@@ -17,7 +17,6 @@ Projeto avaliativo do curso de Tecnologia em Análise e Desenvolvimento de Siste
 * Design system (IHC): paleta, tipografia, espaçamento e acessibilidade em [`docs/design-system.md`](docs/design-system.md).
 * Sistema de design completo (tokens, 23 componentes com anatomia/estados/acessibilidade/código, princípios e fluxos) em [`design-system/`](design-system/README.md), para quem for implementar as telas das specs 003 e 004.
 * Primeira jornada funcional, já implementada: [`specs/003-autenticacao-e-cadastro-de-anuncio/`](specs/003-autenticacao-e-cadastro-de-anuncio/spec.md) e [`specs/004-negociacao-simples/`](specs/004-negociacao-simples/spec.md).
-* Divisão de tarefas da equipe (decisões pendentes e trabalho técnico) em [`tasks/README.md`](tasks/README.md).
 
 ---
 
@@ -55,7 +54,7 @@ conectar o repositório a um projeto Vercel (dashboard ou `vercel --prod`) — n
 ambiente é necessária além das já presentes em `.env`/`app.json`.
 
 Build Android via EAS Build fica para quando houver necessidade de instalar em aparelho fora do
-ambiente de desenvolvimento (ver [Tarefa 12](tasks/micael-cardoso-reis/12-infra-remoto-build-vercel-readme.md)).
+ambiente de desenvolvimento.
 
 ---
 

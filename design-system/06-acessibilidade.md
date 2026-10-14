@@ -1,10 +1,9 @@
 # Acessibilidade
 
 Razão de contraste = (L1 + 0,05) / (L2 + 0,05), com L1 a luminância relativa da cor mais clara e
-L2 a da mais escura (fórmula WCAG). Os seis pares abaixo foram recalculados manualmente na
-Tarefa 26 ([registro de execução](../tasks/micael-cardoso-reis/26-resolver-pendencias-design-kit.md))
-e batem com os valores documentados em `tokens.json`. Os ~50 tokens de cor restantes
-não foram auditados manualmente — só têm a razão declarada na origem (artifact do Figma).
+L2 a da mais escura (fórmula WCAG). Os seis pares abaixo foram recalculados manualmente e batem
+com os valores documentados em `tokens.json`. Os ~50 tokens de cor restantes não foram
+auditados manualmente — só têm a razão declarada na origem (artifact do Figma).
 
 ## Contraste dos pares de cor (modo claro — único implementado, ver ADR 0008)
 

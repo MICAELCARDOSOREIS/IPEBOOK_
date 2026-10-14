@@ -28,7 +28,7 @@ ilustrativa quando não tem foto, para a estante parecer organizada mesmo sem fo
 | Usuários | Público geral de bairro, sem familiaridade técnica esperada: Material 3 tem padrões de navegação (barra inferior, FAB) e feedback (ripple, snackbar) que a maioria já reconhece de outros apps Android. |
 | Acessibilidade | M3 já define contraste mínimo, alvo de toque de 48 dp e papéis de cor consistentes (`on-*`); o app herda isso e mede os pares que usa (ver [06-acessibilidade.md](06-acessibilidade.md)). |
 | Marca | A identidade (verde ipê-do-cerrado, serifa Source Serif 4 para títulos) entra como camada de marca sobre os papéis neutros do M3 — ver `brand-*` em [02-tokens.md](02-tokens.md). |
-| Plataforma | A stack real do app é Expo/React Native, com a primeira entrega em Android e Web (ver [ADR de plataformas](../tasks/eric-vinicius-dos-santos-oliveira/04-plataformas.md)) — M3 é o sistema nativo do Android e tem suporte direto em React Native Web. |
+| Plataforma | A stack real do app é Expo/React Native, com a primeira entrega em Android e Web — M3 é o sistema nativo do Android e tem suporte direto em React Native Web. |
 | Tecnologia | Os tokens já existem como JSON (`tokens.json`) e como módulo TypeScript (`src/view/tokens.ts`, ver [ADR 0010](../docs/adr/0010-design-system-substitui-design-kit.md)); os componentes React Native consomem esses tokens diretamente, sem reescrever valores. |
 
 ## 3. Inventário: telas × componentes

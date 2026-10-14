@@ -33,5 +33,4 @@ destinos) não se aplicam aqui — este projeto não tem essas telas implementad
 - Fica registrado que esta decisão é um subconjunto deliberado do ADR 0019 do projeto irmão, não
   uma decisão nova e independente.
 
-Vínculos: [docs/design-system.md](../design-system.md),
-[tasks/micael-cardoso-reis/06-resolver-referencia-adr-0019.md](../../tasks/micael-cardoso-reis/06-resolver-referencia-adr-0019.md).
+Vínculos: [docs/design-system.md](../design-system.md).

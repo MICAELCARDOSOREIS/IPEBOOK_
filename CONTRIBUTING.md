@@ -115,9 +115,8 @@ depois) o que for afetado:
 * **Criou uma ADR nova?** Acrescente-a ao índice em `docs/adr/README.md` e ao `README.md` da raiz
   (seção "Arquitetura e Decisões"). ADRs aceitos não são reescritos — se uma decisão mudar,
   crie uma nova ADR e linke as duas.
-* **Implementou ou concluiu uma tarefa de `specs/*/tasks.md` ou de `tasks/<pessoa>/*.md`?** Marque
-  a tarefa como concluída e preencha o "Registro de execução" correspondente — não deixe a tarefa
-  como pendente depois de pronta, nem o contrário.
+* **Implementou ou concluiu uma tarefa de `specs/*/tasks.md`?** Marque a tarefa como concluída —
+  não deixe a tarefa como pendente depois de pronta, nem o contrário.
 * **Concluiu uma issue?** Atualize seu checklist e a issue geral relacionada. Só feche quando
   código, documentação e validação exigida estiverem alinhados; registre falhas e limites em
   vez de declarar a entrega validada sem evidência.

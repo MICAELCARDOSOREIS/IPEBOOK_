@@ -61,5 +61,4 @@ que não sabiam qual seguir. Faltava também decidir como carregar as fontes da 
 
 Vínculos: [ADR 0004](0004-design-system-e-tokens-ihc.md), [ADR 0007](0007-serifa-da-marca.md),
 [ADR 0008](0008-sem-dark-mode-android-md3-ios-liquid-glass.md),
-[design-kit/USO.md](../../design-kit/USO.md),
-[tasks/micael-cardoso-reis/26-resolver-pendencias-design-kit.md](../../tasks/micael-cardoso-reis/26-resolver-pendencias-design-kit.md).
+[design-system/README.md](../../design-system/README.md).
