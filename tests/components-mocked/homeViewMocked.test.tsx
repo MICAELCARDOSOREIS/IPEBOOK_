@@ -89,4 +89,25 @@ describe("testes de componente com mock: Home (ISO/IEC 25010 - Usabilidade e Con
     expect(screen.queryByText("Carregando livros…")).toBeNull();
     expect(screen.queryByText("Ainda não há livros por aqui.")).toBeNull();
   });
+
+  it("exibe a tag textual de modalidade de cada anúncio, nunca só a cor", async () => {
+    const mockState: HomeState = {
+      books: [
+        { id: "1", title: "O Alquimista", author: "Paulo Coelho", ownerId: "u1", modality: "trade" as const, status: "available" as const },
+        { id: "2", title: "Dom Casmurro", author: "Machado de Assis", ownerId: "u2", modality: "donation" as const, status: "available" as const },
+      ],
+      loading: false,
+      error: null,
+    };
+    const mockActions: HomeActions = { reload: vi.fn() };
+    mockedUseHomeViewModel.mockReturnValue([mockState, mockActions]);
+
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<Home />);
+    });
+
+    expect(screen.getByText("Troca")).toBeDefined();
+    expect(screen.getByText("Doação")).toBeDefined();
+  });
 });
