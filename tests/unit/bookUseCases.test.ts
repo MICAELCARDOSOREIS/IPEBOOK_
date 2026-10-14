@@ -44,6 +44,21 @@ describe("catálogo inicial", () => {
   });
 });
 
+describe("getBookById (FR-009 — detalhe do livro)", () => {
+  it("retorna o livro quando o id existe", async () => {
+    const book = { id: "1", title: "Livro de teste", author: "Autora de teste", ownerId: "owner-1", modality: "donation" as const, status: "available" as const };
+    const useCases = new BookUseCases(stubDataSource({ findById: async (id) => (id === "1" ? book : null) }));
+
+    await expect(useCases.getBookById("1")).resolves.toEqual(book);
+  });
+
+  it("lança erro de domínio tratável quando o id não existe", async () => {
+    const useCases = new BookUseCases(stubDataSource({ findById: async () => null }));
+
+    await expect(useCases.getBookById("inexistente")).rejects.toThrow(DataSourceError);
+  });
+});
+
 describe("createListing (FR-006 — sessão obrigatória)", () => {
   it("bloqueia cadastro quando não há sessão autenticada", async () => {
     const useCases = new BookUseCases(new MemoryBookDataSource());

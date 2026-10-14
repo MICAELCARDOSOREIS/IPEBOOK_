@@ -2,6 +2,7 @@ import React from "react";
 import { act, fireEvent, render } from "@testing-library/react-native";
 import { describe, expect, it, vi } from "vitest";
 import type { AuthActions, AuthState } from "@/viewmodel/useAuthViewModel";
+import ForgotPassword from "@/view/auth/forgotPassword";
 import SignIn from "@/view/auth/signIn";
 import SignUp from "@/view/auth/signUp";
 
@@ -17,6 +18,7 @@ function mockAuth(state: AuthState, actions: Partial<AuthActions> = {}) {
     signUp: vi.fn().mockResolvedValue(true),
     signIn: vi.fn().mockResolvedValue(true),
     signOut: vi.fn().mockResolvedValue(undefined),
+    requestPasswordReset: vi.fn().mockResolvedValue("senha-temp"),
     ...actions,
   };
   mockedUseAuthViewModel.mockReturnValue([state, fullActions]);
@@ -111,6 +113,22 @@ describe("tela de entrar (ISO/IEC 25010 - Usabilidade e Acessibilidade)", () => 
 
     expect(onNavigateToSignUp).toHaveBeenCalledTimes(1);
   });
+
+  it("aciona a navegação para esqueceu a senha", async () => {
+    mockAuth({ user: null, loading: false, error: null });
+    const onNavigateToForgotPassword = vi.fn();
+
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<SignIn onNavigateToForgotPassword={onNavigateToForgotPassword} />);
+    });
+
+    await act(async () => {
+      fireEvent.press(screen.getByText("Esqueceu a senha?"));
+    });
+
+    expect(onNavigateToForgotPassword).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe("tela de criar conta (ISO/IEC 25010 - Usabilidade e Acessibilidade)", () => {
@@ -169,6 +187,71 @@ describe("tela de criar conta (ISO/IEC 25010 - Usabilidade e Acessibilidade)", (
 
     await act(async () => {
       fireEvent.press(screen.getByText("Já tem conta? Entrar"));
+    });
+
+    expect(onNavigateToSignIn).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("tela de esqueceu a senha (ISO/IEC 25010 - Usabilidade e Acessibilidade, US1)", () => {
+  it("renderiza cabeçalho e campo de e-mail", async () => {
+    mockAuth({ user: null, loading: false, error: null });
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<ForgotPassword />);
+    });
+
+    expect(screen.getByRole("header").props.children).toBe("Esqueceu a senha?");
+    expect(screen.getByLabelText("E-mail")).toBeDefined();
+  });
+
+  it("exibe a senha temporária após recuperar com sucesso", async () => {
+    const requestPasswordReset = vi.fn().mockResolvedValue("abc12345");
+    mockAuth({ user: null, loading: false, error: null }, { requestPasswordReset });
+
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<ForgotPassword />);
+    });
+
+    await act(async () => {
+      fireEvent.changeText(screen.getByLabelText("E-mail"), "pessoa@exemplo.com");
+    });
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Recuperar senha" }));
+    });
+
+    expect(requestPasswordReset).toHaveBeenCalledWith("pessoa@exemplo.com");
+    expect(screen.getByText("abc12345")).toBeDefined();
+    expect(screen.queryByLabelText("E-mail")).toBeNull();
+  });
+
+  it("exibe erro quando o e-mail não corresponde a nenhuma conta", async () => {
+    mockAuth(
+      { user: null, loading: false, error: "Não há conta cadastrada com este e-mail." },
+      { requestPasswordReset: vi.fn().mockResolvedValue(null) },
+    );
+
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<ForgotPassword />);
+    });
+
+    expect(screen.getByRole("alert")).toBeDefined();
+    expect(screen.getByText("Não há conta cadastrada com este e-mail.")).toBeDefined();
+  });
+
+  it("aciona a navegação de volta ao login", async () => {
+    mockAuth({ user: null, loading: false, error: null });
+    const onNavigateToSignIn = vi.fn();
+
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<ForgotPassword onNavigateToSignIn={onNavigateToSignIn} />);
+    });
+
+    await act(async () => {
+      fireEvent.press(screen.getByText("Voltar para o login"));
     });
 
     expect(onNavigateToSignIn).toHaveBeenCalledTimes(1);

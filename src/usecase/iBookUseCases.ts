@@ -10,4 +10,5 @@ export type CreateListingInput = Readonly<{
 export interface IBookUseCases {
   listBooks(): Promise<readonly Book[]>;
   createListing(input: CreateListingInput, sessionUserId: string | null): Promise<Book>;
+  getBookById(id: string): Promise<Book>;
 }

@@ -1,6 +1,6 @@
 import type { IBookDataSource } from "@/model/datasources/iBookDataSource";
 import type { Book } from "@/model/entities/book";
-import { AuthError, ValidationError } from "@/model/errors";
+import { AuthError, DataSourceError, ValidationError } from "@/model/errors";
 import { validateBookPayload } from "@/model/validators/bookValidator";
 import type { CreateListingInput, IBookUseCases } from "@/usecase/iBookUseCases";
 
@@ -38,5 +38,13 @@ export class BookUseCases implements IBookUseCases {
       price: input.price,
       status: "available",
     });
+  }
+
+  async getBookById(id: string): Promise<Book> {
+    const book = await this.dataSource.findById(id);
+    if (!book) {
+      throw new DataSourceError("Anúncio não encontrado.");
+    }
+    return book;
   }
 }

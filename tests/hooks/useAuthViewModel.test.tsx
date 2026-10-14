@@ -40,6 +40,9 @@ function fakeAuth(overrides: Partial<IAuthUseCases> = {}): IAuthUseCases {
     },
     signOut: async () => {},
     getSession: async () => null,
+    requestPasswordReset: async () => {
+      throw new Error("not implemented");
+    },
     ...overrides,
   };
 }
@@ -119,5 +122,38 @@ describe("testes de hook: useAuthViewModel (ISO/IEC 25010 - Confiabilidade)", ()
     });
 
     expect(hook.current[0].user).toBeNull();
+  });
+
+  it("retorna a senha temporária ao recuperar o acesso com sucesso", async () => {
+    const hook = await renderHook(
+      fakeAuth({ requestPasswordReset: async () => "temp12345" }),
+    );
+
+    let result: string | null = null;
+    await act(async () => {
+      result = await hook.current[1].requestPasswordReset("pessoa@exemplo.com");
+    });
+
+    expect(result).toBe("temp12345");
+    expect(hook.current[0].error).toBeNull();
+    expect(hook.current[0].loading).toBe(false);
+  });
+
+  it("registra erro tratável quando a recuperação de senha falha", async () => {
+    const hook = await renderHook(
+      fakeAuth({
+        requestPasswordReset: async () => {
+          throw new AuthError("Não há conta cadastrada com este e-mail.");
+        },
+      }),
+    );
+
+    let result: string | null = "não-nulo";
+    await act(async () => {
+      result = await hook.current[1].requestPasswordReset("desconhecido@exemplo.com");
+    });
+
+    expect(result).toBeNull();
+    expect(hook.current[0].error).toBe("Não há conta cadastrada com este e-mail.");
   });
 });

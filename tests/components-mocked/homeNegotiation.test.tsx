@@ -35,7 +35,7 @@ function setup(books: Book[], user: AuthState["user"], negotiation: Partial<Requ
   vi.mocked(useHomeViewModel).mockReturnValue([{ books, loading: false, error: null }, { reload: vi.fn() }]);
   vi.mocked(useAuthViewModel).mockReturnValue([
     { user, loading: false, error: null },
-    { signUp: vi.fn(), signIn: vi.fn(), signOut: vi.fn() },
+    { signUp: vi.fn(), signIn: vi.fn(), signOut: vi.fn(), requestPasswordReset: vi.fn() },
   ]);
   const request = vi.fn().mockResolvedValue(true);
   vi.mocked(useRequestNegotiationViewModel).mockReturnValue([{ ...emptyNegotiation, ...negotiation }, { request }]);
