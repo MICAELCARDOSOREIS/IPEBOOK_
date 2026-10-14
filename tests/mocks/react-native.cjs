@@ -29,6 +29,11 @@ const ActivityIndicator = React.forwardRef((props, ref) =>
 );
 ActivityIndicator.displayName = "ActivityIndicator";
 
+const TextInput = React.forwardRef((props, ref) =>
+  React.createElement("TextInput", { ...props, ref })
+);
+TextInput.displayName = "TextInput";
+
 const FlatList = React.forwardRef((props, ref) => {
   const data = props.data || [];
   if (data.length === 0 && props.ListEmptyComponent) {
@@ -74,6 +79,7 @@ module.exports = {
   Text,
   Pressable,
   ActivityIndicator,
+  TextInput,
   FlatList,
   StyleSheet,
   AccessibilityInfo,
@@ -83,6 +89,7 @@ module.exports = {
     Text,
     Pressable,
     ActivityIndicator,
+    TextInput,
     FlatList,
     StyleSheet,
     AccessibilityInfo,
