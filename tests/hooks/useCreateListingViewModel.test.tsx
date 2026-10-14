@@ -20,6 +20,9 @@ function stubUseCases(overrides: Partial<IBookUseCases> = {}): IBookUseCases {
       price: input.price,
       status: "available" as const,
     })),
+    getBookById: async () => {
+      throw new Error("not implemented");
+    },
     ...overrides,
   };
 }

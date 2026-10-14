@@ -15,9 +15,9 @@ registro final) são conjuntas.
 - [ ] T001 Estender `src/model/entities/user.ts` com `publicName?`, `photoUrl?`, `socialHandle?`
       (**Maria Clara**, US4) e reaproveitar `authValidator.ts` para a senha temporária
       (**Micael**, FR-002) — sem regra nova de validação.
-- [ ] T002 Estender `src/model/datasources/iAuthDataSource.ts` com
+- [x] T002 Estender `src/model/datasources/iAuthDataSource.ts` com
       `requestPasswordReset(email): Promise<string>`. **Micael**
-- [ ] T003 Implementar `requestPasswordReset` em
+- [x] T003 Implementar `requestPasswordReset` em
       `src/infra/datasources/memoryAuthDataSource.ts`, com teste unitário cobrindo e-mail
       existente e inexistente (FR-001). **Micael**
 - [ ] T004 Estender `IAuthDataSource`/`memoryAuthDataSource.ts` com `updateProfile`, com teste
@@ -25,20 +25,20 @@ registro final) são conjuntas.
 
 ## Casos de uso
 
-- [ ] T005 Adicionar `requestPasswordReset` a `IAuthUseCases`/`authUseCases.ts`, convertendo
+- [x] T005 Adicionar `requestPasswordReset` a `IAuthUseCases`/`authUseCases.ts`, convertendo
       e-mail inexistente em `AuthError` com mensagem neutra (FR-001), com teste unitário.
       **Micael**
 - [ ] T006 Adicionar `updateProfile` a `IAuthUseCases`/`authUseCases.ts`, com teste unitário.
       **Maria Clara**
-- [ ] T028 Adicionar `getBookById(id)` a `IBookUseCases`/`bookUseCases.ts`, delegando a
+- [x] T028 Adicionar `getBookById(id)` a `IBookUseCases`/`bookUseCases.ts`, delegando a
       `IBookDataSource.findById` (já existe) e convertendo id inexistente em erro de domínio
       tratável (FR-009), com teste unitário. **Micael**
 
 ## Componentes reaproveitáveis do design system
 
-- [ ] T007 `src/view/components/TextField.tsx` (campo-de-texto.md: foco, erro), com teste de
+- [x] T007 `src/view/components/TextField.tsx` (campo-de-texto.md: foco, erro), com teste de
       componente. **Micael**
-- [ ] T008 `src/view/components/FilledButton.tsx` (botao.md: pílula, desabilitado), com teste.
+- [x] T008 `src/view/components/FilledButton.tsx` (botao.md: pílula, desabilitado), com teste.
       **Micael**
 - [ ] T009 `src/view/components/Avatar.tsx` (avatar.md: 40/64 px, iniciais), com teste. **Maria
       Clara**
@@ -48,7 +48,7 @@ registro final) são conjuntas.
 
 ## ViewModels
 
-- [ ] T012 `src/viewmodel/useAuthViewModel.ts`: ação `requestPasswordReset`, com teste
+- [x] T012 `src/viewmodel/useAuthViewModel.ts`: ação `requestPasswordReset`, com teste
       (`renderHook`). **Micael**
 - [ ] T013 `src/viewmodel/useProfileViewModel.ts` (novo), com teste. **Maria Clara**
 - [ ] T014 `src/viewmodel/useUserProfileViewModel.ts` (novo, filtro por `ownerId`), com teste.
@@ -58,10 +58,10 @@ registro final) são conjuntas.
 
 ## Telas e rotas
 
-- [ ] T016 Redesenhar `src/view/auth/signIn.tsx` e `src/view/auth/signUp.tsx` com
+- [x] T016 Redesenhar `src/view/auth/signIn.tsx` e `src/view/auth/signUp.tsx` com
       `TextField`/`FilledButton`, sem mudar a lógica de submissão, com testes RNTL atualizados.
       **Micael**
-- [ ] T017 Criar `src/view/auth/forgotPassword.tsx` + rota `src/app/esqueci-senha.tsx`, com
+- [x] T017 Criar `src/view/auth/forgotPassword.tsx` + rota `src/app/esqueci-senha.tsx`, com
       testes RNTL cobrindo US1. **Micael**
 - [ ] T018 Redesenhar `src/view/home.tsx` com o item de lista do design system e adicionar
       `NavigationBar`, sem regressão na spec 005, com testes atualizados. **Maria Clara**
@@ -82,7 +82,7 @@ registro final) são conjuntas.
 
 ## Testes de integração e validação
 
-- [ ] T023 `tests/integration/sc006RecuperarSenhaIntegration.test.ts` (SC-001, pelas camadas
+- [x] T023 `tests/integration/sc006RecuperarSenhaIntegration.test.ts` (SC-001, pelas camadas
       reais). **Micael**
 - [ ] T024 `tests/integration/sc006BuscaEPerfilIntegration.test.ts` (SC-002/SC-003, pelas
       camadas reais). **Maria Clara**

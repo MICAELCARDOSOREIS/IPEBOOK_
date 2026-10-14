@@ -6,6 +6,7 @@ export default function Entrar() {
     <SignIn
       onAuthenticated={() => router.replace("/")}
       onNavigateToSignUp={() => router.push("/criar-conta")}
+      onNavigateToForgotPassword={() => router.push("/esqueci-senha")}
     />
   );
 }

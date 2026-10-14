@@ -9,7 +9,7 @@ vi.mock("@/viewmodel/useAuthViewModel", () => ({ useAuthViewModel: vi.fn() }));
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 const mockedUseAuthViewModel = vi.mocked(useAuthViewModel);
 
-const noopAuthActions: AuthActions = { signUp: vi.fn(), signIn: vi.fn(), signOut: vi.fn() };
+const noopAuthActions: AuthActions = { signUp: vi.fn(), signIn: vi.fn(), signOut: vi.fn(), requestPasswordReset: vi.fn() };
 
 describe("gate de sessão da tela de cadastro de anúncio (FR-006)", () => {
   it("redireciona para entrar quando não há sessão autenticada", async () => {

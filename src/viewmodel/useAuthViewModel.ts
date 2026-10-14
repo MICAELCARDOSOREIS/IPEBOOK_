@@ -14,6 +14,7 @@ export type AuthActions = {
   signUp: (email: string, password: string) => Promise<boolean>;
   signIn: (email: string, password: string) => Promise<boolean>;
   signOut: () => Promise<void>;
+  requestPasswordReset: (email: string) => Promise<string | null>;
 };
 
 const GENERIC_ERROR = "Não foi possível concluir. Tente novamente.";
@@ -71,6 +72,24 @@ export function useAuthViewModel(
     [auth, run],
   );
 
+  const requestPasswordReset = useCallback(async (email: string) => {
+    setState((previous) => ({ ...previous, loading: true, error: null }));
+    try {
+      const temporaryPassword = await auth.requestPasswordReset(email);
+      if (active.current) setState((previous) => ({ ...previous, loading: false, error: null }));
+      return temporaryPassword;
+    } catch (error) {
+      if (active.current) {
+        setState((previous) => ({
+          ...previous,
+          loading: false,
+          error: error instanceof DomainError ? error.message : GENERIC_ERROR,
+        }));
+      }
+      return null;
+    }
+  }, [auth]);
+
   const signOut = useCallback(async () => {
     setState((previous) => ({ ...previous, loading: true, error: null }));
     try {
@@ -81,5 +100,5 @@ export function useAuthViewModel(
     }
   }, [auth]);
 
-  return [state, { signUp, signIn, signOut }];
+  return [state, { signUp, signIn, signOut, requestPasswordReset }];
 }

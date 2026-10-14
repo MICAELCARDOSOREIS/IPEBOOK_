@@ -25,6 +25,7 @@ describe("indicador de sessão na Home (ISO/IEC 25010 - Usabilidade)", () => {
       signUp: vi.fn(),
       signIn: vi.fn(),
       signOut: vi.fn(),
+      requestPasswordReset: vi.fn(),
     };
     mockedUseAuthViewModel.mockReturnValue([authState, authActions]);
     const onNavigateToSignIn = vi.fn();
@@ -49,7 +50,7 @@ describe("indicador de sessão na Home (ISO/IEC 25010 - Usabilidade)", () => {
       error: null,
     };
     const signOut = vi.fn().mockResolvedValue(undefined);
-    const authActions: AuthActions = { signUp: vi.fn(), signIn: vi.fn(), signOut };
+    const authActions: AuthActions = { signUp: vi.fn(), signIn: vi.fn(), signOut, requestPasswordReset: vi.fn() };
     mockedUseAuthViewModel.mockReturnValue([authState, authActions]);
 
     let screen!: Awaited<ReturnType<typeof render>>;
@@ -71,7 +72,7 @@ describe("indicador de sessão na Home (ISO/IEC 25010 - Usabilidade)", () => {
       loading: false,
       error: null,
     };
-    const authActions: AuthActions = { signUp: vi.fn(), signIn: vi.fn(), signOut: vi.fn() };
+    const authActions: AuthActions = { signUp: vi.fn(), signIn: vi.fn(), signOut: vi.fn(), requestPasswordReset: vi.fn() };
     mockedUseAuthViewModel.mockReturnValue([authState, authActions]);
     const onNavigateToCreateListing = vi.fn();
 
@@ -90,7 +91,7 @@ describe("indicador de sessão na Home (ISO/IEC 25010 - Usabilidade)", () => {
     mockedUseHomeViewModel.mockReturnValue([baseHomeState, baseHomeActions]);
     mockedUseAuthViewModel.mockReturnValue([
       { user: null, loading: false, error: null },
-      { signUp: vi.fn(), signIn: vi.fn(), signOut: vi.fn() },
+      { signUp: vi.fn(), signIn: vi.fn(), signOut: vi.fn(), requestPasswordReset: vi.fn() },
     ]);
 
     let screen!: Awaited<ReturnType<typeof render>>;
@@ -105,7 +106,7 @@ describe("indicador de sessão na Home (ISO/IEC 25010 - Usabilidade)", () => {
     mockedUseHomeViewModel.mockReturnValue([baseHomeState, baseHomeActions]);
     mockedUseAuthViewModel.mockReturnValue([
       { user: null, loading: true, error: null },
-      { signUp: vi.fn(), signIn: vi.fn(), signOut: vi.fn() },
+      { signUp: vi.fn(), signIn: vi.fn(), signOut: vi.fn(), requestPasswordReset: vi.fn() },
     ]);
 
     let screen!: Awaited<ReturnType<typeof render>>;

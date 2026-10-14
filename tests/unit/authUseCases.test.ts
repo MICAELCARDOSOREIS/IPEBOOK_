@@ -56,6 +56,27 @@ describe("autenticação: criar conta, entrar e sair (ISO/IEC 25010 - Adequaçã
     await expect(useCases.getSession()).resolves.toBeNull();
   });
 
+  it("gera senha temporária e permite entrar com ela (US1, FR-002)", async () => {
+    const useCases = new AuthUseCases(new MemoryAuthDataSource());
+    await useCases.signUp("pessoa@exemplo.com", "12345678");
+    await useCases.signOut();
+
+    const temporaryPassword = await useCases.requestPasswordReset("pessoa@exemplo.com");
+    expect(temporaryPassword.length).toBeGreaterThanOrEqual(8);
+
+    const user = await useCases.signIn("pessoa@exemplo.com", temporaryPassword);
+    expect(user.email).toBe("pessoa@exemplo.com");
+    await expect(useCases.signIn("pessoa@exemplo.com", "12345678")).rejects.toThrow(AuthError);
+  });
+
+  it("rejeita recuperação de senha para e-mail sem conta (FR-001)", async () => {
+    const useCases = new AuthUseCases(new MemoryAuthDataSource());
+
+    await expect(useCases.requestPasswordReset("desconhecido@exemplo.com")).rejects.toThrow(
+      AuthError,
+    );
+  });
+
   it("isola a sessão retornada de alterações externas", async () => {
     const useCases = new AuthUseCases(new MemoryAuthDataSource());
     const user = await useCases.signUp("pessoa@exemplo.com", "12345678");

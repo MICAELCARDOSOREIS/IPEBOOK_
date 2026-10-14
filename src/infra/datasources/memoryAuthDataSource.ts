@@ -47,4 +47,19 @@ export class MemoryAuthDataSource implements IAuthDataSource {
   async currentUser(): Promise<User | null> {
     return this.session ? { ...this.session } : null;
   }
+
+  async requestPasswordReset(email: string): Promise<string> {
+    const normalizedEmail = email.trim().toLowerCase();
+    const account = this.accountsByEmail.get(normalizedEmail);
+    if (!account) {
+      throw new AuthError("Não há conta cadastrada com este e-mail.");
+    }
+    const temporaryPassword = generateTemporaryPassword();
+    this.accountsByEmail.set(normalizedEmail, { ...account, password: temporaryPassword });
+    return temporaryPassword;
+  }
+}
+
+function generateTemporaryPassword(): string {
+  return Math.random().toString(36).slice(2, 10).padEnd(8, "0");
 }

@@ -30,4 +30,8 @@ export class AuthUseCases implements IAuthUseCases {
   getSession(): Promise<User | null> {
     return this.dataSource.currentUser();
   }
+
+  requestPasswordReset(email: string): Promise<string> {
+    return this.dataSource.requestPasswordReset(email.trim());
+  }
 }
