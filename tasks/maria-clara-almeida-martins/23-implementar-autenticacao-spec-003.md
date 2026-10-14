@@ -12,8 +12,12 @@ já está especificada (spec.md, plan.md, tasks.md). As tarefas de autenticaçã
 entrar, sair) são suas: T001 (parte), T002 (parte), T003, T004, T009, T011, T014 (rotas de
 entrar/criar-conta), conforme marcado em `tasks.md`.
 
-Para as telas (T011), seguir [`design-kit/USO.md`](../../design-kit/USO.md) — tem o guia de voz,
-cor, tipografia e os componentes `TextField`, `Button` e `Logo` de referência.
+Para as telas (T011), seguir [`design-system/README.md`](../../design-system/README.md) — tem o
+guia de voz, cor, tipografia (`01-principios.md`, `03-fundamentos.md`) e os componentes
+[Campo de texto](../../design-system/04-componentes/campo-de-texto.md),
+[Botão](../../design-system/04-componentes/botao.md) e
+[Logotipo](../../design-system/04-componentes/logotipo.md) de referência (`design-kit/` foi
+substituído por `design-system/`, ver [ADR 0010](../../docs/adr/0010-design-system-substitui-design-kit.md)).
 
 ## O que fazer
 

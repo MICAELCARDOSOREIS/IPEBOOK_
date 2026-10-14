@@ -7,8 +7,8 @@ import {
 import { SourceSerif4_700Bold } from "@expo-google-fonts/source-serif-4";
 
 /**
- * Fontes decididas no ADR 0007 (serifa da marca) e no design-kit: Source Serif 4 Bold para a
- * marca, Roboto para a interface. Roboto Flex (nome usado no design-kit) só distribui o corte
+ * Fontes decididas no ADR 0007 (serifa da marca) e no design-system: Source Serif 4 Bold para a
+ * marca, Roboto para a interface. Roboto Flex (nome usado no design-system) só distribui o corte
  * estático Regular pelo Google Fonts/Expo; por isso o app usa Roboto (família próxima, com os
  * pesos 400/500/600 que a tipografia dos tokens exige) em vez de Roboto Flex.
  */

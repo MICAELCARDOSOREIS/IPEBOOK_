@@ -12,7 +12,7 @@ comportamento do M3); os cinco destinos fixos são **Adaptado** — decisão de 
 ## Quando não usar
 
 - Dentro de um fluxo de várias etapas (ex. Anunciar livro) — use
-  [`design-kit/components/StepIndicator/README.md`](../../design-kit/components/StepIndicator/README.md).
+  [indicador-de-etapas.md](indicador-de-etapas.md).
 
 ## Anatomia
 

@@ -1,6 +1,6 @@
 # Tokens
 
-Fonte canônica: [`design-kit/tokens.json`](../design-kit/tokens.json) (ADR 0009). Formato do
+Fonte canônica: [`tokens.json`](tokens.json) ([ADR 0010](../docs/adr/0010-design-system-substitui-design-kit.md)). Formato do
 nome: `categoria.papel.variação`. Em código, `src/view/tokens.ts` expõe esses mesmos valores
 (tema claro).
 
@@ -49,7 +49,7 @@ de uma cor-semente única (aqui, o verde ipê-do-cerrado).
 | `brand-amber` / `cover-sun` | `#f2bc45` / `#ddaf38` | Sol das capas ilustrativas; nunca texto | Novo |
 
 Lista completa (~50 tokens, claro e escuro) em
-[`design-kit/tokens.json`](../design-kit/tokens.json), campo `color.tokens`.
+[`tokens.json`](tokens.json), campo `color.tokens`.
 
 ### Tipografia
 
@@ -63,7 +63,7 @@ Lista completa (~50 tokens, claro e escuro) em
 | `m3-label-lg` | Roboto (500) | 14 px | 500 | 20 px | Rótulo de botão, chip, aba | Herdado |
 | `m3-label-sm` | Roboto (500) | 11 px | 500 | 16 px | Rótulo da barra de navegação | Herdado |
 
-Escala completa (Android M3, iOS, Web, Documentação) em `design-kit/tokens.json`, campo
+Escala completa (Android M3, iOS, Web, Documentação) em `tokens.json`, campo
 `type.groups`.
 
 ### Forma e elevação
@@ -87,9 +87,9 @@ Escala completa (Android M3, iOS, Web, Documentação) em `design-kit/tokens.jso
 
 ### Nomes no código (`src/view/tokens.ts`)
 
-`design-kit/tokens.json` usa nomes de papel M3 (`primary`, `on-surface-variant`...); o módulo
+`tokens.json` usa nomes de papel M3 (`primary`, `on-surface-variant`...); o módulo
 TypeScript consumido pelo código usa uma API própria com um grupo `colors.m3` só para os papéis
-M3 ainda sem equivalente nas chaves antigas (ver [ADR 0009](../docs/adr/0009-design-kit-tokens-como-fonte-unica.md)).
+M3 ainda sem equivalente nas chaves antigas (ver [ADR 0010](../docs/adr/0010-design-system-substitui-design-kit.md)).
 Os exemplos de código em [04-componentes/](04-componentes/) usam a coluna "Em código" abaixo —
 **não** os nomes M3 da tabela de cor desta seção.
 
@@ -106,13 +106,13 @@ Os exemplos de código em [04-componentes/](04-componentes/) usam a coluna "Em c
 | `tertiary-container` / `on-tertiary-container` | `badge.trade.background` / `badge.trade.text` |
 | `doacao-container` / `on-doacao-container` | `badge.donation.background` / `badge.donation.text` |
 | `error` | `error` |
-| `focus-ring` | não tem token em `tokens.ts` — usar o valor de `design-kit/tokens.json` (`#4e8a68`) |
-| `scrim` | não tem token em `tokens.ts` — usar o valor de `design-kit/tokens.json` (`#00000052` claro) |
+| `focus-ring` | não tem token em `tokens.ts` — usar o valor de `tokens.json` (`#4e8a68`) |
+| `scrim` | não tem token em `tokens.ts` — usar o valor de `tokens.json` (`#00000052` claro) |
 | papéis M3 sem chave antiga equivalente (`onSurface`, `surfaceContainer*`, `focusRing` etc.) | `colors.m3.*` |
 
 `on-primary`, `focus-ring` e `scrim` são uma lacuna real: ainda não têm token próprio em
 `src/view/tokens.ts`. Até alguém adicioná-los a `colors.m3`, qualquer código novo que precise
-desses papéis deve citar o valor de `design-kit/tokens.json` num comentário, não escrever o hex
+desses papéis deve citar o valor de `tokens.json` num comentário, não escrever o hex
 sem explicação (ver exemplo em [04-componentes/dialogo.md](04-componentes/dialogo.md)).
 
 ## 3. Tokens de componente (onde é usado)
@@ -133,14 +133,14 @@ sem explicação (ver exemplo em [04-componentes/dialogo.md](04-componentes/dial
 ## 4. Modo escuro
 
 Todos os tokens semânticos de cor já têm um valor `dark` equivalente em
-`design-kit/tokens.json` (ex. `primary` claro `#2c5e45` → escuro `#9fd4b3`), mas **não entram em
+`tokens.json` (ex. `primary` claro `#2c5e45` → escuro `#9fd4b3`), mas **não entram em
 código nesta etapa** — decisão registrada em
 [ADR 0008](../docs/adr/0008-sem-dark-mode-android-md3-ios-liquid-glass.md). Quando o tema escuro
 entrar em escopo, só os tokens semânticos mudam de valor; nenhum componente muda de estrutura.
 
 ## 5. Versão legível por máquina
 
-A versão machine-readable já existe: [`design-kit/tokens.json`](../design-kit/tokens.json), no
+A versão machine-readable já existe: [`tokens.json`](tokens.json), no
 formato de tokens do artifact original do Figma (campos `name`/`value`/`usage` por token, não o
 formato W3C Design Tokens). `src/view/tokens.ts` é o módulo TypeScript gerado a partir dele para
-consumo em código (ver [ADR 0009](../docs/adr/0009-design-kit-tokens-como-fonte-unica.md)).
+consumo em código (ver [ADR 0010](../docs/adr/0010-design-system-substitui-design-kit.md)).

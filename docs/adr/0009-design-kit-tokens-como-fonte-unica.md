@@ -1,6 +1,10 @@
 # 0009 — `design-kit/tokens.json` como fonte única de tokens; carregamento de fonte no Expo
 
-Data: 2026-10-14. Status: aceito. Substitui parcialmente o item 2 do [ADR 0004](0004-design-system-e-tokens-ihc.md).
+Data: 2026-10-14. Status: **substituído por [ADR 0010](0010-design-system-substitui-design-kit.md)**
+(que move a fonte única de `design-kit/tokens.json` para `design-system/tokens.json` e remove
+`design-kit/` do repositório). O registro abaixo é mantido como histórico da decisão original;
+a decisão sobre carregamento de fonte no Expo (item 3) continua válida. Substitui parcialmente
+o item 2 do [ADR 0004](0004-design-system-e-tokens-ihc.md).
 
 ## Contexto
 

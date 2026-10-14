@@ -2,11 +2,12 @@
 
 > Versão: 1.0.0 · Disciplinas: IHC e PDM
 >
-> Base de conteúdo: [`design-kit/`](../design-kit/) (tokens, componentes de referência e
-> brand book trazidos do Figma do projeto, ver [ADR 0008](../docs/adr/0008-sem-dark-mode-android-md3-ios-liquid-glass.md)
-> e [ADR 0009](../docs/adr/0009-design-kit-tokens-como-fonte-unica.md)). Esta pasta reorganiza
-> esse material no formato exigido pela atividade "Sistema de Design do Trabalho Final", com um
-> único sistema base e as etiquetas Herdado/Adaptado/Novo.
+> Fonte única do design do app. Conteúdo originalmente trazido do Figma do projeto para
+> `design-kit/` e depois migrado integralmente para cá (ver
+> [ADR 0010](../docs/adr/0010-design-system-substitui-design-kit.md), que substitui o
+> [ADR 0009](../docs/adr/0009-design-kit-tokens-como-fonte-unica.md) — `design-kit/` não existe
+> mais no repositório). Formato exigido pela atividade "Sistema de Design do Trabalho Final", com
+> um único sistema base e as etiquetas Herdado/Adaptado/Novo.
 
 ## 1. Visão geral
 
@@ -28,19 +29,23 @@ ilustrativa quando não tem foto, para a estante parecer organizada mesmo sem fo
 | Acessibilidade | M3 já define contraste mínimo, alvo de toque de 48 dp e papéis de cor consistentes (`on-*`); o app herda isso e mede os pares que usa (ver [06-acessibilidade.md](06-acessibilidade.md)). |
 | Marca | A identidade (verde ipê-do-cerrado, serifa Source Serif 4 para títulos) entra como camada de marca sobre os papéis neutros do M3 — ver `brand-*` em [02-tokens.md](02-tokens.md). |
 | Plataforma | A stack real do app é Expo/React Native, com a primeira entrega em Android e Web (ver [ADR de plataformas](../tasks/eric-vinicius-dos-santos-oliveira/04-plataformas.md)) — M3 é o sistema nativo do Android e tem suporte direto em React Native Web. |
-| Tecnologia | Os tokens já existem como JSON (`design-kit/tokens.json`) e como módulo TypeScript (`src/view/tokens.ts`, ver [ADR 0009](../docs/adr/0009-design-kit-tokens-como-fonte-unica.md)); os componentes React Native consomem esses tokens diretamente, sem reescrever valores. |
+| Tecnologia | Os tokens já existem como JSON (`tokens.json`) e como módulo TypeScript (`src/view/tokens.ts`, ver [ADR 0010](../docs/adr/0010-design-system-substitui-design-kit.md)); os componentes React Native consomem esses tokens diretamente, sem reescrever valores. |
 
 ## 3. Inventário: telas × componentes
 
 | Tela | Componentes necessários |
 | --- | --- |
-| Entrar / Criar conta (US1, spec 003) | Campo de texto, Botão |
-| Anunciar livro — 3 etapas (US2, spec 003) | Indicador de etapas, Campo de texto, Botão, Barra superior |
-| Início / Explorar | Campo de busca, Chip de filtro, Linha de livro, Barra de navegação |
-| Estante (meus anúncios) | Linha de livro, Capa ilustrativa, Tag, Estado vazio, FAB, Barra de navegação |
-| Detalhe do anúncio | Capa ilustrativa, Tag, Botão, Barra superior |
-| Negociação / Conversa (spec 004) | Bolha de mensagem, Campo de texto, Botão, Barra superior |
+| Entrar / Criar conta (US1, spec 003) | Campo de texto, Botão, Logotipo |
+| Anunciar livro — 3 etapas (US2, spec 003) | Indicador de etapas, Campo de texto, Botão, Barra superior, Capa ilustrativa |
+| Início / Explorar | Campo de busca, Chip, Linha de livro, Barra de navegação, Logotipo |
+| Estante (meus anúncios) | Linha de livro, Capa ilustrativa, Tag, Estado vazio, Fab, Barra de navegação |
+| Detalhe do anúncio | Capa ilustrativa, Tag, Botão, Barra superior, Avatar |
+| Negociação / Conversa (spec 004) | Bolha de mensagem, Campo de texto, Botão, Barra superior, Avatar, Cartão de informação |
 | Diálogo de confirmação (ex. excluir anúncio) | Diálogo, Botão (Perigo) |
+| Configurações / Perfil | Item de lista, Interruptor, Avatar, Barra superior |
+| Propostas / Concluídos (spec 004) | Abas, Linha de livro, Badge |
+
+Lista completa dos 23 componentes em [04-componentes/](04-componentes/).
 
 ## 4. Mapa dos arquivos
 
@@ -49,14 +54,15 @@ ilustrativa quando não tem foto, para a estante parecer organizada mesmo sem fo
 | [01-principios.md](01-principios.md) | Valores que guiam as decisões |
 | [02-tokens.md](02-tokens.md) | Tokens primitivos, semânticos e de componente |
 | [03-fundamentos.md](03-fundamentos.md) | Regras de cor, tipografia, espaço, ícones, elevação e movimento |
-| [04-componentes/](04-componentes/) | Um arquivo por componente (botão, campo de texto, tag, capa ilustrativa, barra de navegação, diálogo) |
+| [04-componentes/](04-componentes/) | Um arquivo por componente — os 23 componentes do design, cada um com anatomia, estados, acessibilidade e código React Native |
 | [05-padroes.md](05-padroes.md) | Fluxos: entrar/cadastrar, anunciar livro |
 | [06-acessibilidade.md](06-acessibilidade.md) | Contraste, alvos de toque, foco, leitor de tela |
 | [07-teste-com-ia.md](07-teste-com-ia.md) | Validação do sistema com um assistente de IA |
 | [CHANGELOG.md](CHANGELOG.md) | Versões e mudanças |
+| [`tokens.json`](tokens.json) | Versão machine-readable dos tokens (dado de apoio, não markdown) |
 
-Fonte de conteúdo mais detalhada (brand book completo e os 23 componentes de referência):
-[`../design-kit/README.md`](../design-kit/README.md) e [`../design-kit/components/`](../design-kit/components/).
+Esta pasta é autossuficiente: não depende de nenhum outro diretório do repositório além de
+`src/view/tokens.ts` (o módulo de código que consome estes tokens).
 
 ## 5. Etiquetas de origem
 
@@ -97,31 +103,32 @@ Pelo menos três decisões Adaptadas ou Novas que expressam a identidade do app:
 
 ## 7. Quem mantém
 
-- **Modelo de governança:** centralizado — Micael Cardoso Reis mantém `design-kit/` e
-  `design-system/`; mudanças de token ou componente passam por ele antes de entrar em `develop`,
+- **Modelo de governança:** centralizado — Micael Cardoso Reis mantém `design-system/`
+  (fonte única desde o [ADR 0010](../docs/adr/0010-design-system-substitui-design-kit.md));
+  mudanças de token ou componente passam por ele antes de entrar em `develop`,
   para evitar que Maria Clara e Eric decidam valores de design em paralelo durante a
   implementação das telas (Tarefas 23 e 24).
 - **Responsável por revisar mudanças:** Micael Cardoso Reis.
 - **Como propor uma mudança:** pull request de uma branch de funcionalidade para `develop` que
-  altera o(s) arquivo(s) de `design-system/` (e `design-kit/tokens.json` quando for um token) e
+  altera o(s) arquivo(s) de `design-system/` (e `tokens.json` quando for um token) e
   o `CHANGELOG.md`; decisões de maior impacto (novo papel de cor, nova plataforma) ganham também
   um ADR em `docs/adr/`.
 
 ## 8. Uso de IA na redação
 
 Estes arquivos foram redigidos com apoio de um assistente de IA (Claude), a partir do conteúdo
-já existente em `design-kit/` (brand book, `tokens.json` e READMEs de componente, todos escritos
-anteriormente neste projeto) e dos ADRs 0008 e 0009. A IA reorganizou e resumiu esse material no
-formato exigido pela atividade; não inventou tokens, cores ou regras novas além dos pontos
-marcados como "Novo"/"Adaptado" na seção 5, que refletem decisões de escopo já tomadas no
-projeto.
+que existia em `design-kit/` (brand book, `tokens.json` e READMEs de componente, todos escritos
+anteriormente neste projeto, antes de a pasta ser migrada para cá e removida — ADR 0010) e dos
+ADRs 0008 e 0009. A IA reorganizou e resumiu esse material no formato exigido pela atividade;
+não inventou tokens, cores ou regras novas além dos pontos marcados como "Novo"/"Adaptado" na
+seção 5, que refletem decisões de escopo já tomadas no projeto.
 
 ## 9. Instruções para assistentes de IA
 
 Ao gerar ou alterar interface neste projeto:
 
 1. Leia `01-principios.md`, `02-tokens.md` e `03-fundamentos.md` antes de qualquer tela.
-2. Use **somente tokens** (`src/view/tokens.ts`, consumido de `design-kit/tokens.json`). Nunca
+2. Use **somente tokens** (`src/view/tokens.ts`, consumido de `tokens.json`). Nunca
    escreva cores, tamanhos ou raios literais no código de componente.
 3. Para cada componente, siga o arquivo correspondente em `04-componentes/`, incluindo todos os
    estados (padrão, pressionado, foco, desabilitado).

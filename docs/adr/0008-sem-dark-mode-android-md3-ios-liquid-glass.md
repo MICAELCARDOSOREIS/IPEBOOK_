@@ -1,6 +1,9 @@
 # 0008 — Sem dark mode nesta etapa; Android segue Material Design 3, iOS segue Liquid Glass
 
-Data: 2026-10-14. Status: aceito.
+Data: 2026-10-14. Status: aceito. Nota (2026-10-14, [ADR 0010](0010-design-system-substitui-design-kit.md)):
+`design-kit/` foi apagado do repositório; as referências a `design-kit/README.md` e
+`design-kit/USO.md` abaixo são históricas — o conteúdo equivalente está hoje em
+`design-system/README.md`, `design-system/01-principios.md` e `design-system/CHANGELOG.md`.
 
 ## Contexto
 
