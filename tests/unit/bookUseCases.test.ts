@@ -8,6 +8,10 @@ function stubDataSource(overrides: Partial<IBookDataSource>): IBookDataSource {
   return {
     list: async () => [],
     create: async (b) => ({ ...b, id: "stub-id" }),
+    findById: async () => null,
+    updateStatus: async () => {
+      throw new Error("não usado");
+    },
     ...overrides,
   };
 }

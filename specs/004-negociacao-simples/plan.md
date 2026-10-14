@@ -11,8 +11,9 @@ a sessão autenticada e o modelo de anúncio da
   status: RequestStatus }>`.
 - `src/model/entities/book.ts`: acrescentar `status: 'available' | 'reserved'` ao `Book`
   (iniciando sempre `available`).
-- `src/model/datasources/iBookRequestDataSource.ts` (novo): contrato `create`, `listByOwner`,
-  `listByRequester`, `respond(id, status)`.
+- `src/model/datasources/iBookRequestDataSource.ts` (novo): contrato `create`, `findById`,
+  `listByListing`, `listByRequester`, `respond(id, status)` (antes `listByOwner`; ver nota em
+  `tasks.md`). `IBookDataSource` ganha `findById` e `updateStatus`.
 - `src/model/errors.ts`: reaproveitar `DomainError`/`ValidationError` já existentes — nenhum
   tipo novo de erro.
 

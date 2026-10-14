@@ -28,14 +28,16 @@ describe("modelo de solicitacao de negociacao", () => {
       status: "pending",
     };
     const dataSource: IBookRequestDataSource = {
-      create: async (newRequest) => newRequest,
-      listByOwner: async () => [request],
+      create: async (newRequest) => ({ ...newRequest, id: "request-1" }),
+      findById: async () => request,
+      listByListing: async () => [request],
       listByRequester: async () => [request],
       respond: async (id, status) => ({ ...request, id, status }),
     };
 
     await expect(dataSource.create(request)).resolves.toEqual(request);
-    await expect(dataSource.listByOwner("owner-1")).resolves.toEqual([request]);
+    await expect(dataSource.findById("request-1")).resolves.toEqual(request);
+    await expect(dataSource.listByListing("listing-1")).resolves.toEqual([request]);
     await expect(dataSource.listByRequester("user-1")).resolves.toEqual([request]);
     await expect(dataSource.respond("request-1", "accepted")).resolves.toEqual({
       ...request,

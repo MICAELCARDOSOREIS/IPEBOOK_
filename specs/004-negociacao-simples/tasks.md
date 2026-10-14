@@ -10,13 +10,19 @@ todas as tarefas abaixo.
 - [x] T001 Criar `src/model/entities/bookRequest.ts` e acrescentar `status` a
       `src/model/entities/book.ts`.
 - [x] T002 Criar `src/model/datasources/iBookRequestDataSource.ts`.
-- [ ] T003 Criar `src/usecase/bookRequestUseCases.ts` com `requestNegotiation` (FR-001 a
+- [x] T003 Criar `src/usecase/bookRequestUseCases.ts` com `requestNegotiation` (FR-001 a
       FR-003), testes unitários cobrindo cada bloqueio.
-- [ ] T004 Implementar `listReceivedRequests`/`listSentRequests`/`respondToRequest` em
+- [x] T004 Implementar `listReceivedRequests`/`listSentRequests`/`respondToRequest` em
       `bookRequestUseCases.ts` (FR-004, FR-005), com testes cobrindo recusa automática dos
       concorrentes.
-- [ ] T005 Criar `src/infra/datasources/memoryBookRequestDataSource.ts` com testes.
-- [ ] T006 Atualizar `src/di/container.ts` para compor `IBookRequestUseCases`.
+- [x] T005 Criar `src/infra/datasources/memoryBookRequestDataSource.ts` com testes.
+- [x] T006 Atualizar `src/di/container.ts` para compor `IBookRequestUseCases`.
+
+> Nota (2026-10-14, T003–T006): o contrato do T002 trocou `listByOwner` por `listByListing` e
+> ganhou `findById`; `IBookDataSource` ganhou `findById`/`updateStatus`. Motivo: o datasource
+> fica só com CRUD e as regras (dono, reserva, recusa automática) ficam no caso de uso.
+> Somente quem anunciou pode responder (AuthError). Testes em
+> `tests/unit/bookRequestUseCases.test.ts` (18 casos, incluindo SC-002 no nível de caso de uso).
 - [ ] T007 Criar `src/viewmodel/useRequestNegotiationViewModel.ts` com testes.
 - [ ] T008 Criar `src/viewmodel/useReceivedRequestsViewModel.ts` e
       `useSentRequestsViewModel.ts` com testes.
