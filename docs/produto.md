@@ -1,6 +1,6 @@
 # Produto e requisitos do Ipebook
 
-Revisão: 2026-10-13. Este documento descreve a base implementada e identifica decisões necessárias para especificar o produto final. Não é uma aprovação de funcionalidades futuras.
+Revisão: 2026-10-14. Este documento descreve a base implementada e identifica decisões necessárias para especificar o produto final. Não é uma aprovação de funcionalidades futuras.
 
 ## Objetivo confirmado
 
@@ -23,7 +23,7 @@ Esta decisão foi trazida do trabalho já em produção da equipe no projeto irm
 | Renderizar títulos e autores fornecidos pelo caso de uso | Implementada; dados de exemplo exercitados em testes |
 | Tratar carregamento, erro e nova tentativa | Implementada |
 | Cadastrar livros (editar fica para depois) | Não implementada; **especificada** em [specs/003](../specs/003-autenticacao-e-cadastro-de-anuncio/), atribuída ao Eric (Tarefa 24) |
-| Conta e autenticação (perfil fica para depois) | Não implementada; **especificada** em [specs/003](../specs/003-autenticacao-e-cadastro-de-anuncio/), atribuída à Maria Clara (Tarefa 23) |
+| Conta e autenticação (criar conta, entrar, sair; perfil fica para depois) | **Implementada** (trilha da Maria Clara, Tarefa 23) em [specs/003](../specs/003-autenticacao-e-cadastro-de-anuncio/): `src/view/auth/signIn.tsx`, `src/view/auth/signUp.tsx`, rotas `src/app/entrar.tsx` e `src/app/criar-conta.tsx`, indicador de sessão em `src/view/home.tsx` |
 | Solicitar e responder negociação simples | Não implementada; **especificada** em [specs/004](../specs/004-negociacao-simples/), atribuída ao Antonio (Tarefa 25) |
 | Busca, filtros e detalhes | Não implementados; fora do primeiro incremento (ver decisões abaixo) |
 | Troca, doação, empréstimo ou venda | Decidido: venda, troca e doação. Empréstimo não entra no escopo |
