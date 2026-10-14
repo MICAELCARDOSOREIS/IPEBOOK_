@@ -4,7 +4,10 @@
 > projeto que a equipe decidiu **não usar mais**. Fica aqui como lembrete — hoje não há perfil
 > nem layout web dedicado no `IPEBOOK_`.
 
-Responsável: Eric Vinícius dos Santos Oliveira (quando a ideia for retomada)
+> **Redistribuída em 2026-10-14** junto com as demais tarefas/issues do Eric (ver issue
+> [#17](https://github.com/Ghostyxseven/IPEBOOK_/issues/17)).
+
+Responsável: Micael Cardoso Reis (quando a ideia for retomada)
 
 ## Ideia para quando houver layout web responsivo
 

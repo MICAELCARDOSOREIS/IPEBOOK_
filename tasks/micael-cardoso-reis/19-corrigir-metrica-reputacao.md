@@ -4,7 +4,10 @@
 > projeto que a equipe decidiu **não usar mais**. Fica aqui como lição aprendida — hoje não
 > existe perfil nem métrica de reputação no `IPEBOOK_`.
 
-Responsável: Eric Vinícius dos Santos Oliveira (quando a ideia for retomada)
+> **Redistribuída em 2026-10-14** junto com as demais tarefas/issues do Eric (ver issue
+> [#14](https://github.com/Ghostyxseven/IPEBOOK_/issues/14)).
+
+Responsável: Micael Cardoso Reis (quando a ideia for retomada)
 
 ## Lição aprendida para se/quando houver métricas de reputação
 
