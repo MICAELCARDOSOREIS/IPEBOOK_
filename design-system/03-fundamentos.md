@@ -1,7 +1,7 @@
 # Fundamentos
 
-Regras de uso dos tokens definidos em [02-tokens.md](02-tokens.md). Detalhe completo da voz e do
-brand book em [`design-kit/README.md`](../design-kit/README.md).
+Regras de uso dos tokens definidos em [02-tokens.md](02-tokens.md). Voz da marca resumida em
+[01-principios.md](01-principios.md).
 
 ## Cor
 

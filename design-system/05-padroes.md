@@ -29,9 +29,8 @@ Fluxos do app, derivados das histórias de usuário de
 ## Padrão 2: Anunciar livro (US2)
 
 - **Objetivo do usuário:** publicar um livro para vender, trocar ou doar.
-- **Componentes usados:** `StepIndicator` (indicador de 3 etapas, ver
-  [`design-kit/components/StepIndicator/README.md`](../design-kit/components/StepIndicator/README.md)),
-  [Campo de texto](04-componentes/campo-de-texto.md), [Botão](04-componentes/botao.md),
+- **Componentes usados:** [Indicador de etapas](04-componentes/indicador-de-etapas.md) (3
+  etapas), [Campo de texto](04-componentes/campo-de-texto.md), [Botão](04-componentes/botao.md),
   [Capa ilustrativa](04-componentes/capa-ilustrativa.md) (prévia quando sem foto), Tag (prévia
   da modalidade escolhida).
 - **Passos:**

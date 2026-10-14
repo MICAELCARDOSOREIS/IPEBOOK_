@@ -11,7 +11,8 @@ Responsável: Maria Clara Almeida Martins (quando a ideia for retomada)
 Quando as telas de autenticação (Tarefa 23) existirem e o app ganhar um layout web dedicado
 (hoje a Web só reaproveita as mesmas telas do app, via `npm run web`), revisar teclado, foco
 visível e estado vazio nas telas de senha/confirmação, seguindo
-[`design-kit/USO.md`](../../design-kit/USO.md).
+[`design-system/README.md`](../../design-system/README.md) (`design-kit/` foi substituído por
+`design-system/`, ver [ADR 0010](../../docs/adr/0010-design-system-substitui-design-kit.md)).
 
 ## O que não fazer agora
 

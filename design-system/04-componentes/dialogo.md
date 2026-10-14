@@ -9,7 +9,7 @@ Origem no sistema base: Material 3, Basic dialog. Situação: **Herdado**.
 ## Quando não usar
 
 - Mensagens de confirmação rápida sem decisão a tomar (use
-  [`design-kit/components/Snackbar/README.md`](../../design-kit/components/Snackbar/README.md)).
+  [snackbar.md](snackbar.md)).
 
 ## Anatomia
 

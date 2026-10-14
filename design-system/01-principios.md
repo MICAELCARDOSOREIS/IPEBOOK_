@@ -1,8 +1,9 @@
 # Princípios
 
 Valores herdados dos princípios do Material 3 ("o material é a metáfora", "ousado e
-intencional", "movimento dá significado") e da voz de marca já registrada em
-[`design-kit/README.md`](../design-kit/README.md), seção "Como o IpêBook fala".
+intencional", "movimento dá significado") e da voz de marca do IpêBook: português do Brasil,
+tratamento por "você", frases curtas e concretas, botões com verbo ("Anunciar livro", "Enviar
+proposta"), nunca "OK" ou caixa-alta, sem emoji na interface.
 
 ## Princípio 1: Uma ação principal por tela
 
@@ -58,6 +59,6 @@ intencional", "movimento dá significado") e da voz de marca já registrada em
 - **O porquê:** Implementar dark mode agora dobraria o trabalho de cada tela nova sem benefício
   claro para o MVP decidido.
 - **Na prática:** Todo componente usa só os valores de tema claro de
-  [`design-kit/tokens.json`](../design-kit/tokens.json); nenhuma tela usa `useColorScheme` nem
+  [`tokens.json`](tokens.json); nenhuma tela usa `useColorScheme` nem
   lógica de tema.
 - **Evite:** Adicionar um toggle de tema ou ler a cor do sistema antes dessa decisão mudar.

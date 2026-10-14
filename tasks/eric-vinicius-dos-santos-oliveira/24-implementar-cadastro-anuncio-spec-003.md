@@ -10,9 +10,13 @@ Domínio: Gestão de Inventário/Anúncios (mesma divisão do projeto irmão)
 já está especificada. As tarefas de cadastro de anúncio são suas: T001 (parte), T002 (parte),
 T005, T006, T007, T008, T010, T012, T014 (rota de anunciar), conforme marcado em `tasks.md`.
 
-Para a tela (T012), seguir [`design-kit/USO.md`](../../design-kit/USO.md) — tem os componentes
-`TextField`, `Chip` (modalidade), `StepIndicator` e `Tag` de referência, e a regra de que a cor
-nunca é o único sinal da modalidade (tag sempre leva o nome).
+Para a tela (T012), seguir [`design-system/README.md`](../../design-system/README.md) — tem os
+componentes [Campo de texto](../../design-system/04-componentes/campo-de-texto.md),
+[Chip](../../design-system/04-componentes/chip.md) (modalidade),
+[Indicador de etapas](../../design-system/04-componentes/indicador-de-etapas.md) e
+[Tag](../../design-system/04-componentes/tag.md) de referência, e a regra de que a cor nunca é o
+único sinal da modalidade (tag sempre leva o nome) — `design-kit/` foi substituído por
+`design-system/`, ver [ADR 0010](../../docs/adr/0010-design-system-substitui-design-kit.md).
 
 ## O que fazer
 

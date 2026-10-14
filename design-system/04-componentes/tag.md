@@ -12,7 +12,7 @@ em si é **Novo** (sem papel equivalente no M3).
 ## Quando não usar
 
 - Como elemento interativo — Tag nunca responde a toque (para filtro, use Chip, ver
-  [`design-kit/components/Chip/README.md`](../../design-kit/components/Chip/README.md)).
+  [chip.md](chip.md)).
 
 ## Anatomia
 

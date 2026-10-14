@@ -65,3 +65,8 @@ implementação das telas.
   statements). Novo teste em `tests/unit/useIpebookFonts.test.ts`.
 - Pendências: nenhuma das 3 originais. Resta, para quem implementar as telas, efetivamente usar
   `fontFamily`/`colors.m3` nos componentes novos (não é desta tarefa).
+
+**Nota posterior (2026-10-14, [ADR 0010](../../docs/adr/0010-design-system-substitui-design-kit.md)):**
+`design-kit/` foi migrado integralmente para `design-system/` (pasta da atividade de IHC + PDM)
+e depois apagado do repositório. As referências a `design-kit/` acima são históricas; o
+equivalente atual é `design-system/tokens.json` e `design-system/04-componentes/`.

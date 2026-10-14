@@ -1,8 +1,8 @@
 /**
  * IpêBook — Tokens de Design (IHC / UI)
- * Fonte canônica: design-kit/tokens.json (ver ADR 0008). Os valores abaixo são o recorte de
- * tema claro — dark mode não entra nesta etapa. `design-tokens.json` na raiz foi substituído
- * por este arquivo e removido (ver Tarefa 26).
+ * Fonte canônica: design-system/tokens.json (ver ADR 0008 e ADR 0010). Os valores abaixo são o
+ * recorte de tema claro — dark mode não entra nesta etapa. `design-tokens.json` na raiz foi
+ * substituído por este arquivo e removido (ver Tarefa 26).
  *
  * Regra de Camada MVVM: Pertence estritamente à camada de View (UI).
  */
@@ -46,7 +46,7 @@ export const colors = {
     text: "#F6F1E8",
   },
 
-  // Papéis Material 3 (design-kit/tokens.json, tema claro) — para componentes novos
+  // Papéis Material 3 (design-system/tokens.json, tema claro) — para componentes novos
   // (Button, TextField, Chip, Tag, Dialog etc.) das specs 003/004.
   m3: {
     onSurface: "#1d1b18",
