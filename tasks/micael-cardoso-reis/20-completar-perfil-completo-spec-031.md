@@ -5,9 +5,10 @@
 > backlog — o `IPEBOOK_` ainda não tem nenhuma spec de perfil de usuário.
 
 > **Redistribuída em 2026-10-14** junto com as demais tarefas/issues do Eric (ver issue
-> [#15](https://github.com/Ghostyxseven/IPEBOOK_/issues/15)).
+> [#15](https://github.com/Ghostyxseven/IPEBOOK_/issues/15)). **Reatribuída em 2026-10-14** da
+> Maria Clara para o Micael.
 
-Responsável: Maria Clara Almeida Martins (quando a ideia for retomada)
+Responsável: Micael Cardoso Reis (quando a ideia for retomada)
 
 ## Ideia para uma spec futura de perfil
 
