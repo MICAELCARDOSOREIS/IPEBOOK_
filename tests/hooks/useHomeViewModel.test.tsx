@@ -9,11 +9,11 @@ import { useHomeViewModel } from "@/viewmodel/useHomeViewModel";
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
 const mounted: ReactTestRenderer[] = [];
 
-async function renderHook(useCases: IBookUseCases) {
+async function renderHook(useCases: Pick<IBookUseCases, "listBooks">) {
   let result!: ReturnType<typeof useHomeViewModel>;
   const loadingStates: boolean[] = [];
   function HookProbe() {
-    result = useHomeViewModel(useCases);
+    result = useHomeViewModel(useCases as IBookUseCases);
     loadingStates.push(result[0].loading);
     return null;
   }
