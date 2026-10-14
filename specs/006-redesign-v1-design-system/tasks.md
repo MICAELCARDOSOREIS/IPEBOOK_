@@ -6,7 +6,7 @@ T002, T003, T005, T007, T008, T012, T016, T017, T023), [#55](https://github.com/
 (Maria Clara — perfil, toca os mesmos arquivos de auth do Micael: T001 parte, T004, T006, T009,
 T013, T014, T020, T021, T024), [#56](https://github.com/Ghostyxseven/IPEBOOK_/issues/56) (Maria
 Clara — home/navegação/pesquisa/detalhe do livro, sem dependência de arquivo com #54: T010,
-T011, T015, T018, T019, T022, T029, T030, T031) e [#58](https://github.com/Ghostyxseven/IPEBOOK_/issues/58)
+T011, T015, T018, T019, T022, T029, T030, T031) e [#59](https://github.com/Ghostyxseven/IPEBOOK_/issues/59)
 (Micael — modelo/caso de uso do detalhe do livro: T028). T025-T027 (validação, documentação,
 registro final) são conjuntas.
 
