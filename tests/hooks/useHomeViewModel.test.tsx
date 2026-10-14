@@ -43,8 +43,8 @@ describe("testes de hook: useHomeViewModel (ISO/IEC 25010 - Confiabilidade)", ()
 
   it("atualiza estado quando livros são carregados com sucesso", async () => {
     const books = [
-      { id: "1", title: "O Quinze", author: "Rachel de Queiroz" },
-      { id: "2", title: "Capitães da Areia", author: "Jorge Amado" },
+      { id: "1", title: "O Quinze", author: "Rachel de Queiroz", status: "available" as const },
+      { id: "2", title: "Capitães da Areia", author: "Jorge Amado", status: "available" as const },
     ];
     const hook = await renderHook({ listBooks: async () => books });
     expect(hook.current[0].books).toEqual(books);
@@ -56,7 +56,7 @@ describe("testes de hook: useHomeViewModel (ISO/IEC 25010 - Confiabilidade)", ()
       .fn()
       .mockRejectedValueOnce(new DomainError("Serviço de catálogo em manutenção."))
       .mockResolvedValueOnce([
-        { id: "3", title: "Iracema", author: "José de Alencar" },
+        { id: "3", title: "Iracema", author: "José de Alencar", status: "available" as const },
       ]);
 
     const hook = await renderHook({ listBooks });
@@ -90,7 +90,7 @@ describe("testes de hook: useHomeViewModel (ISO/IEC 25010 - Confiabilidade)", ()
       resolveFirst = resolve;
     });
     const livrosRecentes: readonly Book[] = [
-      { id: "rec-1", title: "Resultado Recente", author: "Autor Moderno" },
+      { id: "rec-1", title: "Resultado Recente", author: "Autor Moderno", status: "available" },
     ];
     const listBooks = vi.fn().mockReturnValueOnce(pending).mockResolvedValueOnce(livrosRecentes);
 
