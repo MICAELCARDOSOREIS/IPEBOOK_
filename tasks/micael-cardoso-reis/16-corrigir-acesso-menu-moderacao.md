@@ -4,7 +4,11 @@
 > projeto que a equipe decidiu **não usar mais**. Fica aqui como lição aprendida para o
 > `IPEBOOK_` — hoje não existe moderação nem conta de usuário implementada aqui.
 
-Responsável: Antonio Carlos Gomes (quando a ideia for retomada)
+> **Redistribuída em 2026-10-14.** Antonio saiu da equipe; redistribuída junto com as demais
+> issues dele entre Micael e Maria Clara (ver issue
+> [#11](https://github.com/Ghostyxseven/IPEBOOK_/issues/11)).
+
+Responsável: Micael Cardoso Reis (quando a ideia for retomada)
 
 ## Lição aprendida para se/quando houver moderação no IPEBOOK_
 
