@@ -48,6 +48,8 @@ describe("modelo de solicitacao de negociacao", () => {
       id: "listing-1",
       title: "Quarto de Despejo",
       author: "Carolina Maria de Jesus",
+      ownerId: "owner-1",
+      modality: "donation",
       status: "available",
     };
 

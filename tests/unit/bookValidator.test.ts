@@ -12,6 +12,9 @@ describe("validação unitária de livros (ISO/IEC 25010 - Adequação Funcional
         id: "book-1",
         title: "Dom Casmurro",
         author: "Machado de Assis",
+        ownerId: "owner-1",
+        modality: "sale",
+        price: 29.90,
       });
 
       expect(result.isValid).toBe(true);
@@ -23,6 +26,8 @@ describe("validação unitária de livros (ISO/IEC 25010 - Adequação Funcional
         id: "b1",
         title: "It",
         author: "Ed",
+        ownerId: "owner-2",
+        modality: "donation",
       });
 
       expect(result.isValid).toBe(true);
@@ -34,6 +39,8 @@ describe("validação unitária de livros (ISO/IEC 25010 - Adequação Funcional
         id: "b-max",
         title: "A".repeat(150),
         author: "B".repeat(100),
+        ownerId: "owner-3",
+        modality: "trade",
       });
 
       expect(result.isValid).toBe(true);
@@ -106,11 +113,13 @@ describe("validação unitária de livros (ISO/IEC 25010 - Adequação Funcional
       });
 
       expect(result.isValid).toBe(false);
-      expect(result.errors).toHaveLength(3);
+      expect(result.errors).toHaveLength(5);
       expect(result.errors).toEqual([
         "Identificador do livro é obrigatório.",
         "Título do livro é obrigatório.",
         "Autor do livro é obrigatório.",
+        "Identificador do dono é obrigatório.",
+        "Modalidade deve ser 'sale', 'trade' ou 'donation'.",
       ]);
     });
   });

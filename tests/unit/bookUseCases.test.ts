@@ -10,7 +10,7 @@ describe("catálogo inicial", () => {
   });
 
   it("devolve os livros fornecidos pelo contrato", async () => {
-    const books = [{ id: "1", title: "Livro de teste", author: "Autora de teste", status: "available" as const }];
+    const books = [{ id: "1", title: "Livro de teste", author: "Autora de teste", ownerId: "owner-1", modality: "donation" as const, status: "available" as const }];
     const useCases = new BookUseCases({ list: async () => books });
     expect(await useCases.listBooks()).toEqual(books);
   });
@@ -22,7 +22,7 @@ describe("catálogo inicial", () => {
   });
 
   it("isola a memória de alterações nos dados recebidos e devolvidos", async () => {
-    const books = [{ id: "1", title: "Título original", author: "Autora", status: "available" as const }];
+    const books = [{ id: "1", title: "Título original", author: "Autora", ownerId: "owner-1", modality: "trade" as const, status: "available" as const }];
     const source = new MemoryBookDataSource(books);
     books[0].title = "Alterado fora";
     const result = await source.list();

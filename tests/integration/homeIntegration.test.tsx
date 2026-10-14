@@ -10,8 +10,8 @@ describe("testes de integração: View + ViewModel + UseCase + Datasource (ISO/I
   it("integra fluxo completo da camada de dados até a renderização visual do acervo", async () => {
     // 1. Camada de Infraestrutura real: Repositório em memória com livros
     const datasource = new MemoryBookDataSource([
-      { id: "int-1", title: "O Tempo e o Vento", author: "Erico Verissimo", status: "available" },
-      { id: "int-2", title: "Torto Arado", author: "Itamar Vieira Junior", status: "available" },
+      { id: "int-1", title: "O Tempo e o Vento", author: "Erico Verissimo", ownerId: "owner-1", modality: "donation" as const, status: "available" },
+      { id: "int-2", title: "Torto Arado", author: "Itamar Vieira Junior", ownerId: "owner-2", modality: "trade" as const, status: "available" },
     ]);
 
     // 2. Camada de Domínio / Caso de Uso real
