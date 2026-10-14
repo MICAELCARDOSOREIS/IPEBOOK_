@@ -68,8 +68,8 @@ describe("testes de componente com mock: Home (ISO/IEC 25010 - Usabilidade e Con
   it("renderiza catálogo de livros populado com títulos e autores", async () => {
     const mockState: HomeState = {
       books: [
-        { id: "1", title: "O Alquimista", author: "Paulo Coelho", status: "available" },
-        { id: "2", title: "Dom Casmurro", author: "Machado de Assis", status: "available" },
+        { id: "1", title: "O Alquimista", author: "Paulo Coelho", ownerId: "u1", modality: "trade" as const, status: "available" as const },
+        { id: "2", title: "Dom Casmurro", author: "Machado de Assis", ownerId: "u2", modality: "donation" as const, status: "available" as const },
       ],
       loading: false,
       error: null,

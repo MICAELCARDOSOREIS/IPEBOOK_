@@ -1,4 +1,4 @@
-import type { Book } from "@/model/entities/book";
+import type { Book, BookModality } from "@/model/entities/book";
 
 export type BookValidationResult = Readonly<{
   isValid: boolean;
@@ -10,11 +10,16 @@ const MAX_TITLE_LENGTH = 150;
 const MIN_AUTHOR_LENGTH = 2;
 const MAX_AUTHOR_LENGTH = 100;
 
+const VALID_MODALITIES: readonly BookModality[] = ["sale", "trade", "donation"];
+
 export function sanitizeBookInput(input: Partial<Book>): Partial<Book> {
   return {
     id: input.id?.trim(),
     title: input.title?.trim(),
     author: input.author?.trim(),
+    ownerId: input.ownerId?.trim(),
+    modality: input.modality,
+    price: input.price,
   };
 }
 
@@ -53,6 +58,24 @@ export function validateBookPayload(input: unknown): BookValidationResult {
       errors.push(`Autor deve conter no mínimo ${MIN_AUTHOR_LENGTH} caracteres.`);
     } else if (trimmedAuthor.length > MAX_AUTHOR_LENGTH) {
       errors.push(`Autor deve conter no máximo ${MAX_AUTHOR_LENGTH} caracteres.`);
+    }
+  }
+
+  if (typeof raw.ownerId !== "string" || raw.ownerId.trim().length === 0) {
+    errors.push("Identificador do dono é obrigatório.");
+  }
+
+  if (!VALID_MODALITIES.includes(raw.modality as BookModality)) {
+    errors.push("Modalidade deve ser 'sale', 'trade' ou 'donation'.");
+  }
+
+  if (raw.modality === "sale") {
+    if (typeof raw.price !== "number" || raw.price <= 0) {
+      errors.push("Preço é obrigatório e deve ser maior que zero para modalidade de venda.");
+    }
+  } else if (raw.price !== undefined && raw.price !== null) {
+    if (typeof raw.price !== "number" || raw.price < 0) {
+      errors.push("Preço, quando informado, deve ser um número não negativo.");
     }
   }
 
