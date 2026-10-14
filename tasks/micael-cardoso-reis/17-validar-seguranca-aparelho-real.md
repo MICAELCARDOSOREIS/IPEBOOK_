@@ -5,7 +5,11 @@
 > `IPEBOOK_` vier a ter negociação e segurança (denúncia/bloqueio) — hoje a
 > [spec 004](../../specs/004-negociacao-simples/spec.md) deixa isso fora do escopo do MVP.
 
-Responsável: Antonio Carlos Gomes (quando a ideia for retomada)
+> **Redistribuída em 2026-10-14.** Antonio saiu da equipe; redistribuída junto com as demais
+> issues dele entre Micael e Maria Clara (ver issue
+> [#12](https://github.com/Ghostyxseven/IPEBOOK_/issues/12)).
+
+Responsável: Micael Cardoso Reis (quando a ideia for retomada)
 
 ## Ideia para depois, se segurança entrar no escopo
 
