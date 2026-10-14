@@ -4,8 +4,7 @@ Conferência: 2026-10-14 (base: branch `develop`, após merge do deploy web — 
 do `typecheck`). Projeto: `~/IPEBOOK_`.
 
 **Equipe ativa:** Micael Cardoso Reis e Maria Clara Almeida Martins. Eric Vinícius dos Santos
-Oliveira e Antonio Carlos Gomes saíram da equipe em 2026-10-14; o trabalho que concluíram antes
-de saírem permanece íntegro no histórico (ver `tasks/README.md`).
+Oliveira e Antonio Carlos Gomes saíram da equipe em 2026-10-14.
 
 ## Estado verificado
 
@@ -71,10 +70,9 @@ de saírem permanece íntegro no histórico (ver `tasks/README.md`).
    fora do alcance de automação — precisa de login/conta do responsável).
 3. Revisar e integrar a correção da geração de tipos de rota no `typecheck` (ver `package.json`)
    nas próximas validações de CI.
-4. Validar os fluxos em dispositivo físico nas issues de backlog pertinentes; testes
-   automatizados e build web não substituem essa conferência.
-5. Backlog restante (ver `tasks/README.md`), todo condicional a pré-requisitos ainda não
-   cumpridos: perfil de usuário (#15/#16, Maria Clara), layout web dedicado (#17, Micael,
-   depende do perfil), métricas de reputação (#14, Micael), build Android via EAS (#7, Micael,
-   depende de login na conta Expo), notificações (#6, Micael, depende de decisão em conjunto
-   com a equipe), moderação (#11/#12, Micael; #13, Maria Clara — nem especificada ainda).
+4. Validar os fluxos em dispositivo físico; testes automatizados e build web não substituem
+   essa conferência.
+5. O backlog futuro (perfil de usuário, layout web dedicado, métricas de reputação, build
+   Android, notificações, moderação) foi apagado em 2026-10-14 — eram anotações condicionais
+   sem trabalho ativo. Especificar do zero pelo Spec Kit se/quando a necessidade de produto
+   correspondente surgir de verdade.

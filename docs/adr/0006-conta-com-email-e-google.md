@@ -20,8 +20,8 @@ produção uma estratégia de autenticação via Supabase (ADR 0006 de lá) com 
 3. Métodos de acesso: e-mail (com senha ou código) e login com Google — mesma estratégia já
    validada no projeto irmão.
 4. A tecnologia concreta de autenticação/persistência (Supabase ou outra) **não é decidida por
-   este ADR** — fica para a especificação técnica da primeira jornada funcional (Tarefa 8 em
-   `tasks/`), que deve escolher com base nos requisitos, não presumir aqui.
+   este ADR** — fica para a especificação técnica da primeira jornada funcional, que deve
+   escolher com base nos requisitos, não presumir aqui.
 
 ## Alternativas consideradas
 
@@ -40,5 +40,4 @@ produção uma estratégia de autenticação via Supabase (ADR 0006 de lá) com 
 - Nenhuma implementação de autenticação é autorizada por este ADR sozinho — ele registra a
   decisão de produto, não libera a escolha de tecnologia nem o início do código.
 
-Vínculos: [docs/produto.md](../produto.md), [ADR 0005](0005-modalidade-venda-troca-doacao.md),
-[tasks/antonio-carlos-gomes/03-escopo-mvp-e-conta.md](../../tasks/antonio-carlos-gomes/03-escopo-mvp-e-conta.md).
+Vínculos: [docs/produto.md](../produto.md), [ADR 0005](0005-modalidade-venda-troca-doacao.md).

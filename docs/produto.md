@@ -10,7 +10,7 @@ A frase da interface “Um lugar para descobrir sua próxima leitura” sugere d
 
 ## Público e problema
 
-**Decidido em 2026-10-13** (ver [tasks/micael-cardoso-reis/01-problema-e-publico.md](../tasks/micael-cardoso-reis/01-problema-e-publico.md)): o Ipebook conecta pessoas que têm livros parados com pessoas da comunidade que querem ler, viabilizando compra, venda, troca e doação de forma simples e sustentável — o mesmo problema e proposta de valor já validados no projeto irmão da equipe (`/home/usermicael/Projetos/IpeBook`). O público prioritário é a comunidade local de leitores que já possuem livros físicos parados em casa e querem tanto se desfazer deles quanto encontrar novos títulos sem depender de livraria.
+**Decidido em 2026-10-13**: o Ipebook conecta pessoas que têm livros parados com pessoas da comunidade que querem ler, viabilizando compra, venda, troca e doação de forma simples e sustentável — o mesmo problema e proposta de valor já validados no projeto irmão da equipe (`/home/usermicael/Projetos/IpeBook`). O público prioritário é a comunidade local de leitores que já possuem livros físicos parados em casa e querem tanto se desfazer deles quanto encontrar novos títulos sem depender de livraria.
 
 Esta decisão foi trazida do trabalho já em produção da equipe no projeto irmão, não de pesquisa de usuário nova feita nesta base pequena — não há métricas de uso próprias registradas aqui. Se a equipe quiser divergir do produto irmão para este Ipebook específico, revisar esta seção.
 
@@ -80,12 +80,12 @@ forem especificadas.
 
 | Questão | Decisão | Data |
 | --- | --- | --- |
-| Qual problema o Ipebook resolve e para quem? | Conectar pessoas com livros parados a pessoas da comunidade que querem ler, via compra/venda/troca/doação. Público: comunidade local de leitores. Trazido do projeto irmão já em produção (ver [tasks/micael-cardoso-reis/01-problema-e-publico.md](../tasks/micael-cardoso-reis/01-problema-e-publico.md)). | 2026-10-13 |
-| Qual modalidade: troca/doação, biblioteca pessoal, leitura digital ou outra? | Venda, troca e doação de livros físicos. Mesma modalidade do projeto irmão (ver [tasks/maria-clara-almeida-martins/02-modalidade-e-origem-dos-livros.md](../tasks/maria-clara-almeida-martins/02-modalidade-e-origem-dos-livros.md)). | 2026-10-13 |
+| Qual problema o Ipebook resolve e para quem? | Conectar pessoas com livros parados a pessoas da comunidade que querem ler, via compra/venda/troca/doação. Público: comunidade local de leitores. Trazido do projeto irmão já em produção. | 2026-10-13 |
+| Qual modalidade: troca/doação, biblioteca pessoal, leitura digital ou outra? | Venda, troca e doação de livros físicos. Mesma modalidade do projeto irmão. | 2026-10-13 |
 | De onde vêm os livros e como são disponibilizados? | Cadastro manual pelo próprio usuário (anúncio com título, autor, modalidade e, opcionalmente, foto). Sem importação de catálogo externo nesta etapa. | 2026-10-13 |
-| Haverá conta? Quais dados serão necessários? | Sim — conta com e-mail/senha (ou código por e-mail) e login com Google, dados mínimos nome e e-mail, mesma estratégia do projeto irmão (ADR 0006/0028 lá). Ver [tasks/antonio-carlos-gomes/03-escopo-mvp-e-conta.md](../tasks/antonio-carlos-gomes/03-escopo-mvp-e-conta.md). | 2026-10-13 |
+| Haverá conta? Quais dados serão necessários? | Sim — conta com e-mail/senha (ou código por e-mail) e login com Google, dados mínimos nome e e-mail, mesma estratégia do projeto irmão (ADR 0006/0028 lá). | 2026-10-13 |
 | Quais ações compõem a primeira entrega útil? | Nesta ordem: (1) autenticação de conta, (2) cadastrar anúncio de livro, (3) catálogo/listagem (já implementado), (4) solicitar e responder negociação simples. Busca/filtros avançados e segurança/moderação ficam para depois. | 2026-10-13 |
-| Quais plataformas precisam ser suportadas inicialmente? | Android e Web. iOS fica fora da primeira entrega por enquanto (ver [tasks/eric-vinicius-dos-santos-oliveira/04-plataformas.md](../tasks/eric-vinicius-dos-santos-oliveira/04-plataformas.md)). | 2026-10-13 |
+| Quais plataformas precisam ser suportadas inicialmente? | Android e Web. iOS fica fora da primeira entrega por enquanto. | 2026-10-13 |
 
 Todas as decisões acima (exceto a de plataformas, que já tinha sido resolvida em conversa
 direta com o usuário) foram inicialmente trazidas do trabalho já validado em produção da equipe

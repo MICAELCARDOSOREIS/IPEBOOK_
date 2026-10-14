@@ -9,8 +9,7 @@ quando aplicável.
 
 ## Antes de concluir
 
-- [ ] Atualizei as tarefas concluídas em `specs/*/tasks.md` e o registro de execução em
-      `tasks/<pessoa>/*.md`; mantive pendências desmarcadas.
+- [ ] Atualizei as tarefas concluídas em `specs/*/tasks.md`; mantive pendências desmarcadas.
 - [ ] Atualizei `docs/estado.md` e os guias afetados (`docs/produto.md`,
       `docs/arquitetura.md`, `docs/qualidade.md`) com o estado comprovado.
 - [ ] Conferi nomes, links, responsáveis, contagem de testes e índice de ADRs que esta entrega

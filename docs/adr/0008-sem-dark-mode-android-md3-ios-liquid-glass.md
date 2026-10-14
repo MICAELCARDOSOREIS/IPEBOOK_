@@ -13,8 +13,7 @@ linguagem visual cada plataforma deveria seguir — o `design-kit/tokens.json` j
 claro e escuro completos, e o README do kit menciona Material 3 (Android) e componentes
 oficiais do iOS lado a lado, sem o projeto ter decidido isso formalmente.
 
-Isso é uma decisão de design, separada da decisão de plataformas já registrada no
-[ADR de plataformas (Tarefa 4)](../../tasks/eric-vinicius-dos-santos-oliveira/04-plataformas.md):
+Isso é uma decisão de design, separada da decisão de plataformas já registrada (Tarefa 4):
 lá ficou decidido que a primeira entrega cobre Android e Web, com iOS fora por enquanto. Este
 ADR não reabre essa decisão — só documenta a linguagem visual pretendida para quando/se cada
 plataforma for implementada.
@@ -51,6 +50,4 @@ plataforma for implementada.
 - `design-kit/USO.md` é atualizado para registrar esta decisão e evitar que alguém implemente
   dark mode ou misture as linguagens visuais por engano.
 
-Vínculos: [design-kit/USO.md](../../design-kit/USO.md),
-[design-kit/README.md](../../design-kit/README.md),
-[tasks/eric-vinicius-dos-santos-oliveira/04-plataformas.md](../../tasks/eric-vinicius-dos-santos-oliveira/04-plataformas.md).
+Vínculos: [design-system/README.md](../../design-system/README.md).

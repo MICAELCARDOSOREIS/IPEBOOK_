@@ -2,8 +2,8 @@
 
 Data: 2026-10-13. Branch: `develop`. Tipo: primeira jornada funcional do produto (não é mais
 fundação técnica).
-Pedido: implementar a primeira jornada útil decidida em [docs/produto.md](../../docs/produto.md)
-e nas Tarefas 1–3 de `tasks/`: autenticação de conta seguida de cadastro de anúncio de livro.
+Pedido: implementar a primeira jornada útil decidida em [docs/produto.md](../../docs/produto.md):
+autenticação de conta seguida de cadastro de anúncio de livro.
 
 ## Objetivo e usuário
 

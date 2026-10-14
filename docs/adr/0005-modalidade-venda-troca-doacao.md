@@ -24,7 +24,7 @@ negociação completa entre usuários.
    que o usuário enviar, que são de sua responsabilidade.
 3. O modelo `Book` precisará, em especificação futura, de um campo de modalidade (venda/troca/
    doação) além de `id`, `title` e `author` — a extensão exata do modelo fica para a
-   especificação da primeira jornada funcional (ver Tarefa 8 em `tasks/`), não para este ADR.
+   especificação da primeira jornada funcional, não para este ADR.
 
 ## Alternativas consideradas
 
@@ -41,6 +41,4 @@ negociação completa entre usuários.
 - O design system (badges de Venda/Troca/Doação) passa a estar alinhado com a documentação de
   produto, não mais contraditório.
 
-Vínculos: [docs/produto.md](../produto.md), [design-system.md](../design-system.md),
-[tasks/maria-clara-almeida-martins/02-modalidade-e-origem-dos-livros.md](../../tasks/maria-clara-almeida-martins/02-modalidade-e-origem-dos-livros.md),
-[tasks/maria-clara-almeida-martins/07-reconciliar-documentacao-de-modalidade.md](../../tasks/maria-clara-almeida-martins/07-reconciliar-documentacao-de-modalidade.md).
+Vínculos: [docs/produto.md](../produto.md), [design-system.md](../design-system.md).
