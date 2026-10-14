@@ -64,6 +64,43 @@ describe("indicador de sessão na Home (ISO/IEC 25010 - Usabilidade)", () => {
     expect(signOut).toHaveBeenCalledTimes(1);
   });
 
+  it("mostra botão Anunciar quando autenticado e aciona a navegação", async () => {
+    mockedUseHomeViewModel.mockReturnValue([baseHomeState, baseHomeActions]);
+    const authState: AuthState = {
+      user: { id: "1", email: "pessoa@exemplo.com" },
+      loading: false,
+      error: null,
+    };
+    const authActions: AuthActions = { signUp: vi.fn(), signIn: vi.fn(), signOut: vi.fn() };
+    mockedUseAuthViewModel.mockReturnValue([authState, authActions]);
+    const onNavigateToCreateListing = vi.fn();
+
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<Home onNavigateToCreateListing={onNavigateToCreateListing} />);
+    });
+
+    await act(async () => {
+      fireEvent.press(screen.getByText("Anunciar"));
+    });
+    expect(onNavigateToCreateListing).toHaveBeenCalledTimes(1);
+  });
+
+  it("não mostra botão Anunciar quando não há sessão autenticada", async () => {
+    mockedUseHomeViewModel.mockReturnValue([baseHomeState, baseHomeActions]);
+    mockedUseAuthViewModel.mockReturnValue([
+      { user: null, loading: false, error: null },
+      { signUp: vi.fn(), signIn: vi.fn(), signOut: vi.fn() },
+    ]);
+
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<Home />);
+    });
+
+    expect(screen.queryByText("Anunciar")).toBeNull();
+  });
+
   it("não mostra indicador de sessão enquanto a sessão está carregando", async () => {
     mockedUseHomeViewModel.mockReturnValue([baseHomeState, baseHomeActions]);
     mockedUseAuthViewModel.mockReturnValue([

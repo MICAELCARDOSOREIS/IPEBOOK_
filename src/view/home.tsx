@@ -14,9 +14,10 @@ const modalityTag: Record<BookModality, { background: string; text: string; labe
 
 export type HomeProps = {
   onNavigateToSignIn?: () => void;
+  onNavigateToCreateListing?: () => void;
 };
 
-export default function Home({ onNavigateToSignIn }: HomeProps = {}) {
+export default function Home({ onNavigateToSignIn, onNavigateToCreateListing }: HomeProps = {}) {
   const [state, actions] = useHomeViewModel();
   const [authState, authActions] = useAuthViewModel();
 
@@ -31,13 +32,22 @@ export default function Home({ onNavigateToSignIn }: HomeProps = {}) {
         {authState.loading ? null : authState.user ? (
           <View style={styles.sessionRow}>
             <Text style={styles.sessionText}>Olá, {authState.user.email}</Text>
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => void authActions.signOut()}
-              style={styles.sessionButton}
-            >
-              <Text style={styles.sessionButtonText}>Sair</Text>
-            </Pressable>
+            <View style={styles.sessionActions}>
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => onNavigateToCreateListing?.()}
+                style={styles.sessionButton}
+              >
+                <Text style={styles.sessionButtonText}>Anunciar</Text>
+              </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => void authActions.signOut()}
+                style={styles.sessionButton}
+              >
+                <Text style={styles.sessionButtonText}>Sair</Text>
+              </Pressable>
+            </View>
           </View>
         ) : (
           <View style={styles.sessionRow}>
@@ -107,6 +117,7 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: 17, lineHeight: 26, color: tokens.colors.secondaryText, marginTop: 14, marginBottom: tokens.spacing[24] },
   sessionRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: tokens.spacing[24] },
   sessionText: { fontSize: tokens.typography.bodyMedium.fontSize, color: tokens.colors.secondaryText },
+  sessionActions: { flexDirection: "row", alignItems: "center" },
   sessionButton: { minHeight: tokens.accessibility.touchTarget, justifyContent: "center", paddingHorizontal: tokens.spacing[12] },
   sessionButtonText: { color: tokens.colors.action, fontSize: 14, fontWeight: "600" },
   heading: { fontSize: tokens.typography.titleLarge.fontSize, fontWeight: tokens.typography.titleLarge.fontWeight, color: tokens.colors.action, marginBottom: tokens.spacing[24] },
