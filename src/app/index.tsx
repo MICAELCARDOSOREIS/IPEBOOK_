@@ -6,6 +6,8 @@ export default function Index() {
     <Home
       onNavigateToSignIn={() => router.push("/entrar")}
       onNavigateToCreateListing={() => router.push("/anunciar")}
+      onNavigateToReceivedRequests={() => router.push("/pedidos-recebidos")}
+      onNavigateToSentRequests={() => router.push("/meus-pedidos")}
     />
   );
 }

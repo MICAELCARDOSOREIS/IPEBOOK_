@@ -56,8 +56,8 @@ createListing(input: CreateListingInput, sessionUserId: string | null): Promise<
 
 Este é um resumo dos contratos, não um arquivo TypeScript completo. O `id` é usado como chave da
 lista. Título, autor e a tag de modalidade (Venda/Troca/Doação) são exibidos na tela. `status`
-indica se o anúncio está `available` ou `reserved`; a transição para reservado será aplicada
-pelos casos de uso da negociação, ainda não implementados. `createListing` exige
+indica se o anúncio está `available` ou `reserved`; a transição para reservado é aplicada
+pelos casos de uso da negociação (`BookRequestUseCases.respondToRequest` com aceite). `createListing` exige
 `sessionUserId` não nulo (FR-006) e valida o payload com `bookValidator` antes de gravar; o
 anúncio criado é associado à conta autenticada via `ownerId`. Não há ISBN, arquivo digital ou
 localização no modelo atual.
@@ -110,6 +110,24 @@ arquitetura só permite `app → view`), então o gate de sessão fica em
 nada enquanto carrega, chama `onRequireSignIn` (resolvido pela rota com `router.replace("/entrar")`)
 quando não há sessão, e só então renderiza `CreateListing` com o `sessionUserId` real. Antes dessa
 correção, `anunciar.tsx` passava `sessionUserId={null}` fixo e o cadastro falhava sempre.
+
+## Negociação simples (specs/004, trilha do Antonio)
+
+Contratos: `BookRequest` (`id`, `listingId`, `requesterId`, `status: "pending" | "accepted" | "rejected"`, `createdAt`) em [bookRequest.ts](../src/model/entities/bookRequest.ts); `IBookRequestDataSource` (`create`, `findById`, `listByListing`, `listByRequester`, `updateStatus`) em [iBookRequestDataSource.ts](../src/model/datasources/iBookRequestDataSource.ts); e `IBookRequestUseCases` em [iBookRequestUseCases.ts](../src/usecase/iBookRequestUseCases.ts) implementado por `BookRequestUseCases`.
+
+`BookRequestUseCases` implementa quatro operações principais:
+- `requestNegotiation(listingId, requesterId)`: valida regras de bloqueio (não negociar próprio anúncio FR-001, não duplicar pedido pendente FR-002, não solicitar anúncio reservado FR-003) e cria pedido pendente.
+- `listReceivedRequests(ownerId)`: lista todos os pedidos recebidos para anúncios pertencentes ao `ownerId`.
+- `listSentRequests(requesterId)`: lista os pedidos enviados pelo `requesterId` com seus respectivos status.
+- `respondToRequest(requestId, responderId, action)`: apenas o dono do anúncio pode responder (garantido por `AuthError`); ao aceitar, atualiza o pedido para `"accepted"`, marca o anúncio como `"reserved"` e recusa automaticamente todos os demais pedidos pendentes concorrentes para o mesmo anúncio (FR-004, SC-002).
+
+ViewModels, Telas e Rotas:
+- `useRequestNegotiationViewModel`: gerencia o estado da ação de solicitar negociação na Home (`pendingListingId`, `requestedListingIds`, `errorListingId`).
+- `useReceivedRequestsViewModel`: gerencia a listagem e ações de responder (aceitar/recusar) aos pedidos recebidos.
+- `useSentRequestsViewModel`: gerencia a listagem e visualização do status dos pedidos enviados.
+- `src/view/requests/requestListLayout.tsx`: componente estrutural reaproveitável para listas de pedidos, com estados de carregamento, erro amigável e lista vazia.
+- `src/view/requests/receivedRequests.tsx` e `src/view/requests/sentRequests.tsx`: telas puras de pedidos recebidos e enviados, desacopladas do roteador por injeção de callbacks.
+- `src/app/pedidos-recebidos.tsx` e `src/app/meus-pedidos.tsx`: rotas finas do Expo Router que conectam a sessão do usuário às telas de pedidos.
 
 ## Erros
 

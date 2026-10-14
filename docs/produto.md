@@ -1,6 +1,6 @@
 # Produto e requisitos do Ipebook
 
-Revisão: 2026-10-14 (spec 003 completa: autenticação + cadastro de anúncio). Este documento descreve a base implementada e identifica decisões necessárias para especificar o produto final. Não é uma aprovação de funcionalidades futuras.
+Revisão: 2026-10-14 (specs 003 e 004 completas: autenticação, cadastro de anúncio e negociação simples). Este documento descreve a base implementada e identifica decisões necessárias para especificar o produto final. Não é uma aprovação de funcionalidades futuras.
 
 ## Objetivo confirmado
 
@@ -24,7 +24,7 @@ Esta decisão foi trazida do trabalho já em produção da equipe no projeto irm
 | Tratar carregamento, erro e nova tentativa | Implementada |
 | Cadastrar livros (editar fica para depois) | **Implementada** (Antonio, issues #26/#27/#28) em [specs/003](../specs/003-autenticacao-e-cadastro-de-anuncio/): `Book` estendido com `modality`/`price`/`ownerId`, `createListing` exigindo sessão (FR-006), `src/view/listings/createListing.tsx`, rota `src/app/anunciar.tsx` (protegida por sessão via `src/view/listings/createListingScreen.tsx`), botão "Anunciar" condicional em `src/view/home.tsx` |
 | Conta e autenticação (criar conta, entrar, sair; perfil fica para depois) | **Implementada** (Maria Clara, Tarefa 23) em [specs/003](../specs/003-autenticacao-e-cadastro-de-anuncio/): `src/view/auth/signIn.tsx`, `src/view/auth/signUp.tsx`, rotas `src/app/entrar.tsx` e `src/app/criar-conta.tsx`, indicador de sessão em `src/view/home.tsx` |
-| Solicitar e responder negociação simples | Não implementada; **especificada** em [specs/004](../specs/004-negociacao-simples/), atribuída ao Antonio (Tarefa 25) |
+| Solicitar e responder negociação simples | **Implementada** (Antonio, Tarefa 25 / issue #21) em [specs/004](../specs/004-negociacao-simples/): `BookRequest`, casos de uso de solicitação e resposta com recusa automática de concorrentes e reserva do anúncio (SC-002), ViewModels (`useRequestNegotiationViewModel`, `useReceivedRequestsViewModel`, `useSentRequestsViewModel`), telas [`receivedRequests.tsx`](../src/view/requests/receivedRequests.tsx) e [`sentRequests.tsx`](../src/view/requests/sentRequests.tsx), rotas `src/app/pedidos-recebidos.tsx` e `src/app/meus-pedidos.tsx` |
 | Busca, filtros e detalhes | Não implementados; fora do primeiro incremento (ver decisões abaixo) |
 | Troca, doação, empréstimo ou venda | Decidido: venda, troca e doação. Empréstimo não entra no escopo |
 | Leitura de arquivos digitais | Não implementada; fora de escopo — modalidade decidida é livro físico |
