@@ -28,6 +28,7 @@ Oliveira e Antonio Carlos Gomes saíram da equipe em 2026-10-14.
   Deploy estático configurado para a Vercel (`vercel.json`, issue #7/#39 — Micael, PR #45);
   falta só conectar o repositório a um projeto Vercel para publicar de fato.
 - Testes E2E mobile: 3 fluxos declarativos do Maestro configurados em `.maestro/`.
+- Conferência visual via ADB no Samsung SM_A165M em 2026-10-14: telas e estados do MVP registrados em [versões/MVP](versoes/mvp/resumo.md). O anúncio fictício retornou à Home, mas não apareceu no catálogo; negociação no aparelho permanece sem validação.
 - Fundamentação formal: Norma ISO/IEC 25010 (Adequação Funcional, Confiabilidade e Usabilidade/Acessibilidade) detalhada em `docs/qualidade.md` junto com guia de defesa oral.
 - Vínculos e ADRs: índice completo em [docs/adr/README.md](adr/README.md) (ADRs 0001 a 0010).
 

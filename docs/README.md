@@ -10,6 +10,7 @@ Este índice organiza a documentação do novo projeto em `IPEBOOK_`. O código 
 | Testes, critérios de aceite e CI | [Qualidade e validação](qualidade.md) |
 | Como usar a versão atual | [Guia de uso](uso.md) |
 | O que foi entregue e o que falta | [Estado e continuidade](estado.md) |
+| Resumos e imagens das versões | [Versões do produto](versoes/README.md) |
 | Por que a arquitetura foi escolhida | [Índice de ADRs](adr/README.md) |
 | Identidade visual, tipografia e diretrizes de IHC | [Design System](design-system.md) |
 | Integrantes e contexto acadêmico | [Equipe do projeto](equipe.md) |
