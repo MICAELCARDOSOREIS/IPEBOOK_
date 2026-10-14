@@ -10,5 +10,6 @@
 - [0008 — Sem dark mode nesta etapa; Android segue Material Design 3, iOS segue Liquid Glass](0008-sem-dark-mode-android-md3-ios-liquid-glass.md)
 - [0009 — design-kit/tokens.json como fonte única de tokens; carregamento de fonte no Expo](0009-design-kit-tokens-como-fonte-unica.md) (substituído pelo 0010)
 - [0010 — design-system/ substitui design-kit/ como fonte única de design](0010-design-system-substitui-design-kit.md)
+- [0011 — Barra de navegação com 3 destinos (Início, Pesquisa, Perfil)](0011-navegacao-tres-destinos.md)
 
 Preservar registros aceitos; mudanças relevantes geram novo ADR com vínculos de substituição.

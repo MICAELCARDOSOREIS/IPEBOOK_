@@ -18,6 +18,7 @@ Projeto avaliativo do curso de Tecnologia em Análise e Desenvolvimento de Siste
 * Sistema de design completo (tokens, 23 componentes com anatomia/estados/acessibilidade/código, princípios e fluxos) em [`design-system/`](design-system/README.md), para quem for implementar as telas das specs 003 e 004.
 * Primeira jornada funcional, já implementada: [`specs/003-autenticacao-e-cadastro-de-anuncio/`](specs/003-autenticacao-e-cadastro-de-anuncio/spec.md) e [`specs/004-negociacao-simples/`](specs/004-negociacao-simples/spec.md).
 * Catálogo de livros (listagem na Home), especificado retroativamente: [`specs/005-catalogo-de-livros/`](specs/005-catalogo-de-livros/spec.md).
+* Versão 1.0 (telas alinhadas ao design system: recuperação de senha, busca, perfil), especificada e ainda não implementada: [`specs/006-redesign-v1-design-system/`](specs/006-redesign-v1-design-system/spec.md).
 
 ---
 
@@ -154,6 +155,7 @@ maestro test .maestro/
   - [ADR 0008 — Sem dark mode nesta etapa; Android Material 3, iOS Liquid Glass](docs/adr/0008-sem-dark-mode-android-md3-ios-liquid-glass.md)
   - [ADR 0009 — design-kit/tokens.json como fonte única de tokens](docs/adr/0009-design-kit-tokens-como-fonte-unica.md) (substituído pelo 0010)
   - [ADR 0010 — design-system/ substitui design-kit/ como fonte única de design](docs/adr/0010-design-system-substitui-design-kit.md)
+  - [ADR 0011 — Barra de navegação com 3 destinos (Início, Pesquisa, Perfil)](docs/adr/0011-navegacao-tres-destinos.md)
 
 ---
 
