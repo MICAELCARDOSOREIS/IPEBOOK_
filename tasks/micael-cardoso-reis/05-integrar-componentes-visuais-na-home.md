@@ -1,6 +1,10 @@
 # Tarefa 5 — Integrar AppIcon, IconBadge e Icon na tela Home
 
-Responsável: Eric Vinícius dos Santos Oliveira
+> **Redistribuída em 2026-10-14.** Estava com o Eric; redistribuída junto com as demais
+> tarefas/issues dele entre os integrantes. Issue [#1](https://github.com/Ghostyxseven/IPEBOOK_/issues/1)
+> já foi reatribuída e **concluída** sob esta responsabilidade.
+
+Responsável: Micael Cardoso Reis
 Depende de: — (pode começar já, é ajuste técnico sobre o que já existe)
 Bloqueia: nada diretamente, mas evita que o trabalho de design system fique "morto" no código
 
@@ -41,10 +45,13 @@ preservado conforme `docs/design-system.md`.
 
 ## Registro de execução
 
-_(preencher ao concluir: o que foi decidido, por quê, data, e o que ficou pendente)_
-
-- Data:
-- O que foi integrado:
-- O que ficou bloqueado (e por quê):
-- Testes executados e resultado:
-- Pendências:
+- Data: 2026-10-14
+- O que foi integrado: `AppIcon` (name="error") no estado de erro de `src/view/home.tsx`, ao
+  lado da mensagem de alerta já existente.
+- O que ficou bloqueado (e por quê): o badge de modalidade (`IconBadge`) não foi aplicado —
+  `Book` ainda não tem campo de modalidade (ver issue
+  [#26](https://github.com/Ghostyxseven/IPEBOOK_/issues/26), Maria Clara).
+- Testes executados e resultado: `npm test` 39/39 passando, `npm run typecheck` ok,
+  `npm run check:architecture` sem violações, `npm run test:coverage` 98,79% statements.
+- Pendências: nenhuma para o escopo atual. PR [#33](https://github.com/Ghostyxseven/IPEBOOK_/pull/33)
+  mergeado em `develop`, issue #1 fechada.

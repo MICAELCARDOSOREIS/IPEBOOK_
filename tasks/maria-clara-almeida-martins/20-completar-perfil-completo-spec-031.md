@@ -4,7 +4,10 @@
 > (spec 031 daquele projeto), que a equipe decidiu **não usar mais**. Fica aqui como ideia de
 > backlog — o `IPEBOOK_` ainda não tem nenhuma spec de perfil de usuário.
 
-Responsável: Eric Vinícius dos Santos Oliveira (quando a ideia for retomada)
+> **Redistribuída em 2026-10-14** junto com as demais tarefas/issues do Eric (ver issue
+> [#15](https://github.com/Ghostyxseven/IPEBOOK_/issues/15)).
+
+Responsável: Maria Clara Almeida Martins (quando a ideia for retomada)
 
 ## Ideia para uma spec futura de perfil
 
