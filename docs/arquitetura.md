@@ -64,6 +64,29 @@ Este é um resumo dos contratos, não um arquivo TypeScript completo. Os identif
 - Um contador identifica a consulta mais recente: respostas antigas não sobrescrevem o estado atual.
 - Ao desmontar, o hook invalida resultados pendentes. Isso não cancela a operação de dados; apenas evita aplicar seu resultado.
 
+## Autenticação (specs/003, trilha da Maria Clara)
+
+Contratos: `User` (`id`, `email`, sem senha) em [user.ts](../src/model/entities/user.ts);
+`IAuthDataSource` (`signUp`, `signIn`, `signOut`, `currentUser`) e `IAuthUseCases` (mesmos nomes,
+exceto `getSession` no lugar de `currentUser`). `MemoryAuthDataSource` guarda contas por e-mail
+normalizado (minúsculo, sem espaços) e a sessão atual em memória; lança `AuthError` para e-mail
+duplicado (FR-002) e para credenciais inválidas, sem revelar se o e-mail existe. `AuthUseCases`
+valida formato de e-mail e tamanho mínimo de senha (`authValidator.ts`, FR-001) antes de delegar
+ao datasource. `di/container.ts` expõe `authUseCases` ao lado de `bookUseCases`.
+
+`useAuthViewModel` segue o mesmo formato de `useHomeViewModel` (`[state, actions]`, injeção do
+caso de uso por parâmetro para testes). Para manter `src/view/**` testável sem depender de
+`expo-router` (não há mock dessa biblioteca em `tests/`), a navegação após autenticar ou entre
+telas de entrar/criar conta é feita por callbacks (`onAuthenticated`, `onNavigateToSignUp`,
+`onNavigateToSignIn`) recebidos como props; quem resolve esses callbacks com `expo-router` são as
+rotas finas em `src/app/entrar.tsx`, `src/app/criar-conta.tsx` e `src/app/index.tsx` (que deixou
+de ser um reexport puro e passa `onNavigateToSignIn` para `Home`). `src/view/home.tsx` também usa
+`useAuthViewModel` para mostrar "Olá, {e-mail}" + botão "Sair" quando autenticado, ou um link
+"Entrar" quando visitante — essa parte é conjunta com o Eric (botão "Anunciar" ainda pendente).
+
+Cadastro de anúncio (US2, modalidade/preço, `createListing`) ainda não está implementado — ver
+[specs/003/tasks.md](../specs/003-autenticacao-e-cadastro-de-anuncio/tasks.md).
+
 ## Erros
 
 [errors.ts](../src/model/errors.ts) define `DomainError`, `ValidationError`, `AuthError` e `DataSourceError`. A ViewModel apresenta a mensagem de `DomainError`; erros inesperados recebem mensagem genérica. Portanto, mensagens de domínio devem ser seguras para exibição ao usuário.

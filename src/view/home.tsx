@@ -1,11 +1,17 @@
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useHomeViewModel } from "@/viewmodel/useHomeViewModel";
 import { tokens } from "@/view/tokens";
 import { AppIcon } from "@/view/components/AppIcon";
 
-export default function Home() {
+export type HomeProps = {
+  onNavigateToSignIn?: () => void;
+};
+
+export default function Home({ onNavigateToSignIn }: HomeProps = {}) {
   const [state, actions] = useHomeViewModel();
+  const [authState, authActions] = useAuthViewModel();
 
   return (
     <SafeAreaView style={styles.page}>
@@ -15,6 +21,28 @@ export default function Home() {
           <Text accessibilityRole="header" style={styles.title}>Ipebook</Text>
         </View>
         <Text style={styles.subtitle}>Um lugar para descobrir sua próxima leitura.</Text>
+        {authState.loading ? null : authState.user ? (
+          <View style={styles.sessionRow}>
+            <Text style={styles.sessionText}>Olá, {authState.user.email}</Text>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => void authActions.signOut()}
+              style={styles.sessionButton}
+            >
+              <Text style={styles.sessionButtonText}>Sair</Text>
+            </Pressable>
+          </View>
+        ) : (
+          <View style={styles.sessionRow}>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => onNavigateToSignIn?.()}
+              style={styles.sessionButton}
+            >
+              <Text style={styles.sessionButtonText}>Entrar</Text>
+            </Pressable>
+          </View>
+        )}
         <Text accessibilityRole="header" style={styles.heading}>Livros</Text>
         {state.loading ? (
           <View style={styles.status}>
@@ -61,7 +89,11 @@ const styles = StyleSheet.create({
   brand: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[12] },
   mark: { width: 16, height: 36, backgroundColor: tokens.colors.highlight, borderTopRightRadius: tokens.radius.medium },
   title: { fontSize: tokens.typography.displayLarge.fontSize, fontWeight: tokens.typography.displayLarge.fontWeight, color: tokens.colors.action },
-  subtitle: { fontSize: 17, lineHeight: 26, color: tokens.colors.secondaryText, marginTop: 14, marginBottom: tokens.spacing[48] },
+  subtitle: { fontSize: 17, lineHeight: 26, color: tokens.colors.secondaryText, marginTop: 14, marginBottom: tokens.spacing[24] },
+  sessionRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: tokens.spacing[24] },
+  sessionText: { fontSize: tokens.typography.bodyMedium.fontSize, color: tokens.colors.secondaryText },
+  sessionButton: { minHeight: tokens.accessibility.touchTarget, justifyContent: "center", paddingHorizontal: tokens.spacing[12] },
+  sessionButtonText: { color: tokens.colors.action, fontSize: 14, fontWeight: "600" },
   heading: { fontSize: tokens.typography.titleLarge.fontSize, fontWeight: tokens.typography.titleLarge.fontWeight, color: tokens.colors.action, marginBottom: tokens.spacing[24] },
   list: { paddingBottom: tokens.spacing[24] },
   empty: { borderTopWidth: 1, borderTopColor: tokens.colors.border, paddingTop: 28, gap: 10 },

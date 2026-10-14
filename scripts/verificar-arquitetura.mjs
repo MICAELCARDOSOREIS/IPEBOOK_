@@ -33,7 +33,7 @@ async function inspect(directory) {
         if (["model", "usecase"].includes(layer)) failures.push(`${relative}: dependência externa proibida (${specifier}).`);
         return;
       }
-      const destination = target.split(path.sep)[0];
+      const destination = target.split(/[\\/]/)[0];
       if (!allowed[layer].includes(destination)) failures.push(`${relative}: importação de ${specifier} viola a camada.`);
       if (destination === "infra" && layer !== "infra" && relative !== "di/container.ts") failures.push(`${relative}: infraestrutura deve ser composta somente no container.`);
     }
