@@ -1,9 +1,12 @@
 # Tarefas: v1.0 — telas alinhadas ao design system
 
-Status: **especificada, implementação não iniciada**. Atribuição: **Micael Cardoso Reis** —
-autenticação (T001 parte, T002, T003, T006, T009-T011, T014); **Maria Clara Almeida Martins** —
-navegação e perfil (T001 parte, T004, T005, T007, T008, T012-T017). T018-T020 (documentação e
-registro final) são conjuntas.
+Status: **especificada, implementação não iniciada**. Dividida em 3 issues independentes:
+[#54](https://github.com/Ghostyxseven/IPEBOOK_/issues/54) (Micael — autenticação: T001 parte,
+T002, T003, T005, T007, T008, T012, T016, T017, T023), [#55](https://github.com/Ghostyxseven/IPEBOOK_/issues/55)
+(Maria Clara — perfil, toca os mesmos arquivos de auth do Micael: T001 parte, T004, T006, T009,
+T013, T014, T020, T021, T024) e [#56](https://github.com/Ghostyxseven/IPEBOOK_/issues/56) (Maria
+Clara — home/navegação/pesquisa, sem dependência de arquivo com #54: T010, T011, T015, T018,
+T019, T022). T025-T027 (validação, documentação, registro final) são conjuntas.
 
 ## Modelo e validação
 
