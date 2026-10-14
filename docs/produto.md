@@ -1,6 +1,6 @@
 # Produto e requisitos do Ipebook
 
-Revisão: 2026-10-14. Este documento descreve a base implementada e identifica decisões necessárias para especificar o produto final. Não é uma aprovação de funcionalidades futuras.
+Revisão: 2026-10-14 (spec 003 completa: autenticação + cadastro de anúncio). Este documento descreve a base implementada e identifica decisões necessárias para especificar o produto final. Não é uma aprovação de funcionalidades futuras.
 
 ## Objetivo confirmado
 
@@ -22,8 +22,8 @@ Esta decisão foi trazida do trabalho já em produção da equipe no projeto irm
 | Mostrar ausência de livros | Implementada e configuração padrão |
 | Renderizar títulos e autores fornecidos pelo caso de uso | Implementada; dados de exemplo exercitados em testes |
 | Tratar carregamento, erro e nova tentativa | Implementada |
-| Cadastrar livros (editar fica para depois) | Não implementada; **especificada** em [specs/003](../specs/003-autenticacao-e-cadastro-de-anuncio/). Modelo: Maria Clara (issue #26); restante: Antonio (Tarefa 24) |
-| Conta e autenticação (criar conta, entrar, sair; perfil fica para depois) | **Implementada** (trilha da Maria Clara, Tarefa 23) em [specs/003](../specs/003-autenticacao-e-cadastro-de-anuncio/): `src/view/auth/signIn.tsx`, `src/view/auth/signUp.tsx`, rotas `src/app/entrar.tsx` e `src/app/criar-conta.tsx`, indicador de sessão em `src/view/home.tsx` |
+| Cadastrar livros (editar fica para depois) | **Implementada** (Antonio, issues #26/#27/#28) em [specs/003](../specs/003-autenticacao-e-cadastro-de-anuncio/): `Book` estendido com `modality`/`price`/`ownerId`, `createListing` exigindo sessão (FR-006), `src/view/listings/createListing.tsx`, rota `src/app/anunciar.tsx` (protegida por sessão via `src/view/listings/createListingScreen.tsx`), botão "Anunciar" condicional em `src/view/home.tsx` |
+| Conta e autenticação (criar conta, entrar, sair; perfil fica para depois) | **Implementada** (Maria Clara, Tarefa 23) em [specs/003](../specs/003-autenticacao-e-cadastro-de-anuncio/): `src/view/auth/signIn.tsx`, `src/view/auth/signUp.tsx`, rotas `src/app/entrar.tsx` e `src/app/criar-conta.tsx`, indicador de sessão em `src/view/home.tsx` |
 | Solicitar e responder negociação simples | Não implementada; **especificada** em [specs/004](../specs/004-negociacao-simples/), atribuída ao Antonio (Tarefa 25) |
 | Busca, filtros e detalhes | Não implementados; fora do primeiro incremento (ver decisões abaixo) |
 | Troca, doação, empréstimo ou venda | Decidido: venda, troca e doação. Empréstimo não entra no escopo |
@@ -48,9 +48,9 @@ Testes e limitações de cobertura estão em [qualidade.md](qualidade.md). Exist
 
 ## Regras atuais e limites do domínio
 
-- Há autenticação básica em memória, mas o cadastro de anúncios ainda não usa sessão nem controla propriedade.
-- `Book` contém `id`, `title`, `author` e `status` (`available`/`reserved`). Esses campos ainda não definem modalidade, preço, proprietário ou regras de cadastro.
-- A operação disponível é somente consulta; não há gravação nem persistência entre execuções.
+- Há autenticação em memória (conta, sessão) e o cadastro de anúncio exige sessão ativa (FR-006), associando o anúncio criado à conta autenticada (`ownerId`).
+- `Book` contém `id`, `title`, `author`, `status` (`available`/`reserved`), `modality` (`sale`/`trade`/`donation`), `price` opcional (obrigatório e > 0 só quando `modality === "sale"`, FR-005) e `ownerId`.
+- Há consulta (listagem) e gravação (cadastro de anúncio); os dados continuam em memória e desaparecem ao encerrar a execução — nenhum backend real foi escolhido.
 - A base inicia vazia. Dados fictícios não devem ser apresentados como acervo real.
 - Casos de uso dependem de contratos; detalhes da tecnologia de dados ficam na infraestrutura.
 

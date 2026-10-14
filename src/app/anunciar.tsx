@@ -1,14 +1,12 @@
-import { useRouter } from "expo-router";
-import CreateListing from "@/view/listings/createListing";
+import { router } from "expo-router";
+import CreateListingScreen from "@/view/listings/createListingScreen";
 
 export default function AnunciarRoute() {
-  const router = useRouter();
-
   return (
-    <CreateListing
-      sessionUserId={null}
+    <CreateListingScreen
       onCreated={() => router.back()}
       onCancel={() => router.back()}
+      onRequireSignIn={() => router.replace("/entrar")}
     />
   );
 }

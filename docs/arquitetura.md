@@ -42,14 +42,25 @@ type Book = Readonly<{
   title: string;
   author: string;
   status: "available" | "reserved";
+  modality: "sale" | "trade" | "donation";
+  price?: number; // obrigatório e > 0 só quando modality === "sale" (FR-005)
+  ownerId: string;
 }>;
 // IBookDataSource
 list(): Promise<readonly Book[]>;
+create(input): Promise<Book>;
 // IBookUseCases
 listBooks(): Promise<readonly Book[]>;
+createListing(input: CreateListingInput, sessionUserId: string | null): Promise<Book>;
 ```
 
-Este é um resumo dos contratos, não um arquivo TypeScript completo. Os identificadores e textos são strings; não há validação de formato, unicidade ou conteúdo em tempo de execução. O `id` é usado como chave da lista. Título e autor são exibidos na tela. `status` indica se o anúncio está `available` ou `reserved`; a transição para reservado será aplicada pelos casos de uso da negociação, ainda não implementados. Não há proprietário, ISBN, arquivo digital ou localização no modelo atual.
+Este é um resumo dos contratos, não um arquivo TypeScript completo. O `id` é usado como chave da
+lista. Título, autor e a tag de modalidade (Venda/Troca/Doação) são exibidos na tela. `status`
+indica se o anúncio está `available` ou `reserved`; a transição para reservado será aplicada
+pelos casos de uso da negociação, ainda não implementados. `createListing` exige
+`sessionUserId` não nulo (FR-006) e valida o payload com `bookValidator` antes de gravar; o
+anúncio criado é associado à conta autenticada via `ownerId`. Não há ISBN, arquivo digital ou
+localização no modelo atual.
 
 `readonly` protege usos no TypeScript, não congela objetos em tempo de execução. O datasource copia os livros na entrada e na saída para que alterações externas não modifiquem sua lista interna. Não há operação de gravação; os dados desaparecem ao encerrar a execução.
 
@@ -77,24 +88,37 @@ ao datasource. `di/container.ts` expõe `authUseCases` ao lado de `bookUseCases`
 `useAuthViewModel` segue o mesmo formato de `useHomeViewModel` (`[state, actions]`, injeção do
 caso de uso por parâmetro para testes). Para manter `src/view/**` testável sem depender de
 `expo-router` (não há mock dessa biblioteca em `tests/`), a navegação após autenticar ou entre
-telas de entrar/criar conta é feita por callbacks (`onAuthenticated`, `onNavigateToSignUp`,
-`onNavigateToSignIn`) recebidos como props; quem resolve esses callbacks com `expo-router` são as
-rotas finas em `src/app/entrar.tsx`, `src/app/criar-conta.tsx` e `src/app/index.tsx` (que deixou
-de ser um reexport puro e passa `onNavigateToSignIn` para `Home`). `src/view/home.tsx` também usa
-`useAuthViewModel` para mostrar "Olá, {e-mail}" + botão "Sair" quando autenticado, ou um link
-"Entrar" quando visitante — o botão "Anunciar" ainda está pendente e será concluído em
-coordenação com Antonio (Tarefa 24).
+telas é feita por callbacks (`onAuthenticated`, `onNavigateToSignUp`, `onNavigateToSignIn`,
+`onNavigateToCreateListing`, `onRequireSignIn`) recebidos como props; quem resolve esses
+callbacks com `expo-router` são as rotas finas em `src/app/entrar.tsx`, `src/app/criar-conta.tsx`,
+`src/app/anunciar.tsx` e `src/app/index.tsx` (nenhuma delas é mais um reexport puro). `src/view/home.tsx`
+usa `useAuthViewModel` para mostrar "Olá, {e-mail}" + botões "Anunciar"/"Sair" quando autenticado,
+ou um link "Entrar" quando visitante.
 
-Cadastro de anúncio (US2, modalidade/preço, `createListing`) ainda não está implementado — ver
-[specs/003/tasks.md](../specs/003-autenticacao-e-cadastro-de-anuncio/tasks.md).
+## Cadastro de anúncio (specs/003, trilha do Antonio)
+
+`IBookUseCases.createListing(input, sessionUserId)` exige sessão (lança `AuthError` quando
+`sessionUserId` é nulo, FR-006), valida o payload com `bookValidator` (título/autor obrigatórios,
+preço condicional à modalidade) e delega a gravação a `MemoryBookDataSource.create`.
+`useCreateListingViewModel` mantém o estado do formulário (`title`, `author`, `modality`,
+`price`, `loading`, `error`, `success`); `src/view/listings/createListing.tsx` é a tela pura
+(recebe `sessionUserId` como prop, sem acessar `useAuthViewModel`).
+
+A rota `src/app/anunciar.tsx` não pode importar `useAuthViewModel` diretamente (o verificador de
+arquitetura só permite `app → view`), então o gate de sessão fica em
+`src/view/listings/createListingScreen.tsx`: lê a sessão com `useAuthViewModel`, não renderiza
+nada enquanto carrega, chama `onRequireSignIn` (resolvido pela rota com `router.replace("/entrar")`)
+quando não há sessão, e só então renderiza `CreateListing` com o `sessionUserId` real. Antes dessa
+correção, `anunciar.tsx` passava `sessionUserId={null}` fixo e o cadastro falhava sempre.
 
 ## Erros
 
 [errors.ts](../src/model/errors.ts) define `DomainError`, `ValidationError`, `AuthError` e `DataSourceError`. A ViewModel apresenta a mensagem de `DomainError`; erros inesperados recebem mensagem genérica. Portanto, mensagens de domínio devem ser seguras para exibição ao usuário.
 
-`AuthError` e `ValidationError` já são usados na autenticação; a validação de cadastro de anúncio
-ainda não existe. Infraestruturas futuras devem converter erros externos em erros de domínio. A
-implementação atual em memória não integra biblioteca externa de dados.
+`AuthError` e `ValidationError` são usados tanto na autenticação quanto no cadastro de anúncio
+(sessão ausente e validação de payload, respectivamente). Infraestruturas futuras devem converter
+erros externos em erros de domínio. A implementação atual em memória não integra biblioteca
+externa de dados.
 
 ## Convenções e limites da automação
 
