@@ -1,10 +1,14 @@
 # Estado e continuidade
 
-Conferência: 2026-10-14 (base: branch `feature/21-negociacao-telas` / Tarefa 25 / Issue #21). Projeto: `~/IPEBOOK_`.
+Conferência: 2026-10-14 (base: branch `develop`, após merge do deploy web — PR #45). Projeto: `~/IPEBOOK_`.
+
+**Equipe ativa:** Micael Cardoso Reis e Maria Clara Almeida Martins. Eric Vinícius dos Santos
+Oliveira e Antonio Carlos Gomes saíram da equipe em 2026-10-14; o trabalho que concluíram antes
+de saírem permanece íntegro no histórico (ver `tasks/README.md`).
 
 ## Estado verificado
 
-- Branch ativa: `feature/21-negociacao-telas` (derivada de `develop`).
+- Branch ativa: `develop`.
 - Estrutura arquitetural: MVVM sofisticado em sete camadas (`app`, `view`, `viewmodel`, `usecase`, `model`, `infra`, `di`) verificada sem nenhuma violação pelo script de arquitetura (`check:architecture`).
 - Correção em 2026-10-14: `scripts/verificar-arquitetura.mjs` usava `path.sep` para separar o
   caminho do import, mas o especificador (`@/view/home`) sempre usa `/`; em Windows isso
@@ -15,6 +19,8 @@ Conferência: 2026-10-14 (base: branch `feature/21-negociacao-telas` / Tarefa 25
 - Cobertura de testes: 94,19% statements, 82,54% branches, 94,44% funções, 95,88% linhas — acima
   do limiar de 80% exigido.
 - Build Web (`npm run build:web`): exportação estática com 8 rotas compiladas sem falhas.
+  Deploy estático configurado para a Vercel (`vercel.json`, issue #7/#39 — Micael, PR #45);
+  falta só conectar o repositório a um projeto Vercel para publicar de fato.
 - Testes E2E mobile: 3 fluxos declarativos do Maestro configurados em `.maestro/`.
 - Fundamentação formal: Norma ISO/IEC 25010 (Adequação Funcional, Confiabilidade e Usabilidade/Acessibilidade) detalhada em `docs/qualidade.md` junto com guia de defesa oral.
 - Vínculos e ADRs: índice completo em [docs/adr/README.md](adr/README.md) (ADRs 0001 a 0010).
@@ -52,5 +58,12 @@ Conferência: 2026-10-14 (base: branch `feature/21-negociacao-telas` / Tarefa 25
 
 ## Próximos passos
 
-1. Criar Pull Request da branch `feature/21-negociacao-telas` para `develop` e vincular à issue #21.
-2. Após revisão e merge em `develop`, fechar a issue #21 e prosseguir para integração ou empacotamento conforme prioridades da equipe.
+1. ~~Criar Pull Request da branch `feature/21-negociacao-telas` para `develop`~~ — feito (PR #44,
+   issue #21 fechada).
+2. Publicar de fato o deploy Web: conectar o repositório a um projeto Vercel (ação externa,
+   fora do alcance de automação — precisa de login/conta do responsável).
+3. Backlog restante (ver `tasks/README.md`), todo condicional a pré-requisitos ainda não
+   cumpridos: perfil de usuário (#15/#16, Maria Clara), layout web dedicado (#17, Micael,
+   depende do perfil), métricas de reputação (#14, Micael), build Android via EAS (#7, Micael,
+   depende de login na conta Expo), notificações (#6, Micael, depende de decisão em conjunto
+   com a equipe), moderação (#11/#12, Micael; #13, Maria Clara — nem especificada ainda).
