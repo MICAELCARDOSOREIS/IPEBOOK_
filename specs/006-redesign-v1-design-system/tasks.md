@@ -1,12 +1,14 @@
 # Tarefas: v1.0 — telas alinhadas ao design system
 
-Status: **especificada, implementação não iniciada**. Dividida em 3 issues independentes:
+Status: **especificada, implementação não iniciada**. Dividida em 4 issues independentes:
 [#54](https://github.com/Ghostyxseven/IPEBOOK_/issues/54) (Micael — autenticação: T001 parte,
 T002, T003, T005, T007, T008, T012, T016, T017, T023), [#55](https://github.com/Ghostyxseven/IPEBOOK_/issues/55)
 (Maria Clara — perfil, toca os mesmos arquivos de auth do Micael: T001 parte, T004, T006, T009,
-T013, T014, T020, T021, T024) e [#56](https://github.com/Ghostyxseven/IPEBOOK_/issues/56) (Maria
-Clara — home/navegação/pesquisa, sem dependência de arquivo com #54: T010, T011, T015, T018,
-T019, T022). T025-T027 (validação, documentação, registro final) são conjuntas.
+T013, T014, T020, T021, T024), [#56](https://github.com/Ghostyxseven/IPEBOOK_/issues/56) (Maria
+Clara — home/navegação/pesquisa/detalhe do livro, sem dependência de arquivo com #54: T010,
+T011, T015, T018, T019, T022, T029, T030, T031) e [#58](https://github.com/Ghostyxseven/IPEBOOK_/issues/58)
+(Micael — modelo/caso de uso do detalhe do livro: T028). T025-T027 (validação, documentação,
+registro final) são conjuntas.
 
 ## Modelo e validação
 
@@ -28,6 +30,9 @@ T019, T022). T025-T027 (validação, documentação, registro final) são conjun
       **Micael**
 - [ ] T006 Adicionar `updateProfile` a `IAuthUseCases`/`authUseCases.ts`, com teste unitário.
       **Maria Clara**
+- [ ] T028 Adicionar `getBookById(id)` a `IBookUseCases`/`bookUseCases.ts`, delegando a
+      `IBookDataSource.findById` (já existe) e convertendo id inexistente em erro de domínio
+      tratável (FR-009), com teste unitário. **Micael**
 
 ## Componentes reaproveitáveis do design system
 
@@ -68,6 +73,12 @@ T019, T022). T025-T027 (validação, documentação, registro final) são conjun
       com testes RNTL cobrindo US5 (sem expor e-mail, FR-007). **Maria Clara**
 - [ ] T022 Compor a `NavigationBar` em `src/app/_layout.tsx` nas 3 rotas de nível superior.
       **Maria Clara**
+- [ ] T029 Criar `src/view/listings/bookDetail.tsx` + rota dinâmica `src/app/livro/[id].tsx`
+      (US6: título, autor, tag de modalidade, preço, link ao perfil de quem anunciou, botão
+      "Solicitar negociação"), consumindo `getBookById` (T028, Micael). **Maria Clara**
+- [ ] T030 Em `src/view/home.tsx` (parte de T018), trocar o botão "Solicitar negociação" da
+      linha da lista por navegação para `livro/[id]` (T029) — a ação de negociar passa a viver
+      só no detalhe. **Maria Clara**
 
 ## Testes de integração e validação
 
@@ -77,6 +88,8 @@ T019, T022). T025-T027 (validação, documentação, registro final) são conjun
       camadas reais). **Maria Clara**
 - [ ] T025 Rodar `npm run validate` completo (typecheck, arquitetura, cobertura ≥ 80%, sem
       regressão nas specs 003/004/005) e registrar evidências em `validacao.md`. **Conjunta**
+- [ ] T031 `tests/integration/sc006DetalheLivroIntegration.test.tsx` (SC-005, pelas camadas
+      reais — depende de T028, Micael). **Maria Clara**
 
 ## Documentação e registro final
 
