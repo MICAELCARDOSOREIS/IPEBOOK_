@@ -17,6 +17,7 @@ Projeto avaliativo do curso de Tecnologia em Análise e Desenvolvimento de Siste
 * Design system (IHC): paleta, tipografia, espaçamento e acessibilidade em [`docs/design-system.md`](docs/design-system.md).
 * Sistema de design completo (tokens, 23 componentes com anatomia/estados/acessibilidade/código, princípios e fluxos) em [`design-system/`](design-system/README.md), para quem for implementar as telas das specs 003 e 004.
 * Primeira jornada funcional, já implementada: [`specs/003-autenticacao-e-cadastro-de-anuncio/`](specs/003-autenticacao-e-cadastro-de-anuncio/spec.md) e [`specs/004-negociacao-simples/`](specs/004-negociacao-simples/spec.md).
+* Catálogo de livros (listagem na Home), especificado retroativamente: [`specs/005-catalogo-de-livros/`](specs/005-catalogo-de-livros/spec.md).
 
 ---
 
