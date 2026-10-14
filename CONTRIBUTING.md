@@ -87,6 +87,8 @@ tipo(escopo opcional): descrição curta no imperativo
    - As decisões arquiteturais associadas;
    - Quais documentos foram atualizados por causa desta mudança (ver seção 6 abaixo) — se
      nenhum precisou mudar, diga isso explicitamente em vez de omitir.
+   Use o checklist do modelo de PR. Antes de marcar uma issue como concluída, confira também o
+   registro de execução da tarefa da pessoa responsável e o estado da spec correspondente.
 
 ---
 
@@ -116,8 +118,14 @@ depois) o que for afetado:
 * **Implementou ou concluiu uma tarefa de `specs/*/tasks.md` ou de `tasks/<pessoa>/*.md`?** Marque
   a tarefa como concluída e preencha o "Registro de execução" correspondente — não deixe a tarefa
   como pendente depois de pronta, nem o contrário.
+* **Concluiu uma issue?** Atualize seu checklist e a issue geral relacionada. Só feche quando
+  código, documentação e validação exigida estiverem alinhados; registre falhas e limites em
+  vez de declarar a entrega validada sem evidência.
 * **Mudou uma decisão de produto já registrada em `docs/produto.md`?** Atualize a tabela de
   decisões lá, não só o código.
 * Antes de abrir o PR, rode uma busca pelo que você mudou (`grep -rln "<nome-antigo-ou-numero>"
   --include="*.md" .`) para achar documentação que ficou para trás — é o jeito mais rápido de
   pegar isso antes de alguém mais tarde perder tempo seguindo um link morto.
+
+O [modelo de PR](.github/PULL_REQUEST_TEMPLATE.md) reúne esses itens num checklist visível a
+cada entrega. Mesmo sem abrir PR, use a mesma lista antes de considerar a tarefa concluída.

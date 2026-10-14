@@ -2,7 +2,7 @@
 
 Responsável: Maria Clara Almeida Martins
 Depende de: —
-Bloqueia: Tarefa 24 (Eric) na parte conjunta (T013, T015-T017)
+Bloqueia: Tarefa 24 (Antonio) na parte conjunta (T013, T015-T017)
 Domínio: Autenticação e Experiência Inicial (mesma divisão do projeto irmão)
 
 ## Contexto
@@ -26,14 +26,14 @@ Seguir `specs/003-autenticacao-e-cadastro-de-anuncio/plan.md` e as tarefas marca
 caso de uso → infraestrutura → ViewModel → View → rota. Escrever teste antes ou junto de cada
 unidade de código (TDD), seguindo o padrão já usado em `tests/unit/` e `tests/hooks/`.
 
-Combinar com o Eric antes de mexer em `src/view/home.tsx` (T013) e `src/di/container.ts`
+Combinar com o Antonio antes de mexer em `src/view/home.tsx` (T013) e `src/di/container.ts`
 (T008) — são arquivos compartilhados.
 
 ## O que não fazer
 
 - Não implementar login com Google — está fora do escopo da spec 003 (ver "Fora do escopo" em
   `spec.md`).
-- Não mexer no cadastro de anúncio (parte do Eric) além do necessário para a sessão funcionar.
+- Não mexer no cadastro de anúncio (parte do Antonio, exceto modelo da issue #26) além do necessário para a sessão funcionar.
 
 ## Entregável
 
@@ -45,7 +45,13 @@ passando.
 
 ## Registro de execução
 
-- Data:
-- O que foi implementado:
-- Testes executados e resultado:
-- Pendências:
+- Data: 2026-10-14 (conferência dos commits `7656e45`, `9c2d3f4` e `532daf5`).
+- O que foi implementado: modelo, validação, casos de uso, datasource, ViewModel, telas e rotas
+  de autenticação; indicador de sessão na Home. Documentação da trilha atualizada no commit
+  `532daf5`.
+- Testes executados e resultado: 75 testes passaram na conferência local do estado atual;
+  `npm run validate` falhou no `typecheck` com TS2345 nas rotas de autenticação. Ver
+  [docs/estado.md](../../docs/estado.md). Não há registro de validação completa aprovada após
+  essa falha.
+- Pendências: corrigir os tipos locais das rotas e validar o fluxo real; concluir a parte
+  conjunta da spec 003 após o cadastro de anúncios.

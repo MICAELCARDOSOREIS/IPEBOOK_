@@ -82,7 +82,8 @@ telas de entrar/criar conta é feita por callbacks (`onAuthenticated`, `onNaviga
 rotas finas em `src/app/entrar.tsx`, `src/app/criar-conta.tsx` e `src/app/index.tsx` (que deixou
 de ser um reexport puro e passa `onNavigateToSignIn` para `Home`). `src/view/home.tsx` também usa
 `useAuthViewModel` para mostrar "Olá, {e-mail}" + botão "Sair" quando autenticado, ou um link
-"Entrar" quando visitante — essa parte é conjunta com o Eric (botão "Anunciar" ainda pendente).
+"Entrar" quando visitante — o botão "Anunciar" ainda está pendente e será concluído em
+coordenação com Antonio (Tarefa 24).
 
 Cadastro de anúncio (US2, modalidade/preço, `createListing`) ainda não está implementado — ver
 [specs/003/tasks.md](../specs/003-autenticacao-e-cadastro-de-anuncio/tasks.md).
@@ -91,7 +92,9 @@ Cadastro de anúncio (US2, modalidade/preço, `createListing`) ainda não está 
 
 [errors.ts](../src/model/errors.ts) define `DomainError`, `ValidationError`, `AuthError` e `DataSourceError`. A ViewModel apresenta a mensagem de `DomainError`; erros inesperados recebem mensagem genérica. Portanto, mensagens de domínio devem ser seguras para exibição ao usuário.
 
-`AuthError` e `ValidationError` estão disponíveis, mas não significam que autenticação ou validação de cadastro já existam. Infraestruturas futuras devem converter erros externos em erros de domínio. A implementação atual em memória não integra biblioteca externa de dados.
+`AuthError` e `ValidationError` já são usados na autenticação; a validação de cadastro de anúncio
+ainda não existe. Infraestruturas futuras devem converter erros externos em erros de domínio. A
+implementação atual em memória não integra biblioteca externa de dados.
 
 ## Convenções e limites da automação
 

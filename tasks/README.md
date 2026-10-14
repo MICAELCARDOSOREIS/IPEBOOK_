@@ -68,7 +68,7 @@ Tarefa 6 (resolver ADR 0019 ausente) — Micael  ─ pode começar já
 ## Ordem de dependência — tarefas 23 a 25 (implementação do MVP neste repositório)
 
 ```
-#23 Modelo (Maria Clara) ─┐ podem ser feitas em paralelo (arquivos diferentes)   #30 Modelo (Antonio)
+#23 Modelo (Maria Clara, concluído) ─┐ podem ser feitas em paralelo (arquivos diferentes)   #30 Modelo (Antonio, concluído)
 #26 Modelo (Maria Clara) ─┘                                                       ─ pode começar já também
       │                                                                              (coordenar com #26
       ▼                                                                              em book.ts)
@@ -115,11 +115,11 @@ vez, não a issue grande inteira de uma só vez.
 
 | Integrante | Tarefa | Issues menores (fazer nesta ordem) | Spec |
 | --- | --- | --- | --- |
-| Maria Clara Almeida Martins | [23 (#19) — Implementar autenticação](maria-clara-almeida-martins/23-implementar-autenticacao-spec-003.md) | [#23 Modelo](https://github.com/Ghostyxseven/IPEBOOK_/issues/23) (pode começar já) → [#24 Caso de uso+infra](https://github.com/Ghostyxseven/IPEBOOK_/issues/24) → [#25 ViewModel+telas](https://github.com/Ghostyxseven/IPEBOOK_/issues/25) | [specs/003](../specs/003-autenticacao-e-cadastro-de-anuncio/) |
+| Maria Clara Almeida Martins | [23 (#19) — Implementar autenticação](maria-clara-almeida-martins/23-implementar-autenticacao-spec-003.md) | [#23 Modelo](https://github.com/Ghostyxseven/IPEBOOK_/issues/23) (**fechada**) → [#24 Caso de uso+infra](https://github.com/Ghostyxseven/IPEBOOK_/issues/24) → [#25 ViewModel+telas](https://github.com/Ghostyxseven/IPEBOOK_/issues/25) (implementadas, validação completa pendente) | [specs/003](../specs/003-autenticacao-e-cadastro-de-anuncio/) |
 | Maria Clara Almeida Martins | [26 (#26) — Modelo do cadastro de anúncio](maria-clara-almeida-martins/26-modelo-book-modalidade.md) (destacada da Tarefa 24) | [#26 Modelo](https://github.com/Ghostyxseven/IPEBOOK_/issues/26) (pode começar já) | [specs/003](../specs/003-autenticacao-e-cadastro-de-anuncio/) |
 | Antonio Carlos Gomes | [24 (#20) — Implementar cadastro de anúncio](antonio-carlos-gomes/24-implementar-cadastro-anuncio-spec-003.md) (redistribuída do Eric) | [#27 Caso de uso+infra](https://github.com/Ghostyxseven/IPEBOOK_/issues/27) (depende de #26) → [#28 ViewModel+tela](https://github.com/Ghostyxseven/IPEBOOK_/issues/28) | [specs/003](../specs/003-autenticacao-e-cadastro-de-anuncio/) |
 | Maria Clara + Antonio | — | [#29 Conjunta — container, Home, integração final](https://github.com/Ghostyxseven/IPEBOOK_/issues/29) (depois de tudo acima) | [specs/003](../specs/003-autenticacao-e-cadastro-de-anuncio/) |
-| Antonio Carlos Gomes | [25 (#21) — Implementar negociação simples](antonio-carlos-gomes/25-implementar-negociacao-spec-004.md) | [#30 Modelo](https://github.com/Ghostyxseven/IPEBOOK_/issues/30) (**pode começar já**, não espera 23/24) → resto aguarda 23+24 prontas | [specs/004](../specs/004-negociacao-simples/) |
+| Antonio Carlos Gomes | [25 (#21) — Implementar negociação simples](antonio-carlos-gomes/25-implementar-negociacao-spec-004.md) | [#30 Modelo](https://github.com/Ghostyxseven/IPEBOOK_/issues/30) (**fechada**) → resto aguarda 23+24 prontas | [specs/004](../specs/004-negociacao-simples/) |
 
 ### Backlog futuro, por integrante (não é trabalho ativo — ver nota no topo)
 

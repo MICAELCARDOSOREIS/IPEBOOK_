@@ -1,8 +1,8 @@
 # Tarefa 25 (Antonio) — Especificar (feito) e implementar a negociação simples (spec 004)
 
 Responsável: Antonio Carlos Gomes
-Depende de: Tarefas 23 (Maria Clara) e 24 (Eric) — spec 003 implementada, pois a negociação
-precisa de sessão autenticada e de anúncios reais
+Depende de: Tarefas 23 (Maria Clara) e 24 (Antonio) — a negociação funcional precisa de sessão
+autenticada e de anúncios reais. O modelo T001/T002 foi iniciado antes dessa dependência.
 Domínio: Negociação (mesma divisão do projeto irmão)
 
 ## Contexto
@@ -19,9 +19,9 @@ Seguir `specs/004-negociacao-simples/plan.md` e as 14 tarefas de
 `specs/004-negociacao-simples/tasks.md`, na ordem: modelo → caso de uso → infraestrutura → di →
 ViewModel → View → rotas → teste de integração → documentação → validação.
 
-**Não começar antes da spec 003 estar implementada** (Tarefas 23 e 24) — esta spec depende de
+**T003–T014 aguardam a spec 003 implementada** (Tarefas 23 e 24) — o fluxo funcional depende de
 sessão autenticada (`sessionUserId`) e de anúncios reais cadastrados por usuários, não dos
-dados de exemplo atuais.
+dados de exemplo atuais. O modelo T001/T002 já foi entregue.
 
 ## O que não fazer
 
@@ -38,7 +38,12 @@ em `specs/004-negociacao-simples/validacao.md`.
 
 ## Registro de execução
 
-- Data:
-- O que foi implementado:
-- Testes executados e resultado:
-- Pendências:
+- Data: 2026-10-14 (conferência do commit `e8d9e6a`).
+- O que foi implementado: `BookRequest`, `RequestStatus`, `Book.status` e
+  `IBookRequestDataSource` (T001/T002); issue #30 fechada. Nenhum fluxo de negociação foi
+  implementado.
+- Testes executados e resultado: `tests/unit/bookRequest.test.ts` existe e a suíte de 75 testes
+  passou na conferência local; `npm run validate` parou no `typecheck` por erros das rotas de
+  autenticação, sem executar as etapas seguintes nessa chamada.
+- Pendências: T003–T014 após a spec 003; validar a negociação integrada e registrar as
+  evidências em `specs/004-negociacao-simples/validacao.md`.
