@@ -8,7 +8,7 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "expo customize tsconfig.json && tsc --noEmit",
     "test": "node --require ./tests/setupNodeReactNative.cjs ./node_modules/vitest/vitest.mjs run",
     "test:coverage": "node --require ./tests/setupNodeReactNative.cjs ./node_modules/vitest/vitest.mjs run --coverage",
     "check:architecture": "node scripts/verificar-arquitetura.mjs",

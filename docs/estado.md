@@ -1,6 +1,7 @@
 # Estado e continuidade
 
-Conferência: 2026-10-14 (base: branch `develop`, após merge do deploy web — PR #45). Projeto: `~/IPEBOOK_`.
+Conferência: 2026-10-14 (base: branch `develop`, após merge do deploy web — PR #45 — e correção
+do `typecheck`). Projeto: `~/IPEBOOK_`.
 
 **Equipe ativa:** Micael Cardoso Reis e Maria Clara Almeida Martins. Eric Vinícius dos Santos
 Oliveira e Antonio Carlos Gomes saíram da equipe em 2026-10-14; o trabalho que concluíram antes
@@ -9,6 +10,12 @@ de saírem permanece íntegro no histórico (ver `tasks/README.md`).
 ## Estado verificado
 
 - Branch ativa: `develop`.
+- O `typecheck` agora gera os tipos de rota do Expo antes de executar TypeScript
+  (`expo customize tsconfig.json && tsc --noEmit`, ver `package.json`). A validação passou
+  também após remover temporariamente `.expo/types/router.d.ts`, confirmando que as rotas
+  `/pedidos-recebidos` e `/meus-pedidos` são reconhecidas em um ambiente sem tipos prévios —
+  corrige o falso-positivo de typecheck que antes exigia regenerar o cache manualmente
+  (`expo start`) a cada rota nova.
 - Estrutura arquitetural: MVVM sofisticado em sete camadas (`app`, `view`, `viewmodel`, `usecase`, `model`, `infra`, `di`) verificada sem nenhuma violação pelo script de arquitetura (`check:architecture`).
 - Correção em 2026-10-14: `scripts/verificar-arquitetura.mjs` usava `path.sep` para separar o
   caminho do import, mas o especificador (`@/view/home`) sempre usa `/`; em Windows isso
@@ -62,7 +69,11 @@ de saírem permanece íntegro no histórico (ver `tasks/README.md`).
    issue #21 fechada).
 2. Publicar de fato o deploy Web: conectar o repositório a um projeto Vercel (ação externa,
    fora do alcance de automação — precisa de login/conta do responsável).
-3. Backlog restante (ver `tasks/README.md`), todo condicional a pré-requisitos ainda não
+3. Revisar e integrar a correção da geração de tipos de rota no `typecheck` (ver `package.json`)
+   nas próximas validações de CI.
+4. Validar os fluxos em dispositivo físico nas issues de backlog pertinentes; testes
+   automatizados e build web não substituem essa conferência.
+5. Backlog restante (ver `tasks/README.md`), todo condicional a pré-requisitos ainda não
    cumpridos: perfil de usuário (#15/#16, Maria Clara), layout web dedicado (#17, Micael,
    depende do perfil), métricas de reputação (#14, Micael), build Android via EAS (#7, Micael,
    depende de login na conta Expo), notificações (#6, Micael, depende de decisão em conjunto

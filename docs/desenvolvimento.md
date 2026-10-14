@@ -61,6 +61,7 @@ Python 3 é necessário somente para este servidor de conferência. Abrir `http:
 | --- | --- |
 | Catálogo sem livros | É o estado intencional do datasource padrão; não é falha de conexão |
 | Erro de alias `@/` | Conferir `tsconfig.json`, caminho e capitalização do import |
+| Rota nova não reconhecida pelo TypeScript | `npm run typecheck` regenera os tipos ignorados em `.expo/types/` antes de verificar; não editar esses tipos manualmente |
 | Violação de arquitetura | Ler o arquivo e import apontados; corrigir a dependência, sem desabilitar o verificador |
 | Falha de instalação por DNS/rede | Verificar conectividade e acesso ao registro; não modificar versões ou apagar lockfile para esconder a falha |
 | Dependências incompatíveis com Expo | Conferir versões com `npx expo install --check`; revisar o lockfile antes de alterar dependências |
