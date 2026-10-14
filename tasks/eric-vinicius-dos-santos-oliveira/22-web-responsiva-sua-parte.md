@@ -1,37 +1,23 @@
-# Tarefa 22 (Eric) — [Projeto grande] Sua parte da 2ª etapa de web responsiva
+# Backlog futuro — Web responsiva: anúncios e perfil (quando existirem)
 
-Responsável: Eric Vinícius dos Santos Oliveira
-Repositório: `/home/usermicael/Projetos/IpeBook`
-Depende de: —
-Área: Gestão de Anúncios e Perfil/Identidade
+> **Reformulada em 2026-10-14.** Esta tarefa era sobre `/home/usermicael/Projetos/IpeBook`,
+> projeto que a equipe decidiu **não usar mais**. Fica aqui como lembrete — hoje não há perfil
+> nem layout web dedicado no `IPEBOOK_`.
 
-## Contexto
+Responsável: Eric Vinícius dos Santos Oliveira (quando a ideia for retomada)
 
-`specs/040-web-responsiva/tasks.md` indica que falta uma 2ª etapa de layout cobrindo, entre
-outras telas, **perfis, histórico e rascunhos** — que são da sua área — além de checar teclado,
-foco e estados vazios.
+## Ideia para quando houver layout web responsivo
 
-## O que fazer
+Quando o cadastro de anúncio (Tarefa 24) e, eventualmente, um perfil existirem, e o app ganhar
+layout web dedicado, revisar teclado, foco visível e estado vazio dessas telas.
 
-- Revisar as telas de perfil (próprio e de terceiros), histórico de trocas/doações e rascunhos
-  de anúncio (spec 030) na versão web responsiva.
-- Checar navegação por teclado, foco visível e estado vazio.
-- Corrigir o que não estiver de acordo com o design system responsivo já aplicado em outras
-  specs.
+## O que não fazer agora
 
-## O que não fazer
-
-- Não mexer nas telas de outras áreas.
-
-## Entregável
-
-Telas de perfil/histórico/rascunhos responsivas, com teclado/foco/vazio corretos, marcadas
-como feitas em `specs/040-web-responsiva/tasks.md`.
+- Não há telas de perfil/histórico/rascunhos no IPEBOOK_ ainda.
 
 ---
 
 ## Registro de execução
 
-- Data:
-- O que foi corrigido:
-- Pendências:
+Nenhum trabalho feito sob esta formulação (reformulada em 2026-10-14, antes de qualquer
+execução).

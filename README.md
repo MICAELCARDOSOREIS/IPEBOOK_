@@ -16,6 +16,7 @@ Projeto avaliativo do curso de Tecnologia em Análise e Desenvolvimento de Siste
 * Estado atual e próximos passos em [`docs/estado.md`](docs/estado.md).
 * Design system (IHC): paleta, tipografia, espaçamento e acessibilidade em [`docs/design-system.md`](docs/design-system.md).
 * Kit de referência visual (tokens, guia de uso e exemplo de cada componente) em [`design-kit/`](design-kit/USO.md), para quem for implementar as telas das specs 003 e 004.
+* Primeira jornada funcional especificada (ainda não implementada): [`specs/003-autenticacao-e-cadastro-de-anuncio/`](specs/003-autenticacao-e-cadastro-de-anuncio/spec.md) e [`specs/004-negociacao-simples/`](specs/004-negociacao-simples/spec.md).
 * Divisão de tarefas da equipe (decisões pendentes e trabalho técnico) em [`tasks/README.md`](tasks/README.md).
 
 ---
@@ -130,6 +131,9 @@ maestro test .maestro/
   - [ADR 0004 — Design System, tokens contratuais e diretrizes de IHC](docs/adr/0004-design-system-e-tokens-ihc.md)
   - [ADR 0005 — Modalidade do produto: venda, troca e doação de livros físicos](docs/adr/0005-modalidade-venda-troca-doacao.md)
   - [ADR 0006 — Haverá conta: e-mail/senha e login com Google](docs/adr/0006-conta-com-email-e-google.md)
+  - [ADR 0007 — Serifa da marca: Source Serif 4 Bold](docs/adr/0007-serifa-da-marca.md)
+  - [ADR 0008 — Sem dark mode nesta etapa; Android Material 3, iOS Liquid Glass](docs/adr/0008-sem-dark-mode-android-md3-ios-liquid-glass.md)
+  - [ADR 0009 — design-kit/tokens.json como fonte única de tokens](docs/adr/0009-design-kit-tokens-como-fonte-unica.md)
 
 ---
 

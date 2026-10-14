@@ -1,40 +1,26 @@
-# Tarefa 20 (Eric) — [Projeto grande] Completar a spec 031 (perfil completo)
+# Backlog futuro — Perfil completo (nome público, Instagram, foto)
 
-Responsável: Eric Vinícius dos Santos Oliveira
-Repositório: `/home/usermicael/Projetos/IpeBook`
-Depende de: —
-Área: Perfil/Identidade
+> **Reformulada em 2026-10-14.** Esta tarefa era sobre `/home/usermicael/Projetos/IpeBook`
+> (spec 031 daquele projeto), que a equipe decidiu **não usar mais**. Fica aqui como ideia de
+> backlog — o `IPEBOOK_` ainda não tem nenhuma spec de perfil de usuário.
 
-## Contexto
+Responsável: Eric Vinícius dos Santos Oliveira (quando a ideia for retomada)
 
-`specs/031-perfil-completo/tasks.md` lista como pendente:
-- Domínio/repositório de nome público, Instagram e foto de perfil.
-- ViewModel e interface (View) correspondentes.
-- Validação SQL e testes.
-- Aplicar a migração pública remota no Supabase.
+## Ideia para uma spec futura de perfil
 
-## O que fazer
+Se o IPEBOOK_ vier a precisar de um perfil de usuário além da conta mínima da
+[spec 003](../../specs/003-autenticacao-e-cadastro-de-anuncio/spec.md) (nome e e-mail), avaliar
+campos como nome público, rede social e foto — especificando pelo Spec Kit antes de implementar,
+não copiando o modelo do projeto antigo sem necessidade comprovada.
 
-Seguir a especificação já escrita em `specs/031-perfil-completo/spec.md` e o plano em
-`plan.md`, implementando o que falta na ordem das camadas (model → usecase → infra → di →
-viewmodel → view), e por último aplicar a migração remota no Supabase (ação que afeta produção/
-staging — confirmar antes com a equipe).
+## O que não fazer agora
 
-## O que não fazer
-
-- Não aplicar a migração remota antes de ter os testes locais passando.
-- Não adicionar campos de perfil além dos já especificados.
-
-## Entregável
-
-Spec 031 100% concluída em `tasks.md`, com migração aplicada e validada.
+- Não implementar nada disso sem uma especificação prévia — não há spec de perfil completo no
+  IPEBOOK_.
 
 ---
 
 ## Registro de execução
 
-- Data:
-- O que foi implementado:
-- Migração aplicada (ambiente/data):
-- Testes executados e resultado:
-- Pendências:
+Nenhum trabalho feito sob esta formulação (reformulada em 2026-10-14, antes de qualquer
+execução).

@@ -1,34 +1,23 @@
-# Tarefa 21 (Eric) — [Projeto grande] Validar anúncio e perfil em aparelho real
+# Backlog futuro — Validar anúncio/perfil em aparelho real
 
-Responsável: Eric Vinícius dos Santos Oliveira
-Repositório: `/home/usermicael/Projetos/IpeBook`
-Depende de: Tarefa 20 (spec 031 completa) para o bloco de perfil completo
-Área: Gestão de Anúncios e Perfil/Identidade
+> **Reformulada em 2026-10-14.** Esta tarefa era sobre `/home/usermicael/Projetos/IpeBook`,
+> projeto que a equipe decidiu **não usar mais**. Fica aqui como lembrete para quando a
+> [Tarefa 24](24-implementar-cadastro-anuncio-spec-003.md) (cadastro de anúncio) estiver pronta.
 
-## Contexto
+Responsável: Eric Vinícius dos Santos Oliveira (quando a Tarefa 24 estiver pronta)
 
-O roteiro de validação lista os blocos de anúncio/perfil e perfil completo como pendentes de
-validação em aparelho físico.
+## Ideia para depois da Tarefa 24
 
-## O que fazer
+Quando `src/view/listings/createListing.tsx` existir (Tarefa 24), validar o cadastro de anúncio
+em Android real (plataformas decididas: Android e Web).
 
-- Seguir o roteiro para os blocos: cadastro/edição/arquivamento de anúncio, "Minhas
-  publicações"/"Minha estante", perfil próprio e de terceiros, histórico e avaliações.
-- Marcar cada item validado no roteiro e abrir achado/bug para qualquer problema encontrado.
+## O que não fazer agora
 
-## O que não fazer
-
-- Não marcar como validado sem ter rodado no aparelho físico.
-
-## Entregável
-
-Blocos de anúncio e perfil do roteiro marcados como concluídos, com achados registrados.
+- Não há o que validar ainda — a Tarefa 24 não foi implementada.
 
 ---
 
 ## Registro de execução
 
-- Data:
-- Itens validados:
-- Achados/bugs abertos:
-- Pendências:
+Nenhum trabalho feito sob esta formulação (reformulada em 2026-10-14, antes de qualquer
+execução).

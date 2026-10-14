@@ -9,10 +9,9 @@ telas das specs 003 e 004 (`specs/003-autenticacao-e-cadastro-de-anuncio/`,
 
 - `README.md` — o brand book: cor, tipografia, espaçamento, estados, plataformas,
   acessibilidade e iconografia do IpêBook. Leitura obrigatória antes de estilizar qualquer tela.
-- `tokens.json` — os tokens de design (cor, tipografia, espaçamento, raio, elevação, movimento)
-  no formato padrão do sistema — mesma estrutura de `design-tokens.json` na raiz do repositório.
-  **Atenção:** são dois arquivos de tokens diferentes (um já existia aqui, outro veio do
-  artifact) — ver "Atenção" abaixo antes de decidir qual usar.
+- `tokens.json` — os tokens de design (cor, tipografia, espaçamento, raio, elevação, movimento).
+  **É a fonte única de tokens do projeto** (ADR 0009) — `src/view/tokens.ts` consome os valores
+  daqui.
 - `components/<Nome>/README.md` — guia de uso de cada um dos 23 componentes (Button, TextField,
   BookCover, BookRow, Dialog, EmptyState, NavigationBar, Snackbar, TopAppBar etc.).
 - `components/<Nome>/preview.html` — exemplo visual de cada componente, renderizado com o
@@ -25,13 +24,28 @@ telas das specs 003 e 004 (`specs/003-autenticacao-e-cadastro-de-anuncio/`,
   nomes de classe, estrutura e regras de acessibilidade (rótulos, `aria-*`, alvo de toque) para
   recriar os componentes equivalentes em `src/view/components/`.
 
-## Atenção: dois arquivos de tokens
+## Resolvido: `tokens.json` desta pasta é a fonte única (ADR 0009)
 
-Este repositório já tinha `design-tokens.json` na raiz e `src/view/tokens.ts` (ver ADR 0004).
-O `tokens.json` desta pasta é uma versão mais recente/completa vinda do artifact (inclui tags de
-modalidade Venda/Troca/Doação/Reservado/Concluído, capas ilustrativas, tema escuro). **Antes de
-usar em código, reconciliar os dois** — não presumir qual prevalece sem decisão da equipe. Isso
-não foi decidido aqui; é trabalho para quem for implementar a camada visual das specs 003/004.
+`design-tokens.json` que existia na raiz foi removido. `design-kit/tokens.json` é agora o
+contrato canônico; `src/view/tokens.ts` consome seus valores (tema claro — ADR 0008), mantendo
+as chaves antigas (`colors.action` etc.) e acrescentando `colors.m3` com os papéis Material 3
+que ainda não tinham equivalente. Fontes (Source Serif 4 Bold e Roboto) já carregam via
+`src/view/useIpebookFonts.ts`, chamado em `src/app/_layout.tsx`. Ver
+[ADR 0009](../docs/adr/0009-design-kit-tokens-como-fonte-unica.md) para o registro completo,
+incluindo por que Roboto (não Roboto Flex) foi usado.
+
+## Decidido: sem dark mode; Android Material 3, iOS Liquid Glass (ADR 0008)
+
+- **Sem tema escuro nesta etapa.** Ignorar os valores `dark` em `tokens.json` ao reconciliar os
+  tokens — só o tema claro entra em código agora. Não implementar toggle de tema nem lógica de
+  `useColorScheme`.
+- **Android segue Material Design 3** (compostos, elevação, `surface-container-*`, navegação de
+  5 destinos) — ver `README.md` deste kit, seção "Plataformas".
+- **iOS segue Liquid Glass** (vidro em controles flutuantes) **só quando/se iOS voltar ao
+  escopo** — hoje a plataforma-alvo é Android e Web (Tarefa 4). Não implementar nada de Liquid
+  Glass agora; é só a intenção registrada para o futuro.
+- Ver [ADR 0008](../docs/adr/0008-sem-dark-mode-android-md3-ios-liquid-glass.md) para o
+  registro completo da decisão.
 
 ## Como usar ao implementar
 
@@ -39,8 +53,8 @@ não foi decidido aqui; é trabalho para quem for implementar a camada visual da
    acessibilidade antes de montar uma tela nova.
 2. Para cada componente novo de UI (botão, campo de texto, diálogo etc.), abrir o
    `components/<Nome>/README.md` correspondente e seguir a nota de uso.
-3. Recriar o componente em `src/view/components/` como componente React Native, usando os
-   tokens (depois de reconciliados — ver acima acima) em vez de valores soltos, seguindo o
-   padrão já usado em `src/view/components/AppIcon.tsx`, `IconBadge.tsx` e `Icon.tsx`.
+3. Recriar o componente em `src/view/components/` como componente React Native, usando
+   `src/view/tokens.ts` (incluindo o novo grupo `colors.m3`) em vez de valores soltos, seguindo
+   o padrão já usado em `src/view/components/AppIcon.tsx`, `IconBadge.tsx` e `Icon.tsx`.
 4. Não copiar o HTML/CSS Web diretamente — ele é referência de estrutura e acessibilidade, não
    código para colar no app.

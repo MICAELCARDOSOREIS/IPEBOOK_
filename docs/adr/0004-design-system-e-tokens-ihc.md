@@ -7,7 +7,7 @@ O aplicativo IpêBook está sendo desenvolvido para avaliação final conjunta d
 
 ## Decisão
 1. **Fonte Visual Canônica:** Adotar o arquivo oficial do Figma (`cxEisNRzOQR6krv8Ow7HCa`) como a única fonte de verdade visual para componentes e telas.
-2. **Contrato de Tokens (`design-tokens.json`):** Manter na raiz do repositório o arquivo formal em padrão comunitário contendo todas as variáveis de cor (sRGB), tipografia, espaçamento, cantos arredondados, layout, motion e acessibilidade.
+2. **Contrato de Tokens (`design-tokens.json`):** Manter na raiz do repositório o arquivo formal em padrão comunitário contendo todas as variáveis de cor (sRGB), tipografia, espaçamento, cantos arredondados, layout, motion e acessibilidade. *(Substituído em 2026-10-14 por `design-kit/tokens.json` — ver [ADR 0009](0009-design-kit-tokens-como-fonte-unica.md).)*
 3. **Módulo TypeScript Tipado (`src/view/tokens.ts`):** Disponibilizar os tokens no código como constantes imutáveis fortemente tipadas em TypeScript, pertencendo exclusivamente à camada de **View (UI)** da arquitetura MVVM, impedindo vazamento para a lógica de negócio.
 4. **Alvos de Toque Mínimos:** Estabelecer `accessibility.touchTarget = 48` (48 × 48 dp) para todos os componentes interativos do aplicativo, atendendo aos critérios ergonômicos e de acessibilidade.
 5. **Acessibilidade Universal:** Cores informativas (como badges de venda, troca e doação) nunca transmitem significado isoladamente; sempre acompanham rótulo de texto explicativo. Elementos interativos utilizam `accessibilityRole` e textos descritivos para leitores de tela.

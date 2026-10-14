@@ -1,7 +1,9 @@
 /**
  * IpêBook — Tokens de Design (IHC / UI)
- * Sincronizados com design-tokens.json e Figma (cxEisNRzOQR6krv8Ow7HCa).
- * 
+ * Fonte canônica: design-kit/tokens.json (ver ADR 0008). Os valores abaixo são o recorte de
+ * tema claro — dark mode não entra nesta etapa. `design-tokens.json` na raiz foi substituído
+ * por este arquivo e removido (ver Tarefa 26).
+ *
  * Regra de Camada MVVM: Pertence estritamente à camada de View (UI).
  */
 
@@ -43,6 +45,31 @@ export const colors = {
     green: "#30574A",
     text: "#F6F1E8",
   },
+
+  // Papéis Material 3 (design-kit/tokens.json, tema claro) — para componentes novos
+  // (Button, TextField, Chip, Tag, Dialog etc.) das specs 003/004.
+  m3: {
+    onSurface: "#1d1b18",
+    onSurfaceVariant: "#4d4740",
+    surfaceContainerLowest: "#ffffff",
+    surfaceContainerLow: "#f7f3ec",
+    surfaceContainer: "#f2ede5",
+    surfaceContainerHigh: "#ece6dd",
+    surfaceContainerHighest: "#e6e0d7",
+    outline: "#7e776f",
+    outlineVariant: "#d3ccc2",
+    secondaryContainer: "#dce8de",
+    onSecondaryContainer: "#18291f",
+    tertiaryContainer: "#f8d88a",
+    onTertiaryContainer: "#3a2a10",
+    doacaoContainer: "#f4ddd3",
+    onDoacaoContainer: "#6e3a28",
+    errorContainerM3: "#f9dedc",
+    onErrorContainer: "#410e0b",
+    inverseSurface: "#322f2b",
+    inverseOnSurface: "#f5efe8",
+    focusRing: "#4e8a68",
+  },
 } as const;
 
 export const spacing = {
@@ -75,13 +102,25 @@ export const accessibility = {
   focusOffset: 4,
 } as const;
 
+/**
+ * Nomes das fontes carregadas por `useIpebookFonts` (ver `src/view/useIpebookFonts.ts`).
+ * Source Serif 4 Bold é a marca (ADR 0007); Roboto é a interface — ver a nota naquele arquivo
+ * sobre por que é Roboto e não Roboto Flex.
+ */
+export const fontFamily = {
+  brand: "SourceSerif4_700Bold",
+  regular: "Roboto_400Regular",
+  medium: "Roboto_500Medium",
+  semiBold: "Roboto_600SemiBold",
+} as const;
+
 export const typography = {
-  displayLarge: { fontSize: 32, lineHeight: 40, fontWeight: "700" as const },
-  titleLarge: { fontSize: 24, lineHeight: 32, fontWeight: "600" as const },
-  titleMedium: { fontSize: 18, lineHeight: 26, fontWeight: "600" as const },
-  bodyLarge: { fontSize: 16, lineHeight: 24, fontWeight: "400" as const },
-  bodyMedium: { fontSize: 14, lineHeight: 20, fontWeight: "400" as const },
-  labelMedium: { fontSize: 12, lineHeight: 16, fontWeight: "500" as const },
+  displayLarge: { fontSize: 32, lineHeight: 40, fontWeight: "700" as const, fontFamily: fontFamily.brand },
+  titleLarge: { fontSize: 24, lineHeight: 32, fontWeight: "600" as const, fontFamily: fontFamily.semiBold },
+  titleMedium: { fontSize: 18, lineHeight: 26, fontWeight: "600" as const, fontFamily: fontFamily.semiBold },
+  bodyLarge: { fontSize: 16, lineHeight: 24, fontWeight: "400" as const, fontFamily: fontFamily.regular },
+  bodyMedium: { fontSize: 14, lineHeight: 20, fontWeight: "400" as const, fontFamily: fontFamily.regular },
+  labelMedium: { fontSize: 12, lineHeight: 16, fontWeight: "500" as const, fontFamily: fontFamily.medium },
 } as const;
 
 export const motion = {

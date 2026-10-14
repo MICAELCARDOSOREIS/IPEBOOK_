@@ -1,37 +1,26 @@
-# Tarefa 14 (Maria Clara) — [Projeto grande] Validar autenticação e onboarding em aparelho real
+# Backlog futuro — Validar autenticação em aparelho Android real
 
-Responsável: Maria Clara Almeida Martins
-Repositório: `/home/usermicael/Projetos/IpeBook`
-Depende de: pré-requisitos do roteiro
-(`/home/usermicael/Projetos/IpeBook/docs/roteiro-validacao-aparelhos.md`)
-Área: Autenticação e Onboarding; estados transversais
+> **Reformulada em 2026-10-14.** Esta tarefa era sobre `/home/usermicael/Projetos/IpeBook`,
+> projeto que a equipe decidiu **não usar mais**. Fica aqui como lembrete para quando a spec 003
+> (Tarefa 23) estiver implementada no `IPEBOOK_`.
 
-## Contexto
+Responsável: Maria Clara Almeida Martins (quando a Tarefa 23 estiver pronta)
 
-O roteiro de validação lista o bloco de autenticação/onboarding como pendente de validação em
-aparelho físico.
+## Ideia para depois da Tarefa 23
 
-## O que fazer
+Quando `src/view/auth/signIn.tsx` e `signUp.tsx` existirem (ver
+[Tarefa 23](23-implementar-autenticacao-spec-003.md)), validar:
 
-- Seguir o roteiro para o bloco de autenticação/onboarding: criação de conta, login,
-  recuperação de senha, splash/onboarding.
-- Validar também os estados transversais que você é responsável (sem conexão, carregamento,
-  erro genérico, vazio) nesses fluxos.
-- Marcar cada item validado no roteiro e abrir achado/bug para qualquer problema encontrado.
+- Criação de conta, login e logout em Android real (plataformas decididas: Android e Web).
+- Os estados transversais (sem conexão, carregamento, erro, vazio) nessas telas.
 
-## O que não fazer
+## O que não fazer agora
 
-- Não marcar como validado sem ter rodado no aparelho físico.
-
-## Entregável
-
-Bloco de autenticação/onboarding do roteiro marcado como concluído, com achados registrados.
+- Não há o que validar ainda — a Tarefa 23 não foi implementada.
 
 ---
 
 ## Registro de execução
 
-- Data:
-- Itens validados:
-- Achados/bugs abertos:
-- Pendências:
+Nenhum trabalho feito sob esta formulação (reformulada em 2026-10-14, antes de qualquer
+execução).

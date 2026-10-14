@@ -1,37 +1,27 @@
-# Tarefa 19 (Eric) — [Projeto grande] Corrigir métrica de reputação (venda aparece como troca)
+# Backlog futuro — Classificar modalidade corretamente em métricas, se vierem a existir
 
-Responsável: Eric Vinícius dos Santos Oliveira
-Repositório: `/home/usermicael/Projetos/IpeBook`
-Depende de: —
-Área: Perfil/Identidade
+> **Reformulada em 2026-10-14.** Esta tarefa era sobre `/home/usermicael/Projetos/IpeBook`,
+> projeto que a equipe decidiu **não usar mais**. Fica aqui como lição aprendida — hoje não
+> existe perfil nem métrica de reputação no `IPEBOOK_`.
 
-## Contexto
+Responsável: Eric Vinícius dos Santos Oliveira (quando a ideia for retomada)
 
-A auditoria de 13/10/2026 encontrou que uma negociação de **venda** aparece como **troca** nas
-métricas de reputação do perfil (`ProfileScreen.tsx`, `reputationFormat.ts`).
+## Lição aprendida para se/quando houver métricas de reputação
 
-## O que fazer
+No projeto abandonado, uma negociação de venda era contabilizada como troca nas métricas de
+reputação do perfil — erro de classificação por modalidade. Se o IPEBOOK_ vier a ter perfil com
+métricas de negociações concluídas, cobrir com teste as três modalidades decididas
+(venda/troca/doação, ver [ADR 0005](../../docs/adr/0005-modalidade-venda-troca-doacao.md)) desde
+a primeira implementação.
 
-- Reproduzir o bug: criar/observar uma negociação de venda e conferir como ela é contabilizada
-  nas métricas de reputação.
-- Corrigir `reputationFormat.ts` (e `ProfileScreen.tsx` se necessário) para classificar
-  corretamente o tipo de negociação (venda vs. troca vs. doação).
-- Adicionar teste de regressão cobrindo os três tipos de negociação.
+## O que não fazer agora
 
-## O que não fazer
-
-- Não mudar o modelo de dados de negociação — o bug é de formatação/exibição.
-
-## Entregável
-
-Métrica de reputação corrigida com teste de regressão cobrindo venda, troca e doação.
+- Não especificar perfil/reputação sem necessidade de produto concreta — fora do escopo das
+  specs 003/004 atuais.
 
 ---
 
 ## Registro de execução
 
-- Data:
-- Causa do bug:
-- Correção aplicada:
-- Teste adicionado:
-- Pendências:
+Nenhum trabalho feito sob esta formulação (reformulada em 2026-10-14, antes de qualquer
+execução).

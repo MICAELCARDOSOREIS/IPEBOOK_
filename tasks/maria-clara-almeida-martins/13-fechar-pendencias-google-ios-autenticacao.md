@@ -1,40 +1,30 @@
-# Tarefa 13 (Maria Clara) — [Projeto grande] Fechar pendências de Google e iOS na autenticação
+# Backlog futuro — Login Google no provedor que o IPEBOOK_ escolher
 
-Responsável: Maria Clara Almeida Martins
-Repositório: `/home/usermicael/Projetos/IpeBook`
-Depende de: —
-Área: Autenticação e Onboarding
+> **Reformulada em 2026-10-14.** Esta tarefa era sobre `/home/usermicael/Projetos/IpeBook`,
+> projeto que a equipe decidiu **não usar mais**. Fica aqui como lembrete para quando a
+> autenticação do `IPEBOOK_` (spec 003, Tarefa 23) avançar além do e-mail/senha.
 
-## Contexto
+Responsável: Maria Clara Almeida Martins (quando a ideia for retomada)
 
-Ver [00b-achados-projeto-ipebook-grande.md](../00b-achados-projeto-ipebook-grande.md), achado C.
-Dois ADRs da sua área estão com pendência:
+## Ideia para depois da spec 003
 
-- **ADR 0028** (Google e avisos de sucesso no acesso): falta configurar o provedor Google no
-  Supabase.
-- **ADR 0024** (componentes iOS da autenticação): falta validar em iPhone real.
+A [spec 003](../../specs/003-autenticacao-e-cadastro-de-anuncio/spec.md) já decidiu deixar
+login com Google **fora do escopo** desta primeira implementação (ver "Fora do escopo" em
+`spec.md`) justamente para não acoplar a uma decisão de provedor de identidade externo antes de
+haver backend real. Quando essa decisão for revisitada:
 
-## O que fazer
+- Configurar o provedor Google no backend escolhido (nenhum foi decidido ainda — ver ADR 0006).
+- Validar o login Google ponta a ponta.
 
-1. Configurar o provedor Google no painel do Supabase e testar o login com Google ponta a
-   ponta.
-2. Validar os componentes iOS de autenticação (ADR 0024) em um iPhone físico.
-3. Atualizar `docs/adr/index.md` do projeto grande marcando os dois ADRs como aceitos.
+Validação em iPhone não se aplica: plataformas decididas são Android e Web (Tarefa 4).
 
-## O que não fazer
+## O que não fazer agora
 
-- Não marcar o ADR como aceito só com teste no simulador.
-
-## Entregável
-
-Login com Google funcionando ponta a ponta; componentes iOS validados em iPhone físico; os
-dois ADRs com status atualizado.
+- Não implementar login Google antes de a spec 003 (e-mail/senha) estar pronta e validada.
 
 ---
 
 ## Registro de execução
 
-- Data:
-- Google/Supabase — resultado:
-- Validação iOS — resultado:
-- Pendências:
+Nenhum trabalho feito sob esta formulação (reformulada em 2026-10-14, antes de qualquer
+execução).

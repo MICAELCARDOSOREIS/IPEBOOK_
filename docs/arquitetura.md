@@ -37,14 +37,19 @@ O container exporta uma instância compartilhada de `IBookUseCases`. Nos testes,
 ## Contratos e modelo atual
 
 ```typescript
-type Book = Readonly<{ id: string; title: string; author: string }>;
+type Book = Readonly<{
+  id: string;
+  title: string;
+  author: string;
+  status: "available" | "reserved";
+}>;
 // IBookDataSource
 list(): Promise<readonly Book[]>;
 // IBookUseCases
 listBooks(): Promise<readonly Book[]>;
 ```
 
-Este é um resumo dos contratos, não um arquivo TypeScript completo. Os campos são strings; não há validação de formato, unicidade ou conteúdo em tempo de execução. O `id` é usado como chave da lista. Título e autor são exibidos na tela. Não há proprietário, ISBN, arquivo digital, localização ou disponibilidade no modelo atual.
+Este é um resumo dos contratos, não um arquivo TypeScript completo. Os identificadores e textos são strings; não há validação de formato, unicidade ou conteúdo em tempo de execução. O `id` é usado como chave da lista. Título e autor são exibidos na tela. `status` indica se o anúncio está `available` ou `reserved`; a transição para reservado será aplicada pelos casos de uso da negociação, ainda não implementados. Não há proprietário, ISBN, arquivo digital ou localização no modelo atual.
 
 `readonly` protege usos no TypeScript, não congela objetos em tempo de execução. O datasource copia os livros na entrada e na saída para que alterações externas não modifiquem sua lista interna. Não há operação de gravação; os dados desaparecem ao encerrar a execução.
 

@@ -1,37 +1,25 @@
-# Tarefa 15 (Maria Clara) — [Projeto grande] Sua parte da 2ª etapa de web responsiva
+# Backlog futuro — Web responsiva: telas de senha/confirmações
 
-Responsável: Maria Clara Almeida Martins
-Repositório: `/home/usermicael/Projetos/IpeBook`
-Depende de: —
-Área: Autenticação e Onboarding
+> **Reformulada em 2026-10-14.** Esta tarefa era sobre `/home/usermicael/Projetos/IpeBook`,
+> projeto que a equipe decidiu **não usar mais**. Fica aqui como lembrete para quando o
+> `IPEBOOK_` tiver layout web dedicado além da listagem atual.
 
-## Contexto
+Responsável: Maria Clara Almeida Martins (quando a ideia for retomada)
 
-`specs/040-web-responsiva/tasks.md` indica que falta uma 2ª etapa de layout cobrindo, entre
-outras telas, **senha e confirmações** — que são da sua área — além de checar teclado, foco e
-estados vazios.
+## Ideia para quando houver layout web responsivo
 
-## O que fazer
+Quando as telas de autenticação (Tarefa 23) existirem e o app ganhar um layout web dedicado
+(hoje a Web só reaproveita as mesmas telas do app, via `npm run web`), revisar teclado, foco
+visível e estado vazio nas telas de senha/confirmação, seguindo
+[`design-kit/USO.md`](../../design-kit/USO.md).
 
-- Revisar as telas de senha e confirmações (recuperação de senha, verificação de conta) na
-  versão web responsiva.
-- Checar navegação por teclado, foco visível e estado vazio.
-- Corrigir o que não estiver de acordo com o design system responsivo já aplicado em outras
-  specs (`docs/design-system/platforms-accessibility.md`).
+## O que não fazer agora
 
-## O que não fazer
-
-- Não mexer nas telas de outras áreas (bairro, perfis, histórico, rascunhos, moderação).
-
-## Entregável
-
-Telas de senha/confirmação responsivas, com teclado/foco/vazio corretos, marcadas como feitas
-em `specs/040-web-responsiva/tasks.md`.
+- Não há tela de senha/confirmação separada para a Web ainda.
 
 ---
 
 ## Registro de execução
 
-- Data:
-- O que foi corrigido:
-- Pendências:
+Nenhum trabalho feito sob esta formulação (reformulada em 2026-10-14, antes de qualquer
+execução).

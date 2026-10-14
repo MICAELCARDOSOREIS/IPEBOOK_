@@ -1,39 +1,26 @@
-# Tarefa 16 (Antonio) — [Projeto grande] Corrigir acesso indevido ao menu de moderação
+# Backlog futuro — Moderação: checar permissão desde o início, se vier a existir
 
-Responsável: Antonio Carlos Gomes (correção de permissão em conjunto com Micael, dono do
-arquivo `SettingsScreen.tsx`)
-Repositório: `/home/usermicael/Projetos/IpeBook`
-Depende de: —
-Área: Segurança/Moderação
+> **Reformulada em 2026-10-14.** Esta tarefa era sobre `/home/usermicael/Projetos/IpeBook`,
+> projeto que a equipe decidiu **não usar mais**. Fica aqui como lição aprendida para o
+> `IPEBOOK_` — hoje não existe moderação nem conta de usuário implementada aqui.
 
-## Contexto
+Responsável: Antonio Carlos Gomes (quando a ideia for retomada)
 
-A auditoria de 13/10/2026 encontrou que o menu de moderação aparece em `SettingsScreen.tsx`
-para usuários que não deveriam ter acesso — falha de controle de acesso, prioridade baixa
-segundo a auditoria, mas é uma exposição real de função administrativa.
+## Lição aprendida para se/quando houver moderação no IPEBOOK_
 
-## O que fazer
+No projeto abandonado, um menu de moderação aparecia para contas sem permissão (o item era
+renderizado sem checar o papel do usuário). Se o IPEBOOK_ vier a ter um painel administrativo ou
+de moderação no futuro, condicionar sua exibição à permissão real da conta desde a primeira
+implementação, com teste de regressão cobrindo o caso sem permissão.
 
-- Reproduzir o bug: confirmar com que tipo de usuário (comum vs. moderador) o menu aparece
-  indevidamente.
-- Corrigir a condição de exibição do menu em `SettingsScreen.tsx`, coordenando com Micael (dono
-  da tela).
-- Adicionar teste de regressão verificando que um usuário sem permissão não vê o menu.
+## O que não fazer agora
 
-## O que não fazer
-
-- Não remover o menu de moderação para todo mundo.
-
-## Entregável
-
-Controle de acesso corrigido com teste de regressão.
+- Não especificar moderação sem uma necessidade de produto concreta — este projeto não tem
+  modalidade de moderação decidida.
 
 ---
 
 ## Registro de execução
 
-- Data:
-- Causa do bug:
-- Correção aplicada:
-- Teste adicionado:
-- Pendências:
+Nenhum trabalho feito sob esta formulação (reformulada em 2026-10-14, antes de qualquer
+execução).

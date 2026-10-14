@@ -1,11 +1,14 @@
-# Achados da análise do projeto IpeBook grande (2026-10-13)
+# Achados da análise do projeto IpeBook grande (2026-10-13) — projeto abandonado
 
-Leitura obrigatória antes das tarefas 09 em diante. Resume o levantamento do **outro**
-repositório da equipe, `/home/usermicael/Projetos/IpeBook` (branch `develop`) — um projeto bem
-mais avançado que este `IPEBOOK_` (42 specs, 41 ADRs, ~133 PRs mesclados). As tarefas 01 a 08
-desta pasta tratam das decisões de produto e pendências do `IPEBOOK_`; as tarefas 09 em diante
-tratam do que falta no projeto grande, organizadas pela mesma divisão de telas/features que a
-equipe já usa lá.
+> **⚠️ Em 2026-10-14, a equipe decidiu não usar mais `/home/usermicael/Projetos/IpeBook`.** Este
+> arquivo passa a ser **histórico**: registra uma análise de um projeto que não é mais trabalho
+> ativo da equipe. As tarefas 09 a 22 foram reformuladas como ideias de backlog genéricas para o
+> `IPEBOOK_` (ver cada arquivo `tasks/<pessoa>/09-22-*.md` — agora prefixados "Backlog futuro").
+> Não presumir que qualquer achado abaixo ainda se aplica a um projeto ativo.
+
+Leitura de contexto histórico. Resume o levantamento do **outro** repositório da equipe,
+`/home/usermicael/Projetos/IpeBook` (branch `develop`) — um projeto bem mais avançado que este
+`IPEBOOK_` (42 specs, 41 ADRs, ~133 PRs mesclados), que a equipe decidiu não usar mais.
 
 Todos os caminhos de arquivo citados nas tarefas 09+ são **absolutos** e apontam para
 `/home/usermicael/Projetos/IpeBook/...`, não para este repositório.

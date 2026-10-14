@@ -5,8 +5,8 @@
 **Equipe:** Maria Clara Almeida Martins, Micael Cardoso Reis, Antonio Carlos Gomes, Eric Vinícius dos Santos Oliveira  
 **Versão do Documento:** 1.0  
 **Fonte Visual Oficial:** [Figma — IpêBook](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%25C3%25AABook?t=xKQbpBwLpirB2jV2-0)  
-**Contratos Técnicos:** [`design-tokens.json`](../design-tokens.json) e [`src/view/tokens.ts`](../src/view/tokens.ts)  
-**Decisão Arquitetural:** [ADR 0004 — Design System e Tokens de IHC](adr/0004-design-system-e-tokens-ihc.md)
+**Contratos Técnicos:** [`design-kit/tokens.json`](../design-kit/tokens.json) e [`src/view/tokens.ts`](../src/view/tokens.ts)  
+**Decisão Arquitetural:** [ADR 0004 — Design System e Tokens de IHC](adr/0004-design-system-e-tokens-ihc.md), [ADR 0009 — design-kit/tokens.json como fonte única](adr/0009-design-kit-tokens-como-fonte-unica.md)
 
 ---
 
@@ -152,6 +152,6 @@ Para garantir que o usuário nunca fique desorientado, toda tela implementa quat
 
 ## 6. Governança e Rastreabilidade do Código
 
-- O arquivo JSON [`design-tokens.json`](../design-tokens.json) é o contrato canônico entre o Figma e o código.
+- O arquivo JSON [`design-kit/tokens.json`](../design-kit/tokens.json) é o contrato canônico entre o Figma e o código (ver [ADR 0009](adr/0009-design-kit-tokens-como-fonte-unica.md)).
 - O módulo [`src/view/tokens.ts`](../src/view/tokens.ts) consome esse contrato e o disponibiliza fortemente tipado em TypeScript para os componentes React Native.
 - As regras arquiteturais garantem que os tokens residam exclusivamente na camada de **View (UI)**, sem vazamento para as camadas de ViewModel, Caso de Uso ou Modelo.

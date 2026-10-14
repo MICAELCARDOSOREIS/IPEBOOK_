@@ -9,6 +9,7 @@ Seja bem-vindo(a) ao projeto **Ipebook**! Este documento orienta os integrantes 
 1. **Português Obrigatório:** Toda a documentação, mensagens de commit, nomes de cenários de teste, pull requests e discussões técnicas devem ser redigidos em língua portuguesa.
 2. **Qualidade Contínua:** Nenhuma alteração pode ser integrada se quebrar a tipagem estrita (`tsc --noEmit`), violar as regras de camadas da arquitetura MVVM (`scripts/verificar-arquitetura.mjs`) ou reduzir a cobertura de testes para menos de 80% (`npm run test:coverage`).
 3. **Spec Kit & ADRs:** Novas funcionalidades ou decisões arquiteturais devem ser precedidas de especificações (`specs/`) e registros de decisão arquitetural (`docs/adr/`).
+4. **Documentação sempre atualizada:** quem muda o código atualiza a documentação no mesmo commit/PR — nunca depois, "quando der tempo". Ver a seção 6 abaixo para o que checar.
 
 ---
 
@@ -83,7 +84,9 @@ tipo(escopo opcional): descrição curta no imperativo
    Abra o PR apontando sempre para a branch `develop`, descrevendo:
    - O que foi implementado;
    - Os testes criados e o resultado da cobertura;
-   - As decisões arquiteturais associadas.
+   - As decisões arquiteturais associadas;
+   - Quais documentos foram atualizados por causa desta mudança (ver seção 6 abaixo) — se
+     nenhum precisou mudar, diga isso explicitamente em vez de omitir.
 
 ---
 
@@ -91,3 +94,30 @@ tipo(escopo opcional): descrição curta no imperativo
 
 * **Nunca commite chaves secretas ou credenciais:** Arquivos `.env` locais estão no `.gitignore`.
 * Mantenha apenas o arquivo `.env.example` versionado com valores de exemplo fictícios (`EXPO_PUBLIC_SUPABASE_URL=https://seu-projeto.supabase.co`).
+
+---
+
+## 📄 6. Manter a documentação sempre atualizada
+
+Documentação desatualizada é pior do que nenhuma documentação — faz quem lê confiar em algo
+errado. Sempre que seu PR mudar código, dados ou estrutura, atualize na mesma entrega (não
+depois) o que for afetado:
+
+* **Criou, renomeou ou apagou um arquivo que a documentação cita** (teste, spec, componente,
+  fluxo do Maestro)? Corrija todo link/nome citado — faça uma busca (`grep -rn "nome-antigo"`)
+  antes de abrir o PR. Já encontramos documentação referenciando arquivos renomeados e até
+  arquivos duplicados/órfãos que ninguém tinha apagado.
+* **Mudou contagem de testes, cobertura, ou estrutura de pastas?** Atualize `docs/estado.md` e,
+  se pertinente, `docs/qualidade.md` e o `README.md` — não deixe um número antigo ("31 testes em
+  6 arquivos") sobreviver à mudança que o tornou errado.
+* **Criou uma ADR nova?** Acrescente-a ao índice em `docs/adr/README.md` e ao `README.md` da raiz
+  (seção "Arquitetura e Decisões"). ADRs aceitos não são reescritos — se uma decisão mudar,
+  crie uma nova ADR e linke as duas.
+* **Implementou ou concluiu uma tarefa de `specs/*/tasks.md` ou de `tasks/<pessoa>/*.md`?** Marque
+  a tarefa como concluída e preencha o "Registro de execução" correspondente — não deixe a tarefa
+  como pendente depois de pronta, nem o contrário.
+* **Mudou uma decisão de produto já registrada em `docs/produto.md`?** Atualize a tabela de
+  decisões lá, não só o código.
+* Antes de abrir o PR, rode uma busca pelo que você mudou (`grep -rln "<nome-antigo-ou-numero>"
+  --include="*.md" .`) para achar documentação que ficou para trás — é o jeito mais rápido de
+  pegar isso antes de alguém mais tarde perder tempo seguindo um link morto.

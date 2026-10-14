@@ -34,7 +34,7 @@ A qualidade do software do Ipebook foi projetada com base no modelo de produto d
 | :--- | :--- | :--- | :--- |
 | **Adequação Funcional** (*Functional Suitability*) | **Completude e Corretude** | Regras puras de domínio validam títulos, autores, sanitização de strings, limites mínimos/máximos e casos de borda; casos de uso orquestram e isolam dados sem mutações colaterais. | [`tests/unit/bookValidator.test.ts`](../tests/unit/bookValidator.test.ts)<br>[`tests/unit/bookUseCases.test.ts`](../tests/unit/bookUseCases.test.ts)<br>[`tests/integration/homeIntegration.test.tsx`](../tests/integration/homeIntegration.test.tsx) |
 | **Confiabilidade** (*Reliability*) | **Tolerância a Falhas e Recuperabilidade** | A camada de ViewModel gerencia concorrência (descarte de requisições antigas em corridas assíncronas), intercepta falhas técnicas para nunca expor dados internos sensíveis ao usuário e fornece mecanismo determinístico de retry. | [`tests/hooks/useHomeViewModel.test.tsx`](../tests/hooks/useHomeViewModel.test.tsx)<br>[`tests/components-mocked/homeViewMocked.test.tsx`](../tests/components-mocked/homeViewMocked.test.tsx) |
-| **Usabilidade** (*Usability*) | **Acessibilidade e Operabilidade** | A View expõe semântica nativa clara (`accessibilityRole` de `header`, `alert` e `button`), rótulos para leitores de tela (`accessibilityLabel`) e oculta elementos puramente decorativos (`accessible={false}`). | [`tests/components/homeView.test.tsx`](../tests/components/homeView.test.tsx)<br>[`.maestro/03-navegacao-acessibilidade.yaml`](../.maestro/03-navegacao-acessibilidade.yaml) |
+| **Usabilidade** (*Usability*) | **Acessibilidade e Operabilidade** | A View expõe semântica nativa clara (`accessibilityRole` de `header`, `alert` e `button`), rótulos para leitores de tela (`accessibilityLabel`) e oculta elementos puramente decorativos (`accessible={false}`). | [`tests/components/homeView.test.tsx`](../tests/components/homeView.test.tsx)<br>[`.maestro/03-acessibilidade-e-elementos.yaml`](../.maestro/03-acessibilidade-e-elementos.yaml) |
 
 ---
 
@@ -71,8 +71,8 @@ A suíte adota a pirâmide de testes para garantir velocidade, alta fidelidade e
 
 ### 3.6. Testes Ponta a Ponta Mobile (`.maestro/`)
 - **`01-catalogo-inicial.yaml`:** Fluxo E2E de inicialização e visualização do catálogo inicial.
-- **`02-recuperacao-erro.yaml`:** Fluxo E2E de recuperação e nova tentativa.
-- **`03-navegacao-acessibilidade.yaml`:** Fluxo E2E de acessibilidade e rolagem.
+- **`02-recuperacao-erro-retry.yaml`:** Fluxo E2E de recuperação e nova tentativa.
+- **`03-acessibilidade-e-elementos.yaml`:** Fluxo E2E de acessibilidade e rolagem.
 
 ---
 

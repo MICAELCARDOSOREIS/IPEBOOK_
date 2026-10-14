@@ -1,40 +1,24 @@
-# Tarefa 11 (Micael) — [Projeto grande] Fechar acordo sobre o ADR 0011 (notificações)
+# Backlog futuro — Notificações: decidir estratégia em conjunto
 
-Responsável: Micael Cardoso Reis (coordena; decisão é conjunta com Antonio Carlos Gomes e Eric
-Vinícius dos Santos Oliveira)
-Repositório: `/home/usermicael/Projetos/IpeBook`
-Depende de: —
-Bloqueia: `specs/024-configuracoes-notificacoes` (fechamento completo)
+> **Reformulada em 2026-10-14.** Esta tarefa era sobre `/home/usermicael/Projetos/IpeBook`,
+> projeto que a equipe decidiu **não usar mais**. Fica aqui como ideia de backlog para o
+> `IPEBOOK_` — hoje este projeto não tem notificações implementadas nem especificadas.
 
-## Contexto
+Responsável: Micael Cardoso Reis (quando a ideia for retomada, em conjunto com Antonio e Eric)
 
-`specs/024-configuracoes-notificacoes/tasks.md` indica que falta aceitar o ADR 0011 (Entrega de
-notificações) em conjunto com Antonio e Eric. Notificações tocam as áreas de todos (negociação,
-segurança/moderação, anúncios/perfil).
+## Ideia para quando o IPEBOOK_ precisar de notificações
 
-## O que fazer
+- Se/quando o produto decidir ter notificações (push ou in-app), não decidir a estratégia de
+  entrega sozinho — reunir com quem for dono das áreas afetadas (negociação, segurança,
+  anúncios) antes de especificar, e registrar a decisão em ADR.
 
-- Reunir com Antonio e Eric e revisar o ADR 0011
-  (`/home/usermicael/Projetos/IpeBook/docs/adr/0011-entrega-de-notificacoes.md`).
-- Confirmar se a estratégia de entrega de notificações ainda serve para o estado atual de
-  negociação (agora de Micael), segurança (Antonio) e anúncios/perfil (Eric).
-- Marcar o ADR como aceito em `docs/adr/index.md` do projeto grande.
+## O que não fazer agora
 
-## O que não fazer
-
-- Não marcar o ADR como aceito sem confirmação explícita de Antonio e Eric.
-
-## Entregável
-
-ADR 0011 com status "aceito", ou ADR de substituição registrando o que mudou, com a
-concordância dos três registrada no registro de execução abaixo.
+- Não especificar notificações sem que haja uma necessidade de produto concreta primeiro.
 
 ---
 
 ## Registro de execução
 
-- Data:
-- Confirmação de Antonio:
-- Confirmação de Eric:
-- Decisão final:
-- Pendências:
+Nenhum trabalho feito sob esta formulação (reformulada em 2026-10-14, antes de qualquer
+execução).

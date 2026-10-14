@@ -2,6 +2,7 @@
   "expo": {
     "name": "Ipebook",
     "slug": "ipebook",
+    "owner": "ipebook",
     "scheme": "ipebook",
     "version": "0.1.0",
     "orientation": "portrait",
@@ -26,7 +27,8 @@
     },
     "plugins": [
       "expo-router",
-      "expo-status-bar"
+      "expo-status-bar",
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true

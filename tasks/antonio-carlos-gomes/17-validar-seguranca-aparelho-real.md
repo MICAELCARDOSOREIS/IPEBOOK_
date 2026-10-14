@@ -1,35 +1,25 @@
-# Tarefa 17 (Antonio) — [Projeto grande] Validar segurança (denúncia/bloqueio) em aparelho real
+# Backlog futuro — Validar segurança (denúncia/bloqueio) em aparelho real
 
-Responsável: Antonio Carlos Gomes
-Repositório: `/home/usermicael/Projetos/IpeBook`
-Depende de: pré-requisitos do roteiro
-(`/home/usermicael/Projetos/IpeBook/docs/roteiro-validacao-aparelhos.md`)
-Área: Segurança/Moderação
+> **Reformulada em 2026-10-14.** Esta tarefa era sobre `/home/usermicael/Projetos/IpeBook`,
+> projeto que a equipe decidiu **não usar mais**. Fica aqui como lembrete para se/quando o
+> `IPEBOOK_` vier a ter negociação e segurança (denúncia/bloqueio) — hoje a
+> [spec 004](../../specs/004-negociacao-simples/spec.md) deixa isso fora do escopo do MVP.
 
-## Contexto
+Responsável: Antonio Carlos Gomes (quando a ideia for retomada)
 
-O roteiro de validação lista o bloco de segurança (denúncia/bloqueio, spec 027, ADR 0017) como
-pendente de validação em aparelho físico.
+## Ideia para depois, se segurança entrar no escopo
 
-## O que fazer
+Se a equipe decidir incluir denúncia/bloqueio em uma especificação futura, validar o fluxo em
+aparelho Android real quando implementado (plataformas decididas: Android e Web).
 
-- Seguir o roteiro para o bloco de segurança: denunciar usuário, denunciar anúncio, bloquear
-  pessoa, e confirmar que o painel de moderação (spec 036) reage corretamente.
-- Marcar cada item validado no roteiro e abrir achado/bug para qualquer problema encontrado.
+## O que não fazer agora
 
-## O que não fazer
-
-- Não marcar como validado sem ter rodado no aparelho físico.
-
-## Entregável
-
-Bloco de segurança do roteiro marcado como concluído, com achados registrados.
+- Não especificar segurança/moderação agora — está explicitamente fora do escopo da
+  spec 004 (ver "Fora do escopo" em `spec.md`).
 
 ---
 
 ## Registro de execução
 
-- Data:
-- Itens validados:
-- Achados/bugs abertos:
-- Pendências:
+Nenhum trabalho feito sob esta formulação (reformulada em 2026-10-14, antes de qualquer
+execução).

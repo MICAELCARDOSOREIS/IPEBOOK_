@@ -1,7 +1,0 @@
-appId: host.exp.exponent
----
-- launchApp
-- assertVisible: "Ipebook"
-- assertVisible: "Livros"
-- scroll
-- assertVisible: "Quando houver livros disponíveis, eles aparecerão neste espaço."

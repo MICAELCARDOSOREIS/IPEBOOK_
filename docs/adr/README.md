@@ -7,5 +7,7 @@
 - [0005 — Modalidade do produto: venda, troca e doação de livros físicos](0005-modalidade-venda-troca-doacao.md)
 - [0006 — Haverá conta: e-mail/senha e login com Google](0006-conta-com-email-e-google.md)
 - [0007 — Serifa da marca: Source Serif 4 Bold](0007-serifa-da-marca.md)
+- [0008 — Sem dark mode nesta etapa; Android segue Material Design 3, iOS segue Liquid Glass](0008-sem-dark-mode-android-md3-ios-liquid-glass.md)
+- [0009 — design-kit/tokens.json como fonte única de tokens; carregamento de fonte no Expo](0009-design-kit-tokens-como-fonte-unica.md)
 
 Preservar registros aceitos; mudanças relevantes geram novo ADR com vínculos de substituição.

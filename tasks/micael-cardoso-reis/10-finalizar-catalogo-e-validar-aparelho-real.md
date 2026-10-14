@@ -1,45 +1,28 @@
-# Tarefa 10 (Micael) — [Projeto grande] Finalizar catálogo e validar em aparelho real
+# Backlog futuro — Catálogo: paginação e validação em aparelho real
 
-Responsável: Micael Cardoso Reis
-Repositório: `/home/usermicael/Projetos/IpeBook`
-Depende de: pré-requisitos do roteiro
-(`/home/usermicael/Projetos/IpeBook/docs/roteiro-validacao-aparelhos.md`): `.env` real,
-migrações Supabase aplicadas, duas contas de teste, Android + iPhone físicos
-Área: Catálogo/Descoberta, Negociação, Conversa, ISBN
+> **Reformulada em 2026-10-14.** Esta tarefa era sobre `/home/usermicael/Projetos/IpeBook`,
+> projeto que a equipe decidiu **não usar mais**. Fica aqui como ideia de backlog para o
+> `IPEBOOK_`, sem presumir que já se aplica ao código atual — a catálogo daqui ainda só mostra
+> dados de exemplo em memória (ver `docs/produto.md`).
 
-## Contexto
+Responsável: Micael Cardoso Reis (quando a ideia for retomada)
 
-Ver [00b-achados-projeto-ipebook-grande.md](../00b-achados-projeto-ipebook-grande.md), achados
-B e C.
+## Ideia para quando o catálogo do IPEBOOK_ tiver mais dados reais
 
-- `specs/018-catalogo-descoberta/tasks.md` indica que falta testar a paginação do catálogo com
-  mais de 2 itens.
-- O roteiro de validação lista blocos ainda não marcados: catálogo com dados reais, negociação
-  completa, conversa (spec 029), leitura de ISBN (spec 030) — todos nas suas áreas.
+- Testar a paginação quando o catálogo tiver mais itens do que cabem em uma tela (hoje só há
+  dados de exemplo pequenos).
+- Validar o fluxo de catálogo em aparelho Android real quando houver build (plataformas
+  decididas: Android e Web — ver `tasks/eric-vinicius-dos-santos-oliveira/04-plataformas.md`).
 
-## O que fazer
+## O que não fazer agora
 
-1. Testar a paginação do catálogo com mais de 2 itens (spec 018) e corrigir o que falhar.
-2. Seguir o roteiro de validação em aparelho real para os blocos: catálogo, negociação,
-   conversa, ISBN.
-3. Registrar cada validação no próprio roteiro (marcar feito) e abrir achado/bug para qualquer
-   problema encontrado.
-
-## O que não fazer
-
-- Não marcar um bloco do roteiro como validado sem ter rodado de fato no aparelho físico.
-
-## Entregável
-
-Paginação do catálogo testada e corrigida se necessário; blocos de catálogo, negociação,
-conversa e ISBN do roteiro marcados como concluídos, com achados registrados.
+- Não implementar nada disso sem uma especificação prévia no Spec Kit — isso é só uma anotação
+  de backlog, não uma tarefa pronta para começar.
 
 ---
 
 ## Registro de execução
 
-- Data:
-- Paginação — resultado:
-- Blocos do roteiro validados:
-- Achados/bugs abertos:
-- Pendências:
+Nenhum trabalho feito sob esta formulação (reformulada em 2026-10-14, antes de qualquer
+execução). Se antes dela já houvesse execução para o projeto antigo, o registro ficaria aqui —
+não houve.

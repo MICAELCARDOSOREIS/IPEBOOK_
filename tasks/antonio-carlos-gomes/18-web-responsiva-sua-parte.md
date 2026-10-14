@@ -1,36 +1,23 @@
-# Tarefa 18 (Antonio) — [Projeto grande] Sua parte da 2ª etapa de web responsiva
+# Backlog futuro — Web responsiva: moderação (se vier a existir)
 
-Responsável: Antonio Carlos Gomes
-Repositório: `/home/usermicael/Projetos/IpeBook`
-Depende de: —
-Área: Segurança/Moderação
+> **Reformulada em 2026-10-14.** Esta tarefa era sobre `/home/usermicael/Projetos/IpeBook`,
+> projeto que a equipe decidiu **não usar mais**. Fica aqui como lembrete — hoje não existe
+> moderação nem layout web dedicado no `IPEBOOK_`.
 
-## Contexto
+Responsável: Antonio Carlos Gomes (quando a ideia for retomada)
 
-`specs/040-web-responsiva/tasks.md` indica que falta uma 2ª etapa de layout cobrindo, entre
-outras telas, **moderação** — que é da sua área — além de checar teclado, foco e estados
-vazios.
+## Ideia para depois, se moderação e layout web existirem
 
-## O que fazer
+Se moderação vier a existir (ver nota na [Tarefa 16](16-corrigir-acesso-menu-moderacao.md)) e o
+app ganhar layout web dedicado, revisar teclado, foco visível e estado vazio dessa tela.
 
-- Revisar o painel/telas de moderação (spec 036) na versão web responsiva.
-- Checar navegação por teclado, foco visível e estado vazio.
-- Corrigir o que não estiver de acordo com o design system responsivo já aplicado em outras
-  specs.
+## O que não fazer agora
 
-## O que não fazer
-
-- Não mexer nas telas de outras áreas.
-
-## Entregável
-
-Tela de moderação responsiva, com teclado/foco/vazio corretos, marcada como feita em
-`specs/040-web-responsiva/tasks.md`.
+- Não há tela de moderação para revisar ainda.
 
 ---
 
 ## Registro de execução
 
-- Data:
-- O que foi corrigido:
-- Pendências:
+Nenhum trabalho feito sob esta formulação (reformulada em 2026-10-14, antes de qualquer
+execução).

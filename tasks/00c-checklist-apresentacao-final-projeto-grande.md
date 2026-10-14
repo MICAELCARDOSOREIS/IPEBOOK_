@@ -1,16 +1,18 @@
-# Checklist compartilhado — Apresentação final (projeto grande)
+# Backlog futuro — Checklist de apresentação final (genérico)
 
-Não é tarefa de uma pessoa só. Baseado no rascunho em
-`/home/usermicael/Projetos/IpeBook/docs/apresentacao-final.md` (02/10/2026), que listava itens
-ainda não resolvidos. Distribuir entre a equipe nas próximas reuniões:
+> **Reformulada em 2026-10-14.** Este checklist era sobre a apresentação do
+> `/home/usermicael/Projetos/IpeBook`, projeto que a equipe decidiu **não usar mais**. Fica
+> aqui como checklist genérico para quando o `IPEBOOK_` for apresentado — não é compromisso de
+> data nem de escopo.
+
+Não é tarefa de uma pessoa só. Itens a considerar quando houver uma apresentação do IPEBOOK_:
 
 - [ ] Confirmar data da apresentação com o professor — **todos**.
-- [ ] Garantir app instalável pela loja/distribuição (depende da Tarefa 12 de Micael — build
-      Android e, se aplicável, publicação) — **Micael**.
-- [ ] Criar/validar contas de demonstração para a apresentação — **todos revisam a própria
-      área com uma conta de teste**.
-- [ ] Completar o relatório de PDM — **a definir quem escreve**.
-- [ ] Revisar/escrever a política de privacidade — **a definir**.
+- [ ] Garantir que o app está instalável de alguma forma (build ou `npm run web`) — **todos**.
+- [ ] Criar/validar contas de demonstração, se houver autenticação implementada — **todos**.
+- [ ] Completar o relatório exigido pela disciplina — **a definir quem escreve**.
+- [ ] Revisar/escrever a política de privacidade, se houver dados pessoais reais envolvidos —
+      **a definir**.
 - [ ] Ensaiar a apresentação com tempo cronometrado — **todos**.
 - [ ] Preparar um vídeo como plano B, caso a demonstração ao vivo falhe — **a definir**.
 
