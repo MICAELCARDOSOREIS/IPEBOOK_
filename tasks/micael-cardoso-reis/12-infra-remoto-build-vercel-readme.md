@@ -26,5 +26,22 @@ Responsável: Micael Cardoso Reis (quando a ideia for retomada)
 
 ## Registro de execução
 
-Nenhum trabalho feito sob esta formulação (reformulada em 2026-10-14, antes de qualquer
-execução).
+- Data: 2026-10-14
+- Pré-requisito cumprido: specs 003 (#19) e 004 (#21) foram implementadas e mergeadas em
+  `develop` — há agora uma entrega com valor real para publicar.
+- O que foi feito:
+  - Configurado deploy Web estático na Vercel (`vercel.json`: `buildCommand: npm run build:web`,
+    `outputDirectory: dist`, com fallback de 404 para `/+not-found.html`).
+  - `npm run build:web` validado localmente: gera 8 rotas estáticas em `dist/`
+    (`/`, `/entrar`, `/criar-conta`, `/anunciar`, `/meus-pedidos`, `/pedidos-recebidos`,
+    `/_sitemap`, `/+not-found`).
+  - README atualizado: nota de "spec ainda não implementada" corrigida, e nova seção "Deploy
+    Web" documentando o comando e a configuração.
+- O que não foi feito: build Android via EAS Build — exige login/credenciais da conta Expo
+  (ação externa que precisa de autorização direta do usuário); e a publicação em si na Vercel
+  (exige conectar a conta/projeto Vercel, também ação externa).
+- Testes executados e resultado: `npm run validate` completo (typecheck, arquitetura, testes)
+  passando antes e depois da mudança — mudança não tocou código de produto.
+- Pendências: publicar de fato (conectar repositório a um projeto Vercel) e, separadamente,
+  gerar o build Android via EAS — ambos dependem de autorização/credenciais externas do
+  usuário.
