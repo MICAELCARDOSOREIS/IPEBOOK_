@@ -110,4 +110,24 @@ describe("testes de componente com mock: Home (ISO/IEC 25010 - Usabilidade e Con
     expect(screen.getByText("Troca")).toBeDefined();
     expect(screen.getByText("Doação")).toBeDefined();
   });
+
+  it("recarrega o catálogo quando focusKey muda (ex.: ao voltar de cadastrar um anúncio)", async () => {
+    const mockState: HomeState = { books: [], loading: false, error: null };
+    const reloadMock = vi.fn().mockResolvedValue(undefined);
+    const mockActions: HomeActions = { reload: reloadMock };
+    mockedUseHomeViewModel.mockReturnValue([mockState, mockActions]);
+
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<Home focusKey={0} />);
+    });
+
+    expect(reloadMock).not.toHaveBeenCalled();
+
+    await act(async () => {
+      screen.rerender(<Home focusKey={1} />);
+    });
+
+    expect(reloadMock).toHaveBeenCalledTimes(1);
+  });
 });

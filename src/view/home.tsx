@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
@@ -18,6 +19,8 @@ export type HomeProps = {
   onNavigateToCreateListing?: () => void;
   onNavigateToReceivedRequests?: () => void;
   onNavigateToSentRequests?: () => void;
+  /** Mudar este valor força o catálogo a recarregar (ex.: ao voltar de cadastrar um anúncio). */
+  focusKey?: unknown;
 };
 
 export default function Home({
@@ -25,11 +28,21 @@ export default function Home({
   onNavigateToCreateListing,
   onNavigateToReceivedRequests,
   onNavigateToSentRequests,
+  focusKey,
 }: HomeProps = {}) {
   const [state, actions] = useHomeViewModel();
   const [authState, authActions] = useAuthViewModel();
   const [negotiation, negotiationActions] = useRequestNegotiationViewModel();
   const sessionUserId = authState.user?.id ?? null;
+
+  const isFirstFocus = useRef(true);
+  useEffect(() => {
+    if (isFirstFocus.current) {
+      isFirstFocus.current = false;
+      return;
+    }
+    void actions.reload();
+  }, [focusKey]);
 
   return (
     <SafeAreaView style={styles.page}>
