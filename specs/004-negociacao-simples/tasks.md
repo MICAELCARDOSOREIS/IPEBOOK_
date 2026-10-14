@@ -23,14 +23,14 @@ todas as tarefas abaixo.
 > fica só com CRUD e as regras (dono, reserva, recusa automática) ficam no caso de uso.
 > Somente quem anunciou pode responder (AuthError). Testes em
 > `tests/unit/bookRequestUseCases.test.ts` (18 casos, incluindo SC-002 no nível de caso de uso).
-- [ ] T007 Criar `src/viewmodel/useRequestNegotiationViewModel.ts` com testes.
-- [ ] T008 Criar `src/viewmodel/useReceivedRequestsViewModel.ts` e
+- [x] T007 Criar `src/viewmodel/useRequestNegotiationViewModel.ts` com testes.
+- [x] T008 Criar `src/viewmodel/useReceivedRequestsViewModel.ts` e
       `useSentRequestsViewModel.ts` com testes.
-- [ ] T009 Acrescentar botão "Solicitar negociação" em `src/view/home.tsx` com testes RNTL.
-- [ ] T010 Criar `src/view/requests/receivedRequests.tsx` e `sentRequests.tsx` com testes RNTL.
-- [ ] T011 Criar rotas `src/app/pedidos-recebidos.tsx` e `src/app/meus-pedidos.tsx`.
-- [ ] T012 Criar teste de integração cobrindo SC-002 (aceitar recusa os concorrentes e
+- [x] T009 Acrescentar botão "Solicitar negociação" em `src/view/home.tsx` com testes RNTL.
+- [x] T010 Criar `src/view/requests/receivedRequests.tsx` e `sentRequests.tsx` com testes RNTL.
+- [x] T011 Criar rotas `src/app/pedidos-recebidos.tsx` e `src/app/meus-pedidos.tsx`.
+- [x] T012 Criar teste de integração cobrindo SC-002 (aceitar recusa os concorrentes e
       reserva o anúncio).
-- [ ] T013 Atualizar `docs/arquitetura.md`, `docs/produto.md` e `docs/estado.md`.
-- [ ] T014 Executar `npm run validate` e registrar evidências em
+- [x] T013 Atualizar `docs/arquitetura.md`, `docs/produto.md` e `docs/estado.md`.
+- [x] T014 Executar `npm run validate` e registrar evidências em
       `specs/004-negociacao-simples/validacao.md`.

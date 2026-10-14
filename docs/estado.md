@@ -1,20 +1,20 @@
 # Estado e continuidade
 
-Conferência: 2026-10-14 (base: commit `38c6b6a` em `develop`, mais a conclusão da issue #29
-nesta branch). Projeto: `~/IPEBOOK_`.
+Conferência: 2026-10-14 (base: branch `feature/21-negociacao-telas` / Tarefa 25 / Issue #21). Projeto: `~/IPEBOOK_`.
 
 ## Estado verificado
 
-- Branch ativa: `develop`, base exclusiva de desenvolvimento do projeto.
-- Estrutura arquitetural: MVVM sofisticado em sete camadas (`app`, `view`, `viewmodel`, `usecase`, `model`, `infra`, `di`) verificada sem nenhuma violação pelo script de arquitetura.
+- Branch ativa: `feature/21-negociacao-telas` (derivada de `develop`).
+- Estrutura arquitetural: MVVM sofisticado em sete camadas (`app`, `view`, `viewmodel`, `usecase`, `model`, `infra`, `di`) verificada sem nenhuma violação pelo script de arquitetura (`check:architecture`).
 - Correção em 2026-10-14: `scripts/verificar-arquitetura.mjs` usava `path.sep` para separar o
   caminho do import, mas o especificador (`@/view/home`) sempre usa `/`; em Windows isso
   gerava falso positivo em toda importação `@/...`. Corrigido para normalizar para `/` antes de
-  separar. Rodar o script em outro SO pode precisar da mesma atenção se reaparecer.
-- `npm run validate` **passa limpo**: typecheck ok, arquitetura sem violações (34 arquivos),
-  107/107 testes passando em 19 arquivos.
-- Cobertura de testes: 96,28% statements, 86,98% branches, 97,5% funções, 97,53% linhas — acima
+  separar.
+- `npm run validate` **passa limpo**: typecheck ok, arquitetura sem violações (45 arquivos),
+  144/144 testes passando em 24 arquivos.
+- Cobertura de testes: 94,19% statements, 82,54% branches, 94,44% funções, 95,88% linhas — acima
   do limiar de 80% exigido.
+- Build Web (`npm run build:web`): exportação estática com 8 rotas compiladas sem falhas.
 - Testes E2E mobile: 3 fluxos declarativos do Maestro configurados em `.maestro/`.
 - Fundamentação formal: Norma ISO/IEC 25010 (Adequação Funcional, Confiabilidade e Usabilidade/Acessibilidade) detalhada em `docs/qualidade.md` junto com guia de defesa oral.
 - Vínculos e ADRs: índice completo em [docs/adr/README.md](adr/README.md) (ADRs 0001 a 0010).
@@ -41,14 +41,16 @@ nesta branch). Projeto: `~/IPEBOOK_`.
    - Ver `specs/003-autenticacao-e-cadastro-de-anuncio/tasks.md` e `validacao.md` para o
      detalhamento e as evidências.
 4. Tag de modalidade na Home (issue #39, Micael): implementada e mesclada (PR #38).
-5. `specs/004-negociacao-simples/`: Modelo inicial (`BookRequest`, status de `Book` e contrato
-   do datasource) implementado pelo Antonio na issue #30. Fluxo de solicitar/responder
-   negociação ainda não implementado — agora que a spec 003 está completa, pode prosseguir.
+5. `specs/004-negociacao-simples/`: **Completa** — fluxo de negociação simples (solicitar e responder) implementado ponta a ponta (Antonio Carlos Gomes, Tarefa 25 / issue #21):
+   - Modelo e contratos: `BookRequest`, `RequestStatus`, `Book.status` e `IBookRequestDataSource` (T001/T002, issue #30).
+   - Casos de uso e infraestrutura: `BookRequestUseCases` (T003/T004) com regras de bloqueio (FR-001 a FR-003) e recusa automática de concorrentes com reserva do anúncio (FR-004/SC-002); `MemoryBookRequestDataSource` (T005); container DI atualizado com `IBookRequestUseCases` (T006).
+   - ViewModels (T007/T008): `useRequestNegotiationViewModel`, `useReceivedRequestsViewModel`, `useSentRequestsViewModel`.
+   - Views e rotas (T009/T010/T011): botão "Solicitar negociação" e atalhos na Home (`src/view/home.tsx`), telas `receivedRequests.tsx` e `sentRequests.tsx` com `requestListLayout.tsx`, e rotas `src/app/pedidos-recebidos.tsx` e `src/app/meus-pedidos.tsx`.
+   - Teste de integração (T012): `tests/integration/sc002Integration.test.tsx` validando o cenário SC-002 pelas camadas reais.
+   - Ver `specs/004-negociacao-simples/tasks.md` e `validacao.md` para o detalhamento e evidências.
 6. `docs/`: Documentação consolidada em 7 guias temáticos (`README.md`, `produto.md`, `arquitetura.md`, `desenvolvimento.md`, `qualidade.md`, `uso.md`, `estado.md`), mais decisões de produto confirmadas diretamente pelo usuário em 2026-10-13 (problema/público, modalidade, conta) e ADRs 0005, 0006 e 0007.
 
 ## Próximos passos
 
-1. Revisar e mesclar o PR da issue #29 (este trabalho).
-2. Implementar o restante de `specs/004-negociacao-simples/` (Antonio — T003–T014), agora que a
-   spec 003 está completa.
-3. Integração contínua e envio para repositório remoto conforme autorizado.
+1. Criar Pull Request da branch `feature/21-negociacao-telas` para `develop` e vincular à issue #21.
+2. Após revisão e merge em `develop`, fechar a issue #21 e prosseguir para integração ou empacotamento conforme prioridades da equipe.

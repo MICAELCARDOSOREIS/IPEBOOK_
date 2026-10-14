@@ -2,6 +2,7 @@ import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from "
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useHomeViewModel } from "@/viewmodel/useHomeViewModel";
+import { useRequestNegotiationViewModel } from "@/viewmodel/useRequestNegotiationViewModel";
 import { tokens } from "@/view/tokens";
 import { AppIcon } from "@/view/components/AppIcon";
 import type { BookModality } from "@/model/entities/book";
@@ -15,11 +16,20 @@ const modalityTag: Record<BookModality, { background: string; text: string; labe
 export type HomeProps = {
   onNavigateToSignIn?: () => void;
   onNavigateToCreateListing?: () => void;
+  onNavigateToReceivedRequests?: () => void;
+  onNavigateToSentRequests?: () => void;
 };
 
-export default function Home({ onNavigateToSignIn, onNavigateToCreateListing }: HomeProps = {}) {
+export default function Home({
+  onNavigateToSignIn,
+  onNavigateToCreateListing,
+  onNavigateToReceivedRequests,
+  onNavigateToSentRequests,
+}: HomeProps = {}) {
   const [state, actions] = useHomeViewModel();
   const [authState, authActions] = useAuthViewModel();
+  const [negotiation, negotiationActions] = useRequestNegotiationViewModel();
+  const sessionUserId = authState.user?.id ?? null;
 
   return (
     <SafeAreaView style={styles.page}>
@@ -30,6 +40,7 @@ export default function Home({ onNavigateToSignIn, onNavigateToCreateListing }: 
         </View>
         <Text style={styles.subtitle}>Um lugar para descobrir sua próxima leitura.</Text>
         {authState.loading ? null : authState.user ? (
+          <View>
           <View style={styles.sessionRow}>
             <Text style={styles.sessionText}>Olá, {authState.user.email}</Text>
             <View style={styles.sessionActions}>
@@ -48,6 +59,23 @@ export default function Home({ onNavigateToSignIn, onNavigateToCreateListing }: 
                 <Text style={styles.sessionButtonText}>Sair</Text>
               </Pressable>
             </View>
+          </View>
+          <View style={styles.requestsRow}>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => onNavigateToReceivedRequests?.()}
+              style={styles.sessionButton}
+            >
+              <Text style={styles.sessionButtonText}>Pedidos recebidos</Text>
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => onNavigateToSentRequests?.()}
+              style={styles.sessionButton}
+            >
+              <Text style={styles.sessionButtonText}>Meus pedidos</Text>
+            </Pressable>
+          </View>
           </View>
         ) : (
           <View style={styles.sessionRow}>
@@ -98,6 +126,27 @@ export default function Home({ onNavigateToSignIn, onNavigateToCreateListing }: 
                     </View>
                   </View>
                   <Text style={styles.body}>{item.author}</Text>
+                  {item.status === "reserved" ? (
+                    <Text style={styles.reserved}>Reservado</Text>
+                  ) : sessionUserId && item.ownerId !== sessionUserId ? (
+                    negotiation.requestedListingIds.includes(item.id) ? (
+                      <Text style={styles.requested}>Negociação solicitada</Text>
+                    ) : (
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel={`Solicitar negociação de ${item.title}`}
+                        accessibilityState={{ disabled: negotiation.pendingListingId === item.id }}
+                        disabled={negotiation.pendingListingId === item.id}
+                        onPress={() => void negotiationActions.request(item.id, sessionUserId)}
+                        style={styles.requestButton}
+                      >
+                        <Text style={styles.sessionButtonText}>Solicitar negociação</Text>
+                      </Pressable>
+                    )
+                  ) : null}
+                  {negotiation.errorListingId === item.id ? (
+                    <Text accessibilityRole="alert" style={styles.requestError}>{negotiation.error}</Text>
+                  ) : null}
                 </View>
               );
             }}
@@ -133,4 +182,9 @@ const styles = StyleSheet.create({
   bookHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: tokens.spacing[12] },
   tag: { borderRadius: tokens.radius.small, paddingHorizontal: tokens.spacing[12], paddingVertical: tokens.spacing[6] },
   tagText: { fontSize: tokens.typography.labelMedium.fontSize, fontWeight: tokens.typography.labelMedium.fontWeight },
+  requestsRow: { flexDirection: "row", flexWrap: "wrap", marginTop: -tokens.spacing[12], marginBottom: tokens.spacing[24] },
+  requestButton: { minHeight: tokens.accessibility.touchTarget, justifyContent: "center", alignSelf: "flex-start" },
+  requested: { fontSize: tokens.typography.bodyMedium.fontSize, color: tokens.colors.secondaryText, fontWeight: "600" },
+  reserved: { fontSize: tokens.typography.bodyMedium.fontSize, color: tokens.colors.secondaryText, fontStyle: "italic" },
+  requestError: { fontSize: tokens.typography.bodyMedium.fontSize, color: tokens.colors.error },
 });
