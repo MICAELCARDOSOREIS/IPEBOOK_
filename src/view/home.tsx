@@ -4,6 +4,13 @@ import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useHomeViewModel } from "@/viewmodel/useHomeViewModel";
 import { tokens } from "@/view/tokens";
 import { AppIcon } from "@/view/components/AppIcon";
+import type { BookModality } from "@/model/entities/book";
+
+const modalityTag: Record<BookModality, { background: string; text: string; label: string }> = {
+  sale: { background: tokens.colors.badge.sale.background, text: tokens.colors.badge.sale.text, label: "Venda" },
+  trade: { background: tokens.colors.badge.trade.background, text: tokens.colors.badge.trade.text, label: "Troca" },
+  donation: { background: tokens.colors.badge.donation.background, text: tokens.colors.badge.donation.text, label: "Doação" },
+};
 
 export type HomeProps = {
   onNavigateToSignIn?: () => void;
@@ -70,12 +77,20 @@ export default function Home({ onNavigateToSignIn }: HomeProps = {}) {
                 <Text style={styles.body}>Quando houver livros disponíveis, eles aparecerão neste espaço.</Text>
               </View>
             }
-            renderItem={({ item }) => (
-              <View style={styles.book}>
-                <Text style={styles.emptyTitle}>{item.title}</Text>
-                <Text style={styles.body}>{item.author}</Text>
-              </View>
-            )}
+            renderItem={({ item }) => {
+              const tag = modalityTag[item.modality];
+              return (
+                <View style={styles.book}>
+                  <View style={styles.bookHeader}>
+                    <Text style={styles.emptyTitle}>{item.title}</Text>
+                    <View style={[styles.tag, { backgroundColor: tag.background }]}>
+                      <Text style={[styles.tagText, { color: tag.text }]}>{tag.label}</Text>
+                    </View>
+                  </View>
+                  <Text style={styles.body}>{item.author}</Text>
+                </View>
+              );
+            }}
           />
         )}
       </View>
@@ -104,4 +119,7 @@ const styles = StyleSheet.create({
   button: { minHeight: tokens.accessibility.touchTarget, minWidth: tokens.accessibility.touchTarget, justifyContent: "center", paddingHorizontal: tokens.spacing[20], borderRadius: tokens.radius.small, backgroundColor: tokens.colors.action },
   buttonText: { color: tokens.colors.surface, fontSize: 16, fontWeight: "600" },
   book: { paddingVertical: 18, borderBottomWidth: 1, borderBottomColor: tokens.colors.border, gap: 6 },
+  bookHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: tokens.spacing[12] },
+  tag: { borderRadius: tokens.radius.small, paddingHorizontal: tokens.spacing[12], paddingVertical: tokens.spacing[6] },
+  tagText: { fontSize: tokens.typography.labelMedium.fontSize, fontWeight: tokens.typography.labelMedium.fontWeight },
 });
