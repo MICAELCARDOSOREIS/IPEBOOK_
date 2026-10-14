@@ -25,9 +25,11 @@ memória como o restante da base.
   `AuthError` com mensagem neutra (FR-001).
 - `src/usecase/authUseCases.ts`: adicionar `updateProfile(userId, patch): Promise<User>`,
   delegando ao datasource (US4).
-- `src/usecase/bookUseCases.ts`: nenhuma mudança — a busca (US3) filtra em memória no
-  ViewModel, sobre o resultado já retornado por `listBooks()` (FR-005), sem novo método de
-  caso de uso.
+- `src/usecase/bookUseCases.ts`: a busca (US3) filtra em memória no ViewModel, sobre o
+  resultado já retornado por `listBooks()` (FR-005), sem novo método de caso de uso. Para o
+  detalhe do livro (US6), estender `IBookUseCases` com `getBookById(id): Promise<Book>`,
+  delegando a `IBookDataSource.findById` (já existe) e convertendo "não encontrado" em
+  `DomainError` tratável pela View (FR-009). **Micael.**
 
 ## Infraestrutura (camada `infra`)
 
@@ -51,6 +53,10 @@ memória como o restante da base.
 - `src/viewmodel/useSearchViewModel.ts` (novo): estado `{ term, books, loading, error }` —
   reaproveita `useHomeViewModel`/`listBooks()` internamente e filtra por `term` no cliente
   (FR-005), sem chamada de rede por tecla.
+- `src/viewmodel/useBookDetailViewModel.ts` (novo): dado um `bookId`, estado
+  `{ book, loading, error }` chamando `getBookById`, ação `requestNegotiation(sessionUserId)`
+  reaproveitando `useRequestNegotiationViewModel`/`bookRequestUseCases.request` já existentes
+  (US6). **Maria Clara** (view/navegação), consumindo o `getBookById` do **Micael**.
 
 ## View (componentes de design system reaproveitáveis)
 
@@ -73,7 +79,11 @@ memória como o restante da base.
   retornada, com link de volta ao login.
 - `src/view/home.tsx`: trocar o `renderItem` manual pelo componente de item de lista do design
   system (linha-de-livro.md), mantendo o comportamento (tag de modalidade, estados) já coberto
-  pela spec 005; adicionar `NavigationBar`.
+  pela spec 005; adicionar `NavigationBar`; cada item passa a navegar para o detalhe do livro
+  (US6) em vez de ter o botão "Solicitar negociação" embutido na linha.
+- `src/view/listings/bookDetail.tsx` (novo): título, autor, tag de modalidade, preço (se
+  venda), link para o perfil de quem anunciou (US5), botão "Solicitar negociação". **Maria
+  Clara.**
 - `src/view/search/search.tsx` (novo): `SearchField` + lista filtrada, estado vazio conforme
   `estado-vazio.md`.
 - `src/view/profile/profile.tsx` (novo): `Avatar` de 64 px + campos editáveis (`TextField`) +
@@ -87,6 +97,7 @@ memória como o restante da base.
 - `src/app/pesquisa.tsx` (novo).
 - `src/app/perfil.tsx` (novo).
 - `src/app/usuario/[id].tsx` (novo, rota dinâmica).
+- `src/app/livro/[id].tsx` (novo, rota dinâmica, US6). **Maria Clara.**
 - `src/app/_layout.tsx`: compor a `NavigationBar` nas rotas de nível superior (Início, Pesquisa,
   Perfil), sem alterar as rotas de fluxo (entrar, criar-conta, anunciar, esqueci-senha, pedidos).
 

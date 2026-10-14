@@ -4,8 +4,9 @@ Data: 2026-10-14. Branch: `develop`. Tipo: redesenho de telas existentes + telas
 faltavam, para fechar a versão 1.0 do produto.
 Pedido: fazer as telas do app seguirem de fato o [`design-system/`](../../design-system/README.md)
 (hoje usam estilos inline livres, não os componentes documentados), e completar as telas que o
-produto nunca teve — recuperação de senha, busca e perfil de usuário — dividido entre Micael
-(autenticação) e Maria Clara (navegação e perfil).
+produto nunca teve — recuperação de senha, busca, perfil de usuário e detalhe do livro —
+dividido entre Micael (autenticação + modelo do detalhe do livro) e Maria Clara (navegação,
+perfil e a tela do detalhe do livro).
 
 ## Objetivo e usuário
 
@@ -26,6 +27,15 @@ perfil quanto o de quem anunciou um livro.
 - Nova tela "Esqueceu a senha": a pessoa informa o e-mail, o sistema gera uma senha temporária,
   já a define como a senha da conta, e a exibe na própria tela (fluxo simulado, sem envio de
   e-mail real — a persistência é em memória e não há serviço de e-mail).
+
+### Detalhe do livro (dividida entre Micael e Maria Clara)
+
+- Nova tela de detalhe do livro, aberta ao tocar em um item do catálogo: mostra título, autor,
+  modalidade, preço (se venda) e o nome de quem anunciou (link para o perfil público, US5). O
+  botão "Solicitar negociação" (já existente na spec 004) passa a viver aqui, em vez de dentro
+  da linha da lista.
+- Camada de modelo/caso de uso (buscar um livro por id): **Micael**.
+- Camada de tela/rota/navegação a partir do catálogo: **Maria Clara**.
 
 ### Navegação e perfil (Maria Clara)
 
@@ -113,6 +123,21 @@ com essa pessoa.
 - Dado que a pessoa anunciante nunca definiu nome público, então vejo um nome padrão (ex.: "um
   leitor da comunidade"), nunca o e-mail dela exposto publicamente.
 
+### US6 — Ver o detalhe de um livro (P1, dividida entre Micael e Maria Clara)
+
+Como pessoa vendo o catálogo, quero tocar em um livro e ver seus detalhes, para decidir se
+quero solicitar negociação sem precisar que tudo caiba na linha da lista.
+
+- Dado que toco em um item do catálogo, então vejo uma tela com título, autor, modalidade,
+  preço (se venda) e o nome de quem anunciou.
+- Dado que estou na tela de detalhe e toco no nome de quem anunciou, então vou para o perfil
+  público dessa pessoa (US5).
+- Dado que estou autenticada e vejo o detalhe de um livro de outra pessoa, então consigo
+  solicitar negociação pela mesma ação que já existia na listagem (spec 004), sem regressão de
+  comportamento.
+- Dado que busco um livro por id inexistente (ex.: link direto inválido), então vejo uma
+  mensagem de erro clara, não uma tela quebrada.
+
 ## Requisitos
 
 - FR-001: a recuperação de senha deve exigir e-mail de conta existente; para e-mail
@@ -132,6 +157,8 @@ com essa pessoa.
   (ou padrão), avatar e os anúncios dela.
 - FR-008: a barra de navegação deve ter exatamente 3 itens (Início, Pesquisa, Perfil), com o
   item ativo indicado por pílula, conforme ADR 0011 e `barra-de-navegacao.md`.
+- FR-009: buscar um livro por id inexistente deve retornar um erro de domínio tratável pela
+  View (mensagem clara), nunca lançar uma exceção não tratada.
 
 ## Critérios de sucesso
 
@@ -143,6 +170,8 @@ com essa pessoa.
   perfil quanto no perfil público visto a partir de um anúncio dela.
 - SC-004: `npm run validate` passa com as telas novas e redesenhadas, sem regressão nos
   requisitos funcionais das specs 003, 004 e 005.
+- SC-005: uma pessoa consegue tocar em um livro do catálogo, ver seus detalhes e solicitar
+  negociação a partir dessa tela, sem regressão no comportamento já coberto pela spec 004.
 
 ## Casos de erro e suposições
 
