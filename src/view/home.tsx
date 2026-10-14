@@ -2,6 +2,7 @@ import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from "
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useHomeViewModel } from "@/viewmodel/useHomeViewModel";
 import { tokens } from "@/view/tokens";
+import { AppIcon } from "@/view/components/AppIcon";
 
 export default function Home() {
   const [state, actions] = useHomeViewModel();
@@ -22,7 +23,10 @@ export default function Home() {
           </View>
         ) : state.error ? (
           <View style={styles.status}>
-            <Text accessibilityRole="alert" style={styles.body}>{state.error}</Text>
+            <View style={styles.errorRow}>
+              <AppIcon name="error" color={tokens.colors.error} />
+              <Text accessibilityRole="alert" style={styles.body}>{state.error}</Text>
+            </View>
             <Pressable accessibilityRole="button" onPress={() => void actions.reload()} style={styles.button}>
               <Text style={styles.buttonText}>Tentar novamente</Text>
             </Pressable>
@@ -64,6 +68,7 @@ const styles = StyleSheet.create({
   emptyTitle: { fontSize: 19, fontWeight: "600", color: tokens.colors.action },
   body: { fontSize: tokens.typography.bodyLarge.fontSize, lineHeight: 25, color: tokens.colors.secondaryText },
   status: { gap: 18, alignItems: "flex-start" },
+  errorRow: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[12] },
   button: { minHeight: tokens.accessibility.touchTarget, minWidth: tokens.accessibility.touchTarget, justifyContent: "center", paddingHorizontal: tokens.spacing[20], borderRadius: tokens.radius.small, backgroundColor: tokens.colors.action },
   buttonText: { color: tokens.colors.surface, fontSize: 16, fontWeight: "600" },
   book: { paddingVertical: 18, borderBottomWidth: 1, borderBottomColor: tokens.colors.border, gap: 6 },
