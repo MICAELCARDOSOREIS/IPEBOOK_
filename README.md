@@ -16,7 +16,7 @@ Projeto avaliativo do curso de Tecnologia em Análise e Desenvolvimento de Siste
 * Estado atual e próximos passos em [`docs/estado.md`](docs/estado.md).
 * Design system (IHC): paleta, tipografia, espaçamento e acessibilidade em [`docs/design-system.md`](docs/design-system.md).
 * Sistema de design completo (tokens, 23 componentes com anatomia/estados/acessibilidade/código, princípios e fluxos) em [`design-system/`](design-system/README.md), para quem for implementar as telas das specs 003 e 004.
-* Primeira jornada funcional especificada (ainda não implementada): [`specs/003-autenticacao-e-cadastro-de-anuncio/`](specs/003-autenticacao-e-cadastro-de-anuncio/spec.md) e [`specs/004-negociacao-simples/`](specs/004-negociacao-simples/spec.md).
+* Primeira jornada funcional, já implementada: [`specs/003-autenticacao-e-cadastro-de-anuncio/`](specs/003-autenticacao-e-cadastro-de-anuncio/spec.md) e [`specs/004-negociacao-simples/`](specs/004-negociacao-simples/spec.md).
 * Divisão de tarefas da equipe (decisões pendentes e trabalho técnico) em [`tasks/README.md`](tasks/README.md).
 
 ---
@@ -37,6 +37,25 @@ npm run ios      # Dispositivo/Simulador iOS (macOS) — disponível, mas fora d
 ```
 
 > Plataformas suportadas na primeira entrega: **Android e Web** (decisão registrada em [`docs/produto.md`](docs/produto.md)). iOS fica fora do escopo por enquanto; o comando continua disponível para quem tiver ambiente macOS, mas não é alvo de validação desta entrega.
+
+---
+
+## 🌐 Deploy Web
+
+Com as specs 003 (autenticação e cadastro de anúncio) e 004 (negociação) implementadas, o build
+web passou a ter valor real para publicar.
+
+```bash
+npm run build:web   # gera export estático em dist/ (expo export --platform web)
+```
+
+O repositório está configurado para deploy estático na Vercel (ver [`vercel.json`](vercel.json)):
+`buildCommand` roda `npm run build:web` e `outputDirectory` aponta para `dist/`. Para publicar,
+conectar o repositório a um projeto Vercel (dashboard ou `vercel --prod`) — nenhuma variável de
+ambiente é necessária além das já presentes em `.env`/`app.json`.
+
+Build Android via EAS Build fica para quando houver necessidade de instalar em aparelho fora do
+ambiente de desenvolvimento (ver [Tarefa 12](tasks/micael-cardoso-reis/12-infra-remoto-build-vercel-readme.md)).
 
 ---
 
