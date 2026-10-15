@@ -5,7 +5,7 @@
 **Equipe:** Maria Clara Almeida Martins, Micael Cardoso Reis, Antonio Carlos Gomes, Eric Vinícius dos Santos Oliveira  
 **Versão do Documento:** 1.0  
 **Fonte Visual Oficial:** [Figma — IpêBook](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%25C3%25AABook?t=xKQbpBwLpirB2jV2-0)  
-**Figma (modo Dev):** [Figma — IpêBook · Dev Mode](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?m=dev) — specs de cor, espaçamento e assets prontos para inspecionar, sem precisar converter manualmente. Telas individuais: ver [`design-system/telas-android-figma.md`](../design-system/telas-android-figma.md).  
+**Figma (modo Dev):** [Figma — IpêBook · Dev Mode](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?m=dev) — specs de cor, espaçamento e assets prontos para inspecionar, sem precisar converter manualmente. Telas individuais: [Android](../design-system/telas-android-figma.md) (137), [iPhone](../design-system/telas-iphone-figma.md) (144, fora de escopo — ADR 0008), [Web](../design-system/telas-web-figma.md) (126).  
 **Contratos Técnicos:** [`design-system/tokens.json`](../design-system/tokens.json) e [`src/view/tokens.ts`](../src/view/tokens.ts)  
 **Decisão Arquitetural:** [ADR 0004 — Design System e Tokens de IHC](adr/0004-design-system-e-tokens-ihc.md), [ADR 0010 — design-system/ substitui design-kit/ como fonte única](adr/0010-design-system-substitui-design-kit.md)
 **Entrega completa (atividade IHC + PDM):** [`design-system/`](../design-system/)
