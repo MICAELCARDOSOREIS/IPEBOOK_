@@ -4,9 +4,17 @@ import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useReceivedRequestsViewModel } from "@/viewmodel/useReceivedRequestsViewModel";
 import { RequestListLayout, requestStyles as s } from "@/view/requests/requestListLayout";
 
-export type ReceivedRequestsProps = { sessionUserId: string; onBack?: () => void };
+export type ReceivedRequestsProps = {
+  sessionUserId: string;
+  onBack?: () => void;
+  onNavigateToNegotiationDetail?: (requestId: string) => void;
+};
 
-export function ReceivedRequests({ sessionUserId, onBack }: ReceivedRequestsProps) {
+export function ReceivedRequests({
+  sessionUserId,
+  onBack,
+  onNavigateToNegotiationDetail,
+}: ReceivedRequestsProps) {
   const [state, actions] = useReceivedRequestsViewModel(sessionUserId);
 
   return (
@@ -45,6 +53,17 @@ export function ReceivedRequests({ sessionUserId, onBack }: ReceivedRequestsProp
                 </Pressable>
               </View>
             ) : null}
+            {request.status === "accepted" ? (
+              <View style={s.actions}>
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => onNavigateToNegotiationDetail?.(request.id)}
+                  style={s.primary}
+                >
+                  <Text style={s.primaryText}>Ver detalhes do encontro</Text>
+                </Pressable>
+              </View>
+            ) : null}
             {state.respondErrorId === request.id ? (
               <Text accessibilityRole="alert" style={s.error}>{state.respondError}</Text>
             ) : null}
@@ -55,9 +74,17 @@ export function ReceivedRequests({ sessionUserId, onBack }: ReceivedRequestsProp
   );
 }
 
-export type ReceivedRequestsScreenProps = { onBack?: () => void; onRequireSignIn?: () => void };
+export type ReceivedRequestsScreenProps = {
+  onBack?: () => void;
+  onRequireSignIn?: () => void;
+  onNavigateToNegotiationDetail?: (requestId: string) => void;
+};
 
-export default function ReceivedRequestsScreen({ onBack, onRequireSignIn }: ReceivedRequestsScreenProps = {}) {
+export default function ReceivedRequestsScreen({
+  onBack,
+  onRequireSignIn,
+  onNavigateToNegotiationDetail,
+}: ReceivedRequestsScreenProps = {}) {
   const [authState] = useAuthViewModel();
 
   useEffect(() => {
@@ -65,5 +92,11 @@ export default function ReceivedRequestsScreen({ onBack, onRequireSignIn }: Rece
   }, [authState.loading, authState.user, onRequireSignIn]);
 
   if (authState.loading || !authState.user) return null;
-  return <ReceivedRequests sessionUserId={authState.user.id} onBack={onBack} />;
+  return (
+    <ReceivedRequests
+      sessionUserId={authState.user.id}
+      onBack={onBack}
+      onNavigateToNegotiationDetail={onNavigateToNegotiationDetail}
+    />
+  );
 }

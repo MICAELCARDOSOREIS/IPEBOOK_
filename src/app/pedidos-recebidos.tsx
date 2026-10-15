@@ -6,6 +6,7 @@ export default function PedidosRecebidosRoute() {
     <ReceivedRequestsScreen
       onBack={() => router.back()}
       onRequireSignIn={() => router.replace("/entrar")}
+      onNavigateToNegotiationDetail={(id) => router.push(`/negociacao/${id}`)}
     />
   );
 }

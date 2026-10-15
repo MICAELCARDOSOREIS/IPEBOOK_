@@ -5,6 +5,7 @@ import type { BookRequest } from "@/model/entities/bookRequest";
 import { AuthError, ValidationError } from "@/model/errors";
 import type {
   IBookRequestUseCases,
+  NegotiationDetail,
   RequestResponse,
   RequestWithListing,
 } from "@/usecase/iBookRequestUseCases";
@@ -103,5 +104,42 @@ export class BookRequestUseCases implements IBookRequestUseCases {
     }
     await this.books.updateStatus(listing.id, "reserved");
     return accepted;
+  }
+
+  async getRequestDetail(
+    requestId: string,
+    sessionUserId: string | null,
+  ): Promise<NegotiationDetail> {
+    const userId = requireSession(sessionUserId);
+    const request = await this.requests.findById(requestId);
+    if (!request) {
+      throw new ValidationError("Pedido não encontrado.");
+    }
+    const book = await this.books.findById(request.listingId);
+    if (!book) {
+      throw new ValidationError("Anúncio não encontrado.");
+    }
+
+    const isOwner = book.ownerId === userId;
+    const isRequester = request.requesterId === userId;
+
+    if (!isOwner && !isRequester) {
+      throw new AuthError("Você não tem permissão para acessar esta negociação.");
+    }
+
+    const safeMeetingPoints: readonly string[] = [
+      "Campus IFPI Piripiri (Recepção ou Biblioteca)",
+      "Praça da Bandeira (Centro)",
+      "Praça de Alimentação / Mercado Central",
+      "Praça de Eventos",
+    ];
+
+    return {
+      request,
+      book,
+      isOwner,
+      counterpartId: isOwner ? request.requesterId : book.ownerId,
+      safeMeetingPoints,
+    };
   }
 }
