@@ -7,4 +7,5 @@ export interface IAuthUseCases {
   getSession(): Promise<User | null>;
   requestPasswordReset(email: string): Promise<void>;
   completePasswordReset(link: string | null, newPassword: string): Promise<void>;
+  deleteAccount(sessionUserId: string | null): Promise<void>;
 }

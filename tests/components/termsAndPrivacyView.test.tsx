@@ -51,4 +51,28 @@ describe("tela de Termos e Privacidade (ISO/IEC 25010 - Usabilidade e Conformida
     fireEvent.press(backButton);
     expect(onBack).toHaveBeenCalledTimes(1);
   });
+
+  it("aciona callback onNavigateToDeleteAccount na aba de privacidade", async () => {
+    const onDelete = vi.fn();
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(
+        <TermsAndPrivacy onBack={() => {}} onNavigateToDeleteAccount={onDelete} />,
+      );
+    });
+
+    const privacyTab = screen.getByRole("tab", { name: "Privacidade (LGPD)" });
+    await act(async () => {
+      fireEvent.press(privacyTab);
+    });
+
+    const deleteLink = screen.getByRole("button", {
+      name: "Solicitar exclusão da minha conta e dados",
+    });
+    await act(async () => {
+      fireEvent.press(deleteLink);
+    });
+
+    expect(onDelete).toHaveBeenCalledTimes(1);
+  });
 });

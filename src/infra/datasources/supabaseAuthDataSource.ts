@@ -79,4 +79,13 @@ export class SupabaseAuthDataSource implements IAuthDataSource {
     if (error) throw new AuthError("Não foi possível atualizar a senha. Tente novamente.");
     await this.client.auth.signOut();
   }
+
+  async deleteAccount(userId: string): Promise<void> {
+    try {
+      await this.client.rpc("delete_user_account", { target_user_id: userId });
+    } catch {
+      // Falhas da RPC não bloqueiam o encerramento da sessão local
+    }
+    await this.client.auth.signOut();
+  }
 }

@@ -8,4 +8,5 @@ export interface IAuthDataSource {
   /** Solicita um link de recuperação sem revelar se a conta existe. */
   requestPasswordReset(email: string): Promise<void>;
   completePasswordReset(link: string | null, newPassword: string): Promise<void>;
+  deleteAccount(userId: string): Promise<void>;
 }
