@@ -1,6 +1,6 @@
 # Estado e continuidade
 
-## Atualização em 2026-10-15 — Specs 008 a 013 integradas em develop
+## Atualização em 2026-10-15 — Specs 008 a 014 integradas em develop
 
 - **Spec 008 (Meus Anúncios)**: Implementada e integrada em `develop`. Rota `/meus-anuncios`, view `MyListings`, caso de uso `listMyListings` e método `listByOwner` nos datasources. Atalho na Home.
 - **Spec 009 (Detalhes da Negociação Aceita e Ponto de Encontro)**: Implementada e integrada em `develop`. Rota `/negociacao/[id]`, view `RequestDetail`, caso de uso `getRequestDetail` com bloqueio de terceiros e sugestão de pontos públicos seguros em Piripiri, PI. Atalho "Ver detalhes do encontro" em "Pedidos recebidos" e "Meus pedidos" para itens aceitos.
@@ -8,7 +8,8 @@
 - **Spec 011 (Denúncia de Anúncio e Moderação Comunitária)**: Implementada e integrada em `develop`. Rota `/denunciar/[id]`, tela `ReportListingScreen`/`ReportListing`, caso de uso `ReportUseCases` com validações de sessão e motivos pré-definidos (UGC/conformidade com diretrizes de app store), datasources em memória e Supabase. Atalho "Denunciar anúncio" no detalhe do livro.
 - **Spec 012 (Central de Ajuda, FAQ e Guia de Segurança em Piripiri)**: Implementada e integrada em `develop`. Rota `/ajuda`, view `HelpAndFaq`, modelo `helpContent.ts` com filtros interativos por categoria (Segurança em Piripiri, Regras e Trocas, Suporte). Atalho no rodapé da Home.
 - **Spec 013 (Cancelamento e Remoção de Anúncio Próprio)**: Implementada e integrada em `develop`. Ação `cancelListing` no caso de uso `BookUseCases` com proteção de posse (`ownerId === sessionUserId`) e bloqueio de exclusão para itens com negociação aceita (`status === "reserved"`), método `delete` nos datasources em memória e Supabase, botão acessível "Remover" na tela `MyListings` com atualização reativa do catálogo.
-- `npm run check:architecture` passa com 89 arquivos (0 violações); 286 testes passam em 52 arquivos; cobertura > 80% em todas as métricas; `npm run build:web` exporta 17 rotas estáticas.
+- **Spec 014 (Exclusão de Conta e Direito ao Esquecimento LGPD)**: Implementada e integrada em `develop`. Rota `/excluir-conta`, view `DeleteAccountScreen`/`DeleteAccount`, caso de uso `deleteAccount` em `AuthUseCases`, remoção no `MemoryAuthDataSource` e no `SupabaseAuthDataSource` (`auth.admin.deleteUser` ou RPC/delete próprio). Exige digitação da palavra de confirmação "EXCLUIR", desloga a sessão e redireciona para a Home. Atalho acessível na aba de Privacidade dos Termos de Uso.
+- `npm run check:architecture` passa com 91 arquivos (0 violações); cobertura > 80% em todas as métricas (Statements: 90.97%, Branches: 80.22%, Functions: 90.15%, Lines: 91.91%); `npm run build:web` exporta 18 rotas estáticas.
 - A responsabilidade de Perfil da Maria Clara (Issue #55) permaneceu intacta e sem colisões.
 
 ## Atualização em 2026-10-15 — beta em implementação
