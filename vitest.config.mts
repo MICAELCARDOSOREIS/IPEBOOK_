@@ -7,6 +7,8 @@ export default defineConfig({
       "@": fileURLToPath(new URL("./src", import.meta.url)),
       "react-native": fileURLToPath(new URL("./tests/mocks/react-native.ts", import.meta.url)),
       "react-native-safe-area-context": fileURLToPath(new URL("./tests/mocks/react-native-safe-area-context.ts", import.meta.url)),
+      "@expo/vector-icons": fileURLToPath(new URL("./tests/mocks/expo-vector-icons.cjs", import.meta.url)),
+      "expo-symbols": fileURLToPath(new URL("./tests/mocks/expo-symbols.cjs", import.meta.url)),
     },
   },
   test: {

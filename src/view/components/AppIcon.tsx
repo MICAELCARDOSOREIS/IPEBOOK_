@@ -1,8 +1,15 @@
 import React from "react";
+import { Platform } from "react-native";
 import { SymbolView } from "expo-symbols";
+import { MaterialIcons } from "@expo/vector-icons";
 import { tokens } from "@/view/tokens";
+import { FluentIcon, type FluentIconName } from "@/view/components/FluentIcon";
 
-/** Nomes por plataforma (ADR 0005 / ADR 0009): SF Symbols no iOS, Material Symbols no Android e na Web. */
+/**
+ * Nomes por plataforma (ADR 0014): SF Symbols no iOS, Material Symbols no Android e, na Web,
+ * Fluent 2 System Icons quando cobertos (ver `fluentCoverage` abaixo) ou Material Symbols como
+ * fallback. Os campos `android`/`web` aqui seguem a nomenclatura Material (ligatures com "_").
+ */
 const symbols = {
   home: { ios: "house", android: "home", web: "home" },
   search: { ios: "magnifyingglass", android: "search", web: "search" },
@@ -66,24 +73,52 @@ const symbols = {
 
 export type AppIconName = keyof typeof symbols;
 
+/**
+ * Cobertura Fluent 2 (web) por nome do AppIcon, ADR 0014. Só os ícones já usados em telas
+ * implementadas (NavigationBar); os demais caem no fallback Material Symbols até serem migrados.
+ */
+const fluentCoverage: Partial<Record<AppIconName, FluentIconName>> = {
+  home: "home",
+  search: "search",
+  person: "person",
+};
+
 export interface AppIconProps {
   name: AppIconName;
   size?: number;
   color?: string;
+  /** Usa a variante preenchida do ícone (ex. destino ativo da navegação). */
+  filled?: boolean;
 }
 
 /** Ícone decorativo: o rótulo acessível fica no controle que o contém. */
-export function AppIcon({
-  name,
-  size = 24,
-  color = tokens.colors.text,
-}: AppIconProps) {
+export function AppIcon({ name, size = 24, color = tokens.colors.text, filled = false }: AppIconProps) {
+  if (Platform.OS === "ios") {
+    return (
+      <SymbolView
+        name={symbols[name].ios}
+        size={size}
+        tintColor={color}
+        style={{ width: size, height: size }}
+        accessible={false}
+        importantForAccessibility="no-hide-descendants"
+      />
+    );
+  }
+
+  if (Platform.OS === "web") {
+    const fluentName = fluentCoverage[name];
+    if (fluentName) {
+      return <FluentIcon name={fluentName} size={size} color={color} filled={filled} />;
+    }
+    // Fallback: ícone ainda não migrado para o Fluent 2 (ADR 0014) — usa Material Symbols.
+  }
+
   return (
-    <SymbolView
-      name={symbols[name]}
+    <MaterialIcons
+      name={symbols[name].android.replace(/_/g, "-") as never}
       size={size}
-      tintColor={color}
-      style={{ width: size, height: size }}
+      color={color}
       accessible={false}
       importantForAccessibility="no-hide-descendants"
     />

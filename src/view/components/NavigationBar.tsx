@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { tokens } from "@/view/tokens";
+import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
 
 export type NavigationDestination = "home" | "search" | "profile";
 
@@ -8,10 +9,10 @@ export type NavigationBarProps = {
   onNavigate: (destination: NavigationDestination) => void;
 };
 
-const ITEMS: ReadonlyArray<{ key: NavigationDestination; label: string }> = [
-  { key: "home", label: "Início" },
-  { key: "search", label: "Pesquisa" },
-  { key: "profile", label: "Perfil" },
+const ITEMS: ReadonlyArray<{ key: NavigationDestination; label: string; icon: AppIconName }> = [
+  { key: "home", label: "Início", icon: "home" },
+  { key: "search", label: "Pesquisa", icon: "search" },
+  { key: "profile", label: "Perfil", icon: "person" },
 ];
 
 /** Barra de navegação do design system (barra-de-navegacao.md), restrita a 3 destinos (ADR 0011). */
@@ -29,6 +30,12 @@ export function NavigationBar({ active, onNavigate }: NavigationBarProps) {
             onPress={() => onNavigate(item.key)}
             style={[styles.item, isActive && styles.itemActive]}
           >
+            <AppIcon
+              name={item.icon}
+              size={24}
+              filled={isActive}
+              color={isActive ? tokens.colors.m3.onSecondaryContainer : tokens.colors.secondaryText}
+            />
             <Text style={[styles.label, isActive && styles.labelActive]}>{item.label}</Text>
           </Pressable>
         );
@@ -51,12 +58,14 @@ const styles = StyleSheet.create({
     minWidth: tokens.accessibility.touchTarget,
     justifyContent: "center",
     alignItems: "center",
+    gap: tokens.spacing[4],
     paddingHorizontal: tokens.spacing[16],
+    paddingVertical: tokens.spacing[4],
     borderRadius: tokens.radius.full,
   },
   itemActive: { backgroundColor: tokens.colors.soft },
-  label: { color: tokens.colors.secondaryText, ...tokens.typography.labelMedium },
-  labelActive: { color: tokens.colors.action, fontWeight: "600" },
+  label: { color: tokens.colors.secondaryText, ...tokens.typography.labelSmall },
+  labelActive: { color: tokens.colors.m3.onSecondaryContainer, fontWeight: "600" },
 });
 
 export default NavigationBar;

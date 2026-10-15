@@ -145,6 +145,8 @@ export const typography = {
   bodyLarge: { fontSize: 16, lineHeight: 24, fontWeight: "400" as const, fontFamily: fontFamily.regular },
   bodyMedium: { fontSize: 14, lineHeight: 20, fontWeight: "400" as const, fontFamily: fontFamily.regular },
   labelMedium: { fontSize: 12, lineHeight: 16, fontWeight: "500" as const, fontFamily: fontFamily.medium },
+  /** m3-label-sm (02-tokens.md): rótulo da barra de navegação, hora da mensagem, badge. */
+  labelSmall: { fontSize: 11, lineHeight: 16, fontWeight: "500" as const, fontFamily: fontFamily.medium },
 } as const;
 
 export const motion = {
