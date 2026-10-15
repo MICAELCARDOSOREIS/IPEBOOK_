@@ -8,21 +8,22 @@
   teste SQL local de migrações/RLS, checagem de 57 arquivos de arquitetura e cobertura de
   81,35% de ramificações; `npm run build:web` exportou 10 rotas. Isso não comprova o fluxo
   remoto nem a entrega de e-mail.
-- Spec 007 e ADR 0012 registrados. Há migrações locais para perfis, anúncios e pedidos e
-  adaptadores Supabase ativáveis explicitamente; **nenhuma migração foi aplicada a um projeto
-  remoto**, nem a integração foi validada entre contas reais.
-- O `.env` contém URL e chave publicável do Supabase. Em consulta somente de leitura, a API de
-  autenticação respondeu HTTP 200 e a rota pública `books` respondeu HTTP 404; a tabela da
-  migração desta branch ainda não está disponível nesse projeto. Não há credencial de banco
-  nem acesso administrativo gravado no repositório.
-- A Supabase CLI foi autenticada e vinculada localmente em 2026-10-15. O banco remoto já tem
-  quatro migrações ausentes desta pasta, referentes a outra versão do IpeBook, com tabelas
-  `listings` e `book_requests`. `supabase migration list` confirmou a divergência e
-  `supabase db push --dry-run --skip-vault` recusou a aplicação por histórico incompatível.
-  As migrações foram baixadas somente para `/tmp` para inspeção. **Não executar `db push`,
-  `migration repair` ou as migrações desta branch nesse projeto** antes de decidir entre
-  um projeto Supabase separado e uma adaptação explícita ao esquema existente. Nenhuma
-  migração remota foi aplicada.
+- Spec 007 e ADR 0012 registrados. Há migrações locais para anúncios e pedidos (tabelas
+  `v2_books`/`v2_book_requests`) e adaptadores Supabase ativáveis explicitamente.
+- **Continuação em 2026-10-15:** o único projeto Supabase disponível (`xiuuiggpccpgrwkzeloc`,
+  o mesmo do `.env`) tinha um esquema de outra versão/equipe do IpeBook com dados reais
+  (`listings`, `profiles`, `book_requests`, `notifications`, `favorites`, `ratings`, `reports`,
+  `request_messages`, `user_blocks`; 9 anúncios, 6 perfis, 4 pedidos etc.). Não há ferramenta
+  disponível para apagar o projeto inteiro. Com autorização explícita do usuário — informado
+  do volume de dados envolvido —, esse esquema legado e 15 funções `SECURITY DEFINER` órfãs
+  foram apagados, e as migrações da spec 007 foram aplicadas do zero no mesmo projeto via MCP
+  do Supabase (`apply_migration`), sem usar a CLI local. `public.v2_books` e
+  `public.v2_book_requests` existem agora no projeto real, com RLS habilitado e sem dados. O
+  advisor de segurança do Supabase não reporta mais as funções legadas; resta só o aviso padrão
+  de "Leaked Password Protection Disabled" (configuração de Auth, não tratada). As quatro
+  migrações locais que só espelhavam o esquema legado foram removidas do repositório. Ainda não
+  há validação de fluxo real com duas contas, nem envio de e-mail/retorno de link testado
+  contra esse projeto — ver `specs/007-contas-persistentes/validacao.md`.
 - A senha temporária exibida no MVP foi removida. O modo em memória não simula e-mail nem
   altera a senha; há tela para definir nova senha a partir de link Supabase. Ainda é necessário
   validar o retorno do link no Android e Web e configurar SMTP próprio.

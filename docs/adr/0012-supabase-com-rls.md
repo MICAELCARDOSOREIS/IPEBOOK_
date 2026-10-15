@@ -1,6 +1,6 @@
 # 0012 — Supabase com autorização no banco
 
-Data: 2026-10-15. Status: aceito.
+Data: 2026-10-15. Status: substituído parcialmente pelo [0013](0013-reset-esquema-legado-supabase.md) quanto à preservação do esquema legado.
 
 ## Contexto
 
