@@ -17,6 +17,7 @@ export default function Index() {
       onNavigateToCreateListing={() => router.push("/anunciar")}
       onNavigateToReceivedRequests={() => router.push("/pedidos-recebidos")}
       onNavigateToSentRequests={() => router.push("/meus-pedidos")}
+      onNavigateToBookDetail={(bookId) => router.push(`/livro/${bookId}`)}
     />
   );
 }
