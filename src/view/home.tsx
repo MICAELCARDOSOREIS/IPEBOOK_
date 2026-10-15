@@ -23,6 +23,7 @@ export type HomeProps = {
   onNavigateToBookDetail?: (bookId: string) => void;
   onNavigateToTerms?: () => void;
   onNavigateToHelp?: () => void;
+  onNavigateToNotifications?: () => void;
   /** Mudar este valor força o catálogo a recarregar (ex.: ao voltar de cadastrar um anúncio). */
   focusKey?: unknown;
 };
@@ -36,6 +37,7 @@ export default function Home({
   onNavigateToBookDetail,
   onNavigateToTerms,
   onNavigateToHelp,
+  onNavigateToNotifications,
   focusKey,
 }: HomeProps = {}) {
   const [state, actions] = useHomeViewModel();
@@ -80,6 +82,13 @@ export default function Home({
             </View>
           </View>
           <View style={styles.requestsRow}>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => onNavigateToNotifications?.()}
+              style={styles.sessionButton}
+            >
+              <Text style={styles.sessionButtonText}>Notificações</Text>
+            </Pressable>
             <Pressable
               accessibilityRole="button"
               onPress={() => onNavigateToMyListings?.()}
