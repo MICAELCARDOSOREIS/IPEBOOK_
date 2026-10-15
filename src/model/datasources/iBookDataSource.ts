@@ -5,4 +5,5 @@ export interface IBookDataSource {
   create(book: Omit<Book, "id">): Promise<Book>;
   findById(id: string): Promise<Book | null>;
   updateStatus(id: string, status: Book["status"]): Promise<Book>;
+  listByOwner(ownerId: string): Promise<readonly Book[]>;
 }

@@ -58,4 +58,14 @@ export class SupabaseBookDataSource implements IBookDataSource {
     if (error || !data) throw new DataSourceError("Não foi possível atualizar o anúncio.");
     return mapBook(data as BookRow);
   }
+
+  async listByOwner(ownerId: string): Promise<readonly Book[]> {
+    const { data, error } = await this.client
+      .from("v2_books")
+      .select("id,title,author,owner_id,modality,price,status")
+      .eq("owner_id", ownerId)
+      .order("created_at", { ascending: false });
+    if (error) throw new DataSourceError("Não foi possível carregar os seus anúncios.");
+    return (data as BookRow[]).map(mapBook);
+  }
 }

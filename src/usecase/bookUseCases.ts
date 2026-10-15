@@ -47,4 +47,11 @@ export class BookUseCases implements IBookUseCases {
     }
     return book;
   }
+
+  async listMyListings(sessionUserId: string | null): Promise<readonly Book[]> {
+    if (!sessionUserId || !sessionUserId.trim()) {
+      throw new AuthError("Sessão obrigatória para visualizar seus anúncios.");
+    }
+    return this.dataSource.listByOwner(sessionUserId.trim());
+  }
 }
