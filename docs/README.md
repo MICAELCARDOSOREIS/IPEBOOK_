@@ -22,6 +22,10 @@ A [constituição](../.specify/memory/constitution.md) estabelece os princípios
 
 A [especificação 001](../specs/001-estrutura-mvvm/spec.md) cobre a base técnica existente. A documentação de produto diferencia comportamento implementado de questões em aberto: uma sugestão não autoriza sua implementação.
 
+A [especificação 007](../specs/007-contas-persistentes/spec.md) acompanha a primeira entrega
+técnica da beta pública; seu [registro de validação](../specs/007-contas-persistentes/validacao.md)
+mostra o que ainda depende de ambiente real.
+
 ## Manutenção
 
 Ao mudar um fluxo, atualizar sua especificação, os guias afetados e a evidência de validação. Preservar registros históricos com data; manter somente [estado.md](estado.md) como resumo da situação corrente. Escrever em português e não incluir credenciais.

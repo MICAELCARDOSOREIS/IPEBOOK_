@@ -1,0 +1,68 @@
+import { readFileSync } from 'node:fs';
+import { PGlite } from '@electric-sql/pglite';
+
+const db = new PGlite();
+const owner = '11111111-1111-4111-8111-111111111111';
+const reader = '22222222-2222-4222-8222-222222222222';
+const other = '33333333-3333-4333-8333-333333333333';
+await db.exec(`create schema auth;
+create role anon nologin;
+create role authenticated nologin;
+create table auth.users (id uuid primary key);
+create function auth.uid() returns uuid stable language sql as $$
+  select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid
+$$;
+insert into auth.users (id) values ('${owner}'), ('${reader}'), ('${other}');
+create table public.listings (id uuid primary key);
+create table public.book_requests (id uuid primary key);
+create table public.profiles (user_id uuid primary key);
+insert into public.listings (id) values ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa');
+insert into public.book_requests (id) values ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb');
+insert into public.profiles (user_id) values ('${owner}');
+grant usage on schema public, auth to anon, authenticated;
+grant select on auth.users to authenticated;`);
+
+for (const name of ['202610150001_contas_e_anuncios.sql', '202610150002_pedidos.sql']) {
+  await db.exec(readFileSync(new URL(`../supabase/migrations/${name}`, import.meta.url), 'utf8'));
+}
+const legacy = await db.query(`select
+  (select count(*) from public.listings) as listings,
+  (select count(*) from public.book_requests) as requests,
+  (select count(*) from public.profiles) as profiles`);
+if (Object.values(legacy.rows[0]).some((count) => Number(count) !== 1)) {
+  throw new Error('Migração alterou os dados das tabelas legadas');
+}
+async function as(role, user, sql) {
+  await db.exec(`reset role; select set_config('request.jwt.claim.sub', '${user ?? ''}', false); set role ${role};`);
+  return db.query(sql);
+}
+
+async function denied(label, action) {
+  try {
+    await action();
+    throw new Error(`${label}: operação indevida permitida`);
+  } catch (error) {
+    if (error.message === `${label}: operação indevida permitida`) throw error;
+    process.stdout.write(`${label}: negado\n`);
+  }
+}
+
+await as('authenticated', owner, `insert into public.v2_books (id, owner_id, title, author, modality)
+values ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '${owner}', 'Livro', 'Autora', 'donation')`);
+const books = await as('anon', null, `select id from public.v2_books`);
+if (books.rows.length !== 1) throw new Error('Catálogo público indisponível');
+await denied('Visitante publica', () => as('anon', null, `insert into public.v2_books (owner_id, title, author, modality) values ('${owner}', 'Outro', 'Autora', 'donation')`));
+await denied('Leitor falsifica proprietário', () => as('authenticated', reader, `insert into public.v2_books (owner_id, title, author, modality) values ('${owner}', 'Outro', 'Autora', 'donation')`));
+await denied('Dono solicita próprio livro', () => as('authenticated', owner, `insert into public.v2_book_requests (listing_id, requester_id) values ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '${owner}')`));
+await as('authenticated', reader, `insert into public.v2_book_requests (id, listing_id, requester_id)
+values ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '${reader}')`);
+const hidden = await as('authenticated', other, `select id from public.v2_book_requests where id = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'`);
+if (hidden.rows.length !== 0) throw new Error('Terceiro conseguiu ler pedido');
+process.stdout.write('Terceiro lê pedido: oculto\n');
+const blockedUpdate = await as('authenticated', other, `update public.v2_book_requests set status = 'accepted' where id = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'`);
+if (blockedUpdate.affectedRows !== 0) throw new Error('Terceiro conseguiu responder pedido');
+process.stdout.write('Terceiro responde pedido: nenhuma linha alterada\n');
+await as('authenticated', owner, `update public.v2_book_requests set status = 'accepted' where id = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'`);
+await denied('Pedido aceito não reabre', () => as('authenticated', owner, `update public.v2_book_requests set status = 'pending' where id = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'`));
+process.stdout.write('Migrações e cenários SQL locais verificados.\n');
+await db.close();

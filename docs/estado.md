@@ -1,5 +1,48 @@
 # Estado e continuidade
 
+## Atualização em 2026-10-15 — beta em implementação
+
+- Branch de trabalho: `feature/beta-supabase-base`, derivada de `develop` em `1c9a395`.
+- Base antes da mudança: `npm run validate` passou com 166 testes, tipos e arquitetura.
+- Após as alterações locais: `npm run validate` passou com 190 testes em 30 arquivos,
+  teste SQL local de migrações/RLS, checagem de 57 arquivos de arquitetura e cobertura de
+  81,35% de ramificações; `npm run build:web` exportou 10 rotas. Isso não comprova o fluxo
+  remoto nem a entrega de e-mail.
+- Spec 007 e ADR 0012 registrados. Há migrações locais para anúncios e pedidos (tabelas
+  `v2_books`/`v2_book_requests`) e adaptadores Supabase ativáveis explicitamente.
+- **Continuação em 2026-10-15:** o único projeto Supabase disponível (`xiuuiggpccpgrwkzeloc`,
+  o mesmo do `.env`) tinha um esquema de outra versão/equipe do IpeBook com dados reais
+  (`listings`, `profiles`, `book_requests`, `notifications`, `favorites`, `ratings`, `reports`,
+  `request_messages`, `user_blocks`; 9 anúncios, 6 perfis, 4 pedidos etc.). Não há ferramenta
+  disponível para apagar o projeto inteiro. Com autorização explícita do usuário — informado
+  do volume de dados envolvido —, esse esquema legado e 15 funções `SECURITY DEFINER` órfãs
+  foram apagados, e as migrações da spec 007 foram aplicadas do zero no mesmo projeto via MCP
+  do Supabase (`apply_migration`), sem usar a CLI local. `public.v2_books` e
+  `public.v2_book_requests` existem agora no projeto real, com RLS habilitado e sem dados. O
+  advisor de segurança do Supabase não reporta mais as funções legadas; resta só o aviso padrão
+  de "Leaked Password Protection Disabled" (configuração de Auth, não tratada). As quatro
+  migrações locais que só espelhavam o esquema legado foram removidas do repositório. Ainda não
+  há validação de fluxo real com duas contas, nem envio de e-mail/retorno de link testado
+  contra esse projeto — ver `specs/007-contas-persistentes/validacao.md`.
+- A senha temporária exibida no MVP foi removida. O modo em memória não simula e-mail nem
+  altera a senha; há tela para definir nova senha a partir de link Supabase. Ainda é necessário
+  validar o retorno do link no Android e Web e configurar SMTP próprio.
+- As issues #55/#56 da spec 006 seguem abertas e atribuídas à Maria Clara. Não foram alteradas
+  por esta branch.
+- Cloudflare Pages foi escolhido para a Web da beta; não há publicação configurada ou
+  verificada. A configuração Vercel descrita no histórico abaixo pertence ao MVP anterior.
+- O usuário definiu Piripiri, PI, como a única cidade da beta. A regra ainda precisa de
+  especificação, implementação e verificação; nenhuma limitação geográfica está ativa no app.
+- Pendências antes da beta: completar e testar RLS com duas contas, aceite atômico, perfil/idade/
+  cidade/contato, fotos, moderação, exclusão de conta, legal, monitoramento e publicação. A
+  cidade/UF foi definida, mas o domínio ainda não foi informado. Supabase Pro requer autorização de gasto.
+- A auditoria `npm audit --omit=dev` reportou 32 avisos nas dependências, inclusive um crítico
+  em `shell-quote`; não houve atualização automática fora do escopo. Avaliar os caminhos de
+  execução relevantes antes de distribuir um APK ou publicar a Web.
+
+O restante deste documento é o registro anterior e pode conter contagens, links e prioridades
+superados por esta atualização. Atualizar a consolidação ao concluir a spec 007.
+
 Conferência: 2026-10-14 (base: branch `develop`, após merge do deploy web — PR #45 — e correção
 do `typecheck`). Projeto: `~/IPEBOOK_`.
 

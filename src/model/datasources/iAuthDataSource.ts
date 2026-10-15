@@ -5,6 +5,7 @@ export interface IAuthDataSource {
   signIn(email: string, password: string): Promise<User>;
   signOut(): Promise<void>;
   currentUser(): Promise<User | null>;
-  /** Gera uma senha temporária para a conta do e-mail informado e a define como senha atual. */
-  requestPasswordReset(email: string): Promise<string>;
+  /** Solicita um link de recuperação sem revelar se a conta existe. */
+  requestPasswordReset(email: string): Promise<void>;
+  completePasswordReset(link: string | null, newPassword: string): Promise<void>;
 }

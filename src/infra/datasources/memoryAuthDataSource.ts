@@ -48,18 +48,11 @@ export class MemoryAuthDataSource implements IAuthDataSource {
     return this.session ? { ...this.session } : null;
   }
 
-  async requestPasswordReset(email: string): Promise<string> {
-    const normalizedEmail = email.trim().toLowerCase();
-    const account = this.accountsByEmail.get(normalizedEmail);
-    if (!account) {
-      throw new AuthError("Não há conta cadastrada com este e-mail.");
-    }
-    const temporaryPassword = generateTemporaryPassword();
-    this.accountsByEmail.set(normalizedEmail, { ...account, password: temporaryPassword });
-    return temporaryPassword;
+  async requestPasswordReset(_email: string): Promise<void> {
+    throw new AuthError("Recuperação por e-mail indisponível no modo local.");
   }
-}
 
-function generateTemporaryPassword(): string {
-  return Math.random().toString(36).slice(2, 10).padEnd(8, "0");
+  async completePasswordReset(_link: string | null, _newPassword: string): Promise<void> {
+    throw new AuthError("Recuperação por e-mail indisponível no modo local.");
+  }
 }

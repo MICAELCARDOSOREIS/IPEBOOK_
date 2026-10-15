@@ -208,8 +208,8 @@ describe("tela de esqueceu a senha (ISO/IEC 25010 - Usabilidade e Acessibilidade
     expect(screen.getByLabelText("E-mail")).toBeDefined();
   });
 
-  it("exibe a senha temporária após recuperar com sucesso", async () => {
-    const requestPasswordReset = vi.fn().mockResolvedValue("abc12345");
+  it("confirma a solicitação sem exibir senha", async () => {
+    const requestPasswordReset = vi.fn().mockResolvedValue(true);
     mockAuth({ user: null, loading: false, error: null }, { requestPasswordReset });
 
     let screen!: Awaited<ReturnType<typeof render>>;
@@ -225,14 +225,14 @@ describe("tela de esqueceu a senha (ISO/IEC 25010 - Usabilidade e Acessibilidade
     });
 
     expect(requestPasswordReset).toHaveBeenCalledWith("pessoa@exemplo.com");
-    expect(screen.getByText("abc12345")).toBeDefined();
+    expect(screen.getByText("Se houver uma conta com este e-mail, enviaremos um link de recuperação.")).toBeDefined();
     expect(screen.queryByLabelText("E-mail")).toBeNull();
   });
 
-  it("exibe erro quando o e-mail não corresponde a nenhuma conta", async () => {
+  it("exibe erro quando o envio não está disponível", async () => {
     mockAuth(
-      { user: null, loading: false, error: "Não há conta cadastrada com este e-mail." },
-      { requestPasswordReset: vi.fn().mockResolvedValue(null) },
+      { user: null, loading: false, error: "Recuperação por e-mail indisponível no modo local." },
+      { requestPasswordReset: vi.fn().mockResolvedValue(false) },
     );
 
     let screen!: Awaited<ReturnType<typeof render>>;
@@ -241,7 +241,7 @@ describe("tela de esqueceu a senha (ISO/IEC 25010 - Usabilidade e Acessibilidade
     });
 
     expect(screen.getByRole("alert")).toBeDefined();
-    expect(screen.getByText("Não há conta cadastrada com este e-mail.")).toBeDefined();
+    expect(screen.getByText("Recuperação por e-mail indisponível no modo local.")).toBeDefined();
   });
 
   it("aciona a navegação de volta ao login", async () => {

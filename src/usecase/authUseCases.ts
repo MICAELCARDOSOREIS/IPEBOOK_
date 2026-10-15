@@ -1,7 +1,7 @@
 import type { IAuthDataSource } from "@/model/datasources/iAuthDataSource";
 import type { User } from "@/model/entities/user";
 import { ValidationError } from "@/model/errors";
-import { validateAuthPayload } from "@/model/validators/authValidator";
+import { validateAuthPayload, validateNewPassword } from "@/model/validators/authValidator";
 import type { IAuthUseCases } from "@/usecase/iAuthUseCases";
 
 export class AuthUseCases implements IAuthUseCases {
@@ -31,7 +31,13 @@ export class AuthUseCases implements IAuthUseCases {
     return this.dataSource.currentUser();
   }
 
-  requestPasswordReset(email: string): Promise<string> {
+  requestPasswordReset(email: string): Promise<void> {
     return this.dataSource.requestPasswordReset(email.trim());
+  }
+
+  async completePasswordReset(link: string | null, newPassword: string): Promise<void> {
+    const validation = validateNewPassword(newPassword);
+    if (!validation.isValid) throw new ValidationError(validation.errors[0]);
+    return this.dataSource.completePasswordReset(link, newPassword);
   }
 }

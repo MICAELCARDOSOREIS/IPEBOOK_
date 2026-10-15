@@ -8,13 +8,14 @@ export type AuthState = {
   user: User | null;
   loading: boolean;
   error: string | null;
+  statusMessage?: string | null;
 };
 
 export type AuthActions = {
   signUp: (email: string, password: string) => Promise<boolean>;
   signIn: (email: string, password: string) => Promise<boolean>;
   signOut: () => Promise<void>;
-  requestPasswordReset: (email: string) => Promise<string | null>;
+  requestPasswordReset: (email: string) => Promise<boolean>;
 };
 
 const GENERIC_ERROR = "Não foi possível concluir. Tente novamente.";
@@ -62,10 +63,27 @@ export function useAuthViewModel(
     }
   }, []);
 
-  const signUp = useCallback(
-    (email: string, password: string) => run(() => auth.signUp(email, password)),
-    [auth, run],
-  );
+  const signUp = useCallback(async (email: string, password: string) => {
+    setState((previous) => ({ ...previous, loading: true, error: null, statusMessage: null }));
+    try {
+      await auth.signUp(email, password);
+      const user = await auth.getSession();
+      if (active.current) setState({
+        user,
+        loading: false,
+        error: null,
+        statusMessage: user ? null : "Conta criada. Confirme seu e-mail antes de entrar.",
+      });
+      return Boolean(user);
+    } catch (error) {
+      if (active.current) setState((previous) => ({
+        ...previous,
+        loading: false,
+        error: error instanceof DomainError ? error.message : GENERIC_ERROR,
+      }));
+      return false;
+    }
+  }, [auth]);
 
   const signIn = useCallback(
     (email: string, password: string) => run(() => auth.signIn(email, password)),
@@ -75,9 +93,9 @@ export function useAuthViewModel(
   const requestPasswordReset = useCallback(async (email: string) => {
     setState((previous) => ({ ...previous, loading: true, error: null }));
     try {
-      const temporaryPassword = await auth.requestPasswordReset(email);
+      await auth.requestPasswordReset(email);
       if (active.current) setState((previous) => ({ ...previous, loading: false, error: null }));
-      return temporaryPassword;
+      return true;
     } catch (error) {
       if (active.current) {
         setState((previous) => ({
@@ -86,7 +104,7 @@ export function useAuthViewModel(
           error: error instanceof DomainError ? error.message : GENERIC_ERROR,
         }));
       }
-      return null;
+      return false;
     }
   }, [auth]);
 

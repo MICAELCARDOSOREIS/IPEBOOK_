@@ -1,5 +1,10 @@
 # Especificação: versão 1.0 — telas alinhadas ao design system
 
+> A recuperação com senha temporária descrita abaixo registra o comportamento original da
+> spec 006. A [spec 007](../007-contas-persistentes/spec.md) substitui esse fluxo por link de
+> e-mail: a senha não é alterada nem exibida sem comprovação. As demais partes da spec 006
+> continuam pendentes conforme suas tarefas e issues.
+
 Data: 2026-10-14. Branch: `develop`. Tipo: redesenho de telas existentes + telas novas que
 faltavam, para fechar a versão 1.0 do produto.
 Pedido: fazer as telas do app seguirem de fato o [`design-system/`](../../design-system/README.md)

@@ -1,5 +1,20 @@
 # Guia de desenvolvimento
 
+## Integração Supabase em preparação (spec 007)
+
+O padrão continua `EXPO_PUBLIC_BACKEND=memory`. O projeto Supabase compartilhado usa tabelas
+`v2_` para esta versão; as migrações legadas trazidas para esta pasta já constam no histórico
+remoto. Aplicar somente as migrações pendentes após uma simulação de `db push`, configurar a
+URL do projeto, a chave **publicável** e `EXPO_PUBLIC_AUTH_REDIRECT_URL` no `.env`, e então usar
+`EXPO_PUBLIC_BACKEND=supabase`. O endereço de retorno precisa estar na lista de URLs permitidas
+do Supabase Auth. Não usar `service_role` no cliente nem registrar segredos no repositório.
+
+Esse modo ainda não é critério de publicação: faltam testes reais de RLS com duas contas,
+aceite atômico, SMTP, confirmação do link de senha no Android/Web e demais requisitos da beta.
+Validar localmente com `npm run validate` (inclui `npm run test:sql` via PGlite) e
+`npm run build:web`; esses comandos não aplicam migrações remotas nem verificam entrega de
+e-mail.
+
 ## Ambiente
 
 O projeto usa npm e `package-lock.json`. A CI está configurada com Node.js 24; a primeira validação local usou Node.js 26.8.2. As versões do projeto estão em [package.json](../package.json); o lockfile registra as versões resolvidas. Não atualizar dependências como parte de uma simples instalação.
@@ -24,8 +39,9 @@ Em outra máquina, substituir apenas o caminho pelo diretório do clone. `npm ci
 | `npm run ios` | Solicita abertura no simulador iOS disponível |
 | `npm run typecheck` | Verifica tipos sem emitir arquivos |
 | `npm run check:architecture` | Verifica imports entre camadas |
+| `npm run test:sql` | Executa migrações e cenários de RLS em PostgreSQL local via PGlite |
 | `npm test` | Executa a suíte uma vez |
-| `npm run validate` | Executa tipos, arquitetura e testes, interrompendo em falhas |
+| `npm run validate` | Executa tipos, arquitetura, SQL e testes, interrompendo em falhas |
 | `npm run build:web` | Exporta arquivos estáticos para `dist/` |
 
 Para Android/iOS é necessário preparar o ambiente nativo e um cliente compatível com o SDK utilizado. O simulador iOS local depende de macOS. Nesta entrega não há validação em dispositivo ou emulador; executar o comando não garante que o ambiente nativo esteja preparado.
@@ -34,7 +50,12 @@ Para Android/iOS é necessário preparar o ambiente nativo e um cliente compatí
 
 [app.json](../app.json) define nome, slug, esquema `ipebook`, orientação, plugins e exportação web estática. [tsconfig.json](../tsconfig.json) habilita modo estrito e alias `@/`.
 
-O código atual não exige variáveis de ambiente, login, API ou banco. A existência de `.env.example` não significa que suas chaves sejam consumidas pelo aplicativo. Esse arquivo foi encontrado como trabalho local do usuário e não foi alterado nesta revisão. Antes de implementar uma integração, definir e documentar cada variável sem valores secretos. Arquivos `.env*` são ignorados pelo Git, exceto `.env.example`.
+O modo padrão de desenvolvimento (`memory`) não exige variáveis de ambiente, API ou banco.
+O modo `supabase` usa as variáveis descritas acima e no [`.env.example`](../.env.example).
+A presença da URL e da chave publicável no `.env` não aplica migrações nem ativa o backend:
+é necessário configurar `EXPO_PUBLIC_AUTH_REDIRECT_URL` e selecionar
+`EXPO_PUBLIC_BACKEND=supabase` após preparar e validar o projeto remoto. Arquivos `.env*`
+são ignorados pelo Git, exceto `.env.example`.
 
 ## Conferir a exportação local
 

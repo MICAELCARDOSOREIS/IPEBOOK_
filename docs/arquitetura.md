@@ -1,5 +1,10 @@
 # Arquitetura MVVM sofisticado
 
+> Atualização de 2026-10-15: `src/infra` já contém adaptadores Supabase para contas, anúncios
+> e pedidos, selecionáveis por `EXPO_PUBLIC_BACKEND=supabase` em desenvolvimento. O padrão
+> continua em memória; as migrações e o aceite atômico ainda não foram validados no servidor.
+> O fluxo de senha temporária descrito no histórico abaixo foi removido pela spec 007.
+
 A decisão está registrada no [ADR 0002](adr/0002-adotar-expo-mvvm.md). O nome da skill é `skill_mvvm_simplificado`, mas o padrão aplicado é o MVVM sofisticado com sete camadas.
 
 ## Responsabilidades
