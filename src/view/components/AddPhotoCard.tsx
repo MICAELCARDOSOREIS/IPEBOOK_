@@ -8,19 +8,19 @@ export type AddPhotoCardProps = {
 };
 
 /**
- * Cartão de adicionar foto (Anunciar livro, etapa 1). Ainda não tem arquivo próprio em
- * design-system/04-componentes/ — usa os mesmos tokens do Cartão de informação
- * (surface-container-low, radius-medium) com borda tracejada para indicar a ação de upload.
+ * Cartão de adicionar foto (Anunciar livro, etapa 1): quadrado ao lado dos campos de
+ * título/autor, com "+" e rótulo empilhados ao centro (conferido contra o screenshot real da
+ * tela 04.01 no Figma em 2026-10-15 — não é uma faixa de largura total).
  */
-export function AddPhotoCard({ label = "Adicionar foto", onPress }: AddPhotoCardProps) {
+export function AddPhotoCard({ label = "Foto da capa", onPress }: AddPhotoCardProps) {
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={label}
+      accessibilityLabel={`Adicionar ${label.toLowerCase()}`}
       onPress={onPress}
       style={styles.card}
     >
-      <AppIcon name="photo" color={tokens.colors.action} />
+      <AppIcon name="add" color={tokens.colors.action} size={28} />
       <Text style={styles.label}>{label}</Text>
     </Pressable>
   );
@@ -28,20 +28,17 @@ export function AddPhotoCard({ label = "Adicionar foto", onPress }: AddPhotoCard
 
 const styles = StyleSheet.create({
   card: {
-    minHeight: tokens.accessibility.touchTarget,
-    flexDirection: "row",
+    aspectRatio: 1,
+    minWidth: tokens.accessibility.touchTarget * 2,
     alignItems: "center",
     justifyContent: "center",
     gap: tokens.spacing[8],
     borderRadius: tokens.radius.medium,
     borderWidth: 1,
-    borderStyle: "dashed",
-    borderColor: tokens.colors.border,
-    backgroundColor: tokens.colors.soft,
-    paddingVertical: tokens.spacing[16],
-    paddingHorizontal: tokens.spacing[16],
+    borderColor: tokens.colors.m3.outlineVariant,
+    backgroundColor: tokens.colors.surface,
   },
-  label: { color: tokens.colors.action, ...tokens.typography.bodyMedium },
+  label: { color: tokens.colors.action, ...tokens.typography.bodyMedium, textAlign: "center" },
 });
 
 export default AddPhotoCard;
