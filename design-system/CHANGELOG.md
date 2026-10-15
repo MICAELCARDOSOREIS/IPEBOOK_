@@ -2,6 +2,25 @@
 
 Versões no formato `MAIOR.MENOR.CORREÇÃO`. Mudança grande = versão nova.
 
+## 1.2.0 · 2026-10-15
+
+- Implementados os componentes React Native que faltavam para as telas do fluxo "Anunciar
+  livro" (Figma), identificados na mesma verificação da versão 1.1.1.
+- **Responsáveis:** Micael Cardoso Reis.
+- **Mudanças:**
+  - `src/view/components/Chip.tsx`: chip de filtro (`chip.md`), já documentado mas sem
+    implementação em código.
+  - `src/view/components/AddPhotoCard.tsx` e `04-componentes/cartao-de-adicionar-foto.md`
+    (**Novo**): cartão de upload de foto da etapa 1 de "Anunciar livro". Não existia componente
+    M3 equivalente nem documentação prévia — documentado e implementado juntos.
+  - `tests/components/chip.test.tsx` e `tests/components/addPhotoCard.test.tsx`: cobertura dos
+    dois componentes novos.
+  - `README.md`: contagem de componentes atualizada de 23 para 24.
+- **Pendência registrada, não resolvida nesta versão:** o indicador de etapas usado no Figma
+  (barra segmentada de 3 traços) ainda diverge do componente documentado em
+  `indicador-de-etapas.md` (círculos numerados) — precisa de decisão de design antes de mexer
+  no componente ou na doc.
+
 ## 1.1.1 · 2026-10-15
 
 - Sincronizado `src/view/tokens.ts` com `design-system/tokens.json`, a partir de uma
