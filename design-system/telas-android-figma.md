@@ -211,4 +211,6 @@ Esta lista foi gerada lendo a metadata do arquivo Figma via MCP (`get_metadata` 
 
 ## Páginas iPhone e Web
 
-Ainda não extraídas — este inventário cobre só a página Android ("APP · 10 · Android · Material 3"). O guia do arquivo ("00 · Guia") cita 144 telas iPhone e 126 telas Web em páginas separadas.
+Ver [`telas-iphone-figma.md`](telas-iphone-figma.md) (144 telas, iOS 26 — fora do escopo atual
+de implementação, ver ADR 0008) e [`telas-web-figma.md`](telas-web-figma.md) (126 telas,
+Desktop/Tablet/Celular).
