@@ -30,10 +30,12 @@ perfil quanto o de quem anunciou um livro.
 
 ### Detalhe do livro (dividida entre Micael e Maria Clara)
 
-- Nova tela de detalhe do livro, aberta ao tocar em um item do catálogo: mostra título, autor,
-  modalidade, preço (se venda) e o nome de quem anunciou (link para o perfil público, US5). O
-  botão "Solicitar negociação" (já existente na spec 004) passa a viver aqui, em vez de dentro
-  da linha da lista.
+- Nova tela de detalhe do livro, aberta ao tocar em um item do catálogo: mostra a capa
+  ilustrativa (variante "em cartão", ≥ 80 px), título, autor, modalidade, preço (se venda) e o
+  nome de quem anunciou (link para o perfil público, US5). O botão "Solicitar negociação" (já
+  existente na spec 004) passa a viver aqui, em vez de dentro da linha da lista. Como não é uma
+  tela raiz, usa a Barra superior (botão voltar + nome da tela), conforme
+  `design-system/04-componentes/barra-superior.md`.
 - Camada de modelo/caso de uso (buscar um livro por id): **Micael**.
 - Camada de tela/rota/navegação a partir do catálogo: **Maria Clara**.
 
@@ -41,7 +43,8 @@ perfil quanto o de quem anunciou um livro.
 
 - Barra de navegação fixa com 3 destinos: Início, Pesquisa, Perfil (ver [ADR 0011](../../docs/adr/0011-navegacao-tres-destinos.md)).
 - Redesenhar a Home (`src/view/home.tsx`) usando os componentes documentados para item de lista
-  de livro, sem mudar o comportamento já coberto pela spec 005 (catálogo).
+  de livro (incluindo a capa ilustrativa na variante "em lista", 44 px, para anúncios sem foto),
+  sem mudar o comportamento já coberto pela spec 005 (catálogo).
 - Nova tela de busca: filtra o catálogo já carregado por título ou autor, usando o Campo de
   busca do design system — sem endpoint novo, filtro sobre os dados já trazidos por
   `listBooks()`.
@@ -59,6 +62,14 @@ perfil quanto o de quem anunciou um livro.
   nesta versão, sem seletor de arquivo.
 - "Estante" e "Conversas" como destinos de navegação — não existem como funcionalidade
   especificada (ver ADR 0011).
+- Interruptor (toggle) no perfil — o inventário do design system lista esse componente para
+  "Configurações/Perfil", mas não há nenhuma funcionalidade de configuração/notificação no
+  escopo real do IPEBOOK_ (a ideia de notificações foi descartada por falta de necessidade
+  concreta). Não forçar um controle sem função, mesmo estando documentado — mesmo critério do
+  ADR 0011 para "Estante"/"Conversas".
+- Barra superior no Perfil — a própria doc do componente (`barra-superior.md`) diz que telas
+  raiz usam o título grande da marca, não essa barra; Perfil é uma das 3 raízes da barra de
+  navegação (ADR 0011), então segue o mesmo padrão da Home, não o do detalhe do livro.
 - Edição de anúncio, denúncia/bloqueio, mensagens diretas entre usuários.
 - Busca por modalidade, preço ou localização — só por título/autor nesta versão.
 - Validação em dispositivo físico Android — cobre a lógica e a Web; a validação em aparelho
@@ -159,6 +170,11 @@ quero solicitar negociação sem precisar que tudo caiba na linha da lista.
   item ativo indicado por pílula, conforme ADR 0011 e `barra-de-navegacao.md`.
 - FR-009: buscar um livro por id inexistente deve retornar um erro de domínio tratável pela
   View (mensagem clara), nunca lançar uma exceção não tratada.
+- FR-010: todo anúncio sem foto deve exibir a capa ilustrativa (cor/motivo determinísticos a
+  partir do `id` do anúncio, nunca aleatórios a cada renderização), tanto na linha da lista
+  quanto no detalhe do livro.
+- FR-011: toda tela que não seja uma das 3 raízes da barra de navegação (Início, Pesquisa,
+  Perfil) deve usar a Barra superior, com botão voltar funcional e o nome da tela.
 
 ## Critérios de sucesso
 

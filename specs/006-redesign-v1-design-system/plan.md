@@ -70,6 +70,11 @@ memória como o restante da base.
   sobre `primary-container`, usado no perfil próprio (64 px) e em listas/perfil público (40 px).
 - `src/view/components/SearchField.tsx` (novo, extraído de `campo-de-busca.md`): campo de busca
   em pílula com botão Limpar.
+- `src/view/components/BookCover.tsx` (novo, extraído de `capa-ilustrativa.md`): cor/motivo
+  determinísticos a partir do `id` do anúncio (FR-010), variantes "em lista" (44 px, só a arte)
+  e "em cartão" (≥ 80 px, com título/autor sobrepostos). **Maria Clara.**
+- `src/view/components/TopAppBar.tsx` (novo, extraído de `barra-superior.md`): botão voltar +
+  título da tela, para telas que não são raiz (FR-011). **Maria Clara.**
 
 ## View (telas)
 
@@ -78,12 +83,13 @@ memória como o restante da base.
 - `src/view/auth/forgotPassword.tsx` (novo): formulário de e-mail, exibe a senha temporária
   retornada, com link de volta ao login.
 - `src/view/home.tsx`: trocar o `renderItem` manual pelo componente de item de lista do design
-  system (linha-de-livro.md), mantendo o comportamento (tag de modalidade, estados) já coberto
-  pela spec 005; adicionar `NavigationBar`; cada item passa a navegar para o detalhe do livro
-  (US6) em vez de ter o botão "Solicitar negociação" embutido na linha.
-- `src/view/listings/bookDetail.tsx` (novo): título, autor, tag de modalidade, preço (se
-  venda), link para o perfil de quem anunciou (US5), botão "Solicitar negociação". **Maria
-  Clara.**
+  system (linha-de-livro.md, com `BookCover` variante "em lista"), mantendo o comportamento (tag
+  de modalidade, estados) já coberto pela spec 005; adicionar `NavigationBar`; cada item passa a
+  navegar para o detalhe do livro (US6) em vez de ter o botão "Solicitar negociação" embutido na
+  linha.
+- `src/view/listings/bookDetail.tsx` (novo): `TopAppBar` (voltar), `BookCover` variante "em
+  cartão", título, autor, tag de modalidade, preço (se venda), link para o perfil de quem
+  anunciou (US5), botão "Solicitar negociação". **Maria Clara.**
 - `src/view/search/search.tsx` (novo): `SearchField` + lista filtrada, estado vazio conforme
   `estado-vazio.md`.
 - `src/view/profile/profile.tsx` (novo): `Avatar` de 64 px + campos editáveis (`TextField`) +
