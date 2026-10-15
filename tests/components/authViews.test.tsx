@@ -33,7 +33,8 @@ describe("tela de entrar (ISO/IEC 25010 - Usabilidade e Acessibilidade)", () => 
       screen = await render(<SignIn />);
     });
 
-    expect(screen.getByRole("header").props.children).toBe("Entrar");
+    expect(screen.getByRole("header").props.children).toBe("IpêBook");
+    expect(screen.getAllByText("Entrar").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByLabelText("E-mail")).toBeDefined();
     expect(screen.getByLabelText("Senha")).toBeDefined();
   });
@@ -139,7 +140,8 @@ describe("tela de criar conta (ISO/IEC 25010 - Usabilidade e Acessibilidade)", (
       screen = await render(<SignUp />);
     });
 
-    expect(screen.getByRole("header").props.children).toBe("Criar conta");
+    expect(screen.getByRole("header").props.children).toBe("IpêBook");
+    expect(screen.getAllByText("Criar conta").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByLabelText("E-mail")).toBeDefined();
     expect(screen.getByLabelText("Senha")).toBeDefined();
   });
@@ -201,7 +203,8 @@ describe("tela de esqueceu a senha (ISO/IEC 25010 - Usabilidade e Acessibilidade
       screen = await render(<ForgotPassword />);
     });
 
-    expect(screen.getByRole("header").props.children).toBe("Esqueceu a senha?");
+    expect(screen.getByRole("header").props.children).toBe("IpêBook");
+    expect(screen.getByText("Esqueceu a senha?")).toBeDefined();
     expect(screen.getByLabelText("E-mail")).toBeDefined();
   });
 

@@ -4,6 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { tokens } from "@/view/tokens";
 import { FilledButton } from "@/view/components/FilledButton";
+import { Logotipo } from "@/view/components/Logotipo";
 import { TextField } from "@/view/components/TextField";
 
 export type ForgotPasswordProps = {
@@ -23,7 +24,8 @@ export default function ForgotPassword({ onNavigateToSignIn }: ForgotPasswordPro
   return (
     <SafeAreaView style={styles.page}>
       <View style={styles.content}>
-        <Text accessibilityRole="header" style={styles.title}>Esqueceu a senha?</Text>
+        <Logotipo />
+        <Text style={styles.title}>Esqueceu a senha?</Text>
         <Text style={styles.subtitle}>
           Informe o e-mail da sua conta. Como não há envio de e-mail real nesta versão, a senha
           temporária aparece aqui mesmo, na tela.
