@@ -22,6 +22,7 @@ export type HomeProps = {
   onNavigateToSentRequests?: () => void;
   onNavigateToBookDetail?: (bookId: string) => void;
   onNavigateToTerms?: () => void;
+  onNavigateToHelp?: () => void;
   /** Mudar este valor força o catálogo a recarregar (ex.: ao voltar de cadastrar um anúncio). */
   focusKey?: unknown;
 };
@@ -34,6 +35,7 @@ export default function Home({
   onNavigateToSentRequests,
   onNavigateToBookDetail,
   onNavigateToTerms,
+  onNavigateToHelp,
   focusKey,
 }: HomeProps = {}) {
   const [state, actions] = useHomeViewModel();
@@ -166,13 +168,23 @@ export default function Home({
             }}
           />
         )}
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => onNavigateToTerms?.()}
-          style={styles.legalButton}
-        >
-          <Text style={styles.legalText}>Termos de Uso e Privacidade</Text>
-        </Pressable>
+        <View style={styles.footerLinks}>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => onNavigateToTerms?.()}
+            style={styles.legalButton}
+          >
+            <Text style={styles.legalText}>Termos e Privacidade</Text>
+          </Pressable>
+          <Text style={styles.footerSeparator}>•</Text>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => onNavigateToHelp?.()}
+            style={styles.legalButton}
+          >
+            <Text style={styles.legalText}>Central de Ajuda</Text>
+          </Pressable>
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -180,10 +192,19 @@ export default function Home({
 
 const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: tokens.colors.background },
-  legalButton: {
-    alignSelf: "center",
-    paddingVertical: tokens.spacing[12],
+  footerLinks: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: tokens.spacing[8],
     marginTop: tokens.spacing[8],
+  },
+  footerSeparator: {
+    color: tokens.colors.secondaryText,
+    fontSize: tokens.typography.labelMedium.fontSize,
+  },
+  legalButton: {
+    paddingVertical: tokens.spacing[12],
   },
   legalText: {
     fontSize: tokens.typography.labelMedium.fontSize,

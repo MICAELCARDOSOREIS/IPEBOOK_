@@ -1,6 +1,6 @@
 import React from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import Home from "@/view/home";
 
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
@@ -74,5 +74,40 @@ describe("testes de componentes: Home View (ISO/IEC 25010 - Usabilidade e Acessi
       (node) => node.props.accessible === false
     );
     expect(markNode).toBeDefined();
+  });
+
+  it("aciona callbacks de navegação para termos e central de ajuda", async () => {
+    const onTerms = vi.fn();
+    const onHelp = vi.fn();
+    const { root } = await renderComponent(
+      <Home onNavigateToTerms={onTerms} onNavigateToHelp={onHelp} />,
+    );
+
+    const buttons = root.findAll(
+      (node) => node.props.accessibilityRole === "button",
+    );
+    const termsBtn = buttons.find((b) => {
+      try {
+        return Boolean(b.find((n) => n.props.children === "Termos e Privacidade"));
+      } catch {
+        return false;
+      }
+    });
+    const helpBtn = buttons.find((b) => {
+      try {
+        return Boolean(b.find((n) => n.props.children === "Central de Ajuda"));
+      } catch {
+        return false;
+      }
+    });
+
+    expect(termsBtn).toBeDefined();
+    expect(helpBtn).toBeDefined();
+
+    termsBtn?.props.onPress();
+    expect(onTerms).toHaveBeenCalledTimes(1);
+
+    helpBtn?.props.onPress();
+    expect(onHelp).toHaveBeenCalledTimes(1);
   });
 });
