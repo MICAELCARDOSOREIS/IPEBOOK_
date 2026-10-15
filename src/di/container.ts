@@ -1,13 +1,16 @@
 import { MemoryAuthDataSource } from "@/infra/datasources/memoryAuthDataSource";
 import { MemoryBookDataSource } from "@/infra/datasources/memoryBookDataSource";
 import { MemoryBookRequestDataSource } from "@/infra/datasources/memoryBookRequestDataSource";
+import { MemoryReportDataSource } from "@/infra/datasources/memoryReportDataSource";
 import { SupabaseAuthDataSource } from "@/infra/datasources/supabaseAuthDataSource";
 import { SupabaseBookDataSource } from "@/infra/datasources/supabaseBookDataSource";
 import { SupabaseBookRequestDataSource } from "@/infra/datasources/supabaseBookRequestDataSource";
+import { SupabaseReportDataSource } from "@/infra/datasources/supabaseReportDataSource";
 import { createSupabaseAppClient } from "@/infra/supabaseClient";
 import type { IAuthDataSource } from "@/model/datasources/iAuthDataSource";
 import type { IBookDataSource } from "@/model/datasources/iBookDataSource";
 import type { IBookRequestDataSource } from "@/model/datasources/iBookRequestDataSource";
+import type { IReportDataSource } from "@/model/datasources/iReportDataSource";
 import { DataSourceError } from "@/model/errors";
 import { AuthUseCases } from "@/usecase/authUseCases";
 import { BookRequestUseCases } from "@/usecase/bookRequestUseCases";
@@ -15,11 +18,14 @@ import { BookUseCases } from "@/usecase/bookUseCases";
 import type { IAuthUseCases } from "@/usecase/iAuthUseCases";
 import type { IBookRequestUseCases } from "@/usecase/iBookRequestUseCases";
 import type { IBookUseCases } from "@/usecase/iBookUseCases";
+import type { IReportUseCases } from "@/usecase/iReportUseCases";
+import { ReportUseCases } from "@/usecase/reportUseCases";
 
 function createDataSources(): {
   auth: IAuthDataSource;
   books: IBookDataSource;
   requests: IBookRequestDataSource;
+  reports: IReportDataSource;
 } {
   if (process.env.NODE_ENV !== "test" && process.env.EXPO_PUBLIC_BACKEND === "supabase") {
     const redirectUrl = process.env.EXPO_PUBLIC_AUTH_REDIRECT_URL;
@@ -32,6 +38,7 @@ function createDataSources(): {
       auth: new SupabaseAuthDataSource(client, redirectUrl),
       books: new SupabaseBookDataSource(client),
       requests: new SupabaseBookRequestDataSource(client),
+      reports: new SupabaseReportDataSource(client),
     };
   }
   const books = new MemoryBookDataSource();
@@ -39,6 +46,7 @@ function createDataSources(): {
     auth: new MemoryAuthDataSource(),
     books,
     requests: new MemoryBookRequestDataSource(),
+    reports: new MemoryReportDataSource(),
   };
 }
 
@@ -54,4 +62,8 @@ export const authUseCases: IAuthUseCases = new AuthUseCases(
 export const bookRequestUseCases: IBookRequestUseCases = new BookRequestUseCases(
   bookDataSource,
   dataSources.requests,
+);
+
+export const reportUseCases: IReportUseCases = new ReportUseCases(
+  dataSources.reports,
 );

@@ -19,9 +19,15 @@ export type BookDetailProps = {
   bookId: string;
   onBack: () => void;
   onNavigateToUserProfile?: (ownerId: string) => void;
+  onNavigateToReport?: (bookId: string) => void;
 };
 
-export default function BookDetail({ bookId, onBack, onNavigateToUserProfile }: BookDetailProps) {
+export default function BookDetail({
+  bookId,
+  onBack,
+  onNavigateToUserProfile,
+  onNavigateToReport,
+}: BookDetailProps) {
   const [state] = useBookDetailViewModel(bookId);
   const [authState] = useAuthViewModel();
   const [negotiation, negotiationActions] = useRequestNegotiationViewModel();
@@ -75,6 +81,16 @@ export default function BookDetail({ bookId, onBack, onNavigateToUserProfile }: 
             {negotiation.errorListingId === book.id ? (
               <Text accessibilityRole="alert" style={styles.requestError}>{negotiation.error}</Text>
             ) : null}
+            {onNavigateToReport && (!sessionUserId || book.ownerId !== sessionUserId) ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Denunciar anúncio"
+                onPress={() => onNavigateToReport(book.id)}
+                style={styles.reportButton}
+              >
+                <Text style={styles.reportText}>Denunciar anúncio</Text>
+              </Pressable>
+            ) : null}
           </View>
         ) : null}
       </View>
@@ -97,4 +113,6 @@ const styles = StyleSheet.create({
   reserved: { fontSize: tokens.typography.bodyMedium.fontSize, color: tokens.colors.secondaryText, fontStyle: "italic" },
   requested: { fontSize: tokens.typography.bodyMedium.fontSize, color: tokens.colors.secondaryText, fontWeight: "600" },
   requestError: { fontSize: tokens.typography.bodyMedium.fontSize, color: tokens.colors.error },
+  reportButton: { minHeight: tokens.accessibility.touchTarget, justifyContent: "center", marginTop: tokens.spacing[8] },
+  reportText: { color: tokens.colors.secondaryText, fontSize: tokens.typography.labelMedium.fontSize, textDecorationLine: "underline" },
 });
