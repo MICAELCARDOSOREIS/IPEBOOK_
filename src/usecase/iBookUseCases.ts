@@ -12,4 +12,5 @@ export interface IBookUseCases {
   createListing(input: CreateListingInput, sessionUserId: string | null): Promise<Book>;
   getBookById(id: string): Promise<Book>;
   listMyListings(sessionUserId: string | null): Promise<readonly Book[]>;
+  cancelListing(bookId: string, sessionUserId: string | null): Promise<void>;
 }

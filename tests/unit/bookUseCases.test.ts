@@ -13,6 +13,7 @@ function stubDataSource(overrides: Partial<IBookDataSource>): IBookDataSource {
       throw new Error("não usado");
     },
     listByOwner: async () => [],
+    delete: async () => {},
     ...overrides,
   };
 }

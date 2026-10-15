@@ -19,12 +19,24 @@ import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 const mockedUseMyListingsViewModel = vi.mocked(useMyListingsViewModel);
 const mockedUseAuthViewModel = vi.mocked(useAuthViewModel);
 
-function mockViewModel(state: MyListingsState, actions: Partial<MyListingsActions> = {}) {
+function mockViewModel(
+  state: Partial<MyListingsState> = {},
+  actions: Partial<MyListingsActions> = {},
+) {
+  const fullState: MyListingsState = {
+    books: [],
+    loading: false,
+    error: null,
+    cancellingId: null,
+    cancelError: null,
+    ...state,
+  };
   const fullActions: MyListingsActions = {
     reload: vi.fn().mockResolvedValue(undefined),
+    cancelListing: vi.fn().mockResolvedValue(true),
     ...actions,
   };
-  mockedUseMyListingsViewModel.mockReturnValue([state, fullActions]);
+  mockedUseMyListingsViewModel.mockReturnValue([fullState, fullActions]);
   return fullActions;
 }
 
@@ -133,5 +145,32 @@ describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
     });
 
     expect(onRequireSignIn).toHaveBeenCalledTimes(1);
+  });
+
+  it("exibe botão de remover para livro disponível e aciona cancelListing", async () => {
+    const book: Book = {
+      id: "b1",
+      title: "Dom Casmurro",
+      author: "Machado de Assis",
+      modality: "sale",
+      price: 20,
+      ownerId: "user-1",
+      status: "available",
+    };
+    const actions = mockViewModel({ books: [book] });
+    let screen!: Awaited<ReturnType<typeof render>>;
+
+    await act(async () => {
+      screen = await render(<MyListings sessionUserId="user-1" />);
+    });
+
+    const removeBtn = screen.getByRole("button", { name: "Remover anúncio de Dom Casmurro" });
+    expect(removeBtn).toBeDefined();
+
+    await act(async () => {
+      fireEvent.press(removeBtn);
+    });
+
+    expect(actions.cancelListing).toHaveBeenCalledWith("b1");
   });
 });

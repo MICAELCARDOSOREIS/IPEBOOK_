@@ -41,7 +41,7 @@ describe("testes de hook: useMyListingsViewModel (ISO/IEC 25010 - Confiabilidade
   it("inicia em carregamento e atualiza para lista vazia com sucesso", async () => {
     const hook = await renderHook("u1", { listMyListings: async () => [] });
     expect(hook.loadingStates).toContain(true);
-    expect(hook.current[0]).toEqual({ books: [], loading: false, error: null });
+    expect(hook.current[0]).toMatchObject({ books: [], loading: false, error: null });
   });
 
   it("atualiza estado quando os anúncios do usuário são carregados com sucesso", async () => {
@@ -98,5 +98,61 @@ describe("testes de hook: useMyListingsViewModel (ISO/IEC 25010 - Confiabilidade
 
     expect(hook.current[0].error).toBe("Não foi possível carregar seus anúncios. Tente novamente.");
     expect(hook.current[0].loading).toBe(false);
+  });
+
+  it("remove livro com sucesso da lista via cancelListing", async () => {
+    const cancelListing = vi.fn().mockResolvedValue(undefined);
+    const hook = await renderHook("u1", {
+      listMyListings: async () => [
+        {
+          id: "1",
+          title: "Dom Casmurro",
+          author: "Machado",
+          ownerId: "u1",
+          modality: "trade",
+          status: "available",
+        },
+      ],
+      cancelListing,
+    } as unknown as IBookUseCases);
+
+    expect(hook.current[0].books).toHaveLength(1);
+
+    let result = false;
+    await act(async () => {
+      result = await hook.current[1].cancelListing("1");
+    });
+
+    expect(result).toBe(true);
+    expect(hook.current[0].books).toHaveLength(0);
+    expect(hook.current[0].cancellingId).toBeNull();
+    expect(hook.current[0].cancelError).toBeNull();
+  });
+
+  it("seta cancelError quando cancelListing falha com DomainError", async () => {
+    const cancelListing = vi.fn().mockRejectedValue(new DomainError("Não é possível remover."));
+    const hook = await renderHook("u1", {
+      listMyListings: async () => [
+        {
+          id: "1",
+          title: "Dom Casmurro",
+          author: "Machado",
+          ownerId: "u1",
+          modality: "trade",
+          status: "available",
+        },
+      ],
+      cancelListing,
+    } as unknown as IBookUseCases);
+
+    let result = true;
+    await act(async () => {
+      result = await hook.current[1].cancelListing("1");
+    });
+
+    expect(result).toBe(false);
+    expect(hook.current[0].books).toHaveLength(1);
+    expect(hook.current[0].cancellingId).toBeNull();
+    expect(hook.current[0].cancelError).toBe("Não é possível remover.");
   });
 });

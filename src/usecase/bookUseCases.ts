@@ -54,4 +54,29 @@ export class BookUseCases implements IBookUseCases {
     }
     return this.dataSource.listByOwner(sessionUserId.trim());
   }
+
+  async cancelListing(bookId: string, sessionUserId: string | null): Promise<void> {
+    if (!sessionUserId || !sessionUserId.trim()) {
+      throw new AuthError("Sessão obrigatória para cancelar anúncio.");
+    }
+
+    if (!bookId || !bookId.trim()) {
+      throw new ValidationError("Identificador do anúncio é obrigatório.");
+    }
+
+    const book = await this.dataSource.findById(bookId.trim());
+    if (!book) {
+      throw new DataSourceError("Anúncio não encontrado.");
+    }
+
+    if (book.ownerId !== sessionUserId.trim()) {
+      throw new AuthError("Apenas quem anunciou o livro pode cancelá-lo.");
+    }
+
+    if (book.status === "reserved") {
+      throw new ValidationError("Não é possível remover anúncio com negociação aceita em andamento.");
+    }
+
+    await this.dataSource.delete(bookId.trim());
+  }
 }

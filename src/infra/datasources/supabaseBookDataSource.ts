@@ -68,4 +68,9 @@ export class SupabaseBookDataSource implements IBookDataSource {
     if (error) throw new DataSourceError("Não foi possível carregar os seus anúncios.");
     return (data as BookRow[]).map(mapBook);
   }
+
+  async delete(id: string): Promise<void> {
+    const { error } = await this.client.from("v2_books").delete().eq("id", id);
+    if (error) throw new DataSourceError("Não foi possível excluir o anúncio.");
+  }
 }

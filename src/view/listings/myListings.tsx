@@ -51,53 +51,73 @@ export function MyListings({
             </Pressable>
           </View>
         ) : (
-          <FlatList
-            data={state.books}
-            keyExtractor={(book) => book.id}
-            contentContainerStyle={styles.list}
-            ListEmptyComponent={
-              <View style={styles.empty}>
-                <Text style={styles.emptyTitle}>Você ainda não cadastrou nenhum anúncio.</Text>
-                <Text style={styles.body}>Compartilhe livros com a sua comunidade desapegando dos que já leu.</Text>
-                <View style={styles.emptyAction}>
-                  <FilledButton
-                    label="Cadastrar anúncio"
-                    onPress={() => onNavigateToCreateListing?.()}
-                  />
+          <>
+            {state.cancelError ? (
+              <Text accessibilityRole="alert" style={styles.cancelErrorText}>
+                {state.cancelError}
+              </Text>
+            ) : null}
+            <FlatList
+              data={state.books}
+              keyExtractor={(book) => book.id}
+              contentContainerStyle={styles.list}
+              ListEmptyComponent={
+                <View style={styles.empty}>
+                  <Text style={styles.emptyTitle}>Você ainda não cadastrou nenhum anúncio.</Text>
+                  <Text style={styles.body}>Compartilhe livros com a sua comunidade desapegando dos que já leu.</Text>
+                  <View style={styles.emptyAction}>
+                    <FilledButton
+                      label="Cadastrar anúncio"
+                      onPress={() => onNavigateToCreateListing?.()}
+                    />
+                  </View>
                 </View>
-              </View>
-            }
-            renderItem={({ item }) => {
-              const tag = modalityTag[item.modality];
-              return (
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={`Ver detalhe de ${item.title}, ${item.author}`}
-                  onPress={() => onNavigateToBookDetail?.(item.id)}
-                  style={styles.bookCard}
-                >
-                  <BookCover id={item.id} title={item.title} variant="list" />
-                  <View style={styles.bookInfo}>
-                    <View style={styles.bookHeader}>
-                      <Text style={styles.bookTitle}>{item.title}</Text>
-                      <View style={[styles.tag, { backgroundColor: tag.background }]}>
-                        <Text style={[styles.tagText, { color: tag.text }]}>{tag.label}</Text>
+              }
+              renderItem={({ item }) => {
+                const tag = modalityTag[item.modality];
+                return (
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={`Ver detalhe de ${item.title}, ${item.author}`}
+                    onPress={() => onNavigateToBookDetail?.(item.id)}
+                    style={styles.bookCard}
+                  >
+                    <BookCover id={item.id} title={item.title} variant="list" />
+                    <View style={styles.bookInfo}>
+                      <View style={styles.bookHeader}>
+                        <Text style={styles.bookTitle}>{item.title}</Text>
+                        <View style={[styles.tag, { backgroundColor: tag.background }]}>
+                          <Text style={[styles.tagText, { color: tag.text }]}>{tag.label}</Text>
+                        </View>
+                      </View>
+                      <Text style={styles.bookAuthor}>{item.author}</Text>
+                      <View style={styles.statusRow}>
+                        <Text style={item.status === "reserved" ? styles.reservedBadge : styles.availableBadge}>
+                          {item.status === "reserved" ? "Reservado" : "Disponível"}
+                        </Text>
+                        {item.modality === "sale" && item.price ? (
+                          <Text style={styles.price}>{`R$ ${item.price.toFixed(2)}`}</Text>
+                        ) : null}
+                        {item.status === "available" ? (
+                          <Pressable
+                            accessibilityRole="button"
+                            accessibilityLabel={`Remover anúncio de ${item.title}`}
+                            disabled={state.cancellingId === item.id}
+                            onPress={() => void actions.cancelListing(item.id)}
+                            style={styles.cancelButton}
+                          >
+                            <Text style={styles.cancelText}>
+                              {state.cancellingId === item.id ? "Removendo..." : "Remover"}
+                            </Text>
+                          </Pressable>
+                        ) : null}
                       </View>
                     </View>
-                    <Text style={styles.bookAuthor}>{item.author}</Text>
-                    <View style={styles.statusRow}>
-                      <Text style={item.status === "reserved" ? styles.reservedBadge : styles.availableBadge}>
-                        {item.status === "reserved" ? "Reservado" : "Disponível"}
-                      </Text>
-                      {item.modality === "sale" && item.price ? (
-                        <Text style={styles.price}>{`R$ ${item.price.toFixed(2)}`}</Text>
-                      ) : null}
-                    </View>
-                  </View>
-                </Pressable>
-              );
-            }}
-          />
+                  </Pressable>
+                );
+              }}
+            />
+          </>
         )}
       </View>
     </SafeAreaView>
@@ -226,5 +246,23 @@ const styles = StyleSheet.create({
   tagText: {
     fontSize: 11,
     fontWeight: "bold",
+  },
+  cancelButton: {
+    paddingHorizontal: tokens.spacing[12],
+    paddingVertical: tokens.spacing[6],
+    borderRadius: tokens.radius.small,
+    backgroundColor: tokens.colors.errorContainer,
+    minHeight: 32,
+    justifyContent: "center",
+  },
+  cancelText: {
+    fontSize: tokens.typography.labelMedium.fontSize,
+    color: tokens.colors.error,
+    fontWeight: "600",
+  },
+  cancelErrorText: {
+    fontSize: tokens.typography.bodyMedium.fontSize,
+    color: tokens.colors.error,
+    marginBottom: tokens.spacing[12],
   },
 });

@@ -40,4 +40,11 @@ export class MemoryBookDataSource implements IBookDataSource {
   async listByOwner(ownerId: string): Promise<readonly Book[]> {
     return this.books.filter((book) => book.ownerId === ownerId).map((book) => ({ ...book }));
   }
+
+  async delete(id: string): Promise<void> {
+    const index = this.books.findIndex((book) => book.id === id);
+    if (index >= 0) {
+      this.books.splice(index, 1);
+    }
+  }
 }
