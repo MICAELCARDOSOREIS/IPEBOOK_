@@ -6,6 +6,7 @@ export default function CriarConta() {
     <SignUp
       onAuthenticated={() => router.replace("/")}
       onNavigateToSignIn={() => router.push("/entrar")}
+      onNavigateToTerms={() => router.push("/termos")}
     />
   );
 }

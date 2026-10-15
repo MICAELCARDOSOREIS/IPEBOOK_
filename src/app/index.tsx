@@ -19,6 +19,7 @@ export default function Index() {
       onNavigateToReceivedRequests={() => router.push("/pedidos-recebidos")}
       onNavigateToSentRequests={() => router.push("/meus-pedidos")}
       onNavigateToBookDetail={(bookId) => router.push(`/livro/${bookId}`)}
+      onNavigateToTerms={() => router.push("/termos")}
     />
   );
 }

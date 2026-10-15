@@ -21,6 +21,7 @@ export type HomeProps = {
   onNavigateToReceivedRequests?: () => void;
   onNavigateToSentRequests?: () => void;
   onNavigateToBookDetail?: (bookId: string) => void;
+  onNavigateToTerms?: () => void;
   /** Mudar este valor força o catálogo a recarregar (ex.: ao voltar de cadastrar um anúncio). */
   focusKey?: unknown;
 };
@@ -32,6 +33,7 @@ export default function Home({
   onNavigateToReceivedRequests,
   onNavigateToSentRequests,
   onNavigateToBookDetail,
+  onNavigateToTerms,
   focusKey,
 }: HomeProps = {}) {
   const [state, actions] = useHomeViewModel();
@@ -164,6 +166,13 @@ export default function Home({
             }}
           />
         )}
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => onNavigateToTerms?.()}
+          style={styles.legalButton}
+        >
+          <Text style={styles.legalText}>Termos de Uso e Privacidade</Text>
+        </Pressable>
       </View>
     </SafeAreaView>
   );
@@ -171,6 +180,16 @@ export default function Home({
 
 const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: tokens.colors.background },
+  legalButton: {
+    alignSelf: "center",
+    paddingVertical: tokens.spacing[12],
+    marginTop: tokens.spacing[8],
+  },
+  legalText: {
+    fontSize: tokens.typography.labelMedium.fontSize,
+    color: tokens.colors.secondaryText,
+    textDecorationLine: "underline",
+  },
   content: { flex: 1, width: "100%", maxWidth: 720, alignSelf: "center", padding: tokens.spacing[24], paddingTop: tokens.spacing[48] },
   brand: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[12] },
   mark: { width: 16, height: 36, backgroundColor: tokens.colors.highlight, borderTopRightRadius: tokens.radius.medium },
