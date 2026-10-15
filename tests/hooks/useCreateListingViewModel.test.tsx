@@ -23,6 +23,7 @@ function stubUseCases(overrides: Partial<IBookUseCases> = {}): IBookUseCases {
     getBookById: async () => {
       throw new Error("not implemented");
     },
+    listMyListings: async () => [],
     ...overrides,
   };
 }

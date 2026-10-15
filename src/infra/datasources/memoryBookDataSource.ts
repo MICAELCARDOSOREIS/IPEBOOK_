@@ -36,4 +36,8 @@ export class MemoryBookDataSource implements IBookDataSource {
     this.books[index] = updated;
     return { ...updated };
   }
+
+  async listByOwner(ownerId: string): Promise<readonly Book[]> {
+    return this.books.filter((book) => book.ownerId === ownerId).map((book) => ({ ...book }));
+  }
 }

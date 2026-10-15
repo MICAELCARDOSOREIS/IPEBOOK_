@@ -17,6 +17,7 @@ const modalityTag: Record<BookModality, { background: string; text: string; labe
 export type HomeProps = {
   onNavigateToSignIn?: () => void;
   onNavigateToCreateListing?: () => void;
+  onNavigateToMyListings?: () => void;
   onNavigateToReceivedRequests?: () => void;
   onNavigateToSentRequests?: () => void;
   onNavigateToBookDetail?: (bookId: string) => void;
@@ -27,6 +28,7 @@ export type HomeProps = {
 export default function Home({
   onNavigateToSignIn,
   onNavigateToCreateListing,
+  onNavigateToMyListings,
   onNavigateToReceivedRequests,
   onNavigateToSentRequests,
   onNavigateToBookDetail,
@@ -74,6 +76,13 @@ export default function Home({
             </View>
           </View>
           <View style={styles.requestsRow}>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => onNavigateToMyListings?.()}
+              style={styles.sessionButton}
+            >
+              <Text style={styles.sessionButtonText}>Meus anúncios</Text>
+            </Pressable>
             <Pressable
               accessibilityRole="button"
               onPress={() => onNavigateToReceivedRequests?.()}
