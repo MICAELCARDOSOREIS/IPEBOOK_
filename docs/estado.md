@@ -1,5 +1,12 @@
 # Estado e continuidade
 
+## Atualização em 2026-10-15 — Specs 008 e 009 integradas em develop
+
+- **Spec 008 (Meus Anúncios)**: Implementada e integrada em `develop`. Rota `/meus-anuncios`, view `MyListings`, caso de uso `listMyListings` e método `listByOwner` nos datasources. Atalho na Home.
+- **Spec 009 (Detalhes da Negociação Aceita e Ponto de Encontro)**: Implementada e integrada em `develop`. Rota `/negociacao/[id]`, view `RequestDetail`, caso de uso `getRequestDetail` com bloqueio de terceiros e sugestão de pontos públicos seguros em Piripiri, PI. Atalho "Ver detalhes do encontro" em "Pedidos recebidos" e "Meus pedidos" para itens aceitos.
+- `npm run check:architecture` passa com 73 arquivos (0 violações); 257 testes passam em 47 arquivos; cobertura > 81% em todas as métricas; `npm run build:web` exporta 14 rotas estáticas.
+- A responsabilidade de Perfil da Maria Clara (Issue #55) permaneceu intacta e sem colisões.
+
 ## Atualização em 2026-10-15 — beta em implementação
 
 - Branch de trabalho: `feature/beta-supabase-base`, derivada de `develop` em `1c9a395`.
