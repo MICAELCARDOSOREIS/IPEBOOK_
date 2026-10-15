@@ -2,6 +2,37 @@
 
 Versões no formato `MAIOR.MENOR.CORREÇÃO`. Mudança grande = versão nova.
 
+## 1.5.0 · 2026-10-15
+
+- Completa a pendência da versão 1.4.0: inventário das telas do Figma nas outras 2 plataformas
+  (iPhone e Web), mesmo padrão já usado para Android.
+- **Responsáveis:** Micael Cardoso Reis.
+- **Mudanças:**
+  - `design-system/telas-iphone-figma.md` (novo): 144 telas iPhone/iOS 26, mesma organização
+    por fluxo. Marcado como fora do escopo atual de implementação (ADR 0008) — é só
+    consulta/planejamento.
+  - `design-system/telas-web-figma.md` (novo): 126 telas Web, cada uma com os 3 links
+    (Desktop 1440 / Tablet 834 / Celular 390).
+  - `telas-android-figma.md`, `docs/design-system.md` e `README.md`: referências cruzadas para
+    os dois novos inventários.
+- Contagens (144 iPhone / 126 Web) conferem exatamente com os números citados no guia do
+  próprio arquivo Figma.
+
+## 1.4.0 · 2026-10-15
+
+- Novo arquivo `telas-android-figma.md`: inventário das 137 telas Android do Figma (nome,
+  node-id, link em modo Dev de cada uma), para consulta offline sem precisar manter o Figma
+  aberto ou re-extrair a metadata a cada pergunta.
+- **Responsáveis:** Micael Cardoso Reis.
+- **Mudanças:**
+  - `design-system/telas-android-figma.md` (novo): 137 telas organizadas pelos 12 fluxos do
+    arquivo (01 · Acesso a 12 · Acessibilidade e temas), cada uma com link direto para o modo
+    Dev do Figma (`&m=dev`).
+  - `docs/design-system.md`: adicionado o link do Figma em modo Dev no cabeçalho do documento.
+  - `README.md`: referência ao novo inventário no mapa de arquivos.
+- **Pendência:** cobre só a página Android. As páginas iPhone (144 telas) e Web (126 telas)
+  ainda não foram extraídas.
+
 ## 1.3.0 · 2026-10-15
 
 - Resolvida a pendência registrada na versão 1.2.0: o indicador de etapas documentado

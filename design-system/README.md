@@ -58,6 +58,9 @@ Lista completa dos 24 componentes em [04-componentes/](04-componentes/).
 | [05-padroes.md](05-padroes.md) | Fluxos: entrar/cadastrar, anunciar livro |
 | [06-acessibilidade.md](06-acessibilidade.md) | Contraste, alvos de toque, foco, leitor de tela |
 | [07-teste-com-ia.md](07-teste-com-ia.md) | Validação do sistema com um assistente de IA |
+| [telas-android-figma.md](telas-android-figma.md) | Inventário das 137 telas Android do Figma (nome, node-id, link em modo Dev) — consulta offline, sem precisar abrir o Figma |
+| [telas-iphone-figma.md](telas-iphone-figma.md) | Inventário das 144 telas iPhone/iOS 26 do Figma — fora do escopo atual de implementação (ver ADR 0008), consulta/planejamento |
+| [telas-web-figma.md](telas-web-figma.md) | Inventário das 126 telas Web do Figma (Desktop/Tablet/Celular) |
 | [CHANGELOG.md](CHANGELOG.md) | Versões e mudanças |
 | [`tokens.json`](tokens.json) | Versão machine-readable dos tokens (dado de apoio, não markdown) |
 
