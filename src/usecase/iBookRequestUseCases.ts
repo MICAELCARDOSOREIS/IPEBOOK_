@@ -8,6 +8,14 @@ export type RequestWithListing = Readonly<{
 
 export type RequestResponse = "accept" | "reject";
 
+export type NegotiationDetail = Readonly<{
+  request: BookRequest;
+  book: Book;
+  isOwner: boolean;
+  counterpartId: string;
+  safeMeetingPoints: readonly string[];
+}>;
+
 export interface IBookRequestUseCases {
   requestNegotiation(listingId: string, sessionUserId: string | null): Promise<BookRequest>;
   listReceivedRequests(sessionUserId: string | null): Promise<readonly RequestWithListing[]>;
@@ -17,4 +25,5 @@ export interface IBookRequestUseCases {
     response: RequestResponse,
     sessionUserId: string | null,
   ): Promise<BookRequest>;
+  getRequestDetail(requestId: string, sessionUserId: string | null): Promise<NegotiationDetail>;
 }

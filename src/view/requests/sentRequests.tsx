@@ -1,11 +1,20 @@
 import { useEffect } from "react";
+import { Pressable, Text, View } from "react-native";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useSentRequestsViewModel } from "@/viewmodel/useSentRequestsViewModel";
-import { RequestListLayout } from "@/view/requests/requestListLayout";
+import { RequestListLayout, requestStyles as s } from "@/view/requests/requestListLayout";
 
-export type SentRequestsProps = { sessionUserId: string; onBack?: () => void };
+export type SentRequestsProps = {
+  sessionUserId: string;
+  onBack?: () => void;
+  onNavigateToNegotiationDetail?: (requestId: string) => void;
+};
 
-export function SentRequests({ sessionUserId, onBack }: SentRequestsProps) {
+export function SentRequests({
+  sessionUserId,
+  onBack,
+  onNavigateToNegotiationDetail,
+}: SentRequestsProps) {
   const [state, actions] = useSentRequestsViewModel(sessionUserId);
 
   return (
@@ -17,14 +26,34 @@ export function SentRequests({ sessionUserId, onBack }: SentRequestsProps) {
       error={state.error}
       onRetry={() => void actions.reload()}
       onBack={onBack}
-      renderExtra={() => null}
+      renderExtra={({ request }) =>
+        request.status === "accepted" ? (
+          <View style={s.actions}>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => onNavigateToNegotiationDetail?.(request.id)}
+              style={s.primary}
+            >
+              <Text style={s.primaryText}>Ver detalhes do encontro</Text>
+            </Pressable>
+          </View>
+        ) : null
+      }
     />
   );
 }
 
-export type SentRequestsScreenProps = { onBack?: () => void; onRequireSignIn?: () => void };
+export type SentRequestsScreenProps = {
+  onBack?: () => void;
+  onRequireSignIn?: () => void;
+  onNavigateToNegotiationDetail?: (requestId: string) => void;
+};
 
-export default function SentRequestsScreen({ onBack, onRequireSignIn }: SentRequestsScreenProps = {}) {
+export default function SentRequestsScreen({
+  onBack,
+  onRequireSignIn,
+  onNavigateToNegotiationDetail,
+}: SentRequestsScreenProps = {}) {
   const [authState] = useAuthViewModel();
 
   useEffect(() => {
@@ -32,5 +61,11 @@ export default function SentRequestsScreen({ onBack, onRequireSignIn }: SentRequ
   }, [authState.loading, authState.user, onRequireSignIn]);
 
   if (authState.loading || !authState.user) return null;
-  return <SentRequests sessionUserId={authState.user.id} onBack={onBack} />;
+  return (
+    <SentRequests
+      sessionUserId={authState.user.id}
+      onBack={onBack}
+      onNavigateToNegotiationDetail={onNavigateToNegotiationDetail}
+    />
+  );
 }

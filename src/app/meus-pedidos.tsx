@@ -6,6 +6,7 @@ export default function MeusPedidosRoute() {
     <SentRequestsScreen
       onBack={() => router.back()}
       onRequireSignIn={() => router.replace("/entrar")}
+      onNavigateToNegotiationDetail={(id) => router.push(`/negociacao/${id}`)}
     />
   );
 }
