@@ -21,6 +21,7 @@ export default function Index() {
       onNavigateToBookDetail={(bookId) => router.push(`/livro/${bookId}`)}
       onNavigateToTerms={() => router.push("/termos")}
       onNavigateToHelp={() => router.push("/ajuda")}
+      onNavigateToNotifications={() => router.push("/notificacoes")}
     />
   );
 }

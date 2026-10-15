@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { SupabaseAuthDataSource } from "@/infra/datasources/supabaseAuthDataSource";
 import { SupabaseBookDataSource } from "@/infra/datasources/supabaseBookDataSource";
 import { SupabaseBookRequestDataSource } from "@/infra/datasources/supabaseBookRequestDataSource";
+import { SupabaseNotificationDataSource } from "@/infra/datasources/supabaseNotificationDataSource";
 import type { SupabaseAppClient } from "@/infra/supabaseClient";
 
 function fakeClient(value: unknown): SupabaseAppClient {
@@ -227,5 +228,78 @@ describe("datasources Supabase", () => {
     await expect(requests.listByListing("livro")).rejects.toThrow("Não foi possível carregar os pedidos.");
     await expect(requests.listByRequester("pessoa")).rejects.toThrow("Não foi possível carregar os pedidos.");
     await expect(requests.respond("pedido", "rejected")).rejects.toThrow("Não foi possível responder ao pedido.");
+  });
+
+  it("lista, marca como lida e cria notificações via Supabase com tratamento de erro", async () => {
+    const row = {
+      id: "notif-1",
+      user_id: "user-1",
+      title: "Pedido aceito",
+      message: "Seu livro está pronto para troca",
+      type: "request_accepted",
+      read: false,
+      created_at: "2026-10-15T12:00:00Z",
+      action_url: "/negociacao/1",
+    };
+    const order = vi.fn().mockResolvedValue({ data: [row], error: null });
+    const eqSelect = vi.fn().mockReturnValue({ order });
+    const select = vi.fn().mockReturnValue({ eq: eqSelect });
+    const eqUpdate = vi.fn().mockResolvedValue({ error: null });
+    const update = vi.fn().mockReturnValue({ eq: eqUpdate });
+    const insert = vi.fn().mockResolvedValue({ error: null });
+
+    const from = vi.fn().mockImplementation((table: string) => {
+      expect(table).toBe("v2_notifications");
+      return { select, update, insert };
+    });
+
+    const notifDs = new SupabaseNotificationDataSource(fakeClient({ from }));
+
+    const list = await notifDs.listByUser("user-1");
+    expect(list).toHaveLength(1);
+    expect(list[0].id).toBe("notif-1");
+    expect(list[0].actionUrl).toBe("/negociacao/1");
+
+    await expect(notifDs.markAsRead("notif-1")).resolves.toBeUndefined();
+    await expect(notifDs.markAllAsRead("user-1")).resolves.toBeUndefined();
+    await expect(
+      notifDs.addNotification({
+        id: "notif-2",
+        userId: "user-1",
+        title: "Dica",
+        message: "IFPI",
+        type: "safety_tip",
+        read: false,
+        createdAt: "2026-10-15T12:00:00Z",
+      }),
+    ).resolves.toBeUndefined();
+  });
+
+  it("trata erros nas operações de notificação do Supabase", async () => {
+    const error = { message: "falha no banco" };
+    const order = vi.fn().mockResolvedValue({ data: null, error });
+    const eqSelect = vi.fn().mockReturnValue({ order });
+    const select = vi.fn().mockReturnValue({ eq: eqSelect });
+    const eqUpdate = vi.fn().mockResolvedValue({ error });
+    const update = vi.fn().mockReturnValue({ eq: eqUpdate });
+    const insert = vi.fn().mockResolvedValue({ error });
+
+    const from = vi.fn().mockReturnValue({ select, update, insert });
+    const notifDs = new SupabaseNotificationDataSource(fakeClient({ from }));
+
+    await expect(notifDs.listByUser("user-1")).rejects.toThrow("Não foi possível carregar as notificações.");
+    await expect(notifDs.markAsRead("notif-1")).rejects.toThrow("Não foi possível atualizar a notificação.");
+    await expect(notifDs.markAllAsRead("user-1")).rejects.toThrow("Não foi possível marcar as notificações como lidas.");
+    await expect(
+      notifDs.addNotification({
+        id: "notif-2",
+        userId: "user-1",
+        title: "Dica",
+        message: "IFPI",
+        type: "safety_tip",
+        read: false,
+        createdAt: "2026-10-15T12:00:00Z",
+      }),
+    ).rejects.toThrow("Não foi possível criar a notificação.");
   });
 });
