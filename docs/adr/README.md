@@ -13,5 +13,6 @@
 - [0011 — Barra de navegação com 3 destinos (Início, Pesquisa, Perfil)](0011-navegacao-tres-destinos.md)
 - [0012 — Supabase com autorização no banco](0012-supabase-com-rls.md) (substituído parcialmente pelo 0013)
 - [0013 — Reset do esquema legado no projeto Supabase compartilhado](0013-reset-esquema-legado-supabase.md)
+- [0014 — Ícones seguem a biblioteca nativa de cada plataforma](0014-icones-por-biblioteca-nativa-de-plataforma.md)
 
 Preservar registros aceitos; mudanças relevantes geram novo ADR com vínculos de substituição.
