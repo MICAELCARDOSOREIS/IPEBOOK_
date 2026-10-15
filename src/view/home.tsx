@@ -3,9 +3,9 @@ import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from "
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useHomeViewModel } from "@/viewmodel/useHomeViewModel";
-import { useRequestNegotiationViewModel } from "@/viewmodel/useRequestNegotiationViewModel";
 import { tokens } from "@/view/tokens";
 import { AppIcon } from "@/view/components/AppIcon";
+import { BookCover } from "@/view/components/BookCover";
 import type { BookModality } from "@/model/entities/book";
 
 const modalityTag: Record<BookModality, { background: string; text: string; label: string }> = {
@@ -19,6 +19,7 @@ export type HomeProps = {
   onNavigateToCreateListing?: () => void;
   onNavigateToReceivedRequests?: () => void;
   onNavigateToSentRequests?: () => void;
+  onNavigateToBookDetail?: (bookId: string) => void;
   /** Mudar este valor força o catálogo a recarregar (ex.: ao voltar de cadastrar um anúncio). */
   focusKey?: unknown;
 };
@@ -28,12 +29,11 @@ export default function Home({
   onNavigateToCreateListing,
   onNavigateToReceivedRequests,
   onNavigateToSentRequests,
+  onNavigateToBookDetail,
   focusKey,
 }: HomeProps = {}) {
   const [state, actions] = useHomeViewModel();
   const [authState, authActions] = useAuthViewModel();
-  const [negotiation, negotiationActions] = useRequestNegotiationViewModel();
-  const sessionUserId = authState.user?.id ?? null;
 
   const isFirstFocus = useRef(true);
   useEffect(() => {
@@ -131,36 +131,26 @@ export default function Home({
             renderItem={({ item }) => {
               const tag = modalityTag[item.modality];
               return (
-                <View style={styles.book}>
-                  <View style={styles.bookHeader}>
-                    <Text style={styles.emptyTitle}>{item.title}</Text>
-                    <View style={[styles.tag, { backgroundColor: tag.background }]}>
-                      <Text style={[styles.tagText, { color: tag.text }]}>{tag.label}</Text>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`Ver detalhe de ${item.title}, ${item.author}`}
+                  onPress={() => onNavigateToBookDetail?.(item.id)}
+                  style={styles.book}
+                >
+                  <BookCover id={item.id} title={item.title} variant="list" />
+                  <View style={styles.bookInfo}>
+                    <View style={styles.bookHeader}>
+                      <Text style={styles.emptyTitle}>{item.title}</Text>
+                      <View style={[styles.tag, { backgroundColor: tag.background }]}>
+                        <Text style={[styles.tagText, { color: tag.text }]}>{tag.label}</Text>
+                      </View>
                     </View>
+                    <Text style={styles.body}>{item.author}</Text>
+                    {item.status === "reserved" ? (
+                      <Text style={styles.reserved}>Reservado</Text>
+                    ) : null}
                   </View>
-                  <Text style={styles.body}>{item.author}</Text>
-                  {item.status === "reserved" ? (
-                    <Text style={styles.reserved}>Reservado</Text>
-                  ) : sessionUserId && item.ownerId !== sessionUserId ? (
-                    negotiation.requestedListingIds.includes(item.id) ? (
-                      <Text style={styles.requested}>Negociação solicitada</Text>
-                    ) : (
-                      <Pressable
-                        accessibilityRole="button"
-                        accessibilityLabel={`Solicitar negociação de ${item.title}`}
-                        accessibilityState={{ disabled: negotiation.pendingListingId === item.id }}
-                        disabled={negotiation.pendingListingId === item.id}
-                        onPress={() => void negotiationActions.request(item.id, sessionUserId)}
-                        style={styles.requestButton}
-                      >
-                        <Text style={styles.sessionButtonText}>Solicitar negociação</Text>
-                      </Pressable>
-                    )
-                  ) : null}
-                  {negotiation.errorListingId === item.id ? (
-                    <Text accessibilityRole="alert" style={styles.requestError}>{negotiation.error}</Text>
-                  ) : null}
-                </View>
+                </Pressable>
               );
             }}
           />
@@ -191,13 +181,11 @@ const styles = StyleSheet.create({
   errorRow: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[12] },
   button: { minHeight: tokens.accessibility.touchTarget, minWidth: tokens.accessibility.touchTarget, justifyContent: "center", paddingHorizontal: tokens.spacing[20], borderRadius: tokens.radius.small, backgroundColor: tokens.colors.action },
   buttonText: { color: tokens.colors.surface, fontSize: 16, fontWeight: "600" },
-  book: { paddingVertical: 18, borderBottomWidth: 1, borderBottomColor: tokens.colors.border, gap: 6 },
+  book: { flexDirection: "row", gap: tokens.spacing[12], paddingVertical: 18, borderBottomWidth: 1, borderBottomColor: tokens.colors.border },
+  bookInfo: { flex: 1, gap: 6 },
   bookHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: tokens.spacing[12] },
   tag: { borderRadius: tokens.radius.small, paddingHorizontal: tokens.spacing[12], paddingVertical: tokens.spacing[6] },
   tagText: { fontSize: tokens.typography.labelMedium.fontSize, fontWeight: tokens.typography.labelMedium.fontWeight },
   requestsRow: { flexDirection: "row", flexWrap: "wrap", marginTop: -tokens.spacing[12], marginBottom: tokens.spacing[24] },
-  requestButton: { minHeight: tokens.accessibility.touchTarget, justifyContent: "center", alignSelf: "flex-start" },
-  requested: { fontSize: tokens.typography.bodyMedium.fontSize, color: tokens.colors.secondaryText, fontWeight: "600" },
   reserved: { fontSize: tokens.typography.bodyMedium.fontSize, color: tokens.colors.secondaryText, fontStyle: "italic" },
-  requestError: { fontSize: tokens.typography.bodyMedium.fontSize, color: tokens.colors.error },
 });
