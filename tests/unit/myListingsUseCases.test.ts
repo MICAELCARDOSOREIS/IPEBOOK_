@@ -57,3 +57,50 @@ describe("Caso de uso: listMyListings (ISO/IEC 25010 - Adequação Funcional)", 
     expect(user3Books).toHaveLength(0);
   });
 });
+
+describe("Caso de uso: cancelListing (ISO/IEC 25010 - Adequação Funcional e Segurança)", () => {
+  it("lança AuthError se a sessão for nula ou vazia", async () => {
+    const ds = new MemoryBookDataSource(fakeBooks);
+    const uc = new BookUseCases(ds);
+
+    await expect(uc.cancelListing("b1", null)).rejects.toThrow(AuthError);
+    await expect(uc.cancelListing("b1", "")).rejects.toThrow(AuthError);
+  });
+
+  it("lança erro se o anúncio não for encontrado", async () => {
+    const ds = new MemoryBookDataSource(fakeBooks);
+    const uc = new BookUseCases(ds);
+
+    await expect(uc.cancelListing("b-inexistente", "user-1")).rejects.toThrow(
+      "Anúncio não encontrado.",
+    );
+  });
+
+  it("impede que um usuário cancele o anúncio de outro", async () => {
+    const ds = new MemoryBookDataSource(fakeBooks);
+    const uc = new BookUseCases(ds);
+
+    await expect(uc.cancelListing("b2", "user-1")).rejects.toThrow(
+      "Apenas quem anunciou o livro pode cancelá-lo.",
+    );
+  });
+
+  it("impede a exclusão de anúncio que está com negociação aceita (reservado)", async () => {
+    const ds = new MemoryBookDataSource(fakeBooks);
+    const uc = new BookUseCases(ds);
+
+    await expect(uc.cancelListing("b3", "user-1")).rejects.toThrow(
+      "Não é possível remover anúncio com negociação aceita em andamento.",
+    );
+  });
+
+  it("remove o anúncio com sucesso quando disponível e do proprietário", async () => {
+    const ds = new MemoryBookDataSource(fakeBooks);
+    const uc = new BookUseCases(ds);
+
+    await uc.cancelListing("b1", "user-1");
+    const remaining = await uc.listMyListings("user-1");
+    expect(remaining).toHaveLength(1);
+    expect(remaining[0].id).toBe("b3");
+  });
+});
