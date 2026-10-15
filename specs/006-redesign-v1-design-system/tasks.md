@@ -6,7 +6,7 @@ T002, T003, T005, T007, T008, T012, T016, T017, T023), [#55](https://github.com/
 (Maria Clara — perfil, toca os mesmos arquivos de auth do Micael: T001 parte, T004, T006, T009,
 T013, T014, T020, T021, T024), [#56](https://github.com/Ghostyxseven/IPEBOOK_/issues/56) (Maria
 Clara — home/navegação/pesquisa/detalhe do livro, sem dependência de arquivo com #54: T010,
-T011, T015, T018, T019, T022, T029, T030, T031) e [#59](https://github.com/Ghostyxseven/IPEBOOK_/issues/59)
+T011, T015, T018, T019, T022, T029, T030, T031, T032, T033) e [#59](https://github.com/Ghostyxseven/IPEBOOK_/issues/59)
 (Micael — modelo/caso de uso do detalhe do livro: T028). T025-T027 (validação, documentação,
 registro final) são conjuntas.
 
@@ -45,6 +45,11 @@ registro final) são conjuntas.
 - [ ] T010 `src/view/components/SearchField.tsx` (campo-de-busca.md), com teste. **Maria Clara**
 - [ ] T011 `src/view/components/NavigationBar.tsx` (3 destinos, ADR 0011), com teste cobrindo
       item ativo/inativo. **Maria Clara**
+- [ ] T032 `src/view/components/BookCover.tsx` (capa-ilustrativa.md: cor/motivo determinísticos
+      a partir do id, variantes "em lista" 44px e "em cartão" ≥80px, FR-010), com teste. **Maria
+      Clara**
+- [ ] T033 `src/view/components/TopAppBar.tsx` (barra-superior.md: botão voltar + título,
+      FR-011), com teste. **Maria Clara**
 
 ## ViewModels
 
@@ -63,8 +68,9 @@ registro final) são conjuntas.
       **Micael**
 - [x] T017 Criar `src/view/auth/forgotPassword.tsx` + rota `src/app/esqueci-senha.tsx`, com
       testes RNTL cobrindo US1. **Micael**
-- [ ] T018 Redesenhar `src/view/home.tsx` com o item de lista do design system e adicionar
-      `NavigationBar`, sem regressão na spec 005, com testes atualizados. **Maria Clara**
+- [ ] T018 Redesenhar `src/view/home.tsx` com o item de lista do design system (incluindo
+      `BookCover`, T032) e adicionar `NavigationBar`, sem regressão na spec 005, com testes
+      atualizados. **Maria Clara**
 - [ ] T019 Criar `src/view/search/search.tsx` + rota `src/app/pesquisa.tsx`, com testes RNTL
       cobrindo US3 (SC-002). **Maria Clara**
 - [ ] T020 Criar `src/view/profile/profile.tsx` + rota `src/app/perfil.tsx` (exige sessão,
@@ -74,8 +80,9 @@ registro final) são conjuntas.
 - [ ] T022 Compor a `NavigationBar` em `src/app/_layout.tsx` nas 3 rotas de nível superior.
       **Maria Clara**
 - [ ] T029 Criar `src/view/listings/bookDetail.tsx` + rota dinâmica `src/app/livro/[id].tsx`
-      (US6: título, autor, tag de modalidade, preço, link ao perfil de quem anunciou, botão
-      "Solicitar negociação"), consumindo `getBookById` (T028, Micael). **Maria Clara**
+      (US6: `TopAppBar` com voltar, `BookCover` em cartão, título, autor, tag de modalidade,
+      preço, link ao perfil de quem anunciou, botão "Solicitar negociação"), consumindo
+      `getBookById` (T028, Micael). **Maria Clara**
 - [ ] T030 Em `src/view/home.tsx` (parte de T018), trocar o botão "Solicitar negociação" da
       linha da lista por navegação para `livro/[id]` (T029) — a ação de negociar passa a viver
       só no detalhe. **Maria Clara**
