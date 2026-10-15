@@ -2,6 +2,27 @@
 
 Versões no formato `MAIOR.MENOR.CORREÇÃO`. Mudança grande = versão nova.
 
+## 1.1.1 · 2026-10-15
+
+- Sincronizado `src/view/tokens.ts` com `design-system/tokens.json`, a partir de uma
+  verificação direta das telas Android no Figma (amostra de 15 telas, cobrindo as 12 áreas
+  funcionais do arquivo, via MCP do Figma).
+- **Responsáveis:** Micael Cardoso Reis.
+- **Mudanças em `src/view/tokens.ts`:**
+  - `colors.cover.brown`: corrigido de `#633E36` para `#7B4A2F` (valor real do token
+    `cover-brown`, estava desatualizado em relação a `tokens.json`).
+  - `colors.cover.text`: corrigido de `#F6F1E8` para `#F5EFE8` (valor real do token `cover-on`).
+  - `colors.cover`: adicionadas as cores `wine` (`#6B2A36`) e `ochre` (`#86581A`), que faltavam
+    — a capa ilustrativa tem 5 cores no design system (Azul, Marrom, Verde, Vinho, Mostarda),
+    só 3 estavam implementadas. `BookCover.tsx` passa a sortear entre as 5.
+  - `colors.m3`: adicionados `primary`, `onPrimary`, `primaryContainer`, `onPrimaryContainer`,
+    `secondary`, `onSecondary` — papéis M3 usados nas telas de início, detalhe do livro,
+    conversa e estante que ainda não existiam no arquivo de tokens de código.
+  - Novo export `elevation` (níveis 0 a 5, tema claro), espelhando `shadow.tokens` de
+    `tokens.json`; ainda não consumido por nenhum componente.
+- Nenhuma mudança em `tokens.json` nem em `04-componentes/`: a fonte canônica já estava correta
+  e batendo com o Figma — a divergência era só no arquivo de código.
+
 ## 1.1.0 · 2026-10-14
 
 - `design-system/` passa a ser a **fonte única** de design do projeto; `design-kit/` foi
