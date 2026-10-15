@@ -56,25 +56,25 @@ describe("autenticação: criar conta, entrar e sair (ISO/IEC 25010 - Adequaçã
     await expect(useCases.getSession()).resolves.toBeNull();
   });
 
-  it("gera senha temporária e permite entrar com ela (US1, FR-002)", async () => {
+  it("não troca a senha sem comprovação pelo e-mail", async () => {
     const useCases = new AuthUseCases(new MemoryAuthDataSource());
     await useCases.signUp("pessoa@exemplo.com", "12345678");
     await useCases.signOut();
 
-    const temporaryPassword = await useCases.requestPasswordReset("pessoa@exemplo.com");
-    expect(temporaryPassword.length).toBeGreaterThanOrEqual(8);
-
-    const user = await useCases.signIn("pessoa@exemplo.com", temporaryPassword);
+    await expect(useCases.requestPasswordReset("pessoa@exemplo.com")).rejects.toThrow(
+      "Recuperação por e-mail indisponível no modo local.",
+    );
+    const user = await useCases.signIn("pessoa@exemplo.com", "12345678");
     expect(user.email).toBe("pessoa@exemplo.com");
-    await expect(useCases.signIn("pessoa@exemplo.com", "12345678")).rejects.toThrow(AuthError);
   });
 
-  it("rejeita recuperação de senha para e-mail sem conta (FR-001)", async () => {
+  it("usa a mesma resposta local para e-mail existente e inexistente", async () => {
     const useCases = new AuthUseCases(new MemoryAuthDataSource());
-
-    await expect(useCases.requestPasswordReset("desconhecido@exemplo.com")).rejects.toThrow(
-      AuthError,
-    );
+    await useCases.signUp("pessoa@exemplo.com", "12345678");
+    const known = useCases.requestPasswordReset("pessoa@exemplo.com");
+    const unknown = useCases.requestPasswordReset("desconhecido@exemplo.com");
+    await expect(known).rejects.toThrow("Recuperação por e-mail indisponível no modo local.");
+    await expect(unknown).rejects.toThrow("Recuperação por e-mail indisponível no modo local.");
   });
 
   it("isola a sessão retornada de alterações externas", async () => {

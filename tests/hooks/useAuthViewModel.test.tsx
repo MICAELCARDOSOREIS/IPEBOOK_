@@ -43,6 +43,9 @@ function fakeAuth(overrides: Partial<IAuthUseCases> = {}): IAuthUseCases {
     requestPasswordReset: async () => {
       throw new Error("not implemented");
     },
+    completePasswordReset: async () => {
+      throw new Error("not implemented");
+    },
     ...overrides,
   };
 }
@@ -62,7 +65,7 @@ describe("testes de hook: useAuthViewModel (ISO/IEC 25010 - Confiabilidade)", ()
   it("cria conta com sucesso e autentica a sessão", async () => {
     const user = { id: "1", email: "nova@exemplo.com" };
     const signUp = vi.fn().mockResolvedValue(user);
-    const hook = await renderHook(fakeAuth({ signUp }));
+    const hook = await renderHook(fakeAuth({ signUp, getSession: async () => user }));
 
     let success = false;
     await act(async () => {
@@ -70,7 +73,20 @@ describe("testes de hook: useAuthViewModel (ISO/IEC 25010 - Confiabilidade)", ()
     });
 
     expect(success).toBe(true);
-    expect(hook.current[0]).toEqual({ user, loading: false, error: null });
+    expect(hook.current[0]).toMatchObject({ user, loading: false, error: null });
+  });
+
+  it("orienta a confirmar o e-mail quando o cadastro ainda não criou sessão", async () => {
+    const hook = await renderHook(fakeAuth({
+      signUp: async () => ({ id: "1", email: "nova@exemplo.com" }),
+      getSession: async () => null,
+    }));
+    let authenticated = true;
+    await act(async () => {
+      authenticated = await hook.current[1].signUp("nova@exemplo.com", "12345678");
+    });
+    expect(authenticated).toBe(false);
+    expect(hook.current[0].statusMessage).toBe("Conta criada. Confirme seu e-mail antes de entrar.");
   });
 
   it("trata erro de domínio ao falhar o login e permite nova tentativa", async () => {
@@ -124,17 +140,17 @@ describe("testes de hook: useAuthViewModel (ISO/IEC 25010 - Confiabilidade)", ()
     expect(hook.current[0].user).toBeNull();
   });
 
-  it("retorna a senha temporária ao recuperar o acesso com sucesso", async () => {
+  it("confirma a solicitação sem retornar uma senha", async () => {
     const hook = await renderHook(
-      fakeAuth({ requestPasswordReset: async () => "temp12345" }),
+      fakeAuth({ requestPasswordReset: async () => {} }),
     );
 
-    let result: string | null = null;
+    let result = false;
     await act(async () => {
       result = await hook.current[1].requestPasswordReset("pessoa@exemplo.com");
     });
 
-    expect(result).toBe("temp12345");
+    expect(result).toBe(true);
     expect(hook.current[0].error).toBeNull();
     expect(hook.current[0].loading).toBe(false);
   });
@@ -148,12 +164,12 @@ describe("testes de hook: useAuthViewModel (ISO/IEC 25010 - Confiabilidade)", ()
       }),
     );
 
-    let result: string | null = "não-nulo";
+    let result = true;
     await act(async () => {
       result = await hook.current[1].requestPasswordReset("desconhecido@exemplo.com");
     });
 
-    expect(result).toBeNull();
+    expect(result).toBe(false);
     expect(hook.current[0].error).toBe("Não há conta cadastrada com este e-mail.");
   });
 });

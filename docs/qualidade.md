@@ -24,6 +24,10 @@ npm run build:web
 
 O comando `npm run validate` é rigoroso e composto: caso qualquer checagem estática, regra arquitetural ou teste falhe, o processo é abortado imediatamente com código de saída diferente de zero.
 
+Desde a spec 007, `validate` também executa `npm run test:sql`, que aplica as migrações em
+PostgreSQL local via PGlite e verifica cenários de acesso permitido e negado. Esse teste não
+substitui a aplicação das migrações e a conferência de RLS no Supabase hospedado.
+
 ---
 
 ## 2. Fundamentação na Norma ISO/IEC 25010

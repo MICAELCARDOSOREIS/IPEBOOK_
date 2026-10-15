@@ -51,6 +51,10 @@ export default function SignUp({ onAuthenticated, onNavigateToSignIn }: SignUpPr
           <Text accessibilityRole="alert" style={styles.error}>{state.error}</Text>
         ) : null}
 
+        {state.statusMessage ? (
+          <Text accessibilityRole="alert" style={styles.status}>{state.statusMessage}</Text>
+        ) : null}
+
         <FilledButton
           label="Criar conta"
           loading={state.loading}
@@ -72,6 +76,7 @@ const styles = StyleSheet.create({
   title: { fontSize: tokens.typography.displayLarge.fontSize, fontWeight: tokens.typography.displayLarge.fontWeight, color: tokens.colors.action },
   subtitle: { fontSize: 16, lineHeight: 24, color: tokens.colors.secondaryText, marginBottom: tokens.spacing[12] },
   error: { color: tokens.colors.error, fontSize: tokens.typography.bodyMedium.fontSize },
+  status: { color: tokens.colors.action, fontSize: tokens.typography.bodyMedium.fontSize },
   linkButton: { minHeight: tokens.accessibility.touchTarget, justifyContent: "center", alignItems: "center" },
   link: { color: tokens.colors.action, fontSize: tokens.typography.bodyMedium.fontSize, fontWeight: "600" },
 });

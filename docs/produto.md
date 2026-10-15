@@ -1,5 +1,13 @@
 # Produto e requisitos do Ipebook
 
+> Beta pública em preparação desde 2026-10-15: Supabase, Android por APK e Web em Cloudflare
+> Pages foram escolhidos. A [spec 007](../specs/007-contas-persistentes/spec.md) iniciou a
+> migração técnica, mas o app ainda usa memória por padrão e **não está pronto para público**.
+> A recuperação com senha temporária foi removida; no modo local, o envio por e-mail informa
+> que está indisponível. Contato só após aceite, confirmação bilateral da entrega, 18+,
+> atuação apenas em Piripiri, PI, e moderação manual são requisitos futuros da beta,
+> não funcionalidades prontas.
+
 Revisão: 2026-10-14 (specs 003 e 004 completas: autenticação, cadastro de anúncio e negociação simples). Este documento descreve a base implementada e identifica decisões necessárias para especificar o produto final. Não é uma aprovação de funcionalidades futuras.
 
 ## Objetivo confirmado
@@ -54,7 +62,9 @@ Testes e limitações de cobertura estão em [qualidade.md](qualidade.md). Exist
 - A base inicia vazia. Dados fictícios não devem ser apresentados como acervo real.
 - Casos de uso dependem de contratos; detalhes da tecnologia de dados ficam na infraestrutura.
 
-Não há regra definida para duplicidade, ISBN, limite de livros, moderação, disponibilidade, localização ou participação de menores. Com a modalidade decidida (venda/troca/doação), esses pontos podem virar requisitos nas próximas especificações, mas ainda não foram implementados nesta base.
+Não há regra definida para duplicidade, ISBN, limite de livros, moderação ou disponibilidade.
+A beta atenderá apenas Piripiri, PI, e exigirá autodeclaração de idade mínima de 18 anos;
+a forma de aplicar essas regras ainda precisa ser especificada e implementada.
 
 ## Requisitos de qualidade
 
@@ -73,8 +83,8 @@ Não existem metas aprovadas de latência, disponibilidade, escala ou retenção
 
 Nenhuma questão de produto segue pendente no momento — todas as 6 originais foram respondidas
 (ver tabela "Decisões já tomadas" abaixo). O que resta é refinamento: versão mínima de SO
-Android, forma de distribuição, e regras de detalhe (duplicidade, ISBN, moderação) à medida que
-forem especificadas.
+Android, regras de aplicação do limite a Piripiri, PI, e detalhes de duplicidade, ISBN e
+moderação à medida que forem especificadas.
 
 ### Decisões já tomadas
 
@@ -86,16 +96,18 @@ forem especificadas.
 | Haverá conta? Quais dados serão necessários? | Sim — conta com e-mail/senha (ou código por e-mail) e login com Google, dados mínimos nome e e-mail, mesma estratégia do projeto irmão (ADR 0006/0028 lá). | 2026-10-13 |
 | Quais ações compõem a primeira entrega útil? | Nesta ordem: (1) autenticação de conta, (2) cadastrar anúncio de livro, (3) catálogo/listagem (já implementado), (4) solicitar e responder negociação simples. Busca/filtros avançados e segurança/moderação ficam para depois. | 2026-10-13 |
 | Quais plataformas precisam ser suportadas inicialmente? | Android e Web. iOS fica fora da primeira entrega por enquanto. | 2026-10-13 |
+| Em qual cidade a beta pública poderá operar? | Apenas Piripiri, PI. A restrição ainda não está implementada nem validada. | 2026-10-15 |
 
-Todas as decisões acima (exceto a de plataformas, que já tinha sido resolvida em conversa
+As seis decisões originais acima (exceto a de plataformas, que já tinha sido resolvida em conversa
 direta com o usuário) foram inicialmente trazidas do trabalho já validado em produção da equipe
 no projeto irmão (`/home/usermicael/Projetos/IpeBook`), não de pesquisa de usuário nova feita
 nesta base pequena. **Em 2026-10-13, o usuário solicitante confirmou diretamente as três
 principais (problema/público, modalidade, conta/autenticação) como corretas para este
-projeto** — deixaram de ser inferência e passaram a ser decisão confirmada. O responsável pelo
-produto é o usuário solicitante; se a equipe quiser divergir de alguma dessas decisões para
-este Ipebook específico, basta atualizar esta tabela.
+projeto** — deixaram de ser inferência e passaram a ser decisão confirmada. A restrição a
+Piripiri, PI, foi informada diretamente pelo usuário em 2026-10-15. O responsável pelo produto
+é o usuário solicitante; se a equipe quiser divergir de alguma dessas decisões para este Ipebook
+específico, basta atualizar esta tabela.
 
 ## Próxima especificação
 
-Após definir as questões necessárias, escolher uma única jornada, descrever cenários de sucesso e erro em `specs/`, registrar ADRs pertinentes e elaborar plano/tarefas. A escolha de backend e autenticação deve decorrer dos requisitos; a documentação atual não autoriza implementação nem publicação dessas capacidades.
+A [spec 007](../specs/007-contas-persistentes/spec.md) cobre contas e anúncios persistentes. A restrição a Piripiri, PI, deve ser especificada e testada em uma entrega posterior antes da beta pública. Nenhuma publicação foi autorizada ou realizada.

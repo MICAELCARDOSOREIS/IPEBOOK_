@@ -1,5 +1,47 @@
 # Estado e continuidade
 
+## Atualização em 2026-10-15 — beta em implementação
+
+- Branch de trabalho: `feature/beta-supabase-base`, derivada de `develop` em `1c9a395`.
+- Base antes da mudança: `npm run validate` passou com 166 testes, tipos e arquitetura.
+- Após as alterações locais: `npm run validate` passou com 190 testes em 30 arquivos,
+  teste SQL local de migrações/RLS, checagem de 57 arquivos de arquitetura e cobertura de
+  81,35% de ramificações; `npm run build:web` exportou 10 rotas. Isso não comprova o fluxo
+  remoto nem a entrega de e-mail.
+- Spec 007 e ADR 0012 registrados. Há migrações locais para perfis, anúncios e pedidos e
+  adaptadores Supabase ativáveis explicitamente; **nenhuma migração foi aplicada a um projeto
+  remoto**, nem a integração foi validada entre contas reais.
+- O `.env` contém URL e chave publicável do Supabase. Em consulta somente de leitura, a API de
+  autenticação respondeu HTTP 200 e a rota pública `books` respondeu HTTP 404; a tabela da
+  migração desta branch ainda não está disponível nesse projeto. Não há credencial de banco
+  nem acesso administrativo gravado no repositório.
+- A Supabase CLI foi autenticada e vinculada localmente em 2026-10-15. O banco remoto já tem
+  quatro migrações ausentes desta pasta, referentes a outra versão do IpeBook, com tabelas
+  `listings` e `book_requests`. `supabase migration list` confirmou a divergência e
+  `supabase db push --dry-run --skip-vault` recusou a aplicação por histórico incompatível.
+  As migrações foram baixadas somente para `/tmp` para inspeção. **Não executar `db push`,
+  `migration repair` ou as migrações desta branch nesse projeto** antes de decidir entre
+  um projeto Supabase separado e uma adaptação explícita ao esquema existente. Nenhuma
+  migração remota foi aplicada.
+- A senha temporária exibida no MVP foi removida. O modo em memória não simula e-mail nem
+  altera a senha; há tela para definir nova senha a partir de link Supabase. Ainda é necessário
+  validar o retorno do link no Android e Web e configurar SMTP próprio.
+- As issues #55/#56 da spec 006 seguem abertas e atribuídas à Maria Clara. Não foram alteradas
+  por esta branch.
+- Cloudflare Pages foi escolhido para a Web da beta; não há publicação configurada ou
+  verificada. A configuração Vercel descrita no histórico abaixo pertence ao MVP anterior.
+- O usuário definiu Piripiri, PI, como a única cidade da beta. A regra ainda precisa de
+  especificação, implementação e verificação; nenhuma limitação geográfica está ativa no app.
+- Pendências antes da beta: completar e testar RLS com duas contas, aceite atômico, perfil/idade/
+  cidade/contato, fotos, moderação, exclusão de conta, legal, monitoramento e publicação. A
+  cidade/UF foi definida, mas o domínio ainda não foi informado. Supabase Pro requer autorização de gasto.
+- A auditoria `npm audit --omit=dev` reportou 32 avisos nas dependências, inclusive um crítico
+  em `shell-quote`; não houve atualização automática fora do escopo. Avaliar os caminhos de
+  execução relevantes antes de distribuir um APK ou publicar a Web.
+
+O restante deste documento é o registro anterior e pode conter contagens, links e prioridades
+superados por esta atualização. Atualizar a consolidação ao concluir a spec 007.
+
 Conferência: 2026-10-14 (base: branch `develop`, após merge do deploy web — PR #45 — e correção
 do `typecheck`). Projeto: `~/IPEBOOK_`.
 

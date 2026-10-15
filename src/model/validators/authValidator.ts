@@ -6,6 +6,13 @@ export type AuthValidationResult = Readonly<{
 const MIN_PASSWORD_LENGTH = 8;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+export function validateNewPassword(password: string): AuthValidationResult {
+  const errors = password.length < MIN_PASSWORD_LENGTH
+    ? [`Senha deve conter no mínimo ${MIN_PASSWORD_LENGTH} caracteres.`]
+    : [];
+  return { isValid: errors.length === 0, errors };
+}
+
 export function validateAuthPayload(input: unknown): AuthValidationResult {
   const errors: string[] = [];
 
