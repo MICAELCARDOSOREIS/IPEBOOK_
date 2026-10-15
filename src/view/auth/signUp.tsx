@@ -10,9 +10,10 @@ import { TextField } from "@/view/components/TextField";
 export type SignUpProps = {
   onAuthenticated?: () => void;
   onNavigateToSignIn?: () => void;
+  onNavigateToTerms?: () => void;
 };
 
-export default function SignUp({ onAuthenticated, onNavigateToSignIn }: SignUpProps = {}) {
+export default function SignUp({ onAuthenticated, onNavigateToSignIn, onNavigateToTerms }: SignUpProps = {}) {
   const [state, actions] = useAuthViewModel();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -62,6 +63,12 @@ export default function SignUp({ onAuthenticated, onNavigateToSignIn }: SignUpPr
           onPress={() => void handleSubmit()}
         />
 
+        <Pressable accessibilityRole="button" onPress={() => onNavigateToTerms?.()} style={styles.termsButton}>
+          <Text style={styles.termsText}>
+            Ao criar conta, você concorda com os <Text style={styles.termsLink}>Termos de Uso e Privacidade</Text>.
+          </Text>
+        </Pressable>
+
         <Pressable accessibilityRole="button" onPress={() => onNavigateToSignIn?.()} style={styles.linkButton}>
           <Text style={styles.link}>Já tem conta? Entrar</Text>
         </Pressable>
@@ -79,4 +86,7 @@ const styles = StyleSheet.create({
   status: { color: tokens.colors.action, fontSize: tokens.typography.bodyMedium.fontSize },
   linkButton: { minHeight: tokens.accessibility.touchTarget, justifyContent: "center", alignItems: "center" },
   link: { color: tokens.colors.action, fontSize: tokens.typography.bodyMedium.fontSize, fontWeight: "600" },
+  termsButton: { paddingVertical: tokens.spacing[4], alignItems: "center" },
+  termsText: { fontSize: 13, color: tokens.colors.secondaryText, textAlign: "center", lineHeight: 18 },
+  termsLink: { color: tokens.colors.action, fontWeight: "bold", textDecorationLine: "underline" },
 });
