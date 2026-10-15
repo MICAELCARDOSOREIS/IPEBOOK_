@@ -55,4 +55,16 @@ export class MemoryAuthDataSource implements IAuthDataSource {
   async completePasswordReset(_link: string | null, _newPassword: string): Promise<void> {
     throw new AuthError("Recuperação por e-mail indisponível no modo local.");
   }
+
+  async deleteAccount(userId: string): Promise<void> {
+    for (const [email, account] of this.accountsByEmail.entries()) {
+      if (account.id === userId) {
+        this.accountsByEmail.delete(email);
+        break;
+      }
+    }
+    if (this.session?.id === userId) {
+      this.session = null;
+    }
+  }
 }

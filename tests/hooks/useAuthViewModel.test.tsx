@@ -46,6 +46,7 @@ function fakeAuth(overrides: Partial<IAuthUseCases> = {}): IAuthUseCases {
     completePasswordReset: async () => {
       throw new Error("not implemented");
     },
+    deleteAccount: async () => {},
     ...overrides,
   };
 }

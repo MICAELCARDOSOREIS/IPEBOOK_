@@ -8,9 +8,14 @@ import { tokens } from "@/view/tokens";
 export type TermsAndPrivacyProps = {
   onBack?: () => void;
   initialTab?: "terms" | "privacy";
+  onNavigateToDeleteAccount?: () => void;
 };
 
-export default function TermsAndPrivacy({ onBack, initialTab = "terms" }: TermsAndPrivacyProps = {}) {
+export default function TermsAndPrivacy({
+  onBack,
+  initialTab = "terms",
+  onNavigateToDeleteAccount,
+}: TermsAndPrivacyProps = {}) {
   const [activeTab, setActiveTab] = useState<"terms" | "privacy">(initialTab);
   const sections = activeTab === "terms" ? TERMS_OF_USE : PRIVACY_POLICY;
 
@@ -55,6 +60,18 @@ export default function TermsAndPrivacy({ onBack, initialTab = "terms" }: TermsA
               ))}
             </View>
           ))}
+          {activeTab === "privacy" && onNavigateToDeleteAccount ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Solicitar exclusão da minha conta e dados"
+              onPress={onNavigateToDeleteAccount}
+              style={styles.deleteAccountLink}
+            >
+              <Text style={styles.deleteAccountText}>
+                Deseja excluir sua conta? Solicitar exclusão definitiva de dados (LGPD)
+              </Text>
+            </Pressable>
+          ) : null}
         </View>
       </View>
     </SafeAreaView>
@@ -116,5 +133,15 @@ const styles = StyleSheet.create({
     fontSize: tokens.typography.bodyMedium.fontSize,
     lineHeight: 22,
     color: tokens.colors.text,
+  },
+  deleteAccountLink: {
+    paddingVertical: tokens.spacing[16],
+    alignItems: "center",
+  },
+  deleteAccountText: {
+    fontSize: tokens.typography.labelMedium.fontSize,
+    color: tokens.colors.error,
+    textDecorationLine: "underline",
+    fontWeight: "500",
   },
 });

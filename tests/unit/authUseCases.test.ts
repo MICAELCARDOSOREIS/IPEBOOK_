@@ -85,4 +85,22 @@ describe("autenticação: criar conta, entrar e sair (ISO/IEC 25010 - Adequaçã
     const session = await useCases.getSession();
     expect(session?.email).toBe("pessoa@exemplo.com");
   });
+
+  it("rejeita exclusão de conta quando a sessão é nula ou vazia", async () => {
+    const useCases = new AuthUseCases(new MemoryAuthDataSource());
+    await expect(useCases.deleteAccount(null)).rejects.toThrow(AuthError);
+    await expect(useCases.deleteAccount("")).rejects.toThrow(AuthError);
+  });
+
+  it("exclui a conta com sucesso e encerra a sessão ativa", async () => {
+    const useCases = new AuthUseCases(new MemoryAuthDataSource());
+    const user = await useCases.signUp("titular@exemplo.com", "12345678");
+
+    await useCases.deleteAccount(user.id);
+    await expect(useCases.getSession()).resolves.toBeNull();
+
+    await expect(useCases.signIn("titular@exemplo.com", "12345678")).rejects.toThrow(
+      "Credenciais inválidas.",
+    );
+  });
 });

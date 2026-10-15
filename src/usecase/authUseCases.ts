@@ -1,6 +1,6 @@
 import type { IAuthDataSource } from "@/model/datasources/iAuthDataSource";
 import type { User } from "@/model/entities/user";
-import { ValidationError } from "@/model/errors";
+import { AuthError, ValidationError } from "@/model/errors";
 import { validateAuthPayload, validateNewPassword } from "@/model/validators/authValidator";
 import type { IAuthUseCases } from "@/usecase/iAuthUseCases";
 
@@ -39,5 +39,12 @@ export class AuthUseCases implements IAuthUseCases {
     const validation = validateNewPassword(newPassword);
     if (!validation.isValid) throw new ValidationError(validation.errors[0]);
     return this.dataSource.completePasswordReset(link, newPassword);
+  }
+
+  async deleteAccount(sessionUserId: string | null): Promise<void> {
+    if (!sessionUserId || !sessionUserId.trim()) {
+      throw new AuthError("Sessão obrigatória para excluir a conta.");
+    }
+    await this.dataSource.deleteAccount(sessionUserId.trim());
   }
 }
