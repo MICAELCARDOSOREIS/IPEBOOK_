@@ -1,12 +1,15 @@
 # Indicador de etapas (StepIndicator)
 
 Origem no sistema base: nenhum componente M3 equivalente direto (M3 tem stepper horizontal
-genérico). Situação: **Adaptado** — especializado nas três etapas fixas do fluxo Anunciar.
+genérico). Situação: **Adaptado** — barra de progresso contínua, não um stepper de passos
+discretos. Verificado contra as telas reais do fluxo "Anunciar livro" no Figma em 2026-10-15
+(telas 04.01 e 04.05): o preenchimento é proporcional a `etapaAtual / totalDeEtapas`, não três
+segmentos de largura igual.
 
 ## Quando usar
 
-- No fluxo "Anunciar livro" (ver [05-padroes.md](../05-padroes.md), Padrão 2), para mostrar em
-  qual das 3 etapas a pessoa está: livro, fotos e condições, revisão.
+- No fluxo "Anunciar livro" (ver [05-padroes.md](../05-padroes.md), Padrão 2), para mostrar o
+  progresso entre as etapas: livro, fotos e condições, revisão.
 
 ## Quando não usar
 
@@ -14,29 +17,28 @@ genérico). Situação: **Adaptado** — especializado nas três etapas fixas do
 
 ## Anatomia
 
-1. Três segmentos em linha
-2. Segmentos concluídos e o atual em `primary`
-3. Segmentos restantes em `surface-container-highest`
-4. Texto "Etapa N de 3" (só para leitor de tela — a barra em si é decorativa)
+1. Linha de rótulos: "Etapa N de 3" à esquerda, nome da etapa atual à direita
+2. Trilho único em pílula (`radius-full`), 4 px de altura, fundo `secondary-container`
+3. Preenchimento em `primary`, largura proporcional a `etapaAtual / totalDeEtapas`
+4. Ponto decorativo em `primary` no fim do trilho, marcando a conclusão do fluxo
 
 ## Variantes
 
-Não há variantes — sempre três etapas fixas.
+Não há variantes — sempre a mesma barra; o que muda é a proporção preenchida.
 
 ## Estados
 
 | Estado | Aparência (tokens) | Comportamento | Acessibilidade |
 | --- | --- | --- | --- |
-| Concluída | `primary` | - | Incluída na contagem "Etapa N de 3" |
-| Atual | `primary` | - | "Etapa N de 3" é o que é lido |
-| Futura | `surface-container-highest` | - | - |
+| Em progresso | preenchido `primary`, restante `secondary-container` | Largura do preenchido cresce a cada etapa | "Etapa N de 3" é o que é lido |
+| Concluído (última etapa) | barra inteira em `primary` | - | Incluído na contagem "Etapa N de 3" |
 
 ## Acessibilidade
 
 - A barra visual é decorativa (`importantForAccessibility="no"`); só o texto "Etapa N de 3" é
   anunciado.
-- Contraste não se aplica diretamente (elemento decorativo), mas `primary` sobre
-  `surface` já é 7,2:1.
+- `primary` sobre `secondary-container` e sobre `surface` têm contraste suficiente para um
+  elemento não textual (WCAG 1.4.11, ≥ 3:1).
 
 ## Faça e evite
 
@@ -45,23 +47,4 @@ Não há variantes — sempre três etapas fixas.
 
 ## Código
 
-```tsx
-import { Text, View } from "react-native";
-import { tokens } from "@/view/tokens";
-
-function IndicadorDeEtapas({ etapaAtual }: { etapaAtual: 1 | 2 | 3 }) {
-  return (
-    <View>
-      <Text accessibilityLiveRegion="polite">{`Etapa ${etapaAtual} de 3`}</Text>
-      <View style={{ flexDirection: "row", gap: tokens.spacing[6] }} importantForAccessibility="no">
-        {[1, 2, 3].map((n) => (
-          <View
-            key={n}
-            style={{ flex: 1, height: 4, borderRadius: tokens.radius.small, backgroundColor: n <= etapaAtual ? tokens.colors.action : tokens.colors.disabledBackground }}
-          />
-        ))}
-      </View>
-    </View>
-  );
-}
-```
+Ver [`src/view/components/StepProgress.tsx`](../../src/view/components/StepProgress.tsx).

@@ -2,6 +2,26 @@
 
 Versões no formato `MAIOR.MENOR.CORREÇÃO`. Mudança grande = versão nova.
 
+## 1.3.0 · 2026-10-15
+
+- Resolvida a pendência registrada na versão 1.2.0: o indicador de etapas documentado
+  (`indicador-de-etapas.md`) foi conferido de novo contra screenshots reais das telas 04.01 e
+  04.05 do Figma (não só a metadata/variáveis).
+- **Responsáveis:** Micael Cardoso Reis.
+- **Correção de leitura anterior:** a hipótese registrada na 1.2.0 ("barra segmentada de 3
+  traços" vs. "círculos numerados" da doc) estava **errada nos dois lados** — a doc já descrevia
+  uma barra, não círculos; e a barra real do Figma não é 3 segmentos de largura igual, é uma
+  **barra contínua** com preenchimento proporcional a `etapaAtual / totalDeEtapas`.
+- **Mudanças:**
+  - `indicador-de-etapas.md`: reescrita a anatomia para descrever a barra contínua com
+    proporção, não os três segmentos iguais.
+  - `src/view/components/StepProgress.tsx` (novo): implementação da barra contínua.
+  - `cartao-de-adicionar-foto.md` e `src/view/components/AddPhotoCard.tsx`: corrigidos depois
+    de conferir o screenshot real da tela 04.01 — é um quadrado com "+" e rótulo empilhados ao
+    lado dos campos de título/autor, não uma faixa de largura total com borda tracejada (erro
+    da versão 1.2.0, que foi inferido sem checar a imagem renderizada).
+  - Testes atualizados/criados para os três componentes.
+
 ## 1.2.0 · 2026-10-15
 
 - Implementados os componentes React Native que faltavam para as telas do fluxo "Anunciar
