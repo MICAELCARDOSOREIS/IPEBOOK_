@@ -2,6 +2,21 @@
 
 Versões no formato `MAIOR.MENOR.CORREÇÃO`. Mudança grande = versão nova.
 
+## 1.4.0 · 2026-10-15
+
+- Novo arquivo `telas-android-figma.md`: inventário das 137 telas Android do Figma (nome,
+  node-id, link em modo Dev de cada uma), para consulta offline sem precisar manter o Figma
+  aberto ou re-extrair a metadata a cada pergunta.
+- **Responsáveis:** Micael Cardoso Reis.
+- **Mudanças:**
+  - `design-system/telas-android-figma.md` (novo): 137 telas organizadas pelos 12 fluxos do
+    arquivo (01 · Acesso a 12 · Acessibilidade e temas), cada uma com link direto para o modo
+    Dev do Figma (`&m=dev`).
+  - `docs/design-system.md`: adicionado o link do Figma em modo Dev no cabeçalho do documento.
+  - `README.md`: referência ao novo inventário no mapa de arquivos.
+- **Pendência:** cobre só a página Android. As páginas iPhone (144 telas) e Web (126 telas)
+  ainda não foram extraídas.
+
 ## 1.3.0 · 2026-10-15
 
 - Resolvida a pendência registrada na versão 1.2.0: o indicador de etapas documentado
