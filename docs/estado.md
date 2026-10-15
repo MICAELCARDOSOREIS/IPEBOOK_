@@ -1,11 +1,12 @@
 # Estado e continuidade
 
-## Atualização em 2026-10-15 — Specs 008, 009 e 010 integradas em develop
+## Atualização em 2026-10-15 — Specs 008, 009, 010 e 011 integradas em develop
 
 - **Spec 008 (Meus Anúncios)**: Implementada e integrada em `develop`. Rota `/meus-anuncios`, view `MyListings`, caso de uso `listMyListings` e método `listByOwner` nos datasources. Atalho na Home.
 - **Spec 009 (Detalhes da Negociação Aceita e Ponto de Encontro)**: Implementada e integrada em `develop`. Rota `/negociacao/[id]`, view `RequestDetail`, caso de uso `getRequestDetail` com bloqueio de terceiros e sugestão de pontos públicos seguros em Piripiri, PI. Atalho "Ver detalhes do encontro" em "Pedidos recebidos" e "Meus pedidos" para itens aceitos.
 - **Spec 010 (Termos de Uso e Política de Privacidade)**: Implementada e integrada em `develop`. Rota `/termos`, view `TermsAndPrivacy`, modelo `legalContent.ts` com regras da comunidade de Piripiri, PI, LGPD e limites de responsabilidade. Atalhos na Home e na tela de Cadastro.
-- `npm run check:architecture` passa com 76 arquivos (0 violações); 261 testes passam em 48 arquivos; cobertura > 81% em todas as métricas; `npm run build:web` exporta 15 rotas estáticas.
+- **Spec 011 (Denúncia de Anúncio e Moderação Comunitária)**: Implementada e integrada em `develop`. Rota `/denunciar/[id]`, tela `ReportListingScreen`/`ReportListing`, caso de uso `ReportUseCases` com validações de sessão e motivos pré-definidos (UGC/conformidade com diretrizes de app store), datasources em memória e Supabase. Atalho "Denunciar anúncio" no detalhe do livro.
+- `npm run check:architecture` passa com 86 arquivos (0 violações); 275 testes passam em 51 arquivos; cobertura > 80% em todas as métricas; `npm run build:web` exporta 16 rotas estáticas.
 - A responsabilidade de Perfil da Maria Clara (Issue #55) permaneceu intacta e sem colisões.
 
 ## Atualização em 2026-10-15 — beta em implementação
