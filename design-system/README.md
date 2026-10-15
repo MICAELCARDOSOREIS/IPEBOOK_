@@ -45,7 +45,7 @@ ilustrativa quando não tem foto, para a estante parecer organizada mesmo sem fo
 | Configurações / Perfil | Item de lista, Interruptor, Avatar, Barra superior |
 | Propostas / Concluídos (spec 004) | Abas, Linha de livro, Badge |
 
-Lista completa dos 23 componentes em [04-componentes/](04-componentes/).
+Lista completa dos 24 componentes em [04-componentes/](04-componentes/).
 
 ## 4. Mapa dos arquivos
 
@@ -54,7 +54,7 @@ Lista completa dos 23 componentes em [04-componentes/](04-componentes/).
 | [01-principios.md](01-principios.md) | Valores que guiam as decisões |
 | [02-tokens.md](02-tokens.md) | Tokens primitivos, semânticos e de componente |
 | [03-fundamentos.md](03-fundamentos.md) | Regras de cor, tipografia, espaço, ícones, elevação e movimento |
-| [04-componentes/](04-componentes/) | Um arquivo por componente — os 23 componentes do design, cada um com anatomia, estados, acessibilidade e código React Native |
+| [04-componentes/](04-componentes/) | Um arquivo por componente — os 24 componentes do design, cada um com anatomia, estados, acessibilidade e código React Native |
 | [05-padroes.md](05-padroes.md) | Fluxos: entrar/cadastrar, anunciar livro |
 | [06-acessibilidade.md](06-acessibilidade.md) | Contraste, alvos de toque, foco, leitor de tela |
 | [07-teste-com-ia.md](07-teste-com-ia.md) | Validação do sistema com um assistente de IA |

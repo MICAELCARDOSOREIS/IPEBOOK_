@@ -38,17 +38,27 @@ export const colors = {
     completed: { background: "#2F6B4F", text: "#FFFFFF" },
   },
 
-  // Capas ilustrativas (quando anúncio não tem imagem)
+  // Capas ilustrativas (quando anúncio não tem imagem) — as 5 cores do catálogo de componentes
+  // do Figma (capa-ilustrativa.md): Azul, Marrom, Verde, Vinho, Mostarda.
   cover: {
     blue: "#253C4F",
-    brown: "#633E36",
+    brown: "#7B4A2F",
     green: "#30574A",
-    text: "#F6F1E8",
+    wine: "#6B2A36",
+    ochre: "#86581A",
+    sun: "#DDAF38",
+    text: "#F5EFE8",
   },
 
   // Papéis Material 3 (design-system/tokens.json, tema claro) — para componentes novos
   // (Button, TextField, Chip, Tag, Dialog etc.) das specs 003/004.
   m3: {
+    primary: "#2c5e45",
+    onPrimary: "#ffffff",
+    primaryContainer: "#cfe9d7",
+    onPrimaryContainer: "#0f2c1d",
+    secondary: "#4d6356",
+    onSecondary: "#ffffff",
     onSurface: "#1d1b18",
     onSurfaceVariant: "#4d4740",
     surfaceContainerLowest: "#ffffff",
@@ -70,6 +80,20 @@ export const colors = {
     inverseOnSurface: "#f5efe8",
     focusRing: "#4e8a68",
   },
+} as const;
+
+/**
+ * Elevação Material 3 (design-system/tokens.json → shadow.tokens), tema claro. Duas sombras
+ * sobrepostas por nível, formato CSS `box-shadow` (React Native Web); em RN nativo (Android),
+ * usar junto com a prop `elevation` do Android quando o componente precisar de sombra nativa.
+ */
+export const elevation = {
+  level0: "none",
+  level1: "0 1px 2px 0 rgba(0,0,0,0.30), 0 1px 3px 1px rgba(0,0,0,0.15)",
+  level2: "0 1px 2px 0 rgba(0,0,0,0.30), 0 2px 6px 2px rgba(0,0,0,0.15)",
+  level3: "0 3px 8px 0 rgba(0,0,0,0.18)",
+  level4: "0 2px 3px 0 rgba(0,0,0,0.30), 0 6px 10px 4px rgba(0,0,0,0.15)",
+  level5: "0 4px 4px 0 rgba(0,0,0,0.30), 0 8px 12px 6px rgba(0,0,0,0.15)",
 } as const;
 
 export const spacing = {
@@ -140,6 +164,7 @@ export const tokens = {
   accessibility,
   typography,
   motion,
+  elevation,
 } as const;
 
 export default tokens;

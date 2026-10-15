@@ -10,7 +10,13 @@ export type BookCoverProps = {
   variant?: BookCoverVariant;
 };
 
-const COVER_COLORS = [tokens.colors.cover.blue, tokens.colors.cover.brown, tokens.colors.cover.green] as const;
+const COVER_COLORS = [
+  tokens.colors.cover.blue,
+  tokens.colors.cover.brown,
+  tokens.colors.cover.green,
+  tokens.colors.cover.wine,
+  tokens.colors.cover.ochre,
+] as const;
 const ASPECT_RATIO = 120 / 170;
 const LIST_WIDTH = 44;
 const CARD_WIDTH = 96;
