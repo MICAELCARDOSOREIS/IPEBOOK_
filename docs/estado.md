@@ -1,5 +1,17 @@
 # Estado e continuidade
 
+## Atualização em 2026-10-15 — Capturas e inspeção via ADB das novas telas do MVP
+
+- Inspecionadas e capturadas no celular físico Samsung Galaxy conectado via ADB (`RX8Y6018P3W`) e empacotado no Expo Go via Expo Tunnel (`npx expo start --tunnel`).
+- Telas integradas à documentação e galeria do MVP em `docs/versoes/mvp/imagens/`:
+  - `notificacoes.png` (Central de Notificações, Spec 015)
+  - `ajuda.png` (Central de Ajuda, FAQ e Segurança em Piripiri, Spec 012)
+  - `termos-e-privacidade.png` (Termos de Uso e Política de Privacidade LGPD, Spec 010)
+  - `excluir-conta.png` (Exclusão de Conta LGPD, Spec 014)
+  - `denunciar.png` (Denúncia de Anúncio, Spec 011)
+  - `pesquisa.png` (Pesquisa no Catálogo por título e autor)
+- Registro consolidado em `docs/versoes/mvp/resumo.md`.
+
 ## Atualização em 2026-10-15 — Specs 008 a 015 integradas em develop
 
 - **Spec 008 (Meus Anúncios)**: Implementada e integrada em `develop`. Rota `/meus-anuncios`, view `MyListings`, caso de uso `listMyListings` e método `listByOwner` nos datasources. Atalho na Home.

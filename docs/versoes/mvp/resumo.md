@@ -1,6 +1,6 @@
 # MVP — resumo e capturas
 
-**Conferência:** 2026-10-14, via ADB no Samsung SM_A165M, com o aplicativo aberto no Expo Go. **Estado:** telas inspecionadas; fluxo de cadastro de anúncio ainda não validado de ponta a ponta no aparelho.
+**Conferência:** 2026-10-14 e 2026-10-15, via ADB no Samsung físico conectado, com o aplicativo aberto no Expo Go via Expo Tunnel. **Estado:** telas de catálogo, autenticação, pedidos, anúncios, termos, denúncia, exclusão de conta, FAQ e notificações inspecionadas ao vivo no dispositivo.
 
 ## Escopo observado
 
@@ -22,6 +22,12 @@ As imagens são capturas integrais de 1080 × 2340 pixels. A conta e o livro usa
 | Pedidos recebidos | [Estado vazio](imagens/recebidos.png) | Mensagem de ausência de pedidos recebidos. |
 | Meus pedidos | [Estado vazio](imagens/meus-pedidos.png) | Mensagem de ausência de negociações solicitadas. |
 | Após cadastrar anúncio fictício | [Catálogo ainda vazio](imagens/catalogo-com-livro.png) | O aplicativo voltou à página inicial, mas o livro não apareceu na listagem. |
+| Central de Notificações | [Notificações](imagens/notificacoes.png) | Tela de notificações com aviso de sessão e atalho para login (Spec 015). |
+| Central de Ajuda e FAQ | [Ajuda e FAQ](imagens/ajuda.png) | Tópicos de segurança em Piripiri, PI, regras de trocas e chips de filtro (Spec 012). |
+| Termos de Uso e Privacidade | [Termos e Privacidade](imagens/termos-e-privacidade.png) | Cláusulas comunitárias locais e conformidade com a LGPD (Spec 010). |
+| Exclusão de Conta | [Excluir Conta](imagens/excluir-conta.png) | Direito ao esquecimento LGPD e trava de segurança por confirmação (Spec 014). |
+| Denúncia de Anúncio | [Denunciar](imagens/denunciar.png) | Moderação comunitária com motivos padronizados contra fraudes e abusos (Spec 011). |
+| Pesquisa no Catálogo | [Pesquisa](imagens/pesquisa.png) | Campo de busca por título ou autor e estado vazio acolhedor. |
 
 ## Resultado e pendências
 
