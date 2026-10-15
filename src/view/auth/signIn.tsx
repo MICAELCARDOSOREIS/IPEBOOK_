@@ -4,6 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { tokens } from "@/view/tokens";
 import { FilledButton } from "@/view/components/FilledButton";
+import { Logotipo } from "@/view/components/Logotipo";
 import { TextField } from "@/view/components/TextField";
 
 export type SignInProps = {
@@ -25,7 +26,8 @@ export default function SignIn({ onAuthenticated, onNavigateToSignUp, onNavigate
   return (
     <SafeAreaView style={styles.page}>
       <View style={styles.content}>
-        <Text accessibilityRole="header" style={styles.title}>Entrar</Text>
+        <Logotipo />
+        <Text style={styles.title}>Entrar</Text>
         <Text style={styles.subtitle}>Entre com sua conta para anunciar e negociar livros.</Text>
 
         <TextField
