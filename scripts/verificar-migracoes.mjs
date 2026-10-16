@@ -22,7 +22,7 @@ insert into public.profiles (user_id) values ('${owner}');
 grant usage on schema public, auth to anon, authenticated;
 grant select on auth.users to authenticated;`);
 
-for (const name of ['202610150001_contas_e_anuncios.sql', '202610150002_pedidos.sql']) {
+for (const name of ['202610150001_contas_e_anuncios.sql', '202610150002_pedidos.sql', '202610150003_favoritos_alertas.sql']) {
   await db.exec(readFileSync(new URL(`../supabase/migrations/${name}`, import.meta.url), 'utf8'));
 }
 const legacy = await db.query(`select
@@ -64,5 +64,26 @@ if (blockedUpdate.affectedRows !== 0) throw new Error('Terceiro conseguiu respon
 process.stdout.write('Terceiro responde pedido: nenhuma linha alterada\n');
 await as('authenticated', owner, `update public.v2_book_requests set status = 'accepted' where id = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'`);
 await denied('Pedido aceito não reabre', () => as('authenticated', owner, `update public.v2_book_requests set status = 'pending' where id = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'`));
+await as('authenticated', reader, `insert into public.v2_favorites (user_id, book_id) values ('${reader}', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa')`);
+const ownFavorites = await as('authenticated', reader, `select id from public.v2_favorites`);
+if (ownFavorites.rows.length !== 1) throw new Error('Favorito do leitor não apareceu');
+const otherFavorites = await as('authenticated', other, `select id from public.v2_favorites`);
+if (otherFavorites.rows.length !== 0) throw new Error('Favoritos de outra pessoa expostos');
+await denied('Leitor falsifica favorito', () => as('authenticated', other, `insert into public.v2_favorites (user_id, book_id) values ('${reader}', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa')`));
+await as('authenticated', reader, `insert into public.v2_search_alerts (user_id, query) values ('${reader}', 'Casmurro')`);
+await as('authenticated', owner, `insert into public.v2_search_alerts (user_id, query) values ('${owner}', 'Casmurro')`);
+await as('authenticated', owner, `insert into public.v2_books (owner_id, title, author, modality) values ('${owner}', 'Dom Casmurro', 'Machado de Assis', 'donation')`);
+const notices = await as('authenticated', reader, `select type, action_url from public.v2_notifications`);
+if (notices.rows.length !== 1 || notices.rows[0].type !== 'search_alert_match') throw new Error('Alerta não criou notificação');
+const ownerNotices = await as('authenticated', owner, `select id from public.v2_notifications`);
+if (ownerNotices.rows.length !== 0) throw new Error('Anunciante foi avisado sobre o próprio livro');
+const hiddenAlerts = await as('authenticated', other, `select id from public.v2_search_alerts`);
+if (hiddenAlerts.rows.length !== 0) throw new Error('Alertas de outra pessoa expostos');
+await as('authenticated', other, `insert into public.v2_search_alerts (user_id, query) values ('${other}', 'Romance')`);
+await as('authenticated', owner, `insert into public.v2_books (owner_id, title, author, category, modality) values ('${owner}', 'Outro livro', 'Outra pessoa', 'Romance', 'donation')`);
+const categoryNotice = await as('authenticated', other, `select id from public.v2_notifications`);
+if (categoryNotice.rows.length !== 1) throw new Error('Categoria não gerou notificação');
+await as('authenticated', reader, `update public.v2_notifications set read = true`);
+await denied('Leitor altera conteúdo de notificação', () => as('authenticated', reader, `update public.v2_notifications set title = 'alterado'`));
 process.stdout.write('Migrações e cenários SQL locais verificados.\n');
 await db.close();

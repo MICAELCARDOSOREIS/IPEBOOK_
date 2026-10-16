@@ -17,7 +17,7 @@
    - `src/usecase/favoriteUseCases.ts` (`toggleFavorite`, `listFavorites`).
    - `src/usecase/searchAlertUseCases.ts` (`createAlert`, `pauseAlert`, `resumeAlert`,
      `deleteAlert`, `listAlerts`, `matchNewBookAgainstAlerts` — este último chamado pelo caso de
-     uso de criação de anúncio existente, `bookUseCases.create`, para gerar notificação).
+     uso de criação de anúncio existente, `bookUseCases.createListing`, para gerar notificação).
 5. **ViewModel:**
    - `src/viewmodel/useFavoritesViewModel.ts`.
    - `src/viewmodel/useSearchAlertsViewModel.ts`.

@@ -5,6 +5,8 @@ import { tokens } from "@/view/tokens";
 import { AppIcon } from "@/view/components/AppIcon";
 import { BookCover } from "@/view/components/BookCover";
 import { SearchField } from "@/view/components/SearchField";
+import { FavoriteButton } from "@/view/components/FavoriteButton";
+import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import type { BookModality } from "@/model/entities/book";
 
 const modalityTag: Record<BookModality, { background: string; text: string; label: string }> = {
@@ -15,11 +17,13 @@ const modalityTag: Record<BookModality, { background: string; text: string; labe
 
 export type SearchProps = {
   onNavigateToBookDetail?: (bookId: string) => void;
+  onNavigateToAlerts?: (term: string) => void;
 };
 
 /** Busca (US3, T019): filtra o catálogo já carregado por título ou autor (FR-005). */
-export default function Search({ onNavigateToBookDetail }: SearchProps) {
+export default function Search({ onNavigateToBookDetail, onNavigateToAlerts }: SearchProps) {
   const [state, actions] = useSearchViewModel();
+  const [auth] = useAuthViewModel();
 
   return (
     <SafeAreaView style={styles.page}>
@@ -48,16 +52,20 @@ export default function Search({ onNavigateToBookDetail }: SearchProps) {
                     ? "Tente buscar por outro título ou autor."
                     : "Ainda não há livros no catálogo."}
                 </Text>
+                {state.term.trim() ? <Pressable accessibilityRole="button" onPress={() => onNavigateToAlerts?.(state.term.trim())}>
+                  <Text style={styles.alertLink}>Criar alerta para esta busca</Text>
+                </Pressable> : null}
               </View>
             }
             renderItem={({ item }) => {
               const tag = modalityTag[item.modality];
               return (
+                <View style={styles.row}>
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel={`Ver detalhe de ${item.title}, ${item.author}`}
                   onPress={() => onNavigateToBookDetail?.(item.id)}
-                  style={styles.row}
+                  style={styles.rowMain}
                 >
                   <BookCover id={item.id} title={item.title} variant="list" />
                   <View style={styles.rowInfo}>
@@ -70,6 +78,8 @@ export default function Search({ onNavigateToBookDetail }: SearchProps) {
                     <Text style={styles.body}>{item.author}</Text>
                   </View>
                 </Pressable>
+                <FavoriteButton bookId={item.id} userId={auth.user?.id ?? null} />
+                </View>
               );
             }}
           />
@@ -88,7 +98,9 @@ const styles = StyleSheet.create({
   list: { paddingBottom: tokens.spacing[24] },
   empty: { alignItems: "center", paddingTop: tokens.spacing[32], gap: tokens.spacing[8] },
   emptyTitle: { fontSize: 19, fontWeight: "600", color: tokens.colors.action },
+  alertLink: { color: tokens.colors.action, fontWeight: "600", padding: tokens.spacing[12] },
   row: { flexDirection: "row", gap: tokens.spacing[12], paddingVertical: 18, borderBottomWidth: 1, borderBottomColor: tokens.colors.border },
+  rowMain: { flex: 1, flexDirection: "row", gap: tokens.spacing[12] },
   rowInfo: { flex: 1, gap: 6 },
   rowHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: tokens.spacing[12] },
   rowTitle: { fontSize: 19, fontWeight: "600", color: tokens.colors.action },

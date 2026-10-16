@@ -3,17 +3,23 @@ import { MemoryBookDataSource } from "@/infra/datasources/memoryBookDataSource";
 import { MemoryBookRequestDataSource } from "@/infra/datasources/memoryBookRequestDataSource";
 import { MemoryNotificationDataSource } from "@/infra/datasources/memoryNotificationDataSource";
 import { MemoryReportDataSource } from "@/infra/datasources/memoryReportDataSource";
+import { MemoryFavoriteDataSource } from "@/infra/datasources/memoryFavoriteDataSource";
+import { MemorySearchAlertDataSource } from "@/infra/datasources/memorySearchAlertDataSource";
 import { SupabaseAuthDataSource } from "@/infra/datasources/supabaseAuthDataSource";
 import { SupabaseBookDataSource } from "@/infra/datasources/supabaseBookDataSource";
 import { SupabaseBookRequestDataSource } from "@/infra/datasources/supabaseBookRequestDataSource";
 import { SupabaseNotificationDataSource } from "@/infra/datasources/supabaseNotificationDataSource";
 import { SupabaseReportDataSource } from "@/infra/datasources/supabaseReportDataSource";
+import { SupabaseFavoriteDataSource } from "@/infra/datasources/supabaseFavoriteDataSource";
+import { SupabaseSearchAlertDataSource } from "@/infra/datasources/supabaseSearchAlertDataSource";
 import { createSupabaseAppClient } from "@/infra/supabaseClient";
 import type { IAuthDataSource } from "@/model/datasources/iAuthDataSource";
 import type { IBookDataSource } from "@/model/datasources/iBookDataSource";
 import type { IBookRequestDataSource } from "@/model/datasources/iBookRequestDataSource";
 import type { INotificationDataSource } from "@/model/datasources/iNotificationDataSource";
 import type { IReportDataSource } from "@/model/datasources/iReportDataSource";
+import type { IFavoriteDataSource } from "@/model/datasources/iFavoriteDataSource";
+import type { ISearchAlertDataSource } from "@/model/datasources/iSearchAlertDataSource";
 import { DataSourceError } from "@/model/errors";
 import { AuthUseCases } from "@/usecase/authUseCases";
 import { BookRequestUseCases } from "@/usecase/bookRequestUseCases";
@@ -25,6 +31,10 @@ import type { INotificationUseCases } from "@/usecase/iNotificationUseCases";
 import type { IReportUseCases } from "@/usecase/iReportUseCases";
 import { NotificationUseCases } from "@/usecase/notificationUseCases";
 import { ReportUseCases } from "@/usecase/reportUseCases";
+import { FavoriteUseCases } from "@/usecase/favoriteUseCases";
+import { SearchAlertUseCases } from "@/usecase/searchAlertUseCases";
+import type { IFavoriteUseCases } from "@/usecase/iFavoriteUseCases";
+import type { ISearchAlertUseCases } from "@/usecase/iSearchAlertUseCases";
 
 function createDataSources(): {
   auth: IAuthDataSource;
@@ -32,6 +42,8 @@ function createDataSources(): {
   requests: IBookRequestDataSource;
   reports: IReportDataSource;
   notifications: INotificationDataSource;
+  favorites: IFavoriteDataSource;
+  searchAlerts: ISearchAlertDataSource;
 } {
   if (process.env.NODE_ENV !== "test" && process.env.EXPO_PUBLIC_BACKEND === "supabase") {
     const redirectUrl = process.env.EXPO_PUBLIC_AUTH_REDIRECT_URL;
@@ -46,22 +58,29 @@ function createDataSources(): {
       requests: new SupabaseBookRequestDataSource(client),
       reports: new SupabaseReportDataSource(client),
       notifications: new SupabaseNotificationDataSource(client),
+      favorites: new SupabaseFavoriteDataSource(client),
+      searchAlerts: new SupabaseSearchAlertDataSource(client),
     };
   }
   const books = new MemoryBookDataSource();
+  const notifications = new MemoryNotificationDataSource();
   return {
     auth: new MemoryAuthDataSource(),
     books,
     requests: new MemoryBookRequestDataSource(),
     reports: new MemoryReportDataSource(),
-    notifications: new MemoryNotificationDataSource(),
+    notifications,
+    favorites: new MemoryFavoriteDataSource(),
+    searchAlerts: new MemorySearchAlertDataSource(notifications),
   };
 }
 
 const dataSources = createDataSources();
 const bookDataSource = dataSources.books;
 
-export const bookUseCases: IBookUseCases = new BookUseCases(bookDataSource);
+export const searchAlertUseCases: ISearchAlertUseCases = new SearchAlertUseCases(dataSources.searchAlerts);
+export const favoriteUseCases: IFavoriteUseCases = new FavoriteUseCases(dataSources.favorites, bookDataSource);
+export const bookUseCases: IBookUseCases = new BookUseCases(bookDataSource, searchAlertUseCases);
 
 export const authUseCases: IAuthUseCases = new AuthUseCases(
   dataSources.auth,

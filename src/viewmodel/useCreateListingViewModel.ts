@@ -7,6 +7,7 @@ import type { IBookUseCases } from "@/usecase/iBookUseCases";
 export type CreateListingState = {
   title: string;
   author: string;
+  category: string;
   modality: BookModality;
   price: string;
   loading: boolean;
@@ -17,6 +18,7 @@ export type CreateListingState = {
 export type CreateListingActions = {
   setTitle: (value: string) => void;
   setAuthor: (value: string) => void;
+  setCategory: (value: string) => void;
   setModality: (value: BookModality) => void;
   setPrice: (value: string) => void;
   submit: (sessionUserId: string | null) => Promise<Book | null>;
@@ -26,6 +28,7 @@ export type CreateListingActions = {
 const INITIAL_STATE: CreateListingState = {
   title: "",
   author: "",
+  category: "",
   modality: "sale",
   price: "",
   loading: false,
@@ -46,6 +49,10 @@ export function useCreateListingViewModel(
 
   const setAuthor = useCallback((value: string) => {
     setState((prev) => ({ ...prev, author: value, error: null, success: false }));
+  }, []);
+
+  const setCategory = useCallback((value: string) => {
+    setState((prev) => ({ ...prev, category: value, error: null, success: false }));
   }, []);
 
   const setModality = useCallback((value: BookModality) => {
@@ -69,6 +76,7 @@ export function useCreateListingViewModel(
           {
             title: state.title,
             author: state.author,
+            ...(state.category.trim() ? { category: state.category.trim() } : {}),
             modality: state.modality,
             price: priceNum,
           },
@@ -85,12 +93,12 @@ export function useCreateListingViewModel(
         return null;
       }
     },
-    [state.title, state.author, state.modality, state.price, useCases],
+    [state.title, state.author, state.category, state.modality, state.price, useCases],
   );
 
   const reset = useCallback(() => {
     setState(INITIAL_STATE);
   }, []);
 
-  return [state, { setTitle, setAuthor, setModality, setPrice, submit, reset }];
+  return [state, { setTitle, setAuthor, setCategory, setModality, setPrice, submit, reset }];
 }

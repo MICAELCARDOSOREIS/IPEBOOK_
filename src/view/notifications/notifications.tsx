@@ -21,6 +21,7 @@ const TYPE_ICONS: Record<AppNotification["type"], string> = {
   request_accepted: "🤝",
   safety_tip: "🛡️",
   system: "ℹ️",
+  search_alert_match: "📚",
 };
 
 export default function Notifications({

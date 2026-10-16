@@ -7,6 +7,7 @@ type BookRow = {
   id: string;
   title: string;
   author: string;
+  category: string | null;
   owner_id: string;
   modality: Book["modality"];
   price: number | null;
@@ -18,6 +19,7 @@ function mapBook(row: BookRow): Book {
     id: row.id,
     title: row.title,
     author: row.author,
+    ...(row.category ? { category: row.category } : {}),
     ownerId: row.owner_id,
     modality: row.modality,
     ...(row.price === null ? {} : { price: Number(row.price) }),
@@ -29,7 +31,7 @@ export class SupabaseBookDataSource implements IBookDataSource {
   constructor(private readonly client: SupabaseAppClient) {}
 
   async list(): Promise<readonly Book[]> {
-    const { data, error } = await this.client.from("v2_books").select("id,title,author,owner_id,modality,price,status").order("created_at", { ascending: false });
+    const { data, error } = await this.client.from("v2_books").select("id,title,author,category,owner_id,modality,price,status").order("created_at", { ascending: false });
     if (error) throw new DataSourceError("Não foi possível carregar os livros.");
     return (data as BookRow[]).map(mapBook);
   }
@@ -38,23 +40,24 @@ export class SupabaseBookDataSource implements IBookDataSource {
     const { data, error } = await this.client.from("v2_books").insert({
       title: book.title,
       author: book.author,
+      category: book.category ?? null,
       owner_id: book.ownerId,
       modality: book.modality,
       price: book.price ?? null,
       status: book.status,
-    }).select("id,title,author,owner_id,modality,price,status").single();
+    }).select("id,title,author,category,owner_id,modality,price,status").single();
     if (error || !data) throw new DataSourceError("Não foi possível cadastrar o anúncio.");
     return mapBook(data as BookRow);
   }
 
   async findById(id: string): Promise<Book | null> {
-    const { data, error } = await this.client.from("v2_books").select("id,title,author,owner_id,modality,price,status").eq("id", id).maybeSingle();
+    const { data, error } = await this.client.from("v2_books").select("id,title,author,category,owner_id,modality,price,status").eq("id", id).maybeSingle();
     if (error) throw new DataSourceError("Não foi possível consultar o anúncio.");
     return data ? mapBook(data as BookRow) : null;
   }
 
   async updateStatus(id: string, status: Book["status"]): Promise<Book> {
-    const { data, error } = await this.client.from("v2_books").update({ status }).eq("id", id).select("id,title,author,owner_id,modality,price,status").single();
+    const { data, error } = await this.client.from("v2_books").update({ status }).eq("id", id).select("id,title,author,category,owner_id,modality,price,status").single();
     if (error || !data) throw new DataSourceError("Não foi possível atualizar o anúncio.");
     return mapBook(data as BookRow);
   }
@@ -62,7 +65,7 @@ export class SupabaseBookDataSource implements IBookDataSource {
   async listByOwner(ownerId: string): Promise<readonly Book[]> {
     const { data, error } = await this.client
       .from("v2_books")
-      .select("id,title,author,owner_id,modality,price,status")
+      .select("id,title,author,category,owner_id,modality,price,status")
       .eq("owner_id", ownerId)
       .order("created_at", { ascending: false });
     if (error) throw new DataSourceError("Não foi possível carregar os seus anúncios.");

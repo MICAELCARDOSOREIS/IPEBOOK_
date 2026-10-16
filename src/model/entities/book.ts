@@ -4,6 +4,7 @@ export type Book = Readonly<{
   id: string;
   title: string;
   author: string;
+  category?: string;
   ownerId: string;
   modality: BookModality;
   price?: number;

@@ -2,7 +2,8 @@ export type NotificationType =
   | "request_received"
   | "request_accepted"
   | "safety_tip"
-  | "system";
+  | "system"
+  | "search_alert_match";
 
 export type AppNotification = {
   id: string;

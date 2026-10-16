@@ -125,6 +125,20 @@ describe("useCreateListingViewModel (ISO/IEC 25010 - Adequação Funcional)", ()
     );
   });
 
+  it("inclui categoria preenchida ao publicar", async () => {
+    const mock = stubUseCases();
+    const hook = await renderHook(mock);
+    await act(async () => {
+      hook.current[1].setTitle("Livro Teste");
+      hook.current[1].setAuthor("Autor Teste");
+      hook.current[1].setCategory(" Romance ");
+    });
+    await act(async () => { await hook.current[1].submit("user-1"); });
+    expect(mock.createListing).toHaveBeenCalledWith(
+      expect.objectContaining({ category: "Romance" }), "user-1",
+    );
+  });
+
   it("exibe erro de sessão quando sessionUserId é nulo", async () => {
     const mock = stubUseCases({
       createListing: vi.fn(async () => { throw new AuthError("Sessão obrigatória para cadastrar anúncio."); }),

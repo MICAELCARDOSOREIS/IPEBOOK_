@@ -19,7 +19,8 @@ export type SearchActions = {
 function matches(book: Book, normalizedTerm: string): boolean {
   return (
     book.title.toLowerCase().includes(normalizedTerm) ||
-    book.author.toLowerCase().includes(normalizedTerm)
+    book.author.toLowerCase().includes(normalizedTerm) ||
+    (book.category?.toLowerCase().includes(normalizedTerm) ?? false)
   );
 }
 

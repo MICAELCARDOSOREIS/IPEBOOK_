@@ -28,10 +28,10 @@ export default function BookDetail({
   onNavigateToUserProfile,
   onNavigateToReport,
 }: BookDetailProps) {
-  const [state] = useBookDetailViewModel(bookId);
   const [authState] = useAuthViewModel();
-  const [negotiation, negotiationActions] = useRequestNegotiationViewModel();
   const sessionUserId = authState.user?.id ?? null;
+  const [state, actions] = useBookDetailViewModel(bookId, undefined, undefined, sessionUserId);
+  const [negotiation, negotiationActions] = useRequestNegotiationViewModel();
   const book = state.book;
 
   return (
@@ -49,6 +49,14 @@ export default function BookDetail({
             <BookCover id={book.id} title={book.title} author={book.author} variant="card" />
             <Text accessibilityRole="header" style={styles.title}>{book.title}</Text>
             <Text style={styles.body}>{book.author}</Text>
+            <Pressable accessibilityRole="button"
+              accessibilityLabel={state.isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+              accessibilityState={{ disabled: state.favoriteLoading }}
+              disabled={state.favoriteLoading}
+              onPress={() => void actions.toggleFavorite(sessionUserId)} style={styles.ownerButton}>
+              <Text style={styles.ownerText}>{state.isFavorite ? "♥ Favoritado" : "♡ Favoritar"}</Text>
+            </Pressable>
+            {state.favoriteError ? <Text accessibilityRole="alert" style={styles.requestError}>{state.favoriteError}</Text> : null}
             <View style={[styles.tag, { backgroundColor: modalityTag[book.modality].background }]}>
               <Text style={[styles.tagText, { color: modalityTag[book.modality].text }]}>
                 {modalityTag[book.modality].label}
