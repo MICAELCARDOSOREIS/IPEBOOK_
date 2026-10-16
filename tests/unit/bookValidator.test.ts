@@ -21,6 +21,14 @@ describe("validação unitária de livros (ISO/IEC 25010 - Adequação Funcional
       expect(result.errors).toHaveLength(0);
     });
 
+    it("rejeita categoria maior que o limite do anúncio", () => {
+      const result = validateBookPayload({
+        id: "book-category", title: "Livro válido", author: "Autora válida",
+        ownerId: "owner-1", modality: "donation", category: "A".repeat(61),
+      });
+      expect(result.errors).toContain("Categoria deve ter no máximo 60 caracteres.");
+    });
+
     it("aprova livro nos limites mínimos de caracteres (caso de borda)", () => {
       const result = validateBookPayload({
         id: "b1",

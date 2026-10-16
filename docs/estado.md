@@ -1,5 +1,12 @@
 # Estado e continuidade
 
+## Atualização em 2026-10-15 — Spec 016 implementada e migração aplicada
+
+- Branch `feature/favoritos-alertas-busca`, criada de `develop` em `bb86fd7`. Favoritos, alertas por título/autor/categoria e notificação por novo anúncio estão implementados localmente. ADR 0015 registra o trigger transacional no Supabase.
+- `npm run validate` passou com 358 testes em 64 arquivos; cobertura de ramificações 80,22%. `npm run build:web` gerou 21 rotas. Migração SQL local passou, inclusive RLS entre contas.
+- A migração `202610150003_favoritos_alertas.sql` foi aplicada ao Supabase vinculado via `supabase db query --linked --file` e registrada no histórico com `migration repair --status applied`. A consulta posterior confirmou a coluna `category`, três tabelas, nove políticas e o gatilho. Teste SQL remoto confirmou isolamento e notificação entre duas contas. Chromium headless validou o fluxo autenticado em memória e, com duas contas descartáveis, o fluxo real no Supabase: alerta, anúncio, notificação, favorito e desfavorito. Foi corrigida a lista desatualizada ao voltar do detalhe; a repetição exibiu o estado vazio. Contas e dados de teste foram removidos; as quatro tabelas ficaram vazias. O histórico remoto contém oito versões antigas ausentes do repositório; por isso `db push` permanece bloqueado até uma reconciliação própria, sem desfazer registros antigos. Commit local `aab51fe` da implementação principal; correção final ainda sem commit, integração ou publicação.
+- As issues #72 (rascunhos) e #75 (permissões) continuam abertas e não foram implementadas nesta branch.
+
 ## Atualização em 2026-10-15 — Capturas e inspeção via ADB das novas telas do MVP
 
 - Inspecionadas e capturadas no celular físico Samsung Galaxy conectado via ADB (`RX8Y6018P3W`) e empacotado no Expo Go via Expo Tunnel (`npx expo start --tunnel`).

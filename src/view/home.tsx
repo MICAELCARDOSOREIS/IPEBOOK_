@@ -6,6 +6,7 @@ import { useHomeViewModel } from "@/viewmodel/useHomeViewModel";
 import { tokens } from "@/view/tokens";
 import { AppIcon } from "@/view/components/AppIcon";
 import { BookCover } from "@/view/components/BookCover";
+import { FavoriteButton } from "@/view/components/FavoriteButton";
 import type { BookModality } from "@/model/entities/book";
 
 const modalityTag: Record<BookModality, { background: string; text: string; label: string }> = {
@@ -24,6 +25,8 @@ export type HomeProps = {
   onNavigateToTerms?: () => void;
   onNavigateToHelp?: () => void;
   onNavigateToNotifications?: () => void;
+  onNavigateToFavorites?: () => void;
+  onNavigateToAlerts?: () => void;
   /** Mudar este valor força o catálogo a recarregar (ex.: ao voltar de cadastrar um anúncio). */
   focusKey?: unknown;
 };
@@ -38,6 +41,8 @@ export default function Home({
   onNavigateToTerms,
   onNavigateToHelp,
   onNavigateToNotifications,
+  onNavigateToFavorites,
+  onNavigateToAlerts,
   focusKey,
 }: HomeProps = {}) {
   const [state, actions] = useHomeViewModel();
@@ -82,6 +87,12 @@ export default function Home({
             </View>
           </View>
           <View style={styles.requestsRow}>
+            <Pressable accessibilityRole="button" onPress={() => onNavigateToFavorites?.()} style={styles.sessionButton}>
+              <Text style={styles.sessionButtonText}>Favoritos</Text>
+            </Pressable>
+            <Pressable accessibilityRole="button" onPress={() => onNavigateToAlerts?.()} style={styles.sessionButton}>
+              <Text style={styles.sessionButtonText}>Meus alertas</Text>
+            </Pressable>
             <Pressable
               accessibilityRole="button"
               onPress={() => onNavigateToNotifications?.()}
@@ -153,11 +164,12 @@ export default function Home({
             renderItem={({ item }) => {
               const tag = modalityTag[item.modality];
               return (
+                <View style={styles.book}>
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel={`Ver detalhe de ${item.title}, ${item.author}`}
                   onPress={() => onNavigateToBookDetail?.(item.id)}
-                  style={styles.book}
+                  style={styles.bookMain}
                 >
                   <BookCover id={item.id} title={item.title} variant="list" />
                   <View style={styles.bookInfo}>
@@ -173,6 +185,8 @@ export default function Home({
                     ) : null}
                   </View>
                 </Pressable>
+                <FavoriteButton bookId={item.id} userId={authState.user?.id ?? null} />
+                </View>
               );
             }}
           />
@@ -240,6 +254,7 @@ const styles = StyleSheet.create({
   button: { minHeight: tokens.accessibility.touchTarget, minWidth: tokens.accessibility.touchTarget, justifyContent: "center", paddingHorizontal: tokens.spacing[20], borderRadius: tokens.radius.small, backgroundColor: tokens.colors.action },
   buttonText: { color: tokens.colors.surface, fontSize: 16, fontWeight: "600" },
   book: { flexDirection: "row", gap: tokens.spacing[12], paddingVertical: 18, borderBottomWidth: 1, borderBottomColor: tokens.colors.border },
+  bookMain: { flex: 1, flexDirection: "row", gap: tokens.spacing[12] },
   bookInfo: { flex: 1, gap: 6 },
   bookHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: tokens.spacing[12] },
   tag: { borderRadius: tokens.radius.small, paddingHorizontal: tokens.spacing[12], paddingVertical: tokens.spacing[6] },

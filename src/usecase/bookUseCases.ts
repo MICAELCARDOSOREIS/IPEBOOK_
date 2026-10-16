@@ -1,11 +1,12 @@
 import type { IBookDataSource } from "@/model/datasources/iBookDataSource";
+import type { ISearchAlertUseCases } from "@/usecase/iSearchAlertUseCases";
 import type { Book } from "@/model/entities/book";
 import { AuthError, DataSourceError, ValidationError } from "@/model/errors";
 import { validateBookPayload } from "@/model/validators/bookValidator";
 import type { CreateListingInput, IBookUseCases } from "@/usecase/iBookUseCases";
 
 export class BookUseCases implements IBookUseCases {
-  constructor(private readonly dataSource: IBookDataSource) {}
+  constructor(private readonly dataSource: IBookDataSource, private readonly alerts?: ISearchAlertUseCases) {}
 
   listBooks() {
     return this.dataSource.list();
@@ -20,6 +21,7 @@ export class BookUseCases implements IBookUseCases {
       id: "temp",
       title: input.title,
       author: input.author,
+      category: input.category,
       ownerId: sessionUserId,
       modality: input.modality,
       price: input.price,
@@ -30,14 +32,17 @@ export class BookUseCases implements IBookUseCases {
       throw new ValidationError(validation.errors[0]);
     }
 
-    return this.dataSource.create({
+    const book = await this.dataSource.create({
       title: input.title.trim(),
       author: input.author.trim(),
+      ...(input.category?.trim() ? { category: input.category.trim() } : {}),
       ownerId: sessionUserId,
       modality: input.modality,
       price: input.price,
       status: "available",
     });
+    await this.alerts?.matchNewBook(book);
+    return book;
   }
 
   async getBookById(id: string): Promise<Book> {

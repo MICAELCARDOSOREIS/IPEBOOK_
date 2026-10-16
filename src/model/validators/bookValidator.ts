@@ -17,6 +17,7 @@ export function sanitizeBookInput(input: Partial<Book>): Partial<Book> {
     id: input.id?.trim(),
     title: input.title?.trim(),
     author: input.author?.trim(),
+    category: input.category?.trim(),
     ownerId: input.ownerId?.trim(),
     modality: input.modality,
     price: input.price,
@@ -63,6 +64,11 @@ export function validateBookPayload(input: unknown): BookValidationResult {
 
   if (typeof raw.ownerId !== "string" || raw.ownerId.trim().length === 0) {
     errors.push("Identificador do dono é obrigatório.");
+  }
+
+  if (raw.category !== undefined && raw.category !== null &&
+    (typeof raw.category !== "string" || raw.category.trim().length > 60)) {
+    errors.push("Categoria deve ter no máximo 60 caracteres.");
   }
 
   if (!VALID_MODALITIES.includes(raw.modality as BookModality)) {

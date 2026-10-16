@@ -3,6 +3,7 @@ import type { Book, BookModality } from "@/model/entities/book";
 export type CreateListingInput = Readonly<{
   title: string;
   author: string;
+  category?: string;
   modality: BookModality;
   price?: number;
 }>;

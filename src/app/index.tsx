@@ -22,6 +22,8 @@ export default function Index() {
       onNavigateToTerms={() => router.push("/termos")}
       onNavigateToHelp={() => router.push("/ajuda")}
       onNavigateToNotifications={() => router.push("/notificacoes")}
+      onNavigateToFavorites={() => router.push("/favoritos")}
+      onNavigateToAlerts={() => router.push("/alertas")}
     />
   );
 }

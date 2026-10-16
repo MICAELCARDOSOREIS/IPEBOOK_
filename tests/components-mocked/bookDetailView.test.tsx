@@ -37,8 +37,8 @@ function setup(
   options: { loading?: boolean; error?: string | null; negotiation?: Partial<RequestNegotiationState> } = {},
 ) {
   vi.mocked(useBookDetailViewModel).mockReturnValue([
-    { book, loading: options.loading ?? false, error: options.error ?? null },
-    { reload: vi.fn() },
+    { book, loading: options.loading ?? false, error: options.error ?? null, isFavorite: false, favoriteError: null, favoriteLoading: false },
+    { reload: vi.fn(), toggleFavorite: vi.fn() },
   ]);
   vi.mocked(useAuthViewModel).mockReturnValue([
     { user, loading: false, error: null },

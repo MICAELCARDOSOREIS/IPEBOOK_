@@ -15,6 +15,7 @@ function mockViewModel(state: CreateListingState, actions: Partial<CreateListing
   const fullActions: CreateListingActions = {
     setTitle: vi.fn(),
     setAuthor: vi.fn(),
+    setCategory: vi.fn(),
     setModality: vi.fn(),
     setPrice: vi.fn(),
     submit: vi.fn().mockResolvedValue(null),
@@ -28,6 +29,7 @@ function mockViewModel(state: CreateListingState, actions: Partial<CreateListing
 const defaultState: CreateListingState = {
   title: "",
   author: "",
+  category: "",
   modality: "sale",
   price: "",
   loading: false,

@@ -58,6 +58,14 @@ export default function CreateListing({ sessionUserId, onCreated, onCancel }: Cr
         </View>
 
         <View style={styles.field}>
+          <Text style={styles.label}>Categoria (opcional)</Text>
+          <TextInput accessibilityLabel="Categoria do livro" value={state.category}
+            onChangeText={actions.setCategory} editable={!state.loading}
+            style={styles.input} placeholder="Ex: Romance" maxLength={60}
+            placeholderTextColor={tokens.colors.secondaryText} />
+        </View>
+
+        <View style={styles.field}>
           <Text style={styles.label}>Modalidade</Text>
           <View style={styles.modalityRow}>
             {MODALITIES.map((m) => (

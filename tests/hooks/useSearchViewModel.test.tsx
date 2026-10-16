@@ -56,6 +56,13 @@ describe("testes de hook: useSearchViewModel (ISO/IEC 25010 - Adequação Funcio
     expect(hook.current[0].books).toEqual([books[1]]);
   });
 
+  it("filtra por categoria quando o anúncio a informa", async () => {
+    const categorized = { ...books[0], category: "Romance" };
+    const hook = await renderHook({ listBooks: async () => [categorized, books[1]] });
+    await act(async () => { hook.current[1].setTerm("romance"); });
+    expect(hook.current[0].books).toEqual([categorized]);
+  });
+
   it("retorna lista vazia quando nenhum livro corresponde ao termo", async () => {
     const hook = await renderHook({ listBooks: async () => books });
     await act(async () => {
