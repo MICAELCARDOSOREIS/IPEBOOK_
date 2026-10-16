@@ -1,5 +1,9 @@
 # Estado e continuidade
 
+## Atualização em 2026-10-15 — Issues de Micael encerradas
+
+- A issue #71 foi concluída e integrada em `develop` pelo PR #77. A pedido do usuário, as issues #72 (rascunhos) e #75 (permissões da plataforma) foram fechadas como **não planejadas**; essas duas funcionalidades não foram implementadas. As especificações 017 e 020 permanecem como registro do escopo levantado, sem tarefas concluídas.
+
 ## Atualização em 2026-10-15 — Spec 016 integrada em develop
 
 - PR #77 mesclado em `develop` no commit `82ab90f`; CI `validar` aprovada. Favoritos e alertas foram verificados localmente e no Supabase com duas contas descartáveis; a correção da lista ao voltar do detalhe está incluída. Não houve publicação do aplicativo.
