@@ -1,5 +1,10 @@
 # Estado e continuidade
 
+## Atualização em 2026-10-15 — Spec 016 integrada em develop
+
+- PR #77 mesclado em `develop` no commit `82ab90f`; CI `validar` aprovada. Favoritos e alertas foram verificados localmente e no Supabase com duas contas descartáveis; a correção da lista ao voltar do detalhe está incluída. Não houve publicação do aplicativo.
+- As issues #72 (rascunhos) e #75 (permissões) permanecem abertas. O histórico de migrações remoto anterior à spec 016 ainda precisa de reconciliação para que `supabase db push` funcione; a migração desta spec já foi aplicada.
+
 ## Atualização em 2026-10-15 — Spec 016 implementada e migração aplicada
 
 - Branch `feature/favoritos-alertas-busca`, criada de `develop` em `bb86fd7`. Favoritos, alertas por título/autor/categoria e notificação por novo anúncio estão implementados localmente. ADR 0015 registra o trigger transacional no Supabase.
