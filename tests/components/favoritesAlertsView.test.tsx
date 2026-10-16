@@ -3,6 +3,7 @@ import { act, fireEvent, render } from "@testing-library/react-native";
 import { describe, expect, it, vi } from "vitest";
 import Favorites from "@/view/favorites/favorites";
 import SearchAlerts from "@/view/search/searchAlerts";
+import { bookUseCases, favoriteUseCases } from "@/di/container";
 
 describe("favoritos e alertas (spec 016)", () => {
   it("orienta a entrar sem perder a tela de favoritos", async () => {
@@ -17,6 +18,19 @@ describe("favoritos e alertas (spec 016)", () => {
   it("mostra lista vazia de favoritos para conta sem livros salvos", async () => {
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => { screen = await render(<Favorites userId="usuario-favoritos-vazio" onBack={vi.fn()} onLogin={vi.fn()} onBook={vi.fn()} />); });
+    expect(screen.getByRole("header", { name: "Nenhum favorito ainda" })).toBeDefined();
+  });
+
+  it("atualiza favoritos ao retornar do detalhe após desfavoritar", async () => {
+    const userId = "usuario-retorno-favoritos";
+    const book = await bookUseCases.createListing({ title: "Livro de retorno", author: "Autora", modality: "donation" }, userId);
+    await favoriteUseCases.toggleFavorite(userId, book.id);
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => { screen = await render(<Favorites userId={userId} focusKey={0} onBack={vi.fn()} onLogin={vi.fn()} onBook={vi.fn()} />); });
+    expect(screen.getByText("Livro de retorno")).toBeDefined();
+
+    await favoriteUseCases.toggleFavorite(userId, book.id);
+    await act(async () => { screen.rerender(<Favorites userId={userId} focusKey={1} onBack={vi.fn()} onLogin={vi.fn()} onBook={vi.fn()} />); });
     expect(screen.getByRole("header", { name: "Nenhum favorito ainda" })).toBeDefined();
   });
 
