@@ -22,7 +22,7 @@ insert into public.profiles (user_id) values ('${owner}');
 grant usage on schema public, auth to anon, authenticated;
 grant select on auth.users to authenticated;`);
 
-for (const name of ['202610150001_contas_e_anuncios.sql', '202610150002_pedidos.sql', '202610150003_favoritos_alertas.sql']) {
+for (const name of ['202610150001_contas_e_anuncios.sql', '202610150002_pedidos.sql', '202610150003_favoritos_alertas.sql', '202610170001_denuncias.sql']) {
   await db.exec(readFileSync(new URL(`../supabase/migrations/${name}`, import.meta.url), 'utf8'));
 }
 const legacy = await db.query(`select
@@ -85,5 +85,18 @@ const categoryNotice = await as('authenticated', other, `select id from public.v
 if (categoryNotice.rows.length !== 1) throw new Error('Categoria não gerou notificação');
 await as('authenticated', reader, `update public.v2_notifications set read = true`);
 await denied('Leitor altera conteúdo de notificação', () => as('authenticated', reader, `update public.v2_notifications set title = 'alterado'`));
+
+await denied('Visitante denuncia', () => as('anon', null, `insert into public.v2_reports (listing_id, reporter_id, reason) values ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '${reader}', 'fraud_or_scam')`));
+await denied('Leitor falsifica autor da denúncia', () => as('authenticated', reader, `insert into public.v2_reports (listing_id, reporter_id, reason) values ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '${other}', 'fraud_or_scam')`));
+await denied('Denúncia para anúncio inexistente', () => as('authenticated', reader, `insert into public.v2_reports (listing_id, reporter_id, reason) values ('00000000-0000-4000-8000-000000000000', '${reader}', 'fraud_or_scam')`));
+await as('authenticated', reader, `insert into public.v2_reports (id, listing_id, reporter_id, reason, details)
+  values ('cccccccc-cccc-4ccc-8ccc-cccccccccccc', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '${reader}', 'fraud_or_scam', 'Suspeita de golpe')`);
+const ownReports = await as('authenticated', reader, `select id from public.v2_reports where id = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc'`);
+if (ownReports.rows.length !== 1) throw new Error('Autor da denúncia não conseguiu consultar a própria denúncia');
+const hiddenReports = await as('authenticated', other, `select id from public.v2_reports where id = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc'`);
+if (hiddenReports.rows.length !== 0) throw new Error('Terceiro conseguiu visualizar denúncia alheia');
+process.stdout.write('Terceiro lê denúncia: oculto\n');
+await denied('Terceiro altera denúncia', () => as('authenticated', other, `update public.v2_reports set reason = 'other' where id = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc'`));
+
 process.stdout.write('Migrações e cenários SQL locais verificados.\n');
 await db.close();

@@ -15,6 +15,15 @@ Validar localmente com `npm run validate` (inclui `npm run test:sql` via PGlite)
 `npm run build:web`; esses comandos não aplicam migrações remotas nem verificam entrega de
 e-mail.
 
+### Migrações do banco e reconciliação com Supabase
+
+As migrações SQL oficiais residem em `supabase/migrations/` e são aplicadas cronologicamente:
+- **Validação local:** `npm run test:sql` executa todas as migrações e testa políticas RLS usando PostgreSQL em memória via PGlite (`scripts/verificar-migracoes.mjs`).
+- **Conferência remota:** `npx supabase migration list --linked` exibe o status de cada versão no repositório local e no banco remoto do Supabase.
+- **Aplicação remota:** `npx supabase db push` aplica novas migrações locais de forma reproduzível.
+- **Reconciliação de histórico:** Se o histórico remoto divergir devido a migrações legadas órfãs, utiliza-se `npx supabase migration repair --status reverted --linked <versões>` para remover referências órfãs de `schema_migrations`, e `--status applied` para marcar migrações já presentes no banco, garantindo que `db push` continue funcionando sem intervenção manual destrutiva.
+
+
 ## Ambiente
 
 O projeto usa npm e `package-lock.json`. A CI está configurada com Node.js 24; a primeira validação local usou Node.js 26.8.2. As versões do projeto estão em [package.json](../package.json); o lockfile registra as versões resolvidas. Não atualizar dependências como parte de uma simples instalação.
