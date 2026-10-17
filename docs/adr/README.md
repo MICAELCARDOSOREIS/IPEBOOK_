@@ -15,5 +15,6 @@
 - [0013 — Reset do esquema legado no projeto Supabase compartilhado](0013-reset-esquema-legado-supabase.md)
 - [0014 — Ícones seguem a biblioteca nativa de cada plataforma](0014-icones-por-biblioteca-nativa-de-plataforma.md)
 - [0015 — Gerar avisos de busca ao publicar anúncios](0015-alertas-de-busca-no-banco.md)
+- [0016 — Restrição territorial da beta por declaração comunitária](0016-restricao-beta-declaracao-piripiri.md)
 
 Preservar registros aceitos; mudanças relevantes geram novo ADR com vínculos de substituição.

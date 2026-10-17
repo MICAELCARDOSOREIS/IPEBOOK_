@@ -25,6 +25,9 @@ export class BookUseCases implements IBookUseCases {
       ownerId: sessionUserId,
       modality: input.modality,
       price: input.price,
+      city: input.city,
+      state: input.state,
+      neighborhood: input.neighborhood,
     };
 
     const validation = validateBookPayload(payload);
@@ -40,6 +43,9 @@ export class BookUseCases implements IBookUseCases {
       modality: input.modality,
       price: input.price,
       status: "available",
+      city: input.city?.trim() || "Piripiri",
+      state: input.state?.trim() || "PI",
+      ...(input.neighborhood?.trim() ? { neighborhood: input.neighborhood.trim() } : {}),
     });
     await this.alerts?.matchNewBook(book);
     return book;

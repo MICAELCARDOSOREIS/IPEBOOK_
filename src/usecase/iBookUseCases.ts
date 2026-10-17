@@ -6,6 +6,9 @@ export type CreateListingInput = Readonly<{
   category?: string;
   modality: BookModality;
   price?: number;
+  city?: string;
+  state?: string;
+  neighborhood?: string;
 }>;
 
 export interface IBookUseCases {

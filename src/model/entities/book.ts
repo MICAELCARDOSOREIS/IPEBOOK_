@@ -9,4 +9,7 @@ export type Book = Readonly<{
   modality: BookModality;
   price?: number;
   status: "available" | "reserved";
+  city?: string;
+  state?: string;
+  neighborhood?: string;
 }>;
