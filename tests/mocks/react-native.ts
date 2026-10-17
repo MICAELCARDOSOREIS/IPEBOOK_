@@ -58,6 +58,12 @@ export const Image = React.forwardRef<any, any>((props, ref) =>
 );
 Image.displayName = "Image";
 
+export const Modal = React.forwardRef<any, any>((props, ref) => {
+  if (props.visible === false) return null;
+  return React.createElement("Modal", { ...props, ref }, props.children);
+});
+Modal.displayName = "Modal";
+
 export const StyleSheet = {
   create: <T extends Record<string, any>>(styles: T): T => styles,
   flatten: (style: any): any => {
@@ -97,6 +103,7 @@ export default {
   View,
   Text,
   Image,
+  Modal,
   Pressable,
   ActivityIndicator,
   TextInput,

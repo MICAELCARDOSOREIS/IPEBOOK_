@@ -147,7 +147,7 @@ describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
     expect(onRequireSignIn).toHaveBeenCalledTimes(1);
   });
 
-  it("exibe botão de remover para livro disponível e aciona cancelListing", async () => {
+  it("exibe diálogo de confirmação ao remover livro e só executa remoção após confirmação", async () => {
     const book: Book = {
       id: "b1",
       title: "Dom Casmurro",
@@ -167,10 +167,40 @@ describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
     const removeBtn = screen.getByRole("button", { name: "Remover anúncio de Dom Casmurro" });
     expect(removeBtn).toBeDefined();
 
+    // 1. Clicar em Remover abre o diálogo de confirmação
     await act(async () => {
       fireEvent.press(removeBtn);
     });
 
+    expect(screen.getByText("Excluir anúncio?")).toBeDefined();
+    expect(
+      screen.getByText(
+        'Tem certeza de que deseja excluir o anúncio de "Dom Casmurro"? Esta ação não pode ser desfeita.',
+      ),
+    ).toBeDefined();
+
+    // 2. Clicar em Cancelar fecha o diálogo sem chamar cancelListing
+    const cancelBtn = screen.getByRole("button", { name: "Cancelar" });
+    await act(async () => {
+      fireEvent.press(cancelBtn);
+    });
+
+    expect(actions.cancelListing).not.toHaveBeenCalled();
+    expect(screen.queryByText("Excluir anúncio?")).toBeNull();
+
+    // 3. Clicar novamente em Remover e desta vez confirmar a exclusão
+    await act(async () => {
+      fireEvent.press(removeBtn);
+    });
+
+    const confirmBtn = screen.getByRole("button", { name: "Excluir anúncio" });
+    await act(async () => {
+      fireEvent.press(confirmBtn);
+    });
+
     expect(actions.cancelListing).toHaveBeenCalledWith("b1");
+    expect(
+      screen.getByText('Anúncio de "Dom Casmurro" excluído com sucesso.'),
+    ).toBeDefined();
   });
 });

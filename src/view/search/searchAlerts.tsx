@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Dialog } from "@/view/components/Dialog";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { tokens } from "@/view/tokens";
 import { useSearchAlertsViewModel } from "@/viewmodel/useSearchAlertsViewModel";
@@ -9,7 +10,7 @@ export type SearchAlertsProps = { userId: string | null; initialQuery?: string; 
 
 export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogin }: SearchAlertsProps) {
   const [state, actions] = useSearchAlertsViewModel(userId, initialQuery);
-  const [pendingRemoval, setPendingRemoval] = useState<string | null>(null);
+  const [alertToDelete, setAlertToDelete] = useState<{ id: string; query: string } | null>(null);
   return <SafeAreaView style={styles.page}>
     <TopAppBar title="Meus alertas" onBack={onBack} />
     {!userId ? <View style={styles.content}>
@@ -31,13 +32,25 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
             <View style={styles.rowText}><Text style={styles.title}>{item.query}</Text><Text style={styles.body}>{item.active ? "Ativo" : "Pausado"}</Text></View>
             <Pressable accessibilityRole="button" accessibilityLabel={item.active ? `Pausar alerta ${item.query}` : `Retomar alerta ${item.query}`}
               onPress={() => void actions.setActive(item.id, !item.active)} style={styles.smallAction}><Text style={styles.link}>{item.active ? "Pausar" : "Retomar"}</Text></Pressable>
-            {pendingRemoval === item.id ? <View>
-              <Text accessibilityRole="alert">Excluir este alerta?</Text>
-              <Pressable accessibilityRole="button" onPress={() => setPendingRemoval(null)} style={styles.smallAction}><Text>Cancelar</Text></Pressable>
-              <Pressable accessibilityRole="button" onPress={() => { setPendingRemoval(null); void actions.remove(item.id); }} style={styles.smallAction}><Text style={styles.error}>Confirmar exclusão</Text></Pressable>
-            </View> : <Pressable accessibilityRole="button" accessibilityLabel={`Excluir alerta ${item.query}`}
-              onPress={() => setPendingRemoval(item.id)} style={styles.smallAction}><Text style={styles.error}>Excluir</Text></Pressable>}
+            <Pressable accessibilityRole="button" accessibilityLabel={`Excluir alerta ${item.query}`}
+              onPress={() => setAlertToDelete({ id: item.id, query: item.query })} style={styles.smallAction}><Text style={styles.error}>Excluir</Text></Pressable>
           </View>} />}
+      <Dialog
+        visible={alertToDelete !== null}
+        title="Excluir este alerta?"
+        message={alertToDelete ? `Tem certeza de que deseja excluir o alerta de busca para "${alertToDelete.query}"?` : ""}
+        confirmLabel="Confirmar exclusão"
+        cancelLabel="Cancelar"
+        destructive
+        onCancel={() => setAlertToDelete(null)}
+        onConfirm={() => {
+          if (alertToDelete) {
+            const id = alertToDelete.id;
+            setAlertToDelete(null);
+            void actions.remove(id);
+          }
+        }}
+      />
     </View>}
   </SafeAreaView>;
 }

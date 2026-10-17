@@ -1,13 +1,14 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useMyListingsViewModel } from "@/viewmodel/useMyListingsViewModel";
 import { tokens } from "@/view/tokens";
 import { BookCover } from "@/view/components/BookCover";
+import { Dialog } from "@/view/components/Dialog";
 import { FilledButton } from "@/view/components/FilledButton";
 import { TopAppBar } from "@/view/components/TopAppBar";
-import type { BookModality } from "@/model/entities/book";
+import type { Book, BookModality } from "@/model/entities/book";
 
 const modalityTag: Record<BookModality, { background: string; text: string; label: string }> = {
   sale: { background: tokens.colors.badge.sale.background, text: tokens.colors.badge.sale.text, label: "Venda" },
@@ -29,6 +30,8 @@ export function MyListings({
   onNavigateToCreateListing,
 }: MyListingsProps) {
   const [state, actions] = useMyListingsViewModel(sessionUserId);
+  const [listingToDelete, setListingToDelete] = useState<Book | null>(null);
+  const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
 
   return (
     <SafeAreaView style={styles.page}>
@@ -52,6 +55,19 @@ export function MyListings({
           </View>
         ) : (
           <>
+            {feedbackMessage ? (
+              <View style={styles.feedbackBanner} accessibilityRole="alert">
+                <Text style={styles.feedbackText}>{feedbackMessage}</Text>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Fechar aviso"
+                  onPress={() => setFeedbackMessage(null)}
+                  style={styles.closeFeedbackButton}
+                >
+                  <Text style={styles.closeFeedbackText}>✕</Text>
+                </Pressable>
+              </View>
+            ) : null}
             {state.cancelError ? (
               <Text accessibilityRole="alert" style={styles.cancelErrorText}>
                 {state.cancelError}
@@ -103,7 +119,7 @@ export function MyListings({
                             accessibilityRole="button"
                             accessibilityLabel={`Remover anúncio de ${item.title}`}
                             disabled={state.cancellingId === item.id}
-                            onPress={() => void actions.cancelListing(item.id)}
+                            onPress={() => setListingToDelete(item)}
                             style={styles.cancelButton}
                           >
                             <Text style={styles.cancelText}>
@@ -120,6 +136,29 @@ export function MyListings({
           </>
         )}
       </View>
+      <Dialog
+        visible={listingToDelete !== null}
+        title="Excluir anúncio?"
+        message={
+          listingToDelete
+            ? `Tem certeza de que deseja excluir o anúncio de "${listingToDelete.title}"? Esta ação não pode ser desfeita.`
+            : ""
+        }
+        confirmLabel="Excluir anúncio"
+        cancelLabel="Cancelar"
+        destructive
+        loading={state.cancellingId !== null}
+        onCancel={() => setListingToDelete(null)}
+        onConfirm={async () => {
+          if (!listingToDelete) return;
+          const bookTitle = listingToDelete.title;
+          const ok = await actions.cancelListing(listingToDelete.id);
+          if (ok) {
+            setListingToDelete(null);
+            setFeedbackMessage(`Anúncio de "${bookTitle}" excluído com sucesso.`);
+          }
+        }}
+      />
     </SafeAreaView>
   );
 }
@@ -264,5 +303,35 @@ const styles = StyleSheet.create({
     fontSize: tokens.typography.bodyMedium.fontSize,
     color: tokens.colors.error,
     marginBottom: tokens.spacing[12],
+  },
+  feedbackBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: tokens.colors.soft,
+    borderColor: tokens.colors.action,
+    borderWidth: 1,
+    borderRadius: tokens.radius.medium,
+    paddingHorizontal: tokens.spacing[16],
+    paddingVertical: tokens.spacing[12],
+    marginBottom: tokens.spacing[12],
+    gap: tokens.spacing[8],
+  },
+  feedbackText: {
+    flex: 1,
+    color: tokens.colors.actionDeep,
+    fontSize: 14,
+    fontWeight: "500",
+  },
+  closeFeedbackButton: {
+    minWidth: 32,
+    minHeight: 32,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  closeFeedbackText: {
+    color: tokens.colors.actionDeep,
+    fontSize: 14,
+    fontWeight: "700",
   },
 });
