@@ -146,13 +146,18 @@ describe("datasources Supabase", () => {
     const maybeSingle = vi.fn().mockResolvedValue({ data: row, error: null });
     const single = vi.fn().mockResolvedValue({ data: { ...row, status: "reserved" }, error: null });
     const from = vi.fn().mockReturnValue({
-      select: vi.fn().mockReturnValue({ order, eq: vi.fn().mockReturnValue({ maybeSingle }) }),
+      select: vi.fn().mockReturnValue({
+        order,
+        neq: vi.fn().mockReturnValue({ order }),
+        eq: vi.fn().mockReturnValue({ maybeSingle, order }),
+      }),
       update: vi.fn().mockReturnValue({ eq: vi.fn().mockReturnValue({ select: vi.fn().mockReturnValue({ single }) }) }),
     });
     const books = new SupabaseBookDataSource(fakeClient({ from }));
     await expect(books.list()).resolves.toEqual([{ id: "1", title: "Livro", author: "Autora", ownerId: "dono", modality: "donation", status: "available" }]);
     await expect(books.findById("1")).resolves.toMatchObject({ id: "1", ownerId: "dono" });
     await expect(books.updateStatus("1", "reserved")).resolves.toMatchObject({ id: "1", status: "reserved" });
+    await expect(books.update("1", { title: "Novo Título" })).resolves.toMatchObject({ id: "1" });
     expect(from).toHaveBeenCalledWith("v2_books");
   });
 
@@ -160,7 +165,13 @@ describe("datasources Supabase", () => {
     const empty = new SupabaseBookDataSource(fakeClient({ from: vi.fn().mockReturnValue({
       select: vi.fn().mockReturnValue({
         order: vi.fn().mockResolvedValue({ data: [], error: null }),
-        eq: vi.fn().mockReturnValue({ maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }) }),
+        neq: vi.fn().mockReturnValue({
+          order: vi.fn().mockResolvedValue({ data: [], error: null }),
+        }),
+        eq: vi.fn().mockReturnValue({
+          maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+          order: vi.fn().mockResolvedValue({ data: [], error: null }),
+        }),
       }),
     }) }));
     await expect(empty.list()).resolves.toEqual([]);
@@ -169,7 +180,13 @@ describe("datasources Supabase", () => {
     const failed = new SupabaseBookDataSource(fakeClient({ from: vi.fn().mockReturnValue({
       select: vi.fn().mockReturnValue({
         order: vi.fn().mockResolvedValue({ data: null, error: { message: "interno" } }),
-        eq: vi.fn().mockReturnValue({ maybeSingle: vi.fn().mockResolvedValue({ data: null, error: { message: "interno" } }) }),
+        neq: vi.fn().mockReturnValue({
+          order: vi.fn().mockResolvedValue({ data: null, error: { message: "interno" } }),
+        }),
+        eq: vi.fn().mockReturnValue({
+          maybeSingle: vi.fn().mockResolvedValue({ data: null, error: { message: "interno" } }),
+          order: vi.fn().mockResolvedValue({ data: null, error: { message: "interno" } }),
+        }),
       }),
       insert: vi.fn().mockReturnValue({ select: vi.fn().mockReturnValue({ single: vi.fn().mockResolvedValue({ data: null, error: { message: "interno" } }) }) }),
       update: vi.fn().mockReturnValue({ eq: vi.fn().mockReturnValue({ select: vi.fn().mockReturnValue({ single: vi.fn().mockResolvedValue({ data: null, error: { message: "interno" } }) }) }) }),

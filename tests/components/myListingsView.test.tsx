@@ -29,11 +29,14 @@ function mockViewModel(
     error: null,
     cancellingId: null,
     cancelError: null,
+    pausingId: null,
+    pauseError: null,
     ...state,
   };
   const fullActions: MyListingsActions = {
     reload: vi.fn().mockResolvedValue(undefined),
     cancelListing: vi.fn().mockResolvedValue(true),
+    togglePauseListing: vi.fn().mockResolvedValue(true),
     ...actions,
   };
   mockedUseMyListingsViewModel.mockReturnValue([fullState, fullActions]);
@@ -202,5 +205,108 @@ describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
     expect(
       screen.getByText('Anúncio de "Dom Casmurro" excluído com sucesso.'),
     ).toBeDefined();
+  });
+
+  it("renderiza badge Pausado e botão Retomar quando anúncio estiver pausado", async () => {
+    const book: Book = {
+      id: "b1",
+      title: "Livro Pausado",
+      author: "Autor",
+      modality: "trade",
+      ownerId: "user-1",
+      status: "paused",
+    };
+    const actions = mockViewModel({ books: [book] });
+    let screen!: Awaited<ReturnType<typeof render>>;
+
+    await act(async () => {
+      screen = await render(<MyListings sessionUserId="user-1" />);
+    });
+
+    expect(screen.getByText("Pausado")).toBeDefined();
+    const resumeBtn = screen.getByRole("button", { name: "Retomar anúncio de Livro Pausado" });
+    expect(resumeBtn).toBeDefined();
+
+    await act(async () => {
+      fireEvent.press(resumeBtn);
+    });
+
+    expect(actions.togglePauseListing).toHaveBeenCalledWith("b1");
+  });
+
+  it("permite pausar anúncio disponível e chama togglePauseListing", async () => {
+    const book: Book = {
+      id: "b2",
+      title: "Livro Ativo",
+      author: "Autor",
+      modality: "donation",
+      ownerId: "user-1",
+      status: "available",
+    };
+    const actions = mockViewModel({ books: [book] });
+    let screen!: Awaited<ReturnType<typeof render>>;
+
+    await act(async () => {
+      screen = await render(<MyListings sessionUserId="user-1" />);
+    });
+
+    const pauseBtn = screen.getByRole("button", { name: "Pausar anúncio de Livro Ativo" });
+    expect(pauseBtn).toBeDefined();
+
+    await act(async () => {
+      fireEvent.press(pauseBtn);
+    });
+
+    expect(actions.togglePauseListing).toHaveBeenCalledWith("b2");
+  });
+
+  it("navega para tela de edição ao pressionar botão Editar", async () => {
+    const book: Book = {
+      id: "b3",
+      title: "Livro Editável",
+      author: "Autor",
+      modality: "donation",
+      ownerId: "user-1",
+      status: "available",
+    };
+    mockViewModel({ books: [book] });
+    const onNavigateToEditListing = vi.fn();
+    let screen!: Awaited<ReturnType<typeof render>>;
+
+    await act(async () => {
+      screen = await render(
+        <MyListings sessionUserId="user-1" onNavigateToEditListing={onNavigateToEditListing} />,
+      );
+    });
+
+    const editBtn = screen.getByRole("button", { name: "Editar anúncio de Livro Editável" });
+    expect(editBtn).toBeDefined();
+
+    await act(async () => {
+      fireEvent.press(editBtn);
+    });
+
+    expect(onNavigateToEditListing).toHaveBeenCalledWith("b3");
+  });
+
+  it("não exibe botões de editar e pausar quando o anúncio estiver reservado", async () => {
+    const book: Book = {
+      id: "b4",
+      title: "Livro Reservado",
+      author: "Autor",
+      modality: "donation",
+      ownerId: "user-1",
+      status: "reserved",
+    };
+    mockViewModel({ books: [book] });
+    let screen!: Awaited<ReturnType<typeof render>>;
+
+    await act(async () => {
+      screen = await render(<MyListings sessionUserId="user-1" />);
+    });
+
+    expect(screen.getByText("Reservado")).toBeDefined();
+    expect(screen.queryByRole("button", { name: "Editar anúncio de Livro Reservado" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Pausar anúncio de Livro Reservado" })).toBeNull();
   });
 });

@@ -155,4 +155,58 @@ describe("testes de hook: useMyListingsViewModel (ISO/IEC 25010 - Confiabilidade
     expect(hook.current[0].cancellingId).toBeNull();
     expect(hook.current[0].cancelError).toBe("Não é possível remover.");
   });
+
+  it("alterna status do livro via togglePauseListing", async () => {
+    const book: Book = {
+      id: "1",
+      title: "Dom Casmurro",
+      author: "Machado",
+      ownerId: "u1",
+      modality: "trade",
+      status: "available",
+    };
+    const togglePauseListing = vi.fn().mockResolvedValue({ ...book, status: "paused" });
+    const hook = await renderHook("u1", {
+      listMyListings: async () => [book],
+      togglePauseListing,
+    } as unknown as IBookUseCases);
+
+    expect(hook.current[0].books[0].status).toBe("available");
+
+    let result = false;
+    await act(async () => {
+      result = await hook.current[1].togglePauseListing("1");
+    });
+
+    expect(result).toBe(true);
+    expect(hook.current[0].books[0].status).toBe("paused");
+    expect(hook.current[0].pausingId).toBeNull();
+    expect(hook.current[0].pauseError).toBeNull();
+  });
+
+  it("seta pauseError quando togglePauseListing falha", async () => {
+    const book: Book = {
+      id: "1",
+      title: "Dom Casmurro",
+      author: "Machado",
+      ownerId: "u1",
+      modality: "trade",
+      status: "reserved",
+    };
+    const togglePauseListing = vi.fn().mockRejectedValue(new DomainError("Não é possível alterar status de anúncio reservado."));
+    const hook = await renderHook("u1", {
+      listMyListings: async () => [book],
+      togglePauseListing,
+    } as unknown as IBookUseCases);
+
+    let result = true;
+    await act(async () => {
+      result = await hook.current[1].togglePauseListing("1");
+    });
+
+    expect(result).toBe(false);
+    expect(hook.current[0].books[0].status).toBe("reserved");
+    expect(hook.current[0].pausingId).toBeNull();
+    expect(hook.current[0].pauseError).toBe("Não é possível alterar status de anúncio reservado.");
+  });
 });

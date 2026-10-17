@@ -47,7 +47,7 @@ export class BookRequestUseCases implements IBookRequestUseCases {
 
   async listReceivedRequests(sessionUserId: string | null): Promise<readonly RequestWithListing[]> {
     const userId = requireSession(sessionUserId);
-    const myListings = (await this.books.list()).filter((book) => book.ownerId === userId);
+    const myListings = await this.books.listByOwner(userId);
     const result: RequestWithListing[] = [];
     for (const listing of myListings) {
       const requests = await this.requests.listByListing(listing.id);

@@ -10,11 +10,14 @@ export type MyListingsState = {
   error: string | null;
   cancellingId: string | null;
   cancelError: string | null;
+  pausingId: string | null;
+  pauseError: string | null;
 };
 
 export type MyListingsActions = {
   reload: () => Promise<void>;
   cancelListing: (bookId: string) => Promise<boolean>;
+  togglePauseListing: (bookId: string) => Promise<boolean>;
 };
 
 export function useMyListingsViewModel(
@@ -27,6 +30,8 @@ export function useMyListingsViewModel(
     error: null,
     cancellingId: null,
     cancelError: null,
+    pausingId: null,
+    pauseError: null,
   });
   const active = useRef(false);
   const request = useRef(0);
@@ -34,7 +39,7 @@ export function useMyListingsViewModel(
   const reload = useCallback(async () => {
     if (!active.current) return;
     const current = ++request.current;
-    setState((previous) => ({ ...previous, loading: true, error: null, cancelError: null }));
+    setState((previous) => ({ ...previous, loading: true, error: null, cancelError: null, pauseError: null }));
     try {
       const result = await books.listMyListings(sessionUserId);
       if (active.current && current === request.current) {
@@ -85,6 +90,32 @@ export function useMyListingsViewModel(
     [books, sessionUserId],
   );
 
+  const togglePauseListing = useCallback(
+    async (bookId: string): Promise<boolean> => {
+      setState((previous) => ({ ...previous, pausingId: bookId, pauseError: null }));
+      try {
+        const updated = await books.togglePauseListing(bookId, sessionUserId);
+        setState((previous) => ({
+          ...previous,
+          pausingId: null,
+          books: previous.books.map((b) => (b.id === bookId ? updated : b)),
+        }));
+        return true;
+      } catch (error) {
+        setState((previous) => ({
+          ...previous,
+          pausingId: null,
+          pauseError:
+            error instanceof DomainError
+              ? error.message
+              : "Não foi possível alterar o status do anúncio. Tente novamente.",
+        }));
+        return false;
+      }
+    },
+    [books, sessionUserId],
+  );
+
   useEffect(() => {
     active.current = true;
     void reload();
@@ -94,5 +125,5 @@ export function useMyListingsViewModel(
     };
   }, [reload]);
 
-  return [state, { reload, cancelListing }];
+  return [state, { reload, cancelListing, togglePauseListing }];
 }

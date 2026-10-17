@@ -10,7 +10,7 @@ export class MemoryBookDataSource implements IBookDataSource {
   }
 
   async list(): Promise<readonly Book[]> {
-    return this.books.map((book) => ({ ...book }));
+    return this.books.filter((book) => book.status !== "paused").map((book) => ({ ...book }));
   }
 
   async create(book: Omit<Book, "id">): Promise<Book> {
@@ -33,6 +33,20 @@ export class MemoryBookDataSource implements IBookDataSource {
       throw new DataSourceError("Anúncio não encontrado.");
     }
     const updated: Book = { ...this.books[index], status };
+    this.books[index] = updated;
+    return { ...updated };
+  }
+
+  async update(id: string, data: Partial<Omit<Book, "id" | "ownerId">>): Promise<Book> {
+    const index = this.books.findIndex((book) => book.id === id);
+    if (index < 0) {
+      throw new DataSourceError("Anúncio não encontrado.");
+    }
+    const current = this.books[index];
+    const updated: Book = {
+      ...current,
+      ...data,
+    };
     this.books[index] = updated;
     return { ...updated };
   }

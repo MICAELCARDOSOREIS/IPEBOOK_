@@ -43,7 +43,11 @@ export class SupabaseBookDataSource implements IBookDataSource {
   constructor(private readonly client: SupabaseAppClient) {}
 
   async list(): Promise<readonly Book[]> {
-    const { data, error } = await this.client.from("v2_books").select(BOOK_COLUMNS).order("created_at", { ascending: false });
+    const { data, error } = await this.client
+      .from("v2_books")
+      .select(BOOK_COLUMNS)
+      .neq("status", "paused")
+      .order("created_at", { ascending: false });
     if (error) throw new DataSourceError("Não foi possível carregar os livros.");
     return (data as BookRow[]).map(mapBook);
   }
@@ -71,6 +75,30 @@ export class SupabaseBookDataSource implements IBookDataSource {
     const { data, error } = await this.client.from("v2_books").select(BOOK_COLUMNS).eq("id", id).maybeSingle();
     if (error) throw new DataSourceError("Não foi possível consultar o anúncio.");
     return data ? mapBook(data as BookRow) : null;
+  }
+
+  async update(id: string, partial: Partial<Omit<Book, "id" | "ownerId">>): Promise<Book> {
+    const patch: Record<string, unknown> = {};
+    if (partial.title !== undefined) patch.title = partial.title;
+    if (partial.author !== undefined) patch.author = partial.author;
+    if (partial.category !== undefined) patch.category = partial.category ?? null;
+    if (partial.modality !== undefined) patch.modality = partial.modality;
+    if (partial.price !== undefined) patch.price = partial.price ?? null;
+    if (partial.status !== undefined) patch.status = partial.status;
+    if (partial.city !== undefined) patch.city = partial.city ?? null;
+    if (partial.state !== undefined) patch.state = partial.state ?? null;
+    if (partial.neighborhood !== undefined) patch.neighborhood = partial.neighborhood ?? null;
+    if (partial.photoUrl !== undefined) patch.photo_url = partial.photoUrl ?? null;
+    if (partial.photos !== undefined) patch.photos = partial.photos ? Array.from(partial.photos) : [];
+
+    const { data, error } = await this.client
+      .from("v2_books")
+      .update(patch)
+      .eq("id", id)
+      .select(BOOK_COLUMNS)
+      .single();
+    if (error || !data) throw new DataSourceError("Não foi possível atualizar o anúncio.");
+    return mapBook(data as BookRow);
   }
 
   async updateStatus(id: string, status: Book["status"]): Promise<Book> {

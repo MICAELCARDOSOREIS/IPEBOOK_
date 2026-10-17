@@ -22,7 +22,14 @@ insert into public.profiles (user_id) values ('${owner}');
 grant usage on schema public, auth to anon, authenticated;
 grant select on auth.users to authenticated;`);
 
-for (const name of ['202610150001_contas_e_anuncios.sql', '202610150002_pedidos.sql', '202610150003_favoritos_alertas.sql', '202610170001_denuncias.sql', '202610170002_fotos_anuncios.sql']) {
+for (const name of [
+  '202610150001_contas_e_anuncios.sql',
+  '202610150002_pedidos.sql',
+  '202610150003_favoritos_alertas.sql',
+  '202610170001_denuncias.sql',
+  '202610170002_fotos_anuncios.sql',
+  '202610170003_pausar_anuncio.sql',
+]) {
   await db.exec(readFileSync(new URL(`../supabase/migrations/${name}`, import.meta.url), 'utf8'));
 }
 const legacy = await db.query(`select
