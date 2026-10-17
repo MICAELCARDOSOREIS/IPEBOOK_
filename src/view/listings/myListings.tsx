@@ -7,14 +7,10 @@ import { tokens } from "@/view/tokens";
 import { BookCover } from "@/view/components/BookCover";
 import { Dialog } from "@/view/components/Dialog";
 import { FilledButton } from "@/view/components/FilledButton";
+import { Snackbar } from "@/view/components/Snackbar";
+import { Tag } from "@/view/components/Tag";
 import { TopAppBar } from "@/view/components/TopAppBar";
-import type { Book, BookModality } from "@/model/entities/book";
-
-const modalityTag: Record<BookModality, { background: string; text: string; label: string }> = {
-  sale: { background: tokens.colors.badge.sale.background, text: tokens.colors.badge.sale.text, label: "Venda" },
-  trade: { background: tokens.colors.badge.trade.background, text: tokens.colors.badge.trade.text, label: "Troca" },
-  donation: { background: tokens.colors.badge.donation.background, text: tokens.colors.badge.donation.text, label: "Doação" },
-};
+import type { Book } from "@/model/entities/book";
 
 export type MyListingsProps = {
   sessionUserId: string;
@@ -57,19 +53,13 @@ export function MyListings({
           </View>
         ) : (
           <>
-            {feedbackMessage ? (
-              <View style={styles.feedbackBanner} accessibilityRole="alert">
-                <Text style={styles.feedbackText}>{feedbackMessage}</Text>
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel="Fechar aviso"
-                  onPress={() => setFeedbackMessage(null)}
-                  style={styles.closeFeedbackButton}
-                >
-                  <Text style={styles.closeFeedbackText}>✕</Text>
-                </Pressable>
-              </View>
-            ) : null}
+            <Snackbar
+              visible={feedbackMessage !== null}
+              message={feedbackMessage ?? ""}
+              actionLabel="✕"
+              onAction={() => setFeedbackMessage(null)}
+              onDismiss={() => setFeedbackMessage(null)}
+            />
             {state.cancelError ? (
               <Text accessibilityRole="alert" style={styles.cancelErrorText}>
                 {state.cancelError}
@@ -97,7 +87,6 @@ export function MyListings({
                 </View>
               }
               renderItem={({ item }) => {
-                const tag = modalityTag[item.modality];
                 return (
                   <Pressable
                     accessibilityRole="button"
@@ -109,23 +98,11 @@ export function MyListings({
                     <View style={styles.bookInfo}>
                       <View style={styles.bookHeader}>
                         <Text style={styles.bookTitle}>{item.title}</Text>
-                        <View style={[styles.tag, { backgroundColor: tag.background }]}>
-                          <Text style={[styles.tagText, { color: tag.text }]}>{tag.label}</Text>
-                        </View>
+                        <Tag variant={item.modality} />
                       </View>
                       <Text style={styles.bookAuthor}>{item.author}</Text>
                       <View style={styles.statusRow}>
-                        <Text
-                          style={
-                            item.status === "reserved"
-                              ? styles.reservedBadge
-                              : item.status === "paused"
-                              ? styles.pausedBadge
-                              : styles.availableBadge
-                          }
-                        >
-                          {item.status === "reserved" ? "Reservado" : item.status === "paused" ? "Pausado" : "Disponível"}
-                        </Text>
+                        <Tag variant={item.status} />
                         {item.modality === "sale" && item.price ? (
                           <Text style={styles.price}>{`R$ ${item.price.toFixed(2)}`}</Text>
                         ) : null}

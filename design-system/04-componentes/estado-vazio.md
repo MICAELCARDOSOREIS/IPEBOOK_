@@ -1,5 +1,8 @@
 # Estado vazio (EmptyState)
 
+> [!IMPORTANT]
+> **PERTENCE A OUTRA ISSUE (ADR 0019)**: Vinculado ao trabalho de estados globais e ilustrações (Spec 021 / Issue #76 — Maria Clara). Atualmente cada tela vazia já implementa sua apresentação textual e botão de ação direta acessíveis.
+
 Origem no sistema base: nenhum componente M3 dedicado (M3 trata estado vazio como composição
 livre). Situação: **Adaptado** — padronizado para as cinco listas do app.
 

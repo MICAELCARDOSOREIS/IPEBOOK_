@@ -1,5 +1,8 @@
 # Abas (Tabs)
 
+> [!NOTE]
+> **AVALIAÇÃO / NÃO IMPLEMENTADO COMO COMPONENTE GENÉRICO (ADR 0019)**: Descartado como componente de abas isolado. A navegação entre seções principais é realizada pela `NavigationBar` (3 destinos, ADR 0011) e filtros contextuais por categorias ou status utilizam o componente `Chip` (`selected`).
+
 Origem no sistema base: Material 3, Primary tabs. Situação: **Herdado**.
 
 ## Quando usar

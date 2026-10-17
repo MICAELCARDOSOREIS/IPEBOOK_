@@ -1,5 +1,8 @@
 # Opção única (Radio)
 
+> [!NOTE]
+> **AVALIAÇÃO / NÃO IMPLEMENTADO COMO COMPONENTE GENÉRICO (ADR 0019)**: Descartado como componente isolado. Seleções mutuamente exclusivas de opções (como modalidade Venda, Troca, Doação) são implementadas através do componente `Chip` com a propriedade `selected` e acessibilidade `accessibilityRole="checkbox"`.
+
 Origem no sistema base: Material 3, Radio button. Situação: **Herdado**.
 
 ## Quando usar

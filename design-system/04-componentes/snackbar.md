@@ -1,5 +1,8 @@
 # Snackbar
 
+> [!NOTE]
+> **IMPLEMENTADO (ADR 0019)**: Implementado e ativo em `src/view/components/Snackbar.tsx`, fornecendo feedback temporário não intrusivo com acessibilidade `accessibilityLiveRegion="polite"`.
+
 Origem no sistema base: Material 3, Snackbar. Situação: **Herdado**.
 
 ## Quando usar

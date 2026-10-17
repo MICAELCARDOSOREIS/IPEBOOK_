@@ -1,5 +1,8 @@
 # Cartão de informação (InfoCard)
 
+> [!NOTE]
+> **AVALIAÇÃO / NÃO IMPLEMENTADO COMO COMPONENTE GENÉRICO (ADR 0019)**: Descartado como componente isolado. Blocos contextuais informativos utilizam containers locais estilizados com os tokens de design do sistema (`soft`, `actionDeep`, `border`).
+
 Origem no sistema base: Material 3, Elevated/tonal card com ícone. Situação: **Herdado**.
 
 ## Quando usar

@@ -1,5 +1,8 @@
 # Avatar
 
+> [!IMPORTANT]
+> **PERTENCE A OUTRA ISSUE (ADR 0019)**: Vinculado ao fluxo de perfil de usuário (Issues #55 e #73 — Maria Clara). Não implementar nesta etapa de alinhamento da beta.
+
 Origem no sistema base: Material 3, Avatar (imagem circular de perfil). Situação: **Adaptado** —
 M3 não prescreve o que mostrar sem foto; o IpêBook usa iniciais sobre `primary-container`.
 

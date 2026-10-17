@@ -1,5 +1,8 @@
 # Tag
 
+> [!NOTE]
+> **IMPLEMENTADO (ADR 0019)**: Implementado e ativo em `src/view/components/Tag.tsx`, centralizando cores e contraste da modalidade e status do anúncio.
+
 Origem no sistema base: Material 3, Assist chip (não interativo). Situação: **Adaptado** — o M3
 define o componente visual de etiqueta, mas não prescreve cor fixa por significado de domínio
 (modalidade de anúncio); o IpêBook fixa uma cor exclusiva por modalidade. A cor `doacao-container`

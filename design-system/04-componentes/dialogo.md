@@ -1,5 +1,8 @@
 # Diálogo (Dialog)
 
+> [!NOTE]
+> **IMPLEMENTADO (Issue #89 e ADR 0019)**: Implementado e ativo em `src/view/components/Dialog.tsx`, fornecendo diálogo modal com foco, acessibilidade e confirmação para ações destrutivas.
+
 Origem no sistema base: Material 3, Basic dialog. Situação: **Herdado**.
 
 ## Quando usar
