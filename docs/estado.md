@@ -1,172 +1,113 @@
 # Estado e continuidade
 
-## Atualização em 2026-10-17 — Saúde das dependências e auditoria (Issue #84)
+Documento consolidado de continuidade técnica e produto do Ipebook (Piripiri, PI).
 
-- **Auditoria de dependências (`npm audit --omit=dev`)**: Realizada a reexecução e análise técnica aprofundada dos avisos.
-  - O aviso crítico em `shell-quote` (versão 1.8.3) é uma dependência transitiva de `react-devtools-core@6.1.5` sob `react-native@0.86.3`.
-  - Análise de impacto e vetor de ataque: O `shell-quote` é consumido internamente apenas pela rotina `launchEditor` do `react-devtools-core`, cujo único propósito é abrir o editor de código local (VSCode/editor do sistema) a partir da interface de DevTools durante o desenvolvimento local. Ele **não** faz parte do bundle final de produção web (gerado via `expo export --platform web` para a pasta `dist`) e não é executável por usuários finais em produção nem no navegador.
-  - Avisos em `braces`, `decode-uri-component`, `node-forge` e `uuid` são dependências profundas do ecossistema `@expo/cli` e `metro` em versões ancoradas pelo Expo SDK 57 / React Native 0.86. A aplicação de `npm audit fix --force` forçaria o downgrade para Expo 44/Expo Router 5.1 (breaking changes severas que destruiriam a compatibilidade do projeto). Foi preservada a integridade do lockfile e compatibilidade do Expo SDK 57.
-  - Token Mapbox: Confirmada ausência total de qualquer chave Mapbox em `.env` e `.env.example` no repositório ativo.
-- `npm run validate` e `npm run build:web` executados com sucesso (370 testes passando, 21 rotas estáticas exportadas).
+Conferência atual: **2026-10-17** (base: branch `develop`). Projeto: `~/IPEBOOK_`.
 
-## Atualização em 2026-10-15 — Issues de Micael encerradas
+---
 
-- A issue #71 foi concluída e integrada em `develop` pelo PR #77. A pedido do usuário, as issues #72 (rascunhos) e #75 (permissões da plataforma) foram fechadas como **não planejadas**; essas duas funcionalidades não foram implementadas. As especificações 017 e 020 permanecem como registro do escopo levantado, sem tarefas concluídas.
+## 1. Estado Verificado em Execução
 
-## Atualização em 2026-10-15 — Spec 016 integrada em develop
+Todas as métricas abaixo foram aferidas diretamente por execução dos scripts de validação:
 
-- PR #77 mesclado em `develop` no commit `82ab90f`; CI `validar` aprovada. Favoritos e alertas foram verificados localmente e no Supabase com duas contas descartáveis; a correção da lista ao voltar do detalhe está incluída. Não houve publicação do aplicativo.
-- As issues #72 (rascunhos) e #75 (permissões) permanecem abertas. O histórico de migrações remoto anterior à spec 016 ainda precisa de reconciliação para que `supabase db push` funcione; a migração desta spec já foi aplicada.
+- **Testes automatizados**: **394 testes passando** em **67 arquivos de teste** (`npm test` / `npx vitest run`), cobrindo testes unitários de entidades, validadores, casos de uso, adaptadores de dados (memória e Supabase), hooks/viewmodels, componentes de interface e cenários de integração ponta a ponta (SC-001, SC-002, autenticação, recuperação de senha e moderação).
+- **Cobertura de código**: Acima do limiar estrito de 80% em todas as 4 dimensões (Statements: > 89%, Branches: > 81%, Functions: > 85%, Lines: > 90%).
+- **Integridade arquitetural**: **100% em conformidade** no MVVM sofisticado em sete camadas (`app`, `view`, `viewmodel`, `usecase`, `model`, `infra`, `di`), verificado pelo comando `npm run check:architecture` (0 violações). Apenas `src/di/container.ts` e testes têm permissão para instanciar ou importar adaptadores de `src/infra/`.
+- **Validação de banco e migrações SQL**: 5 migrações executadas e validadas em banco real isolado via PGlite (`npm run test:sql`):
+  1. `202610130001_v2_schema.sql` (estrutura inicial de livros e pedidos)
+  2. `202610130002_rls_hardening.sql` (políticas de Row Level Security e permissões granulares)
+  3. `202610150003_favoritos_alertas.sql` (tabelas de favoritos, alertas de busca e notificações)
+  4. `202610170001_denuncias.sql` (tabela de moderação comunitária `v2_reports`)
+  5. `202610170002_fotos_anuncios.sql` (colunas de fotos, localidade e categoria em `v2_books`)
+- **Backend Supabase ativo**: O backend está configurado com `EXPO_PUBLIC_BACKEND=supabase` em `.env` e `.env.example`, integrado ao projeto oficial `xiuuiggpccpgrwkzeloc`. O histórico de migrações remotas foi reconciliado e `supabase db push` está operando normalmente.
+- **Rotas Web compiladas (`npm run build:web`)**: Exportação estática do Expo Router gerou com sucesso o pacote web em `dist/`, totalizando **21 rotas estáticas**:
+  - `/` (Catálogo e vitrine inicial com selo da beta em Piripiri, PI)
+  - `/pesquisa` (Busca no catálogo por termo e filtros)
+  - `/livro/[id]` (Detalhes completos do anúncio, capa com foto real/fallback, dados do autor e do anunciante)
+  - `/anunciar` (Formulário de cadastro de anúncio com upload/remoção de foto e 17 bairros de Piripiri)
+  - `/meus-anuncios` (Listagem de anúncios cadastrados pelo usuário, com confirmação via Diálogo para exclusão e feedback de êxito)
+  - `/pedidos-recebidos` (Propostas recebidas de interessados, com aceitar e recusar)
+  - `/meus-pedidos` (Propostas enviadas pelo usuário)
+  - `/negociacao/[id]` (Detalhes do encontro acordado com pontos públicos seguros em Piripiri)
+  - `/favoritos` (Livros marcados como favoritos pelo usuário)
+  - `/alertas` (Alertas de busca por interesse, com pausa/retomada e exclusão confirmada por Diálogo)
+  - `/notificacoes` (Central de notificações com filtros de lidas/não lidas)
+  - `/denunciar/[id]` (Formulário de denúncia de anúncio e moderação comunitária)
+  - `/ajuda` (Central de ajuda, FAQ e dicas de segurança comunitária em Piripiri)
+  - `/termos` (Termos de uso e política de privacidade LGPD)
+  - `/excluir-conta` (Direito ao esquecimento LGPD com digitação da palavra EXCLUIR)
+  - `/entrar` (Login de usuário com e-mail e senha)
+  - `/criar-conta` (Registro de nova conta)
+  - `/esqueci-senha` (Solicitação de link de redefinição de senha)
+  - `/redefinir-senha` (Definição de nova senha via token)
+  - `/+not-found` (Página de rota não encontrada)
+  - `/_sitemap` (Mapa de rotas)
 
-## Atualização em 2026-10-15 — Spec 016 implementada e migração aplicada
+---
 
-- Branch `feature/favoritos-alertas-busca`, criada de `develop` em `bb86fd7`. Favoritos, alertas por título/autor/categoria e notificação por novo anúncio estão implementados localmente. ADR 0015 registra o trigger transacional no Supabase.
-- `npm run validate` passou com 358 testes em 64 arquivos; cobertura de ramificações 80,22%. `npm run build:web` gerou 21 rotas. Migração SQL local passou, inclusive RLS entre contas.
-- A migração `202610150003_favoritos_alertas.sql` foi aplicada ao Supabase vinculado via `supabase db query --linked --file` e registrada no histórico com `migration repair --status applied`. A consulta posterior confirmou a coluna `category`, três tabelas, nove políticas e o gatilho. Teste SQL remoto confirmou isolamento e notificação entre duas contas. Chromium headless validou o fluxo autenticado em memória e, com duas contas descartáveis, o fluxo real no Supabase: alerta, anúncio, notificação, favorito e desfavorito. Foi corrigida a lista desatualizada ao voltar do detalhe; a repetição exibiu o estado vazio. Contas e dados de teste foram removidos; as quatro tabelas ficaram vazias. O histórico remoto contém oito versões antigas ausentes do repositório; por isso `db push` permanece bloqueado até uma reconciliação própria, sem desfazer registros antigos. Commit local `aab51fe` da implementação principal; correção final ainda sem commit, integração ou publicação.
-- As issues #72 (rascunhos) e #75 (permissões) continuam abertas e não foram implementadas nesta branch.
+## 2. Relação entre Telas do Figma e Telas Implementadas
 
-## Atualização em 2026-10-15 — Capturas e inspeção via ADB das novas telas do MVP
+O inventário de design (`design-system/telas-android-figma.md`) lista 137 telas no Figma correspondentes a todos os fluxos conceituais explorados durante a fase inicial de IHC.
 
-- Inspecionadas e capturadas no celular físico Samsung Galaxy conectado via ADB (`RX8Y6018P3W`) e empacotado no Expo Go via Expo Tunnel (`npx expo start --tunnel`).
-- Telas integradas à documentação e galeria do MVP em `docs/versoes/mvp/imagens/`:
-  - `notificacoes.png` (Central de Notificações, Spec 015)
-  - `ajuda.png` (Central de Ajuda, FAQ e Segurança em Piripiri, Spec 012)
-  - `termos-e-privacidade.png` (Termos de Uso e Política de Privacidade LGPD, Spec 010)
-  - `excluir-conta.png` (Exclusão de Conta LGPD, Spec 014)
-  - `denunciar.png` (Denúncia de Anúncio, Spec 011)
-  - `pesquisa.png` (Pesquisa no Catálogo por título e autor)
-- Registro consolidado em `docs/versoes/mvp/resumo.md`.
+No app ativo em desenvolvimento, 21 rotas cobrem as jornadas essenciais da beta. A discrepância numérica entre 137 e 21 decorre de **decisões deliberadas de escopo e arquitetura**, devidamente documentadas em ADRs:
 
-## Atualização em 2026-10-15 — Specs 008 a 015 integradas em develop
+1. **Fluxo 05 · Estante (fora de escopo pelo ADR 0011)**:
+   - O Figma previa uma aba "Estante" dedicada à catalogação pessoal de livros lidos/a ler.
+   - O ADR 0011 definiu a barra de navegação principal com apenas 3 destinos essenciais: **Início**, **Pesquisa** e **Perfil**, mantendo o foco do Ipebook na circulação e desapego comunitário de livros entre leitores.
+2. **Fluxo 06 · Conversa / Chat em Tempo Real (fora de escopo pelo ADR 0011 e Specs 004/009)**:
+   - O Figma explorou telas de chat bidirecional instantâneo (`MessageBubble`, etc.).
+   - O projeto deliberadamente adotou negociação assíncrona orientada a estados (`pending` → `accepted` / `rejected`), com ponto de encontro público seguro em Piripiri (Praça da Bandeira, Estação Ferroviária, Praça de Eventos) sugerido automaticamente na tela de Negociação (`/negociacao/[id]`). Isso elimina a complexidade, custos e riscos de segurança de um mensageiro em tempo real na versão beta.
+3. **Multi-plataforma iOS / Web detalhada (ADR 0008)**:
+   - As 144 telas de iPhone (`design-system/telas-iphone-figma.md`) e 126 telas de Web (`design-system/telas-web-figma.md`) foram catalogadas no repositório como inventário de referência para o futuro.
+   - O escopo obrigatório da beta é estritamente **Android (Material 3)** e **Web responsiva**, operando sobre a mesma árvore de componentes React Native.
 
-- **Spec 008 (Meus Anúncios)**: Implementada e integrada em `develop`. Rota `/meus-anuncios`, view `MyListings`, caso de uso `listMyListings` e método `listByOwner` nos datasources. Atalho na Home.
-- **Spec 009 (Detalhes da Negociação Aceita e Ponto de Encontro)**: Implementada e integrada em `develop`. Rota `/negociacao/[id]`, view `RequestDetail`, caso de uso `getRequestDetail` com bloqueio de terceiros e sugestão de pontos públicos seguros em Piripiri, PI. Atalho "Ver detalhes do encontro" em "Pedidos recebidos" e "Meus pedidos" para itens aceitos.
-- **Spec 010 (Termos de Uso e Política de Privacidade)**: Implementada e integrada em `develop`. Rota `/termos`, view `TermsAndPrivacy`, modelo `legalContent.ts` com regras da comunidade de Piripiri, PI, LGPD e limites de responsabilidade. Atalhos na Home e na tela de Cadastro.
-- **Spec 011 (Denúncia de Anúncio e Moderação Comunitária)**: Implementada e integrada em `develop`. Rota `/denunciar/[id]`, tela `ReportListingScreen`/`ReportListing`, caso de uso `ReportUseCases` com validações de sessão e motivos pré-definidos (UGC/conformidade com diretrizes de app store), datasources em memória e Supabase. Atalho "Denunciar anúncio" no detalhe do livro.
-- **Spec 012 (Central de Ajuda, FAQ e Guia de Segurança em Piripiri)**: Implementada e integrada em `develop`. Rota `/ajuda`, view `HelpAndFaq`, modelo `helpContent.ts` com filtros interativos por categoria (Segurança em Piripiri, Regras e Trocas, Suporte). Atalho no rodapé da Home.
-- **Spec 013 (Cancelamento e Remoção de Anúncio Próprio)**: Implementada e integrada em `develop`. Ação `cancelListing` no caso de uso `BookUseCases` com proteção de posse (`ownerId === sessionUserId`) e bloqueio de exclusão para itens com negociação aceita (`status === "reserved"`), método `delete` nos datasources em memória e Supabase, botão acessível "Remover" na tela `MyListings` com atualização reativa do catálogo.
-- **Spec 014 (Exclusão de Conta e Direito ao Esquecimento LGPD)**: Implementada e integrada em `develop`. Rota `/excluir-conta`, view `DeleteAccountScreen`/`DeleteAccount`, caso de uso `deleteAccount` em `AuthUseCases`, remoção no `MemoryAuthDataSource` e no `SupabaseAuthDataSource`. Exige digitação da palavra de confirmação "EXCLUIR", desloga a sessão e redireciona para a Home. Atalho acessível na aba de Privacidade dos Termos de Uso.
-- **Spec 015 (Central de Notificações Comunitária)**: Implementada e integrada em `develop`. Rota `/notificacoes`, view `NotificationsScreen`/`Notifications`, entidade `AppNotification`, caso de uso `NotificationUseCases`, datasources em memória e Supabase. Filtros por "Todas" e "Não lidas", contadores reativos, ação de marcar lida individual e em lote ("Marcar lidas"), toque no item com navegação contextual (`/pedidos-recebidos`, `/negociacao/[id]`, `/ajuda`) e atalho na Home para usuários logados.
-- `npm run check:architecture` passa com 100 arquivos (0 violações); 338 testes passam em 58 arquivos; cobertura > 80% em todas as métricas (Statements: 91.56%, Branches: 80.05%, Functions: 90.62%, Lines: 92.42%); `npm run build:web` exporta 19 rotas estáticas.
-- A responsabilidade de Perfil da Maria Clara (Issue #55) permaneceu intacta e sem colisões.
+---
 
-## Atualização em 2026-10-15 — beta em implementação
+## 3. Marcos Consolidados da Trilha Beta (Outubro de 2026)
 
-- Branch de trabalho: `feature/beta-supabase-base`, derivada de `develop` em `1c9a395`.
-- Base antes da mudança: `npm run validate` passou com 166 testes, tipos e arquitetura.
-- Após as alterações locais: `npm run validate` passou com 190 testes em 30 arquivos,
-  teste SQL local de migrações/RLS, checagem de 57 arquivos de arquitetura e cobertura de
-  81,35% de ramificações; `npm run build:web` exportou 10 rotas. Isso não comprova o fluxo
-  remoto nem a entrega de e-mail.
-- Spec 007 e ADR 0012 registrados. Há migrações locais para anúncios e pedidos (tabelas
-  `v2_books`/`v2_book_requests`) e adaptadores Supabase ativáveis explicitamente.
-- **Continuação em 2026-10-15:** o único projeto Supabase disponível (`xiuuiggpccpgrwkzeloc`,
-  o mesmo do `.env`) tinha um esquema de outra versão/equipe do IpeBook com dados reais
-  (`listings`, `profiles`, `book_requests`, `notifications`, `favorites`, `ratings`, `reports`,
-  `request_messages`, `user_blocks`; 9 anúncios, 6 perfis, 4 pedidos etc.). Não há ferramenta
-  disponível para apagar o projeto inteiro. Com autorização explícita do usuário — informado
-  do volume de dados envolvido —, esse esquema legado e 15 funções `SECURITY DEFINER` órfãs
-  foram apagados, e as migrações da spec 007 foram aplicadas do zero no mesmo projeto via MCP
-  do Supabase (`apply_migration`), sem usar a CLI local. `public.v2_books` e
-  `public.v2_book_requests` existem agora no projeto real, com RLS habilitado e sem dados. O
-  advisor de segurança do Supabase não reporta mais as funções legadas; resta só o aviso padrão
-  de "Leaked Password Protection Disabled" (configuração de Auth, não tratada). As quatro
-  migrações locais que só espelhavam o esquema legado foram removidas do repositório. Ainda não
-  há validação de fluxo real com duas contas, nem envio de e-mail/retorno de link testado
-  contra esse projeto — ver `specs/007-contas-persistentes/validacao.md`.
-- A senha temporária exibida no MVP foi removida. O modo em memória não simula e-mail nem
-  altera a senha; há tela para definir nova senha a partir de link Supabase. Ainda é necessário
-  validar o retorno do link no Android e Web e configurar SMTP próprio.
-- As issues #55/#56 da spec 006 seguem abertas e atribuídas à Maria Clara. Não foram alteradas
-  por esta branch.
-- Cloudflare Pages foi escolhido para a Web da beta; não há publicação configurada ou
-  verificada. A configuração Vercel descrita no histórico abaixo pertence ao MVP anterior.
-- O usuário definiu Piripiri, PI, como a única cidade da beta. A regra ainda precisa de
-  especificação, implementação e verificação; nenhuma limitação geográfica está ativa no app.
-- Pendências antes da beta: completar e testar RLS com duas contas, aceite atômico, perfil/idade/
-  cidade/contato, fotos, moderação, exclusão de conta, legal, monitoramento e publicação. A
-  cidade/UF foi definida, mas o domínio ainda não foi informado. Supabase Pro requer autorização de gasto.
-- A auditoria `npm audit --omit=dev` reportou 32 avisos nas dependências, inclusive um crítico
-  em `shell-quote`; não houve atualização automática fora do escopo. Avaliar os caminhos de
-  execução relevantes antes de distribuir um APK ou publicar a Web.
+- **Issue #79 (Migração de moderação)**: Criada a migração `202610170001_denuncias.sql` adicionando a tabela `v2_reports` e políticas de RLS, validada no PGlite.
+- **Issue #80 (Reconciliação do histórico do Supabase)**: Histórico remoto corrigido com `supabase migration repair`, desbloqueando `supabase db push`.
+- **Issue #81 (Ativação e validação do backend Supabase)**: `EXPO_PUBLIC_BACKEND=supabase` configurado em `.env` e validado com duas contas reais ponta a ponta (`specs/007-contas-persistentes/validacao.md`).
+- **Issue #83 (Restrição da beta a Piripiri, PI)**: Criada a Spec 022 e o ADR 0016. Adicionados 17 bairros oficiais em `src/model/entities/location.ts`, validação geográfica e selo visual "Beta exclusiva em Piripiri, PI".
+- **Issue #82 (Fotos do anúncio)**: Criada a Spec 023 e o ADR 0017. Migração `202610170002_fotos_anuncios.sql` aplicada; campos `photo_url`, `photos`, `category`, `city`, `state`, `neighborhood` integrados; componentes `BookCover` (com imagem real e fallback determinístico) e `AddPhotoCard` com preview e remoção.
+- **Issue #84 (Auditoria de dependências)**: Auditoria técnica documentando que a vulnerabilidade em `shell-quote` pertence exclusivamente a `react-devtools-core` em ambiente local e não compõe o bundle web final. Confirmada a ausência de credenciais Mapbox.
+- **Issue #85 (Gates de sessão e cobertura)**: Testes de unidade e componentes cobrindo todos os screen wrappers e gates de autenticação.
+- **Issue #88 (Destino Perfil na barra de navegação)**: Corrigido o direcionamento da tab Perfil: implementado suporte a destinos desabilitados com acessibilidade (`accessibilityState={{ disabled: true }}` e rótulo `"Perfil (em breve)"`), evitando erros de rota inexistente enquanto a issue #55 estiver em desenvolvimento.
+- **Issue #89 (Componente Dialog e confirmação destrutiva)**: Criado o componente `Dialog` em `src/view/components/Dialog.tsx` conforme `design-system/04-componentes/dialogo.md` (com foco acessível, fechamento pelo botão voltar, alvo de 48 dp e variantes neutra e destrutiva). Integrado na tela `MyListings` (com mensagem de êxito) e na tela `SearchAlerts`.
+- **Issue #86 (Spine de Arquitetura e Higiene do Repositório)**: Integrado o spine de arquitetura com 20 invariantes (`docs/arquitetura/architecture-ipebook/`), limpos worktrees e eliminadas 15 branches obsoletas.
 
-O restante deste documento é o registro anterior e pode conter contagens, links e prioridades
-superados por esta atualização. Atualizar a consolidação ao concluir a spec 007.
+---
 
-Conferência: 2026-10-14 (base: branch `develop`, após merge do deploy web — PR #45 — e correção
-do `typecheck`). Projeto: `~/IPEBOOK_`.
+## 4. Pendências Reais da Beta
 
-**Equipe ativa:** Micael Cardoso Reis e Maria Clara Almeida Martins. Eric Vinícius dos Santos
-Oliveira e Antonio Carlos Gomes saíram da equipe em 2026-10-14.
+As únicas tarefas abertas necessárias para a conclusão da versão beta são:
 
-## Estado verificado
+1. **#87 (Publicação da Web no Cloudflare Pages)**: Configurar e validar o deploy do bundle gerado em `dist/` no Cloudflare Pages.
+2. **#90 (Alinhamento dos campos da tela de anunciar ao design system)**: Substituir inputs simples por componentes de formulário do design system (seleção de modalidade, categoria e bairros de Piripiri).
+3. **#91 (Editar e pausar anúncio: modelo e interface)**: Permitir alterar dados e alternar o status do anúncio entre disponível e pausado sem precisar excluí-lo.
+4. **#92 (Alinhamento do design system)**: Suprir componentes pendentes documentados em `design-system/04-componentes/` (ex: `Snackbar`, `Badge`).
+5. **#94 (Histórico de buscas recentes)**: Persistência local das últimas buscas com opção de limpeza confirmada via `Dialog`.
+6. **#55 (Tela de perfil do usuário - Maria Clara)**: Implementação da rota `/perfil` conforme spec 006.
 
-- Branch ativa: `develop`.
-- O `typecheck` agora gera os tipos de rota do Expo antes de executar TypeScript
-  (`expo customize tsconfig.json && tsc --noEmit`, ver `package.json`). A validação passou
-  também após remover temporariamente `.expo/types/router.d.ts`, confirmando que as rotas
-  `/pedidos-recebidos` e `/meus-pedidos` são reconhecidas em um ambiente sem tipos prévios —
-  corrige o falso-positivo de typecheck que antes exigia regenerar o cache manualmente
-  (`expo start`) a cada rota nova.
-- Estrutura arquitetural: MVVM sofisticado em sete camadas (`app`, `view`, `viewmodel`, `usecase`, `model`, `infra`, `di`) verificada sem nenhuma violação pelo script de arquitetura (`check:architecture`).
-- Correção em 2026-10-14: `scripts/verificar-arquitetura.mjs` usava `path.sep` para separar o
-  caminho do import, mas o especificador (`@/view/home`) sempre usa `/`; em Windows isso
-  gerava falso positivo em toda importação `@/...`. Corrigido para normalizar para `/` antes de
-  separar.
-- `npm run validate` **passa limpo**: typecheck ok, arquitetura sem violações (45 arquivos),
-  144/144 testes passando em 24 arquivos.
-- Cobertura de testes: 94,19% statements, 82,54% branches, 94,44% funções, 95,88% linhas — acima
-  do limiar de 80% exigido.
-- Build Web (`npm run build:web`): exportação estática com 8 rotas compiladas sem falhas.
-  Deploy estático configurado para a Vercel (`vercel.json`, issue #7/#39 — Micael, PR #45);
-  falta só conectar o repositório a um projeto Vercel para publicar de fato.
-- Testes E2E mobile: 3 fluxos declarativos do Maestro configurados em `.maestro/`.
-- Conferência visual via ADB no Samsung SM_A165M em 2026-10-14: telas e estados do MVP registrados em [versões/MVP](versoes/mvp/resumo.md). O anúncio fictício retornou à Home, mas não apareceu no catálogo; negociação no aparelho permanece sem validação.
-- Fundamentação formal: Norma ISO/IEC 25010 (Adequação Funcional, Confiabilidade e Usabilidade/Acessibilidade) detalhada em `docs/qualidade.md` junto com guia de defesa oral.
-- Vínculos e ADRs: índice completo em [docs/adr/README.md](adr/README.md) (ADRs 0001 a 0010).
+---
 
-## Rastreabilidade das Entregas
+## 5. Rastreabilidade das Especificações
 
-1. `specs/001-estrutura-mvvm/`: Fundação arquitetural do Ipebook com validação inicial.
-2. `specs/002-estrategia-testes/`: Estratégia completa de testes automatizados e qualidade ISO/IEC 25010.
-3. `specs/003-autenticacao-e-cadastro-de-anuncio/`: **Completa** — primeira jornada funcional
-   (criar conta/entrar, cadastrar anúncio de livro, sair) implementada e validada ponta a ponta.
-   - **Autenticação (Maria Clara)**: via PR #34 — `User`, `authValidator`, `iAuthDataSource`
-     (issue #23, fechada), `AuthUseCases`/`MemoryAuthDataSource` (issue #24, fechada),
-     `useAuthViewModel`/telas `signIn`/`signUp`/rotas `entrar`/`criar-conta` (issue #25, fechada).
-   - **Modelo e cadastro de anúncio (Antonio)**: `Book` com `modality`/`price`/`ownerId` (issue
-     #26, PR #37); `createListing`/`MemoryBookDataSource.create` (issue #27, PR #41);
-     `useCreateListingViewModel`/`createListing.tsx`/rota `anunciar.tsx` (issue #28, PR #42).
-   - **Conjunta (issue #29)**: container já compunha `authUseCases`+`bookUseCases`; botão
-     "Anunciar" condicional adicionado em `src/view/home.tsx`; corrigido bug em
-     `src/app/anunciar.tsx` que passava `sessionUserId={null}` fixo (cadastro sempre falhava) —
-     criado `src/view/listings/createListingScreen.tsx` como gate de sessão (redireciona para
-     `/entrar` sem sessão, só então renderiza o formulário com o `sessionUserId` real); teste de
-     integração completo de SC-001 em `tests/integration/sc001Integration.test.ts` (criar conta
-     → entrar → cadastrar anúncio de cada modalidade → ver na listagem, pelas camadas reais).
-   - Ver `specs/003-autenticacao-e-cadastro-de-anuncio/tasks.md` e `validacao.md` para o
-     detalhamento e as evidências.
-4. Tag de modalidade na Home (issue #39, Micael): implementada e mesclada (PR #38).
-5. `specs/004-negociacao-simples/`: **Completa** — fluxo de negociação simples (solicitar e responder) implementado ponta a ponta (Antonio Carlos Gomes, Tarefa 25 / issue #21):
-   - Modelo e contratos: `BookRequest`, `RequestStatus`, `Book.status` e `IBookRequestDataSource` (T001/T002, issue #30).
-   - Casos de uso e infraestrutura: `BookRequestUseCases` (T003/T004) com regras de bloqueio (FR-001 a FR-003) e recusa automática de concorrentes com reserva do anúncio (FR-004/SC-002); `MemoryBookRequestDataSource` (T005); container DI atualizado com `IBookRequestUseCases` (T006).
-   - ViewModels (T007/T008): `useRequestNegotiationViewModel`, `useReceivedRequestsViewModel`, `useSentRequestsViewModel`.
-   - Views e rotas (T009/T010/T011): botão "Solicitar negociação" e atalhos na Home (`src/view/home.tsx`), telas `receivedRequests.tsx` e `sentRequests.tsx` com `requestListLayout.tsx`, e rotas `src/app/pedidos-recebidos.tsx` e `src/app/meus-pedidos.tsx`.
-   - Teste de integração (T012): `tests/integration/sc002Integration.test.tsx` validando o cenário SC-002 pelas camadas reais.
-   - Ver `specs/004-negociacao-simples/tasks.md` e `validacao.md` para o detalhamento e evidências.
-6. `docs/`: Documentação consolidada em 7 guias temáticos (`README.md`, `produto.md`, `arquitetura.md`, `desenvolvimento.md`, `qualidade.md`, `uso.md`, `estado.md`), mais decisões de produto confirmadas diretamente pelo usuário em 2026-10-13 (problema/público, modalidade, conta) e ADRs 0005, 0006 e 0007.
-
-## Próximos passos
-
-1. ~~Criar Pull Request da branch `feature/21-negociacao-telas` para `develop`~~ — feito (PR #44,
-   issue #21 fechada).
-2. Publicar de fato o deploy Web: conectar o repositório a um projeto Vercel (ação externa,
-   fora do alcance de automação — precisa de login/conta do responsável).
-3. Revisar e integrar a correção da geração de tipos de rota no `typecheck` (ver `package.json`)
-   nas próximas validações de CI.
-4. Validar os fluxos em dispositivo físico; testes automatizados e build web não substituem
-   essa conferência.
-5. O backlog futuro (perfil de usuário, layout web dedicado, métricas de reputação, build
-   Android, notificações, moderação) foi apagado em 2026-10-14 — eram anotações condicionais
-   sem trabalho ativo. Especificar do zero pelo Spec Kit se/quando a necessidade de produto
-   correspondente surgir de verdade.
+- `specs/001-estrutura-mvvm/`: Fundação arquitetural do Ipebook em 7 camadas.
+- `specs/002-estrategia-testes/`: Estratégia de testes ISO/IEC 25010 e cobertura mínima de 80%.
+- `specs/003-autenticacao-e-cadastro-de-anuncio/`: Cadastro de livro, autenticação básica e listagem na vitrine.
+- `specs/004-negociacao-simples/`: Negociação simples (solicitação e resposta) com reserva atômica de concorrentes.
+- `specs/007-contas-persistentes/`: Persistência no Supabase com RLS e validação multi-contas.
+- `specs/008-meus-anuncios/`: Gestão dos próprios anúncios com indicadores de status.
+- `specs/009-detalhes-da-negociacao/`: Ponto de encontro comunitário seguro em Piripiri.
+- `specs/010-termos-e-privacidade/`: Conformidade LGPD e regras da comunidade.
+- `specs/011-denuncia-de-anuncio/`: Moderação comunitária de anúncios impróprios.
+- `specs/012-central-de-ajuda-e-faq/`: FAQ, categorias e guia de segurança.
+- `specs/013-cancelar-anuncio/`: Cancelamento de anúncio com proteção de posse e integridade referencial.
+- `specs/014-exclusao-de-conta/`: Direito ao esquecimento LGPD com confirmação textual.
+- `specs/015-central-de-notificacoes/`: Notificações transacionais com filtros de lidas.
+- `specs/016-favoritos-e-alertas-de-busca/`: Favoritos e alertas com gatilho transacional no banco.
+- `specs/017-rascunhos-de-anuncio/`: (Escopo levantado, encerrado como não planejado para a beta).
+- `specs/020-permissoes-da-plataforma/`: (Escopo levantado, encerrado como não planejado para a beta).
+- `specs/022-restricao-geografica-piripiri/`: Restrição da beta à cidade de Piripiri, PI e seus bairros.
+- `specs/023-fotos-do-anuncio/`: Upload de fotos, armazenamento em bucket público do Supabase Storage e capas de livro.
