@@ -14,6 +14,9 @@ function stubDataSource(overrides: Partial<IBookDataSource>): IBookDataSource {
     },
     listByOwner: async () => [],
     delete: async () => {},
+    update: async () => {
+      throw new Error("não usado");
+    },
     ...overrides,
   };
 }
@@ -200,5 +203,193 @@ describe("MemoryBookDataSource.create", () => {
     Object.assign(created, { title: "Mutado" });
     const all = await source.list();
     expect(all[0].title).toBe("Original");
+  });
+});
+
+describe("updateListing (FR-024 — edição de anúncio)", () => {
+  it("bloqueia edição quando não há sessão", async () => {
+    const source = new MemoryBookDataSource();
+    const useCases = new BookUseCases(source);
+    await expect(
+      useCases.updateListing("book-1", { title: "Novo Título" }, null),
+    ).rejects.toThrow(AuthError);
+  });
+
+  it("bloqueia edição de anúncio inexistente", async () => {
+    const source = new MemoryBookDataSource();
+    const useCases = new BookUseCases(source);
+    await expect(
+      useCases.updateListing("inexistente", { title: "Novo Título" }, "user-1"),
+    ).rejects.toThrow(DataSourceError);
+  });
+
+  it("bloqueia edição quando usuário não é o dono", async () => {
+    const source = new MemoryBookDataSource();
+    const useCases = new BookUseCases(source);
+    const book = await useCases.createListing(
+      { title: "Livro 1", author: "Autor 1", modality: "donation" },
+      "owner-1",
+    );
+
+    await expect(
+      useCases.updateListing(book.id, { title: "Novo Título" }, "outro-user"),
+    ).rejects.toThrow(AuthError);
+  });
+
+  it("bloqueia edição de anúncio reservado", async () => {
+    const source = new MemoryBookDataSource();
+    const useCases = new BookUseCases(source);
+    const book = await useCases.createListing(
+      { title: "Livro 1", author: "Autor 1", modality: "donation" },
+      "owner-1",
+    );
+    await source.updateStatus(book.id, "reserved");
+
+    await expect(
+      useCases.updateListing(book.id, { title: "Novo Título" }, "owner-1"),
+    ).rejects.toThrow("Não é possível editar anúncio com negociação aceita em andamento.");
+  });
+
+  it("valida título e autor não vazios na edição", async () => {
+    const source = new MemoryBookDataSource();
+    const useCases = new BookUseCases(source);
+    const book = await useCases.createListing(
+      { title: "Livro 1", author: "Autor 1", modality: "donation" },
+      "owner-1",
+    );
+
+    await expect(
+      useCases.updateListing(book.id, { title: "   " }, "owner-1"),
+    ).rejects.toThrow(ValidationError);
+    await expect(
+      useCases.updateListing(book.id, { author: "" }, "owner-1"),
+    ).rejects.toThrow(ValidationError);
+  });
+
+  it("valida preço positivo quando a modalidade for sale", async () => {
+    const source = new MemoryBookDataSource();
+    const useCases = new BookUseCases(source);
+    const book = await useCases.createListing(
+      { title: "Livro 1", author: "Autor 1", modality: "donation" },
+      "owner-1",
+    );
+
+    await expect(
+      useCases.updateListing(book.id, { modality: "sale", price: 0 }, "owner-1"),
+    ).rejects.toThrow(ValidationError);
+  });
+
+  it("valida restrição de cidade em Piripiri", async () => {
+    const source = new MemoryBookDataSource();
+    const useCases = new BookUseCases(source);
+    const book = await useCases.createListing(
+      { title: "Livro 1", author: "Autor 1", modality: "donation" },
+      "owner-1",
+    );
+
+    await expect(
+      useCases.updateListing(book.id, { city: "Teresina" }, "owner-1"),
+    ).rejects.toThrow("O Ipebook está em fase beta exclusivamente em Piripiri, PI.");
+  });
+
+  it("atualiza anúncio com sucesso e reflete nos dados", async () => {
+    const source = new MemoryBookDataSource();
+    const useCases = new BookUseCases(source);
+    const book = await useCases.createListing(
+      { title: "Livro Antigo", author: "Autor Antigo", modality: "donation" },
+      "owner-1",
+    );
+
+    const updated = await useCases.updateListing(
+      book.id,
+      {
+        title: "Livro Atualizado",
+        author: "Novo Autor",
+        modality: "sale",
+        price: 25.5,
+        neighborhood: "Floresta",
+      },
+      "owner-1",
+    );
+
+    expect(updated.title).toBe("Livro Atualizado");
+    expect(updated.author).toBe("Novo Autor");
+    expect(updated.modality).toBe("sale");
+    expect(updated.price).toBe(25.5);
+    expect(updated.neighborhood).toBe("Floresta");
+
+    const fetched = await useCases.getBookById(book.id);
+    expect(fetched.title).toBe("Livro Atualizado");
+  });
+});
+
+describe("togglePauseListing (FR-024 — pausar e retomar anúncio)", () => {
+  it("bloqueia pausar sem sessão autenticada", async () => {
+    const source = new MemoryBookDataSource();
+    const useCases = new BookUseCases(source);
+    await expect(useCases.togglePauseListing("id-1", null)).rejects.toThrow(AuthError);
+  });
+
+  it("bloqueia pausar se não for o dono", async () => {
+    const source = new MemoryBookDataSource();
+    const useCases = new BookUseCases(source);
+    const book = await useCases.createListing(
+      { title: "Livro", author: "Autor", modality: "trade" },
+      "owner-1",
+    );
+
+    await expect(useCases.togglePauseListing(book.id, "invasor")).rejects.toThrow(AuthError);
+  });
+
+  it("bloqueia pausar anúncio reservado", async () => {
+    const source = new MemoryBookDataSource();
+    const useCases = new BookUseCases(source);
+    const book = await useCases.createListing(
+      { title: "Livro", author: "Autor", modality: "trade" },
+      "owner-1",
+    );
+    await source.updateStatus(book.id, "reserved");
+
+    await expect(useCases.togglePauseListing(book.id, "owner-1")).rejects.toThrow(
+      "Não é possível alterar o status de anúncio com negociação aceita.",
+    );
+  });
+
+  it("pausa anúncio disponível e o oculta do catálogo público mantendo nos meus anúncios", async () => {
+    const source = new MemoryBookDataSource();
+    const useCases = new BookUseCases(source);
+    const book = await useCases.createListing(
+      { title: "Livro Ativo", author: "Autor", modality: "trade" },
+      "owner-1",
+    );
+
+    expect((await useCases.listBooks())).toHaveLength(1);
+
+    const paused = await useCases.togglePauseListing(book.id, "owner-1");
+    expect(paused.status).toBe("paused");
+
+    // Catálogo público não lista pausados
+    expect((await useCases.listBooks())).toHaveLength(0);
+
+    // listByOwner lista pausados normalmente
+    const ownerBooks = await useCases.listMyListings("owner-1");
+    expect(ownerBooks).toHaveLength(1);
+    expect(ownerBooks[0].status).toBe("paused");
+  });
+
+  it("retoma anúncio pausado e o restaura no catálogo público", async () => {
+    const source = new MemoryBookDataSource();
+    const useCases = new BookUseCases(source);
+    const book = await useCases.createListing(
+      { title: "Livro Pausado", author: "Autor", modality: "trade" },
+      "owner-1",
+    );
+    await useCases.togglePauseListing(book.id, "owner-1");
+
+    const resumed = await useCases.togglePauseListing(book.id, "owner-1");
+    expect(resumed.status).toBe("available");
+
+    expect((await useCases.listBooks())).toHaveLength(1);
+    expect((await useCases.listBooks())[0].id).toBe(book.id);
   });
 });

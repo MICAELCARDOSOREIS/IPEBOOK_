@@ -21,6 +21,7 @@ export type MyListingsProps = {
   onBack?: () => void;
   onNavigateToBookDetail?: (bookId: string) => void;
   onNavigateToCreateListing?: () => void;
+  onNavigateToEditListing?: (bookId: string) => void;
 };
 
 export function MyListings({
@@ -28,6 +29,7 @@ export function MyListings({
   onBack,
   onNavigateToBookDetail,
   onNavigateToCreateListing,
+  onNavigateToEditListing,
 }: MyListingsProps) {
   const [state, actions] = useMyListingsViewModel(sessionUserId);
   const [listingToDelete, setListingToDelete] = useState<Book | null>(null);
@@ -73,6 +75,11 @@ export function MyListings({
                 {state.cancelError}
               </Text>
             ) : null}
+            {state.pauseError ? (
+              <Text accessibilityRole="alert" style={styles.cancelErrorText}>
+                {state.pauseError}
+              </Text>
+            ) : null}
             <FlatList
               data={state.books}
               keyExtractor={(book) => book.id}
@@ -108,11 +115,62 @@ export function MyListings({
                       </View>
                       <Text style={styles.bookAuthor}>{item.author}</Text>
                       <View style={styles.statusRow}>
-                        <Text style={item.status === "reserved" ? styles.reservedBadge : styles.availableBadge}>
-                          {item.status === "reserved" ? "Reservado" : "Disponível"}
+                        <Text
+                          style={
+                            item.status === "reserved"
+                              ? styles.reservedBadge
+                              : item.status === "paused"
+                              ? styles.pausedBadge
+                              : styles.availableBadge
+                          }
+                        >
+                          {item.status === "reserved" ? "Reservado" : item.status === "paused" ? "Pausado" : "Disponível"}
                         </Text>
                         {item.modality === "sale" && item.price ? (
                           <Text style={styles.price}>{`R$ ${item.price.toFixed(2)}`}</Text>
+                        ) : null}
+                      </View>
+                      <View style={styles.actionButtonsRow}>
+                        {item.status !== "reserved" ? (
+                          <>
+                            <Pressable
+                              accessibilityRole="button"
+                              accessibilityLabel={`Editar anúncio de ${item.title}`}
+                              onPress={() => onNavigateToEditListing?.(item.id)}
+                              style={styles.editButton}
+                            >
+                              <Text style={styles.editText}>Editar</Text>
+                            </Pressable>
+                            <Pressable
+                              accessibilityRole="button"
+                              accessibilityLabel={
+                                item.status === "paused"
+                                  ? `Retomar anúncio de ${item.title}`
+                                  : `Pausar anúncio de ${item.title}`
+                              }
+                              disabled={state.pausingId === item.id}
+                              onPress={async () => {
+                                const wasPaused = item.status === "paused";
+                                const ok = await actions.togglePauseListing(item.id);
+                                if (ok) {
+                                  setFeedbackMessage(
+                                    wasPaused
+                                      ? `Anúncio de "${item.title}" reativado no catálogo.`
+                                      : `Anúncio de "${item.title}" pausado. Ele não aparecerá no catálogo público.`
+                                  );
+                                }
+                              }}
+                              style={styles.pauseButton}
+                            >
+                              <Text style={styles.pauseText}>
+                                {state.pausingId === item.id
+                                  ? "Aguarde..."
+                                  : item.status === "paused"
+                                  ? "Retomar"
+                                  : "Pausar"}
+                              </Text>
+                            </Pressable>
+                          </>
                         ) : null}
                         {item.status === "available" ? (
                           <Pressable
@@ -168,6 +226,7 @@ export type MyListingsScreenProps = {
   onRequireSignIn?: () => void;
   onNavigateToBookDetail?: (bookId: string) => void;
   onNavigateToCreateListing?: () => void;
+  onNavigateToEditListing?: (bookId: string) => void;
 };
 
 export default function MyListingsScreen({
@@ -175,6 +234,7 @@ export default function MyListingsScreen({
   onRequireSignIn,
   onNavigateToBookDetail,
   onNavigateToCreateListing,
+  onNavigateToEditListing,
 }: MyListingsScreenProps = {}) {
   const [authState] = useAuthViewModel();
 
@@ -192,6 +252,7 @@ export default function MyListingsScreen({
       onBack={onBack}
       onNavigateToBookDetail={onNavigateToBookDetail}
       onNavigateToCreateListing={onNavigateToCreateListing}
+      onNavigateToEditListing={onNavigateToEditListing}
     />
   );
 }
@@ -267,6 +328,11 @@ const styles = StyleSheet.create({
     color: tokens.colors.action,
     fontWeight: "bold",
   },
+  pausedBadge: {
+    fontSize: 12,
+    color: tokens.colors.secondaryText,
+    fontWeight: "bold",
+  },
   reservedBadge: {
     fontSize: 12,
     color: tokens.colors.error,
@@ -285,6 +351,40 @@ const styles = StyleSheet.create({
   tagText: {
     fontSize: 11,
     fontWeight: "bold",
+  },
+  actionButtonsRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: tokens.spacing[8],
+    marginTop: tokens.spacing[8],
+  },
+  editButton: {
+    paddingHorizontal: tokens.spacing[12],
+    paddingVertical: tokens.spacing[6],
+    borderRadius: tokens.radius.small,
+    backgroundColor: tokens.colors.soft,
+    minHeight: 32,
+    justifyContent: "center",
+  },
+  editText: {
+    fontSize: tokens.typography.labelMedium.fontSize,
+    color: tokens.colors.action,
+    fontWeight: "600",
+  },
+  pauseButton: {
+    paddingHorizontal: tokens.spacing[12],
+    paddingVertical: tokens.spacing[6],
+    borderRadius: tokens.radius.small,
+    backgroundColor: tokens.colors.surface,
+    borderWidth: 1,
+    borderColor: tokens.colors.border,
+    minHeight: 32,
+    justifyContent: "center",
+  },
+  pauseText: {
+    fontSize: tokens.typography.labelMedium.fontSize,
+    color: tokens.colors.secondaryText,
+    fontWeight: "600",
   },
   cancelButton: {
     paddingHorizontal: tokens.spacing[12],

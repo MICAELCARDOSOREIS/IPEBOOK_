@@ -94,4 +94,99 @@ export class BookUseCases implements IBookUseCases {
 
     await this.dataSource.delete(bookId.trim());
   }
+
+  async updateListing(
+    bookId: string,
+    input: import("@/usecase/iBookUseCases").UpdateListingInput,
+    sessionUserId: string | null,
+  ): Promise<Book> {
+    if (!sessionUserId || !sessionUserId.trim()) {
+      throw new AuthError("Sessão obrigatória para editar anúncio.");
+    }
+
+    if (!bookId || !bookId.trim()) {
+      throw new ValidationError("Identificador do anúncio é obrigatório.");
+    }
+
+    const book = await this.dataSource.findById(bookId.trim());
+    if (!book) {
+      throw new DataSourceError("Anúncio não encontrado.");
+    }
+
+    if (book.ownerId !== sessionUserId.trim()) {
+      throw new AuthError("Apenas quem anunciou o livro pode editá-lo.");
+    }
+
+    if (book.status === "reserved") {
+      throw new ValidationError("Não é possível editar anúncio com negociação aceita em andamento.");
+    }
+
+    const nextTitle = input.title !== undefined ? input.title : book.title;
+    const nextAuthor = input.author !== undefined ? input.author : book.author;
+    const nextModality = input.modality !== undefined ? input.modality : book.modality;
+    const nextPrice = nextModality === "sale" ? (input.price !== undefined ? input.price : book.price) : undefined;
+    const nextCategory = input.category !== undefined ? input.category : book.category;
+    const nextCity = input.city !== undefined ? input.city : book.city;
+    const nextState = input.state !== undefined ? input.state : book.state;
+    const nextNeighborhood = input.neighborhood !== undefined ? input.neighborhood : book.neighborhood;
+    const nextPhotoUrl = input.photoUrl !== undefined ? input.photoUrl : book.photoUrl;
+    const nextPhotos = input.photos !== undefined ? input.photos : book.photos;
+
+    const validation = validateBookPayload({
+      id: book.id,
+      ownerId: book.ownerId,
+      title: nextTitle,
+      author: nextAuthor,
+      category: nextCategory,
+      modality: nextModality,
+      price: nextPrice,
+      city: nextCity,
+      state: nextState,
+      neighborhood: nextNeighborhood,
+      photoUrl: nextPhotoUrl,
+      photos: nextPhotos,
+    });
+    if (!validation.isValid) {
+      throw new ValidationError(validation.errors[0]);
+    }
+
+    return this.dataSource.update(bookId.trim(), {
+      title: nextTitle.trim(),
+      author: nextAuthor.trim(),
+      modality: nextModality,
+      price: nextPrice,
+      category: nextCategory?.trim(),
+      city: nextCity?.trim() || "Piripiri",
+      state: nextState?.trim() || "PI",
+      neighborhood: nextNeighborhood?.trim(),
+      photoUrl: nextPhotoUrl?.trim(),
+      photos: nextPhotos,
+    });
+  }
+
+  async togglePauseListing(bookId: string, sessionUserId: string | null): Promise<Book> {
+    if (!sessionUserId || !sessionUserId.trim()) {
+      throw new AuthError("Sessão obrigatória para pausar ou retomar anúncio.");
+    }
+
+    if (!bookId || !bookId.trim()) {
+      throw new ValidationError("Identificador do anúncio é obrigatório.");
+    }
+
+    const book = await this.dataSource.findById(bookId.trim());
+    if (!book) {
+      throw new DataSourceError("Anúncio não encontrado.");
+    }
+
+    if (book.ownerId !== sessionUserId.trim()) {
+      throw new AuthError("Apenas quem anunciou o livro pode pausar ou reativar o anúncio.");
+    }
+
+    if (book.status === "reserved") {
+      throw new ValidationError("Não é possível alterar o status de anúncio com negociação aceita.");
+    }
+
+    const nextStatus = book.status === "paused" ? "available" : "paused";
+    return this.dataSource.updateStatus(book.id, nextStatus);
+  }
 }

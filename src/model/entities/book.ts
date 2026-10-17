@@ -1,4 +1,5 @@
 export type BookModality = "sale" | "trade" | "donation";
+export type BookStatus = "available" | "reserved" | "paused";
 
 export type Book = Readonly<{
   id: string;
@@ -8,7 +9,7 @@ export type Book = Readonly<{
   ownerId: string;
   modality: BookModality;
   price?: number;
-  status: "available" | "reserved";
+  status: BookStatus;
   city?: string;
   state?: string;
   neighborhood?: string;
