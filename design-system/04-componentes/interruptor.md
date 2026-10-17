@@ -1,5 +1,8 @@
 # Interruptor (Switch)
 
+> [!WARNING]
+> **FORA DE ESCOPO NA BETA (Issue #55 e ADR 0019)**: Descartado para a versão beta. Preferências, filtros e confirmações utilizam `Chip`, botões explícitos ou diálogos diretos para garantir consistência e acessibilidade simplificada. Não implementar este componente.
+
 Origem no sistema base: Material 3, Switch. Situação: **Herdado**.
 
 ## Quando usar

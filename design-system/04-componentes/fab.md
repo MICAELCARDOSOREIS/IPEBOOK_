@@ -1,5 +1,8 @@
 # Botão flutuante (Fab)
 
+> [!NOTE]
+> **AVALIAÇÃO / NÃO IMPLEMENTADO COMO COMPONENTE GENÉRICO (ADR 0019)**: Descartado na beta. Ações primárias de criação ("Cadastrar anúncio") são acionadas por botões explícitos na interface ou na barra superior/vazia, evitando sobreposição e problemas de acessibilidade em telas compactas.
+
 Origem no sistema base: Material 3, Extended FAB. Situação: **Adaptado** — M3 permite FAB em
 qualquer tela; o IpêBook restringe a uma única tela e ação.
 

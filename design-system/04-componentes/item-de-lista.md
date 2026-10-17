@@ -1,5 +1,8 @@
 # Item de lista (ListItem)
 
+> [!NOTE]
+> **AVALIAÇÃO / NÃO IMPLEMENTADO COMO COMPONENTE GENÉRICO (ADR 0019)**: Descartado como abstração genérica isolada na beta. Cada listagem do aplicativo (anúncios, propostas recebidas, pedidos enviados, notificações) compõe seus itens diretamente com `Pressable`, tokens semânticos e estrutura visual acessível adequada ao seu contexto específico.
+
 Origem no sistema base: Material 3, List item (uma linha). Situação: **Herdado**.
 
 ## Quando usar

@@ -18,5 +18,6 @@
 - [0016 — Restrição territorial da beta por declaração comunitária](0016-restricao-beta-declaracao-piripiri.md)
 - [0017 — Armazenamento e modelo de fotos de anúncios no Supabase Storage](0017-armazenamento-e-modelo-de-fotos-supabase-storage.md)
 - [0018 — Status pausado e edição de anúncio](0018-status-pausado-e-edicao-de-anuncio.md)
+- [0019 — Alinhamento do Design System às telas reais e ao Figma](0019-alinhamento-design-system-e-componentes.md)
 
 Preservar registros aceitos; mudanças relevantes geram novo ADR com vínculos de substituição.

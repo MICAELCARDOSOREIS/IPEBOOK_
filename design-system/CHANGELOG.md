@@ -2,6 +2,19 @@
 
 Versões no formato `MAIOR.MENOR.CORREÇÃO`. Mudança grande = versão nova.
 
+## 1.6.0 · 2026-10-17
+
+- Alinhamento completo dos 24 componentes documentados em `04-componentes/` contra a realidade do produto em `src/view/components/` (Issue #92, ADR 0019).
+- **Responsáveis:** Micael Cardoso Reis.
+- **Mudanças:**
+  - Implementação do componente `Tag` (`src/view/components/Tag.tsx`) para unificação das modalidades (`venda`, `troca`, `doacao`) e status (`disponivel`, `reservado`, `pausado`, `concluido`) com contraste e acessibilidade garantidos.
+  - Implementação do componente `Snackbar` (`src/view/components/Snackbar.tsx`) para confirmação de ações com `accessibilityLiveRegion="polite"` e ação reversível opcional.
+  - Confirmação do `Dialog` (`src/view/components/Dialog.tsx`) implementado na issue #89.
+  - Classificação e marcação explícita de componentes dependentes de outras issues (`avatar` em #55/#73, `estado-vazio` em #76/Spec 021).
+  - Alerta explícito de fora de escopo nos componentes deliberadamente descartados para a beta (`bolha-de-mensagem`, `interruptor`, `item-de-lista`, `linha-de-livro`, `cartao-de-info`, `abas`, `fab`, `opcao-unica`).
+  - Registro de decisão formal no ADR 0019 (`docs/adr/0019-alinhamento-design-system-e-componentes.md`).
+  - Testes de componentes dedicados para `Tag` e `Snackbar` com 100% de cobertura.
+
 ## 1.5.0 · 2026-10-15
 
 - Completa a pendência da versão 1.4.0: inventário das telas do Figma nas outras 2 plataformas

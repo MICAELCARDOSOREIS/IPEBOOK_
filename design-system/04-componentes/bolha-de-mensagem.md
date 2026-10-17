@@ -1,5 +1,8 @@
 # Bolha de mensagem (MessageBubble)
 
+> [!WARNING]
+> **FORA DE ESCOPO NA BETA (ADR 0011 e ADR 0019)**: O Ipebook não possui chat síncrono instantâneo em tempo real. As negociações são estritamente assíncronas baseadas em estados (`pending` → `accepted`/`rejected`) com sugestão automática de pontos de encontro públicos seguros em Piripiri, PI. Não implementar este componente.
+
 Origem no sistema base: nenhum componente M3 dedicado a chat. Situação: **Novo**.
 
 ## Quando usar

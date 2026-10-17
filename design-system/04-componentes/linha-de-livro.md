@@ -1,5 +1,8 @@
 # Linha de livro (BookRow)
 
+> [!NOTE]
+> **AVALIAÇÃO / NÃO IMPLEMENTADO COMO COMPONENTE GENÉRICO (ADR 0019)**: Descartado como componente isolado. A exibição de livros em listas utiliza diretamente a composição do componente `BookCover` (`variant="list"`) com tipografia e metadados (`Tag`, autor, preço), evitando acoplamento e estruturas rígidas.
+
 Origem no sistema base: Material 3, List item (duas linhas + mídia). Situação: **Adaptado** — o
 M3 define a estrutura de item de lista; os dados mostrados (capa, título, autor, bairro, tag)
 são específicos do domínio do app (ver [01-principios.md](../01-principios.md) §3).
