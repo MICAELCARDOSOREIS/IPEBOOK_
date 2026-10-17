@@ -171,7 +171,7 @@ export default function Home({
                   onPress={() => onNavigateToBookDetail?.(item.id)}
                   style={styles.bookMain}
                 >
-                  <BookCover id={item.id} title={item.title} variant="list" />
+                  <BookCover id={item.id} title={item.title} photoUrl={item.photoUrl} variant="list" />
                   <View style={styles.bookInfo}>
                     <View style={styles.bookHeader}>
                       <Text style={styles.emptyTitle}>{item.title}</Text>

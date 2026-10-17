@@ -30,4 +30,15 @@ describe("BookCover (design-system/04-componentes/capa-ilustrativa.md)", () => {
     expect(getByText("Dom Casmurro")).toBeDefined();
     expect(getByText("Machado de Assis")).toBeDefined();
   });
+
+  it("renderiza imagem real quando photoUrl é fornecido", async () => {
+    const { getByLabelText } = await render(
+      <BookCover
+        id="a1"
+        title="Dom Casmurro"
+        photoUrl="https://imagens.ipebook.app/capas/casmurro.jpg"
+      />,
+    );
+    expect(getByLabelText("Foto da capa de Dom Casmurro")).toBeDefined();
+  });
 });

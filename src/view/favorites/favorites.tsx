@@ -26,7 +26,7 @@ export default function Favorites({ userId, focusKey = 0, onBack, onLogin, onBoo
       : <FlatList data={state.books} keyExtractor={(book) => book.id} contentContainerStyle={styles.list}
         ListEmptyComponent={<View style={styles.status}><Text accessibilityRole="header" style={styles.title}>Nenhum favorito ainda</Text><Text>Toque no coração de um anúncio para guardá-lo aqui.</Text></View>}
         renderItem={({ item }) => <Pressable accessibilityRole="button" accessibilityLabel={`Ver ${item.title}`} onPress={() => onBook(item.id)} style={styles.row}>
-          <BookCover id={item.id} title={item.title} variant="list" />
+          <BookCover id={item.id} title={item.title} photoUrl={item.photoUrl} variant="list" />
           <View><Text style={styles.title}>{item.title}</Text><Text>{item.author}</Text></View>
         </Pressable>} />}
   </SafeAreaView>;

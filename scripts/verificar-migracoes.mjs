@@ -22,7 +22,7 @@ insert into public.profiles (user_id) values ('${owner}');
 grant usage on schema public, auth to anon, authenticated;
 grant select on auth.users to authenticated;`);
 
-for (const name of ['202610150001_contas_e_anuncios.sql', '202610150002_pedidos.sql', '202610150003_favoritos_alertas.sql', '202610170001_denuncias.sql']) {
+for (const name of ['202610150001_contas_e_anuncios.sql', '202610150002_pedidos.sql', '202610150003_favoritos_alertas.sql', '202610170001_denuncias.sql', '202610170002_fotos_anuncios.sql']) {
   await db.exec(readFileSync(new URL(`../supabase/migrations/${name}`, import.meta.url), 'utf8'));
 }
 const legacy = await db.query(`select
@@ -97,6 +97,26 @@ const hiddenReports = await as('authenticated', other, `select id from public.v2
 if (hiddenReports.rows.length !== 0) throw new Error('Terceiro conseguiu visualizar denúncia alheia');
 process.stdout.write('Terceiro lê denúncia: oculto\n');
 await denied('Terceiro altera denúncia', () => as('authenticated', other, `update public.v2_reports set reason = 'other' where id = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc'`));
+
+await as('authenticated', owner, `insert into public.v2_books (
+  id, owner_id, title, author, modality, city, state, neighborhood, photo_url, photos
+) values (
+  'dddddddd-dddd-4ddd-8ddd-dddddddddddd',
+  '${owner}',
+  'Livro com Foto',
+  'Autor Fotográfico',
+  'donation',
+  'Piripiri',
+  'PI',
+  'Centro',
+  'https://exemplo.com/capa.jpg',
+  array['https://exemplo.com/foto1.jpg', 'https://exemplo.com/foto2.jpg']
+)`);
+const bookWithPhoto = await as('anon', null, `select photo_url, photos, neighborhood from public.v2_books where id = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd'`);
+if (!bookWithPhoto.rows[0].photo_url || bookWithPhoto.rows[0].neighborhood !== 'Centro' || bookWithPhoto.rows[0].photos.length !== 2) {
+  throw new Error('Falha ao persistir foto e localização em v2_books');
+}
+process.stdout.write('Livro com foto e localização: persistido e consultado com sucesso\n');
 
 process.stdout.write('Migrações e cenários SQL locais verificados.\n');
 await db.close();

@@ -9,6 +9,8 @@ export type CreateListingInput = Readonly<{
   city?: string;
   state?: string;
   neighborhood?: string;
+  photoUrl?: string;
+  photos?: readonly string[];
 }>;
 
 export interface IBookUseCases {

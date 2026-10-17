@@ -12,4 +12,6 @@ export type Book = Readonly<{
   city?: string;
   state?: string;
   neighborhood?: string;
+  photoUrl?: string;
+  photos?: readonly string[];
 }>;

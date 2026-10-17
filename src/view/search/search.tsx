@@ -67,7 +67,7 @@ export default function Search({ onNavigateToBookDetail, onNavigateToAlerts }: S
                   onPress={() => onNavigateToBookDetail?.(item.id)}
                   style={styles.rowMain}
                 >
-                  <BookCover id={item.id} title={item.title} variant="list" />
+                  <BookCover id={item.id} title={item.title} photoUrl={item.photoUrl} variant="list" />
                   <View style={styles.rowInfo}>
                     <View style={styles.rowHeader}>
                       <Text style={styles.rowTitle}>{item.title}</Text>

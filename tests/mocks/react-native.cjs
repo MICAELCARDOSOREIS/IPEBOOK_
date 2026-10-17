@@ -53,6 +53,11 @@ const FlatList = React.forwardRef((props, ref) => {
 });
 FlatList.displayName = "FlatList";
 
+const Image = React.forwardRef((props, ref) =>
+  React.createElement("Image", { ...props, ref })
+);
+Image.displayName = "Image";
+
 const StyleSheet = {
   create: (styles) => styles,
   flatten: (style) => {
@@ -61,6 +66,20 @@ const StyleSheet = {
       return Object.assign({}, ...style.map(StyleSheet.flatten));
     }
     return style;
+  },
+  absoluteFill: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+  },
+  absoluteFillObject: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
   },
 };
 
@@ -77,6 +96,7 @@ const Platform = {
 module.exports = {
   View,
   Text,
+  Image,
   Pressable,
   ActivityIndicator,
   TextInput,
@@ -87,6 +107,7 @@ module.exports = {
   default: {
     View,
     Text,
+    Image,
     Pressable,
     ActivityIndicator,
     TextInput,

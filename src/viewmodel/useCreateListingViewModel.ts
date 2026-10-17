@@ -11,6 +11,8 @@ export type CreateListingState = {
   modality: BookModality;
   price: string;
   neighborhood: string;
+  photoUrl: string;
+  photos: readonly string[];
   loading: boolean;
   error: string | null;
   success: boolean;
@@ -23,6 +25,9 @@ export type CreateListingActions = {
   setModality: (value: BookModality) => void;
   setPrice: (value: string) => void;
   setNeighborhood: (value: string) => void;
+  setPhotoUrl: (value: string) => void;
+  addPhoto: (value: string) => void;
+  removePhoto: (index: number) => void;
   submit: (sessionUserId: string | null) => Promise<Book | null>;
   reset: () => void;
 };
@@ -34,6 +39,8 @@ const INITIAL_STATE: CreateListingState = {
   modality: "sale",
   price: "",
   neighborhood: "",
+  photoUrl: "",
+  photos: [],
   loading: false,
   error: null,
   success: false,
@@ -70,6 +77,33 @@ export function useCreateListingViewModel(
     setState((prev) => ({ ...prev, neighborhood: value, error: null, success: false }));
   }, []);
 
+  const setPhotoUrl = useCallback((value: string) => {
+    setState((prev) => ({ ...prev, photoUrl: value, error: null, success: false }));
+  }, []);
+
+  const addPhoto = useCallback((value: string) => {
+    setState((prev) => {
+      if (prev.photos.length >= 5) {
+        return { ...prev, error: "O anúncio pode conter no máximo 5 fotos." };
+      }
+      return {
+        ...prev,
+        photos: [...prev.photos, value],
+        error: null,
+        success: false,
+      };
+    });
+  }, []);
+
+  const removePhoto = useCallback((index: number) => {
+    setState((prev) => ({
+      ...prev,
+      photos: prev.photos.filter((_, i) => i !== index),
+      error: null,
+      success: false,
+    }));
+  }, []);
+
   const submit = useCallback(
     async (sessionUserId: string | null): Promise<Book | null> => {
       setState((prev) => ({ ...prev, loading: true, error: null, success: false }));
@@ -89,6 +123,8 @@ export function useCreateListingViewModel(
             city: "Piripiri",
             state: "PI",
             ...(state.neighborhood.trim() ? { neighborhood: state.neighborhood.trim() } : {}),
+            ...(state.photoUrl.trim() ? { photoUrl: state.photoUrl.trim() } : {}),
+            ...(state.photos.length > 0 ? { photos: state.photos } : {}),
           },
           sessionUserId,
         );
@@ -103,12 +139,12 @@ export function useCreateListingViewModel(
         return null;
       }
     },
-    [state.title, state.author, state.category, state.modality, state.price, state.neighborhood, useCases],
+    [state.title, state.author, state.category, state.modality, state.price, state.neighborhood, state.photoUrl, state.photos, useCases],
   );
 
   const reset = useCallback(() => {
     setState(INITIAL_STATE);
   }, []);
 
-  return [state, { setTitle, setAuthor, setCategory, setModality, setPrice, setNeighborhood, submit, reset }];
+  return [state, { setTitle, setAuthor, setCategory, setModality, setPrice, setNeighborhood, setPhotoUrl, addPhoto, removePhoto, submit, reset }];
 }

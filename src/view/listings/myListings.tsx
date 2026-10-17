@@ -82,7 +82,7 @@ export function MyListings({
                     onPress={() => onNavigateToBookDetail?.(item.id)}
                     style={styles.bookCard}
                   >
-                    <BookCover id={item.id} title={item.title} variant="list" />
+                    <BookCover id={item.id} title={item.title} photoUrl={item.photoUrl} variant="list" />
                     <View style={styles.bookInfo}>
                       <View style={styles.bookHeader}>
                         <Text style={styles.bookTitle}>{item.title}</Text>

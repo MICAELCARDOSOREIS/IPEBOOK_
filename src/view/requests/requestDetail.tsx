@@ -65,7 +65,7 @@ export function RequestDetail({
                 onPress={() => onNavigateToBookDetail?.(detail.book.id)}
                 style={styles.bookCard}
               >
-                <BookCover id={detail.book.id} title={detail.book.title} variant="list" />
+                <BookCover id={detail.book.id} title={detail.book.title} photoUrl={detail.book.photoUrl} variant="list" />
                 <View style={styles.bookInfo}>
                   <Text style={styles.bookTitle}>{detail.book.title}</Text>
                   <Text style={styles.bookAuthor}>{detail.book.author}</Text>

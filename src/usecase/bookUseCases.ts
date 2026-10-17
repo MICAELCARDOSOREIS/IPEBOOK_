@@ -28,6 +28,8 @@ export class BookUseCases implements IBookUseCases {
       city: input.city,
       state: input.state,
       neighborhood: input.neighborhood,
+      photoUrl: input.photoUrl,
+      photos: input.photos,
     };
 
     const validation = validateBookPayload(payload);
@@ -46,6 +48,8 @@ export class BookUseCases implements IBookUseCases {
       city: input.city?.trim() || "Piripiri",
       state: input.state?.trim() || "PI",
       ...(input.neighborhood?.trim() ? { neighborhood: input.neighborhood.trim() } : {}),
+      ...(input.photoUrl?.trim() ? { photoUrl: input.photoUrl.trim() } : {}),
+      ...(input.photos && input.photos.length > 0 ? { photos: input.photos } : {}),
     });
     await this.alerts?.matchNewBook(book);
     return book;

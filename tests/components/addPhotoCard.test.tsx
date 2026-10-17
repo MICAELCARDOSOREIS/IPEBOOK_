@@ -24,4 +24,18 @@ describe("AddPhotoCard (design-system/04-componentes/cartao-de-adicionar-foto.md
     fireEvent.press(getByRole("button"));
     expect(onPress).toHaveBeenCalledTimes(1);
   });
+
+  it("exibe pré-visualização quando photoUrl é informado e permite remoção", async () => {
+    const onRemove = vi.fn();
+    const { getByLabelText } = await render(
+      <AddPhotoCard
+        onPress={() => {}}
+        photoUrl="https://imagens.ipebook.app/capa.jpg"
+        onRemovePhoto={onRemove}
+      />,
+    );
+    expect(getByLabelText("Pré-visualização da foto da capa")).toBeDefined();
+    fireEvent.press(getByLabelText("Remover foto da capa"));
+    expect(onRemove).toHaveBeenCalledTimes(1);
+  });
 });

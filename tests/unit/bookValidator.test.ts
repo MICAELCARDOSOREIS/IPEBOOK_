@@ -172,6 +172,56 @@ describe("validação unitária de livros (ISO/IEC 25010 - Adequação Funcional
       expect(resultOutState.isValid).toBe(false);
       expect(resultOutState.errors).toContain("O Ipebook está em fase beta exclusivamente em Piripiri, PI.");
     });
+
+    it("aprova livro com foto de capa e galeria válidas", () => {
+      const result = validateBookPayload({
+        id: "book-photo-1",
+        title: "Livro Ilustrado",
+        author: "Ilustrador",
+        ownerId: "owner-1",
+        modality: "donation",
+        photoUrl: "https://imagens.ipebook.app/livros/capa.jpg",
+        photos: [
+          "https://imagens.ipebook.app/livros/foto1.jpg",
+          "https://imagens.ipebook.app/livros/foto2.jpg",
+        ],
+      });
+      expect(result.isValid).toBe(true);
+      expect(result.errors).toHaveLength(0);
+    });
+
+    it("rejeita URL de foto de capa que não seja HTTP/HTTPS", () => {
+      const result = validateBookPayload({
+        id: "book-photo-bad",
+        title: "Livro com URL Ruim",
+        author: "Autor",
+        ownerId: "owner-1",
+        modality: "donation",
+        photoUrl: "ftp://servidor/arquivo.png",
+      });
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toContain("URL da foto de capa deve ser um endereço HTTP ou HTTPS válido.");
+    });
+
+    it("rejeita galeria com mais de 5 fotos", () => {
+      const result = validateBookPayload({
+        id: "book-photo-limit",
+        title: "Livro com Muitas Fotos",
+        author: "Autor",
+        ownerId: "owner-1",
+        modality: "donation",
+        photos: [
+          "https://exemplo.com/1.jpg",
+          "https://exemplo.com/2.jpg",
+          "https://exemplo.com/3.jpg",
+          "https://exemplo.com/4.jpg",
+          "https://exemplo.com/5.jpg",
+          "https://exemplo.com/6.jpg",
+        ],
+      });
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toContain("O anúncio pode conter no máximo 5 fotos.");
+    });
   });
 
   describe("sanitizeBookInput", () => {

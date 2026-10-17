@@ -3,6 +3,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 
 import { SafeAreaView } from "react-native-safe-area-context";
 import type { BookModality } from "@/model/entities/book";
 import { tokens } from "@/view/tokens";
+import { AddPhotoCard } from "@/view/components/AddPhotoCard";
 import { useCreateListingViewModel } from "@/viewmodel/useCreateListingViewModel";
 
 export type CreateListingProps = {
@@ -19,6 +20,7 @@ const MODALITIES: { value: BookModality; label: string }[] = [
 
 export default function CreateListing({ sessionUserId, onCreated, onCancel }: CreateListingProps) {
   const [state, actions] = useCreateListingViewModel();
+  const [showPhotoInput, setShowPhotoInput] = useState(false);
 
   const handleSubmit = async () => {
     const result = await actions.submit(sessionUserId);
@@ -30,6 +32,32 @@ export default function CreateListing({ sessionUserId, onCreated, onCancel }: Cr
       <View style={styles.content}>
         <Text accessibilityRole="header" style={styles.title}>Anunciar livro</Text>
         <Text style={styles.subtitle}>Preencha os dados do livro que deseja anunciar.</Text>
+
+        <View style={styles.photoRow}>
+          <AddPhotoCard
+            photoUrl={state.photoUrl}
+            onPress={() => setShowPhotoInput(true)}
+            onRemovePhoto={() => {
+              actions.setPhotoUrl("");
+              setShowPhotoInput(false);
+            }}
+          />
+          {showPhotoInput || state.photoUrl ? (
+            <View style={styles.photoInputContainer}>
+              <Text style={styles.label}>URL da foto da capa</Text>
+              <TextInput
+                accessibilityLabel="URL da foto da capa"
+                value={state.photoUrl}
+                onChangeText={actions.setPhotoUrl}
+                editable={!state.loading}
+                style={styles.input}
+                placeholder="https://exemplo.com/capa.jpg"
+                placeholderTextColor={tokens.colors.secondaryText}
+                autoCapitalize="none"
+              />
+            </View>
+          ) : null}
+        </View>
 
         <View style={styles.field}>
           <Text style={styles.label}>Título</Text>
@@ -188,6 +216,16 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     color: tokens.colors.secondaryText,
     marginBottom: tokens.spacing[12],
+  },
+  photoRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: tokens.spacing[12],
+    marginBottom: tokens.spacing[8],
+  },
+  photoInputContainer: {
+    flex: 1,
+    gap: tokens.spacing[6],
   },
   field: { gap: tokens.spacing[6] },
   label: {

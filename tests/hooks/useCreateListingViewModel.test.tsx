@@ -223,4 +223,47 @@ describe("useCreateListingViewModel (ISO/IEC 25010 - Adequação Funcional)", ()
     expect(hook.current[0].author).toBe("");
     expect(hook.current[0].modality).toBe("sale");
   });
+
+  it("gerencia foto da capa e galeria de fotos", async () => {
+    const hook = await renderHook(stubUseCases());
+
+    await act(async () => {
+      hook.current[1].setPhotoUrl("https://exemplo.com/capa.jpg");
+      hook.current[1].addPhoto("https://exemplo.com/foto1.jpg");
+      hook.current[1].addPhoto("https://exemplo.com/foto2.jpg");
+    });
+
+    expect(hook.current[0].photoUrl).toBe("https://exemplo.com/capa.jpg");
+    expect(hook.current[0].photos).toEqual([
+      "https://exemplo.com/foto1.jpg",
+      "https://exemplo.com/foto2.jpg",
+    ]);
+
+    await act(async () => {
+      hook.current[1].removePhoto(0);
+    });
+
+    expect(hook.current[0].photos).toEqual(["https://exemplo.com/foto2.jpg"]);
+  });
+
+  it("bloqueia adicionar mais de 5 fotos na galeria", async () => {
+    const hook = await renderHook(stubUseCases());
+
+    await act(async () => {
+      hook.current[1].addPhoto("https://exemplo.com/1.jpg");
+      hook.current[1].addPhoto("https://exemplo.com/2.jpg");
+      hook.current[1].addPhoto("https://exemplo.com/3.jpg");
+      hook.current[1].addPhoto("https://exemplo.com/4.jpg");
+      hook.current[1].addPhoto("https://exemplo.com/5.jpg");
+    });
+
+    expect(hook.current[0].photos).toHaveLength(5);
+
+    await act(async () => {
+      hook.current[1].addPhoto("https://exemplo.com/6.jpg");
+    });
+
+    expect(hook.current[0].photos).toHaveLength(5);
+    expect(hook.current[0].error).toBe("O anúncio pode conter no máximo 5 fotos.");
+  });
 });

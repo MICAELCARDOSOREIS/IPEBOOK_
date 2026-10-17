@@ -1,4 +1,5 @@
-import { StyleSheet, Text, View } from "react-native";
+import { useState } from "react";
+import { Image, StyleSheet, Text, View } from "react-native";
 import { tokens } from "@/view/tokens";
 
 export type BookCoverVariant = "list" | "card";
@@ -7,6 +8,7 @@ export type BookCoverProps = {
   id: string;
   title: string;
   author?: string;
+  photoUrl?: string;
   variant?: BookCoverVariant;
 };
 
@@ -25,16 +27,32 @@ function hashId(id: string): number {
   return [...id].reduce((sum, char) => sum + char.charCodeAt(0), 0);
 }
 
-/** Capa ilustrativa do design system (capa-ilustrativa.md): cor determinística a partir do id. */
-export function BookCover({ id, title, author, variant = "list" }: BookCoverProps) {
+/** Capa de anúncio: foto real se disponível ou capa ilustrativa determinística do design system. */
+export function BookCover({ id, title, author, photoUrl, variant = "list" }: BookCoverProps) {
+  const [imageError, setImageError] = useState(false);
   const backgroundColor = COVER_COLORS[hashId(id) % COVER_COLORS.length];
   const width = variant === "card" ? CARD_WIDTH : LIST_WIDTH;
+  const height = width / ASPECT_RATIO;
   const showText = variant === "card";
+
+  if (photoUrl && !imageError) {
+    return (
+      <View style={[styles.cover, { width, height }]}>
+        <Image
+          source={{ uri: photoUrl }}
+          accessibilityLabel={`Foto da capa de ${title}`}
+          resizeMode="cover"
+          style={StyleSheet.absoluteFill}
+          onError={() => setImageError(true)}
+        />
+      </View>
+    );
+  }
 
   return (
     <View
       accessibilityLabel={`Capa ilustrativa de ${title}`}
-      style={[styles.cover, { backgroundColor, width, height: width / ASPECT_RATIO }]}
+      style={[styles.cover, { backgroundColor, width, height }]}
     >
       {showText ? (
         <View style={styles.textOverlay} accessible={false}>

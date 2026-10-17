@@ -46,7 +46,7 @@ export default function BookDetail({
           <Text accessibilityRole="alert" style={styles.body}>{state.error}</Text>
         ) : book ? (
           <View style={styles.card}>
-            <BookCover id={book.id} title={book.title} author={book.author} variant="card" />
+            <BookCover id={book.id} title={book.title} author={book.author} photoUrl={book.photoUrl} variant="card" />
             <Text accessibilityRole="header" style={styles.title}>{book.title}</Text>
             <Text style={styles.body}>{book.author}</Text>
             <Pressable accessibilityRole="button"

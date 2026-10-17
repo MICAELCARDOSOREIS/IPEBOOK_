@@ -19,6 +19,9 @@ function mockViewModel(state: CreateListingState, actions: Partial<CreateListing
     setModality: vi.fn(),
     setPrice: vi.fn(),
     setNeighborhood: vi.fn(),
+    setPhotoUrl: vi.fn(),
+    addPhoto: vi.fn(),
+    removePhoto: vi.fn(),
     submit: vi.fn().mockResolvedValue(null),
     reset: vi.fn(),
     ...actions,
@@ -34,6 +37,8 @@ const defaultState: CreateListingState = {
   modality: "sale",
   price: "",
   neighborhood: "",
+  photoUrl: "",
+  photos: [],
   loading: false,
   error: null,
   success: false,
@@ -48,6 +53,7 @@ describe("tela de cadastro de anúncio (ISO/IEC 25010 - Usabilidade e Acessibili
     });
 
     expect(screen.getByRole("header").props.children).toBe("Anunciar livro");
+    expect(screen.getByLabelText("Adicionar foto da capa")).toBeDefined();
     expect(screen.getByLabelText("Título do livro")).toBeDefined();
     expect(screen.getByLabelText("Autor do livro")).toBeDefined();
     expect(screen.getByLabelText("Modalidade Venda")).toBeDefined();
