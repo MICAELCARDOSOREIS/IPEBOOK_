@@ -1,5 +1,14 @@
 # Estado e continuidade
 
+## Atualização em 2026-10-17 — Saúde das dependências e auditoria (Issue #84)
+
+- **Auditoria de dependências (`npm audit --omit=dev`)**: Realizada a reexecução e análise técnica aprofundada dos avisos.
+  - O aviso crítico em `shell-quote` (versão 1.8.3) é uma dependência transitiva de `react-devtools-core@6.1.5` sob `react-native@0.86.3`.
+  - Análise de impacto e vetor de ataque: O `shell-quote` é consumido internamente apenas pela rotina `launchEditor` do `react-devtools-core`, cujo único propósito é abrir o editor de código local (VSCode/editor do sistema) a partir da interface de DevTools durante o desenvolvimento local. Ele **não** faz parte do bundle final de produção web (gerado via `expo export --platform web` para a pasta `dist`) e não é executável por usuários finais em produção nem no navegador.
+  - Avisos em `braces`, `decode-uri-component`, `node-forge` e `uuid` são dependências profundas do ecossistema `@expo/cli` e `metro` em versões ancoradas pelo Expo SDK 57 / React Native 0.86. A aplicação de `npm audit fix --force` forçaria o downgrade para Expo 44/Expo Router 5.1 (breaking changes severas que destruiriam a compatibilidade do projeto). Foi preservada a integridade do lockfile e compatibilidade do Expo SDK 57.
+  - Token Mapbox: Confirmada ausência total de qualquer chave Mapbox em `.env` e `.env.example` no repositório ativo.
+- `npm run validate` e `npm run build:web` executados com sucesso (370 testes passando, 21 rotas estáticas exportadas).
+
 ## Atualização em 2026-10-15 — Issues de Micael encerradas
 
 - A issue #71 foi concluída e integrada em `develop` pelo PR #77. A pedido do usuário, as issues #72 (rascunhos) e #75 (permissões da plataforma) foram fechadas como **não planejadas**; essas duas funcionalidades não foram implementadas. As especificações 017 e 020 permanecem como registro do escopo levantado, sem tarefas concluídas.
