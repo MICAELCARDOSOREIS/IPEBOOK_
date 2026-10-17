@@ -33,6 +33,7 @@ export default function RootLayout() {
       {activeDestination ? (
         <NavigationBar
           active={activeDestination}
+          disabledDestinations={["profile"]}
           onNavigate={(destination) => router.push(DESTINATION_ROUTES[destination])}
         />
       ) : null}
