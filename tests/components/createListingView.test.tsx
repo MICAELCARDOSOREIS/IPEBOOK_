@@ -18,6 +18,7 @@ function mockViewModel(state: CreateListingState, actions: Partial<CreateListing
     setCategory: vi.fn(),
     setModality: vi.fn(),
     setPrice: vi.fn(),
+    setNeighborhood: vi.fn(),
     submit: vi.fn().mockResolvedValue(null),
     reset: vi.fn(),
     ...actions,
@@ -32,6 +33,7 @@ const defaultState: CreateListingState = {
   category: "",
   modality: "sale",
   price: "",
+  neighborhood: "",
   loading: false,
   error: null,
   success: false,
@@ -51,6 +53,8 @@ describe("tela de cadastro de anúncio (ISO/IEC 25010 - Usabilidade e Acessibili
     expect(screen.getByLabelText("Modalidade Venda")).toBeDefined();
     expect(screen.getByLabelText("Modalidade Troca")).toBeDefined();
     expect(screen.getByLabelText("Modalidade Doação")).toBeDefined();
+    expect(screen.getByText("Piripiri, PI (Beta exclusiva)")).toBeDefined();
+    expect(screen.getByLabelText("Bairro do livro em Piripiri")).toBeDefined();
   });
 
   it("exibe campo de preço apenas quando modalidade é venda", async () => {

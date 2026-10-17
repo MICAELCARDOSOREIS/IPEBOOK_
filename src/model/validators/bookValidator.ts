@@ -1,4 +1,5 @@
 import type { Book, BookModality } from "@/model/entities/book";
+import { isValidBetaLocation } from "@/model/entities/location";
 
 export type BookValidationResult = Readonly<{
   isValid: boolean;
@@ -21,6 +22,9 @@ export function sanitizeBookInput(input: Partial<Book>): Partial<Book> {
     ownerId: input.ownerId?.trim(),
     modality: input.modality,
     price: input.price,
+    city: input.city?.trim(),
+    state: input.state?.trim(),
+    neighborhood: input.neighborhood?.trim(),
   };
 }
 
@@ -83,6 +87,18 @@ export function validateBookPayload(input: unknown): BookValidationResult {
     if (typeof raw.price !== "number" || raw.price < 0) {
       errors.push("Preço, quando informado, deve ser um número não negativo.");
     }
+  }
+
+  if (raw.city !== undefined && raw.city !== null && typeof raw.city !== "string") {
+    errors.push("Cidade deve ser um texto válido.");
+  }
+
+  if (raw.state !== undefined && raw.state !== null && typeof raw.state !== "string") {
+    errors.push("Estado deve ser uma sigla válida.");
+  }
+
+  if (!isValidBetaLocation(raw.city as string | undefined, raw.state as string | undefined)) {
+    errors.push("O Ipebook está em fase beta exclusivamente em Piripiri, PI.");
   }
 
   return {

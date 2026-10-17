@@ -10,6 +10,7 @@ export type CreateListingState = {
   category: string;
   modality: BookModality;
   price: string;
+  neighborhood: string;
   loading: boolean;
   error: string | null;
   success: boolean;
@@ -21,6 +22,7 @@ export type CreateListingActions = {
   setCategory: (value: string) => void;
   setModality: (value: BookModality) => void;
   setPrice: (value: string) => void;
+  setNeighborhood: (value: string) => void;
   submit: (sessionUserId: string | null) => Promise<Book | null>;
   reset: () => void;
 };
@@ -31,6 +33,7 @@ const INITIAL_STATE: CreateListingState = {
   category: "",
   modality: "sale",
   price: "",
+  neighborhood: "",
   loading: false,
   error: null,
   success: false,
@@ -63,6 +66,10 @@ export function useCreateListingViewModel(
     setState((prev) => ({ ...prev, price: value, error: null, success: false }));
   }, []);
 
+  const setNeighborhood = useCallback((value: string) => {
+    setState((prev) => ({ ...prev, neighborhood: value, error: null, success: false }));
+  }, []);
+
   const submit = useCallback(
     async (sessionUserId: string | null): Promise<Book | null> => {
       setState((prev) => ({ ...prev, loading: true, error: null, success: false }));
@@ -79,6 +86,9 @@ export function useCreateListingViewModel(
             ...(state.category.trim() ? { category: state.category.trim() } : {}),
             modality: state.modality,
             price: priceNum,
+            city: "Piripiri",
+            state: "PI",
+            ...(state.neighborhood.trim() ? { neighborhood: state.neighborhood.trim() } : {}),
           },
           sessionUserId,
         );
@@ -93,12 +103,12 @@ export function useCreateListingViewModel(
         return null;
       }
     },
-    [state.title, state.author, state.category, state.modality, state.price, useCases],
+    [state.title, state.author, state.category, state.modality, state.price, state.neighborhood, useCases],
   );
 
   const reset = useCallback(() => {
     setState(INITIAL_STATE);
   }, []);
 
-  return [state, { setTitle, setAuthor, setCategory, setModality, setPrice, submit, reset }];
+  return [state, { setTitle, setAuthor, setCategory, setModality, setPrice, setNeighborhood, submit, reset }];
 }

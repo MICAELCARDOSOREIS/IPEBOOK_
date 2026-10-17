@@ -120,7 +120,27 @@ describe("useCreateListingViewModel (ISO/IEC 25010 - Adequação Funcional)", ()
     expect(hook.current[0].title).toBe("");
     expect(hook.current[0].author).toBe("");
     expect(mock.createListing).toHaveBeenCalledWith(
-      { title: "Livro Teste", author: "Autor Teste", modality: "donation", price: undefined },
+      { title: "Livro Teste", author: "Autor Teste", modality: "donation", price: undefined, city: "Piripiri", state: "PI" },
+      "user-1",
+    );
+  });
+
+  it("permite informar bairro de Piripiri no anúncio", async () => {
+    const mock = stubUseCases();
+    const hook = await renderHook(mock);
+
+    await act(async () => {
+      hook.current[1].setTitle("Livro de Piripiri");
+      hook.current[1].setAuthor("Autor");
+      hook.current[1].setNeighborhood("Centro");
+    });
+
+    await act(async () => {
+      await hook.current[1].submit("user-1");
+    });
+
+    expect(mock.createListing).toHaveBeenCalledWith(
+      expect.objectContaining({ city: "Piripiri", state: "PI", neighborhood: "Centro" }),
       "user-1",
     );
   });

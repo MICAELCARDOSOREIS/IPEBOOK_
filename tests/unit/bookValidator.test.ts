@@ -130,6 +130,48 @@ describe("validação unitária de livros (ISO/IEC 25010 - Adequação Funcional
         "Modalidade deve ser 'sale', 'trade' ou 'donation'.",
       ]);
     });
+
+    it("aprova livro declarado explicitamente em Piripiri, PI com bairro", () => {
+      const result = validateBookPayload({
+        id: "book-piripiri",
+        title: "Livro de Piripiri",
+        author: "Autor Piauiense",
+        ownerId: "owner-piripiri",
+        modality: "donation",
+        city: "Piripiri",
+        state: "PI",
+        neighborhood: "Centro",
+      });
+
+      expect(result.isValid).toBe(true);
+      expect(result.errors).toHaveLength(0);
+    });
+
+    it("rejeita livro declarado fora de Piripiri, PI", () => {
+      const resultOutCity = validateBookPayload({
+        id: "book-teresina",
+        title: "Livro de Teresina",
+        author: "Autor",
+        ownerId: "owner-1",
+        modality: "donation",
+        city: "Teresina",
+        state: "PI",
+      });
+      expect(resultOutCity.isValid).toBe(false);
+      expect(resultOutCity.errors).toContain("O Ipebook está em fase beta exclusivamente em Piripiri, PI.");
+
+      const resultOutState = validateBookPayload({
+        id: "book-fortaleza",
+        title: "Livro de Fortaleza",
+        author: "Autor",
+        ownerId: "owner-1",
+        modality: "donation",
+        city: "Piripiri",
+        state: "CE",
+      });
+      expect(resultOutState.isValid).toBe(false);
+      expect(resultOutState.errors).toContain("O Ipebook está em fase beta exclusivamente em Piripiri, PI.");
+    });
   });
 
   describe("sanitizeBookInput", () => {

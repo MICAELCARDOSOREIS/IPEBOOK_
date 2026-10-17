@@ -134,6 +134,39 @@ describe("createListing (FR-006 — sessão obrigatória)", () => {
     expect(created.modality).toBe("trade");
     expect(created.price).toBeUndefined();
   });
+
+  it("rejeita cadastro com cidade diferente de Piripiri", async () => {
+    const source = new MemoryBookDataSource();
+    const useCases = new BookUseCases(source);
+
+    await expect(
+      useCases.createListing(
+        { title: "Livro de Fora", author: "Autor", modality: "donation", city: "Parnaíba" },
+        "user-1",
+      ),
+    ).rejects.toThrow("O Ipebook está em fase beta exclusivamente em Piripiri, PI.");
+  });
+
+  it("persiste localidade de Piripiri, PI com bairro opcional no cadastro", async () => {
+    const source = new MemoryBookDataSource();
+    const useCases = new BookUseCases(source);
+
+    const created = await useCases.createListing(
+      {
+        title: "Livro Comunitário",
+        author: "Autor Local",
+        modality: "trade",
+        city: "Piripiri",
+        state: "PI",
+        neighborhood: "Paciência",
+      },
+      "user-1",
+    );
+
+    expect(created.city).toBe("Piripiri");
+    expect(created.state).toBe("PI");
+    expect(created.neighborhood).toBe("Paciência");
+  });
 });
 
 describe("MemoryBookDataSource.create", () => {

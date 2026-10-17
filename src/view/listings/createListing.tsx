@@ -110,6 +110,26 @@ export default function CreateListing({ sessionUserId, onCreated, onCancel }: Cr
           </View>
         )}
 
+        <View style={styles.field}>
+          <Text style={styles.label}>Localidade da beta</Text>
+          <View style={styles.locationContainer}>
+            <Text style={styles.locationText}>Piripiri, PI (Beta exclusiva)</Text>
+          </View>
+        </View>
+
+        <View style={styles.field}>
+          <Text style={styles.label}>Bairro em Piripiri (opcional)</Text>
+          <TextInput
+            accessibilityLabel="Bairro do livro em Piripiri"
+            value={state.neighborhood}
+            onChangeText={actions.setNeighborhood}
+            editable={!state.loading}
+            style={styles.input}
+            placeholder="Ex: Centro, Paciência, Petecas..."
+            placeholderTextColor={tokens.colors.secondaryText}
+          />
+        </View>
+
         {state.error ? (
           <Text accessibilityRole="alert" style={styles.error}>{state.error}</Text>
         ) : null}
@@ -215,6 +235,20 @@ const styles = StyleSheet.create({
     color: tokens.colors.success,
     fontSize: tokens.typography.bodyMedium.fontSize,
     fontWeight: "600",
+  },
+  locationContainer: {
+    minHeight: tokens.accessibility.touchTarget,
+    justifyContent: "center",
+    paddingHorizontal: tokens.spacing[12],
+    borderRadius: tokens.radius.small,
+    borderWidth: 1,
+    borderColor: tokens.colors.border,
+    backgroundColor: tokens.colors.surface,
+  },
+  locationText: {
+    fontSize: tokens.typography.bodyMedium.fontSize,
+    color: tokens.colors.text,
+    fontWeight: "500",
   },
   button: {
     minHeight: tokens.accessibility.touchTarget,
