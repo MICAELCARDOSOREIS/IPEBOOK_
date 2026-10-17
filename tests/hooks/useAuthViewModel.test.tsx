@@ -173,4 +173,74 @@ describe("testes de hook: useAuthViewModel (ISO/IEC 25010 - Confiabilidade)", ()
     expect(result).toBe(false);
     expect(hook.current[0].error).toBe("Não há conta cadastrada com este e-mail.");
   });
+
+  it("trata erro de domínio e sanitiza erro inesperado no cadastro (signUp)", async () => {
+    const hookDomain = await renderHook(
+      fakeAuth({
+        signUp: async () => {
+          throw new AuthError("E-mail já cadastrado.");
+        },
+      }),
+    );
+    let resDomain = true;
+    await act(async () => {
+      resDomain = await hookDomain.current[1].signUp("existente@exemplo.com", "senha123");
+    });
+    expect(resDomain).toBe(false);
+    expect(hookDomain.current[0].error).toBe("E-mail já cadastrado.");
+
+    const hookUnexpected = await renderHook(
+      fakeAuth({
+        signUp: async () => {
+          throw new Error("banco caiu");
+        },
+      }),
+    );
+    let resUnexpected = true;
+    await act(async () => {
+      resUnexpected = await hookUnexpected.current[1].signUp("novo@exemplo.com", "senha123");
+    });
+    expect(resUnexpected).toBe(false);
+    expect(hookUnexpected.current[0].error).toBe("Não foi possível concluir. Tente novamente.");
+  });
+
+  it("sanitiza erro inesperado na recuperação de senha e lida com falha no signOut", async () => {
+    const hookReset = await renderHook(
+      fakeAuth({
+        requestPasswordReset: async () => {
+          throw new Error("falha SMTP");
+        },
+      }),
+    );
+    let resReset = true;
+    await act(async () => {
+      resReset = await hookReset.current[1].requestPasswordReset("alguem@exemplo.com");
+    });
+    expect(resReset).toBe(false);
+    expect(hookReset.current[0].error).toBe("Não foi possível concluir. Tente novamente.");
+
+    const hookSignOut = await renderHook(
+      fakeAuth({
+        signOut: async () => {
+          throw new Error("falha rede");
+        },
+      }),
+    );
+    await act(async () => {
+      await hookSignOut.current[1].signOut();
+    });
+    expect(hookSignOut.current[0].loading).toBe(false);
+  });
+
+  it("trata falha silenciosamente na recuperação de sessão inicial", async () => {
+    const hook = await renderHook(
+      fakeAuth({
+        getSession: async () => {
+          throw new Error("storage corrompido");
+        },
+      }),
+    );
+    expect(hook.current[0].user).toBeNull();
+    expect(hook.current[0].loading).toBe(false);
+  });
 });
