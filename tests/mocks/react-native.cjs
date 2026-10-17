@@ -58,6 +58,11 @@ const Image = React.forwardRef((props, ref) =>
 );
 Image.displayName = "Image";
 
+const ScrollView = React.forwardRef((props, ref) =>
+  React.createElement("ScrollView", { ...props, ref }, props.children)
+);
+ScrollView.displayName = "ScrollView";
+
 const Modal = React.forwardRef((props, ref) => {
   if (props.visible === false) return null;
   return React.createElement("Modal", { ...props, ref }, props.children);
@@ -103,6 +108,7 @@ module.exports = {
   View,
   Text,
   Image,
+  ScrollView,
   Modal,
   Pressable,
   ActivityIndicator,
@@ -115,6 +121,7 @@ module.exports = {
     View,
     Text,
     Image,
+    ScrollView,
     Modal,
     Pressable,
     ActivityIndicator,

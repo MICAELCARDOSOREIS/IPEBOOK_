@@ -1,9 +1,14 @@
 import { useState } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import type { BookModality } from "@/model/entities/book";
 import { tokens } from "@/view/tokens";
 import { AddPhotoCard } from "@/view/components/AddPhotoCard";
+import { Chip } from "@/view/components/Chip";
+import { FilledButton } from "@/view/components/FilledButton";
+import { StepProgress } from "@/view/components/StepProgress";
+import { TextField } from "@/view/components/TextField";
+import { TopAppBar } from "@/view/components/TopAppBar";
 import { useCreateListingViewModel } from "@/viewmodel/useCreateListingViewModel";
 
 export type CreateListingProps = {
@@ -18,6 +23,10 @@ const MODALITIES: { value: BookModality; label: string }[] = [
   { value: "donation", label: "Doação" },
 ];
 
+/**
+ * Tela de publicação de anúncio reescrita sobre o design system do Ipebook (Issue #90).
+ * Utiliza TopAppBar, StepProgress, TextField, Chip e FilledButton com conformidade IHC/M3.
+ */
 export default function CreateListing({ sessionUserId, onCreated, onCancel }: CreateListingProps) {
   const [state, actions] = useCreateListingViewModel();
   const [showPhotoInput, setShowPhotoInput] = useState(false);
@@ -29,250 +38,221 @@ export default function CreateListing({ sessionUserId, onCreated, onCancel }: Cr
 
   return (
     <SafeAreaView style={styles.page}>
-      <View style={styles.content}>
-        <Text accessibilityRole="header" style={styles.title}>Anunciar livro</Text>
-        <Text style={styles.subtitle}>Preencha os dados do livro que deseja anunciar.</Text>
-
-        <View style={styles.photoRow}>
-          <AddPhotoCard
-            photoUrl={state.photoUrl}
-            onPress={() => setShowPhotoInput(true)}
-            onRemovePhoto={() => {
-              actions.setPhotoUrl("");
-              setShowPhotoInput(false);
-            }}
+      <TopAppBar title="Anunciar livro" onBack={() => onCancel?.()} />
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={styles.content}>
+          <StepProgress
+            currentStep={1}
+            totalSteps={1}
+            stepLabel="Dados do anúncio"
           />
-          {showPhotoInput || state.photoUrl ? (
-            <View style={styles.photoInputContainer}>
-              <Text style={styles.label}>URL da foto da capa</Text>
-              <TextInput
-                accessibilityLabel="URL da foto da capa"
-                value={state.photoUrl}
-                onChangeText={actions.setPhotoUrl}
-                editable={!state.loading}
-                style={styles.input}
-                placeholder="https://exemplo.com/capa.jpg"
-                placeholderTextColor={tokens.colors.secondaryText}
-                autoCapitalize="none"
-              />
-            </View>
-          ) : null}
-        </View>
 
-        <View style={styles.field}>
-          <Text style={styles.label}>Título</Text>
-          <TextInput
-            accessibilityLabel="Título do livro"
+          <Text style={styles.subtitle}>Preencha os dados do livro que deseja anunciar.</Text>
+
+          <View style={styles.photoSection}>
+            <Text style={styles.sectionLabel}>Foto da capa</Text>
+            <View style={styles.photoRow}>
+              <AddPhotoCard
+                photoUrl={state.photoUrl}
+                onPress={() => setShowPhotoInput(true)}
+                onRemovePhoto={() => {
+                  actions.setPhotoUrl("");
+                  setShowPhotoInput(false);
+                }}
+              />
+              {showPhotoInput || state.photoUrl ? (
+                <View style={styles.photoInputContainer}>
+                  <TextField
+                    label="URL da foto da capa"
+                    value={state.photoUrl}
+                    onChangeText={actions.setPhotoUrl}
+                    editable={!state.loading}
+                    placeholder="https://exemplo.com/capa.jpg"
+                    autoCapitalize="none"
+                  />
+                </View>
+              ) : (
+                <View style={styles.photoHelper}>
+                  <Text style={styles.photoHelperTitle}>Adicione uma foto real</Text>
+                  <Text style={styles.photoHelperText}>
+                    Anúncios com foto da capa chamam mais atenção e inspiram confiança na comunidade de Piripiri.
+                  </Text>
+                </View>
+              )}
+            </View>
+          </View>
+
+          <TextField
+            label="Título do livro"
             value={state.title}
             onChangeText={actions.setTitle}
             editable={!state.loading}
-            style={styles.input}
             placeholder="Ex: Dom Casmurro"
-            placeholderTextColor={tokens.colors.secondaryText}
           />
-        </View>
 
-        <View style={styles.field}>
-          <Text style={styles.label}>Autor</Text>
-          <TextInput
-            accessibilityLabel="Autor do livro"
+          <TextField
+            label="Autor do livro"
             value={state.author}
             onChangeText={actions.setAuthor}
             editable={!state.loading}
-            style={styles.input}
             placeholder="Ex: Machado de Assis"
-            placeholderTextColor={tokens.colors.secondaryText}
           />
-        </View>
 
-        <View style={styles.field}>
-          <Text style={styles.label}>Categoria (opcional)</Text>
-          <TextInput accessibilityLabel="Categoria do livro" value={state.category}
-            onChangeText={actions.setCategory} editable={!state.loading}
-            style={styles.input} placeholder="Ex: Romance" maxLength={60}
-            placeholderTextColor={tokens.colors.secondaryText} />
-        </View>
+          <TextField
+            label="Categoria (opcional)"
+            accessibilityLabel="Categoria do livro"
+            value={state.category}
+            onChangeText={actions.setCategory}
+            editable={!state.loading}
+            placeholder="Ex: Romance, Ficção, Didático..."
+            maxLength={60}
+          />
 
-        <View style={styles.field}>
-          <Text style={styles.label}>Modalidade</Text>
-          <View style={styles.modalityRow}>
-            {MODALITIES.map((m) => (
-              <Pressable
-                key={m.value}
-                accessibilityRole="button"
-                accessibilityState={{ selected: state.modality === m.value }}
-                accessibilityLabel={`Modalidade ${m.label}`}
-                onPress={() => actions.setModality(m.value)}
-                disabled={state.loading}
-                style={[
-                  styles.modalityChip,
-                  state.modality === m.value && styles.modalityChipSelected,
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.modalityText,
-                    state.modality === m.value && styles.modalityTextSelected,
-                  ]}
-                >
-                  {m.label}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-        </View>
-
-        {state.modality === "sale" && (
           <View style={styles.field}>
-            <Text style={styles.label}>Preço (R$)</Text>
-            <TextInput
-              accessibilityLabel="Preço do livro"
+            <Text style={styles.sectionLabel}>Modalidade</Text>
+            <View style={styles.modalityRow}>
+              {MODALITIES.map((m) => (
+                <Chip
+                  key={m.value}
+                  label={m.label}
+                  accessibilityLabel={`Modalidade ${m.label}`}
+                  selected={state.modality === m.value}
+                  onPress={() => actions.setModality(m.value)}
+                  disabled={state.loading}
+                />
+              ))}
+            </View>
+          </View>
+
+          {state.modality === "sale" && (
+            <TextField
+              label="Preço do livro"
               value={state.price}
               onChangeText={actions.setPrice}
               editable={!state.loading}
               keyboardType="decimal-pad"
-              style={styles.input}
               placeholder="Ex: 29,90"
-              placeholderTextColor={tokens.colors.secondaryText}
+              helperText="Informe o valor em reais (R$)"
             />
-          </View>
-        )}
+          )}
 
-        <View style={styles.field}>
-          <Text style={styles.label}>Localidade da beta</Text>
-          <View style={styles.locationContainer}>
-            <Text style={styles.locationText}>Piripiri, PI (Beta exclusiva)</Text>
+          <View style={styles.field}>
+            <Text style={styles.sectionLabel}>Localidade da beta</Text>
+            <View style={styles.locationContainer}>
+              <Text style={styles.locationText}>Piripiri, PI (Beta exclusiva)</Text>
+            </View>
           </View>
-        </View>
 
-        <View style={styles.field}>
-          <Text style={styles.label}>Bairro em Piripiri (opcional)</Text>
-          <TextInput
+          <TextField
+            label="Bairro em Piripiri (opcional)"
             accessibilityLabel="Bairro do livro em Piripiri"
             value={state.neighborhood}
             onChangeText={actions.setNeighborhood}
             editable={!state.loading}
-            style={styles.input}
-            placeholder="Ex: Centro, Paciência, Petecas..."
-            placeholderTextColor={tokens.colors.secondaryText}
+            placeholder="Ex: Centro, Paciência, Petecas, Floresta..."
           />
+
+          {state.error ? (
+            <Text accessibilityRole="alert" style={styles.errorText}>
+              {state.error}
+            </Text>
+          ) : null}
+
+          {state.success ? (
+            <Text accessibilityRole="alert" style={styles.successText}>
+              Anúncio cadastrado com sucesso!
+            </Text>
+          ) : null}
+
+          <View style={styles.actionsContainer}>
+            <FilledButton
+              label="Cadastrar anúncio"
+              loading={state.loading}
+              loadingLabel="Cadastrando"
+              disabled={state.loading}
+              onPress={() => void handleSubmit()}
+            />
+
+            {onCancel && (
+              <View style={styles.cancelContainer}>
+                <FilledButton
+                  label="Cancelar"
+                  disabled={state.loading}
+                  onPress={onCancel}
+                />
+              </View>
+            )}
+          </View>
         </View>
-
-        {state.error ? (
-          <Text accessibilityRole="alert" style={styles.error}>{state.error}</Text>
-        ) : null}
-
-        {state.success ? (
-          <Text accessibilityRole="alert" style={styles.successText}>Anúncio cadastrado com sucesso!</Text>
-        ) : null}
-
-        <Pressable
-          accessibilityRole="button"
-          accessibilityState={{ disabled: state.loading }}
-          disabled={state.loading}
-          onPress={() => void handleSubmit()}
-          style={styles.button}
-        >
-          {state.loading ? (
-            <ActivityIndicator color={tokens.colors.surface} accessibilityLabel="Cadastrando" />
-          ) : (
-            <Text style={styles.buttonText}>Cadastrar anúncio</Text>
-          )}
-        </Pressable>
-
-        {onCancel && (
-          <Pressable
-            accessibilityRole="button"
-            onPress={onCancel}
-            disabled={state.loading}
-            style={styles.linkButton}
-          >
-            <Text style={styles.link}>Cancelar</Text>
-          </Pressable>
-        )}
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  page: { flex: 1, backgroundColor: tokens.colors.background },
-  content: {
+  page: {
     flex: 1,
+    backgroundColor: tokens.colors.background,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: tokens.spacing[48],
+  },
+  content: {
     width: "100%",
     maxWidth: 480,
     alignSelf: "center",
     padding: tokens.spacing[24],
-    paddingTop: tokens.spacing[48],
     gap: tokens.spacing[16],
   },
-  title: {
-    fontSize: tokens.typography.displayLarge.fontSize,
-    fontWeight: tokens.typography.displayLarge.fontWeight,
-    color: tokens.colors.action,
-  },
   subtitle: {
-    fontSize: 16,
-    lineHeight: 24,
+    fontSize: 15,
+    lineHeight: 22,
     color: tokens.colors.secondaryText,
-    marginBottom: tokens.spacing[12],
+    marginTop: tokens.spacing[4],
+  },
+  photoSection: {
+    gap: tokens.spacing[8],
+  },
+  sectionLabel: {
+    fontSize: tokens.typography.labelMedium.fontSize,
+    fontWeight: tokens.typography.labelMedium.fontWeight,
+    color: tokens.colors.secondaryText,
   },
   photoRow: {
     flexDirection: "row",
     alignItems: "flex-start",
     gap: tokens.spacing[12],
-    marginBottom: tokens.spacing[8],
   },
   photoInputContainer: {
     flex: 1,
-    gap: tokens.spacing[6],
   },
-  field: { gap: tokens.spacing[6] },
-  label: {
-    fontSize: tokens.typography.labelMedium.fontSize,
+  photoHelper: {
+    flex: 1,
+    justifyContent: "center",
+    gap: tokens.spacing[4],
+    paddingTop: tokens.spacing[4],
+  },
+  photoHelperTitle: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: tokens.colors.text,
+  },
+  photoHelperText: {
+    fontSize: 13,
+    lineHeight: 18,
     color: tokens.colors.secondaryText,
   },
-  input: {
-    minHeight: tokens.accessibility.touchTarget,
-    borderWidth: 1,
-    borderColor: tokens.colors.border,
-    borderRadius: tokens.radius.small,
-    paddingHorizontal: tokens.spacing[12],
-    color: tokens.colors.text,
-    backgroundColor: tokens.colors.surface,
+  field: {
+    gap: tokens.spacing[8],
   },
-  modalityRow: { flexDirection: "row", gap: tokens.spacing[8] },
-  modalityChip: {
-    minHeight: tokens.accessibility.touchTarget,
-    paddingHorizontal: tokens.spacing[16],
-    justifyContent: "center",
-    alignItems: "center",
-    borderRadius: tokens.radius.small,
-    borderWidth: 1,
-    borderColor: tokens.colors.border,
-    backgroundColor: tokens.colors.surface,
-  },
-  modalityChipSelected: {
-    backgroundColor: tokens.colors.action,
-    borderColor: tokens.colors.action,
-  },
-  modalityText: {
-    fontSize: tokens.typography.bodyMedium.fontSize,
-    color: tokens.colors.text,
-    fontWeight: "500",
-  },
-  modalityTextSelected: {
-    color: tokens.colors.surface,
-    fontWeight: "600",
-  },
-  error: {
-    color: tokens.colors.error,
-    fontSize: tokens.typography.bodyMedium.fontSize,
-  },
-  successText: {
-    color: tokens.colors.success,
-    fontSize: tokens.typography.bodyMedium.fontSize,
-    fontWeight: "600",
+  modalityRow: {
+    flexDirection: "row",
+    gap: tokens.spacing[8],
+    flexWrap: "wrap",
   },
   locationContainer: {
     minHeight: tokens.accessibility.touchTarget,
@@ -288,23 +268,22 @@ const styles = StyleSheet.create({
     color: tokens.colors.text,
     fontWeight: "500",
   },
-  button: {
-    minHeight: tokens.accessibility.touchTarget,
-    justifyContent: "center",
-    alignItems: "center",
-    borderRadius: tokens.radius.small,
-    backgroundColor: tokens.colors.action,
-    marginTop: tokens.spacing[8],
+  errorText: {
+    color: tokens.colors.error,
+    fontSize: tokens.typography.bodyMedium.fontSize,
+    marginTop: tokens.spacing[4],
   },
-  buttonText: { color: tokens.colors.surface, fontSize: 16, fontWeight: "600" },
-  linkButton: {
-    minHeight: tokens.accessibility.touchTarget,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  link: {
-    color: tokens.colors.action,
+  successText: {
+    color: tokens.colors.success,
     fontSize: tokens.typography.bodyMedium.fontSize,
     fontWeight: "600",
+    marginTop: tokens.spacing[4],
+  },
+  actionsContainer: {
+    gap: tokens.spacing[12],
+    marginTop: tokens.spacing[8],
+  },
+  cancelContainer: {
+    opacity: 0.85,
   },
 });

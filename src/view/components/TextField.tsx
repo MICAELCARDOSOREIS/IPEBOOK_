@@ -13,6 +13,10 @@ export type TextFieldProps = {
   keyboardType?: KeyboardTypeOptions;
   editable?: boolean;
   helperText?: string;
+  placeholder?: string;
+  placeholderTextColor?: string;
+  maxLength?: number;
+  accessibilityLabel?: string;
 };
 
 /** Campo de texto do design system (campo-de-texto.md): rótulo sempre visível, estado de foco e erro. */
@@ -26,6 +30,10 @@ export function TextField({
   keyboardType,
   editable = true,
   helperText,
+  placeholder,
+  placeholderTextColor = tokens.colors.secondaryText,
+  maxLength,
+  accessibilityLabel,
 }: TextFieldProps) {
   const [focused, setFocused] = useState(false);
   const hasError = Boolean(error);
@@ -36,13 +44,16 @@ export function TextField({
     <View style={styles.field}>
       <Text style={[styles.label, { color: accentColor }]}>{label}</Text>
       <TextInput
-        accessibilityLabel={label}
+        accessibilityLabel={accessibilityLabel ?? label}
         value={value}
         onChangeText={onChangeText}
         secureTextEntry={secureTextEntry}
         autoCapitalize={autoCapitalize}
         keyboardType={keyboardType}
         editable={editable}
+        placeholder={placeholder}
+        placeholderTextColor={placeholderTextColor}
+        maxLength={maxLength}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
         style={[

@@ -6,13 +6,15 @@ export type ChipProps = {
   selected: boolean;
   onPress: () => void;
   disabled?: boolean;
+  accessibilityLabel?: string;
 };
 
 /** Chip de filtro do design system (chip.md): pílula de 32 px, check quando selecionado. */
-export function Chip({ label, selected, onPress, disabled = false }: ChipProps) {
+export function Chip({ label, selected, onPress, disabled = false, accessibilityLabel }: ChipProps) {
   return (
     <Pressable
       accessibilityRole="checkbox"
+      accessibilityLabel={accessibilityLabel ?? label}
       accessibilityState={{ checked: selected, disabled }}
       disabled={disabled}
       hitSlop={8}
