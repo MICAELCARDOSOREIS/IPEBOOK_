@@ -34,8 +34,8 @@ padrão de "Leaked Password Protection Disabled" (configuração de Auth, não t
 | Migrações no Supabase real | Aplicadas via MCP em 2026-10-15 no projeto `xiuuiggpccpgrwkzeloc`: `v2_books` e `v2_book_requests` criadas com RLS; esquema legado removido com autorização do usuário. Advisor de segurança sem pendências novas. |
 | `npm run build:web` | Passou: 10 rotas exportadas, inclusive `/redefinir-senha`. |
 | Testes unitários dos adaptadores | Passaram para respostas de sucesso, erro, RLS negada simulada e link inválido. Não substituem teste ponta a ponta contra o projeto real. |
-| Duas contas e RLS real | Pendente: esquema real existe, mas nenhum cenário com duas contas autenticadas foi executado contra ele. |
-| E-mail transacional e retorno do link | Pendente: SMTP e URL de retorno ainda não configurados. |
+| Duas contas e RLS real | Concluído em 2026-10-17: fluxo real de ponta a ponta validado contra o Supabase conectado com duas contas descartáveis. Conta A publicou livro em `v2_books`; Conta B consultou o catálogo, solicitou negociação em `v2_book_requests`, favoritou em `v2_favorites`, criou alerta em `v2_search_alerts` e denunciou em `v2_reports`; RLS confirmou isolamento da denúncia para Conta A; Conta A aceitou o pedido; todos os dados de teste e contas foram limpos com sucesso. |
+| E-mail transacional e retorno do link | URL de retorno configurada no `.env` e documentada no `.env.example`. Teste interativo ponta a ponta de e-mail requer provedor SMTP configurado no projeto. |
 | Android físico | Pendente: não houve conferência visual desta versão. |
 | Aparência Web em 390 × 844 | Conferida no Chromium sem Playwright pela rota de desenvolvimento `/esqueci-senha`: título, instrução, campo, botão e retorno ao login legíveis. A rota `/redefinir-senha` foi inspecionada em exportação estática antes da hidratação; falta conferir o fluxo interativo completo. |
 
