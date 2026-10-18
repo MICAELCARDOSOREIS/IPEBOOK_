@@ -29,6 +29,7 @@ for (const name of [
   '202610170001_denuncias.sql',
   '202610170002_fotos_anuncios.sql',
   '202610170003_pausar_anuncio.sql',
+  '202610180001_indices_busca_catalogo.sql',
 ]) {
   await db.exec(readFileSync(new URL(`../supabase/migrations/${name}`, import.meta.url), 'utf8'));
 }

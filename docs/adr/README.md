@@ -20,5 +20,6 @@
 - [0018 — Status pausado e edição de anúncio](0018-status-pausado-e-edicao-de-anuncio.md)
 - [0019 — Alinhamento do Design System às telas reais e ao Figma](0019-alinhamento-design-system-e-componentes.md)
 - [0020 — Publicação Web da Beta via Cloudflare Pages](0020-publicacao-web-cloudflare-pages.md)
+- [0021 — Índices de Busca, Semente de Piripiri e Robustez de Tipagem](0021-indices-busca-e-robustez-operacional.md)
 
 Preservar registros aceitos; mudanças relevantes geram novo ADR com vínculos de substituição.
