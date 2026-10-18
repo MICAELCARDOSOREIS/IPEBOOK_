@@ -87,9 +87,14 @@ As únicas tarefas abertas necessárias para a conclusão da versão beta são:
 1. **#87 (Publicação da Web no Cloudflare Pages)**: Configurar e validar o deploy do bundle gerado em `dist/` no Cloudflare Pages.
 2. **#90 (Alinhamento dos campos da tela de anunciar ao design system)**: Substituir inputs simples por componentes de formulário do design system (seleção de modalidade, categoria e bairros de Piripiri).
 3. **#91 (Editar e pausar anúncio: modelo e interface)**: Permitir alterar dados e alternar o status do anúncio entre disponível e pausado sem precisar excluí-lo.
-4. **#92 (Alinhamento do design system)**: Suprir componentes pendentes documentados em `design-system/04-componentes/` (ex: `Snackbar`, `Badge`).
-5. **#94 (Histórico de buscas recentes)**: Persistência local das últimas buscas com opção de limpeza confirmada via `Dialog`.
-6. **#55 (Tela de perfil do usuário - Maria Clara)**: Implementação da rota `/perfil` conforme spec 006.
+- **#91 (Editar e pausar anúncio)**: Concluída, integrada e fechada. Spec 024 e ADR 0018 criados.
+- **#92 (Alinhamento do design system às telas reais e ao Figma)**: Concluída, integrada e fechada. Spec 006 revisada, ADR 0019 criado, componentes `Tag` e `Snackbar` implementados com acessibilidade.
+- **#87 (Publicar a Web da beta - Cloudflare Pages)**: Concluída e integrada. Spec 025 e ADR 0020 criados, remoção de `vercel.json`, criação de `public/_headers`, `public/_redirects` e `docs/implantacao-cloudflare.md`.
+
+Próximas issues da trilha:
+1. **#94 (Histórico de buscas recentes)**: Persistência local das últimas buscas com opção de limpeza confirmada via `Dialog`.
+2. **#93 (Filtros de catálogo na busca)**: Filtros por modalidade, categoria e ordenação.
+3. **#55 / #73 (Tela de perfil do usuário)**: Implementação da rota `/perfil`.
 
 ---
 
@@ -113,3 +118,5 @@ As únicas tarefas abertas necessárias para a conclusão da versão beta são:
 - `specs/020-permissoes-da-plataforma/`: (Escopo levantado, encerrado como não planejado para a beta).
 - `specs/022-restricao-geografica-piripiri/`: Restrição da beta à cidade de Piripiri, PI e seus bairros.
 - `specs/023-fotos-do-anuncio/`: Upload de fotos, armazenamento em bucket público do Supabase Storage e capas de livro.
+- `specs/024-editar-e-pausar-anuncio/`: Edição de anúncio e controle de status de pausa temporária.
+- `specs/025-publicacao-web-cloudflare-pages/`: Configuração de build, roteamento SPA e cabeçalhos para Cloudflare Pages.
