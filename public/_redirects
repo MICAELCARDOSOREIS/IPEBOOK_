@@ -1,0 +1,5 @@
+/denunciar/* /denunciar/[id].html 200
+/editar-anuncio/* /editar-anuncio/[id].html 200
+/livro/* /livro/[id].html 200
+/negociacao/* /negociacao/[id].html 200
+/* /+not-found.html 404
