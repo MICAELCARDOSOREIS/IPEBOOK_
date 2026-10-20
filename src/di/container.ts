@@ -35,6 +35,10 @@ import { FavoriteUseCases } from "@/usecase/favoriteUseCases";
 import { SearchAlertUseCases } from "@/usecase/searchAlertUseCases";
 import type { IFavoriteUseCases } from "@/usecase/iFavoriteUseCases";
 import type { ISearchAlertUseCases } from "@/usecase/iSearchAlertUseCases";
+import { AsyncStorageOnboardingDataSource } from "@/infra/datasources/asyncStorageOnboardingDataSource";
+import { MemoryOnboardingDataSource } from "@/infra/datasources/memoryOnboardingDataSource";
+import type { IOnboardingUseCases } from "@/usecase/iOnboardingUseCases";
+import { OnboardingUseCases } from "@/usecase/onboardingUseCases";
 
 function createDataSources(): {
   auth: IAuthDataSource;
@@ -78,6 +82,9 @@ function createDataSources(): {
 const dataSources = createDataSources();
 const bookDataSource = dataSources.books;
 
+export const onboardingUseCases: IOnboardingUseCases = new OnboardingUseCases(
+  process.env.NODE_ENV === "test" ? new MemoryOnboardingDataSource() : new AsyncStorageOnboardingDataSource(),
+);
 export const searchAlertUseCases: ISearchAlertUseCases = new SearchAlertUseCases(dataSources.searchAlerts);
 export const favoriteUseCases: IFavoriteUseCases = new FavoriteUseCases(dataSources.favorites, bookDataSource);
 export const bookUseCases: IBookUseCases = new BookUseCases(bookDataSource, searchAlertUseCases);
