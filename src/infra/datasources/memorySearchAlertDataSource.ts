@@ -18,6 +18,10 @@ export class MemorySearchAlertDataSource implements ISearchAlertDataSource {
     return created;
   }
 
+  async update(userId: string, id: string, query: string) {
+    this.entries = this.entries.map((entry) => entry.id === id && entry.userId === userId ? { ...entry, query } : entry);
+  }
+
   async setActive(userId: string, id: string, active: boolean) {
     this.entries = this.entries.map((entry) => entry.id === id && entry.userId === userId ? { ...entry, active } : entry);
   }
