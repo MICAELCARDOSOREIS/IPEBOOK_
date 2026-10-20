@@ -4,9 +4,11 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useBookDetailViewModel } from "@/viewmodel/useBookDetailViewModel";
 import { useRequestNegotiationViewModel } from "@/viewmodel/useRequestNegotiationViewModel";
+import { useShareListingViewModel } from "@/viewmodel/useShareListingViewModel";
 import { tokens } from "@/view/tokens";
 import { BookCover } from "@/view/components/BookCover";
 import { FilledButton } from "@/view/components/FilledButton";
+import { Snackbar } from "@/view/components/Snackbar";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { PhotoGallery } from "@/view/listings/photoGallery";
 import type { BookModality } from "@/model/entities/book";
@@ -34,6 +36,7 @@ export default function BookDetail({
   const sessionUserId = authState.user?.id ?? null;
   const [state, actions] = useBookDetailViewModel(bookId, undefined, undefined, sessionUserId);
   const [negotiation, negotiationActions] = useRequestNegotiationViewModel();
+  const [share, shareActions] = useShareListingViewModel();
   const book = state.book;
   const [galleryVisible, setGalleryVisible] = useState(false);
   const photos = book ? [book.photoUrl, ...(book.photos ?? [])].filter((url): url is string => Boolean(url)) : [];
@@ -103,6 +106,17 @@ export default function BookDetail({
             {negotiation.errorListingId === book.id ? (
               <Text accessibilityRole="alert" style={styles.requestError}>{negotiation.error}</Text>
             ) : null}
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Compartilhar anúncio"
+              accessibilityState={{ disabled: share.sharing }}
+              disabled={share.sharing}
+              onPress={() => void shareActions.share(book.id)}
+              style={styles.ownerButton}
+            >
+              <Text style={styles.ownerText}>Compartilhar</Text>
+            </Pressable>
+            {share.error ? <Text accessibilityRole="alert" style={styles.requestError}>{share.error}</Text> : null}
             {onNavigateToReport && (!sessionUserId || book.ownerId !== sessionUserId) ? (
               <Pressable
                 accessibilityRole="button"
@@ -123,6 +137,11 @@ export default function BookDetail({
           onClose={() => setGalleryVisible(false)}
         />
       ) : null}
+      <Snackbar
+        visible={share.linkCopied}
+        message="Link copiado"
+        onDismiss={shareActions.dismissLinkCopied}
+      />
     </SafeAreaView>
   );
 }
