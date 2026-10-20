@@ -1,4 +1,4 @@
-import type { IBookDataSource } from "@/model/datasources/iBookDataSource";
+import type { IBookDataSource, ListBooksOptions } from "@/model/datasources/iBookDataSource";
 import type { ISearchAlertUseCases } from "@/usecase/iSearchAlertUseCases";
 import type { Book } from "@/model/entities/book";
 import { AuthError, DataSourceError, ValidationError } from "@/model/errors";
@@ -8,8 +8,8 @@ import type { CreateListingInput, IBookUseCases } from "@/usecase/iBookUseCases"
 export class BookUseCases implements IBookUseCases {
   constructor(private readonly dataSource: IBookDataSource, private readonly alerts?: ISearchAlertUseCases) {}
 
-  listBooks() {
-    return this.dataSource.list();
+  listBooks(options?: ListBooksOptions) {
+    return this.dataSource.list(options);
   }
 
   async createListing(input: CreateListingInput, sessionUserId: string | null): Promise<Book> {

@@ -47,6 +47,25 @@ describe("catálogo inicial", () => {
     Object.assign(result[0], { title: "Alterado no retorno" });
     expect((await source.list())[0].title).toBe("Título original");
   });
+
+  it("suporta paginação com limit e offset no MemoryBookDataSource e repassa para o datasource (Issue #117)", async () => {
+    const list = [
+      { id: "1", title: "Livro 1", author: "A1", ownerId: "o1", modality: "donation" as const, status: "available" as const },
+      { id: "2", title: "Livro 2", author: "A2", ownerId: "o1", modality: "donation" as const, status: "available" as const },
+      { id: "3", title: "Livro 3", author: "A3", ownerId: "o1", modality: "donation" as const, status: "available" as const },
+      { id: "4", title: "Livro 4", author: "A4", ownerId: "o1", modality: "donation" as const, status: "available" as const },
+    ];
+    const source = new MemoryBookDataSource(list);
+    const useCases = new BookUseCases(source);
+
+    const page1 = await useCases.listBooks({ limit: 2, offset: 0 });
+    expect(page1).toHaveLength(2);
+    expect(page1.map((b) => b.id)).toEqual(["1", "2"]);
+
+    const page2 = await useCases.listBooks({ limit: 2, offset: 2 });
+    expect(page2).toHaveLength(2);
+    expect(page2.map((b) => b.id)).toEqual(["3", "4"]);
+  });
 });
 
 describe("getBookById (FR-009 — detalhe do livro)", () => {
