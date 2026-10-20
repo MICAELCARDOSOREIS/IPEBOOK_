@@ -46,9 +46,11 @@ import { NotificationUseCases } from "@/usecase/notificationUseCases";
 import { PublicProfileUseCases } from "@/usecase/publicProfileUseCases";
 import { ReportUseCases } from "@/usecase/reportUseCases";
 import { FavoriteUseCases } from "@/usecase/favoriteUseCases";
+import { ShareUseCases } from "@/usecase/shareUseCases";
 import { SearchAlertUseCases } from "@/usecase/searchAlertUseCases";
 import { SearchHistoryUseCases } from "@/usecase/searchHistoryUseCases";
 import type { IFavoriteUseCases } from "@/usecase/iFavoriteUseCases";
+import type { IShareUseCases } from "@/usecase/iShareUseCases";
 import type { ISearchAlertUseCases } from "@/usecase/iSearchAlertUseCases";
 import type { ISearchHistoryUseCases } from "@/usecase/iSearchHistoryUseCases";
 import { AsyncStorageOnboardingDataSource } from "@/infra/datasources/asyncStorageOnboardingDataSource";
@@ -141,6 +143,7 @@ export const networkStatusDataSource: INetworkStatusDataSource =
 export const searchAlertUseCases: ISearchAlertUseCases = new SearchAlertUseCases(dataSources.searchAlerts);
 export const searchHistoryUseCases: ISearchHistoryUseCases = new SearchHistoryUseCases(dataSources.searchHistory);
 export const favoriteUseCases: IFavoriteUseCases = new FavoriteUseCases(dataSources.favorites, bookDataSource);
+export const shareUseCases: IShareUseCases = new ShareUseCases();
 export const bookUseCases: IBookUseCases = new BookUseCases(bookDataSource, searchAlertUseCases);
 
 export const authUseCases: IAuthUseCases = new AuthUseCases(

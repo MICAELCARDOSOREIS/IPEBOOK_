@@ -4,15 +4,18 @@ import { describe, expect, it, vi } from "vitest";
 import type { Book } from "@/model/entities/book";
 import type { AuthState } from "@/viewmodel/useAuthViewModel";
 import type { RequestNegotiationState } from "@/viewmodel/useRequestNegotiationViewModel";
+import type { ShareListingState } from "@/viewmodel/useShareListingViewModel";
 import BookDetail from "@/view/listings/bookDetail";
 
 vi.mock("@/viewmodel/useBookDetailViewModel", () => ({ useBookDetailViewModel: vi.fn() }));
 vi.mock("@/viewmodel/useAuthViewModel", () => ({ useAuthViewModel: vi.fn() }));
 vi.mock("@/viewmodel/useRequestNegotiationViewModel", () => ({ useRequestNegotiationViewModel: vi.fn() }));
+vi.mock("@/viewmodel/useShareListingViewModel", () => ({ useShareListingViewModel: vi.fn() }));
 
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useBookDetailViewModel } from "@/viewmodel/useBookDetailViewModel";
 import { useRequestNegotiationViewModel } from "@/viewmodel/useRequestNegotiationViewModel";
+import { useShareListingViewModel } from "@/viewmodel/useShareListingViewModel";
 
 const book = (over: Partial<Book>): Book => ({
   id: "b1",
@@ -31,10 +34,21 @@ const emptyNegotiation: RequestNegotiationState = {
   errorListingId: null,
 };
 
+const emptyShare: ShareListingState = {
+  sharing: false,
+  linkCopied: false,
+  error: null,
+};
+
 function setup(
   book: Book | null,
   user: AuthState["user"],
-  options: { loading?: boolean; error?: string | null; negotiation?: Partial<RequestNegotiationState> } = {},
+  options: {
+    loading?: boolean;
+    error?: string | null;
+    negotiation?: Partial<RequestNegotiationState>;
+    share?: Partial<ShareListingState>;
+  } = {},
 ) {
   vi.mocked(useBookDetailViewModel).mockReturnValue([
     { book, loading: options.loading ?? false, error: options.error ?? null, isFavorite: false, favoriteError: null, favoriteLoading: false },
@@ -49,7 +63,12 @@ function setup(
     { ...emptyNegotiation, ...options.negotiation },
     { request },
   ]);
-  return request;
+  const share = vi.fn().mockResolvedValue(undefined);
+  vi.mocked(useShareListingViewModel).mockReturnValue([
+    { ...emptyShare, ...options.share },
+    { share, dismissLinkCopied: vi.fn() },
+  ]);
+  return { request, share };
 }
 
 async function renderDetail(props: Partial<React.ComponentProps<typeof BookDetail>> = {}) {
@@ -86,7 +105,7 @@ describe("BookDetail (spec 006, US6/T029)", () => {
   });
 
   it("oferece solicitar negociação para outra pessoa autenticada", async () => {
-    const request = setup(book({ ownerId: "other" }), user);
+    const { request } = setup(book({ ownerId: "other" }), user);
     const screen = await renderDetail();
     await act(async () => { fireEvent.press(screen.getByText("Solicitar negociação")); });
     expect(request).toHaveBeenCalledWith("b1", "me");
@@ -152,5 +171,24 @@ describe("BookDetail (spec 006, US6/T029)", () => {
     const screen = await renderDetail({ onBack });
     fireEvent.press(screen.getByLabelText("Voltar"));
     expect(onBack).toHaveBeenCalledTimes(1);
+  });
+
+  it("oferece compartilhar mesmo sem sessão (Spec 019)", async () => {
+    const { share } = setup(book({ ownerId: "other" }), null);
+    const screen = await renderDetail();
+    await act(async () => { fireEvent.press(screen.getByLabelText("Compartilhar anúncio")); });
+    expect(share).toHaveBeenCalledWith("b1");
+  });
+
+  it("mostra confirmação de link copiado (Spec 019)", async () => {
+    setup(book({}), user, { share: { linkCopied: true } });
+    const screen = await renderDetail();
+    expect(screen.getByText("Link copiado")).toBeDefined();
+  });
+
+  it("mostra erro ao compartilhar (Spec 019)", async () => {
+    setup(book({}), user, { share: { error: "Não foi possível compartilhar o anúncio. Tente novamente." } });
+    const screen = await renderDetail();
+    expect(screen.getByText("Não foi possível compartilhar o anúncio. Tente novamente.")).toBeDefined();
   });
 });

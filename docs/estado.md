@@ -174,7 +174,7 @@ No app ativo em desenvolvimento, 21 rotas cobrem as jornadas essenciais da beta.
 - `specs/016-favoritos-e-alertas-de-busca/`: Favoritos e alertas com gatilho transacional no banco.
 - `specs/017-rascunhos-de-anuncio/`: (Escopo levantado, encerrado como não planejado para a beta).
 - `specs/018-perfil-publico-do-anunciante-e-fotos/`: Perfil público do anunciante.
-- `specs/019-compartilhar-anuncio/`: Compartilhamento de anúncio.
+- `specs/019-compartilhar-anuncio/`: Compartilhamento de anúncio (Issue #74, implementado).
 - `specs/020-permissoes-da-plataforma/`: (Escopo levantado, encerrado como não planejado para a beta).
 - `specs/021-estados-globais-de-carregamento-e-erro/`: Tratamento global de carregamento, sem conexão e erro (Issue #76, implementado, ADR 0028).
 - `specs/022-restricao-geografica-piripiri/`: Restrição da beta à cidade de Piripiri, PI e seus bairros.

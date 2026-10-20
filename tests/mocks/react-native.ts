@@ -104,6 +104,11 @@ export const Platform = {
   select: (obj: any) => obj.ios ?? obj.default,
 };
 
+export const Share = {
+  share: (_content: { message?: string; url?: string; title?: string }) =>
+    Promise.resolve({ action: "sharedAction" }),
+};
+
 export default {
   View,
   Text,
@@ -117,4 +122,5 @@ export default {
   StyleSheet,
   AccessibilityInfo,
   Platform,
+  Share,
 };
