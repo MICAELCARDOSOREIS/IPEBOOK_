@@ -31,6 +31,7 @@ for (const name of [
   '202610170003_pausar_anuncio.sql',
   '202610180001_indices_busca_catalogo.sql',
   '202610200001_unicidade_denuncias.sql',
+  '202610200002_rpc_exclusao_conta.sql',
 ]) {
   await db.exec(readFileSync(new URL(`../supabase/migrations/${name}`, import.meta.url), 'utf8'));
 }
@@ -127,6 +128,25 @@ if (!bookWithPhoto.rows[0].photo_url || bookWithPhoto.rows[0].neighborhood !== '
   throw new Error('Falha ao persistir foto e localização em v2_books');
 }
 process.stdout.write('Livro com foto e localização: persistido e consultado com sucesso\n');
+
+// Teste de exclusão definitiva de conta (LGPD / Issue #115)
+await db.exec('reset role');
+const disposableUser = '44444444-4444-4444-8444-444444444444';
+await db.exec(`insert into auth.users (id) values ('${disposableUser}')`);
+await as('authenticated', disposableUser, `insert into public.v2_books (owner_id, title, author, modality) values ('${disposableUser}', 'Livro do descartável', 'Autor', 'donation')`);
+await as('authenticated', disposableUser, `insert into public.v2_favorites (user_id, book_id) values ('${disposableUser}', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa')`);
+
+await denied('Visitante exclui conta', () => as('anon', null, `select public.delete_user_account('${disposableUser}')`));
+await denied('Terceiro tenta excluir conta alheia', () => as('authenticated', other, `select public.delete_user_account('${disposableUser}')`));
+
+await as('authenticated', disposableUser, `select public.delete_user_account('${disposableUser}')`);
+const deletedUser = await db.query(`select id from auth.users where id = '${disposableUser}'`);
+if (deletedUser.rows.length !== 0) throw new Error('Usuário não foi removido de auth.users');
+const cascadedBooks = await db.query(`select id from public.v2_books where owner_id = '${disposableUser}'`);
+if (cascadedBooks.rows.length !== 0) throw new Error('Livros do usuário excluído não foram removidos em cascata');
+const cascadedFavs = await db.query(`select id from public.v2_favorites where user_id = '${disposableUser}'`);
+if (cascadedFavs.rows.length !== 0) throw new Error('Favoritos do usuário excluído não foram removidos em cascata');
+process.stdout.write('Exclusão de conta LGPD e cascata: verificado com sucesso\n');
 
 process.stdout.write('Migrações e cenários SQL locais verificados.\n');
 await db.close();
