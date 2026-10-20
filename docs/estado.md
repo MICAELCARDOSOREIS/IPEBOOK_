@@ -103,6 +103,7 @@ No app ativo em desenvolvimento, 21 rotas cobrem as jornadas essenciais da beta.
 - **Issue #128 (Segurança / LGPD — Exportação e portabilidade de dados do usuário)**: Concluída e integrada via PR #133. Implementação de `UserExportData`, `IUserDataExportDataSource`, `UserDataExportUseCases`, adaptadores em memória e Supabase e injeção em `container.ts`.
 - **Issue #129 (Infra / Otimização — Serviço de validação de imagens antes do upload)**: Concluída e integrada via PR #134. Implementação de `ImageOptimizationService` com checagem de tamanho (5 MB), formatos permitidos (JPEG, PNG, WebP) e sanitização contra path traversal.
 - **Issue #130 (Segurança / Domínio — Sanitização contra injeção em campos de texto)**: Concluída e integrada via PR #135. Validador `textSanitizer.ts` neutralizando scripts, tags HTML e caracteres de controle em títulos, autores, bairros e denúncias comunitárias.
+- **Issue #93 (Descoberta — Filtrar e ordenar o catálogo de livros)**: Concluída na Spec 028. Implementada filtragem por modalidade (Troca, Venda, Doação), categoria dinâmica extraída do catálogo, faixas de preço (grátis, até R$ 20, até R$ 50), ordenação (mais recentes, A-Z, menor preço, maior preço), botão de limpeza e tratamento contextualizado de busca vazia, com cobertura de testes unitários e de componentes.
 - **Trilha de Resiliência, Infra e Segurança (Micael — Outubro de 2026)**:
   - **ADRs 0023 a 0027**: Formalizadas as decisões arquiteturais de CI no GitHub Actions (0023), busca acelerada `pg_trgm` (0024), portabilidade LGPD (0025), sanitização preventiva (0026) e resiliência/logging/rate limiting/release (0027).
   - **Logging Estruturado e Sanitizado (`SafeLogger`)**: Implementação de `ILogger` em `src/infra/services/safeLogger.ts` com mascaramento automático de senhas, JWTs e chaves sensíveis contra vazamento de dados pessoais.
@@ -120,11 +121,10 @@ No app ativo em desenvolvimento, 21 rotas cobrem as jornadas essenciais da beta.
    - **Situação**: A infraestrutura de build e cabeçalhos está pronta e validada localmente (`dist/`, `public/_headers`, `public/_redirects`, ADR 0020, spec 025). Falta a comprovação em ambiente de destino (projeto Cloudflare Pages, domínio e verificação pós-deploy), que depende de ações e credenciais externas do responsável. Enquanto não comprovada em URL pública, o estado permanece como "preparado para publicação".
 2. **#104, #105, #106 (Acessibilidade)**:
    - Correções de semântica de abas (#106, PR #111), foco de teclado em diálogos (#105, PR #113) e associação de erros em formulários (#104, PR #110), identificadas na auditoria #96 (atribuídas a Maria Clara). Implementadas e validadas localmente; aguardando revisão/merge em `develop`.
-3. **#93 (Filtrar e ordenar o catálogo de livros)**:
-   - Refinamento de busca por categoria, modalidade e ordenação.
+3. **#74 (Spec 019 — Compartilhar anúncio)**:
+   - Compartilhamento de links de livros via Web Share API e WhatsApp local para Piripiri.
 4. **#55 (Perfil do usuário)**:
-   - Edição do próprio perfil/configurações (fluxo 07), ainda não implementada. A visão pública
-     de leitura (issue #73) foi concluída separadamente (ver Seção 3).
+   - Edição do próprio perfil/configurações (fluxo 07).
 
 ---
 
@@ -157,3 +157,4 @@ No app ativo em desenvolvimento, 21 rotas cobrem as jornadas essenciais da beta.
 - `specs/025-publicacao-web-cloudflare-pages/`: Configuração de build, roteamento SPA e cabeçalhos para Cloudflare Pages.
 - `specs/026-boas-vindas-primeiro-acesso/`: Boas-vindas e primeiro acesso ao app com escolha opcional de bairro (ADR 0022).
 - `specs/027-historico-buscas-recentes/`: Histórico de buscas recentes salvo no dispositivo via `AsyncStorage` (Issue #94, PR #100).
+- `specs/028-filtrar-e-ordenar-catalogo/`: Filtragem por modalidade, categoria, preço e ordenação do catálogo (Issue #93).
