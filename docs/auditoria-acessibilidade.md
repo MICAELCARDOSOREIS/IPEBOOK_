@@ -29,13 +29,13 @@ Como consequência, os critérios de aceite da issue #96 relativos a essas duas 
 | Rota | View | Resultado |
 | --- | --- | --- |
 | `/` | `home.tsx` | Aprovado — rótulos, papéis e tag de modalidade com texto (não só cor) |
-| `/entrar` | `signIn.tsx` | Achado 1 (erro de campo não associado) |
-| `/criar-conta` | `signUp.tsx` | Achado 1 |
-| `/esqueci-senha` | `forgotPassword.tsx` | Achado 1 |
-| `/redefinir-senha` | `resetPassword.tsx` | Achado 1 |
+| `/entrar` | `signIn.tsx` | Achado 1, corrigido (erro de campo agora associado) |
+| `/criar-conta` | `signUp.tsx` | Achado 1, corrigido |
+| `/esqueci-senha` | `forgotPassword.tsx` | Achado 1, corrigido |
+| `/redefinir-senha` | `resetPassword.tsx` | Achado 1, corrigido |
 | `/excluir-conta` | `deleteAccount.tsx` | Aprovado — confirmação com rótulo e papel de botão |
-| `/anunciar` | `createListing.tsx` | Achado 1; Chip de modalidade aprovado (texto + estado) |
-| `/editar-anuncio/[id]` | `editListing.tsx` | Achado 1 |
+| `/anunciar` | `createListing.tsx` | Achado 1, corrigido; Chip de modalidade aprovado (texto + estado) |
+| `/editar-anuncio/[id]` | `editListing.tsx` | Achado 1, corrigido |
 | `/meus-anuncios` | `myListings.tsx` | Achado 2 (Dialog sem gestão de foco); status com `Tag` em texto, aprovado |
 | `/denunciar/[id]` | `reportListing.tsx` | Aprovado — opções com `accessibilityRole="radio"` e `accessibilityState`, campo de detalhes rotulado |
 | `/livro/[id]` | `bookDetail.tsx` | Aprovado — ações com rótulo explícito (favoritar, denunciar) |
@@ -43,7 +43,7 @@ Como consequência, os critérios de aceite da issue #96 relativos a essas duas 
 | `/pedidos-recebidos` | `receivedRequests.tsx` | Aprovado (ver nota) |
 | `/meus-pedidos` | `sentRequests.tsx` | Aprovado (ver nota) |
 | `/pesquisa` | `search.tsx` | Achado 2 (Dialog de limpar histórico) |
-| `/alertas` | `searchAlerts.tsx` | Achado 1 (erro do alerta não associado ao campo) e Achado 2 (Dialog de exclusão) |
+| `/alertas` | `searchAlerts.tsx` | Achado 1, corrigido (erro do alerta agora associado ao campo); Achado 2 (Dialog de exclusão) |
 | `/favoritos` | `favorites.tsx` | Aprovado |
 | `/notificacoes` | `notifications.tsx` | Aprovado — item de notificação com rótulo combinando título e mensagem |
 | `/ajuda` | `helpAndFaq.tsx` | Aprovado — cabeçalho e botões de pergunta com papel |
@@ -55,7 +55,7 @@ achado novo além dos já listados (que não se repetem aqui).
 
 ## Achados
 
-### Achado 1 — Mensagem de erro de campo não associada ao campo (critério "Mensagens de erro associadas ao campo correspondente")
+### Achado 1 — Mensagem de erro de campo não associada ao campo (critério "Mensagens de erro associadas ao campo correspondente") — **Corrigido na issue #104**
 
 **Onde:** `src/view/components/TextField.tsx` (usado por `signIn.tsx`, `signUp.tsx`,
 `forgotPassword.tsx`, `resetPassword.tsx`, `createListing.tsx`, `editListing.tsx`) e, no mesmo
@@ -75,6 +75,16 @@ com erro de validação.
 **Sugestão para correção futura:** adicionar `nativeID` ao `<Text>` de erro e referenciá-lo via
 `accessibilityLabelledBy` no `TextInput` (RN Web) ou compor a mensagem no próprio
 `accessibilityLabel`/`accessibilityHint` do campo quando `hasError` for verdadeiro.
+
+**Correção aplicada (issue #104):** `src/view/components/TextField.tsx` e
+`src/view/search/searchAlerts.tsx` agora geram um `nativeID` estável (via `useId`) para o
+`<Text accessibilityRole="alert">` do erro e o referenciam em `aria-describedby` no
+`TextInput` — na Web isso vira `aria-describedby` real no DOM (react-native-web mapeia
+`nativeID` para `id`), associando semanticamente erro e campo. Como o React Native nativo
+(iOS/Android) não suporta `aria-describedby` no `TextInput`, a mesma mensagem também é
+exposta via `accessibilityHint` quando `hasError` é verdadeiro, lida pelo TalkBack/VoiceOver
+logo após o rótulo. Ambas as associações somem quando o erro é corrigido. Cobertura em
+`tests/components/designSystemFields.test.tsx` e `tests/components/favoritesAlertsView.test.tsx`.
 
 ### Achado 2 — `Dialog` não gerencia foco, embora o design system declare isso (critério "Ordem de foco coerente e navegação por teclado na Web")
 
@@ -129,7 +139,8 @@ os itens nos dois componentes.
 - [ ] Rodar axe-core na Web (bloqueado: ferramenta só existe no ambiente compartilhado de outra
   máquina da equipe, ou precisa ser instalada neste projeto).
 - [ ] Verificar com TalkBack em aparelho Android real (bloqueado: sem hardware neste ambiente).
-- [ ] Corrigir os achados 1, 2 e 3 acima (ficam para issue(s)/PR(s) seguintes, por decisão de
+- [x] Corrigir o achado 1 (issue #104, ver seção do achado acima).
+- [ ] Corrigir os achados 2 e 3 acima (ficam para issue(s)/PR(s) seguintes, por decisão de
   entregar primeiro só o relatório).
 - [ ] Os ~50 tokens de cor não auditados manualmente, já registrados como lacuna em
   `design-system/06-acessibilidade.md` (linha 5-6), continuam sem verificação própria desta
@@ -139,3 +150,7 @@ os itens nos dois componentes.
 
 - `npm run validate`: aprovado (nenhuma alteração de código nesta entrega; validação roda limpa
   como já registrado em `docs/estado.md`).
+- **Issue #104 (correção do achado 1)**: `npm run validate` aprovado (460 testes em 77 arquivos,
+  cobertura acima de 80% nas 4 dimensões, arquitetura sem violações). Verificação manual de
+  associação `aria-describedby`/`nativeID` via testes de componente; TalkBack/VoiceOver em
+  aparelho real seguem pendentes pela mesma limitação de ambiente já registrada acima.

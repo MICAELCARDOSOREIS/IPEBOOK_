@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Dialog } from "@/view/components/Dialog";
@@ -12,6 +12,8 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
   const [state, actions] = useSearchAlertsViewModel(userId, initialQuery);
   const [alertToDelete, setAlertToDelete] = useState<{ id: string; query: string } | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const errorId = useId();
+  const hasError = Boolean(state.error);
   const cancelEdit = () => { setEditingId(null); actions.setQuery(""); };
   const saveEdit = async () => {
     if (!editingId) { await actions.create(); return; }
@@ -25,6 +27,8 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
     </View> : <View style={styles.content}>
       <Text style={styles.body}>Avisaremos na central de notificações quando surgir um livro com este título ou autor.</Text>
       <TextInput accessibilityLabel="Termo do alerta" value={state.query} onChangeText={actions.setQuery}
+        accessibilityHint={hasError ? state.error ?? undefined : undefined}
+        aria-describedby={hasError ? errorId : undefined}
         placeholder="Título ou autor" style={styles.input} maxLength={100} />
       <Pressable accessibilityRole="button" onPress={() => void saveEdit()} style={styles.action}>
         <Text style={styles.actionText}>{editingId ? "Salvar edição" : "Criar alerta"}</Text>
@@ -33,7 +37,7 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
         <Text style={styles.link}>Cancelar edição</Text>
       </Pressable> : null}
       {state.message ? <Text accessibilityRole="alert" style={styles.body}>{state.message}</Text> : null}
-      {state.error ? <Text accessibilityRole="alert" style={styles.error}>{state.error}</Text> : null}
+      {hasError ? <Text nativeID={errorId} accessibilityRole="alert" style={styles.error}>{state.error}</Text> : null}
       {state.loading ? <ActivityIndicator accessibilityLabel="Carregando alertas" /> :
         <FlatList data={state.alerts} keyExtractor={(item) => item.id}
           ListEmptyComponent={<Text accessibilityRole="header" style={styles.body}>Você ainda não criou alertas.</Text>}

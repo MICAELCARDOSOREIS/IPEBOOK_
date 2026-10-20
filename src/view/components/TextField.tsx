@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import type { KeyboardTypeOptions } from "react-native";
 import { StyleSheet, Text, TextInput, View } from "react-native";
 import { tokens } from "@/view/tokens";
@@ -37,6 +37,7 @@ export function TextField({
 }: TextFieldProps) {
   const [focused, setFocused] = useState(false);
   const hasError = Boolean(error);
+  const errorId = useId();
   const accentColor = hasError ? tokens.colors.error : focused ? tokens.colors.action : tokens.colors.secondaryText;
   const borderColor = hasError ? tokens.colors.error : focused ? tokens.colors.action : tokens.colors.border;
 
@@ -45,6 +46,8 @@ export function TextField({
       <Text style={[styles.label, { color: accentColor }]}>{label}</Text>
       <TextInput
         accessibilityLabel={accessibilityLabel ?? label}
+        accessibilityHint={hasError ? error ?? undefined : undefined}
+        aria-describedby={hasError ? errorId : undefined}
         value={value}
         onChangeText={onChangeText}
         secureTextEntry={secureTextEntry}
@@ -63,7 +66,7 @@ export function TextField({
         ]}
       />
       {hasError ? (
-        <Text accessibilityRole="alert" style={styles.errorText}>{error}</Text>
+        <Text nativeID={errorId} accessibilityRole="alert" style={styles.errorText}>{error}</Text>
       ) : helperText ? (
         <Text style={styles.helperText}>{helperText}</Text>
       ) : null}

@@ -62,6 +62,21 @@ describe("favoritos e alertas (spec 016)", () => {
     expect(screen.queryByText("Machado")).toBeNull();
   });
 
+  it("associa o erro de validação do alerta ao campo para leitores de tela", async () => {
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => { screen = await render(<SearchAlerts userId="usuario-alerta-invalido" onBack={vi.fn()} onLogin={vi.fn()} />); });
+    await act(async () => { fireEvent.changeText(screen.getByLabelText("Termo do alerta"), "a"); });
+    await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Criar alerta" })); });
+    const input = screen.getByLabelText("Termo do alerta");
+    const errorText = screen.getByRole("alert");
+    expect(input.props["aria-describedby"]).toBeDefined();
+    expect(input.props["aria-describedby"]).toBe(errorText.props.nativeID);
+    expect(input.props.accessibilityHint).toBe(errorText.props.children);
+
+    await act(async () => { fireEvent.changeText(screen.getByLabelText("Termo do alerta"), "Machado"); });
+    expect(screen.getByLabelText("Termo do alerta").props["aria-describedby"]).toBeUndefined();
+  });
+
   it("orienta a entrar para criar um alerta", async () => {
     const onLogin = vi.fn();
     let screen!: Awaited<ReturnType<typeof render>>;
