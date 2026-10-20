@@ -9,6 +9,7 @@ vi.mock("@/viewmodel/useNetworkStatus", () => ({ useNetworkStatus: vi.fn() }));
 
 import {
   type SearchModalityFilter,
+  type SearchPriceRange,
   type SearchSortOption,
   useSearchViewModel,
 } from "@/viewmodel/useSearchViewModel";
@@ -20,8 +21,10 @@ const book = (over: Partial<Book>): Book => ({
   id: "b1",
   title: "Dom Casmurro",
   author: "Machado de Assis",
+  category: "Literatura Brasileira",
   ownerId: "other",
   modality: "trade",
+  price: 25,
   status: "available",
   ...over,
 });
@@ -34,14 +37,22 @@ function setup(
     error?: string | null;
     history?: string[];
     modality?: SearchModalityFilter;
+    category?: string | "all";
+    priceRange?: SearchPriceRange;
     sortBy?: SearchSortOption;
+    availableCategories?: string[];
+    hasActiveFilters?: boolean;
   } = {},
 ) {
   const setTerm = vi.fn();
   const setModality = vi.fn();
+  const setCategory = vi.fn();
+  const setPriceRange = vi.fn();
   const setSortBy = vi.fn();
+  const clearFilters = vi.fn();
   const registerSearch = vi.fn();
   const clearHistory = vi.fn();
+
   vi.mocked(useSearchViewModel).mockReturnValue([
     {
       term,
@@ -50,11 +61,34 @@ function setup(
       error: options.error ?? null,
       history: options.history ?? [],
       modality: options.modality ?? "all",
+      category: options.category ?? "all",
+      priceRange: options.priceRange ?? "all",
       sortBy: options.sortBy ?? "recent",
+      availableCategories: options.availableCategories ?? ["Literatura Brasileira", "Didáticos"],
+      hasActiveFilters: options.hasActiveFilters ?? false,
     },
-    { setTerm, setModality, setSortBy, reload: vi.fn(), registerSearch, clearHistory },
+    {
+      setTerm,
+      setModality,
+      setCategory,
+      setPriceRange,
+      setSortBy,
+      clearFilters,
+      reload: vi.fn(),
+      registerSearch,
+      clearHistory,
+    },
   ]);
-  return { setTerm, setModality, setSortBy, registerSearch, clearHistory };
+  return {
+    setTerm,
+    setModality,
+    setCategory,
+    setPriceRange,
+    setSortBy,
+    clearFilters,
+    registerSearch,
+    clearHistory,
+  };
 }
 
 async function renderSearch(props: React.ComponentProps<typeof Search> = {}) {
@@ -63,12 +97,14 @@ async function renderSearch(props: React.ComponentProps<typeof Search> = {}) {
   return screen;
 }
 
-describe("Search (spec 006, US3/T019)", () => {
-  it("mostra os livros filtrados retornados pelo ViewModel", async () => {
+describe("Search (spec 006, US3/T019, Spec 028, Issue #93)", () => {
+  it("mostra os livros filtrados retornados pelo ViewModel com categoria e preço", async () => {
     setup([book({})]);
     const screen = await renderSearch();
     expect(screen.getByText("Dom Casmurro")).toBeDefined();
     expect(screen.getByText("Machado de Assis")).toBeDefined();
+    expect(screen.getAllByText("Literatura Brasileira").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText("R$ 25,00")).toBeDefined();
   });
 
   it("digitar no campo de busca chama setTerm (SC-002)", async () => {
@@ -82,7 +118,7 @@ describe("Search (spec 006, US3/T019)", () => {
     setup([], "termo-sem-correspondencia");
     const screen = await renderSearch();
     expect(screen.getByText("Nenhum livro encontrado.")).toBeDefined();
-    expect(screen.getByText("Tente buscar por outro título ou autor.")).toBeDefined();
+    expect(screen.getByText("Ainda não há livros no catálogo.")).toBeDefined();
   });
 
   it("navega para o detalhe do livro ao tocar num resultado e registra a busca no histórico", async () => {
@@ -147,5 +183,43 @@ describe("Search (spec 006, US3/T019)", () => {
       fireEvent.press(screen.getByLabelText("Filtrar por Troca"));
     });
     expect(setModality).toHaveBeenCalledWith("trade");
+  });
+
+  it("permite filtrar livros por categoria e preço (Spec 028, Issue #93)", async () => {
+    const { setCategory, setPriceRange, setSortBy } = setup([book({})], "", {
+      availableCategories: ["Literatura Brasileira", "Didáticos"],
+    });
+    const screen = await renderSearch();
+
+    expect(screen.getByText("Categoria:")).toBeDefined();
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Filtrar por categoria Literatura Brasileira"));
+    });
+    expect(setCategory).toHaveBeenCalledWith("Literatura Brasileira");
+
+    expect(screen.getByText("Preço:")).toBeDefined();
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Filtrar por Até R$ 20"));
+    });
+    expect(setPriceRange).toHaveBeenCalledWith("under20");
+
+    expect(screen.getByText("Ordenar por:")).toBeDefined();
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Ordenar por Menor preço"));
+    });
+    expect(setSortBy).toHaveBeenCalledWith("price_asc");
+  });
+
+  it("permite limpar filtros no cabeçalho ou no estado vazio quando houver filtros ativos", async () => {
+    const { clearFilters } = setup([], "termo", { hasActiveFilters: true });
+    const screen = await renderSearch();
+
+    expect(screen.getByText("Nenhum livro corresponde aos filtros selecionados.")).toBeDefined();
+
+    const clearButton = screen.getByLabelText("Limpar todos os filtros de busca");
+    await act(async () => {
+      fireEvent.press(clearButton);
+    });
+    expect(clearFilters).toHaveBeenCalledTimes(1);
   });
 });
