@@ -89,6 +89,9 @@ function createDataSources(): {
 const dataSources = createDataSources();
 const bookDataSource = dataSources.books;
 
+export const onboardingUseCases: IOnboardingUseCases = new OnboardingUseCases(
+  process.env.NODE_ENV === "test" ? new MemoryOnboardingDataSource() : new AsyncStorageOnboardingDataSource(),
+);
 export const searchAlertUseCases: ISearchAlertUseCases = new SearchAlertUseCases(dataSources.searchAlerts);
 export const searchHistoryUseCases: ISearchHistoryUseCases = new SearchHistoryUseCases(dataSources.searchHistory);
 export const favoriteUseCases: IFavoriteUseCases = new FavoriteUseCases(dataSources.favorites, bookDataSource);
