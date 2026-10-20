@@ -34,16 +34,16 @@ Como consequência, os critérios de aceite da issue #96 relativos a essas duas 
 | `/esqueci-senha` | `forgotPassword.tsx` | Achado 1, corrigido |
 | `/redefinir-senha` | `resetPassword.tsx` | Achado 1, corrigido |
 | `/excluir-conta` | `deleteAccount.tsx` | Aprovado — confirmação com rótulo e papel de botão |
-| `/anunciar` | `createListing.tsx` | Achado 1, corrigido; Chip de modalidade aprovado (texto + estado) |
-| `/editar-anuncio/[id]` | `editListing.tsx` | Achado 1, corrigido |
-| `/meus-anuncios` | `myListings.tsx` | Achado 2 (Dialog sem gestão de foco); status com `Tag` em texto, aprovado |
+| `/anunciar` | `createListing.tsx` | Achado 1; Chip de modalidade aprovado (texto + estado) |
+| `/editar-anuncio/[id]` | `editListing.tsx` | Achado 1 |
+| `/meus-anuncios` | `myListings.tsx` | Achado 2, corrigido (Dialog agora gerencia foco); status com `Tag` em texto, aprovado |
 | `/denunciar/[id]` | `reportListing.tsx` | Aprovado — opções com `accessibilityRole="radio"` e `accessibilityState`, campo de detalhes rotulado |
 | `/livro/[id]` | `bookDetail.tsx` | Aprovado — ações com rótulo explícito (favoritar, denunciar) |
 | `/negociacao/[id]` | `requestDetail.tsx` | Aprovado (ver nota) |
 | `/pedidos-recebidos` | `receivedRequests.tsx` | Aprovado (ver nota) |
 | `/meus-pedidos` | `sentRequests.tsx` | Aprovado (ver nota) |
-| `/pesquisa` | `search.tsx` | Achado 2 (Dialog de limpar histórico) |
-| `/alertas` | `searchAlerts.tsx` | Achado 1, corrigido (erro do alerta agora associado ao campo); Achado 2 (Dialog de exclusão) |
+| `/pesquisa` | `search.tsx` | Achado 2, corrigido (Dialog de limpar histórico) |
+| `/alertas` | `searchAlerts.tsx` | Achado 1 (erro do alerta não associado ao campo) e Achado 2, corrigido (Dialog de exclusão) |
 | `/favoritos` | `favorites.tsx` | Aprovado |
 | `/notificacoes` | `notifications.tsx` | Aprovado — item de notificação com rótulo combinando título e mensagem |
 | `/ajuda` | `helpAndFaq.tsx` | Aprovado — cabeçalho e botões de pergunta com papel |
@@ -76,17 +76,7 @@ com erro de validação.
 `accessibilityLabelledBy` no `TextInput` (RN Web) ou compor a mensagem no próprio
 `accessibilityLabel`/`accessibilityHint` do campo quando `hasError` for verdadeiro.
 
-**Correção aplicada (issue #104):** `src/view/components/TextField.tsx` e
-`src/view/search/searchAlerts.tsx` agora geram um `nativeID` estável (via `useId`) para o
-`<Text accessibilityRole="alert">` do erro e o referenciam em `aria-describedby` no
-`TextInput` — na Web isso vira `aria-describedby` real no DOM (react-native-web mapeia
-`nativeID` para `id`), associando semanticamente erro e campo. Como o React Native nativo
-(iOS/Android) não suporta `aria-describedby` no `TextInput`, a mesma mensagem também é
-exposta via `accessibilityHint` quando `hasError` é verdadeiro, lida pelo TalkBack/VoiceOver
-logo após o rótulo. Ambas as associações somem quando o erro é corrigido. Cobertura em
-`tests/components/designSystemFields.test.tsx` e `tests/components/favoritesAlertsView.test.tsx`.
-
-### Achado 2 — `Dialog` não gerencia foco, embora o design system declare isso (critério "Ordem de foco coerente e navegação por teclado na Web")
+### Achado 2 — `Dialog` não gerencia foco, embora o design system declare isso (critério "Ordem de foco coerente e navegação por teclado na Web") — **Corrigido na issue #105**
 
 **Onde:** `src/view/components/Dialog.tsx`, usado por `myListings.tsx`, `search.tsx` e
 `searchAlerts.tsx`.
@@ -106,7 +96,31 @@ telas que usam `Dialog` para confirmações.
 para o primeiro elemento focável do diálogo ao montar (ex. `ref` + `.focus()` condicionado a
 `Platform.OS === "web"`), e devolver o foco ao fechar.
 
-### Achado 3 — Abas sem contêiner `tablist` (critério "Rótulo e papel de todo elemento interativo") — **Corrigido na issue #106**
+**Correção aplicada (issue #105):** `src/view/components/Dialog.tsx` agora, só na Web
+(`Platform.OS === "web"`, já que no nativo o leitor de tela gerencia o foco do modal via
+`accessibilityViewIsModal`):
+
+- Ao abrir, captura `document.activeElement` (o gatilho) e move o foco para o primeiro botão
+  habilitado (`Cancelar` ou o de confirmação, se `loading` não tiver desabilitado nenhum).
+- Prende o foco com Tab/Shift+Tab entre os dois botões (ciclo), sem deixar escapar para o
+  conteúdo atrás do diálogo — lógica extraída na função pura `resolveDialogTabWrap` (exportada
+  e testada isoladamente, já que o ambiente de testes deste projeto não tem DOM real para
+  simular refs focáveis de verdade).
+- Esc cancela o diálogo, equivalente ao botão "Cancelar".
+- Ao fechar, devolve o foco ao elemento que abriu o diálogo.
+
+Cobertura em `tests/components/dialog.test.tsx`: testes unitários de `resolveDialogTabWrap`
+(ciclo nos dois sentidos), do atalho Esc (inclusive que não dispara quando já fechado ou fora
+da Web) e da devolução de foco ao fechar. **Limitação real deste ambiente:** como os testes
+rodam em Node sem jsdom (não há DOM real, só os mocks em `tests/mocks/react-native.ts`), os
+refs dos botões não são elementos focáveis de verdade — por isso a prisão de foco via Tab não
+pôde ser exercitada ponta a ponta nos testes de componente, só através da função pura extraída.
+A verificação manual num navegador real (Web, via CDP, sem Playwright — conforme exigido pelo
+projeto) também não foi possível nesta sessão: nenhuma ferramenta de navegador (Claude in
+Chrome/browser pane) estava conectada ao ambiente CLI usado. Fica pendente para quem tiver
+acesso a um navegador conectado, além do TalkBack em Android já registrado acima.
+
+### Achado 3 — Abas sem contêiner `tablist` (critério "Rótulo e papel de todo elemento interativo")
 
 **Onde:** `src/view/components/NavigationBar.tsx` e as abas Termos/Privacidade em
 `src/view/legal/termsAndPrivacy.tsx`. Ambos usam `accessibilityRole="tab"` nos itens
@@ -149,9 +163,11 @@ o estado selecionado/rótulo de cada aba continuam expostos individualmente. Cob
 - [ ] Rodar axe-core na Web (bloqueado: ferramenta só existe no ambiente compartilhado de outra
   máquina da equipe, ou precisa ser instalada neste projeto).
 - [ ] Verificar com TalkBack em aparelho Android real (bloqueado: sem hardware neste ambiente).
-- [x] Corrigir o achado 1 (issue #104, ver seção do achado acima).
-- [ ] Corrigir o achado 2 acima (fica para issue/PR seguinte, por decisão de entregar primeiro só o relatório).
-- [x] Corrigir o achado 3 (issue #106, ver seção do achado acima).
+- [x] Corrigir o achado 1 (issue #104, ver seção do achado acima — PR em revisão, ainda não
+  integrado nesta branch).
+- [x] Corrigir o achado 2 (issue #105, ver seção do achado acima).
+- [x] Corrigir o achado 3 (issue #106, ver seção do achado acima — PR em revisão, ainda não
+  integrado nesta branch).
 - [ ] Os ~50 tokens de cor não auditados manualmente, já registrados como lacuna em
   `design-system/06-acessibilidade.md` (linha 5-6), continuam sem verificação própria desta
   auditoria — herdados, não introduzidos agora.
@@ -160,10 +176,8 @@ o estado selecionado/rótulo de cada aba continuam expostos individualmente. Cob
 
 - `npm run validate`: aprovado (nenhuma alteração de código nesta entrega; validação roda limpa
   como já registrado em `docs/estado.md`).
-- **Issue #104 (correção do achado 1)**: `npm run validate` aprovado (473 testes em 78 arquivos,
-  cobertura acima de 80% nas 4 dimensões, arquitetura sem violações). Verificação manual de
-  associação `aria-describedby`/`nativeID` via testes de componente; TalkBack/VoiceOver em
-  aparelho real seguem pendentes pela mesma limitação de ambiente já registrada acima.
-- **Issue #106 (correção do achado 3)**: `npm run validate` aprovado. Verificação manual de que
-  os `tab`s individuais continuam acessíveis isoladamente (sem `accessible={true}` no
-  contêiner, que colapsaria os filhos em um único elemento para VoiceOver/TalkBack).
+- **Issue #105 (correção do achado 2)**: `npm run validate` aprovado (482 testes em 78 arquivos,
+  cobertura acima de 80% nas 4 dimensões, arquitetura sem violações). Verificação manual em
+  navegador real (Web, via CDP) não foi possível nesta sessão por falta de ferramenta de
+  navegador conectada ao ambiente CLI — mesma limitação categórica do TalkBack/axe-core já
+  registrada acima, agora também para este achado.
