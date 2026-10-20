@@ -26,7 +26,7 @@ Todas as métricas abaixo foram aferidas diretamente por execução dos scripts 
   10. `202610200003_storage_book_photos.sql` (criação do bucket público book-photos com limite de 5MB e políticas de RLS de upload/exclusão pelo proprietário - Issue #116)
 - **Semente Oficial da Beta (`npm run db:seed`)**: Script `scripts/popular-catalogo-piripiri.mjs` gerando 10 anúncios realistas distribuídos pelos bairros de Piripiri, PI com exportação SQL via `--sql`.
 - **Backend Supabase ativo**: O backend está configurado com `EXPO_PUBLIC_BACKEND=supabase` em `.env` e `.env.example`, integrado ao projeto oficial `xiuuiggpccpgrwkzeloc`. O histórico de migrações remotas foi reconciliado e `supabase db push` está operando normalmente.
-- **Rotas Web compiladas (`npm run build:web`)**: Exportação estática do Expo Router gerou com sucesso o pacote web em `dist/`, totalizando **23 rotas estáticas**:
+- **Rotas Web compiladas (`npm run build:web`)**: Exportação estática do Expo Router gerou com sucesso o pacote web em `dist/`, totalizando **23 rotas estáticas** com suporte completo a PWA (Web App Manifest em `dist/manifest.json`, meta tags de instalação standalone, `lang="pt-BR"` e cabeçalhos em `dist/_headers` - Spec 025, ADR 0020, Issue #121):
   - `/` (Catálogo e vitrine inicial com selo da beta em Piripiri, PI)
   - `/bem-vindo` (Boas-vindas e primeiro acesso com escolha opcional de bairro - Spec 026, ADR 0022)
   - `/pesquisa` (Busca no catálogo por termo e filtros, com histórico recente no dispositivo - Spec 027)
