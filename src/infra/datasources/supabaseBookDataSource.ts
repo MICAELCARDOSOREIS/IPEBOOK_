@@ -1,4 +1,4 @@
-import type { IBookDataSource } from "@/model/datasources/iBookDataSource";
+import type { IBookDataSource, ListBooksOptions } from "@/model/datasources/iBookDataSource";
 import type { Book } from "@/model/entities/book";
 import { DataSourceError } from "@/model/errors";
 import type { SupabaseAppClient } from "@/infra/supabaseClient";
@@ -42,12 +42,20 @@ function mapBook(row: BookRow): Book {
 export class SupabaseBookDataSource implements IBookDataSource {
   constructor(private readonly client: SupabaseAppClient) {}
 
-  async list(): Promise<readonly Book[]> {
-    const { data, error } = await this.client
+  async list(options?: ListBooksOptions): Promise<readonly Book[]> {
+    let query = this.client
       .from("v2_books")
       .select(BOOK_COLUMNS)
       .neq("status", "paused")
       .order("created_at", { ascending: false });
+
+    if (options?.limit !== undefined || options?.offset !== undefined) {
+      const offset = Math.max(0, options?.offset ?? 0);
+      const limit = Math.max(1, options?.limit ?? 20);
+      query = query.range(offset, offset + limit - 1);
+    }
+
+    const { data, error } = await query;
     if (error) throw new DataSourceError("Não foi possível carregar os livros.");
     return (data as BookRow[]).map(mapBook);
   }

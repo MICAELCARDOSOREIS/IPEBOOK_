@@ -188,6 +188,23 @@ describe("datasources Supabase", () => {
     expect(from).toHaveBeenCalledWith("v2_books");
   });
 
+  it("aplica paginação com range quando limit e offset são fornecidos (Issue #117)", async () => {
+    const row = { id: "p1", title: "Livro Paginado", author: "Autor", owner_id: "dono", modality: "donation", price: null, status: "available" };
+    const range = vi.fn().mockResolvedValue({ data: [row], error: null });
+    const order = vi.fn().mockReturnValue({ range });
+    const from = vi.fn().mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        neq: vi.fn().mockReturnValue({ order }),
+      }),
+    });
+    const books = new SupabaseBookDataSource(fakeClient({ from }));
+    const result = await books.list({ limit: 10, offset: 20 });
+
+    expect(range).toHaveBeenCalledWith(20, 29);
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe("p1");
+  });
+
   it("trata catálogo vazio, livro ausente e falhas do banco sem detalhes internos", async () => {
     const empty = new SupabaseBookDataSource(fakeClient({ from: vi.fn().mockReturnValue({
       select: vi.fn().mockReturnValue({
