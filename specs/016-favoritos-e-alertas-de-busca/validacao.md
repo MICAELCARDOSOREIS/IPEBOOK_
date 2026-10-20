@@ -24,3 +24,22 @@ Data: 2026-10-15. Branch: `feature/favoritos-alertas-busca`.
 - Um build web configurado localmente para Supabase foi testado no Chromium com duas contas descartáveis criadas sem envio de e-mail. O leitor criou o alerta; o anunciante publicou `Dom Casmurro` e não recebeu autoaviso; o leitor recebeu a notificação, favoritou, viu o livro na lista e desfavoritou no detalhe. A primeira execução revelou lista desatualizada ao voltar; após correção, o mesmo caminho exibiu o estado vazio. As duas contas foram removidas e consulta posterior confirmou zero registros nas quatro tabelas envolvidas. A configuração local e os arquivos temporários de credenciais foram removidos.
 - A publicação do aplicativo e o teste em dispositivo físico permanecem fora desta validação.
 - Não houve publicação nem push de código.
+
+## Issue #95 — Editar alerta de busca (2026-10-19, branch `feature/95-editar-alerta-busca`)
+
+- Adicionado `updateAlert`/`update` à interface, ao caso de uso e aos datasources de memória e
+  Supabase, reaproveitando a validação de termo da criação e a mesma regra de posse de
+  `deleteAlert`/`setActive` (filtro por `userId`, sem efeito para quem não é dono).
+- Tela `searchAlerts.tsx`: botão "Editar" por alerta que preenche o campo existente e troca a
+  ação para "Salvar edição"/"Cancelar edição" — acessível por teclado e leitor de tela (mesmos
+  `accessibilityRole`/`accessibilityLabel` dos demais controles da tela).
+- Testes adicionados: caso de uso (posse, revalidação do termo, novo casamento com o termo
+  atualizado e não mais com o antigo), datasource Supabase (`update` com filtro por conta e erro
+  de domínio em falha) e componente (edição ponta a ponta na tela).
+- `npm run validate`: aprovado — typecheck ok, arquitetura sem violações, 72 arquivos de teste e
+  441 testes passando (cobertura global 89,87% statements / 80,14% branches / 87,67% funções /
+  91,33% linhas).
+- Não há migração nova (confirmado: `v2_search_alerts` já tem a coluna `query`); `npm run
+  test:sql` não se aplica a esta mudança.
+- `npm run build:web` e teste em dispositivo/navegador real não foram executados nesta entrega;
+  ficam para a revisão do PR, se necessário.

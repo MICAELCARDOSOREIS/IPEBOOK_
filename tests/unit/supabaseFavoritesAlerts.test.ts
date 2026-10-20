@@ -43,6 +43,10 @@ describe("persistência Supabase de favoritos e alertas", () => {
     const updated = client({ data: [{ id: "a1" }], error: null });
     await new SupabaseSearchAlertDataSource(updated.value).setActive("u1", "a1", false);
     expect(updated.query.eq).toHaveBeenCalledWith("user_id", "u1");
+    const edited = client({ data: [{ id: "a1" }], error: null });
+    await new SupabaseSearchAlertDataSource(edited.value).update("u1", "a1", "Iracema");
+    expect(edited.query.update).toHaveBeenCalledWith({ query: "Iracema" });
+    expect(edited.query.eq).toHaveBeenCalledWith("user_id", "u1");
     const removed = client({ data: null, error: null });
     await new SupabaseSearchAlertDataSource(removed.value).remove("u1", "a1");
   });
@@ -53,6 +57,7 @@ describe("persistência Supabase de favoritos e alertas", () => {
     await expect(source.listByUser("u1")).rejects.toThrow("Não foi possível carregar alertas.");
     await expect(source.add("u1", "Casmurro")).rejects.toThrow("Não foi possível criar o alerta.");
     await expect(source.setActive("u1", "a1", false)).rejects.toThrow("Não foi possível atualizar o alerta.");
+    await expect(source.update("u1", "a1", "Iracema")).rejects.toThrow("Não foi possível atualizar o alerta.");
     await expect(source.remove("u1", "a1")).rejects.toThrow("Não foi possível excluir o alerta.");
   });
 });

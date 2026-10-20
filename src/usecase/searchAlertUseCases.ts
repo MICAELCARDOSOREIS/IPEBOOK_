@@ -15,13 +15,23 @@ export class SearchAlertUseCases implements ISearchAlertUseCases {
     return this.alerts.listByUser(this.requireUser(userId));
   }
 
-  async createAlert(userId: string | null, query: string) {
-    const owner = this.requireUser(userId);
+  private requireQuery(query: string): string {
     const value = query.trim();
     if (value.length < 2 || value.length > 100) {
       throw new ValidationError("Informe um termo entre 2 e 100 caracteres.");
     }
-    return this.alerts.add(owner, value);
+    return value;
+  }
+
+  async createAlert(userId: string | null, query: string) {
+    const owner = this.requireUser(userId);
+    return this.alerts.add(owner, this.requireQuery(query));
+  }
+
+  async updateAlert(userId: string | null, id: string, query: string) {
+    const owner = this.requireUser(userId);
+    if (!id.trim()) throw new ValidationError("Alerta inválido.");
+    await this.alerts.update(owner, id, this.requireQuery(query));
   }
 
   async setActive(userId: string | null, id: string, active: boolean) {

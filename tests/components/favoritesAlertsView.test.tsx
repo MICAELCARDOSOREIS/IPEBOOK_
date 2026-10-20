@@ -50,6 +50,18 @@ describe("favoritos e alertas (spec 016)", () => {
     expect(screen.getByRole("header", { name: "Você ainda não criou alertas." })).toBeDefined();
   });
 
+  it("edita o termo de um alerta existente", async () => {
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => { screen = await render(<SearchAlerts userId="usuario-edicao-alerta" initialQuery="Machado" onBack={vi.fn()} onLogin={vi.fn()} />); });
+    await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Criar alerta" })); });
+    expect(screen.getByText("Machado")).toBeDefined();
+    await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Editar alerta Machado" })); });
+    await act(async () => { fireEvent.changeText(screen.getByLabelText("Termo do alerta"), "Iracema"); });
+    await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Salvar edição" })); });
+    expect(screen.getByText("Iracema")).toBeDefined();
+    expect(screen.queryByText("Machado")).toBeNull();
+  });
+
   it("orienta a entrar para criar um alerta", async () => {
     const onLogin = vi.fn();
     let screen!: Awaited<ReturnType<typeof render>>;
