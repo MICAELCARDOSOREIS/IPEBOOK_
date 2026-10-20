@@ -47,7 +47,7 @@ Como consequência, os critérios de aceite da issue #96 relativos a essas duas 
 | `/favoritos` | `favorites.tsx` | Aprovado |
 | `/notificacoes` | `notifications.tsx` | Aprovado — item de notificação com rótulo combinando título e mensagem |
 | `/ajuda` | `helpAndFaq.tsx` | Aprovado — cabeçalho e botões de pergunta com papel |
-| `/termos` | `termsAndPrivacy.tsx` | Achado 3 (abas sem contêiner `tablist`) |
+| `/termos` | `termsAndPrivacy.tsx` | Achado 3, corrigido (abas agora em contêiner `tablist`) |
 
 Nota sobre `requestDetail.tsx`/`receivedRequests.tsx`/`sentRequests.tsx`: usam `Pressable` com
 `accessibilityRole`/`accessibilityLabel` consistentes com o restante do app; não apresentaram
@@ -96,7 +96,7 @@ telas que usam `Dialog` para confirmações.
 para o primeiro elemento focável do diálogo ao montar (ex. `ref` + `.focus()` condicionado a
 `Platform.OS === "web"`), e devolver o foco ao fechar.
 
-### Achado 3 — Abas sem contêiner `tablist` (critério "Rótulo e papel de todo elemento interativo")
+### Achado 3 — Abas sem contêiner `tablist` (critério "Rótulo e papel de todo elemento interativo") — **Corrigido na issue #106**
 
 **Onde:** `src/view/components/NavigationBar.tsx` e as abas Termos/Privacidade em
 `src/view/legal/termsAndPrivacy.tsx`. Ambos usam `accessibilityRole="tab"` nos itens
@@ -109,6 +109,16 @@ navegação por setas entre abas.
 
 **Sugestão para correção futura:** adicionar `accessibilityRole="tablist"` à `View` que envolve
 os itens nos dois componentes.
+
+**Correção aplicada (issue #106):** `accessibilityRole="tablist"` adicionado à `View` que
+agrupa os itens em `NavigationBar.tsx` e `termsAndPrivacy.tsx`. Não foi usado `accessible={true}`
+no contêiner: no React Native, `accessible={true}` faz a View ser tratada como um único
+elemento atômico por VoiceOver/TalkBack, escondendo os `tab`s individuais da navegação por
+leitor de tela — o que pioraria a acessibilidade em vez de corrigi-la. O papel do contêiner e
+o estado selecionado/rótulo de cada aba continuam expostos individualmente. Cobertura em
+`tests/components/navigationBar.test.tsx` e `tests/components/termsAndPrivacyView.test.tsx`
+(cada `View` recebeu um `testID` só para a asserção do papel, já que a consulta por role do
+`@testing-library/react-native` não enxerga contêineres não marcados como `accessible`).
 
 ## O que foi verificado e aprovado, sem achados
 
@@ -129,8 +139,11 @@ os itens nos dois componentes.
 - [ ] Rodar axe-core na Web (bloqueado: ferramenta só existe no ambiente compartilhado de outra
   máquina da equipe, ou precisa ser instalada neste projeto).
 - [ ] Verificar com TalkBack em aparelho Android real (bloqueado: sem hardware neste ambiente).
-- [ ] Corrigir os achados 1, 2 e 3 acima (ficam para issue(s)/PR(s) seguintes, por decisão de
-  entregar primeiro só o relatório).
+- [x] Corrigir o achado 1 (issue #104, ver seção do achado acima — PR em revisão, ainda não
+  integrado nesta branch).
+- [ ] Corrigir o achado 2 acima (fica para issue/PR seguinte, por decisão de entregar primeiro
+  só o relatório).
+- [x] Corrigir o achado 3 (issue #106, ver seção do achado acima).
 - [ ] Os ~50 tokens de cor não auditados manualmente, já registrados como lacuna em
   `design-system/06-acessibilidade.md` (linha 5-6), continuam sem verificação própria desta
   auditoria — herdados, não introduzidos agora.
@@ -139,3 +152,7 @@ os itens nos dois componentes.
 
 - `npm run validate`: aprovado (nenhuma alteração de código nesta entrega; validação roda limpa
   como já registrado em `docs/estado.md`).
+- **Issue #106 (correção do achado 3)**: `npm run validate` aprovado (471 testes em 78 arquivos,
+  cobertura acima de 80% nas 4 dimensões, arquitetura sem violações). Verificação manual de que
+  os `tab`s individuais continuam acessíveis isoladamente (sem `accessible={true}` no
+  contêiner, que colapsaria os filhos em um único elemento para VoiceOver/TalkBack).

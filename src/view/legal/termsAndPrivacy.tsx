@@ -23,7 +23,7 @@ export default function TermsAndPrivacy({
     <SafeAreaView style={styles.page}>
       <TopAppBar title="Termos e Privacidade" onBack={() => onBack?.()} />
       <View style={styles.content}>
-        <View style={styles.tabs}>
+        <View testID="terms-privacy-tablist" accessibilityRole="tablist" style={styles.tabs}>
           <Pressable
             accessibilityRole="tab"
             accessibilityState={{ selected: activeTab === "terms" }}
