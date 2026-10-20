@@ -124,6 +124,28 @@ describe("BookDetail (spec 006, US6/T029)", () => {
     expect(onNavigateToUserProfile).toHaveBeenCalledWith("owner-xyz");
   });
 
+  it("oferece ver fotos em tela cheia quando há foto de capa (Spec 018)", async () => {
+    setup(book({ photoUrl: "capa.jpg" }), user);
+    const screen = await renderDetail();
+    const trigger = screen.getByLabelText("Ver fotos do anúncio em tela cheia");
+    await act(async () => { fireEvent.press(trigger); });
+    expect(screen.getByLabelText("Fechar galeria de fotos")).toBeDefined();
+  });
+
+  it("não oferece ver fotos quando o anúncio só tem capa ilustrativa (Spec 018)", async () => {
+    setup(book({ photoUrl: undefined, photos: undefined }), user);
+    const screen = await renderDetail();
+    expect(screen.queryByLabelText("Ver fotos do anúncio em tela cheia")).toBeNull();
+  });
+
+  it("aciona onNavigateToReport ao tocar em denunciar anúncio", async () => {
+    setup(book({ ownerId: "other" }), user);
+    const onNavigateToReport = vi.fn();
+    const screen = await renderDetail({ onNavigateToReport });
+    await act(async () => { fireEvent.press(screen.getByLabelText("Denunciar anúncio")); });
+    expect(onNavigateToReport).toHaveBeenCalledWith("b1");
+  });
+
   it("aciona onBack ao tocar no botão voltar da barra superior (FR-011)", async () => {
     setup(book({}), user);
     const onBack = vi.fn();

@@ -8,8 +8,9 @@ export default function LivroDetalhe() {
     <BookDetail
       bookId={id}
       onBack={() => router.back()}
-      // "/usuario/[id]" ainda não existe (é da issue #55); já aponta para lá, conforme US5.
-      onNavigateToUserProfile={(ownerId) => router.push(`/usuario/${ownerId}` as Href)}
+      // Perfil público (somente leitura) de quem anuncia — Spec 018/Issue #73. Distinto da
+      // futura rota de edição do próprio perfil (fluxo 07, issues #55/#56).
+      onNavigateToUserProfile={(ownerId) => router.push(`/perfil/${ownerId}` as Href)}
       onNavigateToReport={(bookId) => router.push(`/denunciar/${bookId}` as Href)}
     />
   );
