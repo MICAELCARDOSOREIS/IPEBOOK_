@@ -1,14 +1,15 @@
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import type { AppNotification } from "@/model/entities/notification";
+import type { AppIconName } from "@/view/components/AppIcon";
 import { ErrorState } from "@/view/components/ErrorState";
 import { FilledButton } from "@/view/components/FilledButton";
+import { IconBadge, type IconBadgeTone } from "@/view/components/IconBadge";
 import { LoadingState } from "@/view/components/LoadingState";
 import { OfflineState } from "@/view/components/OfflineState";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { tokens } from "@/view/tokens";
 import {
-  type NotificationFilter,
   useNotificationsViewModel,
 } from "@/viewmodel/useNotificationsViewModel";
 import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
@@ -20,14 +21,21 @@ export type NotificationsProps = {
   onNavigateToAction?: (actionUrl: string) => void;
 };
 
-const TYPE_ICONS: Record<AppNotification["type"], string> = {
-  request_received: "📬",
-  request_accepted: "🤝",
-  safety_tip: "🛡️",
-  system: "ℹ️",
-  search_alert_match: "📚",
+const TYPE_BADGES: Record<
+  AppNotification["type"],
+  { icon: AppIconName; tone: IconBadgeTone }
+> = {
+  request_received: { icon: "mail", tone: "action" },
+  request_accepted: { icon: "swap", tone: "trade" },
+  safety_tip: { icon: "info", tone: "neutral" },
+  system: { icon: "info", tone: "neutral" },
+  search_alert_match: { icon: "shelf", tone: "donation" },
 };
 
+/**
+ * Figma `07.04 · Notificações` (`25:812` / Web `148:1020`) e
+ * `07.13 · Notificações · vazio` (`254:6456` / Web `370:17181`).
+ */
 export default function Notifications({
   sessionUserId,
   onBack,
@@ -42,7 +50,7 @@ export default function Notifications({
       <SafeAreaView style={styles.page}>
         <TopAppBar title="Notificações" onBack={() => onBack?.()} />
         <View style={styles.centered}>
-          <Text style={styles.iconLarge}>🔔</Text>
+          <IconBadge icon="bell" tone="action" />
           <Text accessibilityRole="header" style={styles.emptyTitle}>
             Sessão necessária
           </Text>
@@ -64,9 +72,8 @@ export default function Notifications({
     <SafeAreaView style={styles.page}>
       <TopAppBar title="Notificações" onBack={() => onBack?.()} />
       <View style={styles.content}>
-        {/* Barra de Filtros e Ações */}
         <View style={styles.filterBar}>
-          <View style={styles.filterTabs}>
+          <View accessibilityRole="tablist" style={styles.filterTabs}>
             <Pressable
               accessibilityRole="tab"
               accessibilityState={{ selected: state.filter === "all" }}
@@ -111,7 +118,6 @@ export default function Notifications({
           ) : null}
         </View>
 
-        {/* Estados de Carregamento e Erro */}
         {state.loading ? (
           <LoadingState label="Carregando notificações" />
         ) : state.error ? (
@@ -122,7 +128,7 @@ export default function Notifications({
           )
         ) : state.filteredNotifications.length === 0 ? (
           <View style={styles.centered}>
-            <Text style={styles.iconLarge}>📭</Text>
+            <IconBadge icon="bell" tone="neutral" />
             <Text accessibilityRole="header" style={styles.emptyTitle}>
               {state.filter === "unread" ? "Nenhuma notificação não lida" : "Nenhuma notificação"}
             </Text>
@@ -138,7 +144,7 @@ export default function Notifications({
             keyExtractor={(item) => item.id}
             contentContainerStyle={styles.listContent}
             renderItem={({ item }) => {
-              const icon = TYPE_ICONS[item.type] ?? "ℹ️";
+              const badge = TYPE_BADGES[item.type] ?? { icon: "info", tone: "neutral" as const };
               return (
                 <Pressable
                   accessibilityRole="button"
@@ -154,7 +160,7 @@ export default function Notifications({
                   style={[styles.card, !item.read && styles.cardUnread]}
                 >
                   <View style={styles.cardHeader}>
-                    <Text style={styles.cardTypeIcon}>{icon}</Text>
+                    <IconBadge icon={badge.icon} tone={badge.tone} />
                     <View style={styles.cardTitleContainer}>
                       <Text style={[styles.cardTitle, !item.read && styles.cardTitleUnread]}>
                         {item.title}
@@ -178,7 +184,14 @@ export default function Notifications({
 
 const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: tokens.colors.background },
-  content: { flex: 1, paddingHorizontal: tokens.spacing[16], paddingTop: tokens.spacing[8] },
+  content: {
+    flex: 1,
+    width: "100%",
+    maxWidth: 720,
+    alignSelf: "center",
+    paddingHorizontal: tokens.spacing[16],
+    paddingTop: tokens.spacing[8],
+  },
   filterBar: {
     flexDirection: "row",
     alignItems: "center",
@@ -192,12 +205,14 @@ const styles = StyleSheet.create({
     gap: tokens.spacing[8],
   },
   filterChip: {
+    minHeight: tokens.spacing[32],
+    justifyContent: "center",
     paddingHorizontal: tokens.spacing[12],
     paddingVertical: tokens.spacing[6],
     borderRadius: tokens.radius.full,
     backgroundColor: tokens.colors.surface,
     borderWidth: 1,
-    borderColor: tokens.colors.border,
+    borderColor: tokens.colors.m3.outlineVariant,
   },
   filterChipActive: {
     backgroundColor: tokens.colors.action,
@@ -212,6 +227,8 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   markAllButton: {
+    minHeight: tokens.accessibility.touchTarget,
+    justifyContent: "center",
     paddingHorizontal: tokens.spacing[8],
     paddingVertical: tokens.spacing[6],
   },
@@ -222,14 +239,17 @@ const styles = StyleSheet.create({
   },
   centered: {
     flex: 1,
+    width: "100%",
+    maxWidth: 560,
+    alignSelf: "center",
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: tokens.spacing[24],
     gap: tokens.spacing[12],
   },
-  iconLarge: { fontSize: 48 },
   emptyTitle: {
     ...tokens.typography.titleMedium,
+    fontFamily: tokens.typography.displayLarge.fontFamily,
     color: tokens.colors.text,
     textAlign: "center",
   },
@@ -237,7 +257,6 @@ const styles = StyleSheet.create({
     ...tokens.typography.bodyMedium,
     color: tokens.colors.secondaryText,
     textAlign: "center",
-    lineHeight: 20,
   },
   buttonWrapper: {
     marginTop: tokens.spacing[12],
@@ -253,40 +272,37 @@ const styles = StyleSheet.create({
     borderRadius: tokens.radius.medium,
     padding: tokens.spacing[16],
     borderWidth: 1,
-    borderColor: tokens.colors.border,
+    borderColor: tokens.colors.m3.outlineVariant,
     gap: tokens.spacing[8],
   },
   cardUnread: {
     borderColor: tokens.colors.action,
-    borderLeftWidth: 4,
-    backgroundColor: "#F7FAF8",
+    borderLeftWidth: tokens.spacing[4],
+    backgroundColor: tokens.colors.soft,
   },
   cardHeader: {
     flexDirection: "row",
     alignItems: "center",
     gap: tokens.spacing[8],
   },
-  cardTypeIcon: { fontSize: 20 },
   cardTitleContainer: { flex: 1 },
   cardTitle: {
     ...tokens.typography.titleMedium,
     color: tokens.colors.text,
-    fontSize: 16,
   },
   cardTitleUnread: {
     fontWeight: "700",
     color: tokens.colors.actionDeep,
   },
   unreadDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+    width: tokens.spacing[8],
+    height: tokens.spacing[8],
+    borderRadius: tokens.radius.full,
     backgroundColor: tokens.colors.action,
   },
   cardMessage: {
     ...tokens.typography.bodyMedium,
     color: tokens.colors.secondaryText,
-    lineHeight: 20,
   },
   actionHint: {
     ...tokens.typography.labelMedium,

@@ -2,84 +2,304 @@ import { useId, useState } from "react";
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Dialog } from "@/view/components/Dialog";
+import { FilledButton } from "@/view/components/FilledButton";
+import { IconBadge } from "@/view/components/IconBadge";
+import { Tag } from "@/view/components/Tag";
+import { TextButton } from "@/view/components/TextButton";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { tokens } from "@/view/tokens";
 import { useSearchAlertsViewModel } from "@/viewmodel/useSearchAlertsViewModel";
 
 export type SearchAlertsProps = { userId: string | null; initialQuery?: string; onBack: () => void; onLogin: () => void };
 
+/**
+ * Figma `02.07 · Meus alertas` (`145:2921` / Web `370:17381`),
+ * `02.08 · Avisaremos você` (`19:420` / Web `148:968`),
+ * `02.09`–`02.13` (`254:4285`–`254:4728` / Web `370:15901`–`370:16061`).
+ */
 export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogin }: SearchAlertsProps) {
   const [state, actions] = useSearchAlertsViewModel(userId, initialQuery);
   const [alertToDelete, setAlertToDelete] = useState<{ id: string; query: string } | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const errorId = useId();
   const hasError = Boolean(state.error);
-  const cancelEdit = () => { setEditingId(null); actions.setQuery(""); };
+  const cancelEdit = () => {
+    setEditingId(null);
+    actions.setQuery("");
+  };
   const saveEdit = async () => {
-    if (!editingId) { await actions.create(); return; }
+    if (!editingId) {
+      await actions.create();
+      return;
+    }
     if (await actions.update(editingId, state.query)) setEditingId(null);
   };
-  return <SafeAreaView style={styles.page}>
-    <TopAppBar title="Meus alertas" onBack={onBack} />
-    {!userId ? <View style={styles.content}>
-      <Text accessibilityRole="header" style={styles.title}>Entre para criar alertas</Text>
-      <Pressable accessibilityRole="button" onPress={onLogin}><Text style={styles.link}>Entrar</Text></Pressable>
-    </View> : <View style={styles.content}>
-      <Text style={styles.body}>Avisaremos na central de notificações quando surgir um livro com este título ou autor.</Text>
-      <TextInput accessibilityLabel="Termo do alerta" value={state.query} onChangeText={actions.setQuery}
-        accessibilityHint={hasError ? state.error ?? undefined : undefined}
-        aria-describedby={hasError ? errorId : undefined}
-        placeholder="Título ou autor" style={styles.input} maxLength={100} />
-      <Pressable accessibilityRole="button" onPress={() => void saveEdit()} style={styles.action}>
-        <Text style={styles.actionText}>{editingId ? "Salvar edição" : "Criar alerta"}</Text>
-      </Pressable>
-      {editingId ? <Pressable accessibilityRole="button" onPress={cancelEdit} style={styles.smallAction}>
-        <Text style={styles.link}>Cancelar edição</Text>
-      </Pressable> : null}
-      {state.message ? <Text accessibilityRole="alert" style={styles.body}>{state.message}</Text> : null}
-      {hasError ? <Text nativeID={errorId} accessibilityRole="alert" style={styles.error}>{state.error}</Text> : null}
-      {state.loading ? <ActivityIndicator accessibilityLabel="Carregando alertas" /> :
-        <FlatList data={state.alerts} keyExtractor={(item) => item.id}
-          ListEmptyComponent={<Text accessibilityRole="header" style={styles.body}>Você ainda não criou alertas.</Text>}
-          renderItem={({ item }) => <View style={styles.row}>
-            <View style={styles.rowText}><Text style={styles.title}>{item.query}</Text><Text style={styles.body}>{item.active ? "Ativo" : "Pausado"}</Text></View>
-            <Pressable accessibilityRole="button" accessibilityLabel={`Editar alerta ${item.query}`}
-              onPress={() => { setEditingId(item.id); actions.setQuery(item.query); }} style={styles.smallAction}><Text style={styles.link}>Editar</Text></Pressable>
-            <Pressable accessibilityRole="button" accessibilityLabel={item.active ? `Pausar alerta ${item.query}` : `Retomar alerta ${item.query}`}
-              onPress={() => void actions.setActive(item.id, !item.active)} style={styles.smallAction}><Text style={styles.link}>{item.active ? "Pausar" : "Retomar"}</Text></Pressable>
-            <Pressable accessibilityRole="button" accessibilityLabel={`Excluir alerta ${item.query}`}
-              onPress={() => setAlertToDelete({ id: item.id, query: item.query })} style={styles.smallAction}><Text style={styles.error}>Excluir</Text></Pressable>
-          </View>} />}
-      <Dialog
-        visible={alertToDelete !== null}
-        title="Excluir este alerta?"
-        message={alertToDelete ? `Tem certeza de que deseja excluir o alerta de busca para "${alertToDelete.query}"?` : ""}
-        confirmLabel="Confirmar exclusão"
-        cancelLabel="Cancelar"
-        destructive
-        onCancel={() => setAlertToDelete(null)}
-        onConfirm={() => {
-          if (alertToDelete) {
-            const id = alertToDelete.id;
-            setAlertToDelete(null);
-            void actions.remove(id);
-          }
-        }}
-      />
-    </View>}
-  </SafeAreaView>;
+
+  return (
+    <SafeAreaView style={styles.page}>
+      <TopAppBar title="Meus alertas" onBack={onBack} />
+      {!userId ? (
+        <View style={styles.centered}>
+          <IconBadge icon="bell" tone="action" />
+          <Text accessibilityRole="header" style={styles.emptyTitle}>
+            Entre para criar alertas
+          </Text>
+          <Text style={styles.bodyCenter}>
+            Receba um aviso quando alguém anunciar o livro que você procura em Piripiri.
+          </Text>
+          <Pressable accessibilityRole="button" onPress={onLogin} style={styles.loginButton}>
+            <Text style={styles.link}>Entrar</Text>
+          </Pressable>
+        </View>
+      ) : (
+        <View style={styles.content}>
+          <View style={styles.formCard}>
+            <Text style={styles.formTitle}>
+              {editingId ? "Editar alerta de busca" : "Avisaremos você"}
+            </Text>
+            <Text style={styles.body}>
+              Avisaremos na central de notificações quando surgir um livro com este título ou autor.
+            </Text>
+            <TextInput
+              accessibilityLabel="Termo do alerta"
+              value={state.query}
+              onChangeText={actions.setQuery}
+              accessibilityHint={hasError ? state.error ?? undefined : undefined}
+              aria-describedby={hasError ? errorId : undefined}
+              placeholder="Título ou autor"
+              placeholderTextColor={tokens.colors.secondaryText}
+              style={[styles.input, hasError && styles.inputError]}
+              maxLength={100}
+            />
+            {hasError ? (
+              <Text nativeID={errorId} accessibilityRole="alert" style={styles.error}>
+                {state.error}
+              </Text>
+            ) : null}
+            {state.message ? (
+              <Text accessibilityRole="alert" style={styles.successMessage}>
+                {state.message}
+              </Text>
+            ) : null}
+            <FilledButton
+              label={editingId ? "Salvar edição" : "Criar alerta"}
+              onPress={() => void saveEdit()}
+            />
+            {editingId ? (
+              <TextButton label="Cancelar edição" onPress={cancelEdit} />
+            ) : null}
+          </View>
+
+          {state.loading ? (
+            <ActivityIndicator color={tokens.colors.action} accessibilityLabel="Carregando alertas" />
+          ) : (
+            <FlatList
+              data={state.alerts}
+              keyExtractor={(item) => item.id}
+              contentContainerStyle={styles.listContent}
+              ListEmptyComponent={
+                <View style={styles.emptyBox}>
+                  <IconBadge icon="bell" tone="neutral" />
+                  <Text accessibilityRole="header" style={styles.emptyTitle}>
+                    Você ainda não criou alertas.
+                  </Text>
+                  <Text style={styles.bodyCenter}>
+                    Digite um título ou autor acima para ser avisado quando ele chegar à estante comunitária de Piripiri.
+                  </Text>
+                </View>
+              }
+              renderItem={({ item }) => (
+                <View style={styles.row}>
+                  <View style={styles.rowText}>
+                    <Text style={styles.title}>{item.query}</Text>
+                    <Tag
+                      variant={item.active ? "available" : "paused"}
+                      label={item.active ? "Ativo" : "Pausado"}
+                    />
+                  </View>
+                  <View style={styles.rowActions}>
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={`Editar alerta ${item.query}`}
+                      onPress={() => {
+                        setEditingId(item.id);
+                        actions.setQuery(item.query);
+                      }}
+                      style={styles.smallAction}
+                    >
+                      <Text style={styles.link}>Editar</Text>
+                    </Pressable>
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={
+                        item.active ? `Pausar alerta ${item.query}` : `Retomar alerta ${item.query}`
+                      }
+                      onPress={() => void actions.setActive(item.id, !item.active)}
+                      style={styles.smallAction}
+                    >
+                      <Text style={styles.link}>{item.active ? "Pausar" : "Retomar"}</Text>
+                    </Pressable>
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={`Excluir alerta ${item.query}`}
+                      onPress={() => setAlertToDelete({ id: item.id, query: item.query })}
+                      style={styles.smallAction}
+                    >
+                      <Text style={styles.deleteText}>Excluir</Text>
+                    </Pressable>
+                  </View>
+                </View>
+              )}
+            />
+          )}
+          <Dialog
+            visible={alertToDelete !== null}
+            title="Excluir este alerta?"
+            message={
+              alertToDelete
+                ? `Tem certeza de que deseja excluir o alerta de busca para "${alertToDelete.query}"?`
+                : ""
+            }
+            confirmLabel="Confirmar exclusão"
+            cancelLabel="Cancelar"
+            destructive
+            onCancel={() => setAlertToDelete(null)}
+            onConfirm={() => {
+              if (alertToDelete) {
+                const id = alertToDelete.id;
+                setAlertToDelete(null);
+                void actions.remove(id);
+              }
+            }}
+          />
+        </View>
+      )}
+    </SafeAreaView>
+  );
 }
 
 const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: tokens.colors.background },
-  content: { flex: 1, padding: tokens.spacing[24], gap: tokens.spacing[16] },
-  title: { fontSize: 17, color: tokens.colors.action, fontWeight: "600" },
-  body: { color: tokens.colors.secondaryText, fontSize: 15 },
-  error: { color: tokens.colors.error, fontSize: 15 },
-  link: { color: tokens.colors.action, fontWeight: "600" },
-  input: { minHeight: tokens.accessibility.touchTarget, borderWidth: 1, borderColor: tokens.colors.border, backgroundColor: tokens.colors.surface, borderRadius: tokens.radius.small, paddingHorizontal: tokens.spacing[12] },
-  action: { minHeight: tokens.accessibility.touchTarget, justifyContent: "center", alignItems: "center", borderRadius: tokens.radius.small, backgroundColor: tokens.colors.action },
-  actionText: { color: tokens.colors.surface, fontWeight: "600" },
-  row: { flexDirection: "row", alignItems: "center", borderBottomWidth: 1, borderBottomColor: tokens.colors.border, paddingVertical: tokens.spacing[12] },
-  rowText: { flex: 1 }, smallAction: { minHeight: tokens.accessibility.touchTarget, justifyContent: "center", paddingHorizontal: tokens.spacing[8] },
+  content: {
+    flex: 1,
+    width: "100%",
+    maxWidth: 720,
+    alignSelf: "center",
+    padding: tokens.spacing[24],
+    gap: tokens.spacing[16],
+  },
+  centered: {
+    flex: 1,
+    width: "100%",
+    maxWidth: 560,
+    alignSelf: "center",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: tokens.spacing[24],
+    gap: tokens.spacing[12],
+  },
+  formCard: {
+    backgroundColor: tokens.colors.m3.surfaceContainerLow,
+    borderRadius: tokens.radius.medium,
+    borderWidth: 1,
+    borderColor: tokens.colors.m3.outlineVariant,
+    padding: tokens.spacing[16],
+    gap: tokens.spacing[12],
+  },
+  formTitle: {
+    ...tokens.typography.titleMedium,
+    fontFamily: tokens.typography.displayLarge.fontFamily,
+    color: tokens.colors.text,
+  },
+  title: {
+    ...tokens.typography.titleMedium,
+    fontFamily: tokens.typography.displayLarge.fontFamily,
+    color: tokens.colors.text,
+  },
+  emptyTitle: {
+    ...tokens.typography.titleMedium,
+    fontFamily: tokens.typography.displayLarge.fontFamily,
+    color: tokens.colors.text,
+    textAlign: "center",
+  },
+  body: {
+    ...tokens.typography.bodyMedium,
+    color: tokens.colors.secondaryText,
+  },
+  bodyCenter: {
+    ...tokens.typography.bodyMedium,
+    color: tokens.colors.secondaryText,
+    textAlign: "center",
+  },
+  error: {
+    ...tokens.typography.bodyMedium,
+    color: tokens.colors.error,
+  },
+  successMessage: {
+    ...tokens.typography.bodyMedium,
+    color: tokens.colors.success,
+    fontWeight: "600",
+  },
+  link: {
+    ...tokens.typography.bodyMedium,
+    color: tokens.colors.action,
+    fontWeight: "600",
+  },
+  deleteText: {
+    ...tokens.typography.bodyMedium,
+    color: tokens.colors.error,
+    fontWeight: "600",
+  },
+  loginButton: {
+    minHeight: tokens.accessibility.touchTarget,
+    justifyContent: "center",
+    paddingHorizontal: tokens.spacing[16],
+  },
+  input: {
+    minHeight: tokens.accessibility.touchTarget,
+    borderWidth: 1,
+    borderColor: tokens.colors.m3.outline,
+    backgroundColor: tokens.colors.surface,
+    borderRadius: tokens.radius.small,
+    paddingHorizontal: tokens.spacing[12],
+    ...tokens.typography.bodyLarge,
+    color: tokens.colors.text,
+  },
+  inputError: {
+    borderColor: tokens.colors.error,
+  },
+  listContent: {
+    gap: tokens.spacing[12],
+    paddingBottom: tokens.spacing[24],
+  },
+  emptyBox: {
+    alignItems: "center",
+    padding: tokens.spacing[24],
+    gap: tokens.spacing[8],
+  },
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: tokens.colors.surface,
+    borderRadius: tokens.radius.medium,
+    borderWidth: 1,
+    borderColor: tokens.colors.m3.outlineVariant,
+    padding: tokens.spacing[16],
+    gap: tokens.spacing[12],
+  },
+  rowText: {
+    flex: 1,
+    gap: tokens.spacing[6],
+  },
+  rowActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: tokens.spacing[4],
+  },
+  smallAction: {
+    minHeight: tokens.accessibility.touchTarget,
+    justifyContent: "center",
+    paddingHorizontal: tokens.spacing[8],
+  },
 });

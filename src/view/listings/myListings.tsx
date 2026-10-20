@@ -9,12 +9,13 @@ import { BookCover } from "@/view/components/BookCover";
 import { Dialog } from "@/view/components/Dialog";
 import { ErrorState } from "@/view/components/ErrorState";
 import { FilledButton } from "@/view/components/FilledButton";
+import { IconBadge } from "@/view/components/IconBadge";
 import { LoadingState } from "@/view/components/LoadingState";
 import { OfflineState } from "@/view/components/OfflineState";
 import { Snackbar } from "@/view/components/Snackbar";
 import { Tag } from "@/view/components/Tag";
 import { TopAppBar } from "@/view/components/TopAppBar";
-import type { Book } from "@/model/entities/book";
+import { BOOK_CONDITION_LABELS, type Book } from "@/model/entities/book";
 
 export type MyListingsProps = {
   sessionUserId: string;
@@ -25,6 +26,11 @@ export type MyListingsProps = {
   onNavigateToManageListing?: (bookId: string) => void;
 };
 
+/**
+ * Figma `05.01 · Estante` (`25:302` / Web `159:1728`),
+ * `05.02 · Estante vazia` (`25:430` / Web `159:1857`) e
+ * `05.07 · Estante após exclusão` (`403:7319` / Web `403:22271`).
+ */
 export function MyListings({
   sessionUserId,
   onBack,
@@ -75,8 +81,11 @@ export function MyListings({
               contentContainerStyle={styles.list}
               ListEmptyComponent={
                 <View style={styles.empty}>
+                  <IconBadge icon="shelf" tone="neutral" />
                   <Text style={styles.emptyTitle}>Você ainda não cadastrou nenhum anúncio.</Text>
-                  <Text style={styles.body}>Compartilhe livros com a sua comunidade desapegando dos que já leu.</Text>
+                  <Text style={styles.body}>
+                    Compartilhe livros com a sua comunidade desapegando dos que já leu.
+                  </Text>
                   <View style={styles.emptyAction}>
                     <FilledButton
                       label="Cadastrar anúncio"
@@ -86,6 +95,13 @@ export function MyListings({
                 </View>
               }
               renderItem={({ item }) => {
+                const extraMeta = [
+                  item.condition ? BOOK_CONDITION_LABELS[item.condition] : null,
+                  item.neighborhood,
+                ]
+                  .filter(Boolean)
+                  .join(" · ");
+
                 return (
                   <Pressable
                     accessibilityRole="button"
@@ -100,6 +116,7 @@ export function MyListings({
                         <Tag variant={item.modality} />
                       </View>
                       <Text style={styles.bookAuthor}>{item.author}</Text>
+                      {extraMeta ? <Text style={styles.bookMeta}>{extraMeta}</Text> : null}
                       <View style={styles.statusRow}>
                         <Tag variant={item.status} />
                         {item.modality === "sale" && item.price ? (
@@ -140,7 +157,7 @@ export function MyListings({
                                   setFeedbackMessage(
                                     wasPaused
                                       ? `Anúncio de "${item.title}" reativado no catálogo.`
-                                      : `Anúncio de "${item.title}" pausado. Ele não aparecerá no catálogo público.`
+                                      : `Anúncio de "${item.title}" pausado. Ele não aparecerá no catálogo público.`,
                                   );
                                 }
                               }}
@@ -150,8 +167,8 @@ export function MyListings({
                                 {state.pausingId === item.id
                                   ? "Aguarde..."
                                   : item.status === "paused"
-                                  ? "Retomar"
-                                  : "Pausar"}
+                                    ? "Retomar"
+                                    : "Pausar"}
                               </Text>
                             </Pressable>
                           </>
@@ -248,15 +265,15 @@ const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: tokens.colors.background },
   content: { flex: 1, width: "100%", maxWidth: 720, alignSelf: "center", paddingHorizontal: tokens.spacing[16] },
   body: {
-    fontSize: tokens.typography.bodyMedium.fontSize,
+    ...tokens.typography.bodyMedium,
     color: tokens.colors.secondaryText,
     textAlign: "center",
   },
   list: { paddingVertical: tokens.spacing[16], gap: tokens.spacing[12] },
-  empty: { paddingTop: tokens.spacing[48], alignItems: "center", gap: tokens.spacing[8] },
+  empty: { paddingTop: tokens.spacing[48], alignItems: "center", gap: tokens.spacing[12] },
   emptyTitle: {
-    fontSize: tokens.typography.titleMedium.fontSize,
-    fontWeight: "bold",
+    ...tokens.typography.titleMedium,
+    fontFamily: tokens.typography.displayLarge.fontFamily,
     color: tokens.colors.text,
     textAlign: "center",
   },
@@ -269,54 +286,34 @@ const styles = StyleSheet.create({
     padding: tokens.spacing[12],
     gap: tokens.spacing[12],
     borderWidth: 1,
-    borderColor: tokens.colors.border,
+    borderColor: tokens.colors.m3.outlineVariant,
   },
-  bookInfo: { flex: 1, gap: 4 },
-  bookHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: 8 },
+  bookInfo: { flex: 1, gap: tokens.spacing[4] },
+  bookHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: tokens.spacing[8] },
   bookTitle: {
     flex: 1,
-    fontSize: tokens.typography.titleMedium.fontSize,
-    fontWeight: "bold",
+    ...tokens.typography.titleMedium,
+    fontFamily: tokens.typography.displayLarge.fontFamily,
     color: tokens.colors.text,
   },
   bookAuthor: {
-    fontSize: tokens.typography.bodyMedium.fontSize,
+    ...tokens.typography.bodyMedium,
+    color: tokens.colors.secondaryText,
+  },
+  bookMeta: {
+    ...tokens.typography.labelMedium,
     color: tokens.colors.secondaryText,
   },
   statusRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginTop: 4,
-  },
-  availableBadge: {
-    fontSize: 12,
-    color: tokens.colors.action,
-    fontWeight: "bold",
-  },
-  pausedBadge: {
-    fontSize: 12,
-    color: tokens.colors.secondaryText,
-    fontWeight: "bold",
-  },
-  reservedBadge: {
-    fontSize: 12,
-    color: tokens.colors.error,
-    fontWeight: "bold",
+    marginTop: tokens.spacing[4],
   },
   price: {
-    fontSize: tokens.typography.bodyMedium.fontSize,
-    fontWeight: "bold",
-    color: tokens.colors.text,
-  },
-  tag: {
-    paddingHorizontal: tokens.spacing[8],
-    paddingVertical: 2,
-    borderRadius: tokens.radius.full,
-  },
-  tagText: {
-    fontSize: 11,
-    fontWeight: "bold",
+    ...tokens.typography.bodyMedium,
+    fontWeight: "600",
+    color: tokens.colors.action,
   },
   actionButtonsRow: {
     flexDirection: "row",
@@ -329,11 +326,11 @@ const styles = StyleSheet.create({
     paddingVertical: tokens.spacing[6],
     borderRadius: tokens.radius.small,
     backgroundColor: tokens.colors.soft,
-    minHeight: 32,
+    minHeight: tokens.spacing[32],
     justifyContent: "center",
   },
   editText: {
-    fontSize: tokens.typography.labelMedium.fontSize,
+    ...tokens.typography.labelMedium,
     color: tokens.colors.action,
     fontWeight: "600",
   },
@@ -343,12 +340,12 @@ const styles = StyleSheet.create({
     borderRadius: tokens.radius.small,
     backgroundColor: tokens.colors.surface,
     borderWidth: 1,
-    borderColor: tokens.colors.border,
-    minHeight: 32,
+    borderColor: tokens.colors.m3.outlineVariant,
+    minHeight: tokens.spacing[32],
     justifyContent: "center",
   },
   pauseText: {
-    fontSize: tokens.typography.labelMedium.fontSize,
+    ...tokens.typography.labelMedium,
     color: tokens.colors.secondaryText,
     fontWeight: "600",
   },
@@ -357,47 +354,17 @@ const styles = StyleSheet.create({
     paddingVertical: tokens.spacing[6],
     borderRadius: tokens.radius.small,
     backgroundColor: tokens.colors.errorContainer,
-    minHeight: 32,
+    minHeight: tokens.spacing[32],
     justifyContent: "center",
   },
   cancelText: {
-    fontSize: tokens.typography.labelMedium.fontSize,
+    ...tokens.typography.labelMedium,
     color: tokens.colors.error,
     fontWeight: "600",
   },
   cancelErrorText: {
-    fontSize: tokens.typography.bodyMedium.fontSize,
+    ...tokens.typography.bodyMedium,
     color: tokens.colors.error,
     marginBottom: tokens.spacing[12],
-  },
-  feedbackBanner: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    backgroundColor: tokens.colors.soft,
-    borderColor: tokens.colors.action,
-    borderWidth: 1,
-    borderRadius: tokens.radius.medium,
-    paddingHorizontal: tokens.spacing[16],
-    paddingVertical: tokens.spacing[12],
-    marginBottom: tokens.spacing[12],
-    gap: tokens.spacing[8],
-  },
-  feedbackText: {
-    flex: 1,
-    color: tokens.colors.actionDeep,
-    fontSize: 14,
-    fontWeight: "500",
-  },
-  closeFeedbackButton: {
-    minWidth: 32,
-    minHeight: 32,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  closeFeedbackText: {
-    color: tokens.colors.actionDeep,
-    fontSize: 14,
-    fontWeight: "700",
   },
 });

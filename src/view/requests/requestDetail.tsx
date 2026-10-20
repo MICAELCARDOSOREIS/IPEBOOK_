@@ -1,18 +1,13 @@
 import { useEffect } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useRequestDetailViewModel } from "@/viewmodel/useRequestDetailViewModel";
 import { tokens } from "@/view/tokens";
 import { BookCover } from "@/view/components/BookCover";
+import { IconBadge } from "@/view/components/IconBadge";
+import { Tag } from "@/view/components/Tag";
 import { TopAppBar } from "@/view/components/TopAppBar";
-import type { BookModality } from "@/model/entities/book";
-
-const modalityTag: Record<BookModality, { background: string; text: string; label: string }> = {
-  sale: { background: tokens.colors.badge.sale.background, text: tokens.colors.badge.sale.text, label: "Venda" },
-  trade: { background: tokens.colors.badge.trade.background, text: tokens.colors.badge.trade.text, label: "Troca" },
-  donation: { background: tokens.colors.badge.donation.background, text: tokens.colors.badge.donation.text, label: "Doação" },
-};
 
 export type RequestDetailProps = {
   requestId: string;
@@ -21,6 +16,10 @@ export type RequestDetailProps = {
   onNavigateToBookDetail?: (bookId: string) => void;
 };
 
+/**
+ * Figma `06.05 · Encontro combinado` (`27:921` / Web `163:2131`) e
+ * `06.06 · Acompanhar encontro` (`149:3467` / Web `370:16621`).
+ */
 export function RequestDetail({
   requestId,
   sessionUserId,
@@ -33,15 +32,21 @@ export function RequestDetail({
   return (
     <SafeAreaView style={styles.page}>
       <TopAppBar title="Negociação" onBack={() => onBack?.()} />
-      <View style={styles.content}>
+      <ScrollView contentContainerStyle={styles.scroll}>
+        <View style={styles.content}>
           {state.loading ? (
             <View style={styles.status}>
-              <ActivityIndicator color={tokens.colors.action} accessibilityLabel="Carregando detalhes da negociação" />
+              <ActivityIndicator
+                color={tokens.colors.action}
+                accessibilityLabel="Carregando detalhes da negociação"
+              />
               <Text style={styles.body}>Carregando detalhes…</Text>
             </View>
           ) : state.error ? (
             <View style={styles.status}>
-              <Text accessibilityRole="alert" style={styles.errorText}>{state.error}</Text>
+              <Text accessibilityRole="alert" style={styles.errorText}>
+                {state.error}
+              </Text>
               <Pressable
                 accessibilityRole="button"
                 onPress={() => void actions.reload()}
@@ -53,10 +58,13 @@ export function RequestDetail({
           ) : detail ? (
             <View style={styles.container}>
               <View style={styles.successBanner}>
-                <Text style={styles.successTitle}>Negociação aceita!</Text>
-                <Text style={styles.successSubtitle}>
-                  O livro está reservado para esta negociação.
-                </Text>
+                <IconBadge icon="check" tone="action" />
+                <View style={styles.bannerTextContainer}>
+                  <Text style={styles.successTitle}>Negociação aceita!</Text>
+                  <Text style={styles.successSubtitle}>
+                    O livro está reservado para esta negociação.
+                  </Text>
+                </View>
               </View>
 
               <Pressable
@@ -65,16 +73,17 @@ export function RequestDetail({
                 onPress={() => onNavigateToBookDetail?.(detail.book.id)}
                 style={styles.bookCard}
               >
-                <BookCover id={detail.book.id} title={detail.book.title} photoUrl={detail.book.photoUrl} variant="list" />
+                <BookCover
+                  id={detail.book.id}
+                  title={detail.book.title}
+                  photoUrl={detail.book.photoUrl}
+                  variant="list"
+                />
                 <View style={styles.bookInfo}>
                   <Text style={styles.bookTitle}>{detail.book.title}</Text>
                   <Text style={styles.bookAuthor}>{detail.book.author}</Text>
                   <View style={styles.tagRow}>
-                    <View style={[styles.tag, { backgroundColor: modalityTag[detail.book.modality].background }]}>
-                      <Text style={[styles.tagText, { color: modalityTag[detail.book.modality].text }]}>
-                        {modalityTag[detail.book.modality].label}
-                      </Text>
-                    </View>
+                    <Tag variant={detail.book.modality} />
                     {detail.book.modality === "sale" && detail.book.price ? (
                       <Text style={styles.price}>{`R$ ${detail.book.price.toFixed(2)}`}</Text>
                     ) : null}
@@ -83,7 +92,12 @@ export function RequestDetail({
               </Pressable>
 
               <View style={styles.card}>
-                <Text accessibilityRole="header" style={styles.sectionHeader}>Participantes</Text>
+                <View style={styles.cardHeaderRow}>
+                  <IconBadge icon="person" tone="neutral" />
+                  <Text accessibilityRole="header" style={styles.sectionHeader}>
+                    Participantes
+                  </Text>
+                </View>
                 <Text style={styles.bodyText}>
                   {detail.isOwner ? "Pessoa interessada: " : "Pessoa que anunciou: "}
                   <Text style={styles.highlightText}>{detail.counterpartId}</Text>
@@ -91,13 +105,20 @@ export function RequestDetail({
               </View>
 
               <View style={styles.card}>
-                <Text accessibilityRole="header" style={styles.sectionHeader}>Encontro seguro em Piripiri</Text>
+                <View style={styles.cardHeaderRow}>
+                  <IconBadge icon="place" tone="action" />
+                  <Text accessibilityRole="header" style={styles.sectionHeader}>
+                    Encontro seguro em Piripiri
+                  </Text>
+                </View>
                 <Text style={styles.bodyText}>
                   Para a sua segurança, combinem a entrega sempre em locais públicos e movimentados:
                 </Text>
                 <View style={styles.pointList}>
                   {detail.safeMeetingPoints.map((point) => (
-                    <Text key={point} style={styles.pointItem}>• {point}</Text>
+                    <Text key={point} style={styles.pointItem}>
+                      • {point}
+                    </Text>
                   ))}
                 </View>
                 <Text style={styles.tipText}>
@@ -107,6 +128,7 @@ export function RequestDetail({
             </View>
           ) : null}
         </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -146,16 +168,28 @@ export default function RequestDetailScreen({
 
 const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: tokens.colors.background },
-  scroll: { flexGrow: 1 },
-  content: { flex: 1, width: "100%", maxWidth: 720, alignSelf: "center", padding: tokens.spacing[16] },
-  status: { flex: 1, justifyContent: "center", alignItems: "center", gap: tokens.spacing[16], paddingTop: tokens.spacing[48] },
+  scroll: { flexGrow: 1, paddingBottom: tokens.spacing[48] },
+  content: {
+    flex: 1,
+    width: "100%",
+    maxWidth: 720,
+    alignSelf: "center",
+    padding: tokens.spacing[16],
+  },
+  status: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    gap: tokens.spacing[16],
+    paddingTop: tokens.spacing[48],
+  },
   body: {
-    fontSize: tokens.typography.bodyMedium.fontSize,
+    ...tokens.typography.bodyMedium,
     color: tokens.colors.secondaryText,
     textAlign: "center",
   },
   errorText: {
-    fontSize: tokens.typography.bodyMedium.fontSize,
+    ...tokens.typography.bodyMedium,
     color: tokens.colors.error,
     textAlign: "center",
   },
@@ -165,29 +199,35 @@ const styles = StyleSheet.create({
     borderRadius: tokens.radius.full,
     backgroundColor: tokens.colors.surface,
     borderWidth: 1,
-    borderColor: tokens.colors.border,
+    borderColor: tokens.colors.m3.outline,
     minHeight: tokens.accessibility.touchTarget,
     justifyContent: "center",
   },
   retryText: {
-    fontSize: tokens.typography.bodyMedium.fontSize,
+    ...tokens.typography.bodyMedium,
     color: tokens.colors.action,
-    fontWeight: "bold",
+    fontWeight: "600",
   },
   container: { gap: tokens.spacing[16] },
   successBanner: {
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: tokens.colors.badge.sale.background,
     padding: tokens.spacing[16],
     borderRadius: tokens.radius.medium,
-    gap: 4,
+    gap: tokens.spacing[12],
+  },
+  bannerTextContainer: {
+    flex: 1,
+    gap: tokens.spacing[4],
   },
   successTitle: {
-    fontSize: tokens.typography.titleMedium.fontSize,
-    fontWeight: "bold",
+    ...tokens.typography.titleMedium,
+    fontFamily: tokens.typography.displayLarge.fontFamily,
     color: tokens.colors.action,
   },
   successSubtitle: {
-    fontSize: tokens.typography.bodyMedium.fontSize,
+    ...tokens.typography.bodyMedium,
     color: tokens.colors.text,
   },
   bookCard: {
@@ -198,64 +238,65 @@ const styles = StyleSheet.create({
     padding: tokens.spacing[12],
     gap: tokens.spacing[12],
     borderWidth: 1,
-    borderColor: tokens.colors.border,
+    borderColor: tokens.colors.m3.outlineVariant,
   },
-  bookInfo: { flex: 1, gap: 4 },
+  bookInfo: { flex: 1, gap: tokens.spacing[4] },
   bookTitle: {
-    fontSize: tokens.typography.titleMedium.fontSize,
-    fontWeight: "bold",
+    ...tokens.typography.titleMedium,
+    fontFamily: tokens.typography.displayLarge.fontFamily,
     color: tokens.colors.text,
   },
   bookAuthor: {
-    fontSize: tokens.typography.bodyMedium.fontSize,
+    ...tokens.typography.bodyMedium,
     color: tokens.colors.secondaryText,
   },
-  tagRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 4 },
-  tag: {
-    paddingHorizontal: tokens.spacing[8],
-    paddingVertical: 2,
-    borderRadius: tokens.radius.full,
-  },
-  tagText: {
-    fontSize: 11,
-    fontWeight: "bold",
+  tagRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: tokens.spacing[8],
+    marginTop: tokens.spacing[4],
   },
   price: {
-    fontSize: tokens.typography.bodyMedium.fontSize,
-    fontWeight: "bold",
-    color: tokens.colors.text,
+    ...tokens.typography.bodyMedium,
+    fontWeight: "600",
+    color: tokens.colors.action,
   },
   card: {
     backgroundColor: tokens.colors.surface,
     padding: tokens.spacing[16],
     borderRadius: tokens.radius.medium,
     borderWidth: 1,
-    borderColor: tokens.colors.border,
+    borderColor: tokens.colors.m3.outlineVariant,
     gap: tokens.spacing[8],
   },
+  cardHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: tokens.spacing[12],
+  },
   sectionHeader: {
-    fontSize: tokens.typography.titleMedium.fontSize,
-    fontWeight: "bold",
+    flex: 1,
+    ...tokens.typography.titleMedium,
+    fontFamily: tokens.typography.displayLarge.fontFamily,
     color: tokens.colors.text,
   },
   bodyText: {
-    fontSize: tokens.typography.bodyMedium.fontSize,
+    ...tokens.typography.bodyMedium,
     color: tokens.colors.text,
-    lineHeight: 22,
   },
   highlightText: {
-    fontWeight: "bold",
+    fontWeight: "700",
     color: tokens.colors.action,
   },
-  pointList: { gap: 4, paddingVertical: 4 },
+  pointList: { gap: tokens.spacing[4], paddingVertical: tokens.spacing[4] },
   pointItem: {
-    fontSize: tokens.typography.bodyMedium.fontSize,
+    ...tokens.typography.bodyMedium,
     color: tokens.colors.secondaryText,
   },
   tipText: {
-    fontSize: tokens.typography.labelMedium.fontSize,
+    ...tokens.typography.labelMedium,
     color: tokens.colors.secondaryText,
     fontStyle: "italic",
-    marginTop: 4,
+    marginTop: tokens.spacing[4],
   },
 });

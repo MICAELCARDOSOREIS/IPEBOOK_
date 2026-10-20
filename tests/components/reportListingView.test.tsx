@@ -79,6 +79,8 @@ describe("tela de denúncia de anúncio (ReportListing)", () => {
 
     const submitBtn = screen.getByRole("button", { name: "Enviar denúncia" });
     expect(submitBtn).toBeDefined();
+    expect(screen.getByTestId("report-reasons-radiogroup").props.accessibilityRole).toBe("radiogroup");
+    expect(screen.getAllByRole("radio")).toHaveLength(5);
   });
 
   it("aciona callback onBack na barra superior", async () => {

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { PRIVACY_POLICY, TERMS_OF_USE } from "@/model/legalContent";
 import { TopAppBar } from "@/view/components/TopAppBar";
@@ -11,6 +11,11 @@ export type TermsAndPrivacyProps = {
   onNavigateToDeleteAccount?: () => void;
 };
 
+/**
+ * Figma `07.14 · Termos e privacidade` (`254:6585` / Web `370:17221`),
+ * `07.15 · Termos de uso` (`254:6734` / Web `370:17261`) e
+ * `07.16 · Política de privacidade` (`254:6865` / Web `370:17301`).
+ */
 export default function TermsAndPrivacy({
   onBack,
   initialTab = "terms",
@@ -22,93 +27,105 @@ export default function TermsAndPrivacy({
   return (
     <SafeAreaView style={styles.page}>
       <TopAppBar title="Termos e Privacidade" onBack={() => onBack?.()} />
-      <View style={styles.content}>
-        <View testID="terms-privacy-tablist" accessibilityRole="tablist" style={styles.tabs}>
-          <Pressable
-            accessibilityRole="tab"
-            accessibilityState={{ selected: activeTab === "terms" }}
-            onPress={() => setActiveTab("terms")}
-            style={[styles.tab, activeTab === "terms" && styles.activeTab]}
-          >
-            <Text style={[styles.tabText, activeTab === "terms" && styles.activeTabText]}>
-              Termos de Uso
-            </Text>
-          </Pressable>
-          <Pressable
-            accessibilityRole="tab"
-            accessibilityState={{ selected: activeTab === "privacy" }}
-            onPress={() => setActiveTab("privacy")}
-            style={[styles.tab, activeTab === "privacy" && styles.activeTab]}
-          >
-            <Text style={[styles.tabText, activeTab === "privacy" && styles.activeTabText]}>
-              Privacidade (LGPD)
-            </Text>
-          </Pressable>
-        </View>
-
-        <View style={styles.cardList}>
-          <Text style={styles.updatedDate}>Última atualização: 15 de outubro de 2026</Text>
-          {sections.map((section) => (
-            <View key={section.title} style={styles.sectionCard}>
-              <Text accessibilityRole="header" style={styles.sectionTitle}>
-                {section.title}
-              </Text>
-              {section.paragraphs.map((p, index) => (
-                <Text key={index} style={styles.paragraph}>
-                  {p}
-                </Text>
-              ))}
-            </View>
-          ))}
-          {activeTab === "privacy" && onNavigateToDeleteAccount ? (
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <View style={styles.content}>
+          <View testID="terms-privacy-tablist" accessibilityRole="tablist" style={styles.tabs}>
             <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Solicitar exclusão da minha conta e dados"
-              onPress={onNavigateToDeleteAccount}
-              style={styles.deleteAccountLink}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: activeTab === "terms" }}
+              onPress={() => setActiveTab("terms")}
+              style={[styles.tab, activeTab === "terms" && styles.activeTab]}
             >
-              <Text style={styles.deleteAccountText}>
-                Deseja excluir sua conta? Solicitar exclusão definitiva de dados (LGPD)
+              <Text style={[styles.tabText, activeTab === "terms" && styles.activeTabText]}>
+                Termos de Uso
               </Text>
             </Pressable>
-          ) : null}
+            <Pressable
+              accessibilityRole="tab"
+              accessibilityState={{ selected: activeTab === "privacy" }}
+              onPress={() => setActiveTab("privacy")}
+              style={[styles.tab, activeTab === "privacy" && styles.activeTab]}
+            >
+              <Text style={[styles.tabText, activeTab === "privacy" && styles.activeTabText]}>
+                Privacidade (LGPD)
+              </Text>
+            </Pressable>
+          </View>
+
+          <View style={styles.cardList}>
+            <Text style={styles.updatedDate}>Última atualização: 15 de outubro de 2026</Text>
+            {sections.map((section) => (
+              <View key={section.title} style={styles.sectionCard}>
+                <Text accessibilityRole="header" style={styles.sectionTitle}>
+                  {section.title}
+                </Text>
+                {section.paragraphs.map((p, index) => (
+                  <Text key={index} style={styles.paragraph}>
+                    {p}
+                  </Text>
+                ))}
+              </View>
+            ))}
+            {activeTab === "privacy" && onNavigateToDeleteAccount ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Solicitar exclusão da minha conta e dados"
+                onPress={onNavigateToDeleteAccount}
+                style={styles.deleteAccountLink}
+              >
+                <Text style={styles.deleteAccountText}>
+                  Deseja excluir sua conta? Solicitar exclusão definitiva de dados (LGPD)
+                </Text>
+              </Pressable>
+            ) : null}
+          </View>
         </View>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: tokens.colors.background },
-  content: { flex: 1, width: "100%", maxWidth: 720, alignSelf: "center", padding: tokens.spacing[16] },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: tokens.spacing[48],
+  },
+  content: {
+    flex: 1,
+    width: "100%",
+    maxWidth: 720,
+    alignSelf: "center",
+    padding: tokens.spacing[16],
+  },
   tabs: {
     flexDirection: "row",
-    backgroundColor: tokens.colors.surface,
-    borderRadius: tokens.radius.full,
-    padding: 4,
-    borderWidth: 1,
-    borderColor: tokens.colors.border,
+    borderBottomWidth: 1,
+    borderBottomColor: tokens.colors.m3.outlineVariant,
     marginBottom: tokens.spacing[16],
   },
   tab: {
     flex: 1,
-    paddingVertical: tokens.spacing[8],
+    minHeight: tokens.accessibility.touchTarget,
+    justifyContent: "center",
     alignItems: "center",
-    borderRadius: tokens.radius.full,
+    paddingHorizontal: tokens.spacing[16],
+    borderBottomWidth: 2,
+    borderBottomColor: "transparent",
   },
   activeTab: {
-    backgroundColor: tokens.colors.action,
+    borderBottomColor: tokens.colors.action,
   },
   tabText: {
-    fontSize: tokens.typography.labelMedium.fontSize,
-    fontWeight: "600",
+    ...tokens.typography.bodyMedium,
     color: tokens.colors.secondaryText,
   },
   activeTabText: {
-    color: "#FFFFFF",
+    color: tokens.colors.action,
+    fontWeight: "600",
   },
   updatedDate: {
-    fontSize: 12,
+    ...tokens.typography.labelMedium,
     color: tokens.colors.secondaryText,
     fontStyle: "italic",
     marginBottom: tokens.spacing[8],
@@ -117,31 +134,32 @@ const styles = StyleSheet.create({
     gap: tokens.spacing[12],
   },
   sectionCard: {
-    backgroundColor: tokens.colors.surface,
+    backgroundColor: tokens.colors.m3.surfaceContainerLow,
     borderRadius: tokens.radius.medium,
     padding: tokens.spacing[16],
     borderWidth: 1,
-    borderColor: tokens.colors.border,
+    borderColor: tokens.colors.m3.outlineVariant,
     gap: tokens.spacing[8],
   },
   sectionTitle: {
-    fontSize: tokens.typography.bodyLarge.fontSize,
-    fontWeight: "bold",
+    ...tokens.typography.titleMedium,
+    fontFamily: tokens.typography.displayLarge.fontFamily,
     color: tokens.colors.text,
   },
   paragraph: {
-    fontSize: tokens.typography.bodyMedium.fontSize,
-    lineHeight: 22,
+    ...tokens.typography.bodyMedium,
     color: tokens.colors.text,
   },
   deleteAccountLink: {
+    minHeight: tokens.accessibility.touchTarget,
+    justifyContent: "center",
     paddingVertical: tokens.spacing[16],
     alignItems: "center",
   },
   deleteAccountText: {
-    fontSize: tokens.typography.labelMedium.fontSize,
+    ...tokens.typography.labelMedium,
     color: tokens.colors.error,
     textDecorationLine: "underline",
-    fontWeight: "500",
+    fontWeight: "600",
   },
 });

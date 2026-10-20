@@ -321,4 +321,25 @@ describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
     expect(screen.queryByRole("button", { name: "Editar anúncio de Livro Reservado" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Pausar anúncio de Livro Reservado" })).toBeNull();
   });
+
+  it("exibe conservação e bairro na linha do livro conforme Figma 05.01 (Spec 031)", async () => {
+    const book: Book = {
+      id: "b5",
+      title: "Vidas Secas",
+      author: "Graciliano Ramos",
+      modality: "trade",
+      ownerId: "user-1",
+      status: "available",
+      condition: "good",
+      neighborhood: "Centro",
+    };
+    mockViewModel({ books: [book] });
+    let screen!: Awaited<ReturnType<typeof render>>;
+
+    await act(async () => {
+      screen = await render(<MyListings sessionUserId="user-1" />);
+    });
+
+    expect(screen.getByText("Bom estado · Centro")).toBeDefined();
+  });
 });
