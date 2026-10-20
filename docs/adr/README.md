@@ -22,5 +22,10 @@
 - [0020 — Publicação Web da Beta via Cloudflare Pages](0020-publicacao-web-cloudflare-pages.md)
 - [0021 — Índices de Busca, Semente de Piripiri e Robustez de Tipagem](0021-indices-busca-e-robustez-operacional.md)
 - [0022 — Primeiro acesso guardado no dispositivo](0022-primeiro-acesso-no-dispositivo.md)
+- [0023 — Pipeline de Integração Contínua com GitHub Actions](0023-pipeline-ci-github-actions.md)
+- [0024 — Busca textual acelerada com extensão pg_trgm e índice GIN](0024-busca-textual-acelerada-pg-trgm.md)
+- [0025 — Portabilidade e exportação de dados do titular (LGPD)](0025-portabilidade-e-exportacao-dados-lgpd.md)
+- [0026 — Sanitização preventiva contra injeção de texto e validação estrita de fotos](0026-sanitizacao-preventiva-texto-e-upload.md)
+- [0027 — Resiliência offline no catálogo, logging estruturado, rate limiting e verificação de release](0027-resiliencia-seguranca-e-verificacao-release.md)
 
 Preservar registros aceitos; mudanças relevantes geram novo ADR com vínculos de substituição.
