@@ -2,6 +2,7 @@ import { Stack, router, usePathname, type Href } from "expo-router";
 import { View } from "react-native";
 import { useIpebookFonts } from "@/view/useIpebookFonts";
 import { NavigationBar, type NavigationDestination } from "@/view/components/NavigationBar";
+import { InitialRouteGate } from "@/view/onboarding/initialRouteGate";
 
 /** Rotas de nível superior (ADR 0011) — rotas de fluxo (entrar, anunciar, etc.) não entram aqui. */
 const ROOT_DESTINATIONS: Record<string, NavigationDestination> = {
@@ -24,19 +25,20 @@ export default function RootLayout() {
   const [fontsLoaded] = useIpebookFonts();
   const pathname = usePathname();
   const activeDestination = ROOT_DESTINATIONS[pathname];
-
   if (!fontsLoaded) return null;
 
   return (
-    <View style={{ flex: 1 }}>
-      <Stack screenOptions={{ headerShown: false }} />
-      {activeDestination ? (
-        <NavigationBar
-          active={activeDestination}
-          disabledDestinations={["profile"]}
-          onNavigate={(destination) => router.push(DESTINATION_ROUTES[destination])}
-        />
-      ) : null}
-    </View>
+    <InitialRouteGate pathname={pathname} onShowWelcome={() => router.replace("/bem-vindo")}>
+      <View style={{ flex: 1 }}>
+        <Stack screenOptions={{ headerShown: false }} />
+        {activeDestination ? (
+          <NavigationBar
+            active={activeDestination}
+            disabledDestinations={["profile"]}
+            onNavigate={(destination) => router.push(DESTINATION_ROUTES[destination])}
+          />
+        ) : null}
+      </View>
+    </InitialRouteGate>
   );
 }
