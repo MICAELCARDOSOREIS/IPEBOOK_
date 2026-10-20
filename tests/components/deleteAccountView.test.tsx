@@ -72,6 +72,26 @@ describe("tela de exclusão de conta (DeleteAccount - LGPD)", () => {
     expect(submitBtn).toBeDefined();
   });
 
+  it("exibe card de portabilidade e botão para baixar dados em JSON (Spec 029 - LGPD)", async () => {
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(
+        <DeleteAccount
+          sessionUserId="user-1"
+          onBack={() => {}}
+          onAccountDeleted={() => {}}
+        />,
+      );
+    });
+
+    expect(screen.getByRole("header", { name: "Portabilidade de Dados (LGPD)" })).toBeDefined();
+    const downloadBtn = screen.getByRole("button", { name: "Baixar meus dados pessoais em formato JSON" });
+    expect(downloadBtn).toBeDefined();
+    await act(async () => {
+      fireEvent.press(downloadBtn);
+    });
+  });
+
   it("aciona callback onBack na barra superior", async () => {
     const onBack = vi.fn();
     let screen!: Awaited<ReturnType<typeof render>>;

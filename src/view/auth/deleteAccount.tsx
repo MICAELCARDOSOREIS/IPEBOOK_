@@ -64,6 +64,36 @@ export default function DeleteAccount({
     <SafeAreaView style={styles.page}>
       <TopAppBar title="Excluir conta" onBack={onBack} />
       <View style={styles.content}>
+        <View style={styles.exportCard}>
+          <Text accessibilityRole="header" style={styles.exportTitle}>
+            Portabilidade de Dados (LGPD)
+          </Text>
+          <Text style={styles.exportText}>
+            Antes de excluir sua conta, você pode baixar uma cópia completa de todos os seus anúncios, pedidos e dados cadastrais em formato JSON.
+          </Text>
+          {state.exportSuccess ? (
+            <Text accessibilityRole="alert" style={styles.exportSuccessText}>
+              ✓ Arquivo de dados gerado e baixado com sucesso!
+            </Text>
+          ) : null}
+          {state.exportError ? (
+            <Text accessibilityRole="alert" style={styles.errorText}>
+              {state.exportError}
+            </Text>
+          ) : null}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Baixar meus dados pessoais em formato JSON"
+            disabled={state.exporting}
+            onPress={() => void actions.downloadUserData(sessionUserId)}
+            style={styles.exportButton}
+          >
+            <Text style={styles.exportButtonText}>
+              {state.exporting ? "Gerando arquivo..." : "Baixar meus dados (JSON)"}
+            </Text>
+          </Pressable>
+        </View>
+
         <View style={styles.warningCard}>
           <Text accessibilityRole="header" style={styles.warningTitle}>
             Atenção: Ação irreversível
@@ -147,6 +177,44 @@ const styles = StyleSheet.create({
     color: tokens.colors.secondaryText,
     textAlign: "center",
     lineHeight: 22,
+  },
+  exportCard: {
+    padding: tokens.spacing[16],
+    backgroundColor: tokens.colors.soft,
+    borderRadius: tokens.radius.medium,
+    gap: tokens.spacing[12],
+    borderWidth: 1,
+    borderColor: tokens.colors.border,
+  },
+  exportTitle: {
+    fontSize: tokens.typography.titleMedium.fontSize,
+    fontWeight: "700",
+    color: tokens.colors.action,
+  },
+  exportText: {
+    fontSize: tokens.typography.bodyMedium.fontSize,
+    color: tokens.colors.text,
+    lineHeight: 20,
+  },
+  exportSuccessText: {
+    fontSize: tokens.typography.bodyMedium.fontSize,
+    color: tokens.colors.action,
+    fontWeight: "600",
+  },
+  exportButton: {
+    minHeight: tokens.accessibility.touchTarget,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: tokens.colors.surface,
+    borderRadius: tokens.radius.small,
+    borderWidth: 1,
+    borderColor: tokens.colors.action,
+    paddingHorizontal: tokens.spacing[16],
+  },
+  exportButtonText: {
+    color: tokens.colors.action,
+    fontWeight: "600",
+    fontSize: tokens.typography.bodyMedium.fontSize,
   },
   warningCard: {
     padding: tokens.spacing[16],
