@@ -259,4 +259,62 @@ describe("tela de esqueceu a senha (ISO/IEC 25010 - Usabilidade e Acessibilidade
 
     expect(onNavigateToSignIn).toHaveBeenCalledTimes(1);
   });
+
+  it("aciona a navegação de voltar quando onBack é fornecido em SignIn, SignUp e ForgotPassword", async () => {
+    mockAuth({ user: null, loading: false, error: null });
+    const onBackSignIn = vi.fn();
+    const onBackSignUp = vi.fn();
+    const onBackForgot = vi.fn();
+
+    let screenSignIn!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screenSignIn = await render(<SignIn onBack={onBackSignIn} />);
+    });
+    await act(async () => {
+      fireEvent.press(screenSignIn.getByLabelText("Voltar"));
+    });
+    expect(onBackSignIn).toHaveBeenCalledTimes(1);
+
+    let screenSignUp!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screenSignUp = await render(<SignUp onBack={onBackSignUp} />);
+    });
+    await act(async () => {
+      fireEvent.press(screenSignUp.getByLabelText("Voltar"));
+    });
+    expect(onBackSignUp).toHaveBeenCalledTimes(1);
+
+    let screenForgot!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screenForgot = await render(<ForgotPassword onBack={onBackForgot} />);
+    });
+    await act(async () => {
+      fireEvent.press(screenForgot.getByLabelText("Voltar"));
+    });
+    expect(onBackForgot).toHaveBeenCalledTimes(1);
+  });
+
+  it("permite voltar ao login a partir do botão principal na tela de confirmação de e-mail (01.05)", async () => {
+    const requestPasswordReset = vi.fn().mockResolvedValue(true);
+    mockAuth({ user: null, loading: false, error: null }, { requestPasswordReset });
+    const onNavigateToSignIn = vi.fn();
+
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<ForgotPassword onNavigateToSignIn={onNavigateToSignIn} />);
+    });
+
+    await act(async () => {
+      fireEvent.changeText(screen.getByLabelText("E-mail"), "pessoa@exemplo.com");
+    });
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Recuperar senha" }));
+    });
+
+    expect(screen.getByText("Confira seu e-mail")).toBeDefined();
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Voltar para o login" }));
+    });
+    expect(onNavigateToSignIn).toHaveBeenCalledTimes(1);
+  });
 });

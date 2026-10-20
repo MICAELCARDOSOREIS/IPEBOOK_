@@ -38,4 +38,31 @@ describe("tela de nova senha", () => {
     expect(screen.getByText("Senha atualizada. Entre com a nova senha.")).toBeDefined();
     expect(screen.queryByLabelText("Nova senha")).toBeNull();
   });
+
+  it("exibe erro de senhas divergentes sem chamar o submit", async () => {
+    const submit = vi.fn().mockResolvedValue(undefined);
+    mocked.mockReturnValue([{ loading: false, error: null, success: false }, { submit }]);
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => { screen = await render(<ResetPassword link="ipebook://redefinir-senha" />); });
+    await act(async () => {
+      fireEvent.changeText(screen.getByLabelText("Nova senha"), "senha1234");
+      fireEvent.changeText(screen.getByLabelText("Confirmar nova senha"), "senha9999");
+    });
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Salvar nova senha" }));
+    });
+    expect(screen.getByText("As senhas não coincidem.")).toBeDefined();
+    expect(submit).not.toHaveBeenCalled();
+  });
+
+  it("aciona onBack quando fornecido", async () => {
+    const onBack = vi.fn();
+    mocked.mockReturnValue([{ loading: false, error: null, success: false }, { submit: vi.fn() }]);
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => { screen = await render(<ResetPassword link={null} onBack={onBack} />); });
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Voltar"));
+    });
+    expect(onBack).toHaveBeenCalledTimes(1);
+  });
 });
