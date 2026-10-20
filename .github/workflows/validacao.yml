@@ -1,20 +1,44 @@
 name: Validação
+
 on:
   push:
-    branches: [develop]
+    branches: [develop, main]
   pull_request:
     branches: [develop, main]
+
 jobs:
   validar:
+    name: Validação e Testes
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: 22
           cache: npm
-      - run: npm ci
-      - run: npm run validate
-      - run: npm run build:web
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Verificar tipagem TypeScript
+        run: npm run typecheck
+
+      - name: Verificar conformidade arquitetural (7 camadas MVVM)
+        run: npm run check:architecture
+
+      - name: Executar testes de banco e migrações SQL (PGlite)
+        run: npm run test:sql
+
+      - name: Executar testes unitários e cobertura de código
+        run: npm run test:coverage
+
+      - name: Compilar pacote Web estático
+        run: npm run build:web
         env:
           CI: '1'
+          EXPO_PUBLIC_BACKEND: memory
+          EXPO_PUBLIC_SUPABASE_URL: https://exemplo.supabase.co
+          EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_dummy
