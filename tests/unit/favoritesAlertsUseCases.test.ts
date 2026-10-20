@@ -45,6 +45,24 @@ describe("alertas de busca", () => {
     expect(await alerts.listAlerts("reader")).toEqual([]);
   });
 
+  it("edita o termo do alerta, exige posse e revalida a entrada", async () => {
+    const notifications = new MemoryNotificationDataSource([]);
+    const source = new MemorySearchAlertDataSource(notifications);
+    const alerts = new SearchAlertUseCases(source);
+    const books = new BookUseCases(new MemoryBookDataSource(), alerts);
+    const own = await alerts.createAlert("reader", "Casmurro");
+    await expect(alerts.updateAlert(null, own.id, "Iracema")).rejects.toThrow(AuthError);
+    await expect(alerts.updateAlert("reader", own.id, " ")).rejects.toThrow(ValidationError);
+    await alerts.updateAlert("intruso", own.id, "Iracema");
+    expect((await alerts.listAlerts("reader"))[0].query).toBe("Casmurro");
+    await alerts.updateAlert("reader", own.id, "Iracema");
+    expect((await alerts.listAlerts("reader"))[0].query).toBe("Iracema");
+    await books.createListing({ title: "Dom Casmurro", author: "Machado de Assis", modality: "donation" }, "owner");
+    expect(await notifications.listByUser("reader")).toEqual([]);
+    await books.createListing({ title: "Iracema", author: "José de Alencar", modality: "donation" }, "owner");
+    expect(await notifications.listByUser("reader")).toHaveLength(1);
+  });
+
   it("avisa também quando o termo aparece na categoria", async () => {
     const notifications = new MemoryNotificationDataSource([]);
     const alerts = new SearchAlertUseCases(new MemorySearchAlertDataSource(notifications));

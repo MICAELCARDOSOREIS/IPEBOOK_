@@ -9,6 +9,7 @@ export type SearchAlertsActions = {
   setQuery: (value: string) => void;
   reload: () => Promise<void>;
   create: () => Promise<boolean>;
+  update: (id: string, query: string) => Promise<boolean>;
   setActive: (id: string, active: boolean) => Promise<void>;
   remove: (id: string) => Promise<void>;
 };
@@ -38,6 +39,17 @@ export function useSearchAlertsViewModel(userId: string | null, initialQuery = "
       return false;
     }
   }, [userId, state.query, useCases, reload]);
+  const update = useCallback(async (id: string, query: string) => {
+    try {
+      await useCases.updateAlert(userId, id, query);
+      setState((prev) => ({ ...prev, query: "", message: "Alerta atualizado.", error: null }));
+      await reload();
+      return true;
+    } catch (error) {
+      setState((prev) => ({ ...prev, error: error instanceof DomainError ? error.message : "Não foi possível atualizar o alerta." }));
+      return false;
+    }
+  }, [userId, useCases, reload]);
   const setActive = useCallback(async (id: string, active: boolean) => {
     try { await useCases.setActive(userId, id, active); await reload(); }
     catch (error) { setState((prev) => ({ ...prev, error: error instanceof DomainError ? error.message : "Não foi possível atualizar o alerta." })); }
@@ -46,5 +58,5 @@ export function useSearchAlertsViewModel(userId: string | null, initialQuery = "
     try { await useCases.deleteAlert(userId, id); await reload(); }
     catch (error) { setState((prev) => ({ ...prev, error: error instanceof DomainError ? error.message : "Não foi possível excluir o alerta." })); }
   }, [userId, useCases, reload]);
-  return [state, { setQuery, reload, create, setActive, remove }];
+  return [state, { setQuery, reload, create, update, setActive, remove }];
 }

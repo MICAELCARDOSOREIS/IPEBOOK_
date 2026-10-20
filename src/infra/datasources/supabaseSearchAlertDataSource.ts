@@ -26,6 +26,12 @@ export class SupabaseSearchAlertDataSource implements ISearchAlertDataSource {
     return map(data as Row);
   }
 
+  async update(userId: string, id: string, query: string) {
+    const { data, error } = await this.client.from("v2_search_alerts")
+      .update({ query }).eq("id", id).eq("user_id", userId).select("id");
+    if (error || !data?.length) throw new DataSourceError("Não foi possível atualizar o alerta.");
+  }
+
   async setActive(userId: string, id: string, active: boolean) {
     const { data, error } = await this.client.from("v2_search_alerts")
       .update({ active }).eq("id", id).eq("user_id", userId).select("id");

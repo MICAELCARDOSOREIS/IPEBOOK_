@@ -13,3 +13,6 @@
   busca sem resultado.
 - [x] T008 Implementar testes unitários, de hooks e de componentes (cobertura > 80%).
 - [x] T009 Executar `npm run validate` e `npm run build:web`, registrar em `validacao.md`.
+- [x] T010 (Issue #95) Adicionar `updateAlert` à interface, caso de uso e aos dois datasources
+  (memória e Supabase), com proteção de posse e revalidação do termo; tela de edição inline a
+  partir da lista de alertas.

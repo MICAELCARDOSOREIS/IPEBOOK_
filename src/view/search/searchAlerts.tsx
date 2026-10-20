@@ -11,6 +11,12 @@ export type SearchAlertsProps = { userId: string | null; initialQuery?: string; 
 export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogin }: SearchAlertsProps) {
   const [state, actions] = useSearchAlertsViewModel(userId, initialQuery);
   const [alertToDelete, setAlertToDelete] = useState<{ id: string; query: string } | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const cancelEdit = () => { setEditingId(null); actions.setQuery(""); };
+  const saveEdit = async () => {
+    if (!editingId) { await actions.create(); return; }
+    if (await actions.update(editingId, state.query)) setEditingId(null);
+  };
   return <SafeAreaView style={styles.page}>
     <TopAppBar title="Meus alertas" onBack={onBack} />
     {!userId ? <View style={styles.content}>
@@ -20,9 +26,12 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
       <Text style={styles.body}>Avisaremos na central de notificações quando surgir um livro com este título ou autor.</Text>
       <TextInput accessibilityLabel="Termo do alerta" value={state.query} onChangeText={actions.setQuery}
         placeholder="Título ou autor" style={styles.input} maxLength={100} />
-      <Pressable accessibilityRole="button" onPress={() => void actions.create()} style={styles.action}>
-        <Text style={styles.actionText}>Criar alerta</Text>
+      <Pressable accessibilityRole="button" onPress={() => void saveEdit()} style={styles.action}>
+        <Text style={styles.actionText}>{editingId ? "Salvar edição" : "Criar alerta"}</Text>
       </Pressable>
+      {editingId ? <Pressable accessibilityRole="button" onPress={cancelEdit} style={styles.smallAction}>
+        <Text style={styles.link}>Cancelar edição</Text>
+      </Pressable> : null}
       {state.message ? <Text accessibilityRole="alert" style={styles.body}>{state.message}</Text> : null}
       {state.error ? <Text accessibilityRole="alert" style={styles.error}>{state.error}</Text> : null}
       {state.loading ? <ActivityIndicator accessibilityLabel="Carregando alertas" /> :
@@ -30,6 +39,8 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
           ListEmptyComponent={<Text accessibilityRole="header" style={styles.body}>Você ainda não criou alertas.</Text>}
           renderItem={({ item }) => <View style={styles.row}>
             <View style={styles.rowText}><Text style={styles.title}>{item.query}</Text><Text style={styles.body}>{item.active ? "Ativo" : "Pausado"}</Text></View>
+            <Pressable accessibilityRole="button" accessibilityLabel={`Editar alerta ${item.query}`}
+              onPress={() => { setEditingId(item.id); actions.setQuery(item.query); }} style={styles.smallAction}><Text style={styles.link}>Editar</Text></Pressable>
             <Pressable accessibilityRole="button" accessibilityLabel={item.active ? `Pausar alerta ${item.query}` : `Retomar alerta ${item.query}`}
               onPress={() => void actions.setActive(item.id, !item.active)} style={styles.smallAction}><Text style={styles.link}>{item.active ? "Pausar" : "Retomar"}</Text></Pressable>
             <Pressable accessibilityRole="button" accessibilityLabel={`Excluir alerta ${item.query}`}
