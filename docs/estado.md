@@ -10,7 +10,7 @@ Conferência atual: **2026-10-20** (base: branch `develop`). Projeto: `~/IPEBOOK
 
 Todas as métricas abaixo foram aferidas diretamente por execução dos scripts de validação:
 
-- **Testes automatizados**: **487 testes passando** em **79 arquivos de teste** (`npm test` / `npx vitest run`), cobrindo testes unitários de entidades, validadores, casos de uso, semente de catálogo, adaptadores de dados (memória, Supabase e AsyncStorage), hooks/viewmodels, componentes de interface e cenários de integração ponta a ponta.
+- **Testes automatizados**: **494 testes passando** em **80 arquivos de teste** (`npm test` / `npx vitest run`), cobrindo testes unitários de entidades, validadores, casos de uso, semente de catálogo, adaptadores de dados (memória, Supabase e AsyncStorage), hooks/viewmodels, componentes de interface e cenários de integração ponta a ponta.
 - **Cobertura de código**: Acima do limiar estrito de 80% em todas as 4 dimensões (Statements: 90,20%, Branches: 80,41%, Functions: 87,95%, Lines: 91,55%).
 - **Integridade arquitetural**: **100% em conformidade** no MVVM sofisticado em sete camadas (`app`, `view`, `viewmodel`, `usecase`, `model`, `infra`, `di`), verificado pelo comando `npm run check:architecture` (0 violações). Apenas `src/di/container.ts` e testes têm permissão para instanciar ou importar adaptadores de `src/infra/`.
 - **Validação de banco e migrações SQL**: 7 migrações executadas e validadas em banco real isolado via PGlite (`npm run test:sql`):
@@ -23,6 +23,7 @@ Todas as métricas abaixo foram aferidas diretamente por execução dos scripts 
   7. `202610180001_indices_busca_catalogo.sql` (índices parciais e compostos de performance para vitrine, localização, modalidade e moderação - ADR 0021)
   8. `202610200001_unicidade_denuncias.sql` (restrição UNIQUE(reporter_id, listing_id) impedindo denúncias duplicadas pelo mesmo usuário - Issue #112)
   9. `202610200002_rpc_exclusao_conta.sql` (função RPC security definer delete_user_account com autorização estrita e cascata definitiva LGPD - Issue #115)
+  10. `202610200003_storage_book_photos.sql` (criação do bucket público book-photos com limite de 5MB e políticas de RLS de upload/exclusão pelo proprietário - Issue #116)
 - **Semente Oficial da Beta (`npm run db:seed`)**: Script `scripts/popular-catalogo-piripiri.mjs` gerando 10 anúncios realistas distribuídos pelos bairros de Piripiri, PI com exportação SQL via `--sql`.
 - **Backend Supabase ativo**: O backend está configurado com `EXPO_PUBLIC_BACKEND=supabase` em `.env` e `.env.example`, integrado ao projeto oficial `xiuuiggpccpgrwkzeloc`. O histórico de migrações remotas foi reconciliado e `supabase db push` está operando normalmente.
 - **Rotas Web compiladas (`npm run build:web`)**: Exportação estática do Expo Router gerou com sucesso o pacote web em `dist/`, totalizando **23 rotas estáticas**:

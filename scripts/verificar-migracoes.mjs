@@ -20,7 +20,33 @@ insert into public.listings (id) values ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa')
 insert into public.book_requests (id) values ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb');
 insert into public.profiles (user_id) values ('${owner}');
 grant usage on schema public, auth to anon, authenticated;
-grant select on auth.users to authenticated;`);
+grant select on auth.users to authenticated;
+create schema storage;
+create table storage.buckets (
+  id text primary key,
+  name text not null,
+  public boolean default false,
+  file_size_limit bigint,
+  allowed_mime_types text[]
+);
+create table storage.objects (
+  id uuid primary key default gen_random_uuid(),
+  bucket_id text references storage.buckets(id),
+  name text,
+  owner uuid references auth.users(id),
+  created_at timestamptz default now()
+);
+alter table storage.objects enable row level security;
+create or replace function storage.foldername(name text)
+returns text[]
+language sql
+immutable
+as $$
+  select string_to_array(name, '/');
+$$;
+grant usage on schema storage to anon, authenticated;
+grant select, insert, update, delete on storage.buckets to anon, authenticated;
+grant select, insert, update, delete on storage.objects to anon, authenticated;`);
 
 for (const name of [
   '202610150001_contas_e_anuncios.sql',
@@ -32,6 +58,7 @@ for (const name of [
   '202610180001_indices_busca_catalogo.sql',
   '202610200001_unicidade_denuncias.sql',
   '202610200002_rpc_exclusao_conta.sql',
+  '202610200003_storage_book_photos.sql',
 ]) {
   await db.exec(readFileSync(new URL(`../supabase/migrations/${name}`, import.meta.url), 'utf8'));
 }
@@ -147,6 +174,36 @@ if (cascadedBooks.rows.length !== 0) throw new Error('Livros do usuário excluí
 const cascadedFavs = await db.query(`select id from public.v2_favorites where user_id = '${disposableUser}'`);
 if (cascadedFavs.rows.length !== 0) throw new Error('Favoritos do usuário excluído não foram removidos em cascata');
 process.stdout.write('Exclusão de conta LGPD e cascata: verificado com sucesso\n');
+
+// Teste de Storage para fotos de livros (Spec 023 / Issue #116)
+await db.exec('reset role');
+await db.exec(`insert into storage.objects (id, bucket_id, name, owner)
+  values ('10101010-1010-4010-8010-101010101010', 'book-photos', '${owner}/capa.jpg', '${owner}')`);
+
+// Leitura pública
+const publicPhotos = await as('anon', null, `select id from storage.objects where bucket_id = 'book-photos'`);
+if (publicPhotos.rows.length !== 1) throw new Error('Fotos de livros não estão visíveis publicamente');
+process.stdout.write('Fotos de livros públicas: verificado com sucesso\n');
+
+// Visitante não pode inserir foto
+await denied('Visitante envia foto', () => as('anon', null, `insert into storage.objects (bucket_id, name) values ('book-photos', 'qualquer.jpg')`));
+
+// Usuário autenticado não pode inserir foto na pasta de outro usuário
+await denied('Usuário envia foto na pasta de outro', () => as('authenticated', reader, `insert into storage.objects (bucket_id, name, owner) values ('book-photos', '${owner}/foto_hacker.jpg', '${reader}')`));
+
+// Usuário autenticado pode inserir foto na sua própria pasta
+await as('authenticated', reader, `insert into storage.objects (id, bucket_id, name, owner) values ('20202020-2020-4020-8020-202020202020', 'book-photos', '${reader}/minha_capa.jpg', '${reader}')`);
+
+// Terceiro não pode excluir foto alheia (0 linhas afetadas por RLS)
+const forbiddenDelete = await as('authenticated', other, `delete from storage.objects where id = '20202020-2020-4020-8020-202020202020'`);
+if (forbiddenDelete.affectedRows !== 0) throw new Error('Terceiro conseguiu excluir foto alheia');
+process.stdout.write('Terceiro exclui foto alheia: nenhuma linha alterada\n');
+
+// Proprietário pode excluir sua foto
+await as('authenticated', reader, `delete from storage.objects where id = '20202020-2020-4020-8020-202020202020'`);
+const remainingPhoto = await db.query(`select id from storage.objects where id = '20202020-2020-4020-8020-202020202020'`);
+if (remainingPhoto.rows.length !== 0) throw new Error('Foto não foi removida pelo proprietário');
+process.stdout.write('Políticas de Storage book-photos: verificado com sucesso\n');
 
 process.stdout.write('Migrações e cenários SQL locais verificados.\n');
 await db.close();
