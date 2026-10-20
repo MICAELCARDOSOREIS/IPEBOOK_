@@ -1,16 +1,16 @@
 # Validação — Spec 030
 
-Data: 2026-10-20. Branch: `worktree-alinhar-telas-micael-figma`.
+Data: 2026-10-20. Branch: `feature/030-alinhar-telas-micael-figma`, já com `origin/develop` integrada.
 
 ## Comandos executados
 
 | Comando | Resultado |
 | --- | --- |
 | `npx tsc --noEmit` | sem erros |
-| `npm run check:architecture` | 0 violações nas 7 camadas |
+| `npm run check:architecture` | 201 arquivos verificados, 0 violações nas 7 camadas |
 | `npm run test:sql` | 12 migrações aplicadas no PGlite, incluindo a nova `202610200005_conservacao_descricao_anuncio.sql` |
-| `npx vitest run` | 97 arquivos, 650 testes, todos passando |
-| cobertura (`vitest run --coverage`) | Statements 88,88% · Branches 80,69% · Functions 85,51% · Lines 90,47% — acima do limiar de 80% nas quatro dimensões |
+| `npx vitest run` | 98 arquivos, 661 testes, todos passando (já com a `develop` integrada) |
+| cobertura (`vitest run --coverage`) | Statements 88,62% · Branches 80,60% · Functions 85,66% · Lines 90,15% — acima do limiar de 80% nas quatro dimensões |
 | `npx expo export --platform web` | 25 rotas exportadas, incluindo `/gerenciar-anuncio/[id]` |
 
 ## Verificações específicas
