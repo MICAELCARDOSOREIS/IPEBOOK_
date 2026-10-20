@@ -1,4 +1,4 @@
-# Validação da spec 026 — Histórico de buscas recentes (Issue #94)
+# Validação da spec 027 — Histórico de buscas recentes (Issue #94)
 
 Data: 2026-10-19. Branch: `feature/94-historico-buscas-recentes`.
 

@@ -1,4 +1,4 @@
-# Tarefas: Histórico de Buscas Recentes (Spec 026)
+# Tarefas: Histórico de Buscas Recentes (Spec 027)
 
 - [x] T001 Criar `ISearchHistoryDataSource` e as implementações `AsyncStorage` (real) e memória
   (testes), com limite de 10 termos e deduplicação (termo repetido sobe ao topo).

@@ -1,4 +1,4 @@
-# Especificação 026: Histórico de Buscas Recentes (Issue #94)
+# Especificação 027: Histórico de Buscas Recentes (Issue #94)
 
 ## 1. Contexto e Problema
 

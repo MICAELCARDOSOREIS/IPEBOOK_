@@ -1,4 +1,4 @@
-# Plano de Implementação: Histórico de Buscas Recentes (Spec 026)
+# Plano de Implementação: Histórico de Buscas Recentes (Spec 027)
 
 ## Observação de dependência
 
