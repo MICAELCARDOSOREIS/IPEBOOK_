@@ -158,6 +158,9 @@ const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: tokens.colors.background },
   tabs: {
     flexDirection: "row",
+    width: "100%",
+    maxWidth: 720,
+    alignSelf: "center",
     gap: tokens.spacing[8],
     paddingHorizontal: tokens.spacing[16],
     borderBottomWidth: 1,
@@ -177,8 +180,21 @@ const styles = StyleSheet.create({
     color: tokens.colors.secondaryText,
   },
   tabLabelActive: { color: tokens.colors.action, fontWeight: "600" },
-  list: { padding: tokens.spacing[16], gap: tokens.spacing[8] },
-  status: { alignItems: "center", gap: tokens.spacing[12], padding: tokens.spacing[24] },
+  list: {
+    width: "100%",
+    maxWidth: 720,
+    alignSelf: "center",
+    padding: tokens.spacing[16],
+    gap: tokens.spacing[8],
+  },
+  status: {
+    width: "100%",
+    maxWidth: 720,
+    alignSelf: "center",
+    alignItems: "center",
+    gap: tokens.spacing[12],
+    padding: tokens.spacing[24],
+  },
   statusTitle: {
     fontSize: tokens.typography.titleMedium.fontSize,
     lineHeight: tokens.typography.titleMedium.lineHeight,

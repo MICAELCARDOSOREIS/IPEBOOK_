@@ -305,8 +305,7 @@ const styles = StyleSheet.create({
     maxWidth: 240,
   },
   subtitle: {
-    fontSize: 15,
-    lineHeight: 22,
+    ...tokens.typography.bodyLarge,
     color: tokens.colors.secondaryText,
     marginTop: tokens.spacing[4],
   },
@@ -333,13 +332,12 @@ const styles = StyleSheet.create({
     paddingTop: tokens.spacing[4],
   },
   photoHelperTitle: {
-    fontSize: 14,
+    ...tokens.typography.bodyMedium,
     fontWeight: "600",
     color: tokens.colors.text,
   },
   photoHelperText: {
-    fontSize: 12,
-    lineHeight: 16,
+    ...tokens.typography.labelMedium,
     color: tokens.colors.secondaryText,
   },
   field: {

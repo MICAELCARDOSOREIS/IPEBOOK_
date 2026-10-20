@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { FAQ_ITEMS, type FaqItem } from "@/model/helpContent";
+import { FAQ_ITEMS } from "@/model/helpContent";
+import { IconBadge } from "@/view/components/IconBadge";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { tokens } from "@/view/tokens";
 
@@ -18,6 +19,9 @@ const CATEGORIES: { key: CategoryFilter; label: string }[] = [
   { key: "suporte", label: "Suporte e Contato" },
 ];
 
+/**
+ * Figma `09.01 · Ajuda` (`145:2702` / Web `370:17541`).
+ */
 export default function HelpAndFaq({ onBack }: HelpAndFaqProps) {
   const [filter, setFilter] = useState<CategoryFilter>("todos");
 
@@ -32,50 +36,59 @@ export default function HelpAndFaq({ onBack }: HelpAndFaqProps) {
   return (
     <SafeAreaView style={styles.page}>
       <TopAppBar title="Central de Ajuda" onBack={onBack} />
-      <View style={styles.content}>
-        <View style={styles.headerSection}>
-          <Text accessibilityRole="header" style={styles.title}>
-            Dúvidas frequentes
-          </Text>
-          <Text style={styles.subtitle}>
-            Tudo o que você precisa saber sobre trocas, doações e segurança na comunidade de Piripiri, PI.
-          </Text>
-        </View>
-
-        <View style={styles.filterContainer}>
-          {CATEGORIES.map((cat) => {
-            const isSelected = filter === cat.key;
-            return (
-              <Pressable
-                key={cat.key}
-                accessibilityRole="button"
-                accessibilityLabel={`Filtrar por ${cat.label}`}
-                onPress={() => setFilter(cat.key)}
-                style={[styles.filterChip, isSelected && styles.filterChipSelected]}
-              >
-                <Text style={[styles.filterText, isSelected && styles.filterTextSelected]}>
-                  {cat.label}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-
-        <View style={styles.list}>
-          {filteredItems.map((item) => (
-            <View key={item.id} style={styles.faqCard}>
-              <Text style={styles.question}>{item.question}</Text>
-              <Text style={styles.answer}>{item.answer}</Text>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <View style={styles.content}>
+          <View style={styles.headerSection}>
+            <View style={styles.headerTitleRow}>
+              <IconBadge icon="info" tone="action" />
+              <Text accessibilityRole="header" style={styles.title}>
+                Dúvidas frequentes
+              </Text>
             </View>
-          ))}
+            <Text style={styles.subtitle}>
+              Tudo o que você precisa saber sobre trocas, doações e segurança na comunidade de Piripiri, PI.
+            </Text>
+          </View>
+
+          <View style={styles.filterContainer}>
+            {CATEGORIES.map((cat) => {
+              const isSelected = filter === cat.key;
+              return (
+                <Pressable
+                  key={cat.key}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Filtrar por ${cat.label}`}
+                  onPress={() => setFilter(cat.key)}
+                  style={[styles.filterChip, isSelected && styles.filterChipSelected]}
+                >
+                  <Text style={[styles.filterText, isSelected && styles.filterTextSelected]}>
+                    {cat.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+
+          <View style={styles.list}>
+            {filteredItems.map((item) => (
+              <View key={item.id} style={styles.faqCard}>
+                <Text style={styles.question}>{item.question}</Text>
+                <Text style={styles.answer}>{item.answer}</Text>
+              </View>
+            ))}
+          </View>
         </View>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: tokens.colors.background },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: tokens.spacing[48],
+  },
   content: {
     flex: 1,
     width: "100%",
@@ -85,17 +98,21 @@ const styles = StyleSheet.create({
     gap: tokens.spacing[16],
   },
   headerSection: {
-    gap: tokens.spacing[6],
+    gap: tokens.spacing[8],
+  },
+  headerTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: tokens.spacing[12],
   },
   title: {
-    fontSize: tokens.typography.titleLarge.fontSize,
-    fontWeight: "700",
-    color: tokens.colors.action,
+    flex: 1,
+    ...tokens.typography.displayLarge,
+    color: tokens.colors.text,
   },
   subtitle: {
-    fontSize: tokens.typography.bodyMedium.fontSize,
+    ...tokens.typography.bodyLarge,
     color: tokens.colors.secondaryText,
-    lineHeight: 22,
   },
   filterContainer: {
     flexDirection: "row",
@@ -107,7 +124,7 @@ const styles = StyleSheet.create({
     paddingVertical: tokens.spacing[8],
     borderRadius: tokens.radius.full,
     borderWidth: 1,
-    borderColor: tokens.colors.border,
+    borderColor: tokens.colors.m3.outlineVariant,
     backgroundColor: tokens.colors.surface,
     minHeight: tokens.accessibility.touchTarget,
     justifyContent: "center",
@@ -117,33 +134,31 @@ const styles = StyleSheet.create({
     borderColor: tokens.colors.action,
   },
   filterText: {
-    fontSize: tokens.typography.labelMedium.fontSize,
-    fontWeight: "500",
+    ...tokens.typography.labelMedium,
     color: tokens.colors.text,
   },
   filterTextSelected: {
     color: tokens.colors.surface,
+    fontWeight: "600",
   },
   list: {
     gap: tokens.spacing[12],
   },
   faqCard: {
-    backgroundColor: tokens.colors.surface,
+    backgroundColor: tokens.colors.m3.surfaceContainerLow,
     borderRadius: tokens.radius.medium,
     padding: tokens.spacing[16],
     borderWidth: 1,
-    borderColor: tokens.colors.border,
+    borderColor: tokens.colors.m3.outlineVariant,
     gap: tokens.spacing[8],
   },
   question: {
-    fontSize: tokens.typography.titleMedium.fontSize,
-    fontWeight: "600",
+    ...tokens.typography.titleMedium,
+    fontFamily: tokens.typography.displayLarge.fontFamily,
     color: tokens.colors.text,
-    lineHeight: 24,
   },
   answer: {
-    fontSize: tokens.typography.bodyMedium.fontSize,
+    ...tokens.typography.bodyMedium,
     color: tokens.colors.secondaryText,
-    lineHeight: 22,
   },
 });

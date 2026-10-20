@@ -1,6 +1,9 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Checkbox } from "@/view/components/Checkbox";
 import { FilledButton } from "@/view/components/FilledButton";
+import { IconBadge } from "@/view/components/IconBadge";
+import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { tokens } from "@/view/tokens";
 import { useDeleteAccountViewModel } from "@/viewmodel/useDeleteAccountViewModel";
@@ -12,6 +15,12 @@ export type DeleteAccountProps = {
   onNavigateToLogin?: () => void;
 };
 
+/**
+ * Figma `07.07 · Privacidade e dados` (`145:2809` / Web `370:16741`),
+ * `07.08 · Dados solicitados` (`150:3484` / Web `370:16781`),
+ * `07.09 · Excluir conta` (`149:3589` / Web `370:16821`) e
+ * `07.17 · Conta excluída` (`370:6769` / Web `370:18021`).
+ */
 export default function DeleteAccount({
   sessionUserId,
   onBack,
@@ -24,17 +33,22 @@ export default function DeleteAccount({
     return (
       <SafeAreaView style={styles.page}>
         <TopAppBar title="Exclusão de Conta" onBack={onBack} />
-        <View style={styles.content}>
-          <View style={styles.card}>
-            <Text accessibilityRole="header" style={styles.successTitle}>
-              Conta excluída
-            </Text>
-            <Text style={styles.bodyCenter}>
-              Sua conta e seus dados pessoais foram removidos da nossa base em conformidade com a LGPD e as políticas de privacidade do Ipebook.
-            </Text>
-            <FilledButton label="Voltar à tela inicial" onPress={onAccountDeleted} />
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          <View style={styles.content}>
+            <View style={styles.card}>
+              <IconBadge icon="check" tone="action" />
+              <Text accessibilityRole="header" style={styles.successTitle}>
+                Conta excluída
+              </Text>
+              <Text style={styles.bodyCenter}>
+                Sua conta e seus dados pessoais foram removidos da nossa base em conformidade com a LGPD e as políticas de privacidade do Ipebook.
+              </Text>
+              <View style={styles.fullWidthButton}>
+                <FilledButton label="Voltar à tela inicial" onPress={onAccountDeleted} />
+              </View>
+            </View>
           </View>
-        </View>
+        </ScrollView>
       </SafeAreaView>
     );
   }
@@ -43,19 +57,24 @@ export default function DeleteAccount({
     return (
       <SafeAreaView style={styles.page}>
         <TopAppBar title="Exclusão de Conta" onBack={onBack} />
-        <View style={styles.content}>
-          <View style={styles.card}>
-            <Text accessibilityRole="header" style={styles.title}>
-              Sessão necessária
-            </Text>
-            <Text style={styles.bodyCenter}>
-              Você precisa entrar na sua conta para solicitar a exclusão dos seus dados.
-            </Text>
-            {onNavigateToLogin ? (
-              <FilledButton label="Entrar na conta" onPress={onNavigateToLogin} />
-            ) : null}
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          <View style={styles.content}>
+            <View style={styles.card}>
+              <IconBadge icon="lock" tone="neutral" />
+              <Text accessibilityRole="header" style={styles.title}>
+                Sessão necessária
+              </Text>
+              <Text style={styles.bodyCenter}>
+                Você precisa entrar na sua conta para solicitar a exclusão dos seus dados.
+              </Text>
+              {onNavigateToLogin ? (
+                <View style={styles.fullWidthButton}>
+                  <FilledButton label="Entrar na conta" onPress={onNavigateToLogin} />
+                </View>
+              ) : null}
+            </View>
           </View>
-        </View>
+        </ScrollView>
       </SafeAreaView>
     );
   }
@@ -63,85 +82,85 @@ export default function DeleteAccount({
   return (
     <SafeAreaView style={styles.page}>
       <TopAppBar title="Excluir conta" onBack={onBack} />
-      <View style={styles.content}>
-        <View style={styles.exportCard}>
-          <Text accessibilityRole="header" style={styles.exportTitle}>
-            Portabilidade de Dados (LGPD)
-          </Text>
-          <Text style={styles.exportText}>
-            Antes de excluir sua conta, você pode baixar uma cópia completa de todos os seus anúncios, pedidos e dados cadastrais em formato JSON.
-          </Text>
-          {state.exportSuccess ? (
-            <Text accessibilityRole="alert" style={styles.exportSuccessText}>
-              ✓ Arquivo de dados gerado e baixado com sucesso!
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <View style={styles.content}>
+          <View style={styles.exportCard}>
+            <View style={styles.cardHeaderRow}>
+              <IconBadge icon="document" tone="action" />
+              <Text accessibilityRole="header" style={styles.exportTitle}>
+                Portabilidade de Dados (LGPD)
+              </Text>
+            </View>
+            <Text style={styles.exportText}>
+              Antes de excluir sua conta, você pode baixar uma cópia completa de todos os seus anúncios, pedidos e dados cadastrais em formato JSON.
             </Text>
-          ) : null}
-          {state.exportError ? (
+            {state.exportSuccess ? (
+              <Text accessibilityRole="alert" style={styles.exportSuccessText}>
+                ✓ Arquivo de dados gerado e baixado com sucesso!
+              </Text>
+            ) : null}
+            {state.exportError ? (
+              <Text accessibilityRole="alert" style={styles.errorText}>
+                {state.exportError}
+              </Text>
+            ) : null}
+            <OutlinedButton
+              label={state.exporting ? "Gerando arquivo..." : "Baixar meus dados (JSON)"}
+              accessibilityLabel="Baixar meus dados pessoais em formato JSON"
+              loading={state.exporting}
+              disabled={state.exporting}
+              onPress={() => void actions.downloadUserData(sessionUserId)}
+            />
+          </View>
+
+          <View style={styles.warningCard}>
+            <View style={styles.cardHeaderRow}>
+              <IconBadge icon="error" tone="error" />
+              <Text accessibilityRole="header" style={styles.warningTitle}>
+                Atenção: Ação irreversível
+              </Text>
+            </View>
+            <Text style={styles.warningText}>
+              Ao excluir sua conta no Ipebook:
+            </Text>
+            <View style={styles.bulletList}>
+              <Text style={styles.bulletItem}>• Todos os seus anúncios ativos serão cancelados e removidos do catálogo.</Text>
+              <Text style={styles.bulletItem}>• Suas negociações e pedidos pendentes serão cancelados.</Text>
+              <Text style={styles.bulletItem}>• Seus dados cadastrais serão definitivamente eliminados da nossa base (LGPD).</Text>
+            </View>
+          </View>
+
+          <Checkbox
+            label="Estou ciente de que a exclusão da minha conta é definitiva e não pode ser desfeita."
+            accessibilityLabel="Estou ciente de que a exclusão da minha conta é definitiva e não pode ser desfeita"
+            checked={state.confirmed}
+            onChange={actions.setConfirmed}
+          />
+
+          {state.error ? (
             <Text accessibilityRole="alert" style={styles.errorText}>
-              {state.exportError}
+              {state.error}
             </Text>
           ) : null}
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Baixar meus dados pessoais em formato JSON"
-            disabled={state.exporting}
-            onPress={() => void actions.downloadUserData(sessionUserId)}
-            style={styles.exportButton}
-          >
-            <Text style={styles.exportButtonText}>
-              {state.exporting ? "Gerando arquivo..." : "Baixar meus dados (JSON)"}
-            </Text>
-          </Pressable>
+
+          <FilledButton
+            label="Confirmar e excluir minha conta"
+            loading={state.loading}
+            loadingLabel="Excluindo conta..."
+            onPress={() => void actions.deleteAccount(sessionUserId)}
+          />
         </View>
-
-        <View style={styles.warningCard}>
-          <Text accessibilityRole="header" style={styles.warningTitle}>
-            Atenção: Ação irreversível
-          </Text>
-          <Text style={styles.warningText}>
-            Ao excluir sua conta no Ipebook:
-          </Text>
-          <View style={styles.bulletList}>
-            <Text style={styles.bulletItem}>• Todos os seus anúncios ativos serão cancelados e removidos do catálogo.</Text>
-            <Text style={styles.bulletItem}>• Suas negociações e pedidos pendentes serão cancelados.</Text>
-            <Text style={styles.bulletItem}>• Seus dados cadastrais serão definitivamente eliminados da nossa base (LGPD).</Text>
-          </View>
-        </View>
-
-        <Pressable
-          accessibilityRole="checkbox"
-          accessibilityState={{ checked: state.confirmed }}
-          accessibilityLabel="Estou ciente de que a exclusão da minha conta é definitiva e não pode ser desfeita"
-          onPress={() => actions.setConfirmed(!state.confirmed)}
-          style={styles.checkboxRow}
-        >
-          <View style={[styles.checkboxBox, state.confirmed && styles.checkboxBoxChecked]}>
-            {state.confirmed ? <Text style={styles.checkmark}>✓</Text> : null}
-          </View>
-          <Text style={styles.checkboxLabel}>
-            Estou ciente de que a exclusão da minha conta é definitiva e não pode ser desfeita.
-          </Text>
-        </Pressable>
-
-        {state.error ? (
-          <Text accessibilityRole="alert" style={styles.errorText}>
-            {state.error}
-          </Text>
-        ) : null}
-
-        <FilledButton
-          label="Confirmar e excluir minha conta"
-          loading={state.loading}
-          loadingLabel="Excluindo conta..."
-          onPress={() => void actions.deleteAccount(sessionUserId)}
-        />
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: tokens.colors.background },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: tokens.spacing[48],
+  },
   content: {
     flex: 1,
     width: "100%",
@@ -155,28 +174,35 @@ const styles = StyleSheet.create({
     backgroundColor: tokens.colors.surface,
     borderRadius: tokens.radius.large,
     borderWidth: 1,
-    borderColor: tokens.colors.border,
+    borderColor: tokens.colors.m3.outlineVariant,
     gap: tokens.spacing[16],
     alignItems: "center",
     marginTop: tokens.spacing[24],
   },
+  fullWidthButton: {
+    width: "100%",
+  },
+  cardHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: tokens.spacing[12],
+  },
   title: {
-    fontSize: tokens.typography.titleLarge.fontSize,
-    fontWeight: "700",
+    ...tokens.typography.titleLarge,
+    fontFamily: tokens.typography.displayLarge.fontFamily,
     color: tokens.colors.text,
     textAlign: "center",
   },
   successTitle: {
-    fontSize: tokens.typography.titleLarge.fontSize,
-    fontWeight: "700",
+    ...tokens.typography.titleLarge,
+    fontFamily: tokens.typography.displayLarge.fontFamily,
     color: tokens.colors.action,
     textAlign: "center",
   },
   bodyCenter: {
-    fontSize: tokens.typography.bodyMedium.fontSize,
+    ...tokens.typography.bodyMedium,
     color: tokens.colors.secondaryText,
     textAlign: "center",
-    lineHeight: 22,
   },
   exportCard: {
     padding: tokens.spacing[16],
@@ -184,37 +210,22 @@ const styles = StyleSheet.create({
     borderRadius: tokens.radius.medium,
     gap: tokens.spacing[12],
     borderWidth: 1,
-    borderColor: tokens.colors.border,
+    borderColor: tokens.colors.m3.outlineVariant,
   },
   exportTitle: {
-    fontSize: tokens.typography.titleMedium.fontSize,
-    fontWeight: "700",
+    flex: 1,
+    ...tokens.typography.titleMedium,
+    fontFamily: tokens.typography.displayLarge.fontFamily,
     color: tokens.colors.action,
   },
   exportText: {
-    fontSize: tokens.typography.bodyMedium.fontSize,
+    ...tokens.typography.bodyMedium,
     color: tokens.colors.text,
-    lineHeight: 20,
   },
   exportSuccessText: {
-    fontSize: tokens.typography.bodyMedium.fontSize,
+    ...tokens.typography.bodyMedium,
     color: tokens.colors.action,
     fontWeight: "600",
-  },
-  exportButton: {
-    minHeight: tokens.accessibility.touchTarget,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: tokens.colors.surface,
-    borderRadius: tokens.radius.small,
-    borderWidth: 1,
-    borderColor: tokens.colors.action,
-    paddingHorizontal: tokens.spacing[16],
-  },
-  exportButtonText: {
-    color: tokens.colors.action,
-    fontWeight: "600",
-    fontSize: tokens.typography.bodyMedium.fontSize,
   },
   warningCard: {
     padding: tokens.spacing[16],
@@ -225,12 +236,13 @@ const styles = StyleSheet.create({
     borderColor: tokens.colors.error,
   },
   warningTitle: {
-    fontSize: tokens.typography.titleMedium.fontSize,
-    fontWeight: "700",
+    flex: 1,
+    ...tokens.typography.titleMedium,
+    fontFamily: tokens.typography.displayLarge.fontFamily,
     color: tokens.colors.error,
   },
   warningText: {
-    fontSize: tokens.typography.bodyMedium.fontSize,
+    ...tokens.typography.bodyMedium,
     fontWeight: "600",
     color: tokens.colors.text,
   },
@@ -238,44 +250,11 @@ const styles = StyleSheet.create({
     gap: tokens.spacing[8],
   },
   bulletItem: {
-    fontSize: tokens.typography.bodyMedium.fontSize,
+    ...tokens.typography.bodyMedium,
     color: tokens.colors.secondaryText,
-    lineHeight: 20,
-  },
-  checkboxRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: tokens.spacing[12],
-    minHeight: tokens.accessibility.touchTarget,
-    paddingVertical: tokens.spacing[8],
-  },
-  checkboxBox: {
-    width: 24,
-    height: 24,
-    borderRadius: tokens.radius.small,
-    borderWidth: 2,
-    borderColor: tokens.colors.border,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: tokens.colors.surface,
-  },
-  checkboxBoxChecked: {
-    borderColor: tokens.colors.error,
-    backgroundColor: tokens.colors.error,
-  },
-  checkmark: {
-    color: tokens.colors.surface,
-    fontSize: 14,
-    fontWeight: "bold",
-  },
-  checkboxLabel: {
-    flex: 1,
-    fontSize: tokens.typography.bodyMedium.fontSize,
-    color: tokens.colors.text,
-    lineHeight: 20,
   },
   errorText: {
-    fontSize: tokens.typography.bodyMedium.fontSize,
+    ...tokens.typography.bodyMedium,
     color: tokens.colors.error,
   },
 });

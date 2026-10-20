@@ -4,9 +4,12 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import type { RequestStatus } from "@/model/entities/bookRequest";
 import type { RequestWithListing } from "@/viewmodel/useSentRequestsViewModel";
 import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
+import { BookCover } from "@/view/components/BookCover";
 import { ErrorState } from "@/view/components/ErrorState";
+import { IconBadge } from "@/view/components/IconBadge";
 import { LoadingState } from "@/view/components/LoadingState";
 import { OfflineState } from "@/view/components/OfflineState";
+import { Tag } from "@/view/components/Tag";
 import { tokens } from "@/view/tokens";
 
 export const statusLabel: Record<RequestStatus, string> = {
@@ -26,8 +29,19 @@ type Props = {
   renderExtra: (item: RequestWithListing) => ReactNode;
 };
 
-/** Estrutura visual comum às telas de pedidos recebidos e enviados. */
-export function RequestListLayout({ title, emptyText, items, loading, error, onRetry, onBack, renderExtra }: Props) {
+/**
+ * Estrutura visual comum às telas de pedidos recebidos (`05.03`, `06.03`) e enviados.
+ */
+export function RequestListLayout({
+  title,
+  emptyText,
+  items,
+  loading,
+  error,
+  onRetry,
+  onBack,
+  renderExtra,
+}: Props) {
   const { isOnline } = useNetworkStatus();
   return (
     <SafeAreaView style={styles.page}>
@@ -37,7 +51,9 @@ export function RequestListLayout({ title, emptyText, items, loading, error, onR
             <Text style={styles.link}>Voltar</Text>
           </Pressable>
         ) : null}
-        <Text accessibilityRole="header" style={styles.heading}>{title}</Text>
+        <Text accessibilityRole="header" style={styles.heading}>
+          {title}
+        </Text>
         {loading ? (
           <LoadingState label="Carregando pedidos" />
         ) : error ? (
@@ -50,14 +66,38 @@ export function RequestListLayout({ title, emptyText, items, loading, error, onR
           <FlatList
             data={items}
             keyExtractor={(item) => item.request.id}
-            ListEmptyComponent={<Text style={styles.body}>{emptyText}</Text>}
+            contentContainerStyle={styles.listContent}
+            ListEmptyComponent={
+              <View style={styles.emptyBox}>
+                <IconBadge icon="swap" tone="neutral" />
+                <Text style={styles.body}>{emptyText}</Text>
+              </View>
+            }
             renderItem={({ item }) => (
               <View style={styles.item}>
-                <View style={styles.row}>
-                  <Text style={styles.itemTitle}>{item.listing.title}</Text>
-                  <Text style={[styles.badge, styles[item.request.status]]}>{statusLabel[item.request.status]}</Text>
+                <View style={styles.bookRow}>
+                  <BookCover
+                    id={item.listing.id}
+                    title={item.listing.title}
+                    photoUrl={item.listing.photoUrl}
+                    variant="list"
+                  />
+                  <View style={styles.bookInfo}>
+                    <View style={styles.row}>
+                      <Text style={styles.itemTitle}>{item.listing.title}</Text>
+                      <Text style={[styles.badge, styles[item.request.status]]}>
+                        {statusLabel[item.request.status]}
+                      </Text>
+                    </View>
+                    <Text style={styles.body}>{item.listing.author}</Text>
+                    <View style={styles.tagRow}>
+                      <Tag variant={item.listing.modality} />
+                      {item.listing.modality === "sale" && item.listing.price !== undefined ? (
+                        <Text style={styles.price}>{`R$ ${item.listing.price.toFixed(2)}`}</Text>
+                      ) : null}
+                    </View>
+                  </View>
                 </View>
-                <Text style={styles.body}>{item.listing.author}</Text>
                 {renderExtra(item)}
               </View>
             )}
@@ -69,29 +109,140 @@ export function RequestListLayout({ title, emptyText, items, loading, error, onR
 }
 
 export const requestStyles = StyleSheet.create({
-  actions: { flexDirection: "row", gap: tokens.spacing[12], marginTop: tokens.spacing[6] },
-  primary: { minHeight: tokens.accessibility.touchTarget, justifyContent: "center", paddingHorizontal: tokens.spacing[20], borderRadius: tokens.radius.small, backgroundColor: tokens.colors.action },
-  primaryText: { color: tokens.colors.surface, fontSize: 16, fontWeight: "600" },
-  secondary: { minHeight: tokens.accessibility.touchTarget, justifyContent: "center", paddingHorizontal: tokens.spacing[20], borderRadius: tokens.radius.small, borderWidth: 1, borderColor: tokens.colors.border },
-  secondaryText: { color: tokens.colors.action, fontSize: 16, fontWeight: "600" },
-  meta: { fontSize: tokens.typography.bodyMedium.fontSize, color: tokens.colors.secondaryText },
-  error: { fontSize: tokens.typography.bodyMedium.fontSize, color: tokens.colors.error },
+  actions: { flexDirection: "row", gap: tokens.spacing[12], marginTop: tokens.spacing[8] },
+  primary: {
+    minHeight: tokens.accessibility.touchTarget,
+    justifyContent: "center",
+    paddingHorizontal: tokens.spacing[20],
+    borderRadius: tokens.radius.full,
+    backgroundColor: tokens.colors.action,
+  },
+  primaryText: {
+    color: tokens.colors.surface,
+    ...tokens.typography.bodyLarge,
+    fontWeight: "600",
+  },
+  secondary: {
+    minHeight: tokens.accessibility.touchTarget,
+    justifyContent: "center",
+    paddingHorizontal: tokens.spacing[20],
+    borderRadius: tokens.radius.full,
+    borderWidth: 1,
+    borderColor: tokens.colors.m3.outline,
+  },
+  secondaryText: {
+    color: tokens.colors.action,
+    ...tokens.typography.bodyLarge,
+    fontWeight: "600",
+  },
+  meta: {
+    ...tokens.typography.bodyMedium,
+    color: tokens.colors.secondaryText,
+  },
+  error: {
+    ...tokens.typography.bodyMedium,
+    color: tokens.colors.error,
+  },
 });
 
 const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: tokens.colors.background },
-  content: { flex: 1, width: "100%", maxWidth: 720, alignSelf: "center", padding: tokens.spacing[24], paddingTop: tokens.spacing[48] },
-  back: { minHeight: tokens.accessibility.touchTarget, justifyContent: "center", alignSelf: "flex-start" },
-  link: { color: tokens.colors.action, fontSize: 14, fontWeight: "600" },
-  heading: { fontSize: tokens.typography.titleLarge.fontSize, fontWeight: tokens.typography.titleLarge.fontWeight, color: tokens.colors.action, marginBottom: tokens.spacing[24] },
-  row: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: tokens.spacing[12] },
-  body: { fontSize: tokens.typography.bodyLarge.fontSize, lineHeight: 25, color: tokens.colors.secondaryText },
-  item: { paddingVertical: 18, borderBottomWidth: 1, borderBottomColor: tokens.colors.border, gap: 6 },
-  itemTitle: { flex: 1, fontSize: 19, fontWeight: "600", color: tokens.colors.action },
-  badge: { borderRadius: tokens.radius.small, paddingHorizontal: tokens.spacing[12], paddingVertical: tokens.spacing[6], fontSize: tokens.typography.labelMedium.fontSize, fontWeight: tokens.typography.labelMedium.fontWeight, overflow: "hidden" },
-  pending: { backgroundColor: tokens.colors.badge.trade.background, color: tokens.colors.badge.trade.text },
-  accepted: { backgroundColor: tokens.colors.badge.donation.background, color: tokens.colors.badge.donation.text },
-  rejected: { backgroundColor: tokens.colors.border, color: tokens.colors.secondaryText },
+  content: {
+    flex: 1,
+    width: "100%",
+    maxWidth: 720,
+    alignSelf: "center",
+    padding: tokens.spacing[24],
+    paddingTop: tokens.spacing[32],
+  },
+  back: {
+    minHeight: tokens.accessibility.touchTarget,
+    justifyContent: "center",
+    alignSelf: "flex-start",
+  },
+  link: {
+    color: tokens.colors.action,
+    ...tokens.typography.bodyMedium,
+    fontWeight: "600",
+  },
+  heading: {
+    ...tokens.typography.titleLarge,
+    fontFamily: tokens.typography.displayLarge.fontFamily,
+    color: tokens.colors.text,
+    marginBottom: tokens.spacing[16],
+  },
+  listContent: {
+    gap: tokens.spacing[12],
+    paddingBottom: tokens.spacing[24],
+  },
+  emptyBox: {
+    alignItems: "center",
+    padding: tokens.spacing[24],
+    gap: tokens.spacing[12],
+  },
+  bookRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: tokens.spacing[12],
+  },
+  bookInfo: {
+    flex: 1,
+    gap: tokens.spacing[4],
+  },
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: tokens.spacing[12],
+  },
+  tagRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: tokens.spacing[8],
+    marginTop: tokens.spacing[4],
+  },
+  price: {
+    ...tokens.typography.bodyMedium,
+    fontWeight: "600",
+    color: tokens.colors.action,
+  },
+  body: {
+    ...tokens.typography.bodyMedium,
+    color: tokens.colors.secondaryText,
+  },
+  item: {
+    backgroundColor: tokens.colors.surface,
+    borderRadius: tokens.radius.medium,
+    borderWidth: 1,
+    borderColor: tokens.colors.m3.outlineVariant,
+    padding: tokens.spacing[16],
+    gap: tokens.spacing[12],
+  },
+  itemTitle: {
+    flex: 1,
+    ...tokens.typography.titleMedium,
+    fontFamily: tokens.typography.displayLarge.fontFamily,
+    color: tokens.colors.text,
+  },
+  badge: {
+    borderRadius: tokens.radius.full,
+    paddingHorizontal: tokens.spacing[12],
+    paddingVertical: tokens.spacing[4],
+    ...tokens.typography.labelMedium,
+    overflow: "hidden",
+  },
+  pending: {
+    backgroundColor: tokens.colors.badge.trade.background,
+    color: tokens.colors.badge.trade.text,
+  },
+  accepted: {
+    backgroundColor: tokens.colors.badge.donation.background,
+    color: tokens.colors.badge.donation.text,
+  },
+  rejected: {
+    backgroundColor: tokens.colors.disabledBackground,
+    color: tokens.colors.secondaryText,
+  },
   primary: requestStyles.primary,
   primaryText: requestStyles.primaryText,
 });
