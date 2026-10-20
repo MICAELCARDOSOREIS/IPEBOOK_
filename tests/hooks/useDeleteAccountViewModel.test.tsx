@@ -152,4 +152,49 @@ describe("useDeleteAccountViewModel", () => {
     expect(hook.current[0].error).toBe("Serviço indisponível.");
     expect(hook.current[0].success).toBe(false);
   });
+
+  it("baixa dados do usuário com sucesso via downloadUserData (Spec 029 - LGPD)", async () => {
+    const auth = stubAuth();
+    const mockExport = {
+      exportUserData: vi.fn().mockResolvedValue({
+        metadata: { schemaVersion: "1.0", exportedAt: "2026-10-20" },
+        user: { id: "user-1", email: "teste@exemplo.com" },
+      }),
+    };
+    const mockDownload = {
+      downloadJson: vi.fn().mockResolvedValue(true),
+    };
+
+    let result!: ReturnType<typeof useDeleteAccountViewModel>;
+    function Probe() {
+      result = useDeleteAccountViewModel(auth, stubHistory(), mockExport as any, mockDownload as any);
+      return null;
+    }
+    await act(async () => {
+      mounted.push(create(createElement(Probe)));
+    });
+
+    let ok = false;
+    await act(async () => {
+      ok = await result[1].downloadUserData("user-1");
+    });
+
+    expect(ok).toBe(true);
+    expect(result[0].exportSuccess).toBe(true);
+    expect(result[0].exportError).toBeNull();
+    expect(mockExport.exportUserData).toHaveBeenCalledWith("user-1");
+    expect(mockDownload.downloadJson).toHaveBeenCalled();
+  });
+
+  it("rejeita download de dados se sessão for nula", async () => {
+    const hook = await renderHook(stubAuth());
+
+    let ok = true;
+    await act(async () => {
+      ok = await hook.current[1].downloadUserData(null);
+    });
+
+    expect(ok).toBe(false);
+    expect(hook.current[0].exportError).toBe("Você precisa estar conectado para baixar seus dados.");
+  });
 });
