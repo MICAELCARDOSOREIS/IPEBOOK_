@@ -29,10 +29,10 @@ Como consequência, os critérios de aceite da issue #96 relativos a essas duas 
 | Rota | View | Resultado |
 | --- | --- | --- |
 | `/` | `home.tsx` | Aprovado — rótulos, papéis e tag de modalidade com texto (não só cor) |
-| `/entrar` | `signIn.tsx` | Achado 1 (erro de campo não associado) |
-| `/criar-conta` | `signUp.tsx` | Achado 1 |
-| `/esqueci-senha` | `forgotPassword.tsx` | Achado 1 |
-| `/redefinir-senha` | `resetPassword.tsx` | Achado 1 |
+| `/entrar` | `signIn.tsx` | Achado 1, corrigido (erro de campo agora associado) |
+| `/criar-conta` | `signUp.tsx` | Achado 1, corrigido |
+| `/esqueci-senha` | `forgotPassword.tsx` | Achado 1, corrigido |
+| `/redefinir-senha` | `resetPassword.tsx` | Achado 1, corrigido |
 | `/excluir-conta` | `deleteAccount.tsx` | Aprovado — confirmação com rótulo e papel de botão |
 | `/anunciar` | `createListing.tsx` | Achado 1; Chip de modalidade aprovado (texto + estado) |
 | `/editar-anuncio/[id]` | `editListing.tsx` | Achado 1 |
@@ -47,7 +47,7 @@ Como consequência, os critérios de aceite da issue #96 relativos a essas duas 
 | `/favoritos` | `favorites.tsx` | Aprovado |
 | `/notificacoes` | `notifications.tsx` | Aprovado — item de notificação com rótulo combinando título e mensagem |
 | `/ajuda` | `helpAndFaq.tsx` | Aprovado — cabeçalho e botões de pergunta com papel |
-| `/termos` | `termsAndPrivacy.tsx` | Achado 3 (abas sem contêiner `tablist`) |
+| `/termos` | `termsAndPrivacy.tsx` | Achado 3, corrigido (abas agora em contêiner `tablist`) |
 
 Nota sobre `requestDetail.tsx`/`receivedRequests.tsx`/`sentRequests.tsx`: usam `Pressable` com
 `accessibilityRole`/`accessibilityLabel` consistentes com o restante do app; não apresentaram
@@ -55,7 +55,7 @@ achado novo além dos já listados (que não se repetem aqui).
 
 ## Achados
 
-### Achado 1 — Mensagem de erro de campo não associada ao campo (critério "Mensagens de erro associadas ao campo correspondente")
+### Achado 1 — Mensagem de erro de campo não associada ao campo (critério "Mensagens de erro associadas ao campo correspondente") — **Corrigido na issue #104**
 
 **Onde:** `src/view/components/TextField.tsx` (usado por `signIn.tsx`, `signUp.tsx`,
 `forgotPassword.tsx`, `resetPassword.tsx`, `createListing.tsx`, `editListing.tsx`) e, no mesmo
@@ -133,6 +133,16 @@ navegação por setas entre abas.
 
 **Sugestão para correção futura:** adicionar `accessibilityRole="tablist"` à `View` que envolve
 os itens nos dois componentes.
+
+**Correção aplicada (issue #106):** `accessibilityRole="tablist"` adicionado à `View` que
+agrupa os itens em `NavigationBar.tsx` e `termsAndPrivacy.tsx`. Não foi usado `accessible={true}`
+no contêiner: no React Native, `accessible={true}` faz a View ser tratada como um único
+elemento atômico por VoiceOver/TalkBack, escondendo os `tab`s individuais da navegação por
+leitor de tela — o que pioraria a acessibilidade em vez de corrigi-la. O papel do contêiner e
+o estado selecionado/rótulo de cada aba continuam expostos individualmente. Cobertura em
+`tests/components/navigationBar.test.tsx` e `tests/components/termsAndPrivacyView.test.tsx`
+(cada `View` recebeu um `testID` só para a asserção do papel, já que a consulta por role do
+`@testing-library/react-native` não enxerga contêineres não marcados como `accessible`).
 
 ## O que foi verificado e aprovado, sem achados
 

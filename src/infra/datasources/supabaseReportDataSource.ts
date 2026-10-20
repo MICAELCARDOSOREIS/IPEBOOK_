@@ -1,6 +1,6 @@
 import type { IReportDataSource } from "@/model/datasources/iReportDataSource";
 import type { CreateReportInput, ReportListing } from "@/model/entities/report";
-import { DataSourceError } from "@/model/errors";
+import { DataSourceError, DuplicateReportError } from "@/model/errors";
 import type { SupabaseAppClient } from "@/infra/supabaseClient";
 
 type ReportRow = {
@@ -39,6 +39,9 @@ export class SupabaseReportDataSource implements IReportDataSource {
       .single();
 
     if (error) {
+      if ((error as { code?: string }).code === "23505") {
+        throw new DuplicateReportError("Você já denunciou este anúncio.");
+      }
       throw new DataSourceError("Não foi possível registrar a denúncia.");
     }
     return mapReport(data as ReportRow);

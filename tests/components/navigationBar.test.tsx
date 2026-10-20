@@ -15,6 +15,12 @@ describe("NavigationBar (design-system/04-componentes/barra-de-navegacao.md, ADR
     expect(getByLabelText("Perfil")).toBeDefined();
   });
 
+  it("agrupa as abas em um contêiner com papel tablist", async () => {
+    const { getByTestId, getAllByRole } = await render(<NavigationBar active="home" onNavigate={() => {}} />);
+    expect(getByTestId("navigation-bar-tablist").props.accessibilityRole).toBe("tablist");
+    expect(getAllByRole("tab")).toHaveLength(3);
+  });
+
   it("anuncia o destino atual como selecionado e os demais como não selecionados", async () => {
     const { getByLabelText } = await render(<NavigationBar active="search" onNavigate={() => {}} />);
     expect(getByLabelText("Pesquisa").props.accessibilityState).toEqual({ selected: true });

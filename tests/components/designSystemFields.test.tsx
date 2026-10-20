@@ -22,6 +22,35 @@ describe("TextField (design-system/04-componentes/campo-de-texto.md)", () => {
     expect(getByText("E-mail é obrigatório.")).toBeDefined();
   });
 
+  it("associa a mensagem de erro ao campo para leitores de tela (Web e nativo)", async () => {
+    const { getByLabelText, getByRole } = await render(
+      <TextField label="E-mail" value="" onChangeText={() => {}} error="E-mail é obrigatório." />,
+    );
+    const input = getByLabelText("E-mail");
+    const errorText = getByRole("alert");
+    expect(input.props["aria-describedby"]).toBeDefined();
+    expect(input.props["aria-describedby"]).toBe(errorText.props.nativeID);
+    expect(input.props.accessibilityHint).toBe("E-mail é obrigatório.");
+  });
+
+  it("não anuncia mensagem de erro quando o campo está válido", async () => {
+    const { getByLabelText } = await render(
+      <TextField label="E-mail" value="pessoa@exemplo.com" onChangeText={() => {}} />,
+    );
+    const input = getByLabelText("E-mail");
+    expect(input.props["aria-describedby"]).toBeUndefined();
+    expect(input.props.accessibilityHint).toBeUndefined();
+  });
+
+  it("some a associação quando o erro é corrigido", async () => {
+    const { getByLabelText, rerender } = await render(
+      <TextField label="E-mail" value="" onChangeText={() => {}} error="E-mail é obrigatório." />,
+    );
+    expect(getByLabelText("E-mail").props["aria-describedby"]).toBeDefined();
+    await rerender(<TextField label="E-mail" value="pessoa@exemplo.com" onChangeText={() => {}} />);
+    expect(getByLabelText("E-mail").props["aria-describedby"]).toBeUndefined();
+  });
+
   it("chama onChangeText ao digitar", async () => {
     const onChangeText = vi.fn();
     const { getByLabelText } = await render(

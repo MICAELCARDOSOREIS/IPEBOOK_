@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { MemoryReportDataSource } from "@/infra/datasources/memoryReportDataSource";
-import { AuthError, ValidationError } from "@/model/errors";
+import { AuthError, DuplicateReportError, ValidationError } from "@/model/errors";
 import { ReportUseCases } from "@/usecase/reportUseCases";
 
 describe("ReportUseCases", () => {
@@ -67,5 +67,29 @@ describe("ReportUseCases", () => {
     const listingReports = await dataSource.listByListing("book-1");
     expect(listingReports).toHaveLength(1);
     expect(listingReports[0].id).toBe(report.id);
+  });
+
+  it("lança DuplicateReportError quando o mesmo usuário tenta denunciar o mesmo anúncio novamente", async () => {
+    const dataSource = new MemoryReportDataSource();
+    const useCases = new ReportUseCases(dataSource);
+
+    await useCases.submitReport(
+      { listingId: "book-1", reason: "inappropriate_content" },
+      "user-123",
+    );
+
+    await expect(
+      useCases.submitReport(
+        { listingId: "book-1", reason: "fraud_or_scam" },
+        "user-123",
+      ),
+    ).rejects.toThrow(DuplicateReportError);
+
+    await expect(
+      useCases.submitReport(
+        { listingId: "book-1", reason: "fraud_or_scam" },
+        "user-123",
+      ),
+    ).rejects.toThrow("Você já denunciou este anúncio.");
   });
 });

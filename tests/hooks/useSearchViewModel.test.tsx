@@ -135,4 +135,32 @@ describe("testes de hook: useSearchViewModel (ISO/IEC 25010 - Adequação Funcio
     await act(async () => { await hook.current[1].registerSearch("   "); });
     expect(hook.current[0].history).toEqual([]);
   });
+
+  it("filtra livros por modalidade (Issue #93)", async () => {
+    const hook = await renderHook({ listBooks: async () => books });
+    await act(async () => {
+      hook.current[1].setModality("trade");
+    });
+    expect(hook.current[0].books).toEqual([books[1]]);
+
+    await act(async () => {
+      hook.current[1].setModality("donation");
+    });
+    expect(hook.current[0].books).toEqual([books[0]]);
+
+    await act(async () => {
+      hook.current[1].setModality("all");
+    });
+    expect(hook.current[0].books).toEqual(books);
+  });
+
+  it("ordena livros por título em ordem alfabética (Issue #93)", async () => {
+    const hook = await renderHook({ listBooks: async () => books });
+    await act(async () => {
+      hook.current[1].setSortBy("title");
+    });
+    // Capitães da Areia deve vir antes de Dom Casmurro
+    expect(hook.current[0].books[0].title).toBe("Capitães da Areia");
+    expect(hook.current[0].books[1].title).toBe("Dom Casmurro");
+  });
 });

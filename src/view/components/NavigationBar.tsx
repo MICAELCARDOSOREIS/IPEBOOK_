@@ -19,7 +19,7 @@ const ITEMS: ReadonlyArray<{ key: NavigationDestination; label: string; icon: Ap
 /** Barra de navegação do design system (barra-de-navegacao.md), restrita a 3 destinos (ADR 0011). */
 export function NavigationBar({ active, onNavigate, disabledDestinations = [] }: NavigationBarProps) {
   return (
-    <View style={styles.bar}>
+    <View testID="navigation-bar-tablist" accessibilityRole="tablist" style={styles.bar}>
       {ITEMS.map((item) => {
         const isActive = item.key === active;
         const isDisabled = disabledDestinations.includes(item.key);

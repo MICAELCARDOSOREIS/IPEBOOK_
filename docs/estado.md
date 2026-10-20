@@ -21,6 +21,9 @@ Todas as métricas abaixo foram aferidas diretamente por execução dos scripts 
   5. `202610170002_fotos_anuncios.sql` (colunas de fotos, localidade e categoria em `v2_books`)
   6. `202610170003_pausar_anuncio.sql` (status pausado e restrição de ciclo de vida em `v2_books`)
   7. `202610180001_indices_busca_catalogo.sql` (índices parciais e compostos de performance para vitrine, localização, modalidade e moderação - ADR 0021)
+  8. `202610200001_unicidade_denuncias.sql` (restrição UNIQUE(reporter_id, listing_id) impedindo denúncias duplicadas pelo mesmo usuário - Issue #112)
+  9. `202610200002_rpc_exclusao_conta.sql` (função RPC security definer delete_user_account com autorização estrita e cascata definitiva LGPD - Issue #115)
+  10. `202610200003_storage_book_photos.sql` (criação do bucket público book-photos com limite de 5MB e políticas de RLS de upload/exclusão pelo proprietário - Issue #116)
 - **Semente Oficial da Beta (`npm run db:seed`)**: Script `scripts/popular-catalogo-piripiri.mjs` gerando 10 anúncios realistas distribuídos pelos bairros de Piripiri, PI com exportação SQL via `--sql`.
 - **Backend Supabase ativo**: O backend está configurado com `EXPO_PUBLIC_BACKEND=supabase` em `.env` e `.env.example`, integrado ao projeto oficial `xiuuiggpccpgrwkzeloc`. O histórico de migrações remotas foi reconciliado e `supabase db push` está operando normalmente.
 - **Rotas Web compiladas (`npm run build:web`)**: Exportação estática do Expo Router gerou com sucesso o pacote web em `dist/`, totalizando **23 rotas estáticas**:
@@ -88,6 +91,7 @@ No app ativo em desenvolvimento, 21 rotas cobrem as jornadas essenciais da beta.
 - **Issue #96 (Auditoria de acessibilidade das telas)**: Concluída e integrada via PR #101. Auditoria documentada em `specs/006-redesign-v1-design-system/auditoria-acessibilidade-2026-10-20.md`, derivando as issues corretivas #104, #105 e #106.
 - **Issue #98 (Boas-vindas e primeiro acesso)**: Concluída e integrada via PR #102. Spec 026 e ADR 0022 criados. Rota `/bem-vindo`, persistência de primeiro acesso no dispositivo e escolha de bairro de Piripiri.
 - **Issue #108 / #94 (Histórico de buscas recentes e desambiguação de spec)**: Concluída e integrada via PR #100. Spec numerada como 027 para evitar colisão com a spec 026. Armazenamento no dispositivo via `AsyncStorage`, isolado por conta e limpo ao excluir a conta.
+- **Alinhamento das telas de autenticação ao Figma (US1 e US2 / Micael)**: Concluído e integrado. Telas de Entrar (`01.02`), Criar conta (`01.03`), Recuperar acesso (`01.04`), Confira seu e-mail (`01.05`) e Nova senha (`01.06` e `01.07`) alinhadas às especificações do Figma Android Material 3 e Web Responsivo, com `TopAppBar`, cards centralizados responsivos, confirmação de senha e validação interativa comprovada via ADB no dispositivo físico Android.
 
 ---
 
