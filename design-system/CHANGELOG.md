@@ -2,6 +2,23 @@
 
 Versões no formato `MAIOR.MENOR.CORREÇÃO`. Mudança grande = versão nova.
 
+## 1.7.0 · 2026-10-20
+
+- Alinhamento das telas sob responsabilidade do Micael às telas do Figma (Spec 028).
+- **Responsáveis:** Micael Cardoso Reis.
+- **Mudanças:**
+  - Implementação das variantes de botão que o `04-componentes/botao.md` já documentava e o código
+    não tinha: `OutlinedButton` (`src/view/components/OutlinedButton.tsx`) e `TextButton`
+    (`src/view/components/TextButton.tsx`, com tom destrutivo).
+  - Novo componente `Checkbox` (`src/view/components/Checkbox.tsx`) e seu documento
+    `04-componentes/caixa-de-selecao.md`, usado no aceite dos termos do cadastro (`01.03`).
+  - Ícone `mail` acrescentado ao `AppIcon` para a confirmação de e-mail (`01.05`).
+  - Telas de acesso, publicação, gerenciamento de anúncio e favoritos passam a usar a copy, a
+    hierarquia e os estados dos nós correspondentes do Figma; o bairro deixa de ser texto livre e
+    passa a sair da lista oficial de Piripiri.
+  - Cor de tema da Web corrigida de `#0D47A1` para a cor de ação do design system (`#2C5E45`) e
+    ícones do manifesto apontando para arquivos que existem no pacote publicado.
+
 ## 1.6.0 · 2026-10-17
 
 - Alinhamento completo dos 24 componentes documentados em `04-componentes/` contra a realidade do produto em `src/view/components/` (Issue #92, ADR 0019).

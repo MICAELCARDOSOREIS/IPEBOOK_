@@ -1,10 +1,13 @@
 import { useState } from "react";
-import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { Platform, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { tokens } from "@/view/tokens";
+import { Checkbox } from "@/view/components/Checkbox";
 import { FilledButton } from "@/view/components/FilledButton";
 import { Logotipo } from "@/view/components/Logotipo";
+import { OutlinedButton } from "@/view/components/OutlinedButton";
+import { TextButton } from "@/view/components/TextButton";
 import { TextField } from "@/view/components/TextField";
 import { TopAppBar } from "@/view/components/TopAppBar";
 
@@ -15,6 +18,9 @@ export type SignUpProps = {
   onBack?: () => void;
 };
 
+const TERMS_ERROR = "É preciso aceitar os termos de uso para criar a conta.";
+
+/** Figma `01.03 · Criar conta` (nó `336:118`). */
 export default function SignUp({
   onAuthenticated,
   onNavigateToSignIn,
@@ -22,11 +28,19 @@ export default function SignUp({
   onBack,
 }: SignUpProps = {}) {
   const [state, actions] = useAuthViewModel();
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [termsError, setTermsError] = useState<string | null>(null);
 
   const handleSubmit = async () => {
-    const success = await actions.signUp(email, password);
+    if (!acceptedTerms) {
+      setTermsError(TERMS_ERROR);
+      return;
+    }
+    setTermsError(null);
+    const success = await actions.signUp(email, password, name);
     if (success) onAuthenticated?.();
   };
 
@@ -36,8 +50,18 @@ export default function SignUp({
       <View style={styles.centerContainer}>
         <View style={styles.content}>
           <Logotipo />
-          <Text style={styles.title}>Criar conta</Text>
-          <Text style={styles.subtitle}>Crie sua conta para anunciar e negociar livros.</Text>
+          <Text accessibilityRole="header" style={styles.title}>Crie sua conta</Text>
+          <Text style={styles.subtitle}>Anuncie, troque, venda ou doe livros perto de você.</Text>
+
+          <TextField
+            label="Nome completo"
+            value={name}
+            onChangeText={setName}
+            autoCapitalize="words"
+            editable={!state.loading}
+            placeholder="Como você quer ser chamado"
+            maxLength={80}
+          />
 
           <TextField
             label="E-mail"
@@ -46,6 +70,7 @@ export default function SignUp({
             autoCapitalize="none"
             keyboardType="email-address"
             editable={!state.loading}
+            placeholder="voce@exemplo.com"
           />
 
           <TextField
@@ -56,6 +81,25 @@ export default function SignUp({
             editable={!state.loading}
             helperText="Mínimo de 8 caracteres."
           />
+
+          <Checkbox
+            label="Aceito os termos de uso"
+            description="e a política de privacidade."
+            checked={acceptedTerms}
+            onChange={(checked) => {
+              setAcceptedTerms(checked);
+              if (checked) setTermsError(null);
+            }}
+            error={termsError}
+            disabled={state.loading}
+          />
+
+          {onNavigateToTerms ? (
+            <TextButton
+              label="Ler os termos de uso e a política de privacidade"
+              onPress={() => onNavigateToTerms()}
+            />
+          ) : null}
 
           {state.error ? (
             <Text accessibilityRole="alert" style={styles.error}>{state.error}</Text>
@@ -72,15 +116,7 @@ export default function SignUp({
             onPress={() => void handleSubmit()}
           />
 
-          <Pressable accessibilityRole="button" onPress={() => onNavigateToTerms?.()} style={styles.termsButton}>
-            <Text style={styles.termsText}>
-              Ao criar conta, você concorda com os <Text style={styles.termsLink}>Termos de Uso e Privacidade</Text>.
-            </Text>
-          </Pressable>
-
-          <Pressable accessibilityRole="button" onPress={() => onNavigateToSignIn?.()} style={styles.linkButton}>
-            <Text style={styles.link}>Já tem conta? Entrar</Text>
-          </Pressable>
+          <OutlinedButton label="Já tenho conta" onPress={() => onNavigateToSignIn?.()} />
         </View>
       </View>
     </SafeAreaView>
@@ -121,7 +157,7 @@ const styles = StyleSheet.create({
     lineHeight: tokens.typography.displayLarge.lineHeight,
     fontFamily: tokens.typography.displayLarge.fontFamily,
     fontWeight: tokens.typography.displayLarge.fontWeight,
-    color: tokens.colors.action,
+    color: tokens.colors.text,
   },
   subtitle: {
     fontSize: tokens.typography.bodyLarge.fontSize,
@@ -136,37 +172,8 @@ const styles = StyleSheet.create({
     fontFamily: tokens.typography.bodyMedium.fontFamily,
   },
   status: {
-    color: tokens.colors.action,
+    color: tokens.colors.success,
     fontSize: tokens.typography.bodyMedium.fontSize,
     fontFamily: tokens.typography.bodyMedium.fontFamily,
-  },
-  linkButton: {
-    minHeight: tokens.accessibility.touchTarget,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  link: {
-    color: tokens.colors.action,
-    fontSize: tokens.typography.bodyMedium.fontSize,
-    fontFamily: tokens.typography.bodyMedium.fontFamily,
-    fontWeight: "600",
-  },
-  termsButton: {
-    paddingVertical: tokens.spacing[4],
-    alignItems: "center",
-    minHeight: tokens.accessibility.touchTarget,
-    justifyContent: "center",
-  },
-  termsText: {
-    fontSize: tokens.typography.bodyMedium.fontSize,
-    fontFamily: tokens.typography.bodyMedium.fontFamily,
-    color: tokens.colors.secondaryText,
-    textAlign: "center",
-    lineHeight: 20,
-  },
-  termsLink: {
-    color: tokens.colors.action,
-    fontWeight: "bold",
-    textDecorationLine: "underline",
   },
 });

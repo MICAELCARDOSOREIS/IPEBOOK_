@@ -412,3 +412,101 @@ describe("togglePauseListing (FR-024 — pausar e retomar anúncio)", () => {
     expect((await useCases.listBooks())[0].id).toBe(book.id);
   });
 });
+
+describe("Spec 028 — conservação e descrição no anúncio", () => {
+  it("guarda conservação e descrição sanitizadas ao criar", async () => {
+    const source = new MemoryBookDataSource();
+    const useCases = new BookUseCases(source);
+
+    const created = await useCases.createListing(
+      {
+        title: "Dom Casmurro",
+        author: "Machado de Assis",
+        modality: "donation",
+        condition: "marked",
+        description: "  Marcas leves de uso  ",
+        neighborhood: "Centro",
+      },
+      "user-42",
+    );
+
+    expect(created.condition).toBe("marked");
+    expect(created.description).toBe("Marcas leves de uso");
+  });
+
+  it("recusa conservação fora da lista ao criar", async () => {
+    const useCases = new BookUseCases(new MemoryBookDataSource());
+
+    await expect(
+      useCases.createListing(
+        {
+          title: "Dom Casmurro",
+          author: "Machado de Assis",
+          modality: "donation",
+          condition: "antigo" as never,
+        },
+        "user-42",
+      ),
+    ).rejects.toThrow(ValidationError);
+  });
+
+  it("recusa descrição acima do limite ao criar", async () => {
+    const useCases = new BookUseCases(new MemoryBookDataSource());
+
+    await expect(
+      useCases.createListing(
+        {
+          title: "Dom Casmurro",
+          author: "Machado de Assis",
+          modality: "donation",
+          description: "a".repeat(281),
+        },
+        "user-42",
+      ),
+    ).rejects.toThrow(ValidationError);
+  });
+
+  it("altera conservação e descrição ao editar e preserva o que não foi enviado", async () => {
+    const source = new MemoryBookDataSource();
+    const useCases = new BookUseCases(source);
+    const created = await useCases.createListing(
+      {
+        title: "Dom Casmurro",
+        author: "Machado de Assis",
+        modality: "donation",
+        condition: "good",
+        description: "Capa original",
+      },
+      "user-42",
+    );
+
+    const alterado = await useCases.updateListing(
+      created.id,
+      { condition: "worn", description: "Páginas amareladas" },
+      "user-42",
+    );
+    expect(alterado.condition).toBe("worn");
+    expect(alterado.description).toBe("Páginas amareladas");
+
+    const semMudanca = await useCases.updateListing(created.id, { title: "Dom Casmurro II" }, "user-42");
+    expect(semMudanca.condition).toBe("worn");
+    expect(semMudanca.description).toBe("Páginas amareladas");
+  });
+
+  it("limpa a descrição quando ela é enviada vazia", async () => {
+    const source = new MemoryBookDataSource();
+    const useCases = new BookUseCases(source);
+    const created = await useCases.createListing(
+      {
+        title: "Dom Casmurro",
+        author: "Machado de Assis",
+        modality: "donation",
+        description: "Capa original",
+      },
+      "user-42",
+    );
+
+    const limpo = await useCases.updateListing(created.id, { description: "" }, "user-42");
+    expect(limpo.description).toBeUndefined();
+  });
+});

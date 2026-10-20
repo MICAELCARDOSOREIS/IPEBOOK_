@@ -1,4 +1,5 @@
-import type { Book, BookModality } from "@/model/entities/book";
+import type { Book, BookCondition, BookModality } from "@/model/entities/book";
+import { BOOK_CONDITIONS, MAX_BOOK_DESCRIPTION_LENGTH } from "@/model/entities/book";
 import { isValidBetaLocation } from "@/model/entities/location";
 
 export type BookValidationResult = Readonly<{
@@ -37,6 +38,8 @@ export function sanitizeBookInput(input: Partial<Book>): Partial<Book> {
     city: input.city?.trim(),
     state: input.state?.trim(),
     neighborhood: input.neighborhood?.trim(),
+    condition: input.condition,
+    description: input.description?.trim() || undefined,
     photoUrl: input.photoUrl?.trim() || undefined,
     photos: Array.isArray(input.photos)
       ? input.photos.map((p) => (typeof p === "string" ? p.trim() : "")).filter(Boolean)
@@ -89,6 +92,19 @@ export function validateBookPayload(input: unknown): BookValidationResult {
   if (raw.category !== undefined && raw.category !== null &&
     (typeof raw.category !== "string" || raw.category.trim().length > 60)) {
     errors.push("Categoria deve ter no máximo 60 caracteres.");
+  }
+
+  if (raw.condition !== undefined && raw.condition !== null &&
+    !BOOK_CONDITIONS.includes(raw.condition as BookCondition)) {
+    errors.push("Estado de conservação deve ser 'new', 'good', 'marked' ou 'worn'.");
+  }
+
+  if (raw.description !== undefined && raw.description !== null) {
+    if (typeof raw.description !== "string") {
+      errors.push("Descrição deve ser um texto válido.");
+    } else if (raw.description.trim().length > MAX_BOOK_DESCRIPTION_LENGTH) {
+      errors.push(`Descrição deve conter no máximo ${MAX_BOOK_DESCRIPTION_LENGTH} caracteres.`);
+    }
   }
 
   if (!VALID_MODALITIES.includes(raw.modality as BookModality)) {

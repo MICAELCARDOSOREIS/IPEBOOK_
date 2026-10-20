@@ -7,7 +7,7 @@ describe("SC-001 da spec 006 substituído pela recuperação segura da spec 007"
   it("não altera a senha no modo local sem um canal de e-mail", async () => {
     const auth = new AuthUseCases(new MemoryAuthDataSource());
 
-    await auth.signUp("leitora@exemplo.com", "umasenha123");
+    await auth.signUp("leitora@exemplo.com", "umasenha123", "Leitora Teste");
     await auth.signOut();
     await expect(auth.getSession()).resolves.toBeNull();
 
@@ -20,7 +20,7 @@ describe("SC-001 da spec 006 substituído pela recuperação segura da spec 007"
 
   it("não confirma nem nega a existência de outras contas para e-mail desconhecido (FR-001)", async () => {
     const auth = new AuthUseCases(new MemoryAuthDataSource());
-    const owner = await auth.signUp("conhecida@exemplo.com", "umasenha123");
+    const owner = await auth.signUp("conhecida@exemplo.com", "umasenha123", "Leitora Teste");
 
     await expect(auth.requestPasswordReset("desconhecida@exemplo.com")).rejects.toThrow(
       "Recuperação por e-mail indisponível no modo local.",

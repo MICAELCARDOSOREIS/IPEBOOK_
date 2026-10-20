@@ -27,7 +27,7 @@ describe("tela de nova senha", () => {
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => { screen = await render(<ResetPassword link={null} onNavigateToSignIn={onNavigateToSignIn} />); });
     expect(screen.getByRole("alert")).toBeDefined();
-    await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Voltar para o login" })); });
+    await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Voltar ao login" })); });
     expect(onNavigateToSignIn).toHaveBeenCalled();
   });
 
@@ -46,7 +46,7 @@ describe("tela de nova senha", () => {
     await act(async () => { screen = await render(<ResetPassword link="ipebook://redefinir-senha" />); });
     await act(async () => {
       fireEvent.changeText(screen.getByLabelText("Nova senha"), "senha1234");
-      fireEvent.changeText(screen.getByLabelText("Confirmar nova senha"), "senha9999");
+      fireEvent.changeText(screen.getByLabelText("Confirmar senha"), "senha9999");
     });
     await act(async () => {
       fireEvent.press(screen.getByRole("button", { name: "Salvar nova senha" }));

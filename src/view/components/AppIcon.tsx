@@ -62,6 +62,7 @@ const symbols = {
     android: "check_box_outline_blank",
     web: "check_box_outline_blank",
   },
+  mail: { ios: "envelope", android: "mail", web: "mail" },
   star: { ios: "star", android: "star", web: "star" },
   flag: { ios: "flag", android: "flag", web: "flag" },
   share: { ios: "square.and.arrow.up", android: "share", web: "share" },

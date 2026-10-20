@@ -20,6 +20,8 @@ function mockViewModel(state: EditListingState, actions: Partial<EditListingActi
     setModality: vi.fn(),
     setPrice: vi.fn(),
     setNeighborhood: vi.fn(),
+    setCondition: vi.fn(),
+    setDescription: vi.fn(),
     setPhotoUrl: vi.fn(),
     addPhoto: vi.fn(),
     removePhoto: vi.fn(),
@@ -50,6 +52,8 @@ const loadedState: EditListingState = {
   modality: "sale",
   price: "30",
   neighborhood: "Centro",
+  condition: "good",
+  description: "Marcas leves",
   photoUrl: "",
   photos: [],
   loading: false,
@@ -103,9 +107,11 @@ describe("tela de edição de anúncio (ISO/IEC 25010 - Usabilidade e Acessibili
     expect(screen.getByRole("header").props.children).toBe("Editar anúncio");
     expect(screen.getByDisplayValue("Livro Antigo")).toBeDefined();
     expect(screen.getByDisplayValue("Autor Antigo")).toBeDefined();
-    expect(screen.getByDisplayValue("Romance")).toBeDefined();
     expect(screen.getByDisplayValue("30")).toBeDefined();
-    expect(screen.getByDisplayValue("Centro")).toBeDefined();
+    expect(screen.getByDisplayValue("Marcas leves")).toBeDefined();
+    expect(screen.getByLabelText("Categoria Romance").props.accessibilityState.checked).toBe(true);
+    expect(screen.getByLabelText("Conservação Bom estado").props.accessibilityState.checked).toBe(true);
+    expect(screen.getByLabelText("Bairro Centro").props.accessibilityState.checked).toBe(true);
   });
 
   it("permite alterar modalidade e oculta preço quando não é venda", async () => {
@@ -162,5 +168,56 @@ describe("tela de edição de anúncio (ISO/IEC 25010 - Usabilidade e Acessibili
     });
 
     expect(onCancel).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("Spec 028 — edição alinhada ao Figma 04.09", () => {
+  it("desmarca categoria, conservação e bairro ao tocar no chip já escolhido", async () => {
+    const actions = mockViewModel(loadedState);
+
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<EditListing bookId="b1" sessionUserId="user-1" />);
+    });
+
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Categoria Romance"));
+      fireEvent.press(screen.getByLabelText("Conservação Bom estado"));
+      fireEvent.press(screen.getByLabelText("Bairro Centro"));
+    });
+
+    expect(actions.setCategory).toHaveBeenCalledWith("");
+    expect(actions.setCondition).toHaveBeenCalledWith(null);
+    expect(actions.setNeighborhood).toHaveBeenCalledWith("");
+  });
+
+  it("escolhe outra conservação e outro bairro", async () => {
+    const actions = mockViewModel(loadedState);
+
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<EditListing bookId="b1" sessionUserId="user-1" />);
+    });
+
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Conservação Desgastado"));
+      fireEvent.press(screen.getByLabelText("Bairro Petecas"));
+      fireEvent.press(screen.getByLabelText("Categoria Infantil"));
+    });
+
+    expect(actions.setCondition).toHaveBeenCalledWith("worn");
+    expect(actions.setNeighborhood).toHaveBeenCalledWith("Petecas");
+    expect(actions.setCategory).toHaveBeenCalledWith("Infantil");
+  });
+
+  it("mostra a mensagem de sucesso depois de salvar", async () => {
+    mockViewModel({ ...loadedState, success: true });
+
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<EditListing bookId="b1" sessionUserId="user-1" />);
+    });
+
+    expect(screen.getByText("Anúncio atualizado com sucesso!")).toBeDefined();
   });
 });

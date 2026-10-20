@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { Platform, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { tokens } from "@/view/tokens";
 import { FilledButton } from "@/view/components/FilledButton";
-import { Logotipo } from "@/view/components/Logotipo";
+import { TextButton } from "@/view/components/TextButton";
 import { TextField } from "@/view/components/TextField";
 import { TopAppBar } from "@/view/components/TopAppBar";
 
@@ -15,6 +15,7 @@ export type SignInProps = {
   onBack?: () => void;
 };
 
+/** Figma `01.10 · Entrar com e-mail` (nó `354:6017`). */
 export default function SignIn({
   onAuthenticated,
   onNavigateToSignUp,
@@ -32,12 +33,13 @@ export default function SignIn({
 
   return (
     <SafeAreaView style={styles.page}>
-      {onBack ? <TopAppBar title="Entrar" onBack={onBack} /> : null}
+      {onBack ? <TopAppBar title="Entrar com e-mail" onBack={onBack} /> : null}
       <View style={styles.centerContainer}>
         <View style={styles.content}>
-          <Logotipo />
-          <Text style={styles.title}>Entrar</Text>
-          <Text style={styles.subtitle}>Entre com sua conta para anunciar e negociar livros.</Text>
+          <Text accessibilityRole="header" style={styles.title}>
+            Sua próxima leitura começa aqui.
+          </Text>
+          <Text style={styles.subtitle}>Entre com o e-mail e a senha da sua conta.</Text>
 
           <TextField
             label="E-mail"
@@ -46,6 +48,7 @@ export default function SignIn({
             autoCapitalize="none"
             keyboardType="email-address"
             editable={!state.loading}
+            placeholder="voce@exemplo.com"
           />
 
           <TextField
@@ -67,13 +70,8 @@ export default function SignIn({
             onPress={() => void handleSubmit()}
           />
 
-          <Pressable accessibilityRole="button" onPress={() => onNavigateToForgotPassword?.()} style={styles.linkButton}>
-            <Text style={styles.link}>Esqueceu a senha?</Text>
-          </Pressable>
-
-          <Pressable accessibilityRole="button" onPress={() => onNavigateToSignUp?.()} style={styles.linkButton}>
-            <Text style={styles.link}>Ainda não tem conta? Criar conta</Text>
-          </Pressable>
+          <TextButton label="Esqueci minha senha" onPress={() => onNavigateToForgotPassword?.()} />
+          <TextButton label="Criar uma conta" onPress={() => onNavigateToSignUp?.()} />
         </View>
       </View>
     </SafeAreaView>
@@ -114,7 +112,7 @@ const styles = StyleSheet.create({
     lineHeight: tokens.typography.displayLarge.lineHeight,
     fontFamily: tokens.typography.displayLarge.fontFamily,
     fontWeight: tokens.typography.displayLarge.fontWeight,
-    color: tokens.colors.action,
+    color: tokens.colors.text,
   },
   subtitle: {
     fontSize: tokens.typography.bodyLarge.fontSize,
@@ -127,16 +125,5 @@ const styles = StyleSheet.create({
     color: tokens.colors.error,
     fontSize: tokens.typography.bodyMedium.fontSize,
     fontFamily: tokens.typography.bodyMedium.fontFamily,
-  },
-  linkButton: {
-    minHeight: tokens.accessibility.touchTarget,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  link: {
-    color: tokens.colors.action,
-    fontSize: tokens.typography.bodyMedium.fontSize,
-    fontFamily: tokens.typography.bodyMedium.fontFamily,
-    fontWeight: "600",
   },
 });

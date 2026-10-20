@@ -6,6 +6,7 @@ type StoredAccount = Readonly<{
   id: string;
   email: string;
   password: string;
+  name: string;
 }>;
 
 export class MemoryAuthDataSource implements IAuthDataSource {
@@ -13,7 +14,7 @@ export class MemoryAuthDataSource implements IAuthDataSource {
   private session: User | null = null;
   private nextId = 1;
 
-  async signUp(email: string, password: string): Promise<User> {
+  async signUp(email: string, password: string, name: string): Promise<User> {
     const normalizedEmail = email.trim().toLowerCase();
     if (this.accountsByEmail.has(normalizedEmail)) {
       throw new AuthError("Este e-mail já está em uso.");
@@ -22,9 +23,10 @@ export class MemoryAuthDataSource implements IAuthDataSource {
       id: String(this.nextId++),
       email: normalizedEmail,
       password,
+      name: name.trim(),
     };
     this.accountsByEmail.set(normalizedEmail, account);
-    const user: User = { id: account.id, email: account.email };
+    const user: User = { id: account.id, email: account.email, name: account.name };
     this.session = { ...user };
     return user;
   }
@@ -35,7 +37,7 @@ export class MemoryAuthDataSource implements IAuthDataSource {
     if (!account || account.password !== password) {
       throw new AuthError("Credenciais inválidas.");
     }
-    const user: User = { id: account.id, email: account.email };
+    const user: User = { id: account.id, email: account.email, name: account.name };
     this.session = { ...user };
     return user;
   }

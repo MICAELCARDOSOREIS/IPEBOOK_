@@ -24,6 +24,7 @@ export class BookUseCases implements IBookUseCases {
     const sanitizedCity = input.city ? sanitizeTextInput(input.city) : "Piripiri";
     const sanitizedState = input.state ? sanitizeTextInput(input.state) : "PI";
     const sanitizedNeighborhood = input.neighborhood ? sanitizeTextInput(input.neighborhood) : undefined;
+    const sanitizedDescription = input.description ? sanitizeTextInput(input.description) : undefined;
 
     const payload = {
       id: "temp",
@@ -36,6 +37,8 @@ export class BookUseCases implements IBookUseCases {
       city: sanitizedCity,
       state: sanitizedState,
       neighborhood: sanitizedNeighborhood,
+      condition: input.condition,
+      description: sanitizedDescription,
       photoUrl: input.photoUrl,
       photos: input.photos,
     };
@@ -56,6 +59,8 @@ export class BookUseCases implements IBookUseCases {
       city: sanitizedCity,
       state: sanitizedState,
       ...(sanitizedNeighborhood ? { neighborhood: sanitizedNeighborhood } : {}),
+      ...(input.condition ? { condition: input.condition } : {}),
+      ...(sanitizedDescription ? { description: sanitizedDescription } : {}),
       ...(input.photoUrl?.trim() ? { photoUrl: input.photoUrl.trim() } : {}),
       ...(input.photos && input.photos.length > 0 ? { photos: input.photos } : {}),
     });
@@ -137,6 +142,10 @@ export class BookUseCases implements IBookUseCases {
     const nextCity = input.city !== undefined ? (input.city ? sanitizeTextInput(input.city) : "Piripiri") : book.city;
     const nextState = input.state !== undefined ? (input.state ? sanitizeTextInput(input.state) : "PI") : book.state;
     const nextNeighborhood = input.neighborhood !== undefined ? (input.neighborhood ? sanitizeTextInput(input.neighborhood) : undefined) : book.neighborhood;
+    const nextCondition = input.condition !== undefined ? input.condition : book.condition;
+    const nextDescription = input.description !== undefined
+      ? (input.description ? sanitizeTextInput(input.description) : undefined)
+      : book.description;
     const nextPhotoUrl = input.photoUrl !== undefined ? input.photoUrl : book.photoUrl;
     const nextPhotos = input.photos !== undefined ? input.photos : book.photos;
 
@@ -151,6 +160,8 @@ export class BookUseCases implements IBookUseCases {
       city: nextCity,
       state: nextState,
       neighborhood: nextNeighborhood,
+      condition: nextCondition,
+      description: nextDescription,
       photoUrl: nextPhotoUrl,
       photos: nextPhotos,
     });
@@ -167,6 +178,8 @@ export class BookUseCases implements IBookUseCases {
       city: nextCity || "Piripiri",
       state: nextState || "PI",
       neighborhood: nextNeighborhood,
+      condition: nextCondition,
+      description: nextDescription,
       photoUrl: nextPhotoUrl?.trim(),
       photos: nextPhotos,
     });

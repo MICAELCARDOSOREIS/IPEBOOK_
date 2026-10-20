@@ -70,7 +70,7 @@ describe("testes de hook: useAuthViewModel (ISO/IEC 25010 - Confiabilidade)", ()
 
     let success = false;
     await act(async () => {
-      success = await hook.current[1].signUp("nova@exemplo.com", "12345678");
+      success = await hook.current[1].signUp("nova@exemplo.com", "12345678", "Leitora Teste");
     });
 
     expect(success).toBe(true);
@@ -84,7 +84,7 @@ describe("testes de hook: useAuthViewModel (ISO/IEC 25010 - Confiabilidade)", ()
     }));
     let authenticated = true;
     await act(async () => {
-      authenticated = await hook.current[1].signUp("nova@exemplo.com", "12345678");
+      authenticated = await hook.current[1].signUp("nova@exemplo.com", "12345678", "Leitora Teste");
     });
     expect(authenticated).toBe(false);
     expect(hook.current[0].statusMessage).toBe("Conta criada. Confirme seu e-mail antes de entrar.");
@@ -184,7 +184,7 @@ describe("testes de hook: useAuthViewModel (ISO/IEC 25010 - Confiabilidade)", ()
     );
     let resDomain = true;
     await act(async () => {
-      resDomain = await hookDomain.current[1].signUp("existente@exemplo.com", "senha123");
+      resDomain = await hookDomain.current[1].signUp("existente@exemplo.com", "senha123", "Leitora Teste");
     });
     expect(resDomain).toBe(false);
     expect(hookDomain.current[0].error).toBe("E-mail já cadastrado.");
@@ -198,7 +198,7 @@ describe("testes de hook: useAuthViewModel (ISO/IEC 25010 - Confiabilidade)", ()
     );
     let resUnexpected = true;
     await act(async () => {
-      resUnexpected = await hookUnexpected.current[1].signUp("novo@exemplo.com", "senha123");
+      resUnexpected = await hookUnexpected.current[1].signUp("novo@exemplo.com", "senha123", "Leitora Teste");
     });
     expect(resUnexpected).toBe(false);
     expect(hookUnexpected.current[0].error).toBe("Não foi possível concluir. Tente novamente.");

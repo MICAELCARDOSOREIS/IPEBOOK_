@@ -3,18 +3,28 @@ import type { User } from "@/model/entities/user";
 import { AuthError } from "@/model/errors";
 import type { SupabaseAppClient } from "@/infra/supabaseClient";
 
+/** Nome informado no cadastro, guardado em `user_metadata.full_name` (ver Spec 028). */
+function readFullName(user: { user_metadata?: Record<string, unknown> | null }): string | undefined {
+  const value = user.user_metadata?.full_name;
+  return typeof value === "string" && value.trim().length > 0 ? value.trim() : undefined;
+}
+
 export class SupabaseAuthDataSource implements IAuthDataSource {
   constructor(
     private readonly client: SupabaseAppClient,
     private readonly recoveryRedirectUrl: string,
   ) {}
 
-  async signUp(email: string, password: string): Promise<User> {
-    const { data, error } = await this.client.auth.signUp({ email, password });
+  async signUp(email: string, password: string, name: string): Promise<User> {
+    const { data, error } = await this.client.auth.signUp({
+      email,
+      password,
+      options: { data: { full_name: name } },
+    });
     if (error || !data.user?.email) {
       throw new AuthError("Não foi possível criar a conta. Tente novamente.");
     }
-    return { id: data.user.id, email: data.user.email };
+    return { id: data.user.id, email: data.user.email, name: readFullName(data.user) ?? name };
   }
 
   async signIn(email: string, password: string): Promise<User> {
@@ -22,7 +32,7 @@ export class SupabaseAuthDataSource implements IAuthDataSource {
     if (error || !data.user?.email) {
       throw new AuthError("Credenciais inválidas ou conta ainda não confirmada.");
     }
-    return { id: data.user.id, email: data.user.email };
+    return { id: data.user.id, email: data.user.email, name: readFullName(data.user) };
   }
 
   async signOut(): Promise<void> {
@@ -34,7 +44,7 @@ export class SupabaseAuthDataSource implements IAuthDataSource {
     const { data, error } = await this.client.auth.getSession();
     if (error) throw new AuthError("Não foi possível conferir a sessão.");
     const user = data.session?.user;
-    return user?.email ? { id: user.id, email: user.email } : null;
+    return user?.email ? { id: user.id, email: user.email, name: readFullName(user) } : null;
   }
 
   async requestPasswordReset(email: string): Promise<void> {

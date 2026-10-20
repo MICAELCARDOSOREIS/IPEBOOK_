@@ -15,7 +15,7 @@ describe("SC-005: ver detalhe do livro e solicitar negociação pela tela de det
       { title: "Torto Arado", author: "Itamar Vieira Junior", modality: "donation" },
       "owner-sc006",
     );
-    await authUseCases.signUp("comprador-sc006@exemplo.com", "senhaSegura123");
+    await authUseCases.signUp("comprador-sc006@exemplo.com", "senhaSegura123", "Leitora Teste");
 
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {

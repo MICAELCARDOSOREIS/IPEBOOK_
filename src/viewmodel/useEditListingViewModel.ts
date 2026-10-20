@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { bookUseCases } from "@/di/container";
-import type { Book, BookModality } from "@/model/entities/book";
+import type { Book, BookCondition, BookModality } from "@/model/entities/book";
 import { DomainError } from "@/model/errors";
 import type { IBookUseCases } from "@/usecase/iBookUseCases";
 
@@ -12,6 +12,8 @@ export type EditListingState = {
   modality: BookModality;
   price: string;
   neighborhood: string;
+  condition: BookCondition | null;
+  description: string;
   photoUrl: string;
   photos: readonly string[];
   loading: boolean;
@@ -28,6 +30,8 @@ export type EditListingActions = {
   setModality: (value: BookModality) => void;
   setPrice: (value: string) => void;
   setNeighborhood: (value: string) => void;
+  setCondition: (value: BookCondition | null) => void;
+  setDescription: (value: string) => void;
   setPhotoUrl: (value: string) => void;
   addPhoto: (value: string) => void;
   removePhoto: (index: number) => void;
@@ -42,6 +46,8 @@ const INITIAL_STATE: EditListingState = {
   modality: "sale",
   price: "",
   neighborhood: "",
+  condition: null,
+  description: "",
   photoUrl: "",
   photos: [],
   loading: true,
@@ -89,6 +95,8 @@ export function useEditListingViewModel(
         modality: book.modality,
         price: book.price !== undefined ? String(book.price) : "",
         neighborhood: book.neighborhood ?? "",
+        condition: book.condition ?? null,
+        description: book.description ?? "",
         photoUrl: book.photoUrl ?? "",
         photos: book.photos ?? [],
         loading: false,
@@ -138,6 +146,14 @@ export function useEditListingViewModel(
     setState((prev) => ({ ...prev, neighborhood: value, error: null, success: false }));
   }, []);
 
+  const setCondition = useCallback((value: BookCondition | null) => {
+    setState((prev) => ({ ...prev, condition: value, error: null, success: false }));
+  }, []);
+
+  const setDescription = useCallback((value: string) => {
+    setState((prev) => ({ ...prev, description: value, error: null, success: false }));
+  }, []);
+
   const setPhotoUrl = useCallback((value: string) => {
     setState((prev) => ({ ...prev, photoUrl: value, error: null, success: false }));
   }, []);
@@ -183,6 +199,8 @@ export function useEditListingViewModel(
           modality: state.modality,
           price: priceNum,
           neighborhood: state.neighborhood.trim() || undefined,
+          condition: state.condition ?? undefined,
+          description: state.description.trim() || undefined,
           photoUrl: state.photoUrl.trim() || undefined,
           photos: state.photos.length > 0 ? state.photos : undefined,
         },
@@ -204,7 +222,21 @@ export function useEditListingViewModel(
       }));
       return null;
     }
-  }, [bookId, sessionUserId, state.title, state.author, state.category, state.modality, state.price, state.neighborhood, state.photoUrl, state.photos, useCases]);
+  }, [
+    bookId,
+    sessionUserId,
+    state.title,
+    state.author,
+    state.category,
+    state.modality,
+    state.price,
+    state.neighborhood,
+    state.condition,
+    state.description,
+    state.photoUrl,
+    state.photos,
+    useCases,
+  ]);
 
   useEffect(() => {
     active.current = true;
@@ -224,6 +256,8 @@ export function useEditListingViewModel(
       setModality,
       setPrice,
       setNeighborhood,
+      setCondition,
+      setDescription,
       setPhotoUrl,
       addPhoto,
       removePhoto,

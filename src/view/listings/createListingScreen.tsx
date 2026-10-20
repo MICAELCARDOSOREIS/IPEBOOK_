@@ -6,12 +6,16 @@ export type CreateListingScreenProps = {
   onCreated?: () => void;
   onCancel?: () => void;
   onRequireSignIn?: () => void;
+  onViewMyListings?: () => void;
+  onGoHome?: () => void;
 };
 
 export default function CreateListingScreen({
   onCreated,
   onCancel,
   onRequireSignIn,
+  onViewMyListings,
+  onGoHome,
 }: CreateListingScreenProps = {}) {
   const [authState] = useAuthViewModel();
 
@@ -24,6 +28,12 @@ export default function CreateListingScreen({
   if (authState.loading || !authState.user) return null;
 
   return (
-    <CreateListing sessionUserId={authState.user.id} onCreated={onCreated} onCancel={onCancel} />
+    <CreateListing
+      sessionUserId={authState.user.id}
+      onCreated={onCreated}
+      onCancel={onCancel}
+      onViewMyListings={onViewMyListings}
+      onGoHome={onGoHome}
+    />
   );
 }

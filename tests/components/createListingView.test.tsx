@@ -19,6 +19,8 @@ function mockViewModel(state: CreateListingState, actions: Partial<CreateListing
     setModality: vi.fn(),
     setPrice: vi.fn(),
     setNeighborhood: vi.fn(),
+    setCondition: vi.fn(),
+    setDescription: vi.fn(),
     setPhotoUrl: vi.fn(),
     addPhoto: vi.fn(),
     removePhoto: vi.fn(),
@@ -37,6 +39,8 @@ const defaultState: CreateListingState = {
   modality: "sale",
   price: "",
   neighborhood: "",
+  condition: null,
+  description: "",
   photoUrl: "",
   photos: [],
   loading: false,
@@ -44,102 +48,205 @@ const defaultState: CreateListingState = {
   success: false,
 };
 
-describe("tela de cadastro de anúncio (ISO/IEC 25010 - Usabilidade e Acessibilidade)", () => {
-  it("renderiza cabeçalho e campos obrigatórios", async () => {
-    mockViewModel(defaultState);
-    let screen!: Awaited<ReturnType<typeof render>>;
+async function renderScreen(props: Partial<React.ComponentProps<typeof CreateListing>> = {}) {
+  let screen!: Awaited<ReturnType<typeof render>>;
+  await act(async () => {
+    screen = await render(<CreateListing sessionUserId="user-1" {...props} />);
+  });
+  return screen;
+}
+
+async function goToStep(screen: Awaited<ReturnType<typeof render>>, step: 2 | 3) {
+  await act(async () => {
+    fireEvent.press(screen.getByRole("button", { name: "Continuar" }));
+  });
+  if (step === 3) {
     await act(async () => {
-      screen = await render(<CreateListing sessionUserId="user-1" />);
+      fireEvent.press(screen.getByRole("button", { name: "Usar estas fotos" }));
     });
+  }
+}
+
+describe("etapa 1 do anúncio — Livro (Figma 04.01)", () => {
+  it("renderiza cabeçalho, indicador de etapa e campos do livro", async () => {
+    mockViewModel(defaultState);
+    const screen = await renderScreen();
 
     expect(screen.getByRole("header").props.children).toBe("Anunciar livro");
+    expect(screen.getByText("Etapa 1 de 3")).toBeDefined();
     expect(screen.getByLabelText("Adicionar foto da capa")).toBeDefined();
-    expect(screen.getByLabelText("Título do livro")).toBeDefined();
-    expect(screen.getByLabelText("Autor do livro")).toBeDefined();
+    expect(screen.getByLabelText("Título")).toBeDefined();
+    expect(screen.getByLabelText("Autor")).toBeDefined();
     expect(screen.getByLabelText("Modalidade Venda")).toBeDefined();
     expect(screen.getByLabelText("Modalidade Troca")).toBeDefined();
     expect(screen.getByLabelText("Modalidade Doação")).toBeDefined();
-    expect(screen.getByText("Piripiri, PI (Beta exclusiva)")).toBeDefined();
-    expect(screen.getByLabelText("Bairro do livro em Piripiri")).toBeDefined();
   });
 
-  it("exibe campo de preço apenas quando modalidade é venda", async () => {
+  it("exibe campo de preço apenas quando a modalidade é venda", async () => {
     mockViewModel({ ...defaultState, modality: "sale" });
-    let screen!: Awaited<ReturnType<typeof render>>;
-    await act(async () => {
-      screen = await render(<CreateListing sessionUserId="user-1" />);
-    });
-    expect(screen.getByLabelText("Preço do livro")).toBeDefined();
-  });
+    const venda = await renderScreen();
+    expect(venda.getByLabelText("Preço (R$)")).toBeDefined();
 
-  it("oculta campo de preço para doação e troca", async () => {
     mockViewModel({ ...defaultState, modality: "donation" });
-    let screen!: Awaited<ReturnType<typeof render>>;
-    await act(async () => {
-      screen = await render(<CreateListing sessionUserId="user-1" />);
-    });
-    expect(screen.queryByLabelText("Preço do livro")).toBeNull();
+    const doacao = await renderScreen();
+    expect(doacao.queryByLabelText("Preço (R$)")).toBeNull();
   });
 
-  it("exibe indicador de carregamento enquanto cadastra", async () => {
+  it("não publica o anúncio na primeira etapa", async () => {
+    const actions = mockViewModel(defaultState);
+    const screen = await renderScreen();
+
+    expect(screen.queryByRole("button", { name: "Publicar anúncio" })).toBeNull();
+    expect(actions.submit).not.toHaveBeenCalled();
+  });
+
+  it("chama onCancel ao voltar da primeira etapa", async () => {
+    const onCancel = vi.fn();
+    mockViewModel(defaultState);
+    const screen = await renderScreen({ onCancel });
+
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Voltar"));
+    });
+
+    expect(onCancel).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("etapa 2 do anúncio — Fotos (Figma 04.04)", () => {
+  it("mostra os três lugares de foto e a dica", async () => {
+    mockViewModel(defaultState);
+    const screen = await renderScreen();
+    await goToStep(screen, 2);
+
+    expect(screen.getByText("Mostre seu livro.")).toBeDefined();
+    expect(screen.getByText("Etapa 2 de 3")).toBeDefined();
+    expect(screen.getByLabelText("Adicionar foto da capa")).toBeDefined();
+    expect(screen.getByLabelText("Adicionar lombada")).toBeDefined();
+    expect(screen.getByLabelText("Adicionar páginas")).toBeDefined();
+    expect(screen.getByText("Dica de foto")).toBeDefined();
+  });
+
+  it("volta para a etapa anterior", async () => {
+    mockViewModel(defaultState);
+    const screen = await renderScreen();
+    await goToStep(screen, 2);
+
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Voltar à etapa anterior" }));
+    });
+
+    expect(screen.getByText("Etapa 1 de 3")).toBeDefined();
+  });
+});
+
+describe("etapa 3 do anúncio — Detalhes (Figma 04.05)", () => {
+  it("oferece conservação, categoria, descrição com contador e bairros de Piripiri", async () => {
+    mockViewModel({ ...defaultState, description: "Marcas leves" });
+    const screen = await renderScreen();
+    await goToStep(screen, 3);
+
+    expect(screen.getByText("Etapa 3 de 3")).toBeDefined();
+    expect(screen.getByLabelText("Conservação Bom estado")).toBeDefined();
+    expect(screen.getByLabelText("Conservação Desgastado")).toBeDefined();
+    expect(screen.getByLabelText("Categoria Literatura")).toBeDefined();
+    expect(screen.getByLabelText("Descrição")).toBeDefined();
+    expect(screen.getByText("12/280")).toBeDefined();
+    expect(screen.getByLabelText("Bairro Centro")).toBeDefined();
+  });
+
+  it("registra a conservação escolhida", async () => {
+    const actions = mockViewModel(defaultState);
+    const screen = await renderScreen();
+    await goToStep(screen, 3);
+
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Conservação Com marcas"));
+    });
+
+    expect(actions.setCondition).toHaveBeenCalledWith("marked");
+  });
+
+  it("registra o bairro escolhido a partir da lista oficial", async () => {
+    const actions = mockViewModel(defaultState);
+    const screen = await renderScreen();
+    await goToStep(screen, 3);
+
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Bairro Paciência"));
+    });
+
+    expect(actions.setNeighborhood).toHaveBeenCalledWith("Paciência");
+  });
+
+  it("exibe indicador de carregamento enquanto publica", async () => {
     mockViewModel({ ...defaultState, loading: true });
-    let screen!: Awaited<ReturnType<typeof render>>;
-    await act(async () => {
-      screen = await render(<CreateListing sessionUserId="user-1" />);
-    });
-    expect(screen.getByLabelText("Cadastrando")).toBeDefined();
+    const screen = await renderScreen();
+    await goToStep(screen, 3);
+
+    expect(screen.getByLabelText("Publicando")).toBeDefined();
   });
 
-  it("exibe mensagem de erro quando há falha", async () => {
+  it("exibe mensagem de erro quando a publicação falha", async () => {
     mockViewModel({ ...defaultState, error: "Sessão obrigatória para cadastrar anúncio." });
-    let screen!: Awaited<ReturnType<typeof render>>;
-    await act(async () => {
-      screen = await render(<CreateListing sessionUserId="user-1" />);
-    });
+    const screen = await renderScreen();
+    await goToStep(screen, 3);
+
     expect(screen.getByRole("alert").props.children).toBe("Sessão obrigatória para cadastrar anúncio.");
   });
+});
 
-  it("exibe mensagem de sucesso após cadastro", async () => {
-    mockViewModel({ ...defaultState, success: true });
-    let screen!: Awaited<ReturnType<typeof render>>;
-    await act(async () => {
-      screen = await render(<CreateListing sessionUserId="user-1" />);
-    });
-    expect(screen.getByText("Anúncio cadastrado com sucesso!")).toBeDefined();
-  });
-
-  it("chama onCreated após cadastro bem-sucedido", async () => {
+describe("anúncio publicado (Figma 04.07)", () => {
+  it("mostra o livro, os próximos passos e as ações de saída", async () => {
     const onCreated = vi.fn();
+    const onViewMyListings = vi.fn();
+    const onGoHome = vi.fn();
     const actions = mockViewModel(defaultState, {
-      submit: vi.fn().mockResolvedValue({ id: "new-1" }),
-    });
-    let screen!: Awaited<ReturnType<typeof render>>;
-    await act(async () => {
-      screen = await render(<CreateListing sessionUserId="user-1" onCreated={onCreated} />);
+      submit: vi.fn().mockResolvedValue({
+        id: "new-1",
+        title: "Dom Casmurro",
+        author: "Machado de Assis",
+        ownerId: "user-1",
+        modality: "sale",
+        price: 25,
+        status: "available",
+      }),
     });
 
+    const screen = await renderScreen({ onCreated, onViewMyListings, onGoHome });
+    await goToStep(screen, 3);
+
     await act(async () => {
-      fireEvent.press(screen.getByText("Cadastrar anúncio"));
+      fireEvent.press(screen.getByRole("button", { name: "Publicar anúncio" }));
     });
 
     expect(actions.submit).toHaveBeenCalledWith("user-1");
-    expect(onCreated).toHaveBeenCalled();
+    expect(onCreated).toHaveBeenCalledTimes(1);
+    expect(screen.getByText("Seu livro ganhou um novo começo.")).toBeDefined();
+    expect(screen.getByText("Dom Casmurro")).toBeDefined();
+    expect(screen.getByText("Próximos passos")).toBeDefined();
+    expect(screen.getByText("R$ 25.00")).toBeDefined();
+
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Ver meus anúncios" }));
+    });
+    expect(onViewMyListings).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Voltar ao início" }));
+    });
+    expect(onGoHome).toHaveBeenCalledTimes(1);
   });
 
-  it("renderiza botão cancelar quando onCancel é fornecido", async () => {
-    const onCancel = vi.fn();
-    mockViewModel(defaultState);
-    let screen!: Awaited<ReturnType<typeof render>>;
-    await act(async () => {
-      screen = await render(<CreateListing sessionUserId="user-1" onCancel={onCancel} />);
-    });
-
-    const cancelButton = screen.getByText("Cancelar");
-    expect(cancelButton).toBeDefined();
+  it("não mostra a tela de sucesso quando a publicação falha", async () => {
+    mockViewModel(defaultState, { submit: vi.fn().mockResolvedValue(null) });
+    const screen = await renderScreen();
+    await goToStep(screen, 3);
 
     await act(async () => {
-      fireEvent.press(cancelButton);
+      fireEvent.press(screen.getByRole("button", { name: "Publicar anúncio" }));
     });
-    expect(onCancel).toHaveBeenCalled();
+
+    expect(screen.queryByText("Seu livro ganhou um novo começo.")).toBeNull();
   });
 });

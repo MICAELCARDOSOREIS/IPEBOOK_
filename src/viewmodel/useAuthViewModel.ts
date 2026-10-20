@@ -12,7 +12,7 @@ export type AuthState = {
 };
 
 export type AuthActions = {
-  signUp: (email: string, password: string) => Promise<boolean>;
+  signUp: (email: string, password: string, name: string) => Promise<boolean>;
   signIn: (email: string, password: string) => Promise<boolean>;
   signOut: () => Promise<void>;
   requestPasswordReset: (email: string) => Promise<boolean>;
@@ -63,10 +63,10 @@ export function useAuthViewModel(
     }
   }, []);
 
-  const signUp = useCallback(async (email: string, password: string) => {
+  const signUp = useCallback(async (email: string, password: string, name: string) => {
     setState((previous) => ({ ...previous, loading: true, error: null, statusMessage: null }));
     try {
-      await auth.signUp(email, password);
+      await auth.signUp(email, password, name);
       const user = await auth.getSession();
       if (active.current) setState({
         user,

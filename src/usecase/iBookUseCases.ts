@@ -1,5 +1,5 @@
 import type { ListBooksOptions } from "@/model/datasources/iBookDataSource";
-import type { Book, BookModality } from "@/model/entities/book";
+import type { Book, BookCondition, BookModality } from "@/model/entities/book";
 
 export type CreateListingInput = Readonly<{
   title: string;
@@ -10,6 +10,8 @@ export type CreateListingInput = Readonly<{
   city?: string;
   state?: string;
   neighborhood?: string;
+  condition?: BookCondition;
+  description?: string;
   photoUrl?: string;
   photos?: readonly string[];
 }>;
@@ -23,6 +25,8 @@ export type UpdateListingInput = Readonly<{
   city?: string;
   state?: string;
   neighborhood?: string;
+  condition?: BookCondition;
+  description?: string;
   photoUrl?: string;
   photos?: readonly string[];
 }>;

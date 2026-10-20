@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 import { bookUseCases } from "@/di/container";
-import type { Book, BookModality } from "@/model/entities/book";
+import type { Book, BookCondition, BookModality } from "@/model/entities/book";
 import { DomainError } from "@/model/errors";
 import type { IBookUseCases } from "@/usecase/iBookUseCases";
 
@@ -11,6 +11,8 @@ export type CreateListingState = {
   modality: BookModality;
   price: string;
   neighborhood: string;
+  condition: BookCondition | null;
+  description: string;
   photoUrl: string;
   photos: readonly string[];
   loading: boolean;
@@ -25,6 +27,8 @@ export type CreateListingActions = {
   setModality: (value: BookModality) => void;
   setPrice: (value: string) => void;
   setNeighborhood: (value: string) => void;
+  setCondition: (value: BookCondition | null) => void;
+  setDescription: (value: string) => void;
   setPhotoUrl: (value: string) => void;
   addPhoto: (value: string) => void;
   removePhoto: (index: number) => void;
@@ -39,6 +43,8 @@ const INITIAL_STATE: CreateListingState = {
   modality: "sale",
   price: "",
   neighborhood: "",
+  condition: null,
+  description: "",
   photoUrl: "",
   photos: [],
   loading: false,
@@ -75,6 +81,14 @@ export function useCreateListingViewModel(
 
   const setNeighborhood = useCallback((value: string) => {
     setState((prev) => ({ ...prev, neighborhood: value, error: null, success: false }));
+  }, []);
+
+  const setCondition = useCallback((value: BookCondition | null) => {
+    setState((prev) => ({ ...prev, condition: value, error: null, success: false }));
+  }, []);
+
+  const setDescription = useCallback((value: string) => {
+    setState((prev) => ({ ...prev, description: value, error: null, success: false }));
   }, []);
 
   const setPhotoUrl = useCallback((value: string) => {
@@ -123,6 +137,8 @@ export function useCreateListingViewModel(
             city: "Piripiri",
             state: "PI",
             ...(state.neighborhood.trim() ? { neighborhood: state.neighborhood.trim() } : {}),
+            ...(state.condition ? { condition: state.condition } : {}),
+            ...(state.description.trim() ? { description: state.description.trim() } : {}),
             ...(state.photoUrl.trim() ? { photoUrl: state.photoUrl.trim() } : {}),
             ...(state.photos.length > 0 ? { photos: state.photos } : {}),
           },
@@ -139,12 +155,41 @@ export function useCreateListingViewModel(
         return null;
       }
     },
-    [state.title, state.author, state.category, state.modality, state.price, state.neighborhood, state.photoUrl, state.photos, useCases],
+    [
+      state.title,
+      state.author,
+      state.category,
+      state.modality,
+      state.price,
+      state.neighborhood,
+      state.condition,
+      state.description,
+      state.photoUrl,
+      state.photos,
+      useCases,
+    ],
   );
 
   const reset = useCallback(() => {
     setState(INITIAL_STATE);
   }, []);
 
-  return [state, { setTitle, setAuthor, setCategory, setModality, setPrice, setNeighborhood, setPhotoUrl, addPhoto, removePhoto, submit, reset }];
+  return [
+    state,
+    {
+      setTitle,
+      setAuthor,
+      setCategory,
+      setModality,
+      setPrice,
+      setNeighborhood,
+      setCondition,
+      setDescription,
+      setPhotoUrl,
+      addPhoto,
+      removePhoto,
+      submit,
+      reset,
+    },
+  ];
 }

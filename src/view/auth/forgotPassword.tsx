@@ -1,10 +1,13 @@
-import { useState } from "react";
-import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { Platform, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { tokens } from "@/view/tokens";
 import { FilledButton } from "@/view/components/FilledButton";
+import { IconBadge } from "@/view/components/IconBadge";
 import { Logotipo } from "@/view/components/Logotipo";
+import { OutlinedButton } from "@/view/components/OutlinedButton";
+import { TextButton } from "@/view/components/TextButton";
 import { TextField } from "@/view/components/TextField";
 import { TopAppBar } from "@/view/components/TopAppBar";
 
@@ -13,14 +16,49 @@ export type ForgotPasswordProps = {
   onBack?: () => void;
 };
 
+/** Espera antes de liberar o reenvio, igual ao contador do Figma `01.05`. */
+const RESEND_SECONDS = 45;
+
+function formatCountdown(seconds: number): string {
+  const minutes = Math.floor(seconds / 60);
+  const rest = seconds % 60;
+  return `${minutes}:${String(rest).padStart(2, "0")}`;
+}
+
+/** Figma `01.04 · Recuperar acesso` (nó `6:534`) e `01.05 · Confira seu e-mail` (nó `6:597`). */
 export default function ForgotPassword({ onNavigateToSignIn, onBack }: ForgotPasswordProps = {}) {
   const [state, actions] = useAuthViewModel();
   const [email, setEmail] = useState("");
   const [requested, setRequested] = useState(false);
+  const [secondsLeft, setSecondsLeft] = useState(RESEND_SECONDS);
+  const mounted = useRef(true);
+
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!requested || secondsLeft <= 0) return;
+    const timer = setInterval(() => {
+      setSecondsLeft((previous) => (previous <= 1 ? 0 : previous - 1));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [requested, secondsLeft]);
 
   const handleSubmit = async () => {
     const result = await actions.requestPasswordReset(email);
-    if (result) setRequested(true);
+    if (result && mounted.current) {
+      setRequested(true);
+      setSecondsLeft(RESEND_SECONDS);
+    }
+  };
+
+  const handleResend = async () => {
+    const result = await actions.requestPasswordReset(email);
+    if (result && mounted.current) setSecondsLeft(RESEND_SECONDS);
   };
 
   return (
@@ -37,30 +75,48 @@ export default function ForgotPassword({ onNavigateToSignIn, onBack }: ForgotPas
 
           {requested ? (
             <>
-              <Text style={styles.title}>Confira seu e-mail</Text>
+              <IconBadge icon="mail" tone="donation" />
+              <Text accessibilityRole="header" style={styles.title}>Confira seu e-mail.</Text>
               <Text style={styles.subtitle}>
-                Se houver uma conta associada a {email ? <Text style={styles.emailHighlight}>{email}</Text> : "este endereço"}, enviamos um link para definir uma nova senha.
+                Se houver uma conta com{" "}
+                {email ? <Text style={styles.emailHighlight}>{email}</Text> : "este endereço"}, você
+                vai receber um link para criar uma nova senha.
               </Text>
 
               <View style={styles.resultBox}>
-                <Text accessibilityRole="alert" style={styles.resultLabel}>
-                  Se houver uma conta com este e-mail, enviaremos um link de recuperação.
-                </Text>
+                <Text accessibilityRole="alert" style={styles.resultLabel}>Não chegou?</Text>
                 <Text style={styles.resultHint}>
-                  Não encontrou? Confira também a sua pasta de spam ou lixo eletrônico.
+                  Confira a caixa de spam ou verifique se o endereço está correto.
                 </Text>
               </View>
 
-              <FilledButton
-                label="Voltar para o login"
-                onPress={() => onNavigateToSignIn?.()}
+              <FilledButton label="Voltar ao login" onPress={() => onNavigateToSignIn?.()} />
+
+              <OutlinedButton
+                label="Corrigir e-mail"
+                onPress={() => {
+                  setRequested(false);
+                  setSecondsLeft(RESEND_SECONDS);
+                }}
               />
+
+              {secondsLeft > 0 ? (
+                <Text style={styles.countdown}>
+                  {`Você pode reenviar o link em ${formatCountdown(secondsLeft)}.`}
+                </Text>
+              ) : (
+                <TextButton
+                  label="Reenviar link"
+                  disabled={state.loading}
+                  onPress={() => void handleResend()}
+                />
+              )}
             </>
           ) : (
             <>
-              <Text style={styles.title}>Esqueceu a senha?</Text>
+              <Text accessibilityRole="header" style={styles.title}>Recupere seu acesso.</Text>
               <Text style={styles.subtitle}>
-                Informe seu e-mail. Se houver uma conta, você receberá um link para definir outra senha.
+                Digite seu e-mail para receber as instruções de redefinição de senha.
               </Text>
 
               <TextField
@@ -70,6 +126,7 @@ export default function ForgotPassword({ onNavigateToSignIn, onBack }: ForgotPas
                 autoCapitalize="none"
                 keyboardType="email-address"
                 editable={!state.loading}
+                placeholder="voce@exemplo.com"
               />
 
               {state.error ? (
@@ -77,15 +134,17 @@ export default function ForgotPassword({ onNavigateToSignIn, onBack }: ForgotPas
               ) : null}
 
               <FilledButton
-                label="Recuperar senha"
+                label="Enviar link"
                 loading={state.loading}
-                loadingLabel="Recuperando senha"
+                loadingLabel="Enviando link"
                 onPress={() => void handleSubmit()}
               />
 
-              <Pressable accessibilityRole="button" onPress={() => onNavigateToSignIn?.()} style={styles.linkButton}>
-                <Text style={styles.link}>Voltar para o login</Text>
-              </Pressable>
+              <OutlinedButton label="Voltar ao login" onPress={() => onNavigateToSignIn?.()} />
+
+              <Text style={styles.footnote}>
+                Se você lembrar sua senha, faça login normalmente.
+              </Text>
             </>
           )}
         </View>
@@ -128,52 +187,53 @@ const styles = StyleSheet.create({
     lineHeight: tokens.typography.displayLarge.lineHeight,
     fontFamily: tokens.typography.displayLarge.fontFamily,
     fontWeight: tokens.typography.displayLarge.fontWeight,
-    color: tokens.colors.action,
+    color: tokens.colors.text,
   },
   subtitle: {
     fontSize: tokens.typography.bodyLarge.fontSize,
     lineHeight: tokens.typography.bodyLarge.lineHeight,
     fontFamily: tokens.typography.bodyLarge.fontFamily,
     color: tokens.colors.secondaryText,
-    marginBottom: tokens.spacing[4],
   },
   emailHighlight: {
-    fontWeight: "bold",
     color: tokens.colors.text,
+    fontFamily: tokens.typography.bodyLarge.fontFamily,
+    fontWeight: "600",
+  },
+  resultBox: {
+    backgroundColor: tokens.colors.m3.surfaceContainerHigh,
+    borderRadius: tokens.radius.medium,
+    padding: tokens.spacing[16],
+    gap: tokens.spacing[4],
+  },
+  resultLabel: {
+    color: tokens.colors.text,
+    fontSize: tokens.typography.titleMedium.fontSize,
+    lineHeight: tokens.typography.titleMedium.lineHeight,
+    fontFamily: tokens.typography.titleMedium.fontFamily,
+    fontWeight: tokens.typography.titleMedium.fontWeight,
+  },
+  resultHint: {
+    color: tokens.colors.secondaryText,
+    fontSize: tokens.typography.bodyMedium.fontSize,
+    lineHeight: tokens.typography.bodyMedium.lineHeight,
+    fontFamily: tokens.typography.bodyMedium.fontFamily,
+  },
+  countdown: {
+    textAlign: "center",
+    color: tokens.colors.secondaryText,
+    fontSize: tokens.typography.bodyMedium.fontSize,
+    fontFamily: tokens.typography.bodyMedium.fontFamily,
+  },
+  footnote: {
+    textAlign: "center",
+    color: tokens.colors.secondaryText,
+    fontSize: tokens.typography.bodyMedium.fontSize,
+    fontFamily: tokens.typography.bodyMedium.fontFamily,
   },
   error: {
     color: tokens.colors.error,
     fontSize: tokens.typography.bodyMedium.fontSize,
     fontFamily: tokens.typography.bodyMedium.fontFamily,
-  },
-  resultBox: {
-    gap: tokens.spacing[6],
-    borderWidth: 1,
-    borderColor: tokens.colors.border,
-    borderRadius: tokens.radius.medium,
-    padding: tokens.spacing[16],
-    backgroundColor: tokens.colors.surface,
-  },
-  resultLabel: {
-    fontSize: tokens.typography.bodyMedium.fontSize,
-    fontFamily: tokens.typography.bodyMedium.fontFamily,
-    color: tokens.colors.text,
-    fontWeight: "500",
-  },
-  resultHint: {
-    fontSize: tokens.typography.labelMedium.fontSize,
-    fontFamily: tokens.typography.labelMedium.fontFamily,
-    color: tokens.colors.secondaryText,
-  },
-  linkButton: {
-    minHeight: tokens.accessibility.touchTarget,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  link: {
-    color: tokens.colors.action,
-    fontSize: tokens.typography.bodyMedium.fontSize,
-    fontFamily: tokens.typography.bodyMedium.fontFamily,
-    fontWeight: "600",
   },
 });

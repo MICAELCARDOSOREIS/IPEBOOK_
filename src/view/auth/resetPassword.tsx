@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { Platform, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { FilledButton } from "@/view/components/FilledButton";
-import { Logotipo } from "@/view/components/Logotipo";
+import { TextButton } from "@/view/components/TextButton";
 import { TextField } from "@/view/components/TextField";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { tokens } from "@/view/tokens";
@@ -14,6 +14,7 @@ export type ResetPasswordProps = {
   onBack?: () => void;
 };
 
+/** Figma `01.06 · Nova senha` (nó `254:3595`) e `01.09 · Senha atualizada`. */
 export default function ResetPassword({ link, onNavigateToSignIn, onBack }: ResetPasswordProps) {
   const [state, actions] = useResetPasswordViewModel();
   const [password, setPassword] = useState("");
@@ -36,9 +37,8 @@ export default function ResetPassword({ link, onNavigateToSignIn, onBack }: Rese
       {onBack ? <TopAppBar title="Nova senha" onBack={onBack} /> : null}
       <View style={styles.centerContainer}>
         <View style={styles.content}>
-          <Logotipo />
-          <Text accessibilityRole="header" style={styles.title}>Definir nova senha</Text>
-          <Text style={styles.subtitle}>Crie uma nova senha de no mínimo 8 caracteres para sua conta.</Text>
+          <Text accessibilityRole="header" style={styles.title}>Um novo começo.</Text>
+          <Text style={styles.subtitle}>Escolha uma senha com pelo menos 8 caracteres.</Text>
 
           {state.success ? (
             <>
@@ -63,11 +63,11 @@ export default function ResetPassword({ link, onNavigateToSignIn, onBack }: Rese
                 }}
                 secureTextEntry
                 editable={!state.loading}
-                helperText="Mínimo de 8 caracteres."
+                helperText="Use uma senha que você não usa em outro lugar."
               />
 
               <TextField
-                label="Confirmar nova senha"
+                label="Confirmar senha"
                 value={confirmPassword}
                 onChangeText={(text) => {
                   setConfirmPassword(text);
@@ -91,9 +91,7 @@ export default function ResetPassword({ link, onNavigateToSignIn, onBack }: Rese
             </>
           )}
 
-          <Pressable accessibilityRole="button" onPress={onNavigateToSignIn} style={styles.linkButton}>
-            <Text style={styles.link}>Voltar para o login</Text>
-          </Pressable>
+          <TextButton label="Voltar ao login" onPress={() => onNavigateToSignIn?.()} />
         </View>
       </View>
     </SafeAreaView>
