@@ -1,7 +1,8 @@
 import { useCallback, useState } from "react";
-import { authUseCases } from "@/di/container";
+import { authUseCases, searchHistoryUseCases } from "@/di/container";
 import { DomainError } from "@/model/errors";
 import type { IAuthUseCases } from "@/usecase/iAuthUseCases";
+import type { ISearchHistoryUseCases } from "@/usecase/iSearchHistoryUseCases";
 
 export type DeleteAccountState = {
   confirmed: boolean;
@@ -27,6 +28,7 @@ const GENERIC_ERROR = "Não foi possível excluir sua conta. Tente novamente.";
 
 export function useDeleteAccountViewModel(
   auth: IAuthUseCases = authUseCases,
+  history: ISearchHistoryUseCases = searchHistoryUseCases,
 ): [DeleteAccountState, DeleteAccountActions] {
   const [state, setState] = useState<DeleteAccountState>(INITIAL_STATE);
 
@@ -60,6 +62,7 @@ export function useDeleteAccountViewModel(
 
       try {
         await auth.deleteAccount(sessionUserId);
+        await history.clearHistory(sessionUserId);
         setState((prev) => ({
           ...prev,
           loading: false,
@@ -76,7 +79,7 @@ export function useDeleteAccountViewModel(
         return false;
       }
     },
-    [auth, state.confirmed],
+    [auth, history, state.confirmed],
   );
 
   return [state, { setConfirmed, deleteAccount, reset }];

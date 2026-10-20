@@ -10,8 +10,8 @@ Conferência atual: **2026-10-17** (base: branch `develop`). Projeto: `~/IPEBOOK
 
 Todas as métricas abaixo foram aferidas diretamente por execução dos scripts de validação:
 
-- **Testes automatizados**: **439 testes passando** em **72 arquivos de teste** (`npm test` / `npx vitest run`), cobrindo testes unitários de entidades, validadores, casos de uso, semente de catálogo, adaptadores de dados (memória e Supabase), hooks/viewmodels, componentes de interface e cenários de integração ponta a ponta.
-- **Cobertura de código**: Acima do limiar estrito de 80% em todas as 4 dimensões (Statements: > 89%, Branches: > 81%, Functions: > 85%, Lines: > 90%).
+- **Testes automatizados**: **452 testes passando** em **73 arquivos de teste** (`npm test` / `npx vitest run`), cobrindo testes unitários de entidades, validadores, casos de uso, semente de catálogo, adaptadores de dados (memória, Supabase e AsyncStorage), hooks/viewmodels, componentes de interface e cenários de integração ponta a ponta.
+- **Cobertura de código**: Acima do limiar estrito de 80% em todas as 4 dimensões (Statements: 90,12%, Branches: 80,34%, Functions: 87,62%, Lines: 91,47%).
 - **Integridade arquitetural**: **100% em conformidade** no MVVM sofisticado em sete camadas (`app`, `view`, `viewmodel`, `usecase`, `model`, `infra`, `di`), verificado pelo comando `npm run check:architecture` (0 violações). Apenas `src/di/container.ts` e testes têm permissão para instanciar ou importar adaptadores de `src/infra/`.
 - **Validação de banco e migrações SQL**: 7 migrações executadas e validadas em banco real isolado via PGlite (`npm run test:sql`):
   1. `202610130001_v2_schema.sql` (estrutura inicial de livros e pedidos)
