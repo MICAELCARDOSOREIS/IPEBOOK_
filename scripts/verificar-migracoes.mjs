@@ -61,6 +61,7 @@ for (const name of [
   '202610200003_storage_book_photos.sql',
   '202610200004_extensao_pg_trgm_indices.sql',
   '202610200005_conservacao_descricao_anuncio.sql',
+  '202610200006_perfil_publico_e_avaliacoes.sql',
 ]) {
   await db.exec(readFileSync(new URL(`../supabase/migrations/${name}`, import.meta.url), 'utf8'));
 }

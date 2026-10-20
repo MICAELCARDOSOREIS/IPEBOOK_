@@ -13,8 +13,10 @@ begin
     raise exception 'Não autorizado a excluir esta conta';
   end if;
 
-  -- Remove perfis legados se existirem
-  delete from public.profiles where user_id = target_user_id;
+  -- Remove perfis legados se a tabela existir
+  if to_regclass('public.profiles') is not null then
+    execute 'delete from public.profiles where user_id = $1' using target_user_id;
+  end if;
 
   -- Remove da tabela auth.users (dispara cascata nas tabelas de livros, pedidos, favoritos, alertas, denúncias e notificações)
   delete from auth.users where id = target_user_id;
