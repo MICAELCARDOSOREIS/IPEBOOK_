@@ -1,4 +1,4 @@
-# 0023 — Detecção de conectividade com `@react-native-community/netinfo`
+# 0028 — Detecção de conectividade com `@react-native-community/netinfo`
 
 Data: 2026-10-20. Status: aceito.
 

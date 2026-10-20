@@ -168,16 +168,47 @@ https://github.com/architecture-decision-record/architecture-decision-record
 - Após alterar preferências, conferir os destinos e a preservação do conteúdo específico. Distinguir sincronização de arquivos de carregamento efetivo nas sessões; registrar clientes não verificados e recarregar suas instruções quando necessário.
 
 
-# Contexto específico do Ipebook
+<!-- bmad:context -->
+<!-- Verified 2026-10-20 against 75d7660. Managed by bmad-project-context; edits inside this block are replaced on refresh. Keep anything you want preserved outside the markers. -->
 
-Projeto novo e independente em `~/IPEBOOK_`. Arquitetura obrigatória: skill `/home/usermicael/.agents/skills/skill_mvvm_simplificado/SKILL.md` (MVVM sofisticado).
+## ipebook
 
-- Spec Kit obrigatório: https://github.com/github/spec-kit. Constituição em `.specify/memory/constitution.md`; funcionalidades em `specs/`.
-- ADRs obrigatórios em `docs/adr/`, seguindo https://github.com/architecture-decision-record/architecture-decision-record.
-- Usar Superpowers proporcionalmente, mantendo planos e tarefas no Spec Kit; toda documentação em português.
-- `npm ci`, `npm run web`, `npm run validate`, `npm run build:web`.
-- Não usar Playwright. Validar navegador por CDP ou ferramentas disponíveis que não dependam dele.
-- Camadas e responsabilidades: consulte `docs/arquitetura.md`. Fora da própria infraestrutura e dos testes, apenas `src/di/container.ts` pode importar implementações de `infra`.
-- Documentação: `docs/README.md`; produto e pendências em `docs/produto.md`; estado e continuidade em `docs/estado.md`.
-- Manter a documentação sempre atualizada junto com a mudança de código (ver [CONTRIBUTING.md](CONTRIBUTING.md), seção 6) — índice de ADRs, contagem de testes em `docs/estado.md`, nomes de arquivo citados (specs, `.maestro/`, componentes) e tabelas de decisão em `docs/produto.md`. Já foram encontrados aqui: arquivos duplicados/órfãos em `.maestro/` sem uso, e números de teste/ADR desatualizados em mais de um documento ao mesmo tempo.
-- Estado verificado em 2026-10-13: branch `develop` acompanha `origin/develop`; commit inicial `bb97d37`. Consultar Git ao retomar; não inferir aprovação da CI ou publicação.
+Plataforma comunitária de circulação e troca de livros em Piripiri, PI. React Native / Expo 57, TypeScript 6, Vitest e Supabase. Planejamento no Spec Kit (`specs/`), arquitetura em `docs/arquitetura.md` e decisões em `docs/adr/`.
+
+## Policy
+
+- Toda documentação, especificações, planos, tarefas, ADRs e commits devem ser estritamente em português.
+- Spec Kit obrigatório para novas funcionalidades (`specs/`) e constituição em `.specify/memory/constitution.md`.
+- Architecture Decision Records (ADRs) obrigatórios em `docs/adr/` para decisões técnicas relevantes.
+- Não usar Playwright sob nenhuma hipótese; validar navegador via CDP ou ferramentas leves locais.
+- Isolamento de camadas MVVM: fora da infraestrutura e testes, apenas `src/di/container.ts` pode importar implementações de `src/infra/`.
+- Desenvolvimento e PRs baseados na branch `develop`; nunca commitar diretamente em `main`.
+
+## Where things are
+
+- Camadas MVVM: `src/model/` (entidades e contratos), `src/usecase/`, `src/viewmodel/`, `src/view/` e `src/infra/`.
+- Container de Injeção de Dependências: `src/di/container.ts`.
+- Rotas e telas (Expo Router): `app/` (23 rotas estáticas com suporte PWA).
+- Banco de dados e políticas RLS: migrações em `supabase/migrations/` e catálogo semente em `scripts/popular-catalogo-piripiri.mjs`.
+- Rastreamento e continuidade: `docs/estado.md`, `docs/produto.md` e `docs/adr/README.md`.
+
+## Running and verifying
+
+- Pipeline completo de validação local: `npm run validate` (inclui typecheck, linter arquitetural, testes SQL e cobertura com Vitest).
+- Verificação isolada de migrações e RLS via PGlite: `npm run test:sql`.
+- Verificação de fronteiras arquiteturais: `npm run check:architecture`.
+- Manter documentação rigorosamente sincronizada com o código: índice de ADRs, contagem de testes em `docs/estado.md` e tabelas em `docs/produto.md`.
+
+## Conventions that differ from defaults
+
+- Sanitização preventiva de textos de entrada (título, autor, descrição, denúncias) via `TextSanitizer`.
+- Validação estrita de upload de imagens por magic bytes reais (JPEG, PNG, WebP) até 5 MB via `ImageOptimizationService`.
+- Logs seguros com ofuscação de dados sensíveis (senhas, tokens, e-mails) via `SafeLogger`.
+- Conformidade LGPD ativa: exclusão definitiva com cascata via RPC segura e exportação estruturada de dados via `UserDataExportUseCases`.
+
+## Known pitfalls
+
+- Em ambientes sandbox restritos, o Vitest pode acusar `EROFS` ao tentar criar `.vite-temp/` se `node_modules` estiver somente-leitura; executar fora do isolamento restrito quando necessário.
+- A branch `develop` é a base viva de integração: conferir histórico no Git antes de assumir status de branches remotas.
+
+<!-- /bmad:context -->
