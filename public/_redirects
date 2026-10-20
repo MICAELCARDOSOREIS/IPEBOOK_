@@ -1,5 +1,7 @@
-/denunciar/* /denunciar/[id].html 200
-/editar-anuncio/* /editar-anuncio/[id].html 200
-/livro/* /livro/[id].html 200
-/negociacao/* /negociacao/[id].html 200
-/* /+not-found.html 404
+/denunciar/* /denunciar/[id] 200
+/editar-anuncio/* /editar-anuncio/[id] 200
+/gerenciar-anuncio/* /gerenciar-anuncio/[id] 200
+/livro/* /livro/[id] 200
+/negociacao/* /negociacao/[id] 200
+/perfil/* /perfil/[userId] 200
+/* /+not-found 404
