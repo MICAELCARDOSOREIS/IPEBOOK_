@@ -24,6 +24,16 @@ describe("tela de Termos e Privacidade (ISO/IEC 25010 - Usabilidade e Conformida
     expect(screen.getByText("4. Encontros Presenciais e Segurança")).toBeDefined();
   });
 
+  it("agrupa as abas de Termos/Privacidade em um contêiner com papel tablist", async () => {
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<TermsAndPrivacy onBack={() => {}} />);
+    });
+
+    expect(screen.getByTestId("terms-privacy-tablist").props.accessibilityRole).toBe("tablist");
+    expect(screen.getAllByRole("tab")).toHaveLength(2);
+  });
+
   it("permite alternar para a aba de Privacidade e exibe conformidade com LGPD", async () => {
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
