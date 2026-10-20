@@ -40,6 +40,10 @@ import { SearchHistoryUseCases } from "@/usecase/searchHistoryUseCases";
 import type { IFavoriteUseCases } from "@/usecase/iFavoriteUseCases";
 import type { ISearchAlertUseCases } from "@/usecase/iSearchAlertUseCases";
 import type { ISearchHistoryUseCases } from "@/usecase/iSearchHistoryUseCases";
+import { AsyncStorageOnboardingDataSource } from "@/infra/datasources/asyncStorageOnboardingDataSource";
+import { MemoryOnboardingDataSource } from "@/infra/datasources/memoryOnboardingDataSource";
+import type { IOnboardingUseCases } from "@/usecase/iOnboardingUseCases";
+import { OnboardingUseCases } from "@/usecase/onboardingUseCases";
 
 function createDataSources(): {
   auth: IAuthDataSource;
