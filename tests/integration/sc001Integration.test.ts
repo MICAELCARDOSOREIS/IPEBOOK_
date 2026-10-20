@@ -9,7 +9,7 @@ describe("SC-001: criar conta, entrar, cadastrar anúncio de cada modalidade e v
     const auth = new AuthUseCases(new MemoryAuthDataSource());
     const books = new BookUseCases(new MemoryBookDataSource());
 
-    const user = await auth.signUp("leitora@exemplo.com", "umasenha123");
+    const user = await auth.signUp("leitora@exemplo.com", "umasenha123", "Leitora Teste");
     await expect(auth.getSession()).resolves.toEqual(user);
 
     const sessionUserId = user.id;
@@ -50,7 +50,7 @@ describe("SC-001: criar conta, entrar, cadastrar anúncio de cada modalidade e v
   it("exige preço maior que zero quando a modalidade é venda (FR-005)", async () => {
     const auth = new AuthUseCases(new MemoryAuthDataSource());
     const books = new BookUseCases(new MemoryBookDataSource());
-    const user = await auth.signUp("vendedor@exemplo.com", "outrasenha1");
+    const user = await auth.signUp("vendedor@exemplo.com", "outrasenha1", "Leitora Teste");
 
     await expect(
       books.createListing({ title: "Livro", author: "Autor", modality: "sale" }, user.id),

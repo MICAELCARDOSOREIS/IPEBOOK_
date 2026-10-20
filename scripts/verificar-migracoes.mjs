@@ -60,6 +60,7 @@ for (const name of [
   '202610200002_rpc_exclusao_conta.sql',
   '202610200003_storage_book_photos.sql',
   '202610200004_extensao_pg_trgm_indices.sql',
+  '202610200005_conservacao_descricao_anuncio.sql',
 ]) {
   await db.exec(readFileSync(new URL(`../supabase/migrations/${name}`, import.meta.url), 'utf8'));
 }
@@ -87,6 +88,10 @@ async function denied(label, action) {
 
 await as('authenticated', owner, `insert into public.v2_books (id, owner_id, title, author, modality)
 values ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '${owner}', 'Livro', 'Autora', 'donation')`);
+await denied('Conservação fora da lista', () => as('authenticated', owner, `update public.v2_books set condition = 'novo' where id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'`));
+await denied('Descrição acima de 280', () => as('authenticated', owner, `update public.v2_books set description = repeat('a', 281) where id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'`));
+await as('authenticated', owner, `update public.v2_books set condition = 'good', description = 'Marcas leves de uso.' where id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'`);
+process.stdout.write('Conservação e descrição válidas: aceitas\n');
 const books = await as('anon', null, `select id from public.v2_books`);
 if (books.rows.length !== 1) throw new Error('Catálogo público indisponível');
 await denied('Visitante publica', () => as('anon', null, `insert into public.v2_books (owner_id, title, author, modality) values ('${owner}', 'Outro', 'Autora', 'donation')`));

@@ -33,7 +33,8 @@ describe("tela de entrar (ISO/IEC 25010 - Usabilidade e Acessibilidade)", () => 
       screen = await render(<SignIn />);
     });
 
-    expect(screen.getByRole("header").props.children).toBe("IpêBook");
+    expect(screen.getByRole("header").props.children).toBe("Sua próxima leitura começa aqui.");
+    expect(screen.getByText("Entre com o e-mail e a senha da sua conta.")).toBeDefined();
     expect(screen.getAllByText("Entrar").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByLabelText("E-mail")).toBeDefined();
     expect(screen.getByLabelText("Senha")).toBeDefined();
@@ -109,7 +110,7 @@ describe("tela de entrar (ISO/IEC 25010 - Usabilidade e Acessibilidade)", () => 
     });
 
     await act(async () => {
-      fireEvent.press(screen.getByText("Ainda não tem conta? Criar conta"));
+      fireEvent.press(screen.getByText("Criar uma conta"));
     });
 
     expect(onNavigateToSignUp).toHaveBeenCalledTimes(1);
@@ -125,7 +126,7 @@ describe("tela de entrar (ISO/IEC 25010 - Usabilidade e Acessibilidade)", () => 
     });
 
     await act(async () => {
-      fireEvent.press(screen.getByText("Esqueceu a senha?"));
+      fireEvent.press(screen.getByText("Esqueci minha senha"));
     });
 
     expect(onNavigateToForgotPassword).toHaveBeenCalledTimes(1);
@@ -140,10 +141,14 @@ describe("tela de criar conta (ISO/IEC 25010 - Usabilidade e Acessibilidade)", (
       screen = await render(<SignUp />);
     });
 
-    expect(screen.getByRole("header").props.children).toBe("IpêBook");
+    const headers = screen.getAllByRole("header").map((node) => node.props.children);
+    expect(headers).toContain("IpêBook");
+    expect(headers).toContain("Crie sua conta");
     expect(screen.getAllByText("Criar conta").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByLabelText("Nome completo")).toBeDefined();
     expect(screen.getByLabelText("E-mail")).toBeDefined();
     expect(screen.getByLabelText("Senha")).toBeDefined();
+    expect(screen.getByRole("checkbox", { name: "Aceito os termos de uso" })).toBeDefined();
   });
 
   it("exibe mensagem de e-mail já cadastrado", async () => {
@@ -167,14 +172,16 @@ describe("tela de criar conta (ISO/IEC 25010 - Usabilidade e Acessibilidade)", (
     });
 
     await act(async () => {
+      fireEvent.changeText(screen.getByLabelText("Nome completo"), "Ana Paula");
       fireEvent.changeText(screen.getByLabelText("E-mail"), "nova@exemplo.com");
       fireEvent.changeText(screen.getByLabelText("Senha"), "12345678");
+      fireEvent.press(screen.getByRole("checkbox", { name: "Aceito os termos de uso" }));
     });
     await act(async () => {
       fireEvent.press(screen.getByRole("button", { name: "Criar conta" }));
     });
 
-    expect(signUp).toHaveBeenCalledWith("nova@exemplo.com", "12345678");
+    expect(signUp).toHaveBeenCalledWith("nova@exemplo.com", "12345678", "Ana Paula");
     expect(onAuthenticated).toHaveBeenCalledTimes(1);
   });
 
@@ -188,7 +195,7 @@ describe("tela de criar conta (ISO/IEC 25010 - Usabilidade e Acessibilidade)", (
     });
 
     await act(async () => {
-      fireEvent.press(screen.getByText("Já tem conta? Entrar"));
+      fireEvent.press(screen.getByText("Já tenho conta"));
     });
 
     expect(onNavigateToSignIn).toHaveBeenCalledTimes(1);
@@ -203,8 +210,9 @@ describe("tela de esqueceu a senha (ISO/IEC 25010 - Usabilidade e Acessibilidade
       screen = await render(<ForgotPassword />);
     });
 
-    expect(screen.getByRole("header").props.children).toBe("IpêBook");
-    expect(screen.getByText("Esqueceu a senha?")).toBeDefined();
+    const headers = screen.getAllByRole("header").map((node) => node.props.children);
+    expect(headers).toContain("IpêBook");
+    expect(headers).toContain("Recupere seu acesso.");
     expect(screen.getByLabelText("E-mail")).toBeDefined();
   });
 
@@ -221,11 +229,11 @@ describe("tela de esqueceu a senha (ISO/IEC 25010 - Usabilidade e Acessibilidade
       fireEvent.changeText(screen.getByLabelText("E-mail"), "pessoa@exemplo.com");
     });
     await act(async () => {
-      fireEvent.press(screen.getByRole("button", { name: "Recuperar senha" }));
+      fireEvent.press(screen.getByRole("button", { name: "Enviar link" }));
     });
 
     expect(requestPasswordReset).toHaveBeenCalledWith("pessoa@exemplo.com");
-    expect(screen.getByText("Se houver uma conta com este e-mail, enviaremos um link de recuperação.")).toBeDefined();
+    expect(screen.getByText("Não chegou?")).toBeDefined();
     expect(screen.queryByLabelText("E-mail")).toBeNull();
   });
 
@@ -254,7 +262,7 @@ describe("tela de esqueceu a senha (ISO/IEC 25010 - Usabilidade e Acessibilidade
     });
 
     await act(async () => {
-      fireEvent.press(screen.getByText("Voltar para o login"));
+      fireEvent.press(screen.getByText("Voltar ao login"));
     });
 
     expect(onNavigateToSignIn).toHaveBeenCalledTimes(1);
@@ -308,13 +316,154 @@ describe("tela de esqueceu a senha (ISO/IEC 25010 - Usabilidade e Acessibilidade
       fireEvent.changeText(screen.getByLabelText("E-mail"), "pessoa@exemplo.com");
     });
     await act(async () => {
-      fireEvent.press(screen.getByRole("button", { name: "Recuperar senha" }));
+      fireEvent.press(screen.getByRole("button", { name: "Enviar link" }));
     });
 
-    expect(screen.getByText("Confira seu e-mail")).toBeDefined();
+    expect(screen.getByText("Confira seu e-mail.")).toBeDefined();
     await act(async () => {
-      fireEvent.press(screen.getByRole("button", { name: "Voltar para o login" }));
+      fireEvent.press(screen.getByRole("button", { name: "Voltar ao login" }));
     });
     expect(onNavigateToSignIn).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("Spec 030 — telas de acesso alinhadas ao Figma", () => {
+  it("não cria conta sem o aceite explícito dos termos (01.03)", async () => {
+    const signUp = vi.fn().mockResolvedValue(true);
+    mockAuth({ user: null, loading: false, error: null }, { signUp });
+
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<SignUp />);
+    });
+
+    await act(async () => {
+      fireEvent.changeText(screen.getByLabelText("Nome completo"), "Ana Paula");
+      fireEvent.changeText(screen.getByLabelText("E-mail"), "nova@exemplo.com");
+      fireEvent.changeText(screen.getByLabelText("Senha"), "12345678");
+    });
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Criar conta" }));
+    });
+
+    expect(signUp).not.toHaveBeenCalled();
+    expect(screen.getByText("É preciso aceitar os termos de uso para criar a conta.")).toBeDefined();
+  });
+
+  it("limpa o erro dos termos quando a pessoa aceita (01.03)", async () => {
+    const signUp = vi.fn().mockResolvedValue(true);
+    mockAuth({ user: null, loading: false, error: null }, { signUp });
+
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<SignUp />);
+    });
+
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Criar conta" }));
+    });
+    expect(screen.getByText("É preciso aceitar os termos de uso para criar a conta.")).toBeDefined();
+
+    await act(async () => {
+      fireEvent.press(screen.getByRole("checkbox", { name: "Aceito os termos de uso" }));
+    });
+    expect(screen.queryByText("É preciso aceitar os termos de uso para criar a conta.")).toBeNull();
+  });
+
+  it("abre os termos de uso a partir do cadastro (01.03)", async () => {
+    mockAuth({ user: null, loading: false, error: null });
+    const onNavigateToTerms = vi.fn();
+
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<SignUp onNavigateToTerms={onNavigateToTerms} />);
+    });
+
+    await act(async () => {
+      fireEvent.press(screen.getByText("Ler os termos de uso e a política de privacidade"));
+    });
+
+    expect(onNavigateToTerms).toHaveBeenCalledTimes(1);
+  });
+
+  it("mostra o endereço informado e o contador de reenvio (01.05)", async () => {
+    const requestPasswordReset = vi.fn().mockResolvedValue(true);
+    mockAuth({ user: null, loading: false, error: null }, { requestPasswordReset });
+
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<ForgotPassword />);
+    });
+
+    await act(async () => {
+      fireEvent.changeText(screen.getByLabelText("E-mail"), "pessoa@exemplo.com");
+    });
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Enviar link" }));
+    });
+
+    expect(screen.getByText("pessoa@exemplo.com")).toBeDefined();
+    expect(screen.getByText("Você pode reenviar o link em 0:45.")).toBeDefined();
+  });
+
+  it("volta ao formulário pela ação Corrigir e-mail (01.05)", async () => {
+    const requestPasswordReset = vi.fn().mockResolvedValue(true);
+    mockAuth({ user: null, loading: false, error: null }, { requestPasswordReset });
+
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<ForgotPassword />);
+    });
+
+    await act(async () => {
+      fireEvent.changeText(screen.getByLabelText("E-mail"), "pessoa@exemplo.com");
+    });
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Enviar link" }));
+    });
+    expect(screen.queryByLabelText("E-mail")).toBeNull();
+
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Corrigir e-mail" }));
+    });
+
+    expect(screen.getByLabelText("E-mail")).toBeDefined();
+    expect(screen.getByLabelText("E-mail").props.value).toBe("pessoa@exemplo.com");
+  });
+});
+
+describe("Spec 030 — reenvio do link de recuperação (01.05)", () => {
+  it("libera o reenvio quando o contador chega a zero", async () => {
+    vi.useFakeTimers();
+    const requestPasswordReset = vi.fn().mockResolvedValue(true);
+    mockAuth({ user: null, loading: false, error: null }, { requestPasswordReset });
+
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<ForgotPassword />);
+    });
+
+    await act(async () => {
+      fireEvent.changeText(screen.getByLabelText("E-mail"), "pessoa@exemplo.com");
+    });
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Enviar link" }));
+    });
+
+    expect(screen.getByText("Você pode reenviar o link em 0:45.")).toBeDefined();
+
+    await act(async () => {
+      vi.advanceTimersByTime(45_000);
+    });
+
+    expect(screen.queryByText("Você pode reenviar o link em 0:45.")).toBeNull();
+
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Reenviar link" }));
+    });
+
+    expect(requestPasswordReset).toHaveBeenCalledTimes(2);
+    expect(screen.getByText("Você pode reenviar o link em 0:45.")).toBeDefined();
+    vi.useRealTimers();
   });
 });

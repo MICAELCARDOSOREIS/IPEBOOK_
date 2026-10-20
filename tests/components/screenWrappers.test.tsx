@@ -2,6 +2,7 @@ import React from "react";
 import { act, render } from "@testing-library/react-native";
 import { describe, expect, it, vi } from "vitest";
 import CreateListingScreen from "@/view/listings/createListingScreen";
+import ManageListingScreen from "@/view/listings/manageListingScreen";
 import SearchAlertsScreen from "@/view/search/searchAlertsScreen";
 import ReportListingScreen from "@/view/listings/reportListingScreen";
 import FavoritesScreen from "@/view/favorites/favoritesScreen";
@@ -20,6 +21,13 @@ vi.mock("@/view/listings/createListing", () => ({
   default: vi.fn(({ sessionUserId }: { sessionUserId: string }) => {
     const { Text } = require("react-native");
     return <Text testID="create-listing-view">CreateListing: {sessionUserId}</Text>;
+  }),
+}));
+
+vi.mock("@/view/listings/manageListing", () => ({
+  default: vi.fn(({ bookId, sessionUserId }: { bookId: string; sessionUserId: string | null }) => {
+    const { Text } = require("react-native");
+    return <Text testID="manage-listing-view">ManageListing: {bookId} - {String(sessionUserId)}</Text>;
   }),
 }));
 
@@ -97,6 +105,45 @@ describe("Screen Wrappers e Gates de Sessão (ISO/IEC 25010 - Usabilidade e Segu
 
       expect(onRequireSignIn).not.toHaveBeenCalled();
       expect(screen.getByTestId("create-listing-view")).toBeDefined();
+    });
+  });
+
+  describe("ManageListingScreen", () => {
+    it("redireciona para login quando não há sessão", async () => {
+      mockedUseAuth.mockReturnValue([{ user: null, loading: false, error: null }, {} as any]);
+      const onRequireSignIn = vi.fn();
+
+      let screen!: Awaited<ReturnType<typeof render>>;
+      await act(async () => {
+        screen = await render(<ManageListingScreen bookId="b1" onRequireSignIn={onRequireSignIn} />);
+      });
+
+      expect(onRequireSignIn).toHaveBeenCalledTimes(1);
+      expect(screen.toJSON()).toBeNull();
+    });
+
+    it("não redireciona enquanto a sessão carrega", async () => {
+      mockedUseAuth.mockReturnValue([{ user: null, loading: true, error: null }, {} as any]);
+      const onRequireSignIn = vi.fn();
+
+      let screen!: Awaited<ReturnType<typeof render>>;
+      await act(async () => {
+        screen = await render(<ManageListingScreen bookId="b1" onRequireSignIn={onRequireSignIn} />);
+      });
+
+      expect(onRequireSignIn).not.toHaveBeenCalled();
+      expect(screen.toJSON()).toBeNull();
+    });
+
+    it("entrega o anúncio e a sessão para a tela de gerenciamento", async () => {
+      mockedUseAuth.mockReturnValue([{ user: { id: "user-7", email: "a@b.com" }, loading: false, error: null }, {} as any]);
+
+      let screen!: Awaited<ReturnType<typeof render>>;
+      await act(async () => {
+        screen = await render(<ManageListingScreen bookId="b1" onRequireSignIn={vi.fn()} />);
+      });
+
+      expect(screen.getByTestId("manage-listing-view")).toBeDefined();
     });
   });
 

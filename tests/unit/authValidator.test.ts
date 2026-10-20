@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { validateAuthPayload } from "@/model/validators/authValidator";
+import {
+  validateAuthPayload,
+  validateFullName,
+  validateSignUpPayload,
+} from "@/model/validators/authValidator";
 
 describe("validação unitária de autenticação (ISO/IEC 25010 - Adequação Funcional)", () => {
   describe("validateAuthPayload", () => {
@@ -67,5 +71,37 @@ describe("validação unitária de autenticação (ISO/IEC 25010 - Adequação F
         "Senha deve conter no mínimo 8 caracteres.",
       ]);
     });
+  });
+});
+
+describe("Spec 030 — nome no cadastro", () => {
+  it("aprova nome completo com dois caracteres ou mais", () => {
+    expect(validateFullName("Ana Paula").isValid).toBe(true);
+    expect(validateFullName("Jo").isValid).toBe(true);
+  });
+
+  it("recusa nome vazio, curto demais ou longo demais", () => {
+    expect(validateFullName("").errors[0]).toBe("Nome completo é obrigatório.");
+    expect(validateFullName("   ").errors[0]).toBe("Nome completo é obrigatório.");
+    expect(validateFullName("A").errors[0]).toBe("Nome deve conter no mínimo 2 caracteres.");
+    expect(validateFullName("a".repeat(81)).errors[0]).toBe("Nome deve conter no máximo 80 caracteres.");
+  });
+
+  it("recusa valor que não é texto", () => {
+    expect(validateFullName(undefined).isValid).toBe(false);
+    expect(validateFullName(42).isValid).toBe(false);
+  });
+
+  it("valida nome, e-mail e senha juntos no cadastro", () => {
+    expect(
+      validateSignUpPayload({ name: "Ana Paula", email: "ana@exemplo.com", password: "12345678" }).isValid,
+    ).toBe(true);
+
+    const semNome = validateSignUpPayload({ email: "ana@exemplo.com", password: "12345678" });
+    expect(semNome.isValid).toBe(false);
+    expect(semNome.errors[0]).toBe("Nome completo é obrigatório.");
+
+    const tudoInvalido = validateSignUpPayload({ name: "", email: "invalido", password: "123" });
+    expect(tudoInvalido.errors.length).toBe(3);
   });
 });

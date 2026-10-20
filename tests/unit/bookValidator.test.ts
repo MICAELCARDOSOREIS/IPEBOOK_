@@ -264,3 +264,46 @@ describe("validação unitária de livros (ISO/IEC 25010 - Adequação Funcional
     });
   });
 });
+
+describe("Spec 030 — conservação e descrição", () => {
+  const base = {
+    id: "book-1",
+    title: "Dom Casmurro",
+    author: "Machado de Assis",
+    ownerId: "user-1",
+    modality: "donation" as const,
+  };
+
+  it("aprova conservação dentro da lista e descrição no limite", () => {
+    for (const condition of ["new", "good", "marked", "worn"]) {
+      expect(validateBookPayload({ ...base, condition }).isValid).toBe(true);
+    }
+    expect(validateBookPayload({ ...base, description: "a".repeat(280) }).isValid).toBe(true);
+  });
+
+  it("recusa conservação fora da lista", () => {
+    const result = validateBookPayload({ ...base, condition: "novo" });
+    expect(result.isValid).toBe(false);
+    expect(result.errors).toContain("Estado de conservação deve ser 'new', 'good', 'marked' ou 'worn'.");
+  });
+
+  it("recusa descrição acima de 280 caracteres ou que não seja texto", () => {
+    const longa = validateBookPayload({ ...base, description: "a".repeat(281) });
+    expect(longa.errors).toContain("Descrição deve conter no máximo 280 caracteres.");
+
+    const invalida = validateBookPayload({ ...base, description: 42 });
+    expect(invalida.errors).toContain("Descrição deve ser um texto válido.");
+  });
+
+  it("aceita conservação e descrição ausentes ou nulas", () => {
+    expect(validateBookPayload({ ...base, condition: null, description: null }).isValid).toBe(true);
+    expect(validateBookPayload(base).isValid).toBe(true);
+  });
+
+  it("limpa espaços da descrição e preserva a conservação ao sanitizar", () => {
+    const sanitized = sanitizeBookInput({ ...base, condition: "good", description: "  Marcas leves  " });
+    expect(sanitized.condition).toBe("good");
+    expect(sanitized.description).toBe("Marcas leves");
+    expect(sanitizeBookInput({ ...base, description: "   " }).description).toBeUndefined();
+  });
+});

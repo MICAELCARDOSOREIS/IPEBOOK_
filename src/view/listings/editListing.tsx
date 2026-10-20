@@ -1,11 +1,18 @@
 import { useState } from "react";
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import type { BookModality } from "@/model/entities/book";
+import type { BookCondition, BookModality } from "@/model/entities/book";
+import {
+  BOOK_CONDITIONS,
+  BOOK_CONDITION_LABELS,
+  MAX_BOOK_DESCRIPTION_LENGTH,
+} from "@/model/entities/book";
+import { PIRIPIRI_NEIGHBORHOODS } from "@/model/entities/location";
 import { tokens } from "@/view/tokens";
 import { AddPhotoCard } from "@/view/components/AddPhotoCard";
 import { Chip } from "@/view/components/Chip";
 import { FilledButton } from "@/view/components/FilledButton";
+import { TextButton } from "@/view/components/TextButton";
 import { TextField } from "@/view/components/TextField";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { useEditListingViewModel } from "@/viewmodel/useEditListingViewModel";
@@ -23,6 +30,10 @@ const MODALITIES: { value: BookModality; label: string }[] = [
   { value: "donation", label: "Doação" },
 ];
 
+/** Mesmas categorias oferecidas na publicação (Figma `04.05`). */
+const CATEGORIES = ["Literatura", "Infantil", "Didático", "Romance", "Outros"];
+
+/** Figma `04.09 · Editar anúncio` (nó `19:242`). */
 export default function EditListing({
   bookId,
   sessionUserId,
@@ -75,7 +86,7 @@ export default function EditListing({
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.content}>
-          <Text style={styles.subtitle}>Atualize as informações do seu anúncio.</Text>
+          <Text style={styles.subtitle}>Atualize as informações do seu livro.</Text>
 
           <View style={styles.photoSection}>
             <Text style={styles.sectionLabel}>Foto da capa</Text>
@@ -126,14 +137,48 @@ export default function EditListing({
             placeholder="Ex: Machado de Assis"
           />
 
+          <View style={styles.field}>
+            <Text style={styles.sectionLabel}>Categoria</Text>
+            <View style={styles.modalityRow}>
+              {CATEGORIES.map((category) => (
+                <Chip
+                  key={category}
+                  label={category}
+                  accessibilityLabel={`Categoria ${category}`}
+                  selected={state.category === category}
+                  onPress={() => actions.setCategory(state.category === category ? "" : category)}
+                  disabled={state.saving}
+                />
+              ))}
+            </View>
+          </View>
+
+          <View style={styles.field}>
+            <Text style={styles.sectionLabel}>Estado de conservação</Text>
+            <View style={styles.modalityRow}>
+              {BOOK_CONDITIONS.map((condition: BookCondition) => (
+                <Chip
+                  key={condition}
+                  label={BOOK_CONDITION_LABELS[condition]}
+                  accessibilityLabel={`Conservação ${BOOK_CONDITION_LABELS[condition]}`}
+                  selected={state.condition === condition}
+                  onPress={() =>
+                    actions.setCondition(state.condition === condition ? null : condition)
+                  }
+                  disabled={state.saving}
+                />
+              ))}
+            </View>
+          </View>
+
           <TextField
-            label="Categoria (opcional)"
-            accessibilityLabel="Categoria do livro"
-            value={state.category}
-            onChangeText={actions.setCategory}
+            label="Descrição"
+            value={state.description}
+            onChangeText={actions.setDescription}
             editable={!state.saving}
-            placeholder="Ex: Romance, Ficção, Didático..."
-            maxLength={60}
+            placeholder="Ex: Marcas leves de uso, páginas completas."
+            maxLength={MAX_BOOK_DESCRIPTION_LENGTH}
+            helperText={`${state.description.length}/${MAX_BOOK_DESCRIPTION_LENGTH}`}
           />
 
           <View style={styles.field}>
@@ -171,14 +216,23 @@ export default function EditListing({
             </View>
           </View>
 
-          <TextField
-            label="Bairro em Piripiri (opcional)"
-            accessibilityLabel="Bairro do livro em Piripiri"
-            value={state.neighborhood}
-            onChangeText={actions.setNeighborhood}
-            editable={!state.saving}
-            placeholder="Ex: Centro, Paciência, Petecas, Floresta..."
-          />
+          <View style={styles.field}>
+            <Text style={styles.sectionLabel}>Local de retirada</Text>
+            <View style={styles.modalityRow}>
+              {PIRIPIRI_NEIGHBORHOODS.map((neighborhood) => (
+                <Chip
+                  key={neighborhood}
+                  label={neighborhood}
+                  accessibilityLabel={`Bairro ${neighborhood}`}
+                  selected={state.neighborhood === neighborhood}
+                  onPress={() =>
+                    actions.setNeighborhood(state.neighborhood === neighborhood ? "" : neighborhood)
+                  }
+                  disabled={state.saving}
+                />
+              ))}
+            </View>
+          </View>
 
           {state.error ? (
             <Text accessibilityRole="alert" style={styles.errorText}>
@@ -203,7 +257,7 @@ export default function EditListing({
 
             {onCancel && (
               <View style={styles.cancelContainer}>
-                <FilledButton
+                <TextButton
                   label="Cancelar"
                   disabled={state.saving}
                   onPress={onCancel}

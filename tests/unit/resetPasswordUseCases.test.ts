@@ -15,7 +15,7 @@ describe("recuperação de senha", () => {
 
   it("não muda a senha quando o modo local não pode validar o link", async () => {
     const auth = new AuthUseCases(new MemoryAuthDataSource());
-    await auth.signUp("pessoa@exemplo.com", "senha-antiga");
+    await auth.signUp("pessoa@exemplo.com", "senha-antiga", "Leitora Teste");
     await expect(auth.completePasswordReset("ipebook://redefinir-senha", "senha-nova")).rejects.toThrow(AuthError);
     await expect(auth.signIn("pessoa@exemplo.com", "senha-antiga")).resolves.toBeDefined();
     await expect(auth.signIn("pessoa@exemplo.com", "senha-nova")).rejects.toThrow(AuthError);

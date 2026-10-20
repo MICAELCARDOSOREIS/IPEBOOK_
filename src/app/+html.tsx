@@ -12,13 +12,13 @@ export default function Root({ children }: PropsWithChildren) {
         <meta charSet="utf-8" />
         <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-        <meta name="theme-color" content="#0D47A1" />
+        <meta name="theme-color" content="#2C5E45" />
         <meta name="description" content="Marketplace comunitário de livros em Piripiri, PI (venda, troca e doação)" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="IpêBook" />
         <link rel="manifest" href="/manifest.json" />
-        <link rel="apple-touch-icon" href="/favicon.png" />
+        <link rel="apple-touch-icon" href="/icone-192.png" />
         <ScrollViewStyleReset />
       </head>
       <body>{children}</body>

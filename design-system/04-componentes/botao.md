@@ -87,3 +87,16 @@ function BotaoPreenchido({ label, onPress, disabled }: { label: string; onPress:
   );
 }
 ```
+
+## Implementação
+
+| Variante | Arquivo |
+| --- | --- |
+| Preenchido | `src/view/components/FilledButton.tsx` |
+| Contornado | `src/view/components/OutlinedButton.tsx` |
+| Texto | `src/view/components/TextButton.tsx` |
+| Perigo | `src/view/components/TextButton.tsx` com `tone="danger"`, sempre após confirmação em [Diálogo](dialogo.md) |
+
+Em uma tela com botão de voltar na [Barra superior](barra-superior.md), a ação contornada não pode
+se chamar só "Voltar": dois controles com o mesmo nome acessível confundem leitores de tela. Use um
+rótulo que diga para onde se volta, como "Voltar à etapa anterior" (ver `createListing.tsx`).

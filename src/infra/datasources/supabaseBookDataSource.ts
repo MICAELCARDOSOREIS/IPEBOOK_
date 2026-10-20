@@ -15,11 +15,14 @@ type BookRow = {
   city?: string | null;
   state?: string | null;
   neighborhood?: string | null;
+  condition?: Book["condition"] | null;
+  description?: string | null;
   photo_url?: string | null;
   photos?: string[] | null;
 };
 
-const BOOK_COLUMNS = "id,title,author,category,owner_id,modality,price,status,city,state,neighborhood,photo_url,photos";
+const BOOK_COLUMNS =
+  "id,title,author,category,owner_id,modality,price,status,city,state,neighborhood,condition,description,photo_url,photos";
 
 function mapBook(row: BookRow): Book {
   return {
@@ -34,6 +37,8 @@ function mapBook(row: BookRow): Book {
     ...(row.city ? { city: row.city } : {}),
     ...(row.state ? { state: row.state } : {}),
     ...(row.neighborhood ? { neighborhood: row.neighborhood } : {}),
+    ...(row.condition ? { condition: row.condition } : {}),
+    ...(row.description ? { description: row.description } : {}),
     ...(row.photo_url ? { photoUrl: row.photo_url } : {}),
     ...(row.photos && row.photos.length > 0 ? { photos: row.photos } : {}),
   };
@@ -72,6 +77,8 @@ export class SupabaseBookDataSource implements IBookDataSource {
       city: book.city ?? null,
       state: book.state ?? null,
       neighborhood: book.neighborhood ?? null,
+      condition: book.condition ?? null,
+      description: book.description ?? null,
       photo_url: book.photoUrl ?? null,
       photos: book.photos ? Array.from(book.photos) : [],
     }).select(BOOK_COLUMNS).single();
@@ -96,6 +103,8 @@ export class SupabaseBookDataSource implements IBookDataSource {
     if (partial.city !== undefined) patch.city = partial.city ?? null;
     if (partial.state !== undefined) patch.state = partial.state ?? null;
     if (partial.neighborhood !== undefined) patch.neighborhood = partial.neighborhood ?? null;
+    if (partial.condition !== undefined) patch.condition = partial.condition ?? null;
+    if (partial.description !== undefined) patch.description = partial.description ?? null;
     if (partial.photoUrl !== undefined) patch.photo_url = partial.photoUrl ?? null;
     if (partial.photos !== undefined) patch.photos = partial.photos ? Array.from(partial.photos) : [];
 

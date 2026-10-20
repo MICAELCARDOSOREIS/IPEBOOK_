@@ -12,8 +12,8 @@ describe("Integração: Meus Anúncios (Spec 008)", () => {
     const auth = new AuthUseCases(new MemoryAuthDataSource());
     const books = new BookUseCases(new MemoryBookDataSource());
 
-    const userA = await auth.signUp("usera@exemplo.com", "senha12345");
-    const userB = await auth.signUp("userb@exemplo.com", "senha67890");
+    const userA = await auth.signUp("usera@exemplo.com", "senha12345", "Leitora Teste");
+    const userB = await auth.signUp("userb@exemplo.com", "senha67890", "Leitora Teste");
 
     const livroA1 = await books.createListing(
       { title: "Dom Casmurro", author: "Machado de Assis", modality: "sale", price: 25 },

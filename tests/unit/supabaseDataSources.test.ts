@@ -12,11 +12,25 @@ function fakeClient(value: unknown): SupabaseAppClient {
 describe("datasources Supabase", () => {
   it("cria conta e lê sessão confirmada sem expor os dados internos do provedor", async () => {
     const auth = new SupabaseAuthDataSource(fakeClient({ auth: {
-      signUp: vi.fn().mockResolvedValue({ data: { user: { id: "1", email: "pessoa@exemplo.com" } }, error: null }),
-      getSession: vi.fn().mockResolvedValue({ data: { session: { user: { id: "1", email: "pessoa@exemplo.com" } } }, error: null }),
+      signUp: vi.fn().mockResolvedValue({
+        data: { user: { id: "1", email: "pessoa@exemplo.com", user_metadata: { full_name: "Leitora Teste" } } },
+        error: null,
+      }),
+      getSession: vi.fn().mockResolvedValue({
+        data: { session: { user: { id: "1", email: "pessoa@exemplo.com", user_metadata: { full_name: "Leitora Teste" } } } },
+        error: null,
+      }),
     } }), "ipebook://redefinir-senha");
-    await expect(auth.signUp("pessoa@exemplo.com", "senha1234")).resolves.toEqual({ id: "1", email: "pessoa@exemplo.com" });
-    await expect(auth.currentUser()).resolves.toEqual({ id: "1", email: "pessoa@exemplo.com" });
+    await expect(auth.signUp("pessoa@exemplo.com", "senha1234", "Leitora Teste")).resolves.toEqual({
+      id: "1",
+      email: "pessoa@exemplo.com",
+      name: "Leitora Teste",
+    });
+    await expect(auth.currentUser()).resolves.toEqual({
+      id: "1",
+      email: "pessoa@exemplo.com",
+      name: "Leitora Teste",
+    });
   });
 
   it("trata cadastro, sessão e saída com respostas de erro seguras", async () => {
@@ -25,7 +39,7 @@ describe("datasources Supabase", () => {
       getSession: vi.fn().mockResolvedValue({ data: { session: null }, error: { message: "interno" } }),
       signOut: vi.fn().mockResolvedValue({ error: { message: "interno" } }),
     } }), "ipebook://redefinir-senha");
-    await expect(auth.signUp("pessoa@exemplo.com", "senha1234")).rejects.toThrow("Não foi possível criar a conta.");
+    await expect(auth.signUp("pessoa@exemplo.com", "senha1234", "Leitora Teste")).rejects.toThrow("Não foi possível criar a conta.");
     await expect(auth.currentUser()).rejects.toThrow("Não foi possível conferir a sessão.");
     await expect(auth.signOut()).rejects.toThrow("Não foi possível sair.");
   });
@@ -165,6 +179,55 @@ describe("datasources Supabase", () => {
       id: "livro-1", title: row.title, author: row.author,
       ownerId: "dono-1", modality: "sale", price: 29.9, status: "available",
     });
+  });
+
+  it("envia e lê conservação e descrição do anúncio (Spec 030)", async () => {
+    const row = {
+      id: "livro-2", title: "O Cortiço", author: "Aluísio Azevedo",
+      owner_id: "dono-2", modality: "donation", price: null, status: "available",
+      condition: "marked", description: "Marcas leves de uso", neighborhood: "Centro",
+    };
+    const single = vi.fn().mockResolvedValue({ data: row, error: null });
+    const select = vi.fn().mockReturnValue({ single });
+    const insert = vi.fn().mockReturnValue({ select });
+    const update = vi.fn().mockReturnValue({ eq: vi.fn().mockReturnValue({ select }) });
+    const from = vi.fn().mockReturnValue({ insert, update });
+    const books = new SupabaseBookDataSource(fakeClient({ from }));
+
+    const created = await books.create({
+      title: row.title, author: row.author, ownerId: row.owner_id,
+      modality: "donation", status: "available", condition: "marked",
+      description: "Marcas leves de uso",
+    });
+    expect(insert).toHaveBeenCalledWith(
+      expect.objectContaining({ condition: "marked", description: "Marcas leves de uso" }),
+    );
+    expect(created).toMatchObject({ condition: "marked", description: "Marcas leves de uso" });
+
+    await books.update("livro-2", { condition: "worn", description: undefined });
+    expect(update).toHaveBeenCalledWith(expect.objectContaining({ condition: "worn" }));
+  });
+
+  it("omite conservação e descrição quando o registro remoto não tem os campos", async () => {
+    const row = {
+      id: "livro-3", title: "Iracema", author: "José de Alencar",
+      owner_id: "dono-3", modality: "trade", price: null, status: "available",
+      condition: null, description: null,
+    };
+    const single = vi.fn().mockResolvedValue({ data: row, error: null });
+    const insert = vi.fn().mockReturnValue({ select: vi.fn().mockReturnValue({ single }) });
+    const from = vi.fn().mockReturnValue({ insert });
+    const books = new SupabaseBookDataSource(fakeClient({ from }));
+
+    const created = await books.create({
+      title: row.title, author: row.author, ownerId: row.owner_id,
+      modality: "trade", status: "available",
+    });
+    expect(created.condition).toBeUndefined();
+    expect(created.description).toBeUndefined();
+    expect(insert).toHaveBeenCalledWith(
+      expect.objectContaining({ condition: null, description: null }),
+    );
   });
 
   it("lista, consulta e atualiza livros com os dados remotos", async () => {

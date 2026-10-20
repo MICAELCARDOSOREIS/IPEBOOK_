@@ -7,7 +7,7 @@ describe("testes de integração: autenticação (ISO/IEC 25010 - Adequação Fu
     const dataSource = new MemoryAuthDataSource();
     const useCases = new AuthUseCases(dataSource);
 
-    const created = await useCases.signUp("leitora@exemplo.com", "umasenha123");
+    const created = await useCases.signUp("leitora@exemplo.com", "umasenha123", "Leitora Teste");
     expect(created.email).toBe("leitora@exemplo.com");
     await expect(useCases.getSession()).resolves.toEqual(created);
 
@@ -22,10 +22,10 @@ describe("testes de integração: autenticação (ISO/IEC 25010 - Adequação Fu
   it("mantém isolamento entre contas e impede duplicidade de e-mail entre si", async () => {
     const useCases = new AuthUseCases(new MemoryAuthDataSource());
 
-    await useCases.signUp("primeira@exemplo.com", "senha-valida-1");
-    await useCases.signUp("segunda@exemplo.com", "senha-valida-2");
+    await useCases.signUp("primeira@exemplo.com", "senha-valida-1", "Leitora Teste");
+    await useCases.signUp("segunda@exemplo.com", "senha-valida-2", "Leitora Teste");
 
-    await expect(useCases.signUp("primeira@exemplo.com", "outra-senha")).rejects.toThrow(
+    await expect(useCases.signUp("primeira@exemplo.com", "outra-senha", "Leitora Teste")).rejects.toThrow(
       "Este e-mail já está em uso.",
     );
   });

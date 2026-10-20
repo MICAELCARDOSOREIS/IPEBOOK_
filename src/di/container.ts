@@ -145,6 +145,7 @@ export const bookUseCases: IBookUseCases = new BookUseCases(bookDataSource, sear
 
 export const authUseCases: IAuthUseCases = new AuthUseCases(
   dataSources.auth,
+  dataSources.profiles,
 );
 
 export const bookRequestUseCases: IBookRequestUseCases = new BookRequestUseCases(

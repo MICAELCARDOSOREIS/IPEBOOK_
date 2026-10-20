@@ -22,6 +22,7 @@ export type MyListingsProps = {
   onNavigateToBookDetail?: (bookId: string) => void;
   onNavigateToCreateListing?: () => void;
   onNavigateToEditListing?: (bookId: string) => void;
+  onNavigateToManageListing?: (bookId: string) => void;
 };
 
 export function MyListings({
@@ -30,6 +31,7 @@ export function MyListings({
   onNavigateToBookDetail,
   onNavigateToCreateListing,
   onNavigateToEditListing,
+  onNavigateToManageListing,
 }: MyListingsProps) {
   const [state, actions] = useMyListingsViewModel(sessionUserId);
   const { isOnline } = useNetworkStatus();
@@ -105,6 +107,14 @@ export function MyListings({
                         ) : null}
                       </View>
                       <View style={styles.actionButtonsRow}>
+                        <Pressable
+                          accessibilityRole="button"
+                          accessibilityLabel={`Gerenciar anúncio de ${item.title}`}
+                          onPress={() => onNavigateToManageListing?.(item.id)}
+                          style={styles.editButton}
+                        >
+                          <Text style={styles.editText}>Gerenciar</Text>
+                        </Pressable>
                         {item.status !== "reserved" ? (
                           <>
                             <Pressable
@@ -201,6 +211,7 @@ export type MyListingsScreenProps = {
   onNavigateToBookDetail?: (bookId: string) => void;
   onNavigateToCreateListing?: () => void;
   onNavigateToEditListing?: (bookId: string) => void;
+  onNavigateToManageListing?: (bookId: string) => void;
 };
 
 export default function MyListingsScreen({
@@ -209,6 +220,7 @@ export default function MyListingsScreen({
   onNavigateToBookDetail,
   onNavigateToCreateListing,
   onNavigateToEditListing,
+  onNavigateToManageListing,
 }: MyListingsScreenProps = {}) {
   const [authState] = useAuthViewModel();
 
@@ -227,6 +239,7 @@ export default function MyListingsScreen({
       onNavigateToBookDetail={onNavigateToBookDetail}
       onNavigateToCreateListing={onNavigateToCreateListing}
       onNavigateToEditListing={onNavigateToEditListing}
+      onNavigateToManageListing={onNavigateToManageListing}
     />
   );
 }
