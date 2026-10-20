@@ -10,8 +10,8 @@ Conferência atual: **2026-10-20** (base: branch `develop`). Projeto: `~/IPEBOOK
 
 Todas as métricas abaixo foram aferidas diretamente por execução dos scripts de validação:
 
-- **Testes automatizados**: **503 testes passando** em **82 arquivos de teste** (`npm test` / `npx vitest run`), cobrindo testes unitários de entidades, validadores, casos de uso, semente de catálogo, adaptadores de dados (memória, Supabase e AsyncStorage), hooks/viewmodels, componentes de interface e cenários de integração ponta a ponta.
-- **Cobertura de código**: Acima do limiar estrito de 80% em todas as 4 dimensões (Statements: 90,53%, Branches: 80,70%, Functions: 87,67%, Lines: 91,95%).
+- **Testes automatizados**: **556 testes passando** em **88 arquivos de teste** (`npm test` / `npx vitest run`), cobrindo testes unitários de entidades, validadores, casos de uso, semente de catálogo, adaptadores de dados (memória, Supabase e AsyncStorage), hooks/viewmodels, componentes de interface e cenários de integração ponta a ponta.
+- **Cobertura de código**: Acima do limiar estrito de 80% em todas as 4 dimensões (Statements: 90,68%, Branches: 80,65%, Functions: 88,30%, Lines: 92,29%).
 - **Integridade arquitetural**: **100% em conformidade** no MVVM sofisticado em sete camadas (`app`, `view`, `viewmodel`, `usecase`, `model`, `infra`, `di`), verificado pelo comando `npm run check:architecture` (0 violações). Apenas `src/di/container.ts` e testes têm permissão para instanciar ou importar adaptadores de `src/infra/`.
 - **Validação de banco e migrações SQL**: 7 migrações executadas e validadas em banco real isolado via PGlite (`npm run test:sql`):
   1. `202610130001_v2_schema.sql` (estrutura inicial de livros e pedidos)
@@ -22,9 +22,11 @@ Todas as métricas abaixo foram aferidas diretamente por execução dos scripts 
   6. `202610170003_pausar_anuncio.sql` (status pausado e restrição de ciclo de vida em `v2_books`)
   7. `202610180001_indices_busca_catalogo.sql` (índices parciais e compostos de performance para vitrine, localização, modalidade e moderação - ADR 0021)
   8. `202610200001_unicidade_denuncias.sql` (restrição UNIQUE(reporter_id, listing_id) impedindo denúncias duplicadas pelo mesmo usuário - Issue #112)
+  9. `202610200002_rpc_exclusao_conta.sql` (função RPC security definer delete_user_account com autorização estrita e cascata definitiva LGPD - Issue #115)
+  10. `202610200003_storage_book_photos.sql` (criação do bucket público book-photos com limite de 5MB e políticas de RLS de upload/exclusão pelo proprietário - Issue #116)
 - **Semente Oficial da Beta (`npm run db:seed`)**: Script `scripts/popular-catalogo-piripiri.mjs` gerando 10 anúncios realistas distribuídos pelos bairros de Piripiri, PI com exportação SQL via `--sql`.
 - **Backend Supabase ativo**: O backend está configurado com `EXPO_PUBLIC_BACKEND=supabase` em `.env` e `.env.example`, integrado ao projeto oficial `xiuuiggpccpgrwkzeloc`. O histórico de migrações remotas foi reconciliado e `supabase db push` está operando normalmente.
-- **Rotas Web compiladas (`npm run build:web`)**: Exportação estática do Expo Router gerou com sucesso o pacote web em `dist/`, totalizando **23 rotas estáticas**:
+- **Rotas Web compiladas (`npm run build:web`)**: Exportação estática do Expo Router gerou com sucesso o pacote web em `dist/`, totalizando **23 rotas estáticas** com suporte completo a PWA (Web App Manifest em `dist/manifest.json`, meta tags de instalação standalone, `lang="pt-BR"` e cabeçalhos em `dist/_headers` - Spec 025, ADR 0020, Issue #121):
   - `/` (Catálogo e vitrine inicial com selo da beta em Piripiri, PI)
   - `/bem-vindo` (Boas-vindas e primeiro acesso com escolha opcional de bairro - Spec 026, ADR 0022)
   - `/pesquisa` (Busca no catálogo por termo e filtros, com histórico recente no dispositivo - Spec 027)
@@ -91,6 +93,11 @@ No app ativo em desenvolvimento, 21 rotas cobrem as jornadas essenciais da beta.
 - **Issue #98 (Boas-vindas e primeiro acesso)**: Concluída e integrada via PR #102. Spec 026 e ADR 0022 criados. Rota `/bem-vindo`, persistência de primeiro acesso no dispositivo e escolha de bairro de Piripiri.
 - **Issue #108 / #94 (Histórico de buscas recentes e desambiguação de spec)**: Concluída e integrada via PR #100. Spec numerada como 027 para evitar colisão com a spec 026. Armazenamento no dispositivo via `AsyncStorage`, isolado por conta e limpo ao excluir a conta.
 - **Alinhamento das telas de autenticação ao Figma (US1 e US2 / Micael)**: Concluído e integrado. Telas de Entrar (`01.02`), Criar conta (`01.03`), Recuperar acesso (`01.04`), Confira seu e-mail (`01.05`) e Nova senha (`01.06` e `01.07`) alinhadas às especificações do Figma Android Material 3 e Web Responsivo, com `TopAppBar`, cards centralizados responsivos, confirmação de senha e validação interativa comprovada via ADB no dispositivo físico Android.
+- **Issue #115 (Exclusão definitiva de conta no Supabase / LGPD)**: Concluída e integrada via PR #118. Migração `202610200002_rpc_exclusao_conta.sql` com função `security definer` `public.delete_user_account` com verificação estrita `auth.uid() = target_user_id` e exclusão atômica em cascata (anúncios, pedidos, favoritos, alertas, denúncias, notificações e usuário em `auth.users`).
+- **Issue #116 (Storage — Bucket `book-photos` e Políticas de RLS)**: Concluída e integrada via PR #119. Migração `202610200003_storage_book_photos.sql` criando o bucket público com limite de 5MB e formatos de imagem permitidos, com políticas RLS estritas de upload e exclusão pelo proprietário (`storage.foldername(name)[1] = auth.uid()::text`). Contrato `IPhotoStorageDataSource`, adaptadores Supabase/Memória e testes unitários.
+- **Issue #117 (Performance — Paginação no catálogo de livros)**: Concluída e integrada via PR #120. Parâmetros opcionais `limit` e `offset` implementados em `IBookDataSource` e `IBookUseCases`, com cláusula `.range()` no Supabase (limite padrão 20) e testes cobrindo fatiamento e limites.
+- **Issue #121 (Web/PWA — Web App Manifest e meta tags para instalação)**: Concluída e integrada via PR #122. Criação de `public/manifest.json` com metadados do IpêBook (`#0D47A1` / `#F6F1E8`), suporte standalone, injeção de `<html lang="pt-BR">` e meta tags via `src/app/+html.tsx`, cabeçalhos MIME em `public/_headers` e validação com `npm run build:web`.
+- **Issue #123 (Operação — Health check do Supabase em tempo real)**: Concluída e integrada via PR #124. Script seguro `scripts/verificar-saude-supabase.mjs` acessível via `npm run health:supabase`, verificando credenciais, latência de resposta, conectividade com PostgREST e bucket `book-photos`.
 
 ---
 

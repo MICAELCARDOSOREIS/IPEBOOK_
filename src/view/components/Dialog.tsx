@@ -1,5 +1,34 @@
-import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import { useEffect, useRef } from "react";
+import { ActivityIndicator, Modal, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { tokens } from "@/view/tokens";
+
+export type FocusableElement = { focus: () => void };
+
+function focusSafely(element: FocusableElement | null | undefined): void {
+  if (element != null && typeof element.focus === "function") element.focus();
+}
+
+function isFocusable(el: FocusableElement | null): el is HTMLElement & FocusableElement {
+  return el != null && typeof el.focus === "function" && (el as unknown as HTMLElement).tabIndex >= 0;
+}
+
+/**
+ * Decide para onde o foco deve ir quando Tab/Shift+Tab é pressionado dentro do
+ * diálogo, prendendo-o entre o primeiro e o último elemento focável (ciclo).
+ * Função pura para ser testável sem depender de refs/DOM reais.
+ */
+export function resolveDialogTabWrap(
+  focusables: readonly FocusableElement[],
+  activeElement: unknown,
+  event: { shiftKey?: boolean },
+): FocusableElement | null {
+  if (focusables.length === 0) return null;
+  const first = focusables[0];
+  const last = focusables[focusables.length - 1];
+  if (event.shiftKey && activeElement === first) return last;
+  if (!event.shiftKey && activeElement === last) return first;
+  return null;
+}
 
 export type DialogProps = {
   visible: boolean;
@@ -34,6 +63,49 @@ export function Dialog({
   onConfirm,
   onCancel,
 }: DialogProps) {
+  const cancelRef = useRef<FocusableElement | null>(null);
+  const confirmRef = useRef<FocusableElement | null>(null);
+  const triggerRef = useRef<FocusableElement | null>(null);
+
+  // Gestão de foco (Web): o diálogo prende o foco enquanto aberto e o devolve ao
+  // gatilho ao fechar (design-system/06-acessibilidade.md e 04-componentes/dialogo.md).
+  // Native (iOS/Android) já recebe isso do leitor de tela via accessibilityViewIsModal.
+  const isWeb = Platform.OS === "web" && typeof document !== "undefined";
+
+  useEffect(() => {
+    if (!isWeb) return;
+    if (visible) {
+      triggerRef.current = (document.activeElement as unknown as FocusableElement) ?? null;
+      const firstFocusable = loading ? null : cancelRef.current ?? confirmRef.current;
+      focusSafely(firstFocusable);
+    } else {
+      focusSafely(triggerRef.current);
+      triggerRef.current = null;
+    }
+  }, [visible, loading, isWeb]);
+
+  useEffect(() => {
+    if (!isWeb || !visible) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onCancel();
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const focusables = [cancelRef.current, confirmRef.current].filter(isFocusable);
+      const next = resolveDialogTabWrap(focusables, document.activeElement, event);
+      if (next) {
+        event.preventDefault();
+        focusSafely(next);
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown, true);
+    return () => {
+      if (typeof document !== "undefined") document.removeEventListener("keydown", handleKeyDown, true);
+    };
+  }, [visible, onCancel, isWeb]);
+
   return (
     <Modal
       visible={visible}
@@ -59,6 +131,7 @@ export function Dialog({
           <Text style={styles.message}>{message}</Text>
           <View style={styles.actions}>
             <Pressable
+              ref={cancelRef as never}
               accessibilityRole="button"
               accessibilityLabel={cancelLabel}
               accessibilityState={{ disabled: loading }}
@@ -69,6 +142,7 @@ export function Dialog({
               <Text style={styles.cancelText}>{cancelLabel}</Text>
             </Pressable>
             <Pressable
+              ref={confirmRef as never}
               accessibilityRole="button"
               accessibilityLabel={confirmLabel}
               accessibilityState={{ disabled: loading }}
