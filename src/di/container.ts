@@ -42,6 +42,9 @@ import type { ISearchAlertUseCases } from "@/usecase/iSearchAlertUseCases";
 import type { ISearchHistoryUseCases } from "@/usecase/iSearchHistoryUseCases";
 import { AsyncStorageOnboardingDataSource } from "@/infra/datasources/asyncStorageOnboardingDataSource";
 import { MemoryOnboardingDataSource } from "@/infra/datasources/memoryOnboardingDataSource";
+import { SupabasePhotoStorageDataSource } from "@/infra/datasources/supabasePhotoStorageDataSource";
+import { MemoryPhotoStorageDataSource } from "@/infra/datasources/memoryPhotoStorageDataSource";
+import type { IPhotoStorageDataSource } from "@/model/datasources/iPhotoStorageDataSource";
 import type { IOnboardingUseCases } from "@/usecase/iOnboardingUseCases";
 import { OnboardingUseCases } from "@/usecase/onboardingUseCases";
 
@@ -54,6 +57,7 @@ function createDataSources(): {
   favorites: IFavoriteDataSource;
   searchAlerts: ISearchAlertDataSource;
   searchHistory: ISearchHistoryDataSource;
+  photoStorage: IPhotoStorageDataSource;
 } {
   const searchHistory = process.env.NODE_ENV === "test"
     ? new MemorySearchHistoryDataSource()
@@ -74,6 +78,7 @@ function createDataSources(): {
       favorites: new SupabaseFavoriteDataSource(client),
       searchAlerts: new SupabaseSearchAlertDataSource(client),
       searchHistory,
+      photoStorage: new SupabasePhotoStorageDataSource(client),
     };
   }
   const books = new MemoryBookDataSource();
@@ -87,6 +92,7 @@ function createDataSources(): {
     favorites: new MemoryFavoriteDataSource(),
     searchAlerts: new MemorySearchAlertDataSource(notifications),
     searchHistory,
+    photoStorage: new MemoryPhotoStorageDataSource(),
   };
 }
 
@@ -117,3 +123,5 @@ export const reportUseCases: IReportUseCases = new ReportUseCases(
 export const notificationUseCases: INotificationUseCases = new NotificationUseCases(
   dataSources.notifications,
 );
+
+export const photoStorageDataSource: IPhotoStorageDataSource = dataSources.photoStorage;
