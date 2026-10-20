@@ -117,6 +117,33 @@ describe("datasources Supabase", () => {
     await expect(denied.completePasswordReset("ipebook://redefinir-senha?code=abc", "nova-senha")).rejects.toThrow("Não foi possível atualizar a senha.");
   });
 
+  it("exclui conta chamando a RPC delete_user_account e finaliza sessão", async () => {
+    const rpc = vi.fn().mockResolvedValue({ data: null, error: null });
+    const signOut = vi.fn().mockResolvedValue({ error: null });
+    const auth = new SupabaseAuthDataSource(
+      fakeClient({ rpc, auth: { signOut } }),
+      "https://ipebook.exemplo/app/redefinir-senha",
+    );
+
+    await auth.deleteAccount("user-123");
+
+    expect(rpc).toHaveBeenCalledWith("delete_user_account", { target_user_id: "user-123" });
+    expect(signOut).toHaveBeenCalledOnce();
+  });
+
+  it("lança AuthError ao falhar na RPC de exclusão de conta", async () => {
+    const rpc = vi.fn().mockResolvedValue({ data: null, error: { message: "negado" } });
+    const signOut = vi.fn().mockResolvedValue({ error: null });
+    const auth = new SupabaseAuthDataSource(
+      fakeClient({ rpc, auth: { signOut } }),
+      "https://ipebook.exemplo/app/redefinir-senha",
+    );
+
+    await expect(auth.deleteAccount("user-123")).rejects.toThrow(
+      "Não foi possível excluir a conta. Tente novamente.",
+    );
+  });
+
   it("converte livro remoto e preserva o proprietário na criação", async () => {
     const row = {
       id: "livro-1", title: "Dom Casmurro", author: "Machado de Assis",

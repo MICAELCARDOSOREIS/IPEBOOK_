@@ -81,10 +81,9 @@ export class SupabaseAuthDataSource implements IAuthDataSource {
   }
 
   async deleteAccount(userId: string): Promise<void> {
-    try {
-      await this.client.rpc("delete_user_account", { target_user_id: userId });
-    } catch {
-      // Falhas da RPC não bloqueiam o encerramento da sessão local
+    const { error } = await this.client.rpc("delete_user_account", { target_user_id: userId });
+    if (error) {
+      throw new AuthError("Não foi possível excluir a conta. Tente novamente.");
     }
     await this.client.auth.signOut();
   }
