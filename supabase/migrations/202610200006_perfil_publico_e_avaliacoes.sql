@@ -51,3 +51,8 @@ create policy "usuário só cria avaliação em seu próprio nome"
   on public.v2_ratings for insert
   to authenticated
   with check (auth.uid() = rater_id);
+
+grant select on public.v2_profiles to anon, authenticated;
+grant insert, update on public.v2_profiles to authenticated;
+grant select on public.v2_ratings to anon, authenticated;
+grant insert on public.v2_ratings to authenticated;

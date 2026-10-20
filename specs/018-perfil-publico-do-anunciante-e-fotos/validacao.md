@@ -57,7 +57,7 @@ trabalhando na issue #76 (mesmo repositório); nenhum arquivo dessa outra issue 
 - `src/app/perfil/[userId].tsx` (rota nova)
 - `src/app/livro/[id].tsx` (passou a navegar para `/perfil/[userId]`)
 - `src/di/container.ts` (registro de `profiles`, `ratings` e `publicProfileUseCases`)
-- `supabase/migrations/202610200001_perfil_publico_e_avaliacoes.sql` (`v2_profiles`, `v2_ratings`, RLS)
+- `supabase/migrations/202610200006_perfil_publico_e_avaliacoes.sql` (`v2_profiles`, `v2_ratings`, RLS)
 - `tests/unit/publicProfileUseCases.test.ts`
 - `tests/hooks/usePublicProfileViewModel.test.tsx`
 - `tests/components-mocked/publicProfileView.test.tsx`
