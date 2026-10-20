@@ -1,12 +1,15 @@
 import { useEffect, useRef } from "react";
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useHomeViewModel } from "@/viewmodel/useHomeViewModel";
+import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
 import { tokens } from "@/view/tokens";
-import { AppIcon } from "@/view/components/AppIcon";
 import { BookCover } from "@/view/components/BookCover";
+import { ErrorState } from "@/view/components/ErrorState";
 import { FavoriteButton } from "@/view/components/FavoriteButton";
+import { LoadingState } from "@/view/components/LoadingState";
+import { OfflineState } from "@/view/components/OfflineState";
 import type { BookModality } from "@/model/entities/book";
 
 const modalityTag: Record<BookModality, { background: string; text: string; label: string }> = {
@@ -47,6 +50,7 @@ export default function Home({
 }: HomeProps = {}) {
   const [state, actions] = useHomeViewModel();
   const [authState, authActions] = useAuthViewModel();
+  const { isOnline } = useNetworkStatus();
 
   const isFirstFocus = useRef(true);
   useEffect(() => {
@@ -136,20 +140,13 @@ export default function Home({
         )}
         <Text accessibilityRole="header" style={styles.heading}>Livros</Text>
         {state.loading ? (
-          <View style={styles.status}>
-            <ActivityIndicator color={tokens.colors.action} accessibilityLabel="Carregando livros" />
-            <Text style={styles.body}>Carregando livros…</Text>
-          </View>
+          <LoadingState label="Carregando livros" />
         ) : state.error ? (
-          <View style={styles.status}>
-            <View style={styles.errorRow}>
-              <AppIcon name="error" color={tokens.colors.error} />
-              <Text accessibilityRole="alert" style={styles.body}>{state.error}</Text>
-            </View>
-            <Pressable accessibilityRole="button" onPress={() => void actions.reload()} style={styles.button}>
-              <Text style={styles.buttonText}>Tentar novamente</Text>
-            </Pressable>
-          </View>
+          isOnline ? (
+            <ErrorState message={state.error} onRetry={() => void actions.reload()} />
+          ) : (
+            <OfflineState onRetry={() => void actions.reload()} />
+          )
         ) : (
           <FlatList
             data={state.books}
@@ -249,10 +246,6 @@ const styles = StyleSheet.create({
   empty: { borderTopWidth: 1, borderTopColor: tokens.colors.border, paddingTop: 28, gap: 10 },
   emptyTitle: { fontSize: 19, fontWeight: "600", color: tokens.colors.action },
   body: { fontSize: tokens.typography.bodyLarge.fontSize, lineHeight: 25, color: tokens.colors.secondaryText },
-  status: { gap: 18, alignItems: "flex-start" },
-  errorRow: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[12] },
-  button: { minHeight: tokens.accessibility.touchTarget, minWidth: tokens.accessibility.touchTarget, justifyContent: "center", paddingHorizontal: tokens.spacing[20], borderRadius: tokens.radius.small, backgroundColor: tokens.colors.action },
-  buttonText: { color: tokens.colors.surface, fontSize: 16, fontWeight: "600" },
   book: { flexDirection: "row", gap: tokens.spacing[12], paddingVertical: 18, borderBottomWidth: 1, borderBottomColor: tokens.colors.border },
   bookMain: { flex: 1, flexDirection: "row", gap: tokens.spacing[12] },
   bookInfo: { flex: 1, gap: 6 },

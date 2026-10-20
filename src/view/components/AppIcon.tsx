@@ -69,6 +69,7 @@ const symbols = {
   category: { ios: "tag", android: "sell", web: "sell" },
   more: { ios: "ellipsis", android: "more_horiz", web: "more_horiz" },
   eye: { ios: "eye", android: "visibility", web: "visibility" },
+  wifiOff: { ios: "wifi.slash", android: "wifi_off", web: "wifi_off" },
 } as const;
 
 export type AppIconName = keyof typeof symbols;

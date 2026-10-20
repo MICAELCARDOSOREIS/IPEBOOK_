@@ -1,6 +1,7 @@
 import { MemoryAuthDataSource } from "@/infra/datasources/memoryAuthDataSource";
 import { MemoryBookDataSource } from "@/infra/datasources/memoryBookDataSource";
 import { MemoryBookRequestDataSource } from "@/infra/datasources/memoryBookRequestDataSource";
+import { MemoryNetworkStatusDataSource } from "@/infra/datasources/memoryNetworkStatusDataSource";
 import { MemoryNotificationDataSource } from "@/infra/datasources/memoryNotificationDataSource";
 import { MemoryReportDataSource } from "@/infra/datasources/memoryReportDataSource";
 import { MemoryFavoriteDataSource } from "@/infra/datasources/memoryFavoriteDataSource";
@@ -18,6 +19,7 @@ import { createSupabaseAppClient } from "@/infra/supabaseClient";
 import type { IAuthDataSource } from "@/model/datasources/iAuthDataSource";
 import type { IBookDataSource } from "@/model/datasources/iBookDataSource";
 import type { IBookRequestDataSource } from "@/model/datasources/iBookRequestDataSource";
+import type { INetworkStatusDataSource } from "@/model/datasources/iNetworkStatusDataSource";
 import type { INotificationDataSource } from "@/model/datasources/iNotificationDataSource";
 import type { IReportDataSource } from "@/model/datasources/iReportDataSource";
 import type { IFavoriteDataSource } from "@/model/datasources/iFavoriteDataSource";
@@ -42,6 +44,7 @@ import type { ISearchAlertUseCases } from "@/usecase/iSearchAlertUseCases";
 import type { ISearchHistoryUseCases } from "@/usecase/iSearchHistoryUseCases";
 import { AsyncStorageOnboardingDataSource } from "@/infra/datasources/asyncStorageOnboardingDataSource";
 import { MemoryOnboardingDataSource } from "@/infra/datasources/memoryOnboardingDataSource";
+import { NetInfoNetworkStatusDataSource } from "@/infra/datasources/netInfoNetworkStatusDataSource";
 import type { IOnboardingUseCases } from "@/usecase/iOnboardingUseCases";
 import { OnboardingUseCases } from "@/usecase/onboardingUseCases";
 
@@ -96,6 +99,8 @@ const bookDataSource = dataSources.books;
 export const onboardingUseCases: IOnboardingUseCases = new OnboardingUseCases(
   process.env.NODE_ENV === "test" ? new MemoryOnboardingDataSource() : new AsyncStorageOnboardingDataSource(),
 );
+export const networkStatusDataSource: INetworkStatusDataSource =
+  process.env.NODE_ENV === "test" ? new MemoryNetworkStatusDataSource() : new NetInfoNetworkStatusDataSource();
 export const searchAlertUseCases: ISearchAlertUseCases = new SearchAlertUseCases(dataSources.searchAlerts);
 export const searchHistoryUseCases: ISearchHistoryUseCases = new SearchHistoryUseCases(dataSources.searchHistory);
 export const favoriteUseCases: IFavoriteUseCases = new FavoriteUseCases(dataSources.favorites, bookDataSource);

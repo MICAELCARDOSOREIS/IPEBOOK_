@@ -1,16 +1,19 @@
 import { useState } from "react";
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useSearchViewModel } from "@/viewmodel/useSearchViewModel";
 import { tokens } from "@/view/tokens";
-import { AppIcon } from "@/view/components/AppIcon";
 import { BookCover } from "@/view/components/BookCover";
+import { ErrorState } from "@/view/components/ErrorState";
 import { SearchField } from "@/view/components/SearchField";
 import { FavoriteButton } from "@/view/components/FavoriteButton";
 import { Dialog } from "@/view/components/Dialog";
 import { Chip } from "@/view/components/Chip";
+import { LoadingState } from "@/view/components/LoadingState";
+import { OfflineState } from "@/view/components/OfflineState";
 import { Tag } from "@/view/components/Tag";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
+import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
 import type { BookModality } from "@/model/entities/book";
 
 export type SearchProps = {
@@ -29,6 +32,7 @@ const MODALITY_FILTERS: Array<{ id: BookModality | "all"; label: string }> = [
 export default function Search({ onNavigateToBookDetail, onNavigateToAlerts }: SearchProps) {
   const [auth] = useAuthViewModel();
   const [state, actions] = useSearchViewModel(auth.user?.id ?? null);
+  const { isOnline } = useNetworkStatus();
   const [confirmingClear, setConfirmingClear] = useState(false);
 
   return (
@@ -80,14 +84,13 @@ export default function Search({ onNavigateToBookDetail, onNavigateToAlerts }: S
           onConfirm={() => { setConfirmingClear(false); void actions.clearHistory(); }}
         />
         {state.loading ? (
-          <View style={styles.status}>
-            <ActivityIndicator color={tokens.colors.action} accessibilityLabel="Carregando livros" />
-          </View>
+          <LoadingState label="Carregando livros" />
         ) : state.error ? (
-          <View style={styles.status}>
-            <AppIcon name="error" color={tokens.colors.error} />
-            <Text accessibilityRole="alert" style={styles.body}>{state.error}</Text>
-          </View>
+          isOnline ? (
+            <ErrorState message={state.error} onRetry={() => void actions.reload()} />
+          ) : (
+            <OfflineState onRetry={() => void actions.reload()} />
+          )
         ) : (
           <FlatList
             data={state.books}
@@ -142,7 +145,6 @@ const styles = StyleSheet.create({
   filterSection: { gap: tokens.spacing[6] },
   filterLabel: { fontSize: tokens.typography.labelSmall.fontSize, fontWeight: "600", color: tokens.colors.secondaryText },
   filtersRow: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[8] },
-  status: { alignItems: "center", gap: tokens.spacing[12], paddingTop: tokens.spacing[32] },
   body: { fontSize: tokens.typography.bodyLarge.fontSize, lineHeight: 25, color: tokens.colors.secondaryText },
   list: { paddingBottom: tokens.spacing[24] },
   empty: { alignItems: "center", paddingTop: tokens.spacing[32], gap: tokens.spacing[8] },

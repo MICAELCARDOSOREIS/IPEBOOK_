@@ -9,6 +9,7 @@ export default defineConfig({
       "react-native-safe-area-context": fileURLToPath(new URL("./tests/mocks/react-native-safe-area-context.ts", import.meta.url)),
       "@expo/vector-icons": fileURLToPath(new URL("./tests/mocks/expo-vector-icons.cjs", import.meta.url)),
       "expo-symbols": fileURLToPath(new URL("./tests/mocks/expo-symbols.cjs", import.meta.url)),
+      "@react-native-community/netinfo": fileURLToPath(new URL("./tests/mocks/netinfo.ts", import.meta.url)),
     },
   },
   test: {

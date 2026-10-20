@@ -22,5 +22,6 @@
 - [0020 — Publicação Web da Beta via Cloudflare Pages](0020-publicacao-web-cloudflare-pages.md)
 - [0021 — Índices de Busca, Semente de Piripiri e Robustez de Tipagem](0021-indices-busca-e-robustez-operacional.md)
 - [0022 — Primeiro acesso guardado no dispositivo](0022-primeiro-acesso-no-dispositivo.md)
+- [0023 — Detecção de conectividade com `@react-native-community/netinfo`](0023-deteccao-de-conectividade-com-netinfo.md)
 
 Preservar registros aceitos; mudanças relevantes geram novo ADR com vínculos de substituição.
