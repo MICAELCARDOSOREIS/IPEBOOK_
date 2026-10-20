@@ -137,20 +137,20 @@ No app ativo em desenvolvimento, 21 rotas cobrem as jornadas essenciais da beta.
   - **Cache Resiliente Offline-first (`CachedBookDataSource`)**: Decorator em `src/infra/datasources/cachedBookDataSource.ts` com fallback automático via `AsyncStorage` caso haja falha de conexão, garantindo exibição de anúncios sem rede.
   - **Script de Verificação Pré-deploy (`npm run verify:release`)**: Script consolidado em `scripts/verificar-release.mjs` que valida sequencialmente `.env.example`, TypeScript, 7 camadas arquiteturais, 11 migrações SQL com RLS, testes unitários, build estático web e arquivos de distribuição em `dist/`.
 
+- **Issue #109 (Publicação e verificação no Cloudflare Pages)**: Concluída e comprovada em ambiente real de destino (`https://ipebook.pages.dev`). Projeto provisionado via Cloudflare CLI (`cf pages projects create --name ipebook`), pacote estático com 25 rotas publicado via Wrangler (`npx wrangler pages deploy dist --project-name ipebook --branch develop`) e regras de rewrite `200` em `public/_redirects` ajustadas para compatibilidade com Clean URLs do Cloudflare Pages (cobrindo `/livro/*`, `/perfil/*`, `/negociacao/*`, `/denunciar/*`, `/editar-anuncio/*` e `/gerenciar-anuncio/*`). Cabeçalhos de segurança CSP, `manifest.json` e acesso direto HTTP 200 em rotas estáticas e dinâmicas verificados no PoP de Fortaleza (`FOR`).
+
 ---
 
 ## 4. Situação das Issues da Trilha
 
-### Issues Abertas
+### Issues Concluídas do Micael (`pessoa:micael`)
 
-1. **#109 (Comprovar publicação e fluxo Web no Cloudflare Pages)**:
-   - **Situação**: A infraestrutura de build e cabeçalhos está pronta e validada localmente (`dist/`, `public/_headers`, `public/_redirects`, ADR 0020, spec 025). Falta a comprovação em ambiente de destino (projeto Cloudflare Pages, domínio e verificação pós-deploy), que depende de ações e credenciais externas do responsável. Enquanto não comprovada em URL pública, o estado permanece como "preparado para publicação".
-2. **#104, #105, #106 (Acessibilidade)**:
-   - Correções de semântica de abas (#106, PR #111), foco de teclado em diálogos (#105, PR #113) e associação de erros em formulários (#104, PR #110), identificadas na auditoria #96 (atribuídas a Maria Clara). Implementadas e validadas localmente; aguardando revisão/merge em `develop`.
-3. **#74 (Spec 019 — Compartilhar anúncio)**:
-   - Compartilhamento de links de livros via Web Share API e WhatsApp local para Piripiri.
-4. **#55 (Perfil do usuário)**:
-   - Edição do próprio perfil/configurações (fluxo 07).
+- Todas as issues atribuídas a `pessoa:micael` foram concluídas, testadas, integradas em `develop` e encerradas no GitHub (incluindo #93, #109, #115, #116, #117, #121, #123, #126 a #130 e Spec 029).
+
+### Issues Abertas da Maria Clara (`pessoa:maria-clara`)
+
+1. **#55, #56, #74, #97 e #141 a #147**:
+   - Backlog de interface e fluxos complementares do Figma atribuído a Maria Clara (`pessoa:maria-clara`), totalizando 11 issues abertas em acompanhamento.
 
 ---
 
