@@ -27,5 +27,6 @@
 - [0025 — Portabilidade e exportação de dados do titular (LGPD)](0025-portabilidade-e-exportacao-dados-lgpd.md)
 - [0026 — Sanitização preventiva contra injeção de texto e validação estrita de fotos](0026-sanitizacao-preventiva-texto-e-upload.md)
 - [0027 — Resiliência offline no catálogo, logging estruturado, rate limiting e verificação de release](0027-resiliencia-seguranca-e-verificacao-release.md)
+- [0028 — Detecção de conectividade com `@react-native-community/netinfo`](0028-deteccao-de-conectividade-com-netinfo.md)
 
 Preservar registros aceitos; mudanças relevantes geram novo ADR com vínculos de substituição.

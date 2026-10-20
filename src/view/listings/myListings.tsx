@@ -1,12 +1,16 @@
 import { useEffect, useState } from "react";
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useMyListingsViewModel } from "@/viewmodel/useMyListingsViewModel";
+import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
 import { tokens } from "@/view/tokens";
 import { BookCover } from "@/view/components/BookCover";
 import { Dialog } from "@/view/components/Dialog";
+import { ErrorState } from "@/view/components/ErrorState";
 import { FilledButton } from "@/view/components/FilledButton";
+import { LoadingState } from "@/view/components/LoadingState";
+import { OfflineState } from "@/view/components/OfflineState";
 import { Snackbar } from "@/view/components/Snackbar";
 import { Tag } from "@/view/components/Tag";
 import { TopAppBar } from "@/view/components/TopAppBar";
@@ -28,6 +32,7 @@ export function MyListings({
   onNavigateToEditListing,
 }: MyListingsProps) {
   const [state, actions] = useMyListingsViewModel(sessionUserId);
+  const { isOnline } = useNetworkStatus();
   const [listingToDelete, setListingToDelete] = useState<Book | null>(null);
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
 
@@ -36,21 +41,13 @@ export function MyListings({
       <TopAppBar title="Meus anúncios" onBack={() => onBack?.()} />
       <View style={styles.content}>
         {state.loading ? (
-          <View style={styles.status}>
-            <ActivityIndicator color={tokens.colors.action} accessibilityLabel="Carregando seus anúncios" />
-            <Text style={styles.body}>Carregando seus anúncios…</Text>
-          </View>
+          <LoadingState label="Carregando seus anúncios" />
         ) : state.error ? (
-          <View style={styles.status}>
-            <Text accessibilityRole="alert" style={styles.errorText}>{state.error}</Text>
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => void actions.reload()}
-              style={styles.retryButton}
-            >
-              <Text style={styles.retryText}>Tentar novamente</Text>
-            </Pressable>
-          </View>
+          isOnline ? (
+            <ErrorState message={state.error} onRetry={() => void actions.reload()} />
+          ) : (
+            <OfflineState onRetry={() => void actions.reload()} />
+          )
         ) : (
           <>
             <Snackbar
@@ -237,31 +234,10 @@ export default function MyListingsScreen({
 const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: tokens.colors.background },
   content: { flex: 1, width: "100%", maxWidth: 720, alignSelf: "center", paddingHorizontal: tokens.spacing[16] },
-  status: { flex: 1, justifyContent: "center", alignItems: "center", gap: tokens.spacing[16] },
   body: {
     fontSize: tokens.typography.bodyMedium.fontSize,
     color: tokens.colors.secondaryText,
     textAlign: "center",
-  },
-  errorText: {
-    fontSize: tokens.typography.bodyMedium.fontSize,
-    color: tokens.colors.error,
-    textAlign: "center",
-  },
-  retryButton: {
-    paddingVertical: tokens.spacing[8],
-    paddingHorizontal: tokens.spacing[24],
-    borderRadius: tokens.radius.full,
-    backgroundColor: tokens.colors.surface,
-    borderWidth: 1,
-    borderColor: tokens.colors.border,
-    minHeight: tokens.accessibility.touchTarget,
-    justifyContent: "center",
-  },
-  retryText: {
-    fontSize: tokens.typography.bodyMedium.fontSize,
-    color: tokens.colors.action,
-    fontWeight: "bold",
   },
   list: { paddingVertical: tokens.spacing[16], gap: tokens.spacing[12] },
   empty: { paddingTop: tokens.spacing[48], alignItems: "center", gap: tokens.spacing[8] },

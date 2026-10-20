@@ -9,9 +9,13 @@ import { SentRequests } from "@/view/requests/sentRequests";
 
 vi.mock("@/viewmodel/useReceivedRequestsViewModel", () => ({ useReceivedRequestsViewModel: vi.fn() }));
 vi.mock("@/viewmodel/useSentRequestsViewModel", () => ({ useSentRequestsViewModel: vi.fn() }));
+vi.mock("@/viewmodel/useNetworkStatus", () => ({ useNetworkStatus: vi.fn() }));
 
 import { useReceivedRequestsViewModel } from "@/viewmodel/useReceivedRequestsViewModel";
 import { useSentRequestsViewModel } from "@/viewmodel/useSentRequestsViewModel";
+import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
+
+vi.mocked(useNetworkStatus).mockReturnValue({ isOnline: true });
 
 const listing: Book = {
   id: "l1",
@@ -56,6 +60,14 @@ describe("tela de pedidos recebidos (ISO/IEC 25010 - Usabilidade)", () => {
     expect(screen.getByText("Pedidos indisponíveis.")).toBeDefined();
     await act(async () => { fireEvent.press(screen.getByText("Tentar novamente")); });
     expect(actions.reload).toHaveBeenCalledTimes(1);
+  });
+
+  it("mostra o estado de sem conexão em vez do erro genérico quando o dispositivo está offline (Issue #76)", async () => {
+    vi.mocked(useNetworkStatus).mockReturnValue({ isOnline: false });
+    mockReceived({ error: "Pedidos indisponíveis." });
+    const screen = await renderEl(<ReceivedRequests sessionUserId="owner" />);
+    expect(screen.getByText("Você está sem conexão com a internet.")).toBeDefined();
+    vi.mocked(useNetworkStatus).mockReturnValue({ isOnline: true });
   });
 
   it("mostra estado vazio", async () => {

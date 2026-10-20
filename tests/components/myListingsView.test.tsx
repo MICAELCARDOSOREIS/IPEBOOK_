@@ -12,12 +12,15 @@ vi.mock("@/viewmodel/useMyListingsViewModel", () => ({
 vi.mock("@/viewmodel/useAuthViewModel", () => ({
   useAuthViewModel: vi.fn(),
 }));
+vi.mock("@/viewmodel/useNetworkStatus", () => ({ useNetworkStatus: vi.fn() }));
 
 import { useMyListingsViewModel } from "@/viewmodel/useMyListingsViewModel";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
+import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
 
 const mockedUseMyListingsViewModel = vi.mocked(useMyListingsViewModel);
 const mockedUseAuthViewModel = vi.mocked(useAuthViewModel);
+vi.mocked(useNetworkStatus).mockReturnValue({ isOnline: true });
 
 function mockViewModel(
   state: Partial<MyListingsState> = {},
@@ -134,6 +137,15 @@ describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
     const retryBtn = screen.getByRole("button", { name: "Tentar novamente" });
     fireEvent.press(retryBtn);
     expect(actions.reload).toHaveBeenCalledTimes(1);
+  });
+
+  it("mostra o estado de sem conexão em vez do erro genérico quando o dispositivo está offline (Issue #76)", async () => {
+    vi.mocked(useNetworkStatus).mockReturnValue({ isOnline: false });
+    mockViewModel({ books: [], loading: false, error: "Erro de conexão." });
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => { screen = await render(<MyListings sessionUserId="user-1" />); });
+    expect(screen.getByText("Você está sem conexão com a internet.")).toBeDefined();
+    vi.mocked(useNetworkStatus).mockReturnValue({ isOnline: true });
   });
 
   it("MyListingsScreen redireciona para login se o usuário não estiver autenticado", async () => {

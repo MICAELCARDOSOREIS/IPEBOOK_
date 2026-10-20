@@ -1,6 +1,7 @@
 import { MemoryAuthDataSource } from "@/infra/datasources/memoryAuthDataSource";
 import { MemoryBookDataSource } from "@/infra/datasources/memoryBookDataSource";
 import { MemoryBookRequestDataSource } from "@/infra/datasources/memoryBookRequestDataSource";
+import { MemoryNetworkStatusDataSource } from "@/infra/datasources/memoryNetworkStatusDataSource";
 import { MemoryNotificationDataSource } from "@/infra/datasources/memoryNotificationDataSource";
 import { MemoryProfileDataSource } from "@/infra/datasources/memoryProfileDataSource";
 import { MemoryRatingDataSource } from "@/infra/datasources/memoryRatingDataSource";
@@ -23,6 +24,7 @@ import { createSupabaseAppClient } from "@/infra/supabaseClient";
 import type { IAuthDataSource } from "@/model/datasources/iAuthDataSource";
 import type { IBookDataSource } from "@/model/datasources/iBookDataSource";
 import type { IBookRequestDataSource } from "@/model/datasources/iBookRequestDataSource";
+import type { INetworkStatusDataSource } from "@/model/datasources/iNetworkStatusDataSource";
 import type { INotificationDataSource } from "@/model/datasources/iNotificationDataSource";
 import type { IProfileDataSource } from "@/model/datasources/iProfileDataSource";
 import type { IRatingDataSource } from "@/model/datasources/iRatingDataSource";
@@ -51,6 +53,7 @@ import type { ISearchAlertUseCases } from "@/usecase/iSearchAlertUseCases";
 import type { ISearchHistoryUseCases } from "@/usecase/iSearchHistoryUseCases";
 import { AsyncStorageOnboardingDataSource } from "@/infra/datasources/asyncStorageOnboardingDataSource";
 import { MemoryOnboardingDataSource } from "@/infra/datasources/memoryOnboardingDataSource";
+import { NetInfoNetworkStatusDataSource } from "@/infra/datasources/netInfoNetworkStatusDataSource";
 import { SupabasePhotoStorageDataSource } from "@/infra/datasources/supabasePhotoStorageDataSource";
 import { MemoryPhotoStorageDataSource } from "@/infra/datasources/memoryPhotoStorageDataSource";
 import { MemoryUserDataExportDataSource } from "@/infra/datasources/memoryUserDataExportDataSource";
@@ -126,6 +129,8 @@ const bookDataSource = dataSources.books;
 export const onboardingUseCases: IOnboardingUseCases = new OnboardingUseCases(
   process.env.NODE_ENV === "test" ? new MemoryOnboardingDataSource() : new AsyncStorageOnboardingDataSource(),
 );
+export const networkStatusDataSource: INetworkStatusDataSource =
+  process.env.NODE_ENV === "test" ? new MemoryNetworkStatusDataSource() : new NetInfoNetworkStatusDataSource();
 export const searchAlertUseCases: ISearchAlertUseCases = new SearchAlertUseCases(dataSources.searchAlerts);
 export const searchHistoryUseCases: ISearchHistoryUseCases = new SearchHistoryUseCases(dataSources.searchHistory);
 export const favoriteUseCases: IFavoriteUseCases = new FavoriteUseCases(dataSources.favorites, bookDataSource);

@@ -1,9 +1,12 @@
 import type { ReactNode } from "react";
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import type { RequestStatus } from "@/model/entities/bookRequest";
 import type { RequestWithListing } from "@/viewmodel/useSentRequestsViewModel";
-import { AppIcon } from "@/view/components/AppIcon";
+import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
+import { ErrorState } from "@/view/components/ErrorState";
+import { LoadingState } from "@/view/components/LoadingState";
+import { OfflineState } from "@/view/components/OfflineState";
 import { tokens } from "@/view/tokens";
 
 export const statusLabel: Record<RequestStatus, string> = {
@@ -25,6 +28,7 @@ type Props = {
 
 /** Estrutura visual comum às telas de pedidos recebidos e enviados. */
 export function RequestListLayout({ title, emptyText, items, loading, error, onRetry, onBack, renderExtra }: Props) {
+  const { isOnline } = useNetworkStatus();
   return (
     <SafeAreaView style={styles.page}>
       <View style={styles.content}>
@@ -35,20 +39,13 @@ export function RequestListLayout({ title, emptyText, items, loading, error, onR
         ) : null}
         <Text accessibilityRole="header" style={styles.heading}>{title}</Text>
         {loading ? (
-          <View style={styles.status}>
-            <ActivityIndicator color={tokens.colors.action} accessibilityLabel="Carregando pedidos" />
-            <Text style={styles.body}>Carregando pedidos…</Text>
-          </View>
+          <LoadingState label="Carregando pedidos" />
         ) : error ? (
-          <View style={styles.status}>
-            <View style={styles.row}>
-              <AppIcon name="error" color={tokens.colors.error} />
-              <Text accessibilityRole="alert" style={styles.body}>{error}</Text>
-            </View>
-            <Pressable accessibilityRole="button" onPress={onRetry} style={styles.primary}>
-              <Text style={styles.primaryText}>Tentar novamente</Text>
-            </Pressable>
-          </View>
+          isOnline ? (
+            <ErrorState message={error} onRetry={onRetry} />
+          ) : (
+            <OfflineState onRetry={onRetry} />
+          )
         ) : (
           <FlatList
             data={items}
@@ -87,7 +84,6 @@ const styles = StyleSheet.create({
   back: { minHeight: tokens.accessibility.touchTarget, justifyContent: "center", alignSelf: "flex-start" },
   link: { color: tokens.colors.action, fontSize: 14, fontWeight: "600" },
   heading: { fontSize: tokens.typography.titleLarge.fontSize, fontWeight: tokens.typography.titleLarge.fontWeight, color: tokens.colors.action, marginBottom: tokens.spacing[24] },
-  status: { gap: 18, alignItems: "flex-start" },
   row: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: tokens.spacing[12] },
   body: { fontSize: tokens.typography.bodyLarge.fontSize, lineHeight: 25, color: tokens.colors.secondaryText },
   item: { paddingVertical: 18, borderBottomWidth: 1, borderBottomColor: tokens.colors.border, gap: 6 },

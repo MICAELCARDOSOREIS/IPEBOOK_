@@ -10,8 +10,8 @@ Conferência atual: **2026-10-20** (base: branch `develop`). Projeto: `~/IPEBOOK
 
 Todas as métricas abaixo foram aferidas diretamente por execução dos scripts de validação:
 
-- **Testes automatizados**: **506 testes passando** em **82 arquivos de teste** (`npm test` / `npx vitest run`), cobrindo testes unitários de entidades, validadores, casos de uso, semente de catálogo, adaptadores de dados (memória, Supabase e AsyncStorage), hooks/viewmodels, componentes de interface e cenários de integração ponta a ponta. Números aferidos na branch `feature/73-perfil-publico-anunciante` (Issue #73); conferir na branch corrente antes de reutilizar.
-- **Cobertura de código**: Acima do limiar estrito de 80% em todas as 4 dimensões (Statements: 89,38%, Branches: 80,10%, Functions: 87,33%, Lines: 90,91%).
+- **Testes automatizados**: **595 testes passando** em **95 arquivos de teste** (`npm test` / `npx vitest run`), cobrindo testes unitários de entidades, validadores, casos de uso, semente de catálogo, adaptadores de dados (memória, Supabase e AsyncStorage), hooks/viewmodels, componentes de interface e cenários de integração ponta a ponta.
+- **Cobertura de código**: Acima do limiar estrito de 80% em todas as 4 dimensões (Statements: 89,27%, Branches: 80,19%, Functions: 87,23%, Lines: 90,82%).
 - **Integridade arquitetural**: **100% em conformidade** no MVVM sofisticado em sete camadas (`app`, `view`, `viewmodel`, `usecase`, `model`, `infra`, `di`), verificado pelo comando `npm run check:architecture` (0 violações). Apenas `src/di/container.ts` e testes têm permissão para instanciar ou importar adaptadores de `src/infra/`.
 - **Validação de banco e migrações SQL**: 11 migrações executadas e validadas em banco real isolado via PGlite (`npm run test:sql`):
   1. `202610130001_v2_schema.sql` (estrutura inicial de livros e pedidos)
@@ -87,7 +87,8 @@ No app ativo em desenvolvimento, 21 rotas cobrem as jornadas essenciais da beta.
 - **Issue #92 (Alinhamento do design system às telas reais e ao Figma)**: Concluída, integrada e fechada. Spec 006 revisada, ADR 0019 criado, componentes `Tag` e `Snackbar` implementados com acessibilidade.
 - **Issue #87 (Preparação para publicação Web no Cloudflare Pages)**: Concluída e integrada. Spec 025 e ADR 0020 criados, remoção de `vercel.json`, criação de `public/_headers`, `public/_redirects` e `docs/implantacao-cloudflare.md`.
 - **Issue #95 (Editar alerta de busca)**: Concluída e integrada via PR #99. Permite alterar termo de alerta existente na rota `/alertas`.
-- **Issue #96 (Auditoria de acessibilidade das telas)**: Concluída e integrada via PR #101. Auditoria documentada em `specs/006-redesign-v1-design-system/auditoria-acessibilidade-2026-10-20.md`, derivando as issues corretivas #104, #105 e #106.
+- **Issue #96 (Auditoria de acessibilidade das telas)**: Concluída e integrada via PR #101. Auditoria documentada em `docs/auditoria-acessibilidade.md`, derivando as issues corretivas #104, #105 e #106 (as três corrigidas; PRs #110, #113 e #111 aguardando revisão/merge).
+- **Issue #76 (Spec 021 — Estados globais de carregamento e erro)**: Implementada. Componentes `LoadingState`, `ErrorState` e `OfflineState` reaproveitáveis (`design-system/04-componentes/estados-do-sistema.md`), detecção real de conectividade via `@react-native-community/netinfo` (ADR 0028) e hook `useAsyncState` disponível para ViewModels futuros. Aplicada em home, favoritos, meus anúncios, notificações, pedidos (recebidos/enviados) e pesquisa.
 - **Issue #98 (Boas-vindas e primeiro acesso)**: Concluída e integrada via PR #102. Spec 026 e ADR 0022 criados. Rota `/bem-vindo`, persistência de primeiro acesso no dispositivo e escolha de bairro de Piripiri.
 - **Issue #108 / #94 (Histórico de buscas recentes e desambiguação de spec)**: Concluída e integrada via PR #100. Spec numerada como 027 para evitar colisão com a spec 026. Armazenamento no dispositivo via `AsyncStorage`, isolado por conta e limpo ao excluir a conta.
 - **Alinhamento das telas de autenticação ao Figma (US1 e US2 / Micael)**: Concluído e integrado. Telas de Entrar (`01.02`), Criar conta (`01.03`), Recuperar acesso (`01.04`), Confira seu e-mail (`01.05`) e Nova senha (`01.06` e `01.07`) alinhadas às especificações do Figma Android Material 3 e Web Responsivo, com `TopAppBar`, cards centralizados responsivos, confirmação de senha e validação interativa comprovada via ADB no dispositivo físico Android.
@@ -118,7 +119,7 @@ No app ativo em desenvolvimento, 21 rotas cobrem as jornadas essenciais da beta.
 1. **#109 (Comprovar publicação e fluxo Web no Cloudflare Pages)**:
    - **Situação**: A infraestrutura de build e cabeçalhos está pronta e validada localmente (`dist/`, `public/_headers`, `public/_redirects`, ADR 0020, spec 025). Falta a comprovação em ambiente de destino (projeto Cloudflare Pages, domínio e verificação pós-deploy), que depende de ações e credenciais externas do responsável. Enquanto não comprovada em URL pública, o estado permanece como "preparado para publicação".
 2. **#104, #105, #106 (Acessibilidade)**:
-   - Correções de semântica de abas (#106), foco de teclado em diálogos (#105) e associação de erros em formulários (#104), identificadas na auditoria #96 (atribuídas a Maria Clara).
+   - Correções de semântica de abas (#106, PR #111), foco de teclado em diálogos (#105, PR #113) e associação de erros em formulários (#104, PR #110), identificadas na auditoria #96 (atribuídas a Maria Clara). Implementadas e validadas localmente; aguardando revisão/merge em `develop`.
 3. **#93 (Filtrar e ordenar o catálogo de livros)**:
    - Refinamento de busca por categoria, modalidade e ordenação.
 4. **#55 (Perfil do usuário)**:
@@ -149,7 +150,7 @@ No app ativo em desenvolvimento, 21 rotas cobrem as jornadas essenciais da beta.
 - `specs/018-perfil-publico-do-anunciante-e-fotos/`: Perfil público do anunciante.
 - `specs/019-compartilhar-anuncio/`: Compartilhamento de anúncio.
 - `specs/020-permissoes-da-plataforma/`: (Escopo levantado, encerrado como não planejado para a beta).
-- `specs/021-estados-globais-de-carregamento-e-erro/`: Tratamento global de carregamento e erro.
+- `specs/021-estados-globais-de-carregamento-e-erro/`: Tratamento global de carregamento, sem conexão e erro (Issue #76, implementado, ADR 0028).
 - `specs/022-restricao-geografica-piripiri/`: Restrição da beta à cidade de Piripiri, PI e seus bairros.
 - `specs/023-fotos-do-anuncio/`: Upload de fotos, armazenamento em bucket público do Supabase Storage e capas de livro.
 - `specs/024-editar-e-pausar-anuncio/`: Edição de anúncio e controle de status de pausa temporária.

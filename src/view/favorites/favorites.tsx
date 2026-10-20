@@ -1,15 +1,20 @@
 import { useEffect, useRef } from "react";
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { BookCover } from "@/view/components/BookCover";
+import { ErrorState } from "@/view/components/ErrorState";
+import { LoadingState } from "@/view/components/LoadingState";
+import { OfflineState } from "@/view/components/OfflineState";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { tokens } from "@/view/tokens";
 import { useFavoritesViewModel } from "@/viewmodel/useFavoritesViewModel";
+import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
 
 export type FavoritesProps = { userId: string | null; focusKey?: number; onBack: () => void; onLogin: () => void; onBook: (id: string) => void };
 
 export default function Favorites({ userId, focusKey = 0, onBack, onLogin, onBook }: FavoritesProps) {
   const [state, actions] = useFavoritesViewModel(userId);
+  const { isOnline } = useNetworkStatus();
   const firstFocus = useRef(true);
   useEffect(() => {
     if (firstFocus.current) { firstFocus.current = false; return; }
@@ -20,9 +25,10 @@ export default function Favorites({ userId, focusKey = 0, onBack, onLogin, onBoo
     {!userId ? <View style={styles.status}>
       <Text accessibilityRole="header" style={styles.title}>Entre para ver seus favoritos</Text>
       <Pressable accessibilityRole="button" onPress={onLogin}><Text style={styles.link}>Entrar</Text></Pressable>
-    </View> : state.loading ? <ActivityIndicator accessibilityLabel="Carregando favoritos" />
-      : state.error ? <View style={styles.status}><Text accessibilityRole="alert">{state.error}</Text>
-        <Pressable accessibilityRole="button" onPress={() => void actions.reload()}><Text style={styles.link}>Tentar novamente</Text></Pressable></View>
+    </View> : state.loading ? <LoadingState label="Carregando favoritos" />
+      : state.error ? (isOnline
+        ? <ErrorState message={state.error} onRetry={() => void actions.reload()} />
+        : <OfflineState onRetry={() => void actions.reload()} />)
       : <FlatList data={state.books} keyExtractor={(book) => book.id} contentContainerStyle={styles.list}
         ListEmptyComponent={<View style={styles.status}><Text accessibilityRole="header" style={styles.title}>Nenhum favorito ainda</Text><Text>Toque no coração de um anúncio para guardá-lo aqui.</Text></View>}
         renderItem={({ item }) => <Pressable accessibilityRole="button" accessibilityLabel={`Ver ${item.title}`} onPress={() => onBook(item.id)} style={styles.row}>

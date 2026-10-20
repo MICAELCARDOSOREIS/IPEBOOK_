@@ -1,13 +1,17 @@
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import type { AppNotification } from "@/model/entities/notification";
+import { ErrorState } from "@/view/components/ErrorState";
 import { FilledButton } from "@/view/components/FilledButton";
+import { LoadingState } from "@/view/components/LoadingState";
+import { OfflineState } from "@/view/components/OfflineState";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { tokens } from "@/view/tokens";
 import {
   type NotificationFilter,
   useNotificationsViewModel,
 } from "@/viewmodel/useNotificationsViewModel";
+import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
 
 export type NotificationsProps = {
   sessionUserId: string | null;
@@ -31,6 +35,7 @@ export default function Notifications({
   onNavigateToAction,
 }: NotificationsProps) {
   const [state, actions] = useNotificationsViewModel(sessionUserId);
+  const { isOnline } = useNetworkStatus();
 
   if (!sessionUserId) {
     return (
@@ -108,23 +113,13 @@ export default function Notifications({
 
         {/* Estados de Carregamento e Erro */}
         {state.loading ? (
-          <View style={styles.status}>
-            <ActivityIndicator color={tokens.colors.action} accessibilityLabel="Carregando notificações" />
-            <Text style={styles.body}>Carregando notificações…</Text>
-          </View>
+          <LoadingState label="Carregando notificações" />
         ) : state.error ? (
-          <View style={styles.status}>
-            <Text accessibilityRole="alert" style={styles.errorText}>
-              {state.error}
-            </Text>
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => void actions.reload()}
-              style={styles.retryButton}
-            >
-              <Text style={styles.retryText}>Tentar novamente</Text>
-            </Pressable>
-          </View>
+          isOnline ? (
+            <ErrorState message={state.error} onRetry={() => void actions.reload()} />
+          ) : (
+            <OfflineState onRetry={() => void actions.reload()} />
+          )
         ) : state.filteredNotifications.length === 0 ? (
           <View style={styles.centered}>
             <Text style={styles.iconLarge}>📭</Text>
@@ -221,33 +216,6 @@ const styles = StyleSheet.create({
     paddingVertical: tokens.spacing[6],
   },
   markAllText: {
-    ...tokens.typography.labelMedium,
-    color: tokens.colors.action,
-    fontWeight: "600",
-  },
-  status: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: tokens.spacing[24],
-    gap: tokens.spacing[12],
-  },
-  body: {
-    ...tokens.typography.bodyMedium,
-    color: tokens.colors.secondaryText,
-  },
-  errorText: {
-    ...tokens.typography.bodyMedium,
-    color: tokens.colors.error,
-    textAlign: "center",
-  },
-  retryButton: {
-    paddingHorizontal: tokens.spacing[16],
-    paddingVertical: tokens.spacing[8],
-    borderRadius: tokens.radius.full,
-    backgroundColor: tokens.colors.soft,
-  },
-  retryText: {
     ...tokens.typography.labelMedium,
     color: tokens.colors.action,
     fontWeight: "600",
