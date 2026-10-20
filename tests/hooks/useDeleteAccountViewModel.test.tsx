@@ -3,7 +3,17 @@ import { act, create, type ReactTestRenderer } from "react-test-renderer";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { DomainError } from "@/model/errors";
 import type { IAuthUseCases } from "@/usecase/iAuthUseCases";
+import type { ISearchHistoryUseCases } from "@/usecase/iSearchHistoryUseCases";
 import { useDeleteAccountViewModel } from "@/viewmodel/useDeleteAccountViewModel";
+
+function stubHistory(overrides: Partial<ISearchHistoryUseCases> = {}): ISearchHistoryUseCases {
+  return {
+    listTerms: vi.fn().mockResolvedValue([]),
+    registerSearch: vi.fn().mockResolvedValue([]),
+    clearHistory: vi.fn().mockResolvedValue(undefined),
+    ...overrides,
+  };
+}
 
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
 const mounted: ReactTestRenderer[] = [];
@@ -21,10 +31,10 @@ function stubAuth(overrides: Partial<IAuthUseCases> = {}): IAuthUseCases {
   };
 }
 
-async function renderHook(auth: IAuthUseCases) {
+async function renderHook(auth: IAuthUseCases, history: ISearchHistoryUseCases = stubHistory()) {
   let result!: ReturnType<typeof useDeleteAccountViewModel>;
   function HookProbe() {
-    result = useDeleteAccountViewModel(auth);
+    result = useDeleteAccountViewModel(auth, history);
     return null;
   }
   await act(async () => {
@@ -110,6 +120,17 @@ describe("useDeleteAccountViewModel", () => {
     expect(hook.current[0].success).toBe(true);
     expect(hook.current[0].error).toBeNull();
     expect(auth.deleteAccount).toHaveBeenCalledWith("user-1");
+  });
+
+  it("limpa o histórico de buscas da conta ao excluí-la com sucesso", async () => {
+    const auth = stubAuth();
+    const history = stubHistory();
+    const hook = await renderHook(auth, history);
+
+    await act(async () => { hook.current[1].setConfirmed(true); });
+    await act(async () => { await hook.current[1].deleteAccount("user-1"); });
+
+    expect(history.clearHistory).toHaveBeenCalledWith("user-1");
   });
 
   it("trata erro de domínio lançado pelo caso de uso", async () => {

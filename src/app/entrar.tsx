@@ -12,6 +12,7 @@ export default function Entrar() {
       }}
       onNavigateToSignUp={() => router.push("/criar-conta")}
       onNavigateToForgotPassword={() => router.push("/esqueci-senha")}
+      onBack={() => router.back()}
     />
   );
 }

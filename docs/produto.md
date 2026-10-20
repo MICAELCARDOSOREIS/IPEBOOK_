@@ -1,14 +1,13 @@
 # Produto e requisitos do Ipebook
 
-> Beta pública em preparação desde 2026-10-15: Supabase, Android por APK e Web em Cloudflare
-> Pages foram escolhidos. A [spec 007](../specs/007-contas-persistentes/spec.md) iniciou a
-> migração técnica, mas o app ainda usa memória por padrão e **não está pronto para público**.
-> A recuperação com senha temporária foi removida; no modo local, o envio por e-mail informa
-> que está indisponível. Contato só após aceite, confirmação bilateral da entrega, 18+,
-> atuação apenas em Piripiri, PI, e moderação manual são requisitos futuros da beta,
-> não funcionalidades prontas.
+> Beta pública em preparação: Supabase configurado e ativo (`EXPO_PUBLIC_BACKEND=supabase`),
+> restrição geográfica exclusiva para Piripiri, PI implementada (17 bairros, spec 022, ADR 0016),
+> moderação comunitária ativa (spec 011, tabela `v2_reports`), primeiro acesso implementado (spec 026)
+> e histórico recente no dispositivo (spec 027). A publicação Web no Cloudflare Pages está preparada
+> em código e build (`dist/`, `public/_headers`, `public/_redirects`, spec 025, ADR 0020), aguardando
+> comprovação no ambiente de destino externo (issue #109).
 
-Revisão: 2026-10-14 (specs 003 e 004 completas: autenticação, cadastro de anúncio e negociação simples). Este documento descreve a base implementada e identifica decisões necessárias para especificar o produto final. Não é uma aprovação de funcionalidades futuras.
+Revisão: 2026-10-20 (base: branch `develop`). Este documento consolida os requisitos implementados e o alinhamento de produto da versão beta.
 
 ## Objetivo confirmado
 
@@ -30,14 +29,18 @@ Esta decisão foi trazida do trabalho já em produção da equipe no projeto irm
 | Mostrar ausência de livros | Implementada e configuração padrão |
 | Renderizar títulos e autores fornecidos pelo caso de uso | Implementada; dados de exemplo exercitados em testes |
 | Tratar carregamento, erro e nova tentativa | Implementada |
-| Favoritos e alertas de busca | Implementados e validados na [spec 016](../specs/016-favoritos-e-alertas-de-busca/spec.md), inclusive fluxo autenticado contra Supabase com contas descartáveis; integrados em `develop` pelo PR #77, ainda sem publicação |
-| Cadastrar livros (editar fica para depois) | **Implementada** (Antonio, issues #26/#27/#28) em [specs/003](../specs/003-autenticacao-e-cadastro-de-anuncio/): `Book` estendido com `modality`/`price`/`ownerId`, `createListing` exigindo sessão (FR-006), `src/view/listings/createListing.tsx`, rota `src/app/anunciar.tsx` (protegida por sessão via `src/view/listings/createListingScreen.tsx`), botão "Anunciar" condicional em `src/view/home.tsx` |
-| Conta e autenticação (criar conta, entrar, sair; perfil fica para depois) | **Implementada** (Maria Clara, Tarefa 23) em [specs/003](../specs/003-autenticacao-e-cadastro-de-anuncio/): `src/view/auth/signIn.tsx`, `src/view/auth/signUp.tsx`, rotas `src/app/entrar.tsx` e `src/app/criar-conta.tsx`, indicador de sessão em `src/view/home.tsx` |
-| Solicitar e responder negociação simples | **Implementada** (Antonio, Tarefa 25 / issue #21) em [specs/004](../specs/004-negociacao-simples/): `BookRequest`, casos de uso de solicitação e resposta com recusa automática de concorrentes e reserva do anúncio (SC-002), ViewModels (`useRequestNegotiationViewModel`, `useReceivedRequestsViewModel`, `useSentRequestsViewModel`), telas [`receivedRequests.tsx`](../src/view/requests/receivedRequests.tsx) e [`sentRequests.tsx`](../src/view/requests/sentRequests.tsx), rotas `src/app/pedidos-recebidos.tsx` e `src/app/meus-pedidos.tsx` |
-| Busca e detalhe do anúncio | Implementados; busca local por título, autor e categoria opcional, com tela de detalhe |
+| Favoritos e alertas de busca | Implementados e validados na [spec 016](../specs/016-favoritos-e-alertas-de-busca/spec.md), inclusive fluxo autenticado contra Supabase; edição de alertas integrada na issue #95 |
+| Cadastrar livros | **Implementada** em [specs/003](../specs/003-autenticacao-e-cadastro-de-anuncio/): `Book` com `modality`/`price`/`ownerId`, `createListing` exigindo sessão (FR-006), rota `/anunciar` com suporte a fotos e seleção de bairro |
+| Editar e pausar anúncio | **Implementada** em [specs/024](../specs/024-editar-e-pausar-anuncio/spec.md) (issue #91): rota `/editar-anuncio/[id]`, pausa e retomada de anúncios em `/meus-anuncios` |
+| Conta e autenticação (criar conta, entrar, sair, redefinir senha) | **Implementada** em [specs/003](../specs/003-autenticacao-e-cadastro-de-anuncio/) e [specs/007](../specs/007-contas-persistentes/spec.md): `src/view/auth/`, rotas `/entrar`, `/criar-conta`, `/esqueci-senha` e `/redefinir-senha` |
+| Solicitar e responder negociação simples | **Implementada** em [specs/004](../specs/004-negociacao-simples/) e [specs/009](../specs/009-detalhes-negociacao-encontro/): `BookRequest`, reserva atômica de concorrentes e ponto de encontro seguro em Piripiri na rota `/negociacao/[id]` |
+| Busca, filtros e histórico de buscas | Implementados: busca local por título, autor e categoria opcional; histórico recente no dispositivo ([spec 027](../specs/027-historico-buscas-recentes/spec.md), issue #94), isolado por conta e limpo ao excluir a conta |
+| Boas-vindas e primeiro acesso | **Implementada** em [specs/026](../specs/026-boas-vindas-primeiro-acesso/spec.md) (issue #98): rota `/bem-vindo`, escolha opcional de bairro e persistência de primeiro acesso no dispositivo (ADR 0022) |
+| Denúncias e moderação comunitária | **Implementada** em [specs/011](../specs/011-denuncia-anuncio/spec.md) (issue #79): formulário `/denunciar/[id]`, tabela `v2_reports` e políticas de RLS no Supabase |
+| Restrição geográfica a Piripiri, PI | **Implementada** em [specs/022](../specs/022-restricao-geografica-piripiri/spec.md) (issue #83): 17 bairros oficiais, validação de localidade e selo da beta |
 | Troca, doação, empréstimo ou venda | Decidido: venda, troca e doação. Empréstimo não entra no escopo |
 | Leitura de arquivos digitais | Não implementada; fora de escopo — modalidade decidida é livro físico |
-| Banco e sincronização | Adaptadores Supabase existentes; a migração da spec 016 foi aplicada e o fluxo de favoritos/alertas foi validado com duas contas descartáveis |
+| Banco e sincronização | Backend Supabase oficial configurado e ativo (`EXPO_PUBLIC_BACKEND=supabase`), com RLS, migrações SQL validadas via PGlite e adaptadores de memória para testes rápidos |
 
 ## Requisitos funcionais atuais
 
@@ -57,15 +60,12 @@ Testes e limitações de cobertura estão em [qualidade.md](qualidade.md). Exist
 
 ## Regras atuais e limites do domínio
 
-- Há autenticação em memória (conta, sessão) e o cadastro de anúncio exige sessão ativa (FR-006), associando o anúncio criado à conta autenticada (`ownerId`).
-- `Book` contém `id`, `title`, `author`, `category` opcional, `status` (`available`/`reserved`), `modality` (`sale`/`trade`/`donation`), `price` opcional (obrigatório e > 0 só quando `modality === "sale"`, FR-005) e `ownerId`.
-- Há consulta (listagem) e gravação (cadastro de anúncio); os dados continuam em memória e desaparecem ao encerrar a execução — nenhum backend real foi escolhido.
-- A base inicia vazia. Dados fictícios não devem ser apresentados como acervo real.
-- Casos de uso dependem de contratos; detalhes da tecnologia de dados ficam na infraestrutura.
-
-Não há regra definida para duplicidade, ISBN, limite de livros, moderação ou disponibilidade.
-A beta atenderá apenas Piripiri, PI, e exigirá autodeclaração de idade mínima de 18 anos;
-a forma de aplicar essas regras ainda precisa ser especificada e implementada.
+- Backend oficial Supabase integrado (`EXPO_PUBLIC_BACKEND=supabase`) com autenticação, sessão persistente e Row Level Security (RLS) protegendo dados do usuário. Adaptadores em memória mantidos para testes unitários e de integração locais.
+- `Book` contém `id`, `title`, `author`, `category` opcional, `status` (`available`/`reserved`/`paused`), `modality` (`sale`/`trade`/`donation`), `price` opcional (obrigatório e > 0 só quando `modality === "sale"`, FR-005), `ownerId`, `photoUrl`, `photos`, `city`, `state` e `neighborhood`.
+- O cadastro e a edição de anúncios exigem sessão ativa (FR-006), associando o anúncio criado à conta autenticada (`ownerId`).
+- A beta atende exclusivamente a cidade de **Piripiri, PI**, com catálogo delimitado a seus 17 bairros oficiais (spec 022, ADR 0016).
+- Moderação comunitária ativa via denúncias de anúncio (`v2_reports`), permitindo sinalizar conteúdos impróprios (spec 011).
+- Casos de uso dependem de contratos desacoplados; detalhes de persistência e rede ficam na infraestrutura.
 
 ## Requisitos de qualidade
 
@@ -97,7 +97,7 @@ moderação à medida que forem especificadas.
 | Haverá conta? Quais dados serão necessários? | Sim — conta com e-mail/senha (ou código por e-mail) e login com Google, dados mínimos nome e e-mail, mesma estratégia do projeto irmão (ADR 0006/0028 lá). | 2026-10-13 |
 | Quais ações compõem a primeira entrega útil? | Nesta ordem: (1) autenticação de conta, (2) cadastrar anúncio de livro, (3) catálogo/listagem (já implementado), (4) solicitar e responder negociação simples. Busca/filtros avançados e segurança/moderação ficam para depois. | 2026-10-13 |
 | Quais plataformas precisam ser suportadas inicialmente? | Android e Web. iOS fica fora da primeira entrega por enquanto. | 2026-10-13 |
-| Em qual cidade a beta pública poderá operar? | Apenas Piripiri, PI. A restrição ainda não está implementada nem validada. | 2026-10-15 |
+| Em qual cidade a beta pública poderá operar? | Apenas Piripiri, PI. Implementada na Spec 022 e ADR 0016 com 17 bairros oficiais e selo da beta. | 2026-10-15 |
 
 As seis decisões originais acima (exceto a de plataformas, que já tinha sido resolvida em conversa
 direta com o usuário) foram inicialmente trazidas do trabalho já validado em produção da equipe
@@ -105,10 +105,10 @@ no projeto irmão (`/home/usermicael/Projetos/IpeBook`), não de pesquisa de usu
 nesta base pequena. **Em 2026-10-13, o usuário solicitante confirmou diretamente as três
 principais (problema/público, modalidade, conta/autenticação) como corretas para este
 projeto** — deixaram de ser inferência e passaram a ser decisão confirmada. A restrição a
-Piripiri, PI, foi informada diretamente pelo usuário em 2026-10-15. O responsável pelo produto
+Piripiri, PI, foi informada diretamente pelo usuário em 2026-10-15 e consolidada na Spec 022. O responsável pelo produto
 é o usuário solicitante; se a equipe quiser divergir de alguma dessas decisões para este Ipebook
 específico, basta atualizar esta tabela.
 
-## Próxima especificação
+## Próximos passos e pendências
 
-A [spec 007](../specs/007-contas-persistentes/spec.md) cobre contas e anúncios persistentes. A restrição a Piripiri, PI, deve ser especificada e testada em uma entrega posterior antes da beta pública. Nenhuma publicação foi autorizada ou realizada.
+As próximas entregas da trilha incluem: comprovação da publicação Web no Cloudflare Pages (issue #109), correções de acessibilidade derivadas da auditoria (#104, #105, #106), filtros e ordenação do catálogo (#93) e perfis de usuário/anunciante (#55 e #73).

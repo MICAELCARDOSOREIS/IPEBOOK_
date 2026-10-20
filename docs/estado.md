@@ -10,8 +10,8 @@ Conferência atual: **2026-10-20** (base: branch `develop`). Projeto: `~/IPEBOOK
 
 Todas as métricas abaixo foram aferidas diretamente por execução dos scripts de validação:
 
-- **Testes automatizados**: **460 testes passando** em **77 arquivos de teste** (`npm test` / `npx vitest run`), cobrindo testes unitários de entidades, validadores, casos de uso, semente de catálogo, adaptadores de dados (memória e Supabase), hooks/viewmodels, componentes de interface e cenários de integração ponta a ponta.
-- **Cobertura de código**: Acima do limiar estrito de 80% nas 4 dimensões (Statements: 90,18%, Branches: 80,39%, Functions: 87,94%, Lines: 91,57%).
+- **Testes automatizados**: **482 testes passando** em **78 arquivos de teste** (`npm test` / `npx vitest run`), cobrindo testes unitários de entidades, validadores, casos de uso, semente de catálogo, adaptadores de dados (memória, Supabase e AsyncStorage), hooks/viewmodels, componentes de interface e cenários de integração ponta a ponta.
+- **Cobertura de código**: Acima do limiar estrito de 80% em todas as 4 dimensões (Statements: 90,20%, Branches: 80,41%, Functions: 87,95%, Lines: 91,55%).
 - **Integridade arquitetural**: **100% em conformidade** no MVVM sofisticado em sete camadas (`app`, `view`, `viewmodel`, `usecase`, `model`, `infra`, `di`), verificado pelo comando `npm run check:architecture` (0 violações). Apenas `src/di/container.ts` e testes têm permissão para instanciar ou importar adaptadores de `src/infra/`.
 - **Validação de banco e migrações SQL**: 7 migrações executadas e validadas em banco real isolado via PGlite (`npm run test:sql`):
   1. `202610130001_v2_schema.sql` (estrutura inicial de livros e pedidos)
@@ -23,12 +23,13 @@ Todas as métricas abaixo foram aferidas diretamente por execução dos scripts 
   7. `202610180001_indices_busca_catalogo.sql` (índices parciais e compostos de performance para vitrine, localização, modalidade e moderação - ADR 0021)
 - **Semente Oficial da Beta (`npm run db:seed`)**: Script `scripts/popular-catalogo-piripiri.mjs` gerando 10 anúncios realistas distribuídos pelos bairros de Piripiri, PI com exportação SQL via `--sql`.
 - **Backend Supabase ativo**: O backend está configurado com `EXPO_PUBLIC_BACKEND=supabase` em `.env` e `.env.example`, integrado ao projeto oficial `xiuuiggpccpgrwkzeloc`. O histórico de migrações remotas foi reconciliado e `supabase db push` está operando normalmente.
-- **Rotas Web compiladas (`npm run build:web`)**: Exportação estática do Expo Router gerou com sucesso o pacote web em `dist/`, totalizando **22 rotas estáticas**:
+- **Rotas Web compiladas (`npm run build:web`)**: Exportação estática do Expo Router gerou com sucesso o pacote web em `dist/`, totalizando **23 rotas estáticas**:
   - `/` (Catálogo e vitrine inicial com selo da beta em Piripiri, PI)
-  - `/pesquisa` (Busca no catálogo por termo e filtros)
+  - `/bem-vindo` (Boas-vindas e primeiro acesso com escolha opcional de bairro - Spec 026, ADR 0022)
+  - `/pesquisa` (Busca no catálogo por termo e filtros, com histórico recente no dispositivo - Spec 027)
   - `/livro/[id]` (Detalhes completos do anúncio, capa com foto real/fallback, dados do autor e do anunciante)
   - `/anunciar` (Formulário de cadastro de anúncio com upload/remoção de foto e 17 bairros de Piripiri)
-  - `/editar-anuncio/[id]` (Edição completa de anúncios cadastrados pelo usuário)
+  - `/editar-anuncio/[id]` (Edição completa de anúncios cadastrados pelo usuário - Spec 024, ADR 0018)
   - `/meus-anuncios` (Listagem de anúncios do usuário, com opções de editar, pausar/retomar, exclusão confirmada via Diálogo e feedbacks via Snackbar)
   - `/pedidos-recebidos` (Propostas recebidas de interessados, com aceitar e recusar)
   - `/meus-pedidos` (Propostas enviadas pelo usuário)
@@ -36,7 +37,7 @@ Todas as métricas abaixo foram aferidas diretamente por execução dos scripts 
   - `/favoritos` (Livros marcados como favoritos pelo usuário)
   - `/alertas` (Alertas de busca por interesse, com pausa/retomada e exclusão confirmada por Diálogo)
   - `/notificacoes` (Central de notificações com filtros de lidas/não lidas)
-  - `/denunciar/[id]` (Formulário de denúncia de anúncio e moderação comunitária)
+  - `/denunciar/[id]` (Formulário de denúncia de anúncio e moderação comunitária - Spec 011)
   - `/ajuda` (Central de ajuda, FAQ e dicas de segurança comunitária em Piripiri)
   - `/termos` (Termos de uso e política de privacidade LGPD)
   - `/excluir-conta` (Direito ao esquecimento LGPD com digitação da palavra EXCLUIR)
@@ -79,24 +80,30 @@ No app ativo em desenvolvimento, 21 rotas cobrem as jornadas essenciais da beta.
 - **Issue #88 (Destino Perfil na barra de navegação)**: Corrigido o direcionamento da tab Perfil: implementado suporte a destinos desabilitados com acessibilidade (`accessibilityState={{ disabled: true }}` e rótulo `"Perfil (em breve)"`), evitando erros de rota inexistente enquanto a issue #55 estiver em desenvolvimento.
 - **Issue #89 (Componente Dialog e confirmação destrutiva)**: Criado o componente `Dialog` em `src/view/components/Dialog.tsx` conforme `design-system/04-componentes/dialogo.md` (com foco acessível, fechamento pelo botão voltar, alvo de 48 dp e variantes neutra e destrutiva). Integrado na tela `MyListings` (com mensagem de êxito) e na tela `SearchAlerts`.
 - **Issue #86 (Spine de Arquitetura e Higiene do Repositório)**: Integrado o spine de arquitetura com 20 invariantes (`docs/arquitetura/architecture-ipebook/`), limpos worktrees e eliminadas 15 branches obsoletas.
+- **Issue #90 (Formulários do anúncio e design system)**: Concluída, integrada e fechada. Campos alinhados com tokens e validação de bairros de Piripiri.
+- **Issue #91 (Editar e pausar anúncio)**: Concluída, integrada e fechada. Spec 024 e ADR 0018 criados. Migração `202610170003_pausar_anuncio.sql` aplicada.
+- **Issue #92 (Alinhamento do design system às telas reais e ao Figma)**: Concluída, integrada e fechada. Spec 006 revisada, ADR 0019 criado, componentes `Tag` e `Snackbar` implementados com acessibilidade.
+- **Issue #87 (Preparação para publicação Web no Cloudflare Pages)**: Concluída e integrada. Spec 025 e ADR 0020 criados, remoção de `vercel.json`, criação de `public/_headers`, `public/_redirects` e `docs/implantacao-cloudflare.md`.
+- **Issue #95 (Editar alerta de busca)**: Concluída e integrada via PR #99. Permite alterar termo de alerta existente na rota `/alertas`.
+- **Issue #96 (Auditoria de acessibilidade das telas)**: Concluída e integrada via PR #101. Auditoria documentada em `specs/006-redesign-v1-design-system/auditoria-acessibilidade-2026-10-20.md`, derivando as issues corretivas #104, #105 e #106.
+- **Issue #98 (Boas-vindas e primeiro acesso)**: Concluída e integrada via PR #102. Spec 026 e ADR 0022 criados. Rota `/bem-vindo`, persistência de primeiro acesso no dispositivo e escolha de bairro de Piripiri.
+- **Issue #108 / #94 (Histórico de buscas recentes e desambiguação de spec)**: Concluída e integrada via PR #100. Spec numerada como 027 para evitar colisão com a spec 026. Armazenamento no dispositivo via `AsyncStorage`, isolado por conta e limpo ao excluir a conta.
+- **Alinhamento das telas de autenticação ao Figma (US1 e US2 / Micael)**: Concluído e integrado. Telas de Entrar (`01.02`), Criar conta (`01.03`), Recuperar acesso (`01.04`), Confira seu e-mail (`01.05`) e Nova senha (`01.06` e `01.07`) alinhadas às especificações do Figma Android Material 3 e Web Responsivo, com `TopAppBar`, cards centralizados responsivos, confirmação de senha e validação interativa comprovada via ADB no dispositivo físico Android.
 
 ---
 
-## 4. Pendências Reais da Beta
+## 4. Situação das Issues da Trilha
 
-As únicas tarefas abertas necessárias para a conclusão da versão beta são:
+### Issues Abertas
 
-1. **#87 (Publicação da Web no Cloudflare Pages)**: Configurar e validar o deploy do bundle gerado em `dist/` no Cloudflare Pages.
-2. **#90 (Alinhamento dos campos da tela de anunciar ao design system)**: Substituir inputs simples por componentes de formulário do design system (seleção de modalidade, categoria e bairros de Piripiri).
-3. **#91 (Editar e pausar anúncio: modelo e interface)**: Permitir alterar dados e alternar o status do anúncio entre disponível e pausado sem precisar excluí-lo.
-- **#91 (Editar e pausar anúncio)**: Concluída, integrada e fechada. Spec 024 e ADR 0018 criados.
-- **#92 (Alinhamento do design system às telas reais e ao Figma)**: Concluída, integrada e fechada. Spec 006 revisada, ADR 0019 criado, componentes `Tag` e `Snackbar` implementados com acessibilidade.
-- **#87 (Publicar a Web da beta - Cloudflare Pages)**: Concluída e integrada. Spec 025 e ADR 0020 criados, remoção de `vercel.json`, criação de `public/_headers`, `public/_redirects` e `docs/implantacao-cloudflare.md`.
-
-Próximas issues da trilha:
-1. **#94 (Histórico de buscas recentes)**: Persistência local das últimas buscas com opção de limpeza confirmada via `Dialog`.
-2. **#93 (Filtros de catálogo na busca)**: Filtros por modalidade, categoria e ordenação.
-3. **#55 / #73 (Tela de perfil do usuário)**: Implementação da rota `/perfil`.
+1. **#109 (Comprovar publicação e fluxo Web no Cloudflare Pages)**:
+   - **Situação**: A infraestrutura de build e cabeçalhos está pronta e validada localmente (`dist/`, `public/_headers`, `public/_redirects`, ADR 0020, spec 025). Falta a comprovação em ambiente de destino (projeto Cloudflare Pages, domínio e verificação pós-deploy), que depende de ações e credenciais externas do responsável. Enquanto não comprovada em URL pública, o estado permanece como "preparado para publicação".
+2. **#104, #105, #106 (Acessibilidade)**:
+   - Correções de semântica de abas (#106), foco de teclado em diálogos (#105) e associação de erros em formulários (#104), identificadas na auditoria #96 (atribuídas a Maria Clara).
+3. **#93 (Filtrar e ordenar o catálogo de livros)**:
+   - Refinamento de busca por categoria, modalidade e ordenação.
+4. **#55 / #73 (Perfil do usuário / Perfil público do anunciante)**:
+   - Implementação das telas e rotas de perfil.
 
 ---
 
@@ -106,19 +113,26 @@ Próximas issues da trilha:
 - `specs/002-estrategia-testes/`: Estratégia de testes ISO/IEC 25010 e cobertura mínima de 80%.
 - `specs/003-autenticacao-e-cadastro-de-anuncio/`: Cadastro de livro, autenticação básica e listagem na vitrine.
 - `specs/004-negociacao-simples/`: Negociação simples (solicitação e resposta) com reserva atômica de concorrentes.
+- `specs/005-catalogo-de-livros/`: Catálogo de livros e visualização de itens disponíveis.
+- `specs/006-redesign-v1-design-system/`: Design system Material 3, tokens e auditoria de acessibilidade.
 - `specs/007-contas-persistentes/`: Persistência no Supabase com RLS e validação multi-contas.
 - `specs/008-meus-anuncios/`: Gestão dos próprios anúncios com indicadores de status.
-- `specs/009-detalhes-da-negociacao/`: Ponto de encontro comunitário seguro em Piripiri.
+- `specs/009-detalhes-negociacao-encontro/`: Ponto de encontro comunitário seguro em Piripiri.
 - `specs/010-termos-e-privacidade/`: Conformidade LGPD e regras da comunidade.
-- `specs/011-denuncia-de-anuncio/`: Moderação comunitária de anúncios impróprios.
-- `specs/012-central-de-ajuda-e-faq/`: FAQ, categorias e guia de segurança.
+- `specs/011-denuncia-anuncio/`: Moderação comunitária de anúncios impróprios.
+- `specs/012-central-ajuda-faq/`: FAQ, categorias e guia de segurança.
 - `specs/013-cancelar-anuncio/`: Cancelamento de anúncio com proteção de posse e integridade referencial.
-- `specs/014-exclusao-de-conta/`: Direito ao esquecimento LGPD com confirmação textual.
-- `specs/015-central-de-notificacoes/`: Notificações transacionais com filtros de lidas.
+- `specs/014-exclusao-conta/`: Direito ao esquecimento LGPD com confirmação textual.
+- `specs/015-central-notificacoes/`: Notificações transacionais com filtros de lidas.
 - `specs/016-favoritos-e-alertas-de-busca/`: Favoritos e alertas com gatilho transacional no banco.
 - `specs/017-rascunhos-de-anuncio/`: (Escopo levantado, encerrado como não planejado para a beta).
+- `specs/018-perfil-publico-do-anunciante-e-fotos/`: Perfil público do anunciante.
+- `specs/019-compartilhar-anuncio/`: Compartilhamento de anúncio.
 - `specs/020-permissoes-da-plataforma/`: (Escopo levantado, encerrado como não planejado para a beta).
+- `specs/021-estados-globais-de-carregamento-e-erro/`: Tratamento global de carregamento e erro.
 - `specs/022-restricao-geografica-piripiri/`: Restrição da beta à cidade de Piripiri, PI e seus bairros.
 - `specs/023-fotos-do-anuncio/`: Upload de fotos, armazenamento em bucket público do Supabase Storage e capas de livro.
 - `specs/024-editar-e-pausar-anuncio/`: Edição de anúncio e controle de status de pausa temporária.
 - `specs/025-publicacao-web-cloudflare-pages/`: Configuração de build, roteamento SPA e cabeçalhos para Cloudflare Pages.
+- `specs/026-boas-vindas-primeiro-acesso/`: Boas-vindas e primeiro acesso ao app com escolha opcional de bairro (ADR 0022).
+- `specs/027-historico-buscas-recentes/`: Histórico de buscas recentes salvo no dispositivo via `AsyncStorage` (Issue #94, PR #100).
