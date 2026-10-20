@@ -9,6 +9,7 @@ import { MemorySearchHistoryDataSource } from "@/infra/datasources/memorySearchH
 import { AsyncStorageSearchHistoryDataSource } from "@/infra/datasources/asyncStorageSearchHistoryDataSource";
 import { SupabaseAuthDataSource } from "@/infra/datasources/supabaseAuthDataSource";
 import { SupabaseBookDataSource } from "@/infra/datasources/supabaseBookDataSource";
+import { CachedBookDataSource } from "@/infra/datasources/cachedBookDataSource";
 import { SupabaseBookRequestDataSource } from "@/infra/datasources/supabaseBookRequestDataSource";
 import { SupabaseNotificationDataSource } from "@/infra/datasources/supabaseNotificationDataSource";
 import { SupabaseReportDataSource } from "@/infra/datasources/supabaseReportDataSource";
@@ -48,6 +49,10 @@ import { MemoryUserDataExportDataSource } from "@/infra/datasources/memoryUserDa
 import { SupabaseUserDataExportDataSource } from "@/infra/datasources/supabaseUserDataExportDataSource";
 import type { IPhotoStorageDataSource } from "@/model/datasources/iPhotoStorageDataSource";
 import type { IUserDataExportDataSource } from "@/model/datasources/iUserDataExportDataSource";
+import type { ILogger } from "@/model/services/iLogger";
+import { SafeLogger } from "@/infra/services/safeLogger";
+import type { IRateLimiter } from "@/model/services/iRateLimiter";
+import { ClientRateLimiter } from "@/infra/services/clientRateLimiter";
 import type { IOnboardingUseCases } from "@/usecase/iOnboardingUseCases";
 import type { IUserDataExportUseCases } from "@/usecase/iUserDataExportUseCases";
 import { OnboardingUseCases } from "@/usecase/onboardingUseCases";
@@ -77,7 +82,7 @@ function createDataSources(): {
     );
     return {
       auth: new SupabaseAuthDataSource(client, redirectUrl),
-      books: new SupabaseBookDataSource(client),
+      books: new CachedBookDataSource(new SupabaseBookDataSource(client)),
       requests: new SupabaseBookRequestDataSource(client),
       reports: new SupabaseReportDataSource(client),
       notifications: new SupabaseNotificationDataSource(client),
@@ -140,3 +145,7 @@ export const photoStorageDataSource: IPhotoStorageDataSource = dataSources.photo
 export const userDataExportUseCases: IUserDataExportUseCases = new UserDataExportUseCases(
   dataSources.userDataExport,
 );
+
+export const logger: ILogger = new SafeLogger();
+
+export const rateLimiter: IRateLimiter = new ClientRateLimiter();

@@ -17,6 +17,7 @@
     "db:seed": "node scripts/popular-catalogo-piripiri.mjs",
     "validate": "npm run typecheck && npm run check:architecture && npm run test:sql && npm run test:coverage",
     "build:web": "expo export --platform web",
+    "verify:release": "node scripts/verificar-release.mjs",
     "setup:hooks": "git config core.hooksPath .githooks",
     "prepare": "git config core.hooksPath .githooks || true"
   },

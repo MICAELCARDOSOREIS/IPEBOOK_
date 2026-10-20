@@ -103,6 +103,12 @@ No app ativo em desenvolvimento, 21 rotas cobrem as jornadas essenciais da beta.
 - **Issue #128 (Segurança / LGPD — Exportação e portabilidade de dados do usuário)**: Concluída e integrada via PR #133. Implementação de `UserExportData`, `IUserDataExportDataSource`, `UserDataExportUseCases`, adaptadores em memória e Supabase e injeção em `container.ts`.
 - **Issue #129 (Infra / Otimização — Serviço de validação de imagens antes do upload)**: Concluída e integrada via PR #134. Implementação de `ImageOptimizationService` com checagem de tamanho (5 MB), formatos permitidos (JPEG, PNG, WebP) e sanitização contra path traversal.
 - **Issue #130 (Segurança / Domínio — Sanitização contra injeção em campos de texto)**: Concluída e integrada via PR #135. Validador `textSanitizer.ts` neutralizando scripts, tags HTML e caracteres de controle em títulos, autores, bairros e denúncias comunitárias.
+- **Trilha de Resiliência, Infra e Segurança (Micael — Outubro de 2026)**:
+  - **ADRs 0023 a 0027**: Formalizadas as decisões arquiteturais de CI no GitHub Actions (0023), busca acelerada `pg_trgm` (0024), portabilidade LGPD (0025), sanitização preventiva (0026) e resiliência/logging/rate limiting/release (0027).
+  - **Logging Estruturado e Sanitizado (`SafeLogger`)**: Implementação de `ILogger` em `src/infra/services/safeLogger.ts` com mascaramento automático de senhas, JWTs e chaves sensíveis contra vazamento de dados pessoais.
+  - **Rate Limiting no Cliente (`ClientRateLimiter`)**: Algoritmo de janela deslizante (sliding window) em `src/infra/services/clientRateLimiter.ts` protegendo formulários contra múltiplos cliques e requisições repetidas.
+  - **Cache Resiliente Offline-first (`CachedBookDataSource`)**: Decorator em `src/infra/datasources/cachedBookDataSource.ts` com fallback automático via `AsyncStorage` caso haja falha de conexão, garantindo exibição de anúncios sem rede.
+  - **Script de Verificação Pré-deploy (`npm run verify:release`)**: Script consolidado em `scripts/verificar-release.mjs` que valida sequencialmente `.env.example`, TypeScript, 7 camadas arquiteturais, 11 migrações SQL com RLS, testes unitários, build estático web e arquivos de distribuição em `dist/`.
 
 ---
 
