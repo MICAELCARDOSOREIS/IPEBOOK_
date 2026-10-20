@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
@@ -7,6 +8,7 @@ import { tokens } from "@/view/tokens";
 import { BookCover } from "@/view/components/BookCover";
 import { FilledButton } from "@/view/components/FilledButton";
 import { TopAppBar } from "@/view/components/TopAppBar";
+import { PhotoGallery } from "@/view/listings/photoGallery";
 import type { BookModality } from "@/model/entities/book";
 
 const modalityTag: Record<BookModality, { background: string; text: string; label: string }> = {
@@ -33,6 +35,8 @@ export default function BookDetail({
   const [state, actions] = useBookDetailViewModel(bookId, undefined, undefined, sessionUserId);
   const [negotiation, negotiationActions] = useRequestNegotiationViewModel();
   const book = state.book;
+  const [galleryVisible, setGalleryVisible] = useState(false);
+  const photos = book ? [book.photoUrl, ...(book.photos ?? [])].filter((url): url is string => Boolean(url)) : [];
 
   return (
     <SafeAreaView style={styles.page}>
@@ -46,7 +50,17 @@ export default function BookDetail({
           <Text accessibilityRole="alert" style={styles.body}>{state.error}</Text>
         ) : book ? (
           <View style={styles.card}>
-            <BookCover id={book.id} title={book.title} author={book.author} photoUrl={book.photoUrl} variant="card" />
+            {photos.length > 0 ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Ver fotos do anúncio em tela cheia"
+                onPress={() => setGalleryVisible(true)}
+              >
+                <BookCover id={book.id} title={book.title} author={book.author} photoUrl={book.photoUrl} variant="card" />
+              </Pressable>
+            ) : (
+              <BookCover id={book.id} title={book.title} author={book.author} photoUrl={book.photoUrl} variant="card" />
+            )}
             <Text accessibilityRole="header" style={styles.title}>{book.title}</Text>
             <Text style={styles.body}>{book.author}</Text>
             <Pressable accessibilityRole="button"
@@ -102,6 +116,13 @@ export default function BookDetail({
           </View>
         ) : null}
       </View>
+      {photos.length > 0 ? (
+        <PhotoGallery
+          photos={photos}
+          visible={galleryVisible}
+          onClose={() => setGalleryVisible(false)}
+        />
+      ) : null}
     </SafeAreaView>
   );
 }
