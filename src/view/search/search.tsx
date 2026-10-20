@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useSearchViewModel } from "@/viewmodel/useSearchViewModel";
@@ -6,6 +7,7 @@ import { AppIcon } from "@/view/components/AppIcon";
 import { BookCover } from "@/view/components/BookCover";
 import { SearchField } from "@/view/components/SearchField";
 import { FavoriteButton } from "@/view/components/FavoriteButton";
+import { Dialog } from "@/view/components/Dialog";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import type { BookModality } from "@/model/entities/book";
 
@@ -22,14 +24,42 @@ export type SearchProps = {
 
 /** Busca (US3, T019): filtra o catálogo já carregado por título ou autor (FR-005). */
 export default function Search({ onNavigateToBookDetail, onNavigateToAlerts }: SearchProps) {
-  const [state, actions] = useSearchViewModel();
   const [auth] = useAuthViewModel();
+  const [state, actions] = useSearchViewModel(auth.user?.id ?? null);
+  const [confirmingClear, setConfirmingClear] = useState(false);
 
   return (
     <SafeAreaView style={styles.page}>
       <View style={styles.content}>
         <Text accessibilityRole="header" style={styles.heading}>Pesquisa</Text>
-        <SearchField value={state.term} onChangeText={actions.setTerm} />
+        <SearchField value={state.term} onChangeText={actions.setTerm} onSubmitEditing={() => void actions.registerSearch(state.term)} />
+        {!state.term.trim() && state.history.length > 0 ? (
+          <View style={styles.historySection}>
+            <View style={styles.historyHeader}>
+              <Text style={styles.historyTitle}>Buscas recentes</Text>
+              <Pressable accessibilityRole="button" accessibilityLabel="Limpar histórico de buscas" onPress={() => setConfirmingClear(true)}>
+                <Text style={styles.alertLink}>Limpar</Text>
+              </Pressable>
+            </View>
+            <View style={styles.historyChips}>
+              {state.history.map((item) => (
+                <Pressable key={item} accessibilityRole="button" accessibilityLabel={`Buscar novamente por ${item}`} onPress={() => actions.setTerm(item)} style={styles.historyChip}>
+                  <Text style={styles.historyChipText}>{item}</Text>
+                </Pressable>
+              ))}
+            </View>
+          </View>
+        ) : null}
+        <Dialog
+          visible={confirmingClear}
+          title="Limpar histórico de buscas?"
+          message="As buscas recentes salvas neste dispositivo serão removidas."
+          confirmLabel="Limpar histórico"
+          cancelLabel="Cancelar"
+          destructive
+          onCancel={() => setConfirmingClear(false)}
+          onConfirm={() => { setConfirmingClear(false); void actions.clearHistory(); }}
+        />
         {state.loading ? (
           <View style={styles.status}>
             <ActivityIndicator color={tokens.colors.action} accessibilityLabel="Carregando livros" />
@@ -64,7 +94,7 @@ export default function Search({ onNavigateToBookDetail, onNavigateToAlerts }: S
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel={`Ver detalhe de ${item.title}, ${item.author}`}
-                  onPress={() => onNavigateToBookDetail?.(item.id)}
+                  onPress={() => { void actions.registerSearch(state.term); onNavigateToBookDetail?.(item.id); }}
                   style={styles.rowMain}
                 >
                   <BookCover id={item.id} title={item.title} photoUrl={item.photoUrl} variant="list" />
@@ -99,6 +129,12 @@ const styles = StyleSheet.create({
   empty: { alignItems: "center", paddingTop: tokens.spacing[32], gap: tokens.spacing[8] },
   emptyTitle: { fontSize: 19, fontWeight: "600", color: tokens.colors.action },
   alertLink: { color: tokens.colors.action, fontWeight: "600", padding: tokens.spacing[12] },
+  historySection: { gap: tokens.spacing[8] },
+  historyHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  historyTitle: { fontSize: tokens.typography.labelMedium.fontSize, fontWeight: "600", color: tokens.colors.secondaryText },
+  historyChips: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[8] },
+  historyChip: { minHeight: tokens.accessibility.touchTarget, justifyContent: "center", borderRadius: tokens.radius.full, backgroundColor: tokens.colors.soft, paddingHorizontal: tokens.spacing[16] },
+  historyChipText: { color: tokens.colors.text, fontSize: tokens.typography.bodyLarge.fontSize },
   row: { flexDirection: "row", gap: tokens.spacing[12], paddingVertical: 18, borderBottomWidth: 1, borderBottomColor: tokens.colors.border },
   rowMain: { flex: 1, flexDirection: "row", gap: tokens.spacing[12] },
   rowInfo: { flex: 1, gap: 6 },

@@ -2,7 +2,7 @@
 
 Documento consolidado de continuidade técnica e produto do Ipebook (Piripiri, PI).
 
-Conferência atual: **2026-10-17** (base: branch `develop`). Projeto: `~/IPEBOOK_`.
+Conferência atual: **2026-10-20** (base: branch `develop`). Projeto: `~/IPEBOOK_`.
 
 ---
 
@@ -10,8 +10,8 @@ Conferência atual: **2026-10-17** (base: branch `develop`). Projeto: `~/IPEBOOK
 
 Todas as métricas abaixo foram aferidas diretamente por execução dos scripts de validação:
 
-- **Testes automatizados**: **446 testes passando** em **74 arquivos de teste** (`npm test` / `npx vitest run`), cobrindo testes unitários de entidades, validadores, casos de uso, semente de catálogo, adaptadores de dados (memória e Supabase), hooks/viewmodels, componentes de interface e cenários de integração ponta a ponta.
-- **Cobertura de código**: Acima do limiar estrito de 80% nas 4 dimensões (Statements: 89,87%, Branches: 80,14%, Functions: 87,67%, Lines: 91,33%).
+- **Testes automatizados**: **469 testes passando** em **78 arquivos de teste** (`npm test` / `npx vitest run`), cobrindo testes unitários de entidades, validadores, casos de uso, semente de catálogo, adaptadores de dados (memória, Supabase e AsyncStorage), hooks/viewmodels, componentes de interface e cenários de integração ponta a ponta.
+- **Cobertura de código**: Acima do limiar estrito de 80% em todas as 4 dimensões (Statements: 90,19%, Branches: 80,40%, Functions: 87,94%, Lines: 91,54%).
 - **Integridade arquitetural**: **100% em conformidade** no MVVM sofisticado em sete camadas (`app`, `view`, `viewmodel`, `usecase`, `model`, `infra`, `di`), verificado pelo comando `npm run check:architecture` (0 violações). Apenas `src/di/container.ts` e testes têm permissão para instanciar ou importar adaptadores de `src/infra/`.
 - **Validação de banco e migrações SQL**: 7 migrações executadas e validadas em banco real isolado via PGlite (`npm run test:sql`):
   1. `202610130001_v2_schema.sql` (estrutura inicial de livros e pedidos)

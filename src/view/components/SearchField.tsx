@@ -5,15 +5,17 @@ export type SearchFieldProps = {
   value: string;
   onChangeText: (value: string) => void;
   placeholder?: string;
+  onSubmitEditing?: () => void;
 };
 
 /** Campo de busca do design system (campo-de-busca.md): pílula com botão Limpar. */
-export function SearchField({ value, onChangeText, placeholder = "Busque por título ou autor" }: SearchFieldProps) {
+export function SearchField({ value, onChangeText, placeholder = "Busque por título ou autor", onSubmitEditing }: SearchFieldProps) {
   return (
     <View style={styles.container}>
       <TextInput
         value={value}
         onChangeText={onChangeText}
+        onSubmitEditing={onSubmitEditing}
         placeholder={placeholder}
         accessibilityLabel="Buscar livros"
         style={styles.input}

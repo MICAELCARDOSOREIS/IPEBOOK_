@@ -5,6 +5,8 @@ import { MemoryNotificationDataSource } from "@/infra/datasources/memoryNotifica
 import { MemoryReportDataSource } from "@/infra/datasources/memoryReportDataSource";
 import { MemoryFavoriteDataSource } from "@/infra/datasources/memoryFavoriteDataSource";
 import { MemorySearchAlertDataSource } from "@/infra/datasources/memorySearchAlertDataSource";
+import { MemorySearchHistoryDataSource } from "@/infra/datasources/memorySearchHistoryDataSource";
+import { AsyncStorageSearchHistoryDataSource } from "@/infra/datasources/asyncStorageSearchHistoryDataSource";
 import { SupabaseAuthDataSource } from "@/infra/datasources/supabaseAuthDataSource";
 import { SupabaseBookDataSource } from "@/infra/datasources/supabaseBookDataSource";
 import { SupabaseBookRequestDataSource } from "@/infra/datasources/supabaseBookRequestDataSource";
@@ -20,6 +22,7 @@ import type { INotificationDataSource } from "@/model/datasources/iNotificationD
 import type { IReportDataSource } from "@/model/datasources/iReportDataSource";
 import type { IFavoriteDataSource } from "@/model/datasources/iFavoriteDataSource";
 import type { ISearchAlertDataSource } from "@/model/datasources/iSearchAlertDataSource";
+import type { ISearchHistoryDataSource } from "@/model/datasources/iSearchHistoryDataSource";
 import { DataSourceError } from "@/model/errors";
 import { AuthUseCases } from "@/usecase/authUseCases";
 import { BookRequestUseCases } from "@/usecase/bookRequestUseCases";
@@ -33,8 +36,10 @@ import { NotificationUseCases } from "@/usecase/notificationUseCases";
 import { ReportUseCases } from "@/usecase/reportUseCases";
 import { FavoriteUseCases } from "@/usecase/favoriteUseCases";
 import { SearchAlertUseCases } from "@/usecase/searchAlertUseCases";
+import { SearchHistoryUseCases } from "@/usecase/searchHistoryUseCases";
 import type { IFavoriteUseCases } from "@/usecase/iFavoriteUseCases";
 import type { ISearchAlertUseCases } from "@/usecase/iSearchAlertUseCases";
+import type { ISearchHistoryUseCases } from "@/usecase/iSearchHistoryUseCases";
 import { AsyncStorageOnboardingDataSource } from "@/infra/datasources/asyncStorageOnboardingDataSource";
 import { MemoryOnboardingDataSource } from "@/infra/datasources/memoryOnboardingDataSource";
 import type { IOnboardingUseCases } from "@/usecase/iOnboardingUseCases";
@@ -48,7 +53,11 @@ function createDataSources(): {
   notifications: INotificationDataSource;
   favorites: IFavoriteDataSource;
   searchAlerts: ISearchAlertDataSource;
+  searchHistory: ISearchHistoryDataSource;
 } {
+  const searchHistory = process.env.NODE_ENV === "test"
+    ? new MemorySearchHistoryDataSource()
+    : new AsyncStorageSearchHistoryDataSource();
   if (process.env.NODE_ENV !== "test" && process.env.EXPO_PUBLIC_BACKEND === "supabase") {
     const redirectUrl = process.env.EXPO_PUBLIC_AUTH_REDIRECT_URL;
     if (!redirectUrl) throw new DataSourceError("Configure o retorno da recuperação de senha.");
@@ -64,6 +73,7 @@ function createDataSources(): {
       notifications: new SupabaseNotificationDataSource(client),
       favorites: new SupabaseFavoriteDataSource(client),
       searchAlerts: new SupabaseSearchAlertDataSource(client),
+      searchHistory,
     };
   }
   const books = new MemoryBookDataSource();
@@ -76,6 +86,7 @@ function createDataSources(): {
     notifications,
     favorites: new MemoryFavoriteDataSource(),
     searchAlerts: new MemorySearchAlertDataSource(notifications),
+    searchHistory,
   };
 }
 
@@ -86,6 +97,7 @@ export const onboardingUseCases: IOnboardingUseCases = new OnboardingUseCases(
   process.env.NODE_ENV === "test" ? new MemoryOnboardingDataSource() : new AsyncStorageOnboardingDataSource(),
 );
 export const searchAlertUseCases: ISearchAlertUseCases = new SearchAlertUseCases(dataSources.searchAlerts);
+export const searchHistoryUseCases: ISearchHistoryUseCases = new SearchHistoryUseCases(dataSources.searchHistory);
 export const favoriteUseCases: IFavoriteUseCases = new FavoriteUseCases(dataSources.favorites, bookDataSource);
 export const bookUseCases: IBookUseCases = new BookUseCases(bookDataSource, searchAlertUseCases);
 

@@ -1,16 +1,23 @@
 import { createElement } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
 import { afterEach, describe, expect, it } from "vitest";
+import { MemorySearchHistoryDataSource } from "@/infra/datasources/memorySearchHistoryDataSource";
 import type { IBookUseCases } from "@/usecase/iBookUseCases";
+import type { ISearchHistoryUseCases } from "@/usecase/iSearchHistoryUseCases";
+import { SearchHistoryUseCases } from "@/usecase/searchHistoryUseCases";
 import { useSearchViewModel } from "@/viewmodel/useSearchViewModel";
 
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
 const mounted: ReactTestRenderer[] = [];
 
-async function renderHook(useCases: Pick<IBookUseCases, "listBooks">) {
+async function renderHook(
+  useCases: Pick<IBookUseCases, "listBooks">,
+  userId: string | null = null,
+  history: ISearchHistoryUseCases = new SearchHistoryUseCases(new MemorySearchHistoryDataSource()),
+) {
   let result!: ReturnType<typeof useSearchViewModel>;
   function HookProbe() {
-    result = useSearchViewModel(useCases as IBookUseCases);
+    result = useSearchViewModel(userId, useCases as IBookUseCases, history);
     return null;
   }
   await act(async () => {
@@ -97,5 +104,35 @@ describe("testes de hook: useSearchViewModel (ISO/IEC 25010 - Adequação Funcio
       hook.current[1].setTerm("dom casmurro");
     });
     expect(calls).toBe(1);
+  });
+
+  it("guarda termos buscados, evita duplicar e limita a 10 itens", async () => {
+    const history = new SearchHistoryUseCases(new MemorySearchHistoryDataSource());
+    const hook = await renderHook({ listBooks: async () => books }, "leitor", history);
+    for (let i = 0; i < 11; i += 1) {
+      await act(async () => { await hook.current[1].registerSearch(`termo-${i}`); });
+    }
+    await act(async () => { await hook.current[1].registerSearch("termo-5"); });
+    expect(hook.current[0].history).toHaveLength(10);
+    expect(hook.current[0].history[0]).toBe("termo-5");
+    expect(hook.current[0].history.filter((item) => item === "termo-5")).toHaveLength(1);
+  });
+
+  it("isola o histórico por conta e limpa só a conta atual", async () => {
+    const history = new SearchHistoryUseCases(new MemorySearchHistoryDataSource());
+    await history.registerSearch("outra-conta", "Iracema");
+    const hook = await renderHook({ listBooks: async () => books }, "leitor", history);
+    await act(async () => { await hook.current[1].registerSearch("Casmurro"); });
+    expect(hook.current[0].history).toEqual(["Casmurro"]);
+    await act(async () => { await hook.current[1].clearHistory(); });
+    expect(hook.current[0].history).toEqual([]);
+    expect(await history.listTerms("outra-conta")).toEqual(["Iracema"]);
+  });
+
+  it("ignora termo vazio ao registrar busca", async () => {
+    const history = new SearchHistoryUseCases(new MemorySearchHistoryDataSource());
+    const hook = await renderHook({ listBooks: async () => books }, "leitor", history);
+    await act(async () => { await hook.current[1].registerSearch("   "); });
+    expect(hook.current[0].history).toEqual([]);
   });
 });

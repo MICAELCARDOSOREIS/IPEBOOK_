@@ -18,13 +18,15 @@ const book = (over: Partial<Book>): Book => ({
   ...over,
 });
 
-function setup(books: Book[], term = "", options: { loading?: boolean; error?: string | null } = {}) {
+function setup(books: Book[], term = "", options: { loading?: boolean; error?: string | null; history?: string[] } = {}) {
   const setTerm = vi.fn();
+  const registerSearch = vi.fn();
+  const clearHistory = vi.fn();
   vi.mocked(useSearchViewModel).mockReturnValue([
-    { term, books, loading: options.loading ?? false, error: options.error ?? null },
-    { setTerm, reload: vi.fn() },
+    { term, books, loading: options.loading ?? false, error: options.error ?? null, history: options.history ?? [] },
+    { setTerm, reload: vi.fn(), registerSearch, clearHistory },
   ]);
-  return { setTerm };
+  return { setTerm, registerSearch, clearHistory };
 }
 
 async function renderSearch(props: React.ComponentProps<typeof Search> = {}) {
@@ -55,19 +57,43 @@ describe("Search (spec 006, US3/T019)", () => {
     expect(screen.getByText("Tente buscar por outro título ou autor.")).toBeDefined();
   });
 
-  it("navega para o detalhe do livro ao tocar num resultado", async () => {
-    setup([book({ id: "x" })]);
+  it("navega para o detalhe do livro ao tocar num resultado e registra a busca no histórico", async () => {
+    const { registerSearch } = setup([book({ id: "x" })], "dom cas");
     const onNavigateToBookDetail = vi.fn();
     const screen = await renderSearch({ onNavigateToBookDetail });
     await act(async () => {
       fireEvent.press(screen.getByLabelText("Ver detalhe de Dom Casmurro, Machado de Assis"));
     });
     expect(onNavigateToBookDetail).toHaveBeenCalledWith("x");
+    expect(registerSearch).toHaveBeenCalledWith("dom cas");
   });
 
   it("mostra erro de domínio em vez da lista quando o carregamento falha", async () => {
     setup([], "", { error: "Não foi possível carregar os livros. Tente novamente." });
     const screen = await renderSearch();
     expect(screen.getByRole("alert").props.children).toBe("Não foi possível carregar os livros. Tente novamente.");
+  });
+
+  it("mostra buscas recentes quando o campo está vazio e toque refaz a busca (issue #94)", async () => {
+    const { setTerm } = setup([book({})], "", { history: ["Iracema", "Casmurro"] });
+    const screen = await renderSearch();
+    expect(screen.getByText("Buscas recentes")).toBeDefined();
+    fireEvent.press(screen.getByLabelText("Buscar novamente por Iracema"));
+    expect(setTerm).toHaveBeenCalledWith("Iracema");
+  });
+
+  it("não mostra buscas recentes quando há termo digitado", async () => {
+    setup([book({})], "dom", { history: ["Iracema"] });
+    const screen = await renderSearch();
+    expect(screen.queryByText("Buscas recentes")).toBeNull();
+  });
+
+  it("pede confirmação antes de limpar o histórico de buscas", async () => {
+    const { clearHistory } = setup([book({})], "", { history: ["Iracema"] });
+    const screen = await renderSearch();
+    await act(async () => { fireEvent.press(screen.getByLabelText("Limpar histórico de buscas")); });
+    expect(screen.getByText("Limpar histórico de buscas?")).toBeDefined();
+    await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Limpar histórico" })); });
+    expect(clearHistory).toHaveBeenCalledOnce();
   });
 });
