@@ -2,6 +2,8 @@ import { MemoryAuthDataSource } from "@/infra/datasources/memoryAuthDataSource";
 import { MemoryBookDataSource } from "@/infra/datasources/memoryBookDataSource";
 import { MemoryBookRequestDataSource } from "@/infra/datasources/memoryBookRequestDataSource";
 import { MemoryNotificationDataSource } from "@/infra/datasources/memoryNotificationDataSource";
+import { MemoryProfileDataSource } from "@/infra/datasources/memoryProfileDataSource";
+import { MemoryRatingDataSource } from "@/infra/datasources/memoryRatingDataSource";
 import { MemoryReportDataSource } from "@/infra/datasources/memoryReportDataSource";
 import { MemoryFavoriteDataSource } from "@/infra/datasources/memoryFavoriteDataSource";
 import { MemorySearchAlertDataSource } from "@/infra/datasources/memorySearchAlertDataSource";
@@ -11,6 +13,8 @@ import { SupabaseAuthDataSource } from "@/infra/datasources/supabaseAuthDataSour
 import { SupabaseBookDataSource } from "@/infra/datasources/supabaseBookDataSource";
 import { SupabaseBookRequestDataSource } from "@/infra/datasources/supabaseBookRequestDataSource";
 import { SupabaseNotificationDataSource } from "@/infra/datasources/supabaseNotificationDataSource";
+import { SupabaseProfileDataSource } from "@/infra/datasources/supabaseProfileDataSource";
+import { SupabaseRatingDataSource } from "@/infra/datasources/supabaseRatingDataSource";
 import { SupabaseReportDataSource } from "@/infra/datasources/supabaseReportDataSource";
 import { SupabaseFavoriteDataSource } from "@/infra/datasources/supabaseFavoriteDataSource";
 import { SupabaseSearchAlertDataSource } from "@/infra/datasources/supabaseSearchAlertDataSource";
@@ -19,6 +23,8 @@ import type { IAuthDataSource } from "@/model/datasources/iAuthDataSource";
 import type { IBookDataSource } from "@/model/datasources/iBookDataSource";
 import type { IBookRequestDataSource } from "@/model/datasources/iBookRequestDataSource";
 import type { INotificationDataSource } from "@/model/datasources/iNotificationDataSource";
+import type { IProfileDataSource } from "@/model/datasources/iProfileDataSource";
+import type { IRatingDataSource } from "@/model/datasources/iRatingDataSource";
 import type { IReportDataSource } from "@/model/datasources/iReportDataSource";
 import type { IFavoriteDataSource } from "@/model/datasources/iFavoriteDataSource";
 import type { ISearchAlertDataSource } from "@/model/datasources/iSearchAlertDataSource";
@@ -31,8 +37,10 @@ import type { IAuthUseCases } from "@/usecase/iAuthUseCases";
 import type { IBookRequestUseCases } from "@/usecase/iBookRequestUseCases";
 import type { IBookUseCases } from "@/usecase/iBookUseCases";
 import type { INotificationUseCases } from "@/usecase/iNotificationUseCases";
+import type { IPublicProfileUseCases } from "@/usecase/iPublicProfileUseCases";
 import type { IReportUseCases } from "@/usecase/iReportUseCases";
 import { NotificationUseCases } from "@/usecase/notificationUseCases";
+import { PublicProfileUseCases } from "@/usecase/publicProfileUseCases";
 import { ReportUseCases } from "@/usecase/reportUseCases";
 import { FavoriteUseCases } from "@/usecase/favoriteUseCases";
 import { SearchAlertUseCases } from "@/usecase/searchAlertUseCases";
@@ -54,6 +62,8 @@ function createDataSources(): {
   favorites: IFavoriteDataSource;
   searchAlerts: ISearchAlertDataSource;
   searchHistory: ISearchHistoryDataSource;
+  profiles: IProfileDataSource;
+  ratings: IRatingDataSource;
 } {
   const searchHistory = process.env.NODE_ENV === "test"
     ? new MemorySearchHistoryDataSource()
@@ -74,6 +84,8 @@ function createDataSources(): {
       favorites: new SupabaseFavoriteDataSource(client),
       searchAlerts: new SupabaseSearchAlertDataSource(client),
       searchHistory,
+      profiles: new SupabaseProfileDataSource(client),
+      ratings: new SupabaseRatingDataSource(client),
     };
   }
   const books = new MemoryBookDataSource();
@@ -87,6 +99,8 @@ function createDataSources(): {
     favorites: new MemoryFavoriteDataSource(),
     searchAlerts: new MemorySearchAlertDataSource(notifications),
     searchHistory,
+    profiles: new MemoryProfileDataSource(),
+    ratings: new MemoryRatingDataSource(),
   };
 }
 
@@ -116,4 +130,11 @@ export const reportUseCases: IReportUseCases = new ReportUseCases(
 
 export const notificationUseCases: INotificationUseCases = new NotificationUseCases(
   dataSources.notifications,
+);
+
+export const publicProfileUseCases: IPublicProfileUseCases = new PublicProfileUseCases(
+  dataSources.profiles,
+  dataSources.ratings,
+  bookDataSource,
+  dataSources.requests,
 );

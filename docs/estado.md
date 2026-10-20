@@ -10,8 +10,8 @@ Conferência atual: **2026-10-20** (base: branch `develop`). Projeto: `~/IPEBOOK
 
 Todas as métricas abaixo foram aferidas diretamente por execução dos scripts de validação:
 
-- **Testes automatizados**: **482 testes passando** em **78 arquivos de teste** (`npm test` / `npx vitest run`), cobrindo testes unitários de entidades, validadores, casos de uso, semente de catálogo, adaptadores de dados (memória, Supabase e AsyncStorage), hooks/viewmodels, componentes de interface e cenários de integração ponta a ponta.
-- **Cobertura de código**: Acima do limiar estrito de 80% em todas as 4 dimensões (Statements: 90,20%, Branches: 80,41%, Functions: 87,95%, Lines: 91,55%).
+- **Testes automatizados**: **506 testes passando** em **82 arquivos de teste** (`npm test` / `npx vitest run`), cobrindo testes unitários de entidades, validadores, casos de uso, semente de catálogo, adaptadores de dados (memória, Supabase e AsyncStorage), hooks/viewmodels, componentes de interface e cenários de integração ponta a ponta. Números aferidos na branch `feature/73-perfil-publico-anunciante` (Issue #73); conferir na branch corrente antes de reutilizar.
+- **Cobertura de código**: Acima do limiar estrito de 80% em todas as 4 dimensões (Statements: 89,38%, Branches: 80,10%, Functions: 87,33%, Lines: 90,91%).
 - **Integridade arquitetural**: **100% em conformidade** no MVVM sofisticado em sete camadas (`app`, `view`, `viewmodel`, `usecase`, `model`, `infra`, `di`), verificado pelo comando `npm run check:architecture` (0 violações). Apenas `src/di/container.ts` e testes têm permissão para instanciar ou importar adaptadores de `src/infra/`.
 - **Validação de banco e migrações SQL**: 7 migrações executadas e validadas em banco real isolado via PGlite (`npm run test:sql`):
   1. `202610130001_v2_schema.sql` (estrutura inicial de livros e pedidos)
@@ -21,10 +21,12 @@ Todas as métricas abaixo foram aferidas diretamente por execução dos scripts 
   5. `202610170002_fotos_anuncios.sql` (colunas de fotos, localidade e categoria em `v2_books`)
   6. `202610170003_pausar_anuncio.sql` (status pausado e restrição de ciclo de vida em `v2_books`)
   7. `202610180001_indices_busca_catalogo.sql` (índices parciais e compostos de performance para vitrine, localização, modalidade e moderação - ADR 0021)
+  8. `202610200001_perfil_publico_e_avaliacoes.sql` (tabelas `v2_profiles` e `v2_ratings`, com RLS, para o perfil público do anunciante - Spec 018, Issue #73)
 - **Semente Oficial da Beta (`npm run db:seed`)**: Script `scripts/popular-catalogo-piripiri.mjs` gerando 10 anúncios realistas distribuídos pelos bairros de Piripiri, PI com exportação SQL via `--sql`.
 - **Backend Supabase ativo**: O backend está configurado com `EXPO_PUBLIC_BACKEND=supabase` em `.env` e `.env.example`, integrado ao projeto oficial `xiuuiggpccpgrwkzeloc`. O histórico de migrações remotas foi reconciliado e `supabase db push` está operando normalmente.
-- **Rotas Web compiladas (`npm run build:web`)**: Exportação estática do Expo Router gerou com sucesso o pacote web em `dist/`, totalizando **23 rotas estáticas**:
+- **Rotas Web compiladas (`npm run build:web`)**: Exportação estática do Expo Router gerou com sucesso o pacote web em `dist/`, totalizando **24 rotas estáticas**:
   - `/` (Catálogo e vitrine inicial com selo da beta em Piripiri, PI)
+  - `/perfil/[userId]` (Perfil público, somente leitura, de quem anuncia — nome, avaliação média e negociações concluídas - Spec 018, Issue #73)
   - `/bem-vindo` (Boas-vindas e primeiro acesso com escolha opcional de bairro - Spec 026, ADR 0022)
   - `/pesquisa` (Busca no catálogo por termo e filtros, com histórico recente no dispositivo - Spec 027)
   - `/livro/[id]` (Detalhes completos do anúncio, capa com foto real/fallback, dados do autor e do anunciante)
@@ -89,6 +91,7 @@ No app ativo em desenvolvimento, 21 rotas cobrem as jornadas essenciais da beta.
 - **Issue #98 (Boas-vindas e primeiro acesso)**: Concluída e integrada via PR #102. Spec 026 e ADR 0022 criados. Rota `/bem-vindo`, persistência de primeiro acesso no dispositivo e escolha de bairro de Piripiri.
 - **Issue #108 / #94 (Histórico de buscas recentes e desambiguação de spec)**: Concluída e integrada via PR #100. Spec numerada como 027 para evitar colisão com a spec 026. Armazenamento no dispositivo via `AsyncStorage`, isolado por conta e limpo ao excluir a conta.
 - **Alinhamento das telas de autenticação ao Figma (US1 e US2 / Micael)**: Concluído e integrado. Telas de Entrar (`01.02`), Criar conta (`01.03`), Recuperar acesso (`01.04`), Confira seu e-mail (`01.05`) e Nova senha (`01.06` e `01.07`) alinhadas às especificações do Figma Android Material 3 e Web Responsivo, com `TopAppBar`, cards centralizados responsivos, confirmação de senha e validação interativa comprovada via ADB no dispositivo físico Android.
+- **Issue #73 (Perfil público do anunciante e fotos do anúncio)**: Spec 018 implementada. Rota `/perfil/[userId]` (somente leitura: nome, avaliação média ou "Sem avaliações ainda", negociações concluídas) acessível a partir do detalhe do anúncio; galeria de fotos em tela cheia como modal em `bookDetail.tsx`, sem ação quando o anúncio só tem capa ilustrativa. Migração `202610200001_perfil_publico_e_avaliacoes.sql` (`v2_profiles`, `v2_ratings`). Limitações registradas em `specs/018-perfil-publico-do-anunciante-e-fotos/validacao.md` (nome padrão até a edição de perfil #55/#56; sem fluxo de avaliação ainda).
 
 ---
 
@@ -102,8 +105,9 @@ No app ativo em desenvolvimento, 21 rotas cobrem as jornadas essenciais da beta.
    - Correções de semântica de abas (#106), foco de teclado em diálogos (#105) e associação de erros em formulários (#104), identificadas na auditoria #96 (atribuídas a Maria Clara).
 3. **#93 (Filtrar e ordenar o catálogo de livros)**:
    - Refinamento de busca por categoria, modalidade e ordenação.
-4. **#55 / #73 (Perfil do usuário / Perfil público do anunciante)**:
-   - Implementação das telas e rotas de perfil.
+4. **#55 (Perfil do usuário)**:
+   - Edição do próprio perfil/configurações (fluxo 07), ainda não implementada. A visão pública
+     de leitura (issue #73) foi concluída separadamente (ver Seção 3).
 
 ---
 
