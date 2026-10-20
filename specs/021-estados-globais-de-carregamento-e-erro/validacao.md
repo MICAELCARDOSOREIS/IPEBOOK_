@@ -34,8 +34,11 @@ Data: 2026-10-20.
   commitada neste repositório, fora do escopo desta entrega).
 - `npm run check:architecture`: sem violações de import de camada.
 - `npm run validate` (typecheck + arquitetura + migrações SQL + testes com cobertura): aprovado.
-  **503 testes passando em 82 arquivos**; cobertura acima de 80% nas 4 dimensões (Statements
-  90,53%, Branches 80,70%, Functions 87,67%, Lines 91,95%).
+  **556 testes passando em 88 arquivos** (após mesclar `develop`, que avançou com várias outras
+  entregas em paralelo durante esta sessão); cobertura acima de 80% nas 4 dimensões (Statements
+  90,68%, Branches 80,65%, Functions 88,30%, Lines 92,29%). O branch coverage exigiu testes
+  adicionais cobrindo o ramo `OfflineState` (antes não exercitado em nenhuma tela) — ver seção
+  "Testes novos" abaixo.
 - `npm run build:web` (`expo export --platform web`): build concluído com sucesso, 23 rotas
   estáticas exportadas, sem erros — confirma que a nova dependência nativa funciona também no
   bundle Web.
@@ -45,13 +48,21 @@ Data: 2026-10-20.
 - `tests/components/systemStates.test.tsx`: `LoadingState`, `ErrorState`, `OfflineState`
   (rótulos padrão/customizados, alerta de leitor de tela, ação de retry).
 - `tests/hooks/useNetworkStatus.test.tsx`: estado inicial, resposta a mudança de conectividade
-  via `subscribe`, cancelamento da inscrição ao desmontar.
+  via `subscribe`, cancelamento da inscrição ao desmontar, e ignorar respostas tardias do
+  datasource após desmontar (sem lançar erro).
 - `tests/hooks/useAsyncState.test.tsx`: estado inicial, ciclo loading→sucesso, captura de
   `DomainError` vs. erro genérico, limpeza do erro anterior ao reexecutar.
 - Testes existentes das telas tocadas (`myListingsView`, `favoritesAlertsView`,
   `notificationsView`, `requestListViews`, `requestViews` mocado, `searchView` mocado,
   `homeView`/`homeViewMocked`/`homeIntegration`) continuam passando sem alteração de
   comportamento observável (mesmos rótulos e textos de "Tentar novamente").
+- Cobertura do ramo `OfflineState` (branch antes não exercitada em nenhuma tela), mockando
+  `useNetworkStatus` para `isOnline: false` junto com um erro simulado: adicionado em
+  `tests/components-mocked/homeViewMocked.test.tsx`, `searchView.test.tsx`, `requestViews.test.tsx`
+  e em `tests/components/myListingsView.test.tsx`; novos arquivos
+  `tests/components-mocked/favoritesViewMocked.test.tsx` e
+  `tests/components-mocked/notificationsViewMocked.test.tsx` para as duas telas que ainda não
+  tinham suíte com ViewModel mockado.
 
 ## Limitações e pendências
 

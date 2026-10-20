@@ -81,4 +81,25 @@ describe("useNetworkStatus (Spec 021, Issue #76)", () => {
     act(() => renderer?.unmount());
     expect(unsubscribe).toHaveBeenCalledTimes(1);
   });
+
+  it("ignora respostas tardias do datasource e do subscribe após desmontar, sem lançar erro", async () => {
+    let resolveIsOnline!: (value: boolean) => void;
+    let notifyAfterUnmount: ((online: boolean) => void) | undefined;
+    const dataSource = stubNetworkStatus({
+      isOnline: vi.fn(() => new Promise<boolean>((resolve) => { resolveIsOnline = resolve; })),
+      subscribe: vi.fn((onChange: (online: boolean) => void) => {
+        notifyAfterUnmount = onChange;
+        return () => {};
+      }),
+    });
+    const probe = await renderNetworkStatus(dataSource);
+    const renderer = mounted.pop();
+    act(() => renderer?.unmount());
+
+    expect(() => {
+      resolveIsOnline(false);
+      notifyAfterUnmount?.(false);
+    }).not.toThrow();
+    expect(probe.current.isOnline).toBe(true);
+  });
 });

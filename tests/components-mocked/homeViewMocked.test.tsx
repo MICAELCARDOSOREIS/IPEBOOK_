@@ -12,9 +12,12 @@ vi.mock("@/viewmodel/useHomeViewModel", () => {
     useHomeViewModel: vi.fn(),
   };
 });
+vi.mock("@/viewmodel/useNetworkStatus", () => ({ useNetworkStatus: vi.fn() }));
 
 import { useHomeViewModel } from "@/viewmodel/useHomeViewModel";
+import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
 const mockedUseHomeViewModel = vi.mocked(useHomeViewModel);
+vi.mocked(useNetworkStatus).mockReturnValue({ isOnline: true });
 
 describe("testes de componente com mock: Home (ISO/IEC 25010 - Usabilidade e Confiabilidade)", () => {
   it("renderiza indicador de carregamento e acessibilidade quando loading é true", async () => {
@@ -63,6 +66,18 @@ describe("testes de componente com mock: Home (ISO/IEC 25010 - Usabilidade e Con
     });
 
     expect(reloadMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("mostra o estado de sem conexão em vez do erro genérico quando o dispositivo está offline (Issue #76)", async () => {
+    vi.mocked(useNetworkStatus).mockReturnValue({ isOnline: false });
+    const mockState: HomeState = { books: [], loading: false, error: "Falha de conexão." };
+    mockedUseHomeViewModel.mockReturnValue([mockState, { reload: vi.fn() }]);
+
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => { screen = await render(<Home />); });
+
+    expect(screen.getByText("Você está sem conexão com a internet.")).toBeDefined();
+    vi.mocked(useNetworkStatus).mockReturnValue({ isOnline: true });
   });
 
   it("renderiza catálogo de livros populado com títulos e autores", async () => {

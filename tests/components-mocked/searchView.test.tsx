@@ -5,12 +5,16 @@ import type { Book } from "@/model/entities/book";
 import Search from "@/view/search/search";
 
 vi.mock("@/viewmodel/useSearchViewModel", () => ({ useSearchViewModel: vi.fn() }));
+vi.mock("@/viewmodel/useNetworkStatus", () => ({ useNetworkStatus: vi.fn() }));
 
 import {
   type SearchModalityFilter,
   type SearchSortOption,
   useSearchViewModel,
 } from "@/viewmodel/useSearchViewModel";
+import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
+
+vi.mocked(useNetworkStatus).mockReturnValue({ isOnline: true });
 
 const book = (over: Partial<Book>): Book => ({
   id: "b1",
@@ -96,6 +100,14 @@ describe("Search (spec 006, US3/T019)", () => {
     setup([], "", { error: "Não foi possível carregar os livros. Tente novamente." });
     const screen = await renderSearch();
     expect(screen.getByRole("alert").props.children).toBe("Não foi possível carregar os livros. Tente novamente.");
+  });
+
+  it("mostra o estado de sem conexão em vez do erro genérico quando o dispositivo está offline (Issue #76)", async () => {
+    vi.mocked(useNetworkStatus).mockReturnValue({ isOnline: false });
+    setup([], "", { error: "Não foi possível carregar os livros." });
+    const screen = await renderSearch();
+    expect(screen.getByRole("alert").props.children).toBe("Você está sem conexão com a internet.");
+    vi.mocked(useNetworkStatus).mockReturnValue({ isOnline: true });
   });
 
   it("mostra buscas recentes quando o campo está vazio e toque refaz a busca (issue #94)", async () => {
