@@ -1,4 +1,4 @@
-import type { IBookDataSource } from "@/model/datasources/iBookDataSource";
+import type { IBookDataSource, ListBooksOptions } from "@/model/datasources/iBookDataSource";
 import type { Book } from "@/model/entities/book";
 import { DataSourceError } from "@/model/errors";
 
@@ -9,8 +9,18 @@ export class MemoryBookDataSource implements IBookDataSource {
     this.books = books.map((book) => ({ ...book }));
   }
 
-  async list(): Promise<readonly Book[]> {
-    return this.books.filter((book) => book.status !== "paused").map((book) => ({ ...book }));
+  async list(options?: ListBooksOptions): Promise<readonly Book[]> {
+    const available = this.books
+      .filter((book) => book.status !== "paused")
+      .map((book) => ({ ...book }));
+
+    if (options?.limit !== undefined || options?.offset !== undefined) {
+      const offset = Math.max(0, options?.offset ?? 0);
+      const limit = Math.max(1, options?.limit ?? 20);
+      return available.slice(offset, offset + limit);
+    }
+
+    return available;
   }
 
   async create(book: Omit<Book, "id">): Promise<Book> {
