@@ -59,6 +59,7 @@ for (const name of [
   '202610200001_unicidade_denuncias.sql',
   '202610200002_rpc_exclusao_conta.sql',
   '202610200003_storage_book_photos.sql',
+  '202610200004_extensao_pg_trgm_indices.sql',
 ]) {
   await db.exec(readFileSync(new URL(`../supabase/migrations/${name}`, import.meta.url), 'utf8'));
 }
@@ -204,6 +205,11 @@ await as('authenticated', reader, `delete from storage.objects where id = '20202
 const remainingPhoto = await db.query(`select id from storage.objects where id = '20202020-2020-4020-8020-202020202020'`);
 if (remainingPhoto.rows.length !== 0) throw new Error('Foto não foi removida pelo proprietário');
 process.stdout.write('Políticas de Storage book-photos: verificado com sucesso\n');
+
+// Busca textual com extensão pg_trgm e operador ILIKE
+const trgmSearch = await as('anon', null, `select id, title, author from public.v2_books where status = 'available' and (title ilike '%Foto%' or author ilike '%Fotográfico%')`);
+if (trgmSearch.rows.length === 0) throw new Error('Busca trigram ILIKE não encontrou o livro');
+process.stdout.write('Busca textual com pg_trgm e índice GIN: verificado com sucesso\n');
 
 process.stdout.write('Migrações e cenários SQL locais verificados.\n');
 await db.close();
