@@ -1,7 +1,7 @@
 import { createElement } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { ValidationError } from "@/model/errors";
+import { DuplicateReportError, ValidationError } from "@/model/errors";
 import type { IReportUseCases } from "@/usecase/iReportUseCases";
 import { useReportListingViewModel } from "@/viewmodel/useReportListingViewModel";
 
@@ -152,6 +152,29 @@ describe("useReportListingViewModel", () => {
     const [state] = hook.current;
     expect(success).toBe(false);
     expect(state.error).toBe("Motivo inválido.");
+    expect(state.success).toBe(false);
+  });
+
+  it("trata DuplicateReportError exibindo a mensagem amigável de duplicidade", async () => {
+    const useCases = stubUseCases({
+      submitReport: vi.fn(async () => {
+        throw new DuplicateReportError("Você já denunciou este anúncio.");
+      }),
+    });
+    const hook = await renderHook(useCases);
+
+    await act(async () => {
+      hook.current[1].setReason("other");
+    });
+
+    let success = false;
+    await act(async () => {
+      success = await hook.current[1].submit("book-1", "user-1");
+    });
+
+    const [state] = hook.current;
+    expect(success).toBe(false);
+    expect(state.error).toBe("Você já denunciou este anúncio.");
     expect(state.success).toBe(false);
   });
 });
