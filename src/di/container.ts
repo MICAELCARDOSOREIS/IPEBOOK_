@@ -50,8 +50,16 @@ import type { ISearchAlertUseCases } from "@/usecase/iSearchAlertUseCases";
 import type { ISearchHistoryUseCases } from "@/usecase/iSearchHistoryUseCases";
 import { AsyncStorageOnboardingDataSource } from "@/infra/datasources/asyncStorageOnboardingDataSource";
 import { MemoryOnboardingDataSource } from "@/infra/datasources/memoryOnboardingDataSource";
+import { SupabasePhotoStorageDataSource } from "@/infra/datasources/supabasePhotoStorageDataSource";
+import { MemoryPhotoStorageDataSource } from "@/infra/datasources/memoryPhotoStorageDataSource";
+import { MemoryUserDataExportDataSource } from "@/infra/datasources/memoryUserDataExportDataSource";
+import { SupabaseUserDataExportDataSource } from "@/infra/datasources/supabaseUserDataExportDataSource";
+import type { IPhotoStorageDataSource } from "@/model/datasources/iPhotoStorageDataSource";
+import type { IUserDataExportDataSource } from "@/model/datasources/iUserDataExportDataSource";
 import type { IOnboardingUseCases } from "@/usecase/iOnboardingUseCases";
+import type { IUserDataExportUseCases } from "@/usecase/iUserDataExportUseCases";
 import { OnboardingUseCases } from "@/usecase/onboardingUseCases";
+import { UserDataExportUseCases } from "@/usecase/userDataExportUseCases";
 
 function createDataSources(): {
   auth: IAuthDataSource;
@@ -90,14 +98,17 @@ function createDataSources(): {
   }
   const books = new MemoryBookDataSource();
   const notifications = new MemoryNotificationDataSource();
+  const requests = new MemoryBookRequestDataSource();
+  const favorites = new MemoryFavoriteDataSource();
+  const searchAlerts = new MemorySearchAlertDataSource(notifications);
   return {
     auth: new MemoryAuthDataSource(),
     books,
-    requests: new MemoryBookRequestDataSource(),
+    requests,
     reports: new MemoryReportDataSource(),
     notifications,
-    favorites: new MemoryFavoriteDataSource(),
-    searchAlerts: new MemorySearchAlertDataSource(notifications),
+    favorites,
+    searchAlerts,
     searchHistory,
     profiles: new MemoryProfileDataSource(),
     ratings: new MemoryRatingDataSource(),

@@ -13,7 +13,7 @@ Todas as métricas abaixo foram aferidas diretamente por execução dos scripts 
 - **Testes automatizados**: **506 testes passando** em **82 arquivos de teste** (`npm test` / `npx vitest run`), cobrindo testes unitários de entidades, validadores, casos de uso, semente de catálogo, adaptadores de dados (memória, Supabase e AsyncStorage), hooks/viewmodels, componentes de interface e cenários de integração ponta a ponta. Números aferidos na branch `feature/73-perfil-publico-anunciante` (Issue #73); conferir na branch corrente antes de reutilizar.
 - **Cobertura de código**: Acima do limiar estrito de 80% em todas as 4 dimensões (Statements: 89,38%, Branches: 80,10%, Functions: 87,33%, Lines: 90,91%).
 - **Integridade arquitetural**: **100% em conformidade** no MVVM sofisticado em sete camadas (`app`, `view`, `viewmodel`, `usecase`, `model`, `infra`, `di`), verificado pelo comando `npm run check:architecture` (0 violações). Apenas `src/di/container.ts` e testes têm permissão para instanciar ou importar adaptadores de `src/infra/`.
-- **Validação de banco e migrações SQL**: 7 migrações executadas e validadas em banco real isolado via PGlite (`npm run test:sql`):
+- **Validação de banco e migrações SQL**: 11 migrações executadas e validadas em banco real isolado via PGlite (`npm run test:sql`):
   1. `202610130001_v2_schema.sql` (estrutura inicial de livros e pedidos)
   2. `202610130002_rls_hardening.sql` (políticas de Row Level Security e permissões granulares)
   3. `202610150003_favoritos_alertas.sql` (tabelas de favoritos, alertas de busca e notificações)

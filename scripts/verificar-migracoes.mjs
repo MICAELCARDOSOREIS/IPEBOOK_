@@ -20,7 +20,33 @@ insert into public.listings (id) values ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa')
 insert into public.book_requests (id) values ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb');
 insert into public.profiles (user_id) values ('${owner}');
 grant usage on schema public, auth to anon, authenticated;
-grant select on auth.users to authenticated;`);
+grant select on auth.users to authenticated;
+create schema storage;
+create table storage.buckets (
+  id text primary key,
+  name text not null,
+  public boolean default false,
+  file_size_limit bigint,
+  allowed_mime_types text[]
+);
+create table storage.objects (
+  id uuid primary key default gen_random_uuid(),
+  bucket_id text references storage.buckets(id),
+  name text,
+  owner uuid references auth.users(id),
+  created_at timestamptz default now()
+);
+alter table storage.objects enable row level security;
+create or replace function storage.foldername(name text)
+returns text[]
+language sql
+immutable
+as $$
+  select string_to_array(name, '/');
+$$;
+grant usage on schema storage to anon, authenticated;
+grant select, insert, update, delete on storage.buckets to anon, authenticated;
+grant select, insert, update, delete on storage.objects to anon, authenticated;`);
 
 for (const name of [
   '202610150001_contas_e_anuncios.sql',
@@ -30,6 +56,10 @@ for (const name of [
   '202610170002_fotos_anuncios.sql',
   '202610170003_pausar_anuncio.sql',
   '202610180001_indices_busca_catalogo.sql',
+  '202610200001_unicidade_denuncias.sql',
+  '202610200002_rpc_exclusao_conta.sql',
+  '202610200003_storage_book_photos.sql',
+  '202610200004_extensao_pg_trgm_indices.sql',
 ]) {
   await db.exec(readFileSync(new URL(`../supabase/migrations/${name}`, import.meta.url), 'utf8'));
 }
@@ -99,6 +129,7 @@ await denied('Leitor falsifica autor da denúncia', () => as('authenticated', re
 await denied('Denúncia para anúncio inexistente', () => as('authenticated', reader, `insert into public.v2_reports (listing_id, reporter_id, reason) values ('00000000-0000-4000-8000-000000000000', '${reader}', 'fraud_or_scam')`));
 await as('authenticated', reader, `insert into public.v2_reports (id, listing_id, reporter_id, reason, details)
   values ('cccccccc-cccc-4ccc-8ccc-cccccccccccc', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '${reader}', 'fraud_or_scam', 'Suspeita de golpe')`);
+await denied('Denúncia duplicada pelo mesmo leitor', () => as('authenticated', reader, `insert into public.v2_reports (listing_id, reporter_id, reason) values ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '${reader}', 'inappropriate_content')`));
 const ownReports = await as('authenticated', reader, `select id from public.v2_reports where id = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc'`);
 if (ownReports.rows.length !== 1) throw new Error('Autor da denúncia não conseguiu consultar a própria denúncia');
 const hiddenReports = await as('authenticated', other, `select id from public.v2_reports where id = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc'`);
@@ -125,6 +156,60 @@ if (!bookWithPhoto.rows[0].photo_url || bookWithPhoto.rows[0].neighborhood !== '
   throw new Error('Falha ao persistir foto e localização em v2_books');
 }
 process.stdout.write('Livro com foto e localização: persistido e consultado com sucesso\n');
+
+// Teste de exclusão definitiva de conta (LGPD / Issue #115)
+await db.exec('reset role');
+const disposableUser = '44444444-4444-4444-8444-444444444444';
+await db.exec(`insert into auth.users (id) values ('${disposableUser}')`);
+await as('authenticated', disposableUser, `insert into public.v2_books (owner_id, title, author, modality) values ('${disposableUser}', 'Livro do descartável', 'Autor', 'donation')`);
+await as('authenticated', disposableUser, `insert into public.v2_favorites (user_id, book_id) values ('${disposableUser}', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa')`);
+
+await denied('Visitante exclui conta', () => as('anon', null, `select public.delete_user_account('${disposableUser}')`));
+await denied('Terceiro tenta excluir conta alheia', () => as('authenticated', other, `select public.delete_user_account('${disposableUser}')`));
+
+await as('authenticated', disposableUser, `select public.delete_user_account('${disposableUser}')`);
+const deletedUser = await db.query(`select id from auth.users where id = '${disposableUser}'`);
+if (deletedUser.rows.length !== 0) throw new Error('Usuário não foi removido de auth.users');
+const cascadedBooks = await db.query(`select id from public.v2_books where owner_id = '${disposableUser}'`);
+if (cascadedBooks.rows.length !== 0) throw new Error('Livros do usuário excluído não foram removidos em cascata');
+const cascadedFavs = await db.query(`select id from public.v2_favorites where user_id = '${disposableUser}'`);
+if (cascadedFavs.rows.length !== 0) throw new Error('Favoritos do usuário excluído não foram removidos em cascata');
+process.stdout.write('Exclusão de conta LGPD e cascata: verificado com sucesso\n');
+
+// Teste de Storage para fotos de livros (Spec 023 / Issue #116)
+await db.exec('reset role');
+await db.exec(`insert into storage.objects (id, bucket_id, name, owner)
+  values ('10101010-1010-4010-8010-101010101010', 'book-photos', '${owner}/capa.jpg', '${owner}')`);
+
+// Leitura pública
+const publicPhotos = await as('anon', null, `select id from storage.objects where bucket_id = 'book-photos'`);
+if (publicPhotos.rows.length !== 1) throw new Error('Fotos de livros não estão visíveis publicamente');
+process.stdout.write('Fotos de livros públicas: verificado com sucesso\n');
+
+// Visitante não pode inserir foto
+await denied('Visitante envia foto', () => as('anon', null, `insert into storage.objects (bucket_id, name) values ('book-photos', 'qualquer.jpg')`));
+
+// Usuário autenticado não pode inserir foto na pasta de outro usuário
+await denied('Usuário envia foto na pasta de outro', () => as('authenticated', reader, `insert into storage.objects (bucket_id, name, owner) values ('book-photos', '${owner}/foto_hacker.jpg', '${reader}')`));
+
+// Usuário autenticado pode inserir foto na sua própria pasta
+await as('authenticated', reader, `insert into storage.objects (id, bucket_id, name, owner) values ('20202020-2020-4020-8020-202020202020', 'book-photos', '${reader}/minha_capa.jpg', '${reader}')`);
+
+// Terceiro não pode excluir foto alheia (0 linhas afetadas por RLS)
+const forbiddenDelete = await as('authenticated', other, `delete from storage.objects where id = '20202020-2020-4020-8020-202020202020'`);
+if (forbiddenDelete.affectedRows !== 0) throw new Error('Terceiro conseguiu excluir foto alheia');
+process.stdout.write('Terceiro exclui foto alheia: nenhuma linha alterada\n');
+
+// Proprietário pode excluir sua foto
+await as('authenticated', reader, `delete from storage.objects where id = '20202020-2020-4020-8020-202020202020'`);
+const remainingPhoto = await db.query(`select id from storage.objects where id = '20202020-2020-4020-8020-202020202020'`);
+if (remainingPhoto.rows.length !== 0) throw new Error('Foto não foi removida pelo proprietário');
+process.stdout.write('Políticas de Storage book-photos: verificado com sucesso\n');
+
+// Busca textual com extensão pg_trgm e operador ILIKE
+const trgmSearch = await as('anon', null, `select id, title, author from public.v2_books where status = 'available' and (title ilike '%Foto%' or author ilike '%Fotográfico%')`);
+if (trgmSearch.rows.length === 0) throw new Error('Busca trigram ILIKE não encontrou o livro');
+process.stdout.write('Busca textual com pg_trgm e índice GIN: verificado com sucesso\n');
 
 process.stdout.write('Migrações e cenários SQL locais verificados.\n');
 await db.close();

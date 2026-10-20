@@ -1,15 +1,16 @@
-import type { IBookDataSource } from "@/model/datasources/iBookDataSource";
+import type { IBookDataSource, ListBooksOptions } from "@/model/datasources/iBookDataSource";
 import type { ISearchAlertUseCases } from "@/usecase/iSearchAlertUseCases";
 import type { Book } from "@/model/entities/book";
 import { AuthError, DataSourceError, ValidationError } from "@/model/errors";
 import { validateBookPayload } from "@/model/validators/bookValidator";
+import { sanitizeTextInput } from "@/model/validators/textSanitizer";
 import type { CreateListingInput, IBookUseCases } from "@/usecase/iBookUseCases";
 
 export class BookUseCases implements IBookUseCases {
   constructor(private readonly dataSource: IBookDataSource, private readonly alerts?: ISearchAlertUseCases) {}
 
-  listBooks() {
-    return this.dataSource.list();
+  listBooks(options?: ListBooksOptions) {
+    return this.dataSource.list(options);
   }
 
   async createListing(input: CreateListingInput, sessionUserId: string | null): Promise<Book> {
@@ -17,17 +18,24 @@ export class BookUseCases implements IBookUseCases {
       throw new AuthError("Sessão obrigatória para cadastrar anúncio.");
     }
 
+    const sanitizedTitle = sanitizeTextInput(input.title);
+    const sanitizedAuthor = sanitizeTextInput(input.author);
+    const sanitizedCategory = input.category ? sanitizeTextInput(input.category) : undefined;
+    const sanitizedCity = input.city ? sanitizeTextInput(input.city) : "Piripiri";
+    const sanitizedState = input.state ? sanitizeTextInput(input.state) : "PI";
+    const sanitizedNeighborhood = input.neighborhood ? sanitizeTextInput(input.neighborhood) : undefined;
+
     const payload = {
       id: "temp",
-      title: input.title,
-      author: input.author,
-      category: input.category,
+      title: sanitizedTitle,
+      author: sanitizedAuthor,
+      category: sanitizedCategory,
       ownerId: sessionUserId,
       modality: input.modality,
       price: input.price,
-      city: input.city,
-      state: input.state,
-      neighborhood: input.neighborhood,
+      city: sanitizedCity,
+      state: sanitizedState,
+      neighborhood: sanitizedNeighborhood,
       photoUrl: input.photoUrl,
       photos: input.photos,
     };
@@ -38,16 +46,16 @@ export class BookUseCases implements IBookUseCases {
     }
 
     const book = await this.dataSource.create({
-      title: input.title.trim(),
-      author: input.author.trim(),
-      ...(input.category?.trim() ? { category: input.category.trim() } : {}),
+      title: sanitizedTitle,
+      author: sanitizedAuthor,
+      ...(sanitizedCategory ? { category: sanitizedCategory } : {}),
       ownerId: sessionUserId,
       modality: input.modality,
       price: input.price,
       status: "available",
-      city: input.city?.trim() || "Piripiri",
-      state: input.state?.trim() || "PI",
-      ...(input.neighborhood?.trim() ? { neighborhood: input.neighborhood.trim() } : {}),
+      city: sanitizedCity,
+      state: sanitizedState,
+      ...(sanitizedNeighborhood ? { neighborhood: sanitizedNeighborhood } : {}),
       ...(input.photoUrl?.trim() ? { photoUrl: input.photoUrl.trim() } : {}),
       ...(input.photos && input.photos.length > 0 ? { photos: input.photos } : {}),
     });
@@ -121,14 +129,14 @@ export class BookUseCases implements IBookUseCases {
       throw new ValidationError("Não é possível editar anúncio com negociação aceita em andamento.");
     }
 
-    const nextTitle = input.title !== undefined ? input.title : book.title;
-    const nextAuthor = input.author !== undefined ? input.author : book.author;
+    const nextTitle = input.title !== undefined ? sanitizeTextInput(input.title) : book.title;
+    const nextAuthor = input.author !== undefined ? sanitizeTextInput(input.author) : book.author;
     const nextModality = input.modality !== undefined ? input.modality : book.modality;
     const nextPrice = nextModality === "sale" ? (input.price !== undefined ? input.price : book.price) : undefined;
-    const nextCategory = input.category !== undefined ? input.category : book.category;
-    const nextCity = input.city !== undefined ? input.city : book.city;
-    const nextState = input.state !== undefined ? input.state : book.state;
-    const nextNeighborhood = input.neighborhood !== undefined ? input.neighborhood : book.neighborhood;
+    const nextCategory = input.category !== undefined ? (input.category ? sanitizeTextInput(input.category) : undefined) : book.category;
+    const nextCity = input.city !== undefined ? (input.city ? sanitizeTextInput(input.city) : "Piripiri") : book.city;
+    const nextState = input.state !== undefined ? (input.state ? sanitizeTextInput(input.state) : "PI") : book.state;
+    const nextNeighborhood = input.neighborhood !== undefined ? (input.neighborhood ? sanitizeTextInput(input.neighborhood) : undefined) : book.neighborhood;
     const nextPhotoUrl = input.photoUrl !== undefined ? input.photoUrl : book.photoUrl;
     const nextPhotos = input.photos !== undefined ? input.photos : book.photos;
 
@@ -151,14 +159,14 @@ export class BookUseCases implements IBookUseCases {
     }
 
     return this.dataSource.update(bookId.trim(), {
-      title: nextTitle.trim(),
-      author: nextAuthor.trim(),
+      title: nextTitle,
+      author: nextAuthor,
       modality: nextModality,
       price: nextPrice,
-      category: nextCategory?.trim(),
-      city: nextCity?.trim() || "Piripiri",
-      state: nextState?.trim() || "PI",
-      neighborhood: nextNeighborhood?.trim(),
+      category: nextCategory,
+      city: nextCity || "Piripiri",
+      state: nextState || "PI",
+      neighborhood: nextNeighborhood,
       photoUrl: nextPhotoUrl?.trim(),
       photos: nextPhotos,
     });
