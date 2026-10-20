@@ -4,7 +4,7 @@ Versões no formato `MAIOR.MENOR.CORREÇÃO`. Mudança grande = versão nova.
 
 ## 1.7.0 · 2026-10-20
 
-- Alinhamento das telas sob responsabilidade do Micael às telas do Figma (Spec 028).
+- Alinhamento das telas sob responsabilidade do Micael às telas do Figma (Spec 030).
 - **Responsáveis:** Micael Cardoso Reis.
 - **Mudanças:**
   - Implementação das variantes de botão que o `04-componentes/botao.md` já documentava e o código

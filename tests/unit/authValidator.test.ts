@@ -74,7 +74,7 @@ describe("validação unitária de autenticação (ISO/IEC 25010 - Adequação F
   });
 });
 
-describe("Spec 028 — nome no cadastro", () => {
+describe("Spec 030 — nome no cadastro", () => {
   it("aprova nome completo com dois caracteres ou mais", () => {
     expect(validateFullName("Ana Paula").isValid).toBe(true);
     expect(validateFullName("Jo").isValid).toBe(true);

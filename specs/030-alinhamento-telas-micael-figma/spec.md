@@ -1,4 +1,4 @@
-# Spec 028 — Alinhamento das telas do Micael ao Figma e ao Design System
+# Spec 030 — Alinhamento das telas do Micael ao Figma e ao Design System
 
 **Responsável:** Micael Cardoso Reis
 **Fonte visual:** [Figma — IpêBook](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?m=dev),

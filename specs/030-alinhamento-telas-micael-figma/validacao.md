@@ -1,4 +1,4 @@
-# Validação — Spec 028
+# Validação — Spec 030
 
 Data: 2026-10-20. Branch: `worktree-alinhar-telas-micael-figma`.
 

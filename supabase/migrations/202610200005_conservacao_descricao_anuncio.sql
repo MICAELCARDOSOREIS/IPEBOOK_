@@ -1,4 +1,4 @@
--- Spec 028: estado de conservação e descrição do anúncio, pedidos pela etapa de detalhes do
+-- Spec 030: estado de conservação e descrição do anúncio, pedidos pela etapa de detalhes do
 -- Figma (`04.05 · Detalhes do livro`). Ambos são opcionais para não invalidar anúncios já
 -- publicados antes desta migração.
 alter table public.v2_books add column if not exists condition text;
@@ -14,6 +14,6 @@ alter table public.v2_books add constraint v2_books_description_length_check
   check (description is null or char_length(description) <= 280);
 
 comment on column public.v2_books.condition is
-  'Estado de conservação do exemplar: new, good, marked ou worn (Spec 028).';
+  'Estado de conservação do exemplar: new, good, marked ou worn (Spec 030).';
 comment on column public.v2_books.description is
-  'Descrição livre do exemplar, limitada a 280 caracteres (Spec 028).';
+  'Descrição livre do exemplar, limitada a 280 caracteres (Spec 030).';

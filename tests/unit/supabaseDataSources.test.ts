@@ -181,7 +181,7 @@ describe("datasources Supabase", () => {
     });
   });
 
-  it("envia e lê conservação e descrição do anúncio (Spec 028)", async () => {
+  it("envia e lê conservação e descrição do anúncio (Spec 030)", async () => {
     const row = {
       id: "livro-2", title: "O Cortiço", author: "Aluísio Azevedo",
       owner_id: "dono-2", modality: "donation", price: null, status: "available",

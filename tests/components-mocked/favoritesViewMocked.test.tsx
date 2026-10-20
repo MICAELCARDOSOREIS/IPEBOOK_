@@ -45,7 +45,7 @@ describe("Favorites com ViewModel mockado (Issue #76)", () => {
   });
 });
 
-describe("Favorites alinhada ao Figma 02.06 (Spec 028)", () => {
+describe("Favorites alinhada ao Figma 02.06 (Spec 030)", () => {
   const book = {
     id: "b1",
     title: "O Pequeno Príncipe",

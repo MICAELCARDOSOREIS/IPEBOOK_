@@ -413,7 +413,7 @@ describe("togglePauseListing (FR-024 — pausar e retomar anúncio)", () => {
   });
 });
 
-describe("Spec 028 — conservação e descrição no anúncio", () => {
+describe("Spec 030 — conservação e descrição no anúncio", () => {
   it("guarda conservação e descrição sanitizadas ao criar", async () => {
     const source = new MemoryBookDataSource();
     const useCases = new BookUseCases(source);

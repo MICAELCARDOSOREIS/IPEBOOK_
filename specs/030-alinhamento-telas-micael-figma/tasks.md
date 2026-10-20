@@ -1,4 +1,4 @@
-# Tarefas: Spec 028
+# Tarefas: Spec 030
 
 - [x] T001 `OutlinedButton` e `TextButton` conforme `design-system/04-componentes/botao.md`.
 - [x] T002 `Checkbox` + `design-system/04-componentes/caixa-de-selecao.md`.

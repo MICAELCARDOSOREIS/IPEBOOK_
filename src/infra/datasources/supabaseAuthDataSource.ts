@@ -3,7 +3,7 @@ import type { User } from "@/model/entities/user";
 import { AuthError } from "@/model/errors";
 import type { SupabaseAppClient } from "@/infra/supabaseClient";
 
-/** Nome informado no cadastro, guardado em `user_metadata.full_name` (ver Spec 028). */
+/** Nome informado no cadastro, guardado em `user_metadata.full_name` (ver Spec 030). */
 function readFullName(user: { user_metadata?: Record<string, unknown> | null }): string | undefined {
   const value = user.user_metadata?.full_name;
   return typeof value === "string" && value.trim().length > 0 ? value.trim() : undefined;

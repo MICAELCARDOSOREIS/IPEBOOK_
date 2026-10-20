@@ -265,7 +265,7 @@ describe("validação unitária de livros (ISO/IEC 25010 - Adequação Funcional
   });
 });
 
-describe("Spec 028 — conservação e descrição", () => {
+describe("Spec 030 — conservação e descrição", () => {
   const base = {
     id: "book-1",
     title: "Dom Casmurro",

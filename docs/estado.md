@@ -22,7 +22,7 @@ Todas as métricas abaixo foram aferidas diretamente por execução dos scripts 
   6. `202610170003_pausar_anuncio.sql` (status pausado e restrição de ciclo de vida em `v2_books`)
   7. `202610180001_indices_busca_catalogo.sql` (índices parciais e compostos de performance para vitrine, localização, modalidade e moderação - ADR 0021)
   8. `202610200001_perfil_publico_e_avaliacoes.sql` (tabelas `v2_profiles` e `v2_ratings`, com RLS, para o perfil público do anunciante - Spec 018, Issue #73)
-  9. `202610200005_conservacao_descricao_anuncio.sql` (colunas `condition` e `description` em `v2_books`, com restrição de valores e limite de 280 caracteres - Spec 028)
+  9. `202610200005_conservacao_descricao_anuncio.sql` (colunas `condition` e `description` em `v2_books`, com restrição de valores e limite de 280 caracteres - Spec 030)
 - **Semente Oficial da Beta (`npm run db:seed`)**: Script `scripts/popular-catalogo-piripiri.mjs` gerando 10 anúncios realistas distribuídos pelos bairros de Piripiri, PI com exportação SQL via `--sql`.
 - **Backend Supabase ativo**: O backend está configurado com `EXPO_PUBLIC_BACKEND=supabase` em `.env` e `.env.example`, integrado ao projeto oficial `xiuuiggpccpgrwkzeloc`. O histórico de migrações remotas foi reconciliado e `supabase db push` está operando normalmente.
 - **Rotas Web compiladas (`npm run build:web`)**: Exportação estática do Expo Router gerou com sucesso o pacote web em `dist/`, totalizando **25 rotas estáticas**:
@@ -33,7 +33,7 @@ Todas as métricas abaixo foram aferidas diretamente por execução dos scripts 
   - `/livro/[id]` (Detalhes completos do anúncio, capa com foto real/fallback, dados do autor e do anunciante)
   - `/anunciar` (Formulário de cadastro de anúncio com upload/remoção de foto e 17 bairros de Piripiri)
   - `/editar-anuncio/[id]` (Edição completa de anúncios cadastrados pelo usuário - Spec 024, ADR 0018)
-  - `/gerenciar-anuncio/[id]` (Gerenciamento de um anúncio: estado atual, editar, pausar/retomar e excluir - Spec 028)
+  - `/gerenciar-anuncio/[id]` (Gerenciamento de um anúncio: estado atual, editar, pausar/retomar e excluir - Spec 030)
   - `/meus-anuncios` (Listagem de anúncios do usuário, com opções de editar, pausar/retomar, exclusão confirmada via Diálogo e feedbacks via Snackbar)
   - `/pedidos-recebidos` (Propostas recebidas de interessados, com aceitar e recusar)
   - `/meus-pedidos` (Propostas enviadas pelo usuário)
@@ -93,7 +93,7 @@ No app ativo em desenvolvimento, 21 rotas cobrem as jornadas essenciais da beta.
 - **Issue #76 (Spec 021 — Estados globais de carregamento e erro)**: Implementada. Componentes `LoadingState`, `ErrorState` e `OfflineState` reaproveitáveis (`design-system/04-componentes/estados-do-sistema.md`), detecção real de conectividade via `@react-native-community/netinfo` (ADR 0028) e hook `useAsyncState` disponível para ViewModels futuros. Aplicada em home, favoritos, meus anúncios, notificações, pedidos (recebidos/enviados) e pesquisa.
 - **Issue #98 (Boas-vindas e primeiro acesso)**: Concluída e integrada via PR #102. Spec 026 e ADR 0022 criados. Rota `/bem-vindo`, persistência de primeiro acesso no dispositivo e escolha de bairro de Piripiri.
 - **Issue #108 / #94 (Histórico de buscas recentes e desambiguação de spec)**: Concluída e integrada via PR #100. Spec numerada como 027 para evitar colisão com a spec 026. Armazenamento no dispositivo via `AsyncStorage`, isolado por conta e limpo ao excluir a conta.
-- **Alinhamento das telas de autenticação ao Figma (US1 e US2 / Micael)**: Concluído e integrado. Telas de Entrar (`01.02`), Criar conta (`01.03`), Recuperar acesso (`01.04`), Confira seu e-mail (`01.05`) e Nova senha (`01.06` e `01.07`) alinhadas às especificações do Figma Android Material 3 e Web Responsivo, com `TopAppBar`, cards centralizados responsivos, confirmação de senha e validação interativa comprovada via ADB no dispositivo físico Android. **Revisto pela Spec 028** (ver adiante): a conferência nó a nó mostrou que a copy, o campo de nome, o aceite dos termos e os estados de reenvio ainda divergiam do Figma.
+- **Alinhamento das telas de autenticação ao Figma (US1 e US2 / Micael)**: Concluído e integrado. Telas de Entrar (`01.02`), Criar conta (`01.03`), Recuperar acesso (`01.04`), Confira seu e-mail (`01.05`) e Nova senha (`01.06` e `01.07`) alinhadas às especificações do Figma Android Material 3 e Web Responsivo, com `TopAppBar`, cards centralizados responsivos, confirmação de senha e validação interativa comprovada via ADB no dispositivo físico Android. **Revisto pela Spec 030** (ver adiante): a conferência nó a nó mostrou que a copy, o campo de nome, o aceite dos termos e os estados de reenvio ainda divergiam do Figma.
 - **Issue #73 (Perfil público do anunciante e fotos do anúncio)**: Spec 018 implementada. Rota `/perfil/[userId]` (somente leitura: nome, avaliação média ou "Sem avaliações ainda", negociações concluídas) acessível a partir do detalhe do anúncio; galeria de fotos em tela cheia como modal em `bookDetail.tsx`, sem ação quando o anúncio só tem capa ilustrativa. Migração `202610200001_perfil_publico_e_avaliacoes.sql` (`v2_profiles`, `v2_ratings`). Limitações registradas em `specs/018-perfil-publico-do-anunciante-e-fotos/validacao.md` (nome padrão até a edição de perfil #55/#56; sem fluxo de avaliação ainda).
 - **Issue #115 (Exclusão definitiva de conta no Supabase / LGPD)**: Concluída e integrada via PR #118. Migração `202610200002_rpc_exclusao_conta.sql` com função `security definer` `public.delete_user_account` com verificação estrita `auth.uid() = target_user_id` e exclusão atômica em cascata (anúncios, pedidos, favoritos, alertas, denúncias, notificações e usuário em `auth.users`).
 - **Issue #116 (Storage — Bucket `book-photos` e Políticas de RLS)**: Concluída e integrada via PR #119. Migração `202610200003_storage_book_photos.sql` criando o bucket público com limite de 5MB e formatos de imagem permitidos, com políticas RLS estritas de upload e exclusão pelo proprietário (`storage.foldername(name)[1] = auth.uid()::text`). Contrato `IPhotoStorageDataSource`, adaptadores Supabase/Memória e testes unitários.
@@ -105,7 +105,7 @@ No app ativo em desenvolvimento, 21 rotas cobrem as jornadas essenciais da beta.
 - **Issue #128 (Segurança / LGPD — Exportação e portabilidade de dados do usuário)**: Concluída e integrada via PR #133. Implementação de `UserExportData`, `IUserDataExportDataSource`, `UserDataExportUseCases`, adaptadores em memória e Supabase e injeção em `container.ts`.
 - **Issue #129 (Infra / Otimização — Serviço de validação de imagens antes do upload)**: Concluída e integrada via PR #134. Implementação de `ImageOptimizationService` com checagem de tamanho (5 MB), formatos permitidos (JPEG, PNG, WebP) e sanitização contra path traversal.
 - **Issue #130 (Segurança / Domínio — Sanitização contra injeção em campos de texto)**: Concluída e integrada via PR #135. Validador `textSanitizer.ts` neutralizando scripts, tags HTML e caracteres de controle em títulos, autores, bairros e denúncias comunitárias.
-- **Spec 028 — Alinhamento das telas do Micael ao Figma (Outubro de 2026)**: Conferência nó a nó
+- **Spec 030 — Alinhamento das telas do Micael ao Figma (Outubro de 2026)**: Conferência nó a nó
   entre as telas sob responsabilidade do Micael e o Figma Android, com correção das divergências
   encontradas (a auditoria anterior registrava alinhamento que não se confirmava na comparação).
   - **Design System**: `OutlinedButton` e `TextButton` (variantes que o `botao.md` documentava sem
@@ -126,7 +126,7 @@ No app ativo em desenvolvimento, 21 rotas cobrem as jornadas essenciais da beta.
   - **Marca**: `theme_color` da Web corrigida de `#0D47A1` para `#2C5E45` e ícones do manifesto
     apontando para `icone-192.png`/`icone-512.png`, que agora existem no pacote publicado — antes o
     manifesto referenciava `/favicon.png`, ausente de `dist/`.
-  - **Fora de escopo declarado** (ver `specs/028-alinhamento-telas-micael-figma/spec.md`): login
+  - **Fora de escopo declarado** (ver `specs/030-alinhamento-telas-micael-figma/spec.md`): login
     com Google e `01.02`, leitura de ISBN pela câmera, rascunhos (Spec 017), permissões da
     plataforma (Spec 020), "Marcar como concluído" em `04.08` e compartilhar (Spec 019).
 - **Trilha de Resiliência, Infra e Segurança (Micael — Outubro de 2026)**:

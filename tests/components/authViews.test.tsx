@@ -327,7 +327,7 @@ describe("tela de esqueceu a senha (ISO/IEC 25010 - Usabilidade e Acessibilidade
   });
 });
 
-describe("Spec 028 — telas de acesso alinhadas ao Figma", () => {
+describe("Spec 030 — telas de acesso alinhadas ao Figma", () => {
   it("não cria conta sem o aceite explícito dos termos (01.03)", async () => {
     const signUp = vi.fn().mockResolvedValue(true);
     mockAuth({ user: null, loading: false, error: null }, { signUp });
@@ -432,7 +432,7 @@ describe("Spec 028 — telas de acesso alinhadas ao Figma", () => {
   });
 });
 
-describe("Spec 028 — reenvio do link de recuperação (01.05)", () => {
+describe("Spec 030 — reenvio do link de recuperação (01.05)", () => {
   it("libera o reenvio quando o contador chega a zero", async () => {
     vi.useFakeTimers();
     const requestPasswordReset = vi.fn().mockResolvedValue(true);

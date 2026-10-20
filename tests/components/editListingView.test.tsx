@@ -171,7 +171,7 @@ describe("tela de edição de anúncio (ISO/IEC 25010 - Usabilidade e Acessibili
   });
 });
 
-describe("Spec 028 — edição alinhada ao Figma 04.09", () => {
+describe("Spec 030 — edição alinhada ao Figma 04.09", () => {
   it("desmarca categoria, conservação e bairro ao tocar no chip já escolhido", async () => {
     const actions = mockViewModel(loadedState);
 

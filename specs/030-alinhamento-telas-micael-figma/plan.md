@@ -1,4 +1,4 @@
-# Plano: Spec 028 — Alinhamento das telas do Micael
+# Plano: Spec 030 — Alinhamento das telas do Micael
 
 ## Ordem de execução
 

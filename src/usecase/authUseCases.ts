@@ -35,7 +35,7 @@ export class AuthUseCases implements IAuthUseCases {
     try {
       await this.profiles.ensure(userId, name);
     } catch {
-      // Perfil público é complementar ao cadastro; ver Spec 028 e validacao.md.
+      // Perfil público é complementar ao cadastro; ver Spec 030 e validacao.md.
     }
   }
 
