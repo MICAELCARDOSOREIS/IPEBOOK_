@@ -6,7 +6,11 @@ import Search from "@/view/search/search";
 
 vi.mock("@/viewmodel/useSearchViewModel", () => ({ useSearchViewModel: vi.fn() }));
 
-import { useSearchViewModel } from "@/viewmodel/useSearchViewModel";
+import {
+  type SearchModalityFilter,
+  type SearchSortOption,
+  useSearchViewModel,
+} from "@/viewmodel/useSearchViewModel";
 
 const book = (over: Partial<Book>): Book => ({
   id: "b1",
@@ -18,15 +22,35 @@ const book = (over: Partial<Book>): Book => ({
   ...over,
 });
 
-function setup(books: Book[], term = "", options: { loading?: boolean; error?: string | null; history?: string[] } = {}) {
+function setup(
+  books: Book[],
+  term = "",
+  options: {
+    loading?: boolean;
+    error?: string | null;
+    history?: string[];
+    modality?: SearchModalityFilter;
+    sortBy?: SearchSortOption;
+  } = {},
+) {
   const setTerm = vi.fn();
+  const setModality = vi.fn();
+  const setSortBy = vi.fn();
   const registerSearch = vi.fn();
   const clearHistory = vi.fn();
   vi.mocked(useSearchViewModel).mockReturnValue([
-    { term, books, loading: options.loading ?? false, error: options.error ?? null, history: options.history ?? [] },
-    { setTerm, reload: vi.fn(), registerSearch, clearHistory },
+    {
+      term,
+      books,
+      loading: options.loading ?? false,
+      error: options.error ?? null,
+      history: options.history ?? [],
+      modality: options.modality ?? "all",
+      sortBy: options.sortBy ?? "recent",
+    },
+    { setTerm, setModality, setSortBy, reload: vi.fn(), registerSearch, clearHistory },
   ]);
-  return { setTerm, registerSearch, clearHistory };
+  return { setTerm, setModality, setSortBy, registerSearch, clearHistory };
 }
 
 async function renderSearch(props: React.ComponentProps<typeof Search> = {}) {
@@ -95,5 +119,21 @@ describe("Search (spec 006, US3/T019)", () => {
     expect(screen.getByText("Limpar histórico de buscas?")).toBeDefined();
     await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Limpar histórico" })); });
     expect(clearHistory).toHaveBeenCalledOnce();
+  });
+
+  it("permite filtrar livros por modalidade acionando os Chips (Issue #93)", async () => {
+    const { setModality } = setup([book({})], "", { modality: "all" });
+    const screen = await renderSearch();
+    expect(screen.getByText("Modalidade:")).toBeDefined();
+
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Filtrar por Venda"));
+    });
+    expect(setModality).toHaveBeenCalledWith("sale");
+
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Filtrar por Troca"));
+    });
+    expect(setModality).toHaveBeenCalledWith("trade");
   });
 });
