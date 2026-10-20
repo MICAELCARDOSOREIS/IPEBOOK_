@@ -64,6 +64,8 @@ import type { ILogger } from "@/model/services/iLogger";
 import { SafeLogger } from "@/infra/services/safeLogger";
 import type { IRateLimiter } from "@/model/services/iRateLimiter";
 import { ClientRateLimiter } from "@/infra/services/clientRateLimiter";
+import type { IFileDownloadService } from "@/model/services/iFileDownloadService";
+import { FileDownloadService } from "@/infra/services/fileDownloadService";
 import type { IOnboardingUseCases } from "@/usecase/iOnboardingUseCases";
 import type { IUserDataExportUseCases } from "@/usecase/iUserDataExportUseCases";
 import { OnboardingUseCases } from "@/usecase/onboardingUseCases";
@@ -80,6 +82,7 @@ function createDataSources(): {
   searchHistory: ISearchHistoryDataSource;
   profiles: IProfileDataSource;
   ratings: IRatingDataSource;
+  userDataExport: IUserDataExportDataSource;
 } {
   const searchHistory = process.env.NODE_ENV === "test"
     ? new MemorySearchHistoryDataSource()
@@ -102,6 +105,7 @@ function createDataSources(): {
       searchHistory,
       profiles: new SupabaseProfileDataSource(client),
       ratings: new SupabaseRatingDataSource(client),
+      userDataExport: new SupabaseUserDataExportDataSource(client),
     };
   }
   const books = new MemoryBookDataSource();
@@ -109,17 +113,20 @@ function createDataSources(): {
   const requests = new MemoryBookRequestDataSource();
   const favorites = new MemoryFavoriteDataSource();
   const searchAlerts = new MemorySearchAlertDataSource(notifications);
+  const reports = new MemoryReportDataSource();
+  const profiles = new MemoryProfileDataSource();
   return {
     auth: new MemoryAuthDataSource(),
     books,
     requests,
-    reports: new MemoryReportDataSource(),
+    reports,
     notifications,
     favorites,
     searchAlerts,
     searchHistory,
-    profiles: new MemoryProfileDataSource(),
+    profiles,
     ratings: new MemoryRatingDataSource(),
+    userDataExport: new MemoryUserDataExportDataSource(books, requests, favorites, searchAlerts),
   };
 }
 
@@ -160,6 +167,12 @@ export const publicProfileUseCases: IPublicProfileUseCases = new PublicProfileUs
   dataSources.requests,
 );
 
+export const userDataExportUseCases: IUserDataExportUseCases = new UserDataExportUseCases(
+  dataSources.userDataExport,
+);
+
 export const logger: ILogger = new SafeLogger();
 
 export const rateLimiter: IRateLimiter = new ClientRateLimiter();
+
+export const fileDownloadService: IFileDownloadService = new FileDownloadService();
