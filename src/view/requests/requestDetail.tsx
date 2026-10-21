@@ -57,6 +57,7 @@ export function RequestDetail({
             </View>
           ) : detail ? (
             <View style={styles.container}>
+              <Text style={styles.heroHeadline}>Um encontro, um novo capítulo.</Text>
               <View style={styles.successBanner}>
                 <IconBadge icon="check" tone="action" />
                 <View style={styles.bannerTextContainer}>
@@ -209,6 +210,10 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   container: { gap: tokens.spacing[16] },
+  heroHeadline: {
+    ...tokens.typography.displayLarge,
+    color: tokens.colors.text,
+  },
   successBanner: {
     flexDirection: "row",
     alignItems: "center",

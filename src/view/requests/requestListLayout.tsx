@@ -54,6 +54,10 @@ export function RequestListLayout({
         <Text accessibilityRole="header" style={styles.heading}>
           {title}
         </Text>
+        <View style={styles.heroBox}>
+          <Text style={styles.heroTitle}>Sua estante em movimento.</Text>
+          <Text style={styles.body}>Acompanhe as propostas dos seus livros.</Text>
+        </View>
         {loading ? (
           <LoadingState label="Carregando pedidos" />
         ) : error ? (
@@ -63,45 +67,58 @@ export function RequestListLayout({
             <OfflineState onRetry={onRetry} />
           )
         ) : (
-          <FlatList
-            data={items}
-            keyExtractor={(item) => item.request.id}
-            contentContainerStyle={styles.listContent}
-            ListEmptyComponent={
-              <View style={styles.emptyBox}>
-                <IconBadge icon="swap" tone="neutral" />
-                <Text style={styles.body}>{emptyText}</Text>
-              </View>
-            }
-            renderItem={({ item }) => (
-              <View style={styles.item}>
-                <View style={styles.bookRow}>
-                  <BookCover
-                    id={item.listing.id}
-                    title={item.listing.title}
-                    photoUrl={item.listing.photoUrl}
-                    variant="list"
-                  />
-                  <View style={styles.bookInfo}>
-                    <View style={styles.row}>
-                      <Text style={styles.itemTitle}>{item.listing.title}</Text>
-                      <Text style={[styles.badge, styles[item.request.status]]}>
-                        {statusLabel[item.request.status]}
-                      </Text>
-                    </View>
-                    <Text style={styles.body}>{item.listing.author}</Text>
-                    <View style={styles.tagRow}>
-                      <Tag variant={item.listing.modality} />
-                      {item.listing.modality === "sale" && item.listing.price !== undefined ? (
-                        <Text style={styles.price}>{`R$ ${item.listing.price.toFixed(2)}`}</Text>
-                      ) : null}
+          <>
+            <FlatList
+              data={items}
+              keyExtractor={(item) => item.request.id}
+              contentContainerStyle={styles.listContent}
+              ListEmptyComponent={
+                <View style={styles.emptyBox}>
+                  <IconBadge icon="swap" tone="neutral" />
+                  <Text style={styles.body}>{emptyText}</Text>
+                </View>
+              }
+              renderItem={({ item }) => (
+                <View style={styles.item}>
+                  <View style={styles.bookRow}>
+                    <BookCover
+                      id={item.listing.id}
+                      title={item.listing.title}
+                      photoUrl={item.listing.photoUrl}
+                      variant="list"
+                    />
+                    <View style={styles.bookInfo}>
+                      <View style={styles.row}>
+                        <Text style={styles.itemTitle}>{item.listing.title}</Text>
+                        <Text style={[styles.badge, styles[item.request.status]]}>
+                          {statusLabel[item.request.status]}
+                        </Text>
+                      </View>
+                      <Text style={styles.body}>{item.listing.author}</Text>
+                      <View style={styles.tagRow}>
+                        <Tag variant={item.listing.modality} />
+                        {item.listing.modality === "sale" && item.listing.price !== undefined ? (
+                          <Text style={styles.price}>{`R$ ${item.listing.price.toFixed(2)}`}</Text>
+                        ) : null}
+                      </View>
                     </View>
                   </View>
+                  {renderExtra(item)}
                 </View>
-                {renderExtra(item)}
+              )}
+            />
+            {items.length > 0 ? (
+              <View style={styles.infoCard}>
+                <IconBadge icon="chat" tone="action" />
+                <View style={styles.bookInfo}>
+                  <Text style={styles.infoCardTitle}>Tudo pela conversa</Text>
+                  <Text style={styles.body}>
+                    Confira a proposta e combine os detalhes antes de reservar seu livro.
+                  </Text>
+                </View>
               </View>
-            )}
-          />
+            ) : null}
+          </>
         )}
       </View>
     </SafeAreaView>
@@ -169,7 +186,29 @@ const styles = StyleSheet.create({
     ...tokens.typography.titleLarge,
     fontFamily: tokens.typography.displayLarge.fontFamily,
     color: tokens.colors.text,
+    marginBottom: tokens.spacing[8],
+  },
+  heroBox: {
     marginBottom: tokens.spacing[16],
+    gap: tokens.spacing[4],
+  },
+  heroTitle: {
+    ...tokens.typography.displayLarge,
+    color: tokens.colors.text,
+  },
+  infoCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: tokens.colors.soft,
+    borderRadius: tokens.radius.medium,
+    padding: tokens.spacing[16],
+    gap: tokens.spacing[12],
+    marginTop: tokens.spacing[8],
+  },
+  infoCardTitle: {
+    ...tokens.typography.titleMedium,
+    fontFamily: tokens.typography.displayLarge.fontFamily,
+    color: tokens.colors.actionDeep,
   },
   listContent: {
     gap: tokens.spacing[12],

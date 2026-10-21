@@ -46,6 +46,16 @@ Esta especificação **proíbe expressamente** qualquer alteração nos arquivos
 ## Critérios de Aceite
 
 1. Zero valores literais de cor hexadecimal nas 12 telas do Micael listadas no escopo.
-2. Nenhum arquivo pertencente à Maria Clara aparece modificado em `git diff develop`.
-3. Todos os testes unitários, de hooks, de componentes e de integração passam (`npm run verify:release`), mantendo cobertura global > 80%.
-4. Build Web (`dist/`) publicado e validado em `https://ipebook.pages.dev`.
+2. Textos reais de manchete, subtítulo, cartões de orientação e estados vazios extraídos via MCP do Figma (`cxEisNRzOQR6krv8Ow7HCa`) presentes nas respectivas telas:
+   - `searchAlerts.tsx` (`145:2921` / `19:420` / `254:4728`): `"O próximo livro pode chegar."`, `"Avisamos quando houver um anúncio que combine com sua busca."`, `"Todos os tipos · Piripiri, PI"`, `"Nenhum alerta criado"`.
+   - `myListings.tsx` (`25:302` / `25:430`): `"Toque em um livro para editar, pausar ou marcar como concluído."`, `"Sua estante começa com um livro"`, `"Anuncie um livro para vender, trocar ou doar na sua região."`.
+   - `requestListLayout.tsx` & `receivedRequests.tsx` (`149:2962` / `27:707`): `"Sua estante em movimento."`, `"Acompanhe as propostas dos seus livros."`, `"Tudo pela conversa"`, `"Confira a proposta e combine os detalhes antes de reservar seu livro."`, `"Ao aceitar, seu anúncio fica Reservado e vocês combinam o encontro."`.
+   - `requestDetail.tsx` (`27:921` / `149:3467`): `"Um encontro, um novo capítulo."`.
+   - `notifications.tsx` (`25:812` / `254:6456`): `"Você está em dia"`, `"Suas mensagens, propostas e avisos de novos livros aparecerão aqui."`.
+   - `deleteAccount.tsx` (`145:2809` / `149:3589` / `370:6769`): `"Você no controle."`, `"Entenda quais informações ficam visíveis."`, `"Seu perfil público"`, `"Dados de acesso privados"`, `"Sua conta foi excluída."`.
+   - `termsAndPrivacy.tsx` (`254:6585`): `"Informação clara para você."`, `"Consulte os documentos que orientam o uso do IpêBook."`.
+   - `helpAndFaq.tsx` (`145:2702`): `"Vamos ajudar."`, `"Respostas para continuar sua próxima leitura."`.
+   - `reportListing.tsx` (`27:1239` / `370:6727`): `"O que aconteceu?"`, `"Sua denúncia é anônima. A equipe analisa em até 24 horas."`, `"Recebemos sua denúncia."`.
+3. Nenhum arquivo pertencente à Maria Clara aparece modificado em `git diff develop`.
+4. Todos os testes unitários, de hooks, de componentes e de integração passam (`npm run verify:release`), mantendo cobertura global > 80%.
+5. Build Web (`dist/`) publicado e validado em `https://ipebook.pages.dev`.

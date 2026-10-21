@@ -129,13 +129,14 @@ export default function Notifications({
         ) : state.filteredNotifications.length === 0 ? (
           <View style={styles.centered}>
             <IconBadge icon="bell" tone="neutral" />
+            <Text style={styles.emptyHeadline}>Você está em dia</Text>
             <Text accessibilityRole="header" style={styles.emptyTitle}>
               {state.filter === "unread" ? "Nenhuma notificação não lida" : "Nenhuma notificação"}
             </Text>
             <Text style={styles.emptyDescription}>
               {state.filter === "unread"
                 ? "Você já visualizou todas as suas novidades!"
-                : "Quando outros leitores solicitarem seus livros ou aceitarem suas trocas em Piripiri, você verá as atualizações aqui."}
+                : "Suas mensagens, propostas e avisos de novos livros aparecerão aqui."}
             </Text>
           </View>
         ) : (
@@ -246,6 +247,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: tokens.spacing[24],
     gap: tokens.spacing[12],
+  },
+  emptyHeadline: {
+    ...tokens.typography.titleLarge,
+    fontFamily: tokens.typography.displayLarge.fontFamily,
+    color: tokens.colors.text,
+    textAlign: "center",
   },
   emptyTitle: {
     ...tokens.typography.titleMedium,

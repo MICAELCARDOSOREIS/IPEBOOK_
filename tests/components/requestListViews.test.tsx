@@ -156,6 +156,8 @@ describe("SentRequests e ReceivedRequests Views (ISO/IEC 25010 - Adequação Fun
 
       const screen = await render(<ReceivedRequests sessionUserId="user-me" />);
 
+      expect(screen.getByText("Sua estante em movimento.")).toBeDefined();
+      expect(screen.getByText("Tudo pela conversa")).toBeDefined();
       expect(screen.getByText("Capitães da Areia")).toBeDefined();
       expect(screen.getByText("Pessoa interessada: user-interested")).toBeDefined();
 

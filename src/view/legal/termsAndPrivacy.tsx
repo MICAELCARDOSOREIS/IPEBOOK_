@@ -29,6 +29,12 @@ export default function TermsAndPrivacy({
       <TopAppBar title="Termos e Privacidade" onBack={() => onBack?.()} />
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.content}>
+          <View style={styles.heroHeader}>
+            <Text style={styles.heroTitle}>Informação clara para você.</Text>
+            <Text style={styles.heroSubtitle}>
+              Consulte os documentos que orientam o uso do IpêBook.
+            </Text>
+          </View>
           <View testID="terms-privacy-tablist" accessibilityRole="tablist" style={styles.tabs}>
             <Pressable
               accessibilityRole="tab"
@@ -97,6 +103,18 @@ const styles = StyleSheet.create({
     maxWidth: 720,
     alignSelf: "center",
     padding: tokens.spacing[16],
+  },
+  heroHeader: {
+    gap: tokens.spacing[4],
+    marginBottom: tokens.spacing[16],
+  },
+  heroTitle: {
+    ...tokens.typography.displayLarge,
+    color: tokens.colors.text,
+  },
+  heroSubtitle: {
+    ...tokens.typography.bodyLarge,
+    color: tokens.colors.secondaryText,
   },
   tabs: {
     flexDirection: "row",

@@ -32,26 +32,31 @@ export function ReceivedRequests({
           <View>
             <Text style={s.meta}>Pessoa interessada: {request.requesterId}</Text>
             {request.status === "pending" ? (
-              <View style={s.actions}>
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityState={{ disabled: busy }}
-                  disabled={busy}
-                  onPress={() => void actions.accept(request.id)}
-                  style={s.primary}
-                >
-                  <Text style={s.primaryText}>Aceitar</Text>
-                </Pressable>
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityState={{ disabled: busy }}
-                  disabled={busy}
-                  onPress={() => void actions.reject(request.id)}
-                  style={s.secondary}
-                >
-                  <Text style={s.secondaryText}>Recusar</Text>
-                </Pressable>
-              </View>
+              <>
+                <Text style={s.meta}>
+                  Ao aceitar, seu anúncio fica Reservado e vocês combinam o encontro.
+                </Text>
+                <View style={s.actions}>
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityState={{ disabled: busy }}
+                    disabled={busy}
+                    onPress={() => void actions.accept(request.id)}
+                    style={s.primary}
+                  >
+                    <Text style={s.primaryText}>Aceitar</Text>
+                  </Pressable>
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityState={{ disabled: busy }}
+                    disabled={busy}
+                    onPress={() => void actions.reject(request.id)}
+                    style={s.secondary}
+                  >
+                    <Text style={s.secondaryText}>Recusar</Text>
+                  </Pressable>
+                </View>
+              </>
             ) : null}
             {request.status === "accepted" ? (
               <View style={s.actions}>

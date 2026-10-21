@@ -39,8 +39,9 @@ export default function ReportListing({
               <Text accessibilityRole="header" style={styles.successTitle}>
                 Denúncia enviada
               </Text>
+              <Text style={styles.successHeadline}>Recebemos sua denúncia.</Text>
               <Text style={styles.successBody}>
-                Obrigado por ajudar a manter a comunidade Ipebook segura em Piripiri. Nossa moderação analisará este anúncio em até 24 horas e tomará as medidas necessárias.
+                A equipe vai analisar o relato em até 24 horas. Obrigado por ajudar a manter a comunidade Ipebook segura em Piripiri.
               </Text>
               <View style={styles.fullWidthButton}>
                 <FilledButton label="Voltar ao anúncio" onPress={onBack} />
@@ -88,6 +89,13 @@ export default function ReportListing({
               Denunciando: <Text style={styles.bookTitleBold}>{listingTitle}</Text>
             </Text>
           ) : null}
+
+          <View style={styles.heroHeader}>
+            <Text style={styles.heroHeadline}>O que aconteceu?</Text>
+            <Text style={styles.bookContext}>
+              Sua denúncia é anônima. A equipe analisa em até 24 horas.
+            </Text>
+          </View>
 
           <Text accessibilityRole="header" style={styles.sectionTitle}>
             Por que você está denunciando este anúncio?
@@ -170,6 +178,19 @@ const styles = StyleSheet.create({
   bookContext: {
     ...tokens.typography.bodyMedium,
     color: tokens.colors.secondaryText,
+  },
+  heroHeader: {
+    gap: tokens.spacing[4],
+  },
+  heroHeadline: {
+    ...tokens.typography.displayLarge,
+    color: tokens.colors.text,
+  },
+  successHeadline: {
+    ...tokens.typography.titleMedium,
+    fontFamily: tokens.typography.displayLarge.fontFamily,
+    color: tokens.colors.text,
+    textAlign: "center",
   },
   bookTitleBold: {
     fontWeight: "700",

@@ -39,6 +39,10 @@ export default function HelpAndFaq({ onBack }: HelpAndFaqProps) {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.content}>
           <View style={styles.headerSection}>
+            <Text style={styles.heroHeadline}>Vamos ajudar.</Text>
+            <Text style={styles.heroSubtitle}>
+              Respostas para continuar sua próxima leitura.
+            </Text>
             <View style={styles.headerTitleRow}>
               <IconBadge icon="info" tone="action" />
               <Text accessibilityRole="header" style={styles.title}>
@@ -100,14 +104,24 @@ const styles = StyleSheet.create({
   headerSection: {
     gap: tokens.spacing[8],
   },
+  heroHeadline: {
+    ...tokens.typography.displayLarge,
+    color: tokens.colors.text,
+  },
+  heroSubtitle: {
+    ...tokens.typography.bodyLarge,
+    color: tokens.colors.secondaryText,
+  },
   headerTitleRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: tokens.spacing[12],
+    marginTop: tokens.spacing[4],
   },
   title: {
     flex: 1,
-    ...tokens.typography.displayLarge,
+    ...tokens.typography.titleLarge,
+    fontFamily: tokens.typography.displayLarge.fontFamily,
     color: tokens.colors.text,
   },
   subtitle: {

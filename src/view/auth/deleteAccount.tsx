@@ -40,8 +40,9 @@ export default function DeleteAccount({
               <Text accessibilityRole="header" style={styles.successTitle}>
                 Conta excluída
               </Text>
+              <Text style={styles.successHeadline}>Sua conta foi excluída.</Text>
               <Text style={styles.bodyCenter}>
-                Sua conta e seus dados pessoais foram removidos da nossa base em conformidade com a LGPD e as políticas de privacidade do Ipebook.
+                Seu perfil e seus anúncios ficaram indisponíveis. Sua conta e seus dados pessoais foram removidos da nossa base em conformidade com a LGPD.
               </Text>
               <View style={styles.fullWidthButton}>
                 <FilledButton label="Voltar à tela inicial" onPress={onAccountDeleted} />
@@ -84,6 +85,24 @@ export default function DeleteAccount({
       <TopAppBar title="Excluir conta" onBack={onBack} />
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.content}>
+          <View style={styles.heroHeader}>
+            <Text style={styles.heroTitle}>Você no controle.</Text>
+            <Text style={styles.heroSubtitle}>
+              Entenda quais informações ficam visíveis.
+            </Text>
+          </View>
+
+          <View style={styles.privacyInfoCard}>
+            <Text style={styles.privacyInfoTitle}>Seu perfil público</Text>
+            <Text style={styles.exportText}>
+              Nome, cidade, anúncios e avaliações ajudam a comunidade a conhecer você.
+            </Text>
+            <Text style={styles.privacyInfoTitle}>Dados de acesso privados</Text>
+            <Text style={styles.exportText}>
+              Seu telefone e e-mail não aparecem no perfil público nem nos anúncios.
+            </Text>
+          </View>
+
           <View style={styles.exportCard}>
             <View style={styles.cardHeaderRow}>
               <IconBadge icon="document" tone="action" />
@@ -168,6 +187,36 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     padding: tokens.spacing[24],
     gap: tokens.spacing[20],
+  },
+  heroHeader: {
+    gap: tokens.spacing[4],
+  },
+  heroTitle: {
+    ...tokens.typography.displayLarge,
+    color: tokens.colors.text,
+  },
+  heroSubtitle: {
+    ...tokens.typography.bodyLarge,
+    color: tokens.colors.secondaryText,
+  },
+  privacyInfoCard: {
+    padding: tokens.spacing[16],
+    backgroundColor: tokens.colors.m3.surfaceContainerLow,
+    borderRadius: tokens.radius.medium,
+    borderWidth: 1,
+    borderColor: tokens.colors.m3.outlineVariant,
+    gap: tokens.spacing[8],
+  },
+  privacyInfoTitle: {
+    ...tokens.typography.titleMedium,
+    fontFamily: tokens.typography.displayLarge.fontFamily,
+    color: tokens.colors.text,
+  },
+  successHeadline: {
+    ...tokens.typography.titleMedium,
+    fontFamily: tokens.typography.displayLarge.fontFamily,
+    color: tokens.colors.text,
+    textAlign: "center",
   },
   card: {
     padding: tokens.spacing[24],

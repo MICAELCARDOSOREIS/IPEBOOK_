@@ -70,6 +70,7 @@ describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
       );
     });
 
+    expect(screen.getByText("Sua estante começa com um livro")).toBeDefined();
     expect(screen.getByText("Você ainda não cadastrou nenhum anúncio.")).toBeDefined();
     const btn = screen.getByRole("button", { name: "Cadastrar anúncio" });
     fireEvent.press(btn);

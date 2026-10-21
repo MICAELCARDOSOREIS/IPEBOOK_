@@ -75,6 +75,11 @@ export function MyListings({
                 {state.pauseError}
               </Text>
             ) : null}
+            {state.books.length > 0 ? (
+              <Text style={styles.orientationHint}>
+                Toque em um livro para editar, pausar ou marcar como concluído.
+              </Text>
+            ) : null}
             <FlatList
               data={state.books}
               keyExtractor={(book) => book.id}
@@ -82,9 +87,10 @@ export function MyListings({
               ListEmptyComponent={
                 <View style={styles.empty}>
                   <IconBadge icon="shelf" tone="neutral" />
+                  <Text style={styles.emptyHeadline}>Sua estante começa com um livro</Text>
                   <Text style={styles.emptyTitle}>Você ainda não cadastrou nenhum anúncio.</Text>
                   <Text style={styles.body}>
-                    Compartilhe livros com a sua comunidade desapegando dos que já leu.
+                    Anuncie um livro para vender, trocar ou doar na sua região.
                   </Text>
                   <View style={styles.emptyAction}>
                     <FilledButton
@@ -269,8 +275,19 @@ const styles = StyleSheet.create({
     color: tokens.colors.secondaryText,
     textAlign: "center",
   },
+  orientationHint: {
+    ...tokens.typography.bodyMedium,
+    color: tokens.colors.secondaryText,
+    marginTop: tokens.spacing[12],
+  },
   list: { paddingVertical: tokens.spacing[16], gap: tokens.spacing[12] },
   empty: { paddingTop: tokens.spacing[48], alignItems: "center", gap: tokens.spacing[12] },
+  emptyHeadline: {
+    ...tokens.typography.titleLarge,
+    fontFamily: tokens.typography.displayLarge.fontFamily,
+    color: tokens.colors.text,
+    textAlign: "center",
+  },
   emptyTitle: {
     ...tokens.typography.titleMedium,
     fontFamily: tokens.typography.displayLarge.fontFamily,

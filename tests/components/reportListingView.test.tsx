@@ -45,6 +45,8 @@ describe("tela de denúncia de anúncio (ReportListing)", () => {
     });
 
     expect(screen.getByText("O Cortiço")).toBeDefined();
+    expect(screen.getByText("O que aconteceu?")).toBeDefined();
+    expect(screen.getByText("Sua denúncia é anônima. A equipe analisa em até 24 horas.")).toBeDefined();
     expect(screen.getByText("Por que você está denunciando este anúncio?")).toBeDefined();
     expect(screen.getByText("Conteúdo impróprio ou ofensivo")).toBeDefined();
     expect(screen.getByText("Suspeita de golpe ou fraude")).toBeDefined();

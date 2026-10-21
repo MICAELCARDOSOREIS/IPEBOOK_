@@ -53,6 +53,12 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
         </View>
       ) : (
         <View style={styles.content}>
+          <View style={styles.heroHeader}>
+            <Text style={styles.heroTitle}>O próximo livro pode chegar.</Text>
+            <Text style={styles.body}>
+              Avisamos quando houver um anúncio que combine com sua busca.
+            </Text>
+          </View>
           <View style={styles.formCard}>
             <Text style={styles.formTitle}>
               {editingId ? "Editar alerta de busca" : "Avisaremos você"}
@@ -100,11 +106,12 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
               ListEmptyComponent={
                 <View style={styles.emptyBox}>
                   <IconBadge icon="bell" tone="neutral" />
+                  <Text style={styles.emptyHeadline}>Nenhum alerta criado</Text>
                   <Text accessibilityRole="header" style={styles.emptyTitle}>
                     Você ainda não criou alertas.
                   </Text>
                   <Text style={styles.bodyCenter}>
-                    Digite um título ou autor acima para ser avisado quando ele chegar à estante comunitária de Piripiri.
+                    Busque um título ou tema e ative um alerta para receber novidades.
                   </Text>
                 </View>
               }
@@ -112,10 +119,14 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
                 <View style={styles.row}>
                   <View style={styles.rowText}>
                     <Text style={styles.title}>{item.query}</Text>
+                    <Text style={styles.metaText}>Todos os tipos · Piripiri, PI</Text>
                     <Tag
                       variant={item.active ? "available" : "paused"}
                       label={item.active ? "Ativo" : "Pausado"}
                     />
+                    <Text style={styles.body}>
+                      {`Você recebe uma notificação quando um novo livro corresponde à busca por ${item.query}.`}
+                    </Text>
                   </View>
                   <View style={styles.rowActions}>
                     <Pressable
@@ -198,6 +209,13 @@ const styles = StyleSheet.create({
     padding: tokens.spacing[24],
     gap: tokens.spacing[12],
   },
+  heroHeader: {
+    gap: tokens.spacing[4],
+  },
+  heroTitle: {
+    ...tokens.typography.displayLarge,
+    color: tokens.colors.text,
+  },
   formCard: {
     backgroundColor: tokens.colors.m3.surfaceContainerLow,
     borderRadius: tokens.radius.medium,
@@ -216,11 +234,21 @@ const styles = StyleSheet.create({
     fontFamily: tokens.typography.displayLarge.fontFamily,
     color: tokens.colors.text,
   },
+  emptyHeadline: {
+    ...tokens.typography.titleLarge,
+    fontFamily: tokens.typography.displayLarge.fontFamily,
+    color: tokens.colors.text,
+    textAlign: "center",
+  },
   emptyTitle: {
     ...tokens.typography.titleMedium,
     fontFamily: tokens.typography.displayLarge.fontFamily,
     color: tokens.colors.text,
     textAlign: "center",
+  },
+  metaText: {
+    ...tokens.typography.labelMedium,
+    color: tokens.colors.secondaryText,
   },
   body: {
     ...tokens.typography.bodyMedium,
