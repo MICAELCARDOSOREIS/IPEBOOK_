@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { BOOK_CONDITION_LABELS } from "@/model/entities/book";
+import { AppIcon } from "@/view/components/AppIcon";
 import { BookCover } from "@/view/components/BookCover";
 import { ErrorState } from "@/view/components/ErrorState";
 import { FilledButton } from "@/view/components/FilledButton";
@@ -14,6 +15,7 @@ import { TopAppBar } from "@/view/components/TopAppBar";
 import { tokens } from "@/view/tokens";
 import { useFavoritesViewModel } from "@/viewmodel/useFavoritesViewModel";
 import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
+import { useSearchAlertsViewModel } from "@/viewmodel/useSearchAlertsViewModel";
 
 export type FavoritesProps = {
   userId: string | null;
@@ -36,6 +38,8 @@ export default function Favorites({
   onExploreBooks,
 }: FavoritesProps) {
   const [state, actions] = useFavoritesViewModel(userId);
+  // A aba "Alertas" de `02.06` mostra a contagem ao lado do rótulo, como "Livros (n)".
+  const [alertsState] = useSearchAlertsViewModel(userId);
   const { isOnline } = useNetworkStatus();
   const firstFocus = useRef(true);
 
@@ -69,7 +73,7 @@ export default function Favorites({
             onPress={() => onNavigateToAlerts?.()}
             style={styles.tab}
           >
-            <Text style={styles.tabLabel}>Alertas</Text>
+            <Text style={styles.tabLabel}>{`Alertas (${alertsState.alerts.length})`}</Text>
           </Pressable>
         </View>
       ) : null}
@@ -151,7 +155,7 @@ export default function Favorites({
                   onPress={() => void actions.removeFavorite(item.id)}
                   style={styles.favoriteButton}
                 >
-                  <Text style={styles.favoriteIcon}>♥</Text>
+                  <AppIcon name="heart" size={24} color={tokens.colors.action} />
                 </Pressable>
               </View>
             );
@@ -279,5 +283,4 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  favoriteIcon: { color: tokens.colors.action, fontSize: 24 },
 });

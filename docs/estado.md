@@ -4,12 +4,32 @@ Documento consolidado de continuidade técnica e produto do Ipebook (Piripiri, P
 
 Conferência atual: **2026-10-21** (branch `feature/143-galeria-swipe-teclado`, derivada de `develop`).
 
-**Spec 038 validada localmente:** `PhotoGallery` (`src/view/listings/photoGallery.tsx`) passou a usar
+**Spec 039 validada localmente:** nova conferência nó a nó do canvas `APP · 10 · Android · Material 3`
+pelo MCP do Figma corrigiu oito telas do Micael: `/entrar`, `/criar-conta` e `/redefinir-senha`
+deixaram o enquadramento em cartão e passaram ao conteúdo sobre o fundo alinhado ao topo, como
+`/esqueci-senha`; `/favoritos` ganhou contagem na aba "Alertas" e ícone do design system no
+desfavoritar; `/alertas` ganhou o cartão "Alerta ativo" e o ícone de sino na linha; `/meus-anuncios`
+e `/notificacoes` perderam manchetes que o Figma não desenha, com a dica da estante movida para
+depois da lista e seta de avanço nas notificações; `/excluir-conta` separou os dois blocos de
+privacidade, corrigiu a copy que citava telefone e reduziu a portabilidade à ação de rodapé.
+`npm run validate` passou com 803 testes em 116 arquivos, já com `develop` integrado (Spec 038 da
+galeria e métricas da beta). As diferenças que dependem de recursos
+inexistentes (OAuth Google, ISBN pela câmera, rascunhos, "marcar como concluído", conversas) estão
+listadas em `specs/039-alinhamento-fino-telas-micael/spec.md`. Conferência no aparelho via ADB
+pendente.
+
+**Spec 038 (galeria) validada localmente:** `PhotoGallery` (`src/view/listings/photoGallery.tsx`) passou a usar
 `FlatList` horizontal paginada para swipe lateral, com botões Anterior/Próxima sincronizados,
 indicador "Foto X de Y", rótulo de acessibilidade próprio por foto e navegação por teclado na Web
 (`ArrowRight`/`ArrowLeft`/`Esc`, mesmo padrão de `Dialog.tsx`). `npm run validate` passou com 784
 testes em 114 arquivos. Validação manual de gesto real em dispositivo e teclado em navegador real
 ainda pendente — ver `specs/038-galeria-swipe-teclado/validacao.md`.
+
+**Spec 037 validada localmente:** cartões de ponto de encontro seguro em `/negociacao/[id]` passam a
+exibir endereço e horário recomendado, com botão "Como chegar" abrindo o app de mapas padrão
+(`Linking.openURL`) e mensagem de erro acessível quando a abertura falha. `npm run validate` passou
+com 781 testes em 114 arquivos. Validação manual do toque real em dispositivo (abertura efetiva do
+Google Maps/Apple Maps) ainda pendente — ver `specs/037-pontos-encontro-mapa/validacao.md`.
 
 **Spec 036 validada localmente:** lista de alertas com navegação para gerenciamento e edição, modalidades persistidas e aplicadas às notificações. `npm run validate` passou com 779 testes em 114 arquivos, além de tipos, arquitetura e SQL/PGlite. `npm run verify:release` passou, incluindo compilação Web com 28 rotas. No Android, `/alertas` sem sessão foi conferida via ADB; o aparelho se desconectou antes da conferência autenticada. O fluxo autenticado completo foi conferido visualmente na Web local via CDP, com sessão temporária em memória removida após o teste. A migração remota segue pendente porque `supabase migration list` retornou `AccessTokenRequiredError`.
 
@@ -192,3 +212,4 @@ No app ativo em desenvolvimento, 21 rotas cobrem as jornadas essenciais da beta.
 - `specs/031-alinhamento-complementar-telas-micael-figma/`: Alinhamento complementar de Meus Anúncios, Denúncia e Encontro ao Figma.
 - `specs/032-alinhamento-final-telas-micael-figma/`: Abas, filtros e busca em Minha Estante, Notificações e Central de Ajuda.
 - `specs/033-correcoes-revisao-integral/`: Correções de integridade arquitetural, aceite atômico de pedidos, portabilidade LGPD e polimento visual comprovado via ADB no dispositivo físico Android contra o PDF oficial de referência.
+- `specs/039-alinhamento-fino-telas-micael/`: Alinhamento fino de oito telas do Micael ao canvas Android do Figma, lido nó a nó pelo MCP, com a lista das diferenças que dependem de recursos ainda inexistentes.

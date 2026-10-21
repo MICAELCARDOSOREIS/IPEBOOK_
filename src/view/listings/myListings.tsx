@@ -98,12 +98,6 @@ export function MyListings({
             ) : null}
             {state.books.length > 0 ? (
               <>
-                <View style={styles.heroHeader}>
-                  <Text style={styles.heroHeadline}>Cada livro, uma conversa.</Text>
-                  <Text style={styles.orientationHint}>
-                    Toque em um livro para editar, pausar ou marcar como concluído.
-                  </Text>
-                </View>
                 <View testID="my-listings-tablist" accessibilityRole="tablist" style={styles.tabs}>
                   <Pressable
                     accessibilityRole="tab"
@@ -296,6 +290,12 @@ export function MyListings({
                 );
               }}
             />
+            {/* `05.01` traz a dica de uso depois da lista, não antes dela. */}
+            {state.books.length > 0 ? (
+              <Text style={styles.orientationHint}>
+                Toque em um livro para editar, pausar ou marcar como concluído.
+              </Text>
+            ) : null}
           </>
         )}
       </View>
@@ -429,10 +429,6 @@ const styles = StyleSheet.create({
     ...tokens.typography.bodyMedium,
     color: tokens.colors.secondaryText,
   },
-  heroHeader: {
-    marginTop: tokens.spacing[12],
-    gap: tokens.spacing[4],
-  },
   filterRow: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -460,12 +456,6 @@ const styles = StyleSheet.create({
   filterChipTextSelected: {
     color: tokens.colors.surface,
     fontWeight: "600",
-  },
-  heroHeadline: {
-    fontSize: tokens.typography.displayLarge.fontSize,
-    lineHeight: tokens.typography.displayLarge.lineHeight,
-    fontFamily: tokens.typography.displayLarge.fontFamily,
-    color: tokens.colors.text,
   },
   list: { paddingVertical: tokens.spacing[16], gap: tokens.spacing[12] },
   empty: { paddingTop: tokens.spacing[48], alignItems: "center", gap: tokens.spacing[12] },

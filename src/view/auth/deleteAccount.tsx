@@ -99,9 +99,12 @@ export default function DeleteAccount({
             <Text style={styles.exportText}>
               Nome, cidade, anúncios e avaliações ajudam a comunidade a conhecer você.
             </Text>
+          </View>
+
+          <View style={styles.privacyInfoCard}>
             <Text style={styles.privacyInfoTitle}>Dados de acesso privados</Text>
             <Text style={styles.exportText}>
-              Seu telefone e e-mail não aparecem no perfil público nem nos anúncios.
+              Seu e-mail não aparece no perfil público nem nos anúncios.
             </Text>
           </View>
 
@@ -122,12 +125,6 @@ export default function DeleteAccount({
           ) : null}
 
           <View style={styles.exportSection}>
-            <Text accessibilityRole="header" style={styles.exportTitle}>
-              Portabilidade de dados (LGPD)
-            </Text>
-            <Text style={styles.exportText}>
-              Baixe uma cópia dos seus anúncios, pedidos e dados cadastrais em formato JSON.
-            </Text>
             {state.exportSuccess ? (
               <View style={styles.exportSummaryBox}>
                 <Text accessibilityRole="alert" style={styles.exportSuccessText}>
@@ -302,11 +299,6 @@ const styles = StyleSheet.create({
   exportSection: {
     gap: tokens.spacing[12],
     paddingTop: tokens.spacing[8],
-  },
-  exportTitle: {
-    ...tokens.typography.titleMedium,
-    fontFamily: tokens.typography.displayLarge.fontFamily,
-    color: tokens.colors.action,
   },
   exportText: {
     ...tokens.typography.bodyMedium,

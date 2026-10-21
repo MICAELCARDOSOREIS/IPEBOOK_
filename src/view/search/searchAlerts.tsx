@@ -1,6 +1,7 @@
 import { useId } from "react";
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { AppIcon } from "@/view/components/AppIcon";
 import { FilledButton } from "@/view/components/FilledButton";
 import { IconBadge } from "@/view/components/IconBadge";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
@@ -113,21 +114,29 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
                 </View>
               }
               renderItem={({ item }) => (
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={`Gerenciar alerta ${item.query}`}
-                  onPress={() => onManageAlert?.(item.id)}
-                  style={styles.row}
-                >
-                  <View style={styles.rowText}>
-                    <Text style={styles.title}>{item.query}</Text>
-                    <Text style={styles.metaText}>{`${ALERT_MODALITY_SUMMARY(item.modalities)} · ${ALERT_CITY}`}</Text>
-                    <Tag
-                      variant={item.active ? "available" : "paused"}
-                      label={item.active ? "Ativo" : "Pausado"}
-                    />
-                  </View>
-                </Pressable>
+                <View style={styles.alertItem}>
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={`Gerenciar alerta ${item.query}`}
+                    onPress={() => onManageAlert?.(item.id)}
+                    style={styles.row}
+                  >
+                    <AppIcon name="bell" size={24} color={tokens.colors.text} />
+                    <View style={styles.rowText}>
+                      <Text style={styles.title}>{item.query}</Text>
+                      <Text style={styles.metaText}>{`${ALERT_MODALITY_SUMMARY(item.modalities)} · ${ALERT_CITY}`}</Text>
+                      {item.active ? null : <Tag variant="paused" label="Pausado" />}
+                    </View>
+                  </Pressable>
+                  {item.active ? (
+                    <View style={styles.activeAlertCard}>
+                      <Text style={styles.activeAlertTitle}>Alerta ativo</Text>
+                      <Text style={styles.body}>
+                        {`Você recebe uma notificação quando um novo livro corresponde à busca por ${item.query}.`}
+                      </Text>
+                    </View>
+                  ) : null}
+                </View>
               )}
             />
           )}
@@ -262,17 +271,27 @@ const styles = StyleSheet.create({
     paddingVertical: tokens.spacing[8],
     gap: tokens.spacing[8],
   },
+  alertItem: {
+    gap: tokens.spacing[12],
+  },
   row: {
     minHeight: tokens.accessibility.touchTarget,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    backgroundColor: tokens.colors.surface,
-    borderRadius: tokens.radius.medium,
-    borderWidth: 1,
-    borderColor: tokens.colors.m3.outlineVariant,
-    padding: tokens.spacing[16],
+    paddingVertical: tokens.spacing[8],
     gap: tokens.spacing[12],
+  },
+  activeAlertCard: {
+    backgroundColor: tokens.colors.badge.sale.background,
+    borderRadius: tokens.radius.medium,
+    padding: tokens.spacing[16],
+    gap: tokens.spacing[4],
+  },
+  activeAlertTitle: {
+    fontSize: tokens.typography.titleMedium.fontSize,
+    lineHeight: tokens.typography.titleMedium.lineHeight,
+    fontFamily: tokens.typography.titleMedium.fontFamily,
+    color: tokens.colors.text,
   },
   rowText: {
     flex: 1,

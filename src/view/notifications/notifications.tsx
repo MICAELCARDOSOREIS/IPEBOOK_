@@ -1,7 +1,7 @@
 import { Pressable, SectionList, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import type { AppNotification } from "@/model/entities/notification";
-import type { AppIconName } from "@/view/components/AppIcon";
+import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
 import { ErrorState } from "@/view/components/ErrorState";
 import { FilledButton } from "@/view/components/FilledButton";
 import { IconBadge, type IconBadgeTone } from "@/view/components/IconBadge";
@@ -81,20 +81,12 @@ export default function Notifications({
     <SafeAreaView style={styles.page}>
       <TopAppBar title="Notificações" onBack={() => onBack?.()} />
       <View style={styles.content}>
-        {showListChrome ? (
-        <View style={styles.heroHeader}>
-          <Text style={styles.heroTitle}>Novidades dos seus livros.</Text>
-          <Text style={styles.heroSubtitle}>
-            Propostas, mensagens e avisos dos seus alertas.
+        {showListChrome && state.unreadCount > 0 ? (
+          <Text style={styles.unreadCounterBadge}>
+            {state.unreadCount === 1
+              ? "1 alerta pendente de leitura"
+              : `${state.unreadCount} alertas pendentes de leitura`}
           </Text>
-          {state.unreadCount > 0 ? (
-            <Text style={styles.unreadCounterBadge}>
-              {state.unreadCount === 1
-                ? "1 alerta pendente de leitura"
-                : `${state.unreadCount} alertas pendentes de leitura`}
-            </Text>
-          ) : null}
-        </View>
         ) : null}
         {showListChrome ? (
         <View style={styles.filterBar}>
@@ -216,11 +208,15 @@ export default function Notifications({
                       </Text>
                     </View>
                     {!item.read ? <View style={styles.unreadDot} /> : null}
+                    {item.actionUrl ? (
+                      <AppIcon
+                        name="chevronRight"
+                        size={20}
+                        color={tokens.colors.secondaryText}
+                      />
+                    ) : null}
                   </View>
                   <Text style={styles.cardMessage}>{item.message}</Text>
-                  {item.actionUrl ? (
-                    <Text style={styles.actionHint}>Toque para ver detalhes →</Text>
-                  ) : null}
                 </Pressable>
               );
             }}
@@ -246,20 +242,6 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     paddingHorizontal: tokens.spacing[16],
     paddingTop: tokens.spacing[8],
-  },
-  heroHeader: {
-    marginBottom: tokens.spacing[12],
-    gap: tokens.spacing[4],
-  },
-  heroTitle: {
-    fontSize: tokens.typography.displayLarge.fontSize,
-    lineHeight: tokens.typography.displayLarge.lineHeight,
-    fontFamily: tokens.typography.displayLarge.fontFamily,
-    color: tokens.colors.text,
-  },
-  heroSubtitle: {
-    ...tokens.typography.bodyMedium,
-    color: tokens.colors.secondaryText,
   },
   unreadCounterBadge: {
     ...tokens.typography.labelMedium,
@@ -393,11 +375,5 @@ const styles = StyleSheet.create({
   cardMessage: {
     ...tokens.typography.bodyMedium,
     color: tokens.colors.secondaryText,
-  },
-  actionHint: {
-    ...tokens.typography.labelMedium,
-    color: tokens.colors.action,
-    fontWeight: "600",
-    marginTop: tokens.spacing[4],
   },
 });

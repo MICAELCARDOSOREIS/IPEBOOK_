@@ -69,7 +69,8 @@ describe("Favorites alinhada ao Figma 02.06 (Spec 030)", () => {
     });
 
     expect(screen.getByText("Livros (1)")).toBeDefined();
-    expect(screen.getByText("Alertas")).toBeDefined();
+    // Spec 039 (RN-03): a aba "Alertas" também mostra a contagem, como em `02.06`.
+    expect(screen.getByText("Alertas (0)")).toBeDefined();
   });
 
   it("mostra modalidade, preço, conservação e bairro na linha", async () => {
@@ -112,7 +113,7 @@ describe("Favorites alinhada ao Figma 02.06 (Spec 030)", () => {
     });
 
     await act(async () => {
-      fireEvent.press(screen.getByText("Alertas"));
+      fireEvent.press(screen.getByText("Alertas (0)"));
     });
 
     expect(onNavigateToAlerts).toHaveBeenCalledTimes(1);

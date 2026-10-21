@@ -57,6 +57,27 @@ describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
     expect(screen.getByRole("header").props.children).toBe("Minha estante");
   });
 
+  it("não acrescenta manchete e mostra a dica depois da lista (Spec 039, Figma 05.01)", async () => {
+    const book: Book = {
+      id: "b-038",
+      title: "Dom Casmurro",
+      author: "Machado de Assis",
+      modality: "trade",
+      ownerId: "user-1",
+      status: "available",
+    };
+    mockViewModel({ books: [book], loading: false, error: null });
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<MyListings sessionUserId="user-1" />);
+    });
+
+    expect(screen.queryByText("Cada livro, uma conversa.")).toBeNull();
+    expect(
+      screen.getByText("Toque em um livro para editar, pausar ou marcar como concluído."),
+    ).toBeDefined();
+  });
+
   it("exibe mensagem e botão de cadastrar quando não há anúncios", async () => {
     mockViewModel({ books: [], loading: false, error: null });
     const onNavigateToCreateListing = vi.fn();

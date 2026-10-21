@@ -93,7 +93,8 @@ describe("tela de exclusão de conta (DeleteAccount - LGPD)", () => {
       );
     });
 
-    expect(screen.getByRole("header", { name: "Portabilidade de dados (LGPD)" })).toBeDefined();
+    // Spec 039 (RN-08): `07.07` reduz a portabilidade à ação de rodapé; o rótulo acessível do
+    // botão é o que identifica a exportação, no lugar do cabeçalho de seção.
     const downloadBtn = screen.getByRole("button", { name: "Baixar meus dados pessoais em formato JSON" });
     expect(downloadBtn).toBeDefined();
     await act(async () => {
