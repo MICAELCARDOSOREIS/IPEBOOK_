@@ -64,11 +64,12 @@ function setup(
     { request },
   ]);
   const share = vi.fn().mockResolvedValue(undefined);
+  const shareToWhatsApp = vi.fn().mockResolvedValue(undefined);
   vi.mocked(useShareListingViewModel).mockReturnValue([
     { ...emptyShare, ...options.share },
-    { share, dismissLinkCopied: vi.fn() },
+    { share, shareToWhatsApp, dismissLinkCopied: vi.fn() },
   ]);
-  return { request, share };
+  return { request, share, shareToWhatsApp };
 }
 
 async function renderDetail(props: Partial<React.ComponentProps<typeof BookDetail>> = {}) {
@@ -178,6 +179,21 @@ describe("BookDetail (spec 006, US6/T029)", () => {
     const screen = await renderDetail();
     await act(async () => { fireEvent.press(screen.getByLabelText("Compartilhar anúncio")); });
     expect(share).toHaveBeenCalledWith("b1");
+  });
+
+  it("compartilha no WhatsApp com os dados do anúncio (Issue #145)", async () => {
+    const { shareToWhatsApp } = setup(
+      book({ ownerId: "other", modality: "sale", price: 42 }),
+      null,
+    );
+    const screen = await renderDetail();
+    await act(async () => { fireEvent.press(screen.getByLabelText("Compartilhar no WhatsApp")); });
+    expect(shareToWhatsApp).toHaveBeenCalledWith("b1", {
+      title: "Dom Casmurro",
+      author: "Machado de Assis",
+      modality: "sale",
+      price: 42,
+    });
   });
 
   it("mostra confirmação de link copiado (Spec 019)", async () => {

@@ -116,6 +116,23 @@ export default function BookDetail({
             >
               <Text style={styles.ownerText}>Compartilhar</Text>
             </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Compartilhar no WhatsApp"
+              accessibilityState={{ disabled: share.sharing }}
+              disabled={share.sharing}
+              onPress={() =>
+                void shareActions.shareToWhatsApp(book.id, {
+                  title: book.title,
+                  author: book.author,
+                  modality: book.modality,
+                  price: book.price,
+                })
+              }
+              style={styles.whatsAppButton}
+            >
+              <Text style={styles.whatsAppText}>Compartilhar no WhatsApp</Text>
+            </Pressable>
             {share.error ? <Text accessibilityRole="alert" style={styles.requestError}>{share.error}</Text> : null}
             {onNavigateToReport && (!sessionUserId || book.ownerId !== sessionUserId) ? (
               <Pressable
@@ -158,6 +175,15 @@ const styles = StyleSheet.create({
   price: { fontSize: tokens.typography.titleMedium.fontSize, fontWeight: "600", color: tokens.colors.text },
   ownerButton: { minHeight: tokens.accessibility.touchTarget, justifyContent: "center" },
   ownerText: { color: tokens.colors.action, fontSize: 14, fontWeight: "600" },
+  whatsAppButton: {
+    minHeight: tokens.accessibility.touchTarget,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#25D366",
+    borderRadius: tokens.radius.full,
+    paddingHorizontal: tokens.spacing[16],
+  },
+  whatsAppText: { color: "#FFFFFF", fontSize: 14, fontWeight: "700" },
   reserved: { fontSize: tokens.typography.bodyMedium.fontSize, color: tokens.colors.secondaryText, fontStyle: "italic" },
   requested: { fontSize: tokens.typography.bodyMedium.fontSize, color: tokens.colors.secondaryText, fontWeight: "600" },
   requestError: { fontSize: tokens.typography.bodyMedium.fontSize, color: tokens.colors.error },
