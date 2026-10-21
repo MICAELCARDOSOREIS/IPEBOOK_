@@ -72,6 +72,12 @@ export default function Notifications({
     <SafeAreaView style={styles.page}>
       <TopAppBar title="Notificações" onBack={() => onBack?.()} />
       <View style={styles.content}>
+        <View style={styles.heroHeader}>
+          <Text style={styles.heroTitle}>Novidades dos seus livros.</Text>
+          <Text style={styles.heroSubtitle}>
+            Propostas, mensagens e avisos dos seus alertas.
+          </Text>
+        </View>
         <View style={styles.filterBar}>
           <View accessibilityRole="tablist" style={styles.filterTabs}>
             <Pressable
@@ -192,6 +198,18 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     paddingHorizontal: tokens.spacing[16],
     paddingTop: tokens.spacing[8],
+  },
+  heroHeader: {
+    marginBottom: tokens.spacing[12],
+    gap: tokens.spacing[4],
+  },
+  heroTitle: {
+    ...tokens.typography.displayLarge,
+    color: tokens.colors.text,
+  },
+  heroSubtitle: {
+    ...tokens.typography.bodyMedium,
+    color: tokens.colors.secondaryText,
   },
   filterBar: {
     flexDirection: "row",

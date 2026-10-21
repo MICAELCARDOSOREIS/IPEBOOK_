@@ -76,9 +76,12 @@ export function MyListings({
               </Text>
             ) : null}
             {state.books.length > 0 ? (
-              <Text style={styles.orientationHint}>
-                Toque em um livro para editar, pausar ou marcar como concluído.
-              </Text>
+              <View style={styles.heroHeader}>
+                <Text style={styles.heroHeadline}>Cada livro, uma conversa.</Text>
+                <Text style={styles.orientationHint}>
+                  Toque em um livro para editar, pausar ou marcar como concluído.
+                </Text>
+              </View>
             ) : null}
             <FlatList
               data={state.books}
@@ -278,7 +281,14 @@ const styles = StyleSheet.create({
   orientationHint: {
     ...tokens.typography.bodyMedium,
     color: tokens.colors.secondaryText,
+  },
+  heroHeader: {
     marginTop: tokens.spacing[12],
+    gap: tokens.spacing[4],
+  },
+  heroHeadline: {
+    ...tokens.typography.displayLarge,
+    color: tokens.colors.text,
   },
   list: { paddingVertical: tokens.spacing[16], gap: tokens.spacing[12] },
   empty: { paddingTop: tokens.spacing[48], alignItems: "center", gap: tokens.spacing[12] },

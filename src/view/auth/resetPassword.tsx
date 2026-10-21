@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Platform, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { FilledButton } from "@/view/components/FilledButton";
+import { IconBadge } from "@/view/components/IconBadge";
 import { TextButton } from "@/view/components/TextButton";
 import { TextField } from "@/view/components/TextField";
 import { TopAppBar } from "@/view/components/TopAppBar";
@@ -14,7 +15,7 @@ export type ResetPasswordProps = {
   onBack?: () => void;
 };
 
-/** Figma `01.06 · Nova senha` (nó `254:3595`) e `01.09 · Senha atualizada`. */
+/** Figma `01.06 · Nova senha` (nó `254:3595`) e `01.09 · Senha atualizada` (nó `254:4006`). */
 export default function ResetPassword({ link, onNavigateToSignIn, onBack }: ResetPasswordProps) {
   const [state, actions] = useResetPasswordViewModel();
   const [password, setPassword] = useState("");
@@ -34,14 +35,23 @@ export default function ResetPassword({ link, onNavigateToSignIn, onBack }: Rese
 
   return (
     <SafeAreaView style={styles.page}>
-      {onBack ? <TopAppBar title="Nova senha" onBack={onBack} /> : null}
+      {onBack ? (
+        <TopAppBar
+          title={state.success ? "Senha atualizada" : "Nova senha"}
+          onBack={onBack}
+        />
+      ) : null}
       <View style={styles.centerContainer}>
         <View style={styles.content}>
-          <Text accessibilityRole="header" style={styles.title}>Um novo começo.</Text>
-          <Text style={styles.subtitle}>Escolha uma senha com pelo menos 8 caracteres.</Text>
-
           {state.success ? (
             <>
+              <IconBadge icon="check" tone="action" />
+              <Text accessibilityRole="header" style={styles.title}>
+                Tudo certo com seu acesso.
+              </Text>
+              <Text style={styles.subtitle}>
+                Sua nova senha foi salva. Entre novamente para continuar.
+              </Text>
               <View style={styles.successBox}>
                 <Text accessibilityRole="alert" style={styles.message}>
                   Senha atualizada. Entre com a nova senha.
@@ -54,6 +64,8 @@ export default function ResetPassword({ link, onNavigateToSignIn, onBack }: Rese
             </>
           ) : (
             <>
+              <Text accessibilityRole="header" style={styles.title}>Um novo começo.</Text>
+              <Text style={styles.subtitle}>Escolha uma senha com pelo menos 8 caracteres.</Text>
               <TextField
                 label="Nova senha"
                 value={password}

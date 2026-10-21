@@ -4,6 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { BOOK_CONDITION_LABELS } from "@/model/entities/book";
 import { BookCover } from "@/view/components/BookCover";
 import { ErrorState } from "@/view/components/ErrorState";
+import { IconBadge } from "@/view/components/IconBadge";
 import { LoadingState } from "@/view/components/LoadingState";
 import { OfflineState } from "@/view/components/OfflineState";
 import { Tag } from "@/view/components/Tag";
@@ -72,6 +73,7 @@ export default function Favorites({
 
       {!userId ? (
         <View style={styles.status}>
+          <IconBadge icon="heart" tone="action" />
           <Text accessibilityRole="header" style={styles.statusTitle}>
             Entre para ver seus favoritos
           </Text>
@@ -94,11 +96,13 @@ export default function Favorites({
           contentContainerStyle={styles.list}
           ListEmptyComponent={
             <View style={styles.status}>
+              <IconBadge icon="heart" tone="neutral" />
+              <Text style={styles.emptyHeadline}>Nenhum livro salvo</Text>
               <Text accessibilityRole="header" style={styles.statusTitle}>
                 Nenhum favorito ainda
               </Text>
               <Text style={styles.statusHint}>
-                Toque no coração de um anúncio para guardá-lo aqui.
+                Salve os livros que chamarem sua atenção para acompanhar de perto. Toque no coração de um anúncio para guardá-lo aqui.
               </Text>
             </View>
           }
@@ -194,6 +198,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: tokens.spacing[12],
     padding: tokens.spacing[24],
+  },
+  emptyHeadline: {
+    ...tokens.typography.titleLarge,
+    fontFamily: tokens.typography.displayLarge.fontFamily,
+    color: tokens.colors.text,
+    textAlign: "center",
   },
   statusTitle: {
     fontSize: tokens.typography.titleMedium.fontSize,

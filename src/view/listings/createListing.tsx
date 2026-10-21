@@ -154,6 +154,15 @@ export default function CreateListing({
 
           {step === 1 ? (
             <>
+              <View style={styles.isbnCard}>
+                <IconBadge icon="photo" tone="action" />
+                <View style={styles.isbnTexts}>
+                  <Text style={styles.isbnTitle}>Ler ISBN com a câmera</Text>
+                  <Text style={styles.hint}>Preenche título e autor automaticamente.</Text>
+                </View>
+              </View>
+              <Text style={styles.dividerText}>ou</Text>
+
               <View style={styles.field}>
                 <Text style={styles.sectionLabel}>Modalidade</Text>
                 <View style={styles.chipRow}>
@@ -369,6 +378,27 @@ const styles = StyleSheet.create({
     gap: tokens.spacing[16],
   },
   field: { gap: tokens.spacing[8] },
+  isbnCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: tokens.spacing[12],
+    padding: tokens.spacing[12],
+    borderRadius: tokens.radius.medium,
+    backgroundColor: tokens.colors.m3.surfaceContainerLow,
+    borderWidth: 1,
+    borderColor: tokens.colors.m3.outlineVariant,
+  },
+  isbnTexts: { flex: 1, gap: tokens.spacing[4] },
+  isbnTitle: {
+    ...tokens.typography.titleMedium,
+    fontFamily: tokens.typography.displayLarge.fontFamily,
+    color: tokens.colors.text,
+  },
+  dividerText: {
+    ...tokens.typography.labelMedium,
+    color: tokens.colors.secondaryText,
+    textAlign: "center",
+  },
   chipRow: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[8] },
   photoRow: { flexDirection: "row", gap: tokens.spacing[12], alignItems: "flex-start" },
   photoTexts: { flex: 1, gap: tokens.spacing[12] },
