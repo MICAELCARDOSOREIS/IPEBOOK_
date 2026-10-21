@@ -173,7 +173,6 @@ const styles = StyleSheet.create({
     fontSize: tokens.typography.displayLarge.fontSize,
     lineHeight: tokens.typography.displayLarge.lineHeight,
     fontFamily: tokens.typography.displayLarge.fontFamily,
-    fontWeight: tokens.typography.displayLarge.fontWeight,
     color: tokens.colors.text,
   },
   subtitle: {

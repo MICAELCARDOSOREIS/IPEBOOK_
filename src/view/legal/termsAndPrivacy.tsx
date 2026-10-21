@@ -109,7 +109,9 @@ const styles = StyleSheet.create({
     marginBottom: tokens.spacing[16],
   },
   heroTitle: {
-    ...tokens.typography.displayLarge,
+    fontSize: tokens.typography.displayLarge.fontSize,
+    lineHeight: tokens.typography.displayLarge.lineHeight,
+    fontFamily: tokens.typography.displayLarge.fontFamily,
     color: tokens.colors.text,
   },
   heroSubtitle: {

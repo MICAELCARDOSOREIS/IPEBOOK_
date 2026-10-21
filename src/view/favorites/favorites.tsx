@@ -208,7 +208,7 @@ const styles = StyleSheet.create({
   statusTitle: {
     fontSize: tokens.typography.titleMedium.fontSize,
     lineHeight: tokens.typography.titleMedium.lineHeight,
-    fontFamily: tokens.typography.titleMedium.fontFamily,
+    fontFamily: tokens.typography.displayLarge.fontFamily,
     fontWeight: tokens.typography.titleMedium.fontWeight,
     color: tokens.colors.text,
   },

@@ -211,7 +211,9 @@ const styles = StyleSheet.create({
   },
   container: { gap: tokens.spacing[16] },
   heroHeadline: {
-    ...tokens.typography.displayLarge,
+    fontSize: tokens.typography.displayLarge.fontSize,
+    lineHeight: tokens.typography.displayLarge.lineHeight,
+    fontFamily: tokens.typography.displayLarge.fontFamily,
     color: tokens.colors.text,
   },
   successBanner: {

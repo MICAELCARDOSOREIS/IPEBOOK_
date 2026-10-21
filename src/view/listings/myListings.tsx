@@ -287,7 +287,9 @@ const styles = StyleSheet.create({
     gap: tokens.spacing[4],
   },
   heroHeadline: {
-    ...tokens.typography.displayLarge,
+    fontSize: tokens.typography.displayLarge.fontSize,
+    lineHeight: tokens.typography.displayLarge.lineHeight,
+    fontFamily: tokens.typography.displayLarge.fontFamily,
     color: tokens.colors.text,
   },
   list: { paddingVertical: tokens.spacing[16], gap: tokens.spacing[12] },

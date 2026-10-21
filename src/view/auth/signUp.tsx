@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Platform, StyleSheet, Text, View } from "react-native";
+import { Platform, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { tokens } from "@/view/tokens";
@@ -47,7 +47,10 @@ export default function SignUp({
   return (
     <SafeAreaView style={styles.page}>
       {onBack ? <TopAppBar title="Criar conta" onBack={onBack} /> : null}
-      <View style={styles.centerContainer}>
+      <ScrollView
+        contentContainerStyle={styles.centerContainer}
+        keyboardShouldPersistTaps="handled"
+      >
         <View style={styles.content}>
           <Logotipo />
           <Text accessibilityRole="header" style={styles.title}>Crie sua conta</Text>
@@ -118,7 +121,7 @@ export default function SignUp({
 
           <OutlinedButton label="Já tenho conta" onPress={() => onNavigateToSignIn?.()} />
         </View>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -129,7 +132,7 @@ const styles = StyleSheet.create({
     backgroundColor: tokens.colors.background,
   },
   centerContainer: {
-    flex: 1,
+    flexGrow: 1,
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: tokens.spacing[16],
@@ -156,7 +159,6 @@ const styles = StyleSheet.create({
     fontSize: tokens.typography.displayLarge.fontSize,
     lineHeight: tokens.typography.displayLarge.lineHeight,
     fontFamily: tokens.typography.displayLarge.fontFamily,
-    fontWeight: tokens.typography.displayLarge.fontWeight,
     color: tokens.colors.text,
   },
   subtitle: {
