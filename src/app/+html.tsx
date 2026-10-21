@@ -21,7 +21,14 @@ export default function Root({ children }: PropsWithChildren) {
         <link rel="apple-touch-icon" href="/icone-192.png" />
         <ScrollViewStyleReset />
       </head>
-      <body>{children}</body>
+      <body>
+        {children}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `if('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js',{scope:'/'}).catch(function(){});});}`,
+          }}
+        />
+      </body>
     </html>
   );
 }

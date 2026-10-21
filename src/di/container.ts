@@ -73,6 +73,8 @@ import type { IRateLimiter } from "@/model/services/iRateLimiter";
 import { ClientRateLimiter } from "@/infra/services/clientRateLimiter";
 import type { IFileDownloadService } from "@/model/services/iFileDownloadService";
 import { FileDownloadService } from "@/infra/services/fileDownloadService";
+import type { IPwaService } from "@/model/services/iPwaService";
+import { PwaService } from "@/infra/services/pwaService";
 import type { IOnboardingUseCases } from "@/usecase/iOnboardingUseCases";
 import type { IUserDataExportUseCases } from "@/usecase/iUserDataExportUseCases";
 import type { IUserPreferencesUseCases } from "@/usecase/iUserPreferencesUseCases";
@@ -205,3 +207,5 @@ export const logger: ILogger = new SafeLogger();
 export const rateLimiter: IRateLimiter = new ClientRateLimiter();
 
 export const fileDownloadService: IFileDownloadService = new FileDownloadService();
+
+export const pwaService: IPwaService = new PwaService(logger);

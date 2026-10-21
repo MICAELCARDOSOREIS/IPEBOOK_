@@ -2,6 +2,7 @@ import { Stack, router, usePathname, type Href } from "expo-router";
 import { View } from "react-native";
 import { useIpebookFonts } from "@/view/useIpebookFonts";
 import { NavigationBar, type NavigationDestination } from "@/view/components/NavigationBar";
+import { PwaRegister } from "@/view/components/PwaRegister";
 import { InitialRouteGate } from "@/view/onboarding/initialRouteGate";
 
 /** Rotas de nível superior (ADR 0011) — rotas de fluxo (entrar, anunciar, etc.) não entram aqui. */
@@ -26,6 +27,7 @@ export default function RootLayout() {
   return (
     <InitialRouteGate pathname={pathname} onShowWelcome={() => router.replace("/bem-vindo")}>
       <View style={{ flex: 1 }}>
+        <PwaRegister />
         <Stack screenOptions={{ headerShown: false }} />
         {activeDestination ? (
           <NavigationBar
