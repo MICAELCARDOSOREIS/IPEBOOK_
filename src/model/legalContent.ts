@@ -7,7 +7,7 @@ export const TERMS_OF_USE: readonly LegalSection[] = [
   {
     title: "1. Finalidade da Comunidade",
     paragraphs: [
-      "O Ipebook é uma plataforma comunitária voltada à circulação e reutilização de livros físicos, permitindo que leitores publiquem anúncios nas modalidades de venda, troca e doação.",
+      "O IpêBook é uma plataforma comunitária voltada à circulação e reutilização de livros físicos, permitindo que leitores publiquem anúncios nas modalidades de venda, troca e doação.",
       "A atuação inicial da versão beta é focada exclusivamente na cidade de Piripiri, PI, incentivando a integração local e reduzindo barreiras de acesso à leitura.",
     ],
   },
@@ -28,7 +28,7 @@ export const TERMS_OF_USE: readonly LegalSection[] = [
   {
     title: "4. Encontros Presenciais e Segurança",
     paragraphs: [
-      "O Ipebook não realiza a entrega física de mercadorias nem intermedia pagamentos financeiros de forma custodiada. A entrega e eventuais pagamentos são combinados diretamente entre as partes.",
+      "O IpêBook não realiza a entrega física de mercadorias nem intermedia pagamentos financeiros de forma custodiada. A entrega e eventuais pagamentos são combinados diretamente entre as partes.",
       "Recomenda-se enfaticamente que os encontros presenciais sejam agendados durante o dia em locais públicos e movimentados de Piripiri (como o Campus do IFPI Piripiri ou a Praça da Bandeira).",
     ],
   },
@@ -38,7 +38,7 @@ export const PRIVACY_POLICY: readonly LegalSection[] = [
   {
     title: "1. Tratamento de Dados Pessoais (LGPD)",
     paragraphs: [
-      "O Ipebook coleta exclusivamente os dados indispensáveis para o funcionamento da plataforma: endereço de e-mail e informações públicas dos livros cadastrados.",
+      "O IpêBook coleta exclusivamente os dados indispensáveis para o funcionamento da plataforma: endereço de e-mail e informações públicas dos livros cadastrados.",
       "O tratamento segue os princípios da boa-fé, finalidade, transparência e segurança previstos na Lei Geral de Proteção de Dados (Lei nº 13.709/2018).",
     ],
   },

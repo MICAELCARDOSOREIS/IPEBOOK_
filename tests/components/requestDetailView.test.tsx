@@ -46,6 +46,7 @@ describe("tela de Detalhes da Negociação (ISO/IEC 25010 - Usabilidade e Acessi
       status: "reserved",
     },
     isOwner: true,
+    counterpartName: "Ana Paula",
     counterpartId: "comprador-1",
     safeMeetingPoints: ["Campus IFPI Piripiri", "Praça da Bandeira"],
   };
@@ -65,12 +66,12 @@ describe("tela de Detalhes da Negociação (ISO/IEC 25010 - Usabilidade e Acessi
       );
     });
 
-    expect(screen.getByRole("header", { name: "Negociação" })).toBeDefined();
+    expect(screen.getByRole("header", { name: "Acompanhar encontro" })).toBeDefined();
     expect(screen.getByText("Negociação aceita!")).toBeDefined();
     expect(screen.getByText("Memórias Póstumas")).toBeDefined();
     expect(screen.getByText("Machado de Assis")).toBeDefined();
     expect(screen.getByText("R$ 35.00")).toBeDefined();
-    expect(screen.getByText("comprador-1")).toBeDefined();
+    expect(screen.getByText("Ana Paula")).toBeDefined();
     expect(screen.getByText("• Campus IFPI Piripiri")).toBeDefined();
     expect(screen.getByText("• Praça da Bandeira")).toBeDefined();
 

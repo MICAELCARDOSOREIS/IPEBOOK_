@@ -9,16 +9,16 @@ export const FAQ_ITEMS: readonly FaqItem[] = [
   {
     id: "faq-1",
     category: "funcionamento",
-    question: "Como funciona o Ipebook?",
+    question: "Como funciona o IpêBook?",
     answer:
-      "O Ipebook é uma plataforma comunitária voltada para os leitores de Piripiri, PI. Você pode anunciar livros físicos que já leu para doação, troca ou venda a preços justos, combinando a entrega diretamente com outros leitores.",
+      "O IpêBook é uma plataforma comunitária voltada para os leitores de Piripiri, PI. Você pode anunciar livros físicos que já leu para doação, troca ou venda a preços justos, combinando a entrega diretamente com outros leitores.",
   },
   {
     id: "faq-2",
     category: "regras",
-    question: "O Ipebook cobra alguma taxa ou comissão?",
+    question: "O IpêBook cobra alguma taxa ou comissão?",
     answer:
-      "Não. O Ipebook é 100% gratuito e comunitário. Não cobramos comissões por trocas, doações ou vendas. Nas vendas, o valor é acertado diretamente entre as partes no momento do encontro.",
+      "Não. O IpêBook é 100% gratuito e comunitário. Não cobramos comissões por trocas, doações ou vendas. Nas vendas, o valor é acertado diretamente entre as partes no momento do encontro.",
   },
   {
     id: "faq-3",
@@ -51,7 +51,7 @@ export const FAQ_ITEMS: readonly FaqItem[] = [
   {
     id: "faq-7",
     category: "suporte",
-    question: "Como falar com a equipe do Ipebook?",
+    question: "Como falar com a equipe do IpêBook?",
     answer:
       "Você pode entrar em contato conosco pelo e-mail contato@ipebook.com.br ou pessoalmente com a coordenação comunitária do projeto no IFPI Piripiri.",
   },

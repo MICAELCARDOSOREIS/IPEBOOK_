@@ -166,6 +166,7 @@ export const authUseCases: IAuthUseCases = new AuthUseCases(
 export const bookRequestUseCases: IBookRequestUseCases = new BookRequestUseCases(
   bookDataSource,
   dataSources.requests,
+  dataSources.profiles,
 );
 
 export const reportUseCases: IReportUseCases = new ReportUseCases(

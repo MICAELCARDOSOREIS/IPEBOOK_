@@ -13,16 +13,21 @@ const tones: Record<IconBadgeTone, { background: string; icon: string }> = {
   neutral: { background: tokens.colors.soft, icon: tokens.colors.secondaryText },
 };
 
+/** `medium` é o selo das listas; `large` é o círculo de destaque dos estados vazios do Figma. */
+export type IconBadgeSize = "medium" | "large";
+
 export interface IconBadgeProps {
   icon: AppIconName;
   tone: IconBadgeTone;
+  size?: IconBadgeSize;
 }
 
-export function IconBadge({ icon, tone }: IconBadgeProps) {
+export function IconBadge({ icon, tone, size = "medium" }: IconBadgeProps) {
   const { background, icon: iconColor } = tones[tone];
+  const large = size === "large";
   return (
-    <View style={[styles.badge, { backgroundColor: background }]}>
-      <AppIcon name={icon} size={18} color={iconColor} />
+    <View style={[large ? styles.badgeLarge : styles.badge, { backgroundColor: background }]}>
+      <AppIcon name={icon} size={large ? 40 : 18} color={iconColor} />
     </View>
   );
 }
@@ -32,6 +37,13 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: tokens.radius.small,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  badgeLarge: {
+    width: 96,
+    height: 96,
+    borderRadius: tokens.radius.full,
     alignItems: "center",
     justifyContent: "center",
   },

@@ -173,10 +173,9 @@ export function MyListings({
                   </View>
                 ) : (
                   <View style={styles.empty}>
-                    <IconBadge icon="shelf" tone="neutral" />
+                    <IconBadge icon="shelf" tone="neutral" size="large" />
                     <Text style={styles.emptyHeadline}>Sua estante começa com um livro</Text>
-                    <Text style={styles.emptyTitle}>Você ainda não cadastrou nenhum anúncio.</Text>
-                    <Text style={styles.body}>
+                    <Text style={styles.emptyTitle}>
                       Anuncie um livro para vender, trocar ou doar na sua região.
                     </Text>
                     <View style={styles.emptyAction}>
@@ -343,6 +342,8 @@ export type MyListingsScreenProps = {
   onRequireSignIn?: () => void;
   onNavigateToBookDetail?: (bookId: string) => void;
   onNavigateToCreateListing?: () => void;
+  /** Abre a ajuda, como o link "Como funciona" do estado vazio de `05.02`. */
+  onNavigateToHelp?: () => void;
   onNavigateToEditListing?: (bookId: string) => void;
   onNavigateToManageListing?: (bookId: string) => void;
 };
@@ -352,6 +353,7 @@ export default function MyListingsScreen({
   onRequireSignIn,
   onNavigateToBookDetail,
   onNavigateToCreateListing,
+  onNavigateToHelp,
   onNavigateToEditListing,
   onNavigateToManageListing,
 }: MyListingsScreenProps = {}) {
@@ -371,6 +373,7 @@ export default function MyListingsScreen({
       onBack={onBack}
       onNavigateToBookDetail={onNavigateToBookDetail}
       onNavigateToCreateListing={onNavigateToCreateListing}
+      onNavigateToHelp={onNavigateToHelp}
       onNavigateToEditListing={onNavigateToEditListing}
       onNavigateToManageListing={onNavigateToManageListing}
     />
@@ -488,7 +491,7 @@ const styles = StyleSheet.create({
     color: tokens.colors.action,
     fontWeight: "600",
   },
-  emptyAction: { marginTop: tokens.spacing[16], width: "100%", maxWidth: 260 },
+  emptyAction: { marginTop: tokens.spacing[16], width: "100%" },
   bookCard: {
     flexDirection: "row",
     alignItems: "center",

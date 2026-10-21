@@ -54,6 +54,7 @@ describe("testes de hook: useRequestDetailViewModel (ISO/IEC 25010 - Confiabilid
       status: "reserved",
     },
     isOwner: true,
+    counterpartName: "Ana Paula",
     counterpartId: "user-buyer",
     safeMeetingPoints: ["Campus IFPI"],
   };

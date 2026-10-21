@@ -54,6 +54,6 @@ describe("Integração: Detalhes da Negociação Aceita (Spec 009)", () => {
       );
     });
 
-    expect(screen.getByRole("header", { name: "Negociação" })).toBeDefined();
+    expect(screen.getByRole("header", { name: "Acompanhar encontro" })).toBeDefined();
   });
 });

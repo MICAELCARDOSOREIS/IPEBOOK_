@@ -48,6 +48,11 @@ export default function Notifications({
   const [state, actions] = useNotificationsViewModel(sessionUserId);
   const { isOnline } = useNetworkStatus();
   const handleExplore = onExploreBooks ?? onBack;
+  /**
+   * Sem nenhuma notificação, `07.05` mostra só o estado vazio: a manchete e os filtros de `07.04`
+   * pertencem à lista cheia.
+   */
+  const showListChrome = state.loading || Boolean(state.error) || state.notifications.length > 0;
 
   if (!sessionUserId) {
     return (
@@ -58,8 +63,8 @@ export default function Notifications({
           <Text accessibilityRole="header" style={styles.emptyTitle}>
             Sessão necessária
           </Text>
-          <Text style={styles.emptyDescription}>
-            Você precisa estar conectado à sua conta do Ipebook para acompanhar notificações e novidades de livros em Piripiri.
+          <Text style={[styles.emptyDescription, styles.textCentered]}>
+            Você precisa estar conectado à sua conta do IpêBook para acompanhar notificações e novidades de livros em Piripiri.
           </Text>
           <View style={styles.buttonWrapper}>
             <FilledButton
@@ -76,6 +81,7 @@ export default function Notifications({
     <SafeAreaView style={styles.page}>
       <TopAppBar title="Notificações" onBack={() => onBack?.()} />
       <View style={styles.content}>
+        {showListChrome ? (
         <View style={styles.heroHeader}>
           <Text style={styles.heroTitle}>Novidades dos seus livros.</Text>
           <Text style={styles.heroSubtitle}>
@@ -89,6 +95,8 @@ export default function Notifications({
             </Text>
           ) : null}
         </View>
+        ) : null}
+        {showListChrome ? (
         <View style={styles.filterBar}>
           <View accessibilityRole="tablist" style={styles.filterTabs}>
             <Pressable
@@ -134,6 +142,7 @@ export default function Notifications({
             </Pressable>
           ) : null}
         </View>
+        ) : null}
 
         {state.loading ? (
           <LoadingState label="Carregando notificações" />
@@ -144,8 +153,7 @@ export default function Notifications({
             <OfflineState onRetry={() => void actions.reload()} />
           )
         ) : state.filteredNotifications.length === 0 ? (
-          <View style={styles.centered}>
-            <IconBadge icon="bell" tone="neutral" />
+          <View style={styles.emptyState}>
             <Text accessibilityRole="header" style={styles.emptyHeadline}>
               {state.filter === "unread" ? "Nenhuma notificação não lida" : "Você está em dia"}
             </Text>
@@ -314,11 +322,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: tokens.spacing[24],
     gap: tokens.spacing[12],
   },
+  /** Estado vazio de `07.05`: alinhado à esquerda, abaixo da barra. */
+  emptyState: {
+    flex: 1,
+    width: "100%",
+    maxWidth: 560,
+    alignSelf: "center",
+    paddingHorizontal: tokens.spacing[24],
+    gap: tokens.spacing[12],
+  },
   emptyHeadline: {
     ...tokens.typography.titleLarge,
     fontFamily: tokens.typography.displayLarge.fontFamily,
     color: tokens.colors.text,
-    textAlign: "center",
   },
   emptyTitle: {
     ...tokens.typography.titleMedium,
@@ -329,12 +345,13 @@ const styles = StyleSheet.create({
   emptyDescription: {
     ...tokens.typography.bodyMedium,
     color: tokens.colors.secondaryText,
+  },
+  textCentered: {
     textAlign: "center",
   },
   buttonWrapper: {
     marginTop: tokens.spacing[12],
     width: "100%",
-    maxWidth: 240,
   },
   listContent: {
     paddingBottom: tokens.spacing[24],

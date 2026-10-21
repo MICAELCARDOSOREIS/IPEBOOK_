@@ -10,7 +10,7 @@ describe("tela de Termos e Privacidade (ISO/IEC 25010 - Usabilidade e Conformida
       screen = await render(<TermsAndPrivacy onBack={() => {}} />);
     });
 
-    expect(screen.getByRole("header", { name: "Termos e Privacidade" })).toBeDefined();
+    expect(screen.getByRole("header", { name: "Termos e privacidade" })).toBeDefined();
   });
 
   it("inicia na aba de Termos de Uso com menção a Piripiri e segurança", async () => {

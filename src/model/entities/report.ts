@@ -35,7 +35,7 @@ export const REPORT_REASONS: readonly ReportReasonOption[] = [
   {
     key: "other",
     label: "Outro motivo",
-    description: "Outra violação das diretrizes de convivência do Ipebook em Piripiri.",
+    description: "Outra violação das diretrizes de convivência do IpêBook em Piripiri.",
   },
 ];
 

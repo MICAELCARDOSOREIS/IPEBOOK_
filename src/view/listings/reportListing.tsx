@@ -41,7 +41,7 @@ export default function ReportListing({
               </Text>
               <Text style={styles.successHeadline}>Recebemos sua denúncia.</Text>
               <Text style={styles.successBody}>
-                A equipe vai analisar o relato em até 24 horas. Obrigado por ajudar a manter a comunidade Ipebook segura em Piripiri.
+                A equipe vai analisar o relato em até 24 horas. Obrigado por ajudar a manter a comunidade IpêBook segura em Piripiri.
               </Text>
               <View style={styles.fullWidthButton}>
                 <FilledButton label="Voltar ao anúncio" onPress={onBack} />
@@ -97,10 +97,6 @@ export default function ReportListing({
             </Text>
           </View>
 
-          <Text accessibilityRole="header" style={styles.sectionTitle}>
-            Por que você está denunciando este anúncio?
-          </Text>
-
           <View testID="report-reasons-radiogroup" accessibilityRole="radiogroup" style={styles.reasonList}>
             {REPORT_REASONS.map((option) => {
               const isSelected = state.reason === option.key;
@@ -110,6 +106,7 @@ export default function ReportListing({
                   accessibilityRole="radio"
                   accessibilityState={{ checked: isSelected, selected: isSelected }}
                   accessibilityLabel={option.label}
+                  accessibilityHint={option.description}
                   onPress={() => actions.setReason(option.key)}
                   style={[styles.reasonOption, isSelected && styles.reasonOptionSelected]}
                 >
@@ -120,7 +117,6 @@ export default function ReportListing({
                     <Text style={[styles.reasonLabel, isSelected && styles.reasonLabelSelected]}>
                       {option.label}
                     </Text>
-                    <Text style={styles.reasonDescription}>{option.description}</Text>
                   </View>
                 </Pressable>
               );
@@ -204,11 +200,6 @@ const styles = StyleSheet.create({
     color: tokens.colors.text,
     textAlign: "center",
   },
-  sectionTitle: {
-    ...tokens.typography.titleMedium,
-    fontFamily: tokens.typography.displayLarge.fontFamily,
-    color: tokens.colors.text,
-  },
   bodyCenter: {
     ...tokens.typography.bodyMedium,
     color: tokens.colors.secondaryText,
@@ -219,19 +210,12 @@ const styles = StyleSheet.create({
   },
   reasonOption: {
     flexDirection: "row",
-    alignItems: "flex-start",
-    padding: tokens.spacing[12],
-    borderRadius: tokens.radius.medium,
-    borderWidth: 1,
-    borderColor: tokens.colors.m3.outlineVariant,
-    backgroundColor: tokens.colors.surface,
+    alignItems: "center",
+    paddingVertical: tokens.spacing[8],
     minHeight: tokens.accessibility.touchTarget,
     gap: tokens.spacing[12],
   },
-  reasonOptionSelected: {
-    borderColor: tokens.colors.action,
-    backgroundColor: tokens.colors.soft,
-  },
+  reasonOptionSelected: {},
   radioCircle: {
     width: tokens.spacing[20],
     height: tokens.spacing[20],
@@ -262,10 +246,6 @@ const styles = StyleSheet.create({
   },
   reasonLabelSelected: {
     color: tokens.colors.action,
-  },
-  reasonDescription: {
-    ...tokens.typography.labelMedium,
-    color: tokens.colors.secondaryText,
   },
   field: {
     gap: tokens.spacing[6],

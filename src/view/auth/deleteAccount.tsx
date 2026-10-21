@@ -3,7 +3,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Checkbox } from "@/view/components/Checkbox";
 import { FilledButton } from "@/view/components/FilledButton";
 import { IconBadge } from "@/view/components/IconBadge";
-import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { tokens } from "@/view/tokens";
 import { useDeleteAccountViewModel } from "@/viewmodel/useDeleteAccountViewModel";
@@ -85,7 +84,7 @@ export default function DeleteAccount({
 
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar title="Excluir conta" onBack={onBack} />
+      <TopAppBar title="Privacidade e dados" onBack={onBack} />
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.content}>
           <View style={styles.heroHeader}>
@@ -122,15 +121,12 @@ export default function DeleteAccount({
             </Pressable>
           ) : null}
 
-          <View style={styles.exportCard}>
-            <View style={styles.cardHeaderRow}>
-              <IconBadge icon="document" tone="action" />
-              <Text accessibilityRole="header" style={styles.exportTitle}>
-                Portabilidade de Dados (LGPD)
-              </Text>
-            </View>
+          <View style={styles.exportSection}>
+            <Text accessibilityRole="header" style={styles.exportTitle}>
+              Portabilidade de dados (LGPD)
+            </Text>
             <Text style={styles.exportText}>
-              Antes de excluir sua conta, você pode baixar uma cópia completa de todos os seus anúncios, pedidos e dados cadastrais em formato JSON.
+              Baixe uma cópia dos seus anúncios, pedidos e dados cadastrais em formato JSON.
             </Text>
             {state.exportSuccess ? (
               <View style={styles.exportSummaryBox}>
@@ -151,7 +147,7 @@ export default function DeleteAccount({
                 {state.exportError}
               </Text>
             ) : null}
-            <OutlinedButton
+            <FilledButton
               label={state.exporting ? "Gerando arquivo..." : "Solicitar meus dados"}
               accessibilityLabel="Baixar meus dados pessoais em formato JSON"
               loading={state.exporting}
@@ -168,7 +164,7 @@ export default function DeleteAccount({
               </Text>
             </View>
             <Text style={styles.warningText}>
-              Ao excluir sua conta no Ipebook:
+              Ao excluir sua conta no IpêBook:
             </Text>
             <View style={styles.bulletList}>
               <Text style={styles.bulletItem}>• Todos os seus anúncios ativos serão cancelados e removidos do catálogo.</Text>
@@ -303,16 +299,11 @@ const styles = StyleSheet.create({
     color: tokens.colors.secondaryText,
     textAlign: "center",
   },
-  exportCard: {
-    padding: tokens.spacing[16],
-    backgroundColor: tokens.colors.soft,
-    borderRadius: tokens.radius.medium,
+  exportSection: {
     gap: tokens.spacing[12],
-    borderWidth: 1,
-    borderColor: tokens.colors.m3.outlineVariant,
+    paddingTop: tokens.spacing[8],
   },
   exportTitle: {
-    flex: 1,
     ...tokens.typography.titleMedium,
     fontFamily: tokens.typography.displayLarge.fontFamily,
     color: tokens.colors.action,

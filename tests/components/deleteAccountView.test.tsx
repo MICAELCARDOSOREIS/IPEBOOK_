@@ -93,7 +93,7 @@ describe("tela de exclusão de conta (DeleteAccount - LGPD)", () => {
       );
     });
 
-    expect(screen.getByRole("header", { name: "Portabilidade de Dados (LGPD)" })).toBeDefined();
+    expect(screen.getByRole("header", { name: "Portabilidade de dados (LGPD)" })).toBeDefined();
     const downloadBtn = screen.getByRole("button", { name: "Baixar meus dados pessoais em formato JSON" });
     expect(downloadBtn).toBeDefined();
     await act(async () => {

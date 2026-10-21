@@ -31,6 +31,11 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
   const [editingId, setEditingId] = useState<string | null>(null);
   const errorId = useId();
   const hasError = Boolean(state.error);
+  /**
+   * Sem alertas, `02.08` dispensa a manchete da lista cheia. O formulário permanece porque o alerta
+   * também nasce aqui (Spec 016), além de `02.06`.
+   */
+  const showListChrome = state.loading || state.alerts.length > 0 || editingId !== null;
   const cancelEdit = () => {
     setEditingId(null);
     actions.setQuery("");
@@ -61,12 +66,14 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
         </View>
       ) : (
         <View style={styles.content}>
-          <View style={styles.heroHeader}>
-            <Text style={styles.heroTitle}>O próximo livro pode chegar.</Text>
-            <Text style={styles.body}>
-              Avisamos quando houver um anúncio que combine com sua busca.
-            </Text>
-          </View>
+          {showListChrome ? (
+            <View style={styles.heroHeader}>
+              <Text style={styles.heroTitle}>O próximo livro pode chegar.</Text>
+              <Text style={styles.body}>
+                Avisamos quando houver um anúncio que combine com sua busca.
+              </Text>
+            </View>
+          ) : null}
           <View style={styles.formCard}>
             <Text style={styles.formTitle}>
               {editingId ? "Editar alerta de busca" : "Avisaremos você"}
@@ -113,11 +120,10 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
               contentContainerStyle={styles.listContent}
               ListEmptyComponent={
                 <View style={styles.emptyBox}>
-                  <IconBadge icon="bell" tone="neutral" />
                   <Text accessibilityRole="header" style={styles.emptyHeadline}>
-                    Você ainda não criou alertas.
+                    Nenhum alerta criado
                   </Text>
-                  <Text style={styles.bodyCenter}>
+                  <Text style={styles.body}>
                     Busque um título ou tema e ative um alerta para receber novidades.
                   </Text>
                 </View>
@@ -179,7 +185,11 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
           )}
           {onSearchBooks ? (
             <View style={styles.searchAction}>
-              <OutlinedButton label="Procurar outro livro" onPress={onSearchBooks} />
+              {showListChrome ? (
+                <OutlinedButton label="Procurar outro livro" onPress={onSearchBooks} />
+              ) : (
+                <FilledButton label="Procurar um livro" onPress={onSearchBooks} />
+              )}
             </View>
           ) : null}
           <Dialog
@@ -259,7 +269,6 @@ const styles = StyleSheet.create({
     ...tokens.typography.titleLarge,
     fontFamily: tokens.typography.displayLarge.fontFamily,
     color: tokens.colors.text,
-    textAlign: "center",
   },
   emptyTitle: {
     ...tokens.typography.titleMedium,
@@ -342,8 +351,8 @@ const styles = StyleSheet.create({
     paddingBottom: tokens.spacing[24],
   },
   emptyBox: {
-    alignItems: "center",
-    padding: tokens.spacing[24],
+    paddingHorizontal: tokens.spacing[16],
+    paddingVertical: tokens.spacing[8],
     gap: tokens.spacing[8],
   },
   row: {

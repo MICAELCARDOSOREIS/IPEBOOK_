@@ -31,7 +31,7 @@ export function RequestDetail({
 
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar title="Negociação" onBack={() => onBack?.()} />
+      <TopAppBar title="Acompanhar encontro" onBack={() => onBack?.()} />
       <ScrollView contentContainerStyle={styles.scroll}>
         <View style={styles.content}>
           {state.loading ? (
@@ -57,7 +57,7 @@ export function RequestDetail({
             </View>
           ) : detail ? (
             <View style={styles.container}>
-              <Text style={styles.heroHeadline}>Um encontro, um novo capítulo.</Text>
+              <Text style={styles.heroHeadline}>Seu próximo capítulo está perto.</Text>
               <View style={styles.successBanner}>
                 <IconBadge icon="check" tone="action" />
                 <View style={styles.bannerTextContainer}>
@@ -101,7 +101,9 @@ export function RequestDetail({
                 </View>
                 <Text style={styles.bodyText}>
                   {detail.isOwner ? "Pessoa interessada: " : "Pessoa que anunciou: "}
-                  <Text style={styles.highlightText}>{detail.counterpartId}</Text>
+                  <Text style={styles.highlightText}>
+                    {detail.counterpartName ?? detail.counterpartId}
+                  </Text>
                 </Text>
               </View>
 

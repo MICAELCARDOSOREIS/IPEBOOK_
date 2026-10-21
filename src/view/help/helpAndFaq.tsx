@@ -3,7 +3,6 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { FAQ_ITEMS } from "@/model/helpContent";
 import { FilledButton } from "@/view/components/FilledButton";
-import { IconBadge } from "@/view/components/IconBadge";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { TextField } from "@/view/components/TextField";
 import { TopAppBar } from "@/view/components/TopAppBar";
@@ -61,22 +60,13 @@ export default function HelpAndFaq({ onBack, onOpenConversations }: HelpAndFaqPr
 
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar title="Central de Ajuda" onBack={onBack} />
+      <TopAppBar title="Ajuda" onBack={onBack} />
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.content}>
           <View style={styles.headerSection}>
             <Text style={styles.heroHeadline}>Vamos ajudar.</Text>
             <Text style={styles.heroSubtitle}>
               Respostas para continuar sua próxima leitura.
-            </Text>
-            <View style={styles.headerTitleRow}>
-              <IconBadge icon="info" tone="action" />
-              <Text accessibilityRole="header" style={styles.title}>
-                Dúvidas frequentes
-              </Text>
-            </View>
-            <Text style={styles.subtitle}>
-              Tudo o que você precisa saber sobre trocas, doações e segurança na comunidade de Piripiri, PI.
             </Text>
           </View>
 
@@ -170,22 +160,6 @@ const styles = StyleSheet.create({
     color: tokens.colors.text,
   },
   heroSubtitle: {
-    ...tokens.typography.bodyLarge,
-    color: tokens.colors.secondaryText,
-  },
-  headerTitleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: tokens.spacing[12],
-    marginTop: tokens.spacing[4],
-  },
-  title: {
-    flex: 1,
-    ...tokens.typography.titleLarge,
-    fontFamily: tokens.typography.displayLarge.fontFamily,
-    color: tokens.colors.text,
-  },
-  subtitle: {
     ...tokens.typography.bodyLarge,
     color: tokens.colors.secondaryText,
   },

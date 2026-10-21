@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Platform, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { tokens } from "@/view/tokens";
@@ -164,27 +164,15 @@ const styles = StyleSheet.create({
   },
   centerContainer: {
     flexGrow: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: tokens.spacing[16],
-    paddingVertical: tokens.spacing[24],
+    paddingHorizontal: tokens.spacing[24],
+    paddingTop: tokens.spacing[24],
+    paddingBottom: tokens.spacing[32],
   },
   content: {
     width: "100%",
-    maxWidth: 440,
-    backgroundColor: tokens.colors.surface,
-    borderRadius: tokens.radius.large,
-    borderWidth: 1,
-    borderColor: tokens.colors.border,
-    padding: tokens.spacing[24],
+    maxWidth: 560,
+    alignSelf: "center",
     gap: tokens.spacing[16],
-    ...(Platform.OS === "web"
-      ? {
-          boxShadow: tokens.elevation.level1,
-        }
-      : {
-          elevation: 1,
-        }),
   },
   title: {
     fontSize: tokens.typography.displayLarge.fontSize,

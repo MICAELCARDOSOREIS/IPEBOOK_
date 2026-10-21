@@ -26,7 +26,7 @@ export default function TermsAndPrivacy({
 
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar title="Termos e Privacidade" onBack={() => onBack?.()} />
+      <TopAppBar title="Termos e privacidade" onBack={() => onBack?.()} />
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.content}>
           <View style={styles.heroHeader}>

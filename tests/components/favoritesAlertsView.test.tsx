@@ -37,7 +37,7 @@ describe("favoritos e alertas (spec 016)", () => {
   it("cria, pausa, retoma e exclui um alerta com confirmação", async () => {
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => { screen = await render(<SearchAlerts userId="usuario-alertas" initialQuery="Machado" onBack={vi.fn()} onLogin={vi.fn()} />); });
-    expect(screen.getByRole("header", { name: "Você ainda não criou alertas." })).toBeDefined();
+    expect(screen.getByRole("header", { name: "Nenhum alerta criado" })).toBeDefined();
     await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Criar alerta" })); });
     expect(screen.getByText("Machado")).toBeDefined();
     await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Pausar alerta Machado" })); });
@@ -47,7 +47,7 @@ describe("favoritos e alertas (spec 016)", () => {
     await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Excluir alerta Machado" })); });
     expect(screen.getByText("Excluir este alerta?")).toBeDefined();
     await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Confirmar exclusão" })); });
-    expect(screen.getByRole("header", { name: "Você ainda não criou alertas." })).toBeDefined();
+    expect(screen.getByRole("header", { name: "Nenhum alerta criado" })).toBeDefined();
   });
 
   it("edita o termo de um alerta existente", async () => {

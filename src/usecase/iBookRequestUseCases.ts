@@ -13,6 +13,8 @@ export type NegotiationDetail = Readonly<{
   book: Book;
   isOwner: boolean;
   counterpartId: string;
+  /** Nome público da contraparte; `null` quando o perfil não pôde ser carregado. */
+  counterpartName: string | null;
   safeMeetingPoints: readonly string[];
 }>;
 

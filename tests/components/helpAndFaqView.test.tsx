@@ -11,9 +11,9 @@ describe("tela de Central de Ajuda e FAQ (HelpAndFaq)", () => {
       screen = await render(<HelpAndFaq onBack={() => {}} />);
     });
 
-    expect(screen.getByRole("header", { name: "Central de Ajuda" })).toBeDefined();
-    expect(screen.getByText("Dúvidas frequentes")).toBeDefined();
-    expect(screen.getByText(/Tudo o que você precisa saber sobre trocas/)).toBeDefined();
+    expect(screen.getByRole("header", { name: "Ajuda" })).toBeDefined();
+    expect(screen.getByText("Vamos ajudar.")).toBeDefined();
+    expect(screen.getByText("Respostas para continuar sua próxima leitura.")).toBeDefined();
   });
 
   it("exibe orientações locais de Piripiri e segurança", async () => {
@@ -26,7 +26,7 @@ describe("tela de Central de Ajuda e FAQ (HelpAndFaq)", () => {
     expect(screen.getByText("Onde devo realizar a entrega ou troca do livro em Piripiri?")).toBeDefined();
     expect(screen.getByText(/Campus do IFPI Piripiri/)).toBeDefined();
     expect(screen.getByText(/Praça da Bandeira/)).toBeDefined();
-    expect(screen.getByText("O Ipebook cobra alguma taxa ou comissão?")).toBeDefined();
+    expect(screen.getByText("O IpêBook cobra alguma taxa ou comissão?")).toBeDefined();
     expect(screen.getByText(/100% gratuito e comunitário/)).toBeDefined();
   });
 
@@ -41,7 +41,7 @@ describe("tela de Central de Ajuda e FAQ (HelpAndFaq)", () => {
     await act(async () => {
       fireEvent.press(suporteFilter);
     });
-    expect(screen.getByText("Como falar com a equipe do Ipebook?")).toBeDefined();
+    expect(screen.getByText("Como falar com a equipe do IpêBook?")).toBeDefined();
 
     const segurancaFilter = screen.getByRole("button", { name: "Filtrar por Segurança em Piripiri" });
     await act(async () => {
@@ -59,7 +59,7 @@ describe("tela de Central de Ajuda e FAQ (HelpAndFaq)", () => {
     await act(async () => {
       fireEvent.press(todosFilter);
     });
-    expect(screen.getByText("Como funciona o Ipebook?")).toBeDefined();
+    expect(screen.getByText("Como funciona o IpêBook?")).toBeDefined();
   });
 
   it("aciona callback onBack na barra superior", async () => {
@@ -104,7 +104,7 @@ describe("tela de Central de Ajuda e FAQ (HelpAndFaq)", () => {
     });
 
     expect(screen.getByText("Posso levar acompanhante no encontro?")).toBeDefined();
-    expect(screen.queryByText("O Ipebook cobra alguma taxa ou comissão?")).toBeNull();
+    expect(screen.queryByText("O IpêBook cobra alguma taxa ou comissão?")).toBeNull();
 
     await act(async () => {
       fireEvent.changeText(searchInput, "termoinexistentexyz");
@@ -116,6 +116,6 @@ describe("tela de Central de Ajuda e FAQ (HelpAndFaq)", () => {
       fireEvent.press(clearBtn);
     });
 
-    expect(screen.getByText("Como funciona o Ipebook?")).toBeDefined();
+    expect(screen.getByText("Como funciona o IpêBook?")).toBeDefined();
   });
 });

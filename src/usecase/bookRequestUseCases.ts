@@ -1,5 +1,6 @@
 import type { IBookDataSource } from "@/model/datasources/iBookDataSource";
 import type { IBookRequestDataSource } from "@/model/datasources/iBookRequestDataSource";
+import type { IProfileDataSource } from "@/model/datasources/iProfileDataSource";
 import type { Book } from "@/model/entities/book";
 import type { BookRequest } from "@/model/entities/bookRequest";
 import { AuthError, ValidationError } from "@/model/errors";
@@ -21,6 +22,7 @@ export class BookRequestUseCases implements IBookRequestUseCases {
   constructor(
     private readonly books: IBookDataSource,
     private readonly requests: IBookRequestDataSource,
+    private readonly profiles?: IProfileDataSource,
   ) {}
 
   async requestNegotiation(listingId: string, sessionUserId: string | null): Promise<BookRequest> {
@@ -138,12 +140,29 @@ export class BookRequestUseCases implements IBookRequestUseCases {
       "Praça de Eventos",
     ];
 
+    const counterpartId = isOwner ? request.requesterId : book.ownerId;
+
     return {
       request,
       book,
       isOwner,
-      counterpartId: isOwner ? request.requesterId : book.ownerId,
+      counterpartId,
+      counterpartName: await this.findCounterpartName(counterpartId),
       safeMeetingPoints,
     };
+  }
+
+  /**
+   * O encontro de `06.05` identifica a pessoa pelo nome. Uma falha ao ler o perfil não impede
+   * acompanhar a negociação: a tela recorre ao identificador.
+   */
+  private async findCounterpartName(counterpartId: string): Promise<string | null> {
+    if (!this.profiles) return null;
+    try {
+      const profile = await this.profiles.findById(counterpartId);
+      return profile?.name ?? null;
+    } catch {
+      return null;
+    }
   }
 }
