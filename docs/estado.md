@@ -2,7 +2,13 @@
 
 Documento consolidado de continuidade técnica e produto do Ipebook (Piripiri, PI).
 
-Conferência atual: **2026-10-21** (branch `feature/143-galeria-swipe-teclado`, derivada de `develop`).
+Conferência atual: **2026-10-21** (branch `feature/146-home-secoes-destacadas`, derivada de `develop`).
+
+**Spec 041 validada localmente:** a Home ganhou duas seções em carrossel acima da lista vertical
+existente — "Recém-adicionados" e "Doações disponíveis na comunidade" (até 8 itens cada), com
+botões Anterior/Próximo acessíveis e "Ver mais" levando à Pesquisa com o filtro de modalidade
+pré-aplicado quando pertinente. `/pesquisa` passou a aceitar `initialModality`. `npm run validate`
+passou com 792 testes em 114 arquivos.
 
 **Spec 039 validada localmente:** nova conferência nó a nó do canvas `APP · 10 · Android · Material 3`
 pelo MCP do Figma corrigiu oito telas do Micael: `/entrar`, `/criar-conta` e `/redefinir-senha`

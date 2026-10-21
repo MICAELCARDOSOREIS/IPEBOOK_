@@ -43,7 +43,7 @@ describe("navegação para o detalhe do livro a partir da Home (spec 006, US6/T0
     const onNavigateToBookDetail = vi.fn();
     const screen = await renderHome({ onNavigateToBookDetail });
     await act(async () => {
-      fireEvent.press(screen.getByLabelText("Ver detalhe de De outra, Autora"));
+      fireEvent.press(screen.getAllByLabelText("Ver detalhe de De outra, Autora")[0]);
     });
     expect(onNavigateToBookDetail).toHaveBeenCalledWith("a");
   });

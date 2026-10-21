@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
@@ -10,13 +10,98 @@ import { ErrorState } from "@/view/components/ErrorState";
 import { FavoriteButton } from "@/view/components/FavoriteButton";
 import { LoadingState } from "@/view/components/LoadingState";
 import { OfflineState } from "@/view/components/OfflineState";
-import type { BookModality } from "@/model/entities/book";
+import type { Book, BookModality } from "@/model/entities/book";
 
 const modalityTag: Record<BookModality, { background: string; text: string; label: string }> = {
   sale: { background: tokens.colors.badge.sale.background, text: tokens.colors.badge.sale.text, label: "Venda" },
   trade: { background: tokens.colors.badge.trade.background, text: tokens.colors.badge.trade.text, label: "Troca" },
   donation: { background: tokens.colors.badge.donation.background, text: tokens.colors.badge.donation.text, label: "Doação" },
 };
+
+const CAROUSEL_ITEM_WIDTH = 152;
+const CAROUSEL_MAX_ITEMS = 8;
+
+type CatalogCarouselProps = {
+  title: string;
+  books: readonly Book[];
+  onNavigateToBookDetail?: (bookId: string) => void;
+  onViewMore: () => void;
+  viewMoreLabel: string;
+};
+
+/**
+ * Seção destacada da Home (Figma `02.01 · Início`, `02.02 · Explorar por seção`), com navegação
+ * por botões Anterior/Próximo — acessível por teclado na Web via Tab, sem depender de gestos.
+ */
+function CatalogCarousel({ title, books, onNavigateToBookDetail, onViewMore, viewMoreLabel }: CatalogCarouselProps) {
+  const [index, setIndex] = useState(0);
+  const listRef = useRef<FlatList<Book> | null>(null);
+  const lastIndex = Math.max(0, books.length - 1);
+
+  function goTo(nextIndex: number) {
+    const clamped = Math.max(0, Math.min(nextIndex, lastIndex));
+    setIndex(clamped);
+    listRef.current?.scrollToOffset?.({ offset: clamped * CAROUSEL_ITEM_WIDTH, animated: true });
+  }
+
+  return (
+    <View style={styles.carouselSection} testID={`carousel-${title}`}>
+      <View style={styles.carouselHeader}>
+        <Text accessibilityRole="header" style={styles.carouselTitle}>{title}</Text>
+        <Pressable accessibilityRole="button" accessibilityLabel={viewMoreLabel} onPress={onViewMore}>
+          <Text style={styles.viewMoreText}>Ver mais</Text>
+        </Pressable>
+      </View>
+      <View style={styles.carouselRow}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Item anterior de ${title}`}
+          accessibilityState={{ disabled: index <= 0 }}
+          disabled={index <= 0}
+          onPress={() => goTo(index - 1)}
+          style={[styles.carouselNavButton, index <= 0 ? styles.carouselNavButtonDisabled : null]}
+        >
+          <Text style={styles.carouselNavText}>‹</Text>
+        </Pressable>
+        <FlatList
+          ref={listRef}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          data={books as Book[]}
+          keyExtractor={(item) => item.id}
+          style={styles.carouselList}
+          renderItem={({ item }) => {
+            const tag = modalityTag[item.modality];
+            return (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`Ver detalhe de ${item.title}, ${item.author}`}
+                onPress={() => onNavigateToBookDetail?.(item.id)}
+                style={styles.carouselCard}
+              >
+                <BookCover id={item.id} title={item.title} photoUrl={item.photoUrl} variant="list" />
+                <Text numberOfLines={1} style={styles.carouselCardTitle}>{item.title}</Text>
+                <View style={[styles.tag, { backgroundColor: tag.background }]}>
+                  <Text style={[styles.tagText, { color: tag.text }]}>{tag.label}</Text>
+                </View>
+              </Pressable>
+            );
+          }}
+        />
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Próximo item de ${title}`}
+          accessibilityState={{ disabled: index >= lastIndex }}
+          disabled={index >= lastIndex}
+          onPress={() => goTo(index + 1)}
+          style={[styles.carouselNavButton, index >= lastIndex ? styles.carouselNavButtonDisabled : null]}
+        >
+          <Text style={styles.carouselNavText}>›</Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+}
 
 export type HomeProps = {
   onNavigateToSignIn?: () => void;
@@ -30,6 +115,8 @@ export type HomeProps = {
   onNavigateToNotifications?: () => void;
   onNavigateToFavorites?: () => void;
   onNavigateToAlerts?: () => void;
+  /** "Ver mais" das seções destacadas; `modality` pré-aplica o filtro na Pesquisa. */
+  onNavigateToSearch?: (filter?: { modality?: BookModality }) => void;
   /** Mudar este valor força o catálogo a recarregar (ex.: ao voltar de cadastrar um anúncio). */
   focusKey?: unknown;
 };
@@ -46,6 +133,7 @@ export default function Home({
   onNavigateToNotifications,
   onNavigateToFavorites,
   onNavigateToAlerts,
+  onNavigateToSearch,
   focusKey,
 }: HomeProps = {}) {
   const [state, actions] = useHomeViewModel();
@@ -60,6 +148,11 @@ export default function Home({
     }
     void actions.reload();
   }, [focusKey]);
+
+  const recentBooks = state.books.slice(0, CAROUSEL_MAX_ITEMS);
+  const donationBooks = state.books
+    .filter((book) => book.modality === "donation" && book.status === "available")
+    .slice(0, CAROUSEL_MAX_ITEMS);
 
   return (
     <SafeAreaView style={styles.page}>
@@ -138,6 +231,24 @@ export default function Home({
             </Pressable>
           </View>
         )}
+        {!state.loading && !state.error && recentBooks.length > 0 ? (
+          <CatalogCarousel
+            title="Recém-adicionados"
+            books={recentBooks}
+            onNavigateToBookDetail={onNavigateToBookDetail}
+            onViewMore={() => onNavigateToSearch?.()}
+            viewMoreLabel="Ver mais livros recém-adicionados"
+          />
+        ) : null}
+        {!state.loading && !state.error && donationBooks.length > 0 ? (
+          <CatalogCarousel
+            title="Doações disponíveis na comunidade"
+            books={donationBooks}
+            onNavigateToBookDetail={onNavigateToBookDetail}
+            onViewMore={() => onNavigateToSearch?.({ modality: "donation" })}
+            viewMoreLabel="Ver mais doações disponíveis em Piripiri"
+          />
+        ) : null}
         <Text accessibilityRole="header" style={styles.heading}>Livros</Text>
         {state.loading ? (
           <LoadingState label="Carregando livros" />
@@ -254,4 +365,20 @@ const styles = StyleSheet.create({
   tagText: { fontSize: tokens.typography.labelMedium.fontSize, fontWeight: tokens.typography.labelMedium.fontWeight },
   requestsRow: { flexDirection: "row", flexWrap: "wrap", marginTop: -tokens.spacing[12], marginBottom: tokens.spacing[24] },
   reserved: { fontSize: tokens.typography.bodyMedium.fontSize, color: tokens.colors.secondaryText, fontStyle: "italic" },
+  carouselSection: { marginBottom: tokens.spacing[24] },
+  carouselHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: tokens.spacing[12] },
+  carouselTitle: { fontSize: tokens.typography.titleMedium.fontSize, fontWeight: tokens.typography.titleMedium.fontWeight, color: tokens.colors.action },
+  viewMoreText: { fontSize: tokens.typography.labelMedium.fontSize, color: tokens.colors.action, fontWeight: "600" },
+  carouselRow: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[4] },
+  carouselList: { flexGrow: 0 },
+  carouselNavButton: {
+    minHeight: tokens.accessibility.touchTarget,
+    minWidth: tokens.accessibility.touchTarget,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  carouselNavButtonDisabled: { opacity: 0.3 },
+  carouselNavText: { fontSize: 22, color: tokens.colors.action, fontWeight: "700" },
+  carouselCard: { width: CAROUSEL_ITEM_WIDTH, marginRight: tokens.spacing[12], gap: tokens.spacing[4] },
+  carouselCardTitle: { fontSize: tokens.typography.labelMedium.fontSize, fontWeight: "600", color: tokens.colors.text },
 });

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useSearchViewModel } from "@/viewmodel/useSearchViewModel";
@@ -19,7 +19,17 @@ import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
 export type SearchProps = {
   onNavigateToBookDetail?: (bookId: string) => void;
   onNavigateToAlerts?: (term: string) => void;
+  /** Pré-aplica um filtro de modalidade ao abrir, vindo do "Ver mais" da Home (Issue #146). */
+  initialModality?: SearchModalityFilter;
 };
+
+const VALID_INITIAL_MODALITIES: readonly SearchModalityFilter[] = ["sale", "trade", "donation"];
+
+/** Converte o parâmetro de rota `modalidade` (string) no filtro válido, ou `undefined`. */
+export function parseInitialModality(value: string | string[] | undefined): SearchModalityFilter | undefined {
+  const raw = Array.isArray(value) ? value[0] : value;
+  return VALID_INITIAL_MODALITIES.find((modality) => modality === raw);
+}
 
 const MODALITY_FILTERS: Array<{ id: SearchModalityFilter; label: string }> = [
   { id: "all", label: "Todas" },
@@ -43,11 +53,20 @@ const SORT_OPTIONS: Array<{ id: SearchSortOption; label: string }> = [
 ];
 
 /** Busca e Exploração (US3, T019, Spec 028, Issue #93): filtra por termo, modalidade, categoria e preço. */
-export default function Search({ onNavigateToBookDetail, onNavigateToAlerts }: SearchProps) {
+export default function Search({ onNavigateToBookDetail, onNavigateToAlerts, initialModality }: SearchProps) {
   const [auth] = useAuthViewModel();
   const [state, actions] = useSearchViewModel(auth.user?.id ?? null);
   const { isOnline } = useNetworkStatus();
   const [confirmingClear, setConfirmingClear] = useState(false);
+  const appliedInitialModality = useRef(false);
+
+  useEffect(() => {
+    if (appliedInitialModality.current) return;
+    if (initialModality && initialModality !== "all") {
+      actions.setModality(initialModality);
+    }
+    appliedInitialModality.current = true;
+  }, [initialModality, actions]);
 
   return (
     <SafeAreaView style={styles.page}>

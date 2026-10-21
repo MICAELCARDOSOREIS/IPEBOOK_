@@ -24,6 +24,13 @@ export default function Index() {
       onNavigateToNotifications={() => router.push("/notificacoes")}
       onNavigateToFavorites={() => router.push("/favoritos")}
       onNavigateToAlerts={() => router.push("/alertas")}
+      onNavigateToSearch={(filter) =>
+        router.push(
+          filter?.modality
+            ? { pathname: "/pesquisa", params: { modalidade: filter.modality } }
+            : "/pesquisa",
+        )
+      }
     />
   );
 }

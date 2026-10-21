@@ -107,6 +107,19 @@ describe("Search (spec 006, US3/T019, Spec 028, Issue #93)", () => {
     expect(screen.getByText("R$ 25,00")).toBeDefined();
   });
 
+  it("pré-aplica a modalidade recebida via initialModality ao abrir (Issue #146)", async () => {
+    const { setModality } = setup([book({})]);
+    await renderSearch({ initialModality: "donation" });
+    expect(setModality).toHaveBeenCalledWith("donation");
+    expect(setModality).toHaveBeenCalledTimes(1);
+  });
+
+  it("não chama setModality quando initialModality não é informado", async () => {
+    const { setModality } = setup([book({})]);
+    await renderSearch();
+    expect(setModality).not.toHaveBeenCalled();
+  });
+
   it("digitar no campo de busca chama setTerm (SC-002)", async () => {
     const { setTerm } = setup([book({})]);
     const screen = await renderSearch();

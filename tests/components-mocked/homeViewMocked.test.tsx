@@ -1,5 +1,5 @@
 import React from "react";
-import { act, fireEvent, render } from "@testing-library/react-native";
+import { act, fireEvent, render, within } from "@testing-library/react-native";
 import { describe, expect, it, vi } from "vitest";
 import type { HomeActions, HomeState } from "@/viewmodel/useHomeViewModel";
 import Home from "@/view/home";
@@ -97,9 +97,9 @@ describe("testes de componente com mock: Home (ISO/IEC 25010 - Usabilidade e Con
       screen = await render(<Home />);
     });
 
-    expect(screen.getByText("O Alquimista")).toBeDefined();
+    expect(screen.getAllByText("O Alquimista").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("Paulo Coelho")).toBeDefined();
-    expect(screen.getByText("Dom Casmurro")).toBeDefined();
+    expect(screen.getAllByText("Dom Casmurro").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("Machado de Assis")).toBeDefined();
     expect(screen.queryByText("Carregando livros…")).toBeNull();
     expect(screen.queryByText("Ainda não há livros por aqui.")).toBeNull();
@@ -122,8 +122,84 @@ describe("testes de componente com mock: Home (ISO/IEC 25010 - Usabilidade e Con
       screen = await render(<Home />);
     });
 
-    expect(screen.getByText("Troca")).toBeDefined();
-    expect(screen.getByText("Doação")).toBeDefined();
+    expect(screen.getAllByText("Troca").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Doação").length).toBeGreaterThanOrEqual(1);
+  });
+
+  describe("seções destacadas da Home (Figma 02.01, Issue #146)", () => {
+    const books: HomeState["books"] = [
+      { id: "1", title: "O Alquimista", author: "Paulo Coelho", ownerId: "u1", modality: "trade" as const, status: "available" as const },
+      { id: "2", title: "A Hora da Estrela", author: "Clarice Lispector", ownerId: "u2", modality: "donation" as const, status: "available" as const },
+      { id: "3", title: "Vidas Secas", author: "Graciliano Ramos", ownerId: "u3", modality: "donation" as const, status: "reserved" as const },
+    ];
+
+    function setupBooks() {
+      mockedUseHomeViewModel.mockReturnValue([{ books, loading: false, error: null }, { reload: vi.fn() }]);
+    }
+
+    it("mostra 'Recém-adicionados' com os livros do catálogo e aciona 'Ver mais' sem filtro", async () => {
+      setupBooks();
+      const onNavigateToSearch = vi.fn();
+      let screen!: Awaited<ReturnType<typeof render>>;
+      await act(async () => {
+        screen = await render(<Home onNavigateToSearch={onNavigateToSearch} />);
+      });
+
+      expect(screen.getByRole("header", { name: "Recém-adicionados" })).toBeDefined();
+      fireEvent.press(screen.getByLabelText("Ver mais livros recém-adicionados"));
+      expect(onNavigateToSearch).toHaveBeenCalledTimes(1);
+      expect(onNavigateToSearch.mock.calls[0]).toEqual([]);
+    });
+
+    it("mostra 'Doações disponíveis' apenas com doações disponíveis e aciona 'Ver mais' com o filtro", async () => {
+      setupBooks();
+      const onNavigateToSearch = vi.fn();
+      let screen!: Awaited<ReturnType<typeof render>>;
+      await act(async () => {
+        screen = await render(<Home onNavigateToSearch={onNavigateToSearch} />);
+      });
+
+      expect(screen.getByRole("header", { name: "Doações disponíveis na comunidade" })).toBeDefined();
+      const donationCarousel = within(
+        screen.getByTestId("carousel-Doações disponíveis na comunidade"),
+      );
+      expect(donationCarousel.getByLabelText("Ver detalhe de A Hora da Estrela, Clarice Lispector")).toBeDefined();
+      expect(
+        donationCarousel.queryByLabelText("Ver detalhe de Vidas Secas, Graciliano Ramos"),
+      ).toBeNull();
+
+      fireEvent.press(screen.getByLabelText("Ver mais doações disponíveis em Piripiri"));
+      expect(onNavigateToSearch).toHaveBeenCalledWith({ modality: "donation" });
+    });
+
+    it("não mostra a seção de doações quando não há nenhuma disponível", async () => {
+      mockedUseHomeViewModel.mockReturnValue([
+        { books: [books[0]], loading: false, error: null },
+        { reload: vi.fn() },
+      ]);
+      let screen!: Awaited<ReturnType<typeof render>>;
+      await act(async () => {
+        screen = await render(<Home />);
+      });
+      expect(screen.queryByText("Doações disponíveis na comunidade")).toBeNull();
+    });
+
+    it("navega entre os itens do carrossel pelos botões Anterior/Próximo", async () => {
+      setupBooks();
+      let screen!: Awaited<ReturnType<typeof render>>;
+      await act(async () => {
+        screen = await render(<Home />);
+      });
+
+      const nextButton = screen.getByLabelText("Próximo item de Recém-adicionados");
+      expect(screen.getByLabelText("Item anterior de Recém-adicionados").props.accessibilityState.disabled).toBe(true);
+      expect(nextButton.props.accessibilityState.disabled).toBe(false);
+
+      await act(async () => {
+        fireEvent.press(nextButton);
+      });
+      expect(screen.getByLabelText("Item anterior de Recém-adicionados").props.accessibilityState.disabled).toBe(false);
+    });
   });
 
   it("recarrega o catálogo quando focusKey muda (ex.: ao voltar de cadastrar um anúncio)", async () => {
