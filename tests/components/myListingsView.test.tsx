@@ -13,14 +13,25 @@ vi.mock("@/viewmodel/useAuthViewModel", () => ({
   useAuthViewModel: vi.fn(),
 }));
 vi.mock("@/viewmodel/useNetworkStatus", () => ({ useNetworkStatus: vi.fn() }));
+vi.mock("@/viewmodel/useReceivedRequestsViewModel", () => ({ useReceivedRequestsViewModel: vi.fn() }));
 
 import { useMyListingsViewModel } from "@/viewmodel/useMyListingsViewModel";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
+import { useReceivedRequestsViewModel } from "@/viewmodel/useReceivedRequestsViewModel";
+import type { RequestWithListing } from "@/usecase/iBookRequestUseCases";
 
 const mockedUseMyListingsViewModel = vi.mocked(useMyListingsViewModel);
 const mockedUseAuthViewModel = vi.mocked(useAuthViewModel);
 vi.mocked(useNetworkStatus).mockReturnValue({ isOnline: true });
+
+function mockReceived(items: RequestWithListing[]) {
+  vi.mocked(useReceivedRequestsViewModel).mockReturnValue([
+    { items, loading: false, error: null, respondingId: null, respondError: null, respondErrorId: null },
+    { reload: vi.fn(), accept: vi.fn(), reject: vi.fn() },
+  ]);
+}
+mockReceived([]);
 
 function mockViewModel(
   state: Partial<MyListingsState> = {},
@@ -98,7 +109,7 @@ describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
     expect(onNavigateToCreateListing).toHaveBeenCalledTimes(1);
   });
 
-  it("renderiza anúncios com título, autor, modalidade e status", async () => {
+  it("lista cada anúncio como linha com resumo e seta para o gerenciamento (Spec 043, RN-04)", async () => {
     const fakeBook: Book = {
       id: "b1",
       title: "Dom Casmurro",
@@ -107,31 +118,41 @@ describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
       price: 30,
       ownerId: "user-1",
       status: "available",
+      neighborhood: "Centro",
     };
     mockViewModel({ books: [fakeBook], loading: false, error: null });
-    const onNavigateToBookDetail = vi.fn();
+    const onNavigateToManageListing = vi.fn();
 
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
       screen = await render(
-        <MyListings
-          sessionUserId="user-1"
-          onNavigateToBookDetail={onNavigateToBookDetail}
-        />,
+        <MyListings sessionUserId="user-1" onNavigateToManageListing={onNavigateToManageListing} />,
       );
     });
 
     expect(screen.getByText("Dom Casmurro")).toBeDefined();
-    expect(screen.getByText("Machado de Assis")).toBeDefined();
-    expect(screen.getByText("Venda")).toBeDefined();
-    expect(screen.getByText("Disponível")).toBeDefined();
-    expect(screen.getByText("R$ 30.00")).toBeDefined();
+    expect(screen.getByText("R$ 30,00 · Centro · Disponível")).toBeDefined();
+    // As ações ficam em `04.08`; a linha não repete botões de editar, pausar e remover.
+    expect(screen.queryByText("Editar")).toBeNull();
+    expect(screen.queryByText("Remover")).toBeNull();
 
-    const bookItem = screen.getByRole("button", {
-      name: "Ver detalhe de Dom Casmurro, Machado de Assis",
+    fireEvent.press(screen.getByRole("button", { name: "Gerenciar anúncio de Dom Casmurro" }));
+    expect(onNavigateToManageListing).toHaveBeenCalledWith("b1");
+  });
+
+  it("resume troca e doação pela modalidade e mostra a situação (Figma 05.01)", async () => {
+    const books: Book[] = [
+      { id: "b5", title: "Vidas Secas", author: "Graciliano Ramos", modality: "trade", ownerId: "user-1", status: "reserved", neighborhood: "Centro" },
+      { id: "b6", title: "O Quinze", author: "Rachel de Queiroz", modality: "donation", ownerId: "user-1", status: "paused" },
+    ];
+    mockViewModel({ books });
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<MyListings sessionUserId="user-1" />);
     });
-    fireEvent.press(bookItem);
-    expect(onNavigateToBookDetail).toHaveBeenCalledWith("b1");
+
+    expect(screen.getByText("Troca · Centro · Reservado")).toBeDefined();
+    expect(screen.getByText("Doação · Pausado")).toBeDefined();
   });
 
   it("exibe indicador de carregamento", async () => {
@@ -184,226 +205,71 @@ describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
     expect(onRequireSignIn).toHaveBeenCalledTimes(1);
   });
 
-  it("exibe diálogo de confirmação ao remover livro e só executa remoção após confirmação", async () => {
+  it("aba Propostas conta e lista as propostas recebidas em aberto (Spec 043, RN-03)", async () => {
     const book: Book = {
-      id: "b1",
+      id: "b10",
       title: "Dom Casmurro",
       author: "Machado de Assis",
-      modality: "sale",
-      price: 20,
-      ownerId: "user-1",
-      status: "available",
-    };
-    const actions = mockViewModel({ books: [book] });
-    let screen!: Awaited<ReturnType<typeof render>>;
-
-    await act(async () => {
-      screen = await render(<MyListings sessionUserId="user-1" />);
-    });
-
-    const removeBtn = screen.getByRole("button", { name: "Remover anúncio de Dom Casmurro" });
-    expect(removeBtn).toBeDefined();
-
-    // 1. Clicar em Remover abre o diálogo de confirmação
-    await act(async () => {
-      fireEvent.press(removeBtn);
-    });
-
-    expect(screen.getByText("Excluir anúncio?")).toBeDefined();
-    expect(
-      screen.getByText(
-        'Tem certeza de que deseja excluir o anúncio de "Dom Casmurro"? Esta ação não pode ser desfeita.',
-      ),
-    ).toBeDefined();
-
-    // 2. Clicar em Cancelar fecha o diálogo sem chamar cancelListing
-    const cancelBtn = screen.getByRole("button", { name: "Cancelar" });
-    await act(async () => {
-      fireEvent.press(cancelBtn);
-    });
-
-    expect(actions.cancelListing).not.toHaveBeenCalled();
-    expect(screen.queryByText("Excluir anúncio?")).toBeNull();
-
-    // 3. Clicar novamente em Remover e desta vez confirmar a exclusão
-    await act(async () => {
-      fireEvent.press(removeBtn);
-    });
-
-    const confirmBtn = screen.getByRole("button", { name: "Excluir anúncio" });
-    await act(async () => {
-      fireEvent.press(confirmBtn);
-    });
-
-    expect(actions.cancelListing).toHaveBeenCalledWith("b1");
-    expect(
-      screen.getByText('Anúncio de "Dom Casmurro" excluído com sucesso.'),
-    ).toBeDefined();
-  });
-
-  it("renderiza badge Pausado e botão Retomar quando anúncio estiver pausado", async () => {
-    const book: Book = {
-      id: "b1",
-      title: "Livro Pausado",
-      author: "Autor",
       modality: "trade",
-      ownerId: "user-1",
-      status: "paused",
-    };
-    const actions = mockViewModel({ books: [book] });
-    let screen!: Awaited<ReturnType<typeof render>>;
-
-    await act(async () => {
-      screen = await render(<MyListings sessionUserId="user-1" />);
-    });
-
-    expect(screen.getByText("Pausado")).toBeDefined();
-    const resumeBtn = screen.getByRole("button", { name: "Retomar anúncio de Livro Pausado" });
-    expect(resumeBtn).toBeDefined();
-
-    await act(async () => {
-      fireEvent.press(resumeBtn);
-    });
-
-    expect(actions.togglePauseListing).toHaveBeenCalledWith("b1");
-  });
-
-  it("permite pausar anúncio disponível e chama togglePauseListing", async () => {
-    const book: Book = {
-      id: "b2",
-      title: "Livro Ativo",
-      author: "Autor",
-      modality: "donation",
-      ownerId: "user-1",
-      status: "available",
-    };
-    const actions = mockViewModel({ books: [book] });
-    let screen!: Awaited<ReturnType<typeof render>>;
-
-    await act(async () => {
-      screen = await render(<MyListings sessionUserId="user-1" />);
-    });
-
-    const pauseBtn = screen.getByRole("button", { name: "Pausar anúncio de Livro Ativo" });
-    expect(pauseBtn).toBeDefined();
-
-    await act(async () => {
-      fireEvent.press(pauseBtn);
-    });
-
-    expect(actions.togglePauseListing).toHaveBeenCalledWith("b2");
-  });
-
-  it("navega para tela de edição ao pressionar botão Editar", async () => {
-    const book: Book = {
-      id: "b3",
-      title: "Livro Editável",
-      author: "Autor",
-      modality: "donation",
       ownerId: "user-1",
       status: "available",
     };
     mockViewModel({ books: [book] });
-    const onNavigateToEditListing = vi.fn();
+    mockReceived([
+      { request: { id: "r1", listingId: "b10", requesterId: "u-ana", status: "pending" }, listing: book, requesterName: "Ana Paula" },
+      { request: { id: "r2", listingId: "b10", requesterId: "u-bruno", status: "accepted" }, listing: book, requesterName: null },
+      { request: { id: "r3", listingId: "b10", requesterId: "u-caio", status: "rejected" }, listing: book, requesterName: "Caio" },
+    ]);
+    const onNavigateToReceivedRequests = vi.fn();
+    const onNavigateToNegotiationDetail = vi.fn();
     let screen!: Awaited<ReturnType<typeof render>>;
 
     await act(async () => {
       screen = await render(
-        <MyListings sessionUserId="user-1" onNavigateToEditListing={onNavigateToEditListing} />,
+        <MyListings
+          sessionUserId="user-1"
+          onNavigateToReceivedRequests={onNavigateToReceivedRequests}
+          onNavigateToNegotiationDetail={onNavigateToNegotiationDetail}
+        />,
       );
     });
 
-    const editBtn = screen.getByRole("button", { name: "Editar anúncio de Livro Editável" });
-    expect(editBtn).toBeDefined();
-
+    // Livro sem reserva com proposta pendente: antes a aba mostrava "Propostas (0)".
+    expect(screen.getByText("Propostas (2)")).toBeDefined();
     await act(async () => {
-      fireEvent.press(editBtn);
+      fireEvent.press(screen.getByText("Propostas (2)"));
     });
 
-    expect(onNavigateToEditListing).toHaveBeenCalledWith("b3");
+    expect(screen.getByText("Ana Paula · proposta recebida · Troca")).toBeDefined();
+    expect(screen.getByText("Pessoa da comunidade · negociação aceita · Troca")).toBeDefined();
+    expect(screen.queryByText(/Caio/)).toBeNull();
+    expect(screen.queryByText("Todos (1)")).toBeNull();
+    expect(screen.getByText("Tudo pela conversa")).toBeDefined();
+
+    const rows = screen.getAllByRole("button", { name: "Abrir proposta para Dom Casmurro" });
+    await act(async () => {
+      fireEvent.press(rows[0]);
+    });
+    expect(onNavigateToReceivedRequests).toHaveBeenCalledTimes(1);
+    await act(async () => {
+      fireEvent.press(rows[1]);
+    });
+    expect(onNavigateToNegotiationDetail).toHaveBeenCalledWith("r2");
+    mockReceived([]);
   });
 
-  it("não exibe botões de editar e pausar quando o anúncio estiver reservado", async () => {
-    const book: Book = {
-      id: "b4",
-      title: "Livro Reservado",
-      author: "Autor",
-      modality: "donation",
-      ownerId: "user-1",
-      status: "reserved",
-    };
-    mockViewModel({ books: [book] });
+  it("aba Propostas sem propostas mostra estado próprio", async () => {
+    mockViewModel({
+      books: [{ id: "b1", title: "Livro", author: "A", modality: "sale", ownerId: "user-1", status: "available" }],
+    });
     let screen!: Awaited<ReturnType<typeof render>>;
-
     await act(async () => {
       screen = await render(<MyListings sessionUserId="user-1" />);
     });
-
-    expect(screen.getByText("Reservado")).toBeDefined();
-    expect(screen.queryByRole("button", { name: "Editar anúncio de Livro Reservado" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "Pausar anúncio de Livro Reservado" })).toBeNull();
-  });
-
-  it("exibe conservação e bairro na linha do livro conforme Figma 05.01 (Spec 031)", async () => {
-    const book: Book = {
-      id: "b5",
-      title: "Vidas Secas",
-      author: "Graciliano Ramos",
-      modality: "trade",
-      ownerId: "user-1",
-      status: "available",
-      condition: "good",
-      neighborhood: "Centro",
-    };
-    mockViewModel({ books: [book] });
-    let screen!: Awaited<ReturnType<typeof render>>;
-
     await act(async () => {
-      screen = await render(<MyListings sessionUserId="user-1" />);
+      fireEvent.press(screen.getByText("Propostas (0)"));
     });
-
-    expect(screen.getByText("Bom estado · Centro")).toBeDefined();
-  });
-
-  it("separa anúncios e propostas em abas e permite alternar (Figma 05.01, Spec 032)", async () => {
-    const disponivel: Book = {
-      id: "b10",
-      title: "Livro Disponível",
-      author: "Autora",
-      modality: "sale",
-      price: 25,
-      ownerId: "user-1",
-      status: "available",
-    };
-    const reservado: Book = {
-      id: "b11",
-      title: "Livro com Proposta",
-      author: "Autor",
-      modality: "trade",
-      ownerId: "user-1",
-      status: "reserved",
-    };
-    mockViewModel({ books: [disponivel, reservado] });
-    let screen!: Awaited<ReturnType<typeof render>>;
-
-    await act(async () => {
-      screen = await render(<MyListings sessionUserId="user-1" />);
-    });
-
-    // A aba "Anúncios" lista toda a estante, inclusive o reservado, como no Figma.
-    expect(screen.getByText("Anúncios (2)")).toBeDefined();
-    expect(screen.getByText("Propostas (1)")).toBeDefined();
-    expect(screen.getByText("Livro Disponível")).toBeDefined();
-    expect(screen.getByText("Livro com Proposta")).toBeDefined();
-
-    await act(async () => {
-      fireEvent.press(screen.getByText("Propostas (1)"));
-    });
-
-    expect(screen.queryByText("Livro Disponível")).toBeNull();
-    expect(screen.getByText("Livro com Proposta")).toBeDefined();
-    expect(screen.getByText("Todos (1)")).toBeDefined();
-    expect(screen.getByText("Ativos (0)")).toBeDefined();
+    expect(screen.getByText(/Nenhuma proposta em aberto/)).toBeDefined();
   });
 
   it("oferece o botão Anunciar livro quando já existe estante (Figma 05.01)", async () => {

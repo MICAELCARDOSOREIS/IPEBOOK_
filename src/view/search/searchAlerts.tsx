@@ -111,6 +111,8 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
                   <Text style={styles.body}>
                     Busque um título ou tema e ative um alerta para receber novidades.
                   </Text>
+                  {/* `02.13`: a ação vem logo depois do texto, não presa ao rodapé (Spec 043, RN-11). */}
+                  {onSearchBooks ? <FilledButton label="Procurar um livro" onPress={onSearchBooks} /> : null}
                 </View>
               }
               renderItem={({ item }) => (
@@ -140,13 +142,9 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
               )}
             />
           )}
-          {onSearchBooks ? (
+          {onSearchBooks && showListChrome ? (
             <View style={styles.searchAction}>
-              {showListChrome ? (
-                <OutlinedButton label="Procurar outro livro" onPress={onSearchBooks} />
-              ) : (
-                <FilledButton label="Procurar um livro" onPress={onSearchBooks} />
-              )}
+              <OutlinedButton label="Procurar outro livro" onPress={onSearchBooks} />
             </View>
           ) : null}
         </View>

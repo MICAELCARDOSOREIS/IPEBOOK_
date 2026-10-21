@@ -5,7 +5,9 @@ import type { Book, BookCondition, BookModality } from "@/model/entities/book";
 import { BOOK_CONDITIONS, BOOK_CONDITION_LABELS, MAX_BOOK_DESCRIPTION_LENGTH } from "@/model/entities/book";
 import { PIRIPIRI_NEIGHBORHOODS } from "@/model/entities/location";
 import { tokens } from "@/view/tokens";
+import { formatPrice } from "@/view/formatPrice";
 import { AddPhotoCard } from "@/view/components/AddPhotoCard";
+import { Manchete } from "@/view/components/Manchete";
 import { BookCover } from "@/view/components/BookCover";
 import { Chip } from "@/view/components/Chip";
 import { FilledButton } from "@/view/components/FilledButton";
@@ -75,8 +77,7 @@ export default function CreateListing({
       state.neighborhood.trim() ||
       state.category.trim(),
   );
-  const remainingDescriptionChars = MAX_BOOK_DESCRIPTION_LENGTH - state.description.length;
-  const descriptionTooLong = remainingDescriptionChars < 0;
+  const descriptionTooLong = state.description.length > MAX_BOOK_DESCRIPTION_LENGTH;
 
   const handleSubmit = async () => {
     const result = await actions.submit(sessionUserId);
@@ -92,9 +93,7 @@ export default function CreateListing({
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <View style={styles.content}>
             <IconBadge icon="check" tone="action" />
-            <Text accessibilityRole="header" style={styles.successTitle}>
-              Seu livro ganhou um novo começo.
-            </Text>
+            <Manchete texto="Seu livro ganhou" realce="um novo começo." />
             <Text style={styles.subtitle}>
               O anúncio já aparece para leitores de Piripiri.
             </Text>
@@ -111,7 +110,7 @@ export default function CreateListing({
                 <Text style={styles.publishedTitle}>{published.title}</Text>
                 <Text style={styles.publishedAuthor}>{published.author}</Text>
                 {published.price !== undefined ? (
-                  <Text style={styles.publishedPrice}>{`R$ ${published.price.toFixed(2)}`}</Text>
+                  <Text style={styles.publishedPrice}>{formatPrice(published.price)}</Text>
                 ) : null}
               </View>
             </View>
@@ -137,7 +136,7 @@ export default function CreateListing({
             </View>
 
             <FilledButton
-              label="Ver meus anúncios"
+              label="Ver estante"
               onPress={() => onViewMyListings?.()}
             />
             <TextButton label="Voltar ao início" onPress={() => onGoHome?.()} />
@@ -259,25 +258,31 @@ export default function CreateListing({
                 Uma foto nítida ajuda a conhecer o estado do exemplar. Até 3 fotos.
               </Text>
 
+              {/* `04.04`: capa em destaque à esquerda, lombada e páginas empilhadas à direita. */}
               <View style={styles.photoGrid}>
                 <AddPhotoCard
                   label="Foto da capa"
                   photoUrl={state.photoUrl}
                   onPress={() => undefined}
                   onRemovePhoto={() => actions.setPhotoUrl("")}
+                  style={styles.coverSlot}
                 />
-                <AddPhotoCard
-                  label="Lombada"
-                  photoUrl={state.photos[0]}
-                  onPress={() => undefined}
-                  onRemovePhoto={() => actions.removePhoto(0)}
-                />
-                <AddPhotoCard
-                  label="Páginas"
-                  photoUrl={state.photos[1]}
-                  onPress={() => undefined}
-                  onRemovePhoto={() => actions.removePhoto(1)}
-                />
+                <View style={styles.sideSlots}>
+                  <AddPhotoCard
+                    label="Lombada"
+                    photoUrl={state.photos[0]}
+                    onPress={() => undefined}
+                    onRemovePhoto={() => actions.removePhoto(0)}
+                    style={styles.sideSlot}
+                  />
+                  <AddPhotoCard
+                    label="Páginas"
+                    photoUrl={state.photos[1]}
+                    onPress={() => undefined}
+                    onRemovePhoto={() => actions.removePhoto(1)}
+                    style={styles.sideSlot}
+                  />
+                </View>
               </View>
 
               <TextField
@@ -349,6 +354,7 @@ export default function CreateListing({
                 editable={!state.loading}
                 placeholder="Ex: Marcas leves de uso, páginas completas."
                 maxLength={MAX_BOOK_DESCRIPTION_LENGTH}
+                multiline
                 helperText={`${state.description.length}/${MAX_BOOK_DESCRIPTION_LENGTH}`}
                 error={
                   descriptionTooLong
@@ -356,11 +362,6 @@ export default function CreateListing({
                     : undefined
                 }
               />
-              <Text style={styles.hint}>
-                {remainingDescriptionChars >= 0
-                  ? `Restam ${remainingDescriptionChars} caracteres`
-                  : `Limite excedido em ${Math.abs(remainingDescriptionChars)} caracteres`}
-              </Text>
 
               <View style={styles.field}>
                 <Text style={styles.sectionLabel}>Bairro para retirada</Text>
@@ -454,14 +455,11 @@ const styles = StyleSheet.create({
   chipRow: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[8] },
   photoRow: { flexDirection: "row", gap: tokens.spacing[12], alignItems: "flex-start" },
   photoTexts: { flex: 1, gap: tokens.spacing[12] },
-  photoGrid: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[12] },
+  photoGrid: { flexDirection: "row", gap: tokens.spacing[12] },
+  coverSlot: { flex: 2, aspectRatio: undefined, minWidth: 0 },
+  sideSlots: { flex: 1, gap: tokens.spacing[12] },
+  sideSlot: { minWidth: 0 },
   title: {
-    fontSize: tokens.typography.displayLarge.fontSize,
-    lineHeight: tokens.typography.displayLarge.lineHeight,
-    fontFamily: tokens.typography.displayLarge.fontFamily,
-    color: tokens.colors.text,
-  },
-  successTitle: {
     fontSize: tokens.typography.displayLarge.fontSize,
     lineHeight: tokens.typography.displayLarge.lineHeight,
     fontFamily: tokens.typography.displayLarge.fontFamily,

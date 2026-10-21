@@ -128,5 +128,7 @@ describe("Notifications Component (Spec 015)", () => {
       .filter((texto) => typeof texto === "string" && periodos.includes(texto));
 
     expect(cabecalhos.length).toBeGreaterThan(0);
+    // Spec 043 RN-12: cada item traz o horário curto ("· 10h", "· Seg" ou "· 10/10").
+    expect(screen.getAllByText(/ ·\s(\d{1,2}h|Dom|Seg|Ter|Qua|Qui|Sex|Sáb|\d{2}\/\d{2})$/).length).toBeGreaterThan(0);
   });
 });

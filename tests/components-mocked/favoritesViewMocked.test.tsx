@@ -82,7 +82,7 @@ describe("Favorites alinhada ao Figma 02.06 (Spec 030)", () => {
     });
 
     expect(screen.getByText("O Pequeno Príncipe")).toBeDefined();
-    expect(screen.getByText("R$ 25.00")).toBeDefined();
+    expect(screen.getByText("R$ 25,00")).toBeDefined();
     expect(screen.getByText("Saint-Exupéry · Bom estado · Centro")).toBeDefined();
   });
 

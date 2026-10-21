@@ -1,5 +1,5 @@
 import React from "react";
-import { act, fireEvent, render } from "@testing-library/react-native";
+import { act, fireEvent, render, within } from "@testing-library/react-native";
 import { describe, expect, it, vi } from "vitest";
 import Favorites from "@/view/favorites/favorites";
 import SearchAlerts from "@/view/search/searchAlerts";
@@ -18,7 +18,7 @@ describe("favoritos e alertas (spec 016)", () => {
   it("mostra lista vazia de favoritos para conta sem livros salvos", async () => {
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => { screen = await render(<Favorites userId="usuario-favoritos-vazio" onBack={vi.fn()} onLogin={vi.fn()} onBook={vi.fn()} />); });
-    expect(screen.getByRole("header", { name: "Nenhum favorito ainda" })).toBeDefined();
+    expect(screen.getByRole("header", { name: "Nenhum livro salvo" })).toBeDefined();
   });
 
   it("atualiza favoritos ao retornar do detalhe após desfavoritar", async () => {
@@ -31,7 +31,27 @@ describe("favoritos e alertas (spec 016)", () => {
 
     await favoriteUseCases.toggleFavorite(userId, book.id);
     await act(async () => { screen.rerender(<Favorites userId={userId} focusKey={1} onBack={vi.fn()} onLogin={vi.fn()} onBook={vi.fn()} />); });
-    expect(screen.getByRole("header", { name: "Nenhum favorito ainda" })).toBeDefined();
+    expect(screen.getByRole("header", { name: "Nenhum livro salvo" })).toBeDefined();
+  });
+
+  it("favoritos vazio segue 02.14: copy e ação logo abaixo, sem ícone (Spec 043, RN-10)", async () => {
+    const onExploreBooks = vi.fn();
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => { screen = await render(<Favorites userId="usuario-favoritos-vazio-043" onBack={vi.fn()} onLogin={vi.fn()} onBook={vi.fn()} onExploreBooks={onExploreBooks} />); });
+    const box = within(screen.getByRole("header", { name: "Nenhum livro salvo" }).parent!);
+    expect(box.getByText("Toque em Favoritar no anúncio para guardar os livros que você quer ler.")).toBeDefined();
+    fireEvent.press(box.getByRole("button", { name: "Explorar livros" }));
+    expect(onExploreBooks).toHaveBeenCalledOnce();
+  });
+
+  it("alertas vazio traz Procurar um livro logo depois do texto (Spec 043, RN-11)", async () => {
+    const onSearchBooks = vi.fn();
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => { screen = await render(<SearchAlerts userId="usuario-alertas-vazio-043" onBack={vi.fn()} onLogin={vi.fn()} onSearchBooks={onSearchBooks} />); });
+    const box = within(screen.getByRole("header", { name: "Nenhum alerta criado" }).parent!);
+    fireEvent.press(box.getByRole("button", { name: "Procurar um livro" }));
+    expect(onSearchBooks).toHaveBeenCalledOnce();
+    expect(screen.getAllByRole("button", { name: "Procurar um livro" })).toHaveLength(1);
   });
 
   it("abre o gerenciamento pelo alvo único da lista", async () => {

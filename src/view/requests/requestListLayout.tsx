@@ -12,6 +12,7 @@ import { OfflineState } from "@/view/components/OfflineState";
 import { Tag } from "@/view/components/Tag";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { tokens } from "@/view/tokens";
+import { formatPrice } from "@/view/formatPrice";
 
 export const statusLabel: Record<RequestStatus, string> = {
   pending: "Pendente",
@@ -150,7 +151,7 @@ export function RequestListLayout({
                       <View style={styles.tagRow}>
                         <Tag variant={item.listing.modality} />
                         {item.listing.modality === "sale" && item.listing.price !== undefined ? (
-                          <Text style={styles.price}>{`R$ ${item.listing.price.toFixed(2)}`}</Text>
+                          <Text style={styles.price}>{formatPrice(item.listing.price)}</Text>
                         ) : null}
                       </View>
                     </View>

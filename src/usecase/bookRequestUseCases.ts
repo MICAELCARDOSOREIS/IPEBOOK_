@@ -3,7 +3,7 @@ import type { IBookRequestDataSource } from "@/model/datasources/iBookRequestDat
 import type { IProfileDataSource } from "@/model/datasources/iProfileDataSource";
 import type { Book } from "@/model/entities/book";
 import type { BookRequest } from "@/model/entities/bookRequest";
-import type { MeetingPoint } from "@/model/entities/meetingPoint";
+import { PIRIPIRI_MEETING_POINTS, type MeetingPoint } from "@/model/entities/meetingPoint";
 import { AuthError, ValidationError } from "@/model/errors";
 import type {
   IBookRequestUseCases,
@@ -52,10 +52,14 @@ export class BookRequestUseCases implements IBookRequestUseCases {
     const userId = requireSession(sessionUserId);
     const myListings = await this.books.listByOwner(userId);
     const result: RequestWithListing[] = [];
+    const names = new Map<string, string | null>();
     for (const listing of myListings) {
       const requests = await this.requests.listByListing(listing.id);
       for (const request of requests) {
-        result.push({ request, listing });
+        if (!names.has(request.requesterId)) {
+          names.set(request.requesterId, await this.findCounterpartName(request.requesterId));
+        }
+        result.push({ request, listing, requesterName: names.get(request.requesterId) ?? null });
       }
     }
     return result;
@@ -134,28 +138,7 @@ export class BookRequestUseCases implements IBookRequestUseCases {
       throw new AuthError("Você não tem permissão para acessar esta negociação.");
     }
 
-    const safeMeetingPoints: readonly MeetingPoint[] = [
-      {
-        name: "Campus IFPI Piripiri (Recepção ou Biblioteca)",
-        address: "Rodovia PI-112, Km 01, Piripiri, PI",
-        recommendedTime: "Dias úteis, das 8h às 17h",
-      },
-      {
-        name: "Praça da Bandeira (Centro)",
-        address: "Praça da Bandeira, Centro, Piripiri, PI",
-        recommendedTime: "Diariamente, das 8h às 18h",
-      },
-      {
-        name: "Praça de Alimentação / Mercado Central",
-        address: "Mercado Central de Piripiri, Centro, Piripiri, PI",
-        recommendedTime: "Diariamente, das 8h às 18h",
-      },
-      {
-        name: "Praça de Eventos",
-        address: "Praça de Eventos, Centro, Piripiri, PI",
-        recommendedTime: "Diariamente, das 8h às 18h",
-      },
-    ];
+    const safeMeetingPoints: readonly MeetingPoint[] = PIRIPIRI_MEETING_POINTS;
 
     const counterpartId = isOwner ? request.requesterId : book.ownerId;
 

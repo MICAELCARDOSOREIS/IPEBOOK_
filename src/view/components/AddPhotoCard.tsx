@@ -1,4 +1,4 @@
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { Image, Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from "react-native";
 import { tokens } from "@/view/tokens";
 import { AppIcon } from "@/view/components/AppIcon";
 
@@ -7,6 +7,8 @@ export type AddPhotoCardProps = {
   onPress: () => void;
   photoUrl?: string;
   onRemovePhoto?: () => void;
+  /** Ajuste de proporção, como a capa em destaque de `04.04` (Spec 043, RN-07). */
+  style?: StyleProp<ViewStyle>;
 };
 
 /**
@@ -20,10 +22,11 @@ export function AddPhotoCard({
   onPress,
   photoUrl,
   onRemovePhoto,
+  style,
 }: AddPhotoCardProps) {
   if (photoUrl) {
     return (
-      <View style={styles.card}>
+      <View style={[styles.card, style]}>
         <Image
           source={{ uri: photoUrl }}
           accessibilityLabel={`Pré-visualização da ${label.toLowerCase()}`}
@@ -49,7 +52,7 @@ export function AddPhotoCard({
       accessibilityRole="button"
       accessibilityLabel={`Adicionar ${label.toLowerCase()}`}
       onPress={onPress}
-      style={styles.card}
+      style={[styles.card, style]}
     >
       <AppIcon name="add" color={tokens.colors.action} size={28} />
       <Text style={styles.label}>{label}</Text>

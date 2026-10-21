@@ -13,7 +13,7 @@ import {
   useNotificationsViewModel,
 } from "@/viewmodel/useNotificationsViewModel";
 import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
-import { groupNotificationsByPeriod } from "@/viewmodel/notificationGrouping";
+import { groupNotificationsByPeriod, notificationTimeLabel } from "@/viewmodel/notificationGrouping";
 
 export type NotificationsProps = {
   sessionUserId: string | null;
@@ -186,6 +186,7 @@ export default function Notifications({
             )}
             renderItem={({ item }) => {
               const badge = TYPE_BADGES[item.type] ?? { icon: "info", tone: "neutral" as const };
+              const time = notificationTimeLabel(item.createdAt);
               return (
                 <Pressable
                   accessibilityRole="button"
@@ -216,7 +217,11 @@ export default function Notifications({
                       />
                     ) : null}
                   </View>
-                  <Text style={styles.cardMessage}>{item.message}</Text>
+                  {/* Spec 043 RN-12: horário curto na mesma linha, como "· 10h" em `07.04`. */}
+                  <Text style={styles.cardMessage}>
+                    {item.message}
+                    {time ? <Text>{` ·\u00A0${time}`}</Text> : null}
+                  </Text>
                 </Pressable>
               );
             }}

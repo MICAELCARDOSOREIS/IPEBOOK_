@@ -1,3 +1,11 @@
+import { PIRIPIRI_MEETING_POINTS } from "@/model/entities/meetingPoint";
+
+/** "A, B, C e D" com os nomes dos pontos de encontro sugeridos. */
+function listMeetingPoints(): string {
+  const names = PIRIPIRI_MEETING_POINTS.map((point) => point.name);
+  return names.length > 1 ? `${names.slice(0, -1).join(", ")} e ${names[names.length - 1]}` : names.join("");
+}
+
 export interface FaqItem {
   readonly id: string;
   readonly question: string;
@@ -25,7 +33,7 @@ export const FAQ_ITEMS: readonly FaqItem[] = [
     category: "seguranca",
     question: "Onde devo realizar a entrega ou troca do livro em Piripiri?",
     answer:
-      "Sempre priorize locais públicos, iluminados e movimentados durante o dia. Recomendamos os seguintes pontos de encontro em Piripiri: Campus do IFPI Piripiri, Praça da Bandeira (Centro), Memorial Espedito Resende e a Estação Ferroviária.",
+      `Sempre priorize locais públicos, iluminados e movimentados durante o dia. Recomendamos os mesmos pontos sugeridos na negociação: ${listMeetingPoints()}.`,
   },
   {
     id: "faq-4",

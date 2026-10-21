@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { AppNotification } from "@/model/entities/notification";
-import { groupNotificationsByPeriod, periodOf } from "@/viewmodel/notificationGrouping";
+import { groupNotificationsByPeriod, notificationTimeLabel, periodOf } from "@/viewmodel/notificationGrouping";
 
 // As datas são construídas no fuso local do processo, e não com um deslocamento fixo,
 // para que o resultado não mude entre a máquina de quem desenvolve e a CI (que roda em UTC).
@@ -89,5 +89,22 @@ describe("groupNotificationsByPeriod", () => {
 
   it("devolve lista vazia quando não há notificações", () => {
     expect(groupNotificationsByPeriod([], AGORA)).toEqual([]);
+  });
+});
+
+describe("notificationTimeLabel (Spec 043, RN-12)", () => {
+  it("mostra a hora cheia no mesmo dia, como '10h' em 07.04", () => {
+    expect(notificationTimeLabel(diasAtras(0, 10, 30), AGORA)).toBe("10h");
+  });
+
+  it("mostra o dia da semana na mesma semana", () => {
+    // AGORA é terça-feira, 20/10/2026.
+    expect(notificationTimeLabel(diasAtras(1, 9), AGORA)).toBe("Seg");
+    expect(notificationTimeLabel(diasAtras(3, 9), AGORA)).toBe("Sáb");
+  });
+
+  it("mostra a data curta antes disso e nada para data inválida", () => {
+    expect(notificationTimeLabel(diasAtras(10, 9), AGORA)).toBe("10/10");
+    expect(notificationTimeLabel("data-ruim", AGORA)).toBeNull();
   });
 });

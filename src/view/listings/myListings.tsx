@@ -1,69 +1,94 @@
 import { useEffect, useState } from "react";
-import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useMyListingsViewModel } from "@/viewmodel/useMyListingsViewModel";
+import { type ReceivedRequestsState, useReceivedRequestsViewModel } from "@/viewmodel/useReceivedRequestsViewModel";
 import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
 import { tokens } from "@/view/tokens";
+import { formatPrice } from "@/view/formatPrice";
 import { AppIcon } from "@/view/components/AppIcon";
 import { BookCover } from "@/view/components/BookCover";
-import { Dialog } from "@/view/components/Dialog";
 import { ErrorState } from "@/view/components/ErrorState";
 import { FilledButton } from "@/view/components/FilledButton";
 import { IconBadge } from "@/view/components/IconBadge";
 import { LoadingState } from "@/view/components/LoadingState";
 import { OfflineState } from "@/view/components/OfflineState";
-import { Snackbar } from "@/view/components/Snackbar";
-import { Tag } from "@/view/components/Tag";
 import { TopAppBar } from "@/view/components/TopAppBar";
-import { BOOK_CONDITION_LABELS, type Book } from "@/model/entities/book";
+import type { Book, BookModality, BookStatus } from "@/model/entities/book";
+import { COMMUNITY_MEMBER } from "@/view/requests/receivedRequests";
 
 export type MyListingsProps = {
   sessionUserId: string;
   onBack?: () => void;
-  onNavigateToBookDetail?: (bookId: string) => void;
   onNavigateToCreateListing?: () => void;
-  onNavigateToEditListing?: (bookId: string) => void;
   onNavigateToManageListing?: (bookId: string) => void;
   onNavigateToHelp?: () => void;
+  /** Abre os pedidos recebidos, destino de uma proposta pendente (Spec 043, RN-03). */
+  onNavigateToReceivedRequests?: () => void;
+  /** Abre a negociação aceita (`06.05`). */
+  onNavigateToNegotiationDetail?: (requestId: string) => void;
 };
 
+const MODALITY_LABELS: Readonly<Record<BookModality, string>> = {
+  sale: "Venda",
+  trade: "Troca",
+  donation: "Doação",
+};
+
+const STATUS_LABELS: Readonly<Record<BookStatus, string>> = {
+  available: "Disponível",
+  paused: "Pausado",
+  reserved: "Reservado",
+};
+
+/** Resumo da linha de `05.01`: preço ou modalidade, bairro e situação. */
+function listingSummary(book: Book): string {
+  const offer = book.modality === "sale" && book.price ? formatPrice(book.price) : MODALITY_LABELS[book.modality];
+  return [offer, book.neighborhood, STATUS_LABELS[book.status]].filter(Boolean).join(" · ");
+}
+
+/** Resumo da linha de `05.03`: quem propôs, em que pé está e a modalidade. */
+function proposalSummary(item: ReceivedRequestsState["items"][number]): string {
+  const stage = item.request.status === "accepted" ? "negociação aceita" : "proposta recebida";
+  return [item.requesterName ?? COMMUNITY_MEMBER, stage, MODALITY_LABELS[item.listing.modality]].join(" · ");
+}
+
 /**
- * Figma `05.01 · Estante` (`25:302` / Web `159:1728`),
- * `05.02 · Estante vazia` (`25:430` / Web `159:1857`) e
+ * Figma `05.01 · Estante` (`25:302` / Web `159:1728`), `05.02 · Estante vazia` (`25:430` /
+ * Web `159:1857`), `05.03 · Estante · Propostas` (`149:2962`) e
  * `05.07 · Estante após exclusão` (`403:7319` / Web `403:22271`).
  */
 export function MyListings({
   sessionUserId,
   onBack,
-  onNavigateToBookDetail,
   onNavigateToCreateListing,
-  onNavigateToEditListing,
   onNavigateToManageListing,
   onNavigateToHelp,
+  onNavigateToReceivedRequests,
+  onNavigateToNegotiationDetail,
 }: MyListingsProps) {
   const [state, actions] = useMyListingsViewModel(sessionUserId);
+  const [received] = useReceivedRequestsViewModel(sessionUserId);
   const { isOnline } = useNetworkStatus();
-  const [listingToDelete, setListingToDelete] = useState<Book | null>(null);
-  const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"listings" | "proposals">("listings");
-
-  const listingBooks = state.books;
-  const proposalBooks = state.books.filter((book) => book.status === "reserved");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "paused" | "reserved">("all");
 
-  const booksInTab = activeTab === "proposals" ? proposalBooks : listingBooks;
-  const activeCount = booksInTab.filter((b) => b.status === "available").length;
-  const pausedCount = booksInTab.filter((b) => b.status === "paused").length;
-  const reservedCount = booksInTab.filter((b) => b.status === "reserved").length;
+  // Spec 043 RN-03: a aba conta as propostas recebidas em aberto, não os livros reservados.
+  const proposals = received.items.filter(
+    (item) => item.request.status === "pending" || item.request.status === "accepted",
+  );
+  const activeCount = state.books.filter((b) => b.status === "available").length;
+  const pausedCount = state.books.filter((b) => b.status === "paused").length;
+  const reservedCount = state.books.filter((b) => b.status === "reserved").length;
 
-  const filteredBooks = booksInTab.filter((b) => {
+  const filteredBooks = state.books.filter((b) => {
     if (statusFilter === "active") return b.status === "available";
     if (statusFilter === "paused") return b.status === "paused";
     if (statusFilter === "reserved") return b.status === "reserved";
     return true;
   });
-
+  const showFab = state.books.length > 0 && onNavigateToCreateListing;
 
   return (
     <SafeAreaView style={styles.page}>
@@ -77,53 +102,61 @@ export function MyListings({
           ) : (
             <OfflineState onRetry={() => void actions.reload()} />
           )
+        ) : state.books.length === 0 ? (
+          <View style={styles.empty}>
+            <IconBadge icon="shelf" tone="neutral" size="large" />
+            <Text style={styles.emptyHeadline}>Sua estante começa com um livro</Text>
+            <Text style={styles.emptyTitle}>
+              Anuncie um livro para vender, trocar ou doar na sua região.
+            </Text>
+            <View style={styles.emptyAction}>
+              <FilledButton
+                label="Anunciar livro"
+                accessibilityLabel="Cadastrar anúncio"
+                onPress={() => onNavigateToCreateListing?.()}
+              />
+            </View>
+            {onNavigateToHelp ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Como funciona"
+                onPress={onNavigateToHelp}
+                style={styles.howItWorksButton}
+              >
+                <Text style={styles.howItWorksText}>Como funciona</Text>
+              </Pressable>
+            ) : null}
+          </View>
         ) : (
-          <>
-            <Snackbar
-              visible={feedbackMessage !== null}
-              message={feedbackMessage ?? ""}
-              actionLabel="✕"
-              onAction={() => setFeedbackMessage(null)}
-              onDismiss={() => setFeedbackMessage(null)}
-            />
-            {state.cancelError ? (
-              <Text accessibilityRole="alert" style={styles.cancelErrorText}>
-                {state.cancelError}
-              </Text>
-            ) : null}
-            {state.pauseError ? (
-              <Text accessibilityRole="alert" style={styles.cancelErrorText}>
-                {state.pauseError}
-              </Text>
-            ) : null}
-            {state.books.length > 0 ? (
+          <ScrollView contentContainerStyle={[styles.scroll, showFab ? styles.scrollWithFab : null]}>
+            <View testID="my-listings-tablist" accessibilityRole="tablist" style={styles.tabs}>
+              <Pressable
+                accessibilityRole="tab"
+                accessibilityState={{ selected: activeTab === "listings" }}
+                onPress={() => setActiveTab("listings")}
+                style={[styles.tab, activeTab === "listings" && styles.activeTab]}
+              >
+                <Text style={[styles.tabText, activeTab === "listings" && styles.activeTabText]}>
+                  {`Anúncios (${state.books.length})`}
+                </Text>
+              </Pressable>
+              <Pressable
+                accessibilityRole="tab"
+                accessibilityState={{ selected: activeTab === "proposals" }}
+                onPress={() => setActiveTab("proposals")}
+                style={[styles.tab, activeTab === "proposals" && styles.activeTab]}
+              >
+                <Text style={[styles.tabText, activeTab === "proposals" && styles.activeTabText]}>
+                  {`Propostas (${proposals.length})`}
+                </Text>
+              </Pressable>
+            </View>
+            {activeTab === "listings" ? (
               <>
-                <View testID="my-listings-tablist" accessibilityRole="tablist" style={styles.tabs}>
-                  <Pressable
-                    accessibilityRole="tab"
-                    accessibilityState={{ selected: activeTab === "listings" }}
-                    onPress={() => setActiveTab("listings")}
-                    style={[styles.tab, activeTab === "listings" && styles.activeTab]}
-                  >
-                    <Text style={[styles.tabText, activeTab === "listings" && styles.activeTabText]}>
-                      {`Anúncios (${listingBooks.length})`}
-                    </Text>
-                  </Pressable>
-                  <Pressable
-                    accessibilityRole="tab"
-                    accessibilityState={{ selected: activeTab === "proposals" }}
-                    onPress={() => setActiveTab("proposals")}
-                    style={[styles.tab, activeTab === "proposals" && styles.activeTab]}
-                  >
-                    <Text style={[styles.tabText, activeTab === "proposals" && styles.activeTabText]}>
-                      {`Propostas (${proposalBooks.length})`}
-                    </Text>
-                  </Pressable>
-                </View>
                 <View style={styles.filterRow}>
                   {(
                     [
-                      { key: "all", label: `Todos (${booksInTab.length})`, a11y: "Filtrar por Todos" },
+                      { key: "all", label: `Todos (${state.books.length})`, a11y: "Filtrar por Todos" },
                       { key: "active", label: `Ativos (${activeCount})`, a11y: "Filtrar por Ativos" },
                       { key: "paused", label: `Pausados (${pausedCount})`, a11y: "Filtrar por Pausados" },
                       { key: "reserved", label: `Reservados (${reservedCount})`, a11y: "Filtrar por Reservados" },
@@ -146,160 +179,63 @@ export function MyListings({
                     );
                   })}
                 </View>
-              </>
-            ) : null}
-            <FlatList
-              data={filteredBooks}
-
-              keyExtractor={(book) => book.id}
-              contentContainerStyle={styles.list}
-              ListEmptyComponent={
-                state.books.length > 0 ? (
+                {filteredBooks.length === 0 ? (
                   <View style={styles.empty}>
                     <IconBadge icon="shelf" tone="neutral" />
                     <Text style={styles.emptyTitle}>Nenhum anúncio encontrado neste filtro.</Text>
                     <View style={styles.emptyAction}>
-                      <FilledButton
-                        label="Ver todos os anúncios"
-                        onPress={() => setStatusFilter("all")}
-                      />
+                      <FilledButton label="Ver todos os anúncios" onPress={() => setStatusFilter("all")} />
                     </View>
                   </View>
                 ) : (
-                  <View style={styles.empty}>
-                    <IconBadge icon="shelf" tone="neutral" size="large" />
-                    <Text style={styles.emptyHeadline}>Sua estante começa com um livro</Text>
-                    <Text style={styles.emptyTitle}>
-                      Anuncie um livro para vender, trocar ou doar na sua região.
-                    </Text>
-                    <View style={styles.emptyAction}>
-                      <FilledButton
-                        label="Anunciar livro"
-                        accessibilityLabel="Cadastrar anúncio"
-                        onPress={() => onNavigateToCreateListing?.()}
-                      />
-                    </View>
-                    {onNavigateToHelp ? (
-                      <Pressable
-                        accessibilityRole="button"
-                        accessibilityLabel="Como funciona"
-                        onPress={onNavigateToHelp}
-                        style={styles.howItWorksButton}
-                      >
-                        <Text style={styles.howItWorksText}>Como funciona</Text>
-                      </Pressable>
-                    ) : null}
-                  </View>
-                )
-              }
-              renderItem={({ item }) => {
-                const extraMeta = [
-                  item.condition ? BOOK_CONDITION_LABELS[item.condition] : null,
-                  item.neighborhood,
-                ]
-                  .filter(Boolean)
-                  .join(" · ");
-
-                return (
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel={`Ver detalhe de ${item.title}, ${item.author}`}
-                    onPress={() => onNavigateToBookDetail?.(item.id)}
-                    style={styles.bookCard}
-                  >
-                    <BookCover id={item.id} title={item.title} photoUrl={item.photoUrl} variant="list" />
-                    <View style={styles.bookInfo}>
-                      <View style={styles.bookHeader}>
-                        <Text style={styles.bookTitle}>{item.title}</Text>
-                        <Tag variant={item.modality} />
-                      </View>
-                      <Text style={styles.bookAuthor}>{item.author}</Text>
-                      {extraMeta ? <Text style={styles.bookMeta}>{extraMeta}</Text> : null}
-                      <View style={styles.statusRow}>
-                        <Tag variant={item.status} />
-                        {item.modality === "sale" && item.price ? (
-                          <Text style={styles.price}>{`R$ ${item.price.toFixed(2)}`}</Text>
-                        ) : null}
-                      </View>
-                      <View style={styles.actionButtonsRow}>
-                        <Pressable
-                          accessibilityRole="button"
-                          accessibilityLabel={`Gerenciar anúncio de ${item.title}`}
-                          onPress={() => onNavigateToManageListing?.(item.id)}
-                          style={styles.editButton}
-                        >
-                          <Text style={styles.editText}>Gerenciar</Text>
-                        </Pressable>
-                        {item.status !== "reserved" ? (
-                          <>
-                            <Pressable
-                              accessibilityRole="button"
-                              accessibilityLabel={`Editar anúncio de ${item.title}`}
-                              onPress={() => onNavigateToEditListing?.(item.id)}
-                              style={styles.editButton}
-                            >
-                              <Text style={styles.editText}>Editar</Text>
-                            </Pressable>
-                            <Pressable
-                              accessibilityRole="button"
-                              accessibilityLabel={
-                                item.status === "paused"
-                                  ? `Retomar anúncio de ${item.title}`
-                                  : `Pausar anúncio de ${item.title}`
-                              }
-                              disabled={state.pausingId === item.id}
-                              onPress={async () => {
-                                const wasPaused = item.status === "paused";
-                                const ok = await actions.togglePauseListing(item.id);
-                                if (ok) {
-                                  setFeedbackMessage(
-                                    wasPaused
-                                      ? `Anúncio de "${item.title}" reativado no catálogo.`
-                                      : `Anúncio de "${item.title}" pausado. Ele não aparecerá no catálogo público.`,
-                                  );
-                                }
-                              }}
-                              style={styles.pauseButton}
-                            >
-                              <Text style={styles.pauseText}>
-                                {state.pausingId === item.id
-                                  ? "Aguarde..."
-                                  : item.status === "paused"
-                                    ? "Retomar"
-                                    : "Pausar"}
-                              </Text>
-                            </Pressable>
-                          </>
-                        ) : null}
-                        {item.status === "available" ? (
-                          <Pressable
-                            accessibilityRole="button"
-                            accessibilityLabel={`Remover anúncio de ${item.title}`}
-                            disabled={state.cancellingId === item.id}
-                            onPress={() => setListingToDelete(item)}
-                            style={styles.cancelButton}
-                          >
-                            <Text style={styles.cancelText}>
-                              {state.cancellingId === item.id ? "Removendo..." : "Remover"}
-                            </Text>
-                          </Pressable>
-                        ) : null}
-                      </View>
-                    </View>
-                  </Pressable>
-                );
-              }}
-            />
-            {/* `05.01` traz a dica de uso depois da lista, não antes dela. */}
-            {state.books.length > 0 ? (
-              <Text style={styles.orientationHint}>
-                Toque em um livro para editar, pausar ou marcar como concluído.
-              </Text>
-            ) : null}
-          </>
+                  filteredBooks.map((book) => (
+                    <ShelfRow
+                      key={book.id}
+                      book={book}
+                      summary={listingSummary(book)}
+                      accessibilityLabel={`Gerenciar anúncio de ${book.title}`}
+                      onPress={() => onNavigateToManageListing?.(book.id)}
+                    />
+                  ))
+                )}
+                {/* `05.01` traz a dica de uso depois da lista, não antes dela. */}
+                <Text style={styles.orientationHint}>
+                  Toque em um livro para editar, pausar ou marcar como concluído.
+                </Text>
+              </>
+            ) : (
+              <>
+                {proposals.length === 0 ? (
+                  <Text style={styles.proposalsEmpty}>
+                    Nenhuma proposta em aberto. Quando alguém se interessar por um livro seu, ela aparece aqui.
+                  </Text>
+                ) : (
+                  proposals.map((item) => (
+                    <ShelfRow
+                      key={item.request.id}
+                      book={item.listing}
+                      summary={proposalSummary(item)}
+                      accessibilityLabel={`Abrir proposta para ${item.listing.title}`}
+                      onPress={() =>
+                        item.request.status === "accepted"
+                          ? onNavigateToNegotiationDetail?.(item.request.id)
+                          : onNavigateToReceivedRequests?.()
+                      }
+                    />
+                  ))
+                )}
+                <View style={styles.infoCard}>
+                  <Text style={styles.infoCardTitle}>Tudo pela conversa</Text>
+                  <Text style={styles.orientationHint}>
+                    Confira a proposta e combine os detalhes antes de reservar seu livro.
+                  </Text>
+                </View>
+              </>
+            )}
+          </ScrollView>
         )}
       </View>
-      {state.books.length > 0 && onNavigateToCreateListing ? (
+      {showFab ? (
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Anunciar livro"
@@ -310,52 +246,50 @@ export function MyListings({
           <Text style={styles.fabText}>Anunciar livro</Text>
         </Pressable>
       ) : null}
-      <Dialog
-        visible={listingToDelete !== null}
-        title="Excluir anúncio?"
-        message={
-          listingToDelete
-            ? `Tem certeza de que deseja excluir o anúncio de "${listingToDelete.title}"? Esta ação não pode ser desfeita.`
-            : ""
-        }
-        confirmLabel="Excluir anúncio"
-        cancelLabel="Cancelar"
-        destructive
-        loading={state.cancellingId !== null}
-        onCancel={() => setListingToDelete(null)}
-        onConfirm={async () => {
-          if (!listingToDelete) return;
-          const bookTitle = listingToDelete.title;
-          const ok = await actions.cancelListing(listingToDelete.id);
-          if (ok) {
-            setListingToDelete(null);
-            setFeedbackMessage(`Anúncio de "${bookTitle}" excluído com sucesso.`);
-          }
-        }}
-      />
     </SafeAreaView>
+  );
+}
+
+type ShelfRowProps = {
+  book: Book;
+  summary: string;
+  accessibilityLabel: string;
+  onPress: () => void;
+};
+
+/** Linha da estante: capa, título, resumo e seta de avanço, como em `05.01` e `05.03`. */
+function ShelfRow({ book, summary, accessibilityLabel, onPress }: ShelfRowProps) {
+  return (
+    <Pressable accessibilityRole="button" accessibilityLabel={accessibilityLabel} onPress={onPress} style={styles.row}>
+      <BookCover id={book.id} title={book.title} photoUrl={book.photoUrl} variant="list" />
+      <View style={styles.rowText}>
+        <Text style={styles.rowTitle}>{book.title}</Text>
+        <Text style={styles.rowSummary}>{summary}</Text>
+      </View>
+      <AppIcon name="chevronRight" size={24} color={tokens.colors.secondaryText} />
+    </Pressable>
   );
 }
 
 export type MyListingsScreenProps = {
   onBack?: () => void;
   onRequireSignIn?: () => void;
-  onNavigateToBookDetail?: (bookId: string) => void;
   onNavigateToCreateListing?: () => void;
   /** Abre a ajuda, como o link "Como funciona" do estado vazio de `05.02`. */
   onNavigateToHelp?: () => void;
-  onNavigateToEditListing?: (bookId: string) => void;
   onNavigateToManageListing?: (bookId: string) => void;
+  onNavigateToReceivedRequests?: () => void;
+  onNavigateToNegotiationDetail?: (requestId: string) => void;
 };
 
 export default function MyListingsScreen({
   onBack,
   onRequireSignIn,
-  onNavigateToBookDetail,
   onNavigateToCreateListing,
   onNavigateToHelp,
-  onNavigateToEditListing,
   onNavigateToManageListing,
+  onNavigateToReceivedRequests,
+  onNavigateToNegotiationDetail,
 }: MyListingsScreenProps = {}) {
   const [authState] = useAuthViewModel();
 
@@ -371,11 +305,11 @@ export default function MyListingsScreen({
     <MyListings
       sessionUserId={authState.user.id}
       onBack={onBack}
-      onNavigateToBookDetail={onNavigateToBookDetail}
       onNavigateToCreateListing={onNavigateToCreateListing}
       onNavigateToHelp={onNavigateToHelp}
-      onNavigateToEditListing={onNavigateToEditListing}
       onNavigateToManageListing={onNavigateToManageListing}
+      onNavigateToReceivedRequests={onNavigateToReceivedRequests}
+      onNavigateToNegotiationDetail={onNavigateToNegotiationDetail}
     />
   );
 }
@@ -420,20 +354,16 @@ const styles = StyleSheet.create({
   },
   page: { flex: 1, backgroundColor: tokens.colors.background },
   content: { flex: 1, width: "100%", maxWidth: 720, alignSelf: "center", paddingHorizontal: tokens.spacing[16] },
-  body: {
-    ...tokens.typography.bodyMedium,
-    color: tokens.colors.secondaryText,
-    textAlign: "center",
-  },
   orientationHint: {
     ...tokens.typography.bodyMedium,
     color: tokens.colors.secondaryText,
+    marginTop: tokens.spacing[8],
   },
   filterRow: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: tokens.spacing[8],
-    marginTop: tokens.spacing[8],
+    marginBottom: tokens.spacing[8],
   },
   filterChip: {
     minHeight: tokens.accessibility.touchTarget,
@@ -457,7 +387,6 @@ const styles = StyleSheet.create({
     color: tokens.colors.surface,
     fontWeight: "600",
   },
-  list: { paddingVertical: tokens.spacing[16], gap: tokens.spacing[12] },
   empty: { paddingTop: tokens.spacing[48], alignItems: "center", gap: tokens.spacing[12] },
   emptyHeadline: {
     ...tokens.typography.titleLarge,
@@ -482,93 +411,40 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   emptyAction: { marginTop: tokens.spacing[16], width: "100%" },
-  bookCard: {
+  scroll: { paddingBottom: tokens.spacing[24] },
+  /** Espaço para o botão flutuante não cobrir a dica nem a última linha (Spec 043, RN-05). */
+  scrollWithFab: { paddingBottom: tokens.spacing[64] + tokens.spacing[32] },
+  row: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: tokens.colors.surface,
-    borderRadius: tokens.radius.medium,
-    padding: tokens.spacing[12],
-    gap: tokens.spacing[12],
-    borderWidth: 1,
-    borderColor: tokens.colors.m3.outlineVariant,
+    gap: tokens.spacing[16],
+    minHeight: tokens.accessibility.touchTarget,
+    paddingVertical: tokens.spacing[12],
   },
-  bookInfo: { flex: 1, gap: tokens.spacing[4] },
-  bookHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: tokens.spacing[8] },
-  bookTitle: {
-    flex: 1,
+  rowText: { flex: 1, gap: tokens.spacing[4] },
+  rowTitle: {
     ...tokens.typography.titleMedium,
-    fontFamily: tokens.typography.displayLarge.fontFamily,
     color: tokens.colors.text,
   },
-  bookAuthor: {
+  rowSummary: {
     ...tokens.typography.bodyMedium,
     color: tokens.colors.secondaryText,
   },
-  bookMeta: {
-    ...tokens.typography.labelMedium,
-    color: tokens.colors.secondaryText,
-  },
-  statusRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginTop: tokens.spacing[4],
-  },
-  price: {
+  proposalsEmpty: {
     ...tokens.typography.bodyMedium,
-    fontWeight: "600",
-    color: tokens.colors.action,
-  },
-  actionButtonsRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: tokens.spacing[8],
-    marginTop: tokens.spacing[8],
-  },
-  editButton: {
-    paddingHorizontal: tokens.spacing[12],
-    paddingVertical: tokens.spacing[6],
-    borderRadius: tokens.radius.small,
-    backgroundColor: tokens.colors.soft,
-    minHeight: tokens.spacing[32],
-    justifyContent: "center",
-  },
-  editText: {
-    ...tokens.typography.labelMedium,
-    color: tokens.colors.action,
-    fontWeight: "600",
-  },
-  pauseButton: {
-    paddingHorizontal: tokens.spacing[12],
-    paddingVertical: tokens.spacing[6],
-    borderRadius: tokens.radius.small,
-    backgroundColor: tokens.colors.surface,
-    borderWidth: 1,
-    borderColor: tokens.colors.m3.outlineVariant,
-    minHeight: tokens.spacing[32],
-    justifyContent: "center",
-  },
-  pauseText: {
-    ...tokens.typography.labelMedium,
     color: tokens.colors.secondaryText,
+    paddingVertical: tokens.spacing[16],
+  },
+  infoCard: {
+    marginTop: tokens.spacing[16],
+    padding: tokens.spacing[16],
+    gap: tokens.spacing[4],
+    borderRadius: tokens.radius.medium,
+    backgroundColor: tokens.colors.m3.surfaceContainer,
+  },
+  infoCardTitle: {
+    ...tokens.typography.bodyLarge,
     fontWeight: "600",
-  },
-  cancelButton: {
-    paddingHorizontal: tokens.spacing[12],
-    paddingVertical: tokens.spacing[6],
-    borderRadius: tokens.radius.small,
-    backgroundColor: tokens.colors.errorContainer,
-    minHeight: tokens.spacing[32],
-    justifyContent: "center",
-  },
-  cancelText: {
-    ...tokens.typography.labelMedium,
-    color: tokens.colors.error,
-    fontWeight: "600",
-  },
-  cancelErrorText: {
-    ...tokens.typography.bodyMedium,
-    color: tokens.colors.error,
-    marginBottom: tokens.spacing[12],
+    color: tokens.colors.text,
   },
 });

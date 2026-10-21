@@ -79,12 +79,15 @@ describe("tela de pedidos recebidos (ISO/IEC 25010 - Usabilidade)", () => {
   it("aceita e recusa pedido pendente; não oferece ações para respondidos", async () => {
     const actions = mockReceived({
       items: [
-        { request: { id: "r1", listingId: "l1", requesterId: "alice", status: "pending" }, listing },
+        { request: { id: "r1", listingId: "l1", requesterId: "alice", status: "pending" }, listing, requesterName: "Alice Souza" },
         { request: { id: "r2", listingId: "l1", requesterId: "bob", status: "rejected" }, listing },
       ],
     });
     const screen = await renderEl(<ReceivedRequests sessionUserId="owner" />);
-    expect(screen.getByText("Pessoa interessada: alice")).toBeDefined();
+    // Spec 043 RN-02: nome público; sem perfil, nunca o identificador interno.
+    expect(screen.getByText("Pessoa interessada: Alice Souza")).toBeDefined();
+    expect(screen.getByText("Pessoa interessada: Pessoa da comunidade")).toBeDefined();
+    expect(screen.queryByText(/Pessoa interessada: (alice|bob)$/)).toBeNull();
     expect(screen.getByText("Recusado")).toBeDefined();
     expect(screen.getAllByText("Aceitar")).toHaveLength(1);
     await act(async () => { fireEvent.press(screen.getByText("Aceitar")); });

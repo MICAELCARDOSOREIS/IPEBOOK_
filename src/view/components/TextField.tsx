@@ -17,6 +17,8 @@ export type TextFieldProps = {
   placeholderTextColor?: string;
   maxLength?: number;
   accessibilityLabel?: string;
+  /** Campo de várias linhas, como a descrição de `04.05` (Spec 043, RN-08). */
+  multiline?: boolean;
 };
 
 /** Campo de texto do design system (campo-de-texto.md): rótulo sempre visível, estado de foco e erro. */
@@ -34,6 +36,7 @@ export function TextField({
   placeholderTextColor = tokens.colors.secondaryText,
   maxLength,
   accessibilityLabel,
+  multiline = false,
 }: TextFieldProps) {
   const [focused, setFocused] = useState(false);
   const hasError = Boolean(error);
@@ -57,11 +60,15 @@ export function TextField({
         placeholder={placeholder}
         placeholderTextColor={placeholderTextColor}
         maxLength={maxLength}
+        multiline={multiline}
+        numberOfLines={multiline ? 4 : undefined}
+        textAlignVertical={multiline ? "top" : undefined}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
         style={[
           styles.input,
           { borderColor, borderWidth: focused || hasError ? 2 : 1 },
+          multiline && styles.multiline,
           !editable && styles.disabled,
         ]}
       />
@@ -85,6 +92,7 @@ const styles = StyleSheet.create({
     backgroundColor: tokens.colors.surface,
     fontSize: tokens.typography.bodyLarge.fontSize,
   },
+  multiline: { minHeight: tokens.spacing[64] + tokens.spacing[32], paddingVertical: tokens.spacing[12] },
   disabled: { opacity: 0.38 },
   errorText: { color: tokens.colors.error, fontSize: tokens.typography.bodyMedium.fontSize },
   helperText: { color: tokens.colors.secondaryText, fontSize: tokens.typography.labelMedium.fontSize },

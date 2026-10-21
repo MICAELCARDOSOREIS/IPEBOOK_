@@ -5,6 +5,8 @@ import type { MeetingPoint } from "@/model/entities/meetingPoint";
 export type RequestWithListing = Readonly<{
   request: BookRequest;
   listing: Book;
+  /** Nome público de quem pediu, só nos pedidos recebidos; `null` quando o perfil não carrega. */
+  requesterName?: string | null;
 }>;
 
 export type RequestResponse = "accept" | "reject";

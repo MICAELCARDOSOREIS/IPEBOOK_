@@ -24,7 +24,7 @@ describe("tela de Central de Ajuda e FAQ (HelpAndFaq)", () => {
     });
 
     expect(screen.getByText("Onde devo realizar a entrega ou troca do livro em Piripiri?")).toBeDefined();
-    expect(screen.getByText(/Campus do IFPI Piripiri/)).toBeDefined();
+    expect(screen.getByText(/Campus IFPI Piripiri/)).toBeDefined();
     expect(screen.getByText(/Praça da Bandeira/)).toBeDefined();
     expect(screen.getByText("O IpêBook cobra alguma taxa ou comissão?")).toBeDefined();
     expect(screen.getByText(/100% gratuito e comunitário/)).toBeDefined();

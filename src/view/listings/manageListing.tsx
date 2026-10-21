@@ -3,6 +3,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { BOOK_CONDITION_LABELS } from "@/model/entities/book";
 import { tokens } from "@/view/tokens";
+import { formatPrice } from "@/view/formatPrice";
 import { AppIcon } from "@/view/components/AppIcon";
 import { BookCover } from "@/view/components/BookCover";
 import { Dialog } from "@/view/components/Dialog";
@@ -80,7 +81,7 @@ export default function ManageListing({
               <View style={styles.tagRow}>
                 <Tag variant={book.modality} />
                 {book.price !== undefined ? (
-                  <Text style={styles.price}>{`R$ ${book.price.toFixed(2)}`}</Text>
+                  <Text style={styles.price}>{formatPrice(book.price)}</Text>
                 ) : null}
               </View>
               {book.condition ? (

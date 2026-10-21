@@ -2,7 +2,22 @@
 
 Documento consolidado de continuidade técnica e produto do Ipebook (Piripiri, PI).
 
-Conferência atual: **2026-10-21** (branch `feature/perfil-hub-fluxo-07`, derivada de `develop`).
+Conferência atual: **2026-10-21** (branch `feature/relaxed-thompson-60m08j`, derivada de `develop`).
+
+**Spec 043 validada localmente:** as telas do Micael foram percorridas no app compilado para a Web,
+com dois usuários em memória, e comparadas lado a lado com os nós do Figma renderizados pelo MCP.
+Corrigidos: preço com ponto decimal ("R$ 25.00") em seis telas, agora `R$ 25,00` por `formatPrice`;
+identificador interno exibido como "Pessoa interessada" em `/pedidos-recebidos` (agora o nome público,
+ou "Pessoa da comunidade"); aba "Propostas" da estante, que contava só livros reservados e passou a
+listar as propostas recebidas em aberto; botão flutuante que cobria a dica da estante; ponto do
+`StepProgress` sobreposto ao nome da etapa. Alinhados ao Figma: estante em linhas com seta para o
+gerenciamento (`05.01`/`05.03`), capa em destaque na etapa de fotos (`04.04`), descrição multilinha
+com um só contador (`04.05`), manchete com realce e "Ver estante" no sucesso (`04.07`), estados vazios
+de Favoritos (`02.14`) e Alertas (`02.13`), horário curto nas notificações (`07.04`) e pontos de
+encontro da Ajuda iguais aos da negociação. `npm run validate` passou com 897 testes em 127 arquivos.
+Ficam fora (ver `specs/043-telas-micael-figma-ao-vivo/spec.md`): agendamento de encontro de `06.05`,
+cor de fundo e rótulo flutuante dos campos (afetam todas as telas, decisão da equipe) e o preço com
+ponto em `bookDetail.tsx` e na mensagem de compartilhar, que são da trilha da Maria Clara.
 
 **Spec 039 validada localmente:** `/perfil` deixou de abrir direto o formulário de edição e passou a
 ser o hub "Meu perfil" (Figma `07.01`): avatar, estatísticas e menu para Editar perfil (`/perfil/editar`),
@@ -208,3 +223,4 @@ No app ativo em desenvolvimento, 21 rotas cobrem as jornadas essenciais da beta.
 - `specs/032-alinhamento-final-telas-micael-figma/`: Abas, filtros e busca em Minha Estante, Notificações e Central de Ajuda.
 - `specs/033-correcoes-revisao-integral/`: Correções de integridade arquitetural, aceite atômico de pedidos, portabilidade LGPD e polimento visual comprovado via ADB no dispositivo físico Android contra o PDF oficial de referência.
 - `specs/039-alinhamento-fino-telas-micael/`: Alinhamento fino de oito telas do Micael ao canvas Android do Figma, lido nó a nó pelo MCP, com a lista das diferenças que dependem de recursos ainda inexistentes.
+- `specs/043-telas-micael-figma-ao-vivo/`: Telas do Micael conferidas no app compilado contra o Figma: defeitos de preço, nome do interessado e aba Propostas, e alinhamento de Estante, Anunciar, estados vazios, notificações e Ajuda.

@@ -20,11 +20,14 @@ export function StepProgress({ currentStep, totalSteps, stepLabel }: StepProgres
         <Text style={styles.label}>{`Etapa ${currentStep} de ${totalSteps}`}</Text>
         <Text style={styles.label}>{stepLabel}</Text>
       </View>
-      <View style={styles.track} importantForAccessibility="no">
-        <View testID="step-progress-fill" style={[styles.fill, { flex: progress }]} />
-        <View style={{ flex: 1 - progress }} />
+      {/* O ponto final é posicionado em relação à barra, não ao bloco com os rótulos (Spec 043, RN-06). */}
+      <View style={styles.trackArea} importantForAccessibility="no">
+        <View style={styles.track}>
+          <View testID="step-progress-fill" style={[styles.fill, { flex: progress }]} />
+          <View style={{ flex: 1 - progress }} />
+        </View>
+        <View testID="step-progress-end-dot" style={styles.endDot} />
       </View>
-      <View style={styles.endDot} importantForAccessibility="no" />
     </View>
   );
 }
@@ -32,12 +35,12 @@ export function StepProgress({ currentStep, totalSteps, stepLabel }: StepProgres
 const styles = StyleSheet.create({
   labelsRow: { flexDirection: "row", justifyContent: "space-between" },
   label: { color: tokens.colors.secondaryText, ...tokens.typography.bodyMedium },
+  trackArea: { marginTop: tokens.spacing[8] },
   track: {
     flexDirection: "row",
     height: 4,
     borderRadius: tokens.radius.full,
     backgroundColor: tokens.colors.m3.secondaryContainer,
-    marginTop: tokens.spacing[8],
     overflow: "hidden",
   },
   fill: {
@@ -47,7 +50,7 @@ const styles = StyleSheet.create({
   endDot: {
     position: "absolute",
     right: 0,
-    top: tokens.spacing[8],
+    top: 0,
     width: 4,
     height: 4,
     borderRadius: tokens.radius.full,

@@ -55,3 +55,20 @@ export function groupNotificationsByPeriod(
     .filter((period) => buckets[period].length > 0)
     .map((period) => ({ period, title: PERIOD_TITLES[period], data: buckets[period] }));
 }
+
+const WEEKDAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"] as const;
+
+/**
+ * Horário curto ao lado da notificação, como no Figma `07.04` ("· 10h", "· Seg"):
+ * hora cheia no mesmo dia, dia da semana na mesma semana e data curta antes disso.
+ */
+export function notificationTimeLabel(createdAt: string, now: Date = new Date()): string | null {
+  const created = new Date(createdAt);
+  if (Number.isNaN(created.getTime())) return null;
+  const period = periodOf(createdAt, now);
+  if (period === "today") return `${created.getHours()}h`;
+  if (period === "week") return WEEKDAYS[created.getDay()];
+  const day = String(created.getDate()).padStart(2, "0");
+  const month = String(created.getMonth() + 1).padStart(2, "0");
+  return `${day}/${month}`;
+}

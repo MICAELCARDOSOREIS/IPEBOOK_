@@ -13,6 +13,7 @@ import { Tag } from "@/view/components/Tag";
 import { TextButton } from "@/view/components/TextButton";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { tokens } from "@/view/tokens";
+import { formatPrice } from "@/view/formatPrice";
 import { useFavoritesViewModel } from "@/viewmodel/useFavoritesViewModel";
 import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
 import { useSearchAlertsViewModel } from "@/viewmodel/useSearchAlertsViewModel";
@@ -102,20 +103,15 @@ export default function Favorites({
           keyExtractor={(book) => book.id}
           contentContainerStyle={styles.list}
           ListEmptyComponent={
-            <View style={styles.status}>
-              <IconBadge icon="heart" tone="neutral" />
+            // `02.14`: título, apoio e ação alinhados à esquerda, sem ícone (Spec 043, RN-10).
+            <View style={styles.emptyBox}>
               <Text accessibilityRole="header" style={styles.emptyHeadline}>
-                Nenhum favorito ainda
+                Nenhum livro salvo
               </Text>
-              <Text style={styles.statusHint}>
+              <Text style={styles.emptyHint}>
                 Toque em Favoritar no anúncio para guardar os livros que você quer ler.
               </Text>
-              <View style={styles.emptyAction}>
-                <FilledButton
-                  label="Explorar livros"
-                  onPress={onExploreBooks ?? onBack}
-                />
-              </View>
+              <FilledButton label="Explorar livros" onPress={onExploreBooks ?? onBack} />
             </View>
           }
           renderItem={({ item }) => {
@@ -140,7 +136,7 @@ export default function Favorites({
                     <View style={styles.rowHeader}>
                       <Tag variant={item.modality} />
                       {item.price !== undefined ? (
-                        <Text style={styles.price}>{`R$ ${item.price.toFixed(2)}`}</Text>
+                        <Text style={styles.price}>{formatPrice(item.price)}</Text>
                       ) : null}
                     </View>
                     <Text style={styles.bookTitle}>{item.title}</Text>
@@ -211,11 +207,15 @@ const styles = StyleSheet.create({
     gap: tokens.spacing[12],
     padding: tokens.spacing[24],
   },
+  emptyBox: { gap: tokens.spacing[12], paddingVertical: tokens.spacing[24] },
   emptyHeadline: {
     ...tokens.typography.titleLarge,
     fontFamily: tokens.typography.displayLarge.fontFamily,
     color: tokens.colors.text,
-    textAlign: "center",
+  },
+  emptyHint: {
+    ...tokens.typography.bodyLarge,
+    color: tokens.colors.secondaryText,
   },
   statusTitle: {
     fontSize: tokens.typography.titleMedium.fontSize,
@@ -223,18 +223,6 @@ const styles = StyleSheet.create({
     fontFamily: tokens.typography.displayLarge.fontFamily,
     fontWeight: tokens.typography.titleMedium.fontWeight,
     color: tokens.colors.text,
-  },
-  statusHint: {
-    fontSize: tokens.typography.bodyMedium.fontSize,
-    lineHeight: tokens.typography.bodyMedium.lineHeight,
-    fontFamily: tokens.typography.bodyMedium.fontFamily,
-    color: tokens.colors.secondaryText,
-    textAlign: "center",
-  },
-  emptyAction: {
-    marginTop: tokens.spacing[16],
-    width: "100%",
-    maxWidth: 280,
   },
   link: {
     color: tokens.colors.action,

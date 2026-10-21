@@ -1,5 +1,6 @@
 import React from "react";
 import { act, fireEvent, render } from "@testing-library/react-native";
+import { within } from "@testing-library/react-native";
 import { AccessibilityInfo } from "react-native";
 import { describe, expect, it, vi } from "vitest";
 import type { CreateListingState, CreateListingActions } from "@/viewmodel/useCreateListingViewModel";
@@ -125,6 +126,13 @@ describe("etapa 2 do anúncio — Fotos (Figma 04.04)", () => {
     expect(screen.getByLabelText("Adicionar foto da capa")).toBeDefined();
     expect(screen.getByLabelText("Adicionar lombada")).toBeDefined();
     expect(screen.getByLabelText("Adicionar páginas")).toBeDefined();
+    // Spec 043 RN-07: capa em destaque (dois terços), lombada e páginas empilhadas ao lado.
+    const flatten = (style: unknown): Record<string, unknown> =>
+      Array.isArray(style) ? Object.assign({}, ...style.flat(Infinity).filter(Boolean)) : (style as Record<string, unknown>);
+    expect(flatten(screen.getByLabelText("Adicionar foto da capa").props.style).flex).toBe(2);
+    const spine = screen.getByLabelText("Adicionar lombada");
+    expect(within(spine.parent!).getByLabelText("Adicionar páginas")).toBeDefined();
+    expect(within(spine.parent!).queryByLabelText("Adicionar foto da capa")).toBeNull();
     expect(screen.getByText("Dica de foto")).toBeDefined();
   });
 
@@ -152,8 +160,10 @@ describe("etapa 3 do anúncio — Detalhes (Figma 04.05)", () => {
     expect(screen.getByLabelText("Conservação Desgastado")).toBeDefined();
     expect(screen.getByLabelText("Categoria Literatura")).toBeDefined();
     expect(screen.getByLabelText("Descrição")).toBeDefined();
+    // Spec 043 RN-08: um único contador, sem o "Restam n caracteres" repetido.
     expect(screen.getByText("12/280")).toBeDefined();
-    expect(screen.getByText("Restam 268 caracteres")).toBeDefined();
+    expect(screen.queryByText(/Restam/)).toBeNull();
+    expect(screen.getByLabelText("Descrição").props.multiline).toBe(true);
     expect(screen.getByLabelText("Bairro Centro")).toBeDefined();
   });
 
@@ -173,7 +183,6 @@ describe("etapa 3 do anúncio — Detalhes (Figma 04.05)", () => {
     const screen = await renderScreen();
     await goToStep(screen, 3);
 
-    expect(screen.getByText("Limite excedido em 5 caracteres")).toBeDefined();
     expect(screen.getByText("A descrição deve ter no máximo 280 caracteres.")).toBeDefined();
   });
 
@@ -257,13 +266,15 @@ describe("anúncio publicado (Figma 04.07)", () => {
 
     expect(actions.submit).toHaveBeenCalledWith("user-1");
     expect(onCreated).toHaveBeenCalledTimes(1);
-    expect(screen.getByText("Seu livro ganhou um novo começo.")).toBeDefined();
+    // Spec 043 RN-09: manchete com realce em "um novo começo." e ação "Ver estante" (`04.07`).
+    expect(screen.getByRole("header", { name: "Seu livro ganhou um novo começo." })).toBeDefined();
+    expect(screen.getByText("um novo começo.")).toBeDefined();
     expect(screen.getByText("Dom Casmurro")).toBeDefined();
     expect(screen.getByText("Próximos passos")).toBeDefined();
-    expect(screen.getByText("R$ 25.00")).toBeDefined();
+    expect(screen.getByText("R$ 25,00")).toBeDefined();
 
     await act(async () => {
-      fireEvent.press(screen.getByRole("button", { name: "Ver meus anúncios" }));
+      fireEvent.press(screen.getByRole("button", { name: "Ver estante" }));
     });
     expect(onViewMyListings).toHaveBeenCalledTimes(1);
 
@@ -282,6 +293,6 @@ describe("anúncio publicado (Figma 04.07)", () => {
       fireEvent.press(screen.getByRole("button", { name: "Publicar anúncio" }));
     });
 
-    expect(screen.queryByText("Seu livro ganhou um novo começo.")).toBeNull();
+    expect(screen.queryByRole("header", { name: "Seu livro ganhou um novo começo." })).toBeNull();
   });
 });

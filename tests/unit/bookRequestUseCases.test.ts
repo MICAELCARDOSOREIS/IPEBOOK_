@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryBookDataSource } from "@/infra/datasources/memoryBookDataSource";
 import { MemoryBookRequestDataSource } from "@/infra/datasources/memoryBookRequestDataSource";
+import { MemoryProfileDataSource } from "@/infra/datasources/memoryProfileDataSource";
 import type { Book } from "@/model/entities/book";
 import { AuthError, DataSourceError, ValidationError } from "@/model/errors";
 import { BookRequestUseCases } from "@/usecase/bookRequestUseCases";
@@ -72,6 +73,19 @@ describe("negociação simples (spec 004)", () => {
       expect(received).toHaveLength(1);
       expect(received[0].listing.id).toBe("listing-1");
       expect(received[0].request.requesterId).toBe("alice");
+    });
+
+    it("Spec 043 RN-02: recebidos trazem o nome público de quem pediu", async () => {
+      const profiles = new MemoryProfileDataSource();
+      await profiles.ensure("alice", "Alice Souza");
+      const withProfiles = new BookRequestUseCases(books, requests, profiles);
+      await withProfiles.requestNegotiation("listing-1", "alice");
+      await withProfiles.requestNegotiation("listing-1", "bob");
+      const received = await withProfiles.listReceivedRequests("owner");
+      expect(received.map((r) => [r.request.requesterId, r.requesterName])).toEqual([
+        ["alice", "Alice Souza"],
+        ["bob", null],
+      ]);
     });
 
     it("lista enviados com status atual", async () => {

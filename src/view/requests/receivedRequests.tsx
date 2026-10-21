@@ -4,6 +4,9 @@ import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useReceivedRequestsViewModel } from "@/viewmodel/useReceivedRequestsViewModel";
 import { RequestListLayout, requestStyles as s } from "@/view/requests/requestListLayout";
 
+/** Sem perfil público, a tela não expõe o identificador interno (Spec 043, RN-02). */
+export const COMMUNITY_MEMBER = "Pessoa da comunidade";
+
 export type ReceivedRequestsProps = {
   sessionUserId: string;
   onBack?: () => void;
@@ -26,11 +29,11 @@ export function ReceivedRequests({
       error={state.error}
       onRetry={() => void actions.reload()}
       onBack={onBack}
-      renderExtra={({ request }) => {
+      renderExtra={({ request, requesterName }) => {
         const busy = state.respondingId === request.id;
         return (
           <View>
-            <Text style={s.meta}>Pessoa interessada: {request.requesterId}</Text>
+            <Text style={s.meta}>Pessoa interessada: {requesterName ?? COMMUNITY_MEMBER}</Text>
             {request.status === "pending" ? (
               <>
                 <Text style={s.meta}>

@@ -159,7 +159,8 @@ describe("SentRequests e ReceivedRequests Views (ISO/IEC 25010 - Adequação Fun
       expect(screen.getByText("Sua estante em movimento.")).toBeDefined();
       expect(screen.getByText("Tudo pela conversa")).toBeDefined();
       expect(screen.getByText("Capitães da Areia")).toBeDefined();
-      expect(screen.getByText("Pessoa interessada: user-interested")).toBeDefined();
+      expect(screen.getByText("Pessoa interessada: Pessoa da comunidade")).toBeDefined();
+      expect(screen.queryByText(/user-interested/)).toBeNull();
 
       await act(async () => {
         fireEvent.press(screen.getByText("Aceitar"));
@@ -192,7 +193,7 @@ describe("SentRequests e ReceivedRequests Views (ISO/IEC 25010 - Adequação Fun
 
       expect(screen.getByText("A Hora da Estrela")).toBeDefined();
       expect(screen.getByText("Venda")).toBeDefined();
-      expect(screen.getByText("R$ 25.00")).toBeDefined();
+      expect(screen.getByText("R$ 25,00")).toBeDefined();
       expect(screen.getByText("Não foi possível aceitar a negociação.")).toBeDefined();
 
       await act(async () => {

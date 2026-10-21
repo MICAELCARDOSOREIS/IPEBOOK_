@@ -67,6 +67,16 @@ describe("tela de Detalhes da Negociação (ISO/IEC 25010 - Usabilidade e Acessi
     ],
   };
 
+  it("Spec 043 RN-02: sem nome no perfil, não expõe o identificador interno", async () => {
+    mockViewModel({ detail: { ...fakeDetail, counterpartName: null }, loading: false, error: null });
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<RequestDetail requestId="req-1" sessionUserId="vendedor-1" />);
+    });
+    expect(screen.getByText("Pessoa da comunidade")).toBeDefined();
+    expect(screen.queryByText("comprador-1")).toBeNull();
+  });
+
   it("renderiza cabeçalho e informações completas do acordo", async () => {
     mockViewModel({ detail: fakeDetail, loading: false, error: null });
     const onNavigateToBookDetail = vi.fn();
@@ -86,7 +96,7 @@ describe("tela de Detalhes da Negociação (ISO/IEC 25010 - Usabilidade e Acessi
     expect(screen.getByText("Negociação aceita!")).toBeDefined();
     expect(screen.getByText("Memórias Póstumas")).toBeDefined();
     expect(screen.getByText("Machado de Assis")).toBeDefined();
-    expect(screen.getByText("R$ 35.00")).toBeDefined();
+    expect(screen.getByText("R$ 35,00")).toBeDefined();
     expect(screen.getByText("Ana Paula")).toBeDefined();
     expect(screen.getByText("• Campus IFPI Piripiri")).toBeDefined();
     expect(screen.getByText("• Praça da Bandeira")).toBeDefined();

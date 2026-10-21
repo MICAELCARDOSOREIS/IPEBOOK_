@@ -5,6 +5,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useRequestDetailViewModel } from "@/viewmodel/useRequestDetailViewModel";
 import { tokens } from "@/view/tokens";
+import { formatPrice } from "@/view/formatPrice";
+import { COMMUNITY_MEMBER } from "@/view/requests/receivedRequests";
 import { BookCover } from "@/view/components/BookCover";
 import { IconBadge } from "@/view/components/IconBadge";
 import { Tag } from "@/view/components/Tag";
@@ -104,7 +106,7 @@ export function RequestDetail({
                   <View style={styles.tagRow}>
                     <Tag variant={detail.book.modality} />
                     {detail.book.modality === "sale" && detail.book.price ? (
-                      <Text style={styles.price}>{`R$ ${detail.book.price.toFixed(2)}`}</Text>
+                      <Text style={styles.price}>{formatPrice(detail.book.price)}</Text>
                     ) : null}
                   </View>
                 </View>
@@ -120,7 +122,7 @@ export function RequestDetail({
                 <Text style={styles.bodyText}>
                   {detail.isOwner ? "Pessoa interessada: " : "Pessoa que anunciou: "}
                   <Text style={styles.highlightText}>
-                    {detail.counterpartName ?? detail.counterpartId}
+                    {detail.counterpartName ?? COMMUNITY_MEMBER}
                   </Text>
                 </Text>
               </View>
