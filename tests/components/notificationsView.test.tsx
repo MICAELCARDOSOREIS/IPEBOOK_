@@ -113,4 +113,20 @@ describe("Notifications Component (Spec 015)", () => {
 
     expect(screen.getByRole("header", { name: "Notificações" })).toBeDefined();
   });
+
+  it("agrupa as notificações por período da lista (Figma 07.04, Spec 032)", async () => {
+    let screen!: Awaited<ReturnType<typeof render>>;
+
+    await act(async () => {
+      screen = await render(<Notifications sessionUserId="user-1" onBack={vi.fn()} />);
+    });
+
+    const periodos = ["Hoje", "Esta semana", "Antes"];
+    const cabecalhos = screen
+      .getAllByRole("header")
+      .map((node) => node.props.children)
+      .filter((texto) => typeof texto === "string" && periodos.includes(texto));
+
+    expect(cabecalhos.length).toBeGreaterThan(0);
+  });
 });

@@ -48,10 +48,10 @@ describe("tela de denúncia de anúncio (ReportListing)", () => {
     expect(screen.getByText("O que aconteceu?")).toBeDefined();
     expect(screen.getByText("Sua denúncia é anônima. A equipe analisa em até 24 horas.")).toBeDefined();
     expect(screen.getByText("Por que você está denunciando este anúncio?")).toBeDefined();
-    expect(screen.getByText("Conteúdo impróprio ou ofensivo")).toBeDefined();
-    expect(screen.getByText("Suspeita de golpe ou fraude")).toBeDefined();
+    expect(screen.getByText("Conteúdo ofensivo")).toBeDefined();
+    expect(screen.getByText("Golpe ou cobrança indevida")).toBeDefined();
     expect(screen.getByText("Cópia pirata ou ilegal")).toBeDefined();
-    expect(screen.getByText("Informações enganosas")).toBeDefined();
+    expect(screen.getByText("O livro não corresponde à descrição")).toBeDefined();
     expect(screen.getByText("Outro motivo")).toBeDefined();
   });
 
@@ -69,7 +69,7 @@ describe("tela de denúncia de anúncio (ReportListing)", () => {
       );
     });
 
-    const scamOption = screen.getByLabelText("Suspeita de golpe ou fraude");
+    const scamOption = screen.getByLabelText("Golpe ou cobrança indevida");
     await act(async () => {
       fireEvent.press(scamOption);
     });

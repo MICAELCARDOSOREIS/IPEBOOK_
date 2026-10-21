@@ -4,12 +4,15 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { FAQ_ITEMS } from "@/model/helpContent";
 import { FilledButton } from "@/view/components/FilledButton";
 import { IconBadge } from "@/view/components/IconBadge";
+import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { TextField } from "@/view/components/TextField";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { tokens } from "@/view/tokens";
 
 export type HelpAndFaqProps = {
   onBack: () => void;
+  /** Abre as negociações em andamento, como o botão "Abrir conversas" do Figma `09.01`. */
+  onOpenConversations?: () => void;
 };
 
 type CategoryFilter = "todos" | "seguranca" | "regras" | "suporte";
@@ -32,7 +35,7 @@ function normalizeSearchText(value: string): string {
 /**
  * Figma `09.01 · Ajuda` (`145:2702` / Web `370:17541`).
  */
-export default function HelpAndFaq({ onBack }: HelpAndFaqProps) {
+export default function HelpAndFaq({ onBack, onOpenConversations }: HelpAndFaqProps) {
   const [filter, setFilter] = useState<CategoryFilter>("todos");
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -127,6 +130,16 @@ export default function HelpAndFaq({ onBack }: HelpAndFaqProps) {
               ))
             )}
           </View>
+
+          {onOpenConversations ? (
+            <View style={styles.footerAction}>
+              <OutlinedButton
+                label="Abrir conversas"
+                accessibilityLabel="Abrir conversas: suas negociações em andamento"
+                onPress={onOpenConversations}
+              />
+            </View>
+          ) : null}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -205,6 +218,9 @@ const styles = StyleSheet.create({
   },
   list: {
     gap: tokens.spacing[12],
+  },
+  footerAction: {
+    paddingTop: tokens.spacing[24],
   },
   emptyCard: {
     backgroundColor: tokens.colors.m3.surfaceContainerLow,

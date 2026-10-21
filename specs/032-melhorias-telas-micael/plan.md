@@ -1,6 +1,6 @@
 # Plano de Implementação: Melhorias nas Telas do Micael (Issues #160 a #165)
 
-**Branch**: `feat/032-melhorias-telas-micael`  
+**Branch**: `feat/032-melhorias-telas-micael`
 **Spec**: `specs/032-melhorias-telas-micael/spec.md`
 
 ## 1. Arquitetura e Camadas Afetadas

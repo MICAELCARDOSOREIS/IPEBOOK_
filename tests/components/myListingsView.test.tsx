@@ -47,14 +47,14 @@ function mockViewModel(
 }
 
 describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)", () => {
-  it("renderiza cabeçalho acessível com título Meus anúncios", async () => {
+  it("renderiza cabeçalho acessível com título Minha estante (Figma 05.01)", async () => {
     mockViewModel({ books: [], loading: false, error: null });
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
       screen = await render(<MyListings sessionUserId="user-1" />);
     });
 
-    expect(screen.getByRole("header").props.children).toBe("Meus anúncios");
+    expect(screen.getByRole("header").props.children).toBe("Minha estante");
   });
 
   it("exibe mensagem e botão de cadastrar quando não há anúncios", async () => {
@@ -342,6 +342,73 @@ describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
     });
 
     expect(screen.getByText("Bom estado · Centro")).toBeDefined();
+  });
+
+  it("separa anúncios e propostas em abas e permite alternar (Figma 05.01, Spec 032)", async () => {
+    const disponivel: Book = {
+      id: "b10",
+      title: "Livro Disponível",
+      author: "Autora",
+      modality: "sale",
+      price: 25,
+      ownerId: "user-1",
+      status: "available",
+    };
+    const reservado: Book = {
+      id: "b11",
+      title: "Livro com Proposta",
+      author: "Autor",
+      modality: "trade",
+      ownerId: "user-1",
+      status: "reserved",
+    };
+    mockViewModel({ books: [disponivel, reservado] });
+    let screen!: Awaited<ReturnType<typeof render>>;
+
+    await act(async () => {
+      screen = await render(<MyListings sessionUserId="user-1" />);
+    });
+
+    // A aba "Anúncios" lista toda a estante, inclusive o reservado, como no Figma.
+    expect(screen.getByText("Anúncios (2)")).toBeDefined();
+    expect(screen.getByText("Propostas (1)")).toBeDefined();
+    expect(screen.getByText("Livro Disponível")).toBeDefined();
+    expect(screen.getByText("Livro com Proposta")).toBeDefined();
+
+    await act(async () => {
+      fireEvent.press(screen.getByText("Propostas (1)"));
+    });
+
+    expect(screen.queryByText("Livro Disponível")).toBeNull();
+    expect(screen.getByText("Livro com Proposta")).toBeDefined();
+    expect(screen.getByText("Todos (1)")).toBeDefined();
+    expect(screen.getByText("Ativos (0)")).toBeDefined();
+  });
+
+  it("oferece o botão Anunciar livro quando já existe estante (Figma 05.01)", async () => {
+    const livro: Book = {
+      id: "b12",
+      title: "Memórias Póstumas",
+      author: "Machado de Assis",
+      modality: "donation",
+      ownerId: "user-1",
+      status: "available",
+    };
+    mockViewModel({ books: [livro] });
+    const onNavigateToCreateListing = vi.fn();
+    let screen!: Awaited<ReturnType<typeof render>>;
+
+    await act(async () => {
+      screen = await render(
+        <MyListings sessionUserId="user-1" onNavigateToCreateListing={onNavigateToCreateListing} />,
+      );
+    });
+
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Anunciar livro"));
+    });
+
+    expect(onNavigateToCreateListing).toHaveBeenCalledTimes(1);
   });
 
   it("filtra a estante por status (Todos, Ativos, Pausados, Concluídos) e mostra estado vazio contextual (Issue #161)", async () => {

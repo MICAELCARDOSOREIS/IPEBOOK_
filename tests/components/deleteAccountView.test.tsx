@@ -129,4 +129,30 @@ describe("tela de exclusão de conta (DeleteAccount - LGPD)", () => {
 
     expect(screen.getByRole("header", { name: "Exclusão de Conta" })).toBeDefined();
   });
+
+  it("oferece o atalho de editar informações do perfil (Figma 07.07, Spec 032)", async () => {
+    const onEditProfile = vi.fn();
+    let screen!: Awaited<ReturnType<typeof render>>;
+
+    await act(async () => {
+      screen = await render(
+        <DeleteAccount
+          sessionUserId="user-1"
+          onBack={() => {}}
+          onAccountDeleted={() => {}}
+          onEditProfile={onEditProfile}
+        />,
+      );
+    });
+
+    expect(screen.getByText("Solicitar meus dados")).toBeDefined();
+
+    await act(async () => {
+      fireEvent.press(
+        screen.getByLabelText("Editar informações do perfil: atualize nome e bairro"),
+      );
+    });
+
+    expect(onEditProfile).toHaveBeenCalledTimes(1);
+  });
 });

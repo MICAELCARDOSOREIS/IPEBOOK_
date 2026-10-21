@@ -85,4 +85,29 @@ describe("favoritos e alertas (spec 016)", () => {
     fireEvent.press(screen.getByRole("button", { name: "Entrar" }));
     expect(onLogin).toHaveBeenCalledOnce();
   });
+
+  it("mostra o cartão de status do alerta e a busca por outro livro (Figma 02.07, Spec 032)", async () => {
+    const onSearchBooks = vi.fn();
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(
+        <SearchAlerts
+          userId="usuario-cartao-alerta"
+          initialQuery="Clarice"
+          onBack={vi.fn()}
+          onLogin={vi.fn()}
+          onSearchBooks={onSearchBooks}
+        />,
+      );
+    });
+
+    await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Criar alerta" })); });
+    expect(screen.getByText("Alerta ativo")).toBeDefined();
+
+    await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Pausar alerta Clarice" })); });
+    expect(screen.getByText("Alerta pausado")).toBeDefined();
+
+    await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Procurar outro livro" })); });
+    expect(onSearchBooks).toHaveBeenCalledTimes(1);
+  });
 });

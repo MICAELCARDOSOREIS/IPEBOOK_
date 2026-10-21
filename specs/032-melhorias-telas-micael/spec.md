@@ -1,8 +1,8 @@
 # Especificação de Funcionalidade: Melhorias de Experiência e Filtros nas Telas do Micael (Issues #160 a #165)
 
-**Branch**: `feat/032-melhorias-telas-micael`  
-**Data**: 2026-10-20  
-**Status**: Em implementação  
+**Branch**: `feat/032-melhorias-telas-micael`
+**Data**: 2026-10-20
+**Status**: Em implementação
 **Issues vinculadas**: #160, #161, #162, #163, #164, #165 (`pessoa:micael`)
 
 ## 1. Contexto e Objetivo

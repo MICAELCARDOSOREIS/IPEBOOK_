@@ -212,7 +212,9 @@ describe("tela de esqueceu a senha (ISO/IEC 25010 - Usabilidade e Acessibilidade
 
     const headers = screen.getAllByRole("header").map((node) => node.props.children);
     expect(headers).toContain("IpêBook");
-    expect(headers).toContain("Recupere seu acesso.");
+    // Manchete com faixa de realce (Figma 01.04): o texto fica em duas partes,
+    // então a leitura acessível vem do rótulo do cabeçalho.
+    expect(screen.getByLabelText("Recupere seu acesso.")).toBeDefined();
     expect(screen.getByLabelText("E-mail")).toBeDefined();
   });
 

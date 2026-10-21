@@ -128,7 +128,7 @@ export default function ReportListing({
           </View>
 
           <View style={styles.field}>
-            <Text style={styles.inputLabel}>Detalhes adicionais (opcional)</Text>
+            <Text style={styles.inputLabel}>Detalhes (opcional)</Text>
             <TextInput
               accessibilityLabel="Detalhes adicionais da denúncia"
               value={state.details}

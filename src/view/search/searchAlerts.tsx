@@ -4,20 +4,28 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Dialog } from "@/view/components/Dialog";
 import { FilledButton } from "@/view/components/FilledButton";
 import { IconBadge } from "@/view/components/IconBadge";
+import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { Tag } from "@/view/components/Tag";
 import { TextButton } from "@/view/components/TextButton";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { tokens } from "@/view/tokens";
 import { useSearchAlertsViewModel } from "@/viewmodel/useSearchAlertsViewModel";
 
-export type SearchAlertsProps = { userId: string | null; initialQuery?: string; onBack: () => void; onLogin: () => void };
+export type SearchAlertsProps = {
+  userId: string | null;
+  initialQuery?: string;
+  onBack: () => void;
+  onLogin: () => void;
+  /** Abre a busca do catálogo, como o botão "Procurar outro livro" do Figma `02.07`. */
+  onSearchBooks?: () => void;
+};
 
 /**
  * Figma `02.07 · Meus alertas` (`145:2921` / Web `370:17381`),
  * `02.08 · Avisaremos você` (`19:420` / Web `148:968`),
  * `02.09`–`02.13` (`254:4285`–`254:4728` / Web `370:15901`–`370:16061`).
  */
-export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogin }: SearchAlertsProps) {
+export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogin, onSearchBooks }: SearchAlertsProps) {
   const [state, actions] = useSearchAlertsViewModel(userId, initialQuery);
   const [alertToDelete, setAlertToDelete] = useState<{ id: string; query: string } | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -124,9 +132,16 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
                       variant={item.active ? "available" : "paused"}
                       label={item.active ? "Ativo" : "Pausado"}
                     />
-                    <Text style={styles.body}>
-                      {`Você recebe uma notificação quando um novo livro corresponde à busca por ${item.query}.`}
-                    </Text>
+                    <View style={item.active ? styles.statusCard : styles.statusCardPaused}>
+                      <Text style={styles.statusTitle}>
+                        {item.active ? "Alerta ativo" : "Alerta pausado"}
+                      </Text>
+                      <Text style={styles.body}>
+                        {item.active
+                          ? `Você recebe uma notificação quando um novo livro corresponde à busca por ${item.query}.`
+                          : `Retome o alerta para voltar a receber avisos sobre ${item.query}.`}
+                      </Text>
+                    </View>
                   </View>
                   <View style={styles.rowActions}>
                     <Pressable
@@ -163,6 +178,11 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
               )}
             />
           )}
+          {onSearchBooks ? (
+            <View style={styles.searchAction}>
+              <OutlinedButton label="Procurar outro livro" onPress={onSearchBooks} />
+            </View>
+          ) : null}
           <Dialog
             visible={alertToDelete !== null}
             title="Excluir este alerta?"
@@ -269,6 +289,26 @@ const styles = StyleSheet.create({
     ...tokens.typography.bodyMedium,
     color: tokens.colors.success,
     fontWeight: "600",
+  },
+  statusCard: {
+    backgroundColor: tokens.colors.m3.secondaryContainer,
+    borderRadius: tokens.radius.medium,
+    padding: tokens.spacing[16],
+    gap: tokens.spacing[4],
+  },
+  statusCardPaused: {
+    backgroundColor: tokens.colors.m3.surfaceContainerHigh,
+    borderRadius: tokens.radius.medium,
+    padding: tokens.spacing[16],
+    gap: tokens.spacing[4],
+  },
+  statusTitle: {
+    ...tokens.typography.titleMedium,
+    color: tokens.colors.text,
+  },
+  searchAction: {
+    paddingHorizontal: tokens.spacing[16],
+    paddingTop: tokens.spacing[8],
   },
   link: {
     ...tokens.typography.bodyMedium,

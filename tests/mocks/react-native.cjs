@@ -53,6 +53,33 @@ const FlatList = React.forwardRef((props, ref) => {
 });
 FlatList.displayName = "FlatList";
 
+const SectionList = React.forwardRef((props, ref) => {
+  const sections = props.sections || [];
+  const hasItems = sections.some((section) => (section.data || []).length > 0);
+  if (!hasItems && props.ListEmptyComponent) {
+    const empty = typeof props.ListEmptyComponent === "function"
+      ? React.createElement(props.ListEmptyComponent)
+      : props.ListEmptyComponent;
+    return React.createElement(View, { ref }, empty);
+  }
+  return React.createElement(
+    View,
+    { ref },
+    sections.map((section, sectionIndex) =>
+      React.createElement(
+        React.Fragment,
+        { key: section.title || sectionIndex },
+        props.renderSectionHeader ? props.renderSectionHeader({ section }) : null,
+        (section.data || []).map((item, index) => {
+          const key = props.keyExtractor ? props.keyExtractor(item, index) : index;
+          return React.createElement(React.Fragment, { key }, props.renderItem({ item, index, section }));
+        })
+      )
+    )
+  );
+});
+SectionList.displayName = "SectionList";
+
 const Image = React.forwardRef((props, ref) =>
   React.createElement("Image", { ...props, ref })
 );
@@ -114,6 +141,7 @@ module.exports = {
   ActivityIndicator,
   TextInput,
   FlatList,
+  SectionList,
   StyleSheet,
   AccessibilityInfo,
   Platform,
@@ -127,6 +155,7 @@ module.exports = {
     ActivityIndicator,
     TextInput,
     FlatList,
+    SectionList,
     StyleSheet,
     AccessibilityInfo,
     Platform,

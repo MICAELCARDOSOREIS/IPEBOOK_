@@ -123,7 +123,8 @@ export function RequestDetail({
                   ))}
                 </View>
                 <Text style={styles.tipText}>
-                  Dica: Verifique a conservação do livro no momento da troca e prefira horários diurnos.
+                  Chegue alguns minutos antes, verifique a conservação do livro no momento da troca e
+                  prefira horários diurnos.
                 </Text>
               </View>
             </View>

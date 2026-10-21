@@ -10,7 +10,7 @@ Conferência atual: **2026-10-20** (base: branch `develop`). Projeto: `~/IPEBOOK
 
 Todas as métricas abaixo foram aferidas diretamente por execução dos scripts de validação:
 
-- **Testes automatizados**: **661 testes passando** em **98 arquivos de teste** (`npm test` / `npx vitest run`), cobrindo testes unitários de entidades, validadores, casos de uso, semente de catálogo, adaptadores de dados (memória, Supabase e AsyncStorage), hooks/viewmodels, componentes de interface e cenários de integração ponta a ponta.
+- **Testes automatizados**: **739 testes passando** em **108 arquivos de teste** (`npm run validate`; Vitest executado diretamente neste worktree por falta do link local `node_modules/vitest`), cobrindo testes unitários de entidades, validadores, casos de uso, semente de catálogo, adaptadores de dados (memória, Supabase e AsyncStorage), hooks/viewmodels, componentes de interface e cenários de integração ponta a ponta.
 - **Cobertura de código**: Acima do limiar estrito de 80% em todas as 4 dimensões (Statements: 88,62%, Branches: 80,60%, Functions: 85,66%, Lines: 90,15%).
 - **Integridade arquitetural**: **100% em conformidade** no MVVM sofisticado em sete camadas (`app`, `view`, `viewmodel`, `usecase`, `model`, `infra`, `di`), verificado pelo comando `npm run check:architecture` (0 violações). Apenas `src/di/container.ts` e testes têm permissão para instanciar ou importar adaptadores de `src/infra/`.
 - **Validação de banco e migrações SQL**: 12 migrações executadas e validadas em banco real isolado via PGlite (`npm run test:sql`):

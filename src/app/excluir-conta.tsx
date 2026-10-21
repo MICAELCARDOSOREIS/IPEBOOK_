@@ -7,6 +7,7 @@ export default function ExcluirContaRoute() {
       onBack={() => router.back()}
       onAccountDeleted={() => router.replace("/")}
       onNavigateToLogin={() => router.push("/entrar")}
+      onEditProfile={() => router.push("/perfil")}
     />
   );
 }

@@ -1,4 +1,4 @@
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Checkbox } from "@/view/components/Checkbox";
 import { FilledButton } from "@/view/components/FilledButton";
@@ -13,6 +13,8 @@ export type DeleteAccountProps = {
   onBack: () => void;
   onAccountDeleted: () => void;
   onNavigateToLogin?: () => void;
+  /** Abre a edição do perfil, como o item "Editar informações" do Figma `07.07`. */
+  onEditProfile?: () => void;
 };
 
 /**
@@ -26,6 +28,7 @@ export default function DeleteAccount({
   onBack,
   onAccountDeleted,
   onNavigateToLogin,
+  onEditProfile,
 }: DeleteAccountProps) {
   const [state, actions] = useDeleteAccountViewModel();
 
@@ -103,6 +106,22 @@ export default function DeleteAccount({
             </Text>
           </View>
 
+          {onEditProfile ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Editar informações do perfil: atualize nome e bairro"
+              onPress={onEditProfile}
+              style={styles.navigationRow}
+            >
+              <IconBadge icon="person" tone="neutral" />
+              <View style={styles.navigationRowText}>
+                <Text style={styles.navigationRowTitle}>Editar informações</Text>
+                <Text style={styles.exportText}>Atualize nome e bairro.</Text>
+              </View>
+              <Text style={styles.navigationChevron}>›</Text>
+            </Pressable>
+          ) : null}
+
           <View style={styles.exportCard}>
             <View style={styles.cardHeaderRow}>
               <IconBadge icon="document" tone="action" />
@@ -131,7 +150,7 @@ export default function DeleteAccount({
               </Text>
             ) : null}
             <OutlinedButton
-              label={state.exporting ? "Gerando arquivo..." : "Baixar meus dados (JSON)"}
+              label={state.exporting ? "Gerando arquivo..." : "Solicitar meus dados"}
               accessibilityLabel="Baixar meus dados pessoais em formato JSON"
               loading={state.exporting}
               disabled={state.exporting}
@@ -182,6 +201,26 @@ export default function DeleteAccount({
 }
 
 const styles = StyleSheet.create({
+  navigationRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: tokens.spacing[12],
+    paddingVertical: tokens.spacing[12],
+    paddingHorizontal: tokens.spacing[16],
+    borderRadius: tokens.radius.medium,
+    backgroundColor: tokens.colors.surface,
+    borderWidth: 1,
+    borderColor: tokens.colors.border,
+  },
+  navigationRowText: { flex: 1, gap: tokens.spacing[4] },
+  navigationRowTitle: {
+    ...tokens.typography.titleMedium,
+    color: tokens.colors.text,
+  },
+  navigationChevron: {
+    ...tokens.typography.titleMedium,
+    color: tokens.colors.secondaryText,
+  },
   page: { flex: 1, backgroundColor: tokens.colors.background },
   scrollContent: {
     flexGrow: 1,

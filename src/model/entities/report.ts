@@ -13,24 +13,24 @@ export interface ReportReasonOption {
 
 export const REPORT_REASONS: readonly ReportReasonOption[] = [
   {
-    key: "inappropriate_content",
-    label: "Conteúdo impróprio ou ofensivo",
-    description: "Linguagem abusiva, preconceito, incitação à violência ou material impróprio.",
+    key: "misleading_info",
+    label: "O livro não corresponde à descrição",
+    description: "Estado de conservação muito divergente, título trocado ou dados falsos.",
   },
   {
     key: "fraud_or_scam",
-    label: "Suspeita de golpe ou fraude",
+    label: "Golpe ou cobrança indevida",
     description: "Cobrança fora da plataforma, livro inexistente ou conduta suspeita.",
+  },
+  {
+    key: "inappropriate_content",
+    label: "Conteúdo ofensivo",
+    description: "Linguagem abusiva, preconceito, incitação à violência ou material impróprio.",
   },
   {
     key: "piracy_or_copyright",
     label: "Cópia pirata ou ilegal",
     description: "Fotocópia não autorizada, impressão pirata ou violação de direitos.",
-  },
-  {
-    key: "misleading_info",
-    label: "Informações enganosas",
-    description: "Estado de conservação muito divergente, título trocado ou dados falsos.",
   },
   {
     key: "other",

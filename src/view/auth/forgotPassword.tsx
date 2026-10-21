@@ -6,6 +6,7 @@ import { tokens } from "@/view/tokens";
 import { FilledButton } from "@/view/components/FilledButton";
 import { IconBadge } from "@/view/components/IconBadge";
 import { Logotipo } from "@/view/components/Logotipo";
+import { Manchete } from "@/view/components/Manchete";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { TextButton } from "@/view/components/TextButton";
 import { TextField } from "@/view/components/TextField";
@@ -74,7 +75,7 @@ export default function ForgotPassword({ onNavigateToSignIn, onBack }: ForgotPas
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.content}>
-          <Logotipo />
+          <Logotipo underline />
 
           {requested ? (
             <>
@@ -117,7 +118,7 @@ export default function ForgotPassword({ onNavigateToSignIn, onBack }: ForgotPas
             </>
           ) : (
             <>
-              <Text accessibilityRole="header" style={styles.title}>Recupere seu acesso.</Text>
+              <Manchete texto="Recupere seu" realce="acesso." />
               <Text style={styles.subtitle}>
                 Digite seu e-mail para receber as instruções de redefinição de senha.
               </Text>

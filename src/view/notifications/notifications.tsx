@@ -1,4 +1,4 @@
-import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, SectionList, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import type { AppNotification } from "@/model/entities/notification";
 import type { AppIconName } from "@/view/components/AppIcon";
@@ -13,6 +13,7 @@ import {
   useNotificationsViewModel,
 } from "@/viewmodel/useNotificationsViewModel";
 import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
+import { groupNotificationsByPeriod } from "@/viewmodel/notificationGrouping";
 
 export type NotificationsProps = {
   sessionUserId: string | null;
@@ -161,10 +162,19 @@ export default function Notifications({
             ) : null}
           </View>
         ) : (
-          <FlatList
-            data={state.filteredNotifications}
+          <SectionList
+            sections={groupNotificationsByPeriod(state.filteredNotifications).map((section) => ({
+              ...section,
+              data: [...section.data],
+            }))}
             keyExtractor={(item) => item.id}
             contentContainerStyle={styles.listContent}
+            stickySectionHeadersEnabled={false}
+            renderSectionHeader={({ section }) => (
+              <Text accessibilityRole="header" style={styles.sectionHeader}>
+                {section.title}
+              </Text>
+            )}
             renderItem={({ item }) => {
               const badge = TYPE_BADGES[item.type] ?? { icon: "info", tone: "neutral" as const };
               return (
@@ -206,6 +216,12 @@ export default function Notifications({
 
 const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: tokens.colors.background },
+  sectionHeader: {
+    ...tokens.typography.labelMedium,
+    color: tokens.colors.secondaryText,
+    paddingTop: tokens.spacing[16],
+    paddingBottom: tokens.spacing[8],
+  },
   content: {
     flex: 1,
     width: "100%",
