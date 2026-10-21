@@ -33,7 +33,9 @@ describe("Integração: Detalhes da Negociação Aceita (Spec 009)", () => {
     expect(detalheDono.request.status).toBe("accepted");
     expect(detalheDono.isOwner).toBe(true);
     expect(detalheDono.counterpartId).toBe("comprador-user");
-    expect(detalheDono.safeMeetingPoints).toContain("Campus IFPI Piripiri (Recepção ou Biblioteca)");
+    expect(detalheDono.safeMeetingPoints.map((p) => p.name)).toContain(
+      "Campus IFPI Piripiri (Recepção ou Biblioteca)",
+    );
 
     // 4. Comprador consulta detalhes
     const detalheComprador = await requestUseCases.getRequestDetail(pedido.id, "comprador-user");

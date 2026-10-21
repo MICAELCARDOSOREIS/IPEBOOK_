@@ -2,7 +2,13 @@
 
 Documento consolidado de continuidade técnica e produto do Ipebook (Piripiri, PI).
 
-Conferência atual: **2026-10-21** (branch `worktree-telas-gerenciar-alerta`, derivada de `develop`). Projeto: `~/IPEBOOK_/.claude/worktrees/telas-gerenciar-alerta`.
+Conferência atual: **2026-10-21** (branch `feature/142-pontos-encontro-mapa`, derivada de `develop`).
+
+**Spec 037 validada localmente:** cartões de ponto de encontro seguro em `/negociacao/[id]` passam a
+exibir endereço e horário recomendado, com botão "Como chegar" abrindo o app de mapas padrão
+(`Linking.openURL`) e mensagem de erro acessível quando a abertura falha. `npm run validate` passou
+com 781 testes em 114 arquivos. Validação manual do toque real em dispositivo (abertura efetiva do
+Google Maps/Apple Maps) ainda pendente — ver `specs/037-pontos-encontro-mapa/validacao.md`.
 
 **Spec 036 validada localmente:** lista de alertas com navegação para gerenciamento e edição, modalidades persistidas e aplicadas às notificações. `npm run validate` passou com 779 testes em 114 arquivos, além de tipos, arquitetura e SQL/PGlite. `npm run verify:release` passou, incluindo compilação Web com 28 rotas. No Android, `/alertas` sem sessão foi conferida via ADB; o aparelho se desconectou antes da conferência autenticada. O fluxo autenticado completo foi conferido visualmente na Web local via CDP, com sessão temporária em memória removida após o teste. A migração remota segue pendente porque `supabase migration list` retornou `AccessTokenRequiredError`.
 

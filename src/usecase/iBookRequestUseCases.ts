@@ -1,5 +1,6 @@
 import type { Book } from "@/model/entities/book";
 import type { BookRequest } from "@/model/entities/bookRequest";
+import type { MeetingPoint } from "@/model/entities/meetingPoint";
 
 export type RequestWithListing = Readonly<{
   request: BookRequest;
@@ -15,7 +16,7 @@ export type NegotiationDetail = Readonly<{
   counterpartId: string;
   /** Nome público da contraparte; `null` quando o perfil não pôde ser carregado. */
   counterpartName: string | null;
-  safeMeetingPoints: readonly string[];
+  safeMeetingPoints: readonly MeetingPoint[];
 }>;
 
 export interface IBookRequestUseCases {

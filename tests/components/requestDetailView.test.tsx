@@ -5,6 +5,11 @@ import type { NegotiationDetail } from "@/usecase/iBookRequestUseCases";
 import type { RequestDetailState, RequestDetailActions } from "@/viewmodel/useRequestDetailViewModel";
 import RequestDetailScreen, { RequestDetail } from "@/view/requests/requestDetail";
 
+const openURL = vi.fn();
+vi.mock("expo-linking", () => ({
+  openURL: (...args: unknown[]) => openURL(...args),
+}));
+
 vi.mock("@/viewmodel/useRequestDetailViewModel", () => ({
   useRequestDetailViewModel: vi.fn(),
 }));
@@ -48,7 +53,18 @@ describe("tela de Detalhes da Negociação (ISO/IEC 25010 - Usabilidade e Acessi
     isOwner: true,
     counterpartName: "Ana Paula",
     counterpartId: "comprador-1",
-    safeMeetingPoints: ["Campus IFPI Piripiri", "Praça da Bandeira"],
+    safeMeetingPoints: [
+      {
+        name: "Campus IFPI Piripiri",
+        address: "Rodovia PI-112, Km 01, Piripiri, PI",
+        recommendedTime: "Dias úteis, das 8h às 17h",
+      },
+      {
+        name: "Praça da Bandeira",
+        address: "Praça da Bandeira, Centro, Piripiri, PI",
+        recommendedTime: "Diariamente, das 8h às 18h",
+      },
+    ],
   };
 
   it("renderiza cabeçalho e informações completas do acordo", async () => {
@@ -74,12 +90,60 @@ describe("tela de Detalhes da Negociação (ISO/IEC 25010 - Usabilidade e Acessi
     expect(screen.getByText("Ana Paula")).toBeDefined();
     expect(screen.getByText("• Campus IFPI Piripiri")).toBeDefined();
     expect(screen.getByText("• Praça da Bandeira")).toBeDefined();
+    expect(screen.getByText("Rodovia PI-112, Km 01, Piripiri, PI")).toBeDefined();
 
     const bookCard = screen.getByRole("button", {
       name: "Ver anúncio de Memórias Póstumas",
     });
     fireEvent.press(bookCard);
     expect(onNavigateToBookDetail).toHaveBeenCalledWith("b1");
+  });
+
+  it("abre o app de mapas ao tocar em 'Como chegar'", async () => {
+    openURL.mockReset().mockResolvedValue(undefined);
+    mockViewModel({ detail: fakeDetail, loading: false, error: null });
+
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(
+        <RequestDetail requestId="req-1" sessionUserId="vendedor-1" />,
+      );
+    });
+
+    const directionsButton = screen.getByRole("button", {
+      name: "Como chegar à Campus IFPI Piripiri",
+    });
+    await act(async () => {
+      fireEvent.press(directionsButton);
+    });
+
+    expect(openURL).toHaveBeenCalledWith(
+      expect.stringContaining(encodeURIComponent("Rodovia PI-112, Km 01, Piripiri, PI")),
+    );
+  });
+
+  it("exibe mensagem de erro quando o app de mapas não pode ser aberto", async () => {
+    openURL.mockReset().mockRejectedValue(new Error("sem app de mapas"));
+    mockViewModel({ detail: fakeDetail, loading: false, error: null });
+
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(
+        <RequestDetail requestId="req-1" sessionUserId="vendedor-1" />,
+      );
+    });
+
+    const directionsButton = screen.getByRole("button", {
+      name: "Como chegar à Campus IFPI Piripiri",
+    });
+    await act(async () => {
+      fireEvent.press(directionsButton);
+    });
+
+    expect(screen.getByRole("alert")).toBeDefined();
+    expect(
+      screen.getByText('Não foi possível abrir o mapa para "Campus IFPI Piripiri". Tente novamente.'),
+    ).toBeDefined();
   });
 
   it("exibe indicador de carregamento", async () => {

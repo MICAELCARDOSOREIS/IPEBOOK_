@@ -56,7 +56,9 @@ describe("testes de hook: useRequestDetailViewModel (ISO/IEC 25010 - Confiabilid
     isOwner: true,
     counterpartName: "Ana Paula",
     counterpartId: "user-buyer",
-    safeMeetingPoints: ["Campus IFPI"],
+    safeMeetingPoints: [
+      { name: "Campus IFPI", address: "Rodovia PI-112, Km 01, Piripiri, PI", recommendedTime: "Dias úteis, das 8h às 17h" },
+    ],
   };
 
   it("carrega os detalhes da negociação com sucesso", async () => {

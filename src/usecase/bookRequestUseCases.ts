@@ -3,6 +3,7 @@ import type { IBookRequestDataSource } from "@/model/datasources/iBookRequestDat
 import type { IProfileDataSource } from "@/model/datasources/iProfileDataSource";
 import type { Book } from "@/model/entities/book";
 import type { BookRequest } from "@/model/entities/bookRequest";
+import type { MeetingPoint } from "@/model/entities/meetingPoint";
 import { AuthError, ValidationError } from "@/model/errors";
 import type {
   IBookRequestUseCases,
@@ -133,11 +134,27 @@ export class BookRequestUseCases implements IBookRequestUseCases {
       throw new AuthError("Você não tem permissão para acessar esta negociação.");
     }
 
-    const safeMeetingPoints: readonly string[] = [
-      "Campus IFPI Piripiri (Recepção ou Biblioteca)",
-      "Praça da Bandeira (Centro)",
-      "Praça de Alimentação / Mercado Central",
-      "Praça de Eventos",
+    const safeMeetingPoints: readonly MeetingPoint[] = [
+      {
+        name: "Campus IFPI Piripiri (Recepção ou Biblioteca)",
+        address: "Rodovia PI-112, Km 01, Piripiri, PI",
+        recommendedTime: "Dias úteis, das 8h às 17h",
+      },
+      {
+        name: "Praça da Bandeira (Centro)",
+        address: "Praça da Bandeira, Centro, Piripiri, PI",
+        recommendedTime: "Diariamente, das 8h às 18h",
+      },
+      {
+        name: "Praça de Alimentação / Mercado Central",
+        address: "Mercado Central de Piripiri, Centro, Piripiri, PI",
+        recommendedTime: "Diariamente, das 8h às 18h",
+      },
+      {
+        name: "Praça de Eventos",
+        address: "Praça de Eventos, Centro, Piripiri, PI",
+        recommendedTime: "Diariamente, das 8h às 18h",
+      },
     ];
 
     const counterpartId = isOwner ? request.requesterId : book.ownerId;

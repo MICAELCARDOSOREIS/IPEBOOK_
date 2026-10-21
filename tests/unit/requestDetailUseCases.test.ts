@@ -55,6 +55,11 @@ describe("Caso de uso: getRequestDetail (ISO/IEC 25010 - Adequação e Seguranç
     expect(detail.isOwner).toBe(true);
     expect(detail.counterpartId).toBe("interessado-1");
     expect(detail.safeMeetingPoints.length).toBeGreaterThan(0);
+    for (const point of detail.safeMeetingPoints) {
+      expect(point.name).toBeTruthy();
+      expect(point.address).toBeTruthy();
+      expect(point.recommendedTime).toBeTruthy();
+    }
   });
 
   it("permite acesso ao solicitante e identifica o dono do livro", async () => {

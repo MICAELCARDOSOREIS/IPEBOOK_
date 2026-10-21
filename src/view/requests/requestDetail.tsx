@@ -1,4 +1,5 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import * as Linking from "expo-linking";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
@@ -28,6 +29,23 @@ export function RequestDetail({
 }: RequestDetailProps) {
   const [state, actions] = useRequestDetailViewModel(requestId, sessionUserId);
   const detail = state.detail;
+  const [mapErrors, setMapErrors] = useState<Record<string, string>>({});
+
+  async function handleOpenMap(point: { name: string; address: string }) {
+    setMapErrors((previous) => {
+      const { [point.name]: _removed, ...rest } = previous;
+      return rest;
+    });
+    const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(point.address)}`;
+    try {
+      await Linking.openURL(url);
+    } catch {
+      setMapErrors((previous) => ({
+        ...previous,
+        [point.name]: `Não foi possível abrir o mapa para "${point.name}". Tente novamente.`,
+      }));
+    }
+  }
 
   return (
     <SafeAreaView style={styles.page}>
@@ -119,9 +137,24 @@ export function RequestDetail({
                 </Text>
                 <View style={styles.pointList}>
                   {detail.safeMeetingPoints.map((point) => (
-                    <Text key={point} style={styles.pointItem}>
-                      • {point}
-                    </Text>
+                    <View key={point.name} style={styles.pointCard}>
+                      <Text style={styles.pointName}>• {point.name}</Text>
+                      <Text style={styles.pointDetail}>{point.address}</Text>
+                      <Text style={styles.pointDetail}>{point.recommendedTime}</Text>
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel={`Como chegar à ${point.name}`}
+                        onPress={() => void handleOpenMap(point)}
+                        style={styles.directionsButton}
+                      >
+                        <Text style={styles.directionsText}>Como chegar</Text>
+                      </Pressable>
+                      {mapErrors[point.name] ? (
+                        <Text accessibilityRole="alert" style={styles.mapErrorText}>
+                          {mapErrors[point.name]}
+                        </Text>
+                      ) : null}
+                    </View>
                   ))}
                 </View>
                 <Text style={styles.tipText}>
@@ -298,10 +331,40 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: tokens.colors.action,
   },
-  pointList: { gap: tokens.spacing[4], paddingVertical: tokens.spacing[4] },
-  pointItem: {
+  pointList: { gap: tokens.spacing[12], paddingVertical: tokens.spacing[4] },
+  pointCard: {
+    gap: tokens.spacing[4],
+    paddingVertical: tokens.spacing[8],
+    borderTopWidth: 1,
+    borderTopColor: tokens.colors.m3.outlineVariant,
+  },
+  pointName: {
+    ...tokens.typography.bodyMedium,
+    fontWeight: "600",
+    color: tokens.colors.text,
+  },
+  pointDetail: {
     ...tokens.typography.bodyMedium,
     color: tokens.colors.secondaryText,
+  },
+  directionsButton: {
+    alignSelf: "flex-start",
+    marginTop: tokens.spacing[4],
+    paddingVertical: tokens.spacing[8],
+    paddingHorizontal: tokens.spacing[16],
+    borderRadius: tokens.radius.full,
+    backgroundColor: tokens.colors.action,
+    minHeight: tokens.accessibility.touchTarget,
+    justifyContent: "center",
+  },
+  directionsText: {
+    ...tokens.typography.labelMedium,
+    fontWeight: "700",
+    color: tokens.colors.surface,
+  },
+  mapErrorText: {
+    ...tokens.typography.labelMedium,
+    color: tokens.colors.error,
   },
   tipText: {
     ...tokens.typography.labelMedium,
