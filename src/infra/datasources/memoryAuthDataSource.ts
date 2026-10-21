@@ -1,6 +1,6 @@
 import type { IAuthDataSource } from "@/model/datasources/iAuthDataSource";
 import type { User } from "@/model/entities/user";
-import { AuthError } from "@/model/errors";
+import { AuthError, EmailAlreadyRegisteredError } from "@/model/errors";
 
 type StoredAccount = Readonly<{
   id: string;
@@ -17,7 +17,7 @@ export class MemoryAuthDataSource implements IAuthDataSource {
   async signUp(email: string, password: string, name: string): Promise<User> {
     const normalizedEmail = email.trim().toLowerCase();
     if (this.accountsByEmail.has(normalizedEmail)) {
-      throw new AuthError("Este e-mail já está em uso.");
+      throw new EmailAlreadyRegisteredError("Este e-mail já está em uso.");
     }
     const account: StoredAccount = {
       id: String(this.nextId++),

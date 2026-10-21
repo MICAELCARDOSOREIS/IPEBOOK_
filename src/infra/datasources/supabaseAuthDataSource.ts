@@ -1,6 +1,6 @@
 import type { IAuthDataSource } from "@/model/datasources/iAuthDataSource";
 import type { User } from "@/model/entities/user";
-import { AuthError } from "@/model/errors";
+import { AuthError, EmailAlreadyRegisteredError, ExpiredLinkError } from "@/model/errors";
 import type { SupabaseAppClient } from "@/infra/supabaseClient";
 
 /** Nome informado no cadastro, guardado em `user_metadata.full_name` (ver Spec 030). */
@@ -23,6 +23,14 @@ export class SupabaseAuthDataSource implements IAuthDataSource {
     });
     if (error || !data.user?.email) {
       throw new AuthError("Não foi possível criar a conta. Tente novamente.");
+    }
+    /**
+     * Supabase responde com sucesso (sem erro) e `identities: []` quando o e-mail já está
+     * cadastrado e confirmado — nenhuma conta nova é criada nem e-mail é enviado. Sem esta
+     * checagem, a pessoa via a tela como se a conta tivesse sido criada (Issue #97).
+     */
+    if (data.user.identities?.length === 0) {
+      throw new EmailAlreadyRegisteredError("Este e-mail já está cadastrado. Entre com sua senha.");
     }
     return { id: data.user.id, email: data.user.email, name: readFullName(data.user) ?? name };
   }
@@ -57,7 +65,7 @@ export class SupabaseAuthDataSource implements IAuthDataSource {
   }
 
   async completePasswordReset(link: string | null, newPassword: string): Promise<void> {
-    if (!link) throw new AuthError("Link de recuperação inválido ou expirado.");
+    if (!link) throw new ExpiredLinkError("Link de recuperação inválido ou expirado.");
     try {
       const parsed = new URL(link);
       const query = new URLSearchParams(parsed.search);
@@ -67,23 +75,24 @@ export class SupabaseAuthDataSource implements IAuthDataSource {
       const refreshToken = hash.get("refresh_token");
       if (code) {
         const { error } = await this.client.auth.exchangeCodeForSession(code);
-        if (error) throw new AuthError("Link de recuperação inválido ou expirado.");
+        if (error) throw new ExpiredLinkError("Link de recuperação inválido ou expirado.");
       } else if (accessToken && refreshToken) {
         const { error } = await this.client.auth.setSession({
           access_token: accessToken,
           refresh_token: refreshToken,
         });
-        if (error) throw new AuthError("Link de recuperação inválido ou expirado.");
+        if (error) throw new ExpiredLinkError("Link de recuperação inválido ou expirado.");
       } else {
-        throw new AuthError("Link de recuperação inválido ou expirado.");
+        throw new ExpiredLinkError("Link de recuperação inválido ou expirado.");
       }
-    } catch {
-      throw new AuthError("Link de recuperação inválido ou expirado.");
+    } catch (error) {
+      if (error instanceof ExpiredLinkError) throw error;
+      throw new ExpiredLinkError("Link de recuperação inválido ou expirado.");
     }
 
     const { data: sessionData, error: sessionError } = await this.client.auth.getSession();
     if (sessionError || !sessionData.session) {
-      throw new AuthError("Link de recuperação inválido ou expirado.");
+      throw new ExpiredLinkError("Link de recuperação inválido ou expirado.");
     }
     const { error } = await this.client.auth.updateUser({ password: newPassword });
     if (error) throw new AuthError("Não foi possível atualizar a senha. Tente novamente.");

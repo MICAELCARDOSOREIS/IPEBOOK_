@@ -12,11 +12,20 @@ import { useResetPasswordViewModel } from "@/viewmodel/useResetPasswordViewModel
 export type ResetPasswordProps = {
   link: string | null;
   onNavigateToSignIn?: () => void;
+  onNavigateToForgotPassword?: () => void;
   onBack?: () => void;
 };
 
-/** Figma `01.06 · Nova senha` (nó `254:3595`) e `01.09 · Senha atualizada` (nó `254:4006`). */
-export default function ResetPassword({ link, onNavigateToSignIn, onBack }: ResetPasswordProps) {
+/**
+ * Figma `01.06 · Nova senha` (nó `254:3595`), `01.09 · Senha atualizada` (nó `254:4006`) e
+ * `01.08 · Link expirado` (Issue #97).
+ */
+export default function ResetPassword({
+  link,
+  onNavigateToSignIn,
+  onNavigateToForgotPassword,
+  onBack,
+}: ResetPasswordProps) {
   const [state, actions] = useResetPasswordViewModel();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -37,7 +46,7 @@ export default function ResetPassword({ link, onNavigateToSignIn, onBack }: Rese
     <SafeAreaView style={styles.page}>
       {onBack ? (
         <TopAppBar
-          title={state.success ? "Senha atualizada" : "Nova senha"}
+          title={state.success ? "Senha atualizada" : state.linkExpired ? "Link expirado" : "Nova senha"}
           onBack={onBack}
         />
       ) : null}
@@ -46,7 +55,24 @@ export default function ResetPassword({ link, onNavigateToSignIn, onBack }: Rese
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.content}>
-          {state.success ? (
+          {state.linkExpired ? (
+            <>
+              <IconBadge icon="error" tone="error" />
+              <Text accessibilityRole="header" style={styles.title}>Link expirado.</Text>
+              <Text style={styles.subtitle}>
+                Esse link de recuperação não é mais válido. Solicite um novo link para continuar.
+              </Text>
+              <View style={styles.errorBox}>
+                <Text accessibilityRole="alert" style={styles.errorMessage}>
+                  Link de recuperação inválido ou expirado.
+                </Text>
+              </View>
+              <FilledButton
+                label="Solicitar novo link"
+                onPress={() => onNavigateToForgotPassword?.()}
+              />
+            </>
+          ) : state.success ? (
             <>
               <IconBadge icon="check" tone="action" />
               <Text accessibilityRole="header" style={styles.title}>
@@ -173,6 +199,20 @@ const styles = StyleSheet.create({
     color: tokens.colors.error,
     fontSize: tokens.typography.bodyMedium.fontSize,
     fontFamily: tokens.typography.bodyMedium.fontFamily,
+  },
+  errorBox: {
+    borderWidth: 1,
+    borderColor: tokens.colors.error,
+    backgroundColor: tokens.colors.errorContainer,
+    borderRadius: tokens.radius.medium,
+    padding: tokens.spacing[16],
+  },
+  errorMessage: {
+    color: tokens.colors.error,
+    fontSize: tokens.typography.bodyMedium.fontSize,
+    fontFamily: tokens.typography.bodyMedium.fontFamily,
+    lineHeight: 20,
+    fontWeight: "500",
   },
   linkButton: {
     minHeight: tokens.accessibility.touchTarget,

@@ -8,6 +8,7 @@ export default function RedefinirSenhaRoute() {
     <ResetPassword
       link={link}
       onNavigateToSignIn={() => router.replace("/entrar")}
+      onNavigateToForgotPassword={() => router.replace("/esqueci-senha")}
       onBack={() => router.back()}
     />
   );
