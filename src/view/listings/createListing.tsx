@@ -16,6 +16,7 @@ import { Tag } from "@/view/components/Tag";
 import { TextButton } from "@/view/components/TextButton";
 import { TextField } from "@/view/components/TextField";
 import { TopAppBar } from "@/view/components/TopAppBar";
+import { useFormErrorAnnouncer } from "@/view/useFormErrorAnnouncer";
 import { useCreateListingViewModel } from "@/viewmodel/useCreateListingViewModel";
 
 export type CreateListingProps = {
@@ -64,6 +65,7 @@ export default function CreateListing({
   const [state, actions] = useCreateListingViewModel();
   const [step, setStep] = useState(1);
   const [published, setPublished] = useState<Book | null>(null);
+  const errorRef = useFormErrorAnnouncer(state.error);
 
   const hasDraftContent = Boolean(
     state.title.trim() ||
@@ -243,7 +245,7 @@ export default function CreateListing({
               </Text>
 
               {state.error ? (
-                <Text accessibilityRole="alert" style={styles.errorText}>{state.error}</Text>
+                <Text ref={errorRef} accessibilityRole="alert" accessibilityLiveRegion="assertive" style={styles.errorText}>{state.error}</Text>
               ) : null}
 
               <FilledButton label="Continuar" onPress={() => setStep(2)} />
@@ -296,7 +298,7 @@ export default function CreateListing({
               </View>
 
               {state.error ? (
-                <Text accessibilityRole="alert" style={styles.errorText}>{state.error}</Text>
+                <Text ref={errorRef} accessibilityRole="alert" accessibilityLiveRegion="assertive" style={styles.errorText}>{state.error}</Text>
               ) : null}
 
               <FilledButton label="Usar estas fotos" onPress={() => setStep(3)} />
@@ -380,7 +382,7 @@ export default function CreateListing({
               </View>
 
               {state.error ? (
-                <Text accessibilityRole="alert" style={styles.errorText}>{state.error}</Text>
+                <Text ref={errorRef} accessibilityRole="alert" accessibilityLiveRegion="assertive" style={styles.errorText}>{state.error}</Text>
               ) : null}
 
               <FilledButton

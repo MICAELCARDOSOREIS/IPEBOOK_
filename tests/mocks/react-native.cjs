@@ -142,6 +142,7 @@ const StyleSheet = {
 const AccessibilityInfo = {
   isScreenReaderEnabled: () => Promise.resolve(false),
   addEventListener: () => ({ remove: () => {} }),
+  announceForAccessibility: () => {},
 };
 
 const Platform = {

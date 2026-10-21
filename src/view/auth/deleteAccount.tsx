@@ -5,6 +5,7 @@ import { FilledButton } from "@/view/components/FilledButton";
 import { IconBadge } from "@/view/components/IconBadge";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { tokens } from "@/view/tokens";
+import { useFormErrorAnnouncer } from "@/view/useFormErrorAnnouncer";
 import { useDeleteAccountViewModel } from "@/viewmodel/useDeleteAccountViewModel";
 
 export type DeleteAccountProps = {
@@ -30,6 +31,8 @@ export default function DeleteAccount({
   onEditProfile,
 }: DeleteAccountProps) {
   const [state, actions] = useDeleteAccountViewModel();
+  const exportErrorRef = useFormErrorAnnouncer(state.exportError);
+  const errorRef = useFormErrorAnnouncer(state.error);
 
   if (state.success) {
     return (
@@ -140,7 +143,12 @@ export default function DeleteAccount({
               </View>
             ) : null}
             {state.exportError ? (
-              <Text accessibilityRole="alert" style={styles.errorText}>
+              <Text
+                ref={exportErrorRef}
+                accessibilityRole="alert"
+                accessibilityLiveRegion="assertive"
+                style={styles.errorText}
+              >
                 {state.exportError}
               </Text>
             ) : null}
@@ -178,7 +186,12 @@ export default function DeleteAccount({
           />
 
           {state.error ? (
-            <Text accessibilityRole="alert" style={styles.errorText}>
+            <Text
+              ref={errorRef}
+              accessibilityRole="alert"
+              accessibilityLiveRegion="assertive"
+              style={styles.errorText}
+            >
               {state.error}
             </Text>
           ) : null}

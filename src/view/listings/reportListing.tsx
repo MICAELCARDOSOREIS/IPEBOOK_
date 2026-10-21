@@ -5,6 +5,7 @@ import { FilledButton } from "@/view/components/FilledButton";
 import { IconBadge } from "@/view/components/IconBadge";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { tokens } from "@/view/tokens";
+import { useFormErrorAnnouncer } from "@/view/useFormErrorAnnouncer";
 import { useReportListingViewModel } from "@/viewmodel/useReportListingViewModel";
 
 export type ReportListingProps = {
@@ -27,6 +28,7 @@ export default function ReportListing({
   onNavigateToLogin,
 }: ReportListingProps) {
   const [state, actions] = useReportListingViewModel();
+  const errorRef = useFormErrorAnnouncer(state.error);
 
   if (state.success) {
     return (
@@ -140,7 +142,12 @@ export default function ReportListing({
           </View>
 
           {state.error ? (
-            <Text accessibilityRole="alert" style={styles.errorText}>
+            <Text
+              ref={errorRef}
+              accessibilityRole="alert"
+              accessibilityLiveRegion="assertive"
+              style={styles.errorText}
+            >
               {state.error}
             </Text>
           ) : null}

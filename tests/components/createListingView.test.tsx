@@ -1,5 +1,6 @@
 import React from "react";
 import { act, fireEvent, render } from "@testing-library/react-native";
+import { AccessibilityInfo } from "react-native";
 import { describe, expect, it, vi } from "vitest";
 import type { CreateListingState, CreateListingActions } from "@/viewmodel/useCreateListingViewModel";
 import CreateListing from "@/view/listings/createListing";
@@ -214,6 +215,19 @@ describe("etapa 3 do anúncio — Detalhes (Figma 04.05)", () => {
     await goToStep(screen, 3);
 
     expect(screen.getByRole("alert").props.children).toBe("Sessão obrigatória para cadastrar anúncio.");
+  });
+
+  it("anuncia o erro para leitores de tela quando a publicação falha (Spec 042 / Issue #147)", async () => {
+    const announceSpy = vi.spyOn(AccessibilityInfo, "announceForAccessibility");
+    mockViewModel({ ...defaultState, error: "Sessão obrigatória para cadastrar anúncio." });
+    const screen = await renderScreen();
+    await goToStep(screen, 3);
+
+    const errorText = screen.getByRole("alert");
+    expect(errorText.props.accessibilityLiveRegion).toBe("assertive");
+    expect(announceSpy).toHaveBeenCalledWith("Sessão obrigatória para cadastrar anúncio.");
+
+    announceSpy.mockRestore();
   });
 });
 

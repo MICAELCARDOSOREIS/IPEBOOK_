@@ -1,5 +1,6 @@
 import React from "react";
 import { act, fireEvent, render } from "@testing-library/react-native";
+import { AccessibilityInfo } from "react-native";
 import { describe, expect, it, vi } from "vitest";
 import ReportListing from "@/view/listings/reportListing";
 
@@ -104,5 +105,27 @@ describe("tela de denúncia de anúncio (ReportListing)", () => {
       fireEvent.press(backButton);
     });
     expect(onBack).toHaveBeenCalledTimes(1);
+  });
+
+  it("anuncia e foca o erro de validação ao enviar sem motivo selecionado (Spec 042 / Issue #147)", async () => {
+    const announceSpy = vi.spyOn(AccessibilityInfo, "announceForAccessibility");
+    let screen!: Awaited<ReturnType<typeof render>>;
+
+    await act(async () => {
+      screen = await render(
+        <ReportListing listingId="book-1" sessionUserId="user-1" onBack={() => {}} />,
+      );
+    });
+
+    const submitBtn = screen.getByRole("button", { name: "Enviar denúncia" });
+    await act(async () => {
+      fireEvent.press(submitBtn);
+    });
+
+    const errorText = screen.getByRole("alert");
+    expect(errorText.props.accessibilityLiveRegion).toBe("assertive");
+    expect(announceSpy).toHaveBeenCalledWith(errorText.props.children);
+
+    announceSpy.mockRestore();
   });
 });
