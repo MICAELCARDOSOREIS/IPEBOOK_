@@ -34,17 +34,35 @@ const TextInput = React.forwardRef((props, ref) =>
 );
 TextInput.displayName = "TextInput";
 
+const FLAT_LIST_PASSTHROUGH_KEYS = [
+  "testID",
+  "horizontal",
+  "pagingEnabled",
+  "onMomentumScrollEnd",
+  "onScroll",
+  "accessibilityLabel",
+];
+
+function pickPassthroughProps(props) {
+  const picked = {};
+  for (const key of FLAT_LIST_PASSTHROUGH_KEYS) {
+    if (props[key] !== undefined) picked[key] = props[key];
+  }
+  return picked;
+}
+
 const FlatList = React.forwardRef((props, ref) => {
   const data = props.data || [];
+  const passthrough = pickPassthroughProps(props);
   if (data.length === 0 && props.ListEmptyComponent) {
     const empty = typeof props.ListEmptyComponent === "function"
       ? React.createElement(props.ListEmptyComponent)
       : props.ListEmptyComponent;
-    return React.createElement(View, { ref }, empty);
+    return React.createElement(View, { ref, ...passthrough }, empty);
   }
   return React.createElement(
     View,
-    { ref },
+    { ref, ...passthrough },
     data.map((item, index) => {
       const key = props.keyExtractor ? props.keyExtractor(item, index) : index;
       return React.createElement(React.Fragment, { key }, props.renderItem({ item, index }));
