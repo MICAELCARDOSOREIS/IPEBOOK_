@@ -50,14 +50,15 @@ registro final) são conjuntas.
       **Micael**
 - [x] T009 `src/view/components/Avatar.tsx` (avatar.md: 40/64 px, iniciais), com teste
       (`tests/components/avatar.test.tsx`). **Maria Clara**
-- [ ] T010 `src/view/components/SearchField.tsx` (campo-de-busca.md), com teste. **Maria Clara**
-- [ ] T011 `src/view/components/NavigationBar.tsx` (3 destinos, ADR 0011), com teste cobrindo
-      item ativo/inativo. **Maria Clara**
-- [ ] T032 `src/view/components/BookCover.tsx` (capa-ilustrativa.md: cor/motivo determinísticos
-      a partir do id, variantes "em lista" 44px e "em cartão" ≥80px, FR-010), com teste. **Maria
-      Clara**
-- [ ] T033 `src/view/components/TopAppBar.tsx` (barra-superior.md: botão voltar + título,
-      FR-011), com teste. **Maria Clara**
+- [x] T010 `src/view/components/SearchField.tsx` (campo-de-busca.md), com teste
+      (`tests/components/searchField.test.tsx`). **Maria Clara**
+- [x] T011 `src/view/components/NavigationBar.tsx` (3 destinos, ADR 0011), com teste cobrindo
+      item ativo/inativo (`tests/components/navigationBar.test.tsx`). **Maria Clara**
+- [x] T032 `src/view/components/BookCover.tsx` (capa-ilustrativa.md: cor/motivo determinísticos
+      a partir do id, variantes "em lista" 44px e "em cartão" ≥80px, FR-010), com teste
+      (`tests/components/bookCover.test.tsx`). **Maria Clara**
+- [x] T033 `src/view/components/TopAppBar.tsx` (barra-superior.md: botão voltar + título,
+      FR-011), com teste (`tests/components/topAppBar.test.tsx`). **Maria Clara**
 
 ## ViewModels
 
@@ -68,8 +69,8 @@ registro final) são conjuntas.
 - [x] T014 (superseded pela Spec 018/Issue #73): o perfil público (filtro por `ownerId`) já é
       coberto por `usePublicProfileViewModel.ts`, criado naquela spec antes desta ser retomada;
       não foi criado um segundo ViewModel duplicado. **Maria Clara**
-- [ ] T015 `src/viewmodel/useSearchViewModel.ts` (novo, filtro client-side por título/autor,
-      FR-005), com teste. **Maria Clara**
+- [x] T015 `src/viewmodel/useSearchViewModel.ts` (novo, filtro client-side por título/autor,
+      FR-005), com teste (`tests/hooks/useSearchViewModel.test.tsx`). **Maria Clara**
 
 ## Telas e rotas
 
@@ -78,11 +79,12 @@ registro final) são conjuntas.
       **Micael**
 - [x] T017 Criar `src/view/auth/forgotPassword.tsx` + rota `src/app/esqueci-senha.tsx`, com
       testes RNTL cobrindo US1. **Micael**
-- [ ] T018 Redesenhar `src/view/home.tsx` com o item de lista do design system (incluindo
+- [x] T018 Redesenhar `src/view/home.tsx` com o item de lista do design system (incluindo
       `BookCover`, T032) e adicionar `NavigationBar`, sem regressão na spec 005, com testes
-      atualizados. **Maria Clara**
-- [ ] T019 Criar `src/view/search/search.tsx` + rota `src/app/pesquisa.tsx`, com testes RNTL
-      cobrindo US3 (SC-002). **Maria Clara**
+      atualizados (`tests/components/homeView.test.tsx`,
+      `tests/components-mocked/homeViewMocked.test.tsx`). **Maria Clara**
+- [x] T019 Criar `src/view/search/search.tsx` + rota `src/app/pesquisa.tsx`, com testes RNTL
+      cobrindo US3 (SC-002) (`tests/components-mocked/searchView.test.tsx`). **Maria Clara**
 - [x] T020 Criar `src/view/profile/profile.tsx` + rota `src/app/perfil.tsx` (exige sessão,
       FR-006; redireciona para `/entrar` sem sessão), com testes RNTL cobrindo US4
       (`tests/components-mocked/profileView.test.tsx`). **Maria Clara**
@@ -92,11 +94,12 @@ registro final) são conjuntas.
       e-mail (FR-007 preservado). **Maria Clara**
 - [x] T022 `NavigationBar` já estava composta em `src/app/_layout.tsx`; removida a restrição
       `disabledDestinations={["profile"]}` agora que `/perfil` existe. **Maria Clara**
-- [ ] T029 Criar `src/view/listings/bookDetail.tsx` + rota dinâmica `src/app/livro/[id].tsx`
+- [x] T029 Criar `src/view/listings/bookDetail.tsx` + rota dinâmica `src/app/livro/[id].tsx`
       (US6: `TopAppBar` com voltar, `BookCover` em cartão, título, autor, tag de modalidade,
       preço, link ao perfil de quem anunciou, botão "Solicitar negociação"), consumindo
-      `getBookById` (T028, Micael). **Maria Clara**
-- [ ] T030 Em `src/view/home.tsx` (parte de T018), trocar o botão "Solicitar negociação" da
+      `getBookById` (T028, Micael) (`tests/components-mocked/bookDetailView.test.tsx`).
+      **Maria Clara**
+- [x] T030 Em `src/view/home.tsx` (parte de T018), trocar o botão "Solicitar negociação" da
       linha da lista por navegação para `livro/[id]` (T029) — a ação de negociar passa a viver
       só no detalhe. **Maria Clara**
 
@@ -104,12 +107,13 @@ registro final) são conjuntas.
 
 - [x] T023 `tests/integration/sc006RecuperarSenhaIntegration.test.ts` (SC-001, pelas camadas
       reais). **Micael**
-- [x] T024 `tests/integration/sc006BuscaEPerfilIntegration.test.ts` — cobre SC-003 (edição de
-      perfil) pelas camadas reais. SC-002 (busca, T015/T019) é escopo de #56, não desta entrega.
-      **Maria Clara**
-- [ ] T025 Rodar `npm run validate` completo (typecheck, arquitetura, cobertura ≥ 80%, sem
-      regressão nas specs 003/004/005) e registrar evidências em `validacao.md`. **Conjunta**
-- [ ] T031 `tests/integration/sc006DetalheLivroIntegration.test.tsx` (SC-005, pelas camadas
+- [x] T024 `tests/integration/sc006BuscaEPerfilIntegration.test.ts` (SC-003, edição de perfil) e
+      `tests/integration/sc006PesquisaIntegration.test.tsx` (SC-002, filtro de busca) — ambos
+      pelas camadas reais. **Maria Clara**
+- [x] T025 `npm run validate` completo (typecheck, arquitetura, SQL, cobertura ≥ 80%) rodado
+      nesta entrega (#56), que fecha as 4 issues da Spec 006 (#54/#55/#59 já concluídas). Ver
+      `validacao-issue-56.md`. **Conjunta**
+- [x] T031 `tests/integration/sc006DetalheLivroIntegration.test.tsx` (SC-005, pelas camadas
       reais — depende de T028, Micael). **Maria Clara**
 
 ## Documentação e registro final
