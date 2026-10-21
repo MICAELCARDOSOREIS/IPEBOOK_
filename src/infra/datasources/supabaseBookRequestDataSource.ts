@@ -53,8 +53,15 @@ export class SupabaseBookRequestDataSource implements IBookRequestDataSource {
   }
 
   async respond(id: string, status: RequestStatus): Promise<BookRequest> {
+    if (status === "accepted") return this.acceptAtomically(id);
     const { data, error } = await this.client.from("v2_book_requests").update({ status }).eq("id", id).eq("status", "pending").select(columns).single();
     if (error || !data) throw new DataSourceError("Não foi possível responder ao pedido.");
+    return mapRequest(data as RequestRow);
+  }
+
+  async acceptAtomically(id: string): Promise<BookRequest> {
+    const { data, error } = await this.client.rpc("accept_book_request", { target_request_id: id });
+    if (error || !data) throw new DataSourceError("Não foi possível aceitar o pedido.");
     return mapRequest(data as RequestRow);
   }
 }

@@ -4,6 +4,15 @@ import { describe, expect, it, vi } from "vitest";
 import DeleteAccount from "@/view/auth/deleteAccount";
 import DeleteAccountScreen from "@/view/auth/deleteAccountScreen";
 
+vi.mock("expo-file-system/legacy", () => ({
+  documentDirectory: "file:///dados/",
+  writeAsStringAsync: vi.fn().mockResolvedValue(undefined),
+}));
+vi.mock("expo-sharing", () => ({
+  isAvailableAsync: vi.fn().mockResolvedValue(true),
+  shareAsync: vi.fn().mockResolvedValue(undefined),
+}));
+
 describe("tela de exclusão de conta (DeleteAccount - LGPD)", () => {
   it("exibe aviso de sessão necessária quando o usuário não estiver autenticado", async () => {
     const onLogin = vi.fn();

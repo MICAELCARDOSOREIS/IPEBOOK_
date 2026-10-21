@@ -7,6 +7,10 @@ import { MemoryBookRequestDataSource } from "@/infra/datasources/memoryBookReque
 import { MemoryFavoriteDataSource } from "@/infra/datasources/memoryFavoriteDataSource";
 import { MemorySearchAlertDataSource } from "@/infra/datasources/memorySearchAlertDataSource";
 import { MemoryNotificationDataSource } from "@/infra/datasources/memoryNotificationDataSource";
+import { MemoryAuthDataSource } from "@/infra/datasources/memoryAuthDataSource";
+import { MemoryProfileDataSource } from "@/infra/datasources/memoryProfileDataSource";
+import { MemoryReportDataSource } from "@/infra/datasources/memoryReportDataSource";
+import { MemoryRatingDataSource } from "@/infra/datasources/memoryRatingDataSource";
 import type { Book } from "@/model/entities/book";
 
 describe("UserDataExportUseCases & DataSources (Portabilidade LGPD)", () => {
@@ -86,97 +90,59 @@ describe("UserDataExportUseCases & DataSources (Portabilidade LGPD)", () => {
     expect(result.searchAlerts[0].query).toBe("Ficção");
   });
 
-  it("exporta via SupabaseUserDataExportDataSource com mock de PostgREST", async () => {
-    const mockFrom = vi.fn().mockImplementation((table: string) => {
-      if (table === "v2_books") {
-        return {
-          select: () => ({
-            eq: () =>
-              Promise.resolve({
-                data: [
-                  {
-                    id: "b1",
-                    owner_id: "user-1",
-                    title: "Livro Supabase",
-                    author: "Autor S",
-                    modality: "trade",
-                    status: "available",
-                    photos: [],
-                  },
-                ],
-                error: null,
-              }),
-          }),
-        };
-      }
-      if (table === "v2_book_requests") {
-        return {
-          select: () => ({
-            eq: () =>
-              Promise.resolve({
-                data: [
-                  {
-                    id: "r1",
-                    listing_id: "other-book",
-                    requester_id: "user-1",
-                    status: "pending",
-                    created_at: "2026-10-20T00:00:00Z",
-                  },
-                ],
-                error: null,
-              }),
-            in: () =>
-              Promise.resolve({
-                data: [
-                  {
-                    id: "r2",
-                    listing_id: "b1",
-                    requester_id: "other-user",
-                    status: "accepted",
-                    created_at: "2026-10-20T00:00:00Z",
-                  },
-                ],
-                error: null,
-              }),
-          }),
-        };
-      }
-      if (table === "v2_favorites") {
-        return {
-          select: () => ({
-            eq: () =>
-              Promise.resolve({
-                data: [{ book_id: "fav-1" }],
-                error: null,
-              }),
-          }),
-        };
-      }
-      if (table === "v2_search_alerts") {
-        return {
-          select: () => ({
-            eq: () =>
-              Promise.resolve({
-                data: [
-                  {
-                    id: "a1",
-                    user_id: "user-1",
-                    query: "Computação",
-                    active: true,
-                    created_at: "2026-10-20T00:00:00Z",
-                  },
-                ],
-                error: null,
-              }),
-          }),
-        };
-      }
-      return {
-        select: () => ({ eq: () => Promise.resolve({ data: [], error: null }) }),
-      };
+  it("inclui cadastro, perfil, notificações, denúncias, avaliações e histórico local", async () => {
+    const auth = new MemoryAuthDataSource();
+    const user = await auth.signUp("leitor@example.com", "senha-exemplo", "Leitora");
+    const profiles = new MemoryProfileDataSource();
+    await profiles.ensure(user.id, "Leitora");
+    const notifications = new MemoryNotificationDataSource([]);
+    await notifications.addNotification({ id: "n1", userId: user.id, title: "Aviso", message: "Mensagem", type: "system", read: false, createdAt: "2026-10-20" });
+    const reports = new MemoryReportDataSource();
+    await reports.create({ listingId: "b1", reporterId: user.id, reason: "other" });
+    const ratings = new MemoryRatingDataSource();
+    await ratings.create({ raterId: user.id, ratedUserId: "other", requestId: "r1", score: 5 });
+    const source = new MemoryUserDataExportDataSource(undefined, undefined, undefined, undefined, {
+      auth, profiles, notifications, reports, ratings,
     });
+    const history = { listTerms: vi.fn().mockResolvedValue(["Romance"]) } as any;
+    const data = await new UserDataExportUseCases(source, history).exportUserData(user.id);
+    expect(data.account).toMatchObject({ email: "leitor@example.com", name: "Leitora" });
+    expect(data.profile).toMatchObject({ name: "Leitora" });
+    expect(data.notifications).toHaveLength(1);
+    expect(data.reports).toHaveLength(1);
+    expect(data.ratingsGiven).toHaveLength(1);
+    expect(data.searchHistory).toEqual(["Romance"]);
+  });
 
-    const mockClient = { from: mockFrom } as any;
+  it("exporta via SupabaseUserDataExportDataSource com mock de PostgREST", async () => {
+    const rows: Record<string, any[]> = {
+      v2_books: [{ id: "b1", owner_id: "user-1", title: "Livro Supabase", author: "Autor S", modality: "trade", status: "available", photos: [] }],
+      v2_book_requests: [{ id: "r1", listing_id: "other-book", requester_id: "user-1", status: "pending", created_at: "2026-10-20T00:00:00Z" }],
+      v2_favorites: [{ book_id: "fav-1" }],
+      v2_search_alerts: Array.from({ length: 501 }, (_, index) => ({ id: `a${index}`, user_id: "user-1", query: "Computação", active: true, created_at: "2026-10-20T00:00:00Z" })),
+      v2_notifications: [{ id: "n1", user_id: "user-1", title: "Aviso", message: "Mensagem", type: "system", read: false, created_at: "2026-10-20" }],
+      v2_reports: [{ id: "d1", listing_id: "b1", reporter_id: "user-1", reason: "other", created_at: "2026-10-20" }],
+      v2_ratings: [{ id: "v1", rater_id: "user-1", rated_user_id: "other-user", request_id: "r1", score: 5, created_at: "2026-10-20" }],
+    };
+    const paged = (items: any[]) => ({
+      order: () => paged(items),
+      range: (start: number, end: number) => Promise.resolve({ data: items.slice(start, end + 1), error: null }),
+    });
+    const mockFrom = vi.fn().mockImplementation((table: string) => ({
+      select: () => ({
+        eq: () => table === "v2_profiles"
+          ? { maybeSingle: () => Promise.resolve({ data: { id: "user-1", name: "Leitora", created_at: "2026-01-01" }, error: null }) }
+          : paged(rows[table] ?? []),
+        in: () => paged([{ id: "r2", listing_id: "b1", requester_id: "other-user", status: "accepted", created_at: "2026-10-20T00:00:00Z" }]),
+      }),
+    }));
+
+    const mockClient = {
+      from: mockFrom,
+      auth: { getUser: vi.fn().mockResolvedValue({ data: { user: {
+        id: "user-1", email: "leitor@example.com", user_metadata: { full_name: "Leitora" },
+      } }, error: null }) },
+    } as any;
     const supabaseDs = new SupabaseUserDataExportDataSource(mockClient);
 
     const data = await supabaseDs.exportUserData("user-1");
@@ -186,6 +152,25 @@ describe("UserDataExportUseCases & DataSources (Portabilidade LGPD)", () => {
     expect(data.sentRequests).toHaveLength(1);
     expect(data.receivedRequests).toHaveLength(1);
     expect(data.favorites).toEqual(["fav-1"]);
-    expect(data.searchAlerts).toHaveLength(1);
+    expect(data.searchAlerts).toHaveLength(501);
+    expect(data.account).toMatchObject({ email: "leitor@example.com", name: "Leitora" });
+    expect(data.profile).toMatchObject({ name: "Leitora" });
+    expect(data.notifications).toHaveLength(1);
+    expect(data.reports).toHaveLength(1);
+    expect(data.ratingsGiven).toHaveLength(1);
+    expect(data.ratingsReceived).toHaveLength(1);
+  });
+
+  it("recusa exportação parcial quando uma consulta de dados falha", async () => {
+    const client = {
+      auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: "user-1", email: "leitor@example.com" } }, error: null }) },
+      from: (table: string) => ({ select: () => ({
+        eq: () => table === "v2_profiles"
+          ? { maybeSingle: () => Promise.resolve({ data: null, error: null }) }
+          : { order: () => ({ range: () => Promise.resolve({ data: [], error: table === "v2_notifications" ? { message: "falha" } : null }) }) },
+      }) }),
+    } as any;
+    await expect(new SupabaseUserDataExportDataSource(client).exportUserData("user-1"))
+      .rejects.toThrow("Falha ao exportar notificações do usuário.");
   });
 });

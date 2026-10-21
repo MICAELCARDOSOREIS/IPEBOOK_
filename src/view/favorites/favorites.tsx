@@ -4,6 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { BOOK_CONDITION_LABELS } from "@/model/entities/book";
 import { BookCover } from "@/view/components/BookCover";
 import { ErrorState } from "@/view/components/ErrorState";
+import { FilledButton } from "@/view/components/FilledButton";
 import { IconBadge } from "@/view/components/IconBadge";
 import { LoadingState } from "@/view/components/LoadingState";
 import { OfflineState } from "@/view/components/OfflineState";
@@ -21,6 +22,7 @@ export type FavoritesProps = {
   onLogin: () => void;
   onBook: (id: string) => void;
   onNavigateToAlerts?: () => void;
+  onExploreBooks?: () => void;
 };
 
 /** Figma `02.06 · Favoritos` (nó `10:227`) e `02.14 · Favoritos · vazio` (nó `254:4129`). */
@@ -31,6 +33,7 @@ export default function Favorites({
   onLogin,
   onBook,
   onNavigateToAlerts,
+  onExploreBooks,
 }: FavoritesProps) {
   const [state, actions] = useFavoritesViewModel(userId);
   const { isOnline } = useNetworkStatus();
@@ -97,13 +100,18 @@ export default function Favorites({
           ListEmptyComponent={
             <View style={styles.status}>
               <IconBadge icon="heart" tone="neutral" />
-              <Text style={styles.emptyHeadline}>Nenhum livro salvo</Text>
-              <Text accessibilityRole="header" style={styles.statusTitle}>
+              <Text accessibilityRole="header" style={styles.emptyHeadline}>
                 Nenhum favorito ainda
               </Text>
               <Text style={styles.statusHint}>
-                Salve os livros que chamarem sua atenção para acompanhar de perto. Toque no coração de um anúncio para guardá-lo aqui.
+                Toque em Favoritar no anúncio para guardar os livros que você quer ler.
               </Text>
+              <View style={styles.emptyAction}>
+                <FilledButton
+                  label="Explorar livros"
+                  onPress={onExploreBooks ?? onBack}
+                />
+              </View>
             </View>
           }
           renderItem={({ item }) => {
@@ -218,6 +226,11 @@ const styles = StyleSheet.create({
     fontFamily: tokens.typography.bodyMedium.fontFamily,
     color: tokens.colors.secondaryText,
     textAlign: "center",
+  },
+  emptyAction: {
+    marginTop: tokens.spacing[16],
+    width: "100%",
+    maxWidth: 280,
   },
   link: {
     color: tokens.colors.action,

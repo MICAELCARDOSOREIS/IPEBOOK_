@@ -16,11 +16,10 @@ export function StepProgress({ currentStep, totalSteps, stepLabel }: StepProgres
 
   return (
     <View>
-      <Text accessibilityLiveRegion="polite" style={styles.labelsRow}>
+      <View accessibilityLiveRegion="polite" style={styles.labelsRow}>
         <Text style={styles.label}>{`Etapa ${currentStep} de ${totalSteps}`}</Text>
-        {"  "}
         <Text style={styles.label}>{stepLabel}</Text>
-      </Text>
+      </View>
       <View style={styles.track} importantForAccessibility="no">
         <View testID="step-progress-fill" style={[styles.fill, { flex: progress }]} />
         <View style={{ flex: 1 - progress }} />

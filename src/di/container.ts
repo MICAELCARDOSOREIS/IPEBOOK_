@@ -124,8 +124,10 @@ function createDataSources(): {
   const searchAlerts = new MemorySearchAlertDataSource(notifications);
   const reports = new MemoryReportDataSource();
   const profiles = new MemoryProfileDataSource();
+  const auth = new MemoryAuthDataSource();
+  const ratings = new MemoryRatingDataSource();
   return {
-    auth: new MemoryAuthDataSource(),
+    auth,
     books,
     requests,
     reports,
@@ -134,8 +136,10 @@ function createDataSources(): {
     searchAlerts,
     searchHistory,
     profiles,
-    ratings: new MemoryRatingDataSource(),
-    userDataExport: new MemoryUserDataExportDataSource(books, requests, favorites, searchAlerts),
+    ratings,
+    userDataExport: new MemoryUserDataExportDataSource(books, requests, favorites, searchAlerts, {
+      auth, profiles, notifications, reports, ratings,
+    }),
     userPreferences: new MemoryUserPreferencesDataSource(),
   };
 }
@@ -181,6 +185,7 @@ export const publicProfileUseCases: IPublicProfileUseCases = new PublicProfileUs
 
 export const userDataExportUseCases: IUserDataExportUseCases = new UserDataExportUseCases(
   dataSources.userDataExport,
+  searchHistoryUseCases,
 );
 
 export const userPreferencesUseCases: IUserPreferencesUseCases = new UserPreferencesUseCases(

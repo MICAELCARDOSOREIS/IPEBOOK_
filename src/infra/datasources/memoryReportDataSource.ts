@@ -34,4 +34,8 @@ export class MemoryReportDataSource implements IReportDataSource {
       .filter((r) => r.listingId === listingId)
       .map((r) => ({ ...r }));
   }
+
+  async listByReporter(userId: string): Promise<readonly ReportListing[]> {
+    return this.reports.filter((report) => report.reporterId === userId).map((report) => ({ ...report }));
+  }
 }

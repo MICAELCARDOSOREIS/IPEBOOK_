@@ -10,6 +10,7 @@ import { IconBadge } from "@/view/components/IconBadge";
 import { LoadingState } from "@/view/components/LoadingState";
 import { OfflineState } from "@/view/components/OfflineState";
 import { Tag } from "@/view/components/Tag";
+import { TopAppBar } from "@/view/components/TopAppBar";
 import { tokens } from "@/view/tokens";
 
 export const statusLabel: Record<RequestStatus, string> = {
@@ -57,15 +58,8 @@ export function RequestListLayout({
   });
   return (
     <SafeAreaView style={styles.page}>
+      <TopAppBar title={title} onBack={() => onBack?.()} />
       <View style={styles.content}>
-        {onBack ? (
-          <Pressable accessibilityRole="button" onPress={onBack} style={styles.back}>
-            <Text style={styles.link}>Voltar</Text>
-          </Pressable>
-        ) : null}
-        <Text accessibilityRole="header" style={styles.heading}>
-          {title}
-        </Text>
         <View style={styles.heroBox}>
           <Text style={styles.heroTitle}>Sua estante em movimento.</Text>
           <Text style={styles.body}>Acompanhe as propostas dos seus livros.</Text>
@@ -129,7 +123,10 @@ export function RequestListLayout({
                 ) : (
                   <View style={styles.emptyBox}>
                     <IconBadge icon="swap" tone="neutral" />
-                    <Text style={styles.body}>{emptyText}</Text>
+                    <Text accessibilityRole="header" style={styles.emptyTitle}>
+                      Nenhuma proposta ainda
+                    </Text>
+                    <Text style={[styles.body, { textAlign: "center" }]}>{emptyText}</Text>
                   </View>
                 )
               }
@@ -303,6 +300,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: tokens.spacing[24],
     gap: tokens.spacing[12],
+  },
+  emptyTitle: {
+    ...tokens.typography.titleMedium,
+    fontFamily: tokens.typography.displayLarge.fontFamily,
+    color: tokens.colors.text,
+    textAlign: "center",
   },
   bookRow: {
     flexDirection: "row",

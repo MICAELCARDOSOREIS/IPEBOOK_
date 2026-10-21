@@ -2,7 +2,7 @@
 
 Documento consolidado de continuidade técnica e produto do Ipebook (Piripiri, PI).
 
-Conferência atual: **2026-10-20** (base: branch `develop`). Projeto: `~/IPEBOOK_`.
+Conferência atual: **2026-10-21** (branch `fix/revisao-integral-20261020`, derivada de `develop`). Projeto: `~/IPEBOOK_`.
 
 ---
 
@@ -10,23 +10,15 @@ Conferência atual: **2026-10-20** (base: branch `develop`). Projeto: `~/IPEBOOK
 
 Todas as métricas abaixo foram aferidas diretamente por execução dos scripts de validação:
 
-- **Testes automatizados**: **739 testes passando** em **108 arquivos de teste** (`npm run validate`; Vitest executado diretamente neste worktree por falta do link local `node_modules/vitest`), cobrindo testes unitários de entidades, validadores, casos de uso, semente de catálogo, adaptadores de dados (memória, Supabase e AsyncStorage), hooks/viewmodels, componentes de interface e cenários de integração ponta a ponta.
-- **Cobertura de código**: Acima do limiar estrito de 80% em todas as 4 dimensões (Statements: 88,62%, Branches: 80,60%, Functions: 85,66%, Lines: 90,15%).
+- **Testes automatizados**: **745 testes passando** em **108 arquivos de teste** (`npm run validate`), cobrindo entidades, validadores, casos de uso, adaptadores, viewmodels, componentes e integração.
+- **Cobertura de código**: Statements 90,59%, Branches 83,24%, Functions 87,14%, Lines 91,93%.
 - **Integridade arquitetural**: **100% em conformidade** no MVVM sofisticado em sete camadas (`app`, `view`, `viewmodel`, `usecase`, `model`, `infra`, `di`), verificado pelo comando `npm run check:architecture` (0 violações). Apenas `src/di/container.ts` e testes têm permissão para instanciar ou importar adaptadores de `src/infra/`.
-- **Validação de banco e migrações SQL**: 12 migrações executadas e validadas em banco real isolado via PGlite (`npm run test:sql`):
-  1. `202610130001_v2_schema.sql` (estrutura inicial de livros e pedidos)
-  2. `202610130002_rls_hardening.sql` (políticas de Row Level Security e permissões granulares)
-  3. `202610150003_favoritos_alertas.sql` (tabelas de favoritos, alertas de busca e notificações)
-  4. `202610170001_denuncias.sql` (tabela de moderação comunitária `v2_reports`)
-  5. `202610170002_fotos_anuncios.sql` (colunas de fotos, localidade e categoria em `v2_books`)
-  6. `202610170003_pausar_anuncio.sql` (status pausado e restrição de ciclo de vida em `v2_books`)
-  7. `202610180001_indices_busca_catalogo.sql` (índices parciais e compostos de performance para vitrine, localização, modalidade e moderação - ADR 0021)
-  8. `202610200006_perfil_publico_e_avaliacoes.sql` (tabelas `v2_profiles` e `v2_ratings`, com RLS, para o perfil público do anunciante - Spec 018, Issue #73)
-  9. `202610200005_conservacao_descricao_anuncio.sql` (colunas `condition` e `description` em `v2_books`, com restrição de valores e limite de 280 caracteres - Spec 030)
+- **Validação de banco e migrações SQL**: **15 migrações** descobertas e executadas em ordem no PGlite (`npm run test:sql`), com rejeição de versões duplicadas. A edição de perfil passou para `202610200007` e a restrição de avaliações com aceite atômico está em `202610200008`. O histórico remoto não foi conferido nesta sessão porque a CLI Supabase não estava autenticada; verificar antes de aplicar migrações remotamente.
 - **Semente Oficial da Beta (`npm run db:seed`)**: Script `scripts/popular-catalogo-piripiri.mjs` gerando 10 anúncios realistas distribuídos pelos bairros de Piripiri, PI com exportação SQL via `--sql`.
-- **Backend Supabase ativo**: O backend está configurado com `EXPO_PUBLIC_BACKEND=supabase` em `.env` e `.env.example`, integrado ao projeto oficial `xiuuiggpccpgrwkzeloc`. O histórico de migrações remotas foi reconciliado e `supabase db push` está operando normalmente.
-- **Rotas Web compiladas (`npm run build:web`)**: Exportação estática do Expo Router gerou com sucesso o pacote web em `dist/`, totalizando **25 rotas estáticas**:
+- **Backend Supabase**: Configurado para desenvolvimento; a aplicação das novas migrações no banco remoto não foi realizada nem verificada nesta revisão.
+- **Rotas Web compiladas (`npm run build:web`)**: Exportação estática do Expo Router gerou com sucesso o pacote web em `dist/`, totalizando **26 rotas estáticas**:
   - `/` (Catálogo e vitrine inicial com selo da beta em Piripiri, PI)
+  - `/perfil` (Perfil do usuário autenticado)
   - `/perfil/[userId]` (Perfil público, somente leitura, de quem anuncia — nome, avaliação média e negociações concluídas - Spec 018, Issue #73)
   - `/bem-vindo` (Boas-vindas e primeiro acesso com escolha opcional de bairro - Spec 026, ADR 0022)
   - `/pesquisa` (Busca no catálogo por termo e filtros, com histórico recente no dispositivo - Spec 027)
@@ -135,7 +127,7 @@ No app ativo em desenvolvimento, 21 rotas cobrem as jornadas essenciais da beta.
   - **Logging Estruturado e Sanitizado (`SafeLogger`)**: Implementação de `ILogger` em `src/infra/services/safeLogger.ts` com mascaramento automático de senhas, JWTs e chaves sensíveis contra vazamento de dados pessoais. **Consumido pelos ViewModels a partir da Spec 031**, que registram falha de cadastro, de recuperação de senha, de publicação e de denúncia, além dos bloqueios por excesso de tentativas.
   - **Rate Limiting no Cliente (`ClientRateLimiter`)**: Algoritmo de janela deslizante (sliding window) em `src/infra/services/clientRateLimiter.ts`. **Aplicado às telas na Spec 031**, pelo guarda `src/viewmodel/formRateLimit.ts`: entrar e criar conta (5 tentativas por minuto e por e-mail), recuperar senha e denunciar anúncio (3 por minuto) e publicar anúncio (5 por minuto e por sessão). Entrar com sucesso zera o contador daquela conta.
   - **Cache Resiliente Offline-first (`CachedBookDataSource`)**: Decorator em `src/infra/datasources/cachedBookDataSource.ts` com fallback automático via `AsyncStorage` caso haja falha de conexão, garantindo exibição de anúncios sem rede.
-  - **Script de Verificação Pré-deploy (`npm run verify:release`)**: Script consolidado em `scripts/verificar-release.mjs` que valida sequencialmente `.env.example`, TypeScript, 7 camadas arquiteturais, 11 migrações SQL com RLS, testes unitários, build estático web e arquivos de distribuição em `dist/`.
+  - **Script de Verificação Pré-deploy (`npm run verify:release`)**: Script consolidado em `scripts/verificar-release.mjs` que valida sequencialmente `.env.example`, TypeScript, 7 camadas arquiteturais, as migrações SQL com RLS, testes unitários, build estático web e arquivos de distribuição em `dist/`.
 
 - **Issue #109 (Publicação e verificação no Cloudflare Pages)**: Concluída e comprovada em ambiente real de destino (`https://ipebook.pages.dev`). Projeto provisionado via Cloudflare CLI (`cf pages projects create --name ipebook`), pacote estático com 25 rotas publicado via Wrangler (`npx wrangler pages deploy dist --project-name ipebook --branch develop`) e regras de rewrite `200` em `public/_redirects` ajustadas para compatibilidade com Clean URLs do Cloudflare Pages (cobrindo `/livro/*`, `/perfil/*`, `/negociacao/*`, `/denunciar/*`, `/editar-anuncio/*` e `/gerenciar-anuncio/*`). Cabeçalhos de segurança CSP, `manifest.json` e acesso direto HTTP 200 em rotas estáticas e dinâmicas verificados no PoP de Fortaleza (`FOR`).
 
@@ -185,3 +177,7 @@ No app ativo em desenvolvimento, 21 rotas cobrem as jornadas essenciais da beta.
 - `specs/027-historico-buscas-recentes/`: Histórico de buscas recentes salvo no dispositivo via `AsyncStorage` (Issue #94, PR #100).
 - `specs/028-filtrar-e-ordenar-catalogo/`: Filtragem por modalidade, categoria, preço e ordenação do catálogo (Issue #93).
 - `specs/029-portabilidade-e-download-dados-lgpd/`: Interface e serviço de download de dados estruturados em JSON (Art. 18 e 19 LGPD).
+- `specs/030-alinhamento-telas-micael-figma/`: Alinhamento das telas de autenticação e gerenciamento de anúncio ao Figma.
+- `specs/031-alinhamento-complementar-telas-micael-figma/`: Alinhamento complementar de Meus Anúncios, Denúncia e Encontro ao Figma.
+- `specs/032-alinhamento-final-telas-micael-figma/`: Abas, filtros e busca em Minha Estante, Notificações e Central de Ajuda.
+- `specs/033-correcoes-revisao-integral/`: Correções de integridade arquitetural, aceite atômico de pedidos, portabilidade LGPD e polimento visual comprovado via ADB no dispositivo físico Android contra o PDF oficial de referência.

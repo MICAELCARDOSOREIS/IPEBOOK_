@@ -25,6 +25,7 @@ export type MyListingsProps = {
   onNavigateToCreateListing?: () => void;
   onNavigateToEditListing?: (bookId: string) => void;
   onNavigateToManageListing?: (bookId: string) => void;
+  onNavigateToHelp?: () => void;
 };
 
 /**
@@ -39,6 +40,7 @@ export function MyListings({
   onNavigateToCreateListing,
   onNavigateToEditListing,
   onNavigateToManageListing,
+  onNavigateToHelp,
 }: MyListingsProps) {
   const [state, actions] = useMyListingsViewModel(sessionUserId);
   const { isOnline } = useNetworkStatus();
@@ -48,17 +50,17 @@ export function MyListings({
 
   const listingBooks = state.books;
   const proposalBooks = state.books.filter((book) => book.status === "reserved");
-  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "paused" | "closed">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "paused" | "reserved">("all");
 
   const booksInTab = activeTab === "proposals" ? proposalBooks : listingBooks;
   const activeCount = booksInTab.filter((b) => b.status === "available").length;
   const pausedCount = booksInTab.filter((b) => b.status === "paused").length;
-  const closedCount = booksInTab.filter((b) => b.status === "reserved").length;
+  const reservedCount = booksInTab.filter((b) => b.status === "reserved").length;
 
   const filteredBooks = booksInTab.filter((b) => {
     if (statusFilter === "active") return b.status === "available";
     if (statusFilter === "paused") return b.status === "paused";
-    if (statusFilter === "closed") return b.status === "reserved";
+    if (statusFilter === "reserved") return b.status === "reserved";
     return true;
   });
 
@@ -130,7 +132,7 @@ export function MyListings({
                       { key: "all", label: `Todos (${booksInTab.length})`, a11y: "Filtrar por Todos" },
                       { key: "active", label: `Ativos (${activeCount})`, a11y: "Filtrar por Ativos" },
                       { key: "paused", label: `Pausados (${pausedCount})`, a11y: "Filtrar por Pausados" },
-                      { key: "closed", label: `Concluídos (${closedCount})`, a11y: "Filtrar por Concluídos" },
+                      { key: "reserved", label: `Reservados (${reservedCount})`, a11y: "Filtrar por Reservados" },
                     ] as const
                   ).map((chip) => {
                     const selected = statusFilter === chip.key;
@@ -179,10 +181,21 @@ export function MyListings({
                     </Text>
                     <View style={styles.emptyAction}>
                       <FilledButton
-                        label="Cadastrar anúncio"
+                        label="Anunciar livro"
+                        accessibilityLabel="Cadastrar anúncio"
                         onPress={() => onNavigateToCreateListing?.()}
                       />
                     </View>
+                    {onNavigateToHelp ? (
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel="Como funciona"
+                        onPress={onNavigateToHelp}
+                        style={styles.howItWorksButton}
+                      >
+                        <Text style={styles.howItWorksText}>Como funciona</Text>
+                      </Pressable>
+                    ) : null}
                   </View>
                 )
               }
@@ -460,10 +473,20 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   emptyTitle: {
-    ...tokens.typography.titleMedium,
-    fontFamily: tokens.typography.displayLarge.fontFamily,
-    color: tokens.colors.text,
+    ...tokens.typography.bodyMedium,
+    color: tokens.colors.secondaryText,
     textAlign: "center",
+  },
+  howItWorksButton: {
+    minHeight: tokens.accessibility.touchTarget,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: tokens.spacing[8],
+  },
+  howItWorksText: {
+    ...tokens.typography.labelMedium,
+    color: tokens.colors.action,
+    fontWeight: "600",
   },
   emptyAction: { marginTop: tokens.spacing[16], width: "100%", maxWidth: 260 },
   bookCard: {

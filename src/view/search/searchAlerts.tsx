@@ -114,8 +114,7 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
               ListEmptyComponent={
                 <View style={styles.emptyBox}>
                   <IconBadge icon="bell" tone="neutral" />
-                  <Text style={styles.emptyHeadline}>Nenhum alerta criado</Text>
-                  <Text accessibilityRole="header" style={styles.emptyTitle}>
+                  <Text accessibilityRole="header" style={styles.emptyHeadline}>
                     Você ainda não criou alertas.
                   </Text>
                   <Text style={styles.bodyCenter}>
@@ -127,7 +126,7 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
                 <View style={styles.row}>
                   <View style={styles.rowText}>
                     <Text style={styles.title}>{item.query}</Text>
-                    <Text style={styles.metaText}>Todos os tipos · Piripiri, PI</Text>
+                    <Text style={styles.metaText}>Venda, troca e doação · Piripiri, PI</Text>
                     <Tag
                       variant={item.active ? "available" : "paused"}
                       label={item.active ? "Ativo" : "Pausado"}

@@ -94,6 +94,10 @@ export class BookRequestUseCases implements IBookRequestUseCases {
       return this.requests.respond(request.id, "rejected");
     }
 
+    if (this.requests.acceptAtomically) {
+      return this.requests.acceptAtomically(request.id);
+    }
+
     // FR-004
     const accepted = await this.requests.respond(request.id, "accepted");
     const competitors = await this.requests.listByListing(listing.id);

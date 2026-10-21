@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { PGlite } from '@electric-sql/pglite';
 
 const db = new PGlite();
@@ -48,21 +48,13 @@ grant usage on schema storage to anon, authenticated;
 grant select, insert, update, delete on storage.buckets to anon, authenticated;
 grant select, insert, update, delete on storage.objects to anon, authenticated;`);
 
-for (const name of [
-  '202610150001_contas_e_anuncios.sql',
-  '202610150002_pedidos.sql',
-  '202610150003_favoritos_alertas.sql',
-  '202610170001_denuncias.sql',
-  '202610170002_fotos_anuncios.sql',
-  '202610170003_pausar_anuncio.sql',
-  '202610180001_indices_busca_catalogo.sql',
-  '202610200001_unicidade_denuncias.sql',
-  '202610200002_rpc_exclusao_conta.sql',
-  '202610200003_storage_book_photos.sql',
-  '202610200004_extensao_pg_trgm_indices.sql',
-  '202610200005_conservacao_descricao_anuncio.sql',
-  '202610200006_perfil_publico_e_avaliacoes.sql',
-]) {
+const migrationsDir = new URL('../supabase/migrations/', import.meta.url);
+const migrations = readdirSync(migrationsDir).filter((name) => name.endsWith('.sql')).sort();
+const versions = migrations.map((name) => name.split('_')[0]);
+if (new Set(versions).size !== versions.length) {
+  throw new Error('Há versões duplicadas nas migrações SQL');
+}
+for (const name of migrations) {
   await db.exec(readFileSync(new URL(`../supabase/migrations/${name}`, import.meta.url), 'utf8'));
 }
 const legacy = await db.query(`select
@@ -106,8 +98,39 @@ process.stdout.write('Terceiro lê pedido: oculto\n');
 const blockedUpdate = await as('authenticated', other, `update public.v2_book_requests set status = 'accepted' where id = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'`);
 if (blockedUpdate.affectedRows !== 0) throw new Error('Terceiro conseguiu responder pedido');
 process.stdout.write('Terceiro responde pedido: nenhuma linha alterada\n');
-await as('authenticated', owner, `update public.v2_book_requests set status = 'accepted' where id = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'`);
+await denied('Aceite direto fora da RPC', () => as('authenticated', owner, `update public.v2_book_requests set status = 'accepted' where id = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'`));
+await as('authenticated', owner, `select public.accept_book_request('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb')`);
 await denied('Pedido aceito não reabre', () => as('authenticated', owner, `update public.v2_book_requests set status = 'pending' where id = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'`));
+await denied('Terceiro avalia negociação alheia', () => as('authenticated', other, `insert into public.v2_ratings (rater_id, rated_user_id, request_id, score) values ('${other}', '${owner}', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 1)`));
+await denied('Dono avalia pessoa fora da negociação', () => as('authenticated', owner, `insert into public.v2_ratings (rater_id, rated_user_id, request_id, score) values ('${owner}', '${other}', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 1)`));
+await as('authenticated', reader, `insert into public.v2_ratings (rater_id, rated_user_id, request_id, score) values ('${reader}', '${owner}', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 5)`);
+await as('authenticated', owner, `insert into public.v2_ratings (rater_id, rated_user_id, request_id, score) values ('${owner}', '${reader}', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 4)`);
+await denied('Avaliação duplicada no pedido', () => as('authenticated', reader, `insert into public.v2_ratings (rater_id, rated_user_id, request_id, score) values ('${reader}', '${owner}', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 2)`));
+
+await as('authenticated', owner, `insert into public.v2_books (id, owner_id, title, author, modality) values ('eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee', '${owner}', 'Livro com dois pedidos', 'Autora', 'donation')`);
+await as('authenticated', reader, `insert into public.v2_book_requests (id, listing_id, requester_id) values ('f1111111-1111-4111-8111-111111111111', 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee', '${reader}')`);
+await as('authenticated', other, `insert into public.v2_book_requests (id, listing_id, requester_id) values ('f2222222-2222-4222-8222-222222222222', 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee', '${other}')`);
+await denied('Leitor aceita pedido de outro usuário', () => as('authenticated', reader, `select public.accept_book_request('f1111111-1111-4111-8111-111111111111')`));
+await db.exec(`reset role;
+  create function public.simulate_reservation_failure() returns trigger language plpgsql as $$
+  begin
+    if new.id = 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee' and new.status = 'reserved' then
+      raise exception 'Falha simulada na reserva';
+    end if;
+    return new;
+  end; $$;
+  create trigger simulate_reservation_failure before update on public.v2_books
+  for each row execute function public.simulate_reservation_failure();`);
+await denied('Falha na reserva reverte o aceite inteiro', () => as('authenticated', owner, `select public.accept_book_request('f1111111-1111-4111-8111-111111111111')`));
+const afterFailure = await as('authenticated', owner, `select status from public.v2_book_requests where listing_id = 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee' order by id`);
+if (afterFailure.rows.some((row) => row.status !== 'pending')) throw new Error('Aceite deixou pedidos alterados após falha');
+await db.exec('reset role; drop trigger simulate_reservation_failure on public.v2_books; drop function public.simulate_reservation_failure()');
+await as('authenticated', owner, `select public.accept_book_request('f1111111-1111-4111-8111-111111111111')`);
+const acceptedState = await as('authenticated', owner, `select b.status as book_status, r.status as request_status from public.v2_books b join public.v2_book_requests r on r.listing_id = b.id where r.id = 'f1111111-1111-4111-8111-111111111111'`);
+if (acceptedState.rows[0]?.book_status !== 'reserved' || acceptedState.rows[0]?.request_status !== 'accepted') throw new Error('Aceite não reservou o livro');
+const competitor = await as('authenticated', owner, `select status from public.v2_book_requests where id = 'f2222222-2222-4222-8222-222222222222'`);
+if (competitor.rows[0]?.status !== 'rejected') throw new Error('Aceite não rejeitou pedido concorrente');
+await denied('Pedido aceito novamente', () => as('authenticated', owner, `select public.accept_book_request('f1111111-1111-4111-8111-111111111111')`));
 await as('authenticated', reader, `insert into public.v2_favorites (user_id, book_id) values ('${reader}', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa')`);
 const ownFavorites = await as('authenticated', reader, `select id from public.v2_favorites`);
 if (ownFavorites.rows.length !== 1) throw new Error('Favorito do leitor não apareceu');

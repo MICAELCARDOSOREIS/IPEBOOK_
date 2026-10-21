@@ -319,12 +319,14 @@ describe("datasources Supabase", () => {
         select: vi.fn().mockReturnValue({ single: vi.fn().mockResolvedValue({ data: { ...row, status: "accepted" }, error: null }) }),
       }) }) }),
     });
-    const requests = new SupabaseBookRequestDataSource(fakeClient({ from }));
+    const rpc = vi.fn().mockResolvedValue({ data: { ...row, status: "accepted" }, error: null });
+    const requests = new SupabaseBookRequestDataSource(fakeClient({ from, rpc }));
     await expect(requests.create({ listingId: "livro-1", requesterId: "pessoa-1", status: "pending" })).resolves.toMatchObject({ id: "pedido-1" });
     await expect(requests.findById("pedido-1")).resolves.toMatchObject({ id: "pedido-1" });
     await expect(requests.listByListing("livro-1")).resolves.toHaveLength(1);
     await expect(requests.listByRequester("pessoa-1")).resolves.toHaveLength(1);
     await expect(requests.respond("pedido-1", "accepted")).resolves.toMatchObject({ status: "accepted" });
+    expect(rpc).toHaveBeenCalledWith("accept_book_request", { target_request_id: "pedido-1" });
     expect(from).toHaveBeenCalledWith("v2_book_requests");
   });
 
@@ -335,6 +337,16 @@ describe("datasources Supabase", () => {
       from: vi.fn().mockReturnValue({ select: vi.fn().mockReturnValue({ eq }) }),
     }));
     await expect(requests.findById("pedido-1")).rejects.toThrow("Não foi possível consultar o pedido.");
+  });
+
+  it("aceita pedido pela RPC transacional e trata falha sem expor detalhes", async () => {
+    const row = { id: "pedido-1", listing_id: "livro-1", requester_id: "pessoa-1", status: "accepted" };
+    const rpc = vi.fn().mockResolvedValueOnce({ data: row, error: null })
+      .mockResolvedValueOnce({ data: null, error: { message: "detalhe interno" } });
+    const requests = new SupabaseBookRequestDataSource(fakeClient({ rpc }));
+    await expect(requests.acceptAtomically("pedido-1")).resolves.toMatchObject({ status: "accepted" });
+    expect(rpc).toHaveBeenCalledWith("accept_book_request", { target_request_id: "pedido-1" });
+    await expect(requests.acceptAtomically("pedido-1")).rejects.toThrow("Não foi possível aceitar o pedido.");
   });
 
   it("trata falhas de criação, listagem e resposta de pedidos sem vazar o banco", async () => {

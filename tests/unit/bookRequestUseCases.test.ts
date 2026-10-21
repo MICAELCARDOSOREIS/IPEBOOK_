@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryBookDataSource } from "@/infra/datasources/memoryBookDataSource";
 import { MemoryBookRequestDataSource } from "@/infra/datasources/memoryBookRequestDataSource";
 import type { Book } from "@/model/entities/book";
@@ -108,6 +108,16 @@ describe("negociação simples (spec 004)", () => {
       expect((await requests.findById(otherListing.id))?.status).toBe("pending");
       expect((await books.findById("listing-1"))?.status).toBe("reserved");
       expect((await books.findById("listing-2"))?.status).toBe("available");
+    });
+
+    it("usa o aceite atômico quando o adaptador o oferece", async () => {
+      const req = await useCases.requestNegotiation("listing-1", "alice");
+      const accept = vi.fn().mockResolvedValue({ ...req, status: "accepted" });
+      Object.assign(requests, { acceptAtomically: accept });
+      const respond = vi.spyOn(requests, "respond");
+      await expect(useCases.respondToRequest(req.id, "accept", "owner")).resolves.toMatchObject({ status: "accepted" });
+      expect(accept).toHaveBeenCalledWith(req.id);
+      expect(respond).not.toHaveBeenCalled();
     });
 
     it("FR-005: bloqueia responder pedido já respondido", async () => {

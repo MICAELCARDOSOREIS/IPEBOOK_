@@ -20,6 +20,7 @@ export type NotificationsProps = {
   onBack?: () => void;
   onNavigateToLogin?: () => void;
   onNavigateToAction?: (actionUrl: string) => void;
+  onExploreBooks?: () => void;
 };
 
 const TYPE_BADGES: Record<
@@ -42,9 +43,11 @@ export default function Notifications({
   onBack,
   onNavigateToLogin,
   onNavigateToAction,
+  onExploreBooks,
 }: NotificationsProps) {
   const [state, actions] = useNotificationsViewModel(sessionUserId);
   const { isOnline } = useNetworkStatus();
+  const handleExplore = onExploreBooks ?? onBack;
 
   if (!sessionUserId) {
     return (
@@ -143,9 +146,8 @@ export default function Notifications({
         ) : state.filteredNotifications.length === 0 ? (
           <View style={styles.centered}>
             <IconBadge icon="bell" tone="neutral" />
-            <Text style={styles.emptyHeadline}>Você está em dia</Text>
-            <Text accessibilityRole="header" style={styles.emptyTitle}>
-              {state.filter === "unread" ? "Nenhuma notificação não lida" : "Nenhuma notificação"}
+            <Text accessibilityRole="header" style={styles.emptyHeadline}>
+              {state.filter === "unread" ? "Nenhuma notificação não lida" : "Você está em dia"}
             </Text>
             <Text style={styles.emptyDescription}>
               {state.filter === "unread"
@@ -157,6 +159,13 @@ export default function Notifications({
                 <FilledButton
                   label="Ver todas as notificações"
                   onPress={() => actions.setFilter("all")}
+                />
+              </View>
+            ) : handleExplore ? (
+              <View style={styles.buttonWrapper}>
+                <FilledButton
+                  label="Explorar livros"
+                  onPress={handleExplore}
                 />
               </View>
             ) : null}

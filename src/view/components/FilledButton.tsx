@@ -7,14 +7,23 @@ export type FilledButtonProps = {
   loading?: boolean;
   disabled?: boolean;
   loadingLabel?: string;
+  accessibilityLabel?: string;
 };
 
 /** Botão preenchido do design system (botao.md): pílula, uma única ação principal por tela. */
-export function FilledButton({ label, onPress, loading = false, disabled = false, loadingLabel }: FilledButtonProps) {
+export function FilledButton({
+  label,
+  onPress,
+  loading = false,
+  disabled = false,
+  loadingLabel,
+  accessibilityLabel,
+}: FilledButtonProps) {
   const isDisabled = disabled || loading;
   return (
     <Pressable
       accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel ?? label}
       accessibilityState={{ disabled: isDisabled }}
       disabled={isDisabled}
       onPress={onPress}

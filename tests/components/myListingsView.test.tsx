@@ -411,7 +411,7 @@ describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
     expect(onNavigateToCreateListing).toHaveBeenCalledTimes(1);
   });
 
-  it("filtra a estante por status (Todos, Ativos, Pausados, Concluídos) e mostra estado vazio contextual (Issue #161)", async () => {
+  it("filtra a estante por status (Todos, Ativos, Pausados, Reservados) e mostra estado vazio contextual (Issue #161)", async () => {
     const books: Book[] = [
       {
         id: "b1",
@@ -441,7 +441,7 @@ describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
     expect(screen.getByText("Todos (2)")).toBeDefined();
     expect(screen.getByText("Ativos (1)")).toBeDefined();
     expect(screen.getByText("Pausados (1)")).toBeDefined();
-    expect(screen.getByText("Concluídos (0)")).toBeDefined();
+    expect(screen.getByText("Reservados (0)")).toBeDefined();
 
     await act(async () => {
       fireEvent.press(screen.getByLabelText("Filtrar por Pausados"));
@@ -450,7 +450,7 @@ describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
     expect(screen.queryByText("Dom Casmurro")).toBeNull();
 
     await act(async () => {
-      fireEvent.press(screen.getByLabelText("Filtrar por Concluídos"));
+      fireEvent.press(screen.getByLabelText("Filtrar por Reservados"));
     });
     expect(screen.getByText("Nenhum anúncio encontrado neste filtro.")).toBeDefined();
 

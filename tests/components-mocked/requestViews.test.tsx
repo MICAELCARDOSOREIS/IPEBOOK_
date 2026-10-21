@@ -117,7 +117,7 @@ describe("tela de meus pedidos (ISO/IEC 25010 - Usabilidade)", () => {
     expect(screen.getByText("Vidas Secas")).toBeDefined();
     expect(screen.getByText("Aceito")).toBeDefined();
     expect(screen.queryByText("Aceitar")).toBeNull();
-    await act(async () => { fireEvent.press(screen.getByText("Voltar")); });
+    await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Voltar" })); });
     expect(onBack).toHaveBeenCalledTimes(1);
 
     vi.mocked(useSentRequestsViewModel).mockReturnValue([{ ...state, items: [] }, { reload: vi.fn() }]);

@@ -1,4 +1,4 @@
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Checkbox } from "@/view/components/Checkbox";
 import { FilledButton } from "@/view/components/FilledButton";
@@ -135,7 +135,9 @@ export default function DeleteAccount({
             {state.exportSuccess ? (
               <View style={styles.exportSummaryBox}>
                 <Text accessibilityRole="alert" style={styles.exportSuccessText}>
-                  ✓ Arquivo de dados gerado e baixado com sucesso!
+                  {Platform.OS === "web"
+                    ? "✓ Arquivo de dados gerado e baixado com sucesso!"
+                    : "✓ Arquivo de dados gerado. Escolha onde salvá-lo no compartilhamento."}
                 </Text>
                 {state.exportSummary ? (
                   <Text style={styles.exportText}>

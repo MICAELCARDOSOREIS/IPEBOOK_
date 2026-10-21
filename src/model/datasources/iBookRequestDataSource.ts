@@ -6,4 +6,6 @@ export interface IBookRequestDataSource {
   listByListing(listingId: string): Promise<readonly BookRequest[]>;
   listByRequester(requesterId: string): Promise<readonly BookRequest[]>;
   respond(id: string, status: RequestStatus): Promise<BookRequest>;
+  /** Quando disponível, confirma o pedido e atualiza concorrentes e livro numa transação. */
+  acceptAtomically?(id: string): Promise<BookRequest>;
 }

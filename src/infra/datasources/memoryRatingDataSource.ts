@@ -21,4 +21,8 @@ export class MemoryRatingDataSource implements IRatingDataSource {
   async listByRatedUser(userId: string): Promise<readonly Rating[]> {
     return this.ratings.filter((rating) => rating.ratedUserId === userId).map((rating) => ({ ...rating }));
   }
+
+  async listByRater(userId: string): Promise<readonly Rating[]> {
+    return this.ratings.filter((rating) => rating.raterId === userId).map((rating) => ({ ...rating }));
+  }
 }

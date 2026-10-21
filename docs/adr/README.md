@@ -29,5 +29,6 @@
 - [0027 — Resiliência offline no catálogo, logging estruturado, rate limiting e verificação de release](0027-resiliencia-seguranca-e-verificacao-release.md)
 - [0028 — Detecção de conectividade com `@react-native-community/netinfo`](0028-deteccao-de-conectividade-com-netinfo.md)
 - [0029 — Vocabulário fechado para conservação e bairro do anúncio](0029-vocabulario-fechado-de-conservacao-e-bairro.md)
+- [0030 — Aceite atômico e autorização de avaliações no banco](0030-aceite-atomico-e-politica-de-avaliacoes.md)
 
 Preservar registros aceitos; mudanças relevantes geram novo ADR com vínculos de substituição.

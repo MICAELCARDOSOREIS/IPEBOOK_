@@ -8,7 +8,7 @@
 - **Camada View (`src/view/`)**:
   - `src/view/listings/createListing.tsx`: contador `${description.length}/280 caracteres`, validação visual de limite e barra de rascunho ativo com botão `"Limpar rascunho"`.
   - `src/view/listings/editListing.tsx`: contador `${description.length}/280 caracteres` e validação visual de limite.
-  - `src/view/listings/myListings.tsx`: estado local de filtro (`all` | `active` | `paused` | `closed`) com chips acessíveis e estado vazio por filtro.
+  - `src/view/listings/myListings.tsx`: estado local de filtro (`all` | `active` | `paused` | `reserved`) com chips acessíveis e estado vazio por filtro.
   - `src/view/requests/requestListLayout.tsx`: estado local de filtro (`all` | `pending` | `accepted` | `history`) com chips acessíveis e estado vazio por filtro.
   - `src/view/notifications/notifications.tsx`: estado local de filtro (`all` | `unread`) com chips acessíveis e estado vazio para `"Não lidas"`.
   - `src/view/help/helpAndFaq.tsx`: campo `TextField` de busca instantânea normalizando acentos (`NFD`) e estado vazio com ação `"Limpar busca"`.
