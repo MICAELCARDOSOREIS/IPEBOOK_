@@ -3,8 +3,11 @@ import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useProfileViewModel } from "@/viewmodel/useProfileViewModel";
+import { useUserPreferencesViewModel } from "@/viewmodel/useUserPreferencesViewModel";
+import { PIRIPIRI_NEIGHBORHOODS } from "@/model/entities/location";
 import { tokens } from "@/view/tokens";
 import { Avatar } from "@/view/components/Avatar";
+import { Chip } from "@/view/components/Chip";
 import { ErrorState } from "@/view/components/ErrorState";
 import { FilledButton } from "@/view/components/FilledButton";
 import { LoadingState } from "@/view/components/LoadingState";
@@ -19,9 +22,12 @@ export default function Profile({ onNavigateToSignIn }: ProfileProps) {
   const [authState] = useAuthViewModel();
   const userId = authState.user?.id ?? null;
   const [state, actions] = useProfileViewModel(userId);
+  const [preferencesState, preferencesActions] = useUserPreferencesViewModel(userId);
   const [name, setName] = useState("");
   const [photoUrl, setPhotoUrl] = useState("");
   const [socialHandle, setSocialHandle] = useState("");
+  const [phone, setPhone] = useState("");
+  const [neighborhood, setNeighborhood] = useState("");
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
@@ -32,14 +38,27 @@ export default function Profile({ onNavigateToSignIn }: ProfileProps) {
   }, [state.profile]);
 
   useEffect(() => {
+    if (!preferencesState.preferences) return;
+    setPhone(preferencesState.preferences.phone ?? "");
+    setNeighborhood(preferencesState.preferences.neighborhood ?? "");
+  }, [preferencesState.preferences]);
+
+  useEffect(() => {
     if (!authState.loading && !userId) onNavigateToSignIn?.();
   }, [authState.loading, userId, onNavigateToSignIn]);
 
   if (authState.loading || !userId) return null;
 
+  const loading = state.loading || preferencesState.loading;
+  const saving = state.saving || preferencesState.saving;
+  const error = state.error ?? preferencesState.error;
+
   async function handleSave() {
-    const ok = await actions.update({ name, photoUrl: photoUrl || undefined, socialHandle: socialHandle || undefined });
-    if (ok) setSaved(true);
+    const [profileOk, preferencesOk] = await Promise.all([
+      actions.update({ name, photoUrl: photoUrl || undefined, socialHandle: socialHandle || undefined }),
+      preferencesActions.update({ phone: phone || undefined, neighborhood: neighborhood || undefined }),
+    ]);
+    if (profileOk && preferencesOk) setSaved(true);
   }
 
   return (
@@ -49,10 +68,10 @@ export default function Profile({ onNavigateToSignIn }: ProfileProps) {
           <View style={styles.mark} accessible={false} />
           <Text accessibilityRole="header" style={styles.title}>Ipebook</Text>
         </View>
-        {state.loading ? (
+        {loading ? (
           <LoadingState label="Carregando perfil" />
-        ) : state.error && !state.profile ? (
-          <ErrorState message={state.error} onRetry={() => actions.update({ name, photoUrl, socialHandle })} />
+        ) : error && !state.profile ? (
+          <ErrorState message={error} onRetry={() => void handleSave()} />
         ) : (
           <View style={styles.form}>
             <Avatar name={name || "Você"} photoUrl={photoUrl || undefined} size={64} />
@@ -66,10 +85,31 @@ export default function Profile({ onNavigateToSignIn }: ProfileProps) {
               keyboardType="url"
             />
             <TextField label="Rede social" value={socialHandle} onChangeText={setSocialHandle} autoCapitalize="none" />
-            {state.error ? <Text accessibilityRole="alert" style={styles.error}>{state.error}</Text> : null}
+            <TextField
+              label="Telefone/WhatsApp"
+              value={phone}
+              onChangeText={setPhone}
+              placeholder="(86) 99999-9999"
+              keyboardType="phone-pad"
+            />
+            <View style={styles.field}>
+              <Text style={styles.sectionLabel}>Bairro padrão</Text>
+              <View style={styles.chipRow}>
+                {PIRIPIRI_NEIGHBORHOODS.map((item) => (
+                  <Chip
+                    key={item}
+                    label={item}
+                    accessibilityLabel={`Bairro ${item}`}
+                    selected={neighborhood === item}
+                    onPress={() => setNeighborhood(neighborhood === item ? "" : item)}
+                  />
+                ))}
+              </View>
+            </View>
+            {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
             <FilledButton
               label="Salvar"
-              loading={state.saving}
+              loading={saving}
               loadingLabel="Salvando perfil"
               onPress={() => void handleSave()}
             />
@@ -87,6 +127,9 @@ const styles = StyleSheet.create({
   brand: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[12], marginBottom: tokens.spacing[24] },
   mark: { width: 16, height: 36, backgroundColor: tokens.colors.highlight, borderTopRightRadius: tokens.radius.medium },
   title: { fontSize: tokens.typography.displayLarge.fontSize, fontWeight: tokens.typography.displayLarge.fontWeight, color: tokens.colors.action },
-  form: { gap: tokens.spacing[16], alignItems: "flex-start" },
+  form: { gap: tokens.spacing[16], alignItems: "flex-start", width: "100%" },
   error: { color: tokens.colors.error, fontSize: tokens.typography.bodyMedium.fontSize },
+  field: { gap: tokens.spacing[6], width: "100%" },
+  sectionLabel: { fontSize: tokens.typography.labelSmall.fontSize, fontWeight: "600", color: tokens.colors.secondaryText },
+  chipRow: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[8] },
 });

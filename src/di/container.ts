@@ -4,6 +4,7 @@ import { MemoryBookRequestDataSource } from "@/infra/datasources/memoryBookReque
 import { MemoryNetworkStatusDataSource } from "@/infra/datasources/memoryNetworkStatusDataSource";
 import { MemoryNotificationDataSource } from "@/infra/datasources/memoryNotificationDataSource";
 import { MemoryProfileDataSource } from "@/infra/datasources/memoryProfileDataSource";
+import { MemoryUserPreferencesDataSource } from "@/infra/datasources/memoryUserPreferencesDataSource";
 import { MemoryRatingDataSource } from "@/infra/datasources/memoryRatingDataSource";
 import { MemoryReportDataSource } from "@/infra/datasources/memoryReportDataSource";
 import { MemoryFavoriteDataSource } from "@/infra/datasources/memoryFavoriteDataSource";
@@ -16,6 +17,7 @@ import { CachedBookDataSource } from "@/infra/datasources/cachedBookDataSource";
 import { SupabaseBookRequestDataSource } from "@/infra/datasources/supabaseBookRequestDataSource";
 import { SupabaseNotificationDataSource } from "@/infra/datasources/supabaseNotificationDataSource";
 import { SupabaseProfileDataSource } from "@/infra/datasources/supabaseProfileDataSource";
+import { SupabaseUserPreferencesDataSource } from "@/infra/datasources/supabaseUserPreferencesDataSource";
 import { SupabaseRatingDataSource } from "@/infra/datasources/supabaseRatingDataSource";
 import { SupabaseReportDataSource } from "@/infra/datasources/supabaseReportDataSource";
 import { SupabaseFavoriteDataSource } from "@/infra/datasources/supabaseFavoriteDataSource";
@@ -27,6 +29,7 @@ import type { IBookRequestDataSource } from "@/model/datasources/iBookRequestDat
 import type { INetworkStatusDataSource } from "@/model/datasources/iNetworkStatusDataSource";
 import type { INotificationDataSource } from "@/model/datasources/iNotificationDataSource";
 import type { IProfileDataSource } from "@/model/datasources/iProfileDataSource";
+import type { IUserPreferencesDataSource } from "@/model/datasources/iUserPreferencesDataSource";
 import type { IRatingDataSource } from "@/model/datasources/iRatingDataSource";
 import type { IReportDataSource } from "@/model/datasources/iReportDataSource";
 import type { IFavoriteDataSource } from "@/model/datasources/iFavoriteDataSource";
@@ -70,8 +73,10 @@ import type { IFileDownloadService } from "@/model/services/iFileDownloadService
 import { FileDownloadService } from "@/infra/services/fileDownloadService";
 import type { IOnboardingUseCases } from "@/usecase/iOnboardingUseCases";
 import type { IUserDataExportUseCases } from "@/usecase/iUserDataExportUseCases";
+import type { IUserPreferencesUseCases } from "@/usecase/iUserPreferencesUseCases";
 import { OnboardingUseCases } from "@/usecase/onboardingUseCases";
 import { UserDataExportUseCases } from "@/usecase/userDataExportUseCases";
+import { UserPreferencesUseCases } from "@/usecase/userPreferencesUseCases";
 
 function createDataSources(): {
   auth: IAuthDataSource;
@@ -85,6 +90,7 @@ function createDataSources(): {
   profiles: IProfileDataSource;
   ratings: IRatingDataSource;
   userDataExport: IUserDataExportDataSource;
+  userPreferences: IUserPreferencesDataSource;
 } {
   const searchHistory = process.env.NODE_ENV === "test"
     ? new MemorySearchHistoryDataSource()
@@ -108,6 +114,7 @@ function createDataSources(): {
       profiles: new SupabaseProfileDataSource(client),
       ratings: new SupabaseRatingDataSource(client),
       userDataExport: new SupabaseUserDataExportDataSource(client),
+      userPreferences: new SupabaseUserPreferencesDataSource(client),
     };
   }
   const books = new MemoryBookDataSource();
@@ -129,6 +136,7 @@ function createDataSources(): {
     profiles,
     ratings: new MemoryRatingDataSource(),
     userDataExport: new MemoryUserDataExportDataSource(books, requests, favorites, searchAlerts),
+    userPreferences: new MemoryUserPreferencesDataSource(),
   };
 }
 
@@ -173,6 +181,10 @@ export const publicProfileUseCases: IPublicProfileUseCases = new PublicProfileUs
 
 export const userDataExportUseCases: IUserDataExportUseCases = new UserDataExportUseCases(
   dataSources.userDataExport,
+);
+
+export const userPreferencesUseCases: IUserPreferencesUseCases = new UserPreferencesUseCases(
+  dataSources.userPreferences,
 );
 
 export const logger: ILogger = new SafeLogger();
