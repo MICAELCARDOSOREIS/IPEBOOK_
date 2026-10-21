@@ -48,3 +48,19 @@ Implementar uma suíte de soluções desacopladas nas camadas de Domínio (`mode
 - O pipeline de deploy ganha um verificador unificado e reproduzível.
 
 Vínculos: [ADR 0002](0002-adotar-expo-mvvm.md), [ADR 0020](0020-publicacao-web-cloudflare-pages.md), [ADR 0023](0023-pipeline-ci-github-actions.md).
+
+## Onde está aplicado (atualização de 2026-10-20)
+
+A decisão foi tomada junto com a implementação dos serviços, mas os ViewModels só passaram a
+consumi-los na Spec 031. Hoje o limite de tentativas e o log sanitizado valem para:
+
+| Ação | Chave | Limite |
+| --- | --- | --- |
+| Entrar | `auth:signIn:<e-mail>` | 5 por minuto; zera ao entrar com sucesso |
+| Criar conta | `auth:signUp:<e-mail>` | 5 por minuto |
+| Recuperar senha | `auth:resetRequest:<e-mail>` | 3 por minuto |
+| Publicar anúncio | `listing:create:<sessão>` | 5 por minuto |
+| Denunciar anúncio | `report:submit:<anúncio>` | 3 por minuto |
+
+O guarda compartilhado fica em `src/viewmodel/formRateLimit.ts`, que é função pura e devolve a
+mensagem mostrada na tela; os ViewModels só decidem a chave da ação.

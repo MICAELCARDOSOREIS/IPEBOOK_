@@ -1,8 +1,11 @@
 import { useCallback, useState } from "react";
-import { bookUseCases } from "@/di/container";
+import { bookUseCases, logger as defaultLogger, rateLimiter as defaultRateLimiter } from "@/di/container";
 import type { Book, BookCondition, BookModality } from "@/model/entities/book";
 import { DomainError } from "@/model/errors";
+import type { ILogger } from "@/model/services/iLogger";
+import type { IRateLimiter } from "@/model/services/iRateLimiter";
 import type { IBookUseCases } from "@/usecase/iBookUseCases";
+import { formKey, guardFormSubmit } from "@/viewmodel/formRateLimit";
 
 export type CreateListingState = {
   title: string;
@@ -56,6 +59,8 @@ const GENERIC_ERROR = "Não foi possível cadastrar o anúncio. Tente novamente.
 
 export function useCreateListingViewModel(
   useCases: IBookUseCases = bookUseCases,
+  rateLimiter: IRateLimiter = defaultRateLimiter,
+  logger: ILogger = defaultLogger,
 ): [CreateListingState, CreateListingActions] {
   const [state, setState] = useState<CreateListingState>(INITIAL_STATE);
 
@@ -120,6 +125,12 @@ export function useCreateListingViewModel(
 
   const submit = useCallback(
     async (sessionUserId: string | null): Promise<Book | null> => {
+      const guard = guardFormSubmit(rateLimiter, formKey("listing:create", sessionUserId));
+      if (!guard.allowed) {
+        logger.warn("Publicação de anúncio bloqueada pelo limite de tentativas do cliente");
+        setState((prev) => ({ ...prev, loading: false, error: guard.message, success: false }));
+        return null;
+      }
       setState((prev) => ({ ...prev, loading: true, error: null, success: false }));
 
       const priceNum = state.modality === "sale" && state.price.trim()
@@ -152,6 +163,7 @@ export function useCreateListingViewModel(
           loading: false,
           error: error instanceof DomainError ? error.message : GENERIC_ERROR,
         }));
+        logger.error("Falha ao publicar anúncio", error);
         return null;
       }
     },
@@ -167,6 +179,8 @@ export function useCreateListingViewModel(
       state.photoUrl,
       state.photos,
       useCases,
+      rateLimiter,
+      logger,
     ],
   );
 

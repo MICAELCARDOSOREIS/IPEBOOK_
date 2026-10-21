@@ -3,15 +3,24 @@ import { act, create, type ReactTestRenderer } from "react-test-renderer";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { AuthError } from "@/model/errors";
 import type { IAuthUseCases } from "@/usecase/iAuthUseCases";
+import type { ILogger } from "@/model/services/iLogger";
+import type { IRateLimiter } from "@/model/services/iRateLimiter";
+import { ClientRateLimiter } from "@/infra/services/clientRateLimiter";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
+
+function silentLogger(): ILogger {
+  return { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() };
+}
 
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
 const mounted: ReactTestRenderer[] = [];
 
-async function renderHook(auth: IAuthUseCases) {
+async function renderHook(auth: IAuthUseCases, rateLimiter?: IRateLimiter, logger?: ILogger) {
   let result!: ReturnType<typeof useAuthViewModel>;
   function HookProbe() {
-    result = useAuthViewModel(auth);
+    result = rateLimiter
+      ? useAuthViewModel(auth, rateLimiter, logger ?? silentLogger())
+      : useAuthViewModel(auth);
     return null;
   }
   await act(async () => {
@@ -242,5 +251,128 @@ describe("testes de hook: useAuthViewModel (ISO/IEC 25010 - Confiabilidade)", ()
     );
     expect(hook.current[0].user).toBeNull();
     expect(hook.current[0].loading).toBe(false);
+  });
+});
+
+describe("useAuthViewModel — limite de tentativas no cliente (ADR 0027)", () => {
+  it("bloqueia a entrada depois de cinco tentativas na mesma conta e registra o aviso", async () => {
+    const auth = fakeAuth({
+      signIn: async () => {
+        throw new AuthError("Credenciais inválidas.");
+      },
+    });
+    const rateLimiter = new ClientRateLimiter();
+    const logger = silentLogger();
+    const hook = await renderHook(auth, rateLimiter, logger);
+
+    for (let tentativa = 1; tentativa <= 5; tentativa += 1) {
+      await act(async () => {
+        await hook.current[1].signIn("pessoa@exemplo.com", "senha-errada");
+      });
+      expect(hook.current[0].error).toBe("Credenciais inválidas.");
+    }
+
+    await act(async () => {
+      await hook.current[1].signIn("pessoa@exemplo.com", "senha-errada");
+    });
+
+    expect(hook.current[0].error).toMatch(/^Muitas tentativas seguidas\./);
+    expect(logger.warn).toHaveBeenCalled();
+  });
+
+  it("não mistura o limite entre contas diferentes", async () => {
+    const auth = fakeAuth({
+      signIn: async () => {
+        throw new AuthError("Credenciais inválidas.");
+      },
+    });
+    const rateLimiter = new ClientRateLimiter();
+    const hook = await renderHook(auth, rateLimiter);
+
+    for (let tentativa = 1; tentativa <= 5; tentativa += 1) {
+      await act(async () => {
+        await hook.current[1].signIn("primeira@exemplo.com", "x");
+      });
+    }
+
+    await act(async () => {
+      await hook.current[1].signIn("segunda@exemplo.com", "x");
+    });
+
+    expect(hook.current[0].error).toBe("Credenciais inválidas.");
+  });
+
+  it("zera o limite quando a entrada dá certo", async () => {
+    let deveFalhar = true;
+    const auth = fakeAuth({
+      signIn: async () => {
+        if (deveFalhar) throw new AuthError("Credenciais inválidas.");
+        return { id: "u1", email: "pessoa@exemplo.com" };
+      },
+    });
+    const rateLimiter = new ClientRateLimiter();
+    const hook = await renderHook(auth, rateLimiter);
+
+    for (let tentativa = 1; tentativa <= 4; tentativa += 1) {
+      await act(async () => {
+        await hook.current[1].signIn("pessoa@exemplo.com", "x");
+      });
+    }
+
+    deveFalhar = false;
+    await act(async () => {
+      await hook.current[1].signIn("pessoa@exemplo.com", "certa");
+    });
+    expect(hook.current[0].user?.id).toBe("u1");
+
+    deveFalhar = true;
+    await act(async () => {
+      await hook.current[1].signIn("pessoa@exemplo.com", "x");
+    });
+    expect(hook.current[0].error).toBe("Credenciais inválidas.");
+  });
+
+  it("limita o pedido de recuperação de senha a três por conta", async () => {
+    const auth = fakeAuth({ requestPasswordReset: async () => {} });
+    const rateLimiter = new ClientRateLimiter();
+    const hook = await renderHook(auth, rateLimiter);
+
+    for (let tentativa = 1; tentativa <= 3; tentativa += 1) {
+      let ok = false;
+      await act(async () => {
+        ok = await hook.current[1].requestPasswordReset("pessoa@exemplo.com");
+      });
+      expect(ok).toBe(true);
+    }
+
+    let bloqueado = true;
+    await act(async () => {
+      bloqueado = await hook.current[1].requestPasswordReset("pessoa@exemplo.com");
+    });
+
+    expect(bloqueado).toBe(false);
+    expect(hook.current[0].error).toMatch(/^Muitas tentativas seguidas\./);
+  });
+
+  it("bloqueia o cadastro repetido do mesmo e-mail", async () => {
+    const auth = fakeAuth({
+      signUp: async () => {
+        throw new AuthError("Este e-mail já está em uso.");
+      },
+    });
+    const rateLimiter = new ClientRateLimiter();
+    const hook = await renderHook(auth, rateLimiter);
+
+    for (let tentativa = 1; tentativa <= 5; tentativa += 1) {
+      await act(async () => {
+        await hook.current[1].signUp("pessoa@exemplo.com", "12345678", "Pessoa");
+      });
+    }
+
+    await act(async () => {
+      await hook.current[1].signUp("pessoa@exemplo.com", "12345678", "Pessoa");
+    });
+
+    expect(hook.current[0].error).toMatch(/^Muitas tentativas seguidas\./);
   });
 });
