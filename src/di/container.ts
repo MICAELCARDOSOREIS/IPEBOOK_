@@ -44,6 +44,8 @@ import type { IBookRequestUseCases } from "@/usecase/iBookRequestUseCases";
 import type { IBookUseCases } from "@/usecase/iBookUseCases";
 import type { INotificationUseCases } from "@/usecase/iNotificationUseCases";
 import type { IPublicProfileUseCases } from "@/usecase/iPublicProfileUseCases";
+import type { IRatingUseCases } from "@/usecase/iRatingUseCases";
+import { RatingUseCases } from "@/usecase/ratingUseCases";
 import type { IReportUseCases } from "@/usecase/iReportUseCases";
 import { NotificationUseCases } from "@/usecase/notificationUseCases";
 import { PublicProfileUseCases } from "@/usecase/publicProfileUseCases";
@@ -182,6 +184,11 @@ export const publicProfileUseCases: IPublicProfileUseCases = new PublicProfileUs
   dataSources.ratings,
   bookDataSource,
   dataSources.requests,
+);
+
+export const ratingUseCases: IRatingUseCases = new RatingUseCases(
+  dataSources.ratings,
+  dataSources.profiles,
 );
 
 export const userDataExportUseCases: IUserDataExportUseCases = new UserDataExportUseCases(

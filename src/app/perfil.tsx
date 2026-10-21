@@ -1,6 +1,18 @@
 import { router } from "expo-router";
-import Profile from "@/view/profile/profile";
+import ProfileHub from "@/view/profile/profileHub";
 
 export default function Perfil() {
-  return <Profile onNavigateToSignIn={() => router.replace("/entrar")} />;
+  return (
+    <ProfileHub
+      onNavigateToSignIn={() => router.replace("/entrar")}
+      onNavigateToEditProfile={() => router.push("/perfil/editar")}
+      onNavigateToRatings={() => router.push("/perfil/avaliacoes")}
+      onNavigateToNotifications={() => router.push("/notificacoes")}
+      onNavigateToSecurity={() => router.push("/perfil/seguranca")}
+      onNavigateToPrivacy={() => router.push("/excluir-conta")}
+      onNavigateToTerms={() => router.push("/termos")}
+      onNavigateToHelp={() => router.push("/ajuda")}
+      onSignedOut={() => router.replace("/entrar")}
+    />
+  );
 }

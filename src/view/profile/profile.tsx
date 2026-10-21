@@ -13,12 +13,15 @@ import { FilledButton } from "@/view/components/FilledButton";
 import { LoadingState } from "@/view/components/LoadingState";
 import { Snackbar } from "@/view/components/Snackbar";
 import { TextField } from "@/view/components/TextField";
+import { TopAppBar } from "@/view/components/TopAppBar";
 
 export type ProfileProps = {
   onNavigateToSignIn?: () => void;
+  /** Quando presente, exibe a barra superior com "Editar perfil" (Figma `07.02`). */
+  onBack?: () => void;
 };
 
-export default function Profile({ onNavigateToSignIn }: ProfileProps) {
+export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
   const [authState] = useAuthViewModel();
   const userId = authState.user?.id ?? null;
   const [state, actions] = useProfileViewModel(userId);
@@ -63,11 +66,15 @@ export default function Profile({ onNavigateToSignIn }: ProfileProps) {
 
   return (
     <SafeAreaView style={styles.page}>
-      <ScrollView contentContainerStyle={styles.content}>
+      {onBack ? (
+        <TopAppBar title="Editar perfil" onBack={onBack} />
+      ) : (
         <View style={styles.brand}>
           <View style={styles.mark} accessible={false} />
           <Text accessibilityRole="header" style={styles.title}>Ipebook</Text>
         </View>
+      )}
+      <ScrollView contentContainerStyle={styles.content}>
         {loading ? (
           <LoadingState label="Carregando perfil" />
         ) : error && !state.profile ? (
