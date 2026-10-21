@@ -45,7 +45,7 @@ describe("testes de hook: usePublicProfileViewModel (spec 018)", () => {
   };
 
   it("carrega o perfil público com sucesso", async () => {
-    const hook = await renderHook("ana", { getPublicProfile: async () => fakeProfile });
+    const hook = await renderHook("ana", { getPublicProfile: async () => fakeProfile, updateProfile: vi.fn() });
 
     expect(hook.loadingStates).toContain(true);
     expect(hook.current[0].loading).toBe(false);
@@ -59,7 +59,7 @@ describe("testes de hook: usePublicProfileViewModel (spec 018)", () => {
       .mockRejectedValueOnce(new DomainError("Usuário não encontrado."))
       .mockResolvedValueOnce(fakeProfile);
 
-    const hook = await renderHook("ana", { getPublicProfile });
+    const hook = await renderHook("ana", { getPublicProfile, updateProfile: vi.fn() });
     expect(hook.current[0].error).toBe("Usuário não encontrado.");
     expect(hook.current[0].loading).toBe(false);
 
@@ -76,6 +76,7 @@ describe("testes de hook: usePublicProfileViewModel (spec 018)", () => {
       getPublicProfile: async () => {
         throw new Error("Fatal 500");
       },
+      updateProfile: vi.fn(),
     });
 
     expect(hook.current[0].error).toBe("Não foi possível carregar o perfil. Tente novamente.");

@@ -11,10 +11,6 @@ const ROOT_DESTINATIONS: Record<string, NavigationDestination> = {
   "/perfil": "profile",
 };
 
-/**
- * "/perfil" ainda não existe como rota (é da issue #55) — o item Perfil da barra já aponta para
- * lá, conforme combinado em #56, e passa a resolver quando #55 criar `src/app/perfil.tsx`.
- */
 const DESTINATION_ROUTES: Record<NavigationDestination, Href> = {
   home: "/",
   search: "/pesquisa",
@@ -34,7 +30,6 @@ export default function RootLayout() {
         {activeDestination ? (
           <NavigationBar
             active={activeDestination}
-            disabledDestinations={["profile"]}
             onNavigate={(destination) => router.push(DESTINATION_ROUTES[destination])}
           />
         ) : null}

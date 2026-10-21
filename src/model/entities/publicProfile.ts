@@ -6,4 +6,12 @@ export type PublicProfile = Readonly<{
   averageRating: number | null;
   ratingCount: number;
   completedNegotiations: number;
+  photoUrl?: string;
+  socialHandle?: string;
+}>;
+
+export type ProfileEdits = Readonly<{
+  name: string;
+  photoUrl?: string;
+  socialHandle?: string;
 }>;

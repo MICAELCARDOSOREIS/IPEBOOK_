@@ -74,4 +74,52 @@ describe("perfil público do anunciante (spec 018)", () => {
     const profile = await useCases.getPublicProfile("ana");
     expect(profile.completedNegotiations).toBe(2);
   });
+
+  describe("edição do perfil próprio (spec 006 / issue #55)", () => {
+    it("exige um userId", async () => {
+      await expect(useCases.updateProfile("", { name: "Ana" })).rejects.toBeInstanceOf(ValidationError);
+    });
+
+    it("exige um nome não vazio", async () => {
+      await expect(useCases.updateProfile("ana", { name: "   " })).rejects.toBeInstanceOf(ValidationError);
+    });
+
+    it("rejeita nome maior que o limite", async () => {
+      await expect(useCases.updateProfile("ana", { name: "a".repeat(61) })).rejects.toBeInstanceOf(ValidationError);
+    });
+
+    it("rejeita link de foto que não é http(s)", async () => {
+      await expect(
+        useCases.updateProfile("ana", { name: "Ana", photoUrl: "ftp://exemplo.com/foto.png" }),
+      ).rejects.toBeInstanceOf(ValidationError);
+    });
+
+    it("atualiza nome, foto e rede social, e persiste em consultas seguintes", async () => {
+      const updated = await useCases.updateProfile("ana", {
+        name: "Ana Paula",
+        photoUrl: "https://exemplo.com/foto.png",
+        socialHandle: "@anapaula",
+      });
+      expect(updated.name).toBe("Ana Paula");
+      expect(updated.photoUrl).toBe("https://exemplo.com/foto.png");
+      expect(updated.socialHandle).toBe("@anapaula");
+
+      const reloaded = await useCases.getPublicProfile("ana");
+      expect(reloaded.name).toBe("Ana Paula");
+      expect(reloaded.photoUrl).toBe("https://exemplo.com/foto.png");
+    });
+
+    it("permite limpar foto e rede social com valores vazios", async () => {
+      await useCases.updateProfile("ana", { name: "Ana", photoUrl: "https://exemplo.com/foto.png", socialHandle: "@ana" });
+      const cleared = await useCases.updateProfile("ana", { name: "Ana", photoUrl: "", socialHandle: "" });
+      expect(cleared.photoUrl).toBeUndefined();
+      expect(cleared.socialHandle).toBeUndefined();
+    });
+
+    it("cria o perfil antes de atualizar quando ainda não existe", async () => {
+      const updated = await useCases.updateProfile("nova-usuaria", { name: "Nova" });
+      expect(updated.userId).toBe("nova-usuaria");
+      expect(updated.name).toBe("Nova");
+    });
+  });
 });

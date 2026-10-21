@@ -12,23 +12,31 @@ registro final) são conjuntas.
 
 ## Modelo e validação
 
-- [ ] T001 Estender `src/model/entities/user.ts` com `publicName?`, `photoUrl?`, `socialHandle?`
-      (**Maria Clara**, US4) e reaproveitar `authValidator.ts` para a senha temporária
-      (**Micael**, FR-002) — sem regra nova de validação.
+- [x] T001 (parte Maria Clara, US4): decisão de escopo — em vez de estender `User`/
+      `user.ts` (entidade mínima de autenticação: `id`, `email`), os campos editáveis do perfil
+      (`photoUrl?`, `socialHandle?`, além do `name` já existente) foram adicionados a
+      `StoredProfile`/`IProfileDataSource` (criado na Spec 018/Issue #73, que já cobre o
+      perfil público). Evita tocar nos arquivos de autenticação (coordenação com #54) e reaproveita
+      a store de perfil que já existe. Parte do Micael (senha temporária) não tocada. Ver
+      `validacao.md` da Issue #55.
 - [x] T002 Estender `src/model/datasources/iAuthDataSource.ts` com
       `requestPasswordReset(email): Promise<string>`. **Micael**
 - [x] T003 Implementar `requestPasswordReset` em
       `src/infra/datasources/memoryAuthDataSource.ts`, com teste unitário cobrindo e-mail
       existente e inexistente (FR-001). **Micael**
-- [ ] T004 Estender `IAuthDataSource`/`memoryAuthDataSource.ts` com `updateProfile`, com teste
-      unitário. **Maria Clara**
+- [x] T004 (reespecificado, ver T001): `update(userId, patch)` adicionado a
+      `IProfileDataSource`/`memoryProfileDataSource.ts`/`supabaseProfileDataSource.ts` (não a
+      `IAuthDataSource`, ver decisão em T001), com testes unitários (`memoryProfileDataSource.test.ts`).
+      **Maria Clara**
 
 ## Casos de uso
 
 - [x] T005 Adicionar `requestPasswordReset` a `IAuthUseCases`/`authUseCases.ts`, convertendo
       e-mail inexistente em `AuthError` com mensagem neutra (FR-001), com teste unitário.
       **Micael**
-- [ ] T006 Adicionar `updateProfile` a `IAuthUseCases`/`authUseCases.ts`, com teste unitário.
+- [x] T006 (reespecificado, ver T001/T004): `updateProfile(userId, edits)` adicionado a
+      `IPublicProfileUseCases`/`publicProfileUseCases.ts` (não a `IAuthUseCases`), com validação
+      de nome obrigatório/tamanho, foto como link http(s) e teste unitário.
       **Maria Clara**
 - [x] T028 Adicionar `getBookById(id)` a `IBookUseCases`/`bookUseCases.ts`, delegando a
       `IBookDataSource.findById` (já existe) e convertendo id inexistente em erro de domínio
@@ -40,8 +48,8 @@ registro final) são conjuntas.
       componente. **Micael**
 - [x] T008 `src/view/components/FilledButton.tsx` (botao.md: pílula, desabilitado), com teste.
       **Micael**
-- [ ] T009 `src/view/components/Avatar.tsx` (avatar.md: 40/64 px, iniciais), com teste. **Maria
-      Clara**
+- [x] T009 `src/view/components/Avatar.tsx` (avatar.md: 40/64 px, iniciais), com teste
+      (`tests/components/avatar.test.tsx`). **Maria Clara**
 - [ ] T010 `src/view/components/SearchField.tsx` (campo-de-busca.md), com teste. **Maria Clara**
 - [ ] T011 `src/view/components/NavigationBar.tsx` (3 destinos, ADR 0011), com teste cobrindo
       item ativo/inativo. **Maria Clara**
@@ -55,9 +63,11 @@ registro final) são conjuntas.
 
 - [x] T012 `src/viewmodel/useAuthViewModel.ts`: ação `requestPasswordReset`, com teste
       (`renderHook`). **Micael**
-- [ ] T013 `src/viewmodel/useProfileViewModel.ts` (novo), com teste. **Maria Clara**
-- [ ] T014 `src/viewmodel/useUserProfileViewModel.ts` (novo, filtro por `ownerId`), com teste.
-      **Maria Clara**
+- [x] T013 `src/viewmodel/useProfileViewModel.ts` (novo), com teste
+      (`tests/hooks/useProfileViewModel.test.tsx`). **Maria Clara**
+- [x] T014 (superseded pela Spec 018/Issue #73): o perfil público (filtro por `ownerId`) já é
+      coberto por `usePublicProfileViewModel.ts`, criado naquela spec antes desta ser retomada;
+      não foi criado um segundo ViewModel duplicado. **Maria Clara**
 - [ ] T015 `src/viewmodel/useSearchViewModel.ts` (novo, filtro client-side por título/autor,
       FR-005), com teste. **Maria Clara**
 
@@ -73,12 +83,15 @@ registro final) são conjuntas.
       atualizados. **Maria Clara**
 - [ ] T019 Criar `src/view/search/search.tsx` + rota `src/app/pesquisa.tsx`, com testes RNTL
       cobrindo US3 (SC-002). **Maria Clara**
-- [ ] T020 Criar `src/view/profile/profile.tsx` + rota `src/app/perfil.tsx` (exige sessão,
-      FR-006), com testes RNTL cobrindo US4. **Maria Clara**
-- [ ] T021 Criar `src/view/profile/userProfile.tsx` + rota dinâmica `src/app/usuario/[id].tsx`,
-      com testes RNTL cobrindo US5 (sem expor e-mail, FR-007). **Maria Clara**
-- [ ] T022 Compor a `NavigationBar` em `src/app/_layout.tsx` nas 3 rotas de nível superior.
-      **Maria Clara**
+- [x] T020 Criar `src/view/profile/profile.tsx` + rota `src/app/perfil.tsx` (exige sessão,
+      FR-006; redireciona para `/entrar` sem sessão), com testes RNTL cobrindo US4
+      (`tests/components-mocked/profileView.test.tsx`). **Maria Clara**
+- [x] T021 (superseded pela Spec 018/Issue #73, ver T014): o perfil público já existe em
+      `src/view/listings/publicProfile.tsx` + rota `src/app/perfil/[userId].tsx` (não
+      `usuario/[id].tsx`); estendido nesta entrega com `Avatar` e `socialHandle`, sem expor
+      e-mail (FR-007 preservado). **Maria Clara**
+- [x] T022 `NavigationBar` já estava composta em `src/app/_layout.tsx`; removida a restrição
+      `disabledDestinations={["profile"]}` agora que `/perfil` existe. **Maria Clara**
 - [ ] T029 Criar `src/view/listings/bookDetail.tsx` + rota dinâmica `src/app/livro/[id].tsx`
       (US6: `TopAppBar` com voltar, `BookCover` em cartão, título, autor, tag de modalidade,
       preço, link ao perfil de quem anunciou, botão "Solicitar negociação"), consumindo
@@ -91,8 +104,9 @@ registro final) são conjuntas.
 
 - [x] T023 `tests/integration/sc006RecuperarSenhaIntegration.test.ts` (SC-001, pelas camadas
       reais). **Micael**
-- [ ] T024 `tests/integration/sc006BuscaEPerfilIntegration.test.ts` (SC-002/SC-003, pelas
-      camadas reais). **Maria Clara**
+- [x] T024 `tests/integration/sc006BuscaEPerfilIntegration.test.ts` — cobre SC-003 (edição de
+      perfil) pelas camadas reais. SC-002 (busca, T015/T019) é escopo de #56, não desta entrega.
+      **Maria Clara**
 - [ ] T025 Rodar `npm run validate` completo (typecheck, arquitetura, cobertura ≥ 80%, sem
       regressão nas specs 003/004/005) e registrar evidências em `validacao.md`. **Conjunta**
 - [ ] T031 `tests/integration/sc006DetalheLivroIntegration.test.tsx` (SC-005, pelas camadas

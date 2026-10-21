@@ -98,6 +98,24 @@ describe("PublicProfile (spec 018 / issue #73)", () => {
     expect(reload).toHaveBeenCalledTimes(1);
   });
 
+  it("mostra a rede social quando informada (Spec 006 / Issue #55)", async () => {
+    setup(profile({ socialHandle: "@anapaula" }));
+    const screen = await renderView();
+    expect(screen.getByText("@anapaula")).toBeDefined();
+  });
+
+  it("não mostra rede social quando ausente", async () => {
+    setup(profile({ socialHandle: undefined }));
+    const screen = await renderView();
+    expect(screen.queryByText(/^@/)).toBeNull();
+  });
+
+  it("mostra o avatar com o nome como rótulo acessível", async () => {
+    setup(profile({ name: "Ana Paula" }));
+    const screen = await renderView();
+    expect(screen.getByLabelText("Ana Paula")).toBeDefined();
+  });
+
   it("aciona onBack ao tocar no botão voltar da barra superior", async () => {
     setup(profile());
     const onBack = vi.fn();

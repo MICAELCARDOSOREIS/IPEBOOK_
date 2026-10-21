@@ -2,6 +2,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-nati
 import { SafeAreaView } from "react-native-safe-area-context";
 import { usePublicProfileViewModel } from "@/viewmodel/usePublicProfileViewModel";
 import { tokens } from "@/view/tokens";
+import { Avatar } from "@/view/components/Avatar";
 import { TopAppBar } from "@/view/components/TopAppBar";
 
 function formatJoinedAt(joinedAt: string): string {
@@ -36,7 +37,9 @@ export function PublicProfile({ userId, onBack }: PublicProfileProps) {
           </View>
         ) : profile ? (
           <View style={styles.card}>
+            <Avatar name={profile.name} photoUrl={profile.photoUrl} size={64} />
             <Text accessibilityRole="header" style={styles.name}>{profile.name}</Text>
+            {profile.socialHandle ? <Text style={styles.joined}>{profile.socialHandle}</Text> : null}
             <Text style={styles.joined}>
               {`Na comunidade desde ${formatJoinedAt(profile.joinedAt)}`}
             </Text>
