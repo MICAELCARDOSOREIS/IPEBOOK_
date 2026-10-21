@@ -31,5 +31,6 @@
 - [0029 — Vocabulário fechado para conservação e bairro do anúncio](0029-vocabulario-fechado-de-conservacao-e-bairro.md)
 - [0030 — Aceite atômico e autorização de avaliações no banco](0030-aceite-atomico-e-politica-de-avaliacoes.md)
 - [0031 — Modalidades persistidas em alertas de busca](0031-modalidades-persistidas-em-alertas-de-busca.md)
+- [0032 — Script de auditoria e métricas agregadas da beta em Piripiri](0032-script-auditoria-metricas-beta-piripiri.md)
 
 Preservar registros aceitos; mudanças relevantes geram novo ADR com vínculos de substituição.
