@@ -33,5 +33,6 @@
 - [0031 — Modalidades persistidas em alertas de busca](0031-modalidades-persistidas-em-alertas-de-busca.md)
 - [0032 — Script de auditoria e métricas agregadas da beta em Piripiri](0032-script-auditoria-metricas-beta-piripiri.md)
 - [0033 — Verificação de saúde e migrações do Supabase remoto](0033-verificacao-saude-migracoes-remotas-supabase.md)
+- [0034 — Cache progressivo, resiliência de timeout e retry em capas de livros](0034-cache-progressivo-retry-capas-livros.md)
 
 Preservar registros aceitos; mudanças relevantes geram novo ADR com vínculos de substituição.
