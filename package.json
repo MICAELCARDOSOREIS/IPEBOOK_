@@ -14,6 +14,7 @@
     "check:architecture": "node scripts/verificar-arquitetura.mjs",
     "test:sql": "node scripts/verificar-migracoes.mjs",
     "health:supabase": "node scripts/verificar-saude-supabase.mjs",
+    "health:supabase:remote": "node scripts/verificar-migracoes-remotas.mjs",
     "db:seed": "node scripts/popular-catalogo-piripiri.mjs",
     "stats:beta": "node scripts/auditoria-metricas-beta.mjs",
     "validate": "npm run typecheck && npm run check:architecture && npm run test:sql && npm run test:coverage",
