@@ -343,4 +343,54 @@ describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
 
     expect(screen.getByText("Bom estado · Centro")).toBeDefined();
   });
+
+  it("filtra a estante por status (Todos, Ativos, Pausados, Concluídos) e mostra estado vazio contextual (Issue #161)", async () => {
+    const books: Book[] = [
+      {
+        id: "b1",
+        title: "Dom Casmurro",
+        author: "Machado de Assis",
+        modality: "sale",
+        price: 25,
+        ownerId: "user-1",
+        status: "available",
+      },
+      {
+        id: "b2",
+        title: "O Quinze",
+        author: "Rachel de Queiroz",
+        modality: "trade",
+        ownerId: "user-1",
+        status: "paused",
+      },
+    ];
+    mockViewModel({ books });
+    let screen!: Awaited<ReturnType<typeof render>>;
+
+    await act(async () => {
+      screen = await render(<MyListings sessionUserId="user-1" />);
+    });
+
+    expect(screen.getByText("Todos (2)")).toBeDefined();
+    expect(screen.getByText("Ativos (1)")).toBeDefined();
+    expect(screen.getByText("Pausados (1)")).toBeDefined();
+    expect(screen.getByText("Concluídos (0)")).toBeDefined();
+
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Filtrar por Pausados"));
+    });
+    expect(screen.getByText("O Quinze")).toBeDefined();
+    expect(screen.queryByText("Dom Casmurro")).toBeNull();
+
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Filtrar por Concluídos"));
+    });
+    expect(screen.getByText("Nenhum anúncio encontrado neste filtro.")).toBeDefined();
+
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Ver todos os anúncios" }));
+    });
+    expect(screen.getByText("Dom Casmurro")).toBeDefined();
+    expect(screen.getByText("O Quinze")).toBeDefined();
+  });
 });

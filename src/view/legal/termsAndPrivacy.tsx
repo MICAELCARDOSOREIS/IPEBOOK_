@@ -73,16 +73,24 @@ export default function TermsAndPrivacy({
               </View>
             ))}
             {activeTab === "privacy" && onNavigateToDeleteAccount ? (
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Solicitar exclusão da minha conta e dados"
-                onPress={onNavigateToDeleteAccount}
-                style={styles.deleteAccountLink}
-              >
-                <Text style={styles.deleteAccountText}>
-                  Deseja excluir sua conta? Solicitar exclusão definitiva de dados (LGPD)
+              <View style={styles.sectionCard}>
+                <Text accessibilityRole="header" style={styles.sectionTitle}>
+                  Portabilidade e Exclusão (LGPD — Art. 18)
                 </Text>
-              </Pressable>
+                <Text style={styles.paragraph}>
+                  Você pode baixar uma cópia estruturada (JSON) dos seus anúncios, pedidos, favoritos e alertas ou solicitar a exclusão definitiva da sua conta a qualquer momento.
+                </Text>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Solicitar exclusão da minha conta e dados"
+                  onPress={onNavigateToDeleteAccount}
+                  style={styles.deleteAccountLink}
+                >
+                  <Text style={styles.deleteAccountText}>
+                    Deseja exportar ou excluir sua conta? Gerenciar dados e exclusão definitiva (LGPD)
+                  </Text>
+                </Pressable>
+              </View>
             ) : null}
           </View>
         </View>

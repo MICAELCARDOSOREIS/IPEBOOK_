@@ -114,9 +114,16 @@ export default function DeleteAccount({
               Antes de excluir sua conta, você pode baixar uma cópia completa de todos os seus anúncios, pedidos e dados cadastrais em formato JSON.
             </Text>
             {state.exportSuccess ? (
-              <Text accessibilityRole="alert" style={styles.exportSuccessText}>
-                ✓ Arquivo de dados gerado e baixado com sucesso!
-              </Text>
+              <View style={styles.exportSummaryBox}>
+                <Text accessibilityRole="alert" style={styles.exportSuccessText}>
+                  ✓ Arquivo de dados gerado e baixado com sucesso!
+                </Text>
+                {state.exportSummary ? (
+                  <Text style={styles.exportText}>
+                    {`Resumo exportado: ${state.exportSummary.listingsCount} anúncio(s), ${state.exportSummary.requestsCount} pedido(s), ${state.exportSummary.favoritesCount} favorito(s) e ${state.exportSummary.alertsCount} alerta(s).`}
+                  </Text>
+                ) : null}
+              </View>
             ) : null}
             {state.exportError ? (
               <Text accessibilityRole="alert" style={styles.errorText}>
@@ -277,6 +284,9 @@ const styles = StyleSheet.create({
     ...tokens.typography.bodyMedium,
     color: tokens.colors.action,
     fontWeight: "600",
+  },
+  exportSummaryBox: {
+    gap: tokens.spacing[4],
   },
   warningCard: {
     padding: tokens.spacing[16],

@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import type { RequestStatus } from "@/model/entities/bookRequest";
@@ -43,6 +43,18 @@ export function RequestListLayout({
   renderExtra,
 }: Props) {
   const { isOnline } = useNetworkStatus();
+  const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "accepted" | "history">("all");
+
+  const pendingCount = items.filter((item) => item.request.status === "pending").length;
+  const acceptedCount = items.filter((item) => item.request.status === "accepted").length;
+  const historyCount = items.filter((item) => item.request.status === "rejected").length;
+
+  const filteredItems = items.filter((item) => {
+    if (statusFilter === "pending") return item.request.status === "pending";
+    if (statusFilter === "accepted") return item.request.status === "accepted";
+    if (statusFilter === "history") return item.request.status === "rejected";
+    return true;
+  });
   return (
     <SafeAreaView style={styles.page}>
       <View style={styles.content}>
@@ -57,6 +69,34 @@ export function RequestListLayout({
         <View style={styles.heroBox}>
           <Text style={styles.heroTitle}>Sua estante em movimento.</Text>
           <Text style={styles.body}>Acompanhe as propostas dos seus livros.</Text>
+          {items.length > 0 ? (
+            <View style={styles.filterRow}>
+              {(
+                [
+                  { key: "all", label: `Todos (${items.length})`, a11y: "Filtrar pedidos por Todos" },
+                  { key: "pending", label: `Pendentes (${pendingCount})`, a11y: "Filtrar pedidos por Pendentes" },
+                  { key: "accepted", label: `Aceitos (${acceptedCount})`, a11y: "Filtrar pedidos por Aceitos" },
+                  { key: "history", label: `Histórico (${historyCount})`, a11y: "Filtrar pedidos por Histórico" },
+                ] as const
+              ).map((chip) => {
+                const selected = statusFilter === chip.key;
+                return (
+                  <Pressable
+                    key={chip.key}
+                    accessibilityRole="button"
+                    accessibilityLabel={chip.a11y}
+                    accessibilityState={{ selected }}
+                    onPress={() => setStatusFilter(chip.key)}
+                    style={[styles.filterChip, selected && styles.filterChipSelected]}
+                  >
+                    <Text style={[styles.filterChipText, selected && styles.filterChipTextSelected]}>
+                      {chip.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          ) : null}
         </View>
         {loading ? (
           <LoadingState label="Carregando pedidos" />
@@ -69,14 +109,29 @@ export function RequestListLayout({
         ) : (
           <>
             <FlatList
-              data={items}
+              data={filteredItems}
               keyExtractor={(item) => item.request.id}
               contentContainerStyle={styles.listContent}
               ListEmptyComponent={
-                <View style={styles.emptyBox}>
-                  <IconBadge icon="swap" tone="neutral" />
-                  <Text style={styles.body}>{emptyText}</Text>
-                </View>
+                items.length > 0 ? (
+                  <View style={styles.emptyBox}>
+                    <IconBadge icon="swap" tone="neutral" />
+                    <Text style={styles.body}>Nenhum pedido encontrado neste filtro.</Text>
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel="Ver todos os pedidos"
+                      onPress={() => setStatusFilter("all")}
+                      style={styles.filterChip}
+                    >
+                      <Text style={styles.link}>Ver todos os pedidos</Text>
+                    </Pressable>
+                  </View>
+                ) : (
+                  <View style={styles.emptyBox}>
+                    <IconBadge icon="swap" tone="neutral" />
+                    <Text style={styles.body}>{emptyText}</Text>
+                  </View>
+                )
               }
               renderItem={({ item }) => (
                 <View style={styles.item}>
@@ -191,6 +246,34 @@ const styles = StyleSheet.create({
   heroBox: {
     marginBottom: tokens.spacing[16],
     gap: tokens.spacing[4],
+  },
+  filterRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: tokens.spacing[8],
+    marginTop: tokens.spacing[8],
+  },
+  filterChip: {
+    minHeight: tokens.accessibility.touchTarget,
+    justifyContent: "center",
+    paddingHorizontal: tokens.spacing[12],
+    paddingVertical: tokens.spacing[6],
+    borderRadius: tokens.radius.full,
+    backgroundColor: tokens.colors.surface,
+    borderWidth: 1,
+    borderColor: tokens.colors.m3.outlineVariant,
+  },
+  filterChipSelected: {
+    backgroundColor: tokens.colors.action,
+    borderColor: tokens.colors.action,
+  },
+  filterChipText: {
+    ...tokens.typography.labelMedium,
+    color: tokens.colors.text,
+  },
+  filterChipTextSelected: {
+    color: tokens.colors.surface,
+    fontWeight: "600",
   },
   heroTitle: {
     fontSize: tokens.typography.displayLarge.fontSize,

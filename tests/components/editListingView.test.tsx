@@ -220,4 +220,25 @@ describe("Spec 030 — edição alinhada ao Figma 04.09", () => {
 
     expect(screen.getByText("Anúncio atualizado com sucesso!")).toBeDefined();
   });
+
+  it("exibe contador regressivo de caracteres da descrição e alerta se exceder 280 (Issue #160)", async () => {
+    mockViewModel({ ...loadedState, description: "Marcas leves" });
+
+    let screenValid!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screenValid = await render(<EditListing bookId="b1" sessionUserId="user-1" />);
+    });
+    expect(screenValid.getByText("12/280")).toBeDefined();
+    expect(screenValid.getByText("Restam 268 caracteres")).toBeDefined();
+
+    mockViewModel({ ...loadedState, description: "a".repeat(282) });
+
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<EditListing bookId="b1" sessionUserId="user-1" />);
+    });
+
+    expect(screen.getByText("Limite excedido em 2 caracteres")).toBeDefined();
+    expect(screen.getByText("A descrição deve ter no máximo 280 caracteres.")).toBeDefined();
+  });
 });

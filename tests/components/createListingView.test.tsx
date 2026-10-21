@@ -152,7 +152,28 @@ describe("etapa 3 do anúncio — Detalhes (Figma 04.05)", () => {
     expect(screen.getByLabelText("Categoria Literatura")).toBeDefined();
     expect(screen.getByLabelText("Descrição")).toBeDefined();
     expect(screen.getByText("12/280")).toBeDefined();
+    expect(screen.getByText("Restam 268 caracteres")).toBeDefined();
     expect(screen.getByLabelText("Bairro Centro")).toBeDefined();
+  });
+
+  it("exibe banner de rascunho salvo e permite limpar rascunho (Issue #160)", async () => {
+    const actions = mockViewModel({ ...defaultState, title: "Capitães da Areia" });
+    const screen = await renderScreen();
+
+    expect(screen.getByText("Rascunho salvo neste aparelho")).toBeDefined();
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Limpar rascunho" }));
+    });
+    expect(actions.reset).toHaveBeenCalledTimes(1);
+  });
+
+  it("exibe aviso quando a descrição ultrapassa 280 caracteres (Issue #160)", async () => {
+    mockViewModel({ ...defaultState, description: "a".repeat(285) });
+    const screen = await renderScreen();
+    await goToStep(screen, 3);
+
+    expect(screen.getByText("Limite excedido em 5 caracteres")).toBeDefined();
+    expect(screen.getByText("A descrição deve ter no máximo 280 caracteres.")).toBeDefined();
   });
 
   it("registra a conservação escolhida", async () => {

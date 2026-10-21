@@ -76,4 +76,32 @@ describe("tela de Central de Ajuda e FAQ (HelpAndFaq)", () => {
     });
     expect(onBack).toHaveBeenCalledTimes(1);
   });
+
+  it("filtra perguntas frequentes por busca instantânea e permite limpar busca quando não há resultados (Issue #164)", async () => {
+    let screen!: Awaited<ReturnType<typeof render>>;
+
+    await act(async () => {
+      screen = await render(<HelpAndFaq onBack={() => {}} />);
+    });
+
+    const searchInput = screen.getByLabelText("Buscar dúvida");
+    await act(async () => {
+      fireEvent.changeText(searchInput, "acompanhante");
+    });
+
+    expect(screen.getByText("Posso levar acompanhante no encontro?")).toBeDefined();
+    expect(screen.queryByText("O Ipebook cobra alguma taxa ou comissão?")).toBeNull();
+
+    await act(async () => {
+      fireEvent.changeText(searchInput, "termoinexistentexyz");
+    });
+
+    expect(screen.getByText("Nenhuma dúvida encontrada para sua busca.")).toBeDefined();
+    const clearBtn = screen.getByRole("button", { name: "Limpar busca" });
+    await act(async () => {
+      fireEvent.press(clearBtn);
+    });
+
+    expect(screen.getByText("Como funciona o Ipebook?")).toBeDefined();
+  });
 });

@@ -54,6 +54,7 @@ describe("Notifications Component (Spec 015)", () => {
     expect(screen.getByRole("header", { name: "Notificações" })).toBeDefined();
     expect(screen.getByRole("tab", { name: /Todas/ })).toBeDefined();
     expect(screen.getByRole("tab", { name: /Não lidas/ })).toBeDefined();
+    expect(screen.getByText(/alerta.* pendente.* de leitura/)).toBeDefined();
 
     // Filtra por não lidas
     const unreadTab = screen.getByRole("tab", { name: /Não lidas/ });
@@ -66,6 +67,14 @@ describe("Notifications Component (Spec 015)", () => {
     if (markAllBtn) {
       await act(async () => {
         fireEvent.press(markAllBtn);
+      });
+    }
+
+    // Quando não há não lidas, exibe botão para voltar a todas (Issue #163)
+    const seeAllBtn = screen.queryByRole("button", { name: "Ver todas as notificações" });
+    if (seeAllBtn) {
+      await act(async () => {
+        fireEvent.press(seeAllBtn);
       });
     }
 

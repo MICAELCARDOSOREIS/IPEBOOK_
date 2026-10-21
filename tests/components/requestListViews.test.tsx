@@ -200,5 +200,43 @@ describe("SentRequests e ReceivedRequests Views (ISO/IEC 25010 - Adequação Fun
       });
       expect(onNavigate).toHaveBeenCalledWith("req-3");
     });
+
+    it("filtra pedidos por status (Todos, Pendentes, Aceitos, Histórico) e permite voltar para todos (Issue #162)", async () => {
+      mockedUseReceived.mockReturnValue([
+        {
+          items: [mockReceivedItemPending, mockReceivedItemAccepted],
+          loading: false,
+          error: null,
+          respondingId: null,
+          respondError: null,
+          respondErrorId: null,
+        },
+        { reload: vi.fn(), accept: vi.fn(), reject: vi.fn() },
+      ]);
+
+      const screen = await render(<ReceivedRequests sessionUserId="user-me" />);
+
+      expect(screen.getByText("Todos (2)")).toBeDefined();
+      expect(screen.getByText("Pendentes (1)")).toBeDefined();
+      expect(screen.getByText("Aceitos (1)")).toBeDefined();
+      expect(screen.getByText("Histórico (0)")).toBeDefined();
+
+      await act(async () => {
+        fireEvent.press(screen.getByLabelText("Filtrar pedidos por Pendentes"));
+      });
+      expect(screen.getByText("Capitães da Areia")).toBeDefined();
+      expect(screen.queryByText("A Hora da Estrela")).toBeNull();
+
+      await act(async () => {
+        fireEvent.press(screen.getByLabelText("Filtrar pedidos por Histórico"));
+      });
+      expect(screen.getByText("Nenhum pedido encontrado neste filtro.")).toBeDefined();
+
+      await act(async () => {
+        fireEvent.press(screen.getByLabelText("Ver todos os pedidos"));
+      });
+      expect(screen.getByText("Capitães da Areia")).toBeDefined();
+      expect(screen.getByText("A Hora da Estrela")).toBeDefined();
+    });
   });
 });

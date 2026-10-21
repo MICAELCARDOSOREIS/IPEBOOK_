@@ -42,6 +42,8 @@ export default function EditListing({
 }: EditListingProps) {
   const [state, actions] = useEditListingViewModel(bookId, sessionUserId);
   const [showPhotoInput, setShowPhotoInput] = useState(false);
+  const remainingDescriptionChars = MAX_BOOK_DESCRIPTION_LENGTH - state.description.length;
+  const descriptionTooLong = remainingDescriptionChars < 0;
 
   const handleSubmit = async () => {
     const result = await actions.submit();
@@ -179,7 +181,17 @@ export default function EditListing({
             placeholder="Ex: Marcas leves de uso, páginas completas."
             maxLength={MAX_BOOK_DESCRIPTION_LENGTH}
             helperText={`${state.description.length}/${MAX_BOOK_DESCRIPTION_LENGTH}`}
+            error={
+              descriptionTooLong
+                ? `A descrição deve ter no máximo ${MAX_BOOK_DESCRIPTION_LENGTH} caracteres.`
+                : undefined
+            }
           />
+          <Text style={styles.photoHelperText}>
+            {remainingDescriptionChars >= 0
+              ? `Restam ${remainingDescriptionChars} caracteres`
+              : `Limite excedido em ${Math.abs(remainingDescriptionChars)} caracteres`}
+          </Text>
 
           <View style={styles.field}>
             <Text style={styles.sectionLabel}>Modalidade</Text>

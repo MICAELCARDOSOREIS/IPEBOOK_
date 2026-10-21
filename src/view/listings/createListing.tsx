@@ -65,6 +65,17 @@ export default function CreateListing({
   const [step, setStep] = useState(1);
   const [published, setPublished] = useState<Book | null>(null);
 
+  const hasDraftContent = Boolean(
+    state.title.trim() ||
+      state.author.trim() ||
+      state.description.trim() ||
+      state.photoUrl.trim() ||
+      state.neighborhood.trim() ||
+      state.category.trim(),
+  );
+  const remainingDescriptionChars = MAX_BOOK_DESCRIPTION_LENGTH - state.description.length;
+  const descriptionTooLong = remainingDescriptionChars < 0;
+
   const handleSubmit = async () => {
     const result = await actions.submit(sessionUserId);
     if (result) {
@@ -151,6 +162,19 @@ export default function CreateListing({
       >
         <View style={styles.content}>
           <StepProgress currentStep={step} totalSteps={TOTAL_STEPS} stepLabel={STEP_LABELS[step]} />
+
+          {hasDraftContent ? (
+            <View style={styles.draftBanner}>
+              <Text style={styles.draftBannerText}>Rascunho salvo neste aparelho</Text>
+              <TextButton
+                label="Limpar rascunho"
+                onPress={() => {
+                  actions.reset();
+                  setStep(1);
+                }}
+              />
+            </View>
+          ) : null}
 
           {step === 1 ? (
             <>
@@ -324,7 +348,17 @@ export default function CreateListing({
                 placeholder="Ex: Marcas leves de uso, páginas completas."
                 maxLength={MAX_BOOK_DESCRIPTION_LENGTH}
                 helperText={`${state.description.length}/${MAX_BOOK_DESCRIPTION_LENGTH}`}
+                error={
+                  descriptionTooLong
+                    ? `A descrição deve ter no máximo ${MAX_BOOK_DESCRIPTION_LENGTH} caracteres.`
+                    : undefined
+                }
               />
+              <Text style={styles.hint}>
+                {remainingDescriptionChars >= 0
+                  ? `Restam ${remainingDescriptionChars} caracteres`
+                  : `Limite excedido em ${Math.abs(remainingDescriptionChars)} caracteres`}
+              </Text>
 
               <View style={styles.field}>
                 <Text style={styles.sectionLabel}>Bairro para retirada</Text>
@@ -378,6 +412,22 @@ const styles = StyleSheet.create({
     gap: tokens.spacing[16],
   },
   field: { gap: tokens.spacing[8] },
+  draftBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: tokens.spacing[12],
+    paddingVertical: tokens.spacing[6],
+    borderRadius: tokens.radius.medium,
+    backgroundColor: tokens.colors.soft,
+    borderWidth: 1,
+    borderColor: tokens.colors.m3.outlineVariant,
+  },
+  draftBannerText: {
+    ...tokens.typography.labelMedium,
+    color: tokens.colors.actionDeep,
+    fontWeight: "600",
+  },
   isbnCard: {
     flexDirection: "row",
     alignItems: "center",

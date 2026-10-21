@@ -11,6 +11,13 @@ import type { IAuthUseCases } from "@/usecase/iAuthUseCases";
 import type { ISearchHistoryUseCases } from "@/usecase/iSearchHistoryUseCases";
 import type { IUserDataExportUseCases } from "@/usecase/iUserDataExportUseCases";
 
+export type ExportSummary = {
+  listingsCount: number;
+  requestsCount: number;
+  favoritesCount: number;
+  alertsCount: number;
+};
+
 export type DeleteAccountState = {
   confirmed: boolean;
   loading: boolean;
@@ -19,6 +26,7 @@ export type DeleteAccountState = {
   exporting: boolean;
   exportSuccess: boolean;
   exportError: string | null;
+  exportSummary?: ExportSummary | null;
 };
 
 export type DeleteAccountActions = {
@@ -36,6 +44,7 @@ const INITIAL_STATE: DeleteAccountState = {
   exporting: false,
   exportSuccess: false,
   exportError: null,
+  exportSummary: null,
 };
 
 const GENERIC_ERROR = "Não foi possível excluir sua conta. Tente novamente.";
@@ -85,6 +94,13 @@ export function useDeleteAccountViewModel(
             exporting: false,
             exportSuccess: true,
             exportError: null,
+            exportSummary: {
+              listingsCount: data?.listings?.length ?? 0,
+              requestsCount:
+                (data?.sentRequests?.length ?? 0) + (data?.receivedRequests?.length ?? 0),
+              favoritesCount: data?.favorites?.length ?? 0,
+              alertsCount: data?.searchAlerts?.length ?? 0,
+            },
           }));
           return true;
         }

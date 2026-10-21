@@ -90,6 +90,7 @@ describe("tela de exclusão de conta (DeleteAccount - LGPD)", () => {
     await act(async () => {
       fireEvent.press(downloadBtn);
     });
+    expect(screen.getByText(/Resumo exportado:/)).toBeDefined();
   });
 
   it("aciona callback onBack na barra superior", async () => {
