@@ -1,7 +1,7 @@
 import type { ISearchAlertDataSource } from "@/model/datasources/iSearchAlertDataSource";
 import type { INotificationDataSource } from "@/model/datasources/iNotificationDataSource";
-import type { Book } from "@/model/entities/book";
-import type { SearchAlert } from "@/model/entities/searchAlert";
+import type { Book, BookModality } from "@/model/entities/book";
+import { ALL_ALERT_MODALITIES, type SearchAlert } from "@/model/entities/searchAlert";
 
 export class MemorySearchAlertDataSource implements ISearchAlertDataSource {
   private entries: SearchAlert[] = [];
@@ -12,14 +12,14 @@ export class MemorySearchAlertDataSource implements ISearchAlertDataSource {
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   }
 
-  async add(userId: string, query: string) {
-    const created = { id: `alert-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`, userId, query, active: true, createdAt: new Date().toISOString() };
+  async add(userId: string, query: string, modalities: readonly BookModality[] = ALL_ALERT_MODALITIES) {
+    const created = { id: `alert-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`, userId, query, active: true, createdAt: new Date().toISOString(), modalities: [...modalities] };
     this.entries.push(created);
     return created;
   }
 
-  async update(userId: string, id: string, query: string) {
-    this.entries = this.entries.map((entry) => entry.id === id && entry.userId === userId ? { ...entry, query } : entry);
+  async update(userId: string, id: string, query: string, modalities?: readonly BookModality[]) {
+    this.entries = this.entries.map((entry) => entry.id === id && entry.userId === userId ? { ...entry, query, modalities: modalities ? [...modalities] : entry.modalities } : entry);
   }
 
   async setActive(userId: string, id: string, active: boolean) {
@@ -34,6 +34,7 @@ export class MemorySearchAlertDataSource implements ISearchAlertDataSource {
     for (const entry of this.entries) {
       const term = entry.query.toLocaleLowerCase("pt-BR");
       if (!entry.active || entry.userId === book.ownerId ||
+        !(entry.modalities ?? ALL_ALERT_MODALITIES).includes(book.modality) ||
         ![book.title, book.author, book.category ?? ""].some((value) => value.toLocaleLowerCase("pt-BR").includes(term))) continue;
       await this.notifications.addNotification({
         id: `notice-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`, userId: entry.userId, title: "Livro encontrado para seu alerta",

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { searchAlertUseCases } from "@/di/container";
+import type { BookModality } from "@/model/entities/book";
 import type { SearchAlert } from "@/model/entities/searchAlert";
 import { DomainError } from "@/model/errors";
 import type { ISearchAlertUseCases } from "@/usecase/iSearchAlertUseCases";
@@ -9,9 +10,9 @@ export type SearchAlertsActions = {
   setQuery: (value: string) => void;
   reload: () => Promise<void>;
   create: () => Promise<boolean>;
-  update: (id: string, query: string) => Promise<boolean>;
+  update: (id: string, query: string, modalities?: readonly BookModality[]) => Promise<boolean>;
   setActive: (id: string, active: boolean) => Promise<void>;
-  remove: (id: string) => Promise<void>;
+  remove: (id: string) => Promise<boolean>;
 };
 
 export function useSearchAlertsViewModel(userId: string | null, initialQuery = "", useCases: ISearchAlertUseCases = searchAlertUseCases): [SearchAlertsState, SearchAlertsActions] {
@@ -39,9 +40,9 @@ export function useSearchAlertsViewModel(userId: string | null, initialQuery = "
       return false;
     }
   }, [userId, state.query, useCases, reload]);
-  const update = useCallback(async (id: string, query: string) => {
+  const update = useCallback(async (id: string, query: string, modalities?: readonly BookModality[]) => {
     try {
-      await useCases.updateAlert(userId, id, query);
+      await useCases.updateAlert(userId, id, query, modalities);
       setState((prev) => ({ ...prev, query: "", message: "Alerta atualizado.", error: null }));
       await reload();
       return true;
@@ -55,8 +56,8 @@ export function useSearchAlertsViewModel(userId: string | null, initialQuery = "
     catch (error) { setState((prev) => ({ ...prev, error: error instanceof DomainError ? error.message : "Não foi possível atualizar o alerta." })); }
   }, [userId, useCases, reload]);
   const remove = useCallback(async (id: string) => {
-    try { await useCases.deleteAlert(userId, id); await reload(); }
-    catch (error) { setState((prev) => ({ ...prev, error: error instanceof DomainError ? error.message : "Não foi possível excluir o alerta." })); }
+    try { await useCases.deleteAlert(userId, id); await reload(); return true; }
+    catch (error) { setState((prev) => ({ ...prev, error: error instanceof DomainError ? error.message : "Não foi possível excluir o alerta." })); return false; }
   }, [userId, useCases, reload]);
   return [state, { setQuery, reload, create, update, setActive, remove }];
 }

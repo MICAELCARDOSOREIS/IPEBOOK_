@@ -2,7 +2,9 @@
 
 Documento consolidado de continuidade técnica e produto do Ipebook (Piripiri, PI).
 
-Conferência atual: **2026-10-21** (branch `fix/revisao-integral-20261020`, derivada de `develop`). Projeto: `~/IPEBOOK_`.
+Conferência atual: **2026-10-21** (branch `worktree-telas-gerenciar-alerta`, derivada de `develop`). Projeto: `~/IPEBOOK_/.claude/worktrees/telas-gerenciar-alerta`.
+
+**Spec 036 validada localmente:** lista de alertas com navegação para gerenciamento e edição, modalidades persistidas e aplicadas às notificações. `npm run validate` passou com 779 testes em 114 arquivos, além de tipos, arquitetura e SQL/PGlite. `npm run verify:release` passou, incluindo compilação Web com 28 rotas. No Android, `/alertas` sem sessão foi conferida via ADB; o aparelho se desconectou antes da conferência autenticada. O fluxo autenticado completo foi conferido visualmente na Web local via CDP, com sessão temporária em memória removida após o teste. A migração remota segue pendente porque `supabase migration list` retornou `AccessTokenRequiredError`.
 
 ---
 
@@ -10,13 +12,13 @@ Conferência atual: **2026-10-21** (branch `fix/revisao-integral-20261020`, deri
 
 Todas as métricas abaixo foram aferidas diretamente por execução dos scripts de validação:
 
-- **Testes automatizados**: **745 testes passando** em **108 arquivos de teste** (`npm run validate`), cobrindo entidades, validadores, casos de uso, adaptadores, viewmodels, componentes e integração.
-- **Cobertura de código**: Statements 90,59%, Branches 83,24%, Functions 87,14%, Lines 91,93%.
+- **Testes automatizados**: **779 testes passando** em **114 arquivos de teste** (`npm run validate`), cobrindo entidades, validadores, casos de uso, adaptadores, viewmodels, componentes e integração.
+- **Cobertura de código**: Statements 90,75%, Branches 83,10%, Functions 87,52%, Lines 92,10%.
 - **Integridade arquitetural**: **100% em conformidade** no MVVM sofisticado em sete camadas (`app`, `view`, `viewmodel`, `usecase`, `model`, `infra`, `di`), verificado pelo comando `npm run check:architecture` (0 violações). Apenas `src/di/container.ts` e testes têm permissão para instanciar ou importar adaptadores de `src/infra/`.
-- **Validação de banco e migrações SQL**: **15 migrações** descobertas e executadas em ordem no PGlite (`npm run test:sql`), com rejeição de versões duplicadas. A edição de perfil passou para `202610200007` e a restrição de avaliações com aceite atômico está em `202610200008`. O histórico remoto não foi conferido nesta sessão porque a CLI Supabase não estava autenticada; verificar antes de aplicar migrações remotamente.
+- **Validação de banco e migrações SQL**: **17 migrações** descobertas e executadas em ordem no PGlite (`npm run test:sql`), com rejeição de versões duplicadas. A migração de modalidades de alertas é `202610210002`. O histórico remoto não foi conferido nesta sessão; verificar antes de aplicar migrações remotamente.
 - **Semente Oficial da Beta (`npm run db:seed`)**: Script `scripts/popular-catalogo-piripiri.mjs` gerando 10 anúncios realistas distribuídos pelos bairros de Piripiri, PI com exportação SQL via `--sql`.
 - **Backend Supabase**: Configurado para desenvolvimento; a aplicação das novas migrações no banco remoto não foi realizada nem verificada nesta revisão.
-- **Rotas Web compiladas (`npm run build:web`)**: Exportação estática do Expo Router gerou com sucesso o pacote web em `dist/`, totalizando **26 rotas estáticas**:
+- **Rotas Web compiladas (`npm run build:web`)**: Exportação estática do Expo Router gerou com sucesso o pacote web em `dist/`, totalizando **28 rotas estáticas**:
   - `/` (Catálogo e vitrine inicial com selo da beta em Piripiri, PI)
   - `/perfil` (Perfil do usuário autenticado)
   - `/perfil/[userId]` (Perfil público, somente leitura, de quem anuncia — nome, avaliação média e negociações concluídas - Spec 018, Issue #73)
@@ -31,7 +33,9 @@ Todas as métricas abaixo foram aferidas diretamente por execução dos scripts 
   - `/meus-pedidos` (Propostas enviadas pelo usuário)
   - `/negociacao/[id]` (Detalhes do encontro acordado com pontos públicos seguros em Piripiri)
   - `/favoritos` (Livros marcados como favoritos pelo usuário)
-  - `/alertas` (Alertas de busca por interesse, com pausa/retomada e exclusão confirmada por Diálogo)
+  - `/alertas` (Criação e listagem de alertas de busca, com acesso ao gerenciamento individual)
+  - `/alertas/[id]` (Gerenciamento, pausa/retomada e exclusão confirmada de um alerta)
+  - `/alertas/[id]/editar` (Edição do termo e das modalidades do alerta)
   - `/notificacoes` (Central de notificações com filtros de lidas/não lidas)
   - `/denunciar/[id]` (Formulário de denúncia de anúncio e moderação comunitária - Spec 011)
   - `/ajuda` (Central de ajuda, FAQ e dicas de segurança comunitária em Piripiri)

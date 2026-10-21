@@ -34,32 +34,16 @@ describe("favoritos e alertas (spec 016)", () => {
     expect(screen.getByRole("header", { name: "Nenhum favorito ainda" })).toBeDefined();
   });
 
-  it("cria, pausa, retoma e exclui um alerta com confirmação", async () => {
+  it("abre o gerenciamento pelo alvo único da lista", async () => {
+    const onManageAlert = vi.fn();
     let screen!: Awaited<ReturnType<typeof render>>;
-    await act(async () => { screen = await render(<SearchAlerts userId="usuario-alertas" initialQuery="Machado" onBack={vi.fn()} onLogin={vi.fn()} />); });
-    expect(screen.getByRole("header", { name: "Nenhum alerta criado" })).toBeDefined();
+    await act(async () => { screen = await render(<SearchAlerts userId="usuario-alertas" initialQuery="Machado" onBack={vi.fn()} onLogin={vi.fn()} onManageAlert={onManageAlert} />); });
     await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Criar alerta" })); });
-    expect(screen.getByText("Machado")).toBeDefined();
-    await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Pausar alerta Machado" })); });
-    expect(screen.getByText("Pausado")).toBeDefined();
-    await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Retomar alerta Machado" })); });
-    expect(screen.getByText("Ativo")).toBeDefined();
-    await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Excluir alerta Machado" })); });
-    expect(screen.getByText("Excluir este alerta?")).toBeDefined();
-    await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Confirmar exclusão" })); });
-    expect(screen.getByRole("header", { name: "Nenhum alerta criado" })).toBeDefined();
-  });
-
-  it("edita o termo de um alerta existente", async () => {
-    let screen!: Awaited<ReturnType<typeof render>>;
-    await act(async () => { screen = await render(<SearchAlerts userId="usuario-edicao-alerta" initialQuery="Machado" onBack={vi.fn()} onLogin={vi.fn()} />); });
-    await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Criar alerta" })); });
-    expect(screen.getByText("Machado")).toBeDefined();
-    await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Editar alerta Machado" })); });
-    await act(async () => { fireEvent.changeText(screen.getByLabelText("Termo do alerta"), "Iracema"); });
-    await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Salvar edição" })); });
-    expect(screen.getByText("Iracema")).toBeDefined();
-    expect(screen.queryByText("Machado")).toBeNull();
+    const row = screen.getByRole("button", { name: "Gerenciar alerta Machado" });
+    expect(screen.getByText("Venda, troca e doação · Piripiri, PI")).toBeDefined();
+    expect(screen.queryByRole("button", { name: "Editar alerta Machado" })).toBeNull();
+    fireEvent.press(row);
+    expect(onManageAlert).toHaveBeenCalledWith(expect.stringMatching(/^alert-/));
   });
 
   it("associa o erro de validação do alerta ao campo para leitores de tela", async () => {
@@ -86,28 +70,16 @@ describe("favoritos e alertas (spec 016)", () => {
     expect(onLogin).toHaveBeenCalledOnce();
   });
 
-  it("mostra o cartão de status do alerta e a busca por outro livro (Figma 02.07, Spec 032)", async () => {
+  it("oferece busca por outro livro após criar alerta", async () => {
     const onSearchBooks = vi.fn();
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
-      screen = await render(
-        <SearchAlerts
-          userId="usuario-cartao-alerta"
-          initialQuery="Clarice"
-          onBack={vi.fn()}
-          onLogin={vi.fn()}
-          onSearchBooks={onSearchBooks}
-        />,
-      );
+      screen = await render(<SearchAlerts userId="usuario-cartao-alerta" initialQuery="Clarice" onBack={vi.fn()} onLogin={vi.fn()} onSearchBooks={onSearchBooks} />);
     });
-
     await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Criar alerta" })); });
-    expect(screen.getByText("Alerta ativo")).toBeDefined();
-
-    await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Pausar alerta Clarice" })); });
-    expect(screen.getByText("Alerta pausado")).toBeDefined();
-
-    await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Procurar outro livro" })); });
+    expect(screen.getByRole("button", { name: "Gerenciar alerta Clarice" })).toBeDefined();
+    fireEvent.press(screen.getByRole("button", { name: "Procurar outro livro" }));
     expect(onSearchBooks).toHaveBeenCalledTimes(1);
   });
+
 });

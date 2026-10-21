@@ -6,6 +6,7 @@ export type SearchAlertsScreenProps = {
   onBack: () => void;
   onLogin: () => void;
   onSearchBooks?: () => void;
+  onManageAlert?: (alertId: string) => void;
 };
 export default function SearchAlertsScreen(props: SearchAlertsScreenProps) {
   const [auth] = useAuthViewModel();

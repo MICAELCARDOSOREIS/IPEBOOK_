@@ -30,5 +30,6 @@
 - [0028 — Detecção de conectividade com `@react-native-community/netinfo`](0028-deteccao-de-conectividade-com-netinfo.md)
 - [0029 — Vocabulário fechado para conservação e bairro do anúncio](0029-vocabulario-fechado-de-conservacao-e-bairro.md)
 - [0030 — Aceite atômico e autorização de avaliações no banco](0030-aceite-atomico-e-politica-de-avaliacoes.md)
+- [0031 — Modalidades persistidas em alertas de busca](0031-modalidades-persistidas-em-alertas-de-busca.md)
 
 Preservar registros aceitos; mudanças relevantes geram novo ADR com vínculos de substituição.

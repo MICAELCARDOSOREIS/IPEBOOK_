@@ -29,7 +29,7 @@ Esta decisão foi trazida do trabalho já em produção da equipe no projeto irm
 | Mostrar ausência de livros | Implementada e configuração padrão |
 | Renderizar títulos e autores fornecidos pelo caso de uso | Implementada; dados de exemplo exercitados em testes |
 | Tratar carregamento, erro e nova tentativa | Implementada |
-| Favoritos e alertas de busca | Implementados e validados na [spec 016](../specs/016-favoritos-e-alertas-de-busca/spec.md), inclusive fluxo autenticado contra Supabase; edição de alertas integrada na issue #95 |
+| Favoritos e alertas de busca | Implementados na [spec 016](../specs/016-favoritos-e-alertas-de-busca/spec.md); [spec 036](../specs/036-gerenciar-e-editar-alerta/spec.md) adiciona telas próprias de gerenciamento e edição, com modalidades usadas nos avisos; migração remota e validação no aparelho pendentes |
 | Cadastrar livros | **Implementada** em [specs/003](../specs/003-autenticacao-e-cadastro-de-anuncio/): `Book` com `modality`/`price`/`ownerId`, `createListing` exigindo sessão (FR-006), rota `/anunciar` com suporte a fotos e seleção de bairro |
 | Editar e pausar anúncio | **Implementada** em [specs/024](../specs/024-editar-e-pausar-anuncio/spec.md) (issue #91): rota `/editar-anuncio/[id]`, pausa e retomada de anúncios em `/meus-anuncios` |
 | Conta e autenticação (criar conta, entrar, sair, redefinir senha) | **Implementada** em [specs/003](../specs/003-autenticacao-e-cadastro-de-anuncio/) e [specs/007](../specs/007-contas-persistentes/spec.md): `src/view/auth/`, rotas `/entrar`, `/criar-conta`, `/esqueci-senha` e `/redefinir-senha` |

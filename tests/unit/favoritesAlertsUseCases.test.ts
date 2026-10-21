@@ -71,4 +71,17 @@ describe("alertas de busca", () => {
     await books.createListing({ title: "Livro qualquer", author: "Pessoa", category: "Romance", modality: "donation" }, "owner-category");
     expect(await notifications.listByUser("reader-category")).toHaveLength(1);
   });
+
+  it("só avisa para modalidades escolhidas e rejeita seleção vazia", async () => {
+    const notifications = new MemoryNotificationDataSource([]);
+    const alerts = new SearchAlertUseCases(new MemorySearchAlertDataSource(notifications));
+    const books = new BookUseCases(new MemoryBookDataSource(), alerts);
+    await expect(alerts.createAlert("reader", "Casmurro", [])).rejects.toThrow("Selecione pelo menos um tipo.");
+    const alert = await alerts.createAlert("reader", "Casmurro", ["sale"]);
+    await expect(alerts.updateAlert("reader", alert.id, "Casmurro", [])).rejects.toThrow("Selecione pelo menos um tipo.");
+    await books.createListing({ title: "Dom Casmurro", author: "Machado", modality: "donation" }, "owner");
+    expect(await notifications.listByUser("reader")).toHaveLength(0);
+    await books.createListing({ title: "Dom Casmurro", author: "Machado", modality: "sale", price: 20 }, "owner");
+    expect(await notifications.listByUser("reader")).toHaveLength(1);
+  });
 });

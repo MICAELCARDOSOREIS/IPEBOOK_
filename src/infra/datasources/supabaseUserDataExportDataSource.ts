@@ -2,7 +2,7 @@ import type { SupabaseAppClient } from "@/infra/supabaseClient";
 import type { IUserDataExportDataSource } from "@/model/datasources/iUserDataExportDataSource";
 import type { Book } from "@/model/entities/book";
 import type { BookRequest } from "@/model/entities/bookRequest";
-import type { SearchAlert } from "@/model/entities/searchAlert";
+import { ALL_ALERT_MODALITIES, type SearchAlert } from "@/model/entities/searchAlert";
 import type { UserExportData } from "@/model/entities/userExportData";
 import type { AppNotification } from "@/model/entities/notification";
 import type { ReportListing } from "@/model/entities/report";
@@ -101,9 +101,9 @@ export class SupabaseUserDataExportDataSource implements IUserDataExportDataSour
         id: row.id,
         userId: row.user_id,
         query: row.query,
-        category: row.category,
         active: row.active,
         createdAt: row.created_at,
+        modalities: row.modalities?.length ? row.modalities : [...ALL_ALERT_MODALITIES],
       }));
 
       const notifications: AppNotification[] = notificationRows.map((row: any) => ({

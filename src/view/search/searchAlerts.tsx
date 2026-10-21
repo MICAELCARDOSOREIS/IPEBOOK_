@@ -1,12 +1,11 @@
-import { useId, useState } from "react";
+import { useId } from "react";
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Dialog } from "@/view/components/Dialog";
 import { FilledButton } from "@/view/components/FilledButton";
 import { IconBadge } from "@/view/components/IconBadge";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { Tag } from "@/view/components/Tag";
-import { TextButton } from "@/view/components/TextButton";
+import { ALERT_CITY, ALERT_MODALITY_SUMMARY } from "@/view/search/alertLabels";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { tokens } from "@/view/tokens";
 import { useSearchAlertsViewModel } from "@/viewmodel/useSearchAlertsViewModel";
@@ -18,6 +17,7 @@ export type SearchAlertsProps = {
   onLogin: () => void;
   /** Abre a busca do catálogo, como o botão "Procurar outro livro" do Figma `02.07`. */
   onSearchBooks?: () => void;
+  onManageAlert?: (alertId: string) => void;
 };
 
 /**
@@ -25,28 +25,15 @@ export type SearchAlertsProps = {
  * `02.08 · Avisaremos você` (`19:420` / Web `148:968`),
  * `02.09`–`02.13` (`254:4285`–`254:4728` / Web `370:15901`–`370:16061`).
  */
-export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogin, onSearchBooks }: SearchAlertsProps) {
+export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogin, onSearchBooks, onManageAlert }: SearchAlertsProps) {
   const [state, actions] = useSearchAlertsViewModel(userId, initialQuery);
-  const [alertToDelete, setAlertToDelete] = useState<{ id: string; query: string } | null>(null);
-  const [editingId, setEditingId] = useState<string | null>(null);
   const errorId = useId();
   const hasError = Boolean(state.error);
   /**
    * Sem alertas, `02.08` dispensa a manchete da lista cheia. O formulário permanece porque o alerta
    * também nasce aqui (Spec 016), além de `02.06`.
    */
-  const showListChrome = state.loading || state.alerts.length > 0 || editingId !== null;
-  const cancelEdit = () => {
-    setEditingId(null);
-    actions.setQuery("");
-  };
-  const saveEdit = async () => {
-    if (!editingId) {
-      await actions.create();
-      return;
-    }
-    if (await actions.update(editingId, state.query)) setEditingId(null);
-  };
+  const showListChrome = state.loading || state.alerts.length > 0;
 
   return (
     <SafeAreaView style={styles.page}>
@@ -76,7 +63,7 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
           ) : null}
           <View style={styles.formCard}>
             <Text style={styles.formTitle}>
-              {editingId ? "Editar alerta de busca" : "Avisaremos você"}
+              Avisaremos você
             </Text>
             <Text style={styles.body}>
               Avisaremos na central de notificações quando surgir um livro com este título ou autor.
@@ -103,12 +90,9 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
               </Text>
             ) : null}
             <FilledButton
-              label={editingId ? "Salvar edição" : "Criar alerta"}
-              onPress={() => void saveEdit()}
+              label="Criar alerta"
+              onPress={() => void actions.create()}
             />
-            {editingId ? (
-              <TextButton label="Cancelar edição" onPress={cancelEdit} />
-            ) : null}
           </View>
 
           {state.loading ? (
@@ -129,57 +113,21 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
                 </View>
               }
               renderItem={({ item }) => (
-                <View style={styles.row}>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`Gerenciar alerta ${item.query}`}
+                  onPress={() => onManageAlert?.(item.id)}
+                  style={styles.row}
+                >
                   <View style={styles.rowText}>
                     <Text style={styles.title}>{item.query}</Text>
-                    <Text style={styles.metaText}>Venda, troca e doação · Piripiri, PI</Text>
+                    <Text style={styles.metaText}>{`${ALERT_MODALITY_SUMMARY(item.modalities)} · ${ALERT_CITY}`}</Text>
                     <Tag
                       variant={item.active ? "available" : "paused"}
                       label={item.active ? "Ativo" : "Pausado"}
                     />
-                    <View style={item.active ? styles.statusCard : styles.statusCardPaused}>
-                      <Text style={styles.statusTitle}>
-                        {item.active ? "Alerta ativo" : "Alerta pausado"}
-                      </Text>
-                      <Text style={styles.body}>
-                        {item.active
-                          ? `Você recebe uma notificação quando um novo livro corresponde à busca por ${item.query}.`
-                          : `Retome o alerta para voltar a receber avisos sobre ${item.query}.`}
-                      </Text>
-                    </View>
                   </View>
-                  <View style={styles.rowActions}>
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel={`Editar alerta ${item.query}`}
-                      onPress={() => {
-                        setEditingId(item.id);
-                        actions.setQuery(item.query);
-                      }}
-                      style={styles.smallAction}
-                    >
-                      <Text style={styles.link}>Editar</Text>
-                    </Pressable>
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel={
-                        item.active ? `Pausar alerta ${item.query}` : `Retomar alerta ${item.query}`
-                      }
-                      onPress={() => void actions.setActive(item.id, !item.active)}
-                      style={styles.smallAction}
-                    >
-                      <Text style={styles.link}>{item.active ? "Pausar" : "Retomar"}</Text>
-                    </Pressable>
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel={`Excluir alerta ${item.query}`}
-                      onPress={() => setAlertToDelete({ id: item.id, query: item.query })}
-                      style={styles.smallAction}
-                    >
-                      <Text style={styles.deleteText}>Excluir</Text>
-                    </Pressable>
-                  </View>
-                </View>
+                </Pressable>
               )}
             />
           )}
@@ -192,26 +140,6 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
               )}
             </View>
           ) : null}
-          <Dialog
-            visible={alertToDelete !== null}
-            title="Excluir este alerta?"
-            message={
-              alertToDelete
-                ? `Tem certeza de que deseja excluir o alerta de busca para "${alertToDelete.query}"?`
-                : ""
-            }
-            confirmLabel="Confirmar exclusão"
-            cancelLabel="Cancelar"
-            destructive
-            onCancel={() => setAlertToDelete(null)}
-            onConfirm={() => {
-              if (alertToDelete) {
-                const id = alertToDelete.id;
-                setAlertToDelete(null);
-                void actions.remove(id);
-              }
-            }}
-          />
         </View>
       )}
     </SafeAreaView>
@@ -298,22 +226,6 @@ const styles = StyleSheet.create({
     color: tokens.colors.success,
     fontWeight: "600",
   },
-  statusCard: {
-    backgroundColor: tokens.colors.m3.secondaryContainer,
-    borderRadius: tokens.radius.medium,
-    padding: tokens.spacing[16],
-    gap: tokens.spacing[4],
-  },
-  statusCardPaused: {
-    backgroundColor: tokens.colors.m3.surfaceContainerHigh,
-    borderRadius: tokens.radius.medium,
-    padding: tokens.spacing[16],
-    gap: tokens.spacing[4],
-  },
-  statusTitle: {
-    ...tokens.typography.titleMedium,
-    color: tokens.colors.text,
-  },
   searchAction: {
     paddingHorizontal: tokens.spacing[16],
     paddingTop: tokens.spacing[8],
@@ -321,11 +233,6 @@ const styles = StyleSheet.create({
   link: {
     ...tokens.typography.bodyMedium,
     color: tokens.colors.action,
-    fontWeight: "600",
-  },
-  deleteText: {
-    ...tokens.typography.bodyMedium,
-    color: tokens.colors.error,
     fontWeight: "600",
   },
   loginButton: {
@@ -356,6 +263,7 @@ const styles = StyleSheet.create({
     gap: tokens.spacing[8],
   },
   row: {
+    minHeight: tokens.accessibility.touchTarget,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -369,15 +277,5 @@ const styles = StyleSheet.create({
   rowText: {
     flex: 1,
     gap: tokens.spacing[6],
-  },
-  rowActions: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: tokens.spacing[4],
-  },
-  smallAction: {
-    minHeight: tokens.accessibility.touchTarget,
-    justifyContent: "center",
-    paddingHorizontal: tokens.spacing[8],
   },
 });

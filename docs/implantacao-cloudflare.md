@@ -10,7 +10,7 @@ O Ipebook Web é compilado como uma aplicação web estática com hidratação c
 
 - **Comando de build:** `npm run build:web` (que executa `expo export --platform web`).
 - **Diretório de saída:** `dist/`.
-- **Roteamento SPA e rotas dinâmicas:** Regras em `public/_redirects` (copiadas automaticamente para `dist/_redirects`) direcionam rotas com parâmetros como `/livro/*`, `/editar-anuncio/*`, `/denunciar/*` e `/negociacao/*` para os respectivos stubs `[id].html` com código HTTP `200` (rewrite), permitindo que o Expo Router no navegador extraia os parâmetros e monte a tela.
+- **Roteamento SPA e rotas dinâmicas:** Regras em `public/_redirects` (copiadas automaticamente para `dist/_redirects`) direcionam rotas com parâmetros como `/livro/*`, `/editar-anuncio/*`, `/denunciar/*`, `/negociacao/*`, `/alertas/:id` e `/alertas/:id/editar` para os respectivos stubs `[id].html` com código HTTP `200` (rewrite), permitindo que o Expo Router no navegador extraia os parâmetros e monte a tela. A rota de edição de alerta vem antes da rota de gerenciamento para preservar a correspondência mais específica.
 - **Cabeçalhos de Segurança:** Configurados em `public/_headers` (copiados para `dist/_headers`), cobrindo CSP, proteção contra clickjacking (`X-Frame-Options: DENY`), sniffing de MIME (`X-Content-Type-Options: nosniff`) e cache imutável de longo prazo para bundles em `_expo/static/*`.
 
 ---
