@@ -136,7 +136,7 @@ describe("tela de exclusão de conta (DeleteAccount - LGPD)", () => {
       );
     });
 
-    expect(screen.getByRole("header", { name: "Exclusão de Conta" })).toBeDefined();
+    expect(screen.getByRole("header", { name: "Privacidade e dados" })).toBeDefined();
   });
 
   it("oferece o atalho de editar informações do perfil (Figma 07.07, Spec 032)", async () => {

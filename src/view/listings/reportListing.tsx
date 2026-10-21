@@ -31,7 +31,7 @@ export default function ReportListing({
   if (state.success) {
     return (
       <SafeAreaView style={styles.page}>
-        <TopAppBar title="Denúncia" onBack={onBack} />
+        <TopAppBar title="Denunciar anúncio" onBack={onBack} />
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <View style={styles.content}>
             <View style={styles.successCard}>
@@ -56,7 +56,7 @@ export default function ReportListing({
   if (!sessionUserId) {
     return (
       <SafeAreaView style={styles.page}>
-        <TopAppBar title="Denúncia" onBack={onBack} />
+        <TopAppBar title="Denunciar anúncio" onBack={onBack} />
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <View style={styles.content}>
             <View style={styles.authNotice}>

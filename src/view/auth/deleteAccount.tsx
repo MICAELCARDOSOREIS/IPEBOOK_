@@ -34,7 +34,7 @@ export default function DeleteAccount({
   if (state.success) {
     return (
       <SafeAreaView style={styles.page}>
-        <TopAppBar title="Exclusão de Conta" onBack={onBack} />
+        <TopAppBar title="Conta excluída" onBack={onBack} />
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <View style={styles.content}>
             <View style={styles.card}>
@@ -59,7 +59,7 @@ export default function DeleteAccount({
   if (!sessionUserId) {
     return (
       <SafeAreaView style={styles.page}>
-        <TopAppBar title="Exclusão de Conta" onBack={onBack} />
+        <TopAppBar title="Privacidade e dados" onBack={onBack} />
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <View style={styles.content}>
             <View style={styles.card}>
