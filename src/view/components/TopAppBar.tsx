@@ -1,5 +1,7 @@
+import { useMemo } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { tokens } from "@/view/tokens";
+import { tokens, type ColorPalette } from "@/view/tokens";
+import { useTheme } from "@/view/theme/ThemeProvider";
 
 export type TopAppBarProps = {
   title: string;
@@ -8,6 +10,8 @@ export type TopAppBarProps = {
 
 /** Barra superior do design system (barra-superior.md): botão voltar + nome da tela. */
 export function TopAppBar({ title, onBack }: TopAppBarProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   return (
     <View style={styles.bar}>
       <Pressable
@@ -24,22 +28,24 @@ export function TopAppBar({ title, onBack }: TopAppBarProps) {
   );
 }
 
-const styles = StyleSheet.create({
-  bar: {
-    height: 64,
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: tokens.colors.surface,
-    paddingHorizontal: tokens.spacing[12],
-  },
-  backButton: {
-    minHeight: tokens.accessibility.touchTarget,
-    minWidth: tokens.accessibility.touchTarget,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  backIcon: { fontSize: 20, color: tokens.colors.action },
-  title: { marginLeft: tokens.spacing[12], color: tokens.colors.text, ...tokens.typography.titleMedium },
-});
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+    bar: {
+      height: 64,
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: colors.surface,
+      paddingHorizontal: tokens.spacing[12],
+    },
+    backButton: {
+      minHeight: tokens.accessibility.touchTarget,
+      minWidth: tokens.accessibility.touchTarget,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    backIcon: { fontSize: 20, color: colors.action },
+    title: { marginLeft: tokens.spacing[12], color: colors.text, ...tokens.typography.titleMedium },
+  });
+}
 
 export default TopAppBar;

@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import type { Book, BookCondition, BookModality } from "@/model/entities/book";
 import { BOOK_CONDITIONS, BOOK_CONDITION_LABELS, MAX_BOOK_DESCRIPTION_LENGTH } from "@/model/entities/book";
 import { PIRIPIRI_NEIGHBORHOODS } from "@/model/entities/location";
-import { tokens } from "@/view/tokens";
+import { tokens, type ColorPalette } from "@/view/tokens";
+import { useTheme } from "@/view/theme/ThemeProvider";
 import { formatPrice } from "@/view/formatPrice";
 import { AddPhotoCard } from "@/view/components/AddPhotoCard";
 import { Manchete } from "@/view/components/Manchete";
@@ -65,6 +66,8 @@ export default function CreateListing({
   onGoHome,
 }: CreateListingProps) {
   const [state, actions] = useCreateListingViewModel();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [step, setStep] = useState(1);
   const [published, setPublished] = useState<Book | null>(null);
   const errorRef = useFormErrorAnnouncer(state.error);
@@ -405,8 +408,9 @@ export default function CreateListing({
   );
 }
 
-const styles = StyleSheet.create({
-  page: { flex: 1, backgroundColor: tokens.colors.background },
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+  page: { flex: 1, backgroundColor: colors.background },
   scrollContent: { padding: tokens.spacing[16], paddingBottom: tokens.spacing[48] },
   content: {
     width: "100%",
@@ -422,13 +426,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: tokens.spacing[12],
     paddingVertical: tokens.spacing[6],
     borderRadius: tokens.radius.medium,
-    backgroundColor: tokens.colors.soft,
+    backgroundColor: colors.soft,
     borderWidth: 1,
-    borderColor: tokens.colors.m3.outlineVariant,
+    borderColor: colors.m3.outlineVariant,
   },
   draftBannerText: {
     ...tokens.typography.labelMedium,
-    color: tokens.colors.actionDeep,
+    color: colors.actionDeep,
     fontWeight: "600",
   },
   isbnCard: {
@@ -437,19 +441,19 @@ const styles = StyleSheet.create({
     gap: tokens.spacing[12],
     padding: tokens.spacing[12],
     borderRadius: tokens.radius.medium,
-    backgroundColor: tokens.colors.m3.surfaceContainerLow,
+    backgroundColor: colors.m3.surfaceContainerLow,
     borderWidth: 1,
-    borderColor: tokens.colors.m3.outlineVariant,
+    borderColor: colors.m3.outlineVariant,
   },
   isbnTexts: { flex: 1, gap: tokens.spacing[4] },
   isbnTitle: {
     ...tokens.typography.titleMedium,
     fontFamily: tokens.typography.displayLarge.fontFamily,
-    color: tokens.colors.text,
+    color: colors.text,
   },
   dividerText: {
     ...tokens.typography.labelMedium,
-    color: tokens.colors.secondaryText,
+    color: colors.secondaryText,
     textAlign: "center",
   },
   chipRow: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[8] },
@@ -463,29 +467,29 @@ const styles = StyleSheet.create({
     fontSize: tokens.typography.displayLarge.fontSize,
     lineHeight: tokens.typography.displayLarge.lineHeight,
     fontFamily: tokens.typography.displayLarge.fontFamily,
-    color: tokens.colors.text,
+    color: colors.text,
   },
   subtitle: {
     fontSize: tokens.typography.bodyLarge.fontSize,
     lineHeight: tokens.typography.bodyLarge.lineHeight,
     fontFamily: tokens.typography.bodyLarge.fontFamily,
-    color: tokens.colors.secondaryText,
+    color: colors.secondaryText,
   },
   sectionLabel: {
     fontSize: tokens.typography.titleMedium.fontSize,
     lineHeight: tokens.typography.titleMedium.lineHeight,
     fontFamily: tokens.typography.titleMedium.fontFamily,
     fontWeight: tokens.typography.titleMedium.fontWeight,
-    color: tokens.colors.text,
+    color: colors.text,
   },
   hint: {
     fontSize: tokens.typography.bodyMedium.fontSize,
     lineHeight: tokens.typography.bodyMedium.lineHeight,
     fontFamily: tokens.typography.bodyMedium.fontFamily,
-    color: tokens.colors.secondaryText,
+    color: colors.secondaryText,
   },
   tipBox: {
-    backgroundColor: tokens.colors.m3.surfaceContainerHigh,
+    backgroundColor: colors.m3.surfaceContainerHigh,
     borderRadius: tokens.radius.medium,
     padding: tokens.spacing[16],
     gap: tokens.spacing[4],
@@ -494,16 +498,16 @@ const styles = StyleSheet.create({
     fontSize: tokens.typography.titleMedium.fontSize,
     fontFamily: tokens.typography.titleMedium.fontFamily,
     fontWeight: tokens.typography.titleMedium.fontWeight,
-    color: tokens.colors.text,
+    color: colors.text,
   },
   tipText: {
     fontSize: tokens.typography.bodyMedium.fontSize,
     lineHeight: tokens.typography.bodyMedium.lineHeight,
     fontFamily: tokens.typography.bodyMedium.fontFamily,
-    color: tokens.colors.secondaryText,
+    color: colors.secondaryText,
   },
   errorText: {
-    color: tokens.colors.error,
+    color: colors.error,
     fontSize: tokens.typography.bodyMedium.fontSize,
     fontFamily: tokens.typography.bodyMedium.fontFamily,
   },
@@ -518,26 +522,26 @@ const styles = StyleSheet.create({
     lineHeight: tokens.typography.titleMedium.lineHeight,
     fontFamily: tokens.typography.titleMedium.fontFamily,
     fontWeight: tokens.typography.titleMedium.fontWeight,
-    color: tokens.colors.text,
+    color: colors.text,
   },
   publishedAuthor: {
     fontSize: tokens.typography.bodyMedium.fontSize,
     fontFamily: tokens.typography.bodyMedium.fontFamily,
-    color: tokens.colors.secondaryText,
+    color: colors.secondaryText,
   },
   publishedPrice: {
     fontSize: tokens.typography.bodyMedium.fontSize,
     fontFamily: tokens.typography.bodyMedium.fontFamily,
     fontWeight: "600",
-    color: tokens.colors.action,
+    color: colors.action,
   },
   nextStep: { flexDirection: "row", gap: tokens.spacing[12], alignItems: "flex-start" },
   nextStepNumber: {
     width: 28,
     height: 28,
     borderRadius: tokens.radius.full,
-    backgroundColor: tokens.colors.soft,
-    color: tokens.colors.action,
+    backgroundColor: colors.soft,
+    color: colors.action,
     textAlign: "center",
     lineHeight: 28,
     fontFamily: tokens.typography.labelMedium.fontFamily,
@@ -549,12 +553,13 @@ const styles = StyleSheet.create({
     lineHeight: tokens.typography.bodyLarge.lineHeight,
     fontFamily: tokens.typography.bodyLarge.fontFamily,
     fontWeight: "600",
-    color: tokens.colors.text,
+    color: colors.text,
   },
   nextStepHint: {
     fontSize: tokens.typography.bodyMedium.fontSize,
     lineHeight: tokens.typography.bodyMedium.lineHeight,
     fontFamily: tokens.typography.bodyMedium.fontFamily,
-    color: tokens.colors.secondaryText,
+    color: colors.secondaryText,
   },
-});
+  });
+}

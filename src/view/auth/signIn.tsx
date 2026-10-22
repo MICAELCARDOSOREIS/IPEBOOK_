@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
-import { tokens } from "@/view/tokens";
+import { tokens, type ColorPalette } from "@/view/tokens";
+import { useTheme } from "@/view/theme/ThemeProvider";
 import { FilledButton } from "@/view/components/FilledButton";
 import { TextButton } from "@/view/components/TextButton";
 import { TextField } from "@/view/components/TextField";
@@ -23,6 +24,8 @@ export default function SignIn({
   onBack,
 }: SignInProps = {}) {
   const [state, actions] = useAuthViewModel();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -81,10 +84,11 @@ export default function SignIn({
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
   page: {
     flex: 1,
-    backgroundColor: tokens.colors.background,
+    backgroundColor: colors.background,
   },
   centerContainer: {
     flexGrow: 1,
@@ -102,18 +106,19 @@ const styles = StyleSheet.create({
     fontSize: tokens.typography.displayLarge.fontSize,
     lineHeight: tokens.typography.displayLarge.lineHeight,
     fontFamily: tokens.typography.displayLarge.fontFamily,
-    color: tokens.colors.text,
+    color: colors.text,
   },
   subtitle: {
     fontSize: tokens.typography.bodyLarge.fontSize,
     lineHeight: tokens.typography.bodyLarge.lineHeight,
     fontFamily: tokens.typography.bodyLarge.fontFamily,
-    color: tokens.colors.secondaryText,
+    color: colors.secondaryText,
     marginBottom: tokens.spacing[4],
   },
   error: {
-    color: tokens.colors.error,
+    color: colors.error,
     fontSize: tokens.typography.bodyMedium.fontSize,
     fontFamily: tokens.typography.bodyMedium.fontFamily,
   },
-});
+  });
+}

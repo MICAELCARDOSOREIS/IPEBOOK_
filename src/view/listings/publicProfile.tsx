@@ -1,7 +1,9 @@
+import { useMemo } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { usePublicProfileViewModel } from "@/viewmodel/usePublicProfileViewModel";
-import { tokens } from "@/view/tokens";
+import { tokens, type ColorPalette } from "@/view/tokens";
+import { useTheme } from "@/view/theme/ThemeProvider";
 import { Avatar } from "@/view/components/Avatar";
 import { TopAppBar } from "@/view/components/TopAppBar";
 
@@ -18,6 +20,8 @@ export type PublicProfileProps = {
 
 export function PublicProfile({ userId, onBack }: PublicProfileProps) {
   const [state, actions] = usePublicProfileViewModel(userId);
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const profile = state.profile;
 
   return (
@@ -26,7 +30,7 @@ export function PublicProfile({ userId, onBack }: PublicProfileProps) {
       <View style={styles.content}>
         {state.loading ? (
           <View style={styles.status}>
-            <ActivityIndicator color={tokens.colors.action} accessibilityLabel="Carregando perfil" />
+            <ActivityIndicator color={colors.action} accessibilityLabel="Carregando perfil" />
           </View>
         ) : state.error ? (
           <View style={styles.status}>
@@ -70,33 +74,35 @@ export function PublicProfile({ userId, onBack }: PublicProfileProps) {
 
 export default PublicProfile;
 
-const styles = StyleSheet.create({
-  page: { flex: 1, backgroundColor: tokens.colors.background },
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+  page: { flex: 1, backgroundColor: colors.background },
   content: { flex: 1, width: "100%", maxWidth: 720, alignSelf: "center", padding: tokens.spacing[24] },
   status: { alignItems: "center", gap: tokens.spacing[16], paddingTop: tokens.spacing[48] },
-  errorText: { fontSize: tokens.typography.bodyMedium.fontSize, color: tokens.colors.error, textAlign: "center" },
+  errorText: { fontSize: tokens.typography.bodyMedium.fontSize, color: colors.error, textAlign: "center" },
   retryButton: {
     paddingVertical: tokens.spacing[8],
     paddingHorizontal: tokens.spacing[24],
     borderRadius: tokens.radius.full,
-    backgroundColor: tokens.colors.surface,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: tokens.colors.border,
+    borderColor: colors.border,
     minHeight: tokens.accessibility.touchTarget,
     justifyContent: "center",
   },
-  retryText: { fontSize: tokens.typography.bodyMedium.fontSize, color: tokens.colors.action, fontWeight: "bold" },
+  retryText: { fontSize: tokens.typography.bodyMedium.fontSize, color: colors.action, fontWeight: "bold" },
   card: {
     gap: tokens.spacing[16],
-    backgroundColor: tokens.colors.surface,
+    backgroundColor: colors.surface,
     padding: tokens.spacing[24],
     borderRadius: tokens.radius.medium,
     borderWidth: 1,
-    borderColor: tokens.colors.border,
+    borderColor: colors.border,
   },
-  name: { fontSize: tokens.typography.titleLarge.fontSize, fontWeight: tokens.typography.titleLarge.fontWeight, color: tokens.colors.action },
-  joined: { fontSize: tokens.typography.bodyMedium.fontSize, color: tokens.colors.secondaryText },
-  statRow: { gap: 2, borderTopWidth: 1, borderTopColor: tokens.colors.border, paddingTop: tokens.spacing[12] },
-  statValue: { fontSize: tokens.typography.titleMedium.fontSize, fontWeight: "bold", color: tokens.colors.text },
-  statLabel: { fontSize: tokens.typography.bodyMedium.fontSize, color: tokens.colors.secondaryText },
-});
+  name: { fontSize: tokens.typography.titleLarge.fontSize, fontWeight: tokens.typography.titleLarge.fontWeight, color: colors.action },
+  joined: { fontSize: tokens.typography.bodyMedium.fontSize, color: colors.secondaryText },
+  statRow: { gap: 2, borderTopWidth: 1, borderTopColor: colors.border, paddingTop: tokens.spacing[12] },
+  statValue: { fontSize: tokens.typography.titleMedium.fontSize, fontWeight: "bold", color: colors.text },
+  statLabel: { fontSize: tokens.typography.bodyMedium.fontSize, color: colors.secondaryText },
+  });
+}

@@ -1,5 +1,7 @@
+import { useMemo } from "react";
 import { Pressable, StyleSheet, Text } from "react-native";
-import { tokens } from "@/view/tokens";
+import { tokens, type ColorPalette } from "@/view/tokens";
+import { useTheme } from "@/view/theme/ThemeProvider";
 
 export type TextButtonProps = {
   label: string;
@@ -20,6 +22,8 @@ export function TextButton({
   accessibilityLabel,
   tone = "default",
 }: TextButtonProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   return (
     <Pressable
       accessibilityRole="button"
@@ -42,21 +46,23 @@ export function TextButton({
   );
 }
 
-const styles = StyleSheet.create({
-  button: {
-    minHeight: tokens.accessibility.touchTarget,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: tokens.spacing[16],
-  },
-  label: {
-    color: tokens.colors.action,
-    fontSize: tokens.typography.bodyMedium.fontSize,
-    fontFamily: tokens.typography.bodyMedium.fontFamily,
-    fontWeight: "600",
-  },
-  labelDanger: { color: tokens.colors.error },
-  labelDisabled: { color: tokens.colors.disabledText },
-});
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+    button: {
+      minHeight: tokens.accessibility.touchTarget,
+      justifyContent: "center",
+      alignItems: "center",
+      paddingHorizontal: tokens.spacing[16],
+    },
+    label: {
+      color: colors.action,
+      fontSize: tokens.typography.bodyMedium.fontSize,
+      fontFamily: tokens.typography.bodyMedium.fontFamily,
+      fontWeight: "600",
+    },
+    labelDanger: { color: colors.error },
+    labelDisabled: { color: colors.disabledText },
+  });
+}
 
 export default TextButton;

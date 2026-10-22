@@ -1,5 +1,7 @@
+import { useMemo } from "react";
 import { Pressable, StyleSheet, Text } from "react-native";
-import { tokens } from "@/view/tokens";
+import { tokens, type ColorPalette } from "@/view/tokens";
+import { useTheme } from "@/view/theme/ThemeProvider";
 
 export type ChipProps = {
   label: string;
@@ -11,6 +13,9 @@ export type ChipProps = {
 
 /** Chip de filtro do design system (chip.md): pílula de 32 px, check quando selecionado. */
 export function Chip({ label, selected, onPress, disabled = false, accessibilityLabel }: ChipProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <Pressable
       accessibilityRole="checkbox"
@@ -32,19 +37,21 @@ export function Chip({ label, selected, onPress, disabled = false, accessibility
   );
 }
 
-const styles = StyleSheet.create({
-  chip: {
-    height: 32,
-    borderRadius: tokens.radius.full,
-    paddingHorizontal: tokens.spacing[12],
-    justifyContent: "center",
-  },
-  selected: { backgroundColor: tokens.colors.soft },
-  unselected: { borderWidth: 1, borderColor: tokens.colors.border },
-  disabled: { opacity: 0.38 },
-  label: { color: tokens.colors.secondaryText, ...tokens.typography.labelMedium },
-  labelSelected: { color: tokens.colors.action },
-  labelDisabled: { color: tokens.colors.disabledText },
-});
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+    chip: {
+      height: 32,
+      borderRadius: tokens.radius.full,
+      paddingHorizontal: tokens.spacing[12],
+      justifyContent: "center",
+    },
+    selected: { backgroundColor: colors.soft },
+    unselected: { borderWidth: 1, borderColor: colors.border },
+    disabled: { opacity: 0.38 },
+    label: { color: colors.secondaryText, ...tokens.typography.labelMedium },
+    labelSelected: { color: colors.action },
+    labelDisabled: { color: colors.disabledText },
+  });
+}
 
 export default Chip;

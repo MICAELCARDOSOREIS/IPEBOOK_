@@ -1,5 +1,7 @@
+import { useMemo } from "react";
 import { StyleSheet, Text, View } from "react-native";
-import { tokens } from "@/view/tokens";
+import { tokens, type ColorPalette } from "@/view/tokens";
+import { useTheme } from "@/view/theme/ThemeProvider";
 
 export type TagVariant =
   | "sale"
@@ -23,88 +25,91 @@ export type TagProps = {
   accessibilityLabel?: string;
 };
 
-const VARIANT_CONFIG: Record<
-  TagVariant,
-  { background: string; text: string; defaultLabel: string }
-> = {
-  sale: {
-    background: tokens.colors.badge.sale.background,
-    text: tokens.colors.badge.sale.text,
-    defaultLabel: "Venda",
-  },
-  venda: {
-    background: tokens.colors.badge.sale.background,
-    text: tokens.colors.badge.sale.text,
-    defaultLabel: "Venda",
-  },
-  trade: {
-    background: tokens.colors.badge.trade.background,
-    text: tokens.colors.badge.trade.text,
-    defaultLabel: "Troca",
-  },
-  troca: {
-    background: tokens.colors.badge.trade.background,
-    text: tokens.colors.badge.trade.text,
-    defaultLabel: "Troca",
-  },
-  donation: {
-    background: tokens.colors.badge.donation.background,
-    text: tokens.colors.badge.donation.text,
-    defaultLabel: "Doação",
-  },
-  doacao: {
-    background: tokens.colors.badge.donation.background,
-    text: tokens.colors.badge.donation.text,
-    defaultLabel: "Doação",
-  },
-  reserved: {
-    background: tokens.colors.badge.reserved.background,
-    text: tokens.colors.badge.reserved.text,
-    defaultLabel: "Reservado",
-  },
-  reservado: {
-    background: tokens.colors.badge.reserved.background,
-    text: tokens.colors.badge.reserved.text,
-    defaultLabel: "Reservado",
-  },
-  completed: {
-    background: tokens.colors.badge.completed.background,
-    text: tokens.colors.badge.completed.text,
-    defaultLabel: "Concluído",
-  },
-  concluido: {
-    background: tokens.colors.badge.completed.background,
-    text: tokens.colors.badge.completed.text,
-    defaultLabel: "Concluído",
-  },
-  paused: {
-    background: tokens.colors.disabledBackground,
-    text: tokens.colors.disabledText,
-    defaultLabel: "Pausado",
-  },
-  pausado: {
-    background: tokens.colors.disabledBackground,
-    text: tokens.colors.disabledText,
-    defaultLabel: "Pausado",
-  },
-  available: {
-    background: tokens.colors.soft,
-    text: tokens.colors.action,
-    defaultLabel: "Disponível",
-  },
-  disponivel: {
-    background: tokens.colors.soft,
-    text: tokens.colors.action,
-    defaultLabel: "Disponível",
-  },
-};
+function createVariantConfig(
+  colors: ColorPalette,
+): Record<TagVariant, { background: string; text: string; defaultLabel: string }> {
+  return {
+    sale: {
+      background: colors.badge.sale.background,
+      text: colors.badge.sale.text,
+      defaultLabel: "Venda",
+    },
+    venda: {
+      background: colors.badge.sale.background,
+      text: colors.badge.sale.text,
+      defaultLabel: "Venda",
+    },
+    trade: {
+      background: colors.badge.trade.background,
+      text: colors.badge.trade.text,
+      defaultLabel: "Troca",
+    },
+    troca: {
+      background: colors.badge.trade.background,
+      text: colors.badge.trade.text,
+      defaultLabel: "Troca",
+    },
+    donation: {
+      background: colors.badge.donation.background,
+      text: colors.badge.donation.text,
+      defaultLabel: "Doação",
+    },
+    doacao: {
+      background: colors.badge.donation.background,
+      text: colors.badge.donation.text,
+      defaultLabel: "Doação",
+    },
+    reserved: {
+      background: colors.badge.reserved.background,
+      text: colors.badge.reserved.text,
+      defaultLabel: "Reservado",
+    },
+    reservado: {
+      background: colors.badge.reserved.background,
+      text: colors.badge.reserved.text,
+      defaultLabel: "Reservado",
+    },
+    completed: {
+      background: colors.badge.completed.background,
+      text: colors.badge.completed.text,
+      defaultLabel: "Concluído",
+    },
+    concluido: {
+      background: colors.badge.completed.background,
+      text: colors.badge.completed.text,
+      defaultLabel: "Concluído",
+    },
+    paused: {
+      background: colors.disabledBackground,
+      text: colors.disabledText,
+      defaultLabel: "Pausado",
+    },
+    pausado: {
+      background: colors.disabledBackground,
+      text: colors.disabledText,
+      defaultLabel: "Pausado",
+    },
+    available: {
+      background: colors.soft,
+      text: colors.action,
+      defaultLabel: "Disponível",
+    },
+    disponivel: {
+      background: colors.soft,
+      text: colors.action,
+      defaultLabel: "Disponível",
+    },
+  };
+}
 
 /**
  * Componente Tag do Design System do IpêBook (design-system/04-componentes/tag.md).
  * Etiqueta não-interativa indicando modalidade ou status com cores canônicas e alto contraste.
  */
 export function Tag({ variant, label, accessibilityLabel }: TagProps) {
-  const config = VARIANT_CONFIG[variant] ?? VARIANT_CONFIG.sale;
+  const { colors } = useTheme();
+  const variantConfig = useMemo(() => createVariantConfig(colors), [colors]);
+  const config = variantConfig[variant] ?? variantConfig.sale;
   const displayText = label ?? config.defaultLabel;
 
   return (

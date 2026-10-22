@@ -1,5 +1,7 @@
+import { useMemo } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text } from "react-native";
-import { tokens } from "@/view/tokens";
+import { tokens, type ColorPalette } from "@/view/tokens";
+import { useTheme } from "@/view/theme/ThemeProvider";
 
 export type FilledButtonProps = {
   label: string;
@@ -20,6 +22,8 @@ export function FilledButton({
   accessibilityLabel,
 }: FilledButtonProps) {
   const isDisabled = disabled || loading;
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   return (
     <Pressable
       accessibilityRole="button"
@@ -30,7 +34,7 @@ export function FilledButton({
       style={[styles.button, isDisabled && styles.disabled]}
     >
       {loading ? (
-        <ActivityIndicator color={tokens.colors.surface} accessibilityLabel={loadingLabel ?? label} />
+        <ActivityIndicator color={colors.surface} accessibilityLabel={loadingLabel ?? label} />
       ) : (
         <Text style={[styles.label, isDisabled && styles.labelDisabled]}>{label}</Text>
       )}
@@ -38,18 +42,20 @@ export function FilledButton({
   );
 }
 
-const styles = StyleSheet.create({
-  button: {
-    minHeight: tokens.accessibility.touchTarget,
-    justifyContent: "center",
-    alignItems: "center",
-    borderRadius: tokens.radius.full,
-    backgroundColor: tokens.colors.action,
-    paddingHorizontal: tokens.spacing[24],
-  },
-  disabled: { backgroundColor: tokens.colors.disabledBackground },
-  label: { color: tokens.colors.surface, fontSize: 16, fontWeight: "600" },
-  labelDisabled: { color: tokens.colors.disabledText },
-});
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+    button: {
+      minHeight: tokens.accessibility.touchTarget,
+      justifyContent: "center",
+      alignItems: "center",
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.action,
+      paddingHorizontal: tokens.spacing[24],
+    },
+    disabled: { backgroundColor: colors.disabledBackground },
+    label: { color: colors.surface, fontSize: 16, fontWeight: "600" },
+    labelDisabled: { color: colors.disabledText },
+  });
+}
 
 export default FilledButton;

@@ -1,5 +1,7 @@
+import { useMemo } from "react";
 import { Image, Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from "react-native";
-import { tokens } from "@/view/tokens";
+import { tokens, type ColorPalette } from "@/view/tokens";
+import { useTheme } from "@/view/theme/ThemeProvider";
 import { AppIcon } from "@/view/components/AppIcon";
 
 export type AddPhotoCardProps = {
@@ -24,6 +26,9 @@ export function AddPhotoCard({
   onRemovePhoto,
   style,
 }: AddPhotoCardProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   if (photoUrl) {
     return (
       <View style={[styles.card, style]}>
@@ -40,7 +45,7 @@ export function AddPhotoCard({
             onPress={onRemovePhoto}
             style={styles.removeButton}
           >
-            <AppIcon name="close" color={tokens.colors.surface} size={16} />
+            <AppIcon name="close" color={colors.surface} size={16} />
           </Pressable>
         ) : null}
       </View>
@@ -54,42 +59,44 @@ export function AddPhotoCard({
       onPress={onPress}
       style={[styles.card, style]}
     >
-      <AppIcon name="add" color={tokens.colors.action} size={28} />
+      <AppIcon name="add" color={colors.action} size={28} />
       <Text style={styles.label}>{label}</Text>
     </Pressable>
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    aspectRatio: 1,
-    minWidth: tokens.accessibility.touchTarget * 2,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: tokens.spacing[8],
-    borderRadius: tokens.radius.medium,
-    borderWidth: 1,
-    borderColor: tokens.colors.m3.outlineVariant,
-    backgroundColor: tokens.colors.surface,
-    overflow: "hidden",
-    position: "relative",
-  },
-  previewImage: {
-    ...StyleSheet.absoluteFill,
-  },
-  removeButton: {
-    position: "absolute",
-    top: tokens.spacing[4],
-    right: tokens.spacing[4],
-    backgroundColor: "rgba(0, 0, 0, 0.6)",
-    borderRadius: tokens.radius.full,
-    padding: tokens.spacing[4],
-    minWidth: 24,
-    minHeight: 24,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  label: { color: tokens.colors.action, ...tokens.typography.bodyMedium, textAlign: "center" },
-});
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+    card: {
+      aspectRatio: 1,
+      minWidth: tokens.accessibility.touchTarget * 2,
+      alignItems: "center",
+      justifyContent: "center",
+      gap: tokens.spacing[8],
+      borderRadius: tokens.radius.medium,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+      backgroundColor: colors.surface,
+      overflow: "hidden",
+      position: "relative",
+    },
+    previewImage: {
+      ...StyleSheet.absoluteFill,
+    },
+    removeButton: {
+      position: "absolute",
+      top: tokens.spacing[4],
+      right: tokens.spacing[4],
+      backgroundColor: "rgba(0, 0, 0, 0.6)",
+      borderRadius: tokens.radius.full,
+      padding: tokens.spacing[4],
+      minWidth: 24,
+      minHeight: 24,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    label: { color: colors.action, ...tokens.typography.bodyMedium, textAlign: "center" },
+  });
+}
 
 export default AddPhotoCard;

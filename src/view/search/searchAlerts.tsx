@@ -1,4 +1,4 @@
-import { useId } from "react";
+import { useId, useMemo } from "react";
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { AppIcon } from "@/view/components/AppIcon";
@@ -8,7 +8,8 @@ import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { Tag } from "@/view/components/Tag";
 import { ALERT_CITY, ALERT_MODALITY_SUMMARY } from "@/view/search/alertLabels";
 import { TopAppBar } from "@/view/components/TopAppBar";
-import { tokens } from "@/view/tokens";
+import { tokens, type ColorPalette } from "@/view/tokens";
+import { useTheme } from "@/view/theme/ThemeProvider";
 import { useSearchAlertsViewModel } from "@/viewmodel/useSearchAlertsViewModel";
 
 export type SearchAlertsProps = {
@@ -28,6 +29,8 @@ export type SearchAlertsProps = {
  */
 export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogin, onSearchBooks, onManageAlert }: SearchAlertsProps) {
   const [state, actions] = useSearchAlertsViewModel(userId, initialQuery);
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const errorId = useId();
   const hasError = Boolean(state.error);
   /**
@@ -76,7 +79,7 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
               accessibilityHint={hasError ? state.error ?? undefined : undefined}
               aria-describedby={hasError ? errorId : undefined}
               placeholder="Título ou autor"
-              placeholderTextColor={tokens.colors.secondaryText}
+              placeholderTextColor={colors.secondaryText}
               style={[styles.input, hasError && styles.inputError]}
               maxLength={100}
             />
@@ -97,7 +100,7 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
           </View>
 
           {state.loading ? (
-            <ActivityIndicator color={tokens.colors.action} accessibilityLabel="Carregando alertas" />
+            <ActivityIndicator color={colors.action} accessibilityLabel="Carregando alertas" />
           ) : (
             <FlatList
               data={state.alerts}
@@ -123,7 +126,7 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
                     onPress={() => onManageAlert?.(item.id)}
                     style={styles.row}
                   >
-                    <AppIcon name="bell" size={24} color={tokens.colors.text} />
+                    <AppIcon name="bell" size={24} color={colors.text} />
                     <View style={styles.rowText}>
                       <Text style={styles.title}>{item.query}</Text>
                       <Text style={styles.metaText}>{`${ALERT_MODALITY_SUMMARY(item.modalities)} · ${ALERT_CITY}`}</Text>
@@ -153,8 +156,9 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
   );
 }
 
-const styles = StyleSheet.create({
-  page: { flex: 1, backgroundColor: tokens.colors.background },
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+  page: { flex: 1, backgroundColor: colors.background },
   content: {
     flex: 1,
     width: "100%",
@@ -180,57 +184,57 @@ const styles = StyleSheet.create({
     fontSize: tokens.typography.displayLarge.fontSize,
     lineHeight: tokens.typography.displayLarge.lineHeight,
     fontFamily: tokens.typography.displayLarge.fontFamily,
-    color: tokens.colors.text,
+    color: colors.text,
   },
   formCard: {
-    backgroundColor: tokens.colors.m3.surfaceContainerLow,
+    backgroundColor: colors.m3.surfaceContainerLow,
     borderRadius: tokens.radius.medium,
     borderWidth: 1,
-    borderColor: tokens.colors.m3.outlineVariant,
+    borderColor: colors.m3.outlineVariant,
     padding: tokens.spacing[16],
     gap: tokens.spacing[12],
   },
   formTitle: {
     ...tokens.typography.titleMedium,
     fontFamily: tokens.typography.displayLarge.fontFamily,
-    color: tokens.colors.text,
+    color: colors.text,
   },
   title: {
     ...tokens.typography.titleMedium,
     fontFamily: tokens.typography.displayLarge.fontFamily,
-    color: tokens.colors.text,
+    color: colors.text,
   },
   emptyHeadline: {
     ...tokens.typography.titleLarge,
     fontFamily: tokens.typography.displayLarge.fontFamily,
-    color: tokens.colors.text,
+    color: colors.text,
   },
   emptyTitle: {
     ...tokens.typography.titleMedium,
     fontFamily: tokens.typography.displayLarge.fontFamily,
-    color: tokens.colors.text,
+    color: colors.text,
     textAlign: "center",
   },
   metaText: {
     ...tokens.typography.labelMedium,
-    color: tokens.colors.secondaryText,
+    color: colors.secondaryText,
   },
   body: {
     ...tokens.typography.bodyMedium,
-    color: tokens.colors.secondaryText,
+    color: colors.secondaryText,
   },
   bodyCenter: {
     ...tokens.typography.bodyMedium,
-    color: tokens.colors.secondaryText,
+    color: colors.secondaryText,
     textAlign: "center",
   },
   error: {
     ...tokens.typography.bodyMedium,
-    color: tokens.colors.error,
+    color: colors.error,
   },
   successMessage: {
     ...tokens.typography.bodyMedium,
-    color: tokens.colors.success,
+    color: colors.success,
     fontWeight: "600",
   },
   searchAction: {
@@ -239,7 +243,7 @@ const styles = StyleSheet.create({
   },
   link: {
     ...tokens.typography.bodyMedium,
-    color: tokens.colors.action,
+    color: colors.action,
     fontWeight: "600",
   },
   loginButton: {
@@ -250,15 +254,15 @@ const styles = StyleSheet.create({
   input: {
     minHeight: tokens.accessibility.touchTarget,
     borderWidth: 1,
-    borderColor: tokens.colors.m3.outline,
-    backgroundColor: tokens.colors.surface,
+    borderColor: colors.m3.outline,
+    backgroundColor: colors.surface,
     borderRadius: tokens.radius.small,
     paddingHorizontal: tokens.spacing[12],
     ...tokens.typography.bodyLarge,
-    color: tokens.colors.text,
+    color: colors.text,
   },
   inputError: {
-    borderColor: tokens.colors.error,
+    borderColor: colors.error,
   },
   listContent: {
     gap: tokens.spacing[12],
@@ -280,7 +284,7 @@ const styles = StyleSheet.create({
     gap: tokens.spacing[12],
   },
   activeAlertCard: {
-    backgroundColor: tokens.colors.badge.sale.background,
+    backgroundColor: colors.badge.sale.background,
     borderRadius: tokens.radius.medium,
     padding: tokens.spacing[16],
     gap: tokens.spacing[4],
@@ -289,10 +293,11 @@ const styles = StyleSheet.create({
     fontSize: tokens.typography.titleMedium.fontSize,
     lineHeight: tokens.typography.titleMedium.lineHeight,
     fontFamily: tokens.typography.titleMedium.fontFamily,
-    color: tokens.colors.text,
+    color: colors.text,
   },
   rowText: {
     flex: 1,
     gap: tokens.spacing[6],
   },
-});
+  });
+}

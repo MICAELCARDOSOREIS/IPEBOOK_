@@ -1,5 +1,7 @@
+import { useMemo } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text } from "react-native";
-import { tokens } from "@/view/tokens";
+import { tokens, type ColorPalette } from "@/view/tokens";
+import { useTheme } from "@/view/theme/ThemeProvider";
 
 export type OutlinedButtonProps = {
   label: string;
@@ -23,6 +25,8 @@ export function OutlinedButton({
   accessibilityLabel,
 }: OutlinedButtonProps) {
   const isDisabled = disabled || loading;
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   return (
     <Pressable
       accessibilityRole="button"
@@ -33,7 +37,7 @@ export function OutlinedButton({
       style={[styles.button, isDisabled && styles.disabled]}
     >
       {loading ? (
-        <ActivityIndicator color={tokens.colors.action} accessibilityLabel={loadingLabel ?? label} />
+        <ActivityIndicator color={colors.action} accessibilityLabel={loadingLabel ?? label} />
       ) : (
         <Text style={[styles.label, isDisabled && styles.labelDisabled]}>{label}</Text>
       )}
@@ -41,25 +45,27 @@ export function OutlinedButton({
   );
 }
 
-const styles = StyleSheet.create({
-  button: {
-    minHeight: tokens.accessibility.touchTarget,
-    justifyContent: "center",
-    alignItems: "center",
-    borderRadius: tokens.radius.full,
-    borderWidth: 1,
-    borderColor: tokens.colors.m3.outline,
-    backgroundColor: "transparent",
-    paddingHorizontal: tokens.spacing[24],
-  },
-  disabled: { borderColor: tokens.colors.disabledBackground },
-  label: {
-    color: tokens.colors.action,
-    fontSize: tokens.typography.bodyLarge.fontSize,
-    fontFamily: tokens.typography.bodyLarge.fontFamily,
-    fontWeight: "600",
-  },
-  labelDisabled: { color: tokens.colors.disabledText },
-});
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+    button: {
+      minHeight: tokens.accessibility.touchTarget,
+      justifyContent: "center",
+      alignItems: "center",
+      borderRadius: tokens.radius.full,
+      borderWidth: 1,
+      borderColor: colors.m3.outline,
+      backgroundColor: "transparent",
+      paddingHorizontal: tokens.spacing[24],
+    },
+    disabled: { borderColor: colors.disabledBackground },
+    label: {
+      color: colors.action,
+      fontSize: tokens.typography.bodyLarge.fontSize,
+      fontFamily: tokens.typography.bodyLarge.fontFamily,
+      fontWeight: "600",
+    },
+    labelDisabled: { color: colors.disabledText },
+  });
+}
 
 export default OutlinedButton;

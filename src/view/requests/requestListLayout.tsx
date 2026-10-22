@@ -1,4 +1,4 @@
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useMemo, useState } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import type { RequestStatus } from "@/model/entities/bookRequest";
@@ -11,7 +11,8 @@ import { LoadingState } from "@/view/components/LoadingState";
 import { OfflineState } from "@/view/components/OfflineState";
 import { Tag } from "@/view/components/Tag";
 import { TopAppBar } from "@/view/components/TopAppBar";
-import { tokens } from "@/view/tokens";
+import { tokens, type ColorPalette } from "@/view/tokens";
+import { useTheme } from "@/view/theme/ThemeProvider";
 import { formatPrice } from "@/view/formatPrice";
 
 export const statusLabel: Record<RequestStatus, string> = {
@@ -44,6 +45,8 @@ export function RequestListLayout({
   onBack,
   renderExtra,
 }: Props) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { isOnline } = useNetworkStatus();
   const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "accepted" | "history">("all");
 
@@ -178,17 +181,18 @@ export function RequestListLayout({
   );
 }
 
-export const requestStyles = StyleSheet.create({
+export function createRequestStyles(colors: ColorPalette) {
+  return StyleSheet.create({
   actions: { flexDirection: "row", gap: tokens.spacing[12], marginTop: tokens.spacing[8] },
   primary: {
     minHeight: tokens.accessibility.touchTarget,
     justifyContent: "center",
     paddingHorizontal: tokens.spacing[20],
     borderRadius: tokens.radius.full,
-    backgroundColor: tokens.colors.action,
+    backgroundColor: colors.action,
   },
   primaryText: {
-    color: tokens.colors.surface,
+    color: colors.surface,
     ...tokens.typography.bodyLarge,
     fontWeight: "600",
   },
@@ -198,25 +202,28 @@ export const requestStyles = StyleSheet.create({
     paddingHorizontal: tokens.spacing[20],
     borderRadius: tokens.radius.full,
     borderWidth: 1,
-    borderColor: tokens.colors.m3.outline,
+    borderColor: colors.m3.outline,
   },
   secondaryText: {
-    color: tokens.colors.action,
+    color: colors.action,
     ...tokens.typography.bodyLarge,
     fontWeight: "600",
   },
   meta: {
     ...tokens.typography.bodyMedium,
-    color: tokens.colors.secondaryText,
+    color: colors.secondaryText,
   },
-  error: {
-    ...tokens.typography.bodyMedium,
-    color: tokens.colors.error,
-  },
-});
+    error: {
+      ...tokens.typography.bodyMedium,
+      color: colors.error,
+    },
+  });
+}
 
-const styles = StyleSheet.create({
-  page: { flex: 1, backgroundColor: tokens.colors.background },
+function createStyles(colors: ColorPalette) {
+  const requestStyles = createRequestStyles(colors);
+  return StyleSheet.create({
+  page: { flex: 1, backgroundColor: colors.background },
   content: {
     flex: 1,
     width: "100%",
@@ -231,14 +238,14 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
   },
   link: {
-    color: tokens.colors.action,
+    color: colors.action,
     ...tokens.typography.bodyMedium,
     fontWeight: "600",
   },
   heading: {
     ...tokens.typography.titleLarge,
     fontFamily: tokens.typography.displayLarge.fontFamily,
-    color: tokens.colors.text,
+    color: colors.text,
     marginBottom: tokens.spacing[8],
   },
   heroBox: {
@@ -257,32 +264,32 @@ const styles = StyleSheet.create({
     paddingHorizontal: tokens.spacing[12],
     paddingVertical: tokens.spacing[6],
     borderRadius: tokens.radius.full,
-    backgroundColor: tokens.colors.surface,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: tokens.colors.m3.outlineVariant,
+    borderColor: colors.m3.outlineVariant,
   },
   filterChipSelected: {
-    backgroundColor: tokens.colors.action,
-    borderColor: tokens.colors.action,
+    backgroundColor: colors.action,
+    borderColor: colors.action,
   },
   filterChipText: {
     ...tokens.typography.labelMedium,
-    color: tokens.colors.text,
+    color: colors.text,
   },
   filterChipTextSelected: {
-    color: tokens.colors.surface,
+    color: colors.surface,
     fontWeight: "600",
   },
   heroTitle: {
     fontSize: tokens.typography.displayLarge.fontSize,
     lineHeight: tokens.typography.displayLarge.lineHeight,
     fontFamily: tokens.typography.displayLarge.fontFamily,
-    color: tokens.colors.text,
+    color: colors.text,
   },
   infoCard: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: tokens.colors.soft,
+    backgroundColor: colors.soft,
     borderRadius: tokens.radius.medium,
     padding: tokens.spacing[16],
     gap: tokens.spacing[12],
@@ -291,7 +298,7 @@ const styles = StyleSheet.create({
   infoCardTitle: {
     ...tokens.typography.titleMedium,
     fontFamily: tokens.typography.displayLarge.fontFamily,
-    color: tokens.colors.actionDeep,
+    color: colors.actionDeep,
   },
   listContent: {
     gap: tokens.spacing[12],
@@ -305,7 +312,7 @@ const styles = StyleSheet.create({
   emptyTitle: {
     ...tokens.typography.titleMedium,
     fontFamily: tokens.typography.displayLarge.fontFamily,
-    color: tokens.colors.text,
+    color: colors.text,
     textAlign: "center",
   },
   bookRow: {
@@ -332,17 +339,17 @@ const styles = StyleSheet.create({
   price: {
     ...tokens.typography.bodyMedium,
     fontWeight: "600",
-    color: tokens.colors.action,
+    color: colors.action,
   },
   body: {
     ...tokens.typography.bodyMedium,
-    color: tokens.colors.secondaryText,
+    color: colors.secondaryText,
   },
   item: {
-    backgroundColor: tokens.colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: tokens.radius.medium,
     borderWidth: 1,
-    borderColor: tokens.colors.m3.outlineVariant,
+    borderColor: colors.m3.outlineVariant,
     padding: tokens.spacing[16],
     gap: tokens.spacing[12],
   },
@@ -350,7 +357,7 @@ const styles = StyleSheet.create({
     flex: 1,
     ...tokens.typography.titleMedium,
     fontFamily: tokens.typography.displayLarge.fontFamily,
-    color: tokens.colors.text,
+    color: colors.text,
   },
   badge: {
     borderRadius: tokens.radius.full,
@@ -360,17 +367,18 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   pending: {
-    backgroundColor: tokens.colors.badge.trade.background,
-    color: tokens.colors.badge.trade.text,
+    backgroundColor: colors.badge.trade.background,
+    color: colors.badge.trade.text,
   },
   accepted: {
-    backgroundColor: tokens.colors.badge.donation.background,
-    color: tokens.colors.badge.donation.text,
+    backgroundColor: colors.badge.donation.background,
+    color: colors.badge.donation.text,
   },
   rejected: {
-    backgroundColor: tokens.colors.disabledBackground,
-    color: tokens.colors.secondaryText,
+    backgroundColor: colors.disabledBackground,
+    color: colors.secondaryText,
   },
   primary: requestStyles.primary,
   primaryText: requestStyles.primaryText,
-});
+  });
+}

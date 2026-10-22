@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { BOOK_CONDITION_LABELS } from "@/model/entities/book";
@@ -12,7 +12,8 @@ import { OfflineState } from "@/view/components/OfflineState";
 import { Tag } from "@/view/components/Tag";
 import { TextButton } from "@/view/components/TextButton";
 import { TopAppBar } from "@/view/components/TopAppBar";
-import { tokens } from "@/view/tokens";
+import { tokens, type ColorPalette } from "@/view/tokens";
+import { useTheme } from "@/view/theme/ThemeProvider";
 import { formatPrice } from "@/view/formatPrice";
 import { useFavoritesViewModel } from "@/viewmodel/useFavoritesViewModel";
 import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
@@ -39,6 +40,8 @@ export default function Favorites({
   onExploreBooks,
 }: FavoritesProps) {
   const [state, actions] = useFavoritesViewModel(userId);
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   // A aba "Alertas" de `02.06` mostra a contagem ao lado do rótulo, como "Livros (n)".
   const [alertsState] = useSearchAlertsViewModel(userId);
   const { isOnline } = useNetworkStatus();
@@ -151,7 +154,7 @@ export default function Favorites({
                   onPress={() => void actions.removeFavorite(item.id)}
                   style={styles.favoriteButton}
                 >
-                  <AppIcon name="heart" size={24} color={tokens.colors.action} />
+                  <AppIcon name="heart" size={24} color={colors.action} />
                 </Pressable>
               </View>
             );
@@ -166,8 +169,9 @@ export default function Favorites({
   );
 }
 
-const styles = StyleSheet.create({
-  page: { flex: 1, backgroundColor: tokens.colors.background },
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+  page: { flex: 1, backgroundColor: colors.background },
   tabs: {
     flexDirection: "row",
     width: "100%",
@@ -176,7 +180,7 @@ const styles = StyleSheet.create({
     gap: tokens.spacing[8],
     paddingHorizontal: tokens.spacing[16],
     borderBottomWidth: 1,
-    borderBottomColor: tokens.colors.m3.outlineVariant,
+    borderBottomColor: colors.m3.outlineVariant,
   },
   tab: {
     minHeight: tokens.accessibility.touchTarget,
@@ -185,13 +189,13 @@ const styles = StyleSheet.create({
     borderBottomWidth: 2,
     borderBottomColor: "transparent",
   },
-  tabActive: { borderBottomColor: tokens.colors.action },
+  tabActive: { borderBottomColor: colors.action },
   tabLabel: {
     fontSize: tokens.typography.bodyMedium.fontSize,
     fontFamily: tokens.typography.bodyMedium.fontFamily,
-    color: tokens.colors.secondaryText,
+    color: colors.secondaryText,
   },
-  tabLabelActive: { color: tokens.colors.action, fontWeight: "600" },
+  tabLabelActive: { color: colors.action, fontWeight: "600" },
   list: {
     width: "100%",
     maxWidth: 720,
@@ -211,21 +215,21 @@ const styles = StyleSheet.create({
   emptyHeadline: {
     ...tokens.typography.titleLarge,
     fontFamily: tokens.typography.displayLarge.fontFamily,
-    color: tokens.colors.text,
+    color: colors.text,
   },
   emptyHint: {
     ...tokens.typography.bodyLarge,
-    color: tokens.colors.secondaryText,
+    color: colors.secondaryText,
   },
   statusTitle: {
     fontSize: tokens.typography.titleMedium.fontSize,
     lineHeight: tokens.typography.titleMedium.lineHeight,
     fontFamily: tokens.typography.displayLarge.fontFamily,
     fontWeight: tokens.typography.titleMedium.fontWeight,
-    color: tokens.colors.text,
+    color: colors.text,
   },
   link: {
-    color: tokens.colors.action,
+    color: colors.action,
     fontFamily: tokens.typography.bodyMedium.fontFamily,
     fontWeight: "600",
     padding: tokens.spacing[12],
@@ -234,7 +238,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     borderBottomWidth: 1,
-    borderBottomColor: tokens.colors.m3.outlineVariant,
+    borderBottomColor: colors.m3.outlineVariant,
     paddingVertical: tokens.spacing[12],
   },
   rowMain: {
@@ -251,19 +255,19 @@ const styles = StyleSheet.create({
     lineHeight: tokens.typography.titleMedium.lineHeight,
     fontFamily: tokens.typography.titleMedium.fontFamily,
     fontWeight: tokens.typography.titleMedium.fontWeight,
-    color: tokens.colors.text,
+    color: colors.text,
   },
   bookDetails: {
     fontSize: tokens.typography.bodyMedium.fontSize,
     lineHeight: tokens.typography.bodyMedium.lineHeight,
     fontFamily: tokens.typography.bodyMedium.fontFamily,
-    color: tokens.colors.secondaryText,
+    color: colors.secondaryText,
   },
   price: {
     fontSize: tokens.typography.bodyMedium.fontSize,
     fontFamily: tokens.typography.bodyMedium.fontFamily,
     fontWeight: "600",
-    color: tokens.colors.action,
+    color: colors.action,
   },
   favoriteButton: {
     minWidth: tokens.accessibility.touchTarget,
@@ -271,4 +275,5 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-});
+  });
+}

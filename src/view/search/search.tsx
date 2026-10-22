@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useSearchViewModel } from "@/viewmodel/useSearchViewModel";
 import type { SearchModalityFilter, SearchPriceRange, SearchSortOption } from "@/viewmodel/useSearchViewModel";
-import { tokens } from "@/view/tokens";
+import { tokens, type ColorPalette } from "@/view/tokens";
+import { useTheme } from "@/view/theme/ThemeProvider";
 import { BookCover } from "@/view/components/BookCover";
 import { ErrorState } from "@/view/components/ErrorState";
 import { SearchField } from "@/view/components/SearchField";
@@ -55,6 +56,8 @@ const SORT_OPTIONS: Array<{ id: SearchSortOption; label: string }> = [
 /** Busca e Exploração (US3, T019, Spec 028, Issue #93): filtra por termo, modalidade, categoria e preço. */
 export default function Search({ onNavigateToBookDetail, onNavigateToAlerts, initialModality }: SearchProps) {
   const [auth] = useAuthViewModel();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [state, actions] = useSearchViewModel(auth.user?.id ?? null);
   const { isOnline } = useNetworkStatus();
   const [confirmingClear, setConfirmingClear] = useState(false);
@@ -256,34 +259,36 @@ export default function Search({ onNavigateToBookDetail, onNavigateToAlerts, ini
   );
 }
 
-const styles = StyleSheet.create({
-  page: { flex: 1, backgroundColor: tokens.colors.background },
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+  page: { flex: 1, backgroundColor: colors.background },
   content: { flex: 1, width: "100%", maxWidth: 720, alignSelf: "center", padding: tokens.spacing[24], gap: tokens.spacing[16] },
   headerRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  heading: { fontSize: tokens.typography.titleLarge.fontSize, fontWeight: tokens.typography.titleLarge.fontWeight, color: tokens.colors.action },
+  heading: { fontSize: tokens.typography.titleLarge.fontSize, fontWeight: tokens.typography.titleLarge.fontWeight, color: colors.action },
   clearFiltersButton: { minHeight: tokens.accessibility.touchTarget, justifyContent: "center", paddingHorizontal: tokens.spacing[8] },
-  clearFiltersText: { color: tokens.colors.error, fontSize: tokens.typography.bodyMedium.fontSize, fontWeight: "600" },
+  clearFiltersText: { color: colors.error, fontSize: tokens.typography.bodyMedium.fontSize, fontWeight: "600" },
   filterSection: { gap: tokens.spacing[6] },
-  filterLabel: { fontSize: tokens.typography.labelSmall.fontSize, fontWeight: "600", color: tokens.colors.secondaryText },
+  filterLabel: { fontSize: tokens.typography.labelSmall.fontSize, fontWeight: "600", color: colors.secondaryText },
   filtersRow: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[8] },
-  body: { fontSize: tokens.typography.bodyLarge.fontSize, lineHeight: 25, color: tokens.colors.secondaryText },
+  body: { fontSize: tokens.typography.bodyLarge.fontSize, lineHeight: 25, color: colors.secondaryText },
   list: { paddingBottom: tokens.spacing[24] },
   empty: { alignItems: "center", paddingTop: tokens.spacing[32], gap: tokens.spacing[8] },
-  emptyTitle: { fontSize: 19, fontWeight: "600", color: tokens.colors.action },
-  emptyActionButton: { minHeight: tokens.accessibility.touchTarget, justifyContent: "center", alignItems: "center", backgroundColor: tokens.colors.soft, borderRadius: tokens.radius.small, paddingHorizontal: tokens.spacing[16] },
-  emptyActionText: { color: tokens.colors.action, fontWeight: "600", fontSize: 15 },
-  alertLink: { color: tokens.colors.action, fontWeight: "600", padding: tokens.spacing[12] },
+  emptyTitle: { fontSize: 19, fontWeight: "600", color: colors.action },
+  emptyActionButton: { minHeight: tokens.accessibility.touchTarget, justifyContent: "center", alignItems: "center", backgroundColor: colors.soft, borderRadius: tokens.radius.small, paddingHorizontal: tokens.spacing[16] },
+  emptyActionText: { color: colors.action, fontWeight: "600", fontSize: 15 },
+  alertLink: { color: colors.action, fontWeight: "600", padding: tokens.spacing[12] },
   historySection: { gap: tokens.spacing[8] },
   historyHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  historyTitle: { fontSize: tokens.typography.labelMedium.fontSize, fontWeight: "600", color: tokens.colors.secondaryText },
+  historyTitle: { fontSize: tokens.typography.labelMedium.fontSize, fontWeight: "600", color: colors.secondaryText },
   historyChips: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[8] },
-  historyChip: { minHeight: tokens.accessibility.touchTarget, justifyContent: "center", borderRadius: tokens.radius.full, backgroundColor: tokens.colors.soft, paddingHorizontal: tokens.spacing[16] },
-  historyChipText: { color: tokens.colors.text, fontSize: tokens.typography.bodyLarge.fontSize },
-  row: { flexDirection: "row", gap: tokens.spacing[12], paddingVertical: 18, borderBottomWidth: 1, borderBottomColor: tokens.colors.border },
+  historyChip: { minHeight: tokens.accessibility.touchTarget, justifyContent: "center", borderRadius: tokens.radius.full, backgroundColor: colors.soft, paddingHorizontal: tokens.spacing[16] },
+  historyChipText: { color: colors.text, fontSize: tokens.typography.bodyLarge.fontSize },
+  row: { flexDirection: "row", gap: tokens.spacing[12], paddingVertical: 18, borderBottomWidth: 1, borderBottomColor: colors.border },
   rowMain: { flex: 1, flexDirection: "row", gap: tokens.spacing[12] },
   rowInfo: { flex: 1, gap: 4 },
   rowHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: tokens.spacing[12] },
-  rowTitle: { fontSize: 19, fontWeight: "600", color: tokens.colors.action },
-  categoryBadge: { fontSize: tokens.typography.labelSmall.fontSize, color: tokens.colors.secondaryText, fontStyle: "italic" },
-  priceText: { fontSize: tokens.typography.bodyMedium.fontSize, fontWeight: "600", color: tokens.colors.action },
-});
+  rowTitle: { fontSize: 19, fontWeight: "600", color: colors.action },
+  categoryBadge: { fontSize: tokens.typography.labelSmall.fontSize, color: colors.secondaryText, fontStyle: "italic" },
+  priceText: { fontSize: tokens.typography.bodyMedium.fontSize, fontWeight: "600", color: colors.action },
+  });
+}

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import type { BookCondition, BookModality } from "@/model/entities/book";
@@ -8,7 +8,8 @@ import {
   MAX_BOOK_DESCRIPTION_LENGTH,
 } from "@/model/entities/book";
 import { PIRIPIRI_NEIGHBORHOODS } from "@/model/entities/location";
-import { tokens } from "@/view/tokens";
+import { tokens, type ColorPalette } from "@/view/tokens";
+import { useTheme } from "@/view/theme/ThemeProvider";
 import { AddPhotoCard } from "@/view/components/AddPhotoCard";
 import { Chip } from "@/view/components/Chip";
 import { FilledButton } from "@/view/components/FilledButton";
@@ -41,6 +42,8 @@ export default function EditListing({
   onCancel,
 }: EditListingProps) {
   const [state, actions] = useEditListingViewModel(bookId, sessionUserId);
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [showPhotoInput, setShowPhotoInput] = useState(false);
   const remainingDescriptionChars = MAX_BOOK_DESCRIPTION_LENGTH - state.description.length;
   const descriptionTooLong = remainingDescriptionChars < 0;
@@ -55,7 +58,7 @@ export default function EditListing({
       <SafeAreaView style={styles.page}>
         <TopAppBar title="Editar anúncio" onBack={() => onCancel?.()} />
         <View style={styles.statusContainer}>
-          <ActivityIndicator color={tokens.colors.action} accessibilityLabel="Carregando anúncio" />
+          <ActivityIndicator color={colors.action} accessibilityLabel="Carregando anúncio" />
           <Text style={styles.statusText}>Carregando dados do anúncio…</Text>
         </View>
       </SafeAreaView>
@@ -283,10 +286,11 @@ export default function EditListing({
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
   page: {
     flex: 1,
-    backgroundColor: tokens.colors.background,
+    backgroundColor: colors.background,
   },
   scrollContent: {
     flexGrow: 1,
@@ -308,7 +312,7 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontSize: tokens.typography.bodyMedium.fontSize,
-    color: tokens.colors.secondaryText,
+    color: colors.secondaryText,
     textAlign: "center",
   },
   backButtonContainer: {
@@ -318,7 +322,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     ...tokens.typography.bodyLarge,
-    color: tokens.colors.secondaryText,
+    color: colors.secondaryText,
     marginTop: tokens.spacing[4],
   },
   photoSection: {
@@ -327,7 +331,7 @@ const styles = StyleSheet.create({
   sectionLabel: {
     fontSize: tokens.typography.labelMedium.fontSize,
     fontWeight: tokens.typography.labelMedium.fontWeight,
-    color: tokens.colors.secondaryText,
+    color: colors.secondaryText,
   },
   photoRow: {
     flexDirection: "row",
@@ -346,11 +350,11 @@ const styles = StyleSheet.create({
   photoHelperTitle: {
     ...tokens.typography.bodyMedium,
     fontWeight: "600",
-    color: tokens.colors.text,
+    color: colors.text,
   },
   photoHelperText: {
     ...tokens.typography.labelMedium,
-    color: tokens.colors.secondaryText,
+    color: colors.secondaryText,
   },
   field: {
     gap: tokens.spacing[8],
@@ -362,23 +366,23 @@ const styles = StyleSheet.create({
   locationContainer: {
     paddingVertical: tokens.spacing[12],
     paddingHorizontal: tokens.spacing[16],
-    backgroundColor: tokens.colors.soft,
+    backgroundColor: colors.soft,
     borderRadius: tokens.radius.small,
     borderWidth: 1,
-    borderColor: tokens.colors.action,
+    borderColor: colors.action,
   },
   locationText: {
     fontSize: tokens.typography.bodyMedium.fontSize,
-    color: tokens.colors.actionDeep,
+    color: colors.actionDeep,
     fontWeight: "600",
   },
   errorText: {
     fontSize: tokens.typography.bodyMedium.fontSize,
-    color: tokens.colors.error,
+    color: colors.error,
   },
   successText: {
     fontSize: tokens.typography.bodyMedium.fontSize,
-    color: tokens.colors.success,
+    color: colors.success,
     fontWeight: "600",
   },
   actionsContainer: {
@@ -388,4 +392,5 @@ const styles = StyleSheet.create({
   cancelContainer: {
     opacity: 0.85,
   },
-});
+  });
+}

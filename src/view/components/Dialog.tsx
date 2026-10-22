@@ -1,6 +1,7 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { ActivityIndicator, Modal, Platform, Pressable, StyleSheet, Text, View } from "react-native";
-import { tokens } from "@/view/tokens";
+import { tokens, type ColorPalette } from "@/view/tokens";
+import { useTheme } from "@/view/theme/ThemeProvider";
 
 export type FocusableElement = { focus: () => void };
 
@@ -44,7 +45,8 @@ export type DialogProps = {
 
 /**
  * Token scrim de design-system/04-componentes/dialogo.md (#00000052).
- * Véu translúcido escuro que cobre o conteúdo atrás do diálogo.
+ * Véu translúcido escuro que cobre o conteúdo atrás do diálogo — mesmo valor nos dois temas
+ * (`design-system/tokens.json`: "scrim" varia pouco entre claro/escuro, dentro da tolerância).
  */
 const SCRIM_COLOR = "#00000052";
 
@@ -66,6 +68,8 @@ export function Dialog({
   const cancelRef = useRef<FocusableElement | null>(null);
   const confirmRef = useRef<FocusableElement | null>(null);
   const triggerRef = useRef<FocusableElement | null>(null);
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   // Gestão de foco (Web): o diálogo prende o foco enquanto aberto e o devolve ao
   // gatilho ao fechar (design-system/06-acessibilidade.md e 04-componentes/dialogo.md).
@@ -155,7 +159,7 @@ export function Dialog({
               ]}
             >
               {loading ? (
-                <ActivityIndicator color={tokens.colors.surface} />
+                <ActivityIndicator color={colors.surface} />
               ) : (
                 <Text style={styles.confirmText}>{confirmLabel}</Text>
               )}
@@ -167,78 +171,80 @@ export function Dialog({
   );
 }
 
-const styles = StyleSheet.create({
-  scrim: {
-    flex: 1,
-    backgroundColor: SCRIM_COLOR,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: tokens.spacing[24],
-  },
-  card: {
-    width: "100%",
-    maxWidth: 420,
-    backgroundColor: tokens.colors.surface,
-    borderRadius: tokens.radius.extraLarge,
-    padding: tokens.spacing[24],
-    gap: tokens.spacing[16],
-    // Elevação M3 level 3 (design-system/04-componentes/dialogo.md)
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.18,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  title: {
-    color: tokens.colors.text,
-    ...tokens.typography.titleMedium,
-  },
-  message: {
-    color: tokens.colors.secondaryText,
-    ...tokens.typography.bodyMedium,
-  },
-  actions: {
-    flexDirection: "row",
-    justifyContent: "flex-end",
-    alignItems: "center",
-    gap: tokens.spacing[8],
-    marginTop: tokens.spacing[8],
-  },
-  cancelButton: {
-    minHeight: tokens.accessibility.touchTarget,
-    minWidth: tokens.accessibility.touchTarget,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: tokens.spacing[16],
-    borderRadius: tokens.radius.full,
-  },
-  cancelText: {
-    color: tokens.colors.action,
-    ...tokens.typography.bodyMedium,
-    fontWeight: "600",
-  },
-  confirmButton: {
-    minHeight: tokens.accessibility.touchTarget,
-    minWidth: tokens.accessibility.touchTarget,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: tokens.spacing[20],
-    borderRadius: tokens.radius.full,
-  },
-  confirmDefault: {
-    backgroundColor: tokens.colors.action,
-  },
-  confirmDestructive: {
-    backgroundColor: tokens.colors.error,
-  },
-  confirmDisabled: {
-    opacity: 0.6,
-  },
-  confirmText: {
-    color: tokens.colors.surface,
-    ...tokens.typography.bodyMedium,
-    fontWeight: "600",
-  },
-});
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+    scrim: {
+      flex: 1,
+      backgroundColor: SCRIM_COLOR,
+      justifyContent: "center",
+      alignItems: "center",
+      padding: tokens.spacing[24],
+    },
+    card: {
+      width: "100%",
+      maxWidth: 420,
+      backgroundColor: colors.surface,
+      borderRadius: tokens.radius.extraLarge,
+      padding: tokens.spacing[24],
+      gap: tokens.spacing[16],
+      // Elevação M3 level 3 (design-system/04-componentes/dialogo.md)
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 3 },
+      shadowOpacity: 0.18,
+      shadowRadius: 8,
+      elevation: 3,
+    },
+    title: {
+      color: colors.text,
+      ...tokens.typography.titleMedium,
+    },
+    message: {
+      color: colors.secondaryText,
+      ...tokens.typography.bodyMedium,
+    },
+    actions: {
+      flexDirection: "row",
+      justifyContent: "flex-end",
+      alignItems: "center",
+      gap: tokens.spacing[8],
+      marginTop: tokens.spacing[8],
+    },
+    cancelButton: {
+      minHeight: tokens.accessibility.touchTarget,
+      minWidth: tokens.accessibility.touchTarget,
+      justifyContent: "center",
+      alignItems: "center",
+      paddingHorizontal: tokens.spacing[16],
+      borderRadius: tokens.radius.full,
+    },
+    cancelText: {
+      color: colors.action,
+      ...tokens.typography.bodyMedium,
+      fontWeight: "600",
+    },
+    confirmButton: {
+      minHeight: tokens.accessibility.touchTarget,
+      minWidth: tokens.accessibility.touchTarget,
+      justifyContent: "center",
+      alignItems: "center",
+      paddingHorizontal: tokens.spacing[20],
+      borderRadius: tokens.radius.full,
+    },
+    confirmDefault: {
+      backgroundColor: colors.action,
+    },
+    confirmDestructive: {
+      backgroundColor: colors.error,
+    },
+    confirmDisabled: {
+      opacity: 0.6,
+    },
+    confirmText: {
+      color: colors.surface,
+      ...tokens.typography.bodyMedium,
+      fontWeight: "600",
+    },
+  });
+}
 
 export default Dialog;

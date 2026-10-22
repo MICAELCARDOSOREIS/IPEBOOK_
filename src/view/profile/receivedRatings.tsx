@@ -1,10 +1,11 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useReceivedRatingsViewModel } from "@/viewmodel/useReceivedRatingsViewModel";
 import { TopAppBar } from "@/view/components/TopAppBar";
-import { tokens } from "@/view/tokens";
+import { tokens, type ColorPalette } from "@/view/tokens";
+import { useTheme } from "@/view/theme/ThemeProvider";
 
 export type ReceivedRatingsProps = {
   sessionUserId: string | null;
@@ -25,6 +26,8 @@ function stars(score: number): string {
 /** Figma `07.03 · Avaliações recebidas` (`145:2486` / Web `370:16701`). */
 export function ReceivedRatings({ sessionUserId, onBack }: ReceivedRatingsProps) {
   const [state, actions] = useReceivedRatingsViewModel(sessionUserId);
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   return (
     <SafeAreaView style={styles.page}>
@@ -33,7 +36,7 @@ export function ReceivedRatings({ sessionUserId, onBack }: ReceivedRatingsProps)
         <View style={styles.content}>
           {state.loading ? (
             <View style={styles.status}>
-              <ActivityIndicator color={tokens.colors.action} accessibilityLabel="Carregando avaliações" />
+              <ActivityIndicator color={colors.action} accessibilityLabel="Carregando avaliações" />
             </View>
           ) : state.error ? (
             <View style={styles.status}>
@@ -90,34 +93,36 @@ export default function ReceivedRatingsScreen({ onBack, onNavigateToSignIn }: Re
   return <ReceivedRatings sessionUserId={authState.user.id} onBack={onBack} />;
 }
 
-const styles = StyleSheet.create({
-  page: { flex: 1, backgroundColor: tokens.colors.background },
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+  page: { flex: 1, backgroundColor: colors.background },
   scroll: { flexGrow: 1 },
   content: { width: "100%", maxWidth: 720, alignSelf: "center", padding: tokens.spacing[24] },
   status: { alignItems: "center", gap: tokens.spacing[16], paddingTop: tokens.spacing[48] },
-  errorText: { ...tokens.typography.bodyMedium, color: tokens.colors.error, textAlign: "center" },
-  emptyText: { ...tokens.typography.bodyMedium, color: tokens.colors.secondaryText, textAlign: "center" },
+  errorText: { ...tokens.typography.bodyMedium, color: colors.error, textAlign: "center" },
+  emptyText: { ...tokens.typography.bodyMedium, color: colors.secondaryText, textAlign: "center" },
   retryButton: {
     paddingVertical: tokens.spacing[8],
     paddingHorizontal: tokens.spacing[24],
     borderRadius: tokens.radius.full,
-    backgroundColor: tokens.colors.surface,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: tokens.colors.m3.outline,
+    borderColor: colors.m3.outline,
     minHeight: tokens.accessibility.touchTarget,
     justifyContent: "center",
   },
-  retryText: { ...tokens.typography.bodyMedium, color: tokens.colors.action, fontWeight: "600" },
+  retryText: { ...tokens.typography.bodyMedium, color: colors.action, fontWeight: "600" },
   list: { gap: tokens.spacing[12] },
   card: {
-    backgroundColor: tokens.colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: tokens.radius.medium,
     borderWidth: 1,
-    borderColor: tokens.colors.m3.outlineVariant,
+    borderColor: colors.m3.outlineVariant,
     padding: tokens.spacing[16],
     gap: tokens.spacing[4],
   },
-  stars: { fontSize: 20, color: tokens.colors.highlight },
-  raterName: { ...tokens.typography.titleMedium, fontFamily: tokens.typography.displayLarge.fontFamily, color: tokens.colors.text },
-  date: { ...tokens.typography.labelMedium, color: tokens.colors.secondaryText },
-});
+  stars: { fontSize: 20, color: colors.highlight },
+  raterName: { ...tokens.typography.titleMedium, fontFamily: tokens.typography.displayLarge.fontFamily, color: colors.text },
+  date: { ...tokens.typography.labelMedium, color: colors.secondaryText },
+  });
+}

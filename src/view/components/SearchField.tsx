@@ -1,5 +1,7 @@
+import { useMemo } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
-import { tokens } from "@/view/tokens";
+import { tokens, type ColorPalette } from "@/view/tokens";
+import { useTheme } from "@/view/theme/ThemeProvider";
 
 export type SearchFieldProps = {
   value: string;
@@ -10,6 +12,8 @@ export type SearchFieldProps = {
 
 /** Campo de busca do design system (campo-de-busca.md): pílula com botão Limpar. */
 export function SearchField({ value, onChangeText, placeholder = "Busque por título ou autor", onSubmitEditing }: SearchFieldProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   return (
     <View style={styles.container}>
       <TextInput
@@ -17,6 +21,7 @@ export function SearchField({ value, onChangeText, placeholder = "Busque por tí
         onChangeText={onChangeText}
         onSubmitEditing={onSubmitEditing}
         placeholder={placeholder}
+        placeholderTextColor={colors.secondaryText}
         accessibilityLabel="Buscar livros"
         style={styles.input}
       />
@@ -35,23 +40,25 @@ export function SearchField({ value, onChangeText, placeholder = "Busque por tí
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: "row",
-    alignItems: "center",
-    height: 56,
-    backgroundColor: tokens.colors.soft,
-    borderRadius: tokens.radius.full,
-    paddingHorizontal: tokens.spacing[16],
-  },
-  input: { flex: 1, color: tokens.colors.text, fontSize: tokens.typography.bodyLarge.fontSize },
-  clearButton: {
-    minHeight: tokens.accessibility.touchTarget,
-    minWidth: tokens.accessibility.touchTarget,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  clearIcon: { color: tokens.colors.secondaryText, fontSize: 16 },
-});
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+    container: {
+      flexDirection: "row",
+      alignItems: "center",
+      height: 56,
+      backgroundColor: colors.soft,
+      borderRadius: tokens.radius.full,
+      paddingHorizontal: tokens.spacing[16],
+    },
+    input: { flex: 1, color: colors.text, fontSize: tokens.typography.bodyLarge.fontSize },
+    clearButton: {
+      minHeight: tokens.accessibility.touchTarget,
+      minWidth: tokens.accessibility.touchTarget,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    clearIcon: { color: colors.secondaryText, fontSize: 16 },
+  });
+}
 
 export default SearchField;

@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useBookDetailViewModel } from "@/viewmodel/useBookDetailViewModel";
 import { useRequestNegotiationViewModel } from "@/viewmodel/useRequestNegotiationViewModel";
 import { useShareListingViewModel } from "@/viewmodel/useShareListingViewModel";
-import { tokens } from "@/view/tokens";
+import { tokens, type ColorPalette } from "@/view/tokens";
+import { useTheme } from "@/view/theme/ThemeProvider";
 import { BookCover } from "@/view/components/BookCover";
 import { FilledButton } from "@/view/components/FilledButton";
 import { Snackbar } from "@/view/components/Snackbar";
@@ -13,11 +14,13 @@ import { TopAppBar } from "@/view/components/TopAppBar";
 import { PhotoGallery } from "@/view/listings/photoGallery";
 import type { BookModality } from "@/model/entities/book";
 
-const modalityTag: Record<BookModality, { background: string; text: string; label: string }> = {
-  sale: { background: tokens.colors.badge.sale.background, text: tokens.colors.badge.sale.text, label: "Venda" },
-  trade: { background: tokens.colors.badge.trade.background, text: tokens.colors.badge.trade.text, label: "Troca" },
-  donation: { background: tokens.colors.badge.donation.background, text: tokens.colors.badge.donation.text, label: "Doação" },
-};
+function createModalityTag(colors: ColorPalette): Record<BookModality, { background: string; text: string; label: string }> {
+  return {
+    sale: { background: colors.badge.sale.background, text: colors.badge.sale.text, label: "Venda" },
+    trade: { background: colors.badge.trade.background, text: colors.badge.trade.text, label: "Troca" },
+    donation: { background: colors.badge.donation.background, text: colors.badge.donation.text, label: "Doação" },
+  };
+}
 
 export type BookDetailProps = {
   bookId: string;
@@ -32,6 +35,9 @@ export default function BookDetail({
   onNavigateToUserProfile,
   onNavigateToReport,
 }: BookDetailProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+  const modalityTag = useMemo(() => createModalityTag(colors), [colors]);
   const [authState] = useAuthViewModel();
   const sessionUserId = authState.user?.id ?? null;
   const [state, actions] = useBookDetailViewModel(bookId, undefined, undefined, sessionUserId);
@@ -47,7 +53,7 @@ export default function BookDetail({
       <View style={styles.content}>
         {state.loading ? (
           <View style={styles.status}>
-            <ActivityIndicator color={tokens.colors.action} accessibilityLabel="Carregando anúncio" />
+            <ActivityIndicator color={colors.action} accessibilityLabel="Carregando anúncio" />
           </View>
         ) : state.error ? (
           <Text accessibilityRole="alert" style={styles.body}>{state.error}</Text>
@@ -163,18 +169,19 @@ export default function BookDetail({
   );
 }
 
-const styles = StyleSheet.create({
-  page: { flex: 1, backgroundColor: tokens.colors.background },
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+  page: { flex: 1, backgroundColor: colors.background },
   content: { flex: 1, width: "100%", maxWidth: 720, alignSelf: "center", padding: tokens.spacing[24] },
   status: { alignItems: "center", paddingTop: tokens.spacing[48] },
   card: { gap: tokens.spacing[12], alignItems: "flex-start" },
-  title: { fontSize: tokens.typography.titleLarge.fontSize, fontWeight: tokens.typography.titleLarge.fontWeight, color: tokens.colors.action },
-  body: { fontSize: tokens.typography.bodyLarge.fontSize, lineHeight: 25, color: tokens.colors.secondaryText },
+  title: { fontSize: tokens.typography.titleLarge.fontSize, fontWeight: tokens.typography.titleLarge.fontWeight, color: colors.action },
+  body: { fontSize: tokens.typography.bodyLarge.fontSize, lineHeight: 25, color: colors.secondaryText },
   tag: { borderRadius: tokens.radius.small, paddingHorizontal: tokens.spacing[12], paddingVertical: tokens.spacing[6] },
   tagText: { fontSize: tokens.typography.labelMedium.fontSize, fontWeight: tokens.typography.labelMedium.fontWeight },
-  price: { fontSize: tokens.typography.titleMedium.fontSize, fontWeight: "600", color: tokens.colors.text },
+  price: { fontSize: tokens.typography.titleMedium.fontSize, fontWeight: "600", color: colors.text },
   ownerButton: { minHeight: tokens.accessibility.touchTarget, justifyContent: "center" },
-  ownerText: { color: tokens.colors.action, fontSize: 14, fontWeight: "600" },
+  ownerText: { color: colors.action, fontSize: 14, fontWeight: "600" },
   whatsAppButton: {
     minHeight: tokens.accessibility.touchTarget,
     justifyContent: "center",
@@ -184,9 +191,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: tokens.spacing[16],
   },
   whatsAppText: { color: "#FFFFFF", fontSize: 14, fontWeight: "700" },
-  reserved: { fontSize: tokens.typography.bodyMedium.fontSize, color: tokens.colors.secondaryText, fontStyle: "italic" },
-  requested: { fontSize: tokens.typography.bodyMedium.fontSize, color: tokens.colors.secondaryText, fontWeight: "600" },
-  requestError: { fontSize: tokens.typography.bodyMedium.fontSize, color: tokens.colors.error },
+  reserved: { fontSize: tokens.typography.bodyMedium.fontSize, color: colors.secondaryText, fontStyle: "italic" },
+  requested: { fontSize: tokens.typography.bodyMedium.fontSize, color: colors.secondaryText, fontWeight: "600" },
+  requestError: { fontSize: tokens.typography.bodyMedium.fontSize, color: colors.error },
   reportButton: { minHeight: tokens.accessibility.touchTarget, justifyContent: "center", marginTop: tokens.spacing[8] },
-  reportText: { color: tokens.colors.secondaryText, fontSize: tokens.typography.labelMedium.fontSize, textDecorationLine: "underline" },
-});
+  reportText: { color: colors.secondaryText, fontSize: tokens.typography.labelMedium.fontSize, textDecorationLine: "underline" },
+  });
+}

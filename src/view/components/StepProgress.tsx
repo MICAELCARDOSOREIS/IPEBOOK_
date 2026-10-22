@@ -1,5 +1,7 @@
+import { useMemo } from "react";
 import { StyleSheet, Text, View } from "react-native";
-import { tokens } from "@/view/tokens";
+import { tokens, type ColorPalette } from "@/view/tokens";
+import { useTheme } from "@/view/theme/ThemeProvider";
 
 export type StepProgressProps = {
   currentStep: number;
@@ -13,6 +15,8 @@ export type StepProgressProps = {
  */
 export function StepProgress({ currentStep, totalSteps, stepLabel }: StepProgressProps) {
   const progress = Math.min(1, Math.max(0, currentStep / totalSteps));
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   return (
     <View>
@@ -32,30 +36,32 @@ export function StepProgress({ currentStep, totalSteps, stepLabel }: StepProgres
   );
 }
 
-const styles = StyleSheet.create({
-  labelsRow: { flexDirection: "row", justifyContent: "space-between" },
-  label: { color: tokens.colors.secondaryText, ...tokens.typography.bodyMedium },
-  trackArea: { marginTop: tokens.spacing[8] },
-  track: {
-    flexDirection: "row",
-    height: 4,
-    borderRadius: tokens.radius.full,
-    backgroundColor: tokens.colors.m3.secondaryContainer,
-    overflow: "hidden",
-  },
-  fill: {
-    backgroundColor: tokens.colors.action,
-    borderRadius: tokens.radius.full,
-  },
-  endDot: {
-    position: "absolute",
-    right: 0,
-    top: 0,
-    width: 4,
-    height: 4,
-    borderRadius: tokens.radius.full,
-    backgroundColor: tokens.colors.action,
-  },
-});
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+    labelsRow: { flexDirection: "row", justifyContent: "space-between" },
+    label: { color: colors.secondaryText, ...tokens.typography.bodyMedium },
+    trackArea: { marginTop: tokens.spacing[8] },
+    track: {
+      flexDirection: "row",
+      height: 4,
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.m3.secondaryContainer,
+      overflow: "hidden",
+    },
+    fill: {
+      backgroundColor: colors.action,
+      borderRadius: tokens.radius.full,
+    },
+    endDot: {
+      position: "absolute",
+      right: 0,
+      top: 0,
+      width: 4,
+      height: 4,
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.action,
+    },
+  });
+}
 
 export default StepProgress;

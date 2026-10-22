@@ -1,11 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useProfileViewModel } from "@/viewmodel/useProfileViewModel";
 import { useUserPreferencesViewModel } from "@/viewmodel/useUserPreferencesViewModel";
 import { PIRIPIRI_NEIGHBORHOODS } from "@/model/entities/location";
-import { tokens } from "@/view/tokens";
+import { tokens, type ColorPalette } from "@/view/tokens";
+import { useTheme } from "@/view/theme/ThemeProvider";
 import { Avatar } from "@/view/components/Avatar";
 import { Chip } from "@/view/components/Chip";
 import { ErrorState } from "@/view/components/ErrorState";
@@ -22,6 +23,8 @@ export type ProfileProps = {
 };
 
 export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [authState] = useAuthViewModel();
   const userId = authState.user?.id ?? null;
   const [state, actions] = useProfileViewModel(userId);
@@ -128,15 +131,17 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
   );
 }
 
-const styles = StyleSheet.create({
-  page: { flex: 1, backgroundColor: tokens.colors.background },
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+  page: { flex: 1, backgroundColor: colors.background },
   content: { width: "100%", maxWidth: 720, alignSelf: "center", padding: tokens.spacing[24] },
   brand: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[12], marginBottom: tokens.spacing[24] },
-  mark: { width: 16, height: 36, backgroundColor: tokens.colors.highlight, borderTopRightRadius: tokens.radius.medium },
-  title: { fontSize: tokens.typography.displayLarge.fontSize, fontWeight: tokens.typography.displayLarge.fontWeight, color: tokens.colors.action },
+  mark: { width: 16, height: 36, backgroundColor: colors.highlight, borderTopRightRadius: tokens.radius.medium },
+  title: { fontSize: tokens.typography.displayLarge.fontSize, fontWeight: tokens.typography.displayLarge.fontWeight, color: colors.action },
   form: { gap: tokens.spacing[16], alignItems: "flex-start", width: "100%" },
-  error: { color: tokens.colors.error, fontSize: tokens.typography.bodyMedium.fontSize },
+  error: { color: colors.error, fontSize: tokens.typography.bodyMedium.fontSize },
   field: { gap: tokens.spacing[6], width: "100%" },
-  sectionLabel: { fontSize: tokens.typography.labelSmall.fontSize, fontWeight: "600", color: tokens.colors.secondaryText },
+  sectionLabel: { fontSize: tokens.typography.labelSmall.fontSize, fontWeight: "600", color: colors.secondaryText },
   chipRow: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[8] },
-});
+  });
+}

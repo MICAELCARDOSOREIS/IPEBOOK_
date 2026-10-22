@@ -1,7 +1,8 @@
-import { useId, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import type { KeyboardTypeOptions } from "react-native";
 import { StyleSheet, Text, TextInput, View } from "react-native";
-import { tokens } from "@/view/tokens";
+import { tokens, type ColorPalette } from "@/view/tokens";
+import { useTheme } from "@/view/theme/ThemeProvider";
 
 export type TextFieldProps = {
   label: string;
@@ -33,7 +34,7 @@ export function TextField({
   editable = true,
   helperText,
   placeholder,
-  placeholderTextColor = tokens.colors.secondaryText,
+  placeholderTextColor,
   maxLength,
   accessibilityLabel,
   multiline = false,
@@ -41,8 +42,10 @@ export function TextField({
   const [focused, setFocused] = useState(false);
   const hasError = Boolean(error);
   const errorId = useId();
-  const accentColor = hasError ? tokens.colors.error : focused ? tokens.colors.action : tokens.colors.secondaryText;
-  const borderColor = hasError ? tokens.colors.error : focused ? tokens.colors.action : tokens.colors.border;
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+  const accentColor = hasError ? colors.error : focused ? colors.action : colors.secondaryText;
+  const borderColor = hasError ? colors.error : focused ? colors.action : colors.border;
 
   return (
     <View style={styles.field}>
@@ -58,7 +61,7 @@ export function TextField({
         keyboardType={keyboardType}
         editable={editable}
         placeholder={placeholder}
-        placeholderTextColor={placeholderTextColor}
+        placeholderTextColor={placeholderTextColor ?? colors.secondaryText}
         maxLength={maxLength}
         multiline={multiline}
         numberOfLines={multiline ? 4 : undefined}
@@ -81,21 +84,23 @@ export function TextField({
   );
 }
 
-const styles = StyleSheet.create({
-  field: { gap: tokens.spacing[6] },
-  label: { fontSize: tokens.typography.labelMedium.fontSize, fontWeight: tokens.typography.labelMedium.fontWeight },
-  input: {
-    minHeight: tokens.accessibility.touchTarget,
-    borderRadius: tokens.radius.small,
-    paddingHorizontal: tokens.spacing[12],
-    color: tokens.colors.text,
-    backgroundColor: tokens.colors.surface,
-    fontSize: tokens.typography.bodyLarge.fontSize,
-  },
-  multiline: { minHeight: tokens.spacing[64] + tokens.spacing[32], paddingVertical: tokens.spacing[12] },
-  disabled: { opacity: 0.38 },
-  errorText: { color: tokens.colors.error, fontSize: tokens.typography.bodyMedium.fontSize },
-  helperText: { color: tokens.colors.secondaryText, fontSize: tokens.typography.labelMedium.fontSize },
-});
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+    field: { gap: tokens.spacing[6] },
+    label: { fontSize: tokens.typography.labelMedium.fontSize, fontWeight: tokens.typography.labelMedium.fontWeight },
+    input: {
+      minHeight: tokens.accessibility.touchTarget,
+      borderRadius: tokens.radius.small,
+      paddingHorizontal: tokens.spacing[12],
+      color: colors.text,
+      backgroundColor: colors.surface,
+      fontSize: tokens.typography.bodyLarge.fontSize,
+    },
+    multiline: { minHeight: tokens.spacing[64] + tokens.spacing[32], paddingVertical: tokens.spacing[12] },
+    disabled: { opacity: 0.38 },
+    errorText: { color: colors.error, fontSize: tokens.typography.bodyMedium.fontSize },
+    helperText: { color: colors.secondaryText, fontSize: tokens.typography.labelMedium.fontSize },
+  });
+}
 
 export default TextField;

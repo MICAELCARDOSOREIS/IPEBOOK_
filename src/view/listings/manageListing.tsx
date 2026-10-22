@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { BOOK_CONDITION_LABELS } from "@/model/entities/book";
-import { tokens } from "@/view/tokens";
+import { tokens, type ColorPalette } from "@/view/tokens";
+import { useTheme } from "@/view/theme/ThemeProvider";
 import { formatPrice } from "@/view/formatPrice";
 import { AppIcon } from "@/view/components/AppIcon";
 import { BookCover } from "@/view/components/BookCover";
@@ -31,6 +32,8 @@ export default function ManageListing({
   onBack,
 }: ManageListingProps) {
   const [state, actions] = useManageListingViewModel(bookId, sessionUserId);
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [confirmingRemoval, setConfirmingRemoval] = useState(false);
 
   const handleRemove = async () => {
@@ -116,7 +119,7 @@ export default function ManageListing({
             onPress={() => onEdit?.(book.id)}
             style={styles.actionRow}
           >
-            <AppIcon name="edit" size={24} color={tokens.colors.action} />
+            <AppIcon name="edit" size={24} color={colors.action} />
             <View style={styles.actionTexts}>
               <Text style={styles.actionTitle}>Editar anúncio</Text>
               <Text style={styles.actionHint}>Atualize fotos, preço e descrição.</Text>
@@ -131,7 +134,7 @@ export default function ManageListing({
             onPress={() => void actions.togglePause()}
             style={styles.actionRow}
           >
-            <AppIcon name={paused ? "unarchive" : "archive"} size={24} color={tokens.colors.action} />
+            <AppIcon name={paused ? "unarchive" : "archive"} size={24} color={colors.action} />
             <View style={styles.actionTexts}>
               <Text style={styles.actionTitle}>{paused ? "Retomar anúncio" : "Pausar anúncio"}</Text>
               <Text style={styles.actionHint}>
@@ -166,26 +169,27 @@ export default function ManageListing({
   );
 }
 
-const styles = StyleSheet.create({
-  page: { flex: 1, backgroundColor: tokens.colors.background },
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+  page: { flex: 1, backgroundColor: colors.background },
   scrollContent: { padding: tokens.spacing[16], paddingBottom: tokens.spacing[48] },
   content: { width: "100%", maxWidth: 560, alignSelf: "center", gap: tokens.spacing[16] },
   title: {
     fontSize: tokens.typography.displayLarge.fontSize,
     lineHeight: tokens.typography.displayLarge.lineHeight,
     fontFamily: tokens.typography.displayLarge.fontFamily,
-    color: tokens.colors.text,
+    color: colors.text,
   },
   subtitle: {
     fontSize: tokens.typography.bodyLarge.fontSize,
     lineHeight: tokens.typography.bodyLarge.lineHeight,
     fontFamily: tokens.typography.bodyLarge.fontFamily,
-    color: tokens.colors.secondaryText,
+    color: colors.secondaryText,
   },
   bookRow: {
     flexDirection: "row",
     gap: tokens.spacing[12],
-    backgroundColor: tokens.colors.m3.surfaceContainer,
+    backgroundColor: colors.m3.surfaceContainer,
     borderRadius: tokens.radius.medium,
     padding: tokens.spacing[12],
   },
@@ -196,42 +200,42 @@ const styles = StyleSheet.create({
     lineHeight: tokens.typography.titleMedium.lineHeight,
     fontFamily: tokens.typography.titleMedium.fontFamily,
     fontWeight: tokens.typography.titleMedium.fontWeight,
-    color: tokens.colors.text,
+    color: colors.text,
   },
   bookAuthor: {
     fontSize: tokens.typography.bodyMedium.fontSize,
     fontFamily: tokens.typography.bodyMedium.fontFamily,
-    color: tokens.colors.secondaryText,
+    color: colors.secondaryText,
   },
   bookMeta: {
     fontSize: tokens.typography.bodyMedium.fontSize,
     fontFamily: tokens.typography.bodyMedium.fontFamily,
-    color: tokens.colors.secondaryText,
+    color: colors.secondaryText,
   },
   price: {
     fontSize: tokens.typography.bodyMedium.fontSize,
     fontFamily: tokens.typography.bodyMedium.fontFamily,
     fontWeight: "600",
-    color: tokens.colors.action,
+    color: colors.action,
   },
   statusBox: {
-    backgroundColor: tokens.colors.soft,
+    backgroundColor: colors.soft,
     borderRadius: tokens.radius.medium,
     padding: tokens.spacing[16],
     gap: tokens.spacing[4],
   },
-  statusBoxPaused: { backgroundColor: tokens.colors.m3.surfaceContainerHigh },
+  statusBoxPaused: { backgroundColor: colors.m3.surfaceContainerHigh },
   statusTitle: {
     fontSize: tokens.typography.titleMedium.fontSize,
     fontFamily: tokens.typography.titleMedium.fontFamily,
     fontWeight: tokens.typography.titleMedium.fontWeight,
-    color: tokens.colors.text,
+    color: colors.text,
   },
   statusHint: {
     fontSize: tokens.typography.bodyMedium.fontSize,
     lineHeight: tokens.typography.bodyMedium.lineHeight,
     fontFamily: tokens.typography.bodyMedium.fontFamily,
-    color: tokens.colors.secondaryText,
+    color: colors.secondaryText,
   },
   actionRow: {
     flexDirection: "row",
@@ -246,17 +250,18 @@ const styles = StyleSheet.create({
     lineHeight: tokens.typography.bodyLarge.lineHeight,
     fontFamily: tokens.typography.bodyLarge.fontFamily,
     fontWeight: "600",
-    color: tokens.colors.text,
+    color: colors.text,
   },
   actionHint: {
     fontSize: tokens.typography.bodyMedium.fontSize,
     lineHeight: tokens.typography.bodyMedium.lineHeight,
     fontFamily: tokens.typography.bodyMedium.fontFamily,
-    color: tokens.colors.secondaryText,
+    color: colors.secondaryText,
   },
   errorText: {
-    color: tokens.colors.error,
+    color: colors.error,
     fontSize: tokens.typography.bodyMedium.fontSize,
     fontFamily: tokens.typography.bodyMedium.fontFamily,
   },
-});
+  });
+}

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useEffect } from "react";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -7,7 +7,8 @@ import { useProfileViewModel } from "@/viewmodel/useProfileViewModel";
 import { Avatar } from "@/view/components/Avatar";
 import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
 import { Dialog } from "@/view/components/Dialog";
-import { tokens } from "@/view/tokens";
+import { tokens, type ColorPalette } from "@/view/tokens";
+import { useTheme } from "@/view/theme/ThemeProvider";
 
 export type ProfileHubProps = {
   onNavigateToSignIn?: () => void;
@@ -41,6 +42,8 @@ export default function ProfileHub({
   onNavigateToHelp,
   onSignedOut,
 }: ProfileHubProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [authState, authActions] = useAuthViewModel();
   const userId = authState.user?.id ?? null;
   const [state] = useProfileViewModel(userId);
@@ -123,7 +126,7 @@ export default function ProfileHub({
 
           {state.loading ? (
             <View style={styles.status}>
-              <ActivityIndicator color={tokens.colors.action} accessibilityLabel="Carregando perfil" />
+              <ActivityIndicator color={colors.action} accessibilityLabel="Carregando perfil" />
             </View>
           ) : (
             <View style={styles.headerCard}>
@@ -150,7 +153,7 @@ export default function ProfileHub({
                 onPress={item.onPress}
                 style={styles.menuRow}
               >
-                <AppIcon name={item.icon} size={22} color={tokens.colors.text} />
+                <AppIcon name={item.icon} size={22} color={colors.text} />
                 <View style={styles.menuRowText}>
                   <Text style={styles.menuRowTitle}>{item.label}</Text>
                   <Text style={styles.menuRowDescription}>{item.description}</Text>
@@ -165,7 +168,7 @@ export default function ProfileHub({
               onPress={() => setConfirmingSignOut(true)}
               style={styles.menuRow}
             >
-              <AppIcon name="logout" size={22} color={tokens.colors.error} />
+              <AppIcon name="logout" size={22} color={colors.error} />
               <View style={styles.menuRowText}>
                 <Text style={[styles.menuRowTitle, styles.signOutText]}>Sair da conta</Text>
               </View>
@@ -189,39 +192,40 @@ export default function ProfileHub({
   );
 }
 
-const styles = StyleSheet.create({
-  page: { flex: 1, backgroundColor: tokens.colors.background },
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+  page: { flex: 1, backgroundColor: colors.background },
   scroll: { flexGrow: 1 },
   content: { width: "100%", maxWidth: 720, alignSelf: "center", padding: tokens.spacing[24], gap: tokens.spacing[20] },
   title: {
     fontSize: tokens.typography.displayLarge.fontSize,
     lineHeight: tokens.typography.displayLarge.lineHeight,
     fontFamily: tokens.typography.displayLarge.fontFamily,
-    color: tokens.colors.action,
+    color: colors.action,
   },
   status: { alignItems: "center", paddingVertical: tokens.spacing[24] },
   headerCard: {
     flexDirection: "row",
     alignItems: "center",
     gap: tokens.spacing[16],
-    backgroundColor: tokens.colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: tokens.radius.medium,
     borderWidth: 1,
-    borderColor: tokens.colors.m3.outlineVariant,
+    borderColor: colors.m3.outlineVariant,
     padding: tokens.spacing[16],
   },
   headerText: { flex: 1, gap: tokens.spacing[4] },
   name: {
     ...tokens.typography.titleLarge,
     fontFamily: tokens.typography.displayLarge.fontFamily,
-    color: tokens.colors.text,
+    color: colors.text,
   },
-  statsLine: { ...tokens.typography.bodyMedium, color: tokens.colors.secondaryText },
+  statsLine: { ...tokens.typography.bodyMedium, color: colors.secondaryText },
   menu: {
-    backgroundColor: tokens.colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: tokens.radius.medium,
     borderWidth: 1,
-    borderColor: tokens.colors.m3.outlineVariant,
+    borderColor: colors.m3.outlineVariant,
   },
   menuRow: {
     flexDirection: "row",
@@ -231,11 +235,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: tokens.spacing[16],
     minHeight: tokens.accessibility.touchTarget,
     borderBottomWidth: 1,
-    borderBottomColor: tokens.colors.m3.outlineVariant,
+    borderBottomColor: colors.m3.outlineVariant,
   },
   menuRowText: { flex: 1, gap: 2 },
-  menuRowTitle: { ...tokens.typography.bodyLarge, color: tokens.colors.text, fontWeight: "600" },
-  menuRowDescription: { ...tokens.typography.labelMedium, color: tokens.colors.secondaryText },
-  chevron: { ...tokens.typography.titleMedium, color: tokens.colors.secondaryText },
-  signOutText: { color: tokens.colors.error },
-});
+  menuRowTitle: { ...tokens.typography.bodyLarge, color: colors.text, fontWeight: "600" },
+  menuRowDescription: { ...tokens.typography.labelMedium, color: colors.secondaryText },
+  chevron: { ...tokens.typography.titleMedium, color: colors.secondaryText },
+  signOutText: { color: colors.error },
+  });
+}

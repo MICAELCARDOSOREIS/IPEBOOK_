@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import * as Linking from "expo-linking";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useRequestDetailViewModel } from "@/viewmodel/useRequestDetailViewModel";
-import { tokens } from "@/view/tokens";
+import { tokens, type ColorPalette } from "@/view/tokens";
+import { useTheme } from "@/view/theme/ThemeProvider";
 import { formatPrice } from "@/view/formatPrice";
 import { COMMUNITY_MEMBER } from "@/view/requests/receivedRequests";
 import { MeetingCard } from "@/view/requests/meetingCard";
@@ -36,6 +37,8 @@ export function RequestDetail({
   focusKey,
 }: RequestDetailProps) {
   const [state, actions] = useRequestDetailViewModel(requestId, sessionUserId);
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const detail = state.detail;
   const [mapErrors, setMapErrors] = useState<Record<string, string>>({});
 
@@ -63,7 +66,7 @@ export function RequestDetail({
           {state.loading ? (
             <View style={styles.status}>
               <ActivityIndicator
-                color={tokens.colors.action}
+                color={colors.action}
                 accessibilityLabel="Carregando detalhes da negociação"
               />
               <Text style={styles.body}>Carregando detalhes…</Text>
@@ -225,8 +228,9 @@ export default function RequestDetailScreen({
   );
 }
 
-const styles = StyleSheet.create({
-  page: { flex: 1, backgroundColor: tokens.colors.background },
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+  page: { flex: 1, backgroundColor: colors.background },
   scroll: { flexGrow: 1, paddingBottom: tokens.spacing[48] },
   content: {
     flex: 1,
@@ -244,27 +248,27 @@ const styles = StyleSheet.create({
   },
   body: {
     ...tokens.typography.bodyMedium,
-    color: tokens.colors.secondaryText,
+    color: colors.secondaryText,
     textAlign: "center",
   },
   errorText: {
     ...tokens.typography.bodyMedium,
-    color: tokens.colors.error,
+    color: colors.error,
     textAlign: "center",
   },
   retryButton: {
     paddingVertical: tokens.spacing[8],
     paddingHorizontal: tokens.spacing[24],
     borderRadius: tokens.radius.full,
-    backgroundColor: tokens.colors.surface,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: tokens.colors.m3.outline,
+    borderColor: colors.m3.outline,
     minHeight: tokens.accessibility.touchTarget,
     justifyContent: "center",
   },
   retryText: {
     ...tokens.typography.bodyMedium,
-    color: tokens.colors.action,
+    color: colors.action,
     fontWeight: "600",
   },
   container: { gap: tokens.spacing[16] },
@@ -272,12 +276,12 @@ const styles = StyleSheet.create({
     fontSize: tokens.typography.displayLarge.fontSize,
     lineHeight: tokens.typography.displayLarge.lineHeight,
     fontFamily: tokens.typography.displayLarge.fontFamily,
-    color: tokens.colors.text,
+    color: colors.text,
   },
   successBanner: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: tokens.colors.badge.sale.background,
+    backgroundColor: colors.badge.sale.background,
     padding: tokens.spacing[16],
     borderRadius: tokens.radius.medium,
     gap: tokens.spacing[12],
@@ -289,31 +293,31 @@ const styles = StyleSheet.create({
   successTitle: {
     ...tokens.typography.titleMedium,
     fontFamily: tokens.typography.displayLarge.fontFamily,
-    color: tokens.colors.action,
+    color: colors.action,
   },
   successSubtitle: {
     ...tokens.typography.bodyMedium,
-    color: tokens.colors.text,
+    color: colors.text,
   },
   bookCard: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: tokens.colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: tokens.radius.medium,
     padding: tokens.spacing[12],
     gap: tokens.spacing[12],
     borderWidth: 1,
-    borderColor: tokens.colors.m3.outlineVariant,
+    borderColor: colors.m3.outlineVariant,
   },
   bookInfo: { flex: 1, gap: tokens.spacing[4] },
   bookTitle: {
     ...tokens.typography.titleMedium,
     fontFamily: tokens.typography.displayLarge.fontFamily,
-    color: tokens.colors.text,
+    color: colors.text,
   },
   bookAuthor: {
     ...tokens.typography.bodyMedium,
-    color: tokens.colors.secondaryText,
+    color: colors.secondaryText,
   },
   tagRow: {
     flexDirection: "row",
@@ -324,14 +328,14 @@ const styles = StyleSheet.create({
   price: {
     ...tokens.typography.bodyMedium,
     fontWeight: "600",
-    color: tokens.colors.action,
+    color: colors.action,
   },
   card: {
-    backgroundColor: tokens.colors.surface,
+    backgroundColor: colors.surface,
     padding: tokens.spacing[16],
     borderRadius: tokens.radius.medium,
     borderWidth: 1,
-    borderColor: tokens.colors.m3.outlineVariant,
+    borderColor: colors.m3.outlineVariant,
     gap: tokens.spacing[8],
   },
   cardHeaderRow: {
@@ -343,31 +347,31 @@ const styles = StyleSheet.create({
     flex: 1,
     ...tokens.typography.titleMedium,
     fontFamily: tokens.typography.displayLarge.fontFamily,
-    color: tokens.colors.text,
+    color: colors.text,
   },
   bodyText: {
     ...tokens.typography.bodyMedium,
-    color: tokens.colors.text,
+    color: colors.text,
   },
   highlightText: {
     fontWeight: "700",
-    color: tokens.colors.action,
+    color: colors.action,
   },
   pointList: { gap: tokens.spacing[12], paddingVertical: tokens.spacing[4] },
   pointCard: {
     gap: tokens.spacing[4],
     paddingVertical: tokens.spacing[8],
     borderTopWidth: 1,
-    borderTopColor: tokens.colors.m3.outlineVariant,
+    borderTopColor: colors.m3.outlineVariant,
   },
   pointName: {
     ...tokens.typography.bodyMedium,
     fontWeight: "600",
-    color: tokens.colors.text,
+    color: colors.text,
   },
   pointDetail: {
     ...tokens.typography.bodyMedium,
-    color: tokens.colors.secondaryText,
+    color: colors.secondaryText,
   },
   directionsButton: {
     alignSelf: "flex-start",
@@ -375,23 +379,24 @@ const styles = StyleSheet.create({
     paddingVertical: tokens.spacing[8],
     paddingHorizontal: tokens.spacing[16],
     borderRadius: tokens.radius.full,
-    backgroundColor: tokens.colors.action,
+    backgroundColor: colors.action,
     minHeight: tokens.accessibility.touchTarget,
     justifyContent: "center",
   },
   directionsText: {
     ...tokens.typography.labelMedium,
     fontWeight: "700",
-    color: tokens.colors.surface,
+    color: colors.surface,
   },
   mapErrorText: {
     ...tokens.typography.labelMedium,
-    color: tokens.colors.error,
+    color: colors.error,
   },
   tipText: {
     ...tokens.typography.labelMedium,
-    color: tokens.colors.secondaryText,
+    color: colors.secondaryText,
     fontStyle: "italic",
     marginTop: tokens.spacing[4],
   },
-});
+  });
+}

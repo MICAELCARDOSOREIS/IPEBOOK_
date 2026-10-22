@@ -1,10 +1,12 @@
+import { useMemo } from "react";
 import { Image, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { FilledButton } from "@/view/components/FilledButton";
 import { Logotipo } from "@/view/components/Logotipo";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { TextButton } from "@/view/components/TextButton";
-import { accessibility, fontFamily, tokens } from "@/view/tokens";
+import { accessibility, fontFamily, tokens, type ColorPalette } from "@/view/tokens";
+import { useTheme } from "@/view/theme/ThemeProvider";
 import illustration from "./ilustracao-classicos.png";
 
 export type WelcomeProps = {
@@ -18,6 +20,8 @@ export type WelcomeProps = {
  * Ver issue #98 e ADR 0022.
  */
 export default function Welcome({ onStart, onSignIn, onExplore }: WelcomeProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   return (
     <SafeAreaView style={styles.page} edges={["top", "bottom"]}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -62,8 +66,9 @@ export default function Welcome({ onStart, onSignIn, onExplore }: WelcomeProps) 
   );
 }
 
-const styles = StyleSheet.create({
-  page: { flex: 1, backgroundColor: tokens.colors.surface },
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+  page: { flex: 1, backgroundColor: colors.surface },
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: tokens.spacing[24],
@@ -86,7 +91,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: tokens.spacing[6],
-    backgroundColor: tokens.colors.m3.surfaceContainerHigh,
+    backgroundColor: colors.m3.surfaceContainerHigh,
     borderRadius: tokens.radius.full,
     paddingHorizontal: tokens.spacing[12],
     paddingVertical: tokens.spacing[6],
@@ -95,39 +100,40 @@ const styles = StyleSheet.create({
     width: tokens.spacing[6],
     height: tokens.spacing[6],
     borderRadius: tokens.radius.full,
-    backgroundColor: tokens.colors.action,
+    backgroundColor: colors.action,
   },
   locationText: {
     ...tokens.typography.labelMedium,
-    color: tokens.colors.m3.onSurfaceVariant,
+    color: colors.m3.onSurfaceVariant,
   },
   title: {
     fontFamily: fontFamily.brand,
     fontSize: tokens.typography.displayLarge.fontSize,
     lineHeight: tokens.typography.displayLarge.lineHeight,
-    color: tokens.colors.m3.onSurface,
+    color: colors.m3.onSurface,
   },
   highlight: {
     alignSelf: "flex-start",
-    backgroundColor: tokens.colors.m3.tertiaryContainer,
+    backgroundColor: colors.m3.tertiaryContainer,
     borderRadius: tokens.radius.small,
     paddingHorizontal: tokens.spacing[6],
   },
   illustration: { width: "100%", height: 300 },
   subtitle: {
     ...tokens.typography.bodyLarge,
-    color: tokens.colors.m3.onSurfaceVariant,
+    color: colors.m3.onSurfaceVariant,
   },
   modalities: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[8] },
   modality: {
     ...tokens.typography.bodyMedium,
     fontFamily: fontFamily.medium,
-    color: tokens.colors.m3.onSurfaceVariant,
+    color: colors.m3.onSurfaceVariant,
     borderWidth: 1,
-    borderColor: tokens.colors.m3.outlineVariant,
+    borderColor: colors.m3.outlineVariant,
     borderRadius: tokens.radius.small,
     paddingHorizontal: tokens.spacing[16],
     paddingVertical: tokens.spacing[8],
   },
   actions: { gap: tokens.spacing[12], marginTop: tokens.spacing[16] },
-});
+  });
+}

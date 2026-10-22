@@ -1,7 +1,8 @@
-import { useId } from "react";
+import { useId, useMemo } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { AppIcon } from "@/view/components/AppIcon";
-import { tokens } from "@/view/tokens";
+import { tokens, type ColorPalette } from "@/view/tokens";
+import { useTheme } from "@/view/theme/ThemeProvider";
 
 export type CheckboxProps = {
   label: string;
@@ -28,6 +29,8 @@ export function Checkbox({
 }: CheckboxProps) {
   const errorId = useId();
   const hasError = Boolean(error);
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   return (
     <View style={styles.wrapper}>
@@ -46,12 +49,12 @@ export function Checkbox({
           size={24}
           color={
             disabled
-              ? tokens.colors.disabledText
+              ? colors.disabledText
               : checked
-                ? tokens.colors.action
+                ? colors.action
                 : hasError
-                  ? tokens.colors.error
-                  : tokens.colors.m3.outline
+                  ? colors.error
+                  : colors.m3.outline
           }
         />
         <View style={styles.texts}>
@@ -68,33 +71,35 @@ export function Checkbox({
   );
 }
 
-const styles = StyleSheet.create({
-  wrapper: { gap: tokens.spacing[4] },
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: tokens.spacing[12],
-    minHeight: tokens.accessibility.touchTarget,
-  },
-  texts: { flex: 1, gap: 2 },
-  label: {
-    color: tokens.colors.text,
-    fontSize: tokens.typography.bodyLarge.fontSize,
-    lineHeight: tokens.typography.bodyLarge.lineHeight,
-    fontFamily: tokens.typography.bodyLarge.fontFamily,
-  },
-  labelDisabled: { color: tokens.colors.disabledText },
-  description: {
-    color: tokens.colors.secondaryText,
-    fontSize: tokens.typography.bodyMedium.fontSize,
-    lineHeight: tokens.typography.bodyMedium.lineHeight,
-    fontFamily: tokens.typography.bodyMedium.fontFamily,
-  },
-  error: {
-    color: tokens.colors.error,
-    fontSize: tokens.typography.bodyMedium.fontSize,
-    fontFamily: tokens.typography.bodyMedium.fontFamily,
-  },
-});
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+    wrapper: { gap: tokens.spacing[4] },
+    row: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[12],
+      minHeight: tokens.accessibility.touchTarget,
+    },
+    texts: { flex: 1, gap: 2 },
+    label: {
+      color: colors.text,
+      fontSize: tokens.typography.bodyLarge.fontSize,
+      lineHeight: tokens.typography.bodyLarge.lineHeight,
+      fontFamily: tokens.typography.bodyLarge.fontFamily,
+    },
+    labelDisabled: { color: colors.disabledText },
+    description: {
+      color: colors.secondaryText,
+      fontSize: tokens.typography.bodyMedium.fontSize,
+      lineHeight: tokens.typography.bodyMedium.lineHeight,
+      fontFamily: tokens.typography.bodyMedium.fontFamily,
+    },
+    error: {
+      color: colors.error,
+      fontSize: tokens.typography.bodyMedium.fontSize,
+      fontFamily: tokens.typography.bodyMedium.fontFamily,
+    },
+  });
+}
 
 export default Checkbox;

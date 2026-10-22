@@ -1,10 +1,12 @@
+import { useMemo } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { REPORT_REASONS } from "@/model/entities/report";
 import { FilledButton } from "@/view/components/FilledButton";
 import { IconBadge } from "@/view/components/IconBadge";
 import { TopAppBar } from "@/view/components/TopAppBar";
-import { tokens } from "@/view/tokens";
+import { tokens, type ColorPalette } from "@/view/tokens";
+import { useTheme } from "@/view/theme/ThemeProvider";
 import { useFormErrorAnnouncer } from "@/view/useFormErrorAnnouncer";
 import { useReportListingViewModel } from "@/viewmodel/useReportListingViewModel";
 
@@ -28,6 +30,8 @@ export default function ReportListing({
   onNavigateToLogin,
 }: ReportListingProps) {
   const [state, actions] = useReportListingViewModel();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const errorRef = useFormErrorAnnouncer(state.error);
 
   if (state.success) {
@@ -134,7 +138,7 @@ export default function ReportListing({
               editable={!state.loading}
               style={styles.textInput}
               placeholder="Descreva o problema com mais detalhes para nos ajudar..."
-              placeholderTextColor={tokens.colors.secondaryText}
+              placeholderTextColor={colors.secondaryText}
               multiline
               numberOfLines={3}
               maxLength={500}
@@ -164,8 +168,9 @@ export default function ReportListing({
   );
 }
 
-const styles = StyleSheet.create({
-  page: { flex: 1, backgroundColor: tokens.colors.background },
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+  page: { flex: 1, backgroundColor: colors.background },
   scrollContent: {
     flexGrow: 1,
     paddingBottom: tokens.spacing[48],
@@ -180,7 +185,7 @@ const styles = StyleSheet.create({
   },
   bookContext: {
     ...tokens.typography.bodyMedium,
-    color: tokens.colors.secondaryText,
+    color: colors.secondaryText,
   },
   heroHeader: {
     gap: tokens.spacing[4],
@@ -189,27 +194,27 @@ const styles = StyleSheet.create({
     fontSize: tokens.typography.displayLarge.fontSize,
     lineHeight: tokens.typography.displayLarge.lineHeight,
     fontFamily: tokens.typography.displayLarge.fontFamily,
-    color: tokens.colors.text,
+    color: colors.text,
   },
   successHeadline: {
     ...tokens.typography.titleMedium,
     fontFamily: tokens.typography.displayLarge.fontFamily,
-    color: tokens.colors.text,
+    color: colors.text,
     textAlign: "center",
   },
   bookTitleBold: {
     fontWeight: "700",
-    color: tokens.colors.text,
+    color: colors.text,
   },
   title: {
     ...tokens.typography.titleLarge,
     fontFamily: tokens.typography.displayLarge.fontFamily,
-    color: tokens.colors.text,
+    color: colors.text,
     textAlign: "center",
   },
   bodyCenter: {
     ...tokens.typography.bodyMedium,
-    color: tokens.colors.secondaryText,
+    color: colors.secondaryText,
     textAlign: "center",
   },
   reasonList: {
@@ -228,19 +233,19 @@ const styles = StyleSheet.create({
     height: tokens.spacing[20],
     borderRadius: tokens.radius.full,
     borderWidth: 2,
-    borderColor: tokens.colors.border,
+    borderColor: colors.border,
     alignItems: "center",
     justifyContent: "center",
     marginTop: 2,
   },
   radioCircleSelected: {
-    borderColor: tokens.colors.action,
+    borderColor: colors.action,
   },
   radioDot: {
     width: 10,
     height: 10,
     borderRadius: tokens.radius.full,
-    backgroundColor: tokens.colors.action,
+    backgroundColor: colors.action,
   },
   reasonTextContainer: {
     flex: 1,
@@ -249,39 +254,39 @@ const styles = StyleSheet.create({
   reasonLabel: {
     ...tokens.typography.bodyLarge,
     fontWeight: "600",
-    color: tokens.colors.text,
+    color: colors.text,
   },
   reasonLabelSelected: {
-    color: tokens.colors.action,
+    color: colors.action,
   },
   field: {
     gap: tokens.spacing[6],
   },
   inputLabel: {
     ...tokens.typography.labelMedium,
-    color: tokens.colors.text,
+    color: colors.text,
   },
   textInput: {
     borderWidth: 1,
-    borderColor: tokens.colors.m3.outline,
+    borderColor: colors.m3.outline,
     borderRadius: tokens.radius.medium,
     padding: tokens.spacing[12],
     ...tokens.typography.bodyLarge,
-    color: tokens.colors.text,
-    backgroundColor: tokens.colors.surface,
+    color: colors.text,
+    backgroundColor: colors.surface,
     minHeight: tokens.spacing[64],
     textAlignVertical: "top",
   },
   errorText: {
     ...tokens.typography.bodyMedium,
-    color: tokens.colors.error,
+    color: colors.error,
   },
   successCard: {
     padding: tokens.spacing[24],
-    backgroundColor: tokens.colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: tokens.radius.large,
     borderWidth: 1,
-    borderColor: tokens.colors.m3.outlineVariant,
+    borderColor: colors.m3.outlineVariant,
     gap: tokens.spacing[16],
     alignItems: "center",
     marginTop: tokens.spacing[24],
@@ -289,20 +294,20 @@ const styles = StyleSheet.create({
   successTitle: {
     ...tokens.typography.titleLarge,
     fontFamily: tokens.typography.displayLarge.fontFamily,
-    color: tokens.colors.action,
+    color: colors.action,
     textAlign: "center",
   },
   successBody: {
     ...tokens.typography.bodyMedium,
-    color: tokens.colors.secondaryText,
+    color: colors.secondaryText,
     textAlign: "center",
   },
   authNotice: {
     padding: tokens.spacing[24],
-    backgroundColor: tokens.colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: tokens.radius.large,
     borderWidth: 1,
-    borderColor: tokens.colors.m3.outlineVariant,
+    borderColor: colors.m3.outlineVariant,
     gap: tokens.spacing[16],
     alignItems: "center",
     marginTop: tokens.spacing[24],
@@ -310,4 +315,5 @@ const styles = StyleSheet.create({
   fullWidthButton: {
     width: "100%",
   },
-});
+  });
+}

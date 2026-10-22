@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import type { BookModality } from "@/model/entities/book";
@@ -8,7 +8,8 @@ import { FilledButton } from "@/view/components/FilledButton";
 import { TextButton } from "@/view/components/TextButton";
 import { TextField } from "@/view/components/TextField";
 import { TopAppBar } from "@/view/components/TopAppBar";
-import { tokens } from "@/view/tokens";
+import { tokens, type ColorPalette } from "@/view/tokens";
+import { useTheme } from "@/view/theme/ThemeProvider";
 import { ALERT_CITY, ALERT_MODALITY_LABELS } from "@/view/search/alertLabels";
 import { useSearchAlertsViewModel } from "@/viewmodel/useSearchAlertsViewModel";
 
@@ -23,6 +24,8 @@ export type EditAlertProps = {
 /** Figma `02.10 · Editar alerta` (`254:4437`). */
 export default function EditAlert({ alertId, userId, onBack, onSaved }: EditAlertProps) {
   const [state, actions] = useSearchAlertsViewModel(userId);
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const alert = state.alerts.find((item) => item.id === alertId);
   const [term, setTerm] = useState("");
   const [modalities, setModalities] = useState<readonly BookModality[]>(ALL_ALERT_MODALITIES);
@@ -50,7 +53,7 @@ export default function EditAlert({ alertId, userId, onBack, onSaved }: EditAler
       <SafeAreaView style={styles.page}>
         <TopAppBar title="Editar alerta" onBack={onBack} />
         <View style={styles.status}>
-          <ActivityIndicator color={tokens.colors.action} accessibilityLabel="Carregando alerta" />
+          <ActivityIndicator color={colors.action} accessibilityLabel="Carregando alerta" />
         </View>
       </SafeAreaView>
     );
@@ -142,8 +145,9 @@ export default function EditAlert({ alertId, userId, onBack, onSaved }: EditAler
   );
 }
 
-const styles = StyleSheet.create({
-  page: { flex: 1, backgroundColor: tokens.colors.background },
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+  page: { flex: 1, backgroundColor: colors.background },
   scroll: { flexGrow: 1, paddingBottom: tokens.spacing[32] },
   status: { flex: 1, alignItems: "center", justifyContent: "center" },
   content: {
@@ -158,12 +162,13 @@ const styles = StyleSheet.create({
     fontSize: tokens.typography.displayLarge.fontSize,
     lineHeight: tokens.typography.displayLarge.lineHeight,
     fontFamily: tokens.typography.displayLarge.fontFamily,
-    color: tokens.colors.text,
+    color: colors.text,
   },
-  body: { ...tokens.typography.bodyMedium, color: tokens.colors.secondaryText },
+  body: { ...tokens.typography.bodyMedium, color: colors.secondaryText },
   field: { gap: tokens.spacing[8] },
-  sectionLabel: { ...tokens.typography.titleMedium, color: tokens.colors.text },
+  sectionLabel: { ...tokens.typography.titleMedium, color: colors.text },
   chipRow: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[8] },
-  hint: { ...tokens.typography.bodyMedium, color: tokens.colors.secondaryText },
-  error: { ...tokens.typography.bodyMedium, color: tokens.colors.error },
-});
+  hint: { ...tokens.typography.bodyMedium, color: colors.secondaryText },
+  error: { ...tokens.typography.bodyMedium, color: colors.error },
+  });
+}

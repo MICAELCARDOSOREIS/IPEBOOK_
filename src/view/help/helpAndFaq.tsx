@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { FAQ_ITEMS } from "@/model/helpContent";
@@ -6,7 +6,8 @@ import { FilledButton } from "@/view/components/FilledButton";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { TextField } from "@/view/components/TextField";
 import { TopAppBar } from "@/view/components/TopAppBar";
-import { tokens } from "@/view/tokens";
+import { tokens, type ColorPalette } from "@/view/tokens";
+import { useTheme } from "@/view/theme/ThemeProvider";
 
 export type HelpAndFaqProps = {
   onBack: () => void;
@@ -35,6 +36,8 @@ function normalizeSearchText(value: string): string {
  * Figma `09.01 · Ajuda` (`145:2702` / Web `370:17541`).
  */
 export default function HelpAndFaq({ onBack, onOpenConversations }: HelpAndFaqProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [filter, setFilter] = useState<CategoryFilter>("todos");
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -136,8 +139,9 @@ export default function HelpAndFaq({ onBack, onOpenConversations }: HelpAndFaqPr
   );
 }
 
-const styles = StyleSheet.create({
-  page: { flex: 1, backgroundColor: tokens.colors.background },
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+  page: { flex: 1, backgroundColor: colors.background },
   scrollContent: {
     flexGrow: 1,
     paddingBottom: tokens.spacing[48],
@@ -157,11 +161,11 @@ const styles = StyleSheet.create({
     fontSize: tokens.typography.displayLarge.fontSize,
     lineHeight: tokens.typography.displayLarge.lineHeight,
     fontFamily: tokens.typography.displayLarge.fontFamily,
-    color: tokens.colors.text,
+    color: colors.text,
   },
   heroSubtitle: {
     ...tokens.typography.bodyLarge,
-    color: tokens.colors.secondaryText,
+    color: colors.secondaryText,
   },
   filterContainer: {
     flexDirection: "row",
@@ -173,21 +177,21 @@ const styles = StyleSheet.create({
     paddingVertical: tokens.spacing[8],
     borderRadius: tokens.radius.full,
     borderWidth: 1,
-    borderColor: tokens.colors.m3.outlineVariant,
-    backgroundColor: tokens.colors.surface,
+    borderColor: colors.m3.outlineVariant,
+    backgroundColor: colors.surface,
     minHeight: tokens.accessibility.touchTarget,
     justifyContent: "center",
   },
   filterChipSelected: {
-    backgroundColor: tokens.colors.action,
-    borderColor: tokens.colors.action,
+    backgroundColor: colors.action,
+    borderColor: colors.action,
   },
   filterText: {
     ...tokens.typography.labelMedium,
-    color: tokens.colors.text,
+    color: colors.text,
   },
   filterTextSelected: {
-    color: tokens.colors.surface,
+    color: colors.surface,
     fontWeight: "600",
   },
   list: {
@@ -197,29 +201,30 @@ const styles = StyleSheet.create({
     paddingTop: tokens.spacing[24],
   },
   emptyCard: {
-    backgroundColor: tokens.colors.m3.surfaceContainerLow,
+    backgroundColor: colors.m3.surfaceContainerLow,
     borderRadius: tokens.radius.medium,
     padding: tokens.spacing[20],
     borderWidth: 1,
-    borderColor: tokens.colors.m3.outlineVariant,
+    borderColor: colors.m3.outlineVariant,
     gap: tokens.spacing[12],
     alignItems: "center",
   },
   faqCard: {
-    backgroundColor: tokens.colors.m3.surfaceContainerLow,
+    backgroundColor: colors.m3.surfaceContainerLow,
     borderRadius: tokens.radius.medium,
     padding: tokens.spacing[16],
     borderWidth: 1,
-    borderColor: tokens.colors.m3.outlineVariant,
+    borderColor: colors.m3.outlineVariant,
     gap: tokens.spacing[8],
   },
   question: {
     ...tokens.typography.titleMedium,
     fontFamily: tokens.typography.displayLarge.fontFamily,
-    color: tokens.colors.text,
+    color: colors.text,
   },
   answer: {
     ...tokens.typography.bodyMedium,
-    color: tokens.colors.secondaryText,
+    color: colors.secondaryText,
   },
-});
+  });
+}

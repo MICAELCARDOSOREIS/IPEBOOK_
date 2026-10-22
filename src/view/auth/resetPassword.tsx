@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { FilledButton } from "@/view/components/FilledButton";
@@ -6,7 +6,8 @@ import { IconBadge } from "@/view/components/IconBadge";
 import { TextButton } from "@/view/components/TextButton";
 import { TextField } from "@/view/components/TextField";
 import { TopAppBar } from "@/view/components/TopAppBar";
-import { tokens } from "@/view/tokens";
+import { tokens, type ColorPalette } from "@/view/tokens";
+import { useTheme } from "@/view/theme/ThemeProvider";
 import { useResetPasswordViewModel } from "@/viewmodel/useResetPasswordViewModel";
 
 export type ResetPasswordProps = {
@@ -27,6 +28,8 @@ export default function ResetPassword({
   onBack,
 }: ResetPasswordProps) {
   const [state, actions] = useResetPasswordViewModel();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [validationError, setValidationError] = useState<string | null>(null);
@@ -138,10 +141,11 @@ export default function ResetPassword({
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
   page: {
     flex: 1,
-    backgroundColor: tokens.colors.background,
+    backgroundColor: colors.background,
   },
   centerContainer: {
     flexGrow: 1,
@@ -159,43 +163,43 @@ const styles = StyleSheet.create({
     fontSize: tokens.typography.displayLarge.fontSize,
     lineHeight: tokens.typography.displayLarge.lineHeight,
     fontFamily: tokens.typography.displayLarge.fontFamily,
-    color: tokens.colors.action,
+    color: colors.action,
   },
   subtitle: {
     fontSize: tokens.typography.bodyLarge.fontSize,
     lineHeight: tokens.typography.bodyLarge.lineHeight,
     fontFamily: tokens.typography.bodyLarge.fontFamily,
-    color: tokens.colors.secondaryText,
+    color: colors.secondaryText,
     marginBottom: tokens.spacing[4],
   },
   successBox: {
     borderWidth: 1,
-    borderColor: tokens.colors.success,
-    backgroundColor: tokens.colors.soft,
+    borderColor: colors.success,
+    backgroundColor: colors.soft,
     borderRadius: tokens.radius.medium,
     padding: tokens.spacing[16],
   },
   message: {
-    color: tokens.colors.success,
+    color: colors.success,
     fontSize: tokens.typography.bodyMedium.fontSize,
     fontFamily: tokens.typography.bodyMedium.fontFamily,
     lineHeight: 20,
     fontWeight: "500",
   },
   error: {
-    color: tokens.colors.error,
+    color: colors.error,
     fontSize: tokens.typography.bodyMedium.fontSize,
     fontFamily: tokens.typography.bodyMedium.fontFamily,
   },
   errorBox: {
     borderWidth: 1,
-    borderColor: tokens.colors.error,
-    backgroundColor: tokens.colors.errorContainer,
+    borderColor: colors.error,
+    backgroundColor: colors.errorContainer,
     borderRadius: tokens.radius.medium,
     padding: tokens.spacing[16],
   },
   errorMessage: {
-    color: tokens.colors.error,
+    color: colors.error,
     fontSize: tokens.typography.bodyMedium.fontSize,
     fontFamily: tokens.typography.bodyMedium.fontFamily,
     lineHeight: 20,
@@ -207,9 +211,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   link: {
-    color: tokens.colors.action,
+    color: colors.action,
     fontSize: tokens.typography.bodyMedium.fontSize,
     fontFamily: tokens.typography.bodyMedium.fontFamily,
     fontWeight: "600",
   },
-});
+  });
+}

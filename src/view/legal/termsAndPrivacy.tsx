@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { PRIVACY_POLICY, TERMS_OF_USE } from "@/model/legalContent";
 import { TopAppBar } from "@/view/components/TopAppBar";
-import { tokens } from "@/view/tokens";
+import { tokens, type ColorPalette } from "@/view/tokens";
+import { useTheme } from "@/view/theme/ThemeProvider";
 
 export type TermsAndPrivacyProps = {
   onBack?: () => void;
@@ -21,6 +22,8 @@ export default function TermsAndPrivacy({
   initialTab = "terms",
   onNavigateToDeleteAccount,
 }: TermsAndPrivacyProps = {}) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [activeTab, setActiveTab] = useState<"terms" | "privacy">(initialTab);
   const sections = activeTab === "terms" ? TERMS_OF_USE : PRIVACY_POLICY;
 
@@ -99,8 +102,9 @@ export default function TermsAndPrivacy({
   );
 }
 
-const styles = StyleSheet.create({
-  page: { flex: 1, backgroundColor: tokens.colors.background },
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+  page: { flex: 1, backgroundColor: colors.background },
   scrollContent: {
     flexGrow: 1,
     paddingBottom: tokens.spacing[48],
@@ -120,16 +124,16 @@ const styles = StyleSheet.create({
     fontSize: tokens.typography.displayLarge.fontSize,
     lineHeight: tokens.typography.displayLarge.lineHeight,
     fontFamily: tokens.typography.displayLarge.fontFamily,
-    color: tokens.colors.text,
+    color: colors.text,
   },
   heroSubtitle: {
     ...tokens.typography.bodyLarge,
-    color: tokens.colors.secondaryText,
+    color: colors.secondaryText,
   },
   tabs: {
     flexDirection: "row",
     borderBottomWidth: 1,
-    borderBottomColor: tokens.colors.m3.outlineVariant,
+    borderBottomColor: colors.m3.outlineVariant,
     marginBottom: tokens.spacing[16],
   },
   tab: {
@@ -142,19 +146,19 @@ const styles = StyleSheet.create({
     borderBottomColor: "transparent",
   },
   activeTab: {
-    borderBottomColor: tokens.colors.action,
+    borderBottomColor: colors.action,
   },
   tabText: {
     ...tokens.typography.bodyMedium,
-    color: tokens.colors.secondaryText,
+    color: colors.secondaryText,
   },
   activeTabText: {
-    color: tokens.colors.action,
+    color: colors.action,
     fontWeight: "600",
   },
   updatedDate: {
     ...tokens.typography.labelMedium,
-    color: tokens.colors.secondaryText,
+    color: colors.secondaryText,
     fontStyle: "italic",
     marginBottom: tokens.spacing[8],
   },
@@ -162,21 +166,21 @@ const styles = StyleSheet.create({
     gap: tokens.spacing[12],
   },
   sectionCard: {
-    backgroundColor: tokens.colors.m3.surfaceContainerLow,
+    backgroundColor: colors.m3.surfaceContainerLow,
     borderRadius: tokens.radius.medium,
     padding: tokens.spacing[16],
     borderWidth: 1,
-    borderColor: tokens.colors.m3.outlineVariant,
+    borderColor: colors.m3.outlineVariant,
     gap: tokens.spacing[8],
   },
   sectionTitle: {
     ...tokens.typography.titleMedium,
     fontFamily: tokens.typography.displayLarge.fontFamily,
-    color: tokens.colors.text,
+    color: colors.text,
   },
   paragraph: {
     ...tokens.typography.bodyMedium,
-    color: tokens.colors.text,
+    color: colors.text,
   },
   deleteAccountLink: {
     minHeight: tokens.accessibility.touchTarget,
@@ -186,8 +190,9 @@ const styles = StyleSheet.create({
   },
   deleteAccountText: {
     ...tokens.typography.labelMedium,
-    color: tokens.colors.error,
+    color: colors.error,
     textDecorationLine: "underline",
     fontWeight: "600",
   },
-});
+  });
+}

@@ -1,8 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { Pressable, Text, View } from "react-native";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useReceivedRequestsViewModel } from "@/viewmodel/useReceivedRequestsViewModel";
-import { RequestListLayout, requestStyles as s } from "@/view/requests/requestListLayout";
+import { RequestListLayout, createRequestStyles } from "@/view/requests/requestListLayout";
+import { useTheme } from "@/view/theme/ThemeProvider";
 
 /** Sem perfil público, a tela não expõe o identificador interno (Spec 043, RN-02). */
 export const COMMUNITY_MEMBER = "Pessoa da comunidade";
@@ -19,6 +20,8 @@ export function ReceivedRequests({
   onNavigateToNegotiationDetail,
 }: ReceivedRequestsProps) {
   const [state, actions] = useReceivedRequestsViewModel(sessionUserId);
+  const { colors } = useTheme();
+  const s = useMemo(() => createRequestStyles(colors), [colors]);
 
   return (
     <RequestListLayout

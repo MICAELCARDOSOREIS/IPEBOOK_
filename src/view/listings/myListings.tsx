@@ -1,11 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useMyListingsViewModel } from "@/viewmodel/useMyListingsViewModel";
 import { type ReceivedRequestsState, useReceivedRequestsViewModel } from "@/viewmodel/useReceivedRequestsViewModel";
 import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
-import { tokens } from "@/view/tokens";
+import { tokens, type ColorPalette } from "@/view/tokens";
+import { useTheme } from "@/view/theme/ThemeProvider";
 import { formatPrice } from "@/view/formatPrice";
 import { AppIcon } from "@/view/components/AppIcon";
 import { BookCover } from "@/view/components/BookCover";
@@ -68,6 +69,8 @@ export function MyListings({
   onNavigateToReceivedRequests,
   onNavigateToNegotiationDetail,
 }: MyListingsProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [state, actions] = useMyListingsViewModel(sessionUserId);
   const [received] = useReceivedRequestsViewModel(sessionUserId);
   const { isOnline } = useNetworkStatus();
@@ -242,7 +245,7 @@ export function MyListings({
           onPress={onNavigateToCreateListing}
           style={styles.fab}
         >
-          <AppIcon name="add" size={20} color={tokens.colors.m3.onSecondaryContainer} />
+          <AppIcon name="add" size={20} color={colors.m3.onSecondaryContainer} />
           <Text style={styles.fabText}>Anunciar livro</Text>
         </Pressable>
       ) : null}
@@ -259,6 +262,8 @@ type ShelfRowProps = {
 
 /** Linha da estante: capa, título, resumo e seta de avanço, como em `05.01` e `05.03`. */
 function ShelfRow({ book, summary, accessibilityLabel, onPress }: ShelfRowProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={accessibilityLabel} onPress={onPress} style={styles.row}>
       <BookCover id={book.id} title={book.title} photoUrl={book.photoUrl} variant="list" />
@@ -266,7 +271,7 @@ function ShelfRow({ book, summary, accessibilityLabel, onPress }: ShelfRowProps)
         <Text style={styles.rowTitle}>{book.title}</Text>
         <Text style={styles.rowSummary}>{summary}</Text>
       </View>
-      <AppIcon name="chevronRight" size={24} color={tokens.colors.secondaryText} />
+      <AppIcon name="chevronRight" size={24} color={colors.secondaryText} />
     </Pressable>
   );
 }
@@ -314,11 +319,12 @@ export default function MyListingsScreen({
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
   tabs: {
     flexDirection: "row",
     borderBottomWidth: 1,
-    borderBottomColor: tokens.colors.m3.outlineVariant,
+    borderBottomColor: colors.m3.outlineVariant,
     marginBottom: tokens.spacing[16],
   },
   tab: {
@@ -330,12 +336,12 @@ const styles = StyleSheet.create({
     borderBottomWidth: 2,
     borderBottomColor: "transparent",
   },
-  activeTab: { borderBottomColor: tokens.colors.action },
+  activeTab: { borderBottomColor: colors.action },
   tabText: {
     ...tokens.typography.bodyMedium,
-    color: tokens.colors.secondaryText,
+    color: colors.secondaryText,
   },
-  activeTabText: { color: tokens.colors.action, fontWeight: "600" },
+  activeTabText: { color: colors.action, fontWeight: "600" },
   fab: {
     position: "absolute",
     right: tokens.spacing[16],
@@ -346,17 +352,17 @@ const styles = StyleSheet.create({
     minHeight: tokens.accessibility.touchTarget,
     paddingHorizontal: tokens.spacing[20],
     borderRadius: tokens.radius.large,
-    backgroundColor: tokens.colors.m3.secondaryContainer,
+    backgroundColor: colors.m3.secondaryContainer,
   },
   fabText: {
     ...tokens.typography.labelMedium,
-    color: tokens.colors.m3.onSecondaryContainer,
+    color: colors.m3.onSecondaryContainer,
   },
-  page: { flex: 1, backgroundColor: tokens.colors.background },
+  page: { flex: 1, backgroundColor: colors.background },
   content: { flex: 1, width: "100%", maxWidth: 720, alignSelf: "center", paddingHorizontal: tokens.spacing[16] },
   orientationHint: {
     ...tokens.typography.bodyMedium,
-    color: tokens.colors.secondaryText,
+    color: colors.secondaryText,
     marginTop: tokens.spacing[8],
   },
   filterRow: {
@@ -371,32 +377,32 @@ const styles = StyleSheet.create({
     paddingHorizontal: tokens.spacing[12],
     paddingVertical: tokens.spacing[6],
     borderRadius: tokens.radius.full,
-    backgroundColor: tokens.colors.surface,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: tokens.colors.m3.outlineVariant,
+    borderColor: colors.m3.outlineVariant,
   },
   filterChipSelected: {
-    backgroundColor: tokens.colors.action,
-    borderColor: tokens.colors.action,
+    backgroundColor: colors.action,
+    borderColor: colors.action,
   },
   filterChipText: {
     ...tokens.typography.labelMedium,
-    color: tokens.colors.text,
+    color: colors.text,
   },
   filterChipTextSelected: {
-    color: tokens.colors.surface,
+    color: colors.surface,
     fontWeight: "600",
   },
   empty: { paddingTop: tokens.spacing[48], alignItems: "center", gap: tokens.spacing[12] },
   emptyHeadline: {
     ...tokens.typography.titleLarge,
     fontFamily: tokens.typography.displayLarge.fontFamily,
-    color: tokens.colors.text,
+    color: colors.text,
     textAlign: "center",
   },
   emptyTitle: {
     ...tokens.typography.bodyMedium,
-    color: tokens.colors.secondaryText,
+    color: colors.secondaryText,
     textAlign: "center",
   },
   howItWorksButton: {
@@ -407,7 +413,7 @@ const styles = StyleSheet.create({
   },
   howItWorksText: {
     ...tokens.typography.labelMedium,
-    color: tokens.colors.action,
+    color: colors.action,
     fontWeight: "600",
   },
   emptyAction: { marginTop: tokens.spacing[16], width: "100%" },
@@ -424,15 +430,15 @@ const styles = StyleSheet.create({
   rowText: { flex: 1, gap: tokens.spacing[4] },
   rowTitle: {
     ...tokens.typography.titleMedium,
-    color: tokens.colors.text,
+    color: colors.text,
   },
   rowSummary: {
     ...tokens.typography.bodyMedium,
-    color: tokens.colors.secondaryText,
+    color: colors.secondaryText,
   },
   proposalsEmpty: {
     ...tokens.typography.bodyMedium,
-    color: tokens.colors.secondaryText,
+    color: colors.secondaryText,
     paddingVertical: tokens.spacing[16],
   },
   infoCard: {
@@ -440,11 +446,12 @@ const styles = StyleSheet.create({
     padding: tokens.spacing[16],
     gap: tokens.spacing[4],
     borderRadius: tokens.radius.medium,
-    backgroundColor: tokens.colors.m3.surfaceContainer,
+    backgroundColor: colors.m3.surfaceContainer,
   },
   infoCardTitle: {
     ...tokens.typography.bodyLarge,
     fontWeight: "600",
-    color: tokens.colors.text,
+    color: colors.text,
   },
-});
+  });
+}

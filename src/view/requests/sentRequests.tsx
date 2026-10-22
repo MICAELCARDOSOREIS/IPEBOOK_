@@ -1,8 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { Pressable, Text, View } from "react-native";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useSentRequestsViewModel } from "@/viewmodel/useSentRequestsViewModel";
-import { RequestListLayout, requestStyles as s } from "@/view/requests/requestListLayout";
+import { RequestListLayout, createRequestStyles } from "@/view/requests/requestListLayout";
+import { useTheme } from "@/view/theme/ThemeProvider";
 
 export type SentRequestsProps = {
   sessionUserId: string;
@@ -16,6 +17,8 @@ export function SentRequests({
   onNavigateToNegotiationDetail,
 }: SentRequestsProps) {
   const [state, actions] = useSentRequestsViewModel(sessionUserId);
+  const { colors } = useTheme();
+  const s = useMemo(() => createRequestStyles(colors), [colors]);
 
   return (
     <RequestListLayout

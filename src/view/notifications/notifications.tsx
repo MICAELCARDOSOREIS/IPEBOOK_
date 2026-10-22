@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { Pressable, SectionList, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import type { AppNotification } from "@/model/entities/notification";
@@ -8,7 +9,8 @@ import { IconBadge, type IconBadgeTone } from "@/view/components/IconBadge";
 import { LoadingState } from "@/view/components/LoadingState";
 import { OfflineState } from "@/view/components/OfflineState";
 import { TopAppBar } from "@/view/components/TopAppBar";
-import { tokens } from "@/view/tokens";
+import { tokens, type ColorPalette } from "@/view/tokens";
+import { useTheme } from "@/view/theme/ThemeProvider";
 import {
   useNotificationsViewModel,
 } from "@/viewmodel/useNotificationsViewModel";
@@ -47,6 +49,8 @@ export default function Notifications({
   onExploreBooks,
 }: NotificationsProps) {
   const [state, actions] = useNotificationsViewModel(sessionUserId);
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { isOnline } = useNetworkStatus();
   const handleExplore = onExploreBooks ?? onBack;
   /**
@@ -214,7 +218,7 @@ export default function Notifications({
                       <AppIcon
                         name="chevronRight"
                         size={20}
-                        color={tokens.colors.secondaryText}
+                        color={colors.secondaryText}
                       />
                     ) : null}
                   </View>
@@ -233,11 +237,12 @@ export default function Notifications({
   );
 }
 
-const styles = StyleSheet.create({
-  page: { flex: 1, backgroundColor: tokens.colors.background },
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+  page: { flex: 1, backgroundColor: colors.background },
   sectionHeader: {
     ...tokens.typography.labelMedium,
-    color: tokens.colors.secondaryText,
+    color: colors.secondaryText,
     paddingTop: tokens.spacing[16],
     paddingBottom: tokens.spacing[8],
   },
@@ -251,7 +256,7 @@ const styles = StyleSheet.create({
   },
   unreadCounterBadge: {
     ...tokens.typography.labelMedium,
-    color: tokens.colors.actionDeep,
+    color: colors.actionDeep,
     fontWeight: "600",
     marginTop: tokens.spacing[4],
   },
@@ -273,20 +278,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: tokens.spacing[12],
     paddingVertical: tokens.spacing[6],
     borderRadius: tokens.radius.full,
-    backgroundColor: tokens.colors.surface,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: tokens.colors.m3.outlineVariant,
+    borderColor: colors.m3.outlineVariant,
   },
   filterChipActive: {
-    backgroundColor: tokens.colors.action,
-    borderColor: tokens.colors.action,
+    backgroundColor: colors.action,
+    borderColor: colors.action,
   },
   filterChipText: {
     ...tokens.typography.labelMedium,
-    color: tokens.colors.text,
+    color: colors.text,
   },
   filterChipTextActive: {
-    color: tokens.colors.surface,
+    color: colors.surface,
     fontWeight: "700",
   },
   markAllButton: {
@@ -297,7 +302,7 @@ const styles = StyleSheet.create({
   },
   markAllText: {
     ...tokens.typography.labelMedium,
-    color: tokens.colors.action,
+    color: colors.action,
     fontWeight: "600",
   },
   centered: {
@@ -322,17 +327,17 @@ const styles = StyleSheet.create({
   emptyHeadline: {
     ...tokens.typography.titleLarge,
     fontFamily: tokens.typography.displayLarge.fontFamily,
-    color: tokens.colors.text,
+    color: colors.text,
   },
   emptyTitle: {
     ...tokens.typography.titleMedium,
     fontFamily: tokens.typography.displayLarge.fontFamily,
-    color: tokens.colors.text,
+    color: colors.text,
     textAlign: "center",
   },
   emptyDescription: {
     ...tokens.typography.bodyMedium,
-    color: tokens.colors.secondaryText,
+    color: colors.secondaryText,
   },
   textCentered: {
     textAlign: "center",
@@ -346,17 +351,17 @@ const styles = StyleSheet.create({
     gap: tokens.spacing[12],
   },
   card: {
-    backgroundColor: tokens.colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: tokens.radius.medium,
     padding: tokens.spacing[16],
     borderWidth: 1,
-    borderColor: tokens.colors.m3.outlineVariant,
+    borderColor: colors.m3.outlineVariant,
     gap: tokens.spacing[8],
   },
   cardUnread: {
-    borderColor: tokens.colors.action,
+    borderColor: colors.action,
     borderLeftWidth: tokens.spacing[4],
-    backgroundColor: tokens.colors.soft,
+    backgroundColor: colors.soft,
   },
   cardHeader: {
     flexDirection: "row",
@@ -366,20 +371,21 @@ const styles = StyleSheet.create({
   cardTitleContainer: { flex: 1 },
   cardTitle: {
     ...tokens.typography.titleMedium,
-    color: tokens.colors.text,
+    color: colors.text,
   },
   cardTitleUnread: {
     fontWeight: "700",
-    color: tokens.colors.actionDeep,
+    color: colors.actionDeep,
   },
   unreadDot: {
     width: tokens.spacing[8],
     height: tokens.spacing[8],
     borderRadius: tokens.radius.full,
-    backgroundColor: tokens.colors.action,
+    backgroundColor: colors.action,
   },
   cardMessage: {
     ...tokens.typography.bodyMedium,
-    color: tokens.colors.secondaryText,
+    color: colors.secondaryText,
   },
-});
+  });
+}

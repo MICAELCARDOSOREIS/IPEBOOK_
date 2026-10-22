@@ -1,11 +1,13 @@
+import { useMemo } from "react";
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Checkbox } from "@/view/components/Checkbox";
 import { FilledButton } from "@/view/components/FilledButton";
 import { IconBadge } from "@/view/components/IconBadge";
 import { TopAppBar } from "@/view/components/TopAppBar";
-import { tokens } from "@/view/tokens";
+import { tokens, type ColorPalette } from "@/view/tokens";
 import { useFormErrorAnnouncer } from "@/view/useFormErrorAnnouncer";
+import { useTheme } from "@/view/theme/ThemeProvider";
 import { useDeleteAccountViewModel } from "@/viewmodel/useDeleteAccountViewModel";
 
 export type DeleteAccountProps = {
@@ -33,6 +35,8 @@ export default function DeleteAccount({
   const [state, actions] = useDeleteAccountViewModel();
   const exportErrorRef = useFormErrorAnnouncer(state.exportError);
   const errorRef = useFormErrorAnnouncer(state.error);
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   if (state.success) {
     return (
@@ -208,7 +212,8 @@ export default function DeleteAccount({
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
   navigationRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -216,20 +221,20 @@ const styles = StyleSheet.create({
     paddingVertical: tokens.spacing[12],
     paddingHorizontal: tokens.spacing[16],
     borderRadius: tokens.radius.medium,
-    backgroundColor: tokens.colors.surface,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: tokens.colors.border,
+    borderColor: colors.border,
   },
   navigationRowText: { flex: 1, gap: tokens.spacing[4] },
   navigationRowTitle: {
     ...tokens.typography.titleMedium,
-    color: tokens.colors.text,
+    color: colors.text,
   },
   navigationChevron: {
     ...tokens.typography.titleMedium,
-    color: tokens.colors.secondaryText,
+    color: colors.secondaryText,
   },
-  page: { flex: 1, backgroundColor: tokens.colors.background },
+  page: { flex: 1, backgroundColor: colors.background },
   scrollContent: {
     flexGrow: 1,
     paddingBottom: tokens.spacing[48],
@@ -249,37 +254,37 @@ const styles = StyleSheet.create({
     fontSize: tokens.typography.displayLarge.fontSize,
     lineHeight: tokens.typography.displayLarge.lineHeight,
     fontFamily: tokens.typography.displayLarge.fontFamily,
-    color: tokens.colors.text,
+    color: colors.text,
   },
   heroSubtitle: {
     ...tokens.typography.bodyLarge,
-    color: tokens.colors.secondaryText,
+    color: colors.secondaryText,
   },
   privacyInfoCard: {
     padding: tokens.spacing[16],
-    backgroundColor: tokens.colors.m3.surfaceContainerLow,
+    backgroundColor: colors.m3.surfaceContainerLow,
     borderRadius: tokens.radius.medium,
     borderWidth: 1,
-    borderColor: tokens.colors.m3.outlineVariant,
+    borderColor: colors.m3.outlineVariant,
     gap: tokens.spacing[8],
   },
   privacyInfoTitle: {
     ...tokens.typography.titleMedium,
     fontFamily: tokens.typography.displayLarge.fontFamily,
-    color: tokens.colors.text,
+    color: colors.text,
   },
   successHeadline: {
     ...tokens.typography.titleMedium,
     fontFamily: tokens.typography.displayLarge.fontFamily,
-    color: tokens.colors.text,
+    color: colors.text,
     textAlign: "center",
   },
   card: {
     padding: tokens.spacing[24],
-    backgroundColor: tokens.colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: tokens.radius.large,
     borderWidth: 1,
-    borderColor: tokens.colors.m3.outlineVariant,
+    borderColor: colors.m3.outlineVariant,
     gap: tokens.spacing[16],
     alignItems: "center",
     marginTop: tokens.spacing[24],
@@ -295,18 +300,18 @@ const styles = StyleSheet.create({
   title: {
     ...tokens.typography.titleLarge,
     fontFamily: tokens.typography.displayLarge.fontFamily,
-    color: tokens.colors.text,
+    color: colors.text,
     textAlign: "center",
   },
   successTitle: {
     ...tokens.typography.titleLarge,
     fontFamily: tokens.typography.displayLarge.fontFamily,
-    color: tokens.colors.action,
+    color: colors.action,
     textAlign: "center",
   },
   bodyCenter: {
     ...tokens.typography.bodyMedium,
-    color: tokens.colors.secondaryText,
+    color: colors.secondaryText,
     textAlign: "center",
   },
   exportSection: {
@@ -315,11 +320,11 @@ const styles = StyleSheet.create({
   },
   exportText: {
     ...tokens.typography.bodyMedium,
-    color: tokens.colors.text,
+    color: colors.text,
   },
   exportSuccessText: {
     ...tokens.typography.bodyMedium,
-    color: tokens.colors.action,
+    color: colors.action,
     fontWeight: "600",
   },
   exportSummaryBox: {
@@ -327,32 +332,33 @@ const styles = StyleSheet.create({
   },
   warningCard: {
     padding: tokens.spacing[16],
-    backgroundColor: tokens.colors.errorContainer,
+    backgroundColor: colors.errorContainer,
     borderRadius: tokens.radius.medium,
     gap: tokens.spacing[12],
     borderWidth: 1,
-    borderColor: tokens.colors.error,
+    borderColor: colors.error,
   },
   warningTitle: {
     flex: 1,
     ...tokens.typography.titleMedium,
     fontFamily: tokens.typography.displayLarge.fontFamily,
-    color: tokens.colors.error,
+    color: colors.error,
   },
   warningText: {
     ...tokens.typography.bodyMedium,
     fontWeight: "600",
-    color: tokens.colors.text,
+    color: colors.text,
   },
   bulletList: {
     gap: tokens.spacing[8],
   },
   bulletItem: {
     ...tokens.typography.bodyMedium,
-    color: tokens.colors.secondaryText,
+    color: colors.secondaryText,
   },
   errorText: {
     ...tokens.typography.bodyMedium,
-    color: tokens.colors.error,
+    color: colors.error,
   },
-});
+  });
+}

@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Dialog } from "@/view/components/Dialog";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { TextButton } from "@/view/components/TextButton";
 import { TopAppBar } from "@/view/components/TopAppBar";
-import { tokens } from "@/view/tokens";
+import { tokens, type ColorPalette } from "@/view/tokens";
+import { useTheme } from "@/view/theme/ThemeProvider";
 import { ALERT_MODALITY_SUMMARY, ALERT_CITY } from "@/view/search/alertLabels";
 import { useSearchAlertsViewModel } from "@/viewmodel/useSearchAlertsViewModel";
 
@@ -27,6 +28,8 @@ export default function ManageAlert({
   onAlertDeleted,
 }: ManageAlertProps) {
   const [state, actions] = useSearchAlertsViewModel(userId);
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const alert = state.alerts.find((item) => item.id === alertId);
 
@@ -35,7 +38,7 @@ export default function ManageAlert({
       <SafeAreaView style={styles.page}>
         <TopAppBar title="Gerenciar alerta" onBack={onBack} />
         <View style={styles.status}>
-          <ActivityIndicator color={tokens.colors.action} accessibilityLabel="Carregando alerta" />
+          <ActivityIndicator color={colors.action} accessibilityLabel="Carregando alerta" />
         </View>
       </SafeAreaView>
     );
@@ -131,8 +134,9 @@ export default function ManageAlert({
   );
 }
 
-const styles = StyleSheet.create({
-  page: { flex: 1, backgroundColor: tokens.colors.background },
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+  page: { flex: 1, backgroundColor: colors.background },
   scroll: { flexGrow: 1, paddingBottom: tokens.spacing[32] },
   status: { flex: 1, alignItems: "center", justifyContent: "center" },
   content: {
@@ -147,30 +151,31 @@ const styles = StyleSheet.create({
     fontSize: tokens.typography.displayLarge.fontSize,
     lineHeight: tokens.typography.displayLarge.lineHeight,
     fontFamily: tokens.typography.displayLarge.fontFamily,
-    color: tokens.colors.text,
+    color: colors.text,
   },
-  body: { ...tokens.typography.bodyMedium, color: tokens.colors.secondaryText },
+  body: { ...tokens.typography.bodyMedium, color: colors.secondaryText },
   statusCard: {
-    backgroundColor: tokens.colors.badge.sale.background,
+    backgroundColor: colors.badge.sale.background,
     borderRadius: tokens.radius.medium,
     padding: tokens.spacing[16],
     gap: tokens.spacing[4],
   },
   statusCardPaused: {
-    backgroundColor: tokens.colors.m3.surfaceContainerHigh,
+    backgroundColor: colors.m3.surfaceContainerHigh,
     borderRadius: tokens.radius.medium,
     padding: tokens.spacing[16],
     gap: tokens.spacing[4],
   },
   statusTitle: {
     ...tokens.typography.titleMedium,
-    color: tokens.colors.text,
+    color: colors.text,
   },
   summary: { gap: tokens.spacing[4] },
   summaryTitle: {
     ...tokens.typography.titleMedium,
-    color: tokens.colors.text,
+    color: colors.text,
   },
-  metaText: { ...tokens.typography.bodyMedium, color: tokens.colors.secondaryText },
-  error: { ...tokens.typography.bodyMedium, color: tokens.colors.error },
-});
+  metaText: { ...tokens.typography.bodyMedium, color: colors.secondaryText },
+  error: { ...tokens.typography.bodyMedium, color: colors.error },
+  });
+}
