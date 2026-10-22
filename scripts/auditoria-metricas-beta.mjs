@@ -1,6 +1,6 @@
 /**
  * Script de Auditoria e Métricas Agregadas da Beta — Piripiri, PI
- * Issue #179 / Spec 038
+ * Issue #179 / Spec 047
  *
  * Consolida estatísticas agregadas de livros por bairro, modalidade e status,
  * com estrita conformidade à LGPD (Lei 13.709/2018): 100% livre de dados pessoais.
@@ -658,7 +658,7 @@ export async function executarAuditoriaBeta(argv = process.argv.slice(2)) {
 
   if (args.has('--help') || args.has('-h')) {
     process.stdout.write(`
-IpêBook — Script de Auditoria e Métricas da Beta em Piripiri, PI (Issue #179 / Spec 038)
+IpêBook — Script de Auditoria e Métricas da Beta em Piripiri, PI (Issue #179 / Spec 047)
 
 Uso:
   npm run stats:beta [opções]

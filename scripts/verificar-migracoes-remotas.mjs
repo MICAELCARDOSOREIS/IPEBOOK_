@@ -1,6 +1,6 @@
 /**
  * Script de Diagnóstico de Saúde e Verificação de Migrações do Supabase Remoto
- * Issue #177 / Spec 039 / ADR 0033
+ * Issue #177 / Spec 049 / ADR 0033
  *
  * Inspeciona a conectividade, existência de tabelas, integridade de colunas,
  * disponibilidade do Supabase Storage e funções RPC no backend remoto do Supabase,
@@ -694,7 +694,7 @@ export function formatarRelatorioTerminal(resultado) {
   const linhas = [];
   linhas.push('═══════════════════════════════════════════════════════════════════════');
   linhas.push('  IpêBook — Diagnóstico de Saúde e Migrações do Supabase Remoto        ');
-  linhas.push('  Piripiri, PI · Operação da Versão 2 (Issue #177 / Spec 039)          ');
+  linhas.push('  Piripiri, PI · Operação da Versão 2 (Issue #177 / Spec 049)          ');
   linhas.push('═══════════════════════════════════════════════════════════════════════\n');
 
   if (!resultado.configOk) {

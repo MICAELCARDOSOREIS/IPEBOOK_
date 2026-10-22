@@ -11,7 +11,7 @@ import {
 } from '../../scripts/auditoria-metricas-beta.mjs';
 import { PIRIPIRI_NEIGHBORHOODS as OFFICIAL_PIRIPIRI_NEIGHBORHOODS } from '@/model/entities/location';
 
-describe('Auditoria e Métricas Agregadas da Beta — Piripiri, PI (Spec 038)', () => {
+describe('Auditoria e Métricas Agregadas da Beta — Piripiri, PI (Spec 047)', () => {
   it('contém exatamente os 17 bairros oficiais de Piripiri em conformidade com location.ts', () => {
     expect(PIRIPIRI_NEIGHBORHOODS).toEqual(OFFICIAL_PIRIPIRI_NEIGHBORHOODS);
     expect(PIRIPIRI_NEIGHBORHOODS.length).toBe(17);

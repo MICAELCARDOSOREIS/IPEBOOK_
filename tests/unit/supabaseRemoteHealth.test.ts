@@ -13,7 +13,7 @@ import {
   TABELAS_CRITICAS,
 } from '../../scripts/verificar-migracoes-remotas.mjs';
 
-describe('Diagnóstico de Saúde e Migrações do Supabase Remoto (Spec 039 / ADR 0033)', () => {
+describe('Diagnóstico de Saúde e Migrações do Supabase Remoto (Spec 049 / ADR 0033)', () => {
   describe('mascararUrl', () => {
     it('mascara URLs válidas preservando protocolo e host sem vazar paths ou credenciais', () => {
       expect(mascararUrl('https://xyz.supabase.co/rest/v1/')).toBe('https://xyz.supabase.co');

@@ -2,7 +2,27 @@
 
 Documento consolidado de continuidade técnica e produto do Ipebook (Piripiri, PI).
 
-Conferência atual: **2026-10-21** (branch `feature/relaxed-thompson-60m08j`, derivada de `develop`).
+Conferência atual: **2026-10-21** (branch `chore/higiene-specs-docs-testes`, derivada de `develop`).
+
+**Higiene da numeração de specs (2026-10-21):** oito pastas de `specs/` dividiam número com outra
+spec (031, 032, 033, 038, 039, 040 e 041). Foram renumeradas para 044–051, mantendo o número original
+nas specs mais antigas ou mais citadas pelo código: 031 limite de tentativas → fica; 044 alinhamento
+complementar (era 031); 045 melhorias das telas (era 032); 046 estados do fluxo de acesso (era 033);
+047 métricas da beta (era 038); 048 perfil hub (era 039); 049 saúde e migrações do Supabase remoto
+(era 039); 050 compartilhar no WhatsApp (era 040); 051 seções da Home (era 041). Mensagens de commit
+anteriores continuam citando os números antigos; consultar o mapa acima. Regra para evitar nova colisão
+no `CONTRIBUTING.md`.
+
+**Verificação (2026-10-21):** `npm run validate` passou com **969 testes em 134 arquivos** (cobertura:
+92,68% statements, 84,50% branches, 90,21% functions, 93,84% lines). `npm run verify:release` passou
+com 31 rotas Web. Foram acrescentados testes de hook para `useFavoritesViewModel`,
+`useFavoriteButtonViewModel` e `useSearchAlertsViewModel`, antes com a cobertura mais baixa.
+
+**Supabase remoto — pendente:** `npm run health:supabase:remote` encontrou **4 migrações não
+aplicadas** (`202610200007`, `202610200008`, `202610210001`, `202610210002`): faltam `photo_url` e
+`social_handle` em `v2_profiles`, `modalities` em `v2_search_alerts`, a tabela `v2_user_preferences` e
+a RPC `accept_book_request`. Enquanto isso, perfil, preferências, modalidades de alerta e aceite
+atômico não funcionam no backend remoto. Aplicar com `supabase db push` mediante autorização.
 
 **Spec 043 validada localmente:** as telas do Micael foram percorridas no app compilado para a Web,
 com dois usuários em memória, e comparadas lado a lado com os nós do Figma renderizados pelo MCP.
@@ -19,7 +39,7 @@ Ficam fora (ver `specs/043-telas-micael-figma-ao-vivo/spec.md`): agendamento de 
 cor de fundo e rótulo flutuante dos campos (afetam todas as telas, decisão da equipe) e o preço com
 ponto em `bookDetail.tsx` e na mensagem de compartilhar, que são da trilha da Maria Clara.
 
-**Spec 039 validada localmente:** `/perfil` deixou de abrir direto o formulário de edição e passou a
+**Spec 048 validada localmente (numerada 039 na entrega original):** `/perfil` deixou de abrir direto o formulário de edição e passou a
 ser o hub "Meu perfil" (Figma `07.01`): avatar, estatísticas e menu para Editar perfil (`/perfil/editar`),
 Avaliações recebidas (`/perfil/avaliacoes`, novo caso de uso `RatingUseCases`), Notificações,
 Segurança e verificação (`/perfil/seguranca`, novo — envia link de redefinição de senha),
@@ -28,7 +48,7 @@ Privacidade e dados (linkado à tela já existente `/excluir-conta`), Termos, Aj
 infraestrutura nova (migração/RLS) — spec e PR separados. `npm run validate` passou com 803 testes
 em 119 arquivos.
 
-**Spec 038 validada localmente:** `PhotoGallery` (`src/view/listings/photoGallery.tsx`) passou a usar
+**Spec 038 (galeria) validada localmente:** `PhotoGallery` (`src/view/listings/photoGallery.tsx`) passou a usar
 `FlatList` horizontal paginada para swipe lateral, com botões Anterior/Próxima sincronizados,
 indicador "Foto X de Y", rótulo de acessibilidade próprio por foto e navegação por teclado na Web
 (`ArrowRight`/`ArrowLeft`/`Esc`, mesmo padrão de `Dialog.tsx`). `npm run validate` passou com 784
@@ -49,15 +69,18 @@ Google Maps/Apple Maps) ainda pendente — ver `specs/037-pontos-encontro-mapa/v
 
 Todas as métricas abaixo foram aferidas diretamente por execução dos scripts de validação:
 
-- **Testes automatizados**: **779 testes passando** em **114 arquivos de teste** (`npm run validate`), cobrindo entidades, validadores, casos de uso, adaptadores, viewmodels, componentes e integração.
-- **Cobertura de código**: Statements 90,75%, Branches 83,10%, Functions 87,52%, Lines 92,10%.
-- **Integridade arquitetural**: **100% em conformidade** no MVVM sofisticado em sete camadas (`app`, `view`, `viewmodel`, `usecase`, `model`, `infra`, `di`), verificado pelo comando `npm run check:architecture` (0 violações). Apenas `src/di/container.ts` e testes têm permissão para instanciar ou importar adaptadores de `src/infra/`.
-- **Validação de banco e migrações SQL**: **17 migrações** descobertas e executadas em ordem no PGlite (`npm run test:sql`), com rejeição de versões duplicadas. A migração de modalidades de alertas é `202610210002`. O histórico remoto não foi conferido nesta sessão; verificar antes de aplicar migrações remotamente.
+- **Testes automatizados**: **969 testes passando** em **134 arquivos de teste** (`npm run validate`), cobrindo entidades, validadores, casos de uso, adaptadores, viewmodels, componentes e integração.
+- **Cobertura de código**: Statements 92,68%, Branches 84,50%, Functions 90,21%, Lines 93,84%.
+- **Integridade arquitetural**: **100% em conformidade (244 arquivos verificados)** no MVVM sofisticado em sete camadas (`app`, `view`, `viewmodel`, `usecase`, `model`, `infra`, `di`), verificado pelo comando `npm run check:architecture` (0 violações). Apenas `src/di/container.ts` e testes têm permissão para instanciar ou importar adaptadores de `src/infra/`.
+- **Validação de banco e migrações SQL**: **17 migrações** descobertas e executadas em ordem no PGlite (`npm run test:sql`), com rejeição de versões duplicadas. Remotamente, 13 estão aplicadas e 4 pendentes (ver o aviso "Supabase remoto — pendente" acima).
 - **Semente Oficial da Beta (`npm run db:seed`)**: Script `scripts/popular-catalogo-piripiri.mjs` gerando 10 anúncios realistas distribuídos pelos bairros de Piripiri, PI com exportação SQL via `--sql`.
-- **Backend Supabase**: Configurado para desenvolvimento; a aplicação das novas migrações no banco remoto não foi realizada nem verificada nesta revisão.
-- **Rotas Web compiladas (`npm run build:web`)**: Exportação estática do Expo Router gerou com sucesso o pacote web em `dist/`, totalizando **28 rotas estáticas**:
+- **Backend Supabase**: Configurado para desenvolvimento; as 4 migrações mais recentes ainda não foram aplicadas no banco remoto (verificado em 2026-10-21).
+- **Rotas Web compiladas (`npm run build:web`)**: Exportação estática do Expo Router gerou com sucesso o pacote web em `dist/`, totalizando **31 rotas estáticas** (as rotas `/perfil/editar`, `/perfil/avaliacoes` e `/perfil/seguranca` foram acrescentadas pela Spec 048):
   - `/` (Catálogo e vitrine inicial com selo da beta em Piripiri, PI)
   - `/perfil` (Perfil do usuário autenticado)
+  - `/perfil/editar` (Edição do perfil próprio - Spec 048)
+  - `/perfil/avaliacoes` (Avaliações recebidas - Spec 048)
+  - `/perfil/seguranca` (Segurança e verificação, envia link de redefinição de senha - Spec 048)
   - `/perfil/[userId]` (Perfil público, somente leitura, de quem anuncia — nome, avaliação média e negociações concluídas - Spec 018, Issue #73)
   - `/bem-vindo` (Boas-vindas e primeiro acesso com escolha opcional de bairro - Spec 026, ADR 0022)
   - `/pesquisa` (Busca no catálogo por termo e filtros, com histórico recente no dispositivo - Spec 027)
@@ -91,7 +114,7 @@ Todas as métricas abaixo foram aferidas diretamente por execução dos scripts 
 
 O inventário de design (`design-system/telas-android-figma.md`) lista 137 telas no Figma correspondentes a todos os fluxos conceituais explorados durante a fase inicial de IHC.
 
-No app ativo em desenvolvimento, 21 rotas cobrem as jornadas essenciais da beta. A discrepância numérica entre 137 e 21 decorre de **decisões deliberadas de escopo e arquitetura**, devidamente documentadas em ADRs:
+No app ativo em desenvolvimento, 31 rotas cobrem as jornadas essenciais da beta. A discrepância numérica entre 137 e 31 decorre de **decisões deliberadas de escopo e arquitetura**, devidamente documentadas em ADRs:
 
 1. **Fluxo 05 · Estante (fora de escopo pelo ADR 0011)**:
    - O Figma previa uma aba "Estante" dedicada à catalogação pessoal de livros lidos/a ler.
@@ -219,8 +242,24 @@ No app ativo em desenvolvimento, 21 rotas cobrem as jornadas essenciais da beta.
 - `specs/028-filtrar-e-ordenar-catalogo/`: Filtragem por modalidade, categoria, preço e ordenação do catálogo (Issue #93).
 - `specs/029-portabilidade-e-download-dados-lgpd/`: Interface e serviço de download de dados estruturados em JSON (Art. 18 e 19 LGPD).
 - `specs/030-alinhamento-telas-micael-figma/`: Alinhamento das telas de autenticação e gerenciamento de anúncio ao Figma.
-- `specs/031-alinhamento-complementar-telas-micael-figma/`: Alinhamento complementar de Meus Anúncios, Denúncia e Encontro ao Figma.
+- `specs/031-limite-de-tentativas-e-log-nas-telas/`: Limite de tentativas e log sanitizado ligados às telas.
+- `specs/044-alinhamento-complementar-telas-micael-figma/` (antes 031): Alinhamento complementar de Meus Anúncios, Denúncia e Encontro ao Figma.
 - `specs/032-alinhamento-final-telas-micael-figma/`: Abas, filtros e busca em Minha Estante, Notificações e Central de Ajuda.
 - `specs/033-correcoes-revisao-integral/`: Correções de integridade arquitetural, aceite atômico de pedidos, portabilidade LGPD e polimento visual comprovado via ADB no dispositivo físico Android contra o PDF oficial de referência.
+- `specs/034-preferencias-privadas-perfil/`: Telefone/WhatsApp e bairro padrão privados do perfil (Issue #141).
+- `specs/035-alinhamento-visual-telas-micael/`: Alinhamento visual das telas do Micael.
+- `specs/036-gerenciar-e-editar-alerta/`: Gerenciamento, edição e modalidades de alertas (ADR 0031).
+- `specs/037-pontos-encontro-mapa/`: Endereço, horário e "Como chegar" nos pontos de encontro.
+- `specs/038-galeria-swipe-teclado/`: Galeria de fotos com swipe e teclado (Issue #143).
+- `specs/040-cache-progressivo-capas-livro/`: Cache progressivo e retry das capas (ADR 0034).
+- `specs/041-pwa-service-worker-cache-offline/`: Service Worker e cache offline do PWA (ADR 0035).
+- `specs/042-ordenacao-foco-talkback/`: Ordem de foco e anúncios de erro para leitores de tela (Issue #147).
+- `specs/045-melhorias-telas-micael/` (antes 032): Melhorias e filtros nas telas do Micael (Issues #160 a #165).
+- `specs/046-estados-fluxo-acesso/` (antes 033): Link expirado e e-mail já cadastrado (Issue #97).
+- `specs/047-metricas-beta-piripiri/` (antes 038): Script de auditoria e métricas da beta (ADR 0032).
+- `specs/048-perfil-hub-fluxo-07/` (antes 039): Hub "Meu perfil".
+- `specs/049-saude-migracoes-supabase-remoto/` (antes 039): Verificação de saúde e migrações remotas (ADR 0033).
+- `specs/050-compartilhar-whatsapp/` (antes 040): Mensagem formatada e botão do WhatsApp (Issue #145).
+- `specs/051-home-secoes-destacadas/` (antes 041): Seções de recém-adicionados e doações (Issue #146).
 - `specs/039-alinhamento-fino-telas-micael/`: Alinhamento fino de oito telas do Micael ao canvas Android do Figma, lido nó a nó pelo MCP, com a lista das diferenças que dependem de recursos ainda inexistentes.
 - `specs/043-telas-micael-figma-ao-vivo/`: Telas do Micael conferidas no app compilado contra o Figma: defeitos de preço, nome do interessado e aba Propostas, e alinhamento de Estante, Anunciar, estados vazios, notificações e Ajuda.

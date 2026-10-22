@@ -9,6 +9,7 @@ Seja bem-vindo(a) ao projeto **Ipebook**! Este documento orienta os integrantes 
 1. **Português Obrigatório:** Toda a documentação, mensagens de commit, nomes de cenários de teste, pull requests e discussões técnicas devem ser redigidos em língua portuguesa.
 2. **Qualidade Contínua:** Nenhuma alteração pode ser integrada se quebrar a tipagem estrita (`tsc --noEmit`), violar as regras de camadas da arquitetura MVVM (`scripts/verificar-arquitetura.mjs`) ou reduzir a cobertura de testes para menos de 80% (`npm run test:coverage`).
 3. **Spec Kit & ADRs:** Novas funcionalidades ou decisões arquiteturais devem ser precedidas de especificações (`specs/`) e registros de decisão arquitetural (`docs/adr/`).
+   **Numeração das specs:** antes de criar `specs/NNN-...`, liste `specs/` e use o próximo número livre (`ls specs | tail -3`) — nunca reutilize um número já existente, nem em branches paralelas; ao abrir o PR, confira se outra branch não tomou o mesmo número.
 4. **Documentação sempre atualizada:** quem muda o código atualiza a documentação no mesmo commit/PR — nunca depois, "quando der tempo". Ver a seção 6 abaixo para o que checar.
 
 ---

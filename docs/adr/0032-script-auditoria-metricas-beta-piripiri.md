@@ -32,4 +32,4 @@ Além disso, a equipe necessita executar auditorias em dois cenários:
 - Relatórios podem ser versionados ou integrados a pipelines em formato Markdown ou JSON.
 - A privacidade da comunidade leitora de Piripiri fica preservada por design e testes automatizados.
 
-Vínculos: [Spec 038](../../specs/038-metricas-beta-piripiri/spec.md), [ADR 0016](0016-restricao-beta-declaracao-piripiri.md), [ADR 0021](0021-indices-busca-e-robustez-operacional.md), [ADR 0025](0025-portabilidade-e-exportacao-dados-lgpd.md).
+Vínculos: [Spec 047](../../specs/047-metricas-beta-piripiri/spec.md), [ADR 0016](0016-restricao-beta-declaracao-piripiri.md), [ADR 0021](0021-indices-busca-e-robustez-operacional.md), [ADR 0025](0025-portabilidade-e-exportacao-dados-lgpd.md).

@@ -38,4 +38,4 @@ Ao mesmo tempo, as diretrizes de segurança do projeto proíbem o armazenamento 
 - Qualquer migração pendente é apontada com clareza, indicando o arquivo SQL correspondente a ser aplicado.
 - A segurança de credenciais é preservada, sem vazamento de tokens em pipelines ou logs.
 
-Vínculos: [Spec 039](../../specs/039-saude-migracoes-supabase-remoto/spec.md), [ADR 0012](0012-supabase-com-rls.md), [ADR 0013](0013-reset-esquema-legado-supabase.md), [ADR 0021](0021-indices-busca-e-robustez-operacional.md), [ADR 0027](0027-resiliencia-seguranca-e-verificacao-release.md).
+Vínculos: [Spec 049](../../specs/049-saude-migracoes-supabase-remoto/spec.md), [ADR 0012](0012-supabase-com-rls.md), [ADR 0013](0013-reset-esquema-legado-supabase.md), [ADR 0021](0021-indices-busca-e-robustez-operacional.md), [ADR 0027](0027-resiliencia-seguranca-e-verificacao-release.md).
