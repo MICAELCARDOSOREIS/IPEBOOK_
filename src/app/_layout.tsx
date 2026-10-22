@@ -4,6 +4,7 @@ import { useIpebookFonts } from "@/view/useIpebookFonts";
 import { NavigationBar, type NavigationDestination } from "@/view/components/NavigationBar";
 import { PwaRegister } from "@/view/components/PwaRegister";
 import { InitialRouteGate } from "@/view/onboarding/initialRouteGate";
+import { ThemeProvider } from "@/view/theme/ThemeProvider";
 
 /** Rotas de nível superior (ADR 0011) — rotas de fluxo (entrar, anunciar, etc.) não entram aqui. */
 const ROOT_DESTINATIONS: Record<string, NavigationDestination> = {
@@ -25,17 +26,18 @@ export default function RootLayout() {
   if (!fontsLoaded) return null;
 
   return (
-    <InitialRouteGate pathname={pathname} onShowWelcome={() => router.replace("/bem-vindo")}>
-      <View style={{ flex: 1 }}>
-        <PwaRegister />
-        <Stack screenOptions={{ headerShown: false }} />
-        {activeDestination ? (
-          <NavigationBar
-            active={activeDestination}
-            onNavigate={(destination) => router.push(DESTINATION_ROUTES[destination])}
-          />
-        ) : null}
-      </View>
-    </InitialRouteGate>
+    <ThemeProvider>
+      <InitialRouteGate pathname={pathname} onShowWelcome={() => router.replace("/bem-vindo")}>
+        <View style={{ flex: 1 }}>
+          <Stack screenOptions={{ headerShown: false }} />
+          {activeDestination ? (
+            <NavigationBar
+              active={activeDestination}
+              onNavigate={(destination) => router.push(DESTINATION_ROUTES[destination])}
+            />
+          ) : null}
+        </View>
+      </InitialRouteGate>
+    </ThemeProvider>
   );
 }

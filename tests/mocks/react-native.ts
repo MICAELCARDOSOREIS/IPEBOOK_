@@ -150,6 +150,12 @@ export const Platform = {
   select: (obj: any) => obj.ios ?? obj.default,
 };
 
+export let mockColorScheme: "light" | "dark" | null = "light";
+export const useColorScheme = () => mockColorScheme;
+export function __setMockColorScheme(scheme: "light" | "dark" | null) {
+  mockColorScheme = scheme;
+}
+
 export const Share = {
   share: (_content: { message?: string; url?: string; title?: string }) =>
     Promise.resolve({ action: "sharedAction" }),
@@ -209,4 +215,5 @@ export default {
   Platform,
   Share,
   Animated,
+  useColorScheme,
 };

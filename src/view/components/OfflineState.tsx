@@ -1,6 +1,8 @@
+import { useMemo } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { AppIcon } from "@/view/components/AppIcon";
-import { tokens } from "@/view/tokens";
+import { tokens, type ColorPalette } from "@/view/tokens";
+import { useTheme } from "@/view/theme/ThemeProvider";
 
 export type OfflineStateProps = {
   onRetry: () => void;
@@ -18,10 +20,13 @@ export function OfflineState({
   message = "Você está sem conexão com a internet.",
   retryLabel = "Tentar novamente",
 }: OfflineStateProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   return (
     <View style={styles.container}>
       <View style={styles.row}>
-        <AppIcon name="wifiOff" color={tokens.colors.secondaryText} />
+        <AppIcon name="wifiOff" color={colors.secondaryText} />
         <Text accessibilityRole="alert" style={styles.message}>{message}</Text>
       </View>
       <Pressable accessibilityRole="button" onPress={onRetry} style={styles.retry}>
@@ -31,35 +36,37 @@ export function OfflineState({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    gap: tokens.spacing[16],
-    alignItems: "flex-start",
-    paddingVertical: tokens.spacing[24],
-  },
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: tokens.spacing[12],
-  },
-  message: {
-    flex: 1,
-    color: tokens.colors.secondaryText,
-    ...tokens.typography.bodyMedium,
-  },
-  retry: {
-    minHeight: tokens.accessibility.touchTarget,
-    justifyContent: "center",
-    paddingHorizontal: tokens.spacing[20],
-    borderRadius: tokens.radius.small,
-    borderWidth: 1,
-    borderColor: tokens.colors.border,
-  },
-  retryText: {
-    ...tokens.typography.bodyMedium,
-    color: tokens.colors.action,
-    fontWeight: "600",
-  },
-});
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+    container: {
+      gap: tokens.spacing[16],
+      alignItems: "flex-start",
+      paddingVertical: tokens.spacing[24],
+    },
+    row: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[12],
+    },
+    message: {
+      flex: 1,
+      color: colors.secondaryText,
+      ...tokens.typography.bodyMedium,
+    },
+    retry: {
+      minHeight: tokens.accessibility.touchTarget,
+      justifyContent: "center",
+      paddingHorizontal: tokens.spacing[20],
+      borderRadius: tokens.radius.small,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    retryText: {
+      ...tokens.typography.bodyMedium,
+      color: colors.action,
+      fontWeight: "600",
+    },
+  });
+}
 
 export default OfflineState;

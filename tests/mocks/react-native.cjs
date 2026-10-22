@@ -150,6 +150,12 @@ const Platform = {
   select: (obj) => obj.ios || obj.default,
 };
 
+let mockColorScheme = "light";
+const useColorScheme = () => mockColorScheme;
+function __setMockColorScheme(scheme) {
+  mockColorScheme = scheme;
+}
+
 class MockAnimatedValue {
   constructor(v) {
     this.value = v;
@@ -202,6 +208,8 @@ module.exports = {
   AccessibilityInfo,
   Platform,
   Animated,
+  useColorScheme,
+  __setMockColorScheme,
   default: {
     View,
     Text,

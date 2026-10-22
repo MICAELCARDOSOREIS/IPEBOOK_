@@ -1,22 +1,32 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useHomeViewModel } from "@/viewmodel/useHomeViewModel";
 import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
-import { tokens } from "@/view/tokens";
+import { tokens, type ColorPalette } from "@/view/tokens";
+import { useTheme } from "@/view/theme/ThemeProvider";
 import { BookCover } from "@/view/components/BookCover";
 import { ErrorState } from "@/view/components/ErrorState";
 import { FavoriteButton } from "@/view/components/FavoriteButton";
 import { LoadingState } from "@/view/components/LoadingState";
 import { OfflineState } from "@/view/components/OfflineState";
 import type { Book, BookModality } from "@/model/entities/book";
+import type { ThemePreference } from "@/model/entities/themePreference";
 
-const modalityTag: Record<BookModality, { background: string; text: string; label: string }> = {
-  sale: { background: tokens.colors.badge.sale.background, text: tokens.colors.badge.sale.text, label: "Venda" },
-  trade: { background: tokens.colors.badge.trade.background, text: tokens.colors.badge.trade.text, label: "Troca" },
-  donation: { background: tokens.colors.badge.donation.background, text: tokens.colors.badge.donation.text, label: "Doação" },
-};
+const THEME_OPTIONS: { value: ThemePreference; label: string }[] = [
+  { value: "system", label: "Sistema" },
+  { value: "light", label: "Claro" },
+  { value: "dark", label: "Escuro" },
+];
+
+function createModalityTag(colors: ColorPalette): Record<BookModality, { background: string; text: string; label: string }> {
+  return {
+    sale: { background: colors.badge.sale.background, text: colors.badge.sale.text, label: "Venda" },
+    trade: { background: colors.badge.trade.background, text: colors.badge.trade.text, label: "Troca" },
+    donation: { background: colors.badge.donation.background, text: colors.badge.donation.text, label: "Doação" },
+  };
+}
 
 const CAROUSEL_ITEM_WIDTH = 152;
 const CAROUSEL_MAX_ITEMS = 8;
@@ -37,6 +47,9 @@ function CatalogCarousel({ title, books, onNavigateToBookDetail, onViewMore, vie
   const [index, setIndex] = useState(0);
   const listRef = useRef<FlatList<Book> | null>(null);
   const lastIndex = Math.max(0, books.length - 1);
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+  const modalityTag = useMemo(() => createModalityTag(colors), [colors]);
 
   function goTo(nextIndex: number) {
     const clamped = Math.max(0, Math.min(nextIndex, lastIndex));
@@ -139,6 +152,9 @@ export default function Home({
   const [state, actions] = useHomeViewModel();
   const [authState, authActions] = useAuthViewModel();
   const { isOnline } = useNetworkStatus();
+  const { colors, preference, setPreference } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+  const modalityTag = useMemo(() => createModalityTag(colors), [colors]);
 
   const isFirstFocus = useRef(true);
   useEffect(() => {
@@ -162,6 +178,25 @@ export default function Home({
           <Text accessibilityRole="header" style={styles.title}>Ipebook</Text>
         </View>
         <Text style={styles.subtitle}>Um lugar para descobrir sua próxima leitura.</Text>
+        <View testID="theme-toggle-radiogroup" accessibilityRole="radiogroup" style={styles.themeToggleRow}>
+          {THEME_OPTIONS.map((option) => {
+            const isSelected = preference === option.value;
+            return (
+              <Pressable
+                key={option.value}
+                accessibilityRole="radio"
+                accessibilityLabel={`Tema ${option.label}`}
+                accessibilityState={{ checked: isSelected }}
+                onPress={() => void setPreference(option.value)}
+                style={[styles.themeToggleOption, isSelected && styles.themeToggleOptionSelected]}
+              >
+                <Text style={[styles.themeToggleText, isSelected && styles.themeToggleTextSelected]}>
+                  {option.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
         {authState.loading ? null : authState.user ? (
           <View>
           <View style={styles.sessionRow}>
@@ -321,64 +356,78 @@ export default function Home({
   );
 }
 
-const styles = StyleSheet.create({
-  page: { flex: 1, backgroundColor: tokens.colors.background },
-  footerLinks: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: tokens.spacing[8],
-    marginTop: tokens.spacing[8],
-  },
-  footerSeparator: {
-    color: tokens.colors.secondaryText,
-    fontSize: tokens.typography.labelMedium.fontSize,
-  },
-  legalButton: {
-    paddingVertical: tokens.spacing[12],
-  },
-  legalText: {
-    fontSize: tokens.typography.labelMedium.fontSize,
-    color: tokens.colors.secondaryText,
-    textDecorationLine: "underline",
-  },
-  content: { flex: 1, width: "100%", maxWidth: 720, alignSelf: "center", padding: tokens.spacing[24], paddingTop: tokens.spacing[48] },
-  brand: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[12] },
-  mark: { width: 16, height: 36, backgroundColor: tokens.colors.highlight, borderTopRightRadius: tokens.radius.medium },
-  title: { fontSize: tokens.typography.displayLarge.fontSize, fontWeight: tokens.typography.displayLarge.fontWeight, color: tokens.colors.action },
-  subtitle: { fontSize: 17, lineHeight: 26, color: tokens.colors.secondaryText, marginTop: 14, marginBottom: tokens.spacing[24] },
-  sessionRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: tokens.spacing[24] },
-  sessionText: { fontSize: tokens.typography.bodyMedium.fontSize, color: tokens.colors.secondaryText },
-  sessionActions: { flexDirection: "row", alignItems: "center" },
-  sessionButton: { minHeight: tokens.accessibility.touchTarget, justifyContent: "center", paddingHorizontal: tokens.spacing[12] },
-  sessionButtonText: { color: tokens.colors.action, fontSize: 14, fontWeight: "600" },
-  heading: { fontSize: tokens.typography.titleLarge.fontSize, fontWeight: tokens.typography.titleLarge.fontWeight, color: tokens.colors.action, marginBottom: tokens.spacing[24] },
-  list: { paddingBottom: tokens.spacing[24] },
-  empty: { borderTopWidth: 1, borderTopColor: tokens.colors.border, paddingTop: 28, gap: 10 },
-  emptyTitle: { fontSize: 19, fontWeight: "600", color: tokens.colors.action },
-  body: { fontSize: tokens.typography.bodyLarge.fontSize, lineHeight: 25, color: tokens.colors.secondaryText },
-  book: { flexDirection: "row", gap: tokens.spacing[12], paddingVertical: 18, borderBottomWidth: 1, borderBottomColor: tokens.colors.border },
-  bookMain: { flex: 1, flexDirection: "row", gap: tokens.spacing[12] },
-  bookInfo: { flex: 1, gap: 6 },
-  bookHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: tokens.spacing[12] },
-  tag: { borderRadius: tokens.radius.small, paddingHorizontal: tokens.spacing[12], paddingVertical: tokens.spacing[6] },
-  tagText: { fontSize: tokens.typography.labelMedium.fontSize, fontWeight: tokens.typography.labelMedium.fontWeight },
-  requestsRow: { flexDirection: "row", flexWrap: "wrap", marginTop: -tokens.spacing[12], marginBottom: tokens.spacing[24] },
-  reserved: { fontSize: tokens.typography.bodyMedium.fontSize, color: tokens.colors.secondaryText, fontStyle: "italic" },
-  carouselSection: { marginBottom: tokens.spacing[24] },
-  carouselHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: tokens.spacing[12] },
-  carouselTitle: { fontSize: tokens.typography.titleMedium.fontSize, fontWeight: tokens.typography.titleMedium.fontWeight, color: tokens.colors.action },
-  viewMoreText: { fontSize: tokens.typography.labelMedium.fontSize, color: tokens.colors.action, fontWeight: "600" },
-  carouselRow: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[4] },
-  carouselList: { flexGrow: 0 },
-  carouselNavButton: {
-    minHeight: tokens.accessibility.touchTarget,
-    minWidth: tokens.accessibility.touchTarget,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  carouselNavButtonDisabled: { opacity: 0.3 },
-  carouselNavText: { fontSize: 22, color: tokens.colors.action, fontWeight: "700" },
-  carouselCard: { width: CAROUSEL_ITEM_WIDTH, marginRight: tokens.spacing[12], gap: tokens.spacing[4] },
-  carouselCardTitle: { fontSize: tokens.typography.labelMedium.fontSize, fontWeight: "600", color: tokens.colors.text },
-});
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+    page: { flex: 1, backgroundColor: colors.background },
+    footerLinks: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: tokens.spacing[8],
+      marginTop: tokens.spacing[8],
+    },
+    footerSeparator: {
+      color: colors.secondaryText,
+      fontSize: tokens.typography.labelMedium.fontSize,
+    },
+    legalButton: {
+      paddingVertical: tokens.spacing[12],
+    },
+    legalText: {
+      fontSize: tokens.typography.labelMedium.fontSize,
+      color: colors.secondaryText,
+      textDecorationLine: "underline",
+    },
+    content: { flex: 1, width: "100%", maxWidth: 720, alignSelf: "center", padding: tokens.spacing[24], paddingTop: tokens.spacing[48] },
+    brand: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[12] },
+    mark: { width: 16, height: 36, backgroundColor: colors.highlight, borderTopRightRadius: tokens.radius.medium },
+    title: { fontSize: tokens.typography.displayLarge.fontSize, fontWeight: tokens.typography.displayLarge.fontWeight, color: colors.action },
+    subtitle: { fontSize: 17, lineHeight: 26, color: colors.secondaryText, marginTop: 14, marginBottom: tokens.spacing[12] },
+    themeToggleRow: { flexDirection: "row", gap: tokens.spacing[8], marginBottom: tokens.spacing[24] },
+    themeToggleOption: {
+      minHeight: tokens.accessibility.touchTarget,
+      justifyContent: "center",
+      paddingHorizontal: tokens.spacing[12],
+      borderRadius: tokens.radius.full,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    themeToggleOptionSelected: { backgroundColor: colors.soft, borderColor: colors.action },
+    themeToggleText: { fontSize: tokens.typography.labelMedium.fontSize, color: colors.secondaryText, fontWeight: "600" },
+    themeToggleTextSelected: { color: colors.action },
+    sessionRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: tokens.spacing[24] },
+    sessionText: { fontSize: tokens.typography.bodyMedium.fontSize, color: colors.secondaryText },
+    sessionActions: { flexDirection: "row", alignItems: "center" },
+    sessionButton: { minHeight: tokens.accessibility.touchTarget, justifyContent: "center", paddingHorizontal: tokens.spacing[12] },
+    sessionButtonText: { color: colors.action, fontSize: 14, fontWeight: "600" },
+    heading: { fontSize: tokens.typography.titleLarge.fontSize, fontWeight: tokens.typography.titleLarge.fontWeight, color: colors.action, marginBottom: tokens.spacing[24] },
+    list: { paddingBottom: tokens.spacing[24] },
+    empty: { borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 28, gap: 10 },
+    emptyTitle: { fontSize: 19, fontWeight: "600", color: colors.action },
+    body: { fontSize: tokens.typography.bodyLarge.fontSize, lineHeight: 25, color: colors.secondaryText },
+    book: { flexDirection: "row", gap: tokens.spacing[12], paddingVertical: 18, borderBottomWidth: 1, borderBottomColor: colors.border },
+    bookMain: { flex: 1, flexDirection: "row", gap: tokens.spacing[12] },
+    bookInfo: { flex: 1, gap: 6 },
+    bookHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: tokens.spacing[12] },
+    tag: { borderRadius: tokens.radius.small, paddingHorizontal: tokens.spacing[12], paddingVertical: tokens.spacing[6] },
+    tagText: { fontSize: tokens.typography.labelMedium.fontSize, fontWeight: tokens.typography.labelMedium.fontWeight },
+    requestsRow: { flexDirection: "row", flexWrap: "wrap", marginTop: -tokens.spacing[12], marginBottom: tokens.spacing[24] },
+    reserved: { fontSize: tokens.typography.bodyMedium.fontSize, color: colors.secondaryText, fontStyle: "italic" },
+    carouselSection: { marginBottom: tokens.spacing[24] },
+    carouselHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: tokens.spacing[12] },
+    carouselTitle: { fontSize: tokens.typography.titleMedium.fontSize, fontWeight: tokens.typography.titleMedium.fontWeight, color: colors.action },
+    viewMoreText: { fontSize: tokens.typography.labelMedium.fontSize, color: colors.action, fontWeight: "600" },
+    carouselRow: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[4] },
+    carouselList: { flexGrow: 0 },
+    carouselNavButton: {
+      minHeight: tokens.accessibility.touchTarget,
+      minWidth: tokens.accessibility.touchTarget,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    carouselNavButtonDisabled: { opacity: 0.3 },
+    carouselNavText: { fontSize: 22, color: colors.action, fontWeight: "700" },
+    carouselCard: { width: CAROUSEL_ITEM_WIDTH, marginRight: tokens.spacing[12], gap: tokens.spacing[4] },
+    carouselCardTitle: { fontSize: tokens.typography.labelMedium.fontSize, fontWeight: "600", color: colors.text },
+  });
+}

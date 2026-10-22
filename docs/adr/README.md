@@ -7,7 +7,7 @@
 - [0005 — Modalidade do produto: venda, troca e doação de livros físicos](0005-modalidade-venda-troca-doacao.md)
 - [0006 — Haverá conta: e-mail/senha e login com Google](0006-conta-com-email-e-google.md)
 - [0007 — Serifa da marca: Source Serif 4 Bold](0007-serifa-da-marca.md)
-- [0008 — Sem dark mode nesta etapa; Android segue Material Design 3, iOS segue Liquid Glass](0008-sem-dark-mode-android-md3-ios-liquid-glass.md)
+- [0008 — Sem dark mode nesta etapa; Android segue Material Design 3, iOS segue Liquid Glass](0008-sem-dark-mode-android-md3-ios-liquid-glass.md) (decisão 1 substituída pelo 0035)
 - [0009 — design-kit/tokens.json como fonte única de tokens; carregamento de fonte no Expo](0009-design-kit-tokens-como-fonte-unica.md) (substituído pelo 0010)
 - [0010 — design-system/ substitui design-kit/ como fonte única de design](0010-design-system-substitui-design-kit.md)
 - [0011 — Barra de navegação com 3 destinos (Início, Pesquisa, Perfil)](0011-navegacao-tres-destinos.md)
@@ -34,6 +34,6 @@
 - [0032 — Script de auditoria e métricas agregadas da beta em Piripiri](0032-script-auditoria-metricas-beta-piripiri.md)
 - [0033 — Verificação de saúde e migrações do Supabase remoto](0033-verificacao-saude-migracoes-remotas-supabase.md)
 - [0034 — Cache progressivo, resiliência de timeout e retry em capas de livros](0034-cache-progressivo-retry-capas-livros.md)
-- [0035 — Service Worker e cache offline de assets e catálogo no PWA](0035-service-worker-cache-offline-pwa.md)
+- [0035 — Tema escuro entra em escopo (substitui a decisão 1 da 0008)](0035-tema-escuro-entra-em-escopo.md)
 
 Preservar registros aceitos; mudanças relevantes geram novo ADR com vínculos de substituição.

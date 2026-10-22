@@ -1,8 +1,9 @@
 /**
  * IpêBook — Tokens de Design (IHC / UI)
- * Fonte canônica: design-system/tokens.json (ver ADR 0008 e ADR 0010). Os valores abaixo são o
- * recorte de tema claro — dark mode não entra nesta etapa. `design-tokens.json` na raiz foi
- * substituído por este arquivo e removido (ver Tarefa 26).
+ * Fonte canônica: design-system/tokens.json (ver ADR 0010). `colors` é o tema claro; `darkColors`
+ * (mesma forma) é o tema escuro, habilitado pela ADR 0035 — ver `src/view/theme/ThemeProvider.tsx`
+ * e `useTheme()` para o consumo dinâmico. `design-tokens.json` na raiz foi substituído por este
+ * arquivo e removido (ver Tarefa 26).
  *
  * Regra de Camada MVVM: Pertence estritamente à camada de View (UI).
  */
@@ -78,6 +79,90 @@ export const colors = {
     onErrorContainer: "#410e0b",
     inverseSurface: "#322f2b",
     inverseOnSurface: "#f5efe8",
+    focusRing: "#4e8a68",
+  },
+} as const;
+
+/** Mesma forma de `colors`, com folhas widened para `string` — permite que `colors` e `darkColors`
+ * (valores hex diferentes) compartilhem um único tipo, consumido por `useTheme()`. */
+type WidenToString<T> = T extends string ? string : { [K in keyof T]: WidenToString<T[K]> };
+export type ColorPalette = WidenToString<typeof colors>;
+
+/**
+ * Tema escuro (ADR 0035): mesma forma de `colors`, valores de `design-system/tokens.json` (coluna
+ * `dark`) onde documentados. Tokens sem par `dark` explícito (ex. `success` como cor de texto)
+ * reaproveitam o equivalente semântico mais próximo (`m3.primary` escuro) — verificado em
+ * `tests/unit/themeContrast.test.ts`, nunca um valor inventado sem checagem de contraste.
+ */
+export const darkColors: ColorPalette = {
+  // Identidade e Marca
+  background: "#151311",
+  surface: "#1d1b19",
+  text: "#e8e2db",
+  secondaryText: "#cdc5bc",
+  action: "#9fd4b3",
+  actionDeep: "#bbf0ce",
+  soft: "#364b3e",
+  border: "#968f86",
+  highlight: "#F4B942",
+  gold: "#D99719",
+  brandBrown: "#e2b48c",
+  brandAmber: "#f2bc45",
+
+  // Estados
+  success: "#9fd4b3",
+  error: "#ffb4ab",
+  errorContainer: "#8c1d18",
+  disabledBackground: "#364b3e",
+  disabledText: "#cdc5bc",
+
+  // Badges por Modalidade
+  badge: {
+    sale: { background: "#364b3e", text: "#d2e8d9" },
+    trade: { background: "#6b4f12", text: "#ffe2a8" },
+    donation: { background: "#5a2f22", text: "#ffdbcf" },
+    reserved: { background: "#F4B942", text: "#3C302A" },
+    completed: { background: "#2F6B4F", text: "#FFFFFF" },
+  },
+
+  // Capas ilustrativas: tons saturados, iguais nos dois temas (design-system/tokens.json).
+  cover: {
+    blue: "#253C4F",
+    brown: "#7B4A2F",
+    green: "#30574A",
+    wine: "#6B2A36",
+    ochre: "#86581A",
+    sun: "#DDAF38",
+    text: "#F5EFE8",
+  },
+
+  // Papéis Material 3 (design-system/tokens.json, tema escuro).
+  m3: {
+    primary: "#9fd4b3",
+    onPrimary: "#00381f",
+    primaryContainer: "#1f5139",
+    onPrimaryContainer: "#bbf0ce",
+    secondary: "#b4ccbc",
+    onSecondary: "#203529",
+    onSurface: "#e8e2db",
+    onSurfaceVariant: "#cdc5bc",
+    surfaceContainerLowest: "#0f0e0c",
+    surfaceContainerLow: "#1d1b19",
+    surfaceContainer: "#221f1d",
+    surfaceContainerHigh: "#2c2a27",
+    surfaceContainerHighest: "#373431",
+    outline: "#968f86",
+    outlineVariant: "#4b4640",
+    secondaryContainer: "#364b3e",
+    onSecondaryContainer: "#d2e8d9",
+    tertiaryContainer: "#6b4f12",
+    onTertiaryContainer: "#ffe2a8",
+    doacaoContainer: "#5a2f22",
+    onDoacaoContainer: "#ffdbcf",
+    errorContainerM3: "#8c1d18",
+    onErrorContainer: "#ffdad6",
+    inverseSurface: "#e8e2db",
+    inverseOnSurface: "#322f2b",
     focusRing: "#4e8a68",
   },
 } as const;

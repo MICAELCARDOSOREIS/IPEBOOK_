@@ -1,6 +1,7 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { Animated, Image, StyleSheet, Text, View } from "react-native";
-import { tokens } from "@/view/tokens";
+import { tokens, type ColorPalette } from "@/view/tokens";
+import { useTheme } from "@/view/theme/ThemeProvider";
 import { useBookCoverImage } from "@/viewmodel/useBookCoverImage";
 
 export type BookCoverVariant = "list" | "card";
@@ -61,6 +62,8 @@ export function BookCover({
     initialBackoffMs,
   });
 
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const backgroundColor = COVER_COLORS[hashId(id) % COVER_COLORS.length];
   const width = variant === "card" ? CARD_WIDTH : LIST_WIDTH;
   const height = width / ASPECT_RATIO;
@@ -151,30 +154,32 @@ export function BookCover({
   );
 }
 
-const styles = StyleSheet.create({
-  cover: {
-    borderRadius: tokens.radius.large,
-    justifyContent: "flex-end",
-    overflow: "hidden",
-  },
-  skeleton: {
-    backgroundColor: tokens.colors.disabledBackground,
-    borderRadius: tokens.radius.large,
-  },
-  hiddenImage: {
-    opacity: 0,
-  },
-  textOverlay: {
-    padding: tokens.spacing[8],
-  },
-  title: {
-    color: tokens.colors.cover.text,
-    ...tokens.typography.labelMedium,
-  },
-  author: {
-    color: tokens.colors.cover.text,
-    fontSize: 11,
-  },
-});
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+    cover: {
+      borderRadius: tokens.radius.large,
+      justifyContent: "flex-end",
+      overflow: "hidden",
+    },
+    skeleton: {
+      backgroundColor: colors.disabledBackground,
+      borderRadius: tokens.radius.large,
+    },
+    hiddenImage: {
+      opacity: 0,
+    },
+    textOverlay: {
+      padding: tokens.spacing[8],
+    },
+    title: {
+      color: tokens.colors.cover.text,
+      ...tokens.typography.labelMedium,
+    },
+    author: {
+      color: tokens.colors.cover.text,
+      fontSize: 11,
+    },
+  });
+}
 
 export default BookCover;
