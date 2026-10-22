@@ -192,8 +192,8 @@ export const TABELAS_CRITICAS = {
   },
   v2_user_preferences: {
     nome: 'v2_user_preferences',
-    descricao: 'Preferências privadas de notificação e contato',
-    colunas: ['user_id', 'email_notifications', 'notify_new_matches', 'notify_request_updates', 'phone_visible', 'updated_at'],
+    descricao: 'Preferências privadas de contato e bairro padrão',
+    colunas: ['user_id', 'phone', 'neighborhood', 'updated_at'],
   },
   v2_meetings: {
     nome: 'v2_meetings',
