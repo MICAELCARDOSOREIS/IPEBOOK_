@@ -195,6 +195,11 @@ export const TABELAS_CRITICAS = {
     descricao: 'Preferências privadas de notificação e contato',
     colunas: ['user_id', 'email_notifications', 'notify_new_matches', 'notify_request_updates', 'phone_visible', 'updated_at'],
   },
+  v2_meetings: {
+    nome: 'v2_meetings',
+    descricao: 'Encontros combinados nas negociações aceitas (Spec 052)',
+    colunas: ['id', 'request_id', 'point_name', 'scheduled_at', 'proposed_by', 'status', 'created_at', 'updated_at'],
+  },
 };
 
 /**
@@ -524,6 +529,11 @@ export const MAPEAMENTO_MIGRACOES = {
     titulo: 'Modalidades persistidas em alertas de busca',
     validar: (ctx) => ctx.tabelas.v2_search_alerts?.colunasValidas.includes('modalities'),
     detalhe: 'Coluna modalities em public.v2_search_alerts',
+  },
+  '202610220001_encontros.sql': {
+    titulo: 'Encontros combinados na negociação',
+    validar: (ctx) => ctx.tabelas.v2_meetings?.existe,
+    detalhe: 'Tabela public.v2_meetings',
   },
 };
 

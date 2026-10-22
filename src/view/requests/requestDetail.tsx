@@ -7,6 +7,7 @@ import { useRequestDetailViewModel } from "@/viewmodel/useRequestDetailViewModel
 import { tokens } from "@/view/tokens";
 import { formatPrice } from "@/view/formatPrice";
 import { COMMUNITY_MEMBER } from "@/view/requests/receivedRequests";
+import { MeetingCard } from "@/view/requests/meetingCard";
 import { BookCover } from "@/view/components/BookCover";
 import { IconBadge } from "@/view/components/IconBadge";
 import { Tag } from "@/view/components/Tag";
@@ -17,6 +18,9 @@ export type RequestDetailProps = {
   sessionUserId: string;
   onBack?: () => void;
   onNavigateToBookDetail?: (bookId: string) => void;
+  /** Abre `06.04`/`06.13` para combinar ou reagendar (Spec 052). */
+  onScheduleMeeting?: () => void;
+  focusKey?: number;
 };
 
 /**
@@ -28,6 +32,8 @@ export function RequestDetail({
   sessionUserId,
   onBack,
   onNavigateToBookDetail,
+  onScheduleMeeting,
+  focusKey,
 }: RequestDetailProps) {
   const [state, actions] = useRequestDetailViewModel(requestId, sessionUserId);
   const detail = state.detail;
@@ -127,6 +133,14 @@ export function RequestDetail({
                 </Text>
               </View>
 
+              <MeetingCard
+                requestId={requestId}
+                sessionUserId={sessionUserId}
+                counterpartName={detail.counterpartName ?? COMMUNITY_MEMBER}
+                focusKey={focusKey}
+                onScheduleMeeting={onScheduleMeeting}
+              />
+
               <View style={styles.card}>
                 <View style={styles.cardHeaderRow}>
                   <IconBadge icon="place" tone="action" />
@@ -177,6 +191,8 @@ export type RequestDetailScreenProps = {
   onBack?: () => void;
   onRequireSignIn?: () => void;
   onNavigateToBookDetail?: (bookId: string) => void;
+  onScheduleMeeting?: () => void;
+  focusKey?: number;
 };
 
 export default function RequestDetailScreen({
@@ -184,6 +200,8 @@ export default function RequestDetailScreen({
   onBack,
   onRequireSignIn,
   onNavigateToBookDetail,
+  onScheduleMeeting,
+  focusKey,
 }: RequestDetailScreenProps) {
   const [authState] = useAuthViewModel();
 
@@ -201,6 +219,8 @@ export default function RequestDetailScreen({
       sessionUserId={authState.user.id}
       onBack={onBack}
       onNavigateToBookDetail={onNavigateToBookDetail}
+      onScheduleMeeting={onScheduleMeeting}
+      focusKey={focusKey}
     />
   );
 }

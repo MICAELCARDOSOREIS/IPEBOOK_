@@ -2,7 +2,18 @@
 
 Documento consolidado de continuidade técnica e produto do Ipebook (Piripiri, PI).
 
-Conferência atual: **2026-10-21** (branch `chore/higiene-specs-docs-testes`, derivada de `develop`).
+Conferência atual: **2026-10-22** (branch `feature/relaxed-thompson-60m08j`, derivada de `develop`).
+
+**Spec 052 validada localmente (Issue #188; criada como 044 e renumerada porque o número passou a ser da spec de alinhamento complementar):** a negociação aceita ganhou o encontro combinado
+(Figma `06.04`, `06.05`, `06.11`–`06.14`): convite com local entre os pontos seguros, dia nos próximos
+sete dias e faixa de horário; confirmação só pela outra pessoa; reagendamento que volta a aguardar
+confirmação; cancelamento com diálogo; aviso `meeting_update` a cada mudança. Nova tabela
+`v2_meetings` com RLS e gatilhos (ADR 0036). `npm run validate` passou com 1032 testes em 145
+arquivos, já sobre o `develop` com a renumeração das specs (#191); fluxo completo conferido com dois usuários no app compilado para a Web
+(`specs/052-combinar-encontro/validacao.md`). Supabase remoto: aplicadas em 2026-10-22 as
+migrações `202610200007`, `202610200008`, `202610210001` e `202610210002`; ainda pendentes a remoção
+das duas políticas substituídas pela `202610200008` e a `202610220001_encontros.sql`, que exigem
+confirmar comandos destrutivos (detalhes na T012 da Spec 052). Conferência no aparelho Android pendente.
 
 **Higiene da numeração de specs (2026-10-21):** oito pastas de `specs/` dividiam número com outra
 spec (031, 032, 033, 038, 039, 040 e 041). Foram renumeradas para 044–051, mantendo o número original
@@ -18,7 +29,7 @@ no `CONTRIBUTING.md`.
 com 31 rotas Web. Foram acrescentados testes de hook para `useFavoritesViewModel`,
 `useFavoriteButtonViewModel` e `useSearchAlertsViewModel`, antes com a cobertura mais baixa.
 
-**Supabase remoto — pendente:** `npm run health:supabase:remote` encontrou **4 migrações não
+**Supabase remoto (2026-10-21, já resolvido em 2026-10-22, ver Spec 052 acima):** `npm run health:supabase:remote` encontrou **4 migrações não
 aplicadas** (`202610200007`, `202610200008`, `202610210001`, `202610210002`): faltam `photo_url` e
 `social_handle` em `v2_profiles`, `modalities` em `v2_search_alerts`, a tabela `v2_user_preferences` e
 a RPC `accept_book_request`. Enquanto isso, perfil, preferências, modalidades de alerta e aceite
@@ -263,3 +274,4 @@ No app ativo em desenvolvimento, 31 rotas cobrem as jornadas essenciais da beta.
 - `specs/051-home-secoes-destacadas/` (antes 041): Seções de recém-adicionados e doações (Issue #146).
 - `specs/039-alinhamento-fino-telas-micael/`: Alinhamento fino de oito telas do Micael ao canvas Android do Figma, lido nó a nó pelo MCP, com a lista das diferenças que dependem de recursos ainda inexistentes.
 - `specs/043-telas-micael-figma-ao-vivo/`: Telas do Micael conferidas no app compilado contra o Figma: defeitos de preço, nome do interessado e aba Propostas, e alinhamento de Estante, Anunciar, estados vazios, notificações e Ajuda.
+- `specs/052-combinar-encontro/`: Combinar encontro com local, dia e horário, confirmação, reagendamento e cancelamento (Issue #188, implementada e validada localmente; migração remota pendente).

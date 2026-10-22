@@ -32,6 +32,7 @@ const TYPE_BADGES: Record<
   safety_tip: { icon: "info", tone: "neutral" },
   system: { icon: "info", tone: "neutral" },
   search_alert_match: { icon: "shelf", tone: "donation" },
+  meeting_update: { icon: "calendar", tone: "action" },
 };
 
 /**

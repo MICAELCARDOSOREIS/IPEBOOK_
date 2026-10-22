@@ -35,5 +35,6 @@
 - [0033 — Verificação de saúde e migrações do Supabase remoto](0033-verificacao-saude-migracoes-remotas-supabase.md)
 - [0034 — Cache progressivo, resiliência de timeout e retry em capas de livros](0034-cache-progressivo-retry-capas-livros.md)
 - [0035 — Tema escuro entra em escopo (substitui a decisão 1 da 0008)](0035-tema-escuro-entra-em-escopo.md)
+- [0036 — Encontro como entidade própria da negociação](0036-encontro-como-entidade-propria.md)
 
 Preservar registros aceitos; mudanças relevantes geram novo ADR com vínculos de substituição.

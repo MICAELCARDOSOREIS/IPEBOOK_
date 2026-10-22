@@ -4,6 +4,7 @@
 /editar-anuncio/* /editar-anuncio/[id] 200
 /gerenciar-anuncio/* /gerenciar-anuncio/[id] 200
 /livro/* /livro/[id] 200
+/negociacao/:id/encontro /negociacao/[id]/encontro 200
 /negociacao/* /negociacao/[id] 200
 /perfil/* /perfil/[userId] 200
 /* /+not-found 404

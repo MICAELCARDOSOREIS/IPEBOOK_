@@ -107,6 +107,42 @@ await as('authenticated', reader, `insert into public.v2_ratings (rater_id, rate
 await as('authenticated', owner, `insert into public.v2_ratings (rater_id, rated_user_id, request_id, score) values ('${owner}', '${reader}', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 4)`);
 await denied('Avaliação duplicada no pedido', () => as('authenticated', reader, `insert into public.v2_ratings (rater_id, rated_user_id, request_id, score) values ('${reader}', '${owner}', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 2)`));
 
+// Spec 052 / ADR 0036: encontro da negociação aceita bbbb (dono = owner, leitor = reader).
+const meeting = 'cccccccc-0044-4044-8044-cccccccccccc';
+const praca = 'Praça da Bandeira (Centro)';
+await denied('Terceiro convida para encontro alheio', () => as('authenticated', other, `insert into public.v2_meetings (request_id, point_name, scheduled_at, proposed_by) values ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', '${praca}', now() + interval '1 day', '${other}')`));
+await denied('Convite em nome de outra pessoa', () => as('authenticated', owner, `insert into public.v2_meetings (request_id, point_name, scheduled_at, proposed_by) values ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', '${praca}', now() + interval '1 day', '${reader}')`));
+await denied('Encontro fora dos pontos seguros', () => as('authenticated', owner, `insert into public.v2_meetings (request_id, point_name, scheduled_at, proposed_by) values ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'Minha casa', now() + interval '1 day', '${owner}')`));
+await denied('Encontro no passado', () => as('authenticated', owner, `insert into public.v2_meetings (request_id, point_name, scheduled_at, proposed_by) values ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', '${praca}', now() - interval '1 hour', '${owner}')`));
+await denied('Encontro além de sete dias', () => as('authenticated', owner, `insert into public.v2_meetings (request_id, point_name, scheduled_at, proposed_by) values ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', '${praca}', now() + interval '9 days', '${owner}')`));
+await as('authenticated', owner, `insert into public.v2_meetings (id, request_id, point_name, scheduled_at, proposed_by) values ('${meeting}', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', '${praca}', now() + interval '1 day', '${owner}')`);
+await denied('Segundo encontro ativo no mesmo pedido', () => as('authenticated', reader, `insert into public.v2_meetings (request_id, point_name, scheduled_at, proposed_by) values ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', '${praca}', now() + interval '2 days', '${reader}')`));
+const hiddenMeeting = await as('authenticated', other, `select id from public.v2_meetings`);
+if (hiddenMeeting.rows.length !== 0) throw new Error('Encontro visível para quem não participa');
+const readerMeeting = await as('authenticated', reader, `select id from public.v2_meetings`);
+if (readerMeeting.rows.length !== 1) throw new Error('Participante não vê o encontro');
+const inviteNotice = await as('authenticated', reader, `select title, type, action_url from public.v2_notifications where type = 'meeting_update'`);
+if (inviteNotice.rows[0]?.title !== 'Convite para encontro' || inviteNotice.rows[0]?.action_url !== '/negociacao/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb') throw new Error('Convite não avisou a outra pessoa');
+const blockedMeeting = await as('authenticated', other, `update public.v2_meetings set status = 'cancelled' where id = '${meeting}'`);
+if (blockedMeeting.affectedRows !== 0) throw new Error('Terceiro alterou encontro alheio');
+await denied('Quem convidou confirma o próprio convite', () => as('authenticated', owner, `update public.v2_meetings set status = 'confirmed' where id = '${meeting}'`));
+await as('authenticated', reader, `update public.v2_meetings set status = 'confirmed' where id = '${meeting}'`);
+await denied('Confirmação altera o local', () => as('authenticated', reader, `update public.v2_meetings set status = 'confirmed', point_name = 'Praça de Eventos' where id = '${meeting}'`));
+await denied('Reagendamento em nome de outra pessoa', () => as('authenticated', reader, `update public.v2_meetings set status = 'proposed', proposed_by = '${owner}', scheduled_at = now() + interval '2 days' where id = '${meeting}'`));
+await as('authenticated', reader, `update public.v2_meetings set status = 'proposed', proposed_by = '${reader}', point_name = 'Praça de Eventos', scheduled_at = now() + interval '2 days' where id = '${meeting}'`);
+await as('authenticated', owner, `update public.v2_meetings set status = 'cancelled' where id = '${meeting}'`);
+await denied('Encontro cancelado volta a valer', () => as('authenticated', reader, `update public.v2_meetings set status = 'confirmed' where id = '${meeting}'`));
+const meetingOwnerNotices = await as('authenticated', owner, `select title from public.v2_notifications where type = 'meeting_update' order by created_at, title`);
+const ownerTitles = meetingOwnerNotices.rows.map((row) => row.title).sort();
+if (JSON.stringify(ownerTitles) !== JSON.stringify(['Encontro confirmado', 'Encontro reagendado'])) throw new Error(`Avisos do encontro para quem anunciou: ${ownerTitles}`);
+const meetingReaderNotices = await as('authenticated', reader, `select title from public.v2_notifications where type = 'meeting_update'`);
+if (!meetingReaderNotices.rows.some((row) => row.title === 'Encontro cancelado')) throw new Error('Cancelamento não avisou a outra pessoa');
+await as('authenticated', reader, `insert into public.v2_meetings (request_id, point_name, scheduled_at, proposed_by) values ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', '${praca}', now() + interval '3 days', '${reader}')`);
+await denied('Cliente insere notificação direto', () => as('authenticated', owner, `insert into public.v2_notifications (user_id, title, message, type) values ('${reader}', 'Falso', 'Falso', 'meeting_update')`));
+process.stdout.write('Encontro da negociação (Spec 052): verificado com sucesso\n');
+// Os cenários de alerta abaixo contam todas as notificações de cada pessoa.
+await db.exec(`reset role; delete from public.v2_notifications where type = 'meeting_update'`);
+
 await as('authenticated', owner, `insert into public.v2_books (id, owner_id, title, author, modality) values ('eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee', '${owner}', 'Livro com dois pedidos', 'Autora', 'donation')`);
 await as('authenticated', reader, `insert into public.v2_book_requests (id, listing_id, requester_id) values ('f1111111-1111-4111-8111-111111111111', 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee', '${reader}')`);
 await as('authenticated', other, `insert into public.v2_book_requests (id, listing_id, requester_id) values ('f2222222-2222-4222-8222-222222222222', 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee', '${other}')`);

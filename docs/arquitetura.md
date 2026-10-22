@@ -134,6 +134,14 @@ ViewModels, Telas e Rotas:
 - `src/view/requests/receivedRequests.tsx` e `src/view/requests/sentRequests.tsx`: telas puras de pedidos recebidos e enviados, desacopladas do roteador por injeção de callbacks.
 - `src/app/pedidos-recebidos.tsx` e `src/app/meus-pedidos.tsx`: rotas finas do Expo Router que conectam a sessão do usuário às telas de pedidos.
 
+## Encontro da negociação (specs/052, trilha do Micael)
+
+Decisão em [ADR 0036](adr/0036-encontro-como-entidade-propria.md). Contratos: `Meeting` (`requestId`, `pointName`, `scheduledAt`, `proposedBy`, `status: "proposed" | "confirmed" | "cancelled"`) em [meeting.ts](../src/model/entities/meeting.ts), regras de local, dia e horário em [meetingValidator.ts](../src/model/validators/meetingValidator.ts) e `IMeetingDataSource` em [iMeetingDataSource.ts](../src/model/datasources/iMeetingDataSource.ts).
+
+- `MeetingUseCases` (`propose`, `confirm`, `reschedule`, `cancel`, `getMeeting`): só participantes de pedido aceito; quem convida não confirma; um encontro ativo por pedido; relógio injetável.
+- Supabase: tabela `v2_meetings` (`202610220001_encontros.sql`) com RLS, gatilho de validação e gatilho `security definer` que avisa a outra pessoa (`meeting_update`). Em memória, `MemoryMeetingDataSource` reproduz o aviso.
+- Telas: cartão do encontro em `/negociacao/[id]` (`meetingCard.tsx`, Figma `06.05`, `06.11`, `06.12`) e `/negociacao/[id]/encontro` (`scheduleMeeting.tsx`, `06.04` e `06.13`), com `useMeetingViewModel` e `useScheduleMeetingViewModel`.
+
 ## Erros
 
 [errors.ts](../src/model/errors.ts) define `DomainError`, `ValidationError`, `AuthError` e `DataSourceError`. A ViewModel apresenta a mensagem de `DomainError`; erros inesperados recebem mensagem genérica. Portanto, mensagens de domínio devem ser seguras para exibição ao usuário.

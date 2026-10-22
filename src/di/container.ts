@@ -1,6 +1,7 @@
 import { MemoryAuthDataSource } from "@/infra/datasources/memoryAuthDataSource";
 import { MemoryBookDataSource } from "@/infra/datasources/memoryBookDataSource";
 import { MemoryBookRequestDataSource } from "@/infra/datasources/memoryBookRequestDataSource";
+import { MemoryMeetingDataSource } from "@/infra/datasources/memoryMeetingDataSource";
 import { MemoryNetworkStatusDataSource } from "@/infra/datasources/memoryNetworkStatusDataSource";
 import { MemoryNotificationDataSource } from "@/infra/datasources/memoryNotificationDataSource";
 import { MemoryProfileDataSource } from "@/infra/datasources/memoryProfileDataSource";
@@ -15,6 +16,7 @@ import { SupabaseAuthDataSource } from "@/infra/datasources/supabaseAuthDataSour
 import { SupabaseBookDataSource } from "@/infra/datasources/supabaseBookDataSource";
 import { CachedBookDataSource } from "@/infra/datasources/cachedBookDataSource";
 import { SupabaseBookRequestDataSource } from "@/infra/datasources/supabaseBookRequestDataSource";
+import { SupabaseMeetingDataSource } from "@/infra/datasources/supabaseMeetingDataSource";
 import { SupabaseNotificationDataSource } from "@/infra/datasources/supabaseNotificationDataSource";
 import { SupabaseProfileDataSource } from "@/infra/datasources/supabaseProfileDataSource";
 import { SupabaseUserPreferencesDataSource } from "@/infra/datasources/supabaseUserPreferencesDataSource";
@@ -26,6 +28,7 @@ import { createSupabaseAppClient } from "@/infra/supabaseClient";
 import type { IAuthDataSource } from "@/model/datasources/iAuthDataSource";
 import type { IBookDataSource } from "@/model/datasources/iBookDataSource";
 import type { IBookRequestDataSource } from "@/model/datasources/iBookRequestDataSource";
+import type { IMeetingDataSource } from "@/model/datasources/iMeetingDataSource";
 import type { INetworkStatusDataSource } from "@/model/datasources/iNetworkStatusDataSource";
 import type { INotificationDataSource } from "@/model/datasources/iNotificationDataSource";
 import type { IProfileDataSource } from "@/model/datasources/iProfileDataSource";
@@ -38,6 +41,8 @@ import type { ISearchHistoryDataSource } from "@/model/datasources/iSearchHistor
 import { DataSourceError } from "@/model/errors";
 import { AuthUseCases } from "@/usecase/authUseCases";
 import { BookRequestUseCases } from "@/usecase/bookRequestUseCases";
+import { MeetingUseCases } from "@/usecase/meetingUseCases";
+import type { IMeetingUseCases } from "@/usecase/iMeetingUseCases";
 import { BookUseCases } from "@/usecase/bookUseCases";
 import type { IAuthUseCases } from "@/usecase/iAuthUseCases";
 import type { IBookRequestUseCases } from "@/usecase/iBookRequestUseCases";
@@ -90,6 +95,7 @@ function createDataSources(): {
   auth: IAuthDataSource;
   books: IBookDataSource;
   requests: IBookRequestDataSource;
+  meetings: IMeetingDataSource;
   reports: IReportDataSource;
   notifications: INotificationDataSource;
   favorites: IFavoriteDataSource;
@@ -114,6 +120,7 @@ function createDataSources(): {
       auth: new SupabaseAuthDataSource(client, redirectUrl),
       books: new CachedBookDataSource(new SupabaseBookDataSource(client)),
       requests: new SupabaseBookRequestDataSource(client),
+      meetings: new SupabaseMeetingDataSource(client),
       reports: new SupabaseReportDataSource(client),
       notifications: new SupabaseNotificationDataSource(client),
       favorites: new SupabaseFavoriteDataSource(client),
@@ -138,6 +145,7 @@ function createDataSources(): {
     auth,
     books,
     requests,
+    meetings: new MemoryMeetingDataSource(requests, books, notifications),
     reports,
     notifications,
     favorites,
@@ -178,6 +186,12 @@ export const bookRequestUseCases: IBookRequestUseCases = new BookRequestUseCases
   bookDataSource,
   dataSources.requests,
   dataSources.profiles,
+);
+
+export const meetingUseCases: IMeetingUseCases = new MeetingUseCases(
+  dataSources.meetings,
+  dataSources.requests,
+  bookDataSource,
 );
 
 export const reportUseCases: IReportUseCases = new ReportUseCases(
