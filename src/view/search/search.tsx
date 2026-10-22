@@ -71,190 +71,197 @@ export default function Search({ onNavigateToBookDetail, onNavigateToAlerts, ini
     appliedInitialModality.current = true;
   }, [initialModality, actions]);
 
+  // Busca e filtros viajam no cabeçalho da própria lista: ocupam quase toda a altura da tela em
+  // celular, então precisam rolar junto com os resultados em vez de empurrá-los para fora.
+  const listHeader = (
+    <View style={styles.filters}>
+      <View style={styles.headerRow}>
+        <Text accessibilityRole="header" style={styles.heading}>Pesquisa</Text>
+        {state.hasActiveFilters ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Limpar todos os filtros de busca"
+            onPress={actions.clearFilters}
+            style={styles.clearFiltersButton}
+          >
+            <Text style={styles.clearFiltersText}>Limpar filtros</Text>
+          </Pressable>
+        ) : null}
+      </View>
+
+      <SearchField
+        value={state.term}
+        onChangeText={actions.setTerm}
+        onSubmitEditing={() => void actions.registerSearch(state.term)}
+      />
+
+      {/* Filtro por Modalidade */}
+      <View style={styles.filterSection}>
+        <Text style={styles.filterLabel}>Modalidade:</Text>
+        <View style={styles.filtersRow}>
+          {MODALITY_FILTERS.map((f) => (
+            <Chip
+              key={f.id}
+              label={f.label}
+              accessibilityLabel={f.id === "all" ? "Filtrar por todas as modalidades" : `Filtrar por ${f.label}`}
+              selected={state.modality === f.id}
+              onPress={() => actions.setModality(f.id)}
+            />
+          ))}
+        </View>
+      </View>
+
+      {/* Filtro por Categoria */}
+      {state.availableCategories.length > 0 ? (
+        <View style={styles.filterSection}>
+          <Text style={styles.filterLabel}>Categoria:</Text>
+          <View style={styles.filtersRow}>
+            <Chip
+              label="Todas"
+              accessibilityLabel="Filtrar por todas as categorias"
+              selected={state.category === "all"}
+              onPress={() => actions.setCategory("all")}
+            />
+            {state.availableCategories.map((cat) => (
+              <Chip
+                key={cat}
+                label={cat}
+                accessibilityLabel={`Filtrar por categoria ${cat}`}
+                selected={state.category === cat}
+                onPress={() => actions.setCategory(cat)}
+              />
+            ))}
+          </View>
+        </View>
+      ) : null}
+
+      {/* Filtro por Faixa de Preço */}
+      <View style={styles.filterSection}>
+        <Text style={styles.filterLabel}>Preço:</Text>
+        <View style={styles.filtersRow}>
+          {PRICE_FILTERS.map((p) => (
+            <Chip
+              key={p.id}
+              label={p.label}
+              accessibilityLabel={`Filtrar por ${p.label}`}
+              selected={state.priceRange === p.id}
+              onPress={() => actions.setPriceRange(p.id)}
+            />
+          ))}
+        </View>
+      </View>
+
+      {/* Ordenação */}
+      <View style={styles.filterSection}>
+        <Text style={styles.filterLabel}>Ordenar por:</Text>
+        <View style={styles.filtersRow}>
+          {SORT_OPTIONS.map((s) => (
+            <Chip
+              key={s.id}
+              label={s.label}
+              accessibilityLabel={`Ordenar por ${s.label}`}
+              selected={state.sortBy === s.id}
+              onPress={() => actions.setSortBy(s.id)}
+            />
+          ))}
+        </View>
+      </View>
+
+      {!state.term.trim() && state.history.length > 0 ? (
+        <View style={styles.historySection}>
+          <View style={styles.historyHeader}>
+            <Text style={styles.historyTitle}>Buscas recentes</Text>
+            <Pressable accessibilityRole="button" accessibilityLabel="Limpar histórico de buscas" onPress={() => setConfirmingClear(true)}>
+              <Text style={styles.alertLink}>Limpar histórico</Text>
+            </Pressable>
+          </View>
+          <View style={styles.historyChips}>
+            {state.history.map((item) => (
+              <Pressable key={item} accessibilityRole="button" accessibilityLabel={`Buscar novamente por ${item}`} onPress={() => actions.setTerm(item)} style={styles.historyChip}>
+                <Text style={styles.historyChipText}>{item}</Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+      ) : null}
+
+      <Dialog
+        visible={confirmingClear}
+        title="Limpar histórico de buscas?"
+        message="As buscas recentes salvas neste dispositivo serão removidas."
+        confirmLabel="Limpar histórico"
+        cancelLabel="Cancelar"
+        destructive
+        onCancel={() => setConfirmingClear(false)}
+        onConfirm={() => { setConfirmingClear(false); void actions.clearHistory(); }}
+      />
+
+    </View>
+  );
+
+  const listEmpty = state.loading ? (
+    <LoadingState label="Carregando livros" />
+  ) : state.error ? (
+    isOnline ? (
+      <ErrorState message={state.error} onRetry={() => void actions.reload()} />
+    ) : (
+      <OfflineState onRetry={() => void actions.reload()} />
+    )
+  ) : (
+    <View style={styles.empty}>
+      <Text style={styles.emptyTitle}>Nenhum livro encontrado.</Text>
+      <Text style={styles.body}>
+        {state.hasActiveFilters
+          ? "Nenhum livro corresponde aos filtros selecionados."
+          : "Ainda não há livros no catálogo."}
+      </Text>
+      {state.hasActiveFilters ? (
+        <Pressable accessibilityRole="button" onPress={actions.clearFilters} style={styles.emptyActionButton}>
+          <Text style={styles.emptyActionText}>Limpar filtros</Text>
+        </Pressable>
+      ) : null}
+      {state.term.trim() ? (
+        <Pressable accessibilityRole="button" onPress={() => onNavigateToAlerts?.(state.term.trim())}>
+          <Text style={styles.alertLink}>Criar alerta para esta busca</Text>
+        </Pressable>
+      ) : null}
+    </View>
+  );
+
   return (
     <SafeAreaView style={styles.page}>
-      <View style={styles.content}>
-        <View style={styles.headerRow}>
-          <Text accessibilityRole="header" style={styles.heading}>Pesquisa</Text>
-          {state.hasActiveFilters ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Limpar todos os filtros de busca"
-              onPress={actions.clearFilters}
-              style={styles.clearFiltersButton}
-            >
-              <Text style={styles.clearFiltersText}>Limpar filtros</Text>
-            </Pressable>
-          ) : null}
-        </View>
-
-        <SearchField
-          value={state.term}
-          onChangeText={actions.setTerm}
-          onSubmitEditing={() => void actions.registerSearch(state.term)}
-        />
-
-        {/* Filtro por Modalidade */}
-        <View style={styles.filterSection}>
-          <Text style={styles.filterLabel}>Modalidade:</Text>
-          <View style={styles.filtersRow}>
-            {MODALITY_FILTERS.map((f) => (
-              <Chip
-                key={f.id}
-                label={f.label}
-                accessibilityLabel={f.id === "all" ? "Filtrar por todas as modalidades" : `Filtrar por ${f.label}`}
-                selected={state.modality === f.id}
-                onPress={() => actions.setModality(f.id)}
-              />
-            ))}
-          </View>
-        </View>
-
-        {/* Filtro por Categoria */}
-        {state.availableCategories.length > 0 ? (
-          <View style={styles.filterSection}>
-            <Text style={styles.filterLabel}>Categoria:</Text>
-            <View style={styles.filtersRow}>
-              <Chip
-                label="Todas"
-                accessibilityLabel="Filtrar por todas as categorias"
-                selected={state.category === "all"}
-                onPress={() => actions.setCategory("all")}
-              />
-              {state.availableCategories.map((cat) => (
-                <Chip
-                  key={cat}
-                  label={cat}
-                  accessibilityLabel={`Filtrar por categoria ${cat}`}
-                  selected={state.category === cat}
-                  onPress={() => actions.setCategory(cat)}
-                />
-              ))}
-            </View>
-          </View>
-        ) : null}
-
-        {/* Filtro por Faixa de Preço */}
-        <View style={styles.filterSection}>
-          <Text style={styles.filterLabel}>Preço:</Text>
-          <View style={styles.filtersRow}>
-            {PRICE_FILTERS.map((p) => (
-              <Chip
-                key={p.id}
-                label={p.label}
-                accessibilityLabel={`Filtrar por ${p.label}`}
-                selected={state.priceRange === p.id}
-                onPress={() => actions.setPriceRange(p.id)}
-              />
-            ))}
-          </View>
-        </View>
-
-        {/* Ordenação */}
-        <View style={styles.filterSection}>
-          <Text style={styles.filterLabel}>Ordenar por:</Text>
-          <View style={styles.filtersRow}>
-            {SORT_OPTIONS.map((s) => (
-              <Chip
-                key={s.id}
-                label={s.label}
-                accessibilityLabel={`Ordenar por ${s.label}`}
-                selected={state.sortBy === s.id}
-                onPress={() => actions.setSortBy(s.id)}
-              />
-            ))}
-          </View>
-        </View>
-
-        {!state.term.trim() && state.history.length > 0 ? (
-          <View style={styles.historySection}>
-            <View style={styles.historyHeader}>
-              <Text style={styles.historyTitle}>Buscas recentes</Text>
-              <Pressable accessibilityRole="button" accessibilityLabel="Limpar histórico de buscas" onPress={() => setConfirmingClear(true)}>
-                <Text style={styles.alertLink}>Limpar histórico</Text>
-              </Pressable>
-            </View>
-            <View style={styles.historyChips}>
-              {state.history.map((item) => (
-                <Pressable key={item} accessibilityRole="button" accessibilityLabel={`Buscar novamente por ${item}`} onPress={() => actions.setTerm(item)} style={styles.historyChip}>
-                  <Text style={styles.historyChipText}>{item}</Text>
-                </Pressable>
-              ))}
-            </View>
-          </View>
-        ) : null}
-
-        <Dialog
-          visible={confirmingClear}
-          title="Limpar histórico de buscas?"
-          message="As buscas recentes salvas neste dispositivo serão removidas."
-          confirmLabel="Limpar histórico"
-          cancelLabel="Cancelar"
-          destructive
-          onCancel={() => setConfirmingClear(false)}
-          onConfirm={() => { setConfirmingClear(false); void actions.clearHistory(); }}
-        />
-
-        {state.loading ? (
-          <LoadingState label="Carregando livros" />
-        ) : state.error ? (
-          isOnline ? (
-            <ErrorState message={state.error} onRetry={() => void actions.reload()} />
-          ) : (
-            <OfflineState onRetry={() => void actions.reload()} />
-          )
-        ) : (
-          <FlatList
-            data={state.books}
-            keyExtractor={(book) => book.id}
-            contentContainerStyle={styles.list}
-            ListEmptyComponent={
-              <View style={styles.empty}>
-                <Text style={styles.emptyTitle}>Nenhum livro encontrado.</Text>
-                <Text style={styles.body}>
-                  {state.hasActiveFilters
-                    ? "Nenhum livro corresponde aos filtros selecionados."
-                    : "Ainda não há livros no catálogo."}
-                </Text>
-                {state.hasActiveFilters ? (
-                  <Pressable accessibilityRole="button" onPress={actions.clearFilters} style={styles.emptyActionButton}>
-                    <Text style={styles.emptyActionText}>Limpar filtros</Text>
-                  </Pressable>
-                ) : null}
-                {state.term.trim() ? (
-                  <Pressable accessibilityRole="button" onPress={() => onNavigateToAlerts?.(state.term.trim())}>
-                    <Text style={styles.alertLink}>Criar alerta para esta busca</Text>
-                  </Pressable>
-                ) : null}
-              </View>
-            }
-            renderItem={({ item }) => {
-              return (
-                <View style={styles.row}>
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel={`Ver detalhe de ${item.title}, ${item.author}`}
-                    onPress={() => { void actions.registerSearch(state.term); onNavigateToBookDetail?.(item.id); }}
-                    style={styles.rowMain}
-                  >
-                    <BookCover id={item.id} title={item.title} photoUrl={item.photoUrl} variant="list" />
-                    <View style={styles.rowInfo}>
-                      <View style={styles.rowHeader}>
-                        <Text style={styles.rowTitle}>{item.title}</Text>
-                        <Tag variant={item.modality} />
-                      </View>
-                      <Text style={styles.body}>{item.author}</Text>
-                      {item.category ? <Text style={styles.categoryBadge}>{item.category}</Text> : null}
-                      {item.price ? <Text style={styles.priceText}>R$ {item.price.toFixed(2).replace(".", ",")}</Text> : null}
-                    </View>
-                  </Pressable>
-                  <FavoriteButton bookId={item.id} userId={auth.user?.id ?? null} />
+      <FlatList
+        data={state.loading || state.error ? [] : state.books}
+        keyExtractor={(book) => book.id}
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+        ListHeaderComponent={listHeader}
+        ListEmptyComponent={listEmpty}
+        renderItem={({ item }) => {
+          return (
+            <View style={styles.row}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`Ver detalhe de ${item.title}, ${item.author}`}
+                onPress={() => { void actions.registerSearch(state.term); onNavigateToBookDetail?.(item.id); }}
+                style={styles.rowMain}
+              >
+                <BookCover id={item.id} title={item.title} photoUrl={item.photoUrl} variant="list" />
+                <View style={styles.rowInfo}>
+                  <View style={styles.rowHeader}>
+                    <Text style={styles.rowTitle}>{item.title}</Text>
+                    <Tag variant={item.modality} />
+                  </View>
+                  <Text style={styles.body}>{item.author}</Text>
+                  {item.category ? <Text style={styles.categoryBadge}>{item.category}</Text> : null}
+                  {item.price ? <Text style={styles.priceText}>R$ {item.price.toFixed(2).replace(".", ",")}</Text> : null}
                 </View>
-              );
-            }}
-          />
-        )}
-      </View>
+              </Pressable>
+              <FavoriteButton bookId={item.id} userId={auth.user?.id ?? null} />
+            </View>
+          );
+        }}
+      />
     </SafeAreaView>
   );
 }
@@ -262,7 +269,17 @@ export default function Search({ onNavigateToBookDetail, onNavigateToAlerts, ini
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
   page: { flex: 1, backgroundColor: colors.background },
-  content: { flex: 1, width: "100%", maxWidth: 720, alignSelf: "center", padding: tokens.spacing[24], gap: tokens.spacing[16] },
+  // `contentContainerStyle` da lista: `flexGrow` deixa o conteúdo ultrapassar a altura da tela,
+  // que é o que permite a rolagem. O `gap` fica no cabeçalho para não afetar as linhas da lista.
+  content: {
+    flexGrow: 1,
+    width: "100%",
+    maxWidth: 720,
+    alignSelf: "center",
+    padding: tokens.spacing[24],
+    paddingBottom: tokens.spacing[24],
+  },
+  filters: { gap: tokens.spacing[16] },
   headerRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   heading: { fontSize: tokens.typography.titleLarge.fontSize, fontWeight: tokens.typography.titleLarge.fontWeight, color: colors.action },
   clearFiltersButton: { minHeight: tokens.accessibility.touchTarget, justifyContent: "center", paddingHorizontal: tokens.spacing[8] },
@@ -271,7 +288,6 @@ function createStyles(colors: ColorPalette) {
   filterLabel: { fontSize: tokens.typography.labelSmall.fontSize, fontWeight: "600", color: colors.secondaryText },
   filtersRow: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[8] },
   body: { fontSize: tokens.typography.bodyLarge.fontSize, lineHeight: 25, color: colors.secondaryText },
-  list: { paddingBottom: tokens.spacing[24] },
   empty: { alignItems: "center", paddingTop: tokens.spacing[32], gap: tokens.spacing[8] },
   emptyTitle: { fontSize: 19, fontWeight: "600", color: colors.action },
   emptyActionButton: { minHeight: tokens.accessibility.touchTarget, justifyContent: "center", alignItems: "center", backgroundColor: colors.soft, borderRadius: tokens.radius.small, paddingHorizontal: tokens.spacing[16] },

@@ -3,6 +3,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-nati
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useBookDetailViewModel } from "@/viewmodel/useBookDetailViewModel";
+import { usePublicProfileViewModel } from "@/viewmodel/usePublicProfileViewModel";
 import { useRequestNegotiationViewModel } from "@/viewmodel/useRequestNegotiationViewModel";
 import { useShareListingViewModel } from "@/viewmodel/useShareListingViewModel";
 import { tokens, type ColorPalette } from "@/view/tokens";
@@ -20,6 +21,32 @@ function createModalityTag(colors: ColorPalette): Record<BookModality, { backgro
     trade: { background: colors.badge.trade.background, text: colors.badge.trade.text, label: "Troca" },
     donation: { background: colors.badge.donation.background, text: colors.badge.donation.text, label: "Doação" },
   };
+}
+
+/** Texto usado enquanto o perfil carrega ou quando ele não pôde ser lido. */
+const OWNER_FALLBACK_LABEL = "Anunciado por outro membro da comunidade";
+
+/**
+ * Mostra o nome público de quem anunciou. O `ownerId` é um identificador interno (UUID) e nunca
+ * vai para a tela: sem nome disponível, cai em um rótulo genérico.
+ */
+function OwnerLink({ ownerId, onPress }: { ownerId: string; onPress?: () => void }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+  const [profileState] = usePublicProfileViewModel(ownerId);
+  const name = profileState.profile?.name?.trim();
+  const label = name ? `Anunciado por ${name}` : OWNER_FALLBACK_LABEL;
+
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      onPress={onPress}
+      style={styles.ownerButton}
+    >
+      <Text style={styles.ownerText}>{label}</Text>
+    </Pressable>
+  );
 }
 
 export type BookDetailProps = {
@@ -88,13 +115,10 @@ export default function BookDetail({
             {book.modality === "sale" && book.price ? (
               <Text style={styles.price}>{`R$ ${book.price.toFixed(2)}`}</Text>
             ) : null}
-            <Pressable
-              accessibilityRole="button"
+            <OwnerLink
+              ownerId={book.ownerId}
               onPress={() => onNavigateToUserProfile?.(book.ownerId)}
-              style={styles.ownerButton}
-            >
-              <Text style={styles.ownerText}>Anunciado por {book.ownerId}</Text>
-            </Pressable>
+            />
             {book.status === "reserved" ? (
               <Text style={styles.reserved}>Reservado</Text>
             ) : sessionUserId && book.ownerId !== sessionUserId ? (

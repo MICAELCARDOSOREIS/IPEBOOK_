@@ -51,23 +51,24 @@ function pickPassthroughProps(props) {
   return picked;
 }
 
+/** Aceita tanto elemento quanto componente, como a FlatList real. */
+function renderListSlot(slot) {
+  if (!slot) return null;
+  return typeof slot === "function" ? React.createElement(slot) : slot;
+}
+
 const FlatList = React.forwardRef((props, ref) => {
   const data = props.data || [];
   const passthrough = pickPassthroughProps(props);
-  if (data.length === 0 && props.ListEmptyComponent) {
-    const empty = typeof props.ListEmptyComponent === "function"
-      ? React.createElement(props.ListEmptyComponent)
-      : props.ListEmptyComponent;
-    return React.createElement(View, { ref, ...passthrough }, empty);
-  }
-  return React.createElement(
-    View,
-    { ref, ...passthrough },
-    data.map((item, index) => {
+  const header = renderListSlot(props.ListHeaderComponent);
+  const footer = renderListSlot(props.ListFooterComponent);
+  const body = data.length === 0
+    ? renderListSlot(props.ListEmptyComponent)
+    : data.map((item, index) => {
       const key = props.keyExtractor ? props.keyExtractor(item, index) : index;
       return React.createElement(React.Fragment, { key }, props.renderItem({ item, index }));
-    })
-  );
+    });
+  return React.createElement(View, { ref, ...passthrough }, header, body, footer);
 });
 FlatList.displayName = "FlatList";
 

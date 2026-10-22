@@ -11,9 +11,11 @@ vi.mock("@/viewmodel/useBookDetailViewModel", () => ({ useBookDetailViewModel: v
 vi.mock("@/viewmodel/useAuthViewModel", () => ({ useAuthViewModel: vi.fn() }));
 vi.mock("@/viewmodel/useRequestNegotiationViewModel", () => ({ useRequestNegotiationViewModel: vi.fn() }));
 vi.mock("@/viewmodel/useShareListingViewModel", () => ({ useShareListingViewModel: vi.fn() }));
+vi.mock("@/viewmodel/usePublicProfileViewModel", () => ({ usePublicProfileViewModel: vi.fn() }));
 
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useBookDetailViewModel } from "@/viewmodel/useBookDetailViewModel";
+import { usePublicProfileViewModel } from "@/viewmodel/usePublicProfileViewModel";
 import { useRequestNegotiationViewModel } from "@/viewmodel/useRequestNegotiationViewModel";
 import { useShareListingViewModel } from "@/viewmodel/useShareListingViewModel";
 
@@ -48,8 +50,27 @@ function setup(
     error?: string | null;
     negotiation?: Partial<RequestNegotiationState>;
     share?: Partial<ShareListingState>;
+    /** Nome público de quem anunciou; ausente simula perfil ainda carregando ou indisponível. */
+    ownerName?: string;
   } = {},
 ) {
+  vi.mocked(usePublicProfileViewModel).mockReturnValue([
+    {
+      profile: options.ownerName
+        ? {
+          userId: book?.ownerId ?? "other",
+          name: options.ownerName,
+          joinedAt: "2026-01-01",
+          averageRating: null,
+          ratingCount: 0,
+          completedNegotiations: 0,
+        }
+        : null,
+      loading: false,
+      error: null,
+    },
+    { reload: vi.fn() },
+  ]);
   vi.mocked(useBookDetailViewModel).mockReturnValue([
     { book, loading: options.loading ?? false, error: options.error ?? null, isFavorite: false, favoriteError: null, favoriteLoading: false },
     { reload: vi.fn(), toggleFavorite: vi.fn() },
@@ -137,11 +158,27 @@ describe("BookDetail (spec 006, US6/T029)", () => {
   });
 
   it("aciona onNavigateToUserProfile ao tocar no nome de quem anunciou (US5)", async () => {
-    setup(book({ ownerId: "owner-xyz" }), user);
+    setup(book({ ownerId: "owner-xyz" }), user, { ownerName: "Joana Lima" });
     const onNavigateToUserProfile = vi.fn();
     const screen = await renderDetail({ onNavigateToUserProfile });
-    await act(async () => { fireEvent.press(screen.getByText("Anunciado por owner-xyz")); });
+    await act(async () => { fireEvent.press(screen.getByText("Anunciado por Joana Lima")); });
     expect(onNavigateToUserProfile).toHaveBeenCalledWith("owner-xyz");
+  });
+
+  it("nunca expõe o identificador interno de quem anunciou na tela", async () => {
+    const ownerId = "665e6478-544a-4ede-9dbb-185e3435430a";
+    setup(book({ ownerId }), user, { ownerName: "Joana Lima" });
+    const screen = await renderDetail();
+    expect(screen.queryByText(new RegExp(ownerId))).toBeNull();
+    expect(screen.getByText("Anunciado por Joana Lima")).toBeDefined();
+  });
+
+  it("usa rótulo genérico quando o perfil de quem anunciou não está disponível", async () => {
+    const ownerId = "665e6478-544a-4ede-9dbb-185e3435430a";
+    setup(book({ ownerId }), user);
+    const screen = await renderDetail();
+    expect(screen.queryByText(new RegExp(ownerId))).toBeNull();
+    expect(screen.getByText("Anunciado por outro membro da comunidade")).toBeDefined();
   });
 
   it("oferece ver fotos em tela cheia quando há foto de capa (Spec 018)", async () => {

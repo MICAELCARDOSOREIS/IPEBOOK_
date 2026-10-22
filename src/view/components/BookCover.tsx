@@ -4,7 +4,7 @@ import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { useBookCoverImage } from "@/viewmodel/useBookCoverImage";
 
-export type BookCoverVariant = "list" | "card";
+export type BookCoverVariant = "list" | "card" | "carousel";
 
 export type BookCoverProps = {
   id: string;
@@ -28,6 +28,14 @@ const COVER_COLORS = [
 const ASPECT_RATIO = 120 / 170;
 const LIST_WIDTH = 44;
 const CARD_WIDTH = 96;
+/** Preenche a largura do card de carrossel da Home (`CAROUSEL_ITEM_WIDTH`). */
+const CAROUSEL_WIDTH = 152;
+
+const VARIANT_WIDTH: Record<BookCoverVariant, number> = {
+  list: LIST_WIDTH,
+  card: CARD_WIDTH,
+  carousel: CAROUSEL_WIDTH,
+};
 
 function hashId(id: string): number {
   return [...id].reduce((sum, char) => sum + char.charCodeAt(0), 0);
@@ -65,7 +73,7 @@ export function BookCover({
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const backgroundColor = COVER_COLORS[hashId(id) % COVER_COLORS.length];
-  const width = variant === "card" ? CARD_WIDTH : LIST_WIDTH;
+  const width = VARIANT_WIDTH[variant] ?? LIST_WIDTH;
   const height = width / ASPECT_RATIO;
   const showText = variant === "card";
 

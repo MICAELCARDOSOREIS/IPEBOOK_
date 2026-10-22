@@ -29,7 +29,19 @@ function createModalityTag(colors: ColorPalette): Record<BookModality, { backgro
 }
 
 const CAROUSEL_ITEM_WIDTH = 152;
+const CAROUSEL_ITEM_GAP = tokens.spacing[12];
+/**
+ * Passo real entre dois cards: a largura do card mais a margem que os separa. Usar apenas
+ * `CAROUSEL_ITEM_WIDTH` no `scrollToOffset` acumulava `CAROUSEL_ITEM_GAP` de desvio por clique,
+ * deixando uma fatia do item anterior visível à esquerda.
+ */
+const CAROUSEL_ITEM_STRIDE = CAROUSEL_ITEM_WIDTH + CAROUSEL_ITEM_GAP;
 const CAROUSEL_MAX_ITEMS = 8;
+
+/** Deslocamento horizontal que deixa o item `index` alinhado à borda esquerda do carrossel. */
+export function carouselOffsetFor(index: number): number {
+  return index * CAROUSEL_ITEM_STRIDE;
+}
 
 type CatalogCarouselProps = {
   title: string;
@@ -54,14 +66,19 @@ function CatalogCarousel({ title, books, onNavigateToBookDetail, onViewMore, vie
   function goTo(nextIndex: number) {
     const clamped = Math.max(0, Math.min(nextIndex, lastIndex));
     setIndex(clamped);
-    listRef.current?.scrollToOffset?.({ offset: clamped * CAROUSEL_ITEM_WIDTH, animated: true });
+    listRef.current?.scrollToOffset?.({ offset: carouselOffsetFor(clamped), animated: true });
   }
 
   return (
     <View style={styles.carouselSection} testID={`carousel-${title}`}>
       <View style={styles.carouselHeader}>
-        <Text accessibilityRole="header" style={styles.carouselTitle}>{title}</Text>
-        <Pressable accessibilityRole="button" accessibilityLabel={viewMoreLabel} onPress={onViewMore}>
+        <Text accessibilityRole="header" numberOfLines={2} style={styles.carouselTitle}>{title}</Text>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={viewMoreLabel}
+          onPress={onViewMore}
+          style={styles.viewMoreButton}
+        >
           <Text style={styles.viewMoreText}>Ver mais</Text>
         </Pressable>
       </View>
@@ -92,9 +109,9 @@ function CatalogCarousel({ title, books, onNavigateToBookDetail, onViewMore, vie
                 onPress={() => onNavigateToBookDetail?.(item.id)}
                 style={styles.carouselCard}
               >
-                <BookCover id={item.id} title={item.title} photoUrl={item.photoUrl} variant="list" />
-                <Text numberOfLines={1} style={styles.carouselCardTitle}>{item.title}</Text>
-                <View style={[styles.tag, { backgroundColor: tag.background }]}>
+                <BookCover id={item.id} title={item.title} photoUrl={item.photoUrl} variant="carousel" />
+                <Text numberOfLines={2} style={styles.carouselCardTitle}>{item.title}</Text>
+                <View style={[styles.tag, styles.carouselCardTag, { backgroundColor: tag.background }]}>
                   <Text style={[styles.tagText, { color: tag.text }]}>{tag.label}</Text>
                 </View>
               </Pressable>
@@ -170,188 +187,198 @@ export default function Home({
     .filter((book) => book.modality === "donation" && book.status === "available")
     .slice(0, CAROUSEL_MAX_ITEMS);
 
+  // Cabeçalho e rodapé viajam dentro da própria lista: assim a Home inteira rola em um único
+  // gesto, sem aninhar uma VirtualizedList dentro de um ScrollView.
+  const listHeader = (
+    <View>
+      <View style={styles.brand}>
+        <View style={styles.mark} accessible={false} />
+        <Text accessibilityRole="header" style={styles.title}>Ipebook</Text>
+      </View>
+      <Text style={styles.subtitle}>Um lugar para descobrir sua próxima leitura.</Text>
+      <View testID="theme-toggle-radiogroup" accessibilityRole="radiogroup" style={styles.themeToggleRow}>
+        {THEME_OPTIONS.map((option) => {
+          const isSelected = preference === option.value;
+          return (
+            <Pressable
+              key={option.value}
+              accessibilityRole="radio"
+              accessibilityLabel={`Tema ${option.label}`}
+              accessibilityState={{ checked: isSelected }}
+              onPress={() => void setPreference(option.value)}
+              style={[styles.themeToggleOption, isSelected && styles.themeToggleOptionSelected]}
+            >
+              <Text style={[styles.themeToggleText, isSelected && styles.themeToggleTextSelected]}>
+                {option.label}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+      {authState.loading ? null : authState.user ? (
+        <View>
+        <View style={styles.sessionRow}>
+          <Text style={styles.sessionText}>Olá, {authState.user.email}</Text>
+          <View style={styles.sessionActions}>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => onNavigateToCreateListing?.()}
+              style={styles.sessionButton}
+            >
+              <Text style={styles.sessionButtonText}>Anunciar</Text>
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => void authActions.signOut()}
+              style={styles.sessionButton}
+            >
+              <Text style={styles.sessionButtonText}>Sair</Text>
+            </Pressable>
+          </View>
+        </View>
+        <View style={styles.requestsRow}>
+          <Pressable accessibilityRole="button" onPress={() => onNavigateToFavorites?.()} style={styles.sessionButton}>
+            <Text style={styles.sessionButtonText}>Favoritos</Text>
+          </Pressable>
+          <Pressable accessibilityRole="button" onPress={() => onNavigateToAlerts?.()} style={styles.sessionButton}>
+            <Text style={styles.sessionButtonText}>Meus alertas</Text>
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => onNavigateToNotifications?.()}
+            style={styles.sessionButton}
+          >
+            <Text style={styles.sessionButtonText}>Notificações</Text>
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => onNavigateToMyListings?.()}
+            style={styles.sessionButton}
+          >
+            <Text style={styles.sessionButtonText}>Meus anúncios</Text>
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => onNavigateToReceivedRequests?.()}
+            style={styles.sessionButton}
+          >
+            <Text style={styles.sessionButtonText}>Pedidos recebidos</Text>
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => onNavigateToSentRequests?.()}
+            style={styles.sessionButton}
+          >
+            <Text style={styles.sessionButtonText}>Meus pedidos</Text>
+          </Pressable>
+        </View>
+        </View>
+      ) : (
+        <View style={styles.sessionRow}>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => onNavigateToSignIn?.()}
+            style={styles.sessionButton}
+          >
+            <Text style={styles.sessionButtonText}>Entrar</Text>
+          </Pressable>
+        </View>
+      )}
+      {!state.loading && !state.error && recentBooks.length > 0 ? (
+        <CatalogCarousel
+          title="Recém-adicionados"
+          books={recentBooks}
+          onNavigateToBookDetail={onNavigateToBookDetail}
+          onViewMore={() => onNavigateToSearch?.()}
+          viewMoreLabel="Ver mais livros recém-adicionados"
+        />
+      ) : null}
+      {!state.loading && !state.error && donationBooks.length > 0 ? (
+        <CatalogCarousel
+          title="Doações disponíveis na comunidade"
+          books={donationBooks}
+          onNavigateToBookDetail={onNavigateToBookDetail}
+          onViewMore={() => onNavigateToSearch?.({ modality: "donation" })}
+          viewMoreLabel="Ver mais doações disponíveis em Piripiri"
+        />
+      ) : null}
+      <Text accessibilityRole="header" style={styles.heading}>Livros</Text>
+    </View>
+  );
+
+  const listFooter = (
+    <View style={styles.footerLinks}>
+      <Pressable
+        accessibilityRole="button"
+        onPress={() => onNavigateToTerms?.()}
+        style={styles.legalButton}
+      >
+        <Text style={styles.legalText}>Termos e Privacidade</Text>
+      </Pressable>
+      <Text style={styles.footerSeparator}>•</Text>
+      <Pressable
+        accessibilityRole="button"
+        onPress={() => onNavigateToHelp?.()}
+        style={styles.legalButton}
+      >
+        <Text style={styles.legalText}>Central de Ajuda</Text>
+      </Pressable>
+    </View>
+  );
+
+  const listEmpty = state.loading ? (
+    <LoadingState label="Carregando livros" />
+  ) : state.error ? (
+    isOnline ? (
+      <ErrorState message={state.error} onRetry={() => void actions.reload()} />
+    ) : (
+      <OfflineState onRetry={() => void actions.reload()} />
+    )
+  ) : (
+    <View style={styles.empty}>
+      <Text style={styles.emptyTitle}>Ainda não há livros por aqui.</Text>
+      <Text style={styles.body}>Quando houver livros disponíveis, eles aparecerão neste espaço.</Text>
+    </View>
+  );
+
   return (
     <SafeAreaView style={styles.page}>
-      <View style={styles.content}>
-        <View style={styles.brand}>
-          <View style={styles.mark} accessible={false} />
-          <Text accessibilityRole="header" style={styles.title}>Ipebook</Text>
-        </View>
-        <Text style={styles.subtitle}>Um lugar para descobrir sua próxima leitura.</Text>
-        <View testID="theme-toggle-radiogroup" accessibilityRole="radiogroup" style={styles.themeToggleRow}>
-          {THEME_OPTIONS.map((option) => {
-            const isSelected = preference === option.value;
-            return (
-              <Pressable
-                key={option.value}
-                accessibilityRole="radio"
-                accessibilityLabel={`Tema ${option.label}`}
-                accessibilityState={{ checked: isSelected }}
-                onPress={() => void setPreference(option.value)}
-                style={[styles.themeToggleOption, isSelected && styles.themeToggleOptionSelected]}
-              >
-                <Text style={[styles.themeToggleText, isSelected && styles.themeToggleTextSelected]}>
-                  {option.label}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-        {authState.loading ? null : authState.user ? (
-          <View>
-          <View style={styles.sessionRow}>
-            <Text style={styles.sessionText}>Olá, {authState.user.email}</Text>
-            <View style={styles.sessionActions}>
-              <Pressable
-                accessibilityRole="button"
-                onPress={() => onNavigateToCreateListing?.()}
-                style={styles.sessionButton}
-              >
-                <Text style={styles.sessionButtonText}>Anunciar</Text>
-              </Pressable>
-              <Pressable
-                accessibilityRole="button"
-                onPress={() => void authActions.signOut()}
-                style={styles.sessionButton}
-              >
-                <Text style={styles.sessionButtonText}>Sair</Text>
-              </Pressable>
-            </View>
-          </View>
-          <View style={styles.requestsRow}>
-            <Pressable accessibilityRole="button" onPress={() => onNavigateToFavorites?.()} style={styles.sessionButton}>
-              <Text style={styles.sessionButtonText}>Favoritos</Text>
-            </Pressable>
-            <Pressable accessibilityRole="button" onPress={() => onNavigateToAlerts?.()} style={styles.sessionButton}>
-              <Text style={styles.sessionButtonText}>Meus alertas</Text>
-            </Pressable>
+      <FlatList
+        data={state.loading || state.error ? [] : state.books}
+        keyExtractor={(book) => book.id}
+        contentContainerStyle={styles.content}
+        ListHeaderComponent={listHeader}
+        ListFooterComponent={listFooter}
+        ListEmptyComponent={listEmpty}
+        renderItem={({ item }) => {
+          const tag = modalityTag[item.modality];
+          return (
+            <View style={styles.book}>
             <Pressable
               accessibilityRole="button"
-              onPress={() => onNavigateToNotifications?.()}
-              style={styles.sessionButton}
+              accessibilityLabel={`Ver detalhe de ${item.title}, ${item.author}`}
+              onPress={() => onNavigateToBookDetail?.(item.id)}
+              style={styles.bookMain}
             >
-              <Text style={styles.sessionButtonText}>Notificações</Text>
-            </Pressable>
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => onNavigateToMyListings?.()}
-              style={styles.sessionButton}
-            >
-              <Text style={styles.sessionButtonText}>Meus anúncios</Text>
-            </Pressable>
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => onNavigateToReceivedRequests?.()}
-              style={styles.sessionButton}
-            >
-              <Text style={styles.sessionButtonText}>Pedidos recebidos</Text>
-            </Pressable>
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => onNavigateToSentRequests?.()}
-              style={styles.sessionButton}
-            >
-              <Text style={styles.sessionButtonText}>Meus pedidos</Text>
-            </Pressable>
-          </View>
-          </View>
-        ) : (
-          <View style={styles.sessionRow}>
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => onNavigateToSignIn?.()}
-              style={styles.sessionButton}
-            >
-              <Text style={styles.sessionButtonText}>Entrar</Text>
-            </Pressable>
-          </View>
-        )}
-        {!state.loading && !state.error && recentBooks.length > 0 ? (
-          <CatalogCarousel
-            title="Recém-adicionados"
-            books={recentBooks}
-            onNavigateToBookDetail={onNavigateToBookDetail}
-            onViewMore={() => onNavigateToSearch?.()}
-            viewMoreLabel="Ver mais livros recém-adicionados"
-          />
-        ) : null}
-        {!state.loading && !state.error && donationBooks.length > 0 ? (
-          <CatalogCarousel
-            title="Doações disponíveis na comunidade"
-            books={donationBooks}
-            onNavigateToBookDetail={onNavigateToBookDetail}
-            onViewMore={() => onNavigateToSearch?.({ modality: "donation" })}
-            viewMoreLabel="Ver mais doações disponíveis em Piripiri"
-          />
-        ) : null}
-        <Text accessibilityRole="header" style={styles.heading}>Livros</Text>
-        {state.loading ? (
-          <LoadingState label="Carregando livros" />
-        ) : state.error ? (
-          isOnline ? (
-            <ErrorState message={state.error} onRetry={() => void actions.reload()} />
-          ) : (
-            <OfflineState onRetry={() => void actions.reload()} />
-          )
-        ) : (
-          <FlatList
-            data={state.books}
-            keyExtractor={(book) => book.id}
-            contentContainerStyle={styles.list}
-            ListEmptyComponent={
-              <View style={styles.empty}>
-                <Text style={styles.emptyTitle}>Ainda não há livros por aqui.</Text>
-                <Text style={styles.body}>Quando houver livros disponíveis, eles aparecerão neste espaço.</Text>
-              </View>
-            }
-            renderItem={({ item }) => {
-              const tag = modalityTag[item.modality];
-              return (
-                <View style={styles.book}>
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={`Ver detalhe de ${item.title}, ${item.author}`}
-                  onPress={() => onNavigateToBookDetail?.(item.id)}
-                  style={styles.bookMain}
-                >
-                  <BookCover id={item.id} title={item.title} photoUrl={item.photoUrl} variant="list" />
-                  <View style={styles.bookInfo}>
-                    <View style={styles.bookHeader}>
-                      <Text style={styles.emptyTitle}>{item.title}</Text>
-                      <View style={[styles.tag, { backgroundColor: tag.background }]}>
-                        <Text style={[styles.tagText, { color: tag.text }]}>{tag.label}</Text>
-                      </View>
-                    </View>
-                    <Text style={styles.body}>{item.author}</Text>
-                    {item.status === "reserved" ? (
-                      <Text style={styles.reserved}>Reservado</Text>
-                    ) : null}
+              <BookCover id={item.id} title={item.title} photoUrl={item.photoUrl} variant="list" />
+              <View style={styles.bookInfo}>
+                <View style={styles.bookHeader}>
+                  <Text style={styles.emptyTitle}>{item.title}</Text>
+                  <View style={[styles.tag, { backgroundColor: tag.background }]}>
+                    <Text style={[styles.tagText, { color: tag.text }]}>{tag.label}</Text>
                   </View>
-                </Pressable>
-                <FavoriteButton bookId={item.id} userId={authState.user?.id ?? null} />
                 </View>
-              );
-            }}
-          />
-        )}
-        <View style={styles.footerLinks}>
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => onNavigateToTerms?.()}
-            style={styles.legalButton}
-          >
-            <Text style={styles.legalText}>Termos e Privacidade</Text>
-          </Pressable>
-          <Text style={styles.footerSeparator}>•</Text>
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => onNavigateToHelp?.()}
-            style={styles.legalButton}
-          >
-            <Text style={styles.legalText}>Central de Ajuda</Text>
-          </Pressable>
-        </View>
-      </View>
+                <Text style={styles.body}>{item.author}</Text>
+                {item.status === "reserved" ? (
+                  <Text style={styles.reserved}>Reservado</Text>
+                ) : null}
+              </View>
+            </Pressable>
+            <FavoriteButton bookId={item.id} userId={authState.user?.id ?? null} />
+            </View>
+          );
+        }}
+      />
     </SafeAreaView>
   );
 }
@@ -378,7 +405,17 @@ function createStyles(colors: ColorPalette) {
       color: colors.secondaryText,
       textDecorationLine: "underline",
     },
-    content: { flex: 1, width: "100%", maxWidth: 720, alignSelf: "center", padding: tokens.spacing[24], paddingTop: tokens.spacing[48] },
+    // Usado como `contentContainerStyle`: `flexGrow` (e não `flex: 1`) deixa o conteúdo crescer
+    // além da altura da tela, que é o que permite a rolagem.
+    content: {
+      flexGrow: 1,
+      width: "100%",
+      maxWidth: 720,
+      alignSelf: "center",
+      padding: tokens.spacing[24],
+      paddingTop: tokens.spacing[48],
+      paddingBottom: tokens.spacing[24],
+    },
     brand: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[12] },
     mark: { width: 16, height: 36, backgroundColor: colors.highlight, borderTopRightRadius: tokens.radius.medium },
     title: { fontSize: tokens.typography.displayLarge.fontSize, fontWeight: tokens.typography.displayLarge.fontWeight, color: colors.action },
@@ -401,7 +438,6 @@ function createStyles(colors: ColorPalette) {
     sessionButton: { minHeight: tokens.accessibility.touchTarget, justifyContent: "center", paddingHorizontal: tokens.spacing[12] },
     sessionButtonText: { color: colors.action, fontSize: 14, fontWeight: "600" },
     heading: { fontSize: tokens.typography.titleLarge.fontSize, fontWeight: tokens.typography.titleLarge.fontWeight, color: colors.action, marginBottom: tokens.spacing[24] },
-    list: { paddingBottom: tokens.spacing[24] },
     empty: { borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 28, gap: 10 },
     emptyTitle: { fontSize: 19, fontWeight: "600", color: colors.action },
     body: { fontSize: tokens.typography.bodyLarge.fontSize, lineHeight: 25, color: colors.secondaryText },
@@ -415,7 +451,13 @@ function createStyles(colors: ColorPalette) {
     reserved: { fontSize: tokens.typography.bodyMedium.fontSize, color: colors.secondaryText, fontStyle: "italic" },
     carouselSection: { marginBottom: tokens.spacing[24] },
     carouselHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: tokens.spacing[12] },
-    carouselTitle: { fontSize: tokens.typography.titleMedium.fontSize, fontWeight: tokens.typography.titleMedium.fontWeight, color: colors.action },
+    carouselTitle: {
+      flexShrink: 1,
+      fontSize: tokens.typography.titleMedium.fontSize,
+      fontWeight: tokens.typography.titleMedium.fontWeight,
+      color: colors.action,
+    },
+    viewMoreButton: { flexShrink: 0, minHeight: tokens.accessibility.touchTarget, justifyContent: "center" },
     viewMoreText: { fontSize: tokens.typography.labelMedium.fontSize, color: colors.action, fontWeight: "600" },
     carouselRow: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[4] },
     carouselList: { flexGrow: 0 },
@@ -427,7 +469,8 @@ function createStyles(colors: ColorPalette) {
     },
     carouselNavButtonDisabled: { opacity: 0.3 },
     carouselNavText: { fontSize: 22, color: colors.action, fontWeight: "700" },
-    carouselCard: { width: CAROUSEL_ITEM_WIDTH, marginRight: tokens.spacing[12], gap: tokens.spacing[4] },
+    carouselCard: { width: CAROUSEL_ITEM_WIDTH, marginRight: CAROUSEL_ITEM_GAP, gap: tokens.spacing[4] },
+    carouselCardTag: { alignSelf: "flex-start" },
     carouselCardTitle: { fontSize: tokens.typography.labelMedium.fontSize, fontWeight: "600", color: colors.text },
   });
 }
