@@ -3,7 +3,7 @@ import { MemoryThemePreferenceDataSource } from "@/infra/datasources/memoryTheme
 import type { IThemePreferenceDataSource } from "@/model/datasources/iThemePreferenceDataSource";
 import { ThemePreferenceUseCases } from "@/usecase/themePreferenceUseCases";
 
-describe("ThemePreferenceUseCases (Spec 043 / Issue #144)", () => {
+describe("ThemePreferenceUseCases (Spec 044 / Issue #144)", () => {
   it("começa seguindo o tema do sistema e persiste a escolha manual", async () => {
     const useCases = new ThemePreferenceUseCases(new MemoryThemePreferenceDataSource());
 

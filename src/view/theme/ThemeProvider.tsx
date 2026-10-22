@@ -19,7 +19,7 @@ const defaultValue: ThemeContextValue = {
 
 const ThemeContext = createContext<ThemeContextValue>(defaultValue);
 
-/** Distribui o tema resolvido (claro/escuro) para a árvore (ADR 0035). Envolver em `src/app/_layout.tsx`. */
+/** Distribui o tema resolvido (claro/escuro) para a árvore (ADR 0036). Envolver em `src/app/_layout.tsx`. */
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [state, actions] = useThemeViewModel();
   const resolvedColors = state.resolvedScheme === "dark" ? darkColors : colors;

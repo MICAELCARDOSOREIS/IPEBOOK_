@@ -1,7 +1,7 @@
 /**
  * IpêBook — Tokens de Design (IHC / UI)
  * Fonte canônica: design-system/tokens.json (ver ADR 0010). `colors` é o tema claro; `darkColors`
- * (mesma forma) é o tema escuro, habilitado pela ADR 0035 — ver `src/view/theme/ThemeProvider.tsx`
+ * (mesma forma) é o tema escuro, habilitado pela ADR 0036 — ver `src/view/theme/ThemeProvider.tsx`
  * e `useTheme()` para o consumo dinâmico. `design-tokens.json` na raiz foi substituído por este
  * arquivo e removido (ver Tarefa 26).
  *
@@ -89,7 +89,7 @@ type WidenToString<T> = T extends string ? string : { [K in keyof T]: WidenToStr
 export type ColorPalette = WidenToString<typeof colors>;
 
 /**
- * Tema escuro (ADR 0035): mesma forma de `colors`, valores de `design-system/tokens.json` (coluna
+ * Tema escuro (ADR 0036): mesma forma de `colors`, valores de `design-system/tokens.json` (coluna
  * `dark`) onde documentados. Tokens sem par `dark` explícito (ex. `success` como cor de texto)
  * reaproveitam o equivalente semântico mais próximo (`m3.primary` escuro) — verificado em
  * `tests/unit/themeContrast.test.ts`, nunca um valor inventado sem checagem de contraste.

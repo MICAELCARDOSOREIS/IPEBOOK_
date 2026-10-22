@@ -1,4 +1,4 @@
-# Validação — Spec 043
+# Validação — Spec 044
 
 **Data:** 21 de outubro de 2026
 

@@ -1,9 +1,9 @@
-# Spec 043 — Tema escuro: infraestrutura e primeira fatia vertical (Issue #144)
+# Spec 044 — Tema escuro: infraestrutura e primeira fatia vertical (Issue #144)
 
 ## Contexto
 
 Figma fluxo 12 · Acessibilidade e temas (`12.01 · Tema escuro`, `12.02 · Alto contraste`). Ver
-[ADR 0035](../../docs/adr/0035-tema-escuro-entra-em-escopo.md) para a decisão de reverter a ADR
+[ADR 0036](../../docs/adr/0036-tema-escuro-entra-em-escopo.md) para a decisão de reverter a ADR
 0008 e trazer o tema escuro para o escopo.
 
 ## Escopo desta entrega

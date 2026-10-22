@@ -1,4 +1,4 @@
-/** Razão de contraste WCAG 2.1 entre duas cores hex, para validar os pares de tema (ADR 0035). */
+/** Razão de contraste WCAG 2.1 entre duas cores hex, para validar os pares de tema (ADR 0036). */
 export function contrastRatio(hexA: string, hexB: string): number {
   const luminanceA = relativeLuminance(hexA);
   const luminanceB = relativeLuminance(hexB);

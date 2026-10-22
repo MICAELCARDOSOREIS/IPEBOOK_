@@ -1,6 +1,6 @@
-# Tarefas — Spec 043
+# Tarefas — Spec 044
 
-- [x] ADR 0035 (substitui a decisão 1 da ADR 0008) + atualização do índice e da ADR 0008.
+- [x] ADR 0036 (substitui a decisão 1 da ADR 0008) + atualização do índice e da ADR 0008.
 - [x] `ThemePreference` (model) + datasources (memory/AsyncStorage) + usecase + wiring no container.
 - [x] `darkColors` em `tokens.ts`, derivado de `design-system/tokens.json` (coluna `dark`).
 - [x] `contrastRatio.ts` + `tests/unit/themeContrast.test.ts` (17 pares, claro e escuro, ≥4.5:1).

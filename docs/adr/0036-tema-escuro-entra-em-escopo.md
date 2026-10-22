@@ -1,4 +1,4 @@
-# 0035 — Tema escuro entra em escopo (substitui a decisão 1 da ADR 0008)
+# 0036 — Tema escuro entra em escopo (substitui a decisão 1 da ADR 0008)
 
 Data: 2026-10-21. Status: aceito.
 

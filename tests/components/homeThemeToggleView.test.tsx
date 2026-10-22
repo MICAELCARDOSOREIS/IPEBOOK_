@@ -14,7 +14,7 @@ import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
 const mockedUseHomeViewModel = vi.mocked(useHomeViewModel);
 vi.mocked(useNetworkStatus).mockReturnValue({ isOnline: true });
 
-describe("alternador de tema na Home (Spec 043 / Issue #144, ADR 0035)", () => {
+describe("alternador de tema na Home (Spec 044 / Issue #144, ADR 0036)", () => {
   it("mostra as três opções de tema com 'Sistema' selecionado por padrão", async () => {
     const mockState: HomeState = { books: [], loading: true, error: null };
     const mockActions: HomeActions = { reload: vi.fn() };

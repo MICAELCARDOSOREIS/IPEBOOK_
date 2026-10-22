@@ -16,7 +16,7 @@ export type ThemeViewModelActions = {
   setPreference: (preference: ThemePreference) => Promise<void>;
 };
 
-/** Resolve a preferência salva + o tema do sistema no tema efetivo (ADR 0035). */
+/** Resolve a preferência salva + o tema do sistema no tema efetivo (ADR 0036). */
 export function useThemeViewModel(
   useCases: IThemePreferenceUseCases = themePreferenceUseCases,
 ): [ThemeViewModelState, ThemeViewModelActions] {

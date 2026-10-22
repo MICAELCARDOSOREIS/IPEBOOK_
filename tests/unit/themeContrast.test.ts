@@ -4,7 +4,7 @@ import { colors, darkColors } from "@/view/tokens";
 
 const MIN_TEXT_CONTRAST = 4.5;
 
-describe("contraste de tema claro/escuro (Spec 043 / Issue #144, WCAG AA)", () => {
+describe("contraste de tema claro/escuro (Spec 044 / Issue #144, WCAG AA)", () => {
   it.each([
     ["texto principal sobre fundo", colors.text, colors.background],
     ["texto secundário sobre fundo", colors.secondaryText, colors.background],
