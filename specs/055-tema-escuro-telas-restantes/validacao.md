@@ -1,4 +1,4 @@
-# Validação — Spec 045
+# Validação — Spec 055
 
 **Data:** 21 de outubro de 2026
 

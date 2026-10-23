@@ -87,6 +87,11 @@ import type { IThemePreferenceUseCases } from "@/usecase/iThemePreferenceUseCase
 import type { IUserDataExportUseCases } from "@/usecase/iUserDataExportUseCases";
 import type { IUserPreferencesUseCases } from "@/usecase/iUserPreferencesUseCases";
 import { OnboardingUseCases } from "@/usecase/onboardingUseCases";
+import type { IBlockedUserDataSource } from "@/model/datasources/iBlockedUserDataSource";
+import type { IBlockedUserUseCases } from "@/usecase/iBlockedUserUseCases";
+import { BlockedUserUseCases } from "@/usecase/blockedUserUseCases";
+import { MemoryBlockedUserDataSource } from "@/infra/datasources/memoryBlockedUserDataSource";
+import { SupabaseBlockedUserDataSource } from "@/infra/datasources/supabaseBlockedUserDataSource";
 import { ThemePreferenceUseCases } from "@/usecase/themePreferenceUseCases";
 import { UserDataExportUseCases } from "@/usecase/userDataExportUseCases";
 import { UserPreferencesUseCases } from "@/usecase/userPreferencesUseCases";
@@ -105,6 +110,7 @@ function createDataSources(): {
   ratings: IRatingDataSource;
   userDataExport: IUserDataExportDataSource;
   userPreferences: IUserPreferencesDataSource;
+  blockedUsers: IBlockedUserDataSource;
 } {
   const searchHistory = process.env.NODE_ENV === "test"
     ? new MemorySearchHistoryDataSource()
@@ -130,6 +136,7 @@ function createDataSources(): {
       ratings: new SupabaseRatingDataSource(client),
       userDataExport: new SupabaseUserDataExportDataSource(client),
       userPreferences: new SupabaseUserPreferencesDataSource(client),
+      blockedUsers: new SupabaseBlockedUserDataSource(client, new SupabaseProfileDataSource(client)),
     };
   }
   const books = new MemoryBookDataSource();
@@ -141,6 +148,7 @@ function createDataSources(): {
   const profiles = new MemoryProfileDataSource();
   const auth = new MemoryAuthDataSource();
   const ratings = new MemoryRatingDataSource();
+  const blockedUsers = new MemoryBlockedUserDataSource([], profiles);
   return {
     auth,
     books,
@@ -157,6 +165,7 @@ function createDataSources(): {
       auth, profiles, notifications, reports, ratings,
     }),
     userPreferences: new MemoryUserPreferencesDataSource(),
+    blockedUsers,
   };
 }
 
@@ -223,7 +232,13 @@ export const userPreferencesUseCases: IUserPreferencesUseCases = new UserPrefere
   dataSources.userPreferences,
 );
 
-export const logger: ILogger = new SafeLogger();
+export const blockedUserUseCases: IBlockedUserUseCases = new BlockedUserUseCases(
+  dataSources.blockedUsers,
+);
+
+export const logger: ILogger = new SafeLogger(
+  process.env.NODE_ENV === "test" ? { sink: () => {} } : {}
+);
 
 export const rateLimiter: IRateLimiter = new ClientRateLimiter();
 

@@ -254,6 +254,7 @@ describe('Diagnóstico de Saúde e Migrações do Supabase Remoto (Spec 049 / AD
           v2_ratings: { existe: true },
           v2_user_preferences: { existe: true },
           v2_meetings: { existe: true },
+          v2_blocked_users: { existe: true },
         },
         storage: { ok: true, publico: true },
         rpc: {
@@ -265,8 +266,8 @@ describe('Diagnóstico de Saúde e Migrações do Supabase Remoto (Spec 049 / AD
       };
 
       const resultado = reconciliarMigracoesLocais('supabase/migrations', contextoDiagnostico);
-      expect(resultado.total).toBe(18);
-      expect(resultado.aplicadas).toBe(18);
+      expect(resultado.total).toBe(20);
+      expect(resultado.aplicadas).toBe(20);
       expect(resultado.pendentes).toBe(0);
       expect(resultado.migracoes.every((m: any) => m.status === 'APLICADA')).toBe(true);
     });
@@ -285,6 +286,7 @@ describe('Diagnóstico de Saúde e Migrações do Supabase Remoto (Spec 049 / AD
           v2_ratings: { existe: true },
           v2_user_preferences: { existe: false }, // tabela ausente
           v2_meetings: { existe: false }, // encontros da Spec 052 ainda não aplicados
+          v2_blocked_users: { existe: false }, // bloqueios da Spec 056 ainda não aplicados
         },
         storage: { ok: true, publico: true },
         rpc: {
@@ -296,9 +298,9 @@ describe('Diagnóstico de Saúde e Migrações do Supabase Remoto (Spec 049 / AD
       };
 
       const resultado = reconciliarMigracoesLocais('supabase/migrations', contextoParcial);
-      expect(resultado.total).toBe(18);
-      expect(resultado.aplicadas).toBe(13);
-      expect(resultado.pendentes).toBe(5);
+      expect(resultado.total).toBe(20);
+      expect(resultado.aplicadas).toBe(14);
+      expect(resultado.pendentes).toBe(6);
 
       const pendentes = resultado.migracoes.filter((m: any) => m.status === 'PENDENTE');
       const arquivosPendentes = pendentes.map((m: any) => m.arquivo);
@@ -307,6 +309,7 @@ describe('Diagnóstico de Saúde e Migrações do Supabase Remoto (Spec 049 / AD
       expect(arquivosPendentes).toContain('202610210001_preferencias_privadas_perfil.sql');
       expect(arquivosPendentes).toContain('202610210002_modalidades_alerta_busca.sql');
       expect(arquivosPendentes).toContain('202610220001_encontros.sql');
+      expect(arquivosPendentes).toContain('202610230002_bloqueio_usuarios.sql');
     });
   });
 
@@ -353,7 +356,7 @@ describe('Diagnóstico de Saúde e Migrações do Supabase Remoto (Spec 049 / AD
       const parsed = JSON.parse(relatorioJson);
       expect(parsed.ok).toBe(true);
       expect(parsed.url).toBe('https://projeto-vitest.supabase.co');
-      expect(parsed.migracoes.total).toBe(18);
+      expect(parsed.migracoes.total).toBe(20);
     });
 
     it('formata adequadamente falhas e pendências detectadas', async () => {

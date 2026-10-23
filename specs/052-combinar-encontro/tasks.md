@@ -2,7 +2,7 @@
 
 Responsável: **Micael Cardoso Reis** (`pessoa:micael`). Issue #188.
 
-- [x] T001 ADR 0036 (encontro como entidade própria) e índice de ADRs.
+- [x] T001 ADR 0037 (encontro como entidade própria) e índice de ADRs.
 - [x] T002 `entities/meeting.ts` e `validators/meetingValidator.ts` com testes (RN-02, RN-03).
 - [x] T003 `iMeetingDataSource.ts` e `memoryMeetingDataSource.ts` com testes (aviso à outra pessoa em `meetingNotice.ts`).
 - [x] T004 `meetingUseCases.ts` com testes de RN-01, RN-04 a RN-08.

@@ -6,7 +6,7 @@ import type { Meeting, MeetingStatus } from "@/model/entities/meeting";
 import { type MeetingChange, meetingNotice } from "@/model/entities/meetingNotice";
 import { DataSourceError } from "@/model/errors";
 
-/** Encontros em memória; avisa a outra pessoa como o gatilho `v2_notify_meeting_change` (ADR 0036). */
+/** Encontros em memória; avisa a outra pessoa como o gatilho `v2_notify_meeting_change` (ADR 0037). */
 export class MemoryMeetingDataSource implements IMeetingDataSource {
   private readonly meetings: Meeting[] = [];
 

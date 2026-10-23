@@ -48,6 +48,7 @@ Em outra máquina, substituir apenas o caminho pelo diretório do clone. `npm ci
 | `npm run ios` | Solicita abertura no simulador iOS disponível |
 | `npm run typecheck` | Verifica tipos sem emitir arquivos |
 | `npm run check:architecture` | Verifica imports entre camadas |
+| `npm run check:numbering` | Falha se duas specs ou dois ADRs usarem o mesmo número |
 | `npm run test:sql` | Executa migrações e cenários de RLS em PostgreSQL local via PGlite |
 | `npm test` | Executa a suíte uma vez |
 | `npm run validate` | Executa tipos, arquitetura, SQL e testes, interrompendo em falhas |

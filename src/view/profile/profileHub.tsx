@@ -17,6 +17,7 @@ export type ProfileHubProps = {
   onNavigateToNotifications: () => void;
   onNavigateToSecurity: () => void;
   onNavigateToPrivacy: () => void;
+  onNavigateToBlockedUsers?: () => void;
   onNavigateToTerms: () => void;
   onNavigateToHelp: () => void;
   onSignedOut: () => void;
@@ -38,6 +39,7 @@ export default function ProfileHub({
   onNavigateToNotifications,
   onNavigateToSecurity,
   onNavigateToPrivacy,
+  onNavigateToBlockedUsers,
   onNavigateToTerms,
   onNavigateToHelp,
   onSignedOut,
@@ -101,6 +103,13 @@ export default function ProfileHub({
       label: "Privacidade e dados",
       description: "Baixe seus dados ou exclua sua conta",
       onPress: onNavigateToPrivacy,
+    },
+    {
+      key: "blocked",
+      icon: "lock",
+      label: "Pessoas bloqueadas",
+      description: "Gerencie quem não pode interagir com você",
+      onPress: onNavigateToBlockedUsers ?? (() => {}),
     },
     {
       key: "terms",

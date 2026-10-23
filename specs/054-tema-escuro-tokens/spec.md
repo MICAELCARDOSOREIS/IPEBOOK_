@@ -1,4 +1,4 @@
-# Spec 044 — Tema escuro: infraestrutura e primeira fatia vertical (Issue #144)
+# Spec 054 — Tema escuro: infraestrutura e primeira fatia vertical (Issue #144)
 
 ## Contexto
 

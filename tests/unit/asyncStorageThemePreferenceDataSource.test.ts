@@ -16,7 +16,7 @@ import {
   THEME_PREFERENCE_KEY,
 } from "@/infra/datasources/asyncStorageThemePreferenceDataSource";
 
-describe("AsyncStorageThemePreferenceDataSource (Spec 044 / Issue #144)", () => {
+describe("AsyncStorageThemePreferenceDataSource (Spec 054 / Issue #144)", () => {
   beforeEach(() => {
     store.clear();
   });

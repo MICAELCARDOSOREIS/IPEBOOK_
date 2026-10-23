@@ -34,6 +34,10 @@
 - [0032 — Script de auditoria e métricas agregadas da beta em Piripiri](0032-script-auditoria-metricas-beta-piripiri.md)
 - [0033 — Verificação de saúde e migrações do Supabase remoto](0033-verificacao-saude-migracoes-remotas-supabase.md)
 - [0034 — Cache progressivo, resiliência de timeout e retry em capas de livros](0034-cache-progressivo-retry-capas-livros.md)
+- [0035 — Service Worker e cache offline de assets e catálogo no PWA](0035-service-worker-cache-offline-pwa.md)
 - [0036 — Tema escuro entra em escopo (substitui a decisão 1 da 0008)](0036-tema-escuro-entra-em-escopo.md)
+- [0037 — Encontro como entidade própria da negociação](0037-encontro-como-entidade-propria.md) (criado como 0036 e renumerado por colisão com o ADR do tema escuro)
+- [0038 — Leitura pública anônima de perfis comunitários e avaliações](0038-leitura-anonima-perfis-publicos-e-avaliacoes.md)
+- [0039 — Bloqueio de usuários e moderação interpessoal](0039-bloqueio-de-usuarios-e-moderacao.md)
 
 Preservar registros aceitos; mudanças relevantes geram novo ADR com vínculos de substituição.

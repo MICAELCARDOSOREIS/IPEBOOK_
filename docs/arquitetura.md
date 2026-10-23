@@ -1,9 +1,12 @@
 # Arquitetura MVVM sofisticado
 
-> Atualização de 2026-10-15: `src/infra` já contém adaptadores Supabase para contas, anúncios
-> e pedidos, selecionáveis por `EXPO_PUBLIC_BACKEND=supabase` em desenvolvimento. O padrão
-> continua em memória; as migrações e o aceite atômico ainda não foram validados no servidor.
-> O fluxo de senha temporária descrito no histórico abaixo foi removido pela spec 007.
+> Atualização de 2026-10-23: `src/infra/datasources` tem implementações em memória e Supabase
+> para cada contrato (contas, anúncios, pedidos, encontros, favoritos, alertas, notificações,
+> denúncias, perfis, avaliações, fotos, preferências e exportação LGPD), além de adaptadores
+> `AsyncStorage` (onboarding, histórico de buscas, tema) e `NetInfo` (conectividade).
+> `di/container.ts` escolhe o Supabase quando `EXPO_PUBLIC_BACKEND=supabase` (fora de testes);
+> caso contrário, usa memória. As seções abaixo descrevem a origem de cada fluxo e podem citar o
+> estado da época em que foram escritas. O fluxo de senha temporária foi removido pela spec 007.
 
 A decisão está registrada no [ADR 0002](adr/0002-adotar-expo-mvvm.md). O nome da skill é `skill_mvvm_simplificado`, mas o padrão aplicado é o MVVM sofisticado com sete camadas.
 
@@ -19,7 +22,7 @@ A decisão está registrada no [ADR 0002](adr/0002-adotar-expo-mvvm.md). O nome 
 | `infra` | Implementar contratos com tecnologia concreta | [memoryBookDataSource.ts](../src/infra/datasources/memoryBookDataSource.ts) | Definir fluxo de tela |
 | `di` | Construir e conectar implementações | [container.ts](../src/di/container.ts) | Concentrar regras de negócio |
 
-`app/_layout.tsx` configura o Stack; `app/index.tsx` reexporta a View. As pastas `model/services` e `infra/services` estão reservadas e não contêm serviços implementados.
+`app/_layout.tsx` configura o Stack; `app/index.tsx` reexporta a View. `model/services` define contratos de serviços transversais (`ILogger`, `IRateLimiter`, `IFileDownloadService`, `IPwaService`), implementados em `infra/services` (`SafeLogger`, `ClientRateLimiter`, download de arquivos, otimização de imagens e PWA).
 
 ## Fluxo da tela inicial
 
@@ -37,7 +40,7 @@ flowchart TD
 
 Ao montar a tela, o hook chama `listBooks()`. O caso de uso delega a `list()` do datasource recebido no construtor. O datasource padrão retorna uma lista vazia. Quando resolve, o hook entrega o estado à View. Esta mostra lista, ausência de dados, carregamento ou erro.
 
-O container exporta uma instância compartilhada de `IBookUseCases`. Nos testes, a ViewModel recebe uma implementação alternativa pelo argumento; não é necessário conectar banco nem rede. Não existe seleção de backend porque só há a implementação em memória.
+O container exporta uma instância compartilhada de `IBookUseCases`. Nos testes, a ViewModel recebe uma implementação alternativa pelo argumento; não é necessário conectar banco nem rede. O backend (memória ou Supabase) é escolhido no container, conforme a nota no topo deste documento.
 
 ## Contratos e modelo atual
 
@@ -67,7 +70,7 @@ pelos casos de uso da negociação (`BookRequestUseCases.respondToRequest` com a
 anúncio criado é associado à conta autenticada via `ownerId`. Não há ISBN, arquivo digital ou
 localização no modelo atual.
 
-`readonly` protege usos no TypeScript, não congela objetos em tempo de execução. O datasource copia os livros na entrada e na saída para que alterações externas não modifiquem sua lista interna. Não há operação de gravação; os dados desaparecem ao encerrar a execução.
+`readonly` protege usos no TypeScript, não congela objetos em tempo de execução. O datasource em memória copia os livros na entrada e na saída para que alterações externas não modifiquem sua lista interna; seus dados desaparecem ao encerrar a execução. A persistência real fica no `SupabaseBookDataSource`.
 
 ## Estado e concorrência
 
@@ -136,7 +139,7 @@ ViewModels, Telas e Rotas:
 
 ## Encontro da negociação (specs/052, trilha do Micael)
 
-Decisão em [ADR 0036](adr/0036-encontro-como-entidade-propria.md). Contratos: `Meeting` (`requestId`, `pointName`, `scheduledAt`, `proposedBy`, `status: "proposed" | "confirmed" | "cancelled"`) em [meeting.ts](../src/model/entities/meeting.ts), regras de local, dia e horário em [meetingValidator.ts](../src/model/validators/meetingValidator.ts) e `IMeetingDataSource` em [iMeetingDataSource.ts](../src/model/datasources/iMeetingDataSource.ts).
+Decisão em [ADR 0037](adr/0037-encontro-como-entidade-propria.md). Contratos: `Meeting` (`requestId`, `pointName`, `scheduledAt`, `proposedBy`, `status: "proposed" | "confirmed" | "cancelled"`) em [meeting.ts](../src/model/entities/meeting.ts), regras de local, dia e horário em [meetingValidator.ts](../src/model/validators/meetingValidator.ts) e `IMeetingDataSource` em [iMeetingDataSource.ts](../src/model/datasources/iMeetingDataSource.ts).
 
 - `MeetingUseCases` (`propose`, `confirm`, `reschedule`, `cancel`, `getMeeting`): só participantes de pedido aceito; quem convida não confirma; um encontro ativo por pedido; relógio injetável.
 - Supabase: tabela `v2_meetings` (`202610220001_encontros.sql`) com RLS, gatilho de validação e gatilho `security definer` que avisa a outra pessoa (`meeting_update`). Em memória, `MemoryMeetingDataSource` reproduz o aviso.
@@ -147,9 +150,8 @@ Decisão em [ADR 0036](adr/0036-encontro-como-entidade-propria.md). Contratos: `
 [errors.ts](../src/model/errors.ts) define `DomainError`, `ValidationError`, `AuthError` e `DataSourceError`. A ViewModel apresenta a mensagem de `DomainError`; erros inesperados recebem mensagem genérica. Portanto, mensagens de domínio devem ser seguras para exibição ao usuário.
 
 `AuthError` e `ValidationError` são usados tanto na autenticação quanto no cadastro de anúncio
-(sessão ausente e validação de payload, respectivamente). Infraestruturas futuras devem converter
-erros externos em erros de domínio. A implementação atual em memória não integra biblioteca
-externa de dados.
+(sessão ausente e validação de payload, respectivamente). As implementações Supabase convertem
+erros externos em erros de domínio antes de chegarem aos casos de uso.
 
 ## Convenções e limites da automação
 

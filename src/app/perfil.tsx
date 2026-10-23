@@ -10,6 +10,7 @@ export default function Perfil() {
       onNavigateToNotifications={() => router.push("/notificacoes")}
       onNavigateToSecurity={() => router.push("/perfil/seguranca")}
       onNavigateToPrivacy={() => router.push("/excluir-conta")}
+      onNavigateToBlockedUsers={() => router.push("/perfil/bloqueados")}
       onNavigateToTerms={() => router.push("/termos")}
       onNavigateToHelp={() => router.push("/ajuda")}
       onSignedOut={() => router.replace("/entrar")}

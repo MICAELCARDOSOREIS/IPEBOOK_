@@ -1,4 +1,4 @@
-# 0036 — Encontro como entidade própria da negociação
+# 0037 — Encontro como entidade própria da negociação
 
 Data: 2026-10-22. Status: aceito.
 

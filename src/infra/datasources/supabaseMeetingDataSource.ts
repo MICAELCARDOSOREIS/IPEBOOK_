@@ -25,7 +25,7 @@ function mapMeeting(row: MeetingRow): Meeting {
   };
 }
 
-/** Encontros em `v2_meetings`; os avisos vêm do gatilho `v2_notify_meeting_change` (ADR 0036). */
+/** Encontros em `v2_meetings`; os avisos vêm do gatilho `v2_notify_meeting_change` (ADR 0037). */
 export class SupabaseMeetingDataSource implements IMeetingDataSource {
   constructor(private readonly client: SupabaseAppClient) {}
 

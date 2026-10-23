@@ -1,4 +1,4 @@
-# Tarefas — Spec 044
+# Tarefas — Spec 054
 
 - [x] ADR 0036 (substitui a decisão 1 da ADR 0008) + atualização do índice e da ADR 0008.
 - [x] `ThemePreference` (model) + datasources (memory/AsyncStorage) + usecase + wiring no container.

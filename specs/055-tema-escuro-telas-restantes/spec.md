@@ -1,8 +1,8 @@
-# Spec 045 — Tema escuro: migração das telas e componentes restantes (Issue #189)
+# Spec 055 — Tema escuro: migração das telas e componentes restantes (Issue #189)
 
 ## Contexto
 
-A Spec 044 (Issue #144, ADR 0036) entregou a infraestrutura completa de tema escuro e migrou a
+A Spec 054 (Issue #144, ADR 0036) entregou a infraestrutura completa de tema escuro e migrou a
 Home e os componentes que ela usa diretamente, como fatia vertical inicial. Esta entrega continua
 o trabalho registrado como acompanhamento na Issue #189: migrar o restante do app.
 
@@ -19,7 +19,7 @@ o trabalho registrado como acompanhamento na Issue #189: migrar o restante do ap
   importam o `requestStyles` compartilhado) e `search/` (editAlert, manageAlert, search,
   searchAlerts).
 - Padrão aplicado em todos: `StyleSheet.create` estático vira `createStyles(colors: ColorPalette)`,
-  lido via `useTheme()` no topo do componente, igual ao padrão já estabelecido na Spec 044.
+  lido via `useTheme()` no topo do componente, igual ao padrão já estabelecido na Spec 054.
 
 ## Fora do escopo (exceções documentadas, sem mudança)
 

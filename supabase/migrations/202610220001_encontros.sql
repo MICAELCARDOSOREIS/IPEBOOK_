@@ -1,4 +1,4 @@
--- Spec 052 / ADR 0036: encontro combinado numa negociação aceita (Figma 06.04, 06.05, 06.11–06.14).
+-- Spec 052 / ADR 0037: encontro combinado numa negociação aceita (Figma 06.04, 06.05, 06.11–06.14).
 
 -- Avisos de encontro usam um tipo próprio de notificação.
 alter table public.v2_notifications drop constraint if exists v2_notifications_type_check;

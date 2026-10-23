@@ -5,7 +5,7 @@ import { meetingNotice } from "@/model/entities/meetingNotice";
 
 const sql = readFileSync("supabase/migrations/202610220001_encontros.sql", "utf8");
 
-describe("encontro no banco espelha o código (ADR 0036)", () => {
+describe("encontro no banco espelha o código (ADR 0037)", () => {
   it("o check de point_name aceita exatamente PIRIPIRI_MEETING_POINTS", () => {
     const check = sql.slice(sql.indexOf("point_name text not null check"), sql.indexOf("scheduled_at timestamptz"));
     const names = [...check.matchAll(/'([^']+)'/g)].map((match) => match[1]);

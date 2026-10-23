@@ -107,7 +107,7 @@ await as('authenticated', reader, `insert into public.v2_ratings (rater_id, rate
 await as('authenticated', owner, `insert into public.v2_ratings (rater_id, rated_user_id, request_id, score) values ('${owner}', '${reader}', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 4)`);
 await denied('Avaliação duplicada no pedido', () => as('authenticated', reader, `insert into public.v2_ratings (rater_id, rated_user_id, request_id, score) values ('${reader}', '${owner}', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 2)`));
 
-// Spec 052 / ADR 0036: encontro da negociação aceita bbbb (dono = owner, leitor = reader).
+// Spec 052 / ADR 0037: encontro da negociação aceita bbbb (dono = owner, leitor = reader).
 const meeting = 'cccccccc-0044-4044-8044-cccccccccccc';
 const praca = 'Praça da Bandeira (Centro)';
 await denied('Terceiro convida para encontro alheio', () => as('authenticated', other, `insert into public.v2_meetings (request_id, point_name, scheduled_at, proposed_by) values ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', '${praca}', now() + interval '1 day', '${other}')`));
@@ -285,6 +285,34 @@ process.stdout.write('Políticas de Storage book-photos: verificado com sucesso\
 const trgmSearch = await as('anon', null, `select id, title, author from public.v2_books where status = 'available' and (title ilike '%Foto%' or author ilike '%Fotográfico%')`);
 if (trgmSearch.rows.length === 0) throw new Error('Busca trigram ILIKE não encontrou o livro');
 process.stdout.write('Busca textual com pg_trgm e índice GIN: verificado com sucesso\n');
+
+// Leitura pública anônima de perfis comunitários e avaliações (ADR 0038)
+await db.exec('reset role');
+await db.exec(`insert into public.v2_profiles (id, name) values ('${owner}', 'Dono Comunitário') on conflict (id) do update set name = 'Dono Comunitário'`);
+const anonProfile = await as('anon', null, `select name from public.v2_profiles where id = '${owner}'`);
+if (anonProfile.rows[0]?.name !== 'Dono Comunitário') throw new Error('Visitante anônimo não conseguiu ler o perfil público');
+
+await denied('Visitante altera perfil', () => as('anon', null, `update public.v2_profiles set name = 'Hacker' where id = '${owner}'`));
+await denied('Visitante cria perfil', () => as('anon', null, `insert into public.v2_profiles (id, name) values ('33333333-3333-4333-8333-333333333333', 'Invasor')`));
+process.stdout.write('Leitura anônima de perfis (ADR 0038): verificado com sucesso\n');
+
+// Bloqueio de usuários e moderação interpessoal (Spec 056 / ADR 0039)
+await as('authenticated', owner, `insert into public.v2_blocked_users (blocker_id, blocked_id) values ('${owner}', '${other}')`);
+const ownerBlocked = await as('authenticated', owner, `select blocked_id from public.v2_blocked_users`);
+if (ownerBlocked.rows.length !== 1 || ownerBlocked.rows[0]?.blocked_id !== other) throw new Error('Bloqueio do dono não foi retornado');
+
+await denied('Usuário bloqueia a si mesmo', () => as('authenticated', owner, `insert into public.v2_blocked_users (blocker_id, blocked_id) values ('${owner}', '${owner}')`));
+const readerViewsOwnerBlocks = await as('authenticated', reader, `select * from public.v2_blocked_users where blocker_id = '${owner}'`);
+if (readerViewsOwnerBlocks.rows.length !== 0) throw new Error('Terceiro conseguiu visualizar lista de bloqueios alheia');
+
+const readerTriesUnblock = await as('authenticated', reader, `delete from public.v2_blocked_users where blocker_id = '${owner}' and blocked_id = '${other}'`);
+if (readerTriesUnblock.affectedRows !== 0) throw new Error('Terceiro conseguiu remover bloqueio alheio');
+
+await denied('Visitante insere bloqueio', () => as('anon', null, `insert into public.v2_blocked_users (blocker_id, blocked_id) values ('${owner}', '${other}')`));
+await as('authenticated', owner, `delete from public.v2_blocked_users where blocker_id = '${owner}' and blocked_id = '${other}'`);
+const afterUnblock = await as('authenticated', owner, `select * from public.v2_blocked_users where blocker_id = '${owner}'`);
+if (afterUnblock.rows.length !== 0) throw new Error('Desbloqueio não removeu o registro');
+process.stdout.write('Bloqueio de usuários (Spec 056 / ADR 0039): verificado com sucesso\n');
 
 process.stdout.write('Migrações e cenários SQL locais verificados.\n');
 await db.close();

@@ -41,7 +41,7 @@ function fakeUseCases(preference: "system" | "light" | "dark" = "system"): IThem
   };
 }
 
-describe("useThemeViewModel (Spec 044 / Issue #144)", () => {
+describe("useThemeViewModel (Spec 054 / Issue #144)", () => {
   it("segue o tema claro do sistema quando a preferência é 'system'", async () => {
     __setMockColorScheme("light");
     const hook = await renderHook(fakeUseCases("system"));

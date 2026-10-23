@@ -2,13 +2,24 @@
 
 Documento consolidado de continuidade técnica e produto do Ipebook (Piripiri, PI).
 
-Conferência atual: **2026-10-22** (branch `feature/relaxed-thompson-60m08j`, derivada de `develop`).
+Conferência atual: **2026-10-23** (branch `chore/higiene-docs-numeracao`, derivada de `develop` em `e794ec7`).
+
+**Higiene de numeração (2026-10-23):** a colisão voltou depois dos PRs paralelos #192 e #193. O ADR do
+encontro (criado como 0036) passou a ser o **ADR 0037**, e o 0036 ficou com o tema escuro, já citado pela
+ADR 0008 e pelo índice. As specs do tema escuro foram renumeradas: **044-tema-escuro-tokens → 054** e
+**045-tema-escuro-telas-restantes → 055**. As specs 044 (alinhamento complementar) e 045 (melhorias das telas) ficam
+com o número, porque a Spec 053 se refere a elas. Commits #190, #193 e #195 citam os números antigos.
+
+**Pendências abertas (2026-10-23):** aplicar `202610220001_encontros.sql` no Supabase remoto e rodar
+`npm run health:supabase:remote`; decidir a leitura anônima de `v2_profiles` (nome de quem anuncia para
+visitantes, Spec 053), com ADR; confirmar a revogação do token de acesso do Supabase usado em 22/10;
+conferências no Android das Specs 037, 038 e 052.
 
 **Spec 052 validada localmente (Issue #188; criada como 044 e renumerada porque o número passou a ser da spec de alinhamento complementar):** a negociação aceita ganhou o encontro combinado
 (Figma `06.04`, `06.05`, `06.11`–`06.14`): convite com local entre os pontos seguros, dia nos próximos
 sete dias e faixa de horário; confirmação só pela outra pessoa; reagendamento que volta a aguardar
 confirmação; cancelamento com diálogo; aviso `meeting_update` a cada mudança. Nova tabela
-`v2_meetings` com RLS e gatilhos (ADR 0036). `npm run validate` passou com 1032 testes em 145
+`v2_meetings` com RLS e gatilhos (ADR 0037). `npm run validate` passou com 1032 testes em 145
 arquivos, já sobre o `develop` com a renumeração das specs (#191); fluxo completo conferido com dois usuários no app compilado para a Web
 (`specs/052-combinar-encontro/validacao.md`). Supabase remoto: aplicadas em 2026-10-22 as
 migrações `202610200007`, `202610200008`, `202610210001` e `202610210002`; a remoção
@@ -282,4 +293,7 @@ No app ativo em desenvolvimento, 31 rotas cobrem as jornadas essenciais da beta.
 - `specs/039-alinhamento-fino-telas-micael/`: Alinhamento fino de oito telas do Micael ao canvas Android do Figma, lido nó a nó pelo MCP, com a lista das diferenças que dependem de recursos ainda inexistentes.
 - `specs/043-telas-micael-figma-ao-vivo/`: Telas do Micael conferidas no app compilado contra o Figma: defeitos de preço, nome do interessado e aba Propostas, e alinhamento de Estante, Anunciar, estados vazios, notificações e Ajuda.
 - `specs/052-combinar-encontro/`: Combinar encontro com local, dia e horário, confirmação, reagendamento e cancelamento (Issue #188, implementada e validada localmente; migração remota pendente).
-- `specs/053-correcoes-home-pesquisa-detalhe/`: Seis defeitos encontrados em aparelho real via `adb` — Home e Pesquisa não rolavam (lista de livros colapsava para altura 0; resultados ficavam com 146px), UUID de quem anunciou exposto no detalhe, carrossel desalinhando 12dp por clique, título de seção sobrepondo o "Ver mais" e capa de 44dp num card de 152dp. Corrigidos e verificados no aparelho. **Atravessa deliberadamente a fronteira de escopo das Specs 044/045** (os três arquivos são da Maria Clara), com autorização expressa do Micael em 22/10/2026 — ver a seção "Exceção de escopo" da spec. Pendência: `v2_profiles` não é legível de forma anônima, então visitantes deslogados veem "Anunciado por outro membro da comunidade" em vez do nome; exibir o nome real depende de ajustar a RLS.
+- `specs/053-correcoes-home-pesquisa-detalhe/`: Seis defeitos encontrados em aparelho real via `adb` — Home e Pesquisa não rolavam (lista de livros colapsava para altura 0; resultados ficavam com 146px), UUID de quem anunciou exposto no detalhe, carrossel desalinhando 12dp por clique, título de seção sobrepondo o "Ver mais" e capa de 44dp num card de 152dp. Corrigidos e verificados no aparelho. **Atravessa deliberadamente a fronteira de escopo das Specs 044/045** (os três arquivos são da Maria Clara), com autorização expressa do Micael em 22/10/2026 — ver a seção "Exceção de escopo" da spec. Pendência de leitura anônima de `v2_profiles` resolvida pelo ADR 0038 / migração 202610230001.
+- `specs/054-tema-escuro-tokens/`: Tema escuro — infraestrutura (tokens, `ThemeProvider`, preferência no dispositivo) e primeira fatia vertical (Issue #144, ADR 0036; era 044).
+- `specs/055-tema-escuro-telas-restantes/`: Tema escuro aplicado às telas e componentes restantes (Issue #189; era 045).
+- `specs/056-bloqueio-de-usuarios/`: Bloqueio e desbloqueio de pessoas (Figma `07.10` a `07.12`, ADR 0039), tabela `v2_blocked_users`, rota `/perfil/bloqueados` e confirmação via `Dialog`.
