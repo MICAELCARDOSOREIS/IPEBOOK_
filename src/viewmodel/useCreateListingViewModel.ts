@@ -7,7 +7,7 @@ import {
 } from "@/di/container";
 import type { Book, BookCondition, BookModality } from "@/model/entities/book";
 import { DomainError } from "@/model/errors";
-import { isValidIsbn } from "@/model/isbn";
+import { isValidIsbn, normalizeIsbn } from "@/model/isbn";
 import type { ILogger } from "@/model/services/iLogger";
 import type { IRateLimiter } from "@/model/services/iRateLimiter";
 import type { IBookMetadataService } from "@/model/services/iBookMetadataService";
@@ -40,7 +40,8 @@ export type CreateListingState = {
 
 export type CreateListingActions = {
   setIsbn: (value: string) => void;
-  lookupIsbn: () => Promise<boolean>;
+  lookupIsbn: (overrideIsbn?: string) => Promise<boolean>;
+  handleBarcodeScanned: (code: string) => Promise<boolean>;
   clearIsbnFeedback: () => void;
   setTitle: (value: string) => void;
   setAuthor: (value: string) => void;
@@ -94,8 +95,11 @@ export function useCreateListingViewModel(
     setState((prev) => ({ ...prev, isbnFeedback: null }));
   }, []);
 
-  const lookupIsbn = useCallback(async (): Promise<boolean> => {
-    const rawIsbn = state.isbn.trim();
+  const lookupIsbn = useCallback(async (overrideIsbn?: string): Promise<boolean> => {
+    const rawIsbn = (overrideIsbn !== undefined ? overrideIsbn : state.isbn).trim();
+    if (overrideIsbn !== undefined) {
+      setState((prev) => ({ ...prev, isbn: overrideIsbn, isbnFeedback: null }));
+    }
     if (!rawIsbn) {
       setState((prev) => ({
         ...prev,
@@ -154,6 +158,12 @@ export function useCreateListingViewModel(
       return false;
     }
   }, [metadataService, state.isbn]);
+
+  const handleBarcodeScanned = useCallback(async (code: string): Promise<boolean> => {
+    const cleaned = normalizeIsbn(code);
+    setIsbn(cleaned);
+    return lookupIsbn(cleaned);
+  }, [setIsbn, lookupIsbn]);
 
   const setTitle = useCallback((value: string) => {
     setState((prev) => ({ ...prev, title: value, error: null, success: false }));
@@ -284,6 +294,7 @@ export function useCreateListingViewModel(
     {
       setIsbn,
       lookupIsbn,
+      handleBarcodeScanned,
       clearIsbnFeedback,
       setTitle,
       setAuthor,

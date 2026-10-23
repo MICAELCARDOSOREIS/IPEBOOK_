@@ -11,6 +11,7 @@ export default defineConfig({
       "expo-symbols": fileURLToPath(new URL("./tests/mocks/expo-symbols.cjs", import.meta.url)),
       "@react-native-community/netinfo": fileURLToPath(new URL("./tests/mocks/netinfo.ts", import.meta.url)),
       "expo-linking": fileURLToPath(new URL("./tests/mocks/expo-linking.ts", import.meta.url)),
+      "expo-camera": fileURLToPath(new URL("./tests/mocks/expo-camera.ts", import.meta.url)),
     },
   },
   test: {

@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import type { BookModality } from "@/model/entities/book";
 import type { IsbnFeedback } from "@/viewmodel/useCreateListingViewModel";
@@ -7,8 +7,10 @@ import { useTheme } from "@/view/theme/ThemeProvider";
 import { AddPhotoCard } from "@/view/components/AddPhotoCard";
 import { Chip } from "@/view/components/Chip";
 import { FilledButton } from "@/view/components/FilledButton";
+import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { IconBadge } from "@/view/components/IconBadge";
 import { TextField } from "@/view/components/TextField";
+import { BarcodeScannerModal } from "@/view/components/BarcodeScannerModal";
 
 const MODALITIES: { value: BookModality; label: string }[] = [
   { value: "sale", label: "Venda" },
@@ -22,6 +24,7 @@ export type CreateListingStep1Props = {
   isbnFeedback?: IsbnFeedback | null;
   onSetIsbn?: (value: string) => void;
   onLookupIsbn?: () => void;
+  onScanBarcode?: (code: string) => void;
   modality: BookModality;
   title: string;
   author: string;
@@ -45,6 +48,7 @@ export function CreateListingStep1({
   isbnFeedback,
   onSetIsbn,
   onLookupIsbn,
+  onScanBarcode,
   modality,
   title,
   author,
@@ -62,6 +66,7 @@ export function CreateListingStep1({
   onContinue,
 }: CreateListingStep1Props) {
   const { colors } = useTheme();
+  const [scannerVisible, setScannerVisible] = useState(false);
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   return (
@@ -70,9 +75,18 @@ export function CreateListingStep1({
         <View style={styles.isbnHeader}>
           <IconBadge icon="photo" tone="action" />
           <View style={styles.isbnTexts}>
-            <Text style={styles.isbnTitle}>Buscar livro por ISBN</Text>
+            <Text style={styles.isbnTitle}>Ler ISBN com a câmera</Text>
             <Text style={styles.hint}>Preenche título e autor automaticamente.</Text>
           </View>
+        </View>
+
+        <View style={styles.scanActionRow}>
+          <OutlinedButton
+            label="Escanear com a câmera"
+            accessibilityLabel="Abrir leitor de código de barras pela câmera"
+            disabled={loading || lookingUpIsbn}
+            onPress={() => setScannerVisible(true)}
+          />
         </View>
 
         <View style={styles.isbnInputRow}>
@@ -93,6 +107,14 @@ export function CreateListingStep1({
             onPress={() => onLookupIsbn?.()}
           />
         </View>
+
+        <BarcodeScannerModal
+          visible={scannerVisible}
+          onClose={() => setScannerVisible(false)}
+          onScan={(scannedCode) => {
+            onScanBarcode?.(scannedCode);
+          }}
+        />
 
         {isbnFeedback ? (
           <View
@@ -216,6 +238,9 @@ function createStyles(colors: ColorPalette) {
       ...tokens.typography.titleMedium,
       fontFamily: tokens.typography.displayLarge.fontFamily,
       color: colors.text,
+    },
+    scanActionRow: {
+      width: "100%",
     },
     isbnInputRow: {
       flexDirection: "row",

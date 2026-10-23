@@ -8,6 +8,7 @@ const mockSafePath = path.resolve(__dirname, "mocks/react-native-safe-area-conte
 const mockSymbolsPath = path.resolve(__dirname, "mocks/expo-symbols.cjs");
 const mockVectorIconsPath = path.resolve(__dirname, "mocks/expo-vector-icons.cjs");
 const mockNetInfoPath = path.resolve(__dirname, "mocks/netinfo.cjs");
+const mockCameraPath = path.resolve(__dirname, "mocks/expo-camera.cjs");
 
 Module._resolveFilename = function (req, ...args) {
   if (req === "react-native") {
@@ -24,6 +25,9 @@ Module._resolveFilename = function (req, ...args) {
   }
   if (req === "@react-native-community/netinfo") {
     return mockNetInfoPath;
+  }
+  if (req === "expo-camera") {
+    return mockCameraPath;
   }
   return orig.call(this, req, ...args);
 };

@@ -36,6 +36,7 @@ const symbols = {
   unarchive: { ios: "arrow.uturn.up", android: "unarchive", web: "unarchive" },
   delete: { ios: "trash", android: "delete", web: "delete" },
   photo: { ios: "photo", android: "add_photo_alternate", web: "add_photo_alternate" },
+  camera: { ios: "camera", android: "camera_alt", web: "camera_alt" },
   person: { ios: "person", android: "person", web: "person" },
   shelf: { ios: "books.vertical", android: "library_books", web: "library_books" },
   document: { ios: "doc.text", android: "description", web: "description" },

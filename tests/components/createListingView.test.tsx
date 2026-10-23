@@ -17,6 +17,7 @@ function mockViewModel(state: CreateListingState, actions: Partial<CreateListing
   const fullActions: CreateListingActions = {
     setIsbn: vi.fn(),
     lookupIsbn: vi.fn().mockResolvedValue(false),
+    handleBarcodeScanned: vi.fn().mockResolvedValue(false),
     clearIsbnFeedback: vi.fn(),
     setTitle: vi.fn(),
     setAuthor: vi.fn(),
@@ -124,6 +125,21 @@ describe("etapa 1 do anúncio — Livro (Figma 04.01)", () => {
     });
 
     expect(actions.lookupIsbn).toHaveBeenCalledTimes(1);
+  });
+
+  it("exibe botão para escanear código de barras com a câmera (Spec 059 / Figma 04.01)", async () => {
+    mockViewModel(defaultState);
+    const screen = await renderScreen();
+
+    const scanButton = screen.getByLabelText("Abrir leitor de código de barras pela câmera");
+    expect(scanButton).toBeDefined();
+
+    await act(async () => {
+      fireEvent.press(scanButton);
+    });
+
+    // O modal deve ser aberto e exibir o título
+    expect(screen.getByText("Escanear ISBN")).toBeDefined();
   });
 
   it("chama onCancel ao voltar da primeira etapa", async () => {

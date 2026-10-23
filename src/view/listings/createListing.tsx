@@ -120,6 +120,7 @@ export default function CreateListing({
               isbnFeedback={state.isbnFeedback}
               onSetIsbn={actions.setIsbn}
               onLookupIsbn={() => void actions.lookupIsbn()}
+              onScanBarcode={(code) => void actions.handleBarcodeScanned(code)}
               modality={state.modality}
               title={state.title}
               author={state.author}

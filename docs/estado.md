@@ -5,12 +5,13 @@ Documento consolidado de continuidade técnica e produto do Ipebook (Piripiri, P
 Conferência atual: **2026-10-23** (branch `develop` consolidada após PRs #197, #198 e #199).
 
 **Entregas consolidadas (2026-10-23):**
-- **Spec 056 (Bloqueio e Desbloqueio de Usuários, ADR 0039):** Gestão de pessoas bloqueadas no hub de perfil (`/perfil/bloqueados`, Figma `07.10`–`07.12`), com diálogo acessível de confirmação, tabela `v2_blocked_users` com RLS rígida e migração `202610230002_bloqueio_usuarios.sql`. Integrado via PR #197.
-- **Spec 057 (Convidar amigos e compartilhar o app, ADR 0040):** Fechamento do fluxo Figma `08.02` e `07.01` com ação no perfil e rota `/perfil/convidar`, mensagem acolhedora da comunidade de Piripiri, abertura direta do WhatsApp e fallbacks nativo e web. Integrado via PR #198.
+- **Spec 059 (Leitor de código de barras físico com câmera para ISBN, ADR 0042):** Concretização com hardware da promessa do Figma `04.01` ("Ler ISBN com a câmera"). Integração do `expo-camera` (~57.0.6) via modal acessível `BarcodeScannerModal` com overlay de mira visual e leitura instantânea de EAN-13, EAN-8 e UPC; solicitação de permissão com fallback amigável; encadeamento automático com a busca de metadados da Spec 058.
 - **Spec 058 (Busca e preenchimento de livro por ISBN, ADR 0041):** Concretização interativa do card de ISBN da etapa 1 de anúncio (`/anunciar`, Figma `04.01`), com validação de ISBN-10 e ISBN-13, integração à API aberta da Open Library com timeout resiliente de 5 s e modo memória para testes offline. Integrado via PR #199.
+- **Spec 057 (Convidar amigos e compartilhar o app, ADR 0040):** Fechamento do fluxo Figma `08.02` e `07.01` com ação no perfil e rota `/perfil/convidar`, mensagem acolhedora da comunidade de Piripiri, abertura direta do WhatsApp e fallbacks nativo e web. Integrado via PR #198.
+- **Spec 056 (Bloqueio e Desbloqueio de Usuários, ADR 0039):** Gestão de pessoas bloqueadas no hub de perfil (`/perfil/bloqueados`, Figma `07.10`–`07.12`), com diálogo acessível de confirmação, tabela `v2_blocked_users` com RLS rígida e migração `202610230002_bloqueio_usuarios.sql`. Integrado via PR #197.
 - **Leitura anônima de perfis públicos (ADR 0038 / Spec 053):** Política RLS em `v2_profiles` e `v2_ratings` para visitantes (`anon`) verem o nome de quem anuncia e avaliações comunitárias sem expor dados privados.
 - **Modularização arquitetural de telas:** `createListing.tsx` (565 linhas) e `myListings.tsx` (457 linhas) decompostos em submódulos coesos em `src/view/listings/`.
-- **Prevenção automatizada de colisões:** Script `scripts/verificar-numeracao.mjs` (`npm run check:numbering`) integrado aos testes e ao pipeline de validação (58 specs e 42 ADRs sem colisões).
+- **Prevenção automatizada de colisões:** Script `scripts/verificar-numeracao.mjs` (`npm run check:numbering`) integrado aos testes e ao pipeline de validação (59 specs e 43 ADRs sem colisões).
 
 **Pendências abertas (2026-10-23):** aplicar no Supabase remoto as 3 migrações criadas (`202610220001_encontros.sql`, `202610230001_leitura_anonima_perfis_e_avaliacoes.sql`, `202610230002_bloqueio_usuarios.sql`) e rodar `npm run health:supabase:remote`; confirmar a revogação do token de acesso do Supabase usado em 22/10; conferências em dispositivo físico Android das Specs 037, 038, 052, 056, 057 e 058.
 

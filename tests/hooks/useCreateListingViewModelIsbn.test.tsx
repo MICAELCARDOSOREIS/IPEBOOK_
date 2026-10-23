@@ -139,4 +139,29 @@ describe("useCreateListingViewModel — Busca por ISBN (Spec 058)", () => {
     expect(hook.current[0].isbnFeedback?.type).toBe("info");
     expect(hook.current[0].isbnFeedback?.message).toContain("manualmente");
   });
+
+  it("handleBarcodeScanned normaliza código de barras e dispara busca automática (Spec 059)", async () => {
+    const fakeMetadataService: IBookMetadataService = {
+      lookupByIsbn: vi.fn().mockResolvedValue({
+        isbn: "9788535914849",
+        title: "Memórias Póstumas de Brás Cubas",
+        author: "Machado de Assis",
+        coverUrl: "https://exemplo.com/bras-cubas.jpg",
+      }),
+    };
+    const hook = await renderHook(fakeMetadataService);
+
+    let success = false;
+    await act(async () => {
+      success = await hook.current[1].handleBarcodeScanned("978-85-359-1484-9");
+    });
+
+    expect(success).toBe(true);
+    expect(hook.current[0].isbn).toBe("9788535914849");
+    expect(hook.current[0].title).toBe("Memórias Póstumas de Brás Cubas");
+    expect(hook.current[0].author).toBe("Machado de Assis");
+    expect(hook.current[0].photoUrl).toBe("https://exemplo.com/bras-cubas.jpg");
+    expect(hook.current[0].isbnFeedback?.type).toBe("success");
+    expect(fakeMetadataService.lookupByIsbn).toHaveBeenCalledWith("9788535914849");
+  });
 });
