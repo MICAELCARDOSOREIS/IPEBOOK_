@@ -245,3 +245,13 @@ export const rateLimiter: IRateLimiter = new ClientRateLimiter();
 export const fileDownloadService: IFileDownloadService = new FileDownloadService();
 
 export const pwaService: IPwaService = new PwaService(logger);
+
+import type { IBookMetadataService } from "@/model/services/iBookMetadataService";
+import { MemoryBookMetadataService } from "@/infra/services/memoryBookMetadataService";
+import { OpenLibraryBookMetadataService } from "@/infra/services/openLibraryBookMetadataService";
+
+export const bookMetadataService: IBookMetadataService =
+  process.env.NODE_ENV !== "test" && process.env.EXPO_PUBLIC_BACKEND === "supabase"
+    ? new OpenLibraryBookMetadataService()
+    : new MemoryBookMetadataService();
+

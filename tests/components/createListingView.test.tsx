@@ -15,6 +15,9 @@ const mockedUseCreateListingViewModel = vi.mocked(useCreateListingViewModel);
 
 function mockViewModel(state: CreateListingState, actions: Partial<CreateListingActions> = {}) {
   const fullActions: CreateListingActions = {
+    setIsbn: vi.fn(),
+    lookupIsbn: vi.fn().mockResolvedValue(false),
+    clearIsbnFeedback: vi.fn(),
     setTitle: vi.fn(),
     setAuthor: vi.fn(),
     setCategory: vi.fn(),
@@ -35,6 +38,9 @@ function mockViewModel(state: CreateListingState, actions: Partial<CreateListing
 }
 
 const defaultState: CreateListingState = {
+  isbn: "",
+  lookingUpIsbn: false,
+  isbnFeedback: null,
   title: "",
   author: "",
   category: "",
@@ -100,6 +106,24 @@ describe("etapa 1 do anúncio — Livro (Figma 04.01)", () => {
 
     expect(screen.queryByRole("button", { name: "Publicar anúncio" })).toBeNull();
     expect(actions.submit).not.toHaveBeenCalled();
+  });
+
+  it("permite digitar o código ISBN e acionar a busca automática (Spec 058)", async () => {
+    const actions = mockViewModel({
+      ...defaultState,
+      isbn: "9788535914849",
+      isbnFeedback: { type: "success", message: 'Encontrado: "Dom Casmurro"!' },
+    });
+    const screen = await renderScreen();
+
+    expect(screen.getByLabelText("Código ISBN")).toBeDefined();
+    expect(screen.getByText('Encontrado: "Dom Casmurro"!')).toBeDefined();
+
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Buscar dados do livro pelo ISBN"));
+    });
+
+    expect(actions.lookupIsbn).toHaveBeenCalledTimes(1);
   });
 
   it("chama onCancel ao voltar da primeira etapa", async () => {

@@ -115,6 +115,11 @@ export default function CreateListing({
 
           {step === 1 ? (
             <CreateListingStep1
+              isbn={state.isbn}
+              lookingUpIsbn={state.lookingUpIsbn}
+              isbnFeedback={state.isbnFeedback}
+              onSetIsbn={actions.setIsbn}
+              onLookupIsbn={() => void actions.lookupIsbn()}
               modality={state.modality}
               title={state.title}
               author={state.author}

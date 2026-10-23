@@ -40,5 +40,6 @@
 - [0038 — Leitura pública anônima de perfis comunitários e avaliações](0038-leitura-anonima-perfis-publicos-e-avaliacoes.md)
 - [0039 — Bloqueio de usuários e moderação interpessoal](0039-bloqueio-de-usuarios-e-moderacao.md)
 - [0040 — Compartilhamento do aplicativo e convite de amigos](0040-compartilhamento-convidar-amigos.md)
+- [0041 — Consulta de metadados de livro por ISBN](0041-consulta-metadados-isbn.md)
 
 Preservar registros aceitos; mudanças relevantes geram novo ADR com vínculos de substituição.

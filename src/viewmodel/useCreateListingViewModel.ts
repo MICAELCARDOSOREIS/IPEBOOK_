@@ -1,13 +1,28 @@
 import { useCallback, useState } from "react";
-import { bookUseCases, logger as defaultLogger, rateLimiter as defaultRateLimiter } from "@/di/container";
+import {
+  bookMetadataService as defaultMetadataService,
+  bookUseCases,
+  logger as defaultLogger,
+  rateLimiter as defaultRateLimiter,
+} from "@/di/container";
 import type { Book, BookCondition, BookModality } from "@/model/entities/book";
 import { DomainError } from "@/model/errors";
+import { isValidIsbn } from "@/model/isbn";
 import type { ILogger } from "@/model/services/iLogger";
 import type { IRateLimiter } from "@/model/services/iRateLimiter";
+import type { IBookMetadataService } from "@/model/services/iBookMetadataService";
 import type { IBookUseCases } from "@/usecase/iBookUseCases";
 import { formKey, guardFormSubmit } from "@/viewmodel/formRateLimit";
 
+export type IsbnFeedback = {
+  type: "success" | "info" | "error";
+  message: string;
+};
+
 export type CreateListingState = {
+  isbn: string;
+  lookingUpIsbn: boolean;
+  isbnFeedback: IsbnFeedback | null;
   title: string;
   author: string;
   category: string;
@@ -24,6 +39,9 @@ export type CreateListingState = {
 };
 
 export type CreateListingActions = {
+  setIsbn: (value: string) => void;
+  lookupIsbn: () => Promise<boolean>;
+  clearIsbnFeedback: () => void;
   setTitle: (value: string) => void;
   setAuthor: (value: string) => void;
   setCategory: (value: string) => void;
@@ -40,6 +58,9 @@ export type CreateListingActions = {
 };
 
 const INITIAL_STATE: CreateListingState = {
+  isbn: "",
+  lookingUpIsbn: false,
+  isbnFeedback: null,
   title: "",
   author: "",
   category: "",
@@ -61,8 +82,78 @@ export function useCreateListingViewModel(
   useCases: IBookUseCases = bookUseCases,
   rateLimiter: IRateLimiter = defaultRateLimiter,
   logger: ILogger = defaultLogger,
+  metadataService: IBookMetadataService = defaultMetadataService,
 ): [CreateListingState, CreateListingActions] {
   const [state, setState] = useState<CreateListingState>(INITIAL_STATE);
+
+  const setIsbn = useCallback((value: string) => {
+    setState((prev) => ({ ...prev, isbn: value, isbnFeedback: null }));
+  }, []);
+
+  const clearIsbnFeedback = useCallback(() => {
+    setState((prev) => ({ ...prev, isbnFeedback: null }));
+  }, []);
+
+  const lookupIsbn = useCallback(async (): Promise<boolean> => {
+    const rawIsbn = state.isbn.trim();
+    if (!rawIsbn) {
+      setState((prev) => ({
+        ...prev,
+        isbnFeedback: { type: "info", message: "Digite o código ISBN para buscar." },
+      }));
+      return false;
+    }
+
+    if (!isValidIsbn(rawIsbn)) {
+      setState((prev) => ({
+        ...prev,
+        isbnFeedback: {
+          type: "error",
+          message: "Código ISBN inválido. Digite 10 ou 13 dígitos numéricos.",
+        },
+      }));
+      return false;
+    }
+
+    setState((prev) => ({ ...prev, lookingUpIsbn: true, isbnFeedback: null }));
+    try {
+      const meta = await metadataService.lookupByIsbn(rawIsbn);
+      if (!meta) {
+        setState((prev) => ({
+          ...prev,
+          lookingUpIsbn: false,
+          isbnFeedback: {
+            type: "info",
+            message: "Livro não encontrado na base pública. Você pode digitar os dados manualmente.",
+          },
+        }));
+        return false;
+      }
+
+      setState((prev) => ({
+        ...prev,
+        lookingUpIsbn: false,
+        title: meta.title,
+        author: meta.author,
+        photoUrl: meta.coverUrl && !prev.photoUrl ? meta.coverUrl : prev.photoUrl,
+        isbnFeedback: {
+          type: "success",
+          message: `Encontrado: "${meta.title}"!`,
+        },
+      }));
+      return true;
+    } catch {
+      setState((prev) => ({
+        ...prev,
+        lookingUpIsbn: false,
+        isbnFeedback: {
+          type: "info",
+          message: "Não foi possível consultar a base no momento. Digite os dados manualmente.",
+        },
+      }));
+      return false;
+    }
+  }, [metadataService, state.isbn]);
 
   const setTitle = useCallback((value: string) => {
     setState((prev) => ({ ...prev, title: value, error: null, success: false }));
@@ -191,6 +282,9 @@ export function useCreateListingViewModel(
   return [
     state,
     {
+      setIsbn,
+      lookupIsbn,
+      clearIsbnFeedback,
       setTitle,
       setAuthor,
       setCategory,
