@@ -23,4 +23,14 @@ export class ShareUseCases implements IShareUseCases {
   buildWhatsAppShareUrl(message: string): string {
     return `whatsapp://send?text=${encodeURIComponent(message)}`;
   }
+
+  buildInviteMessage(url: string = "https://ipebook.pages.dev"): string {
+    const targetUrl = url.trim() || "https://ipebook.pages.dev";
+    return `Oi! Estou usando o IpêBook para trocar, vender e doar livros em Piripiri. Dá uma olhada e participa também da nossa comunidade de leitores:\n${targetUrl}`;
+  }
+
+  buildWhatsAppInviteUrl(url?: string): string {
+    const message = this.buildInviteMessage(url);
+    return this.buildWhatsAppShareUrl(message);
+  }
 }

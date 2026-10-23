@@ -39,5 +39,6 @@
 - [0037 — Encontro como entidade própria da negociação](0037-encontro-como-entidade-propria.md) (criado como 0036 e renumerado por colisão com o ADR do tema escuro)
 - [0038 — Leitura pública anônima de perfis comunitários e avaliações](0038-leitura-anonima-perfis-publicos-e-avaliacoes.md)
 - [0039 — Bloqueio de usuários e moderação interpessoal](0039-bloqueio-de-usuarios-e-moderacao.md)
+- [0040 — Compartilhamento do aplicativo e convite de amigos](0040-compartilhamento-convidar-amigos.md)
 
 Preservar registros aceitos; mudanças relevantes geram novo ADR com vínculos de substituição.

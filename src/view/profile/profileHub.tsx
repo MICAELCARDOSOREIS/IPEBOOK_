@@ -18,6 +18,7 @@ export type ProfileHubProps = {
   onNavigateToSecurity: () => void;
   onNavigateToPrivacy: () => void;
   onNavigateToBlockedUsers?: () => void;
+  onNavigateToInviteFriends?: () => void;
   onNavigateToTerms: () => void;
   onNavigateToHelp: () => void;
   onSignedOut: () => void;
@@ -40,6 +41,7 @@ export default function ProfileHub({
   onNavigateToSecurity,
   onNavigateToPrivacy,
   onNavigateToBlockedUsers,
+  onNavigateToInviteFriends,
   onNavigateToTerms,
   onNavigateToHelp,
   onSignedOut,
@@ -110,6 +112,13 @@ export default function ProfileHub({
       label: "Pessoas bloqueadas",
       description: "Gerencie quem não pode interagir com você",
       onPress: onNavigateToBlockedUsers ?? (() => {}),
+    },
+    {
+      key: "invite",
+      icon: "share",
+      label: "Convidar amigos",
+      description: "Divulgue o IpêBook e ajude a comunidade a crescer",
+      onPress: onNavigateToInviteFriends ?? (() => {}),
     },
     {
       key: "terms",

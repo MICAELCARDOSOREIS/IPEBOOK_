@@ -139,4 +139,22 @@ describe("Meu perfil — hub de navegação (Figma 07.01)", () => {
 
     expect(onNavigateToSignIn).toHaveBeenCalledTimes(1);
   });
+
+  it("aciona a navegação para Convidar amigos (Spec 057, Figma 08.02)", async () => {
+    mockAuth({ id: "ana", email: "ana@exemplo.com" });
+    mockProfile();
+    const onNavigateToInviteFriends = vi.fn();
+
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(
+        <ProfileHub {...baseProps({ onNavigateToInviteFriends })} />,
+      );
+    });
+
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Convidar amigos"));
+    });
+    expect(onNavigateToInviteFriends).toHaveBeenCalledTimes(1);
+  });
 });

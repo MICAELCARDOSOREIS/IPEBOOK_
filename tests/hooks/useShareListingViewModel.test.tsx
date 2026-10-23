@@ -43,6 +43,8 @@ const fakeUseCases: IShareUseCases = {
   buildListingSharePath: (bookId) => `/livro/${bookId}`,
   buildShareMessage: (listing, url) => `${listing.title} de ${listing.author} — ${url}`,
   buildWhatsAppShareUrl: (message) => `whatsapp://send?text=${encodeURIComponent(message)}`,
+  buildInviteMessage: () => "",
+  buildWhatsAppInviteUrl: () => "",
 };
 
 const fakeListing = { title: "Dom Casmurro", author: "Machado de Assis", modality: "trade" as const };
@@ -97,6 +99,8 @@ describe("testes de hook: useShareListingViewModel (Spec 019)", () => {
       },
       buildShareMessage: () => "",
       buildWhatsAppShareUrl: () => "",
+      buildInviteMessage: () => "",
+      buildWhatsAppInviteUrl: () => "",
     };
     const hook = await renderHook(useCases);
     await act(async () => {

@@ -13,4 +13,8 @@ export interface IShareUseCases {
   buildShareMessage(listing: ShareableListing, url: string): string;
   /** URL do esquema `whatsapp://send` com o texto já codificado. */
   buildWhatsAppShareUrl(message: string): string;
+  /** Mensagem convidando amigos para a comunidade de leitores em Piripiri (Figma 08.02). */
+  buildInviteMessage(url?: string): string;
+  /** URL do esquema `whatsapp://send` com a mensagem de convite da comunidade. */
+  buildWhatsAppInviteUrl(url?: string): string;
 }
