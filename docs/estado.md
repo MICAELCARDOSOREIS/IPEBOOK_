@@ -2,18 +2,17 @@
 
 Documento consolidado de continuidade técnica e produto do Ipebook (Piripiri, PI).
 
-Conferência atual: **2026-10-23** (branch `chore/higiene-docs-numeracao`, derivada de `develop` em `e794ec7`).
+Conferência atual: **2026-10-23** (branch `develop` consolidada após PRs #197, #198 e #199).
 
-**Higiene de numeração (2026-10-23):** a colisão voltou depois dos PRs paralelos #192 e #193. O ADR do
-encontro (criado como 0036) passou a ser o **ADR 0037**, e o 0036 ficou com o tema escuro, já citado pela
-ADR 0008 e pelo índice. As specs do tema escuro foram renumeradas: **044-tema-escuro-tokens → 054** e
-**045-tema-escuro-telas-restantes → 055**. As specs 044 (alinhamento complementar) e 045 (melhorias das telas) ficam
-com o número, porque a Spec 053 se refere a elas. Commits #190, #193 e #195 citam os números antigos.
+**Entregas consolidadas (2026-10-23):**
+- **Spec 056 (Bloqueio e Desbloqueio de Usuários, ADR 0039):** Gestão de pessoas bloqueadas no hub de perfil (`/perfil/bloqueados`, Figma `07.10`–`07.12`), com diálogo acessível de confirmação, tabela `v2_blocked_users` com RLS rígida e migração `202610230002_bloqueio_usuarios.sql`. Integrado via PR #197.
+- **Spec 057 (Convidar amigos e compartilhar o app, ADR 0040):** Fechamento do fluxo Figma `08.02` e `07.01` com ação no perfil e rota `/perfil/convidar`, mensagem acolhedora da comunidade de Piripiri, abertura direta do WhatsApp e fallbacks nativo e web. Integrado via PR #198.
+- **Spec 058 (Busca e preenchimento de livro por ISBN, ADR 0041):** Concretização interativa do card de ISBN da etapa 1 de anúncio (`/anunciar`, Figma `04.01`), com validação de ISBN-10 e ISBN-13, integração à API aberta da Open Library com timeout resiliente de 5 s e modo memória para testes offline. Integrado via PR #199.
+- **Leitura anônima de perfis públicos (ADR 0038 / Spec 053):** Política RLS em `v2_profiles` e `v2_ratings` para visitantes (`anon`) verem o nome de quem anuncia e avaliações comunitárias sem expor dados privados.
+- **Modularização arquitetural de telas:** `createListing.tsx` (565 linhas) e `myListings.tsx` (457 linhas) decompostos em submódulos coesos em `src/view/listings/`.
+- **Prevenção automatizada de colisões:** Script `scripts/verificar-numeracao.mjs` (`npm run check:numbering`) integrado aos testes e ao pipeline de validação (58 specs e 42 ADRs sem colisões).
 
-**Pendências abertas (2026-10-23):** aplicar `202610220001_encontros.sql` no Supabase remoto e rodar
-`npm run health:supabase:remote`; decidir a leitura anônima de `v2_profiles` (nome de quem anuncia para
-visitantes, Spec 053), com ADR; confirmar a revogação do token de acesso do Supabase usado em 22/10;
-conferências no Android das Specs 037, 038 e 052.
+**Pendências abertas (2026-10-23):** aplicar no Supabase remoto as 3 migrações criadas (`202610220001_encontros.sql`, `202610230001_leitura_anonima_perfis_e_avaliacoes.sql`, `202610230002_bloqueio_usuarios.sql`) e rodar `npm run health:supabase:remote`; confirmar a revogação do token de acesso do Supabase usado em 22/10; conferências em dispositivo físico Android das Specs 037, 038, 052, 056, 057 e 058.
 
 **Spec 052 validada localmente (Issue #188; criada como 044 e renumerada porque o número passou a ser da spec de alinhamento complementar):** a negociação aceita ganhou o encontro combinado
 (Figma `06.04`, `06.05`, `06.11`–`06.14`): convite com local entre os pontos seguros, dia nos próximos
