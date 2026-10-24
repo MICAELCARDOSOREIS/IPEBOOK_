@@ -225,10 +225,9 @@ export default function ProfileHub({
                 <View style={styles.identityText}>
                   <Text style={styles.name}>{profile.name ?? "Você"}</Text>
                   <Text style={styles.subtitle}>
-                    {profile.socialHandle ??
-                      (profile.ratingCount > 0
-                        ? `★ ${profile.averageRating?.toFixed(1)} (${profile.ratingCount} ${profile.ratingCount > 1 ? "avaliações" : "avaliação"})`
-                        : "Sem avaliações ainda")}
+                    {profile.ratingCount > 0
+                      ? `★ ${profile.averageRating?.toFixed(1)} (${profile.ratingCount} ${profile.ratingCount > 1 ? "avaliações" : "avaliação"})`
+                      : "Sem avaliações ainda"}
                     {" · "}
                     {profile.neighborhood ? `${profile.neighborhood}, Piripiri` : "Piripiri, PI"}
                   </Text>
