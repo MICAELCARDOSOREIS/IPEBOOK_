@@ -224,9 +224,9 @@ export default function Home({
           onPress={() => onSelectNeighborhood?.()}
           style={styles.neighborhoodPill}
         >
-          <AppIcon name="place" size={16} color={colors.primary} />
+          <AppIcon name="place" size={16} color={colors.action} />
           <Text style={styles.neighborhoodText}>{currentNeighborhood}</Text>
-          <AppIcon name="chevronDown" size={16} color={colors.primary} />
+          <AppIcon name="chevronDown" size={16} color={colors.action} />
         </Pressable>
 
         <View style={styles.topRightActions}>
@@ -367,7 +367,7 @@ export default function Home({
         style={styles.donationBanner}
       >
         <View style={styles.donationBannerIconBox}>
-          <AppIcon name="bookmark" size={20} color={colors.primary} />
+          <AppIcon name="bookmark" size={20} color={colors.action} />
         </View>
         <View style={styles.donationBannerTextBox}>
           <Text style={styles.donationBannerTitle}>Doações da semana</Text>
@@ -528,7 +528,7 @@ function createStyles(colors: ColorPalette) {
       alignItems: "center",
       gap: tokens.spacing[6],
       backgroundColor: colors.soft,
-      paddingHorizontal: tokens.spacing[14],
+      paddingHorizontal: tokens.spacing[12],
       paddingVertical: tokens.spacing[8],
       borderRadius: tokens.radius.full,
       minHeight: tokens.accessibility.touchTarget,
@@ -583,7 +583,7 @@ function createStyles(colors: ColorPalette) {
     shortcutChip: {
       backgroundColor: colors.soft,
       borderRadius: tokens.radius.small,
-      paddingHorizontal: tokens.spacing[10],
+      paddingHorizontal: tokens.spacing[8],
       paddingVertical: tokens.spacing[4],
     },
     shortcutChipText: {
@@ -663,7 +663,7 @@ function createStyles(colors: ColorPalette) {
     chipsContainer: {
       flexDirection: "row",
       gap: tokens.spacing[8],
-      paddingVertical: tokens.spacing[2],
+      paddingVertical: tokens.spacing[4],
     },
     filterChip: {
       flexDirection: "row",
@@ -699,7 +699,7 @@ function createStyles(colors: ColorPalette) {
     donationBanner: {
       flexDirection: "row",
       alignItems: "center",
-      padding: tokens.spacing[14],
+      padding: tokens.spacing[16],
       backgroundColor: colors.soft,
       borderRadius: tokens.radius.medium,
       gap: tokens.spacing[12],
@@ -824,7 +824,7 @@ function createStyles(colors: ColorPalette) {
     },
     tag: {
       borderRadius: tokens.radius.small,
-      paddingHorizontal: tokens.spacing[10],
+      paddingHorizontal: tokens.spacing[8],
       paddingVertical: tokens.spacing[4],
     },
     tagText: {
@@ -874,7 +874,7 @@ function createStyles(colors: ColorPalette) {
     themeToggleOption: {
       minHeight: tokens.accessibility.touchTarget,
       justifyContent: "center",
-      paddingHorizontal: tokens.spacing[14],
+      paddingHorizontal: tokens.spacing[12],
       borderRadius: tokens.radius.full,
       borderWidth: 1,
       borderColor: colors.border,
