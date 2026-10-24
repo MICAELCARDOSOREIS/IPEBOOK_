@@ -49,5 +49,6 @@
 - [0047 — Alinhamento visual da tela Minha Estante ao Figma 05.01 e 05.02](0047-alinhamento-estante-figma.md)
 - [0048 — Alinhamento visual da tela Perfil ao Figma 07.01 e 07.02](0048-alinhamento-perfil-figma.md)
 - [0049 — Alinhamento visual da tela Explorar ao Figma 02.02](0049-alinhamento-explorar-figma.md)
+- [0049 — Alinhamento visual da tela Explorar ao Figma 02.02](0049-alinhamento-explorar-figma.md)
 
 Preservar registros aceitos; mudanças relevantes geram novo ADR com vínculos de substituição.

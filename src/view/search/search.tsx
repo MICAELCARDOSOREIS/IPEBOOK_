@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useSearchViewModel } from "@/viewmodel/useSearchViewModel";
 import type { SearchModalityFilter, SearchPriceRange, SearchSortOption } from "@/viewmodel/useSearchViewModel";
-import { tokens, type ColorPalette } from "@/view/tokens";
+import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { BookCover } from "@/view/components/BookCover";
 import { ErrorState } from "@/view/components/ErrorState";
@@ -19,6 +19,8 @@ import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
 
 export type SearchProps = {
+  currentNeighborhood?: string;
+  onSelectNeighborhood?: () => void;
   onNavigateToBookDetail?: (bookId: string) => void;
   onNavigateToAlerts?: (term: string) => void;
   /** Pré-aplica um filtro de modalidade ao abrir, vindo do "Ver mais" da Home (Issue #146). */
@@ -40,7 +42,8 @@ const MODALITY_FILTERS: Array<{ id: SearchModalityFilter; label: string }> = [
   { id: "donation", label: "Doação" },
 ];
 
-const QUICK_CATEGORY_FILTERS = ["Ficção", "Não ficção", "Infantil"] as const;
+/** Categorias rápidas do Figma `02.02 · Explorar` (nó 183:3499). */
+const QUICK_CATEGORY_FILTERS = ["Ficção", "Não ficção", "Infantil", "Didático"] as const;
 
 const PRICE_FILTERS: Array<{ id: SearchPriceRange; label: string }> = [
   { id: "all", label: "Todos os preços" },
@@ -56,8 +59,14 @@ const SORT_OPTIONS: Array<{ id: SearchSortOption; label: string }> = [
   { id: "price_desc", label: "Maior preço" },
 ];
 
-/** Busca e Exploração (US3, T019, Spec 028, Issue #93): filtra por termo, modalidade, categoria e preço. */
-export default function Search({ onNavigateToBookDetail, onNavigateToAlerts, initialModality }: SearchProps) {
+/** Busca e Exploração (Figma `02.02 · Explorar`, nó `10:2`). */
+export default function Search({
+  currentNeighborhood = "Centro",
+  onSelectNeighborhood,
+  onNavigateToBookDetail,
+  onNavigateToAlerts,
+  initialModality,
+}: SearchProps) {
   const [auth] = useAuthViewModel();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -75,40 +84,71 @@ export default function Search({ onNavigateToBookDetail, onNavigateToAlerts, ini
     appliedInitialModality.current = true;
   }, [initialModality, actions]);
 
-  // Busca e filtros viajam no cabeçalho da própria lista: ocupam quase toda a altura da tela em
-  // celular, então precisam rolar junto com os resultados em vez de empurrá-los para fora.
+  // Busca e filtros viajam no cabeçalho da própria lista para rolagem natural no mobile.
   const listHeader = (
     <View style={styles.filters}>
-      <View style={styles.headerRow}>
-        <Text accessibilityRole="header" style={styles.heading}>O que vamos ler hoje?</Text>
-        {state.hasActiveFilters ? (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Limpar todos os filtros de busca"
-            onPress={actions.clearFilters}
-            style={styles.clearFiltersButton}
-          >
-            <Text style={styles.clearFiltersText}>Limpar filtros</Text>
-          </Pressable>
-        ) : null}
+      {/* 1. Barra de Topo: Bairro (Pill) e Ações (Limpar filtros / Tune) (Figma nós 137:2457 e 137:2461) */}
+      <View style={styles.topBar}>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={showAdvancedFilters ? "Ocultar filtros avançados" : "Mostrar filtros avançados"}
-          onPress={() => setShowAdvancedFilters((visible) => !visible)}
-          style={styles.tuneButton}
+          accessibilityLabel={`Selecionar bairro: ${currentNeighborhood}`}
+          onPress={() => onSelectNeighborhood?.()}
+          style={styles.neighborhoodPill}
         >
-          <AppIcon name="tune" size={20} color={colors.secondaryText} />
+          <AppIcon name="place" size={20} color={colors.m3.primary} />
+          <Text style={styles.neighborhoodText}>{currentNeighborhood}</Text>
+          <AppIcon name="chevronDown" size={20} color={colors.m3.onSurfaceVariant} />
         </Pressable>
-      </View>
-      <Text style={styles.subtitle}>Livros novos e seminovos para trocar, comprar ou receber aqui perto.</Text>
 
+        <View style={styles.topRightActions}>
+          {state.hasActiveFilters ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Limpar todos os filtros de busca"
+              onPress={actions.clearFilters}
+              style={styles.clearFiltersButton}
+            >
+              <Text style={styles.clearFiltersText}>Limpar filtros</Text>
+            </Pressable>
+          ) : null}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={showAdvancedFilters ? "Ocultar filtros avançados" : "Mostrar filtros avançados"}
+            onPress={() => setShowAdvancedFilters((visible) => !visible)}
+            style={[styles.tuneButton, showAdvancedFilters && styles.tuneButtonActive]}
+          >
+            <AppIcon
+              name="tune"
+              size={24}
+              color={showAdvancedFilters ? colors.m3.onSecondaryContainer : colors.m3.onSurfaceVariant}
+            />
+          </Pressable>
+        </View>
+      </View>
+
+      {/* 2. Manchete Editorial (Figma nó 137:2463) */}
+      <View style={styles.heroSection}>
+        <Text accessibilityRole="header" style={styles.heading}>
+          O que vamos{"\n"}ler hoje?
+        </Text>
+        <Text style={styles.subtitle}>
+          Livros novos e seminovos para trocar, comprar ou receber aqui perto.
+        </Text>
+      </View>
+
+      {/* 3. Campo de Busca Integrado M3 (Figma nó 99:1733) */}
       <SearchField
         value={state.term}
         onChangeText={actions.setTerm}
         onSubmitEditing={() => void actions.registerSearch(state.term)}
       />
 
-      <View style={styles.quickCategories}>
+      {/* 4. Categorias Rápidas em Rolagem Horizontal (Figma nó 183:3499) */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.quickCategoriesScroll}
+      >
         <Chip
           label="Todos"
           accessibilityLabel="Filtrar por todas as categorias"
@@ -124,82 +164,83 @@ export default function Search({ onNavigateToBookDetail, onNavigateToAlerts, ini
             onPress={() => actions.setCategory(category)}
           />
         ))}
-      </View>
+      </ScrollView>
 
-      {showAdvancedFilters ? <View style={styles.advancedFilters}>
-      {/* Filtro por Modalidade */}
-      <View style={styles.filterSection}>
-        <Text style={styles.filterLabel}>Modalidade:</Text>
-        <View style={styles.filtersRow}>
-          {MODALITY_FILTERS.map((f) => (
-            <Chip
-              key={f.id}
-              label={f.label}
-              accessibilityLabel={f.id === "all" ? "Filtrar por todas as modalidades" : `Filtrar por ${f.label}`}
-              selected={state.modality === f.id}
-              onPress={() => actions.setModality(f.id)}
-            />
-          ))}
-        </View>
-      </View>
+      {showAdvancedFilters ? (
+        <View style={styles.advancedFilters}>
+          {/* Filtro por Modalidade */}
+          <View style={styles.filterSection}>
+            <Text style={styles.filterLabel}>Modalidade:</Text>
+            <View style={styles.filtersRow}>
+              {MODALITY_FILTERS.map((f) => (
+                <Chip
+                  key={f.id}
+                  label={f.label}
+                  accessibilityLabel={f.id === "all" ? "Filtrar por todas as modalidades" : `Filtrar por ${f.label}`}
+                  selected={state.modality === f.id}
+                  onPress={() => actions.setModality(f.id)}
+                />
+              ))}
+            </View>
+          </View>
 
-      {/* Filtro por Categoria */}
-      {state.availableCategories.length > 0 ? (
-        <View style={styles.filterSection}>
-          <Text style={styles.filterLabel}>Categoria:</Text>
-          <View style={styles.filtersRow}>
-            <Chip
-              label="Todas"
-              accessibilityLabel="Filtrar por todas as categorias"
-              selected={state.category === "all"}
-              onPress={() => actions.setCategory("all")}
-            />
-            {state.availableCategories.map((cat) => (
-              <Chip
-                key={cat}
-                label={cat}
-                accessibilityLabel={`Filtrar por categoria ${cat}`}
-                selected={state.category === cat}
-                onPress={() => actions.setCategory(cat)}
-              />
-            ))}
+          {/* Filtro por Categoria */}
+          {state.availableCategories.length > 0 ? (
+            <View style={styles.filterSection}>
+              <Text style={styles.filterLabel}>Categoria:</Text>
+              <View style={styles.filtersRow}>
+                <Chip
+                  label="Todas"
+                  accessibilityLabel="Filtrar por todas as categorias"
+                  selected={state.category === "all"}
+                  onPress={() => actions.setCategory("all")}
+                />
+                {state.availableCategories.map((cat) => (
+                  <Chip
+                    key={cat}
+                    label={cat}
+                    accessibilityLabel={`Filtrar por categoria ${cat}`}
+                    selected={state.category === cat}
+                    onPress={() => actions.setCategory(cat)}
+                  />
+                ))}
+              </View>
+            </View>
+          ) : null}
+
+          {/* Filtro por Faixa de Preço */}
+          <View style={styles.filterSection}>
+            <Text style={styles.filterLabel}>Preço:</Text>
+            <View style={styles.filtersRow}>
+              {PRICE_FILTERS.map((p) => (
+                <Chip
+                  key={p.id}
+                  label={p.label}
+                  accessibilityLabel={`Filtrar por ${p.label}`}
+                  selected={state.priceRange === p.id}
+                  onPress={() => actions.setPriceRange(p.id)}
+                />
+              ))}
+            </View>
+          </View>
+
+          {/* Ordenação */}
+          <View style={styles.filterSection}>
+            <Text style={styles.filterLabel}>Ordenar por:</Text>
+            <View style={styles.filtersRow}>
+              {SORT_OPTIONS.map((s) => (
+                <Chip
+                  key={s.id}
+                  label={s.label}
+                  accessibilityLabel={`Ordenar por ${s.label}`}
+                  selected={state.sortBy === s.id}
+                  onPress={() => actions.setSortBy(s.id)}
+                />
+              ))}
+            </View>
           </View>
         </View>
       ) : null}
-
-      {/* Filtro por Faixa de Preço */}
-      <View style={styles.filterSection}>
-        <Text style={styles.filterLabel}>Preço:</Text>
-        <View style={styles.filtersRow}>
-          {PRICE_FILTERS.map((p) => (
-            <Chip
-              key={p.id}
-              label={p.label}
-              accessibilityLabel={`Filtrar por ${p.label}`}
-              selected={state.priceRange === p.id}
-              onPress={() => actions.setPriceRange(p.id)}
-            />
-          ))}
-        </View>
-      </View>
-
-      {/* Ordenação */}
-      <View style={styles.filterSection}>
-        <Text style={styles.filterLabel}>Ordenar por:</Text>
-        <View style={styles.filtersRow}>
-          {SORT_OPTIONS.map((s) => (
-            <Chip
-              key={s.id}
-              label={s.label}
-              accessibilityLabel={`Ordenar por ${s.label}`}
-              selected={state.sortBy === s.id}
-              onPress={() => actions.setSortBy(s.id)}
-            />
-          ))}
-        </View>
-      </View>
-
-      </View> : null}
 
       {!state.term.trim() && state.history.length > 0 ? (
         <View style={styles.historySection}>
@@ -229,7 +270,6 @@ export default function Search({ onNavigateToBookDetail, onNavigateToAlerts, ini
         onCancel={() => setConfirmingClear(false)}
         onConfirm={() => { setConfirmingClear(false); void actions.clearHistory(); }}
       />
-
     </View>
   );
 
@@ -272,26 +312,43 @@ export default function Search({ onNavigateToBookDetail, onNavigateToAlerts, ini
         ListHeaderComponent={listHeader}
         ListEmptyComponent={listEmpty}
         renderItem={({ item }) => {
+          const priceOrCondition =
+            item.price != null
+              ? `R$ ${item.price.toFixed(2).replace(".", ",")}`
+              : item.modality === "trade"
+              ? "Por outro livro"
+              : "Gratuito";
+
           return (
-            <View style={styles.row}>
+            <View style={styles.card}>
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel={`Ver detalhe de ${item.title}, ${item.author}`}
                 onPress={() => { void actions.registerSearch(state.term); onNavigateToBookDetail?.(item.id); }}
-                style={styles.rowMain}
+                style={styles.cardMain}
               >
                 <BookCover id={item.id} title={item.title} photoUrl={item.photoUrl} variant="list" />
-                <View style={styles.rowInfo}>
-                  <View style={styles.rowHeader}>
-                    <Text style={styles.rowTitle}>{item.title}</Text>
+                <View style={styles.cardInfo}>
+                  <Text numberOfLines={2} style={styles.cardTitle}>{item.title}</Text>
+                  <Text numberOfLines={1} style={styles.cardAuthor}>{item.author}</Text>
+                  <View style={styles.cardMetaRow}>
                     <Tag variant={item.modality} />
+                    <Text style={styles.priceText}>{priceOrCondition}</Text>
                   </View>
-                  <Text style={styles.body}>{item.author}</Text>
                   {item.category ? <Text style={styles.categoryBadge}>{item.category}</Text> : null}
-                  {item.price ? <Text style={styles.priceText}>R$ {item.price.toFixed(2).replace(".", ",")}</Text> : null}
                 </View>
               </Pressable>
-              <FavoriteButton bookId={item.id} userId={auth.user?.id ?? null} />
+              <View style={styles.cardActions}>
+                <FavoriteButton bookId={item.id} userId={auth.user?.id ?? null} />
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`Abrir ${item.title}`}
+                  onPress={() => { void actions.registerSearch(state.term); onNavigateToBookDetail?.(item.id); }}
+                  style={styles.chevronButton}
+                >
+                  <AppIcon name="chevronRight" size={24} color={colors.m3.onSurfaceVariant} />
+                </Pressable>
+              </View>
             </View>
           );
         }}
@@ -302,52 +359,176 @@ export default function Search({ onNavigateToBookDetail, onNavigateToAlerts, ini
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
-  page: { flex: 1, backgroundColor: colors.background },
-  // `contentContainerStyle` da lista: `flexGrow` deixa o conteúdo ultrapassar a altura da tela,
-  // que é o que permite a rolagem. O `gap` fica no cabeçalho para não afetar as linhas da lista.
-  content: {
-    flexGrow: 1,
-    width: "100%",
-    maxWidth: 720,
-    alignSelf: "center",
-    padding: tokens.spacing[24],
-    paddingBottom: tokens.spacing[24],
-  },
-  filters: { gap: tokens.spacing[16] },
-  headerRow: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[8] },
-  tuneButton: { minHeight: tokens.accessibility.touchTarget, minWidth: tokens.accessibility.touchTarget, justifyContent: "center", alignItems: "center" },
-  heading: {
-    fontSize: 24,
-    lineHeight: 30,
-    fontWeight: "700",
-    color: colors.text,
-  },
-  clearFiltersButton: { minHeight: tokens.accessibility.touchTarget, justifyContent: "center", paddingHorizontal: tokens.spacing[8] },
-  clearFiltersText: { color: colors.error, fontSize: tokens.typography.bodyMedium.fontSize, fontWeight: "600" },
-  filterSection: { gap: tokens.spacing[6] },
-  quickCategories: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[8] },
-  advancedFilters: { gap: tokens.spacing[16] },
-  subtitle: { fontSize: tokens.typography.bodyMedium.fontSize, lineHeight: 18, color: colors.secondaryText },
-  filterLabel: { fontSize: tokens.typography.labelSmall.fontSize, fontWeight: "600", color: colors.secondaryText },
-  filtersRow: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[8] },
-  body: { fontSize: tokens.typography.bodyLarge.fontSize, lineHeight: 25, color: colors.secondaryText },
-  empty: { alignItems: "center", paddingTop: tokens.spacing[32], gap: tokens.spacing[8] },
-  emptyTitle: { fontSize: 19, fontWeight: "600", color: colors.action },
-  emptyActionButton: { minHeight: tokens.accessibility.touchTarget, justifyContent: "center", alignItems: "center", backgroundColor: colors.soft, borderRadius: tokens.radius.small, paddingHorizontal: tokens.spacing[16] },
-  emptyActionText: { color: colors.action, fontWeight: "600", fontSize: 15 },
-  alertLink: { color: colors.action, fontWeight: "600", padding: tokens.spacing[12] },
-  historySection: { gap: tokens.spacing[8] },
-  historyHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  historyTitle: { fontSize: tokens.typography.labelMedium.fontSize, fontWeight: "600", color: colors.secondaryText },
-  historyChips: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[8] },
-  historyChip: { minHeight: tokens.accessibility.touchTarget, justifyContent: "center", borderRadius: tokens.radius.full, backgroundColor: colors.soft, paddingHorizontal: tokens.spacing[16] },
-  historyChipText: { color: colors.text, fontSize: tokens.typography.bodyLarge.fontSize },
-  row: { flexDirection: "row", gap: tokens.spacing[12], paddingVertical: 18, borderBottomWidth: 1, borderBottomColor: colors.border },
-  rowMain: { flex: 1, flexDirection: "row", gap: tokens.spacing[12] },
-  rowInfo: { flex: 1, gap: 4 },
-  rowHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: tokens.spacing[12] },
-  rowTitle: { fontSize: 19, fontWeight: "600", color: colors.action },
-  categoryBadge: { fontSize: tokens.typography.labelSmall.fontSize, color: colors.secondaryText, fontStyle: "italic" },
-  priceText: { fontSize: tokens.typography.bodyMedium.fontSize, fontWeight: "600", color: colors.action },
+    page: { flex: 1, backgroundColor: colors.background },
+    content: {
+      flexGrow: 1,
+      width: "100%",
+      maxWidth: 720,
+      alignSelf: "center",
+      paddingHorizontal: tokens.spacing[16],
+      paddingTop: tokens.spacing[8],
+      paddingBottom: tokens.spacing[24],
+    },
+    filters: { gap: tokens.spacing[16], marginBottom: tokens.spacing[16] },
+    topBar: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+    },
+    neighborhoodPill: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+      backgroundColor: colors.soft,
+      paddingLeft: tokens.spacing[12],
+      paddingRight: tokens.spacing[8],
+      paddingVertical: tokens.spacing[8],
+      borderRadius: tokens.radius.full,
+    },
+    neighborhoodText: {
+      ...tokens.typography.labelMedium,
+      color: colors.text,
+      fontWeight: "500",
+    },
+    topRightActions: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[8],
+    },
+    tuneButton: {
+      width: 48,
+      height: 48,
+      borderRadius: 24,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    tuneButtonActive: {
+      backgroundColor: colors.soft,
+    },
+    heroSection: {
+      gap: tokens.spacing[6],
+      marginTop: tokens.spacing[4],
+      marginBottom: tokens.spacing[4],
+    },
+    heading: {
+      fontFamily: fontFamily.brand,
+      fontSize: 34,
+      lineHeight: 41,
+      color: colors.text,
+      letterSpacing: -0.5,
+    },
+    subtitle: {
+      fontSize: 16,
+      lineHeight: 24,
+      color: colors.secondaryText,
+    },
+    quickCategoriesScroll: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[8],
+      paddingVertical: 2,
+    },
+    clearFiltersButton: {
+      minHeight: tokens.accessibility.touchTarget,
+      justifyContent: "center",
+      paddingHorizontal: tokens.spacing[8],
+    },
+    clearFiltersText: { color: colors.error, fontSize: tokens.typography.bodyMedium.fontSize, fontWeight: "600" },
+    filterSection: { gap: tokens.spacing[6] },
+    advancedFilters: { gap: tokens.spacing[16] },
+    filterLabel: { fontSize: tokens.typography.labelSmall.fontSize, fontWeight: "600", color: colors.secondaryText },
+    filtersRow: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[8] },
+    body: { fontSize: tokens.typography.bodyLarge.fontSize, lineHeight: 25, color: colors.secondaryText },
+    empty: { alignItems: "center", paddingTop: tokens.spacing[32], gap: tokens.spacing[8] },
+    emptyTitle: { fontSize: 19, fontWeight: "600", color: colors.action },
+    emptyActionButton: {
+      minHeight: tokens.accessibility.touchTarget,
+      justifyContent: "center",
+      alignItems: "center",
+      backgroundColor: colors.soft,
+      borderRadius: tokens.radius.small,
+      paddingHorizontal: tokens.spacing[16],
+    },
+    emptyActionText: { color: colors.action, fontWeight: "600", fontSize: 15 },
+    alertLink: { color: colors.action, fontWeight: "600", padding: tokens.spacing[12] },
+    historySection: { gap: tokens.spacing[8] },
+    historyHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+    historyTitle: { fontSize: tokens.typography.labelMedium.fontSize, fontWeight: "600", color: colors.secondaryText },
+    historyChips: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[8] },
+    historyChip: {
+      minHeight: tokens.accessibility.touchTarget,
+      justifyContent: "center",
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.soft,
+      paddingHorizontal: tokens.spacing[16],
+    },
+    historyChipText: { color: colors.text, fontSize: tokens.typography.bodyLarge.fontSize },
+
+    // Card de Livro (Figma 02.02 · Explorar nós 137:2471 a 137:2490)
+    card: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: colors.surface,
+      borderRadius: 16,
+      paddingLeft: tokens.spacing[12],
+      paddingRight: tokens.spacing[4],
+      paddingVertical: tokens.spacing[12],
+      marginBottom: tokens.spacing[12],
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+      elevation: 1,
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.12,
+      shadowRadius: 2,
+      gap: 14,
+    },
+    cardMain: {
+      flex: 1,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 14,
+    },
+    cardInfo: {
+      flex: 1,
+      gap: tokens.spacing[4],
+      justifyContent: "center",
+    },
+    cardTitle: {
+      fontFamily: fontFamily.brand,
+      fontSize: 19,
+      lineHeight: 24,
+      color: colors.text,
+    },
+    cardAuthor: {
+      fontSize: 14,
+      lineHeight: 20,
+      color: colors.secondaryText,
+    },
+    cardMetaRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[8],
+      paddingTop: tokens.spacing[4],
+    },
+    priceText: {
+      fontSize: 14,
+      lineHeight: 20,
+      fontWeight: "500",
+      color: colors.text,
+    },
+    cardActions: {
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center",
+      width: 48,
+    },
+    chevronButton: {
+      width: 48,
+      height: 48,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    categoryBadge: { fontSize: tokens.typography.labelSmall.fontSize, color: colors.secondaryText, fontStyle: "italic" },
   });
 }
