@@ -115,6 +115,11 @@ export const Modal = React.forwardRef<any, any>((props, ref) => {
 });
 Modal.displayName = "Modal";
 
+export const KeyboardAvoidingView = React.forwardRef<any, any>((props, ref) =>
+  React.createElement("KeyboardAvoidingView", { ...props, ref }, props.children)
+);
+KeyboardAvoidingView.displayName = "KeyboardAvoidingView";
+
 export const StyleSheet = {
   create: <T extends Record<string, any>>(styles: T): T => styles,
   flatten: (style: any): any => {
@@ -206,6 +211,7 @@ export default {
   Image,
   ScrollView,
   Modal,
+  KeyboardAvoidingView,
   Pressable,
   ActivityIndicator,
   TextInput,

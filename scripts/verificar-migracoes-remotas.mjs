@@ -205,6 +205,11 @@ export const TABELAS_CRITICAS = {
     descricao: 'Relação privada de bloqueio entre pessoas da comunidade (Spec 056 / ADR 0039)',
     colunas: ['blocker_id', 'blocked_id', 'created_at'],
   },
+  v2_negotiation_messages: {
+    nome: 'v2_negotiation_messages',
+    descricao: 'Mensagens e chat da negociação presencial (Spec 061 / ADR 0044)',
+    colunas: ['id', 'request_id', 'sender_id', 'content', 'created_at'],
+  },
 };
 
 /**
@@ -549,6 +554,11 @@ export const MAPEAMENTO_MIGRACOES = {
     titulo: 'Bloqueio de usuários e moderação interpessoal',
     validar: (ctx) => ctx.tabelas.v2_blocked_users?.existe,
     detalhe: 'Tabela public.v2_blocked_users (ADR 0039)',
+  },
+  '202610240001_mensagens_negociacao.sql': {
+    titulo: 'Mensagens e chat da negociação presencial',
+    validar: (ctx) => ctx.tabelas.v2_negotiation_messages?.existe,
+    detalhe: 'Tabela public.v2_negotiation_messages (Spec 061 / ADR 0044)',
   },
 };
 

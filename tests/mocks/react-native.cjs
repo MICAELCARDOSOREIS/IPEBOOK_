@@ -115,6 +115,11 @@ const Modal = React.forwardRef((props, ref) => {
 });
 Modal.displayName = "Modal";
 
+const KeyboardAvoidingView = React.forwardRef((props, ref) =>
+  React.createElement("KeyboardAvoidingView", { ...props, ref }, props.children)
+);
+KeyboardAvoidingView.displayName = "KeyboardAvoidingView";
+
 const StyleSheet = {
   create: (styles) => styles,
   flatten: (style) => {
@@ -200,6 +205,7 @@ module.exports = {
   Image,
   ScrollView,
   Modal,
+  KeyboardAvoidingView,
   Pressable,
   ActivityIndicator,
   TextInput,
@@ -217,6 +223,7 @@ module.exports = {
     Image,
     ScrollView,
     Modal,
+  KeyboardAvoidingView,
     Pressable,
     ActivityIndicator,
     TextInput,

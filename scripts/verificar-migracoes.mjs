@@ -314,5 +314,26 @@ const afterUnblock = await as('authenticated', owner, `select * from public.v2_b
 if (afterUnblock.rows.length !== 0) throw new Error('Desbloqueio não removeu o registro');
 process.stdout.write('Bloqueio de usuários (Spec 056 / ADR 0039): verificado com sucesso\n');
 
+// Mensagens e Chat da Negociação Presencial (Spec 061 / ADR 0044)
+const sampleReqId = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+await as('authenticated', reader, `insert into public.v2_negotiation_messages (request_id, sender_id, content) values ('${sampleReqId}', '${reader}', 'Olá! Chego em 10 minutos.')`);
+const readMsgs = await as('authenticated', owner, `select content from public.v2_negotiation_messages where request_id = '${sampleReqId}'`);
+if (readMsgs.rows.length !== 1 || readMsgs.rows[0]?.content !== 'Olá! Chego em 10 minutos.') {
+  throw new Error('Dono da negociação não conseguiu ler a mensagem enviada');
+}
+
+const thirdPartyReadMsgs = await as('authenticated', other, `select content from public.v2_negotiation_messages where request_id = '${sampleReqId}'`);
+if (thirdPartyReadMsgs.rows.length !== 0) throw new Error('Terceiro conseguiu ler mensagens de negociação alheia');
+
+await denied('Terceiro envia mensagem em negociação alheia', () => as('authenticated', other, `insert into public.v2_negotiation_messages (request_id, sender_id, content) values ('${sampleReqId}', '${other}', 'Intromissão')`));
+await denied('Visitante anônimo envia mensagem', () => as('anon', null, `insert into public.v2_negotiation_messages (request_id, sender_id, content) values ('${sampleReqId}', '${reader}', 'Anônimo')`));
+
+// Bloqueio impede envio de mensagem
+await as('authenticated', owner, `insert into public.v2_blocked_users (blocker_id, blocked_id) values ('${owner}', '${reader}')`);
+await denied('Envio de mensagem com bloqueio ativo', () => as('authenticated', reader, `insert into public.v2_negotiation_messages (request_id, sender_id, content) values ('${sampleReqId}', '${reader}', 'Mensagem pós-bloqueio')`));
+await as('authenticated', owner, `delete from public.v2_blocked_users where blocker_id = '${owner}' and blocked_id = '${reader}'`);
+
+process.stdout.write('Mensagens de negociação (Spec 061 / ADR 0044): verificado com sucesso\n');
+
 process.stdout.write('Migrações e cenários SQL locais verificados.\n');
 await db.close();

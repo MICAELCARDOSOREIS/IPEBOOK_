@@ -13,6 +13,8 @@ import { BookCover } from "@/view/components/BookCover";
 import { IconBadge } from "@/view/components/IconBadge";
 import { Tag } from "@/view/components/Tag";
 import { TopAppBar } from "@/view/components/TopAppBar";
+import { AppIcon } from "@/view/components/AppIcon";
+import { NegotiationChatModal } from "@/view/requests/NegotiationChatModal";
 
 export type RequestDetailProps = {
   requestId: string;
@@ -41,6 +43,7 @@ export function RequestDetail({
   const styles = useMemo(() => createStyles(colors), [colors]);
   const detail = state.detail;
   const [mapErrors, setMapErrors] = useState<Record<string, string>>({});
+  const [chatModalVisible, setChatModalVisible] = useState(false);
 
   async function handleOpenMap(point: { name: string; address: string }) {
     setMapErrors((previous) => {
@@ -134,6 +137,18 @@ export function RequestDetail({
                     {detail.counterpartName ?? COMMUNITY_MEMBER}
                   </Text>
                 </Text>
+
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`Abrir conversa com ${detail.counterpartName ?? COMMUNITY_MEMBER}`}
+                  onPress={() => setChatModalVisible(true)}
+                  style={styles.chatButton}
+                >
+                  <AppIcon name="chat" size={18} color={colors.action} />
+                  <Text style={styles.chatButtonText}>
+                    Abrir conversa com {detail.counterpartName ?? COMMUNITY_MEMBER}
+                  </Text>
+                </Pressable>
               </View>
 
               <MeetingCard
@@ -185,6 +200,16 @@ export function RequestDetail({
           ) : null}
         </View>
       </ScrollView>
+
+      {detail ? (
+        <NegotiationChatModal
+          visible={chatModalVisible}
+          requestId={requestId}
+          sessionUserId={sessionUserId}
+          counterpartName={detail.counterpartName ?? COMMUNITY_MEMBER}
+          onClose={() => setChatModalVisible(false)}
+        />
+      ) : null}
     </SafeAreaView>
   );
 }
@@ -355,6 +380,25 @@ function createStyles(colors: ColorPalette) {
   },
   highlightText: {
     fontWeight: "700",
+    color: colors.action,
+  },
+  chatButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: tokens.spacing[8],
+    marginTop: tokens.spacing[12],
+    paddingVertical: tokens.spacing[8],
+    paddingHorizontal: tokens.spacing[16],
+    backgroundColor: colors.surface,
+    borderRadius: tokens.radius.medium,
+    borderWidth: 1,
+    borderColor: colors.action,
+    minHeight: tokens.accessibility.touchTarget,
+  },
+  chatButtonText: {
+    ...tokens.typography.bodyMedium,
+    fontWeight: "600",
     color: colors.action,
   },
   pointList: { gap: tokens.spacing[12], paddingVertical: tokens.spacing[4] },

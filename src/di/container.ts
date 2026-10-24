@@ -92,6 +92,9 @@ import type { IBlockedUserUseCases } from "@/usecase/iBlockedUserUseCases";
 import { BlockedUserUseCases } from "@/usecase/blockedUserUseCases";
 import { MemoryBlockedUserDataSource } from "@/infra/datasources/memoryBlockedUserDataSource";
 import { SupabaseBlockedUserDataSource } from "@/infra/datasources/supabaseBlockedUserDataSource";
+import type { IMessageDataSource } from "@/model/datasources/iMessageDataSource";
+import { MemoryMessageDataSource } from "@/infra/datasources/memoryMessageDataSource";
+import { SupabaseMessageDataSource } from "@/infra/datasources/supabaseMessageDataSource";
 import { ThemePreferenceUseCases } from "@/usecase/themePreferenceUseCases";
 import { UserDataExportUseCases } from "@/usecase/userDataExportUseCases";
 import { UserPreferencesUseCases } from "@/usecase/userPreferencesUseCases";
@@ -111,6 +114,7 @@ function createDataSources(): {
   userDataExport: IUserDataExportDataSource;
   userPreferences: IUserPreferencesDataSource;
   blockedUsers: IBlockedUserDataSource;
+  messages: IMessageDataSource;
 } {
   const searchHistory = process.env.NODE_ENV === "test"
     ? new MemorySearchHistoryDataSource()
@@ -137,6 +141,7 @@ function createDataSources(): {
       userDataExport: new SupabaseUserDataExportDataSource(client),
       userPreferences: new SupabaseUserPreferencesDataSource(client),
       blockedUsers: new SupabaseBlockedUserDataSource(client, new SupabaseProfileDataSource(client)),
+      messages: new SupabaseMessageDataSource(client),
     };
   }
   const books = new MemoryBookDataSource();
@@ -166,6 +171,7 @@ function createDataSources(): {
     }),
     userPreferences: new MemoryUserPreferencesDataSource(),
     blockedUsers,
+    messages: new MemoryMessageDataSource(),
   };
 }
 
@@ -235,6 +241,28 @@ export const userPreferencesUseCases: IUserPreferencesUseCases = new UserPrefere
 export const blockedUserUseCases: IBlockedUserUseCases = new BlockedUserUseCases(
   dataSources.blockedUsers,
 );
+
+import {
+  getNegotiationMessages,
+  sendNegotiationMessage,
+  type MessageUseCaseContext,
+  type SendMessageParams,
+} from "@/model/usecases/messageUseCases";
+
+export const messageDataSource = dataSources.messages;
+export const messageUseCaseContext: MessageUseCaseContext = {
+  messageDataSource: dataSources.messages,
+  bookRequestDataSource: dataSources.requests,
+  bookDataSource,
+  blockedUserDataSource: dataSources.blockedUsers,
+};
+
+export const negotiationMessageUseCases = {
+  getMessages: (requestId: string, sessionUserId: string) =>
+    getNegotiationMessages(requestId, sessionUserId, messageUseCaseContext),
+  sendMessage: (params: SendMessageParams) =>
+    sendNegotiationMessage(params, messageUseCaseContext),
+};
 
 export const logger: ILogger = new SafeLogger(
   process.env.NODE_ENV === "test" ? { sink: () => {} } : {}
