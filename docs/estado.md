@@ -13,8 +13,9 @@ Conferência atual: **2026-10-23** (branch `develop` consolidada após PRs #197,
 - **Leitura anônima de perfis públicos (ADR 0038 / Spec 053):** Política RLS em `v2_profiles` e `v2_ratings` para visitantes (`anon`) verem o nome de quem anuncia e avaliações comunitárias sem expor dados privados.
 - **Modularização arquitetural de telas:** `createListing.tsx` (565 linhas) e `myListings.tsx` (457 linhas) decompostos em submódulos coesos em `src/view/listings/`.
 - **Prevenção automatizada de colisões:** Script `scripts/verificar-numeracao.mjs` (`npm run check:numbering`) integrado aos testes e ao pipeline de validação (60 specs e 44 ADRs sem colisões).
+- **Supabase remoto 100% sincronizado:** Todas as 20 migrações locais (`supabase/migrations/`) foram aplicadas e verificadas no banco remoto via `scripts/verificar-migracoes-remotas.mjs` (incluindo `202610220001_encontros.sql`, `202610230001_leitura_anonima_perfis_e_avaliacoes.sql` e `202610230002_bloqueio_usuarios.sql`). As 11 tabelas, o bucket de Storage e as funções RPC de LGPD e aceite atômico encontram-se 100% íntegros e operacionais.
 
-**Pendências abertas (2026-10-23):** aplicar no Supabase remoto as 3 migrações criadas (`202610220001_encontros.sql`, `202610230001_leitura_anonima_perfis_e_avaliacoes.sql`, `202610230002_bloqueio_usuarios.sql`) e rodar `npm run health:supabase:remote`; confirmar a revogação do token de acesso do Supabase usado em 22/10; conferências em dispositivo físico Android das Specs 037, 038, 052, 056, 057 e 058.
+**Pendências abertas (2026-10-23):** confirmar a revogação do token de acesso temporário do Supabase; conferências em dispositivo físico Android das Specs 037, 038, 052, 056, 057, 058, 059 e 060.
 
 **Spec 052 validada localmente (Issue #188; criada como 044 e renumerada porque o número passou a ser da spec de alinhamento complementar):** a negociação aceita ganhou o encontro combinado
 (Figma `06.04`, `06.05`, `06.11`–`06.14`): convite com local entre os pontos seguros, dia nos próximos
