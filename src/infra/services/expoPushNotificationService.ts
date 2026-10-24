@@ -1,5 +1,5 @@
 import { Platform } from "react-native";
-import * as Notifications from "expo-notifications";
+import type * as NotificationsType from "expo-notifications";
 import type {
   IPushNotificationService,
   MeetingReminderParams,
@@ -7,16 +7,32 @@ import type {
 } from "@/model/services/iPushNotificationService";
 import type { ILogger } from "@/model/services/iLogger";
 
+function getNotificationsModule(): typeof NotificationsType | null {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    return require("expo-notifications");
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Implementação real do serviço de notificações push e locais com expo-notifications (Spec 060 / ADR 0043).
+ * Contém proteção graciosa para ambientes como Expo Go onde submódulos nativos não estão compilados.
  */
 export class ExpoPushNotificationService implements IPushNotificationService {
   private initialized = false;
 
   constructor(private readonly logger?: ILogger) {}
 
-  private async ensureInitialized(): Promise<void> {
-    if (this.initialized) return;
+  private async ensureInitialized(): Promise<typeof NotificationsType | null> {
+    const Notifications = getNotificationsModule();
+    if (!Notifications) {
+      this.logger?.warn("Módulo expo-notifications indisponível no runtime atual (ex: Expo Go sem client customizado)");
+      return null;
+    }
+
+    if (this.initialized) return Notifications;
 
     try {
       Notifications.setNotificationHandler({
@@ -40,8 +56,10 @@ export class ExpoPushNotificationService implements IPushNotificationService {
       }
 
       this.initialized = true;
+      return Notifications;
     } catch (err) {
       this.logger?.warn("Falha ao inicializar handler de notificações Expo", { err });
+      return Notifications;
     }
   }
 
@@ -52,6 +70,9 @@ export class ExpoPushNotificationService implements IPushNotificationService {
       }
       return false;
     }
+
+    const Notifications = getNotificationsModule();
+    if (!Notifications) return false;
 
     try {
       const { status } = await Notifications.getPermissionsAsync();
@@ -74,6 +95,9 @@ export class ExpoPushNotificationService implements IPushNotificationService {
       return false;
     }
 
+    const Notifications = getNotificationsModule();
+    if (!Notifications) return false;
+
     try {
       const { status } = await Notifications.requestPermissionsAsync();
       return status === "granted";
@@ -83,7 +107,9 @@ export class ExpoPushNotificationService implements IPushNotificationService {
   }
 
   async registerForPushNotifications(): Promise<string | null> {
-    await this.ensureInitialized();
+    const Notifications = await this.ensureInitialized();
+    if (!Notifications) return null;
+
     const hasPermission = await this.getPermissions();
     if (!hasPermission) {
       const granted = await this.requestPermissions();
@@ -100,9 +126,11 @@ export class ExpoPushNotificationService implements IPushNotificationService {
   }
 
   async scheduleLocalNotification(options: NotificationScheduleOptions): Promise<string | null> {
-    await this.ensureInitialized();
+    const Notifications = await this.ensureInitialized();
+    if (!Notifications) return null;
+
     try {
-      const trigger: Notifications.NotificationTriggerInput =
+      const trigger: NotificationsType.NotificationTriggerInput =
         options.triggerSeconds && options.triggerSeconds > 0
           ? {
               type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
@@ -165,6 +193,9 @@ export class ExpoPushNotificationService implements IPushNotificationService {
   }
 
   async cancelScheduledNotification(notificationId: string): Promise<boolean> {
+    const Notifications = getNotificationsModule();
+    if (!Notifications) return true;
+
     try {
       await Notifications.cancelScheduledNotificationAsync(notificationId);
       return true;
