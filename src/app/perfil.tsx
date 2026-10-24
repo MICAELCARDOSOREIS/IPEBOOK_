@@ -7,6 +7,7 @@ export default function Perfil() {
       onNavigateToSignIn={() => router.replace("/entrar")}
       onNavigateToEditProfile={() => router.push("/perfil/editar")}
       onNavigateToRatings={() => router.push("/perfil/avaliacoes")}
+      onNavigateToFavorites={() => router.push("/favoritos")}
       onNavigateToNotifications={() => router.push("/notificacoes")}
       onNavigateToSecurity={() => router.push("/perfil/seguranca")}
       onNavigateToPrivacy={() => router.push("/excluir-conta")}

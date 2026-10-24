@@ -14,14 +14,8 @@ export default function Index() {
     <Home
       focusKey={focusKey}
       onNavigateToSignIn={() => router.push("/entrar")}
-      onNavigateToCreateListing={() => router.push("/anunciar")}
-      onNavigateToMyListings={() => router.push("/meus-anuncios")}
-      onNavigateToReceivedRequests={() => router.push("/pedidos-recebidos")}
-      onNavigateToSentRequests={() => router.push("/meus-pedidos")}
       onNavigateToBookDetail={(bookId) => router.push(`/livro/${bookId}`)}
       onNavigateToNotifications={() => router.push("/notificacoes")}
-      onNavigateToFavorites={() => router.push("/favoritos")}
-      onNavigateToAlerts={() => router.push("/alertas")}
       onNavigateToSearch={(filter) =>
         router.push(
           filter?.modality

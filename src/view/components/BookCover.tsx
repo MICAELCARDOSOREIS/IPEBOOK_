@@ -26,7 +26,8 @@ const COVER_COLORS = [
   tokens.colors.cover.ochre,
 ] as const;
 const ASPECT_RATIO = 120 / 170;
-const LIST_WIDTH = 44;
+/** Largura canônica de capa em listas no Figma (`05.01`, `02.06`, `04.08`: 56x80px). */
+const LIST_WIDTH = 56;
 const CARD_WIDTH = 96;
 /** Preenche a largura do card de carrossel da Home (`CAROUSEL_ITEM_WIDTH`). */
 const CAROUSEL_WIDTH = 152;

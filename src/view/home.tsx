@@ -149,14 +149,8 @@ export type HomeProps = {
   currentNeighborhood?: string;
   onSelectNeighborhood?: () => void;
   onNavigateToSignIn?: () => void;
-  onNavigateToCreateListing?: () => void;
-  onNavigateToMyListings?: () => void;
-  onNavigateToReceivedRequests?: () => void;
-  onNavigateToSentRequests?: () => void;
   onNavigateToBookDetail?: (bookId: string) => void;
   onNavigateToNotifications?: () => void;
-  onNavigateToFavorites?: () => void;
-  onNavigateToAlerts?: () => void;
   onNavigateToTerms?: () => void;
   onNavigateToHelp?: () => void;
   /** "Ver mais" das seções destacadas; `modality` pré-aplica o filtro na Pesquisa. */
@@ -169,21 +163,15 @@ export default function Home({
   currentNeighborhood = "Centro",
   onSelectNeighborhood,
   onNavigateToSignIn,
-  onNavigateToCreateListing,
-  onNavigateToMyListings,
-  onNavigateToReceivedRequests,
-  onNavigateToSentRequests,
   onNavigateToBookDetail,
   onNavigateToNotifications,
-  onNavigateToFavorites,
-  onNavigateToAlerts,
   onNavigateToTerms,
   onNavigateToHelp,
   onNavigateToSearch,
   focusKey,
 }: HomeProps = {}) {
   const [state, actions] = useHomeViewModel();
-  const [authState, authActions] = useAuthViewModel();
+  const [authState] = useAuthViewModel();
   const { isOnline } = useNetworkStatus();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -215,7 +203,7 @@ export default function Home({
 
   const listHeader = (
     <View style={styles.headerContainer}>
-      {/* 1. Barra de Topo: Bairro (Pill) e Sino de Notificações + Sessão */}
+      {/* 1. Barra de Topo: Bairro (Pill), Entrar (sem sessão) e Sino de Notificações */}
       <View style={styles.topBar}>
         <Pressable
           accessibilityRole="button"
@@ -229,25 +217,7 @@ export default function Home({
         </Pressable>
 
         <View style={styles.topRightActions}>
-          {authState.loading ? null : authState.user ? (
-            <View style={styles.sessionHeaderRow}>
-              <Text numberOfLines={1} style={styles.sessionText}>Olá, {authState.user.email}</Text>
-              <Pressable
-                accessibilityRole="button"
-                onPress={() => onNavigateToCreateListing?.()}
-                style={styles.sessionPill}
-              >
-                <Text style={styles.sessionPillText}>Anunciar</Text>
-              </Pressable>
-              <Pressable
-                accessibilityRole="button"
-                onPress={() => void authActions.signOut()}
-                style={styles.sessionPill}
-              >
-                <Text style={styles.sessionPillText}>Sair</Text>
-              </Pressable>
-            </View>
-          ) : (
+          {authState.loading || authState.user ? null : (
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Entrar no aplicativo"
@@ -268,27 +238,6 @@ export default function Home({
           </Pressable>
         </View>
       </View>
-
-      {/* Atalhos de negociação quando autenticado */}
-      {authState.user ? (
-        <View style={styles.userShortcutsRow}>
-          <Pressable accessibilityRole="button" onPress={() => onNavigateToFavorites?.()} style={styles.shortcutChip}>
-            <Text style={styles.shortcutChipText}>Favoritos</Text>
-          </Pressable>
-          <Pressable accessibilityRole="button" onPress={() => onNavigateToAlerts?.()} style={styles.shortcutChip}>
-            <Text style={styles.shortcutChipText}>Meus alertas</Text>
-          </Pressable>
-          <Pressable accessibilityRole="button" onPress={() => onNavigateToMyListings?.()} style={styles.shortcutChip}>
-            <Text style={styles.shortcutChipText}>Meus anúncios</Text>
-          </Pressable>
-          <Pressable accessibilityRole="button" onPress={() => onNavigateToReceivedRequests?.()} style={styles.shortcutChip}>
-            <Text style={styles.shortcutChipText}>Pedidos recebidos</Text>
-          </Pressable>
-          <Pressable accessibilityRole="button" onPress={() => onNavigateToSentRequests?.()} style={styles.shortcutChip}>
-            <Text style={styles.shortcutChipText}>Meus pedidos</Text>
-          </Pressable>
-        </View>
-      ) : null}
 
       {/* 2. Manchete Editorial (Hero do Figma 02.01) */}
       <View style={styles.heroSection}>
@@ -442,11 +391,6 @@ function createStyles(colors: ColorPalette) {
       justifyContent: "center",
       alignItems: "center",
     },
-    sessionHeaderRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[6],
-    },
     sessionPill: {
       paddingHorizontal: tokens.spacing[12],
       paddingVertical: tokens.spacing[6],
@@ -459,28 +403,6 @@ function createStyles(colors: ColorPalette) {
       ...tokens.typography.labelMedium,
       fontWeight: "600",
       color: colors.action,
-    },
-    sessionText: {
-      ...tokens.typography.labelSmall,
-      color: colors.secondaryText,
-      maxWidth: 120,
-    },
-    userShortcutsRow: {
-      flexDirection: "row",
-      flexWrap: "wrap",
-      gap: tokens.spacing[8],
-      marginBottom: tokens.spacing[16],
-    },
-    shortcutChip: {
-      backgroundColor: colors.soft,
-      borderRadius: tokens.radius.small,
-      paddingHorizontal: tokens.spacing[8],
-      paddingVertical: tokens.spacing[4],
-    },
-    shortcutChipText: {
-      ...tokens.typography.labelSmall,
-      color: colors.action,
-      fontWeight: "500",
     },
 
     // 2. Hero editorial

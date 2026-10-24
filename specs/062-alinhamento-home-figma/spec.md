@@ -72,4 +72,7 @@ Conferência da tela `02.01 · Início` (`9:525`) pelo servidor MCP do Figma e n
 - Chips de modalidade quebram linha em vez de rolar na horizontal.
 - O título usa só `fontFamily.brand`, sem `fontWeight`: no Android a combinação fazia a serifa cair para a fonte do sistema.
 
-Pendente: o botão "Entrar"/"Anunciar"/"Sair" e as setas do carrossel não estão no Figma, mas continuam por terem função e testes próprios.
+- Com sessão, o topo fica igual ao Figma (bairro e sino). Saíram a saudação com e-mail, "Anunciar", "Sair" (sem confirmação) e a linha de atalhos, que estouravam a largura em celulares. Os destinos continuam acessíveis: Anunciar, Meus anúncios e Pedidos recebidos pela Estante; Meus pedidos por Conversas; Sair pelo Perfil, com confirmação; Favoritos e alertas por um novo item no Perfil.
+- Sem sessão, "Entrar" continua no topo, pois o Figma não mostra o estado deslogado.
+
+Pendente: as setas do carrossel não estão no Figma, mas continuam por serem navegação acessível com testes próprios.

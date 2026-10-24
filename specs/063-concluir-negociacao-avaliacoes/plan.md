@@ -16,7 +16,7 @@
 - **Camada 5 (ViewModel):**
   - Criar `src/viewmodel/useNegotiationRatingViewModel.ts` para orquestrar o estado de avaliação da negociação (loading, nota selecionada, envio e confirmação).
 - **Camada 6 (View / Apresentação):**
-  - Criar `src/view/requests/NegotiationRatingModal.tsx` com as 5 estrelas selecionáveis.
+  - Criar `src/view/requests/NegotiationRatingModal.tsx` com as 5 estrelas selecionáveis, suporte semântico a leitores de tela (`accessibilityRole="radio"`) e área de toque acessível (mínimo 48dp).
   - Integrar card de avaliação / status concluído em `src/view/requests/requestDetail.tsx`.
 - **Camada 7 (Testes e Verificação):**
   - Testes unitários para use cases e validadores.

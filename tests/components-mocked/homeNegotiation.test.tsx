@@ -55,17 +55,6 @@ describe("navegação para o detalhe do livro a partir da Home (spec 006, US6/T0
     expect(screen.queryByText("Solicitar negociação")).toBeNull();
   });
 
-  it("navega para pedidos recebidos e meus pedidos", async () => {
-    setup([], user);
-    const onNavigateToReceivedRequests = vi.fn();
-    const onNavigateToSentRequests = vi.fn();
-    const screen = await renderHome({ onNavigateToReceivedRequests, onNavigateToSentRequests });
-    await act(async () => { fireEvent.press(screen.getByText("Pedidos recebidos")); });
-    await act(async () => { fireEvent.press(screen.getByText("Meus pedidos")); });
-    expect(onNavigateToReceivedRequests).toHaveBeenCalledTimes(1);
-    expect(onNavigateToSentRequests).toHaveBeenCalledTimes(1);
-  });
-
   it("não mostra pedidos recebidos/meus pedidos sem sessão", async () => {
     setup([book({})], null);
     const screen = await renderHome();

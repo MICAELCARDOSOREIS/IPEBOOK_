@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
+import { AppIcon } from "@/view/components/AppIcon";
 
 export type SearchFieldProps = {
   value: string;
@@ -16,6 +17,7 @@ export function SearchField({ value, onChangeText, placeholder = "Buscar título
   const styles = useMemo(() => createStyles(colors), [colors]);
   return (
     <View style={styles.container}>
+      <AppIcon name="search" size={24} color={colors.secondaryText} />
       <TextInput
         value={value}
         onChangeText={onChangeText}
@@ -49,6 +51,7 @@ function createStyles(colors: ColorPalette) {
       backgroundColor: colors.soft,
       borderRadius: tokens.radius.full,
       paddingHorizontal: tokens.spacing[16],
+      gap: tokens.spacing[12],
     },
     input: { flex: 1, color: colors.text, fontSize: tokens.typography.bodyLarge.fontSize },
     clearButton: {

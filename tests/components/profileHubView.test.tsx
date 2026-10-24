@@ -61,6 +61,20 @@ describe("Meu perfil — hub de navegação (Figma 07.01)", () => {
     cleanup();
   });
 
+  it("leva a Favoritos e alertas (atalho que saiu da Home, Spec 062)", async () => {
+    mockAuth({ id: "ana", email: "ana@exemplo.com" });
+    mockProfile();
+    const onNavigateToFavorites = vi.fn();
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<ProfileHub {...baseProps({ onNavigateToFavorites })} />);
+    });
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Favoritos e alertas"));
+    });
+    expect(onNavigateToFavorites).toHaveBeenCalledTimes(1);
+  });
+
   it("oferece o alternador de aparência (movido da Home, Spec 062)", async () => {
     mockAuth({ id: "ana", email: "ana@exemplo.com" });
     mockProfile();
