@@ -255,3 +255,13 @@ export const bookMetadataService: IBookMetadataService =
     ? new OpenLibraryBookMetadataService()
     : new MemoryBookMetadataService();
 
+import type { IPushNotificationService } from "@/model/services/iPushNotificationService";
+import { MemoryPushNotificationService } from "@/infra/services/memoryPushNotificationService";
+import { ExpoPushNotificationService } from "@/infra/services/expoPushNotificationService";
+
+export const pushNotificationService: IPushNotificationService =
+  process.env.NODE_ENV !== "test"
+    ? new ExpoPushNotificationService(logger)
+    : new MemoryPushNotificationService();
+
+

@@ -42,5 +42,6 @@
 - [0040 — Compartilhamento do aplicativo e convite de amigos](0040-compartilhamento-convidar-amigos.md)
 - [0041 — Consulta de metadados de livro por ISBN](0041-consulta-metadados-isbn.md)
 - [0042 — Leitor de código de barras físico com câmera para ISBN](0042-leitor-codigo-barras-camera.md)
+- [0043 — Notificações push locais e lembretes de encontros](0043-notificacoes-push-e-lembretes.md)
 
 Preservar registros aceitos; mudanças relevantes geram novo ADR com vínculos de substituição.

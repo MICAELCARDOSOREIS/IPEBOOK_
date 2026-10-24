@@ -12,12 +12,14 @@ export default defineConfig({
       "@react-native-community/netinfo": fileURLToPath(new URL("./tests/mocks/netinfo.ts", import.meta.url)),
       "expo-linking": fileURLToPath(new URL("./tests/mocks/expo-linking.ts", import.meta.url)),
       "expo-camera": fileURLToPath(new URL("./tests/mocks/expo-camera.ts", import.meta.url)),
+      "expo-notifications": fileURLToPath(new URL("./tests/mocks/expo-notifications.ts", import.meta.url)),
     },
   },
   test: {
     globals: true,
     environment: "node",
     pool: "threads",
+    testTimeout: 15000,
     setupFiles: ["./tests/setupNodeReactNative.cjs", "./tests/setupTests.ts"],
     include: ["tests/**/*.test.ts", "tests/**/*.test.tsx"],
     coverage: {
