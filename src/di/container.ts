@@ -63,6 +63,7 @@ import type { IFavoriteUseCases } from "@/usecase/iFavoriteUseCases";
 import type { IShareUseCases } from "@/usecase/iShareUseCases";
 import type { ISearchAlertUseCases } from "@/usecase/iSearchAlertUseCases";
 import type { ISearchHistoryUseCases } from "@/usecase/iSearchHistoryUseCases";
+import { INITIAL_DEV_BOOKS } from "@/di/seedBooks";
 import { AsyncStorageOnboardingDataSource } from "@/infra/datasources/asyncStorageOnboardingDataSource";
 import { AsyncStorageThemePreferenceDataSource } from "@/infra/datasources/asyncStorageThemePreferenceDataSource";
 import { MemoryOnboardingDataSource } from "@/infra/datasources/memoryOnboardingDataSource";
@@ -124,7 +125,7 @@ function createDataSources(): {
     if (!redirectUrl) throw new DataSourceError("Configure o retorno da recuperação de senha.");
     const client = createSupabaseAppClient(
       process.env.EXPO_PUBLIC_SUPABASE_URL ?? "",
-      process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? "",
+      process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? process.env.EXPO_PUBLIC_SUPABASE_KEY ?? "",
     );
     return {
       auth: new SupabaseAuthDataSource(client, redirectUrl),
@@ -144,7 +145,8 @@ function createDataSources(): {
       messages: new SupabaseMessageDataSource(client),
     };
   }
-  const books = new MemoryBookDataSource();
+  const initialBooks = process.env.NODE_ENV === "test" ? [] : INITIAL_DEV_BOOKS;
+  const books = new MemoryBookDataSource(initialBooks);
   const notifications = new MemoryNotificationDataSource();
   const requests = new MemoryBookRequestDataSource();
   const favorites = new MemoryFavoriteDataSource();
