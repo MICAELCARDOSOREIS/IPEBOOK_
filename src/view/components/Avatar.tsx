@@ -6,7 +6,7 @@ import { useTheme } from "@/view/theme/ThemeProvider";
 export type AvatarProps = {
   name: string;
   photoUrl?: string;
-  size?: 40 | 64;
+  size?: number;
 };
 
 function initials(name: string): string {
@@ -28,9 +28,10 @@ export function Avatar({ name, photoUrl, size = 40 }: AvatarProps) {
       />
     );
   }
+  const fontSize = size >= 64 ? Math.round(size * 0.34) : tokens.typography.labelMedium.fontSize;
   return (
     <View accessibilityLabel={name} style={[styles.fallback, dimension]}>
-      <Text style={styles.initials}>{initials(name)}</Text>
+      <Text style={[styles.initials, { fontSize }]}>{initials(name)}</Text>
     </View>
   );
 }

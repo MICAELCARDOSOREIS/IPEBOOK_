@@ -4,8 +4,10 @@ import ProfileHub from "@/view/profile/profileHub";
 export default function Perfil() {
   return (
     <ProfileHub
-      onNavigateToSignIn={() => router.replace("/entrar")}
+      requireAuth={false}
+      onNavigateToSignIn={() => router.push("/entrar")}
       onNavigateToEditProfile={() => router.push("/perfil/editar")}
+      onNavigateToMyListings={() => router.push("/meus-anuncios")}
       onNavigateToRatings={() => router.push("/perfil/avaliacoes")}
       onNavigateToFavorites={() => router.push("/favoritos")}
       onNavigateToNotifications={() => router.push("/notificacoes")}
