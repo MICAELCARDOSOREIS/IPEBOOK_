@@ -62,7 +62,7 @@ export function MyListings({
     (item) => item.request.status === "pending" || item.request.status === "accepted",
   );
   const concludedProposals = received.items.filter(
-    (item) => item.request.status === "completed",
+    (item) => item.request.status === "rejected" || (item.request.status as string) === "completed",
   );
 
   const showFab = state.books.length > 0 && onNavigateToCreateListing;
@@ -310,10 +310,10 @@ function createStyles(colors: ColorPalette) {
       position: "relative",
     },
     tabText: {
-      ...tokens.typography.labelLarge,
+      ...tokens.typography.labelMedium,
     },
     activeTabText: {
-      color: colors.primary,
+      color: colors.m3.primary,
       fontWeight: "600",
     },
     inactiveTabText: {
@@ -326,7 +326,7 @@ function createStyles(colors: ColorPalette) {
       left: tokens.spacing[12],
       right: tokens.spacing[12],
       height: 3,
-      backgroundColor: colors.primary,
+      backgroundColor: colors.m3.primary,
       borderTopLeftRadius: 3,
       borderTopRightRadius: 3,
     },
@@ -352,10 +352,10 @@ function createStyles(colors: ColorPalette) {
       paddingHorizontal: tokens.spacing[16],
       borderRadius: tokens.radius.medium,
       backgroundColor: colors.m3.secondaryContainer,
-      ...tokens.elevation.level3,
+      elevation: 3,
     },
     fabText: {
-      ...tokens.typography.labelLarge,
+      ...tokens.typography.labelMedium,
       color: colors.m3.onSecondaryContainer,
       fontWeight: "600",
     },
@@ -364,7 +364,7 @@ function createStyles(colors: ColorPalette) {
       gap: tokens.spacing[12],
     },
     concludedEmpty: {
-      paddingTop: tokens.spacing[40],
+      paddingTop: tokens.spacing[32] + tokens.spacing[8],
       alignItems: "center",
       gap: tokens.spacing[8],
       paddingHorizontal: tokens.spacing[16],

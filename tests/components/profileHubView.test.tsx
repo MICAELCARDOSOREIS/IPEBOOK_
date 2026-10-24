@@ -182,4 +182,28 @@ describe("Meu perfil — hub de navegação (Figma 07.01)", () => {
     });
     expect(onNavigateToInviteFriends).toHaveBeenCalledTimes(1);
   });
+
+  it("renderiza cabeçalho editorial, tríade de métricas e seções Atividade e Conta (Spec 065, Figma 07.01)", async () => {
+    mockAuth({ id: "ana", email: "ana@exemplo.com" });
+    mockProfile();
+
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<ProfileHub {...baseProps()} />);
+    });
+
+    // 1. Título editorial da marca
+    expect(screen.getByRole("header").props.children).toBe("Meu perfil");
+
+    // 2. Tríade de métricas
+    expect(screen.getByText("publicações")).toBeDefined();
+    expect(screen.getByText("trocas")).toBeDefined();
+    expect(screen.getByText("avaliação")).toBeDefined();
+    expect(screen.getByText("3")).toBeDefined(); // completedNegotiations: 3
+    expect(screen.getByText("4.5")).toBeDefined(); // averageRating: 4.5
+
+    // 3. Seções agrupadas
+    expect(screen.getByText("Atividade")).toBeDefined();
+    expect(screen.getByText("Conta")).toBeDefined();
+  });
 });

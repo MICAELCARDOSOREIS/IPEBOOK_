@@ -360,7 +360,7 @@ describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
     mockViewModel({ books: [book] });
     mockReceived([
       {
-        request: { id: "req-c1", listingId: "b-conc", requesterId: "u-lucas", status: "completed" },
+        request: { id: "req-c1", listingId: "b-conc", requesterId: "u-lucas", status: "rejected" },
         listing: book,
         requesterName: "Lucas Mendes",
       },
