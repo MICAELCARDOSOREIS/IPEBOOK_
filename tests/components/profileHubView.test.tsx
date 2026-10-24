@@ -61,6 +61,17 @@ describe("Meu perfil — hub de navegação (Figma 07.01)", () => {
     cleanup();
   });
 
+  it("oferece o alternador de aparência (movido da Home, Spec 062)", async () => {
+    mockAuth({ id: "ana", email: "ana@exemplo.com" });
+    mockProfile();
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<ProfileHub {...baseProps()} />);
+    });
+    expect(screen.getByTestId("theme-toggle-radiogroup")).toBeDefined();
+    expect(screen.getByLabelText("Tema Sistema")).toBeDefined();
+  });
+
   it("mostra nome, estatísticas e aciona a navegação de cada item do menu", async () => {
     mockAuth({ id: "ana", email: "ana@exemplo.com" });
     mockProfile();

@@ -8,23 +8,27 @@ describe("NavigationBar (design-system/04-componentes/barra-de-navegacao.md, ADR
     cleanup();
   });
 
-  it("mostra exatamente os 3 destinos do ADR 0011", async () => {
+  it("mostra os cinco destinos principais da aplicação", async () => {
     const { getByLabelText } = await render(<NavigationBar active="home" onNavigate={() => {}} />);
     expect(getByLabelText("Início")).toBeDefined();
-    expect(getByLabelText("Pesquisa")).toBeDefined();
+    expect(getByLabelText("Explorar")).toBeDefined();
+    expect(getByLabelText("Estante")).toBeDefined();
+    expect(getByLabelText("Conversas")).toBeDefined();
     expect(getByLabelText("Perfil")).toBeDefined();
   });
 
   it("agrupa as abas em um contêiner com papel tablist", async () => {
     const { getByTestId, getAllByRole } = await render(<NavigationBar active="home" onNavigate={() => {}} />);
     expect(getByTestId("navigation-bar-tablist").props.accessibilityRole).toBe("tablist");
-    expect(getAllByRole("tab")).toHaveLength(3);
+    expect(getAllByRole("tab")).toHaveLength(5);
   });
 
   it("anuncia o destino atual como selecionado e os demais como não selecionados", async () => {
     const { getByLabelText } = await render(<NavigationBar active="search" onNavigate={() => {}} />);
-    expect(getByLabelText("Pesquisa").props.accessibilityState).toEqual({ selected: true });
+    expect(getByLabelText("Explorar").props.accessibilityState).toEqual({ selected: true });
     expect(getByLabelText("Início").props.accessibilityState).toEqual({ selected: false });
+    expect(getByLabelText("Estante").props.accessibilityState).toEqual({ selected: false });
+    expect(getByLabelText("Conversas").props.accessibilityState).toEqual({ selected: false });
     expect(getByLabelText("Perfil").props.accessibilityState).toEqual({ selected: false });
   });
 

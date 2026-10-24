@@ -67,7 +67,7 @@ export function carregarConfiguracaoAmbiente(envCustom = null, cwd = process.cwd
 
   const env = envCustom || { ...fileEnv, ...process.env };
   const supabaseUrl = env.EXPO_PUBLIC_SUPABASE_URL || '';
-  const supabaseKey = env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY || '';
+  const supabaseKey = env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY || env.EXPO_PUBLIC_SUPABASE_KEY || '';
 
   if (!supabaseUrl || !supabaseKey) {
     return {

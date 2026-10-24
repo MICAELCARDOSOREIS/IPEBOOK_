@@ -15,6 +15,8 @@ import { Tag } from "@/view/components/Tag";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { AppIcon } from "@/view/components/AppIcon";
 import { NegotiationChatModal } from "@/view/requests/NegotiationChatModal";
+import { NegotiationRatingModal } from "@/view/requests/NegotiationRatingModal";
+import { useNegotiationRatingViewModel } from "@/viewmodel/useNegotiationRatingViewModel";
 
 export type RequestDetailProps = {
   requestId: string;
@@ -44,6 +46,14 @@ export function RequestDetail({
   const detail = state.detail;
   const [mapErrors, setMapErrors] = useState<Record<string, string>>({});
   const [chatModalVisible, setChatModalVisible] = useState(false);
+  const [ratingModalVisible, setRatingModalVisible] = useState(false);
+
+  const counterpartId = detail?.counterpartId ?? "";
+  const [ratingState, ratingActions] = useNegotiationRatingViewModel(
+    requestId,
+    sessionUserId,
+    counterpartId,
+  );
 
   async function handleOpenMap(point: { name: string; address: string }) {
     setMapErrors((previous) => {
@@ -159,6 +169,51 @@ export function RequestDetail({
                 onScheduleMeeting={onScheduleMeeting}
               />
 
+              {/* Card de Conclusão e Avaliação (Spec 063 / Figma 06.07, 06.08, 06.21) */}
+              <View style={styles.card} testID="negotiation-completion-card">
+                <View style={styles.cardHeaderRow}>
+                  <IconBadge icon="check" tone="action" />
+                  <Text accessibilityRole="header" style={styles.sectionHeader}>
+                    {ratingState.userRating ? "Negociação concluída" : "Concluir negociação"}
+                  </Text>
+                </View>
+                {ratingState.userRating ? (
+                  <View style={styles.completedRatingContainer}>
+                    <Text style={styles.bodyText}>
+                      Você avaliou esta negociação com {ratingState.userRating.score} estrelas.
+                    </Text>
+                    <View style={styles.ratingStarsRow}>
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <Text
+                          key={star}
+                          style={[
+                            styles.starStatic,
+                            star <= ratingState.userRating!.score ? styles.starFilled : styles.starEmpty,
+                          ]}
+                        >
+                          ★
+                        </Text>
+                      ))}
+                    </View>
+                  </View>
+                ) : (
+                  <View style={styles.pendingRatingContainer}>
+                    <Text style={styles.bodyText}>
+                      Vocês já se encontraram e a entrega do livro foi realizada?
+                    </Text>
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel="Concluir negociação e avaliar"
+                      onPress={() => setRatingModalVisible(true)}
+                      style={styles.completeButton}
+                    >
+                      <AppIcon name="check" size={18} color={colors.surface} />
+                      <Text style={styles.completeButtonText}>Concluir e avaliar</Text>
+                    </Pressable>
+                  </View>
+                )}
+              </View>
+
               <View style={styles.card}>
                 <View style={styles.cardHeaderRow}>
                   <IconBadge icon="place" tone="action" />
@@ -208,6 +263,26 @@ export function RequestDetail({
           sessionUserId={sessionUserId}
           counterpartName={detail.counterpartName ?? COMMUNITY_MEMBER}
           onClose={() => setChatModalVisible(false)}
+        />
+      ) : null}
+
+      {detail ? (
+        <NegotiationRatingModal
+          visible={ratingModalVisible}
+          counterpartName={detail.counterpartName ?? COMMUNITY_MEMBER}
+          selectedScore={ratingState.selectedScore}
+          onSelectScore={ratingActions.setSelectedScore}
+          onSubmit={async () => {
+            const ok = await ratingActions.submitRating();
+            return ok;
+          }}
+          onClose={() => {
+            setRatingModalVisible(false);
+            ratingActions.resetFeedback();
+          }}
+          isSubmitting={ratingState.isSubmitting}
+          submitError={ratingState.submitError}
+          isSuccess={ratingState.isSuccess}
         />
       ) : null}
     </SafeAreaView>
@@ -441,6 +516,43 @@ function createStyles(colors: ColorPalette) {
     color: colors.secondaryText,
     fontStyle: "italic",
     marginTop: tokens.spacing[4],
+  },
+  completedRatingContainer: {
+    gap: tokens.spacing[8],
+  },
+  pendingRatingContainer: {
+    gap: tokens.spacing[12],
+  },
+  ratingStarsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: tokens.spacing[4],
+  },
+  starStatic: {
+    fontSize: 22,
+  },
+  starFilled: {
+    color: colors.highlight,
+  },
+  starEmpty: {
+    color: colors.border,
+  },
+  completeButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: tokens.spacing[8],
+    backgroundColor: colors.action,
+    borderRadius: tokens.radius.full,
+    paddingVertical: tokens.spacing[12],
+    paddingHorizontal: tokens.spacing[20],
+    minHeight: tokens.accessibility.touchTarget,
+    alignSelf: "flex-start",
+  },
+  completeButtonText: {
+    ...tokens.typography.labelMedium,
+    fontWeight: "700",
+    color: colors.surface,
   },
   });
 }
