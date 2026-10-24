@@ -98,9 +98,9 @@ describe("testes de componente com mock: Home (ISO/IEC 25010 - Usabilidade e Con
     });
 
     expect(screen.getAllByText("O Alquimista").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText("Paulo Coelho")).toBeDefined();
+    expect(screen.getAllByText("Paulo Coelho").length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText("Dom Casmurro").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText("Machado de Assis")).toBeDefined();
+    expect(screen.getAllByText("Machado de Assis").length).toBeGreaterThanOrEqual(1);
     expect(screen.queryByText("Carregando livros…")).toBeNull();
     expect(screen.queryByText("Ainda não há livros por aqui.")).toBeNull();
   });
