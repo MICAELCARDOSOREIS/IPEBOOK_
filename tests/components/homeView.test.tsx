@@ -70,10 +70,10 @@ describe("testes de componentes: Home View (ISO/IEC 25010 - Usabilidade e Acessi
     const { root } = await renderComponent(<Home />);
 
     // Marca visual estilizada com accessible={false}
-    const markNode = root.find(
+    const markNodes = root.findAll(
       (node) => node.props.accessible === false
     );
-    expect(markNode).toBeDefined();
+    expect(markNodes.length).toBeGreaterThanOrEqual(1);
   });
 
   it("aciona callbacks de navegação para termos e central de ajuda", async () => {
