@@ -59,6 +59,19 @@ export default function SignUp({
           <Text accessibilityRole="header" style={styles.title}>Crie sua conta</Text>
           <Text style={styles.subtitle}>Anuncie, troque, venda ou doe livros perto de você.</Text>
 
+          <OutlinedButton
+            label="Continuar com Google"
+            accessibilityLabel="Continuar com Google"
+            disabled
+            onPress={() => undefined}
+          />
+
+          <View accessibilityRole="none" style={styles.divider}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>ou crie com e-mail</Text>
+            <View style={styles.dividerLine} />
+          </View>
+
           <TextField
             label="Nome completo"
             value={name}
@@ -145,7 +158,24 @@ function createStyles(colors: ColorPalette) {
     width: "100%",
     maxWidth: 560,
     alignSelf: "center",
-    gap: tokens.spacing[16],
+    gap: tokens.spacing[12],
+  },
+  divider: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: tokens.spacing[12],
+    marginVertical: tokens.spacing[4],
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: colors.border,
+  },
+  dividerText: {
+    color: colors.secondaryText,
+    fontSize: tokens.typography.bodyLarge.fontSize,
+    fontFamily: tokens.typography.bodyLarge.fontFamily,
+    fontWeight: "600",
   },
   title: {
     fontSize: tokens.typography.displayLarge.fontSize,

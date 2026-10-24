@@ -176,6 +176,7 @@ describe("Search (spec 006, US3/T019, Spec 028, Issue #93)", () => {
   it("pede confirmação antes de limpar o histórico de buscas", async () => {
     const { clearHistory } = setup([book({})], "", { history: ["Iracema"] });
     const screen = await renderSearch();
+    await act(async () => { fireEvent.press(screen.getByLabelText("Mostrar filtros avançados")); });
     await act(async () => { fireEvent.press(screen.getByLabelText("Limpar histórico de buscas")); });
     expect(screen.getByText("Limpar histórico de buscas?")).toBeDefined();
     await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Limpar histórico" })); });
@@ -185,6 +186,7 @@ describe("Search (spec 006, US3/T019, Spec 028, Issue #93)", () => {
   it("permite filtrar livros por modalidade acionando os Chips (Issue #93)", async () => {
     const { setModality } = setup([book({})], "", { modality: "all" });
     const screen = await renderSearch();
+    await act(async () => { fireEvent.press(screen.getByLabelText("Mostrar filtros avançados")); });
     expect(screen.getByText("Modalidade:")).toBeDefined();
 
     await act(async () => {
@@ -204,6 +206,9 @@ describe("Search (spec 006, US3/T019, Spec 028, Issue #93)", () => {
     });
     const screen = await renderSearch();
 
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Mostrar filtros avançados"));
+    });
     expect(screen.getByText("Categoria:")).toBeDefined();
     await act(async () => {
       fireEvent.press(screen.getByLabelText("Filtrar por categoria Literatura Brasileira"));

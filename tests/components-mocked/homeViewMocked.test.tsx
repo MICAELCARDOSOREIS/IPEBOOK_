@@ -151,7 +151,7 @@ describe("testes de componente com mock: Home (ISO/IEC 25010 - Usabilidade e Con
       expect(onNavigateToSearch.mock.calls[0]).toEqual([]);
     });
 
-    it("mostra 'Doações disponíveis' apenas com doações disponíveis e aciona 'Ver mais' com o filtro", async () => {
+    it("resume no destaque 'Doações da semana' só as doações disponíveis e abre a Pesquisa filtrada", async () => {
       setupBooks();
       const onNavigateToSearch = vi.fn();
       let screen!: Awaited<ReturnType<typeof render>>;
@@ -159,20 +159,15 @@ describe("testes de componente com mock: Home (ISO/IEC 25010 - Usabilidade e Con
         screen = await render(<Home onNavigateToSearch={onNavigateToSearch} />);
       });
 
-      expect(screen.getByRole("header", { name: "Doações disponíveis na comunidade" })).toBeDefined();
-      const donationCarousel = within(
-        screen.getByTestId("carousel-Doações disponíveis na comunidade"),
-      );
-      expect(donationCarousel.getByLabelText("Ver detalhe de A Hora da Estrela, Clarice Lispector")).toBeDefined();
-      expect(
-        donationCarousel.queryByLabelText("Ver detalhe de Vidas Secas, Graciliano Ramos"),
-      ).toBeNull();
+      const expectedCount = books.filter((b) => b.modality === "donation" && b.status === "available").length;
+      const summary = `${expectedCount} ${expectedCount === 1 ? "livro gratuito" : "livros gratuitos"} em Piripiri`;
+      expect(screen.getByText(summary)).toBeDefined();
 
-      fireEvent.press(screen.getByLabelText("Ver mais doações disponíveis em Piripiri"));
+      fireEvent.press(screen.getByLabelText(`Doações da semana: ${summary}`));
       expect(onNavigateToSearch).toHaveBeenCalledWith({ modality: "donation" });
     });
 
-    it("não mostra a seção de doações quando não há nenhuma disponível", async () => {
+    it("não inventa quantidade de doações quando não há nenhuma disponível", async () => {
       mockedUseHomeViewModel.mockReturnValue([
         { books: [books[0]], loading: false, error: null },
         { reload: vi.fn() },
@@ -181,7 +176,8 @@ describe("testes de componente com mock: Home (ISO/IEC 25010 - Usabilidade e Con
       await act(async () => {
         screen = await render(<Home />);
       });
-      expect(screen.queryByText("Doações disponíveis na comunidade")).toBeNull();
+      expect(screen.getByText("Veja as doações em Piripiri")).toBeDefined();
+      expect(screen.queryByText(/livros? gratuitos? em Piripiri/)).toBeNull();
     });
 
     it("navega entre os itens do carrossel pelos botões Anterior/Próximo", async () => {

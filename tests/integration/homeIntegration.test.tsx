@@ -40,8 +40,8 @@ describe("testes de integração: View + ViewModel + UseCase + Datasource (ISO/I
     });
 
     // 4. Verifica a integração real exibindo a interface do aplicativo
-    expect(screen.getByText("Ipebook")).toBeDefined();
-    expect(screen.getByText("Livros")).toBeDefined();
+    expect(screen.getByText("Encontre sua próxima história.")).toBeDefined();
+    expect(screen.getByText("Perto de você")).toBeDefined();
   });
 
   it("preserva integridade entre casos de uso e datasource com catálogo inicialmente vazio", async () => {

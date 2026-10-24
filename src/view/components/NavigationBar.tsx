@@ -4,7 +4,7 @@ import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
 
-export type NavigationDestination = "home" | "search" | "profile";
+export type NavigationDestination = "home" | "search" | "shelf" | "conversations" | "profile";
 
 export type NavigationBarProps = {
   active: NavigationDestination;
@@ -14,7 +14,9 @@ export type NavigationBarProps = {
 
 const ITEMS: ReadonlyArray<{ key: NavigationDestination; label: string; icon: AppIconName }> = [
   { key: "home", label: "Início", icon: "home" },
-  { key: "search", label: "Pesquisa", icon: "search" },
+  { key: "search", label: "Explorar", icon: "search" },
+  { key: "shelf", label: "Estante", icon: "shelf" },
+  { key: "conversations", label: "Conversas", icon: "chat" },
   { key: "profile", label: "Perfil", icon: "person" },
 ];
 
@@ -66,11 +68,12 @@ function createStyles(colors: ColorPalette) {
     },
     item: {
       minHeight: tokens.accessibility.touchTarget,
-      minWidth: tokens.accessibility.touchTarget,
+      flex: 1,
+      minWidth: 0,
       justifyContent: "center",
       alignItems: "center",
       gap: tokens.spacing[4],
-      paddingHorizontal: tokens.spacing[16],
+      paddingHorizontal: tokens.spacing[4],
       paddingVertical: tokens.spacing[4],
       borderRadius: tokens.radius.full,
     },

@@ -14,6 +14,7 @@ import { Chip } from "@/view/components/Chip";
 import { LoadingState } from "@/view/components/LoadingState";
 import { OfflineState } from "@/view/components/OfflineState";
 import { Tag } from "@/view/components/Tag";
+import { AppIcon } from "@/view/components/AppIcon";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
 
@@ -39,6 +40,8 @@ const MODALITY_FILTERS: Array<{ id: SearchModalityFilter; label: string }> = [
   { id: "donation", label: "Doação" },
 ];
 
+const QUICK_CATEGORY_FILTERS = ["Ficção", "Não ficção", "Infantil"] as const;
+
 const PRICE_FILTERS: Array<{ id: SearchPriceRange; label: string }> = [
   { id: "all", label: "Todos os preços" },
   { id: "free", label: "Grátis" },
@@ -61,6 +64,7 @@ export default function Search({ onNavigateToBookDetail, onNavigateToAlerts, ini
   const [state, actions] = useSearchViewModel(auth.user?.id ?? null);
   const { isOnline } = useNetworkStatus();
   const [confirmingClear, setConfirmingClear] = useState(false);
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const appliedInitialModality = useRef(false);
 
   useEffect(() => {
@@ -76,7 +80,7 @@ export default function Search({ onNavigateToBookDetail, onNavigateToAlerts, ini
   const listHeader = (
     <View style={styles.filters}>
       <View style={styles.headerRow}>
-        <Text accessibilityRole="header" style={styles.heading}>Pesquisa</Text>
+        <Text accessibilityRole="header" style={styles.heading}>O que vamos ler hoje?</Text>
         {state.hasActiveFilters ? (
           <Pressable
             accessibilityRole="button"
@@ -87,7 +91,16 @@ export default function Search({ onNavigateToBookDetail, onNavigateToAlerts, ini
             <Text style={styles.clearFiltersText}>Limpar filtros</Text>
           </Pressable>
         ) : null}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={showAdvancedFilters ? "Ocultar filtros avançados" : "Mostrar filtros avançados"}
+          onPress={() => setShowAdvancedFilters((visible) => !visible)}
+          style={styles.tuneButton}
+        >
+          <AppIcon name="tune" size={20} color={colors.secondaryText} />
+        </Pressable>
       </View>
+      <Text style={styles.subtitle}>Livros novos e seminovos para trocar, comprar ou receber aqui perto.</Text>
 
       <SearchField
         value={state.term}
@@ -95,6 +108,25 @@ export default function Search({ onNavigateToBookDetail, onNavigateToAlerts, ini
         onSubmitEditing={() => void actions.registerSearch(state.term)}
       />
 
+      <View style={styles.quickCategories}>
+        <Chip
+          label="Todos"
+          accessibilityLabel="Filtrar por todas as categorias"
+          selected={state.category === "all"}
+          onPress={() => actions.setCategory("all")}
+        />
+        {QUICK_CATEGORY_FILTERS.map((category) => (
+          <Chip
+            key={category}
+            label={category}
+            accessibilityLabel={`Filtrar por categoria ${category}`}
+            selected={state.category === category}
+            onPress={() => actions.setCategory(category)}
+          />
+        ))}
+      </View>
+
+      {showAdvancedFilters ? <View style={styles.advancedFilters}>
       {/* Filtro por Modalidade */}
       <View style={styles.filterSection}>
         <Text style={styles.filterLabel}>Modalidade:</Text>
@@ -166,6 +198,8 @@ export default function Search({ onNavigateToBookDetail, onNavigateToAlerts, ini
           ))}
         </View>
       </View>
+
+      </View> : null}
 
       {!state.term.trim() && state.history.length > 0 ? (
         <View style={styles.historySection}>
@@ -280,11 +314,20 @@ function createStyles(colors: ColorPalette) {
     paddingBottom: tokens.spacing[24],
   },
   filters: { gap: tokens.spacing[16] },
-  headerRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  heading: { fontSize: tokens.typography.titleLarge.fontSize, fontWeight: tokens.typography.titleLarge.fontWeight, color: colors.action },
+  headerRow: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[8] },
+  tuneButton: { minHeight: tokens.accessibility.touchTarget, minWidth: tokens.accessibility.touchTarget, justifyContent: "center", alignItems: "center" },
+  heading: {
+    fontSize: 24,
+    lineHeight: 30,
+    fontWeight: "700",
+    color: colors.text,
+  },
   clearFiltersButton: { minHeight: tokens.accessibility.touchTarget, justifyContent: "center", paddingHorizontal: tokens.spacing[8] },
   clearFiltersText: { color: colors.error, fontSize: tokens.typography.bodyMedium.fontSize, fontWeight: "600" },
   filterSection: { gap: tokens.spacing[6] },
+  quickCategories: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[8] },
+  advancedFilters: { gap: tokens.spacing[16] },
+  subtitle: { fontSize: tokens.typography.bodyMedium.fontSize, lineHeight: 18, color: colors.secondaryText },
   filterLabel: { fontSize: tokens.typography.labelSmall.fontSize, fontWeight: "600", color: colors.secondaryText },
   filtersRow: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[8] },
   body: { fontSize: tokens.typography.bodyLarge.fontSize, lineHeight: 25, color: colors.secondaryText },

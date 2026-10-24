@@ -10,12 +10,16 @@ import { ThemeProvider } from "@/view/theme/ThemeProvider";
 const ROOT_DESTINATIONS: Record<string, NavigationDestination> = {
   "/": "home",
   "/pesquisa": "search",
+  "/meus-anuncios": "shelf",
+  "/meus-pedidos": "conversations",
   "/perfil": "profile",
 };
 
 const DESTINATION_ROUTES: Record<NavigationDestination, Href> = {
   home: "/",
   search: "/pesquisa",
+  shelf: "/meus-anuncios",
+  conversations: "/meus-pedidos",
   profile: "/perfil" as Href,
 };
 

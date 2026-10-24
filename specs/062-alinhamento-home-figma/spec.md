@@ -59,3 +59,17 @@ Todos os leitores e membros da comunidade de Piripiri que abrem o IpêBook para 
 4. O carrossel "Perto de você" e o card "Doações da semana" são renderizados.
 5. Acessibilidade preservada para leitores de tela (`accessibilityRole="header"`, `accessibilityRole="button"`, labels semânticos).
 6. 100% dos testes da suíte passam (`npm test`, `check:architecture`, `check:numbering`).
+
+## 7. Ajustes após conferência com o Figma via MCP (23/10/2026)
+
+Conferência da tela `02.01 · Início` (`9:525`) pelo servidor MCP do Figma e no aparelho:
+
+- A Home termina no destaque "Doações da semana", como no Figma. Saíram a lista vertical "Livros", o carrossel extra "Doações disponíveis na comunidade", o selo "Ipebook", o subtítulo institucional e o rodapé.
+- O alternador de aparência (Spec 054) foi para o Perfil (`ThemePreferenceSelector`). Os links de Termos e Ajuda já existiam no Perfil.
+- Carregamento, erro, sem conexão e catálogo vazio (RN-04) aparecem na seção "Perto de você".
+- O destaque de doações mostra a contagem real de doações disponíveis; sem nenhuma, mostra "Veja as doações em Piripiri" em vez de um número fixo.
+- O cartão do carrossel mantém o aviso "Reservado" (Spec 006).
+- Chips de modalidade quebram linha em vez de rolar na horizontal.
+- O título usa só `fontFamily.brand`, sem `fontWeight`: no Android a combinação fazia a serifa cair para a fonte do sistema.
+
+Pendente: o botão "Entrar"/"Anunciar"/"Sair" e as setas do carrossel não estão no Figma, mas continuam por terem função e testes próprios.

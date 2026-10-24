@@ -11,7 +11,7 @@ export type SearchFieldProps = {
 };
 
 /** Campo de busca do design system (campo-de-busca.md): pílula com botão Limpar. */
-export function SearchField({ value, onChangeText, placeholder = "Busque por título ou autor", onSubmitEditing }: SearchFieldProps) {
+export function SearchField({ value, onChangeText, placeholder = "Buscar título, autor ou categoria", onSubmitEditing }: SearchFieldProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   return (

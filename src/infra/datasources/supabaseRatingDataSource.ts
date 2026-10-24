@@ -44,4 +44,15 @@ export class SupabaseRatingDataSource implements IRatingDataSource {
     if (error) throw new DataSourceError("Não foi possível carregar as avaliações.");
     return (data as RatingRow[]).map(mapRating);
   }
+
+  async findByRequestAndRater(requestId: string, raterId: string): Promise<Rating | null> {
+    const { data, error } = await this.client
+      .from("v2_ratings")
+      .select(columns)
+      .eq("request_id", requestId)
+      .eq("rater_id", raterId)
+      .maybeSingle();
+    if (error) throw new DataSourceError("Não foi possível carregar a avaliação da negociação.");
+    return data ? mapRating(data as RatingRow) : null;
+  }
 }

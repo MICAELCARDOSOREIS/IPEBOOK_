@@ -7,6 +7,7 @@ import { useProfileViewModel } from "@/viewmodel/useProfileViewModel";
 import { Avatar } from "@/view/components/Avatar";
 import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
 import { Dialog } from "@/view/components/Dialog";
+import { ThemePreferenceSelector } from "@/view/components/ThemePreferenceSelector";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 
@@ -192,6 +193,8 @@ export default function ProfileHub({
               </View>
             </Pressable>
           </View>
+
+          <ThemePreferenceSelector />
         </View>
       </ScrollView>
 

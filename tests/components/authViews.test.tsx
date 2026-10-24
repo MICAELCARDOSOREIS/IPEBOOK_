@@ -149,6 +149,8 @@ describe("tela de criar conta (ISO/IEC 25010 - Usabilidade e Acessibilidade)", (
     expect(screen.getByLabelText("E-mail")).toBeDefined();
     expect(screen.getByLabelText("Senha")).toBeDefined();
     expect(screen.getByRole("checkbox", { name: "Aceito os termos de uso" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Continuar com Google" })).toBeDefined();
+    expect(screen.getByText("ou crie com e-mail")).toBeDefined();
   });
 
   it("exibe mensagem de e-mail já cadastrado", async () => {

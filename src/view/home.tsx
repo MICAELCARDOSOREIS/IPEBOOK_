@@ -9,17 +9,9 @@ import { useTheme } from "@/view/theme/ThemeProvider";
 import { AppIcon } from "@/view/components/AppIcon";
 import { BookCover } from "@/view/components/BookCover";
 import { ErrorState } from "@/view/components/ErrorState";
-import { FavoriteButton } from "@/view/components/FavoriteButton";
 import { LoadingState } from "@/view/components/LoadingState";
 import { OfflineState } from "@/view/components/OfflineState";
 import type { Book, BookModality } from "@/model/entities/book";
-import type { ThemePreference } from "@/model/entities/themePreference";
-
-const THEME_OPTIONS: { value: ThemePreference; label: string }[] = [
-  { value: "system", label: "Sistema" },
-  { value: "light", label: "Claro" },
-  { value: "dark", label: "Escuro" },
-];
 
 function createModalityTag(colors: ColorPalette): Record<BookModality, { background: string; text: string; label: string }> {
   return {
@@ -29,7 +21,7 @@ function createModalityTag(colors: ColorPalette): Record<BookModality, { backgro
   };
 }
 
-const CAROUSEL_ITEM_WIDTH = 152;
+const CAROUSEL_ITEM_WIDTH = 168;
 const CAROUSEL_ITEM_GAP = tokens.spacing[12];
 const CAROUSEL_ITEM_STRIDE = CAROUSEL_ITEM_WIDTH + CAROUSEL_ITEM_GAP;
 const CAROUSEL_MAX_ITEMS = 8;
@@ -123,13 +115,16 @@ function CatalogCarousel({
                 onPress={() => onNavigateToBookDetail?.(item.id)}
                 style={styles.carouselCard}
               >
-                <BookCover id={item.id} title={item.title} photoUrl={item.photoUrl} variant="carousel" />
+                <View style={styles.carouselCardCoverArea}>
+                  <BookCover id={item.id} title={item.title} photoUrl={item.photoUrl} variant="card" />
+                </View>
                 <View style={styles.carouselCardMeta}>
-                  <Text numberOfLines={1} style={[styles.carouselCardModality, { color: tag.text }]}>
+                  <Text numberOfLines={1} style={styles.carouselCardModality}>
                     {tag.label}{priceSuffix}
                   </Text>
                   <Text numberOfLines={2} style={styles.carouselCardTitle}>{item.title}</Text>
                   <Text numberOfLines={1} style={styles.carouselCardAuthor}>{item.author}</Text>
+                  {item.status === "reserved" ? <Text style={styles.carouselCardReserved}>Reservado</Text> : null}
                 </View>
               </Pressable>
             );
@@ -159,11 +154,11 @@ export type HomeProps = {
   onNavigateToReceivedRequests?: () => void;
   onNavigateToSentRequests?: () => void;
   onNavigateToBookDetail?: (bookId: string) => void;
-  onNavigateToTerms?: () => void;
-  onNavigateToHelp?: () => void;
   onNavigateToNotifications?: () => void;
   onNavigateToFavorites?: () => void;
   onNavigateToAlerts?: () => void;
+  onNavigateToTerms?: () => void;
+  onNavigateToHelp?: () => void;
   /** "Ver mais" das seções destacadas; `modality` pré-aplica o filtro na Pesquisa. */
   onNavigateToSearch?: (filter?: { modality?: BookModality }) => void;
   /** Mudar este valor força o catálogo a recarregar (ex.: ao voltar de cadastrar um anúncio). */
@@ -179,18 +174,18 @@ export default function Home({
   onNavigateToReceivedRequests,
   onNavigateToSentRequests,
   onNavigateToBookDetail,
-  onNavigateToTerms,
-  onNavigateToHelp,
   onNavigateToNotifications,
   onNavigateToFavorites,
   onNavigateToAlerts,
+  onNavigateToTerms,
+  onNavigateToHelp,
   onNavigateToSearch,
   focusKey,
 }: HomeProps = {}) {
   const [state, actions] = useHomeViewModel();
   const [authState, authActions] = useAuthViewModel();
   const { isOnline } = useNetworkStatus();
-  const { colors, preference, setPreference } = useTheme();
+  const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const modalityTag = useMemo(() => createModalityTag(colors), [colors]);
   const [selectedModality, setSelectedModality] = useState<BookModality | "all">("all");
@@ -210,9 +205,13 @@ export default function Home({
   }, [state.books, selectedModality]);
 
   const recentBooks = filteredBooks.slice(0, CAROUSEL_MAX_ITEMS);
-  const donationBooks = state.books
-    .filter((book) => book.modality === "donation" && book.status === "available")
-    .slice(0, CAROUSEL_MAX_ITEMS);
+  const donationCount = state.books.filter(
+    (book) => book.modality === "donation" && book.status === "available",
+  ).length;
+  const donationSummary =
+    donationCount === 0
+      ? "Veja as doações em Piripiri"
+      : `${donationCount} ${donationCount === 1 ? "livro gratuito" : "livros gratuitos"} em Piripiri`;
 
   const listHeader = (
     <View style={styles.headerContainer}>
@@ -224,9 +223,9 @@ export default function Home({
           onPress={() => onSelectNeighborhood?.()}
           style={styles.neighborhoodPill}
         >
-          <AppIcon name="place" size={16} color={colors.action} />
+          <AppIcon name="place" size={20} color={colors.m3.primary} />
           <Text style={styles.neighborhoodText}>{currentNeighborhood}</Text>
-          <AppIcon name="chevronDown" size={16} color={colors.action} />
+          <AppIcon name="chevronDown" size={20} color={colors.m3.onSurfaceVariant} />
         </Pressable>
 
         <View style={styles.topRightActions}>
@@ -265,7 +264,7 @@ export default function Home({
             onPress={() => onNavigateToNotifications?.()}
             style={styles.notificationButton}
           >
-            <AppIcon name="bell" size={22} color={colors.text} />
+            <AppIcon name="bell" size={24} color={colors.m3.onSurfaceVariant} />
           </Pressable>
         </View>
       </View>
@@ -293,18 +292,12 @@ export default function Home({
 
       {/* 2. Manchete Editorial (Hero do Figma 02.01) */}
       <View style={styles.heroSection}>
-        <View style={styles.brandBadge}>
-          <View style={styles.mark} accessible={false} />
-          <Text accessibilityRole="header" style={styles.brandTitle}>Ipebook</Text>
-        </View>
         <Text accessibilityRole="header" style={styles.heroTitle}>
           Encontre sua próxima história.
         </Text>
         <Text style={styles.heroSubtitle}>
           Compre, troque ou receba livros de quem mora perto de você.
         </Text>
-        {/* Subtítulo institucional legado para conformidade de acessibilidade */}
-        <Text style={styles.legacySubtitle}>Um lugar para descobrir sua próxima leitura.</Text>
       </View>
 
       {/* 3. Campo de Busca Integrado */}
@@ -314,17 +307,12 @@ export default function Home({
         onPress={() => onNavigateToSearch?.(selectedModality === "all" ? undefined : { modality: selectedModality })}
         style={styles.searchBar}
       >
-        <AppIcon name="search" size={20} color={colors.secondaryText} />
+        <AppIcon name="search" size={24} color={colors.m3.onSurfaceVariant} />
         <Text style={styles.searchPlaceholder}>Buscar título, autor ou categoria</Text>
       </Pressable>
 
       {/* 4. Chips de Filtro Rápido (Todos, Venda, Troca, Doação) */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.chipsContainer}
-        style={styles.chipsScroll}
-      >
+      <View style={styles.chipsContainer}>
         {(["all", "sale", "trade", "donation"] as const).map((mod) => {
           const isSelected = selectedModality === mod;
           const label = mod === "all" ? "Todos" : mod === "sale" ? "Venda" : mod === "trade" ? "Troca" : "Doação";
@@ -337,17 +325,25 @@ export default function Home({
               onPress={() => setSelectedModality(mod)}
               style={[styles.filterChip, isSelected && styles.filterChipSelected]}
             >
-              {isSelected ? <Text style={styles.filterChipCheck}>✓ </Text> : null}
+              {isSelected ? <AppIcon name="check" size={18} color={colors.m3.onSecondaryContainer} /> : null}
               <Text style={[styles.filterChipText, isSelected && styles.filterChipTextSelected]}>
                 {label}
               </Text>
             </Pressable>
           );
         })}
-      </ScrollView>
+      </View>
 
-      {/* 5. Carrossel "Perto de você" (Figma 02.01) */}
-      {!state.loading && !state.error && recentBooks.length > 0 ? (
+      {/* 5. "Perto de você" (Figma 02.01): carrossel ou estado de carregamento, erro ou vazio */}
+      {state.loading ? (
+        <LoadingState label="Carregando livros" />
+      ) : state.error ? (
+        isOnline ? (
+          <ErrorState message={state.error} onRetry={() => void actions.reload()} />
+        ) : (
+          <OfflineState onRetry={() => void actions.reload()} />
+        )
+      ) : recentBooks.length > 0 ? (
         <CatalogCarousel
           title="Recém-adicionados"
           displayTitle="Perto de você"
@@ -357,160 +353,54 @@ export default function Home({
           viewMoreLabel="Ver mais livros recém-adicionados"
           viewMoreButtonText="Ver todos"
         />
-      ) : null}
+      ) : (
+        <View style={styles.empty}>
+          <Text accessibilityRole="header" style={styles.carouselTitle}>Perto de você</Text>
+          <Text style={styles.emptyTitle}>Ainda não há livros por aqui.</Text>
+          <Text style={styles.body}>Quando houver livros disponíveis, eles aparecerão neste espaço.</Text>
+        </View>
+      )}
 
       {/* 6. Banner de Destaque Comunitário ("Doações da semana") */}
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel="Doações da semana: 3 livros gratuitos em Piripiri"
+        accessibilityLabel={`Doações da semana: ${donationSummary}`}
         onPress={() => onNavigateToSearch?.({ modality: "donation" })}
         style={styles.donationBanner}
       >
         <View style={styles.donationBannerIconBox}>
-          <AppIcon name="bookmark" size={20} color={colors.action} />
+          <AppIcon name="bookmark" size={24} color={colors.m3.onSurfaceVariant} />
         </View>
         <View style={styles.donationBannerTextBox}>
           <Text style={styles.donationBannerTitle}>Doações da semana</Text>
           <Text style={styles.donationBannerSubtitle}>
-            {donationBooks.length > 0 ? `${donationBooks.length} livros gratuitos em Piripiri` : "3 livros gratuitos em Piripiri"}
+            {donationSummary}
           </Text>
         </View>
-        <AppIcon name="chevronRight" size={18} color={colors.secondaryText} />
+        <AppIcon name="chevronRight" size={24} color={colors.m3.onSurfaceVariant} />
       </Pressable>
 
-      {/* 7. Carrossel adicional de Doações (Spec 051) se houver */}
-      {!state.loading && !state.error && donationBooks.length > 0 ? (
-        <CatalogCarousel
-          title="Doações disponíveis na comunidade"
-          books={donationBooks}
-          onNavigateToBookDetail={onNavigateToBookDetail}
-          onViewMore={() => onNavigateToSearch?.({ modality: "donation" })}
-          viewMoreLabel="Ver mais doações disponíveis em Piripiri"
-        />
-      ) : null}
-
-      {/* Título de seção para o catálogo vertical */}
-      <Text accessibilityRole="header" style={styles.heading}>Livros</Text>
-    </View>
-  );
-
-  const listFooter = (
-    <View style={styles.footerContainer}>
-      {/* Alternador de tema em área de preferências acessível */}
-      <View style={styles.preferencesSection}>
-        <Text style={styles.preferencesLabel}>Aparência</Text>
-        <View testID="theme-toggle-radiogroup" accessibilityRole="radiogroup" style={styles.themeToggleRow}>
-          {THEME_OPTIONS.map((option) => {
-            const isSelected = preference === option.value;
-            return (
-              <Pressable
-                key={option.value}
-                accessibilityRole="radio"
-                accessibilityLabel={`Tema ${option.label}`}
-                accessibilityState={{ checked: isSelected }}
-                onPress={() => void setPreference(option.value)}
-                style={[styles.themeToggleOption, isSelected && styles.themeToggleOptionSelected]}
-              >
-                <Text style={[styles.themeToggleText, isSelected && styles.themeToggleTextSelected]}>
-                  {option.label}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-      </View>
-
-      <View style={styles.footerLinks}>
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => onNavigateToTerms?.()}
-          style={styles.legalButton}
-        >
-          <Text style={styles.legalText}>Termos e Privacidade</Text>
-        </Pressable>
-        <Text style={styles.footerSeparator}>•</Text>
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => onNavigateToHelp?.()}
-          style={styles.legalButton}
-        >
-          <Text style={styles.legalText}>Central de Ajuda</Text>
-        </Pressable>
-      </View>
-    </View>
-  );
-
-  const listEmpty = state.loading ? (
-    <LoadingState label="Carregando livros" />
-  ) : state.error ? (
-    isOnline ? (
-      <ErrorState message={state.error} onRetry={() => void actions.reload()} />
-    ) : (
-      <OfflineState onRetry={() => void actions.reload()} />
-    )
-  ) : (
-    <View style={styles.empty}>
-      <Text style={styles.emptyTitle}>Ainda não há livros por aqui.</Text>
-      <Text style={styles.body}>Quando houver livros disponíveis, eles aparecerão neste espaço.</Text>
     </View>
   );
 
   return (
     <SafeAreaView style={styles.page}>
-      <FlatList
-        data={state.loading || state.error ? [] : filteredBooks}
-        keyExtractor={(book) => book.id}
-        contentContainerStyle={styles.content}
-        ListHeaderComponent={listHeader}
-        ListFooterComponent={listFooter}
-        ListEmptyComponent={listEmpty}
-        renderItem={({ item }) => {
-          const tag = modalityTag[item.modality];
-          const priceSuffix = item.modality === "sale" && item.price != null
-            ? ` · R$ ${item.price.toFixed(2).replace(".", ",")}`
-            : "";
-          return (
-            <View style={styles.book}>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={`Ver detalhe de ${item.title}, ${item.author}`}
-                onPress={() => onNavigateToBookDetail?.(item.id)}
-                style={styles.bookMain}
-              >
-                <BookCover id={item.id} title={item.title} photoUrl={item.photoUrl} variant="list" />
-                <View style={styles.bookInfo}>
-                  <View style={styles.bookHeader}>
-                    <Text numberOfLines={2} style={styles.bookTitle}>{item.title}</Text>
-                    <View style={[styles.tag, { backgroundColor: tag.background }]}>
-                      <Text style={[styles.tagText, { color: tag.text }]}>{tag.label}{priceSuffix}</Text>
-                    </View>
-                  </View>
-                  <Text style={styles.body}>{item.author}</Text>
-                  {item.status === "reserved" ? (
-                    <Text style={styles.reserved}>Reservado</Text>
-                  ) : null}
-                </View>
-              </Pressable>
-              <FavoriteButton bookId={item.id} userId={authState.user?.id ?? null} />
-            </View>
-          );
-        }}
-      />
+      <ScrollView contentContainerStyle={styles.content}>{listHeader}</ScrollView>
     </SafeAreaView>
   );
 }
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
-    page: { flex: 1, backgroundColor: colors.background },
+    page: { flex: 1, backgroundColor: colors.surface },
     content: {
       flexGrow: 1,
       width: "100%",
       maxWidth: 720,
       alignSelf: "center",
-      padding: tokens.spacing[20],
-      paddingTop: tokens.spacing[16],
-      paddingBottom: tokens.spacing[32],
+      paddingHorizontal: tokens.spacing[24],
+      paddingTop: tokens.spacing[8],
+      paddingBottom: tokens.spacing[24],
     },
     headerContainer: {
       marginBottom: tokens.spacing[16],
@@ -521,22 +411,24 @@ function createStyles(colors: ColorPalette) {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
-      marginBottom: tokens.spacing[20],
+      marginBottom: tokens.spacing[12],
     },
     neighborhoodPill: {
       flexDirection: "row",
       alignItems: "center",
       gap: tokens.spacing[6],
-      backgroundColor: colors.soft,
-      paddingHorizontal: tokens.spacing[12],
+      backgroundColor: colors.m3.surfaceContainerHigh,
+      paddingLeft: tokens.spacing[12],
+      paddingRight: tokens.spacing[8],
       paddingVertical: tokens.spacing[8],
       borderRadius: tokens.radius.full,
       minHeight: tokens.accessibility.touchTarget,
     },
     neighborhoodText: {
-      ...tokens.typography.labelMedium,
-      fontWeight: "600",
-      color: colors.text,
+      ...tokens.typography.bodyMedium,
+      fontFamily: tokens.typography.labelMedium.fontFamily,
+      fontWeight: "500",
+      color: colors.m3.onSurface,
     },
     topRightActions: {
       flexDirection: "row",
@@ -544,10 +436,9 @@ function createStyles(colors: ColorPalette) {
       gap: tokens.spacing[8],
     },
     notificationButton: {
-      width: 44,
-      height: 44,
+      width: tokens.accessibility.touchTarget,
+      height: tokens.accessibility.touchTarget,
       borderRadius: tokens.radius.full,
-      backgroundColor: colors.soft,
       justifyContent: "center",
       alignItems: "center",
     },
@@ -594,124 +485,80 @@ function createStyles(colors: ColorPalette) {
 
     // 2. Hero editorial
     heroSection: {
-      marginBottom: tokens.spacing[20],
-    },
-    brandBadge: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[8],
-      marginBottom: tokens.spacing[8],
-    },
-    mark: {
-      width: 12,
-      height: 22,
-      backgroundColor: colors.highlight,
-      borderTopRightRadius: tokens.radius.small,
-    },
-    brandTitle: {
-      ...tokens.typography.labelMedium,
-      fontWeight: "700",
-      color: colors.action,
-      letterSpacing: 0.5,
-      textTransform: "uppercase",
+      marginBottom: tokens.spacing[12],
     },
     heroTitle: {
       fontFamily: fontFamily.brand,
-      fontSize: 32,
-      lineHeight: 38,
-      fontWeight: "700",
-      color: colors.text,
-      letterSpacing: -0.5,
+      fontSize: 34,
+      lineHeight: 41,
+      color: colors.brandBrown,
     },
     heroSubtitle: {
       ...tokens.typography.bodyLarge,
-      color: colors.secondaryText,
+      color: colors.m3.onSurfaceVariant,
       marginTop: tokens.spacing[8],
-      lineHeight: 24,
-    },
-    legacySubtitle: {
-      fontSize: 13,
-      lineHeight: 18,
-      color: colors.secondaryText,
-      marginTop: tokens.spacing[4],
-      opacity: 0.7,
     },
 
     // 3. Campo de Busca
     searchBar: {
       flexDirection: "row",
       alignItems: "center",
-      height: 52,
-      backgroundColor: colors.soft,
+      height: tokens.spacing[56],
+      backgroundColor: colors.m3.surfaceContainerHigh,
       borderRadius: tokens.radius.full,
       paddingHorizontal: tokens.spacing[16],
-      gap: tokens.spacing[12],
-      marginBottom: tokens.spacing[16],
-      borderWidth: 1,
-      borderColor: colors.border,
+      gap: tokens.spacing[16],
+      marginBottom: tokens.spacing[8],
     },
     searchPlaceholder: {
       ...tokens.typography.bodyLarge,
-      color: colors.secondaryText,
-      fontSize: 15,
+      color: colors.m3.onSurfaceVariant,
     },
 
     // 4. Chips de Filtro
-    chipsScroll: {
-      marginBottom: tokens.spacing[20],
-    },
     chipsContainer: {
       flexDirection: "row",
+      flexWrap: "wrap",
       gap: tokens.spacing[8],
-      paddingVertical: tokens.spacing[4],
+      marginBottom: tokens.spacing[24],
     },
     filterChip: {
       flexDirection: "row",
       alignItems: "center",
+      gap: tokens.spacing[8],
       paddingHorizontal: tokens.spacing[16],
-      paddingVertical: tokens.spacing[8],
-      borderRadius: tokens.radius.full,
+      borderRadius: tokens.radius.small,
       borderWidth: 1,
-      borderColor: colors.border,
-      backgroundColor: colors.surface,
-      minHeight: 38,
+      borderColor: colors.m3.outlineVariant,
+      backgroundColor: "transparent",
+      minHeight: tokens.spacing[32],
     },
     filterChipSelected: {
-      backgroundColor: colors.badge.sale.background,
-      borderColor: colors.action,
-    },
-    filterChipCheck: {
-      ...tokens.typography.labelMedium,
-      color: colors.badge.sale.text,
-      fontWeight: "700",
+      paddingLeft: tokens.spacing[8],
+      backgroundColor: colors.m3.secondaryContainer,
+      borderColor: colors.m3.secondaryContainer,
     },
     filterChipText: {
-      ...tokens.typography.labelMedium,
-      color: colors.text,
+      ...tokens.typography.bodyMedium,
+      fontFamily: tokens.typography.labelMedium.fontFamily,
+      color: colors.m3.onSurfaceVariant,
       fontWeight: "500",
     },
     filterChipTextSelected: {
-      color: colors.badge.sale.text,
-      fontWeight: "700",
+      color: colors.m3.onSecondaryContainer,
     },
 
     // 5. Destaque Comunitário ("Doações da semana")
     donationBanner: {
       flexDirection: "row",
       alignItems: "center",
-      padding: tokens.spacing[16],
-      backgroundColor: colors.soft,
-      borderRadius: tokens.radius.medium,
-      gap: tokens.spacing[12],
+      paddingHorizontal: tokens.spacing[16],
+      paddingVertical: tokens.spacing[8],
+      minHeight: tokens.spacing[56],
+      gap: tokens.spacing[16],
       marginBottom: tokens.spacing[24],
-      borderWidth: 1,
-      borderColor: colors.border,
     },
     donationBannerIconBox: {
-      width: 40,
-      height: 40,
-      borderRadius: tokens.radius.small,
-      backgroundColor: colors.surface,
       justifyContent: "center",
       alignItems: "center",
     },
@@ -720,15 +567,12 @@ function createStyles(colors: ColorPalette) {
       gap: 2,
     },
     donationBannerTitle: {
-      ...tokens.typography.titleMedium,
-      fontSize: 16,
-      fontWeight: "600",
-      color: colors.text,
+      ...tokens.typography.bodyLarge,
+      color: colors.m3.onSurface,
     },
     donationBannerSubtitle: {
       ...tokens.typography.bodyMedium,
-      fontSize: 13,
-      color: colors.secondaryText,
+      color: colors.m3.onSurfaceVariant,
     },
 
     // 6. Carrossel
@@ -741,9 +585,10 @@ function createStyles(colors: ColorPalette) {
     },
     carouselTitle: {
       flexShrink: 1,
-      fontSize: 20,
-      fontWeight: "700",
-      color: colors.text,
+      ...tokens.typography.bodyLarge,
+      fontSize: 22,
+      lineHeight: 28,
+      color: colors.m3.onSurface,
     },
     viewMoreButton: {
       flexShrink: 0,
@@ -751,9 +596,10 @@ function createStyles(colors: ColorPalette) {
       justifyContent: "center",
     },
     viewMoreText: {
-      fontSize: tokens.typography.labelMedium.fontSize,
-      color: colors.action,
-      fontWeight: "600",
+      ...tokens.typography.bodyMedium,
+      fontFamily: tokens.typography.labelMedium.fontFamily,
+      color: colors.m3.primary,
+      fontWeight: "500",
     },
     carouselRow: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[4] },
     carouselList: { flexGrow: 0 },
@@ -768,145 +614,48 @@ function createStyles(colors: ColorPalette) {
     carouselCard: {
       width: CAROUSEL_ITEM_WIDTH,
       marginRight: CAROUSEL_ITEM_GAP,
-      backgroundColor: colors.surface,
+      backgroundColor: colors.m3.surfaceContainerLow,
       borderRadius: tokens.radius.medium,
       overflow: "hidden",
-      borderWidth: 1,
-      borderColor: colors.border,
+      boxShadow: tokens.elevation.level1,
+    },
+    carouselCardCoverArea: {
+      alignItems: "center",
+      justifyContent: "center",
+      paddingVertical: tokens.spacing[8],
+      backgroundColor: colors.m3.surfaceContainerHigh,
     },
     carouselCardMeta: {
-      padding: tokens.spacing[8],
-      gap: 2,
+      paddingHorizontal: tokens.spacing[16],
+      paddingVertical: tokens.spacing[12],
     },
     carouselCardModality: {
-      fontSize: 11,
-      fontWeight: "600",
-      textTransform: "uppercase",
+      ...tokens.typography.labelMedium,
+      color: colors.m3.onSurfaceVariant,
     },
     carouselCardTitle: {
-      fontSize: 14,
-      fontWeight: "600",
-      color: colors.text,
-      lineHeight: 18,
+      ...tokens.typography.bodyLarge,
+      color: colors.m3.onSurface,
     },
     carouselCardAuthor: {
-      fontSize: 12,
-      color: colors.secondaryText,
+      ...tokens.typography.bodyMedium,
+      color: colors.m3.onSurfaceVariant,
+    },
+    carouselCardReserved: {
+      ...tokens.typography.labelMedium,
+      color: colors.m3.onTertiaryContainer,
     },
 
-    // 7. Lista Vertical e Geral
-    heading: {
-      fontSize: tokens.typography.titleLarge.fontSize,
-      fontWeight: tokens.typography.titleLarge.fontWeight,
-      color: colors.action,
-      marginBottom: tokens.spacing[16],
-    },
-    book: {
-      flexDirection: "row",
-      gap: tokens.spacing[12],
-      paddingVertical: tokens.spacing[16],
-      borderBottomWidth: 1,
-      borderBottomColor: colors.border,
-    },
-    bookMain: { flex: 1, flexDirection: "row", gap: tokens.spacing[12] },
-    bookInfo: { flex: 1, gap: 6 },
-    bookHeader: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-      gap: tokens.spacing[12],
-    },
-    bookTitle: {
-      flex: 1,
-      fontSize: 16,
-      fontWeight: "600",
-      color: colors.text,
-    },
-    tag: {
-      borderRadius: tokens.radius.small,
-      paddingHorizontal: tokens.spacing[8],
-      paddingVertical: tokens.spacing[4],
-    },
-    tagText: {
-      fontSize: tokens.typography.labelMedium.fontSize,
-      fontWeight: tokens.typography.labelMedium.fontWeight,
-    },
-    reserved: {
-      fontSize: tokens.typography.bodyMedium.fontSize,
-      color: colors.secondaryText,
-      fontStyle: "italic",
-    },
 
     // 8. Estado vazio e rodapé
     empty: {
-      borderTopWidth: 1,
-      borderTopColor: colors.border,
-      paddingTop: 28,
-      gap: 10,
+      gap: tokens.spacing[8],
+      marginBottom: tokens.spacing[24],
     },
-    emptyTitle: { fontSize: 19, fontWeight: "600", color: colors.action },
+    emptyTitle: { ...tokens.typography.bodyLarge, color: colors.m3.onSurface },
     body: {
-      fontSize: tokens.typography.bodyLarge.fontSize,
-      lineHeight: 25,
-      color: colors.secondaryText,
-    },
-    footerContainer: {
-      marginTop: tokens.spacing[24],
-      paddingTop: tokens.spacing[16],
-      borderTopWidth: 1,
-      borderTopColor: colors.border,
-      gap: tokens.spacing[16],
-    },
-    preferencesSection: {
-      alignItems: "center",
-      gap: tokens.spacing[8],
-    },
-    preferencesLabel: {
-      ...tokens.typography.labelSmall,
-      color: colors.secondaryText,
-      textTransform: "uppercase",
-      letterSpacing: 0.5,
-    },
-    themeToggleRow: {
-      flexDirection: "row",
-      gap: tokens.spacing[8],
-    },
-    themeToggleOption: {
-      minHeight: tokens.accessibility.touchTarget,
-      justifyContent: "center",
-      paddingHorizontal: tokens.spacing[12],
-      borderRadius: tokens.radius.full,
-      borderWidth: 1,
-      borderColor: colors.border,
-      backgroundColor: colors.surface,
-    },
-    themeToggleOptionSelected: {
-      backgroundColor: colors.soft,
-      borderColor: colors.action,
-    },
-    themeToggleText: {
-      fontSize: tokens.typography.labelMedium.fontSize,
-      color: colors.secondaryText,
-      fontWeight: "600",
-    },
-    themeToggleTextSelected: { color: colors.action },
-    footerLinks: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "center",
-      gap: tokens.spacing[8],
-    },
-    footerSeparator: {
-      color: colors.secondaryText,
-      fontSize: tokens.typography.labelMedium.fontSize,
-    },
-    legalButton: {
-      paddingVertical: tokens.spacing[8],
-    },
-    legalText: {
-      fontSize: tokens.typography.labelMedium.fontSize,
-      color: colors.secondaryText,
-      textDecorationLine: "underline",
+      ...tokens.typography.bodyMedium,
+      color: colors.m3.onSurfaceVariant,
     },
   });
 }
