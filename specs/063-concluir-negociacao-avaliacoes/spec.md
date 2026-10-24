@@ -27,10 +27,11 @@ Todos os leitores de Piripiri que participam de uma negociação aceita (seja qu
 3. **Estado de Negociação Concluída e Avaliada (`06.08` e `06.22`):**
    - Feedback imediato de "Avaliação enviada com sucesso!".
    - Exibição de badge/banner permanente de negociação concluída indicando a nota atribuída pela pessoa autenticada.
+   - O estado de conclusão da negociação na interface é determinado pela existência da avaliação registrada via `findByRequestAndRater` (mantendo o status do pedido em `v2_requests` como `accepted` sem mutações destrutivas na máquina de estados de empréstimos/trocas).
    - Prevenção de reenvio de avaliação no mesmo pedido (respeitando a restrição do banco `unique (rater_id, request_id)`).
 4. **Camadas de Negócio e Repositório:**
-   - Adicionar método `submitRating(sessionUserId, { requestId, ratedUserId, score })` no caso de uso de avaliações.
-   - Adicionar consulta `getUserRatingForRequest(requestId, raterId)` em `IRatingDataSource` e implementações (Memory e Supabase) para recuperar o estado prévio da avaliação.
+   - Adicionar método `submitRating(sessionUserId, { requestId, ratedUserId, score })` no caso de uso de avaliações (`IRatingUseCases`).
+   - Adicionar consulta `findByRequestAndRater(requestId, raterId)` em `IRatingDataSource` e implementações (`MemoryRatingDataSource` e `SupabaseRatingDataSource`) para recuperar o estado prévio da avaliação.
 5. **Acessibilidade:**
    - Estados de foco, toque mínimo de 48dp nos botões de estrelas e alertas acessíveis `accessibilityLiveRegion="polite"`.
 

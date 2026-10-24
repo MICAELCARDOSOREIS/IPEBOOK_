@@ -4,7 +4,6 @@ import MyListingsScreen from "@/view/listings/myListings";
 export default function MeusAnunciosRoute() {
   return (
     <MyListingsScreen
-      onBack={() => router.back()}
       onRequireSignIn={() => router.replace("/entrar")}
       onNavigateToCreateListing={() => router.push("/anunciar")}
       onNavigateToHelp={() => router.push("/ajuda")}

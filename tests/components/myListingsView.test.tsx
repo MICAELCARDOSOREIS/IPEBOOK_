@@ -347,4 +347,61 @@ describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
     expect(screen.getByText("Dom Casmurro")).toBeDefined();
     expect(screen.getByText("O Quinze")).toBeDefined();
   });
+
+  it("renderiza a aba Concluídos e exibe estado vazio ou livros finalizados (Spec 064, Figma 05.01)", async () => {
+    const book: Book = {
+      id: "b-conc",
+      title: "Vidas Secas",
+      author: "Graciliano Ramos",
+      modality: "trade",
+      ownerId: "user-1",
+      status: "available",
+    };
+    mockViewModel({ books: [book] });
+    mockReceived([
+      {
+        request: { id: "req-c1", listingId: "b-conc", requesterId: "u-lucas", status: "completed" },
+        listing: book,
+        requesterName: "Lucas Mendes",
+      },
+    ]);
+
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<MyListings sessionUserId="user-1" />);
+    });
+
+    expect(screen.getByText("Concluídos")).toBeDefined();
+
+    await act(async () => {
+      fireEvent.press(screen.getByText("Concluídos"));
+    });
+
+    expect(screen.getByText("Vidas Secas")).toBeDefined();
+    expect(screen.getByText("Lucas Mendes · Concluído · Troca")).toBeDefined();
+  });
+
+  it("não exibe botão de voltar quando onBack não é fornecido (Spec 064)", async () => {
+    mockViewModel({ books: [] });
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<MyListings sessionUserId="user-1" />);
+    });
+
+    expect(screen.queryByLabelText("Voltar")).toBeNull();
+  });
+
+  it("exibe botão de voltar quando onBack é fornecido (Spec 064)", async () => {
+    mockViewModel({ books: [] });
+    const onBack = vi.fn();
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<MyListings sessionUserId="user-1" onBack={onBack} />);
+    });
+
+    const backBtn = screen.getByLabelText("Voltar");
+    expect(backBtn).toBeDefined();
+    fireEvent.press(backBtn);
+    expect(onBack).toHaveBeenCalledTimes(1);
+  });
 });

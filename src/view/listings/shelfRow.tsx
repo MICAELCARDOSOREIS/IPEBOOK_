@@ -27,10 +27,14 @@ export function ShelfRow({ book, summary, accessibilityLabel, onPress }: ShelfRo
     >
       <BookCover id={book.id} title={book.title} photoUrl={book.photoUrl} variant="list" />
       <View style={styles.rowText}>
-        <Text style={styles.rowTitle}>{book.title}</Text>
-        <Text style={styles.rowSummary}>{summary}</Text>
+        <Text style={styles.rowTitle} numberOfLines={2}>
+          {book.title}
+        </Text>
+        <Text style={styles.rowSummary} numberOfLines={2}>
+          {summary}
+        </Text>
       </View>
-      <AppIcon name="chevronRight" size={24} color={colors.secondaryText} />
+      <AppIcon name="chevronRight" size={24} color={colors.m3.onSurfaceVariant} />
     </Pressable>
   );
 }

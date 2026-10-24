@@ -5,15 +5,15 @@ import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useMyListingsViewModel } from "@/viewmodel/useMyListingsViewModel";
 import { useReceivedRequestsViewModel } from "@/viewmodel/useReceivedRequestsViewModel";
 import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
-import { tokens, type ColorPalette } from "@/view/tokens";
+import { tokens, fontFamily, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { AppIcon } from "@/view/components/AppIcon";
 import { ErrorState } from "@/view/components/ErrorState";
 import { LoadingState } from "@/view/components/LoadingState";
 import { OfflineState } from "@/view/components/OfflineState";
-import { TopAppBar } from "@/view/components/TopAppBar";
 import { ShelfRow } from "@/view/listings/shelfRow";
 import { MyListingsEmpty } from "@/view/listings/myListingsEmpty";
+import { COMMUNITY_MEMBER } from "@/view/requests/receivedRequests";
 import {
   type ListingsFilter,
   MyListingsListingsTab,
@@ -34,10 +34,11 @@ export type MyListingsProps = {
   onNavigateToNegotiationDetail?: (requestId: string) => void;
 };
 
+type ShelfTab = "listings" | "proposals" | "concluded";
+
 /**
- * Figma `05.01 · Estante` (`25:302` / Web `159:1728`), `05.02 · Estante vazia` (`25:430` /
- * Web `159:1857`), `05.03 · Estante · Propostas` (`149:2962`) e
- * `05.07 · Estante após exclusão` (`403:7319` / Web `403:22271`).
+ * Figma `05.01 · Estante` (`25:302`), `05.02 · Estante vazia` (`25:430`),
+ * `05.03 · Estante · Propostas` (`149:2962`).
  */
 export function MyListings({
   sessionUserId,
@@ -53,19 +54,38 @@ export function MyListings({
   const [state, actions] = useMyListingsViewModel(sessionUserId);
   const [received] = useReceivedRequestsViewModel(sessionUserId);
   const { isOnline } = useNetworkStatus();
-  const [activeTab, setActiveTab] = useState<"listings" | "proposals">("listings");
+  const [activeTab, setActiveTab] = useState<ShelfTab>("listings");
   const [statusFilter, setStatusFilter] = useState<ListingsFilter>("all");
 
   // Spec 043 RN-03: a aba conta as propostas recebidas em aberto, não os livros reservados.
   const proposals = received.items.filter(
     (item) => item.request.status === "pending" || item.request.status === "accepted",
   );
+  const concludedProposals = received.items.filter(
+    (item) => item.request.status === "completed",
+  );
 
   const showFab = state.books.length > 0 && onNavigateToCreateListing;
 
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar title="Minha estante" onBack={() => onBack?.()} />
+      <View style={styles.header}>
+        {onBack ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Voltar"
+            hitSlop={12}
+            onPress={onBack}
+            style={styles.backButton}
+          >
+            <AppIcon name="back" size={24} color={colors.text} />
+          </Pressable>
+        ) : null}
+        <Text accessibilityRole="header" style={styles.heroTitle}>
+          Minha estante
+        </Text>
+      </View>
+
       <View style={styles.content}>
         {state.loading ? (
           <LoadingState label="Carregando seus anúncios" />
@@ -81,29 +101,67 @@ export function MyListings({
             onNavigateToHelp={onNavigateToHelp}
           />
         ) : (
-          <ScrollView contentContainerStyle={[styles.scroll, showFab ? styles.scrollWithFab : null]}>
-            <View testID="my-listings-tablist" accessibilityRole="tablist" style={styles.tabs}>
-              <Pressable
-                accessibilityRole="tab"
-                accessibilityState={{ selected: activeTab === "listings" }}
-                onPress={() => setActiveTab("listings")}
-                style={[styles.tab, activeTab === "listings" && styles.activeTab]}
-              >
-                <Text style={[styles.tabText, activeTab === "listings" && styles.activeTabText]}>
-                  {`Anúncios (${state.books.length})`}
-                </Text>
-              </Pressable>
-              <Pressable
-                accessibilityRole="tab"
-                accessibilityState={{ selected: activeTab === "proposals" }}
-                onPress={() => setActiveTab("proposals")}
-                style={[styles.tab, activeTab === "proposals" && styles.activeTab]}
-              >
-                <Text style={[styles.tabText, activeTab === "proposals" && styles.activeTabText]}>
-                  {`Propostas (${proposals.length})`}
-                </Text>
-              </Pressable>
+          <ScrollView
+            contentContainerStyle={[styles.scroll, showFab ? styles.scrollWithFab : null]}
+            showsVerticalScrollIndicator={false}
+          >
+            {/* Abas Material 3 com indicador ativo e divisória (Figma 05.01 nó 25:392) */}
+            <View testID="my-listings-tablist" accessibilityRole="tablist" style={styles.tabsContainer}>
+              <View style={styles.tabsRow}>
+                <Pressable
+                  accessibilityRole="tab"
+                  accessibilityState={{ selected: activeTab === "listings" }}
+                  onPress={() => setActiveTab("listings")}
+                  style={styles.tab}
+                >
+                  <Text
+                    style={[
+                      styles.tabText,
+                      activeTab === "listings" ? styles.activeTabText : styles.inactiveTabText,
+                    ]}
+                  >
+                    {`Anúncios (${state.books.length})`}
+                  </Text>
+                  {activeTab === "listings" && <View style={styles.activeIndicator} />}
+                </Pressable>
+
+                <Pressable
+                  accessibilityRole="tab"
+                  accessibilityState={{ selected: activeTab === "proposals" }}
+                  onPress={() => setActiveTab("proposals")}
+                  style={styles.tab}
+                >
+                  <Text
+                    style={[
+                      styles.tabText,
+                      activeTab === "proposals" ? styles.activeTabText : styles.inactiveTabText,
+                    ]}
+                  >
+                    {`Propostas (${proposals.length})`}
+                  </Text>
+                  {activeTab === "proposals" && <View style={styles.activeIndicator} />}
+                </Pressable>
+
+                <Pressable
+                  accessibilityRole="tab"
+                  accessibilityState={{ selected: activeTab === "concluded" }}
+                  onPress={() => setActiveTab("concluded")}
+                  style={styles.tab}
+                >
+                  <Text
+                    style={[
+                      styles.tabText,
+                      activeTab === "concluded" ? styles.activeTabText : styles.inactiveTabText,
+                    ]}
+                  >
+                    Concluídos
+                  </Text>
+                  {activeTab === "concluded" && <View style={styles.activeIndicator} />}
+                </Pressable>
+              </View>
+              <View style={styles.tabsDivider} />
             </View>
+
             {activeTab === "listings" ? (
               <MyListingsListingsTab
                 books={state.books}
@@ -111,16 +169,42 @@ export function MyListings({
                 onStatusFilterChange={setStatusFilter}
                 onNavigateToManageListing={onNavigateToManageListing}
               />
-            ) : (
+            ) : activeTab === "proposals" ? (
               <MyListingsProposalsTab
                 proposals={proposals}
                 onNavigateToReceivedRequests={onNavigateToReceivedRequests}
                 onNavigateToNegotiationDetail={onNavigateToNegotiationDetail}
               />
+            ) : (
+              <View style={styles.concludedTab}>
+                {concludedProposals.length === 0 ? (
+                  <View style={styles.concludedEmpty}>
+                    <View style={styles.concludedIconCircle}>
+                      <AppIcon name="shelf" size={36} color={colors.m3.onSecondaryContainer} />
+                    </View>
+                    <Text style={styles.concludedEmptyTitle}>Nenhum anúncio concluído ainda</Text>
+                    <Text style={styles.concludedEmptySubtitle}>
+                      Quando uma troca, venda ou doação for finalizada, o histórico do livro aparecerá aqui.
+                    </Text>
+                  </View>
+                ) : (
+                  concludedProposals.map((item) => (
+                    <ShelfRow
+                      key={item.request.id}
+                      book={item.listing}
+                      summary={`${item.requesterName ?? COMMUNITY_MEMBER} · Concluído · ${item.listing.modality === "sale" ? "Venda" : item.listing.modality === "trade" ? "Troca" : "Doação"}`}
+                      accessibilityLabel={`Ver histórico de ${item.listing.title}`}
+                      onPress={() => onNavigateToNegotiationDetail?.(item.request.id)}
+                    />
+                  ))
+                )}
+              </View>
             )}
           </ScrollView>
         )}
       </View>
+
+      {/* Extended FAB Material 3 (Figma 05.01 nó 25:425) */}
       {showFab ? (
         <Pressable
           accessibilityRole="button"
@@ -181,47 +265,129 @@ export default function MyListingsScreen({
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
-    tabs: {
+    page: { flex: 1, backgroundColor: colors.background },
+    header: {
       flexDirection: "row",
-      borderBottomWidth: 1,
-      borderBottomColor: colors.m3.outlineVariant,
+      alignItems: "center",
+      paddingHorizontal: tokens.spacing[20],
+      paddingTop: tokens.spacing[12],
+      paddingBottom: tokens.spacing[8],
+      gap: tokens.spacing[8],
+    },
+    backButton: {
+      minHeight: tokens.accessibility.touchTarget,
+      minWidth: tokens.accessibility.touchTarget,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    heroTitle: {
+      fontFamily: fontFamily.brand,
+      fontSize: 34,
+      lineHeight: 41,
+      color: colors.brandBrown,
+    },
+    content: {
+      flex: 1,
+      width: "100%",
+      maxWidth: 720,
+      alignSelf: "center",
+      paddingHorizontal: tokens.spacing[20],
+    },
+    tabsContainer: {
       marginBottom: tokens.spacing[16],
+    },
+    tabsRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
     },
     tab: {
       flex: 1,
       minHeight: tokens.accessibility.touchTarget,
       justifyContent: "center",
       alignItems: "center",
-      paddingHorizontal: tokens.spacing[16],
-      borderBottomWidth: 2,
-      borderBottomColor: "transparent",
+      paddingVertical: tokens.spacing[12],
+      position: "relative",
     },
-    activeTab: { borderBottomColor: colors.action },
     tabText: {
-      ...tokens.typography.bodyMedium,
-      color: colors.secondaryText,
+      ...tokens.typography.labelLarge,
     },
-    activeTabText: { color: colors.action, fontWeight: "600" },
+    activeTabText: {
+      color: colors.primary,
+      fontWeight: "600",
+    },
+    inactiveTabText: {
+      color: colors.m3.onSurfaceVariant,
+      fontWeight: "400",
+    },
+    activeIndicator: {
+      position: "absolute",
+      bottom: 0,
+      left: tokens.spacing[12],
+      right: tokens.spacing[12],
+      height: 3,
+      backgroundColor: colors.primary,
+      borderTopLeftRadius: 3,
+      borderTopRightRadius: 3,
+    },
+    tabsDivider: {
+      height: 1,
+      backgroundColor: colors.m3.outlineVariant,
+      width: "100%",
+    },
+    scroll: {
+      paddingBottom: tokens.spacing[24],
+    },
+    scrollWithFab: {
+      paddingBottom: tokens.spacing[64] + tokens.spacing[32],
+    },
     fab: {
       position: "absolute",
-      right: tokens.spacing[16],
+      right: tokens.spacing[20],
       bottom: tokens.spacing[24],
       flexDirection: "row",
       alignItems: "center",
       gap: tokens.spacing[8],
-      minHeight: tokens.accessibility.touchTarget,
-      paddingHorizontal: tokens.spacing[20],
-      borderRadius: tokens.radius.large,
+      minHeight: 48,
+      paddingHorizontal: tokens.spacing[16],
+      borderRadius: tokens.radius.medium,
       backgroundColor: colors.m3.secondaryContainer,
+      ...tokens.elevation.level3,
     },
     fabText: {
-      ...tokens.typography.labelMedium,
+      ...tokens.typography.labelLarge,
       color: colors.m3.onSecondaryContainer,
+      fontWeight: "600",
     },
-    page: { flex: 1, backgroundColor: colors.background },
-    content: { flex: 1, width: "100%", maxWidth: 720, alignSelf: "center", paddingHorizontal: tokens.spacing[16] },
-    scroll: { paddingBottom: tokens.spacing[24] },
-    /** Espaço para o botão flutuante não cobrir a dica nem a última linha (Spec 043, RN-05). */
-    scrollWithFab: { paddingBottom: tokens.spacing[64] + tokens.spacing[32] },
+    concludedTab: {
+      paddingVertical: tokens.spacing[16],
+      gap: tokens.spacing[12],
+    },
+    concludedEmpty: {
+      paddingTop: tokens.spacing[40],
+      alignItems: "center",
+      gap: tokens.spacing[8],
+      paddingHorizontal: tokens.spacing[16],
+    },
+    concludedIconCircle: {
+      width: 72,
+      height: 72,
+      borderRadius: 36,
+      backgroundColor: colors.m3.secondaryContainer,
+      justifyContent: "center",
+      alignItems: "center",
+      marginBottom: tokens.spacing[8],
+    },
+    concludedEmptyTitle: {
+      ...tokens.typography.titleMedium,
+      color: colors.text,
+      textAlign: "center",
+    },
+    concludedEmptySubtitle: {
+      ...tokens.typography.bodyMedium,
+      color: colors.secondaryText,
+      textAlign: "center",
+      maxWidth: 320,
+    },
   });
 }

@@ -141,7 +141,7 @@ describe("NegotiationRatingModal (Spec 063 / ADR 0046)", () => {
     });
 
     const root = tree.root;
-    const textNodes = root.findAllByType("Text");
+    const textNodes = root.findAllByType(Text);
     const texts = textNodes.map((n) => n.props.children).flat().join(" ");
     expect(texts).toContain("Avaliação enviada!");
 

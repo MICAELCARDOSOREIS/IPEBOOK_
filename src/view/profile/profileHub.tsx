@@ -15,6 +15,7 @@ export type ProfileHubProps = {
   onNavigateToSignIn?: () => void;
   onNavigateToEditProfile: () => void;
   onNavigateToRatings: () => void;
+  onNavigateToFavorites?: () => void;
   onNavigateToNotifications: () => void;
   onNavigateToSecurity: () => void;
   onNavigateToPrivacy: () => void;
@@ -38,6 +39,7 @@ export default function ProfileHub({
   onNavigateToSignIn,
   onNavigateToEditProfile,
   onNavigateToRatings,
+  onNavigateToFavorites,
   onNavigateToNotifications,
   onNavigateToSecurity,
   onNavigateToPrivacy,
@@ -85,6 +87,13 @@ export default function ProfileHub({
       label: "Avaliações recebidas",
       description: "Veja o que a comunidade disse sobre você",
       onPress: onNavigateToRatings,
+    },
+    {
+      key: "favorites",
+      icon: "heart",
+      label: "Favoritos e alertas",
+      description: "Livros salvos e alertas de busca",
+      onPress: onNavigateToFavorites ?? (() => {}),
     },
     {
       key: "notifications",

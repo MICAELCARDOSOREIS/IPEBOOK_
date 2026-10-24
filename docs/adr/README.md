@@ -46,5 +46,6 @@
 - [0044 — Chat e mensagens internas da negociação presencial](0044-chat-mensagens-negociacao.md)
 - [0045 — Alinhamento visual da tela inicial (Home) ao Figma 02.01](0045-alinhamento-visual-home-figma.md)
 - [0046 — Conclusão de negociação e avaliação mútua](0046-concluir-negociacao-avaliacoes.md)
+- [0047 — Alinhamento visual da tela Minha Estante ao Figma 05.01 e 05.02](0047-alinhamento-estante-figma.md)
 
 Preservar registros aceitos; mudanças relevantes geram novo ADR com vínculos de substituição.
