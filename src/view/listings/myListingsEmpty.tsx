@@ -88,7 +88,7 @@ function createStyles(colors: ColorPalette) {
       paddingHorizontal: tokens.spacing[16],
     },
     howItWorksText: {
-      ...tokens.typography.labelLarge,
+      ...tokens.typography.labelMedium,
       color: colors.action,
       fontWeight: "600",
     },
