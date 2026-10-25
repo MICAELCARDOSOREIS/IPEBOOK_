@@ -51,5 +51,6 @@
 - [0049 — Alinhamento visual da tela Explorar ao Figma 02.02](0049-alinhamento-explorar-figma.md)
 - [0050 — Seletor de bairro comunitário e persistência de localidade ativa](0050-seletor-bairro-comunitario.md)
 - [0051 — Seção hiperlocal na Home e consulta remota de bairro no Supabase](0051-secao-hiperlocal-home-e-filtro-supabase.md)
+- [0052 — Alinhamento visual dos encontros e negociação ao Figma](0052-alinhamento-visual-encontros-figma.md)
 
 Preservar registros aceitos; mudanças relevantes geram novo ADR com vínculos de substituição.

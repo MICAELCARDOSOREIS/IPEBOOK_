@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { PIRIPIRI_MEETING_POINTS } from "@/model/entities/meetingPoint";
 import { useMeetingViewModel } from "@/viewmodel/useMeetingViewModel";
-import { tokens } from "@/view/tokens";
+import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
+import { useTheme } from "@/view/theme/ThemeProvider";
 import { formatMeetingWhen } from "@/view/meetingFormat";
 import { AppIcon } from "@/view/components/AppIcon";
 import { Dialog } from "@/view/components/Dialog";
@@ -22,13 +23,15 @@ export type MeetingCardProps = {
 };
 
 /**
- * Encontro da negociação aceita (Spec 052): convite pendente, encontro combinado (`06.05`),
+ * Encontro da negociação aceita (Spec 052 / Spec 069): convite pendente, encontro combinado (`06.05`),
  * cancelamento com confirmação (`06.11`/`06.12`) e reagendamento (`06.13`).
  */
 export function MeetingCard({ requestId, sessionUserId, counterpartName, focusKey, onScheduleMeeting }: MeetingCardProps) {
   const [state, actions] = useMeetingViewModel(requestId, sessionUserId);
   const [confirmingCancel, setConfirmingCancel] = useState(false);
   const { reload } = actions;
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   // A primeira carga já vem do ViewModel; recarrega só quando a tela volta ao foco depois.
   const lastFocusKey = useRef(focusKey);
@@ -104,14 +107,14 @@ export function MeetingCard({ requestId, sessionUserId, counterpartName, focusKe
 
       {/* Linhas de `06.05`: quando, onde e o que fazer. */}
       <View style={styles.detailRow}>
-        <AppIcon name="calendar" size={24} color={tokens.colors.text} />
+        <AppIcon name="calendar" size={24} color={colors.m3.onSurface} />
         <View style={styles.detailText}>
           <Text style={styles.detailTitle}>{formatMeetingWhen(meeting.scheduledAt)}</Text>
           <Text style={styles.body}>Chegue alguns minutos antes</Text>
         </View>
       </View>
       <View style={styles.detailRow}>
-        <AppIcon name="place" size={24} color={tokens.colors.text} />
+        <AppIcon name="place" size={24} color={colors.m3.onSurface} />
         <View style={styles.detailText}>
           <Text style={styles.detailTitle}>{meeting.pointName}</Text>
           {point ? <Text style={styles.body}>{point.address}</Text> : null}
@@ -152,25 +155,39 @@ export function MeetingCard({ requestId, sessionUserId, counterpartName, focusKe
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: tokens.colors.surface,
-    padding: tokens.spacing[16],
-    borderRadius: tokens.radius.medium,
-    borderWidth: 1,
-    borderColor: tokens.colors.m3.outlineVariant,
-    gap: tokens.spacing[12],
-  },
-  headerRow: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[12] },
-  title: {
-    flex: 1,
-    ...tokens.typography.titleMedium,
-    fontFamily: tokens.typography.displayLarge.fontFamily,
-    color: tokens.colors.text,
-  },
-  body: { ...tokens.typography.bodyMedium, color: tokens.colors.secondaryText },
-  detailRow: { flexDirection: "row", alignItems: "flex-start", gap: tokens.spacing[16] },
-  detailText: { flex: 1, gap: tokens.spacing[4] },
-  detailTitle: { ...tokens.typography.bodyLarge, color: tokens.colors.text },
-  error: { ...tokens.typography.bodyMedium, color: tokens.colors.error },
-});
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+    card: {
+      backgroundColor: colors.m3.surfaceContainerLow,
+      padding: tokens.spacing[16],
+      borderRadius: tokens.radius.medium,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+      gap: tokens.spacing[12],
+    },
+    headerRow: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[12] },
+    title: {
+      flex: 1,
+      ...tokens.typography.titleMedium,
+      fontFamily: fontFamily.semiBold,
+      color: colors.m3.onSurface,
+    },
+    body: {
+      ...tokens.typography.bodyMedium,
+      fontFamily: fontFamily.regular,
+      color: colors.m3.onSurfaceVariant,
+    },
+    detailRow: { flexDirection: "row", alignItems: "flex-start", gap: tokens.spacing[16] },
+    detailText: { flex: 1, gap: tokens.spacing[4] },
+    detailTitle: {
+      ...tokens.typography.bodyLarge,
+      fontFamily: fontFamily.semiBold,
+      color: colors.m3.onSurface,
+    },
+    error: {
+      ...tokens.typography.bodyMedium,
+      fontFamily: fontFamily.medium,
+      color: colors.m3.error,
+    },
+  });
+}
