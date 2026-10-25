@@ -258,4 +258,34 @@ describe("testes de hook: useSearchViewModel (ISO/IEC 25010 - Adequação Funcio
     expect(hook.current[0].hasActiveFilters).toBe(false);
     expect(hook.current[0].books).toEqual(books);
   });
+
+  it("filtra livros por bairro específico em Piripiri (Spec 067 / ADR 0050)", async () => {
+    const list = [
+      { id: "1", title: "Livro Centro", author: "A", ownerId: "u1", modality: "sale" as const, status: "available" as const, neighborhood: "Centro" },
+      { id: "2", title: "Livro Petecas", author: "B", ownerId: "u2", modality: "trade" as const, status: "available" as const, neighborhood: "Petecas" },
+      { id: "3", title: "Livro Paciência", author: "C", ownerId: "u3", modality: "donation" as const, status: "available" as const, neighborhood: "Paciência" },
+    ];
+    const hook = await renderHook({ listBooks: async () => list });
+
+    expect(hook.current[0].neighborhood).toBe("all");
+    expect(hook.current[0].books).toHaveLength(3);
+
+    await act(async () => {
+      hook.current[1].setNeighborhood("Petecas");
+    });
+    expect(hook.current[0].neighborhood).toBe("Petecas");
+    expect(hook.current[0].hasActiveFilters).toBe(true);
+    expect(hook.current[0].books).toEqual([list[1]]);
+
+    // Selecionar "all" ou "Todos os bairros" restaura todo o catálogo
+    await act(async () => {
+      hook.current[1].setNeighborhood("all");
+    });
+    expect(hook.current[0].books).toHaveLength(3);
+
+    await act(async () => {
+      hook.current[1].setNeighborhood("Todos os bairros");
+    });
+    expect(hook.current[0].books).toHaveLength(3);
+  });
 });

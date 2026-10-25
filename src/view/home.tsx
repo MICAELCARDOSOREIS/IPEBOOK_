@@ -4,6 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useHomeViewModel } from "@/viewmodel/useHomeViewModel";
 import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
+import { useActiveNeighborhood } from "@/viewmodel/useActiveNeighborhood";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { AppIcon } from "@/view/components/AppIcon";
@@ -11,6 +12,7 @@ import { BookCover } from "@/view/components/BookCover";
 import { ErrorState } from "@/view/components/ErrorState";
 import { LoadingState } from "@/view/components/LoadingState";
 import { OfflineState } from "@/view/components/OfflineState";
+import { NeighborhoodSelectorModal } from "@/view/components/NeighborhoodSelectorModal";
 import type { Book, BookModality } from "@/model/entities/book";
 
 function createModalityTag(colors: ColorPalette): Record<BookModality, { background: string; text: string; label: string }> {
@@ -160,7 +162,7 @@ export type HomeProps = {
 };
 
 export default function Home({
-  currentNeighborhood = "Centro",
+  currentNeighborhood,
   onSelectNeighborhood,
   onNavigateToSignIn,
   onNavigateToBookDetail,
@@ -170,6 +172,10 @@ export default function Home({
   onNavigateToSearch,
   focusKey,
 }: HomeProps = {}) {
+  const neighborhoodHook = useActiveNeighborhood();
+  const effectiveNeighborhood = currentNeighborhood ?? neighborhoodHook.activeNeighborhood;
+  const handleSelectNeighborhood = onSelectNeighborhood ?? neighborhoodHook.openSelector;
+
   const [state, actions] = useHomeViewModel();
   const [authState] = useAuthViewModel();
   const { isOnline } = useNetworkStatus();
@@ -201,18 +207,23 @@ export default function Home({
       ? "Veja as doações em Piripiri"
       : `${donationCount} ${donationCount === 1 ? "livro gratuito" : "livros gratuitos"} em Piripiri`;
 
+  const displayNeighborhood =
+    effectiveNeighborhood === "all" || effectiveNeighborhood === "Todos os bairros (Piripiri)"
+      ? "Piripiri (Todos)"
+      : effectiveNeighborhood;
+
   const listHeader = (
     <View style={styles.headerContainer}>
       {/* 1. Barra de Topo: Bairro (Pill), Entrar (sem sessão) e Sino de Notificações */}
       <View style={styles.topBar}>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={`Selecionar bairro: ${currentNeighborhood}`}
-          onPress={() => onSelectNeighborhood?.()}
+          accessibilityLabel={`Selecionar bairro: ${displayNeighborhood}`}
+          onPress={handleSelectNeighborhood}
           style={styles.neighborhoodPill}
         >
           <AppIcon name="place" size={20} color={colors.m3.primary} />
-          <Text style={styles.neighborhoodText}>{currentNeighborhood}</Text>
+          <Text style={styles.neighborhoodText}>{displayNeighborhood}</Text>
           <AppIcon name="chevronDown" size={20} color={colors.m3.onSurfaceVariant} />
         </Pressable>
 
@@ -335,6 +346,12 @@ export default function Home({
   return (
     <SafeAreaView style={styles.page}>
       <ScrollView contentContainerStyle={styles.content}>{listHeader}</ScrollView>
+      <NeighborhoodSelectorModal
+        visible={neighborhoodHook.isSelectorOpen}
+        currentNeighborhood={effectiveNeighborhood}
+        onSelect={neighborhoodHook.selectNeighborhood}
+        onClose={neighborhoodHook.closeSelector}
+      />
     </SafeAreaView>
   );
 }
