@@ -113,7 +113,7 @@ function CatalogCarousel({
             return (
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel={`Ver detalhe de ${item.title}, ${item.author}`}
+                accessibilityLabel={`Ver detalhe de ${item.title}, ${item.author}${item.neighborhood ? ` em ${item.neighborhood}` : ""}`}
                 onPress={() => onNavigateToBookDetail?.(item.id)}
                 style={styles.carouselCard}
               >
@@ -126,6 +126,14 @@ function CatalogCarousel({
                   </Text>
                   <Text numberOfLines={2} style={styles.carouselCardTitle}>{item.title}</Text>
                   <Text numberOfLines={1} style={styles.carouselCardAuthor}>{item.author}</Text>
+                  {item.neighborhood ? (
+                    <View style={styles.carouselCardLocationRow}>
+                      <AppIcon name="place" size={14} color={colors.m3.onSurfaceVariant} />
+                      <Text numberOfLines={1} style={styles.carouselCardNeighborhood}>
+                        {item.neighborhood}
+                      </Text>
+                    </View>
+                  ) : null}
                   {item.status === "reserved" ? <Text style={styles.carouselCardReserved}>Reservado</Text> : null}
                 </View>
               </Pressable>
@@ -645,6 +653,17 @@ function createStyles(colors: ColorPalette) {
     carouselCardReserved: {
       ...tokens.typography.labelMedium,
       color: colors.m3.onTertiaryContainer,
+    },
+    carouselCardLocationRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[4],
+      marginTop: tokens.spacing[2],
+    },
+    carouselCardNeighborhood: {
+      ...tokens.typography.labelSmall,
+      fontFamily: fontFamily.regular,
+      color: colors.m3.onSurfaceVariant,
     },
 
 
