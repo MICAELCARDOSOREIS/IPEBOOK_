@@ -33,7 +33,7 @@ const baseMeeting: Meeting = {
 function mockMeeting(state: Partial<MeetingState>, actions: Partial<MeetingActions> = {}) {
   const full: MeetingActions = { reload: vi.fn(), confirm: vi.fn().mockResolvedValue(true), cancel: vi.fn().mockResolvedValue(true), ...actions };
   vi.mocked(useMeetingViewModel).mockReturnValue([
-    { meeting: null, loading: false, error: null, busy: false, actionError: null, ...state },
+    { meeting: null, history: [], loading: false, error: null, busy: false, actionError: null, ...state },
     full,
   ]);
   return full;
@@ -107,6 +107,14 @@ describe("cartão do encontro (Spec 052, 06.05/06.11/06.12)", () => {
     expect(screen.getByRole("header", { name: "Encontro cancelado" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Combinar novo encontro" })).toBeDefined();
     expect(screen.getByRole("alert").props.children).toBe("Muitas tentativas seguidas.");
+  });
+
+  it("exibe tentativas anteriores no histórico quando houver múltiplos encontros (Spec 071)", async () => {
+    const cancelado: Meeting = { ...baseMeeting, id: "m0", status: "cancelled" };
+    mockMeeting({ meeting: baseMeeting, history: [baseMeeting, cancelado] });
+    const screen = await renderCard("dono");
+    expect(screen.getByText("Tentativas anteriores")).toBeDefined();
+    expect(screen.getByText("Cancelado")).toBeDefined();
   });
 
   it("carregando e erro de carga com nova tentativa", async () => {

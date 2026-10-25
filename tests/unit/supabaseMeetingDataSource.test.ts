@@ -14,12 +14,13 @@ const row = {
 
 /** Cadeia do PostgREST: cada método devolve a própria cadeia; os terminais resolvem `result`. */
 function fakeClient(result: { data: unknown; error: unknown }) {
-  const chain: Record<string, ReturnType<typeof vi.fn>> = {};
+  const chain: Record<string, ReturnType<typeof vi.fn>> & { then?: any } = {};
   for (const method of ["select", "eq", "order", "limit", "insert", "update"]) {
     chain[method] = vi.fn(() => chain);
   }
   chain.maybeSingle = vi.fn().mockResolvedValue(result);
   chain.single = vi.fn().mockResolvedValue(result);
+  chain.then = (onFulfilled: any, onRejected: any) => Promise.resolve(result).then(onFulfilled, onRejected);
   const client = { from: vi.fn(() => chain) } as unknown as SupabaseAppClient;
   return { client, chain };
 }
@@ -82,5 +83,20 @@ describe("SupabaseMeetingDataSource (Spec 052)", () => {
       .rejects.toThrow(/mudou/);
     await expect(new SupabaseMeetingDataSource(fakeClient({ data: null, error: { message: "x" } }).client).update("m1", { status: "cancelled" }, "proposed", "dono"))
       .rejects.toThrow(/atualizar/);
+  });
+
+  it("lista o histórico por pedido e os encontros do usuário (Spec 071)", async () => {
+    const ok = fakeClient({ data: [row], error: null });
+    const list = await new SupabaseMeetingDataSource(ok.client).listByRequest("r1");
+    expect(list).toHaveLength(1);
+    expect(list[0].id).toBe("m1");
+    expect(ok.chain.eq).toHaveBeenCalledWith("request_id", "r1");
+
+    const userList = await new SupabaseMeetingDataSource(ok.client).listByUser("dono");
+    expect(userList).toHaveLength(1);
+
+    const fail = fakeClient({ data: null, error: { message: "erro" } });
+    await expect(new SupabaseMeetingDataSource(fail.client).listByRequest("r1")).rejects.toBeInstanceOf(DataSourceError);
+    await expect(new SupabaseMeetingDataSource(fail.client).listByUser("dono")).rejects.toBeInstanceOf(DataSourceError);
   });
 });

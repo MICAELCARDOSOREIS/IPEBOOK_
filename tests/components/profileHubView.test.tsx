@@ -206,4 +206,22 @@ describe("Meu perfil — hub de navegação (Figma 07.01)", () => {
     expect(screen.getByText("Atividade")).toBeDefined();
     expect(screen.getByText("Conta")).toBeDefined();
   });
+
+  it("aciona a navegação para Histórico de encontros (Spec 071)", async () => {
+    mockAuth({ id: "ana", email: "ana@exemplo.com" });
+    mockProfile();
+    const onNavigateToMeetingHistory = vi.fn();
+
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(
+        <ProfileHub {...baseProps({ onNavigateToMeetingHistory })} />,
+      );
+    });
+
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Histórico de encontros"));
+    });
+    expect(onNavigateToMeetingHistory).toHaveBeenCalledTimes(1);
+  });
 });
