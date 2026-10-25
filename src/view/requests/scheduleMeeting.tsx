@@ -1,10 +1,11 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { PIRIPIRI_MEETING_POINTS } from "@/model/entities/meetingPoint";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useScheduleMeetingViewModel } from "@/viewmodel/useScheduleMeetingViewModel";
-import { tokens } from "@/view/tokens";
+import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
+import { useTheme } from "@/view/theme/ThemeProvider";
 import { formatMeetingDay, spokenMeetingDay } from "@/view/meetingFormat";
 import { useFormErrorAnnouncer } from "@/view/useFormErrorAnnouncer";
 import { AppIcon } from "@/view/components/AppIcon";
@@ -22,10 +23,16 @@ export type ScheduleMeetingProps = {
   onSent?: () => void;
 };
 
-type OptionChipProps = { label: string; accessibilityLabel: string; selected: boolean; onPress: () => void };
+type OptionChipProps = {
+  label: string;
+  accessibilityLabel: string;
+  selected: boolean;
+  onPress: () => void;
+  styles: ReturnType<typeof createStyles>;
+};
 
 /** Opção de escolha única de `06.04`, anunciada como `radio` (Spec 052, RN-09). */
-function OptionChip({ label, accessibilityLabel, selected, onPress }: OptionChipProps) {
+function OptionChip({ label, accessibilityLabel, selected, onPress, styles }: OptionChipProps) {
   return (
     <Pressable
       accessibilityRole="radio"
@@ -49,6 +56,8 @@ export function ScheduleMeeting({ requestId, sessionUserId, onBack, onSent }: Sc
   const [state, actions] = useScheduleMeetingViewModel(requestId, sessionUserId);
   const errorRef = useFormErrorAnnouncer(state.error);
   const rescheduling = state.mode === "reschedule";
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   return (
     <SafeAreaView style={styles.page}>
@@ -81,9 +90,15 @@ export function ScheduleMeeting({ requestId, sessionUserId, onBack, onSent }: Sc
                       onPress={() => actions.selectPoint(point.name)}
                       style={[styles.place, selected && styles.placeSelected]}
                     >
-                      <AppIcon name="place" size={24} color={tokens.colors.text} />
+                      <View style={[styles.placeIconBox, selected && styles.placeIconBoxSelected]}>
+                        <AppIcon
+                          name="place"
+                          size={24}
+                          color={selected ? colors.m3.onSecondaryContainer : colors.m3.onSurfaceVariant}
+                        />
+                      </View>
                       <View style={styles.placeText}>
-                        <Text style={styles.placeName}>{point.name}</Text>
+                        <Text style={[styles.placeName, selected && styles.placeNameSelected]}>{point.name}</Text>
                         <Text style={styles.placeDetail}>{point.recommendedTime}</Text>
                       </View>
                       <View style={[styles.radio, selected && styles.radioSelected]}>
@@ -103,6 +118,7 @@ export function ScheduleMeeting({ requestId, sessionUserId, onBack, onSent }: Sc
                     accessibilityLabel={`Dia ${spokenMeetingDay(day)}`}
                     selected={state.dayIndex === index}
                     onPress={() => actions.selectDay(index)}
+                    styles={styles}
                   />
                 ))}
               </View>
@@ -116,6 +132,7 @@ export function ScheduleMeeting({ requestId, sessionUserId, onBack, onSent }: Sc
                     accessibilityLabel={`Horário ${hour}h`}
                     selected={state.hour === hour}
                     onPress={() => actions.selectHour(hour)}
+                    styles={styles}
                   />
                 ))}
               </View>
@@ -165,62 +182,114 @@ export default function ScheduleMeetingScreen({ requestId, onBack, onRequireSign
   return <ScheduleMeeting requestId={requestId} sessionUserId={authState.user.id} onBack={onBack} onSent={onSent} />;
 }
 
-const styles = StyleSheet.create({
-  page: { flex: 1, backgroundColor: tokens.colors.background },
-  scroll: { paddingBottom: tokens.spacing[24] },
-  content: { width: "100%", maxWidth: 560, alignSelf: "center", padding: tokens.spacing[16], gap: tokens.spacing[12] },
-  headline: {
-    ...tokens.typography.displayLarge,
-    color: tokens.colors.text,
-  },
-  body: { ...tokens.typography.bodyLarge, color: tokens.colors.secondaryText },
-  sectionLabel: { ...tokens.typography.titleMedium, color: tokens.colors.text, marginTop: tokens.spacing[8] },
-  places: { gap: tokens.spacing[12] },
-  place: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: tokens.spacing[16],
-    minHeight: tokens.accessibility.touchTarget,
-    padding: tokens.spacing[16],
-    borderRadius: tokens.radius.medium,
-    borderWidth: 1,
-    borderColor: tokens.colors.m3.outlineVariant,
-    backgroundColor: tokens.colors.surface,
-  },
-  placeSelected: { borderColor: tokens.colors.action, borderWidth: 2, backgroundColor: tokens.colors.soft },
-  placeText: { flex: 1, gap: tokens.spacing[4] },
-  placeName: { ...tokens.typography.bodyLarge, color: tokens.colors.text },
-  placeDetail: { ...tokens.typography.bodyMedium, color: tokens.colors.secondaryText },
-  radio: {
-    width: 20,
-    height: 20,
-    borderRadius: tokens.radius.full,
-    borderWidth: 2,
-    borderColor: tokens.colors.secondaryText,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  radioSelected: { borderColor: tokens.colors.action },
-  radioDot: { width: 10, height: 10, borderRadius: tokens.radius.full, backgroundColor: tokens.colors.action },
-  chips: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[8] },
-  chip: {
-    minHeight: tokens.accessibility.touchTarget,
-    justifyContent: "center",
-    paddingHorizontal: tokens.spacing[16],
-    borderRadius: tokens.radius.small,
-    borderWidth: 1,
-    borderColor: tokens.colors.m3.outlineVariant,
-    backgroundColor: tokens.colors.surface,
-  },
-  chipSelected: { backgroundColor: tokens.colors.soft, borderColor: tokens.colors.soft },
-  chipText: { ...tokens.typography.bodyMedium, color: tokens.colors.text },
-  chipTextSelected: { color: tokens.colors.actionDeep, fontWeight: "600" },
-  error: { ...tokens.typography.bodyMedium, color: tokens.colors.error },
-  footer: {
-    borderTopWidth: 1,
-    borderTopColor: tokens.colors.m3.outlineVariant,
-    backgroundColor: tokens.colors.m3.surfaceContainer,
-    padding: tokens.spacing[16],
-  },
-  footerContent: { width: "100%", maxWidth: 560, alignSelf: "center", gap: tokens.spacing[8] },
-});
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+    page: { flex: 1, backgroundColor: colors.surface },
+    scroll: { paddingBottom: tokens.spacing[24] },
+    content: { width: "100%", maxWidth: 560, alignSelf: "center", padding: tokens.spacing[16], gap: tokens.spacing[12] },
+    headline: {
+      ...tokens.typography.displayLarge,
+      fontFamily: fontFamily.brand,
+      color: colors.m3.onSurface,
+    },
+    body: {
+      ...tokens.typography.bodyLarge,
+      fontFamily: fontFamily.regular,
+      color: colors.m3.onSurfaceVariant,
+    },
+    sectionLabel: {
+      ...tokens.typography.titleMedium,
+      fontFamily: fontFamily.semiBold,
+      color: colors.m3.onSurface,
+      marginTop: tokens.spacing[8],
+    },
+    places: { gap: tokens.spacing[12] },
+    place: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[16],
+      minHeight: tokens.accessibility.touchTarget,
+      padding: tokens.spacing[16],
+      borderRadius: tokens.radius.medium,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+      backgroundColor: colors.m3.surfaceContainerLow,
+    },
+    placeSelected: {
+      borderColor: colors.m3.primary,
+      borderWidth: 2,
+      backgroundColor: colors.m3.surfaceContainerHighest,
+    },
+    placeIconBox: {
+      width: 44,
+      height: 44,
+      borderRadius: tokens.radius.medium,
+      backgroundColor: colors.m3.surfaceContainerHigh,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    placeIconBoxSelected: {
+      backgroundColor: colors.m3.secondaryContainer,
+    },
+    placeText: { flex: 1, gap: tokens.spacing[4] },
+    placeName: {
+      ...tokens.typography.bodyLarge,
+      fontFamily: fontFamily.semiBold,
+      color: colors.m3.onSurface,
+    },
+    placeNameSelected: {
+      color: colors.m3.primary,
+    },
+    placeDetail: {
+      ...tokens.typography.bodyMedium,
+      fontFamily: fontFamily.regular,
+      color: colors.m3.onSurfaceVariant,
+    },
+    radio: {
+      width: 22,
+      height: 22,
+      borderRadius: tokens.radius.full,
+      borderWidth: 2,
+      borderColor: colors.m3.outline,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    radioSelected: { borderColor: colors.m3.primary },
+    radioDot: { width: 12, height: 12, borderRadius: tokens.radius.full, backgroundColor: colors.m3.primary },
+    chips: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[8] },
+    chip: {
+      minHeight: tokens.accessibility.touchTarget,
+      justifyContent: "center",
+      paddingHorizontal: tokens.spacing[16],
+      borderRadius: tokens.radius.medium,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+      backgroundColor: colors.m3.surfaceContainerLow,
+    },
+    chipSelected: {
+      backgroundColor: colors.m3.secondaryContainer,
+      borderColor: colors.m3.secondaryContainer,
+    },
+    chipText: {
+      ...tokens.typography.bodyMedium,
+      fontFamily: fontFamily.regular,
+      color: colors.m3.onSurface,
+    },
+    chipTextSelected: {
+      fontFamily: fontFamily.semiBold,
+      color: colors.m3.onSecondaryContainer,
+    },
+    error: {
+      ...tokens.typography.bodyMedium,
+      fontFamily: fontFamily.medium,
+      color: colors.m3.error,
+    },
+    footer: {
+      borderTopWidth: 1,
+      borderTopColor: colors.m3.outlineVariant,
+      backgroundColor: colors.m3.surfaceContainer,
+      padding: tokens.spacing[16],
+    },
+    footerContent: { width: "100%", maxWidth: 560, alignSelf: "center", gap: tokens.spacing[8] },
+  });
+}
