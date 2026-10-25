@@ -10,9 +10,21 @@ export class MemoryBookDataSource implements IBookDataSource {
   }
 
   async list(options?: ListBooksOptions): Promise<readonly Book[]> {
-    const available = this.books
+    let available = this.books
       .filter((book) => book.status !== "paused")
       .map((book) => ({ ...book }));
+
+    if (
+      options?.neighborhood &&
+      options.neighborhood !== "all" &&
+      options.neighborhood !== "Todos os bairros (Piripiri)"
+    ) {
+      available = available.filter((book) => book.neighborhood === options.neighborhood);
+    }
+
+    if (options?.modality) {
+      available = available.filter((book) => book.modality === options.modality);
+    }
 
     if (options?.limit !== undefined || options?.offset !== undefined) {
       const offset = Math.max(0, options?.offset ?? 0);
