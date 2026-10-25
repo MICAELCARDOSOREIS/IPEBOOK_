@@ -16,13 +16,16 @@ export default function Index() {
       onNavigateToSignIn={() => router.push("/entrar")}
       onNavigateToBookDetail={(bookId) => router.push(`/livro/${bookId}`)}
       onNavigateToNotifications={() => router.push("/notificacoes")}
-      onNavigateToSearch={(filter) =>
+      onNavigateToSearch={(filter) => {
+        const params: Record<string, string> = {};
+        if (filter?.modality) params.modalidade = filter.modality;
+        if (filter?.neighborhood) params.bairro = filter.neighborhood;
         router.push(
-          filter?.modality
-            ? { pathname: "/pesquisa", params: { modalidade: filter.modality } }
+          Object.keys(params).length > 0
+            ? { pathname: "/pesquisa", params }
             : "/pesquisa",
-        )
-      }
+        );
+      }}
     />
   );
 }

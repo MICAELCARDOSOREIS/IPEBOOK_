@@ -155,8 +155,8 @@ export type HomeProps = {
   onNavigateToNotifications?: () => void;
   onNavigateToTerms?: () => void;
   onNavigateToHelp?: () => void;
-  /** "Ver mais" das seções destacadas; `modality` pré-aplica o filtro na Pesquisa. */
-  onNavigateToSearch?: (filter?: { modality?: BookModality }) => void;
+  /** "Ver mais" das seções destacadas; `modality` e `neighborhood` pré-aplicam filtros na Pesquisa. */
+  onNavigateToSearch?: (filter?: { modality?: BookModality; neighborhood?: string }) => void;
   /** Mudar este valor força o catálogo a recarregar (ex.: ao voltar de cadastrar um anúncio). */
   focusKey?: unknown;
 };
@@ -172,7 +172,7 @@ export default function Home({
   onNavigateToSearch,
   focusKey,
 }: HomeProps = {}) {
-  const neighborhoodHook = useActiveNeighborhood();
+  const neighborhoodHook = useActiveNeighborhood("Centro");
   const effectiveNeighborhood = currentNeighborhood ?? neighborhoodHook.activeNeighborhood;
   const handleSelectNeighborhood = onSelectNeighborhood ?? neighborhoodHook.openSelector;
 
@@ -193,12 +193,28 @@ export default function Home({
     void actions.reload();
   }, [focusKey]);
 
+  const isSpecificNeighborhood =
+    Boolean(effectiveNeighborhood) &&
+    effectiveNeighborhood !== "all" &&
+    effectiveNeighborhood !== "Todos os bairros (Piripiri)";
+
+  const isCustomNeighborhood =
+    isSpecificNeighborhood && effectiveNeighborhood !== "Centro";
+
   const filteredBooks = useMemo(() => {
     if (selectedModality === "all") return state.books;
     return state.books.filter((b) => b.modality === selectedModality);
   }, [state.books, selectedModality]);
 
-  const recentBooks = filteredBooks.slice(0, CAROUSEL_MAX_ITEMS);
+  const neighborhoodBooks = useMemo(() => {
+    if (!isSpecificNeighborhood) return filteredBooks;
+    if (effectiveNeighborhood === "Centro") {
+      return filteredBooks.filter((b) => !b.neighborhood || b.neighborhood === "Centro");
+    }
+    return filteredBooks.filter((b) => b.neighborhood === effectiveNeighborhood);
+  }, [filteredBooks, isSpecificNeighborhood, effectiveNeighborhood]);
+
+  const recentBooks = neighborhoodBooks.slice(0, CAROUSEL_MAX_ITEMS);
   const donationCount = state.books.filter(
     (book) => book.modality === "donation" && book.status === "available",
   ).length;
@@ -208,9 +224,13 @@ export default function Home({
       : `${donationCount} ${donationCount === 1 ? "livro gratuito" : "livros gratuitos"} em Piripiri`;
 
   const displayNeighborhood =
-    effectiveNeighborhood === "all" || effectiveNeighborhood === "Todos os bairros (Piripiri)"
+    !isSpecificNeighborhood
       ? "Piripiri (Todos)"
       : effectiveNeighborhood;
+
+  const carouselDisplayTitle = isCustomNeighborhood
+    ? `Perto de você no ${effectiveNeighborhood}`
+    : "Perto de você";
 
   const listHeader = (
     <View style={styles.headerContainer}>
@@ -264,7 +284,16 @@ export default function Home({
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Buscar título, autor ou categoria"
-        onPress={() => onNavigateToSearch?.(selectedModality === "all" ? undefined : { modality: selectedModality })}
+        onPress={() => {
+          const filter: { modality?: BookModality; neighborhood?: string } = {};
+          if (selectedModality !== "all") filter.modality = selectedModality;
+          if (isCustomNeighborhood) filter.neighborhood = effectiveNeighborhood;
+          if (Object.keys(filter).length > 0) {
+            onNavigateToSearch?.(filter);
+          } else {
+            onNavigateToSearch?.();
+          }
+        }}
         style={styles.searchBar}
       >
         <AppIcon name="search" size={24} color={colors.m3.onSurfaceVariant} />
@@ -306,18 +335,51 @@ export default function Home({
       ) : recentBooks.length > 0 ? (
         <CatalogCarousel
           title="Recém-adicionados"
-          displayTitle="Perto de você"
+          displayTitle={carouselDisplayTitle}
           books={recentBooks}
           onNavigateToBookDetail={onNavigateToBookDetail}
-          onViewMore={() => (selectedModality === "all" ? onNavigateToSearch?.() : onNavigateToSearch?.({ modality: selectedModality }))}
+          onViewMore={() => {
+            const filter: { modality?: BookModality; neighborhood?: string } = {};
+            if (selectedModality !== "all") filter.modality = selectedModality;
+            if (isCustomNeighborhood) filter.neighborhood = effectiveNeighborhood;
+            if (Object.keys(filter).length > 0) {
+              onNavigateToSearch?.(filter);
+            } else {
+              onNavigateToSearch?.();
+            }
+          }}
           viewMoreLabel="Ver mais livros recém-adicionados"
           viewMoreButtonText="Ver todos"
         />
       ) : (
         <View style={styles.empty}>
-          <Text accessibilityRole="header" style={styles.carouselTitle}>Perto de você</Text>
-          <Text style={styles.emptyTitle}>Ainda não há livros por aqui.</Text>
-          <Text style={styles.body}>Quando houver livros disponíveis, eles aparecerão neste espaço.</Text>
+          <Text accessibilityRole="header" style={styles.carouselTitle}>{carouselDisplayTitle}</Text>
+          <Text style={styles.emptyTitle}>
+            {state.books.length > 0 && isSpecificNeighborhood
+              ? `Ainda não há livros no ${effectiveNeighborhood}.`
+              : "Ainda não há livros por aqui."}
+          </Text>
+          <Text style={styles.body}>
+            {state.books.length > 0 && isSpecificNeighborhood
+              ? "Seja a primeira pessoa a anunciar neste bairro ou explore livros de toda Piripiri."
+              : "Quando houver livros disponíveis, eles aparecerão neste espaço."}
+          </Text>
+          {state.books.length > 0 && isSpecificNeighborhood && filteredBooks.length > 0 ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Ver livros em toda Piripiri"
+              onPress={() =>
+                onNavigateToSearch?.(
+                  selectedModality === "all"
+                    ? { neighborhood: "all" }
+                    : { modality: selectedModality, neighborhood: "all" },
+                )
+              }
+              style={[styles.viewMoreButton, { marginTop: tokens.spacing[12], alignSelf: "flex-start" }]}
+            >
+              <Text style={styles.viewMoreText}>Explorar toda Piripiri</Text>
+            </Pressable>
+          ) : null}
         </View>
       )}
 

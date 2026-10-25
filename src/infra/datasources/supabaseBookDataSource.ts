@@ -51,16 +51,29 @@ export class SupabaseBookDataSource implements IBookDataSource {
     let query = this.client
       .from("v2_books")
       .select(BOOK_COLUMNS)
-      .neq("status", "paused")
-      .order("created_at", { ascending: false });
+      .neq("status", "paused");
+
+    if (
+      options?.neighborhood &&
+      options.neighborhood !== "all" &&
+      options.neighborhood !== "Todos os bairros (Piripiri)"
+    ) {
+      query = query.eq("neighborhood", options.neighborhood);
+    }
+
+    if (options?.modality) {
+      query = query.eq("modality", options.modality);
+    }
+
+    let orderedQuery = query.order("created_at", { ascending: false });
 
     if (options?.limit !== undefined || options?.offset !== undefined) {
       const offset = Math.max(0, options?.offset ?? 0);
       const limit = Math.max(1, options?.limit ?? 20);
-      query = query.range(offset, offset + limit - 1);
+      orderedQuery = orderedQuery.range(offset, offset + limit - 1);
     }
 
-    const { data, error } = await query;
+    const { data, error } = await orderedQuery;
     if (error) throw new DataSourceError("Não foi possível carregar os livros.");
     return (data as BookRow[]).map(mapBook);
   }

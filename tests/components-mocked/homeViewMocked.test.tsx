@@ -217,4 +217,70 @@ describe("testes de componente com mock: Home (ISO/IEC 25010 - Usabilidade e Con
 
     expect(reloadMock).toHaveBeenCalledTimes(1);
   });
+
+  describe("seção hiperlocal por bairro ativo (Spec 068 / ADR 0051)", () => {
+    const mixedBooks: HomeState["books"] = [
+      {
+        id: "1",
+        title: "Livro do Centro",
+        author: "Autor A",
+        ownerId: "u1",
+        modality: "sale",
+        status: "available",
+        neighborhood: "Centro",
+      },
+      {
+        id: "2",
+        title: "Livro de Crioli",
+        author: "Autor B",
+        ownerId: "u2",
+        modality: "donation",
+        status: "available",
+        neighborhood: "Crioli",
+      },
+    ];
+
+    it("filtra os livros do bairro ativo e atualiza título do carrossel", async () => {
+      mockedUseHomeViewModel.mockReturnValue([
+        { books: mixedBooks, loading: false, error: null },
+        { reload: vi.fn() },
+      ]);
+      const onNavigateToSearch = vi.fn();
+      let screen!: Awaited<ReturnType<typeof render>>;
+      await act(async () => {
+        screen = await render(
+          <Home currentNeighborhood="Crioli" onNavigateToSearch={onNavigateToSearch} />,
+        );
+      });
+
+      expect(screen.getByText("Perto de você no Crioli")).toBeDefined();
+      expect(screen.getAllByText("Livro de Crioli").length).toBeGreaterThanOrEqual(1);
+      expect(screen.queryByText("Livro do Centro")).toBeNull();
+
+      fireEvent.press(screen.getByLabelText("Ver mais livros recém-adicionados"));
+      expect(onNavigateToSearch).toHaveBeenCalledWith({ neighborhood: "Crioli" });
+    });
+
+    it("exibe estado de ausência acolhedor quando não há livros no bairro selecionado", async () => {
+      mockedUseHomeViewModel.mockReturnValue([
+        { books: mixedBooks, loading: false, error: null },
+        { reload: vi.fn() },
+      ]);
+      const onNavigateToSearch = vi.fn();
+      let screen!: Awaited<ReturnType<typeof render>>;
+      await act(async () => {
+        screen = await render(
+          <Home currentNeighborhood="Petecas" onNavigateToSearch={onNavigateToSearch} />,
+        );
+      });
+
+      expect(screen.getByText("Perto de você no Petecas")).toBeDefined();
+      expect(screen.getByText("Ainda não há livros no Petecas.")).toBeDefined();
+
+      const exploreAllBtn = screen.getByLabelText("Ver livros em toda Piripiri");
+      expect(exploreAllBtn).toBeDefined();
+      fireEvent.press(exploreAllBtn);
+      expect(onNavigateToSearch).toHaveBeenCalledWith({ neighborhood: "all" });
+    });
+  });
 });

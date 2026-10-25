@@ -48,6 +48,7 @@ Esta decisão foi trazida do trabalho já em produção da equipe no projeto irm
 | Conclusão de negociação e avaliação mútua | **Implementada** em [specs/063](../specs/063-concluir-negociacao-avaliacoes/spec.md) (ADR 0046): avaliação de 1 a 5 estrelas e comentários |
 | Alinhamento visual total com Figma | **Implementada** em [specs/062](../specs/062-alinhamento-home-figma/spec.md), [064](../specs/064-alinhamento-estante-figma/spec.md), [065](../specs/065-alinhamento-perfil-figma/spec.md) e [066](../specs/066-alinhamento-explorar-figma/spec.md) |
 | Seletor de bairro e filtro territorial | **Implementada** em [specs/067](../specs/067-seletor-bairro-piripiri/spec.md) (ADR 0050): modal de seleção dos 17 bairros de Piripiri, persistência e filtro no catálogo |
+| Seção hiperlocal na Home e consulta remota | **Implementada** em [specs/068](../specs/068-secao-hiperlocal-home-e-filtro-supabase/spec.md) (ADR 0051): carrossel hiperlocal por bairro e filtro remoto no Supabase |
 | Troca, doação, empréstimo ou venda | Decidido: venda, troca e doação. Empréstimo não entra no escopo |
 | Leitura de arquivos digitais | Não implementada; fora de escopo — modalidade decidida é livro físico |
 | Banco e sincronização | Backend Supabase oficial configurado e ativo (`EXPO_PUBLIC_BACKEND=supabase`), com RLS, migrações SQL validadas via PGlite e adaptadores de memória para testes rápidos |
