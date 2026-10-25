@@ -2,7 +2,7 @@
 
 Documento consolidado de continuidade técnica e produto do Ipebook (Piripiri, PI).
 
-Conferência atual: **2026-10-25** (branch `develop` consolidada com 67 specs e 50 ADRs, 1.142 testes automatizados em 164 arquivos 100% passando).
+Conferência atual: **2026-10-25** (branch `develop` consolidada com 68 specs e 51 ADRs, 1.149 testes automatizados em 165 arquivos 100% passando).
 
 **Entregas consolidadas (2026-10-23):**
 - **Spec 060 (Notificações push locais e lembretes de encontros, ADR 0043):** Infraestrutura desacoplada com `expo-notifications` (~57.0.24) para agendamento local de lembretes de encontros com cálculo de antecedência (60 min antes do horário no ponto seguro de Piripiri), canal de notificações no Android com alta prioridade e implementações real (`ExpoPushNotificationService`) e em memória (`MemoryPushNotificationService`) no container de DI.
@@ -310,3 +310,4 @@ No app ativo em desenvolvimento, 31 rotas cobrem as jornadas essenciais da beta.
 - `specs/065-alinhamento-perfil-figma/`: Alinhamento visual da tela Meu Perfil ao Figma `07.01` e `07.02` (ADR 0048).
 - `specs/066-alinhamento-explorar-figma/`: Alinhamento visual da tela Explorar / Pesquisa ao Figma `02.02` (ADR 0049).
 - `specs/067-seletor-bairro-piripiri/`: Seletor de bairro comunitário e filtro territorial de Piripiri na Home e no Explorar (Figma `02.01` e `02.02`, ADR 0050).
+- `specs/068-secao-hiperlocal-home-e-filtro-supabase/`: Seção hiperlocal na Home e filtro remoto de bairro no Supabase (Figma `02.01` e `02.02`, ADR 0051).

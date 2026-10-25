@@ -268,6 +268,24 @@ describe("datasources Supabase", () => {
     expect(result[0].id).toBe("p1");
   });
 
+  it("aplica filtro de bairro e modalidade na consulta remota (Spec 068 / ADR 0051)", async () => {
+    const row = { id: "p2", title: "Livro no Centro", author: "Autor", owner_id: "dono", modality: "donation", price: null, status: "available", neighborhood: "Centro" };
+    const order = vi.fn().mockResolvedValue({ data: [row], error: null });
+    const eqModality = vi.fn().mockReturnValue({ order });
+    const eqNeighborhood = vi.fn().mockReturnValue({ eq: eqModality, order });
+    const neq = vi.fn().mockReturnValue({ eq: eqNeighborhood, order });
+    const from = vi.fn().mockReturnValue({
+      select: vi.fn().mockReturnValue({ neq }),
+    });
+    const books = new SupabaseBookDataSource(fakeClient({ from }));
+    const result = await books.list({ neighborhood: "Centro", modality: "donation" });
+
+    expect(eqNeighborhood).toHaveBeenCalledWith("neighborhood", "Centro");
+    expect(eqModality).toHaveBeenCalledWith("modality", "donation");
+    expect(result).toHaveLength(1);
+    expect(result[0].neighborhood).toBe("Centro");
+  });
+
   it("trata catálogo vazio, livro ausente e falhas do banco sem detalhes internos", async () => {
     const empty = new SupabaseBookDataSource(fakeClient({ from: vi.fn().mockReturnValue({
       select: vi.fn().mockReturnValue({
