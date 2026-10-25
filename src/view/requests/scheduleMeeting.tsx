@@ -282,7 +282,7 @@ function createStyles(colors: ColorPalette) {
     error: {
       ...tokens.typography.bodyMedium,
       fontFamily: fontFamily.medium,
-      color: colors.m3.error,
+      color: colors.error,
     },
     footer: {
       borderTopWidth: 1,
