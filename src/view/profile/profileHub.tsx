@@ -17,6 +17,7 @@ export type ProfileHubProps = {
   onNavigateToEditProfile: () => void;
   onNavigateToMyListings?: () => void;
   onNavigateToRatings: () => void;
+  onNavigateToMeetingHistory?: () => void;
   onNavigateToFavorites?: () => void;
   onNavigateToNotifications: () => void;
   onNavigateToSecurity: () => void;
@@ -47,6 +48,7 @@ export default function ProfileHub({
   onNavigateToEditProfile,
   onNavigateToMyListings,
   onNavigateToRatings,
+  onNavigateToMeetingHistory,
   onNavigateToFavorites,
   onNavigateToNotifications,
   onNavigateToSecurity,
@@ -124,6 +126,15 @@ export default function ProfileHub({
           ? `★ ${ratingText} em ${completedTrocas} trocas`
           : "Veja o que a comunidade disse sobre você",
       onPress: onNavigateToRatings,
+      showChevron: true,
+    },
+    {
+      key: "meetings",
+      icon: "calendar",
+      iconColor: colors.text,
+      label: "Histórico de encontros",
+      description: "Encontros nos pontos seguros de Piripiri",
+      onPress: onNavigateToMeetingHistory ?? (() => {}),
       showChevron: true,
     },
     {

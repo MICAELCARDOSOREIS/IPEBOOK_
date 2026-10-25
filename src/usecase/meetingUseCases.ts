@@ -26,6 +26,16 @@ export class MeetingUseCases implements IMeetingUseCases {
     return this.meetings.findLatestByRequest(requestId);
   }
 
+  async getMeetingHistory(requestId: string, sessionUserId: string | null): Promise<readonly Meeting[]> {
+    await this.requireParticipant(requestId, requireSession(sessionUserId));
+    return this.meetings.listByRequest(requestId);
+  }
+
+  async getUserMeetingHistory(sessionUserId: string | null): Promise<readonly Meeting[]> {
+    const userId = requireSession(sessionUserId);
+    return this.meetings.listByUser(userId);
+  }
+
   async propose(requestId: string, proposal: MeetingProposal, sessionUserId: string | null): Promise<Meeting> {
     const userId = requireSession(sessionUserId);
     await this.requireParticipant(requestId, userId);

@@ -81,6 +81,29 @@ export function MeetingCard({ requestId, sessionUserId, counterpartName, focusKe
           label={meeting ? "Combinar novo encontro" : "Combinar encontro"}
           onPress={() => onScheduleMeeting?.()}
         />
+
+        {(state.history ?? []).length > 0 ? (
+          <View style={styles.historyContainer}>
+            <Text style={styles.historyTitle}>Histórico de encontros</Text>
+            {(state.history ?? []).map((item) => (
+              <View key={item.id} style={styles.historyItem}>
+                <AppIcon
+                  name={item.status === "confirmed" ? "check" : "calendar"}
+                  size={18}
+                  color={item.status === "confirmed" ? colors.m3.primary : colors.m3.onSurfaceVariant}
+                />
+                <View style={styles.historyItemContent}>
+                  <Text style={styles.historyItemText}>
+                    {formatMeetingWhen(item.scheduledAt)} · {item.pointName}
+                  </Text>
+                  <Text style={styles.historyStatusBadge}>
+                    {item.status === "cancelled" ? "Cancelado" : item.status === "confirmed" ? "Confirmado" : "Proposto"}
+                  </Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        ) : null}
       </View>
     );
   }
@@ -88,6 +111,7 @@ export function MeetingCard({ requestId, sessionUserId, counterpartName, focusKe
   const point = PIRIPIRI_MEETING_POINTS.find((item) => item.name === meeting.pointName);
   const mine = meeting.proposedBy === sessionUserId;
   const confirmed = meeting.status === "confirmed";
+  const pastMeetings = (state.history ?? []).filter((m) => m.id !== meeting.id);
 
   return (
     <View style={styles.card}>
@@ -136,6 +160,29 @@ export function MeetingCard({ requestId, sessionUserId, counterpartName, focusKe
         onPress={() => onScheduleMeeting?.()}
       />
       <TextButton label="Cancelar encontro" tone="danger" disabled={state.busy} onPress={() => setConfirmingCancel(true)} />
+
+      {pastMeetings.length > 0 ? (
+        <View style={styles.historyContainer}>
+          <Text style={styles.historyTitle}>Tentativas anteriores</Text>
+          {pastMeetings.map((item) => (
+            <View key={item.id} style={styles.historyItem}>
+              <AppIcon
+                name={item.status === "confirmed" ? "check" : "calendar"}
+                size={18}
+                color={item.status === "confirmed" ? colors.m3.primary : colors.m3.onSurfaceVariant}
+              />
+              <View style={styles.historyItemContent}>
+                <Text style={styles.historyItemText}>
+                  {formatMeetingWhen(item.scheduledAt)} · {item.pointName}
+                </Text>
+                <Text style={styles.historyStatusBadge}>
+                  {item.status === "cancelled" ? "Cancelado" : item.status === "confirmed" ? "Confirmado" : "Proposto"}
+                </Text>
+              </View>
+            </View>
+          ))}
+        </View>
+      ) : null}
 
       <Dialog
         visible={confirmingCancel}
@@ -188,6 +235,49 @@ function createStyles(colors: ColorPalette) {
       ...tokens.typography.bodyMedium,
       fontFamily: fontFamily.medium,
       color: colors.error,
+    },
+    historyContainer: {
+      marginTop: tokens.spacing[8],
+      paddingTop: tokens.spacing[12],
+      borderTopWidth: 1,
+      borderTopColor: colors.m3.outlineVariant,
+      gap: tokens.spacing[8],
+    },
+    historyTitle: {
+      ...tokens.typography.labelMedium,
+      fontFamily: fontFamily.semiBold,
+      color: colors.m3.onSurfaceVariant,
+    },
+    historyItem: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[8],
+      paddingVertical: tokens.spacing[4],
+    },
+    historyItemContent: {
+      flex: 1,
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      gap: tokens.spacing[8],
+    },
+    historyItemText: {
+      flex: 1,
+      ...tokens.typography.bodyMedium,
+      fontSize: 13,
+      lineHeight: 18,
+      fontFamily: fontFamily.regular,
+      color: colors.m3.onSurface,
+    },
+    historyStatusBadge: {
+      ...tokens.typography.labelSmall,
+      fontFamily: fontFamily.medium,
+      color: colors.m3.onSurfaceVariant,
+      backgroundColor: colors.m3.surfaceContainerHighest,
+      paddingHorizontal: tokens.spacing[8],
+      paddingVertical: 2,
+      borderRadius: tokens.radius.small,
+      overflow: "hidden",
     },
   });
 }

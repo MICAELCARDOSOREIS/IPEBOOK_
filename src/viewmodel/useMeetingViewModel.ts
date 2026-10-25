@@ -13,6 +13,7 @@ import { formKey, guardFormSubmit } from "@/viewmodel/formRateLimit";
 
 export type MeetingState = {
   meeting: Meeting | null;
+  history: readonly Meeting[];
   loading: boolean;
   error: string | null;
   busy: boolean;
@@ -40,6 +41,7 @@ export function useMeetingViewModel(
 ): [MeetingState, MeetingActions] {
   const [state, setState] = useState<MeetingState>({
     meeting: null,
+    history: [],
     loading: true,
     error: null,
     busy: false,
@@ -51,8 +53,11 @@ export function useMeetingViewModel(
     if (!active.current) return;
     setState((previous) => ({ ...previous, loading: true, error: null }));
     try {
-      const meeting = await useCases.getMeeting(requestId, sessionUserId);
-      if (active.current) setState((previous) => ({ ...previous, meeting, loading: false }));
+      const [meeting, history] = await Promise.all([
+        useCases.getMeeting(requestId, sessionUserId),
+        useCases.getMeetingHistory(requestId, sessionUserId),
+      ]);
+      if (active.current) setState((previous) => ({ ...previous, meeting, history, loading: false }));
     } catch (error) {
       if (active.current) {
         setState((previous) => ({
@@ -78,7 +83,8 @@ export function useMeetingViewModel(
         const updated = action === "confirm"
           ? await useCases.confirm(meeting.id, sessionUserId)
           : await useCases.cancel(meeting.id, sessionUserId);
-        if (active.current) setState((previous) => ({ ...previous, meeting: updated, busy: false }));
+        const history = await useCases.getMeetingHistory(requestId, sessionUserId).catch(() => []);
+        if (active.current) setState((previous) => ({ ...previous, meeting: updated, history, busy: false }));
         return true;
       } catch (error) {
         logger.warn("Falha ao responder ao encontro", { action });

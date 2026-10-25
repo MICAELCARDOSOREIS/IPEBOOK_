@@ -658,7 +658,7 @@ function createStyles(colors: ColorPalette) {
       flexDirection: "row",
       alignItems: "center",
       gap: tokens.spacing[4],
-      marginTop: tokens.spacing[2],
+      marginTop: 2,
     },
     carouselCardNeighborhood: {
       ...tokens.typography.labelSmall,
