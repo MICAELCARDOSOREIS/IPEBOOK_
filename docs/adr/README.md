@@ -52,5 +52,6 @@
 - [0050 — Seletor de bairro comunitário e persistência de localidade ativa](0050-seletor-bairro-comunitario.md)
 - [0051 — Seção hiperlocal na Home e consulta remota de bairro no Supabase](0051-secao-hiperlocal-home-e-filtro-supabase.md)
 - [0052 — Alinhamento visual dos encontros e negociação ao Figma](0052-alinhamento-visual-encontros-figma.md)
+- [0053 — Selo de bairro nos cards de livro (Home e Busca)](0053-selo-bairro-cards-livro.md)
 
 Preservar registros aceitos; mudanças relevantes geram novo ADR com vínculos de substituição.
