@@ -282,5 +282,19 @@ describe("testes de componente com mock: Home (ISO/IEC 25010 - Usabilidade e Con
       fireEvent.press(exploreAllBtn);
       expect(onNavigateToSearch).toHaveBeenCalledWith({ neighborhood: "all" });
     });
+
+    it("exibe o selo de bairro no card do livro quando definido (Spec 070 / ADR 0053)", async () => {
+      mockedUseHomeViewModel.mockReturnValue([
+        { books: mixedBooks, loading: false, error: null },
+        { reload: vi.fn() },
+      ]);
+      let screen!: Awaited<ReturnType<typeof render>>;
+      await act(async () => {
+        screen = await render(<Home currentNeighborhood="Crioli" />);
+      });
+
+      expect(screen.getAllByText("Crioli").length).toBeGreaterThanOrEqual(2);
+      expect(screen.getByLabelText("Ver detalhe de Livro de Crioli, Autor B em Crioli")).toBeDefined();
+    });
   });
 });
