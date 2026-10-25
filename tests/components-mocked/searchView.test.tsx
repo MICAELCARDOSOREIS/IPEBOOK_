@@ -243,4 +243,12 @@ describe("Search (spec 006, US3/T019, Spec 028, Issue #93)", () => {
     });
     expect(clearFilters).toHaveBeenCalledTimes(1);
   });
+
+  it("renderiza o selo de bairro no card do livro na busca quando definido (Spec 070 / ADR 0053)", async () => {
+    setup([book({ neighborhood: "Centro" })]);
+    const screen = await renderSearch();
+
+    expect(screen.getByText("Centro")).toBeDefined();
+    expect(screen.getByLabelText("Ver detalhe de Dom Casmurro, Machado de Assis em Centro")).toBeDefined();
+  });
 });

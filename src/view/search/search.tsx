@@ -358,7 +358,7 @@ export default function Search({
             <View style={styles.card}>
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel={`Ver detalhe de ${item.title}, ${item.author}`}
+                accessibilityLabel={`Ver detalhe de ${item.title}, ${item.author}${item.neighborhood ? ` em ${item.neighborhood}` : ""}`}
                 onPress={() => { void actions.registerSearch(state.term); onNavigateToBookDetail?.(item.id); }}
                 style={styles.cardMain}
               >
@@ -369,6 +369,12 @@ export default function Search({
                   <View style={styles.cardMetaRow}>
                     <Tag variant={item.modality} />
                     <Text style={styles.priceText}>{priceOrCondition}</Text>
+                    {item.neighborhood ? (
+                      <View style={styles.cardLocationBadge}>
+                        <AppIcon name="place" size={12} color={colors.m3.onSurfaceVariant} />
+                        <Text style={styles.cardLocationText}>{item.neighborhood}</Text>
+                      </View>
+                    ) : null}
                   </View>
                   {item.category ? <Text style={styles.categoryBadge}>{item.category}</Text> : null}
                 </View>
@@ -551,6 +557,20 @@ function createStyles(colors: ColorPalette) {
       alignItems: "center",
       gap: tokens.spacing[8],
       paddingTop: tokens.spacing[4],
+    },
+    cardLocationBadge: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 2,
+      paddingHorizontal: tokens.spacing[6],
+      paddingVertical: 2,
+      borderRadius: tokens.radius.small,
+      backgroundColor: colors.m3.surfaceContainerHigh,
+    },
+    cardLocationText: {
+      ...tokens.typography.labelSmall,
+      fontFamily: fontFamily.regular,
+      color: colors.m3.onSurfaceVariant,
     },
     priceText: {
       fontSize: 14,
