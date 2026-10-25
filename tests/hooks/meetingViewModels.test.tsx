@@ -11,6 +11,7 @@ import { MeetingUseCases } from "@/usecase/meetingUseCases";
 import type { IMeetingUseCases } from "@/usecase/iMeetingUseCases";
 import { useMeetingViewModel } from "@/viewmodel/useMeetingViewModel";
 import { useScheduleMeetingViewModel } from "@/viewmodel/useScheduleMeetingViewModel";
+import { useUserMeetingsViewModel } from "@/viewmodel/useUserMeetingsViewModel";
 
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
 const mounted: ReactTestRenderer[] = [];
@@ -136,5 +137,42 @@ describe("useMeetingViewModel (Spec 052, 06.05/06.11)", () => {
     const failing = { ...useCases, getMeeting: vi.fn().mockRejectedValue(new Error("rede")) } as unknown as IMeetingUseCases;
     const broken = await renderMeeting("dono", failing);
     expect(broken.current[0].error).toMatch(/Não foi possível carregar/);
+  });
+
+  it("carrega o histórico de encontros da negociação (Spec 071)", async () => {
+    await useCases.propose("aceito", { pointName: PRACA, scheduledAt: new Date(2026, 9, 23, 10).toISOString() }, "dono");
+    const hook = await renderMeeting("leitora");
+    expect(hook.current[0].history).toHaveLength(1);
+    expect(hook.current[0].history[0].pointName).toBe(PRACA);
+  });
+});
+
+async function renderUserMeetings(userId: string | null, cases: IMeetingUseCases = useCases) {
+  let result!: ReturnType<typeof useUserMeetingsViewModel>;
+  function Probe() {
+    result = useUserMeetingsViewModel(userId, cases);
+    return null;
+  }
+  await act(async () => {
+    mounted.push(create(createElement(Probe)));
+  });
+  return { get current() { return result; } };
+}
+
+describe("useUserMeetingsViewModel (Spec 071)", () => {
+  it("carrega a lista de encontros do usuário ou vazio se deslogado", async () => {
+    await useCases.propose("aceito", { pointName: PRACA, scheduledAt: new Date(2026, 9, 23, 10).toISOString() }, "dono");
+    const hook = await renderUserMeetings("leitora");
+    expect(hook.current[0].loading).toBe(false);
+    expect(hook.current[0].meetings).toHaveLength(1);
+
+    const anon = await renderUserMeetings(null);
+    expect(anon.current[0].meetings).toHaveLength(0);
+  });
+
+  it("trata erro ao carregar os encontros", async () => {
+    const failing = { ...useCases, getUserMeetingHistory: vi.fn().mockRejectedValue(new Error("rede")) } as unknown as IMeetingUseCases;
+    const hook = await renderUserMeetings("dono", failing);
+    expect(hook.current[0].error).toMatch(/Não foi possível carregar/);
   });
 });
