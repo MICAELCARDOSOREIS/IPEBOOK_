@@ -39,6 +39,14 @@ Esta decisão foi trazida do trabalho já em produção da equipe no projeto irm
 | Boas-vindas e primeiro acesso | **Implementada** em [specs/026](../specs/026-boas-vindas-primeiro-acesso/spec.md) (issue #98): rota `/bem-vindo`, escolha opcional de bairro e persistência de primeiro acesso no dispositivo (ADR 0022) |
 | Denúncias e moderação comunitária | **Implementada** em [specs/011](../specs/011-denuncia-anuncio/spec.md) (issue #79): formulário `/denunciar/[id]`, tabela `v2_reports` e políticas de RLS no Supabase |
 | Restrição geográfica a Piripiri, PI | **Implementada** em [specs/022](../specs/022-restricao-geografica-piripiri/spec.md) (issue #83): 17 bairros oficiais, validação de localidade e selo da beta |
+| Tema escuro e acessibilidade de contraste | **Implementada** em [specs/054](../specs/054-tema-escuro-tokens/spec.md) e [specs/055](../specs/055-tema-escuro-telas-restantes/spec.md) (ADR 0036): alternância claro/escuro/sistema e tokens semânticos |
+| Bloqueio e desbloqueio de usuários | **Implementada** em [specs/056](../specs/056-bloqueio-de-usuarios/spec.md) (ADR 0039): rota `/perfil/bloqueados` e bloqueio mútuo |
+| Convidar amigos e compartilhar app | **Implementada** em [specs/057](../specs/057-convidar-amigos/spec.md) (ADR 0040): rota `/perfil/convidar` e integração WhatsApp |
+| Consulta e leitura de ISBN por câmera | **Implementada** em [specs/058](../specs/058-busca-livro-isbn/spec.md) e [specs/059](../specs/059-scanner-codigo-barras-isbn/spec.md) (ADR 0041/0042): autopreenchimento e scanner |
+| Notificações push locais e lembretes de encontro | **Implementada** em [specs/060](../specs/060-notificacoes-push-e-lembretes/spec.md) (ADR 0043): agendamento 60 min antes do encontro |
+| Chat interno na negociação | **Implementada** em [specs/061](../specs/061-chat-mensagens-negociacao/spec.md) (ADR 0044): troca de mensagens transacionais no fluxo de encontro |
+| Conclusão de negociação e avaliação mútua | **Implementada** em [specs/063](../specs/063-concluir-negociacao-avaliacoes/spec.md) (ADR 0046): avaliação de 1 a 5 estrelas e comentários |
+| Alinhamento visual total com Figma | **Implementada** em [specs/062](../specs/062-alinhamento-home-figma/spec.md), [064](../specs/064-alinhamento-estante-figma/spec.md), [065](../specs/065-alinhamento-perfil-figma/spec.md) e [066](../specs/066-alinhamento-explorar-figma/spec.md) |
 | Troca, doação, empréstimo ou venda | Decidido: venda, troca e doação. Empréstimo não entra no escopo |
 | Leitura de arquivos digitais | Não implementada; fora de escopo — modalidade decidida é livro físico |
 | Banco e sincronização | Backend Supabase oficial configurado e ativo (`EXPO_PUBLIC_BACKEND=supabase`), com RLS, migrações SQL validadas via PGlite e adaptadores de memória para testes rápidos |
