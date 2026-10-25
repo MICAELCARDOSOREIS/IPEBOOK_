@@ -13,6 +13,7 @@ export type SearchState = {
   term: string;
   modality: SearchModalityFilter;
   category: string | "all";
+  neighborhood: string | "all";
   priceRange: SearchPriceRange;
   sortBy: SearchSortOption;
   availableCategories: readonly string[];
@@ -27,6 +28,7 @@ export type SearchActions = {
   setTerm: (term: string) => void;
   setModality: (modality: SearchModalityFilter) => void;
   setCategory: (category: string | "all") => void;
+  setNeighborhood: (neighborhood: string | "all") => void;
   setPriceRange: (range: SearchPriceRange) => void;
   setSortBy: (sortBy: SearchSortOption) => void;
   clearFilters: () => void;
@@ -68,6 +70,7 @@ export function useSearchViewModel(
   const [term, setTerm] = useState("");
   const [modality, setModality] = useState<SearchModalityFilter>("all");
   const [category, setCategory] = useState<string | "all">("all");
+  const [neighborhood, setNeighborhood] = useState<string | "all">("all");
   const [priceRange, setPriceRange] = useState<SearchPriceRange>("all");
   const [sortBy, setSortBy] = useState<SearchSortOption>("recent");
   const [terms, setTerms] = useState<readonly string[]>([]);
@@ -89,15 +92,17 @@ export function useSearchViewModel(
       Boolean(term.trim()) ||
       modality !== "all" ||
       category !== "all" ||
+      (neighborhood !== "all" && neighborhood !== "Todos os bairros") ||
       priceRange !== "all" ||
       sortBy !== "recent"
     );
-  }, [term, modality, category, priceRange, sortBy]);
+  }, [term, modality, category, neighborhood, priceRange, sortBy]);
 
   const clearFilters = useCallback(() => {
     setTerm("");
     setModality("all");
     setCategory("all");
+    setNeighborhood("all");
     setPriceRange("all");
     setSortBy("recent");
   }, []);
@@ -116,6 +121,10 @@ export function useSearchViewModel(
       const normalizedCat = category.trim().toLowerCase();
       result = result.filter((book) => book.category?.trim().toLowerCase() === normalizedCat);
     }
+    if (neighborhood !== "all" && neighborhood !== "Todos os bairros") {
+      const normalizedNeigh = neighborhood.trim().toLowerCase();
+      result = result.filter((book) => book.neighborhood?.trim().toLowerCase() === normalizedNeigh);
+    }
     if (priceRange !== "all") {
       result = result.filter((book) => matchesPrice(book, priceRange));
     }
@@ -129,7 +138,7 @@ export function useSearchViewModel(
     }
 
     return result;
-  }, [homeState.books, term, modality, category, priceRange, sortBy]);
+  }, [homeState.books, term, modality, category, neighborhood, priceRange, sortBy]);
 
   const registerSearch = useCallback(async (value: string) => {
     setTerms(await history.registerSearch(userId, value));
@@ -145,6 +154,7 @@ export function useSearchViewModel(
       term,
       modality,
       category,
+      neighborhood,
       priceRange,
       sortBy,
       availableCategories,
@@ -158,6 +168,7 @@ export function useSearchViewModel(
       setTerm,
       setModality,
       setCategory,
+      setNeighborhood,
       setPriceRange,
       setSortBy,
       clearFilters,
