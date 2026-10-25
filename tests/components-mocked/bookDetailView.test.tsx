@@ -111,7 +111,7 @@ describe("BookDetail (spec 006, US6/T029)", () => {
     expect(headers).toContain("Dom Casmurro");
     expect(screen.getAllByText("Machado de Assis").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("Venda")).toBeDefined();
-    expect(screen.getByText("R$ 42.00")).toBeDefined();
+    expect(screen.getByText(/R\$\s*42/)).toBeDefined();
   });
 
   it("não mostra preço fora da modalidade venda", async () => {

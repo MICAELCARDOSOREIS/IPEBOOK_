@@ -54,5 +54,6 @@
 - [0052 — Alinhamento visual dos encontros e negociação ao Figma](0052-alinhamento-visual-encontros-figma.md)
 - [0053 — Selo de bairro nos cards de livro (Home e Busca)](0053-selo-bairro-cards-livro.md)
 - [0054 — Histórico de encontros na negociação e perfil](0054-historico-encontros-negociacao.md)
+- [0055 — Alinhamento global das telas Android ao Figma](0055-alinhamento-global-figma.md)
 
 Preservar registros aceitos; mudanças relevantes geram novo ADR com vínculos de substituição.
