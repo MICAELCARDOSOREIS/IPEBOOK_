@@ -2,7 +2,7 @@
 
 Documento consolidado de continuidade técnica e produto do Ipebook (Piripiri, PI).
 
-Conferência atual: **2026-10-23** (branch `develop` consolidada após PRs #197, #198 e #199).
+Conferência atual: **2026-10-25** (branch `develop` consolidada com 66 specs e 49 ADRs, 1.132 testes automatizados em 162 arquivos 100% passando).
 
 **Entregas consolidadas (2026-10-23):**
 - **Spec 060 (Notificações push locais e lembretes de encontros, ADR 0043):** Infraestrutura desacoplada com `expo-notifications` (~57.0.24) para agendamento local de lembretes de encontros com cálculo de antecedência (60 min antes do horário no ponto seguro de Piripiri), canal de notificações no Android com alta prioridade e implementações real (`ExpoPushNotificationService`) e em memória (`MemoryPushNotificationService`) no container de DI.
@@ -299,3 +299,13 @@ No app ativo em desenvolvimento, 31 rotas cobrem as jornadas essenciais da beta.
 - `specs/054-tema-escuro-tokens/`: Tema escuro — infraestrutura (tokens, `ThemeProvider`, preferência no dispositivo) e primeira fatia vertical (Issue #144, ADR 0036; era 044).
 - `specs/055-tema-escuro-telas-restantes/`: Tema escuro aplicado às telas e componentes restantes (Issue #189; era 045).
 - `specs/056-bloqueio-de-usuarios/`: Bloqueio e desbloqueio de pessoas (Figma `07.10` a `07.12`, ADR 0039), tabela `v2_blocked_users`, rota `/perfil/bloqueados` e confirmação via `Dialog`.
+- `specs/057-convidar-amigos/`: Compartilhamento do app e convite de amigos via WhatsApp (Figma `08.02` e `07.01`, ADR 0040).
+- `specs/058-busca-livro-isbn/`: Consulta e autopreenchimento de metadados de livros por ISBN via Open Library (Figma `04.01`, ADR 0041).
+- `specs/059-scanner-codigo-barras-isbn/`: Scanner físico com câmera para leitura instantânea de código de barras de ISBN (Figma `04.01`, ADR 0042).
+- `specs/060-notificacoes-push-e-lembretes/`: Notificações push locais e agendamento de lembretes para encontros nos pontos seguros (ADR 0043).
+- `specs/061-chat-mensagens-negociacao/`: Chat e mensagens transacionais dentro da negociação ativa (Figma `06.06`, ADR 0044).
+- `specs/062-alinhamento-home-figma/`: Alinhamento visual da tela inicial (Home) ao Figma `02.01` (ADR 0045).
+- `specs/063-concluir-negociacao-avaliacoes/`: Conclusão da negociação presencial e avaliação mútua entre leitor e anunciante (Figma `06.09`–`06.10`, ADR 0046).
+- `specs/064-alinhamento-estante-figma/`: Alinhamento visual da tela Minha Estante ao Figma `05.01` e `05.02` (ADR 0047).
+- `specs/065-alinhamento-perfil-figma/`: Alinhamento visual da tela Meu Perfil ao Figma `07.01` e `07.02` (ADR 0048).
+- `specs/066-alinhamento-explorar-figma/`: Alinhamento visual da tela Explorar / Pesquisa ao Figma `02.02` (ADR 0049).
