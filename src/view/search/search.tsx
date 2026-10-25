@@ -15,8 +15,10 @@ import { LoadingState } from "@/view/components/LoadingState";
 import { OfflineState } from "@/view/components/OfflineState";
 import { Tag } from "@/view/components/Tag";
 import { AppIcon } from "@/view/components/AppIcon";
+import { NeighborhoodSelectorModal } from "@/view/components/NeighborhoodSelectorModal";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
+import { useActiveNeighborhood } from "@/viewmodel/useActiveNeighborhood";
 
 export type SearchProps = {
   currentNeighborhood?: string;
@@ -61,12 +63,17 @@ const SORT_OPTIONS: Array<{ id: SearchSortOption; label: string }> = [
 
 /** Busca e Exploração (Figma `02.02 · Explorar`, nó `10:2`). */
 export default function Search({
-  currentNeighborhood = "Centro",
+  currentNeighborhood,
   onSelectNeighborhood,
   onNavigateToBookDetail,
   onNavigateToAlerts,
   initialModality,
-}: SearchProps) {
+}: SearchProps = {}) {
+  const neighborhoodHook = useActiveNeighborhood("all");
+  const effectiveNeighborhood =
+    currentNeighborhood !== undefined ? currentNeighborhood : neighborhoodHook.activeNeighborhood;
+  const handleSelectNeighborhood = onSelectNeighborhood ?? neighborhoodHook.openSelector;
+
   const [auth] = useAuthViewModel();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -84,6 +91,34 @@ export default function Search({
     appliedInitialModality.current = true;
   }, [initialModality, actions]);
 
+  useEffect(() => {
+    if (typeof actions.setNeighborhood === "function") {
+      if (
+        effectiveNeighborhood &&
+        effectiveNeighborhood !== "all" &&
+        effectiveNeighborhood !== "Todos os bairros (Piripiri)"
+      ) {
+        actions.setNeighborhood(effectiveNeighborhood);
+      } else {
+        actions.setNeighborhood("all");
+      }
+    }
+  }, [effectiveNeighborhood, actions]);
+
+  const displayNeighborhood =
+    !effectiveNeighborhood ||
+    effectiveNeighborhood === "all" ||
+    effectiveNeighborhood === "Todos os bairros (Piripiri)"
+      ? "Piripiri (Todos)"
+      : effectiveNeighborhood;
+
+  const handleSelectNeighborhoodOption = (bairro: string) => {
+    void neighborhoodHook.selectNeighborhood(bairro);
+    if (typeof actions.setNeighborhood === "function") {
+      actions.setNeighborhood(bairro);
+    }
+  };
+
   // Busca e filtros viajam no cabeçalho da própria lista para rolagem natural no mobile.
   const listHeader = (
     <View style={styles.filters}>
@@ -91,12 +126,12 @@ export default function Search({
       <View style={styles.topBar}>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={`Selecionar bairro: ${currentNeighborhood}`}
-          onPress={() => onSelectNeighborhood?.()}
+          accessibilityLabel={`Selecionar bairro: ${displayNeighborhood}`}
+          onPress={handleSelectNeighborhood}
           style={styles.neighborhoodPill}
         >
           <AppIcon name="place" size={20} color={colors.m3.primary} />
-          <Text style={styles.neighborhoodText}>{currentNeighborhood}</Text>
+          <Text style={styles.neighborhoodText}>{displayNeighborhood}</Text>
           <AppIcon name="chevronDown" size={20} color={colors.m3.onSurfaceVariant} />
         </Pressable>
 
@@ -352,6 +387,12 @@ export default function Search({
             </View>
           );
         }}
+      />
+      <NeighborhoodSelectorModal
+        visible={neighborhoodHook.isSelectorOpen}
+        currentNeighborhood={effectiveNeighborhood}
+        onSelect={handleSelectNeighborhoodOption}
+        onClose={neighborhoodHook.closeSelector}
       />
     </SafeAreaView>
   );

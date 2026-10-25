@@ -47,6 +47,7 @@ function setup(
   const setTerm = vi.fn();
   const setModality = vi.fn();
   const setCategory = vi.fn();
+  const setNeighborhood = vi.fn();
   const setPriceRange = vi.fn();
   const setSortBy = vi.fn();
   const clearFilters = vi.fn();
@@ -62,6 +63,7 @@ function setup(
       history: options.history ?? [],
       modality: options.modality ?? "all",
       category: options.category ?? "all",
+      neighborhood: "all",
       priceRange: options.priceRange ?? "all",
       sortBy: options.sortBy ?? "recent",
       availableCategories: options.availableCategories ?? ["Literatura Brasileira", "Didáticos"],
@@ -71,6 +73,7 @@ function setup(
       setTerm,
       setModality,
       setCategory,
+      setNeighborhood,
       setPriceRange,
       setSortBy,
       clearFilters,
