@@ -2,7 +2,7 @@
 
 Documento consolidado de continuidade técnica e produto do Ipebook (Piripiri, PI).
 
-Conferência atual: **2026-10-25** (branch `develop` consolidada com 70 specs e 53 ADRs, 1.150 testes automatizados em 165 arquivos 100% passando).
+Conferência atual: **2026-10-25** (branch `develop` consolidada com 71 specs e 54 ADRs, testes automatizados 100% passando).
 
 **Entregas consolidadas (2026-10-23):**
 - **Spec 060 (Notificações push locais e lembretes de encontros, ADR 0043):** Infraestrutura desacoplada com `expo-notifications` (~57.0.24) para agendamento local de lembretes de encontros com cálculo de antecedência (60 min antes do horário no ponto seguro de Piripiri), canal de notificações no Android com alta prioridade e implementações real (`ExpoPushNotificationService`) e em memória (`MemoryPushNotificationService`) no container de DI.

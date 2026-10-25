@@ -36,6 +36,20 @@ export class SupabaseMeetingDataSource implements IMeetingDataSource {
     return data ? mapMeeting(data as MeetingRow) : null;
   }
 
+  async listByRequest(requestId: string): Promise<readonly Meeting[]> {
+    const { data, error } = await this.client.from("v2_meetings").select(columns)
+      .eq("request_id", requestId).order("created_at", { ascending: false });
+    if (error) throw new DataSourceError("Não foi possível carregar o histórico de encontros.");
+    return (data ?? []).map((row) => mapMeeting(row as MeetingRow));
+  }
+
+  async listByUser(_userId: string): Promise<readonly Meeting[]> {
+    const { data, error } = await this.client.from("v2_meetings").select(columns)
+      .order("created_at", { ascending: false });
+    if (error) throw new DataSourceError("Não foi possível carregar os encontros.");
+    return (data ?? []).map((row) => mapMeeting(row as MeetingRow));
+  }
+
   async findById(id: string): Promise<Meeting | null> {
     const { data, error } = await this.client.from("v2_meetings").select(columns).eq("id", id).maybeSingle();
     if (error) throw new DataSourceError("Não foi possível carregar o encontro.");

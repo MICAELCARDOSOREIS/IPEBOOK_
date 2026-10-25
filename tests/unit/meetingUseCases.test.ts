@@ -91,4 +91,23 @@ describe("combinar encontro (Spec 052)", () => {
     await expect(meetings.create({ requestId: "aceito", pointName: IFPI, scheduledAt: sabado15h, proposedBy: "dono" })).rejects.toBeInstanceOf(DataSourceError);
     expect(await meetings.findById("nao-existe")).toBeNull();
   });
+
+  it("recupera o histórico da negociação e os encontros do leitor em Piripiri (Spec 071)", async () => {
+    const primeiro = await useCases.propose("aceito", { pointName: PRACA, scheduledAt: amanha10h }, "dono");
+    await useCases.cancel(primeiro.id, "dono");
+    const segundo = await useCases.propose("aceito", { pointName: IFPI, scheduledAt: sabado15h }, "leitora");
+
+    const historicoNegociacao = await useCases.getMeetingHistory("aceito", "dono");
+    expect(historicoNegociacao).toHaveLength(2);
+    expect(historicoNegociacao[0].id).toBe(segundo.id);
+    expect(historicoNegociacao[1].id).toBe(primeiro.id);
+
+    const encontrosLeitora = await useCases.getUserMeetingHistory("leitora");
+    expect(encontrosLeitora).toHaveLength(2);
+
+    const encontrosDono = await useCases.getUserMeetingHistory("dono");
+    expect(encontrosDono).toHaveLength(2);
+
+    await expect(useCases.getUserMeetingHistory(null)).rejects.toBeInstanceOf(AuthError);
+  });
 });

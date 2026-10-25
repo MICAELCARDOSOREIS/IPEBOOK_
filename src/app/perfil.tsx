@@ -9,6 +9,7 @@ export default function Perfil() {
       onNavigateToEditProfile={() => router.push("/perfil/editar")}
       onNavigateToMyListings={() => router.push("/meus-anuncios")}
       onNavigateToRatings={() => router.push("/perfil/avaliacoes")}
+      onNavigateToMeetingHistory={() => router.push("/perfil/encontros")}
       onNavigateToFavorites={() => router.push("/favoritos")}
       onNavigateToNotifications={() => router.push("/notificacoes")}
       onNavigateToSecurity={() => router.push("/perfil/seguranca")}
