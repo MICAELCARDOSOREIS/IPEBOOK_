@@ -118,6 +118,8 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
   const [saved, setSaved] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [isNeighborhoodModalOpen, setIsNeighborhoodModalOpen] = useState(false);
+  /** Atalhos de bairro ficam recolhidos por padrão para manter o formulário limpo (Spec 017 polish). */
+  const [showNeighborhoodPicks, setShowNeighborhoodPicks] = useState(false);
   const [discardOpen, setDiscardOpen] = useState(false);
   /** true quando o toque em Salvar encontrou erros em linha (anuncia o resumo no TalkBack). */
   const [blockedSave, setBlockedSave] = useState(false);
@@ -367,25 +369,41 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
                 </View>
               </Pressable>
 
-              {/* Atalhos: seis primeiros bairros da lista oficial (o modal traz todos). */}
-              <View style={styles.neighborhoodChipsArea}>
-                <Text style={styles.sectionLabel}>Bairros de Piripiri</Text>
-                <View style={styles.chipRow}>
-                  {PIRIPIRI_NEIGHBORHOODS.slice(0, NEIGHBORHOOD_QUICK_PICKS).map((item) => (
-                    <Chip
-                      key={item}
-                      size="compact"
-                      label={item}
-                      accessibilityLabel={`Bairro ${item}`}
-                      selected={neighborhood === item}
-                      onPress={() => setNeighborhood(item)}
+              {/* Atalhos de bairro: recolhidos por padrão para um seletor mais limpo; o seletor
+                  acima abre a lista completa e o link abaixo revela os primeiros da lista oficial. */}
+              {showNeighborhoodPicks ? (
+                <View style={styles.neighborhoodChipsArea}>
+                  <View style={styles.chipsHeader}>
+                    <Text style={styles.sectionLabel}>Bairros de Piripiri</Text>
+                    <TextButton
+                      label="Recolher"
+                      accessibilityLabel="Recolher atalhos de bairros"
+                      onPress={() => setShowNeighborhoodPicks(false)}
                     />
-                  ))}
+                  </View>
+                  <View style={styles.chipRow}>
+                    {PIRIPIRI_NEIGHBORHOODS.slice(0, NEIGHBORHOOD_QUICK_PICKS).map((item) => (
+                      <Chip
+                        key={item}
+                        size="compact"
+                        label={item}
+                        accessibilityLabel={`Bairro ${item}`}
+                        selected={neighborhood === item}
+                        onPress={() => setNeighborhood(item)}
+                      />
+                    ))}
+                  </View>
+                  <Text style={styles.chipsHelper}>
+                    Não achou o seu? Toque em "Selecionar bairro" para ver a lista completa.
+                  </Text>
                 </View>
-                <Text style={styles.chipsHelper}>
-                  Não achou o seu? Toque em "Selecionar bairro" para ver a lista completa.
-                </Text>
-              </View>
+              ) : (
+                <TextButton
+                  label="Ver bairros populares"
+                  accessibilityLabel="Mostrar atalhos de bairros populares"
+                  onPress={() => setShowNeighborhoodPicks(true)}
+                />
+              )}
 
               {/* Mensagem de privacidade (Figma 07.02) */}
               <Text style={styles.privacyHelper}>Seu e-mail fica privado.</Text>
@@ -447,11 +465,17 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
               </Text>
             ) : null}
 
-            {/* Mensagem de erro de salvamento */}
+            {/* Mensagem de erro de carregamento/salvamento: banner discreto com nova tentativa,
+                sem transformar um erro pontual de preferências em tela bloqueante. */}
             {error ? (
-              <Text accessibilityRole="alert" style={styles.errorText}>
-                {error}
-              </Text>
+              <View style={styles.errorBanner} accessibilityRole="alert">
+                <Text style={styles.errorBannerText}>{error}</Text>
+                <TextButton
+                  label="Tentar novamente"
+                  accessibilityLabel="Tentar novamente carregar perfil e preferências"
+                  onPress={handleRetryLoad}
+                />
+              </View>
             ) : null}
 
             {/* 4. Ação Principal Fixa: "Salvar alterações" (Figma 07.02) */}
@@ -479,14 +503,18 @@ function createStyles(colors: ColorPalette) {
       width: "100%",
     },
     heroSection: {
-      marginBottom: tokens.spacing[16],
+      marginBottom: tokens.spacing[8],
     },
     heroTitle: {
       fontFamily: fontFamily.brand,
-      fontSize: 32,
+      fontSize: 30,
       lineHeight: 38,
       fontWeight: "700",
       color: colors.brandBrown,
+      // A serifada da marca tem sobrehang à esquerda; um leve respiro evita que a primeira
+      // letra encoste e seja recortada pela viewport do ScrollView.
+      paddingLeft: tokens.spacing[4],
+      paddingRight: tokens.spacing[8],
     },
     heroSubtitle: {
       ...tokens.typography.bodyLarge,
@@ -496,7 +524,8 @@ function createStyles(colors: ColorPalette) {
     avatarSection: {
       alignItems: "center",
       justifyContent: "center",
-      marginVertical: tokens.spacing[16],
+      marginTop: tokens.spacing[8],
+      marginBottom: tokens.spacing[24],
     },
     fieldsGroup: {
       gap: tokens.spacing[16],
@@ -544,6 +573,11 @@ function createStyles(colors: ColorPalette) {
       marginTop: tokens.spacing[4],
       gap: tokens.spacing[8],
     },
+    chipsHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+    },
     sectionLabel: {
       ...tokens.typography.labelMedium,
       fontWeight: "600",
@@ -564,6 +598,23 @@ function createStyles(colors: ColorPalette) {
       color: colors.error,
       fontSize: tokens.typography.bodyMedium.fontSize,
       marginTop: tokens.spacing[8],
+    },
+    errorBanner: {
+      marginTop: tokens.spacing[16],
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: tokens.spacing[12],
+      borderRadius: tokens.radius.medium,
+      borderWidth: 1,
+      borderColor: colors.error,
+      paddingHorizontal: tokens.spacing[16],
+      paddingVertical: tokens.spacing[12],
+    },
+    errorBannerText: {
+      flex: 1,
+      color: colors.error,
+      ...tokens.typography.bodyMedium,
     },
     actionContainer: {
       marginTop: tokens.spacing[32],
