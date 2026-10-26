@@ -8,7 +8,7 @@ describe("ShareUseCases — Convite de amigos (Spec 057, Figma 08.02)", () => {
     const message = useCases.buildInviteMessage();
     expect(message).toContain("IpêBook");
     expect(message).toContain("Piripiri");
-    expect(message).toContain("https://ipebook.pages.dev");
+    expect(message).toContain("https://ipebook.app");
   });
 
   it("permite customizar a URL oficial de destino do convite", () => {
@@ -20,7 +20,7 @@ describe("ShareUseCases — Convite de amigos (Spec 057, Figma 08.02)", () => {
   it("monta URL do WhatsApp com a mensagem de convite codificada", () => {
     const url = useCases.buildWhatsAppInviteUrl();
     expect(url.startsWith("whatsapp://send?text=")).toBe(true);
-    expect(url).toContain(encodeURIComponent("https://ipebook.pages.dev"));
+    expect(url).toContain(encodeURIComponent("https://ipebook.app"));
     expect(url).toContain(encodeURIComponent("Piripiri"));
   });
 });
