@@ -10,7 +10,9 @@
 
 export const colors = {
   // Identidade e Marca
-  background: "#F6F1E8",
+  // `background` e `surface` são o mesmo tom no Figma Android (`02.01` em diante): o fundo das
+  // telas é `surface` (`#FCFAF5`), conforme design-system/tokens.json — ADR 0056.
+  background: "#FCFAF5",
   surface: "#FCFAF5",
   text: "#3C302A",
   secondaryText: "#645B55",
@@ -191,12 +193,16 @@ export const spacing = {
   20: 20,
   24: 24,
   32: 32,
+  /** Botão de ícone circular da barra superior e do topo da Home (Figma `01.06`, `02.01`). */
+  40: 40,
   48: 48,
   56: 56,
   64: 64,
 } as const;
 
 export const radius = {
+  /** Campo de texto contornado (M3: container de 4 dp), Figma `01.03`/`01.06`. */
+  extraSmall: 4,
   small: 8,
   medium: 14,
   large: 18,
@@ -229,6 +235,8 @@ export const typography = {
   titleMedium: { fontSize: 18, lineHeight: 26, fontWeight: "600" as const, fontFamily: fontFamily.semiBold },
   bodyLarge: { fontSize: 16, lineHeight: 24, fontWeight: "400" as const, fontFamily: fontFamily.regular },
   bodyMedium: { fontSize: 14, lineHeight: 20, fontWeight: "400" as const, fontFamily: fontFamily.regular },
+  /** m3-label-lg: rótulo de botão e de chip no Figma (`01.03`, `02.01`). */
+  labelLarge: { fontSize: 14, lineHeight: 20, fontWeight: "500" as const, fontFamily: fontFamily.medium },
   labelMedium: { fontSize: 12, lineHeight: 16, fontWeight: "500" as const, fontFamily: fontFamily.medium },
   /** m3-label-sm (02-tokens.md): rótulo da barra de navegação, hora da mensagem, badge. */
   labelSmall: { fontSize: 11, lineHeight: 16, fontWeight: "500" as const, fontFamily: fontFamily.medium },

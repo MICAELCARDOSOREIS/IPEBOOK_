@@ -8,11 +8,13 @@ vi.mock("@/viewmodel/useSearchViewModel", () => ({ useSearchViewModel: vi.fn() }
 vi.mock("@/viewmodel/useNetworkStatus", () => ({ useNetworkStatus: vi.fn() }));
 
 import {
+  type SearchConditionFilter,
   type SearchModalityFilter,
   type SearchPriceRange,
   type SearchSortOption,
   useSearchViewModel,
 } from "@/viewmodel/useSearchViewModel";
+import { describeResults, activeFilters as deriveActiveFilters, type SearchFilters } from "@/viewmodel/searchFilters";
 import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
 
 vi.mocked(useNetworkStatus).mockReturnValue({ isOnline: true });
@@ -38,44 +40,73 @@ function setup(
     history?: string[];
     modality?: SearchModalityFilter;
     category?: string | "all";
+    condition?: SearchConditionFilter;
     priceRange?: SearchPriceRange;
     sortBy?: SearchSortOption;
     availableCategories?: string[];
     hasActiveFilters?: boolean;
+    draftResultCount?: number;
   } = {},
 ) {
   const setTerm = vi.fn();
   const setModality = vi.fn();
   const setCategory = vi.fn();
+  const setCondition = vi.fn();
   const setNeighborhood = vi.fn();
   const setPriceRange = vi.fn();
   const setSortBy = vi.fn();
+  const removeActiveFilter = vi.fn();
+  const openFilterDraft = vi.fn();
+  const updateDraftFilters = vi.fn();
+  const applyDraftFilters = vi.fn();
+  const resetFilters = vi.fn();
   const clearFilters = vi.fn();
   const registerSearch = vi.fn();
   const clearHistory = vi.fn();
 
+  const filters: SearchFilters = {
+    modality: options.modality ?? "all",
+    category: options.category ?? "all",
+    condition: options.condition ?? "all",
+    priceRange: options.priceRange ?? "all",
+  };
+  const activeFilters = deriveActiveFilters(filters);
+
   vi.mocked(useSearchViewModel).mockReturnValue([
     {
       term,
+      filters,
+      draftFilters: filters,
       books,
       loading: options.loading ?? false,
       error: options.error ?? null,
       history: options.history ?? [],
-      modality: options.modality ?? "all",
-      category: options.category ?? "all",
+      modality: filters.modality,
+      category: filters.category,
+      condition: filters.condition,
       neighborhood: "all",
-      priceRange: options.priceRange ?? "all",
+      priceRange: filters.priceRange,
       sortBy: options.sortBy ?? "recent",
       availableCategories: options.availableCategories ?? ["Literatura Brasileira", "Didáticos"],
-      hasActiveFilters: options.hasActiveFilters ?? false,
+      activeFilters,
+      activeFilterCount: activeFilters.length,
+      hasActiveFilters: options.hasActiveFilters ?? (Boolean(term.trim()) || activeFilters.length > 0),
+      resultsSummary: describeResults(books.length, filters),
+      draftResultCount: options.draftResultCount ?? books.length,
     },
     {
       setTerm,
       setModality,
       setCategory,
+      setCondition,
       setNeighborhood,
       setPriceRange,
       setSortBy,
+      removeActiveFilter,
+      openFilterDraft,
+      updateDraftFilters,
+      applyDraftFilters,
+      resetFilters,
       clearFilters,
       reload: vi.fn(),
       registerSearch,
@@ -86,8 +117,14 @@ function setup(
     setTerm,
     setModality,
     setCategory,
+    setCondition,
     setPriceRange,
     setSortBy,
+    removeActiveFilter,
+    openFilterDraft,
+    updateDraftFilters,
+    applyDraftFilters,
+    resetFilters,
     clearFilters,
     registerSearch,
     clearHistory,
@@ -134,6 +171,14 @@ describe("Search (spec 006, US3/T019, Spec 028, Issue #93)", () => {
     setup([], "termo-sem-correspondencia");
     const screen = await renderSearch();
     expect(screen.getByText("Nenhum livro encontrado.")).toBeDefined();
+    expect(
+      screen.getByText('Nenhum livro encontrado para "termo-sem-correspondencia". Tente outro título, autor ou categoria.'),
+    ).toBeDefined();
+  });
+
+  it("explica o catálogo vazio quando não há termo nem filtros", async () => {
+    setup([]);
+    const screen = await renderSearch();
     expect(screen.getByText("Ainda não há livros no catálogo.")).toBeDefined();
   });
 
@@ -179,67 +224,109 @@ describe("Search (spec 006, US3/T019, Spec 028, Issue #93)", () => {
   it("pede confirmação antes de limpar o histórico de buscas", async () => {
     const { clearHistory } = setup([book({})], "", { history: ["Iracema"] });
     const screen = await renderSearch();
-    await act(async () => { fireEvent.press(screen.getByLabelText("Mostrar filtros avançados")); });
     await act(async () => { fireEvent.press(screen.getByLabelText("Limpar histórico de buscas")); });
     expect(screen.getByText("Limpar histórico de buscas?")).toBeDefined();
     await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Limpar histórico" })); });
     expect(clearHistory).toHaveBeenCalledOnce();
   });
 
-  it("permite filtrar livros por modalidade acionando os Chips (Issue #93)", async () => {
-    const { setModality } = setup([book({})], "", { modality: "all" });
+  it("abre 'Filtrar livros' com rascunho e só aplica ao tocar em Mostrar N livros (Figma 02.03)", async () => {
+    const { openFilterDraft, updateDraftFilters, applyDraftFilters, resetFilters } = setup(
+      [book({}), book({ id: "b2", title: "Capitães da Areia" })],
+      "",
+      { draftResultCount: 1 },
+    );
     const screen = await renderSearch();
-    await act(async () => { fireEvent.press(screen.getByLabelText("Mostrar filtros avançados")); });
-    expect(screen.getByText("Modalidade:")).toBeDefined();
 
-    await act(async () => {
-      fireEvent.press(screen.getByLabelText("Filtrar por Venda"));
-    });
-    expect(setModality).toHaveBeenCalledWith("sale");
+    await act(async () => { fireEvent.press(screen.getByLabelText("Abrir filtros")); });
+    expect(openFilterDraft).toHaveBeenCalledOnce();
+    expect(screen.getByText("Filtrar livros")).toBeDefined();
+    expect(screen.getByText("Uma leitura do seu jeito.")).toBeDefined();
 
-    await act(async () => {
-      fireEvent.press(screen.getByLabelText("Filtrar por Troca"));
-    });
-    expect(setModality).toHaveBeenCalledWith("trade");
+    await act(async () => { fireEvent.press(screen.getByLabelText("Filtrar por Venda")); });
+    expect(updateDraftFilters).toHaveBeenCalledWith({ modality: "sale" });
+    await act(async () => { fireEvent.press(screen.getByLabelText("Filtrar por Troca")); });
+    expect(updateDraftFilters).toHaveBeenCalledWith({ modality: "trade" });
+    expect(applyDraftFilters).not.toHaveBeenCalled();
+
+    await act(async () => { fireEvent.press(screen.getByLabelText("Mostrar 1 livro")); });
+    expect(applyDraftFilters).toHaveBeenCalledOnce();
+
+    await act(async () => { fireEvent.press(screen.getByLabelText("Abrir filtros")); });
+    await act(async () => { fireEvent.press(screen.getByLabelText("Limpar filtros")); });
+    expect(resetFilters).toHaveBeenCalledOnce();
   });
 
-  it("permite filtrar livros por categoria e preço (Spec 028, Issue #93)", async () => {
-    const { setCategory, setPriceRange, setSortBy } = setup([book({})], "", {
+  it("filtra por categoria, modalidade, conservação, preço e ordenação na tela de filtros (Spec 028)", async () => {
+    const { updateDraftFilters, setSortBy } = setup([book({})], "", {
       availableCategories: ["Literatura Brasileira", "Didáticos"],
     });
     const screen = await renderSearch();
+    await act(async () => { fireEvent.press(screen.getByLabelText("Abrir filtros")); });
 
-    await act(async () => {
-      fireEvent.press(screen.getByLabelText("Mostrar filtros avançados"));
-    });
-    expect(screen.getByText("Categoria:")).toBeDefined();
+    expect(screen.getByText("Categoria")).toBeDefined();
     await act(async () => {
       fireEvent.press(screen.getByLabelText("Filtrar por categoria Literatura Brasileira"));
     });
-    expect(setCategory).toHaveBeenCalledWith("Literatura Brasileira");
+    expect(updateDraftFilters).toHaveBeenCalledWith({ category: "Literatura Brasileira" });
 
-    expect(screen.getByText("Preço:")).toBeDefined();
-    await act(async () => {
-      fireEvent.press(screen.getByLabelText("Filtrar por Até R$ 20"));
-    });
-    expect(setPriceRange).toHaveBeenCalledWith("under20");
+    expect(screen.getByText("Condição do livro")).toBeDefined();
+    await act(async () => { fireEvent.press(screen.getByLabelText("Somente bom estado")); });
+    expect(updateDraftFilters).toHaveBeenCalledWith({ condition: "good" });
 
-    expect(screen.getByText("Ordenar por:")).toBeDefined();
-    await act(async () => {
-      fireEvent.press(screen.getByLabelText("Ordenar por Menor preço"));
-    });
+    expect(screen.getByText("Preço")).toBeDefined();
+    await act(async () => { fireEvent.press(screen.getByLabelText("Filtrar por Até R$ 20")); });
+    expect(updateDraftFilters).toHaveBeenCalledWith({ priceRange: "under20" });
+
+    expect(screen.getByText("Ordenar por")).toBeDefined();
+    await act(async () => { fireEvent.press(screen.getByLabelText("Ordenar por Menor preço")); });
     expect(setSortBy).toHaveBeenCalledWith("price_asc");
   });
 
-  it("permite limpar filtros no cabeçalho ou no estado vazio quando houver filtros ativos", async () => {
-    const { clearFilters } = setup([], "termo", { hasActiveFilters: true });
+  it("mostra os filtros aplicados como chips removíveis (Figma 02.04)", async () => {
+    const { removeActiveFilter } = setup([book({})], "", { modality: "sale", condition: "good", priceRange: "under50" });
+    const screen = await renderSearch();
+
+    expect(screen.getByLabelText("Remover filtro Venda")).toBeDefined();
+    expect(screen.getByLabelText("Remover filtro Bom estado")).toBeDefined();
+    expect(screen.getByLabelText("Remover filtro Até R$ 50")).toBeDefined();
+
+    await act(async () => { fireEvent.press(screen.getByLabelText("Remover filtro Venda")); });
+    expect(removeActiveFilter).toHaveBeenCalledWith("modality");
+  });
+
+  it("resume a faixa de resultados e troca a ordenação pela folha de ordenação (Figma 02.04)", async () => {
+    const { setSortBy } = setup(
+      [book({}), book({ id: "b2", title: "Capitães da Areia", author: "Jorge Amado" })],
+      "",
+      { modality: "sale" },
+    );
+    const screen = await renderSearch();
+
+    expect(screen.getByText("2 livros à venda")).toBeDefined();
+    await act(async () => { fireEvent.press(screen.getByLabelText("Ordenar por Mais recentes")); });
+    await act(async () => { fireEvent.press(screen.getByLabelText("A-Z")); });
+    expect(setSortBy).toHaveBeenCalledWith("title");
+  });
+
+  it("limpa os filtros no cabeçalho sem apagar o termo buscado", async () => {
+    const { resetFilters } = setup([book({})], "termo", { modality: "sale" });
+    const screen = await renderSearch();
+
+    expect(screen.getByLabelText("Abrir filtros, 1 ativos")).toBeDefined();
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Limpar todos os filtros de busca"));
+    });
+    expect(resetFilters).toHaveBeenCalledTimes(1);
+  });
+
+  it("oferece limpar filtros no estado vazio quando nada corresponde", async () => {
+    const { clearFilters } = setup([], "termo", { hasActiveFilters: true, modality: "sale" });
     const screen = await renderSearch();
 
     expect(screen.getByText("Nenhum livro corresponde aos filtros selecionados.")).toBeDefined();
-
-    const clearButton = screen.getByLabelText("Limpar todos os filtros de busca");
     await act(async () => {
-      fireEvent.press(clearButton);
+      fireEvent.press(screen.getByLabelText("Limpar filtros e buscar novamente"));
     });
     expect(clearFilters).toHaveBeenCalledTimes(1);
   });

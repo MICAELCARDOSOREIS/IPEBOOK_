@@ -7,6 +7,7 @@ export default function CriarConta() {
       onAuthenticated={() => router.replace("/")}
       onNavigateToSignIn={() => router.push("/entrar")}
       onNavigateToTerms={() => router.push("/termos")}
+      onBack={() => router.back()}
     />
   );
 }

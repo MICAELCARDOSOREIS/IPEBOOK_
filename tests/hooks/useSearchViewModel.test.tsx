@@ -288,4 +288,110 @@ describe("testes de hook: useSearchViewModel (ISO/IEC 25010 - Adequação Funcio
     });
     expect(hook.current[0].books).toHaveLength(3);
   });
+
+  it("filtra por conservação: 'somente bom estado' inclui anúncios sem conservação informada (Figma 02.03)", async () => {
+    const list = [
+      { id: "1", title: "Lançamento", author: "A", ownerId: "u1", modality: "sale" as const, status: "available" as const, condition: "new" as const },
+      { id: "2", title: "Bom estado", author: "B", ownerId: "u2", modality: "sale" as const, status: "available" as const, condition: "good" as const },
+      { id: "3", title: "Sem conservação", author: "C", ownerId: "u3", modality: "sale" as const, status: "available" as const },
+      { id: "4", title: "Desgastado", author: "D", ownerId: "u4", modality: "sale" as const, status: "available" as const, condition: "worn" as const },
+    ];
+    const hook = await renderHook({ listBooks: async () => list });
+
+    await act(async () => { hook.current[1].setCondition("good"); });
+    expect(hook.current[0].books).toEqual([list[1], list[2]]);
+    expect(hook.current[0].hasActiveFilters).toBe(true);
+
+    await act(async () => { hook.current[1].setCondition("all"); });
+    expect(hook.current[0].books).toHaveLength(4);
+  });
+
+  it("mantém as escolhas em rascunho até aplicar 'Filtrar livros' (Figma 02.03)", async () => {
+    const list = [
+      { id: "1", title: "Venda A", author: "A", ownerId: "u1", modality: "sale" as const, status: "available" as const },
+      { id: "2", title: "Venda B", author: "B", ownerId: "u2", modality: "sale" as const, status: "available" as const },
+      { id: "3", title: "Doação", author: "C", ownerId: "u3", modality: "donation" as const, status: "available" as const },
+    ];
+    const hook = await renderHook({ listBooks: async () => list });
+
+    await act(async () => { hook.current[1].openFilterDraft(); });
+    await act(async () => { hook.current[1].updateDraftFilters({ modality: "sale" }); });
+
+    // O rascunho não altera a lista nem os filtros aplicados até o toque em "Mostrar N livros".
+    expect(hook.current[0].draftFilters.modality).toBe("sale");
+    expect(hook.current[0].draftResultCount).toBe(2);
+    expect(hook.current[0].filters.modality).toBe("all");
+    expect(hook.current[0].books).toHaveLength(3);
+
+    await act(async () => { hook.current[1].applyDraftFilters(); });
+    expect(hook.current[0].filters.modality).toBe("sale");
+    expect(hook.current[0].books).toHaveLength(2);
+  });
+
+  it("expõe os filtros aplicados como chips e remove um por vez (Figma 02.04)", async () => {
+    const list = [
+      { id: "1", title: "Dom Casmurro", author: "Machado", ownerId: "u1", modality: "sale" as const, status: "available" as const, category: "Ficção", price: 30 },
+      { id: "2", title: "Iracema", author: "Alencar", ownerId: "u2", modality: "donation" as const, status: "available" as const, category: "Ficção" },
+    ];
+    const hook = await renderHook({ listBooks: async () => list });
+
+    await act(async () => {
+      hook.current[1].setModality("sale");
+      hook.current[1].setCategory("Ficção");
+      hook.current[1].setCondition("good");
+      hook.current[1].setPriceRange("under50");
+    });
+    expect(hook.current[0].activeFilters.map((filter) => filter.key)).toEqual([
+      "modality",
+      "category",
+      "condition",
+      "priceRange",
+    ]);
+    expect(hook.current[0].activeFilters.map((filter) => filter.label)).toEqual([
+      "Venda",
+      "Ficção",
+      "Bom estado",
+      "Até R$ 50",
+    ]);
+    expect(hook.current[0].activeFilterCount).toBe(4);
+
+    await act(async () => { hook.current[1].removeActiveFilter("condition"); });
+    expect(hook.current[0].activeFilters.map((filter) => filter.label)).toEqual(["Venda", "Ficção", "Até R$ 50"]);
+    expect(hook.current[0].books).toEqual([list[0]]);
+  });
+
+  it("resume a faixa de resultados no formato do Figma 02.04", async () => {
+    const list = [
+      { id: "1", title: "Dom Casmurro", author: "Machado", ownerId: "u1", modality: "sale" as const, status: "available" as const, category: "Literatura" },
+      { id: "2", title: "Iracema", author: "Alencar", ownerId: "u2", modality: "sale" as const, status: "available" as const, category: "Literatura" },
+    ];
+    const hook = await renderHook({ listBooks: async () => list });
+
+    expect(hook.current[0].resultsSummary).toBe("2 livros");
+    await act(async () => {
+      hook.current[1].setModality("sale");
+      hook.current[1].setCategory("Literatura");
+    });
+    expect(hook.current[0].resultsSummary).toBe("2 livros à venda · Literatura");
+  });
+
+  it("resetFilters limpa filtros e mantém o termo; clearFilters recomeça a busca", async () => {
+    const hook = await renderHook({ listBooks: async () => books });
+    await act(async () => {
+      hook.current[1].setTerm("Dom");
+      hook.current[1].setModality("donation");
+      hook.current[1].setSortBy("title");
+    });
+
+    await act(async () => { hook.current[1].resetFilters(); });
+    expect(hook.current[0].term).toBe("Dom");
+    expect(hook.current[0].modality).toBe("all");
+    expect(hook.current[0].sortBy).toBe("recent");
+    expect(hook.current[0].hasActiveFilters).toBe(true);
+
+    await act(async () => { hook.current[1].clearFilters(); });
+    expect(hook.current[0].term).toBe("");
+    expect(hook.current[0].hasActiveFilters).toBe(false);
+    expect(hook.current[0].books).toEqual(books);
+  });
 });

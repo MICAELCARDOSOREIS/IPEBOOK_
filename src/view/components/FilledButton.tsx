@@ -45,7 +45,8 @@ export function FilledButton({
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     button: {
-      minHeight: tokens.accessibility.touchTarget,
+      // Figma `01.03`/`01.04`: botão preenchido com 52 dp de altura e raio de pílula.
+      minHeight: 52,
       justifyContent: "center",
       alignItems: "center",
       borderRadius: tokens.radius.full,
@@ -53,7 +54,7 @@ function createStyles(colors: ColorPalette) {
       paddingHorizontal: tokens.spacing[24],
     },
     disabled: { backgroundColor: colors.disabledBackground },
-    label: { color: colors.surface, fontSize: 16, fontWeight: "600" },
+    label: { color: colors.m3.onPrimary, ...tokens.typography.labelLarge },
     labelDisabled: { color: colors.disabledText },
   });
 }

@@ -9,10 +9,12 @@ export type ChipProps = {
   onPress: () => void;
   disabled?: boolean;
   accessibilityLabel?: string;
+  /** `compact` (32 dp) nas fileiras da Home e do Explorar; `regular` (40 dp) em "Filtrar livros". */
+  size?: "compact" | "regular";
 };
 
-/** Chip de filtro do design system (chip.md): pílula de 32 px, check quando selecionado. */
-export function Chip({ label, selected, onPress, disabled = false, accessibilityLabel }: ChipProps) {
+/** Chip de filtro do design system (chip.md): contêiner de 32 dp com raio de 8 dp, como no Figma `02.01`. */
+export function Chip({ label, selected, onPress, disabled = false, accessibilityLabel, size = "compact" }: ChipProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
@@ -26,6 +28,7 @@ export function Chip({ label, selected, onPress, disabled = false, accessibility
       onPress={onPress}
       style={[
         styles.chip,
+        size === "regular" ? styles.chipRegular : styles.chipCompact,
         selected ? styles.selected : styles.unselected,
         disabled && styles.disabled,
       ]}
@@ -40,16 +43,18 @@ export function Chip({ label, selected, onPress, disabled = false, accessibility
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     chip: {
-      height: 32,
-      borderRadius: tokens.radius.full,
-      paddingHorizontal: tokens.spacing[12],
+      borderRadius: tokens.radius.small,
       justifyContent: "center",
+      backgroundColor: colors.m3.surfaceContainerLowest,
     },
-    selected: { backgroundColor: colors.soft },
-    unselected: { borderWidth: 1, borderColor: colors.border },
+    // Figma `02.01`/`02.02`: 32 dp nas fileiras rápidas; `02.03`: 40 dp na tela de filtros.
+    chipCompact: { height: tokens.spacing[32], paddingHorizontal: tokens.spacing[16] },
+    chipRegular: { height: tokens.spacing[40], paddingHorizontal: tokens.spacing[20] },
+    selected: { backgroundColor: colors.m3.secondaryContainer, borderWidth: 0 },
+    unselected: { borderWidth: 1, borderColor: colors.m3.outlineVariant },
     disabled: { opacity: 0.38 },
-    label: { color: colors.secondaryText, ...tokens.typography.labelMedium },
-    labelSelected: { color: colors.action },
+    label: { color: colors.m3.onSurfaceVariant, ...tokens.typography.labelLarge },
+    labelSelected: { color: colors.m3.onSecondaryContainer },
     labelDisabled: { color: colors.disabledText },
   });
 }

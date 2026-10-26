@@ -7,7 +7,6 @@ import { useMyListingsViewModel } from "@/viewmodel/useMyListingsViewModel";
 import { Avatar } from "@/view/components/Avatar";
 import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
 import { Dialog } from "@/view/components/Dialog";
-import { ThemePreferenceSelector } from "@/view/components/ThemePreferenceSelector";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 
@@ -24,6 +23,7 @@ export type ProfileHubProps = {
   onNavigateToPrivacy: () => void;
   onNavigateToBlockedUsers?: () => void;
   onNavigateToInviteFriends?: () => void;
+  onNavigateToSettings?: () => void;
   onNavigateToTerms: () => void;
   onNavigateToHelp: () => void;
   onSignedOut: () => void;
@@ -55,6 +55,7 @@ export default function ProfileHub({
   onNavigateToPrivacy,
   onNavigateToBlockedUsers,
   onNavigateToInviteFriends,
+  onNavigateToSettings,
   onNavigateToTerms,
   onNavigateToHelp,
   onSignedOut,
@@ -196,6 +197,15 @@ export default function ProfileHub({
       showChevron: true,
     },
     {
+      key: "settings",
+      icon: "settings",
+      iconColor: colors.m3.onSurfaceVariant,
+      label: "Configurações",
+      description: "Aparência e preferências do aplicativo",
+      onPress: onNavigateToSettings ?? (() => {}),
+      showChevron: true,
+    },
+    {
       key: "terms",
       icon: "document",
       iconColor: colors.m3.onSurfaceVariant,
@@ -277,18 +287,15 @@ export default function ProfileHub({
                   <Text style={styles.sectionHeader}>Atividade</Text>
                 </View>
                 <View style={styles.cardGroup}>
-                  {activityItems.map((item, index) => (
+                  {activityItems.map((item) => (
                     <Pressable
                       key={item.key}
                       accessibilityRole="button"
                       accessibilityLabel={item.label}
                       onPress={item.onPress}
-                      style={[
-                        styles.menuRow,
-                        index === activityItems.length - 1 && styles.menuRowLast,
-                      ]}
+                      style={styles.menuRow}
                     >
-                      <AppIcon name={item.icon} size={24} color={item.iconColor ?? colors.m3.primary} />
+                      <AppIcon name={item.icon} size={24} color={item.iconColor ?? colors.m3.onSurface} />
                       <View style={styles.menuRowText}>
                         <Text style={styles.menuRowTitle}>{item.label}</Text>
                         {item.description ? (
@@ -335,7 +342,7 @@ export default function ProfileHub({
                     accessibilityRole="button"
                     accessibilityLabel="Sair da conta"
                     onPress={() => setConfirmingSignOut(true)}
-                    style={[styles.menuRow, styles.menuRowLast]}
+                    style={styles.menuRow}
                   >
                     <AppIcon name="logout" size={24} color={colors.error} />
                     <View style={styles.menuRowText}>
@@ -345,8 +352,7 @@ export default function ProfileHub({
                 </View>
               </View>
 
-              {/* Alternador de Tema M3 */}
-              <ThemePreferenceSelector />
+
             </>
           )}
         </View>
@@ -390,7 +396,8 @@ function createStyles(colors: ColorPalette) {
       flexDirection: "row",
       alignItems: "center",
       gap: tokens.spacing[16],
-      backgroundColor: colors.m3.surfaceContainer,
+      // Figma `07.01` (nó 25:610): #F7F3EC é `surface-container-low`, não `surface-container`.
+      backgroundColor: colors.m3.surfaceContainerLow,
       borderRadius: 20,
       paddingHorizontal: tokens.spacing[16],
       paddingVertical: tokens.spacing[12],
@@ -434,7 +441,7 @@ function createStyles(colors: ColorPalette) {
     },
     statBox: {
       flex: 1,
-      backgroundColor: colors.m3.surfaceContainer,
+      backgroundColor: colors.m3.surfaceContainerLow,
       borderRadius: 16,
       alignItems: "center",
       justifyContent: "center",
@@ -462,37 +469,30 @@ function createStyles(colors: ColorPalette) {
       paddingHorizontal: tokens.spacing[4],
     },
     sectionHeader: {
-      fontSize: 14,
-      lineHeight: 20,
+      fontSize: 13,
+      lineHeight: 18,
       fontFamily: fontFamily.medium,
-      color: colors.m3.primary,
-      fontWeight: "600",
+      // Figma `07.01`: rótulo de seção em `on-surface-variant`, não em verde.
+      color: colors.m3.onSurfaceVariant,
+      fontWeight: "500",
     },
+    // Figma `07.01`: as linhas de menu ficam direto no fundo da página, sem cartão, borda nem
+    // divisórias.
     cardGroup: {
-      backgroundColor: colors.surface,
-      borderRadius: 16,
-      borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
-      overflow: "hidden",
+      backgroundColor: "transparent",
     },
     menuRow: {
       flexDirection: "row",
       alignItems: "center",
       gap: tokens.spacing[16],
-      paddingVertical: tokens.spacing[16],
-      paddingHorizontal: tokens.spacing[16],
+      paddingVertical: tokens.spacing[12],
+      paddingHorizontal: tokens.spacing[4],
       minHeight: tokens.accessibility.touchTarget,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.m3.outlineVariant,
-    },
-    menuRowLast: {
-      borderBottomWidth: 0,
     },
     menuRowText: { flex: 1, gap: 2 },
     menuRowTitle: {
       ...tokens.typography.bodyLarge,
-      color: colors.text,
-      fontWeight: "500",
+      color: colors.m3.onSurface,
     },
     menuRowDescription: {
       ...tokens.typography.bodyMedium,

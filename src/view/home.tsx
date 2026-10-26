@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useHomeViewModel } from "@/viewmodel/useHomeViewModel";
 import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
@@ -13,6 +12,7 @@ import { ErrorState } from "@/view/components/ErrorState";
 import { LoadingState } from "@/view/components/LoadingState";
 import { OfflineState } from "@/view/components/OfflineState";
 import { NeighborhoodSelectorModal } from "@/view/components/NeighborhoodSelectorModal";
+import { ScreenContainer } from "@/view/components/ScreenContainer";
 import type { Book, BookModality } from "@/model/entities/book";
 
 function createModalityTag(colors: ColorPalette): Record<BookModality, { background: string; text: string; label: string }> {
@@ -78,6 +78,29 @@ function CatalogCarousel({
         >
           {displayTitle ?? title}
         </Text>
+        {/* Figma `02.01` não mostra setas: o carrossel rola por gesto. Estes botões ficam invisíveis
+            sobre o título da seção — área sem toque de cartão — para leitores de tela e teclado
+            paginarem item a item. */}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Item anterior de ${title}`}
+          accessibilityState={{ disabled: index <= 0 }}
+          disabled={index <= 0}
+          onPress={() => goTo(index - 1)}
+          style={[styles.carouselNavButton, styles.carouselNavButtonLeft]}
+        >
+          <Text style={styles.carouselNavText}>‹</Text>
+        </Pressable>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Próximo item de ${title}`}
+          accessibilityState={{ disabled: index >= lastIndex }}
+          disabled={index >= lastIndex}
+          onPress={() => goTo(index + 1)}
+          style={[styles.carouselNavButton, styles.carouselNavButtonRight]}
+        >
+          <Text style={styles.carouselNavText}>›</Text>
+        </Pressable>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={viewMoreLabel}
@@ -88,16 +111,6 @@ function CatalogCarousel({
         </Pressable>
       </View>
       <View style={styles.carouselRow}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={`Item anterior de ${title}`}
-          accessibilityState={{ disabled: index <= 0 }}
-          disabled={index <= 0}
-          onPress={() => goTo(index - 1)}
-          style={[styles.carouselNavButton, index <= 0 ? styles.carouselNavButtonDisabled : null]}
-        >
-          <Text style={styles.carouselNavText}>‹</Text>
-        </Pressable>
         <FlatList
           ref={listRef}
           horizontal
@@ -140,16 +153,6 @@ function CatalogCarousel({
             );
           }}
         />
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={`Próximo item de ${title}`}
-          accessibilityState={{ disabled: index >= lastIndex }}
-          disabled={index >= lastIndex}
-          onPress={() => goTo(index + 1)}
-          style={[styles.carouselNavButton, index >= lastIndex ? styles.carouselNavButtonDisabled : null]}
-        >
-          <Text style={styles.carouselNavText}>›</Text>
-        </Pressable>
       </View>
     </View>
   );
@@ -414,30 +417,24 @@ export default function Home({
   );
 
   return (
-    <SafeAreaView style={styles.page}>
-      <ScrollView contentContainerStyle={styles.content}>{listHeader}</ScrollView>
-      <NeighborhoodSelectorModal
-        visible={neighborhoodHook.isSelectorOpen}
-        currentNeighborhood={effectiveNeighborhood}
-        onSelect={neighborhoodHook.selectNeighborhood}
-        onClose={neighborhoodHook.closeSelector}
-      />
-    </SafeAreaView>
+    <ScreenContainer
+      maxWidth={720}
+      overlay={
+        <NeighborhoodSelectorModal
+          visible={neighborhoodHook.isSelectorOpen}
+          currentNeighborhood={effectiveNeighborhood}
+          onSelect={neighborhoodHook.selectNeighborhood}
+          onClose={neighborhoodHook.closeSelector}
+        />
+      }
+    >
+      {listHeader}
+    </ScreenContainer>
   );
 }
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
-    page: { flex: 1, backgroundColor: colors.surface },
-    content: {
-      flexGrow: 1,
-      width: "100%",
-      maxWidth: 720,
-      alignSelf: "center",
-      paddingHorizontal: tokens.spacing[24],
-      paddingTop: tokens.spacing[8],
-      paddingBottom: tokens.spacing[24],
-    },
     headerContainer: {
       marginBottom: tokens.spacing[16],
     },
@@ -456,9 +453,8 @@ function createStyles(colors: ColorPalette) {
       backgroundColor: colors.m3.surfaceContainerHigh,
       paddingLeft: tokens.spacing[12],
       paddingRight: tokens.spacing[8],
-      paddingVertical: tokens.spacing[8],
+      height: tokens.spacing[40],
       borderRadius: tokens.radius.full,
-      minHeight: tokens.accessibility.touchTarget,
     },
     neighborhoodText: {
       ...tokens.typography.bodyMedium,
@@ -472,9 +468,10 @@ function createStyles(colors: ColorPalette) {
       gap: tokens.spacing[8],
     },
     notificationButton: {
-      width: tokens.accessibility.touchTarget,
-      height: tokens.accessibility.touchTarget,
+      width: tokens.spacing[40],
+      height: tokens.spacing[40],
       borderRadius: tokens.radius.full,
+      backgroundColor: colors.m3.surfaceContainerLowest,
       justifyContent: "center",
       alignItems: "center",
     },
@@ -534,13 +531,14 @@ function createStyles(colors: ColorPalette) {
     filterChip: {
       flexDirection: "row",
       alignItems: "center",
-      gap: tokens.spacing[8],
-      paddingHorizontal: tokens.spacing[16],
+      gap: tokens.spacing[6],
+      // Figma `02.01`: os quatro chips cabem em uma linha (333 dp de 345 dp úteis).
+      paddingHorizontal: 14,
       borderRadius: tokens.radius.small,
       borderWidth: 1,
       borderColor: colors.m3.outlineVariant,
-      backgroundColor: "transparent",
-      minHeight: tokens.spacing[32],
+      backgroundColor: colors.m3.surfaceContainerLowest,
+      height: tokens.spacing[32],
     },
     filterChipSelected: {
       paddingLeft: tokens.spacing[8],
@@ -548,10 +546,8 @@ function createStyles(colors: ColorPalette) {
       borderColor: colors.m3.secondaryContainer,
     },
     filterChipText: {
-      ...tokens.typography.bodyMedium,
-      fontFamily: tokens.typography.labelMedium.fontFamily,
+      ...tokens.typography.labelLarge,
       color: colors.m3.onSurfaceVariant,
-      fontWeight: "500",
     },
     filterChipTextSelected: {
       color: colors.m3.onSecondaryContainer,
@@ -587,6 +583,7 @@ function createStyles(colors: ColorPalette) {
     // 6. Carrossel
     carouselSection: { marginBottom: tokens.spacing[24] },
     carouselHeader: {
+      position: "relative",
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
@@ -610,33 +607,43 @@ function createStyles(colors: ColorPalette) {
       color: colors.m3.primary,
       fontWeight: "500",
     },
-    carouselRow: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[4] },
+    carouselRow: { position: "relative" },
     carouselList: { flexGrow: 0 },
+    // Figma `02.01`: a faixa mostra dois cartões inteiros, então as setas saem do fluxo e ficam
+    // invisíveis sobre o título da seção (texto estático, sem toque) para não roubar o toque dos
+    // cartões nem empurrar a lista.
     carouselNavButton: {
-      minHeight: tokens.accessibility.touchTarget,
-      minWidth: tokens.accessibility.touchTarget,
+      position: "absolute",
+      top: 0,
+      zIndex: 2,
+      width: tokens.accessibility.touchTarget,
+      height: tokens.spacing[32],
       alignItems: "center",
       justifyContent: "center",
+      opacity: 0,
     },
-    carouselNavButtonDisabled: { opacity: 0.3 },
+    carouselNavButtonLeft: { left: 0 },
+    carouselNavButtonRight: { left: tokens.accessibility.touchTarget },
     carouselNavText: { fontSize: 22, color: colors.action, fontWeight: "700" },
     carouselCard: {
       width: CAROUSEL_ITEM_WIDTH,
       marginRight: CAROUSEL_ITEM_GAP,
       backgroundColor: colors.m3.surfaceContainerLow,
-      borderRadius: tokens.radius.medium,
+      // Figma `02.01`: cartão de livro com raio de 12 dp e sem sombra.
+      borderRadius: 12,
       overflow: "hidden",
-      boxShadow: tokens.elevation.level1,
     },
     carouselCardCoverArea: {
       alignItems: "center",
       justifyContent: "center",
-      paddingVertical: tokens.spacing[8],
-      backgroundColor: colors.m3.surfaceContainerHigh,
+      // Figma `02.01`: área de capa com 144 dp (capa de 119 dp + 12,5 dp de folga).
+      paddingVertical: 12,
+      backgroundColor: colors.m3.surfaceContainerLow,
     },
     carouselCardMeta: {
-      paddingHorizontal: tokens.spacing[16],
+      paddingHorizontal: tokens.spacing[12],
       paddingVertical: tokens.spacing[12],
+      gap: 2,
     },
     carouselCardModality: {
       ...tokens.typography.labelMedium,

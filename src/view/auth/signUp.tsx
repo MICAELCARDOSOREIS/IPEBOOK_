@@ -7,6 +7,7 @@ import { useTheme } from "@/view/theme/ThemeProvider";
 import { Checkbox } from "@/view/components/Checkbox";
 import { FilledButton } from "@/view/components/FilledButton";
 import { Logotipo } from "@/view/components/Logotipo";
+import { Manchete } from "@/view/components/Manchete";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { TextButton } from "@/view/components/TextButton";
 import { TextField } from "@/view/components/TextField";
@@ -55,8 +56,8 @@ export default function SignUp({
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.content}>
-          <Logotipo />
-          <Text accessibilityRole="header" style={styles.title}>Crie sua conta</Text>
+          <Logotipo underline />
+          <Manchete texto="Crie sua" realce="conta." />
           <Text style={styles.subtitle}>Anuncie, troque, venda ou doe livros perto de você.</Text>
 
           <OutlinedButton
@@ -176,12 +177,6 @@ function createStyles(colors: ColorPalette) {
     fontSize: tokens.typography.bodyLarge.fontSize,
     fontFamily: tokens.typography.bodyLarge.fontFamily,
     fontWeight: "600",
-  },
-  title: {
-    fontSize: tokens.typography.displayLarge.fontSize,
-    lineHeight: tokens.typography.displayLarge.lineHeight,
-    fontFamily: tokens.typography.displayLarge.fontFamily,
-    color: colors.text,
   },
   subtitle: {
     fontSize: tokens.typography.bodyLarge.fontSize,

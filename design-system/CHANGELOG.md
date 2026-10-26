@@ -2,6 +2,38 @@
 
 Versões no formato `MAIOR.MENOR.CORREÇÃO`. Mudança grande = versão nova.
 
+## 1.9.0 · 2026-10-26
+
+- Filtro do Explorar alinhado ao Figma `02.03` e `02.04` (ADR 0057).
+- **Responsáveis:** Micael Cardoso Reis.
+- **Mudanças:**
+  - `Chip` ganha a variante `size="regular"` (40 dp, padding lateral de 20 dp) para os grupos de
+    escolha da tela "Filtrar livros" (`02.03`); as fileiras rápidas da Home e do Explorar seguem em
+    32 dp (`compact`).
+  - Filtros aplicados passam a aparecer como **chips removíveis** (`02.04`): o mesmo `Chip`
+    selecionado, com `accessibilityLabel="Remover filtro …"` e `✕` no rótulo. Documentado em
+    `04-componentes/chip.md`, que também corrige o raio (8 dp, não pílula) e os tokens da variante
+    não selecionada (`surface-container-lowest` + `outline-variant`).
+  - Novo **Padrão 3: Explorar e filtrar o catálogo** em `05-padroes.md`, cobrindo busca, tela de
+    filtros com rascunho, chips aplicados, ordenação e os três estados vazios.
+
+## 1.8.0 · 2026-10-26
+
+- Profissionalização da orientação de tela e do layout das telas (decisão de retrato + componente
+  de coluna centralizada).
+- **Responsáveis:** Micael Cardoso Reis.
+- **Mudanças:**
+  - Decisão de **retrato-only no mobile** formalizada em `03-fundamentos.md` (nova seção
+    "Orientação e layout responsivo"): trava nativa via `app.json` + rede de segurança em runtime
+    com `expo-screen-orientation` (`lockAsync(PORTRAIT_UP)` em `src/app/_layout.tsx`, só nativo).
+    Web fica livre, com conteúdo centralizado.
+  - Novo componente `ScreenContainer` (`src/view/components/ScreenContainer.tsx`): centraliza o
+    padrão `SafeAreaView` > `ScrollView` > coluna `maxWidth`/`alignSelf: center` com padding lateral
+    `space-4` (16 px), eliminando a reescrita manual e inconsistente desse bloco em cada tela.
+  - `home.tsx` e `welcome.tsx` migradas para o `ScreenContainer`; padding lateral das duas alinhado
+    ao padrão do design system (`space-4`), corrigindo o desvio de `space-6` que havia na Home.
+  - Dependência adicionada: `expo-screen-orientation@~58.0.3` (módulo first-party do Expo).
+
 ## 1.7.0 · 2026-10-20
 
 - Alinhamento das telas sob responsabilidade do Micael às telas do Figma (Spec 030).

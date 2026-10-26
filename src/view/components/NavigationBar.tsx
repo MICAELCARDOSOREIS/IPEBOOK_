@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
@@ -20,10 +20,15 @@ const ITEMS: ReadonlyArray<{ key: NavigationDestination; label: string; icon: Ap
   { key: "profile", label: "Perfil", icon: "person" },
 ];
 
-/** Barra de navegação do design system (barra-de-navegacao.md), restrita a 3 destinos (ADR 0011). */
+/** Barra de navegação do design system (barra-de-navegacao.md), Material 3 como no Figma `02.01`:
+ * barra em `surface-container`, indicador ativo em pílula de 56x32 dp ao redor do ícone e rótulo
+ * abaixo. Restrita a 5 destinos (ADR 0011).
+ */
 export function NavigationBar({ active, onNavigate, disabledDestinations = [] }: NavigationBarProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const lastNavigateTime = useRef(0);
+  const DEBOUNCE_MS = 300;
 
   return (
     <View testID="navigation-bar-tablist" accessibilityRole="tablist" style={styles.bar}>
@@ -37,15 +42,23 @@ export function NavigationBar({ active, onNavigate, disabledDestinations = [] }:
             accessibilityState={isDisabled ? { selected: isActive, disabled: true } : { selected: isActive }}
             accessibilityLabel={isDisabled ? `${item.label} (em breve)` : item.label}
             disabled={isDisabled}
-            onPress={() => !isDisabled && onNavigate(item.key)}
-            style={[styles.item, isActive && styles.itemActive, isDisabled && styles.itemDisabled]}
+            onPress={() => {
+              if (isDisabled || isActive) return;
+              const now = Date.now();
+              if (now - lastNavigateTime.current < DEBOUNCE_MS) return;
+              lastNavigateTime.current = now;
+              onNavigate(item.key);
+            }}
+            style={[styles.item, isDisabled && styles.itemDisabled]}
           >
-            <AppIcon
-              name={item.icon}
-              size={24}
-              filled={isActive}
-              color={isDisabled ? colors.secondaryText : isActive ? colors.m3.onSecondaryContainer : colors.secondaryText}
-            />
+            <View style={[styles.indicator, isActive && styles.indicatorActive]}>
+              <AppIcon
+                name={item.icon}
+                size={24}
+                filled={isActive}
+                color={isDisabled ? colors.secondaryText : isActive ? colors.m3.onSecondaryContainer : colors.secondaryText}
+              />
+            </View>
             <Text style={[styles.label, isActive && styles.labelActive, isDisabled && styles.labelDisabled]}>
               {item.label}
             </Text>
@@ -61,26 +74,28 @@ function createStyles(colors: ColorPalette) {
     bar: {
       flexDirection: "row",
       justifyContent: "space-around",
-      backgroundColor: colors.surface,
-      paddingVertical: tokens.spacing[8],
-      borderTopWidth: 1,
-      borderTopColor: colors.border,
+      backgroundColor: colors.m3.surfaceContainer,
+      paddingTop: tokens.spacing[12],
+      paddingBottom: tokens.spacing[16],
     },
     item: {
-      minHeight: tokens.accessibility.touchTarget,
       flex: 1,
       minWidth: 0,
-      justifyContent: "center",
       alignItems: "center",
       gap: tokens.spacing[4],
-      paddingHorizontal: tokens.spacing[4],
       paddingVertical: tokens.spacing[4],
-      borderRadius: tokens.radius.full,
     },
-    itemActive: { backgroundColor: colors.soft },
+    indicator: {
+      width: tokens.spacing[56],
+      height: tokens.spacing[32],
+      borderRadius: tokens.radius.large,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    indicatorActive: { backgroundColor: colors.m3.secondaryContainer },
     itemDisabled: { opacity: 0.38 },
-    label: { color: colors.secondaryText, ...tokens.typography.labelSmall },
-    labelActive: { color: colors.m3.onSecondaryContainer, fontWeight: "600" },
+    label: { color: colors.secondaryText, ...tokens.typography.labelMedium },
+    labelActive: { color: colors.m3.onSurface },
     labelDisabled: { opacity: 0.7 },
   });
 }
