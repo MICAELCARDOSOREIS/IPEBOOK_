@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
@@ -16,26 +16,38 @@ export default function AuthCallback({ url, onSuccess, onBackToSignIn }: AuthCal
   const { colors } = useTheme();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!url) return;
-    let isMounted = true;
+  // Mantém as dependências mais recentes sem reexecutar o efeito: cada renderização recria
+  // `actions` e `onSuccess`, e reprocessar a URL descartaria o resultado em andamento.
+  const latest = useRef({ actions, onSuccess, error: state.error });
+  latest.current = { actions, onSuccess, error: state.error };
+  const processedUrl = useRef<string | null>(null);
+  const mounted = useRef(true);
 
-    async function completeAuth() {
-      if (!actions.handleAuthCallback || !url) return;
-      const ok = await actions.handleAuthCallback(url);
-      if (!isMounted) return;
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!url || processedUrl.current === url) return;
+    processedUrl.current = url;
+
+    async function completeAuth(callbackUrl: string) {
+      const handle = latest.current.actions.handleAuthCallback;
+      if (!handle) return;
+      const ok = await handle(callbackUrl);
+      if (!mounted.current) return;
       if (ok) {
-        onSuccess();
+        latest.current.onSuccess();
       } else {
-        setErrorMessage(state.error ?? "Não foi possível concluir o login.");
+        setErrorMessage(latest.current.error ?? "Não foi possível concluir o login.");
       }
     }
 
-    completeAuth();
-    return () => {
-      isMounted = false;
-    };
-  }, [url, actions, onSuccess, state.error]);
+    completeAuth(url);
+  }, [url]);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>

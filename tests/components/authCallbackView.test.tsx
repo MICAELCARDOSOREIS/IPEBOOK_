@@ -46,6 +46,33 @@ describe("tela de callback de autenticação (AuthCallback)", () => {
     expect(onSuccess).toHaveBeenCalled();
   });
 
+  it("conclui o login uma única vez mesmo com novas renderizações durante o processamento", async () => {
+    let resolveCallback: (ok: boolean) => void = () => {};
+    const handleAuthCallback = vi.fn(
+      () => new Promise<boolean>((resolve) => { resolveCallback = resolve; }),
+    );
+    mockAuth({ user: null, loading: true, error: null }, { handleAuthCallback });
+    const url = "https://ipebook.app/auth/callback#access_token=token&refresh_token=refresh";
+    const firstOnSuccess = vi.fn();
+    const secondOnSuccess = vi.fn();
+
+    let view!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      view = await render(<AuthCallback url={url} onSuccess={firstOnSuccess} />);
+    });
+    // Nova renderização com ações e callback recriados, como ocorre ao mudar o estado.
+    mockAuth({ user: null, loading: true, error: null }, { handleAuthCallback });
+    await act(async () => {
+      await view.rerender(<AuthCallback url={url} onSuccess={secondOnSuccess} />);
+    });
+    await act(async () => {
+      resolveCallback(true);
+    });
+
+    expect(handleAuthCallback).toHaveBeenCalledTimes(1);
+    expect(firstOnSuccess.mock.calls.length + secondOnSuccess.mock.calls.length).toBe(1);
+  });
+
   it("exibe mensagem de erro quando o callback falha", async () => {
     const handleAuthCallback = vi.fn().mockResolvedValue(false);
     mockAuth({ user: null, loading: false, error: "Link inválido ou expirado." }, { handleAuthCallback });
