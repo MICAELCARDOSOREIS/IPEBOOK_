@@ -235,10 +235,12 @@ describe("datasources Supabase", () => {
     const order = vi.fn().mockResolvedValue({ data: [row], error: null });
     const maybeSingle = vi.fn().mockResolvedValue({ data: row, error: null });
     const single = vi.fn().mockResolvedValue({ data: { ...row, status: "reserved" }, error: null });
+    const listChain: Record<string, unknown> = { order };
+    listChain.neq = vi.fn(() => listChain);
     const from = vi.fn().mockReturnValue({
       select: vi.fn().mockReturnValue({
         order,
-        neq: vi.fn().mockReturnValue({ order }),
+        neq: listChain.neq,
         eq: vi.fn().mockReturnValue({ maybeSingle, order }),
       }),
       update: vi.fn().mockReturnValue({ eq: vi.fn().mockReturnValue({ select: vi.fn().mockReturnValue({ single }) }) }),
@@ -255,9 +257,11 @@ describe("datasources Supabase", () => {
     const row = { id: "p1", title: "Livro Paginado", author: "Autor", owner_id: "dono", modality: "donation", price: null, status: "available" };
     const range = vi.fn().mockResolvedValue({ data: [row], error: null });
     const order = vi.fn().mockReturnValue({ range });
+    const listChain: Record<string, unknown> = { order };
+    listChain.neq = vi.fn(() => listChain);
     const from = vi.fn().mockReturnValue({
       select: vi.fn().mockReturnValue({
-        neq: vi.fn().mockReturnValue({ order }),
+        neq: listChain.neq,
       }),
     });
     const books = new SupabaseBookDataSource(fakeClient({ from }));
@@ -273,7 +277,8 @@ describe("datasources Supabase", () => {
     const order = vi.fn().mockResolvedValue({ data: [row], error: null });
     const eqModality = vi.fn().mockReturnValue({ order });
     const eqNeighborhood = vi.fn().mockReturnValue({ eq: eqModality, order });
-    const neq = vi.fn().mockReturnValue({ eq: eqNeighborhood, order });
+    const neq = vi.fn();
+    neq.mockReturnValue({ neq, eq: eqNeighborhood, order });
     const from = vi.fn().mockReturnValue({
       select: vi.fn().mockReturnValue({ neq }),
     });
@@ -287,30 +292,32 @@ describe("datasources Supabase", () => {
   });
 
   it("trata catálogo vazio, livro ausente e falhas do banco sem detalhes internos", async () => {
+    const emptyOrder = vi.fn().mockResolvedValue({ data: [], error: null });
+    const emptyNeq = vi.fn();
+    emptyNeq.mockReturnValue({ order: emptyOrder, neq: emptyNeq });
     const empty = new SupabaseBookDataSource(fakeClient({ from: vi.fn().mockReturnValue({
       select: vi.fn().mockReturnValue({
-        order: vi.fn().mockResolvedValue({ data: [], error: null }),
-        neq: vi.fn().mockReturnValue({
-          order: vi.fn().mockResolvedValue({ data: [], error: null }),
-        }),
+        order: emptyOrder,
+        neq: emptyNeq,
         eq: vi.fn().mockReturnValue({
           maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
-          order: vi.fn().mockResolvedValue({ data: [], error: null }),
+          order: emptyOrder,
         }),
       }),
     }) }));
     await expect(empty.list()).resolves.toEqual([]);
     await expect(empty.findById("ausente")).resolves.toBeNull();
 
+    const failedOrder = vi.fn().mockResolvedValue({ data: null, error: { message: "interno" } });
+    const failedNeq = vi.fn();
+    failedNeq.mockReturnValue({ order: failedOrder, neq: failedNeq });
     const failed = new SupabaseBookDataSource(fakeClient({ from: vi.fn().mockReturnValue({
       select: vi.fn().mockReturnValue({
-        order: vi.fn().mockResolvedValue({ data: null, error: { message: "interno" } }),
-        neq: vi.fn().mockReturnValue({
-          order: vi.fn().mockResolvedValue({ data: null, error: { message: "interno" } }),
-        }),
+        order: failedOrder,
+        neq: failedNeq,
         eq: vi.fn().mockReturnValue({
           maybeSingle: vi.fn().mockResolvedValue({ data: null, error: { message: "interno" } }),
-          order: vi.fn().mockResolvedValue({ data: null, error: { message: "interno" } }),
+          order: failedOrder,
         }),
       }),
       insert: vi.fn().mockReturnValue({ select: vi.fn().mockReturnValue({ single: vi.fn().mockResolvedValue({ data: null, error: { message: "interno" } }) }) }),

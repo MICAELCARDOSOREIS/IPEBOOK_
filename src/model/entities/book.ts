@@ -1,5 +1,5 @@
 export type BookModality = "sale" | "trade" | "donation";
-export type BookStatus = "available" | "reserved" | "paused";
+export type BookStatus = "available" | "reserved" | "paused" | "draft";
 
 /** Estado de conservação do exemplar (Figma `04.05 · Detalhes do livro`). */
 export type BookCondition = "new" | "good" | "marked" | "worn";
@@ -32,4 +32,10 @@ export type Book = Readonly<{
   neighborhood?: string;
   photoUrl?: string;
   photos?: readonly string[];
+  /**
+   * Etapa do assistente de publicação em que o rascunho foi salvo (1 Livro, 2 Fotos,
+   * 3 Detalhes). Presente apenas em anúncios com status `"draft"` (Spec 017), usada
+   * para retomar o fluxo exatamente de onde a pessoa parou.
+   */
+  draftStep?: number;
 }>;
