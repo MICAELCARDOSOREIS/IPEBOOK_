@@ -125,6 +125,9 @@ describe("Profile (Spec 006 US4, Issue #55)", () => {
       fireEvent.changeText(screen.getByLabelText("Telefone/WhatsApp"), "86988887777");
     });
     await act(async () => {
+      fireEvent.press(screen.getByLabelText("Mostrar atalhos de bairros populares"));
+    });
+    await act(async () => {
       fireEvent.press(screen.getByLabelText("Bairro Centro"));
     });
     await act(async () => { fireEvent.press(screen.getByText(/Salvar/)); });
@@ -213,8 +216,18 @@ describe("Profile (Spec 006 US4, Issue #55)", () => {
   it("rotula os atalhos como bairros de Piripiri, sem inventar frequência", async () => {
     setup({ id: "ana", email: "ana@exemplo.com" });
     const screen = await renderProfile();
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Mostrar atalhos de bairros populares"));
+    });
     expect(screen.getByText("Bairros de Piripiri")).toBeDefined();
     expect(screen.queryByText("Bairros mais frequentes")).toBeNull();
+  });
+
+  it("mantém os atalhos de bairro recolhidos por padrão", async () => {
+    setup({ id: "ana", email: "ana@exemplo.com" });
+    const screen = await renderProfile();
+    expect(screen.getByLabelText("Mostrar atalhos de bairros populares")).toBeDefined();
+    expect(screen.queryByText("Bairros de Piripiri")).toBeNull();
   });
 
   it("volta direto quando não há edição em aberto", async () => {
