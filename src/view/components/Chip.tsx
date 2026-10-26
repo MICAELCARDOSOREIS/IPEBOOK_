@@ -9,7 +9,7 @@ export type ChipProps = {
   onPress: () => void;
   disabled?: boolean;
   accessibilityLabel?: string;
-  /** `compact` (32 dp) nas fileiras da Home e do Explorar; `regular` (40 dp) em "Filtrar livros". */
+  /** `compact` (32 dp) nas fileiras da Home e do Explorar; `regular` (40 dp) nos grupos de escolha de tela cheia (`02.03`, `04.05`). */
   size?: "compact" | "regular";
 };
 
@@ -47,7 +47,7 @@ function createStyles(colors: ColorPalette) {
       justifyContent: "center",
       backgroundColor: colors.m3.surfaceContainerLowest,
     },
-    // Figma `02.01`/`02.02`: 32 dp nas fileiras rápidas; `02.03`: 40 dp na tela de filtros.
+    // Figma `02.01`/`02.02`: 32 dp nas fileiras rápidas; `02.03`/`04.05`: 40 dp nos grupos de escolha.
     chipCompact: { height: tokens.spacing[32], paddingHorizontal: tokens.spacing[16] },
     chipRegular: { height: tokens.spacing[40], paddingHorizontal: tokens.spacing[20] },
     selected: { backgroundColor: colors.m3.secondaryContainer, borderWidth: 0 },

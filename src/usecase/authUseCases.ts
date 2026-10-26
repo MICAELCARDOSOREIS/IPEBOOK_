@@ -47,6 +47,17 @@ export class AuthUseCases implements IAuthUseCases {
     return this.dataSource.signIn(email.trim(), password);
   }
 
+  async signInWithGoogle(): Promise<User> {
+    if (!this.dataSource.signInWithGoogle) {
+      throw new AuthError("Login com Google indisponível.");
+    }
+    const user = await this.dataSource.signInWithGoogle();
+    if (user.id && user.id !== "pending") {
+      await this.ensurePublicProfile(user.id, user.name || "Leitor IpêBook");
+    }
+    return user;
+  }
+
   signOut(): Promise<void> {
     return this.dataSource.signOut();
   }

@@ -7,6 +7,10 @@
     "version": "0.1.0",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
+    "backgroundColor": "#FCFAF5",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "icon": "./assets/icon.png",
     "splash": {
       "image": "./assets/splash-icon.png",
@@ -14,27 +18,61 @@
       "backgroundColor": "#FCFAF5"
     },
     "android": {
+      "package": "com.ipebook.app",
+      "versionCode": 1,
       "adaptiveIcon": {
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundColor": "#FCFAF5",
         "monochromeImage": "./assets/android-icon-monochrome.png"
-      }
+      },
+      "softwareKeyboardLayoutMode": "resize",
+      "permissions": [
+        "android.permission.INTERNET",
+        "android.permission.CAMERA"
+      ]
+    },
+    "ios": {
+      "bundleIdentifier": "com.ipebook.app",
+      "supportsTablet": false
     },
     "web": {
       "bundler": "metro",
       "output": "static",
       "favicon": "./assets/favicon.png",
-      "themeColor": "#0D47A1",
+      "themeColor": "#2C5E45",
       "backgroundColor": "#FCFAF5",
       "description": "Marketplace comunitário de livros em Piripiri, PI (venda, troca e doação)"
     },
     "plugins": [
       "expo-router",
       "expo-status-bar",
-      "expo-font"
+      "expo-font",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "O IpêBook usa a câmera apenas para ler o código de barras do ISBN ao anunciar um livro.",
+          "recordAudioAndroid": false
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#2C5E45"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "asyncRoutes": {
+          "web": true
+        }
+      },
+      "eas": {
+        "projectId": "7593e188-168b-4282-87b9-74afae861981"
+      }
     }
   }
 }

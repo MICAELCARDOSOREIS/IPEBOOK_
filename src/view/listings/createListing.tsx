@@ -1,9 +1,10 @@
-import { useMemo, useState } from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import type { Book } from "@/model/entities/book";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
+import { FilledButton } from "@/view/components/FilledButton";
 import { StepProgress } from "@/view/components/StepProgress";
 import { TextButton } from "@/view/components/TextButton";
 import { TopAppBar } from "@/view/components/TopAppBar";
@@ -54,6 +55,7 @@ export default function CreateListing({
   const [step, setStep] = useState(1);
   const [published, setPublished] = useState<Book | null>(null);
   const errorRef = useFormErrorAnnouncer(state.error);
+  const scrollRef = useRef<React.ComponentRef<typeof ScrollView>>(null);
 
   const hasDraftContent = Boolean(
     state.title.trim() ||
@@ -71,6 +73,13 @@ export default function CreateListing({
       onCreated?.();
     }
   };
+
+  // Com a barra de ações fixa, o erro da submissão fica no fim do conteúdo rolável.
+  useEffect(() => {
+    if (published || !state.error) return;
+    // `scrollToEnd` pode não existir no ambiente de teste do ScrollView.
+    scrollRef.current?.scrollToEnd?.({ animated: true });
+  }, [published, state.error]);
 
   if (published) {
     return (
@@ -91,9 +100,10 @@ export default function CreateListing({
   };
 
   return (
-    <SafeAreaView style={styles.page}>
+    <SafeAreaView edges={["top", "left", "right"]} style={styles.page}>
       <TopAppBar title={STEP_TITLES[step]} onBack={handleBack} />
       <ScrollView
+        ref={scrollRef}
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
@@ -135,7 +145,6 @@ export default function CreateListing({
               onSetPrice={actions.setPrice}
               onSetPhotoUrl={actions.setPhotoUrl}
               onGoToPhotos={() => setStep(2)}
-              onContinue={() => setStep(2)}
             />
           ) : null}
 
@@ -148,8 +157,6 @@ export default function CreateListing({
               errorRef={errorRef}
               onSetPhotoUrl={actions.setPhotoUrl}
               onRemovePhoto={actions.removePhoto}
-              onContinue={() => setStep(3)}
-              onBack={() => setStep(1)}
             />
           ) : null}
 
@@ -166,12 +173,47 @@ export default function CreateListing({
               onSetCategory={actions.setCategory}
               onSetDescription={actions.setDescription}
               onSetNeighborhood={actions.setNeighborhood}
-              onSubmit={() => void handleSubmit()}
-              onBack={() => setStep(2)}
             />
           ) : null}
         </View>
       </ScrollView>
+
+      {/* Barra de ação fixa do Figma: nós `12:269`, `28:750` e `12:413` (`surface-container`). */}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 8 : 0}
+      >
+        <SafeAreaView edges={["bottom"]} style={styles.actionBar}>
+          <View style={styles.actionBarInner}>
+            {step === 1 ? (
+              <FilledButton label="Continuar" onPress={() => setStep(2)} />
+            ) : null}
+
+            {step === 2 ? (
+              <>
+                <FilledButton label="Usar estas fotos" onPress={() => setStep(3)} />
+                <TextButton label="Voltar à etapa anterior" onPress={() => setStep(1)} />
+              </>
+            ) : null}
+
+            {step === 3 ? (
+              <>
+                <FilledButton
+                  label="Publicar anúncio"
+                  loading={state.loading}
+                  loadingLabel="Publicando"
+                  onPress={() => void handleSubmit()}
+                />
+                <TextButton
+                  label="Voltar à etapa anterior"
+                  disabled={state.loading}
+                  onPress={() => setStep(2)}
+                />
+              </>
+            ) : null}
+          </View>
+        </SafeAreaView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -179,12 +221,25 @@ export default function CreateListing({
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     page: { flex: 1, backgroundColor: colors.background },
-    scrollContent: { padding: tokens.spacing[16], paddingBottom: tokens.spacing[48] },
+    scrollContent: { padding: tokens.spacing[16], paddingBottom: tokens.spacing[24] },
     content: {
       width: "100%",
       maxWidth: 560,
       alignSelf: "center",
       gap: tokens.spacing[16],
+    },
+    actionBar: {
+      width: "100%",
+      backgroundColor: colors.m3.surfaceContainer,
+    },
+    actionBarInner: {
+      width: "100%",
+      maxWidth: 560,
+      alignSelf: "center",
+      gap: tokens.spacing[8],
+      paddingHorizontal: tokens.spacing[16],
+      paddingTop: tokens.spacing[16],
+      paddingBottom: tokens.spacing[8],
     },
     draftBanner: {
       flexDirection: "row",

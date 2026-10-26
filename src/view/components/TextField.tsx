@@ -22,6 +22,8 @@ export type TextFieldProps = {
   multiline?: boolean;
   /** Fundo atrás do rótulo flutuante; precisa ser o mesmo do contêiner que hospeda o campo. */
   labelBackgroundColor?: string;
+  /** Alinhamento do texto de suporte. `right` é o contador de `04.05` (`39/280` à direita). */
+  helperTextAlign?: "left" | "right";
 };
 
 /**
@@ -45,6 +47,7 @@ export function TextField({
   accessibilityLabel,
   multiline = false,
   labelBackgroundColor,
+  helperTextAlign = "left",
 }: TextFieldProps) {
   const [focused, setFocused] = useState(false);
   const hasError = Boolean(error);
@@ -107,9 +110,17 @@ export function TextField({
         )}
       </View>
       {hasError ? (
-        <Text nativeID={errorId} accessibilityRole="alert" style={styles.errorText}>{error}</Text>
+        <Text
+          nativeID={errorId}
+          accessibilityRole="alert"
+          style={[styles.errorText, helperTextAlign === "right" && styles.supportingRight]}
+        >
+          {error}
+        </Text>
       ) : helperText ? (
-        <Text style={styles.helperText}>{helperText}</Text>
+        <Text style={[styles.helperText, helperTextAlign === "right" && styles.supportingRight]}>
+          {helperText}
+        </Text>
       ) : null}
     </View>
   );
@@ -162,6 +173,8 @@ function createStyles(colors: ColorPalette) {
       paddingHorizontal: tokens.spacing[16],
       ...tokens.typography.labelMedium,
     },
+    // Figma `04.05`: contador e texto de suporte alinhados à direita do campo.
+    supportingRight: { textAlign: "right" },
   });
 }
 

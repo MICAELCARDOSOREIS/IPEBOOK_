@@ -13,12 +13,8 @@ export default function Perfil() {
       onNavigateToFavorites={() => router.push("/favoritos")}
       onNavigateToNotifications={() => router.push("/notificacoes")}
       onNavigateToSecurity={() => router.push("/perfil/seguranca")}
-      onNavigateToPrivacy={() => router.push("/excluir-conta")}
-      onNavigateToBlockedUsers={() => router.push("/perfil/bloqueados")}
       onNavigateToInviteFriends={() => router.push("/perfil/convidar")}
       onNavigateToSettings={() => router.push("/perfil/configuracoes" as never)}
-      onNavigateToTerms={() => router.push("/termos")}
-      onNavigateToHelp={() => router.push("/ajuda")}
       onSignedOut={() => router.replace("/entrar")}
     />
   );

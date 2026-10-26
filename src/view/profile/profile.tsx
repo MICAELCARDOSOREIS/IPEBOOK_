@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
+  BackHandler,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -16,12 +17,14 @@ import { useTheme } from "@/view/theme/ThemeProvider";
 import { Avatar } from "@/view/components/Avatar";
 import { AppIcon } from "@/view/components/AppIcon";
 import { Chip } from "@/view/components/Chip";
+import { Dialog } from "@/view/components/Dialog";
 import { ErrorState } from "@/view/components/ErrorState";
 import { FilledButton } from "@/view/components/FilledButton";
 import { LoadingState } from "@/view/components/LoadingState";
 import { NeighborhoodSelectorModal } from "@/view/components/NeighborhoodSelectorModal";
 import { ScreenContainer } from "@/view/components/ScreenContainer";
 import { Snackbar } from "@/view/components/Snackbar";
+import { TextButton } from "@/view/components/TextButton";
 import { TextField } from "@/view/components/TextField";
 import { TopAppBar } from "@/view/components/TopAppBar";
 
@@ -30,6 +33,69 @@ export type ProfileProps = {
   /** Quando presente, exibe a barra superior com "Editar perfil" (Figma `07.02`). */
   onBack?: () => void;
 };
+
+const MAX_NAME_LENGTH = 60;
+const MAX_SOCIAL_HANDLE_LENGTH = 60;
+const MAX_PHONE_DIGITS = 11;
+
+/**
+ * Atalhos exibidos abaixo do campo de bairro. São os seis primeiros da lista oficial,
+ * não um ranking de frequência: o rótulo diz "Bairros de Piripiri" para não inventar dado.
+ */
+const NEIGHBORHOOD_QUICK_PICKS = 6;
+
+type FieldErrors = Partial<Record<"name" | "photoUrl" | "socialHandle" | "phone", string>>;
+
+/**
+ * Máscara progressiva de telefone brasileiro no formulário: aplica (XX) XXXXX-XXXX
+ * enquanto a pessoa digita. O caso de uso já normaliza para somente dígitos ao salvar.
+ */
+export function formatPhoneMask(raw: string): string {
+  const digits = raw.replace(/\D/g, "").slice(0, MAX_PHONE_DIGITS);
+  if (digits.length <= 2) return digits;
+  const area = digits.slice(0, 2);
+  const rest = digits.slice(2);
+  if (rest.length <= 4) return `(${area}) ${rest}`;
+  if (rest.length <= 8) return `(${area}) ${rest.slice(0, 4)}-${rest.slice(4)}`;
+  return `(${area}) ${rest.slice(0, 5)}-${rest.slice(5)}`;
+}
+
+/**
+ * Validação preventiva espelhando as regras do domínio (`PublicProfileUseCases.updateProfile`
+ * e `UserPreferencesUseCases.updatePreferences`) para exibir o erro no campo correspondente
+ * antes de enviar qualquer requisição.
+ */
+function validateProfileFields(values: {
+  name: string;
+  photoUrl: string;
+  socialHandle: string;
+  phone: string;
+}): FieldErrors {
+  const errors: FieldErrors = {};
+  const name = values.name.trim();
+  if (!name) {
+    errors.name = "Informe um nome público.";
+  } else if (name.length > MAX_NAME_LENGTH) {
+    errors.name = `O nome público deve ter até ${MAX_NAME_LENGTH} caracteres.`;
+  }
+
+  const photoUrl = values.photoUrl.trim();
+  if (photoUrl && !/^https?:\/\//i.test(photoUrl)) {
+    errors.photoUrl = "A foto deve ser um link (http/https) válido.";
+  }
+
+  const socialHandle = values.socialHandle.trim();
+  if (socialHandle && socialHandle.length > MAX_SOCIAL_HANDLE_LENGTH) {
+    errors.socialHandle = `A rede social deve ter até ${MAX_SOCIAL_HANDLE_LENGTH} caracteres.`;
+  }
+
+  const phoneDigits = values.phone.replace(/\D/g, "");
+  if (phoneDigits && (phoneDigits.length < 10 || phoneDigits.length > MAX_PHONE_DIGITS)) {
+    errors.phone = "Informe um telefone válido com DDD.";
+  }
+
+  return errors;
+}
 
 /**
  * Tela de Edição de Perfil alinhada fielmente ao Figma `07.02 · Editar perfil` (`145:2408`)
@@ -47,9 +113,21 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
   const [photoUrl, setPhotoUrl] = useState("");
   const [socialHandle, setSocialHandle] = useState("");
   const [phone, setPhone] = useState("");
-  const [neighborhood, setNeighborhood] = useState("Centro");
+  /** null = ainda não escolhido. A tela não atribui um bairro que a pessoa não selecionou. */
+  const [neighborhood, setNeighborhood] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [isNeighborhoodModalOpen, setIsNeighborhoodModalOpen] = useState(false);
+  const [discardOpen, setDiscardOpen] = useState(false);
+  /** true quando o toque em Salvar encontrou erros em linha (anuncia o resumo no TalkBack). */
+  const [blockedSave, setBlockedSave] = useState(false);
+
+  /** Edita um campo e limpa o erro em linha correspondente assim que a pessoa corrige o valor. */
+  function editField(field: keyof FieldErrors, value: string, apply: (next: string) => void) {
+    apply(value);
+    setFieldErrors((previous) => (previous[field] ? { ...previous, [field]: undefined } : previous));
+    setBlockedSave(false);
+  }
 
   useEffect(() => {
     if (!state.profile) return;
@@ -60,35 +138,115 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
 
   useEffect(() => {
     if (!preferencesState.preferences) return;
-    setPhone(preferencesState.preferences.phone ?? "");
-    if (preferencesState.preferences.neighborhood) {
-      setNeighborhood(preferencesState.preferences.neighborhood);
-    }
+    setPhone(preferencesState.preferences.phone ? formatPhoneMask(preferencesState.preferences.phone) : "");
+    setNeighborhood(preferencesState.preferences.neighborhood ?? null);
   }, [preferencesState.preferences]);
 
   useEffect(() => {
     if (!authState.loading && !userId) onNavigateToSignIn?.();
   }, [authState.loading, userId, onNavigateToSignIn]);
 
-  if (authState.loading || !userId) return null;
+  /**
+   * Valores carregados servem de linha de base: depois de salvar, os casos de uso devolvem
+   * perfil e preferências atualizados e `dirty` volta a ser falso sem código extra.
+   */
+  const baselinePhone = preferencesState.preferences?.phone
+    ? formatPhoneMask(preferencesState.preferences.phone)
+    : "";
+  const dirty =
+    name !== (state.profile?.name ?? "") ||
+    photoUrl !== (state.profile?.photoUrl ?? "") ||
+    socialHandle !== (state.profile?.socialHandle ?? "") ||
+    phone !== baselinePhone ||
+    neighborhood !== (preferencesState.preferences?.neighborhood ?? null);
+
+  const dirtyRef = useRef(dirty);
+  dirtyRef.current = dirty;
+  const modalOpenRef = useRef(isNeighborhoodModalOpen);
+  modalOpenRef.current = isNeighborhoodModalOpen;
+
+  /** Voltar com edição em aberto pergunta antes de descartar; sem edição, sai direto. */
+  function requestBack() {
+    if (dirty) setDiscardOpen(true);
+    else onBack?.();
+  }
+
+  // Volte físico do Android: fecha o modal de bairros, pergunta antes de descartar e, com a
+  // tela limpa, deixa o sistema navegar (retorna false).
+  useEffect(() => {
+    if (Platform.OS === "web") return;
+    const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
+      if (modalOpenRef.current) {
+        setIsNeighborhoodModalOpen(false);
+        return true;
+      }
+      if (dirtyRef.current) {
+        setDiscardOpen(true);
+        return true;
+      }
+      return false;
+    });
+    return () => subscription.remove();
+  }, []);
+
+  if (authState.loading) {
+    return (
+      <ScreenContainer maxWidth={560} paddingTop={tokens.spacing[12]}>
+        <LoadingState label="Carregando sessão" />
+      </ScreenContainer>
+    );
+  }
+
+  if (!userId) {
+    return (
+      <ScreenContainer
+        maxWidth={560}
+        paddingTop={tokens.spacing[12]}
+        paddingBottom={tokens.spacing[32]}
+        header={<TopAppBar title="Editar perfil" onBack={onBack ?? (() => {})} />}
+      >
+        <View style={styles.guestCard}>
+          <Text style={styles.guestTitle}>Entre para editar seu perfil</Text>
+          <Text style={styles.guestText}>
+            Suas informações ficam guardadas na sua conta. Entre ou crie uma para continuar.
+          </Text>
+          <FilledButton label="Entrar ou criar conta" onPress={onNavigateToSignIn ?? (() => {})} />
+        </View>
+      </ScreenContainer>
+    );
+  }
 
   const loading = state.loading || preferencesState.loading;
   const saving = state.saving || preferencesState.saving;
   const error = state.error ?? preferencesState.error;
 
   async function handleSave() {
+    const errors = validateProfileFields({ name, photoUrl, socialHandle, phone });
+    setFieldErrors(errors);
+    if (Object.keys(errors).length > 0) {
+      setBlockedSave(true);
+      return;
+    }
+    setBlockedSave(false);
+
+    const trimmedName = name.trim();
     const [profileOk, preferencesOk] = await Promise.all([
       actions.update({
-        name,
-        photoUrl: photoUrl || undefined,
-        socialHandle: socialHandle || undefined,
+        name: trimmedName,
+        photoUrl: photoUrl.trim() || undefined,
+        socialHandle: socialHandle.trim() || undefined,
       }),
       preferencesActions.update({
         phone: phone || undefined,
-        neighborhood: neighborhood || undefined,
+        neighborhood: neighborhood ?? undefined,
       }),
     ]);
     if (profileOk && preferencesOk) setSaved(true);
+  }
+
+  function handleRetryLoad() {
+    actions.reload();
+    preferencesActions.reload();
   }
 
   return (
@@ -96,17 +254,30 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
       maxWidth={560}
       paddingTop={tokens.spacing[12]}
       paddingBottom={tokens.spacing[32]}
-      header={<TopAppBar title="Editar perfil" onBack={onBack ?? (() => {})} />}
+      header={<TopAppBar title="Editar perfil" onBack={requestBack} />}
       overlay={
         <>
           <NeighborhoodSelectorModal
             visible={isNeighborhoodModalOpen}
-            currentNeighborhood={neighborhood}
+            currentNeighborhood={neighborhood ?? ""}
             onSelect={(selected) => {
               setNeighborhood(selected);
               setIsNeighborhoodModalOpen(false);
             }}
             onClose={() => setIsNeighborhoodModalOpen(false)}
+          />
+          <Dialog
+            visible={discardOpen}
+            title="Descartar alterações?"
+            message="As mudanças feitas ainda não foram salvas."
+            confirmLabel="Descartar"
+            cancelLabel="Continuar editando"
+            destructive
+            onConfirm={() => {
+              setDiscardOpen(false);
+              onBack?.();
+            }}
+            onCancel={() => setDiscardOpen(false)}
           />
           <Snackbar
             visible={saved}
@@ -123,7 +294,7 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
         {loading ? (
           <LoadingState label="Carregando perfil" />
         ) : error && !state.profile ? (
-          <ErrorState message={error} onRetry={() => void handleSave()} />
+          <ErrorState message={error} onRetry={handleRetryLoad} />
         ) : (
           <View style={styles.formContainer}>
             {/* 1. Manchete Editorial (Figma 07.02) */}
@@ -140,7 +311,7 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
             <View style={styles.avatarSection}>
               <Avatar
                 name={name || "Você"}
-                photoUrl={photoUrl || undefined}
+                photoUrl={photoUrl.trim() || undefined}
                 size={88}
               />
             </View>
@@ -152,9 +323,13 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
                 label="Nome"
                 accessibilityLabel="Nome público"
                 value={name}
-                onChangeText={setName}
+                onChangeText={(value) => editField("name", value, setName)}
                 placeholder="Seu nome"
                 autoCapitalize="words"
+                maxLength={MAX_NAME_LENGTH}
+                error={fieldErrors.name}
+                helperText={fieldErrors.name ? undefined : `${name.trim().length}/${MAX_NAME_LENGTH}`}
+                helperTextAlign="right"
               />
 
               {/* Cidade (Campo fixo / informativo M3 desabilitado) */}
@@ -169,7 +344,11 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
               {/* Bairro (Campo interativo contornado com seletor no Figma 07.02) */}
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel={`Bairro selecionado: ${neighborhood}. Toque para alterar`}
+                accessibilityLabel={
+                  neighborhood
+                    ? `Bairro selecionado: ${neighborhood}. Toque para alterar`
+                    : "Nenhum bairro selecionado. Toque para escolher"
+                }
                 onPress={() => setIsNeighborhoodModalOpen(true)}
                 style={styles.selectorField}
               >
@@ -177,7 +356,9 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
                   <View style={styles.notch}>
                     <Text style={styles.floatingLabel}>Bairro</Text>
                   </View>
-                  <Text style={styles.fieldValue}>{neighborhood}</Text>
+                  <Text style={neighborhood ? styles.fieldValue : styles.fieldPlaceholder}>
+                    {neighborhood ?? "Selecionar bairro"}
+                  </Text>
                   <AppIcon
                     name="chevronDown"
                     size={20}
@@ -186,11 +367,11 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
                 </View>
               </Pressable>
 
-              {/* Chips rápidos de bairro mais frequentes */}
+              {/* Atalhos: seis primeiros bairros da lista oficial (o modal traz todos). */}
               <View style={styles.neighborhoodChipsArea}>
-                <Text style={styles.sectionLabel}>Bairros mais frequentes</Text>
+                <Text style={styles.sectionLabel}>Bairros de Piripiri</Text>
                 <View style={styles.chipRow}>
-                  {PIRIPIRI_NEIGHBORHOODS.slice(0, 6).map((item) => (
+                  {PIRIPIRI_NEIGHBORHOODS.slice(0, NEIGHBORHOOD_QUICK_PICKS).map((item) => (
                     <Chip
                       key={item}
                       size="compact"
@@ -201,6 +382,9 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
                     />
                   ))}
                 </View>
+                <Text style={styles.chipsHelper}>
+                  Não achou o seu? Toque em "Selecionar bairro" para ver a lista completa.
+                </Text>
               </View>
 
               {/* Mensagem de privacidade (Figma 07.02) */}
@@ -211,9 +395,12 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
                 label="Telefone/WhatsApp"
                 accessibilityLabel="Telefone/WhatsApp"
                 value={phone}
-                onChangeText={setPhone}
+                onChangeText={(value) => editField("phone", value, (raw) => setPhone(formatPhoneMask(raw)))}
                 placeholder="(86) 99999-9999"
                 keyboardType="phone-pad"
+                maxLength={15}
+                error={fieldErrors.phone}
+                helperText="Visível apenas para quem negociar com você."
               />
 
               {/* Rede social */}
@@ -221,9 +408,11 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
                 label="Rede social"
                 accessibilityLabel="Rede social"
                 value={socialHandle}
-                onChangeText={setSocialHandle}
+                onChangeText={(value) => editField("socialHandle", value, setSocialHandle)}
                 placeholder="@usuario"
                 autoCapitalize="none"
+                maxLength={MAX_SOCIAL_HANDLE_LENGTH}
+                error={fieldErrors.socialHandle}
               />
 
               {/* Foto (link) */}
@@ -231,12 +420,32 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
                 label="Foto (link)"
                 accessibilityLabel="Foto (link)"
                 value={photoUrl}
-                onChangeText={setPhotoUrl}
+                onChangeText={(value) => editField("photoUrl", value, setPhotoUrl)}
                 placeholder="https://..."
                 autoCapitalize="none"
                 keyboardType="url"
+                error={fieldErrors.photoUrl}
+                helperText="Um link http/https com a imagem da sua foto."
               />
+
+              {/* Hoje só dá para trocar a foto colando outro link; para removê-la é preciso
+                  limpar o campo. O botão abaixo faz isso em um toque. */}
+              {photoUrl.trim() ? (
+                <TextButton
+                  label="Remover foto"
+                  accessibilityLabel="Remover foto do perfil"
+                  onPress={() => editField("photoUrl", "", setPhotoUrl)}
+                />
+              ) : null}
             </View>
+
+            {/* Resumo acessível: o foco não pula para o campo com erro, então a região viva
+                informa no leitor de tela que há itens destacados. */}
+            {blockedSave ? (
+              <Text accessibilityRole="alert" accessibilityLiveRegion="polite" style={styles.errorText}>
+                Confira os campos destacados para salvar.
+              </Text>
+            ) : null}
 
             {/* Mensagem de erro de salvamento */}
             {error ? (
@@ -249,7 +458,6 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
             <View style={styles.actionContainer}>
               <FilledButton
                 label="Salvar alterações"
-                accessibilityLabel="Salvar"
                 loading={saving}
                 loadingLabel="Salvando perfil"
                 onPress={() => void handleSave()}
@@ -324,6 +532,14 @@ function createStyles(colors: ColorPalette) {
       ...tokens.typography.bodyLarge,
       color: colors.m3.onSurface,
     },
+    fieldPlaceholder: {
+      ...tokens.typography.bodyLarge,
+      color: colors.m3.onSurfaceVariant,
+    },
+    chipsHelper: {
+      ...tokens.typography.bodyMedium,
+      color: colors.m3.onSurfaceVariant,
+    },
     neighborhoodChipsArea: {
       marginTop: tokens.spacing[4],
       gap: tokens.spacing[8],
@@ -352,6 +568,20 @@ function createStyles(colors: ColorPalette) {
     actionContainer: {
       marginTop: tokens.spacing[32],
       width: "100%",
+    },
+    guestCard: {
+      gap: tokens.spacing[12],
+      borderRadius: tokens.radius.large,
+      backgroundColor: colors.m3.surfaceContainerLow,
+      padding: tokens.spacing[24],
+    },
+    guestTitle: {
+      ...tokens.typography.titleLarge,
+      color: colors.m3.onSurface,
+    },
+    guestText: {
+      ...tokens.typography.bodyMedium,
+      color: colors.m3.onSurfaceVariant,
     },
   });
 }

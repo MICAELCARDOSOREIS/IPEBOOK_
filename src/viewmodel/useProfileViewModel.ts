@@ -13,6 +13,8 @@ export type ProfileState = {
 
 export type ProfileActions = {
   update: (edits: ProfileEdits) => Promise<boolean>;
+  /** Recarrega o perfil e as mensagens de erro atuais (usado pelo estado de erro da tela). */
+  reload: () => void;
 };
 
 const GENERIC_ERROR = "Não foi possível carregar o perfil. Tente novamente.";
@@ -82,5 +84,24 @@ export function useProfileViewModel(
     [userId, useCases],
   );
 
-  return [state, { update }];
+  const reload = useCallback(() => {
+    if (!userId) return;
+    setState((previous) => ({ ...previous, loading: true, error: null }));
+    void (async () => {
+      try {
+        const profile = await useCases.getPublicProfile(userId);
+        if (active.current) setState({ profile, loading: false, saving: false, error: null });
+      } catch (error) {
+        if (active.current) {
+          setState((previous) => ({
+            ...previous,
+            loading: false,
+            error: error instanceof DomainError ? error.message : GENERIC_ERROR,
+          }));
+        }
+      }
+    })();
+  }, [userId, useCases]);
+
+  return [state, { update, reload }];
 }
