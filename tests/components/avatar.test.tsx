@@ -22,4 +22,15 @@ describe("Avatar (design-system/04-componentes/avatar.md)", () => {
     const { getByText } = await render(<Avatar name="Ana" />);
     expect(getByText("A")).toBeDefined();
   });
+
+  it("ignora tokens que não começam com letra nas iniciais", async () => {
+    const { getByText, queryByText } = await render(<Avatar name="Usuário #4426" />);
+    expect(getByText("U")).toBeDefined();
+    expect(queryByText("U#")).toBeNull();
+  });
+
+  it("usa o primeiro caractere alfanumérico quando nenhuma palavra começa com letra", async () => {
+    const { getByText } = await render(<Avatar name="4426" />);
+    expect(getByText("4")).toBeDefined();
+  });
 });
