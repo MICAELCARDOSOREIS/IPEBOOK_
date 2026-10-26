@@ -2,7 +2,9 @@
 
 Documento consolidado de continuidade técnica e produto do Ipebook (Piripiri, PI).
 
-Conferência atual: **2026-10-26** (73 specs e 62 ADRs numerados, 173 arquivos e 1.252 testes automatizados 100% passando).
+Conferência atual: **2026-10-26** (74 specs e 64 ADRs numerados, 174 arquivos e 1.274 testes automatizados 100% passando).
+
+**Detalhe do livro no padrão Material 3 do Figma `03.01`–`03.03` (2026-10-26, Spec 074):** `src/view/listings/bookDetail.tsx` ganhou capa em destaque de borda a borda na cor da modalidade, botões de ícone tonais sobre a capa, valor com etiqueta, cartão "Aceita em troca"/"Doação para quem vai ler", lista Conservação/Categoria/Retirada e barra fixa com "Compartilhar" (WhatsApp) e ação principal por modalidade ("Tenho interesse", "Propor troca", "Quero receber"). "Conversar" do Figma não foi feito porque o chat só existe dentro de uma negociação. Validado em 174 arquivos / 1.274 testes e no Galaxy A16 (claro e escuro).
 
 **Tempo real no chat, persistência de rascunhos e push token remoto (2026-10-26, Specs 017/060/061, ADR 0062):** consolidadas três capacidades centrais de experiência e infraestrutura.
 1. **Chat em tempo real (Spec 061, ADR 0044 e ADR 0062):** o contrato `IMessageDataSource` ganhou `subscribeToMessages`, implementado no `SupabaseMessageDataSource` via Supabase Realtime Channels ouvindo eventos `INSERT` filtrados por `request_id=eq.${requestId}` com desinscrição e remoção limpa do canal (`removeChannel`), e no `MemoryMessageDataSource` com gerenciamento de listeners reativos; o hook `useNegotiationChatViewModel` subscreve reativamente na montagem e deduplica mensagens recebidas por ID.
