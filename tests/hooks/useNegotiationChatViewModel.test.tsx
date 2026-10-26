@@ -1,6 +1,6 @@
 import { createElement } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { useNegotiationChatViewModel } from "@/viewmodel/useNegotiationChatViewModel";
 import type { NegotiationMessage } from "@/model/entities/negotiationMessage";
 
@@ -10,6 +10,7 @@ const mounted: ReactTestRenderer[] = [];
 type MockUseCases = {
   getMessages: (requestId: string, sessionUserId: string) => Promise<NegotiationMessage[]>;
   sendMessage: (params: { requestId: string; senderId: string; content: string }) => Promise<NegotiationMessage>;
+  subscribeToMessages?: (requestId: string, onMessage: (msg: NegotiationMessage) => void) => () => void;
 };
 
 async function renderChatHook(
@@ -157,5 +158,71 @@ describe("Hook useNegotiationChatViewModel (Spec 061 / ADR 0044)", () => {
     expect(hook.current[0].sendError).toBeNull();
     expect(hook.current[0].messages).toHaveLength(1);
     expect(hook.current[0].messages[0].content).toBe("Tentativa com falha");
+  });
+
+  it("assina mensagens em tempo real e adiciona novas mensagens sem duplicações", async () => {
+    let capturedCallback: ((msg: NegotiationMessage) => void) | null = null;
+    const unsubscribeMock = vi.fn();
+
+    const mockUseCases: MockUseCases = {
+      getMessages: async () => sampleMessages,
+      sendMessage: async () => {
+        throw new Error("Não implementado");
+      },
+      subscribeToMessages: vi.fn((requestId, onMessage) => {
+        expect(requestId).toBe("req-1");
+        capturedCallback = onMessage;
+        return unsubscribeMock;
+      }),
+    };
+
+    const hook = await renderChatHook("req-1", "user-1", mockUseCases);
+
+    expect(mockUseCases.subscribeToMessages).toHaveBeenCalledTimes(1);
+    expect(hook.current[0].messages).toHaveLength(1);
+
+    // Nova mensagem recebida via WebSocket/Realtime
+    const incomingMessage: NegotiationMessage = {
+      id: "msg-rt-1",
+      requestId: "req-1",
+      senderId: "user-2",
+      content: "Estou no portão da frente!",
+      createdAt: "2026-10-23T10:15:00Z",
+    };
+
+    await act(async () => {
+      capturedCallback?.(incomingMessage);
+    });
+
+    expect(hook.current[0].messages).toHaveLength(2);
+    expect(hook.current[0].messages[1].content).toBe("Estou no portão da frente!");
+
+    // Tentar adicionar a mesma mensagem novamente (não deve duplicar)
+    await act(async () => {
+      capturedCallback?.(incomingMessage);
+    });
+
+    expect(hook.current[0].messages).toHaveLength(2);
+  });
+
+  it("executa cleanup ao desmontar o componente", async () => {
+    const unsubscribeMock = vi.fn();
+    const mockUseCases: MockUseCases = {
+      getMessages: async () => [],
+      sendMessage: async () => {
+        throw new Error("Não implementado");
+      },
+      subscribeToMessages: vi.fn(() => unsubscribeMock),
+    };
+
+    await renderChatHook("req-1", "user-1", mockUseCases);
+    expect(unsubscribeMock).not.toHaveBeenCalled();
+
+    // Desmonta todas as árvores montadas
+    await act(async () => {
+      mounted.splice(0).forEach((tree) => tree.unmount());
+    });
+
+    expect(unsubscribeMock).toHaveBeenCalledTimes(1);
   });
 });

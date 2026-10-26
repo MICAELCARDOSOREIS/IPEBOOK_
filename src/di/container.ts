@@ -251,6 +251,7 @@ export const blockedUserUseCases: IBlockedUserUseCases = new BlockedUserUseCases
   dataSources.blockedUsers,
 );
 
+import type { NegotiationMessage } from "@/model/entities/negotiationMessage";
 import {
   getNegotiationMessages,
   sendNegotiationMessage,
@@ -271,6 +272,8 @@ export const negotiationMessageUseCases = {
     getNegotiationMessages(requestId, sessionUserId, messageUseCaseContext),
   sendMessage: (params: SendMessageParams) =>
     sendNegotiationMessage(params, messageUseCaseContext),
+  subscribeToMessages: (requestId: string, onMessage: (msg: NegotiationMessage) => void) =>
+    messageDataSource.subscribeToMessages?.(requestId, onMessage) ?? (() => {}),
 };
 
 export const logger: ILogger = new SafeLogger(

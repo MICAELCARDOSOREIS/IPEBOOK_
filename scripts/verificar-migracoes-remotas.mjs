@@ -217,7 +217,7 @@ export const TABELAS_CRITICAS = {
  * @param {string} supabaseUrl
  * @param {string} supabaseKey
  * @param {typeof fetch} [fetchFn]
- * @returns {Promise<{ ok: boolean, tabelas: Record<string, { existe: boolean, ok: boolean, descricao: string, colunasValidas: string[], colunasAusentes: string[], erro?: string }> }>}
+ * @returns {Promise<{ ok: boolean, tabelas: Record<string, { existe: boolean, ok: boolean, restrita?: boolean, descricao: string, colunasValidas: string[], colunasAusentes: string[], erro?: string }> }>}
  */
 export async function verificarTabelasEColunas(supabaseUrl, supabaseKey, fetchFn = fetch) {
   const resultados = {};
@@ -248,6 +248,21 @@ export async function verificarTabelasEColunas(supabaseUrl, supabaseKey, fetchFn
         continue;
       }
 
+      // 401/403 com objeto resolvido pelo PostgREST prova que a tabela existe no
+      // esquema; apenas não é legível pela chave anon — RLS rígida conforme migração
+      // (ex.: v2_negotiation_messages revoked para anon). Não contar como ausente.
+      if (res.status === 401 || res.status === 403) {
+        resultados[chaveTabela] = {
+          existe: true,
+          ok: true,
+          restrita: true,
+          descricao: def.descricao,
+          colunasValidas: [],
+          colunasAusentes: [],
+        };
+        continue;
+      }
+
       // Se falhou, verifica se a tabela inteira não existe (404) ou se alguma coluna não existe (400)
       if (res.status === 404) {
         todasOk = false;
@@ -266,6 +281,7 @@ export async function verificarTabelasEColunas(supabaseUrl, supabaseKey, fetchFn
       todasOk = false;
       const colunasValidas = [];
       const colunasAusentes = [];
+      let restrita = false;
 
       for (const col of def.colunas) {
         try {
@@ -279,12 +295,29 @@ export async function verificarTabelasEColunas(supabaseUrl, supabaseKey, fetchFn
 
           if (colRes.ok) {
             colunasValidas.push(col);
+          } else if (colRes.status === 401 || colRes.status === 403) {
+            // Acesso restrito por RLS/grants: impossível verificar a coluna com esta chave;
+            // não contá-la como ausente (falso positivo de migração pendente).
+            restrita = true;
           } else {
             colunasAusentes.push(col);
           }
         } catch {
           colunasAusentes.push(col);
         }
+      }
+
+      if (colunasAusentes.length === 0 && restrita) {
+        todasOk = true;
+        resultados[chaveTabela] = {
+          existe: true,
+          ok: true,
+          restrita: true,
+          descricao: def.descricao,
+          colunasValidas,
+          colunasAusentes: [],
+        };
+        continue;
       }
 
       resultados[chaveTabela] = {
@@ -754,6 +787,8 @@ export function formatarRelatorioTerminal(resultado) {
   for (const [nome, t] of Object.entries(resultado.tabelas.tabelas || {})) {
     if (!t.existe) {
       linhas.push(`   • ${nome.padEnd(22)} ❌ INEXISTENTE (${t.descricao})`);
+    } else if (t.restrita && (!t.colunasValidas || t.colunasValidas.length === 0)) {
+      linhas.push(`   • ${nome.padEnd(22)} 🔒 RESTRITA (existe; RLS bloqueia a chave anon — esperado)`);
     } else if (t.colunasAusentes && t.colunasAusentes.length > 0) {
       linhas.push(`   • ${nome.padEnd(22)} ⚠️  PARCIAL (${t.colunasValidas.length}/${t.colunasValidas.length + t.colunasAusentes.length} colunas)`);
       linhas.push(`     ↳ Ausentes: ${t.colunasAusentes.join(', ')}`);

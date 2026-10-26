@@ -68,4 +68,140 @@ describe("SupabaseUserPreferencesDataSource (Spec 034 / Issue #141)", () => {
     const ds = new SupabaseUserPreferencesDataSource(client);
     await expect(ds.upsert("ana", { phone: "86999998888" })).rejects.toBeInstanceOf(DataSourceError);
   });
+
+  it("findById retorna pushToken quando presente na coluna push_token", async () => {
+    const maybeSingle = vi.fn().mockResolvedValue({
+      data: {
+        user_id: "ana",
+        phone: "86999998888",
+        neighborhood: "Centro",
+        push_token: "ExponentPushToken[mock-token-123]",
+      },
+      error: null,
+    });
+    const eq = vi.fn().mockReturnValue({ maybeSingle });
+    const select = vi.fn().mockReturnValue({ eq });
+    const client = fakeClient({ select });
+
+    const ds = new SupabaseUserPreferencesDataSource(client);
+    expect(await ds.findById("ana")).toEqual({
+      userId: "ana",
+      phone: "86999998888",
+      neighborhood: "Centro",
+      pushToken: "ExponentPushToken[mock-token-123]",
+    });
+  });
+
+  it("findById retorna pushToken como null quando explicitamente nulo no banco", async () => {
+    const maybeSingle = vi.fn().mockResolvedValue({
+      data: {
+        user_id: "ana",
+        phone: null,
+        neighborhood: null,
+        push_token: null,
+      },
+      error: null,
+    });
+    const eq = vi.fn().mockReturnValue({ maybeSingle });
+    const select = vi.fn().mockReturnValue({ eq });
+    const client = fakeClient({ select });
+
+    const ds = new SupabaseUserPreferencesDataSource(client);
+    expect(await ds.findById("ana")).toEqual({
+      userId: "ana",
+      phone: undefined,
+      neighborhood: undefined,
+      pushToken: null,
+    });
+  });
+
+  it("upsert salva push_token quando informado", async () => {
+    const upsert = vi.fn().mockResolvedValue({ error: null });
+    const maybeSingle = vi.fn().mockResolvedValue({
+      data: {
+        user_id: "ana",
+        phone: "86999998888",
+        neighborhood: "Centro",
+        push_token: "ExponentPushToken[token-456]",
+      },
+      error: null,
+    });
+    const eq = vi.fn().mockReturnValue({ maybeSingle });
+    const select = vi.fn().mockReturnValue({ eq });
+    const client = fakeClient({ upsert }, { select });
+
+    const ds = new SupabaseUserPreferencesDataSource(client);
+    const result = await ds.upsert("ana", {
+      phone: "86999998888",
+      neighborhood: "Centro",
+      pushToken: "ExponentPushToken[token-456]",
+    });
+
+    expect(result).toEqual({
+      userId: "ana",
+      phone: "86999998888",
+      neighborhood: "Centro",
+      pushToken: "ExponentPushToken[token-456]",
+    });
+    expect(upsert).toHaveBeenCalledWith(
+      {
+        user_id: "ana",
+        phone: "86999998888",
+        neighborhood: "Centro",
+        push_token: "ExponentPushToken[token-456]",
+      },
+      { onConflict: "user_id" },
+    );
+  });
+
+  it("upsert permite atualizar push_token para null (desregistro)", async () => {
+    const upsert = vi.fn().mockResolvedValue({ error: null });
+    const maybeSingle = vi.fn().mockResolvedValue({
+      data: {
+        user_id: "ana",
+        phone: "86999998888",
+        neighborhood: "Centro",
+        push_token: null,
+      },
+      error: null,
+    });
+    const eq = vi.fn().mockReturnValue({ maybeSingle });
+    const select = vi.fn().mockReturnValue({ eq });
+    const client = fakeClient({ upsert }, { select });
+
+    const ds = new SupabaseUserPreferencesDataSource(client);
+    const result = await ds.upsert("ana", { pushToken: null });
+
+    expect(result.pushToken).toBeNull();
+    expect(upsert).toHaveBeenCalledWith(
+      {
+        user_id: "ana",
+        phone: null,
+        neighborhood: null,
+        push_token: null,
+      },
+      { onConflict: "user_id" },
+    );
+  });
+
+  it("upsertPreferences delega para upsert", async () => {
+    const upsert = vi.fn().mockResolvedValue({ error: null });
+    const maybeSingle = vi.fn().mockResolvedValue({
+      data: {
+        user_id: "ana",
+        phone: "86999998888",
+        neighborhood: "Centro",
+        push_token: "ExponentPushToken[xyz]",
+      },
+      error: null,
+    });
+    const eq = vi.fn().mockReturnValue({ maybeSingle });
+    const select = vi.fn().mockReturnValue({ eq });
+    const client = fakeClient({ upsert }, { select });
+
+    const ds = new SupabaseUserPreferencesDataSource(client);
+    const result = await ds.upsertPreferences("ana", { pushToken: "ExponentPushToken[xyz]" });
+
+    expect(result.pushToken).toBe("ExponentPushToken[xyz]");
+  });
 });

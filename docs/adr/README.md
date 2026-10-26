@@ -61,5 +61,6 @@
 - [0059 — Identidade do aplicativo e distribuição Android via EAS Build](0059-identidade-android-e-build-eas.md)
 - [0060 — Meu perfil curto e Configurações como destino único de preferências](0060-perfil-curto-configuracoes-destino-unico.md)
 - [0061 — Editar perfil sem dados inventados e guarda de alterações](0061-editar-perfil-sem-dados-inventados.md)
+- [0062 — Assinatura Realtime de Mensagens, Rascunhos de Anúncios e Push Token Remoto](0062-realtime-chat-rascunho-push-token.md)
 
 Preservar registros aceitos; mudanças relevantes geram novo ADR com vínculos de substituição.

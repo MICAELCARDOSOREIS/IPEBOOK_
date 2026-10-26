@@ -56,15 +56,69 @@ export default function CreateListing({
   const [published, setPublished] = useState<Book | null>(null);
   const errorRef = useFormErrorAnnouncer(state.error);
   const scrollRef = useRef<React.ComponentRef<typeof ScrollView>>(null);
+  const isMountedRef = useRef(false);
 
   const hasDraftContent = Boolean(
-    state.title.trim() ||
+    state.isbn.trim() ||
+      state.title.trim() ||
       state.author.trim() ||
       state.description.trim() ||
       state.photoUrl.trim() ||
       state.neighborhood.trim() ||
-      state.category.trim(),
+      state.category.trim() ||
+      state.price.trim() ||
+      state.photos.length > 0 ||
+      state.condition !== null,
   );
+
+  useEffect(() => {
+    let active = true;
+    async function initDraft() {
+      if (!hasDraftContent) {
+        await actions.loadDraft();
+      }
+    }
+    void initDraft();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isMountedRef.current) {
+      isMountedRef.current = true;
+      return;
+    }
+    if (hasDraftContent && !published && !state.success) {
+      void actions.saveDraft();
+    }
+  }, [
+    hasDraftContent,
+    published,
+    state.success,
+    state.isbn,
+    state.title,
+    state.author,
+    state.category,
+    state.modality,
+    state.price,
+    state.neighborhood,
+    state.condition,
+    state.description,
+    state.photoUrl,
+    state.photos,
+    actions,
+  ]);
+
+  const handleGoToStep2 = () => {
+    void actions.saveDraft();
+    setStep(2);
+  };
+
+  const handleGoToStep3 = () => {
+    void actions.saveDraft();
+    setStep(3);
+  };
 
   const handleSubmit = async () => {
     const result = await actions.submit(sessionUserId);
@@ -144,7 +198,7 @@ export default function CreateListing({
               onSetAuthor={actions.setAuthor}
               onSetPrice={actions.setPrice}
               onSetPhotoUrl={actions.setPhotoUrl}
-              onGoToPhotos={() => setStep(2)}
+              onGoToPhotos={handleGoToStep2}
             />
           ) : null}
 
@@ -186,12 +240,12 @@ export default function CreateListing({
         <SafeAreaView edges={["bottom"]} style={styles.actionBar}>
           <View style={styles.actionBarInner}>
             {step === 1 ? (
-              <FilledButton label="Continuar" onPress={() => setStep(2)} />
+              <FilledButton label="Continuar" onPress={handleGoToStep2} />
             ) : null}
 
             {step === 2 ? (
               <>
-                <FilledButton label="Usar estas fotos" onPress={() => setStep(3)} />
+                <FilledButton label="Usar estas fotos" onPress={handleGoToStep3} />
                 <TextButton label="Voltar à etapa anterior" onPress={() => setStep(1)} />
               </>
             ) : null}
