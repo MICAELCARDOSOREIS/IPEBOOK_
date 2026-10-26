@@ -1,5 +1,6 @@
 import React from "react";
 import { act, fireEvent, render } from "@testing-library/react-native";
+import { Platform, StyleSheet } from "react-native";
 import { describe, expect, it, vi } from "vitest";
 import type { Book } from "@/model/entities/book";
 import type { MyListingsState, MyListingsActions } from "@/viewmodel/useMyListingsViewModel";
@@ -58,14 +59,51 @@ function mockViewModel(
 }
 
 describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)", () => {
-  it("renderiza cabeçalho acessível com título Minha estante (Figma 05.01)", async () => {
+  it("renderiza cabeçalho Estante com subtítulo (Spec 075, CA1)", async () => {
     mockViewModel({ books: [], loading: false, error: null });
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
       screen = await render(<MyListings sessionUserId="user-1" />);
     });
 
-    expect(screen.getByRole("header").props.children).toBe("Minha estante");
+    expect(screen.getByRole("header").props.children).toBe("Estante");
+    expect(screen.getByText("Seus livros em Piripiri")).toBeDefined();
+  });
+
+  it("resume os anúncios por modalidade em três cartões (Spec 075, CA2)", async () => {
+    const base = { author: "A", ownerId: "user-1", status: "available" as const };
+    mockViewModel({
+      books: [
+        { ...base, id: "s1", title: "V1", modality: "sale" },
+        { ...base, id: "s2", title: "V2", modality: "sale" },
+        { ...base, id: "t1", title: "T1", modality: "trade" },
+      ],
+    });
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<MyListings sessionUserId="user-1" />);
+    });
+    expect(screen.getByLabelText("2 à venda")).toBeDefined();
+    expect(screen.getByLabelText("1 em troca")).toBeDefined();
+    expect(screen.getByLabelText("0 para doar")).toBeDefined();
+  });
+
+  it("mostra Precisa da sua atenção com Ver proposta para proposta pendente (Spec 075, CA4)", async () => {
+    const book: Book = { id: "b20", title: "Vidas Secas", author: "G", modality: "trade", ownerId: "user-1", status: "available" };
+    mockViewModel({ books: [book] });
+    mockReceived([
+      { request: { id: "r20", listingId: "b20", requesterId: "u-lu", status: "pending" }, listing: book, requesterName: "Lucas" },
+    ]);
+    const onNavigateToReceivedRequests = vi.fn();
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<MyListings sessionUserId="user-1" onNavigateToReceivedRequests={onNavigateToReceivedRequests} />);
+    });
+    expect(screen.getByText("Precisa da sua atenção")).toBeDefined();
+    expect(screen.getByText("Lucas quer trocar")).toBeDefined();
+    await act(async () => { fireEvent.press(screen.getByText("Ver proposta")); });
+    expect(onNavigateToReceivedRequests).toHaveBeenCalledTimes(1);
+    mockReceived([]);
   });
 
   it("não acrescenta manchete e mostra a dica depois da lista (Spec 039, Figma 05.01)", async () => {
@@ -235,9 +273,9 @@ describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
     });
 
     // Livro sem reserva com proposta pendente: antes a aba mostrava "Propostas (0)".
-    expect(screen.getByText("Propostas (2)")).toBeDefined();
+    expect(screen.getByLabelText("Propostas, 2 em aberto")).toBeDefined();
     await act(async () => {
-      fireEvent.press(screen.getByText("Propostas (2)"));
+      fireEvent.press(screen.getByLabelText("Propostas, 2 em aberto"));
     });
 
     expect(screen.getByText("Ana Paula · proposta recebida · Troca")).toBeDefined();
@@ -258,7 +296,7 @@ describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
     mockReceived([]);
   });
 
-  it("aba Propostas sem propostas mostra estado próprio", async () => {
+  it("aba Propostas sem propostas mostra estado próprio e volta para Anúncios (Spec 075, CA5)", async () => {
     mockViewModel({
       books: [{ id: "b1", title: "Livro", author: "A", modality: "sale", ownerId: "user-1", status: "available" }],
     });
@@ -267,9 +305,11 @@ describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
       screen = await render(<MyListings sessionUserId="user-1" />);
     });
     await act(async () => {
-      fireEvent.press(screen.getByText("Propostas (0)"));
+      fireEvent.press(screen.getByLabelText("Propostas"));
     });
-    expect(screen.getByText(/Nenhuma proposta em aberto/)).toBeDefined();
+    expect(screen.getByText("Nenhuma proposta agora.")).toBeDefined();
+    await act(async () => { fireEvent.press(screen.getByText("Ver meus anúncios")); });
+    expect(screen.getByText("Livro")).toBeDefined();
   });
 
   it("oferece o botão Anunciar livro quando já existe estante (Figma 05.01)", async () => {
@@ -371,10 +411,10 @@ describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
       screen = await render(<MyListings sessionUserId="user-1" />);
     });
 
-    expect(screen.getByText("Concluídos")).toBeDefined();
+    expect(screen.getByLabelText("Concluídos")).toBeDefined();
 
     await act(async () => {
-      fireEvent.press(screen.getByText("Concluídos"));
+      fireEvent.press(screen.getByLabelText("Concluídos"));
     });
 
     expect(screen.getByText("Vidas Secas")).toBeDefined();
@@ -403,5 +443,23 @@ describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
     expect(backBtn).toBeDefined();
     fireEvent.press(backBtn);
     expect(onBack).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    ["ios", 9],
+    ["android", undefined],
+  ] as const)("usa o seletor de abas da plataforma %s (Spec 075, CA6/CA7)", async (os, trackRadius) => {
+    const originalOS = Platform.OS;
+    Platform.OS = os;
+    mockViewModel({
+      books: [{ id: "b1", title: "Livro", author: "A", modality: "sale", ownerId: "user-1", status: "available" }],
+    });
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<MyListings sessionUserId="user-1" />);
+    });
+    const style = StyleSheet.flatten(screen.getByTestId("my-listings-tablist").props.style);
+    expect(style.borderRadius).toBe(trackRadius);
+    Platform.OS = originalOS;
   });
 });

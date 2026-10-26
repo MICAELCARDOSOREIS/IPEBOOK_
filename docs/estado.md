@@ -2,7 +2,9 @@
 
 Documento consolidado de continuidade técnica e produto do Ipebook (Piripiri, PI).
 
-Conferência atual: **2026-10-26** (74 specs e 64 ADRs numerados, 174 arquivos e 1.274 testes automatizados 100% passando).
+Conferência atual: **2026-10-26** (75 specs e 64 ADRs numerados, 174 arquivos e 1.278 testes automatizados 100% passando).
+
+**Estante no padrão do Figma `05.04`–`05.08` (2026-10-26, Spec 075):** a aba Estante ganhou cabeçalho "Estante" com subtítulo e "+", cartões de resumo por modalidade, seletor de abas por plataforma (*segmented buttons* M3 no Android, controle segmentado do Figma no iPhone) com distintivo de propostas em aberto, cartão "Precisa da sua atenção" com "Ver proposta", lista de anúncios em cartão e estados vazios de Propostas e Concluídos com "Ver meus anúncios". Sem "Recusar" no cartão nem edição em lote; o terceiro cartão conta anúncios para doar. Validado em 1.278 testes e no Galaxy A16; iPhone verificado só por teste.
 
 **Detalhe do livro no padrão Material 3 do Figma `03.01`–`03.03` (2026-10-26, Spec 074):** `src/view/listings/bookDetail.tsx` ganhou capa em destaque de borda a borda na cor da modalidade, botões de ícone tonais sobre a capa, valor com etiqueta, cartão "Aceita em troca"/"Doação para quem vai ler", lista Conservação/Categoria/Retirada e barra fixa com "Compartilhar" (WhatsApp) e ação principal por modalidade ("Tenho interesse", "Propor troca", "Quero receber"). "Conversar" do Figma não foi feito porque o chat só existe dentro de uma negociação. Validado em 174 arquivos / 1.274 testes e no Galaxy A16 (claro e escuro).
 
