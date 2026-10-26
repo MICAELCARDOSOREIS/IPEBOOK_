@@ -29,7 +29,7 @@ describe("SC-003: editar o perfil próprio pelas camadas reais", () => {
       fireEvent.changeText(screen.getByLabelText("Rede social"), "@clarinha");
     });
     await act(async () => {
-      fireEvent.press(screen.getByText("Salvar"));
+      fireEvent.press(screen.getByText(/Salvar/));
     });
 
     expect(screen.getByText("Perfil atualizado")).toBeDefined();

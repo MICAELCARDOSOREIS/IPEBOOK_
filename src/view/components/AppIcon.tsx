@@ -27,6 +27,7 @@ const symbols = {
   check: { ios: "checkmark", android: "check", web: "check" },
   chevronRight: { ios: "chevron.right", android: "chevron_right", web: "chevron_right" },
   chevronDown: { ios: "chevron.down", android: "expand_more", web: "expand_more" },
+  chevronUp: { ios: "chevron.up", android: "expand_less", web: "expand_less" },
   error: { ios: "exclamationmark.circle", android: "error", web: "error" },
   send: { ios: "paperplane", android: "send", web: "send" },
   chevronLeft: { ios: "chevron.left", android: "chevron_left", web: "chevron_left" },

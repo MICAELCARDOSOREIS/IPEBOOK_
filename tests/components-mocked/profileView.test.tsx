@@ -91,14 +91,14 @@ describe("Profile (Spec 006 US4, Issue #55)", () => {
     const { update } = setup({ id: "ana", email: "ana@exemplo.com" });
     const screen = await renderProfile();
     await act(async () => { fireEvent.changeText(screen.getByDisplayValue("Ana"), "Ana Paula"); });
-    await act(async () => { fireEvent.press(screen.getByText("Salvar")); });
+    await act(async () => { fireEvent.press(screen.getByText(/Salvar/)); });
     expect(update).toHaveBeenCalledWith({ name: "Ana Paula", photoUrl: undefined, socialHandle: undefined });
   });
 
   it("mostra confirmação após salvar", async () => {
     setup({ id: "ana", email: "ana@exemplo.com" });
     const screen = await renderProfile();
-    await act(async () => { fireEvent.press(screen.getByText("Salvar")); });
+    await act(async () => { fireEvent.press(screen.getByText(/Salvar/)); });
     expect(screen.getByText("Perfil atualizado")).toBeDefined();
   });
 
@@ -126,7 +126,7 @@ describe("Profile (Spec 006 US4, Issue #55)", () => {
     await act(async () => {
       fireEvent.press(screen.getByLabelText("Bairro Centro"));
     });
-    await act(async () => { fireEvent.press(screen.getByText("Salvar")); });
+    await act(async () => { fireEvent.press(screen.getByText(/Salvar/)); });
     expect(update).toHaveBeenCalledWith({ name: "Ana", photoUrl: undefined, socialHandle: undefined });
     expect(updatePreferences).toHaveBeenCalledWith({ phone: "86988887777", neighborhood: "Centro" });
   });

@@ -41,7 +41,8 @@ cartão que a envolve, não à capa).
 
 ## Acessibilidade
 
-- Proporção fixa 120:170, elevação `elevation-1`.
+- Proporção fixa 5:8 (56x90 em listas, 74x119 nos cards, 97x155 no detalhe), raio de 4 dp e sem
+  elevação própria — a sombra, quando existe, é do cartão que a envolve.
 - Texto alternativo sempre com o título do livro ("Capa ilustrativa de Dom Casmurro"); a
   ilustração decorativa (motivo, sol) fica oculta do leitor de tela.
 - Contraste de `cover.text` sobre as cores de fundo: 5,4:1 a 10:1 (todas acima do mínimo de
@@ -66,7 +67,7 @@ function BookCover({ idAnuncio, titulo }: { idAnuncio: string; titulo: string })
   return (
     <View
       accessibilityLabel={`Capa ilustrativa de ${titulo}`}
-      style={{ backgroundColor: cor, borderRadius: tokens.radius.large, aspectRatio: 120 / 170 }}
+      style={{ backgroundColor: cor, borderRadius: tokens.radius.extraSmall, aspectRatio: 5 / 8 }}
     >
       <Text style={{ color: tokens.colors.cover.text, ...tokens.typography.labelMedium }}>{titulo}</Text>
     </View>

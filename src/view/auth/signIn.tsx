@@ -5,6 +5,8 @@ import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { FilledButton } from "@/view/components/FilledButton";
+import { Logotipo } from "@/view/components/Logotipo";
+import { Manchete } from "@/view/components/Manchete";
 import { TextButton } from "@/view/components/TextButton";
 import { TextField } from "@/view/components/TextField";
 import { TopAppBar } from "@/view/components/TopAppBar";
@@ -42,9 +44,9 @@ export default function SignIn({
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.content}>
-          <Text accessibilityRole="header" style={styles.title}>
-            Sua próxima leitura começa aqui.
-          </Text>
+          <Logotipo underline />
+
+          <Manchete texto="Sua próxima leitura" realce="começa aqui." />
           <Text style={styles.subtitle}>Entre com o e-mail e a senha da sua conta.</Text>
 
           <TextField
@@ -101,12 +103,6 @@ function createStyles(colors: ColorPalette) {
     maxWidth: 560,
     alignSelf: "center",
     gap: tokens.spacing[16],
-  },
-  title: {
-    fontSize: tokens.typography.displayLarge.fontSize,
-    lineHeight: tokens.typography.displayLarge.lineHeight,
-    fontFamily: tokens.typography.displayLarge.fontFamily,
-    color: colors.text,
   },
   subtitle: {
     fontSize: tokens.typography.bodyLarge.fontSize,

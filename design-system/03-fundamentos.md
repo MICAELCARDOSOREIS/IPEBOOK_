@@ -58,3 +58,26 @@ Regras de uso dos tokens definidos em [02-tokens.md](02-tokens.md). Voz da marca
   (200 ms); diálogo e snackbar em `duration-medium2` (300 ms). (Herdado)
 - Com a opção "Remover animações" do Android ativa, troque deslocamentos por esmaecimento;
   nunca remova o feedback por completo. (Herdado)
+
+## Orientação e layout responsivo
+
+- **Mobile é só retrato.** O app trava em `portrait` em dois níveis: a `orientation: "portrait"`
+  do `app.json` (trava nativa em builds Android/iOS) e, como rede de segurança em runtime, um
+  `lockAsync(PORTRAIT_UP)` do `expo-screen-orientation` no `src/app/_layout.tsx` (ignora Web).
+  (Adaptado — M3 é agnóstico de orientação; a escolha de retrato-only é da marca)
+- **O porquê:** a negociação entre vizinhos acontece numa mão, em qualquer lugar — não há tela
+  que ganhe com paisagem, e travar evita reflow acidental e estados de layout não testados.
+- **Web fica livre:** o navegador de desktop não força retrato. Em vez disso, o conteúdo é
+  centralizado numa coluna de leitura com `maxWidth` (ver abaixo), com o fundo `surface` em
+  volta. (Adaptado)
+- **Coluna de conteúdo padronizada** — toda tela envolve seu conteúdo em `ScreenContainer`
+  (`src/view/components/ScreenContainer.tsx`), que centraliza o padrão `SafeAreaView` >
+  `ScrollView` > coluna `maxWidth`/`alignSelf: center` com padding lateral `space-4` (16 px).
+  Não reescrever esse bloco manualmente em tela nova. (Novo — componente de layout do app)
+- **Larguras da coluna:** `maxWidth` 720 em telas de conteúdo (Início, Pesquisa, Perfil,
+  Detalhe); 560 em telas de formulário/foco (Boas-vindas, Alertas, Encontro). Acima da largura,
+  sobra fundo `surface`; abaixo de 840 px (Web), vale o layout móvel. (Adaptado — estende a
+  regra de margem Web do item "Espaçamento")
+- **Evite:** criar `SafeAreaView` + `ScrollView` + `maxWidth` solto em tela nova (use o
+  `ScreenContainer`); depender de paisagem para qualquer fluxo; e usar `paddingHorizontal`
+  diferente de `space-4` sem justificar no comentário.

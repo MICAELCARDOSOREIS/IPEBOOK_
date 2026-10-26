@@ -4,7 +4,7 @@ import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { useBookCoverImage } from "@/viewmodel/useBookCoverImage";
 
-export type BookCoverVariant = "list" | "card" | "carousel";
+export type BookCoverVariant = "list" | "card" | "carousel" | "detail";
 
 export type BookCoverProps = {
   id: string;
@@ -25,17 +25,22 @@ const COVER_COLORS = [
   tokens.colors.cover.wine,
   tokens.colors.cover.ochre,
 ] as const;
-const ASPECT_RATIO = 120 / 170;
-/** Largura canônica de capa em listas no Figma (`05.01`, `02.06`, `04.08`: 56x80px). */
+/** Proporção da capa no Figma (`02.01`, `02.02`): 55x88dp e 74x119dp, ambas em 5:8. */
+const ASPECT_RATIO = 5 / 8;
+/** Largura canônica de capa em listas no Figma (`05.01`, `02.06`, `04.08`: 55x88dp). */
 const LIST_WIDTH = 56;
-const CARD_WIDTH = 96;
+/** Capa dentro do card de carrossel da Home (`02.01`: 74x119dp). */
+const CARD_WIDTH = 74;
 /** Preenche a largura do card de carrossel da Home (`CAROUSEL_ITEM_WIDTH`). */
 const CAROUSEL_WIDTH = 152;
+/** Capa de destaque no detalhe do anúncio (`03.01`: 97x155dp). */
+const DETAIL_WIDTH = 97;
 
 const VARIANT_WIDTH: Record<BookCoverVariant, number> = {
   list: LIST_WIDTH,
   card: CARD_WIDTH,
   carousel: CAROUSEL_WIDTH,
+  detail: DETAIL_WIDTH,
 };
 
 function hashId(id: string): number {
@@ -76,6 +81,8 @@ export function BookCover({
   const backgroundColor = COVER_COLORS[hashId(id) % COVER_COLORS.length];
   const width = VARIANT_WIDTH[variant] ?? LIST_WIDTH;
   const height = width / ASPECT_RATIO;
+  // Capa de lista no Figma (`02.02`, `05.01`) tem 56x80dp e não comporta texto legível; o título já
+  // aparece na própria linha, então só o card grande repete o texto sobre a ilustração.
   const showText = variant === "card";
 
   const pulseAnim = useRef(new Animated.Value(0.4)).current;
@@ -149,7 +156,7 @@ export function BookCover({
     >
       {showText ? (
         <View style={styles.textOverlay} accessible={false}>
-          <Text style={styles.title} numberOfLines={2}>
+          <Text style={styles.title} numberOfLines={3}>
             {title}
           </Text>
           {author ? (
@@ -166,13 +173,14 @@ export function BookCover({
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     cover: {
-      borderRadius: tokens.radius.large,
+      // Figma `02.02`: capa com canto praticamente reto (raio ~2dp).
+      borderRadius: tokens.radius.extraSmall,
       justifyContent: "flex-end",
       overflow: "hidden",
     },
     skeleton: {
       backgroundColor: colors.disabledBackground,
-      borderRadius: tokens.radius.large,
+      borderRadius: tokens.radius.extraSmall,
     },
     hiddenImage: {
       opacity: 0,
@@ -182,7 +190,10 @@ function createStyles(colors: ColorPalette) {
     },
     title: {
       color: tokens.colors.cover.text,
-      ...tokens.typography.labelMedium,
+      // Capa de 74 dp: 11 dp/14 dp cabem em três linhas sem truncar títulos curtos.
+      fontSize: 11,
+      lineHeight: 14,
+      fontFamily: tokens.typography.labelMedium.fontFamily,
     },
     author: {
       color: tokens.colors.cover.text,
