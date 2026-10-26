@@ -55,10 +55,8 @@ function createStyles(colors: ColorPalette) {
       paddingHorizontal: tokens.spacing[16],
     },
     label: {
-      color: colors.action,
-      fontSize: tokens.typography.bodyMedium.fontSize,
-      fontFamily: tokens.typography.bodyMedium.fontFamily,
-      fontWeight: "600",
+      color: colors.m3.primary,
+      ...tokens.typography.labelLarge,
     },
     labelDanger: { color: colors.error },
     labelDisabled: { color: colors.disabledText },

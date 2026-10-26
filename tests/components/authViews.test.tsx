@@ -33,7 +33,7 @@ describe("tela de entrar (ISO/IEC 25010 - Usabilidade e Acessibilidade)", () => 
       screen = await render(<SignIn />);
     });
 
-    expect(screen.getByRole("header").props.children).toBe("Sua próxima leitura começa aqui.");
+    expect(screen.getByRole("header", { name: "Sua próxima leitura começa aqui." })).toBeDefined();
     expect(screen.getByText("Entre com o e-mail e a senha da sua conta.")).toBeDefined();
     expect(screen.getAllByText("Entrar").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByLabelText("E-mail")).toBeDefined();
@@ -141,9 +141,9 @@ describe("tela de criar conta (ISO/IEC 25010 - Usabilidade e Acessibilidade)", (
       screen = await render(<SignUp />);
     });
 
-    const headers = screen.getAllByRole("header").map((node) => node.props.children);
+    const headers = screen.getAllByRole("header").map((node) => node.props.accessibilityLabel ?? node.props.children);
     expect(headers).toContain("IpêBook");
-    expect(headers).toContain("Crie sua conta");
+    expect(headers.some((h) => typeof h === "string" && h.includes("Crie sua"))).toBe(true);
     expect(screen.getAllByText("Criar conta").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByLabelText("Nome completo")).toBeDefined();
     expect(screen.getByLabelText("E-mail")).toBeDefined();

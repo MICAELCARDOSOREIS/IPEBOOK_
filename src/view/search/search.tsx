@@ -2,7 +2,10 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useSearchViewModel } from "@/viewmodel/useSearchViewModel";
-import type { SearchModalityFilter, SearchPriceRange, SearchSortOption } from "@/viewmodel/useSearchViewModel";
+import type { SearchModalityFilter } from "@/viewmodel/useSearchViewModel";
+import { SORT_LABELS } from "@/viewmodel/searchFilters";
+import { FilterSheet } from "@/view/search/FilterSheet";
+import { SortSheet } from "@/view/search/SortSheet";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { BookCover } from "@/view/components/BookCover";
@@ -37,30 +40,6 @@ export function parseInitialModality(value: string | string[] | undefined): Sear
   return VALID_INITIAL_MODALITIES.find((modality) => modality === raw);
 }
 
-const MODALITY_FILTERS: Array<{ id: SearchModalityFilter; label: string }> = [
-  { id: "all", label: "Todas" },
-  { id: "sale", label: "Venda" },
-  { id: "trade", label: "Troca" },
-  { id: "donation", label: "Doação" },
-];
-
-/** Categorias rápidas do Figma `02.02 · Explorar` (nó 183:3499). */
-const QUICK_CATEGORY_FILTERS = ["Ficção", "Não ficção", "Infantil", "Didático"] as const;
-
-const PRICE_FILTERS: Array<{ id: SearchPriceRange; label: string }> = [
-  { id: "all", label: "Todos os preços" },
-  { id: "free", label: "Grátis" },
-  { id: "under20", label: "Até R$ 20" },
-  { id: "under50", label: "Até R$ 50" },
-];
-
-const SORT_OPTIONS: Array<{ id: SearchSortOption; label: string }> = [
-  { id: "recent", label: "Recentes" },
-  { id: "title", label: "A-Z" },
-  { id: "price_asc", label: "Menor preço" },
-  { id: "price_desc", label: "Maior preço" },
-];
-
 /** Busca e Exploração (Figma `02.02 · Explorar`, nó `10:2`). */
 export default function Search({
   currentNeighborhood,
@@ -80,7 +59,8 @@ export default function Search({
   const [state, actions] = useSearchViewModel(auth.user?.id ?? null);
   const { isOnline } = useNetworkStatus();
   const [confirmingClear, setConfirmingClear] = useState(false);
-  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [showFilterSheet, setShowFilterSheet] = useState(false);
+  const [showSortSheet, setShowSortSheet] = useState(false);
   const appliedInitialModality = useRef(false);
 
   useEffect(() => {
@@ -119,6 +99,10 @@ export default function Search({
     }
   };
 
+  // A categoria já aparece selecionada na fileira de chips do catálogo; repeti-la nos chips
+  // removíveis duplicaria o mesmo estado em dois lugares da tela.
+  const visibleActiveFilters = state.activeFilters.filter((filter) => filter.key !== "category");
+
   // Busca e filtros viajam no cabeçalho da própria lista para rolagem natural no mobile.
   const listHeader = (
     <View style={styles.filters}>
@@ -140,7 +124,7 @@ export default function Search({
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Limpar todos os filtros de busca"
-              onPress={actions.clearFilters}
+              onPress={actions.resetFilters}
               style={styles.clearFiltersButton}
             >
               <Text style={styles.clearFiltersText}>Limpar filtros</Text>
@@ -148,15 +132,21 @@ export default function Search({
           ) : null}
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={showAdvancedFilters ? "Ocultar filtros avançados" : "Mostrar filtros avançados"}
-            onPress={() => setShowAdvancedFilters((visible) => !visible)}
-            style={[styles.tuneButton, showAdvancedFilters && styles.tuneButtonActive]}
+            accessibilityLabel={
+              state.activeFilterCount > 0 ? `Abrir filtros, ${state.activeFilterCount} ativos` : "Abrir filtros"
+            }
+            onPress={() => {
+              actions.openFilterDraft();
+              setShowFilterSheet(true);
+            }}
+            style={styles.tuneButton}
           >
-            <AppIcon
-              name="tune"
-              size={24}
-              color={showAdvancedFilters ? colors.m3.onSecondaryContainer : colors.m3.onSurfaceVariant}
-            />
+            <AppIcon name="tune" size={24} color={colors.m3.onSurfaceVariant} />
+            {state.activeFilterCount > 0 ? (
+              <View style={styles.tuneBadge}>
+                <Text style={styles.tuneBadgeText}>{state.activeFilterCount}</Text>
+              </View>
+            ) : null}
           </Pressable>
         </View>
       </View>
@@ -178,102 +168,63 @@ export default function Search({
         onSubmitEditing={() => void actions.registerSearch(state.term)}
       />
 
-      {/* 4. Categorias Rápidas em Rolagem Horizontal (Figma nó 183:3499) */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.quickCategoriesScroll}
-      >
-        <Chip
-          label="Todos"
-          accessibilityLabel="Filtrar por todas as categorias"
-          selected={state.category === "all"}
-          onPress={() => actions.setCategory("all")}
-        />
-        {QUICK_CATEGORY_FILTERS.map((category) => (
+      {/* 4. Categorias do próprio catálogo em rolagem horizontal (Figma nó 183:3499) */}
+      {state.availableCategories.length > 0 ? (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.quickCategoriesScroll}
+        >
           <Chip
-            key={category}
-            label={category}
-            accessibilityLabel={`Filtrar por categoria ${category}`}
-            selected={state.category === category}
-            onPress={() => actions.setCategory(category)}
+            label="Todos"
+            accessibilityLabel="Filtrar por todas as categorias"
+            selected={state.category === "all"}
+            onPress={() => actions.setCategory("all")}
           />
-        ))}
-      </ScrollView>
+          {state.availableCategories.map((category) => (
+            <Chip
+              key={category}
+              label={category}
+              accessibilityLabel={`Filtrar por categoria ${category}`}
+              selected={state.category === category}
+              onPress={() => actions.setCategory(category)}
+            />
+          ))}
+        </ScrollView>
+      ) : null}
 
-      {showAdvancedFilters ? (
-        <View style={styles.advancedFilters}>
-          {/* Filtro por Modalidade */}
-          <View style={styles.filterSection}>
-            <Text style={styles.filterLabel}>Modalidade:</Text>
-            <View style={styles.filtersRow}>
-              {MODALITY_FILTERS.map((f) => (
-                <Chip
-                  key={f.id}
-                  label={f.label}
-                  accessibilityLabel={f.id === "all" ? "Filtrar por todas as modalidades" : `Filtrar por ${f.label}`}
-                  selected={state.modality === f.id}
-                  onPress={() => actions.setModality(f.id)}
-                />
-              ))}
-            </View>
-          </View>
+      {/* 5. Filtros aplicados como chips removíveis (Figma `02.04 · Explorar com filtro`) */}
+      {visibleActiveFilters.length > 0 ? (
+        <View style={styles.activeFiltersRow}>
+          {visibleActiveFilters.map((filter) => (
+            <Pressable
+              key={filter.key}
+              accessibilityRole="button"
+              accessibilityLabel={`Remover filtro ${filter.label}`}
+              hitSlop={8}
+              onPress={() => actions.removeActiveFilter(filter.key)}
+              style={styles.activeFilterChip}
+            >
+              <Text style={styles.activeFilterText}>{filter.label}</Text>
+              <AppIcon name="close" size={16} color={colors.m3.onSecondaryContainer} />
+            </Pressable>
+          ))}
+        </View>
+      ) : null}
 
-          {/* Filtro por Categoria */}
-          {state.availableCategories.length > 0 ? (
-            <View style={styles.filterSection}>
-              <Text style={styles.filterLabel}>Categoria:</Text>
-              <View style={styles.filtersRow}>
-                <Chip
-                  label="Todas"
-                  accessibilityLabel="Filtrar por todas as categorias"
-                  selected={state.category === "all"}
-                  onPress={() => actions.setCategory("all")}
-                />
-                {state.availableCategories.map((cat) => (
-                  <Chip
-                    key={cat}
-                    label={cat}
-                    accessibilityLabel={`Filtrar por categoria ${cat}`}
-                    selected={state.category === cat}
-                    onPress={() => actions.setCategory(cat)}
-                  />
-                ))}
-              </View>
-            </View>
-          ) : null}
-
-          {/* Filtro por Faixa de Preço */}
-          <View style={styles.filterSection}>
-            <Text style={styles.filterLabel}>Preço:</Text>
-            <View style={styles.filtersRow}>
-              {PRICE_FILTERS.map((p) => (
-                <Chip
-                  key={p.id}
-                  label={p.label}
-                  accessibilityLabel={`Filtrar por ${p.label}`}
-                  selected={state.priceRange === p.id}
-                  onPress={() => actions.setPriceRange(p.id)}
-                />
-              ))}
-            </View>
-          </View>
-
-          {/* Ordenação */}
-          <View style={styles.filterSection}>
-            <Text style={styles.filterLabel}>Ordenar por:</Text>
-            <View style={styles.filtersRow}>
-              {SORT_OPTIONS.map((s) => (
-                <Chip
-                  key={s.id}
-                  label={s.label}
-                  accessibilityLabel={`Ordenar por ${s.label}`}
-                  selected={state.sortBy === s.id}
-                  onPress={() => actions.setSortBy(s.id)}
-                />
-              ))}
-            </View>
-          </View>
+      {/* 6. Resumo da faixa de resultados e ordenação (Figma `02.04`: "1 livro à venda · Literatura") */}
+      {!state.loading && !state.error && state.books.length > 0 ? (
+        <View style={styles.summaryRow}>
+          <Text numberOfLines={2} style={styles.summaryText}>{state.resultsSummary}</Text>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`Ordenar por ${SORT_LABELS[state.sortBy]}`}
+            onPress={() => setShowSortSheet(true)}
+            style={styles.sortButton}
+          >
+            <Text style={styles.sortText}>{SORT_LABELS[state.sortBy]}</Text>
+            <AppIcon name="chevronDown" size={16} color={colors.m3.primary} />
+          </Pressable>
         </View>
       ) : null}
 
@@ -320,12 +271,19 @@ export default function Search({
     <View style={styles.empty}>
       <Text style={styles.emptyTitle}>Nenhum livro encontrado.</Text>
       <Text style={styles.body}>
-        {state.hasActiveFilters
+        {state.activeFilterCount > 0
           ? "Nenhum livro corresponde aos filtros selecionados."
-          : "Ainda não há livros no catálogo."}
+          : state.term.trim()
+            ? `Nenhum livro encontrado para "${state.term.trim()}". Tente outro título, autor ou categoria.`
+            : "Ainda não há livros no catálogo."}
       </Text>
       {state.hasActiveFilters ? (
-        <Pressable accessibilityRole="button" onPress={actions.clearFilters} style={styles.emptyActionButton}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Limpar filtros e buscar novamente"
+          onPress={actions.clearFilters}
+          style={styles.emptyActionButton}
+        >
           <Text style={styles.emptyActionText}>Limpar filtros</Text>
         </Pressable>
       ) : null}
@@ -394,6 +352,30 @@ export default function Search({
           );
         }}
       />
+      <FilterSheet
+        visible={showFilterSheet}
+        draftFilters={state.draftFilters}
+        sortBy={state.sortBy}
+        availableCategories={state.availableCategories}
+        resultCount={state.draftResultCount}
+        onChange={actions.updateDraftFilters}
+        onSortChange={actions.setSortBy}
+        onApply={() => {
+          actions.applyDraftFilters();
+          setShowFilterSheet(false);
+        }}
+        onReset={() => {
+          actions.resetFilters();
+          setShowFilterSheet(false);
+        }}
+        onClose={() => setShowFilterSheet(false)}
+      />
+      <SortSheet
+        visible={showSortSheet}
+        selected={state.sortBy}
+        onSelect={actions.setSortBy}
+        onClose={() => setShowSortSheet(false)}
+      />
       <NeighborhoodSelectorModal
         visible={neighborhoodHook.isSelectorOpen}
         currentNeighborhood={effectiveNeighborhood}
@@ -426,7 +408,7 @@ function createStyles(colors: ColorPalette) {
       flexDirection: "row",
       alignItems: "center",
       gap: 6,
-      backgroundColor: colors.soft,
+      backgroundColor: colors.m3.surfaceContainerHigh,
       paddingLeft: tokens.spacing[12],
       paddingRight: tokens.spacing[8],
       paddingVertical: tokens.spacing[8],
@@ -449,8 +431,24 @@ function createStyles(colors: ColorPalette) {
       justifyContent: "center",
       alignItems: "center",
     },
-    tuneButtonActive: {
-      backgroundColor: colors.soft,
+    // Contador de filtros aplicados sobre o ícone de ajustes (chip de 18 dp do Material 3).
+    tuneBadge: {
+      position: "absolute",
+      top: 6,
+      right: 6,
+      minWidth: 18,
+      height: 18,
+      paddingHorizontal: 4,
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.m3.primary,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    tuneBadgeText: {
+      color: colors.m3.onPrimary,
+      fontSize: 11,
+      lineHeight: 14,
+      fontFamily: fontFamily.semiBold,
     },
     heroSection: {
       gap: tokens.spacing[6],
@@ -461,7 +459,7 @@ function createStyles(colors: ColorPalette) {
       fontFamily: fontFamily.brand,
       fontSize: 34,
       lineHeight: 41,
-      color: colors.text,
+      color: colors.brandBrown,
       letterSpacing: -0.5,
     },
     subtitle: {
@@ -480,11 +478,35 @@ function createStyles(colors: ColorPalette) {
       justifyContent: "center",
       paddingHorizontal: tokens.spacing[8],
     },
-    clearFiltersText: { color: colors.error, fontSize: tokens.typography.bodyMedium.fontSize, fontWeight: "600" },
-    filterSection: { gap: tokens.spacing[6] },
-    advancedFilters: { gap: tokens.spacing[16] },
-    filterLabel: { fontSize: tokens.typography.labelSmall.fontSize, fontWeight: "600", color: colors.secondaryText },
-    filtersRow: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[8] },
+    clearFiltersText: { color: colors.action, fontSize: tokens.typography.bodyMedium.fontSize, fontWeight: "600" },
+    // Chip removível de filtro aplicado (Figma `02.04`): verde `secondaryContainer` com ✕.
+    activeFiltersRow: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[8] },
+    activeFilterChip: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[6],
+      height: tokens.spacing[32],
+      paddingHorizontal: tokens.spacing[12],
+      borderRadius: tokens.radius.small,
+      backgroundColor: colors.m3.secondaryContainer,
+    },
+    activeFilterText: { ...tokens.typography.labelLarge, color: colors.m3.onSecondaryContainer },
+    summaryRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: tokens.spacing[12],
+    },
+    summaryText: { flex: 1, ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
+    sortButton: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "flex-end",
+      gap: 2,
+      minHeight: tokens.accessibility.touchTarget,
+      paddingLeft: tokens.spacing[8],
+    },
+    sortText: { ...tokens.typography.labelLarge, color: colors.m3.primary },
     body: { fontSize: tokens.typography.bodyLarge.fontSize, lineHeight: 25, color: colors.secondaryText },
     empty: { alignItems: "center", paddingTop: tokens.spacing[32], gap: tokens.spacing[8] },
     emptyTitle: { fontSize: 19, fontWeight: "600", color: colors.action },
@@ -512,22 +534,21 @@ function createStyles(colors: ColorPalette) {
     historyChipText: { color: colors.text, fontSize: tokens.typography.bodyLarge.fontSize },
 
     // Card de Livro (Figma 02.02 · Explorar nós 137:2471 a 137:2490)
+    // Figma: sem borda, background branco (#FFF), sombra dupla elevation level1
     card: {
       flexDirection: "row",
       alignItems: "center",
-      backgroundColor: colors.surface,
+      backgroundColor: colors.m3.surfaceContainerLowest,
       borderRadius: 16,
       paddingLeft: tokens.spacing[12],
       paddingRight: tokens.spacing[4],
       paddingVertical: tokens.spacing[12],
       marginBottom: tokens.spacing[12],
-      borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
-      elevation: 1,
+      elevation: 2,
       shadowColor: "#000",
       shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.12,
-      shadowRadius: 2,
+      shadowOpacity: 0.22,
+      shadowRadius: 3,
       gap: 14,
     },
     cardMain: {
@@ -562,10 +583,6 @@ function createStyles(colors: ColorPalette) {
       flexDirection: "row",
       alignItems: "center",
       gap: 2,
-      paddingHorizontal: tokens.spacing[6],
-      paddingVertical: 2,
-      borderRadius: tokens.radius.small,
-      backgroundColor: colors.m3.surfaceContainerHigh,
     },
     cardLocationText: {
       ...tokens.typography.labelSmall,

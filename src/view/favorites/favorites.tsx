@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { BOOK_CONDITION_LABELS } from "@/model/entities/book";
+import { BOOK_CONDITION_LABELS, type BookModality } from "@/model/entities/book";
 import { AppIcon } from "@/view/components/AppIcon";
 import { BookCover } from "@/view/components/BookCover";
 import { ErrorState } from "@/view/components/ErrorState";
@@ -9,10 +9,9 @@ import { FilledButton } from "@/view/components/FilledButton";
 import { IconBadge } from "@/view/components/IconBadge";
 import { LoadingState } from "@/view/components/LoadingState";
 import { OfflineState } from "@/view/components/OfflineState";
-import { Tag } from "@/view/components/Tag";
 import { TextButton } from "@/view/components/TextButton";
 import { TopAppBar } from "@/view/components/TopAppBar";
-import { tokens, type ColorPalette } from "@/view/tokens";
+import { tokens, fontFamily, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { formatPrice } from "@/view/formatPrice";
 import { useFavoritesViewModel } from "@/viewmodel/useFavoritesViewModel";
@@ -27,6 +26,13 @@ export type FavoritesProps = {
   onBook: (id: string) => void;
   onNavigateToAlerts?: () => void;
   onExploreBooks?: () => void;
+};
+
+/** Rótulo curto de modalidade na linha pequena do card (`02.06`). */
+const MODALITY_LABELS: Readonly<Record<BookModality, string>> = {
+  sale: "Venda",
+  trade: "Troca",
+  donation: "Doação",
 };
 
 /** Figma `02.06 · Favoritos` (nó `10:227`) e `02.14 · Favoritos · vazio` (nó `254:4129`). */
@@ -136,12 +142,13 @@ export default function Favorites({
                 >
                   <BookCover id={item.id} title={item.title} photoUrl={item.photoUrl} variant="list" />
                   <View style={styles.rowTexts}>
-                    <View style={styles.rowHeader}>
-                      <Tag variant={item.modality} />
-                      {item.price !== undefined ? (
-                        <Text style={styles.price}>{formatPrice(item.price)}</Text>
-                      ) : null}
-                    </View>
+                    {/* Figma `02.06`: linha pequena acima do título — preço quando é venda,
+                        senão a modalidade. Não é pílula de tag. */}
+                    <Text style={styles.modalityLine}>
+                      {item.modality === "sale" && item.price !== undefined
+                        ? formatPrice(item.price)
+                        : MODALITY_LABELS[item.modality]}
+                    </Text>
                     <Text style={styles.bookTitle}>{item.title}</Text>
                     <Text style={styles.bookDetails}>{details}</Text>
                   </View>
@@ -249,25 +256,21 @@ function createStyles(colors: ColorPalette) {
     minHeight: tokens.accessibility.touchTarget,
   },
   rowTexts: { flex: 1, gap: tokens.spacing[4] },
-  rowHeader: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[8] },
+  modalityLine: {
+    ...tokens.typography.labelMedium,
+    color: colors.m3.onSurfaceVariant,
+  },
   bookTitle: {
-    fontSize: tokens.typography.titleMedium.fontSize,
-    lineHeight: tokens.typography.titleMedium.lineHeight,
-    fontFamily: tokens.typography.titleMedium.fontFamily,
-    fontWeight: tokens.typography.titleMedium.fontWeight,
-    color: colors.text,
+    fontFamily: fontFamily.brand,
+    fontSize: 18,
+    lineHeight: 24,
+    color: colors.m3.onSurface,
   },
   bookDetails: {
     fontSize: tokens.typography.bodyMedium.fontSize,
     lineHeight: tokens.typography.bodyMedium.lineHeight,
     fontFamily: tokens.typography.bodyMedium.fontFamily,
     color: colors.secondaryText,
-  },
-  price: {
-    fontSize: tokens.typography.bodyMedium.fontSize,
-    fontFamily: tokens.typography.bodyMedium.fontFamily,
-    fontWeight: "600",
-    color: colors.action,
   },
   favoriteButton: {
     minWidth: tokens.accessibility.touchTarget,

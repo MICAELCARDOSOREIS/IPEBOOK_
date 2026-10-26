@@ -49,3 +49,39 @@ Fluxos do app, derivados das histórias de usuário de
 - **Faça:** se a pessoa não estiver logada ao tentar anunciar, redirecionar para Entrar sem
   perder o que já preencheu (ver caso de erro em spec 003, US2).
 - **Evite:** bloquear o avanço de etapa sem dizer qual campo falta.
+
+## Padrão 3: Explorar e filtrar o catálogo
+
+- **Objetivo do usuário:** encontrar um livro disponível em Piripiri, PI, combinando busca, filtros e
+  ordenação sem perder a referência de quantos resultados existem.
+- **Componentes usados:** [Campo de busca](04-componentes/campo-de-busca.md),
+  [Chip](04-componentes/chip.md) (32 dp nas fileiras, 40 dp na tela de filtros),
+  [Barra superior](04-componentes/barra-superior.md) (tela "Filtrar livros"),
+  [Opção única](04-componentes/opcao-unica.md) (modalidade, categoria, conservação e preço),
+  [Botão](04-componentes/botao.md) (filled "Mostrar N livros", text "Limpar filtros") e
+  [Linha de livro](04-componentes/linha-de-livro.md).
+- **Passos:**
+  1. Explorar mostra busca, ícone de ajustes (com distintivo quando há filtros ativos) e uma única
+     fileira de categorias — "Todos" + categorias do catálogo carregado.
+  2. Tocar no ícone abre **"Filtrar livros"** (`02.03`) com modalidade, categoria, conservação, preço e
+     ordenação. As escolhas ficam em rascunho e o botão principal recalculado ("Mostrar 3 livros").
+  3. "Mostrar N livros" aplica o conjunto e volta ao Explorar; voltar pela barra superior descarta.
+  4. Os filtros aplicados viram chips removíveis (`02.04`) abaixo do resumo "3 livros à venda · Bom
+     estado"; a categoria não se repete ali porque já aparece marcada na fileira de cima.
+  5. A ordenação fica no resumo ("Mais recentes") e abre a folha **"Ordenar por"**.
+- **Estados que precisam de tela:**
+
+| Situação | O que o usuário vê | Componentes e tokens |
+| --- | --- | --- |
+| Carregando | Esqueleto ou indicador no lugar da lista, busca e ajustes ativos | `Estado do sistema` |
+| Erro | Mensagem com ação de tentar novamente, filtros preservados | `error`, `errorContainer` |
+| Vazio (filtros) | "Nenhum livro corresponde aos filtros selecionados." + "Limpar filtros e buscar novamente" | [Estado vazio](04-componentes/estado-vazio.md) |
+| Vazio (termo) | "Nenhum livro encontrado para 'termo'. Tente outro título, autor ou categoria." | `Estado vazio` |
+| Vazio (catálogo) | "Ainda não há livros no catálogo." | `Estado vazio` |
+| Sucesso | Lista filtrada com resumo à esquerda e ordenação à direita | `secondaryContainer`, `onSurfaceVariant` |
+
+- **Faça:** contar os resultados no próprio botão de aplicar, para a pessoa saber o efeito do filtro
+  antes de voltar à lista; manter `resetFilters` separado de `clearFilters` — limpar filtros preserva o
+  termo e o bairro, reiniciar a busca apaga tudo.
+- **Evite:** filtrar a lista a cada toque dentro da tela de filtros (a lista pisca e pode esvaziar no meio
+  da escolha), usar categorias fixas que não existem no catálogo e contar a ordenação como filtro ativo.

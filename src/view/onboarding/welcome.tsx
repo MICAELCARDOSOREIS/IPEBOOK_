@@ -1,9 +1,9 @@
 import { useMemo } from "react";
-import { Image, ScrollView, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Image, StyleSheet, Text, View } from "react-native";
 import { FilledButton } from "@/view/components/FilledButton";
 import { Logotipo } from "@/view/components/Logotipo";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
+import { ScreenContainer } from "@/view/components/ScreenContainer";
 import { TextButton } from "@/view/components/TextButton";
 import { accessibility, fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
@@ -23,64 +23,53 @@ export default function Welcome({ onStart, onSignIn, onExplore }: WelcomeProps) 
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   return (
-    <SafeAreaView style={styles.page} edges={["top", "bottom"]}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.content}>
-          <View style={styles.header}>
-            <Logotipo />
-            <View style={styles.location} accessible accessibilityLabel="Beta exclusiva em Piripiri, PI">
-              <View style={styles.locationDot} />
-              <Text style={styles.locationText}>PIRIPIRI · PIAUÍ</Text>
-            </View>
-          </View>
-
-          <Text accessibilityRole="header" style={styles.title}>Uma boa história</Text>
-          <View style={styles.highlight}>
-            <Text style={styles.title}>merece continuar.</Text>
-          </View>
-
-          <Image
-            source={illustration}
-            style={styles.illustration}
-            resizeMode="contain"
-            accessible={false}
-            importantForAccessibility="no"
-          />
-
-          <Text style={styles.subtitle}>Livros de quem mora perto de você.</Text>
-
-          <View style={styles.modalities} accessible accessibilityLabel="Modalidades: venda, troca e doação">
-            {["Venda", "Troca", "Doação"].map((label) => (
-              <Text key={label} style={styles.modality}>{label}</Text>
-            ))}
-          </View>
-
-          <View style={styles.actions}>
-            <FilledButton label="Começar" onPress={onStart} />
-            <OutlinedButton label="Já tenho conta" onPress={onSignIn} />
-            <TextButton label="Explorar livros sem entrar" onPress={onExplore} />
-          </View>
+    <ScreenContainer
+      maxWidth={560}
+      paddingTop={tokens.spacing[24]}
+      paddingBottom={tokens.spacing[32]}
+      edges={["top", "bottom"]}
+      contentStyle={{ gap: tokens.spacing[16] }}
+    >
+      <View style={styles.header}>
+        <Logotipo />
+        <View style={styles.location} accessible accessibilityLabel="Beta exclusiva em Piripiri, PI">
+          <View style={styles.locationDot} />
+          <Text style={styles.locationText}>PIRIPIRI · PIAUÍ</Text>
         </View>
-      </ScrollView>
-    </SafeAreaView>
+      </View>
+
+      <Text accessibilityRole="header" style={styles.title}>Uma boa história</Text>
+      <View style={styles.highlight}>
+        <Text style={styles.title}>merece continuar.</Text>
+      </View>
+
+      <Image
+        source={illustration}
+        style={styles.illustration}
+        resizeMode="contain"
+        accessible={false}
+        importantForAccessibility="no"
+      />
+
+      <Text style={styles.subtitle}>Livros de quem mora perto de você.</Text>
+
+      <View style={styles.modalities} accessible accessibilityLabel="Modalidades: venda, troca e doação">
+        {["Venda", "Troca", "Doação"].map((label) => (
+          <Text key={label} style={styles.modality}>{label}</Text>
+        ))}
+      </View>
+
+      <View style={styles.actions}>
+        <FilledButton label="Começar" onPress={onStart} />
+        <OutlinedButton label="Já tenho conta" onPress={onSignIn} />
+        <TextButton label="Explorar livros sem entrar" onPress={onExplore} />
+      </View>
+    </ScreenContainer>
   );
 }
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
-  page: { flex: 1, backgroundColor: colors.surface },
-  scrollContent: {
-    flexGrow: 1,
-    paddingHorizontal: tokens.spacing[24],
-    paddingTop: tokens.spacing[24],
-    paddingBottom: tokens.spacing[32],
-  },
-  content: {
-    width: "100%",
-    maxWidth: 560,
-    alignSelf: "center",
-    gap: tokens.spacing[16],
-  },
   header: {
     flexDirection: "row",
     alignItems: "center",

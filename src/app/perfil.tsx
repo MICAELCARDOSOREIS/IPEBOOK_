@@ -16,6 +16,7 @@ export default function Perfil() {
       onNavigateToPrivacy={() => router.push("/excluir-conta")}
       onNavigateToBlockedUsers={() => router.push("/perfil/bloqueados")}
       onNavigateToInviteFriends={() => router.push("/perfil/convidar")}
+      onNavigateToSettings={() => router.push("/perfil/configuracoes" as never)}
       onNavigateToTerms={() => router.push("/termos")}
       onNavigateToHelp={() => router.push("/ajuda")}
       onSignedOut={() => router.replace("/entrar")}

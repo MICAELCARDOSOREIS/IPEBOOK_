@@ -75,15 +75,20 @@ describe("Meu perfil — hub de navegação (Figma 07.01)", () => {
     expect(onNavigateToFavorites).toHaveBeenCalledTimes(1);
   });
 
-  it("oferece o alternador de aparência (movido da Home, Spec 062)", async () => {
+  it("oferece o item Configurações com navegação (Spec 073, substituiu seletor avulso de tema)", async () => {
     mockAuth({ id: "ana", email: "ana@exemplo.com" });
     mockProfile();
+    const onNavigateToSettings = vi.fn();
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
-      screen = await render(<ProfileHub {...baseProps()} />);
+      screen = await render(<ProfileHub {...baseProps({ onNavigateToSettings })} />);
     });
-    expect(screen.getByTestId("theme-toggle-radiogroup")).toBeDefined();
-    expect(screen.getByLabelText("Tema Sistema")).toBeDefined();
+    expect(screen.getByLabelText("Configurações")).toBeDefined();
+    expect(screen.getByText("Aparência e preferências do aplicativo")).toBeDefined();
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Configurações"));
+    });
+    expect(onNavigateToSettings).toHaveBeenCalledTimes(1);
   });
 
   it("mostra nome, estatísticas e aciona a navegação de cada item do menu", async () => {

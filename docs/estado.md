@@ -2,7 +2,15 @@
 
 Documento consolidado de continuidade técnica e produto do Ipebook (Piripiri, PI).
 
-Conferência atual: **2026-10-25** (72 specs e 55 ADRs numerados, testes automatizados 100% passando).
+Conferência atual: **2026-10-26** (73 specs e 57 ADRs numerados, testes automatizados 100% passando).
+
+**Filtro do Explorar alinhado ao Figma `02.03`/`02.04` (2026-10-26, Spec 028 evoluída, ADR 0057):** o painel de filtros embutido saiu de cena. O ícone de ajustes do Explorar passa a abrir a tela **"Filtrar livros"** (`src/view/search/FilterSheet.tsx`), com manchete em serifa, modalidade, categoria dinâmica, condição do livro (novo), preço e ordenação; as escolhas ficam em rascunho e só valem ao tocar em **"Mostrar N livros"**, com `N` recalculado a cada escolha. Os filtros aplicados viram **chips removíveis** (`02.04`) abaixo do resumo da faixa de resultados (`"3 livros à venda · Bom estado"`), e a ordenação ganhou a folha própria `SortSheet` (`"Mais recentes"`, `A-Z`, `Menor preço`, `Maior preço`). O ícone de ajustes exibe distintivo com a quantidade de filtros ativos; a fileira de chips de categoria passou a ser extraída do catálogo carregado (antes era fixa em categorias inexistentes). A lógica pura de filtro, ordenação, chips e resumo vive em `src/viewmodel/searchFilters.ts`, e `Chip` ganhou a variante `size="regular"` (40 dp) usada apenas na tela de filtros.
+
+Correções de comportamento da mesma entrega: `resetFilters` limpa filtros e ordenação preservando termo e bairro (antes "Limpar filtros" apagava o termo digitado), a ordenação deixou de contar como filtro ativo e o estado vazio passou a distinguir filtros, termo e catálogo vazio. Validado em 168 arquivos / 1180 testes, `tsc --noEmit` limpo, `check:architecture` sem violações e conferência no Galaxy A16 (contagem 8 → 3 na tela de filtros, chips removíveis, ordenação A-Z e reinício por "Limpar filtros").
+
+**Alinhamento global das telas Android ao Figma (2026-10-26, Spec 072, ADR 0055 e ADR 0056):** 137 telas do inventário visual organizadas em 6 grupos de trabalho disjuntos (Grupos A a F: Acesso, Livro/Comunidade, Publicação, Estante/Negociação, Perfil/Configurações e Descoberta). Componentes compartilhados alinhados às diretrizes M3 (fundo de superfície `#FCFAF5`, campos contornados com rótulo flutuante e raio 4, botões, chips e TopAppBar com serifa da marca `Source Serif 4`). 33 de 33 tarefas concluídas e validadas com 0 violações arquiteturais e verificação em dispositivo físico Android.
+
+**Configurações e tema do perfil (2026-10-26, Spec 073, ADR 0036):** experiência de perfil estruturada com entrada "Configurações" no `ProfileHub` (`src/view/profile/profileHub.tsx`), remoção do seletor duplicado de tema na raiz do hub e criação da tela dedicada `Settings` (`src/view/profile/settings.tsx` e rota `/perfil/configuracoes`), permitindo escolher entre Sistema, Claro e Escuro com persistência local em `AsyncStorage` (`ipebook.preferenciaDeTema`). Sincronização do tema resolvido com a moldura visual do sistema (`expo-status-bar` com `style="auto"` e `"userInterfaceStyle": "automatic"` no `app.json`).
 
 **Entregas consolidadas (2026-10-23):**
 - **Spec 060 (Notificações push locais e lembretes de encontros, ADR 0043):** Infraestrutura desacoplada com `expo-notifications` (~58.1.6) para agendamento local de lembretes de encontros com cálculo de antecedência (60 min antes do horário no ponto seguro de Piripiri), canal de notificações no Android com alta prioridade e implementações real (`ExpoPushNotificationService`) e em memória (`MemoryPushNotificationService`) no container de DI.
@@ -12,10 +20,10 @@ Conferência atual: **2026-10-25** (72 specs e 55 ADRs numerados, testes automat
 - **Spec 056 (Bloqueio e Desbloqueio de Usuários, ADR 0039):** Gestão de pessoas bloqueadas no hub de perfil (`/perfil/bloqueados`, Figma `07.10`–`07.12`), com diálogo acessível de confirmação, tabela `v2_blocked_users` com RLS rígida e migração `202610230002_bloqueio_usuarios.sql`. Integrado via PR #197.
 - **Leitura anônima de perfis públicos (ADR 0038 / Spec 053):** Política RLS em `v2_profiles` e `v2_ratings` para visitantes (`anon`) verem o nome de quem anuncia e avaliações comunitárias sem expor dados privados.
 - **Modularização arquitetural de telas:** `createListing.tsx` (565 linhas) e `myListings.tsx` (457 linhas) decompostos em submódulos coesos em `src/view/listings/`.
-- **Prevenção automatizada de colisões:** Script `scripts/verificar-numeracao.mjs` (`npm run check:numbering`) integrado aos testes e ao pipeline de validação (72 specs e 55 ADRs numerados, sem colisões).
-- **Supabase remoto parcialmente sincronizado:** 20 das 21 migrações locais (`supabase/migrations/`) foram aplicadas e verificadas no banco remoto via `scripts/verificar-migracoes-remotas.mjs` (incluindo `202610220001_encontros.sql`, `202610230001_leitura_anonima_perfis_e_avaliacoes.sql` e `202610230002_bloqueio_usuarios.sql`). A migração `202610240001_mensagens_negociacao.sql` permanece pendente; as 12 tabelas já aplicadas, o bucket de Storage e as funções RPC de LGPD e aceite atômico estão operacionais.
+- **Prevenção automatizada de colisões:** Script `scripts/verificar-numeracao.mjs` (`npm run check:numbering`) integrado aos testes e ao pipeline de validação (73 specs e 57 ADRs numerados, sem colisões).
+- **Supabase remoto parcialmente sincronizado:** 20 das 21 migrações locais (`supabase/migrations/`) foram aplicadas e verificadas no banco remoto via `scripts/verificar-migracoes-remotas.mjs` (incluindo `202610220001_encontros.sql`, `202610230001_leitura_anonima_perfis_e_avaliacoes.sql` e `202610230002_bloqueio_usuarios.sql`). A migração `202610240001_mensagens_negociacao.sql` permanece pendente no banco remoto; as 12 tabelas já aplicadas, o bucket de Storage e as funções RPC de LGPD e aceite atômico estão operacionais.
 
-**Pendências abertas (2026-10-25):** confirmar a revogação do token de acesso temporário do Supabase; aplicar no Supabase remoto a migração `202610240001_mensagens_negociacao.sql` da Spec 061; conferências em dispositivo físico Android das Specs 037, 038, 052, 056, 057, 058, 059 e 060.
+**Pendências abertas (2026-10-26):** confirmar a revogação do token de acesso temporário do Supabase; aplicar no Supabase remoto a migração `202610240001_mensagens_negociacao.sql` da Spec 061 (chat da negociação presencial); conferências em dispositivo físico Android das Specs 037, 038, 052, 056, 057, 058, 059 e 060.
 
 **Spec 052 validada localmente (Issue #188; criada como 044 e renumerada porque o número passou a ser da spec de alinhamento complementar):** a negociação aceita ganhou o encontro combinado
 (Figma `06.04`, `06.05`, `06.11`–`06.14`): convite com local entre os pontos seguros, dia nos próximos
@@ -102,13 +110,14 @@ Todas as métricas abaixo foram aferidas diretamente por execução dos scripts 
 
 - **Testes automatizados**: **969 testes passando** em **134 arquivos de teste** (`npm run validate`), cobrindo entidades, validadores, casos de uso, adaptadores, viewmodels, componentes e integração.
 - **Cobertura de código**: Statements 92,68%, Branches 84,50%, Functions 90,21%, Lines 93,84%.
-- **Integridade arquitetural**: **100% em conformidade (244 arquivos verificados)** no MVVM sofisticado em sete camadas (`app`, `view`, `viewmodel`, `usecase`, `model`, `infra`, `di`), verificado pelo comando `npm run check:architecture` (0 violações). Apenas `src/di/container.ts` e testes têm permissão para instanciar ou importar adaptadores de `src/infra/`.
-- **Validação de banco e migrações SQL**: **17 migrações** descobertas e executadas em ordem no PGlite (`npm run test:sql`), com rejeição de versões duplicadas. Remotamente, as 17 estão aplicadas (conferido em 2026-10-21; ver "Supabase remoto — sincronizado" acima).
+- **Integridade arquitetural**: **100% em conformidade (320 arquivos verificados)** no MVVM sofisticado em sete camadas (`app`, `view`, `viewmodel`, `usecase`, `model`, `infra`, `di`), verificado pelo comando `npm run check:architecture` (0 violações). Apenas `src/di/container.ts` e testes têm permissão para instanciar ou importar adaptadores de `src/infra/`.
+- **Validação de banco e migrações SQL**: **21 migrações** descobertas e executadas em ordem no PGlite (`npm run test:sql`), com rejeição de versões duplicadas e políticas/RPCs 100% aprovadas. No Supabase remoto, 20 estão aplicadas; a migração `202610240001_mensagens_negociacao.sql` (Spec 061 / ADR 0044) permanece pendente de aplicação remota.
 - **Semente Oficial da Beta (`npm run db:seed`)**: Script `scripts/popular-catalogo-piripiri.mjs` gerando 10 anúncios realistas distribuídos pelos bairros de Piripiri, PI com exportação SQL via `--sql`.
-- **Backend Supabase**: Configurado para desenvolvimento; as 17 migrações estão aplicadas no banco remoto e o diagnóstico `health:supabase:remote` passou (verificado em 2026-10-21).
-- **Rotas Web compiladas (`npm run build:web`)**: Exportação estática do Expo Router gerou com sucesso o pacote web em `dist/`, totalizando **31 rotas estáticas** (as rotas `/perfil/editar`, `/perfil/avaliacoes` e `/perfil/seguranca` foram acrescentadas pela Spec 048):
+- **Backend Supabase**: Configurado para desenvolvimento; 20 migrações aplicadas no banco remoto e o diagnóstico `health:supabase:remote` cobrindo as tabelas operacionais, com `202610240001_mensagens_negociacao.sql` pendente no remoto.
+- **Rotas Web compiladas (`npm run build:web`)**: Exportação estática do Expo Router gerou com sucesso o pacote web em `dist/`, totalizando **32 rotas estáticas** (as rotas `/perfil/editar`, `/perfil/avaliacoes` e `/perfil/seguranca` foram acrescentadas pela Spec 048, e `/perfil/configuracoes` pela Spec 073):
   - `/` (Catálogo e vitrine inicial com selo da beta em Piripiri, PI)
   - `/perfil` (Perfil do usuário autenticado)
+  - `/perfil/configuracoes` (Configurações e tema do aplicativo - Spec 073)
   - `/perfil/editar` (Edição do perfil próprio - Spec 048)
   - `/perfil/avaliacoes` (Avaliações recebidas - Spec 048)
   - `/perfil/seguranca` (Segurança e verificação, envia link de redefinição de senha - Spec 048)
@@ -145,7 +154,7 @@ Todas as métricas abaixo foram aferidas diretamente por execução dos scripts 
 
 O inventário de design (`design-system/telas-android-figma.md`) lista 137 telas no Figma correspondentes a todos os fluxos conceituais explorados durante a fase inicial de IHC.
 
-No app ativo em desenvolvimento, 31 rotas cobrem as jornadas essenciais da beta. A discrepância numérica entre 137 e 31 decorre de **decisões deliberadas de escopo e arquitetura**, devidamente documentadas em ADRs:
+No app ativo em desenvolvimento, 32 rotas cobrem as jornadas essenciais da beta. A discrepância numérica entre 137 e 32 decorre de **decisões deliberadas de escopo e arquitetura**, devidamente documentadas em ADRs:
 
 1. **Fluxo 05 · Estante (fora de escopo pelo ADR 0011)**:
    - O Figma previa uma aba "Estante" dedicada à catalogação pessoal de livros lidos/a ler.
@@ -313,3 +322,6 @@ No app ativo em desenvolvimento, 31 rotas cobrem as jornadas essenciais da beta.
 - `specs/068-secao-hiperlocal-home-e-filtro-supabase/`: Seção hiperlocal na Home e filtro remoto de bairro no Supabase (Figma `02.01` e `02.02`, ADR 0051).
 - `specs/069-alinhamento-encontros-negociacao-figma/`: Alinhamento visual dos encontros e negociação presencial ao Figma (Figma `06.04` e `06.05`, ADR 0052).
 - `specs/070-selo-bairro-cards-livro/`: Selo de bairro nos cards de livro na Home e na Pesquisa (Figma `02.01` e `02.02`, ADR 0053).
+- `specs/071-historico-encontros-negociacao/`: Histórico de encontros na negociação e perfil (Figma `06.05`, `06.11`, `07.01`, ADR 0054).
+- `specs/072-alinhamento-global-figma/`: Alinhamento global das telas Android ao Figma Material 3 (137 telas, Grupos A a F, ADR 0055 e ADR 0056).
+- `specs/073-configuracoes-e-tema/`: Configurações e tema do perfil — tela dedicada `/perfil/configuracoes`, seleção entre Sistema, Claro e Escuro e integração à moldura do sistema (ADR 0036).
