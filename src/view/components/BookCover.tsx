@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef } from "react";
 import { Animated, Image, StyleSheet, Text, View } from "react-native";
-import { tokens, type ColorPalette } from "@/view/tokens";
+import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { useBookCoverImage } from "@/viewmodel/useBookCoverImage";
 
@@ -33,8 +33,11 @@ const LIST_WIDTH = 56;
 const CARD_WIDTH = 74;
 /** Preenche a largura do card de carrossel da Home (`CAROUSEL_ITEM_WIDTH`). */
 const CAROUSEL_WIDTH = 152;
-/** Capa de destaque no detalhe do anúncio (`03.01`: 97x155dp). */
-const DETAIL_WIDTH = 97;
+/**
+ * Capa de destaque no detalhe do anúncio. O Figma (`03.01`) usa 97x155dp, mas na prática a capa
+ * ficava perdida na área de destaque; 136x218dp mantém a proporção 5:8 com título legível.
+ */
+const DETAIL_WIDTH = 136;
 
 const VARIANT_WIDTH: Record<BookCoverVariant, number> = {
   list: LIST_WIDTH,
@@ -82,8 +85,8 @@ export function BookCover({
   const width = VARIANT_WIDTH[variant] ?? LIST_WIDTH;
   const height = width / ASPECT_RATIO;
   // Capa de lista no Figma (`02.02`, `05.01`) tem 56x80dp e não comporta texto legível; o título já
-  // aparece na própria linha, então só o card grande repete o texto sobre a ilustração.
-  const showText = variant === "card";
+  // aparece na própria linha, então só o card grande e o detalhe repetem o texto sobre a ilustração.
+  const showText = variant === "card" || variant === "detail";
 
   const pulseAnim = useRef(new Animated.Value(0.4)).current;
 
@@ -155,12 +158,12 @@ export function BookCover({
       style={[styles.cover, { backgroundColor, width, height }]}
     >
       {showText ? (
-        <View style={styles.textOverlay} accessible={false}>
-          <Text style={styles.title} numberOfLines={3}>
+        <View style={[styles.textOverlay, variant === "detail" && styles.textOverlayDetail]} accessible={false}>
+          <Text style={[styles.title, variant === "detail" && styles.titleDetail]} numberOfLines={variant === "detail" ? 4 : 3}>
             {title}
           </Text>
           {author ? (
-            <Text style={styles.author} numberOfLines={1}>
+            <Text style={[styles.author, variant === "detail" && styles.authorDetail]} numberOfLines={2}>
               {author}
             </Text>
           ) : null}
@@ -187,6 +190,21 @@ function createStyles(colors: ColorPalette) {
     },
     textOverlay: {
       padding: tokens.spacing[8],
+    },
+    textOverlayDetail: {
+      padding: tokens.spacing[16],
+      gap: tokens.spacing[8],
+    },
+    titleDetail: {
+      fontFamily: fontFamily.brand,
+      fontSize: 17,
+      lineHeight: 22,
+      fontWeight: "700",
+    },
+    authorDetail: {
+      fontSize: 13,
+      lineHeight: 17,
+      opacity: 0.9,
     },
     title: {
       color: tokens.colors.cover.text,
