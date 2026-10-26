@@ -60,6 +60,14 @@ const defaultState: CreateListingState = {
   success: false,
 };
 
+/** Etapa 1 válida: o botão Continuar só avança com título, autor e preço da venda. */
+const filledState: CreateListingState = {
+  ...defaultState,
+  title: "Dom Casmurro",
+  author: "Machado de Assis",
+  price: "25,00",
+};
+
 async function renderScreen(props: Partial<React.ComponentProps<typeof CreateListing>> = {}) {
   let screen!: Awaited<ReturnType<typeof render>>;
   await act(async () => {
@@ -160,7 +168,7 @@ describe("etapa 1 do anúncio — Livro (Figma 04.01)", () => {
 
 describe("etapa 2 do anúncio — Fotos (Figma 04.04)", () => {
   it("mostra os três lugares de foto e a dica", async () => {
-    mockViewModel(defaultState);
+    mockViewModel(filledState);
     const screen = await renderScreen();
     await goToStep(screen, 2);
 
@@ -180,7 +188,7 @@ describe("etapa 2 do anúncio — Fotos (Figma 04.04)", () => {
   });
 
   it("volta para a etapa anterior", async () => {
-    mockViewModel(defaultState);
+    mockViewModel(filledState);
     const screen = await renderScreen();
     await goToStep(screen, 2);
 
@@ -194,7 +202,7 @@ describe("etapa 2 do anúncio — Fotos (Figma 04.04)", () => {
 
 describe("etapa 3 do anúncio — Detalhes (Figma 04.05)", () => {
   it("oferece conservação, categoria, descrição com contador e bairro de Piripiri", async () => {
-    mockViewModel({ ...defaultState, description: "Marcas leves" });
+    mockViewModel({ ...filledState, description: "Marcas leves" });
     const screen = await renderScreen();
     await goToStep(screen, 3);
 
@@ -224,7 +232,7 @@ describe("etapa 3 do anúncio — Detalhes (Figma 04.05)", () => {
   });
 
   it("exibe aviso quando a descrição ultrapassa 280 caracteres (Issue #160)", async () => {
-    mockViewModel({ ...defaultState, description: "a".repeat(285) });
+    mockViewModel({ ...filledState, description: "a".repeat(285) });
     const screen = await renderScreen();
     await goToStep(screen, 3);
 
@@ -232,7 +240,7 @@ describe("etapa 3 do anúncio — Detalhes (Figma 04.05)", () => {
   });
 
   it("registra a conservação escolhida", async () => {
-    const actions = mockViewModel(defaultState);
+    const actions = mockViewModel(filledState);
     const screen = await renderScreen();
     await goToStep(screen, 3);
 
@@ -244,7 +252,7 @@ describe("etapa 3 do anúncio — Detalhes (Figma 04.05)", () => {
   });
 
   it("registra o bairro escolhido no seletor de bairros de Piripiri", async () => {
-    const actions = mockViewModel(defaultState);
+    const actions = mockViewModel(filledState);
     const screen = await renderScreen();
     await goToStep(screen, 3);
 
@@ -263,7 +271,7 @@ describe("etapa 3 do anúncio — Detalhes (Figma 04.05)", () => {
   });
 
   it("permite limpar o bairro selecionado", async () => {
-    const actions = mockViewModel({ ...defaultState, neighborhood: "Centro" });
+    const actions = mockViewModel({ ...filledState, neighborhood: "Centro" });
     const screen = await renderScreen();
     await goToStep(screen, 3);
 
@@ -277,7 +285,7 @@ describe("etapa 3 do anúncio — Detalhes (Figma 04.05)", () => {
   });
 
   it("mantém as ações da etapa na barra fixa inferior", async () => {
-    mockViewModel(defaultState);
+    mockViewModel(filledState);
     const screen = await renderScreen();
     await goToStep(screen, 3);
 
@@ -289,7 +297,7 @@ describe("etapa 3 do anúncio — Detalhes (Figma 04.05)", () => {
   });
 
   it("exibe indicador de carregamento enquanto publica", async () => {
-    mockViewModel({ ...defaultState, loading: true });
+    mockViewModel({ ...filledState, loading: true });
     const screen = await renderScreen();
     await goToStep(screen, 3);
 
@@ -297,7 +305,7 @@ describe("etapa 3 do anúncio — Detalhes (Figma 04.05)", () => {
   });
 
   it("exibe mensagem de erro quando a publicação falha", async () => {
-    mockViewModel({ ...defaultState, error: "Sessão obrigatória para cadastrar anúncio." });
+    mockViewModel({ ...filledState, error: "Sessão obrigatória para cadastrar anúncio." });
     const screen = await renderScreen();
     await goToStep(screen, 3);
 
@@ -306,7 +314,7 @@ describe("etapa 3 do anúncio — Detalhes (Figma 04.05)", () => {
 
   it("anuncia o erro para leitores de tela quando a publicação falha (Spec 042 / Issue #147)", async () => {
     const announceSpy = vi.spyOn(AccessibilityInfo, "announceForAccessibility");
-    mockViewModel({ ...defaultState, error: "Sessão obrigatória para cadastrar anúncio." });
+    mockViewModel({ ...filledState, error: "Sessão obrigatória para cadastrar anúncio." });
     const screen = await renderScreen();
     await goToStep(screen, 3);
 
@@ -323,7 +331,7 @@ describe("anúncio publicado (Figma 04.07)", () => {
     const onCreated = vi.fn();
     const onViewMyListings = vi.fn();
     const onGoHome = vi.fn();
-    const actions = mockViewModel(defaultState, {
+    const actions = mockViewModel(filledState, {
       submit: vi.fn().mockResolvedValue({
         id: "new-1",
         title: "Dom Casmurro",
@@ -363,7 +371,7 @@ describe("anúncio publicado (Figma 04.07)", () => {
   });
 
   it("não mostra a tela de sucesso quando a publicação falha", async () => {
-    mockViewModel(defaultState, { submit: vi.fn().mockResolvedValue(null) });
+    mockViewModel(filledState, { submit: vi.fn().mockResolvedValue(null) });
     const screen = await renderScreen();
     await goToStep(screen, 3);
 
@@ -376,6 +384,36 @@ describe("anúncio publicado (Figma 04.07)", () => {
 });
 
 describe("persistência e recuperação de rascunhos na UI (Spec 017 / Spec 072)", () => {
+  it("não avança e mostra o erro em cada campo quando a etapa 1 está incompleta", async () => {
+    const actions = mockViewModel({ ...defaultState, modality: "sale" });
+    const screen = await renderScreen();
+
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Continuar" }));
+    });
+
+    expect(screen.getByText("Etapa 1 de 3")).toBeDefined();
+    expect(screen.getByText("Informe o título do livro.")).toBeDefined();
+    expect(screen.getByText("Informe o autor do livro.")).toBeDefined();
+    expect(screen.getByText("Informe um preço maior que zero.")).toBeDefined();
+    expect(actions.saveDraft).not.toHaveBeenCalled();
+  });
+
+  it("não mostra erros de campo antes da primeira tentativa de avançar", async () => {
+    mockViewModel(defaultState);
+    const screen = await renderScreen();
+
+    expect(screen.queryByText("Informe o título do livro.")).toBeNull();
+  });
+
+  it("desativa a busca por ISBN enquanto o campo está vazio", async () => {
+    mockViewModel(defaultState);
+    const screen = await renderScreen();
+
+    const button = screen.getByLabelText("Buscar dados do livro pelo ISBN");
+    expect(button.props.accessibilityState?.disabled).toBe(true);
+  });
+
   it("dispara actions.loadDraft na montagem se o formulário estiver limpo", async () => {
     const actions = mockViewModel(defaultState);
     await renderScreen();
@@ -384,7 +422,7 @@ describe("persistência e recuperação de rascunhos na UI (Spec 017 / Spec 072)
   });
 
   it("salva o rascunho ao avançar da etapa 1 para a etapa 2 via botão Continuar", async () => {
-    const actions = mockViewModel(defaultState);
+    const actions = mockViewModel(filledState);
     const screen = await renderScreen();
 
     await act(async () => {
@@ -396,7 +434,7 @@ describe("persistência e recuperação de rascunhos na UI (Spec 017 / Spec 072)
   });
 
   it("salva o rascunho ao avançar da etapa 2 para a etapa 3 via botão Usar estas fotos", async () => {
-    const actions = mockViewModel(defaultState);
+    const actions = mockViewModel(filledState);
     const screen = await renderScreen();
     await goToStep(screen, 2);
 

@@ -2,7 +2,9 @@
 
 Documento consolidado de continuidade técnica e produto do Ipebook (Piripiri, PI).
 
-Conferência atual: **2026-10-26** (76 specs e 64 ADRs numerados, 176 arquivos e 1.285 testes automatizados 100% passando).
+Conferência atual: **2026-10-26** (77 specs e 64 ADRs numerados, 177 arquivos e 1.291 testes automatizados 100% passando).
+
+**Usabilidade do anúncio (2026-10-26, Spec 077):** "Continuar" da etapa 1 valida título, autor e preço da venda e mostra o erro no campo (antes só ao publicar); cada etapa abre no topo; Voltar do Android recua uma etapa; "Buscar" ISBN fica desativado sem código. Validado em 1.291 testes; sem conferência em aparelho.
 
 **Aba Conversas como lista de conversas e rótulos do perfil (2026-10-26, Spec 076):** o destino "Conversas" (`/meus-pedidos`) deixou de abrir "Meus pedidos" e passou a listar as negociações enviadas e recebidas (sem recusadas) no padrão do Figma `06.01`/`06.09`: avatar, nome da outra pessoa, última mensagem do chat ("Você: …" quando minha), horário relativo e "Sobre <livro>"; pendentes mostram "Proposta recebida"/"Aguardando resposta". Novo `useConversationsViewModel` (reaproveita `useRequestList`, agora genérico) e `src/view/conversations/conversations.tsx`. "Atividade"/"Conta" do Meu perfil passaram à cor primária, como no `07.01`. Limitação: uma consulta de mensagens por negociação aceita. Validado em 1.285 testes e no Galaxy A16.
 
