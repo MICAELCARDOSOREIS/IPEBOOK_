@@ -4,7 +4,10 @@ import TermsAndPrivacy from "@/view/legal/termsAndPrivacy";
 export default function TermosRoute() {
   return (
     <TermsAndPrivacy
-      onBack={() => router.back()}
+      onBack={() => {
+        if (router.canGoBack()) router.back();
+        else router.replace("/");
+      }}
       onNavigateToDeleteAccount={() => router.push("/excluir-conta")}
     />
   );

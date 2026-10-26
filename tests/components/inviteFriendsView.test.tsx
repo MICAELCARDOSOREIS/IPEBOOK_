@@ -19,8 +19,8 @@ function mockViewModel(
     sharing: false,
     linkCopied: false,
     error: null,
-    inviteMessage: "Oi! Participe do IpêBook em Piripiri: https://ipebook.pages.dev",
-    inviteUrl: "https://ipebook.pages.dev",
+    inviteMessage: "Oi! Participe do IpêBook em Piripiri: https://ipebook.app",
+    inviteUrl: "https://ipebook.app",
     ...state,
   };
   const fullActions: InviteFriendsActions = {
@@ -49,7 +49,7 @@ describe("InviteFriends — Convidar amigos (Figma 08.02, Spec 057)", () => {
     expect(screen.getByText("Convidar amigos")).toBeDefined();
     expect(screen.getByText("Livros ganham vida quando são lidos.")).toBeDefined();
     expect(
-      screen.getByText(/Oi! Participe do IpêBook em Piripiri: https:\/\/ipebook\.pages\.dev/),
+      screen.getByText(/Oi! Participe do IpêBook em Piripiri: https:\/\/ipebook\.app/),
     ).toBeDefined();
   });
 
