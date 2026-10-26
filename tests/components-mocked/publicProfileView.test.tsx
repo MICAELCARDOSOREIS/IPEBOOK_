@@ -123,4 +123,27 @@ describe("PublicProfile (spec 018 / issue #73)", () => {
     fireEvent.press(screen.getByLabelText("Voltar"));
     expect(onBack).toHaveBeenCalledTimes(1);
   });
+
+  it("aciona onStartChat ao tocar no botão de conversa", async () => {
+    setup(profile({ userId: "ana", name: "Ana Paula" }));
+    const onStartChat = vi.fn();
+    const screen = await renderView({ onStartChat });
+    fireEvent.press(screen.getByText("Conversar com Ana Paula"));
+    expect(onStartChat).toHaveBeenCalledWith("ana");
+  });
+
+  it("aciona onReportOrBlock ao tocar no botão de denunciar ou bloquear", async () => {
+    setup(profile({ userId: "ana", name: "Ana Paula" }));
+    const onReportOrBlock = vi.fn();
+    const screen = await renderView({ onReportOrBlock });
+    fireEvent.press(screen.getByLabelText("Denunciar ou bloquear"));
+    expect(onReportOrBlock).toHaveBeenCalledWith("ana");
+  });
+
+  it("resume o rótulo do botão de conversa mantendo acessibilidade completa para nomes longos", async () => {
+    setup(profile({ name: "Biblioteca Comunitária de Piripiri" }));
+    const screen = await renderView();
+    expect(screen.getByText("Conversar com Biblioteca")).toBeDefined();
+    expect(screen.getByLabelText("Conversar com Biblioteca Comunitária de Piripiri")).toBeDefined();
+  });
 });
