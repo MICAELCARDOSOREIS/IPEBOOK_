@@ -184,11 +184,11 @@ graph TD
 
 | Name | Version |
 | --- | --- |
-| Expo | 57.0.23 |
-| Expo Router | ~57.0.21 |
-| React Native | 0.86.3 |
-| React | 19.2.3 |
-| react-native-web | ~0.21.0 |
+| Expo | 58.0.19 |
+| Expo Router | ~58.0.26 |
+| React Native | 0.88.0 |
+| React | 19.3.0 |
+| react-native-web | ^0.21.4 |
 | TypeScript | ~6.0.3 |
 | @supabase/supabase-js | ^2.117.3 |
 | Supabase CLI | ^2.120.0 |
