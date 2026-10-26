@@ -12,6 +12,7 @@ export default defineConfig({
       "@react-native-community/netinfo": fileURLToPath(new URL("./tests/mocks/netinfo.ts", import.meta.url)),
       "expo-linking": fileURLToPath(new URL("./tests/mocks/expo-linking.ts", import.meta.url)),
       "expo-camera": fileURLToPath(new URL("./tests/mocks/expo-camera.ts", import.meta.url)),
+      "expo-constants": fileURLToPath(new URL("./tests/mocks/expo-constants.ts", import.meta.url)),
       "expo-notifications": fileURLToPath(new URL("./tests/mocks/expo-notifications.ts", import.meta.url)),
     },
   },

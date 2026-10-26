@@ -3,18 +3,53 @@ import { act, cleanup, fireEvent, render } from "@testing-library/react-native";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Settings } from "@/view/profile/settings";
 import { ThemeProvider } from "@/view/theme/ThemeProvider";
+import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
+import { useSettingsViewModel } from "@/viewmodel/useSettingsViewModel";
+
+vi.mock("@/viewmodel/useSettingsViewModel", () => ({ useSettingsViewModel: vi.fn() }));
+vi.mock("@/viewmodel/useAuthViewModel", () => ({ useAuthViewModel: vi.fn() }));
+
+const mockedUseSettingsViewModel = vi.mocked(useSettingsViewModel);
+const mockedUseAuthViewModel = vi.mocked(useAuthViewModel);
+
+function mockSettings(clearBooksCache = vi.fn().mockResolvedValue(undefined)) {
+  mockedUseSettingsViewModel.mockReturnValue([
+    { clearingCache: false, cacheCleared: false, cacheError: null },
+    { clearBooksCache },
+  ]);
+  return { clearBooksCache };
+}
+
+/** Configurações mostra gestão de conta apenas com sessão (ADR 0060). */
+function mockSession(signedIn: boolean) {
+  mockedUseAuthViewModel.mockReturnValue([
+    {
+      user: signedIn ? { id: "ana", email: "ana@exemplo.com" } : null,
+      loading: false,
+      error: null,
+    },
+    {
+      signUp: vi.fn(),
+      signIn: vi.fn(),
+      signOut: vi.fn(),
+      requestPasswordReset: vi.fn(),
+    },
+  ]);
+}
 
 describe("Configurações — tela dedicada (Spec 073, ADR 0036)", () => {
   afterEach(() => {
     cleanup();
+    vi.clearAllMocks();
   });
 
-  async function renderSettings(onBack = vi.fn()) {
+  async function renderSettings(props: Partial<React.ComponentProps<typeof Settings>> = {}) {
+    const onBack = vi.fn();
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
       screen = await render(
         <ThemeProvider>
-          <Settings onBack={onBack} />
+          <Settings onBack={onBack} {...props} />
         </ThemeProvider>,
       );
     });
@@ -22,6 +57,8 @@ describe("Configurações — tela dedicada (Spec 073, ADR 0036)", () => {
   }
 
   it("renderiza o título 'Configurações' na TopAppBar e aciona onBack ao tocar no botão voltar", async () => {
+    mockSession(true);
+    mockSettings();
     const { screen, onBack } = await renderSettings();
 
     // Título na barra superior
@@ -41,6 +78,8 @@ describe("Configurações — tela dedicada (Spec 073, ADR 0036)", () => {
   });
 
   it("renderiza a seção 'Aparência' com as opções de tema em radiogroup acessível", async () => {
+    mockSession(true);
+    mockSettings();
     const { screen } = await renderSettings();
 
     // Cabeçalho e descrição da seção
@@ -74,6 +113,8 @@ describe("Configurações — tela dedicada (Spec 073, ADR 0036)", () => {
   });
 
   it("alterna a opção de tema ao selecionar Claro ou Escuro", async () => {
+    mockSession(true);
+    mockSettings();
     const { screen } = await renderSettings();
 
     const escuroOption = screen.getByLabelText("Tema Escuro");
@@ -83,5 +124,87 @@ describe("Configurações — tela dedicada (Spec 073, ADR 0036)", () => {
 
     expect(escuroOption.props.accessibilityState.checked).toBe(true);
     expect(screen.getByLabelText("Tema Sistema").props.accessibilityState.checked).toBe(false);
+  });
+
+  it("oferece a limpeza dos dados salvos no dispositivo e aciona o use case", async () => {
+    mockSession(true);
+    const { clearBooksCache } = mockSettings();
+    const { screen } = await renderSettings();
+
+    expect(screen.getAllByRole("header").map((h) => h.props.children)).toContain("Dados neste dispositivo");
+
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Limpar dados salvos no dispositivo"));
+    });
+
+    expect(clearBooksCache).toHaveBeenCalledTimes(1);
+  });
+
+  it("confirma em texto a limpeza concluída para quem usa leitor de tela", async () => {
+    mockSession(true);
+    mockedUseSettingsViewModel.mockReturnValue([
+      { clearingCache: false, cacheCleared: true, cacheError: null },
+      { clearBooksCache: vi.fn() },
+    ]);
+    const { screen } = await renderSettings();
+
+    expect(screen.getByText("Dados salvos limpos deste dispositivo.")).toBeDefined();
+  });
+
+  it("exibe erro amigável sem detalhes técnicos quando a limpeza falha", async () => {
+    mockSession(true);
+    mockedUseSettingsViewModel.mockReturnValue([
+      {
+        clearingCache: false,
+        cacheCleared: false,
+        cacheError: "Não foi possível limpar os dados salvos. Tente novamente.",
+      },
+      { clearBooksCache: vi.fn() },
+    ]);
+    const { screen } = await renderSettings();
+
+    expect(screen.getByText("Não foi possível limpar os dados salvos. Tente novamente.")).toBeDefined();
+    expect(screen.queryByText("Dados salvos limpos deste dispositivo.")).toBeNull();
+  });
+
+  it("mostra a versão do aplicativo e só exibe atalhos com navegação", async () => {
+    mockSession(false);
+    mockSettings();
+    const onNavigateToHelp = vi.fn();
+    const { screen } = await renderSettings({ onNavigateToHelp });
+
+    expect(screen.getAllByRole("header").map((h) => h.props.children)).toContain("Sobre o IpêBook");
+    expect(screen.getByText("Versão")).toBeDefined();
+
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Ajuda e suporte"));
+    });
+    expect(onNavigateToHelp).toHaveBeenCalledTimes(1);
+
+    // Sem onNavigateToTerms, o atalho não é renderizado; sem sessão, a gestão de conta também não
+    expect(screen.queryByLabelText("Termos e privacidade")).toBeNull();
+    expect(screen.queryByLabelText("Privacidade e dados")).toBeNull();
+    expect(screen.queryByLabelText("Pessoas bloqueadas")).toBeNull();
+  });
+
+  it("recebe Privacidade e dados e Pessoas bloqueadas quando há conta (ADR 0060)", async () => {
+    mockSession(true);
+    mockSettings();
+    const onNavigateToPrivacy = vi.fn();
+    const onNavigateToBlockedUsers = vi.fn();
+    const { screen } = await renderSettings({ onNavigateToPrivacy, onNavigateToBlockedUsers });
+
+    expect(screen.getAllByRole("header").map((h) => h.props.children)).toContain("Conta e dados");
+    expect(screen.getByText("Baixe seus dados ou exclua sua conta")).toBeDefined();
+
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Privacidade e dados"));
+    });
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Pessoas bloqueadas"));
+    });
+
+    expect(onNavigateToPrivacy).toHaveBeenCalledTimes(1);
+    expect(onNavigateToBlockedUsers).toHaveBeenCalledTimes(1);
   });
 });

@@ -47,3 +47,31 @@ update.
 
 - [ ] RN-01 a RN-04 implementados e testados (usecase, datasources, ViewModel, View).
 - [ ] `npm run validate` passando.
+
+## Continuação (26/10/2026) — editar perfil sem dados inventados
+
+Entrega registrada no ADR 0061. Objetivo: a tela de edição e o hub de perfil deixam de afirmar
+coisas que não são verdade sobre a pessoa e param de descartar trabalho em silêncio.
+
+- **RN-05** Nenhum valor de bairro é exibido ou salvo como se fosse escolha da pessoa: sem
+  preferência gravada, o campo mostra "Selecionar bairro" e o hub mostra "Piripiri, PI".
+- **RN-06** Os atalhos de bairro são rotulados pelo que são ("Bairros de Piripiri"), sem alegar
+  frequência que o aplicativo não mede, e apontam o seletor completo.
+- **RN-07** Carregando a sessão, a tela mostra estado de carregamento; sem sessão, mostra um cartão
+  com o caminho "Entrar ou criar conta". Nenhum desses casos deixa a tela em branco.
+- **RN-08** Sair da tela com alteração não salva (barra superior ou botão físico de voltar do
+  Android) pergunta antes de descartar; sem alteração, sai direto. Depois de salvar, a guarda se
+  desliga porque a linha de base passa a ser o valor gravado.
+- **RN-09** Haver foto no perfil permite removê-la em um toque. Bloqueio de salvamento por erros em
+  linha é anunciado em região viva, e o campo de nome mostra o contador de caracteres.
+
+### Como será testado
+
+`tests/components-mocked/profileView.test.tsx` (RN-05 a RN-09) e
+`tests/components/profileHubView.test.tsx` (bairro real no cartão de identidade).
+
+### Critérios de aceite da continuação
+
+- [ ] RN-05 a RN-09 implementados e cobertos por testes.
+- [ ] `npm run check:architecture` e `npm run validate` passando.
+

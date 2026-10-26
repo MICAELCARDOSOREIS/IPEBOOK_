@@ -18,6 +18,8 @@ export type NeighborhoodSelectorModalProps = {
   currentNeighborhood?: string;
   onSelect: (neighborhood: string) => void;
   onClose: () => void;
+  /** `false` em escolhas que exigem um bairro único (ex.: retirada do anúncio, `04.05`). */
+  allowAllNeighborhoods?: boolean;
 };
 
 const ALL_NEIGHBORHOODS_LABEL = "Todos os bairros (Piripiri)";
@@ -27,6 +29,7 @@ export function NeighborhoodSelectorModal({
   currentNeighborhood = "Centro",
   onSelect,
   onClose,
+  allowAllNeighborhoods = true,
 }: NeighborhoodSelectorModalProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -34,10 +37,12 @@ export function NeighborhoodSelectorModal({
 
   const filteredItems = useMemo(() => {
     const term = filterText.trim().toLowerCase();
-    const allList = [ALL_NEIGHBORHOODS_LABEL, ...PIRIPIRI_NEIGHBORHOODS];
+    const allList = allowAllNeighborhoods
+      ? [ALL_NEIGHBORHOODS_LABEL, ...PIRIPIRI_NEIGHBORHOODS]
+      : [...PIRIPIRI_NEIGHBORHOODS];
     if (!term) return allList;
     return allList.filter((name) => name.toLowerCase().includes(term));
-  }, [filterText]);
+  }, [allowAllNeighborhoods, filterText]);
 
   if (!visible) return null;
 

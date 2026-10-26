@@ -39,7 +39,6 @@ export type CreateListingStep1Props = {
   onSetPrice: (price: string) => void;
   onSetPhotoUrl: (url: string) => void;
   onGoToPhotos: () => void;
-  onContinue: () => void;
 };
 
 export function CreateListingStep1({
@@ -63,7 +62,6 @@ export function CreateListingStep1({
   onSetPrice,
   onSetPhotoUrl,
   onGoToPhotos,
-  onContinue,
 }: CreateListingStep1Props) {
   const { colors } = useTheme();
   const [scannerVisible, setScannerVisible] = useState(false);
@@ -211,8 +209,6 @@ export function CreateListingStep1({
           {error}
         </Text>
       ) : null}
-
-      <FilledButton label="Continuar" onPress={onContinue} />
     </>
   );
 }

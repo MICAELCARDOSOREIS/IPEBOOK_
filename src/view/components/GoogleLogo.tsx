@@ -1,0 +1,26 @@
+import { Image } from "react-native";
+
+export type GoogleLogoProps = {
+  size?: number;
+};
+
+/**
+ * Logotipo oficial multicolorido do Google (G), conforme diretrizes de marca e Figma `01.02`/`01.03`.
+ * Utiliza asset rasterizado em alta definição (base64) compatível com Android, iOS e Web.
+ */
+const GOOGLE_G_BASE64 =
+  "data:image/png;base64,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";
+
+export function GoogleLogo({ size = 20 }: GoogleLogoProps) {
+  return (
+    <Image
+      source={{ uri: GOOGLE_G_BASE64 }}
+      style={{ width: size, height: size }}
+      resizeMode="contain"
+      accessible={false}
+      importantForAccessibility="no"
+    />
+  );
+}
+
+export default GoogleLogo;

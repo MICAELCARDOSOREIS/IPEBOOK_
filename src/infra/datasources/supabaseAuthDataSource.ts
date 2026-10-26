@@ -1,3 +1,4 @@
+import { Platform } from "react-native";
 import type { IAuthDataSource } from "@/model/datasources/iAuthDataSource";
 import type { User } from "@/model/entities/user";
 import { AuthError, EmailAlreadyRegisteredError, ExpiredLinkError } from "@/model/errors";
@@ -7,6 +8,69 @@ import type { SupabaseAppClient } from "@/infra/supabaseClient";
 function readFullName(user: { user_metadata?: Record<string, unknown> | null }): string | undefined {
   const value = user.user_metadata?.full_name;
   return typeof value === "string" && value.trim().length > 0 ? value.trim() : undefined;
+}
+
+function translateSupabaseAuthError(error: { message?: string; status?: number; code?: string }): {
+  isEmailRegistered: boolean;
+  message: string;
+} {
+  const code = (error.code ?? "").toLowerCase();
+  const msg = (error.message ?? "").toLowerCase();
+  const status = error.status;
+
+  if (
+    code === "user_already_exists" ||
+    msg.includes("already registered") ||
+    msg.includes("already exists") ||
+    msg.includes("user already registered")
+  ) {
+    return {
+      isEmailRegistered: true,
+      message: "Este e-mail já está cadastrado. Entre com sua senha.",
+    };
+  }
+
+  if (
+    status === 429 ||
+    code === "over_email_send_rate_limit" ||
+    code === "over_request_rate_limit" ||
+    msg.includes("security purposes") ||
+    msg.includes("rate limit")
+  ) {
+    return {
+      isEmailRegistered: false,
+      message: "Muitas tentativas em pouco tempo. Aguarde alguns instantes antes de tentar novamente.",
+    };
+  }
+
+  if (code === "weak_password" || msg.includes("password should be at least")) {
+    return {
+      isEmailRegistered: false,
+      message: "A senha deve conter no mínimo 6 caracteres.",
+    };
+  }
+
+  if (code === "signup_disabled" || msg.includes("signups not allowed")) {
+    return {
+      isEmailRegistered: false,
+      message: "Novos cadastros estão temporariamente indisponíveis.",
+    };
+  }
+
+  if (msg.includes("invalid format") || msg.includes("valid email") || msg.includes("unable to validate email")) {
+    return {
+      isEmailRegistered: false,
+      message: "Informe um endereço de e-mail válido.",
+    };
+  }
+
+  return {
+    isEmailRegistered: false,
+    message:
+      error.message && error.message !== "interno"
+        ? error.message
+        : "Não foi possível criar a conta. Tente novamente.",
+  };
 }
 
 export class SupabaseAuthDataSource implements IAuthDataSource {
@@ -21,7 +85,21 @@ export class SupabaseAuthDataSource implements IAuthDataSource {
       password,
       options: { data: { full_name: name } },
     });
-    if (error || !data.user?.email) {
+    if (error) {
+      if (typeof __DEV__ !== "undefined" && __DEV__) {
+        console.warn("[SupabaseAuthDataSource.signUp] Erro retornado pelo Supabase:", {
+          message: error.message,
+          status: error.status,
+          code: error.code,
+        });
+      }
+      const translated = translateSupabaseAuthError(error);
+      if (translated.isEmailRegistered) {
+        throw new EmailAlreadyRegisteredError(translated.message);
+      }
+      throw new AuthError(translated.message);
+    }
+    if (!data.user?.email) {
       throw new AuthError("Não foi possível criar a conta. Tente novamente.");
     }
     /**
@@ -38,9 +116,61 @@ export class SupabaseAuthDataSource implements IAuthDataSource {
   async signIn(email: string, password: string): Promise<User> {
     const { data, error } = await this.client.auth.signInWithPassword({ email, password });
     if (error || !data.user?.email) {
+      if (error) {
+        if (typeof __DEV__ !== "undefined" && __DEV__) {
+          console.warn("[SupabaseAuthDataSource.signIn] Erro retornado pelo Supabase:", {
+            message: error.message,
+            status: error.status,
+            code: error.code,
+          });
+        }
+        const msg = (error.message ?? "").toLowerCase();
+        if (msg.includes("email not confirmed")) {
+          throw new AuthError("Confirme seu e-mail antes de entrar. Verifique sua caixa de entrada.");
+        }
+        if (error.status === 429 || msg.includes("security purposes") || msg.includes("rate limit")) {
+          throw new AuthError("Muitas tentativas em pouco tempo. Aguarde alguns instantes antes de tentar novamente.");
+        }
+      }
       throw new AuthError("Credenciais inválidas ou conta ainda não confirmada.");
     }
     return { id: data.user.id, email: data.user.email, name: readFullName(data.user) };
+  }
+
+  async signInWithGoogle(): Promise<User> {
+    const authClient = this.client.auth as unknown as {
+      signInWithOAuth?: (params: {
+        provider: "google";
+        options?: { redirectTo?: string };
+      }) => Promise<{ data: { url: string | null } | null; error: Error | null }>;
+    };
+
+    if (typeof authClient.signInWithOAuth !== "function") {
+      throw new AuthError("Login com Google indisponível no cliente atual.");
+    }
+
+    const { data, error } = await authClient.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: this.recoveryRedirectUrl,
+      },
+    });
+
+    if (error) {
+      throw new AuthError("Não foi possível autenticar com o Google. Tente novamente.");
+    }
+
+    if (data?.url) {
+      if (Platform.OS === "web" && typeof window !== "undefined") {
+        window.location.href = data.url;
+      } else {
+        const Linking = await import("expo-linking");
+        await Linking.openURL(data.url);
+      }
+    }
+
+    const current = await this.currentUser();
+    return current ?? { id: "pending", email: "", name: "Usuário Google" };
   }
 
   async signOut(): Promise<void> {
