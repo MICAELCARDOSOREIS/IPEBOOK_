@@ -53,4 +53,38 @@ describe("UserPreferencesUseCases (Spec 034 / Issue #141)", () => {
     const reloaded = await useCases.getPreferences("ana");
     expect(reloaded).toEqual({ userId: "ana", phone: "86999998888", neighborhood: "Centro" });
   });
+
+  it("salva pushToken e preserva telefone e bairro existentes", async () => {
+    const useCases = setup();
+    await useCases.updatePreferences("ana", { phone: "86999998888", neighborhood: "Centro" });
+    const withToken = await useCases.updatePreferences("ana", { pushToken: "ExponentPushToken[123]" });
+    expect(withToken).toEqual({
+      userId: "ana",
+      phone: "86999998888",
+      neighborhood: "Centro",
+      pushToken: "ExponentPushToken[123]",
+    });
+
+    const reloaded = await useCases.getPreferences("ana");
+    expect(reloaded.pushToken).toBe("ExponentPushToken[123]");
+  });
+
+  it("preserva pushToken existente ao atualizar apenas telefone ou bairro", async () => {
+    const useCases = setup();
+    await useCases.updatePreferences("ana", { pushToken: "ExponentPushToken[123]" });
+    const updated = await useCases.updatePreferences("ana", { phone: "86999998888", neighborhood: "Centro" });
+    expect(updated).toEqual({
+      userId: "ana",
+      phone: "86999998888",
+      neighborhood: "Centro",
+      pushToken: "ExponentPushToken[123]",
+    });
+  });
+
+  it("permite limpar pushToken passando null", async () => {
+    const useCases = setup();
+    await useCases.updatePreferences("ana", { pushToken: "ExponentPushToken[123]" });
+    const cleared = await useCases.updatePreferences("ana", { pushToken: null });
+    expect(cleared.pushToken).toBeNull();
+  });
 });

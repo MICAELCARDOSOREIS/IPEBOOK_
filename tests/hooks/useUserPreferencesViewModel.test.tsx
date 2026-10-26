@@ -35,12 +35,12 @@ const preferences = { userId: "ana", phone: "86999998888", neighborhood: "Centro
 describe("testes de hook: useUserPreferencesViewModel (Spec 034 / Issue #141)", () => {
   it("não carrega nada sem sessão", async () => {
     const hook = await renderHook(null, { getPreferences: vi.fn(), updatePreferences: vi.fn() });
-    expect(hook.current[0]).toEqual({ preferences: null, loading: false, saving: false, error: null });
+    expect(hook.current[0]).toEqual({ preferences: null, pushToken: null, loading: false, saving: false, error: null });
   });
 
   it("carrega as preferências da pessoa autenticada", async () => {
     const hook = await renderHook("ana", { getPreferences: async () => preferences, updatePreferences: vi.fn() });
-    expect(hook.current[0]).toEqual({ preferences, loading: false, saving: false, error: null });
+    expect(hook.current[0]).toEqual({ preferences, pushToken: null, loading: false, saving: false, error: null });
   });
 
   it("reporta erro de domínio ao carregar", async () => {
@@ -50,7 +50,13 @@ describe("testes de hook: useUserPreferencesViewModel (Spec 034 / Issue #141)", 
       },
       updatePreferences: vi.fn(),
     });
-    expect(hook.current[0]).toEqual({ preferences: null, loading: false, saving: false, error: "Usuário não encontrado." });
+    expect(hook.current[0]).toEqual({
+      preferences: null,
+      pushToken: null,
+      loading: false,
+      saving: false,
+      error: "Usuário não encontrado.",
+    });
   });
 
   it("atualiza as preferências com sucesso", async () => {
@@ -104,6 +110,74 @@ describe("testes de hook: useUserPreferencesViewModel (Spec 034 / Issue #141)", 
     await act(async () => {
       hook.current[1].reload();
     });
-    expect(hook.current[0]).toEqual({ preferences, loading: false, saving: false, error: null });
+    expect(hook.current[0]).toEqual({ preferences, pushToken: null, loading: false, saving: false, error: null });
+  });
+
+  it("carrega o pushToken salvo nas preferências no estado do ViewModel", async () => {
+    const preferencesWithToken = {
+      ...preferences,
+      pushToken: "ExponentPushToken[sample-token-123]",
+    };
+    const hook = await renderHook("ana", {
+      getPreferences: async () => preferencesWithToken,
+      updatePreferences: vi.fn(),
+    });
+    expect(hook.current[0].pushToken).toBe("ExponentPushToken[sample-token-123]");
+    expect(hook.current[0].preferences?.pushToken).toBe("ExponentPushToken[sample-token-123]");
+  });
+
+  it("setPushToken atualiza o token remoto com sucesso", async () => {
+    const updated = {
+      ...preferences,
+      pushToken: "ExponentPushToken[sample-token-456]",
+    };
+    const updatePreferences = vi.fn().mockResolvedValue(updated);
+    const hook = await renderHook("ana", {
+      getPreferences: async () => preferences,
+      updatePreferences,
+    });
+
+    let ok = false;
+    await act(async () => {
+      ok = await hook.current[1].setPushToken!("ExponentPushToken[sample-token-456]");
+    });
+
+    expect(ok).toBe(true);
+    expect(updatePreferences).toHaveBeenCalledWith("ana", {
+      pushToken: "ExponentPushToken[sample-token-456]",
+    });
+    expect(hook.current[0].pushToken).toBe("ExponentPushToken[sample-token-456]");
+  });
+
+  it("setPushToken permite desregistrar token remoto passando null", async () => {
+    const updated = {
+      ...preferences,
+      pushToken: null,
+    };
+    const updatePreferences = vi.fn().mockResolvedValue(updated);
+    const hook = await renderHook("ana", {
+      getPreferences: async () => ({ ...preferences, pushToken: "ExponentPushToken[antigo]" }),
+      updatePreferences,
+    });
+
+    let ok = false;
+    await act(async () => {
+      ok = await hook.current[1].setPushToken!(null);
+    });
+
+    expect(ok).toBe(true);
+    expect(updatePreferences).toHaveBeenCalledWith("ana", { pushToken: null });
+    expect(hook.current[0].pushToken).toBeNull();
+  });
+
+  it("setPushToken retorna false quando não autenticado", async () => {
+    const updatePreferences = vi.fn();
+    const hook = await renderHook(null, { getPreferences: vi.fn(), updatePreferences });
+    let ok = true;
+    await act(async () => {
+      ok = await hook.current[1].setPushToken!("ExponentPushToken[xyz]");
+    });
+    expect(ok).toBe(false);
+    expect(updatePreferences).not.toHaveBeenCalled();
   });
 });
