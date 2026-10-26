@@ -2,7 +2,7 @@
 
 Documento consolidado de continuidade técnica e produto do Ipebook (Piripiri, PI).
 
-Conferência atual: **2026-10-25** (branch `develop` consolidada com 71 specs e 54 ADRs, testes automatizados 100% passando).
+Conferência atual: **2026-10-25** (72 specs e 55 ADRs numerados, testes automatizados 100% passando).
 
 **Entregas consolidadas (2026-10-23):**
 - **Spec 060 (Notificações push locais e lembretes de encontros, ADR 0043):** Infraestrutura desacoplada com `expo-notifications` (~57.0.24) para agendamento local de lembretes de encontros com cálculo de antecedência (60 min antes do horário no ponto seguro de Piripiri), canal de notificações no Android com alta prioridade e implementações real (`ExpoPushNotificationService`) e em memória (`MemoryPushNotificationService`) no container de DI.
@@ -12,10 +12,10 @@ Conferência atual: **2026-10-25** (branch `develop` consolidada com 71 specs e 
 - **Spec 056 (Bloqueio e Desbloqueio de Usuários, ADR 0039):** Gestão de pessoas bloqueadas no hub de perfil (`/perfil/bloqueados`, Figma `07.10`–`07.12`), com diálogo acessível de confirmação, tabela `v2_blocked_users` com RLS rígida e migração `202610230002_bloqueio_usuarios.sql`. Integrado via PR #197.
 - **Leitura anônima de perfis públicos (ADR 0038 / Spec 053):** Política RLS em `v2_profiles` e `v2_ratings` para visitantes (`anon`) verem o nome de quem anuncia e avaliações comunitárias sem expor dados privados.
 - **Modularização arquitetural de telas:** `createListing.tsx` (565 linhas) e `myListings.tsx` (457 linhas) decompostos em submódulos coesos em `src/view/listings/`.
-- **Prevenção automatizada de colisões:** Script `scripts/verificar-numeracao.mjs` (`npm run check:numbering`) integrado aos testes e ao pipeline de validação (60 specs e 44 ADRs sem colisões).
-- **Supabase remoto 100% sincronizado:** Todas as 20 migrações locais (`supabase/migrations/`) foram aplicadas e verificadas no banco remoto via `scripts/verificar-migracoes-remotas.mjs` (incluindo `202610220001_encontros.sql`, `202610230001_leitura_anonima_perfis_e_avaliacoes.sql` e `202610230002_bloqueio_usuarios.sql`). As 11 tabelas, o bucket de Storage e as funções RPC de LGPD e aceite atômico encontram-se 100% íntegros e operacionais.
+- **Prevenção automatizada de colisões:** Script `scripts/verificar-numeracao.mjs` (`npm run check:numbering`) integrado aos testes e ao pipeline de validação (72 specs e 55 ADRs numerados, sem colisões).
+- **Supabase remoto parcialmente sincronizado:** 20 das 21 migrações locais (`supabase/migrations/`) foram aplicadas e verificadas no banco remoto via `scripts/verificar-migracoes-remotas.mjs` (incluindo `202610220001_encontros.sql`, `202610230001_leitura_anonima_perfis_e_avaliacoes.sql` e `202610230002_bloqueio_usuarios.sql`). A migração `202610240001_mensagens_negociacao.sql` permanece pendente; as 12 tabelas já aplicadas, o bucket de Storage e as funções RPC de LGPD e aceite atômico estão operacionais.
 
-**Pendências abertas (2026-10-23):** confirmar a revogação do token de acesso temporário do Supabase; conferências em dispositivo físico Android das Specs 037, 038, 052, 056, 057, 058, 059 e 060.
+**Pendências abertas (2026-10-25):** confirmar a revogação do token de acesso temporário do Supabase; aplicar no Supabase remoto a migração `202610240001_mensagens_negociacao.sql` da Spec 061; conferências em dispositivo físico Android das Specs 037, 038, 052, 056, 057, 058, 059 e 060.
 
 **Spec 052 validada localmente (Issue #188; criada como 044 e renumerada porque o número passou a ser da spec de alinhamento complementar):** a negociação aceita ganhou o encontro combinado
 (Figma `06.04`, `06.05`, `06.11`–`06.14`): convite com local entre os pontos seguros, dia nos próximos
@@ -294,7 +294,7 @@ No app ativo em desenvolvimento, 31 rotas cobrem as jornadas essenciais da beta.
 - `specs/051-home-secoes-destacadas/` (antes 041): Seções de recém-adicionados e doações (Issue #146).
 - `specs/039-alinhamento-fino-telas-micael/`: Alinhamento fino de oito telas do Micael ao canvas Android do Figma, lido nó a nó pelo MCP, com a lista das diferenças que dependem de recursos ainda inexistentes.
 - `specs/043-telas-micael-figma-ao-vivo/`: Telas do Micael conferidas no app compilado contra o Figma: defeitos de preço, nome do interessado e aba Propostas, e alinhamento de Estante, Anunciar, estados vazios, notificações e Ajuda.
-- `specs/052-combinar-encontro/`: Combinar encontro com local, dia e horário, confirmação, reagendamento e cancelamento (Issue #188, implementada e validada localmente; migração remota pendente).
+- `specs/052-combinar-encontro/`: Combinar encontro com local, dia e horário, confirmação, reagendamento e cancelamento (Issue #188, implementada, validada localmente e com a migração remota aplicada).
 - `specs/053-correcoes-home-pesquisa-detalhe/`: Seis defeitos encontrados em aparelho real via `adb` — Home e Pesquisa não rolavam (lista de livros colapsava para altura 0; resultados ficavam com 146px), UUID de quem anunciou exposto no detalhe, carrossel desalinhando 12dp por clique, título de seção sobrepondo o "Ver mais" e capa de 44dp num card de 152dp. Corrigidos e verificados no aparelho. **Atravessa deliberadamente a fronteira de escopo das Specs 044/045** (os três arquivos são da Maria Clara), com autorização expressa do Micael em 22/10/2026 — ver a seção "Exceção de escopo" da spec. Pendência de leitura anônima de `v2_profiles` resolvida pelo ADR 0038 / migração 202610230001.
 - `specs/054-tema-escuro-tokens/`: Tema escuro — infraestrutura (tokens, `ThemeProvider`, preferência no dispositivo) e primeira fatia vertical (Issue #144, ADR 0036; era 044).
 - `specs/055-tema-escuro-telas-restantes/`: Tema escuro aplicado às telas e componentes restantes (Issue #189; era 045).
