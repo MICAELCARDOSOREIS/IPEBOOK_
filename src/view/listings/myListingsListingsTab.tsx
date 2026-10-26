@@ -18,6 +18,7 @@ const STATUS_LABELS: Readonly<Record<BookStatus, string>> = {
   available: "Disponível",
   paused: "Pausado",
   reserved: "Reservado",
+  draft: "Rascunho",
 };
 
 export function listingSummary(book: Book): string {

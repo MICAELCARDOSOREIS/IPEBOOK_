@@ -50,6 +50,14 @@ function stubUseCases(overrides: Partial<IBookUseCases> = {}): IBookUseCases {
     togglePauseListing: vi.fn(async () => {
       throw new Error("not implemented");
     }),
+    listDrafts: vi.fn(async () => []),
+    saveDraft: vi.fn(async () => {
+      throw new Error("not implemented");
+    }),
+    discardDraft: vi.fn(async () => {}),
+    publishDraft: vi.fn(async () => {
+      throw new Error("not implemented");
+    }),
     ...overrides,
   };
 }

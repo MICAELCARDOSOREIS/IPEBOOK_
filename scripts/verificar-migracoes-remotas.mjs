@@ -593,6 +593,11 @@ export const MAPEAMENTO_MIGRACOES = {
     validar: (ctx) => ctx.tabelas.v2_negotiation_messages?.existe,
     detalhe: 'Tabela public.v2_negotiation_messages (Spec 061 / ADR 0044)',
   },
+  '202610260001_rascunhos_anuncio.sql': {
+    titulo: 'Rascunhos de anúncio (status draft)',
+    validar: (ctx) => ctx.tabelas.v2_books?.existe,
+    detalhe: 'Coluna draft_step, CHECKs flexibilizados e políticas RLS de rascunho em v2_books (Spec 017)',
+  },
 };
 
 /**
