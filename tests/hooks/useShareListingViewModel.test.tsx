@@ -53,7 +53,7 @@ describe("testes de hook: useShareListingViewModel (Spec 019)", () => {
   it("compartilha via menu nativo no Android", async () => {
     const originalOS = Platform.OS;
     Platform.OS = "android";
-    const shareSpy = vi.spyOn(Share, "share").mockResolvedValue({ action: "sharedAction" });
+    const shareSpy = vi.spyOn(Share, "share").mockResolvedValue({ action: "sharedAction", activityType: undefined });
     const hook = await renderHook(fakeUseCases);
     await act(async () => {
       await hook.current[1].share("b1");
@@ -137,7 +137,7 @@ describe("testes de hook: useShareListingViewModel (Spec 019)", () => {
       Platform.OS = "android";
       const linking = await import("expo-linking");
       vi.mocked(linking.canOpenURL).mockResolvedValue(false);
-      const shareSpy = vi.spyOn(Share, "share").mockResolvedValue({ action: "sharedAction" });
+      const shareSpy = vi.spyOn(Share, "share").mockResolvedValue({ action: "sharedAction", activityType: undefined });
 
       const hook = await renderHook(fakeUseCases);
       await act(async () => {

@@ -80,7 +80,7 @@ describe("useInviteFriendsViewModel (Spec 057, Figma 08.02)", () => {
     const originalOS = Platform.OS;
     Platform.OS = "android";
     vi.mocked(Linking.canOpenURL).mockResolvedValue(false);
-    const shareSpy = vi.spyOn(Share, "share").mockResolvedValue({ action: "sharedAction" });
+    const shareSpy = vi.spyOn(Share, "share").mockResolvedValue({ action: "sharedAction", activityType: undefined });
 
     const hook = await renderHook(fakeUseCases);
     await act(async () => {
@@ -96,7 +96,7 @@ describe("useInviteFriendsViewModel (Spec 057, Figma 08.02)", () => {
   it("compartilha via menu nativo em shareNative no mobile", async () => {
     const originalOS = Platform.OS;
     Platform.OS = "android";
-    const shareSpy = vi.spyOn(Share, "share").mockResolvedValue({ action: "sharedAction" });
+    const shareSpy = vi.spyOn(Share, "share").mockResolvedValue({ action: "sharedAction", activityType: undefined });
 
     const hook = await renderHook(fakeUseCases);
     await act(async () => {
