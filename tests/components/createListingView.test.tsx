@@ -30,6 +30,9 @@ function mockViewModel(state: CreateListingState, actions: Partial<CreateListing
     setPhotoUrl: vi.fn(),
     addPhoto: vi.fn(),
     removePhoto: vi.fn(),
+    saveDraft: vi.fn().mockResolvedValue(undefined),
+    loadDraft: vi.fn().mockResolvedValue(false),
+    clearDraft: vi.fn().mockResolvedValue(undefined),
     submit: vi.fn().mockResolvedValue(null),
     reset: vi.fn(),
     ...actions,
@@ -369,5 +372,54 @@ describe("anúncio publicado (Figma 04.07)", () => {
     });
 
     expect(screen.queryByRole("header", { name: "Seu livro ganhou um novo começo." })).toBeNull();
+  });
+});
+
+describe("persistência e recuperação de rascunhos na UI (Spec 017 / Spec 072)", () => {
+  it("dispara actions.loadDraft na montagem se o formulário estiver limpo", async () => {
+    const actions = mockViewModel(defaultState);
+    await renderScreen();
+
+    expect(actions.loadDraft).toHaveBeenCalledTimes(1);
+  });
+
+  it("salva o rascunho ao avançar da etapa 1 para a etapa 2 via botão Continuar", async () => {
+    const actions = mockViewModel(defaultState);
+    const screen = await renderScreen();
+
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Continuar" }));
+    });
+
+    expect(actions.saveDraft).toHaveBeenCalled();
+    expect(screen.getByText("Etapa 2 de 3")).toBeDefined();
+  });
+
+  it("salva o rascunho ao avançar da etapa 2 para a etapa 3 via botão Usar estas fotos", async () => {
+    const actions = mockViewModel(defaultState);
+    const screen = await renderScreen();
+    await goToStep(screen, 2);
+
+    expect(actions.saveDraft).toHaveBeenCalled();
+
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Usar estas fotos" }));
+    });
+
+    expect(actions.saveDraft).toHaveBeenCalledTimes(2);
+    expect(screen.getByText("Etapa 3 de 3")).toBeDefined();
+  });
+
+  it("permite descartar o rascunho salvo limpando os dados e resetando para a etapa 1", async () => {
+    const actions = mockViewModel({ ...defaultState, title: "O Quinze", author: "Rachel de Queiroz" });
+    const screen = await renderScreen();
+
+    expect(screen.getByText("Rascunho salvo neste aparelho")).toBeDefined();
+
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Limpar rascunho" }));
+    });
+
+    expect(actions.reset).toHaveBeenCalledTimes(1);
   });
 });

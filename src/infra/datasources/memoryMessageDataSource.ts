@@ -2,6 +2,7 @@ import type { NegotiationMessage } from "@/model/entities/negotiationMessage";
 import type {
   IMessageDataSource,
   CreateNegotiationMessageDTO,
+  MessageSubscriptionCallback,
 } from "@/model/datasources/iMessageDataSource";
 
 /**
@@ -9,6 +10,7 @@ import type {
  */
 export class MemoryMessageDataSource implements IMessageDataSource {
   private messages: NegotiationMessage[] = [];
+  private listeners = new Map<string, Set<MessageSubscriptionCallback>>();
 
   constructor(initialMessages: NegotiationMessage[] = []) {
     this.messages = [...initialMessages];
@@ -30,11 +32,46 @@ export class MemoryMessageDataSource implements IMessageDataSource {
     };
 
     this.messages.push(message);
+
+    const set = this.listeners.get(dto.requestId);
+    if (set) {
+      for (const callback of set) {
+        try {
+          callback(message);
+        } catch {
+          // Ignora falhas de execução no listener para isolar o fluxo
+        }
+      }
+    }
+
     return message;
+  }
+
+  subscribeToMessages(
+    requestId: string,
+    onMessage: MessageSubscriptionCallback
+  ): () => void {
+    let set = this.listeners.get(requestId);
+    if (!set) {
+      set = new Set();
+      this.listeners.set(requestId, set);
+    }
+    set.add(onMessage);
+
+    return () => {
+      const current = this.listeners.get(requestId);
+      if (current) {
+        current.delete(onMessage);
+        if (current.size === 0) {
+          this.listeners.delete(requestId);
+        }
+      }
+    };
   }
 
   /** Auxiliar para testes */
   clear(): void {
     this.messages = [];
+    this.listeners.clear();
   }
 }

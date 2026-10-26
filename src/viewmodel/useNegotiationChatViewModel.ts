@@ -18,6 +18,12 @@ export type NegotiationChatActions = {
   reload: () => Promise<void>;
 };
 
+export type NegotiationChatUseCases = {
+  getMessages: (requestId: string, sessionUserId: string) => Promise<NegotiationMessage[]>;
+  sendMessage: (params: { requestId: string; senderId: string; content: string }) => Promise<NegotiationMessage>;
+  subscribeToMessages?: (requestId: string, onMessage: (msg: NegotiationMessage) => void) => () => void;
+};
+
 /**
  * ViewModel para a tela de chat da negociação presencial (Spec 061 / ADR 0044).
  * Figma 06.02, 06.10 (falha de envio) e 06.16 (mensagem enviada).
@@ -25,7 +31,7 @@ export type NegotiationChatActions = {
 export function useNegotiationChatViewModel(
   requestId: string,
   sessionUserId: string,
-  useCases = negotiationMessageUseCases
+  useCases: NegotiationChatUseCases = negotiationMessageUseCases
 ): [NegotiationChatState, NegotiationChatActions] {
   const [messages, setMessages] = useState<NegotiationMessage[]>([]);
   const [inputText, setInputText] = useState("");
@@ -58,6 +64,20 @@ export function useNegotiationChatViewModel(
     loadMessages();
   }, [loadMessages]);
 
+  useEffect(() => {
+    if (!requestId || !useCases.subscribeToMessages) {
+      return;
+    }
+
+    const unsubscribe = useCases.subscribeToMessages(requestId, (newMsg) => {
+      setMessages((prev) => (prev.some((m) => m.id === newMsg.id) ? prev : [...prev, newMsg]));
+    });
+
+    return () => {
+      unsubscribe?.();
+    };
+  }, [requestId, useCases]);
+
   const handleSendText = useCallback(
     async (textToSend: string): Promise<boolean> => {
       const trimmed = textToSend.trim();
@@ -73,7 +93,7 @@ export function useNegotiationChatViewModel(
           content: trimmed,
         });
 
-        setMessages((prev) => [...prev, sent]);
+        setMessages((prev) => (prev.some((m) => m.id === sent.id) ? prev : [...prev, sent]));
         setInputText("");
         setLastFailedText(null);
         return true;

@@ -1,6 +1,7 @@
 import type {
   IMessageDataSource,
   CreateNegotiationMessageDTO,
+  MessageSubscriptionCallback,
 } from "@/model/datasources/iMessageDataSource";
 import type { NegotiationMessage } from "@/model/entities/negotiationMessage";
 import { DataSourceError } from "@/model/errors";
@@ -62,5 +63,32 @@ export class SupabaseMessageDataSource implements IMessageDataSource {
     }
 
     return mapMessage(data as MessageRow);
+  }
+
+  subscribeToMessages(
+    requestId: string,
+    onMessage: MessageSubscriptionCallback
+  ): () => void {
+    const channel = this.client
+      .channel(`negotiation-messages:${requestId}`)
+      .on(
+        "postgres_changes" as any,
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "v2_negotiation_messages",
+          filter: `request_id=eq.${requestId}`,
+        },
+        (payload: { new: MessageRow }) => {
+          if (payload?.new) {
+            onMessage(mapMessage(payload.new));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      this.client.removeChannel(channel);
+    };
   }
 }

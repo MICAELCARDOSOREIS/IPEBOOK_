@@ -1,9 +1,28 @@
 import { createElement } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AuthError, ValidationError } from "@/model/errors";
 import type { IBookUseCases } from "@/usecase/iBookUseCases";
-import { useCreateListingViewModel } from "@/viewmodel/useCreateListingViewModel";
+
+const store = new Map<string, string>();
+
+vi.mock("@react-native-async-storage/async-storage", () => ({
+  default: {
+    getItem: vi.fn(async (key: string) => store.get(key) ?? null),
+    setItem: vi.fn(async (key: string, value: string) => {
+      store.set(key, value);
+    }),
+    removeItem: vi.fn(async (key: string) => {
+      store.delete(key);
+    }),
+  },
+}));
+
+import {
+  CREATE_LISTING_DRAFT_KEY,
+  type CreateListingDraft,
+  useCreateListingViewModel,
+} from "@/viewmodel/useCreateListingViewModel";
 
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
 const mounted: ReactTestRenderer[] = [];
@@ -56,6 +75,9 @@ afterEach(async () => {
 });
 
 describe("useCreateListingViewModel (ISO/IEC 25010 - Adequação Funcional)", () => {
+  beforeEach(() => {
+    store.clear();
+  });
   it("inicia com estado padrão do formulário", async () => {
     const hook = await renderHook(stubUseCases());
     const [state] = hook.current;
@@ -271,5 +293,148 @@ describe("useCreateListingViewModel (ISO/IEC 25010 - Adequação Funcional)", ()
 
     expect(hook.current[0].photos).toHaveLength(5);
     expect(hook.current[0].error).toBe("O anúncio pode conter no máximo 5 fotos.");
+  });
+
+  describe("persistência de rascunho no AsyncStorage (Spec 017 / Spec 072)", () => {
+    it("salva o rascunho preenchido no AsyncStorage", async () => {
+      const hook = await renderHook(stubUseCases());
+
+      await act(async () => {
+        hook.current[1].setIsbn("9788535914849");
+        hook.current[1].setTitle("Dom Casmurro");
+        hook.current[1].setAuthor("Machado de Assis");
+        hook.current[1].setCategory("Literatura");
+        hook.current[1].setModality("sale");
+        hook.current[1].setPrice("25,00");
+        hook.current[1].setNeighborhood("Centro");
+        hook.current[1].setCondition("good");
+        hook.current[1].setDescription("Exemplar em excelente estado.");
+        hook.current[1].setPhotoUrl("https://exemplo.com/capa.jpg");
+        hook.current[1].addPhoto("https://exemplo.com/foto1.jpg");
+      });
+
+      await act(async () => {
+        await hook.current[1].saveDraft();
+      });
+
+      const raw = store.get(CREATE_LISTING_DRAFT_KEY);
+      expect(raw).toBeDefined();
+      const draft = JSON.parse(raw!) as CreateListingDraft;
+      expect(draft.isbn).toBe("9788535914849");
+      expect(draft.title).toBe("Dom Casmurro");
+      expect(draft.author).toBe("Machado de Assis");
+      expect(draft.category).toBe("Literatura");
+      expect(draft.modality).toBe("sale");
+      expect(draft.price).toBe("25,00");
+      expect(draft.neighborhood).toBe("Centro");
+      expect(draft.condition).toBe("good");
+      expect(draft.description).toBe("Exemplar em excelente estado.");
+      expect(draft.photoUrl).toBe("https://exemplo.com/capa.jpg");
+      expect(draft.photos).toEqual(["https://exemplo.com/foto1.jpg"]);
+    });
+
+    it("carrega rascunho existente e preenche o estado", async () => {
+      const savedDraft: CreateListingDraft = {
+        isbn: "9788573261769",
+        title: "Iracema",
+        author: "José de Alencar",
+        category: "Clássicos",
+        modality: "trade",
+        price: "",
+        neighborhood: "Floresta",
+        condition: "marked",
+        description: "Contém anotações a lápis.",
+        photoUrl: "https://exemplo.com/iracema.jpg",
+        photos: ["https://exemplo.com/p1.jpg", "https://exemplo.com/p2.jpg"],
+      };
+      store.set(CREATE_LISTING_DRAFT_KEY, JSON.stringify(savedDraft));
+
+      const hook = await renderHook(stubUseCases());
+      let loaded = false;
+
+      await act(async () => {
+        loaded = await hook.current[1].loadDraft();
+      });
+
+      expect(loaded).toBe(true);
+      const [state] = hook.current;
+      expect(state.isbn).toBe("9788573261769");
+      expect(state.title).toBe("Iracema");
+      expect(state.author).toBe("José de Alencar");
+      expect(state.category).toBe("Clássicos");
+      expect(state.modality).toBe("trade");
+      expect(state.price).toBe("");
+      expect(state.neighborhood).toBe("Floresta");
+      expect(state.condition).toBe("marked");
+      expect(state.description).toBe("Contém anotações a lápis.");
+      expect(state.photoUrl).toBe("https://exemplo.com/iracema.jpg");
+      expect(state.photos).toEqual(["https://exemplo.com/p1.jpg", "https://exemplo.com/p2.jpg"]);
+    });
+
+    it("retorna false ao tentar carregar quando não há rascunho", async () => {
+      const hook = await renderHook(stubUseCases());
+      let loaded = false;
+
+      await act(async () => {
+        loaded = await hook.current[1].loadDraft();
+      });
+
+      expect(loaded).toBe(false);
+      expect(hook.current[0].title).toBe("");
+    });
+
+    it("retorna false e não quebra quando o JSON do rascunho estiver corrompido", async () => {
+      store.set(CREATE_LISTING_DRAFT_KEY, "invalido{json");
+      const hook = await renderHook(stubUseCases());
+      let loaded = false;
+
+      await act(async () => {
+        loaded = await hook.current[1].loadDraft();
+      });
+
+      expect(loaded).toBe(false);
+      expect(hook.current[0].title).toBe("");
+    });
+
+    it("limpa rascunho do AsyncStorage via clearDraft", async () => {
+      store.set(CREATE_LISTING_DRAFT_KEY, JSON.stringify({ title: "Livro Antigo" }));
+      const hook = await renderHook(stubUseCases());
+
+      await act(async () => {
+        await hook.current[1].clearDraft();
+      });
+
+      expect(store.has(CREATE_LISTING_DRAFT_KEY)).toBe(false);
+    });
+
+    it("limpa rascunho do AsyncStorage ao submeter com sucesso", async () => {
+      store.set(CREATE_LISTING_DRAFT_KEY, JSON.stringify({ title: "Livro Publicado" }));
+      const mock = stubUseCases();
+      const hook = await renderHook(mock);
+
+      await act(async () => {
+        hook.current[1].setTitle("Livro Publicado");
+        hook.current[1].setAuthor("Autor");
+      });
+
+      await act(async () => {
+        const res = await hook.current[1].submit("user-draft-1");
+        expect(res).not.toBeNull();
+      });
+
+      expect(store.has(CREATE_LISTING_DRAFT_KEY)).toBe(false);
+    });
+
+    it("limpa rascunho do AsyncStorage ao resetar o formulário", async () => {
+      store.set(CREATE_LISTING_DRAFT_KEY, JSON.stringify({ title: "Rascunho a Descartar" }));
+      const hook = await renderHook(stubUseCases());
+
+      await act(async () => {
+        hook.current[1].reset();
+      });
+
+      expect(store.has(CREATE_LISTING_DRAFT_KEY)).toBe(false);
+      expect(hook.current[0].title).toBe("");
+    });
   });
 });
