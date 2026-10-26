@@ -48,21 +48,20 @@ export function OutlinedButton({
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     button: {
-      minHeight: tokens.accessibility.touchTarget,
+      // Figma `01.03`/`01.04`: mesmo tamanho do preenchido, borda `outline-variant` de 1 dp.
+      minHeight: 52,
       justifyContent: "center",
       alignItems: "center",
       borderRadius: tokens.radius.full,
       borderWidth: 1,
-      borderColor: colors.m3.outline,
+      borderColor: colors.m3.outlineVariant,
       backgroundColor: "transparent",
       paddingHorizontal: tokens.spacing[24],
     },
     disabled: { borderColor: colors.disabledBackground },
     label: {
-      color: colors.action,
-      fontSize: tokens.typography.bodyLarge.fontSize,
-      fontFamily: tokens.typography.bodyLarge.fontFamily,
-      fontWeight: "600",
+      color: colors.m3.onSurface,
+      ...tokens.typography.labelLarge,
     },
     labelDisabled: { color: colors.disabledText },
   });

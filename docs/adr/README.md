@@ -55,5 +55,7 @@
 - [0053 — Selo de bairro nos cards de livro (Home e Busca)](0053-selo-bairro-cards-livro.md)
 - [0054 — Histórico de encontros na negociação e perfil](0054-historico-encontros-negociacao.md)
 - [0055 — Alinhamento global das telas Android ao Figma](0055-alinhamento-global-figma.md)
+- [0056 — Componentes compartilhados alinhados ao Figma Android](0056-componentes-compartilhados-figma.md)
+- [0057 — Experiência de filtro do Explorar (Filtrar livros e filtros aplicados)](0057-filtro-do-explorar.md)
 
 Preservar registros aceitos; mudanças relevantes geram novo ADR com vínculos de substituição.

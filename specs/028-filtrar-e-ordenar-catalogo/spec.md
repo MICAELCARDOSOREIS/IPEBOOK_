@@ -35,3 +35,33 @@ Esta especificação atende ao fluxo **02 · Descoberta** do Figma:
 - **Camada ViewModel (`useSearchViewModel`):** Gerenciamento reativo dos filtros, ordenação e derivação das categorias disponíveis no catálogo.
 - **Camada View (`src/view/search/search.tsx`):** Exibição dos filtros por chips, controle de ordenação e tratamento do estado vazio.
 - **Testes:** Testes automatizados do ViewModel e da View cobrindo combinações de filtros, ordenação e limpeza.
+
+---
+
+## 4. Evolução (2026-10-26 — ADR 0057)
+
+A entrega original resolvia os critérios CA1–CA8 em um painel embutido no Explorar, aberto pelo ícone de
+ajustes. A conferência dos SVG `02.03 · Filtrar livros` e `02.04 · Explorar com filtro` mostrou outra
+estrutura, e a leitura no Galaxy A16 revelou problemas de uso que o painel escondia: categorias fixas que
+não existiam no catálogo, recarga da lista a cada toque sem contagem de resultados, "Limpar filtros"
+apagando o termo digitado e ordenação contada como filtro.
+
+O que mudou, sem alterar os critérios de aceite:
+
+- **CA1/CA2/CA3/CA4** passam a ser escolhidos na tela própria `Filtrar livros` (`FilterSheet`), com
+  rascunho aplicado só ao tocar em **"Mostrar N livros"**. A fileira de categorias do Explorar passa a ser
+  extraída do catálogo carregado, e a ordenação sai da tela de filtros para a folha `SortSheet`.
+- **CA5** permanece: termo, bairro e os quatro filtros continuam cumulativos.
+- **CA6** ganha os **chips removíveis** de `02.04` (modalidade, condição e preço) e um distintivo com a
+  quantidade de filtros ativos no ícone de ajustes. `resetFilters` limpa filtros e ordenação preservando
+  termo e bairro; `clearFilters` continua reiniciando a busca inteira.
+- **CA7** separa três mensagens de estado vazio (filtros, termo e catálogo vazio), com a ação
+  "Limpar filtros e buscar novamente".
+- **Novo — filtro de conservação:** "Somente bom estado" (`condition: "good"`), incluindo anúncios sem
+  conservação gravada, porque o detalhe do anúncio já os apresenta como "Bom estado".
+- **CA8** se mantém, agora também no `radiogroup` de conservação e nas linhas de opção de 48 dp.
+
+Implementação: `src/viewmodel/searchFilters.ts` (lógica pura), `useSearchViewModel` (estado, rascunho e
+ações), `src/view/search/FilterSheet.tsx`, `src/view/search/SortSheet.tsx` e `Chip` com variante de 40 dp.
+Cobertura em `tests/unit/searchFilters.test.ts`, `tests/hooks/useSearchViewModel.test.tsx` e
+`tests/components-mocked/searchView.test.tsx` (suíte completa com 168 arquivos / 1180 testes).

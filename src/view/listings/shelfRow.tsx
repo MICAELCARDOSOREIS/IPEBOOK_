@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { Book } from "@/model/entities/book";
-import { tokens, type ColorPalette } from "@/view/tokens";
+import { tokens, fontFamily, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { AppIcon } from "@/view/components/AppIcon";
 import { BookCover } from "@/view/components/BookCover";
@@ -50,12 +50,15 @@ function createStyles(colors: ColorPalette) {
     },
     rowText: { flex: 1, gap: tokens.spacing[4] },
     rowTitle: {
-      ...tokens.typography.titleMedium,
-      color: colors.text,
+      // Figma `05.01`: título do livro na serifada da marca, 18dp.
+      fontFamily: fontFamily.brand,
+      fontSize: 18,
+      lineHeight: 24,
+      color: colors.m3.onSurface,
     },
     rowSummary: {
       ...tokens.typography.bodyMedium,
-      color: colors.secondaryText,
+      color: colors.m3.onSurfaceVariant,
     },
   });
 }

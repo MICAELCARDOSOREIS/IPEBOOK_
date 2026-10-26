@@ -190,11 +190,11 @@ export default function BookDetail({
                   onPress={() => setGalleryVisible(true)}
                   style={styles.coverTouch}
                 >
-                  <BookCover id={book.id} title={book.title} author={book.author} photoUrl={book.photoUrl} variant="card" />
+                  <BookCover id={book.id} title={book.title} author={book.author} photoUrl={book.photoUrl} variant="detail" />
                 </Pressable>
               ) : (
                 <View style={styles.coverTouch}>
-                  <BookCover id={book.id} title={book.title} author={book.author} photoUrl={book.photoUrl} variant="card" />
+                  <BookCover id={book.id} title={book.title} author={book.author} photoUrl={book.photoUrl} variant="detail" />
                 </View>
               )}
               {photos.length > 1 ? (
@@ -345,8 +345,8 @@ function createStyles(colors: ColorPalette) {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
-      paddingHorizontal: tokens.spacing[16],
-      backgroundColor: colors.background,
+      paddingHorizontal: tokens.spacing[8],
+      backgroundColor: colors.m3.surfaceContainerLow,
     },
     topBarLeading: {
       flexDirection: "row",
@@ -354,9 +354,10 @@ function createStyles(colors: ColorPalette) {
       gap: tokens.spacing[12],
     },
     topBarTitle: {
-      fontSize: 20,
+      fontSize: 22,
+      lineHeight: 28,
       fontWeight: "500",
-      color: colors.text,
+      color: colors.m3.onSurface,
     },
     topBarTrailing: {
       flexDirection: "row",
@@ -364,8 +365,8 @@ function createStyles(colors: ColorPalette) {
       gap: tokens.spacing[8],
     },
     iconButton: {
-      width: 44,
-      height: 44,
+      width: tokens.spacing[40],
+      height: tokens.spacing[40],
       justifyContent: "center",
       alignItems: "center",
       borderRadius: tokens.radius.full,
@@ -389,8 +390,9 @@ function createStyles(colors: ColorPalette) {
     },
     coverContainer: {
       width: "100%",
-      backgroundColor: colors.soft,
-      borderRadius: tokens.radius.medium,
+      // Figma `03.01`: área da capa em `surface-container-low`, canto de 16 dp.
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderRadius: 16,
       paddingVertical: tokens.spacing[24],
       alignItems: "center",
       justifyContent: "center",

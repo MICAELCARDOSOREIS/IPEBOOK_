@@ -48,7 +48,7 @@ function createStyles(colors: ColorPalette) {
       flexDirection: "row",
       alignItems: "center",
       height: 56,
-      backgroundColor: colors.soft,
+      backgroundColor: colors.m3.surfaceContainerHigh,
       borderRadius: tokens.radius.full,
       paddingHorizontal: tokens.spacing[16],
       gap: tokens.spacing[12],

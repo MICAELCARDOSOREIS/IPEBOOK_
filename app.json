@@ -6,17 +6,17 @@
     "scheme": "ipebook",
     "version": "0.1.0",
     "orientation": "portrait",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "icon": "./assets/icon.png",
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#F6F1E8"
+      "backgroundColor": "#FCFAF5"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundColor": "#F6F1E8",
+        "backgroundColor": "#FCFAF5",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       }
     },
@@ -25,7 +25,7 @@
       "output": "static",
       "favicon": "./assets/favicon.png",
       "themeColor": "#0D47A1",
-      "backgroundColor": "#F6F1E8",
+      "backgroundColor": "#FCFAF5",
       "description": "Marketplace comunitário de livros em Piripiri, PI (venda, troca e doação)"
     },
     "plugins": [
