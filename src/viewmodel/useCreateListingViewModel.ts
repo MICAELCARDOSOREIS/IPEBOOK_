@@ -1,4 +1,5 @@
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   bookMetadataService as defaultMetadataService,
   bookUseCases,
@@ -13,6 +14,22 @@ import type { IRateLimiter } from "@/model/services/iRateLimiter";
 import type { IBookMetadataService } from "@/model/services/iBookMetadataService";
 import type { IBookUseCases } from "@/usecase/iBookUseCases";
 import { formKey, guardFormSubmit } from "@/viewmodel/formRateLimit";
+
+export const CREATE_LISTING_DRAFT_KEY = "ipebook.rascunho_anuncio";
+
+export type CreateListingDraft = {
+  isbn: string;
+  title: string;
+  author: string;
+  category: string;
+  modality: BookModality;
+  price: string;
+  neighborhood: string;
+  condition: BookCondition | null;
+  description: string;
+  photoUrl: string;
+  photos: readonly string[];
+};
 
 export type IsbnFeedback = {
   type: "success" | "info" | "error";
@@ -54,6 +71,9 @@ export type CreateListingActions = {
   setPhotoUrl: (value: string) => void;
   addPhoto: (value: string) => void;
   removePhoto: (index: number) => void;
+  saveDraft: () => Promise<void>;
+  loadDraft: () => Promise<boolean>;
+  clearDraft: () => Promise<void>;
   submit: (sessionUserId: string | null) => Promise<Book | null>;
   reset: () => void;
 };
@@ -86,6 +106,8 @@ export function useCreateListingViewModel(
   metadataService: IBookMetadataService = defaultMetadataService,
 ): [CreateListingState, CreateListingActions] {
   const [state, setState] = useState<CreateListingState>(INITIAL_STATE);
+  const stateRef = useRef(state);
+  stateRef.current = state;
 
   const setIsbn = useCallback((value: string) => {
     setState((prev) => ({ ...prev, isbn: value, isbnFeedback: null }));
@@ -224,6 +246,70 @@ export function useCreateListingViewModel(
     }));
   }, []);
 
+  const clearDraft = useCallback(async (): Promise<void> => {
+    try {
+      await AsyncStorage.removeItem(CREATE_LISTING_DRAFT_KEY);
+    } catch (err) {
+      logger.warn("Falha ao limpar rascunho do anúncio no AsyncStorage", { error: String(err) });
+    }
+  }, [logger]);
+
+  const saveDraft = useCallback(async (): Promise<void> => {
+    try {
+      const cur = stateRef.current;
+      const draft: CreateListingDraft = {
+        isbn: cur.isbn,
+        title: cur.title,
+        author: cur.author,
+        category: cur.category,
+        modality: cur.modality,
+        price: cur.price,
+        neighborhood: cur.neighborhood,
+        condition: cur.condition,
+        description: cur.description,
+        photoUrl: cur.photoUrl,
+        photos: cur.photos,
+      };
+      await AsyncStorage.setItem(CREATE_LISTING_DRAFT_KEY, JSON.stringify(draft));
+    } catch (err) {
+      logger.warn("Falha ao salvar rascunho do anúncio no AsyncStorage", { error: String(err) });
+    }
+  }, [logger]);
+
+  const loadDraft = useCallback(async (): Promise<boolean> => {
+    try {
+      const raw = await AsyncStorage.getItem(CREATE_LISTING_DRAFT_KEY);
+      if (!raw) {
+        return false;
+      }
+      const draft = JSON.parse(raw) as Partial<CreateListingDraft>;
+      if (!draft || typeof draft !== "object") {
+        return false;
+      }
+      setState((prev) => ({
+        ...prev,
+        isbn: typeof draft.isbn === "string" ? draft.isbn : prev.isbn,
+        title: typeof draft.title === "string" ? draft.title : prev.title,
+        author: typeof draft.author === "string" ? draft.author : prev.author,
+        category: typeof draft.category === "string" ? draft.category : prev.category,
+        modality:
+          draft.modality === "trade" || draft.modality === "donation" || draft.modality === "sale"
+            ? draft.modality
+            : prev.modality,
+        price: typeof draft.price === "string" ? draft.price : prev.price,
+        neighborhood: typeof draft.neighborhood === "string" ? draft.neighborhood : prev.neighborhood,
+        condition: draft.condition !== undefined ? draft.condition : prev.condition,
+        description: typeof draft.description === "string" ? draft.description : prev.description,
+        photoUrl: typeof draft.photoUrl === "string" ? draft.photoUrl : prev.photoUrl,
+        photos: Array.isArray(draft.photos) ? draft.photos : prev.photos,
+      }));
+      return true;
+    } catch (err) {
+      logger.warn("Falha ao carregar rascunho do anúncio do AsyncStorage", { error: String(err) });
+      return false;
+    }
+  }, [logger]);
+
   const submit = useCallback(
     async (sessionUserId: string | null): Promise<Book | null> => {
       const guard = guardFormSubmit(rateLimiter, formKey("listing:create", sessionUserId));
@@ -256,6 +342,7 @@ export function useCreateListingViewModel(
           },
           sessionUserId,
         );
+        await clearDraft();
         setState({ ...INITIAL_STATE, success: true });
         return book;
       } catch (error) {
@@ -282,12 +369,14 @@ export function useCreateListingViewModel(
       useCases,
       rateLimiter,
       logger,
+      clearDraft,
     ],
   );
 
   const reset = useCallback(() => {
+    void clearDraft();
     setState(INITIAL_STATE);
-  }, []);
+  }, [clearDraft]);
 
   return [
     state,
@@ -307,6 +396,9 @@ export function useCreateListingViewModel(
       setPhotoUrl,
       addPhoto,
       removePhoto,
+      saveDraft,
+      loadDraft,
+      clearDraft,
       submit,
       reset,
     },
