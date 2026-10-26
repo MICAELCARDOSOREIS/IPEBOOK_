@@ -149,10 +149,24 @@ export class SupabaseAuthDataSource implements IAuthDataSource {
       throw new AuthError("Login com Google indisponível no cliente atual.");
     }
 
+    let redirectTo = "ipebook://auth/callback";
+    if (Platform.OS === "web") {
+      redirectTo = typeof window !== "undefined" && window.location?.origin
+        ? `${window.location.origin}/auth/callback`
+        : "http://localhost:8081/auth/callback";
+    } else {
+      try {
+        const Linking = await import("expo-linking");
+        redirectTo = Linking.createURL("/auth/callback");
+      } catch {
+        redirectTo = "ipebook://auth/callback";
+      }
+    }
+
     const { data, error } = await authClient.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: this.recoveryRedirectUrl,
+        redirectTo,
       },
     });
 
@@ -171,6 +185,37 @@ export class SupabaseAuthDataSource implements IAuthDataSource {
 
     const current = await this.currentUser();
     return current ?? { id: "pending", email: "", name: "Usuário Google" };
+  }
+
+  async setSessionFromUrl(url: string): Promise<User> {
+    try {
+      const parsed = new URL(url);
+      const query = new URLSearchParams(parsed.search);
+      const hash = new URLSearchParams(parsed.hash.replace(/^#/, ""));
+      const code = query.get("code");
+      const accessToken = hash.get("access_token") || query.get("access_token");
+      const refreshToken = hash.get("refresh_token") || query.get("refresh_token");
+
+      if (code) {
+        const { data, error } = await this.client.auth.exchangeCodeForSession(code);
+        if (error || !data.user?.email) throw new AuthError("Falha ao autenticar com o código recebido.");
+        return { id: data.user.id, email: data.user.email, name: readFullName(data.user) };
+      }
+
+      if (accessToken && refreshToken) {
+        const { data, error } = await this.client.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        });
+        if (error || !data.user?.email) throw new AuthError("Falha ao restaurar sessão.");
+        return { id: data.user.id, email: data.user.email, name: readFullName(data.user) };
+      }
+
+      throw new AuthError("URL de autenticação não contém tokens válidos.");
+    } catch (error) {
+      if (error instanceof AuthError) throw error;
+      throw new AuthError("Não foi possível processar o retorno de autenticação.");
+    }
   }
 
   async signOut(): Promise<void> {

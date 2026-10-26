@@ -58,6 +58,17 @@ export class AuthUseCases implements IAuthUseCases {
     return user;
   }
 
+  async setSessionFromUrl(url: string): Promise<User> {
+    if (!this.dataSource.setSessionFromUrl) {
+      throw new AuthError("Processamento de retorno de autenticação indisponível.");
+    }
+    const user = await this.dataSource.setSessionFromUrl(url);
+    if (user.id && user.id !== "pending") {
+      await this.ensurePublicProfile(user.id, user.name || "Leitor IpêBook");
+    }
+    return user;
+  }
+
   signOut(): Promise<void> {
     return this.dataSource.signOut();
   }

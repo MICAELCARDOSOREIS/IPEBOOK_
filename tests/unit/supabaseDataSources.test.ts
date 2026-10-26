@@ -131,6 +131,50 @@ describe("datasources Supabase", () => {
     await expect(denied.completePasswordReset("ipebook://redefinir-senha?code=abc", "nova-senha")).rejects.toThrow("Não foi possível atualizar a senha.");
   });
 
+  it("restaura sessão a partir de deep link OAuth com access_token e refresh_token", async () => {
+    const setSession = vi.fn().mockResolvedValue({
+      data: { user: { id: "google-123", email: "leitor@gmail.com", user_metadata: { full_name: "Micael" } } },
+      error: null,
+    });
+    const auth = new SupabaseAuthDataSource(fakeClient({
+      auth: { setSession },
+    }), "ipebook://redefinir-senha");
+
+    const user = await auth.setSessionFromUrl("ipebook://auth/callback#access_token=jwt-token&refresh_token=ref-token");
+
+    expect(setSession).toHaveBeenCalledWith({
+      access_token: "jwt-token",
+      refresh_token: "ref-token",
+    });
+    expect(user).toEqual({
+      id: "google-123",
+      email: "leitor@gmail.com",
+      name: "Micael",
+    });
+  });
+
+  it("restaura sessão a partir de deep link OAuth com code de autenticação", async () => {
+    const exchangeCodeForSession = vi.fn().mockResolvedValue({
+      data: { user: { id: "code-user", email: "code@gmail.com" } },
+      error: null,
+    });
+    const auth = new SupabaseAuthDataSource(fakeClient({
+      auth: { exchangeCodeForSession },
+    }), "ipebook://redefinir-senha");
+
+    const user = await auth.setSessionFromUrl("ipebook://auth/callback?code=auth-code-123");
+
+    expect(exchangeCodeForSession).toHaveBeenCalledWith("auth-code-123");
+    expect(user.id).toBe("code-user");
+  });
+
+  it("rejeita URL de callback sem tokens válidos", async () => {
+    const auth = new SupabaseAuthDataSource(fakeClient({ auth: {} }), "ipebook://redefinir-senha");
+    await expect(auth.setSessionFromUrl("ipebook://auth/callback")).rejects.toThrow(
+      "URL de autenticação não contém tokens válidos.",
+    );
+  });
+
   it("exclui conta chamando a RPC delete_user_account e finaliza sessão", async () => {
     const rpc = vi.fn().mockResolvedValue({ data: null, error: null });
     const signOut = vi.fn().mockResolvedValue({ error: null });
