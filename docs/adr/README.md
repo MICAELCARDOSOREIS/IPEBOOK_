@@ -63,5 +63,6 @@
 - [0061 — Editar perfil sem dados inventados e guarda de alterações](0061-editar-perfil-sem-dados-inventados.md)
 - [0062 — Assinatura Realtime de Mensagens, Rascunhos de Anúncios e Push Token Remoto](0062-realtime-chat-rascunho-push-token.md)
 - [0063 — Adoção do domínio próprio ipebook.app e redirecionamento canônico no Cloudflare Pages](0063-dominio-proprio-ipebook-app.md)
+- [0064 — Redirecionamento canônico de ipebook.pages.dev via Bulk Redirects da Cloudflare](0064-redirecionamento-canonico-bulk-redirects.md)
 
 Preservar registros aceitos; mudanças relevantes geram novo ADR com vínculos de substituição.

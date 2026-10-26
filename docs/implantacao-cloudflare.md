@@ -39,7 +39,7 @@ Em **Settings** > **Environment variables**, configure as seguintes chaves para 
 | `EXPO_PUBLIC_BACKEND` | `supabase` |
 | `EXPO_PUBLIC_SUPABASE_URL` | `https://xiuuiggpccpgrwkzeloc.supabase.co` |
 | `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | *(Chave anônima pública `sbp_...` do projeto Supabase)* |
-| `EXPO_PUBLIC_AUTH_REDIRECT_URL` | `https://ipebook.app/entrar` (ou `/redefinir-senha`) |
+| `EXPO_PUBLIC_AUTH_REDIRECT_URL` | `https://ipebook.app/redefinir-senha` (retorno da recuperação de senha; entra no bundle durante o build) |
 
 ### 2.4 Configuração de Domínio Próprio (Custom Domain `ipebook.app`)
 Para vincular o domínio próprio ao projeto no Cloudflare Pages:
@@ -48,11 +48,10 @@ Para vincular o domínio próprio ao projeto no Cloudflare Pages:
 3. Digite `ipebook.app` e clique em **Continue**.
 4. Se o domínio já estiver sob a mesma conta da Cloudflare, o registro DNS CNAME/apex e o certificado SSL/TLS Universal são provisionados e validados automaticamente.
 5. (Opcional recomendado) Repita o processo para `www.ipebook.app` para garantir o redirecionamento ou cobertura do subdomínio www.
-6. O arquivo `public/_redirects` já inclui a diretiva de redirecionamento canônico 301 com prioridade:
-   ```text
-   https://ipebook.pages.dev/* https://ipebook.app/:splat 301!
-   ```
-   Isso garante que acessos ao subdomínio técnico `.pages.dev` sejam encaminhados de forma transparente e definitiva para `https://ipebook.app`.
+6. O redirecionamento canônico de `ipebook.pages.dev` é feito por **Bulk Redirects** (ADR 0064), pois o `_redirects` do Pages não aceita origem com domínio. Em **Entrega e desempenho** > **Redirecionamentos em massa**:
+   - Lista `ipebook_canonico`: origem `ipebook.pages.dev`, destino `https://ipebook.app`, status `301`, com *Preservar string de consulta*, *Correspondência de subcaminho* e *Preservar sufixo do caminho* marcados (sem *Incluir subdomínios*, para manter as pré-visualizações).
+   - Regra `ipebook dominio canonico` habilitada e associada à lista.
+   - Verificação: `curl -sI https://ipebook.pages.dev/termos` deve responder `301` com `location: https://ipebook.app/termos`.
 
 ---
 
