@@ -1,6 +1,6 @@
 # ADR 0063 — Adoção do domínio próprio ipebook.app e redirecionamento canônico no Cloudflare Pages
 
-- **Status:** Aceito
+- **Status:** Aceito (item 2 da decisão substituído pelo [ADR 0064](0064-redirecionamento-canonico-bulk-redirects.md))
 - **Data:** 26 de outubro de 2026
 - **Autores:** Micael Cardoso Reis (`pessoa:micael`)
 - **Contexto técnico:** ADR 0020 (Publicação Web via Cloudflare Pages), ADR 0040 (Compartilhar e convidar amigos), ADR 0059 (Identidade Android e build EAS `com.ipebook.app`), Spec 025 (Publicação Web Cloudflare Pages), Spec 057 (Convidar amigos).
