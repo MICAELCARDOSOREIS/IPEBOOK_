@@ -17,6 +17,7 @@ export type AuthState = {
 export type AuthActions = {
   signUp: (email: string, password: string, name: string) => Promise<boolean>;
   signIn: (email: string, password: string) => Promise<boolean>;
+  signInWithGoogle?: () => Promise<boolean>;
   signOut: () => Promise<void>;
   requestPasswordReset: (email: string) => Promise<boolean>;
 };
@@ -142,6 +143,31 @@ export function useAuthViewModel(
     }
   }, [auth, rateLimiter, logger]);
 
+  const signInWithGoogle = useCallback(async () => {
+    setState((previous) => ({ ...previous, loading: true, error: null, statusMessage: null }));
+    try {
+      if (!auth.signInWithGoogle) {
+        throw new DomainError("Login com Google indisponível.");
+      }
+      const user = await auth.signInWithGoogle();
+      if (active.current) {
+        setState({ user, loading: false, error: null, statusMessage: null });
+      }
+      return Boolean(user && user.id && user.id !== "pending");
+    } catch (error) {
+      if (active.current) {
+        setState((previous) => ({
+          ...previous,
+          loading: false,
+          error: error instanceof DomainError ? error.message : GENERIC_ERROR,
+          statusMessage: null,
+        }));
+      }
+      logger.error("Falha ao autenticar com Google", error);
+      return false;
+    }
+  }, [auth, logger]);
+
   const signOut = useCallback(async () => {
     setState((previous) => ({ ...previous, loading: true, error: null }));
     try {
@@ -152,5 +178,5 @@ export function useAuthViewModel(
     }
   }, [auth]);
 
-  return [state, { signUp, signIn, signOut, requestPasswordReset }];
+  return [state, { signUp, signIn, signInWithGoogle, signOut, requestPasswordReset }];
 }

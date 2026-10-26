@@ -13,6 +13,8 @@ export type UserPreferencesState = {
 
 export type UserPreferencesActions = {
   update: (edits: UserPreferencesEdits) => Promise<boolean>;
+  /** Recarrega as preferências e limpa as mensagens de erro atuais (usado pelo estado de erro da tela). */
+  reload: () => void;
 };
 
 const GENERIC_ERROR = "Não foi possível carregar suas preferências. Tente novamente.";
@@ -82,5 +84,24 @@ export function useUserPreferencesViewModel(
     [userId, useCases],
   );
 
-  return [state, { update }];
+  const reload = useCallback(() => {
+    if (!userId) return;
+    setState((previous) => ({ ...previous, loading: true, error: null }));
+    void (async () => {
+      try {
+        const preferences = await useCases.getPreferences(userId);
+        if (active.current) setState({ preferences, loading: false, saving: false, error: null });
+      } catch (error) {
+        if (active.current) {
+          setState((previous) => ({
+            ...previous,
+            loading: false,
+            error: error instanceof DomainError ? error.message : GENERIC_ERROR,
+          }));
+        }
+      }
+    })();
+  }, [userId, useCases]);
+
+  return [state, { update, reload }];
 }

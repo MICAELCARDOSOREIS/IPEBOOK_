@@ -38,7 +38,46 @@ describe("SupabaseAuthDataSource (Issue #97)", () => {
       signUp: vi.fn().mockResolvedValue({ data: { user: null }, error: { message: "falhou" } }),
     });
     const ds = new SupabaseAuthDataSource(client, "https://app/redefinir-senha");
-    await expect(ds.signUp("a@b.com", "senha12345", "Nome")).rejects.toBeInstanceOf(AuthError);
+    await expect(ds.signUp("a@b.com", "senha12345", "Nome")).rejects.toThrow("falhou");
+  });
+
+  it("lança AuthError com mensagem amigável de limite de tentativas quando o Supabase retorna rate limit (429)", async () => {
+    const client = fakeClient({
+      signUp: vi.fn().mockResolvedValue({
+        data: { user: null },
+        error: { message: "For security purposes, you can only request this after 43 seconds.", status: 429, code: "over_email_send_rate_limit" },
+      }),
+    });
+    const ds = new SupabaseAuthDataSource(client, "https://app/redefinir-senha");
+    await expect(ds.signUp("a@b.com", "senha12345", "Nome")).rejects.toThrow(
+      "Muitas tentativas em pouco tempo. Aguarde alguns instantes antes de tentar novamente.",
+    );
+  });
+
+  it("lança EmailAlreadyRegisteredError quando o Supabase retorna erro de usuário existente", async () => {
+    const client = fakeClient({
+      signUp: vi.fn().mockResolvedValue({
+        data: { user: null },
+        error: { message: "User already registered", status: 400, code: "user_already_exists" },
+      }),
+    });
+    const ds = new SupabaseAuthDataSource(client, "https://app/redefinir-senha");
+    await expect(ds.signUp("existente@exemplo.com", "senha12345", "Nome")).rejects.toBeInstanceOf(
+      EmailAlreadyRegisteredError,
+    );
+  });
+
+  it("signIn lança mensagem amigável quando e-mail ainda não foi confirmado", async () => {
+    const client = fakeClient({
+      signInWithPassword: vi.fn().mockResolvedValue({
+        data: { user: null },
+        error: { message: "Email not confirmed", status: 400 },
+      }),
+    });
+    const ds = new SupabaseAuthDataSource(client, "https://app/redefinir-senha");
+    await expect(ds.signIn("a@b.com", "senha12345")).rejects.toThrow(
+      "Confirme seu e-mail antes de entrar. Verifique sua caixa de entrada.",
+    );
   });
 
   it("completePasswordReset lança ExpiredLinkError quando não há link", async () => {

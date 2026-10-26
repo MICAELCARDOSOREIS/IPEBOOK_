@@ -20,7 +20,9 @@ interface CachePayload<T> {
 }
 
 const DEFAULT_TTL_MS = 5 * 60 * 1000; // 5 minutos
-const DEFAULT_PREFIX = "ipebook:cache:books";
+export const DEFAULT_PREFIX = "ipebook:cache:books";
+/** Chave do catálogo offline; exportada para a limpeza em Configurações (Spec 073). */
+export const BOOKS_LIST_CACHE_KEY = `${DEFAULT_PREFIX}:list`;
 
 /**
  * Decorator resiliente para IBookDataSource que adiciona cache local (Offline First)

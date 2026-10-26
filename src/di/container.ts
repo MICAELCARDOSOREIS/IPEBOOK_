@@ -66,8 +66,10 @@ import type { ISearchHistoryUseCases } from "@/usecase/iSearchHistoryUseCases";
 import { INITIAL_DEV_BOOKS } from "@/di/seedBooks";
 import { AsyncStorageOnboardingDataSource } from "@/infra/datasources/asyncStorageOnboardingDataSource";
 import { AsyncStorageThemePreferenceDataSource } from "@/infra/datasources/asyncStorageThemePreferenceDataSource";
+import { AsyncStorageLocalCacheDataSource } from "@/infra/datasources/asyncStorageLocalCacheDataSource";
 import { MemoryOnboardingDataSource } from "@/infra/datasources/memoryOnboardingDataSource";
 import { MemoryThemePreferenceDataSource } from "@/infra/datasources/memoryThemePreferenceDataSource";
+import { MemoryLocalCacheDataSource } from "@/infra/datasources/memoryLocalCacheDataSource";
 import { NetInfoNetworkStatusDataSource } from "@/infra/datasources/netInfoNetworkStatusDataSource";
 import { SupabasePhotoStorageDataSource } from "@/infra/datasources/supabasePhotoStorageDataSource";
 import { MemoryPhotoStorageDataSource } from "@/infra/datasources/memoryPhotoStorageDataSource";
@@ -97,6 +99,8 @@ import type { IMessageDataSource } from "@/model/datasources/iMessageDataSource"
 import { MemoryMessageDataSource } from "@/infra/datasources/memoryMessageDataSource";
 import { SupabaseMessageDataSource } from "@/infra/datasources/supabaseMessageDataSource";
 import { ThemePreferenceUseCases } from "@/usecase/themePreferenceUseCases";
+import type { ILocalCacheUseCases } from "@/usecase/iLocalCacheUseCases";
+import { LocalCacheUseCases } from "@/usecase/localCacheUseCases";
 import { UserDataExportUseCases } from "@/usecase/userDataExportUseCases";
 import { UserPreferencesUseCases } from "@/usecase/userPreferencesUseCases";
 
@@ -185,6 +189,9 @@ export const onboardingUseCases: IOnboardingUseCases = new OnboardingUseCases(
 );
 export const themePreferenceUseCases: IThemePreferenceUseCases = new ThemePreferenceUseCases(
   process.env.NODE_ENV === "test" ? new MemoryThemePreferenceDataSource() : new AsyncStorageThemePreferenceDataSource(),
+);
+export const localCacheUseCases: ILocalCacheUseCases = new LocalCacheUseCases(
+  process.env.NODE_ENV === "test" ? new MemoryLocalCacheDataSource() : new AsyncStorageLocalCacheDataSource(),
 );
 export const networkStatusDataSource: INetworkStatusDataSource =
   process.env.NODE_ENV === "test" ? new MemoryNetworkStatusDataSource() : new NetInfoNetworkStatusDataSource();

@@ -17,6 +17,7 @@ function mockAuth(state: AuthState, actions: Partial<AuthActions> = {}) {
   const fullActions: AuthActions = {
     signUp: vi.fn().mockResolvedValue(true),
     signIn: vi.fn().mockResolvedValue(true),
+    signInWithGoogle: vi.fn().mockResolvedValue(true),
     signOut: vi.fn().mockResolvedValue(undefined),
     requestPasswordReset: vi.fn().mockResolvedValue("senha-temp"),
     ...actions,
@@ -161,6 +162,24 @@ describe("tela de criar conta (ISO/IEC 25010 - Usabilidade e Acessibilidade)", (
     });
 
     expect(screen.getByText("Este e-mail já está em uso.")).toBeDefined();
+  });
+
+  it("chama signInWithGoogle e onAuthenticated ao tocar em Continuar com Google", async () => {
+    const signInWithGoogle = vi.fn().mockResolvedValue(true);
+    mockAuth({ user: null, loading: false, error: null }, { signInWithGoogle });
+    const onAuthenticated = vi.fn();
+
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<SignUp onAuthenticated={onAuthenticated} />);
+    });
+
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Continuar com Google" }));
+    });
+
+    expect(signInWithGoogle).toHaveBeenCalledTimes(1);
+    expect(onAuthenticated).toHaveBeenCalledTimes(1);
   });
 
   it("chama onAuthenticated após criar conta com sucesso", async () => {

@@ -4,9 +4,11 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useProfileViewModel } from "@/viewmodel/useProfileViewModel";
 import { useMyListingsViewModel } from "@/viewmodel/useMyListingsViewModel";
+import { useUserPreferencesViewModel } from "@/viewmodel/useUserPreferencesViewModel";
 import { Avatar } from "@/view/components/Avatar";
 import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
 import { Dialog } from "@/view/components/Dialog";
+import { FilledButton } from "@/view/components/FilledButton";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 
@@ -20,12 +22,8 @@ export type ProfileHubProps = {
   onNavigateToFavorites?: () => void;
   onNavigateToNotifications: () => void;
   onNavigateToSecurity: () => void;
-  onNavigateToPrivacy: () => void;
-  onNavigateToBlockedUsers?: () => void;
   onNavigateToInviteFriends?: () => void;
   onNavigateToSettings?: () => void;
-  onNavigateToTerms: () => void;
-  onNavigateToHelp: () => void;
   onSignedOut: () => void;
 };
 
@@ -52,12 +50,8 @@ export default function ProfileHub({
   onNavigateToFavorites,
   onNavigateToNotifications,
   onNavigateToSecurity,
-  onNavigateToPrivacy,
-  onNavigateToBlockedUsers,
   onNavigateToInviteFriends,
   onNavigateToSettings,
-  onNavigateToTerms,
-  onNavigateToHelp,
   onSignedOut,
 }: ProfileHubProps) {
   const { colors } = useTheme();
@@ -66,6 +60,7 @@ export default function ProfileHub({
   const userId = authState.user?.id ?? null;
   const [state] = useProfileViewModel(userId);
   const [myListingsState] = useMyListingsViewModel(userId);
+  const [preferencesState] = useUserPreferencesViewModel(userId);
   const [confirmingSignOut, setConfirmingSignOut] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
 
@@ -78,24 +73,25 @@ export default function ProfileHub({
   // Se requer autenticação e não há usuário, aguarda redirecionamento
   if (requireAuth && (authState.loading || !userId)) return null;
 
-  // Se logado usa os dados reais; se visitante/demonstração usa os dados canônicos do Figma 07.01 (Lucas Andrade)
-  const isDemonstration = !userId;
+  // Logado usa os dados reais; sem conta a tela exibe o estado de convidado (sem dados inventados)
+  const isSignedIn = !!userId;
   const profile = {
-    userId: state.profile?.userId ?? "demo",
-    name: state.profile?.name ?? "Lucas Andrade",
-    socialHandle: state.profile?.socialHandle ?? "@instragram",
-    neighborhood: "Centro",
-    averageRating: state.profile?.averageRating ?? 4.9,
-    ratingCount: state.profile?.ratingCount ?? 8,
-    completedNegotiations: state.profile?.completedNegotiations ?? 8,
+    userId: state.profile?.userId ?? "",
+    name: state.profile?.name ?? "Você",
+    socialHandle: state.profile?.socialHandle,
+    // Bairro real da pessoa, quando ela escolheu um; sem isso o cartão mostra só a cidade.
+    neighborhood: preferencesState.preferences?.neighborhood,
+    averageRating: state.profile?.averageRating ?? 0,
+    ratingCount: state.profile?.ratingCount ?? 0,
+    completedNegotiations: state.profile?.completedNegotiations ?? 0,
     photoUrl: state.profile?.photoUrl,
-    joinedAt: state.profile?.joinedAt ?? "2026-01-01T00:00:00.000Z",
+    joinedAt: state.profile?.joinedAt,
   };
 
-  const activeBooks = isDemonstration ? 4 : myListingsState.books.filter((b) => b.status === "available").length;
-  const reservedBooks = isDemonstration ? 1 : myListingsState.books.filter((b) => b.status === "reserved").length;
-  const totalPublications = isDemonstration ? 5 : myListingsState.books.length;
-  const completedTrocas = isDemonstration ? 8 : (profile.completedNegotiations ?? 0);
+  const activeBooks = myListingsState.books.filter((b) => b.status === "available").length;
+  const reservedBooks = myListingsState.books.filter((b) => b.status === "reserved").length;
+  const totalPublications = myListingsState.books.length;
+  const completedTrocas = profile.completedNegotiations;
   const ratingText = profile.ratingCount > 0 ? (profile.averageRating ?? 0).toFixed(1) : "—";
 
   async function handleConfirmSignOut() {
@@ -149,7 +145,7 @@ export default function ProfileHub({
     },
   ];
 
-  // Itens da seção "Conta" (Figma 07.01 nós 25:647, 25:656, 25:665, 25:674)
+  // Seção "Conta" enxuta (ADR 0060): o que é preferência do aplicativo mora em Configurações
   const accountItems: MenuItem[] = [
     {
       key: "notifications",
@@ -165,26 +161,8 @@ export default function ProfileHub({
       icon: "lock",
       iconColor: colors.text,
       label: "Segurança e verificação",
-      description: isDemonstration ? "E-mail confirmado" : "Alterar senha da conta",
+      description: "Alterar senha da conta",
       onPress: onNavigateToSecurity,
-      showChevron: true,
-    },
-    {
-      key: "privacy",
-      icon: "document",
-      iconColor: colors.m3.onSurfaceVariant,
-      label: "Privacidade e dados",
-      description: "Baixe seus dados ou exclua sua conta",
-      onPress: onNavigateToPrivacy,
-      showChevron: true,
-    },
-    {
-      key: "blocked",
-      icon: "lock",
-      iconColor: colors.m3.onSurfaceVariant,
-      label: "Pessoas bloqueadas",
-      description: "Gerencie quem não pode interagir com você",
-      onPress: onNavigateToBlockedUsers ?? (() => {}),
       showChevron: true,
     },
     {
@@ -196,163 +174,164 @@ export default function ProfileHub({
       onPress: onNavigateToInviteFriends ?? (() => {}),
       showChevron: true,
     },
-    {
-      key: "settings",
-      icon: "settings",
-      iconColor: colors.m3.onSurfaceVariant,
-      label: "Configurações",
-      description: "Aparência e preferências do aplicativo",
-      onPress: onNavigateToSettings ?? (() => {}),
-      showChevron: true,
-    },
-    {
-      key: "terms",
-      icon: "document",
-      iconColor: colors.m3.onSurfaceVariant,
-      label: "Termos e privacidade",
-      description: "Termos de uso e política de privacidade",
-      onPress: onNavigateToTerms,
-      showChevron: true,
-    },
-    {
-      key: "help",
-      icon: "info",
-      iconColor: colors.text,
-      label: "Ajuda e suporte",
-      description: "Dúvidas frequentes e suporte comunitário",
-      onPress: onNavigateToHelp,
-      showChevron: true,
-    },
   ];
 
   return (
     <SafeAreaView style={styles.page}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.content}>
-          {/* Título editorial da marca (Figma 07.01 nó 563:8321: Source Serif 4 Bold 34px, #58331F) */}
-          <Text accessibilityRole="header" style={styles.title}>
-            Meu perfil
-          </Text>
+          {/* Título editorial da marca (Figma 07.01 nó 563:8321: Source Serif 4 Bold 34px, #58331F)
+              com entrada de Configurações no topo (ADR 0060), liberada também para visitante */}
+          <View style={styles.headerRow}>
+            <Text accessibilityRole="header" style={styles.title}>
+              Meu perfil
+            </Text>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Abrir configurações"
+              hitSlop={8}
+              onPress={onNavigateToSettings ?? (() => {})}
+              style={styles.settingsButton}
+            >
+              <AppIcon name="settings" size={24} color={colors.m3.onSurfaceVariant} />
+            </Pressable>
+          </View>
 
-          {state.loading && !isDemonstration ? (
+          {state.loading && isSignedIn ? (
             <View style={styles.status}>
               <ActivityIndicator color={colors.m3.primary} accessibilityLabel="Carregando perfil" />
             </View>
           ) : (
             <>
-              {/* Card de Identidade (Figma 07.01 nó 25:610: 345x96px, rx 20px, fill #F7F3EC) */}
-              <View style={styles.identityCard}>
-                <Avatar name={profile.name ?? "Você"} photoUrl={profile.photoUrl} size={72} />
-                <View style={styles.identityText}>
-                  <Text style={styles.name}>{profile.name ?? "Você"}</Text>
-                  <Text style={styles.subtitle}>
-                    {profile.ratingCount > 0
-                      ? `★ ${profile.averageRating?.toFixed(1)} (${profile.ratingCount} ${profile.ratingCount > 1 ? "avaliações" : "avaliação"})`
-                      : "Sem avaliações ainda"}
-                    {" · "}
-                    {profile.neighborhood ? `${profile.neighborhood}, Piripiri` : "Piripiri, PI"}
-                  </Text>
-                </View>
-              </View>
+              {isSignedIn ? (
+                <>
+                  {/* Card de Identidade (Figma 07.01 nó 25:610: 345x96px, rx 20px, fill #F7F3EC) */}
+                  <View style={styles.identityCard}>
+                    <Avatar name={profile.name} photoUrl={profile.photoUrl} size={72} />
+                    <View style={styles.identityText}>
+                      <Text style={styles.name}>{profile.name}</Text>
+                      <Text style={styles.subtitle}>
+                        {profile.ratingCount > 0
+                          ? `★ ${profile.averageRating?.toFixed(1)} (${profile.ratingCount} ${profile.ratingCount > 1 ? "avaliações" : "avaliação"})`
+                          : "Sem avaliações ainda"}
+                        {" · "}
+                        {profile.neighborhood ? `${profile.neighborhood}, Piripiri` : "Piripiri, PI"}
+                      </Text>
+                    </View>
+                  </View>
 
-              {/* Botão Outline "Editar perfil" (Figma 07.01 nó 604:8677: 345x48px, rx 24px, stroke #D3CCC2, sem ícone) */}
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Editar perfil"
-                onPress={onNavigateToEditProfile}
-                style={styles.editProfileButton}
-              >
-                <Text style={styles.editProfileButtonText}>Editar perfil</Text>
-              </Pressable>
-
-              {/* Tríade de Métricas Comunitárias (Figma 07.01 nó 25:616: 3 caixas de 109.6x76px, rx 16px, fill #F7F3EC) */}
-              <View style={styles.statsContainer}>
-                <View style={styles.statBox}>
-                  <Text style={styles.statNumber}>{totalPublications}</Text>
-                  <Text style={styles.statLabel}>publicações</Text>
-                </View>
-                <View style={styles.statBox}>
-                  <Text style={styles.statNumber}>{completedTrocas}</Text>
-                  <Text style={styles.statLabel}>trocas</Text>
-                </View>
-                <View style={styles.statBox}>
-                  <Text style={styles.statNumber}>{ratingText}</Text>
-                  <Text style={styles.statLabel}>avaliação</Text>
-                </View>
-              </View>
-
-              {/* Seção 1: Atividade (Figma 07.01 nó 604:8684: altura 36px, cor #2C5E45) */}
-              <View style={styles.section}>
-                <View style={styles.sectionHeaderRow}>
-                  <Text style={styles.sectionHeader}>Atividade</Text>
-                </View>
-                <View style={styles.cardGroup}>
-                  {activityItems.map((item) => (
-                    <Pressable
-                      key={item.key}
-                      accessibilityRole="button"
-                      accessibilityLabel={item.label}
-                      onPress={item.onPress}
-                      style={styles.menuRow}
-                    >
-                      <AppIcon name={item.icon} size={24} color={item.iconColor ?? colors.m3.onSurface} />
-                      <View style={styles.menuRowText}>
-                        <Text style={styles.menuRowTitle}>{item.label}</Text>
-                        {item.description ? (
-                          <Text style={styles.menuRowDescription}>{item.description}</Text>
-                        ) : null}
-                      </View>
-                      {item.showChevron ? (
-                        <AppIcon name="chevronRight" size={20} color={colors.m3.onSurfaceVariant} />
-                      ) : null}
-                    </Pressable>
-                  ))}
-                </View>
-              </View>
-
-              {/* Seção 2: Conta e Preferências (Figma 07.01 nó 604:8686: altura 36px, cor #2C5E45) */}
-              <View style={styles.section}>
-                <View style={styles.sectionHeaderRow}>
-                  <Text style={styles.sectionHeader}>Conta</Text>
-                </View>
-                <View style={styles.cardGroup}>
-                  {accountItems.map((item) => (
-                    <Pressable
-                      key={item.key}
-                      accessibilityRole="button"
-                      accessibilityLabel={item.label}
-                      onPress={item.onPress}
-                      style={styles.menuRow}
-                    >
-                      <AppIcon name={item.icon} size={24} color={item.iconColor ?? colors.m3.onSurfaceVariant} />
-                      <View style={styles.menuRowText}>
-                        <Text style={styles.menuRowTitle}>{item.label}</Text>
-                        {item.description ? (
-                          <Text style={styles.menuRowDescription}>{item.description}</Text>
-                        ) : null}
-                      </View>
-                      {item.showChevron ? (
-                        <AppIcon name="chevronRight" size={20} color={colors.m3.onSurfaceVariant} />
-                      ) : null}
-                    </Pressable>
-                  ))}
-
-                  {/* Sair da conta (Figma 07.01 nó 25:674: sem chevron) */}
+                  {/* Botão Outline "Editar perfil" (Figma 07.01 nó 604:8677: 345x48px, rx 24px, stroke #D3CCC2, sem ícone) */}
                   <Pressable
                     accessibilityRole="button"
-                    accessibilityLabel="Sair da conta"
-                    onPress={() => setConfirmingSignOut(true)}
-                    style={styles.menuRow}
+                    accessibilityLabel="Editar perfil"
+                    onPress={onNavigateToEditProfile}
+                    style={styles.editProfileButton}
                   >
-                    <AppIcon name="logout" size={24} color={colors.error} />
-                    <View style={styles.menuRowText}>
-                      <Text style={[styles.menuRowTitle, styles.signOutText]}>Sair da conta</Text>
-                    </View>
+                    <Text style={styles.editProfileButtonText}>Editar perfil</Text>
                   </Pressable>
+
+                  {/* Tríade de Métricas Comunitárias (Figma 07.01 nó 25:616: 3 caixas de 109.6x76px, rx 16px, fill #F7F3EC) */}
+                  <View style={styles.statsContainer}>
+                    <View style={styles.statBox}>
+                      <Text style={styles.statNumber}>{totalPublications}</Text>
+                      <Text style={styles.statLabel}>publicações</Text>
+                    </View>
+                    <View style={styles.statBox}>
+                      <Text style={styles.statNumber}>{completedTrocas}</Text>
+                      <Text style={styles.statLabel}>trocas</Text>
+                    </View>
+                    <View style={styles.statBox}>
+                      <Text style={styles.statNumber}>{ratingText}</Text>
+                      <Text style={styles.statLabel}>avaliação</Text>
+                    </View>
+                  </View>
+
+                  {/* Seção 1: Atividade (Figma 07.01 nó 604:8684: altura 36px, cor #2C5E45) */}
+                  <View style={styles.section}>
+                    <View style={styles.sectionHeaderRow}>
+                      <Text style={styles.sectionHeader}>Atividade</Text>
+                    </View>
+                    <View style={styles.cardGroup}>
+                      {activityItems.map((item) => (
+                        <Pressable
+                          key={item.key}
+                          accessibilityRole="button"
+                          accessibilityLabel={item.label}
+                          onPress={item.onPress}
+                          style={styles.menuRow}
+                        >
+                          <AppIcon name={item.icon} size={24} color={item.iconColor ?? colors.m3.onSurface} />
+                          <View style={styles.menuRowText}>
+                            <Text style={styles.menuRowTitle}>{item.label}</Text>
+                            {item.description ? (
+                              <Text style={styles.menuRowDescription}>{item.description}</Text>
+                            ) : null}
+                          </View>
+                          {item.showChevron ? (
+                            <AppIcon name="chevronRight" size={20} color={colors.m3.onSurfaceVariant} />
+                          ) : null}
+                        </Pressable>
+                      ))}
+                    </View>
+                  </View>
+                </>
+              ) : (
+                /* Estado de convidado: sem conta não há identidade nem atividade a exibir */
+                <View style={styles.guestCard}>
+                  <Text style={styles.guestTitle}>Você ainda não entrou</Text>
+                  <Text style={styles.guestText}>
+                    Crie uma conta grátis para publicar livros, favoritar buscas e negociar trocas em Piripiri.
+                  </Text>
+                  <FilledButton
+                    label="Entrar ou criar conta"
+                    onPress={onNavigateToSignIn ?? (() => {})}
+                  />
                 </View>
-              </View>
+              )}
 
+              {/* Seção 2: Conta (Figma 07.01 nó 604:8686). Sem sessão não há conta para gerenciar (ADR 0060). */}
+              {isSignedIn ? (
+                <View style={styles.section}>
+                  <View style={styles.sectionHeaderRow}>
+                    <Text style={styles.sectionHeader}>Conta</Text>
+                  </View>
+                  <View style={styles.cardGroup}>
+                    {accountItems.map((item) => (
+                      <Pressable
+                        key={item.key}
+                        accessibilityRole="button"
+                        accessibilityLabel={item.label}
+                        onPress={item.onPress}
+                        style={styles.menuRow}
+                      >
+                        <AppIcon name={item.icon} size={24} color={item.iconColor ?? colors.m3.onSurfaceVariant} />
+                        <View style={styles.menuRowText}>
+                          <Text style={styles.menuRowTitle}>{item.label}</Text>
+                          {item.description ? (
+                            <Text style={styles.menuRowDescription}>{item.description}</Text>
+                          ) : null}
+                        </View>
+                        {item.showChevron ? (
+                          <AppIcon name="chevronRight" size={20} color={colors.m3.onSurfaceVariant} />
+                        ) : null}
+                      </Pressable>
+                    ))}
 
+                    {/* Sair da conta (Figma 07.01 nó 25:674: sem chevron) */}
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel="Sair da conta"
+                      onPress={() => setConfirmingSignOut(true)}
+                      style={styles.menuRow}
+                    >
+                      <AppIcon name="logout" size={24} color={colors.error} />
+                      <View style={styles.menuRowText}>
+                        <Text style={[styles.menuRowTitle, styles.signOutText]}>Sair da conta</Text>
+                      </View>
+                    </Pressable>
+                  </View>
+                </View>
+              ) : null}
             </>
           )}
         </View>
@@ -385,13 +364,42 @@ function createStyles(colors: ColorPalette) {
       paddingTop: tokens.spacing[12],
       gap: tokens.spacing[16],
     },
+    headerRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[12],
+    },
     title: {
+      flex: 1,
       fontFamily: fontFamily.brand,
       fontSize: 34,
       lineHeight: 41,
       color: colors.brandBrown,
     },
+    // Alvo de toque de 48 dp ao redor da engrenagem (FR-011, Spec 073).
+    settingsButton: {
+      minWidth: tokens.accessibility.touchTarget,
+      minHeight: tokens.accessibility.touchTarget,
+      alignItems: "center",
+      justifyContent: "center",
+    },
     status: { alignItems: "center", paddingVertical: tokens.spacing[32] },
+    guestCard: {
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderRadius: 20,
+      padding: tokens.spacing[24],
+      gap: tokens.spacing[12],
+    },
+    guestTitle: {
+      fontFamily: fontFamily.brand,
+      fontSize: 20,
+      lineHeight: 26,
+      color: colors.text,
+    },
+    guestText: {
+      ...tokens.typography.bodyMedium,
+      color: colors.m3.onSurfaceVariant,
+    },
     identityCard: {
       flexDirection: "row",
       alignItems: "center",
