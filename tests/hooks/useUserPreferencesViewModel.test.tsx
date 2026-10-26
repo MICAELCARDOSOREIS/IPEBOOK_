@@ -91,4 +91,19 @@ describe("testes de hook: useUserPreferencesViewModel (Spec 034 / Issue #141)", 
     expect(ok).toBe(false);
     expect(updatePreferences).not.toHaveBeenCalled();
   });
+
+  it("recarrega as preferências pelo reload após falha de carregamento", async () => {
+    let attempts = 0;
+    const getPreferences = vi.fn(async () => {
+      attempts += 1;
+      if (attempts === 1) throw new Error("boom");
+      return preferences;
+    });
+    const hook = await renderHook("ana", { getPreferences, updatePreferences: vi.fn() });
+    expect(hook.current[0].error).toBe("Não foi possível carregar suas preferências. Tente novamente.");
+    await act(async () => {
+      hook.current[1].reload();
+    });
+    expect(hook.current[0]).toEqual({ preferences, loading: false, saving: false, error: null });
+  });
 });

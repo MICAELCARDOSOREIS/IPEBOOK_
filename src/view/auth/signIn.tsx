@@ -5,8 +5,10 @@ import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { FilledButton } from "@/view/components/FilledButton";
+import { GoogleLogo } from "@/view/components/GoogleLogo";
 import { Logotipo } from "@/view/components/Logotipo";
 import { Manchete } from "@/view/components/Manchete";
+import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { TextButton } from "@/view/components/TextButton";
 import { TextField } from "@/view/components/TextField";
 import { TopAppBar } from "@/view/components/TopAppBar";
@@ -30,6 +32,14 @@ export default function SignIn({
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [googleLoading, setGoogleLoading] = useState(false);
+
+  const handleGoogleSignIn = async () => {
+    setGoogleLoading(true);
+    const success = await actions.signInWithGoogle?.();
+    setGoogleLoading(false);
+    if (success) onAuthenticated?.();
+  };
 
   const handleSubmit = async () => {
     const success = await actions.signIn(email, password);
@@ -48,6 +58,21 @@ export default function SignIn({
 
           <Manchete texto="Sua próxima leitura" realce="começa aqui." />
           <Text style={styles.subtitle}>Entre com o e-mail e a senha da sua conta.</Text>
+
+          <OutlinedButton
+            label="Continuar com Google"
+            accessibilityLabel="Continuar com Google"
+            icon={<GoogleLogo size={20} />}
+            loading={googleLoading}
+            disabled={state.loading}
+            onPress={() => void handleGoogleSignIn()}
+          />
+
+          <View accessibilityRole="none" style={styles.divider}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>ou entre com e-mail</Text>
+            <View style={styles.dividerLine} />
+          </View>
 
           <TextField
             label="E-mail"
@@ -110,6 +135,22 @@ function createStyles(colors: ColorPalette) {
     fontFamily: tokens.typography.bodyLarge.fontFamily,
     color: colors.secondaryText,
     marginBottom: tokens.spacing[4],
+  },
+  divider: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: tokens.spacing[12],
+    marginVertical: tokens.spacing[4],
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: colors.border,
+  },
+  dividerText: {
+    fontSize: tokens.typography.bodyMedium.fontSize,
+    fontFamily: tokens.typography.bodyMedium.fontFamily,
+    color: colors.secondaryText,
   },
   error: {
     color: colors.error,

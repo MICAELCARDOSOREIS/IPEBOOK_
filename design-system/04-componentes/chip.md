@@ -23,7 +23,7 @@ Origem no sistema base: Material 3, Filter chip. Situação: **Herdado**.
 | Tamanho | Altura | Padding lateral | Uso |
 | --- | --- | --- | --- |
 | `compact` (padrão) | 32 dp | 16 dp | Fileiras rápidas da Home (`02.01`) e do Explorar (`02.02`, `02.04`) |
-| `regular` | 40 dp | 20 dp | Grupos de escolha da tela `Filtrar livros` (`02.03`) |
+| `regular` | 40 dp | 20 dp | Grupos de escolha de tela cheia: `Filtrar livros` (`02.03`) e `Detalhes do livro` (`04.05`) |
 
 ## Variantes
 
@@ -71,7 +71,7 @@ import { Chip } from "@/view/components/Chip";
 // Fileira de escolha (Explorar, Home): 32 dp
 <Chip label="Literatura" selected={category === "Literatura"} onPress={() => setCategory("Literatura")} />
 
-// Grupo de escolha na tela "Filtrar livros": 40 dp
+// Grupo de escolha em formulario ou tela de filtros: 40 dp
 <Chip label="Venda" size="regular" selected={draft.modality === "sale"} onPress={() => setModality("sale")} />
 
 // Filtro já aplicado (chip removível) — rótulo e ação explícitos

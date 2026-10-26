@@ -57,5 +57,9 @@
 - [0055 — Alinhamento global das telas Android ao Figma](0055-alinhamento-global-figma.md)
 - [0056 — Componentes compartilhados alinhados ao Figma Android](0056-componentes-compartilhados-figma.md)
 - [0057 — Experiência de filtro do Explorar (Filtrar livros e filtros aplicados)](0057-filtro-do-explorar.md)
+- [0058 — Configurações como hub de preferências do dispositivo](0058-configuracoes-hub-preferencias-dispositivo.md)
+- [0059 — Identidade do aplicativo e distribuição Android via EAS Build](0059-identidade-android-e-build-eas.md)
+- [0060 — Meu perfil curto e Configurações como destino único de preferências](0060-perfil-curto-configuracoes-destino-unico.md)
+- [0061 — Editar perfil sem dados inventados e guarda de alterações](0061-editar-perfil-sem-dados-inventados.md)
 
 Preservar registros aceitos; mudanças relevantes geram novo ADR com vínculos de substituição.

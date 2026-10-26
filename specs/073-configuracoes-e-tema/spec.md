@@ -32,9 +32,19 @@ Como pessoa usuária, quero que toda a moldura visível do aplicativo acompanhe 
 - Dado que o tema escuro está ativo, quando navego pelas telas, então fundo, conteúdo, barra de status e demais elementos visíveis usam uma aparência escura coerente.
 - Dado que o tema claro está ativo, quando navego pelas telas, então os mesmos elementos usam uma aparência clara coerente e legível.
 
+### US4 — Encontrar preferências úteis do dispositivo (P1)
+
+Como pessoa usuária, quero encontrar em Configurações opções que realmente fazem algo no meu aparelho, inclusive sem ter conta.
+
+- Dado que estou sem sessão, quando abro Configurações, então a tela continua disponível com aparência, dados do dispositivo e informações do aplicativo.
+- Dado que Meu perfil está cheio demais, quando procuro Privacidade, Pessoas bloqueadas, Termos ou Ajuda, então esses itens estão em Configurações e não mais na lista do perfil (ADR 0060).
+- Dado que há uma cópia offline do catálogo guardada neste aparelho, quando toco em **Limpar dados salvos**, então a cópia é removida e a confirmação aparece em texto; anúncios e conta não são afetados.
+- Dado que a limpeza falha, quando volto à tela, então vejo uma mensagem amigável em português, sem detalhes técnicos, e posso tentar novamente.
+- Dado que quero saber a versão instalada, quando consulto **Sobre o IpêBook**, então a versão do aplicativo é exibida e atalhos para Termos, Exportar/excluir dados e Ajuda estão presentes quando a rota fornece navegação.
+
 ## Requisitos
 
-- FR-001: Meu perfil deve exibir uma entrada **Configurações** na seção de conta, com descrição de sua finalidade e área de toque acessível.
+- FR-001: Meu perfil deve dar acesso a Configurações por um botão no cabeçalho da tela, com rótulo acessível e alvo de toque mínimo de 48 dp, disponível também para quem não tem conta (ADR 0060).
 - FR-002: A entrada Configurações deve abrir uma tela dedicada com navegação de retorno.
 - FR-003: A tela deve apresentar uma seção **Aparência** com as opções **Sistema**, **Claro** e **Escuro**.
 - FR-004: Somente uma opção de aparência pode estar selecionada por vez, com estado perceptível visualmente e por tecnologia assistiva.
@@ -45,6 +55,12 @@ Como pessoa usuária, quero que toda a moldura visível do aplicativo acompanhe 
 - FR-009: O seletor de aparência não deve permanecer duplicado em Meu perfil após existir na tela dedicada.
 - FR-010: Falhas ao recuperar ou salvar a preferência não devem bloquear o uso; o aplicativo deve continuar seguindo a aparência do sistema.
 - FR-011: Todos os controles novos devem ter alvo de toque de pelo menos 48 dp e rótulos acessíveis em português.
+- FR-012: A seção "Dados neste dispositivo" deve limpar exatamente a chave do catálogo offline escrita por `CachedBookDataSource`, usando a mesma constante exportada, sem tocar em outras preferências locais.
+- FR-013: A limpeza deve expor estados de carregamento, sucesso e erro; o sucesso e o erro devem ser anunciados textualmente (região viva) para tecnologia assistiva.
+- FR-014: A seção "Sobre o IpêBook" deve exibir a versão do aplicativo obtida de `expo-constants` e apenas atalhos cuja navegação foi fornecida.
+- FR-015: Nenhuma opção deve ser exibida sem comportamento real; preferências dependentes de recursos inexistentes permanecem fora do escopo.
+- FR-016: "Privacidade e dados" e "Pessoas bloqueadas" devem viver na seção "Conta e dados" de Configurações e aparecer somente com sessão, deixando de ser listadas em Meu perfil (ADR 0060).
+- FR-017: A entrada de Configurações não deve permanecer duplicada como linha da lista de Meu perfil após existir no cabeçalho, e a seção "Conta" deve desaparecer para visitantes.
 
 ## Critérios de sucesso
 
@@ -60,5 +76,5 @@ Como pessoa usuária, quero que toda a moldura visível do aplicativo acompanhe 
 - Se a preferência armazenada estiver ausente ou inválida, o aplicativo segue o tema do sistema.
 - Se a leitura ou gravação local falhar, a tela continua utilizável e a escolha da sessão é aplicada sem expor detalhes técnicos.
 - A preferência é do dispositivo, não da conta, e por isso Configurações permanece disponível mesmo sem sessão autenticada.
-- A tela inicialmente agrupa apenas aparência; novas preferências poderão ser acrescentadas posteriormente sem alterar este escopo.
+- A tela inicialmente agrupava apenas aparência; na continuação (ADR 0058) passaram a compor o hub a limpeza do catálogo offline e as informações do aplicativo, mantendo o mesmo contrato de persistência local.
 - A implementação reutiliza os padrões visuais, de navegação, persistência e acessibilidade já adotados pelo projeto.

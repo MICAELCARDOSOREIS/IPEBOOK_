@@ -3,8 +3,6 @@ import { StyleSheet, Text, View } from "react-native";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { AddPhotoCard } from "@/view/components/AddPhotoCard";
-import { FilledButton } from "@/view/components/FilledButton";
-import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { TextField } from "@/view/components/TextField";
 
 export type CreateListingStep2Props = {
@@ -15,8 +13,6 @@ export type CreateListingStep2Props = {
   errorRef?: React.Ref<any>;
   onSetPhotoUrl: (url: string) => void;
   onRemovePhoto: (index: number) => void;
-  onContinue: () => void;
-  onBack: () => void;
 };
 
 export function CreateListingStep2({
@@ -27,8 +23,6 @@ export function CreateListingStep2({
   errorRef,
   onSetPhotoUrl,
   onRemovePhoto,
-  onContinue,
-  onBack,
 }: CreateListingStep2Props) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -94,9 +88,6 @@ export function CreateListingStep2({
           {error}
         </Text>
       ) : null}
-
-      <FilledButton label="Usar estas fotos" onPress={onContinue} />
-      <OutlinedButton label="Voltar à etapa anterior" onPress={onBack} />
     </>
   );
 }

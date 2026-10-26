@@ -6,6 +6,7 @@ import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { Checkbox } from "@/view/components/Checkbox";
 import { FilledButton } from "@/view/components/FilledButton";
+import { GoogleLogo } from "@/view/components/GoogleLogo";
 import { Logotipo } from "@/view/components/Logotipo";
 import { Manchete } from "@/view/components/Manchete";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
@@ -37,6 +38,14 @@ export default function SignUp({
   const [password, setPassword] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [termsError, setTermsError] = useState<string | null>(null);
+  const [googleLoading, setGoogleLoading] = useState(false);
+
+  const handleGoogleSignIn = async () => {
+    setGoogleLoading(true);
+    const success = await actions.signInWithGoogle?.();
+    setGoogleLoading(false);
+    if (success) onAuthenticated?.();
+  };
 
   const handleSubmit = async () => {
     if (!acceptedTerms) {
@@ -63,8 +72,10 @@ export default function SignUp({
           <OutlinedButton
             label="Continuar com Google"
             accessibilityLabel="Continuar com Google"
-            disabled
-            onPress={() => undefined}
+            icon={<GoogleLogo size={20} />}
+            loading={googleLoading}
+            disabled={state.loading}
+            onPress={() => void handleGoogleSignIn()}
           />
 
           <View accessibilityRole="none" style={styles.divider}>

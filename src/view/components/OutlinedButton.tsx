@@ -1,5 +1,5 @@
-import { useMemo } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, Text } from "react-native";
+import { useMemo, type ReactNode } from "react";
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 
@@ -10,6 +10,8 @@ export type OutlinedButtonProps = {
   disabled?: boolean;
   loadingLabel?: string;
   accessibilityLabel?: string;
+  /** Ícone exibido à esquerda do rótulo (ex.: GoogleLogo). */
+  icon?: ReactNode;
 };
 
 /**
@@ -23,6 +25,7 @@ export function OutlinedButton({
   disabled = false,
   loadingLabel,
   accessibilityLabel,
+  icon,
 }: OutlinedButtonProps) {
   const isDisabled = disabled || loading;
   const { colors } = useTheme();
@@ -39,7 +42,10 @@ export function OutlinedButton({
       {loading ? (
         <ActivityIndicator color={colors.action} accessibilityLabel={loadingLabel ?? label} />
       ) : (
-        <Text style={[styles.label, isDisabled && styles.labelDisabled]}>{label}</Text>
+        <View style={styles.contentRow}>
+          {icon}
+          <Text style={[styles.label, isDisabled && styles.labelDisabled]}>{label}</Text>
+        </View>
       )}
     </Pressable>
   );
@@ -57,6 +63,12 @@ function createStyles(colors: ColorPalette) {
       borderColor: colors.m3.outlineVariant,
       backgroundColor: "transparent",
       paddingHorizontal: tokens.spacing[24],
+    },
+    contentRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: tokens.spacing[12],
     },
     disabled: { borderColor: colors.disabledBackground },
     label: {

@@ -145,6 +145,11 @@ export const StyleSheet = {
   },
 };
 
+/** Volte físico do Android: as telas registram um listener; aqui o evento nunca é disparado. */
+export const BackHandler = {
+  addEventListener: (_type: string, _handler: () => boolean) => ({ remove: () => {} }),
+};
+
 export const AccessibilityInfo = {
   isScreenReaderEnabled: () => Promise.resolve(false),
   addEventListener: () => ({ remove: () => {} }),
