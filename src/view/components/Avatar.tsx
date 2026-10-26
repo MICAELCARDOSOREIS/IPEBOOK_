@@ -10,8 +10,17 @@ export type AvatarProps = {
 };
 
 function initials(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  return parts.slice(0, 2).map((part) => part[0]).join("").toUpperCase();
+  // Considera apenas palavras iniciadas por letra, ignorando tokens como "#4426" que
+  // produziriam iniciais quebradas (ex.: "U#").
+  const parts = name
+    .trim()
+    .split(/\s+/)
+    .filter((part) => /\p{L}/u.test(part.charAt(0) || ""));
+  if (parts.length === 0) {
+    const fallback = name.match(/[\p{L}\p{N}]/u);
+    return fallback ? fallback[0].toUpperCase() : "";
+  }
+  return parts.slice(0, 2).map((part) => part.charAt(0)).join("").toUpperCase();
 }
 
 /** Avatar do design system (avatar.md): foto quando houver, iniciais quando não. */
