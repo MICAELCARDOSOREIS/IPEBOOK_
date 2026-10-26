@@ -480,8 +480,8 @@ function createStyles(colors: ColorPalette) {
       fontSize: 13,
       lineHeight: 18,
       fontFamily: fontFamily.medium,
-      // Figma `07.01`: rótulo de seção em `on-surface-variant`, não em verde.
-      color: colors.m3.onSurfaceVariant,
+      // Figma `07.01` (conferido em 2026-10-26, Spec 076): rótulo de seção na cor primária.
+      color: colors.m3.primary,
       fontWeight: "500",
     },
     // Figma `07.01`: as linhas de menu ficam direto no fundo da página, sem cartão, borda nem

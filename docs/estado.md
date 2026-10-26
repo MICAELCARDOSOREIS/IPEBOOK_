@@ -2,7 +2,9 @@
 
 Documento consolidado de continuidade técnica e produto do Ipebook (Piripiri, PI).
 
-Conferência atual: **2026-10-26** (75 specs e 64 ADRs numerados, 174 arquivos e 1.278 testes automatizados 100% passando).
+Conferência atual: **2026-10-26** (76 specs e 64 ADRs numerados, 176 arquivos e 1.285 testes automatizados 100% passando).
+
+**Aba Conversas como lista de conversas e rótulos do perfil (2026-10-26, Spec 076):** o destino "Conversas" (`/meus-pedidos`) deixou de abrir "Meus pedidos" e passou a listar as negociações enviadas e recebidas (sem recusadas) no padrão do Figma `06.01`/`06.09`: avatar, nome da outra pessoa, última mensagem do chat ("Você: …" quando minha), horário relativo e "Sobre <livro>"; pendentes mostram "Proposta recebida"/"Aguardando resposta". Novo `useConversationsViewModel` (reaproveita `useRequestList`, agora genérico) e `src/view/conversations/conversations.tsx`. "Atividade"/"Conta" do Meu perfil passaram à cor primária, como no `07.01`. Limitação: uma consulta de mensagens por negociação aceita. Validado em 1.285 testes e no Galaxy A16.
 
 **Estante no padrão do Figma `05.04`–`05.08` (2026-10-26, Spec 075):** a aba Estante ganhou cabeçalho "Estante" com subtítulo e "+", cartões de resumo por modalidade, seletor de abas por plataforma (*segmented buttons* M3 no Android, controle segmentado do Figma no iPhone) com distintivo de propostas em aberto, cartão "Precisa da sua atenção" com "Ver proposta", lista de anúncios em cartão e estados vazios de Propostas e Concluídos com "Ver meus anúncios". Sem "Recusar" no cartão nem edição em lote; o terceiro cartão conta anúncios para doar. Validado em 1.278 testes e no Galaxy A16; iPhone verificado só por teste.
 
