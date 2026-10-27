@@ -56,4 +56,12 @@ describe("ExpoImagePickerService (Spec 087)", () => {
     expect(manipulator.context.resize).not.toHaveBeenCalled();
     expect(saveAsync).toHaveBeenCalledWith({ compress: 0.7, format: "jpeg" });
   });
+
+  it("usa a proporção pedida no recorte da capa (5:8) e 1:1 por padrão (Spec 092)", async () => {
+    picker.launchImageLibraryAsync.mockResolvedValue({ canceled: false, assets: [{ uri: "file:///a.jpg", width: 800, height: 800 }] });
+    await new ExpoImagePickerService().pickImage("library", [5, 8]);
+    expect(picker.launchImageLibraryAsync).toHaveBeenLastCalledWith(expect.objectContaining({ aspect: [5, 8], allowsEditing: true }));
+    await new ExpoImagePickerService().pickSquareImage("library");
+    expect(picker.launchImageLibraryAsync).toHaveBeenLastCalledWith(expect.objectContaining({ aspect: [1, 1] }));
+  });
 });

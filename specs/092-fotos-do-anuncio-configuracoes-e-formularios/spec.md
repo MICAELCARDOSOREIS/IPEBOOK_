@@ -11,4 +11,4 @@ Fechar lacunas de usabilidade encontradas na revisão das telas restantes.
 5. **Encontro**: opção selecionada usa o ícone de check, não o caractere "✓".
 
 ## Validação
-`npm run validate`: cobertura de ramos 80,03 % (limite 80 %). Testes novos: caso de uso e viewmodel de foto do anúncio, etapa 2, `TextField`, Configurações, tela "Denunciar pessoa", folha de segurança, `pushOnce`. **Pendente conferir no Galaxy A16** (câmera, galeria e envio reais).
+`npm run validate`: cobertura de ramos 80,03 % (limite 80 %). Testes novos: caso de uso e viewmodel de foto do anúncio, etapa 2, `TextField`, Configurações, tela "Denunciar pessoa", folha de segurança, `pushOnce`. Conferido no Galaxy A16: galeria → recorte 5:8 → envio (JPEG de ~100 KB em `<pessoa>/anuncio/`) → pré-visualização no espaço da capa. A leitura do arquivo no nativo passou a usar `require("expo-file-system")` síncrono (o `import()` dinâmico quebrava no Expo Go com "Requiring unknown module"). **Pendente conferir a câmera** (precisa tirar a foto no aparelho).
