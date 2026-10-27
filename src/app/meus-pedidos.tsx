@@ -8,6 +8,7 @@ export default function MeusPedidosRoute() {
       onRequireSignIn={() => replaceOnce("/entrar")}
       onOpenChat={(id) => pushOnce(`/conversa/${id}` as never)}
       onOpenNegotiation={(id) => pushOnce(`/negociacao/${id}`)}
+      onReportListing={(id) => pushOnce(`/denunciar/${id}`)}
       onOpenReceivedRequests={() => pushOnce("/pedidos-recebidos")}
       onOpenListing={(id) => pushOnce(`/livro/${id}`)}
       onExplore={() => pushOnce("/pesquisa")}

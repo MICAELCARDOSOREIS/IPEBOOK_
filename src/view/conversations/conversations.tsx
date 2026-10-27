@@ -17,6 +17,8 @@ import { Avatar } from "@/view/components/Avatar";
 import { Dialog } from "@/view/components/Dialog";
 import { ErrorState } from "@/view/components/ErrorState";
 import { FilledButton } from "@/view/components/FilledButton";
+import { BookCover } from "@/view/components/BookCover";
+import { Tag } from "@/view/components/Tag";
 import { LoadingState } from "@/view/components/LoadingState";
 import { OfflineState } from "@/view/components/OfflineState";
 
@@ -26,6 +28,8 @@ export type ConversationsProps = {
   onOpenChat?: (requestId: string) => void;
   /** "Combinar" dentro do chat embutido da web larga. */
   onOpenNegotiation?: (requestId: string) => void;
+  /** "Denunciar" do painel "Sobre a troca" (web larga). */
+  onReportListing?: (listingId: string) => void;
   /** Proposta recebida pendente: abre os pedidos recebidos para aceitar ou recusar. */
   onOpenReceivedRequests?: () => void;
   /** Pedido enviado pendente: volta ao detalhe do livro. */
@@ -39,6 +43,7 @@ export function Conversations({
   sessionUserId,
   onOpenChat,
   onOpenNegotiation,
+  onReportListing,
   onOpenReceivedRequests,
   onOpenListing,
   onExplore,
@@ -70,6 +75,8 @@ export function Conversations({
 
   // Web larga (Figma `06.01`): a conversa abre ao lado da lista, sem trocar de rota.
   const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  const selectedItem = state.items.find((item) => item.requestId === selectedId) ?? null;
 
   const open = (item: ConversationItem) => {
     if (item.kind === "accepted" && wideWeb) setSelectedId(item.requestId);
@@ -178,6 +185,28 @@ export function Conversations({
         <View style={styles.widePane} testID="conversation-pane">
           <Chat requestId={selectedId} sessionUserId={sessionUserId} onOpenNegotiation={onOpenNegotiation} />
         </View>
+      ) : null}
+      {wideWeb && selectedItem ? (
+        <View style={styles.aboutPane} testID="conversation-about">
+          <Text accessibilityRole="header" style={styles.aboutTitle}>{`Sobre ${selectedItem.listing.modality === "trade" ? "a troca" : selectedItem.listing.modality === "donation" ? "a doação" : "a compra"}`}</Text>
+          <View style={styles.aboutBook}>
+            <BookCover id={selectedItem.listing.id} title={selectedItem.listing.title} photoUrl={selectedItem.listing.photoUrl} variant="list" />
+            <View style={styles.aboutBookText}>
+              <Text style={styles.aboutBookTitle} numberOfLines={2}>{selectedItem.listing.title}</Text>
+              <Tag variant={selectedItem.listing.modality} />
+            </View>
+          </View>
+          <FilledButton label="Combinar encontro" onPress={() => onOpenNegotiation?.(selectedItem.requestId)} />
+          <View style={styles.aboutSafe}>
+            <Text style={styles.aboutSafeTitle}>Encontro seguro</Text>
+            <Text style={styles.aboutSafeBody}>Locais públicos e horário de movimento.</Text>
+          </View>
+          {onReportListing ? (
+            <Pressable accessibilityRole="button" accessibilityLabel="Denunciar anúncio" onPress={() => onReportListing(selectedItem.listing.id)}>
+              <Text style={styles.aboutReport}>Denunciar anúncio</Text>
+            </Pressable>
+          ) : null}
+        </View>
       ) : wideWeb && state.items.length > 0 ? (
         <View style={[styles.widePane, styles.widePaneEmpty]}>
           <Text style={styles.emptyBody}>Escolha uma conversa para ver as mensagens.</Text>
@@ -212,6 +241,15 @@ function createStyles(colors: ColorPalette) {
     widePanes: { flex: 1, flexDirection: "row", width: "100%", maxWidth: 1440, alignSelf: "center" },
     wideListPane: { width: 360, borderRightWidth: 1, borderRightColor: colors.m3.outlineVariant, backgroundColor: colors.m3.surfaceContainerLow },
     widePane: { flex: 1, minWidth: 0 },
+    aboutPane: { width: 320, gap: 16, padding: 20, borderLeftWidth: 1, borderLeftColor: colors.m3.outlineVariant, backgroundColor: colors.m3.surfaceContainerLow },
+    aboutTitle: { ...tokens.typography.titleMedium, color: colors.m3.onSurface },
+    aboutBook: { flexDirection: "row", alignItems: "center", gap: 12 },
+    aboutBookText: { flex: 1, gap: 6, alignItems: "flex-start" },
+    aboutBookTitle: { ...tokens.typography.labelLarge, color: colors.m3.onSurface },
+    aboutSafe: { gap: 2, padding: 16, borderRadius: tokens.radius.medium, backgroundColor: colors.m3.surfaceContainer },
+    aboutSafeTitle: { ...tokens.typography.labelLarge, color: colors.m3.onSurface },
+    aboutSafeBody: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
+    aboutReport: { ...tokens.typography.labelLarge, color: colors.error },
     widePaneEmpty: { alignItems: "center", justifyContent: "center" },
     emptyWide: { width: "100%", maxWidth: 420, alignSelf: "center" },
     title: {
