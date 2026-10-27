@@ -132,8 +132,8 @@ describe("tela de Detalhes da Negociação (ISO/IEC 25010 - Usabilidade e Acessi
     expect(screen.getByText("Machado de Assis")).toBeDefined();
     expect(screen.getByText("R$ 35,00")).toBeDefined();
     expect(screen.getByText("Ana Paula")).toBeDefined();
-    expect(screen.getByText("• Campus IFPI Piripiri")).toBeDefined();
-    expect(screen.getByText("• Praça da Bandeira")).toBeDefined();
+    expect(screen.getByText("Campus IFPI Piripiri")).toBeDefined();
+    expect(screen.getByText("Praça da Bandeira")).toBeDefined();
     expect(screen.getByText("Rodovia PI-112, Km 01, Piripiri, PI")).toBeDefined();
 
     const bookCard = screen.getByRole("button", {
@@ -157,6 +157,24 @@ describe("tela de Detalhes da Negociação (ISO/IEC 25010 - Usabilidade e Acessi
     expect(
       screen.getByText("Depois do encontro e da entrega do livro, volte aqui para concluir e avaliar."),
     ).toBeDefined();
+    // Spec 084: antes do encontro, sem botão principal de conclusão; só o atalho discreto.
+    expect(screen.queryByLabelText("Concluir negociação e avaliar")).toBeNull();
+    expect(screen.getByRole("button", { name: "Já fizemos a entrega" })).toBeDefined();
+  });
+
+  it("depois do encontro mostra o botão principal Concluir e avaliar (Spec 084)", async () => {
+    mockedMeeting = {
+      id: "m1", requestId: "req-1", pointName: "Praça da Bandeira (Centro)",
+      scheduledAt: "2020-01-01T15:00:00.000Z", proposedBy: "comprador-1", status: "confirmed",
+    };
+    mockViewModel({ detail: fakeDetail, loading: false, error: null });
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<RequestDetail requestId="req-1" sessionUserId="vendedor-1" />);
+    });
+    expect(screen.getByLabelText("Concluir negociação e avaliar")).toBeDefined();
+    expect(screen.queryByRole("button", { name: "Já fizemos a entrega" })).toBeNull();
+    mockedMeeting = null;
   });
 
   it("convite da outra pessoa mostra Sua vez no topo (Spec 080)", async () => {
