@@ -14,6 +14,8 @@ export type InviteFriendsState = {
 };
 
 export type InviteFriendsActions = {
+  /** Captura a imagem do convite (`capture` devolve o arquivo PNG) e abre a folha de compartilhamento (Spec 092). */
+  shareImage: (capture: () => Promise<string>) => Promise<void>;
   shareToWhatsApp: () => Promise<void>;
   shareNative: () => Promise<void>;
   copyLink: () => Promise<void>;
@@ -23,11 +25,27 @@ export type InviteFriendsActions = {
 const GENERIC_ERROR = "Não foi possível compartilhar o convite. Tente novamente.";
 const DEFAULT_APP_URL = "https://ipebook.app";
 
+/** Abre a folha de compartilhamento do sistema com a imagem; `false` quando o aparelho não oferece. */
+export type ShareImageFile = (uri: string) => Promise<boolean>;
+
+/**
+ * `require` síncrono dentro da função: o `import()` dinâmico gera um pacote assíncrono que o Expo Go às
+ * vezes não encontra ("Requiring unknown module"), como aconteceu com o `expo-file-system`.
+ */
+const defaultShareImageFile: ShareImageFile = async (uri) => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const Sharing = require("expo-sharing") as typeof import("expo-sharing");
+  if (!(await Sharing.isAvailableAsync())) return false;
+  await Sharing.shareAsync(uri, { mimeType: "image/png", dialogTitle: "Convidar amigos para o IpêBook" });
+  return true;
+};
+
 type WebNavigatorWithShare = Navigator & { share?: (data: { text?: string; url?: string }) => Promise<void> };
 
 export function useInviteFriendsViewModel(
   useCases: IShareUseCases = shareUseCases,
   appUrl: string = DEFAULT_APP_URL,
+  shareImageFile: ShareImageFile = defaultShareImageFile,
 ): [InviteFriendsState, InviteFriendsActions] {
   const message = useCases.buildInviteMessage(appUrl);
   const [state, setState] = useState<InviteFriendsState>({
@@ -38,6 +56,7 @@ export function useInviteFriendsViewModel(
     inviteUrl: appUrl,
   });
   const active = useRef(true);
+  const busy = useRef(false);
 
   useEffect(() => {
     active.current = true;
@@ -45,6 +64,31 @@ export function useInviteFriendsViewModel(
       active.current = false;
     };
   }, []);
+
+  const shareImage = useCallback(
+    async (capture: () => Promise<string>) => {
+      if (busy.current) return;
+      busy.current = true;
+      setState((prev) => ({ ...prev, sharing: true, error: null }));
+      try {
+        // Na web não há arquivo para a folha do sistema: cai no texto com link.
+        const shared = Platform.OS === "web" ? false : await shareImageFile(await capture());
+        if (!shared) await Share.share({ message });
+        if (active.current) setState((prev) => ({ ...prev, sharing: false, linkCopied: false, error: null }));
+      } catch (error) {
+        if (active.current) {
+          setState((prev) => ({
+            ...prev,
+            sharing: false,
+            error: error instanceof DomainError ? error.message : GENERIC_ERROR,
+          }));
+        }
+      } finally {
+        busy.current = false;
+      }
+    },
+    [message, shareImageFile],
+  );
 
   const shareToWhatsApp = useCallback(async () => {
     setState((prev) => ({ ...prev, sharing: true, error: null }));
@@ -131,5 +175,5 @@ export function useInviteFriendsViewModel(
     if (active.current) setState((prev) => ({ ...prev, linkCopied: false }));
   }, []);
 
-  return [state, { shareToWhatsApp, shareNative, copyLink, dismissLinkCopied }];
+  return [state, { shareImage, shareToWhatsApp, shareNative, copyLink, dismissLinkCopied }];
 }
