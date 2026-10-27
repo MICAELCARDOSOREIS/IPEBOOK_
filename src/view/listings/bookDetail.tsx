@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
@@ -216,7 +216,22 @@ export default function BookDetail({
                   <BookCover id={book.id} title={book.title} author={book.author} photoUrl={book.photoUrl} variant="detail" />
                 </View>
               )}
-              {photos.length > 1 ? (
+              {photos.length > 1 && wideWeb ? (
+                <View style={styles.thumbRow} accessibilityLabel={`${photos.length} fotos`}>
+                  {photos.map((url, idx) => (
+                    <Pressable
+                      key={`${url}-${idx}`}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Ver foto ${idx + 1} em tela cheia`}
+                      onPress={() => setGalleryVisible(true)}
+                      style={[styles.thumb, idx === 0 && styles.thumbActive]}
+                    >
+                      <Image source={{ uri: url }} style={styles.thumbImage} resizeMode="cover" accessible={false} />
+                    </Pressable>
+                  ))}
+                </View>
+              ) : null}
+              {photos.length > 1 && !wideWeb ? (
                 <View style={styles.photoDots} accessibilityLabel={`${photos.length} fotos`}>
                   {photos.map((_, idx) => (
                     <View key={idx} style={[styles.dot, idx === 0 && styles.dotActive]} />
@@ -448,6 +463,10 @@ function createStyles(colors: ColorPalette) {
       shadowOffset: { width: 0, height: 6 },
       elevation: 8,
     },
+    thumbRow: { flexDirection: "row", gap: 12, marginTop: tokens.spacing[16] },
+    thumb: { width: 56, height: 72, borderRadius: 8, overflow: "hidden", borderWidth: 2, borderColor: "transparent", backgroundColor: colors.m3.surfaceContainerLowest },
+    thumbActive: { borderColor: colors.m3.primary },
+    thumbImage: { width: "100%", height: "100%" },
     photoDots: {
       flexDirection: "row",
       alignItems: "center",
