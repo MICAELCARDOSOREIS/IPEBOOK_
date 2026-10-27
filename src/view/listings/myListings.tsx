@@ -149,6 +149,29 @@ export function MyListings({
           />
         ) : (
           <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+            {/* Banner de incentivo à circulação na web larga (Figma 05.01) */}
+            {wideWeb && onNavigateToCreateListing ? (
+              <View style={styles.webExchangeBanner} testID="shelf-exchange-banner">
+                <View style={styles.webExchangeBannerIconBox}>
+                  <AppIcon name="swap" size={28} color={colors.m3.onTertiaryContainer} />
+                </View>
+                <View style={styles.webExchangeBannerTextBox}>
+                  <Text style={styles.webExchangeBannerTitle}>Quer fazer seus livros circularem?</Text>
+                  <Text style={styles.webExchangeBannerSubtitle}>
+                    Tem livros parados na estante? Anuncie para troca, venda acessível ou doação para leitores de Piripiri.
+                  </Text>
+                </View>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Anunciar novo livro na estante"
+                  onPress={onNavigateToCreateListing}
+                  style={styles.webExchangeBannerButton}
+                >
+                  <Text style={styles.webExchangeBannerButtonText}>Anunciar livro</Text>
+                </Pressable>
+              </View>
+            ) : null}
+
             {/* Resumo por modalidade */}
             <View style={styles.statsRow}>
               {stats.map((stat) => (
@@ -457,6 +480,51 @@ function createStyles(colors: ColorPalette) {
     contentWide: { maxWidth: 1440, paddingHorizontal: 80 },
     addButtonWide: { height: 52, paddingHorizontal: 32, borderRadius: tokens.radius.full, alignItems: "center", justifyContent: "center", backgroundColor: colors.m3.primary },
     addButtonWideText: { ...tokens.typography.labelLarge, color: colors.m3.onPrimary },
+    webExchangeBanner: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[16],
+      backgroundColor: colors.m3.tertiaryContainer,
+      borderRadius: 16,
+      padding: tokens.spacing[20],
+      marginBottom: tokens.spacing[8],
+    },
+    webExchangeBannerIconBox: {
+      width: 48,
+      height: 48,
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.m3.surfaceContainerLowest,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    webExchangeBannerTextBox: {
+      flex: 1,
+      gap: tokens.spacing[4],
+    },
+    webExchangeBannerTitle: {
+      fontFamily: fontFamily.brand,
+      fontSize: 18,
+      lineHeight: 24,
+      fontWeight: "700",
+      color: colors.m3.onTertiaryContainer,
+    },
+    webExchangeBannerSubtitle: {
+      ...tokens.typography.bodyMedium,
+      color: colors.m3.onTertiaryContainer,
+    },
+    webExchangeBannerButton: {
+      height: 44,
+      paddingHorizontal: tokens.spacing[20],
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.m3.primary,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    webExchangeBannerButtonText: {
+      ...tokens.typography.labelLarge,
+      color: colors.m3.onPrimary,
+      fontWeight: "600",
+    },
     // Folga para o último cartão não ficar escondido atrás do FAB.
     scroll: { paddingBottom: 96, gap: tokens.spacing[16] },
     statsRow: { flexDirection: "row", gap: tokens.spacing[8] },
