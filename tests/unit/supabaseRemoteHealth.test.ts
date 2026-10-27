@@ -307,8 +307,8 @@ describe('Diagnóstico de Saúde e Migrações do Supabase Remoto (Spec 049 / AD
       };
 
       const resultado = reconciliarMigracoesLocais('supabase/migrations', contextoDiagnostico);
-      expect(resultado.total).toBe(21);
-      expect(resultado.aplicadas).toBe(21);
+      expect(resultado.total).toBe(22);
+      expect(resultado.aplicadas).toBe(22);
       expect(resultado.pendentes).toBe(0);
       expect(resultado.migracoes.every((m: any) => m.status === 'APLICADA')).toBe(true);
     });
@@ -340,9 +340,9 @@ describe('Diagnóstico de Saúde e Migrações do Supabase Remoto (Spec 049 / AD
       };
 
       const resultado = reconciliarMigracoesLocais('supabase/migrations', contextoParcial);
-      expect(resultado.total).toBe(21);
+      expect(resultado.total).toBe(22);
       expect(resultado.aplicadas).toBe(14);
-      expect(resultado.pendentes).toBe(7);
+      expect(resultado.pendentes).toBe(8);
 
       const pendentes = resultado.migracoes.filter((m: any) => m.status === 'PENDENTE');
       const arquivosPendentes = pendentes.map((m: any) => m.arquivo);
@@ -353,6 +353,7 @@ describe('Diagnóstico de Saúde e Migrações do Supabase Remoto (Spec 049 / AD
       expect(arquivosPendentes).toContain('202610220001_encontros.sql');
       expect(arquivosPendentes).toContain('202610230002_bloqueio_usuarios.sql');
       expect(arquivosPendentes).toContain('202610240001_mensagens_negociacao.sql');
+      expect(arquivosPendentes).toContain('202610260001_push_token_preferencias.sql');
     });
   });
 
@@ -399,7 +400,7 @@ describe('Diagnóstico de Saúde e Migrações do Supabase Remoto (Spec 049 / AD
       const parsed = JSON.parse(relatorioJson);
       expect(parsed.ok).toBe(true);
       expect(parsed.url).toBe('https://projeto-vitest.supabase.co');
-      expect(parsed.migracoes.total).toBe(21);
+      expect(parsed.migracoes.total).toBe(22);
     });
 
     it('formata adequadamente falhas e pendências detectadas', async () => {
