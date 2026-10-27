@@ -15,6 +15,7 @@ import { BookCover } from "@/view/components/BookCover";
 import { IconBadge } from "@/view/components/IconBadge";
 import { Tag } from "@/view/components/Tag";
 import { TopAppBar } from "@/view/components/TopAppBar";
+import { Avatar } from "@/view/components/Avatar";
 import { AppIcon } from "@/view/components/AppIcon";
 import { NegotiationRatingModal } from "@/view/requests/NegotiationRatingModal";
 import { useNegotiationRatingViewModel } from "@/viewmodel/useNegotiationRatingViewModel";
@@ -83,6 +84,7 @@ export function RequestDetail({
     { label: meetingConfirmed ? "Encontro combinado" : "Combinar encontro", done: meetingConfirmed || completed },
     { label: "Concluída", done: completed },
   ];
+  const currentStep = progress.findIndex((item) => !item.done);
 
   async function handleOpenMap(point: { name: string; address: string }) {
     setMapErrors((previous) => {
@@ -142,19 +144,18 @@ export function RequestDetail({
               <Text style={styles.heroHeadline}>
                 {completed ? "Livro entregue. Boa leitura!" : "Seu próximo capítulo está perto."}
               </Text>
-              <View style={styles.successBanner}>
-                <IconBadge icon="check" tone="action" />
-                <View style={styles.bannerTextContainer}>
-                  <Text style={styles.successTitle}>
-                    {completed ? "Negociação concluída" : "Negociação aceita!"}
-                  </Text>
-                  <Text style={styles.successSubtitle}>
-                    {completed
-                      ? "Obrigado por avaliar. Isso ajuda a comunidade a confiar."
-                      : "O livro está reservado para esta negociação."}
-                  </Text>
+              {/* Aceita: a etapa "Aceita" já informa (Spec 083); o aviso fica só para a conclusão. */}
+              {completed ? (
+                <View style={styles.successBanner}>
+                  <IconBadge icon="check" tone="action" />
+                  <View style={styles.bannerTextContainer}>
+                    <Text style={styles.successTitle}>Negociação concluída</Text>
+                    <Text style={styles.successSubtitle}>
+                      Obrigado por avaliar. Isso ajuda a comunidade a confiar.
+                    </Text>
+                  </View>
                 </View>
-              </View>
+              ) : null}
 
               {/* Onde a negociação está: aceita → encontro combinado → concluída. */}
               <View
@@ -163,20 +164,27 @@ export function RequestDetail({
                 accessibilityLabel={`Andamento: ${progress.filter((item) => item.done).length} de ${progress.length} etapas. ${progress.find((item) => !item.done)?.label ?? "Tudo concluído"}`}
                 style={styles.progressRow}
               >
-                {progress.map((item, index) => (
-                  <View key={item.label} style={styles.progressItem}>
-                    <View style={[styles.progressDot, item.done && styles.progressDotDone]}>
+                {progress.map((item, index) => {
+                  const current = index === currentStep;
+                  return (
+                  <View
+                    key={item.label}
+                    accessibilityLabel={current ? `Etapa atual: ${item.label}` : undefined}
+                    style={styles.progressItem}
+                  >
+                    <View style={[styles.progressDot, item.done && styles.progressDotDone, current && styles.progressDotCurrent]}>
                       {item.done ? (
                         <AppIcon name="check" size={14} color={colors.surface} />
                       ) : (
-                        <Text style={styles.progressNumber}>{index + 1}</Text>
+                        <Text style={[styles.progressNumber, current && styles.progressNumberCurrent]}>{index + 1}</Text>
                       )}
                     </View>
-                    <Text style={[styles.progressLabel, item.done && styles.progressLabelDone]}>
+                    <Text style={[styles.progressLabel, item.done && styles.progressLabelDone, current && styles.progressLabelCurrent]}>
                       {item.label}
                     </Text>
                   </View>
-                ))}
+                  );
+                })}
               </View>
               {awaitingMyConfirmation && !completed ? (
                 <View accessibilityRole="alert" style={styles.yourTurn}>
@@ -211,33 +219,6 @@ export function RequestDetail({
                 </View>
               </Pressable>
 
-              <View style={styles.card}>
-                <View style={styles.cardHeaderRow}>
-                  <IconBadge icon="person" tone="neutral" />
-                  <Text accessibilityRole="header" style={styles.sectionHeader}>
-                    Participantes
-                  </Text>
-                </View>
-                <Text style={styles.bodyText}>
-                  {detail.isOwner ? "Pessoa interessada: " : "Pessoa que anunciou: "}
-                  <Text style={styles.highlightText}>
-                    {detail.counterpartName ?? COMMUNITY_MEMBER}
-                  </Text>
-                </Text>
-
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={`Abrir conversa com ${detail.counterpartName ?? COMMUNITY_MEMBER}`}
-                  onPress={() => onOpenChat?.(requestId)}
-                  style={styles.chatButton}
-                >
-                  <AppIcon name="chat" size={18} color={colors.action} />
-                  <Text style={styles.chatButtonText}>
-                    Abrir conversa com {detail.counterpartName ?? COMMUNITY_MEMBER}
-                  </Text>
-                </Pressable>
-              </View>
-
               <MeetingCard
                 requestId={requestId}
                 sessionUserId={sessionUserId}
@@ -246,6 +227,26 @@ export function RequestDetail({
                 onScheduleMeeting={onScheduleMeeting}
                 onMeetingChange={handleMeetingChange}
               />
+
+              {/* Pessoa da negociação em uma linha (Spec 083), no lugar do cartão "Participantes" */}
+              <View style={styles.personRow}>
+                <Avatar name={detail.counterpartName ?? COMMUNITY_MEMBER} size={44} />
+                <View style={styles.personText}>
+                  <Text style={styles.personName} numberOfLines={1}>
+                    {detail.counterpartName ?? COMMUNITY_MEMBER}
+                  </Text>
+                  <Text style={styles.personRole}>{detail.isOwner ? "Quer o livro" : "Anunciou o livro"}</Text>
+                </View>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`Conversar com ${detail.counterpartName ?? COMMUNITY_MEMBER}`}
+                  onPress={() => onOpenChat?.(requestId)}
+                  style={styles.chatButton}
+                >
+                  <AppIcon name="chat" size={18} color={colors.m3.onSecondaryContainer} />
+                  <Text style={styles.chatButtonText}>Conversar</Text>
+                </Pressable>
+              </View>
 
               {/* Card de Conclusão e Avaliação (Spec 063 / Figma 06.07, 06.08, 06.21) */}
               <View style={styles.card} testID="negotiation-completion-card">
@@ -433,6 +434,10 @@ function createStyles(colors: ColorPalette) {
     progressNumber: { ...tokens.typography.labelMedium, color: colors.m3.onSurfaceVariant },
     progressLabel: { ...tokens.typography.labelMedium, color: colors.m3.onSurfaceVariant, textAlign: "center" },
     progressLabelDone: { color: colors.text },
+    // Etapa em andamento (Spec 083): contorno e número verdes, rótulo em negrito.
+    progressDotCurrent: { borderColor: colors.action, borderWidth: 2 },
+    progressNumberCurrent: { color: colors.action, fontWeight: "700" },
+    progressLabelCurrent: { color: colors.action, fontWeight: "700" },
     yourTurn: {
       flexDirection: "row",
       alignItems: "center",
@@ -484,9 +489,10 @@ function createStyles(colors: ColorPalette) {
     fontWeight: "600",
   },
   container: { gap: tokens.spacing[16] },
+  // Manchete menor (Spec 083) para a ação do momento caber acima da dobra.
   heroHeadline: {
-    fontSize: tokens.typography.displayLarge.fontSize,
-    lineHeight: tokens.typography.displayLarge.lineHeight,
+    fontSize: 24,
+    lineHeight: 30,
     fontFamily: tokens.typography.displayLarge.fontFamily,
     color: colors.text,
   },
@@ -569,24 +575,31 @@ function createStyles(colors: ColorPalette) {
     fontWeight: "700",
     color: colors.action,
   },
+  // Linha da pessoa (Spec 083): avatar, nome, papel e botão tonal "Conversar".
+  personRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: tokens.spacing[12],
+    padding: tokens.spacing[12],
+    borderRadius: 16,
+    backgroundColor: colors.m3.surfaceContainerLow,
+  },
+  personText: { flex: 1, gap: 2 },
+  personName: { ...tokens.typography.bodyLarge, fontWeight: "600", color: colors.m3.onSurface },
+  personRole: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
   chatButton: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    gap: tokens.spacing[8],
-    marginTop: tokens.spacing[12],
-    paddingVertical: tokens.spacing[8],
+    gap: tokens.spacing[6],
+    minHeight: 40,
     paddingHorizontal: tokens.spacing[16],
-    backgroundColor: colors.surface,
-    borderRadius: tokens.radius.medium,
-    borderWidth: 1,
-    borderColor: colors.action,
-    minHeight: tokens.accessibility.touchTarget,
+    borderRadius: tokens.radius.full,
+    backgroundColor: colors.m3.secondaryContainer,
   },
   chatButtonText: {
-    ...tokens.typography.bodyMedium,
+    ...tokens.typography.labelMedium,
     fontWeight: "600",
-    color: colors.action,
+    color: colors.m3.onSecondaryContainer,
   },
   pointList: { gap: tokens.spacing[12], paddingVertical: tokens.spacing[4] },
   pointCard: {

@@ -86,15 +86,29 @@ describe("tela de Detalhes da Negociação (ISO/IEC 25010 - Usabilidade e Acessi
     expect(screen.queryByText("comprador-1")).toBeNull();
   });
 
-  it("Abrir conversa leva à conversa em tela cheia (Spec 082, CA5)", async () => {
+  it("linha da pessoa com papel e Conversar abre a conversa (Spec 082 CA5, Spec 083 CA3)", async () => {
     mockViewModel({ detail: fakeDetail, loading: false, error: null });
     const onOpenChat = vi.fn();
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
       screen = await render(<RequestDetail requestId="req-1" sessionUserId="vendedor-1" onOpenChat={onOpenChat} />);
     });
-    await act(async () => { fireEvent.press(screen.getByLabelText(/^Abrir conversa com/)); });
+    expect(screen.queryByText("Participantes")).toBeNull();
+    expect(screen.getByText("Ana Paula")).toBeDefined();
+    expect(screen.getByText(fakeDetail.isOwner ? "Quer o livro" : "Anunciou o livro")).toBeDefined();
+    await act(async () => { fireEvent.press(screen.getByLabelText("Conversar com Ana Paula")); });
     expect(onOpenChat).toHaveBeenCalledWith("req-1");
+  });
+
+  it("destaca a etapa atual e mostra o encontro antes da pessoa (Spec 083, CA2/CA4)", async () => {
+    mockViewModel({ detail: fakeDetail, loading: false, error: null });
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<RequestDetail requestId="req-1" sessionUserId="vendedor-1" />);
+    });
+    expect(screen.getByLabelText("Etapa atual: Combinar encontro")).toBeDefined();
+    const order = screen.queryAllByText(/^(Combine o encontro|Conversar)$/).map((node) => node.props.children);
+    expect(order).toEqual(["Combine o encontro", "Conversar"]);
   });
 
   it("renderiza cabeçalho e informações completas do acordo", async () => {
@@ -113,7 +127,7 @@ describe("tela de Detalhes da Negociação (ISO/IEC 25010 - Usabilidade e Acessi
     });
 
     expect(screen.getByRole("header", { name: "Acompanhar encontro" })).toBeDefined();
-    expect(screen.getByText("Negociação aceita!")).toBeDefined();
+    expect(screen.queryByText("Negociação aceita!")).toBeNull();
     expect(screen.getByText("Memórias Póstumas")).toBeDefined();
     expect(screen.getByText("Machado de Assis")).toBeDefined();
     expect(screen.getByText("R$ 35,00")).toBeDefined();
