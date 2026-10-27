@@ -287,8 +287,11 @@ describe("Search (spec 006, US3/T019, Spec 028, Issue #93)", () => {
     expect(updateDraftFilters).toHaveBeenCalledWith({ category: "Literatura Brasileira" });
 
     expect(screen.getByText("Condição do livro")).toBeDefined();
-    await act(async () => { fireEvent.press(screen.getByLabelText("Somente bom estado")); });
+    await act(async () => { fireEvent.press(screen.getByLabelText("Bom estado")); });
     expect(updateDraftFilters).toHaveBeenCalledWith({ condition: "good" });
+
+    await act(async () => { fireEvent.press(screen.getByLabelText("Com marcas")); });
+    expect(updateDraftFilters).toHaveBeenCalledWith({ condition: "marked" });
 
     expect(screen.getByText("Preço")).toBeDefined();
     await act(async () => { fireEvent.press(screen.getByLabelText("Filtrar por Até R$ 20")); });
