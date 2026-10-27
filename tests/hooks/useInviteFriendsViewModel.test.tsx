@@ -140,7 +140,7 @@ describe("useInviteFriendsViewModel — imagem do convite (Spec 092)", () => {
     const capture = vi.fn().mockResolvedValue("file:///tmp/convite.png");
     await act(async () => { await hook.current[1].shareImage(capture); });
     expect(capture).toHaveBeenCalledTimes(1);
-    expect(shareFile).toHaveBeenCalledWith("file:///tmp/convite.png");
+    expect(shareFile).toHaveBeenCalledWith("file:///tmp/convite.png", "Convidar amigos para o IpêBook");
     expect(share).not.toHaveBeenCalled();
     expect(hook.current[0].sharing).toBe(false);
     expect(hook.current[0].error).toBeNull();

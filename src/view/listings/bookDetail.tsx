@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
@@ -6,10 +6,12 @@ import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useBookDetailViewModel } from "@/viewmodel/useBookDetailViewModel";
 import { usePublicProfileViewModel } from "@/viewmodel/usePublicProfileViewModel";
 import { useRequestNegotiationViewModel } from "@/viewmodel/useRequestNegotiationViewModel";
-import { useShareListingViewModel } from "@/viewmodel/useShareListingViewModel";
+import { SHARE_BASE_URL, useShareListingViewModel } from "@/viewmodel/useShareListingViewModel";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
+import { captureRef } from "react-native-view-shot";
 import { BookCover } from "@/view/components/BookCover";
+import { ListingShareCard } from "@/view/components/ListingShareCard";
 import { FilledButton } from "@/view/components/FilledButton";
 import { Snackbar } from "@/view/components/Snackbar";
 import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
@@ -94,6 +96,23 @@ export default function BookDetail({
   const [share, shareActions] = useShareListingViewModel();
   const book = state.book;
   const [galleryVisible, setGalleryVisible] = useState(false);
+  // Imagem de compartilhamento: o cartão fica fora da tela e é capturado em PNG depois que a capa carrega.
+  const shareCardRef = useRef<React.ComponentRef<typeof View>>(null);
+  const coverSettled = useRef(false);
+  const coverWaiters = useRef<Array<() => void>>([]);
+  const onCoverSettled = () => {
+    coverSettled.current = true;
+    coverWaiters.current.splice(0).forEach((resolve) => resolve());
+  };
+  const captureShareImage = async () => {
+    if (book?.photoUrl && !coverSettled.current) {
+      await new Promise<void>((resolve) => {
+        coverWaiters.current.push(resolve);
+        setTimeout(resolve, 2500);
+      });
+    }
+    return captureRef(shareCardRef, { format: "png", quality: 1, result: "tmpfile" });
+  };
   const photos = book ? [book.photoUrl, ...(book.photos ?? [])].filter((url): url is string => Boolean(url)) : [];
 
   const formattedPrice = useMemo(() => {
@@ -119,16 +138,15 @@ export default function BookDetail({
     <View style={[styles.bottomBar, wideWeb && styles.bottomBarWide]}>
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel="Compartilhar no WhatsApp"
+      accessibilityLabel="Compartilhar anúncio como imagem"
       accessibilityState={{ disabled: share.sharing }}
       disabled={share.sharing}
       onPress={() =>
-        void shareActions.shareToWhatsApp(book.id, {
-          title: book.title,
-          author: book.author,
-          modality: book.modality,
-          price: book.price,
-        })
+        void shareActions.shareImage(
+          book.id,
+          { title: book.title, author: book.author, modality: book.modality, price: book.price },
+          captureShareImage,
+        )
       }
       style={styles.tonalButton}
     >
@@ -338,6 +356,23 @@ export default function BookDetail({
         ) : null}
       </ScrollView>
 
+      {/* Cartão da imagem de compartilhamento: fora da tela e invisível ao leitor de tela, só para a captura. */}
+      {book ? (
+        <View
+          pointerEvents="none"
+          accessible={false}
+          importantForAccessibility="no-hide-descendants"
+          style={styles.offscreen}
+        >
+          <ListingShareCard
+            ref={shareCardRef}
+            book={book}
+            url={`${SHARE_BASE_URL}/livro/${book.id}`}
+            onCoverSettled={onCoverSettled}
+          />
+        </View>
+      ) : null}
+
       {/* 6. Barra fixa inferior: Compartilhar (tonal) + ação principal por modalidade */}
       {book && !state.loading && !wideWeb ? (
         <SafeAreaView edges={["bottom"]} style={styles.bottomBarContainer}>
@@ -416,6 +451,7 @@ const PRIMARY_ACTION_LABEL: Record<BookModality, string> = {
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
+    offscreen: { position: "absolute", left: -10000, top: 0 },
     page: { flex: 1, backgroundColor: colors.background },
     scrollContent: { paddingBottom: tokens.spacing[32] },
     // Web larga (Figma `03.01`): capa à esquerda e cartão de ações à direita, com 48 px entre as colunas.
