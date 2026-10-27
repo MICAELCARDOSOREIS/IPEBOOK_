@@ -15,8 +15,8 @@ import { OfflineState } from "@/view/components/OfflineState";
 
 export type ConversationsProps = {
   sessionUserId: string;
-  /** Negociação aceita: abre o chat (`06.02`). */
-  onOpenNegotiation?: (requestId: string) => void;
+  /** Negociação aceita: abre a conversa em tela cheia (`06.02`, Spec 082). */
+  onOpenChat?: (requestId: string) => void;
   /** Proposta recebida pendente: abre os pedidos recebidos para aceitar ou recusar. */
   onOpenReceivedRequests?: () => void;
   /** Pedido enviado pendente: volta ao detalhe do livro. */
@@ -28,7 +28,7 @@ export type ConversationsProps = {
 /** Figma `06.01 · Conversas` (`27:519`) e `06.09 · Conversas · vazio` (`254:5566`), Spec 076. */
 export function Conversations({
   sessionUserId,
-  onOpenNegotiation,
+  onOpenChat,
   onOpenReceivedRequests,
   onOpenListing,
   onExplore,
@@ -39,7 +39,7 @@ export function Conversations({
   const { isOnline } = useNetworkStatus();
 
   const open = (item: ConversationItem) => {
-    if (item.kind === "accepted") onOpenNegotiation?.(item.requestId);
+    if (item.kind === "accepted") onOpenChat?.(item.requestId);
     else if (item.kind === "pendingReceived") onOpenReceivedRequests?.();
     else onOpenListing?.(item.listing.id);
   };
@@ -62,13 +62,13 @@ export function Conversations({
           <View style={styles.emptyIcon}>
             <AppIcon name="chat" size={32} color={colors.m3.onSecondaryContainer} />
           </View>
-          <Text style={styles.emptyTitle}>Nenhuma conversa ainda.</Text>
+          <Text style={styles.emptyTitle}>Nenhuma conversa ainda</Text>
           <Text style={styles.emptyBody}>
-            Quando você pedir um livro ou alguém se interessar por um seu, a conversa aparece aqui.
+            Encontre um livro e converse com a pessoa para combinar os detalhes.
           </Text>
           {onExplore ? (
             <View style={styles.emptyAction}>
-              <FilledButton label="Explorar livros" onPress={onExplore} />
+              <FilledButton label="Encontrar um livro" onPress={onExplore} />
             </View>
           ) : null}
         </View>

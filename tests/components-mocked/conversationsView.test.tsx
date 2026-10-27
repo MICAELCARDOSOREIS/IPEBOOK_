@@ -35,12 +35,12 @@ describe("Conversations (Spec 076)", () => {
     { requestId: "r3", listing: listing("b3", "Iracema"), otherName: "Marina", preview: "Aguardando resposta", time: null, kind: "pendingSent" },
   ];
 
-  it("lista pessoa, prévia, horário e livro e leva ao destino de cada situação (CA4)", async () => {
+  it("lista pessoa, prévia, horário e livro; aceita abre a conversa (Spec 076 CA4, Spec 082 CA5)", async () => {
     setup({ items });
-    const onOpenNegotiation = vi.fn();
+    const onOpenChat = vi.fn();
     const onOpenReceivedRequests = vi.fn();
     const onOpenListing = vi.fn();
-    const screen = await renderView({ onOpenNegotiation, onOpenReceivedRequests, onOpenListing });
+    const screen = await renderView({ onOpenChat, onOpenReceivedRequests, onOpenListing });
 
     expect(screen.getByRole("header").props.children).toBe("Conversas");
     expect(screen.getByText("Ana Paula")).toBeDefined();
@@ -49,19 +49,20 @@ describe("Conversations (Spec 076)", () => {
     expect(screen.getByText("Sobre Dom Casmurro")).toBeDefined();
 
     await act(async () => { fireEvent.press(screen.getByText("Ana Paula")); });
-    expect(onOpenNegotiation).toHaveBeenCalledWith("r1");
+    expect(onOpenChat).toHaveBeenCalledWith("r1");
     await act(async () => { fireEvent.press(screen.getByText("Lucas")); });
     expect(onOpenReceivedRequests).toHaveBeenCalledTimes(1);
     await act(async () => { fireEvent.press(screen.getByText("Marina")); });
     expect(onOpenListing).toHaveBeenCalledWith("b3");
   });
 
-  it("mostra o estado vazio do 06.09 com Explorar livros (CA5)", async () => {
+  it("mostra o estado vazio do 06.09 com Encontrar um livro (Spec 082)", async () => {
     setup({ items: [] });
     const onExplore = vi.fn();
     const screen = await renderView({ onExplore });
-    expect(screen.getByText("Nenhuma conversa ainda.")).toBeDefined();
-    await act(async () => { fireEvent.press(screen.getByText("Explorar livros")); });
+    expect(screen.getByText("Nenhuma conversa ainda")).toBeDefined();
+    expect(screen.getByText("Encontre um livro e converse com a pessoa para combinar os detalhes.")).toBeDefined();
+    await act(async () => { fireEvent.press(screen.getByText("Encontrar um livro")); });
     expect(onExplore).toHaveBeenCalledTimes(1);
   });
 

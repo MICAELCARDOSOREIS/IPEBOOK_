@@ -2,7 +2,9 @@
 
 Documento consolidado de continuidade técnica e produto do Ipebook (Piripiri, PI).
 
-Conferência atual: **2026-10-26** (81 specs e 65 ADRs numerados, 185 arquivos e 1.364 testes automatizados 100% passando).
+Conferência atual: **2026-10-26** (82 specs e 65 ADRs numerados, 186 arquivos e 1.370 testes automatizados 100% passando).
+
+**Conversa em tela cheia (2026-10-26, Spec 082):** o chat deixou de ser modal dentro de "Acompanhar encontro" e virou a rota `/conversa/[id]` no padrão do Figma `06.02`: título com o nome da outra pessoa, cartão do livro com etiqueta da modalidade e "Combinar" (abre `/negociacao/[id]`), balões meus/da outra pessoa com horário "8h40", separadores "Hoje/Ontem/sáb, 24 out" (`src/viewmodel/chatTimeline.ts`), rolagem até a última mensagem, sugestões de primeira mensagem e "Reenviar" na falha. A aba Conversas e "Abrir conversa" levam à tela; o estado vazio segue o `06.09` ("Encontrar um livro"). `NegotiationChatModal` removido. Validado em 1.370 testes; conferência no aparelho pendente.
 
 **Refinos do acompanhamento do encontro (2026-10-26, Spec 080):** puxar para atualizar sem esconder o conteúdo, aviso "Sua vez" quando o convite da outra pessoa espera confirmação e pontos seguros recolhidos quando o encontro já está combinado. Validado em 1.299 testes; sem conferência em aparelho.
 
