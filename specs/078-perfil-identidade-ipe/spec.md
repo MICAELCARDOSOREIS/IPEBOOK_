@@ -43,3 +43,7 @@ Campos, validação, salvamento e navegação continuam iguais.
 - **Ícone do app**: `assets/icon.png`, ícone adaptativo do Android (frente transparente, fundo `#FCEFCB` e versão
   monocromática), `splash-icon.png`, `favicon.png` e `public/icone-192.png`/`icone-512.png` gerados a partir da
   mesma arte. O ícone só muda no aparelho num build nativo novo (EAS); no Expo Go aparece o ícone do Expo.
+- **Editar perfil em seções**: o formulário virou três cartões com ícone, título e legenda — "Foto do cartão"
+  (logo abaixo da pré-visualização), "Sobre você" (nome e bairro; o campo desabilitado "Cidade" saiu e
+  "Piripiri, PI" foi para a legenda) e "Contato para negociar" (cadeado, telefone e rede social, com o aviso
+  de privacidade como legenda).
