@@ -57,11 +57,12 @@ export function MyListingsListingsTab({
     return true;
   });
 
-  const filterChips: { key: ListingsFilter; label: string; a11y: string }[] = [
+  // Cada situação usa a cor da sua etiqueta (Disponível, Pausado, Reservado); "Todos" fica neutro.
+  const filterChips: { key: ListingsFilter; label: string; a11y: string; tone?: { background: string; text: string } }[] = [
     { key: "all", label: `Todos (${books.length})`, a11y: "Filtrar por Todos" },
-    { key: "active", label: `Ativos (${activeCount})`, a11y: "Filtrar por Ativos" },
-    { key: "paused", label: `Pausados (${pausedCount})`, a11y: "Filtrar por Pausados" },
-    { key: "reserved", label: `Reservados (${reservedCount})`, a11y: "Filtrar por Reservados" },
+    { key: "active", label: `Ativos (${activeCount})`, a11y: "Filtrar por Ativos", tone: { background: colors.soft, text: colors.action } },
+    { key: "paused", label: `Pausados (${pausedCount})`, a11y: "Filtrar por Pausados", tone: { background: colors.disabledBackground, text: colors.disabledText } },
+    { key: "reserved", label: `Reservados (${reservedCount})`, a11y: "Filtrar por Reservados", tone: colors.badge.reserved },
   ];
 
   return (
@@ -73,6 +74,7 @@ export function MyListingsListingsTab({
             key={chip.key}
             label={chip.label}
             accessibilityLabel={chip.a11y}
+            tone={chip.tone}
             selected={statusFilter === chip.key}
             onPress={() => onStatusFilterChange(chip.key)}
           />
