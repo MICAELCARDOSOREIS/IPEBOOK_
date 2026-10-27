@@ -2,6 +2,7 @@ import * as Linking from "expo-linking";
 import { useMemo, useState, useEffect } from "react";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useProfileViewModel } from "@/viewmodel/useProfileViewModel";
 import { useMyListingsViewModel } from "@/viewmodel/useMyListingsViewModel";
@@ -178,10 +179,12 @@ export default function ProfileHub({
     },
   ];
 
+  const wideWeb = useIsWideWeb();
+
   return (
     <SafeAreaView edges={["top", "left", "right"]} style={styles.page}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <View style={styles.content}>
+        <View style={[styles.content, wideWeb && styles.contentWide]}>
           {/* Título editorial da marca (Figma 07.01 nó 563:8321: Source Serif 4 Bold 34px, #58331F)
               com entrada de Configurações no topo (ADR 0060), liberada também para visitante */}
           <View style={styles.headerRow}>
@@ -382,6 +385,7 @@ function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     page: { flex: 1, backgroundColor: colors.background },
     scroll: { flexGrow: 1, paddingBottom: tokens.spacing[32] },
+    contentWide: { maxWidth: 960, paddingTop: tokens.spacing[32] },
     content: {
       width: "100%",
       maxWidth: 720,
