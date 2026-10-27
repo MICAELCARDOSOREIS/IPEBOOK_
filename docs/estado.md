@@ -2,7 +2,7 @@
 
 Documento consolidado de continuidade técnica e produto do Ipebook (Piripiri, PI).
 
-Conferência atual: **2026-10-26** (80 specs e 64 ADRs numerados, 178 arquivos e 1.299 testes automatizados 100% passando).
+Conferência atual: **2026-10-26** (80 specs e 64 ADRs numerados, 179 arquivos e 1.299 testes automatizados 100% passando).
 
 **Refinos do acompanhamento do encontro (2026-10-26, Spec 080):** puxar para atualizar sem esconder o conteúdo, aviso "Sua vez" quando o convite da outra pessoa espera confirmação e pontos seguros recolhidos quando o encontro já está combinado. Validado em 1.299 testes; sem conferência em aparelho.
 
