@@ -45,7 +45,7 @@ export default function DeleteAccount({
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <View style={styles.content}>
             <View style={styles.card}>
-              <IconBadge icon="check" tone="action" />
+              <IconBadge icon="check" tone="action" size="large" />
               <Text accessibilityRole="header" style={styles.successTitle}>
                 Conta excluída
               </Text>
@@ -70,7 +70,7 @@ export default function DeleteAccount({
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <View style={styles.content}>
             <View style={styles.card}>
-              <IconBadge icon="lock" tone="neutral" />
+              <IconBadge icon="lock" tone="neutral" size="large" />
               <Text accessibilityRole="header" style={styles.title}>
                 Sessão necessária
               </Text>

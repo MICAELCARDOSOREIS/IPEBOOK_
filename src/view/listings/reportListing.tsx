@@ -41,7 +41,7 @@ export default function ReportListing({
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <View style={styles.content}>
             <View style={styles.successCard}>
-              <IconBadge icon="check" tone="action" />
+              <IconBadge icon="check" tone="action" size="large" />
               <Text accessibilityRole="header" style={styles.successTitle}>
                 Denúncia enviada
               </Text>
@@ -66,7 +66,7 @@ export default function ReportListing({
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <View style={styles.content}>
             <View style={styles.authNotice}>
-              <IconBadge icon="flag" tone="neutral" />
+              <IconBadge icon="flag" tone="neutral" size="large" />
               <Text accessibilityRole="header" style={styles.title}>
                 Identificação necessária
               </Text>
