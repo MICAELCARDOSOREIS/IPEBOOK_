@@ -26,7 +26,7 @@ export function ReaderCard({ name, subtitle, photoUrl, eyebrow = "Cartão de lei
     <View accessible accessibilityLabel={`Cartão de leitor de ${name}`} style={styles.card}>
       <View style={styles.spine} />
       <View style={styles.mark}>
-        <IpeMark size={84} />
+        <IpeMark size={76} />
       </View>
       <View style={styles.avatarRing}>
         <Avatar name={name} photoUrl={photoUrl} size={64} />
@@ -66,13 +66,13 @@ function createStyles(colors: ColorPalette) {
       width: 8,
       backgroundColor: colors.ipe.trunk,
     },
-    mark: { position: "absolute", right: -6, bottom: -4, opacity: 0.9 },
+    mark: { position: "absolute", right: tokens.spacing[12], top: 0, bottom: 0, justifyContent: "center" },
     avatarRing: {
       padding: 3,
       borderRadius: tokens.radius.full,
       backgroundColor: colors.ipe.bloom,
     },
-    text: { flex: 1, gap: 2, paddingRight: 56 },
+    text: { flex: 1, gap: 2, paddingRight: 80 },
     eyebrow: {
       fontSize: 11,
       lineHeight: 16,
