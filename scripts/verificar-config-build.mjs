@@ -2,7 +2,7 @@
 // Verificação de prontidão da configuração nativa e de release do Ipebook (CA da Spec 074).
 // Falha com código 1 quando qualquer invariante de build estiver quebrado, para que o
 // `npm run validate` e a CI impeçam a integração. Não requer o Expo rodando: lê os arquivos.
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -33,6 +33,34 @@ function dimensoesPng(caminho) {
 const app = lerJson("app.json").expo;
 const manifest = lerJson("public/manifest.json");
 const eas = lerJson("eas.json");
+
+console.log("\x1b[36m▶ Publicação Web (rotas dinâmicas e cabeçalhos)\x1b[0m");
+/** Pastas de `src/app` que contêm um arquivo dinâmico `[param].tsx` (ex.: `livro/[id].tsx`). */
+function rotasDinamicas(dir = join(raiz, "src/app"), prefixo = "") {
+  const achadas = [];
+  for (const entrada of readdirSync(dir, { withFileTypes: true })) {
+    if (entrada.isDirectory()) {
+      achadas.push(...rotasDinamicas(join(dir, entrada.name), `${prefixo}/${entrada.name}`));
+    } else if (/^\[[A-Za-z]+\]\.tsx$/.test(entrada.name)) {
+      achadas.push(`${prefixo}/${entrada.name.replace(/\.tsx$/, "")}`);
+    }
+  }
+  return achadas;
+}
+const redirects = readFileSync(join(raiz, "public/_redirects"), "utf-8");
+for (const rota of rotasDinamicas()) {
+  conferir(
+    `Redirecionamento 200 para a rota dinâmica ${rota}`,
+    redirects.split("\n").some((linha) => linha.trim().endsWith(`${rota} 200`)),
+    `public/_redirects não tem regra "<prefixo>/* ${rota} 200"; abrir esse link direto na web daria 404.`,
+  );
+}
+const cabecalhos = readFileSync(join(raiz, "public/_headers"), "utf-8");
+conferir(
+  "Permissions-Policy libera a câmera do próprio site (leitor de ISBN)",
+  /Permissions-Policy:[^\n]*camera=\(self\)/.test(cabecalhos),
+  'public/_headers bloqueia a câmera (camera=()); o leitor de código de barras não funcionaria na web.',
+);
 
 console.log("\x1b[36m▶ Identidade do aplicativo (pré-requisito de qualquer build nativo)\x1b[0m");
 conferir(
