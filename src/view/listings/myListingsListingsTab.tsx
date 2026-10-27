@@ -4,6 +4,7 @@ import type { Book, BookModality, BookStatus } from "@/model/entities/book";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { formatPrice } from "@/view/formatPrice";
+import { Chip } from "@/view/components/Chip";
 import { FilledButton } from "@/view/components/FilledButton";
 import { IconBadge } from "@/view/components/IconBadge";
 import { ShelfRow } from "@/view/listings/shelfRow";
@@ -66,23 +67,16 @@ export function MyListingsListingsTab({
   return (
     <>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
-        {filterChips.map((chip) => {
-          const selected = statusFilter === chip.key;
-          return (
-            <Pressable
-              key={chip.key}
-              accessibilityRole="button"
-              accessibilityLabel={chip.a11y}
-              accessibilityState={{ selected }}
-              onPress={() => onStatusFilterChange(chip.key)}
-              style={[styles.filterChip, selected && styles.filterChipSelected]}
-            >
-              <Text style={[styles.filterChipText, selected && styles.filterChipTextSelected]}>
-                {chip.label}
-              </Text>
-            </Pressable>
-          );
-        })}
+        {/* Mesmo Chip do resto do app (Home, Explorar, filtros): raio, check e cores iguais. */}
+        {filterChips.map((chip) => (
+          <Chip
+            key={chip.key}
+            label={chip.label}
+            accessibilityLabel={chip.a11y}
+            selected={statusFilter === chip.key}
+            onPress={() => onStatusFilterChange(chip.key)}
+          />
+        ))}
       </ScrollView>
       {filteredBooks.length === 0 ? (
         <View style={styles.empty}>
@@ -125,28 +119,6 @@ function createStyles(colors: ColorPalette) {
       flexDirection: "row",
       gap: tokens.spacing[8],
       paddingBottom: tokens.spacing[8],
-    },
-    filterChip: {
-      minHeight: tokens.accessibility.touchTarget,
-      justifyContent: "center",
-      paddingHorizontal: tokens.spacing[12],
-      paddingVertical: tokens.spacing[6],
-      borderRadius: tokens.radius.full,
-      backgroundColor: colors.surface,
-      borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
-    },
-    filterChipSelected: {
-      backgroundColor: colors.m3.secondaryContainer,
-      borderColor: colors.m3.secondaryContainer,
-    },
-    filterChipText: {
-      ...tokens.typography.labelMedium,
-      color: colors.text,
-    },
-    filterChipTextSelected: {
-      color: colors.m3.onSecondaryContainer,
-      fontWeight: "600",
     },
     empty: { paddingTop: tokens.spacing[48], alignItems: "center", gap: tokens.spacing[12] },
     emptyTitle: {
