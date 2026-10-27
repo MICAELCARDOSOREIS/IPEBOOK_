@@ -187,7 +187,7 @@ export default function ProfileHub({
         <View style={[styles.content, wideWeb && styles.contentWide]}>
           {/* Título editorial da marca (Figma 07.01 nó 563:8321: Source Serif 4 Bold 34px, #58331F)
               com entrada de Configurações no topo (ADR 0060), liberada também para visitante */}
-          <View style={styles.headerRow}>
+          <View style={[styles.headerRow, wideWeb && styles.fullRow]}>
             <Text accessibilityRole="header" style={styles.title}>
               Meu perfil
             </Text>
@@ -211,6 +211,7 @@ export default function ProfileHub({
               {isSignedIn ? (
                 <>
                   {/* Cartão de leitor com o ipê da marca (Spec 078), no lugar do cartão neutro do Figma 07.01 */}
+                  <View style={styles.heroBlock}>
                   <ReaderCard
                     name={profile.name}
                     photoUrl={profile.photoUrl}
@@ -273,8 +274,10 @@ export default function ProfileHub({
                     </View>
                   </View>
 
+                  </View>
+
                   {/* Seção 1: Atividade (Figma 07.01 nó 604:8684: altura 36px, cor #2C5E45) */}
-                  <View style={styles.section}>
+                  <View style={[styles.section, wideWeb && styles.sectionWide]}>
                     <View style={styles.sectionHeaderRow}>
                       <View style={styles.sectionBloom} />
                       <Text style={styles.sectionHeader}>Atividade</Text>
@@ -305,7 +308,7 @@ export default function ProfileHub({
                 </>
               ) : (
                 /* Estado de convidado: sem conta não há identidade nem atividade a exibir */
-                <View style={styles.guestCard}>
+                <View style={[styles.guestCard, wideWeb && styles.fullRow]}>
                   <Text style={styles.guestTitle}>Você ainda não entrou</Text>
                   <Text style={styles.guestText}>
                     Crie uma conta grátis para publicar livros, favoritar buscas e negociar trocas em Piripiri.
@@ -319,7 +322,7 @@ export default function ProfileHub({
 
               {/* Seção 2: Conta (Figma 07.01 nó 604:8686). Sem sessão não há conta para gerenciar (ADR 0060). */}
               {isSignedIn ? (
-                <View style={styles.section}>
+                <View style={[styles.section, wideWeb && styles.sectionWide]}>
                   <View style={styles.sectionHeaderRow}>
                     <View style={styles.sectionBloom} />
                     <Text style={styles.sectionHeader}>Conta</Text>
@@ -385,7 +388,11 @@ function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     page: { flex: 1, backgroundColor: colors.background },
     scroll: { flexGrow: 1, paddingBottom: tokens.spacing[32] },
-    contentWide: { maxWidth: 960, paddingTop: tokens.spacing[32] },
+    // Web larga (Figma `07.01`): cartão e métricas em largura total, "Atividade" e "Conta" em duas colunas.
+    contentWide: { maxWidth: 1440, paddingHorizontal: 80, paddingTop: tokens.spacing[32], flexDirection: "row", flexWrap: "wrap", alignItems: "flex-start", columnGap: 48, rowGap: 24 },
+    fullRow: { width: "100%" },
+    heroBlock: { width: "100%", gap: tokens.spacing[16] },
+    sectionWide: { flex: 1, flexBasis: 400, minWidth: 360 },
     content: {
       width: "100%",
       maxWidth: 720,

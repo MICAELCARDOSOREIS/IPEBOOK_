@@ -7,6 +7,7 @@ export default function MeusPedidosRoute() {
     <ConversationsScreen
       onRequireSignIn={() => replaceOnce("/entrar")}
       onOpenChat={(id) => pushOnce(`/conversa/${id}` as never)}
+      onOpenNegotiation={(id) => pushOnce(`/negociacao/${id}`)}
       onOpenReceivedRequests={() => pushOnce("/pedidos-recebidos")}
       onOpenListing={(id) => pushOnce(`/livro/${id}`)}
       onExplore={() => pushOnce("/pesquisa")}

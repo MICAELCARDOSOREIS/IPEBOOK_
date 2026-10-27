@@ -4,6 +4,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import type { Book } from "@/model/entities/book";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
+import { BookCover } from "@/view/components/BookCover";
+import { Tag } from "@/view/components/Tag";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { FilledButton } from "@/view/components/FilledButton";
 import { StepProgress } from "@/view/components/StepProgress";
@@ -218,6 +220,7 @@ export default function CreateListing({
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
+        <View style={wideWeb ? styles.wideLayout : undefined}>
         <View style={styles.content}>
           <StepProgress currentStep={step} totalSteps={TOTAL_STEPS} stepLabel={STEP_LABELS[step]} />
 
@@ -298,6 +301,24 @@ export default function CreateListing({
             />
           ) : null}
         </View>
+        {wideWeb ? (
+          <View style={styles.previewCard} accessibilityLabel="Prévia do anúncio">
+            <Text style={styles.previewLabel}>Prévia do anúncio</Text>
+            <View style={styles.previewBook}>
+              <BookCover id="previa" title={state.title.trim() || "Título do livro"} author={state.author.trim() || undefined} photoUrl={state.photoUrl || undefined} variant="detail" />
+              <Text style={styles.previewTitle}>{state.title.trim() || "Título do livro"}</Text>
+              <Text style={styles.previewAuthor}>{state.author.trim() || "Autor"}</Text>
+              <View style={styles.previewMeta}>
+                <Text style={styles.previewPrice}>
+                  {state.modality === "sale" ? (state.price.trim() ? `R$ ${state.price.trim()}` : "R$ —") : state.modality === "trade" ? "Para trocar" : "Gratuito"}
+                </Text>
+                <Tag variant={state.modality} />
+              </View>
+            </View>
+            <Text style={styles.previewNote}>Só o bairro aparece no anúncio. Seu nome completo e seu e-mail ficam privados.</Text>
+          </View>
+        ) : null}
+        </View>
       </ScrollView>
 
       {/* Barra de ação fixa do Figma: nós `12:269`, `28:750` e `12:413` (`surface-container`). O desvio do teclado é da raiz única (Spec 088). */}
@@ -339,8 +360,17 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
   return StyleSheet.create({
     page: { flex: 1, backgroundColor: colors.background },
     scrollContent: { padding: tokens.spacing[16], paddingBottom: tokens.spacing[24] },
+    wideLayout: { flexDirection: "row", alignItems: "flex-start", justifyContent: "center", gap: 48, width: "100%", maxWidth: 1200, alignSelf: "center" },
+    previewCard: { width: 320, gap: 16, padding: 20, borderRadius: tokens.radius.large, backgroundColor: colors.m3.surfaceContainerLow, borderWidth: 1, borderColor: colors.m3.outlineVariant },
+    previewLabel: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
+    previewBook: { gap: 6, padding: 12, borderRadius: 20, backgroundColor: colors.m3.surfaceContainerLowest },
+    previewTitle: { ...tokens.typography.titleMedium, color: colors.m3.onSurface },
+    previewAuthor: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
+    previewMeta: { flexDirection: "row", alignItems: "center", gap: 8 },
+    previewPrice: { ...tokens.typography.labelLarge, color: colors.m3.onSurface },
+    previewNote: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
     content: {
-      width: "100%",
+      width: wideWeb ? 640 : "100%",
       maxWidth: wideWeb ? 720 : 560,
       alignSelf: "center",
       gap: tokens.spacing[16],
