@@ -35,3 +35,11 @@ Campos, validação, salvamento e navegação continuam iguais.
 | CA3 | Meu perfil usa o cartão; textos e métricas existentes continuam | testes existentes |
 | CA4 | Editar perfil mostra a pré-visualização e ela muda ao digitar o nome | teste de componente |
 | CA5 | Conferência no Galaxy A16 nos temas claro e escuro | captura via ADB |
+
+## Evolução (2026-10-26)
+
+- **Avatar sem foto**: em todo o app, quem não tem foto aparece com o ipê sobre `ipe-container`, no lugar
+  das iniciais (`Avatar`). No cartão de leitor o selo do canto só aparece quando há foto, para não repetir o ipê.
+- **Ícone do app**: `assets/icon.png`, ícone adaptativo do Android (frente transparente, fundo `#FCEFCB` e versão
+  monocromática), `splash-icon.png`, `favicon.png` e `public/icone-192.png`/`icone-512.png` gerados a partir da
+  mesma arte. O ícone só muda no aparelho num build nativo novo (EAS); no Expo Go aparece o ícone do Expo.

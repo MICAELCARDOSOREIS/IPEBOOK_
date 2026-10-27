@@ -22,7 +22,7 @@
       "versionCode": 1,
       "adaptiveIcon": {
         "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundColor": "#FCFAF5",
+        "backgroundColor": "#FCEFCB",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "softwareKeyboardLayoutMode": "resize",
