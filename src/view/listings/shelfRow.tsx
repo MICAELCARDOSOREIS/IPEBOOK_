@@ -5,6 +5,7 @@ import { tokens, fontFamily, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { AppIcon } from "@/view/components/AppIcon";
 import { BookCover } from "@/view/components/BookCover";
+import { ModalityCoverArea } from "@/view/components/ModalityCoverArea";
 
 export type ShelfRowProps = {
   book: Book;
@@ -25,7 +26,9 @@ export function ShelfRow({ book, summary, accessibilityLabel, onPress }: ShelfRo
       onPress={onPress}
       style={styles.row}
     >
-      <BookCover id={book.id} title={book.title} photoUrl={book.photoUrl} variant="list" />
+      <ModalityCoverArea modality={book.modality}>
+        <BookCover id={book.id} title={book.title} photoUrl={book.photoUrl} variant="list" />
+      </ModalityCoverArea>
       <View style={styles.rowText}>
         <Text style={styles.rowTitle} numberOfLines={2}>
           {book.title}

@@ -17,6 +17,18 @@ describe("NavigationBar (design-system/04-componentes/barra-de-navegacao.md, ADR
     expect(getByLabelText("Perfil")).toBeDefined();
   });
 
+  it("mostra selo numérico no destino, limita a 9+ e anuncia a contagem (Spec 091)", async () => {
+    const { getByLabelText, getByText, queryByText } = await render(
+      <NavigationBar active="home" onNavigate={() => {}} badges={{ conversations: 2, shelf: 12, profile: 0 }} />,
+    );
+    expect(getByLabelText("Conversas, 2 novas")).toBeDefined();
+    expect(getByText("2")).toBeDefined();
+    expect(getByText("9+")).toBeDefined();
+    expect(getByLabelText("Estante, 12 novas")).toBeDefined();
+    expect(getByLabelText("Perfil")).toBeDefined();
+    expect(queryByText("0")).toBeNull();
+  });
+
   it("agrupa as abas em um contêiner com papel tablist", async () => {
     const { getByTestId, getAllByRole } = await render(<NavigationBar active="home" onNavigate={() => {}} />);
     expect(getByTestId("navigation-bar-tablist").props.accessibilityRole).toBe("tablist");

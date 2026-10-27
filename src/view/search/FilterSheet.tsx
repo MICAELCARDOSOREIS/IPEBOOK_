@@ -8,6 +8,7 @@ import { TextButton } from "@/view/components/TextButton";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
+import { categoryTone } from "@/view/categoryTone";
 import {
   CONDITION_FILTER_LABELS,
   MODALITY_FILTER_LABELS,
@@ -57,7 +58,7 @@ export function FilterSheet({
   onReset,
   onClose,
 }: FilterSheetProps) {
-  const { colors } = useTheme();
+  const { colors, resolvedScheme } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const categories = useMemo(() => {
     const list = [...availableCategories];
@@ -72,6 +73,9 @@ export function FilterSheet({
     <Modal
       visible={visible}
       animationType="slide"
+      // App em tela cheia: sem isto o Android pinta faixas cinza sob a barra de status e a de navegação.
+      statusBarTranslucent
+      navigationBarTranslucent
       onRequestClose={onClose}
       accessibilityViewIsModal
       aria-modal
@@ -94,6 +98,7 @@ export function FilterSheet({
                   accessibilityLabel={
                     modality === "all" ? "Filtrar por todas as modalidades" : `Filtrar por ${MODALITY_FILTER_LABELS[modality]}`
                   }
+                  tone={modality === "all" ? undefined : colors.badge[modality]}
                   selected={draftFilters.modality === modality}
                   onPress={() => onChange({ modality })}
                 />
@@ -106,7 +111,7 @@ export function FilterSheet({
               <Text style={styles.sectionLabel}>Categoria</Text>
               <View style={styles.chipsRow}>
                 <Chip
-                  size="regular"
+                  size="compact"
                   label="Todas"
                   accessibilityLabel="Filtrar por todas as categorias"
                   selected={draftFilters.category === "all"}
@@ -115,9 +120,10 @@ export function FilterSheet({
                 {categories.map((category) => (
                   <Chip
                     key={category}
-                    size="regular"
+                    size="compact"
                     label={category}
                     accessibilityLabel={`Filtrar por categoria ${category}`}
+                    tone={categoryTone(category, resolvedScheme)}
                     selected={draftFilters.category === category}
                     onPress={() => onChange({ category })}
                   />
@@ -128,27 +134,17 @@ export function FilterSheet({
 
           <View style={styles.section}>
             <Text style={styles.sectionLabel}>Condição do livro</Text>
-            <View accessibilityRole="radiogroup" accessibilityLabel="Condição do livro" style={styles.radioGroup}>
-              {CONDITION_IDS.map((condition) => {
-                const selected = draftFilters.condition === condition;
-                return (
-                  <Pressable
-                    key={condition}
-                    accessibilityRole="radio"
-                    accessibilityLabel={CONDITION_FILTER_LABELS[condition]}
-                    accessibilityState={{ checked: selected }}
-                    onPress={() => onChange({ condition })}
-                    style={styles.radioRow}
-                  >
-                    <AppIcon
-                      name={selected ? "radioOn" : "radioOff"}
-                      size={24}
-                      color={selected ? colors.m3.primary : colors.m3.outline}
-                    />
-                    <Text style={styles.radioLabel}>{CONDITION_FILTER_LABELS[condition]}</Text>
-                  </Pressable>
-                );
-              })}
+            <View style={styles.chipsRow}>
+              {CONDITION_IDS.map((condition) => (
+                <Chip
+                  key={condition}
+                  size="regular"
+                  label={CONDITION_FILTER_LABELS[condition]}
+                  accessibilityLabel={CONDITION_FILTER_LABELS[condition]}
+                  selected={draftFilters.condition === condition}
+                  onPress={() => onChange({ condition })}
+                />
+              ))}
             </View>
           </View>
 
@@ -186,12 +182,21 @@ export function FilterSheet({
         </ScrollView>
 
         <View style={styles.footer}>
-          <FilledButton
-            label={`Mostrar ${resultCount} ${resultCount === 1 ? "livro" : "livros"}`}
-            accessibilityLabel={`Mostrar ${resultCount} ${resultCount === 1 ? "livro" : "livros"}`}
-            onPress={onApply}
-          />
-          <TextButton label="Limpar filtros" onPress={onReset} />
+          {resultCount === 0 ? (
+            <Text accessibilityRole="alert" style={styles.emptyHint}>
+              Nenhum livro com essas escolhas. Tire algum filtro para ver mais.
+            </Text>
+          ) : null}
+          <View style={styles.footerRow}>
+            <TextButton label="Limpar" accessibilityLabel="Limpar filtros" onPress={onReset} />
+            <View style={styles.footerPrimary}>
+              <FilledButton
+                label={resultCount === 0 ? "Ver resultados" : `Mostrar ${resultCount} ${resultCount === 1 ? "livro" : "livros"}`}
+                accessibilityLabel={`Mostrar ${resultCount} ${resultCount === 1 ? "livro" : "livros"}`}
+                onPress={onApply}
+              />
+            </View>
+          </View>
         </View>
       </SafeAreaView>
     </Modal>
@@ -210,14 +215,19 @@ function createStyles(colors: ColorPalette) {
     // Figma `02.03`: manchete editorial em Source Serif, logo abaixo da barra superior.
     heading: {
       fontFamily: fontFamily.brand,
-      fontSize: 28,
-      lineHeight: 34,
+      fontSize: 24,
+      lineHeight: 30,
       color: colors.text,
       letterSpacing: -0.3,
     },
-    section: { gap: tokens.spacing[8] },
+    section: {
+      gap: tokens.spacing[12],
+      paddingBottom: tokens.spacing[20],
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.m3.outlineVariant,
+    },
     sectionLabel: {
-      ...tokens.typography.bodyLarge,
+      ...tokens.typography.titleMedium,
       color: colors.m3.onSurface,
     },
     chipsRow: { flexDirection: "row", flexWrap: "wrap", columnGap: tokens.spacing[8], rowGap: tokens.spacing[8] },
@@ -233,9 +243,12 @@ function createStyles(colors: ColorPalette) {
       paddingHorizontal: tokens.spacing[24],
       paddingTop: tokens.spacing[12],
       paddingBottom: tokens.spacing[8],
-      gap: tokens.spacing[4],
-      backgroundColor: colors.background,
+      gap: tokens.spacing[8],
+      backgroundColor: colors.m3.surfaceContainer,
     },
+    footerRow: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[8] },
+    footerPrimary: { flex: 1 },
+    emptyHint: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant, textAlign: "center" },
   });
 }
 

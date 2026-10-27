@@ -107,6 +107,7 @@ export default function EditAlert({ alertId, userId, onBack, onSaved }: EditAler
                 <Chip
                   key={modality}
                   label={ALERT_MODALITY_LABELS[modality]}
+                  tone={colors.badge[modality]}
                   selected={modalities.includes(modality)}
                   accessibilityLabel={`Tipo ${ALERT_MODALITY_LABELS[modality]}`}
                   onPress={() => toggle(modality)}

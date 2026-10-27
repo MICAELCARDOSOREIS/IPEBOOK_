@@ -6,10 +6,17 @@ import { PublicProfile as PublicProfileView } from "@/view/listings/publicProfil
 
 vi.mock("@/viewmodel/usePublicProfileViewModel", () => ({ usePublicProfileViewModel: vi.fn() }));
 vi.mock("@/viewmodel/useAuthViewModel", () => ({ useAuthViewModel: vi.fn() }));
+vi.mock("@/viewmodel/useProfileSafetyViewModel", () => ({ useProfileSafetyViewModel: vi.fn() }));
+vi.mock("@/viewmodel/useChatWithUser", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/viewmodel/useChatWithUser")>()),
+  useChatWithUser: vi.fn(),
+}));
 
 import * as Linking from "expo-linking";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { usePublicProfileViewModel } from "@/viewmodel/usePublicProfileViewModel";
+import { useChatWithUser } from "@/viewmodel/useChatWithUser";
+import { useProfileSafetyViewModel } from "@/viewmodel/useProfileSafetyViewModel";
 
 const profile = (over: Partial<PublicProfile> = {}): PublicProfile => ({
   userId: "ana",
@@ -21,6 +28,11 @@ const profile = (over: Partial<PublicProfile> = {}): PublicProfile => ({
   ...over,
 });
 
+const start = vi.fn().mockResolvedValue(undefined);
+const loadListings = vi.fn().mockResolvedValue(undefined);
+const block = vi.fn().mockResolvedValue(true);
+const listingA = { id: "l1", title: "Dom Casmurro", author: "Machado", ownerId: "ana", modality: "trade", status: "available" } as const;
+
 function setup(
   profileValue: PublicProfile | null,
   options: { loading?: boolean; error?: string | null; viewerId?: string } = {},
@@ -30,6 +42,11 @@ function setup(
     {} as ReturnType<typeof useAuthViewModel>[1],
   ]);
   const reload = vi.fn().mockResolvedValue(undefined);
+  vi.mocked(useChatWithUser).mockImplementation(() => ({ busy: false, notice: null, start }));
+  vi.mocked(useProfileSafetyViewModel).mockReturnValue([
+    { listings: [listingA], loadingListings: false, blocking: false, blocked: false, error: null },
+    { loadListings, block, clearError: vi.fn() },
+  ]);
   vi.mocked(usePublicProfileViewModel).mockReturnValue([
     { profile: profileValue, loading: options.loading ?? false, error: options.error ?? null },
     { reload },
@@ -147,20 +164,55 @@ describe("PublicProfile (spec 018 / issue #73)", () => {
     expect(onBack).toHaveBeenCalledTimes(1);
   });
 
-  it("aciona onStartChat ao tocar no botão de conversa", async () => {
+  it("inicia a busca da conversa ao tocar no botão de conversa (Spec 091)", async () => {
     setup(profile({ userId: "ana", name: "Ana Paula" }));
-    const onStartChat = vi.fn();
-    const screen = await renderView({ onStartChat });
+    start.mockClear();
+    const screen = await renderView();
     fireEvent.press(screen.getByText("Conversar com Ana Paula"));
-    expect(onStartChat).toHaveBeenCalledWith("ana");
+    expect(start).toHaveBeenCalledTimes(1);
   });
 
-  it("aciona onReportOrBlock ao tocar no botão de denunciar ou bloquear", async () => {
+  it("explica como começar quando ainda não há conversa (Spec 091)", async () => {
     setup(profile({ userId: "ana", name: "Ana Paula" }));
-    const onReportOrBlock = vi.fn();
-    const screen = await renderView({ onReportOrBlock });
-    fireEvent.press(screen.getByLabelText("Denunciar ou bloquear"));
-    expect(onReportOrBlock).toHaveBeenCalledWith("ana");
+    vi.mocked(useChatWithUser).mockImplementation(() => ({ busy: false, notice: "Ainda não há conversa com essa pessoa.", start }));
+    const screen = await renderView();
+    expect(screen.getByText("Ainda não há conversa com essa pessoa.")).toBeDefined();
+  });
+
+  it("abre a folha de segurança e bloqueia a pessoa depois de confirmar (Spec 091)", async () => {
+    setup(profile({ userId: "ana", name: "Ana Paula" }), { viewerId: "me" });
+    block.mockClear();
+    const onBack = vi.fn();
+    const screen = await renderView({ onBack });
+    await act(async () => { fireEvent.press(screen.getByLabelText("Denunciar ou bloquear")); });
+    expect(screen.getByText("Denunciar um anúncio")).toBeDefined();
+    await act(async () => { fireEvent.press(screen.getByLabelText("Bloquear Ana Paula")); });
+    expect(screen.getByText("Bloquear esta pessoa?")).toBeDefined();
+    await act(async () => { fireEvent.press(screen.getByText("Bloquear")); });
+    expect(block).toHaveBeenCalledTimes(1);
+    await act(async () => {});
+    expect(onBack).toHaveBeenCalledTimes(1);
+  });
+
+  it("leva à denúncia da pessoa (Spec 091)", async () => {
+    setup(profile({ userId: "ana", name: "Ana Paula" }), { viewerId: "me" });
+    const onReportUser = vi.fn();
+    const screen = await renderView({ onReportUser });
+    await act(async () => { fireEvent.press(screen.getByLabelText("Denunciar ou bloquear")); });
+    await act(async () => { fireEvent.press(screen.getByLabelText("Denunciar Ana Paula")); });
+    expect(onReportUser).toHaveBeenCalledWith("ana", "Ana Paula");
+  });
+
+  it("leva à denúncia do anúncio escolhido (Spec 091)", async () => {
+    setup(profile({ userId: "ana", name: "Ana Paula" }), { viewerId: "me" });
+    loadListings.mockClear();
+    const onReportListing = vi.fn();
+    const screen = await renderView({ onReportListing });
+    await act(async () => { fireEvent.press(screen.getByLabelText("Denunciar ou bloquear")); });
+    await act(async () => { fireEvent.press(screen.getByLabelText("Denunciar um anúncio de Ana Paula")); });
+    expect(screen.getByText("Qual anúncio denunciar?")).toBeDefined();
+    await act(async () => { fireEvent.press(screen.getByLabelText("Denunciar o anúncio Dom Casmurro")); });
+    expect(onReportListing).toHaveBeenCalledWith("l1");
   });
 
   it("resume o rótulo do botão de conversa mantendo acessibilidade completa para nomes longos", async () => {

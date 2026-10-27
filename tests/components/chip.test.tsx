@@ -9,12 +9,12 @@ describe("Chip (design-system/04-componentes/chip.md)", () => {
     expect(getByRole("checkbox").props.accessibilityState.checked).toBe(true);
   });
 
-  it("mostra o check no rótulo quando selecionado", async () => {
+  it("mostra o rótulo sem o caractere de check quando selecionado (o check é um ícone)", async () => {
     const { getByText } = await render(<Chip label="Venda" selected onPress={() => {}} />);
-    expect(getByText("✓ Venda")).toBeDefined();
+    expect(getByText("Venda")).toBeDefined();
   });
 
-  it("não mostra o check quando não selecionado", async () => {
+  it("mostra o rótulo quando não selecionado", async () => {
     const { getByText } = await render(<Chip label="Venda" selected={false} onPress={() => {}} />);
     expect(getByText("Venda")).toBeDefined();
   });

@@ -27,6 +27,9 @@ function mapMessage(row: MessageRow): NegotiationMessage {
   };
 }
 
+/** Sequência para nomes de canal únicos: o mesmo tópico não aceita novos `.on()` depois de `subscribe()`. */
+let channelSeq = 0;
+
 /**
  * Persistência de mensagens de negociação em `v2_negotiation_messages` (Spec 061 / ADR 0044).
  */
@@ -90,7 +93,7 @@ export class SupabaseMessageDataSource implements IMessageDataSource {
     onMessage: MessageSubscriptionCallback
   ): () => void {
     const channel = this.client
-      .channel(`negotiation-messages:${requestId}`)
+      .channel(`negotiation-messages:${requestId}:${++channelSeq}`)
       .on(
         "postgres_changes" as any,
         {
@@ -114,7 +117,7 @@ export class SupabaseMessageDataSource implements IMessageDataSource {
 
   subscribeToAllMessages(onMessage: MessageSubscriptionCallback): () => void {
     const channel = this.client
-      .channel(`negotiation-messages:all:${Date.now()}`)
+      .channel(`negotiation-messages:all:${++channelSeq}`)
       .on(
         "postgres_changes" as any,
         { event: "INSERT", schema: "public", table: "v2_negotiation_messages" },

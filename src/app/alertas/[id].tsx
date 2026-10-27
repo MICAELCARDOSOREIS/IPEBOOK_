@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
-import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
+import { useFocusEffect, useLocalSearchParams } from "expo-router";
+import { backOnce, pushOnce, replaceOnce } from "@/view/pushOnce";
 import ManageAlertScreen from "@/view/search/manageAlertScreen";
 
 export default function ManageAlertRoute() {
@@ -10,9 +11,9 @@ export default function ManageAlertRoute() {
     <ManageAlertScreen
       key={focusKey}
       alertId={id ?? ""}
-      onBack={() => router.back()}
-      onEditAlert={(alertId) => router.push({ pathname: "/alertas/[id]/editar", params: { id: alertId } })}
-      onAlertDeleted={() => router.replace("/alertas")}
+      onBack={() => backOnce()}
+      onEditAlert={(alertId) => pushOnce({ pathname: "/alertas/[id]/editar", params: { id: alertId } })}
+      onAlertDeleted={() => replaceOnce("/alertas")}
     />
   );
 }

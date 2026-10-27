@@ -1,8 +1,11 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import * as Linking from "expo-linking";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
+import { useChatWithUser } from "@/viewmodel/useChatWithUser";
+import { useProfileSafetyViewModel } from "@/viewmodel/useProfileSafetyViewModel";
+import { ProfileSafetySheet } from "@/view/listings/profileSafetySheet";
 import { usePublicProfileViewModel } from "@/viewmodel/usePublicProfileViewModel";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
@@ -20,20 +23,27 @@ function formatJoinedAt(joinedAt: string): string {
 export type PublicProfileProps = {
   userId: string;
   onBack?: () => void;
-  onStartChat?: (userId: string) => void;
-  onReportOrBlock?: (userId: string) => void;
+  /** Abre o chat de uma negociação aceita com esta pessoa (Spec 091). */
+  onOpenChat?: (requestId: string) => void;
+  /** Abre a denúncia de um anúncio desta pessoa (Spec 091). */
+  onReportListing?: (listingId: string) => void;
+  /** Abre a denúncia da própria pessoa (Spec 091). */
+  onReportUser?: (userId: string, name: string) => void;
 };
 
 /**
  * Perfil público do membro da comunidade (Figma `03.04 · Perfil de Ana Paula`, nó `19:21`).
  */
-export function PublicProfile({ userId, onBack, onStartChat, onReportOrBlock }: PublicProfileProps) {
+export function PublicProfile({ userId, onBack, onOpenChat, onReportListing, onReportUser }: PublicProfileProps) {
   const [state, actions] = usePublicProfileViewModel(userId);
   const [auth] = useAuthViewModel();
   // No próprio perfil não faz sentido conversar consigo nem se denunciar
   const isOwnProfile = Boolean(auth.user?.id) && auth.user?.id === userId;
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const [safetyOpen, setSafetyOpen] = useState(false);
+  const [safety, safetyActions] = useProfileSafetyViewModel(auth.user?.id ?? null, userId);
+  const chat = useChatWithUser(auth.user?.id ?? null, userId, (requestId) => onOpenChat?.(requestId));
   const profile = state.profile;
   const instagramHandle = profile?.socialHandle?.trim().replace(/^@+/, "") || null;
 
@@ -146,13 +156,19 @@ export function PublicProfile({ userId, onBack, onStartChat, onReportOrBlock }: 
               <FilledButton
                 label={chatButtonLabel}
                 accessibilityLabel={`Conversar com ${profile.name}`}
-                onPress={() => onStartChat?.(profile.userId)}
+                loading={chat.busy}
+                onPress={() => void chat.start()}
               />
+              {chat.notice ? (
+                <Text accessibilityRole="alert" style={styles.cardSubtitle}>
+                  {chat.notice}
+                </Text>
+              ) : null}
 
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel="Denunciar ou bloquear"
-                onPress={() => onReportOrBlock?.(profile.userId)}
+                onPress={() => setSafetyOpen(true)}
                 style={styles.safetyButton}
               >
                 <AppIcon name="flag" size={18} color={colors.error} />
@@ -163,6 +179,31 @@ export function PublicProfile({ userId, onBack, onStartChat, onReportOrBlock }: 
           </View>
         ) : null}
       </ScrollView>
+      {profile ? (
+        <ProfileSafetySheet
+          visible={safetyOpen}
+          personName={profile.name}
+          listings={safety.listings}
+          loadingListings={safety.loadingListings}
+          blocking={safety.blocking}
+          error={safety.error}
+          onLoadListings={() => void safetyActions.loadListings()}
+          onReportListing={(listingId) => onReportListing?.(listingId)}
+          onReportUser={() => onReportUser?.(userId, profile.name)}
+          onConfirmBlock={() => {
+            void safetyActions.block().then((ok) => {
+              if (ok) {
+                setSafetyOpen(false);
+                onBack?.();
+              }
+            });
+          }}
+          onClose={() => {
+            setSafetyOpen(false);
+            safetyActions.clearError();
+          }}
+        />
+      ) : null}
     </SafeAreaView>
   );
 }

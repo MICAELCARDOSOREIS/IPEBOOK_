@@ -1,13 +1,15 @@
 import { useEffect } from "react";
 import { Stack, router, usePathname, type Href } from "expo-router";
+import { pushOnce, replaceOnce } from "@/view/pushOnce";
 import * as ScreenOrientation from "expo-screen-orientation";
 import { StatusBar } from "expo-status-bar";
 import { Platform } from "react-native";
 import { useIpebookFonts } from "@/view/useIpebookFonts";
-import { NavigationBar, type NavigationDestination } from "@/view/components/NavigationBar";
+import { ConnectedNavigationBar } from "@/view/components/ConnectedNavigationBar";
+import type { NavigationDestination } from "@/view/components/NavigationBar";
 import { PwaRegister } from "@/view/components/PwaRegister";
 import { InitialRouteGate } from "@/view/onboarding/initialRouteGate";
-import { ThemeProvider } from "@/view/theme/ThemeProvider";
+import { ThemeProvider, useTheme } from "@/view/theme/ThemeProvider";
 import { KeyboardAwareRoot } from "@/view/components/KeyboardAwareRoot";
 
 /** Rotas de nível superior (ADR 0011) — rotas de fluxo (entrar, anunciar, etc.) não entram aqui. */
@@ -27,6 +29,12 @@ const DESTINATION_ROUTES: Record<NavigationDestination, Href> = {
   profile: "/perfil" as Href,
 };
 
+/** Ícones da barra de status seguem o tema do app (preferência da pessoa), não só o do sistema. */
+function ThemedStatusBar() {
+  const { resolvedScheme } = useTheme();
+  return <StatusBar style={resolvedScheme === "dark" ? "light" : "dark"} />;
+}
+
 export default function RootLayout() {
   const [fontsLoaded] = useIpebookFonts();
   const pathname = usePathname();
@@ -45,18 +53,19 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider>
-      <StatusBar style="auto" />
-      <InitialRouteGate pathname={pathname} onShowWelcome={() => router.replace("/bem-vindo")}>
+      <ThemedStatusBar />
+      <InitialRouteGate pathname={pathname} onShowWelcome={() => replaceOnce("/bem-vindo")}>
         <KeyboardAwareRoot>
           <Stack screenOptions={{ headerShown: false }} />
           {activeDestination ? (
-            <NavigationBar
+            <ConnectedNavigationBar
               active={activeDestination}
+              pathname={pathname}
               onNavigate={(destination) => {
                 const targetRoute = DESTINATION_ROUTES[destination];
                 // Previne navegação duplicada verificando se já estamos na rota
                 if (pathname !== targetRoute) {
-                  router.push(targetRoute);
+                  pushOnce(targetRoute);
                 }
               }}
             />

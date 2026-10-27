@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
-import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
+import { useFocusEffect, useLocalSearchParams } from "expo-router";
+import { backOnce, pushOnce, replaceOnce } from "@/view/pushOnce";
 import RequestDetailScreen from "@/view/requests/requestDetail";
 
 export default function NegociacaoDetalheRoute() {
@@ -12,11 +13,11 @@ export default function NegociacaoDetalheRoute() {
     <RequestDetailScreen
       requestId={id}
       focusKey={focusKey}
-      onBack={() => router.back()}
-      onRequireSignIn={() => router.replace("/entrar")}
-      onNavigateToBookDetail={(bookId) => router.push(`/livro/${bookId}`)}
-      onScheduleMeeting={() => router.push(`/negociacao/${id}/encontro` as never)}
-      onOpenChat={(requestId) => router.push(`/conversa/${requestId}` as never)}
+      onBack={() => backOnce()}
+      onRequireSignIn={() => replaceOnce("/entrar")}
+      onNavigateToBookDetail={(bookId) => pushOnce(`/livro/${bookId}`)}
+      onScheduleMeeting={() => pushOnce(`/negociacao/${id}/encontro` as never)}
+      onOpenChat={(requestId) => pushOnce(`/conversa/${requestId}` as never)}
     />
   );
 }

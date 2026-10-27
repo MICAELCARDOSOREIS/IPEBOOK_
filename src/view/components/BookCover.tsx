@@ -168,7 +168,12 @@ export function BookCover({
             </Text>
           ) : null}
         </View>
-      ) : null}
+      ) : (
+        // Capa de lista sem foto: a inicial do título dá identidade ao bloco, em vez de um retângulo liso.
+        <Text accessible={false} style={styles.initial}>
+          {title.trim().charAt(0).toLocaleUpperCase("pt-BR")}
+        </Text>
+      )}
     </View>
   );
 }
@@ -180,6 +185,18 @@ function createStyles(colors: ColorPalette) {
       borderRadius: tokens.radius.extraSmall,
       justifyContent: "flex-end",
       overflow: "hidden",
+    },
+    initial: {
+      position: "absolute",
+      top: 0,
+      bottom: 0,
+      left: 0,
+      right: 0,
+      textAlign: "center",
+      textAlignVertical: "center",
+      fontFamily: fontFamily.brand,
+      fontSize: 28,
+      color: "rgba(255,255,255,0.85)",
     },
     skeleton: {
       backgroundColor: colors.disabledBackground,

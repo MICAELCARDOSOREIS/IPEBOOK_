@@ -54,8 +54,13 @@ export default function Welcome({ onStart, onSignIn, onExplore }: WelcomeProps) 
       <Text style={styles.subtitle}>Livros de quem mora perto de você.</Text>
 
       <View style={styles.modalities} accessible accessibilityLabel="Modalidades: venda, troca e doação">
-        {["Venda", "Troca", "Doação"].map((label) => (
-          <Text key={label} style={styles.modality}>{label}</Text>
+        {([["Venda", colors.badge.sale], ["Troca", colors.badge.trade], ["Doação", colors.badge.donation]] as const).map(([label, tone]) => (
+          <Text
+            key={label}
+            style={[styles.modality, { backgroundColor: tone.background, borderColor: tone.background, color: tone.text }]}
+          >
+            {label}
+          </Text>
         ))}
       </View>
 

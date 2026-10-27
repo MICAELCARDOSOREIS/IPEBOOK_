@@ -2,8 +2,6 @@ import { useEffect, useMemo, useRef } from "react";
 import {
   ActivityIndicator,
   FlatList,
-  KeyboardAvoidingView,
-  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -22,7 +20,7 @@ import { BookCover } from "@/view/components/BookCover";
 import { Chip } from "@/view/components/Chip";
 import { ErrorState } from "@/view/components/ErrorState";
 import { Tag } from "@/view/components/Tag";
-import { TopAppBar } from "@/view/components/TopAppBar";
+import { Avatar } from "@/view/components/Avatar";
 
 const COMMUNITY_MEMBER = "Pessoa da comunidade";
 const SUGGESTIONS = [
@@ -57,6 +55,12 @@ export function Chat({ requestId, sessionUserId, onBack, onOpenNegotiation }: Ch
     if (timeline.length > 0) listRef.current?.scrollToEnd?.({ animated: true });
   }, [timeline.length]);
 
+  const scrollToLatest = () => {
+    listRef.current?.scrollToEnd?.({ animated: false });
+    // Segunda passada depois da medição dos balões.
+    setTimeout(() => listRef.current?.scrollToEnd?.({ animated: false }), 120);
+  };
+
   const renderItem = ({ item }: { item: ChatTimelineItem }) => {
     if (item.kind === "day") {
       return (
@@ -71,7 +75,11 @@ export function Chat({ requestId, sessionUserId, onBack, onOpenNegotiation }: Ch
       <View
         accessible
         accessibilityLabel={`${mine ? "Você" : name} às ${time}: ${item.message.content}`}
-        style={[styles.bubble, mine ? styles.bubbleMine : styles.bubbleOther]}
+        style={[
+          styles.bubble,
+          mine ? styles.bubbleMine : styles.bubbleOther,
+          item.grouped ? styles.bubbleGrouped : null,
+        ]}
       >
         <Text style={styles.bubbleText}>{item.message.content}</Text>
         <Text style={styles.bubbleTime}>{time}</Text>
@@ -81,11 +89,24 @@ export function Chat({ requestId, sessionUserId, onBack, onOpenNegotiation }: Ch
 
   return (
     <SafeAreaView edges={["top", "left", "right", "bottom"]} style={styles.page}>
-      <TopAppBar title={name} onBack={onBack ?? (() => {})} />
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-      >
+      {/* Cabeçalho com a foto da pessoa (Spec 089); sem foto o avatar mostra o ipê. */}
+      <View style={styles.header}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Voltar"
+          hitSlop={8}
+          onPress={onBack ?? (() => {})}
+          style={styles.backButton}
+        >
+          <AppIcon name="back" size={24} color={colors.m3.onSurface} />
+        </Pressable>
+        <Avatar name={name} photoUrl={detail?.counterpartPhotoUrl ?? undefined} size={40} />
+        <Text accessibilityRole="header" style={styles.headerTitle} numberOfLines={1}>
+          {name}
+        </Text>
+      </View>
+      {/* O desvio do teclado é da raiz única (KeyboardAwareRoot, Spec 088); aqui só o layout do chat. */}
+      <View style={styles.flex}>
         {detail ? (
           <View style={styles.bookCard}>
             <BookCover id={detail.book.id} title={detail.book.title} photoUrl={detail.book.photoUrl} variant="list" />
@@ -98,7 +119,6 @@ export function Chat({ requestId, sessionUserId, onBack, onOpenNegotiation }: Ch
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Combinar encontro na negociação"
-              hitSlop={8}
               onPress={() => onOpenNegotiation?.(requestId)}
               style={styles.combine}
             >
@@ -133,7 +153,11 @@ export function Chat({ requestId, sessionUserId, onBack, onOpenNegotiation }: Ch
             keyExtractor={(item) => item.key}
             renderItem={renderItem}
             contentContainerStyle={styles.list}
-            onContentSizeChange={() => listRef.current?.scrollToEnd?.({ animated: false })}
+            // Renderiza todas as mensagens: com itens ainda não medidos o fim calculado ficava curto e a
+            // última mensagem aparecia cortada sob o campo de digitação.
+            initialNumToRender={timeline.length}
+            onContentSizeChange={scrollToLatest}
+            onLayout={scrollToLatest}
           />
         )}
 
@@ -172,7 +196,7 @@ export function Chat({ requestId, sessionUserId, onBack, onOpenNegotiation }: Ch
             )}
           </Pressable>
         </View>
-      </KeyboardAvoidingView>
+      </View>
     </SafeAreaView>
   );
 }
@@ -192,6 +216,20 @@ function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     page: { flex: 1, backgroundColor: colors.background },
     flex: { flex: 1 },
+    header: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[12],
+      minHeight: 64,
+      paddingHorizontal: tokens.spacing[8],
+    },
+    backButton: {
+      width: tokens.accessibility.touchTarget,
+      height: tokens.accessibility.touchTarget,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    headerTitle: { flex: 1, ...tokens.typography.titleMedium, fontWeight: "600", color: colors.m3.onSurface },
     bookCard: {
       flexDirection: "row",
       alignItems: "center",
@@ -204,11 +242,19 @@ function createStyles(colors: ColorPalette) {
     },
     bookText: { flex: 1, gap: tokens.spacing[6], alignItems: "flex-start" },
     bookTitle: { ...tokens.typography.bodyLarge, fontWeight: "500", color: colors.m3.onSurface },
-    combine: { minHeight: tokens.accessibility.touchTarget, justifyContent: "center", paddingHorizontal: tokens.spacing[8] },
-    combineText: { ...tokens.typography.labelMedium, fontWeight: "600", color: colors.m3.primary },
+    // "Combinar" como botão tonal (Spec 089): antes era só um texto verde, sem cara de botão.
+    combine: {
+      minHeight: 40,
+      justifyContent: "center",
+      paddingHorizontal: tokens.spacing[16],
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.m3.secondaryContainer,
+    },
+    combineText: { ...tokens.typography.labelMedium, fontWeight: "600", color: colors.m3.onSecondaryContainer },
     center: { flex: 1, alignItems: "center", justifyContent: "center" },
-    list: { paddingHorizontal: tokens.spacing[16], paddingVertical: tokens.spacing[8], gap: tokens.spacing[12] },
-    dayRow: { alignItems: "center", paddingVertical: tokens.spacing[4] },
+    // Espaço no fim para a última mensagem não colar no campo de digitar (Spec 089).
+    list: { paddingHorizontal: tokens.spacing[16], paddingTop: tokens.spacing[8], paddingBottom: tokens.spacing[24] },
+    dayRow: { alignItems: "center", paddingVertical: tokens.spacing[4], marginTop: tokens.spacing[8] },
     dayLabel: {
       fontSize: 12,
       lineHeight: 16,
@@ -221,6 +267,7 @@ function createStyles(colors: ColorPalette) {
       overflow: "hidden",
     },
     bubble: {
+      marginTop: tokens.spacing[12],
       maxWidth: "78%",
       paddingHorizontal: tokens.spacing[12],
       paddingTop: tokens.spacing[8],
@@ -228,6 +275,7 @@ function createStyles(colors: ColorPalette) {
       borderRadius: 18,
       gap: 2,
     },
+    bubbleGrouped: { marginTop: tokens.spacing[4] },
     bubbleMine: { alignSelf: "flex-end", backgroundColor: colors.m3.secondaryContainer, borderBottomRightRadius: 6 },
     bubbleOther: { alignSelf: "flex-start", backgroundColor: colors.m3.surfaceContainerHigh, borderBottomLeftRadius: 6 },
     bubbleText: { ...tokens.typography.bodyLarge, color: colors.m3.onSurface },

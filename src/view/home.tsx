@@ -15,6 +15,8 @@ import { NeighborhoodSelectorModal } from "@/view/components/NeighborhoodSelecto
 import { ScreenContainer } from "@/view/components/ScreenContainer";
 import type { Book, BookModality } from "@/model/entities/book";
 
+const MODALITY_PLURAL = { sale: "livros à venda", trade: "livros para troca", donation: "livros para doação" } as const;
+
 function createModalityTag(colors: ColorPalette): Record<BookModality, { background: string; text: string; label: string }> {
   return {
     sale: { background: colors.badge.sale.background, text: colors.badge.sale.text, label: "Venda" },
@@ -130,13 +132,24 @@ function CatalogCarousel({
                 onPress={() => onNavigateToBookDetail?.(item.id)}
                 style={styles.carouselCard}
               >
-                <View style={styles.carouselCardCoverArea}>
+                {/* Fundo da capa na cor da modalidade, como no topo do detalhe do livro. */}
+                <View style={[styles.carouselCardCoverArea, { backgroundColor: tag.background }]}>
                   <BookCover id={item.id} title={item.title} photoUrl={item.photoUrl} variant="card" />
                 </View>
                 <View style={styles.carouselCardMeta}>
-                  <Text numberOfLines={1} style={styles.carouselCardModality}>
-                    {tag.label}{priceSuffix}
-                  </Text>
+                  {/* Modalidade em etiqueta colorida (a mesma cor dos filtros e do detalhe), preço ao lado. */}
+                  <View style={styles.carouselCardModalityRow}>
+                    <View style={[styles.carouselCardModalityPill, { backgroundColor: tag.background }]}>
+                      <Text numberOfLines={1} style={[styles.carouselCardModality, { color: tag.text }]}>
+                        {tag.label}
+                      </Text>
+                    </View>
+                    {priceSuffix ? (
+                      <Text numberOfLines={1} style={styles.carouselCardPrice}>
+                        {priceSuffix.replace(" · ", "")}
+                      </Text>
+                    ) : null}
+                  </View>
                   <Text numberOfLines={2} style={styles.carouselCardTitle}>{item.title}</Text>
                   <Text numberOfLines={1} style={styles.carouselCardAuthor}>{item.author}</Text>
                   {item.neighborhood ? (
@@ -316,6 +329,8 @@ export default function Home({
         {(["all", "sale", "trade", "donation"] as const).map((mod) => {
           const isSelected = selectedModality === mod;
           const label = mod === "all" ? "Todos" : mod === "sale" ? "Venda" : mod === "trade" ? "Troca" : "Doação";
+          // Cada modalidade tem a sua cor, a mesma das etiquetas dos livros; "Todos" fica neutro.
+          const tone = mod === "all" ? null : colors.badge[mod];
           return (
             <Pressable
               key={mod}
@@ -323,10 +338,23 @@ export default function Home({
               accessibilityLabel={`Filtrar por ${label}`}
               accessibilityState={{ selected: isSelected }}
               onPress={() => setSelectedModality(mod)}
-              style={[styles.filterChip, isSelected && styles.filterChipSelected]}
+              style={[
+                styles.filterChip,
+                isSelected && styles.filterChipSelected,
+                isSelected && tone ? { backgroundColor: tone.background, borderColor: tone.background } : null,
+                // O pontinho de cor ocupa espaço: reduz o respiro para os quatro chips seguirem numa linha.
+                tone && !isSelected ? { paddingHorizontal: 10 } : null,
+              ]}
             >
-              {isSelected ? <AppIcon name="check" size={18} color={colors.m3.onSecondaryContainer} /> : null}
-              <Text style={[styles.filterChipText, isSelected && styles.filterChipTextSelected]}>
+              {tone && !isSelected ? <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: tone.background, borderWidth: 1, borderColor: tone.text }} /> : null}
+              {isSelected ? <AppIcon name="check" size={18} color={tone?.text ?? colors.m3.onSecondaryContainer} /> : null}
+              <Text
+                style={[
+                  styles.filterChipText,
+                  isSelected && styles.filterChipTextSelected,
+                  isSelected && tone ? { color: tone.text } : null,
+                ]}
+              >
                 {label}
               </Text>
             </Pressable>
@@ -367,7 +395,7 @@ export default function Home({
           <Text accessibilityRole="header" style={styles.carouselTitle}>{carouselDisplayTitle}</Text>
           <Text style={styles.emptyTitle}>
             {state.books.length > 0 && isSpecificNeighborhood
-              ? `Ainda não há livros no ${effectiveNeighborhood}.`
+              ? `Ainda não há ${selectedModality === "all" ? "livros" : MODALITY_PLURAL[selectedModality]} no ${effectiveNeighborhood}.`
               : "Ainda não há livros por aqui."}
           </Text>
           <Text style={styles.body}>
@@ -418,6 +446,7 @@ export default function Home({
 
   return (
     <ScreenContainer
+      edges={["top", "left", "right"]}
       maxWidth={720}
       overlay={
         <NeighborhoodSelectorModal
@@ -495,8 +524,8 @@ function createStyles(colors: ColorPalette) {
     },
     heroTitle: {
       fontFamily: fontFamily.brand,
-      fontSize: 34,
-      lineHeight: 41,
+      fontSize: 30,
+      lineHeight: 36,
       color: colors.brandBrown,
     },
     heroSubtitle: {
@@ -645,9 +674,19 @@ function createStyles(colors: ColorPalette) {
       paddingVertical: tokens.spacing[12],
       gap: 2,
     },
+    carouselCardModalityRow: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[8] },
+    carouselCardModalityPill: {
+      paddingHorizontal: tokens.spacing[8],
+      paddingVertical: 2,
+      borderRadius: tokens.radius.small,
+    },
     carouselCardModality: {
       ...tokens.typography.labelMedium,
       color: colors.m3.onSurfaceVariant,
+    },
+    carouselCardPrice: {
+      ...tokens.typography.labelLarge,
+      color: colors.m3.onSurface,
     },
     carouselCardTitle: {
       ...tokens.typography.bodyLarge,

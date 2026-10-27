@@ -195,6 +195,11 @@ export const TABELAS_CRITICAS = {
     descricao: 'Conversas apagadas por cada pessoa (Spec 090)',
     colunas: ['user_id', 'request_id', 'hidden_at'],
   },
+  v2_user_reports: {
+    nome: 'v2_user_reports',
+    descricao: 'Denúncias de pessoas feitas no perfil público (Spec 091)',
+    colunas: ['id', 'reporter_id', 'reported_user_id', 'reason', 'details', 'created_at'],
+  },
   v2_user_preferences: {
     nome: 'v2_user_preferences',
     descricao: 'Preferências privadas de contato e bairro padrão',
@@ -621,6 +626,11 @@ export const MAPEAMENTO_MIGRACOES = {
     titulo: 'Conversas apagadas por pessoa',
     validar: (ctx) => Boolean(ctx.tabelas.v2_hidden_conversations?.existe),
     detalhe: 'Tabela public.v2_hidden_conversations com RLS por dono (Spec 090)',
+  },
+  '202610270002_denuncias_de_pessoas.sql': {
+    titulo: 'Denúncias de pessoas',
+    validar: (ctx) => Boolean(ctx.tabelas.v2_user_reports?.existe),
+    detalhe: 'Tabela public.v2_user_reports com RLS por denunciante (Spec 091)',
   },
 };
 

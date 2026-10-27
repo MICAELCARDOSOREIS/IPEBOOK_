@@ -2,6 +2,7 @@ import { useMemo, type ReactNode } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
+import { useGuardedPress } from "@/view/useGuardedPress";
 
 export type OutlinedButtonProps = {
   label: string;
@@ -28,6 +29,7 @@ export function OutlinedButton({
   icon,
 }: OutlinedButtonProps) {
   const isDisabled = disabled || loading;
+  const guardedPress = useGuardedPress(onPress);
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   return (
@@ -36,7 +38,7 @@ export function OutlinedButton({
       accessibilityLabel={accessibilityLabel ?? label}
       accessibilityState={{ disabled: isDisabled }}
       disabled={isDisabled}
-      onPress={onPress}
+      onPress={guardedPress}
       style={[styles.button, isDisabled && styles.disabled]}
     >
       {loading ? (

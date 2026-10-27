@@ -50,6 +50,9 @@ export function NeighborhoodSelectorModal({
     <Modal
       animationType="fade"
       transparent
+      // Tela cheia: o véu cobre também as barras do sistema (sem faixas claras em cima e embaixo).
+      statusBarTranslucent
+      navigationBarTranslucent
       visible={visible}
       onRequestClose={onClose}
     >
@@ -61,6 +64,8 @@ export function NeighborhoodSelectorModal({
           style={styles.scrimBackdrop}
         />
         <View style={styles.sheetContainer}>
+          {/* Alça da folha (M3): indica que é uma folha inferior que se fecha. */}
+          <View accessible={false} importantForAccessibility="no" style={styles.handle} />
           {/* Cabeçalho */}
           <View style={styles.header}>
             <View style={styles.headerTitles}>
@@ -146,9 +151,7 @@ export function NeighborhoodSelectorModal({
                       {item}
                     </Text>
                   </View>
-                  {isSelected ? (
-                    <AppIcon name="check" size={20} color={colors.m3.primary} />
-                  ) : null}
+                  {isSelected ? <AppIcon name="check" size={20} color={colors.m3.primary} /> : null}
                 </Pressable>
               );
             }}
@@ -168,6 +171,15 @@ function createStyles(colors: ColorPalette) {
     },
     scrimBackdrop: {
       ...StyleSheet.absoluteFill,
+    },
+    handle: {
+      alignSelf: "center",
+      width: 32,
+      height: 4,
+      borderRadius: 2,
+      marginTop: tokens.spacing[12],
+      backgroundColor: colors.m3.onSurfaceVariant,
+      opacity: 0.4,
     },
     sheetContainer: {
       backgroundColor: colors.surface,

@@ -1,4 +1,5 @@
-import { router, useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
+import { pushOnce } from "@/view/pushOnce";
 import Search, { parseInitialModality } from "@/view/search/search";
 
 export default function Pesquisa() {
@@ -8,8 +9,8 @@ export default function Pesquisa() {
     <Search
       initialModality={parseInitialModality(modalidade)}
       currentNeighborhood={typeof bairro === "string" ? bairro : undefined}
-      onNavigateToBookDetail={(bookId) => router.push(`/livro/${bookId}`)}
-      onNavigateToAlerts={(term) => router.push({ pathname: "/alertas", params: { termo: term } })}
+      onNavigateToBookDetail={(bookId) => pushOnce(`/livro/${bookId}`)}
+      onNavigateToAlerts={(term) => pushOnce({ pathname: "/alertas", params: { termo: term } })}
     />
   );
 }

@@ -8,7 +8,9 @@ import { FilterSheet } from "@/view/search/FilterSheet";
 import { SortSheet } from "@/view/search/SortSheet";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
+import { categoryTone } from "@/view/categoryTone";
 import { BookCover } from "@/view/components/BookCover";
+import { ModalityCoverArea } from "@/view/components/ModalityCoverArea";
 import { ErrorState } from "@/view/components/ErrorState";
 import { SearchField } from "@/view/components/SearchField";
 import { FavoriteButton } from "@/view/components/FavoriteButton";
@@ -54,7 +56,7 @@ export default function Search({
   const handleSelectNeighborhood = onSelectNeighborhood ?? neighborhoodHook.openSelector;
 
   const [auth] = useAuthViewModel();
-  const { colors } = useTheme();
+  const { colors, resolvedScheme } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [state, actions] = useSearchViewModel(auth.user?.id ?? null);
   const { isOnline } = useNetworkStatus();
@@ -154,7 +156,7 @@ export default function Search({
       {/* 2. Manchete Editorial (Figma nó 137:2463) */}
       <View style={styles.heroSection}>
         <Text accessibilityRole="header" style={styles.heading}>
-          O que vamos{"\n"}ler hoje?
+          O que vamos ler hoje?
         </Text>
         <Text style={styles.subtitle}>
           Livros novos e seminovos para trocar, comprar ou receber aqui perto.
@@ -186,6 +188,7 @@ export default function Search({
               key={category}
               label={category}
               accessibilityLabel={`Filtrar por categoria ${category}`}
+              tone={categoryTone(category, resolvedScheme)}
               selected={state.category === category}
               onPress={() => actions.setCategory(category)}
             />
@@ -259,6 +262,9 @@ export default function Search({
     </View>
   );
 
+  const neighborhoodApplied = displayNeighborhood !== "Piripiri (Todos)";
+  const onlyNeighborhoodBlocks = neighborhoodApplied && state.matchesInOtherNeighborhoods > 0;
+
   const listEmpty = state.loading ? (
     <LoadingState label="Carregando livros" />
   ) : state.error ? (
@@ -269,14 +275,28 @@ export default function Search({
     )
   ) : (
     <View style={styles.empty}>
-      <Text style={styles.emptyTitle}>Nenhum livro encontrado.</Text>
+      <Text style={styles.emptyTitle}>
+        {onlyNeighborhoodBlocks ? `Nenhum livro no ${displayNeighborhood} com essa busca.` : "Nenhum livro encontrado."}
+      </Text>
       <Text style={styles.body}>
-        {state.activeFilterCount > 0
+        {onlyNeighborhoodBlocks
+          ? `Há ${state.matchesInOtherNeighborhoods} ${state.matchesInOtherNeighborhoods === 1 ? "livro" : "livros"} em outros bairros de Piripiri.`
+          : state.activeFilterCount > 0
           ? "Nenhum livro corresponde aos filtros selecionados."
           : state.term.trim()
             ? `Nenhum livro encontrado para "${state.term.trim()}". Tente outro título, autor ou categoria.`
             : "Ainda não há livros no catálogo."}
       </Text>
+      {onlyNeighborhoodBlocks ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Ver em toda Piripiri"
+          onPress={() => handleSelectNeighborhoodOption("Todos os bairros (Piripiri)")}
+          style={styles.emptyActionButton}
+        >
+          <Text style={styles.emptyActionText}>Ver em toda Piripiri</Text>
+        </Pressable>
+      ) : null}
       {state.hasActiveFilters ? (
         <Pressable
           accessibilityRole="button"
@@ -296,7 +316,7 @@ export default function Search({
   );
 
   return (
-    <SafeAreaView style={styles.page}>
+    <SafeAreaView edges={["top", "left", "right"]} style={styles.page}>
       <FlatList
         data={state.loading || state.error ? [] : state.books}
         keyExtractor={(book) => book.id}
@@ -320,7 +340,9 @@ export default function Search({
                 onPress={() => { void actions.registerSearch(state.term); onNavigateToBookDetail?.(item.id); }}
                 style={styles.cardMain}
               >
-                <BookCover id={item.id} title={item.title} photoUrl={item.photoUrl} variant="list" />
+                <ModalityCoverArea modality={item.modality}>
+                  <BookCover id={item.id} title={item.title} photoUrl={item.photoUrl} variant="list" />
+                </ModalityCoverArea>
                 <View style={styles.cardInfo}>
                   <Text numberOfLines={2} style={styles.cardTitle}>{item.title}</Text>
                   <Text numberOfLines={1} style={styles.cardAuthor}>{item.author}</Text>
@@ -457,14 +479,14 @@ function createStyles(colors: ColorPalette) {
     },
     heading: {
       fontFamily: fontFamily.brand,
-      fontSize: 34,
-      lineHeight: 41,
+      fontSize: 28,
+      lineHeight: 34,
       color: colors.brandBrown,
       letterSpacing: -0.5,
     },
     subtitle: {
-      fontSize: 16,
-      lineHeight: 24,
+      fontSize: 14,
+      lineHeight: 20,
       color: colors.secondaryText,
     },
     quickCategoriesScroll: {

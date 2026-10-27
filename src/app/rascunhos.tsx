@@ -1,13 +1,13 @@
-import { router } from "expo-router";
+import { backOnce, pushOnce, replaceOnce } from "@/view/pushOnce";
 import DraftsScreen from "@/view/listings/drafts";
 
 export default function RascunhosRoute() {
   return (
     <DraftsScreen
-      onBack={() => router.back()}
-      onRequireSignIn={() => router.replace("/entrar")}
-      onResume={(bookId) => router.push(`/anunciar?rascunho=${bookId}` as never)}
-      onNavigateToCreateListing={() => router.push("/anunciar")}
+      onBack={() => backOnce()}
+      onRequireSignIn={() => replaceOnce("/entrar")}
+      onResume={(bookId) => pushOnce(`/anunciar?rascunho=${bookId}` as never)}
+      onNavigateToCreateListing={() => pushOnce("/anunciar")}
     />
   );
 }

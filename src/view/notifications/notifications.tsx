@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Pressable, SectionList, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import type { AppNotification } from "@/model/entities/notification";
@@ -53,6 +53,15 @@ export default function Notifications({
   const styles = useMemo(() => createStyles(colors), [colors]);
   const { isOnline } = useNetworkStatus();
   const handleExplore = onExploreBooks ?? onBack;
+  const [refreshing, setRefreshing] = useState(false);
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await actions.refresh();
+    } finally {
+      setRefreshing(false);
+    }
+  };
   /**
    * Sem nenhuma notificação, `07.05` mostra só o estado vazio: a manchete e os filtros de `07.04`
    * pertencem à lista cheia.
@@ -86,13 +95,6 @@ export default function Notifications({
     <SafeAreaView style={styles.page}>
       <TopAppBar title="Notificações" onBack={() => onBack?.()} />
       <View style={styles.content}>
-        {showListChrome && state.unreadCount > 0 ? (
-          <Text style={styles.unreadCounterBadge}>
-            {state.unreadCount === 1
-              ? "1 alerta pendente de leitura"
-              : `${state.unreadCount} alertas pendentes de leitura`}
-          </Text>
-        ) : null}
         {showListChrome ? (
         <View style={styles.filterBar}>
           <View accessibilityRole="tablist" style={styles.filterTabs}>
@@ -132,10 +134,11 @@ export default function Notifications({
           {state.unreadCount > 0 ? (
             <Pressable
               accessibilityRole="button"
+              accessibilityLabel="Marcar todas como lidas"
               onPress={() => void actions.markAllAsRead()}
               style={styles.markAllButton}
             >
-              <Text style={styles.markAllText}>Marcar lidas</Text>
+              <Text style={styles.markAllText}>Marcar todas como lidas</Text>
             </Pressable>
           ) : null}
         </View>
@@ -177,6 +180,7 @@ export default function Notifications({
           </View>
         ) : (
           <SectionList
+            testID="notifications-list"
             sections={groupNotificationsByPeriod(state.filteredNotifications).map((section) => ({
               ...section,
               data: [...section.data],
@@ -184,6 +188,8 @@ export default function Notifications({
             keyExtractor={(item) => item.id}
             contentContainerStyle={styles.listContent}
             stickySectionHeadersEnabled={false}
+            refreshing={refreshing}
+            onRefresh={() => void handleRefresh()}
             renderSectionHeader={({ section }) => (
               <Text accessibilityRole="header" style={styles.sectionHeader}>
                 {section.title}
@@ -253,12 +259,6 @@ function createStyles(colors: ColorPalette) {
     alignSelf: "center",
     paddingHorizontal: tokens.spacing[16],
     paddingTop: tokens.spacing[8],
-  },
-  unreadCounterBadge: {
-    ...tokens.typography.labelMedium,
-    color: colors.actionDeep,
-    fontWeight: "600",
-    marginTop: tokens.spacing[4],
   },
   filterBar: {
     flexDirection: "row",

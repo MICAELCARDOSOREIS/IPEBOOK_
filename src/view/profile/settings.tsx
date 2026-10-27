@@ -21,7 +21,7 @@ export type SettingsProps = {
 
 type LinkItem = {
   key: string;
-  icon: "document" | "info" | "lock";
+  icon: "document" | "info" | "lock" | "block" | "visibility";
   label: string;
   description?: string;
   onPress?: () => void;
@@ -52,14 +52,14 @@ export function Settings({
     ? [
         {
           key: "privacy",
-          icon: "document" as const,
+          icon: "visibility" as const,
           label: "Privacidade e dados",
           description: "Baixe seus dados ou exclua sua conta",
           onPress: onNavigateToPrivacy,
         },
         {
           key: "blocked",
-          icon: "lock" as const,
+          icon: "block" as const,
           label: "Pessoas bloqueadas",
           description: "Gerencie quem não pode interagir com você",
           onPress: onNavigateToBlockedUsers,
@@ -68,20 +68,23 @@ export function Settings({
     : [];
 
   const aboutLinks: LinkItem[] = [
-    { key: "terms", icon: "document" as const, label: "Termos e privacidade", onPress: onNavigateToTerms },
     { key: "help", icon: "info" as const, label: "Ajuda e suporte", onPress: onNavigateToHelp },
+    { key: "terms", icon: "document" as const, label: "Termos e privacidade", onPress: onNavigateToTerms },
   ].filter((link) => link.onPress);
 
-  function renderLink(link: LinkItem) {
+  function renderLink(link: LinkItem, index: number) {
     return (
       <Pressable
         key={link.key}
         accessibilityRole="button"
         accessibilityLabel={link.label}
         onPress={link.onPress}
-        style={styles.linkRow}
+        android_ripple={{ color: colors.m3.surfaceContainerHigh }}
+        style={({ pressed }) => [styles.linkRow, index > 0 && styles.linkDivider, pressed && styles.linkPressed]}
       >
-        <AppIcon name={link.icon} size={20} color={colors.m3.onSurfaceVariant} />
+        <View style={styles.iconCircle}>
+          <AppIcon name={link.icon} size={20} color={colors.m3.onSecondaryContainer} />
+        </View>
         <View style={styles.linkText}>
           <Text style={styles.linkLabel}>{link.label}</Text>
           {link.description ? <Text style={styles.linkDescription}>{link.description}</Text> : null}
@@ -96,72 +99,82 @@ export function Settings({
       <TopAppBar title="Configurações" onBack={onBack} />
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.content}>
-          {/* Seção Aparência (Spec 073 FR-003, ADR 0036) */}
-          <View style={styles.section}>
-            <Text accessibilityRole="header" style={styles.sectionHeader}>
-              Aparência
-            </Text>
-            <Text style={styles.sectionDescription}>
-              Escolha como o aplicativo aparece para você.
-            </Text>
-            <ThemePreferenceSelector />
-          </View>
-
-          {/* Seção Conta e dados (ADR 0060): itens que sairam de Meu perfil e dependem de sessão */}
+          {/* Conta e dados (ADR 0060): só com sessão, e primeiro por ser o que mais importa */}
           {accountLinks.length > 0 ? (
             <View style={styles.section}>
               <Text accessibilityRole="header" style={styles.sectionHeader}>
                 Conta e dados
               </Text>
-              {accountLinks.map((link) => renderLink(link))}
+              <View style={styles.listCard}>{accountLinks.map(renderLink)}</View>
             </View>
           ) : null}
 
-          {/* Seção Dados neste dispositivo (Spec 073): limpeza do catálogo offline */}
+          {/* Aparência (Spec 073 FR-003, ADR 0036) */}
+          <View style={styles.section}>
+            <Text accessibilityRole="header" style={styles.sectionHeader}>
+              Aparência
+            </Text>
+            <View style={styles.card}>
+              <Text style={styles.sectionDescription}>
+                Escolha como o aplicativo aparece para você.
+              </Text>
+              <ThemePreferenceSelector />
+            </View>
+          </View>
+
+          {/* Dados neste dispositivo (Spec 073): limpeza do catálogo offline */}
           <View style={styles.section}>
             <Text accessibilityRole="header" style={styles.sectionHeader}>
               Dados neste dispositivo
             </Text>
-            <Text style={styles.sectionDescription}>
-              O IpêBook guarda uma cópia do catálogo de Piripiri para abrir rápido mesmo sem internet.
-              Limpar não apaga seus anúncios nem remove sua conta.
-            </Text>
-            <OutlinedButton
-              label="Limpar dados salvos"
-              accessibilityLabel="Limpar dados salvos no dispositivo"
-              loading={state.clearingCache}
-              loadingLabel="Limpando dados salvos"
-              onPress={() => void actions.clearBooksCache()}
-            />
-            {state.cacheCleared ? (
-              <Text accessibilityLiveRegion="polite" style={styles.feedbackSuccess}>
-                Dados salvos limpos deste dispositivo.
+            <View style={styles.card}>
+              <Text style={styles.sectionDescription}>
+                O IpêBook guarda uma cópia do catálogo de Piripiri para abrir rápido mesmo sem
+                internet. Limpar não apaga seus anúncios nem remove sua conta.
               </Text>
-            ) : null}
-            {state.cacheError ? (
-              <Text accessibilityLiveRegion="polite" style={styles.feedbackError}>
-                {state.cacheError}
-              </Text>
-            ) : null}
+              <OutlinedButton
+                label="Limpar dados salvos"
+                accessibilityLabel="Limpar dados salvos no dispositivo"
+                loading={state.clearingCache}
+                loadingLabel="Limpando dados salvos"
+                onPress={() => void actions.clearBooksCache()}
+              />
+              {state.cacheCleared ? (
+                <Text accessibilityLiveRegion="polite" style={styles.feedbackSuccess}>
+                  Dados salvos limpos deste dispositivo.
+                </Text>
+              ) : null}
+              {state.cacheError ? (
+                <Text accessibilityLiveRegion="polite" style={styles.feedbackError}>
+                  {state.cacheError}
+                </Text>
+              ) : null}
+            </View>
           </View>
 
-          {/* Seção Sobre e atalhos (Spec 073) */}
+          {/* Sobre e atalhos (Spec 073) */}
           <View style={styles.section}>
             <Text accessibilityRole="header" style={styles.sectionHeader}>
               Sobre o IpêBook
             </Text>
-            <View style={styles.versionRow}>
-              <Text style={styles.versionLabel}>Versão</Text>
-              <Text accessibilityLabel={`Versão do aplicativo ${version ?? "desconhecida"}`} style={styles.versionValue}>
-                {version ?? "—"}
-              </Text>
+            <View style={styles.listCard}>
+              {aboutLinks.map(renderLink)}
+              <View style={[styles.versionRow, aboutLinks.length > 0 && styles.linkDivider]}>
+                <Text style={styles.versionLabel}>Versão</Text>
+                <Text
+                  accessibilityLabel={`Versão do aplicativo ${version ?? "desconhecida"}`}
+                  style={styles.versionValue}
+                >
+                  {version ?? "—"}
+                </Text>
+              </View>
             </View>
-            {aboutLinks.map((link) => renderLink(link))}
-            <Text style={styles.sectionDescription}>
-              IpêBook — leitura, anúncios e configurações funcionam sem internet. Só publicar,
-              favoritar e negociar pedem conexão.
-            </Text>
           </View>
+
+          <Text style={styles.footer}>
+            Leitura, anúncios e configurações funcionam sem internet. Só publicar, favoritar e
+            negociar pedem conexão.
+          </Text>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -173,23 +186,50 @@ export default Settings;
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     page: { flex: 1, backgroundColor: colors.background },
+    card: {
+      gap: tokens.spacing[12],
+      padding: tokens.spacing[16],
+      borderRadius: tokens.radius.large,
+      backgroundColor: colors.m3.surfaceContainerLow,
+    },
+    listCard: {
+      borderRadius: tokens.radius.large,
+      overflow: "hidden",
+      backgroundColor: colors.m3.surfaceContainerLow,
+    },
+    iconCircle: {
+      width: 40,
+      height: 40,
+      borderRadius: tokens.radius.full,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: colors.m3.secondaryContainer,
+    },
+    linkDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.m3.outlineVariant },
+    linkPressed: { backgroundColor: colors.m3.surfaceContainerHigh },
     scroll: { flexGrow: 1, paddingBottom: tokens.spacing[32] },
     content: {
       width: "100%",
       maxWidth: 720,
       alignSelf: "center",
-      padding: tokens.spacing[24],
-      gap: tokens.spacing[32],
+      padding: tokens.spacing[16],
+      gap: tokens.spacing[24],
     },
-    section: { gap: tokens.spacing[12] },
+    section: { gap: tokens.spacing[8] },
     sectionHeader: {
-      ...tokens.typography.titleMedium,
-      fontFamily: tokens.typography.displayLarge.fontFamily,
-      color: colors.text,
+      ...tokens.typography.labelLarge,
+      color: colors.m3.primary,
+      paddingHorizontal: tokens.spacing[8],
     },
     sectionDescription: {
       ...tokens.typography.bodyMedium,
       color: colors.secondaryText,
+    },
+    footer: {
+      ...tokens.typography.bodyMedium,
+      color: colors.secondaryText,
+      textAlign: "center",
+      paddingHorizontal: tokens.spacing[16],
     },
     feedbackSuccess: {
       ...tokens.typography.bodyMedium,
@@ -204,6 +244,7 @@ function createStyles(colors: ColorPalette) {
       justifyContent: "space-between",
       alignItems: "center",
       minHeight: tokens.accessibility.touchTarget,
+      paddingHorizontal: tokens.spacing[16],
     },
     versionLabel: {
       ...tokens.typography.bodyMedium,
@@ -218,8 +259,9 @@ function createStyles(colors: ColorPalette) {
       flexDirection: "row",
       alignItems: "center",
       gap: tokens.spacing[12],
-      minHeight: tokens.accessibility.touchTarget,
+      minHeight: 64,
       paddingVertical: tokens.spacing[8],
+      paddingHorizontal: tokens.spacing[16],
     },
     linkText: { flex: 1, gap: 2 },
     linkLabel: {

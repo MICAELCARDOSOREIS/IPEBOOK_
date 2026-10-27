@@ -1,4 +1,5 @@
-import { router, useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
+import { backOnce } from "@/view/pushOnce";
 import EditAlertScreen from "@/view/search/editAlertScreen";
 
 export default function EditAlertRoute() {
@@ -6,8 +7,8 @@ export default function EditAlertRoute() {
   return (
     <EditAlertScreen
       alertId={id ?? ""}
-      onBack={() => router.back()}
-      onSaved={() => router.back()}
+      onBack={() => backOnce()}
+      onSaved={() => backOnce()}
     />
   );
 }

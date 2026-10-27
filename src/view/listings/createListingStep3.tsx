@@ -8,6 +8,7 @@ import {
 } from "@/model/entities/book";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
+import { categoryTone } from "@/view/categoryTone";
 import { AppIcon } from "@/view/components/AppIcon";
 import { Chip } from "@/view/components/Chip";
 import { NeighborhoodSelectorModal } from "@/view/components/NeighborhoodSelectorModal";
@@ -48,7 +49,7 @@ export function CreateListingStep3({
   onSetDescription,
   onSetNeighborhood,
 }: CreateListingStep3Props) {
-  const { colors } = useTheme();
+  const { colors, resolvedScheme } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [neighborhoodPickerVisible, setNeighborhoodPickerVisible] = useState(false);
 
@@ -82,6 +83,7 @@ export function CreateListingStep3({
               size="regular"
               label={cat}
               accessibilityLabel={`Categoria ${cat}`}
+              tone={categoryTone(cat, resolvedScheme)}
               selected={category === cat}
               onPress={() => onSetCategory(category === cat ? "" : cat)}
               disabled={loading}
