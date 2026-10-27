@@ -6,13 +6,10 @@ import type { SupabaseAppClient } from "@/infra/supabaseClient";
 
 const openAuthSessionAsync = vi.fn();
 vi.mock("expo-web-browser", () => ({ openAuthSessionAsync: (...args: unknown[]) => openAuthSessionAsync(...args) }));
-// SDK 58: no Expo Go, createURL devolvia o esquema do app ("ipebook:///…"), que o Expo Go não abre;
-// por isso o retorno vem de Constants.experienceUrl.
-const constants = vi.hoisted(() => ({ executionEnvironment: "storeClient", experienceUrl: "exp://192.168.1.230:8081" }));
-vi.mock("expo-constants", () => ({
-  default: constants,
-  ExecutionEnvironment: { Bare: "bare", Standalone: "standalone", StoreClient: "storeClient" },
-}));
+// SDK 58: no Expo Go deste projeto, createURL devolvia "ipebook:///…" (sem hostUri nem expoGoConfig); o sinal
+// confiável é a origem HTTP do bundle servido pelo Metro.
+const bundle = vi.hoisted(() => ({ origin: "http://192.168.1.230:8081" as string | null }));
+vi.mock("expo/internal/bundle-origin", () => ({ getBundleOrigin: () => bundle.origin }));
 
 function client() {
   const auth = {
@@ -57,7 +54,7 @@ describe("Login com Google no app nativo (Spec 085)", () => {
 
   it("no app instalado volta por ipebook://auth/callback, com host, aceito pela lista do Supabase", async () => {
     Platform.OS = "android";
-    constants.executionEnvironment = "standalone";
+    bundle.origin = null;
     const { auth, ds } = client();
     openAuthSessionAsync.mockResolvedValue({ type: "success", url: "ipebook://auth/callback#access_token=AT&refresh_token=RT" });
     await ds.signInWithGoogle();
@@ -65,7 +62,7 @@ describe("Login com Google no app nativo (Spec 085)", () => {
       provider: "google",
       options: { redirectTo: "ipebook://auth/callback", skipBrowserRedirect: true },
     });
-    constants.executionEnvironment = "storeClient";
+    bundle.origin = "http://192.168.1.230:8081";
   });
 
   it("cancelar no navegador não cria sessão e avisa", async () => {
