@@ -55,45 +55,6 @@ describe("InviteFriends — Convidar amigos (Figma 08.02, Spec 057)", () => {
     ).toBeDefined();
   });
 
-  it("aciona envio pelo WhatsApp ao tocar no botão principal", async () => {
-    const actions = mockViewModel();
-    let screen!: Awaited<ReturnType<typeof render>>;
-    await act(async () => {
-      screen = await render(<InviteFriends />);
-    });
-
-    await act(async () => {
-      fireEvent.press(screen.getByLabelText("Enviar convite pelo WhatsApp"));
-    });
-    expect(actions.shareToWhatsApp).toHaveBeenCalledTimes(1);
-  });
-
-  it("aciona compartilhamento nativo ao tocar em outras opções", async () => {
-    const actions = mockViewModel();
-    let screen!: Awaited<ReturnType<typeof render>>;
-    await act(async () => {
-      screen = await render(<InviteFriends />);
-    });
-
-    await act(async () => {
-      fireEvent.press(screen.getByLabelText("Mais opções de compartilhamento"));
-    });
-    expect(actions.shareNative).toHaveBeenCalledTimes(1);
-  });
-
-  it("aciona cópia de link ao tocar no botão de texto", async () => {
-    const actions = mockViewModel();
-    let screen!: Awaited<ReturnType<typeof render>>;
-    await act(async () => {
-      screen = await render(<InviteFriends />);
-    });
-
-    await act(async () => {
-      fireEvent.press(screen.getByLabelText("Copiar link do aplicativo"));
-    });
-    expect(actions.copyLink).toHaveBeenCalledTimes(1);
-  });
-
   it("exibe aviso acessível quando o link foi copiado", async () => {
     mockViewModel({ linkCopied: true });
     let screen!: Awaited<ReturnType<typeof render>>;
@@ -104,7 +65,6 @@ describe("InviteFriends — Convidar amigos (Figma 08.02, Spec 057)", () => {
     expect(
       screen.getByText("Link copiado para a área de transferência!"),
     ).toBeDefined();
-    expect(screen.getByText("Link copiado!")).toBeDefined();
   });
 
   it("chama onBack ao acionar o botão de voltar", async () => {
@@ -121,7 +81,7 @@ describe("InviteFriends — Convidar amigos (Figma 08.02, Spec 057)", () => {
     expect(onBack).toHaveBeenCalledTimes(1);
   });
 
-  it("compartilha a imagem do convite capturando o cartão em PNG (Spec 092)", async () => {
+  it("um único botão Compartilhar convite envia imagem e texto, sem os outros botões (Spec 092)", async () => {
     const actions = mockViewModel();
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
@@ -129,9 +89,13 @@ describe("InviteFriends — Convidar amigos (Figma 08.02, Spec 057)", () => {
     });
     expect(screen.getByLabelText("Convite para o IpêBook em Piripiri. Acesse ipebook.app")).toBeDefined();
     await act(async () => {
-      fireEvent.press(screen.getByLabelText("Compartilhar a imagem do convite"));
+      fireEvent.press(screen.getByLabelText("Compartilhar o convite com imagem e texto"));
     });
     expect(actions.shareImage).toHaveBeenCalledTimes(1);
+    expect(screen.queryByLabelText("Enviar convite pelo WhatsApp")).toBeNull();
+    expect(screen.queryByLabelText("Mais opções de compartilhamento")).toBeNull();
+    expect(screen.queryByLabelText("Copiar link do aplicativo")).toBeNull();
+    expect(screen.getByText("Texto que vai junto com a imagem")).toBeDefined();
     const capture = vi.mocked(actions.shareImage).mock.calls[0][0];
     await expect(capture()).resolves.toBe("file:///tmp/convite.png");
   });

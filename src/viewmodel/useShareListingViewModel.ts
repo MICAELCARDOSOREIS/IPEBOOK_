@@ -139,7 +139,7 @@ export function useShareListingViewModel(
           if (active.current) setState({ sharing: false, linkCopied: true, error: null });
           return;
         }
-        const shared = await shareImageFile(await capture(), "Compartilhar anúncio");
+        const shared = await shareImageFile(await capture(), message, "Compartilhar anúncio");
         if (!shared) await Share.share({ message });
         if (active.current) setState({ sharing: false, linkCopied: false, error: null });
       } catch (error) {

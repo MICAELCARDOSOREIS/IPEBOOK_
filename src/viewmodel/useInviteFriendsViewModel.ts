@@ -57,8 +57,13 @@ export function useInviteFriendsViewModel(
       busy.current = true;
       setState((prev) => ({ ...prev, sharing: true, error: null }));
       try {
-        // Na web não há arquivo para a folha do sistema: cai no texto com link.
-        const shared = Platform.OS === "web" ? false : await shareImageFile(await capture(), "Convidar amigos para o IpêBook");
+        // Na web não há arquivo para a folha do sistema: copia o texto com o link.
+        if (Platform.OS === "web") {
+          await navigator.clipboard.writeText(message);
+          if (active.current) setState((prev) => ({ ...prev, sharing: false, linkCopied: true, error: null }));
+          return;
+        }
+        const shared = await shareImageFile(await capture(), message, "Convidar amigos para o IpêBook");
         if (!shared) await Share.share({ message });
         if (active.current) setState((prev) => ({ ...prev, sharing: false, linkCopied: false, error: null }));
       } catch (error) {

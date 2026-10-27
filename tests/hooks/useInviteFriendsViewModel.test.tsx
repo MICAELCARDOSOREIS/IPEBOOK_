@@ -140,7 +140,7 @@ describe("useInviteFriendsViewModel — imagem do convite (Spec 092)", () => {
     const capture = vi.fn().mockResolvedValue("file:///tmp/convite.png");
     await act(async () => { await hook.current[1].shareImage(capture); });
     expect(capture).toHaveBeenCalledTimes(1);
-    expect(shareFile).toHaveBeenCalledWith("file:///tmp/convite.png", "Convidar amigos para o IpêBook");
+    expect(shareFile).toHaveBeenCalledWith("file:///tmp/convite.png", expect.stringContaining("IpêBook"), "Convidar amigos para o IpêBook");
     expect(share).not.toHaveBeenCalled();
     expect(hook.current[0].sharing).toBe(false);
     expect(hook.current[0].error).toBeNull();
@@ -154,14 +154,16 @@ describe("useInviteFriendsViewModel — imagem do convite (Spec 092)", () => {
     expect(share).toHaveBeenCalledWith({ message: expect.stringContaining("IpêBook") });
   });
 
-  it("na web compartilha só o texto, sem capturar", async () => {
+  it("na web copia o texto com o link, sem capturar", async () => {
     vi.spyOn(Platform, "OS", "get").mockReturnValue("web");
-    const share = vi.spyOn(Share, "share").mockResolvedValue({ action: "sharedAction", activityType: undefined });
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    vi.stubGlobal("navigator", { clipboard: { writeText } });
     const capture = vi.fn();
     const hook = await renderHook(fakeUseCases, undefined, vi.fn());
     await act(async () => { await hook.current[1].shareImage(capture); });
     expect(capture).not.toHaveBeenCalled();
-    expect(share).toHaveBeenCalledTimes(1);
+    expect(writeText).toHaveBeenCalledWith(expect.stringContaining("IpêBook"));
+    expect(hook.current[0].linkCopied).toBe(true);
   });
 
   it("mostra erro amigável quando a captura falha e ignora segundo toque em andamento", async () => {
