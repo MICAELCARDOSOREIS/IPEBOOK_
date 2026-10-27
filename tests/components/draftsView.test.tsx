@@ -5,16 +5,11 @@ import type { Book } from "@/model/entities/book";
 import type { DraftsState, DraftsActions } from "@/viewmodel/useDraftsViewModel";
 import { Drafts } from "@/view/listings/drafts";
 import DraftsScreen from "@/view/listings/drafts";
-import { Alert } from "react-native";
 
 vi.mock("@/viewmodel/useDraftsViewModel", () => ({
   useDraftsViewModel: vi.fn(),
 }));
 vi.mock("@/viewmodel/useAuthViewModel", () => ({ useAuthViewModel: vi.fn() }));
-vi.mock("react-native", async () => {
-  const actual = await vi.importActual<Record<string, unknown>>("react-native");
-  return { ...actual, Alert: { alert: vi.fn() } };
-});
 
 import { useDraftsViewModel } from "@/viewmodel/useDraftsViewModel";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
@@ -155,24 +150,55 @@ describe("tela de Rascunhos (Spec 017 — Figma 04.11 a 04.16)", () => {
     expect(screen.getByText("Parou no livro")).toBeTruthy();
   });
 
-  it("descartar abre confirmação e chama discardDraft ao confirmar", async () => {
-    const alertMock = vi.mocked(Alert.alert);
-    alertMock.mockClear();
+  it("descartar abre a confirmação em diálogo e só apaga ao confirmar (Spec 092)", async () => {
     const actions = mockViewModel({ drafts: [draft()], loading: false });
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
       screen = await render(<Drafts sessionUserId="u1" />);
     });
-    fireEvent.press(screen.getByText("Descartar"));
-    expect(alertMock).toHaveBeenCalledWith(
-      "Descartar rascunho?",
-      expect.any(String),
-      expect.arrayContaining([expect.objectContaining({ text: "Descartar" })]),
-    );
-    const buttons = alertMock.mock.calls[0][2] as { text: string; onPress?: () => void }[];
-    const confirmar = buttons.find((b) => b.text === "Descartar");
-    confirmar?.onPress?.();
+    await act(async () => { fireEvent.press(screen.getByLabelText("Descartar rascunho")); });
+    expect(screen.getByText("Descartar rascunho?")).toBeTruthy();
+    expect(actions.discardDraft).not.toHaveBeenCalled();
+    await act(async () => { fireEvent.press(screen.getByText("Cancelar")); });
+    expect(actions.discardDraft).not.toHaveBeenCalled();
+    await act(async () => { fireEvent.press(screen.getByLabelText("Descartar rascunho")); });
+    await act(async () => { fireEvent.press(screen.getAllByText("Descartar").slice(-1)[0]); });
     expect(actions.discardDraft).toHaveBeenCalledWith("d1");
+  });
+
+  it("mostra o resumo, o autor e o andamento do rascunho (Spec 092)", async () => {
+    mockViewModel({ drafts: [draft({ author: "Machado de Assis" }), draft({ id: "d2", title: "Iracema", draftStep: 1 })], loading: false });
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<Drafts sessionUserId="u1" />);
+    });
+    expect(screen.getByText("2 anúncios em andamento")).toBeTruthy();
+    expect(screen.getByText("Machado de Assis")).toBeTruthy();
+    expect(screen.getByText("Autor não informado")).toBeTruthy();
+    expect(screen.getByText("Parou no livro")).toBeTruthy();
+  });
+
+  it("recarrega a lista quando a tela volta ao foco, mas não na primeira carga (Spec 092)", async () => {
+    const actions = mockViewModel({ drafts: [], loading: false });
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<Drafts sessionUserId="u1" focusKey={0} />);
+    });
+    expect(actions.reload).not.toHaveBeenCalled();
+    await act(async () => { await screen.rerender(<Drafts sessionUserId="u1" focusKey={1} />); });
+    expect(actions.reload).toHaveBeenCalledTimes(1);
+  });
+
+  it("singular no resumo e toque no cartão retoma o rascunho (Spec 092)", async () => {
+    const onResume = vi.fn();
+    mockViewModel({ drafts: [draft({ id: "z" })], loading: false });
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<Drafts sessionUserId="u1" onResume={onResume} />);
+    });
+    expect(screen.getByText("1 anúncio em andamento")).toBeTruthy();
+    await act(async () => { fireEvent.press(screen.getByLabelText("Rascunho Dom Casmurro, Parou nos detalhes")); });
+    expect(onResume).toHaveBeenCalledWith("z");
   });
 });
 
