@@ -1,4 +1,5 @@
 import { Platform } from "react-native";
+import { ImageManipulator, SaveFormat } from "expo-image-manipulator";
 import * as ImagePicker from "expo-image-picker";
 import { ValidationError } from "@/model/errors";
 import type { IImagePickerService, ImageSource, PickedImage } from "@/model/services/iImagePickerService";
@@ -8,7 +9,10 @@ const PERMISSION_DENIED: Record<ImageSource, string> = {
   library: "Permita o acesso às fotos nas configurações do aparelho para escolher uma imagem.",
 };
 
-/** Seletor de imagens do Expo (ADR 0065): recorte 1:1 e compressão antes do envio. */
+/** Lado máximo enviado: suficiente para a tela e reduz armazenamento e tráfego (Spec 087). */
+const MAX_SIDE = 1080;
+
+/** Seletor de imagens do Expo (ADR 0065): recorte 1:1, redução para 1080 px e compressão antes do envio. */
 export class ExpoImagePickerService implements IImagePickerService {
   async pickSquareImage(source: ImageSource): Promise<PickedImage | null> {
     const permission =
@@ -21,14 +25,19 @@ export class ExpoImagePickerService implements IImagePickerService {
       mediaTypes: ["images"],
       allowsEditing: true,
       aspect: [1, 1],
-      quality: 0.7,
+      // A compressão acontece uma só vez, depois de reduzir
+      quality: 1,
     };
     const result =
       source === "camera" ? await ImagePicker.launchCameraAsync(options) : await ImagePicker.launchImageLibraryAsync(options);
     const asset = result.canceled ? undefined : result.assets[0];
     if (!asset) return null;
 
-    return { bytes: new Uint8Array(await readBytes(asset.uri)), fileName: asset.fileName ?? "foto.jpg" };
+    const context = ImageManipulator.manipulate(asset.uri);
+    if (asset.width > MAX_SIDE) context.resize({ width: MAX_SIDE });
+    const reduced = await (await context.renderAsync()).saveAsync({ compress: 0.7, format: SaveFormat.JPEG });
+
+    return { bytes: new Uint8Array(await readBytes(reduced.uri)), fileName: asset.fileName ?? "foto.jpg" };
   }
 }
 
