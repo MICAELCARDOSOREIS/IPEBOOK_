@@ -37,12 +37,14 @@ describe("WelcomeRoute (issue #98)", () => {
     expect(onFinish).toHaveBeenCalledWith("/entrar");
   });
 
-  it("marca como vistas e segue para o catálogo ao tocar em Explorar livros sem entrar", async () => {
+  it("não oferece acesso de visitante ao catálogo (Spec 092)", async () => {
     const { screen, dismiss, onFinish } = await renderRoute();
 
-    fireEvent.press(screen.getByRole("button", { name: "Explorar livros sem entrar" }));
+    expect(screen.queryByRole("button", { name: /Explorar/i })).toBeNull();
+    fireEvent.press(screen.getByRole("button", { name: "Já tenho conta" }));
 
     expect(dismiss).toHaveBeenCalledTimes(1);
-    expect(onFinish).toHaveBeenCalledWith("/");
+    expect(onFinish).toHaveBeenCalledWith("/entrar");
+    expect(onFinish).not.toHaveBeenCalledWith("/");
   });
 });

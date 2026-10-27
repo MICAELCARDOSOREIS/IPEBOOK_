@@ -65,5 +65,7 @@
 - [0063 — Adoção do domínio próprio ipebook.app e redirecionamento canônico no Cloudflare Pages](0063-dominio-proprio-ipebook-app.md)
 - [0064 — Redirecionamento canônico de ipebook.pages.dev via Bulk Redirects da Cloudflare](0064-redirecionamento-canonico-bulk-redirects.md)
 - [0065 — Foto de perfil pela câmera ou galeria, guardada no bucket `book-photos`](0065-foto-de-perfil-por-camera-e-galeria.md)
+- [0066 — Aprimoramentos da Experiência Web Responsiva e Desktop Largo](0066-aprimoramentos-web-responsiva.md)
+- [0067 — Catálogo exige conta: fim da navegação de visitante](0067-catalogo-exige-conta.md)
 
 Preservar registros aceitos; mudanças relevantes geram novo ADR com vínculos de substituição.

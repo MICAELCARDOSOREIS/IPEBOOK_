@@ -1,6 +1,7 @@
 import { useCallback, useState } from "react";
 import { useFocusEffect } from "expo-router";
-import { pushOnce } from "@/view/pushOnce";
+import { pushOnce, replaceOnce } from "@/view/pushOnce";
+import { RequireAuth } from "@/view/components/RequireAuth";
 import Home from "@/view/home";
 
 export default function Index() {
@@ -12,21 +13,25 @@ export default function Index() {
   );
 
   return (
-    <Home
-      focusKey={focusKey}
-      onNavigateToSignIn={() => pushOnce("/entrar")}
-      onNavigateToBookDetail={(bookId) => pushOnce(`/livro/${bookId}`)}
-      onNavigateToNotifications={() => pushOnce("/notificacoes")}
-      onNavigateToSearch={(filter) => {
-        const params: Record<string, string> = {};
-        if (filter?.modality) params.modalidade = filter.modality;
-        if (filter?.neighborhood) params.bairro = filter.neighborhood;
-        pushOnce(
-          Object.keys(params).length > 0
-            ? { pathname: "/pesquisa", params }
-            : "/pesquisa",
-        );
-      }}
-    />
+    // Início exige conta: sem sessão, volta às boas-vindas, mesmo destino do portão de
+    // primeiro acesso (replaceOnce deduplica) — Spec 092.
+    <RequireAuth onRequireSignIn={() => replaceOnce("/bem-vindo")}>
+      <Home
+        focusKey={focusKey}
+        onNavigateToSignIn={() => pushOnce("/entrar")}
+        onNavigateToBookDetail={(bookId) => pushOnce(`/livro/${bookId}`)}
+        onNavigateToNotifications={() => pushOnce("/notificacoes")}
+        onNavigateToSearch={(filter) => {
+          const params: Record<string, string> = {};
+          if (filter?.modality) params.modalidade = filter.modality;
+          if (filter?.neighborhood) params.bairro = filter.neighborhood;
+          pushOnce(
+            Object.keys(params).length > 0
+              ? { pathname: "/pesquisa", params }
+              : "/pesquisa",
+          );
+        }}
+      />
+    </RequireAuth>
   );
 }
