@@ -67,7 +67,8 @@
           "cameraPermission": "O IpêBook usa a câmera para ler o ISBN ao anunciar um livro e para tirar a foto do seu perfil.",
           "microphonePermission": false
         }
-      ]
+      ],
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true
