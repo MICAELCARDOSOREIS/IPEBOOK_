@@ -13,6 +13,8 @@ import { Avatar } from "@/view/components/Avatar";
 import { AppIcon } from "@/view/components/AppIcon";
 import { FilledButton } from "@/view/components/FilledButton";
 import { TopAppBar } from "@/view/components/TopAppBar";
+import { OwnerListings } from "@/view/listings/ownerListings";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
 
 function formatJoinedAt(joinedAt: string): string {
   const date = new Date(joinedAt);
@@ -29,18 +31,21 @@ export type PublicProfileProps = {
   onReportListing?: (listingId: string) => void;
   /** Abre a denúncia da própria pessoa (Spec 091). */
   onReportUser?: (userId: string, name: string) => void;
+  /** Abre um anúncio da pessoa na grade da web larga. */
+  onOpenBook?: (bookId: string) => void;
 };
 
 /**
  * Perfil público do membro da comunidade (Figma `03.04 · Perfil de Ana Paula`, nó `19:21`).
  */
-export function PublicProfile({ userId, onBack, onOpenChat, onReportListing, onReportUser }: PublicProfileProps) {
+export function PublicProfile({ userId, onBack, onOpenChat, onReportListing, onReportUser, onOpenBook }: PublicProfileProps) {
+  const wideWeb = useIsWideWeb();
   const [state, actions] = usePublicProfileViewModel(userId);
   const [auth] = useAuthViewModel();
   // No próprio perfil não faz sentido conversar consigo nem se denunciar
   const isOwnProfile = Boolean(auth.user?.id) && auth.user?.id === userId;
   const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = useMemo(() => createStyles(colors, wideWeb), [colors, wideWeb]);
   const [safetyOpen, setSafetyOpen] = useState(false);
   const [safety, safetyActions] = useProfileSafetyViewModel(auth.user?.id ?? null, userId);
   const chat = useChatWithUser(auth.user?.id ?? null, userId, (requestId) => onOpenChat?.(requestId));
@@ -176,6 +181,7 @@ export function PublicProfile({ userId, onBack, onOpenChat, onReportListing, onR
               </Pressable>
             </View>
             ) : null}
+            {wideWeb ? <OwnerListings ownerId={userId} ownerName={profile.name} onOpenBook={onOpenBook} /> : null}
           </View>
         ) : null}
       </ScrollView>
@@ -210,14 +216,14 @@ export function PublicProfile({ userId, onBack, onOpenChat, onReportListing, onR
 
 export default PublicProfile;
 
-function createStyles(colors: ColorPalette) {
+function createStyles(colors: ColorPalette, wideWeb: boolean) {
   return StyleSheet.create({
     page: { flex: 1, backgroundColor: colors.background },
     scrollContent: {
       paddingHorizontal: tokens.spacing[16],
       paddingTop: tokens.spacing[8],
       paddingBottom: tokens.spacing[32],
-      maxWidth: 720,
+      maxWidth: wideWeb ? 1000 : 720,
       width: "100%",
       alignSelf: "center",
     },
