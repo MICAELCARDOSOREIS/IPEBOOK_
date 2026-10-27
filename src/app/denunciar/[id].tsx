@@ -1,4 +1,5 @@
-import { router, useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
+import { backOnce, pushOnce } from "@/view/pushOnce";
 import ReportListingScreen from "@/view/listings/reportListingScreen";
 
 export default function DenunciarLivro() {
@@ -7,8 +8,8 @@ export default function DenunciarLivro() {
   return (
     <ReportListingScreen
       listingId={id}
-      onBack={() => router.back()}
-      onNavigateToLogin={() => router.push("/entrar")}
+      onBack={() => backOnce()}
+      onNavigateToLogin={() => pushOnce("/entrar")}
     />
   );
 }

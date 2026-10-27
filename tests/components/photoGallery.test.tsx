@@ -27,6 +27,15 @@ function swipeTo(screen: Awaited<ReturnType<typeof render>>, index: number, widt
 }
 
 describe("PhotoGallery (spec 018 / spec 038, issues #73 e #143)", () => {
+  it("dá à foto largura e altura em pixels, não porcentagem (tela preta no Android, Spec 091)", async () => {
+    const screen = await renderGallery();
+    const image = screen.getByLabelText("Foto 1 do anúncio");
+    const style = Object.assign({}, ...[image.props.style].flat(Infinity).filter(Boolean));
+    expect(typeof style.width).toBe("number");
+    expect(typeof style.height).toBe("number");
+    expect(style.width).toBeGreaterThan(0);
+  });
+
   afterEach(() => {
     cleanup();
   });

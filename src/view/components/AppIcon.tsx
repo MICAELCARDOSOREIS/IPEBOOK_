@@ -67,6 +67,7 @@ const symbols = {
   mail: { ios: "envelope", android: "mail", web: "mail" },
   star: { ios: "star", android: "star", web: "star" },
   flag: { ios: "flag", android: "flag", web: "flag" },
+  block: { ios: "nosign", android: "block", web: "block" },
   share: { ios: "square.and.arrow.up", android: "share", web: "share" },
   conservation: { ios: "book.closed", android: "menu_book", web: "menu_book" },
   category: { ios: "tag", android: "sell", web: "sell" },

@@ -50,6 +50,8 @@ export type SearchState = {
   resultsSummary: string;
   /** Quantidade que o botão do Figma `02.03` mostra antes de aplicar o rascunho. */
   draftResultCount: number;
+  /** Livros que bateriam com a busca e os filtros em outros bairros; 0 sem bairro aplicado (Spec 091). */
+  matchesInOtherNeighborhoods: number;
   books: readonly Book[];
   loading: boolean;
   error: string | null;
@@ -114,6 +116,15 @@ export function useSearchViewModel(
   const draftResultCount = useMemo(
     () => filterBooks(homeState.books, { term, filters: draftFilters, neighborhood }).length,
     [homeState.books, term, draftFilters, neighborhood],
+  );
+
+  // Com um bairro escolhido, avisa quando o vazio vem só do bairro (os mesmos filtros achariam livros em outro).
+  const matchesInOtherNeighborhoods = useMemo(
+    () =>
+      neighborhood === "all" || neighborhood === "Todos os bairros"
+        ? 0
+        : filterBooks(homeState.books, { term, filters, neighborhood: "all" }).length,
+    [homeState.books, term, filters, neighborhood],
   );
 
   const activeFilters = useMemo(() => deriveActiveFilters(filters), [filters]);
@@ -184,6 +195,7 @@ export function useSearchViewModel(
       hasActiveFilters,
       resultsSummary,
       draftResultCount,
+      matchesInOtherNeighborhoods,
       books: filteredBooks,
       loading: homeState.loading,
       error: homeState.error,

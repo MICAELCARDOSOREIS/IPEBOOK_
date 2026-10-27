@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { BackHandler, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from "react-native";
+import { BackHandler, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import type { Book } from "@/model/entities/book";
 import { tokens, type ColorPalette } from "@/view/tokens";
@@ -287,48 +287,37 @@ export default function CreateListing({
         </View>
       </ScrollView>
 
-      {/* Barra de ação fixa do Figma: nós `12:269`, `28:750` e `12:413` (`surface-container`). */}
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 8 : 0}
-      >
-        <SafeAreaView edges={["bottom"]} style={styles.actionBar}>
-          <View style={styles.actionBarInner}>
-            {step === 1 ? (
-              <FilledButton label="Continuar" onPress={handleGoToStep2} />
-            ) : null}
+      {/* Barra de ação fixa do Figma: nós `12:269`, `28:750` e `12:413` (`surface-container`). O desvio do teclado é da raiz única (Spec 088). */}
+      <SafeAreaView edges={["bottom"]} style={styles.actionBar}>
+        <View style={styles.actionBarInner}>
+          {step === 1 ? (
+            <FilledButton label="Continuar" onPress={handleGoToStep2} />
+          ) : null}
 
-            {step === 2 ? (
-              <>
-                <FilledButton label="Usar estas fotos" onPress={handleGoToStep3} />
-                <TextButton label="Voltar à etapa anterior" onPress={() => setStep(1)} />
-              </>
-            ) : null}
+          {step === 2 ? <FilledButton label="Usar estas fotos" onPress={handleGoToStep3} /> : null}
 
-            {step === 3 ? (
-              <>
-                <FilledButton
-                  label="Publicar anúncio"
-                  loading={state.loading}
-                  loadingLabel="Publicando"
-                  onPress={() => void handleSubmit()}
-                />
-                <TextButton
-                  label="Voltar à etapa anterior"
-                  disabled={state.loading}
-                  onPress={() => setStep(2)}
-                />
-              </>
-            ) : null}
+          {step === 3 ? (
+            <FilledButton
+              label="Publicar anúncio"
+              loading={state.loading}
+              loadingLabel="Publicando"
+              onPress={() => void handleSubmit()}
+            />
+          ) : null}
 
+          {/* Ações secundárias lado a lado: a barra fixa ocupava três linhas e escondia o formulário. */}
+          <View style={styles.secondaryRow}>
+            {step > 1 ? (
+              <TextButton label="Voltar à etapa anterior" disabled={state.loading} onPress={() => setStep(step - 1)} />
+            ) : null}
             <TextButton
               label="Salvar para depois"
               disabled={state.loading}
               onPress={() => void handleSaveForLater()}
             />
           </View>
-        </SafeAreaView>
-      </KeyboardAvoidingView>
+        </View>
+      </SafeAreaView>
     </SafeAreaView>
   );
 }
@@ -354,8 +343,9 @@ function createStyles(colors: ColorPalette) {
       gap: tokens.spacing[8],
       paddingHorizontal: tokens.spacing[16],
       paddingTop: tokens.spacing[16],
-      paddingBottom: tokens.spacing[8],
+      paddingBottom: tokens.spacing[4],
     },
+    secondaryRow: { flexDirection: "row", justifyContent: "center", flexWrap: "wrap" },
     draftBanner: {
       flexDirection: "row",
       alignItems: "center",

@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
-import { router, useFocusEffect } from "expo-router";
+import { useFocusEffect } from "expo-router";
+import { pushOnce } from "@/view/pushOnce";
 import Home from "@/view/home";
 
 export default function Index() {
@@ -13,14 +14,14 @@ export default function Index() {
   return (
     <Home
       focusKey={focusKey}
-      onNavigateToSignIn={() => router.push("/entrar")}
-      onNavigateToBookDetail={(bookId) => router.push(`/livro/${bookId}`)}
-      onNavigateToNotifications={() => router.push("/notificacoes")}
+      onNavigateToSignIn={() => pushOnce("/entrar")}
+      onNavigateToBookDetail={(bookId) => pushOnce(`/livro/${bookId}`)}
+      onNavigateToNotifications={() => pushOnce("/notificacoes")}
       onNavigateToSearch={(filter) => {
         const params: Record<string, string> = {};
         if (filter?.modality) params.modalidade = filter.modality;
         if (filter?.neighborhood) params.bairro = filter.neighborhood;
-        router.push(
+        pushOnce(
           Object.keys(params).length > 0
             ? { pathname: "/pesquisa", params }
             : "/pesquisa",

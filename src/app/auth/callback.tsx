@@ -1,4 +1,5 @@
 import { router } from "expo-router";
+import { backOnce, replaceOnce } from "@/view/pushOnce";
 import { useURL } from "expo-linking";
 import AuthCallback from "@/view/auth/authCallback";
 
@@ -8,10 +9,10 @@ export default function AuthCallbackRoute() {
   return (
     <AuthCallback
       url={url}
-      onSuccess={() => router.replace("/")}
+      onSuccess={() => replaceOnce("/")}
       onBackToSignIn={() => {
-        if (router.canGoBack()) router.back();
-        else router.replace("/entrar");
+        if (router.canGoBack()) backOnce();
+        else replaceOnce("/entrar");
       }}
     />
   );

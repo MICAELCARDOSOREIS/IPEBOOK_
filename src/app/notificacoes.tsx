@@ -1,4 +1,5 @@
 import { type Href, useRouter } from "expo-router";
+import { backOnce, pushOnce } from "@/view/pushOnce";
 import NotificationsScreen from "@/view/notifications/notificationsScreen";
 
 export default function NotificationsRoute() {
@@ -6,11 +7,11 @@ export default function NotificationsRoute() {
 
   return (
     <NotificationsScreen
-      onBack={() => router.back()}
-      onNavigateToLogin={() => router.push("/entrar")}
+      onBack={() => backOnce()}
+      onNavigateToLogin={() => pushOnce("/entrar")}
       onNavigateToAction={(actionUrl) => {
         if (actionUrl && actionUrl.startsWith("/")) {
-          router.push(actionUrl as Href);
+          pushOnce(actionUrl as Href);
         }
       }}
     />

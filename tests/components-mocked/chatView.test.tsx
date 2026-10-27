@@ -21,6 +21,7 @@ function setup(chat: Partial<NegotiationChatState> = {}) {
         isOwner: false,
         counterpartId: "ana",
         counterpartName: "Ana Paula",
+        counterpartPhotoUrl: "https://cdn/ana.jpg",
         safeMeetingPoints: [],
       },
       loading: false,
@@ -77,6 +78,23 @@ describe("Chat em tela cheia (Spec 082)", () => {
     expect(screen.getByText("Comece a conversa")).toBeDefined();
     await act(async () => { fireEvent.press(screen.getByText("O livro ainda está disponível?")); });
     expect(actions.setInputText).toHaveBeenCalledWith("O livro ainda está disponível?");
+  });
+
+  it("mostra a foto da pessoa no cabeçalho e Voltar funciona (Spec 089)", async () => {
+    setup();
+    const onBack = vi.fn();
+    const screen = await renderChat({ onBack });
+    expect(screen.getByLabelText("Ana Paula")).toBeDefined();
+    await act(async () => { fireEvent.press(screen.getByLabelText("Voltar")); });
+    expect(onBack).toHaveBeenCalledTimes(1);
+  });
+
+  it("Combinar é um botão com rótulo acessível (Spec 089)", async () => {
+    setup();
+    const onOpenNegotiation = vi.fn();
+    const screen = await renderChat({ onOpenNegotiation });
+    await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Combinar encontro na negociação" })); });
+    expect(onOpenNegotiation).toHaveBeenCalledWith("r1");
   });
 
   it("mostra a falha de envio com Reenviar", async () => {

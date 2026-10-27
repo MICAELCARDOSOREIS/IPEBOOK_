@@ -17,6 +17,8 @@ export type NotificationsState = {
 
 export type NotificationsActions = {
   reload: () => Promise<void>;
+  /** Recarrega sem esconder a lista (puxar para atualizar). */
+  refresh: () => Promise<void>;
   markAsRead: (notificationId: string) => Promise<void>;
   markAllAsRead: () => Promise<void>;
   setFilter: (filter: NotificationFilter) => void;
@@ -65,6 +67,7 @@ export function useNotificationsViewModel(
   }, [sessionUserId, useCases]);
 
   const reload = useCallback(() => load(false), [load]);
+  const refresh = useCallback(() => load(true), [load]);
 
   useEffect(() => {
     active.current = true;
@@ -126,6 +129,7 @@ export function useNotificationsViewModel(
     },
     {
       reload,
+      refresh,
       markAsRead,
       markAllAsRead,
       setFilter,

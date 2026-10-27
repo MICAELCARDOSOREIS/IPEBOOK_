@@ -4,6 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { BOOK_CONDITION_LABELS, type BookModality } from "@/model/entities/book";
 import { AppIcon } from "@/view/components/AppIcon";
 import { BookCover } from "@/view/components/BookCover";
+import { ModalityCoverArea } from "@/view/components/ModalityCoverArea";
 import { ErrorState } from "@/view/components/ErrorState";
 import { FilledButton } from "@/view/components/FilledButton";
 import { IconBadge } from "@/view/components/IconBadge";
@@ -140,7 +141,9 @@ export default function Favorites({
                   onPress={() => onBook(item.id)}
                   style={styles.rowMain}
                 >
-                  <BookCover id={item.id} title={item.title} photoUrl={item.photoUrl} variant="list" />
+                  <ModalityCoverArea modality={item.modality}>
+                    <BookCover id={item.id} title={item.title} photoUrl={item.photoUrl} variant="list" />
+                  </ModalityCoverArea>
                   <View style={styles.rowTexts}>
                     {/* Figma `02.06`: linha pequena acima do título — preço quando é venda,
                         senão a modalidade. Não é pílula de tag. */}

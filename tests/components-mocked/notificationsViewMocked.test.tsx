@@ -24,6 +24,7 @@ function mock(state: Partial<NotificationsState>, actions: Partial<Notifications
   };
   const fullActions: NotificationsActions = {
     reload: vi.fn(),
+    refresh: vi.fn().mockResolvedValue(undefined),
     markAsRead: vi.fn(),
     markAllAsRead: vi.fn(),
     setFilter: vi.fn(),
@@ -51,5 +52,31 @@ describe("Notifications com ViewModel mockado (Issue #76)", () => {
       screen = await render(<Notifications sessionUserId="u1" onBack={vi.fn()} />);
     });
     expect(screen.getByText("Você está sem conexão com a internet.")).toBeDefined();
+  });
+});
+
+describe("Notifications — puxar para atualizar e rótulos (Spec 091)", () => {
+  const item = { id: "n1", userId: "u", title: "Nova proposta", message: "Ana quer seu livro", type: "request_received", read: false, createdAt: new Date().toISOString() } as const;
+
+  it("recarrega sem esconder a lista ao puxar para atualizar", async () => {
+    const actions = mock({ notifications: [item], filteredNotifications: [item], unreadCount: 1 });
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<Notifications sessionUserId="u" />);
+    });
+    await act(async () => {
+      await screen.getByTestId("notifications-list").props.onRefresh();
+    });
+    expect(actions.refresh).toHaveBeenCalledTimes(1);
+  });
+
+  it("oferece 'Marcar todas como lidas' e não repete a contagem de pendentes", async () => {
+    mock({ notifications: [item], filteredNotifications: [item], unreadCount: 1 });
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<Notifications sessionUserId="u" />);
+    });
+    expect(screen.getByLabelText("Marcar todas como lidas")).toBeDefined();
+    expect(screen.queryByText("1 alerta pendente de leitura")).toBeNull();
   });
 });

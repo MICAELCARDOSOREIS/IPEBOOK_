@@ -46,6 +46,7 @@ function setup(
     availableCategories?: string[];
     hasActiveFilters?: boolean;
     draftResultCount?: number;
+    matchesInOtherNeighborhoods?: number;
   } = {},
 ) {
   const setTerm = vi.fn();
@@ -93,6 +94,7 @@ function setup(
       hasActiveFilters: options.hasActiveFilters ?? (Boolean(term.trim()) || activeFilters.length > 0),
       resultsSummary: describeResults(books.length, filters),
       draftResultCount: options.draftResultCount ?? books.length,
+      matchesInOtherNeighborhoods: options.matchesInOtherNeighborhoods ?? 0,
     },
     {
       setTerm,
@@ -174,6 +176,20 @@ describe("Search (spec 006, US3/T019, Spec 028, Issue #93)", () => {
     expect(
       screen.getByText('Nenhum livro encontrado para "termo-sem-correspondencia". Tente outro título, autor ou categoria.'),
     ).toBeDefined();
+  });
+
+  it("avisa quando só o bairro escolhido esconde livros que existem em outros (Spec 091)", async () => {
+    setup([], "", { modality: "trade", matchesInOtherNeighborhoods: 3 });
+    const screen = await renderSearch({ currentNeighborhood: "Centro" });
+    expect(screen.getByText("Nenhum livro no Centro com essa busca.")).toBeDefined();
+    expect(screen.getByText("Há 3 livros em outros bairros de Piripiri.")).toBeDefined();
+    expect(screen.getByLabelText("Ver em toda Piripiri")).toBeDefined();
+  });
+
+  it("não sugere outros bairros quando nenhum livro existe fora do bairro (Spec 091)", async () => {
+    setup([], "", { matchesInOtherNeighborhoods: 0 });
+    const screen = await renderSearch({ currentNeighborhood: "Centro" });
+    expect(screen.queryByLabelText("Ver em toda Piripiri")).toBeNull();
   });
 
   it("explica o catálogo vazio quando não há termo nem filtros", async () => {

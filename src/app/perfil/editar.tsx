@@ -1,11 +1,11 @@
-import { router } from "expo-router";
+import { backOnce, replaceOnce } from "@/view/pushOnce";
 import Profile from "@/view/profile/profile";
 
 export default function EditarPerfilRoute() {
   return (
     <Profile
-      onNavigateToSignIn={() => router.replace("/entrar")}
-      onBack={() => router.back()}
+      onNavigateToSignIn={() => replaceOnce("/entrar")}
+      onBack={() => backOnce()}
     />
   );
 }

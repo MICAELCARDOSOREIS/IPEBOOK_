@@ -112,7 +112,7 @@ describe("SupabaseMessageDataSource (Spec 061 / ADR 0044)", () => {
 
     const unsubscribe = ds.subscribeToMessages("req-1", onMessage);
 
-    expect(client.channel).toHaveBeenCalledWith("negotiation-messages:req-1");
+    expect(client.channel).toHaveBeenCalledWith(expect.stringMatching(/^negotiation-messages:req-1:\d+$/));
     expect(mockChannel.on).toHaveBeenCalledWith(
       "postgres_changes",
       {

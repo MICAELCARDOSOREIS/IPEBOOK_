@@ -10,6 +10,7 @@ import {
 import { PIRIPIRI_NEIGHBORHOODS } from "@/model/entities/location";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
+import { categoryTone } from "@/view/categoryTone";
 import { AddPhotoCard } from "@/view/components/AddPhotoCard";
 import { Chip } from "@/view/components/Chip";
 import { FilledButton } from "@/view/components/FilledButton";
@@ -42,7 +43,7 @@ export default function EditListing({
   onCancel,
 }: EditListingProps) {
   const [state, actions] = useEditListingViewModel(bookId, sessionUserId);
-  const { colors } = useTheme();
+  const { colors, resolvedScheme } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [showPhotoInput, setShowPhotoInput] = useState(false);
   const remainingDescriptionChars = MAX_BOOK_DESCRIPTION_LENGTH - state.description.length;
@@ -150,6 +151,7 @@ export default function EditListing({
                   key={category}
                   label={category}
                   accessibilityLabel={`Categoria ${category}`}
+                  tone={categoryTone(category, resolvedScheme)}
                   selected={state.category === category}
                   onPress={() => actions.setCategory(state.category === category ? "" : category)}
                   disabled={state.saving}
@@ -204,6 +206,7 @@ export default function EditListing({
                   key={m.value}
                   label={m.label}
                   accessibilityLabel={`Modalidade ${m.label}`}
+                  tone={colors.badge[m.value]}
                   selected={state.modality === m.value}
                   onPress={() => actions.setModality(m.value)}
                   disabled={state.saving}

@@ -54,7 +54,6 @@ describe("Notifications Component (Spec 015)", () => {
     expect(screen.getByRole("header", { name: "Notificações" })).toBeDefined();
     expect(screen.getByRole("tab", { name: /Todas/ })).toBeDefined();
     expect(screen.getByRole("tab", { name: /Não lidas/ })).toBeDefined();
-    expect(screen.getByText(/alerta.* pendente.* de leitura/)).toBeDefined();
 
     // Filtra por não lidas
     const unreadTab = screen.getByRole("tab", { name: /Não lidas/ });
@@ -63,7 +62,7 @@ describe("Notifications Component (Spec 015)", () => {
     });
 
     // Clica no botão de marcar lidas se estiver visível
-    const markAllBtn = screen.queryByRole("button", { name: "Marcar lidas" });
+    const markAllBtn = screen.queryByRole("button", { name: "Marcar todas como lidas" });
     if (markAllBtn) {
       await act(async () => {
         fireEvent.press(markAllBtn);

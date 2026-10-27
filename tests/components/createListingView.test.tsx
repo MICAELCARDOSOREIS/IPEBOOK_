@@ -124,22 +124,17 @@ describe("etapa 1 do anúncio — Livro (Figma 04.01)", () => {
     expect(actions.submit).not.toHaveBeenCalled();
   });
 
-  it("permite digitar o código ISBN e acionar a busca automática (Spec 058)", async () => {
-    const actions = mockViewModel({
+  it("mostra o resultado da busca por ISBN sem campo de código nem botão Buscar (Spec 058, Spec 091)", async () => {
+    mockViewModel({
       ...defaultState,
       isbn: "9788535914849",
       isbnFeedback: { type: "success", message: 'Encontrado: "Dom Casmurro"!' },
     });
     const screen = await renderScreen();
 
-    expect(screen.getByLabelText("Código ISBN")).toBeDefined();
     expect(screen.getByText('Encontrado: "Dom Casmurro"!')).toBeDefined();
-
-    await act(async () => {
-      fireEvent.press(screen.getByLabelText("Buscar dados do livro pelo ISBN"));
-    });
-
-    expect(actions.lookupIsbn).toHaveBeenCalledTimes(1);
+    expect(screen.queryByLabelText("Código ISBN")).toBeNull();
+    expect(screen.queryByLabelText("Buscar dados do livro pelo ISBN")).toBeNull();
   });
 
   it("exibe botão para escanear código de barras com a câmera (Spec 059 / Figma 04.01)", async () => {
@@ -408,14 +403,6 @@ describe("persistência e recuperação de rascunhos na UI (Spec 017 / Spec 072)
     const screen = await renderScreen();
 
     expect(screen.queryByText("Informe o título do livro.")).toBeNull();
-  });
-
-  it("desativa a busca por ISBN enquanto o campo está vazio", async () => {
-    mockViewModel(defaultState);
-    const screen = await renderScreen();
-
-    const button = screen.getByLabelText("Buscar dados do livro pelo ISBN");
-    expect(button.props.accessibilityState?.disabled).toBe(true);
   });
 
   it("dispara actions.loadDraft na montagem se o formulário estiver limpo", async () => {

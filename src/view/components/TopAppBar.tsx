@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { AppIcon } from "@/view/components/AppIcon";
+import { useGuardedPress } from "@/view/useGuardedPress";
 
 export type TopAppBarProps = {
   title: string;
@@ -14,6 +15,7 @@ export type TopAppBarProps = {
  * (`01.06`, `01.10`, `04.08`): 64 dp de altura, título de 22 dp e botão voltar circular de 40 dp.
  */
 export function TopAppBar({ title, onBack }: TopAppBarProps) {
+  const guardedBack = useGuardedPress(onBack);
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   return (
@@ -22,7 +24,7 @@ export function TopAppBar({ title, onBack }: TopAppBarProps) {
         accessibilityRole="button"
         accessibilityLabel="Voltar"
         hitSlop={8}
-        onPress={onBack}
+        onPress={guardedBack}
         style={styles.backButton}
       >
         <AppIcon name="back" size={24} color={colors.m3.onSurface} />

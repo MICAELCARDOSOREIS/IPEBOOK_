@@ -1,13 +1,13 @@
-import { router } from "expo-router";
+import { backOnce, pushOnce, replaceOnce } from "@/view/pushOnce";
 import DeleteAccountScreen from "@/view/auth/deleteAccountScreen";
 
 export default function ExcluirContaRoute() {
   return (
     <DeleteAccountScreen
-      onBack={() => router.back()}
-      onAccountDeleted={() => router.replace("/")}
-      onNavigateToLogin={() => router.push("/entrar")}
-      onEditProfile={() => router.push("/perfil/editar")}
+      onBack={() => backOnce()}
+      onAccountDeleted={() => replaceOnce("/")}
+      onNavigateToLogin={() => pushOnce("/entrar")}
+      onEditProfile={() => pushOnce("/perfil/editar")}
     />
   );
 }
