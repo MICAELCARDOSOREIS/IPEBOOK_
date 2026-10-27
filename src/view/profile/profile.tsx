@@ -15,7 +15,6 @@ import type { ImageSource } from "@/model/services/iImagePickerService";
 import { PIRIPIRI_NEIGHBORHOODS } from "@/model/entities/location";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
-import { readerCardNumber, readerCardSince } from "@/view/readerCardNumber";
 import { ReaderCard } from "@/view/components/ReaderCard";
 import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
 import { Chip } from "@/view/components/Chip";
@@ -328,8 +327,6 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
                 name={name.trim() || "Você"}
                 photoUrl={photoUrl.trim() || undefined}
                 subtitle={neighborhood ? `${neighborhood}, Piripiri` : "Piripiri, PI"}
-                cardNumber={readerCardNumber(userId)}
-                memberSince={readerCardSince(state.profile?.joinedAt)}
               />
             </View>
 
