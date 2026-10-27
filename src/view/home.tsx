@@ -251,6 +251,11 @@ export default function Home({
   const donationCount = state.books.filter(
     (book) => book.modality === "donation" && book.status === "available",
   ).length;
+  const totalBooksCount = state.books.length;
+  const uniqueNeighborhoodsCount = useMemo(() => {
+    const set = new Set(state.books.map((b) => b.neighborhood).filter(Boolean));
+    return Math.max(1, set.size);
+  }, [state.books]);
   const donationSummary =
     donationCount === 0
       ? "Veja as doações em Piripiri"
@@ -280,37 +285,63 @@ export default function Home({
           <AppIcon name="chevronDown" size={20} color={colors.m3.onSurfaceVariant} />
         </Pressable>
 
-        <View style={styles.topRightActions}>
-          {authState.loading || authState.user ? null : (
+        {wideWeb ? null : (
+          <View style={styles.topRightActions}>
+            {authState.loading || authState.user ? null : (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Entrar no aplicativo"
+                onPress={() => onNavigateToSignIn?.()}
+                style={styles.sessionPill}
+              >
+                <Text style={styles.sessionPillText}>Entrar</Text>
+              </Pressable>
+            )}
+
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Entrar no aplicativo"
-              onPress={() => onNavigateToSignIn?.()}
-              style={styles.sessionPill}
+              accessibilityLabel="Abrir notificações"
+              onPress={() => onNavigateToNotifications?.()}
+              style={styles.notificationButton}
             >
-              <Text style={styles.sessionPillText}>Entrar</Text>
+              <AppIcon name="bell" size={24} color={colors.m3.onSurfaceVariant} />
             </Pressable>
-          )}
-
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Abrir notificações"
-            onPress={() => onNavigateToNotifications?.()}
-            style={styles.notificationButton}
-          >
-            <AppIcon name="bell" size={24} color={colors.m3.onSurfaceVariant} />
-          </Pressable>
-        </View>
+          </View>
+        )}
       </View>
 
       {/* 2. Manchete Editorial (Hero do Figma 02.01) */}
-      <View style={styles.heroSection}>
-        <Text accessibilityRole="header" style={styles.heroTitle}>
+      <View style={[styles.heroSection, wideWeb && styles.heroSectionWide]}>
+        <Text accessibilityRole="header" style={[styles.heroTitle, wideWeb && styles.heroTitleWide]}>
           Encontre sua próxima história.
         </Text>
-        <Text style={styles.heroSubtitle}>
+        <Text style={[styles.heroSubtitle, wideWeb && styles.heroSubtitleWide]}>
           Compre, troque ou receba livros de quem mora perto de você.
         </Text>
+        {wideWeb && totalBooksCount > 0 ? (
+          <View style={styles.statsBannerWide} testID="home-community-stats">
+            <View style={styles.statItemWide}>
+              <Text style={styles.statNumberWide}>{totalBooksCount}</Text>
+              <Text style={styles.statLabelWide}>
+                {totalBooksCount === 1 ? "livro anunciado" : "livros anunciados"}
+              </Text>
+            </View>
+            <View style={styles.statDividerWide} />
+            <View style={styles.statItemWide}>
+              <Text style={styles.statNumberWide}>{uniqueNeighborhoodsCount}</Text>
+              <Text style={styles.statLabelWide}>
+                {uniqueNeighborhoodsCount === 1 ? "bairro com leitores" : "bairros com leitores"}
+              </Text>
+            </View>
+            <View style={styles.statDividerWide} />
+            <View style={styles.statItemWide}>
+              <Text style={styles.statNumberWide}>{donationCount}</Text>
+              <Text style={styles.statLabelWide}>
+                {donationCount === 1 ? "doação disponível" : "doações disponíveis"}
+              </Text>
+            </View>
+          </View>
+        ) : null}
       </View>
 
       {/* 3. Campo de Busca Integrado */}
@@ -574,16 +605,60 @@ function createStyles(colors: ColorPalette) {
     heroSection: {
       marginBottom: tokens.spacing[12],
     },
+    heroSectionWide: {
+      paddingVertical: tokens.spacing[16],
+      marginBottom: tokens.spacing[20],
+    },
     heroTitle: {
       fontFamily: fontFamily.brand,
       fontSize: 30,
       lineHeight: 36,
       color: colors.brandBrown,
     },
+    heroTitleWide: {
+      fontSize: 38,
+      lineHeight: 46,
+    },
     heroSubtitle: {
       ...tokens.typography.bodyLarge,
       color: colors.m3.onSurfaceVariant,
       marginTop: tokens.spacing[8],
+    },
+    heroSubtitleWide: {
+      fontSize: 18,
+      lineHeight: 26,
+    },
+    statsBannerWide: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[32],
+      marginTop: tokens.spacing[20],
+      paddingVertical: tokens.spacing[16],
+      paddingHorizontal: tokens.spacing[24],
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderRadius: 16,
+      alignSelf: "flex-start",
+    },
+    statItemWide: {
+      alignItems: "flex-start",
+    },
+    statNumberWide: {
+      fontFamily: fontFamily.brand,
+      fontSize: 24,
+      lineHeight: 30,
+      fontWeight: "700",
+      color: colors.m3.primary,
+    },
+    statLabelWide: {
+      fontSize: 13,
+      lineHeight: 18,
+      color: colors.m3.onSurfaceVariant,
+      marginTop: tokens.spacing[4],
+    },
+    statDividerWide: {
+      width: 1,
+      height: 32,
+      backgroundColor: colors.m3.outlineVariant,
     },
 
     // 3. Campo de Busca
