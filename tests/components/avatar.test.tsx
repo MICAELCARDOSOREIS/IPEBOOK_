@@ -3,34 +3,19 @@ import { describe, expect, it } from "vitest";
 import { render } from "@testing-library/react-native";
 import { Avatar } from "@/view/components/Avatar";
 
-describe("Avatar (design-system/04-componentes/avatar.md)", () => {
-  it("mostra as iniciais do nome quando não há foto", async () => {
-    const { getByText, getByLabelText } = await render(<Avatar name="Ana Paula Martins" />);
-    expect(getByText("AP")).toBeDefined();
+describe("Avatar (design-system/04-componentes/avatar.md, Spec 078)", () => {
+  it("mostra o ipê da marca quando não há foto, sem iniciais", async () => {
+    const { getByLabelText, getByTestId, queryByText } = await render(<Avatar name="Ana Paula Martins" />);
     expect(getByLabelText("Ana Paula Martins")).toBeDefined();
-  });
-
-  it("mostra a imagem quando há foto", async () => {
-    const { getByLabelText, queryByText } = await render(
-      <Avatar name="Ana Paula" photoUrl="https://exemplo.com/foto.png" />,
-    );
-    expect(getByLabelText("Ana Paula")).toBeDefined();
+    expect(getByTestId("avatar-ipe", { includeHiddenElements: true })).toBeDefined();
     expect(queryByText("AP")).toBeNull();
   });
 
-  it("gera iniciais a partir de um único nome", async () => {
-    const { getByText } = await render(<Avatar name="Ana" />);
-    expect(getByText("A")).toBeDefined();
-  });
-
-  it("ignora tokens que não começam com letra nas iniciais", async () => {
-    const { getByText, queryByText } = await render(<Avatar name="Usuário #4426" />);
-    expect(getByText("U")).toBeDefined();
-    expect(queryByText("U#")).toBeNull();
-  });
-
-  it("usa o primeiro caractere alfanumérico quando nenhuma palavra começa com letra", async () => {
-    const { getByText } = await render(<Avatar name="4426" />);
-    expect(getByText("4")).toBeDefined();
+  it("mostra a imagem quando há foto", async () => {
+    const { getByLabelText, queryByTestId } = await render(
+      <Avatar name="Ana Paula" photoUrl="https://exemplo.com/foto.png" />,
+    );
+    expect(getByLabelText("Ana Paula")).toBeDefined();
+    expect(queryByTestId("avatar-ipe", { includeHiddenElements: true })).toBeNull();
   });
 });

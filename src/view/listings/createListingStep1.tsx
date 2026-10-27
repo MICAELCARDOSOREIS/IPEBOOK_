@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import type { BookModality } from "@/model/entities/book";
 import type { IsbnFeedback } from "@/viewmodel/useCreateListingViewModel";
+import type { ListingBasicsErrors } from "@/viewmodel/listingBasicsValidation";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { AddPhotoCard } from "@/view/components/AddPhotoCard";
@@ -38,6 +39,7 @@ export type CreateListingStep1Props = {
   onSetAuthor: (author: string) => void;
   onSetPrice: (price: string) => void;
   onSetPhotoUrl: (url: string) => void;
+  fieldErrors?: ListingBasicsErrors;
   onGoToPhotos: () => void;
 };
 
@@ -61,6 +63,7 @@ export function CreateListingStep1({
   onSetAuthor,
   onSetPrice,
   onSetPhotoUrl,
+  fieldErrors = {},
   onGoToPhotos,
 }: CreateListingStep1Props) {
   const { colors } = useTheme();
@@ -71,7 +74,7 @@ export function CreateListingStep1({
     <>
       <View style={styles.isbnCard}>
         <View style={styles.isbnHeader}>
-          <IconBadge icon="photo" tone="action" />
+          <IconBadge icon="camera" tone="action" />
           <View style={styles.isbnTexts}>
             <Text style={styles.isbnTitle}>Ler ISBN com a câmera</Text>
             <Text style={styles.hint}>Preenche título e autor automaticamente.</Text>
@@ -102,6 +105,7 @@ export function CreateListingStep1({
             label={lookingUpIsbn ? "Buscando..." : "Buscar"}
             accessibilityLabel="Buscar dados do livro pelo ISBN"
             loading={lookingUpIsbn}
+            disabled={loading || !(isbn ?? "").trim()}
             onPress={() => onLookupIsbn?.()}
           />
         </View>
@@ -173,6 +177,7 @@ export function CreateListingStep1({
             onChangeText={onSetTitle}
             editable={!loading}
             placeholder="Ex: Dom Casmurro"
+            error={fieldErrors.title}
           />
           <TextField
             label="Autor"
@@ -180,6 +185,7 @@ export function CreateListingStep1({
             onChangeText={onSetAuthor}
             editable={!loading}
             placeholder="Ex: Machado de Assis"
+            error={fieldErrors.author}
           />
         </View>
       </View>
@@ -192,6 +198,7 @@ export function CreateListingStep1({
           editable={!loading}
           keyboardType="decimal-pad"
           placeholder="Ex: 25,00"
+          error={fieldErrors.price}
         />
       ) : null}
 

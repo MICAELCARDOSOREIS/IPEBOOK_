@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import {
   BackHandler,
   KeyboardAvoidingView,
@@ -14,8 +14,8 @@ import { useUserPreferencesViewModel } from "@/viewmodel/useUserPreferencesViewM
 import { PIRIPIRI_NEIGHBORHOODS } from "@/model/entities/location";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
-import { Avatar } from "@/view/components/Avatar";
-import { AppIcon } from "@/view/components/AppIcon";
+import { ReaderCard } from "@/view/components/ReaderCard";
+import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
 import { Chip } from "@/view/components/Chip";
 import { Dialog } from "@/view/components/Dialog";
 import { ErrorState } from "@/view/components/ErrorState";
@@ -309,17 +309,44 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
               </Text>
             </View>
 
-            {/* 2. Avatar Centralizado em Destaque (Figma 07.02) */}
+            {/* 2. Pré-visualização ao vivo do cartão de leitor (Spec 078), no lugar do avatar solto do 07.02 */}
             <View style={styles.avatarSection}>
-              <Avatar
-                name={name || "Você"}
+              <Text style={styles.previewLabel}>Assim seu cartão aparece</Text>
+              <ReaderCard
+                name={name.trim() || "Você"}
                 photoUrl={photoUrl.trim() || undefined}
-                size={88}
+                subtitle={neighborhood ? `${neighborhood}, Piripiri` : "Piripiri, PI"}
               />
             </View>
 
-            {/* 3. Campos Principais do Formulário */}
-            <View style={styles.fieldsGroup}>
+            {/* 3. Foto logo abaixo da pré-visualização: o que muda aparece no cartão acima (Spec 078) */}
+            <FormSection icon="camera" title="Foto do cartão" caption="Cole o link de uma imagem. Sem foto, o cartão mostra o ipê.">
+              {/* Foto (link) */}
+              <TextField
+                label="Foto (link)"
+                accessibilityLabel="Foto (link)"
+                value={photoUrl}
+                onChangeText={(value) => editField("photoUrl", value, setPhotoUrl)}
+                placeholder="https://..."
+                autoCapitalize="none"
+                keyboardType="url"
+                error={fieldErrors.photoUrl}
+                helperText="Um link http/https com a imagem da sua foto."
+              />
+
+              {/* Hoje só dá para trocar a foto colando outro link; para removê-la é preciso
+                  limpar o campo. O botão abaixo faz isso em um toque. */}
+              {photoUrl.trim() ? (
+                <TextButton
+                  label="Remover foto"
+                  accessibilityLabel="Remover foto do perfil"
+                  onPress={() => editField("photoUrl", "", setPhotoUrl)}
+                />
+              ) : null}
+            </FormSection>
+
+            {/* 4. Sobre você: nome e bairro. A cidade é fixa (Piripiri, PI) e vai na legenda, sem campo desabilitado. */}
+            <FormSection icon="person" title="Sobre você" caption="Aparece no seu perfil público, em Piripiri, PI.">
               {/* Nome */}
               <TextField
                 label="Nome"
@@ -332,15 +359,6 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
                 error={fieldErrors.name}
                 helperText={fieldErrors.name ? undefined : `${name.trim().length}/${MAX_NAME_LENGTH}`}
                 helperTextAlign="right"
-              />
-
-              {/* Cidade (Campo fixo / informativo M3 desabilitado) */}
-              <TextField
-                label="Cidade"
-                value="Piripiri, PI"
-                onChangeText={() => {}}
-                editable={false}
-                accessibilityLabel="Cidade: Piripiri, PI"
               />
 
               {/* Bairro (Campo interativo contornado com seletor no Figma 07.02) */}
@@ -404,10 +422,10 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
                   onPress={() => setShowNeighborhoodPicks(true)}
                 />
               )}
+            </FormSection>
 
-              {/* Mensagem de privacidade (Figma 07.02) */}
-              <Text style={styles.privacyHelper}>Seu e-mail fica privado.</Text>
-
+            {/* 5. Contato: privado, só para quem negocia com você */}
+            <FormSection icon="lock" title="Contato para negociar" caption="Só quem negociar com você vê estes dados. Seu e-mail fica privado.">
               {/* Telefone/WhatsApp */}
               <TextField
                 label="Telefone/WhatsApp"
@@ -418,7 +436,7 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
                 keyboardType="phone-pad"
                 maxLength={15}
                 error={fieldErrors.phone}
-                helperText="Visível apenas para quem negociar com você."
+                helperText="Com DDD, para combinar a entrega pelo WhatsApp."
               />
 
               {/* Rede social */}
@@ -432,30 +450,7 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
                 maxLength={MAX_SOCIAL_HANDLE_LENGTH}
                 error={fieldErrors.socialHandle}
               />
-
-              {/* Foto (link) */}
-              <TextField
-                label="Foto (link)"
-                accessibilityLabel="Foto (link)"
-                value={photoUrl}
-                onChangeText={(value) => editField("photoUrl", value, setPhotoUrl)}
-                placeholder="https://..."
-                autoCapitalize="none"
-                keyboardType="url"
-                error={fieldErrors.photoUrl}
-                helperText="Um link http/https com a imagem da sua foto."
-              />
-
-              {/* Hoje só dá para trocar a foto colando outro link; para removê-la é preciso
-                  limpar o campo. O botão abaixo faz isso em um toque. */}
-              {photoUrl.trim() ? (
-                <TextButton
-                  label="Remover foto"
-                  accessibilityLabel="Remover foto do perfil"
-                  onPress={() => editField("photoUrl", "", setPhotoUrl)}
-                />
-              ) : null}
-            </View>
+            </FormSection>
 
             {/* Resumo acessível: o foco não pula para o campo com erro, então a região viva
                 informa no leitor de tela que há itens destacados. */}
@@ -494,17 +489,66 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
   );
 }
 
+/** Seção do formulário: cartão `surface-container-low` com ícone, título e legenda (Spec 078). */
+function FormSection({
+  icon,
+  title,
+  caption,
+  children,
+}: {
+  icon: AppIconName;
+  title: string;
+  caption: string;
+  children: ReactNode;
+}) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+  return (
+    <View style={styles.formSection}>
+      <View style={styles.formSectionHeader}>
+        <View style={styles.formSectionIcon}>
+          <AppIcon name={icon} size={18} color={colors.ipe.onContainer} />
+        </View>
+        <View style={styles.formSectionTitles}>
+          <Text accessibilityRole="header" style={styles.formSectionTitle}>
+            {title}
+          </Text>
+          <Text style={styles.formSectionCaption}>{caption}</Text>
+        </View>
+      </View>
+      {children}
+    </View>
+  );
+}
+
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
+    formSection: {
+      gap: tokens.spacing[16],
+      padding: tokens.spacing[16],
+      borderRadius: 20,
+      backgroundColor: colors.m3.surfaceContainerLow,
+    },
+    formSectionHeader: { flexDirection: "row", alignItems: "flex-start", gap: tokens.spacing[12] },
+    formSectionIcon: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: colors.ipe.container,
+    },
+    formSectionTitles: { flex: 1, gap: 2 },
+    formSectionTitle: { ...tokens.typography.titleMedium, color: colors.m3.onSurface },
+    formSectionCaption: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
     keyboardView: {
       width: "100%",
     },
     formContainer: {
       width: "100%",
+      gap: tokens.spacing[16],
     },
-    heroSection: {
-      marginBottom: tokens.spacing[8],
-    },
+    heroSection: {},
     heroTitle: {
       fontFamily: fontFamily.brand,
       fontSize: 30,
@@ -522,15 +566,9 @@ function createStyles(colors: ColorPalette) {
       marginTop: tokens.spacing[6],
     },
     avatarSection: {
-      alignItems: "center",
-      justifyContent: "center",
-      marginTop: tokens.spacing[8],
-      marginBottom: tokens.spacing[24],
+      gap: tokens.spacing[8],
     },
-    fieldsGroup: {
-      gap: tokens.spacing[16],
-      width: "100%",
-    },
+    previewLabel: { ...tokens.typography.labelMedium, color: colors.m3.onSurfaceVariant },
     selectorField: {
       width: "100%",
     },
@@ -588,12 +626,6 @@ function createStyles(colors: ColorPalette) {
       flexWrap: "wrap",
       gap: tokens.spacing[8],
     },
-    privacyHelper: {
-      ...tokens.typography.bodyMedium,
-      color: colors.m3.onSurfaceVariant,
-      marginTop: tokens.spacing[4],
-      marginBottom: tokens.spacing[4],
-    },
     errorText: {
       color: colors.error,
       fontSize: tokens.typography.bodyMedium.fontSize,
@@ -617,7 +649,7 @@ function createStyles(colors: ColorPalette) {
       ...tokens.typography.bodyMedium,
     },
     actionContainer: {
-      marginTop: tokens.spacing[32],
+      marginTop: tokens.spacing[8],
       width: "100%",
     },
     guestCard: {

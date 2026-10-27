@@ -5,11 +5,13 @@ import type { IBookRequestUseCases, RequestWithListing } from "@/usecase/iBookRe
 
 export type { RequestWithListing };
 
-export type RequestListState = {
-  items: readonly RequestWithListing[];
+export type ListState<T> = {
+  items: readonly T[];
   loading: boolean;
   error: string | null;
 };
+
+export type RequestListState = ListState<RequestWithListing>;
 
 const LOAD_ERROR = "Não foi possível carregar os pedidos. Tente novamente.";
 
@@ -21,10 +23,11 @@ export function messageOf(error: unknown, fallback: string): string {
  * Base compartilhada pelas listas de pedidos recebidos e enviados: carrega, descarta
  * respostas antigas (condição de corrida) e ignora atualizações após desmontar.
  */
-export function useRequestList(
-  load: () => Promise<readonly RequestWithListing[]>,
-): [RequestListState, () => Promise<void>, MutableRefObject<boolean>] {
-  const [state, setState] = useState<RequestListState>({ items: [], loading: true, error: null });
+export function useRequestList<T = RequestWithListing>(
+  load: () => Promise<readonly T[]>,
+  loadError: string = LOAD_ERROR,
+): [ListState<T>, () => Promise<void>, MutableRefObject<boolean>] {
+  const [state, setState] = useState<ListState<T>>({ items: [], loading: true, error: null });
   const active = useRef(false);
   const generation = useRef(0);
 
@@ -39,10 +42,10 @@ export function useRequestList(
       }
     } catch (error) {
       if (active.current && current === generation.current) {
-        setState((prev) => ({ ...prev, loading: false, error: messageOf(error, LOAD_ERROR) }));
+        setState((prev) => ({ ...prev, loading: false, error: messageOf(error, loadError) }));
       }
     }
-  }, [load]);
+  }, [load, loadError]);
 
   useEffect(() => {
     active.current = true;
