@@ -1,6 +1,8 @@
 import { useMemo } from "react";
+import * as Linking from "expo-linking";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { usePublicProfileViewModel } from "@/viewmodel/usePublicProfileViewModel";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
@@ -27,9 +29,13 @@ export type PublicProfileProps = {
  */
 export function PublicProfile({ userId, onBack, onStartChat, onReportOrBlock }: PublicProfileProps) {
   const [state, actions] = usePublicProfileViewModel(userId);
+  const [auth] = useAuthViewModel();
+  // No próprio perfil não faz sentido conversar consigo nem se denunciar
+  const isOwnProfile = Boolean(auth.user?.id) && auth.user?.id === userId;
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const profile = state.profile;
+  const instagramHandle = profile?.socialHandle?.trim().replace(/^@+/, "") || null;
 
   const chatButtonLabel = useMemo(() => {
     if (!profile?.name) return "Conversar";
@@ -68,10 +74,16 @@ export function PublicProfile({ userId, onBack, onStartChat, onReportOrBlock }: 
               <Avatar name={profile.name} photoUrl={profile.photoUrl} size={80} />
               <Text accessibilityRole="header" style={styles.name}>{profile.name}</Text>
               <Text style={styles.subtitle}>Conheça a pessoa antes de combinar.</Text>
-              {profile.socialHandle ? (
-                <View style={styles.socialBadge}>
-                  <Text style={styles.socialHandle}>{profile.socialHandle}</Text>
-                </View>
+              {instagramHandle ? (
+                <Pressable
+                  accessibilityRole="link"
+                  accessibilityLabel={`Abrir Instagram @${instagramHandle}`}
+                  hitSlop={8}
+                  onPress={() => void Linking.openURL(`https://instagram.com/${instagramHandle}`).catch(() => {})}
+                  style={({ pressed }) => [styles.socialBadge, pressed && { opacity: 0.6 }]}
+                >
+                  <Text style={styles.socialHandle}>{`@${instagramHandle}`}</Text>
+                </Pressable>
               ) : null}
             </View>
 
@@ -129,6 +141,7 @@ export function PublicProfile({ userId, onBack, onStartChat, onReportOrBlock }: 
             </View>
 
             {/* 4. Ações Principais com Hierarquia M3 e Contraste Acessível */}
+            {!isOwnProfile ? (
             <View style={styles.actionsSection}>
               <FilledButton
                 label={chatButtonLabel}
@@ -146,6 +159,7 @@ export function PublicProfile({ userId, onBack, onStartChat, onReportOrBlock }: 
                 <Text style={styles.safetyButtonText}>Denunciar ou bloquear</Text>
               </Pressable>
             </View>
+            ) : null}
           </View>
         ) : null}
       </ScrollView>

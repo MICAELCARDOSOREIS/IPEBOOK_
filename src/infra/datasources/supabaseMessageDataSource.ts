@@ -91,4 +91,23 @@ export class SupabaseMessageDataSource implements IMessageDataSource {
       this.client.removeChannel(channel);
     };
   }
+
+  subscribeToAllMessages(onMessage: MessageSubscriptionCallback): () => void {
+    const channel = this.client
+      .channel(`negotiation-messages:all:${Date.now()}`)
+      .on(
+        "postgres_changes" as any,
+        { event: "INSERT", schema: "public", table: "v2_negotiation_messages" },
+        (payload: { new: MessageRow }) => {
+          if (payload?.new) {
+            onMessage(mapMessage(payload.new));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      this.client.removeChannel(channel);
+    };
+  }
 }

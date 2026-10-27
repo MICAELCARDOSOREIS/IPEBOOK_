@@ -34,7 +34,7 @@ export function useNotificationsViewModel(
   const active = useRef(false);
   const request = useRef(0);
 
-  const reload = useCallback(async () => {
+  const load = useCallback(async (silent: boolean) => {
     if (!sessionUserId) {
       setNotifications([]);
       setLoading(false);
@@ -42,8 +42,10 @@ export function useNotificationsViewModel(
       return;
     }
     const current = ++request.current;
-    setLoading(true);
-    setError(null);
+    if (!silent) {
+      setLoading(true);
+      setError(null);
+    }
     try {
       const items = await useCases.listNotifications(sessionUserId);
       if (active.current && current === request.current) {
@@ -62,6 +64,8 @@ export function useNotificationsViewModel(
     }
   }, [sessionUserId, useCases]);
 
+  const reload = useCallback(() => load(false), [load]);
+
   useEffect(() => {
     active.current = true;
     void reload();
@@ -69,6 +73,12 @@ export function useNotificationsViewModel(
       active.current = false;
     };
   }, [reload]);
+
+  // Tempo real (Spec 086): notificação nova ou alterada recarrega a lista sem piscar o carregamento
+  useEffect(() => {
+    if (!sessionUserId || !useCases.subscribe) return;
+    return useCases.subscribe(sessionUserId, () => void load(true));
+  }, [sessionUserId, useCases, load]);
 
   const markAsRead = useCallback(
     async (notificationId: string) => {

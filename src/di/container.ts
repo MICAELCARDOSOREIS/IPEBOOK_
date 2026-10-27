@@ -277,6 +277,8 @@ export const negotiationMessageUseCases = {
     sendNegotiationMessage(params, messageUseCaseContext),
   subscribeToMessages: (requestId: string, onMessage: (msg: NegotiationMessage) => void) =>
     messageDataSource.subscribeToMessages?.(requestId, onMessage) ?? (() => {}),
+  subscribeToAllMessages: (onMessage: (msg: NegotiationMessage) => void) =>
+    messageDataSource.subscribeToAllMessages?.(onMessage) ?? (() => {}),
 };
 
 export const logger: ILogger = new SafeLogger(

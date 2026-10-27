@@ -1,5 +1,5 @@
-import { useCallback } from "react";
-import { bookRequestUseCases, negotiationMessageUseCases, publicProfileUseCases } from "@/di/container";
+import { useCallback, useEffect } from "react";
+import { bookRequestUseCases, negotiationMessageUseCases, notificationUseCases, publicProfileUseCases } from "@/di/container";
 import type { Book } from "@/model/entities/book";
 import type { RequestWithListing } from "@/usecase/iBookRequestUseCases";
 import type { NegotiationMessage } from "@/model/entities/negotiationMessage";
@@ -31,6 +31,8 @@ export type ConversationsDeps = {
   listReceivedRequests: (sessionUserId: string | null) => Promise<readonly RequestWithListing[]>;
   getMessages: (requestId: string, sessionUserId: string) => Promise<NegotiationMessage[]>;
   getProfile: (userId: string) => Promise<{ name: string | null; photoUrl: string | null }>;
+  /** Avisa em tempo real que algo mudou (mensagem nova, pedido novo ou respondido); retorna o cancelamento. */
+  subscribe?: (sessionUserId: string, onChange: () => void) => () => void;
 };
 
 const defaultDeps: ConversationsDeps = {
@@ -40,6 +42,15 @@ const defaultDeps: ConversationsDeps = {
   getProfile: async (userId) => {
     const profile = await publicProfileUseCases.getPublicProfile(userId);
     return { name: profile.name ?? null, photoUrl: profile.photoUrl ?? null };
+  },
+  // Pedidos novos e respostas geram notificação; mensagens chegam pela tabela de mensagens (Spec 086)
+  subscribe: (sessionUserId, onChange) => {
+    const offMessages = negotiationMessageUseCases.subscribeToAllMessages(() => onChange());
+    const offNotifications = notificationUseCases.subscribe?.(sessionUserId, onChange) ?? (() => {});
+    return () => {
+      offMessages();
+      offNotifications();
+    };
   },
 };
 
@@ -123,5 +134,11 @@ export function useConversationsViewModel(
   }, [sessionUserId, deps]);
 
   const [state, reload] = useRequestList<ConversationItem>(load, LOAD_ERROR);
+
+  useEffect(() => {
+    if (!sessionUserId || !deps.subscribe) return;
+    return deps.subscribe(sessionUserId, () => void reload());
+  }, [sessionUserId, deps, reload]);
+
   return [state, { reload }];
 }

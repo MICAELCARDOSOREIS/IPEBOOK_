@@ -24,4 +24,9 @@ export interface IMessageDataSource {
    * Retorna uma função de cancelamento da assinatura.
    */
   subscribeToMessages?(requestId: string, onMessage: MessageSubscriptionCallback): () => void;
+
+  /**
+   * Assina todas as mensagens novas que a pessoa pode ver (a RLS filtra), para a lista de conversas (Spec 086).
+   */
+  subscribeToAllMessages?(onMessage: MessageSubscriptionCallback): () => void;
 }

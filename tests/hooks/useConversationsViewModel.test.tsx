@@ -152,4 +152,32 @@ describe("useConversationsViewModel (Spec 076)", () => {
     expect(formatConversationTime("2026-10-24T09:00:00", now)).toBe("sáb");
     expect(formatConversationTime("2026-10-01T09:00:00", now)).toBe("01/10");
   });
+
+  it("recarrega a lista quando chega mudança em tempo real e cancela ao desmontar (Spec 086)", async () => {
+    let push: (() => void) | undefined;
+    const unsubscribe = vi.fn();
+    const base = deps([], [], {}, {});
+    const listReceivedRequests = vi
+      .fn()
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([
+        { request: { id: "r9", listingId: "b9", requesterId: "ana", status: "pending" }, listing: book("b9", "Iracema", "me"), requesterName: "Ana" },
+      ]);
+    const subscribe = vi.fn((_userId: string, onChange: () => void) => {
+      push = onChange;
+      return unsubscribe;
+    });
+    const hook = await renderHook("me", { ...base, listReceivedRequests, subscribe });
+    expect(hook.current[0].items).toHaveLength(0);
+
+    await act(async () => {
+      push?.();
+    });
+    expect(hook.current[0].items).toHaveLength(1);
+
+    await act(async () => {
+      mounted.splice(0).forEach((tree) => tree.unmount());
+    });
+    expect(unsubscribe).toHaveBeenCalledTimes(1);
+  });
 });

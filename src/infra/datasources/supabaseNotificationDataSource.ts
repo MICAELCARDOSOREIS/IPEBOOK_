@@ -65,6 +65,21 @@ export class SupabaseNotificationDataSource implements INotificationDataSource {
     }
   }
 
+  subscribeToChanges(userId: string, onChange: () => void): () => void {
+    const channel = this.client
+      .channel(`notifications:${userId}`)
+      .on(
+        "postgres_changes" as any,
+        { event: "*", schema: "public", table: "v2_notifications", filter: `user_id=eq.${userId}` },
+        () => onChange(),
+      )
+      .subscribe();
+
+    return () => {
+      this.client.removeChannel(channel);
+    };
+  }
+
   async addNotification(notification: AppNotification): Promise<void> {
     const { error } = await this.client.from("v2_notifications").insert({
       id: notification.id,
