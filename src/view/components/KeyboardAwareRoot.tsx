@@ -1,22 +1,27 @@
 import type { ReactNode } from "react";
-import { KeyboardAvoidingView, Platform, StyleSheet } from "react-native";
+import { Platform, StyleSheet, View } from "react-native";
+import { useKeyboardHeight } from "@/view/useKeyboardHeight";
 
 /**
- * Raiz que mantém o campo em foco acima do teclado no Android (Spec 088). No SDK 58 o app roda em tela cheia
- * (edge-to-edge) e o `softwareKeyboardLayoutMode: "resize"` deixa de encolher a janela: o teclado cobria os
- * campos. O `padding` aqui faz esse papel para todas as telas. No iOS não age, porque cada tela com formulário
- * já usa o próprio `KeyboardAvoidingView`.
+ * Raiz que mantém os campos em foco acima do teclado (Spec 088). No SDK 58 o app roda em tela
+ * cheia (edge-to-edge) e o `softwareKeyboardLayoutMode: "resize"` deixa de encolher a janela no
+ * Android. O `KeyboardAvoidingView` com `behavior="padding"` também não resolve lá, porque calcula
+ * o padding pela sobreposição do seu quadro com o quadro do teclado, e nessa conta o resultado sai
+ * zero quando a janela nunca encolhe. Aqui o padding de baixo vem direto da geometria reportada
+ * pelo evento do teclado (`useKeyboardHeight`), no Android e no iOS. Na web não age, porque o
+ * navegador já encolhe a área útil quando o teclado abre.
  */
 export function KeyboardAwareRoot({ children }: { children: ReactNode }) {
+  const keyboardHeight = useKeyboardHeight();
+  const nativo = Platform.OS === "android" || Platform.OS === "ios";
+
   return (
-    <KeyboardAvoidingView
+    <View
       testID="keyboard-aware-root"
-      style={styles.root}
-      behavior={Platform.OS === "android" ? "padding" : undefined}
-      enabled={Platform.OS === "android"}
+      style={[styles.root, nativo && keyboardHeight > 0 && { paddingBottom: keyboardHeight }]}
     >
       {children}
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 

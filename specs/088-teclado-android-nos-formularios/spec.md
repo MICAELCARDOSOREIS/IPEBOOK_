@@ -9,9 +9,11 @@ tinham `KeyboardAvoidingView` (`createListing`, `chat`, `profile`) só o ativam 
 no Android.
 
 ## Escopo
-- `src/view/components/KeyboardAwareRoot.tsx`: raiz única com `KeyboardAvoidingView` de
-  `behavior="padding"` ativada **somente no Android**, envolvendo `Stack` e `NavigationBar`
-  em `src/app/_layout.tsx`.
+- `src/view/useKeyboardHeight.ts`: hook que escuta `keyboardDidShow`/`keyboardDidHide` e reporta
+  a altura real do teclado nativo. O `KeyboardAvoidingView` calcula o padding pela sobreposição de quadros,
+  o que resulta em zero no Android em tela cheia (edge-to-edge).
+- `src/view/components/KeyboardAwareRoot.tsx`: raiz única que aplica `paddingBottom: keyboardHeight`
+  **somente no Android**, envolvendo `Stack` e `NavigationBar` em `src/app/_layout.tsx`.
 - Nenhuma tela alterada: como as vistas internas agem apenas no iOS, não há dois `padding`
   somados na mesma tela.
 - `app.json` permanece com `softwareKeyboardLayoutMode: "resize"` para não regredir o iOS e
