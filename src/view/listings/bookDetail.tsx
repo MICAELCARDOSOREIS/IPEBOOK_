@@ -162,6 +162,17 @@ export default function BookDetail({
   return (
     <SafeAreaView edges={["left", "right"]} style={styles.page}>
       <ScrollView contentContainerStyle={wideWeb ? styles.scrollContentWide : styles.scrollContent} keyboardShouldPersistTaps="handled">
+        {wideWeb ? (
+          <View accessibilityRole="header" style={styles.breadcrumb}>
+            <Pressable accessibilityRole="link" accessibilityLabel="Voltar para Explorar" onPress={onBack}>
+              <Text style={styles.breadcrumbLink}>Explorar</Text>
+            </Pressable>
+            {book?.category ? <Text style={styles.breadcrumbSep}>›</Text> : null}
+            {book?.category ? <Text style={styles.breadcrumbText}>{book.category}</Text> : null}
+            {book ? <Text style={styles.breadcrumbSep}>›</Text> : null}
+            {book ? <Text numberOfLines={1} style={styles.breadcrumbCurrent}>{book.title}</Text> : null}
+          </View>
+        ) : null}
         {/* 1. Capa em destaque na cor da modalidade (Figma `03.01`–`03.03`), indo até a barra de status. */}
         <View
           style={[
@@ -190,7 +201,7 @@ export default function BookDetail({
           </View>
 
           {book ? (
-            <View style={styles.coverArea}>
+            <View style={[styles.coverArea, wideWeb && styles.coverAreaWide]}>
               {photos.length > 0 ? (
                 <Pressable
                   accessibilityRole="button"
@@ -276,6 +287,16 @@ export default function BookDetail({
 
             {/* 5. Anunciante */}
             <SellerCard ownerId={book.ownerId} onPress={() => onNavigateToUserProfile?.(book.ownerId)} />
+
+            {wideWeb ? (
+              <View style={styles.safeMeetingCard}>
+                <AppIcon name="place" size={20} color={colors.m3.onSecondaryContainer} />
+                <View style={styles.safeMeetingText}>
+                  <Text style={styles.safeMeetingTitle}>Encontro seguro</Text>
+                  <Text style={styles.safeMeetingBody}>Prefira locais públicos. Pague só depois de conferir o exemplar.</Text>
+                </View>
+              </View>
+            ) : null}
 
             {state.favoriteError ? (
               <Text accessibilityRole="alert" style={styles.requestError}>{state.favoriteError}</Text>
@@ -383,8 +404,17 @@ function createStyles(colors: ColorPalette) {
     page: { flex: 1, backgroundColor: colors.background },
     scrollContent: { paddingBottom: tokens.spacing[32] },
     // Web larga (Figma `03.01`): capa à esquerda e cartão de ações à direita, com 48 px entre as colunas.
-    scrollContentWide: { flexDirection: "row", alignItems: "flex-start", gap: 48, width: "100%", maxWidth: 1440, alignSelf: "center", paddingHorizontal: 80, paddingTop: 32, paddingBottom: tokens.spacing[48] },
-    heroWide: { flex: 1.6, borderRadius: 28, paddingTop: tokens.spacing[16], minHeight: 420 },
+    scrollContentWide: { flexDirection: "row", flexWrap: "wrap", alignItems: "flex-start", columnGap: 48, rowGap: 16, width: "100%", maxWidth: 1440, alignSelf: "center", paddingHorizontal: 80, paddingTop: 32, paddingBottom: tokens.spacing[48] },
+    heroWide: { flex: 1.6, borderRadius: 28, paddingTop: tokens.spacing[16], minHeight: 520 },
+    breadcrumb: { width: "100%", flexDirection: "row", alignItems: "center", gap: 8 },
+    breadcrumbLink: { ...tokens.typography.bodyMedium, color: colors.m3.primary },
+    breadcrumbText: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
+    breadcrumbSep: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
+    breadcrumbCurrent: { ...tokens.typography.bodyMedium, color: colors.m3.onSurface, flexShrink: 1 },
+    safeMeetingCard: { flexDirection: "row", gap: 12, padding: 16, borderRadius: tokens.radius.medium, backgroundColor: colors.m3.surfaceContainer },
+    safeMeetingText: { flex: 1, gap: 2 },
+    safeMeetingTitle: { ...tokens.typography.labelLarge, color: colors.m3.onSurface },
+    safeMeetingBody: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
     contentWide: { flex: 1, maxWidth: 440, padding: 24, borderRadius: 20, borderWidth: 1, borderColor: colors.m3.outlineVariant, backgroundColor: colors.m3.surfaceContainerLow },
     bottomBarWide: { paddingHorizontal: 0, paddingVertical: 0 },
     hero: {
@@ -409,6 +439,7 @@ function createStyles(colors: ColorPalette) {
       backgroundColor: colors.m3.surfaceContainerLowest,
     },
     coverArea: { alignItems: "center", paddingTop: tokens.spacing[8] },
+    coverAreaWide: { flex: 1, justifyContent: "center", paddingTop: 0 },
     coverShadow: {
       borderRadius: 8,
       shadowColor: "#000",
