@@ -33,6 +33,10 @@ describe("searchFilters (Spec 028 · Figma 02.03/02.04)", () => {
     expect(matchesCondition(book({ condition: "new" }), "good")).toBe(false);
     expect(matchesCondition(book({ condition: "worn" }), "good")).toBe(false);
     expect(matchesCondition(book({ condition: "worn" }), "all")).toBe(true);
+    expect(matchesCondition(book({ condition: "new" }), "new")).toBe(true);
+    expect(matchesCondition(book({ condition: "marked" }), "marked")).toBe(true);
+    expect(matchesCondition(book({ condition: "worn" }), "worn")).toBe(true);
+    expect(matchesCondition(book({ condition: "good" }), "new")).toBe(false);
   });
 
   it("trata doação e preço zero como gratuitos e exclui gratuitos das faixas pagas", () => {
@@ -100,5 +104,11 @@ describe("searchFilters (Spec 028 · Figma 02.03/02.04)", () => {
     expect(describeResults(3, withFilters({ modality: "donation", condition: "good" }))).toBe(
       "3 livros para doação · Bom estado",
     );
+    expect(describeResults(1, withFilters({ modality: "sale", condition: "new" }))).toBe(
+      "1 livro à venda · Novo",
+    );
+    expect(activeFilters(withFilters({ condition: "worn" }))).toEqual([
+      { key: "condition", label: "Desgastado" },
+    ]);
   });
 });

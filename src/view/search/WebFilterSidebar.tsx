@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { AppIcon } from "@/view/components/AppIcon";
+import { BOOK_CONDITIONS, BOOK_CONDITION_LABELS } from "@/model/entities/book";
 import type { SearchConditionFilter, SearchFilters, SearchModalityFilter } from "@/viewmodel/searchFilters";
 
 export type WebFilterSidebarProps = {
@@ -62,11 +63,14 @@ export function WebFilterSidebar({
 
       <View style={styles.group}>
         <Text style={styles.groupLabel}>Conservação</Text>
-        <CheckRow
-          label="Bom estado"
-          checked={filters.condition === "good"}
-          onPress={() => onCondition(filters.condition === "good" ? "all" : "good")}
-        />
+        {BOOK_CONDITIONS.map((cond) => (
+          <CheckRow
+            key={cond}
+            label={BOOK_CONDITION_LABELS[cond]}
+            checked={filters.condition === cond}
+            onPress={() => onCondition(filters.condition === cond ? "all" : cond)}
+          />
+        ))}
       </View>
 
       {categories.length > 0 ? (

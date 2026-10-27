@@ -46,6 +46,12 @@ describe("WebFilterSidebar (Figma 34:229)", () => {
     expect(onModality).toHaveBeenCalledWith("trade");
     fireEvent.press(screen.getByLabelText("Bom estado"));
     expect(onCondition).toHaveBeenCalledWith("good");
+    fireEvent.press(screen.getByLabelText("Novo"));
+    expect(onCondition).toHaveBeenCalledWith("new");
+    fireEvent.press(screen.getByLabelText("Com marcas"));
+    expect(onCondition).toHaveBeenCalledWith("marked");
+    fireEvent.press(screen.getByLabelText("Desgastado"));
+    expect(onCondition).toHaveBeenCalledWith("worn");
     fireEvent.press(screen.getByLabelText("Infantil"));
     expect(onCategory).toHaveBeenCalledWith("Infantil");
     // Literatura já está marcada: tocar de novo desmarca.
