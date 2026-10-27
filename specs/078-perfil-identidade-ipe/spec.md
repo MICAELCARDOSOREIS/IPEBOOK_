@@ -12,8 +12,9 @@ aberto (`assets/logo-clean.png`). O perfil parece genérico, e a edição não m
 
 1. **Tokens `ipe`** nos temas claro e escuro: fundo do cartão, texto sobre ele, flor (âmbar), flor profunda
    (laranja) e tronco (marrom da marca).
-2. **`IpeMark`**: ilustração decorativa feita com `View` (copa de flores, tronco e livro aberto), sem
-   dependência nova e invisível para leitores de tela.
+2. **`IpeMark`**: medalhão do ipê brotando do livro em papel recortado (`src/view/assets/ipe-medalhao.png`, arte
+   enviada pelo usuário e recortada em círculo com fundo transparente), decorativo e invisível para leitores
+   de tela. A primeira versão, desenhada com `View`, foi rejeitada pelo usuário por ficar feia.
 3. **`ReaderCard` — "cartão de leitor"**: fundo `ipe.container`, lombada marrom à esquerda como capa de livro,
    avatar com anel âmbar, nome em serifa, linha de avaliação e bairro, e o `IpeMark` no canto.
 4. **Meu perfil**: o cartão de identidade vira `ReaderCard`; números em serifa marrom; rótulos de seção com
