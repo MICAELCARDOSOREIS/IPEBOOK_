@@ -82,7 +82,7 @@ export function MyListingsListingsTab({
       </ScrollView>
       {filteredBooks.length === 0 ? (
         <View style={styles.empty}>
-          <IconBadge icon="shelf" tone="neutral" />
+          <IconBadge icon="shelf" tone="neutral" size="large" />
           <Text style={styles.emptyTitle}>Nenhum anúncio encontrado neste filtro.</Text>
           <View style={styles.emptyAction}>
             <FilledButton
@@ -124,8 +124,8 @@ function createStyles(colors: ColorPalette) {
     },
     empty: { paddingTop: tokens.spacing[48], alignItems: "center", gap: tokens.spacing[12] },
     emptyTitle: {
-      ...tokens.typography.bodyMedium,
-      color: colors.secondaryText,
+      ...tokens.typography.bodyLarge,
+      color: colors.m3.onSurface,
       textAlign: "center",
     },
     emptyAction: { marginTop: tokens.spacing[16], width: "100%" },
