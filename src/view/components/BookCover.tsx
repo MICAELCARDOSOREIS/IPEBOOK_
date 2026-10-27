@@ -3,6 +3,11 @@ import { Animated, Image, StyleSheet, Text, View } from "react-native";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { useBookCoverImage } from "@/viewmodel/useBookCoverImage";
+import estrelas from "@/view/assets/capas/estrelas.svg";
+import ondas from "@/view/assets/capas/ondas.svg";
+import ipe from "@/view/assets/capas/ipe.svg";
+import sol from "@/view/assets/capas/sol.svg";
+import montanhas from "@/view/assets/capas/montanhas.svg";
 
 export type BookCoverVariant = "list" | "card" | "carousel" | "detail";
 
@@ -45,6 +50,25 @@ const VARIANT_WIDTH: Record<BookCoverVariant, number> = {
   carousel: CAROUSEL_WIDTH,
   detail: DETAIL_WIDTH,
 };
+
+const asSource = (art: number | string) => (typeof art === "string" ? { uri: art } : art);
+
+/** Motivo da capa ilustrativa (Figma "Capa ilustrativa" `39:1546`): estrelas, ondas, ipê ou sol com montanhas. */
+function CoverArt({ index, width, height }: { index: number; width: number; height: number }) {
+  const kind = index % 4;
+  const abs = (left: number, top: number, w: number, h: number) =>
+    ({ position: "absolute", left, top, width: w, height: h }) as const;
+  if (kind === 3) {
+    return (
+      <>
+        <Image source={asSource(sol)} resizeMode="stretch" accessible={false} style={abs(width * 0.617, height * 0.306, width * 0.217, height * 0.153)} />
+        <Image source={asSource(montanhas)} resizeMode="stretch" accessible={false} style={abs(0, height * 0.459, width, height * 0.235)} />
+      </>
+    );
+  }
+  const art = kind === 0 ? estrelas : kind === 1 ? ondas : ipe;
+  return <Image source={asSource(art)} resizeMode="stretch" accessible={false} style={abs(0, height * 0.274, width, height * 0.436)} />;
+}
 
 function hashId(id: string): number {
   return [...id].reduce((sum, char) => sum + char.charCodeAt(0), 0);
@@ -157,6 +181,7 @@ export function BookCover({
       accessibilityLabel={`Capa ilustrativa de ${title}`}
       style={[styles.cover, { backgroundColor, width, height }]}
     >
+      {showText ? <CoverArt index={hashId(id)} width={width} height={height} /> : null}
       {showText ? (
         <View style={[styles.textOverlay, variant === "detail" && styles.textOverlayDetail]} accessible={false}>
           <Text style={[styles.title, variant === "detail" && styles.titleDetail]} numberOfLines={variant === "detail" ? 4 : 3}>
