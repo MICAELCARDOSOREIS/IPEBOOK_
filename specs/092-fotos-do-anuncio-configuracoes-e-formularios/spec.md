@@ -10,5 +10,7 @@ Fechar lacunas de usabilidade encontradas na revisão das telas restantes.
 4. **Modais** (`Dialog`, leitor de código de barras, avaliação, ordenação): barras do sistema translúcidas, sem faixas cinza.
 5. **Encontro**: opção selecionada usa o ícone de check, não o caractere "✓".
 
+6. **Rascunhos**: cartão com capa na cor da modalidade, título, autor, etiqueta da modalidade, etapa ("Parou nos detalhes") e barra de andamento de 3 etapas; resumo "N anúncios em andamento"; toque no cartão retoma; "Retomar" e "Descartar" com os botões do design system; confirmação de descarte em `Dialog` (antes `Alert`, que não aparece na web); estado vazio com ícone; a lista recarrega ao voltar de Anunciar (antes mostrava a lista antiga depois de "Salvar para depois").
+
 ## Validação
 `npm run validate`: cobertura de ramos 80,03 % (limite 80 %). Testes novos: caso de uso e viewmodel de foto do anúncio, etapa 2, `TextField`, Configurações, tela "Denunciar pessoa", folha de segurança, `pushOnce`. Conferido no Galaxy A16: galeria → recorte 5:8 → envio (JPEG de ~100 KB em `<pessoa>/anuncio/`) → pré-visualização no espaço da capa. A leitura do arquivo no nativo passou a usar `require("expo-file-system")` síncrono (o `import()` dinâmico quebrava no Expo Go com "Requiring unknown module"). Câmera e demais fluxos desta spec confirmados como funcionais pelo usuário em 2026-10-27.
