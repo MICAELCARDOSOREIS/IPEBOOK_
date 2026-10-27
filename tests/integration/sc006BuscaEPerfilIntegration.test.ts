@@ -1,12 +1,13 @@
 import React from "react";
 import { act, fireEvent, render } from "@testing-library/react-native";
 import { describe, expect, it } from "vitest";
-import { authUseCases, publicProfileUseCases } from "@/di/container";
+import { authUseCases, imagePickerService, publicProfileUseCases } from "@/di/container";
+import type { MemoryImagePickerService } from "@/infra/services/memoryImagePickerService";
 import Profile from "@/view/profile/profile";
 
 /**
  * SC-003 (Issue #55) pela composição real (container → caso de uso → infra em memória): uma
- * pessoa autenticada edita o próprio perfil público (nome, foto, rede social) pela tela de
+ * pessoa autenticada edita o próprio perfil público (nome, foto pela galeria e Instagram — Spec 081) pela tela de
  * Perfil e a alteração fica disponível para quem consultar o perfil público depois.
  *
  * A parte de busca (SC-002, Issue #56) não faz parte desta entrega — ver `tasks.md` (T015/T019,
@@ -22,11 +23,16 @@ describe("SC-003: editar o perfil próprio pelas camadas reais", () => {
     });
 
     expect(screen.getByDisplayValue("Clarinha Martins")).toBeDefined();
-    await act(async () => {
-      fireEvent.changeText(screen.getByLabelText("Foto (link)"), "https://exemplo.com/foto.png");
+    // Galeria simulada devolve um JPEG real (magic bytes) que passa pela validação e pelo Storage em memória.
+    (imagePickerService as MemoryImagePickerService).setNext({
+      bytes: new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0, 0, 0, 0, 0, 0, 0, 0]),
+      fileName: "clarinha.jpg",
     });
     await act(async () => {
-      fireEvent.changeText(screen.getByLabelText("Rede social"), "@clarinha");
+      fireEvent.press(screen.getByLabelText("Escolher foto da galeria"));
+    });
+    await act(async () => {
+      fireEvent.changeText(screen.getByLabelText("Instagram"), "clarinha");
     });
     await act(async () => {
       fireEvent.press(screen.getByText(/Salvar/));
@@ -36,9 +42,10 @@ describe("SC-003: editar o perfil próprio pelas camadas reais", () => {
 
     const publicProfile = await publicProfileUseCases.getPublicProfile(user.id);
     expect(publicProfile.name).toBe("Clarinha Martins");
-    expect(publicProfile.photoUrl).toBe("https://exemplo.com/foto.png");
+    expect(publicProfile.photoUrl).toMatch(new RegExp(`^https://mock\\.storage\\.local/book-photos/${user.id}/`));
     expect(publicProfile.socialHandle).toBe("@clarinha");
 
+    (imagePickerService as MemoryImagePickerService).setNext(null);
     await authUseCases.signOut();
   });
 });

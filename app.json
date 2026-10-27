@@ -50,7 +50,7 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "O IpêBook usa a câmera apenas para ler o código de barras do ISBN ao anunciar um livro.",
+          "cameraPermission": "O IpêBook usa a câmera para ler o ISBN ao anunciar um livro e para tirar a foto do seu perfil.",
           "recordAudioAndroid": false
         }
       ],
@@ -58,6 +58,14 @@
         "expo-notifications",
         {
           "color": "#2C5E45"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "O IpêBook acessa suas fotos só quando você escolhe uma imagem para o seu perfil.",
+          "cameraPermission": "O IpêBook usa a câmera para ler o ISBN ao anunciar um livro e para tirar a foto do seu perfil.",
+          "microphonePermission": false
         }
       ]
     ],

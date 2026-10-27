@@ -1,5 +1,6 @@
 import React from "react";
 import { act, cleanup, fireEvent, render } from "@testing-library/react-native";
+import * as Linking from "expo-linking";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { PiripiriNeighborhood } from "@/model/entities/location";
 import type { AuthState } from "@/viewmodel/useAuthViewModel";
@@ -339,5 +340,42 @@ describe("Meu perfil — hub de navegação (Figma 07.01)", () => {
 
     expect(screen.getByText(/Piripiri, PI/)).toBeDefined();
     expect(screen.queryByText(/Centro/)).toBeNull();
+  });
+
+  it("mostra o Instagram e abre o perfil dele (Spec 081)", async () => {
+    mockAuth({ id: "ana", email: "ana@exemplo.com" });
+    mockProfile({ ...fakeProfile, socialHandle: "@ana.lima" });
+    const openURL = vi.spyOn(Linking, "openURL").mockResolvedValue(true);
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<ProfileHub {...baseProps()} />);
+    });
+    expect(screen.getByText("@ana.lima")).toBeDefined();
+    await act(async () => { fireEvent.press(screen.getByLabelText("Abrir Instagram @ana.lima")); });
+    expect(openURL).toHaveBeenCalledWith("https://instagram.com/ana.lima");
+    openURL.mockRestore();
+  });
+
+  it("sem Instagram oferece adicionar pelo Editar perfil (Spec 081)", async () => {
+    mockAuth({ id: "ana", email: "ana@exemplo.com" });
+    mockProfile(fakeProfile);
+    const onNavigateToEditProfile = vi.fn();
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<ProfileHub {...baseProps({ onNavigateToEditProfile })} />);
+    });
+    await act(async () => { fireEvent.press(screen.getByText("Adicionar Instagram")); });
+    expect(onNavigateToEditProfile).toHaveBeenCalledTimes(1);
+  });
+
+  it("não mostra o ipê no canto do cartão no Meu perfil e usa singular em 1 publicação (Spec 081)", async () => {
+    mockAuth({ id: "ana", email: "ana@exemplo.com" });
+    mockProfile({ ...fakeProfile, completedNegotiations: 1, photoUrl: "https://exemplo.com/ana.png" });
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<ProfileHub {...baseProps()} />);
+    });
+    expect(screen.queryByTestId("reader-card-ipe", { includeHiddenElements: true })).toBeNull();
+    expect(screen.getByText("troca")).toBeDefined();
   });
 });
