@@ -147,6 +147,21 @@ describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
     expect(onNavigateToCreateListing).toHaveBeenCalledTimes(1);
   });
 
+  it("no celular o Anunciar livro é um único FAB do Material 3 no canto inferior, não um botão no cabeçalho", async () => {
+    const livro: Book = { id: "b13", title: "Iracema", author: "Alencar", modality: "trade", ownerId: "user-1", status: "available" };
+    mockViewModel({ books: [livro] });
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<MyListings sessionUserId="user-1" onNavigateToCreateListing={vi.fn()} />);
+    });
+    const fabs = screen.getAllByLabelText("Anunciar livro");
+    expect(fabs).toHaveLength(1);
+    const raw = fabs[0].props.style;
+    const resolved = typeof raw === "function" ? raw({ pressed: false }) : raw;
+    const style = Object.assign({}, ...[resolved].flat(Infinity).filter(Boolean));
+    expect(style).toMatchObject({ position: "absolute", width: 56, height: 56 });
+  });
+
   it("lista cada anúncio como linha com resumo e seta para o gerenciamento (Spec 043, RN-04)", async () => {
     const fakeBook: Book = {
       id: "b1",

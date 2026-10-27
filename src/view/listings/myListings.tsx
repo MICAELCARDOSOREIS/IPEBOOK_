@@ -120,18 +120,14 @@ export function MyListings({
             <Text style={styles.draftsLinkText}>Rascunhos</Text>
           </Pressable>
         ) : null}
-        {hasBooks && onNavigateToCreateListing ? (
+        {hasBooks && onNavigateToCreateListing && wideWeb ? (
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Anunciar livro"
             onPress={onNavigateToCreateListing}
-            style={wideWeb ? styles.addButtonWide : styles.addButton}
+            style={styles.addButtonWide}
           >
-            {wideWeb ? (
-              <Text style={styles.addButtonWideText}>Anunciar livro</Text>
-            ) : (
-              <AppIcon name="add" size={24} color={colors.m3.onSecondaryContainer} />
-            )}
+            <Text style={styles.addButtonWideText}>Anunciar livro</Text>
           </Pressable>
         ) : null}
       </View>
@@ -281,6 +277,18 @@ export function MyListings({
           </ScrollView>
         )}
       </View>
+      {/* FAB do Material 3 (56 dp, primary container) no canto inferior direito, acima da barra de navegação. */}
+      {hasBooks && onNavigateToCreateListing && !wideWeb ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Anunciar livro"
+          onPress={onNavigateToCreateListing}
+          android_ripple={{ color: colors.m3.onPrimaryContainer, borderless: false }}
+          style={({ pressed }) => [styles.fab, pressed && styles.fabPressed]}
+        >
+          <AppIcon name="add" size={24} color={colors.m3.onPrimaryContainer} />
+        </Pressable>
+      ) : null}
     </SafeAreaView>
   );
 }
@@ -403,14 +411,23 @@ function createStyles(colors: ColorPalette) {
       color: colors.m3.onSurface,
     },
     heroSubtitle: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
-    addButton: {
-      width: tokens.accessibility.touchTarget,
-      height: tokens.accessibility.touchTarget,
-      borderRadius: tokens.radius.full,
+    fab: {
+      position: "absolute",
+      right: tokens.spacing[16],
+      bottom: tokens.spacing[16],
+      width: 56,
+      height: 56,
+      borderRadius: 16,
       alignItems: "center",
       justifyContent: "center",
-      backgroundColor: colors.m3.secondaryContainer,
+      backgroundColor: colors.m3.primaryContainer,
+      elevation: 6,
+      shadowColor: "#000",
+      shadowOpacity: 0.25,
+      shadowRadius: 6,
+      shadowOffset: { width: 0, height: 3 },
     },
+    fabPressed: { opacity: 0.9 },
     draftsLink: {
       marginLeft: "auto",
       minHeight: tokens.accessibility.touchTarget,
@@ -434,7 +451,8 @@ function createStyles(colors: ColorPalette) {
     contentWide: { maxWidth: 1440, paddingHorizontal: 80 },
     addButtonWide: { height: 52, paddingHorizontal: 32, borderRadius: tokens.radius.full, alignItems: "center", justifyContent: "center", backgroundColor: colors.m3.primary },
     addButtonWideText: { ...tokens.typography.labelLarge, color: colors.m3.onPrimary },
-    scroll: { paddingBottom: tokens.spacing[32], gap: tokens.spacing[16] },
+    // Folga para o último cartão não ficar escondido atrás do FAB.
+    scroll: { paddingBottom: 96, gap: tokens.spacing[16] },
     statsRow: { flexDirection: "row", gap: tokens.spacing[8] },
     statCard: {
       flex: 1,
