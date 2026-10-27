@@ -15,9 +15,10 @@ vi.mock("@/viewmodel/useRequestDetailViewModel", () => ({
 }));
 
 // O cartão do encontro (Spec 052) tem testes próprios; aqui ele começa sem convite.
+let mockedMeeting: Record<string, unknown> | null = null;
 vi.mock("@/viewmodel/useMeetingViewModel", () => ({
   useMeetingViewModel: () => [
-    { meeting: null, loading: false, error: null, busy: false, actionError: null },
+    { meeting: mockedMeeting, loading: false, error: null, busy: false, actionError: null },
     { reload: vi.fn(), confirm: vi.fn(), cancel: vi.fn() },
   ],
 }));
@@ -115,6 +116,73 @@ describe("tela de Detalhes da Negociação (ISO/IEC 25010 - Usabilidade e Acessi
     });
     fireEvent.press(bookCard);
     expect(onNavigateToBookDetail).toHaveBeenCalledWith("b1");
+  });
+
+  it("mostra o andamento e só pede a conclusão depois do encontro (Spec 079)", async () => {
+    mockViewModel({ detail: fakeDetail, loading: false, error: null });
+
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<RequestDetail requestId="req-1" sessionUserId="vendedor-1" />);
+    });
+
+    expect(
+      screen.getByLabelText("Andamento: 1 de 3 etapas. Combinar encontro"),
+    ).toBeDefined();
+    expect(
+      screen.getByText("Depois do encontro e da entrega do livro, volte aqui para concluir e avaliar."),
+    ).toBeDefined();
+  });
+
+  it("convite da outra pessoa mostra Sua vez no topo (Spec 080)", async () => {
+    mockedMeeting = {
+      id: "m1", requestId: "req-1", pointName: "Praça da Bandeira (Centro)",
+      scheduledAt: "2099-01-01T15:00:00.000Z", proposedBy: "comprador-1", status: "proposed",
+    };
+    mockViewModel({ detail: fakeDetail, loading: false, error: null });
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<RequestDetail requestId="req-1" sessionUserId="vendedor-1" />);
+    });
+    expect(screen.getByText(/^Sua vez:/)).toBeDefined();
+    mockedMeeting = null;
+  });
+
+  it("encontro combinado recolhe os pontos seguros e permite expandir (Spec 080)", async () => {
+    mockedMeeting = {
+      id: "m1", requestId: "req-1", pointName: "Praça da Bandeira (Centro)",
+      scheduledAt: "2099-01-01T15:00:00.000Z", proposedBy: "comprador-1", status: "confirmed",
+    };
+    mockViewModel({ detail: fakeDetail, loading: false, error: null });
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<RequestDetail requestId="req-1" sessionUserId="vendedor-1" />);
+    });
+    expect(screen.queryByRole("button", { name: "Como chegar à Campus IFPI Piripiri" })).toBeNull();
+    expect(screen.getByLabelText("Andamento: 2 de 3 etapas. Concluída")).toBeDefined();
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Ver pontos seguros de Piripiri" }));
+    });
+    expect(screen.getByRole("button", { name: "Como chegar à Campus IFPI Piripiri" })).toBeDefined();
+    mockedMeeting = null;
+  });
+
+  it("puxar para atualizar recarrega sem esconder o conteúdo (Spec 080)", async () => {
+    const reload = vi.fn().mockResolvedValue(undefined);
+    mockedUseRequestDetailViewModel.mockReturnValue([
+      { detail: fakeDetail, loading: true, error: null },
+      { reload },
+    ]);
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<RequestDetail requestId="req-1" sessionUserId="vendedor-1" />);
+    });
+    expect(screen.queryByText("Carregando detalhes…")).toBeNull();
+    const scroll = screen.getByTestId("request-detail-scroll");
+    await act(async () => {
+      await scroll.props.refreshControl.props.onRefresh();
+    });
+    expect(reload).toHaveBeenCalled();
   });
 
   it("abre o app de mapas ao tocar em 'Como chegar'", async () => {

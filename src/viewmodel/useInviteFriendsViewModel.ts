@@ -21,7 +21,7 @@ export type InviteFriendsActions = {
 };
 
 const GENERIC_ERROR = "Não foi possível compartilhar o convite. Tente novamente.";
-const DEFAULT_APP_URL = "https://ipebook.pages.dev";
+const DEFAULT_APP_URL = "https://ipebook.app";
 
 type WebNavigatorWithShare = Navigator & { share?: (data: { text?: string; url?: string }) => Promise<void> };
 

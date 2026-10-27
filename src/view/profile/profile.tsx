@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import {
   BackHandler,
   KeyboardAvoidingView,
@@ -14,8 +14,8 @@ import { useUserPreferencesViewModel } from "@/viewmodel/useUserPreferencesViewM
 import { PIRIPIRI_NEIGHBORHOODS } from "@/model/entities/location";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
-import { Avatar } from "@/view/components/Avatar";
-import { AppIcon } from "@/view/components/AppIcon";
+import { ReaderCard } from "@/view/components/ReaderCard";
+import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
 import { Chip } from "@/view/components/Chip";
 import { Dialog } from "@/view/components/Dialog";
 import { ErrorState } from "@/view/components/ErrorState";
@@ -118,6 +118,8 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
   const [saved, setSaved] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [isNeighborhoodModalOpen, setIsNeighborhoodModalOpen] = useState(false);
+  /** Atalhos de bairro ficam recolhidos por padrão para manter o formulário limpo (Spec 017 polish). */
+  const [showNeighborhoodPicks, setShowNeighborhoodPicks] = useState(false);
   const [discardOpen, setDiscardOpen] = useState(false);
   /** true quando o toque em Salvar encontrou erros em linha (anuncia o resumo no TalkBack). */
   const [blockedSave, setBlockedSave] = useState(false);
@@ -307,17 +309,44 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
               </Text>
             </View>
 
-            {/* 2. Avatar Centralizado em Destaque (Figma 07.02) */}
+            {/* 2. Pré-visualização ao vivo do cartão de leitor (Spec 078), no lugar do avatar solto do 07.02 */}
             <View style={styles.avatarSection}>
-              <Avatar
-                name={name || "Você"}
+              <Text style={styles.previewLabel}>Assim seu cartão aparece</Text>
+              <ReaderCard
+                name={name.trim() || "Você"}
                 photoUrl={photoUrl.trim() || undefined}
-                size={88}
+                subtitle={neighborhood ? `${neighborhood}, Piripiri` : "Piripiri, PI"}
               />
             </View>
 
-            {/* 3. Campos Principais do Formulário */}
-            <View style={styles.fieldsGroup}>
+            {/* 3. Foto logo abaixo da pré-visualização: o que muda aparece no cartão acima (Spec 078) */}
+            <FormSection icon="camera" title="Foto do cartão" caption="Cole o link de uma imagem. Sem foto, o cartão mostra o ipê.">
+              {/* Foto (link) */}
+              <TextField
+                label="Foto (link)"
+                accessibilityLabel="Foto (link)"
+                value={photoUrl}
+                onChangeText={(value) => editField("photoUrl", value, setPhotoUrl)}
+                placeholder="https://..."
+                autoCapitalize="none"
+                keyboardType="url"
+                error={fieldErrors.photoUrl}
+                helperText="Um link http/https com a imagem da sua foto."
+              />
+
+              {/* Hoje só dá para trocar a foto colando outro link; para removê-la é preciso
+                  limpar o campo. O botão abaixo faz isso em um toque. */}
+              {photoUrl.trim() ? (
+                <TextButton
+                  label="Remover foto"
+                  accessibilityLabel="Remover foto do perfil"
+                  onPress={() => editField("photoUrl", "", setPhotoUrl)}
+                />
+              ) : null}
+            </FormSection>
+
+            {/* 4. Sobre você: nome e bairro. A cidade é fixa (Piripiri, PI) e vai na legenda, sem campo desabilitado. */}
+            <FormSection icon="person" title="Sobre você" caption="Aparece no seu perfil público, em Piripiri, PI.">
               {/* Nome */}
               <TextField
                 label="Nome"
@@ -330,15 +359,6 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
                 error={fieldErrors.name}
                 helperText={fieldErrors.name ? undefined : `${name.trim().length}/${MAX_NAME_LENGTH}`}
                 helperTextAlign="right"
-              />
-
-              {/* Cidade (Campo fixo / informativo M3 desabilitado) */}
-              <TextField
-                label="Cidade"
-                value="Piripiri, PI"
-                onChangeText={() => {}}
-                editable={false}
-                accessibilityLabel="Cidade: Piripiri, PI"
               />
 
               {/* Bairro (Campo interativo contornado com seletor no Figma 07.02) */}
@@ -367,29 +387,45 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
                 </View>
               </Pressable>
 
-              {/* Atalhos: seis primeiros bairros da lista oficial (o modal traz todos). */}
-              <View style={styles.neighborhoodChipsArea}>
-                <Text style={styles.sectionLabel}>Bairros de Piripiri</Text>
-                <View style={styles.chipRow}>
-                  {PIRIPIRI_NEIGHBORHOODS.slice(0, NEIGHBORHOOD_QUICK_PICKS).map((item) => (
-                    <Chip
-                      key={item}
-                      size="compact"
-                      label={item}
-                      accessibilityLabel={`Bairro ${item}`}
-                      selected={neighborhood === item}
-                      onPress={() => setNeighborhood(item)}
+              {/* Atalhos de bairro: recolhidos por padrão para um seletor mais limpo; o seletor
+                  acima abre a lista completa e o link abaixo revela os primeiros da lista oficial. */}
+              {showNeighborhoodPicks ? (
+                <View style={styles.neighborhoodChipsArea}>
+                  <View style={styles.chipsHeader}>
+                    <Text style={styles.sectionLabel}>Bairros de Piripiri</Text>
+                    <TextButton
+                      label="Recolher"
+                      accessibilityLabel="Recolher atalhos de bairros"
+                      onPress={() => setShowNeighborhoodPicks(false)}
                     />
-                  ))}
+                  </View>
+                  <View style={styles.chipRow}>
+                    {PIRIPIRI_NEIGHBORHOODS.slice(0, NEIGHBORHOOD_QUICK_PICKS).map((item) => (
+                      <Chip
+                        key={item}
+                        size="compact"
+                        label={item}
+                        accessibilityLabel={`Bairro ${item}`}
+                        selected={neighborhood === item}
+                        onPress={() => setNeighborhood(item)}
+                      />
+                    ))}
+                  </View>
+                  <Text style={styles.chipsHelper}>
+                    Não achou o seu? Toque em "Selecionar bairro" para ver a lista completa.
+                  </Text>
                 </View>
-                <Text style={styles.chipsHelper}>
-                  Não achou o seu? Toque em "Selecionar bairro" para ver a lista completa.
-                </Text>
-              </View>
+              ) : (
+                <TextButton
+                  label="Ver bairros populares"
+                  accessibilityLabel="Mostrar atalhos de bairros populares"
+                  onPress={() => setShowNeighborhoodPicks(true)}
+                />
+              )}
+            </FormSection>
 
-              {/* Mensagem de privacidade (Figma 07.02) */}
-              <Text style={styles.privacyHelper}>Seu e-mail fica privado.</Text>
-
+            {/* 5. Contato: privado, só para quem negocia com você */}
+            <FormSection icon="lock" title="Contato para negociar" caption="Só quem negociar com você vê estes dados. Seu e-mail fica privado.">
               {/* Telefone/WhatsApp */}
               <TextField
                 label="Telefone/WhatsApp"
@@ -400,7 +436,7 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
                 keyboardType="phone-pad"
                 maxLength={15}
                 error={fieldErrors.phone}
-                helperText="Visível apenas para quem negociar com você."
+                helperText="Com DDD, para combinar a entrega pelo WhatsApp."
               />
 
               {/* Rede social */}
@@ -414,30 +450,7 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
                 maxLength={MAX_SOCIAL_HANDLE_LENGTH}
                 error={fieldErrors.socialHandle}
               />
-
-              {/* Foto (link) */}
-              <TextField
-                label="Foto (link)"
-                accessibilityLabel="Foto (link)"
-                value={photoUrl}
-                onChangeText={(value) => editField("photoUrl", value, setPhotoUrl)}
-                placeholder="https://..."
-                autoCapitalize="none"
-                keyboardType="url"
-                error={fieldErrors.photoUrl}
-                helperText="Um link http/https com a imagem da sua foto."
-              />
-
-              {/* Hoje só dá para trocar a foto colando outro link; para removê-la é preciso
-                  limpar o campo. O botão abaixo faz isso em um toque. */}
-              {photoUrl.trim() ? (
-                <TextButton
-                  label="Remover foto"
-                  accessibilityLabel="Remover foto do perfil"
-                  onPress={() => editField("photoUrl", "", setPhotoUrl)}
-                />
-              ) : null}
-            </View>
+            </FormSection>
 
             {/* Resumo acessível: o foco não pula para o campo com erro, então a região viva
                 informa no leitor de tela que há itens destacados. */}
@@ -447,11 +460,17 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
               </Text>
             ) : null}
 
-            {/* Mensagem de erro de salvamento */}
+            {/* Mensagem de erro de carregamento/salvamento: banner discreto com nova tentativa,
+                sem transformar um erro pontual de preferências em tela bloqueante. */}
             {error ? (
-              <Text accessibilityRole="alert" style={styles.errorText}>
-                {error}
-              </Text>
+              <View style={styles.errorBanner} accessibilityRole="alert">
+                <Text style={styles.errorBannerText}>{error}</Text>
+                <TextButton
+                  label="Tentar novamente"
+                  accessibilityLabel="Tentar novamente carregar perfil e preferências"
+                  onPress={handleRetryLoad}
+                />
+              </View>
             ) : null}
 
             {/* 4. Ação Principal Fixa: "Salvar alterações" (Figma 07.02) */}
@@ -470,23 +489,76 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
   );
 }
 
+/** Seção do formulário: cartão `surface-container-low` com ícone, título e legenda (Spec 078). */
+function FormSection({
+  icon,
+  title,
+  caption,
+  children,
+}: {
+  icon: AppIconName;
+  title: string;
+  caption: string;
+  children: ReactNode;
+}) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+  return (
+    <View style={styles.formSection}>
+      <View style={styles.formSectionHeader}>
+        <View style={styles.formSectionIcon}>
+          <AppIcon name={icon} size={18} color={colors.ipe.onContainer} />
+        </View>
+        <View style={styles.formSectionTitles}>
+          <Text accessibilityRole="header" style={styles.formSectionTitle}>
+            {title}
+          </Text>
+          <Text style={styles.formSectionCaption}>{caption}</Text>
+        </View>
+      </View>
+      {children}
+    </View>
+  );
+}
+
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
+    formSection: {
+      gap: tokens.spacing[16],
+      padding: tokens.spacing[16],
+      borderRadius: 20,
+      backgroundColor: colors.m3.surfaceContainerLow,
+    },
+    formSectionHeader: { flexDirection: "row", alignItems: "flex-start", gap: tokens.spacing[12] },
+    formSectionIcon: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: colors.ipe.container,
+    },
+    formSectionTitles: { flex: 1, gap: 2 },
+    formSectionTitle: { ...tokens.typography.titleMedium, color: colors.m3.onSurface },
+    formSectionCaption: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
     keyboardView: {
       width: "100%",
     },
     formContainer: {
       width: "100%",
+      gap: tokens.spacing[16],
     },
-    heroSection: {
-      marginBottom: tokens.spacing[16],
-    },
+    heroSection: {},
     heroTitle: {
       fontFamily: fontFamily.brand,
-      fontSize: 32,
+      fontSize: 30,
       lineHeight: 38,
       fontWeight: "700",
       color: colors.brandBrown,
+      // A serifada da marca tem sobrehang à esquerda; um leve respiro evita que a primeira
+      // letra encoste e seja recortada pela viewport do ScrollView.
+      paddingLeft: tokens.spacing[4],
+      paddingRight: tokens.spacing[8],
     },
     heroSubtitle: {
       ...tokens.typography.bodyLarge,
@@ -494,14 +566,9 @@ function createStyles(colors: ColorPalette) {
       marginTop: tokens.spacing[6],
     },
     avatarSection: {
-      alignItems: "center",
-      justifyContent: "center",
-      marginVertical: tokens.spacing[16],
+      gap: tokens.spacing[8],
     },
-    fieldsGroup: {
-      gap: tokens.spacing[16],
-      width: "100%",
-    },
+    previewLabel: { ...tokens.typography.labelMedium, color: colors.m3.onSurfaceVariant },
     selectorField: {
       width: "100%",
     },
@@ -544,6 +611,11 @@ function createStyles(colors: ColorPalette) {
       marginTop: tokens.spacing[4],
       gap: tokens.spacing[8],
     },
+    chipsHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+    },
     sectionLabel: {
       ...tokens.typography.labelMedium,
       fontWeight: "600",
@@ -554,19 +626,30 @@ function createStyles(colors: ColorPalette) {
       flexWrap: "wrap",
       gap: tokens.spacing[8],
     },
-    privacyHelper: {
-      ...tokens.typography.bodyMedium,
-      color: colors.m3.onSurfaceVariant,
-      marginTop: tokens.spacing[4],
-      marginBottom: tokens.spacing[4],
-    },
     errorText: {
       color: colors.error,
       fontSize: tokens.typography.bodyMedium.fontSize,
       marginTop: tokens.spacing[8],
     },
+    errorBanner: {
+      marginTop: tokens.spacing[16],
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: tokens.spacing[12],
+      borderRadius: tokens.radius.medium,
+      borderWidth: 1,
+      borderColor: colors.error,
+      paddingHorizontal: tokens.spacing[16],
+      paddingVertical: tokens.spacing[12],
+    },
+    errorBannerText: {
+      flex: 1,
+      color: colors.error,
+      ...tokens.typography.bodyMedium,
+    },
     actionContainer: {
-      marginTop: tokens.spacing[32],
+      marginTop: tokens.spacing[8],
       width: "100%",
     },
     guestCard: {

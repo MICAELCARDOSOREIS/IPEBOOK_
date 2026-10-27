@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from "react-native";
+import { BackHandler, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import type { Book } from "@/model/entities/book";
 import { tokens, type ColorPalette } from "@/view/tokens";
@@ -10,6 +10,10 @@ import { TextButton } from "@/view/components/TextButton";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { useFormErrorAnnouncer } from "@/view/useFormErrorAnnouncer";
 import { useCreateListingViewModel } from "@/viewmodel/useCreateListingViewModel";
+import {
+  validateListingBasics,
+  type ListingBasicsErrors,
+} from "@/viewmodel/listingBasicsValidation";
 import { CreateListingSuccess } from "@/view/listings/createListingSuccess";
 import { CreateListingStep1 } from "@/view/listings/createListingStep1";
 import { CreateListingStep2 } from "@/view/listings/createListingStep2";
@@ -57,6 +61,8 @@ export default function CreateListing({
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [step, setStep] = useState(1);
   const [published, setPublished] = useState<Book | null>(null);
+  // Erros da etapa 1 só aparecem depois da primeira tentativa de avançar.
+  const [basicsTouched, setBasicsTouched] = useState(false);
   const errorRef = useFormErrorAnnouncer(state.error);
   const scrollRef = useRef<React.ComponentRef<typeof ScrollView>>(null);
   const isMountedRef = useRef(false);
@@ -115,7 +121,42 @@ export default function CreateListing({
     actions,
   ]);
 
+  const basicsErrors: ListingBasicsErrors = basicsTouched
+    ? validateListingBasics({
+        title: state.title,
+        author: state.author,
+        modality: state.modality,
+        price: state.price,
+      })
+    : {};
+
+  // Cada etapa começa do topo, senão a nova tela abre no meio do conteúdo anterior.
+  useEffect(() => {
+    scrollRef.current?.scrollTo?.({ y: 0, animated: false });
+  }, [step]);
+
+  // No Android, o botão/gesto Voltar recua uma etapa em vez de abandonar o anúncio.
+  useEffect(() => {
+    if (published || step === 1) return;
+    const sub = BackHandler.addEventListener("hardwareBackPress", () => {
+      setStep((current) => current - 1);
+      return true;
+    });
+    return () => sub.remove();
+  }, [published, step]);
+
   const handleGoToStep2 = () => {
+    const errors = validateListingBasics({
+      title: state.title,
+      author: state.author,
+      modality: state.modality,
+      price: state.price,
+    });
+    if (Object.keys(errors).length > 0) {
+      setBasicsTouched(true);
+      scrollRef.current?.scrollTo?.({ y: 0, animated: true });
+      return;
+    }
     void actions.saveDraft();
     setStep(2);
   };
@@ -183,6 +224,7 @@ export default function CreateListing({
                 label="Limpar rascunho"
                 onPress={() => {
                   actions.reset();
+                  setBasicsTouched(false);
                   setStep(1);
                 }}
               />
@@ -210,7 +252,8 @@ export default function CreateListing({
               onSetAuthor={actions.setAuthor}
               onSetPrice={actions.setPrice}
               onSetPhotoUrl={actions.setPhotoUrl}
-              onGoToPhotos={handleGoToStep2}
+              fieldErrors={basicsErrors}
+              onGoToPhotos={() => setStep(2)}
             />
           ) : null}
 

@@ -193,7 +193,7 @@ export const TABELAS_CRITICAS = {
   v2_user_preferences: {
     nome: 'v2_user_preferences',
     descricao: 'Preferências privadas de contato e bairro padrão',
-    colunas: ['user_id', 'phone', 'neighborhood', 'updated_at'],
+    colunas: ['user_id', 'phone', 'neighborhood', 'updated_at', 'push_token'],
   },
   v2_meetings: {
     nome: 'v2_meetings',
@@ -593,7 +593,14 @@ export const MAPEAMENTO_MIGRACOES = {
     validar: (ctx) => ctx.tabelas.v2_negotiation_messages?.existe,
     detalhe: 'Tabela public.v2_negotiation_messages (Spec 061 / ADR 0044)',
   },
-  '202610260001_rascunhos_anuncio.sql': {
+  '202610260001_push_token_preferencias.sql': {
+    titulo: 'Token de notificação push nas preferências privadas',
+    validar: (ctx) =>
+      Boolean(ctx.tabelas.v2_user_preferences?.existe) &&
+      !(ctx.tabelas.v2_user_preferences?.colunasAusentes ?? []).includes('push_token'),
+    detalhe: 'Coluna public.v2_user_preferences.push_token (ADR 0062)',
+  },
+  '202610260002_rascunhos_anuncio.sql': {
     titulo: 'Rascunhos de anúncio (status draft)',
     validar: (ctx) => ctx.tabelas.v2_books?.existe,
     detalhe: 'Coluna draft_step, CHECKs flexibilizados e políticas RLS de rascunho em v2_books (Spec 017)',

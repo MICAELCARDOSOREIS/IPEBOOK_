@@ -7,6 +7,7 @@ import { useTheme } from "@/view/theme/ThemeProvider";
 import { Avatar } from "@/view/components/Avatar";
 import { AppIcon } from "@/view/components/AppIcon";
 import { FilledButton } from "@/view/components/FilledButton";
+import { TopAppBar } from "@/view/components/TopAppBar";
 
 function formatJoinedAt(joinedAt: string): string {
   const date = new Date(joinedAt);
@@ -30,21 +31,23 @@ export function PublicProfile({ userId, onBack, onStartChat, onReportOrBlock }: 
   const styles = useMemo(() => createStyles(colors), [colors]);
   const profile = state.profile;
 
+  const chatButtonLabel = useMemo(() => {
+    if (!profile?.name) return "Conversar";
+    const trimmed = profile.name.trim();
+    if (trimmed.length > 22) {
+      const first = trimmed.split(" ")[0];
+      if (first && first.length <= 15) {
+        return `Conversar com ${first}`;
+      }
+      return "Conversar";
+    }
+    return `Conversar com ${trimmed}`;
+  }, [profile?.name]);
+
   return (
     <SafeAreaView edges={["top", "left", "right"]} style={styles.page}>
-      {/* 1. Barra Superior M3: Voltar + "Perfil" */}
-      <View style={styles.topBar}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Voltar"
-          hitSlop={12}
-          onPress={() => onBack?.()}
-          style={styles.backButton}
-        >
-          <AppIcon name="back" size={24} color={colors.text} />
-        </Pressable>
-        <Text accessibilityRole="header" style={styles.topBarTitle}>Perfil</Text>
-      </View>
+      {/* 1. Barra Superior M3 Oficial com botão voltar e título padronizado */}
+      <TopAppBar title="Perfil" onBack={() => onBack?.()} />
 
       <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
         {state.loading ? (
@@ -66,60 +69,70 @@ export function PublicProfile({ userId, onBack, onStartChat, onReportOrBlock }: 
               <Text accessibilityRole="header" style={styles.name}>{profile.name}</Text>
               <Text style={styles.subtitle}>Conheça a pessoa antes de combinar.</Text>
               {profile.socialHandle ? (
-                <Text style={styles.socialHandle}>{profile.socialHandle}</Text>
+                <View style={styles.socialBadge}>
+                  <Text style={styles.socialHandle}>{profile.socialHandle}</Text>
+                </View>
               ) : null}
             </View>
 
-            {/* 3. Cards Informativos do Figma */}
-            {/* Card 1: Avaliações (Destaque em container secundário) */}
-            <View style={styles.highlightCard}>
-              <View style={styles.cardHeaderRow}>
-                <Text style={styles.statLargeValue}>
-                  {profile.ratingCount > 0 ? profile.averageRating?.toFixed(1) : "—"}
+            {/* 3. Cards Informativos Padronizados com Superfície M3 */}
+            {/* Card 1: Avaliações */}
+            <View style={styles.infoCard}>
+              <View style={styles.cardLeadingBox}>
+                {profile.ratingCount > 0 ? (
+                  <View style={styles.ratingNumberRow}>
+                    <Text style={styles.statLargeValue}>
+                      {profile.averageRating?.toFixed(1)}
+                    </Text>
+                    <AppIcon name="star" size={12} color={colors.highlight} />
+                  </View>
+                ) : (
+                  <AppIcon name="star" size={24} color={colors.secondaryText} />
+                )}
+              </View>
+              <View style={styles.cardHeaderTextCol}>
+                <Text style={styles.cardTitle}>
+                  {profile.ratingCount > 0
+                    ? `Avaliação média (${profile.ratingCount} ${profile.ratingCount > 1 ? "avaliações" : "avaliação"})`
+                    : "Sem avaliações ainda"}
                 </Text>
-                <View style={styles.cardHeaderTextCol}>
-                  <Text style={styles.cardTitle}>
-                    {profile.ratingCount > 0
-                      ? `Avaliação média (${profile.ratingCount} ${profile.ratingCount > 1 ? "avaliações" : "avaliação"})`
-                      : "Sem avaliações ainda"}
-                  </Text>
-                  <Text style={styles.cardSubtitle}>
-                    {profile.ratingCount > 0 ? "Avaliação da comunidade em Piripiri" : "Novo membro no IpêBook"}
-                  </Text>
-                </View>
+                <Text style={styles.cardSubtitle}>
+                  {profile.ratingCount > 0 ? "Avaliação da comunidade em Piripiri" : "Novo membro no IpêBook"}
+                </Text>
               </View>
             </View>
 
             {/* Card 2: Negociações Concluídas */}
-            <View style={styles.surfaceCard}>
-              <View style={styles.cardHeaderRow}>
+            <View style={styles.infoCard}>
+              <View style={styles.cardLeadingBox}>
                 <Text style={styles.statLargeValue}>{profile.completedNegotiations}</Text>
-                <View style={styles.cardHeaderTextCol}>
-                  <Text style={styles.cardTitle}>
-                    {profile.completedNegotiations === 1 ? "Negociação concluída" : "Negociações concluídas"}
-                  </Text>
-                  <Text style={styles.cardSubtitle}>Livros trocados, vendidos ou doados com sucesso</Text>
-                </View>
+              </View>
+              <View style={styles.cardHeaderTextCol}>
+                <Text style={styles.cardTitle}>
+                  {profile.completedNegotiations === 1 ? "Negociação concluída" : "Negociações concluídas"}
+                </Text>
+                <Text style={styles.cardSubtitle}>Livros trocados, vendidos ou doados com sucesso</Text>
               </View>
             </View>
 
             {/* Card 3: Tempo de Comunidade */}
-            <View style={styles.surfaceCard}>
-              <View style={styles.cardHeaderRow}>
+            <View style={styles.infoCard}>
+              <View style={styles.cardLeadingBox}>
                 <AppIcon name="calendar" size={24} color={colors.m3.primary} />
-                <View style={styles.cardHeaderTextCol}>
-                  <Text style={styles.cardTitle}>
-                    {`Na comunidade desde ${formatJoinedAt(profile.joinedAt)}`}
-                  </Text>
-                  <Text style={styles.cardSubtitle}>Piripiri, Piauí</Text>
-                </View>
+              </View>
+              <View style={styles.cardHeaderTextCol}>
+                <Text style={styles.cardTitle}>
+                  {`Na comunidade desde ${formatJoinedAt(profile.joinedAt)}`}
+                </Text>
+                <Text style={styles.cardSubtitle}>Piripiri, Piauí</Text>
               </View>
             </View>
 
-            {/* 4. Ações Principais do Figma */}
+            {/* 4. Ações Principais com Hierarquia M3 e Contraste Acessível */}
             <View style={styles.actionsSection}>
               <FilledButton
-                label={`Conversar com ${profile.name}`}
+                label={chatButtonLabel}
+                accessibilityLabel={`Conversar com ${profile.name}`}
                 onPress={() => onStartChat?.(profile.userId)}
               />
 
@@ -127,9 +140,10 @@ export function PublicProfile({ userId, onBack, onStartChat, onReportOrBlock }: 
                 accessibilityRole="button"
                 accessibilityLabel="Denunciar ou bloquear"
                 onPress={() => onReportOrBlock?.(profile.userId)}
-                style={styles.destructiveButton}
+                style={styles.safetyButton}
               >
-                <Text style={styles.destructiveText}>Denunciar ou bloquear</Text>
+                <AppIcon name="flag" size={18} color={colors.error} />
+                <Text style={styles.safetyButtonText}>Denunciar ou bloquear</Text>
               </Pressable>
             </View>
           </View>
@@ -144,26 +158,6 @@ export default PublicProfile;
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     page: { flex: 1, backgroundColor: colors.background },
-    topBar: {
-      height: 56,
-      flexDirection: "row",
-      alignItems: "center",
-      paddingHorizontal: tokens.spacing[16],
-      backgroundColor: colors.background,
-      gap: tokens.spacing[12],
-    },
-    backButton: {
-      width: 44,
-      height: 44,
-      justifyContent: "center",
-      alignItems: "center",
-      borderRadius: tokens.radius.full,
-    },
-    topBarTitle: {
-      fontSize: 20,
-      fontWeight: "500",
-      color: colors.text,
-    },
     scrollContent: {
       paddingHorizontal: tokens.spacing[16],
       paddingTop: tokens.spacing[8],
@@ -212,6 +206,7 @@ function createStyles(colors: ColorPalette) {
       fontWeight: "700",
       color: colors.text,
       textAlign: "center",
+      paddingHorizontal: tokens.spacing[8],
     },
     subtitle: {
       fontSize: 14,
@@ -219,33 +214,47 @@ function createStyles(colors: ColorPalette) {
       color: colors.secondaryText,
       textAlign: "center",
     },
+    socialBadge: {
+      paddingHorizontal: tokens.spacing[12],
+      paddingVertical: tokens.spacing[4],
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+      marginTop: tokens.spacing[4],
+    },
     socialHandle: {
-      fontSize: 14,
+      fontSize: 13,
       fontWeight: "500",
       color: colors.action,
     },
-    highlightCard: {
-      backgroundColor: colors.m3.secondaryContainer,
-      borderRadius: 16,
-      padding: tokens.spacing[16],
-    },
-    surfaceCard: {
+    infoCard: {
       backgroundColor: colors.surface,
       borderRadius: 16,
       borderWidth: 1,
       borderColor: colors.m3.outlineVariant,
       padding: tokens.spacing[16],
-    },
-    cardHeaderRow: {
       flexDirection: "row",
       alignItems: "center",
       gap: tokens.spacing[16],
     },
+    cardLeadingBox: {
+      width: 48,
+      height: 48,
+      borderRadius: 12,
+      backgroundColor: colors.m3.surfaceContainerHigh,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    ratingNumberRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 2,
+    },
     statLargeValue: {
-      fontSize: 28,
+      fontSize: 20,
       fontWeight: "700",
       color: colors.text,
-      minWidth: 44,
       textAlign: "center",
     },
     cardHeaderTextCol: {
@@ -260,22 +269,27 @@ function createStyles(colors: ColorPalette) {
     cardSubtitle: {
       fontSize: 13,
       color: colors.secondaryText,
+      lineHeight: 18,
     },
     actionsSection: {
       gap: tokens.spacing[12],
-      paddingTop: tokens.spacing[16],
+      paddingTop: tokens.spacing[12],
     },
-    destructiveButton: {
-      minHeight: tokens.accessibility.touchTarget,
-      justifyContent: "center",
+    safetyButton: {
+      minHeight: 52,
+      flexDirection: "row",
       alignItems: "center",
-      backgroundColor: colors.error,
+      justifyContent: "center",
+      gap: tokens.spacing[8],
       borderRadius: tokens.radius.full,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+      backgroundColor: "transparent",
       paddingHorizontal: tokens.spacing[24],
     },
-    destructiveText: {
-      color: "#FFFFFF",
-      fontSize: 15,
+    safetyButtonText: {
+      ...tokens.typography.labelLarge,
+      color: colors.error,
       fontWeight: "600",
     },
   });

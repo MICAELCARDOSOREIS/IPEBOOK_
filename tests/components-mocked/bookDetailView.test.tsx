@@ -126,23 +126,67 @@ describe("BookDetail (spec 006, US6/T029)", () => {
     expect(screen.getByRole("alert").props.children).toBe("Anúncio não encontrado.");
   });
 
-  it("oferece solicitar negociação para outra pessoa autenticada", async () => {
-    const { request } = setup(book({ ownerId: "other" }), user);
+  it.each([
+    ["sale", "Tenho interesse"],
+    ["trade", "Propor troca"],
+    ["donation", "Quero receber"],
+  ] as const)("ação principal de %s é \"%s\" e solicita a negociação (Spec 074, CA1)", async (modality, label) => {
+    const { request } = setup(book({ ownerId: "other", modality, price: modality === "sale" ? 25 : undefined }), user);
     const screen = await renderDetail();
-    await act(async () => { fireEvent.press(screen.getByText("Solicitar negociação")); });
+    await act(async () => { fireEvent.press(screen.getByText(label)); });
     expect(request).toHaveBeenCalledWith("b1", "me");
   });
 
-  it("não oferece solicitar negociação no próprio anúncio", async () => {
+  it("não oferece ação principal no próprio anúncio, mas mantém compartilhar (Spec 074, CA2)", async () => {
     setup(book({ ownerId: "me" }), user);
     const screen = await renderDetail();
-    expect(screen.queryByText("Solicitar negociação")).toBeNull();
+    expect(screen.queryByText("Propor troca")).toBeNull();
+    expect(screen.getByLabelText("Compartilhar no WhatsApp")).toBeDefined();
   });
 
-  it("não oferece solicitar negociação sem sessão", async () => {
+  it("não oferece ação principal sem sessão (Spec 074, CA2)", async () => {
     setup(book({ ownerId: "other" }), null);
     const screen = await renderDetail();
-    expect(screen.queryByText("Solicitar negociação")).toBeNull();
+    expect(screen.queryByText("Propor troca")).toBeNull();
+  });
+
+  it("mostra valor e etiqueta por modalidade (Spec 074, CA3)", async () => {
+    setup(book({ modality: "trade" }), user);
+    const trade = await renderDetail();
+    expect(trade.getByText("Por outro livro")).toBeDefined();
+    expect(trade.getByText("Troca")).toBeDefined();
+
+    setup(book({ modality: "donation" }), user);
+    const donation = await renderDetail();
+    expect(donation.getByText("Gratuito")).toBeDefined();
+    expect(donation.getByText("Doação")).toBeDefined();
+  });
+
+  it("mostra o cartão da modalidade só em troca e doação (Spec 074, CA4)", async () => {
+    setup(book({ modality: "trade" }), user);
+    const trade = await renderDetail();
+    expect(trade.getByText("Aceita em troca")).toBeDefined();
+    expect(trade.queryByText("Doação para quem vai ler")).toBeNull();
+
+    setup(book({ modality: "donation" }), user);
+    const donation = await renderDetail();
+    expect(donation.getByText("Doação para quem vai ler")).toBeDefined();
+
+    setup(book({ modality: "sale", price: 10 }), user);
+    const sale = await renderDetail();
+    expect(sale.queryByText("Aceita em troca")).toBeNull();
+    expect(sale.queryByText("Doação para quem vai ler")).toBeNull();
+  });
+
+  it("lista conservação, categoria e retirada (Spec 074, CA5)", async () => {
+    setup(book({ condition: "good", category: "Romance", neighborhood: "Fonte dos Matos" }), user);
+    const screen = await renderDetail();
+    expect(screen.getByText("Conservação")).toBeDefined();
+    expect(screen.getByText("Bom estado")).toBeDefined();
+    expect(screen.getByText("Categoria")).toBeDefined();
+    expect(screen.getByText("Romance")).toBeDefined();
+    expect(screen.getByText("Retirada")).toBeDefined();
+    expect(screen.getByText("Fonte dos Matos")).toBeDefined();
   });
 
   it("mostra confirmação quando já solicitada e indica anúncio reservado", async () => {
@@ -161,7 +205,7 @@ describe("BookDetail (spec 006, US6/T029)", () => {
     setup(book({ ownerId: "owner-xyz" }), user, { ownerName: "Joana Lima" });
     const onNavigateToUserProfile = vi.fn();
     const screen = await renderDetail({ onNavigateToUserProfile });
-    await act(async () => { fireEvent.press(screen.getByText("Anunciado por Joana Lima")); });
+    await act(async () => { fireEvent.press(screen.getByLabelText("Anunciado por Joana Lima")); });
     expect(onNavigateToUserProfile).toHaveBeenCalledWith("owner-xyz");
   });
 
@@ -170,7 +214,8 @@ describe("BookDetail (spec 006, US6/T029)", () => {
     setup(book({ ownerId }), user, { ownerName: "Joana Lima" });
     const screen = await renderDetail();
     expect(screen.queryByText(new RegExp(ownerId))).toBeNull();
-    expect(screen.getByText("Anunciado por Joana Lima")).toBeDefined();
+    expect(screen.getByLabelText("Anunciado por Joana Lima")).toBeDefined();
+    expect(screen.getByText("Joana Lima")).toBeDefined();
   });
 
   it("usa rótulo genérico quando o perfil de quem anunciou não está disponível", async () => {
@@ -178,7 +223,7 @@ describe("BookDetail (spec 006, US6/T029)", () => {
     setup(book({ ownerId }), user);
     const screen = await renderDetail();
     expect(screen.queryByText(new RegExp(ownerId))).toBeNull();
-    expect(screen.getByText("Anunciado por outro membro da comunidade")).toBeDefined();
+    expect(screen.getByLabelText("Anunciado por outro membro da comunidade")).toBeDefined();
   });
 
   it("oferece ver fotos em tela cheia quando há foto de capa (Spec 018)", async () => {

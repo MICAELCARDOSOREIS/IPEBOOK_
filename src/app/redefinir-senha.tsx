@@ -9,7 +9,10 @@ export default function RedefinirSenhaRoute() {
       link={link}
       onNavigateToSignIn={() => router.replace("/entrar")}
       onNavigateToForgotPassword={() => router.replace("/esqueci-senha")}
-      onBack={() => router.back()}
+      onBack={() => {
+        if (router.canGoBack()) router.back();
+        else router.replace("/");
+      }}
     />
   );
 }
