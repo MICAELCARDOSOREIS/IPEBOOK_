@@ -2,7 +2,9 @@
 
 Documento consolidado de continuidade técnica e produto do Ipebook (Piripiri, PI).
 
-Conferência atual: **2026-10-26** (77 specs e 64 ADRs numerados, 177 arquivos e 1.291 testes automatizados 100% passando).
+Conferência atual: **2026-10-26** (79 specs e 64 ADRs numerados, 179 arquivos e 1.299 testes automatizados 100% passando).
+
+**Acompanhamento do encontro (2026-10-26, Spec 079):** "Acompanhar encontro" ganhou andamento Aceita → Encontro → Concluída; o cartão do encontro diz "Hoje"/"Amanhã"/"Em n dias" ou que o horário passou e tem "Como chegar" ao ponto escolhido; a conclusão só é sugerida depois do encontro e o banner muda para "Negociação concluída" após avaliar. Validado em 1.299 testes; sem conferência em aparelho.
 
 **Usabilidade do anúncio (2026-10-26, Spec 077):** "Continuar" da etapa 1 valida título, autor e preço da venda e mostra o erro no campo (antes só ao publicar); cada etapa abre no topo; Voltar do Android recua uma etapa; "Buscar" ISBN fica desativado sem código. Validado em 1.291 testes; sem conferência em aparelho.
 

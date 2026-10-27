@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import type { Meeting } from "@/model/entities/meeting";
 import * as Linking from "expo-linking";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -7,6 +8,7 @@ import { useRequestDetailViewModel } from "@/viewmodel/useRequestDetailViewModel
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { formatPrice } from "@/view/formatPrice";
+import { describeMeetingCountdown } from "@/view/meetingFormat";
 import { COMMUNITY_MEMBER } from "@/view/requests/receivedRequests";
 import { MeetingCard } from "@/view/requests/meetingCard";
 import { BookCover } from "@/view/components/BookCover";
@@ -47,6 +49,8 @@ export function RequestDetail({
   const [mapErrors, setMapErrors] = useState<Record<string, string>>({});
   const [chatModalVisible, setChatModalVisible] = useState(false);
   const [ratingModalVisible, setRatingModalVisible] = useState(false);
+  const [meeting, setMeeting] = useState<Meeting | null>(null);
+  const handleMeetingChange = useCallback((value: Meeting | null) => setMeeting(value), []);
 
   const counterpartId = detail?.counterpartId ?? "";
   const [ratingState, ratingActions] = useNegotiationRatingViewModel(
@@ -54,6 +58,15 @@ export function RequestDetail({
     sessionUserId,
     counterpartId,
   );
+
+  const completed = Boolean(ratingState.userRating);
+  const meetingConfirmed = meeting?.status === "confirmed";
+  const meetingHappened = meetingConfirmed && describeMeetingCountdown(meeting!.scheduledAt).past;
+  const progress = [
+    { label: "Aceita", done: true },
+    { label: meetingConfirmed ? "Encontro combinado" : "Combinar encontro", done: meetingConfirmed || completed },
+    { label: "Concluída", done: completed },
+  ];
 
   async function handleOpenMap(point: { name: string; address: string }) {
     setMapErrors((previous) => {
@@ -99,15 +112,44 @@ export function RequestDetail({
             </View>
           ) : detail ? (
             <View style={styles.container}>
-              <Text style={styles.heroHeadline}>Seu próximo capítulo está perto.</Text>
+              <Text style={styles.heroHeadline}>
+                {completed ? "Livro entregue. Boa leitura!" : "Seu próximo capítulo está perto."}
+              </Text>
               <View style={styles.successBanner}>
                 <IconBadge icon="check" tone="action" />
                 <View style={styles.bannerTextContainer}>
-                  <Text style={styles.successTitle}>Negociação aceita!</Text>
+                  <Text style={styles.successTitle}>
+                    {completed ? "Negociação concluída" : "Negociação aceita!"}
+                  </Text>
                   <Text style={styles.successSubtitle}>
-                    O livro está reservado para esta negociação.
+                    {completed
+                      ? "Obrigado por avaliar. Isso ajuda a comunidade a confiar."
+                      : "O livro está reservado para esta negociação."}
                   </Text>
                 </View>
+              </View>
+
+              {/* Onde a negociação está: aceita → encontro combinado → concluída. */}
+              <View
+                accessible
+                accessibilityRole="progressbar"
+                accessibilityLabel={`Andamento: ${progress.filter((item) => item.done).length} de ${progress.length} etapas. ${progress.find((item) => !item.done)?.label ?? "Tudo concluído"}`}
+                style={styles.progressRow}
+              >
+                {progress.map((item, index) => (
+                  <View key={item.label} style={styles.progressItem}>
+                    <View style={[styles.progressDot, item.done && styles.progressDotDone]}>
+                      {item.done ? (
+                        <AppIcon name="check" size={14} color={colors.surface} />
+                      ) : (
+                        <Text style={styles.progressNumber}>{index + 1}</Text>
+                      )}
+                    </View>
+                    <Text style={[styles.progressLabel, item.done && styles.progressLabelDone]}>
+                      {item.label}
+                    </Text>
+                  </View>
+                ))}
               </View>
 
               <Pressable
@@ -167,6 +209,7 @@ export function RequestDetail({
                 counterpartName={detail.counterpartName ?? COMMUNITY_MEMBER}
                 focusKey={focusKey}
                 onScheduleMeeting={onScheduleMeeting}
+                onMeetingChange={handleMeetingChange}
               />
 
               {/* Card de Conclusão e Avaliação (Spec 063 / Figma 06.07, 06.08, 06.21) */}
@@ -199,7 +242,9 @@ export function RequestDetail({
                 ) : (
                   <View style={styles.pendingRatingContainer}>
                     <Text style={styles.bodyText}>
-                      Vocês já se encontraram e a entrega do livro foi realizada?
+                      {meetingHappened
+                        ? "Vocês já se encontraram e a entrega do livro foi realizada?"
+                        : "Depois do encontro e da entrega do livro, volte aqui para concluir e avaliar."}
                     </Text>
                     <Pressable
                       accessibilityRole="button"
@@ -330,6 +375,21 @@ export default function RequestDetailScreen({
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
+    progressRow: { flexDirection: "row", justifyContent: "space-between", gap: tokens.spacing[8] },
+    progressItem: { flex: 1, alignItems: "center", gap: tokens.spacing[4] },
+    progressDot: {
+      width: 24,
+      height: 24,
+      borderRadius: 12,
+      alignItems: "center",
+      justifyContent: "center",
+      borderWidth: 1,
+      borderColor: colors.m3.outline,
+    },
+    progressDotDone: { backgroundColor: colors.action, borderColor: colors.action },
+    progressNumber: { ...tokens.typography.labelMedium, color: colors.m3.onSurfaceVariant },
+    progressLabel: { ...tokens.typography.labelMedium, color: colors.m3.onSurfaceVariant, textAlign: "center" },
+    progressLabelDone: { color: colors.text },
   page: { flex: 1, backgroundColor: colors.background },
   scroll: { flexGrow: 1, paddingBottom: tokens.spacing[48] },
   content: {

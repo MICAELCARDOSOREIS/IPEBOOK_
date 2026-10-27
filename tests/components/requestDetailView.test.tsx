@@ -117,6 +117,22 @@ describe("tela de Detalhes da Negociação (ISO/IEC 25010 - Usabilidade e Acessi
     expect(onNavigateToBookDetail).toHaveBeenCalledWith("b1");
   });
 
+  it("mostra o andamento e só pede a conclusão depois do encontro (Spec 079)", async () => {
+    mockViewModel({ detail: fakeDetail, loading: false, error: null });
+
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<RequestDetail requestId="req-1" sessionUserId="vendedor-1" />);
+    });
+
+    expect(
+      screen.getByLabelText("Andamento: 1 de 3 etapas. Combinar encontro"),
+    ).toBeDefined();
+    expect(
+      screen.getByText("Depois do encontro e da entrega do livro, volte aqui para concluir e avaliar."),
+    ).toBeDefined();
+  });
+
   it("abre o app de mapas ao tocar em 'Como chegar'", async () => {
     openURL.mockReset().mockResolvedValue(undefined);
     mockViewModel({ detail: fakeDetail, loading: false, error: null });
