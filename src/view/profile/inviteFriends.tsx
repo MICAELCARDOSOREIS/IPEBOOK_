@@ -6,8 +6,6 @@ import { useTheme } from "@/view/theme/ThemeProvider";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { IconBadge } from "@/view/components/IconBadge";
 import { FilledButton } from "@/view/components/FilledButton";
-import { OutlinedButton } from "@/view/components/OutlinedButton";
-import { TextButton } from "@/view/components/TextButton";
 import { captureRef } from "react-native-view-shot";
 import { InviteCard } from "@/view/components/InviteCard";
 import { useInviteFriendsViewModel } from "@/viewmodel/useInviteFriendsViewModel";
@@ -46,7 +44,7 @@ export function InviteFriends({ onBack }: InviteFriendsProps) {
           <InviteCard ref={cardRef} url={state.inviteUrl} />
 
           <View style={styles.previewCard}>
-            <Text style={styles.previewLabel}>Mensagem de convite</Text>
+            <Text style={styles.previewLabel}>Texto que vai junto com a imagem</Text>
             <Text style={styles.previewText}>{state.inviteMessage}</Text>
           </View>
 
@@ -70,29 +68,13 @@ export function InviteFriends({ onBack }: InviteFriendsProps) {
             </View>
           ) : null}
 
+          {/* Um botão só: manda a imagem e o texto com o link juntos (Spec 092). */}
           <View style={styles.actions}>
             <FilledButton
-              label="Compartilhar imagem do convite"
-              accessibilityLabel="Compartilhar a imagem do convite"
+              label="Compartilhar convite"
+              accessibilityLabel="Compartilhar o convite com imagem e texto"
               loading={state.sharing}
               onPress={() => void actions.shareImage(captureInvite)}
-            />
-            <OutlinedButton
-              label="Enviar texto pelo WhatsApp"
-              accessibilityLabel="Enviar convite pelo WhatsApp"
-              disabled={state.sharing}
-              onPress={() => void actions.shareToWhatsApp()}
-            />
-            <TextButton
-              label="Outras opções de envio"
-              accessibilityLabel="Mais opções de compartilhamento"
-              disabled={state.sharing}
-              onPress={() => void actions.shareNative()}
-            />
-            <TextButton
-              label={state.linkCopied ? "Link copiado!" : "Copiar link de convite"}
-              accessibilityLabel="Copiar link do aplicativo"
-              onPress={() => void actions.copyLink()}
             />
           </View>
         </View>

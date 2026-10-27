@@ -229,7 +229,7 @@ describe("useShareListingViewModel — imagem do anúncio (Spec 092)", () => {
     const hook = await renderHook(fakeUseCases, shareFile);
     const capture = vi.fn().mockResolvedValue("file:///tmp/anuncio.png");
     await act(async () => { await hook.current[1].shareImage("b1", fakeListing, capture); });
-    expect(shareFile).toHaveBeenCalledWith("file:///tmp/anuncio.png", "Compartilhar anúncio");
+    expect(shareFile).toHaveBeenCalledWith("file:///tmp/anuncio.png", "Dom Casmurro de Machado de Assis — https://ipebook.app/livro/b1", "Compartilhar anúncio");
     expect(shareSpy).not.toHaveBeenCalled();
     expect(hook.current[0]).toEqual({ sharing: false, linkCopied: false, error: null });
     Platform.OS = originalOS;
