@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
+import { Chat } from "@/view/conversations/chat";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import {
   formatConversationTime,
@@ -22,6 +24,8 @@ export type ConversationsProps = {
   sessionUserId: string;
   /** Negociação aceita: abre a conversa em tela cheia (`06.02`, Spec 082). */
   onOpenChat?: (requestId: string) => void;
+  /** "Combinar" dentro do chat embutido da web larga. */
+  onOpenNegotiation?: (requestId: string) => void;
   /** Proposta recebida pendente: abre os pedidos recebidos para aceitar ou recusar. */
   onOpenReceivedRequests?: () => void;
   /** Pedido enviado pendente: volta ao detalhe do livro. */
@@ -34,11 +38,13 @@ export type ConversationsProps = {
 export function Conversations({
   sessionUserId,
   onOpenChat,
+  onOpenNegotiation,
   onOpenReceivedRequests,
   onOpenListing,
   onExplore,
 }: ConversationsProps) {
   const { colors } = useTheme();
+  const wideWeb = useIsWideWeb();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [state, actions] = useConversationsViewModel(sessionUserId);
   const { isOnline } = useNetworkStatus();
@@ -62,14 +68,20 @@ export function Conversations({
     setToDelete(null);
   };
 
+  // Web larga (Figma `06.01`): a conversa abre ao lado da lista, sem trocar de rota.
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
   const open = (item: ConversationItem) => {
-    if (item.kind === "accepted") onOpenChat?.(item.requestId);
+    if (item.kind === "accepted" && wideWeb) setSelectedId(item.requestId);
+    else if (item.kind === "accepted") onOpenChat?.(item.requestId);
     else if (item.kind === "pendingReceived") onOpenReceivedRequests?.();
     else onOpenListing?.(item.listing.id);
   };
 
   return (
     <SafeAreaView edges={["top", "left", "right"]} style={styles.page}>
+      <View style={wideWeb ? styles.widePanes : styles.flexOne}>
+      <View style={wideWeb ? (state.items.length > 0 ? styles.wideListPane : styles.wideColumn) : styles.flexOne}>
       <Text accessibilityRole="header" style={styles.title}>
         Conversas
       </Text>
@@ -82,7 +94,7 @@ export function Conversations({
           <OfflineState onRetry={() => void actions.reload()} />
         )
       ) : state.items.length === 0 ? (
-        <View style={styles.empty}>
+        <View style={[styles.empty, wideWeb && styles.emptyWide]}>
           <View style={styles.emptyIcon}>
             <AppIcon name="chat" size={32} color={colors.m3.onSecondaryContainer} />
           </View>
@@ -161,6 +173,17 @@ export function Conversations({
         onConfirm={() => void confirmDelete()}
         onCancel={() => setToDelete(null)}
       />
+      </View>
+      {wideWeb && selectedId ? (
+        <View style={styles.widePane} testID="conversation-pane">
+          <Chat requestId={selectedId} sessionUserId={sessionUserId} onOpenNegotiation={onOpenNegotiation} />
+        </View>
+      ) : wideWeb && state.items.length > 0 ? (
+        <View style={[styles.widePane, styles.widePaneEmpty]}>
+          <Text style={styles.emptyBody}>Escolha uma conversa para ver as mensagens.</Text>
+        </View>
+      ) : null}
+      </View>
     </SafeAreaView>
   );
 }
@@ -183,6 +206,14 @@ export default function ConversationsScreen({ onRequireSignIn, ...props }: Conve
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     page: { flex: 1, backgroundColor: colors.background },
+    flexOne: { flex: 1 },
+    // Web larga: coluna de 960 px alinhada ao cabeçalho; o estado vazio não estica o botão pela tela toda.
+    wideColumn: { flex: 1, width: "100%", maxWidth: 960, alignSelf: "center", paddingHorizontal: 24 },
+    widePanes: { flex: 1, flexDirection: "row", width: "100%", maxWidth: 1440, alignSelf: "center" },
+    wideListPane: { width: 360, borderRightWidth: 1, borderRightColor: colors.m3.outlineVariant, backgroundColor: colors.m3.surfaceContainerLow },
+    widePane: { flex: 1, minWidth: 0 },
+    widePaneEmpty: { alignItems: "center", justifyContent: "center" },
+    emptyWide: { width: "100%", maxWidth: 420, alignSelf: "center" },
     title: {
       fontFamily: fontFamily.brand,
       fontSize: 32,
