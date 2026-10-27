@@ -1,8 +1,11 @@
 import { useMemo, type ReactNode } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Image, StyleSheet, Text, View } from "react-native";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
+import estrelas from "@/view/assets/capas/estrelas.svg";
+import ondas from "@/view/assets/capas/ondas.svg";
+import ipe from "@/view/assets/capas/ipe.svg";
 
 /**
  * Casca das telas de acesso na web larga (Figma `01.02`–`01.05`): painel da marca à esquerda
@@ -27,9 +30,9 @@ export function AuthShell({ children }: { children: ReactNode }) {
           Venda, troque e doe livros com vizinhos de Piripiri. Cada livro ganha um novo leitor.
         </Text>
         <View style={styles.covers}>
-          <Cover color={colors.cover.brown} author="MACHADO DE ASSIS" title="Dom Casmurro" style={styles.coverLeft} />
-          <Cover color={colors.cover.green} author="LISPECTOR" title="A hora da estrela" style={styles.coverRight} />
-          <Cover color={colors.cover.blue} author="SAINT-EXUPÉRY" title="O Pequeno Príncipe" style={styles.coverCenter} />
+          <Cover color={colors.cover.brown} author="MACHADO DE ASSIS" title="Dom Casmurro" art={ondas} style={styles.coverLeft} />
+          <Cover color={colors.cover.green} author="LISPECTOR" title="A hora da estrela" art={ipe} style={styles.coverRight} />
+          <Cover color={colors.cover.blue} author="SAINT-EXUPÉRY" title="O Pequeno Príncipe" art={estrelas} style={styles.coverCenter} />
         </View>
       </View>
       <View style={styles.formPane}>{children}</View>
@@ -37,7 +40,7 @@ export function AuthShell({ children }: { children: ReactNode }) {
   );
 }
 
-function Cover({ color, author, title, style }: { color: string; author: string; title: string; style: object }) {
+function Cover({ color, author, title, art, style }: { color: string; author: string; title: string; art: number | string; style: object }) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   return (
@@ -45,6 +48,7 @@ function Cover({ color, author, title, style }: { color: string; author: string;
       <View style={styles.coverSpine} />
       <View style={styles.coverFrame} />
       <Text numberOfLines={1} style={styles.coverAuthor}>{author}</Text>
+      <Image source={typeof art === "string" ? { uri: art } : art} style={styles.coverArt} resizeMode="stretch" accessible={false} />
       <Text style={styles.coverTitle}>{title}</Text>
     </View>
   );
@@ -99,6 +103,7 @@ function createStyles(colors: ColorPalette) {
       borderColor: colors.cover.text,
       borderRadius: 4,
     },
+    coverArt: { position: "absolute", left: 0, top: 62, width: 170, height: 99 },
     coverAuthor: {
       position: "absolute",
       left: 31,
