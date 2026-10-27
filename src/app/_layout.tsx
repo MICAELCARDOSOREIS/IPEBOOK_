@@ -24,7 +24,7 @@ const ROOT_DESTINATIONS: Record<string, NavigationDestination> = {
 };
 
 /** Telas de acesso e boas-vindas têm o próprio topo (painel da marca), sem o cabeçalho do app. */
-const AUTH_ROUTES = new Set(["/bem-vindo", "/entrar", "/criar-conta", "/esqueci-senha", "/redefinir-senha", "/auth/callback"]);
+const AUTH_ROUTES = new Set(["/bem-vindo", "/sobre", "/entrar", "/criar-conta", "/esqueci-senha", "/redefinir-senha", "/auth/callback"]);
 
 const DESTINATION_ROUTES: Record<NavigationDestination, Href> = {
   home: "/",

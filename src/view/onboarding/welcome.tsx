@@ -9,19 +9,23 @@ import { accessibility, fontFamily, tokens, type ColorPalette } from "@/view/tok
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { AppIcon } from "@/view/components/AppIcon";
+import { AboutSections } from "@/view/onboarding/aboutSections";
 import illustration from "./ilustracao-classicos.png";
 
 export type WelcomeProps = {
   onStart: () => void;
   onSignIn: () => void;
   onExplore: () => void;
+  /** Links do rodapé da página na web larga. */
+  onHelp?: () => void;
+  onTerms?: () => void;
 };
 
 /**
  * Boas-vindas do primeiro acesso (Figma `01.01`, Android `324:38` / Web `146:457`).
  * Ver issue #98 e ADR 0022.
  */
-export default function Welcome({ onStart, onSignIn, onExplore }: WelcomeProps) {
+export default function Welcome({ onStart, onSignIn, onExplore, onHelp, onTerms }: WelcomeProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const wideWeb = useIsWideWeb();
@@ -84,7 +88,7 @@ export default function Welcome({ onStart, onSignIn, onExplore }: WelcomeProps) 
           ))}
         </View>
 
-        <Text style={styles.wideFooter}>IpêBook · Piripiri, Piauí</Text>
+        <AboutSections onStart={onStart} onSignIn={onSignIn} onHelp={onHelp} onTerms={onTerms} />
       </ScrollView>
     );
   }

@@ -269,4 +269,14 @@ describe("Configurações — tela dedicada (Spec 073, ADR 0036)", () => {
     expect(url.startsWith("mailto:ipebook738@gmail.com?subject=")).toBe(true);
     expect(decodeURIComponent(url)).toContain("Versão do aplicativo:");
   });
+
+  it("oferece 'Conhecer o IpêBook' que leva à página de apresentação (Spec 092)", async () => {
+    mockSession(false);
+    mockSettings();
+    const onNavigateToAbout = vi.fn();
+    const { screen } = await renderSettings({ onNavigateToAbout });
+    await act(async () => { fireEvent.press(screen.getByLabelText("Conhecer o IpêBook")); });
+    expect(onNavigateToAbout).toHaveBeenCalledTimes(1);
+  });
 });
+

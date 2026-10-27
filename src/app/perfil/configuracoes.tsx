@@ -9,6 +9,7 @@ export default function ConfiguracoesRoute() {
       onNavigateToPrivacy={() => pushOnce("/excluir-conta")}
       onNavigateToBlockedUsers={() => pushOnce("/perfil/bloqueados")}
       onNavigateToHelp={() => pushOnce("/ajuda")}
+      onNavigateToAbout={() => pushOnce("/sobre" as never)}
       onNavigateToEditProfile={() => pushOnce("/perfil/editar")}
       onNavigateToSecurity={() => pushOnce("/perfil/seguranca")}
       onNavigateToNotifications={() => pushOnce("/notificacoes")}

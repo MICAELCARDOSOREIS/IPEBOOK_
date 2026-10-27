@@ -25,6 +25,8 @@ export type SettingsProps = {
   onNavigateToHelp?: () => void;
   onNavigateToPrivacy?: () => void;
   onNavigateToBlockedUsers?: () => void;
+  /** Abre a página que apresenta o IpêBook. */
+  onNavigateToAbout?: () => void;
   onNavigateToEditProfile?: () => void;
   onNavigateToSecurity?: () => void;
   onNavigateToNotifications?: () => void;
@@ -52,6 +54,7 @@ export function Settings({
   onNavigateToHelp,
   onNavigateToPrivacy,
   onNavigateToBlockedUsers,
+  onNavigateToAbout,
   onNavigateToEditProfile,
   onNavigateToSecurity,
   onNavigateToNotifications,
@@ -119,6 +122,7 @@ export function Settings({
     : [];
 
   const aboutLinks: LinkItem[] = [
+    { key: "about", icon: "info" as const, label: "Conhecer o IpêBook", description: "Como funciona, segurança e a comunidade de Piripiri", onPress: onNavigateToAbout },
     { key: "help", icon: "info" as const, label: "Ajuda e suporte", onPress: onNavigateToHelp },
     {
       key: "contact",
