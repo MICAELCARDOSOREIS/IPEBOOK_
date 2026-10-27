@@ -1,4 +1,4 @@
-import { backOnce, pushOnce } from "@/view/pushOnce";
+import { backOnce, pushOnce, replaceOnce } from "@/view/pushOnce";
 import { Settings } from "@/view/profile/settings";
 
 export default function ConfiguracoesRoute() {
@@ -9,6 +9,10 @@ export default function ConfiguracoesRoute() {
       onNavigateToPrivacy={() => pushOnce("/excluir-conta")}
       onNavigateToBlockedUsers={() => pushOnce("/perfil/bloqueados")}
       onNavigateToHelp={() => pushOnce("/ajuda")}
+      onNavigateToEditProfile={() => pushOnce("/perfil/editar")}
+      onNavigateToSecurity={() => pushOnce("/perfil/seguranca")}
+      onNavigateToNotifications={() => pushOnce("/notificacoes")}
+      onSignedOut={() => replaceOnce("/entrar")}
     />
   );
 }

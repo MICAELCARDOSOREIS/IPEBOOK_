@@ -72,6 +72,7 @@ const symbols = {
   conservation: { ios: "book.closed", android: "menu_book", web: "menu_book" },
   category: { ios: "tag", android: "sell", web: "sell" },
   more: { ios: "ellipsis", android: "more_horiz", web: "more_horiz" },
+  visibilityOff: { ios: "eye.slash", android: "visibility_off", web: "visibility_off" },
   eye: { ios: "eye", android: "visibility", web: "visibility" },
   wifiOff: { ios: "wifi.slash", android: "wifi_off", web: "wifi_off" },
 } as const;

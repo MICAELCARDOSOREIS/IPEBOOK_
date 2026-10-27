@@ -1,13 +1,21 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Constants from "expo-constants";
+import * as Linking from "expo-linking";
+import { supportMailtoUrl, SUPPORT_EMAIL } from "@/view/supportContact";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { ThemePreferenceSelector } from "@/view/components/ThemePreferenceSelector";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { AppIcon } from "@/view/components/AppIcon";
+import { Avatar } from "@/view/components/Avatar";
+import { Dialog } from "@/view/components/Dialog";
+import { NeighborhoodSelectorModal } from "@/view/components/NeighborhoodSelectorModal";
+import { TextButton } from "@/view/components/TextButton";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useSettingsViewModel } from "@/viewmodel/useSettingsViewModel";
+import { useActiveNeighborhood } from "@/viewmodel/useActiveNeighborhood";
+import { usePublicProfileViewModel } from "@/viewmodel/usePublicProfileViewModel";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 
@@ -17,11 +25,16 @@ export type SettingsProps = {
   onNavigateToHelp?: () => void;
   onNavigateToPrivacy?: () => void;
   onNavigateToBlockedUsers?: () => void;
+  onNavigateToEditProfile?: () => void;
+  onNavigateToSecurity?: () => void;
+  onNavigateToNotifications?: () => void;
+  /** Depois de sair da conta (Spec 091). */
+  onSignedOut?: () => void;
 };
 
 type LinkItem = {
   key: string;
-  icon: "document" | "info" | "lock" | "block" | "visibility";
+  icon: "document" | "info" | "lock" | "block" | "visibility" | "person" | "bell" | "place" | "mail";
   label: string;
   description?: string;
   onPress?: () => void;
@@ -39,17 +52,55 @@ export function Settings({
   onNavigateToHelp,
   onNavigateToPrivacy,
   onNavigateToBlockedUsers,
+  onNavigateToEditProfile,
+  onNavigateToSecurity,
+  onNavigateToNotifications,
+  onSignedOut,
 }: SettingsProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const [authState] = useAuthViewModel();
+  const [authState, authActions] = useAuthViewModel();
   const hasAccount = !!authState.user?.id;
+  const sessionUserId = authState.user?.id ?? null;
+  const [profileState] = usePublicProfileViewModel(sessionUserId ?? "");
+  const neighborhood = useActiveNeighborhood("all");
+  const [confirmingSignOut, setConfirmingSignOut] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
+  const defaultNeighborhoodLabel =
+    neighborhood.activeNeighborhood === "all" || neighborhood.activeNeighborhood === "Todos os bairros (Piripiri)"
+      ? "Todos os bairros"
+      : neighborhood.activeNeighborhood;
+
+  async function handleSignOut() {
+    setSigningOut(true);
+    try {
+      await authActions.signOut();
+      setConfirmingSignOut(false);
+      onSignedOut?.();
+    } finally {
+      setSigningOut(false);
+    }
+  }
   const [state, actions] = useSettingsViewModel();
   const version = Constants.expoConfig?.version ?? null;
 
   // Gestão da conta veio de Meu perfil (ADR 0060) e só aparece com sessão
   const accountLinks: LinkItem[] = hasAccount
     ? [
+        {
+          key: "security",
+          icon: "lock" as const,
+          label: "Segurança e verificação",
+          description: "Senha, e-mail e confirmação da conta",
+          onPress: onNavigateToSecurity,
+        },
+        {
+          key: "notifications",
+          icon: "bell" as const,
+          label: "Central de notificações",
+          description: "Propostas, mensagens e avisos de novos livros",
+          onPress: onNavigateToNotifications,
+        },
         {
           key: "privacy",
           icon: "visibility" as const,
@@ -69,6 +120,13 @@ export function Settings({
 
   const aboutLinks: LinkItem[] = [
     { key: "help", icon: "info" as const, label: "Ajuda e suporte", onPress: onNavigateToHelp },
+    {
+      key: "contact",
+      icon: "mail" as const,
+      label: "Falar com a equipe",
+      description: SUPPORT_EMAIL,
+      onPress: () => void Linking.openURL(supportMailtoUrl(version)),
+    },
     { key: "terms", icon: "document" as const, label: "Termos e privacidade", onPress: onNavigateToTerms },
   ].filter((link) => link.onPress);
 
@@ -99,6 +157,31 @@ export function Settings({
       <TopAppBar title="Configurações" onBack={onBack} />
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.content}>
+          {/* Cartão da conta (Spec 091): quem está logada e atalho para editar o perfil */}
+          {hasAccount ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Editar perfil"
+              onPress={onNavigateToEditProfile}
+              style={styles.accountCard}
+            >
+              <Avatar
+                name={profileState.profile?.name ?? authState.user?.email ?? "Você"}
+                photoUrl={profileState.profile?.photoUrl ?? undefined}
+                size={56}
+              />
+              <View style={styles.linkText}>
+                <Text numberOfLines={1} style={styles.accountName}>
+                  {profileState.profile?.name ?? "Minha conta"}
+                </Text>
+                <Text numberOfLines={1} style={styles.linkDescription}>
+                  {authState.user?.email}
+                </Text>
+              </View>
+              <Text style={styles.accountAction}>Editar</Text>
+            </Pressable>
+          ) : null}
+
           {/* Conta e dados (ADR 0060): só com sessão, e primeiro por ser o que mais importa */}
           {accountLinks.length > 0 ? (
             <View style={styles.section}>
@@ -108,6 +191,22 @@ export function Settings({
               <View style={styles.listCard}>{accountLinks.map(renderLink)}</View>
             </View>
           ) : null}
+
+          {/* Preferências de uso (Spec 091): o bairro com que a Home e a Explorar abrem */}
+          <View style={styles.section}>
+            <Text accessibilityRole="header" style={styles.sectionHeader}>
+              Preferências
+            </Text>
+            <View style={styles.listCard}>
+              {renderLink({
+                key: "neighborhood",
+                icon: "place",
+                label: "Bairro padrão",
+                description: `${defaultNeighborhoodLabel} · usado para mostrar livros perto de você`,
+                onPress: neighborhood.openSelector,
+              }, 0)}
+            </View>
+          </View>
 
           {/* Aparência (Spec 073 FR-003, ADR 0036) */}
           <View style={styles.section}>
@@ -139,6 +238,23 @@ export function Settings({
                 loadingLabel="Limpando dados salvos"
                 onPress={() => void actions.clearBooksCache()}
               />
+              <OutlinedButton
+                label="Limpar histórico de buscas"
+                accessibilityLabel="Limpar histórico de buscas deste aparelho"
+                loading={state.clearingHistory}
+                loadingLabel="Limpando histórico de buscas"
+                onPress={() => void actions.clearSearchHistory(sessionUserId)}
+              />
+              {state.historyCleared ? (
+                <Text accessibilityLiveRegion="polite" style={styles.feedbackSuccess}>
+                  Histórico de buscas limpo.
+                </Text>
+              ) : null}
+              {state.historyError ? (
+                <Text accessibilityLiveRegion="polite" style={styles.feedbackError}>
+                  {state.historyError}
+                </Text>
+              ) : null}
               {state.cacheCleared ? (
                 <Text accessibilityLiveRegion="polite" style={styles.feedbackSuccess}>
                   Dados salvos limpos deste dispositivo.
@@ -171,12 +287,36 @@ export function Settings({
             </View>
           </View>
 
+          {hasAccount ? (
+            <View style={styles.signOutRow}>
+              <TextButton label="Sair da conta" tone="danger" onPress={() => setConfirmingSignOut(true)} />
+            </View>
+          ) : null}
+
           <Text style={styles.footer}>
             Leitura, anúncios e configurações funcionam sem internet. Só publicar, favoritar e
             negociar pedem conexão.
           </Text>
         </View>
       </ScrollView>
+
+      <NeighborhoodSelectorModal
+        visible={neighborhood.isSelectorOpen}
+        currentNeighborhood={neighborhood.activeNeighborhood}
+        onSelect={(name) => void neighborhood.selectNeighborhood(name)}
+        onClose={neighborhood.closeSelector}
+      />
+      <Dialog
+        visible={confirmingSignOut}
+        title="Sair da conta?"
+        message="Você volta a ver só o catálogo. Seus anúncios e conversas continuam salvos."
+        confirmLabel="Sair"
+        cancelLabel="Ficar"
+        destructive
+        loading={signingOut}
+        onConfirm={() => void handleSignOut()}
+        onCancel={() => setConfirmingSignOut(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -197,6 +337,17 @@ function createStyles(colors: ColorPalette) {
       overflow: "hidden",
       backgroundColor: colors.m3.surfaceContainerLow,
     },
+    accountCard: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[12],
+      padding: tokens.spacing[16],
+      borderRadius: tokens.radius.large,
+      backgroundColor: colors.m3.secondaryContainer,
+    },
+    accountName: { ...tokens.typography.titleMedium, color: colors.m3.onSecondaryContainer },
+    accountAction: { ...tokens.typography.labelLarge, color: colors.m3.primary },
+    signOutRow: { alignItems: "center" },
     iconCircle: {
       width: 40,
       height: 40,

@@ -62,3 +62,34 @@ describe("useSettingsViewModel — Configurações (Spec 073)", () => {
     expect(hook.current[0].cacheError).not.toContain("storage indisponível");
   });
 });
+
+describe("useSettingsViewModel — histórico de buscas (Spec 091)", () => {
+  async function renderWithHistory(clearHistory: () => Promise<void>) {
+    let result!: ReturnType<typeof useSettingsViewModel>;
+    function Probe() {
+      result = useSettingsViewModel(
+        { clearBooksCache: vi.fn() },
+        { listTerms: vi.fn(), registerSearch: vi.fn(), clearHistory } as never,
+      );
+      return null;
+    }
+    await act(async () => { mounted.push(create(createElement(Probe))); });
+    return { get current() { return result; } };
+  }
+
+  it("apaga o histórico e confirma", async () => {
+    const clearHistory = vi.fn().mockResolvedValue(undefined);
+    const hook = await renderWithHistory(clearHistory);
+    await act(async () => { await hook.current[1].clearSearchHistory("ana"); });
+    expect(clearHistory).toHaveBeenCalledWith("ana");
+    expect(hook.current[0].historyCleared).toBe(true);
+    expect(hook.current[0].historyError).toBeNull();
+  });
+
+  it("mostra erro amigável quando apagar falha", async () => {
+    const hook = await renderWithHistory(vi.fn().mockRejectedValue(new Error("x")));
+    await act(async () => { await hook.current[1].clearSearchHistory(null); });
+    expect(hook.current[0].historyCleared).toBe(false);
+    expect(hook.current[0].historyError).toBe("Não foi possível limpar o histórico de buscas. Tente novamente.");
+  });
+});

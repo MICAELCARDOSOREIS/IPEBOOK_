@@ -317,6 +317,8 @@ import type { IImagePickerService } from "@/model/services/iImagePickerService";
 import { ExpoImagePickerService } from "@/infra/services/expoImagePickerService";
 import { MemoryImagePickerService } from "@/infra/services/memoryImagePickerService";
 import type { IProfilePhotoUseCases } from "@/usecase/iProfilePhotoUseCases";
+import type { IListingPhotoUseCases } from "@/usecase/iListingPhotoUseCases";
+import { ListingPhotoUseCases } from "@/usecase/listingPhotoUseCases";
 import { ProfilePhotoUseCases } from "@/usecase/profilePhotoUseCases";
 
 /** Foto de perfil pela câmera ou galeria (ADR 0065). */
@@ -324,3 +326,4 @@ export const imagePickerService: IImagePickerService =
   process.env.NODE_ENV !== "test" ? new ExpoImagePickerService() : new MemoryImagePickerService();
 
 export const profilePhotoUseCases: IProfilePhotoUseCases = new ProfilePhotoUseCases(dataSources.photos);
+export const listingPhotoUseCases: IListingPhotoUseCases = new ListingPhotoUseCases(dataSources.photos);

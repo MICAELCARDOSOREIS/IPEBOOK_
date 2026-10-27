@@ -11,4 +11,9 @@ export interface IImagePickerService {
    * `ValidationError` com mensagem amigável quando a permissão é negada (ADR 0065).
    */
   pickSquareImage(source: ImageSource): Promise<PickedImage | null>;
+
+  /**
+   * Como `pickSquareImage`, com a proporção do recorte escolhida; a capa de livro usa 5:8 (Spec 092).
+   */
+  pickImage(source: ImageSource, aspect: readonly [number, number]): Promise<PickedImage | null>;
 }

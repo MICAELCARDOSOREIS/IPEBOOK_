@@ -1,8 +1,9 @@
 import { useId, useMemo, useState } from "react";
-import type { KeyboardTypeOptions } from "react-native";
-import { StyleSheet, Text, TextInput, View } from "react-native";
+import type { KeyboardTypeOptions, ReturnKeyTypeOptions, TextInputProps } from "react-native";
+import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
+import { AppIcon } from "@/view/components/AppIcon";
 
 export type TextFieldProps = {
   label: string;
@@ -24,6 +25,13 @@ export type TextFieldProps = {
   labelBackgroundColor?: string;
   /** Alinhamento do texto de suporte. `right` é o contador de `04.05` (`39/280` à direita). */
   helperTextAlign?: "left" | "right";
+  /** Sugestão para gerenciadores de senha e preenchimento automático (e-mail, nome, senha atual ou nova). */
+  autoComplete?: TextInputProps["autoComplete"];
+  textContentType?: TextInputProps["textContentType"];
+  /** "next" nos campos intermediários e "done" no último: o teclado mostra a ação certa. */
+  returnKeyType?: ReturnKeyTypeOptions;
+  /** Toque na ação do teclado; no último campo costuma enviar o formulário. */
+  onSubmitEditing?: () => void;
 };
 
 /**
@@ -48,8 +56,14 @@ export function TextField({
   multiline = false,
   labelBackgroundColor,
   helperTextAlign = "left",
+  autoComplete,
+  textContentType,
+  returnKeyType,
+  onSubmitEditing,
 }: TextFieldProps) {
   const [focused, setFocused] = useState(false);
+  // Campo de senha ganha o olho de mostrar/ocultar (some a dúvida de ter digitado errado no celular).
+  const [revealed, setRevealed] = useState(false);
   const hasError = Boolean(error);
   const errorId = useId();
   const { colors } = useTheme();
@@ -75,7 +89,12 @@ export function TextField({
           aria-describedby={hasError ? errorId : undefined}
           value={value}
           onChangeText={onChangeText}
-          secureTextEntry={secureTextEntry}
+          secureTextEntry={secureTextEntry && !revealed}
+          autoComplete={autoComplete}
+          textContentType={textContentType}
+          returnKeyType={returnKeyType}
+          onSubmitEditing={onSubmitEditing}
+          autoCorrect={secureTextEntry ? false : undefined}
           autoCapitalize={autoCapitalize}
           keyboardType={keyboardType}
           editable={editable}
@@ -87,8 +106,20 @@ export function TextField({
           textAlignVertical={multiline ? "top" : "center"}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
-          style={[styles.input, multiline && styles.inputMultiline]}
+          style={[styles.input, multiline && styles.inputMultiline, secureTextEntry && styles.inputWithToggle]}
         />
+        {secureTextEntry ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={revealed ? "Ocultar senha" : "Mostrar senha"}
+            accessibilityState={{ selected: revealed }}
+            hitSlop={8}
+            onPress={() => setRevealed((current) => !current)}
+            style={styles.toggle}
+          >
+            <AppIcon name={revealed ? "visibilityOff" : "visibility"} size={22} color={colors.m3.onSurfaceVariant} />
+          </Pressable>
+        ) : null}
         {floating ? (
           <View
             pointerEvents="none"
@@ -146,6 +177,16 @@ function createStyles(colors: ColorPalette) {
     inputMultiline: {
       minHeight: tokens.spacing[64] + tokens.spacing[24],
       paddingTop: tokens.spacing[16],
+    },
+    inputWithToggle: { paddingRight: tokens.spacing[48] },
+    toggle: {
+      position: "absolute",
+      right: tokens.spacing[4],
+      top: 0,
+      bottom: 0,
+      width: tokens.spacing[48],
+      alignItems: "center",
+      justifyContent: "center",
     },
     notch: {
       position: "absolute",

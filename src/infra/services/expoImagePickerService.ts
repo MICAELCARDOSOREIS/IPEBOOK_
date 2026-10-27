@@ -14,7 +14,11 @@ const MAX_SIDE = 1080;
 
 /** Seletor de imagens do Expo (ADR 0065): recorte 1:1, redução para 1080 px e compressão antes do envio. */
 export class ExpoImagePickerService implements IImagePickerService {
-  async pickSquareImage(source: ImageSource): Promise<PickedImage | null> {
+  pickSquareImage(source: ImageSource): Promise<PickedImage | null> {
+    return this.pickImage(source, [1, 1]);
+  }
+
+  async pickImage(source: ImageSource, aspect: readonly [number, number]): Promise<PickedImage | null> {
     const permission =
       source === "camera"
         ? await ImagePicker.requestCameraPermissionsAsync()
@@ -24,7 +28,7 @@ export class ExpoImagePickerService implements IImagePickerService {
     const options: ImagePicker.ImagePickerOptions = {
       mediaTypes: ["images"],
       allowsEditing: true,
-      aspect: [1, 1],
+      aspect: [aspect[0], aspect[1]],
       // A compressão acontece uma só vez, depois de reduzir
       quality: 1,
     };

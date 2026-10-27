@@ -28,7 +28,16 @@ export function SortSheet({ visible, selected, onSelect, onClose }: SortSheetPro
   const insets = useSafeAreaInsets();
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} accessibilityViewIsModal aria-modal>
+    <Modal
+      statusBarTranslucent
+      navigationBarTranslucent
+      visible={visible}
+      transparent
+      animationType="slide"
+      onRequestClose={onClose}
+      accessibilityViewIsModal
+      aria-modal
+    >
       <View style={styles.scrim}>
         <Pressable accessibilityRole="none" accessibilityLabel="Fechar ordenação" style={StyleSheet.absoluteFill} onPress={onClose} />
         <View style={[styles.sheet, { paddingBottom: tokens.spacing[16] + insets.bottom }]}>

@@ -40,6 +40,8 @@ export function NegotiationRatingModal({
 
   return (
     <Modal
+      statusBarTranslucent
+      navigationBarTranslucent
       visible={visible}
       animationType="fade"
       transparent
