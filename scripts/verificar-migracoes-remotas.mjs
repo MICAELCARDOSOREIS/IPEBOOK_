@@ -605,6 +605,13 @@ export const MAPEAMENTO_MIGRACOES = {
     validar: (ctx) => ctx.tabelas.v2_books?.existe,
     detalhe: 'Coluna draft_step, CHECKs flexibilizados e políticas RLS de rascunho em v2_books (Spec 017)',
   },
+  '202610260003_tempo_real_conversas_notificacoes.sql': {
+    titulo: 'Conversas e notificações em tempo real',
+    // A publicação não é visível pela API REST; confere as tabelas publicadas
+    validar: (ctx) =>
+      Boolean(ctx.tabelas.v2_negotiation_messages?.existe) && Boolean(ctx.tabelas.v2_notifications?.existe),
+    detalhe: 'Tabelas de mensagens, notificações e pedidos na publicação supabase_realtime (Spec 086)',
+  },
 };
 
 /**

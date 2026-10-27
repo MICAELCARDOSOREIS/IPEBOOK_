@@ -49,7 +49,7 @@ export function Conversations({
       <Text accessibilityRole="header" style={styles.title}>
         Conversas
       </Text>
-      {state.loading ? (
+      {state.loading && state.items.length === 0 ? (
         <LoadingState label="Carregando conversas" />
       ) : state.error ? (
         isOnline ? (

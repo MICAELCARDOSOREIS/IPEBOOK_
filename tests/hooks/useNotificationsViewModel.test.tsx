@@ -169,4 +169,31 @@ describe("useNotificationsViewModel", () => {
     const [state] = hook.current;
     expect(state.error).toBe("Não foi possível marcar todas as notificações como lidas.");
   });
+
+  it("recarrega sozinha quando chega notificação em tempo real e cancela ao desmontar (Spec 086)", async () => {
+    let push: (() => void) | undefined;
+    const unsubscribe = vi.fn();
+    const listNotifications = vi
+      .fn()
+      .mockResolvedValueOnce([mockNotifications[1]])
+      .mockResolvedValueOnce(mockNotifications);
+    const subscribe = vi.fn((_userId: string, onChange: () => void) => {
+      push = onChange;
+      return unsubscribe;
+    });
+    const hook = await renderHook("user-1", stubNotifications({ listNotifications, subscribe }));
+    expect(subscribe).toHaveBeenCalledWith("user-1", expect.any(Function));
+    expect(hook.current[0].unreadCount).toBe(0);
+
+    await act(async () => {
+      push?.();
+    });
+    expect(hook.current[0].unreadCount).toBe(1);
+    expect(hook.current[0].loading).toBe(false);
+
+    await act(async () => {
+      mounted.pop()?.unmount();
+    });
+    expect(unsubscribe).toHaveBeenCalledTimes(1);
+  });
 });

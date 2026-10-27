@@ -307,8 +307,8 @@ describe('Diagnóstico de Saúde e Migrações do Supabase Remoto (Spec 049 / AD
       };
 
       const resultado = reconciliarMigracoesLocais('supabase/migrations', contextoDiagnostico);
-      expect(resultado.total).toBe(23);
-      expect(resultado.aplicadas).toBe(23);
+      expect(resultado.total).toBe(24);
+      expect(resultado.aplicadas).toBe(24);
       expect(resultado.pendentes).toBe(0);
       expect(resultado.migracoes.every((m: any) => m.status === 'APLICADA')).toBe(true);
     });
@@ -340,9 +340,9 @@ describe('Diagnóstico de Saúde e Migrações do Supabase Remoto (Spec 049 / AD
       };
 
       const resultado = reconciliarMigracoesLocais('supabase/migrations', contextoParcial);
-      expect(resultado.total).toBe(23);
+      expect(resultado.total).toBe(24);
       expect(resultado.aplicadas).toBe(15);
-      expect(resultado.pendentes).toBe(8);
+      expect(resultado.pendentes).toBe(9);
 
       const pendentes = resultado.migracoes.filter((m: any) => m.status === 'PENDENTE');
       const arquivosPendentes = pendentes.map((m: any) => m.arquivo);
@@ -400,7 +400,7 @@ describe('Diagnóstico de Saúde e Migrações do Supabase Remoto (Spec 049 / AD
       const parsed = JSON.parse(relatorioJson);
       expect(parsed.ok).toBe(true);
       expect(parsed.url).toBe('https://projeto-vitest.supabase.co');
-      expect(parsed.migracoes.total).toBe(23);
+      expect(parsed.migracoes.total).toBe(24);
     });
 
     it('formata adequadamente falhas e pendências detectadas', async () => {

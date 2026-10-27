@@ -29,4 +29,8 @@ export class NotificationUseCases implements INotificationUseCases {
     }
     await this.dataSource.markAllAsRead(sessionUserId);
   }
+
+  subscribe(sessionUserId: string, onChange: () => void): () => void {
+    return this.dataSource.subscribeToChanges?.(sessionUserId, onChange) ?? (() => {});
+  }
 }

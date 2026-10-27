@@ -5,7 +5,10 @@ import type { PublicProfile } from "@/model/entities/publicProfile";
 import { PublicProfile as PublicProfileView } from "@/view/listings/publicProfile";
 
 vi.mock("@/viewmodel/usePublicProfileViewModel", () => ({ usePublicProfileViewModel: vi.fn() }));
+vi.mock("@/viewmodel/useAuthViewModel", () => ({ useAuthViewModel: vi.fn() }));
 
+import * as Linking from "expo-linking";
+import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { usePublicProfileViewModel } from "@/viewmodel/usePublicProfileViewModel";
 
 const profile = (over: Partial<PublicProfile> = {}): PublicProfile => ({
@@ -20,8 +23,12 @@ const profile = (over: Partial<PublicProfile> = {}): PublicProfile => ({
 
 function setup(
   profileValue: PublicProfile | null,
-  options: { loading?: boolean; error?: string | null } = {},
+  options: { loading?: boolean; error?: string | null; viewerId?: string } = {},
 ) {
+  vi.mocked(useAuthViewModel).mockReturnValue([
+    { user: options.viewerId ? { id: options.viewerId, email: "x@exemplo.com" } : null, loading: false, error: null },
+    {} as ReturnType<typeof useAuthViewModel>[1],
+  ]);
   const reload = vi.fn().mockResolvedValue(undefined);
   vi.mocked(usePublicProfileViewModel).mockReturnValue([
     { profile: profileValue, loading: options.loading ?? false, error: options.error ?? null },
@@ -102,6 +109,22 @@ describe("PublicProfile (spec 018 / issue #73)", () => {
     setup(profile({ socialHandle: "@anapaula" }));
     const screen = await renderView();
     expect(screen.getByText("@anapaula")).toBeDefined();
+  });
+
+  it("abre o Instagram ao tocar no @ (sem @ duplicado na URL)", async () => {
+    const openURL = vi.spyOn(Linking, "openURL").mockResolvedValue(true);
+    setup(profile({ socialHandle: "@anapaula" }));
+    const screen = await renderView();
+    fireEvent.press(screen.getByLabelText("Abrir Instagram @anapaula"));
+    expect(openURL).toHaveBeenCalledWith("https://instagram.com/anapaula");
+    openURL.mockRestore();
+  });
+
+  it("esconde conversar e denunciar no próprio perfil", async () => {
+    setup(profile({ userId: "ana", name: "Ana Paula" }), { viewerId: "ana" });
+    const screen = await renderView();
+    expect(screen.queryByLabelText("Conversar com Ana Paula")).toBeNull();
+    expect(screen.queryByLabelText("Denunciar ou bloquear")).toBeNull();
   });
 
   it("não mostra rede social quando ausente", async () => {
