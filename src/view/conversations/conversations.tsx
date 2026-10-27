@@ -12,6 +12,7 @@ import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { AppIcon } from "@/view/components/AppIcon";
 import { Avatar } from "@/view/components/Avatar";
+import { Dialog } from "@/view/components/Dialog";
 import { ErrorState } from "@/view/components/ErrorState";
 import { FilledButton } from "@/view/components/FilledButton";
 import { LoadingState } from "@/view/components/LoadingState";
@@ -47,6 +48,19 @@ export function Conversations({
     const timer = setInterval(() => setNow(new Date()), 60_000);
     return () => clearInterval(timer);
   }, []);
+
+  // Apagar some só para quem apagou (Spec 090); só conversas aceitas, pedidos pendentes têm seus próprios botões.
+  const [toDelete, setToDelete] = useState<ConversationItem | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteFailed, setDeleteFailed] = useState(false);
+  const confirmDelete = async () => {
+    if (!toDelete) return;
+    setDeleting(true);
+    const ok = await actions.deleteConversation(toDelete.requestId);
+    setDeleting(false);
+    setDeleteFailed(!ok);
+    setToDelete(null);
+  };
 
   const open = (item: ConversationItem) => {
     if (item.kind === "accepted") onOpenChat?.(item.requestId);
@@ -91,7 +105,9 @@ export function Conversations({
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={`Conversa com ${item.otherName} sobre ${item.listing.title}. ${item.preview}`}
+              accessibilityHint={item.kind === "accepted" ? "Mantenha pressionado para apagar a conversa" : undefined}
               onPress={() => open(item)}
+              onLongPress={item.kind === "accepted" ? () => setToDelete(item) : undefined}
               style={({ pressed }) => [styles.row, pressed ? styles.rowPressed : null]}
             >
               <Avatar name={item.otherName} photoUrl={item.otherPhotoUrl ?? undefined} size={48} />
@@ -122,10 +138,29 @@ export function Conversations({
             </Pressable>
           )}
           ListFooterComponent={
-            <Text style={styles.footer}>Combine sempre pelo chat do IpêBook. Não compartilhe senhas ou códigos.</Text>
+            <View>
+              {deleteFailed ? (
+                <Text accessibilityRole="alert" style={styles.footerError}>
+                  Não foi possível apagar a conversa. Tente novamente.
+                </Text>
+              ) : null}
+              <Text style={styles.footer}>Combine sempre pelo chat do IpêBook. Não compartilhe senhas ou códigos.</Text>
+              <Text style={styles.footer}>Para apagar uma conversa, mantenha o dedo sobre ela.</Text>
+            </View>
           }
         />
       )}
+      <Dialog
+        visible={toDelete !== null}
+        title="Apagar conversa?"
+        message={`A conversa com ${toDelete?.otherName ?? ""} some só para você. Se ela mandar outra mensagem, a conversa volta.`}
+        confirmLabel="Apagar"
+        cancelLabel="Manter"
+        destructive
+        loading={deleting}
+        onConfirm={() => void confirmDelete()}
+        onCancel={() => setToDelete(null)}
+      />
     </SafeAreaView>
   );
 }
@@ -190,6 +225,7 @@ function createStyles(colors: ColorPalette) {
       paddingHorizontal: tokens.spacing[20],
       paddingTop: tokens.spacing[16],
     },
+    footerError: { ...tokens.typography.bodyMedium, color: colors.error, paddingHorizontal: tokens.spacing[20], paddingTop: tokens.spacing[16] },
     empty: { alignItems: "center", gap: tokens.spacing[8], paddingTop: tokens.spacing[48], paddingHorizontal: tokens.spacing[24] },
     emptyIcon: {
       width: 72,

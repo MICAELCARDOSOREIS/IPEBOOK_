@@ -65,6 +65,26 @@ export class SupabaseMessageDataSource implements IMessageDataSource {
     return mapMessage(data as MessageRow);
   }
 
+  async hideConversation(requestId: string, userId: string): Promise<void> {
+    const { error } = await this.client
+      .from("v2_hidden_conversations")
+      .upsert({ user_id: userId, request_id: requestId, hidden_at: new Date().toISOString() });
+    if (error) {
+      throw new DataSourceError("Não foi possível apagar a conversa. Tente novamente.");
+    }
+  }
+
+  async listHiddenConversations(userId: string): Promise<Record<string, string>> {
+    const { data, error } = await this.client
+      .from("v2_hidden_conversations")
+      .select("request_id,hidden_at")
+      .eq("user_id", userId);
+    if (error) {
+      throw new DataSourceError("Não foi possível carregar as conversas.");
+    }
+    return Object.fromEntries((data ?? []).map((row) => [row.request_id as string, row.hidden_at as string]));
+  }
+
   subscribeToMessages(
     requestId: string,
     onMessage: MessageSubscriptionCallback

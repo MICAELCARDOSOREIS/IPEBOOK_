@@ -16,10 +16,12 @@ const listing = (id: string, title: string): Book => ({
   id, title, author: "A", ownerId: "x", modality: "trade", status: "available",
 });
 
+const deleteConversation = vi.fn().mockResolvedValue(true);
+
 function setup(state: Partial<ConversationsState>) {
   vi.mocked(useConversationsViewModel).mockReturnValue([
     { items: [], loading: false, error: null, ...state },
-    { reload: vi.fn() },
+    { reload: vi.fn(), deleteConversation },
   ]);
 }
 
@@ -101,5 +103,22 @@ describe("Conversations (Spec 076)", () => {
     expect(screen.getByText("9h")).toBeDefined();
     await act(async () => { vi.setSystemTime(new Date("2026-10-26T16:10:00")); vi.advanceTimersByTime(60_000); });
     expect(screen.getByText("10h")).toBeDefined();
+  });
+
+  it("apaga a conversa aceita com toque longo e confirmação (Spec 090)", async () => {
+    setup({ items });
+    deleteConversation.mockClear();
+    const screen = await renderView();
+    await act(async () => { fireEvent(screen.getByText("Ana Paula"), "longPress"); });
+    expect(screen.getByText("Apagar conversa?")).toBeDefined();
+    await act(async () => { fireEvent.press(screen.getByText("Apagar")); });
+    expect(deleteConversation).toHaveBeenCalledWith("r1");
+  });
+
+  it("não oferece apagar em proposta pendente (Spec 090)", async () => {
+    setup({ items });
+    const screen = await renderView();
+    await act(async () => { fireEvent(screen.getByText("Lucas"), "longPress"); });
+    expect(screen.queryByText("Apagar conversa?")).toBeNull();
   });
 });

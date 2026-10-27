@@ -10,6 +10,7 @@ import type {
  */
 export class MemoryMessageDataSource implements IMessageDataSource {
   private messages: NegotiationMessage[] = [];
+  private hidden = new Map<string, string>();
   private listeners = new Map<string, Set<MessageSubscriptionCallback>>();
 
   constructor(initialMessages: NegotiationMessage[] = []) {
@@ -69,9 +70,22 @@ export class MemoryMessageDataSource implements IMessageDataSource {
     };
   }
 
+  async hideConversation(requestId: string, userId: string): Promise<void> {
+    this.hidden.set(`${userId}:${requestId}`, new Date().toISOString());
+  }
+
+  async listHiddenConversations(userId: string): Promise<Record<string, string>> {
+    const result: Record<string, string> = {};
+    for (const [key, at] of this.hidden) {
+      if (key.startsWith(`${userId}:`)) result[key.slice(userId.length + 1)] = at;
+    }
+    return result;
+  }
+
   /** Auxiliar para testes */
   clear(): void {
     this.messages = [];
+    this.hidden.clear();
     this.listeners.clear();
   }
 }

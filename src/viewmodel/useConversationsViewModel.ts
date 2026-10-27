@@ -31,6 +31,10 @@ export type ConversationsDeps = {
   listReceivedRequests: (sessionUserId: string | null) => Promise<readonly RequestWithListing[]>;
   getMessages: (requestId: string, sessionUserId: string) => Promise<NegotiationMessage[]>;
   getProfile: (userId: string) => Promise<{ name: string | null; photoUrl: string | null }>;
+  /** Apaga a conversa só para esta pessoa (Spec 090). */
+  hideConversation?: (requestId: string, sessionUserId: string) => Promise<void>;
+  /** Conversas apagadas: id do pedido -> momento do apagar (Spec 090). */
+  listHiddenConversations?: (sessionUserId: string) => Promise<Record<string, string>>;
   /** Avisa em tempo real que algo mudou (mensagem nova, pedido novo ou respondido); retorna o cancelamento. */
   subscribe?: (sessionUserId: string, onChange: () => void) => () => void;
 };
@@ -39,6 +43,8 @@ const defaultDeps: ConversationsDeps = {
   listSentRequests: (id) => bookRequestUseCases.listSentRequests(id),
   listReceivedRequests: (id) => bookRequestUseCases.listReceivedRequests(id),
   getMessages: (requestId, sessionUserId) => negotiationMessageUseCases.getMessages(requestId, sessionUserId),
+  hideConversation: (requestId, userId) => negotiationMessageUseCases.hideConversation(requestId, userId),
+  listHiddenConversations: (userId) => negotiationMessageUseCases.listHiddenConversations(userId),
   getProfile: async (userId) => {
     const profile = await publicProfileUseCases.getPublicProfile(userId);
     return { name: profile.name ?? null, photoUrl: profile.photoUrl ?? null };
@@ -121,7 +127,7 @@ async function buildItem(
 export function useConversationsViewModel(
   sessionUserId: string | null,
   deps: ConversationsDeps = defaultDeps,
-): [ConversationsState, { reload: () => Promise<void> }] {
+): [ConversationsState, { reload: () => Promise<void>; deleteConversation: (requestId: string) => Promise<boolean> }] {
   const load = useCallback(async () => {
     if (!sessionUserId) return [];
     const [sent, received] = await Promise.all([
@@ -129,11 +135,17 @@ export function useConversationsViewModel(
       deps.listReceivedRequests(sessionUserId),
     ]);
     const open = (list: readonly RequestWithListing[]) => list.filter((e) => e.request.status !== "rejected");
+    const hidden = deps.listHiddenConversations ? await safely(deps.listHiddenConversations(sessionUserId), {}) : {};
     const built = await Promise.all([
       ...open(sent).map((e) => buildItem(e, sessionUserId, true, deps)),
       ...open(received).map((e) => buildItem(e, sessionUserId, false, deps)),
     ]);
-    return built.sort((a, b) => b.sortKey.localeCompare(a.sortKey)).map((b) => b.item);
+    // Conversa apagada some, a menos que tenha chegado mensagem depois de apagar (Spec 090).
+    const visible = built.filter(({ item }) => {
+      const hiddenAt = hidden[item.requestId];
+      return !hiddenAt || (item.lastMessageAt !== null && item.lastMessageAt > hiddenAt);
+    });
+    return visible.sort((a, b) => b.sortKey.localeCompare(a.sortKey)).map((b) => b.item);
   }, [sessionUserId, deps]);
 
   const [state, reload] = useRequestList<ConversationItem>(load, LOAD_ERROR);
@@ -143,5 +155,19 @@ export function useConversationsViewModel(
     return deps.subscribe(sessionUserId, () => void reload());
   }, [sessionUserId, deps, reload]);
 
-  return [state, { reload }];
+  const deleteConversation = useCallback(
+    async (requestId: string) => {
+      if (!sessionUserId || !deps.hideConversation) return false;
+      try {
+        await deps.hideConversation(requestId, sessionUserId);
+        await reload();
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [sessionUserId, deps, reload],
+  );
+
+  return [state, { reload, deleteConversation }];
 }

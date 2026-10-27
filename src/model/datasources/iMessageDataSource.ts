@@ -29,4 +29,14 @@ export interface IMessageDataSource {
    * Assina todas as mensagens novas que a pessoa pode ver (a RLS filtra), para a lista de conversas (Spec 086).
    */
   subscribeToAllMessages?(onMessage: MessageSubscriptionCallback): () => void;
+
+  /**
+   * Oculta a conversa só para esta pessoa (Spec 090); mensagem posterior a esse momento a traz de volta.
+   */
+  hideConversation?(requestId: string, userId: string): Promise<void>;
+
+  /**
+   * Conversas ocultas pela pessoa: id do pedido -> momento (ISO) em que foi apagada.
+   */
+  listHiddenConversations?(userId: string): Promise<Record<string, string>>;
 }

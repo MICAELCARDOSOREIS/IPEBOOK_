@@ -2,7 +2,9 @@
 
 Documento consolidado de continuidade técnica e produto do Ipebook (Piripiri, PI).
 
-Conferência atual: **2026-10-26** (89 specs e 65 ADRs numerados, 189 arquivos de teste e 1.396 testes automatizados 100% passando).
+Conferência atual: **2026-10-26** (90 specs e 65 ADRs numerados, 189 arquivos de teste e 1.400 testes automatizados 100% passando).
+
+**Apagar conversa (2026-10-27, Spec 090):** toque longo numa conversa aceita abre "Apagar conversa?"; a conversa é ocultada só para quem apagou (tabela `v2_hidden_conversations`, migração `202610270001`) e volta se chegar mensagem nova. Validado em 1.400 testes; **pendente aplicar a migração no Supabase remoto e conferir no Galaxy A16**.
 
 **Conversas com proposta no topo, tempo vivo e chat mais legível (2026-10-27, Spec 089):** a proposta recebida pendente fica no topo da lista com o selo "Nova proposta"; o horário relativo se atualiza a cada minuto; o chat ganhou cabeçalho com a foto da outra pessoa, agrupamento de mensagens seguidas, respiro no fim e "Combinar" como botão tonal. Validado em 1.396 testes; **pendente conferência manual no Galaxy A16**.
 
