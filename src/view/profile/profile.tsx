@@ -14,7 +14,7 @@ import { useUserPreferencesViewModel } from "@/viewmodel/useUserPreferencesViewM
 import { PIRIPIRI_NEIGHBORHOODS } from "@/model/entities/location";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
-import { Avatar } from "@/view/components/Avatar";
+import { ReaderCard } from "@/view/components/ReaderCard";
 import { AppIcon } from "@/view/components/AppIcon";
 import { Chip } from "@/view/components/Chip";
 import { Dialog } from "@/view/components/Dialog";
@@ -309,12 +309,13 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
               </Text>
             </View>
 
-            {/* 2. Avatar Centralizado em Destaque (Figma 07.02) */}
+            {/* 2. Pré-visualização ao vivo do cartão de leitor (Spec 078), no lugar do avatar solto do 07.02 */}
             <View style={styles.avatarSection}>
-              <Avatar
-                name={name || "Você"}
+              <Text style={styles.previewLabel}>Assim seu cartão aparece</Text>
+              <ReaderCard
+                name={name.trim() || "Você"}
                 photoUrl={photoUrl.trim() || undefined}
-                size={88}
+                subtitle={neighborhood ? `${neighborhood}, Piripiri` : "Piripiri, PI"}
               />
             </View>
 
@@ -522,11 +523,11 @@ function createStyles(colors: ColorPalette) {
       marginTop: tokens.spacing[6],
     },
     avatarSection: {
-      alignItems: "center",
-      justifyContent: "center",
+      gap: tokens.spacing[8],
       marginTop: tokens.spacing[8],
       marginBottom: tokens.spacing[24],
     },
+    previewLabel: { ...tokens.typography.labelMedium, color: colors.m3.onSurfaceVariant },
     fieldsGroup: {
       gap: tokens.spacing[16],
       width: "100%",
