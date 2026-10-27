@@ -150,6 +150,28 @@ export const BackHandler = {
   addEventListener: (_type: string, _handler: () => boolean) => ({ remove: () => {} }),
 };
 
+type KeyboardListener = (event: { endCoordinates?: { height: number; screenY: number } } | undefined) => void;
+const keyboardListeners = new Map<string, Set<KeyboardListener>>();
+
+/** Emula o teclado nativo: registra listeners e permite disparar eventos nos testes. */
+export const Keyboard = {
+  addListener: (type: string, handler: KeyboardListener) => {
+    const set = keyboardListeners.get(type) ?? new Set<KeyboardListener>();
+    set.add(handler);
+    keyboardListeners.set(type, set);
+    return { remove: () => set.delete(handler) };
+  },
+  dismiss: () => {},
+};
+
+/** Dispara um evento de teclado para os listeners registrados (uso exclusivo em testes). */
+export function __emitKeyboardEvent(type: string, height: number | undefined, screenY = 0) {
+  const event = height === undefined ? undefined : { endCoordinates: { height, screenY } };
+  for (const handler of keyboardListeners.get(type) ?? []) handler(event);
+}
+
+export const useWindowDimensions = () => ({ width: 360, height: 800, scale: 1, fontScale: 1 });
+
 export const AccessibilityInfo = {
   isScreenReaderEnabled: () => Promise.resolve(false),
   addEventListener: () => ({ remove: () => {} }),
@@ -224,6 +246,8 @@ export default {
   SectionList,
   StyleSheet,
   AccessibilityInfo,
+  BackHandler,
+  Keyboard,
   Platform,
   Share,
   Animated,

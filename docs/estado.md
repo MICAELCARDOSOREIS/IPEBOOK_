@@ -2,9 +2,9 @@
 
 Documento consolidado de continuidade técnica e produto do Ipebook (Piripiri, PI).
 
-Conferência atual: **2026-10-26** (88 specs e 65 ADRs numerados, 189 arquivos de teste e 1.385 testes automatizados 100% passando).
+Conferência atual: **2026-10-26** (88 specs e 65 ADRs numerados, 189 arquivos de teste e 1.388 testes automatizados 100% passando).
 
-**Teclado não cobre os campos no Android (2026-10-26, Spec 088):** no Expo SDK 58 em modo tela cheia (edge-to-edge), o `softwareKeyboardLayoutMode: "resize"` não encolhe a janela no Android. A raiz `KeyboardAwareRoot` adiciona `KeyboardAvoidingView` com `behavior="padding"` exclusivo para Android em volta da `Stack` e `NavigationBar` em `src/app/_layout.tsx`. As telas próprias do Android não somam dois "padding", porque os `KeyboardAvoidingView` de `createListing`, `chat` e `profile` só agem no iOS. Validado em 1.385 testes; **pendente conferência manual no Galaxy A16**.
+**Teclado não cobre os campos (2026-10-26, Spec 088):** no Expo SDK 58 em modo tela cheia (edge-to-edge), o `softwareKeyboardLayoutMode: "resize"` não encolhe a janela no Android, e o `KeyboardAvoidingView` com `behavior="padding"` também falha lá, porque calcula o padding pela sobreposição do seu quadro com o quadro do teclado (resultado zero quando a janela nunca encolhe). A raiz `KeyboardAwareRoot` em `src/app/_layout.tsx` agora soma direto a geometria reportada pelo evento nativo (`useKeyboardHeight`, `keyboardDidShow/Hide`) como `paddingBottom`, no Android e no iOS; na web o navegador já encolhe a área útil. Validado em 1.388 testes; **pendente conferência manual no Galaxy A16**.
 
 **Fotos menores e Supabase sempre ativo (2026-10-26, Spec 087):** as fotos passam a ser reduzidas para 1080 px antes do envio (`expo-image-manipulator`), em vez de chegar até 1,5 MB, e o workflow `manter-supabase-ativo.yml` consulta o banco a cada 2 dias para o plano gratuito não pausar o projeto. **Pendente: cadastrar os segredos no GitHub e conferir o envio de foto no aparelho.**
 
