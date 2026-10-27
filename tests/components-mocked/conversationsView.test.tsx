@@ -1,10 +1,13 @@
 import { act, fireEvent, render } from "@testing-library/react-native";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Book } from "@/model/entities/book";
 import type { ConversationItem, ConversationsState } from "@/viewmodel/useConversationsViewModel";
 import { Conversations } from "@/view/conversations/conversations";
 
-vi.mock("@/viewmodel/useConversationsViewModel", () => ({ useConversationsViewModel: vi.fn() }));
+vi.mock("@/viewmodel/useConversationsViewModel", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/viewmodel/useConversationsViewModel")>()),
+  useConversationsViewModel: vi.fn(),
+}));
 vi.mock("@/viewmodel/useNetworkStatus", () => ({ useNetworkStatus: () => ({ isOnline: true }) }));
 
 import { useConversationsViewModel } from "@/viewmodel/useConversationsViewModel";
@@ -29,10 +32,19 @@ async function renderView(props: Partial<Parameters<typeof Conversations>[0]> = 
 }
 
 describe("Conversations (Spec 076)", () => {
+  // O horário é calculado na tela (Spec 089); fixa só o relógio para o resultado ser previsível.
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date", "setInterval", "clearInterval"] });
+    vi.setSystemTime(new Date("2026-10-26T15:00:00"));
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   const items: ConversationItem[] = [
-    { requestId: "r1", listing: listing("b1", "Dom Casmurro"), otherName: "Ana Paula", otherPhotoUrl: null, preview: "Pode ser sábado na praça?", time: "9h", kind: "accepted" },
-    { requestId: "r2", listing: listing("b2", "Vidas Secas"), otherName: "Lucas", otherPhotoUrl: null, preview: "Proposta recebida", time: null, kind: "pendingReceived" },
-    { requestId: "r3", listing: listing("b3", "Iracema"), otherName: "Marina", otherPhotoUrl: null, preview: "Aguardando resposta", time: null, kind: "pendingSent" },
+    { requestId: "r1", listing: listing("b1", "Dom Casmurro"), otherName: "Ana Paula", otherPhotoUrl: null, preview: "Pode ser sábado na praça?", lastMessageAt: "2026-10-26T06:00:00", kind: "accepted" },
+    { requestId: "r2", listing: listing("b2", "Vidas Secas"), otherName: "Lucas", otherPhotoUrl: null, preview: "Proposta recebida", lastMessageAt: null, kind: "pendingReceived" },
+    { requestId: "r3", listing: listing("b3", "Iracema"), otherName: "Marina", otherPhotoUrl: null, preview: "Aguardando resposta", lastMessageAt: null, kind: "pendingSent" },
   ];
 
   it("lista pessoa, prévia, horário e livro; aceita abre a conversa (Spec 076 CA4, Spec 082 CA5)", async () => {
@@ -74,5 +86,20 @@ describe("Conversations (Spec 076)", () => {
     setup({ error: "Não foi possível carregar suas conversas. Tente novamente." });
     const failed = await renderView();
     expect(failed.getByText("Não foi possível carregar suas conversas. Tente novamente.")).toBeDefined();
+  });
+
+  it("destaca a proposta recebida com o selo Nova proposta (Spec 089)", async () => {
+    setup({ items });
+    const screen = await renderView();
+    expect(screen.getAllByText("Nova proposta")).toHaveLength(1);
+    expect(screen.queryByText("Nova proposta", { exact: true })).not.toBeNull();
+  });
+
+  it("atualiza o rótulo de tempo sem recarregar a lista (Spec 089)", async () => {
+    setup({ items });
+    const screen = await renderView();
+    expect(screen.getByText("9h")).toBeDefined();
+    await act(async () => { vi.setSystemTime(new Date("2026-10-26T16:10:00")); vi.advanceTimersByTime(60_000); });
+    expect(screen.getByText("10h")).toBeDefined();
   });
 });

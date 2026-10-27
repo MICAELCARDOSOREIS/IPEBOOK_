@@ -1,8 +1,12 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
-import { useConversationsViewModel, type ConversationItem } from "@/viewmodel/useConversationsViewModel";
+import {
+  formatConversationTime,
+  useConversationsViewModel,
+  type ConversationItem,
+} from "@/viewmodel/useConversationsViewModel";
 import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
@@ -37,6 +41,12 @@ export function Conversations({
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [state, actions] = useConversationsViewModel(sessionUserId);
   const { isOnline } = useNetworkStatus();
+  // O rótulo "agora" / "10 min" envelhece sozinho: a tela recalcula a cada minuto sem recarregar a lista (Spec 089).
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 60_000);
+    return () => clearInterval(timer);
+  }, []);
 
   const open = (item: ConversationItem) => {
     if (item.kind === "accepted") onOpenChat?.(item.requestId);
@@ -90,8 +100,15 @@ export function Conversations({
                   <Text style={styles.name} numberOfLines={1}>
                     {item.otherName}
                   </Text>
-                  {item.time ? <Text style={styles.time}>{item.time}</Text> : null}
+                  {item.lastMessageAt ? (
+                    <Text style={styles.time}>{formatConversationTime(item.lastMessageAt, now)}</Text>
+                  ) : null}
                 </View>
+                {item.kind === "pendingReceived" ? (
+                  <View style={styles.badge}>
+                    <Text style={styles.badgeText}>Nova proposta</Text>
+                  </View>
+                ) : null}
                 <Text
                   style={[styles.preview, item.kind !== "accepted" ? styles.previewStatus : null]}
                   numberOfLines={1}
@@ -154,6 +171,15 @@ function createStyles(colors: ColorPalette) {
     rowText: { flex: 1, gap: 2 },
     rowHeader: { flexDirection: "row", alignItems: "baseline", gap: tokens.spacing[8] },
     name: { flex: 1, ...tokens.typography.bodyLarge, fontWeight: "500", color: colors.m3.onSurface },
+    badge: {
+      alignSelf: "flex-start",
+      paddingHorizontal: tokens.spacing[8],
+      paddingVertical: 2,
+      marginVertical: 2,
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.m3.primary,
+    },
+    badgeText: { fontSize: 11, lineHeight: 16, fontWeight: "700", color: colors.m3.onPrimary },
     time: { fontSize: 12, lineHeight: 16, color: colors.m3.onSurfaceVariant },
     preview: { ...tokens.typography.bodyMedium, color: colors.m3.onSurface },
     previewStatus: { color: colors.m3.onSurfaceVariant, fontStyle: "italic" },
