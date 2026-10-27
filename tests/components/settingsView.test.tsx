@@ -278,5 +278,15 @@ describe("Configurações — tela dedicada (Spec 073, ADR 0036)", () => {
     await act(async () => { fireEvent.press(screen.getByLabelText("Conhecer o IpêBook")); });
     expect(onNavigateToAbout).toHaveBeenCalledTimes(1);
   });
+
+  it("oferece o Instagram do IpêBook com o ícone e abre o perfil (Spec 092)", async () => {
+    mockSession(false);
+    mockSettings();
+    const open = vi.spyOn(Linking, "openURL").mockResolvedValue(true as never);
+    const { screen } = await renderSettings();
+    expect(screen.getByText("@ipebook")).toBeDefined();
+    await act(async () => { fireEvent.press(screen.getByLabelText("Siga o IpêBook no Instagram")); });
+    expect(open).toHaveBeenCalledWith("https://instagram.com/ipebook");
+  });
 });
 

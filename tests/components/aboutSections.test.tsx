@@ -36,5 +36,8 @@ describe("AboutSections — página que apresenta o app (Spec 092)", () => {
     expect(onHelp).toHaveBeenCalledTimes(1);
     expect(onTerms).toHaveBeenCalledTimes(1);
     expect(open).toHaveBeenCalledWith("mailto:ipebook738@gmail.com");
+    await act(async () => { fireEvent.press(full.getByLabelText("Instagram do IpêBook: @ipebook")); });
+    expect(open).toHaveBeenCalledWith("https://instagram.com/ipebook");
+    expect(full.getByText("@ipebook")).toBeDefined();
   });
 });

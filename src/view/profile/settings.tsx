@@ -4,6 +4,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Constants from "expo-constants";
 import * as Linking from "expo-linking";
 import { supportMailtoUrl, SUPPORT_EMAIL } from "@/view/supportContact";
+import { INSTAGRAM_HANDLE, INSTAGRAM_URL } from "@/view/instagram";
+import { InstagramIcon } from "@/view/components/InstagramIcon";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { ThemePreferenceSelector } from "@/view/components/ThemePreferenceSelector";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
@@ -36,7 +38,7 @@ export type SettingsProps = {
 
 type LinkItem = {
   key: string;
-  icon: "document" | "info" | "lock" | "block" | "visibility" | "person" | "bell" | "place" | "mail";
+  icon: "document" | "info" | "lock" | "block" | "visibility" | "person" | "bell" | "place" | "mail" | "instagram";
   label: string;
   description?: string;
   onPress?: () => void;
@@ -125,6 +127,13 @@ export function Settings({
     { key: "about", icon: "info" as const, label: "Conhecer o IpêBook", description: "Como funciona, segurança e a comunidade de Piripiri", onPress: onNavigateToAbout },
     { key: "help", icon: "info" as const, label: "Ajuda e suporte", onPress: onNavigateToHelp },
     {
+      key: "instagram",
+      icon: "instagram" as const,
+      label: "Siga o IpêBook no Instagram",
+      description: `@${INSTAGRAM_HANDLE}`,
+      onPress: () => void Linking.openURL(INSTAGRAM_URL),
+    },
+    {
       key: "contact",
       icon: "mail" as const,
       label: "Falar com a equipe",
@@ -145,7 +154,11 @@ export function Settings({
         style={({ pressed }) => [styles.linkRow, index > 0 && styles.linkDivider, pressed && styles.linkPressed]}
       >
         <View style={styles.iconCircle}>
-          <AppIcon name={link.icon} size={20} color={colors.m3.onSecondaryContainer} />
+          {link.icon === "instagram" ? (
+            <InstagramIcon size={20} color={colors.m3.onSecondaryContainer} />
+          ) : (
+            <AppIcon name={link.icon} size={20} color={colors.m3.onSecondaryContainer} />
+          )}
         </View>
         <View style={styles.linkText}>
           <Text style={styles.linkLabel}>{link.label}</Text>
