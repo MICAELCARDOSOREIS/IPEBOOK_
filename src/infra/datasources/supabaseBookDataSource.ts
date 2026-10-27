@@ -19,10 +19,11 @@ type BookRow = {
   description?: string | null;
   photo_url?: string | null;
   photos?: string[] | null;
+  draft_step?: number | null;
 };
 
 const BOOK_COLUMNS =
-  "id,title,author,category,owner_id,modality,price,status,city,state,neighborhood,condition,description,photo_url,photos";
+  "id,title,author,category,owner_id,modality,price,status,city,state,neighborhood,condition,description,photo_url,photos,draft_step";
 
 function mapBook(row: BookRow): Book {
   return {
@@ -41,6 +42,7 @@ function mapBook(row: BookRow): Book {
     ...(row.description ? { description: row.description } : {}),
     ...(row.photo_url ? { photoUrl: row.photo_url } : {}),
     ...(row.photos && row.photos.length > 0 ? { photos: row.photos } : {}),
+    ...(row.draft_step === null || row.draft_step === undefined ? {} : { draftStep: Number(row.draft_step) }),
   };
 }
 
@@ -51,7 +53,8 @@ export class SupabaseBookDataSource implements IBookDataSource {
     let query = this.client
       .from("v2_books")
       .select(BOOK_COLUMNS)
-      .neq("status", "paused");
+      .neq("status", "paused")
+      .neq("status", "draft");
 
     if (
       options?.neighborhood &&
@@ -94,6 +97,7 @@ export class SupabaseBookDataSource implements IBookDataSource {
       description: book.description ?? null,
       photo_url: book.photoUrl ?? null,
       photos: book.photos ? Array.from(book.photos) : [],
+      draft_step: book.draftStep ?? null,
     }).select(BOOK_COLUMNS).single();
     if (error || !data) throw new DataSourceError("Não foi possível cadastrar o anúncio.");
     return mapBook(data as BookRow);
@@ -120,6 +124,7 @@ export class SupabaseBookDataSource implements IBookDataSource {
     if (partial.description !== undefined) patch.description = partial.description ?? null;
     if (partial.photoUrl !== undefined) patch.photo_url = partial.photoUrl ?? null;
     if (partial.photos !== undefined) patch.photos = partial.photos ? Array.from(partial.photos) : [];
+    if (partial.draftStep !== undefined) patch.draft_step = partial.draftStep ?? null;
 
     const { data, error } = await this.client
       .from("v2_books")

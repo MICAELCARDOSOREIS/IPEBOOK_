@@ -21,6 +21,8 @@ import { CreateListingStep3 } from "@/view/listings/createListingStep3";
 
 export type CreateListingProps = {
   sessionUserId: string | null;
+  /** Rascunho no servidor a retomar (Spec 017), vindo da rota `/rascunhos`. */
+  initialDraftId?: string;
   onCreated?: () => void;
   onCancel?: () => void;
   onViewMyListings?: () => void;
@@ -48,6 +50,7 @@ const STEP_LABELS: Record<number, string> = {
  */
 export default function CreateListing({
   sessionUserId,
+  initialDraftId,
   onCreated,
   onCancel,
   onViewMyListings,
@@ -78,17 +81,19 @@ export default function CreateListing({
   );
 
   useEffect(() => {
-    let active = true;
-    async function initDraft() {
-      if (!hasDraftContent) {
-        await actions.loadDraft();
-      }
+    if (initialDraftId) {
+      let active = true;
+      void actions.loadServerDraft(initialDraftId).then((step) => {
+        if (active && step) {
+          setStep(step);
+        }
+      });
+      return () => {
+        active = false;
+      };
     }
-    void initDraft();
-    return () => {
-      active = false;
-    };
-  }, []);
+    void actions.loadDraft();
+  }, [initialDraftId]);
 
   useEffect(() => {
     if (!isMountedRef.current) {
@@ -166,6 +171,13 @@ export default function CreateListing({
     if (result) {
       setPublished(result);
       onCreated?.();
+    }
+  };
+
+  const handleSaveForLater = async () => {
+    const saved = await actions.saveForLater(sessionUserId, step);
+    if (saved) {
+      onCancel?.();
     }
   };
 
@@ -308,6 +320,12 @@ export default function CreateListing({
                 />
               </>
             ) : null}
+
+            <TextButton
+              label="Salvar para depois"
+              disabled={state.loading}
+              onPress={() => void handleSaveForLater()}
+            />
           </View>
         </SafeAreaView>
       </KeyboardAvoidingView>

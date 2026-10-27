@@ -8,6 +8,8 @@ export type CreateListingScreenProps = {
   onRequireSignIn?: () => void;
   onViewMyListings?: () => void;
   onGoHome?: () => void;
+  /** Id do rascunho a retomar (Spec 017); a rota fornece lendo o parâmetro de navegação. */
+  initialDraftId?: string;
 };
 
 export default function CreateListingScreen({
@@ -16,6 +18,7 @@ export default function CreateListingScreen({
   onRequireSignIn,
   onViewMyListings,
   onGoHome,
+  initialDraftId,
 }: CreateListingScreenProps = {}) {
   const [authState] = useAuthViewModel();
 
@@ -30,6 +33,7 @@ export default function CreateListingScreen({
   return (
     <CreateListing
       sessionUserId={authState.user.id}
+      initialDraftId={initialDraftId}
       onCreated={onCreated}
       onCancel={onCancel}
       onViewMyListings={onViewMyListings}

@@ -28,6 +28,8 @@ export type MyListingsProps = {
   sessionUserId: string;
   onBack?: () => void;
   onNavigateToCreateListing?: () => void;
+  /** Abre a tela de rascunhos (Spec 017). */
+  onNavigateToDrafts?: () => void;
   onNavigateToManageListing?: (bookId: string) => void;
   onNavigateToHelp?: () => void;
   /** Abre os pedidos recebidos, destino de uma proposta pendente (Spec 043, RN-03). */
@@ -46,6 +48,7 @@ export function MyListings({
   sessionUserId,
   onBack,
   onNavigateToCreateListing,
+  onNavigateToDrafts,
   onNavigateToManageListing,
   onNavigateToHelp,
   onNavigateToReceivedRequests,
@@ -104,6 +107,17 @@ export function MyListings({
           </Text>
           <Text style={styles.heroSubtitle}>Seus livros em Piripiri</Text>
         </View>
+        {onNavigateToDrafts ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Ver rascunhos"
+            hitSlop={12}
+            onPress={onNavigateToDrafts}
+            style={styles.draftsLink}
+          >
+            <Text style={styles.draftsLinkText}>Rascunhos</Text>
+          </Pressable>
+        ) : null}
         {hasBooks && onNavigateToCreateListing ? (
           <Pressable
             accessibilityRole="button"
@@ -315,6 +329,7 @@ export type MyListingsScreenProps = {
   onBack?: () => void;
   onRequireSignIn?: () => void;
   onNavigateToCreateListing?: () => void;
+  onNavigateToDrafts?: () => void;
   /** Abre a ajuda, como o link "Como funciona" do estado vazio de `05.02`. */
   onNavigateToHelp?: () => void;
   onNavigateToManageListing?: (bookId: string) => void;
@@ -326,6 +341,7 @@ export default function MyListingsScreen({
   onBack,
   onRequireSignIn,
   onNavigateToCreateListing,
+  onNavigateToDrafts,
   onNavigateToHelp,
   onNavigateToManageListing,
   onNavigateToReceivedRequests,
@@ -346,6 +362,7 @@ export default function MyListingsScreen({
       sessionUserId={authState.user.id}
       onBack={onBack}
       onNavigateToCreateListing={onNavigateToCreateListing}
+      onNavigateToDrafts={onNavigateToDrafts}
       onNavigateToHelp={onNavigateToHelp}
       onNavigateToManageListing={onNavigateToManageListing}
       onNavigateToReceivedRequests={onNavigateToReceivedRequests}
@@ -387,6 +404,17 @@ function createStyles(colors: ColorPalette) {
       alignItems: "center",
       justifyContent: "center",
       backgroundColor: colors.m3.secondaryContainer,
+    },
+    draftsLink: {
+      marginLeft: "auto",
+      minHeight: tokens.accessibility.touchTarget,
+      justifyContent: "center",
+      paddingHorizontal: tokens.spacing[8],
+    },
+    draftsLinkText: {
+      ...tokens.typography.labelMedium,
+      color: colors.m3.primary,
+      fontWeight: "600",
     },
     content: {
       flex: 1,
