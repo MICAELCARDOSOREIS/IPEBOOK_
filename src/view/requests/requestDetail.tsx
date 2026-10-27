@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Meeting } from "@/model/entities/meeting";
 import * as Linking from "expo-linking";
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useRequestDetailViewModel } from "@/viewmodel/useRequestDetailViewModel";
@@ -51,6 +51,19 @@ export function RequestDetail({
   const [ratingModalVisible, setRatingModalVisible] = useState(false);
   const [meeting, setMeeting] = useState<Meeting | null>(null);
   const handleMeetingChange = useCallback((value: Meeting | null) => setMeeting(value), []);
+  const [refreshCount, setRefreshCount] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
+  const [showAllPoints, setShowAllPoints] = useState(false);
+
+  async function handleRefresh() {
+    setRefreshing(true);
+    setRefreshCount((count) => count + 1);
+    try {
+      await actions.reload();
+    } finally {
+      setRefreshing(false);
+    }
+  }
 
   const counterpartId = detail?.counterpartId ?? "";
   const [ratingState, ratingActions] = useNegotiationRatingViewModel(
@@ -61,6 +74,8 @@ export function RequestDetail({
 
   const completed = Boolean(ratingState.userRating);
   const meetingConfirmed = meeting?.status === "confirmed";
+  const awaitingMyConfirmation =
+    meeting?.status === "proposed" && meeting.proposedBy !== sessionUserId;
   const meetingHappened = meetingConfirmed && describeMeetingCountdown(meeting!.scheduledAt).past;
   const progress = [
     { label: "Aceita", done: true },
@@ -87,9 +102,20 @@ export function RequestDetail({
   return (
     <SafeAreaView style={styles.page}>
       <TopAppBar title="Acompanhar encontro" onBack={() => onBack?.()} />
-      <ScrollView contentContainerStyle={styles.scroll}>
+      <ScrollView
+        testID="request-detail-scroll"
+        contentContainerStyle={styles.scroll}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => void handleRefresh()}
+            colors={[colors.action]}
+            tintColor={colors.action}
+          />
+        }
+      >
         <View style={styles.content}>
-          {state.loading ? (
+          {state.loading && !detail ? (
             <View style={styles.status}>
               <ActivityIndicator
                 color={colors.action}
@@ -151,6 +177,14 @@ export function RequestDetail({
                   </View>
                 ))}
               </View>
+              {awaitingMyConfirmation && !completed ? (
+                <View accessibilityRole="alert" style={styles.yourTurn}>
+                  <AppIcon name="info" size={18} color={colors.actionDeep} />
+                  <Text style={styles.yourTurnText}>
+                    Sua vez: {detail.counterpartName ?? COMMUNITY_MEMBER} sugeriu um encontro. Confirme ou sugira outro horário.
+                  </Text>
+                </View>
+              ) : null}
 
               <Pressable
                 accessibilityRole="button"
@@ -207,7 +241,7 @@ export function RequestDetail({
                 requestId={requestId}
                 sessionUserId={sessionUserId}
                 counterpartName={detail.counterpartName ?? COMMUNITY_MEMBER}
-                focusKey={focusKey}
+                focusKey={(focusKey ?? 0) + refreshCount}
                 onScheduleMeeting={onScheduleMeeting}
                 onMeetingChange={handleMeetingChange}
               />
@@ -267,10 +301,24 @@ export function RequestDetail({
                   </Text>
                 </View>
                 <Text style={styles.bodyText}>
-                  Para a sua segurança, combinem a entrega sempre em locais públicos e movimentados:
+                  {meetingConfirmed && !showAllPoints
+                    ? "O local já está combinado. Se precisarem mudar, prefiram outro ponto público e movimentado."
+                    : "Para a sua segurança, combinem a entrega sempre em locais públicos e movimentados:"}
                 </Text>
+                {meetingConfirmed ? (
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityState={{ expanded: showAllPoints }}
+                    onPress={() => setShowAllPoints((value) => !value)}
+                    style={styles.directionsButton}
+                  >
+                    <Text style={styles.directionsText}>
+                      {showAllPoints ? "Ocultar pontos seguros" : "Ver pontos seguros de Piripiri"}
+                    </Text>
+                  </Pressable>
+                ) : null}
                 <View style={styles.pointList}>
-                  {detail.safeMeetingPoints.map((point) => (
+                  {(meetingConfirmed && !showAllPoints ? [] : detail.safeMeetingPoints).map((point) => (
                     <View key={point.name} style={styles.pointCard}>
                       <Text style={styles.pointName}>• {point.name}</Text>
                       <Text style={styles.pointDetail}>{point.address}</Text>
@@ -390,6 +438,15 @@ function createStyles(colors: ColorPalette) {
     progressNumber: { ...tokens.typography.labelMedium, color: colors.m3.onSurfaceVariant },
     progressLabel: { ...tokens.typography.labelMedium, color: colors.m3.onSurfaceVariant, textAlign: "center" },
     progressLabelDone: { color: colors.text },
+    yourTurn: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[8],
+      padding: tokens.spacing[12],
+      borderRadius: tokens.radius.medium,
+      backgroundColor: colors.soft,
+    },
+    yourTurnText: { flex: 1, ...tokens.typography.bodyMedium, color: colors.actionDeep },
   page: { flex: 1, backgroundColor: colors.background },
   scroll: { flexGrow: 1, paddingBottom: tokens.spacing[48] },
   content: {
