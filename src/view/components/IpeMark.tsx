@@ -8,7 +8,7 @@ export type IpeMarkProps = {
 };
 
 /**
- * Medalhão do ipê amarelo brotando de um livro aberto, em papel recortado (`src/view/assets/ipe-medalhao.png`,
+ * Ipê amarelo brotando de um livro aberto, em papel recortado e sem fundo (`src/view/assets/ipe-medalhao.png`,
  * arte enviada pelo usuário em 2026-10-26, Spec 078). Puramente decorativo.
  */
 export function IpeMark({ size = 64, testID }: IpeMarkProps) {
