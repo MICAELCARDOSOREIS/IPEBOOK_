@@ -27,6 +27,10 @@ function stubUseCases(overrides: Partial<IBookUseCases> = {}): IBookUseCases {
     togglePauseListing: vi.fn().mockResolvedValue({ ...book, status: "paused" }),
     listMyListings: vi.fn().mockResolvedValue([]),
     cancelListing: vi.fn().mockResolvedValue(undefined),
+    listDrafts: vi.fn().mockResolvedValue([]),
+    saveDraft: vi.fn(),
+    discardDraft: vi.fn().mockResolvedValue(undefined),
+    publishDraft: vi.fn(),
     ...overrides,
   };
 }

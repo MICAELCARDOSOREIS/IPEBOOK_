@@ -11,7 +11,7 @@ export class MemoryBookDataSource implements IBookDataSource {
 
   async list(options?: ListBooksOptions): Promise<readonly Book[]> {
     let available = this.books
-      .filter((book) => book.status !== "paused")
+      .filter((book) => book.status !== "paused" && book.status !== "draft")
       .map((book) => ({ ...book }));
 
     if (

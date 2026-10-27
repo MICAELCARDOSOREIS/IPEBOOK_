@@ -6,6 +6,7 @@ export default function MeusAnunciosRoute() {
     <MyListingsScreen
       onRequireSignIn={() => router.replace("/entrar")}
       onNavigateToCreateListing={() => router.push("/anunciar")}
+      onNavigateToDrafts={() => router.push("/rascunhos" as never)}
       onNavigateToHelp={() => router.push("/ajuda")}
       onNavigateToManageListing={(bookId) => router.push(`/gerenciar-anuncio/${bookId}` as never)}
       onNavigateToReceivedRequests={() => router.push("/pedidos-recebidos")}

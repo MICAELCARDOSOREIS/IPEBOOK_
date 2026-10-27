@@ -119,6 +119,38 @@ describe("cartão do encontro (Spec 052, 06.05/06.11/06.12)", () => {
     expect(screen.getByText("Cancelado")).toBeDefined();
   });
 
+  it("histórico após cancelamento distingue encontros confirmados, propostos e cancelados", async () => {
+    const confirmado: Meeting = { ...baseMeeting, id: "m2", status: "confirmed" };
+    const proposto: Meeting = { ...baseMeeting, id: "m3", status: "proposed" };
+    const cancelado: Meeting = { ...baseMeeting, status: "cancelled" };
+    mockMeeting({ meeting: cancelado, history: [cancelado, confirmado, proposto] });
+    const screen = await renderCard("dono");
+    expect(screen.getByText("Histórico de encontros")).toBeDefined();
+    expect(screen.getByText("Confirmado")).toBeDefined();
+    expect(screen.getByText("Proposto")).toBeDefined();
+    expect(screen.getByText("Cancelado")).toBeDefined();
+  });
+
+  it("tentativas anteriores marcam encontros confirmados e propostos", async () => {
+    const confirmado: Meeting = { ...baseMeeting, id: "m2", status: "confirmed" };
+    const proposto: Meeting = { ...baseMeeting, id: "m3", status: "proposed" };
+    mockMeeting({ meeting: { ...baseMeeting, status: "confirmed" }, history: [baseMeeting, confirmado, proposto] });
+    const screen = await renderCard("dono");
+    expect(screen.getByText("Tentativas anteriores")).toBeDefined();
+    expect(screen.getAllByText("Confirmado").length).toBeGreaterThan(0);
+    expect(screen.getByText("Proposto")).toBeDefined();
+  });
+
+  it("ponto fora da lista de Piripiri abre o mapa pelo nome do local", async () => {
+    openURL.mockReset().mockResolvedValue(undefined);
+    mockMeeting({ meeting: { ...baseMeeting, status: "confirmed", pointName: "Biblioteca do bairro" } });
+    const screen = await renderCard("leitora");
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Como chegar a Biblioteca do bairro" }));
+    });
+    expect(openURL).toHaveBeenCalledWith(expect.stringContaining(encodeURIComponent("Biblioteca do bairro, Piripiri")));
+  });
+
   it("mostra quanto falta e abre o mapa do ponto escolhido (Spec 079)", async () => {
     openURL.mockReset().mockResolvedValue(undefined);
     const amanha = new Date();

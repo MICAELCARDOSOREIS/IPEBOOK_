@@ -2,9 +2,9 @@ import type { IBookDataSource, ListBooksOptions } from "@/model/datasources/iBoo
 import type { ISearchAlertUseCases } from "@/usecase/iSearchAlertUseCases";
 import type { Book } from "@/model/entities/book";
 import { AuthError, DataSourceError, ValidationError } from "@/model/errors";
-import { validateBookPayload } from "@/model/validators/bookValidator";
+import { validateBookPayload, validateDraftPayload } from "@/model/validators/bookValidator";
 import { sanitizeTextInput } from "@/model/validators/textSanitizer";
-import type { CreateListingInput, IBookUseCases } from "@/usecase/iBookUseCases";
+import type { CreateListingInput, IBookUseCases, SaveDraftInput } from "@/usecase/iBookUseCases";
 
 export class BookUseCases implements IBookUseCases {
   constructor(private readonly dataSource: IBookDataSource, private readonly alerts?: ISearchAlertUseCases) {}
@@ -80,7 +80,9 @@ export class BookUseCases implements IBookUseCases {
     if (!sessionUserId || !sessionUserId.trim()) {
       throw new AuthError("Sessão obrigatória para visualizar seus anúncios.");
     }
-    return this.dataSource.listByOwner(sessionUserId.trim());
+    // Rascunhos (Spec 017) têm tela própria; a lista "Meus anúncios" só traz publicados.
+    const mine = await this.dataSource.listByOwner(sessionUserId.trim());
+    return mine.filter((book) => book.status !== "draft");
   }
 
   async cancelListing(bookId: string, sessionUserId: string | null): Promise<void> {
@@ -209,5 +211,165 @@ export class BookUseCases implements IBookUseCases {
 
     const nextStatus = book.status === "paused" ? "available" : "paused";
     return this.dataSource.updateStatus(book.id, nextStatus);
+  }
+
+  async listDrafts(sessionUserId: string | null): Promise<readonly Book[]> {
+    if (!sessionUserId || !sessionUserId.trim()) {
+      throw new AuthError("Sessão obrigatória para visualizar seus rascunhos.");
+    }
+    // listByOwner já vem ordenado por criação (mais recente primeiro) no datasource.
+    const mine = await this.dataSource.listByOwner(sessionUserId.trim());
+    return mine.filter((book) => book.status === "draft");
+  }
+
+  async saveDraft(input: SaveDraftInput, sessionUserId: string | null): Promise<Book> {
+    if (!sessionUserId || !sessionUserId.trim()) {
+      throw new AuthError("Sessão obrigatória para salvar rascunho.");
+    }
+    const ownerId = sessionUserId.trim();
+    const sanitizedTitle = sanitizeTextInput(input.title ?? "");
+    const sanitizedAuthor = sanitizeTextInput(input.author ?? "");
+    const sanitizedCategory = input.category ? sanitizeTextInput(input.category) : undefined;
+    const sanitizedNeighborhood = input.neighborhood ? sanitizeTextInput(input.neighborhood) : undefined;
+    const sanitizedDescription = input.description ? sanitizeTextInput(input.description) : undefined;
+
+    const candidate = {
+      ownerId,
+      title: sanitizedTitle,
+      author: sanitizedAuthor,
+      category: sanitizedCategory,
+      modality: input.modality,
+      price: input.price,
+      city: "Piripiri",
+      state: "PI",
+      neighborhood: sanitizedNeighborhood,
+      condition: input.condition,
+      description: sanitizedDescription,
+      photoUrl: input.photoUrl?.trim(),
+      photos: input.photos,
+      status: "draft" as const,
+      draftStep: input.draftStep,
+    };
+
+    const validation = validateDraftPayload(candidate);
+    if (!validation.isValid) {
+      throw new ValidationError(validation.errors[0]);
+    }
+
+    const campos = {
+      title: sanitizedTitle,
+      author: sanitizedAuthor,
+      category: sanitizedCategory,
+      modality: input.modality,
+      price: input.price,
+      city: "Piripiri",
+      state: "PI",
+      neighborhood: sanitizedNeighborhood,
+      condition: input.condition,
+      description: sanitizedDescription,
+      photoUrl: input.photoUrl?.trim(),
+      photos: input.photos,
+    };
+
+    if (input.draftId) {
+      const existing = await this.dataSource.findById(input.draftId);
+      if (!existing) {
+        throw new DataSourceError("Rascunho não encontrado.");
+      }
+      if (existing.ownerId !== ownerId) {
+        throw new AuthError("Apenas quem criou o rascunho pode editá-lo.");
+      }
+      if (existing.status !== "draft") {
+        throw new ValidationError("Este anúncio não é mais um rascunho.");
+      }
+      return this.dataSource.update(input.draftId, { ...campos, draftStep: input.draftStep });
+    }
+
+    return this.dataSource.create({ ...campos, ownerId, status: "draft", draftStep: input.draftStep });
+  }
+
+  async discardDraft(bookId: string, sessionUserId: string | null): Promise<void> {
+    if (!sessionUserId || !sessionUserId.trim()) {
+      throw new AuthError("Sessão obrigatória para descartar rascunho.");
+    }
+    if (!bookId || !bookId.trim()) {
+      throw new ValidationError("Identificador do rascunho é obrigatório.");
+    }
+    const ownerId = sessionUserId.trim();
+    const book = await this.dataSource.findById(bookId.trim());
+    if (!book) {
+      throw new DataSourceError("Rascunho não encontrado.");
+    }
+    if (book.ownerId !== ownerId) {
+      throw new AuthError("Apenas quem criou o rascunho pode descartá-lo.");
+    }
+    if (book.status !== "draft") {
+      throw new ValidationError("Este anúncio não é um rascunho.");
+    }
+    await this.dataSource.delete(bookId.trim());
+  }
+
+  async publishDraft(draftId: string, input: CreateListingInput, sessionUserId: string | null): Promise<Book> {
+    if (!sessionUserId || !sessionUserId.trim()) {
+      throw new AuthError("Sessão obrigatória para publicar anúncio.");
+    }
+    if (!draftId || !draftId.trim()) {
+      throw new ValidationError("Identificador do rascunho é obrigatório.");
+    }
+    const ownerId = sessionUserId.trim();
+    const existing = await this.dataSource.findById(draftId.trim());
+    if (!existing) {
+      throw new DataSourceError("Rascunho não encontrado.");
+    }
+    if (existing.ownerId !== ownerId) {
+      throw new AuthError("Apenas quem criou o rascunho pode publicá-lo.");
+    }
+    if (existing.status !== "draft") {
+      throw new ValidationError("Este anúncio já foi publicado.");
+    }
+
+    const sanitizedTitle = sanitizeTextInput(input.title);
+    const sanitizedAuthor = sanitizeTextInput(input.author);
+    const sanitizedCategory = input.category ? sanitizeTextInput(input.category) : undefined;
+    const sanitizedNeighborhood = input.neighborhood ? sanitizeTextInput(input.neighborhood) : undefined;
+    const sanitizedDescription = input.description ? sanitizeTextInput(input.description) : undefined;
+
+    const validation = validateBookPayload({
+      id: draftId,
+      ownerId,
+      title: sanitizedTitle,
+      author: sanitizedAuthor,
+      category: sanitizedCategory,
+      modality: input.modality,
+      price: input.price,
+      city: input.city ? sanitizeTextInput(input.city) : "Piripiri",
+      state: input.state ? sanitizeTextInput(input.state) : "PI",
+      neighborhood: sanitizedNeighborhood,
+      condition: input.condition,
+      description: sanitizedDescription,
+      photoUrl: input.photoUrl,
+      photos: input.photos,
+    });
+    if (!validation.isValid) {
+      throw new ValidationError(validation.errors[0]);
+    }
+
+    const book = await this.dataSource.update(draftId.trim(), {
+      title: sanitizedTitle,
+      author: sanitizedAuthor,
+      ...(sanitizedCategory ? { category: sanitizedCategory } : {}),
+      modality: input.modality,
+      price: input.price,
+      city: "Piripiri",
+      state: "PI",
+      ...(sanitizedNeighborhood ? { neighborhood: sanitizedNeighborhood } : {}),
+      ...(input.condition ? { condition: input.condition } : {}),
+      ...(sanitizedDescription ? { description: sanitizedDescription } : {}),
+      ...(input.photoUrl?.trim() ? { photoUrl: input.photoUrl.trim() } : {}),
+      ...(input.photos && input.photos.length > 0 ? { photos: input.photos } : {}),
+      status: "available",
+    });
+    await this.alerts?.matchNewBook(book);
+    return book;
   }
 }

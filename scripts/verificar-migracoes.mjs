@@ -345,6 +345,45 @@ if (prefs.rows[0]?.push_token !== 'ExponentPushToken[teste]') throw new Error('p
 const otherPrefs = await as('authenticated', other, `select push_token from public.v2_user_preferences where user_id = '${owner}'`);
 if (otherPrefs.rows.length !== 0) throw new Error('Terceiro conseguiu ler o push_token alheio');
 process.stdout.write('Preferências com push_token (ADR 0062): verificado com sucesso\n');
+// Rascunhos de anúncio (Spec 017): 'draft' aceita conteúdo incompleto e fica invisível a terceiros.
+await db.exec('reset role');
+const draftVazio = 'd7a0017d-0017-4017-8017-000000000001';
+const draftDescarte = 'd7a0017d-0017-4017-8017-000000000002';
+// Rascunho com título/autor vazios e modalidade 'sale' sem preço: aceito enquanto draft.
+await as('authenticated', owner, `insert into public.v2_books (id, owner_id, title, author, modality, status, draft_step)
+  values ('${draftVazio}', '${owner}', '', '', 'sale', 'draft', 1)`);
+process.stdout.write('Rascunho incompleto (sem título/autor/preço): aceito\n');
+// O dono enxerga o próprio rascunho; terceiros e visitantes não.
+const ownerSeesDraft = await as('authenticated', owner, `select id from public.v2_books where id = '${draftVazio}'`);
+if (ownerSeesDraft.rows.length !== 1) throw new Error('Dono não enxerga o próprio rascunho');
+const thirdSeesDraft = await as('authenticated', reader, `select id from public.v2_books where id = '${draftVazio}'`);
+if (thirdSeesDraft.rows.length !== 0) throw new Error('Rascunho visível para terceiros');
+const anonSeesDraft = await as('anon', null, `select id from public.v2_books where id = '${draftVazio}'`);
+if (anonSeesDraft.rows.length !== 0) throw new Error('Rascunho visível para visitante anônimo');
+process.stdout.write('Rascunho oculto de terceiros e visitantes: verificado\n');
+// Terceiro não descarta rascunho alheio (nenhuma linha alterada por RLS).
+const thirdDeleteDraft = await as('authenticated', reader, `delete from public.v2_books where id = '${draftVazio}'`);
+if (thirdDeleteDraft.affectedRows !== 0) throw new Error('Terceiro conseguiu descartar rascunho alheio');
+// Publicar o rascunho (preenchendo título/autor/preço) transiciona para 'available'.
+await as('authenticated', owner, `update public.v2_books set status = 'available', title = 'Dom Casmurro', author = 'Machado de Assis', price = 12
+  where id = '${draftVazio}'`);
+const published = await as('anon', null, `select status, title from public.v2_books where id = '${draftVazio}'`);
+if (published.rows[0]?.status !== 'available' || published.rows[0]?.title !== 'Dom Casmurro') {
+  throw new Error('Publicação a partir de rascunho não tornou o anúncio disponível');
+}
+process.stdout.write('Publicar a partir de rascunho: transiciona para available\n');
+// Anúncio publicado (não draft) continua exigindo título e autor preenchidos.
+await denied('Publicar sem título', () => as('authenticated', owner,
+  `insert into public.v2_books (owner_id, title, author, modality, price) values ('${owner}', '', 'Sem título', 'sale', 5)`));
+await denied('Venda publicada sem preço', () => as('authenticated', owner,
+  `insert into public.v2_books (owner_id, title, author, modality) values ('${owner}', 'Com título', 'Autor', 'sale')`));
+// Dono descarta um rascunho seu (exclusão física permitida pela política de delete).
+await as('authenticated', owner, `insert into public.v2_books (id, owner_id, title, author, modality, status, draft_step)
+  values ('${draftDescarte}', '${owner}', 'A descartar', 'Autor', 'donation', 'draft', 2)`);
+await as('authenticated', owner, `delete from public.v2_books where id = '${draftDescarte}'`);
+const discarded = await db.query(`select id from public.v2_books where id = '${draftDescarte}'`);
+if (discarded.rows.length !== 0) throw new Error('Dono não conseguiu descartar o próprio rascunho');
+process.stdout.write('Rascunhos de anúncio (Spec 017): verificado com sucesso\n');
 
 process.stdout.write('Migrações e cenários SQL locais verificados.\n');
 await db.close();

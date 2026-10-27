@@ -12,7 +12,7 @@ import { isValidIsbn, normalizeIsbn } from "@/model/isbn";
 import type { ILogger } from "@/model/services/iLogger";
 import type { IRateLimiter } from "@/model/services/iRateLimiter";
 import type { IBookMetadataService } from "@/model/services/iBookMetadataService";
-import type { IBookUseCases } from "@/usecase/iBookUseCases";
+import type { CreateListingInput, IBookUseCases } from "@/usecase/iBookUseCases";
 import { formKey, guardFormSubmit } from "@/viewmodel/formRateLimit";
 
 export const CREATE_LISTING_DRAFT_KEY = "ipebook.rascunho_anuncio";
@@ -50,6 +50,8 @@ export type CreateListingState = {
   description: string;
   photoUrl: string;
   photos: readonly string[];
+  /** Identificador do rascunho no servidor quando a pessoa retomou um (Spec 017). */
+  draftId: string | null;
   loading: boolean;
   error: string | null;
   success: boolean;
@@ -74,6 +76,9 @@ export type CreateListingActions = {
   saveDraft: () => Promise<void>;
   loadDraft: () => Promise<boolean>;
   clearDraft: () => Promise<void>;
+  saveForLater: (sessionUserId: string | null, step: number) => Promise<boolean>;
+  resumeDraft: (book: Book) => void;
+  loadServerDraft: (draftId: string) => Promise<number | null>;
   submit: (sessionUserId: string | null) => Promise<Book | null>;
   reset: () => void;
 };
@@ -92,6 +97,7 @@ const INITIAL_STATE: CreateListingState = {
   description: "",
   photoUrl: "",
   photos: [],
+  draftId: null,
   loading: false,
   error: null,
   success: false,
@@ -310,6 +316,87 @@ export function useCreateListingViewModel(
     }
   }, [logger]);
 
+  const buildInput = useCallback((): CreateListingInput => {
+    const cur = stateRef.current;
+    const priceNum = cur.modality === "sale" && cur.price.trim()
+      ? Number(cur.price.replace(",", "."))
+      : undefined;
+    return {
+      title: cur.title,
+      author: cur.author,
+      ...(cur.category.trim() ? { category: cur.category.trim() } : {}),
+      modality: cur.modality,
+      price: priceNum,
+      city: "Piripiri",
+      state: "PI",
+      ...(cur.neighborhood.trim() ? { neighborhood: cur.neighborhood.trim() } : {}),
+      ...(cur.condition ? { condition: cur.condition } : {}),
+      ...(cur.description.trim() ? { description: cur.description.trim() } : {}),
+      ...(cur.photoUrl.trim() ? { photoUrl: cur.photoUrl.trim() } : {}),
+      ...(cur.photos.length > 0 ? { photos: cur.photos } : {}),
+    };
+  }, []);
+
+  const resumeDraft = useCallback((book: Book): void => {
+    setState((prev) => ({
+      ...prev,
+      draftId: book.id,
+      title: book.title ?? prev.title,
+      author: book.author ?? prev.author,
+      category: book.category ?? prev.category,
+      modality: book.modality ?? prev.modality,
+      price: book.price !== undefined ? String(book.price) : prev.price,
+      neighborhood: book.neighborhood ?? prev.neighborhood,
+      condition: book.condition ?? prev.condition,
+      description: book.description ?? prev.description,
+      photoUrl: book.photoUrl ?? prev.photoUrl,
+      photos: book.photos ?? prev.photos,
+    }));
+  }, []);
+
+  const saveForLater = useCallback(
+    async (sessionUserId: string | null, step: number): Promise<boolean> => {
+      if (!sessionUserId) {
+        return false;
+      }
+      try {
+        const saved = await useCases.saveDraft(
+          { ...buildInput(), draftId: stateRef.current.draftId ?? undefined, draftStep: step },
+          sessionUserId,
+        );
+        setState((prev) => ({ ...prev, draftId: saved.id }));
+        return true;
+      } catch (error) {
+        setState((prev) => ({
+          ...prev,
+          error: error instanceof DomainError
+            ? error.message
+            : "Não foi possível salvar o rascunho. Tente novamente.",
+        }));
+        logger.error("Falha ao salvar rascunho do anúncio", error);
+        return false;
+      }
+    },
+    [buildInput, logger, useCases],
+  );
+
+  const loadServerDraft = useCallback(
+    async (draftId: string): Promise<number | null> => {
+      try {
+        const book = await useCases.getBookById(draftId);
+        if (book.status !== "draft") {
+          return null;
+        }
+        resumeDraft(book);
+        return book.draftStep ?? 1;
+      } catch (error) {
+        logger.error("Falha ao retomar rascunho do anúncio", error);
+        return null;
+      }
+    },
+    [logger, resumeDraft, useCases],
+  );
+
   const submit = useCallback(
     async (sessionUserId: string | null): Promise<Book | null> => {
       const guard = guardFormSubmit(rateLimiter, formKey("listing:create", sessionUserId));
@@ -320,28 +407,12 @@ export function useCreateListingViewModel(
       }
       setState((prev) => ({ ...prev, loading: true, error: null, success: false }));
 
-      const priceNum = state.modality === "sale" && state.price.trim()
-        ? Number(state.price.replace(",", "."))
-        : undefined;
-
+      const input = buildInput();
+      const draftId = stateRef.current.draftId;
       try {
-        const book = await useCases.createListing(
-          {
-            title: state.title,
-            author: state.author,
-            ...(state.category.trim() ? { category: state.category.trim() } : {}),
-            modality: state.modality,
-            price: priceNum,
-            city: "Piripiri",
-            state: "PI",
-            ...(state.neighborhood.trim() ? { neighborhood: state.neighborhood.trim() } : {}),
-            ...(state.condition ? { condition: state.condition } : {}),
-            ...(state.description.trim() ? { description: state.description.trim() } : {}),
-            ...(state.photoUrl.trim() ? { photoUrl: state.photoUrl.trim() } : {}),
-            ...(state.photos.length > 0 ? { photos: state.photos } : {}),
-          },
-          sessionUserId,
-        );
+        const book = draftId
+          ? await useCases.publishDraft(draftId, input, sessionUserId)
+          : await useCases.createListing(input, sessionUserId);
         await clearDraft();
         setState({ ...INITIAL_STATE, success: true });
         return book;
@@ -356,20 +427,11 @@ export function useCreateListingViewModel(
       }
     },
     [
-      state.title,
-      state.author,
-      state.category,
-      state.modality,
-      state.price,
-      state.neighborhood,
-      state.condition,
-      state.description,
-      state.photoUrl,
-      state.photos,
-      useCases,
-      rateLimiter,
-      logger,
+      buildInput,
       clearDraft,
+      logger,
+      rateLimiter,
+      useCases,
     ],
   );
 
@@ -399,6 +461,9 @@ export function useCreateListingViewModel(
       saveDraft,
       loadDraft,
       clearDraft,
+      saveForLater,
+      resumeDraft,
+      loadServerDraft,
       submit,
       reset,
     },

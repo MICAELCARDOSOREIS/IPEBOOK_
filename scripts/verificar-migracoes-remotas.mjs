@@ -600,6 +600,11 @@ export const MAPEAMENTO_MIGRACOES = {
       !(ctx.tabelas.v2_user_preferences?.colunasAusentes ?? []).includes('push_token'),
     detalhe: 'Coluna public.v2_user_preferences.push_token (ADR 0062)',
   },
+  '202610260002_rascunhos_anuncio.sql': {
+    titulo: 'Rascunhos de anúncio (status draft)',
+    validar: (ctx) => ctx.tabelas.v2_books?.existe,
+    detalhe: 'Coluna draft_step, CHECKs flexibilizados e políticas RLS de rascunho em v2_books (Spec 017)',
+  },
 };
 
 /**
