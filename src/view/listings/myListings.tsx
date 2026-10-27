@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
 import type { BookModality } from "@/model/entities/book";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useMyListingsViewModel } from "@/viewmodel/useMyListingsViewModel";
@@ -84,12 +85,13 @@ export function MyListings({
     { key: "concluded", label: "Concluídos" },
   ];
   const isIOS = Platform.OS === "ios";
+  const wideWeb = useIsWideWeb();
   const hasBooks = !state.loading && !state.error && state.books.length > 0;
 
   return (
     <SafeAreaView edges={["top", "left", "right"]} style={styles.page}>
       {/* Cabeçalho do Figma `05.04`–`05.08`: título em serifa, subtítulo e "+" para anunciar. */}
-      <View style={styles.header}>
+      <View style={[styles.header, wideWeb && styles.headerWide]}>
         {onBack ? (
           <Pressable
             accessibilityRole="button"
@@ -123,14 +125,18 @@ export function MyListings({
             accessibilityRole="button"
             accessibilityLabel="Anunciar livro"
             onPress={onNavigateToCreateListing}
-            style={styles.addButton}
+            style={wideWeb ? styles.addButtonWide : styles.addButton}
           >
-            <AppIcon name="add" size={24} color={colors.m3.onSecondaryContainer} />
+            {wideWeb ? (
+              <Text style={styles.addButtonWideText}>Anunciar livro</Text>
+            ) : (
+              <AppIcon name="add" size={24} color={colors.m3.onSecondaryContainer} />
+            )}
           </Pressable>
         ) : null}
       </View>
 
-      <View style={styles.content}>
+      <View style={[styles.content, wideWeb && styles.contentWide]}>
         {state.loading ? (
           <LoadingState label="Carregando seus anúncios" />
         ) : state.error ? (
@@ -423,6 +429,11 @@ function createStyles(colors: ColorPalette) {
       alignSelf: "center",
       paddingHorizontal: tokens.spacing[20],
     },
+    // Web larga (Figma `05.01`): coluna de 1280 px com 80 px de margem e botão "Anunciar livro" em texto.
+    headerWide: { width: "100%", maxWidth: 1440, alignSelf: "center", paddingHorizontal: 80, paddingTop: 32 },
+    contentWide: { maxWidth: 1440, paddingHorizontal: 80 },
+    addButtonWide: { height: 52, paddingHorizontal: 32, borderRadius: tokens.radius.full, alignItems: "center", justifyContent: "center", backgroundColor: colors.m3.primary },
+    addButtonWideText: { ...tokens.typography.labelLarge, color: colors.m3.onPrimary },
     scroll: { paddingBottom: tokens.spacing[32], gap: tokens.spacing[16] },
     statsRow: { flexDirection: "row", gap: tokens.spacing[8] },
     statCard: {

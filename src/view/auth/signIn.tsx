@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { AuthShell } from "@/view/auth/AuthShell";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
@@ -29,6 +31,7 @@ export default function SignIn({
 }: SignInProps = {}) {
   const [state, actions] = useAuthViewModel();
   const { colors } = useTheme();
+  const wideWeb = useIsWideWeb();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -47,10 +50,11 @@ export default function SignIn({
   };
 
   return (
+    <AuthShell>
     <SafeAreaView style={styles.page}>
       {onBack ? <TopAppBar title="Entrar com e-mail" onBack={onBack} /> : null}
       <ScrollView
-        contentContainerStyle={styles.centerContainer}
+        contentContainerStyle={[styles.centerContainer, wideWeb && { justifyContent: "center" }]}
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.content}>
@@ -80,6 +84,9 @@ export default function SignIn({
             onChangeText={setEmail}
             autoCapitalize="none"
             keyboardType="email-address"
+            autoComplete="email"
+            textContentType="emailAddress"
+            returnKeyType="next"
             editable={!state.loading}
             placeholder="voce@exemplo.com"
           />
@@ -89,6 +96,10 @@ export default function SignIn({
             value={password}
             onChangeText={setPassword}
             secureTextEntry
+            autoComplete="current-password"
+            textContentType="password"
+            returnKeyType="done"
+            onSubmitEditing={() => void handleSubmit()}
             editable={!state.loading}
           />
 
@@ -108,6 +119,7 @@ export default function SignIn({
         </View>
       </ScrollView>
     </SafeAreaView>
+    </AuthShell>
   );
 }
 

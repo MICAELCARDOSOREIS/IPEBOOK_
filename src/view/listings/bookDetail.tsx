@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useBookDetailViewModel } from "@/viewmodel/useBookDetailViewModel";
 import { usePublicProfileViewModel } from "@/viewmodel/usePublicProfileViewModel";
@@ -111,16 +112,61 @@ export default function BookDetail({
   const neighborhoodLabel = book?.neighborhood || "Centro";
   const primaryActionLabel = book ? PRIMARY_ACTION_LABEL[book.modality] : "";
   const insets = useSafeAreaInsets();
+  const wideWeb = useIsWideWeb();
   const heroColors = book ? modalityTag[book.modality] : null;
+
+  const actionBar = book && !state.loading ? (
+    <View style={[styles.bottomBar, wideWeb && styles.bottomBarWide]}>
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel="Compartilhar no WhatsApp"
+      accessibilityState={{ disabled: share.sharing }}
+      disabled={share.sharing}
+      onPress={() =>
+        void shareActions.shareToWhatsApp(book.id, {
+          title: book.title,
+          author: book.author,
+          modality: book.modality,
+          price: book.price,
+        })
+      }
+      style={styles.tonalButton}
+    >
+      <Text style={styles.tonalButtonText}>Compartilhar</Text>
+    </Pressable>
+    {book.status === "reserved" || (sessionUserId && book.ownerId !== sessionUserId) ? (
+      <View style={styles.primarySlot}>
+        {book.status === "reserved" ? (
+          <View style={styles.statusPill}>
+            <Text style={styles.reserved}>Reservado</Text>
+          </View>
+        ) : sessionUserId && book.ownerId !== sessionUserId ? (
+          negotiation.requestedListingIds.includes(book.id) ? (
+            <View style={styles.statusPill}>
+              <Text style={styles.requested}>Negociação solicitada</Text>
+            </View>
+          ) : (
+            <FilledButton
+              label={primaryActionLabel}
+              loading={negotiation.pendingListingId === book.id}
+              loadingLabel="Solicitando negociação"
+              onPress={() => void negotiationActions.request(book.id, sessionUserId)}
+            />
+          )
+        ) : null}
+      </View>
+    ) : null}
+  </View>
+  ) : null;
 
   return (
     <SafeAreaView edges={["left", "right"]} style={styles.page}>
-      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={wideWeb ? styles.scrollContentWide : styles.scrollContent} keyboardShouldPersistTaps="handled">
         {/* 1. Capa em destaque na cor da modalidade (Figma `03.01`–`03.03`), indo até a barra de status. */}
         <View
           style={[
             styles.hero,
-            { paddingTop: insets.top + tokens.spacing[8] },
+            wideWeb ? styles.heroWide : { paddingTop: insets.top + tokens.spacing[8] },
             heroColors ? { backgroundColor: heroColors.background } : null,
           ]}
         >
@@ -179,7 +225,7 @@ export default function BookDetail({
             <Text accessibilityRole="alert" style={styles.errorText}>{state.error}</Text>
           </View>
         ) : book ? (
-          <View style={styles.content}>
+          <View style={[styles.content, wideWeb && styles.contentWide]}>
             {/* 2. Título, autor, valor e etiqueta da modalidade */}
             <View style={styles.titleSection}>
               <Text accessibilityRole="header" style={styles.title}>{book.title}</Text>
@@ -193,6 +239,8 @@ export default function BookDetail({
                 </Text>
               </View>
             </View>
+
+            {wideWeb ? actionBar : null}
 
             {/* 3. Cartão da modalidade (troca e doação) */}
             {book.modality !== "sale" ? (
@@ -255,49 +303,9 @@ export default function BookDetail({
       </ScrollView>
 
       {/* 6. Barra fixa inferior: Compartilhar (tonal) + ação principal por modalidade */}
-      {book && !state.loading ? (
+      {book && !state.loading && !wideWeb ? (
         <SafeAreaView edges={["bottom"]} style={styles.bottomBarContainer}>
-          <View style={styles.bottomBar}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Compartilhar no WhatsApp"
-              accessibilityState={{ disabled: share.sharing }}
-              disabled={share.sharing}
-              onPress={() =>
-                void shareActions.shareToWhatsApp(book.id, {
-                  title: book.title,
-                  author: book.author,
-                  modality: book.modality,
-                  price: book.price,
-                })
-              }
-              style={styles.tonalButton}
-            >
-              <Text style={styles.tonalButtonText}>Compartilhar</Text>
-            </Pressable>
-            {book.status === "reserved" || (sessionUserId && book.ownerId !== sessionUserId) ? (
-              <View style={styles.primarySlot}>
-                {book.status === "reserved" ? (
-                  <View style={styles.statusPill}>
-                    <Text style={styles.reserved}>Reservado</Text>
-                  </View>
-                ) : sessionUserId && book.ownerId !== sessionUserId ? (
-                  negotiation.requestedListingIds.includes(book.id) ? (
-                    <View style={styles.statusPill}>
-                      <Text style={styles.requested}>Negociação solicitada</Text>
-                    </View>
-                  ) : (
-                    <FilledButton
-                      label={primaryActionLabel}
-                      loading={negotiation.pendingListingId === book.id}
-                      loadingLabel="Solicitando negociação"
-                      onPress={() => void negotiationActions.request(book.id, sessionUserId)}
-                    />
-                  )
-                ) : null}
-              </View>
-            ) : null}
-          </View>
+          {actionBar}
         </SafeAreaView>
       ) : null}
 
@@ -374,6 +382,11 @@ function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     page: { flex: 1, backgroundColor: colors.background },
     scrollContent: { paddingBottom: tokens.spacing[32] },
+    // Web larga (Figma `03.01`): capa à esquerda e cartão de ações à direita, com 48 px entre as colunas.
+    scrollContentWide: { flexDirection: "row", alignItems: "flex-start", gap: 48, width: "100%", maxWidth: 1440, alignSelf: "center", paddingHorizontal: 80, paddingTop: 32, paddingBottom: tokens.spacing[48] },
+    heroWide: { flex: 1.6, borderRadius: 28, paddingTop: tokens.spacing[16], minHeight: 420 },
+    contentWide: { flex: 1, maxWidth: 440, padding: 24, borderRadius: 20, borderWidth: 1, borderColor: colors.m3.outlineVariant, backgroundColor: colors.m3.surfaceContainerLow },
+    bottomBarWide: { paddingHorizontal: 0, paddingVertical: 0 },
     hero: {
       backgroundColor: colors.m3.surfaceContainerLow,
       borderBottomLeftRadius: 28,
