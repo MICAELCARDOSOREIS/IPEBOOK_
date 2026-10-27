@@ -14,6 +14,7 @@ import { AppIcon } from "@/view/components/AppIcon";
 import { FilledButton } from "@/view/components/FilledButton";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { OwnerListings } from "@/view/listings/ownerListings";
+import { UserRatingsPanel } from "@/view/listings/userRatingsPanel";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 
 function formatJoinedAt(joinedAt: string): string {
@@ -181,7 +182,14 @@ export function PublicProfile({ userId, onBack, onOpenChat, onReportListing, onR
               </Pressable>
             </View>
             ) : null}
-            {wideWeb ? <OwnerListings ownerId={userId} ownerName={profile.name} onOpenBook={onOpenBook} /> : null}
+            {wideWeb ? (
+              <View style={styles.wideBelow}>
+                <View style={styles.wideBelowMain}>
+                  <OwnerListings ownerId={userId} ownerName={profile.name} onOpenBook={onOpenBook} />
+                </View>
+                <UserRatingsPanel userId={userId} />
+              </View>
+            ) : null}
           </View>
         ) : null}
       </ScrollView>
@@ -255,6 +263,8 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
     container: {
       gap: tokens.spacing[16],
     },
+    wideBelow: { flexDirection: "row", alignItems: "flex-start", gap: tokens.spacing[24] },
+    wideBelowMain: { flex: 1 },
     identitySection: {
       alignItems: "center",
       gap: tokens.spacing[8],
