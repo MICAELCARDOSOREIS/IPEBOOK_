@@ -60,7 +60,7 @@ export default function ResetPassword({
         <View style={styles.content}>
           {state.linkExpired ? (
             <>
-              <IconBadge icon="error" tone="error" />
+              <IconBadge icon="error" tone="error" size="large" />
               <Text accessibilityRole="header" style={styles.title}>Link expirado.</Text>
               <Text style={styles.subtitle}>
                 Esse link de recuperação não é mais válido. Solicite um novo link para continuar.
@@ -77,7 +77,7 @@ export default function ResetPassword({
             </>
           ) : state.success ? (
             <>
-              <IconBadge icon="check" tone="action" />
+              <IconBadge icon="check" tone="action" size="large" />
               <Text accessibilityRole="header" style={styles.title}>
                 Tudo certo com seu acesso.
               </Text>
@@ -106,6 +106,9 @@ export default function ResetPassword({
                   if (validationError) setValidationError(null);
                 }}
                 secureTextEntry
+                autoComplete="new-password"
+                textContentType="newPassword"
+                returnKeyType="next"
                 editable={!state.loading}
                 helperText="Use uma senha que você não usa em outro lugar."
               />
@@ -118,6 +121,10 @@ export default function ResetPassword({
                   if (validationError) setValidationError(null);
                 }}
                 secureTextEntry
+                autoComplete="new-password"
+                textContentType="newPassword"
+                returnKeyType="done"
+                onSubmitEditing={() => void handleSubmit()}
                 editable={!state.loading}
               />
 

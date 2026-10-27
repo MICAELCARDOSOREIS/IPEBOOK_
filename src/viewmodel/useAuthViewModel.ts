@@ -164,7 +164,11 @@ export function useAuthViewModel(
           statusMessage: null,
         }));
       }
-      logger.error("Falha ao autenticar com Google", error);
+      if (error instanceof DomainError && error.message.toLowerCase().includes("cancelado")) {
+        logger.info("Login com Google cancelado pelo usuário");
+      } else {
+        logger.error("Falha ao autenticar com Google", error);
+      }
       return false;
     }
   }, [auth, logger]);
