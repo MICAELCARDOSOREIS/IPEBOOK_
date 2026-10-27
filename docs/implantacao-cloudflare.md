@@ -78,7 +78,9 @@ Após a conclusão da implantação pela Cloudflare:
 4. **Rotas Dinâmicas (F5 direto):** Acessar diretamente uma URL de anúncio (ex.: `https://ipebook.app/livro/fbb7e0a4-378d-4e9e-a61f-13589c381c8c`) e atualizar a página. O navegador deve exibir os detalhes do livro sem retornar erro 404 da CDN.
 5. **Tratamento de 404:** Acessar `https://ipebook.app/rota-inexistente-12345` e conferir a apresentação da tela de recurso não encontrado (`+not-found.html`) com status 404.
 6. **Autenticação:** Testar login ou cadastro com credenciais válidas e verificar persistência de sessão e permissões RLS.
-7. **Cabeçalhos HTTP:** Inspecionar resposta com `curl -I https://ipebook.app` e validar presença dos cabeçalhos `X-Content-Type-Options`, `X-Frame-Options` e `Content-Security-Policy`.
+7. **Rotas dinâmicas novas:** além de `/livro/<id>`, abrir direto `/conversa/<id>`, `/perfil/<id>` e `/denunciar-pessoa/<id>` (F5). Todas dependem de uma regra em `public/_redirects`; `npm run check:build-config` (também na CI) reprova a integração se alguma rota dinâmica de `src/app` ficar sem regra.
+8. **Câmera e APIs de livros:** conferir que o leitor de ISBN pede permissão de câmera (`Permissions-Policy: camera=(self)`) e que a busca por ISBN não é bloqueada pela CSP (`openlibrary.org`, `www.googleapis.com` e `covers.openlibrary.org` estão liberados em `public/_headers`).
+9. **Cabeçalhos HTTP:** Inspecionar resposta com `curl -I https://ipebook.app` e validar presença dos cabeçalhos `X-Content-Type-Options`, `X-Frame-Options` e `Content-Security-Policy`.
 
 ---
 

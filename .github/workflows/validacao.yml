@@ -29,6 +29,12 @@ jobs:
       - name: Verificar conformidade arquitetural (7 camadas MVVM)
         run: npm run check:architecture
 
+      - name: Verificar numeração de specs e ADRs
+        run: npm run check:numbering
+
+      - name: Verificar configuração de build e publicação Web
+        run: npm run check:build-config
+
       - name: Executar testes de banco e migrações SQL (PGlite)
         run: npm run test:sql
 
