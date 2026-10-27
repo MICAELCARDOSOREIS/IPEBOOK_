@@ -10,8 +10,10 @@ esperar o retorno.
 
 ## Decisão
 
-- **Nativo**: `signInWithOAuth` com `skipBrowserRedirect: true` e `redirectTo = Linking.createURL("/auth/callback")`
-  (`exp://<ip>:8081/--/auth/callback` no Expo Go, `ipebook://auth/callback` no app instalado), aberto por
+- **Nativo**: `signInWithOAuth` com `skipBrowserRedirect: true` e `redirectTo` = `Constants.experienceUrl` +
+  `/--/auth/callback` no Expo Go (`exp://<ip>:8081/--/auth/callback`) e `ipebook://auth/callback` no app instalado.
+  O `Linking.createURL` do SDK 58 devolvia `ipebook:///auth/callback` mesmo no Expo Go — esquema que o Expo Go
+  não abre e, sem host, recusado pela lista do Supabase (confirmado no `dumpsys` do Android). Aberto por
   `WebBrowser.openAuthSessionAsync` (`expo-web-browser`, incluído no Expo Go). A URL de retorno vai para
   `setSessionFromUrl`, que cria a sessão (tokens no fragmento ou código). Cancelar gera `AuthError`.
 - **Web**: inalterado — redireciona para `<origem>/auth/callback`, tratado pela rota existente.

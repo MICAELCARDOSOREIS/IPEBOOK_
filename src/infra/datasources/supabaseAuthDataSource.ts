@@ -162,11 +162,9 @@ export class SupabaseAuthDataSource implements IAuthDataSource {
       return current ?? { id: "pending", email: "", name: "Usuário Google" };
     }
 
-    // Nativo (Spec 085): o retorno usa o deep link do ambiente — `exp://…/--/auth/callback` no Expo Go e
-    // `ipebook://auth/callback` no app instalado. A sessão de autenticação do expo-web-browser abre o Google
-    // dentro do app e devolve a URL de retorno, em vez de deixar o login terminar no Chrome (no site).
-    const Linking = await import("expo-linking");
-    const redirectTo = Linking.createURL("/auth/callback");
+    // Nativo (Spec 085): a sessão de autenticação do expo-web-browser abre o Google e devolve a URL de
+    // retorno, em vez de deixar o login terminar no Chrome (no site).
+    const redirectTo = await nativeAuthRedirect();
     const { data, error } = await authClient.signInWithOAuth({
       provider: "google",
       options: { redirectTo, skipBrowserRedirect: true },
@@ -277,4 +275,18 @@ export class SupabaseAuthDataSource implements IAuthDataSource {
     }
     await this.client.auth.signOut();
   }
+}
+
+/**
+ * Endereço de retorno do login social no nativo (Spec 085). No Expo Go o `Linking.createURL` do SDK 58
+ * devolve `ipebook:///auth/callback`, que o Expo Go não abre e que, sem host, o Supabase não aceita — por isso
+ * o login voltava para o site. Expo Go usa a URL do próprio projeto (`exp://<ip>:8081/--/auth/callback`);
+ * o app instalado usa `ipebook://auth/callback`, com host, liberado em Redirect URLs.
+ */
+async function nativeAuthRedirect(): Promise<string> {
+  const { default: Constants, ExecutionEnvironment } = await import("expo-constants");
+  if (Constants.executionEnvironment === ExecutionEnvironment.StoreClient && Constants.experienceUrl) {
+    return `${Constants.experienceUrl}/--/auth/callback`;
+  }
+  return "ipebook://auth/callback";
 }

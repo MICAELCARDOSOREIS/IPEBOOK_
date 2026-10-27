@@ -6,7 +6,13 @@ import type { SupabaseAppClient } from "@/infra/supabaseClient";
 
 const openAuthSessionAsync = vi.fn();
 vi.mock("expo-web-browser", () => ({ openAuthSessionAsync: (...args: unknown[]) => openAuthSessionAsync(...args) }));
-vi.mock("expo-linking", () => ({ createURL: (path: string) => `exp://192.168.1.230:8081/--${path}` }));
+// SDK 58: no Expo Go, createURL devolvia o esquema do app ("ipebook:///…"), que o Expo Go não abre;
+// por isso o retorno vem de Constants.experienceUrl.
+const constants = vi.hoisted(() => ({ executionEnvironment: "storeClient", experienceUrl: "exp://192.168.1.230:8081" }));
+vi.mock("expo-constants", () => ({
+  default: constants,
+  ExecutionEnvironment: { Bare: "bare", Standalone: "standalone", StoreClient: "storeClient" },
+}));
 
 function client() {
   const auth = {
@@ -47,6 +53,19 @@ describe("Login com Google no app nativo (Spec 085)", () => {
     );
     expect(auth.setSession).toHaveBeenCalledWith({ access_token: "AT", refresh_token: "RT" });
     expect(user).toEqual({ id: "u1", email: "ana@exemplo.com", name: "Ana" });
+  });
+
+  it("no app instalado volta por ipebook://auth/callback, com host, aceito pela lista do Supabase", async () => {
+    Platform.OS = "android";
+    constants.executionEnvironment = "standalone";
+    const { auth, ds } = client();
+    openAuthSessionAsync.mockResolvedValue({ type: "success", url: "ipebook://auth/callback#access_token=AT&refresh_token=RT" });
+    await ds.signInWithGoogle();
+    expect(auth.signInWithOAuth).toHaveBeenCalledWith({
+      provider: "google",
+      options: { redirectTo: "ipebook://auth/callback", skipBrowserRedirect: true },
+    });
+    constants.executionEnvironment = "storeClient";
   });
 
   it("cancelar no navegador não cria sessão e avisa", async () => {
