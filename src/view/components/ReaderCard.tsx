@@ -55,7 +55,7 @@ export function ReaderCard({
           <Text style={styles.headerTitle}>{eyebrow}</Text>
           <Text style={styles.headerSub}>Biblioteca Comunitária de Piripiri</Text>
         </View>
-        <IpeMark size={40} />
+        <IpeMark size={32} />
       </View>
 
       <View style={styles.body}>
@@ -63,7 +63,7 @@ export function ReaderCard({
           {photoUrl ? (
             <Image source={{ uri: photoUrl }} accessible={false} resizeMode="cover" style={styles.photo} />
           ) : (
-            <IpeMark size={64} />
+            <IpeMark size={52} />
           )}
         </View>
 
@@ -90,7 +90,7 @@ export function ReaderCard({
               ) : null}
             </View>
           ) : null}
-          <Text style={styles.subtitle} numberOfLines={2}>
+          <Text style={styles.subtitle} numberOfLines={1}>
             {subtitle}
           </Text>
           {footer}
@@ -128,15 +128,15 @@ function createStyles(colors: ColorPalette) {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
-      paddingVertical: tokens.spacing[12],
+      paddingVertical: tokens.spacing[8],
       paddingHorizontal: tokens.spacing[16],
       backgroundColor: colors.ipe.trunk,
     },
     headerTexts: { flex: 1, gap: 2 },
     headerTitle: {
       fontFamily: fontFamily.brand,
-      fontSize: 18,
-      lineHeight: 24,
+      fontSize: 16,
+      lineHeight: 20,
       fontWeight: "700",
       letterSpacing: 0.4,
       color: colors.ipe.container,
@@ -152,12 +152,13 @@ function createStyles(colors: ColorPalette) {
     },
     body: {
       flexDirection: "row",
-      gap: tokens.spacing[16],
-      padding: tokens.spacing[16],
+      gap: tokens.spacing[12],
+      paddingHorizontal: tokens.spacing[16],
+      paddingVertical: tokens.spacing[12],
     },
     photoFrame: {
-      width: 96,
-      height: 124,
+      width: 72,
+      height: 92,
       borderRadius: 10,
       borderWidth: 3,
       borderColor: colors.ipe.bloom,
@@ -167,7 +168,7 @@ function createStyles(colors: ColorPalette) {
       backgroundColor: colors.ipe.container,
     },
     photo: { width: "100%", height: "100%" },
-    fields: { flex: 1, gap: tokens.spacing[8] },
+    fields: { flex: 1, gap: tokens.spacing[4] },
     label: {
       fontSize: 10,
       lineHeight: 14,
@@ -179,8 +180,8 @@ function createStyles(colors: ColorPalette) {
     },
     name: {
       fontFamily: fontFamily.brand,
-      fontSize: 22,
-      lineHeight: 28,
+      fontSize: 20,
+      lineHeight: 24,
       fontWeight: "700",
       color: colors.ipe.onContainer,
     },
@@ -192,13 +193,13 @@ function createStyles(colors: ColorPalette) {
       alignItems: "center",
       gap: 2,
       marginHorizontal: tokens.spacing[16],
-      paddingTop: tokens.spacing[8],
-      paddingBottom: tokens.spacing[12],
+      paddingTop: tokens.spacing[4],
+      paddingBottom: tokens.spacing[8],
       borderTopWidth: 1,
       borderTopColor: colors.ipe.trunk,
       borderStyle: "dashed",
     },
-    barcode: { flexDirection: "row", height: 36, alignItems: "stretch" },
+    barcode: { flexDirection: "row", height: 24, alignItems: "stretch" },
     bar: { backgroundColor: colors.ipe.onContainer },
     barcodeNumber: {
       fontSize: 10,
