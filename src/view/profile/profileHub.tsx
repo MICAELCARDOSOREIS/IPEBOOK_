@@ -1,3 +1,4 @@
+import * as Linking from "expo-linking";
 import { useMemo, useState, useEffect } from "react";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -91,6 +92,7 @@ export default function ProfileHub({
   const activeBooks = myListingsState.books.filter((b) => b.status === "available").length;
   const reservedBooks = myListingsState.books.filter((b) => b.status === "reserved").length;
   const totalPublications = myListingsState.books.length;
+  const instagramHandle = profile.socialHandle?.trim().replace(/^@+/, "") || null;
   const completedTrocas = profile.completedNegotiations;
   const ratingText = profile.ratingCount > 0 ? (profile.averageRating ?? 0).toFixed(1) : "—";
 
@@ -214,6 +216,32 @@ export default function ProfileHub({
                         ? `★ ${profile.averageRating?.toFixed(1)} (${profile.ratingCount} ${profile.ratingCount > 1 ? "avaliações" : "avaliação"})`
                         : "Sem avaliações ainda"
                     } · ${profile.neighborhood ? `${profile.neighborhood}, Piripiri` : "Piripiri, PI"}`}
+                    showMark={false}
+                    footer={
+                      /* Instagram dentro do cartão (Spec 081): abre o perfil; sem @, leva ao Editar perfil */
+                      instagramHandle ? (
+                        <Pressable
+                          accessibilityRole="link"
+                          accessibilityLabel={`Abrir Instagram @${instagramHandle}`}
+                          hitSlop={8}
+                          onPress={() => void Linking.openURL(`https://instagram.com/${instagramHandle}`)}
+                          style={styles.instagramPill}
+                        >
+                          <AppIcon name="camera" size={14} color={colors.ipe.onContainer} />
+                          <Text style={styles.instagramPillText}>{`@${instagramHandle}`}</Text>
+                        </Pressable>
+                      ) : (
+                        <Pressable
+                          accessibilityRole="button"
+                          hitSlop={8}
+                          onPress={onNavigateToEditProfile}
+                          style={styles.instagramPill}
+                        >
+                          <AppIcon name="add" size={14} color={colors.ipe.onContainer} />
+                          <Text style={styles.instagramPillText}>Adicionar Instagram</Text>
+                        </Pressable>
+                      )
+                    }
                   />
 
                   {/* Botão Outline "Editar perfil" (Figma 07.01 nó 604:8677: 345x48px, rx 24px, stroke #D3CCC2, sem ícone) */}
@@ -230,11 +258,11 @@ export default function ProfileHub({
                   <View style={styles.statsContainer}>
                     <View style={styles.statBox}>
                       <Text style={styles.statNumber}>{totalPublications}</Text>
-                      <Text style={styles.statLabel}>publicações</Text>
+                      <Text style={styles.statLabel}>{totalPublications === 1 ? "publicação" : "publicações"}</Text>
                     </View>
                     <View style={styles.statBox}>
                       <Text style={styles.statNumber}>{completedTrocas}</Text>
-                      <Text style={styles.statLabel}>trocas</Text>
+                      <Text style={styles.statLabel}>{completedTrocas === 1 ? "troca" : "trocas"}</Text>
                     </View>
                     <View style={styles.statBox}>
                       <Text style={styles.statNumber}>{ratingText}</Text>
@@ -398,6 +426,19 @@ function createStyles(colors: ColorPalette) {
       ...tokens.typography.bodyMedium,
       color: colors.m3.onSurfaceVariant,
     },
+    instagramPill: {
+      flexDirection: "row",
+      alignSelf: "flex-start",
+      alignItems: "center",
+      gap: tokens.spacing[4],
+      marginTop: tokens.spacing[8],
+      minHeight: 32,
+      paddingHorizontal: tokens.spacing[12],
+      borderRadius: tokens.radius.full,
+      borderWidth: 1,
+      borderColor: colors.ipe.onContainer,
+    },
+    instagramPillText: { ...tokens.typography.labelMedium, fontWeight: "600", color: colors.ipe.onContainer },
     editProfileButton: {
       flexDirection: "row",
       alignItems: "center",
