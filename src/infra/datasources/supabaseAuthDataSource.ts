@@ -278,15 +278,14 @@ export class SupabaseAuthDataSource implements IAuthDataSource {
 }
 
 /**
- * Endereço de retorno do login social no nativo (Spec 085). No Expo Go o `Linking.createURL` do SDK 58
- * devolve `ipebook:///auth/callback`, que o Expo Go não abre e que, sem host, o Supabase não aceita — por isso
- * o login voltava para o site. Expo Go usa a URL do próprio projeto (`exp://<ip>:8081/--/auth/callback`);
- * o app instalado usa `ipebook://auth/callback`, com host, liberado em Redirect URLs.
+ * Endereço de retorno do login social no nativo (Spec 085). No SDK 58, `Linking.createURL` devolvia
+ * `ipebook:///auth/callback` no Expo Go deste projeto (sem `expoGoConfig.developer` nem `expoConfig.hostUri`): o
+ * Expo Go não abre esse esquema e, sem host, o Supabase o recusa e manda o login para o site. A origem do bundle
+ * (mesma fonte que o `createURL` usa) é o sinal confiável: servido por HTTP (Expo Go) o retorno é
+ * `exp://<ip>:8081/--/auth/callback`; carregado do disco (app instalado), `ipebook://auth/callback`.
  */
 async function nativeAuthRedirect(): Promise<string> {
-  const { default: Constants, ExecutionEnvironment } = await import("expo-constants");
-  if (Constants.executionEnvironment === ExecutionEnvironment.StoreClient && Constants.experienceUrl) {
-    return `${Constants.experienceUrl}/--/auth/callback`;
-  }
-  return "ipebook://auth/callback";
+  const { getBundleOrigin } = await import("expo/internal/bundle-origin");
+  const origin = getBundleOrigin();
+  return origin ? `exp://${origin.replace(/^https?:\/\//, "")}/--/auth/callback` : "ipebook://auth/callback";
 }
