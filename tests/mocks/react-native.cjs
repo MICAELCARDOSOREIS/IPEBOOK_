@@ -83,7 +83,7 @@ const SectionList = React.forwardRef((props, ref) => {
   }
   return React.createElement(
     View,
-    { ref },
+    { ref, testID: props.testID, onRefresh: props.onRefresh, refreshing: props.refreshing },
     sections.map((section, sectionIndex) =>
       React.createElement(
         React.Fragment,
@@ -156,6 +156,23 @@ const Platform = {
   select: (obj) => obj.ios || obj.default,
 };
 
+/** Emula o teclado nativo: registra listeners e permite disparar eventos nos testes. */
+const keyboardListeners = new Map();
+const Keyboard = {
+  addListener: (type, handler) => {
+    const set = keyboardListeners.get(type) || new Set();
+    set.add(handler);
+    keyboardListeners.set(type, set);
+    return { remove: () => set.delete(handler) };
+  },
+  dismiss: () => {},
+};
+function __emitKeyboardEvent(type, height, screenY = 0) {
+  const event = height === undefined ? undefined : { endCoordinates: { height, screenY } };
+  for (const handler of keyboardListeners.get(type) || []) handler(event);
+}
+const useWindowDimensions = () => ({ width: 360, height: 800, scale: 1, fontScale: 1 });
+
 let mockColorScheme = "light";
 const useColorScheme = () => mockColorScheme;
 function __setMockColorScheme(scheme) {
@@ -169,6 +186,9 @@ class MockAnimatedValue {
   setValue(v) {
     this.value = v;
   }
+  __getValue() {
+    return this.value;
+  }
   interpolate() {
     return this;
   }
@@ -176,11 +196,14 @@ class MockAnimatedValue {
 
 const Animated = {
   Value: MockAnimatedValue,
-  timing: (_value, _config) => ({
+  // Em teste, o timing aplica o alvo de imediato: a animação é síncrona e previsível.
+  timing: (value, config) => ({
     start: (cb) => {
+      if (value && value.setValue) value.setValue(config && config.toValue != null ? config.toValue : 0);
       if (cb) cb({ finished: true });
     },
     stop: () => {},
+    stopAnimation: () => {},
   }),
   loop: (_anim) => ({
     start: (cb) => {
@@ -214,6 +237,9 @@ module.exports = {
   StyleSheet,
   AccessibilityInfo,
   Platform,
+  Keyboard,
+  __emitKeyboardEvent,
+  useWindowDimensions,
   Animated,
   useColorScheme,
   __setMockColorScheme,

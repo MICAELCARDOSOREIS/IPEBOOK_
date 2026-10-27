@@ -83,7 +83,7 @@ export const SectionList = React.forwardRef<any, any>((props: any, ref: any) => 
   }
   return React.createElement(
     View,
-    { ref },
+    { ref, testID: props.testID, onRefresh: props.onRefresh, refreshing: props.refreshing },
     sections.map((section: any, sectionIndex: number) =>
       React.createElement(
         React.Fragment,
@@ -202,6 +202,9 @@ class MockAnimatedValue {
   setValue(v: number) {
     this.value = v;
   }
+  __getValue() {
+    return this.value;
+  }
   interpolate() {
     return this;
   }
@@ -209,11 +212,14 @@ class MockAnimatedValue {
 
 export const Animated = {
   Value: MockAnimatedValue,
-  timing: (_value: any, _config: any) => ({
+  // Em teste, o timing aplica o alvo de imediato: a animação é síncrona e previsível.
+  timing: (value: any, config: any) => ({
     start: (cb?: (result: { finished: boolean }) => void) => {
+      value?.setValue?.(config?.toValue ?? 0);
       if (cb) cb({ finished: true });
     },
     stop: () => {},
+    stopAnimation: () => {},
   }),
   loop: (_anim: any) => ({
     start: (cb?: (result: { finished: boolean }) => void) => {
