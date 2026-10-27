@@ -1,14 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import type { BookModality } from "@/model/entities/book";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useMyListingsViewModel } from "@/viewmodel/useMyListingsViewModel";
 import { useReceivedRequestsViewModel } from "@/viewmodel/useReceivedRequestsViewModel";
 import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
 import { tokens, fontFamily, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
-import { AppIcon } from "@/view/components/AppIcon";
+import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
 import { ErrorState } from "@/view/components/ErrorState";
+import { FilledButton } from "@/view/components/FilledButton";
 import { LoadingState } from "@/view/components/LoadingState";
 import { OfflineState } from "@/view/components/OfflineState";
 import { ShelfRow } from "@/view/listings/shelfRow";
@@ -65,10 +67,25 @@ export function MyListings({
     (item) => item.request.status === "rejected" || (item.request.status as string) === "completed",
   );
 
-  const showFab = state.books.length > 0 && onNavigateToCreateListing;
+  const pendingProposals = proposals.filter((item) => item.request.status === "pending");
+  const attention = pendingProposals[0];
+  const countBy = (modality: BookModality) => state.books.filter((b) => b.modality === modality).length;
+  const stats: { key: BookModality; count: number; label: string }[] = [
+    { key: "sale", count: countBy("sale"), label: "à venda" },
+    { key: "trade", count: countBy("trade"), label: "em troca" },
+    { key: "donation", count: countBy("donation"), label: "para doar" },
+  ];
+  const tabs: { key: ShelfTab; label: string; badge?: number }[] = [
+    { key: "listings", label: "Anúncios" },
+    { key: "proposals", label: "Propostas", badge: proposals.length },
+    { key: "concluded", label: "Concluídos" },
+  ];
+  const isIOS = Platform.OS === "ios";
+  const hasBooks = !state.loading && !state.error && state.books.length > 0;
 
   return (
-    <SafeAreaView style={styles.page}>
+    <SafeAreaView edges={["top", "left", "right"]} style={styles.page}>
+      {/* Cabeçalho do Figma `05.04`–`05.08`: título em serifa, subtítulo e "+" para anunciar. */}
       <View style={styles.header}>
         {onBack ? (
           <Pressable
@@ -76,14 +93,27 @@ export function MyListings({
             accessibilityLabel="Voltar"
             hitSlop={12}
             onPress={onBack}
-            style={styles.backButton}
+            style={styles.iconButton}
           >
-            <AppIcon name="back" size={24} color={colors.text} />
+            <AppIcon name="back" size={24} color={colors.m3.onSurface} />
           </Pressable>
         ) : null}
-        <Text accessibilityRole="header" style={styles.heroTitle}>
-          Minha estante
-        </Text>
+        <View style={styles.headerText}>
+          <Text accessibilityRole="header" style={styles.heroTitle}>
+            Estante
+          </Text>
+          <Text style={styles.heroSubtitle}>Seus livros em Piripiri</Text>
+        </View>
+        {hasBooks && onNavigateToCreateListing ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Anunciar livro"
+            onPress={onNavigateToCreateListing}
+            style={styles.addButton}
+          >
+            <AppIcon name="add" size={24} color={colors.m3.onSecondaryContainer} />
+          </Pressable>
+        ) : null}
       </View>
 
       <View style={styles.content}>
@@ -101,122 +131,183 @@ export function MyListings({
             onNavigateToHelp={onNavigateToHelp}
           />
         ) : (
-          <ScrollView
-            contentContainerStyle={[styles.scroll, showFab ? styles.scrollWithFab : null]}
-            showsVerticalScrollIndicator={false}
-          >
-            {/* Abas Material 3 com indicador ativo e divisória (Figma 05.01 nó 25:392) */}
-            <View testID="my-listings-tablist" accessibilityRole="tablist" style={styles.tabsContainer}>
-              <View style={styles.tabsRow}>
-                <Pressable
-                  accessibilityRole="tab"
-                  accessibilityState={{ selected: activeTab === "listings" }}
-                  onPress={() => setActiveTab("listings")}
-                  style={styles.tab}
+          <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+            {/* Resumo por modalidade */}
+            <View style={styles.statsRow}>
+              {stats.map((stat) => (
+                <View
+                  key={stat.key}
+                  accessible
+                  accessibilityLabel={`${stat.count} ${stat.label}`}
+                  style={[styles.statCard, { backgroundColor: colors.badge[stat.key].background }]}
                 >
-                  <Text
-                    style={[
-                      styles.tabText,
-                      activeTab === "listings" ? styles.activeTabText : styles.inactiveTabText,
-                    ]}
-                  >
-                    {`Anúncios (${state.books.length})`}
-                  </Text>
-                  {activeTab === "listings" && <View style={styles.activeIndicator} />}
-                </Pressable>
+                  <Text style={[styles.statCount, { color: colors.badge[stat.key].text }]}>{stat.count}</Text>
+                  <Text style={[styles.statLabel, { color: colors.badge[stat.key].text }]}>{stat.label}</Text>
+                </View>
+              ))}
+            </View>
 
-                <Pressable
-                  accessibilityRole="tab"
-                  accessibilityState={{ selected: activeTab === "proposals" }}
-                  onPress={() => setActiveTab("proposals")}
-                  style={styles.tab}
-                >
-                  <Text
+            {/* Abas: segmented buttons M3 no Android; controle segmentado do Figma no iPhone. */}
+            <View
+              testID="my-listings-tablist"
+              accessibilityRole="tablist"
+              style={isIOS ? styles.segmentTrackIOS : styles.segmentRowAndroid}
+            >
+              {tabs.map((tab, index) => {
+                const selected = activeTab === tab.key;
+                const a11yLabel = tab.badge ? `${tab.label}, ${tab.badge} em aberto` : tab.label;
+                return (
+                  <Pressable
+                    key={tab.key}
+                    accessibilityRole="tab"
+                    accessibilityLabel={a11yLabel}
+                    accessibilityState={{ selected }}
+                    onPress={() => setActiveTab(tab.key)}
                     style={[
-                      styles.tabText,
-                      activeTab === "proposals" ? styles.activeTabText : styles.inactiveTabText,
+                      isIOS ? styles.segmentIOS : styles.segmentAndroid,
+                      !isIOS && index > 0 ? styles.segmentAndroidJoined : null,
+                      !isIOS && index === 0 ? styles.segmentAndroidFirst : null,
+                      !isIOS && index === tabs.length - 1 ? styles.segmentAndroidLast : null,
+                      selected ? (isIOS ? styles.segmentIOSSelected : styles.segmentAndroidSelected) : null,
                     ]}
                   >
-                    {`Propostas (${proposals.length})`}
-                  </Text>
-                  {activeTab === "proposals" && <View style={styles.activeIndicator} />}
-                </Pressable>
-
-                <Pressable
-                  accessibilityRole="tab"
-                  accessibilityState={{ selected: activeTab === "concluded" }}
-                  onPress={() => setActiveTab("concluded")}
-                  style={styles.tab}
-                >
-                  <Text
-                    style={[
-                      styles.tabText,
-                      activeTab === "concluded" ? styles.activeTabText : styles.inactiveTabText,
-                    ]}
-                  >
-                    Concluídos
-                  </Text>
-                  {activeTab === "concluded" && <View style={styles.activeIndicator} />}
-                </Pressable>
-              </View>
-              <View style={styles.tabsDivider} />
+                    {!isIOS && selected ? (
+                      <AppIcon name="check" size={16} color={colors.m3.onSecondaryContainer} />
+                    ) : null}
+                    <Text
+                      numberOfLines={1}
+                      style={[styles.segmentText, selected ? styles.segmentTextSelected : null]}
+                    >
+                      {tab.label}
+                    </Text>
+                    {tab.badge ? (
+                      <View style={styles.segmentBadge}>
+                        <Text style={styles.segmentBadgeText}>{tab.badge}</Text>
+                      </View>
+                    ) : null}
+                  </Pressable>
+                );
+              })}
             </View>
 
             {activeTab === "listings" ? (
-              <MyListingsListingsTab
-                books={state.books}
-                statusFilter={statusFilter}
-                onStatusFilterChange={setStatusFilter}
-                onNavigateToManageListing={onNavigateToManageListing}
-              />
+              <>
+                {attention ? (
+                  <View style={styles.attentionCard}>
+                    <Text style={styles.sectionTitle}>Precisa da sua atenção</Text>
+                    <View style={styles.attentionRow}>
+                      <View style={styles.attentionAvatar}>
+                        <Text style={styles.attentionAvatarText}>
+                          {initials(attention.requesterName ?? COMMUNITY_MEMBER)}
+                        </Text>
+                      </View>
+                      <View style={styles.attentionText}>
+                        <Text style={styles.attentionTitle}>
+                          {`${attention.requesterName ?? COMMUNITY_MEMBER} ${REQUEST_VERB[attention.listing.modality]}`}
+                        </Text>
+                        <Text style={styles.attentionSubtitle} numberOfLines={1}>
+                          {attention.listing.title}
+                        </Text>
+                      </View>
+                    </View>
+                    <View style={styles.attentionActions}>
+                      <FilledButton label="Ver proposta" onPress={() => onNavigateToReceivedRequests?.()} />
+                    </View>
+                  </View>
+                ) : null}
+                <MyListingsListingsTab
+                  books={state.books}
+                  statusFilter={statusFilter}
+                  onStatusFilterChange={setStatusFilter}
+                  onNavigateToManageListing={onNavigateToManageListing}
+                />
+              </>
             ) : activeTab === "proposals" ? (
-              <MyListingsProposalsTab
-                proposals={proposals}
-                onNavigateToReceivedRequests={onNavigateToReceivedRequests}
-                onNavigateToNegotiationDetail={onNavigateToNegotiationDetail}
+              proposals.length === 0 ? (
+                <ShelfEmptyState
+                  icon="swap"
+                  title="Nenhuma proposta agora."
+                  body="Quando alguém se interessar por um livro seu, a proposta aparece aqui."
+                  onShowListings={() => setActiveTab("listings")}
+                />
+              ) : (
+                <MyListingsProposalsTab
+                  proposals={proposals}
+                  onNavigateToReceivedRequests={onNavigateToReceivedRequests}
+                  onNavigateToNegotiationDetail={onNavigateToNegotiationDetail}
+                />
+              )
+            ) : concludedProposals.length === 0 ? (
+              <ShelfEmptyState
+                icon="check"
+                title="Nada concluído ainda."
+                body="Vendas, trocas e doações finalizadas ficam guardadas aqui."
+                onShowListings={() => setActiveTab("listings")}
               />
             ) : (
-              <View style={styles.concludedTab}>
-                {concludedProposals.length === 0 ? (
-                  <View style={styles.concludedEmpty}>
-                    <View style={styles.concludedIconCircle}>
-                      <AppIcon name="shelf" size={36} color={colors.m3.onSecondaryContainer} />
-                    </View>
-                    <Text style={styles.concludedEmptyTitle}>Nenhum anúncio concluído ainda</Text>
-                    <Text style={styles.concludedEmptySubtitle}>
-                      Quando uma troca, venda ou doação for finalizada, o histórico do livro aparecerá aqui.
-                    </Text>
-                  </View>
-                ) : (
-                  concludedProposals.map((item) => (
-                    <ShelfRow
-                      key={item.request.id}
-                      book={item.listing}
-                      summary={`${item.requesterName ?? COMMUNITY_MEMBER} · Concluído · ${item.listing.modality === "sale" ? "Venda" : item.listing.modality === "trade" ? "Troca" : "Doação"}`}
-                      accessibilityLabel={`Ver histórico de ${item.listing.title}`}
-                      onPress={() => onNavigateToNegotiationDetail?.(item.request.id)}
-                    />
-                  ))
-                )}
+              <View style={styles.listCard}>
+                <Text style={styles.sectionTitle}>Concluídos</Text>
+                {concludedProposals.map((item) => (
+                  <ShelfRow
+                    key={item.request.id}
+                    book={item.listing}
+                    summary={`${item.requesterName ?? COMMUNITY_MEMBER} · Concluído · ${MODALITY_LABEL[item.listing.modality]}`}
+                    accessibilityLabel={`Ver histórico de ${item.listing.title}`}
+                    onPress={() => onNavigateToNegotiationDetail?.(item.request.id)}
+                  />
+                ))}
               </View>
             )}
           </ScrollView>
         )}
       </View>
-
-      {/* Extended FAB Material 3 (Figma 05.01 nó 25:425) */}
-      {showFab ? (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Anunciar livro"
-          onPress={onNavigateToCreateListing}
-          style={styles.fab}
-        >
-          <AppIcon name="add" size={20} color={colors.m3.onSecondaryContainer} />
-          <Text style={styles.fabText}>Anunciar livro</Text>
-        </Pressable>
-      ) : null}
     </SafeAreaView>
+  );
+}
+
+
+const MODALITY_LABEL: Record<BookModality, string> = { sale: "Venda", trade: "Troca", donation: "Doação" };
+
+const REQUEST_VERB: Record<BookModality, string> = {
+  sale: "quer comprar",
+  trade: "quer trocar",
+  donation: "quer receber",
+};
+
+function initials(name: string): string {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("");
+}
+
+/** Estado vazio das abas (Figma `05.05` e `05.06`): ícone em círculo, manchete em serifa e volta aos anúncios. */
+function ShelfEmptyState({
+  icon,
+  title,
+  body,
+  onShowListings,
+}: {
+  icon: AppIconName;
+  title: string;
+  body: string;
+  onShowListings: () => void;
+}) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+  return (
+    <View style={styles.emptyState}>
+      <View style={styles.emptyIcon}>
+        <AppIcon name={icon} size={32} color={colors.m3.onSecondaryContainer} />
+      </View>
+      <Text style={styles.emptyTitle}>{title}</Text>
+      <Text style={styles.emptyBody}>{body}</Text>
+      <View style={styles.emptyAction}>
+        <FilledButton label="Ver meus anúncios" onPress={onShowListings} />
+      </View>
+    </View>
   );
 }
 
@@ -271,20 +362,31 @@ function createStyles(colors: ColorPalette) {
       alignItems: "center",
       paddingHorizontal: tokens.spacing[20],
       paddingTop: tokens.spacing[12],
-      paddingBottom: tokens.spacing[8],
+      paddingBottom: tokens.spacing[12],
       gap: tokens.spacing[8],
     },
-    backButton: {
+    iconButton: {
       minHeight: tokens.accessibility.touchTarget,
       minWidth: tokens.accessibility.touchTarget,
       justifyContent: "center",
       alignItems: "center",
     },
+    headerText: { flex: 1 },
     heroTitle: {
       fontFamily: fontFamily.brand,
-      fontSize: 34,
-      lineHeight: 41,
-      color: colors.brandBrown,
+      fontSize: 32,
+      lineHeight: 40,
+      fontWeight: "700",
+      color: colors.m3.onSurface,
+    },
+    heroSubtitle: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
+    addButton: {
+      width: tokens.accessibility.touchTarget,
+      height: tokens.accessibility.touchTarget,
+      borderRadius: tokens.radius.full,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: colors.m3.secondaryContainer,
     },
     content: {
       flex: 1,
@@ -293,101 +395,122 @@ function createStyles(colors: ColorPalette) {
       alignSelf: "center",
       paddingHorizontal: tokens.spacing[20],
     },
-    tabsContainer: {
-      marginBottom: tokens.spacing[16],
+    scroll: { paddingBottom: tokens.spacing[32], gap: tokens.spacing[16] },
+    statsRow: { flexDirection: "row", gap: tokens.spacing[8] },
+    statCard: {
+      flex: 1,
+      borderRadius: 16,
+      paddingHorizontal: tokens.spacing[12],
+      paddingVertical: tokens.spacing[12],
+      gap: 2,
     },
-    tabsRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-    },
-    tab: {
+    statCount: { fontFamily: fontFamily.brand, fontSize: 24, lineHeight: 30, fontWeight: "700" },
+    statLabel: { fontSize: 13, lineHeight: 18 },
+    // Android: segmented buttons M3 (40 dp, contorno, seleção em secondaryContainer com ✓).
+    segmentRowAndroid: { flexDirection: "row" },
+    segmentAndroid: {
       flex: 1,
       minHeight: tokens.accessibility.touchTarget,
-      justifyContent: "center",
-      alignItems: "center",
-      paddingVertical: tokens.spacing[12],
-      position: "relative",
-    },
-    tabText: {
-      ...tokens.typography.labelMedium,
-    },
-    activeTabText: {
-      color: colors.m3.primary,
-      fontWeight: "600",
-    },
-    inactiveTabText: {
-      color: colors.m3.onSurfaceVariant,
-      fontWeight: "400",
-    },
-    activeIndicator: {
-      position: "absolute",
-      bottom: 0,
-      left: tokens.spacing[12],
-      right: tokens.spacing[12],
-      height: 3,
-      backgroundColor: colors.m3.primary,
-      borderTopLeftRadius: 3,
-      borderTopRightRadius: 3,
-    },
-    tabsDivider: {
-      height: 1,
-      backgroundColor: colors.m3.outlineVariant,
-      width: "100%",
-    },
-    scroll: {
-      paddingBottom: tokens.spacing[24],
-    },
-    scrollWithFab: {
-      paddingBottom: tokens.spacing[64] + tokens.spacing[32],
-    },
-    fab: {
-      position: "absolute",
-      right: tokens.spacing[20],
-      bottom: tokens.spacing[24],
       flexDirection: "row",
       alignItems: "center",
-      gap: tokens.spacing[8],
-      minHeight: 48,
-      paddingHorizontal: tokens.spacing[16],
-      borderRadius: tokens.radius.medium,
-      backgroundColor: colors.m3.secondaryContainer,
-      elevation: 3,
+      justifyContent: "center",
+      gap: tokens.spacing[4],
+      paddingHorizontal: tokens.spacing[8],
+      borderWidth: 1,
+      borderColor: colors.m3.outline,
     },
-    fabText: {
-      ...tokens.typography.labelMedium,
-      color: colors.m3.onSecondaryContainer,
-      fontWeight: "600",
+    segmentAndroidJoined: { marginLeft: -1 },
+    segmentAndroidFirst: { borderTopLeftRadius: tokens.radius.full, borderBottomLeftRadius: tokens.radius.full },
+    segmentAndroidLast: { borderTopRightRadius: tokens.radius.full, borderBottomRightRadius: tokens.radius.full },
+    segmentAndroidSelected: { backgroundColor: colors.m3.secondaryContainer },
+    // iPhone: controle segmentado do Figma (trilho cinza, segmento selecionado claro e elevado).
+    segmentTrackIOS: {
+      flexDirection: "row",
+      padding: 2,
+      borderRadius: 9,
+      backgroundColor: colors.m3.surfaceContainerHighest,
     },
-    concludedTab: {
-      paddingVertical: tokens.spacing[16],
+    segmentIOS: {
+      flex: 1,
+      minHeight: 32,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: tokens.spacing[4],
+      borderRadius: 7,
+    },
+    segmentIOSSelected: {
+      backgroundColor: colors.m3.surfaceContainerLowest,
+      shadowColor: "#000",
+      shadowOpacity: 0.12,
+      shadowRadius: 4,
+      shadowOffset: { width: 0, height: 2 },
+    },
+    segmentText: { ...tokens.typography.labelMedium, color: colors.m3.onSurface },
+    segmentTextSelected: { fontWeight: "600", color: colors.m3.onSecondaryContainer },
+    segmentBadge: {
+      minWidth: 18,
+      height: 18,
+      borderRadius: 9,
+      paddingHorizontal: 4,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: colors.error,
+    },
+    segmentBadgeText: { fontSize: 11, lineHeight: 14, fontWeight: "700", color: colors.m3.onPrimary },
+    sectionTitle: { ...tokens.typography.titleMedium, color: colors.m3.onSurface },
+    attentionCard: {
       gap: tokens.spacing[12],
+      padding: tokens.spacing[16],
+      borderRadius: 16,
+      backgroundColor: colors.m3.surfaceContainerLow,
     },
-    concludedEmpty: {
-      paddingTop: tokens.spacing[32] + tokens.spacing[8],
+    attentionRow: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[12] },
+    attentionAvatar: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: colors.m3.secondaryContainer,
+    },
+    attentionAvatarText: { ...tokens.typography.labelMedium, fontWeight: "600", color: colors.m3.onSecondaryContainer },
+    attentionText: { flex: 1, gap: 2 },
+    attentionTitle: { ...tokens.typography.bodyLarge, fontWeight: "600", color: colors.m3.onSurface },
+    attentionSubtitle: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
+    attentionActions: { alignSelf: "flex-end", minWidth: 160 },
+    listCard: {
+      gap: tokens.spacing[4],
+      paddingHorizontal: tokens.spacing[16],
+      paddingTop: tokens.spacing[16],
+      paddingBottom: tokens.spacing[4],
+      borderRadius: 16,
+      backgroundColor: colors.m3.surfaceContainerLow,
+    },
+    emptyState: {
       alignItems: "center",
       gap: tokens.spacing[8],
+      paddingTop: tokens.spacing[40],
       paddingHorizontal: tokens.spacing[16],
     },
-    concludedIconCircle: {
+    emptyIcon: {
       width: 72,
       height: 72,
       borderRadius: 36,
-      backgroundColor: colors.m3.secondaryContainer,
-      justifyContent: "center",
       alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: colors.m3.secondaryContainer,
       marginBottom: tokens.spacing[8],
     },
-    concludedEmptyTitle: {
-      ...tokens.typography.titleMedium,
-      color: colors.text,
+    emptyTitle: {
+      fontFamily: fontFamily.brand,
+      fontSize: 24,
+      lineHeight: 32,
+      fontWeight: "700",
+      color: colors.m3.onSurface,
       textAlign: "center",
     },
-    concludedEmptySubtitle: {
-      ...tokens.typography.bodyMedium,
-      color: colors.secondaryText,
-      textAlign: "center",
-      maxWidth: 320,
-    },
+    emptyBody: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant, textAlign: "center", maxWidth: 320 },
+    emptyAction: { marginTop: tokens.spacing[16], alignSelf: "stretch" },
   });
 }

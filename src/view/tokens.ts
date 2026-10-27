@@ -25,6 +25,15 @@ export const colors = {
   brandBrown: "#58331F",
   brandAmber: "#F2BC45",
 
+  // Ipê da marca (Spec 078): cartão de leitor e ilustração do ipê brotando do livro (assets/logo-clean.png).
+  ipe: {
+    container: "#FCEFCB",
+    onContainer: "#4A2B16",
+    bloom: "#F7C21E",
+    bloomDeep: "#F29A1A",
+    trunk: "#58331F",
+  },
+
   // Estados
   success: "#2F6B4F",
   error: "#B3261E",
@@ -110,6 +119,15 @@ export const darkColors: ColorPalette = {
   gold: "#D99719",
   brandBrown: "#e2b48c",
   brandAmber: "#f2bc45",
+
+  // Ipê da marca (Spec 078): mesma árvore, cartão em âmbar escuro para manter contraste.
+  ipe: {
+    container: "#3b2c12",
+    onContainer: "#fbe6b4",
+    bloom: "#F7C21E",
+    bloomDeep: "#F29A1A",
+    trunk: "#e2b48c",
+  },
 
   // Estados
   success: "#9fd4b3",

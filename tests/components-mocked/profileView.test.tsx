@@ -96,6 +96,15 @@ describe("Profile (Spec 006 US4, Issue #55)", () => {
     expect(update).toHaveBeenCalledWith({ name: "Ana Paula", photoUrl: undefined, socialHandle: undefined });
   });
 
+  it("mostra a pré-visualização do cartão de leitor e a atualiza ao digitar o nome (Spec 078, CA4)", async () => {
+    setup({ id: "ana", email: "ana@exemplo.com" });
+    const screen = await renderProfile();
+    expect(screen.getByText("Assim seu cartão aparece")).toBeDefined();
+    expect(screen.getByLabelText("Cartão de leitor de Ana")).toBeDefined();
+    await act(async () => { fireEvent.changeText(screen.getByDisplayValue("Ana"), "Ana Paula"); });
+    expect(screen.getByLabelText("Cartão de leitor de Ana Paula")).toBeDefined();
+  });
+
   it("mostra confirmação após salvar", async () => {
     setup({ id: "ana", email: "ana@exemplo.com" });
     const screen = await renderProfile();

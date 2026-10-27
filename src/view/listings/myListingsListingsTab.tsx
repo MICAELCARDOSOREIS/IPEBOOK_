@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import type { Book, BookModality, BookStatus } from "@/model/entities/book";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
@@ -64,7 +64,7 @@ export function MyListingsListingsTab({
 
   return (
     <>
-      <View style={styles.filterRow}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
         {filterChips.map((chip) => {
           const selected = statusFilter === chip.key;
           return (
@@ -82,7 +82,7 @@ export function MyListingsListingsTab({
             </Pressable>
           );
         })}
-      </View>
+      </ScrollView>
       {filteredBooks.length === 0 ? (
         <View style={styles.empty}>
           <IconBadge icon="shelf" tone="neutral" />
@@ -95,15 +95,20 @@ export function MyListingsListingsTab({
           </View>
         </View>
       ) : (
-        filteredBooks.map((book) => (
-          <ShelfRow
-            key={book.id}
-            book={book}
-            summary={listingSummary(book)}
-            accessibilityLabel={`Gerenciar anúncio de ${book.title}`}
-            onPress={() => onNavigateToManageListing?.(book.id)}
-          />
-        ))
+        <View style={styles.listCard}>
+          <Text style={styles.listTitle}>
+            {`${filteredBooks.length} ${filteredBooks.length === 1 ? "anúncio" : "anúncios"}`}
+          </Text>
+          {filteredBooks.map((book) => (
+            <ShelfRow
+              key={book.id}
+              book={book}
+              summary={listingSummary(book)}
+              accessibilityLabel={`Gerenciar anúncio de ${book.title}`}
+              onPress={() => onNavigateToManageListing?.(book.id)}
+            />
+          ))}
+        </View>
       )}
       {/* `05.01` traz a dica de uso depois da lista, não antes dela. */}
       <Text style={styles.orientationHint}>
@@ -117,9 +122,8 @@ function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     filterRow: {
       flexDirection: "row",
-      flexWrap: "wrap",
       gap: tokens.spacing[8],
-      marginBottom: tokens.spacing[8],
+      paddingBottom: tokens.spacing[8],
     },
     filterChip: {
       minHeight: tokens.accessibility.touchTarget,
@@ -132,15 +136,15 @@ function createStyles(colors: ColorPalette) {
       borderColor: colors.m3.outlineVariant,
     },
     filterChipSelected: {
-      backgroundColor: colors.action,
-      borderColor: colors.action,
+      backgroundColor: colors.m3.secondaryContainer,
+      borderColor: colors.m3.secondaryContainer,
     },
     filterChipText: {
       ...tokens.typography.labelMedium,
       color: colors.text,
     },
     filterChipTextSelected: {
-      color: colors.surface,
+      color: colors.m3.onSecondaryContainer,
       fontWeight: "600",
     },
     empty: { paddingTop: tokens.spacing[48], alignItems: "center", gap: tokens.spacing[12] },
@@ -150,6 +154,14 @@ function createStyles(colors: ColorPalette) {
       textAlign: "center",
     },
     emptyAction: { marginTop: tokens.spacing[16], width: "100%" },
+    listCard: {
+      paddingHorizontal: tokens.spacing[16],
+      paddingTop: tokens.spacing[16],
+      paddingBottom: tokens.spacing[4],
+      borderRadius: 16,
+      backgroundColor: colors.m3.surfaceContainerLow,
+    },
+    listTitle: { ...tokens.typography.titleMedium, color: colors.m3.onSurface },
     orientationHint: {
       ...tokens.typography.bodyMedium,
       color: colors.secondaryText,
