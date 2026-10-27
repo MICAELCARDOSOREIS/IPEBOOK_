@@ -16,7 +16,6 @@ import { IconBadge } from "@/view/components/IconBadge";
 import { Tag } from "@/view/components/Tag";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { AppIcon } from "@/view/components/AppIcon";
-import { NegotiationChatModal } from "@/view/requests/NegotiationChatModal";
 import { NegotiationRatingModal } from "@/view/requests/NegotiationRatingModal";
 import { useNegotiationRatingViewModel } from "@/viewmodel/useNegotiationRatingViewModel";
 
@@ -27,6 +26,8 @@ export type RequestDetailProps = {
   onNavigateToBookDetail?: (bookId: string) => void;
   /** Abre `06.04`/`06.13` para combinar ou reagendar (Spec 052). */
   onScheduleMeeting?: () => void;
+  /** Abre a conversa em tela cheia (`/conversa/[id]`, Spec 082). */
+  onOpenChat?: (requestId: string) => void;
   focusKey?: number;
 };
 
@@ -40,6 +41,7 @@ export function RequestDetail({
   onBack,
   onNavigateToBookDetail,
   onScheduleMeeting,
+  onOpenChat,
   focusKey,
 }: RequestDetailProps) {
   const [state, actions] = useRequestDetailViewModel(requestId, sessionUserId);
@@ -47,7 +49,6 @@ export function RequestDetail({
   const styles = useMemo(() => createStyles(colors), [colors]);
   const detail = state.detail;
   const [mapErrors, setMapErrors] = useState<Record<string, string>>({});
-  const [chatModalVisible, setChatModalVisible] = useState(false);
   const [ratingModalVisible, setRatingModalVisible] = useState(false);
   const [meeting, setMeeting] = useState<Meeting | null>(null);
   const handleMeetingChange = useCallback((value: Meeting | null) => setMeeting(value), []);
@@ -227,7 +228,7 @@ export function RequestDetail({
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel={`Abrir conversa com ${detail.counterpartName ?? COMMUNITY_MEMBER}`}
-                  onPress={() => setChatModalVisible(true)}
+                  onPress={() => onOpenChat?.(requestId)}
                   style={styles.chatButton}
                 >
                   <AppIcon name="chat" size={18} color={colors.action} />
@@ -349,15 +350,6 @@ export function RequestDetail({
         </View>
       </ScrollView>
 
-      {detail ? (
-        <NegotiationChatModal
-          visible={chatModalVisible}
-          requestId={requestId}
-          sessionUserId={sessionUserId}
-          counterpartName={detail.counterpartName ?? COMMUNITY_MEMBER}
-          onClose={() => setChatModalVisible(false)}
-        />
-      ) : null}
 
       {detail ? (
         <NegotiationRatingModal
@@ -388,6 +380,7 @@ export type RequestDetailScreenProps = {
   onRequireSignIn?: () => void;
   onNavigateToBookDetail?: (bookId: string) => void;
   onScheduleMeeting?: () => void;
+  onOpenChat?: (requestId: string) => void;
   focusKey?: number;
 };
 
@@ -397,6 +390,7 @@ export default function RequestDetailScreen({
   onRequireSignIn,
   onNavigateToBookDetail,
   onScheduleMeeting,
+  onOpenChat,
   focusKey,
 }: RequestDetailScreenProps) {
   const [authState] = useAuthViewModel();
@@ -416,6 +410,7 @@ export default function RequestDetailScreen({
       onBack={onBack}
       onNavigateToBookDetail={onNavigateToBookDetail}
       onScheduleMeeting={onScheduleMeeting}
+      onOpenChat={onOpenChat}
       focusKey={focusKey}
     />
   );

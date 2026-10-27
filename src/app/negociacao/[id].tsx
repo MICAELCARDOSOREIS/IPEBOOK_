@@ -16,6 +16,7 @@ export default function NegociacaoDetalheRoute() {
       onRequireSignIn={() => router.replace("/entrar")}
       onNavigateToBookDetail={(bookId) => router.push(`/livro/${bookId}`)}
       onScheduleMeeting={() => router.push(`/negociacao/${id}/encontro` as never)}
+      onOpenChat={(requestId) => router.push(`/conversa/${requestId}` as never)}
     />
   );
 }

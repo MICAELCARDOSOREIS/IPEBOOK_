@@ -6,7 +6,7 @@ export default function MeusPedidosRoute() {
   return (
     <ConversationsScreen
       onRequireSignIn={() => router.replace("/entrar")}
-      onOpenNegotiation={(id) => router.push(`/negociacao/${id}`)}
+      onOpenChat={(id) => router.push(`/conversa/${id}` as never)}
       onOpenReceivedRequests={() => router.push("/pedidos-recebidos")}
       onOpenListing={(id) => router.push(`/livro/${id}`)}
       onExplore={() => router.push("/pesquisa")}

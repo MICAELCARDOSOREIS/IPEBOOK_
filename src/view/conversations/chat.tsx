@@ -1,0 +1,290 @@
+import { useEffect, useMemo, useRef } from "react";
+import {
+  ActivityIndicator,
+  FlatList,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
+import { useNegotiationChatViewModel } from "@/viewmodel/useNegotiationChatViewModel";
+import { useRequestDetailViewModel } from "@/viewmodel/useRequestDetailViewModel";
+import { buildChatTimeline, formatBubbleTime, type ChatTimelineItem } from "@/viewmodel/chatTimeline";
+import { tokens, type ColorPalette } from "@/view/tokens";
+import { useTheme } from "@/view/theme/ThemeProvider";
+import { AppIcon } from "@/view/components/AppIcon";
+import { BookCover } from "@/view/components/BookCover";
+import { Chip } from "@/view/components/Chip";
+import { ErrorState } from "@/view/components/ErrorState";
+import { Tag } from "@/view/components/Tag";
+import { TopAppBar } from "@/view/components/TopAppBar";
+
+const COMMUNITY_MEMBER = "Pessoa da comunidade";
+const SUGGESTIONS = [
+  "O livro ainda está disponível?",
+  "Podemos combinar num ponto seguro?",
+  "Qual horário fica bom para você?",
+];
+
+export type ChatProps = {
+  requestId: string;
+  sessionUserId: string;
+  onBack?: () => void;
+  /** "Combinar": abre a negociação para marcar o encontro (`/negociacao/[id]`). */
+  onOpenNegotiation?: (requestId: string) => void;
+};
+
+/** Conversa em tela cheia, Figma `06.02 · Conversa com Ana Paula` (Spec 082). */
+export function Chat({ requestId, sessionUserId, onBack, onOpenNegotiation }: ChatProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+  const [detailState] = useRequestDetailViewModel(requestId, sessionUserId);
+  const [state, actions] = useNegotiationChatViewModel(requestId, sessionUserId);
+  const listRef = useRef<FlatList<ChatTimelineItem>>(null);
+
+  const detail = detailState.detail;
+  const name = detail?.counterpartName ?? COMMUNITY_MEMBER;
+  const timeline = useMemo(() => buildChatTimeline(state.messages), [state.messages]);
+  const canSend = state.inputText.trim().length > 0 && !state.isSending;
+
+  // Ao abrir e a cada mensagem nova, a última fica visível (Spec 082).
+  useEffect(() => {
+    if (timeline.length > 0) listRef.current?.scrollToEnd?.({ animated: true });
+  }, [timeline.length]);
+
+  const renderItem = ({ item }: { item: ChatTimelineItem }) => {
+    if (item.kind === "day") {
+      return (
+        <View style={styles.dayRow}>
+          <Text style={styles.dayLabel}>{item.label}</Text>
+        </View>
+      );
+    }
+    const mine = item.message.senderId === sessionUserId;
+    const time = formatBubbleTime(item.message.createdAt);
+    return (
+      <View
+        accessible
+        accessibilityLabel={`${mine ? "Você" : name} às ${time}: ${item.message.content}`}
+        style={[styles.bubble, mine ? styles.bubbleMine : styles.bubbleOther]}
+      >
+        <Text style={styles.bubbleText}>{item.message.content}</Text>
+        <Text style={styles.bubbleTime}>{time}</Text>
+      </View>
+    );
+  };
+
+  return (
+    <SafeAreaView edges={["top", "left", "right", "bottom"]} style={styles.page}>
+      <TopAppBar title={name} onBack={onBack ?? (() => {})} />
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+        {detail ? (
+          <View style={styles.bookCard}>
+            <BookCover id={detail.book.id} title={detail.book.title} photoUrl={detail.book.photoUrl} variant="list" />
+            <View style={styles.bookText}>
+              <Text style={styles.bookTitle} numberOfLines={1}>
+                {detail.book.title}
+              </Text>
+              <Tag variant={detail.book.modality} />
+            </View>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Combinar encontro na negociação"
+              hitSlop={8}
+              onPress={() => onOpenNegotiation?.(requestId)}
+              style={styles.combine}
+            >
+              <Text style={styles.combineText}>Combinar</Text>
+            </Pressable>
+          </View>
+        ) : null}
+
+        {state.isLoading ? (
+          <View style={styles.center}>
+            <ActivityIndicator color={colors.action} accessibilityLabel="Carregando mensagens" />
+          </View>
+        ) : state.error ? (
+          <ErrorState message={state.error} onRetry={() => void actions.reload()} />
+        ) : timeline.length === 0 ? (
+          <View style={styles.empty}>
+            <View style={styles.emptyIcon}>
+              <AppIcon name="chat" size={28} color={colors.m3.onSecondaryContainer} />
+            </View>
+            <Text style={styles.emptyTitle}>Comece a conversa</Text>
+            <Text style={styles.emptyBody}>Combine pelo chat e encontre em um ponto seguro de Piripiri.</Text>
+            <View style={styles.suggestions}>
+              {SUGGESTIONS.map((text) => (
+                <Chip key={text} label={text} size="compact" selected={false} onPress={() => actions.setInputText(text)} />
+              ))}
+            </View>
+          </View>
+        ) : (
+          <FlatList
+            ref={listRef}
+            data={timeline}
+            keyExtractor={(item) => item.key}
+            renderItem={renderItem}
+            contentContainerStyle={styles.list}
+            onContentSizeChange={() => listRef.current?.scrollToEnd?.({ animated: false })}
+          />
+        )}
+
+        {state.sendError ? (
+          <View accessibilityRole="alert" style={styles.sendError}>
+            <Text style={styles.sendErrorText}>{state.sendError}</Text>
+            <Pressable accessibilityRole="button" onPress={() => void actions.retryLastMessage()} hitSlop={8}>
+              <Text style={styles.retryText}>Reenviar</Text>
+            </Pressable>
+          </View>
+        ) : null}
+
+        <View style={styles.composer}>
+          <TextInput
+            accessibilityLabel="Campo de mensagem"
+            value={state.inputText}
+            onChangeText={actions.setInputText}
+            placeholder="Escreva uma mensagem"
+            placeholderTextColor={colors.m3.onSurfaceVariant}
+            multiline
+            maxLength={1000}
+            style={styles.input}
+          />
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Enviar mensagem"
+            accessibilityState={{ disabled: !canSend }}
+            disabled={!canSend}
+            onPress={() => void actions.sendMessage()}
+            style={[styles.send, canSend ? styles.sendActive : null]}
+          >
+            {state.isSending ? (
+              <ActivityIndicator color={colors.m3.onPrimary} />
+            ) : (
+              <AppIcon name="send" size={22} color={canSend ? colors.m3.onPrimary : colors.m3.onSurfaceVariant} />
+            )}
+          </Pressable>
+        </View>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
+  );
+}
+
+export type ChatScreenProps = Omit<ChatProps, "sessionUserId"> & { onRequireSignIn?: () => void };
+
+export default function ChatScreen({ onRequireSignIn, ...props }: ChatScreenProps) {
+  const [authState] = useAuthViewModel();
+  useEffect(() => {
+    if (!authState.loading && !authState.user) onRequireSignIn?.();
+  }, [authState.loading, authState.user, onRequireSignIn]);
+  if (authState.loading || !authState.user) return null;
+  return <Chat sessionUserId={authState.user.id} {...props} />;
+}
+
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+    page: { flex: 1, backgroundColor: colors.background },
+    flex: { flex: 1 },
+    bookCard: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[12],
+      marginHorizontal: tokens.spacing[16],
+      marginBottom: tokens.spacing[8],
+      padding: tokens.spacing[12],
+      borderRadius: 16,
+      backgroundColor: colors.m3.surfaceContainer,
+    },
+    bookText: { flex: 1, gap: tokens.spacing[6], alignItems: "flex-start" },
+    bookTitle: { ...tokens.typography.bodyLarge, fontWeight: "500", color: colors.m3.onSurface },
+    combine: { minHeight: tokens.accessibility.touchTarget, justifyContent: "center", paddingHorizontal: tokens.spacing[8] },
+    combineText: { ...tokens.typography.labelMedium, fontWeight: "600", color: colors.m3.primary },
+    center: { flex: 1, alignItems: "center", justifyContent: "center" },
+    list: { paddingHorizontal: tokens.spacing[16], paddingVertical: tokens.spacing[8], gap: tokens.spacing[12] },
+    dayRow: { alignItems: "center", paddingVertical: tokens.spacing[4] },
+    dayLabel: {
+      fontSize: 12,
+      lineHeight: 16,
+      fontWeight: "500",
+      color: colors.m3.onSurfaceVariant,
+      paddingHorizontal: tokens.spacing[12],
+      paddingVertical: 2,
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.m3.surfaceContainer,
+      overflow: "hidden",
+    },
+    bubble: {
+      maxWidth: "78%",
+      paddingHorizontal: tokens.spacing[12],
+      paddingTop: tokens.spacing[8],
+      paddingBottom: tokens.spacing[6],
+      borderRadius: 18,
+      gap: 2,
+    },
+    bubbleMine: { alignSelf: "flex-end", backgroundColor: colors.m3.secondaryContainer, borderBottomRightRadius: 6 },
+    bubbleOther: { alignSelf: "flex-start", backgroundColor: colors.m3.surfaceContainerHigh, borderBottomLeftRadius: 6 },
+    bubbleText: { ...tokens.typography.bodyLarge, color: colors.m3.onSurface },
+    bubbleTime: { fontSize: 11, lineHeight: 14, color: colors.m3.onSurfaceVariant },
+    empty: { flex: 1, alignItems: "center", justifyContent: "center", gap: tokens.spacing[8], padding: tokens.spacing[24] },
+    emptyIcon: {
+      width: 64,
+      height: 64,
+      borderRadius: 32,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: colors.m3.secondaryContainer,
+    },
+    emptyTitle: { ...tokens.typography.titleMedium, color: colors.m3.onSurface },
+    emptyBody: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant, textAlign: "center", maxWidth: 300 },
+    suggestions: { flexDirection: "row", flexWrap: "wrap", justifyContent: "center", gap: tokens.spacing[8], marginTop: tokens.spacing[8] },
+    sendError: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: tokens.spacing[12],
+      marginHorizontal: tokens.spacing[16],
+      paddingHorizontal: tokens.spacing[12],
+      paddingVertical: tokens.spacing[8],
+      borderRadius: 12,
+      backgroundColor: colors.errorContainer,
+    },
+    sendErrorText: { flex: 1, ...tokens.typography.bodyMedium, color: colors.error },
+    retryText: { ...tokens.typography.labelMedium, fontWeight: "600", color: colors.error },
+    composer: {
+      flexDirection: "row",
+      alignItems: "flex-end",
+      gap: tokens.spacing[8],
+      paddingHorizontal: tokens.spacing[16],
+      paddingVertical: tokens.spacing[12],
+      backgroundColor: colors.m3.surfaceContainer,
+    },
+    input: {
+      flex: 1,
+      minHeight: 48,
+      maxHeight: 120,
+      paddingHorizontal: tokens.spacing[16],
+      paddingVertical: tokens.spacing[12],
+      borderRadius: 24,
+      borderWidth: 1,
+      borderColor: colors.m3.outline,
+      backgroundColor: colors.background,
+      color: colors.m3.onSurface,
+      ...tokens.typography.bodyLarge,
+    },
+    send: {
+      width: 48,
+      height: 48,
+      borderRadius: 24,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    sendActive: { backgroundColor: colors.m3.primary },
+  });
+}

@@ -86,6 +86,17 @@ describe("tela de Detalhes da Negociação (ISO/IEC 25010 - Usabilidade e Acessi
     expect(screen.queryByText("comprador-1")).toBeNull();
   });
 
+  it("Abrir conversa leva à conversa em tela cheia (Spec 082, CA5)", async () => {
+    mockViewModel({ detail: fakeDetail, loading: false, error: null });
+    const onOpenChat = vi.fn();
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<RequestDetail requestId="req-1" sessionUserId="vendedor-1" onOpenChat={onOpenChat} />);
+    });
+    await act(async () => { fireEvent.press(screen.getByLabelText(/^Abrir conversa com/)); });
+    expect(onOpenChat).toHaveBeenCalledWith("req-1");
+  });
+
   it("renderiza cabeçalho e informações completas do acordo", async () => {
     mockViewModel({ detail: fakeDetail, loading: false, error: null });
     const onNavigateToBookDetail = vi.fn();
