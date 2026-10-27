@@ -33,6 +33,7 @@ describe("ReaderCard e IpeMark (Spec 078)", () => {
         photoUrl="https://cdn/ana.jpg"
         cardNumber="IPE 000123"
         memberSince="out/2026"
+        showBarcode
         footer={<></>}
       />,
     );
@@ -44,6 +45,11 @@ describe("ReaderCard e IpeMark (Spec 078)", () => {
     expect(screen.getAllByText("IPE 000123").length).toBe(1);
     expect(screen.getAllByText("IPE 000123", { includeHiddenElements: true }).length).toBe(2);
     expect(screen.getByText("out/2026")).toBeDefined();
+  });
+
+  it("sem showBarcode o código de barras não aparece e o número fica só nos campos (Spec 092)", async () => {
+    const screen = await render(<ReaderCard name="Ana" subtitle="x" cardNumber="IPE 000123" />);
+    expect(screen.getAllByText("IPE 000123", { includeHiddenElements: true }).length).toBe(1);
   });
 
   it("sem número, data nem foto mostra só o essencial, com o ipê na moldura (Spec 092)", async () => {
