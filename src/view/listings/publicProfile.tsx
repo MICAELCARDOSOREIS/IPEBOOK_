@@ -5,6 +5,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useChatWithUser } from "@/viewmodel/useChatWithUser";
 import { useProfileSafetyViewModel } from "@/viewmodel/useProfileSafetyViewModel";
+import { normalizeInstagramHandle } from "@/model/validators/instagramValidator";
 import { ProfileSafetySheet } from "@/view/listings/profileSafetySheet";
 import { usePublicProfileViewModel } from "@/viewmodel/usePublicProfileViewModel";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
@@ -51,7 +52,8 @@ export function PublicProfile({ userId, onBack, onOpenChat, onReportListing, onR
   const [safety, safetyActions] = useProfileSafetyViewModel(auth.user?.id ?? null, userId);
   const chat = useChatWithUser(auth.user?.id ?? null, userId, (requestId) => onOpenChat?.(requestId));
   const profile = state.profile;
-  const instagramHandle = profile?.socialHandle?.trim().replace(/^@+/, "") || null;
+  // Só exibe o link quando o valor gravado respeita o padrão do Instagram (regra do domínio).
+  const instagramHandle = normalizeInstagramHandle(profile?.socialHandle)?.slice(1) ?? null;
 
   const chatButtonLabel = useMemo(() => {
     if (!profile?.name) return "Conversar";
