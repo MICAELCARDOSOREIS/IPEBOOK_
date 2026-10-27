@@ -14,6 +14,7 @@ export default defineConfig({
       "expo-camera": fileURLToPath(new URL("./tests/mocks/expo-camera.ts", import.meta.url)),
       "expo-constants": fileURLToPath(new URL("./tests/mocks/expo-constants.ts", import.meta.url)),
       "expo-image-picker": fileURLToPath(new URL("./tests/mocks/expo-image-picker.ts", import.meta.url)),
+      "expo-image-manipulator": fileURLToPath(new URL("./tests/mocks/expo-image-manipulator.ts", import.meta.url)),
       "expo-notifications": fileURLToPath(new URL("./tests/mocks/expo-notifications.ts", import.meta.url)),
     },
   },

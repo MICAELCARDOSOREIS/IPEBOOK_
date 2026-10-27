@@ -1,0 +1,28 @@
+name: Manter Supabase ativo
+
+# O plano gratuito pausa o projeto após 7 dias sem uso (Spec 087).
+# Uma consulta real ao banco a cada 2 dias conta como atividade.
+on:
+  schedule:
+    - cron: "17 9 */2 * *"
+  workflow_dispatch:
+
+jobs:
+  consultar:
+    name: Consultar o banco
+    runs-on: ubuntu-latest
+    steps:
+      - name: Consultar um livro pela API pública
+        env:
+          SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_KEY" ]; then
+            echo "::error::Cadastre os segredos EXPO_PUBLIC_SUPABASE_URL e EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY no repositório."
+            exit 1
+          fi
+          status=$(curl -sS -o /dev/null -w "%{http_code}" \
+            "$SUPABASE_URL/rest/v1/v2_books?select=id&limit=1" \
+            -H "apikey: $SUPABASE_KEY" -H "Authorization: Bearer $SUPABASE_KEY")
+          echo "Resposta do Supabase: HTTP $status"
+          test "$status" = "200"

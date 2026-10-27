@@ -2,7 +2,11 @@
 
 Documento consolidado de continuidade técnica e produto do Ipebook (Piripiri, PI).
 
-Conferência atual: **2026-10-26** (84 specs e 65 ADRs numerados, 186 arquivos e 1.374 testes automatizados 100% passando).
+Conferência atual: **2026-10-26** (87 specs e 65 ADRs numerados, 186 arquivos e 1.385 testes automatizados 100% passando).
+
+**Fotos menores e Supabase sempre ativo (2026-10-26, Spec 087):** as fotos passam a ser reduzidas para 1080 px antes do envio (`expo-image-manipulator`), em vez de chegar até 1,5 MB, e o workflow `manter-supabase-ativo.yml` consulta o banco a cada 2 dias para o plano gratuito não pausar o projeto. **Pendente: cadastrar os segredos no GitHub e conferir o envio de foto no aparelho.**
+
+**Conversas e notificações em tempo real (2026-10-26, Spec 086):** nenhuma tabela estava na publicação `supabase_realtime`, então a assinatura do chat nunca recebia mensagens. A migração `202610260003` publica mensagens, notificações e pedidos (a RLS filtra o que cada pessoa recebe); a central de notificações e a lista de Conversas recarregam sozinhas, sem piscar. O perfil público também passou a abrir o Instagram ao tocar no @ e a esconder "Conversar"/"Denunciar" no próprio perfil. Validado em 1.381 testes; **pendente aplicar a migração no Supabase remoto e conferir em dois aparelhos**.
 
 **Foto da outra pessoa e encontro mais leve (2026-10-26, Spec 084):** corrigido o avatar que mostrava o ipê mesmo quando a pessoa tinha foto — `getRequestDetail` passou a devolver `counterpartPhotoUrl`, os recebidos `requesterPhotoUrl` e as Conversas buscam nome e foto de quem anunciou. Antes do encontro, "Concluir negociação" fica neutro com o atalho "Já fizemos a entrega" (o botão principal volta depois do encontro); os pontos seguros viraram linhas tocáveis com "Rota". Validado em 1.374 testes e no Galaxy A16.
 
