@@ -120,6 +120,7 @@ function createDataSources(): {
   userPreferences: IUserPreferencesDataSource;
   blockedUsers: IBlockedUserDataSource;
   messages: IMessageDataSource;
+  photos: IPhotoStorageDataSource;
 } {
   const searchHistory = process.env.NODE_ENV === "test"
     ? new MemorySearchHistoryDataSource()
@@ -147,6 +148,7 @@ function createDataSources(): {
       userPreferences: new SupabaseUserPreferencesDataSource(client),
       blockedUsers: new SupabaseBlockedUserDataSource(client, new SupabaseProfileDataSource(client)),
       messages: new SupabaseMessageDataSource(client),
+      photos: new SupabasePhotoStorageDataSource(client),
     };
   }
   const initialBooks = process.env.NODE_ENV === "test" ? [] : INITIAL_DEV_BOOKS;
@@ -178,6 +180,7 @@ function createDataSources(): {
     userPreferences: new MemoryUserPreferencesDataSource(),
     blockedUsers,
     messages: new MemoryMessageDataSource(),
+    photos: new MemoryPhotoStorageDataSource(),
   };
 }
 
@@ -304,4 +307,14 @@ export const pushNotificationService: IPushNotificationService =
     ? new ExpoPushNotificationService(logger)
     : new MemoryPushNotificationService();
 
+import type { IImagePickerService } from "@/model/services/iImagePickerService";
+import { ExpoImagePickerService } from "@/infra/services/expoImagePickerService";
+import { MemoryImagePickerService } from "@/infra/services/memoryImagePickerService";
+import type { IProfilePhotoUseCases } from "@/usecase/iProfilePhotoUseCases";
+import { ProfilePhotoUseCases } from "@/usecase/profilePhotoUseCases";
 
+/** Foto de perfil pela câmera ou galeria (ADR 0065). */
+export const imagePickerService: IImagePickerService =
+  process.env.NODE_ENV !== "test" ? new ExpoImagePickerService() : new MemoryImagePickerService();
+
+export const profilePhotoUseCases: IProfilePhotoUseCases = new ProfilePhotoUseCases(dataSources.photos);

@@ -64,5 +64,6 @@
 - [0062 — Assinatura Realtime de Mensagens, Rascunhos de Anúncios e Push Token Remoto](0062-realtime-chat-rascunho-push-token.md)
 - [0063 — Adoção do domínio próprio ipebook.app e redirecionamento canônico no Cloudflare Pages](0063-dominio-proprio-ipebook-app.md)
 - [0064 — Redirecionamento canônico de ipebook.pages.dev via Bulk Redirects da Cloudflare](0064-redirecionamento-canonico-bulk-redirects.md)
+- [0065 — Foto de perfil pela câmera ou galeria, guardada no bucket `book-photos`](0065-foto-de-perfil-por-camera-e-galeria.md)
 
 Preservar registros aceitos; mudanças relevantes geram novo ADR com vínculos de substituição.
