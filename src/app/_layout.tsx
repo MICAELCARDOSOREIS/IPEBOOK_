@@ -2,12 +2,13 @@ import { useEffect } from "react";
 import { Stack, router, usePathname, type Href } from "expo-router";
 import * as ScreenOrientation from "expo-screen-orientation";
 import { StatusBar } from "expo-status-bar";
-import { Platform, View } from "react-native";
+import { Platform } from "react-native";
 import { useIpebookFonts } from "@/view/useIpebookFonts";
 import { NavigationBar, type NavigationDestination } from "@/view/components/NavigationBar";
 import { PwaRegister } from "@/view/components/PwaRegister";
 import { InitialRouteGate } from "@/view/onboarding/initialRouteGate";
 import { ThemeProvider } from "@/view/theme/ThemeProvider";
+import { KeyboardAwareRoot } from "@/view/components/KeyboardAwareRoot";
 
 /** Rotas de nível superior (ADR 0011) — rotas de fluxo (entrar, anunciar, etc.) não entram aqui. */
 const ROOT_DESTINATIONS: Record<string, NavigationDestination> = {
@@ -46,7 +47,7 @@ export default function RootLayout() {
     <ThemeProvider>
       <StatusBar style="auto" />
       <InitialRouteGate pathname={pathname} onShowWelcome={() => router.replace("/bem-vindo")}>
-        <View style={{ flex: 1 }}>
+        <KeyboardAwareRoot>
           <Stack screenOptions={{ headerShown: false }} />
           {activeDestination ? (
             <NavigationBar
@@ -60,7 +61,7 @@ export default function RootLayout() {
               }}
             />
           ) : null}
-        </View>
+        </KeyboardAwareRoot>
       </InitialRouteGate>
     </ThemeProvider>
   );
