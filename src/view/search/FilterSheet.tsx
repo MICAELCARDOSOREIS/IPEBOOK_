@@ -23,7 +23,7 @@ import {
 
 const MODALITY_IDS: readonly SearchModalityFilter[] = ["all", "sale", "trade", "donation"];
 const PRICE_IDS: readonly SearchPriceRange[] = ["all", "free", "under20", "under50"];
-const CONDITION_IDS: readonly SearchConditionFilter[] = ["all", "good"];
+const CONDITION_IDS: readonly SearchConditionFilter[] = ["all", "new", "good", "marked", "worn"];
 const SORT_IDS: readonly SearchSortOption[] = ["recent", "title", "price_asc", "price_desc"];
 
 export type FilterSheetProps = {

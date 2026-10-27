@@ -1,10 +1,11 @@
-import type { Book, BookModality } from "@/model/entities/book";
+import type { Book, BookCondition, BookModality } from "@/model/entities/book";
+import { BOOK_CONDITION_LABELS } from "@/model/entities/book";
 
 export type SearchModalityFilter = BookModality | "all";
 export type SearchPriceRange = "all" | "free" | "under20" | "under50";
 export type SearchSortOption = "recent" | "title" | "price_asc" | "price_desc";
-/** Conservação do exemplar: `good` cobre "Bom estado" e anúncios sem conservação informada. */
-export type SearchConditionFilter = "all" | "good";
+/** Conservação do exemplar: "all" ou uma das condições do catálogo (Figma `02.03` e `34:229`). */
+export type SearchConditionFilter = "all" | BookCondition;
 
 /** Parâmetros que restringem o catálogo na Pesquisa (Figma `02.03 · Filtrar livros`). */
 export type SearchFilters = Readonly<{
@@ -51,7 +52,7 @@ export const PRICE_FILTER_LABELS: Readonly<Record<SearchPriceRange, string>> = {
 
 export const CONDITION_FILTER_LABELS: Readonly<Record<SearchConditionFilter, string>> = {
   all: "Todas as condições",
-  good: "Somente bom estado",
+  ...BOOK_CONDITION_LABELS,
 };
 
 export const SORT_LABELS: Readonly<Record<SearchSortOption, string>> = {
@@ -92,12 +93,16 @@ export function matchesPrice(book: Book, range: SearchPriceRange): boolean {
 }
 
 /**
- * "Somente bom estado" aceita exemplares sem conservação informada: o detalhe do anúncio já
- * apresenta esse caso como "Bom estado" (`bookDetail`), então excluí-los aqui contradiria a tela.
+ * "Bom estado" aceita exemplares sem conservação informada (pois o detalhe do anúncio já
+ * apresenta esse caso como "Bom estado"). Condições específicas ("new", "marked", "worn")
+ * exigem que o exemplar tenha exatamente aquela condição informada.
  */
 export function matchesCondition(book: Book, condition: SearchConditionFilter): boolean {
   if (condition === "all") return true;
-  return book.condition === undefined || book.condition === "good";
+  if (condition === "good") {
+    return book.condition === undefined || book.condition === "good";
+  }
+  return book.condition === condition;
 }
 
 function matchesNeighborhood(book: Book, neighborhood: string): boolean {
@@ -147,7 +152,7 @@ export function activeFilters(filters: SearchFilters): ActiveFilter[] {
     list.push({ key: "category", label: filters.category });
   }
   if (filters.condition !== "all") {
-    list.push({ key: "condition", label: "Bom estado" });
+    list.push({ key: "condition", label: CONDITION_FILTER_LABELS[filters.condition] });
   }
   if (filters.priceRange !== "all") {
     list.push({ key: "priceRange", label: PRICE_FILTER_LABELS[filters.priceRange] });
@@ -172,7 +177,7 @@ export function describeResults(count: number, filters: SearchFilters): string {
     details.push(filters.category);
   }
   if (filters.condition !== "all") {
-    details.push("Bom estado");
+    details.push(CONDITION_FILTER_LABELS[filters.condition]);
   }
   if (filters.priceRange !== "all") {
     details.push(PRICE_FILTER_LABELS[filters.priceRange]);
