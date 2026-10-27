@@ -125,7 +125,7 @@ export default function Favorites({
 
       {!userId ? (
         <View style={styles.status}>
-          <IconBadge icon="heart" tone="action" />
+          <IconBadge icon="heart" tone="action" size="large" />
           <Text accessibilityRole="header" style={styles.statusTitle}>
             Entre para ver seus favoritos
           </Text>

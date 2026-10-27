@@ -73,7 +73,7 @@ export default function Notifications({
       <SafeAreaView style={styles.page}>
         <TopAppBar title="Notificações" onBack={() => onBack?.()} />
         <View style={styles.centered}>
-          <IconBadge icon="bell" tone="action" />
+          <IconBadge icon="bell" tone="action" size="large" />
           <Text accessibilityRole="header" style={styles.emptyTitle}>
             Sessão necessária
           </Text>

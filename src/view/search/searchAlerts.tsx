@@ -44,7 +44,7 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
       <TopAppBar title="Meus alertas" onBack={onBack} />
       {!userId ? (
         <View style={styles.centered}>
-          <IconBadge icon="bell" tone="action" />
+          <IconBadge icon="bell" tone="action" size="large" />
           <Text accessibilityRole="header" style={styles.emptyTitle}>
             Entre para criar alertas
           </Text>

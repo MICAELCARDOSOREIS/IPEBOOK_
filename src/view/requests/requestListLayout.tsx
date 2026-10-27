@@ -113,7 +113,7 @@ export function RequestListLayout({
               ListEmptyComponent={
                 items.length > 0 ? (
                   <View style={styles.emptyBox}>
-                    <IconBadge icon="swap" tone="neutral" />
+                    <IconBadge icon="swap" tone="neutral" size="large" />
                     <Text style={styles.body}>Nenhum pedido encontrado neste filtro.</Text>
                     <Pressable
                       accessibilityRole="button"
@@ -126,7 +126,7 @@ export function RequestListLayout({
                   </View>
                 ) : (
                   <View style={styles.emptyBox}>
-                    <IconBadge icon="swap" tone="neutral" />
+                    <IconBadge icon="swap" tone="neutral" size="large" />
                     <Text accessibilityRole="header" style={styles.emptyTitle}>
                       Nenhuma proposta ainda
                     </Text>

@@ -30,7 +30,7 @@ export default function ReportUser({ userId, userName, onBack, onNavigateToLogin
       <SafeAreaView style={styles.page}>
         <TopAppBar title="Denunciar pessoa" onBack={onBack} />
         <View style={styles.centered}>
-          <IconBadge icon="check" tone="action" />
+          <IconBadge icon="check" tone="action" size="large" />
           <Text accessibilityRole="header" style={styles.title}>Denúncia enviada</Text>
           <Text style={styles.body}>
             Recebemos sua denúncia. A equipe vai analisar o relato em até 24 horas. Obrigado por ajudar a manter a comunidade segura.
@@ -48,7 +48,7 @@ export default function ReportUser({ userId, userName, onBack, onNavigateToLogin
       <SafeAreaView style={styles.page}>
         <TopAppBar title="Denunciar pessoa" onBack={onBack} />
         <View style={styles.centered}>
-          <IconBadge icon="flag" tone="neutral" />
+          <IconBadge icon="flag" tone="neutral" size="large" />
           <Text accessibilityRole="header" style={styles.title}>Identificação necessária</Text>
           <Text style={styles.body}>Apenas pessoas com conta podem denunciar, para evitar abusos.</Text>
           {onNavigateToLogin ? (

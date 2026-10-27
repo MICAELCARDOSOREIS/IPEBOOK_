@@ -86,7 +86,7 @@ export default function ForgotPassword({ onNavigateToSignIn, onBack }: ForgotPas
 
           {requested ? (
             <>
-              <IconBadge icon="mail" tone="donation" />
+              <IconBadge icon="mail" tone="donation" size="large" />
               <Text accessibilityRole="header" style={styles.title}>Confira seu e-mail.</Text>
               <Text style={styles.subtitle}>
                 Se houver uma conta com{" "}
