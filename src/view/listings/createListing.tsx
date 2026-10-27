@@ -4,6 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import type { Book } from "@/model/entities/book";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { FilledButton } from "@/view/components/FilledButton";
 import { StepProgress } from "@/view/components/StepProgress";
 import { TextButton } from "@/view/components/TextButton";
@@ -60,7 +61,8 @@ export default function CreateListing({
   const [state, actions] = useCreateListingViewModel();
   const [photoState, photoActions] = useListingPhotoViewModel(sessionUserId);
   const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const wideWeb = useIsWideWeb();
+  const styles = useMemo(() => createStyles(colors, wideWeb), [colors, wideWeb]);
   const [step, setStep] = useState(1);
   const [published, setPublished] = useState<Book | null>(null);
   // Erros da etapa 1 só aparecem depois da primeira tentativa de avançar.
@@ -333,13 +335,13 @@ export default function CreateListing({
   );
 }
 
-function createStyles(colors: ColorPalette) {
+function createStyles(colors: ColorPalette, wideWeb: boolean) {
   return StyleSheet.create({
     page: { flex: 1, backgroundColor: colors.background },
     scrollContent: { padding: tokens.spacing[16], paddingBottom: tokens.spacing[24] },
     content: {
       width: "100%",
-      maxWidth: 560,
+      maxWidth: wideWeb ? 720 : 560,
       alignSelf: "center",
       gap: tokens.spacing[16],
     },
@@ -349,7 +351,7 @@ function createStyles(colors: ColorPalette) {
     },
     actionBarInner: {
       width: "100%",
-      maxWidth: 560,
+      maxWidth: wideWeb ? 720 : 560,
       alignSelf: "center",
       gap: tokens.spacing[8],
       paddingHorizontal: tokens.spacing[16],
