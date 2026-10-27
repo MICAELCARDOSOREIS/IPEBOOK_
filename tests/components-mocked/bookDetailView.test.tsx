@@ -10,7 +10,8 @@ import BookDetail from "@/view/listings/bookDetail";
 vi.mock("@/viewmodel/useBookDetailViewModel", () => ({ useBookDetailViewModel: vi.fn() }));
 vi.mock("@/viewmodel/useAuthViewModel", () => ({ useAuthViewModel: vi.fn() }));
 vi.mock("@/viewmodel/useRequestNegotiationViewModel", () => ({ useRequestNegotiationViewModel: vi.fn() }));
-vi.mock("@/viewmodel/useShareListingViewModel", () => ({ useShareListingViewModel: vi.fn() }));
+vi.mock("@/viewmodel/useShareListingViewModel", () => ({ useShareListingViewModel: vi.fn(), SHARE_BASE_URL: "https://ipebook.app" }));
+vi.mock("react-native-view-shot", () => ({ captureRef: vi.fn().mockResolvedValue("file:///tmp/anuncio.png") }));
 vi.mock("@/viewmodel/usePublicProfileViewModel", () => ({ usePublicProfileViewModel: vi.fn() }));
 
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
@@ -86,11 +87,12 @@ function setup(
   ]);
   const share = vi.fn().mockResolvedValue(undefined);
   const shareToWhatsApp = vi.fn().mockResolvedValue(undefined);
+  const shareImage = vi.fn().mockResolvedValue(undefined);
   vi.mocked(useShareListingViewModel).mockReturnValue([
     { ...emptyShare, ...options.share },
-    { share, shareToWhatsApp, dismissLinkCopied: vi.fn() },
+    { share, shareImage, shareToWhatsApp, dismissLinkCopied: vi.fn() },
   ]);
-  return { request, share, shareToWhatsApp };
+  return { request, share, shareToWhatsApp, shareImage };
 }
 
 async function renderDetail(props: Partial<React.ComponentProps<typeof BookDetail>> = {}) {
@@ -141,7 +143,7 @@ describe("BookDetail (spec 006, US6/T029)", () => {
     setup(book({ ownerId: "me" }), user);
     const screen = await renderDetail();
     expect(screen.queryByText("Propor troca")).toBeNull();
-    expect(screen.getByLabelText("Compartilhar no WhatsApp")).toBeDefined();
+    expect(screen.getByLabelText("Compartilhar anúncio como imagem")).toBeDefined();
   });
 
   it("não oferece ação principal sem sessão (Spec 074, CA2)", async () => {
@@ -263,19 +265,20 @@ describe("BookDetail (spec 006, US6/T029)", () => {
     expect(share).toHaveBeenCalledWith("b1");
   });
 
-  it("compartilha no WhatsApp com os dados do anúncio (Issue #145)", async () => {
-    const { shareToWhatsApp } = setup(
+  it("compartilha a imagem do anúncio com os dados e a captura do cartão (Spec 092)", async () => {
+    const { shareImage } = setup(
       book({ ownerId: "other", modality: "sale", price: 42 }),
       null,
     );
     const screen = await renderDetail();
-    await act(async () => { fireEvent.press(screen.getByLabelText("Compartilhar no WhatsApp")); });
-    expect(shareToWhatsApp).toHaveBeenCalledWith("b1", {
-      title: "Dom Casmurro",
-      author: "Machado de Assis",
-      modality: "sale",
-      price: 42,
-    });
+    await act(async () => { fireEvent.press(screen.getByLabelText("Compartilhar anúncio como imagem")); });
+    expect(shareImage).toHaveBeenCalledWith(
+      "b1",
+      { title: "Dom Casmurro", author: "Machado de Assis", modality: "sale", price: 42 },
+      expect.any(Function),
+    );
+    const capture = vi.mocked(shareImage).mock.calls[0][2] as () => Promise<string>;
+    await expect(capture()).resolves.toBe("file:///tmp/anuncio.png");
   });
 
   it("mostra confirmação de link copiado (Spec 019)", async () => {
