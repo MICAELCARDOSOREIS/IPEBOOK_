@@ -87,131 +87,208 @@ export function Conversations({
 
   return (
     <SafeAreaView edges={["top", "left", "right"]} style={styles.page}>
-      <View style={wideWeb ? styles.widePanes : styles.flexOne}>
-      <View style={wideWeb ? (state.items.length > 0 ? styles.wideListPane : styles.wideColumn) : styles.flexOne}>
-      <Text accessibilityRole="header" style={styles.title}>
-        Conversas
-      </Text>
-      {state.loading && state.items.length === 0 ? (
-        <LoadingState label="Carregando conversas" />
-      ) : state.error ? (
-        isOnline ? (
-          <ErrorState message={state.error} onRetry={() => void actions.reload()} />
-        ) : (
-          <OfflineState onRetry={() => void actions.reload()} />
-        )
-      ) : state.items.length === 0 ? (
-        <View style={[styles.empty, wideWeb && styles.emptyWide]}>
-          <View style={styles.emptyIcon}>
-            <AppIcon name="chat" size={32} color={colors.m3.onSecondaryContainer} />
-          </View>
-          <Text style={styles.emptyTitle}>Nenhuma conversa ainda</Text>
-          <Text style={styles.emptyBody}>
-            Encontre um livro e converse com a pessoa para combinar os detalhes.
+      <View style={wideWeb ? styles.wideContainer : styles.flexOne}>
+        {/* Cabeçalho da tela (alinhado a 80px no desktop com o WebHeader) */}
+        <View style={wideWeb ? styles.wideHeader : styles.mobileHeader}>
+          <Text accessibilityRole="header" style={[styles.title, wideWeb && styles.titleWide]}>
+            Conversas
           </Text>
-          {onExplore ? (
-            <View style={styles.emptyAction}>
-              <FilledButton label="Encontrar um livro" onPress={onExplore} />
-            </View>
+          {wideWeb ? (
+            <Text style={styles.subtitleWide}>
+              Acompanhe propostas de troca, compra e doação direto com leitores de Piripiri.
+            </Text>
           ) : null}
         </View>
-      ) : (
-        <FlatList
-          data={state.items}
-          keyExtractor={(item) => item.requestId}
-          contentContainerStyle={styles.list}
-          renderItem={({ item }) => (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={`Conversa com ${item.otherName} sobre ${item.listing.title}. ${item.preview}`}
-              accessibilityHint={item.kind === "accepted" ? "Mantenha pressionado para apagar a conversa" : undefined}
-              onPress={() => open(item)}
-              onLongPress={item.kind === "accepted" ? () => setToDelete(item) : undefined}
-              style={({ pressed }) => [styles.row, pressed ? styles.rowPressed : null]}
-            >
-              <Avatar name={item.otherName} photoUrl={item.otherPhotoUrl ?? undefined} size={48} />
-              <View style={styles.rowText}>
-                <View style={styles.rowHeader}>
-                  <Text style={styles.name} numberOfLines={1}>
-                    {item.otherName}
-                  </Text>
-                  {item.lastMessageAt ? (
-                    <Text style={styles.time}>{formatConversationTime(item.lastMessageAt, now)}</Text>
-                  ) : null}
+
+        {state.loading && state.items.length === 0 ? (
+          <LoadingState label="Carregando conversas" />
+        ) : state.error ? (
+          isOnline ? (
+            <ErrorState message={state.error} onRetry={() => void actions.reload()} />
+          ) : (
+            <OfflineState onRetry={() => void actions.reload()} />
+          )
+        ) : state.items.length === 0 ? (
+          /* Estado Vazio (Figma 06.09 com refinamento para desktop largo) */
+          <View style={wideWeb ? styles.emptyContainerWide : styles.flexOne}>
+            <View style={[styles.empty, wideWeb && styles.emptyWide]}>
+              <View style={[styles.emptyIcon, wideWeb && styles.emptyIconWide]}>
+                <AppIcon name="chat" size={wideWeb ? 36 : 32} color={colors.m3.onSecondaryContainer} />
+              </View>
+              <Text style={[styles.emptyTitle, wideWeb && styles.emptyTitleWide]}>
+                Nenhuma conversa ainda
+              </Text>
+              <Text style={[styles.emptyBody, wideWeb && styles.emptyBodyWide]}>
+                Encontre um livro e converse com a pessoa para combinar os detalhes.
+              </Text>
+              {onExplore ? (
+                <View style={[styles.emptyAction, wideWeb && styles.emptyActionWide]}>
+                  <FilledButton label="Encontrar um livro" onPress={onExplore} />
                 </View>
-                {item.kind === "pendingReceived" ? (
-                  <View style={styles.badge}>
-                    <Text style={styles.badgeText}>Nova proposta</Text>
+              ) : null}
+            </View>
+
+            {/* Destaques informativos de segurança e circulação na web larga */}
+            {wideWeb ? (
+              <View style={styles.featuresRowWide}>
+                <View style={styles.featureCardWide}>
+                  <View style={styles.featureIconBoxWide}>
+                    <AppIcon name="swap" size={24} color={colors.m3.primary} />
                   </View>
-                ) : null}
-                <Text
-                  style={[styles.preview, item.kind !== "accepted" ? styles.previewStatus : null]}
-                  numberOfLines={1}
-                >
-                  {item.preview}
-                </Text>
-                <Text style={styles.about} numberOfLines={1}>
-                  {`Sobre ${item.listing.title}`}
+                  <Text style={styles.featureTitleWide}>Negociação direta</Text>
+                  <Text style={styles.featureBodyWide}>
+                    Converse em tempo real e combine troca, compra ou doação direto pelo aplicativo.
+                  </Text>
+                </View>
+
+                <View style={styles.featureCardWide}>
+                  <View style={styles.featureIconBoxWide}>
+                    <AppIcon name="place" size={24} color={colors.m3.primary} />
+                  </View>
+                  <Text style={styles.featureTitleWide}>Pontos de encontro seguros</Text>
+                  <Text style={styles.featureBodyWide}>
+                    Locais públicos sugeridos em Piripiri (Praça da Bandeira, IFPI, Memorial) para entrega segura.
+                  </Text>
+                </View>
+
+                <View style={styles.featureCardWide}>
+                  <View style={styles.featureIconBoxWide}>
+                    <AppIcon name="star" size={24} color={colors.m3.primary} />
+                  </View>
+                  <Text style={styles.featureTitleWide}>Avaliações mútuas</Text>
+                  <Text style={styles.featureBodyWide}>
+                    Ao concluir o encontro, ambos os leitores avaliam a entrega para manter a rede comunitária confiável.
+                  </Text>
+                </View>
+              </View>
+            ) : null}
+          </View>
+        ) : (
+          /* Quando há conversas: painel integrado na web larga */
+          <View style={wideWeb ? styles.wideWorkspace : styles.flexOne}>
+            <View style={wideWeb ? styles.wideListPane : styles.flexOne}>
+              {wideWeb ? (
+                <View style={styles.wideListHeader}>
+                  <Text style={styles.wideListCount}>
+                    {`${state.items.length} ${state.items.length === 1 ? "conversa" : "conversas"}`}
+                  </Text>
+                </View>
+              ) : null}
+              <FlatList
+                data={state.items}
+                keyExtractor={(item) => item.requestId}
+                contentContainerStyle={wideWeb ? styles.wideList : styles.list}
+                renderItem={({ item }) => {
+                  const isSelected = wideWeb && item.requestId === selectedId;
+                  return (
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={`Conversa com ${item.otherName} sobre ${item.listing.title}. ${item.preview}`}
+                      accessibilityHint={item.kind === "accepted" ? "Mantenha pressionado para apagar a conversa" : undefined}
+                      onPress={() => open(item)}
+                      onLongPress={item.kind === "accepted" ? () => setToDelete(item) : undefined}
+                      style={({ pressed }) => [
+                        styles.row,
+                        pressed ? styles.rowPressed : null,
+                        isSelected ? styles.rowSelected : null,
+                      ]}
+                    >
+                      <Avatar name={item.otherName} photoUrl={item.otherPhotoUrl ?? undefined} size={48} />
+                      <View style={styles.rowText}>
+                        <View style={styles.rowHeader}>
+                          <Text style={[styles.name, isSelected && styles.nameSelected]} numberOfLines={1}>
+                            {item.otherName}
+                          </Text>
+                          {item.lastMessageAt ? (
+                            <Text style={styles.time}>{formatConversationTime(item.lastMessageAt, now)}</Text>
+                          ) : null}
+                        </View>
+                        {item.kind === "pendingReceived" ? (
+                          <View style={styles.badge}>
+                            <Text style={styles.badgeText}>Nova proposta</Text>
+                          </View>
+                        ) : null}
+                        <Text
+                          style={[styles.preview, item.kind !== "accepted" ? styles.previewStatus : null]}
+                          numberOfLines={1}
+                        >
+                          {item.preview}
+                        </Text>
+                        <Text style={styles.about} numberOfLines={1}>
+                          {`Sobre ${item.listing.title}`}
+                        </Text>
+                      </View>
+                    </Pressable>
+                  );
+                }}
+                ListFooterComponent={
+                  <View>
+                    {deleteFailed ? (
+                      <Text accessibilityRole="alert" style={styles.footerError}>
+                        Não foi possível apagar a conversa. Tente novamente.
+                      </Text>
+                    ) : null}
+                    <Text style={styles.footer}>Combine sempre pelo chat do IpêBook. Não compartilhe senhas ou códigos.</Text>
+                    <Text style={styles.footer}>Para apagar uma conversa, mantenha o dedo sobre ela.</Text>
+                  </View>
+                }
+              />
+            </View>
+
+            {/* Painel Central: Chat da negociação selecionada ou placeholder */}
+            {wideWeb && selectedId ? (
+              <View style={styles.widePane} testID="conversation-pane">
+                <Chat requestId={selectedId} sessionUserId={sessionUserId} onOpenNegotiation={onOpenNegotiation} />
+              </View>
+            ) : wideWeb ? (
+              <View style={[styles.widePane, styles.widePaneEmpty]}>
+                <View style={styles.emptyCenterIconBox}>
+                  <AppIcon name="chat" size={44} color={colors.m3.primary} />
+                </View>
+                <Text style={styles.emptyCenterTitle}>Escolha uma conversa</Text>
+                <Text style={styles.emptyCenterBody}>
+                  Selecione uma conversa na lista ao lado para ver o histórico e enviar mensagens.
                 </Text>
               </View>
-            </Pressable>
-          )}
-          ListFooterComponent={
-            <View>
-              {deleteFailed ? (
-                <Text accessibilityRole="alert" style={styles.footerError}>
-                  Não foi possível apagar a conversa. Tente novamente.
-                </Text>
-              ) : null}
-              <Text style={styles.footer}>Combine sempre pelo chat do IpêBook. Não compartilhe senhas ou códigos.</Text>
-              <Text style={styles.footer}>Para apagar uma conversa, mantenha o dedo sobre ela.</Text>
-            </View>
-          }
+            ) : null}
+
+            {/* Painel Direito: Detalhes da negociação e encontro seguro */}
+            {wideWeb && selectedItem ? (
+              <View style={styles.aboutPane} testID="conversation-about">
+                <Text accessibilityRole="header" style={styles.aboutTitle}>{`Sobre ${selectedItem.listing.modality === "trade" ? "a troca" : selectedItem.listing.modality === "donation" ? "a doação" : "a compra"}`}</Text>
+                <View style={styles.aboutBook}>
+                  <BookCover id={selectedItem.listing.id} title={selectedItem.listing.title} photoUrl={selectedItem.listing.photoUrl} variant="list" />
+                  <View style={styles.aboutBookText}>
+                    <Text style={styles.aboutBookTitle} numberOfLines={2}>{selectedItem.listing.title}</Text>
+                    <Tag variant={selectedItem.listing.modality} />
+                  </View>
+                </View>
+                <FilledButton label="Combinar encontro" onPress={() => onOpenNegotiation?.(selectedItem.requestId)} />
+                <View style={styles.aboutSafe}>
+                  <Text style={styles.aboutSafeTitle}>Encontro seguro</Text>
+                  <Text style={styles.aboutSafeBody}>Locais públicos e horário de movimento em Piripiri.</Text>
+                </View>
+                {onReportListing ? (
+                  <Pressable accessibilityRole="button" accessibilityLabel="Denunciar anúncio" onPress={() => onReportListing(selectedItem.listing.id)}>
+                    <Text style={styles.aboutReport}>Denunciar anúncio</Text>
+                  </Pressable>
+                ) : null}
+              </View>
+            ) : null}
+          </View>
+        )}
+
+        <Dialog
+          visible={toDelete !== null}
+          title="Apagar conversa?"
+          message={`A conversa com ${toDelete?.otherName ?? ""} some só para você. Se ela mandar outra mensagem, a conversa volta.`}
+          confirmLabel="Apagar"
+          cancelLabel="Manter"
+          destructive
+          loading={deleting}
+          onConfirm={() => void confirmDelete()}
+          onCancel={() => setToDelete(null)}
         />
-      )}
-      <Dialog
-        visible={toDelete !== null}
-        title="Apagar conversa?"
-        message={`A conversa com ${toDelete?.otherName ?? ""} some só para você. Se ela mandar outra mensagem, a conversa volta.`}
-        confirmLabel="Apagar"
-        cancelLabel="Manter"
-        destructive
-        loading={deleting}
-        onConfirm={() => void confirmDelete()}
-        onCancel={() => setToDelete(null)}
-      />
-      </View>
-      {wideWeb && selectedId ? (
-        <View style={styles.widePane} testID="conversation-pane">
-          <Chat requestId={selectedId} sessionUserId={sessionUserId} onOpenNegotiation={onOpenNegotiation} />
-        </View>
-      ) : null}
-      {wideWeb && selectedItem ? (
-        <View style={styles.aboutPane} testID="conversation-about">
-          <Text accessibilityRole="header" style={styles.aboutTitle}>{`Sobre ${selectedItem.listing.modality === "trade" ? "a troca" : selectedItem.listing.modality === "donation" ? "a doação" : "a compra"}`}</Text>
-          <View style={styles.aboutBook}>
-            <BookCover id={selectedItem.listing.id} title={selectedItem.listing.title} photoUrl={selectedItem.listing.photoUrl} variant="list" />
-            <View style={styles.aboutBookText}>
-              <Text style={styles.aboutBookTitle} numberOfLines={2}>{selectedItem.listing.title}</Text>
-              <Tag variant={selectedItem.listing.modality} />
-            </View>
-          </View>
-          <FilledButton label="Combinar encontro" onPress={() => onOpenNegotiation?.(selectedItem.requestId)} />
-          <View style={styles.aboutSafe}>
-            <Text style={styles.aboutSafeTitle}>Encontro seguro</Text>
-            <Text style={styles.aboutSafeBody}>Locais públicos e horário de movimento.</Text>
-          </View>
-          {onReportListing ? (
-            <Pressable accessibilityRole="button" accessibilityLabel="Denunciar anúncio" onPress={() => onReportListing(selectedItem.listing.id)}>
-              <Text style={styles.aboutReport}>Denunciar anúncio</Text>
-            </Pressable>
-          ) : null}
-        </View>
-      ) : wideWeb && state.items.length > 0 ? (
-        <View style={[styles.widePane, styles.widePaneEmpty]}>
-          <Text style={styles.emptyBody}>Escolha uma conversa para ver as mensagens.</Text>
-        </View>
-      ) : null}
       </View>
     </SafeAreaView>
   );
@@ -236,22 +313,23 @@ function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     page: { flex: 1, backgroundColor: colors.background },
     flexOne: { flex: 1 },
-    // Web larga: coluna de 960 px alinhada ao cabeçalho; o estado vazio não estica o botão pela tela toda.
-    wideColumn: { flex: 1, width: "100%", maxWidth: 960, alignSelf: "center", paddingHorizontal: 24 },
-    widePanes: { flex: 1, flexDirection: "row", width: "100%", maxWidth: 1440, alignSelf: "center" },
-    wideListPane: { width: 360, borderRightWidth: 1, borderRightColor: colors.m3.outlineVariant, backgroundColor: colors.m3.surfaceContainerLow },
-    widePane: { flex: 1, minWidth: 0 },
-    aboutPane: { width: 320, gap: 16, padding: 20, borderLeftWidth: 1, borderLeftColor: colors.m3.outlineVariant, backgroundColor: colors.m3.surfaceContainerLow },
-    aboutTitle: { ...tokens.typography.titleMedium, color: colors.m3.onSurface },
-    aboutBook: { flexDirection: "row", alignItems: "center", gap: 12 },
-    aboutBookText: { flex: 1, gap: 6, alignItems: "flex-start" },
-    aboutBookTitle: { ...tokens.typography.labelLarge, color: colors.m3.onSurface },
-    aboutSafe: { gap: 2, padding: 16, borderRadius: tokens.radius.medium, backgroundColor: colors.m3.surfaceContainer },
-    aboutSafeTitle: { ...tokens.typography.labelLarge, color: colors.m3.onSurface },
-    aboutSafeBody: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
-    aboutReport: { ...tokens.typography.labelLarge, color: colors.error },
-    widePaneEmpty: { alignItems: "center", justifyContent: "center" },
-    emptyWide: { width: "100%", maxWidth: 420, alignSelf: "center" },
+    // Container web largo padronizado em 1440 px com 80 px de margem lateral (alinhado ao WebHeader).
+    wideContainer: {
+      flex: 1,
+      width: "100%",
+      maxWidth: 1440,
+      alignSelf: "center",
+      paddingHorizontal: 80,
+      paddingTop: tokens.spacing[24],
+      paddingBottom: tokens.spacing[32],
+    },
+    mobileHeader: {
+      paddingBottom: tokens.spacing[8],
+    },
+    wideHeader: {
+      marginBottom: tokens.spacing[24],
+      gap: tokens.spacing[6],
+    },
     title: {
       fontFamily: fontFamily.brand,
       fontSize: 32,
@@ -260,8 +338,180 @@ function createStyles(colors: ColorPalette) {
       color: colors.brandBrown,
       paddingHorizontal: tokens.spacing[20],
       paddingTop: tokens.spacing[16],
-      paddingBottom: tokens.spacing[16],
+      paddingBottom: tokens.spacing[8],
     },
+    titleWide: {
+      paddingHorizontal: 0,
+      paddingTop: 0,
+      paddingBottom: 0,
+    },
+    subtitleWide: {
+      ...tokens.typography.bodyLarge,
+      color: colors.m3.onSurfaceVariant,
+      fontSize: 16,
+      lineHeight: 22,
+    },
+    // Estado Vazio Web Largo
+    emptyContainerWide: {
+      width: "100%",
+      alignItems: "center",
+    },
+    emptyWide: {
+      width: "100%",
+      maxWidth: 620,
+      alignSelf: "center",
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderRadius: 24,
+      paddingVertical: tokens.spacing[40],
+      paddingHorizontal: tokens.spacing[48],
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+      marginTop: tokens.spacing[12],
+      gap: tokens.spacing[12],
+    },
+    emptyIconWide: {
+      width: 80,
+      height: 80,
+      borderRadius: 40,
+      marginBottom: tokens.spacing[4],
+    },
+    emptyTitleWide: {
+      fontSize: 26,
+      lineHeight: 34,
+      color: colors.m3.onSurface,
+    },
+    emptyBodyWide: {
+      maxWidth: 440,
+      fontSize: 15,
+      lineHeight: 22,
+      color: colors.m3.onSurfaceVariant,
+    },
+    emptyActionWide: {
+      width: "100%",
+      maxWidth: 280,
+      alignSelf: "center",
+      marginTop: tokens.spacing[12],
+    },
+    featuresRowWide: {
+      flexDirection: "row",
+      gap: tokens.spacing[20],
+      marginTop: tokens.spacing[32],
+      width: "100%",
+      maxWidth: 1100,
+      justifyContent: "center",
+    },
+    featureCardWide: {
+      flex: 1,
+      backgroundColor: colors.surface,
+      borderRadius: 16,
+      padding: tokens.spacing[20],
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+      gap: tokens.spacing[6],
+    },
+    featureIconBoxWide: {
+      width: 44,
+      height: 44,
+      borderRadius: 12,
+      backgroundColor: colors.m3.primaryContainer,
+      alignItems: "center",
+      justifyContent: "center",
+      marginBottom: tokens.spacing[4],
+    },
+    featureTitleWide: {
+      ...tokens.typography.labelLarge,
+      color: colors.m3.onSurface,
+      fontWeight: "700",
+      fontSize: 15,
+    },
+    featureBodyWide: {
+      ...tokens.typography.bodyMedium,
+      color: colors.m3.onSurfaceVariant,
+      fontSize: 13,
+      lineHeight: 18,
+    },
+    // Espaço multi-painel para conversas ativas
+    wideWorkspace: {
+      flex: 1,
+      flexDirection: "row",
+      borderRadius: 20,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+      backgroundColor: colors.surface,
+      overflow: "hidden",
+      minHeight: 640,
+      maxHeight: 840,
+    },
+    wideListPane: {
+      width: 380,
+      borderRightWidth: 1,
+      borderRightColor: colors.m3.outlineVariant,
+      backgroundColor: colors.m3.surfaceContainerLow,
+    },
+    wideListHeader: {
+      paddingHorizontal: tokens.spacing[20],
+      paddingVertical: tokens.spacing[12],
+      borderBottomWidth: 1,
+      borderBottomColor: colors.m3.outlineVariant,
+      backgroundColor: colors.m3.surfaceContainerLow,
+    },
+    wideListCount: {
+      ...tokens.typography.labelMedium,
+      color: colors.m3.onSurfaceVariant,
+      fontWeight: "600",
+    },
+    wideList: {
+      paddingBottom: tokens.spacing[24],
+    },
+    widePane: {
+      flex: 1,
+      minWidth: 0,
+      backgroundColor: colors.background,
+    },
+    widePaneEmpty: {
+      alignItems: "center",
+      justifyContent: "center",
+      padding: tokens.spacing[32],
+      gap: tokens.spacing[12],
+    },
+    emptyCenterIconBox: {
+      width: 80,
+      height: 80,
+      borderRadius: 40,
+      backgroundColor: colors.m3.surfaceContainerHigh,
+      alignItems: "center",
+      justifyContent: "center",
+      marginBottom: tokens.spacing[8],
+    },
+    emptyCenterTitle: {
+      fontFamily: fontFamily.brand,
+      fontSize: 20,
+      lineHeight: 26,
+      fontWeight: "700",
+      color: colors.m3.onSurface,
+    },
+    emptyCenterBody: {
+      ...tokens.typography.bodyMedium,
+      color: colors.m3.onSurfaceVariant,
+      textAlign: "center",
+      maxWidth: 320,
+    },
+    aboutPane: {
+      width: 320,
+      gap: 16,
+      padding: 20,
+      borderLeftWidth: 1,
+      borderLeftColor: colors.m3.outlineVariant,
+      backgroundColor: colors.m3.surfaceContainerLow,
+    },
+    aboutTitle: { ...tokens.typography.titleMedium, color: colors.m3.onSurface },
+    aboutBook: { flexDirection: "row", alignItems: "center", gap: 12 },
+    aboutBookText: { flex: 1, gap: 6, alignItems: "flex-start" },
+    aboutBookTitle: { ...tokens.typography.labelLarge, color: colors.m3.onSurface },
+    aboutSafe: { gap: 2, padding: 16, borderRadius: tokens.radius.medium, backgroundColor: colors.m3.surfaceContainer },
+    aboutSafeTitle: { ...tokens.typography.labelLarge, color: colors.m3.onSurface },
+    aboutSafeBody: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
+    aboutReport: { ...tokens.typography.labelLarge, color: colors.error },
     list: { paddingBottom: tokens.spacing[32], width: "100%", maxWidth: 720, alignSelf: "center" },
     row: {
       flexDirection: "row",
@@ -272,9 +522,15 @@ function createStyles(colors: ColorPalette) {
       paddingVertical: tokens.spacing[12],
     },
     rowPressed: { backgroundColor: colors.m3.surfaceContainer },
+    rowSelected: {
+      backgroundColor: colors.m3.secondaryContainer,
+      borderLeftWidth: 4,
+      borderLeftColor: colors.m3.primary,
+    },
     rowText: { flex: 1, gap: 2 },
     rowHeader: { flexDirection: "row", alignItems: "baseline", gap: tokens.spacing[8] },
     name: { flex: 1, ...tokens.typography.bodyLarge, fontWeight: "500", color: colors.m3.onSurface },
+    nameSelected: { fontWeight: "700", color: colors.m3.onSecondaryContainer },
     badge: {
       alignSelf: "flex-start",
       paddingHorizontal: tokens.spacing[8],
