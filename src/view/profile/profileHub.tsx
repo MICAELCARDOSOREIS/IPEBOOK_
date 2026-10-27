@@ -7,6 +7,7 @@ import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useProfileViewModel } from "@/viewmodel/useProfileViewModel";
 import { useMyListingsViewModel } from "@/viewmodel/useMyListingsViewModel";
 import { useUserPreferencesViewModel } from "@/viewmodel/useUserPreferencesViewModel";
+import { readerCardNumber, readerCardSince } from "@/view/readerCardNumber";
 import { ReaderCard } from "@/view/components/ReaderCard";
 import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
 import { Dialog } from "@/view/components/Dialog";
@@ -220,7 +221,8 @@ export default function ProfileHub({
                         ? `★ ${profile.averageRating?.toFixed(1)} (${profile.ratingCount} ${profile.ratingCount > 1 ? "avaliações" : "avaliação"})`
                         : "Sem avaliações ainda"
                     } · ${profile.neighborhood ? `${profile.neighborhood}, Piripiri` : "Piripiri, PI"}`}
-                    showMark={false}
+                    cardNumber={readerCardNumber(profile.userId || userId)}
+                    memberSince={readerCardSince(profile.joinedAt)}
                     footer={
                       /* Instagram dentro do cartão (Spec 081): abre o perfil; sem @, leva ao Editar perfil */
                       instagramHandle ? (
