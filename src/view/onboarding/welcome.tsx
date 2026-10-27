@@ -4,7 +4,6 @@ import { FilledButton } from "@/view/components/FilledButton";
 import { Logotipo } from "@/view/components/Logotipo";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { ScreenContainer } from "@/view/components/ScreenContainer";
-import { TextButton } from "@/view/components/TextButton";
 import { accessibility, fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
@@ -15,7 +14,6 @@ import illustration from "./ilustracao-classicos.png";
 export type WelcomeProps = {
   onStart: () => void;
   onSignIn: () => void;
-  onExplore: () => void;
   /** Links do rodapé da página na web larga. */
   onHelp?: () => void;
   onTerms?: () => void;
@@ -23,9 +21,10 @@ export type WelcomeProps = {
 
 /**
  * Boas-vindas do primeiro acesso (Figma `01.01`, Android `324:38` / Web `146:457`).
- * Ver issue #98 e ADR 0022.
+ * Ver issue #98 e ADR 0022. O catálogo exige conta (Spec 092): sem sessão, a tela só
+ * oferece criar conta ou entrar — não há acesso de visitante.
  */
-export default function Welcome({ onStart, onSignIn, onExplore, onHelp, onTerms }: WelcomeProps) {
+export default function Welcome({ onStart, onSignIn, onHelp, onTerms }: WelcomeProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const wideWeb = useIsWideWeb();
@@ -68,8 +67,8 @@ export default function Welcome({ onStart, onSignIn, onExplore, onHelp, onTerms 
               <Pressable accessibilityRole="button" accessibilityLabel="Começar agora" onPress={onStart} style={styles.wideCta}>
                 <Text style={styles.wideCtaText}>Começar agora</Text>
               </Pressable>
-              <Pressable accessibilityRole="button" accessibilityLabel="Explorar livros" onPress={onExplore} style={styles.wideOutlined}>
-                <Text style={styles.wideOutlinedText}>Explorar livros</Text>
+              <Pressable accessibilityRole="button" accessibilityLabel="Já tenho conta" onPress={onSignIn} style={styles.wideOutlined}>
+                <Text style={styles.wideOutlinedText}>Já tenho conta</Text>
               </Pressable>
             </View>
           </View>
@@ -138,7 +137,6 @@ export default function Welcome({ onStart, onSignIn, onExplore, onHelp, onTerms 
       <View style={styles.actions}>
         <FilledButton label="Começar" onPress={onStart} />
         <OutlinedButton label="Já tenho conta" onPress={onSignIn} />
-        <TextButton label="Explorar livros sem entrar" onPress={onExplore} />
       </View>
     </ScreenContainer>
   );

@@ -1,7 +1,7 @@
 import Welcome from "@/view/onboarding/welcome";
 import { useWelcomeGateViewModel } from "@/viewmodel/useWelcomeGateViewModel";
 
-export type WelcomeDestination = "/criar-conta" | "/entrar" | "/";
+export type WelcomeDestination = "/criar-conta" | "/entrar";
 
 export type WelcomeRouteProps = {
   onFinish: (destination: WelcomeDestination) => void;
@@ -22,7 +22,6 @@ export default function WelcomeRoute({ onFinish, onHelp, onTerms }: WelcomeRoute
     <Welcome
       onStart={() => finish("/criar-conta")}
       onSignIn={() => finish("/entrar")}
-      onExplore={() => finish("/")}
       onHelp={onHelp}
       onTerms={onTerms}
     />
