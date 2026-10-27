@@ -45,9 +45,15 @@ export class ExpoImagePickerService implements IImagePickerService {
   }
 }
 
-/** Lê o arquivo escolhido; `expo-file-system` é carregado só no nativo, onde existe. */
+/**
+ * Lê o arquivo escolhido. No navegador `fetch` lê o `blob:`; no nativo `fetch` de `file://` devolvia bytes
+ * que não eram a imagem ("Use uma foto em JPEG…"), então lê pelo `expo-file-system`. O `require` fica
+ * dentro da função (síncrono): o `import()` dinâmico gerava um pacote assíncrono que o Expo Go não achava
+ * ("Requiring unknown module") e o módulo só existe no nativo.
+ */
 async function readBytes(uri: string): Promise<ArrayBuffer> {
   if (Platform.OS === "web") return (await fetch(uri)).arrayBuffer();
-  const { File } = await import("expo-file-system");
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { File } = require("expo-file-system") as typeof import("expo-file-system");
   return new File(uri).arrayBuffer();
 }
