@@ -298,10 +298,12 @@ export const pwaService: IPwaService = new PwaService(logger);
 import type { IBookMetadataService } from "@/model/services/iBookMetadataService";
 import { MemoryBookMetadataService } from "@/infra/services/memoryBookMetadataService";
 import { OpenLibraryBookMetadataService } from "@/infra/services/openLibraryBookMetadataService";
+import { GoogleBooksBookMetadataService } from "@/infra/services/googleBooksBookMetadataService";
+import { CompositeBookMetadataService } from "@/infra/services/compositeBookMetadataService";
 
 export const bookMetadataService: IBookMetadataService =
   process.env.NODE_ENV !== "test" && process.env.EXPO_PUBLIC_BACKEND === "supabase"
-    ? new OpenLibraryBookMetadataService()
+    ? new CompositeBookMetadataService([new OpenLibraryBookMetadataService(), new GoogleBooksBookMetadataService()])
     : new MemoryBookMetadataService();
 
 import type { IPushNotificationService } from "@/model/services/iPushNotificationService";
