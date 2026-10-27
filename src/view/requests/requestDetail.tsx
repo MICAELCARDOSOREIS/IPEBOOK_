@@ -230,7 +230,11 @@ export function RequestDetail({
 
               {/* Pessoa da negociação em uma linha (Spec 083), no lugar do cartão "Participantes" */}
               <View style={styles.personRow}>
-                <Avatar name={detail.counterpartName ?? COMMUNITY_MEMBER} size={44} />
+                <Avatar
+                  name={detail.counterpartName ?? COMMUNITY_MEMBER}
+                  photoUrl={detail.counterpartPhotoUrl ?? undefined}
+                  size={44}
+                />
                 <View style={styles.personText}>
                   <Text style={styles.personName} numberOfLines={1}>
                     {detail.counterpartName ?? COMMUNITY_MEMBER}
@@ -251,7 +255,7 @@ export function RequestDetail({
               {/* Card de Conclusão e Avaliação (Spec 063 / Figma 06.07, 06.08, 06.21) */}
               <View style={styles.card} testID="negotiation-completion-card">
                 <View style={styles.cardHeaderRow}>
-                  <IconBadge icon="check" tone="action" />
+                  <IconBadge icon="check" tone={meetingHappened || completed ? "action" : "neutral"} />
                   <Text accessibilityRole="header" style={styles.sectionHeader}>
                     {ratingState.userRating ? "Negociação concluída" : "Concluir negociação"}
                   </Text>
@@ -282,15 +286,29 @@ export function RequestDetail({
                         ? "Vocês já se encontraram e a entrega do livro foi realizada?"
                         : "Depois do encontro e da entrega do livro, volte aqui para concluir e avaliar."}
                     </Text>
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel="Concluir negociação e avaliar"
-                      onPress={() => setRatingModalVisible(true)}
-                      style={styles.completeButton}
-                    >
-                      <AppIcon name="check" size={18} color={colors.surface} />
-                      <Text style={styles.completeButtonText}>Concluir e avaliar</Text>
-                    </Pressable>
+                    {/* Spec 084: o botão principal só aparece depois do encontro; antes, um atalho
+                        discreto para quem fez a entrega sem marcar pelo app. */}
+                    {meetingHappened ? (
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel="Concluir negociação e avaliar"
+                        onPress={() => setRatingModalVisible(true)}
+                        style={styles.completeButton}
+                      >
+                        <AppIcon name="check" size={18} color={colors.surface} />
+                        <Text style={styles.completeButtonText}>Concluir e avaliar</Text>
+                      </Pressable>
+                    ) : (
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel="Já fizemos a entrega"
+                        hitSlop={8}
+                        onPress={() => setRatingModalVisible(true)}
+                        style={styles.earlyComplete}
+                      >
+                        <Text style={styles.earlyCompleteText}>Já fizemos a entrega</Text>
+                      </Pressable>
+                    )}
                   </View>
                 )}
               </View>
@@ -321,17 +339,21 @@ export function RequestDetail({
                 ) : null}
                 <View style={styles.pointList}>
                   {(meetingConfirmed && !showAllPoints ? [] : detail.safeMeetingPoints).map((point) => (
-                    <View key={point.name} style={styles.pointCard}>
-                      <Text style={styles.pointName}>• {point.name}</Text>
-                      <Text style={styles.pointDetail}>{point.address}</Text>
-                      <Text style={styles.pointDetail}>{point.recommendedTime}</Text>
+                    <View key={point.name}>
+                      {/* Spec 084: a linha inteira abre o mapa, no lugar de um botão cheio por ponto. */}
                       <Pressable
                         accessibilityRole="button"
                         accessibilityLabel={`Como chegar à ${point.name}`}
                         onPress={() => void handleOpenMap(point)}
-                        style={styles.directionsButton}
+                        style={styles.pointRow}
                       >
-                        <Text style={styles.directionsText}>Como chegar</Text>
+                        <AppIcon name="place" size={20} color={colors.action} />
+                        <View style={styles.pointText}>
+                          <Text style={styles.pointName}>{point.name}</Text>
+                          <Text style={styles.pointDetail}>{point.address}</Text>
+                          <Text style={styles.pointDetail}>{point.recommendedTime}</Text>
+                        </View>
+                        <Text style={styles.pointLink}>Rota</Text>
                       </Pressable>
                       {mapErrors[point.name] ? (
                         <Text accessibilityRole="alert" style={styles.mapErrorText}>
@@ -602,12 +624,19 @@ function createStyles(colors: ColorPalette) {
     color: colors.m3.onSecondaryContainer,
   },
   pointList: { gap: tokens.spacing[12], paddingVertical: tokens.spacing[4] },
-  pointCard: {
-    gap: tokens.spacing[4],
-    paddingVertical: tokens.spacing[8],
+  pointRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: tokens.spacing[12],
+    minHeight: tokens.accessibility.touchTarget,
+    paddingVertical: tokens.spacing[12],
     borderTopWidth: 1,
     borderTopColor: colors.m3.outlineVariant,
   },
+  pointText: { flex: 1, gap: 2 },
+  pointLink: { ...tokens.typography.labelMedium, fontWeight: "700", color: colors.action },
+  earlyComplete: { alignSelf: "flex-start", minHeight: tokens.accessibility.touchTarget, justifyContent: "center" },
+  earlyCompleteText: { ...tokens.typography.labelMedium, fontWeight: "600", color: colors.action, textDecorationLine: "underline" },
   pointName: {
     ...tokens.typography.bodyMedium,
     fontWeight: "600",
@@ -623,14 +652,14 @@ function createStyles(colors: ColorPalette) {
     paddingVertical: tokens.spacing[8],
     paddingHorizontal: tokens.spacing[16],
     borderRadius: tokens.radius.full,
-    backgroundColor: colors.action,
+    backgroundColor: colors.m3.secondaryContainer,
     minHeight: tokens.accessibility.touchTarget,
     justifyContent: "center",
   },
   directionsText: {
     ...tokens.typography.labelMedium,
     fontWeight: "700",
-    color: colors.surface,
+    color: colors.m3.onSecondaryContainer,
   },
   mapErrorText: {
     ...tokens.typography.labelMedium,

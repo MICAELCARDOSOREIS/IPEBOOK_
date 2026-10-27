@@ -2,7 +2,9 @@
 
 Documento consolidado de continuidade técnica e produto do Ipebook (Piripiri, PI).
 
-Conferência atual: **2026-10-26** (83 specs e 65 ADRs numerados, 186 arquivos e 1.371 testes automatizados 100% passando).
+Conferência atual: **2026-10-26** (84 specs e 65 ADRs numerados, 186 arquivos e 1.374 testes automatizados 100% passando).
+
+**Foto da outra pessoa e encontro mais leve (2026-10-26, Spec 084):** corrigido o avatar que mostrava o ipê mesmo quando a pessoa tinha foto — `getRequestDetail` passou a devolver `counterpartPhotoUrl`, os recebidos `requesterPhotoUrl` e as Conversas buscam nome e foto de quem anunciou. Antes do encontro, "Concluir negociação" fica neutro com o atalho "Já fizemos a entrega" (o botão principal volta depois do encontro); os pontos seguros viraram linhas tocáveis com "Rota". Validado em 1.374 testes e no Galaxy A16.
 
 **Acompanhar encontro com a ação do momento no topo (2026-10-26, Spec 083):** manchete menor, sem o aviso "Negociação aceita!" (a etapa "Aceita" já informa), etapa em andamento destacada em verde e anunciada como "Etapa atual", cartão do encontro antes da pessoa e o cartão "Participantes" virou uma linha com avatar, nome, papel ("Anunciou o livro"/"Quer o livro") e botão "Conversar". Validado em 1.371 testes e no Galaxy A16.
 
