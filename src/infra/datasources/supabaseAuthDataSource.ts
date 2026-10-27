@@ -141,7 +141,7 @@ export class SupabaseAuthDataSource implements IAuthDataSource {
     const authClient = this.client.auth as unknown as {
       signInWithOAuth?: (params: {
         provider: "google";
-        options?: { redirectTo?: string };
+        options?: { redirectTo?: string; skipBrowserRedirect?: boolean };
       }) => Promise<{ data: { url: string | null } | null; error: Error | null }>;
     };
 
@@ -149,42 +149,38 @@ export class SupabaseAuthDataSource implements IAuthDataSource {
       throw new AuthError("Login com Google indisponível no cliente atual.");
     }
 
-    let redirectTo = "ipebook://auth/callback";
+    // Web: o navegador vai ao Google e volta para /auth/callback, que cria a sessão.
     if (Platform.OS === "web") {
-      redirectTo = typeof window !== "undefined" && window.location?.origin
-        ? `${window.location.origin}/auth/callback`
-        : "http://localhost:8081/auth/callback";
-    } else {
-      try {
-        const Linking = await import("expo-linking");
-        redirectTo = Linking.createURL("/auth/callback");
-      } catch {
-        redirectTo = "ipebook://auth/callback";
-      }
+      const origin = typeof window !== "undefined" && window.location?.origin ? window.location.origin : "http://localhost:8081";
+      const { data, error } = await authClient.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: `${origin}/auth/callback` },
+      });
+      if (error) throw new AuthError("Não foi possível autenticar com o Google. Tente novamente.");
+      if (data?.url && typeof window !== "undefined") window.location.href = data.url;
+      const current = await this.currentUser();
+      return current ?? { id: "pending", email: "", name: "Usuário Google" };
     }
 
+    // Nativo (Spec 085): o retorno usa o deep link do ambiente — `exp://…/--/auth/callback` no Expo Go e
+    // `ipebook://auth/callback` no app instalado. A sessão de autenticação do expo-web-browser abre o Google
+    // dentro do app e devolve a URL de retorno, em vez de deixar o login terminar no Chrome (no site).
+    const Linking = await import("expo-linking");
+    const redirectTo = Linking.createURL("/auth/callback");
     const { data, error } = await authClient.signInWithOAuth({
       provider: "google",
-      options: {
-        redirectTo,
-      },
+      options: { redirectTo, skipBrowserRedirect: true },
     });
-
-    if (error) {
+    if (error || !data?.url) {
       throw new AuthError("Não foi possível autenticar com o Google. Tente novamente.");
     }
 
-    if (data?.url) {
-      if (Platform.OS === "web" && typeof window !== "undefined") {
-        window.location.href = data.url;
-      } else {
-        const Linking = await import("expo-linking");
-        await Linking.openURL(data.url);
-      }
+    const WebBrowser = await import("expo-web-browser");
+    const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+    if (result.type !== "success" || !("url" in result)) {
+      throw new AuthError("Login com Google cancelado.");
     }
-
-    const current = await this.currentUser();
-    return current ?? { id: "pending", email: "", name: "Usuário Google" };
+    return this.setSessionFromUrl(result.url);
   }
 
   async setSessionFromUrl(url: string): Promise<User> {

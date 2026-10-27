@@ -1,0 +1,31 @@
+# Spec 085 — Login com Google volta para o app (Expo Go e app instalado)
+
+**Data:** 26 de outubro de 2026 · **Arquivo:** `src/infra/datasources/supabaseAuthDataSource.ts` · **Base:** ADR 0006.
+
+## Problema (reproduzido no Galaxy A16, Expo Go)
+
+Ao entrar com Google, o login abria no Chrome por `Linking.openURL` e terminava **no site, dentro do Chrome**;
+o app nunca recebia a sessão. O código também devolvia um usuário "pending" logo após abrir o navegador, sem
+esperar o retorno.
+
+## Decisão
+
+- **Nativo**: `signInWithOAuth` com `skipBrowserRedirect: true` e `redirectTo = Linking.createURL("/auth/callback")`
+  (`exp://<ip>:8081/--/auth/callback` no Expo Go, `ipebook://auth/callback` no app instalado), aberto por
+  `WebBrowser.openAuthSessionAsync` (`expo-web-browser`, incluído no Expo Go). A URL de retorno vai para
+  `setSessionFromUrl`, que cria a sessão (tokens no fragmento ou código). Cancelar gera `AuthError`.
+- **Web**: inalterado — redireciona para `<origem>/auth/callback`, tratado pela rota existente.
+
+## Pré-requisito externo
+
+No Supabase (Authentication → URL Configuration → **Redirect URLs**) precisam constar `ipebook://**` e, para
+desenvolvimento no Expo Go, `exp://**`. Sem isso o Supabase volta para o Site URL (o site) e o login termina
+no navegador.
+
+## Critérios de aceite
+
+| # | Critério | Verificação |
+|---|---|---|
+| CA1 | Nativo abre a sessão de autenticação com o deep link do ambiente e cria a sessão pelo retorno | teste unitário |
+| CA2 | Cancelar não cria sessão e mostra erro | teste unitário |
+| CA3 | Login real no Expo Go termina dentro do app | Galaxy A16 (pendente: depende da conta Google do usuário) |
