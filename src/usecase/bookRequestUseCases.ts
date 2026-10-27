@@ -19,6 +19,8 @@ function requireSession(sessionUserId: string | null): string {
   return sessionUserId;
 }
 
+type Counterpart = { name: string | null; photoUrl: string | null };
+
 export class BookRequestUseCases implements IBookRequestUseCases {
   constructor(
     private readonly books: IBookDataSource,
@@ -52,14 +54,20 @@ export class BookRequestUseCases implements IBookRequestUseCases {
     const userId = requireSession(sessionUserId);
     const myListings = await this.books.listByOwner(userId);
     const result: RequestWithListing[] = [];
-    const names = new Map<string, string | null>();
+    const people = new Map<string, Counterpart>();
     for (const listing of myListings) {
       const requests = await this.requests.listByListing(listing.id);
       for (const request of requests) {
-        if (!names.has(request.requesterId)) {
-          names.set(request.requesterId, await this.findCounterpartName(request.requesterId));
+        if (!people.has(request.requesterId)) {
+          people.set(request.requesterId, await this.findCounterpart(request.requesterId));
         }
-        result.push({ request, listing, requesterName: names.get(request.requesterId) ?? null });
+        const person = people.get(request.requesterId);
+        result.push({
+          request,
+          listing,
+          requesterName: person?.name ?? null,
+          requesterPhotoUrl: person?.photoUrl ?? null,
+        });
       }
     }
     return result;
@@ -147,22 +155,25 @@ export class BookRequestUseCases implements IBookRequestUseCases {
       book,
       isOwner,
       counterpartId,
-      counterpartName: await this.findCounterpartName(counterpartId),
+      ...(await this.findCounterpart(counterpartId).then((person) => ({
+        counterpartName: person.name,
+        counterpartPhotoUrl: person.photoUrl,
+      }))),
       safeMeetingPoints,
     };
   }
 
   /**
    * O encontro de `06.05` identifica a pessoa pelo nome. Uma falha ao ler o perfil não impede
-   * acompanhar a negociação: a tela recorre ao identificador.
+   * acompanhar a negociação: a tela recorre ao identificador. A foto vai junto para o avatar (Spec 084).
    */
-  private async findCounterpartName(counterpartId: string): Promise<string | null> {
-    if (!this.profiles) return null;
+  private async findCounterpart(counterpartId: string): Promise<Counterpart> {
+    if (!this.profiles) return { name: null, photoUrl: null };
     try {
       const profile = await this.profiles.findById(counterpartId);
-      return profile?.name ?? null;
+      return { name: profile?.name ?? null, photoUrl: profile?.photoUrl ?? null };
     } catch {
-      return null;
+      return { name: null, photoUrl: null };
     }
   }
 }

@@ -88,6 +88,24 @@ describe("negociação simples (spec 004)", () => {
       ]);
     });
 
+    it("traz a foto de perfil de quem pediu e da outra pessoa no detalhe (Spec 084)", async () => {
+      const profiles = new MemoryProfileDataSource();
+      await profiles.ensure("alice", "Alice Souza");
+      await profiles.update("alice", { name: "Alice Souza", photoUrl: "https://cdn/alice.jpg" });
+      await profiles.ensure("owner", "Dono");
+      await profiles.update("owner", { name: "Dono", photoUrl: "https://cdn/dono.jpg" });
+      const withProfiles = new BookRequestUseCases(books, requests, profiles);
+      const req = await withProfiles.requestNegotiation("listing-1", "alice");
+
+      const received = await withProfiles.listReceivedRequests("owner");
+      expect(received[0].requesterPhotoUrl).toBe("https://cdn/alice.jpg");
+
+      const asOwner = await withProfiles.getRequestDetail(req.id, "owner");
+      expect(asOwner.counterpartPhotoUrl).toBe("https://cdn/alice.jpg");
+      const asRequester = await withProfiles.getRequestDetail(req.id, "alice");
+      expect(asRequester.counterpartPhotoUrl).toBe("https://cdn/dono.jpg");
+    });
+
     it("lista enviados com status atual", async () => {
       const req = await useCases.requestNegotiation("listing-1", "alice");
       await useCases.respondToRequest(req.id, "reject", "owner");

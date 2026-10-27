@@ -84,7 +84,7 @@ export function Conversations({
               onPress={() => open(item)}
               style={({ pressed }) => [styles.row, pressed ? styles.rowPressed : null]}
             >
-              <Avatar name={item.otherName} size={48} />
+              <Avatar name={item.otherName} photoUrl={item.otherPhotoUrl ?? undefined} size={48} />
               <View style={styles.rowText}>
                 <View style={styles.rowHeader}>
                   <Text style={styles.name} numberOfLines={1}>
