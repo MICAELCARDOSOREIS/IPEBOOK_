@@ -30,9 +30,9 @@ async function renderView(props: Partial<Parameters<typeof Conversations>[0]> = 
 
 describe("Conversations (Spec 076)", () => {
   const items: ConversationItem[] = [
-    { requestId: "r1", listing: listing("b1", "Dom Casmurro"), otherName: "Ana Paula", preview: "Pode ser sábado na praça?", time: "9h", kind: "accepted" },
-    { requestId: "r2", listing: listing("b2", "Vidas Secas"), otherName: "Lucas", preview: "Proposta recebida", time: null, kind: "pendingReceived" },
-    { requestId: "r3", listing: listing("b3", "Iracema"), otherName: "Marina", preview: "Aguardando resposta", time: null, kind: "pendingSent" },
+    { requestId: "r1", listing: listing("b1", "Dom Casmurro"), otherName: "Ana Paula", otherPhotoUrl: null, preview: "Pode ser sábado na praça?", time: "9h", kind: "accepted" },
+    { requestId: "r2", listing: listing("b2", "Vidas Secas"), otherName: "Lucas", otherPhotoUrl: null, preview: "Proposta recebida", time: null, kind: "pendingReceived" },
+    { requestId: "r3", listing: listing("b3", "Iracema"), otherName: "Marina", otherPhotoUrl: null, preview: "Aguardando resposta", time: null, kind: "pendingSent" },
   ];
 
   it("lista pessoa, prévia, horário e livro; aceita abre a conversa (Spec 076 CA4, Spec 082 CA5)", async () => {

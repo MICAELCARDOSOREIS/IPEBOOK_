@@ -7,6 +7,8 @@ export type RequestWithListing = Readonly<{
   listing: Book;
   /** Nome público de quem pediu, só nos pedidos recebidos; `null` quando o perfil não carrega. */
   requesterName?: string | null;
+  /** Foto de perfil de quem pediu, só nos recebidos; `null` sem foto (Spec 084). */
+  requesterPhotoUrl?: string | null;
 }>;
 
 export type RequestResponse = "accept" | "reject";
@@ -18,6 +20,8 @@ export type NegotiationDetail = Readonly<{
   counterpartId: string;
   /** Nome público da contraparte; `null` quando o perfil não pôde ser carregado. */
   counterpartName: string | null;
+  /** Foto de perfil da contraparte; `null` sem foto ou sem perfil (Spec 084). */
+  counterpartPhotoUrl?: string | null;
   safeMeetingPoints: readonly MeetingPoint[];
 }>;
 

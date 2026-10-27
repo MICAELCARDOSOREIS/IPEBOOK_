@@ -57,12 +57,13 @@ function deps(
   received: RequestWithListing[],
   messages: Record<string, NegotiationMessage[]>,
   names: Record<string, string>,
+  photos: Record<string, string> = {},
 ): ConversationsDeps {
   return {
     listSentRequests: vi.fn().mockResolvedValue(sent),
     listReceivedRequests: vi.fn().mockResolvedValue(received),
     getMessages: vi.fn(async (requestId: string) => messages[requestId] ?? []),
-    getProfileName: vi.fn(async (userId: string) => names[userId] ?? null),
+    getProfile: vi.fn(async (userId: string) => ({ name: names[userId] ?? null, photoUrl: photos[userId] ?? null })),
   };
 }
 
@@ -92,6 +93,29 @@ describe("useConversationsViewModel (Spec 076)", () => {
     expect(items[0]).toMatchObject({ otherName: "Ana Paula", preview: "Pode ser sábado na praça?", kind: "accepted" });
     expect(items[1]).toMatchObject({ otherName: "Lucas", preview: "Você: Combinado, levo o livro.", kind: "accepted" });
     expect(hook.current[0].loading).toBe(false);
+  });
+
+  it("traz a foto da outra pessoa nos enviados e nos recebidos (Spec 084)", async () => {
+    const hook = await renderHook(
+      "me",
+      deps(
+        [{ request: { id: "s1", listingId: "b9", requesterId: "me", status: "pending" }, listing: book("b9", "Iracema", "ze") }],
+        [
+          {
+            request: { id: "p1", listingId: "b1", requesterId: "ana", status: "pending" },
+            listing: book("b1", "Dom Casmurro", "me"),
+            requesterName: "Ana",
+            requesterPhotoUrl: "https://cdn/ana.jpg",
+          },
+        ],
+        {},
+        { ze: "Zé" },
+        { ze: "https://cdn/ze.jpg" },
+      ),
+    );
+    const byId = Object.fromEntries(hook.current[0].items.map((i) => [i.requestId, i]));
+    expect(byId.s1.otherPhotoUrl).toBe("https://cdn/ze.jpg");
+    expect(byId.p1.otherPhotoUrl).toBe("https://cdn/ana.jpg");
   });
 
   it("descreve pendentes e aceitas sem mensagem (CA3)", async () => {

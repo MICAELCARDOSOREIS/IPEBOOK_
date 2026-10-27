@@ -11,6 +11,8 @@ export type ConversationItem = Readonly<{
   requestId: string;
   listing: Book;
   otherName: string;
+  /** Foto de perfil da outra pessoa; sem foto o avatar mostra o ipê (Spec 084). */
+  otherPhotoUrl: string | null;
   preview: string;
   /** Horário relativo da última mensagem; `null` quando ainda não há mensagem. */
   time: string | null;
@@ -28,14 +30,17 @@ export type ConversationsDeps = {
   listSentRequests: (sessionUserId: string | null) => Promise<readonly RequestWithListing[]>;
   listReceivedRequests: (sessionUserId: string | null) => Promise<readonly RequestWithListing[]>;
   getMessages: (requestId: string, sessionUserId: string) => Promise<NegotiationMessage[]>;
-  getProfileName: (userId: string) => Promise<string | null>;
+  getProfile: (userId: string) => Promise<{ name: string | null; photoUrl: string | null }>;
 };
 
 const defaultDeps: ConversationsDeps = {
   listSentRequests: (id) => bookRequestUseCases.listSentRequests(id),
   listReceivedRequests: (id) => bookRequestUseCases.listReceivedRequests(id),
   getMessages: (requestId, sessionUserId) => negotiationMessageUseCases.getMessages(requestId, sessionUserId),
-  getProfileName: async (userId) => (await publicProfileUseCases.getPublicProfile(userId)).name ?? null,
+  getProfile: async (userId) => {
+    const profile = await publicProfileUseCases.getPublicProfile(userId);
+    return { name: profile.name ?? null, photoUrl: profile.photoUrl ?? null };
+  },
 };
 
 const COMMUNITY_MEMBER = "Pessoa da comunidade";
@@ -71,9 +76,10 @@ async function buildItem(
   deps: ConversationsDeps,
 ): Promise<{ item: ConversationItem; sortKey: string }> {
   const { request, listing } = entry;
-  const otherName =
-    (sent ? await safely(deps.getProfileName(listing.ownerId), null) : entry.requesterName) || COMMUNITY_MEMBER;
-  const base = { requestId: request.id, listing, otherName };
+  const other = sent
+    ? await safely(deps.getProfile(listing.ownerId), { name: null, photoUrl: null })
+    : { name: entry.requesterName ?? null, photoUrl: entry.requesterPhotoUrl ?? null };
+  const base = { requestId: request.id, listing, otherName: other.name || COMMUNITY_MEMBER, otherPhotoUrl: other.photoUrl };
 
   if (request.status === "pending") {
     return {
