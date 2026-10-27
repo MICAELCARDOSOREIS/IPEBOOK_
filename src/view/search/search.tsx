@@ -5,6 +5,8 @@ import { useSearchViewModel } from "@/viewmodel/useSearchViewModel";
 import type { SearchModalityFilter } from "@/viewmodel/useSearchViewModel";
 import { SORT_LABELS } from "@/viewmodel/searchFilters";
 import { FilterSheet } from "@/view/search/FilterSheet";
+import { WebFilterSidebar } from "@/view/search/WebFilterSidebar";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { SortSheet } from "@/view/search/SortSheet";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
@@ -62,6 +64,7 @@ export default function Search({
   const { isOnline } = useNetworkStatus();
   const [confirmingClear, setConfirmingClear] = useState(false);
   const [showFilterSheet, setShowFilterSheet] = useState(false);
+  const wideWeb = useIsWideWeb();
   const [showSortSheet, setShowSortSheet] = useState(false);
   const appliedInitialModality = useRef(false);
 
@@ -274,7 +277,12 @@ export default function Search({
       <OfflineState onRetry={() => void actions.reload()} />
     )
   ) : (
-    <View style={styles.empty}>
+    <View style={[styles.empty, wideWeb && styles.emptyWide]}>
+      {wideWeb ? (
+        <View style={styles.emptyIcon}>
+          <AppIcon name="search" size={32} color={colors.m3.onSurface} />
+        </View>
+      ) : null}
       <Text style={styles.emptyTitle}>
         {onlyNeighborhoodBlocks ? `Nenhum livro no ${displayNeighborhood} com essa busca.` : "Nenhum livro encontrado."}
       </Text>
@@ -317,13 +325,48 @@ export default function Search({
 
   return (
     <SafeAreaView edges={["top", "left", "right"]} style={styles.page}>
+      <View style={wideWeb ? styles.wideRow : styles.flexOne}>
+      {wideWeb ? (
+        <WebFilterSidebar
+          filters={state.filters}
+          categories={state.availableCategories}
+          hasActiveFilters={state.hasActiveFilters}
+          onModality={actions.setModality}
+          onCondition={actions.setCondition}
+          onCategory={actions.setCategory}
+          onClear={actions.resetFilters}
+        />
+      ) : null}
       <FlatList
+        key={wideWeb ? "grade" : "lista"}
+        numColumns={wideWeb ? 4 : 1}
+        columnWrapperStyle={wideWeb ? styles.gridRow : undefined}
         data={state.loading || state.error ? [] : state.books}
         keyExtractor={(book) => book.id}
-        contentContainerStyle={styles.content}
+        style={styles.flexOne}
+        contentContainerStyle={wideWeb ? styles.contentWide : styles.content}
         keyboardShouldPersistTaps="handled"
         ListHeaderComponent={listHeader}
         ListEmptyComponent={listEmpty}
+        ListFooterComponent={
+          wideWeb && !state.loading && !state.error && state.books.length > 0 ? (
+            <View style={styles.alertCard}>
+              <AppIcon name="bell" size={24} color={colors.m3.onTertiaryContainer} />
+              <View style={styles.alertCardText}>
+                <Text style={styles.alertCardTitle}>Não achou o livro?</Text>
+                <Text style={styles.alertCardBody}>Crie um alerta e avisamos quando alguém anunciar.</Text>
+              </View>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Criar alerta de busca"
+                onPress={() => onNavigateToAlerts?.(state.term.trim())}
+                style={styles.alertCardButton}
+              >
+                <Text style={styles.alertCardButtonText}>Criar alerta</Text>
+              </Pressable>
+            </View>
+          ) : undefined
+        }
         renderItem={({ item }) => {
           const priceOrCondition =
             item.price != null
@@ -333,12 +376,12 @@ export default function Search({
               : "Gratuito";
 
           return (
-            <View style={styles.card}>
+            <View style={[styles.card, wideWeb && styles.cardWide]}>
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel={`Ver detalhe de ${item.title}, ${item.author}${item.neighborhood ? ` em ${item.neighborhood}` : ""}`}
                 onPress={() => { void actions.registerSearch(state.term); onNavigateToBookDetail?.(item.id); }}
-                style={styles.cardMain}
+                style={[styles.cardMain, wideWeb && styles.cardMainWide]}
               >
                 <ModalityCoverArea modality={item.modality}>
                   <BookCover id={item.id} title={item.title} photoUrl={item.photoUrl} variant="list" />
@@ -359,7 +402,7 @@ export default function Search({
                   {item.category ? <Text style={styles.categoryBadge}>{item.category}</Text> : null}
                 </View>
               </Pressable>
-              <View style={styles.cardActions}>
+              <View style={[styles.cardActions, wideWeb && styles.cardActionsWide]}>
                 <FavoriteButton bookId={item.id} userId={auth.user?.id ?? null} />
                 <Pressable
                   accessibilityRole="button"
@@ -374,6 +417,7 @@ export default function Search({
           );
         }}
       />
+      </View>
       <FilterSheet
         visible={showFilterSheet}
         draftFilters={state.draftFilters}
@@ -411,6 +455,14 @@ export default function Search({
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     page: { flex: 1, backgroundColor: colors.background },
+    flexOne: { flex: 1 },
+    // Web larga (Figma `34:229`): filtros fixos à esquerda e resultados em grade de 4 colunas.
+    wideRow: { flex: 1, flexDirection: "row", gap: 24, width: "100%", maxWidth: 1440, alignSelf: "center", paddingHorizontal: 80, paddingTop: 32 },
+    contentWide: { flexGrow: 1, paddingBottom: tokens.spacing[32], gap: 24 },
+    gridRow: { gap: 24 },
+    cardMainWide: { flexDirection: "column", alignItems: "stretch", gap: 8 },
+    cardActionsWide: { position: "absolute", top: 8, right: 8, width: 48 },
+    cardWide: { alignItems: "stretch", paddingLeft: 12, paddingRight: 12, marginBottom: 0, flex: 1, flexDirection: "column", maxWidth: "25%", borderRadius: 20, backgroundColor: colors.m3.surfaceContainerLowest },
     content: {
       flexGrow: 1,
       width: "100%",
@@ -531,6 +583,14 @@ function createStyles(colors: ColorPalette) {
     sortText: { ...tokens.typography.labelLarge, color: colors.m3.primary },
     body: { fontSize: tokens.typography.bodyLarge.fontSize, lineHeight: 25, color: colors.secondaryText },
     empty: { alignItems: "center", paddingTop: tokens.spacing[32], gap: tokens.spacing[8] },
+    emptyWide: { width: "100%", paddingVertical: 48, paddingHorizontal: 48, borderRadius: 28, backgroundColor: colors.m3.surfaceContainerLow, gap: 16 },
+    emptyIcon: { width: 64, height: 64, borderRadius: 32, alignItems: "center", justifyContent: "center", backgroundColor: colors.m3.secondaryContainer },
+    alertCard: { flexDirection: "row", alignItems: "center", gap: 16, paddingHorizontal: 24, paddingVertical: 20, borderRadius: tokens.radius.large, backgroundColor: colors.m3.tertiaryContainer },
+    alertCardText: { flex: 1, gap: 2 },
+    alertCardTitle: { fontFamily: tokens.typography.labelLarge.fontFamily, fontSize: 20, lineHeight: 28, fontWeight: "600", color: colors.m3.onTertiaryContainer },
+    alertCardBody: { ...tokens.typography.bodyLarge, color: colors.m3.onTertiaryContainer },
+    alertCardButton: { height: 52, minWidth: 180, alignItems: "center", justifyContent: "center", borderRadius: tokens.radius.full, backgroundColor: colors.m3.primary },
+    alertCardButtonText: { ...tokens.typography.labelLarge, color: colors.m3.onPrimary },
     emptyTitle: { fontSize: 19, fontWeight: "600", color: colors.action },
     emptyActionButton: {
       minHeight: tokens.accessibility.touchTarget,

@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { BOOK_CONDITION_LABELS, type BookModality } from "@/model/entities/book";
 import { AppIcon } from "@/view/components/AppIcon";
 import { BookCover } from "@/view/components/BookCover";
@@ -62,11 +63,44 @@ export default function Favorites({
     void actions.reload();
   }, [focusKey]);
 
+  const wideWeb = useIsWideWeb();
+  const [statusFilter, setStatusFilter] = useState<"all" | "available" | "reserved">("all");
+  const visibleBooks = state.books.filter((book) =>
+    statusFilter === "all" ? true : statusFilter === "reserved" ? book.status === "reserved" : book.status !== "reserved",
+  );
+
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar title="Favoritos" onBack={onBack} />
+      {wideWeb ? null : <TopAppBar title="Favoritos" onBack={onBack} />}
 
-      {userId ? (
+      {wideWeb && userId ? (
+        <View style={styles.wideHeader}>
+          <Text accessibilityRole="header" style={styles.wideTitle}>Favoritos</Text>
+          <Text style={styles.wideSubtitle}>
+            {`${state.books.length} ${state.books.length === 1 ? "livro salvo" : "livros salvos"} · avisamos se o preço ou a disponibilidade mudar.`}
+          </Text>
+          <View style={styles.wideChips}>
+            {([["all", "Todos"], ["available", "Disponíveis"], ["reserved", "Reservados"]] as const).map(([value, label]) => {
+              const selected = statusFilter === value;
+              return (
+                <Pressable
+                  key={value}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Mostrar ${label.toLowerCase()}`}
+                  accessibilityState={{ selected }}
+                  onPress={() => setStatusFilter(value)}
+                  style={[styles.wideChip, selected && styles.wideChipSelected]}
+                >
+                  {selected ? <AppIcon name="check" size={16} color={colors.m3.onSecondaryContainer} /> : null}
+                  <Text style={[styles.wideChipText, selected && { color: colors.m3.onSecondaryContainer }]}>{label}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
+      ) : null}
+
+      {userId && !wideWeb ? (
         <View testID="favorites-tablist" accessibilityRole="tablist" style={styles.tabs}>
           <Pressable
             accessibilityRole="tab"
@@ -109,9 +143,23 @@ export default function Favorites({
         )
       ) : (
         <FlatList
-          data={state.books}
+          key={wideWeb ? "grade" : "lista"}
+          numColumns={wideWeb ? 4 : 1}
+          columnWrapperStyle={wideWeb ? styles.wideGridRow : undefined}
+          data={visibleBooks}
           keyExtractor={(book) => book.id}
-          contentContainerStyle={styles.list}
+          contentContainerStyle={wideWeb ? styles.wideList : styles.list}
+          ListFooterComponent={
+            wideWeb && state.books.length > 0 ? (
+              <View style={styles.privacyNote}>
+                <AppIcon name="info" size={20} color={colors.m3.onSurfaceVariant} />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.privacyTitle}>Favoritos ficam só com você</Text>
+                  <Text style={styles.privacyBody}>Quem anunciou não vê quem salvou o livro.</Text>
+                </View>
+              </View>
+            ) : undefined
+          }
           ListEmptyComponent={
             // `02.14`: título, apoio e ação alinhados à esquerda, sem ícone (Spec 043, RN-10).
             <View style={styles.emptyBox}>
@@ -134,12 +182,12 @@ export default function Favorites({
               .join(" · ");
 
             return (
-              <View style={styles.row}>
+              <View style={[styles.row, wideWeb && styles.wideCard]}>
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel={`Ver ${item.title}`}
                   onPress={() => onBook(item.id)}
-                  style={styles.rowMain}
+                  style={[styles.rowMain, wideWeb && styles.wideCardMain]}
                 >
                   <ModalityCoverArea modality={item.modality}>
                     <BookCover id={item.id} title={item.title} photoUrl={item.photoUrl} variant="list" />
@@ -206,6 +254,20 @@ function createStyles(colors: ColorPalette) {
     color: colors.secondaryText,
   },
   tabLabelActive: { color: colors.action, fontWeight: "600" },
+  wideHeader: { width: "100%", maxWidth: 1440, alignSelf: "center", paddingHorizontal: 80, paddingTop: 32, gap: 8 },
+  wideTitle: { fontFamily: tokens.typography.labelLarge.fontFamily, fontSize: 36, lineHeight: 44, fontWeight: "700", color: colors.m3.onSurface },
+  wideSubtitle: { ...tokens.typography.bodyLarge, color: colors.m3.onSurfaceVariant },
+  wideChips: { flexDirection: "row", gap: 8, paddingTop: 16 },
+  wideChip: { flexDirection: "row", alignItems: "center", gap: 6, height: 32, paddingHorizontal: 16, borderRadius: tokens.radius.small, borderWidth: 1, borderColor: colors.m3.outline },
+  wideChipSelected: { backgroundColor: colors.m3.secondaryContainer, borderColor: colors.m3.secondaryContainer, paddingLeft: 8 },
+  wideChipText: { ...tokens.typography.labelLarge, color: colors.m3.onSurfaceVariant },
+  wideList: { width: "100%", maxWidth: 1440, alignSelf: "center", paddingHorizontal: 80, paddingVertical: 24, gap: 24 },
+  wideGridRow: { gap: 24 },
+  wideCard: { flex: 1, maxWidth: "25%", flexDirection: "column", alignItems: "stretch", borderRadius: 20, backgroundColor: colors.m3.surfaceContainerLowest, padding: 12 },
+  wideCardMain: { flexDirection: "column", alignItems: "stretch" },
+  privacyNote: { flexDirection: "row", alignItems: "center", gap: 16, padding: 16, marginTop: 8, borderRadius: tokens.radius.medium, backgroundColor: colors.m3.surfaceContainer },
+  privacyTitle: { ...tokens.typography.labelLarge, color: colors.m3.onSurface },
+  privacyBody: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
   list: {
     width: "100%",
     maxWidth: 720,

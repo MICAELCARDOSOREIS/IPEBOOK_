@@ -12,6 +12,7 @@ import { ErrorState } from "@/view/components/ErrorState";
 import { LoadingState } from "@/view/components/LoadingState";
 import { OfflineState } from "@/view/components/OfflineState";
 import { NeighborhoodSelectorModal } from "@/view/components/NeighborhoodSelectorModal";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { ScreenContainer } from "@/view/components/ScreenContainer";
 import type { Book, BookModality } from "@/model/entities/book";
 
@@ -62,6 +63,53 @@ function CatalogCarousel({
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const modalityTag = useMemo(() => createModalityTag(colors), [colors]);
+  const wideWeb = useIsWideWeb();
+
+  const renderCard = (item: Book, wide = false) => {
+    const tag = modalityTag[item.modality];
+    const priceSuffix = item.modality === "sale" && item.price != null
+      ? ` · R$ ${item.price.toFixed(2).replace(".", ",")}`
+      : "";
+    return (
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`Ver detalhe de ${item.title}, ${item.author}${item.neighborhood ? ` em ${item.neighborhood}` : ""}`}
+        onPress={() => onNavigateToBookDetail?.(item.id)}
+        style={[styles.carouselCard, wide && styles.carouselCardWide]}
+      >
+        {/* Fundo da capa na cor da modalidade, como no topo do detalhe do livro. */}
+        <View style={[styles.carouselCardCoverArea, { backgroundColor: tag.background }]}>
+          <BookCover id={item.id} title={item.title} photoUrl={item.photoUrl} variant="card" />
+        </View>
+        <View style={styles.carouselCardMeta}>
+          {/* Modalidade em etiqueta colorida (a mesma cor dos filtros e do detalhe), preço ao lado. */}
+          <View style={styles.carouselCardModalityRow}>
+            <View style={[styles.carouselCardModalityPill, { backgroundColor: tag.background }]}>
+              <Text numberOfLines={1} style={[styles.carouselCardModality, { color: tag.text }]}>
+                {tag.label}
+              </Text>
+            </View>
+            {priceSuffix ? (
+              <Text numberOfLines={1} style={styles.carouselCardPrice}>
+                {priceSuffix.replace(" · ", "")}
+              </Text>
+            ) : null}
+          </View>
+          <Text numberOfLines={2} style={styles.carouselCardTitle}>{item.title}</Text>
+          <Text numberOfLines={1} style={styles.carouselCardAuthor}>{item.author}</Text>
+          {item.neighborhood ? (
+            <View style={styles.carouselCardLocationRow}>
+              <AppIcon name="place" size={14} color={colors.m3.onSurfaceVariant} />
+              <Text numberOfLines={1} style={styles.carouselCardNeighborhood}>
+                {item.neighborhood}
+              </Text>
+            </View>
+          ) : null}
+          {item.status === "reserved" ? <Text style={styles.carouselCardReserved}>Reservado</Text> : null}
+        </View>
+      </Pressable>
+    );
+  };
 
   function goTo(nextIndex: number) {
     const clamped = Math.max(0, Math.min(nextIndex, lastIndex));
@@ -112,6 +160,9 @@ function CatalogCarousel({
           <Text style={styles.viewMoreText}>{viewMoreButtonText}</Text>
         </Pressable>
       </View>
+      {wideWeb ? (
+        <View style={styles.carouselGrid}>{books.slice(0, 5).map((item) => <View key={item.id} style={styles.carouselGridCell}>{renderCard(item, true)}</View>)}</View>
+      ) : (
       <View style={styles.carouselRow}>
         <FlatList
           ref={listRef}
@@ -120,53 +171,10 @@ function CatalogCarousel({
           data={books as Book[]}
           keyExtractor={(item) => item.id}
           style={styles.carouselList}
-          renderItem={({ item }) => {
-            const tag = modalityTag[item.modality];
-            const priceSuffix = item.modality === "sale" && item.price != null
-              ? ` · R$ ${item.price.toFixed(2).replace(".", ",")}`
-              : "";
-            return (
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={`Ver detalhe de ${item.title}, ${item.author}${item.neighborhood ? ` em ${item.neighborhood}` : ""}`}
-                onPress={() => onNavigateToBookDetail?.(item.id)}
-                style={styles.carouselCard}
-              >
-                {/* Fundo da capa na cor da modalidade, como no topo do detalhe do livro. */}
-                <View style={[styles.carouselCardCoverArea, { backgroundColor: tag.background }]}>
-                  <BookCover id={item.id} title={item.title} photoUrl={item.photoUrl} variant="card" />
-                </View>
-                <View style={styles.carouselCardMeta}>
-                  {/* Modalidade em etiqueta colorida (a mesma cor dos filtros e do detalhe), preço ao lado. */}
-                  <View style={styles.carouselCardModalityRow}>
-                    <View style={[styles.carouselCardModalityPill, { backgroundColor: tag.background }]}>
-                      <Text numberOfLines={1} style={[styles.carouselCardModality, { color: tag.text }]}>
-                        {tag.label}
-                      </Text>
-                    </View>
-                    {priceSuffix ? (
-                      <Text numberOfLines={1} style={styles.carouselCardPrice}>
-                        {priceSuffix.replace(" · ", "")}
-                      </Text>
-                    ) : null}
-                  </View>
-                  <Text numberOfLines={2} style={styles.carouselCardTitle}>{item.title}</Text>
-                  <Text numberOfLines={1} style={styles.carouselCardAuthor}>{item.author}</Text>
-                  {item.neighborhood ? (
-                    <View style={styles.carouselCardLocationRow}>
-                      <AppIcon name="place" size={14} color={colors.m3.onSurfaceVariant} />
-                      <Text numberOfLines={1} style={styles.carouselCardNeighborhood}>
-                        {item.neighborhood}
-                      </Text>
-                    </View>
-                  ) : null}
-                  {item.status === "reserved" ? <Text style={styles.carouselCardReserved}>Reservado</Text> : null}
-                </View>
-              </Pressable>
-            );
-          }}
+          renderItem={({ item }) => renderCard(item)}
         />
       </View>
+      )}
     </View>
   );
 }
@@ -206,6 +214,7 @@ export default function Home({
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const modalityTag = useMemo(() => createModalityTag(colors), [colors]);
+  const wideWeb = useIsWideWeb();
   const [selectedModality, setSelectedModality] = useState<BookModality | "all">("all");
 
   const isFirstFocus = useRef(true);
@@ -422,6 +431,46 @@ export default function Home({
         </View>
       )}
 
+      {wideWeb ? (
+        <View style={styles.shortcuts}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`Doações da semana: ${donationSummary}`}
+            onPress={() => onNavigateToSearch?.({ modality: "donation" })}
+            style={[styles.shortcut, { backgroundColor: colors.m3.doacaoContainer }]}
+          >
+            <AppIcon name="bookmark" size={24} color={colors.m3.onDoacaoContainer} />
+            <View style={styles.shortcutText}>
+              <Text style={[styles.shortcutTitle, { color: colors.m3.onDoacaoContainer }]}>Doações da semana</Text>
+              <Text style={[styles.shortcutBody, { color: colors.m3.onDoacaoContainer }]}>{donationSummary}</Text>
+            </View>
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Troque o que já leu"
+            onPress={() => onNavigateToSearch?.({ modality: "trade" })}
+            style={[styles.shortcut, { backgroundColor: colors.m3.tertiaryContainer }]}
+          >
+            <AppIcon name="swap" size={24} color={colors.m3.onTertiaryContainer} />
+            <View style={styles.shortcutText}>
+              <Text style={[styles.shortcutTitle, { color: colors.m3.onTertiaryContainer }]}>Troque o que já leu</Text>
+              <Text style={[styles.shortcutBody, { color: colors.m3.onTertiaryContainer }]}>
+                Proponha uma troca direto pelo chat, sem intermediários.
+              </Text>
+            </View>
+          </Pressable>
+          <View style={[styles.shortcut, { backgroundColor: colors.m3.primaryContainer }]}>
+            <AppIcon name="checkCircle" size={24} color={colors.m3.onPrimaryContainer} />
+            <View style={styles.shortcutText}>
+              <Text style={[styles.shortcutTitle, { color: colors.m3.onPrimaryContainer }]}>Encontro seguro</Text>
+              <Text style={[styles.shortcutBody, { color: colors.m3.onPrimaryContainer }]}>
+                Locais públicos sugeridos e avaliação depois de cada troca.
+              </Text>
+            </View>
+          </View>
+        </View>
+      ) : (
+      <>
       {/* 6. Banner de Destaque Comunitário ("Doações da semana") */}
       <Pressable
         accessibilityRole="button"
@@ -440,6 +489,8 @@ export default function Home({
         </View>
         <AppIcon name="chevronRight" size={24} color={colors.m3.onSurfaceVariant} />
       </Pressable>
+      </>
+      )}
 
     </View>
   );
@@ -447,7 +498,8 @@ export default function Home({
   return (
     <ScreenContainer
       edges={["top", "left", "right"]}
-      maxWidth={720}
+      maxWidth={wideWeb ? 1440 : 720}
+      paddingHorizontal={wideWeb ? 80 : undefined}
       overlay={
         <NeighborhoodSelectorModal
           visible={neighborhoodHook.isSelectorOpen}
@@ -637,6 +689,15 @@ function createStyles(colors: ColorPalette) {
       fontWeight: "500",
     },
     carouselRow: { position: "relative" },
+    shortcuts: { flexDirection: "row", gap: 24 },
+    shortcut: { flex: 1, flexDirection: "row", gap: 16, padding: 24, borderRadius: tokens.radius.large },
+    shortcutText: { flex: 1, gap: 4 },
+    shortcutTitle: { fontFamily: fontFamily.medium, fontSize: 20, lineHeight: 28, fontWeight: "600" },
+    shortcutBody: { ...tokens.typography.bodyMedium },
+    // Web larga (Figma `34:160`): grade de 5 colunas com 24 px de respiro.
+    carouselGrid: { flexDirection: "row", flexWrap: "wrap", gap: 24 },
+    carouselGridCell: { flexGrow: 1, flexBasis: 0, minWidth: 180, flexDirection: "column" },
+    carouselCardWide: { flex: 1, width: "100%", marginRight: 0, borderRadius: 20, backgroundColor: colors.m3.surfaceContainerLowest },
     carouselList: { flexGrow: 0 },
     // Figma `02.01`: a faixa mostra dois cartões inteiros, então as setas saem do fluxo e ficam
     // invisíveis sobre o título da seção (texto estático, sem toque) para não roubar o toque dos

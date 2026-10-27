@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { AuthShell } from "@/view/auth/AuthShell";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
@@ -32,6 +34,7 @@ export default function SignUp({
 }: SignUpProps = {}) {
   const [state, actions] = useAuthViewModel();
   const { colors } = useTheme();
+  const wideWeb = useIsWideWeb();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -58,10 +61,11 @@ export default function SignUp({
   };
 
   return (
+    <AuthShell>
     <SafeAreaView style={styles.page}>
       {onBack ? <TopAppBar title="Criar conta" onBack={onBack} /> : null}
       <ScrollView
-        contentContainerStyle={styles.centerContainer}
+        contentContainerStyle={[styles.centerContainer, wideWeb && { justifyContent: "center" }]}
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.content}>
@@ -89,6 +93,9 @@ export default function SignUp({
             value={name}
             onChangeText={setName}
             autoCapitalize="words"
+            autoComplete="name"
+            textContentType="name"
+            returnKeyType="next"
             editable={!state.loading}
             placeholder="Como você quer ser chamado"
             maxLength={80}
@@ -100,6 +107,9 @@ export default function SignUp({
             onChangeText={setEmail}
             autoCapitalize="none"
             keyboardType="email-address"
+            autoComplete="email"
+            textContentType="emailAddress"
+            returnKeyType="next"
             editable={!state.loading}
             placeholder="voce@exemplo.com"
           />
@@ -109,6 +119,9 @@ export default function SignUp({
             value={password}
             onChangeText={setPassword}
             secureTextEntry
+            autoComplete="new-password"
+            textContentType="newPassword"
+            returnKeyType="done"
             editable={!state.loading}
             helperText="Mínimo de 8 caracteres."
           />
@@ -151,6 +164,7 @@ export default function SignUp({
         </View>
       </ScrollView>
     </SafeAreaView>
+    </AuthShell>
   );
 }
 

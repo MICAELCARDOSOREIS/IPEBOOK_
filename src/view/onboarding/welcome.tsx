@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Image, StyleSheet, Text, View } from "react-native";
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { FilledButton } from "@/view/components/FilledButton";
 import { Logotipo } from "@/view/components/Logotipo";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
@@ -7,6 +7,8 @@ import { ScreenContainer } from "@/view/components/ScreenContainer";
 import { TextButton } from "@/view/components/TextButton";
 import { accessibility, fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
+import { AppIcon } from "@/view/components/AppIcon";
 import illustration from "./ilustracao-classicos.png";
 
 export type WelcomeProps = {
@@ -22,6 +24,71 @@ export type WelcomeProps = {
 export default function Welcome({ onStart, onSignIn, onExplore }: WelcomeProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const wideWeb = useIsWideWeb();
+
+  // Web larga (Figma `01.01` Web `146:457`): cabeçalho, chamada em duas colunas, três modalidades e rodapé.
+  if (wideWeb) {
+    const cards = [
+      { label: "Venda", icon: "bookmark", tone: colors.m3.primaryContainer, on: colors.m3.onPrimaryContainer, text: "Defina o preço em reais e combine a entrega no seu bairro." },
+      { label: "Troca", icon: "swap", tone: colors.m3.tertiaryContainer, on: colors.m3.onTertiaryContainer, text: "Ofereça um livro da sua estante e explique as condições." },
+      { label: "Doação", icon: "heart", tone: colors.m3.doacaoContainer, on: colors.m3.onDoacaoContainer, text: "Doe para quem vai ler. Sem cobrança pelo exemplar." },
+    ] as const;
+    return (
+      <ScrollView style={styles.wideRoot} contentContainerStyle={styles.wideContent}>
+        <View style={styles.wideHeader}>
+          <Logotipo />
+          <View style={styles.wideHeaderActions}>
+            <Pressable accessibilityRole="button" accessibilityLabel="Entrar" onPress={onSignIn}>
+              <Text style={styles.wideLink}>Entrar</Text>
+            </Pressable>
+            <Pressable accessibilityRole="button" accessibilityLabel="Criar conta" onPress={onStart} style={styles.wideCta}>
+              <Text style={styles.wideCtaText}>Criar conta</Text>
+            </Pressable>
+          </View>
+        </View>
+
+        <View style={styles.wideHero}>
+          <View style={styles.wideHeroText}>
+            <View style={styles.location} accessible accessibilityLabel="Beta exclusiva em Piripiri, PI">
+              <AppIcon name="place" size={14} color={colors.m3.onSurfaceVariant} />
+              <Text style={styles.locationText}>Piripiri · Piauí</Text>
+            </View>
+            <View>
+              <Text accessibilityRole="header" style={styles.wideTitle}>Uma boa história</Text>
+              <Text style={styles.wideTitle}>merece continuar.</Text>
+            </View>
+            <Text style={styles.wideLead}>
+              Encontre, troque, venda ou doe livros com quem mora perto de você. Sem taxas e com encontro em local público.
+            </Text>
+            <View style={styles.wideActions}>
+              <Pressable accessibilityRole="button" accessibilityLabel="Começar agora" onPress={onStart} style={styles.wideCta}>
+                <Text style={styles.wideCtaText}>Começar agora</Text>
+              </Pressable>
+              <Pressable accessibilityRole="button" accessibilityLabel="Explorar livros" onPress={onExplore} style={styles.wideOutlined}>
+                <Text style={styles.wideOutlinedText}>Explorar livros</Text>
+              </Pressable>
+            </View>
+          </View>
+          <View style={styles.widePanel}>
+            <Image source={illustration} style={styles.wideIllustration} resizeMode="contain" accessible={false} importantForAccessibility="no" />
+          </View>
+        </View>
+
+        <View style={styles.wideCards}>
+          {cards.map((card) => (
+            <View key={card.label} style={[styles.wideCard, { backgroundColor: card.tone }]}>
+              <AppIcon name={card.icon} size={24} color={card.on} />
+              <Text style={[styles.wideCardTitle, { color: card.on }]}>{card.label}</Text>
+              <Text style={[styles.wideCardText, { color: card.on }]}>{card.text}</Text>
+            </View>
+          ))}
+        </View>
+
+        <Text style={styles.wideFooter}>IpêBook · Piripiri, Piauí</Text>
+      </ScrollView>
+    );
+  }
+
   return (
     <ScreenContainer
       maxWidth={560}
@@ -75,6 +142,27 @@ export default function Welcome({ onStart, onSignIn, onExplore }: WelcomeProps) 
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
+  wideRoot: { flex: 1, backgroundColor: colors.background },
+  wideContent: { width: "100%", maxWidth: 1440, alignSelf: "center", paddingHorizontal: 80, paddingTop: 16, paddingBottom: 32, gap: 64 },
+  wideHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", minHeight: 56 },
+  wideHeaderActions: { flexDirection: "row", alignItems: "center", gap: 24 },
+  wideLink: { ...tokens.typography.labelLarge, color: colors.m3.primary },
+  wideCta: { height: 52, paddingHorizontal: 32, borderRadius: tokens.radius.full, alignItems: "center", justifyContent: "center", backgroundColor: colors.m3.primary },
+  wideCtaText: { ...tokens.typography.labelLarge, color: colors.m3.onPrimary },
+  wideOutlined: { height: 52, paddingHorizontal: 32, borderRadius: tokens.radius.full, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: colors.m3.outline },
+  wideOutlinedText: { ...tokens.typography.labelLarge, color: colors.m3.primary },
+  wideHero: { flexDirection: "row", alignItems: "center", gap: 48 },
+  wideHeroText: { flex: 1, gap: 24, alignItems: "flex-start" },
+  wideTitle: { fontFamily: fontFamily.brand, fontSize: 56, lineHeight: 64, color: colors.m3.onSurface },
+  wideLead: { ...tokens.typography.bodyLarge, fontSize: 19, lineHeight: 30, color: colors.m3.onSurfaceVariant, maxWidth: 480 },
+  wideActions: { flexDirection: "row", gap: 16 },
+  widePanel: { flex: 1, maxWidth: 560, height: 420, borderRadius: 28, alignItems: "center", justifyContent: "center", backgroundColor: colors.m3.primaryContainer },
+  wideIllustration: { width: "90%", height: "90%" },
+  wideCards: { flexDirection: "row", gap: 24 },
+  wideCard: { flex: 1, gap: 8, padding: 24, borderRadius: tokens.radius.large },
+  wideCardTitle: { fontFamily: fontFamily.medium, fontSize: 20, lineHeight: 28, fontWeight: "600" },
+  wideCardText: { ...tokens.typography.bodyLarge },
+  wideFooter: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
   header: {
     flexDirection: "row",
     alignItems: "center",
