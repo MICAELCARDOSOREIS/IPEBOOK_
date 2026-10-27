@@ -199,4 +199,41 @@ describe("useConversationsViewModel (Spec 076)", () => {
     });
     expect(unsubscribe).toHaveBeenCalledTimes(1);
   });
+
+  it("apaga a conversa só para mim e ela volta com mensagem nova (Spec 090)", async () => {
+    const sent = [{ request: { id: "s2", listingId: "b2", requesterId: "me", status: "accepted" as const }, listing: book("b2", "Vidas Secas", "lucas") }];
+    const messages = { s2: [msg("s2", "lucas", "Levo o livro", "2026-10-26T12:00:00Z")] };
+    const base = deps(sent, [], messages, { lucas: "Lucas" });
+    const hiddenAt: Record<string, string> = {};
+    const hideConversation = vi.fn(async (requestId: string) => {
+      hiddenAt[requestId] = "2026-10-26T13:00:00Z";
+    });
+    const hook = await renderHook("me", { ...base, hideConversation, listHiddenConversations: vi.fn(async () => hiddenAt) });
+    expect(hook.current[0].items).toHaveLength(1);
+
+    let ok = false;
+    await act(async () => {
+      ok = await hook.current[1].deleteConversation("s2");
+    });
+    expect(ok).toBe(true);
+    expect(hideConversation).toHaveBeenCalledWith("s2", "me");
+    expect(hook.current[0].items).toHaveLength(0);
+
+    // mensagem posterior ao apagar traz a conversa de volta
+    messages.s2 = [msg("s2", "lucas", "Cheguei", "2026-10-26T14:00:00Z")];
+    await act(async () => {
+      await hook.current[1].reload();
+    });
+    expect(hook.current[0].items).toHaveLength(1);
+  });
+
+  it("devolve falso quando apagar falha (Spec 090)", async () => {
+    const failing = { ...deps([], [], {}, {}), hideConversation: vi.fn().mockRejectedValue(new Error("rede")) };
+    const hook = await renderHook("me", failing);
+    let ok = true;
+    await act(async () => {
+      ok = await hook.current[1].deleteConversation("x");
+    });
+    expect(ok).toBe(false);
+  });
 });

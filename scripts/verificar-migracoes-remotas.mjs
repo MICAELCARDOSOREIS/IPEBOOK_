@@ -190,6 +190,11 @@ export const TABELAS_CRITICAS = {
     descricao: 'Notificações e avisos da plataforma',
     colunas: ['id', 'user_id', 'type', 'title', 'message', 'action_url', 'read', 'created_at'],
   },
+  v2_hidden_conversations: {
+    nome: 'v2_hidden_conversations',
+    descricao: 'Conversas apagadas por cada pessoa (Spec 090)',
+    colunas: ['user_id', 'request_id', 'hidden_at'],
+  },
   v2_user_preferences: {
     nome: 'v2_user_preferences',
     descricao: 'Preferências privadas de contato e bairro padrão',
@@ -611,6 +616,11 @@ export const MAPEAMENTO_MIGRACOES = {
     validar: (ctx) =>
       Boolean(ctx.tabelas.v2_negotiation_messages?.existe) && Boolean(ctx.tabelas.v2_notifications?.existe),
     detalhe: 'Tabelas de mensagens, notificações e pedidos na publicação supabase_realtime (Spec 086)',
+  },
+  '202610270001_conversas_ocultas.sql': {
+    titulo: 'Conversas apagadas por pessoa',
+    validar: (ctx) => Boolean(ctx.tabelas.v2_hidden_conversations?.existe),
+    detalhe: 'Tabela public.v2_hidden_conversations com RLS por dono (Spec 090)',
   },
 };
 

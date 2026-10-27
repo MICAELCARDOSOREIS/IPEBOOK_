@@ -279,6 +279,10 @@ export const negotiationMessageUseCases = {
     messageDataSource.subscribeToMessages?.(requestId, onMessage) ?? (() => {}),
   subscribeToAllMessages: (onMessage: (msg: NegotiationMessage) => void) =>
     messageDataSource.subscribeToAllMessages?.(onMessage) ?? (() => {}),
+  hideConversation: async (requestId: string, userId: string) => {
+    await messageDataSource.hideConversation?.(requestId, userId);
+  },
+  listHiddenConversations: async (userId: string) => (await messageDataSource.listHiddenConversations?.(userId)) ?? {},
 };
 
 export const logger: ILogger = new SafeLogger(
