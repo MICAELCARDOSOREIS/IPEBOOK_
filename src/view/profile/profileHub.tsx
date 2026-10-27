@@ -5,7 +5,7 @@ import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useProfileViewModel } from "@/viewmodel/useProfileViewModel";
 import { useMyListingsViewModel } from "@/viewmodel/useMyListingsViewModel";
 import { useUserPreferencesViewModel } from "@/viewmodel/useUserPreferencesViewModel";
-import { Avatar } from "@/view/components/Avatar";
+import { ReaderCard } from "@/view/components/ReaderCard";
 import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
 import { Dialog } from "@/view/components/Dialog";
 import { FilledButton } from "@/view/components/FilledButton";
@@ -205,20 +205,16 @@ export default function ProfileHub({
             <>
               {isSignedIn ? (
                 <>
-                  {/* Card de Identidade (Figma 07.01 nó 25:610: 345x96px, rx 20px, fill #F7F3EC) */}
-                  <View style={styles.identityCard}>
-                    <Avatar name={profile.name} photoUrl={profile.photoUrl} size={72} />
-                    <View style={styles.identityText}>
-                      <Text style={styles.name}>{profile.name}</Text>
-                      <Text style={styles.subtitle}>
-                        {profile.ratingCount > 0
-                          ? `★ ${profile.averageRating?.toFixed(1)} (${profile.ratingCount} ${profile.ratingCount > 1 ? "avaliações" : "avaliação"})`
-                          : "Sem avaliações ainda"}
-                        {" · "}
-                        {profile.neighborhood ? `${profile.neighborhood}, Piripiri` : "Piripiri, PI"}
-                      </Text>
-                    </View>
-                  </View>
+                  {/* Cartão de leitor com o ipê da marca (Spec 078), no lugar do cartão neutro do Figma 07.01 */}
+                  <ReaderCard
+                    name={profile.name}
+                    photoUrl={profile.photoUrl}
+                    subtitle={`${
+                      profile.ratingCount > 0
+                        ? `★ ${profile.averageRating?.toFixed(1)} (${profile.ratingCount} ${profile.ratingCount > 1 ? "avaliações" : "avaliação"})`
+                        : "Sem avaliações ainda"
+                    } · ${profile.neighborhood ? `${profile.neighborhood}, Piripiri` : "Piripiri, PI"}`}
+                  />
 
                   {/* Botão Outline "Editar perfil" (Figma 07.01 nó 604:8677: 345x48px, rx 24px, stroke #D3CCC2, sem ícone) */}
                   <Pressable
@@ -249,6 +245,7 @@ export default function ProfileHub({
                   {/* Seção 1: Atividade (Figma 07.01 nó 604:8684: altura 36px, cor #2C5E45) */}
                   <View style={styles.section}>
                     <View style={styles.sectionHeaderRow}>
+                      <View style={styles.sectionBloom} />
                       <Text style={styles.sectionHeader}>Atividade</Text>
                     </View>
                     <View style={styles.cardGroup}>
@@ -293,6 +290,7 @@ export default function ProfileHub({
               {isSignedIn ? (
                 <View style={styles.section}>
                   <View style={styles.sectionHeaderRow}>
+                    <View style={styles.sectionBloom} />
                     <Text style={styles.sectionHeader}>Conta</Text>
                   </View>
                   <View style={styles.cardGroup}>
@@ -400,30 +398,6 @@ function createStyles(colors: ColorPalette) {
       ...tokens.typography.bodyMedium,
       color: colors.m3.onSurfaceVariant,
     },
-    identityCard: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[16],
-      // Figma `07.01` (nó 25:610): #F7F3EC é `surface-container-low`, não `surface-container`.
-      backgroundColor: colors.m3.surfaceContainerLow,
-      borderRadius: 20,
-      paddingHorizontal: tokens.spacing[16],
-      paddingVertical: tokens.spacing[12],
-      minHeight: 96,
-    },
-    identityText: { flex: 1, gap: tokens.spacing[4] },
-    name: {
-      fontFamily: fontFamily.brand,
-      fontSize: 24,
-      lineHeight: 29,
-      color: colors.text,
-    },
-    subtitle: {
-      fontSize: 14,
-      lineHeight: 20,
-      fontFamily: fontFamily.regular,
-      color: colors.m3.onSurfaceVariant,
-    },
     editProfileButton: {
       flexDirection: "row",
       alignItems: "center",
@@ -457,10 +431,11 @@ function createStyles(colors: ColorPalette) {
       paddingVertical: tokens.spacing[8],
     },
     statNumber: {
-      fontSize: 22,
-      lineHeight: 28,
+      fontFamily: fontFamily.brand,
+      fontSize: 24,
+      lineHeight: 30,
       fontWeight: "700",
-      color: colors.text,
+      color: colors.brandBrown,
     },
     statLabel: {
       fontSize: 12,
@@ -473,8 +448,17 @@ function createStyles(colors: ColorPalette) {
     },
     sectionHeaderRow: {
       height: 36,
-      justifyContent: "center",
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[8],
       paddingHorizontal: tokens.spacing[4],
+    },
+    // Flor de ipê marcando cada seção (Spec 078).
+    sectionBloom: {
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      backgroundColor: colors.ipe.bloomDeep,
     },
     sectionHeader: {
       fontSize: 13,
