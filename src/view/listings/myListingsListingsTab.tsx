@@ -8,6 +8,7 @@ import { Chip } from "@/view/components/Chip";
 import { FilledButton } from "@/view/components/FilledButton";
 import { IconBadge } from "@/view/components/IconBadge";
 import { ShelfRow } from "@/view/listings/shelfRow";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
 
 const MODALITY_LABELS: Readonly<Record<BookModality, string>> = {
   sale: "Venda",
@@ -45,6 +46,7 @@ export function MyListingsListingsTab({
 }: MyListingsListingsTabProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const wideWeb = useIsWideWeb();
 
   const activeCount = books.filter((b) => b.status === "available").length;
   const pausedCount = books.filter((b) => b.status === "paused").length;
@@ -96,9 +98,25 @@ export function MyListingsListingsTab({
           <Text style={styles.listTitle}>
             {`${filteredBooks.length} ${filteredBooks.length === 1 ? "anúncio" : "anúncios"}`}
           </Text>
+          {wideWeb ? (
+            <View style={styles.tableHeader}>
+              <Text style={[styles.tableHeaderText, { flex: 3 }]}>Livro</Text>
+              <Text style={[styles.tableHeaderText, { flex: 1.5 }]}>Situação</Text>
+              <Text style={[styles.tableHeaderText, { width: 96 }]}>Ação</Text>
+            </View>
+          ) : null}
           {filteredBooks.map((book) => (
             <ShelfRow
               key={book.id}
+              wide={
+                wideWeb
+                  ? {
+                      statusVariant: book.status === "reserved" ? "reserved" : book.modality,
+                      statusLabel: book.status === "available" ? MODALITY_LABELS[book.modality] : STATUS_LABELS[book.status],
+                      offer: book.modality === "sale" && book.price ? formatPrice(book.price) : MODALITY_LABELS[book.modality],
+                    }
+                  : undefined
+              }
               book={book}
               summary={listingSummary(book)}
               accessibilityLabel={`Gerenciar anúncio de ${book.title}`}
@@ -136,6 +154,8 @@ function createStyles(colors: ColorPalette) {
       borderRadius: 16,
       backgroundColor: colors.m3.surfaceContainerLow,
     },
+    tableHeader: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[16], paddingHorizontal: tokens.spacing[16], paddingVertical: tokens.spacing[12] },
+    tableHeaderText: { ...tokens.typography.labelLarge, color: colors.m3.onSurfaceVariant },
     listTitle: { ...tokens.typography.titleMedium, color: colors.m3.onSurface },
     orientationHint: {
       ...tokens.typography.bodyMedium,
