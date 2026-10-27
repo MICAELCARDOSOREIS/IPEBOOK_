@@ -5,7 +5,11 @@ import { AuthError } from "@/model/errors";
 import type { SupabaseAppClient } from "@/infra/supabaseClient";
 
 const openAuthSessionAsync = vi.fn();
-vi.mock("expo-web-browser", () => ({ openAuthSessionAsync: (...args: unknown[]) => openAuthSessionAsync(...args) }));
+const warmUpAsync = vi.fn().mockResolvedValue({});
+vi.mock("expo-web-browser", () => ({
+  openAuthSessionAsync: (...args: unknown[]) => openAuthSessionAsync(...args),
+  warmUpAsync: (...args: unknown[]) => warmUpAsync(...args),
+}));
 // SDK 58: no Expo Go deste projeto, createURL devolvia "ipebook:///…" (sem hostUri nem expoGoConfig); o sinal
 // confiável é a origem HTTP do bundle servido pelo Metro.
 const bundle = vi.hoisted(() => ({ origin: "http://192.168.1.230:8081" as string | null }));
@@ -47,7 +51,9 @@ describe("Login com Google no app nativo (Spec 085)", () => {
     expect(openAuthSessionAsync).toHaveBeenCalledWith(
       "https://supabase/auth/v1/authorize?provider=google",
       "exp://192.168.1.230:8081/--/auth/callback",
+      expect.objectContaining({ createTask: false }),
     );
+    expect(warmUpAsync).toHaveBeenCalled();
     expect(auth.setSession).toHaveBeenCalledWith({ access_token: "AT", refresh_token: "RT" });
     expect(user).toEqual({ id: "u1", email: "ana@exemplo.com", name: "Ana" });
   });

@@ -14,8 +14,13 @@ esperar o retorno.
   `/--/auth/callback` no Expo Go (`exp://<ip>:8081/--/auth/callback`) e `ipebook://auth/callback` no app instalado.
   O `Linking.createURL` do SDK 58 devolvia `ipebook:///auth/callback` mesmo no Expo Go — esquema que o Expo Go
   não abre e, sem host, recusado pela lista do Supabase (confirmado no `dumpsys` do Android). Aberto por
-  `WebBrowser.openAuthSessionAsync` (`expo-web-browser`, incluído no Expo Go). A URL de retorno vai para
-  `setSessionFromUrl`, que cria a sessão (tokens no fragmento ou código). Cancelar gera `AuthError`.
+  `WebBrowser.openAuthSessionAsync` (`expo-web-browser`, incluído no Expo Go) com `{ createTask: false }`:
+  no Android, `createTask: true` (padrão) abre o navegador em uma nova tarefa, o que causa um ciclo de alternância
+  de tarefas no Android e dispara um evento imediato de `active` no ciclo de vida (`AppState`) do app com launchMode
+  `singleTask`, resolvendo a sessão como fechada em ~50 ms antes do navegador carregar. Com `{ createTask: false }`
+  e aquecimento prévio (`warmUpAsync`), o Chrome Custom Tab abre diretamente na mesma tarefa da aplicação,
+  mantendo o app em pausa até a conclusão do redirecionamento ou cancelamento real pelo usuário. A URL de retorno vai para
+  `setSessionFromUrl`, que cria a sessão (tokens no fragmento ou código). Cancelar gera `AuthError` e é registrado no log em nível informativo (`info`).
 - **Web**: inalterado — redireciona para `<origem>/auth/callback`, tratado pela rota existente.
 
 ## Pré-requisito externo

@@ -174,8 +174,20 @@ export class SupabaseAuthDataSource implements IAuthDataSource {
     }
 
     const WebBrowser = await import("expo-web-browser");
-    const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+    if (Platform.OS === "android" && typeof WebBrowser.warmUpAsync === "function") {
+      try {
+        await WebBrowser.warmUpAsync();
+      } catch {
+        // Ignora se o dispositivo ou navegador padrão não suportar Custom Tabs
+      }
+    }
+    const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo, {
+      createTask: false,
+    });
     if (result.type !== "success" || !("url" in result)) {
+      if (typeof __DEV__ !== "undefined" && __DEV__) {
+        console.warn("[SupabaseAuthDataSource.signInWithGoogle] Sessão não concluída:", result);
+      }
       throw new AuthError("Login com Google cancelado.");
     }
     return this.setSessionFromUrl(result.url);
