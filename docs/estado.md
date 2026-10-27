@@ -2,11 +2,13 @@
 
 Documento consolidado de continuidade técnica e produto do Ipebook (Piripiri, PI).
 
-Conferência atual: **2026-10-26** (78 specs e 64 ADRs numerados, 179 arquivos e 1.299 testes automatizados 100% passando).
+Conferência atual: **2026-10-26** (80 specs e 65 ADRs numerados, 181 arquivos e 1.309 testes automatizados 100% passando).
 
 **Acompanhamento do encontro (2026-10-26, Spec 079):** "Acompanhar encontro" ganhou andamento Aceita → Encontro → Concluída; o cartão do encontro diz "Hoje"/"Amanhã"/"Em n dias" ou que o horário passou e tem "Como chegar" ao ponto escolhido; a conclusão só é sugerida depois do encontro e o banner muda para "Negociação concluída" após avaliar. Validado em 1.299 testes; sem conferência em aparelho.
 
 **Usabilidade do anúncio (2026-10-26, Spec 077):** "Continuar" da etapa 1 valida título, autor e preço da venda e mostra o erro no campo (antes só ao publicar); cada etapa abre no topo; Voltar do Android recua uma etapa; "Buscar" ISBN fica desativado sem código. Validado em 1.291 testes; sem conferência em aparelho.
+
+**Editar perfil com foto pela câmera/galeria e Instagram (2026-10-26, Spec 080, ADR 0065):** a foto deixou de ser link colado: botões "Galeria" e "Câmera" (`expo-image-picker`, recorte 1:1), validação por *magic bytes* e 5 MB em `ProfilePhotoUseCases` e envio ao bucket `book-photos` em `<id>/perfil/` (sem migração de Storage). "Rede social" virou **Instagram** (`@perfil`, letras/números/ponto/_ até 30, sem link). No Meu perfil o Instagram fica dentro do cartão de leitor e abre o perfil; o selo do ipê saiu desse cartão; plural "1 publicação/1 troca". Upload real confirmado no Galaxy A16. Dependência nova `expo-image-picker`; permissões de câmera/fotos atualizadas no `app.json` (valem no próximo build EAS).
 
 **Correção: coluna `push_token` sem migração (2026-10-26, ADR 0062):** o app lia e gravava `v2_user_preferences.push_token`, mas nenhuma migração criava a coluna; no Supabase remoto a consulta falhava e "Editar perfil" mostrava "Não foi possível consultar as preferências." (telefone e bairro não carregavam nem salvavam). Nova migração aditiva `202610260001_push_token_preferencias.sql` (coluna + `grant` explícito, que faltava e impedia testar a tabela no PGlite), cenário em `scripts/verificar-migracoes.mjs` (falhou antes, passa depois) e checagem da coluna no diagnóstico remoto, que agora acusa a pendência. **Pendente: aplicar a migração no Supabase remoto** e confirmar com `npm run health:supabase:remote`.
 

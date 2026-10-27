@@ -9,10 +9,12 @@ import Profile from "@/view/profile/profile";
 vi.mock("@/viewmodel/useAuthViewModel", () => ({ useAuthViewModel: vi.fn() }));
 vi.mock("@/viewmodel/useProfileViewModel", () => ({ useProfileViewModel: vi.fn() }));
 vi.mock("@/viewmodel/useUserPreferencesViewModel", () => ({ useUserPreferencesViewModel: vi.fn() }));
+vi.mock("@/viewmodel/useProfilePhotoViewModel", () => ({ useProfilePhotoViewModel: vi.fn() }));
 
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useProfileViewModel } from "@/viewmodel/useProfileViewModel";
 import { useUserPreferencesViewModel } from "@/viewmodel/useUserPreferencesViewModel";
+import { useProfilePhotoViewModel } from "@/viewmodel/useProfilePhotoViewModel";
 
 const profile = {
   userId: "ana",
@@ -37,8 +39,15 @@ function setup(
     saving?: boolean;
     preferences?: UserPreferencesState["preferences"];
     preferencesError?: string | null;
+    pickedPhotoUrl?: string | null;
+    photoError?: string | null;
   } = {},
 ) {
+  const choose = vi.fn().mockResolvedValue(options.pickedPhotoUrl ?? null);
+  vi.mocked(useProfilePhotoViewModel).mockReturnValue([
+    { uploading: false, error: options.photoError ?? null },
+    { choose, clearError: vi.fn() },
+  ]);
   vi.mocked(useAuthViewModel).mockReturnValue([
     { user, loading: options.sessionLoading ?? false, error: null },
     { signUp: vi.fn(), signIn: vi.fn(), signOut: vi.fn(), requestPasswordReset: vi.fn() },
@@ -63,7 +72,7 @@ function setup(
     },
     { update: updatePreferences, reload: vi.fn() },
   ]);
-  return { update, updatePreferences };
+  return { update, updatePreferences, choose };
 }
 
 async function renderProfile(props: Partial<React.ComponentProps<typeof Profile>> = {}) {
@@ -160,15 +169,35 @@ describe("Profile (Spec 006 US4, Issue #55)", () => {
     expect(updatePreferences).not.toHaveBeenCalled();
   });
 
-  it("valida o link da foto sem enviar requisição quando inválido", async () => {
+  it("escolhe a foto pela galeria, mostra no cartão e grava ao salvar (Spec 080, CA3)", async () => {
+    const { update, choose } = setup({ id: "ana", email: "ana@exemplo.com" }, { pickedPhotoUrl: "https://cdn/ana/perfil/a.jpg" });
+    const screen = await renderProfile();
+    await act(async () => { fireEvent.press(screen.getByLabelText("Escolher foto da galeria")); });
+    expect(choose).toHaveBeenCalledWith("library");
+    expect(screen.getByLabelText("Remover foto do perfil")).toBeDefined();
+    await act(async () => { fireEvent.press(screen.getByText(/Salvar/)); });
+    expect(update).toHaveBeenCalledWith({ name: "Ana", photoUrl: "https://cdn/ana/perfil/a.jpg", socialHandle: undefined });
+  });
+
+  it("tira foto com a câmera e mostra o erro do envio (Spec 080, CA4)", async () => {
+    const { choose } = setup({ id: "ana", email: "ana@exemplo.com" }, { photoError: "Permita o acesso à câmera." });
+    const screen = await renderProfile();
+    await act(async () => { fireEvent.press(screen.getByLabelText("Tirar foto com a câmera")); });
+    expect(choose).toHaveBeenCalledWith("camera");
+    expect(screen.getByText("Permita o acesso à câmera.")).toBeDefined();
+  });
+
+  it("normaliza o Instagram com @ e recusa link ou caracteres inválidos (Spec 080, CA5)", async () => {
     const { update } = setup({ id: "ana", email: "ana@exemplo.com" });
     const screen = await renderProfile();
-    await act(async () => {
-      fireEvent.changeText(screen.getByLabelText("Foto (link)"), "exemplo.com/foto.png");
-    });
+    await act(async () => { fireEvent.changeText(screen.getByLabelText("Instagram"), "instagram.com/ana"); });
     await act(async () => { fireEvent.press(screen.getByText(/Salvar/)); });
-    expect(screen.getByText("A foto deve ser um link (http/https) válido.")).toBeDefined();
+    expect(screen.getByText("Use só letras, números, ponto e _ (até 30), sem link.")).toBeDefined();
     expect(update).not.toHaveBeenCalled();
+
+    await act(async () => { fireEvent.changeText(screen.getByLabelText("Instagram"), " ana.lima_ "); });
+    await act(async () => { fireEvent.press(screen.getByText(/Salvar/)); });
+    expect(update).toHaveBeenCalledWith({ name: "Ana", photoUrl: undefined, socialHandle: "@ana.lima_" });
   });
 
   it("valida telefone incompleto em linha ao salvar", async () => {
