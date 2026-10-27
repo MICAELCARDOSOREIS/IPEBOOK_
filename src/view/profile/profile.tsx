@@ -11,6 +11,8 @@ import {
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useProfileViewModel } from "@/viewmodel/useProfileViewModel";
 import { useUserPreferencesViewModel } from "@/viewmodel/useUserPreferencesViewModel";
+import { useProfilePhotoViewModel } from "@/viewmodel/useProfilePhotoViewModel";
+import type { ImageSource } from "@/model/services/iImagePickerService";
 import { PIRIPIRI_NEIGHBORHOODS } from "@/model/entities/location";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
@@ -21,6 +23,7 @@ import { Dialog } from "@/view/components/Dialog";
 import { ErrorState } from "@/view/components/ErrorState";
 import { FilledButton } from "@/view/components/FilledButton";
 import { LoadingState } from "@/view/components/LoadingState";
+import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { NeighborhoodSelectorModal } from "@/view/components/NeighborhoodSelectorModal";
 import { ScreenContainer } from "@/view/components/ScreenContainer";
 import { Snackbar } from "@/view/components/Snackbar";
@@ -65,6 +68,12 @@ export function formatPhoneMask(raw: string): string {
  * e `UserPreferencesUseCases.updatePreferences`) para exibir o erro no campo correspondente
  * antes de enviar qualquer requisição.
  */
+/** "@perfil", " perfil " → "@perfil"; `null` para vazio, link ou caractere fora do padrão do Instagram. */
+export function normalizeInstagram(raw: string): string | null {
+  const handle = raw.trim().replace(/^@+/, "");
+  return /^[A-Za-z0-9._]{1,30}$/.test(handle) ? `@${handle}` : null;
+}
+
 function validateProfileFields(values: {
   name: string;
   photoUrl: string;
@@ -84,9 +93,8 @@ function validateProfileFields(values: {
     errors.photoUrl = "A foto deve ser um link (http/https) válido.";
   }
 
-  const socialHandle = values.socialHandle.trim();
-  if (socialHandle && socialHandle.length > MAX_SOCIAL_HANDLE_LENGTH) {
-    errors.socialHandle = `A rede social deve ter até ${MAX_SOCIAL_HANDLE_LENGTH} caracteres.`;
+  if (values.socialHandle.trim() && !normalizeInstagram(values.socialHandle)) {
+    errors.socialHandle = "Use só letras, números, ponto e _ (até 30), sem link.";
   }
 
   const phoneDigits = values.phone.replace(/\D/g, "");
@@ -106,6 +114,7 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [authState] = useAuthViewModel();
   const userId = authState.user?.id ?? null;
+  const [photo, photoActions] = useProfilePhotoViewModel(userId);
   const [state, actions] = useProfileViewModel(userId);
   const [preferencesState, preferencesActions] = useUserPreferencesViewModel(userId);
 
@@ -129,6 +138,11 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
     apply(value);
     setFieldErrors((previous) => (previous[field] ? { ...previous, [field]: undefined } : previous));
     setBlockedSave(false);
+  }
+
+  async function pickPhoto(source: ImageSource) {
+    const url = await photoActions.choose(source);
+    if (url) editField("photoUrl", url, setPhotoUrl);
   }
 
   useEffect(() => {
@@ -236,7 +250,7 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
       actions.update({
         name: trimmedName,
         photoUrl: photoUrl.trim() || undefined,
-        socialHandle: socialHandle.trim() || undefined,
+        socialHandle: normalizeInstagram(socialHandle) ?? undefined,
       }),
       preferencesActions.update({
         phone: phone || undefined,
@@ -319,24 +333,35 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
               />
             </View>
 
-            {/* 3. Foto logo abaixo da pré-visualização: o que muda aparece no cartão acima (Spec 078) */}
-            <FormSection icon="camera" title="Foto do cartão" caption="Cole o link de uma imagem. Sem foto, o cartão mostra o ipê.">
-              {/* Foto (link) */}
-              <TextField
-                label="Foto (link)"
-                accessibilityLabel="Foto (link)"
-                value={photoUrl}
-                onChangeText={(value) => editField("photoUrl", value, setPhotoUrl)}
-                placeholder="https://..."
-                autoCapitalize="none"
-                keyboardType="url"
-                error={fieldErrors.photoUrl}
-                helperText="Um link http/https com a imagem da sua foto."
-              />
-
-              {/* Hoje só dá para trocar a foto colando outro link; para removê-la é preciso
-                  limpar o campo. O botão abaixo faz isso em um toque. */}
-              {photoUrl.trim() ? (
+            {/* 3. Foto pela galeria ou câmera (Spec 081, ADR 0065); o resultado aparece no cartão acima */}
+            <FormSection icon="camera" title="Foto do cartão" caption="Escolha da galeria ou tire na hora. Sem foto, o cartão mostra o ipê.">
+              <View style={styles.photoActions}>
+                <View style={styles.photoAction}>
+                  <OutlinedButton
+                    label="Galeria"
+                    accessibilityLabel="Escolher foto da galeria"
+                    icon={<AppIcon name="photo" size={18} color={colors.m3.primary} />}
+                    disabled={photo.uploading}
+                    onPress={() => void pickPhoto("library")}
+                  />
+                </View>
+                <View style={styles.photoAction}>
+                  <OutlinedButton
+                    label="Câmera"
+                    accessibilityLabel="Tirar foto com a câmera"
+                    icon={<AppIcon name="camera" size={18} color={colors.m3.primary} />}
+                    disabled={photo.uploading}
+                    onPress={() => void pickPhoto("camera")}
+                  />
+                </View>
+              </View>
+              {photo.uploading ? <LoadingState label="Enviando foto" /> : null}
+              {photo.error ? (
+                <Text accessibilityRole="alert" style={styles.errorText}>
+                  {photo.error}
+                </Text>
+              ) : null}
+              {photoUrl.trim() && !photo.uploading ? (
                 <TextButton
                   label="Remover foto"
                   accessibilityLabel="Remover foto do perfil"
@@ -439,16 +464,17 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
                 helperText="Com DDD, para combinar a entrega pelo WhatsApp."
               />
 
-              {/* Rede social */}
+              {/* Instagram (Spec 081): aceita "@perfil" ou "perfil" e guarda como "@perfil" */}
               <TextField
-                label="Rede social"
-                accessibilityLabel="Rede social"
+                label="Instagram"
+                accessibilityLabel="Instagram"
                 value={socialHandle}
                 onChangeText={(value) => editField("socialHandle", value, setSocialHandle)}
-                placeholder="@usuario"
+                placeholder="@seuperfil"
                 autoCapitalize="none"
                 maxLength={MAX_SOCIAL_HANDLE_LENGTH}
                 error={fieldErrors.socialHandle}
+                helperText={fieldErrors.socialHandle ? undefined : "Opcional. Só o @, sem link."}
               />
             </FormSection>
 
@@ -523,6 +549,8 @@ function FormSection({
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
+    photoActions: { flexDirection: "row", gap: tokens.spacing[12] },
+    photoAction: { flex: 1 },
     formSection: {
       gap: tokens.spacing[16],
       padding: tokens.spacing[16],
