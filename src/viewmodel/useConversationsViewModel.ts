@@ -14,8 +14,8 @@ export type ConversationItem = Readonly<{
   /** Foto de perfil da outra pessoa; sem foto o avatar mostra o ipê (Spec 084). */
   otherPhotoUrl: string | null;
   preview: string;
-  /** Horário relativo da última mensagem; `null` quando ainda não há mensagem. */
-  time: string | null;
+  /** Data da última mensagem; `null` sem mensagem. A tela formata e atualiza o rótulo de tempo (Spec 089). */
+  lastMessageAt: string | null;
   kind: ConversationKind;
 }>;
 
@@ -54,6 +54,8 @@ const defaultDeps: ConversationsDeps = {
   },
 };
 
+/** Maior que qualquer data ISO: ordena a proposta recebida pendente antes das conversas. */
+const TOP_SORT_KEY = "9999";
 const COMMUNITY_MEMBER = "Pessoa da comunidade";
 const LOAD_ERROR = "Não foi possível carregar suas conversas. Tente novamente.";
 const WEEKDAYS = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"];
@@ -94,19 +96,20 @@ async function buildItem(
 
   if (request.status === "pending") {
     return {
-      item: { ...base, kind: sent ? "pendingSent" : "pendingReceived", time: null, preview: sent ? "Aguardando resposta" : "Proposta recebida" },
-      sortKey: "",
+      item: { ...base, kind: sent ? "pendingSent" : "pendingReceived", lastMessageAt: null, preview: sent ? "Aguardando resposta" : "Proposta recebida" },
+      // Proposta recebida pede ação: fica no topo, antes de qualquer conversa (Spec 089).
+      sortKey: sent ? "" : TOP_SORT_KEY,
     };
   }
 
   const messages = await safely(deps.getMessages(request.id, sessionUserId), []);
   const last = messages[messages.length - 1];
   if (!last) {
-    return { item: { ...base, kind: "accepted", time: null, preview: "Combinem os detalhes pelo chat" }, sortKey: "" };
+    return { item: { ...base, kind: "accepted", lastMessageAt: null, preview: "Combinem os detalhes pelo chat" }, sortKey: "" };
   }
   const preview = last.senderId === sessionUserId ? `Você: ${last.content}` : last.content;
   return {
-    item: { ...base, kind: "accepted", time: formatConversationTime(last.createdAt), preview },
+    item: { ...base, kind: "accepted", lastMessageAt: last.createdAt, preview },
     sortKey: last.createdAt,
   };
 }

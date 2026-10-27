@@ -38,4 +38,22 @@ describe("chatTimeline (Spec 082, CA1)", () => {
       "m3",
     ]);
   });
+
+  it("marca como agrupada a mensagem seguinte da mesma pessoa no mesmo dia (Spec 089)", () => {
+    const m = (id: string, senderId: string, createdAt: string): NegotiationMessage => ({
+      id, requestId: "r1", senderId, content: id, createdAt,
+    });
+    const items = buildChatTimeline(
+      [
+        m("m1", "ana", "2026-10-26T09:00:00"),
+        m("m2", "ana", "2026-10-26T09:01:00"),
+        m("m3", "eu", "2026-10-26T09:02:00"),
+        m("m4", "eu", "2026-10-27T08:00:00"),
+      ],
+      new Date("2026-10-27T10:00:00"),
+    );
+    const grouped = items.filter((i) => i.kind === "message").map((i) => (i.kind === "message" ? [i.message.id, i.grouped] : []));
+    // m2 segue m1 (mesma pessoa, mesmo dia); m3 troca de pessoa; m4 começa outro dia, mesmo com a mesma pessoa.
+    expect(grouped).toEqual([["m1", false], ["m2", true], ["m3", false], ["m4", false]]);
+  });
 });

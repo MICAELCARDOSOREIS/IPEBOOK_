@@ -2,7 +2,9 @@
 
 Documento consolidado de continuidade técnica e produto do Ipebook (Piripiri, PI).
 
-Conferência atual: **2026-10-26** (88 specs e 65 ADRs numerados, 189 arquivos de teste e 1.388 testes automatizados 100% passando).
+Conferência atual: **2026-10-26** (89 specs e 65 ADRs numerados, 189 arquivos de teste e 1.396 testes automatizados 100% passando).
+
+**Conversas com proposta no topo, tempo vivo e chat mais legível (2026-10-27, Spec 089):** a proposta recebida pendente fica no topo da lista com o selo "Nova proposta"; o horário relativo se atualiza a cada minuto; o chat ganhou cabeçalho com a foto da outra pessoa, agrupamento de mensagens seguidas, respiro no fim e "Combinar" como botão tonal. Validado em 1.396 testes; **pendente conferência manual no Galaxy A16**.
 
 **Teclado não cobre os campos (2026-10-26, Spec 088):** no Expo SDK 58 em modo tela cheia (edge-to-edge), o `softwareKeyboardLayoutMode: "resize"` não encolhe a janela no Android, e o `KeyboardAvoidingView` com `behavior="padding"` também falha lá, porque calcula o padding pela sobreposição do seu quadro com o quadro do teclado (resultado zero quando a janela nunca encolhe). A raiz `KeyboardAwareRoot` em `src/app/_layout.tsx` agora soma direto a geometria reportada pelo evento nativo (`useKeyboardHeight`, `keyboardDidShow/Hide`) como `paddingBottom`, no Android e no iOS; na web o navegador já encolhe a área útil. Validado em 1.388 testes; **pendente conferência manual no Galaxy A16**.
 

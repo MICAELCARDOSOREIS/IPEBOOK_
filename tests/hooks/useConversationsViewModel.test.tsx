@@ -90,9 +90,28 @@ describe("useConversationsViewModel (Spec 076)", () => {
 
     const items = hook.current[0].items;
     expect(items.map((i) => i.requestId)).toEqual(["r1", "r2"]);
-    expect(items[0]).toMatchObject({ otherName: "Ana Paula", preview: "Pode ser sábado na praça?", kind: "accepted" });
+    expect(items[0]).toMatchObject({ otherName: "Ana Paula", preview: "Pode ser sábado na praça?", kind: "accepted", lastMessageAt: "2026-10-26T10:00:00Z" });
     expect(items[1]).toMatchObject({ otherName: "Lucas", preview: "Você: Combinado, levo o livro.", kind: "accepted" });
     expect(hook.current[0].loading).toBe(false);
+  });
+
+  it("coloca a proposta recebida pendente no topo e as conversas depois, da mais recente para a mais antiga (Spec 089)", async () => {
+    const hook = await renderHook(
+      "me",
+      deps(
+        [{ request: { id: "s2", listingId: "b2", requesterId: "me", status: "accepted" }, listing: book("b2", "Vidas Secas", "lucas") }],
+        [
+          { request: { id: "a1", listingId: "b1", requesterId: "ana", status: "accepted" }, listing: book("b1", "Dom Casmurro", "me"), requesterName: "Ana" },
+          { request: { id: "p1", listingId: "b3", requesterId: "caio", status: "pending" }, listing: book("b3", "Iracema", "me"), requesterName: "Caio" },
+        ],
+        {
+          a1: [msg("a1", "ana", "Oi", "2026-10-26T10:00:00Z")],
+          s2: [msg("s2", "lucas", "Levo o livro", "2026-10-26T12:00:00Z")],
+        },
+        { lucas: "Lucas" },
+      ),
+    );
+    expect(hook.current[0].items.map((i) => i.requestId)).toEqual(["p1", "s2", "a1"]);
   });
 
   it("traz a foto da outra pessoa nos enviados e nos recebidos (Spec 084)", async () => {
@@ -134,7 +153,7 @@ describe("useConversationsViewModel (Spec 076)", () => {
     const byId = Object.fromEntries(hook.current[0].items.map((i) => [i.requestId, i]));
     expect(byId.p1).toMatchObject({ preview: "Proposta recebida", kind: "pendingReceived", otherName: "Pessoa da comunidade" });
     expect(byId.s1).toMatchObject({ preview: "Aguardando resposta", kind: "pendingSent", otherName: "Pessoa da comunidade" });
-    expect(byId.a1).toMatchObject({ preview: "Combinem os detalhes pelo chat", kind: "accepted", time: null });
+    expect(byId.a1).toMatchObject({ preview: "Combinem os detalhes pelo chat", kind: "accepted", lastMessageAt: null });
   });
 
   it("mostra erro amigável quando a lista falha", async () => {
