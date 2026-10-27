@@ -25,13 +25,16 @@ export function ReaderCard({ name, subtitle, photoUrl, eyebrow = "Cartão de lei
   return (
     <View accessible accessibilityLabel={`Cartão de leitor de ${name}`} style={styles.card}>
       <View style={styles.spine} />
-      <View style={styles.mark}>
-        <IpeMark size={76} />
-      </View>
+      {/* Sem foto o próprio avatar já é o ipê; o selo no canto só entra quando há foto. */}
+      {photoUrl ? (
+        <View style={styles.mark}>
+          <IpeMark size={76} />
+        </View>
+      ) : null}
       <View style={styles.avatarRing}>
         <Avatar name={name} photoUrl={photoUrl} size={64} />
       </View>
-      <View style={styles.text}>
+      <View style={[styles.text, photoUrl ? styles.textWithMark : null]}>
         <Text style={styles.eyebrow}>{eyebrow}</Text>
         <Text style={styles.name} numberOfLines={2}>
           {name}
@@ -72,7 +75,8 @@ function createStyles(colors: ColorPalette) {
       borderRadius: tokens.radius.full,
       backgroundColor: colors.ipe.bloom,
     },
-    text: { flex: 1, gap: 2, paddingRight: 80 },
+    text: { flex: 1, gap: 2 },
+    textWithMark: { paddingRight: 80 },
     eyebrow: {
       fontSize: 11,
       lineHeight: 16,
