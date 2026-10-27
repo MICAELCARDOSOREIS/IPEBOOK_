@@ -112,6 +112,8 @@ export function Dialog({
 
   return (
     <Modal
+      statusBarTranslucent
+      navigationBarTranslucent
       visible={visible}
       transparent
       animationType="fade"

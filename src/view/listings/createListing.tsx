@@ -10,6 +10,7 @@ import { TextButton } from "@/view/components/TextButton";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { useFormErrorAnnouncer } from "@/view/useFormErrorAnnouncer";
 import { useCreateListingViewModel } from "@/viewmodel/useCreateListingViewModel";
+import { useListingPhotoViewModel } from "@/viewmodel/useListingPhotoViewModel";
 import {
   validateListingBasics,
   type ListingBasicsErrors,
@@ -57,6 +58,7 @@ export default function CreateListing({
   onGoHome,
 }: CreateListingProps) {
   const [state, actions] = useCreateListingViewModel();
+  const [photoState, photoActions] = useListingPhotoViewModel(sessionUserId);
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [step, setStep] = useState(1);
@@ -266,6 +268,15 @@ export default function CreateListing({
               errorRef={errorRef}
               onSetPhotoUrl={actions.setPhotoUrl}
               onRemovePhoto={actions.removePhoto}
+              uploading={photoState.uploading}
+              photoError={photoState.error}
+              onChoosePhoto={(slot, source) => {
+                void photoActions.choose(source).then((url) => {
+                  if (!url) return;
+                  if (slot === "cover") actions.setPhotoUrl(url);
+                  else actions.addPhoto(url);
+                });
+              }}
             />
           ) : null}
 

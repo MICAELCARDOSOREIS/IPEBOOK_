@@ -2,7 +2,9 @@
 
 Documento consolidado de continuidade técnica e produto do Ipebook (Piripiri, PI).
 
-Conferência atual: **2026-10-26** (91 specs e 65 ADRs numerados, 197 arquivos de teste e 1.430 testes automatizados 100% passando).
+Conferência atual: **2026-10-26** (92 specs e 65 ADRs numerados, 206 arquivos de teste e 1.458 testes automatizados 100% passando).
+
+**Fotos do anúncio, Configurações e formulários (2026-10-27, Spec 092):** a etapa de fotos de Anunciar agora abre câmera e galeria (antes só aceitava colar um link); Configurações ganhou cartão da conta, bairro padrão, limpar histórico de buscas, "Falar com a equipe" (e-mail do suporte) e sair da conta; campos de senha têm mostrar/ocultar e todos os formulários de acesso usam preenchimento automático e a ação do teclado; modais com barras translúcidas. Validado em 1.458 testes; **pendente conferir câmera e envio de foto no Galaxy A16**.
 
 **Melhorias de usabilidade (2026-10-27, Spec 091):** chat com foto e rolagem ao fim; Anunciar com campos largos, ISBN em uma linha e barra de ações enxuta; cores por modalidade e por categoria (chips e fundo da capa); filtros reorganizados; galeria de fotos corrigida no Android; "Conversar", bloquear e denunciar (anúncio e pessoa) no perfil público; proteção contra toque duplo; canal Realtime único nas notificações; selo de propostas na barra de navegação. Validado em 1.430 testes; **pendente aplicar as migrações `202610270001` e `202610270002` no Supabase remoto e conferir no Galaxy A16**.
 

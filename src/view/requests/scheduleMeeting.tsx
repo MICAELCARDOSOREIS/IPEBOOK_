@@ -33,17 +33,17 @@ type OptionChipProps = {
 
 /** Opção de escolha única de `06.04`, anunciada como `radio` (Spec 052, RN-09). */
 function OptionChip({ label, accessibilityLabel, selected, onPress, styles }: OptionChipProps) {
+  const { colors } = useTheme();
   return (
     <Pressable
       accessibilityRole="radio"
       accessibilityLabel={accessibilityLabel}
       accessibilityState={{ checked: selected }}
       onPress={onPress}
-      style={[styles.chip, selected && styles.chipSelected]}
+      style={[styles.chip, selected && styles.chipSelected, selected && styles.chipWithCheck]}
     >
-      <Text style={[styles.chipText, selected && styles.chipTextSelected]}>
-        {selected ? `✓ ${label}` : label}
-      </Text>
+      {selected ? <AppIcon name="check" size={18} color={colors.m3.onSecondaryContainer} /> : null}
+      <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{label}</Text>
     </Pressable>
   );
 }
@@ -266,6 +266,7 @@ function createStyles(colors: ColorPalette) {
       borderColor: colors.m3.outlineVariant,
       backgroundColor: colors.m3.surfaceContainerLow,
     },
+    chipWithCheck: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[4] },
     chipSelected: {
       backgroundColor: colors.m3.secondaryContainer,
       borderColor: colors.m3.secondaryContainer,

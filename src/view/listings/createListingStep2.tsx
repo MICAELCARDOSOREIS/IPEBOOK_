@@ -1,8 +1,11 @@
-import { useMemo } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { useMemo, useState } from "react";
+import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import type { ImageSource } from "@/model/services/iImagePickerService";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { AddPhotoCard } from "@/view/components/AddPhotoCard";
+import { PhotoSourceSheet } from "@/view/components/PhotoSourceSheet";
+import { TextButton } from "@/view/components/TextButton";
 import { TextField } from "@/view/components/TextField";
 
 export type CreateListingStep2Props = {
@@ -13,6 +16,10 @@ export type CreateListingStep2Props = {
   errorRef?: React.Ref<any>;
   onSetPhotoUrl: (url: string) => void;
   onRemovePhoto: (index: number) => void;
+  /** Foto nova pela câmera ou galeria (Spec 092); `cover` é a capa, `extra` as demais. */
+  onChoosePhoto?: (slot: "cover" | "extra", source: ImageSource) => void;
+  uploading?: boolean;
+  photoError?: string | null;
 };
 
 export function CreateListingStep2({
@@ -23,7 +30,12 @@ export function CreateListingStep2({
   errorRef,
   onSetPhotoUrl,
   onRemovePhoto,
+  onChoosePhoto,
+  uploading = false,
+  photoError,
 }: CreateListingStep2Props) {
+  const [sheetSlot, setSheetSlot] = useState<"cover" | "extra" | null>(null);
+  const [showLinkField, setShowLinkField] = useState(false);
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
@@ -39,7 +51,7 @@ export function CreateListingStep2({
         <AddPhotoCard
           label="Foto da capa"
           photoUrl={photoUrl}
-          onPress={() => undefined}
+          onPress={() => setSheetSlot("cover")}
           onRemovePhoto={() => onSetPhotoUrl("")}
           style={styles.coverSlot}
         />
@@ -47,28 +59,53 @@ export function CreateListingStep2({
           <AddPhotoCard
             label="Lombada"
             photoUrl={photos[0]}
-            onPress={() => undefined}
+            onPress={() => setSheetSlot("extra")}
             onRemovePhoto={() => onRemovePhoto(0)}
             style={styles.sideSlot}
           />
           <AddPhotoCard
             label="Páginas"
             photoUrl={photos[1]}
-            onPress={() => undefined}
+            onPress={() => setSheetSlot("extra")}
             onRemovePhoto={() => onRemovePhoto(1)}
             style={styles.sideSlot}
           />
         </View>
       </View>
 
-      <TextField
-        label="Endereço da foto da capa"
-        value={photoUrl}
-        onChangeText={onSetPhotoUrl}
-        editable={!loading}
-        placeholder="https://exemplo.com/capa.jpg"
-        autoCapitalize="none"
-        helperText="Capa ilustrativa: a foto real substitui esta prévia."
+      {uploading ? (
+        <View accessibilityLiveRegion="polite" style={styles.uploadingRow}>
+          <ActivityIndicator color={colors.action} accessibilityLabel="Enviando foto" />
+          <Text style={styles.tipText}>Enviando a foto…</Text>
+        </View>
+      ) : null}
+      {photoError ? (
+        <Text accessibilityRole="alert" style={styles.errorText}>{photoError}</Text>
+      ) : null}
+
+      {showLinkField ? (
+        <TextField
+          label="Endereço da foto da capa"
+          value={photoUrl}
+          onChangeText={onSetPhotoUrl}
+          editable={!loading}
+          placeholder="https://exemplo.com/capa.jpg"
+          autoCapitalize="none"
+          helperText="Cole o link de uma imagem pública, se preferir."
+        />
+      ) : (
+        <TextButton label="Prefiro colar o link de uma imagem" onPress={() => setShowLinkField(true)} />
+      )}
+
+      <PhotoSourceSheet
+        visible={sheetSlot !== null}
+        title={sheetSlot === "cover" ? "Foto da capa" : "Mais uma foto"}
+        onChoose={(source) => {
+          const slot = sheetSlot;
+          setSheetSlot(null);
+          if (slot) onChoosePhoto?.(slot, source);
+        }}
+        onClose={() => setSheetSlot(null)}
       />
 
       <View style={styles.tipBox}>
@@ -110,6 +147,7 @@ function createStyles(colors: ColorPalette) {
       fontFamily: tokens.typography.bodyLarge.fontFamily,
       color: colors.secondaryText,
     },
+    uploadingRow: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[12] },
     tipBox: {
       backgroundColor: colors.m3.surfaceContainerHigh,
       borderRadius: tokens.radius.medium,

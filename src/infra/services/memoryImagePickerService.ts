@@ -11,4 +11,8 @@ export class MemoryImagePickerService implements IImagePickerService {
   async pickSquareImage(_source: ImageSource): Promise<PickedImage | null> {
     return this.next;
   }
+
+  async pickImage(_source: ImageSource, _aspect: readonly [number, number]): Promise<PickedImage | null> {
+    return this.next;
+  }
 }
