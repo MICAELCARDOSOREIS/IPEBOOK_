@@ -1,27 +1,27 @@
 import type { ReactNode } from "react";
-import { Platform, StyleSheet, View } from "react-native";
-import { useKeyboardHeight } from "@/view/useKeyboardHeight";
+import { Animated, StyleSheet } from "react-native";
+import { useAnimatedKeyboardInset } from "@/view/useKeyboardInset";
+import { useTheme } from "@/view/theme/ThemeProvider";
 
 /**
- * Raiz que mantém os campos em foco acima do teclado (Spec 088). No SDK 58 o app roda em tela
- * cheia (edge-to-edge) e o `softwareKeyboardLayoutMode: "resize"` deixa de encolher a janela no
- * Android. O `KeyboardAvoidingView` com `behavior="padding"` também não resolve lá, porque calcula
- * o padding pela sobreposição do seu quadro com o quadro do teclado, e nessa conta o resultado sai
- * zero quando a janela nunca encolhe. Aqui o padding de baixo vem direto da geometria reportada
- * pelo evento do teclado (`useKeyboardHeight`), no Android e no iOS. Na web não age, porque o
- * navegador já encolhe a área útil quando o teclado abre.
+ * Raiz única que desvia o conteúdo do teclado em todo o app (Spec 088).
+ *
+ * No Expo SDK 58 o app roda em tela cheia (edge-to-edge) e o `softwareKeyboardLayoutMode: "resize"`
+ * deixou de encolher a janela no Android; o `KeyboardAvoidingView` com `behavior="padding"` também
+ * falha lá, porque calcula o padding pela sobreposição do seu quadro com o do teclado (sai zero
+ * quando a janela nunca encolhe). Aqui o `paddingBottom` vem direto da geometria reportada pelo
+ * evento do teclado (`useAnimatedKeyboardInset`) e desliza animado junto com ele — vale para todas
+ * as telas de uma vez, no Android e no iOS, então as telas não precisam de `KeyboardAvoidingView`
+ * próprios. Na web o navegador já encolhe a área útil e o valor fica em zero.
  */
 export function KeyboardAwareRoot({ children }: { children: ReactNode }) {
-  const keyboardHeight = useKeyboardHeight();
-  const nativo = Platform.OS === "android" || Platform.OS === "ios";
+  const inseto = useAnimatedKeyboardInset();
+  const { colors } = useTheme();
 
   return (
-    <View
-      testID="keyboard-aware-root"
-      style={[styles.root, nativo && keyboardHeight > 0 && { paddingBottom: keyboardHeight }]}
-    >
+    <Animated.View testID="keyboard-aware-root" style={[styles.root, { paddingBottom: inseto, backgroundColor: colors.m3.surfaceContainer }]}>
       {children}
-    </View>
+    </Animated.View>
   );
 }
 

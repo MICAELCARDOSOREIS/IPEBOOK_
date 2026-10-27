@@ -1,7 +1,6 @@
 import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import {
   BackHandler,
-  KeyboardAvoidingView,
   Platform,
   Pressable,
   StyleSheet,
@@ -303,10 +302,8 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
         </>
       }
     >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        style={styles.keyboardView}
-      >
+      {/* O desvio do teclado é da raiz única (KeyboardAwareRoot, Spec 088). */}
+      <View style={styles.keyboardView}>
         {loading ? (
           <LoadingState label="Carregando perfil" />
         ) : error && !state.profile ? (
@@ -510,7 +507,7 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
             </View>
           </View>
         )}
-      </KeyboardAvoidingView>
+      </View>
     </ScreenContainer>
   );
 }
