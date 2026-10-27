@@ -115,8 +115,9 @@ export function MyListings({
             accessibilityLabel="Ver rascunhos"
             hitSlop={12}
             onPress={onNavigateToDrafts}
-            style={styles.draftsLink}
+            style={({ pressed }) => [styles.draftsLink, pressed && styles.draftsLinkPressed]}
           >
+            <AppIcon name="document" size={20} color={colors.m3.onSecondaryContainer} />
             <Text style={styles.draftsLinkText}>Rascunhos</Text>
           </Pressable>
         ) : null}
@@ -428,16 +429,21 @@ function createStyles(colors: ColorPalette) {
       shadowOffset: { width: 0, height: 3 },
     },
     fabPressed: { opacity: 0.9 },
+    // Botão tonal com ícone (M3): maior e com cara de botão, em vez de um texto pequeno solto.
     draftsLink: {
       marginLeft: "auto",
       minHeight: tokens.accessibility.touchTarget,
-      justifyContent: "center",
-      paddingHorizontal: tokens.spacing[8],
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[8],
+      paddingHorizontal: tokens.spacing[16],
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.m3.secondaryContainer,
     },
+    draftsLinkPressed: { opacity: 0.85 },
     draftsLinkText: {
-      ...tokens.typography.labelMedium,
-      color: colors.m3.primary,
-      fontWeight: "600",
+      ...tokens.typography.labelLarge,
+      color: colors.m3.onSecondaryContainer,
     },
     content: {
       flex: 1,
