@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { tokens, type ColorPalette } from "@/view/tokens";
@@ -8,6 +8,8 @@ import { IconBadge } from "@/view/components/IconBadge";
 import { FilledButton } from "@/view/components/FilledButton";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { TextButton } from "@/view/components/TextButton";
+import { captureRef } from "react-native-view-shot";
+import { InviteCard } from "@/view/components/InviteCard";
 import { useInviteFriendsViewModel } from "@/viewmodel/useInviteFriendsViewModel";
 
 export type InviteFriendsProps = {
@@ -21,6 +23,10 @@ export function InviteFriends({ onBack }: InviteFriendsProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [state, actions] = useInviteFriendsViewModel();
+  const cardRef = useRef<React.ComponentRef<typeof View>>(null);
+
+  // A imagem do convite é este cartão: captura em PNG e abre a folha de compartilhamento do sistema.
+  const captureInvite = () => captureRef(cardRef, { format: "png", quality: 1, result: "tmpfile" });
 
   return (
     <SafeAreaView style={styles.page}>
@@ -36,6 +42,8 @@ export function InviteFriends({ onBack }: InviteFriendsProps) {
               Convide pessoas queridas de Piripiri para participar do IpêBook. Quanto mais leitores na comunidade, mais histórias em circulação.
             </Text>
           </View>
+
+          <InviteCard ref={cardRef} url={state.inviteUrl} />
 
           <View style={styles.previewCard}>
             <Text style={styles.previewLabel}>Mensagem de convite</Text>
@@ -64,12 +72,18 @@ export function InviteFriends({ onBack }: InviteFriendsProps) {
 
           <View style={styles.actions}>
             <FilledButton
-              label="Convidar pelo WhatsApp"
-              accessibilityLabel="Enviar convite pelo WhatsApp"
+              label="Compartilhar imagem do convite"
+              accessibilityLabel="Compartilhar a imagem do convite"
               loading={state.sharing}
-              onPress={() => void actions.shareToWhatsApp()}
+              onPress={() => void actions.shareImage(captureInvite)}
             />
             <OutlinedButton
+              label="Enviar texto pelo WhatsApp"
+              accessibilityLabel="Enviar convite pelo WhatsApp"
+              disabled={state.sharing}
+              onPress={() => void actions.shareToWhatsApp()}
+            />
+            <TextButton
               label="Outras opções de envio"
               accessibilityLabel="Mais opções de compartilhamento"
               disabled={state.sharing}

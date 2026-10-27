@@ -7,6 +7,7 @@ import type { InviteFriendsState, InviteFriendsActions } from "@/viewmodel/useIn
 vi.mock("@/viewmodel/useInviteFriendsViewModel", () => ({
   useInviteFriendsViewModel: vi.fn(),
 }));
+vi.mock("react-native-view-shot", () => ({ captureRef: vi.fn().mockResolvedValue("file:///tmp/convite.png") }));
 
 import { useInviteFriendsViewModel } from "@/viewmodel/useInviteFriendsViewModel";
 const mockedUseInviteFriendsViewModel = vi.mocked(useInviteFriendsViewModel);
@@ -24,6 +25,7 @@ function mockViewModel(
     ...state,
   };
   const fullActions: InviteFriendsActions = {
+    shareImage: vi.fn().mockResolvedValue(undefined),
     shareToWhatsApp: vi.fn().mockResolvedValue(undefined),
     shareNative: vi.fn().mockResolvedValue(undefined),
     copyLink: vi.fn().mockResolvedValue(undefined),
@@ -117,5 +119,20 @@ describe("InviteFriends — Convidar amigos (Figma 08.02, Spec 057)", () => {
       fireEvent.press(screen.getByLabelText("Voltar"));
     });
     expect(onBack).toHaveBeenCalledTimes(1);
+  });
+
+  it("compartilha a imagem do convite capturando o cartão em PNG (Spec 092)", async () => {
+    const actions = mockViewModel();
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<InviteFriends />);
+    });
+    expect(screen.getByLabelText("Convite para o IpêBook em Piripiri. Acesse ipebook.app")).toBeDefined();
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Compartilhar a imagem do convite"));
+    });
+    expect(actions.shareImage).toHaveBeenCalledTimes(1);
+    const capture = vi.mocked(actions.shareImage).mock.calls[0][0];
+    await expect(capture()).resolves.toBe("file:///tmp/convite.png");
   });
 });
