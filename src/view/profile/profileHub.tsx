@@ -7,6 +7,7 @@ import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useProfileViewModel } from "@/viewmodel/useProfileViewModel";
 import { useMyListingsViewModel } from "@/viewmodel/useMyListingsViewModel";
 import { useUserPreferencesViewModel } from "@/viewmodel/useUserPreferencesViewModel";
+import { normalizeInstagramHandle } from "@/model/validators/instagramValidator";
 import { ReaderCard } from "@/view/components/ReaderCard";
 import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
 import { Dialog } from "@/view/components/Dialog";
@@ -93,7 +94,8 @@ export default function ProfileHub({
   const activeBooks = myListingsState.books.filter((b) => b.status === "available").length;
   const reservedBooks = myListingsState.books.filter((b) => b.status === "reserved").length;
   const totalPublications = myListingsState.books.length;
-  const instagramHandle = profile.socialHandle?.trim().replace(/^@+/, "") || null;
+  // Só oferece o link quando o valor gravado respeita o padrão do Instagram (regra do domínio).
+  const instagramHandle = normalizeInstagramHandle(profile.socialHandle)?.slice(1) ?? null;
   const completedTrocas = profile.completedNegotiations;
   const ratingText = profile.ratingCount > 0 ? (profile.averageRating ?? 0).toFixed(1) : "—";
 

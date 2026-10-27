@@ -13,6 +13,7 @@ import { useUserPreferencesViewModel } from "@/viewmodel/useUserPreferencesViewM
 import { useProfilePhotoViewModel } from "@/viewmodel/useProfilePhotoViewModel";
 import type { ImageSource } from "@/model/services/iImagePickerService";
 import { PIRIPIRI_NEIGHBORHOODS } from "@/model/entities/location";
+import { normalizeInstagramHandle } from "@/model/validators/instagramValidator";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { ReaderCard } from "@/view/components/ReaderCard";
@@ -65,14 +66,9 @@ export function formatPhoneMask(raw: string): string {
 /**
  * Validação preventiva espelhando as regras do domínio (`PublicProfileUseCases.updateProfile`
  * e `UserPreferencesUseCases.updatePreferences`) para exibir o erro no campo correspondente
- * antes de enviar qualquer requisição.
+ * antes de enviar qualquer requisição. A regra do @perfil é a única do domínio
+ * (`normalizeInstagramHandle`), também aplicada na escrita e na exibição.
  */
-/** "@perfil", " perfil " → "@perfil"; `null` para vazio, link ou caractere fora do padrão do Instagram. */
-export function normalizeInstagram(raw: string): string | null {
-  const handle = raw.trim().replace(/^@+/, "");
-  return /^[A-Za-z0-9._]{1,30}$/.test(handle) ? `@${handle}` : null;
-}
-
 function validateProfileFields(values: {
   name: string;
   photoUrl: string;
@@ -92,7 +88,7 @@ function validateProfileFields(values: {
     errors.photoUrl = "A foto deve ser um link (http/https) válido.";
   }
 
-  if (values.socialHandle.trim() && !normalizeInstagram(values.socialHandle)) {
+  if (values.socialHandle.trim() && !normalizeInstagramHandle(values.socialHandle)) {
     errors.socialHandle = "Use só letras, números, ponto e _ (até 30), sem link.";
   }
 
@@ -249,7 +245,7 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
       actions.update({
         name: trimmedName,
         photoUrl: photoUrl.trim() || undefined,
-        socialHandle: normalizeInstagram(socialHandle) ?? undefined,
+        socialHandle: normalizeInstagramHandle(socialHandle) ?? undefined,
       }),
       preferencesActions.update({
         phone: phone || undefined,

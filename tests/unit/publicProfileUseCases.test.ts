@@ -116,6 +116,19 @@ describe("perfil público do anunciante (spec 018)", () => {
       expect(cleared.socialHandle).toBeUndefined();
     });
 
+    it("normaliza @perfil sem arroba ao salvar", async () => {
+      const updated = await useCases.updateProfile("ana", { name: "Ana", socialHandle: " anapaula " });
+      expect(updated.socialHandle).toBe("@anapaula");
+    });
+
+    it("rejeita rede social com link ou caracteres fora do padrão do Instagram", async () => {
+      // Regressão de segurança: o valor vira trecho de URL externa nas telas de perfil.
+      const invalidos = ["https://instagram.com/ana", "ana?u=evil.example", "ana/x", "ana;rm", "a".repeat(31), "ana$&"];
+      for (const socialHandle of invalidos) {
+        await expect(useCases.updateProfile("ana", { name: "Ana", socialHandle })).rejects.toBeInstanceOf(ValidationError);
+      }
+    });
+
     it("cria o perfil antes de atualizar quando ainda não existe", async () => {
       const updated = await useCases.updateProfile("nova-usuaria", { name: "Nova" });
       expect(updated.userId).toBe("nova-usuaria");
