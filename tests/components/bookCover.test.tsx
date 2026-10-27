@@ -38,6 +38,14 @@ describe("BookCover (design-system/04-componentes/capa-ilustrativa.md e Spec 040
     expect(getByText("Machado de Assis")).toBeDefined();
   });
 
+  it("variante de detalhe sem foto sobrepõe título e autor", async () => {
+    const { getByText } = await render(
+      <BookCover id="a1" title="Dom Casmurro" author="Machado de Assis" variant="detail" />,
+    );
+    expect(getByText("Dom Casmurro")).toBeDefined();
+    expect(getByText("Machado de Assis")).toBeDefined();
+  });
+
   it("renderiza imagem real quando photoUrl é fornecido", async () => {
     const { getByLabelText } = await render(
       <BookCover

@@ -170,6 +170,38 @@ describe("testes de hook: useShareListingViewModel (Spec 019)", () => {
       Platform.OS = originalOS;
     });
 
+    it("não mostra erro quando a pessoa cancela o menu de compartilhamento", async () => {
+      const originalOS = Platform.OS;
+      Platform.OS = "web";
+      const cancel = Object.assign(new Error("Share canceled"), { name: "AbortError" });
+      vi.stubGlobal("navigator", { share: vi.fn().mockRejectedValue(cancel), clipboard: { writeText: vi.fn() } });
+
+      const hook = await renderHook(fakeUseCases);
+      await act(async () => {
+        await hook.current[1].shareToWhatsApp("b1", fakeListing);
+      });
+
+      expect(hook.current[0]).toEqual({ sharing: false, linkCopied: false, error: null });
+      Platform.OS = originalOS;
+    });
+
+    it("copia a mensagem quando o navegador recusa a Web Share API", async () => {
+      const originalOS = Platform.OS;
+      Platform.OS = "web";
+      const denied = Object.assign(new Error("Permission denied"), { name: "NotAllowedError" });
+      const writeText = vi.fn().mockResolvedValue(undefined);
+      vi.stubGlobal("navigator", { share: vi.fn().mockRejectedValue(denied), clipboard: { writeText } });
+
+      const hook = await renderHook(fakeUseCases);
+      await act(async () => {
+        await hook.current[1].shareToWhatsApp("b1", fakeListing);
+      });
+
+      expect(writeText).toHaveBeenCalledWith(expect.stringContaining("Dom Casmurro"));
+      expect(hook.current[0]).toEqual({ sharing: false, linkCopied: true, error: null });
+      Platform.OS = originalOS;
+    });
+
     it("copia a mensagem quando a Web Share API não está disponível", async () => {
       const originalOS = Platform.OS;
       Platform.OS = "web";

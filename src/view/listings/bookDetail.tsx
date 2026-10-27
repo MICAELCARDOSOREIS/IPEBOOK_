@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useBookDetailViewModel } from "@/viewmodel/useBookDetailViewModel";
 import { usePublicProfileViewModel } from "@/viewmodel/usePublicProfileViewModel";
@@ -11,7 +11,7 @@ import { useTheme } from "@/view/theme/ThemeProvider";
 import { BookCover } from "@/view/components/BookCover";
 import { FilledButton } from "@/view/components/FilledButton";
 import { Snackbar } from "@/view/components/Snackbar";
-import { AppIcon } from "@/view/components/AppIcon";
+import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
 import { Avatar } from "@/view/components/Avatar";
 import { PhotoGallery } from "@/view/listings/photoGallery";
 import { BOOK_CONDITION_LABELS, type BookModality } from "@/model/entities/book";
@@ -32,11 +32,9 @@ const OWNER_FALLBACK_LABEL = "Anunciado por outro membro da comunidade";
  */
 function SellerCard({
   ownerId,
-  neighborhood = "Centro",
   onPress,
 }: {
   ownerId: string;
-  neighborhood?: string;
   onPress?: () => void;
 }) {
   const { colors } = useTheme();
@@ -51,7 +49,7 @@ function SellerCard({
     : "";
   const exchangesCount = profile?.completedNegotiations ?? 0;
   const exchangesText = `${exchangesCount} ${exchangesCount === 1 ? "troca" : "trocas"}`;
-  const metaText = `${ratingText}${exchangesText} · ${neighborhood}`;
+  const metaText = `${ratingText}${exchangesText}`;
 
   return (
     <Pressable
@@ -61,9 +59,9 @@ function SellerCard({
       style={styles.sellerCard}
     >
       <View style={styles.sellerInfo}>
-        <Avatar name={name || "Comunidade"} photoUrl={profile?.photoUrl} size={44} />
+        <Avatar name={name || "Comunidade"} photoUrl={profile?.photoUrl} size={40} />
         <View style={styles.sellerTextCol}>
-          <Text style={styles.sellerName}>{label}</Text>
+          <Text style={styles.sellerName}>{name || "Membro da comunidade"}</Text>
           <Text style={styles.sellerMeta}>{metaText}</Text>
         </View>
       </View>
@@ -111,66 +109,67 @@ export default function BookDetail({
   const conditionLabel = book?.condition ? BOOK_CONDITION_LABELS[book.condition] : "Bom estado";
   const categoryLabel = book?.category || "Literatura";
   const neighborhoodLabel = book?.neighborhood || "Centro";
-  const metaLine = `${conditionLabel} · ${categoryLabel} · ${neighborhoodLabel}`;
-
-  const negotiationGuidance = useMemo(() => {
-    if (!book) return "";
-    if (book.modality === "sale") {
-      return "Pagamento direto entre vocês, depois de conferir o exemplar.";
-    }
-    if (book.modality === "trade") {
-      return "Combinem o local e confiram os livros antes da troca.";
-    }
-    return "Doação para quem vai ler. Retirada em local público.";
-  }, [book]);
+  const primaryActionLabel = book ? PRIMARY_ACTION_LABEL[book.modality] : "";
+  const insets = useSafeAreaInsets();
+  const heroColors = book ? modalityTag[book.modality] : null;
 
   return (
-    <SafeAreaView edges={["top", "left", "right"]} style={styles.page}>
-      {/* 1. Barra de Topo M3: Voltar + "Detalhes" + Ações (Favoritar e Compartilhar) */}
-      <View style={styles.topBar}>
-        <View style={styles.topBarLeading}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Voltar"
-            hitSlop={12}
-            onPress={onBack}
-            style={styles.iconButton}
-          >
-            <AppIcon name="back" size={24} color={colors.text} />
-          </Pressable>
-          <Text accessibilityRole="header" style={styles.topBarTitle}>Detalhes</Text>
-        </View>
-
-        <View style={styles.topBarTrailing}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={state.isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
-            accessibilityState={{ disabled: state.favoriteLoading }}
-            disabled={state.favoriteLoading}
-            onPress={() => void actions.toggleFavorite(sessionUserId)}
-            style={styles.iconButton}
-          >
-            <AppIcon
-              name={state.isFavorite ? "heartFill" : "heart"}
-              size={24}
-              color={state.isFavorite ? colors.action : colors.m3.onSurfaceVariant}
-            />
-          </Pressable>
-
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Compartilhar anúncio"
-            accessibilityState={{ disabled: share.sharing }}
-            disabled={share.sharing}
-            onPress={() => void shareActions.share(book?.id ?? bookId)}
-            style={styles.iconButton}
-          >
-            <AppIcon name="share" size={24} color={colors.m3.onSurfaceVariant} />
-          </Pressable>
-        </View>
-      </View>
-
+    <SafeAreaView edges={["left", "right"]} style={styles.page}>
       <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+        {/* 1. Capa em destaque na cor da modalidade (Figma `03.01`–`03.03`), indo até a barra de status. */}
+        <View
+          style={[
+            styles.hero,
+            { paddingTop: insets.top + tokens.spacing[8] },
+            heroColors ? { backgroundColor: heroColors.background } : null,
+          ]}
+        >
+          <View style={styles.heroBar}>
+            <HeroIconButton icon="back" label="Voltar" onPress={onBack} />
+            <View style={styles.heroBarTrailing}>
+              <HeroIconButton
+                icon="share"
+                label="Compartilhar anúncio"
+                disabled={share.sharing}
+                onPress={() => void shareActions.share(book?.id ?? bookId)}
+              />
+              <HeroIconButton
+                icon={state.isFavorite ? "heartFill" : "heart"}
+                label={state.isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+                disabled={state.favoriteLoading}
+                iconColor={state.isFavorite ? colors.action : undefined}
+                onPress={() => void actions.toggleFavorite(sessionUserId)}
+              />
+            </View>
+          </View>
+
+          {book ? (
+            <View style={styles.coverArea}>
+              {photos.length > 0 ? (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Ver fotos do anúncio em tela cheia"
+                  onPress={() => setGalleryVisible(true)}
+                  style={styles.coverShadow}
+                >
+                  <BookCover id={book.id} title={book.title} author={book.author} photoUrl={book.photoUrl} variant="detail" />
+                </Pressable>
+              ) : (
+                <View style={styles.coverShadow}>
+                  <BookCover id={book.id} title={book.title} author={book.author} photoUrl={book.photoUrl} variant="detail" />
+                </View>
+              )}
+              {photos.length > 1 ? (
+                <View style={styles.photoDots} accessibilityLabel={`${photos.length} fotos`}>
+                  {photos.map((_, idx) => (
+                    <View key={idx} style={[styles.dot, idx === 0 && styles.dotActive]} />
+                  ))}
+                </View>
+              ) : null}
+            </View>
+          ) : null}
+        </View>
+
         {state.loading ? (
           <View style={styles.status}>
             <ActivityIndicator color={colors.action} accessibilityLabel="Carregando anúncio" />
@@ -180,141 +179,123 @@ export default function BookDetail({
             <Text accessibilityRole="alert" style={styles.errorText}>{state.error}</Text>
           </View>
         ) : book ? (
-          <View style={styles.card}>
-            {/* 2. Destaque de Capa (Figma nó div · SAINT-EXUPÉRY O Pequeno Príncipe) */}
-            <View style={styles.coverContainer}>
-              {photos.length > 0 ? (
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel="Ver fotos do anúncio em tela cheia"
-                  onPress={() => setGalleryVisible(true)}
-                  style={styles.coverTouch}
-                >
-                  <BookCover id={book.id} title={book.title} author={book.author} photoUrl={book.photoUrl} variant="detail" />
-                </Pressable>
-              ) : (
-                <View style={styles.coverTouch}>
-                  <BookCover id={book.id} title={book.title} author={book.author} photoUrl={book.photoUrl} variant="detail" />
-                </View>
-              )}
-              {photos.length > 1 ? (
-                <View style={styles.photoDots}>
-                  {photos.map((_, idx) => (
-                    <View key={idx} style={[styles.dot, idx === 0 && styles.dotActive]} />
-                  ))}
-                </View>
-              ) : null}
-            </View>
-
-            {/* 3. Título e Autor */}
+          <View style={styles.content}>
+            {/* 2. Título, autor, valor e etiqueta da modalidade */}
             <View style={styles.titleSection}>
               <Text accessibilityRole="header" style={styles.title}>{book.title}</Text>
               <Text style={styles.author}>{book.author}</Text>
             </View>
-
-            {/* 4. Modalidade e Valor */}
             <View style={styles.priceRow}>
-              {book.modality === "sale" ? (
-                <Text style={styles.priceValue}>{formattedPrice}</Text>
-              ) : null}
+              <Text style={styles.priceValue}>{formattedPrice}</Text>
               <View style={[styles.tag, { backgroundColor: modalityTag[book.modality].background }]}>
                 <Text style={[styles.tagText, { color: modalityTag[book.modality].text }]}>
                   {modalityTag[book.modality].label}
                 </Text>
               </View>
-              {book.modality !== "sale" ? (
-                <Text style={styles.conditionPriceValue}>{formattedPrice}</Text>
-              ) : null}
             </View>
 
-            {/* 5. Conservação, Categoria e Bairro */}
-            <Text style={styles.metaLine}>{metaLine}</Text>
+            {/* 3. Cartão da modalidade (troca e doação) */}
+            {book.modality !== "sale" ? (
+              <View style={[styles.modalityCard, { backgroundColor: modalityTag[book.modality].background }]}>
+                <AppIcon
+                  name={book.modality === "trade" ? "swap" : "info"}
+                  size={20}
+                  color={modalityTag[book.modality].text}
+                />
+                <View style={styles.modalityCardText}>
+                  <Text style={[styles.modalityCardTitle, { color: modalityTag[book.modality].text }]}>
+                    {book.modality === "trade" ? "Aceita em troca" : "Doação para quem vai ler"}
+                  </Text>
+                  <Text style={[styles.modalityCardBody, { color: modalityTag[book.modality].text }]}>
+                    {book.modality === "trade"
+                      ? "Combine pelo chat qual livro oferecer. Levem os dois exemplares e confiram antes de trocar."
+                      : "Sem cobrança pelo exemplar. Retirada em local público, combinada pelo chat."}
+                  </Text>
+                </View>
+              </View>
+            ) : null}
 
-            {/* 6. Descrição */}
+            {/* 4. Detalhes: conservação, categoria e retirada */}
+            <View style={styles.detailList}>
+              <DetailRow icon="conservation" label="Conservação" value={conditionLabel} />
+              <DetailRow icon="category" label="Categoria" value={categoryLabel} />
+              <DetailRow icon="place" label="Retirada" value={neighborhoodLabel} last />
+            </View>
+
             {book.description ? (
               <Text style={styles.descriptionText}>{book.description}</Text>
             ) : null}
 
+            {/* 5. Anunciante */}
+            <SellerCard ownerId={book.ownerId} onPress={() => onNavigateToUserProfile?.(book.ownerId)} />
+
             {state.favoriteError ? (
               <Text accessibilityRole="alert" style={styles.requestError}>{state.favoriteError}</Text>
             ) : null}
-
-            {/* 7. Card do Anunciante */}
-            <SellerCard
-              ownerId={book.ownerId}
-              neighborhood={book.neighborhood}
-              onPress={() => onNavigateToUserProfile?.(book.ownerId)}
-            />
-
-            {/* 8. Orientação da Negociação */}
-            <View style={styles.guidanceBox}>
-              <AppIcon name="info" size={20} color={colors.m3.onSurfaceVariant} />
-              <Text style={styles.guidanceText}>{negotiationGuidance}</Text>
-            </View>
-
-            {/* Ações Secundárias */}
-            <View style={styles.secondaryActions}>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Compartilhar no WhatsApp"
-                accessibilityState={{ disabled: share.sharing }}
-                disabled={share.sharing}
-                onPress={() =>
-                  void shareActions.shareToWhatsApp(book.id, {
-                    title: book.title,
-                    author: book.author,
-                    modality: book.modality,
-                    price: book.price,
-                  })
-                }
-                style={styles.whatsAppButton}
-              >
-                <Text style={styles.whatsAppText}>Compartilhar no WhatsApp</Text>
-              </Pressable>
-
-              {onNavigateToReport && (!sessionUserId || book.ownerId !== sessionUserId) ? (
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel="Denunciar anúncio"
-                  onPress={() => onNavigateToReport(book.id)}
-                  style={styles.reportButton}
-                >
-                  <Text style={styles.reportText}>Denunciar anúncio</Text>
-                </Pressable>
-              ) : null}
-            </View>
-
             {negotiation.errorListingId === book.id ? (
               <Text accessibilityRole="alert" style={styles.requestError}>{negotiation.error}</Text>
             ) : null}
             {share.error ? (
               <Text accessibilityRole="alert" style={styles.requestError}>{share.error}</Text>
             ) : null}
+
+            {onNavigateToReport && (!sessionUserId || book.ownerId !== sessionUserId) ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Denunciar anúncio"
+                onPress={() => onNavigateToReport(book.id)}
+                style={styles.reportButton}
+              >
+                <AppIcon name="flag" size={18} color={colors.m3.onSurfaceVariant} />
+                <Text style={styles.reportText}>Denunciar anúncio</Text>
+              </Pressable>
+            ) : null}
           </View>
         ) : null}
       </ScrollView>
 
-      {/* 9. Barra Fixa Inferior: Ação Principal */}
+      {/* 6. Barra fixa inferior: Compartilhar (tonal) + ação principal por modalidade */}
       {book && !state.loading ? (
         <SafeAreaView edges={["bottom"]} style={styles.bottomBarContainer}>
           <View style={styles.bottomBar}>
-            {book.status === "reserved" ? (
-              <View style={styles.statusPill}>
-                <Text style={styles.reserved}>Reservado</Text>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Compartilhar no WhatsApp"
+              accessibilityState={{ disabled: share.sharing }}
+              disabled={share.sharing}
+              onPress={() =>
+                void shareActions.shareToWhatsApp(book.id, {
+                  title: book.title,
+                  author: book.author,
+                  modality: book.modality,
+                  price: book.price,
+                })
+              }
+              style={styles.tonalButton}
+            >
+              <Text style={styles.tonalButtonText}>Compartilhar</Text>
+            </Pressable>
+            {book.status === "reserved" || (sessionUserId && book.ownerId !== sessionUserId) ? (
+              <View style={styles.primarySlot}>
+                {book.status === "reserved" ? (
+                  <View style={styles.statusPill}>
+                    <Text style={styles.reserved}>Reservado</Text>
+                  </View>
+                ) : sessionUserId && book.ownerId !== sessionUserId ? (
+                  negotiation.requestedListingIds.includes(book.id) ? (
+                    <View style={styles.statusPill}>
+                      <Text style={styles.requested}>Negociação solicitada</Text>
+                    </View>
+                  ) : (
+                    <FilledButton
+                      label={primaryActionLabel}
+                      loading={negotiation.pendingListingId === book.id}
+                      loadingLabel="Solicitando negociação"
+                      onPress={() => void negotiationActions.request(book.id, sessionUserId)}
+                    />
+                  )
+                ) : null}
               </View>
-            ) : sessionUserId && book.ownerId !== sessionUserId ? (
-              negotiation.requestedListingIds.includes(book.id) ? (
-                <View style={styles.statusPill}>
-                  <Text style={styles.requested}>Negociação solicitada</Text>
-                </View>
-              ) : (
-                <FilledButton
-                  label="Solicitar negociação"
-                  loading={negotiation.pendingListingId === book.id}
-                  loadingLabel="Solicitando negociação"
-                  onPress={() => void negotiationActions.request(book.id, sessionUserId)}
-                />
-              )
             ) : null}
           </View>
         </SafeAreaView>
@@ -337,235 +318,203 @@ export default function BookDetail({
   );
 }
 
+/** Botão de ícone tonal circular sobre a capa (M3 filled tonal icon button, 40 dp com 48 dp de toque). */
+function HeroIconButton({
+  icon,
+  label,
+  onPress,
+  disabled = false,
+  iconColor,
+}: {
+  icon: AppIconName;
+  label: string;
+  onPress: () => void;
+  disabled?: boolean;
+  iconColor?: string;
+}) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ disabled }}
+      disabled={disabled}
+      hitSlop={4}
+      onPress={onPress}
+      style={styles.heroIconButton}
+    >
+      <AppIcon name={icon} size={22} color={iconColor ?? colors.m3.onSurface} />
+    </Pressable>
+  );
+}
+
+/** Linha da lista de detalhes (Figma `03.01`: ícone em selo, rótulo à esquerda, valor à direita). */
+function DetailRow({ icon, label, value, last = false }: { icon: AppIconName; label: string; value: string; last?: boolean }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+  return (
+    <View style={[styles.detailRow, !last && styles.detailRowDivider]}>
+      <View style={styles.detailIcon}>
+        <AppIcon name={icon} size={18} color={colors.m3.onSecondaryContainer} />
+      </View>
+      <Text style={styles.detailLabel}>{label}</Text>
+      <Text style={styles.detailValue} numberOfLines={1}>{value}</Text>
+    </View>
+  );
+}
+
+const PRIMARY_ACTION_LABEL: Record<BookModality, string> = {
+  sale: "Tenho interesse",
+  trade: "Propor troca",
+  donation: "Quero receber",
+};
+
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     page: { flex: 1, backgroundColor: colors.background },
-    topBar: {
-      height: 56,
+    scrollContent: { paddingBottom: tokens.spacing[32] },
+    hero: {
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderBottomLeftRadius: 28,
+      borderBottomRightRadius: 28,
+      paddingHorizontal: tokens.spacing[16],
+      paddingBottom: tokens.spacing[24],
+    },
+    heroBar: {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
-      paddingHorizontal: tokens.spacing[8],
-      backgroundColor: colors.m3.surfaceContainerLow,
     },
-    topBarLeading: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[12],
-    },
-    topBarTitle: {
-      fontSize: 22,
-      lineHeight: 28,
-      fontWeight: "500",
-      color: colors.m3.onSurface,
-    },
-    topBarTrailing: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[8],
-    },
-    iconButton: {
-      width: tokens.spacing[40],
-      height: tokens.spacing[40],
-      justifyContent: "center",
-      alignItems: "center",
+    heroBarTrailing: { flexDirection: "row", gap: tokens.spacing[8] },
+    heroIconButton: {
+      width: 44,
+      height: 44,
       borderRadius: tokens.radius.full,
-    },
-    scrollContent: {
-      paddingHorizontal: tokens.spacing[16],
-      paddingTop: tokens.spacing[8],
-      paddingBottom: tokens.spacing[32],
-    },
-    status: {
-      alignItems: "center",
-      paddingTop: tokens.spacing[48],
-    },
-    errorText: {
-      fontSize: tokens.typography.bodyLarge.fontSize,
-      color: colors.error,
-      textAlign: "center",
-    },
-    card: {
-      gap: tokens.spacing[16],
-    },
-    coverContainer: {
-      width: "100%",
-      // Figma `03.01`: área da capa em `surface-container-low`, canto de 16 dp.
-      backgroundColor: colors.m3.surfaceContainerLow,
-      borderRadius: 16,
-      paddingVertical: tokens.spacing[24],
       alignItems: "center",
       justifyContent: "center",
+      backgroundColor: colors.m3.surfaceContainerLowest,
     },
-    coverTouch: {
-      alignItems: "center",
-      justifyContent: "center",
+    coverArea: { alignItems: "center", paddingTop: tokens.spacing[8] },
+    coverShadow: {
+      borderRadius: 8,
+      shadowColor: "#000",
+      shadowOpacity: 0.25,
+      shadowRadius: 12,
+      shadowOffset: { width: 0, height: 6 },
+      elevation: 8,
     },
     photoDots: {
       flexDirection: "row",
       alignItems: "center",
       gap: 6,
-      marginTop: tokens.spacing[12],
+      marginTop: tokens.spacing[16],
+      paddingHorizontal: tokens.spacing[8],
+      paddingVertical: 4,
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.m3.surfaceContainerLowest,
     },
-    dot: {
-      width: 6,
-      height: 6,
-      borderRadius: 3,
-      backgroundColor: colors.m3.outlineVariant,
+    dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.m3.outlineVariant },
+    dotActive: { backgroundColor: colors.m3.onSurface },
+    status: { alignItems: "center", paddingTop: tokens.spacing[48] },
+    errorText: {
+      fontSize: tokens.typography.bodyLarge.fontSize,
+      color: colors.error,
+      textAlign: "center",
     },
-    dotActive: {
-      backgroundColor: colors.text,
-      width: 8,
-      height: 8,
-      borderRadius: 4,
+    content: {
+      paddingHorizontal: tokens.spacing[16],
+      paddingTop: tokens.spacing[20],
+      gap: tokens.spacing[16],
     },
-    titleSection: {
-      gap: tokens.spacing[4],
-    },
+    titleSection: { gap: tokens.spacing[4] },
     title: {
       fontFamily: fontFamily.brand,
-      fontSize: 24,
-      lineHeight: 30,
+      fontSize: 28,
+      lineHeight: 36,
       fontWeight: "700",
-      color: colors.text,
+      color: colors.m3.onSurface,
     },
-    author: {
-      fontSize: 16,
-      lineHeight: 22,
-      color: colors.secondaryText,
+    author: { fontSize: 16, lineHeight: 24, color: colors.m3.onSurfaceVariant },
+    priceRow: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[12] },
+    priceValue: { fontSize: 22, lineHeight: 28, fontWeight: "700", color: colors.m3.onSurface },
+    tag: { borderRadius: tokens.radius.small, paddingHorizontal: tokens.spacing[8], paddingVertical: 2 },
+    tagText: { fontSize: 12, fontWeight: "500", lineHeight: 16 },
+    modalityCard: {
+      flexDirection: "row",
+      gap: tokens.spacing[12],
+      borderRadius: 16,
+      padding: tokens.spacing[16],
     },
-    priceRow: {
+    modalityCardText: { flex: 1, gap: 2 },
+    modalityCardTitle: { fontSize: 16, lineHeight: 24, fontWeight: "600" },
+    modalityCardBody: { fontSize: 14, lineHeight: 20 },
+    detailList: {
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderRadius: 16,
+      paddingHorizontal: tokens.spacing[16],
+    },
+    detailRow: {
       flexDirection: "row",
       alignItems: "center",
       gap: tokens.spacing[12],
+      minHeight: 56,
     },
-    priceValue: {
-      fontSize: 24,
-      fontWeight: "700",
-      color: colors.text,
+    detailRowDivider: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.m3.outlineVariant },
+    detailIcon: {
+      width: 32,
+      height: 32,
+      borderRadius: 8,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: colors.m3.secondaryContainer,
     },
-    conditionPriceValue: {
-      fontSize: 18,
-      fontWeight: "600",
-      color: colors.text,
-    },
-    tag: {
-      borderRadius: tokens.radius.small,
-      paddingHorizontal: tokens.spacing[8],
-      paddingVertical: 2,
-    },
-    tagText: {
-      fontSize: 12,
-      fontWeight: "500",
-      lineHeight: 16,
-    },
-    metaLine: {
-      fontSize: 14,
-      lineHeight: 20,
-      color: colors.secondaryText,
-    },
-    descriptionText: {
-      fontSize: 15,
-      lineHeight: 22,
-      color: colors.text,
-    },
+    detailLabel: { flex: 1, fontSize: 16, lineHeight: 24, color: colors.m3.onSurface },
+    detailValue: { fontSize: 14, lineHeight: 20, color: colors.m3.onSurfaceVariant, maxWidth: "50%" },
+    descriptionText: { fontSize: 16, lineHeight: 24, color: colors.m3.onSurface },
     sellerCard: {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
-      backgroundColor: colors.surface,
+      backgroundColor: colors.m3.surfaceContainerLow,
       borderRadius: 16,
-      borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
-      padding: tokens.spacing[16],
+      paddingHorizontal: tokens.spacing[16],
+      minHeight: 64,
     },
-    sellerInfo: {
+    sellerInfo: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[12], flex: 1 },
+    sellerTextCol: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: tokens.spacing[8] },
+    sellerName: { flexShrink: 1, fontSize: 16, lineHeight: 24, fontWeight: "500", color: colors.m3.onSurface },
+    sellerMeta: { fontSize: 14, color: colors.m3.onSurfaceVariant },
+    reportButton: {
+      minHeight: tokens.accessibility.touchTarget,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: tokens.spacing[8],
+    },
+    reportText: { color: colors.m3.onSurfaceVariant, fontSize: tokens.typography.labelMedium.fontSize },
+    bottomBarContainer: { backgroundColor: colors.m3.surfaceContainer },
+    bottomBar: {
       flexDirection: "row",
       alignItems: "center",
       gap: tokens.spacing[12],
-      flex: 1,
-    },
-    sellerTextCol: {
-      flex: 1,
-      gap: 2,
-    },
-    sellerName: {
-      fontSize: 16,
-      fontWeight: "600",
-      color: colors.text,
-    },
-    sellerMeta: {
-      fontSize: 13,
-      color: colors.secondaryText,
-    },
-    guidanceBox: {
-      flexDirection: "row",
-      alignItems: "flex-start",
-      gap: tokens.spacing[8],
-      paddingVertical: tokens.spacing[4],
-    },
-    guidanceText: {
-      flex: 1,
-      fontSize: 13,
-      lineHeight: 18,
-      color: colors.secondaryText,
-    },
-    secondaryActions: {
-      gap: tokens.spacing[8],
-      alignItems: "center",
-      paddingTop: tokens.spacing[8],
-    },
-    whatsAppButton: {
-      minHeight: tokens.accessibility.touchTarget,
-      justifyContent: "center",
-      alignItems: "center",
-      backgroundColor: "#25D366",
-      borderRadius: tokens.radius.full,
-      paddingHorizontal: tokens.spacing[24],
-      width: "100%",
-    },
-    whatsAppText: {
-      color: "#FFFFFF",
-      fontSize: 14,
-      fontWeight: "700",
-    },
-    reportButton: {
-      minHeight: tokens.accessibility.touchTarget,
-      justifyContent: "center",
-      paddingVertical: tokens.spacing[8],
-    },
-    reportText: {
-      color: colors.secondaryText,
-      fontSize: tokens.typography.labelMedium.fontSize,
-      textDecorationLine: "underline",
-    },
-    bottomBarContainer: {
-      backgroundColor: colors.surface,
-      borderTopWidth: 1,
-      borderTopColor: colors.m3.outlineVariant,
-    },
-    bottomBar: {
       paddingHorizontal: tokens.spacing[16],
       paddingVertical: tokens.spacing[12],
     },
-    statusPill: {
+    tonalButton: {
+      flex: 1,
+      minHeight: 52,
+      borderRadius: tokens.radius.full,
       alignItems: "center",
       justifyContent: "center",
-      paddingVertical: tokens.spacing[12],
+      backgroundColor: colors.m3.secondaryContainer,
+      paddingHorizontal: tokens.spacing[16],
     },
-    reserved: {
-      fontSize: tokens.typography.bodyMedium.fontSize,
-      color: colors.secondaryText,
-      fontStyle: "italic",
-    },
-    requested: {
-      fontSize: tokens.typography.bodyMedium.fontSize,
-      color: colors.action,
-      fontWeight: "600",
-    },
-    requestError: {
-      fontSize: tokens.typography.bodyMedium.fontSize,
-      color: colors.error,
-    },
+    tonalButtonText: { fontSize: 16, fontWeight: "600", color: colors.m3.onSecondaryContainer },
+    primarySlot: { flex: 1 },
+    statusPill: { alignItems: "center", justifyContent: "center", minHeight: 52 },
+    reserved: { fontSize: tokens.typography.bodyMedium.fontSize, color: colors.secondaryText, fontStyle: "italic" },
+    requested: { fontSize: tokens.typography.bodyMedium.fontSize, color: colors.action, fontWeight: "600" },
+    requestError: { fontSize: tokens.typography.bodyMedium.fontSize, color: colors.error },
   });
 }

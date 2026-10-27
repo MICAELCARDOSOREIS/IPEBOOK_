@@ -38,7 +38,7 @@ Data: 2026-10-26 · Branch: `feat/rascunhos-anuncio-017` (base `develop`)
 
 ## Limitações
 
-- Validação do fluxo real em navegador/dispositivo e aplicação da migração `202610260001_rascunhos_anuncio.sql`
+- Validação do fluxo real em navegador/dispositivo e aplicação da migração `202610260002_rascunhos_anuncio.sql`
   ao Supabase remoto ainda não realizadas neste ciclo. A migração fica pendente de aplicação remota
   antes de valer em produção.
 - Build aprovado e testes automatizados verdes não substituem a conferência manual do fluxo em

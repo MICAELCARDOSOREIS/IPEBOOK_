@@ -25,7 +25,7 @@
       },
       "env": {
         "EXPO_PUBLIC_BACKEND": "supabase",
-        "EXPO_PUBLIC_AUTH_REDIRECT_URL": "https://ipebook.pages.dev/redefinir-senha"
+        "EXPO_PUBLIC_AUTH_REDIRECT_URL": "https://ipebook.app/redefinir-senha"
       }
     },
     "production": {
@@ -36,7 +36,7 @@
       },
       "env": {
         "EXPO_PUBLIC_BACKEND": "supabase",
-        "EXPO_PUBLIC_AUTH_REDIRECT_URL": "https://ipebook.pages.dev/redefinir-senha"
+        "EXPO_PUBLIC_AUTH_REDIRECT_URL": "https://ipebook.app/redefinir-senha"
       }
     }
   },

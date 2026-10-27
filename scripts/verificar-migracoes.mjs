@@ -335,6 +335,16 @@ await as('authenticated', owner, `delete from public.v2_blocked_users where bloc
 
 process.stdout.write('Mensagens de negociação (Spec 061 / ADR 0044): verificado com sucesso\n');
 
+// ADR 0062 / Spec 078: o app lê e grava `push_token` em v2_user_preferences; sem a coluna,
+// a consulta inteira falha e a tela "Editar perfil" mostra "Não foi possível consultar as preferências."
+await as('authenticated', owner, `insert into public.v2_user_preferences (user_id, phone, neighborhood, push_token)
+values ('${owner}', '86999990000', 'Centro', 'ExponentPushToken[teste]')
+on conflict (user_id) do update set push_token = excluded.push_token`);
+const prefs = await as('authenticated', owner, `select user_id,phone,neighborhood,push_token from public.v2_user_preferences where user_id = '${owner}'`);
+if (prefs.rows[0]?.push_token !== 'ExponentPushToken[teste]') throw new Error('push_token não foi gravado nas preferências');
+const otherPrefs = await as('authenticated', other, `select push_token from public.v2_user_preferences where user_id = '${owner}'`);
+if (otherPrefs.rows.length !== 0) throw new Error('Terceiro conseguiu ler o push_token alheio');
+process.stdout.write('Preferências com push_token (ADR 0062): verificado com sucesso\n');
 // Rascunhos de anúncio (Spec 017): 'draft' aceita conteúdo incompleto e fica invisível a terceiros.
 await db.exec('reset role');
 const draftVazio = 'd7a0017d-0017-4017-8017-000000000001';

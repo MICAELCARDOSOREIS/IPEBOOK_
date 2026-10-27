@@ -75,11 +75,23 @@ export function useShareListingViewModel(
 
         if (Platform.OS === "web") {
           const webNavigator = navigator as WebNavigatorWithShare;
+          let shared = false;
           if (typeof webNavigator.share === "function") {
-            await webNavigator.share({ text: message, url });
-          } else {
-            await navigator.clipboard.writeText(message);
+            try {
+              await webNavigator.share({ text: message, url });
+              shared = true;
+            } catch (shareError) {
+              const name = (shareError as { name?: string } | null)?.name;
+              // Fechar o menu do navegador não é falha; nada foi compartilhado nem copiado.
+              if (name === "AbortError") {
+                if (active.current) setState({ sharing: false, linkCopied: false, error: null });
+                return;
+              }
+              // Sem permissão (iframe, falta de gesto do usuário): recorre à área de transferência.
+              if (name !== "NotAllowedError") throw shareError;
+            }
           }
+          if (!shared) await navigator.clipboard.writeText(message);
           if (active.current) setState({ sharing: false, linkCopied: true, error: null });
           return;
         }

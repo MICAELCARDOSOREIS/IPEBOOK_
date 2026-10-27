@@ -7,7 +7,7 @@ import type { IShareUseCases } from "@/usecase/iShareUseCases";
 import { useInviteFriendsViewModel } from "@/viewmodel/useInviteFriendsViewModel";
 
 vi.mock("expo-linking", () => ({
-  createURL: vi.fn((path: string) => `https://ipebook.pages.dev${path}`),
+  createURL: vi.fn((path: string) => `https://ipebook.app${path}`),
   canOpenURL: vi.fn().mockResolvedValue(false),
   openURL: vi.fn().mockResolvedValue(undefined),
 }));
@@ -43,9 +43,9 @@ const fakeUseCases: IShareUseCases = {
   buildListingSharePath: () => "/livro/1",
   buildShareMessage: () => "mensagem",
   buildWhatsAppShareUrl: (msg) => `whatsapp://send?text=${encodeURIComponent(msg)}`,
-  buildInviteMessage: (url = "https://ipebook.pages.dev") =>
+  buildInviteMessage: (url = "https://ipebook.app") =>
     `Venha para o IpêBook em Piripiri: ${url}`,
-  buildWhatsAppInviteUrl: (url = "https://ipebook.pages.dev") =>
+  buildWhatsAppInviteUrl: (url = "https://ipebook.app") =>
     `whatsapp://send?text=${encodeURIComponent(`Venha para o IpêBook em Piripiri: ${url}`)}`,
 };
 
@@ -120,7 +120,7 @@ describe("useInviteFriendsViewModel (Spec 057, Figma 08.02)", () => {
       await hook.current[1].copyLink();
     });
 
-    expect(writeText).toHaveBeenCalledWith("https://ipebook.pages.dev");
+    expect(writeText).toHaveBeenCalledWith("https://ipebook.app");
     expect(hook.current[0].linkCopied).toBe(true);
 
     act(() => {

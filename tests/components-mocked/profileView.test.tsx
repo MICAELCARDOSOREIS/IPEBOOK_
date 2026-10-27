@@ -96,6 +96,15 @@ describe("Profile (Spec 006 US4, Issue #55)", () => {
     expect(update).toHaveBeenCalledWith({ name: "Ana Paula", photoUrl: undefined, socialHandle: undefined });
   });
 
+  it("mostra a pré-visualização do cartão de leitor e a atualiza ao digitar o nome (Spec 078, CA4)", async () => {
+    setup({ id: "ana", email: "ana@exemplo.com" });
+    const screen = await renderProfile();
+    expect(screen.getByText("Assim seu cartão aparece")).toBeDefined();
+    expect(screen.getByLabelText("Cartão de leitor de Ana")).toBeDefined();
+    await act(async () => { fireEvent.changeText(screen.getByDisplayValue("Ana"), "Ana Paula"); });
+    expect(screen.getByLabelText("Cartão de leitor de Ana Paula")).toBeDefined();
+  });
+
   it("mostra confirmação após salvar", async () => {
     setup({ id: "ana", email: "ana@exemplo.com" });
     const screen = await renderProfile();
@@ -123,6 +132,9 @@ describe("Profile (Spec 006 US4, Issue #55)", () => {
     const screen = await renderProfile();
     await act(async () => {
       fireEvent.changeText(screen.getByLabelText("Telefone/WhatsApp"), "86988887777");
+    });
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Mostrar atalhos de bairros populares"));
     });
     await act(async () => {
       fireEvent.press(screen.getByLabelText("Bairro Centro"));
@@ -213,8 +225,18 @@ describe("Profile (Spec 006 US4, Issue #55)", () => {
   it("rotula os atalhos como bairros de Piripiri, sem inventar frequência", async () => {
     setup({ id: "ana", email: "ana@exemplo.com" });
     const screen = await renderProfile();
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Mostrar atalhos de bairros populares"));
+    });
     expect(screen.getByText("Bairros de Piripiri")).toBeDefined();
     expect(screen.queryByText("Bairros mais frequentes")).toBeNull();
+  });
+
+  it("mantém os atalhos de bairro recolhidos por padrão", async () => {
+    setup({ id: "ana", email: "ana@exemplo.com" });
+    const screen = await renderProfile();
+    expect(screen.getByLabelText("Mostrar atalhos de bairros populares")).toBeDefined();
+    expect(screen.queryByText("Bairros de Piripiri")).toBeNull();
   });
 
   it("volta direto quando não há edição em aberto", async () => {
