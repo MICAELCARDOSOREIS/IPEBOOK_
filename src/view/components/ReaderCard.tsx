@@ -11,8 +11,10 @@ export type ReaderCardProps = {
   photoUrl?: string;
   /** Título da faixa superior; padrão "Cartão de leitor". */
   eyebrow?: string;
-  /** Número impresso e em código de barras (ver `readerCardNumber`); sem ele o cartão não mostra a faixa de código. */
+  /** Número impresso no cartão (ver `readerCardNumber`); com `showBarcode` também vira código de barras. */
   cardNumber?: string;
+  /** Mostra o código de barras decorativo no rodapé; fica desligado por padrão para o cartão ser mais baixo. */
+  showBarcode?: boolean;
   /** "out/2026": desde quando a pessoa é leitora da comunidade. */
   memberSince?: string;
   /** Conteúdo extra abaixo da linha de apoio, como o Instagram do Meu perfil (Spec 081). */
@@ -42,6 +44,7 @@ export function ReaderCard({
   eyebrow = "Cartão de leitor",
   cardNumber,
   memberSince,
+  showBarcode = false,
   footer,
 }: ReaderCardProps) {
   const { colors } = useTheme();
@@ -63,7 +66,7 @@ export function ReaderCard({
           {photoUrl ? (
             <Image source={{ uri: photoUrl }} accessible={false} resizeMode="cover" style={styles.photo} />
           ) : (
-            <IpeMark size={52} />
+            <IpeMark size={44} />
           )}
         </View>
 
@@ -97,7 +100,7 @@ export function ReaderCard({
         </View>
       </View>
 
-      {cardNumber ? (
+      {cardNumber && showBarcode ? (
         <View accessible={false} importantForAccessibility="no-hide-descendants" style={styles.barcodeArea}>
           <View style={styles.barcode}>
             {bars.map((width, index) =>
@@ -153,12 +156,12 @@ function createStyles(colors: ColorPalette) {
     body: {
       flexDirection: "row",
       gap: tokens.spacing[12],
-      paddingHorizontal: tokens.spacing[16],
+      paddingHorizontal: tokens.spacing[12],
       paddingVertical: tokens.spacing[12],
     },
     photoFrame: {
-      width: 72,
-      height: 92,
+      width: 64,
+      height: 80,
       borderRadius: 10,
       borderWidth: 3,
       borderColor: colors.ipe.bloom,
