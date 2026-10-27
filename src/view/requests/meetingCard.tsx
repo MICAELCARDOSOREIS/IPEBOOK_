@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import * as Linking from "expo-linking";
 import { StyleSheet, Text, View } from "react-native";
+import type { Meeting } from "@/model/entities/meeting";
 import { PIRIPIRI_MEETING_POINTS } from "@/model/entities/meetingPoint";
 import { useMeetingViewModel } from "@/viewmodel/useMeetingViewModel";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
-import { formatMeetingWhen } from "@/view/meetingFormat";
+import { describeMeetingCountdown, formatMeetingWhen } from "@/view/meetingFormat";
 import { AppIcon } from "@/view/components/AppIcon";
 import { Dialog } from "@/view/components/Dialog";
 import { FilledButton } from "@/view/components/FilledButton";
@@ -20,15 +22,29 @@ export type MeetingCardProps = {
   /** Muda quando a tela volta ao foco, para recarregar depois de combinar ou reagendar. */
   focusKey?: number;
   onScheduleMeeting?: () => void;
+  /** Avisa a tela do encontro atual, para o progresso e o cartão de conclusão. */
+  onMeetingChange?: (meeting: Meeting | null) => void;
 };
 
 /**
  * Encontro da negociação aceita (Spec 052 / Spec 069): convite pendente, encontro combinado (`06.05`),
  * cancelamento com confirmação (`06.11`/`06.12`) e reagendamento (`06.13`).
  */
-export function MeetingCard({ requestId, sessionUserId, counterpartName, focusKey, onScheduleMeeting }: MeetingCardProps) {
+export function MeetingCard({
+  requestId,
+  sessionUserId,
+  counterpartName,
+  focusKey,
+  onScheduleMeeting,
+  onMeetingChange,
+}: MeetingCardProps) {
   const [state, actions] = useMeetingViewModel(requestId, sessionUserId);
   const [confirmingCancel, setConfirmingCancel] = useState(false);
+  const [mapError, setMapError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!state.loading) onMeetingChange?.(state.meeting ?? null);
+  }, [state.loading, state.meeting, onMeetingChange]);
   const { reload } = actions;
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -112,6 +128,17 @@ export function MeetingCard({ requestId, sessionUserId, counterpartName, focusKe
   const mine = meeting.proposedBy === sessionUserId;
   const confirmed = meeting.status === "confirmed";
   const pastMeetings = (state.history ?? []).filter((m) => m.id !== meeting.id);
+  const countdown = describeMeetingCountdown(meeting.scheduledAt);
+
+  async function openDirections() {
+    setMapError(null);
+    const query = point ? point.address : `${meeting!.pointName}, Piripiri`;
+    try {
+      await Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`);
+    } catch {
+      setMapError("Não foi possível abrir o mapa. Tente novamente.");
+    }
+  }
 
   return (
     <View style={styles.card}>
@@ -134,7 +161,9 @@ export function MeetingCard({ requestId, sessionUserId, counterpartName, focusKe
         <AppIcon name="calendar" size={24} color={colors.m3.onSurface} />
         <View style={styles.detailText}>
           <Text style={styles.detailTitle}>{formatMeetingWhen(meeting.scheduledAt)}</Text>
-          <Text style={styles.body}>Chegue alguns minutos antes</Text>
+          <Text style={[styles.body, !countdown.past && styles.countdown]}>
+            {countdown.past ? "O horário combinado já passou" : `${countdown.label} · chegue alguns minutos antes`}
+          </Text>
         </View>
       </View>
       <View style={styles.detailRow}>
@@ -144,6 +173,12 @@ export function MeetingCard({ requestId, sessionUserId, counterpartName, focusKe
           {point ? <Text style={styles.body}>{point.address}</Text> : null}
         </View>
       </View>
+      <TextButton
+        label="Como chegar"
+        accessibilityLabel={`Como chegar a ${meeting.pointName}`}
+        onPress={() => void openDirections()}
+      />
+      {mapError ? <Text accessibilityRole="alert" style={styles.error}>{mapError}</Text> : null}
 
       {actionError}
       {!confirmed && !mine ? (
@@ -226,6 +261,7 @@ function createStyles(colors: ColorPalette) {
     },
     detailRow: { flexDirection: "row", alignItems: "flex-start", gap: tokens.spacing[16] },
     detailText: { flex: 1, gap: tokens.spacing[4] },
+    countdown: { color: colors.action, fontFamily: fontFamily.medium },
     detailTitle: {
       ...tokens.typography.bodyLarge,
       fontFamily: fontFamily.semiBold,
