@@ -162,7 +162,7 @@ export default function Favorites({
           }
           ListEmptyComponent={
             // `02.14`: título, apoio e ação alinhados à esquerda, sem ícone (Spec 043, RN-10).
-            <View style={styles.emptyBox}>
+            <View style={[styles.emptyBox, wideWeb && styles.emptyBoxWide]}>
               <Text accessibilityRole="header" style={styles.emptyHeadline}>
                 Nenhum livro salvo
               </Text>
@@ -283,6 +283,7 @@ function createStyles(colors: ColorPalette) {
     gap: tokens.spacing[12],
     padding: tokens.spacing[24],
   },
+  emptyBoxWide: { maxWidth: 420, alignSelf: "flex-start" },
   emptyBox: { gap: tokens.spacing[12], paddingVertical: tokens.spacing[24] },
   emptyHeadline: {
     ...tokens.typography.titleLarge,
