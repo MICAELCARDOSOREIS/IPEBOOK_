@@ -4,6 +4,8 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { AppIcon } from "@/view/components/AppIcon";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
+import { InstagramIcon } from "@/view/components/InstagramIcon";
+import { INSTAGRAM_HANDLE, INSTAGRAM_URL } from "@/view/instagram";
 import { SUPPORT_EMAIL } from "@/view/supportContact";
 
 export type AboutSectionsProps = {
@@ -95,6 +97,15 @@ export function AboutSections({ onStart, onSignIn, onHelp, onTerms }: AboutSecti
           ) : null}
           <Pressable
             accessibilityRole="link"
+            accessibilityLabel={`Instagram do IpêBook: @${INSTAGRAM_HANDLE}`}
+            onPress={() => void Linking.openURL(INSTAGRAM_URL)}
+            style={styles.instagramLink}
+          >
+            <InstagramIcon size={20} color={colors.m3.primary} />
+            <Text style={styles.footerLink}>{`@${INSTAGRAM_HANDLE}`}</Text>
+          </Pressable>
+          <Pressable
+            accessibilityRole="link"
             accessibilityLabel={`Falar com a equipe: ${SUPPORT_EMAIL}`}
             onPress={() => void Linking.openURL(`mailto:${SUPPORT_EMAIL}`)}
           >
@@ -133,6 +144,7 @@ function createStyles(colors: ColorPalette) {
     footer: { gap: 12, paddingTop: 24, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.m3.outlineVariant },
     footerBrand: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
     footerLinks: { flexDirection: "row", gap: 24, flexWrap: "wrap" },
+    instagramLink: { flexDirection: "row", alignItems: "center", gap: 6 },
     footerLink: { ...tokens.typography.labelLarge, color: colors.m3.primary },
   });
 }
