@@ -34,3 +34,5 @@ google-services.json
 *-firebase-adminsdk-*.json
 *adminsdk*.json
 service-account*.json
+
+.env.local
