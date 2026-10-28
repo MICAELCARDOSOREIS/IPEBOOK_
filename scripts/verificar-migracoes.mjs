@@ -626,6 +626,14 @@ if (pausadoSuspenso.rows[0]?.status !== 'paused') throw new Error('Suspensão n�
 await denied('Conta suspensa publica anúncio', () => as('authenticated', vendedor, `insert into public.v2_books (owner_id, title, author, modality) values ('${vendedor}', 'Novo', 'Autor', 'donation')`));
 await denied('Conta suspensa reativa anúncio', () => as('authenticated', vendedor, `update public.v2_books set status = 'available' where id = '${livro102}'`));
 await denied('Conta suspensa pede livro', () => as('authenticated', vendedor, `insert into public.v2_book_requests (listing_id, requester_id) values ('${livro101}', '${vendedor}')`));
+// Spec 107: auditoria de segurança — a suspensão cobre o resto, não se apaga com a exclusão e não é consultável.
+await denied('Conta suspensa denuncia pessoa', () => as('authenticated', vendedor, `insert into public.v2_user_reports (reporter_id, reported_user_id, reason) values ('${vendedor}', '${reader}', 'other')`));
+await denied('Conta suspensa denuncia anúncio', () => as('authenticated', vendedor, `insert into public.v2_reports (listing_id, reporter_id, reason) values ('${livro101}', '${vendedor}', 'other')`));
+const perfilSuspenso = await as('authenticated', vendedor, `update public.v2_profiles set name = 'Ofensa' where id = '${vendedor}' returning id`);
+if (perfilSuspenso.rows.length !== 0) throw new Error('Conta suspensa editou o perfil');
+await denied('Conta suspensa exclui a conta e apaga a suspensão', () => as('authenticated', vendedor, `select public.delete_user_account('${vendedor}')`));
+await denied('Pessoa comum consulta suspensão alheia', () => as('authenticated', reader, `select public.v2_is_suspended('${vendedor}')`));
+await denied('Foto de perfil com link http', () => as('authenticated', reader, `insert into public.v2_profiles (id, name, photo_url) values ('${reader}', 'Leitor', 'http://rastreio.example/p.gif') on conflict (id) do update set photo_url = excluded.photo_url`));
 await as('authenticated', moderador, `select public.v2_moderation_unsuspend('${vendedor}')`);
 await as('authenticated', vendedor, `update public.v2_books set status = 'available' where id = '${livro102}'`);
 const suspensoMod = await as('authenticated', moderador, `select public.v2_is_moderator() as m`);

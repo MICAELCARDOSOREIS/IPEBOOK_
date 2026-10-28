@@ -119,4 +119,59 @@ describe("SupabaseAuthDataSource (Issue #97)", () => {
     await ds.completePasswordReset("ipebook://redefinir-senha?code=abc", "nova-senha");
     expect(signOut).toHaveBeenCalledTimes(1);
   });
+
+  describe("retorno de autenticação com tokens crus (auditoria de segurança)", () => {
+    const tokensNoHash = "ipebook://auth/callback#access_token=a&refresh_token=r";
+    const atacante = { id: "atacante", email: "a@x.com", user_metadata: {} };
+
+    it("recusa tokens vindos na query string", async () => {
+      const setSession = vi.fn();
+      const ds = new SupabaseAuthDataSource(
+        fakeClient({ setSession, getSession: vi.fn().mockResolvedValue({ data: { session: null }, error: null }) }),
+        "https://app/redefinir-senha",
+      );
+      await expect(ds.setSessionFromUrl("https://ipebook.app/auth/callback?access_token=a&refresh_token=r")).rejects.toBeInstanceOf(AuthError);
+      expect(setSession).not.toHaveBeenCalled();
+    });
+
+    it("não troca uma sessão ativa pela conta de outra pessoa", async () => {
+      const setSession = vi.fn().mockResolvedValue({ data: { user: atacante }, error: null });
+      const ds = new SupabaseAuthDataSource(
+        fakeClient({
+          setSession,
+          getSession: vi.fn().mockResolvedValue({ data: { session: { user: { id: "vitima", email: "v@x.com" } } }, error: null }),
+        }),
+        "https://app/redefinir-senha",
+      );
+      await expect(ds.setSessionFromUrl(tokensNoHash)).rejects.toBeInstanceOf(AuthError);
+      expect(setSession).not.toHaveBeenCalled();
+    });
+
+    it("aceita tokens no hash quando não há sessão (confirmação de e-mail)", async () => {
+      const setSession = vi.fn().mockResolvedValue({ data: { user: atacante }, error: null });
+      const ds = new SupabaseAuthDataSource(
+        fakeClient({ setSession, getSession: vi.fn().mockResolvedValue({ data: { session: null }, error: null }) }),
+        "https://app/redefinir-senha",
+      );
+      await expect(ds.setSessionFromUrl(tokensNoHash)).resolves.toMatchObject({ id: "atacante" });
+    });
+  });
+
+  it("apaga as fotos da pessoa no storage antes de excluir a conta (LGPD)", async () => {
+    const ordem: string[] = [];
+    const list = vi.fn(async (prefix: string) => {
+      if (prefix === "u1") return { data: [{ name: "livro1", id: null }, { name: "avatar.jpg", id: "f0" }], error: null };
+      if (prefix === "u1/livro1") return { data: [{ name: "capa.jpg", id: "f1" }], error: null };
+      return { data: [], error: null };
+    });
+    const remove = vi.fn(async (paths: string[]) => { ordem.push(`remove:${[...paths].sort().join(",")}`); return { error: null }; });
+    const client = {
+      auth: { signOut: vi.fn().mockResolvedValue({ error: null }) },
+      storage: { from: vi.fn(() => ({ list, remove })) },
+      rpc: vi.fn(async () => { ordem.push("rpc"); return { error: null }; }),
+    } as unknown as SupabaseAppClient;
+    const ds = new SupabaseAuthDataSource(client, "https://app/redefinir-senha");
+    await ds.deleteAccount("u1");
+    expect(ordem).toEqual(["remove:u1/avatar.jpg,u1/livro1/capa.jpg", "rpc"]);
+  });
 });

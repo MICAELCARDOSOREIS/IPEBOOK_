@@ -45,6 +45,8 @@ if rodando; then
 fi
 
 mkdir -p "$PASTA"
+# Libera a memória de daemons do Gradle parados (do APK de debug, por exemplo) antes da build pesada.
+if [[ -x "$RAIZ/android/gradlew" ]]; then (cd "$RAIZ/android" && ./gradlew --stop >/dev/null 2>&1 || true); fi
 SAIDA="$PASTA/ipebook-$PERFIL-$(date +%Y%m%d-%H%M).aab"
 rm -f "$PID_ARQ"
 cd "$RAIZ"
