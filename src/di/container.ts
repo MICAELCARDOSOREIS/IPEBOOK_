@@ -108,6 +108,11 @@ import type { ILocalCacheUseCases } from "@/usecase/iLocalCacheUseCases";
 import { LocalCacheUseCases } from "@/usecase/localCacheUseCases";
 import { UserDataExportUseCases } from "@/usecase/userDataExportUseCases";
 import { UserPreferencesUseCases } from "@/usecase/userPreferencesUseCases";
+import type { IModerationDataSource } from "@/model/datasources/iModerationDataSource";
+import { MemoryModerationDataSource } from "@/infra/datasources/memoryModerationDataSource";
+import { SupabaseModerationDataSource } from "@/infra/datasources/supabaseModerationDataSource";
+import type { IModerationUseCases } from "@/usecase/iModerationUseCases";
+import { ModerationUseCases } from "@/usecase/moderationUseCases";
 
 function createDataSources(): {
   auth: IAuthDataSource;
@@ -127,6 +132,7 @@ function createDataSources(): {
   blockedUsers: IBlockedUserDataSource;
   messages: IMessageDataSource;
   photos: IPhotoStorageDataSource;
+  moderation: IModerationDataSource;
 } {
   const searchHistory = process.env.NODE_ENV === "test"
     ? new MemorySearchHistoryDataSource()
@@ -156,6 +162,7 @@ function createDataSources(): {
       blockedUsers: new SupabaseBlockedUserDataSource(client, new SupabaseProfileDataSource(client)),
       messages: new SupabaseMessageDataSource(client),
       photos: new SupabasePhotoStorageDataSource(client),
+      moderation: new SupabaseModerationDataSource(client),
     };
   }
   const initialBooks = process.env.NODE_ENV === "test" ? [] : INITIAL_DEV_BOOKS;
@@ -189,6 +196,7 @@ function createDataSources(): {
     blockedUsers,
     messages: new MemoryMessageDataSource(),
     photos: new MemoryPhotoStorageDataSource(),
+    moderation: new MemoryModerationDataSource(),
   };
 }
 
@@ -349,3 +357,5 @@ export const imagePickerService: IImagePickerService =
 
 export const profilePhotoUseCases: IProfilePhotoUseCases = new ProfilePhotoUseCases(dataSources.photos);
 export const listingPhotoUseCases: IListingPhotoUseCases = new ListingPhotoUseCases(dataSources.photos);
+
+export const moderationUseCases: IModerationUseCases = new ModerationUseCases(dataSources.moderation);

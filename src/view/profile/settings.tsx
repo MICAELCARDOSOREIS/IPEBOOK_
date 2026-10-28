@@ -16,6 +16,7 @@ import { NeighborhoodSelectorModal } from "@/view/components/NeighborhoodSelecto
 import { TextButton } from "@/view/components/TextButton";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useSettingsViewModel } from "@/viewmodel/useSettingsViewModel";
+import { useIsModerator } from "@/viewmodel/useModerationViewModel";
 import {
   NOTIFICATION_PREFERENCE_CATEGORIES,
   useNotificationPreferencesViewModel,
@@ -36,6 +37,8 @@ export type SettingsProps = {
   onNavigateToHelp?: () => void;
   onNavigateToPrivacy?: () => void;
   onNavigateToBlockedUsers?: () => void;
+  /** Fila da moderação; o atalho só aparece para moderadores (Spec 102). */
+  onNavigateToModeration?: () => void;
   /** Abre a página que apresenta o IpêBook. */
   onNavigateToAbout?: () => void;
   onNavigateToEditProfile?: () => void;
@@ -47,7 +50,7 @@ export type SettingsProps = {
 
 type LinkItem = {
   key: string;
-  icon: "document" | "info" | "lock" | "block" | "visibility" | "person" | "bell" | "place" | "mail" | "instagram";
+  icon: "document" | "info" | "lock" | "block" | "visibility" | "person" | "bell" | "place" | "mail" | "instagram" | "flag";
   label: string;
   description?: string;
   onPress?: () => void;
@@ -65,6 +68,7 @@ export function Settings({
   onNavigateToHelp,
   onNavigateToPrivacy,
   onNavigateToBlockedUsers,
+  onNavigateToModeration,
   onNavigateToAbout,
   onNavigateToEditProfile,
   onNavigateToSecurity,
@@ -103,6 +107,7 @@ export function Settings({
   const [state, actions] = useSettingsViewModel();
   const [notifPrefs, notifActions] = useNotificationPreferencesViewModel(sessionUserId);
   const version = Constants.expoConfig?.version ?? null;
+  const isModerator = useIsModerator(sessionUserId);
 
   // Gestão da conta veio de Meu perfil (ADR 0060) e só aparece com sessão
   const accountLinks: LinkItem[] = hasAccount
@@ -135,6 +140,17 @@ export function Settings({
           description: "Gerencie quem não pode interagir com você",
           onPress: onNavigateToBlockedUsers,
         },
+        ...(isModerator
+          ? [
+              {
+                key: "moderation",
+                icon: "flag" as const,
+                label: "Moderação",
+                description: "Analise as denúncias da comunidade",
+                onPress: onNavigateToModeration,
+              },
+            ]
+          : []),
       ].filter((link) => link.onPress)
     : [];
 

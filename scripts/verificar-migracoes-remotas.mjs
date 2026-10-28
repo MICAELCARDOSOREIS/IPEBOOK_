@@ -681,6 +681,11 @@ export const MAPEAMENTO_MIGRACOES = {
     validar: (ctx) => Boolean(ctx.tabelas.v2_user_preferences?.colunasValidas?.includes('muted_types')),
     detalhe: 'Status cancelled em v2_book_requests e gatilhos de aviso de favoritos (Spec 101)',
   },
+  '202610290001_moderacao.sql': {
+    titulo: 'Moderação',
+    validar: (ctx) => Boolean(ctx.tabelas.v2_books?.colunasValidas?.includes('synopsis')),
+    detalhe: 'Tabelas v2_moderators e v2_suspended_users, fila e decisões da moderação (Spec 102)',
+  },
 };
 
 /**

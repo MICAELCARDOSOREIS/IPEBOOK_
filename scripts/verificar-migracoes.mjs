@@ -579,5 +579,59 @@ const terceiroFav = await as('authenticated', other, `select 1 from public.v2_no
 if (terceiroFav.rows.length !== 0) throw new Error('Terceiro viu avisos de favorito ou cancelamento alheios');
 process.stdout.write('Cancelar pedido e avisos de favoritos (Spec 101): verificados com sucesso\n');
 
+// Spec 102 / ADR 0078: moderação — fila só para moderadores, pausa automática com 3 denúncias, arquivar,
+// remover anúncio e suspender conta.
+const moderador = '55555555-5555-4555-8555-555555555555';
+const vendedor = '66666666-6666-4666-8666-666666666666';
+await db.exec(`reset role; insert into auth.users (id) values ('${moderador}'), ('${vendedor}'); insert into public.v2_moderators (user_id) values ('${moderador}')`);
+await db.exec(`reset role; insert into public.v2_profiles (id, name) values ('${vendedor}', 'Vendedor 102') on conflict (id) do update set name = excluded.name`);
+const livro102 = '10210210-2102-4102-8102-102102102101';
+const livro102b = '10210210-2102-4102-8102-102102102102';
+await as('authenticated', vendedor, `insert into public.v2_books (id, owner_id, title, author, modality) values ('${livro102}', '${vendedor}', 'Livro Denunciado 102', 'Autor', 'donation'), ('${livro102b}', '${vendedor}', 'Outro Livro 102', 'Autor', 'donation')`);
+await denied('Pessoa comum vê a fila de moderação', () => as('authenticated', reader, `select * from public.v2_moderation_queue()`));
+await denied('Pessoa comum se torna moderadora', () => as('authenticated', reader, `insert into public.v2_moderators (user_id) values ('${reader}')`));
+await denied('Pessoa comum decide denúncia', () => as('authenticated', reader, `select public.v2_moderation_resolve('listing', '${livro102}', 'dismiss')`));
+for (const quem of [reader, other]) {
+  await as('authenticated', quem, `insert into public.v2_reports (listing_id, reporter_id, reason) values ('${livro102}', '${quem}', 'fraud_or_scam')`);
+}
+const aindaNoAr = await as('anon', null, `select status from public.v2_books where id = '${livro102}'`);
+if (aindaNoAr.rows[0]?.status !== 'available') throw new Error('Duas denúncias não deveriam pausar o anúncio');
+await as('authenticated', owner, `insert into public.v2_reports (listing_id, reporter_id, reason, details) values ('${livro102}', '${owner}', 'misleading_info', 'Foto não é do livro')`);
+const pausado = await db.query(`select status, moderation_hold from public.v2_books where id = '${livro102}'`);
+if (pausado.rows[0]?.status !== 'paused' || pausado.rows[0]?.moderation_hold !== true) throw new Error('Três denúncias não pausaram o anúncio');
+await denied('Dono reativa anúncio em análise', () => as('authenticated', vendedor, `update public.v2_books set status = 'available' where id = '${livro102}'`));
+await denied('Dono tira a retenção da moderação', () => as('authenticated', vendedor, `update public.v2_books set moderation_hold = false where id = '${livro102}'`));
+const fila = await as('authenticated', moderador, `select kind, target_id, report_count, details from public.v2_moderation_queue()`);
+const itemFila = fila.rows.find((r) => r.target_id === livro102);
+if (!itemFila || Number(itemFila.report_count) !== 3 || !itemFila.details.includes('Foto não é do livro')) throw new Error('Fila não agrupou as denúncias do anúncio');
+await as('authenticated', moderador, `select public.v2_moderation_resolve('listing', '${livro102}', 'dismiss')`);
+const devolvido = await db.query(`select status, moderation_hold from public.v2_books where id = '${livro102}'`);
+if (devolvido.rows[0]?.status !== 'available' || devolvido.rows[0]?.moderation_hold !== false) throw new Error('Arquivar não devolveu o anúncio ao ar');
+const filaVazia = await as('authenticated', moderador, `select 1 from public.v2_moderation_queue() where target_id = '${livro102}'`);
+if (filaVazia.rows.length !== 0) throw new Error('Denúncia arquivada continuou na fila');
+
+await as('authenticated', reader, `insert into public.v2_reports (listing_id, reporter_id, reason) values ('${livro102b}', '${reader}', 'piracy_or_copyright')`);
+await as('authenticated', moderador, `select public.v2_moderation_resolve('listing', '${livro102b}', 'remove_listing')`);
+const removido = await db.query(`select 1 from public.v2_books where id = '${livro102b}'`);
+if (removido.rows.length !== 0) throw new Error('Remover não tirou o anúncio do ar');
+const avisoRemocao = await as('authenticated', vendedor, `select 1 from public.v2_notifications where title = 'Anúncio removido pela moderação'`);
+if (avisoRemocao.rows.length !== 1) throw new Error('Quem anunciou não soube da remoção');
+
+await as('authenticated', reader, `insert into public.v2_user_reports (reporter_id, reported_user_id, reason) values ('${reader}', '${vendedor}', 'fraud_or_scam')`);
+const filaPessoa = await as('authenticated', moderador, `select target_label from public.v2_moderation_queue() where kind = 'user' and target_id = '${vendedor}'`);
+if (filaPessoa.rows[0]?.target_label !== 'Vendedor 102') throw new Error('Fila não trouxe a denúncia de pessoa');
+await as('authenticated', moderador, `select public.v2_moderation_resolve('user', '${vendedor}', 'suspend_user', 'Golpe')`);
+const pausadoSuspenso = await db.query(`select status from public.v2_books where id = '${livro102}'`);
+if (pausadoSuspenso.rows[0]?.status !== 'paused') throw new Error('Suspensão não pausou os anúncios da conta');
+await denied('Conta suspensa publica anúncio', () => as('authenticated', vendedor, `insert into public.v2_books (owner_id, title, author, modality) values ('${vendedor}', 'Novo', 'Autor', 'donation')`));
+await denied('Conta suspensa reativa anúncio', () => as('authenticated', vendedor, `update public.v2_books set status = 'available' where id = '${livro102}'`));
+await denied('Conta suspensa pede livro', () => as('authenticated', vendedor, `insert into public.v2_book_requests (listing_id, requester_id) values ('${livro101}', '${vendedor}')`));
+await as('authenticated', moderador, `select public.v2_moderation_unsuspend('${vendedor}')`);
+await as('authenticated', vendedor, `update public.v2_books set status = 'available' where id = '${livro102}'`);
+const suspensoMod = await as('authenticated', moderador, `select public.v2_is_moderator() as m`);
+const comumMod = await as('authenticated', reader, `select public.v2_is_moderator() as m`);
+if (suspensoMod.rows[0].m !== true || comumMod.rows[0].m !== false) throw new Error('v2_is_moderator respondeu errado');
+process.stdout.write('Moderação (Spec 102): verificada com sucesso\n');
+
 process.stdout.write('Migrações e cenários SQL locais verificados.\n');
 await db.close();
