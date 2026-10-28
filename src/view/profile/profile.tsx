@@ -214,7 +214,7 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
         maxWidth={560}
         paddingTop={tokens.spacing[12]}
         paddingBottom={tokens.spacing[32]}
-        header={<TopAppBar title="Editar perfil" onBack={onBack ?? (() => {})} />}
+        header={<TopAppBar contentMaxWidth={560} title="Editar perfil" onBack={onBack ?? (() => {})} />}
       >
         <View style={styles.guestCard}>
           <Text style={styles.guestTitle}>Entre para editar seu perfil</Text>
@@ -265,7 +265,7 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
       maxWidth={560}
       paddingTop={tokens.spacing[12]}
       paddingBottom={tokens.spacing[32]}
-      header={<TopAppBar title="Editar perfil" onBack={requestBack} />}
+      header={<TopAppBar contentMaxWidth={560} title="Editar perfil" onBack={requestBack} />}
       overlay={
         <>
           <NeighborhoodSelectorModal

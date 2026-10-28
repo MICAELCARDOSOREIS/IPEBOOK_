@@ -28,7 +28,7 @@ export default function ReportUser({ userId, userName, onBack, onNavigateToLogin
   if (state.success) {
     return (
       <SafeAreaView style={styles.page}>
-        <TopAppBar title="Denunciar pessoa" onBack={onBack} />
+        <TopAppBar contentMaxWidth={560} title="Denunciar pessoa" onBack={onBack} />
         <View style={styles.centered}>
           <IconBadge icon="check" tone="action" size="large" />
           <Text accessibilityRole="header" style={styles.title}>Denúncia enviada</Text>
@@ -46,7 +46,7 @@ export default function ReportUser({ userId, userName, onBack, onNavigateToLogin
   if (!sessionUserId) {
     return (
       <SafeAreaView style={styles.page}>
-        <TopAppBar title="Denunciar pessoa" onBack={onBack} />
+        <TopAppBar contentMaxWidth={560} title="Denunciar pessoa" onBack={onBack} />
         <View style={styles.centered}>
           <IconBadge icon="flag" tone="neutral" size="large" />
           <Text accessibilityRole="header" style={styles.title}>Identificação necessária</Text>
@@ -63,7 +63,7 @@ export default function ReportUser({ userId, userName, onBack, onNavigateToLogin
 
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar title="Denunciar pessoa" onBack={onBack} />
+      <TopAppBar contentMaxWidth={560} title="Denunciar pessoa" onBack={onBack} />
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <View style={styles.content}>
           <Text style={styles.heading}>{userName ? `O que aconteceu com ${userName}?` : "O que aconteceu?"}</Text>

@@ -69,7 +69,7 @@ export function Drafts({ sessionUserId, onBack, onResume, onNavigateToCreateList
 
   return (
     <SafeAreaView edges={["top", "left", "right"]} style={styles.page}>
-      <TopAppBar title="Rascunhos" onBack={onBack ?? (() => {})} />
+      <TopAppBar contentMaxWidth={560} title="Rascunhos" onBack={onBack ?? (() => {})} />
       <View style={styles.content}>
         {state.loading ? (
           <LoadingState label="Carregando seus rascunhos" />
