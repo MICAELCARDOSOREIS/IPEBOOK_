@@ -12,6 +12,8 @@ import { FluentIcon, type FluentIconName } from "@/view/components/FluentIcon";
  */
 const symbols = {
   home: { ios: "house", android: "home", web: "home" },
+  lightMode: { ios: "sun.max", android: "light_mode", web: "light_mode" },
+  darkMode: { ios: "moon", android: "dark_mode", web: "dark_mode" },
   search: { ios: "magnifyingglass", android: "search", web: "search" },
   close: { ios: "xmark", android: "close", web: "close" },
   logout: {

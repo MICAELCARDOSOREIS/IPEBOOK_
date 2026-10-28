@@ -9,6 +9,7 @@ import { useTheme } from "@/view/theme/ThemeProvider";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { AppIcon } from "@/view/components/AppIcon";
 import { AboutSections } from "@/view/onboarding/aboutSections";
+import { ThemeToggleButton } from "@/view/components/ThemeToggleButton";
 import illustration from "./ilustracao-classicos.png";
 import { WEB_MAX_WIDTH } from "@/view/webLayout";
 
@@ -52,6 +53,7 @@ export default function Welcome({ onStart, onSignIn, onHelp, onTerms, betaInvite
                 <Text style={styles.wideLink}>Entrar</Text>
               </Pressable>
             )}
+            {betaInvite ? <ThemeToggleButton /> : null}
             <Pressable accessibilityRole="button" accessibilityLabel={labels.header} onPress={onStart} style={styles.wideCta}>
               <Text style={styles.wideCtaText}>{labels.header}</Text>
             </Pressable>
@@ -114,6 +116,7 @@ export default function Welcome({ onStart, onSignIn, onHelp, onTerms, betaInvite
           <View style={styles.locationDot} />
           <Text style={styles.locationText}>PIRIPIRI · PIAUÍ</Text>
         </View>
+        {betaInvite ? <ThemeToggleButton /> : null}
       </View>
 
       <Text accessibilityRole="header" style={styles.title}>Uma boa história</Text>
