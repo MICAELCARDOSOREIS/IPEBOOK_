@@ -1,6 +1,6 @@
 # Especificação 106 — Login Google nativo no Android
 
-Status: implementada e testada localmente. Cliente Android (SHA-1 do EAS) criado no Firebase em 2026-10-29 e `.env` local configurado; **pendente criar as variáveis no EAS e gerar build nova**. ADR: [0082](../../docs/adr/0082-login-google-nativo.md).
+Status: implementada e testada localmente. Cliente Android (SHA-1 do EAS) criado no Firebase em 2026-10-29 , `.env` local e variáveis do EAS (development, preview, production) configurados; **pendente gerar build nova e testar no aparelho**. ADR: [0082](../../docs/adr/0082-login-google-nativo.md).
 
 ## Objetivo
 "Continuar com Google" abre o seletor de contas do próprio Android, sem sair do app para o navegador.
