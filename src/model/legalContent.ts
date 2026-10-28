@@ -34,14 +34,25 @@ export const TERMS_OF_USE: readonly LegalSection[] = [
     ],
   },
   {
-    title: "5. Moderação e Suspensão",
+    title: "5. Responsabilidade das Pessoas Usuárias",
     paragraphs: [
-      "Qualquer pessoa pode denunciar anúncios ou perfis. A moderação pode arquivar a denúncia, remover anúncios e suspender contas que descumpram estes Termos. Um anúncio com três denúncias fica pausado até ser analisado.",
+      "O IpêBook apenas disponibiliza o espaço para que leitores se encontrem. Cada pessoa é a única responsável pelo que publica, escreve no chat, combina, entrega, paga ou recebe, e pelos encontros que marca.",
+      "O IpêBook não responde por atos, omissões, prejuízos, danos, golpes, atrasos, desistências ou conflitos entre pessoas usuárias, nem por conteúdo publicado por elas. Nos termos do art. 19 do Marco Civil da Internet (Lei nº 12.965/2014), o conteúdo de terceiros só gera responsabilidade para a plataforma se, após ordem judicial específica, ela não o tornar indisponível.",
+      "O IpêBook não verifica a identidade, os antecedentes ou as intenções das pessoas usuárias. Avaliações e denúncias são opiniões da comunidade, não garantias.",
+      "É proibido: anunciar o que não seja livro físico próprio; usar dados de outras pessoas; enganar, assediar, ameaçar ou discriminar; enviar propaganda ou golpes; burlar a moderação ou criar contas para isso. Quem descumprir responde pessoalmente perante a lei e perante quem foi prejudicado.",
+      "Se o IpêBook for acionado por algo que você fez na plataforma, você se compromete a assumir a responsabilidade e a ressarcir os prejuízos causados ao IpêBook, na medida permitida pela lei.",
+      "O aplicativo é oferecido gratuitamente, como está, e pode ficar indisponível, mudar ou ser encerrado a qualquer momento. As limitações destes Termos valem na máxima extensão permitida pela legislação brasileira; se alguma cláusula for considerada inválida, as demais continuam valendo.",
+    ],
+  },
+  {
+    title: "6. Moderação e Suspensão",
+    paragraphs: [
+      "Qualquer pessoa pode denunciar anúncios ou perfis. A moderação pode, a seu critério, arquivar a denúncia, remover anúncios e suspender ou excluir contas que descumpram estes Termos, sem obrigação de analisar previamente todo conteúdo publicado. Um anúncio com três denúncias fica pausado até ser analisado.",
       "Se a sua conta ou anúncio for afetado e você discordar, escreva para ipebook738@gmail.com pedindo nova análise.",
     ],
   },
   {
-    title: "6. Alterações e Legislação",
+    title: "7. Alterações e Legislação",
     paragraphs: [
       "Estes Termos podem ser atualizados; mudanças relevantes serão avisadas no aplicativo. Continuar usando o IpêBook depois do aviso significa aceitar a nova versão.",
       "Aplica-se a legislação brasileira, inclusive o Código de Defesa do Consumidor quando cabível. Fica eleito o foro do domicílio da pessoa usuária.",
@@ -55,7 +66,7 @@ export const PRIVACY_POLICY: readonly LegalSection[] = [
   {
     title: "1. Quem trata os seus dados",
     paragraphs: [
-      "O IpêBook é um projeto comunitário de Piripiri, PI. Dúvidas, pedidos sobre os seus dados e contato com a pessoa encarregada: ipebook738@gmail.com.",
+      "O IpêBook é um projeto comunitário de Piripiri, PI, e é o controlador dos dados tratados no aplicativo. Dúvidas, pedidos sobre os seus dados e contato com a pessoa encarregada: ipebook738@gmail.com.",
       "O tratamento segue a Lei Geral de Proteção de Dados (Lei nº 13.709/2018), com base na execução do serviço que você pede ao criar a conta (art. 7º, V), no legítimo interesse de manter a comunidade segura e corrigir falhas (art. 7º, IX) e no seu consentimento para receber notificações, que pode ser retirado a qualquer momento nas configurações do aparelho ou do app (art. 7º, I).",
     ],
   },
