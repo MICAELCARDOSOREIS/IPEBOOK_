@@ -105,6 +105,9 @@ await denied('Terceiro avalia negociação alheia', () => as('authenticated', ot
 await denied('Dono avalia pessoa fora da negociação', () => as('authenticated', owner, `insert into public.v2_ratings (rater_id, rated_user_id, request_id, score) values ('${owner}', '${other}', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 1)`));
 await as('authenticated', reader, `insert into public.v2_ratings (rater_id, rated_user_id, request_id, score) values ('${reader}', '${owner}', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 5)`);
 await as('authenticated', owner, `insert into public.v2_ratings (rater_id, rated_user_id, request_id, score) values ('${owner}', '${reader}', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 4)`);
+// Spec 100: a avaliação avisa quem foi avaliado.
+const avisoAvaliacao = await as('authenticated', owner, `select action_url from public.v2_notifications where type = 'rating_received'`);
+if (avisoAvaliacao.rows.length === 0 || avisoAvaliacao.rows[0].action_url !== '/perfil/avaliacoes') throw new Error('Avaliação não avisou quem foi avaliado');
 await denied('Avaliação duplicada no pedido', () => as('authenticated', reader, `insert into public.v2_ratings (rater_id, rated_user_id, request_id, score) values ('${reader}', '${owner}', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 2)`));
 
 // Spec 052 / ADR 0037: encontro da negociação aceita bbbb (dono = owner, leitor = reader).
@@ -509,6 +512,33 @@ if (avisoDonoAceito.rows.length !== 0) throw new Error('Quem anunciou recebeu o 
 const terceiroAvisos = await as('authenticated', other, `select 1 from public.v2_notifications where type in ('request_received', 'request_accepted') and (action_url = '/pedidos-recebidos' or action_url = '/negociacao/${pedido98}')`);
 if (terceiroAvisos.rows.length !== 0) throw new Error('Terceiro viu avisos de pedido alheios');
 process.stdout.write('Avisos de pedido recebido e aceito (Spec 098): verificados com sucesso\n');
+
+// Spec 100 / ADR 0076: avisos restantes — mensagem nova (sem repetir enquanto não lida), pedido recusado e avaliação.
+await as('authenticated', reader, `insert into public.v2_negotiation_messages (request_id, sender_id, content) values ('${pedido98}', '${reader}', 'Oi, ainda está disponível?')`);
+await as('authenticated', reader, `insert into public.v2_negotiation_messages (request_id, sender_id, content) values ('${pedido98}', '${reader}', 'Posso buscar amanhã.')`);
+const avisosMsg = await as('authenticated', owner, `select id, message from public.v2_notifications where type = 'new_message' and action_url = '/negociacao/${pedido98}'`);
+if (avisosMsg.rows.length !== 1) throw new Error('Mensagem nova deveria gerar um único aviso enquanto não lido');
+const avisoMsgRemetente = await as('authenticated', reader, `select 1 from public.v2_notifications where type = 'new_message'`);
+if (avisoMsgRemetente.rows.length !== 0) throw new Error('Quem enviou a mensagem recebeu o próprio aviso');
+await as('authenticated', owner, `update public.v2_notifications set read = true where id = '${avisosMsg.rows[0].id}'`);
+await as('authenticated', reader, `insert into public.v2_negotiation_messages (request_id, sender_id, content) values ('${pedido98}', '${reader}', 'Combinado?')`);
+const avisosMsgDepois = await as('authenticated', owner, `select 1 from public.v2_notifications where type = 'new_message' and not read and action_url = '/negociacao/${pedido98}'`);
+if (avisosMsgDepois.rows.length !== 1) throw new Error('Mensagem depois do aviso lido deveria avisar de novo');
+await as('authenticated', owner, `insert into public.v2_negotiation_messages (request_id, sender_id, content) values ('${pedido98}', '${owner}', 'Combinado!')`);
+const avisoMsgLeitor = await as('authenticated', reader, `select 1 from public.v2_notifications where type = 'new_message' and action_url = '/negociacao/${pedido98}'`);
+if (avisoMsgLeitor.rows.length !== 1) throw new Error('Resposta do anunciante não avisou quem pediu');
+
+const livro100 = '10010010-0100-4100-8100-100100100100';
+const pedido100 = '10010010-0100-4100-8100-100100100101';
+await as('authenticated', owner, `insert into public.v2_books (id, owner_id, title, author, modality) values ('${livro100}', '${owner}', 'Livro Recusa 100', 'Autor 100', 'donation')`);
+await as('authenticated', other, `insert into public.v2_book_requests (id, listing_id, requester_id) values ('${pedido100}', '${livro100}', '${other}')`);
+await as('authenticated', owner, `update public.v2_book_requests set status = 'rejected' where id = '${pedido100}'`);
+const avisoRecusa = await as('authenticated', other, `select action_url from public.v2_notifications where type = 'request_rejected'`);
+if (avisoRecusa.rows.length !== 1 || avisoRecusa.rows[0].action_url !== '/meus-pedidos') throw new Error('Recusa não avisou quem pediu');
+
+const avaliacaoTerceiro = await as('authenticated', other, `select 1 from public.v2_notifications where type in ('rating_received', 'new_message')`);
+if (avaliacaoTerceiro.rows.length !== 0) throw new Error('Terceiro viu avisos de mensagem ou avaliação alheios');
+process.stdout.write('Avisos de mensagem, recusa e avaliação (Spec 100): verificados com sucesso\n');
 
 process.stdout.write('Migrações e cenários SQL locais verificados.\n');
 await db.close();

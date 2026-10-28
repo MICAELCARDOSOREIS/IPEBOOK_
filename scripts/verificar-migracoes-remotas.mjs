@@ -670,6 +670,12 @@ export const MAPEAMENTO_MIGRACOES = {
     validar: (ctx) => Boolean(ctx.tabelas.v2_user_preferences?.colunasValidas?.includes('muted_types')),
     detalhe: 'Coluna muted_types em v2_user_preferences (Spec 099)',
   },
+  // O REST não expõe gatilhos; usa a tabela de mensagens como indício.
+  '202610280007_avisos_restantes.sql': {
+    titulo: 'Avisos de mensagem, recusa e avaliação',
+    validar: (ctx) => Boolean(ctx.tabelas.v2_user_preferences?.colunasValidas?.includes('muted_types')),
+    detalhe: 'Gatilhos v2_message_notifies e v2_rating_notifies e aviso request_rejected (Spec 100)',
+  },
 };
 
 /**

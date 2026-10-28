@@ -33,6 +33,9 @@ const TYPE_BADGES: Record<
 > = {
   request_received: { icon: "mail", tone: "action" },
   request_accepted: { icon: "swap", tone: "trade" },
+  request_rejected: { icon: "mail", tone: "neutral" },
+  new_message: { icon: "chat", tone: "action" },
+  rating_received: { icon: "star", tone: "donation" },
   safety_tip: { icon: "info", tone: "neutral" },
   system: { icon: "info", tone: "neutral" },
   search_alert_match: { icon: "shelf", tone: "donation" },
