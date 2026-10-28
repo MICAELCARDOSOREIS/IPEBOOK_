@@ -10,7 +10,7 @@ import { SHARE_BASE_URL, useShareListingViewModel } from "@/viewmodel/useShareLi
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { captureRef } from "react-native-view-shot";
-import { BookCover } from "@/view/components/BookCover";
+import { Book3D } from "@/view/components/Book3D";
 import { ListingShareCard } from "@/view/components/ListingShareCard";
 import { FilledButton } from "@/view/components/FilledButton";
 import { Snackbar } from "@/view/components/Snackbar";
@@ -18,6 +18,7 @@ import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
 import { Avatar } from "@/view/components/Avatar";
 import { PhotoGallery } from "@/view/listings/photoGallery";
 import { BOOK_CONDITION_LABELS, type BookModality } from "@/model/entities/book";
+import { WEB_MAX_WIDTH } from "@/view/webLayout";
 
 function createModalityTag(colors: ColorPalette): Record<BookModality, { background: string; text: string; label: string }> {
   return {
@@ -200,7 +201,8 @@ export default function BookDetail({
           ]}
         >
           <View style={styles.heroBar}>
-            <HeroIconButton icon="back" label="Voltar" onPress={onBack} />
+            {/* Na web larga o caminho "Explorar › …" acima já volta; a seta sobre a capa sobrava. */}
+            {wideWeb ? <View /> : <HeroIconButton icon="back" label="Voltar" onPress={onBack} />}
             <View style={styles.heroBarTrailing}>
               <HeroIconButton
                 icon="share"
@@ -220,20 +222,27 @@ export default function BookDetail({
 
           {book ? (
             <View style={[styles.coverArea, wideWeb && styles.coverAreaWide]}>
+              <View style={wideWeb ? styles.coverWide : undefined}>
+                {/* Gira com o dedo; havendo fotos, tocar sem arrastar abre a galeria em tela cheia. */}
+                <Book3D
+                  id={book.id}
+                  title={book.title}
+                  author={book.author}
+                  photoUrl={book.photoUrl}
+                  onPress={photos.length > 0 ? () => setGalleryVisible(true) : undefined}
+                />
+              </View>
               {photos.length > 0 ? (
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel="Ver fotos do anúncio em tela cheia"
                   onPress={() => setGalleryVisible(true)}
-                  style={styles.coverShadow}
+                  hitSlop={8}
+                  style={styles.photosLink}
                 >
-                  <BookCover id={book.id} title={book.title} author={book.author} photoUrl={book.photoUrl} variant="detail" />
+                  <Text style={styles.photosLinkText}>Ver fotos</Text>
                 </Pressable>
-              ) : (
-                <View style={styles.coverShadow}>
-                  <BookCover id={book.id} title={book.title} author={book.author} photoUrl={book.photoUrl} variant="detail" />
-                </View>
-              )}
+              ) : null}
               {photos.length > 1 && wideWeb ? (
                 <View style={styles.thumbRow} accessibilityLabel={`${photos.length} fotos`}>
                   {photos.map((url, idx) => (
@@ -455,7 +464,7 @@ function createStyles(colors: ColorPalette) {
     page: { flex: 1, backgroundColor: colors.background },
     scrollContent: { paddingBottom: tokens.spacing[32] },
     // Web larga (Figma `03.01`): capa à esquerda e cartão de ações à direita, com 48 px entre as colunas.
-    scrollContentWide: { flexDirection: "row", flexWrap: "wrap", alignItems: "flex-start", columnGap: 48, rowGap: 16, width: "100%", maxWidth: 1440, alignSelf: "center", paddingHorizontal: 80, paddingTop: 32, paddingBottom: tokens.spacing[48] },
+    scrollContentWide: { flexDirection: "row", flexWrap: "wrap", alignItems: "flex-start", columnGap: 48, rowGap: 16, width: "100%", maxWidth: WEB_MAX_WIDTH, alignSelf: "center", paddingHorizontal: 80, paddingTop: 32, paddingBottom: tokens.spacing[48] },
     heroWide: { flex: 1.6, borderRadius: 28, paddingTop: tokens.spacing[16], minHeight: 520 },
     breadcrumb: { width: "100%", flexDirection: "row", alignItems: "center", gap: 8 },
     breadcrumbLink: { ...tokens.typography.bodyMedium, color: colors.m3.primary },
@@ -491,14 +500,10 @@ function createStyles(colors: ColorPalette) {
     },
     coverArea: { alignItems: "center", paddingTop: tokens.spacing[8] },
     coverAreaWide: { flex: 1, justifyContent: "center", paddingTop: 0 },
-    coverShadow: {
-      borderRadius: 8,
-      shadowColor: "#000",
-      shadowOpacity: 0.25,
-      shadowRadius: 12,
-      shadowOffset: { width: 0, height: 6 },
-      elevation: 8,
-    },
+    // A área da capa na web larga tem ~520 px de altura; a capa de 218 px ficava perdida nela.
+    coverWide: { transform: [{ scale: 1.6 }] },
+    photosLink: { alignSelf: "center", minHeight: tokens.accessibility.touchTarget, justifyContent: "center", paddingHorizontal: tokens.spacing[16] },
+    photosLinkText: { ...tokens.typography.labelLarge, fontFamily: fontFamily.semiBold, color: colors.m3.primary, textDecorationLine: "underline" },
     thumbRow: { flexDirection: "row", gap: 12, marginTop: tokens.spacing[16] },
     thumb: { width: 56, height: 72, borderRadius: 8, overflow: "hidden", borderWidth: 2, borderColor: "transparent", backgroundColor: colors.m3.surfaceContainerLowest },
     thumbActive: { borderColor: colors.m3.primary },
@@ -612,7 +617,7 @@ function createStyles(colors: ColorPalette) {
     tonalButtonText: { fontSize: 16, fontWeight: "600", color: colors.m3.onSecondaryContainer },
     primarySlot: { flex: 1 },
     statusPill: { alignItems: "center", justifyContent: "center", minHeight: 52 },
-    reserved: { fontSize: tokens.typography.bodyMedium.fontSize, color: colors.secondaryText, fontStyle: "italic" },
+    reserved: { ...tokens.typography.labelLarge, color: colors.m3.onTertiaryContainer, backgroundColor: colors.m3.tertiaryContainer, paddingHorizontal: 16, paddingVertical: 8, borderRadius: tokens.radius.full, overflow: "hidden" },
     requested: { fontSize: tokens.typography.bodyMedium.fontSize, color: colors.action, fontWeight: "600" },
     requestError: { fontSize: tokens.typography.bodyMedium.fontSize, color: colors.error },
   });
