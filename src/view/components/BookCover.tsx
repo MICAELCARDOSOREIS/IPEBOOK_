@@ -53,6 +53,11 @@ const COVER_ARTS = [capaNoite, capaOndas, capaArvore, capaMontanhas] as const;
 const GOLD = "#D9A93A";
 
 /** Hash FNV-1a: espalha ids parecidos (uuid) entre os quatro desenhos; a soma dos caracteres repetia o mesmo. */
+/** Cor da capa ilustrativa deste livro; também serve de cor da lombada e da contracapa no livro 3D. */
+export function coverBackground(id: string): string {
+  return COVER_BACKGROUNDS[hashId(id) % 4];
+}
+
 function hashId(id: string): number {
   let hash = 2166136261;
   for (const char of id) {
