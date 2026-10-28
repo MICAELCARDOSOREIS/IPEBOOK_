@@ -1,5 +1,7 @@
 import { useMemo } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from "react-native";
+import { topBarInset } from "@/view/topBarInset";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { AppIcon } from "@/view/components/AppIcon";
@@ -8,18 +10,24 @@ import { useGuardedPress } from "@/view/useGuardedPress";
 export type TopAppBarProps = {
   title: string;
   onBack: () => void;
+  /** Barra M3 sobre conteúdo em tela cheia (mapa): cobre a barra de status e sobe um nível de elevação. */
+  floating?: boolean;
 };
 
 /**
  * Barra superior do design system (barra-superior.md), pequena do Material 3 como no Figma
  * (`01.06`, `01.10`, `04.08`): 64 dp de altura, título de 22 dp e botão voltar circular de 40 dp.
  */
-export function TopAppBar({ title, onBack }: TopAppBarProps) {
+export function TopAppBar({ title, onBack, floating = false }: TopAppBarProps) {
   const guardedBack = useGuardedPress(onBack);
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const { width } = useWindowDimensions();
+  // Web larga: a barra acompanha a coluna de conteúdo centralizada (não vale para a barra sobre o mapa).
+  const alignToContent = Platform.OS === "web" && !floating ? { paddingHorizontal: topBarInset(width) } : null;
   return (
-    <View style={styles.bar}>
+    <View style={floating ? [styles.bar, styles.barOverlay, { height: tokens.spacing[64] + insets.top, paddingTop: insets.top }] : [styles.bar, alignToContent]}>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Voltar"
@@ -43,6 +51,14 @@ function createStyles(colors: ColorPalette) {
       paddingHorizontal: tokens.spacing[8],
       gap: tokens.spacing[12],
       backgroundColor: colors.surface,
+    },
+    barOverlay: {
+      backgroundColor: colors.m3.surfaceContainer,
+      elevation: 3,
+      shadowColor: "#000",
+      shadowOpacity: 0.15,
+      shadowRadius: 4,
+      shadowOffset: { width: 0, height: 2 },
     },
     backButton: {
       width: tokens.spacing[40],
