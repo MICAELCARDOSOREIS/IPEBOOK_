@@ -110,6 +110,20 @@ export function RequestListLayout({
               data={filteredItems}
               keyExtractor={(item) => item.request.id}
               contentContainerStyle={styles.listContent}
+              // O aviso acompanha o fim da lista, em vez de ficar preso no rodapé da janela.
+              ListFooterComponent={
+                items.length > 0 ? (
+                  <View style={styles.infoCard}>
+                    <IconBadge icon="chat" tone="action" />
+                    <View style={styles.bookInfo}>
+                      <Text style={styles.infoCardTitle}>Tudo pela conversa</Text>
+                      <Text style={styles.body}>
+                        Confira a proposta e combine os detalhes antes de reservar seu livro.
+                      </Text>
+                    </View>
+                  </View>
+                ) : undefined
+              }
               ListEmptyComponent={
                 items.length > 0 ? (
                   <View style={styles.emptyBox}>
@@ -163,17 +177,6 @@ export function RequestListLayout({
                 </View>
               )}
             />
-            {items.length > 0 ? (
-              <View style={styles.infoCard}>
-                <IconBadge icon="chat" tone="action" />
-                <View style={styles.bookInfo}>
-                  <Text style={styles.infoCardTitle}>Tudo pela conversa</Text>
-                  <Text style={styles.body}>
-                    Confira a proposta e combine os detalhes antes de reservar seu livro.
-                  </Text>
-                </View>
-              </View>
-            ) : null}
           </>
         )}
       </View>
