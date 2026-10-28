@@ -58,6 +58,7 @@ const defaultState: CreateListingState = {
   description: "",
   photoUrl: "",
   photos: [],
+  edition: {},
   draftId: null,
   loading: false,
   error: null,

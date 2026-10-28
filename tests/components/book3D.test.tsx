@@ -85,6 +85,12 @@ describe("Book3D: livro que gira (projeção ortogonal)", () => {
     expect(screen.getByText("Meninos de rua na Bahia dos anos 1930.")).toBeDefined();
   });
 
+  it("a contracapa mostra a editora no pé", async () => {
+    const screen = await open({ startAngle: 180, description: "Sinopse do livro.", publisher: "Companhia das Letras" });
+    expect(screen.getByText("Companhia das Letras")).toBeDefined();
+    expect(screen.getByText("Sinopse do livro.")).toBeDefined();
+  });
+
   it("sem autor nem descrição, a contracapa e a lombada mostram só o título", async () => {
     const back = await open({ startAngle: 180, author: undefined });
     expect(back.getByText("Capitães da Areia")).toBeDefined();

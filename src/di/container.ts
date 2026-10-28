@@ -315,10 +315,15 @@ import { MemoryBookMetadataService } from "@/infra/services/memoryBookMetadataSe
 import { OpenLibraryBookMetadataService } from "@/infra/services/openLibraryBookMetadataService";
 import { GoogleBooksBookMetadataService } from "@/infra/services/googleBooksBookMetadataService";
 import { CompositeBookMetadataService } from "@/infra/services/compositeBookMetadataService";
+import { BrasilApiBookMetadataService } from "@/infra/services/brasilApiBookMetadataService";
 
 export const bookMetadataService: IBookMetadataService =
   process.env.NODE_ENV !== "test" && process.env.EXPO_PUBLIC_BACKEND === "supabase"
-    ? new CompositeBookMetadataService([new OpenLibraryBookMetadataService(), new GoogleBooksBookMetadataService()])
+    ? new CompositeBookMetadataService([
+        new OpenLibraryBookMetadataService(),
+        new GoogleBooksBookMetadataService(),
+        new BrasilApiBookMetadataService(),
+      ])
     : new MemoryBookMetadataService();
 
 import type { IPushNotificationService } from "@/model/services/iPushNotificationService";

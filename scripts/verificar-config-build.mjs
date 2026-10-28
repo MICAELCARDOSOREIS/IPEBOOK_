@@ -69,6 +69,11 @@ for (const origem of ["covers.openlibrary.org", "*.archive.org", "books.google.c
   );
 }
 conferir(
+  "CSP libera a consulta de ISBN na BrasilAPI (connect-src)",
+  /connect-src[^;]*https:\/\/brasilapi\.com\.br/.test(cabecalhos),
+  "public/_headers não inclui https://brasilapi.com.br em connect-src; na web o ISBN perderia a sinopse e as edições nacionais.",
+);
+conferir(
   "Permissions-Policy libera a câmera do próprio site (leitor de ISBN)",
   /Permissions-Policy:[^\n]*camera=\(self\)/.test(cabecalhos),
   'public/_headers bloqueia a câmera (camera=()); o leitor de código de barras não funcionaria na web.',

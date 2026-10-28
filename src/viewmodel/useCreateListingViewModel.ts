@@ -9,6 +9,7 @@ import {
 import type { Book, BookCondition, BookModality } from "@/model/entities/book";
 import { DomainError } from "@/model/errors";
 import { isValidIsbn, normalizeIsbn } from "@/model/isbn";
+import type { BookEdition } from "@/model/validators/bookEdition";
 import type { ILogger } from "@/model/services/iLogger";
 import type { IRateLimiter } from "@/model/services/iRateLimiter";
 import type { IBookMetadataService } from "@/model/services/iBookMetadataService";
@@ -29,6 +30,8 @@ export type CreateListingDraft = {
   description: string;
   photoUrl: string;
   photos: readonly string[];
+  /** Sinopse e dados da edição vindos do ISBN (Spec 097). */
+  edition?: BookEdition;
 };
 
 export type IsbnFeedback = {
@@ -50,6 +53,8 @@ export type CreateListingState = {
   description: string;
   photoUrl: string;
   photos: readonly string[];
+  /** Sinopse e dados da edição vindos do ISBN (Spec 097); vazio sem ISBN ou sem dados. */
+  edition: BookEdition;
   /** Identificador do rascunho no servidor quando a pessoa retomou um (Spec 017). */
   draftId: string | null;
   loading: boolean;
@@ -97,6 +102,7 @@ const INITIAL_STATE: CreateListingState = {
   description: "",
   photoUrl: "",
   photos: [],
+  edition: {},
   draftId: null,
   loading: false,
   error: null,
@@ -168,6 +174,12 @@ export function useCreateListingViewModel(
         title: meta.title,
         author: meta.author,
         photoUrl: meta.coverUrl && !prev.photoUrl ? meta.coverUrl : prev.photoUrl,
+        edition: {
+          ...(meta.synopsis ? { synopsis: meta.synopsis } : {}),
+          ...(meta.publisher ? { publisher: meta.publisher } : {}),
+          ...(meta.pageCount ? { pageCount: meta.pageCount } : {}),
+          ...(meta.publicationYear ? { publicationYear: meta.publicationYear } : {}),
+        },
         isbnFeedback: {
           type: "success",
           message: `Encontrado: "${meta.title}"!`,
@@ -275,6 +287,7 @@ export function useCreateListingViewModel(
         description: cur.description,
         photoUrl: cur.photoUrl,
         photos: cur.photos,
+        edition: cur.edition,
       };
       await AsyncStorage.setItem(CREATE_LISTING_DRAFT_KEY, JSON.stringify(draft));
     } catch (err) {
@@ -308,6 +321,7 @@ export function useCreateListingViewModel(
         description: typeof draft.description === "string" ? draft.description : prev.description,
         photoUrl: typeof draft.photoUrl === "string" ? draft.photoUrl : prev.photoUrl,
         photos: Array.isArray(draft.photos) ? draft.photos : prev.photos,
+        edition: draft.edition && typeof draft.edition === "object" ? draft.edition : prev.edition,
       }));
       return true;
     } catch (err) {
@@ -332,6 +346,7 @@ export function useCreateListingViewModel(
       ...(cur.neighborhood.trim() ? { neighborhood: cur.neighborhood.trim() } : {}),
       ...(cur.condition ? { condition: cur.condition } : {}),
       ...(cur.description.trim() ? { description: cur.description.trim() } : {}),
+      ...cur.edition,
       ...(cur.photoUrl.trim() ? { photoUrl: cur.photoUrl.trim() } : {}),
       ...(cur.photos.length > 0 ? { photos: cur.photos } : {}),
     };
@@ -351,6 +366,12 @@ export function useCreateListingViewModel(
       description: book.description ?? prev.description,
       photoUrl: book.photoUrl ?? prev.photoUrl,
       photos: book.photos ?? prev.photos,
+      edition: {
+        ...(book.synopsis ? { synopsis: book.synopsis } : {}),
+        ...(book.publisher ? { publisher: book.publisher } : {}),
+        ...(book.pageCount ? { pageCount: book.pageCount } : {}),
+        ...(book.publicationYear ? { publicationYear: book.publicationYear } : {}),
+      },
     }));
   }, []);
 

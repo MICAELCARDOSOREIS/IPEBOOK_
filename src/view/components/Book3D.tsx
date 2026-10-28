@@ -8,8 +8,10 @@ export type Book3DProps = {
   id: string;
   title: string;
   author?: string;
-  /** Descrição do anúncio, mostrada na contracapa. */
+  /** Sinopse (ou, sem ela, a descrição do anúncio), mostrada na contracapa. */
   description?: string;
+  /** Editora, mostrada no pé da contracapa. */
+  publisher?: string;
   photoUrl?: string;
   /** Toque sem arrastar (por exemplo, abrir as fotos); sem isso, o toque volta o livro para a capa. */
   onPress?: () => void;
@@ -42,7 +44,7 @@ function darken(hex: string, amount: number): string {
  * ortogonal feita só com `View` e `scaleX`, sem biblioteca 3D (ver `book3dGeometry.ts`). Solta o dedo, o giro
  * continua e desacelera. Quem pede menos movimento recebe o livro parado, com giro só pelas ações de acessibilidade.
  */
-export function Book3D({ id, title, author, description, photoUrl, onPress, intro = true, scale = 1, startAngle = 0 }: Book3DProps) {
+export function Book3D({ id, title, author, description, publisher, photoUrl, onPress, intro = true, scale = 1, startAngle = 0 }: Book3DProps) {
   const WIDTH = BASE_WIDTH * scale;
   const HEIGHT = BASE_HEIGHT * scale;
   const DEPTH = BASE_DEPTH * scale;
@@ -169,7 +171,7 @@ export function Book3D({ id, title, author, description, photoUrl, onPress, intr
               { left: total / 2 - size / 2, width: size, height: HEIGHT, backgroundColor: face === "front" || face === "back" ? darken(base, 0.1) : undefined, transform: [{ translateX: center }, { scaleX: width / size }] },
             ]}
           >
-            <FaceContent face={face} id={id} title={title} author={author} description={description} photoUrl={photoUrl} base={base} width={WIDTH} height={HEIGHT} depth={DEPTH} fade={fade} />
+            <FaceContent face={face} id={id} title={title} author={author} description={description} publisher={publisher} photoUrl={photoUrl} base={base} width={WIDTH} height={HEIGHT} depth={DEPTH} fade={fade} />
             <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: `rgba(0,0,0,${shade.toFixed(3)})` }]} />
           </View>
         );
@@ -178,7 +180,7 @@ export function Book3D({ id, title, author, description, photoUrl, onPress, intr
   );
 }
 
-function FaceContent({ face, id, title, author, description, photoUrl, base, width, height, depth, fade }: { face: BookFace } & Pick<Book3DProps, "id" | "title" | "author" | "description" | "photoUrl"> & { base: string; width: number; height: number; depth: number; fade: number }) {
+function FaceContent({ face, id, title, author, description, publisher, photoUrl, base, width, height, depth, fade }: { face: BookFace } & Pick<Book3DProps, "id" | "title" | "author" | "description" | "publisher" | "photoUrl"> & { base: string; width: number; height: number; depth: number; fade: number }) {
   if (face === "front") {
     return (
       <View style={[styles.fill, { opacity: fade }]}>
@@ -203,10 +205,15 @@ function FaceContent({ face, id, title, author, description, photoUrl, base, wid
           {description ? (
             <>
               <View style={styles.backRule} />
-              <Text numberOfLines={9} style={[styles.backDescription, { fontSize: width * 0.062, lineHeight: width * 0.09 }]}>
+              <Text numberOfLines={publisher ? 8 : 9} style={[styles.backDescription, { fontSize: width * 0.062, lineHeight: width * 0.09 }]}>
                 {description}
               </Text>
             </>
+          ) : null}
+          {publisher ? (
+            <Text numberOfLines={1} style={[styles.backPublisher, { fontSize: width * 0.055 }]}>
+              {publisher}
+            </Text>
           ) : null}
         </View>
       </View>
@@ -252,6 +259,7 @@ const styles = StyleSheet.create({
   backText: { position: "absolute", left: 0, right: 0, top: 0, bottom: 0, justifyContent: "center", alignItems: "center", gap: 6 },
   backTitle: { color: "#F5EFE8", fontFamily: fontFamily.brand, textAlign: "center" },
   backAuthor: { color: GOLD, fontFamily: fontFamily.regular, textAlign: "center" },
+  backPublisher: { color: GOLD, fontFamily: fontFamily.semiBold, textAlign: "center", marginTop: 4, letterSpacing: 0.5 },
   backRule: { width: 28, height: 1, backgroundColor: GOLD, opacity: 0.8, marginVertical: 4 },
   backDescription: { color: "rgba(245,239,232,0.85)", fontFamily: fontFamily.regular, textAlign: "center" },
   spineAuthor: { color: "rgba(245,239,232,0.8)", fontFamily: fontFamily.regular, textAlign: "center" },

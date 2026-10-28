@@ -460,5 +460,18 @@ if (criado.rows.length !== 1 || criado.rows[0].pushed_at !== null) throw new Err
 process.stdout.write('Gatilho do push não impede criar o aviso (sem pg_net): verificado\n');
 await denied('Pessoa marca o aviso como enviado', () => as('authenticated', reader, `update public.v2_notifications set pushed_at = now() where title = 'Aviso de teste'`));
 
+// Spec 097 / ADR 0073: sinopse e dados da edição do livro (colunas opcionais de v2_books). Livro aaaa do owner.
+const livroEdicao = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+await as('authenticated', owner, `update public.v2_books set synopsis = 'Distopia futurista.', publisher = 'Companhia das Letras', page_count = 416, publication_year = 2009 where id = '${livroEdicao}'`);
+const lidoSemLogin = await as('anon', null, `select synopsis, publisher, page_count, publication_year from public.v2_books where id = '${livroEdicao}'`);
+if (lidoSemLogin.rows[0]?.synopsis !== 'Distopia futurista.' || Number(lidoSemLogin.rows[0]?.page_count) !== 416) throw new Error('Edição do livro não visível no catálogo público');
+await denied('Sinopse acima de 2000 caracteres', () => as('authenticated', owner, `update public.v2_books set synopsis = repeat('a', 2001) where id = '${livroEdicao}'`));
+await denied('Editora acima de 120 caracteres', () => as('authenticated', owner, `update public.v2_books set publisher = repeat('e', 121) where id = '${livroEdicao}'`));
+await denied('Páginas zeradas', () => as('authenticated', owner, `update public.v2_books set page_count = 0 where id = '${livroEdicao}'`));
+await denied('Ano fora do intervalo', () => as('authenticated', owner, `update public.v2_books set publication_year = 3000 where id = '${livroEdicao}'`));
+const semPermissao = await as('authenticated', other, `update public.v2_books set synopsis = 'Invasão' where id = '${livroEdicao}'`);
+if (semPermissao.affectedRows !== 0) throw new Error('Outra pessoa alterou a sinopse do livro');
+process.stdout.write('Sinopse e dados da edição do livro (Spec 097): verificados com sucesso\n');
+
 process.stdout.write('Migrações e cenários SQL locais verificados.\n');
 await db.close();

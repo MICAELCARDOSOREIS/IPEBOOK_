@@ -21,12 +21,24 @@ export class CompositeBookMetadataService implements IBookMetadataService {
     // Capa grande da primeira fonte que tiver; senão a pequena de quem tiver alguma.
     const cover = results.find((item) => item.coverUrl && item.coverIsLarge) ?? results.find((item) => item.coverUrl);
 
+    // Dados da edição (Spec 097): pega de quem tiver, na ordem das fontes.
+    const edition = <K extends "synopsis" | "publisher" | "pageCount" | "publicationYear">(key: K) =>
+      results.find((item) => item[key] !== undefined)?.[key];
+    const synopsis = edition("synopsis");
+    const publisher = edition("publisher");
+    const pageCount = edition("pageCount");
+    const publicationYear = edition("publicationYear");
+
     return {
       isbn: first.isbn,
       title: first.title,
       author: knownAuthor?.author ?? first.author,
       coverUrl: cover?.coverUrl,
       ...(cover?.coverIsLarge ? { coverIsLarge: true } : {}),
+      ...(synopsis ? { synopsis } : {}),
+      ...(publisher ? { publisher } : {}),
+      ...(pageCount ? { pageCount } : {}),
+      ...(publicationYear ? { publicationYear } : {}),
     };
   }
 }

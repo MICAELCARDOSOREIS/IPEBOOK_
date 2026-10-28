@@ -16,6 +16,10 @@ export const BOOK_CONDITION_LABELS: Readonly<Record<BookCondition, string>> = {
 /** Limite da descrição, igual ao contador mostrado na etapa de detalhes do Figma. */
 export const MAX_BOOK_DESCRIPTION_LENGTH = 280;
 
+/** Limites dos dados da edição vindos do ISBN (Spec 097); a sinopse é do livro, não escrita pela pessoa. */
+export const MAX_BOOK_SYNOPSIS_LENGTH = 2000;
+export const MAX_BOOK_PUBLISHER_LENGTH = 120;
+
 export type Book = Readonly<{
   id: string;
   title: string;
@@ -27,6 +31,11 @@ export type Book = Readonly<{
   status: BookStatus;
   condition?: BookCondition;
   description?: string;
+  /** Sinopse e dados da edição, preenchidos pelo ISBN (Spec 097). */
+  synopsis?: string;
+  publisher?: string;
+  pageCount?: number;
+  publicationYear?: number;
   city?: string;
   state?: string;
   neighborhood?: string;

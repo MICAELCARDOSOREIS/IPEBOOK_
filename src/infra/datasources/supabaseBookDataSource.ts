@@ -17,13 +17,17 @@ type BookRow = {
   neighborhood?: string | null;
   condition?: Book["condition"] | null;
   description?: string | null;
+  synopsis?: string | null;
+  publisher?: string | null;
+  page_count?: number | null;
+  publication_year?: number | null;
   photo_url?: string | null;
   photos?: string[] | null;
   draft_step?: number | null;
 };
 
 const BOOK_COLUMNS =
-  "id,title,author,category,owner_id,modality,price,status,city,state,neighborhood,condition,description,photo_url,photos,draft_step";
+  "id,title,author,category,owner_id,modality,price,status,city,state,neighborhood,condition,description,synopsis,publisher,page_count,publication_year,photo_url,photos,draft_step";
 
 function mapBook(row: BookRow): Book {
   return {
@@ -40,6 +44,10 @@ function mapBook(row: BookRow): Book {
     ...(row.neighborhood ? { neighborhood: row.neighborhood } : {}),
     ...(row.condition ? { condition: row.condition } : {}),
     ...(row.description ? { description: row.description } : {}),
+    ...(row.synopsis ? { synopsis: row.synopsis } : {}),
+    ...(row.publisher ? { publisher: row.publisher } : {}),
+    ...(row.page_count ? { pageCount: Number(row.page_count) } : {}),
+    ...(row.publication_year ? { publicationYear: Number(row.publication_year) } : {}),
     ...(row.photo_url ? { photoUrl: row.photo_url } : {}),
     ...(row.photos && row.photos.length > 0 ? { photos: row.photos } : {}),
     ...(row.draft_step === null || row.draft_step === undefined ? {} : { draftStep: Number(row.draft_step) }),
@@ -97,6 +105,10 @@ export class SupabaseBookDataSource implements IBookDataSource {
       neighborhood: book.neighborhood ?? null,
       condition: book.condition ?? null,
       description: book.description ?? null,
+      synopsis: book.synopsis ?? null,
+      publisher: book.publisher ?? null,
+      page_count: book.pageCount ?? null,
+      publication_year: book.publicationYear ?? null,
       photo_url: book.photoUrl ?? null,
       photos: book.photos ? Array.from(book.photos) : [],
       draft_step: book.draftStep ?? null,
@@ -124,6 +136,10 @@ export class SupabaseBookDataSource implements IBookDataSource {
     if (partial.neighborhood !== undefined) patch.neighborhood = partial.neighborhood ?? null;
     if (partial.condition !== undefined) patch.condition = partial.condition ?? null;
     if (partial.description !== undefined) patch.description = partial.description ?? null;
+    if (partial.synopsis !== undefined) patch.synopsis = partial.synopsis ?? null;
+    if (partial.publisher !== undefined) patch.publisher = partial.publisher ?? null;
+    if (partial.pageCount !== undefined) patch.page_count = partial.pageCount ?? null;
+    if (partial.publicationYear !== undefined) patch.publication_year = partial.publicationYear ?? null;
     if (partial.photoUrl !== undefined) patch.photo_url = partial.photoUrl ?? null;
     if (partial.photos !== undefined) patch.photos = partial.photos ? Array.from(partial.photos) : [];
     if (partial.draftStep !== undefined) patch.draft_step = partial.draftStep ?? null;

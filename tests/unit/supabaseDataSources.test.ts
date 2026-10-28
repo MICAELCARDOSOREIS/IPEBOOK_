@@ -252,6 +252,31 @@ describe("datasources Supabase", () => {
     expect(update).toHaveBeenCalledWith(expect.objectContaining({ condition: "worn" }));
   });
 
+  it("grava e lê sinopse, editora, páginas e ano da edição (Spec 097)", async () => {
+    const row = {
+      id: "livro-9", title: "1984", author: "George Orwell", owner_id: "dono-9", modality: "donation", price: null,
+      status: "available", synopsis: "Distopia.", publisher: "Companhia das Letras", page_count: 416, publication_year: 2009,
+    };
+    const single = vi.fn().mockResolvedValue({ data: row, error: null });
+    const select = vi.fn().mockReturnValue({ single });
+    const insert = vi.fn().mockReturnValue({ select });
+    const update = vi.fn().mockReturnValue({ eq: vi.fn().mockReturnValue({ select }) });
+    const from = vi.fn().mockReturnValue({ insert, update });
+    const books = new SupabaseBookDataSource(fakeClient({ from }));
+
+    const created = await books.create({
+      title: row.title, author: row.author, ownerId: row.owner_id, modality: "donation", status: "available",
+      synopsis: "Distopia.", publisher: "Companhia das Letras", pageCount: 416, publicationYear: 2009,
+    });
+    expect(insert).toHaveBeenCalledWith(
+      expect.objectContaining({ synopsis: "Distopia.", publisher: "Companhia das Letras", page_count: 416, publication_year: 2009 }),
+    );
+    expect(created).toMatchObject({ synopsis: "Distopia.", publisher: "Companhia das Letras", pageCount: 416, publicationYear: 2009 });
+
+    await books.update("livro-9", { synopsis: "Nova.", publisher: undefined, pageCount: 300, publicationYear: 2020 });
+    expect(update).toHaveBeenCalledWith(expect.objectContaining({ synopsis: "Nova.", page_count: 300, publication_year: 2020 }));
+  });
+
   it("omite conservação e descrição quando o registro remoto não tem os campos", async () => {
     const row = {
       id: "livro-3", title: "Iracema", author: "José de Alencar",
