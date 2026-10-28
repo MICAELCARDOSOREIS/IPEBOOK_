@@ -1,5 +1,6 @@
 import type { IReportDataSource } from "@/model/datasources/iReportDataSource";
 import type { CreateReportInput, CreateUserReportInput, ReportListing, ReportUser } from "@/model/entities/report";
+import { toDomainError } from "@/infra/supabaseErrors";
 import { DataSourceError, DuplicateReportError } from "@/model/errors";
 import type { SupabaseAppClient } from "@/infra/supabaseClient";
 
@@ -42,7 +43,7 @@ export class SupabaseReportDataSource implements IReportDataSource {
       if ((error as { code?: string }).code === "23505") {
         throw new DuplicateReportError("Você já denunciou este anúncio.");
       }
-      throw new DataSourceError("Não foi possível registrar a denúncia.");
+      throw toDomainError(error, "Não foi possível registrar a denúncia.");
     }
     return mapReport(data as ReportRow);
   }
@@ -63,7 +64,7 @@ export class SupabaseReportDataSource implements IReportDataSource {
       if ((error as { code?: string }).code === "23505") {
         throw new DuplicateReportError("Você já denunciou esta pessoa.");
       }
-      throw new DataSourceError("Não foi possível registrar a denúncia.");
+      throw toDomainError(error, "Não foi possível registrar a denúncia.");
     }
     const row = data as {
       id: string;

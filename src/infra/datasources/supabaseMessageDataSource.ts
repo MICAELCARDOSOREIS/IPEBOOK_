@@ -4,6 +4,7 @@ import type {
   MessageSubscriptionCallback,
 } from "@/model/datasources/iMessageDataSource";
 import type { NegotiationMessage } from "@/model/entities/negotiationMessage";
+import { toDomainError } from "@/infra/supabaseErrors";
 import { DataSourceError } from "@/model/errors";
 import type { SupabaseAppClient } from "@/infra/supabaseClient";
 
@@ -62,7 +63,7 @@ export class SupabaseMessageDataSource implements IMessageDataSource {
       .single();
 
     if (error || !data) {
-      throw new DataSourceError("Não foi possível enviar a mensagem. Tente novamente.");
+      throw toDomainError(error, "Não foi possível enviar a mensagem. Tente novamente.");
     }
 
     return mapMessage(data as MessageRow);

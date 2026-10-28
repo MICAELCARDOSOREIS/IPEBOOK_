@@ -48,6 +48,7 @@ Esta decisão foi trazida do trabalho já em produção da equipe no projeto irm
 | Avisos de mensagem nova, pedido recusado e avaliação recebida | **Implementada** em [specs/100](../specs/100-avisos-restantes/spec.md) (ADR 0076): gatilhos no banco, central e push |
 | Cancelar pedido e avisos de livros favoritados | **Implementada** em [specs/101](../specs/101-cancelar-pedido-e-avisos-de-favoritos/spec.md) (ADR 0077): status `cancelled`, botão em Conversas e avisos de preço e disponibilidade |
 | Moderação de denúncias | **Implementada** em [specs/102](../specs/102-moderacao/spec.md) (ADR 0078): fila para moderadores, pausa automática, remoção de anúncio e suspensão de conta |
+| Limites contra abuso | **Implementada** em [specs/103](../specs/103-limites-anti-abuso/spec.md) (ADR 0079): limites diários e por minuto no banco, com mensagem no app |
 | Chat interno na negociação | **Implementada** em [specs/061](../specs/061-chat-mensagens-negociacao/spec.md) (ADR 0044): troca de mensagens transacionais no fluxo de encontro |
 | Conclusão de negociação e avaliação mútua | **Implementada** em [specs/063](../specs/063-concluir-negociacao-avaliacoes/spec.md) (ADR 0046): avaliação mútua de 1 a 5 estrelas |
 | Alinhamento visual total com Figma | **Implementada** em [specs/062](../specs/062-alinhamento-home-figma/spec.md), [064](../specs/064-alinhamento-estante-figma/spec.md), [065](../specs/065-alinhamento-perfil-figma/spec.md) e [066](../specs/066-alinhamento-explorar-figma/spec.md) |

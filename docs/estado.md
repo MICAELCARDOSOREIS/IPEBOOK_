@@ -4,6 +4,8 @@ Documento consolidado de continuidade técnica e produto do Ipebook (Piripiri, P
 
 Conferência atual: **2026-10-28** (99 specs e 75 ADRs numerados, 246 arquivos de teste e 1.719 testes automatizados 100% passando).
 
+**Limites contra abuso (2026-10-29, Spec 103, ADR 0079):** por conta, 15 anúncios/dia, 10 pedidos/dia, 30 mensagens em 5 minutos e 10 denúncias/dia; o banco recusa com o código `IBLIM` e o app mostra a mensagem. Migração `202610290002_limites_anti_abuso.sql`. Validado com `npm run validate` (**1.766 testes**). **Pendente aplicar no Supabase remoto.**
+
 **Moderação (2026-10-29, Spec 102, ADR 0078):** fila de denúncias em `/moderacao` (atalho em Configurações só para moderadores) com arquivar, remover anúncio e suspender conta; anúncio com três denunciantes é pausado sozinho até a análise. Moderadores são cadastrados no SQL do Supabase (`v2_moderators`). Migração `202610290001_moderacao.sql`. Validado com `npm run validate` (**1.763 testes**, SQL/PGlite e arquitetura). **Pendente aplicar a migração no Supabase remoto e cadastrar o primeiro moderador.**
 
 **Cancelar pedido e avisos de favoritos (2026-10-28, Spec 101, ADR 0077):** quem pediu pode cancelar o pedido pendente em Conversas ("Cancelar pedido", com confirmação) e quem anunciou é avisado (`request_cancelled`); quem favoritou é avisado quando o preço baixa, o livro é reservado, pausado ou entregue, ou o anúncio é excluído (`favorite_update`). Migração `202610280008_cancelar_pedido_e_avisos_de_favoritos.sql`. Validado com `npm run validate` (246 arquivos / **1.746 testes**, SQL/PGlite e arquitetura). Migração aplicada no Supabase remoto e `enviar-push` publicada.

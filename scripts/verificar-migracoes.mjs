@@ -633,5 +633,41 @@ const comumMod = await as('authenticated', reader, `select public.v2_is_moderato
 if (suspensoMod.rows[0].m !== true || comumMod.rows[0].m !== false) throw new Error('v2_is_moderator respondeu errado');
 process.stdout.write('Moderação (Spec 102): verificada com sucesso\n');
 
+// Spec 103 / ADR 0079: limites por pessoa (código IBLIM) contra spam.
+const spammer = '77777777-7777-4777-8777-777777777777';
+await db.exec(`reset role; insert into auth.users (id) values ('${spammer}')`);
+async function limitado(label, action) {
+  try {
+    await action();
+  } catch (error) {
+    if (error.code === 'IBLIM') { process.stdout.write(`${label}: limitado\n`); return; }
+    throw error;
+  }
+  throw new Error(`${label}: limite não aplicado`);
+}
+for (let i = 0; i < 15; i++) {
+  await as('authenticated', spammer, `insert into public.v2_books (owner_id, title, author, modality) values ('${spammer}', 'Spam ${i}', 'Autor', 'donation')`);
+}
+await limitado('16º anúncio no dia', () => as('authenticated', spammer, `insert into public.v2_books (owner_id, title, author, modality) values ('${spammer}', 'Spam 16', 'Autor', 'donation')`));
+const novato = '88888888-8888-4888-8888-888888888888';
+await db.exec(`reset role; insert into auth.users (id) values ('${novato}')`);
+const livrosAlvo = await db.query(`select id from public.v2_books where owner_id = '${spammer}' order by title limit 11`);
+for (const row of livrosAlvo.rows.slice(0, 10)) {
+  await as('authenticated', novato, `insert into public.v2_book_requests (listing_id, requester_id) values ('${row.id}', '${novato}')`);
+}
+await limitado('11º pedido no dia', () => as('authenticated', novato, `insert into public.v2_book_requests (listing_id, requester_id) values ('${livrosAlvo.rows[10].id}', '${novato}')`));
+const pedidoNovato = await db.query(`select id from public.v2_book_requests where requester_id = '${novato}' limit 1`);
+await as('authenticated', spammer, `select public.accept_book_request('${pedidoNovato.rows[0].id}')`);
+for (let i = 0; i < 30; i++) {
+  await as('authenticated', novato, `insert into public.v2_negotiation_messages (request_id, sender_id, content) values ('${pedidoNovato.rows[0].id}', '${novato}', 'Msg ${i}')`);
+}
+await limitado('31ª mensagem em 5 minutos', () => as('authenticated', novato, `insert into public.v2_negotiation_messages (request_id, sender_id, content) values ('${pedidoNovato.rows[0].id}', '${novato}', 'Excesso')`));
+for (const row of livrosAlvo.rows.slice(0, 10)) {
+  await as('authenticated', novato, `insert into public.v2_reports (listing_id, reporter_id, reason) values ('${row.id}', '${novato}', 'other')`);
+}
+await limitado('11ª denúncia no dia', () => as('authenticated', novato, `insert into public.v2_user_reports (reporter_id, reported_user_id, reason) values ('${novato}', '${spammer}', 'other')`));
+await db.exec(`reset role; insert into public.v2_books (owner_id, title, author, modality) values ('${spammer}', 'Pelo painel', 'Autor', 'donation')`);
+process.stdout.write('Limites contra abuso (Spec 103): verificados com sucesso\n');
+
 process.stdout.write('Migrações e cenários SQL locais verificados.\n');
 await db.close();

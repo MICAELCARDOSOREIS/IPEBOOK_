@@ -1,5 +1,6 @@
 import type { IBookDataSource, ListBooksOptions } from "@/model/datasources/iBookDataSource";
 import type { Book } from "@/model/entities/book";
+import { toDomainError } from "@/infra/supabaseErrors";
 import { DataSourceError } from "@/model/errors";
 import type { SupabaseAppClient } from "@/infra/supabaseClient";
 
@@ -113,7 +114,7 @@ export class SupabaseBookDataSource implements IBookDataSource {
       photos: book.photos ? Array.from(book.photos) : [],
       draft_step: book.draftStep ?? null,
     }).select(BOOK_COLUMNS).single();
-    if (error || !data) throw new DataSourceError("Não foi possível cadastrar o anúncio.");
+    if (error || !data) throw toDomainError(error, "Não foi possível cadastrar o anúncio.");
     return mapBook(data as BookRow);
   }
 
