@@ -186,7 +186,7 @@ export class SupabaseAuthDataSource implements IAuthDataSource {
     });
     if (result.type !== "success" || !("url" in result)) {
       if (typeof __DEV__ !== "undefined" && __DEV__) {
-        console.warn("[SupabaseAuthDataSource.signInWithGoogle] Sessão não concluída:", result);
+        console.warn(`[SupabaseAuthDataSource.signInWithGoogle] Sessão não concluída: ${JSON.stringify(result)} (retorno esperado: ${redirectTo})`);
       }
       throw new AuthError("Login com Google cancelado.");
     }
@@ -297,6 +297,9 @@ export class SupabaseAuthDataSource implements IAuthDataSource {
  * `exp://<ip>:8081/--/auth/callback`; carregado do disco (app instalado), `ipebook://auth/callback`.
  */
 async function nativeAuthRedirect(): Promise<string> {
+  // `exp://` só é aberto pelo Expo Go; o APK de desenvolvimento também tem Metro, mas trata `ipebook://`.
+  const { default: Constants, ExecutionEnvironment } = await import("expo-constants");
+  if (Constants.executionEnvironment !== ExecutionEnvironment.StoreClient) return "ipebook://auth/callback";
   const { getBundleOrigin } = await import("expo/internal/bundle-origin");
   const origin = getBundleOrigin();
   return origin ? `exp://${origin.replace(/^https?:\/\//, "")}/--/auth/callback` : "ipebook://auth/callback";

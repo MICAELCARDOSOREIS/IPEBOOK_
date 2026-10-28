@@ -15,6 +15,13 @@ vi.mock("expo-web-browser", () => ({
 const bundle = vi.hoisted(() => ({ origin: "http://192.168.1.230:8081" as string | null }));
 vi.mock("expo/internal/bundle-origin", () => ({ getBundleOrigin: () => bundle.origin }));
 
+// Expo Go = "storeClient"; build de desenvolvimento (APK) = "bare"; o padrão dos testes é o Expo Go.
+const env = vi.hoisted(() => ({ executionEnvironment: "storeClient" as string }));
+vi.mock("expo-constants", () => ({
+  default: { get executionEnvironment() { return env.executionEnvironment; } },
+  ExecutionEnvironment: { Bare: "bare", Standalone: "standalone", StoreClient: "storeClient" },
+}));
+
 function client() {
   const auth = {
     signInWithOAuth: vi.fn().mockResolvedValue({ data: { url: "https://supabase/auth/v1/authorize?provider=google" }, error: null }),
@@ -69,6 +76,19 @@ describe("Login com Google no app nativo (Spec 085)", () => {
       options: { redirectTo: "ipebook://auth/callback", skipBrowserRedirect: true },
     });
     bundle.origin = "http://192.168.1.230:8081";
+  });
+
+  it("no APK de desenvolvimento, mesmo com Metro ativo, volta por ipebook://auth/callback (não por exp://)", async () => {
+    Platform.OS = "android";
+    env.executionEnvironment = "bare";
+    const { auth, ds } = client();
+    openAuthSessionAsync.mockResolvedValue({ type: "success", url: "ipebook://auth/callback#access_token=AT&refresh_token=RT" });
+    await ds.signInWithGoogle();
+    expect(auth.signInWithOAuth).toHaveBeenCalledWith({
+      provider: "google",
+      options: { redirectTo: "ipebook://auth/callback", skipBrowserRedirect: true },
+    });
+    env.executionEnvironment = "storeClient";
   });
 
   it("cancelar no navegador não cria sessão e avisa", async () => {
