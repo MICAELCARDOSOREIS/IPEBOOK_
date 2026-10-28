@@ -6,6 +6,8 @@
   "scripts": {
     "start": "expo start",
     "android": "expo run:android",
+    "apk:debug": "bash scripts/gerar-apk-debug.sh",
+    "apk:debug:status": "bash scripts/gerar-apk-debug.sh status",
     "ios": "expo run:ios",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
