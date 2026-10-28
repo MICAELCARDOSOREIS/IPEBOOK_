@@ -16,6 +16,28 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { tokens } from "@/view/tokens";
 
+/** Uma página da galeria: se a foto não carregar, avisa em vez de deixar a tela preta. */
+function GalleryPhoto({ uri, position, width, height }: { uri: string; position: number; width: number; height: number }) {
+  const [failed, setFailed] = useState(false);
+  return (
+    <View style={[styles.photoPage, { width, height }]}>
+      {failed ? (
+        <Text accessibilityRole="alert" style={styles.failedText}>
+          Não foi possível carregar esta foto.
+        </Text>
+      ) : (
+        <Image
+          source={{ uri }}
+          accessibilityLabel={`Foto ${position} do anúncio`}
+          resizeMode="contain"
+          onError={() => setFailed(true)}
+          style={{ width, height }}
+        />
+      )}
+    </View>
+  );
+}
+
 export type PhotoGalleryProps = {
   photos: readonly string[];
   initialIndex?: number;
@@ -103,14 +125,7 @@ export function PhotoGallery({ photos, initialIndex = 0, visible, onClose }: Pho
             getItemLayout={(_, itemIndex) => ({ length: pageWidth, offset: pageWidth * itemIndex, index: itemIndex })}
             onMomentumScrollEnd={handleMomentumScrollEnd}
             renderItem={({ item, index: itemIndex }) => (
-              <View style={[styles.photoPage, { width: pageWidth, height: pageHeight }]}>
-                <Image
-                  source={{ uri: item }}
-                  accessibilityLabel={`Foto ${itemIndex + 1} do anúncio`}
-                  resizeMode="contain"
-                  style={{ width: pageWidth, height: pageHeight }}
-                />
-              </View>
+              <GalleryPhoto uri={item} position={itemIndex + 1} width={pageWidth} height={pageHeight} />
             )}
           />
         </View>
@@ -156,6 +171,7 @@ const styles = StyleSheet.create({
   counter: { color: "#FFFFFF", fontSize: tokens.typography.bodyMedium.fontSize },
   photoArea: { flex: 1 },
   photoPage: { alignItems: "center", justifyContent: "center" },
+  failedText: { color: "#FFFFFF", fontSize: tokens.typography.bodyMedium.fontSize, textAlign: "center", padding: tokens.spacing[24] },
   navRow: { flexDirection: "row", justifyContent: "space-between", padding: tokens.spacing[16] },
   navButton: { minHeight: tokens.accessibility.touchTarget, justifyContent: "center", paddingHorizontal: tokens.spacing[12] },
   navButtonDisabled: { opacity: 0.4 },

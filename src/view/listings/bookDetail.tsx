@@ -228,6 +228,7 @@ export default function BookDetail({
                   id={book.id}
                   title={book.title}
                   author={book.author}
+                  description={book.description}
                   photoUrl={book.photoUrl}
                   scale={wideWeb ? 1.6 : 1}
                   onPress={photos.length > 0 ? () => setGalleryVisible(true) : undefined}

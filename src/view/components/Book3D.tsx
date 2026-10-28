@@ -8,6 +8,8 @@ export type Book3DProps = {
   id: string;
   title: string;
   author?: string;
+  /** Descrição do anúncio, mostrada na contracapa. */
+  description?: string;
   photoUrl?: string;
   /** Toque sem arrastar (por exemplo, abrir as fotos); sem isso, o toque volta o livro para a capa. */
   onPress?: () => void;
@@ -40,7 +42,7 @@ function darken(hex: string, amount: number): string {
  * ortogonal feita só com `View` e `scaleX`, sem biblioteca 3D (ver `book3dGeometry.ts`). Solta o dedo, o giro
  * continua e desacelera. Quem pede menos movimento recebe o livro parado, com giro só pelas ações de acessibilidade.
  */
-export function Book3D({ id, title, author, photoUrl, onPress, intro = true, scale = 1, startAngle = 0 }: Book3DProps) {
+export function Book3D({ id, title, author, description, photoUrl, onPress, intro = true, scale = 1, startAngle = 0 }: Book3DProps) {
   const WIDTH = BASE_WIDTH * scale;
   const HEIGHT = BASE_HEIGHT * scale;
   const DEPTH = BASE_DEPTH * scale;
@@ -167,7 +169,7 @@ export function Book3D({ id, title, author, photoUrl, onPress, intro = true, sca
               { left: total / 2 - size / 2, width: size, height: HEIGHT, backgroundColor: face === "front" || face === "back" ? darken(base, 0.1) : undefined, transform: [{ translateX: center }, { scaleX: width / size }] },
             ]}
           >
-            <FaceContent face={face} id={id} title={title} author={author} photoUrl={photoUrl} base={base} width={WIDTH} height={HEIGHT} depth={DEPTH} fade={fade} />
+            <FaceContent face={face} id={id} title={title} author={author} description={description} photoUrl={photoUrl} base={base} width={WIDTH} height={HEIGHT} depth={DEPTH} fade={fade} />
             <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: `rgba(0,0,0,${shade.toFixed(3)})` }]} />
           </View>
         );
@@ -176,7 +178,7 @@ export function Book3D({ id, title, author, photoUrl, onPress, intro = true, sca
   );
 }
 
-function FaceContent({ face, id, title, author, photoUrl, base, width, height, depth, fade }: { face: BookFace } & Pick<Book3DProps, "id" | "title" | "author" | "photoUrl"> & { base: string; width: number; height: number; depth: number; fade: number }) {
+function FaceContent({ face, id, title, author, description, photoUrl, base, width, height, depth, fade }: { face: BookFace } & Pick<Book3DProps, "id" | "title" | "author" | "description" | "photoUrl"> & { base: string; width: number; height: number; depth: number; fade: number }) {
   if (face === "front") {
     return (
       <View style={[styles.fill, { opacity: fade }]}>
@@ -188,6 +190,25 @@ function FaceContent({ face, id, title, author, photoUrl, base, width, height, d
     return (
       <View style={[styles.fill, { backgroundColor: darken(base, 0.1) }]}>
         <View style={[styles.backFrame, { opacity: 0.7 * fade }]} />
+        {/* Contracapa: título, autor e a descrição do anúncio, como numa orelha de livro. */}
+        <View style={[styles.backText, { padding: width * 0.14, opacity: fade }]}>
+          <Text numberOfLines={3} style={[styles.backTitle, { fontSize: width * 0.1 }]}>
+            {title}
+          </Text>
+          {author ? (
+            <Text numberOfLines={2} style={[styles.backAuthor, { fontSize: width * 0.075 }]}>
+              {author}
+            </Text>
+          ) : null}
+          {description ? (
+            <>
+              <View style={styles.backRule} />
+              <Text numberOfLines={9} style={[styles.backDescription, { fontSize: width * 0.062, lineHeight: width * 0.09 }]}>
+                {description}
+              </Text>
+            </>
+          ) : null}
+        </View>
       </View>
     );
   }
@@ -199,9 +220,14 @@ function FaceContent({ face, id, title, author, photoUrl, base, width, height, d
           <View key={at} style={[styles.band, { top: height * at }]} />
         ))}
         <View style={{ position: "absolute", left: (depth - height * 0.7) / 2, top: (height - depth) / 2, width: height * 0.7, height: depth, justifyContent: "center", opacity: fade, transform: [{ rotate: "-90deg" }] }}>
-          <Text numberOfLines={1} style={[styles.spineText, { fontSize: depth * 0.43 }]}>
+          <Text numberOfLines={1} style={[styles.spineText, { fontSize: depth * (author ? 0.34 : 0.43) }]}>
             {title}
           </Text>
+          {author ? (
+            <Text numberOfLines={1} style={[styles.spineAuthor, { fontSize: depth * 0.26 }]}>
+              {author}
+            </Text>
+          ) : null}
         </View>
       </View>
     );
@@ -223,6 +249,12 @@ const styles = StyleSheet.create({
   fill: { flex: 1 },
   backFrame: { position: "absolute", left: 12, right: 12, top: 12, bottom: 12, borderWidth: 1, borderColor: GOLD },
   band: { position: "absolute", left: 0, right: 0, height: 1.5, backgroundColor: GOLD },
+  backText: { position: "absolute", left: 0, right: 0, top: 0, bottom: 0, justifyContent: "center", alignItems: "center", gap: 6 },
+  backTitle: { color: "#F5EFE8", fontFamily: fontFamily.brand, textAlign: "center" },
+  backAuthor: { color: GOLD, fontFamily: fontFamily.regular, textAlign: "center" },
+  backRule: { width: 28, height: 1, backgroundColor: GOLD, opacity: 0.8, marginVertical: 4 },
+  backDescription: { color: "rgba(245,239,232,0.85)", fontFamily: fontFamily.regular, textAlign: "center" },
+  spineAuthor: { color: "rgba(245,239,232,0.8)", fontFamily: fontFamily.regular, textAlign: "center" },
   spineText: { color: "#F5EFE8", fontFamily: fontFamily.brand, fontSize: 12, textAlign: "center" },
   pageLine: { position: "absolute", top: 0, bottom: 0, width: 0.7, backgroundColor: "rgba(0,0,0,0.14)" },
 });

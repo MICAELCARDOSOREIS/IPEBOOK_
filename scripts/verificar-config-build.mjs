@@ -35,13 +35,13 @@ const manifest = lerJson("public/manifest.json");
 const eas = lerJson("eas.json");
 
 console.log("\x1b[36m▶ Publicação Web (rotas dinâmicas e cabeçalhos)\x1b[0m");
-/** Pastas de `src/app` que contêm um arquivo dinâmico `[param].tsx` (ex.: `livro/[id].tsx`). */
+/** Rotas de `src/app` com segmento dinâmico (`livro/[id].tsx`, `negociacao/[id]/entrega.tsx`). */
 function rotasDinamicas(dir = join(raiz, "src/app"), prefixo = "") {
   const achadas = [];
   for (const entrada of readdirSync(dir, { withFileTypes: true })) {
     if (entrada.isDirectory()) {
       achadas.push(...rotasDinamicas(join(dir, entrada.name), `${prefixo}/${entrada.name}`));
-    } else if (/^\[[A-Za-z]+\]\.tsx$/.test(entrada.name)) {
+    } else if (entrada.name.endsWith(".tsx") && /\[[A-Za-z]+\]/.test(`${prefixo}/${entrada.name}`)) {
       achadas.push(`${prefixo}/${entrada.name.replace(/\.tsx$/, "")}`);
     }
   }
@@ -56,6 +56,18 @@ for (const rota of rotasDinamicas()) {
   );
 }
 const cabecalhos = readFileSync(join(raiz, "public/_headers"), "utf-8");
+conferir(
+  "CSP libera imagens do Mapbox (mapa estático do encontro)",
+  /img-src[^;]*https:\/\/api\.mapbox\.com/.test(cabecalhos),
+  "public/_headers não inclui https://api.mapbox.com em img-src; o mapa do encontro seria bloqueado na web.",
+);
+for (const origem of ["covers.openlibrary.org", "*.archive.org", "books.google.com"]) {
+  conferir(
+    `CSP libera as capas de ${origem} (ISBN e galeria de fotos)`,
+    new RegExp(`img-src[^;]*https://${origem.replace(/[.*]/g, "\\$&")}`).test(cabecalhos),
+    `public/_headers não inclui https://${origem} em img-src; a capa vinda do ISBN seria bloqueada e a galeria ficaria preta na web (a Open Library redireciona para archive.org).`,
+  );
+}
 conferir(
   "Permissions-Policy libera a câmera do próprio site (leitor de ISBN)",
   /Permissions-Policy:[^\n]*camera=\(self\)/.test(cabecalhos),

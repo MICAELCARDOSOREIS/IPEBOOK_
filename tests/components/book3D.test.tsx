@@ -71,6 +71,28 @@ describe("Book3D: livro que gira (projeção ortogonal)", () => {
     expect(screen.queryByTestId("book3d-face-front")).toBeNull();
   });
 
+  it("a lombada mostra título e autor", async () => {
+    const screen = await open({ startAngle: 90 });
+    expect(screen.getByText("Capitães da Areia")).toBeDefined();
+    expect(screen.getByText("Jorge Amado")).toBeDefined();
+  });
+
+  it("a contracapa mostra título, autor e a descrição do anúncio", async () => {
+    const screen = await open({ startAngle: 180, description: "Meninos de rua na Bahia dos anos 1930." });
+    expect(screen.getByTestId("book3d-face-back")).toBeDefined();
+    expect(screen.getByText("Capitães da Areia")).toBeDefined();
+    expect(screen.getByText("Jorge Amado")).toBeDefined();
+    expect(screen.getByText("Meninos de rua na Bahia dos anos 1930.")).toBeDefined();
+  });
+
+  it("sem autor nem descrição, a contracapa e a lombada mostram só o título", async () => {
+    const back = await open({ startAngle: 180, author: undefined });
+    expect(back.getByText("Capitães da Areia")).toBeDefined();
+    expect(back.queryByText("Jorge Amado")).toBeNull();
+    const spine = await open({ startAngle: 90, author: undefined });
+    expect(spine.getAllByText("Capitães da Areia").length).toBeGreaterThan(0);
+  });
+
   it("com foto, a frente é a foto do livro", async () => {
     const screen = await open({ photoUrl: "https://exemplo.com/capa.jpg" });
     expect(screen.getByLabelText("Foto da capa de Capitães da Areia")).toBeDefined();

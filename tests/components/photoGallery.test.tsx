@@ -36,6 +36,15 @@ describe("PhotoGallery (spec 018 / spec 038, issues #73 e #143)", () => {
     expect(style.width).toBeGreaterThan(0);
   });
 
+  it("foto que não carrega (bloqueada ou fora do ar) mostra um aviso em vez da tela preta", async () => {
+    const screen = await renderGallery({ photos: ["https://exemplo.com/some.jpg"] });
+    expect(screen.queryByText("Não foi possível carregar esta foto.")).toBeNull();
+    await act(async () => { fireEvent(screen.getByLabelText("Foto 1 do anúncio"), "error"); });
+    expect(screen.getByText("Não foi possível carregar esta foto.")).toBeDefined();
+    expect(screen.getByRole("alert")).toBeDefined();
+    expect(screen.queryByLabelText("Foto 1 do anúncio")).toBeNull();
+  });
+
   afterEach(() => {
     cleanup();
   });
