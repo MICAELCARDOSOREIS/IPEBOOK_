@@ -82,6 +82,19 @@ export function Conversations({
     setToDelete(null);
   };
 
+  // Desistir de um pedido enviado ainda sem resposta (Spec 101); quem anunciou é avisado.
+  const [toCancel, setToCancel] = useState<ConversationItem | null>(null);
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelFailed, setCancelFailed] = useState(false);
+  const confirmCancel = async () => {
+    if (!toCancel) return;
+    setCancelling(true);
+    const ok = await actions.cancelRequest(toCancel.requestId);
+    setCancelling(false);
+    setCancelFailed(!ok);
+    setToCancel(null);
+  };
+
   // Web larga (Figma `06.01`): a conversa abre ao lado da lista, sem trocar de rota.
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
@@ -241,11 +254,27 @@ export function Conversations({
                           <AppIcon name="delete" size={20} color={colors.m3.onSurfaceVariant} />
                         </Pressable>
                       ) : null}
+                      {item.kind === "pendingSent" ? (
+                        <Pressable
+                          accessibilityRole="button"
+                          accessibilityLabel={`Cancelar pedido de ${item.listing.title}`}
+                          onPress={() => setToCancel(item)}
+                          hitSlop={8}
+                          style={styles.cancelRequest}
+                        >
+                          <Text style={styles.cancelRequestText}>Cancelar pedido</Text>
+                        </Pressable>
+                      ) : null}
                     </View>
                   );
                 }}
                 ListFooterComponent={
                   <View>
+                    {cancelFailed ? (
+                      <Text accessibilityRole="alert" style={styles.footerError}>
+                        Não foi possível cancelar o pedido. Tente novamente.
+                      </Text>
+                    ) : null}
                     {deleteFailed ? (
                       <Text accessibilityRole="alert" style={styles.footerError}>
                         Não foi possível apagar a conversa. Tente novamente.
@@ -311,6 +340,17 @@ export function Conversations({
           loading={deleting}
           onConfirm={() => void confirmDelete()}
           onCancel={() => setToDelete(null)}
+        />
+        <Dialog
+          visible={toCancel !== null}
+          title="Cancelar pedido?"
+          message={`Você desiste do pedido de "${toCancel?.listing.title ?? ""}". Quem anunciou será avisado.`}
+          confirmLabel="Sim, cancelar"
+          cancelLabel="Manter pedido"
+          destructive
+          loading={cancelling}
+          onConfirm={() => void confirmCancel()}
+          onCancel={() => setToCancel(null)}
         />
       </View>
     </SafeAreaView>
@@ -601,6 +641,8 @@ function createStyles(colors: ColorPalette) {
     deleteButton: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", position: "absolute", right: 12, top: "50%", marginTop: -20 },
     // A linha e o apagar são botões irmãos: o navegador não aceita botão dentro de botão.
     rowWrap: { position: "relative" },
+    cancelRequest: { alignSelf: "flex-end", paddingHorizontal: tokens.spacing[20], paddingBottom: tokens.spacing[8], minHeight: 32, justifyContent: "center" },
+    cancelRequestText: { ...tokens.typography.labelLarge, color: colors.error },
     rowWithDelete: { paddingRight: 56 },
     deleteButtonHovered: { backgroundColor: colors.m3.surfaceContainerHigh },
   });

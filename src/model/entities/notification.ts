@@ -2,6 +2,8 @@ export type NotificationType =
   | "request_received"
   | "request_accepted"
   | "request_rejected"
+  | "request_cancelled"
+  | "favorite_update"
   | "new_message"
   | "rating_received"
   | "safety_tip"
@@ -21,8 +23,10 @@ export const NOTIFICATION_CHANNEL: Record<NotificationType, NotificationChannel>
   request_received: "messages",
   request_accepted: "messages",
   request_rejected: "messages",
+  request_cancelled: "messages",
   new_message: "messages",
   rating_received: "updates",
+  favorite_update: "updates",
   meeting_update: "reminders",
   search_alert_match: "updates",
   safety_tip: "updates",

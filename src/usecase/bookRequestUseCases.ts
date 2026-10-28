@@ -125,6 +125,21 @@ export class BookRequestUseCases implements IBookRequestUseCases {
     return accepted;
   }
 
+  async cancelRequest(requestId: string, sessionUserId: string | null): Promise<BookRequest> {
+    const userId = requireSession(sessionUserId);
+    const request = await this.requests.findById(requestId);
+    if (!request) {
+      throw new ValidationError("Pedido não encontrado.");
+    }
+    if (request.requesterId !== userId) {
+      throw new AuthError("Somente quem fez o pedido pode cancelá-lo.");
+    }
+    if (request.status !== "pending") {
+      throw new ValidationError("Este pedido já foi respondido.");
+    }
+    return this.requests.respond(request.id, "cancelled");
+  }
+
   async getRequestDetail(
     requestId: string,
     sessionUserId: string | null,

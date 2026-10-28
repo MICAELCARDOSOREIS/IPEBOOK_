@@ -34,7 +34,7 @@ const listing = (id: string, title: string): Book => ({
 function setup(state: Partial<ConversationsState>) {
   vi.mocked(useConversationsViewModel).mockReturnValue([
     { items: [], loading: false, error: null, ...state },
-    { reload: vi.fn(), deleteConversation: vi.fn().mockResolvedValue(true) },
+    { reload: vi.fn(), deleteConversation: vi.fn().mockResolvedValue(true), cancelRequest: vi.fn().mockResolvedValue(true) },
   ]);
 }
 

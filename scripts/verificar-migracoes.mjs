@@ -540,5 +540,44 @@ const avaliacaoTerceiro = await as('authenticated', other, `select 1 from public
 if (avaliacaoTerceiro.rows.length !== 0) throw new Error('Terceiro viu avisos de mensagem ou avaliação alheios');
 process.stdout.write('Avisos de mensagem, recusa e avaliação (Spec 100): verificados com sucesso\n');
 
+// Spec 101 / ADR 0077: quem pediu cancela o próprio pedido pendente; quem favoritou é avisado de preço e saída do ar.
+const livro101 = '10110110-1101-4101-8101-101101101101';
+const pedido101 = '10110110-1101-4101-8101-101101101102';
+await as('authenticated', owner, `insert into public.v2_books (id, owner_id, title, author, modality) values ('${livro101}', '${owner}', 'Livro Cancela 101', 'Autor 101', 'donation')`);
+await as('authenticated', reader, `insert into public.v2_book_requests (id, listing_id, requester_id) values ('${pedido101}', '${livro101}', '${reader}')`);
+const donoCancela = await as('authenticated', owner, `update public.v2_book_requests set status = 'cancelled' where id = '${pedido101}'`).catch(() => ({ affectedRows: 0 }));
+if (donoCancela.affectedRows !== 0) throw new Error('Quem anunciou conseguiu marcar o pedido como cancelado');
+const terceiroCancela = await as('authenticated', other, `update public.v2_book_requests set status = 'cancelled' where id = '${pedido101}'`);
+if (terceiroCancela.affectedRows !== 0) throw new Error('Terceiro cancelou pedido alheio');
+await denied('Quem pediu aceita o próprio pedido', () => as('authenticated', reader, `update public.v2_book_requests set status = 'accepted' where id = '${pedido101}'`));
+await as('authenticated', reader, `update public.v2_book_requests set status = 'cancelled' where id = '${pedido101}'`);
+const avisoCancelado = await as('authenticated', owner, `select action_url from public.v2_notifications where type = 'request_cancelled'`);
+if (avisoCancelado.rows.length !== 1 || avisoCancelado.rows[0].action_url !== '/pedidos-recebidos') throw new Error('Cancelamento não avisou quem anunciou');
+await denied('Cancelar pedido já cancelado', () => as('authenticated', reader, `update public.v2_book_requests set status = 'cancelled' where id = '${pedido101}'`).then((r) => { if (r.affectedRows === 0) throw new Error('sem linha'); }));
+await as('authenticated', reader, `insert into public.v2_book_requests (listing_id, requester_id) values ('${livro101}', '${reader}')`);
+
+const livroFav = '10110110-1101-4101-8101-101101101103';
+const livroFavExcluido = '10110110-1101-4101-8101-101101101104';
+await as('authenticated', owner, `insert into public.v2_books (id, owner_id, title, author, modality, price) values ('${livroFav}', '${owner}', 'Livro Favorito 101', 'Autor 101', 'sale', 30)`);
+await as('authenticated', owner, `insert into public.v2_books (id, owner_id, title, author, modality) values ('${livroFavExcluido}', '${owner}', 'Livro Excluído 101', 'Autor 101', 'donation')`);
+await as('authenticated', reader, `insert into public.v2_favorites (user_id, book_id) values ('${reader}', '${livroFav}'), ('${reader}', '${livroFavExcluido}')`);
+await as('authenticated', owner, `update public.v2_books set price = 35 where id = '${livroFav}'`);
+const semAvisoAlta = await as('authenticated', reader, `select 1 from public.v2_notifications where type = 'favorite_update'`);
+if (semAvisoAlta.rows.length !== 0) throw new Error('Alta de preço não deveria avisar');
+await as('authenticated', owner, `update public.v2_books set price = 25 where id = '${livroFav}'`);
+const avisoPreco = await as('authenticated', reader, `select message, action_url from public.v2_notifications where type = 'favorite_update'`);
+if (avisoPreco.rows.length !== 1 || !avisoPreco.rows[0].message.includes('R$ 25,00') || avisoPreco.rows[0].action_url !== `/livro/${livroFav}`) throw new Error('Queda de preço não avisou quem favoritou');
+await as('authenticated', owner, `update public.v2_books set status = 'paused' where id = '${livroFav}'`);
+// Anúncio publicado só sai por moderação ou exclusão de conta (o dono só apaga rascunho).
+await db.exec(`reset role; delete from public.v2_books where id = '${livroFavExcluido}'`);
+const avisosFav = await as('authenticated', reader, `select title, action_url from public.v2_notifications where type = 'favorite_update' order by created_at, title`);
+if (avisosFav.rows.length !== 3) throw new Error(`Esperava 3 avisos de favorito, veio ${JSON.stringify(avisosFav.rows)}`);
+if (!avisosFav.rows.some((r) => r.action_url === '/favoritos')) throw new Error('Exclusão do livro não avisou quem favoritou');
+const donoFav = await as('authenticated', owner, `select 1 from public.v2_notifications where type = 'favorite_update'`);
+if (donoFav.rows.length !== 0) throw new Error('Quem anunciou recebeu aviso do próprio livro');
+const terceiroFav = await as('authenticated', other, `select 1 from public.v2_notifications where type in ('favorite_update', 'request_cancelled')`);
+if (terceiroFav.rows.length !== 0) throw new Error('Terceiro viu avisos de favorito ou cancelamento alheios');
+process.stdout.write('Cancelar pedido e avisos de favoritos (Spec 101): verificados com sucesso\n');
+
 process.stdout.write('Migrações e cenários SQL locais verificados.\n');
 await db.close();

@@ -35,6 +35,8 @@ export type ConversationsDeps = {
   hideConversation?: (requestId: string, sessionUserId: string) => Promise<void>;
   /** Conversas apagadas: id do pedido -> momento do apagar (Spec 090). */
   listHiddenConversations?: (sessionUserId: string) => Promise<Record<string, string>>;
+  /** Desiste de um pedido enviado ainda pendente (Spec 101). */
+  cancelRequest?: (requestId: string, sessionUserId: string) => Promise<unknown>;
   /** Avisa em tempo real que algo mudou (mensagem nova, pedido novo ou respondido); retorna o cancelamento. */
   subscribe?: (sessionUserId: string, onChange: () => void) => () => void;
 };
@@ -45,6 +47,7 @@ const defaultDeps: ConversationsDeps = {
   getMessages: (requestId, sessionUserId) => negotiationMessageUseCases.getMessages(requestId, sessionUserId),
   hideConversation: (requestId, userId) => negotiationMessageUseCases.hideConversation(requestId, userId),
   listHiddenConversations: (userId) => negotiationMessageUseCases.listHiddenConversations(userId),
+  cancelRequest: (requestId, userId) => bookRequestUseCases.cancelRequest(requestId, userId),
   getProfile: async (userId) => {
     const profile = await publicProfileUseCases.getPublicProfile(userId);
     return { name: profile.name ?? null, photoUrl: profile.photoUrl ?? null };
@@ -124,17 +127,23 @@ async function buildItem(
  * Lista de conversas da aba Conversas (Spec 076, Figma `06.01`): negociações enviadas e recebidas,
  * sem as recusadas, com a última mensagem das aceitas.
  */
+export type ConversationsActions = {
+  reload: () => Promise<void>;
+  deleteConversation: (requestId: string) => Promise<boolean>;
+  cancelRequest: (requestId: string) => Promise<boolean>;
+};
+
 export function useConversationsViewModel(
   sessionUserId: string | null,
   deps: ConversationsDeps = defaultDeps,
-): [ConversationsState, { reload: () => Promise<void>; deleteConversation: (requestId: string) => Promise<boolean> }] {
+): [ConversationsState, ConversationsActions] {
   const load = useCallback(async () => {
     if (!sessionUserId) return [];
     const [sent, received] = await Promise.all([
       deps.listSentRequests(sessionUserId),
       deps.listReceivedRequests(sessionUserId),
     ]);
-    const open = (list: readonly RequestWithListing[]) => list.filter((e) => e.request.status !== "rejected");
+    const open = (list: readonly RequestWithListing[]) => list.filter((e) => e.request.status !== "rejected" && e.request.status !== "cancelled");
     const hidden = deps.listHiddenConversations ? await safely(deps.listHiddenConversations(sessionUserId), {}) : {};
     const built = await Promise.all([
       ...open(sent).map((e) => buildItem(e, sessionUserId, true, deps)),
@@ -169,5 +178,19 @@ export function useConversationsViewModel(
     [sessionUserId, deps, reload],
   );
 
-  return [state, { reload, deleteConversation }];
+  const cancelRequest = useCallback(
+    async (requestId: string) => {
+      if (!sessionUserId || !deps.cancelRequest) return false;
+      try {
+        await deps.cancelRequest(requestId, sessionUserId);
+        await reload();
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [sessionUserId, deps, reload],
+  );
+
+  return [state, { reload, deleteConversation, cancelRequest }];
 }

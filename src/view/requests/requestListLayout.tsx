@@ -23,6 +23,7 @@ export const statusLabel: Record<RequestStatus, string> = {
   pending: "Pendente",
   accepted: "Aceito",
   rejected: "Recusado",
+  cancelled: "Cancelado",
 };
 
 type Props = {
@@ -59,12 +60,13 @@ export function RequestListLayout({
 
   const pendingCount = items.filter((item) => item.request.status === "pending").length;
   const acceptedCount = items.filter((item) => item.request.status === "accepted").length;
-  const historyCount = items.filter((item) => item.request.status === "rejected").length;
+  const isHistory = (status: RequestStatus) => status === "rejected" || status === "cancelled";
+  const historyCount = items.filter((item) => isHistory(item.request.status)).length;
 
   const filteredItems = items.filter((item) => {
     if (statusFilter === "pending") return item.request.status === "pending";
     if (statusFilter === "accepted") return item.request.status === "accepted";
-    if (statusFilter === "history") return item.request.status === "rejected";
+    if (statusFilter === "history") return isHistory(item.request.status);
     return true;
   });
   return (
@@ -391,6 +393,10 @@ function createStyles(colors: ColorPalette) {
     color: colors.badge.donation.text,
   },
   rejected: {
+    backgroundColor: colors.disabledBackground,
+    color: colors.secondaryText,
+  },
+  cancelled: {
     backgroundColor: colors.disabledBackground,
     color: colors.secondaryText,
   },

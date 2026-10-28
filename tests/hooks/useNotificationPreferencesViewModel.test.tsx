@@ -67,7 +67,7 @@ describe("useNotificationPreferencesViewModel (Spec 099)", () => {
       await hook.current[1].setEnabled("proposals", false);
     });
     expect(useCases.updatePreferences).toHaveBeenCalledWith("ana", {
-      mutedTypes: ["request_received", "request_accepted", "request_rejected", "new_message"],
+      mutedTypes: ["request_received", "request_accepted", "request_rejected", "request_cancelled", "new_message"],
     });
   });
 
