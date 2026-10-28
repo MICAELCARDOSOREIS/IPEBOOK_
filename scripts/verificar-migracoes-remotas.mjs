@@ -686,6 +686,11 @@ export const MAPEAMENTO_MIGRACOES = {
     validar: (ctx) => Boolean(ctx.tabelas.v2_books?.colunasValidas?.includes('synopsis')),
     detalhe: 'Tabelas v2_moderators e v2_suspended_users, fila e decisões da moderação (Spec 102)',
   },
+  '202610290002_limites_anti_abuso.sql': {
+    titulo: 'Limites contra abuso',
+    validar: (ctx) => Boolean(ctx.tabelas.v2_books?.colunasValidas?.includes('synopsis')),
+    detalhe: 'Gatilhos v2_*_rate_limit com o código IBLIM (Spec 103)',
+  },
 };
 
 /**
