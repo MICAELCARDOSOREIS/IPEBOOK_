@@ -12,6 +12,7 @@ import { AppIcon } from "@/view/components/AppIcon";
 import { ErrorState } from "@/view/components/ErrorState";
 import { LoadingState } from "@/view/components/LoadingState";
 import { TopAppBar } from "@/view/components/TopAppBar";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
 
 export type MeetingHistoryProps = {
   onBack?: () => void;
@@ -22,6 +23,8 @@ export default function MeetingHistory({ onBack, onNavigateToNegotiation }: Meet
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [authState] = useAuthViewModel();
+  // Web larga: coluna mais ampla e dois cartões por linha.
+  const wide = useIsWideWeb();
   const userId = authState.user?.id ?? null;
   const [state, actions] = useUserMeetingsViewModel(userId);
 
@@ -38,8 +41,8 @@ export default function MeetingHistory({ onBack, onNavigateToNegotiation }: Meet
 
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar title="Histórico de encontros" onBack={onBack ?? (() => {})} />
-      <ScrollView contentContainerStyle={styles.content}>
+      <TopAppBar contentMaxWidth={wide ? WIDE_CONTENT_MAX_WIDTH : undefined} title="Histórico de encontros" onBack={onBack ?? (() => {})} />
+      <ScrollView contentContainerStyle={[styles.content, wide && styles.contentWide]}>
         {state.loading ? (
           <LoadingState label="Carregando encontros…" />
         ) : state.error ? (
@@ -53,8 +56,8 @@ export default function MeetingHistory({ onBack, onNavigateToNegotiation }: Meet
             </Text>
           </View>
         ) : (
-          <View style={styles.list}>
-            <Text style={styles.summaryText}>
+          <View style={[styles.list, wide && styles.listWide]}>
+            <Text style={[styles.summaryText, wide && styles.fullRow]}>
               {state.meetings.length} {state.meetings.length === 1 ? "encontro registrado" : "encontros registrados"} nos pontos públicos de Piripiri
             </Text>
             {state.meetings.map((meeting) => {
@@ -66,7 +69,7 @@ export default function MeetingHistory({ onBack, onNavigateToNegotiation }: Meet
                   accessibilityRole="button"
                   accessibilityLabel={`Encontro em ${meeting.pointName}, ${formatMeetingWhen(meeting.scheduledAt)}. Situação: ${statusInfo.text}`}
                   onPress={() => onNavigateToNegotiation?.(meeting.requestId)}
-                  style={styles.meetingCard}
+                  style={[styles.meetingCard, wide && styles.cardWide]}
                 >
                   <View style={styles.cardHeader}>
                     <View style={styles.pointHeader}>
@@ -120,6 +123,8 @@ export default function MeetingHistory({ onBack, onNavigateToNegotiation }: Meet
   );
 }
 
+const WIDE_CONTENT_MAX_WIDTH = 1100;
+
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     page: { flex: 1, backgroundColor: colors.background },
@@ -153,6 +158,10 @@ function createStyles(colors: ColorPalette) {
     list: {
       gap: tokens.spacing[12],
     },
+    contentWide: { maxWidth: WIDE_CONTENT_MAX_WIDTH },
+    listWide: { flexDirection: "row", flexWrap: "wrap" },
+    fullRow: { width: "100%" },
+    cardWide: { flexBasis: "48%", flexGrow: 0 },
     summaryText: {
       ...tokens.typography.labelMedium,
       fontFamily: fontFamily.medium,

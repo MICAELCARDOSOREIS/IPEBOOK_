@@ -7,6 +7,7 @@ import { Avatar } from "@/view/components/Avatar";
 import { Dialog } from "@/view/components/Dialog";
 import { Snackbar } from "@/view/components/Snackbar";
 import { TopAppBar } from "@/view/components/TopAppBar";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { AppIcon } from "@/view/components/AppIcon";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
@@ -22,6 +23,8 @@ export type BlockedUsersProps = {
  */
 export function BlockedUsers({ onBack }: BlockedUsersProps) {
   const [authState] = useAuthViewModel();
+  // Web larga: coluna mais ampla e dois cartões por linha.
+  const wide = useIsWideWeb();
   const sessionUserId = authState.user?.id ?? null;
   const [state, actions] = useBlockedUsersViewModel(sessionUserId);
   const { colors } = useTheme();
@@ -39,9 +42,9 @@ export function BlockedUsers({ onBack }: BlockedUsersProps) {
 
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar title="Pessoas bloqueadas" onBack={onBack} />
+      <TopAppBar contentMaxWidth={wide ? WIDE_CONTENT_MAX_WIDTH : undefined} title="Pessoas bloqueadas" onBack={onBack} />
       <ScrollView contentContainerStyle={styles.scroll}>
-        <View style={styles.content}>
+        <View style={[styles.content, wide && styles.contentWide]}>
           <Text style={styles.introText}>
             Pessoas bloqueadas não podem visualizar seus anúncios, enviar propostas de livros nem combinar encontros com você em Piripiri.
           </Text>
@@ -69,9 +72,9 @@ export function BlockedUsers({ onBack }: BlockedUsersProps) {
               </Text>
             </View>
           ) : (
-            <View style={styles.list}>
+            <View style={[styles.list, wide && styles.listWide]}>
               {state.blockedUsers.map((item) => (
-                <View key={item.userId} style={styles.card}>
+                <View key={item.userId} style={[styles.card, wide && styles.cardWide]}>
                   <View style={styles.userRow}>
                     <Avatar name={item.name} photoUrl={item.photoUrl} size={40} />
                     <View style={styles.userText}>
@@ -116,6 +119,8 @@ export function BlockedUsers({ onBack }: BlockedUsersProps) {
     </SafeAreaView>
   );
 }
+
+const WIDE_CONTENT_MAX_WIDTH = 1100;
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
@@ -173,6 +178,9 @@ function createStyles(colors: ColorPalette) {
     list: {
       gap: tokens.spacing[12],
     },
+    contentWide: { maxWidth: WIDE_CONTENT_MAX_WIDTH },
+    listWide: { flexDirection: "row", flexWrap: "wrap" },
+    cardWide: { flexBasis: "48%", flexGrow: 0 },
     card: {
       backgroundColor: colors.surface,
       borderRadius: tokens.radius.medium,

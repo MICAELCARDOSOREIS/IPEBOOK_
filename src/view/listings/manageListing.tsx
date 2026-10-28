@@ -45,7 +45,7 @@ export default function ManageListing({
   if (state.loading) {
     return (
       <SafeAreaView style={styles.page}>
-        <TopAppBar title="Gerenciar anúncio" onBack={() => onBack?.()} />
+        <TopAppBar contentMaxWidth={560} title="Gerenciar anúncio" onBack={() => onBack?.()} />
         <LoadingState label="Carregando anúncio" />
       </SafeAreaView>
     );
@@ -54,7 +54,7 @@ export default function ManageListing({
   if (!state.book) {
     return (
       <SafeAreaView style={styles.page}>
-        <TopAppBar title="Gerenciar anúncio" onBack={() => onBack?.()} />
+        <TopAppBar contentMaxWidth={560} title="Gerenciar anúncio" onBack={() => onBack?.()} />
         <ErrorState
           message={state.error ?? "Não foi possível carregar o anúncio."}
           onRetry={() => void actions.load()}
@@ -70,7 +70,7 @@ export default function ManageListing({
 
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar title="Gerenciar anúncio" onBack={() => onBack?.()} />
+      <TopAppBar contentMaxWidth={560} title="Gerenciar anúncio" onBack={() => onBack?.()} />
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.content}>
           <Text accessibilityRole="header" style={styles.title}>Seu livro, suas escolhas.</Text>

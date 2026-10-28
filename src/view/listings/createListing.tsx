@@ -214,7 +214,7 @@ export default function CreateListing({
 
   return (
     <SafeAreaView edges={["top", "left", "right"]} style={styles.page}>
-      <TopAppBar title={STEP_TITLES[step]} onBack={handleBack} />
+      <TopAppBar contentMaxWidth={wideWeb ? 1200 : undefined} title={STEP_TITLES[step]} onBack={handleBack} />
       <ScrollView
         ref={scrollRef}
         contentContainerStyle={styles.scrollContent}

@@ -71,7 +71,7 @@ export function PublicProfile({ userId, onBack, onOpenChat, onReportListing, onR
   return (
     <SafeAreaView edges={["top", "left", "right"]} style={styles.page}>
       {/* 1. Barra Superior M3 Oficial com botão voltar e título padronizado */}
-      <TopAppBar title="Perfil" onBack={() => onBack?.()} />
+      <TopAppBar contentMaxWidth={wideWeb ? 1000 : undefined} title="Perfil" onBack={() => onBack?.()} />
 
       <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
         {state.loading ? (

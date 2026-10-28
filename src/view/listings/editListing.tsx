@@ -57,7 +57,7 @@ export default function EditListing({
   if (state.loading) {
     return (
       <SafeAreaView style={styles.page}>
-        <TopAppBar title="Editar anúncio" onBack={() => onCancel?.()} />
+        <TopAppBar contentMaxWidth={480} title="Editar anúncio" onBack={() => onCancel?.()} />
         <View style={styles.statusContainer}>
           <ActivityIndicator color={colors.action} accessibilityLabel="Carregando anúncio" />
           <Text style={styles.statusText}>Carregando dados do anúncio…</Text>
@@ -69,7 +69,7 @@ export default function EditListing({
   if (state.error && !state.book) {
     return (
       <SafeAreaView style={styles.page}>
-        <TopAppBar title="Editar anúncio" onBack={() => onCancel?.()} />
+        <TopAppBar contentMaxWidth={480} title="Editar anúncio" onBack={() => onCancel?.()} />
         <View style={styles.statusContainer}>
           <Text accessibilityRole="alert" style={styles.errorText}>
             {state.error}
@@ -86,7 +86,7 @@ export default function EditListing({
 
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar title="Editar anúncio" onBack={() => onCancel?.()} />
+      <TopAppBar contentMaxWidth={480} title="Editar anúncio" onBack={() => onCancel?.()} />
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
