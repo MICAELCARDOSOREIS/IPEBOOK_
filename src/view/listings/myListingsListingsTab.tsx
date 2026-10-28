@@ -20,6 +20,7 @@ const STATUS_LABELS: Readonly<Record<BookStatus, string>> = {
   available: "Disponível",
   paused: "Pausado",
   reserved: "Reservado",
+  delivered: "Entregue",
   draft: "Rascunho",
 };
 

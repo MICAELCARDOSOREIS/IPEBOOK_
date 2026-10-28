@@ -51,6 +51,13 @@ describe("MemoryBookDataSource (Spec 068 / ADR 0051)", () => {
     },
   ];
 
+  it("livro entregue sai do catálogo público (Spec 095)", async () => {
+    const ds = new MemoryBookDataSource(books);
+    await ds.updateStatus("b1", "delivered");
+    expect((await ds.list()).map((b) => b.id)).not.toContain("b1");
+    expect((await ds.findById("b1"))?.status).toBe("delivered");
+  });
+
   it("filtra livros por bairro", async () => {
     const ds = new MemoryBookDataSource(books);
     const centro = await ds.list({ neighborhood: "Centro" });

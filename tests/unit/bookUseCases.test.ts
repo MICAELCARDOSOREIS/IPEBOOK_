@@ -269,6 +269,18 @@ describe("updateListing (FR-024 — edição de anúncio)", () => {
     ).rejects.toThrow("Não é possível editar anúncio com negociação aceita em andamento.");
   });
 
+  it.each([
+    ["edita", (uc: BookUseCases, id: string) => uc.updateListing(id, { title: "Novo" }, "owner-1"), "Não é possível editar anúncio com negociação aceita em andamento."],
+    ["pausa", (uc: BookUseCases, id: string) => uc.togglePauseListing(id, "owner-1"), "Não é possível alterar o status de anúncio com negociação aceita."],
+    ["remove", (uc: BookUseCases, id: string) => uc.cancelListing(id, "owner-1"), "Não é possível remover anúncio com negociação aceita em andamento."],
+  ])("livro entregue (Spec 095) não se %s", async (_acao, acao, mensagem) => {
+    const source = new MemoryBookDataSource();
+    const useCases = new BookUseCases(source);
+    const book = await useCases.createListing({ title: "Livro", author: "Autor", modality: "donation" }, "owner-1");
+    await source.updateStatus(book.id, "delivered");
+    await expect(acao(useCases, book.id)).rejects.toThrow(mensagem);
+  });
+
   it("valida título e autor não vazios na edição", async () => {
     const source = new MemoryBookDataSource();
     const useCases = new BookUseCases(source);

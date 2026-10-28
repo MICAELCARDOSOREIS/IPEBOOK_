@@ -10,6 +10,11 @@ vi.mock("@/viewmodel/useConversationsViewModel", async (importOriginal) => ({
   useConversationsViewModel: vi.fn(),
 }));
 vi.mock("@/viewmodel/useNetworkStatus", () => ({ useNetworkStatus: () => ({ isOnline: true }) }));
+// Entrega por QR (Spec 095): começa sem conclusão.
+let deliveryCompleted: Record<string, unknown> | null = null;
+vi.mock("@/viewmodel/useDeliveryViewModel", () => ({
+  useDeliveryStatus: () => ({ loading: false, role: "receiver", completed: deliveryCompleted }),
+}));
 vi.mock("@/view/conversations/chat", () => ({
   Chat: () => <>{/* Chat mock */}</>,
 }));
@@ -105,5 +110,35 @@ describe("Conversas na Web Larga (Spec 093 · Figma 06.01 / 06.09)", () => {
     expect(screen.getByTestId("conversation-about")).toBeDefined();
     expect(screen.getByText("Sobre a troca")).toBeDefined();
   });
-});
 
+  describe("Combinar encontro no painel lateral (Spec 095)", () => {
+    const accepted: ConversationItem = {
+      requestId: "r1",
+      listing: listing("b1", "Dom Casmurro"),
+      otherName: "Ana Paula",
+      otherPhotoUrl: null,
+      preview: "Pode ser sábado na praça?",
+      lastMessageAt: "2026-10-26T06:00:00",
+      kind: "accepted",
+    };
+
+    it("oferece Combinar encontro e abre a negociação", async () => {
+      setup({ items: [accepted] });
+      const onOpenNegotiation = vi.fn();
+      const screen = await renderView({ onOpenNegotiation });
+      await act(async () => { fireEvent.press(screen.getByText("Ana Paula")); });
+      await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Combinar encontro" })); });
+      expect(onOpenNegotiation).toHaveBeenCalledWith("r1");
+    });
+
+    it("com a entrega concluída, não oferece mais Combinar encontro", async () => {
+      deliveryCompleted = { requestId: "r1", completedBy: "u", completedAt: "2026-10-29T10:00:00.000Z" };
+      setup({ items: [accepted] });
+      const screen = await renderView();
+      await act(async () => { fireEvent.press(screen.getByText("Ana Paula")); });
+      deliveryCompleted = null;
+      expect(screen.getByTestId("conversation-about")).toBeDefined();
+      expect(screen.queryByRole("button", { name: "Combinar encontro" })).toBeNull();
+    });
+  });
+});

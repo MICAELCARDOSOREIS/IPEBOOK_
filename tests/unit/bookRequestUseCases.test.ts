@@ -59,6 +59,11 @@ describe("negociação simples (spec 004)", () => {
       await expect(useCases.requestNegotiation("listing-1", "alice")).resolves.toMatchObject({ status: "pending" });
     });
 
+    it("bloqueia anúncio já entregue (Spec 095)", async () => {
+      await books.updateStatus("listing-1", "delivered");
+      await expect(useCases.requestNegotiation("listing-1", "alice")).rejects.toThrow(/não está mais disponível/);
+    });
+
     it("FR-003: bloqueia anúncio reservado", async () => {
       await books.updateStatus("listing-1", "reserved");
       await expect(useCases.requestNegotiation("listing-1", "alice")).rejects.toThrow(/não está mais disponível/);

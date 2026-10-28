@@ -24,6 +24,8 @@ export type MeetingCardProps = {
   onScheduleMeeting?: () => void;
   /** Avisa a tela do encontro atual, para o progresso e o cartão de conclusão. */
   onMeetingChange?: (meeting: Meeting | null) => void;
+  /** Entrega já concluída (Spec 095): o encontro vira um resumo, sem reagendar, cancelar nem contagem regressiva. */
+  concluded?: boolean;
 };
 
 /**
@@ -37,6 +39,7 @@ export function MeetingCard({
   focusKey,
   onScheduleMeeting,
   onMeetingChange,
+  concluded = false,
 }: MeetingCardProps) {
   const [state, actions] = useMeetingViewModel(requestId, sessionUserId);
   const [confirmingCancel, setConfirmingCancel] = useState(false);
@@ -94,7 +97,7 @@ export function MeetingCard({
         </Text>
         {actionError}
         <FilledButton
-          label={meeting ? "Combinar novo encontro" : "Combinar encontro"}
+          label={meeting ? "Combinar novo encontro" : "Escolher local e horário"}
           onPress={() => onScheduleMeeting?.()}
         />
 
@@ -140,6 +143,30 @@ export function MeetingCard({
     }
   }
 
+  if (concluded) {
+    return (
+      <View style={styles.card} testID="meeting-concluded">
+        <View style={styles.headerRow}>
+          <IconBadge icon="check" tone="action" />
+          <Text accessibilityRole="header" style={styles.title}>Encontro realizado</Text>
+        </View>
+        <View style={styles.detailRow}>
+          <AppIcon name="calendar" size={24} color={colors.m3.onSurface} />
+          <View style={styles.detailText}>
+            <Text style={styles.detailTitle}>{formatMeetingWhen(meeting.scheduledAt)}</Text>
+          </View>
+        </View>
+        <View style={styles.detailRow}>
+          <AppIcon name="place" size={24} color={colors.m3.onSurface} />
+          <View style={styles.detailText}>
+            <Text style={styles.detailTitle}>{meeting.pointName}</Text>
+            {point ? <Text style={styles.body}>{point.address}</Text> : null}
+          </View>
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.card}>
       <View style={styles.headerRow}>
@@ -152,8 +179,8 @@ export function MeetingCard({
         {confirmed
           ? "Os dois confirmaram. Vocês recebem um aviso se algo mudar."
           : mine
-            ? `${counterpartName} ainda precisa confirmar este encontro.`
-            : `${counterpartName} sugeriu este encontro.`}
+            ? `${counterpartName} vai confirmar este horário ou sugerir outro. Você recebe um aviso quando responder.`
+            : `${counterpartName} sugeriu este encontro. Confirme se esse horário funciona ou sugira outro.`}
       </Text>
 
       {/* Linhas de `06.05`: quando, onde e o que fazer. */}

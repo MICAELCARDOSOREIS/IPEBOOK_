@@ -200,6 +200,11 @@ export const TABELAS_CRITICAS = {
     descricao: 'Denúncias de pessoas feitas no perfil público (Spec 091)',
     colunas: ['id', 'reporter_id', 'reported_user_id', 'reason', 'details', 'created_at'],
   },
+  v2_deliveries: {
+    nome: 'v2_deliveries',
+    descricao: 'Entregas concluídas por QR code (Spec 095)',
+    colunas: ['request_id', 'completed_by', 'completed_at'],
+  },
   v2_user_preferences: {
     nome: 'v2_user_preferences',
     descricao: 'Preferências privadas de contato e bairro padrão',
@@ -631,6 +636,17 @@ export const MAPEAMENTO_MIGRACOES = {
     titulo: 'Denúncias de pessoas',
     validar: (ctx) => Boolean(ctx.tabelas.v2_user_reports?.existe),
     detalhe: 'Tabela public.v2_user_reports com RLS por denunciante (Spec 091)',
+  },
+  '202610280001_entrega_por_qr_code.sql': {
+    titulo: 'Entrega por QR code',
+    validar: (ctx) => Boolean(ctx.tabelas.v2_deliveries?.existe),
+    detalhe: 'Tabela public.v2_deliveries e funções create_delivery_code e complete_delivery (Spec 095)',
+  },
+  // O REST não expõe a constraint nem o gatilho; usa a tabela da migração anterior como indício (aplicar as duas juntas).
+  '202610280002_livro_entregue.sql': {
+    titulo: 'Livro entregue',
+    validar: (ctx) => Boolean(ctx.tabelas.v2_deliveries?.existe),
+    detalhe: 'Status delivered em v2_books e gatilho v2_delivery_marks_book_delivered (Spec 095)',
   },
 };
 

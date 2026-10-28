@@ -67,5 +67,8 @@
 - [0065 — Foto de perfil pela câmera ou galeria, guardada no bucket `book-photos`](0065-foto-de-perfil-por-camera-e-galeria.md)
 - [0066 — Aprimoramentos da Experiência Web Responsiva e Desktop Largo](0066-aprimoramentos-web-responsiva.md)
 - [0067 — Catálogo exige conta: fim da navegação de visitante](0067-catalogo-exige-conta.md)
+- [0068 — Mapa estático do Mapbox em "Combinar encontro"](0068-mapa-estatico-mapbox-no-encontro.md)
+- [0069 — Mapa interativo do Mapbox no app nativo](0069-mapa-interativo-mapbox-no-app.md)
+- [0070 — Concluir a negociação por QR code](0070-conclusao-por-qr-code.md)
 
 Preservar registros aceitos; mudanças relevantes geram novo ADR com vínculos de substituição.

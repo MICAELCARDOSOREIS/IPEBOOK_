@@ -1,6 +1,7 @@
 import { MemoryAuthDataSource } from "@/infra/datasources/memoryAuthDataSource";
 import { MemoryBookDataSource } from "@/infra/datasources/memoryBookDataSource";
 import { MemoryBookRequestDataSource } from "@/infra/datasources/memoryBookRequestDataSource";
+import { MemoryDeliveryDataSource } from "@/infra/datasources/memoryDeliveryDataSource";
 import { MemoryMeetingDataSource } from "@/infra/datasources/memoryMeetingDataSource";
 import { MemoryNetworkStatusDataSource } from "@/infra/datasources/memoryNetworkStatusDataSource";
 import { MemoryNotificationDataSource } from "@/infra/datasources/memoryNotificationDataSource";
@@ -16,6 +17,7 @@ import { SupabaseAuthDataSource } from "@/infra/datasources/supabaseAuthDataSour
 import { SupabaseBookDataSource } from "@/infra/datasources/supabaseBookDataSource";
 import { CachedBookDataSource } from "@/infra/datasources/cachedBookDataSource";
 import { SupabaseBookRequestDataSource } from "@/infra/datasources/supabaseBookRequestDataSource";
+import { SupabaseDeliveryDataSource } from "@/infra/datasources/supabaseDeliveryDataSource";
 import { SupabaseMeetingDataSource } from "@/infra/datasources/supabaseMeetingDataSource";
 import { SupabaseNotificationDataSource } from "@/infra/datasources/supabaseNotificationDataSource";
 import { SupabaseProfileDataSource } from "@/infra/datasources/supabaseProfileDataSource";
@@ -28,6 +30,7 @@ import { createSupabaseAppClient } from "@/infra/supabaseClient";
 import type { IAuthDataSource } from "@/model/datasources/iAuthDataSource";
 import type { IBookDataSource } from "@/model/datasources/iBookDataSource";
 import type { IBookRequestDataSource } from "@/model/datasources/iBookRequestDataSource";
+import type { IDeliveryDataSource } from "@/model/datasources/iDeliveryDataSource";
 import type { IMeetingDataSource } from "@/model/datasources/iMeetingDataSource";
 import type { INetworkStatusDataSource } from "@/model/datasources/iNetworkStatusDataSource";
 import type { INotificationDataSource } from "@/model/datasources/iNotificationDataSource";
@@ -41,6 +44,8 @@ import type { ISearchHistoryDataSource } from "@/model/datasources/iSearchHistor
 import { DataSourceError } from "@/model/errors";
 import { AuthUseCases } from "@/usecase/authUseCases";
 import { BookRequestUseCases } from "@/usecase/bookRequestUseCases";
+import { DeliveryUseCases } from "@/usecase/deliveryUseCases";
+import type { IDeliveryUseCases } from "@/usecase/iDeliveryUseCases";
 import { MeetingUseCases } from "@/usecase/meetingUseCases";
 import type { IMeetingUseCases } from "@/usecase/iMeetingUseCases";
 import { BookUseCases } from "@/usecase/bookUseCases";
@@ -109,6 +114,7 @@ function createDataSources(): {
   books: IBookDataSource;
   requests: IBookRequestDataSource;
   meetings: IMeetingDataSource;
+  deliveries: IDeliveryDataSource;
   reports: IReportDataSource;
   notifications: INotificationDataSource;
   favorites: IFavoriteDataSource;
@@ -137,6 +143,7 @@ function createDataSources(): {
       books: new CachedBookDataSource(new SupabaseBookDataSource(client)),
       requests: new SupabaseBookRequestDataSource(client),
       meetings: new SupabaseMeetingDataSource(client),
+      deliveries: new SupabaseDeliveryDataSource(client),
       reports: new SupabaseReportDataSource(client),
       notifications: new SupabaseNotificationDataSource(client),
       favorites: new SupabaseFavoriteDataSource(client),
@@ -167,6 +174,7 @@ function createDataSources(): {
     books,
     requests,
     meetings: new MemoryMeetingDataSource(requests, books, notifications),
+    deliveries: new MemoryDeliveryDataSource(requests, books, notifications),
     reports,
     notifications,
     favorites,
@@ -219,6 +227,13 @@ export const meetingUseCases: IMeetingUseCases = new MeetingUseCases(
   dataSources.meetings,
   dataSources.requests,
   bookDataSource,
+);
+
+export const deliveryUseCases: IDeliveryUseCases = new DeliveryUseCases(
+  dataSources.deliveries,
+  dataSources.requests,
+  bookDataSource,
+  dataSources.meetings,
 );
 
 export const reportUseCases: IReportUseCases = new ReportUseCases(
