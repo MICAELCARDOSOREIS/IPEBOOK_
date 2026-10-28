@@ -2,7 +2,9 @@
 
 Documento consolidado de continuidade técnica e produto do Ipebook (Piripiri, PI).
 
-Conferência atual: **2026-10-28** (99 specs e 75 ADRs numerados, 246 arquivos de teste e 1.719 testes automatizados 100% passando).
+Conferência atual: **Negociação concluída sai de Propostas (2026-10-29, correção):** depois da entrega por QR o pedido continua `accepted` e só o livro passa a `delivered`; a Estante contava esse pedido como proposta em aberto (aba "Propostas" e seu selo). Agora pedido aceito com livro entregue vai para "Concluídos". Teste de regressão em `tests/components/myListingsView.test.tsx` (falhava antes da correção). Validado com `npm run validate` (**1.788 testes**).
+
+**2026-10-28** (99 specs e 75 ADRs numerados, 246 arquivos de teste e 1.719 testes automatizados 100% passando).
 
 **Correções da auditoria de segurança (2026-10-28, Spec 107, ADR 0083):** link de login não troca a conta de quem já está logado e não aceita tokens na query; suspensão passa a bloquear encontros, avaliações, denúncias, edição de perfil e aceite de pedido; conta suspensa não se exclui pelo app; `v2_is_suspended(uuid)` fora do app; exclusão de conta apaga as fotos no storage; `photo_url` só `https://`. Migração `202610300001_correcoes_auditoria_seguranca.sql`. Validado com `npm run validate` (**1.787 testes**, SQL/PGlite e arquitetura). Migração aplicada e conferida no Supabase remoto em 2026-10-28.
 

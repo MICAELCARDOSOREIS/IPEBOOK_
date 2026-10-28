@@ -342,6 +342,41 @@ describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
     expect(screen.getByLabelText("1 à venda")).toBeDefined();
   });
 
+  it("negociação aceita com o livro já entregue sai de Propostas e do selo e vai para Concluídos", async () => {
+    const entregue: Book = { id: "b20", title: "Vidas Secas", author: "Graciliano", modality: "donation", ownerId: "user-1", status: "delivered" };
+    const reservado: Book = { ...entregue, id: "b21", title: "Iracema", status: "reserved" };
+    mockViewModel({ books: [entregue, reservado] });
+    mockReceived([
+      { request: { id: "r20", listingId: "b20", requesterId: "u-ana", status: "accepted" }, listing: entregue, requesterName: "Ana" },
+      { request: { id: "r21", listingId: "b21", requesterId: "u-bia", status: "accepted" }, listing: reservado, requesterName: "Bia" },
+    ]);
+    const onNavigateToNegotiationDetail = vi.fn();
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<MyListings sessionUserId="user-1" onNavigateToNegotiationDetail={onNavigateToNegotiationDetail} />);
+    });
+
+    // Só a negociação ainda em andamento conta como proposta em aberto.
+    expect(screen.getByLabelText("Propostas, 1 em aberto")).toBeDefined();
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Propostas, 1 em aberto"));
+    });
+    expect(screen.getByText("Bia · negociação aceita · Doação")).toBeDefined();
+    expect(screen.queryByText(/Ana/)).toBeNull();
+
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Concluídos"));
+    });
+    expect(screen.getByText("Ana · Concluído · Doação")).toBeDefined();
+    // O livro aparece uma vez só (pela negociação), não repetido como "Entregue".
+    expect(screen.getAllByText("Vidas Secas")).toHaveLength(1);
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Ver histórico de Vidas Secas"));
+    });
+    expect(onNavigateToNegotiationDetail).toHaveBeenCalledWith("r20");
+    mockReceived([]);
+  });
+
   it("leva o livro entregue de Anúncios para Concluídos", async () => {
     const base = { author: "A", ownerId: "user-1", modality: "sale" as const };
     mockViewModel({
