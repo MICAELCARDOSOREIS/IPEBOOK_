@@ -197,7 +197,7 @@ Plataforma comunitária de circulação e troca de livros em Piripiri, PI. React
 - Pipeline completo de validação local: `npm run validate` (inclui typecheck, linter arquitetural, testes SQL e cobertura com Vitest).
 - Verificação isolada de migrações e RLS via PGlite: `npm run test:sql`.
 - Verificação de fronteiras arquiteturais: `npm run check:architecture`.
-- APK de debug: `npm run apk:debug` (Gradle desacoplado do terminal/sessão; não morre se a sessão de IA fechar) e `npm run apk:debug:status`. Log em `android/build-logs/apk-debug.log`. Nunca rodar `./gradlew assembleDebug` preso à sessão.
+- APK de debug: `npm run apk:debug` (Gradle desacoplado do terminal/sessão; só arm64 por padrão, `APK_ABIS` para outras) e `npm run apk:debug:status`. Log em `android/build-logs/apk-debug.log`. Nunca rodar `./gradlew assembleDebug` preso à sessão.
 - Manter documentação rigorosamente sincronizada com o código: índice de ADRs, contagem de testes em `docs/estado.md` e tabelas em `docs/produto.md`.
 
 ## Conventions that differ from defaults

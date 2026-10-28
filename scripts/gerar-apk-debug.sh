@@ -6,6 +6,7 @@
 #   scripts/gerar-apk-debug.sh          inicia (ou mostra a compilação que já está rodando)
 #   scripts/gerar-apk-debug.sh status   mostra o andamento
 #   scripts/gerar-apk-debug.sh esperar  acompanha até terminar
+#   scripts/gerar-apk-debug.sh parar    interrompe a compilação
 set -euo pipefail
 
 RAIZ="$(cd "$(dirname "$0")/.." && pwd)"
@@ -33,11 +34,14 @@ status() {
 
 case "${1:-iniciar}" in
   status) status; exit $? ;;
+  parar)
+    if rodando; then kill -- -"$(cat "$PID_ARQ")" 2>/dev/null || kill "$(cat "$PID_ARQ")"; echo "Compilação interrompida."; else echo "Nada rodando."; fi
+    exit 0 ;;
   esperar)
     while rodando; do sleep 15; done
     status; exit $? ;;
   iniciar) ;;
-  *) echo "Uso: $0 [iniciar|status|esperar]"; exit 2 ;;
+  *) echo "Uso: $0 [iniciar|status|esperar|parar]"; exit 2 ;;
 esac
 
 if rodando; then
@@ -58,7 +62,10 @@ cp "$RAIZ/google-services.json" "$RAIZ/android/app/google-services.json"
 cd "$RAIZ/android"
 rm -f "$PID_ARQ"
 # O próprio processo grava o PID (o setsid pode criar outro processo, e aí o $! não serviria).
-setsid nohup bash -c 'echo $$ > "$1"; ./gradlew assembleDebug --console=plain; echo "RESULTADO=$?"' _ "$PID_ARQ" > "$LOG" 2>&1 < /dev/null &
+# Só a arquitetura do celular (arm64 por padrão): compilar as 4 do React Native leva ~4x mais tempo.
+# Outra: APK_ABIS="arm64-v8a,x86_64" npm run apk:debug
+ABIS="${APK_ABIS:-arm64-v8a}"
+setsid nohup bash -c 'echo $$ > "$1"; ./gradlew assembleDebug --console=plain -PreactNativeArchitectures="$2"; echo "RESULTADO=$?"' _ "$PID_ARQ" "$ABIS" > "$LOG" 2>&1 < /dev/null &
 for _ in 1 2 3 4 5 6 7 8 9 10; do [[ -s "$PID_ARQ" ]] && break; sleep 0.3; done
 echo "Compilação iniciada em segundo plano (PID $(cat "$PID_ARQ"))."
 echo "Andamento: $0 status   |   Log: $LOG"
