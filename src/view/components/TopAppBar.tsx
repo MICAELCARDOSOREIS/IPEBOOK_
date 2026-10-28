@@ -12,20 +12,22 @@ export type TopAppBarProps = {
   onBack: () => void;
   /** Barra M3 sobre conteúdo em tela cheia (mapa): cobre a barra de status e sobe um nível de elevação. */
   floating?: boolean;
+  /** Largura da coluna de conteúdo da tela, para alinhar a barra a ela na web larga. */
+  contentMaxWidth?: number;
 };
 
 /**
  * Barra superior do design system (barra-superior.md), pequena do Material 3 como no Figma
  * (`01.06`, `01.10`, `04.08`): 64 dp de altura, título de 22 dp e botão voltar circular de 40 dp.
  */
-export function TopAppBar({ title, onBack, floating = false }: TopAppBarProps) {
+export function TopAppBar({ title, onBack, floating = false, contentMaxWidth }: TopAppBarProps) {
   const guardedBack = useGuardedPress(onBack);
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const { width } = useWindowDimensions();
   // Web larga: a barra acompanha a coluna de conteúdo centralizada (não vale para a barra sobre o mapa).
-  const alignToContent = Platform.OS === "web" && !floating ? { paddingHorizontal: topBarInset(width) } : null;
+  const alignToContent = Platform.OS === "web" && !floating ? { paddingHorizontal: topBarInset(width, contentMaxWidth) } : null;
   return (
     <View style={floating ? [styles.bar, styles.barOverlay, { height: tokens.spacing[64] + insets.top, paddingTop: insets.top }] : [styles.bar, alignToContent]}>
       <Pressable
