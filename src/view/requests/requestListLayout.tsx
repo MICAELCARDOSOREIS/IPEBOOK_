@@ -3,6 +3,7 @@ import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import type { RequestStatus } from "@/model/entities/bookRequest";
 import type { RequestWithListing } from "@/viewmodel/useSentRequestsViewModel";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
 import { BookCover } from "@/view/components/BookCover";
 import { ErrorState } from "@/view/components/ErrorState";
@@ -14,6 +15,8 @@ import { TopAppBar } from "@/view/components/TopAppBar";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { formatPrice } from "@/view/formatPrice";
+
+const WIDE_CONTENT_MAX_WIDTH = 1100;
 
 export const statusLabel: Record<RequestStatus, string> = {
   pending: "Pendente",
@@ -48,6 +51,8 @@ export function RequestListLayout({
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const { isOnline } = useNetworkStatus();
+  // Web larga: coluna mais larga e dois pedidos por linha, em vez de uma faixa estreita no meio.
+  const wide = useIsWideWeb();
   const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "accepted" | "history">("all");
 
   const pendingCount = items.filter((item) => item.request.status === "pending").length;
@@ -62,8 +67,8 @@ export function RequestListLayout({
   });
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar title={title} onBack={() => onBack?.()} />
-      <View style={styles.content}>
+      <TopAppBar title={title} onBack={() => onBack?.()} contentMaxWidth={wide ? WIDE_CONTENT_MAX_WIDTH : undefined} />
+      <View style={[styles.content, wide && styles.contentWide]}>
         <View style={styles.heroBox}>
           <Text style={styles.heroTitle}>Sua estante em movimento.</Text>
           <Text style={styles.body}>Acompanhe as propostas dos seus livros.</Text>
@@ -107,6 +112,9 @@ export function RequestListLayout({
         ) : (
           <>
             <FlatList
+              key={wide ? "duas-colunas" : "uma-coluna"}
+              numColumns={wide ? 2 : 1}
+              columnWrapperStyle={wide ? styles.columns : undefined}
               data={filteredItems}
               keyExtractor={(item) => item.request.id}
               contentContainerStyle={styles.listContent}
@@ -149,7 +157,7 @@ export function RequestListLayout({
                 )
               }
               renderItem={({ item }) => (
-                <View style={styles.item}>
+                <View style={[styles.item, wide && styles.itemWide]}>
                   <View style={styles.bookRow}>
                     <BookCover
                       id={item.listing.id}
@@ -235,6 +243,9 @@ function createStyles(colors: ColorPalette) {
     padding: tokens.spacing[24],
     paddingTop: tokens.spacing[32],
   },
+  contentWide: { maxWidth: WIDE_CONTENT_MAX_WIDTH },
+  columns: { gap: tokens.spacing[12] },
+  itemWide: { flex: 1, maxWidth: "50%" },
   back: {
     minHeight: tokens.accessibility.touchTarget,
     justifyContent: "center",
