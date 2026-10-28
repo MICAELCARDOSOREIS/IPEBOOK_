@@ -12,7 +12,7 @@ Roteiro para publicar o primeiro beta. Itens marcados com **(você)** dependem d
 ## Passo a passo
 1. **(você)** Criar a conta de desenvolvedor em https://play.google.com/console (taxa única de US$ 25; conta pessoal exige verificação de identidade).
 2. **(você)** Criar o app: nome "IpêBook", idioma português (Brasil), tipo App, gratuito.
-3. Gerar o App Bundle: `npx eas-cli build -p android --profile production`.
+3. Gerar o App Bundle: na nuvem `npx eas-cli build -p android --profile production`, ou na máquina `npm run aab:local` (desacoplado; acompanhe com `npm run aab:local:status`).
 4. **(você)** Primeiro envio manual (exigência do Google): Testes > Teste interno > Criar versão > enviar o `.aab` baixado do EAS.
 5. **(você)** Em Configuração > Integridade do app > Assinatura de apps, copiar o **SHA-1 da chave de assinatura do Google Play** e adicioná-lo no Firebase (app `com.ipebook.app` > Adicionar impressão digital). Sem isso, o login com Google falha no app baixado da loja.
 6. **(você)** Preencher: Conteúdo do app (política de privacidade, anúncios: não, acesso ao app com conta de teste, classificação de conteúdo, público-alvo 18+, segurança dos dados conforme [play-store.md](play-store.md)) e a Ficha da loja.

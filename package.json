@@ -8,6 +8,8 @@
     "android": "expo run:android",
     "apk:debug": "bash scripts/gerar-apk-debug.sh",
     "apk:debug:status": "bash scripts/gerar-apk-debug.sh status",
+    "aab:local": "bash scripts/gerar-aab-local.sh",
+    "aab:local:status": "bash scripts/gerar-aab-local.sh status",
     "ios": "expo run:ios",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
