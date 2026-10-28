@@ -79,5 +79,6 @@
 - [0077 — Cancelar pedido por status e avisos de favoritos no servidor](0077-cancelar-pedido-e-avisos-de-favoritos.md)
 - [0078 — Moderação por RPCs no banco e moderadores cadastrados no Supabase](0078-moderacao.md)
 - [0079 — Limites contra abuso por gatilho no banco](0079-limites-anti-abuso.md)
+- [0080 — Acompanhamento de erros com Sentry](0080-acompanhamento-de-erros-sentry.md)
 
 Preservar registros aceitos; mudanças relevantes geram novo ADR com vínculos de substituição.
