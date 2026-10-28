@@ -97,6 +97,14 @@ describe("Chat em tela cheia (Spec 082)", () => {
     expect(onOpenNegotiation).toHaveBeenCalledWith("r1");
   });
 
+  it("embutido na web larga, omite Voltar e Combinar (o painel lateral já oferece)", async () => {
+    setup();
+    const screen = await renderChat({ embedded: true });
+    expect(screen.getByText("Dom Casmurro")).toBeDefined();
+    expect(screen.queryByLabelText("Voltar")).toBeNull();
+    expect(screen.queryByLabelText("Combinar encontro na negociação")).toBeNull();
+  });
+
   it("mostra a falha de envio com Reenviar", async () => {
     const actions = setup({ sendError: "Sem conexão." });
     const screen = await renderChat();

@@ -35,10 +35,12 @@ export type ChatProps = {
   onBack?: () => void;
   /** "Combinar": abre a negociação para marcar o encontro (`/negociacao/[id]`). */
   onOpenNegotiation?: (requestId: string) => void;
+  /** Painel da web larga: a lista e o "Combinar encontro" já estão nas colunas vizinhas. */
+  embedded?: boolean;
 };
 
 /** Conversa em tela cheia, Figma `06.02 · Conversa com Ana Paula` (Spec 082). */
-export function Chat({ requestId, sessionUserId, onBack, onOpenNegotiation }: ChatProps) {
+export function Chat({ requestId, sessionUserId, onBack, onOpenNegotiation, embedded = false }: ChatProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [detailState] = useRequestDetailViewModel(requestId, sessionUserId);
@@ -91,15 +93,17 @@ export function Chat({ requestId, sessionUserId, onBack, onOpenNegotiation }: Ch
     <SafeAreaView edges={["top", "left", "right", "bottom"]} style={styles.page}>
       {/* Cabeçalho com a foto da pessoa (Spec 089); sem foto o avatar mostra o ipê. */}
       <View style={styles.header}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Voltar"
-          hitSlop={8}
-          onPress={onBack ?? (() => {})}
-          style={styles.backButton}
-        >
-          <AppIcon name="back" size={24} color={colors.m3.onSurface} />
-        </Pressable>
+        {embedded ? null : (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Voltar"
+            hitSlop={8}
+            onPress={onBack ?? (() => {})}
+            style={styles.backButton}
+          >
+            <AppIcon name="back" size={24} color={colors.m3.onSurface} />
+          </Pressable>
+        )}
         <Avatar name={name} photoUrl={detail?.counterpartPhotoUrl ?? undefined} size={40} />
         <Text accessibilityRole="header" style={styles.headerTitle} numberOfLines={1}>
           {name}
@@ -116,14 +120,16 @@ export function Chat({ requestId, sessionUserId, onBack, onOpenNegotiation }: Ch
               </Text>
               <Tag variant={detail.book.modality} />
             </View>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Combinar encontro na negociação"
-              onPress={() => onOpenNegotiation?.(requestId)}
-              style={styles.combine}
-            >
-              <Text style={styles.combineText}>Combinar</Text>
-            </Pressable>
+            {embedded ? null : (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Combinar encontro na negociação"
+                onPress={() => onOpenNegotiation?.(requestId)}
+                style={styles.combine}
+              >
+                <Text style={styles.combineText}>Combinar</Text>
+              </Pressable>
+            )}
           </View>
         ) : null}
 
