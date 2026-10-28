@@ -20,6 +20,7 @@ const TITLES: Record<string, string> = {
   "/criar-conta": "Criar conta",
   "/esqueci-senha": "Esqueci a senha",
   "/redefinir-senha": "Redefinir senha",
+  "/beta": "Teste o app Android",
 };
 
 /** Título da aba do navegador para a rota atual; rotas sem nome próprio usam só o nome do app. */
