@@ -12,6 +12,7 @@ import { AppIcon } from "@/view/components/AppIcon";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import type { BlockedUser } from "@/model/entities/blockedUser";
+import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
 
 export type BlockedUsersProps = {
   onBack: () => void;
@@ -120,7 +121,7 @@ export function BlockedUsers({ onBack }: BlockedUsersProps) {
   );
 }
 
-const WIDE_CONTENT_MAX_WIDTH = 1100;
+const WIDE_CONTENT_MAX_WIDTH = WEB_MAX_WIDTH;
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
@@ -178,7 +179,7 @@ function createStyles(colors: ColorPalette) {
     list: {
       gap: tokens.spacing[12],
     },
-    contentWide: { maxWidth: WIDE_CONTENT_MAX_WIDTH },
+    contentWide: { maxWidth: WEB_MAX_WIDTH, paddingHorizontal: WEB_GUTTER },
     listWide: { flexDirection: "row", flexWrap: "wrap" },
     cardWide: { flexBasis: "48%", flexGrow: 0 },
     card: {

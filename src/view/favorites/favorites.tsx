@@ -19,6 +19,7 @@ import { formatPrice } from "@/view/formatPrice";
 import { useFavoritesViewModel } from "@/viewmodel/useFavoritesViewModel";
 import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
 import { useSearchAlertsViewModel } from "@/viewmodel/useSearchAlertsViewModel";
+import { WEB_MAX_WIDTH, useWebGridColumns } from "@/view/webLayout";
 
 export type FavoritesProps = {
   userId: string | null;
@@ -64,6 +65,7 @@ export default function Favorites({
   }, [focusKey]);
 
   const wideWeb = useIsWideWeb();
+  const gridColumns = useWebGridColumns();
   const [statusFilter, setStatusFilter] = useState<"all" | "available" | "reserved">("all");
   const visibleBooks = state.books.filter((book) =>
     statusFilter === "all" ? true : statusFilter === "reserved" ? book.status === "reserved" : book.status !== "reserved",
@@ -143,8 +145,8 @@ export default function Favorites({
         )
       ) : (
         <FlatList
-          key={wideWeb ? "grade" : "lista"}
-          numColumns={wideWeb ? 4 : 1}
+          key={wideWeb ? `grade-${gridColumns}` : "lista"}
+          numColumns={wideWeb ? gridColumns : 1}
           columnWrapperStyle={wideWeb ? styles.wideGridRow : undefined}
           data={visibleBooks}
           keyExtractor={(book) => book.id}
@@ -182,7 +184,7 @@ export default function Favorites({
               .join(" · ");
 
             return (
-              <View style={[styles.row, wideWeb && styles.wideCard]}>
+              <View style={[styles.row, wideWeb && styles.wideCard, wideWeb && { maxWidth: `${100 / gridColumns}%` }]}>
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel={`Ver ${item.title}`}
@@ -254,14 +256,14 @@ function createStyles(colors: ColorPalette) {
     color: colors.secondaryText,
   },
   tabLabelActive: { color: colors.action, fontWeight: "600" },
-  wideHeader: { width: "100%", maxWidth: 1440, alignSelf: "center", paddingHorizontal: 80, paddingTop: 32, gap: 8 },
+  wideHeader: { width: "100%", maxWidth: WEB_MAX_WIDTH, alignSelf: "center", paddingHorizontal: 80, paddingTop: 32, gap: 8 },
   wideTitle: { fontFamily: tokens.typography.labelLarge.fontFamily, fontSize: 36, lineHeight: 44, fontWeight: "700", color: colors.m3.onSurface },
   wideSubtitle: { ...tokens.typography.bodyLarge, color: colors.m3.onSurfaceVariant },
   wideChips: { flexDirection: "row", gap: 8, paddingTop: 16 },
   wideChip: { flexDirection: "row", alignItems: "center", gap: 6, height: 32, paddingHorizontal: 16, borderRadius: tokens.radius.small, borderWidth: 1, borderColor: colors.m3.outline },
   wideChipSelected: { backgroundColor: colors.m3.secondaryContainer, borderColor: colors.m3.secondaryContainer, paddingLeft: 8 },
   wideChipText: { ...tokens.typography.labelLarge, color: colors.m3.onSurfaceVariant },
-  wideList: { width: "100%", maxWidth: 1440, alignSelf: "center", paddingHorizontal: 80, paddingVertical: 24, gap: 24 },
+  wideList: { width: "100%", maxWidth: WEB_MAX_WIDTH, alignSelf: "center", paddingHorizontal: 80, paddingVertical: 24, gap: 24 },
   wideGridRow: { gap: 24 },
   wideCard: { flex: 1, maxWidth: "25%", flexDirection: "column", alignItems: "stretch", borderRadius: 20, backgroundColor: colors.m3.surfaceContainerLowest, padding: 12 },
   wideCardMain: { flexDirection: "column", alignItems: "stretch" },

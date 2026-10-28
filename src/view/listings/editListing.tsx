@@ -16,8 +16,10 @@ import { Chip } from "@/view/components/Chip";
 import { FilledButton } from "@/view/components/FilledButton";
 import { TextButton } from "@/view/components/TextButton";
 import { TextField } from "@/view/components/TextField";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { useEditListingViewModel } from "@/viewmodel/useEditListingViewModel";
+import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
 
 export type EditListingProps = {
   bookId: string;
@@ -46,6 +48,8 @@ export default function EditListing({
   const { colors, resolvedScheme } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [showPhotoInput, setShowPhotoInput] = useState(false);
+  // Web larga: foto e identificação de um lado, descrição e venda do outro.
+  const wide = useIsWideWeb();
   const remainingDescriptionChars = MAX_BOOK_DESCRIPTION_LENGTH - state.description.length;
   const descriptionTooLong = remainingDescriptionChars < 0;
 
@@ -57,7 +61,7 @@ export default function EditListing({
   if (state.loading) {
     return (
       <SafeAreaView style={styles.page}>
-        <TopAppBar contentMaxWidth={480} title="Editar anúncio" onBack={() => onCancel?.()} />
+        <TopAppBar contentMaxWidth={wide ? WEB_MAX_WIDTH : 480} title="Editar anúncio" onBack={() => onCancel?.()} />
         <View style={styles.statusContainer}>
           <ActivityIndicator color={colors.action} accessibilityLabel="Carregando anúncio" />
           <Text style={styles.statusText}>Carregando dados do anúncio…</Text>
@@ -69,7 +73,7 @@ export default function EditListing({
   if (state.error && !state.book) {
     return (
       <SafeAreaView style={styles.page}>
-        <TopAppBar contentMaxWidth={480} title="Editar anúncio" onBack={() => onCancel?.()} />
+        <TopAppBar contentMaxWidth={wide ? WEB_MAX_WIDTH : 480} title="Editar anúncio" onBack={() => onCancel?.()} />
         <View style={styles.statusContainer}>
           <Text accessibilityRole="alert" style={styles.errorText}>
             {state.error}
@@ -86,14 +90,16 @@ export default function EditListing({
 
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar contentMaxWidth={480} title="Editar anúncio" onBack={() => onCancel?.()} />
+      <TopAppBar contentMaxWidth={wide ? WEB_MAX_WIDTH : 480} title="Editar anúncio" onBack={() => onCancel?.()} />
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.content}>
+        <View style={[styles.content, wide && styles.contentWide]}>
           <Text style={styles.subtitle}>Atualize as informações do seu livro.</Text>
 
+          <View style={[styles.columns, wide && styles.columnsWide]}>
+          <View style={[styles.column, wide && styles.columnHalf]}>
           <View style={styles.photoSection}>
             <Text style={styles.sectionLabel}>Foto da capa</Text>
             <View style={styles.photoRow}>
@@ -178,6 +184,8 @@ export default function EditListing({
             </View>
           </View>
 
+          </View>
+          <View style={[styles.column, wide && styles.columnHalf]}>
           <TextField
             label="Descrição"
             value={state.description}
@@ -252,6 +260,9 @@ export default function EditListing({
             </View>
           </View>
 
+          </View>
+          </View>
+
           {state.error ? (
             <Text accessibilityRole="alert" style={styles.errorText}>
               {state.error}
@@ -306,6 +317,11 @@ function createStyles(colors: ColorPalette) {
     padding: tokens.spacing[24],
     gap: tokens.spacing[16],
   },
+  contentWide: { maxWidth: WEB_MAX_WIDTH, paddingHorizontal: WEB_GUTTER },
+  columns: { gap: tokens.spacing[16] },
+  columnsWide: { flexDirection: "row", alignItems: "flex-start", gap: tokens.spacing[24] },
+  column: { gap: tokens.spacing[16] },
+  columnHalf: { flex: 1 },
   statusContainer: {
     flex: 1,
     justifyContent: "center",

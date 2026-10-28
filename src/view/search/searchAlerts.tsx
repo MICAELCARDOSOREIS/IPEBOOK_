@@ -12,6 +12,7 @@ import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { useSearchAlertsViewModel } from "@/viewmodel/useSearchAlertsViewModel";
+import { WEB_MAX_WIDTH, useWebColumns } from "@/view/webLayout";
 
 export type SearchAlertsProps = {
   userId: string | null;
@@ -34,6 +35,7 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
   const styles = useMemo(() => createStyles(colors), [colors]);
   // Web larga: coluna mais ampla e dois alertas por linha.
   const wide = useIsWideWeb();
+  const listColumns = useWebColumns(2, 3);
   const errorId = useId();
   const hasError = Boolean(state.error);
   /**
@@ -106,8 +108,8 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
             <ActivityIndicator color={colors.action} accessibilityLabel="Carregando alertas" />
           ) : (
             <FlatList
-              key={wide ? "duas-colunas" : "uma-coluna"}
-              numColumns={wide ? 2 : 1}
+              key={wide ? `colunas-${listColumns}` : "uma-coluna"}
+              numColumns={wide ? listColumns : 1}
               columnWrapperStyle={wide ? { gap: tokens.spacing[12] } : undefined}
               data={state.alerts}
               keyExtractor={(item) => item.id}
@@ -162,7 +164,7 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
   );
 }
 
-const WIDE_CONTENT_MAX_WIDTH = 1100;
+const WIDE_CONTENT_MAX_WIDTH = WEB_MAX_WIDTH;
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({

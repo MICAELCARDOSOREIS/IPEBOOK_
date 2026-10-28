@@ -79,6 +79,7 @@ export default function RootLayout() {
               pathname={pathname}
               onNavigate={navigateTo}
               onAnnounce={() => pushOnce("/anunciar")}
+              onOpenNotifications={() => pushOnce("/notificacoes")}
             />
           ) : null}
           <Stack screenOptions={{ headerShown: false }} />

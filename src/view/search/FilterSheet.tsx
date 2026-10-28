@@ -1,5 +1,6 @@
 import { useMemo } from "react";
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Modal, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { AppIcon } from "@/view/components/AppIcon";
 import { Chip } from "@/view/components/Chip";
@@ -60,6 +61,8 @@ export function FilterSheet({
 }: FilterSheetProps) {
   const { colors, resolvedScheme } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const wideWeb = useIsWideWeb();
+  const { width } = useWindowDimensions();
   const categories = useMemo(() => {
     const list = [...availableCategories];
     // Uma categoria aplicada pode ter saído do catálogo; mantê-la evita perder o filtro em edição.
@@ -72,7 +75,8 @@ export function FilterSheet({
   return (
     <Modal
       visible={visible}
-      animationType="slide"
+      animationType={wideWeb ? "fade" : "slide"}
+      transparent={wideWeb}
       // App em tela cheia: sem isto o Android pinta faixas cinza sob a barra de status e a de navegação.
       statusBarTranslucent
       navigationBarTranslucent
@@ -80,8 +84,11 @@ export function FilterSheet({
       accessibilityViewIsModal
       aria-modal
     >
-      <SafeAreaView style={styles.page}>
-        <TopAppBar title="Filtrar livros" onBack={onClose} />
+      {/* Web larga: diálogo centralizado sobre um véu, em vez de uma página esticada pela janela. */}
+      <View style={wideWeb ? styles.scrim : styles.page}>
+      {wideWeb ? <Pressable accessibilityLabel="Fechar filtros" onPress={onClose} style={StyleSheet.absoluteFill} /> : null}
+      <SafeAreaView style={[styles.page, wideWeb && styles.dialog]}>
+        <TopAppBar title="Filtrar livros" onBack={onClose} contentMaxWidth={wideWeb ? width : undefined} />
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           <Text accessibilityRole="header" style={styles.heading}>
             Uma leitura do seu jeito.
@@ -199,6 +206,7 @@ export function FilterSheet({
           </View>
         </View>
       </SafeAreaView>
+      </View>
     </Modal>
   );
 }
@@ -206,6 +214,8 @@ export function FilterSheet({
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     page: { flex: 1, backgroundColor: colors.background },
+    scrim: { flex: 1, alignItems: "center", justifyContent: "center", padding: tokens.spacing[24], backgroundColor: "rgba(0,0,0,0.4)" },
+    dialog: { flex: 0, width: "100%", maxWidth: 640, height: "90%", maxHeight: 820, borderRadius: 28, overflow: "hidden" },
     content: {
       paddingHorizontal: tokens.spacing[24],
       paddingTop: tokens.spacing[8],

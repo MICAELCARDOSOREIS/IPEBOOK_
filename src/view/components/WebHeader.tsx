@@ -1,5 +1,6 @@
 import { useMemo } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, useWindowDimensions, View } from "react-native";
+import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { AppIcon } from "@/view/components/AppIcon";
@@ -12,6 +13,10 @@ export type WebHeaderProps = {
   /** Iniciais para o avatar; sem sessão o avatar leva ao perfil (que oferece entrar). */
   initials?: string;
   badgeCount?: number;
+  /** Abre as notificações; sem ele o sino não aparece. */
+  onOpenNotifications?: () => void;
+  /** Notificações não lidas, mostradas como selo no sino. */
+  notificationCount?: number;
 };
 
 const LINKS: ReadonlyArray<{ key: NavigationDestination; label: string }> = [
@@ -21,12 +26,25 @@ const LINKS: ReadonlyArray<{ key: NavigationDestination; label: string }> = [
 ];
 
 /** Cabeçalho Web do Figma `34:70` (desktop e tablet): marca, busca, atalhos, Anunciar, conversas e avatar. */
-export function WebHeader({ active, onNavigate, onAnnounce, initials = "", badgeCount = 0 }: WebHeaderProps) {
+export function WebHeader({
+  active,
+  onNavigate,
+  onAnnounce,
+  initials = "",
+  badgeCount = 0,
+  onOpenNotifications,
+  notificationCount = 0,
+}: WebHeaderProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  // Acompanha a coluna de conteúdo das telas: margem fixa, e centralizado em janelas muito largas.
+  const { width } = useWindowDimensions();
+  const sideInset = Math.round(Math.max(0, width - WEB_MAX_WIDTH) / 2) + WEB_GUTTER;
+  // Janelas médias (tablet, notebook pequeno): vãos menores para tudo caber sem cortar o avatar.
+  const compact = width < 1280;
 
   return (
-    <View accessibilityRole="header" testID="web-header" style={styles.bar}>
+    <View accessibilityRole="header" testID="web-header" style={[styles.bar, { paddingHorizontal: sideInset }, compact && styles.barCompact]}>
       <Pressable accessibilityRole="link" accessibilityLabel="IpêBook, ir para o início" onPress={() => onNavigate("home")}>
         <Text style={styles.brand}>IpêBook</Text>
       </Pressable>
@@ -37,7 +55,7 @@ export function WebHeader({ active, onNavigate, onAnnounce, initials = "", badge
         onPress={() => onNavigate("search")}
         style={styles.search}
       >
-        <Text style={styles.searchText}>Buscar título, autor ou categoria</Text>
+        <Text numberOfLines={1} style={styles.searchText}>Buscar título, autor ou categoria</Text>
         <AppIcon name="search" size={20} color={colors.m3.onSurfaceVariant} />
       </Pressable>
 
@@ -76,6 +94,26 @@ export function WebHeader({ active, onNavigate, onAnnounce, initials = "", badge
         {badgeCount > 0 ? <View style={styles.dot} /> : null}
       </Pressable>
 
+      {onOpenNotifications ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={
+            notificationCount > 0
+              ? `Abrir notificações, ${notificationCount} ${notificationCount === 1 ? "não lida" : "não lidas"}`
+              : "Abrir notificações"
+          }
+          onPress={onOpenNotifications}
+          style={styles.iconButton}
+        >
+          <AppIcon name="bell" size={24} color={colors.m3.onSurface} />
+          {notificationCount > 0 ? (
+            <View style={styles.countBadge}>
+              <Text style={styles.countBadgeText}>{notificationCount > 9 ? "9+" : notificationCount}</Text>
+            </View>
+          ) : null}
+        </Pressable>
+      ) : null}
+
       <Pressable accessibilityRole="button" accessibilityLabel="Meu perfil" onPress={() => onNavigate("profile")} style={styles.avatar}>
         {initials ? <Text style={styles.avatarText}>{initials}</Text> : <AppIcon name="person" size={20} color={colors.m3.onPrimaryContainer} />}
       </Pressable>
@@ -101,6 +139,8 @@ function createStyles(colors: ColorPalette) {
       alignItems: "center",
       justifyContent: "space-between",
       gap: 10,
+      flexShrink: 1,
+      minWidth: 160,
       width: 520,
       maxWidth: "40%",
       height: 48,
@@ -110,6 +150,20 @@ function createStyles(colors: ColorPalette) {
     },
     searchText: { ...tokens.typography.bodyLarge, color: colors.m3.onSurfaceVariant },
     spacer: { flex: 1 },
+    barCompact: { gap: 16 },
+    countBadge: {
+      position: "absolute",
+      top: 2,
+      right: 2,
+      minWidth: 16,
+      height: 16,
+      paddingHorizontal: 4,
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.error,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    countBadgeText: { fontSize: 10, lineHeight: 12, fontWeight: "700", color: "#FFFFFF" },
     links: { flexDirection: "row", alignItems: "center", gap: 24, height: "100%" },
     link: { height: "100%", justifyContent: "center" },
     linkText: { ...tokens.typography.labelLarge, color: colors.m3.onSurfaceVariant },

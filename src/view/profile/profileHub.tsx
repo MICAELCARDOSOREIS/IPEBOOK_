@@ -14,6 +14,7 @@ import { Dialog } from "@/view/components/Dialog";
 import { FilledButton } from "@/view/components/FilledButton";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
+import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
 
 export type ProfileHubProps = {
   requireAuth?: boolean;
@@ -213,7 +214,7 @@ export default function ProfileHub({
               {isSignedIn ? (
                 <>
                   {/* Cartão de leitor com o ipê da marca (Spec 078), no lugar do cartão neutro do Figma 07.01 */}
-                  <View style={styles.heroBlock}>
+                  <View style={[styles.heroBlock, wideWeb && styles.heroBlockWide]}>
                   <ReaderCard
                     name={profile.name}
                     photoUrl={profile.photoUrl}
@@ -391,10 +392,12 @@ function createStyles(colors: ColorPalette) {
     page: { flex: 1, backgroundColor: colors.background },
     scroll: { flexGrow: 1, paddingBottom: tokens.spacing[32] },
     // Web larga (Figma `07.01`): cartão e métricas em largura total, "Atividade" e "Conta" em duas colunas.
-    contentWide: { maxWidth: 1440, paddingHorizontal: 80, paddingTop: tokens.spacing[32], flexDirection: "row", flexWrap: "wrap", alignItems: "flex-start", columnGap: 48, rowGap: 24 },
+    contentWide: { maxWidth: WEB_MAX_WIDTH, paddingHorizontal: WEB_GUTTER, paddingTop: tokens.spacing[32], flexDirection: "row", flexWrap: "wrap", alignItems: "flex-start", columnGap: 48, rowGap: 24 },
     fullRow: { width: "100%" },
     heroBlock: { width: "100%", gap: tokens.spacing[16] },
-    sectionWide: { flex: 1, flexBasis: 400, minWidth: 360 },
+    // Web larga: cartão, botão e números numa coluna lateral fixa; Atividade e Conta lado a lado.
+    heroBlockWide: { width: 360, position: "sticky" as "relative", top: tokens.spacing[16] },
+    sectionWide: { flex: 1, flexBasis: 300, minWidth: 300 },
     content: {
       width: "100%",
       maxWidth: 720,

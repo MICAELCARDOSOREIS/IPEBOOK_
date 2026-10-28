@@ -1,3 +1,5 @@
+import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
+
 /** Largura padrão do conteúdo centralizado das telas (720 com 24 de respiro). */
 export const CONTENT_MAX_WIDTH = 720;
 const CONTENT_PADDING = 24;
@@ -10,6 +12,10 @@ const DEFAULT_INSET = 8;
  * coluna de conteúdo centralizada, em vez de colar na borda da janela.
  */
 export function topBarInset(windowWidth: number, contentMaxWidth: number = CONTENT_MAX_WIDTH): number {
+  // Layout largo da web: a coluna ocupa a janela com a margem do cabeçalho do site.
+  if (contentMaxWidth >= WEB_MAX_WIDTH) {
+    return Math.round(Math.max(0, windowWidth - WEB_MAX_WIDTH) / 2) + WEB_GUTTER - BACK_BUTTON_GUTTER;
+  }
   if (windowWidth <= contentMaxWidth) return DEFAULT_INSET;
   return Math.round((windowWidth - contentMaxWidth) / 2) + CONTENT_PADDING - BACK_BUTTON_GUTTER;
 }

@@ -16,6 +16,7 @@ import { NeighborhoodSelectorModal } from "@/view/components/NeighborhoodSelecto
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { ScreenContainer } from "@/view/components/ScreenContainer";
 import type { Book, BookModality } from "@/model/entities/book";
+import { WEB_MAX_WIDTH } from "@/view/webLayout";
 
 const MODALITY_PLURAL = { sale: "livros à venda", trade: "livros para troca", donation: "livros para doação" } as const;
 
@@ -79,8 +80,8 @@ function CatalogCarousel({
         style={[styles.carouselCard, wide && styles.carouselCardWide]}
       >
         {/* Fundo da capa na cor da modalidade, como no topo do detalhe do livro. */}
-        <View style={[styles.carouselCardCoverArea, { backgroundColor: tag.background }]}>
-          <BookCover id={item.id} title={item.title} photoUrl={item.photoUrl} variant="card" />
+        <View style={[styles.carouselCardCoverArea, wide && styles.carouselCardCoverAreaWide, { backgroundColor: tag.background }]}>
+          <BookCover id={item.id} title={item.title} photoUrl={item.photoUrl} variant={wide ? "detail" : "card"} />
         </View>
         <View style={styles.carouselCardMeta}>
           {/* Modalidade em etiqueta colorida (a mesma cor dos filtros e do detalhe), preço ao lado. */}
@@ -551,7 +552,7 @@ export default function Home({
   return (
     <ScreenContainer
       edges={["top", "left", "right"]}
-      maxWidth={wideWeb ? 1440 : 720}
+      maxWidth={wideWeb ? WEB_MAX_WIDTH : 720}
       paddingHorizontal={wideWeb ? 80 : undefined}
       overlay={
         <NeighborhoodSelectorModal
@@ -806,7 +807,9 @@ function createStyles(colors: ColorPalette) {
     shortcutBody: { ...tokens.typography.bodyMedium },
     // Web larga (Figma `34:160`): grade de 5 colunas com 24 px de respiro.
     carouselGrid: { flexDirection: "row", flexWrap: "wrap", gap: 24 },
-    carouselGridCell: { flexGrow: 1, flexBasis: 0, minWidth: 180, flexDirection: "column" },
+    // Cartões com largura máxima para a capa não ficar perdida em faixas largas com poucos livros.
+    carouselGridCell: { flexGrow: 1, flexBasis: 0, minWidth: 180, maxWidth: 260, flexDirection: "column" },
+    carouselCardCoverAreaWide: { paddingVertical: 20 },
     carouselCardWide: { flex: 1, width: "100%", marginRight: 0, borderRadius: 20, backgroundColor: colors.m3.surfaceContainerLowest },
     carouselList: { flexGrow: 0 },
     // Figma `02.01`: a faixa mostra dois cartões inteiros, então as setas saem do fluxo e ficam

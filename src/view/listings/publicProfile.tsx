@@ -17,6 +17,7 @@ import { TopAppBar } from "@/view/components/TopAppBar";
 import { OwnerListings } from "@/view/listings/ownerListings";
 import { UserRatingsPanel } from "@/view/listings/userRatingsPanel";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
+import { WEB_MAX_WIDTH } from "@/view/webLayout";
 
 function formatJoinedAt(joinedAt: string): string {
   const date = new Date(joinedAt);
@@ -71,7 +72,7 @@ export function PublicProfile({ userId, onBack, onOpenChat, onReportListing, onR
   return (
     <SafeAreaView edges={["top", "left", "right"]} style={styles.page}>
       {/* 1. Barra Superior M3 Oficial com botão voltar e título padronizado */}
-      <TopAppBar contentMaxWidth={wideWeb ? 1000 : undefined} title="Perfil" onBack={() => onBack?.()} />
+      <TopAppBar contentMaxWidth={wideWeb ? WEB_MAX_WIDTH : undefined} title="Perfil" onBack={() => onBack?.()} />
 
       <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
         {state.loading ? (
@@ -106,6 +107,8 @@ export function PublicProfile({ userId, onBack, onOpenChat, onReportListing, onR
             </View>
 
             {/* 3. Cards Informativos Padronizados com Superfície M3 */}
+            {/* Na web larga os três cartões ficam lado a lado, sem esticar pela largura toda. */}
+            <View style={styles.statsRow}>
             {/* Card 1: Avaliações */}
             <View style={styles.infoCard}>
               <View style={styles.cardLeadingBox}>
@@ -156,6 +159,7 @@ export function PublicProfile({ userId, onBack, onOpenChat, onReportListing, onR
                 </Text>
                 <Text style={styles.cardSubtitle}>Piripiri, Piauí</Text>
               </View>
+            </View>
             </View>
 
             {/* 4. Ações Principais com Hierarquia M3 e Contraste Acessível */}
@@ -233,7 +237,7 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
       paddingHorizontal: tokens.spacing[16],
       paddingTop: tokens.spacing[8],
       paddingBottom: tokens.spacing[32],
-      maxWidth: wideWeb ? 1000 : 720,
+      maxWidth: wideWeb ? WEB_MAX_WIDTH : 720,
       width: "100%",
       alignSelf: "center",
     },
@@ -301,7 +305,9 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
       fontWeight: "500",
       color: colors.action,
     },
+    statsRow: wideWeb ? { flexDirection: "row", gap: tokens.spacing[16] } : { gap: tokens.spacing[12] },
     infoCard: {
+      flex: wideWeb ? 1 : undefined,
       backgroundColor: colors.surface,
       borderRadius: 16,
       borderWidth: 1,
@@ -344,7 +350,9 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
       color: colors.secondaryText,
       lineHeight: 18,
     },
+    // Web larga: botões lado a lado com largura do conteúdo, centralizados.
     actionsSection: {
+      ...(wideWeb ? { flexDirection: "row", justifyContent: "center", alignItems: "center", flexWrap: "wrap" } : null),
       gap: tokens.spacing[12],
       paddingTop: tokens.spacing[12],
     },

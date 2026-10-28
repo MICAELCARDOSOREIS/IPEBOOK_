@@ -2,9 +2,11 @@ import { useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { PRIVACY_POLICY, TERMS_OF_USE } from "@/model/legalContent";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
+import { WEB_MAX_WIDTH, WEB_GUTTER, useWebColumns, webColumnWidth } from "@/view/webLayout";
 
 export type TermsAndPrivacyProps = {
   onBack?: () => void;
@@ -25,13 +27,17 @@ export default function TermsAndPrivacy({
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [activeTab, setActiveTab] = useState<"terms" | "privacy">(initialTab);
+  // Web larga: coluna mais larga, com as cláusulas em duas colunas.
+  const wide = useIsWideWeb();
+  const columns = useWebColumns(2, 3);
+  const columnWidth = { width: webColumnWidth(columns) };
   const sections = activeTab === "terms" ? TERMS_OF_USE : PRIVACY_POLICY;
 
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar title="Termos e privacidade" onBack={() => onBack?.()} />
+      <TopAppBar title="Termos e privacidade" onBack={() => onBack?.()} contentMaxWidth={wide ? WEB_MAX_WIDTH : undefined} />
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.content}>
+        <View style={[styles.content, wide && styles.contentWide]}>
           <View style={styles.heroHeader}>
             <Text style={styles.heroTitle}>Informação clara para você.</Text>
             <Text style={styles.heroSubtitle}>
@@ -61,10 +67,10 @@ export default function TermsAndPrivacy({
             </Pressable>
           </View>
 
-          <View style={styles.cardList}>
-            <Text style={styles.updatedDate}>Última atualização: 15 de outubro de 2026</Text>
+          <View style={[styles.cardList, wide && styles.cardListWide]}>
+            <Text style={[styles.updatedDate, wide && styles.fullRow]}>Última atualização: 15 de outubro de 2026</Text>
             {sections.map((section) => (
-              <View key={section.title} style={styles.sectionCard}>
+              <View key={section.title} style={[styles.sectionCard, wide && columnWidth]}>
                 <Text accessibilityRole="header" style={styles.sectionTitle}>
                   {section.title}
                 </Text>
@@ -76,7 +82,7 @@ export default function TermsAndPrivacy({
               </View>
             ))}
             {activeTab === "privacy" && onNavigateToDeleteAccount ? (
-              <View style={styles.sectionCard}>
+              <View style={[styles.sectionCard, wide && styles.fullRow]}>
                 <Text accessibilityRole="header" style={styles.sectionTitle}>
                   Portabilidade e Exclusão (LGPD — Art. 18)
                 </Text>
@@ -116,6 +122,9 @@ function createStyles(colors: ColorPalette) {
     alignSelf: "center",
     padding: tokens.spacing[16],
   },
+  contentWide: { maxWidth: WEB_MAX_WIDTH, paddingHorizontal: WEB_GUTTER },
+  cardListWide: { flexDirection: "row", flexWrap: "wrap", alignItems: "flex-start", columnGap: tokens.spacing[16], rowGap: tokens.spacing[16] },
+  fullRow: { width: "100%" },
   heroHeader: {
     gap: tokens.spacing[4],
     marginBottom: tokens.spacing[16],

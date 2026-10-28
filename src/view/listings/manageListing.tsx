@@ -15,6 +15,7 @@ import { TextButton } from "@/view/components/TextButton";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { useManageListingViewModel } from "@/viewmodel/useManageListingViewModel";
+import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
 
 export type ManageListingProps = {
   bookId: string;
@@ -48,7 +49,7 @@ export default function ManageListing({
   if (state.loading) {
     return (
       <SafeAreaView style={styles.page}>
-        <TopAppBar contentMaxWidth={wide ? 960 : 560} title="Gerenciar anúncio" onBack={() => onBack?.()} />
+        <TopAppBar contentMaxWidth={wide ? WEB_MAX_WIDTH : 560} title="Gerenciar anúncio" onBack={() => onBack?.()} />
         <LoadingState label="Carregando anúncio" />
       </SafeAreaView>
     );
@@ -57,7 +58,7 @@ export default function ManageListing({
   if (!state.book) {
     return (
       <SafeAreaView style={styles.page}>
-        <TopAppBar contentMaxWidth={wide ? 960 : 560} title="Gerenciar anúncio" onBack={() => onBack?.()} />
+        <TopAppBar contentMaxWidth={wide ? WEB_MAX_WIDTH : 560} title="Gerenciar anúncio" onBack={() => onBack?.()} />
         <ErrorState
           message={state.error ?? "Não foi possível carregar o anúncio."}
           onRetry={() => void actions.load()}
@@ -73,7 +74,7 @@ export default function ManageListing({
 
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar contentMaxWidth={wide ? 960 : 560} title="Gerenciar anúncio" onBack={() => onBack?.()} />
+      <TopAppBar contentMaxWidth={wide ? WEB_MAX_WIDTH : 560} title="Gerenciar anúncio" onBack={() => onBack?.()} />
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={[styles.content, wide && styles.contentWide]}>
           <Text accessibilityRole="header" style={styles.title}>Seu livro, suas escolhas.</Text>
@@ -185,7 +186,7 @@ function createStyles(colors: ColorPalette) {
   page: { flex: 1, backgroundColor: colors.background },
   scrollContent: { padding: tokens.spacing[16], paddingBottom: tokens.spacing[48] },
   content: { width: "100%", maxWidth: 560, alignSelf: "center", gap: tokens.spacing[16] },
-  contentWide: { maxWidth: 960 },
+  contentWide: { maxWidth: WEB_MAX_WIDTH, paddingHorizontal: WEB_GUTTER },
   columns: { gap: tokens.spacing[16] },
   columnsWide: { flexDirection: "row", alignItems: "flex-start", gap: tokens.spacing[24] },
   column: { gap: tokens.spacing[16] },

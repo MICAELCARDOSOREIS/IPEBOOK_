@@ -17,6 +17,7 @@ import {
 } from "@/viewmodel/useNotificationsViewModel";
 import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
 import { groupNotificationsByPeriod, notificationTimeLabel } from "@/viewmodel/notificationGrouping";
+import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
 
 export type NotificationsProps = {
   sessionUserId: string | null;
@@ -97,15 +98,16 @@ export default function Notifications({
   return (
     <SafeAreaView style={styles.page}>
       <TopAppBar title="Notificações" onBack={() => onBack?.()} contentMaxWidth={wide ? WIDE_CONTENT_MAX_WIDTH : undefined} />
-      <View style={[styles.content, wide && { maxWidth: WIDE_CONTENT_MAX_WIDTH }]}>
+      {/* Web larga: filtros numa barra lateral fixa e a lista numa coluna de leitura ao lado. */}
+      <View style={[styles.content, wide && styles.contentWide]}>
         {showListChrome ? (
-        <View style={styles.filterBar}>
-          <View accessibilityRole="tablist" style={styles.filterTabs}>
+        <View style={[styles.filterBar, wide && styles.filterBarWide]}>
+          <View accessibilityRole="tablist" style={[styles.filterTabs, wide && styles.filterTabsWide]}>
             <Pressable
               accessibilityRole="tab"
               accessibilityState={{ selected: state.filter === "all" }}
               onPress={() => actions.setFilter("all")}
-              style={[styles.filterChip, state.filter === "all" && styles.filterChipActive]}
+              style={[styles.filterChip, wide && styles.filterChipWide, state.filter === "all" && styles.filterChipActive]}
             >
               <Text
                 style={[
@@ -121,7 +123,7 @@ export default function Notifications({
               accessibilityRole="tab"
               accessibilityState={{ selected: state.filter === "unread" }}
               onPress={() => actions.setFilter("unread")}
-              style={[styles.filterChip, state.filter === "unread" && styles.filterChipActive]}
+              style={[styles.filterChip, wide && styles.filterChipWide, state.filter === "unread" && styles.filterChipActive]}
             >
               <Text
                 style={[
@@ -147,6 +149,7 @@ export default function Notifications({
         </View>
         ) : null}
 
+        <View style={wide ? styles.main : styles.flexOne}>
         {state.loading ? (
           <LoadingState label="Carregando notificações" />
         ) : state.error ? (
@@ -241,12 +244,13 @@ export default function Notifications({
             }}
           />
         )}
+        </View>
       </View>
     </SafeAreaView>
   );
 }
 
-const WIDE_CONTENT_MAX_WIDTH = 920;
+const WIDE_CONTENT_MAX_WIDTH = WEB_MAX_WIDTH;
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
@@ -265,6 +269,28 @@ function createStyles(colors: ColorPalette) {
     paddingHorizontal: tokens.spacing[16],
     paddingTop: tokens.spacing[8],
   },
+  flexOne: { flex: 1, minHeight: 0 },
+  contentWide: {
+    maxWidth: WEB_MAX_WIDTH,
+    paddingHorizontal: WEB_GUTTER,
+    paddingTop: tokens.spacing[16],
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 48,
+  },
+  // Coluna de leitura: avisos curtos ficam ilegíveis esticados na largura toda.
+  main: { flex: 1, minWidth: 0, maxWidth: 880, alignSelf: "stretch", minHeight: 0 },
+  filterBarWide: {
+    width: 260,
+    flexDirection: "column",
+    alignItems: "stretch",
+    justifyContent: "flex-start",
+    flexWrap: "nowrap",
+    gap: tokens.spacing[16],
+    marginBottom: 0,
+  },
+  filterTabsWide: { flexDirection: "column", gap: tokens.spacing[4] },
+  filterChipWide: { minHeight: 44, paddingHorizontal: tokens.spacing[16], borderWidth: 0, backgroundColor: "transparent" },
   filterBar: {
     flexDirection: "row",
     alignItems: "center",

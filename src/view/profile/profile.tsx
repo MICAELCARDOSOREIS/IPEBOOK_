@@ -26,10 +26,12 @@ import { LoadingState } from "@/view/components/LoadingState";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { NeighborhoodSelectorModal } from "@/view/components/NeighborhoodSelectorModal";
 import { ScreenContainer } from "@/view/components/ScreenContainer";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { Snackbar } from "@/view/components/Snackbar";
 import { TextButton } from "@/view/components/TextButton";
 import { TextField } from "@/view/components/TextField";
 import { TopAppBar } from "@/view/components/TopAppBar";
+import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
 
 export type ProfileProps = {
   onNavigateToSignIn?: () => void;
@@ -106,6 +108,8 @@ function validateProfileFields(values: {
  */
 export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
   const { colors } = useTheme();
+  // Web larga: coluna mais larga, com cartão e foto de um lado e dados e contato do outro.
+  const wide = useIsWideWeb();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [authState] = useAuthViewModel();
   const userId = authState.user?.id ?? null;
@@ -262,10 +266,11 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
 
   return (
     <ScreenContainer
-      maxWidth={560}
+      maxWidth={wide ? WEB_MAX_WIDTH : 560}
+      paddingHorizontal={wide ? WEB_GUTTER : undefined}
       paddingTop={tokens.spacing[12]}
       paddingBottom={tokens.spacing[32]}
-      header={<TopAppBar contentMaxWidth={560} title="Editar perfil" onBack={requestBack} />}
+      header={<TopAppBar contentMaxWidth={wide ? WEB_MAX_WIDTH : 560} title="Editar perfil" onBack={requestBack} />}
       overlay={
         <>
           <NeighborhoodSelectorModal
@@ -316,6 +321,8 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
               </Text>
             </View>
 
+            <View style={[styles.columns, wide && styles.columnsWide]}>
+            <View style={[styles.column, wide && styles.columnHalf]}>
             {/* 2. Pré-visualização ao vivo do cartão de leitor (Spec 078), no lugar do avatar solto do 07.02 */}
             <View style={styles.avatarSection}>
               <Text style={styles.previewLabel}>Assim seu cartão aparece</Text>
@@ -363,6 +370,8 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
               ) : null}
             </FormSection>
 
+            </View>
+            <View style={[styles.column, wide && styles.columnHalf]}>
             {/* 4. Sobre você: nome e bairro. A cidade é fixa (Piripiri, PI) e vai na legenda, sem campo desabilitado. */}
             <FormSection icon="person" title="Sobre você" caption="Aparece no seu perfil público, em Piripiri, PI.">
               {/* Nome */}
@@ -471,6 +480,9 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
               />
             </FormSection>
 
+            </View>
+            </View>
+
             {/* Resumo acessível: o foco não pula para o campo com erro, então a região viva
                 informa no leitor de tela que há itens destacados. */}
             {blockedSave ? (
@@ -570,6 +582,10 @@ function createStyles(colors: ColorPalette) {
       gap: tokens.spacing[16],
     },
     heroSection: {},
+    columns: { gap: tokens.spacing[16] },
+    columnsWide: { flexDirection: "row", alignItems: "flex-start", gap: tokens.spacing[24] },
+    column: { gap: tokens.spacing[16] },
+    columnHalf: { flex: 1 },
     heroTitle: {
       fontFamily: fontFamily.brand,
       fontSize: 30,

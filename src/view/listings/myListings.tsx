@@ -22,6 +22,7 @@ import {
   MyListingsListingsTab,
 } from "@/view/listings/myListingsListingsTab";
 import { MyListingsProposalsTab } from "@/view/listings/myListingsProposalsTab";
+import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
 
 export { ShelfRow } from "@/view/listings/shelfRow";
 
@@ -71,9 +72,14 @@ export function MyListings({
     (item) => item.request.status === "rejected" || (item.request.status as string) === "completed",
   );
 
+  // Livro entregue sai de Anúncios; em Concluídos entra quando não há pedido concluído que já o mostre.
+  const activeBooks = state.books.filter((b) => b.status !== "delivered");
+  const deliveredBooks = state.books.filter(
+    (b) => b.status === "delivered" && !concludedProposals.some((item) => item.listing.id === b.id),
+  );
   const pendingProposals = proposals.filter((item) => item.request.status === "pending");
   const attention = pendingProposals[0];
-  const countBy = (modality: BookModality) => state.books.filter((b) => b.modality === modality).length;
+  const countBy = (modality: BookModality) => activeBooks.filter((b) => b.modality === modality).length;
   const stats: { key: BookModality; count: number; label: string }[] = [
     { key: "sale", count: countBy("sale"), label: "à venda" },
     { key: "trade", count: countBy("trade"), label: "em troca" },
@@ -119,16 +125,6 @@ export function MyListings({
           >
             <AppIcon name="document" size={20} color={colors.m3.onSecondaryContainer} />
             <Text style={styles.draftsLinkText}>Rascunhos</Text>
-          </Pressable>
-        ) : null}
-        {hasBooks && onNavigateToCreateListing && wideWeb ? (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Anunciar livro"
-            onPress={onNavigateToCreateListing}
-            style={styles.addButtonWide}
-          >
-            <Text style={styles.addButtonWideText}>Anunciar livro</Text>
           </Pressable>
         ) : null}
       </View>
@@ -179,7 +175,7 @@ export function MyListings({
                   key={stat.key}
                   accessible
                   accessibilityLabel={`${stat.count} ${stat.label}`}
-                  style={[styles.statCard, { backgroundColor: colors.badge[stat.key].background }]}
+                  style={[styles.statCard, wideWeb && styles.statCardWide, { backgroundColor: colors.badge[stat.key].background }]}
                 >
                   <Text style={[styles.statCount, { color: colors.badge[stat.key].text }]}>{stat.count}</Text>
                   <Text style={[styles.statLabel, { color: colors.badge[stat.key].text }]}>{stat.label}</Text>
@@ -216,7 +212,7 @@ export function MyListings({
                     ) : null}
                     <Text
                       numberOfLines={1}
-                      style={[styles.segmentText, selected ? styles.segmentTextSelected : null]}
+                      style={[styles.segmentText, wideWeb && styles.segmentTextWide, selected ? styles.segmentTextSelected : null]}
                     >
                       {tab.label}
                     </Text>
@@ -256,7 +252,7 @@ export function MyListings({
                   </View>
                 ) : null}
                 <MyListingsListingsTab
-                  books={state.books}
+                  books={activeBooks}
                   statusFilter={statusFilter}
                   onStatusFilterChange={setStatusFilter}
                   onNavigateToManageListing={onNavigateToManageListing}
@@ -277,7 +273,7 @@ export function MyListings({
                   onNavigateToNegotiationDetail={onNavigateToNegotiationDetail}
                 />
               )
-            ) : concludedProposals.length === 0 ? (
+            ) : concludedProposals.length === 0 && deliveredBooks.length === 0 ? (
               <ShelfEmptyState
                 icon="check"
                 title="Nada concluído ainda."
@@ -294,6 +290,15 @@ export function MyListings({
                     summary={`${item.requesterName ?? COMMUNITY_MEMBER} · Concluído · ${MODALITY_LABEL[item.listing.modality]}`}
                     accessibilityLabel={`Ver histórico de ${item.listing.title}`}
                     onPress={() => onNavigateToNegotiationDetail?.(item.request.id)}
+                  />
+                ))}
+                {deliveredBooks.map((book) => (
+                  <ShelfRow
+                    key={book.id}
+                    book={book}
+                    summary={`Entregue · ${MODALITY_LABEL[book.modality]}`}
+                    accessibilityLabel={`Ver ${book.title}`}
+                    onPress={() => onNavigateToManageListing?.(book.id)}
                   />
                 ))}
               </View>
@@ -476,10 +481,8 @@ function createStyles(colors: ColorPalette) {
       paddingHorizontal: tokens.spacing[20],
     },
     // Web larga (Figma `05.01`): coluna de 1280 px com 80 px de margem e botão "Anunciar livro" em texto.
-    headerWide: { width: "100%", maxWidth: 1440, alignSelf: "center", paddingHorizontal: 80, paddingTop: 32 },
-    contentWide: { maxWidth: 1440, paddingHorizontal: 80 },
-    addButtonWide: { height: 52, paddingHorizontal: 32, borderRadius: tokens.radius.full, alignItems: "center", justifyContent: "center", backgroundColor: colors.m3.primary },
-    addButtonWideText: { ...tokens.typography.labelLarge, color: colors.m3.onPrimary },
+    headerWide: { width: "100%", maxWidth: WEB_MAX_WIDTH, alignSelf: "center", paddingHorizontal: 80, paddingTop: 32 },
+    contentWide: { maxWidth: WEB_MAX_WIDTH, paddingHorizontal: WEB_GUTTER },
     webExchangeBanner: {
       flexDirection: "row",
       alignItems: "center",
@@ -528,6 +531,8 @@ function createStyles(colors: ColorPalette) {
     // Folga para o último cartão não ficar escondido atrás do FAB.
     scroll: { paddingBottom: 96, gap: tokens.spacing[16] },
     statsRow: { flexDirection: "row", gap: tokens.spacing[8] },
+    // Web larga: número e rótulo lado a lado em cartões compactos, sem esticar pela largura toda.
+    statCardWide: { flex: 0, minWidth: 160, flexDirection: "row", alignItems: "baseline", gap: tokens.spacing[8], paddingHorizontal: tokens.spacing[16] },
     statCard: {
       flex: 1,
       borderRadius: 16,
@@ -577,6 +582,7 @@ function createStyles(colors: ColorPalette) {
       shadowRadius: 4,
       shadowOffset: { width: 0, height: 2 },
     },
+    segmentTextWide: { ...tokens.typography.labelLarge },
     segmentText: { ...tokens.typography.labelMedium, color: colors.m3.onSurface },
     segmentTextSelected: { fontWeight: "600", color: colors.m3.onSecondaryContainer },
     segmentBadge: {

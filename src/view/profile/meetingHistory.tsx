@@ -13,6 +13,7 @@ import { ErrorState } from "@/view/components/ErrorState";
 import { LoadingState } from "@/view/components/LoadingState";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
+import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
 
 export type MeetingHistoryProps = {
   onBack?: () => void;
@@ -123,7 +124,7 @@ export default function MeetingHistory({ onBack, onNavigateToNegotiation }: Meet
   );
 }
 
-const WIDE_CONTENT_MAX_WIDTH = 1100;
+const WIDE_CONTENT_MAX_WIDTH = WEB_MAX_WIDTH;
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
@@ -158,7 +159,7 @@ function createStyles(colors: ColorPalette) {
     list: {
       gap: tokens.spacing[12],
     },
-    contentWide: { maxWidth: WIDE_CONTENT_MAX_WIDTH },
+    contentWide: { maxWidth: WEB_MAX_WIDTH, paddingHorizontal: WEB_GUTTER },
     listWide: { flexDirection: "row", flexWrap: "wrap" },
     fullRow: { width: "100%" },
     cardWide: { flexBasis: "48%", flexGrow: 0 },
