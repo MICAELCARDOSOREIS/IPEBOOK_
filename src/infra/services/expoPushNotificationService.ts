@@ -125,6 +125,21 @@ export class ExpoPushNotificationService implements IPushNotificationService {
     }
   }
 
+  subscribeToOpened(listener: (target: { url: string | null }) => void): () => void {
+    const Notifications = getNotificationsModule();
+    if (!Notifications) return () => {};
+    const notify = (response: NotificationsType.NotificationResponse | null) => {
+      const url = response?.notification.request.content.data?.url;
+      listener({ url: typeof url === "string" ? url : null });
+    };
+    const subscription = Notifications.addNotificationResponseReceivedListener((response) => notify(response));
+    // App aberto pelo toque, estando fechado: a resposta já chegou antes do listener existir.
+    void Notifications.getLastNotificationResponseAsync?.().then((response) => {
+      if (response) notify(response);
+    }).catch(() => {});
+    return () => subscription.remove();
+  }
+
   async scheduleLocalNotification(options: NotificationScheduleOptions): Promise<string | null> {
     const Notifications = await this.ensureInitialized();
     if (!Notifications) return null;

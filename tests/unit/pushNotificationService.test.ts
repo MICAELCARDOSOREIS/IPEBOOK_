@@ -1,7 +1,12 @@
+import { createRequire } from "node:module";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryPushNotificationService } from "@/infra/services/memoryPushNotificationService";
 import { ExpoPushNotificationService } from "@/infra/services/expoPushNotificationService";
 import * as Notifications from "expo-notifications";
+
+// O serviço carrega `expo-notifications` por `require`; o teste pega a mesma instância para controlar a resposta e a escuta.
+const mockState = (createRequire(import.meta.url)("expo-notifications") as { __mock: { lastResponse: unknown; listener?: (r: unknown) => void; removed: number } }).__mock;
+const tap = (url: unknown) => ({ notification: { request: { content: { data: { url } } } } });
 
 describe("PushNotificationService (Spec 060 / ADR 0043)", () => {
   describe("MemoryPushNotificationService", () => {
@@ -14,6 +19,16 @@ describe("PushNotificationService (Spec 060 / ADR 0043)", () => {
       expect(await service.requestPermissions()).toBe(true);
       expect(await service.getPermissions()).toBe(true);
       expect(await service.registerForPushNotifications()).toBe("ExponentPushToken[mock-local-token]");
+    });
+
+    it("avisa o toque na notificação a quem escuta e para depois de cancelar", () => {
+      const service = new MemoryPushNotificationService(true);
+      const vistos: Array<string | null> = [];
+      const cancelar = service.subscribeToOpened(({ url }) => vistos.push(url));
+      service.simulateOpened("/negociacao/r1");
+      cancelar();
+      service.simulateOpened("/negociacao/r2");
+      expect(vistos).toEqual(["/negociacao/r1"]);
     });
 
     it("agenda notificação local e cancela com sucesso", async () => {
@@ -124,6 +139,27 @@ describe("PushNotificationService (Spec 060 / ADR 0043)", () => {
     it("registra e obtém token expo push", async () => {
       const token = await service.registerForPushNotifications();
       expect(token).toBe("ExponentPushToken[mock-token]");
+    });
+
+    it("avisa o toque na notificação com a rota do aviso e cancela a escuta (Spec 096, CA3)", () => {
+      mockState.lastResponse = null;
+      const aberturas: Array<string | null> = [];
+      const cancelar = service.subscribeToOpened(({ url }) => aberturas.push(url));
+      mockState.listener?.(tap("/negociacao/r1"));
+      mockState.listener?.(tap(42));
+      expect(aberturas).toEqual(["/negociacao/r1", null]);
+      const antes = mockState.removed;
+      cancelar();
+      expect(mockState.removed).toBe(antes + 1);
+    });
+
+    it("com o app aberto pelo toque, entrega a última resposta que chegou antes da escuta", async () => {
+      mockState.lastResponse = tap("/negociacao/r2");
+      const aberturas: Array<string | null> = [];
+      service.subscribeToOpened(({ url }) => aberturas.push(url));
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      mockState.lastResponse = null;
+      expect(aberturas).toEqual(["/negociacao/r2"]);
     });
 
     it("agenda notificação local e cancela", async () => {
