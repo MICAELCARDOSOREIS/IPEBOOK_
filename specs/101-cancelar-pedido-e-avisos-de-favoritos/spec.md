@@ -1,6 +1,6 @@
 # Especificação 101 — Cancelar pedido e avisos de livros favoritados
 
-Status: implementada e testada localmente; migração `202610280008_cancelar_pedido_e_avisos_de_favoritos.sql` aguardando aplicação no Supabase remoto. ADR: [0077](../../docs/adr/0077-cancelar-pedido-e-avisos-de-favoritos.md).
+Status: implementada e testada localmente; migração `202610280008_cancelar_pedido_e_avisos_de_favoritos.sql` aplicada no Supabase remoto. ADR: [0077](../../docs/adr/0077-cancelar-pedido-e-avisos-de-favoritos.md).
 
 ## Objetivo
 Permitir que quem pediu um livro desista do pedido ainda sem resposta, avisando quem anunciou, e avisar quem favoritou um livro quando o preço baixa ou o livro deixa de estar disponível.
