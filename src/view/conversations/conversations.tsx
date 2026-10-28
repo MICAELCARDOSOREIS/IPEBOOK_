@@ -3,6 +3,7 @@ import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { Chat } from "@/view/conversations/chat";
+import { useDeliveryStatus } from "@/viewmodel/useDeliveryViewModel";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import {
   formatConversationTime,
@@ -21,6 +22,13 @@ import { BookCover } from "@/view/components/BookCover";
 import { Tag } from "@/view/components/Tag";
 import { LoadingState } from "@/view/components/LoadingState";
 import { OfflineState } from "@/view/components/OfflineState";
+
+/** "Combinar encontro" do painel largo; some quando a entrega já foi concluída por QR (Spec 095). */
+function CombineAction({ requestId, sessionUserId, onOpen }: { requestId: string; sessionUserId: string; onOpen?: (requestId: string) => void }) {
+  const delivery = useDeliveryStatus(requestId, sessionUserId);
+  if (delivery.completed) return null;
+  return <FilledButton label="Combinar encontro" onPress={() => onOpen?.(requestId)} />;
+}
 
 export type ConversationsProps = {
   sessionUserId: string;
@@ -263,7 +271,7 @@ export function Conversations({
                     <Tag variant={selectedItem.listing.modality} />
                   </View>
                 </View>
-                <FilledButton label="Combinar encontro" onPress={() => onOpenNegotiation?.(selectedItem.requestId)} />
+                <CombineAction requestId={selectedItem.requestId} sessionUserId={sessionUserId} onOpen={onOpenNegotiation} />
                 <View style={styles.aboutSafe}>
                   <Text style={styles.aboutSafeTitle}>Encontro seguro</Text>
                   <Text style={styles.aboutSafeBody}>Locais públicos e horário de movimento em Piripiri.</Text>

@@ -6,6 +6,11 @@ import { Chat } from "@/view/conversations/chat";
 
 vi.mock("@/viewmodel/useRequestDetailViewModel", () => ({ useRequestDetailViewModel: vi.fn() }));
 vi.mock("@/viewmodel/useNegotiationChatViewModel", () => ({ useNegotiationChatViewModel: vi.fn() }));
+// Entrega por QR (Spec 095): começa sem conclusão.
+let deliveryCompleted: Record<string, unknown> | null = null;
+vi.mock("@/viewmodel/useDeliveryViewModel", () => ({
+  useDeliveryStatus: () => ({ loading: false, role: "receiver", completed: deliveryCompleted }),
+}));
 
 import { useRequestDetailViewModel } from "@/viewmodel/useRequestDetailViewModel";
 import { useNegotiationChatViewModel } from "@/viewmodel/useNegotiationChatViewModel";
@@ -95,6 +100,25 @@ describe("Chat em tela cheia (Spec 082)", () => {
     const screen = await renderChat({ onOpenNegotiation });
     await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Combinar encontro na negociação" })); });
     expect(onOpenNegotiation).toHaveBeenCalledWith("r1");
+  });
+
+  it("depois da entrega concluída, o chat não oferece mais o Combinar (Spec 095)", async () => {
+    setup();
+    deliveryCompleted = { requestId: "r1", completedBy: "me", completedAt: "2026-10-29T10:00:00.000Z" };
+    const screen = await renderChat({});
+    deliveryCompleted = null;
+    expect(screen.getByText("Dom Casmurro")).toBeDefined();
+    expect(screen.queryByLabelText("Combinar encontro na negociação")).toBeNull();
+  });
+
+  it("depois da entrega concluída, a conversa vira só consulta, sem campo de mensagem", async () => {
+    setup();
+    deliveryCompleted = { requestId: "r1", completedBy: "me", completedAt: "2026-10-29T10:00:00.000Z" };
+    const screen = await renderChat({});
+    deliveryCompleted = null;
+    expect(screen.getByText("Negociação concluída. A conversa ficou só para consulta.")).toBeDefined();
+    expect(screen.queryByLabelText("Campo de mensagem")).toBeNull();
+    expect(screen.queryByLabelText("Enviar mensagem")).toBeNull();
   });
 
   it("embutido na web larga, omite Voltar e Combinar (o painel lateral já oferece)", async () => {

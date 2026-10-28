@@ -103,7 +103,7 @@ export class BookUseCases implements IBookUseCases {
       throw new AuthError("Apenas quem anunciou o livro pode cancelá-lo.");
     }
 
-    if (book.status === "reserved") {
+    if (book.status === "reserved" || book.status === "delivered") {
       throw new ValidationError("Não é possível remover anúncio com negociação aceita em andamento.");
     }
 
@@ -132,7 +132,7 @@ export class BookUseCases implements IBookUseCases {
       throw new AuthError("Apenas quem anunciou o livro pode editá-lo.");
     }
 
-    if (book.status === "reserved") {
+    if (book.status === "reserved" || book.status === "delivered") {
       throw new ValidationError("Não é possível editar anúncio com negociação aceita em andamento.");
     }
 
@@ -205,7 +205,7 @@ export class BookUseCases implements IBookUseCases {
       throw new AuthError("Apenas quem anunciou o livro pode pausar ou reativar o anúncio.");
     }
 
-    if (book.status === "reserved") {
+    if (book.status === "reserved" || book.status === "delivered") {
       throw new ValidationError("Não é possível alterar o status de anúncio com negociação aceita.");
     }
 

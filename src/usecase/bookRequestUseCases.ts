@@ -39,7 +39,7 @@ export class BookRequestUseCases implements IBookRequestUseCases {
       throw new ValidationError("Você não pode negociar o próprio anúncio.");
     }
     // FR-003
-    if (listing.status === "reserved") {
+    if (listing.status === "reserved" || listing.status === "delivered") {
       throw new ValidationError("Este anúncio não está mais disponível.");
     }
     // FR-002

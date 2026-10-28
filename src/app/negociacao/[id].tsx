@@ -17,6 +17,7 @@ export default function NegociacaoDetalheRoute() {
       onRequireSignIn={() => replaceOnce("/entrar")}
       onNavigateToBookDetail={(bookId) => pushOnce(`/livro/${bookId}`)}
       onScheduleMeeting={() => pushOnce(`/negociacao/${id}/encontro` as never)}
+      onOpenDelivery={() => pushOnce(`/negociacao/${id}/entrega` as never)}
       onOpenChat={(requestId) => pushOnce(`/conversa/${requestId}` as never)}
     />
   );

@@ -152,11 +152,11 @@ export default function BookDetail({
     >
       <Text style={styles.tonalButtonText}>Compartilhar</Text>
     </Pressable>
-    {book.status === "reserved" || (sessionUserId && book.ownerId !== sessionUserId) ? (
+    {book.status === "reserved" || book.status === "delivered" || (sessionUserId && book.ownerId !== sessionUserId) ? (
       <View style={styles.primarySlot}>
-        {book.status === "reserved" ? (
+        {book.status === "reserved" || book.status === "delivered" ? (
           <View style={styles.statusPill}>
-            <Text style={styles.reserved}>Reservado</Text>
+            <Text style={styles.reserved}>{book.status === "delivered" ? "Entregue" : "Reservado"}</Text>
           </View>
         ) : sessionUserId && book.ownerId !== sessionUserId ? (
           negotiation.requestedListingIds.includes(book.id) ? (

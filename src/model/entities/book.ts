@@ -1,5 +1,5 @@
 export type BookModality = "sale" | "trade" | "donation";
-export type BookStatus = "available" | "reserved" | "paused" | "draft";
+export type BookStatus = "available" | "reserved" | "paused" | "draft" | "delivered";
 
 /** Estado de conservação do exemplar (Figma `04.05 · Detalhes do livro`). */
 export type BookCondition = "new" | "good" | "marked" | "worn";

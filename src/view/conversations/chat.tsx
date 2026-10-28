@@ -12,6 +12,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useNegotiationChatViewModel } from "@/viewmodel/useNegotiationChatViewModel";
 import { useRequestDetailViewModel } from "@/viewmodel/useRequestDetailViewModel";
+import { useDeliveryStatus } from "@/viewmodel/useDeliveryViewModel";
 import { buildChatTimeline, formatBubbleTime, type ChatTimelineItem } from "@/viewmodel/chatTimeline";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
@@ -45,6 +46,8 @@ export function Chat({ requestId, sessionUserId, onBack, onOpenNegotiation, embe
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [detailState] = useRequestDetailViewModel(requestId, sessionUserId);
   const [state, actions] = useNegotiationChatViewModel(requestId, sessionUserId);
+  // Entrega concluída por QR (Spec 095): não há mais o que combinar.
+  const delivery = useDeliveryStatus(requestId, sessionUserId);
   const listRef = useRef<FlatList<ChatTimelineItem>>(null);
 
   const detail = detailState.detail;
@@ -120,7 +123,7 @@ export function Chat({ requestId, sessionUserId, onBack, onOpenNegotiation, embe
               </Text>
               <Tag variant={detail.book.modality} />
             </View>
-            {embedded ? null : (
+            {embedded || delivery.completed ? null : (
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel="Combinar encontro na negociação"
@@ -176,6 +179,11 @@ export function Chat({ requestId, sessionUserId, onBack, onOpenNegotiation, embe
           </View>
         ) : null}
 
+        {delivery.completed ? (
+          <View style={styles.closedNotice} accessibilityLiveRegion="polite">
+            <Text style={styles.closedNoticeText}>Negociação concluída. A conversa ficou só para consulta.</Text>
+          </View>
+        ) : (
         <View style={styles.composer}>
           <TextInput
             accessibilityLabel="Campo de mensagem"
@@ -202,6 +210,7 @@ export function Chat({ requestId, sessionUserId, onBack, onOpenNegotiation, embe
             )}
           </Pressable>
         </View>
+        )}
       </View>
     </SafeAreaView>
   );
@@ -220,6 +229,8 @@ export default function ChatScreen({ onRequireSignIn, ...props }: ChatScreenProp
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
+    closedNotice: { padding: tokens.spacing[16], backgroundColor: colors.m3.surfaceContainer },
+    closedNoticeText: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant, textAlign: "center" },
     page: { flex: 1, backgroundColor: colors.background },
     flex: { flex: 1 },
     header: {

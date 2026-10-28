@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Meeting } from "@/model/entities/meeting";
-import * as Linking from "expo-linking";
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
@@ -8,17 +7,21 @@ import { useRequestDetailViewModel } from "@/viewmodel/useRequestDetailViewModel
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { formatPrice } from "@/view/formatPrice";
-import { describeMeetingCountdown } from "@/view/meetingFormat";
 import { COMMUNITY_MEMBER } from "@/view/requests/receivedRequests";
 import { MeetingCard } from "@/view/requests/meetingCard";
 import { BookCover } from "@/view/components/BookCover";
 import { IconBadge } from "@/view/components/IconBadge";
 import { Tag } from "@/view/components/Tag";
 import { TopAppBar } from "@/view/components/TopAppBar";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { Avatar } from "@/view/components/Avatar";
 import { AppIcon } from "@/view/components/AppIcon";
-import { NegotiationRatingModal } from "@/view/requests/NegotiationRatingModal";
 import { useNegotiationRatingViewModel } from "@/viewmodel/useNegotiationRatingViewModel";
+import { useDeliveryStatus } from "@/viewmodel/useDeliveryViewModel";
+import { NegotiationRatingModal } from "@/view/requests/NegotiationRatingModal";
+import { FilledButton } from "@/view/components/FilledButton";
+
+const WIDE_CONTENT_MAX_WIDTH = 1100;
 
 export type RequestDetailProps = {
   requestId: string;
@@ -29,6 +32,8 @@ export type RequestDetailProps = {
   onScheduleMeeting?: () => void;
   /** Abre a conversa em tela cheia (`/conversa/[id]`, Spec 082). */
   onOpenChat?: (requestId: string) => void;
+  /** Abre "Entrega do livro": o anunciante mostra o QR e o leitor o lê (Spec 095). */
+  onOpenDelivery?: () => void;
   focusKey?: number;
 };
 
@@ -43,19 +48,17 @@ export function RequestDetail({
   onNavigateToBookDetail,
   onScheduleMeeting,
   onOpenChat,
+  onOpenDelivery,
   focusKey,
 }: RequestDetailProps) {
   const [state, actions] = useRequestDetailViewModel(requestId, sessionUserId);
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const detail = state.detail;
-  const [mapErrors, setMapErrors] = useState<Record<string, string>>({});
-  const [ratingModalVisible, setRatingModalVisible] = useState(false);
   const [meeting, setMeeting] = useState<Meeting | null>(null);
   const handleMeetingChange = useCallback((value: Meeting | null) => setMeeting(value), []);
   const [refreshCount, setRefreshCount] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
-  const [showAllPoints, setShowAllPoints] = useState(false);
 
   async function handleRefresh() {
     setRefreshing(true);
@@ -74,11 +77,15 @@ export function RequestDetail({
     counterpartId,
   );
 
-  const completed = Boolean(ratingState.userRating);
+  const delivery = useDeliveryStatus(requestId, sessionUserId, (focusKey ?? 0) + refreshCount);
+  const [ratingModalVisible, setRatingModalVisible] = useState(false);
+  // Web larga: coluna mais larga; livro e encontro de um lado, entrega e pessoa do outro.
+  const wide = useIsWideWeb();
+  // Concluída pela entrega por QR (Spec 095); a avaliação sozinha vale para negociações anteriores.
+  const completed = Boolean(delivery.completed) || Boolean(ratingState.userRating);
   const meetingConfirmed = meeting?.status === "confirmed";
   const awaitingMyConfirmation =
     meeting?.status === "proposed" && meeting.proposedBy !== sessionUserId;
-  const meetingHappened = meetingConfirmed && describeMeetingCountdown(meeting!.scheduledAt).past;
   const progress = [
     { label: "Aceita", done: true },
     { label: meetingConfirmed ? "Encontro combinado" : "Combinar encontro", done: meetingConfirmed || completed },
@@ -86,25 +93,9 @@ export function RequestDetail({
   ];
   const currentStep = progress.findIndex((item) => !item.done);
 
-  async function handleOpenMap(point: { name: string; address: string }) {
-    setMapErrors((previous) => {
-      const { [point.name]: _removed, ...rest } = previous;
-      return rest;
-    });
-    const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(point.address)}`;
-    try {
-      await Linking.openURL(url);
-    } catch {
-      setMapErrors((previous) => ({
-        ...previous,
-        [point.name]: `Não foi possível abrir o mapa para "${point.name}". Tente novamente.`,
-      }));
-    }
-  }
-
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar title="Acompanhar encontro" onBack={() => onBack?.()} />
+      <TopAppBar title="Acompanhar encontro" onBack={() => onBack?.()} contentMaxWidth={wide ? WIDE_CONTENT_MAX_WIDTH : undefined} />
       <ScrollView
         testID="request-detail-scroll"
         contentContainerStyle={styles.scroll}
@@ -117,7 +108,7 @@ export function RequestDetail({
           />
         }
       >
-        <View style={styles.content}>
+        <View style={[styles.content, wide && styles.contentWide]}>
           {state.loading && !detail ? (
             <View style={styles.status}>
               <ActivityIndicator
@@ -151,7 +142,9 @@ export function RequestDetail({
                   <View style={styles.bannerTextContainer}>
                     <Text style={styles.successTitle}>Negociação concluída</Text>
                     <Text style={styles.successSubtitle}>
-                      Obrigado por avaliar. Isso ajuda a comunidade a confiar.
+                      {ratingState.userRating
+                        ? "Obrigado por avaliar. Isso ajuda a comunidade a confiar."
+                        : "As duas pessoas confirmaram a entrega. Avaliar ajuda a comunidade a confiar."}
                     </Text>
                   </View>
                 </View>
@@ -195,6 +188,8 @@ export function RequestDetail({
                 </View>
               ) : null}
 
+              <View style={[styles.columns, wide && styles.columnsWide]}>
+              <View style={[styles.column, wide && styles.columnHalf]}>
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel={`Ver anúncio de ${detail.book.title}`}
@@ -209,7 +204,8 @@ export function RequestDetail({
                 />
                 <View style={styles.bookInfo}>
                   <Text style={styles.bookTitle}>{detail.book.title}</Text>
-                  <Text style={styles.bookAuthor}>{detail.book.author}</Text>
+                  {/* "Autor desconhecido" é o texto de preenchimento do cadastro; sem autor real, não ocupa linha. */}
+                  {detail.book.author !== "Autor desconhecido" ? <Text style={styles.bookAuthor}>{detail.book.author}</Text> : null}
                   <View style={styles.tagRow}>
                     <Tag variant={detail.book.modality} />
                     {detail.book.modality === "sale" && detail.book.price ? (
@@ -226,7 +222,46 @@ export function RequestDetail({
                 focusKey={(focusKey ?? 0) + refreshCount}
                 onScheduleMeeting={onScheduleMeeting}
                 onMeetingChange={handleMeetingChange}
+                concluded={Boolean(delivery.completed)}
               />
+              </View>
+              <View style={[styles.column, wide && styles.columnHalf]}>
+
+              {meetingConfirmed || delivery.completed ? (
+                <View style={styles.card} testID="delivery-card">
+                  <View style={styles.cardHeaderRow}>
+                    <IconBadge icon="check" tone={delivery.completed ? "action" : "neutral"} />
+                    <Text accessibilityRole="header" style={styles.sectionHeader}>
+                      {delivery.completed ? "Entrega concluída" : "Entrega do livro"}
+                    </Text>
+                  </View>
+                  {delivery.completed ? (
+                    ratingState.userRating ? (
+                      <Text style={styles.bodyText}>
+                        Você avaliou esta negociação com {ratingState.userRating.score} estrelas.
+                      </Text>
+                    ) : (
+                      <>
+                        <Text style={styles.bodyText}>As duas pessoas confirmaram a entrega. Conte como foi.</Text>
+                        <FilledButton label="Avaliar negociação" onPress={() => setRatingModalVisible(true)} />
+                      </>
+                    )
+                  ) : (
+                    <>
+                      <Text style={styles.bodyText}>
+                        {delivery.role === "giver"
+                          ? "No encontro, mostre o QR para quem recebe o livro. A leitura conclui a negociação."
+                          : "No encontro, leia o QR que a outra pessoa mostra para concluir a negociação."}
+                      </Text>
+                      <FilledButton
+                        label={delivery.role === "giver" ? "Mostrar QR da entrega" : "Ler QR da entrega"}
+                        disabled={delivery.loading || !delivery.role}
+                        onPress={() => onOpenDelivery?.()}
+                      />
+                    </>
+                  )}
+                </View>
+              ) : null}
 
               {/* Pessoa da negociação em uma linha (Spec 083), no lugar do cartão "Participantes" */}
               <View style={styles.personRow}>
@@ -236,7 +271,7 @@ export function RequestDetail({
                   size={44}
                 />
                 <View style={styles.personText}>
-                  <Text style={styles.personName} numberOfLines={1}>
+                  <Text style={styles.personName} numberOfLines={2}>
                     {detail.counterpartName ?? COMMUNITY_MEMBER}
                   </Text>
                   <Text style={styles.personRole}>{detail.isOwner ? "Quer o livro" : "Anunciou o livro"}</Text>
@@ -251,128 +286,12 @@ export function RequestDetail({
                   <Text style={styles.chatButtonText}>Conversar</Text>
                 </Pressable>
               </View>
-
-              {/* Card de Conclusão e Avaliação (Spec 063 / Figma 06.07, 06.08, 06.21) */}
-              <View style={styles.card} testID="negotiation-completion-card">
-                <View style={styles.cardHeaderRow}>
-                  <IconBadge icon="check" tone={meetingHappened || completed ? "action" : "neutral"} />
-                  <Text accessibilityRole="header" style={styles.sectionHeader}>
-                    {ratingState.userRating ? "Negociação concluída" : "Concluir negociação"}
-                  </Text>
-                </View>
-                {ratingState.userRating ? (
-                  <View style={styles.completedRatingContainer}>
-                    <Text style={styles.bodyText}>
-                      Você avaliou esta negociação com {ratingState.userRating.score} estrelas.
-                    </Text>
-                    <View style={styles.ratingStarsRow}>
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <Text
-                          key={star}
-                          style={[
-                            styles.starStatic,
-                            star <= ratingState.userRating!.score ? styles.starFilled : styles.starEmpty,
-                          ]}
-                        >
-                          ★
-                        </Text>
-                      ))}
-                    </View>
-                  </View>
-                ) : (
-                  <View style={styles.pendingRatingContainer}>
-                    <Text style={styles.bodyText}>
-                      {meetingHappened
-                        ? "Vocês já se encontraram e a entrega do livro foi realizada?"
-                        : "Depois do encontro e da entrega do livro, volte aqui para concluir e avaliar."}
-                    </Text>
-                    {/* Spec 084: o botão principal só aparece depois do encontro; antes, um atalho
-                        discreto para quem fez a entrega sem marcar pelo app. */}
-                    {meetingHappened ? (
-                      <Pressable
-                        accessibilityRole="button"
-                        accessibilityLabel="Concluir negociação e avaliar"
-                        onPress={() => setRatingModalVisible(true)}
-                        style={styles.completeButton}
-                      >
-                        <AppIcon name="check" size={18} color={colors.surface} />
-                        <Text style={styles.completeButtonText}>Concluir e avaliar</Text>
-                      </Pressable>
-                    ) : (
-                      <Pressable
-                        accessibilityRole="button"
-                        accessibilityLabel="Já fizemos a entrega"
-                        hitSlop={8}
-                        onPress={() => setRatingModalVisible(true)}
-                        style={styles.earlyComplete}
-                      >
-                        <Text style={styles.earlyCompleteText}>Já fizemos a entrega</Text>
-                      </Pressable>
-                    )}
-                  </View>
-                )}
               </View>
-
-              <View style={styles.card}>
-                <View style={styles.cardHeaderRow}>
-                  <IconBadge icon="place" tone="action" />
-                  <Text accessibilityRole="header" style={styles.sectionHeader}>
-                    Encontro seguro em Piripiri
-                  </Text>
-                </View>
-                <Text style={styles.bodyText}>
-                  {meetingConfirmed && !showAllPoints
-                    ? "O local já está combinado. Se precisarem mudar, prefiram outro ponto público e movimentado."
-                    : "Para a sua segurança, combinem a entrega sempre em locais públicos e movimentados:"}
-                </Text>
-                {meetingConfirmed ? (
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityState={{ expanded: showAllPoints }}
-                    onPress={() => setShowAllPoints((value) => !value)}
-                    style={styles.directionsButton}
-                  >
-                    <Text style={styles.directionsText}>
-                      {showAllPoints ? "Ocultar pontos seguros" : "Ver pontos seguros de Piripiri"}
-                    </Text>
-                  </Pressable>
-                ) : null}
-                <View style={styles.pointList}>
-                  {(meetingConfirmed && !showAllPoints ? [] : detail.safeMeetingPoints).map((point) => (
-                    <View key={point.name}>
-                      {/* Spec 084: a linha inteira abre o mapa, no lugar de um botão cheio por ponto. */}
-                      <Pressable
-                        accessibilityRole="button"
-                        accessibilityLabel={`Como chegar à ${point.name}`}
-                        onPress={() => void handleOpenMap(point)}
-                        style={styles.pointRow}
-                      >
-                        <AppIcon name="place" size={20} color={colors.action} />
-                        <View style={styles.pointText}>
-                          <Text style={styles.pointName}>{point.name}</Text>
-                          <Text style={styles.pointDetail}>{point.address}</Text>
-                          <Text style={styles.pointDetail}>{point.recommendedTime}</Text>
-                        </View>
-                        <Text style={styles.pointLink}>Rota</Text>
-                      </Pressable>
-                      {mapErrors[point.name] ? (
-                        <Text accessibilityRole="alert" style={styles.mapErrorText}>
-                          {mapErrors[point.name]}
-                        </Text>
-                      ) : null}
-                    </View>
-                  ))}
-                </View>
-                <Text style={styles.tipText}>
-                  Chegue alguns minutos antes, verifique a conservação do livro no momento da troca e
-                  prefira horários diurnos.
-                </Text>
               </View>
             </View>
           ) : null}
         </View>
       </ScrollView>
-
 
       {detail ? (
         <NegotiationRatingModal
@@ -380,10 +299,7 @@ export function RequestDetail({
           counterpartName={detail.counterpartName ?? COMMUNITY_MEMBER}
           selectedScore={ratingState.selectedScore}
           onSelectScore={ratingActions.setSelectedScore}
-          onSubmit={async () => {
-            const ok = await ratingActions.submitRating();
-            return ok;
-          }}
+          onSubmit={async () => ratingActions.submitRating()}
           onClose={() => {
             setRatingModalVisible(false);
             ratingActions.resetFeedback();
@@ -404,6 +320,8 @@ export type RequestDetailScreenProps = {
   onNavigateToBookDetail?: (bookId: string) => void;
   onScheduleMeeting?: () => void;
   onOpenChat?: (requestId: string) => void;
+  /** Abre "Entrega do livro": o anunciante mostra o QR e o leitor o lê (Spec 095). */
+  onOpenDelivery?: () => void;
   focusKey?: number;
 };
 
@@ -414,6 +332,7 @@ export default function RequestDetailScreen({
   onNavigateToBookDetail,
   onScheduleMeeting,
   onOpenChat,
+  onOpenDelivery,
   focusKey,
 }: RequestDetailScreenProps) {
   const [authState] = useAuthViewModel();
@@ -434,6 +353,7 @@ export default function RequestDetailScreen({
       onNavigateToBookDetail={onNavigateToBookDetail}
       onScheduleMeeting={onScheduleMeeting}
       onOpenChat={onOpenChat}
+      onOpenDelivery={onOpenDelivery}
       focusKey={focusKey}
     />
   );
@@ -511,6 +431,11 @@ function createStyles(colors: ColorPalette) {
     fontWeight: "600",
   },
   container: { gap: tokens.spacing[16] },
+  contentWide: { maxWidth: WIDE_CONTENT_MAX_WIDTH, paddingHorizontal: tokens.spacing[24] },
+  columns: { gap: tokens.spacing[16] },
+  columnsWide: { flexDirection: "row", alignItems: "flex-start" },
+  column: { gap: tokens.spacing[16] },
+  columnHalf: { flex: 1 },
   // Manchete menor (Spec 083) para a ação do momento caber acima da dobra.
   heroHeadline: {
     fontSize: 24,
@@ -613,7 +538,7 @@ function createStyles(colors: ColorPalette) {
     flexDirection: "row",
     alignItems: "center",
     gap: tokens.spacing[6],
-    minHeight: 40,
+    minHeight: tokens.accessibility.touchTarget,
     paddingHorizontal: tokens.spacing[16],
     borderRadius: tokens.radius.full,
     backgroundColor: colors.m3.secondaryContainer,
@@ -622,91 +547,6 @@ function createStyles(colors: ColorPalette) {
     ...tokens.typography.labelMedium,
     fontWeight: "600",
     color: colors.m3.onSecondaryContainer,
-  },
-  pointList: { gap: tokens.spacing[12], paddingVertical: tokens.spacing[4] },
-  pointRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: tokens.spacing[12],
-    minHeight: tokens.accessibility.touchTarget,
-    paddingVertical: tokens.spacing[12],
-    borderTopWidth: 1,
-    borderTopColor: colors.m3.outlineVariant,
-  },
-  pointText: { flex: 1, gap: 2 },
-  pointLink: { ...tokens.typography.labelMedium, fontWeight: "700", color: colors.action },
-  earlyComplete: { alignSelf: "flex-start", minHeight: tokens.accessibility.touchTarget, justifyContent: "center" },
-  earlyCompleteText: { ...tokens.typography.labelMedium, fontWeight: "600", color: colors.action, textDecorationLine: "underline" },
-  pointName: {
-    ...tokens.typography.bodyMedium,
-    fontWeight: "600",
-    color: colors.text,
-  },
-  pointDetail: {
-    ...tokens.typography.bodyMedium,
-    color: colors.secondaryText,
-  },
-  directionsButton: {
-    alignSelf: "flex-start",
-    marginTop: tokens.spacing[4],
-    paddingVertical: tokens.spacing[8],
-    paddingHorizontal: tokens.spacing[16],
-    borderRadius: tokens.radius.full,
-    backgroundColor: colors.m3.secondaryContainer,
-    minHeight: tokens.accessibility.touchTarget,
-    justifyContent: "center",
-  },
-  directionsText: {
-    ...tokens.typography.labelMedium,
-    fontWeight: "700",
-    color: colors.m3.onSecondaryContainer,
-  },
-  mapErrorText: {
-    ...tokens.typography.labelMedium,
-    color: colors.error,
-  },
-  tipText: {
-    ...tokens.typography.labelMedium,
-    color: colors.secondaryText,
-    fontStyle: "italic",
-    marginTop: tokens.spacing[4],
-  },
-  completedRatingContainer: {
-    gap: tokens.spacing[8],
-  },
-  pendingRatingContainer: {
-    gap: tokens.spacing[12],
-  },
-  ratingStarsRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: tokens.spacing[4],
-  },
-  starStatic: {
-    fontSize: 22,
-  },
-  starFilled: {
-    color: colors.highlight,
-  },
-  starEmpty: {
-    color: colors.border,
-  },
-  completeButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: tokens.spacing[8],
-    backgroundColor: colors.action,
-    borderRadius: tokens.radius.full,
-    paddingVertical: tokens.spacing[12],
-    paddingHorizontal: tokens.spacing[20],
-    minHeight: tokens.accessibility.touchTarget,
-    alignSelf: "flex-start",
-  },
-  completeButtonText: {
-    ...tokens.typography.labelMedium,
-    fontWeight: "700",
-    color: colors.surface,
   },
   });
 }

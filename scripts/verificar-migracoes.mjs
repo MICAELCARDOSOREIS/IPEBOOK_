@@ -395,5 +395,52 @@ if (publicadas !== 'v2_book_requests,v2_negotiation_messages,v2_notifications') 
 }
 process.stdout.write('Tempo real de conversas e notificações (Spec 086): verificado com sucesso\n');
 
+// Spec 095 / ADR 0070: conclusão da entrega por QR code (pedido bbbb; dono = owner, leitor = reader).
+const pedido = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+await denied('Gerar código sem encontro confirmado', () => as('authenticated', owner, `select * from public.create_delivery_code('${pedido}')`));
+await as('authenticated', owner, `update public.v2_meetings set status = 'confirmed' where request_id = '${pedido}' and status = 'proposed'`);
+await denied('Leitor gera o código da entrega', () => as('authenticated', reader, `select * from public.create_delivery_code('${pedido}')`));
+await denied('Terceiro gera o código da entrega', () => as('authenticated', other, `select * from public.create_delivery_code('${pedido}')`));
+await denied('Visitante gera o código da entrega', () => as('anon', null, `select * from public.create_delivery_code('${pedido}')`));
+const gerado = await as('authenticated', owner, `select * from public.create_delivery_code('${pedido}')`);
+const codigo = gerado.rows[0]?.code;
+if (!/^[23456789A-HJKMNP-Z]{8}$/.test(codigo ?? '')) throw new Error(`Código gerado inválido: ${codigo}`);
+const lidoPeloLeitor = await as('authenticated', reader, `select code from public.v2_delivery_codes`).catch(() => ({ rows: [] }));
+if (lidoPeloLeitor.rows.length !== 0) throw new Error('Leitor leu o código direto da tabela');
+await denied('Anunciante confirma a própria entrega', () => as('authenticated', owner, `select * from public.complete_delivery('${pedido}', '${codigo}')`));
+await denied('Terceiro confirma a entrega', () => as('authenticated', other, `select * from public.complete_delivery('${pedido}', '${codigo}')`));
+const errado = codigo === 'AAAAAAAA' ? 'BBBBBBBB' : 'AAAAAAAA';
+for (let tentativa = 1; tentativa <= 5; tentativa += 1) {
+  const r = await as('authenticated', reader, `select * from public.complete_delivery('${pedido}', '${errado}')`);
+  if (r.rows[0]?.resultado !== 'incorreto') throw new Error(`Tentativa ${tentativa}: esperava incorreto, veio ${r.rows[0]?.resultado}`);
+}
+const bloqueado = await as('authenticated', reader, `select * from public.complete_delivery('${pedido}', '${codigo}')`);
+if (bloqueado.rows[0]?.resultado !== 'bloqueado') throw new Error('Código não bloqueou após 5 tentativas erradas');
+process.stdout.write('Cinco tentativas erradas bloqueiam o código: verificado\n');
+const novo = (await as('authenticated', owner, `select * from public.create_delivery_code('${pedido}')`)).rows[0].code;
+await db.exec(`reset role; update public.v2_delivery_codes set expires_at = now() - interval '1 minute' where request_id = '${pedido}'`);
+const expirado = await as('authenticated', reader, `select * from public.complete_delivery('${pedido}', '${novo}')`);
+if (expirado.rows[0]?.resultado !== 'expirado') throw new Error('Código vencido foi aceito');
+process.stdout.write('Código vencido: recusado\n');
+const ultimo = (await as('authenticated', owner, `select * from public.create_delivery_code('${pedido}')`)).rows[0].code;
+await denied('Entrega escrita direto na tabela', () => as('authenticated', reader, `insert into public.v2_deliveries (request_id, completed_by) values ('${pedido}', '${reader}')`));
+const ok = await as('authenticated', reader, `select * from public.complete_delivery('${pedido}', '${ultimo.toLowerCase()}')`);
+if (ok.rows[0]?.resultado !== 'ok') throw new Error(`Código certo não concluiu: ${ok.rows[0]?.resultado}`);
+for (const [papel, usuario] of [['anunciante', owner], ['leitor', reader]]) {
+  const visto = await as('authenticated', usuario, `select request_id from public.v2_deliveries`);
+  if (visto.rows.length !== 1) throw new Error(`Entrega não visível para o ${papel}`);
+}
+const escondida = await as('authenticated', other, `select request_id from public.v2_deliveries`);
+if (escondida.rows.length !== 0) throw new Error('Entrega visível para quem não participa');
+await denied('Entrega concluída não se repete', () => as('authenticated', reader, `select * from public.complete_delivery('${pedido}', '${ultimo}')`));
+await denied('Código novo depois de concluída', () => as('authenticated', owner, `select * from public.create_delivery_code('${pedido}')`));
+const avisoEntrega = await as('authenticated', owner, `select title, action_url from public.v2_notifications where title = 'Entrega confirmada'`);
+if (avisoEntrega.rows.length !== 1 || avisoEntrega.rows[0].action_url !== `/negociacao/${pedido}`) throw new Error('Entrega não avisou o anunciante');
+process.stdout.write('Conclusão da entrega por QR code (Spec 095): verificada com sucesso\n');
+const livroEntregue = await as('authenticated', owner, `select status from public.v2_books where id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'`);
+if (livroEntregue.rows[0]?.status !== 'delivered') throw new Error(`Livro não virou entregue: ${livroEntregue.rows[0]?.status}`);
+process.stdout.write('Livro entregue depois da conclusão (Spec 095): verificado com sucesso\n');
+
+
 process.stdout.write('Migrações e cenários SQL locais verificados.\n');
 await db.close();

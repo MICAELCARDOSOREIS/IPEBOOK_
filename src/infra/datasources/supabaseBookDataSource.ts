@@ -54,7 +54,9 @@ export class SupabaseBookDataSource implements IBookDataSource {
       .from("v2_books")
       .select(BOOK_COLUMNS)
       .neq("status", "paused")
-      .neq("status", "draft");
+      .neq("status", "draft")
+      // Entregue (Spec 095): a negociação foi concluída e o livro saiu de circulação.
+      .neq("status", "delivered");
 
     if (
       options?.neighborhood &&

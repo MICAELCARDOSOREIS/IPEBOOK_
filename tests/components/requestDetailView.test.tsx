@@ -5,11 +5,6 @@ import type { NegotiationDetail } from "@/usecase/iBookRequestUseCases";
 import type { RequestDetailState, RequestDetailActions } from "@/viewmodel/useRequestDetailViewModel";
 import RequestDetailScreen, { RequestDetail } from "@/view/requests/requestDetail";
 
-const openURL = vi.fn();
-vi.mock("expo-linking", () => ({
-  openURL: (...args: unknown[]) => openURL(...args),
-}));
-
 vi.mock("@/viewmodel/useRequestDetailViewModel", () => ({
   useRequestDetailViewModel: vi.fn(),
 }));
@@ -21,6 +16,16 @@ vi.mock("@/viewmodel/useMeetingViewModel", () => ({
     { meeting: mockedMeeting, loading: false, error: null, busy: false, actionError: null },
     { reload: vi.fn(), confirm: vi.fn(), cancel: vi.fn() },
   ],
+}));
+
+// Situação da entrega por QR (Spec 095); começa sem papel nem conclusão.
+let mockedDelivery: { loading: boolean; role: "giver" | "receiver" | null; completed: Record<string, unknown> | null } = {
+  loading: false,
+  role: null,
+  completed: null,
+};
+vi.mock("@/viewmodel/useDeliveryViewModel", () => ({
+  useDeliveryStatus: () => mockedDelivery,
 }));
 
 vi.mock("@/viewmodel/useAuthViewModel", () => ({
@@ -67,11 +72,15 @@ describe("tela de Detalhes da Negociação (ISO/IEC 25010 - Usabilidade e Acessi
         name: "Campus IFPI Piripiri",
         address: "Rodovia PI-112, Km 01, Piripiri, PI",
         recommendedTime: "Dias úteis, das 8h às 17h",
+        latitude: -4.2741994,
+        longitude: -41.7777509,
       },
       {
         name: "Praça da Bandeira",
         address: "Praça da Bandeira, Centro, Piripiri, PI",
         recommendedTime: "Diariamente, das 8h às 18h",
+        latitude: -4.2741994,
+        longitude: -41.7777509,
       },
     ],
   };
@@ -132,9 +141,9 @@ describe("tela de Detalhes da Negociação (ISO/IEC 25010 - Usabilidade e Acessi
     expect(screen.getByText("Machado de Assis")).toBeDefined();
     expect(screen.getByText("R$ 35,00")).toBeDefined();
     expect(screen.getByText("Ana Paula")).toBeDefined();
-    expect(screen.getByText("Campus IFPI Piripiri")).toBeDefined();
-    expect(screen.getByText("Praça da Bandeira")).toBeDefined();
-    expect(screen.getByText("Rodovia PI-112, Km 01, Piripiri, PI")).toBeDefined();
+    // Os pontos de encontro são escolhidos no mapa de "Combinar encontro" (Spec 094), não mais nesta tela.
+    expect(screen.queryByText("Encontro seguro em Piripiri")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Como chegar à Campus IFPI Piripiri" })).toBeNull();
 
     const bookCard = screen.getByRole("button", {
       name: "Ver anúncio de Memórias Póstumas",
@@ -143,7 +152,7 @@ describe("tela de Detalhes da Negociação (ISO/IEC 25010 - Usabilidade e Acessi
     expect(onNavigateToBookDetail).toHaveBeenCalledWith("b1");
   });
 
-  it("mostra o andamento e só pede a conclusão depois do encontro (Spec 079)", async () => {
+  it("mostra o andamento sem o cartão de conclusão, que virá por QR code (Spec 094)", async () => {
     mockViewModel({ detail: fakeDetail, loading: false, error: null });
 
     let screen!: Awaited<ReturnType<typeof render>>;
@@ -154,15 +163,11 @@ describe("tela de Detalhes da Negociação (ISO/IEC 25010 - Usabilidade e Acessi
     expect(
       screen.getByLabelText("Andamento: 1 de 3 etapas. Combinar encontro"),
     ).toBeDefined();
-    expect(
-      screen.getByText("Depois do encontro e da entrega do livro, volte aqui para concluir e avaliar."),
-    ).toBeDefined();
-    // Spec 084: antes do encontro, sem botão principal de conclusão; só o atalho discreto.
-    expect(screen.queryByLabelText("Concluir negociação e avaliar")).toBeNull();
-    expect(screen.getByRole("button", { name: "Já fizemos a entrega" })).toBeDefined();
+    expect(screen.queryByText("Concluir negociação")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Já fizemos a entrega" })).toBeNull();
   });
 
-  it("depois do encontro mostra o botão principal Concluir e avaliar (Spec 084)", async () => {
+  it("depois do encontro também não mostra o cartão de conclusão (Spec 094)", async () => {
     mockedMeeting = {
       id: "m1", requestId: "req-1", pointName: "Praça da Bandeira (Centro)",
       scheduledAt: "2020-01-01T15:00:00.000Z", proposedBy: "comprador-1", status: "confirmed",
@@ -172,7 +177,7 @@ describe("tela de Detalhes da Negociação (ISO/IEC 25010 - Usabilidade e Acessi
     await act(async () => {
       screen = await render(<RequestDetail requestId="req-1" sessionUserId="vendedor-1" />);
     });
-    expect(screen.getByLabelText("Concluir negociação e avaliar")).toBeDefined();
+    expect(screen.queryByLabelText("Concluir negociação e avaliar")).toBeNull();
     expect(screen.queryByRole("button", { name: "Já fizemos a entrega" })).toBeNull();
     mockedMeeting = null;
   });
@@ -191,7 +196,59 @@ describe("tela de Detalhes da Negociação (ISO/IEC 25010 - Usabilidade e Acessi
     mockedMeeting = null;
   });
 
-  it("encontro combinado recolhe os pontos seguros e permite expandir (Spec 080)", async () => {
+  describe("entrega por QR code (Spec 095, CA6/CA7)", () => {
+    const confirmed = {
+      id: "m1", requestId: "req-1", pointName: "Praça da Bandeira (Centro)",
+      scheduledAt: "2099-01-01T15:00:00.000Z", proposedBy: "comprador-1", status: "confirmed",
+    };
+
+    async function open(onOpenDelivery = vi.fn()) {
+      mockViewModel({ detail: fakeDetail, loading: false, error: null });
+      let screen!: Awaited<ReturnType<typeof render>>;
+      await act(async () => {
+        screen = await render(<RequestDetail requestId="req-1" sessionUserId="vendedor-1" onOpenDelivery={onOpenDelivery} />);
+      });
+      return { screen, onOpenDelivery };
+    }
+
+    it("sem encontro confirmado, não oferece a entrega", async () => {
+      mockedMeeting = null;
+      mockedDelivery = { loading: false, role: "giver", completed: null };
+      const { screen } = await open();
+      expect(screen.queryByTestId("delivery-card")).toBeNull();
+    });
+
+    it("anunciante com encontro confirmado mostra o QR da entrega", async () => {
+      mockedMeeting = confirmed;
+      mockedDelivery = { loading: false, role: "giver", completed: null };
+      const { screen, onOpenDelivery } = await open();
+      await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Mostrar QR da entrega" })); });
+      expect(onOpenDelivery).toHaveBeenCalledTimes(1);
+    });
+
+    it("leitor com encontro confirmado lê o QR da entrega", async () => {
+      mockedMeeting = confirmed;
+      mockedDelivery = { loading: false, role: "receiver", completed: null };
+      const { screen } = await open();
+      expect(screen.getByRole("button", { name: "Ler QR da entrega" })).toBeDefined();
+    });
+
+    it("entrega concluída marca a etapa 3 e oferece avaliar", async () => {
+      mockedMeeting = confirmed;
+      mockedDelivery = { loading: false, role: "receiver", completed: { requestId: "req-1", completedBy: "u", completedAt: "2026-10-29T10:00:00.000Z" } };
+      const { screen } = await open();
+      expect(screen.getByRole("header", { name: "Entrega concluída" })).toBeDefined();
+      expect(screen.getByRole("button", { name: "Avaliar negociação" })).toBeDefined();
+      expect(screen.getByLabelText("Andamento: 3 de 3 etapas. Tudo concluído")).toBeDefined();
+    });
+
+    it("limpa o estado dos testes", () => {
+      mockedMeeting = null;
+      mockedDelivery = { loading: false, role: null, completed: null };
+    });
+  });
+
+  it("encontro combinado não lista mais os pontos seguros (Spec 094)", async () => {
     mockedMeeting = {
       id: "m1", requestId: "req-1", pointName: "Praça da Bandeira (Centro)",
       scheduledAt: "2099-01-01T15:00:00.000Z", proposedBy: "comprador-1", status: "confirmed",
@@ -201,12 +258,9 @@ describe("tela de Detalhes da Negociação (ISO/IEC 25010 - Usabilidade e Acessi
     await act(async () => {
       screen = await render(<RequestDetail requestId="req-1" sessionUserId="vendedor-1" />);
     });
-    expect(screen.queryByRole("button", { name: "Como chegar à Campus IFPI Piripiri" })).toBeNull();
+    expect(screen.queryByText("Encontro seguro em Piripiri")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Ver pontos seguros de Piripiri" })).toBeNull();
     expect(screen.getByLabelText("Andamento: 2 de 3 etapas. Concluída")).toBeDefined();
-    await act(async () => {
-      fireEvent.press(screen.getByRole("button", { name: "Ver pontos seguros de Piripiri" }));
-    });
-    expect(screen.getByRole("button", { name: "Como chegar à Campus IFPI Piripiri" })).toBeDefined();
     mockedMeeting = null;
   });
 
@@ -226,53 +280,6 @@ describe("tela de Detalhes da Negociação (ISO/IEC 25010 - Usabilidade e Acessi
       await scroll.props.refreshControl.props.onRefresh();
     });
     expect(reload).toHaveBeenCalled();
-  });
-
-  it("abre o app de mapas ao tocar em 'Como chegar'", async () => {
-    openURL.mockReset().mockResolvedValue(undefined);
-    mockViewModel({ detail: fakeDetail, loading: false, error: null });
-
-    let screen!: Awaited<ReturnType<typeof render>>;
-    await act(async () => {
-      screen = await render(
-        <RequestDetail requestId="req-1" sessionUserId="vendedor-1" />,
-      );
-    });
-
-    const directionsButton = screen.getByRole("button", {
-      name: "Como chegar à Campus IFPI Piripiri",
-    });
-    await act(async () => {
-      fireEvent.press(directionsButton);
-    });
-
-    expect(openURL).toHaveBeenCalledWith(
-      expect.stringContaining(encodeURIComponent("Rodovia PI-112, Km 01, Piripiri, PI")),
-    );
-  });
-
-  it("exibe mensagem de erro quando o app de mapas não pode ser aberto", async () => {
-    openURL.mockReset().mockRejectedValue(new Error("sem app de mapas"));
-    mockViewModel({ detail: fakeDetail, loading: false, error: null });
-
-    let screen!: Awaited<ReturnType<typeof render>>;
-    await act(async () => {
-      screen = await render(
-        <RequestDetail requestId="req-1" sessionUserId="vendedor-1" />,
-      );
-    });
-
-    const directionsButton = screen.getByRole("button", {
-      name: "Como chegar à Campus IFPI Piripiri",
-    });
-    await act(async () => {
-      fireEvent.press(directionsButton);
-    });
-
-    expect(screen.getByRole("alert")).toBeDefined();
-    expect(
-      screen.getByText('Não foi possível abrir o mapa para "Campus IFPI Piripiri". Tente novamente.'),
-    ).toBeDefined();
   });
 
   it("exibe indicador de carregamento", async () => {
@@ -314,5 +321,29 @@ describe("tela de Detalhes da Negociação (ISO/IEC 25010 - Usabilidade e Acessi
     });
 
     expect(onRequireSignIn).toHaveBeenCalledTimes(1);
+  });
+
+  it("a tela com sessão repassa a ação de abrir a entrega (regressão: o toque não fazia nada)", async () => {
+    mockedUseAuthViewModel.mockReturnValue([
+      { user: { id: "vendedor-1", name: "Ana", email: "a@b.c" } as never, loading: false, error: null },
+      { signIn: vi.fn(), signUp: vi.fn(), signOut: vi.fn(), requestPasswordReset: vi.fn() },
+    ]);
+    mockedMeeting = {
+      id: "m1", requestId: "req-1", pointName: "Praça da Bandeira (Centro)",
+      scheduledAt: "2099-01-01T15:00:00.000Z", proposedBy: "comprador-1", status: "confirmed",
+    };
+    mockedDelivery = { loading: false, role: "giver", completed: null };
+    mockViewModel({ detail: fakeDetail, loading: false, error: null });
+    const onOpenDelivery = vi.fn();
+
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<RequestDetailScreen requestId="req-1" onOpenDelivery={onOpenDelivery} />);
+    });
+    await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Mostrar QR da entrega" })); });
+
+    expect(onOpenDelivery).toHaveBeenCalledTimes(1);
+    mockedMeeting = null;
+    mockedDelivery = { loading: false, role: null, completed: null };
   });
 });
