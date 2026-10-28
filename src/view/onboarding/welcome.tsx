@@ -18,6 +18,8 @@ export type WelcomeProps = {
   /** Links do rodapé da página na web larga. */
   onHelp?: () => void;
   onTerms?: () => void;
+  /** Spec 108: no site, os botões chamam para o teste do app em vez de entrar ou criar conta. */
+  betaInvite?: boolean;
 };
 
 /**
@@ -25,7 +27,10 @@ export type WelcomeProps = {
  * Ver issue #98 e ADR 0022. O catálogo exige conta (Spec 092): sem sessão, a tela só
  * oferece criar conta ou entrar — não há acesso de visitante.
  */
-export default function Welcome({ onStart, onSignIn, onHelp, onTerms }: WelcomeProps) {
+export default function Welcome({ onStart, onSignIn, onHelp, onTerms, betaInvite = false }: WelcomeProps) {
+  const labels = betaInvite
+    ? { header: "Quero testar", start: "Quero testar o app", signIn: "Ver na Play Store" }
+    : { header: "Criar conta", start: "Começar agora", signIn: "Já tenho conta" };
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const wideWeb = useIsWideWeb();
@@ -42,11 +47,13 @@ export default function Welcome({ onStart, onSignIn, onHelp, onTerms }: WelcomeP
         <View style={styles.wideHeader}>
           <Logotipo />
           <View style={styles.wideHeaderActions}>
-            <Pressable accessibilityRole="button" accessibilityLabel="Entrar" onPress={onSignIn}>
-              <Text style={styles.wideLink}>Entrar</Text>
-            </Pressable>
-            <Pressable accessibilityRole="button" accessibilityLabel="Criar conta" onPress={onStart} style={styles.wideCta}>
-              <Text style={styles.wideCtaText}>Criar conta</Text>
+            {betaInvite ? null : (
+              <Pressable accessibilityRole="button" accessibilityLabel="Entrar" onPress={onSignIn}>
+                <Text style={styles.wideLink}>Entrar</Text>
+              </Pressable>
+            )}
+            <Pressable accessibilityRole="button" accessibilityLabel={labels.header} onPress={onStart} style={styles.wideCta}>
+              <Text style={styles.wideCtaText}>{labels.header}</Text>
             </Pressable>
           </View>
         </View>
@@ -65,11 +72,11 @@ export default function Welcome({ onStart, onSignIn, onHelp, onTerms }: WelcomeP
               Encontre, troque, venda ou doe livros com quem mora perto de você. Sem taxas e com encontro em local público.
             </Text>
             <View style={styles.wideActions}>
-              <Pressable accessibilityRole="button" accessibilityLabel="Começar agora" onPress={onStart} style={styles.wideCta}>
-                <Text style={styles.wideCtaText}>Começar agora</Text>
+              <Pressable accessibilityRole="button" accessibilityLabel={labels.start} onPress={onStart} style={styles.wideCta}>
+                <Text style={styles.wideCtaText}>{labels.start}</Text>
               </Pressable>
-              <Pressable accessibilityRole="button" accessibilityLabel="Já tenho conta" onPress={onSignIn} style={styles.wideOutlined}>
-                <Text style={styles.wideOutlinedText}>Já tenho conta</Text>
+              <Pressable accessibilityRole="button" accessibilityLabel={labels.signIn} onPress={onSignIn} style={styles.wideOutlined}>
+                <Text style={styles.wideOutlinedText}>{labels.signIn}</Text>
               </Pressable>
             </View>
           </View>
@@ -88,7 +95,7 @@ export default function Welcome({ onStart, onSignIn, onHelp, onTerms }: WelcomeP
           ))}
         </View>
 
-        <AboutSections onStart={onStart} onSignIn={onSignIn} onHelp={onHelp} onTerms={onTerms} />
+        <AboutSections onStart={onStart} onSignIn={onSignIn} onHelp={onHelp} onTerms={onTerms} betaInvite={betaInvite} />
       </ScrollView>
     );
   }
@@ -136,8 +143,8 @@ export default function Welcome({ onStart, onSignIn, onHelp, onTerms }: WelcomeP
       </View>
 
       <View style={styles.actions}>
-        <FilledButton label="Começar" onPress={onStart} />
-        <OutlinedButton label="Já tenho conta" onPress={onSignIn} />
+        <FilledButton label={betaInvite ? labels.start : "Começar"} onPress={onStart} />
+        <OutlinedButton label={labels.signIn} onPress={onSignIn} />
       </View>
     </ScreenContainer>
   );

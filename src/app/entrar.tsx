@@ -8,6 +8,7 @@ export default function Entrar() {
     <SignIn
       onAuthenticated={() => {
         if (retorno === "favoritos") replaceOnce("/favoritos");
+        else if (retorno === "excluir-conta") replaceOnce("/excluir-conta");
         else if (retorno === "alertas") replaceOnce({ pathname: "/alertas", params: { termo: termo ?? "" } });
         else replaceOnce("/");
       }}

@@ -6,7 +6,7 @@ export default function ExcluirContaRoute() {
     <DeleteAccountScreen
       onBack={() => backOnce()}
       onAccountDeleted={() => replaceOnce("/")}
-      onNavigateToLogin={() => pushOnce("/entrar")}
+      onNavigateToLogin={() => pushOnce({ pathname: "/entrar", params: { retorno: "excluir-conta" } })}
       onEditProfile={() => pushOnce("/perfil/editar")}
     />
   );

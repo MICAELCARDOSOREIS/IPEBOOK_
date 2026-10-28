@@ -13,6 +13,8 @@ export type AboutSectionsProps = {
   onSignIn: () => void;
   onHelp?: () => void;
   onTerms?: () => void;
+  /** Spec 108: chamada final para o teste do app em vez de criar conta e entrar. */
+  betaInvite?: boolean;
 };
 
 const STEPS = [
@@ -32,7 +34,7 @@ const SAFETY = [
  * Seções da página que apresenta o app na web (Spec 092): como funciona, segurança, chamada final para
  * Criar conta e Entrar, e rodapé com Ajuda, Termos e contato. Vem depois da chamada principal da boas-vindas.
  */
-export function AboutSections({ onStart, onSignIn, onHelp, onTerms }: AboutSectionsProps) {
+export function AboutSections({ onStart, onSignIn, onHelp, onTerms, betaInvite = false }: AboutSectionsProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
@@ -73,11 +75,11 @@ export function AboutSections({ onStart, onSignIn, onHelp, onTerms }: AboutSecti
       <View style={styles.finalCta}>
         <Text accessibilityRole="header" style={styles.finalTitle}>Pronto para dar nova vida a um livro?</Text>
         <View style={styles.finalActions}>
-          <Pressable accessibilityRole="button" accessibilityLabel="Criar conta grátis" onPress={onStart} style={styles.cta}>
-            <Text style={styles.ctaText}>Criar conta</Text>
+          <Pressable accessibilityRole="button" accessibilityLabel={betaInvite ? "Quero testar o app" : "Criar conta grátis"} onPress={onStart} style={styles.cta}>
+            <Text style={styles.ctaText}>{betaInvite ? "Quero testar o app" : "Criar conta"}</Text>
           </Pressable>
-          <Pressable accessibilityRole="button" accessibilityLabel="Já tenho conta, entrar" onPress={onSignIn} style={styles.outlined}>
-            <Text style={styles.outlinedText}>Entrar</Text>
+          <Pressable accessibilityRole="button" accessibilityLabel={betaInvite ? "Ver na Play Store" : "Já tenho conta, entrar"} onPress={onSignIn} style={styles.outlined}>
+            <Text style={styles.outlinedText}>{betaInvite ? "Ver na Play Store" : "Entrar"}</Text>
           </Pressable>
         </View>
       </View>
