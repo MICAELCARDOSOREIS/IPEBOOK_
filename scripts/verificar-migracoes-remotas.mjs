@@ -696,6 +696,11 @@ export const MAPEAMENTO_MIGRACOES = {
     validar: (ctx) => Boolean(ctx.tabelas.v2_books?.colunasValidas?.includes('synopsis')),
     detalhe: 'Suspensão completa, exclusão bloqueada para conta suspensa e photo_url só https (Spec 107)',
   },
+  '202610310001_testadores_beta.sql': {
+    titulo: 'Inscrições para o teste beta',
+    validar: (ctx) => Boolean(ctx.tabelas.v2_books?.colunasValidas?.includes('synopsis')),
+    detalhe: 'Tabela v2_beta_testers fechada e função v2_register_beta_tester (Spec 108)',
+  },
 };
 
 /**

@@ -121,6 +121,11 @@ import { MemoryModerationDataSource } from "@/infra/datasources/memoryModeration
 import { SupabaseModerationDataSource } from "@/infra/datasources/supabaseModerationDataSource";
 import type { IModerationUseCases } from "@/usecase/iModerationUseCases";
 import { ModerationUseCases } from "@/usecase/moderationUseCases";
+import { MemoryBetaTesterDataSource } from "@/infra/datasources/memoryBetaTesterDataSource";
+import { SupabaseBetaTesterDataSource } from "@/infra/datasources/supabaseBetaTesterDataSource";
+import type { IBetaTesterDataSource } from "@/model/datasources/iBetaTesterDataSource";
+import { BetaSignupUseCases } from "@/usecase/betaSignupUseCases";
+import type { IBetaSignupUseCases } from "@/usecase/iBetaSignupUseCases";
 
 function createDataSources(): {
   auth: IAuthDataSource;
@@ -141,6 +146,7 @@ function createDataSources(): {
   messages: IMessageDataSource;
   photos: IPhotoStorageDataSource;
   moderation: IModerationDataSource;
+  betaTesters: IBetaTesterDataSource;
 } {
   const searchHistory = process.env.NODE_ENV === "test"
     ? new MemorySearchHistoryDataSource()
@@ -175,6 +181,7 @@ function createDataSources(): {
       messages: new SupabaseMessageDataSource(client),
       photos: new SupabasePhotoStorageDataSource(client),
       moderation: new SupabaseModerationDataSource(client),
+      betaTesters: new SupabaseBetaTesterDataSource(client),
     };
   }
   const initialBooks = process.env.NODE_ENV === "test" ? [] : INITIAL_DEV_BOOKS;
@@ -209,6 +216,7 @@ function createDataSources(): {
     messages: new MemoryMessageDataSource(),
     photos: new MemoryPhotoStorageDataSource(),
     moderation: new MemoryModerationDataSource(),
+    betaTesters: new MemoryBetaTesterDataSource(),
   };
 }
 
@@ -259,6 +267,8 @@ export const deliveryUseCases: IDeliveryUseCases = new DeliveryUseCases(
 export const reportUseCases: IReportUseCases = new ReportUseCases(
   dataSources.reports,
 );
+
+export const betaSignupUseCases: IBetaSignupUseCases = new BetaSignupUseCases(dataSources.betaTesters);
 
 export const notificationUseCases: INotificationUseCases = new NotificationUseCases(
   dataSources.notifications,

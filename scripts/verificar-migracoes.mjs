@@ -677,5 +677,24 @@ await limitado('11ª denúncia no dia', () => as('authenticated', novato, `inser
 await db.exec(`reset role; insert into public.v2_books (owner_id, title, author, modality) values ('${spammer}', 'Pelo painel', 'Autor', 'donation')`);
 process.stdout.write('Limites contra abuso (Spec 103): verificados com sucesso\n');
 
+// Spec 108: inscrições do beta só pela função; tabela fechada para a API.
+await as('anon', null, `select public.v2_register_beta_tester('  Leitor@Gmail.com ', 'Leitor')`);
+await as('anon', null, `select public.v2_register_beta_tester('leitor@gmail.com', null)`);
+await db.exec('reset role');
+const beta = await db.query('select email, name from public.v2_beta_testers');
+if (beta.rows.length !== 1 || beta.rows[0].email !== 'leitor@gmail.com' || beta.rows[0].name !== 'Leitor') {
+  throw new Error(`Inscrição beta inesperada: ${JSON.stringify(beta.rows)}`);
+}
+await denied('Anônimo lendo testadores beta', () => as('anon', null, 'select * from public.v2_beta_testers'));
+await denied('Conta logada lendo testadores beta', () => as('authenticated', owner, 'select * from public.v2_beta_testers'));
+await denied('Anônimo inserindo direto', () => as('anon', null, `insert into public.v2_beta_testers (email) values ('x@gmail.com')`));
+await denied('Anônimo apagando testadores', () => as('anon', null, 'delete from public.v2_beta_testers'));
+await denied('E-mail inválido no beta', () => as('anon', null, `select public.v2_register_beta_tester('sem-arroba', null)`));
+await db.exec(`reset role; insert into public.v2_beta_testers (email) select 'massa' || g || '@gmail.com' from generate_series(1, 299) g`);
+await denied('Inscrição acima do limite por hora', () => as('anon', null, `select public.v2_register_beta_tester('extra@gmail.com', null)`));
+await as('anon', null, `select public.v2_register_beta_tester('leitor@gmail.com', null)`);
+await db.exec('reset role');
+process.stdout.write('Inscrições do beta (Spec 108): verificadas com sucesso\n');
+
 process.stdout.write('Migrações e cenários SQL locais verificados.\n');
 await db.close();
