@@ -203,4 +203,14 @@ describe("BookCover (design-system/04-componentes/capa-ilustrativa.md e Spec 040
       vi.useRealTimers();
     }
   });
+
+  it("a lombada sobre a arte pode ser desligada (livro 3D tem a sua)", async () => {
+    const com = await render(<BookCover id="a1" title="Dom Casmurro" variant="detail" />);
+    const sem = await render(<BookCover id="a1" title="Dom Casmurro" variant="detail" showSpine={false} />);
+    const count = (tree: unknown): number => {
+      const node = tree as { children?: unknown[] } | null;
+      return node?.children ? node.children.reduce((sum: number, child) => sum + (typeof child === "object" ? 1 + count(child) : 0), 0) : 0;
+    };
+    expect(count(com.toJSON())).toBeGreaterThan(count(sem.toJSON()));
+  });
 });

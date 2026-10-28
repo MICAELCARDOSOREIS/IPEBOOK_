@@ -180,7 +180,7 @@ function FaceContent({ face, id, title, author, photoUrl, base, width, height, d
   if (face === "front") {
     return (
       <View style={[styles.fill, { opacity: fade }]}>
-        <BookCover id={id} title={title} author={author} photoUrl={photoUrl} variant="detail" width={width} />
+        <BookCover id={id} title={title} author={author} photoUrl={photoUrl} variant="detail" width={width} showSpine={false} />
       </View>
     );
   }

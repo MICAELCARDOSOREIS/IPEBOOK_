@@ -23,6 +23,8 @@ export type BookCoverProps = {
   testID?: string;
   /** Largura em dp que substitui a da variante (o livro 3D ampliado na web larga). */
   width?: number;
+  /** Desenha a lombada sobre a arte (capa plana). O livro 3D desliga: ele já tem a lombada de verdade. */
+  showSpine?: boolean;
 };
 
 /** A cor de cada arte, na mesma ordem de `COVER_ARTS`: noite marrom, árvore petróleo, montanhas verdes e ondas azul-marinho. */
@@ -79,6 +81,7 @@ export function BookCover({
   photoUrl,
   variant = "list",
   width: widthOverride,
+  showSpine = true,
   timeoutMs,
   maxRetries,
   initialBackoffMs,
@@ -175,12 +178,14 @@ export function BookCover({
       style={[styles.cover, { backgroundColor, width, height }]}
     >
       <Image source={asSource(COVER_ARTS[kind])} resizeMode="cover" accessible={false} style={{ position: "absolute", left: 0, top: 0, width, height }} />
-      {/* Lombada: faixa escura com filetes dourados, como na encadernação do caderno. */}
-      <View pointerEvents="none" accessible={false} style={[styles.spine, { width: Math.max(4, width * 0.06) }]}>
-        {[0.07, 0.11, 0.87, 0.91].map((at) => (
-          <View key={at} style={{ position: "absolute", left: 0, right: 0, top: height * at, height: 1, backgroundColor: GOLD }} />
-        ))}
-      </View>
+      {showSpine ? (
+        // Lombada: faixa escura com filetes dourados, como na encadernação do caderno.
+        <View pointerEvents="none" accessible={false} style={[styles.spine, { width: Math.max(4, width * 0.06) }]}>
+          {[0.07, 0.11, 0.87, 0.91].map((at) => (
+            <View key={at} style={{ position: "absolute", left: 0, right: 0, top: height * at, height: 1, backgroundColor: GOLD }} />
+          ))}
+        </View>
+      ) : null}
     </View>
   );
 }
