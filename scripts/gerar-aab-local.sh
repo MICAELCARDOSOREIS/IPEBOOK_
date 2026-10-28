@@ -52,7 +52,8 @@ cd "$RAIZ"
 # caminho desta variável (na nuvem, a mesma variável vem do EAS como arquivo secreto).
 # Pasta temporária própria: o build local precisa de vários GB e o /tmp costuma ser pequeno (tmpfs).
 mkdir -p "$PASTA/tmp"
-setsid nohup env GOOGLE_SERVICES_JSON="$RAIZ/google-services.json" EAS_LOCAL_BUILD_WORKINGDIR="$PASTA/tmp/eas-$$" \
+# Sem SENTRY_AUTH_TOKEN, o envio de mapas de código ao Sentry derruba a build; o eas.json já desliga, isto garante.
+setsid nohup env SENTRY_DISABLE_AUTO_UPLOAD="${SENTRY_DISABLE_AUTO_UPLOAD:-true}" GOOGLE_SERVICES_JSON="$RAIZ/google-services.json" EAS_LOCAL_BUILD_WORKINGDIR="$PASTA/tmp/eas-$$" \
   bash -c 'echo $$ > "$1"; npx -y eas-cli build -p android --profile "$2" --local --non-interactive --output "$3"; r=$?; echo "ARQUIVO=$3"; echo "RESULTADO=$r"' \
   _ "$PID_ARQ" "$PERFIL" "$SAIDA" > "$LOG" 2>&1 < /dev/null &
 for _ in 1 2 3 4 5 6 7 8 9 10; do [[ -s "$PID_ARQ" ]] && break; sleep 0.3; done
