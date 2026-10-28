@@ -4,9 +4,9 @@ import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { useBookCoverImage } from "@/viewmodel/useBookCoverImage";
 import capaNoite from "@/view/assets/capas/capa-1.webp";
-import capaOndas from "@/view/assets/capas/capa-2.webp";
-import capaArvore from "@/view/assets/capas/capa-3.webp";
-import capaMontanhas from "@/view/assets/capas/capa-4.webp";
+import capaArvore from "@/view/assets/capas/capa-2.webp";
+import capaMontanhas from "@/view/assets/capas/capa-3.webp";
+import capaOndas from "@/view/assets/capas/capa-4.webp";
 
 export type BookCoverVariant = "list" | "card" | "carousel" | "detail";
 
@@ -25,8 +25,8 @@ export type BookCoverProps = {
   width?: number;
 };
 
-/** Cada motivo tem a sua cor, como nos cadernos de referência: noite marrom, ondas azul-marinho, árvore petróleo e montanhas verdes. */
-const COVER_BACKGROUNDS = ["#33241D", "#14284B", "#0E4A59", "#2C5232"] as const;
+/** A cor de cada arte, na mesma ordem de `COVER_ARTS`: noite marrom, árvore petróleo, montanhas verdes e ondas azul-marinho. */
+const COVER_BACKGROUNDS = ["#3A2A20", "#0F4B5B", "#2C5232", "#14284B"] as const;
 /** Proporção da capa no Figma (`02.01`, `02.02`): 55x88dp e 74x119dp, ambas em 5:8. */
 const ASPECT_RATIO = 5 / 8;
 /** Largura canônica de capa em listas no Figma (`05.01`, `02.06`, `04.08`: 55x88dp). */
@@ -51,7 +51,7 @@ const VARIANT_WIDTH: Record<BookCoverVariant, number> = {
 const asSource = (art: number | string) => (typeof art === "string" ? { uri: art } : art);
 
 /** Quatro capas ilustrativas, recortadas dos cadernos artesanais do design: noite, ondas, árvore e montanhas. */
-const COVER_ARTS = [capaNoite, capaOndas, capaArvore, capaMontanhas] as const;
+const COVER_ARTS = [capaNoite, capaArvore, capaMontanhas, capaOndas] as const;
 const GOLD = "#D9A93A";
 
 /** Hash FNV-1a: espalha ids parecidos (uuid) entre os quatro desenhos; a soma dos caracteres repetia o mesmo. */

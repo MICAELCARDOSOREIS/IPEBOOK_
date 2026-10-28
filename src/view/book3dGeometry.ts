@@ -32,3 +32,16 @@ export function projectBookFaces(angle: number, width: number, depth: number): P
   if (sin < 0) faces.push({ face: "right", center: (width / 2) * cos, width: depth * -sin, shade: 0.28 * (1 + sin) + 0.08 });
   return faces.filter((face) => face.width >= 0.5);
 }
+
+const clamp01 = (value: number) => Math.min(1, Math.max(0, value));
+
+/**
+ * Opacidade do conteúdo de uma face, de 0 a 1, conforme a fração da largura que ela mostra (`ratio`). Quase de
+ * lado, a capa e a contracapa espremidas só mostram pedaços de letra e de arte, e o texto da lombada fica
+ * ilegível; então o conteúdo some aos poucos e fica uma faixa lisa da cor do livro.
+ */
+export function faceContentOpacity(face: BookFace, ratio: number): number {
+  if (face === "front" || face === "back") return clamp01((ratio - 0.15) / 0.15);
+  if (face === "left") return clamp01((ratio - 0.3) / 0.3);
+  return 1;
+}
