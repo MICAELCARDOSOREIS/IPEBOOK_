@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { PRIVACY_POLICY, TERMS_OF_USE } from "@/model/legalContent";
+import { LEGAL_LAST_UPDATED, PRIVACY_POLICY, TERMS_OF_USE } from "@/model/legalContent";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { tokens, type ColorPalette } from "@/view/tokens";
@@ -68,7 +68,7 @@ export default function TermsAndPrivacy({
           </View>
 
           <View style={[styles.cardList, wide && styles.cardListWide]}>
-            <Text style={[styles.updatedDate, wide && styles.fullRow]}>Última atualização: 15 de outubro de 2026</Text>
+            <Text style={[styles.updatedDate, wide && styles.fullRow]}>{`Última atualização: ${LEGAL_LAST_UPDATED}`}</Text>
             {sections.map((section) => (
               <View key={section.title} style={[styles.sectionCard, wide && columnWidth]}>
                 <Text accessibilityRole="header" style={styles.sectionTitle}>
