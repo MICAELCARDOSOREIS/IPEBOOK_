@@ -26,3 +26,11 @@ supabase/.temp/
 .claude/
 .qoder/
 bun.lock
+
+# Configuração do Firebase do Android (por ambiente; não vai ao repositório)
+google-services.json
+
+# Chaves privadas de conta de serviço do Firebase/Google (nunca versionar)
+*-firebase-adminsdk-*.json
+*adminsdk*.json
+service-account*.json
