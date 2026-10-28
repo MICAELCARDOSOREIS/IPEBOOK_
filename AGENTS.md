@@ -198,7 +198,7 @@ Plataforma comunitária de circulação e troca de livros em Piripiri, PI. React
 - Verificação isolada de migrações e RLS via PGlite: `npm run test:sql`.
 - Verificação de fronteiras arquiteturais: `npm run check:architecture`.
 - APK de debug: `npm run apk:debug` (Gradle desacoplado do terminal/sessão; só arm64 por padrão, `APK_ABIS` para outras) e `npm run apk:debug:status`. Log em `android/build-logs/apk-debug.log`. Nunca rodar `./gradlew assembleDebug` preso à sessão.
-- App Bundle de produção local (assinado com a chave do EAS, para a Play Store, sem cota da nuvem): `npm run aab:local` e `npm run aab:local:status`; saída em `android/build-logs/`.
+- App Bundle de produção local (assinado com a chave do EAS, para a Play Store, sem cota da nuvem): `npm run aab:local`, `npm run aab:local:status` e `npm run aab:local:log` (acompanha ao vivo); saída em `android/build-logs/`.
 - Manter documentação rigorosamente sincronizada com o código: índice de ADRs, contagem de testes em `docs/estado.md` e tabelas em `docs/produto.md`.
 
 ## Conventions that differ from defaults

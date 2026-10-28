@@ -10,6 +10,8 @@
     "apk:debug:status": "bash scripts/gerar-apk-debug.sh status",
     "aab:local": "bash scripts/gerar-aab-local.sh",
     "aab:local:status": "bash scripts/gerar-aab-local.sh status",
+    "aab:local:log": "tail -n 40 -f android/build-logs/aab-local.log",
+    "apk:debug:log": "tail -n 40 -f android/build-logs/apk-debug.log",
     "ios": "expo run:ios",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
