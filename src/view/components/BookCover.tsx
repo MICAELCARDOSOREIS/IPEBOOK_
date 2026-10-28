@@ -13,6 +13,7 @@ export type BookCoverVariant = "list" | "card" | "carousel" | "detail";
 export type BookCoverProps = {
   id: string;
   title: string;
+  /** Aceito por compatibilidade: a capa ilustrativa é só arte, e o autor aparece ao lado dela. */
   author?: string;
   photoUrl?: string;
   variant?: BookCoverVariant;
@@ -68,7 +69,6 @@ function hashId(id: string): number {
 export function BookCover({
   id,
   title,
-  author,
   photoUrl,
   variant = "list",
   timeoutMs,
@@ -96,9 +96,6 @@ export function BookCover({
   const backgroundColor = COVER_BACKGROUNDS[kind];
   const width = VARIANT_WIDTH[variant] ?? LIST_WIDTH;
   const height = width / ASPECT_RATIO;
-  // Capa de lista no Figma (`02.02`, `05.01`) tem 56x80dp e não comporta texto legível; o título já
-  // aparece na própria linha, então só o card grande e o detalhe repetem o texto sobre a ilustração.
-  const showText = variant === "card" || variant === "detail";
 
   const pulseAnim = useRef(new Animated.Value(0.4)).current;
 
@@ -176,18 +173,6 @@ export function BookCover({
           <View key={at} style={{ position: "absolute", left: 0, right: 0, top: height * at, height: 1, backgroundColor: GOLD }} />
         ))}
       </View>
-      {showText ? (
-        <View style={[styles.textOverlay, { paddingLeft: width * 0.06 + tokens.spacing[8] }, variant === "detail" && styles.textOverlayDetail]} accessible={false}>
-          <Text style={[styles.title, variant === "detail" && styles.titleDetail]} numberOfLines={variant === "detail" ? 4 : 3}>
-            {title}
-          </Text>
-          {author ? (
-            <Text style={[styles.author, variant === "detail" && styles.authorDetail]} numberOfLines={2}>
-              {author}
-            </Text>
-          ) : null}
-        </View>
-      ) : null}
     </View>
   );
 }
@@ -215,37 +200,6 @@ function createStyles(colors: ColorPalette) {
     },
     hiddenImage: {
       opacity: 0,
-    },
-    // Faixa escura sob o título: o texto precisa ler bem sobre a arte da capa.
-    textOverlay: {
-      padding: tokens.spacing[8],
-      backgroundColor: "rgba(15,12,10,0.62)",
-    },
-    textOverlayDetail: {
-      padding: tokens.spacing[16],
-      gap: tokens.spacing[8],
-    },
-    titleDetail: {
-      fontFamily: fontFamily.brand,
-      fontSize: 17,
-      lineHeight: 22,
-      fontWeight: "700",
-    },
-    authorDetail: {
-      fontSize: 13,
-      lineHeight: 17,
-      opacity: 0.9,
-    },
-    title: {
-      color: tokens.colors.cover.text,
-      fontFamily: fontFamily.brand,
-      // Capa de 74 dp: 11 dp/14 dp cabem em três linhas sem truncar títulos curtos.
-      fontSize: 11,
-      lineHeight: 14,
-    },
-    author: {
-      color: tokens.colors.cover.text,
-      fontSize: 11,
     },
   });
 }
