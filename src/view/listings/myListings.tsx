@@ -65,11 +65,14 @@ export function MyListings({
   const [statusFilter, setStatusFilter] = useState<ListingsFilter>("all");
 
   // Spec 043 RN-03: a aba conta as propostas recebidas em aberto, não os livros reservados.
+  // O pedido continua "aceito" depois da entrega por QR; o que marca a conclusão é o livro entregue.
+  const isDelivered = (item: (typeof received.items)[number]) =>
+    item.request.status === "accepted" && item.listing.status === "delivered";
   const proposals = received.items.filter(
-    (item) => item.request.status === "pending" || item.request.status === "accepted",
+    (item) => item.request.status === "pending" || (item.request.status === "accepted" && !isDelivered(item)),
   );
   const concludedProposals = received.items.filter(
-    (item) => item.request.status === "rejected" || item.request.status === "cancelled" || (item.request.status as string) === "completed",
+    (item) => item.request.status === "rejected" || item.request.status === "cancelled" || isDelivered(item),
   );
 
   // Livro entregue sai de Anúncios; em Concluídos entra quando não há pedido concluído que já o mostre.
