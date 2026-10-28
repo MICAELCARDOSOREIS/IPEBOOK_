@@ -1,6 +1,6 @@
 # Especificação 104 — Acompanhamento de erros com Sentry
 
-Status: implementada e testada localmente; projeto `ipebook` criado no Sentry e DSN no `.env` local; **pendente DSN no EAS e build nova**. ADR: [0080](../../docs/adr/0080-acompanhamento-de-erros-sentry.md).
+Status: implementada e testada localmente; projeto `ipebook` criado no Sentry e DSN no `.env` e no EAS; **pendente build nova e conferir o primeiro erro no painel**. ADR: [0080](../../docs/adr/0080-acompanhamento-de-erros-sentry.md).
 
 ## Objetivo
 Saber quando o app quebra no aparelho das pessoas, sem expor dados pessoais.
