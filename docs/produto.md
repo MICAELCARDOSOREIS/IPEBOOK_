@@ -135,7 +135,7 @@ Issues antigas citadas aqui (#93 filtros, #73 perfil público, #109 Cloudflare) 
 
 - Aplicar no Supabase remoto as migrações `202610290001_moderacao.sql` e `202610290002_limites_anti_abuso.sql` e cadastrar o primeiro moderador (Spec 102).
 - Criar o projeto no Sentry e configurar `EXPO_PUBLIC_SENTRY_DSN` no `.env` e no EAS (Spec 104).
-- Gerar a build de produção (`eas build -p android --profile production`) e preencher a Play Console com o rascunho de [docs/loja/play-store.md](loja/play-store.md).
+- Beta na Play Store: seguir [docs/loja/beta-play-store.md](loja/beta-play-store.md).
 - Revisão jurídica dos termos e da política de privacidade e publicação em um link público.
 - Teste completo no aparelho com duas contas (pedido, chat, encontro, QR, avaliação, avisos e moderação).
 - Avaliar métricas de uso (ex.: PostHog) e um projeto Supabase separado para testes; ambos dependem de conta e decisão de custo.

@@ -34,25 +34,55 @@ export const TERMS_OF_USE: readonly LegalSection[] = [
   },
 ];
 
+export const LEGAL_LAST_UPDATED = "29 de outubro de 2026";
+
 export const PRIVACY_POLICY: readonly LegalSection[] = [
   {
-    title: "1. Tratamento de Dados Pessoais (LGPD)",
+    title: "1. Quem trata os seus dados",
     paragraphs: [
-      "O IpêBook coleta exclusivamente os dados indispensáveis para o funcionamento da plataforma: endereço de e-mail e informações públicas dos livros cadastrados.",
-      "O tratamento segue os princípios da boa-fé, finalidade, transparência e segurança previstos na Lei Geral de Proteção de Dados (Lei nº 13.709/2018).",
+      "O IpêBook é um projeto comunitário de Piripiri, PI. Dúvidas, pedidos sobre os seus dados e contato com a pessoa encarregada: ipebook738@gmail.com.",
+      "O tratamento segue a Lei Geral de Proteção de Dados (Lei nº 13.709/2018), com base na execução do serviço que você pede ao criar a conta e no legítimo interesse de manter a comunidade segura.",
     ],
   },
   {
-    title: "2. Sigilo e Visibilidade das Contas",
+    title: "2. Dados que coletamos e para quê",
     paragraphs: [
-      "O endereço de e-mail da pessoa usuária é estritamente confidencial e nunca é exibido publicamente na listagem de livros ou perfis abertos.",
-      "Nenhum dado cadastral é comercializado ou compartilhado com redes de publicidade de terceiros.",
+      "Conta: nome, e-mail e, se você entrar com Google, a identificação da sua conta Google. Servem para criar e proteger o seu acesso.",
+      "Perfil e anúncios: foto de perfil (opcional), bairro escolhido em Piripiri, livros anunciados e as fotos deles. Aparecem para a comunidade.",
+      "Negociações: pedidos, mensagens do chat, encontros combinados, confirmação de entrega e avaliações. Ficam visíveis só para as duas pessoas da negociação (as avaliações aparecem no perfil público).",
+      "Segurança: denúncias e bloqueios que você faz ou recebe, analisados pela moderação.",
+      "Avisos: o identificador do aparelho para notificações e as suas preferências de aviso.",
+      "Diagnóstico: relatórios de erro do aplicativo, sem nome, e-mail ou conteúdo de mensagens, para corrigir falhas.",
+      "Não coletamos localização por GPS, contatos, documentos ou dados de pagamento.",
     ],
   },
   {
-    title: "3. Direitos do Titular e Exclusão",
+    title: "3. Com quem os dados são compartilhados",
     paragraphs: [
-      "A qualquer momento, o titular tem o direito de solicitar a confirmação da existência de tratamento, a correção de dados incompletos ou a exclusão definitiva de sua conta e anúncios dos servidores.",
+      "Nenhum dado é vendido nem usado para publicidade.",
+      "Usamos fornecedores que processam dados só para fazer o app funcionar: Supabase (banco de dados, login e fotos), Expo e Google Firebase (envio de notificações), Google (login com Google) e Sentry (relatórios de erro). Alguns ficam fora do Brasil e seguem cláusulas de proteção de dados.",
+      "O seu e-mail nunca é exibido para outras pessoas.",
+    ],
+  },
+  {
+    title: "4. Por quanto tempo guardamos",
+    paragraphs: [
+      "Os dados ficam guardados enquanto a conta existir. Ao excluir a conta, apagamos de forma definitiva perfil, anúncios, pedidos, mensagens, favoritos, alertas, avaliações e notificações.",
+      "Relatórios de erro são apagados automaticamente pelo fornecedor em até 90 dias.",
+    ],
+  },
+  {
+    title: "5. Seus direitos",
+    paragraphs: [
+      "Você pode, a qualquer momento: confirmar quais dados temos, baixar uma cópia (Configurações > Privacidade e dados > Exportar), corrigir o seu perfil e excluir a conta de forma definitiva pelo próprio app.",
+      "Também pode pedir pelo e-mail ipebook738@gmail.com; respondemos em até 15 dias.",
+    ],
+  },
+  {
+    title: "6. Segurança e idade",
+    paragraphs: [
+      "Os dados trafegam criptografados (HTTPS) e o acesso é restrito por regras no banco de dados: cada pessoa só lê o que é seu ou o que é público.",
+      "O IpêBook é destinado a maiores de 18 anos, conforme os Termos de Uso.",
     ],
   },
 ];

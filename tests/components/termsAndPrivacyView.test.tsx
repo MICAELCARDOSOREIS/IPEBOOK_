@@ -45,9 +45,22 @@ describe("tela de Termos e Privacidade (ISO/IEC 25010 - Usabilidade e Conformida
       fireEvent.press(privacyTab);
     });
 
-    expect(screen.getByText("1. Tratamento de Dados Pessoais (LGPD)")).toBeDefined();
+    expect(screen.getByText("2. Dados que coletamos e para quê")).toBeDefined();
     expect(screen.getByText(/Lei Geral de Proteção de Dados/)).toBeDefined();
-    expect(screen.getByText("2. Sigilo e Visibilidade das Contas")).toBeDefined();
+    // A política precisa refletir o que o app realmente coleta (formulário de segurança dos dados da Play Store).
+    expect(screen.getByText("3. Com quem os dados são compartilhados")).toBeDefined();
+    expect(screen.getByText(/Supabase .*Sentry/)).toBeDefined();
+    expect(screen.getByText(/Não coletamos localização por GPS/)).toBeDefined();
+    expect(screen.getByText(/maiores de 18 anos/)).toBeDefined();
+    expect(screen.getByText("Última atualização: 29 de outubro de 2026")).toBeDefined();
+  });
+
+  it("abre direto na aba de Privacidade quando pedido (link da Play Store)", async () => {
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<TermsAndPrivacy initialTab="privacy" />);
+    });
+    expect(screen.getByText("1. Quem trata os seus dados")).toBeDefined();
   });
 
   it("aciona callback onBack ao pressionar botão de retorno", async () => {

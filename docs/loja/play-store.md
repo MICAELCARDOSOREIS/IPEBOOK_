@@ -6,8 +6,9 @@ Rascunho para revisar antes de publicar. Os dados de coleta abaixo foram levanta
 - **Nome:** IpêBook — livros em Piripiri
 - **Pacote:** `com.ipebook.app`
 - **Categoria:** Livros e referências
-- **Público-alvo:** maiores de 13 anos (há chat entre pessoas; ajustar se a política decidir 18+)
-- **Contato:** e-mail de suporte definido em `src/view/supportContact.ts`
+- **Público-alvo:** maiores de 18 anos (Termos de Uso, seção 2)
+- **Contato:** ipebook738@gmail.com
+- **Política de privacidade (URL pública):** https://ipebook.app/termos?aba=privacidade
 
 ## Descrição curta (até 80 caracteres)
 Venda, troque e doe livros com leitores de Piripiri, com encontro seguro.
