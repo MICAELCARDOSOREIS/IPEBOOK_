@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildPushMessage,
   channelOf,
+  NOTIFICATION_CHANNEL,
   isExpoPushToken,
   isInvalidTokenTicket,
   isTypeMuted,
@@ -9,6 +10,7 @@ import {
   priorityOf,
   type StoredNotification,
 } from "../../supabase/functions/enviar-push/logic";
+import { NOTIFICATION_CHANNEL as APP_CHANNELS } from "@/model/entities/notification";
 
 const aviso: StoredNotification = {
   id: "n1",
@@ -50,6 +52,17 @@ describe("função enviar-push: lógica pura (Spec 096)", () => {
     expect(channelOf("search_alert_match")).toBe("updates");
     expect(channelOf("safety_tip")).toBe("updates");
     expect(channelOf("desconhecido")).toBe("updates");
+  });
+
+  it("avisos da Spec 100: mensagem e recusa tocam como conversa; avaliação é novidade", () => {
+    expect(channelOf("new_message")).toBe("messages");
+    expect(channelOf("request_rejected")).toBe("messages");
+    expect(channelOf("rating_received")).toBe("updates");
+    expect(priorityOf("new_message")).toBe("high");
+  });
+
+  it("servidor e app usam a mesma tabela de canais", () => {
+    expect(NOTIFICATION_CHANNEL).toEqual(APP_CHANNELS);
   });
 
   it("so convoca para conversas e lembretes; novidades ficam em prioridade padrão", () => {

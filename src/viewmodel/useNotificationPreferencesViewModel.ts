@@ -16,8 +16,8 @@ export const NOTIFICATION_PREFERENCE_CATEGORIES: Record<
 > = {
   proposals: {
     label: "Propostas e mensagens",
-    description: "Alguém tem interesse num livro seu ou responde a um pedido",
-    types: ["request_received", "request_accepted"],
+    description: "Pedidos, respostas e mensagens novas no chat da negociação",
+    types: ["request_received", "request_accepted", "request_rejected", "new_message"],
   },
   meetings: {
     label: "Lembretes de encontro",
@@ -31,8 +31,8 @@ export const NOTIFICATION_PREFERENCE_CATEGORIES: Record<
   },
   system: {
     label: "Avisos do sistema",
-    description: "Segurança, novidades e comunicados do IpêBook",
-    types: ["system", "safety_tip"],
+    description: "Avaliações recebidas, segurança e comunicados do IpêBook",
+    types: ["system", "safety_tip", "rating_received"],
   },
 };
 
