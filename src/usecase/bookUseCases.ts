@@ -3,6 +3,7 @@ import type { ISearchAlertUseCases } from "@/usecase/iSearchAlertUseCases";
 import type { Book } from "@/model/entities/book";
 import { AuthError, DataSourceError, ValidationError } from "@/model/errors";
 import { validateBookPayload, validateDraftPayload } from "@/model/validators/bookValidator";
+import { normalizeEdition } from "@/model/validators/bookEdition";
 import { sanitizeTextInput } from "@/model/validators/textSanitizer";
 import type { CreateListingInput, IBookUseCases, SaveDraftInput } from "@/usecase/iBookUseCases";
 
@@ -61,6 +62,7 @@ export class BookUseCases implements IBookUseCases {
       ...(sanitizedNeighborhood ? { neighborhood: sanitizedNeighborhood } : {}),
       ...(input.condition ? { condition: input.condition } : {}),
       ...(sanitizedDescription ? { description: sanitizedDescription } : {}),
+      ...normalizeEdition(input),
       ...(input.photoUrl?.trim() ? { photoUrl: input.photoUrl.trim() } : {}),
       ...(input.photos && input.photos.length > 0 ? { photos: input.photos } : {}),
     });
@@ -267,6 +269,7 @@ export class BookUseCases implements IBookUseCases {
       neighborhood: sanitizedNeighborhood,
       condition: input.condition,
       description: sanitizedDescription,
+      ...normalizeEdition(input),
       photoUrl: input.photoUrl?.trim(),
       photos: input.photos,
     };

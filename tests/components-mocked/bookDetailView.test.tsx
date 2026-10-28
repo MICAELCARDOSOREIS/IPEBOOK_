@@ -236,6 +236,24 @@ describe("BookDetail (spec 006, US6/T029)", () => {
     expect(screen.getByLabelText("Fechar galeria de fotos")).toBeDefined();
   });
 
+  it("mostra editora, páginas, ano e a sinopse quando vêm do ISBN (Spec 097)", async () => {
+    setup(book({ synopsis: "Distopia futurista sobre vigilância.", publisher: "Companhia das Letras", pageCount: 416, publicationYear: 2009 }), user);
+    const screen = await renderDetail();
+    expect(screen.getByText("Editora")).toBeDefined();
+    expect(screen.getByText("Companhia das Letras")).toBeDefined();
+    expect(screen.getByText("416")).toBeDefined();
+    expect(screen.getByText("2009")).toBeDefined();
+    expect(screen.getByRole("header", { name: "Sinopse" })).toBeDefined();
+    expect(screen.getByText("Distopia futurista sobre vigilância.")).toBeDefined();
+  });
+
+  it("sem dados da edição, não mostra Editora, Páginas, Ano nem Sinopse (Spec 097)", async () => {
+    setup(book({}), user);
+    const screen = await renderDetail();
+    for (const rotulo of ["Editora", "Páginas", "Ano"]) expect(screen.queryByText(rotulo)).toBeNull();
+    expect(screen.queryByRole("header", { name: "Sinopse" })).toBeNull();
+  });
+
   it("não oferece ver fotos quando o anúncio só tem capa ilustrativa (Spec 018)", async () => {
     setup(book({ photoUrl: undefined, photos: undefined }), user);
     const screen = await renderDetail();

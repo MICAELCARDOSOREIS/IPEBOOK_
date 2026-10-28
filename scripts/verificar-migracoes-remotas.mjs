@@ -153,6 +153,7 @@ export const TABELAS_CRITICAS = {
       'photos',
       'condition',
       'description',
+      'synopsis',
     ],
   },
   v2_profiles: {
@@ -653,6 +654,11 @@ export const MAPEAMENTO_MIGRACOES = {
     titulo: 'Push de avisos',
     validar: (ctx) => Boolean(ctx.tabelas.v2_deliveries?.existe),
     detalhe: 'Coluna pushed_at, tabela v2_push_settings e gatilhos de push (Spec 096)',
+  },
+  '202610280004_sinopse_edicao_anuncio.sql': {
+    titulo: 'Sinopse e dados da edição',
+    validar: (ctx) => Boolean(ctx.tabelas.v2_books?.colunasValidas?.includes('synopsis')),
+    detalhe: 'Colunas synopsis, publisher, page_count e publication_year em v2_books (Spec 097)',
   },
 };
 

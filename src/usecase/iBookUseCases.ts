@@ -12,6 +12,11 @@ export type CreateListingInput = Readonly<{
   neighborhood?: string;
   condition?: BookCondition;
   description?: string;
+  /** Sinopse e dados da edição, vindos do ISBN (Spec 097). */
+  synopsis?: string;
+  publisher?: string;
+  pageCount?: number;
+  publicationYear?: number;
   photoUrl?: string;
   photos?: readonly string[];
 }>;

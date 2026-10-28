@@ -228,7 +228,8 @@ export default function BookDetail({
                   id={book.id}
                   title={book.title}
                   author={book.author}
-                  description={book.description}
+                  description={book.synopsis ?? book.description}
+                  publisher={book.publisher}
                   photoUrl={book.photoUrl}
                   scale={wideWeb ? 1.6 : 1}
                   onPress={photos.length > 0 ? () => setGalleryVisible(true) : undefined}
@@ -322,11 +323,22 @@ export default function BookDetail({
             <View style={styles.detailList}>
               <DetailRow icon="conservation" label="Conservação" value={conditionLabel} />
               <DetailRow icon="category" label="Categoria" value={categoryLabel} />
+              {/* Dados da edição, preenchidos pelo ISBN (Spec 097). */}
+              {book.publisher ? <DetailRow icon="info" label="Editora" value={book.publisher} /> : null}
+              {book.pageCount ? <DetailRow icon="conservation" label="Páginas" value={String(book.pageCount)} /> : null}
+              {book.publicationYear ? <DetailRow icon="info" label="Ano" value={String(book.publicationYear)} /> : null}
               <DetailRow icon="place" label="Retirada" value={neighborhoodLabel} last />
             </View>
 
             {book.description ? (
               <Text style={styles.descriptionText}>{book.description}</Text>
+            ) : null}
+
+            {book.synopsis ? (
+              <View style={styles.synopsisSection}>
+                <Text accessibilityRole="header" style={styles.synopsisTitle}>Sinopse</Text>
+                <Text style={styles.synopsisText}>{book.synopsis}</Text>
+              </View>
             ) : null}
 
             {/* 5. Anunciante */}
@@ -576,6 +588,9 @@ function createStyles(colors: ColorPalette) {
     },
     detailLabel: { flex: 1, fontSize: 16, lineHeight: 24, color: colors.m3.onSurface },
     detailValue: { fontSize: 14, lineHeight: 20, color: colors.m3.onSurfaceVariant, maxWidth: "50%" },
+    synopsisSection: { gap: tokens.spacing[8] },
+    synopsisTitle: { ...tokens.typography.titleMedium, fontFamily: fontFamily.semiBold, color: colors.m3.onSurface },
+    synopsisText: { fontSize: 15, lineHeight: 23, color: colors.m3.onSurfaceVariant },
     descriptionText: { fontSize: 16, lineHeight: 24, color: colors.m3.onSurface },
     sellerCard: {
       flexDirection: "row",

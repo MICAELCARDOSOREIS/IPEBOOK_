@@ -72,5 +72,6 @@
 - [0070 — Concluir a negociação por QR code](0070-conclusao-por-qr-code.md)
 - [0071 — Push de avisos por Edge Function do Supabase](0071-push-de-avisos-por-edge-function.md)
 - [0072 — Mapa interativo do Mapbox na web](0072-mapa-interativo-mapbox-na-web.md)
+- [0073 — BrasilAPI como terceira fonte de ISBN e dados da edição no anúncio](0073-brasilapi-como-fonte-de-isbn.md)
 
 Preservar registros aceitos; mudanças relevantes geram novo ADR com vínculos de substituição.
