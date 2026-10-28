@@ -12,6 +12,7 @@ import { PIRIPIRI_NEIGHBORHOODS } from "@/model/entities/location";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { AppIcon } from "@/view/components/AppIcon";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
 
 export type NeighborhoodSelectorModalProps = {
   visible: boolean;
@@ -34,6 +35,7 @@ export function NeighborhoodSelectorModal({
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [filterText, setFilterText] = useState("");
+  const wideWeb = useIsWideWeb();
 
   const filteredItems = useMemo(() => {
     const term = filterText.trim().toLowerCase();
@@ -56,16 +58,16 @@ export function NeighborhoodSelectorModal({
       visible={visible}
       onRequestClose={onClose}
     >
-      <View style={styles.scrim}>
+      <View style={[styles.scrim, wideWeb && styles.scrimWide]}>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Fechar ao tocar fora"
           onPress={onClose}
           style={styles.scrimBackdrop}
         />
-        <View style={styles.sheetContainer}>
+        <View style={[styles.sheetContainer, wideWeb && styles.dialogWide]}>
           {/* Alça da folha (M3): indica que é uma folha inferior que se fecha. */}
-          <View accessible={false} importantForAccessibility="no" style={styles.handle} />
+          {wideWeb ? null : <View accessible={false} importantForAccessibility="no" style={styles.handle} />}
           {/* Cabeçalho */}
           <View style={styles.header}>
             <View style={styles.headerTitles}>
@@ -169,6 +171,9 @@ function createStyles(colors: ColorPalette) {
       backgroundColor: "rgba(0,0,0,0.5)",
       justifyContent: "flex-end",
     },
+    // Web larga: diálogo centralizado em vez de folha inferior esticada pela janela inteira.
+    scrimWide: { justifyContent: "center", alignItems: "center", padding: tokens.spacing[24] },
+    dialogWide: { width: "100%", maxWidth: 480, borderRadius: 28 },
     scrimBackdrop: {
       ...StyleSheet.absoluteFill,
     },

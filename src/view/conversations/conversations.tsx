@@ -22,6 +22,7 @@ import { BookCover } from "@/view/components/BookCover";
 import { Tag } from "@/view/components/Tag";
 import { LoadingState } from "@/view/components/LoadingState";
 import { OfflineState } from "@/view/components/OfflineState";
+import { WEB_MAX_WIDTH } from "@/view/webLayout";
 
 /** "Combinar encontro" do painel largo; some quando a entrega já foi concluída por QR (Spec 095). */
 function CombineAction({ requestId, sessionUserId, onOpen }: { requestId: string; sessionUserId: string; onOpen?: (requestId: string) => void }) {
@@ -101,7 +102,7 @@ export function Conversations({
           <Text accessibilityRole="header" style={[styles.title, wideWeb && styles.titleWide]}>
             Conversas
           </Text>
-          {wideWeb ? (
+          {wideWeb && state.items.length === 0 ? (
             <Text style={styles.subtitleWide}>
               Acompanhe propostas de troca, compra e doação direto com leitores de Piripiri.
             </Text>
@@ -189,6 +190,7 @@ export function Conversations({
                 renderItem={({ item }) => {
                   const isSelected = wideWeb && item.requestId === selectedId;
                   return (
+                    <View style={styles.rowWrap}>
                     <Pressable
                       accessibilityRole="button"
                       accessibilityLabel={`Conversa com ${item.otherName} sobre ${item.listing.title}. ${item.preview}`}
@@ -199,6 +201,7 @@ export function Conversations({
                         styles.row,
                         pressed ? styles.rowPressed : null,
                         isSelected ? styles.rowSelected : null,
+                        wideWeb && item.kind === "accepted" ? styles.rowWithDelete : null,
                       ]}
                     >
                       <Avatar name={item.otherName} photoUrl={item.otherPhotoUrl ?? undefined} size={48} />
@@ -227,6 +230,18 @@ export function Conversations({
                         </Text>
                       </View>
                     </Pressable>
+                      {/* Na web larga não há toque longo: o apagar fica visível na própria linha. */}
+                      {wideWeb && item.kind === "accepted" ? (
+                        <Pressable
+                          accessibilityRole="button"
+                          accessibilityLabel={`Apagar conversa com ${item.otherName}`}
+                          onPress={() => setToDelete(item)}
+                          style={({ hovered }: { hovered?: boolean }) => [styles.deleteButton, hovered ? styles.deleteButtonHovered : null]}
+                        >
+                          <AppIcon name="delete" size={20} color={colors.m3.onSurfaceVariant} />
+                        </Pressable>
+                      ) : null}
+                    </View>
                   );
                 }}
                 ListFooterComponent={
@@ -237,7 +252,7 @@ export function Conversations({
                       </Text>
                     ) : null}
                     <Text style={styles.footer}>Combine sempre pelo chat do IpêBook. Não compartilhe senhas ou códigos.</Text>
-                    <Text style={styles.footer}>Para apagar uma conversa, mantenha o dedo sobre ela.</Text>
+                    {wideWeb ? null : <Text style={styles.footer}>Para apagar uma conversa, mantenha o dedo sobre ela.</Text>}
                   </View>
                 }
               />
@@ -325,17 +340,19 @@ function createStyles(colors: ColorPalette) {
     wideContainer: {
       flex: 1,
       width: "100%",
-      maxWidth: 1440,
+      maxWidth: WEB_MAX_WIDTH,
       alignSelf: "center",
       paddingHorizontal: 80,
-      paddingTop: tokens.spacing[24],
-      paddingBottom: tokens.spacing[32],
+      paddingTop: tokens.spacing[16],
+      paddingBottom: tokens.spacing[24],
+      // O painel ocupa a janela e cada coluna rola por conta própria, como nos mensageiros.
+      minHeight: 0,
     },
     mobileHeader: {
       paddingBottom: tokens.spacing[8],
     },
     wideHeader: {
-      marginBottom: tokens.spacing[24],
+      marginBottom: tokens.spacing[16],
       gap: tokens.spacing[6],
     },
     title: {
@@ -447,11 +464,11 @@ function createStyles(colors: ColorPalette) {
       borderColor: colors.m3.outlineVariant,
       backgroundColor: colors.surface,
       overflow: "hidden",
-      minHeight: 640,
-      maxHeight: 840,
+      minHeight: 0,
     },
     wideListPane: {
       width: 380,
+      minHeight: 0,
       borderRightWidth: 1,
       borderRightColor: colors.m3.outlineVariant,
       backgroundColor: colors.m3.surfaceContainerLow,
@@ -474,6 +491,7 @@ function createStyles(colors: ColorPalette) {
     widePane: {
       flex: 1,
       minWidth: 0,
+      minHeight: 0,
       backgroundColor: colors.background,
     },
     widePaneEmpty: {
@@ -506,6 +524,7 @@ function createStyles(colors: ColorPalette) {
     },
     aboutPane: {
       width: 320,
+      minHeight: 0,
       gap: 16,
       padding: 20,
       borderLeftWidth: 1,
@@ -579,5 +598,10 @@ function createStyles(colors: ColorPalette) {
     },
     emptyBody: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant, textAlign: "center", maxWidth: 320 },
     emptyAction: { alignSelf: "stretch", marginTop: tokens.spacing[16] },
+    deleteButton: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", position: "absolute", right: 12, top: "50%", marginTop: -20 },
+    // A linha e o apagar são botões irmãos: o navegador não aceita botão dentro de botão.
+    rowWrap: { position: "relative" },
+    rowWithDelete: { paddingRight: 56 },
+    deleteButtonHovered: { backgroundColor: colors.m3.surfaceContainerHigh },
   });
 }

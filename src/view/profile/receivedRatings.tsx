@@ -7,6 +7,7 @@ import { TopAppBar } from "@/view/components/TopAppBar";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
+import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
 
 export type ReceivedRatingsProps = {
   sessionUserId: string | null;
@@ -96,7 +97,7 @@ export default function ReceivedRatingsScreen({ onBack, onNavigateToSignIn }: Re
   return <ReceivedRatings sessionUserId={authState.user.id} onBack={onBack} />;
 }
 
-const WIDE_CONTENT_MAX_WIDTH = 1100;
+const WIDE_CONTENT_MAX_WIDTH = WEB_MAX_WIDTH;
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
@@ -118,7 +119,7 @@ function createStyles(colors: ColorPalette) {
   },
   retryText: { ...tokens.typography.bodyMedium, color: colors.action, fontWeight: "600" },
   list: { gap: tokens.spacing[12] },
-  contentWide: { maxWidth: WIDE_CONTENT_MAX_WIDTH },
+  contentWide: { maxWidth: WEB_MAX_WIDTH, paddingHorizontal: WEB_GUTTER },
   listWide: { flexDirection: "row", flexWrap: "wrap" },
   cardWide: { flexBasis: "48%", flexGrow: 0 },
   card: {

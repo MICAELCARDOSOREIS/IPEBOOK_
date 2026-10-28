@@ -58,12 +58,15 @@ export function NavigationBar({ active, onNavigate, disabledDestinations = [], b
           >
             <View style={styles.indicator}>
               <ActiveIndicator active={isActive} color={colors.m3.secondaryContainer} />
-              <AppIcon
-                name={item.icon}
-                size={24}
-                filled={isActive}
-                color={isDisabled ? colors.secondaryText : isActive ? colors.m3.onSecondaryContainer : colors.m3.onSurfaceVariant}
-              />
+              {/* Na web a pílula (posicionada) seria pintada por cima do ícone: ele sobe uma camada. */}
+              <View style={styles.iconLayer}>
+                <AppIcon
+                  name={item.icon}
+                  size={24}
+                  filled={isActive}
+                  color={isDisabled ? colors.secondaryText : isActive ? colors.m3.onSecondaryContainer : colors.m3.onSurfaceVariant}
+                />
+              </View>
               {badgeCount > 0 ? (
                 <View style={styles.badge}>
                   <Text style={styles.badgeText}>{badgeCount > 9 ? "9+" : String(badgeCount)}</Text>
@@ -127,6 +130,7 @@ function createStyles(colors: ColorPalette) {
       alignItems: "center",
       gap: tokens.spacing[4],
     },
+    iconLayer: { zIndex: 1 },
     indicator: {
       width: 64,
       height: tokens.spacing[32],

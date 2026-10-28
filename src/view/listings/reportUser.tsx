@@ -4,11 +4,13 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { USER_REPORT_REASONS } from "@/model/entities/report";
 import { FilledButton } from "@/view/components/FilledButton";
 import { IconBadge } from "@/view/components/IconBadge";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useReportUserViewModel } from "@/viewmodel/useReportUserViewModel";
+import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
 
 export type ReportUserProps = {
   userId: string;
@@ -23,12 +25,14 @@ export default function ReportUser({ userId, userName, onBack, onNavigateToLogin
   const sessionUserId = auth.user?.id ?? null;
   const [state, actions] = useReportUserViewModel();
   const { colors } = useTheme();
+  // Web larga: motivos de um lado, detalhes e envio do outro.
+  const wide = useIsWideWeb();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   if (state.success) {
     return (
       <SafeAreaView style={styles.page}>
-        <TopAppBar contentMaxWidth={560} title="Denunciar pessoa" onBack={onBack} />
+        <TopAppBar contentMaxWidth={wide ? WEB_MAX_WIDTH : 560} title="Denunciar pessoa" onBack={onBack} />
         <View style={styles.centered}>
           <IconBadge icon="check" tone="action" size="large" />
           <Text accessibilityRole="header" style={styles.title}>Denúncia enviada</Text>
@@ -46,7 +50,7 @@ export default function ReportUser({ userId, userName, onBack, onNavigateToLogin
   if (!sessionUserId) {
     return (
       <SafeAreaView style={styles.page}>
-        <TopAppBar contentMaxWidth={560} title="Denunciar pessoa" onBack={onBack} />
+        <TopAppBar contentMaxWidth={wide ? WEB_MAX_WIDTH : 560} title="Denunciar pessoa" onBack={onBack} />
         <View style={styles.centered}>
           <IconBadge icon="flag" tone="neutral" size="large" />
           <Text accessibilityRole="header" style={styles.title}>Identificação necessária</Text>
@@ -63,12 +67,14 @@ export default function ReportUser({ userId, userName, onBack, onNavigateToLogin
 
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar contentMaxWidth={560} title="Denunciar pessoa" onBack={onBack} />
+      <TopAppBar contentMaxWidth={wide ? WEB_MAX_WIDTH : 560} title="Denunciar pessoa" onBack={onBack} />
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-        <View style={styles.content}>
+        <View style={[styles.content, wide && styles.contentWide]}>
           <Text style={styles.heading}>{userName ? `O que aconteceu com ${userName}?` : "O que aconteceu?"}</Text>
           <Text style={styles.body}>Sua denúncia é anônima. A equipe analisa em até 24 horas.</Text>
 
+          <View style={[styles.columns, wide && styles.columnsWide]}>
+          <View style={[styles.column, wide && styles.columnHalf]}>
           <View accessibilityRole="radiogroup" style={styles.reasons}>
             {USER_REPORT_REASONS.map((option) => {
               const selected = state.reason === option.key;
@@ -94,6 +100,8 @@ export default function ReportUser({ userId, userName, onBack, onNavigateToLogin
             })}
           </View>
 
+          </View>
+          <View style={[styles.column, wide && styles.columnHalf]}>
           <Text style={styles.label}>Detalhes (opcional)</Text>
           <TextInput
             accessibilityLabel="Detalhes adicionais da denúncia"
@@ -117,6 +125,8 @@ export default function ReportUser({ userId, userName, onBack, onNavigateToLogin
             loadingLabel="Enviando"
             onPress={() => void actions.submit(userId, sessionUserId)}
           />
+          </View>
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -128,6 +138,11 @@ function createStyles(colors: ColorPalette) {
     page: { flex: 1, backgroundColor: colors.background },
     scroll: { padding: tokens.spacing[16] },
     content: { width: "100%", maxWidth: 560, alignSelf: "center", gap: tokens.spacing[16] },
+    contentWide: { maxWidth: WEB_MAX_WIDTH, paddingHorizontal: WEB_GUTTER },
+    columns: { gap: tokens.spacing[16] },
+    columnsWide: { flexDirection: "row", alignItems: "flex-start", gap: tokens.spacing[24] },
+    column: { gap: tokens.spacing[16] },
+    columnHalf: { flex: 1 },
     centered: { flex: 1, alignItems: "center", justifyContent: "center", gap: tokens.spacing[12], padding: tokens.spacing[24] },
     full: { alignSelf: "stretch" },
     title: { ...tokens.typography.titleMedium, color: colors.m3.onSurface, textAlign: "center" },

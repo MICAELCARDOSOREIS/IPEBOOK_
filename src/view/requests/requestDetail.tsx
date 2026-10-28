@@ -20,8 +20,9 @@ import { useNegotiationRatingViewModel } from "@/viewmodel/useNegotiationRatingV
 import { useDeliveryStatus } from "@/viewmodel/useDeliveryViewModel";
 import { NegotiationRatingModal } from "@/view/requests/NegotiationRatingModal";
 import { FilledButton } from "@/view/components/FilledButton";
+import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
 
-const WIDE_CONTENT_MAX_WIDTH = 1100;
+const WIDE_CONTENT_MAX_WIDTH = WEB_MAX_WIDTH;
 
 export type RequestDetailProps = {
   requestId: string;
@@ -431,7 +432,7 @@ function createStyles(colors: ColorPalette) {
     fontWeight: "600",
   },
   container: { gap: tokens.spacing[16] },
-  contentWide: { maxWidth: WIDE_CONTENT_MAX_WIDTH, paddingHorizontal: tokens.spacing[24] },
+  contentWide: { maxWidth: WEB_MAX_WIDTH, paddingHorizontal: WEB_GUTTER },
   columns: { gap: tokens.spacing[16] },
   columnsWide: { flexDirection: "row", alignItems: "flex-start" },
   column: { gap: tokens.spacing[16] },

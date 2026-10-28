@@ -111,6 +111,19 @@ describe("Conversas na Web Larga (Spec 093 · Figma 06.01 / 06.09)", () => {
     expect(screen.getByText("Sobre a troca")).toBeDefined();
   });
 
+  it("oferece botão visível de apagar só nas conversas aceitas, sem dica de toque longo", async () => {
+    setup({
+      items: [
+        { requestId: "r1", listing: listing("b1", "Dom Casmurro"), otherName: "Ana Paula", otherPhotoUrl: null, preview: "Oi", lastMessageAt: null, kind: "accepted" },
+        { requestId: "r2", listing: listing("b2", "O Cortiço"), otherName: "Carlos", otherPhotoUrl: null, preview: "Proposta", lastMessageAt: null, kind: "pendingReceived" },
+      ],
+    });
+    const screen = await renderView();
+    expect(screen.getByLabelText("Apagar conversa com Ana Paula")).toBeDefined();
+    expect(screen.queryByLabelText("Apagar conversa com Carlos")).toBeNull();
+    expect(screen.queryByText(/mantenha o dedo/)).toBeNull();
+  });
+
   describe("Combinar encontro no painel lateral (Spec 095)", () => {
     const accepted: ConversationItem = {
       requestId: "r1",

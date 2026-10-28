@@ -15,8 +15,9 @@ import { TopAppBar } from "@/view/components/TopAppBar";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { formatPrice } from "@/view/formatPrice";
+import { WEB_MAX_WIDTH, WEB_GUTTER, useWebColumns } from "@/view/webLayout";
 
-const WIDE_CONTENT_MAX_WIDTH = 1100;
+const WIDE_CONTENT_MAX_WIDTH = WEB_MAX_WIDTH;
 
 export const statusLabel: Record<RequestStatus, string> = {
   pending: "Pendente",
@@ -53,6 +54,7 @@ export function RequestListLayout({
   const { isOnline } = useNetworkStatus();
   // Web larga: coluna mais larga e dois pedidos por linha, em vez de uma faixa estreita no meio.
   const wide = useIsWideWeb();
+  const listColumns = useWebColumns(2, 3);
   const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "accepted" | "history">("all");
 
   const pendingCount = items.filter((item) => item.request.status === "pending").length;
@@ -112,8 +114,8 @@ export function RequestListLayout({
         ) : (
           <>
             <FlatList
-              key={wide ? "duas-colunas" : "uma-coluna"}
-              numColumns={wide ? 2 : 1}
+              key={wide ? `colunas-${listColumns}` : "uma-coluna"}
+              numColumns={wide ? listColumns : 1}
               columnWrapperStyle={wide ? styles.columns : undefined}
               data={filteredItems}
               keyExtractor={(item) => item.request.id}
@@ -243,7 +245,7 @@ function createStyles(colors: ColorPalette) {
     padding: tokens.spacing[24],
     paddingTop: tokens.spacing[32],
   },
-  contentWide: { maxWidth: WIDE_CONTENT_MAX_WIDTH },
+  contentWide: { maxWidth: WEB_MAX_WIDTH, paddingHorizontal: WEB_GUTTER },
   columns: { gap: tokens.spacing[12] },
   itemWide: { flex: 1, maxWidth: "50%" },
   back: {

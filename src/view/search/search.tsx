@@ -26,6 +26,7 @@ import { NeighborhoodSelectorModal } from "@/view/components/NeighborhoodSelecto
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
 import { useActiveNeighborhood } from "@/viewmodel/useActiveNeighborhood";
+import { WEB_MAX_WIDTH, useWebGridColumns } from "@/view/webLayout";
 
 export type SearchProps = {
   currentNeighborhood?: string;
@@ -65,6 +66,7 @@ export default function Search({
   const [confirmingClear, setConfirmingClear] = useState(false);
   const [showFilterSheet, setShowFilterSheet] = useState(false);
   const wideWeb = useIsWideWeb();
+  const gridColumns = useWebGridColumns();
   const [showSortSheet, setShowSortSheet] = useState(false);
   const appliedInitialModality = useRef(false);
 
@@ -135,6 +137,8 @@ export default function Search({
               <Text style={styles.clearFiltersText}>Limpar filtros</Text>
             </Pressable>
           ) : null}
+          {/* Na web larga a coluna "Filtros" já está sempre visível; o atalho só existe nas telas estreitas. */}
+          {wideWeb ? null : (
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={
@@ -153,6 +157,7 @@ export default function Search({
               </View>
             ) : null}
           </Pressable>
+          )}
         </View>
       </View>
 
@@ -338,8 +343,8 @@ export default function Search({
         />
       ) : null}
       <FlatList
-        key={wideWeb ? "grade" : "lista"}
-        numColumns={wideWeb ? 4 : 1}
+        key={wideWeb ? `grade-${gridColumns}` : "lista"}
+        numColumns={wideWeb ? gridColumns : 1}
         columnWrapperStyle={wideWeb ? styles.gridRow : undefined}
         data={state.loading || state.error ? [] : state.books}
         keyExtractor={(book) => book.id}
@@ -376,7 +381,7 @@ export default function Search({
               : "Gratuito";
 
           return (
-            <View style={[styles.card, wideWeb && styles.cardWide]}>
+            <View style={[styles.card, wideWeb && styles.cardWide, wideWeb && { maxWidth: `${100 / gridColumns}%` }]}>
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel={`Ver detalhe de ${item.title}, ${item.author}${item.neighborhood ? ` em ${item.neighborhood}` : ""}`}
@@ -384,14 +389,14 @@ export default function Search({
                 style={[styles.cardMain, wideWeb && styles.cardMainWide]}
               >
                 <ModalityCoverArea modality={item.modality}>
-                  <BookCover id={item.id} title={item.title} photoUrl={item.photoUrl} variant="list" />
+                  <BookCover id={item.id} title={item.title} photoUrl={item.photoUrl} variant={wideWeb ? "card" : "list"} />
                 </ModalityCoverArea>
-                <View style={styles.cardInfo}>
+                <View style={[styles.cardInfo, wideWeb && styles.cardInfoWide]}>
                   <Text numberOfLines={2} style={styles.cardTitle}>{item.title}</Text>
                   <Text numberOfLines={1} style={styles.cardAuthor}>{item.author}</Text>
-                  <View style={styles.cardMetaRow}>
+                  <View style={[styles.cardMetaRow, wideWeb && styles.cardMetaRowWide]}>
                     <Tag variant={item.modality} />
-                    <Text style={styles.priceText}>{priceOrCondition}</Text>
+                    <Text numberOfLines={1} style={styles.priceText}>{priceOrCondition}</Text>
                     {item.neighborhood ? (
                       <View style={styles.cardLocationBadge}>
                         <AppIcon name="place" size={12} color={colors.m3.onSurfaceVariant} />
@@ -404,6 +409,7 @@ export default function Search({
               </Pressable>
               <View style={[styles.cardActions, wideWeb && styles.cardActionsWide]}>
                 <FavoriteButton bookId={item.id} userId={auth.user?.id ?? null} />
+                {wideWeb ? null : (
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel={`Abrir ${item.title}`}
@@ -412,6 +418,7 @@ export default function Search({
                 >
                   <AppIcon name="chevronRight" size={24} color={colors.m3.onSurfaceVariant} />
                 </Pressable>
+                )}
               </View>
             </View>
           );
@@ -457,10 +464,13 @@ function createStyles(colors: ColorPalette) {
     page: { flex: 1, backgroundColor: colors.background },
     flexOne: { flex: 1 },
     // Web larga (Figma `34:229`): filtros fixos à esquerda e resultados em grade de 4 colunas.
-    wideRow: { flex: 1, flexDirection: "row", gap: 24, width: "100%", maxWidth: 1440, alignSelf: "center", paddingHorizontal: 80, paddingTop: 32 },
+    wideRow: { flex: 1, flexDirection: "row", gap: 24, width: "100%", maxWidth: WEB_MAX_WIDTH, alignSelf: "center", paddingHorizontal: 80, paddingTop: 32 },
     contentWide: { flexGrow: 1, paddingBottom: tokens.spacing[32], gap: 24 },
     gridRow: { gap: 24 },
     cardMainWide: { flexDirection: "column", alignItems: "stretch", gap: 8 },
+    // Na grade, o texto começa logo abaixo da capa para os títulos ficarem alinhados entre colunas.
+    cardInfoWide: { justifyContent: "flex-start" },
+    cardMetaRowWide: { flexWrap: "wrap", rowGap: 4 },
     cardActionsWide: { position: "absolute", top: 8, right: 8, width: 48 },
     cardWide: { alignItems: "stretch", paddingLeft: 12, paddingRight: 12, marginBottom: 0, flex: 1, flexDirection: "column", maxWidth: "25%", borderRadius: 20, backgroundColor: colors.m3.surfaceContainerLowest },
     content: {

@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { AppIcon } from "@/view/components/AppIcon";
@@ -37,6 +37,8 @@ export function WebFilterSidebar({
 
   return (
     <View accessibilityLabel="Filtros" testID="web-filter-sidebar" style={styles.panel}>
+      {/* Rola por conta própria: em janelas baixas a coluna não cabe inteira ao lado dos resultados. */}
+      <ScrollView contentContainerStyle={styles.panelContent}>
       <Text accessibilityRole="header" style={styles.title}>Filtros</Text>
 
       <View style={styles.group}>
@@ -92,6 +94,7 @@ export function WebFilterSidebar({
           <Text style={styles.clear}>Limpar filtros</Text>
         </Pressable>
       ) : null}
+      </ScrollView>
     </View>
   );
 }
@@ -119,12 +122,13 @@ function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     panel: {
       width: 280,
-      gap: 24,
-      padding: 24,
+      maxHeight: "100%",
+      overflow: "hidden",
       borderRadius: tokens.radius.large,
       backgroundColor: colors.m3.surfaceContainerLow,
       alignSelf: "flex-start",
     },
+    panelContent: { gap: 24, padding: 24 },
     title: { fontFamily: tokens.typography.labelLarge.fontFamily, fontSize: 20, lineHeight: 28, fontWeight: "600", color: colors.m3.onSurface },
     group: { gap: 4 },
     groupLabel: { ...tokens.typography.labelLarge, color: colors.m3.onSurface, marginBottom: 6 },

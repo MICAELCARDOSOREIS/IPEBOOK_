@@ -10,6 +10,7 @@ import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { AppIcon } from "@/view/components/AppIcon";
 import { AboutSections } from "@/view/onboarding/aboutSections";
 import illustration from "./ilustracao-classicos.png";
+import { WEB_MAX_WIDTH } from "@/view/webLayout";
 
 export type WelcomeProps = {
   onStart: () => void;
@@ -145,7 +146,7 @@ export default function Welcome({ onStart, onSignIn, onHelp, onTerms }: WelcomeP
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
   wideRoot: { flex: 1, backgroundColor: colors.background },
-  wideContent: { width: "100%", maxWidth: 1440, alignSelf: "center", paddingHorizontal: 80, paddingTop: 16, paddingBottom: 32, gap: 64 },
+  wideContent: { width: "100%", maxWidth: WEB_MAX_WIDTH, alignSelf: "center", paddingHorizontal: 80, paddingTop: 16, paddingBottom: 32, gap: 64 },
   wideHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", minHeight: 56 },
   wideHeaderActions: { flexDirection: "row", alignItems: "center", gap: 24 },
   wideLink: { ...tokens.typography.labelLarge, color: colors.m3.primary },

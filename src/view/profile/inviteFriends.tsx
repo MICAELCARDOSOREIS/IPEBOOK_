@@ -3,12 +3,14 @@ import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { IconBadge } from "@/view/components/IconBadge";
 import { FilledButton } from "@/view/components/FilledButton";
 import { captureRef } from "react-native-view-shot";
 import { InviteCard } from "@/view/components/InviteCard";
 import { useInviteFriendsViewModel } from "@/viewmodel/useInviteFriendsViewModel";
+import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
 
 export type InviteFriendsProps = {
   onBack?: () => void;
@@ -21,6 +23,8 @@ export function InviteFriends({ onBack }: InviteFriendsProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [state, actions] = useInviteFriendsViewModel();
+  // Web larga: o cartão do convite de um lado, texto e ação do outro.
+  const wide = useIsWideWeb();
   const cardRef = useRef<React.ComponentRef<typeof View>>(null);
 
   // A imagem do convite é este cartão: captura em PNG e abre a folha de compartilhamento do sistema.
@@ -28,9 +32,9 @@ export function InviteFriends({ onBack }: InviteFriendsProps) {
 
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar contentMaxWidth={560} title="Convidar amigos" onBack={() => onBack?.()} />
+      <TopAppBar contentMaxWidth={wide ? WEB_MAX_WIDTH : 560} title="Convidar amigos" onBack={() => onBack?.()} />
       <ScrollView contentContainerStyle={styles.scroll}>
-        <View style={styles.content}>
+        <View style={[styles.content, wide && styles.contentWide]}>
           <View style={styles.header}>
             <IconBadge icon="shelf" tone="action" size="large" />
             <Text accessibilityRole="header" style={styles.title}>
@@ -41,8 +45,11 @@ export function InviteFriends({ onBack }: InviteFriendsProps) {
             </Text>
           </View>
 
+          <View style={[styles.columns, wide && styles.columnsWide]}>
+          <View style={[styles.column, wide && styles.columnHalf, wide && styles.cardColumn]}>
           <InviteCard ref={cardRef} url={state.inviteUrl} />
-
+          </View>
+          <View style={[styles.column, wide && styles.columnHalf]}>
           <View style={styles.previewCard}>
             <Text style={styles.previewLabel}>Texto que vai junto com a imagem</Text>
             <Text style={styles.previewText}>{state.inviteMessage}</Text>
@@ -77,6 +84,8 @@ export function InviteFriends({ onBack }: InviteFriendsProps) {
               onPress={() => void actions.shareImage(captureInvite)}
             />
           </View>
+          </View>
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -95,6 +104,12 @@ function createStyles(colors: ColorPalette) {
       alignSelf: "center",
       gap: tokens.spacing[24],
     },
+    contentWide: { maxWidth: WEB_MAX_WIDTH, paddingHorizontal: WEB_GUTTER },
+    columns: { gap: tokens.spacing[24] },
+    columnsWide: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[48] },
+    column: { gap: tokens.spacing[24] },
+    columnHalf: { flex: 1 },
+    cardColumn: { alignItems: "center" },
     header: {
       alignItems: "center",
       gap: tokens.spacing[12],

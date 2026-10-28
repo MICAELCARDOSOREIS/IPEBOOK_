@@ -327,6 +327,40 @@ describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
     expect(screen.getByText("Livro")).toBeDefined();
   });
 
+  it("não conta livros entregues no resumo por modalidade", async () => {
+    const base = { author: "A", ownerId: "user-1" };
+    mockViewModel({
+      books: [
+        { ...base, id: "s1", title: "V1", modality: "sale", status: "available" as const },
+        { ...base, id: "s2", title: "V2", modality: "sale", status: "delivered" as const },
+      ],
+    });
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<MyListings sessionUserId="user-1" />);
+    });
+    expect(screen.getByLabelText("1 à venda")).toBeDefined();
+  });
+
+  it("leva o livro entregue de Anúncios para Concluídos", async () => {
+    const base = { author: "A", ownerId: "user-1", modality: "sale" as const };
+    mockViewModel({
+      books: [
+        { ...base, id: "a1", title: "Ativo", status: "available" as const },
+        { ...base, id: "e1", title: "Entregue", status: "delivered" as const },
+      ],
+    });
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<MyListings sessionUserId="user-1" />);
+    });
+    expect(screen.queryByText("Entregue")).toBeNull();
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Concluídos"));
+    });
+    expect(screen.getByText("Entregue")).toBeDefined();
+  });
+
   it("oferece o botão Anunciar livro quando já existe estante (Figma 05.01)", async () => {
     const livro: Book = {
       id: "b12",

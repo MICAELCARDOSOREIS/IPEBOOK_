@@ -4,11 +4,13 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Checkbox } from "@/view/components/Checkbox";
 import { FilledButton } from "@/view/components/FilledButton";
 import { IconBadge } from "@/view/components/IconBadge";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useFormErrorAnnouncer } from "@/view/useFormErrorAnnouncer";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { useDeleteAccountViewModel } from "@/viewmodel/useDeleteAccountViewModel";
+import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
 
 export type DeleteAccountProps = {
   sessionUserId: string | null;
@@ -36,12 +38,14 @@ export default function DeleteAccount({
   const exportErrorRef = useFormErrorAnnouncer(state.exportError);
   const errorRef = useFormErrorAnnouncer(state.error);
   const { colors } = useTheme();
+  // Web larga: coluna mais larga, com o conteúdo dividido em duas colunas.
+  const wide = useIsWideWeb();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   if (state.success) {
     return (
       <SafeAreaView style={styles.page}>
-        <TopAppBar title="Conta excluída" onBack={onBack} />
+        <TopAppBar title="Conta excluída" onBack={onBack} contentMaxWidth={wide ? WEB_MAX_WIDTH : undefined} />
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <View style={styles.content}>
             <View style={styles.card}>
@@ -66,7 +70,7 @@ export default function DeleteAccount({
   if (!sessionUserId) {
     return (
       <SafeAreaView style={styles.page}>
-        <TopAppBar title="Privacidade e dados" onBack={onBack} />
+        <TopAppBar title="Privacidade e dados" onBack={onBack} contentMaxWidth={wide ? WEB_MAX_WIDTH : undefined} />
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <View style={styles.content}>
             <View style={styles.card}>
@@ -91,9 +95,9 @@ export default function DeleteAccount({
 
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar title="Privacidade e dados" onBack={onBack} />
+      <TopAppBar title="Privacidade e dados" onBack={onBack} contentMaxWidth={wide ? WEB_MAX_WIDTH : undefined} />
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.content}>
+        <View style={[styles.content, wide && styles.contentWide]}>
           <View style={styles.heroHeader}>
             <Text style={styles.heroTitle}>Você no controle.</Text>
             <Text style={styles.heroSubtitle}>
@@ -101,6 +105,8 @@ export default function DeleteAccount({
             </Text>
           </View>
 
+          <View style={[styles.columns, wide && styles.columnsWide]}>
+          <View style={[styles.column, wide && styles.columnHalf]}>
           <View style={styles.privacyInfoCard}>
             <Text style={styles.privacyInfoTitle}>Seu perfil público</Text>
             <Text style={styles.exportText}>
@@ -165,6 +171,8 @@ export default function DeleteAccount({
             />
           </View>
 
+          </View>
+          <View style={[styles.column, wide && styles.columnHalf]}>
           <View style={styles.warningCard}>
             <View style={styles.cardHeaderRow}>
               <IconBadge icon="error" tone="error" />
@@ -206,6 +214,8 @@ export default function DeleteAccount({
             loadingLabel="Excluindo conta..."
             onPress={() => void actions.deleteAccount(sessionUserId)}
           />
+          </View>
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -214,6 +224,11 @@ export default function DeleteAccount({
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
+  contentWide: { maxWidth: WEB_MAX_WIDTH, paddingHorizontal: WEB_GUTTER },
+  columns: { gap: tokens.spacing[16] },
+  columnsWide: { flexDirection: "row", alignItems: "flex-start", gap: tokens.spacing[24] },
+  column: { gap: tokens.spacing[16] },
+  columnHalf: { flex: 1 },
   navigationRow: {
     flexDirection: "row",
     alignItems: "center",

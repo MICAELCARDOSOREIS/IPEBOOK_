@@ -114,7 +114,8 @@ export function Chat({ requestId, sessionUserId, onBack, onOpenNegotiation, embe
       </View>
       {/* O desvio do teclado é da raiz única (KeyboardAwareRoot, Spec 088); aqui só o layout do chat. */}
       <View style={styles.flex}>
-        {detail ? (
+        {/* Embutido na web larga, o livro já aparece no painel "Sobre a negociação" ao lado. */}
+        {detail && !embedded ? (
           <View style={styles.bookCard}>
             <BookCover id={detail.book.id} title={detail.book.title} photoUrl={detail.book.photoUrl} variant="list" />
             <View style={styles.bookText}>
@@ -231,8 +232,8 @@ function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     closedNotice: { padding: tokens.spacing[16], backgroundColor: colors.m3.surfaceContainer },
     closedNoticeText: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant, textAlign: "center" },
-    page: { flex: 1, backgroundColor: colors.background },
-    flex: { flex: 1 },
+    page: { flex: 1, minHeight: 0, backgroundColor: colors.background },
+    flex: { flex: 1, minHeight: 0 },
     header: {
       flexDirection: "row",
       alignItems: "center",

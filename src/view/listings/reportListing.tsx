@@ -4,11 +4,13 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { REPORT_REASONS } from "@/model/entities/report";
 import { FilledButton } from "@/view/components/FilledButton";
 import { IconBadge } from "@/view/components/IconBadge";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { useFormErrorAnnouncer } from "@/view/useFormErrorAnnouncer";
 import { useReportListingViewModel } from "@/viewmodel/useReportListingViewModel";
+import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
 
 export type ReportListingProps = {
   listingId: string;
@@ -31,13 +33,15 @@ export default function ReportListing({
 }: ReportListingProps) {
   const [state, actions] = useReportListingViewModel();
   const { colors } = useTheme();
+  // Web larga: coluna mais larga, com o conteúdo dividido em duas colunas.
+  const wide = useIsWideWeb();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const errorRef = useFormErrorAnnouncer(state.error);
 
   if (state.success) {
     return (
       <SafeAreaView style={styles.page}>
-        <TopAppBar title="Denunciar anúncio" onBack={onBack} />
+        <TopAppBar title="Denunciar anúncio" onBack={onBack} contentMaxWidth={wide ? WEB_MAX_WIDTH : undefined} />
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <View style={styles.content}>
             <View style={styles.successCard}>
@@ -62,7 +66,7 @@ export default function ReportListing({
   if (!sessionUserId) {
     return (
       <SafeAreaView style={styles.page}>
-        <TopAppBar title="Denunciar anúncio" onBack={onBack} />
+        <TopAppBar title="Denunciar anúncio" onBack={onBack} contentMaxWidth={wide ? WEB_MAX_WIDTH : undefined} />
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <View style={styles.content}>
             <View style={styles.authNotice}>
@@ -87,9 +91,9 @@ export default function ReportListing({
 
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar title="Denunciar anúncio" onBack={onBack} />
+      <TopAppBar title="Denunciar anúncio" onBack={onBack} contentMaxWidth={wide ? WEB_MAX_WIDTH : undefined} />
       <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
-        <View style={styles.content}>
+        <View style={[styles.content, wide && styles.contentWide]}>
           {listingTitle ? (
             <Text style={styles.bookContext}>
               Denunciando: <Text style={styles.bookTitleBold}>{listingTitle}</Text>
@@ -103,6 +107,8 @@ export default function ReportListing({
             </Text>
           </View>
 
+          <View style={[styles.columns, wide && styles.columnsWide]}>
+          <View style={[styles.column, wide && styles.columnHalf]}>
           <View testID="report-reasons-radiogroup" accessibilityRole="radiogroup" style={styles.reasonList}>
             {REPORT_REASONS.map((option) => {
               const isSelected = state.reason === option.key;
@@ -129,6 +135,8 @@ export default function ReportListing({
             })}
           </View>
 
+          </View>
+          <View style={[styles.column, wide && styles.columnHalf]}>
           <View style={styles.field}>
             <Text style={styles.inputLabel}>Detalhes (opcional)</Text>
             <TextInput
@@ -162,6 +170,8 @@ export default function ReportListing({
             loadingLabel="Enviando denúncia..."
             onPress={() => void actions.submit(listingId, sessionUserId)}
           />
+          </View>
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -171,6 +181,11 @@ export default function ReportListing({
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
   page: { flex: 1, backgroundColor: colors.background },
+  contentWide: { maxWidth: WEB_MAX_WIDTH, paddingHorizontal: WEB_GUTTER },
+  columns: { gap: tokens.spacing[16] },
+  columnsWide: { flexDirection: "row", alignItems: "flex-start", gap: tokens.spacing[24] },
+  column: { gap: tokens.spacing[16] },
+  columnHalf: { flex: 1 },
   scrollContent: {
     flexGrow: 1,
     paddingBottom: tokens.spacing[48],

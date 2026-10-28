@@ -6,14 +6,18 @@ import { FilledButton } from "@/view/components/FilledButton";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { TextField } from "@/view/components/TextField";
 import { TopAppBar } from "@/view/components/TopAppBar";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
+import { WEB_MAX_WIDTH, WEB_GUTTER, useWebColumns, webColumnWidth } from "@/view/webLayout";
 
 export type HelpAndFaqProps = {
   onBack: () => void;
   /** Abre as negociações em andamento, como o botão "Abrir conversas" do Figma `09.01`. */
   onOpenConversations?: () => void;
 };
+
+const WIDE_CONTENT_MAX_WIDTH = WEB_MAX_WIDTH;
 
 type CategoryFilter = "todos" | "seguranca" | "regras" | "suporte";
 
@@ -40,6 +44,10 @@ export default function HelpAndFaq({ onBack, onOpenConversations }: HelpAndFaqPr
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [filter, setFilter] = useState<CategoryFilter>("todos");
   const [searchQuery, setSearchQuery] = useState("");
+  // Web larga: coluna mais larga, com as respostas em duas colunas.
+  const wide = useIsWideWeb();
+  const columns = useWebColumns(2, 3);
+  const columnWidth = { width: webColumnWidth(columns) };
 
   const normalizedQuery = normalizeSearchText(searchQuery);
 
@@ -63,9 +71,9 @@ export default function HelpAndFaq({ onBack, onOpenConversations }: HelpAndFaqPr
 
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar title="Ajuda" onBack={onBack} />
+      <TopAppBar title="Ajuda" onBack={onBack} contentMaxWidth={wide ? WIDE_CONTENT_MAX_WIDTH : undefined} />
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.content}>
+        <View style={[styles.content, wide && styles.contentWide]}>
           <View style={styles.headerSection}>
             <Text style={styles.heroHeadline}>Vamos ajudar.</Text>
             <Text style={styles.heroSubtitle}>
@@ -99,9 +107,9 @@ export default function HelpAndFaq({ onBack, onOpenConversations }: HelpAndFaqPr
             })}
           </View>
 
-          <View style={styles.list}>
+          <View style={[styles.list, wide && styles.listWide]}>
             {filteredItems.length === 0 ? (
-              <View style={styles.emptyCard}>
+              <View style={[styles.emptyCard, wide && styles.fullRow]}>
                 <Text style={styles.question}>Nenhuma dúvida encontrada para sua busca.</Text>
                 <Text style={styles.answer}>
                   Tente buscar por outra palavra-chave ou limpe o filtro ativo.
@@ -116,7 +124,7 @@ export default function HelpAndFaq({ onBack, onOpenConversations }: HelpAndFaqPr
               </View>
             ) : (
               filteredItems.map((item) => (
-                <View key={item.id} style={styles.faqCard}>
+                <View key={item.id} style={[styles.faqCard, wide && columnWidth]}>
                   <Text style={styles.question}>{item.question}</Text>
                   <Text style={styles.answer}>{item.answer}</Text>
                 </View>
@@ -197,6 +205,9 @@ function createStyles(colors: ColorPalette) {
   list: {
     gap: tokens.spacing[12],
   },
+  contentWide: { maxWidth: WEB_MAX_WIDTH, paddingHorizontal: WEB_GUTTER },
+  listWide: { flexDirection: "row", flexWrap: "wrap", alignItems: "flex-start", columnGap: tokens.spacing[16], rowGap: tokens.spacing[16] },
+  fullRow: { width: "100%" },
   footerAction: {
     paddingTop: tokens.spacing[24],
   },

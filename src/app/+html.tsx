@@ -27,7 +27,14 @@ export default function Root({ children }: PropsWithChildren) {
         {/* Barras de rolagem finas e discretas nos dois temas (a nativa do Chrome fica branca no escuro). */}
         <style
           dangerouslySetInnerHTML={{
-            __html: `*{scrollbar-width:thin;scrollbar-color:rgba(128,128,128,.45) transparent}`,
+            __html: [
+              `*{scrollbar-width:thin;scrollbar-color:rgba(128,128,128,.45) transparent}`,
+              // Foco de teclado visível nos dois temas: anel escuro com halo claro (WCAG 2.4.7).
+              `:focus-visible{outline:2px solid #1F4A35;outline-offset:2px;box-shadow:0 0 0 5px #CFE8D9;border-radius:8px}`,
+              `[role="button"],[role="link"],[role="tab"],[role="radio"],[role="checkbox"],[role="switch"],[role="search"]{cursor:pointer}`,
+              `[aria-disabled="true"]{cursor:not-allowed}`,
+              `@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}`,
+            ].join(""),
           }}
         />
         {headNodes}

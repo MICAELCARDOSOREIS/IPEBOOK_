@@ -14,10 +14,13 @@ import { Tag } from "@/view/components/Tag";
 import { TextButton } from "@/view/components/TextButton";
 import { LoadingState } from "@/view/components/LoadingState";
 import { TopAppBar } from "@/view/components/TopAppBar";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useDraftsViewModel } from "@/viewmodel/useDraftsViewModel";
+import { WEB_MAX_WIDTH, WEB_GUTTER, useWebColumns, webColumnWidth } from "@/view/webLayout";
 
 const TOTAL_STEPS = 3;
+const WIDE_CONTENT_MAX_WIDTH = WEB_MAX_WIDTH;
 
 const STEP_LABELS: Record<number, string> = {
   1: "no livro",
@@ -49,6 +52,10 @@ export function Drafts({ sessionUserId, onBack, onResume, onNavigateToCreateList
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [state, actions] = useDraftsViewModel(sessionUserId);
   const [toDiscard, setToDiscard] = useState<Book | null>(null);
+  // Web larga: coluna mais larga e dois rascunhos por linha, em vez de uma faixa estreita no meio.
+  const wide = useIsWideWeb();
+  const columns = useWebColumns(2, 3);
+  const columnWidth = { width: webColumnWidth(columns) };
 
   // A primeira carga é do próprio viewmodel; as seguintes acontecem quando a tela volta ao foco.
   const firstFocus = useRef(true);
@@ -69,8 +76,8 @@ export function Drafts({ sessionUserId, onBack, onResume, onNavigateToCreateList
 
   return (
     <SafeAreaView edges={["top", "left", "right"]} style={styles.page}>
-      <TopAppBar contentMaxWidth={560} title="Rascunhos" onBack={onBack ?? (() => {})} />
-      <View style={styles.content}>
+      <TopAppBar contentMaxWidth={wide ? WIDE_CONTENT_MAX_WIDTH : 560} title="Rascunhos" onBack={onBack ?? (() => {})} />
+      <View style={[styles.content, wide && styles.contentWide]}>
         {state.loading ? (
           <LoadingState label="Carregando seus rascunhos" />
         ) : state.error ? (
@@ -92,19 +99,19 @@ export function Drafts({ sessionUserId, onBack, onResume, onNavigateToCreateList
             ) : null}
           </View>
         ) : (
-          <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-            <Text style={styles.summary}>
+          <ScrollView contentContainerStyle={[styles.scroll, wide && styles.scrollWide]} showsVerticalScrollIndicator={false}>
+            <Text style={[styles.summary, wide && styles.fullRow]}>
               {state.drafts.length === 1 ? "1 anúncio em andamento" : `${state.drafts.length} anúncios em andamento`}
             </Text>
             {state.discardError ? (
-              <Text accessibilityRole="alert" style={styles.cardError}>{state.discardError}</Text>
+              <Text accessibilityRole="alert" style={[styles.cardError, wide && styles.fullRow]}>{state.discardError}</Text>
             ) : null}
             {state.drafts.map((book) => {
               const step = Math.min(Math.max(book.draftStep ?? 1, 1), TOTAL_STEPS);
               const title = book.title?.trim() || "Sem título";
               const discarding = state.discardingId === book.id;
               return (
-                <View key={book.id} style={styles.card}>
+                <View key={book.id} style={[styles.card, wide && columnWidth]}>
                   <Pressable
                     accessibilityRole="button"
                     accessibilityLabel={`Rascunho ${title}, ${stepLabel(book)}`}
@@ -209,6 +216,9 @@ function createStyles(colors: ColorPalette) {
       alignSelf: "center",
       paddingHorizontal: tokens.spacing[16],
     },
+    contentWide: { maxWidth: WEB_MAX_WIDTH, paddingHorizontal: WEB_GUTTER },
+    scrollWide: { flexDirection: "row", flexWrap: "wrap", alignItems: "flex-start", columnGap: tokens.spacing[16], rowGap: tokens.spacing[16] },
+    fullRow: { width: "100%" },
     scroll: { gap: tokens.spacing[12], paddingBottom: tokens.spacing[24] },
     summary: { ...tokens.typography.labelLarge, color: colors.m3.primary, paddingTop: tokens.spacing[4] },
     card: {
@@ -251,6 +261,6 @@ function createStyles(colors: ColorPalette) {
       textAlign: "center",
       maxWidth: 320,
     },
-    emptyAction: { alignSelf: "stretch", marginTop: tokens.spacing[16] },
+    emptyAction: { alignSelf: "center", width: "100%", maxWidth: 320, marginTop: tokens.spacing[16] },
   });
 }

@@ -121,10 +121,10 @@ describe("Chat em tela cheia (Spec 082)", () => {
     expect(screen.queryByLabelText("Enviar mensagem")).toBeNull();
   });
 
-  it("embutido na web larga, omite Voltar e Combinar (o painel lateral já oferece)", async () => {
+  it("embutido na web larga, omite Voltar, Combinar e o cartão do livro (o painel lateral já oferece)", async () => {
     setup();
     const screen = await renderChat({ embedded: true });
-    expect(screen.getByText("Dom Casmurro")).toBeDefined();
+    expect(screen.queryByText("Dom Casmurro")).toBeNull();
     expect(screen.queryByLabelText("Voltar")).toBeNull();
     expect(screen.queryByLabelText("Combinar encontro na negociação")).toBeNull();
   });
