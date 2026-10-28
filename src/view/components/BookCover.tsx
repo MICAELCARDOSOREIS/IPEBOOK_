@@ -1,13 +1,8 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, type ReactNode } from "react";
 import { Animated, Image, StyleSheet, Text, View } from "react-native";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { useBookCoverImage } from "@/viewmodel/useBookCoverImage";
-import estrelas from "@/view/assets/capas/estrelas.svg";
-import ondas from "@/view/assets/capas/ondas.svg";
-import ipe from "@/view/assets/capas/ipe.svg";
-import sol from "@/view/assets/capas/sol.svg";
-import montanhas from "@/view/assets/capas/montanhas.svg";
 
 export type BookCoverVariant = "list" | "card" | "carousel" | "detail";
 
@@ -51,23 +46,84 @@ const VARIANT_WIDTH: Record<BookCoverVariant, number> = {
   detail: DETAIL_WIDTH,
 };
 
-const asSource = (art: number | string) => (typeof art === "string" ? { uri: art } : art);
+const TONE = "rgba(245,239,232,0.22)";
+const TONE_STRONG = "rgba(245,239,232,0.42)";
+const SUN = tokens.colors.cover.sun;
+const BLOSSOM = "#E8A0B4";
 
-/** Motivo da capa ilustrativa (Figma "Capa ilustrativa" `39:1546`): estrelas, ondas, ipê ou sol com montanhas. */
-function CoverArt({ index, width, height }: { index: number; width: number; height: number }) {
+/** Bolinha posicionada pela fração da largura (`x`) e da altura da área (`y`); `d` é o diâmetro em fração da largura. */
+function dot(w: number, h: number, x: number, y: number, d: number, color: string, key: string) {
+  const size = w * d;
+  return (
+    <View
+      key={key}
+      style={{ position: "absolute", left: w * x - size / 2, top: h * y - size / 2, width: size, height: size, borderRadius: size, backgroundColor: color }}
+    />
+  );
+}
+
+/**
+ * Motivo da capa ilustrativa (Figma "Capa ilustrativa" `39:1546`): estrelas, ondas, ipê ou sol com montanhas.
+ * Desenhado com formas do próprio app, porque o Android não mostra `.svg` dentro de `Image`: antes a capa sem foto
+ * aparecia como um retângulo liso.
+ */
+function CoverArt({ index, width, top, height }: { index: number; width: number; top: number; height: number }) {
   const kind = index % 4;
-  const abs = (left: number, top: number, w: number, h: number) =>
-    ({ position: "absolute", left, top, width: w, height: h }) as const;
-  if (kind === 3) {
-    return (
-      <>
-        <Image source={asSource(sol)} resizeMode="stretch" accessible={false} style={abs(width * 0.617, height * 0.306, width * 0.217, height * 0.153)} />
-        <Image source={asSource(montanhas)} resizeMode="stretch" accessible={false} style={abs(0, height * 0.459, width, height * 0.235)} />
-      </>
+  let shapes: ReactNode;
+  if (kind === 0) {
+    // Céu de estrelas: pontos de tamanhos variados e uma estrela maior em ouro.
+    const stars: Array<[number, number, number]> = [[0.2, 0.2, 0.05], [0.5, 0.1, 0.04], [0.78, 0.25, 0.06], [0.34, 0.5, 0.04], [0.64, 0.58, 0.05], [0.14, 0.78, 0.04], [0.86, 0.82, 0.04]];
+    shapes = [...stars.map(([x, y, d], i) => dot(width, height, x, y, d, TONE_STRONG, `s${i}`)), dot(width, height, 0.5, 0.42, 0.14, SUN, "sol")];
+  } else if (kind === 1) {
+    // Ondas: fileiras de círculos vazados, cortados pela borda da área.
+    const diameter = width * 0.34;
+    shapes = [0, 1, 2, 3].flatMap((row) =>
+      [0, 1, 2, 3, 4].map((col) => (
+        <View
+          key={`w${row}-${col}`}
+          style={{
+            position: "absolute",
+            left: col * diameter * 0.6 - diameter * 0.35 + (row % 2) * diameter * 0.3,
+            top: row * height * 0.22,
+            width: diameter,
+            height: diameter,
+            borderRadius: diameter,
+            borderWidth: Math.max(1, width * 0.018),
+            borderColor: row === 0 ? TONE_STRONG : TONE,
+          }}
+        />
+      )),
     );
+  } else if (kind === 2) {
+    // Ipê: tronco e copa de flores amarelas e rosadas.
+    const trunk = width * 0.04;
+    shapes = [
+      <View key="tronco" style={{ position: "absolute", left: width / 2 - trunk / 2, top: height * 0.5, width: trunk, height: height * 0.5, backgroundColor: TONE_STRONG, borderRadius: trunk }} />,
+      dot(width, height, 0.5, 0.3, 0.3, SUN, "c0"),
+      dot(width, height, 0.33, 0.42, 0.22, BLOSSOM, "c1"),
+      dot(width, height, 0.67, 0.42, 0.22, BLOSSOM, "c2"),
+      dot(width, height, 0.42, 0.18, 0.16, BLOSSOM, "c3"),
+      dot(width, height, 0.62, 0.2, 0.14, SUN, "c4"),
+    ];
+  } else {
+    // Sol nascente entre montanhas (triângulos feitos com bordas).
+    const mountain = (left: number, base: number, rise: number, color: string, key: string) => (
+      <View
+        key={key}
+        style={{ position: "absolute", left, top: height - rise, width: 0, height: 0, borderLeftWidth: base / 2, borderRightWidth: base / 2, borderBottomWidth: rise, borderLeftColor: "transparent", borderRightColor: "transparent", borderBottomColor: color }}
+      />
+    );
+    shapes = [
+      dot(width, height, 0.66, 0.34, 0.2, SUN, "sol"),
+      mountain(-width * 0.12, width * 0.7, height * 0.62, TONE, "m1"),
+      mountain(width * 0.36, width * 0.8, height * 0.78, TONE_STRONG, "m2"),
+    ];
   }
-  const art = kind === 0 ? estrelas : kind === 1 ? ondas : ipe;
-  return <Image source={asSource(art)} resizeMode="stretch" accessible={false} style={abs(0, height * 0.274, width, height * 0.436)} />;
+  return (
+    <View pointerEvents="none" accessible={false} style={{ position: "absolute", left: 0, right: 0, top, height, overflow: "hidden" }}>
+      {shapes}
+    </View>
+  );
 }
 
 function hashId(id: string): number {
@@ -181,21 +237,31 @@ export function BookCover({
       accessibilityLabel={`Capa ilustrativa de ${title}`}
       style={[styles.cover, { backgroundColor, width, height }]}
     >
-      {showText ? <CoverArt index={hashId(id)} width={width} height={height} /> : null}
+      {/* Lombada: faixa escura e um filete claro, como na encadernação de um livro. */}
+      <View pointerEvents="none" accessible={false} style={[styles.spine, { width: Math.max(4, width * 0.07) }]} />
+      <CoverArt
+        index={hashId(id)}
+        width={width}
+        top={showText ? height * 0.1 : height * 0.5}
+        height={showText ? height * 0.42 : height * 0.4}
+      />
       {showText ? (
-        <View style={[styles.textOverlay, variant === "detail" && styles.textOverlayDetail]} accessible={false}>
+        <View style={[styles.textOverlay, { paddingLeft: width * 0.07 + tokens.spacing[8] }, variant === "detail" && styles.textOverlayDetail]} accessible={false}>
           <Text style={[styles.title, variant === "detail" && styles.titleDetail]} numberOfLines={variant === "detail" ? 4 : 3}>
             {title}
           </Text>
           {author ? (
-            <Text style={[styles.author, variant === "detail" && styles.authorDetail]} numberOfLines={2}>
-              {author}
-            </Text>
+            <>
+              <View style={[styles.rule, { width: width * 0.22 }]} />
+              <Text style={[styles.author, variant === "detail" && styles.authorDetail]} numberOfLines={2}>
+                {author}
+              </Text>
+            </>
           ) : null}
         </View>
       ) : (
         // Capa de lista sem foto: a inicial do título dá identidade ao bloco, em vez de um retângulo liso.
-        <Text accessible={false} style={styles.initial}>
+        <Text accessible={false} style={[styles.initial, { bottom: height * 0.5 }]}>
           {title.trim().charAt(0).toLocaleUpperCase("pt-BR")}
         </Text>
       )}
@@ -211,10 +277,23 @@ function createStyles(colors: ColorPalette) {
       justifyContent: "flex-end",
       overflow: "hidden",
     },
+    spine: {
+      position: "absolute",
+      left: 0,
+      top: 0,
+      bottom: 0,
+      backgroundColor: "rgba(0,0,0,0.22)",
+      borderRightWidth: 1,
+      borderRightColor: "rgba(245,239,232,0.28)",
+    },
+    rule: {
+      height: 1,
+      backgroundColor: "rgba(245,239,232,0.5)",
+      marginVertical: tokens.spacing[4],
+    },
     initial: {
       position: "absolute",
       top: 0,
-      bottom: 0,
       left: 0,
       right: 0,
       textAlign: "center",
@@ -250,10 +329,10 @@ function createStyles(colors: ColorPalette) {
     },
     title: {
       color: tokens.colors.cover.text,
+      fontFamily: fontFamily.brand,
       // Capa de 74 dp: 11 dp/14 dp cabem em três linhas sem truncar títulos curtos.
       fontSize: 11,
       lineHeight: 14,
-      fontFamily: tokens.typography.labelMedium.fontFamily,
     },
     author: {
       color: tokens.colors.cover.text,

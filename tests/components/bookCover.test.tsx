@@ -30,6 +30,22 @@ describe("BookCover (design-system/04-componentes/capa-ilustrativa.md e Spec 040
     expect(queryByText("Dom Casmurro")).toBeNull();
   });
 
+  it.each([
+    ["d", "estrelas", "list"],
+    ["d", "estrelas", "card"],
+    ["a", "ondas", "carousel"],
+    ["a", "ondas", "detail"],
+    ["b", "ipê", "card"],
+    ["b", "ipê", "list"],
+    ["c", "sol e montanhas", "detail"],
+    ["c", "sol e montanhas", "carousel"],
+  ] as const)("capa sem foto desenha o motivo %s (%s) na variante %s, sem arquivos .svg", async (id, _motivo, variant) => {
+    const { getByLabelText } = await render(
+      <BookCover id={id} title="Grande Sertão" author="Guimarães Rosa" variant={variant} />,
+    );
+    expect(getByLabelText("Capa ilustrativa de Grande Sertão")).toBeDefined();
+  });
+
   it("variante em cartão (≥80px) sobrepõe título e autor", async () => {
     const { getByText } = await render(
       <BookCover id="a1" title="Dom Casmurro" author="Machado de Assis" variant="card" />,
