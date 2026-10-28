@@ -26,3 +26,24 @@ describe("Boas-vindas na web larga: página que apresenta o app (Spec 092)", () 
     expect(screen.queryByLabelText(/Explorar/i)).toBeNull();
   });
 });
+
+describe("Boas-vindas no site como convite do beta (Spec 108)", () => {
+  it("troca Entrar e Criar conta pelo teste do app e pela Play Store", async () => {
+    const onStart = vi.fn();
+    const onSignIn = vi.fn();
+    const screen = await render(<Welcome betaInvite onStart={onStart} onSignIn={onSignIn} onTerms={() => {}} />);
+    expect(screen.queryByLabelText("Entrar")).toBeNull();
+    expect(screen.queryByLabelText("Criar conta")).toBeNull();
+    expect(screen.queryByLabelText("Já tenho conta")).toBeNull();
+    expect(screen.queryByText("Criar conta")).toBeNull();
+    await act(async () => { fireEvent.press(screen.getByLabelText("Quero testar")); });
+    for (const botao of screen.getAllByLabelText("Quero testar o app")) {
+      await act(async () => { fireEvent.press(botao); });
+    }
+    for (const botao of screen.getAllByLabelText("Ver na Play Store")) {
+      await act(async () => { fireEvent.press(botao); });
+    }
+    expect(onStart).toHaveBeenCalledTimes(3);
+    expect(onSignIn).toHaveBeenCalledTimes(2);
+  });
+});

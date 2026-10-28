@@ -15,6 +15,14 @@ só lugar para depois colocá-los na lista de testadores do Play Console.
 - Fora do escopo: adicionar os e-mails no Play Console automaticamente (a API pública não permite
   editar listas de testadores) e enviar e-mail de confirmação.
 
+## Site só com o convite (por enquanto)
+- Na web, a página inicial troca Entrar/Criar conta por "Quero testar o app" (`/beta`) e
+  "Ver na Play Store"; as demais telas do app redirecionam para `/bem-vindo`.
+- Continuam abertas pelo endereço: `/beta`, `/sobre`, `/ajuda`, `/termos`, `/excluir-conta`,
+  `/entrar`, `/esqueci-senha`, `/redefinir-senha` e `/auth/callback` (a Play Store exige o link de
+  exclusão de conta; o login volta para `/excluir-conta`). O app Android não muda.
+- Para reabrir o site completo, desligar `WEB_BETA_ONLY` em `src/view/webBetaMode.ts`.
+
 ## Regras
 - **RN-01** E-mail obrigatório, com formato válido, até 254 caracteres; guardado em minúsculas e sem
   espaços. Precisa ser uma Conta Google (a página pede Gmail; outros domínios são aceitos porque
@@ -44,3 +52,4 @@ Cole a lista em *Teste fechado → Testadores → lista de e-mails*.
 | CA4 | Limite global por hora (RN-05) | `npm run test:sql` |
 | CA5 | Tela mostra link da loja, envia, exibe erro e sucesso | `tests/components/betaInviteScreen.test.tsx` |
 | CA6 | Rota `/beta` gerada no build web | `npm run build:web` |
+| CA7 | Site sem entrar/criar conta e com redirecionamento | `tests/unit/webBetaMode.test.ts`, `tests/components/welcomeWide.test.tsx` |

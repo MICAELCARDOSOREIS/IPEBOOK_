@@ -7,11 +7,12 @@ import { Logotipo } from "@/view/components/Logotipo";
 import { Manchete } from "@/view/components/Manchete";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { TextField } from "@/view/components/TextField";
+import { PLAY_STORE_URL } from "@/view/playStore";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useBetaSignupViewModel, type BetaSignupActions, type BetaSignupState } from "@/viewmodel/useBetaSignupViewModel";
 
-export const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.ipebook.app";
+export { PLAY_STORE_URL };
 
 const STEPS = [
   "Deixe seu Gmail aqui embaixo. Ele precisa ser a conta Google do seu celular Android.",

@@ -15,6 +15,7 @@ import { PwaRegister } from "@/view/components/PwaRegister";
 import { InitialRouteGate } from "@/view/onboarding/initialRouteGate";
 import { ThemeProvider, useTheme } from "@/view/theme/ThemeProvider";
 import { KeyboardAwareRoot } from "@/view/components/KeyboardAwareRoot";
+import { WEB_BETA_ONLY, webBetaRedirect } from "@/view/webBetaMode";
 
 /** Rotas de nível superior (ADR 0011) — rotas de fluxo (entrar, anunciar, etc.) não entram aqui. */
 const ROOT_DESTINATIONS: Record<string, NavigationDestination> = {
@@ -75,6 +76,12 @@ export default function RootLayout() {
     if (Platform.OS === "web" && typeof document !== "undefined") document.title = pageTitleFor(pathname);
   }, [pathname]);
 
+  // Spec 108: no site, por enquanto, só o convite do beta do app Android.
+  const betaRedirect = webBetaRedirect(pathname);
+  useEffect(() => {
+    if (betaRedirect) replaceOnce(betaRedirect);
+  }, [betaRedirect]);
+
   if (!fontsLoaded) return null;
 
   return (
@@ -82,7 +89,7 @@ export default function RootLayout() {
       <ThemedStatusBar />
       <InitialRouteGate pathname={pathname} onShowWelcome={() => replaceOnce("/bem-vindo")}>
         <KeyboardAwareRoot>
-          {wideWeb && !AUTH_ROUTES.has(pathname) ? (
+          {wideWeb && !WEB_BETA_ONLY && !AUTH_ROUTES.has(pathname) ? (
             <ConnectedWebHeader
               active={activeDestination}
               pathname={pathname}
@@ -92,7 +99,7 @@ export default function RootLayout() {
             />
           ) : null}
           <Stack screenOptions={{ headerShown: false }} />
-          {activeDestination && !wideWeb ? (
+          {activeDestination && !wideWeb && !WEB_BETA_ONLY ? (
             <ConnectedNavigationBar active={activeDestination} pathname={pathname} onNavigate={navigateTo} />
           ) : null}
         </KeyboardAwareRoot>
