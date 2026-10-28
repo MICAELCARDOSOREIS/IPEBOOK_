@@ -1,6 +1,6 @@
 # Especificação 106 — Login Google nativo no Android
 
-Status: implementada e testada localmente; **desligada até configurar `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`, o cliente Android no Google Cloud e gerar build nova**. ADR: [0082](../../docs/adr/0082-login-google-nativo.md).
+Status: implementada e testada localmente. Cliente Android (SHA-1 do EAS) criado no Firebase em 2026-10-29 e `.env` local configurado; **pendente criar as variáveis no EAS e gerar build nova**. ADR: [0082](../../docs/adr/0082-login-google-nativo.md).
 
 ## Objetivo
 "Continuar com Google" abre o seletor de contas do próprio Android, sem sair do app para o navegador.
@@ -15,7 +15,8 @@ Status: implementada e testada localmente; **desligada até configurar `EXPO_PUB
 1. **Google Cloud > Credenciais:** usar o cliente OAuth "Aplicativo da Web" que o Supabase já usa no provedor Google; copiar o ID para `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` (`.env` e `eas env:create`).
 2. **Google Cloud:** criar cliente OAuth "Android" com o pacote `com.ipebook.app` e o SHA-1 da chave de assinatura (`eas credentials -p android`). Depois de publicar na Play Store, criar outro com o SHA-1 da "Assinatura de apps do Google Play".
 3. **Supabase > Authentication > Providers > Google:** conferir que o ID do cliente web está em "Client IDs".
-4. Gerar build nova (`eas build -p android --profile preview` ou `production`); não funciona no Expo Go.
+4. **EAS:** o `google-services.json` é ignorado pelo Git e não sobe na build; `app.config.js` lê a variável de arquivo `GOOGLE_SERVICES_JSON`. Criar com `eas env:create --name GOOGLE_SERVICES_JSON --type file --value ./google-services.json --environment <ambiente> --visibility secret`.
+5. Gerar build nova (`eas build -p android --profile preview` ou `production`); não funciona no Expo Go.
 
 ## Critérios de aceite e verificação
 | # | Critério | Verificação |
