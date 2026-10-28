@@ -137,7 +137,7 @@ describe("datasources Supabase", () => {
       error: null,
     });
     const auth = new SupabaseAuthDataSource(fakeClient({
-      auth: { setSession },
+      auth: { setSession, getSession: vi.fn().mockResolvedValue({ data: { session: null }, error: null }) },
     }), "ipebook://redefinir-senha");
 
     const user = await auth.setSessionFromUrl("ipebook://auth/callback#access_token=jwt-token&refresh_token=ref-token");

@@ -30,6 +30,7 @@ function client() {
       error: null,
     }),
     getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null }),
+    getSession: vi.fn().mockResolvedValue({ data: { session: null }, error: null }),
   };
   return { auth, ds: new SupabaseAuthDataSource({ auth } as unknown as SupabaseAppClient, "https://app/redefinir-senha") };
 }

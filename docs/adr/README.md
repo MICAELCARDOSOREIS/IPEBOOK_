@@ -82,5 +82,6 @@
 - [0080 — Acompanhamento de erros com Sentry](0080-acompanhamento-de-erros-sentry.md)
 - [0081 — Atualizações pelo EAS Update com runtime pela versão do app](0081-atualizacoes-eas-update.md)
 - [0082 — Login Google nativo com idToken no Supabase](0082-login-google-nativo.md)
+- [0083 — Correções da auditoria de segurança](0083-correcoes-auditoria-seguranca.md)
 
 Preservar registros aceitos; mudanças relevantes geram novo ADR com vínculos de substituição.

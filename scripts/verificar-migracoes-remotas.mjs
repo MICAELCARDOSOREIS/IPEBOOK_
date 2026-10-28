@@ -691,6 +691,11 @@ export const MAPEAMENTO_MIGRACOES = {
     validar: (ctx) => Boolean(ctx.tabelas.v2_books?.colunasValidas?.includes('synopsis')),
     detalhe: 'Gatilhos v2_*_rate_limit com o código IBLIM (Spec 103)',
   },
+  '202610300001_correcoes_auditoria_seguranca.sql': {
+    titulo: 'Correções da auditoria de segurança',
+    validar: (ctx) => Boolean(ctx.tabelas.v2_books?.colunasValidas?.includes('synopsis')),
+    detalhe: 'Suspensão completa, exclusão bloqueada para conta suspensa e photo_url só https (Spec 107)',
+  },
 };
 
 /**
