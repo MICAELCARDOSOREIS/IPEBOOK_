@@ -10,10 +10,11 @@ Mostrar, na tela `06.04 · Combinar encontro` (e no reagendamento), um mapa com 
 4. Sem `EXPO_PUBLIC_MAPBOX_TOKEN` ou com falha de carregamento, o mapa some sem erro; a lista continua funcional.
 5. O mapa tem rótulo de acessibilidade que informa o ponto selecionado.
 
-6. **App nativo (ADR 0069):** o mapa é interativo (`@rnmapbox/maps`): zoom, arraste e toque no pino numerado escolhe o local; o pino escolhido fica verde e maior. Exige novo APK de desenvolvimento. A web mantém a imagem estática.
+6. **App nativo (ADR 0069):** o mapa é interativo (`@rnmapbox/maps`): zoom, arraste e toque no pino numerado escolhe o local; o pino escolhido fica verde e maior. Exige novo APK de desenvolvimento.
+7. **Web (ADR 0072):** o mapa também é interativo (`mapbox-gl`), com o mesmo comportamento do app: pinos numerados, toque escolhe o local, zoom no escolhido e enquadramento acima do painel. A imagem estática (ADR 0068) é só a reserva quando não há WebGL.
 
 ## Fora do escopo
-Mapa interativo na web (`mapbox-gl`).
+(Entregue na web pelo ADR 0072.)
 
 ## Critérios de aceite e validação
 | # | Critério | Verificação |

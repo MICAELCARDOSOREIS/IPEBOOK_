@@ -2,7 +2,7 @@ import React from "react";
 import { act, fireEvent, render } from "@testing-library/react-native";
 import { afterEach, describe, expect, it } from "vitest";
 import { PIRIPIRI_MEETING_POINTS } from "@/model/entities/meetingPoint";
-import { MeetingMap } from "@/view/requests/MeetingMap";
+import { StaticMeetingMap } from "@/view/requests/MeetingMapStatic";
 import { TopAppBar } from "@/view/components/TopAppBar";
 
 const TOKEN = process.env.EXPO_PUBLIC_MAPBOX_TOKEN;
@@ -14,12 +14,12 @@ afterEach(() => {
 async function draw(selectedName: string | null) {
   let screen!: Awaited<ReturnType<typeof render>>;
   await act(async () => {
-    screen = await render(<MeetingMap selectedName={selectedName} coveredBottom={0.5} />);
+    screen = await render(<StaticMeetingMap selectedName={selectedName} coveredBottom={0.5} />);
   });
   return { screen, container: screen.toJSON() };
 }
 
-describe("mapa estático da web em Combinar encontro (Spec 094)", () => {
+describe("mapa estático da web, reserva do interativo (Spec 094, ADR 0072)", () => {
   it("sem token, não desenha nada", async () => {
     delete process.env.EXPO_PUBLIC_MAPBOX_TOKEN;
     const { container } = await draw(null);

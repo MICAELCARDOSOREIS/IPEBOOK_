@@ -71,5 +71,6 @@
 - [0069 — Mapa interativo do Mapbox no app nativo](0069-mapa-interativo-mapbox-no-app.md)
 - [0070 — Concluir a negociação por QR code](0070-conclusao-por-qr-code.md)
 - [0071 — Push de avisos por Edge Function do Supabase](0071-push-de-avisos-por-edge-function.md)
+- [0072 — Mapa interativo do Mapbox na web](0072-mapa-interativo-mapbox-na-web.md)
 
 Preservar registros aceitos; mudanças relevantes geram novo ADR com vínculos de substituição.
