@@ -260,6 +260,15 @@ export const PanResponder = {
   create: (_config: unknown) => ({ panHandlers: {} }),
 };
 
+export const Switch = React.forwardRef<any, any>((props, ref) =>
+  React.createElement("Switch", {
+    ...props,
+    ref,
+    accessibilityRole: props.accessibilityRole ?? "switch",
+  })
+);
+Switch.displayName = "Switch";
+
 export default {
   View,
   Text,
@@ -281,5 +290,6 @@ export default {
   Animated,
   PanResponder,
   AppState,
+  Switch,
   useColorScheme,
 };

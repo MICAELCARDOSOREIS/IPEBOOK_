@@ -4,6 +4,10 @@ import type {
   UserPreferencesUpdate,
 } from "@/model/datasources/iUserPreferencesDataSource";
 import { PIRIPIRI_NEIGHBORHOODS } from "@/model/entities/location";
+import {
+  NOTIFICATION_TYPES,
+  type NotificationType,
+} from "@/model/entities/notification";
 import type { UserPreferences, UserPreferencesEdits } from "@/model/entities/userPreferences";
 import { ValidationError } from "@/model/errors";
 import type { IUserPreferencesUseCases } from "@/usecase/iUserPreferencesUseCases";
@@ -14,11 +18,18 @@ function toPreferences(stored: StoredUserPreferences): UserPreferences {
     phone: stored.phone,
     neighborhood: isKnownNeighborhood(stored.neighborhood) ? stored.neighborhood : undefined,
     ...(stored.pushToken !== undefined ? { pushToken: stored.pushToken } : {}),
+    ...(stored.mutedTypes !== undefined ? { mutedTypes: stored.mutedTypes } : {}),
   };
 }
 
 function isKnownNeighborhood(value: string | undefined): value is UserPreferences["neighborhood"] {
   return value !== undefined && (PIRIPIRI_NEIGHBORHOODS as readonly string[]).includes(value);
+}
+
+/** Mantém só tipos de aviso conhecidos e sem repetição; descarta o que a pessoa não pode escolher (Spec 099). */
+function sanitizeMutedTypes(values: readonly NotificationType[]): NotificationType[] {
+  const known = new Set<string>(NOTIFICATION_TYPES);
+  return [...new Set(values.filter((value) => known.has(value)))];
 }
 
 export class UserPreferencesUseCases implements IUserPreferencesUseCases {
@@ -37,7 +48,10 @@ export class UserPreferencesUseCases implements IUserPreferencesUseCases {
     let neighborhoodToSave: string | undefined;
 
     const existing =
-      edits.phone === undefined || edits.neighborhood === undefined || edits.pushToken === undefined
+      edits.phone === undefined ||
+      edits.neighborhood === undefined ||
+      edits.pushToken === undefined ||
+      edits.mutedTypes === undefined
         ? await this.preferences.findById(userId)
         : null;
 
@@ -65,6 +79,7 @@ export class UserPreferencesUseCases implements IUserPreferencesUseCases {
       phone: phoneToSave,
       neighborhood: neighborhoodToSave,
       pushToken: edits.pushToken !== undefined ? edits.pushToken : existing?.pushToken,
+      mutedTypes: edits.mutedTypes !== undefined ? sanitizeMutedTypes(edits.mutedTypes) : existing?.mutedTypes,
     };
 
     const updated = await this.preferences.upsert(userId, patch);

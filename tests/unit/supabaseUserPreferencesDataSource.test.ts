@@ -115,6 +115,92 @@ describe("SupabaseUserPreferencesDataSource (Spec 034 / Issue #141)", () => {
     });
   });
 
+  it("findById traz mutedTypes quando a coluna muted_types vem do banco (Spec 099)", async () => {
+    const maybeSingle = vi.fn().mockResolvedValue({
+      data: {
+        user_id: "ana",
+        phone: "86999998888",
+        neighborhood: "Centro",
+        push_token: null,
+        muted_types: ["search_alert_match", "system"],
+      },
+      error: null,
+    });
+    const eq = vi.fn().mockReturnValue({ maybeSingle });
+    const select = vi.fn().mockReturnValue({ eq });
+    const client = fakeClient({ select });
+
+    const ds = new SupabaseUserPreferencesDataSource(client);
+    expect(await ds.findById("ana")).toEqual({
+      userId: "ana",
+      phone: "86999998888",
+      neighborhood: "Centro",
+      pushToken: null,
+      mutedTypes: ["search_alert_match", "system"],
+    });
+  });
+
+  it("upsert grava muted_types quando informado (Spec 099)", async () => {
+    const upsert = vi.fn().mockResolvedValue({ error: null });
+    const maybeSingle = vi.fn().mockResolvedValue({
+      data: {
+        user_id: "ana",
+        phone: null,
+        neighborhood: null,
+        push_token: null,
+        muted_types: ["meeting_update"],
+      },
+      error: null,
+    });
+    const eq = vi.fn().mockReturnValue({ maybeSingle });
+    const select = vi.fn().mockReturnValue({ eq });
+    const client = fakeClient({ upsert }, { select });
+
+    const ds = new SupabaseUserPreferencesDataSource(client);
+    const result = await ds.upsert("ana", { mutedTypes: ["meeting_update"] });
+
+    expect(result.mutedTypes).toEqual(["meeting_update"]);
+    expect(upsert.mock.calls[0][0]).toMatchObject({ user_id: "ana", muted_types: ["meeting_update"] });
+  });
+
+  it("lança erro quando o upsert não consegue reler a linha salva", async () => {
+    const upsert = vi.fn().mockResolvedValue({ error: null });
+    const maybeSingle = vi.fn().mockResolvedValue({ data: null, error: null });
+    const eq = vi.fn().mockReturnValue({ maybeSingle });
+    const select = vi.fn().mockReturnValue({ eq });
+    const client = fakeClient({ upsert }, { select });
+
+    const ds = new SupabaseUserPreferencesDataSource(client);
+    await expect(ds.upsert("ana", { phone: "86999998888" })).rejects.toThrow(
+      "Não foi possível salvar as preferências.",
+    );
+  });
+
+  it("findById trata muted_types nulo como lista vazia (Spec 099)", async () => {
+    const maybeSingle = vi.fn().mockResolvedValue({
+      data: {
+        user_id: "ana",
+        phone: null,
+        neighborhood: null,
+        push_token: null,
+        muted_types: null,
+      },
+      error: null,
+    });
+    const eq = vi.fn().mockReturnValue({ maybeSingle });
+    const select = vi.fn().mockReturnValue({ eq });
+    const client = fakeClient({ select });
+
+    const ds = new SupabaseUserPreferencesDataSource(client);
+    expect(await ds.findById("ana")).toEqual({
+      userId: "ana",
+      phone: undefined,
+      neighborhood: undefined,
+      pushToken: null,
+      mutedTypes: [],
+    });
+  });
+
   it("upsert salva push_token quando informado", async () => {
     const upsert = vi.fn().mockResolvedValue({ error: null });
     const maybeSingle = vi.fn().mockResolvedValue({

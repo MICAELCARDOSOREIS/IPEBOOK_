@@ -209,7 +209,7 @@ export const TABELAS_CRITICAS = {
   v2_user_preferences: {
     nome: 'v2_user_preferences',
     descricao: 'Preferências privadas de contato e bairro padrão',
-    colunas: ['user_id', 'phone', 'neighborhood', 'updated_at', 'push_token'],
+    colunas: ['user_id', 'phone', 'neighborhood', 'updated_at', 'push_token', 'muted_types'],
   },
   v2_meetings: {
     nome: 'v2_meetings',
@@ -659,6 +659,16 @@ export const MAPEAMENTO_MIGRACOES = {
     titulo: 'Sinopse e dados da edição',
     validar: (ctx) => Boolean(ctx.tabelas.v2_books?.colunasValidas?.includes('synopsis')),
     detalhe: 'Colunas synopsis, publisher, page_count e publication_year em v2_books (Spec 097)',
+  },
+  '202610280005_avisos_de_pedido.sql': {
+    titulo: 'Avisos de pedido recebido e aceito',
+    validar: (ctx) => Boolean(ctx.tabelas.v2_book_requests?.existe),
+    detalhe: 'Gatilho v2_request_notifies e função v2_notify_request_change (Spec 098)',
+  },
+  '202610280006_preferencias_de_aviso.sql': {
+    titulo: 'Preferências por tipo de aviso',
+    validar: (ctx) => Boolean(ctx.tabelas.v2_user_preferences?.colunasValidas?.includes('muted_types')),
+    detalhe: 'Coluna muted_types em v2_user_preferences (Spec 099)',
   },
 };
 

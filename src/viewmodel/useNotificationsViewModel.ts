@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { notificationUseCases } from "@/di/container";
+import { notificationUseCases, pushNotificationService } from "@/di/container";
 import type { AppNotification } from "@/model/entities/notification";
+import type { IPushNotificationService } from "@/model/services/iPushNotificationService";
 import { DomainError } from "@/model/errors";
 import type { INotificationUseCases } from "@/usecase/iNotificationUseCases";
 
@@ -27,6 +28,7 @@ export type NotificationsActions = {
 export function useNotificationsViewModel(
   sessionUserId: string | null,
   useCases: INotificationUseCases = notificationUseCases,
+  push: IPushNotificationService = pushNotificationService,
 ): [NotificationsState, NotificationsActions] {
   const [notifications, setNotifications] = useState<readonly AppNotification[]>([]);
   const [loading, setLoading] = useState(true);
@@ -117,6 +119,15 @@ export function useNotificationsViewModel(
   const unreadCount = notifications.filter((n) => !n.read).length;
   const filteredNotifications =
     filter === "unread" ? notifications.filter((n) => !n.read) : notifications;
+
+  // Selo do app acompanha as não lidas (Spec 099): zera ao entrar sem sessão e ao ler tudo.
+  useEffect(() => {
+    if (!sessionUserId) {
+      void push.setBadgeCount(0);
+      return;
+    }
+    void push.setBadgeCount(unreadCount);
+  }, [sessionUserId, unreadCount, push]);
 
   return [
     {

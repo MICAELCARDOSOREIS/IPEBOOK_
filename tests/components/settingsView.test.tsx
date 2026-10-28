@@ -1,20 +1,35 @@
 import React from "react";
 import { act, cleanup, fireEvent, render } from "@testing-library/react-native";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as Linking from "expo-linking";
 import { Settings } from "@/view/profile/settings";
 import { ThemeProvider } from "@/view/theme/ThemeProvider";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useSettingsViewModel } from "@/viewmodel/useSettingsViewModel";
+import {
+  NOTIFICATION_PREFERENCE_CATEGORIES,
+  useNotificationPreferencesViewModel,
+} from "@/viewmodel/useNotificationPreferencesViewModel";
 
 vi.mock("@/viewmodel/useSettingsViewModel", () => ({ useSettingsViewModel: vi.fn() }));
 vi.mock("@/viewmodel/useAuthViewModel", () => ({ useAuthViewModel: vi.fn() }));
 vi.mock("@/viewmodel/usePublicProfileViewModel", () => ({
   usePublicProfileViewModel: () => [{ profile: { userId: "ana", name: "Ana Paula", joinedAt: "2026-01-10T00:00:00.000Z" }, loading: false, error: null }, { reload: vi.fn() }],
 }));
+// Preferências de notificação (Spec 099) vêm do container; na tela testamos só a apresentação.
+vi.mock("@/viewmodel/useNotificationPreferencesViewModel", () => ({
+  useNotificationPreferencesViewModel: vi.fn(),
+  NOTIFICATION_PREFERENCE_CATEGORIES: {
+    proposals: { label: "Propostas e mensagens", description: "Alguém tem interesse num livro seu ou responde a um pedido", types: ["request_received", "request_accepted"] },
+    meetings: { label: "Lembretes de encontro", description: "Convites e avisos sobre a entrega combinada", types: ["meeting_update"] },
+    searchAlerts: { label: "Novidades dos alertas de busca", description: "Livros novos que batem com os seus alertas", types: ["search_alert_match"] },
+    system: { label: "Avisos do sistema", description: "Segurança, novidades e comunicados do IpêBook", types: ["system", "safety_tip"] },
+  },
+}));
 
 const mockedUseSettingsViewModel = vi.mocked(useSettingsViewModel);
 const mockedUseAuthViewModel = vi.mocked(useAuthViewModel);
+const mockedNotifPrefs = vi.mocked(useNotificationPreferencesViewModel);
 
 function mockSettings(clearBooksCache = vi.fn().mockResolvedValue(undefined)) {
   mockedUseSettingsViewModel.mockReturnValue([
@@ -22,6 +37,21 @@ function mockSettings(clearBooksCache = vi.fn().mockResolvedValue(undefined)) {
     { clearBooksCache, clearSearchHistory: vi.fn().mockResolvedValue(undefined) },
   ]);
   return { clearBooksCache };
+}
+
+/** Selo padrão das preferências de notificação: tudo ligado, sem erro (Spec 099). */
+function mockNotifPrefs(overrides: Partial<ReturnType<typeof useNotificationPreferencesViewModel>[0]> = {}) {
+  const setEnabled = vi.fn().mockResolvedValue(undefined);
+  mockedNotifPrefs.mockReturnValue([
+    {
+      enabled: { proposals: true, meetings: true, searchAlerts: true, system: true },
+      saving: false,
+      error: null,
+      ...overrides,
+    },
+    { setEnabled },
+  ]);
+  return { setEnabled };
 }
 
 /** Configurações mostra gestão de conta apenas com sessão (ADR 0060). */
@@ -45,6 +75,11 @@ describe("Configurações — tela dedicada (Spec 073, ADR 0036)", () => {
   afterEach(() => {
     cleanup();
     vi.clearAllMocks();
+  });
+
+  // Toda tela com sessão mostra as chaves de notificação; o valor padrão deixa tudo ligado.
+  beforeEach(() => {
+    mockNotifPrefs();
   });
 
   async function renderSettings(props: Partial<React.ComponentProps<typeof Settings>> = {}) {
@@ -287,6 +322,31 @@ describe("Configurações — tela dedicada (Spec 073, ADR 0036)", () => {
     expect(screen.getByText("@ipebook")).toBeDefined();
     await act(async () => { fireEvent.press(screen.getByLabelText("Siga o IpêBook no Instagram")); });
     expect(open).toHaveBeenCalledWith("https://instagram.com/ipebook");
+  });
+
+  it("mostra as quatro chaves de notificação com sessão e desliga uma categoria (Spec 099)", async () => {
+    mockSession(true);
+    mockSettings();
+    const { setEnabled } = mockNotifPrefs();
+    const { screen } = await renderSettings();
+
+    expect(screen.getAllByRole("header").map((h) => h.props.children)).toContain("Notificações");
+    for (const category of Object.values(NOTIFICATION_PREFERENCE_CATEGORIES)) {
+      expect(screen.getByLabelText(`${category.label}: ativada`)).toBeDefined();
+    }
+
+    // Desligar "Avisos do sistema" grava os tipos correspondentes como desativados.
+    await act(async () => {
+      fireEvent(screen.getByLabelText("Avisos do sistema: ativada"), "valueChange", false);
+    });
+    expect(setEnabled).toHaveBeenCalledWith("system", false);
+  });
+
+  it("não mostra a seção de notificações sem sessão (Spec 099)", async () => {
+    mockSession(false);
+    mockSettings();
+    const { screen } = await renderSettings();
+    expect(screen.queryByText("Notificações")).toBeNull();
   });
 });
 
