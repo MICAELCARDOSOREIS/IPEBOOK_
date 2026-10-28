@@ -80,5 +80,6 @@
 - [0078 — Moderação por RPCs no banco e moderadores cadastrados no Supabase](0078-moderacao.md)
 - [0079 — Limites contra abuso por gatilho no banco](0079-limites-anti-abuso.md)
 - [0080 — Acompanhamento de erros com Sentry](0080-acompanhamento-de-erros-sentry.md)
+- [0081 — Atualizações pelo EAS Update com runtime pela versão do app](0081-atualizacoes-eas-update.md)
 
 Preservar registros aceitos; mudanças relevantes geram novo ADR com vínculos de substituição.

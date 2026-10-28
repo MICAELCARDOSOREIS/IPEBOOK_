@@ -4,6 +4,8 @@ Documento consolidado de continuidade técnica e produto do Ipebook (Piripiri, P
 
 Conferência atual: **2026-10-28** (99 specs e 75 ADRs numerados, 246 arquivos de teste e 1.719 testes automatizados 100% passando).
 
+**Avaliação na loja e atualizações sem loja (2026-10-29, Spec 105, ADR 0081):** depois de uma avaliação de 4 ou 5 estrelas o app pede a nota na loja (`expo-store-review`); `expo-updates` configurado com canais por perfil (`eas update --channel production`). Vale a partir da próxima build nativa. Validado com `npm run validate` (**1.775 testes**) e `npm run build:web`.
+
 **Acompanhamento de erros com Sentry (2026-10-29, Spec 104, ADR 0080):** `@sentry/react-native` atrás de `IErrorReporter`; logs de erro e telas que quebram (aviso amigável pelo `ErrorBoundary`) vão ao Sentry, sem dados pessoais. **Desligado até configurar `EXPO_PUBLIC_SENTRY_DSN` (`.env` e EAS) e gerar build nova.** Validado com `npm run validate` (**1.771 testes**) e `npm run build:web` (43 rotas).
 
 **Limites contra abuso (2026-10-29, Spec 103, ADR 0079):** por conta, 15 anúncios/dia, 10 pedidos/dia, 30 mensagens em 5 minutos e 10 denúncias/dia; o banco recusa com o código `IBLIM` e o app mostra a mensagem. Migração `202610290002_limites_anti_abuso.sql`. Validado com `npm run validate` (**1.766 testes**). **Pendente aplicar no Supabase remoto.**

@@ -3,6 +3,7 @@ import { act, create, type ReactTestRenderer } from "react-test-renderer";
 import { afterEach, describe, expect, it } from "vitest";
 import { useNegotiationRatingViewModel } from "@/viewmodel/useNegotiationRatingViewModel";
 import type { Rating } from "@/model/entities/rating";
+import { MemoryStoreReviewService } from "@/infra/services/memoryStoreReviewService";
 import type { IRatingUseCases, ReceivedRating, SubmitRatingParams } from "@/usecase/iRatingUseCases";
 
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
@@ -37,10 +38,11 @@ async function renderRatingHook(
   sessionUserId: string | null,
   ratedUserId: string,
   useCases: IRatingUseCases,
+  storeReview: MemoryStoreReviewService = new MemoryStoreReviewService(),
 ) {
   let result!: ReturnType<typeof useNegotiationRatingViewModel>;
   function HookProbe() {
-    result = useNegotiationRatingViewModel(requestId, sessionUserId, ratedUserId, useCases);
+    result = useNegotiationRatingViewModel(requestId, sessionUserId, ratedUserId, useCases, storeReview);
     return null;
   }
   await act(async () => {
@@ -129,5 +131,19 @@ describe("Hook useNegotiationRatingViewModel (Spec 063 / ADR 0046)", () => {
     const [state] = hook.current;
     expect(state.isSuccess).toBe(false);
     expect(state.submitError).toBe("Erro de conexão com o banco");
+  });
+
+  it("pede a nota do app na loja só depois de avaliação de 4 ou 5 estrelas (Spec 105)", async () => {
+    const boa = new MemoryStoreReviewService();
+    const hook = await renderRatingHook("r1", "ana", "bia", createMockUseCases(), boa);
+    await act(async () => { hook.current[1].setSelectedScore(4); });
+    await act(async () => { await hook.current[1].submitRating(); });
+    expect(boa.requests).toBe(1);
+
+    const ruim = new MemoryStoreReviewService();
+    const hook2 = await renderRatingHook("r2", "ana", "bia", createMockUseCases(), ruim);
+    await act(async () => { hook2.current[1].setSelectedScore(3); });
+    await act(async () => { await hook2.current[1].submitRating(); });
+    expect(ruim.requests).toBe(0);
   });
 });
