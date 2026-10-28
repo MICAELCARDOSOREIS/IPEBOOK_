@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { normalizeAngle, projectBookFaces } from "@/view/book3dGeometry";
+import { faceContentOpacity, normalizeAngle, projectBookFaces } from "@/view/book3dGeometry";
 
 const W = 136;
 const D = 28;
@@ -68,5 +68,37 @@ describe("geometria do livro 3D (projeção ortogonal)", () => {
     const inclinada = projectBookFaces(60, W, D).find((f) => f.face === "front")!.shade;
     expect(inclinada).toBeGreaterThan(frente);
     expect(projectBookFaces(60, W, D).every((f) => f.shade >= 0 && f.shade <= 0.5)).toBe(true);
+  });
+});
+
+describe("conteúdo das faces quase de lado", () => {
+  it("capa e contracapa somem aos poucos perto de 90° e ficam inteiras de frente", () => {
+    for (const face of ["front", "back"] as const) {
+      expect(faceContentOpacity(face, 1)).toBe(1);
+      expect(faceContentOpacity(face, 0.3)).toBe(1);
+      expect(faceContentOpacity(face, 0.15)).toBe(0);
+      expect(faceContentOpacity(face, 0.1)).toBe(0);
+      const meio = faceContentOpacity(face, 0.225);
+      expect(meio).toBeGreaterThan(0);
+      expect(meio).toBeLessThan(1);
+    }
+  });
+
+  it("o título da lombada some quando ela está quase de frente e fica legível de lado", () => {
+    expect(faceContentOpacity("left", 1)).toBe(1);
+    expect(faceContentOpacity("left", 0.6)).toBe(1);
+    expect(faceContentOpacity("left", 0.3)).toBe(0);
+    expect(faceContentOpacity("left", 0.05)).toBe(0);
+  });
+
+  it("o corte das páginas é sempre mostrado", () => {
+    expect(faceContentOpacity("right", 0.01)).toBe(1);
+  });
+
+  it("a cada ângulo, o livro sempre mostra alguma face com conteúdo ou uma faixa lisa, sem faces cortadas", () => {
+    for (let angle = 0; angle < 360; angle += 3) {
+      const faces = projectBookFaces(angle, 136, 28);
+      expect(faces.length).toBeGreaterThan(0);
+    }
   });
 });

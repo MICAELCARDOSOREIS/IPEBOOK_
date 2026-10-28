@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AccessibilityInfo, PanResponder, StyleSheet, Text, View } from "react-native";
 import { BookCover, coverBackground } from "@/view/components/BookCover";
-import { normalizeAngle, projectBookFaces, type BookFace } from "@/view/book3dGeometry";
+import { faceContentOpacity, normalizeAngle, projectBookFaces, type BookFace } from "@/view/book3dGeometry";
 import { fontFamily } from "@/view/tokens";
 
 export type Book3DProps = {
@@ -157,16 +157,17 @@ export function Book3D({ id, title, author, photoUrl, onPress, intro = true, sca
       <View pointerEvents="none" style={[styles.ground, { width: shadowWidth * 0.85, opacity: 0.18 }]} />
       {faces.map(({ face, center, width, shade }) => {
         const size = face === "front" || face === "back" ? WIDTH : DEPTH;
+        const fade = faceContentOpacity(face, width / size);
         return (
           <View
             key={face}
             testID={`book3d-face-${face}`}
             style={[
               styles.face,
-              { left: total / 2 - size / 2, width: size, height: HEIGHT, transform: [{ translateX: center }, { scaleX: width / size }] },
+              { left: total / 2 - size / 2, width: size, height: HEIGHT, backgroundColor: face === "front" || face === "back" ? darken(base, 0.1) : undefined, transform: [{ translateX: center }, { scaleX: width / size }] },
             ]}
           >
-            <FaceContent face={face} id={id} title={title} author={author} photoUrl={photoUrl} base={base} width={WIDTH} height={HEIGHT} depth={DEPTH} />
+            <FaceContent face={face} id={id} title={title} author={author} photoUrl={photoUrl} base={base} width={WIDTH} height={HEIGHT} depth={DEPTH} fade={fade} />
             <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: `rgba(0,0,0,${shade.toFixed(3)})` }]} />
           </View>
         );
@@ -175,14 +176,18 @@ export function Book3D({ id, title, author, photoUrl, onPress, intro = true, sca
   );
 }
 
-function FaceContent({ face, id, title, author, photoUrl, base, width, height, depth }: { face: BookFace } & Pick<Book3DProps, "id" | "title" | "author" | "photoUrl"> & { base: string; width: number; height: number; depth: number }) {
+function FaceContent({ face, id, title, author, photoUrl, base, width, height, depth, fade }: { face: BookFace } & Pick<Book3DProps, "id" | "title" | "author" | "photoUrl"> & { base: string; width: number; height: number; depth: number; fade: number }) {
   if (face === "front") {
-    return <BookCover id={id} title={title} author={author} photoUrl={photoUrl} variant="detail" width={width} />;
+    return (
+      <View style={[styles.fill, { opacity: fade }]}>
+        <BookCover id={id} title={title} author={author} photoUrl={photoUrl} variant="detail" width={width} />
+      </View>
+    );
   }
   if (face === "back") {
     return (
       <View style={[styles.fill, { backgroundColor: darken(base, 0.1) }]}>
-        <View style={styles.backFrame} />
+        <View style={[styles.backFrame, { opacity: 0.7 * fade }]} />
       </View>
     );
   }
@@ -193,7 +198,7 @@ function FaceContent({ face, id, title, author, photoUrl, base, width, height, d
         {[0.05, 0.08, 0.92, 0.95].map((at) => (
           <View key={at} style={[styles.band, { top: height * at }]} />
         ))}
-        <View style={{ position: "absolute", left: (depth - height * 0.7) / 2, top: (height - depth) / 2, width: height * 0.7, height: depth, justifyContent: "center", transform: [{ rotate: "-90deg" }] }}>
+        <View style={{ position: "absolute", left: (depth - height * 0.7) / 2, top: (height - depth) / 2, width: height * 0.7, height: depth, justifyContent: "center", opacity: fade, transform: [{ rotate: "-90deg" }] }}>
           <Text numberOfLines={1} style={[styles.spineText, { fontSize: depth * 0.43 }]}>
             {title}
           </Text>
@@ -216,7 +221,7 @@ const styles = StyleSheet.create({
   ground: { position: "absolute", bottom: 0, alignSelf: "center", height: 12, borderRadius: 12, backgroundColor: "#000" },
   face: { position: "absolute", top: 0, overflow: "hidden", borderRadius: 2 },
   fill: { flex: 1 },
-  backFrame: { position: "absolute", left: 12, right: 12, top: 12, bottom: 12, borderWidth: 1, borderColor: GOLD, opacity: 0.7 },
+  backFrame: { position: "absolute", left: 12, right: 12, top: 12, bottom: 12, borderWidth: 1, borderColor: GOLD },
   band: { position: "absolute", left: 0, right: 0, height: 1.5, backgroundColor: GOLD },
   spineText: { color: "#F5EFE8", fontFamily: fontFamily.brand, fontSize: 12, textAlign: "center" },
   pageLine: { position: "absolute", top: 0, bottom: 0, width: 0.7, backgroundColor: "rgba(0,0,0,0.14)" },
