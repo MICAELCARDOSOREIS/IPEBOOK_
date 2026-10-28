@@ -51,6 +51,7 @@ Esta decisão foi trazida do trabalho já em produção da equipe no projeto irm
 | Limites contra abuso | **Implementada** em [specs/103](../specs/103-limites-anti-abuso/spec.md) (ADR 0079): limites diários e por minuto no banco, com mensagem no app |
 | Acompanhamento de erros | **Implementada** em [specs/104](../specs/104-acompanhamento-de-erros/spec.md) (ADR 0080): Sentry sem dados pessoais e tela de erro amigável; liga com `EXPO_PUBLIC_SENTRY_DSN` |
 | Avaliação na loja e atualizações sem loja | **Implementada** em [specs/105](../specs/105-avaliacao-na-loja-e-atualizacoes/spec.md) (ADR 0081): pedido de nota após boa negociação e EAS Update |
+| Login Google nativo | **Implementada** em [specs/106](../specs/106-login-google-nativo/spec.md) (ADR 0082): seletor de contas do Android e `signInWithIdToken`; navegador como reserva |
 | Chat interno na negociação | **Implementada** em [specs/061](../specs/061-chat-mensagens-negociacao/spec.md) (ADR 0044): troca de mensagens transacionais no fluxo de encontro |
 | Conclusão de negociação e avaliação mútua | **Implementada** em [specs/063](../specs/063-concluir-negociacao-avaliacoes/spec.md) (ADR 0046): avaliação mútua de 1 a 5 estrelas |
 | Alinhamento visual total com Figma | **Implementada** em [specs/062](../specs/062-alinhamento-home-figma/spec.md), [064](../specs/064-alinhamento-estante-figma/spec.md), [065](../specs/065-alinhamento-perfil-figma/spec.md) e [066](../specs/066-alinhamento-explorar-figma/spec.md) |

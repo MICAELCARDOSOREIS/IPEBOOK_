@@ -87,6 +87,7 @@ import { SafeLogger, reportingSink } from "@/infra/services/safeLogger";
 import { MemoryErrorReporter } from "@/infra/services/memoryErrorReporter";
 import { SentryErrorReporter } from "@/infra/services/sentryErrorReporter";
 import type { IErrorReporter } from "@/model/services/iErrorReporter";
+import { GoogleNativeSignInService } from "@/infra/services/googleNativeSignInService";
 import type { IStoreReviewService } from "@/model/services/iStoreReviewService";
 import { ExpoStoreReviewService } from "@/infra/services/expoStoreReviewService";
 import { MemoryStoreReviewService } from "@/infra/services/memoryStoreReviewService";
@@ -152,7 +153,11 @@ function createDataSources(): {
       process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? process.env.EXPO_PUBLIC_SUPABASE_KEY ?? "",
     );
     return {
-      auth: new SupabaseAuthDataSource(client, redirectUrl),
+      auth: new SupabaseAuthDataSource(
+        client,
+        redirectUrl,
+        new GoogleNativeSignInService(process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID),
+      ),
       books: new CachedBookDataSource(new SupabaseBookDataSource(client)),
       requests: new SupabaseBookRequestDataSource(client),
       meetings: new SupabaseMeetingDataSource(client),

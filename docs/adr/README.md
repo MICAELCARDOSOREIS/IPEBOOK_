@@ -81,5 +81,6 @@
 - [0079 — Limites contra abuso por gatilho no banco](0079-limites-anti-abuso.md)
 - [0080 — Acompanhamento de erros com Sentry](0080-acompanhamento-de-erros-sentry.md)
 - [0081 — Atualizações pelo EAS Update com runtime pela versão do app](0081-atualizacoes-eas-update.md)
+- [0082 — Login Google nativo com idToken no Supabase](0082-login-google-nativo.md)
 
 Preservar registros aceitos; mudanças relevantes geram novo ADR com vínculos de substituição.
