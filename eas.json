@@ -47,8 +47,8 @@
   "submit": {
     "production": {
       "android": {
-        "track": "internal",
-        "releaseStatus": "draft",
+        "track": "alpha",
+        "releaseStatus": "completed",
         "serviceAccountKeyPath": "./credenciais/play-service-account.json"
       }
     }
