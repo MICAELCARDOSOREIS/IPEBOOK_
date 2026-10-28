@@ -8,6 +8,7 @@ import { useIpebookFonts } from "@/view/useIpebookFonts";
 import { ConnectedNavigationBar } from "@/view/components/ConnectedNavigationBar";
 import { ConnectedWebHeader } from "@/view/components/ConnectedWebHeader";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
+import { pageTitleFor } from "@/view/pageTitle";
 import type { NavigationDestination } from "@/view/components/NavigationBar";
 import { PwaRegister } from "@/view/components/PwaRegister";
 import { InitialRouteGate } from "@/view/onboarding/initialRouteGate";
@@ -59,6 +60,11 @@ export default function RootLayout() {
       /* dispositivo/emulador sem suporte à trava: ignora silenciosamente */
     });
   }, []);
+
+  // Web: a aba mostra a tela atual em vez da URL.
+  useEffect(() => {
+    if (Platform.OS === "web" && typeof document !== "undefined") document.title = pageTitleFor(pathname);
+  }, [pathname]);
 
   if (!fontsLoaded) return null;
 

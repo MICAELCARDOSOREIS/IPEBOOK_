@@ -24,6 +24,12 @@ export default function Root({ children }: PropsWithChildren) {
         <link rel="manifest" href="/manifest.json" />
         <link rel="apple-touch-icon" href="/icone-192.png" />
         <ScrollViewStyleReset />
+        {/* Barras de rolagem finas e discretas nos dois temas (a nativa do Chrome fica branca no escuro). */}
+        <style
+          dangerouslySetInnerHTML={{
+            __html: `*{scrollbar-width:thin;scrollbar-color:rgba(128,128,128,.45) transparent}`,
+          }}
+        />
         {headNodes}
       </head>
       <body {...bodyAttributes}>
