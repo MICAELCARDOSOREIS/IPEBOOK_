@@ -1,5 +1,6 @@
 import { useEffect } from "react";
-import { Stack, router, usePathname, type Href } from "expo-router";
+import { Stack, router, usePathname, type ErrorBoundaryProps, type Href } from "expo-router";
+import { AppErrorFallback, startErrorReporting } from "@/view/components/AppErrorFallback";
 import { pushOnce, replaceOnce } from "@/view/pushOnce";
 import * as ScreenOrientation from "expo-screen-orientation";
 import { StatusBar } from "expo-status-bar";
@@ -39,6 +40,14 @@ const DESTINATION_ROUTES: Record<NavigationDestination, Href> = {
 function ThemedStatusBar() {
   const { resolvedScheme } = useTheme();
   return <StatusBar style={resolvedScheme === "dark" ? "light" : "dark"} />;
+}
+
+// Acompanhamento de erros (Spec 104): sem EXPO_PUBLIC_SENTRY_DSN, não envia nada.
+startErrorReporting();
+
+/** Uma tela que quebra mostra o aviso amigável em vez de fechar o app (expo-router). */
+export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
+  return <AppErrorFallback error={error} retry={retry} />;
 }
 
 export default function RootLayout() {

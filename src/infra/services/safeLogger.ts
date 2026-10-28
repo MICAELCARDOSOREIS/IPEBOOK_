@@ -28,6 +28,21 @@ const LOG_LEVEL_PRIORITY: Record<LogLevel, number> = {
 
 export type LogSink = (entry: LogEntry) => void;
 
+/** Saída padrão no console; logs de erro também seguem para o acompanhamento de erros (Spec 104). */
+export function reportingSink(reporter: { captureException(error: unknown, context?: Record<string, unknown>): void }): LogSink {
+  return (entry) => {
+    const payload = JSON.stringify(entry);
+    if (entry.level === "error") {
+      console.error(payload);
+      reporter.captureException(new Error(entry.error ? `${entry.message}: ${entry.error}` : entry.message), entry.context);
+    } else if (entry.level === "warn") {
+      console.warn(payload);
+    } else {
+      console.log(payload);
+    }
+  };
+}
+
 export interface SafeLoggerOptions {
   minLevel?: LogLevel;
   sink?: LogSink;

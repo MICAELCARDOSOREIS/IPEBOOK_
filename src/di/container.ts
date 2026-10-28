@@ -83,7 +83,11 @@ import { SupabaseUserDataExportDataSource } from "@/infra/datasources/supabaseUs
 import type { IPhotoStorageDataSource } from "@/model/datasources/iPhotoStorageDataSource";
 import type { IUserDataExportDataSource } from "@/model/datasources/iUserDataExportDataSource";
 import type { ILogger } from "@/model/services/iLogger";
-import { SafeLogger } from "@/infra/services/safeLogger";
+import { SafeLogger, reportingSink } from "@/infra/services/safeLogger";
+import { MemoryErrorReporter } from "@/infra/services/memoryErrorReporter";
+import { SentryErrorReporter } from "@/infra/services/sentryErrorReporter";
+import type { IErrorReporter } from "@/model/services/iErrorReporter";
+import Constants from "expo-constants";
 import type { IRateLimiter } from "@/model/services/iRateLimiter";
 import { ClientRateLimiter } from "@/infra/services/clientRateLimiter";
 import type { IFileDownloadService } from "@/model/services/iFileDownloadService";
@@ -308,8 +312,21 @@ export const negotiationMessageUseCases = {
   listHiddenConversations: async (userId: string) => (await messageDataSource.listHiddenConversations?.(userId)) ?? {},
 };
 
+const sentryDsn = process.env.EXPO_PUBLIC_SENTRY_DSN;
+/** Sem chave do Sentry (ou em teste) os erros ficam só no aparelho (Spec 104 / ADR 0080). */
+export const errorReporter: IErrorReporter =
+  process.env.NODE_ENV !== "test" && sentryDsn
+    ? new SentryErrorReporter({
+        dsn: sentryDsn,
+        environment: process.env.EXPO_PUBLIC_APP_ENV ?? (__DEV__ ? "development" : "production"),
+        release: Constants.expoConfig?.version,
+      })
+    : new MemoryErrorReporter();
+
 export const logger: ILogger = new SafeLogger(
-  process.env.NODE_ENV === "test" ? { sink: () => {} } : {}
+  process.env.NODE_ENV === "test"
+    ? { sink: () => {} }
+    : { sink: reportingSink(errorReporter) },
 );
 
 export const rateLimiter: IRateLimiter = new ClientRateLimiter();

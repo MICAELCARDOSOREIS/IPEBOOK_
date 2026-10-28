@@ -72,7 +72,8 @@
         }
       ],
       "expo-web-browser",
-      "@rnmapbox/maps"
+      "@rnmapbox/maps",
+      "@sentry/react-native"
     ],
     "experiments": {
       "typedRoutes": true
