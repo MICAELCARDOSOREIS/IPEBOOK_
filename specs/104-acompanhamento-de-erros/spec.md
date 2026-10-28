@@ -8,7 +8,7 @@ Saber quando o app quebra no aparelho das pessoas, sem expor dados pessoais.
 ## Escopo
 - `@sentry/react-native` (versão indicada pelo Expo) atrás do contrato `IErrorReporter`.
 - Logs de erro do `SafeLogger` seguem para o Sentry; telas que quebram mostram um aviso amigável (`ErrorBoundary` do expo-router) e enviam o erro.
-- Fora do escopo: envio de mapas de código (source maps), rastreamento de desempenho e replay de sessão.
+- Fora do escopo: envio de mapas de código (source maps), rastreamento de desempenho e replay de sessão. O envio automático fica desligado com `SENTRY_DISABLE_AUTO_UPLOAD=true` no `eas.json`: sem `SENTRY_AUTH_TOKEN` ele derruba a build de produção. Para ligar, criar o token no Sentry, guardá-lo no EAS como segredo e remover a variável.
 
 ## Regras
 - **RN-01** Sem `EXPO_PUBLIC_SENTRY_DSN`, nada é enviado (implementação em memória).
