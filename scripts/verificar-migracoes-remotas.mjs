@@ -648,6 +648,12 @@ export const MAPEAMENTO_MIGRACOES = {
     validar: (ctx) => Boolean(ctx.tabelas.v2_deliveries?.existe),
     detalhe: 'Status delivered em v2_books e gatilho v2_delivery_marks_book_delivered (Spec 095)',
   },
+  // O REST não expõe a coluna pushed_at nem o gatilho; usa a tabela da migração de entrega como indício.
+  '202610280003_push_de_avisos.sql': {
+    titulo: 'Push de avisos',
+    validar: (ctx) => Boolean(ctx.tabelas.v2_deliveries?.existe),
+    detalhe: 'Coluna pushed_at, tabela v2_push_settings e gatilhos de push (Spec 096)',
+  },
 };
 
 /**

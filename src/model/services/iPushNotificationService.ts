@@ -35,6 +35,12 @@ export interface IPushNotificationService {
   registerForPushNotifications(): Promise<string | null>;
 
   /**
+   * Avisa quando a pessoa toca numa notificação (com o app aberto, em segundo plano ou fechado), com a rota
+   * que o aviso carrega (Spec 096, CA3). Devolve o cancelamento.
+   */
+  subscribeToOpened(listener: (target: { url: string | null }) => void): () => void;
+
+  /**
    * Agenda uma notificação local imediata ou para daqui a N segundos.
    */
   scheduleLocalNotification(options: NotificationScheduleOptions): Promise<string | null>;

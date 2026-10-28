@@ -43,6 +43,20 @@ export class MemoryPushNotificationService implements IPushNotificationService {
     return this.pushToken;
   }
 
+  private readonly openedListeners = new Set<(target: { url: string | null }) => void>();
+
+  subscribeToOpened(listener: (target: { url: string | null }) => void): () => void {
+    this.openedListeners.add(listener);
+    return () => {
+      this.openedListeners.delete(listener);
+    };
+  }
+
+  /** Simula o toque na notificação, para os testes. */
+  simulateOpened(url: string | null): void {
+    for (const listener of this.openedListeners) listener({ url });
+  }
+
   async scheduleLocalNotification(options: NotificationScheduleOptions): Promise<string | null> {
     if (!this.permissionGranted) return null;
     const id = `local-notification-${this.nextId++}`;

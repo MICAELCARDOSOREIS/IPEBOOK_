@@ -442,5 +442,23 @@ if (livroEntregue.rows[0]?.status !== 'delivered') throw new Error(`Livro não v
 process.stdout.write('Livro entregue depois da conclusão (Spec 095): verificado com sucesso\n');
 
 
+// Spec 096 / ADR 0071: push de avisos para o celular.
+const tokenA = 'ExponentPushToken[aaaaaaaaaaaaaaaaaaaaaa]';
+await as('authenticated', owner, `insert into public.v2_user_preferences (user_id, push_token) values ('${owner}', '${tokenA}') on conflict (user_id) do update set push_token = excluded.push_token`);
+await as('authenticated', reader, `insert into public.v2_user_preferences (user_id, push_token) values ('${reader}', '${tokenA}') on conflict (user_id) do update set push_token = excluded.push_token`);
+const donoDoToken = await db.query(`select user_id::text from public.v2_user_preferences where push_token = '${tokenA}'`);
+if (donoDoToken.rows.length !== 1 || donoDoToken.rows[0].user_id !== reader) throw new Error('Token repetido continuou em duas contas');
+process.stdout.write('Token de push repetido sai da conta anterior: verificado\n');
+await denied('Pessoa lê a configuração do push', () => as('authenticated', owner, `select * from public.v2_push_settings`));
+await denied('Pessoa grava a configuração do push', () => as('authenticated', owner, `insert into public.v2_push_settings (function_url, publishable_key) values ('https://x', 'k')`));
+await db.exec(`reset role; insert into public.v2_push_settings (function_url, publishable_key) values ('https://exemplo.functions.supabase.co/enviar-push', 'sb_publishable_teste')`);
+await db.exec(`reset role; select set_config('request.jwt.claim.sub', '${reader}', false); set role authenticated;`);
+await db.query(`select 1`);
+await db.exec(`reset role; insert into public.v2_notifications (user_id, title, message, type) values ('${reader}', 'Aviso de teste', 'Sem pg_net, o gatilho não pode falhar', 'system')`);
+const criado = await db.query(`select pushed_at from public.v2_notifications where title = 'Aviso de teste'`);
+if (criado.rows.length !== 1 || criado.rows[0].pushed_at !== null) throw new Error('Aviso com push configurado deveria ser criado sem pushed_at');
+process.stdout.write('Gatilho do push não impede criar o aviso (sem pg_net): verificado\n');
+await denied('Pessoa marca o aviso como enviado', () => as('authenticated', reader, `update public.v2_notifications set pushed_at = now() where title = 'Aviso de teste'`));
+
 process.stdout.write('Migrações e cenários SQL locais verificados.\n');
 await db.close();
