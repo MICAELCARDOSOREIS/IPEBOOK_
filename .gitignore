@@ -36,3 +36,6 @@ google-services.json
 service-account*.json
 
 .env.local
+
+# Chave da conta de serviço da Google Play (link para ~/.config/ipebook)
+credenciais/

@@ -48,7 +48,8 @@
     "production": {
       "android": {
         "track": "internal",
-        "releaseStatus": "draft"
+        "releaseStatus": "draft",
+        "serviceAccountKeyPath": "./credenciais/play-service-account.json"
       }
     }
   }
