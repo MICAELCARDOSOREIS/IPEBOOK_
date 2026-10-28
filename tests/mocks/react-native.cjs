@@ -192,12 +192,29 @@ class MockAnimatedValue {
   interpolate() {
     return this;
   }
+  addListener() {
+    return "mock-listener";
+  }
+  removeListener() {}
+  stopAnimation() {}
 }
+
+const AppState = { currentState: "active", addEventListener: () => ({ remove: () => {} }) };
+
+const PanResponder = { create: () => ({ panHandlers: {} }) };
 
 const Animated = {
   Value: MockAnimatedValue,
   // Em teste, o timing aplica o alvo de imediato: a animação é síncrona e previsível.
   timing: (value, config) => ({
+    start: (cb) => {
+      if (value && value.setValue) value.setValue(config && config.toValue != null ? config.toValue : 0);
+      if (cb) cb({ finished: true });
+    },
+    stop: () => {},
+    stopAnimation: () => {},
+  }),
+  spring: (value, config) => ({
     start: (cb) => {
       if (value && value.setValue) value.setValue(config && config.toValue != null ? config.toValue : 0);
       if (cb) cb({ finished: true });
@@ -241,6 +258,8 @@ module.exports = {
   __emitKeyboardEvent,
   useWindowDimensions,
   Animated,
+  PanResponder,
+  AppState,
   useColorScheme,
   __setMockColorScheme,
   default: {
@@ -259,5 +278,7 @@ module.exports = {
     AccessibilityInfo,
     Platform,
     Animated,
+    PanResponder,
+    AppState,
   },
 };

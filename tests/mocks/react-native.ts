@@ -208,12 +208,25 @@ class MockAnimatedValue {
   interpolate() {
     return this;
   }
+  addListener() {
+    return "mock-listener";
+  }
+  removeListener() {}
+  stopAnimation() {}
 }
 
 export const Animated = {
   Value: MockAnimatedValue,
   // Em teste, o timing aplica o alvo de imediato: a animação é síncrona e previsível.
   timing: (value: any, config: any) => ({
+    start: (cb?: (result: { finished: boolean }) => void) => {
+      value?.setValue?.(config?.toValue ?? 0);
+      if (cb) cb({ finished: true });
+    },
+    stop: () => {},
+    stopAnimation: () => {},
+  }),
+  spring: (value: any, config: any) => ({
     start: (cb?: (result: { finished: boolean }) => void) => {
       value?.setValue?.(config?.toValue ?? 0);
       if (cb) cb({ finished: true });
@@ -238,6 +251,15 @@ export const Animated = {
   ),
 };
 
+export const AppState = {
+  currentState: "active",
+  addEventListener: (_type: string, _listener: (status: string) => void) => ({ remove: () => {} }),
+};
+
+export const PanResponder = {
+  create: (_config: unknown) => ({ panHandlers: {} }),
+};
+
 export default {
   View,
   Text,
@@ -257,5 +279,7 @@ export default {
   Platform,
   Share,
   Animated,
+  PanResponder,
+  AppState,
   useColorScheme,
 };
