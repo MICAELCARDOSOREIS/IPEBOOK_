@@ -9,6 +9,7 @@ import { IconBadge, type IconBadgeTone } from "@/view/components/IconBadge";
 import { LoadingState } from "@/view/components/LoadingState";
 import { OfflineState } from "@/view/components/OfflineState";
 import { TopAppBar } from "@/view/components/TopAppBar";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import {
@@ -51,6 +52,8 @@ export default function Notifications({
   const [state, actions] = useNotificationsViewModel(sessionUserId);
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  // Web larga: coluna mais ampla em vez de uma faixa estreita no meio.
+  const wide = useIsWideWeb();
   const { isOnline } = useNetworkStatus();
   const handleExplore = onExploreBooks ?? onBack;
   const [refreshing, setRefreshing] = useState(false);
@@ -93,8 +96,8 @@ export default function Notifications({
 
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar title="Notificações" onBack={() => onBack?.()} />
-      <View style={styles.content}>
+      <TopAppBar title="Notificações" onBack={() => onBack?.()} contentMaxWidth={wide ? WIDE_CONTENT_MAX_WIDTH : undefined} />
+      <View style={[styles.content, wide && { maxWidth: WIDE_CONTENT_MAX_WIDTH }]}>
         {showListChrome ? (
         <View style={styles.filterBar}>
           <View accessibilityRole="tablist" style={styles.filterTabs}>
@@ -242,6 +245,8 @@ export default function Notifications({
     </SafeAreaView>
   );
 }
+
+const WIDE_CONTENT_MAX_WIDTH = 920;
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
