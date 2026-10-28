@@ -31,8 +31,8 @@ Para enviar um arquivo específico: `bash scripts/enviar-play.sh caminho/do/arqu
 ## Faixa e status
 
 Definidos em `eas.json`, perfil `submit.production.android`:
-- `track`: `internal` (teste interno). Outras opções: `alpha` (teste fechado), `beta` (aberto), `production`.
-- `releaseStatus`: `draft` (fica como rascunho no Console). Use `completed` para liberar direto.
+- `track`: `alpha` (teste fechado, faixa "Teste fechado - Alpha"). Outras opções: `internal`, `beta` (aberto), `production`.
+- `releaseStatus`: `completed` (publicada para os testadores assim que o Google aprovar). Use `draft` para revisar antes no Console.
 
 ## Segurança
 
