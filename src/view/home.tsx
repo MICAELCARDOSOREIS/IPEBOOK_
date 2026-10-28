@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { AppState, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useHomeViewModel } from "@/viewmodel/useHomeViewModel";
 import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
+import { useNotificationsViewModel } from "@/viewmodel/useNotificationsViewModel";
 import { useActiveNeighborhood } from "@/viewmodel/useActiveNeighborhood";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
@@ -210,6 +211,9 @@ export default function Home({
 
   const [state, actions] = useHomeViewModel();
   const [authState] = useAuthViewModel();
+  // Só o contador de não lidas: convite e resposta de encontro chegam por aqui, em tempo real (Spec 086).
+  const [notificationsState, notificationsActions] = useNotificationsViewModel(authState.user?.id ?? null);
+  const unreadCount = notificationsState.unreadCount;
   const { isOnline } = useNetworkStatus();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -224,7 +228,16 @@ export default function Home({
       return;
     }
     void actions.reload();
+    void notificationsActions.refresh();
   }, [focusKey]);
+
+  // O tempo real pode não chegar com o app em segundo plano: ao voltar, confere os avisos de novo.
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", (status) => {
+      if (status === "active") void notificationsActions.refresh();
+    });
+    return () => subscription.remove();
+  }, [notificationsActions]);
 
   const isSpecificNeighborhood =
     Boolean(effectiveNeighborhood) &&
@@ -300,11 +313,20 @@ export default function Home({
 
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Abrir notificações"
+              accessibilityLabel={
+                unreadCount > 0
+                  ? `Abrir notificações, ${unreadCount} ${unreadCount === 1 ? "não lida" : "não lidas"}`
+                  : "Abrir notificações"
+              }
               onPress={() => onNavigateToNotifications?.()}
               style={styles.notificationButton}
             >
               <AppIcon name="bell" size={24} color={colors.m3.onSurfaceVariant} />
+              {unreadCount > 0 ? (
+                <View style={styles.notificationBadge}>
+                  <Text style={styles.notificationBadgeText}>{unreadCount > 9 ? "9+" : unreadCount}</Text>
+                </View>
+              ) : null}
             </Pressable>
           </View>
         )}
@@ -587,6 +609,19 @@ function createStyles(colors: ColorPalette) {
       justifyContent: "center",
       alignItems: "center",
     },
+    notificationBadge: {
+      position: "absolute",
+      top: 2,
+      right: 2,
+      minWidth: 16,
+      height: 16,
+      paddingHorizontal: tokens.spacing[4],
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.error,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    notificationBadgeText: { fontSize: 10, lineHeight: 12, fontWeight: "700", color: "#FFFFFF" },
     sessionPill: {
       paddingHorizontal: tokens.spacing[12],
       paddingVertical: tokens.spacing[6],
