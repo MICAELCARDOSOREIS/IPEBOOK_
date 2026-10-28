@@ -7,7 +7,7 @@
 > em código e build (`dist/`, `public/_headers`, `public/_redirects`, spec 025, ADR 0020), aguardando
 > comprovação no ambiente de destino externo (issue #109).
 
-Revisão: 2026-10-20 (base: branch `develop`). Este documento consolida os requisitos implementados e o alinhamento de produto da versão beta.
+Revisão: 2026-10-29 (base: branch `develop`). Este documento consolida os requisitos implementados e o alinhamento de produto da versão beta.
 
 ## Objetivo confirmado
 
@@ -80,7 +80,7 @@ Testes e limitações de cobertura estão em [qualidade.md](qualidade.md). Exist
 ## Regras atuais e limites do domínio
 
 - Backend oficial Supabase integrado (`EXPO_PUBLIC_BACKEND=supabase`) com autenticação, sessão persistente e Row Level Security (RLS) protegendo dados do usuário. Adaptadores em memória mantidos para testes unitários e de integração locais.
-- `Book` contém `id`, `title`, `author`, `category` opcional, `status` (`available`/`reserved`/`paused`), `modality` (`sale`/`trade`/`donation`), `price` opcional (obrigatório e > 0 só quando `modality === "sale"`, FR-005), `ownerId`, `photoUrl`, `photos`, `city`, `state` e `neighborhood`.
+- `Book` contém `id`, `title`, `author`, `category` opcional, `status` (`available`/`reserved`/`paused`/`draft`/`delivered`), `modality` (`sale`/`trade`/`donation`), `price` opcional (obrigatório e > 0 só quando `modality === "sale"`, FR-005), `ownerId`, `photoUrl`, `photos`, `city`, `state` e `neighborhood`.
 - O cadastro e a edição de anúncios exigem sessão ativa (FR-006), associando o anúncio criado à conta autenticada (`ownerId`).
 - A beta atende exclusivamente a cidade de **Piripiri, PI**, com catálogo delimitado a seus 17 bairros oficiais (spec 022, ADR 0016).
 - Moderação comunitária ativa via denúncias de anúncio (`v2_reports`), permitindo sinalizar conteúdos impróprios (spec 011).
@@ -130,4 +130,11 @@ específico, basta atualizar esta tabela.
 
 ## Próximos passos e pendências
 
-As próximas entregas da trilha incluem: comprovação da publicação Web no Cloudflare Pages (issue #109), correções de acessibilidade derivadas da auditoria (#104, #105, #106), filtros e ordenação do catálogo (#93) e perfis de usuário/anunciante (#55 e #73).
+Issues antigas citadas aqui (#93 filtros, #73 perfil público, #109 Cloudflare) já foram concluídas; ver `docs/estado.md`. Pendências atuais para o lançamento:
+
+- Aplicar no Supabase remoto as migrações `202610290001_moderacao.sql` e `202610290002_limites_anti_abuso.sql` e cadastrar o primeiro moderador (Spec 102).
+- Criar o projeto no Sentry e configurar `EXPO_PUBLIC_SENTRY_DSN` no `.env` e no EAS (Spec 104).
+- Gerar a build de produção (`eas build -p android --profile production`) e preencher a Play Console com o rascunho de [docs/loja/play-store.md](loja/play-store.md).
+- Revisão jurídica dos termos e da política de privacidade e publicação em um link público.
+- Teste completo no aparelho com duas contas (pedido, chat, encontro, QR, avaliação, avisos e moderação).
+- Avaliar métricas de uso (ex.: PostHog) e um projeto Supabase separado para testes; ambos dependem de conta e decisão de custo.
