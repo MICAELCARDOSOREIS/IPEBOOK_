@@ -73,5 +73,7 @@
 - [0071 — Push de avisos por Edge Function do Supabase](0071-push-de-avisos-por-edge-function.md)
 - [0072 — Mapa interativo do Mapbox na web](0072-mapa-interativo-mapbox-na-web.md)
 - [0073 — BrasilAPI como terceira fonte de ISBN e dados da edição no anúncio](0073-brasilapi-como-fonte-de-isbn.md)
+- [0074 — Avisos de pedido recebido e aceito no servidor](0074-avisos-de-pedido-recebido-e-aceito.md)
+- [0075 — Preferências de aviso, canais de entrega e push profissional](0075-preferencias-e-canais-de-notificacao.md)
 
 Preservar registros aceitos; mudanças relevantes geram novo ADR com vínculos de substituição.

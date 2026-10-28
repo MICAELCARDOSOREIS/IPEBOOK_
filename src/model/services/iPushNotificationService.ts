@@ -3,11 +3,15 @@
  * Pertence estritamente à camada de Modelo (model/services).
  */
 
+import type { NotificationChannel } from "@/model/entities/notification";
+
 export type NotificationScheduleOptions = {
   title: string;
   body: string;
   data?: Record<string, unknown>;
   triggerSeconds?: number;
+  /** Canal Android por onde o aviso local toca (Spec 099). Ausente = canal padrão. */
+  channelId?: NotificationChannel;
 };
 
 export type MeetingReminderParams = {
@@ -54,4 +58,10 @@ export interface IPushNotificationService {
    * Cancela uma notificação local agendada.
    */
   cancelScheduledNotification(notificationId: string): Promise<boolean>;
+
+  /**
+   * Ajusta o selo (badge) do ícone do app com o número de avisos não lidos (Spec 099).
+   * No iOS reflete o contador; no Android o selo é por canal e a chamada é tolerada sem efeito.
+   */
+  setBadgeCount(count: number): Promise<void>; 
 }

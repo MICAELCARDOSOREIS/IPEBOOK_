@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useMemo, useRef, useState } from "react";
+import { Pressable, ScrollView, StyleSheet, Switch, Text, View, type ScrollViewInstance } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Constants from "expo-constants";
 import * as Linking from "expo-linking";
@@ -16,10 +16,19 @@ import { NeighborhoodSelectorModal } from "@/view/components/NeighborhoodSelecto
 import { TextButton } from "@/view/components/TextButton";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useSettingsViewModel } from "@/viewmodel/useSettingsViewModel";
+import {
+  NOTIFICATION_PREFERENCE_CATEGORIES,
+  useNotificationPreferencesViewModel,
+  type NotificationPreferenceKey,
+} from "@/viewmodel/useNotificationPreferencesViewModel";
 import { useActiveNeighborhood } from "@/viewmodel/useActiveNeighborhood";
 import { usePublicProfileViewModel } from "@/viewmodel/usePublicProfileViewModel";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
+import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
+
+const WIDE_CONTENT_MAX_WIDTH = WEB_MAX_WIDTH;
 
 export type SettingsProps = {
   onBack: () => void;
@@ -63,6 +72,11 @@ export function Settings({
   onSignedOut,
 }: SettingsProps) {
   const { colors } = useTheme();
+  // Web larga: barra lateral com a conta e o índice das seções, e as seções empilhadas ao lado.
+  const wide = useIsWideWeb();
+  const scrollRef = useRef<ScrollViewInstance>(null);
+  const mainY = useRef(0);
+  const sectionY = useRef<Record<string, number>>({});
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [authState, authActions] = useAuthViewModel();
   const hasAccount = !!authState.user?.id;
@@ -87,6 +101,7 @@ export function Settings({
     }
   }
   const [state, actions] = useSettingsViewModel();
+  const [notifPrefs, notifActions] = useNotificationPreferencesViewModel(sessionUserId);
   const version = Constants.expoConfig?.version ?? null;
 
   // Gestão da conta veio de Meu perfil (ADR 0060) e só aparece com sessão
@@ -143,6 +158,16 @@ export function Settings({
     { key: "terms", icon: "document" as const, label: "Termos e privacidade", onPress: onNavigateToTerms },
   ].filter((link) => link.onPress);
 
+  // Índice da barra lateral (web larga): leva até cada seção da coluna principal.
+  const navItems: { key: string; label: string; icon: Exclude<LinkItem["icon"], "instagram"> }[] = [
+    ...(accountLinks.length > 0 ? [{ key: "account", label: "Conta e dados", icon: "person" as const }] : []),
+    { key: "preferences", label: "Preferências", icon: "place" as const },
+    ...(hasAccount ? [{ key: "notifications", label: "Notificações", icon: "bell" as const }] : []),
+    { key: "appearance", label: "Aparência", icon: "visibility" as const },
+    { key: "device", label: "Dados neste dispositivo", icon: "document" as const },
+    { key: "about", label: "Sobre o IpêBook", icon: "info" as const },
+  ];
+
   function renderLink(link: LinkItem, index: number) {
     return (
       <Pressable
@@ -169,39 +194,69 @@ export function Settings({
     );
   }
 
+  // Cartão da conta (Spec 091): quem está logada e atalho para editar o perfil.
+  const accountCard = hasAccount ? (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel="Editar perfil"
+      onPress={onNavigateToEditProfile}
+      style={[styles.accountCard, wide && styles.accountCardWide]}
+    >
+      <Avatar
+        name={profileState.profile?.name ?? authState.user?.email ?? "Você"}
+        photoUrl={profileState.profile?.photoUrl ?? undefined}
+        size={56}
+      />
+      <View style={styles.linkText}>
+        <Text numberOfLines={1} style={styles.accountName}>
+          {profileState.profile?.name ?? "Minha conta"}
+        </Text>
+        <Text numberOfLines={1} style={styles.linkDescription}>
+          {authState.user?.email}
+        </Text>
+      </View>
+      <Text style={styles.accountAction}>Editar</Text>
+    </Pressable>
+  ) : null;
+
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar title="Configurações" onBack={onBack} />
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <View style={styles.content}>
-          {/* Cartão da conta (Spec 091): quem está logada e atalho para editar o perfil */}
-          {hasAccount ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Editar perfil"
-              onPress={onNavigateToEditProfile}
-              style={styles.accountCard}
-            >
-              <Avatar
-                name={profileState.profile?.name ?? authState.user?.email ?? "Você"}
-                photoUrl={profileState.profile?.photoUrl ?? undefined}
-                size={56}
-              />
-              <View style={styles.linkText}>
-                <Text numberOfLines={1} style={styles.accountName}>
-                  {profileState.profile?.name ?? "Minha conta"}
-                </Text>
-                <Text numberOfLines={1} style={styles.linkDescription}>
-                  {authState.user?.email}
-                </Text>
+      <TopAppBar title="Configurações" onBack={onBack} contentMaxWidth={wide ? WIDE_CONTENT_MAX_WIDTH : undefined} />
+      <ScrollView ref={scrollRef} contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        <View style={[styles.content, wide && styles.contentWide]}>
+          {wide ? (
+            <View style={styles.sidebar}>
+              {accountCard}
+              <View accessibilityRole="menu" accessibilityLabel="Seções das configurações" style={styles.sideNav}>
+                {navItems.map((item) => (
+                  <Pressable
+                    key={item.key}
+                    accessibilityRole="link"
+                    accessibilityLabel={`Ir para ${item.label}`}
+                    onPress={() => scrollRef.current?.scrollTo({ y: mainY.current + (sectionY.current[item.key] ?? 0) - 16, animated: true })}
+                    style={({ hovered, pressed }: { hovered?: boolean; pressed: boolean }) => [styles.sideNavItem, (hovered || pressed) && styles.sideNavItemActive]}
+                  >
+                    <AppIcon name={item.icon} size={20} color={colors.m3.onSurfaceVariant} />
+                    <Text style={styles.sideNavLabel}>{item.label}</Text>
+                  </Pressable>
+                ))}
               </View>
-              <Text style={styles.accountAction}>Editar</Text>
-            </Pressable>
+              {hasAccount ? (
+                <View style={styles.sideSignOut}>
+                  <TextButton label="Sair da conta" tone="danger" onPress={() => setConfirmingSignOut(true)} />
+                </View>
+              ) : null}
+            </View>
           ) : null}
+          <View
+            style={wide ? styles.main : styles.mainStacked}
+            onLayout={(event) => { mainY.current = wide ? event.nativeEvent.layout.y : 0; }}
+          >
+          {wide ? null : accountCard}
 
           {/* Conta e dados (ADR 0060): só com sessão, e primeiro por ser o que mais importa */}
           {accountLinks.length > 0 ? (
-            <View style={styles.section}>
+            <View style={styles.section} onLayout={(event) => { sectionY.current["account"] = event.nativeEvent.layout.y; }}>
               <Text accessibilityRole="header" style={styles.sectionHeader}>
                 Conta e dados
               </Text>
@@ -210,7 +265,7 @@ export function Settings({
           ) : null}
 
           {/* Preferências de uso (Spec 091): o bairro com que a Home e a Explorar abrem */}
-          <View style={styles.section}>
+          <View style={styles.section} onLayout={(event) => { sectionY.current["preferences"] = event.nativeEvent.layout.y; }}>
             <Text accessibilityRole="header" style={styles.sectionHeader}>
               Preferências
             </Text>
@@ -225,8 +280,45 @@ export function Settings({
             </View>
           </View>
 
+          {/* Notificações (Spec 099 / ADR 0075): a pessoa escolhe quais avisos chegam por push */}
+          {hasAccount ? (
+            <View style={styles.section} onLayout={(event) => { sectionY.current["notifications"] = event.nativeEvent.layout.y; }}>
+              <Text accessibilityRole="header" style={styles.sectionHeader}>
+                Notificações
+              </Text>
+              <View style={styles.listCard}>
+                {(Object.keys(NOTIFICATION_PREFERENCE_CATEGORIES) as NotificationPreferenceKey[]).map(
+                  (key, index) => {
+                    const category = NOTIFICATION_PREFERENCE_CATEGORIES[key];
+                    return (
+                      <View key={key} style={[styles.toggleRow, index > 0 && styles.linkDivider]}>
+                        <View style={styles.linkText}>
+                          <Text style={styles.linkLabel}>{category.label}</Text>
+                          <Text style={styles.linkDescription}>{category.description}</Text>
+                        </View>
+                        <Switch
+                          value={notifPrefs.enabled[key]}
+                          onValueChange={(value) => void notifActions.setEnabled(key, value)}
+                          accessibilityRole="switch"
+                          accessibilityLabel={`${category.label}: ${notifPrefs.enabled[key] ? "ativada" : "desativada"}`}
+                          trackColor={{ false: colors.m3.outlineVariant, true: colors.action }}
+                          thumbColor={notifPrefs.enabled[key] ? colors.surface : colors.m3.surfaceContainerHigh}
+                        />
+                      </View>
+                    );
+                  },
+                )}
+              </View>
+              {notifPrefs.error ? (
+                <Text accessibilityLiveRegion="polite" style={styles.feedbackError}>
+                  {notifPrefs.error}
+                </Text>
+              ) : null}
+            </View>
+          ) : null}
+
           {/* Aparência (Spec 073 FR-003, ADR 0036) */}
-          <View style={styles.section}>
+          <View style={styles.section} onLayout={(event) => { sectionY.current["appearance"] = event.nativeEvent.layout.y; }}>
             <Text accessibilityRole="header" style={styles.sectionHeader}>
               Aparência
             </Text>
@@ -239,7 +331,7 @@ export function Settings({
           </View>
 
           {/* Dados neste dispositivo (Spec 073): limpeza do catálogo offline */}
-          <View style={styles.section}>
+          <View style={styles.section} onLayout={(event) => { sectionY.current["device"] = event.nativeEvent.layout.y; }}>
             <Text accessibilityRole="header" style={styles.sectionHeader}>
               Dados neste dispositivo
             </Text>
@@ -286,7 +378,7 @@ export function Settings({
           </View>
 
           {/* Sobre e atalhos (Spec 073) */}
-          <View style={styles.section}>
+          <View style={styles.section} onLayout={(event) => { sectionY.current["about"] = event.nativeEvent.layout.y; }}>
             <Text accessibilityRole="header" style={styles.sectionHeader}>
               Sobre o IpêBook
             </Text>
@@ -304,7 +396,7 @@ export function Settings({
             </View>
           </View>
 
-          {hasAccount ? (
+          {hasAccount && !wide ? (
             <View style={styles.signOutRow}>
               <TextButton label="Sair da conta" tone="danger" onPress={() => setConfirmingSignOut(true)} />
             </View>
@@ -314,6 +406,7 @@ export function Settings({
             Leitura, anúncios e configurações funcionam sem internet. Só publicar, favoritar e
             negociar pedem conexão.
           </Text>
+          </View>
         </View>
       </ScrollView>
 
@@ -383,6 +476,30 @@ function createStyles(colors: ColorPalette) {
       padding: tokens.spacing[16],
       gap: tokens.spacing[24],
     },
+    contentWide: { maxWidth: WEB_MAX_WIDTH, paddingHorizontal: WEB_GUTTER, flexDirection: "row", alignItems: "flex-start", gap: 48 },
+    mainStacked: { gap: tokens.spacing[24] },
+    // Coluna de leitura: as listas de opções não passam de ~880 px, como nas preferências de sistemas.
+    main: { flex: 1, minWidth: 0, maxWidth: 880, gap: tokens.spacing[32] },
+    sidebar: {
+      width: 300,
+      gap: tokens.spacing[16],
+      // Fica visível enquanto a coluna principal rola (só existe na web).
+      position: "sticky" as "relative",
+      top: tokens.spacing[16],
+    },
+    accountCardWide: { flexDirection: "column", alignItems: "flex-start", gap: tokens.spacing[12] },
+    sideNav: { gap: 2 },
+    sideNavItem: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[12],
+      minHeight: 44,
+      paddingHorizontal: tokens.spacing[12],
+      borderRadius: tokens.radius.full,
+    },
+    sideNavItemActive: { backgroundColor: colors.m3.surfaceContainerHigh },
+    sideNavLabel: { ...tokens.typography.labelLarge, color: colors.m3.onSurface },
+    sideSignOut: { alignItems: "flex-start", paddingHorizontal: tokens.spacing[4] },
     section: { gap: tokens.spacing[8] },
     sectionHeader: {
       ...tokens.typography.labelLarge,
@@ -424,6 +541,14 @@ function createStyles(colors: ColorPalette) {
       color: colors.text,
     },
     linkRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[12],
+      minHeight: 64,
+      paddingVertical: tokens.spacing[8],
+      paddingHorizontal: tokens.spacing[16],
+    },
+    toggleRow: {
       flexDirection: "row",
       alignItems: "center",
       gap: tokens.spacing[12],

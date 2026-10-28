@@ -4,6 +4,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { AppNotification } from "@/model/entities/notification";
 import { DomainError } from "@/model/errors";
 import type { INotificationUseCases } from "@/usecase/iNotificationUseCases";
+import { MemoryPushNotificationService } from "@/infra/services/memoryPushNotificationService";
+import type { IPushNotificationService } from "@/model/services/iPushNotificationService";
 import { useNotificationsViewModel } from "@/viewmodel/useNotificationsViewModel";
 
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
@@ -39,10 +41,10 @@ function stubNotifications(overrides: Partial<INotificationUseCases> = {}): INot
   };
 }
 
-async function renderHook(sessionUserId: string | null, useCases: INotificationUseCases) {
+async function renderHook(sessionUserId: string | null, useCases: INotificationUseCases, push?: IPushNotificationService) {
   let result!: ReturnType<typeof useNotificationsViewModel>;
   function HookProbe() {
-    result = useNotificationsViewModel(sessionUserId, useCases);
+    result = useNotificationsViewModel(sessionUserId, useCases, push);
     return null;
   }
   await act(async () => {
@@ -86,6 +88,19 @@ describe("useNotificationsViewModel", () => {
     expect(state.unreadCount).toBe(1);
     expect(state.filter).toBe("all");
     expect(state.filteredNotifications).toHaveLength(2);
+  });
+
+  it("sincroniza o selo do app com as não lidas (Spec 099)", async () => {
+    const push = new MemoryPushNotificationService();
+    await renderHook("user-1", stubNotifications(), push);
+    expect(push.getBadgeCount()).toBe(1);
+  });
+
+  it("zera o selo quando a sessão sai (Spec 099)", async () => {
+    const push = new MemoryPushNotificationService();
+    await push.setBadgeCount(4);
+    await renderHook(null, stubNotifications(), push);
+    expect(push.getBadgeCount()).toBe(0);
   });
 
   it("filtra apenas não lidas quando filter é 'unread'", async () => {
@@ -142,6 +157,18 @@ describe("useNotificationsViewModel", () => {
     expect(state.error).toBe("Erro ao listar");
   });
 
+  it("captura erro genérico ao falhar no carregamento", async () => {
+    const useCases = stubNotifications({
+      listNotifications: vi.fn().mockRejectedValue(new Error("pane")),
+    });
+
+    const hook = await renderHook("user-1", useCases);
+    const [state] = hook.current;
+
+    expect(state.loading).toBe(false);
+    expect(state.error).toBe("Não foi possível carregar as notificações. Tente novamente.");
+  });
+
   it("captura erro genérico ao falhar em markAsRead", async () => {
     const useCases = stubNotifications({
       markAsRead: vi.fn().mockRejectedValue(new Error("Falha inesperada")),
@@ -168,6 +195,24 @@ describe("useNotificationsViewModel", () => {
 
     const [state] = hook.current;
     expect(state.error).toBe("Não foi possível marcar todas as notificações como lidas.");
+  });
+
+  it("mostra a mensagem do DomainError ao falhar em marcar como lida", async () => {
+    const useCases = stubNotifications({
+      markAsRead: vi.fn().mockRejectedValue(new DomainError("Sem permissão")),
+      markAllAsRead: vi.fn().mockRejectedValue(new DomainError("Sem permissão em lote")),
+    });
+
+    const hook = await renderHook("user-1", useCases);
+    await act(async () => {
+      await hook.current[1].markAsRead("n-1");
+    });
+    expect(hook.current[0].error).toBe("Sem permissão");
+
+    await act(async () => {
+      await hook.current[1].markAllAsRead();
+    });
+    expect(hook.current[0].error).toBe("Sem permissão em lote");
   });
 
   it("recarrega sozinha quando chega notificação em tempo real e cancela ao desmontar (Spec 086)", async () => {

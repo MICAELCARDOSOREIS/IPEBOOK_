@@ -5,6 +5,7 @@ import {
   buildPushMessage,
   isExpoPushToken,
   isInvalidTokenTicket,
+  isTypeMuted,
   parseRequestId,
   type PushTicket,
   type StoredNotification,
@@ -28,24 +29,37 @@ Deno.serve(async (request) => {
   });
 
   // RN-03: só quem consegue marcar `pushed_at` envia; uma segunda chamada não acha nada.
+  // Primeiro a pessoa: sem token válido ou com o tipo desativado, o aviso não consome o envio
+  // (reavivar a preferência depois volta a funcionar para avisos ainda não enviados).
   const { data: claimed, error: claimError } = await admin
     .from("v2_notifications")
-    .update({ pushed_at: new Date().toISOString() })
+    .select("id,user_id,title,message,type,action_url")
     .eq("id", id)
     .is("pushed_at", null)
-    .select("id,user_id,title,message,type,action_url")
     .maybeSingle();
-  if (claimError) return reply(500, { erro: "Não foi possível reivindicar o aviso." });
+  if (claimError) return reply(500, { erro: "Não foi possível ler o aviso." });
   if (!claimed) return reply(200, { enviado: false, motivo: "aviso inexistente ou já enviado" });
 
   const notification = claimed as StoredNotification;
   const { data: preferences } = await admin
     .from("v2_user_preferences")
-    .select("push_token")
+    .select("push_token,muted_types")
     .eq("user_id", notification.user_id)
     .maybeSingle();
   const token = preferences?.push_token;
   if (!isExpoPushToken(token)) return reply(200, { enviado: false, motivo: "pessoa sem token de push" });
+  // Spec 099: a pessoa desativou este tipo de aviso — o push não sai, mas o aviso segue no app.
+  if (isTypeMuted(notification.type, preferences?.muted_types)) {
+    return reply(200, { enviado: false, motivo: "tipo de aviso desativado" });
+  }
+
+  // Reivindica o envio de forma atômica agora que há destino e permissão (RN-03).
+  const { count } = await admin
+    .from("v2_notifications")
+    .update({ pushed_at: new Date().toISOString() }, { count: "exact" })
+    .eq("id", id)
+    .is("pushed_at", null);
+  if (!count) return reply(200, { enviado: false, motivo: "envio reivindicado por outra chamada" });
 
   const response = await fetch(EXPO_PUSH_URL, {
     method: "POST",

@@ -3,6 +3,7 @@ import type {
   StoredUserPreferences,
   UserPreferencesUpdate,
 } from "@/model/datasources/iUserPreferencesDataSource";
+import type { NotificationType } from "@/model/entities/notification";
 import { DataSourceError } from "@/model/errors";
 import type { SupabaseAppClient } from "@/infra/supabaseClient";
 
@@ -11,6 +12,7 @@ export type UserPreferencesRow = {
   phone: string | null;
   neighborhood: string | null;
   push_token?: string | null;
+  muted_types?: string[] | null;
 };
 
 type PreferencesRow = UserPreferencesRow;
@@ -21,10 +23,13 @@ function mapPreferences(row: PreferencesRow): StoredUserPreferences {
     phone: row.phone ?? undefined,
     neighborhood: row.neighborhood ?? undefined,
     ...(row.push_token !== undefined ? { pushToken: row.push_token } : {}),
+    ...(row.muted_types !== undefined
+      ? { mutedTypes: (row.muted_types ?? []) as NotificationType[] }
+      : {}),
   };
 }
 
-const columns = "user_id,phone,neighborhood,push_token";
+const columns = "user_id,phone,neighborhood,push_token,muted_types";
 
 export class SupabaseUserPreferencesDataSource implements IUserPreferencesDataSource {
   constructor(private readonly client: SupabaseAppClient) {}
@@ -47,6 +52,9 @@ export class SupabaseUserPreferencesDataSource implements IUserPreferencesDataSo
     };
     if (patch.pushToken !== undefined) {
       row.push_token = patch.pushToken;
+    }
+    if (patch.mutedTypes !== undefined) {
+      row.muted_types = [...patch.mutedTypes];
     }
 
     const { error } = await this.client.from("v2_user_preferences").upsert(

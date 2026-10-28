@@ -167,6 +167,8 @@ if (acceptedState.rows[0]?.book_status !== 'reserved' || acceptedState.rows[0]?.
 const competitor = await as('authenticated', owner, `select status from public.v2_book_requests where id = 'f2222222-2222-4222-8222-222222222222'`);
 if (competitor.rows[0]?.status !== 'rejected') throw new Error('Aceite não rejeitou pedido concorrente');
 await denied('Pedido aceito novamente', () => as('authenticated', owner, `select public.accept_book_request('f1111111-1111-4111-8111-111111111111')`));
+// Os cenários de alerta abaixo contam todas as notificações de cada pessoa.
+await db.exec(`reset role; delete from public.v2_notifications`);
 await as('authenticated', reader, `insert into public.v2_favorites (user_id, book_id) values ('${reader}', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa')`);
 const ownFavorites = await as('authenticated', reader, `select id from public.v2_favorites`);
 if (ownFavorites.rows.length !== 1) throw new Error('Favorito do leitor não apareceu');
@@ -345,6 +347,18 @@ if (prefs.rows[0]?.push_token !== 'ExponentPushToken[teste]') throw new Error('p
 const otherPrefs = await as('authenticated', other, `select push_token from public.v2_user_preferences where user_id = '${owner}'`);
 if (otherPrefs.rows.length !== 0) throw new Error('Terceiro conseguiu ler o push_token alheio');
 process.stdout.write('Preferências com push_token (ADR 0062): verificado com sucesso\n');
+// Spec 099 / ADR 0075: preferência por tipo de aviso. `muted_types` guarda os tipos desativados para push;
+// só o titular lê e grava, e o padrão vazio mantém o comportamento de receber tudo (Spec 096).
+await as('authenticated', owner, `update public.v2_user_preferences set muted_types = array['search_alert_match','system']::text[] where user_id = '${owner}'`);
+const mutedRow = await as('authenticated', owner, `select muted_types from public.v2_user_preferences where user_id = '${owner}'`);
+const mutedList = mutedRow.rows[0]?.muted_types ?? [];
+if (!mutedList.includes('search_alert_match') || !mutedList.includes('system')) throw new Error('muted_types não gravou os tipos desativados');
+const mutedOther = await as('authenticated', other, `select muted_types from public.v2_user_preferences where user_id = '${owner}'`);
+if (mutedOther.rows.length !== 0) throw new Error('Terceiro conseguiu ler o muted_types alheio');
+await as('authenticated', reader, `insert into public.v2_user_preferences (user_id) values ('${reader}') on conflict (user_id) do nothing`);
+const readerRow = await as('authenticated', reader, `select muted_types from public.v2_user_preferences where user_id = '${reader}'`);
+if ((readerRow.rows[0]?.muted_types ?? []).length !== 0) throw new Error('muted_types deveria ser vazio por padrão (recebe tudo)');
+process.stdout.write('Preferências por tipo de aviso (Spec 099 / ADR 0075): verificado com sucesso\n');
 // Rascunhos de anúncio (Spec 017): 'draft' aceita conteúdo incompleto e fica invisível a terceiros.
 await db.exec('reset role');
 const draftVazio = 'd7a0017d-0017-4017-8017-000000000001';
@@ -472,6 +486,29 @@ await denied('Ano fora do intervalo', () => as('authenticated', owner, `update p
 const semPermissao = await as('authenticated', other, `update public.v2_books set synopsis = 'Invasão' where id = '${livroEdicao}'`);
 if (semPermissao.affectedRows !== 0) throw new Error('Outra pessoa alterou a sinopse do livro');
 process.stdout.write('Sinopse e dados da edição do livro (Spec 097): verificados com sucesso\n');
+
+// Spec 098 / ADR 0074: avisos de pedido recebido e aceito.
+const livro98 = '98989898-9898-4898-8898-989898989898';
+const pedido98 = '98989898-9898-4898-8898-989898989899';
+await as('authenticated', owner, `insert into public.v2_books (id, owner_id, title, author, modality) values ('${livro98}', '${owner}', 'Livro Avisos 098', 'Autor 098', 'donation')`);
+await as('authenticated', reader, `insert into public.v2_book_requests (id, listing_id, requester_id) values ('${pedido98}', '${livro98}', '${reader}')`);
+
+const avisoRecebido = await as('authenticated', owner, `select title, action_url from public.v2_notifications where type = 'request_received' and action_url = '/pedidos-recebidos'`);
+if (avisoRecebido.rows.length === 0) throw new Error('Pedido novo não avisou quem anunciou o livro');
+
+const avisoLeitorRecebido = await as('authenticated', reader, `select 1 from public.v2_notifications where type = 'request_received' and action_url = '/pedidos-recebidos'`);
+if (avisoLeitorRecebido.rows.length !== 0) throw new Error('Quem pediu recebeu o aviso de pedido recebido');
+
+await as('authenticated', owner, `select public.accept_book_request('${pedido98}')`);
+const avisoAceito = await as('authenticated', reader, `select title, action_url from public.v2_notifications where type = 'request_accepted' and action_url = '/negociacao/${pedido98}'`);
+if (avisoAceito.rows.length === 0) throw new Error('Aceite não avisou quem pediu o livro');
+
+const avisoDonoAceito = await as('authenticated', owner, `select 1 from public.v2_notifications where type = 'request_accepted' and action_url = '/negociacao/${pedido98}'`);
+if (avisoDonoAceito.rows.length !== 0) throw new Error('Quem anunciou recebeu o aviso de pedido aceito');
+
+const terceiroAvisos = await as('authenticated', other, `select 1 from public.v2_notifications where type in ('request_received', 'request_accepted') and (action_url = '/pedidos-recebidos' or action_url = '/negociacao/${pedido98}')`);
+if (terceiroAvisos.rows.length !== 0) throw new Error('Terceiro viu avisos de pedido alheios');
+process.stdout.write('Avisos de pedido recebido e aceito (Spec 098): verificados com sucesso\n');
 
 process.stdout.write('Migrações e cenários SQL locais verificados.\n');
 await db.close();

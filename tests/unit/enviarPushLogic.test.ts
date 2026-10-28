@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
   buildPushMessage,
+  channelOf,
   isExpoPushToken,
   isInvalidTokenTicket,
+  isTypeMuted,
   parseRequestId,
+  priorityOf,
   type StoredNotification,
 } from "../../supabase/functions/enviar-push/logic";
 
@@ -17,20 +20,52 @@ const aviso: StoredNotification = {
 };
 
 describe("função enviar-push: lógica pura (Spec 096)", () => {
-  it("CA5: a mensagem leva título, texto e a rota do aviso", () => {
+  it("CA5: a mensagem leva título, texto, canal do tipo e a rota do aviso (Spec 099)", () => {
     expect(buildPushMessage(aviso, "ExponentPushToken[abc123]")).toEqual({
       to: "ExponentPushToken[abc123]",
       title: "Convite para encontro",
       body: aviso.message,
       sound: "default",
-      channelId: "default",
+      channelId: "reminders",
       priority: "high",
+      collapseId: aviso.action_url,
+      tag: aviso.action_url,
+      threadId: aviso.action_url,
       data: { url: aviso.action_url, type: "meeting_update", notificationId: "n1" },
     });
   });
 
-  it("aviso sem rota continua válido, com url nula", () => {
-    expect(buildPushMessage({ ...aviso, action_url: null }, "ExpoPushToken[x]").data.url).toBeNull();
+  it("aviso sem rota continua válido, com url nula e sem agrupamento", () => {
+    const semRota = buildPushMessage({ ...aviso, action_url: null }, "ExpoPushToken[x]");
+    expect(semRota.data.url).toBeNull();
+    expect(semRota.collapseId).toBeUndefined();
+    expect(semRota.tag).toBeUndefined();
+    expect(semRota.threadId).toBeUndefined();
+  });
+
+  it("cada tipo cai no canal esperado (ADR 0075)", () => {
+    expect(channelOf("request_received")).toBe("messages");
+    expect(channelOf("request_accepted")).toBe("messages");
+    expect(channelOf("meeting_update")).toBe("reminders");
+    expect(channelOf("search_alert_match")).toBe("updates");
+    expect(channelOf("safety_tip")).toBe("updates");
+    expect(channelOf("desconhecido")).toBe("updates");
+  });
+
+  it("so convoca para conversas e lembretes; novidades ficam em prioridade padrão", () => {
+    expect(priorityOf("request_received")).toBe("high");
+    expect(priorityOf("meeting_update")).toBe("high");
+    expect(priorityOf("system")).toBe("default");
+    expect(priorityOf("search_alert_match")).toBe("default");
+  });
+
+  it("reconhece o tipo desativado nas preferências (Spec 099)", () => {
+    expect(isTypeMuted("system", ["system", "safety_tip"])).toBe(true);
+    expect(isTypeMuted("request_received", ["system"])).toBe(false);
+    // Ausente ou fora de formato = recebe tudo, como antes da Spec 099.
+    expect(isTypeMuted("system", null)).toBe(false);
+    expect(isTypeMuted("system", undefined)).toBe(false);
+    expect(isTypeMuted("system", "system")).toBe(false);
   });
 
   it("só aceita token no formato do Expo", () => {

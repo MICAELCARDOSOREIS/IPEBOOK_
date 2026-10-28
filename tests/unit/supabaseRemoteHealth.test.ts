@@ -292,7 +292,7 @@ describe('Diagnóstico de Saúde e Migrações do Supabase Remoto (Spec 049 / AD
           v2_reports: { existe: true },
           v2_profiles: { existe: true, colunasValidas: ['photo_url', 'social_handle'] },
           v2_ratings: { existe: true },
-          v2_user_preferences: { existe: true },
+          v2_user_preferences: { existe: true, colunasValidas: ['muted_types'] },
           v2_meetings: { existe: true },
           v2_blocked_users: { existe: true },
           v2_negotiation_messages: { existe: true },
@@ -310,8 +310,8 @@ describe('Diagnóstico de Saúde e Migrações do Supabase Remoto (Spec 049 / AD
       };
 
       const resultado = reconciliarMigracoesLocais('supabase/migrations', contextoDiagnostico);
-      expect(resultado.total).toBe(30);
-      expect(resultado.aplicadas).toBe(30);
+      expect(resultado.total).toBe(32);
+      expect(resultado.aplicadas).toBe(32);
       expect(resultado.pendentes).toBe(0);
       expect(resultado.migracoes.every((m: any) => m.status === 'APLICADA')).toBe(true);
     });
@@ -343,9 +343,9 @@ describe('Diagnóstico de Saúde e Migrações do Supabase Remoto (Spec 049 / AD
       };
 
       const resultado = reconciliarMigracoesLocais('supabase/migrations', contextoParcial);
-      expect(resultado.total).toBe(30);
-      expect(resultado.aplicadas).toBe(16);
-      expect(resultado.pendentes).toBe(14);
+      expect(resultado.total).toBe(32);
+      expect(resultado.aplicadas).toBe(17);
+      expect(resultado.pendentes).toBe(15);
 
       const pendentes = resultado.migracoes.filter((m: any) => m.status === 'PENDENTE');
       const arquivosPendentes = pendentes.map((m: any) => m.arquivo);
@@ -403,7 +403,7 @@ describe('Diagnóstico de Saúde e Migrações do Supabase Remoto (Spec 049 / AD
       const parsed = JSON.parse(relatorioJson);
       expect(parsed.ok).toBe(true);
       expect(parsed.url).toBe('https://projeto-vitest.supabase.co');
-      expect(parsed.migracoes.total).toBe(30);
+      expect(parsed.migracoes.total).toBe(32);
     });
 
     it('formata adequadamente falhas e pendências detectadas', async () => {
