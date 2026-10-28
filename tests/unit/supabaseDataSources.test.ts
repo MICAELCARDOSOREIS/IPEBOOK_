@@ -460,6 +460,28 @@ describe("datasources Supabase", () => {
     await expect(requests.respond("pedido", "rejected")).rejects.toThrow("Não foi possível responder ao pedido.");
   });
 
+  it("mapeia notificação sem action_url sem inserir a propriedade actionUrl", async () => {
+    const row = {
+      id: "notif-2",
+      user_id: "user-1",
+      title: "Aviso do sistema",
+      message: "Bem-vindo",
+      type: "system",
+      read: false,
+      created_at: "2026-10-15T12:00:00Z",
+      action_url: null,
+    };
+    const order = vi.fn().mockResolvedValue({ data: [row], error: null });
+    const eqSelect = vi.fn().mockReturnValue({ order });
+    const select = vi.fn().mockReturnValue({ eq: eqSelect });
+    const from = vi.fn().mockReturnValue({ select });
+
+    const notifDs = new SupabaseNotificationDataSource(fakeClient({ from }));
+    const list = await notifDs.listByUser("user-1");
+
+    expect(list[0]).not.toHaveProperty("actionUrl");
+  });
+
   it("lista, marca como lida e cria notificações via Supabase com tratamento de erro", async () => {
     const row = {
       id: "notif-1",
