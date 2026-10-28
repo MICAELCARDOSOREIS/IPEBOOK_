@@ -17,11 +17,12 @@ const listing = (id: string, title: string): Book => ({
 });
 
 const deleteConversation = vi.fn().mockResolvedValue(true);
+const cancelRequest = vi.fn().mockResolvedValue(true);
 
 function setup(state: Partial<ConversationsState>) {
   vi.mocked(useConversationsViewModel).mockReturnValue([
     { items: [], loading: false, error: null, ...state },
-    { reload: vi.fn(), deleteConversation },
+    { reload: vi.fn(), deleteConversation, cancelRequest },
   ]);
 }
 
@@ -120,5 +121,25 @@ describe("Conversations (Spec 076)", () => {
     const screen = await renderView();
     await act(async () => { fireEvent(screen.getByText("Lucas"), "longPress"); });
     expect(screen.queryByText("Apagar conversa?")).toBeNull();
+  });
+
+  it("cancela o pedido enviado pendente com confirmação (Spec 101)", async () => {
+    setup({ items });
+    cancelRequest.mockClear();
+    const screen = await renderView();
+    expect(screen.getAllByText("Cancelar pedido")).toHaveLength(1);
+    await act(async () => { fireEvent.press(screen.getByLabelText("Cancelar pedido de Iracema")); });
+    expect(screen.getByText("Cancelar pedido?")).toBeDefined();
+    await act(async () => { fireEvent.press(screen.getByText("Sim, cancelar")); });
+    expect(cancelRequest).toHaveBeenCalledWith("r3");
+  });
+
+  it("avisa quando o cancelamento falha (Spec 101)", async () => {
+    setup({ items });
+    cancelRequest.mockResolvedValueOnce(false);
+    const screen = await renderView();
+    await act(async () => { fireEvent.press(screen.getByLabelText("Cancelar pedido de Iracema")); });
+    await act(async () => { fireEvent.press(screen.getByText("Sim, cancelar")); });
+    expect(screen.getByText("Não foi possível cancelar o pedido. Tente novamente.")).toBeDefined();
   });
 });

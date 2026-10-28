@@ -69,7 +69,7 @@ export function MyListings({
     (item) => item.request.status === "pending" || item.request.status === "accepted",
   );
   const concludedProposals = received.items.filter(
-    (item) => item.request.status === "rejected" || (item.request.status as string) === "completed",
+    (item) => item.request.status === "rejected" || item.request.status === "cancelled" || (item.request.status as string) === "completed",
   );
 
   // Livro entregue sai de Anúncios; em Concluídos entra quando não há pedido concluído que já o mostre.

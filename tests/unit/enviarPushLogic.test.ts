@@ -61,6 +61,11 @@ describe("função enviar-push: lógica pura (Spec 096)", () => {
     expect(priorityOf("new_message")).toBe("high");
   });
 
+  it("avisos da Spec 101: cancelamento toca como conversa; favorito é novidade", () => {
+    expect(channelOf("request_cancelled")).toBe("messages");
+    expect(channelOf("favorite_update")).toBe("updates");
+  });
+
   it("servidor e app usam a mesma tabela de canais", () => {
     expect(NOTIFICATION_CHANNEL).toEqual(APP_CHANNELS);
   });

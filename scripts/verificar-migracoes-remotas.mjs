@@ -676,6 +676,11 @@ export const MAPEAMENTO_MIGRACOES = {
     validar: (ctx) => Boolean(ctx.tabelas.v2_user_preferences?.colunasValidas?.includes('muted_types')),
     detalhe: 'Gatilhos v2_message_notifies e v2_rating_notifies e aviso request_rejected (Spec 100)',
   },
+  '202610280008_cancelar_pedido_e_avisos_de_favoritos.sql': {
+    titulo: 'Cancelar pedido e avisos de favoritos',
+    validar: (ctx) => Boolean(ctx.tabelas.v2_user_preferences?.colunasValidas?.includes('muted_types')),
+    detalhe: 'Status cancelled em v2_book_requests e gatilhos de aviso de favoritos (Spec 101)',
+  },
 };
 
 /**

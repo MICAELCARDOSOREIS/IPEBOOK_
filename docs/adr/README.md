@@ -76,5 +76,6 @@
 - [0074 — Avisos de pedido recebido e aceito no servidor](0074-avisos-de-pedido-recebido-e-aceito.md)
 - [0075 — Preferências de aviso, canais de entrega e push profissional](0075-preferencias-e-canais-de-notificacao.md)
 - [0076 — Avisos de mensagem, pedido recusado e avaliação no servidor](0076-avisos-de-mensagem-recusa-e-avaliacao.md)
+- [0077 — Cancelar pedido por status e avisos de favoritos no servidor](0077-cancelar-pedido-e-avisos-de-favoritos.md)
 
 Preservar registros aceitos; mudanças relevantes geram novo ADR com vínculos de substituição.

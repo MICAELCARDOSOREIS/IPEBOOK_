@@ -35,4 +35,6 @@ export interface IBookRequestUseCases {
     sessionUserId: string | null,
   ): Promise<BookRequest>;
   getRequestDetail(requestId: string, sessionUserId: string | null): Promise<NegotiationDetail>;
+  /** Quem pediu desiste do pedido ainda pendente; quem anunciou é avisado (Spec 101). */
+  cancelRequest(requestId: string, sessionUserId: string | null): Promise<BookRequest>;
 }

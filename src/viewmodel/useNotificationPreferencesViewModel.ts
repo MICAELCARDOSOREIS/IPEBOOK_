@@ -17,7 +17,7 @@ export const NOTIFICATION_PREFERENCE_CATEGORIES: Record<
   proposals: {
     label: "Propostas e mensagens",
     description: "Pedidos, respostas e mensagens novas no chat da negociação",
-    types: ["request_received", "request_accepted", "request_rejected", "new_message"],
+    types: ["request_received", "request_accepted", "request_rejected", "request_cancelled", "new_message"],
   },
   meetings: {
     label: "Lembretes de encontro",
@@ -25,9 +25,9 @@ export const NOTIFICATION_PREFERENCE_CATEGORIES: Record<
     types: ["meeting_update"],
   },
   searchAlerts: {
-    label: "Novidades dos alertas de busca",
-    description: "Livros novos que batem com os seus alertas",
-    types: ["search_alert_match"],
+    label: "Alertas de busca e favoritos",
+    description: "Livros novos dos seus alertas e mudanças nos livros que você favoritou",
+    types: ["search_alert_match", "favorite_update"],
   },
   system: {
     label: "Avisos do sistema",

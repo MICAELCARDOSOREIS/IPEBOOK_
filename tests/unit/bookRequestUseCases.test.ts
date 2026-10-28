@@ -174,6 +174,31 @@ describe("negociação simples (spec 004)", () => {
       await expect(useCases.respondToRequest("x", "accept", "owner")).rejects.toBeInstanceOf(ValidationError);
     });
   });
+
+  describe("cancelRequest (Spec 101)", () => {
+    it("quem pediu cancela o próprio pedido pendente e pode pedir de novo", async () => {
+      const req = await useCases.requestNegotiation("listing-1", "alice");
+      await expect(useCases.cancelRequest(req.id, "alice")).resolves.toMatchObject({ status: "cancelled" });
+      await expect(useCases.requestNegotiation("listing-1", "alice")).resolves.toMatchObject({ status: "pending" });
+    });
+
+    it("só quem pediu pode cancelar", async () => {
+      const req = await useCases.requestNegotiation("listing-1", "alice");
+      await expect(useCases.cancelRequest(req.id, "owner")).rejects.toBeInstanceOf(AuthError);
+      expect((await requests.findById(req.id))?.status).toBe("pending");
+    });
+
+    it("não cancela pedido já respondido", async () => {
+      const req = await useCases.requestNegotiation("listing-1", "alice");
+      await useCases.respondToRequest(req.id, "accept", "owner");
+      await expect(useCases.cancelRequest(req.id, "alice")).rejects.toThrow(/já foi respondido/);
+    });
+
+    it("exige sessão e pedido existente", async () => {
+      await expect(useCases.cancelRequest("x", null)).rejects.toBeInstanceOf(AuthError);
+      await expect(useCases.cancelRequest("x", "alice")).rejects.toBeInstanceOf(ValidationError);
+    });
+  });
 });
 
 describe("MemoryBookRequestDataSource", () => {

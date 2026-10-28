@@ -114,6 +114,7 @@ describe("useReceivedRequestsViewModel (ISO/IEC 25010 - Adequação Funcional)",
       listSentRequests: useCases.listSentRequests.bind(useCases),
       respondToRequest: useCases.respondToRequest.bind(useCases),
       getRequestDetail: useCases.getRequestDetail.bind(useCases),
+      cancelRequest: useCases.cancelRequest.bind(useCases),
       listReceivedRequests: async (id) => {
         if (fail) throw new DataSourceError("Pedidos indisponíveis.");
         return useCases.listReceivedRequests(id);

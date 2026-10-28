@@ -236,4 +236,33 @@ describe("useConversationsViewModel (Spec 076)", () => {
     });
     expect(ok).toBe(false);
   });
+
+  it("cancela o pedido pendente enviado e ele some da lista (Spec 101)", async () => {
+    const pending = { request: { id: "p1", listingId: "b2", requesterId: "me", status: "pending" as const }, listing: book("b2", "Vidas Secas", "lucas") };
+    let sent: RequestWithListing[] = [pending];
+    const base = deps([], [], {}, { lucas: "Lucas" });
+    const cancelRequest = vi.fn(async () => {
+      sent = [{ ...pending, request: { ...pending.request, status: "cancelled" as const } }];
+    });
+    const hook = await renderHook("me", { ...base, listSentRequests: vi.fn(async () => sent), cancelRequest });
+    expect(hook.current[0].items.map((i) => i.kind)).toEqual(["pendingSent"]);
+
+    let ok = false;
+    await act(async () => {
+      ok = await hook.current[1].cancelRequest("p1");
+    });
+    expect(ok).toBe(true);
+    expect(cancelRequest).toHaveBeenCalledWith("p1", "me");
+    expect(hook.current[0].items).toHaveLength(0);
+  });
+
+  it("devolve falso quando cancelar falha (Spec 101)", async () => {
+    const failing = { ...deps([], [], {}, {}), cancelRequest: vi.fn().mockRejectedValue(new Error("rede")) };
+    const hook = await renderHook("me", failing);
+    let ok = true;
+    await act(async () => {
+      ok = await hook.current[1].cancelRequest("x");
+    });
+    expect(ok).toBe(false);
+  });
 });
