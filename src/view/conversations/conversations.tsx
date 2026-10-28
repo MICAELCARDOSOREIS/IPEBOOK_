@@ -238,7 +238,7 @@ export function Conversations({
             {/* Painel Central: Chat da negociação selecionada ou placeholder */}
             {wideWeb && selectedId ? (
               <View style={styles.widePane} testID="conversation-pane">
-                <Chat requestId={selectedId} sessionUserId={sessionUserId} onOpenNegotiation={onOpenNegotiation} />
+                <Chat embedded requestId={selectedId} sessionUserId={sessionUserId} onOpenNegotiation={onOpenNegotiation} />
               </View>
             ) : wideWeb ? (
               <View style={[styles.widePane, styles.widePaneEmpty]}>
