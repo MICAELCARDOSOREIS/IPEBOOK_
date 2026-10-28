@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import type { Rating } from "@/model/entities/rating";
-import { ratingUseCases } from "@/di/container";
+import { ratingUseCases, storeReviewService } from "@/di/container";
 
 export type NegotiationRatingState = {
   isLoading: boolean;
@@ -28,6 +28,7 @@ export function useNegotiationRatingViewModel(
   sessionUserId: string | null,
   ratedUserId: string,
   useCases = ratingUseCases,
+  storeReview = storeReviewService,
 ): [NegotiationRatingState, NegotiationRatingActions] {
   const [userRating, setUserRating] = useState<Rating | null>(null);
   const [selectedScore, setSelectedScore] = useState<number>(5);
@@ -84,6 +85,8 @@ export function useNegotiationRatingViewModel(
       });
       setUserRating(created);
       setIsSuccess(true);
+      // Negociação bem avaliada é o melhor momento para pedir a nota do app na loja (Spec 105).
+      if (selectedScore >= 4) void storeReview.requestReview();
       return true;
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Erro ao registrar avaliação.";
@@ -92,7 +95,7 @@ export function useNegotiationRatingViewModel(
     } finally {
       setIsSubmitting(false);
     }
-  }, [requestId, sessionUserId, ratedUserId, selectedScore, useCases]);
+  }, [requestId, sessionUserId, ratedUserId, selectedScore, useCases, storeReview]);
 
   const resetFeedback = useCallback(() => {
     setSubmitError(null);

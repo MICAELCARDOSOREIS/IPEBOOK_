@@ -87,6 +87,9 @@ import { SafeLogger, reportingSink } from "@/infra/services/safeLogger";
 import { MemoryErrorReporter } from "@/infra/services/memoryErrorReporter";
 import { SentryErrorReporter } from "@/infra/services/sentryErrorReporter";
 import type { IErrorReporter } from "@/model/services/iErrorReporter";
+import type { IStoreReviewService } from "@/model/services/iStoreReviewService";
+import { ExpoStoreReviewService } from "@/infra/services/expoStoreReviewService";
+import { MemoryStoreReviewService } from "@/infra/services/memoryStoreReviewService";
 import Constants from "expo-constants";
 import type { IRateLimiter } from "@/model/services/iRateLimiter";
 import { ClientRateLimiter } from "@/infra/services/clientRateLimiter";
@@ -376,3 +379,6 @@ export const profilePhotoUseCases: IProfilePhotoUseCases = new ProfilePhotoUseCa
 export const listingPhotoUseCases: IListingPhotoUseCases = new ListingPhotoUseCases(dataSources.photos);
 
 export const moderationUseCases: IModerationUseCases = new ModerationUseCases(dataSources.moderation);
+
+export const storeReviewService: IStoreReviewService =
+  process.env.NODE_ENV === "test" ? new MemoryStoreReviewService() : new ExpoStoreReviewService();
