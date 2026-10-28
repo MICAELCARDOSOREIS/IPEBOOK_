@@ -21,6 +21,8 @@ export type BookCoverProps = {
   maxRetries?: number;
   initialBackoffMs?: number;
   testID?: string;
+  /** Largura em dp que substitui a da variante (o livro 3D ampliado na web larga). */
+  width?: number;
 };
 
 /** Cada motivo tem a sua cor, como nos cadernos de referência: noite marrom, ondas azul-marinho, árvore petróleo e montanhas verdes. */
@@ -76,6 +78,7 @@ export function BookCover({
   title,
   photoUrl,
   variant = "list",
+  width: widthOverride,
   timeoutMs,
   maxRetries,
   initialBackoffMs,
@@ -99,7 +102,7 @@ export function BookCover({
   const styles = useMemo(() => createStyles(colors), [colors]);
   const kind = hashId(id) % 4;
   const backgroundColor = COVER_BACKGROUNDS[kind];
-  const width = VARIANT_WIDTH[variant] ?? LIST_WIDTH;
+  const width = widthOverride ?? VARIANT_WIDTH[variant] ?? LIST_WIDTH;
   const height = width / ASPECT_RATIO;
 
   const pulseAnim = useRef(new Animated.Value(0.4)).current;

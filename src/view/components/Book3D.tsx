@@ -13,11 +13,15 @@ export type Book3DProps = {
   onPress?: () => void;
   /** Gira um pouco ao aparecer, para mostrar que é um livro. Desligado nos testes. */
   intro?: boolean;
+  /** Tamanho do livro em relação ao padrão (136 x 218 dp); ocupa o espaço que mostra, ao contrário de `transform: scale`. */
+  scale?: number;
+  /** Ângulo inicial em graus; 0 mostra a capa. */
+  startAngle?: number;
 };
 
-const WIDTH = 136;
-const HEIGHT = 218;
-const DEPTH = 28;
+const BASE_WIDTH = 136;
+const BASE_HEIGHT = 218;
+const BASE_DEPTH = 28;
 const GOLD = "#D9A93A";
 const PAGE = "#F1E9D6";
 /** Graus por dp arrastado. */
@@ -36,9 +40,12 @@ function darken(hex: string, amount: number): string {
  * ortogonal feita só com `View` e `scaleX`, sem biblioteca 3D (ver `book3dGeometry.ts`). Solta o dedo, o giro
  * continua e desacelera. Quem pede menos movimento recebe o livro parado, com giro só pelas ações de acessibilidade.
  */
-export function Book3D({ id, title, author, photoUrl, onPress, intro = true }: Book3DProps) {
-  const [angle, setAngle] = useState(0);
-  const angleRef = useRef(0);
+export function Book3D({ id, title, author, photoUrl, onPress, intro = true, scale = 1, startAngle = 0 }: Book3DProps) {
+  const WIDTH = BASE_WIDTH * scale;
+  const HEIGHT = BASE_HEIGHT * scale;
+  const DEPTH = BASE_DEPTH * scale;
+  const [angle, setAngle] = useState(normalizeAngle(startAngle));
+  const angleRef = useRef(normalizeAngle(startAngle));
   const reduceMotion = useRef(false);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
   const press = useRef(onPress);
@@ -97,16 +104,16 @@ export function Book3D({ id, title, author, photoUrl, onPress, intro = true }: B
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const startAngle = useRef(0);
+  const dragFrom = useRef(0);
   const pan = useMemo(
     () =>
       PanResponder.create({
         onStartShouldSetPanResponder: () => true,
         onPanResponderGrant: () => {
           stop();
-          startAngle.current = angleRef.current;
+          dragFrom.current = angleRef.current;
         },
-        onPanResponderMove: (_event, g) => apply(startAngle.current + g.dx * DRAG_GAIN),
+        onPanResponderMove: (_event, g) => apply(dragFrom.current + g.dx * DRAG_GAIN),
         onPanResponderRelease: (_event, g) => {
           if (Math.abs(g.dx) < TAP_SLOP && Math.abs(g.dy) < TAP_SLOP) {
             if (press.current) press.current();
@@ -159,7 +166,7 @@ export function Book3D({ id, title, author, photoUrl, onPress, intro = true }: B
               { left: total / 2 - size / 2, width: size, height: HEIGHT, transform: [{ translateX: center }, { scaleX: width / size }] },
             ]}
           >
-            <FaceContent face={face} id={id} title={title} author={author} photoUrl={photoUrl} base={base} />
+            <FaceContent face={face} id={id} title={title} author={author} photoUrl={photoUrl} base={base} width={WIDTH} height={HEIGHT} depth={DEPTH} />
             <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: `rgba(0,0,0,${shade.toFixed(3)})` }]} />
           </View>
         );
@@ -168,9 +175,9 @@ export function Book3D({ id, title, author, photoUrl, onPress, intro = true }: B
   );
 }
 
-function FaceContent({ face, id, title, author, photoUrl, base }: { face: BookFace } & Pick<Book3DProps, "id" | "title" | "author" | "photoUrl"> & { base: string }) {
+function FaceContent({ face, id, title, author, photoUrl, base, width, height, depth }: { face: BookFace } & Pick<Book3DProps, "id" | "title" | "author" | "photoUrl"> & { base: string; width: number; height: number; depth: number }) {
   if (face === "front") {
-    return <BookCover id={id} title={title} author={author} photoUrl={photoUrl} variant="detail" />;
+    return <BookCover id={id} title={title} author={author} photoUrl={photoUrl} variant="detail" width={width} />;
   }
   if (face === "back") {
     return (
@@ -184,10 +191,10 @@ function FaceContent({ face, id, title, author, photoUrl, base }: { face: BookFa
     return (
       <View style={[styles.fill, { backgroundColor: darken(base, 0.25) }]}>
         {[0.05, 0.08, 0.92, 0.95].map((at) => (
-          <View key={at} style={[styles.band, { top: HEIGHT * at }]} />
+          <View key={at} style={[styles.band, { top: height * at }]} />
         ))}
-        <View style={styles.spineTextBox}>
-          <Text numberOfLines={1} style={styles.spineText}>
+        <View style={{ position: "absolute", left: (depth - height * 0.7) / 2, top: (height - depth) / 2, width: height * 0.7, height: depth, justifyContent: "center", transform: [{ rotate: "-90deg" }] }}>
+          <Text numberOfLines={1} style={[styles.spineText, { fontSize: depth * 0.43 }]}>
             {title}
           </Text>
         </View>
@@ -197,7 +204,7 @@ function FaceContent({ face, id, title, author, photoUrl, base }: { face: BookFa
   // Corte das páginas: linhas finas paralelas à lombada.
   return (
     <View style={[styles.fill, { backgroundColor: PAGE }]}>
-      {Array.from({ length: Math.floor(DEPTH / 2.5) }, (_, i) => (
+      {Array.from({ length: Math.floor(depth / 2.5) }, (_, i) => (
         <View key={i} style={[styles.pageLine, { left: 2 + i * 2.5 }]} />
       ))}
     </View>
@@ -211,7 +218,6 @@ const styles = StyleSheet.create({
   fill: { flex: 1 },
   backFrame: { position: "absolute", left: 12, right: 12, top: 12, bottom: 12, borderWidth: 1, borderColor: GOLD, opacity: 0.7 },
   band: { position: "absolute", left: 0, right: 0, height: 1.5, backgroundColor: GOLD },
-  spineTextBox: { position: "absolute", left: (DEPTH - HEIGHT * 0.7) / 2, top: (HEIGHT - DEPTH) / 2, width: HEIGHT * 0.7, height: DEPTH, justifyContent: "center", transform: [{ rotate: "-90deg" }] },
   spineText: { color: "#F5EFE8", fontFamily: fontFamily.brand, fontSize: 12, textAlign: "center" },
   pageLine: { position: "absolute", top: 0, bottom: 0, width: 0.7, backgroundColor: "rgba(0,0,0,0.14)" },
 });

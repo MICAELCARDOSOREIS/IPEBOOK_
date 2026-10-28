@@ -222,13 +222,14 @@ export default function BookDetail({
 
           {book ? (
             <View style={[styles.coverArea, wideWeb && styles.coverAreaWide]}>
-              <View style={wideWeb ? styles.coverWide : undefined}>
+              <View>
                 {/* Gira com o dedo; havendo fotos, tocar sem arrastar abre a galeria em tela cheia. */}
                 <Book3D
                   id={book.id}
                   title={book.title}
                   author={book.author}
                   photoUrl={book.photoUrl}
+                  scale={wideWeb ? 1.6 : 1}
                   onPress={photos.length > 0 ? () => setGalleryVisible(true) : undefined}
                 />
               </View>
@@ -501,7 +502,6 @@ function createStyles(colors: ColorPalette) {
     coverArea: { alignItems: "center", paddingTop: tokens.spacing[8] },
     coverAreaWide: { flex: 1, justifyContent: "center", paddingTop: 0 },
     // A área da capa na web larga tem ~520 px de altura; a capa de 218 px ficava perdida nela.
-    coverWide: { transform: [{ scale: 1.6 }] },
     photosLink: { alignSelf: "center", minHeight: tokens.accessibility.touchTarget, justifyContent: "center", paddingHorizontal: tokens.spacing[16] },
     photosLinkText: { ...tokens.typography.labelLarge, fontFamily: fontFamily.semiBold, color: colors.m3.primary, textDecorationLine: "underline" },
     thumbRow: { flexDirection: "row", gap: 12, marginTop: tokens.spacing[16] },

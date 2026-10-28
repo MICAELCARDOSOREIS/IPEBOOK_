@@ -57,6 +57,20 @@ describe("Book3D: livro que gira (projeção ortogonal)", () => {
     expect(screen.queryByTestId("book3d-face-front")).toBeNull();
   });
 
+  it("a escala aumenta o espaço que o livro ocupa (e não só o desenho), para não cobrir o que vem abaixo", async () => {
+    const flat = (style: unknown) => Object.assign({}, ...[style].flat(Infinity).filter(Boolean));
+    const normal = flat((await open()).getByLabelText(LABEL).props.style);
+    const grande = flat((await open({ scale: 1.6 })).getByLabelText(LABEL).props.style);
+    expect(grande.width).toBeCloseTo(normal.width * 1.6, 3);
+    expect(grande.height).toBeCloseTo((normal.height - 16) * 1.6 + 16, 3);
+  });
+
+  it("pode começar girado, sem animação", async () => {
+    const screen = await open({ startAngle: 90 });
+    expect(screen.getByTestId("book3d-face-left")).toBeDefined();
+    expect(screen.queryByTestId("book3d-face-front")).toBeNull();
+  });
+
   it("com foto, a frente é a foto do livro", async () => {
     const screen = await open({ photoUrl: "https://exemplo.com/capa.jpg" });
     expect(screen.getByLabelText("Foto da capa de Capitães da Areia")).toBeDefined();
