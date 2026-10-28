@@ -3,6 +3,7 @@ import type { IAuthDataSource } from "@/model/datasources/iAuthDataSource";
 import type { User } from "@/model/entities/user";
 import { AuthError, EmailAlreadyRegisteredError, ExpiredLinkError } from "@/model/errors";
 import type { SupabaseAppClient } from "@/infra/supabaseClient";
+import type { INativeGoogleSignIn } from "@/model/services/iNativeGoogleSignIn";
 
 /** Nome informado no cadastro, guardado em `user_metadata.full_name` (ver Spec 030). */
 function readFullName(user: { user_metadata?: Record<string, unknown> | null }): string | undefined {
@@ -77,6 +78,7 @@ export class SupabaseAuthDataSource implements IAuthDataSource {
   constructor(
     private readonly client: SupabaseAppClient,
     private readonly recoveryRedirectUrl: string,
+    private readonly nativeGoogle?: INativeGoogleSignIn,
   ) {}
 
   async signUp(email: string, password: string, name: string): Promise<User> {
@@ -138,6 +140,11 @@ export class SupabaseAuthDataSource implements IAuthDataSource {
   }
 
   async signInWithGoogle(): Promise<User> {
+    // Nativo com cliente configurado (Spec 106): seletor de contas do Android, sem navegador.
+    if (Platform.OS !== "web" && this.nativeGoogle?.isAvailable()) {
+      return this.signInWithNativeGoogle(this.nativeGoogle);
+    }
+
     const authClient = this.client.auth as unknown as {
       signInWithOAuth?: (params: {
         provider: "google";
@@ -193,6 +200,16 @@ export class SupabaseAuthDataSource implements IAuthDataSource {
     return this.setSessionFromUrl(result.url);
   }
 
+  private async signInWithNativeGoogle(nativeGoogle: INativeGoogleSignIn): Promise<User> {
+    const idToken = await nativeGoogle.getIdToken();
+    if (!idToken) throw new AuthError("Login com Google cancelado.");
+    const { data, error } = await this.client.auth.signInWithIdToken({ provider: "google", token: idToken });
+    if (error || !data.user) {
+      throw new AuthError("Não foi possível autenticar com o Google. Tente novamente.");
+    }
+    return { id: data.user.id, email: data.user.email ?? "", name: readFullName(data.user) };
+  }
+
   async setSessionFromUrl(url: string): Promise<User> {
     try {
       const parsed = new URL(url);
@@ -227,6 +244,7 @@ export class SupabaseAuthDataSource implements IAuthDataSource {
   async signOut(): Promise<void> {
     const { error } = await this.client.auth.signOut();
     if (error) throw new AuthError("Não foi possível sair. Tente novamente.");
+    await this.nativeGoogle?.signOut();
   }
 
   async currentUser(): Promise<User | null> {

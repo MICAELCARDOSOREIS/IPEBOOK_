@@ -18,6 +18,7 @@ export default defineConfig({
       "expo-notifications": fileURLToPath(new URL("./tests/mocks/expo-notifications.ts", import.meta.url)),
       "react-native-view-shot": fileURLToPath(new URL("./tests/mocks/react-native-view-shot.ts", import.meta.url)),
       "expo-store-review": fileURLToPath(new URL("./tests/mocks/expo-store-review.ts", import.meta.url)),
+      "@react-native-google-signin/google-signin": fileURLToPath(new URL("./tests/mocks/google-signin.ts", import.meta.url)),
       "@sentry/react-native": fileURLToPath(new URL("./tests/mocks/sentry-react-native.ts", import.meta.url)),
     },
   },
