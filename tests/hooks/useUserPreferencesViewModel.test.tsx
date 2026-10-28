@@ -1,7 +1,7 @@
 import { createElement } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { ValidationError } from "@/model/errors";
+import { DomainError, ValidationError } from "@/model/errors";
 import type { IUserPreferencesUseCases } from "@/usecase/iUserPreferencesUseCases";
 import { useUserPreferencesViewModel } from "@/viewmodel/useUserPreferencesViewModel";
 
@@ -85,6 +85,42 @@ describe("testes de hook: useUserPreferencesViewModel (Spec 034 / Issue #141)", 
     });
     expect(ok).toBe(false);
     expect(hook.current[0].error).toBe("Não foi possível salvar suas preferências. Tente novamente.");
+  });
+
+  it("mostra a mensagem do DomainError ao falhar ao salvar", async () => {
+    const hook = await renderHook("ana", {
+      getPreferences: async () => preferences,
+      updatePreferences: async () => {
+        throw new DomainError("bairro inválido");
+      },
+    });
+    let ok = true;
+    await act(async () => {
+      ok = await hook.current[1].update({ neighborhood: "Inventado" });
+    });
+    expect(ok).toBe(false);
+    expect(hook.current[0].error).toBe("bairro inválido");
+  });
+
+  it("reload sem sessão não recarrega nada", async () => {
+    const getPreferences = vi.fn();
+    const hook = await renderHook(null, { getPreferences, updatePreferences: vi.fn() });
+    await act(async () => {
+      hook.current[1].reload();
+    });
+    expect(getPreferences).not.toHaveBeenCalled();
+  });
+
+  it("reload propaga o DomainError quando a recarga falha", async () => {
+    const getPreferences = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("boom"))
+      .mockRejectedValueOnce(new DomainError("sem acesso"));
+    const hook = await renderHook("ana", { getPreferences, updatePreferences: vi.fn() });
+    await act(async () => {
+      hook.current[1].reload();
+    });
+    expect(hook.current[0].error).toBe("sem acesso");
   });
 
   it("não atualiza sem sessão", async () => {

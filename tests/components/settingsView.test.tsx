@@ -348,5 +348,13 @@ describe("Configurações — tela dedicada (Spec 073, ADR 0036)", () => {
     const { screen } = await renderSettings();
     expect(screen.queryByText("Notificações")).toBeNull();
   });
+
+  it("mostra a mensagem de erro ao falhar ao salvar uma categoria (Spec 099)", async () => {
+    mockSession(true);
+    mockSettings();
+    mockNotifPrefs({ error: "Não foi possível salvar suas preferências de notificação." });
+    const { screen } = await renderSettings();
+    expect(screen.getByText("Não foi possível salvar suas preferências de notificação.")).toBeDefined();
+  });
 });
 
