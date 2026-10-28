@@ -13,7 +13,7 @@ create table public.v2_meetings (
   point_name text not null check (point_name in (
     'Campus IFPI Piripiri (Recepção ou Biblioteca)',
     'Praça da Bandeira (Centro)',
-    'Praça de Alimentação / Mercado Central',
+    'Museu de Piripiri',
     'Praça de Eventos'
   )),
   scheduled_at timestamptz not null,

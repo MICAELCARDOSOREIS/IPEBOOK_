@@ -11,7 +11,7 @@
 
 ## Contexto
 
-As negociações de livros no IpêBook culminam no agendamento de encontros presenciais em um dos 4 pontos públicos e seguros de Piripiri (Campus IFPI, Praça da Bandeira, Praça de Alimentação / Mercado Central e Praça de Eventos).
+As negociações de livros no IpêBook culminam no agendamento de encontros presenciais em um dos 4 pontos públicos e seguros de Piripiri (Campus IFPI, Praça da Bandeira, Museu de Piripiri e Praça de Eventos).
 Durante a interação entre leitor e doador/vendedor, podem ocorrer cancelamentos, reagendamentos e conclusões de encontros.
 Até o momento, a aplicação expunha apenas o encontro ativo mais recente (`findLatestByRequest`), deixando os participantes sem visibilidade dos encontros anteriores ou do histórico geral de trocas presenciais realizadas na cidade.
 

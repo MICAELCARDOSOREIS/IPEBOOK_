@@ -57,7 +57,7 @@ describe("testes de hook: useRequestDetailViewModel (ISO/IEC 25010 - Confiabilid
     counterpartName: "Ana Paula",
     counterpartId: "user-buyer",
     safeMeetingPoints: [
-      { name: "Campus IFPI", address: "Rodovia PI-112, Km 01, Piripiri, PI", recommendedTime: "Dias úteis, das 8h às 17h" },
+      { name: "Campus IFPI", address: "Rodovia PI-112, Km 01, Piripiri, PI", recommendedTime: "Dias úteis, das 8h às 17h", latitude: -4.2900535, longitude: -41.7935589 },
     ],
   };
 

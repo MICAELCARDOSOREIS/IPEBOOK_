@@ -68,7 +68,7 @@ describe("useScheduleMeetingViewModel (Spec 052, 06.04/06.13)", () => {
   it("oferece sete dias e as faixas de horário, e exige as três escolhas", async () => {
     const hook = await renderSchedule("dono");
     const [state, actions] = hook.current;
-    expect(state).toMatchObject({ mode: "propose", loading: false, pointName: null, timeSlots: [9, 10, 15, 17] });
+    expect(state).toMatchObject({ mode: "propose", loading: false, pointName: null, timeSlots: [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18] });
     expect(state.dayOptions).toHaveLength(7);
     await act(async () => { expect(await actions.submit()).toBe(false); });
     expect(hook.current[0].error).toMatch(/local, o dia e o horário/);

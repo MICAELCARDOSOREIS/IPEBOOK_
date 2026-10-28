@@ -68,7 +68,8 @@
           "microphonePermission": false
         }
       ],
-      "expo-web-browser"
+      "expo-web-browser",
+      "@rnmapbox/maps"
     ],
     "experiments": {
       "typedRoutes": true

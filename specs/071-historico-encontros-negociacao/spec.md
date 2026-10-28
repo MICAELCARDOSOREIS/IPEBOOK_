@@ -9,7 +9,7 @@
 
 ## 1. Objetivo
 
-Exibir na tela de negociação e no hub de perfil do leitor o histórico de encontros realizados, confirmados e cancelados nos 4 pontos seguros de Piripiri (Campus IFPI, Praça da Bandeira, Praça de Alimentação / Mercado Central e Praça de Eventos), permitindo auditoria visual, transparência e segurança comunitária.
+Exibir na tela de negociação e no hub de perfil do leitor o histórico de encontros realizados, confirmados e cancelados nos 4 pontos seguros de Piripiri (Campus IFPI, Praça da Bandeira, Museu de Piripiri e Praça de Eventos), permitindo auditoria visual, transparência e segurança comunitária.
 
 ---
 
