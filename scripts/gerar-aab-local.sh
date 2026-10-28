@@ -52,8 +52,12 @@ cd "$RAIZ"
 # caminho desta variável (na nuvem, a mesma variável vem do EAS como arquivo secreto).
 # Pasta temporária própria: o build local precisa de vários GB e o /tmp costuma ser pequeno (tmpfs).
 mkdir -p "$PASTA/tmp"
-# Sem SENTRY_AUTH_TOKEN, o envio de mapas de código ao Sentry derruba a build; o eas.json já desliga, isto garante.
-setsid nohup env SENTRY_DISABLE_AUTO_UPLOAD="${SENTRY_DISABLE_AUTO_UPLOAD:-true}" GOOGLE_SERVICES_JSON="$RAIZ/google-services.json" EAS_LOCAL_BUILD_WORKINGDIR="$PASTA/tmp/eas-$$" \
+# Mapas de código para o Sentry: com o token (variável ou ~/.config/ipebook/sentry-auth-token, fora do Git), envia;
+# sem ele, desliga o envio, que senão derruba a build.
+TOKEN_ARQ="$HOME/.config/ipebook/sentry-auth-token"
+if [[ -z "${SENTRY_AUTH_TOKEN:-}" && -r "$TOKEN_ARQ" ]]; then export SENTRY_AUTH_TOKEN="$(cat "$TOKEN_ARQ")"; fi
+if [[ -n "${SENTRY_AUTH_TOKEN:-}" ]]; then SEM_UPLOAD=false; else SEM_UPLOAD=true; fi
+setsid nohup env SENTRY_DISABLE_AUTO_UPLOAD="$SEM_UPLOAD" GOOGLE_SERVICES_JSON="$RAIZ/google-services.json" EAS_LOCAL_BUILD_WORKINGDIR="$PASTA/tmp/eas-$$" \
   bash -c 'echo $$ > "$1"; npx -y eas-cli build -p android --profile "$2" --local --non-interactive --output "$3"; r=$?; echo "ARQUIVO=$3"; echo "RESULTADO=$r"' \
   _ "$PID_ARQ" "$PERFIL" "$SAIDA" > "$LOG" 2>&1 < /dev/null &
 for _ in 1 2 3 4 5 6 7 8 9 10; do [[ -s "$PID_ARQ" ]] && break; sleep 0.3; done
