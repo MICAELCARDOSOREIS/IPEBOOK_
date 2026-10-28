@@ -27,8 +27,7 @@
       },
       "env": {
         "EXPO_PUBLIC_BACKEND": "supabase",
-        "EXPO_PUBLIC_AUTH_REDIRECT_URL": "https://ipebook.app/redefinir-senha",
-        "SENTRY_DISABLE_AUTO_UPLOAD": "true"
+        "EXPO_PUBLIC_AUTH_REDIRECT_URL": "https://ipebook.app/redefinir-senha"
       },
       "channel": "preview"
     },
@@ -40,8 +39,7 @@
       },
       "env": {
         "EXPO_PUBLIC_BACKEND": "supabase",
-        "EXPO_PUBLIC_AUTH_REDIRECT_URL": "https://ipebook.app/redefinir-senha",
-        "SENTRY_DISABLE_AUTO_UPLOAD": "true"
+        "EXPO_PUBLIC_AUTH_REDIRECT_URL": "https://ipebook.app/redefinir-senha"
       },
       "channel": "production"
     }
