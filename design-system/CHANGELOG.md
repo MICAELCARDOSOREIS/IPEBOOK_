@@ -2,6 +2,22 @@
 
 Versões no formato `MAIOR.MENOR.CORREÇÃO`. Mudança grande = versão nova.
 
+## 1.11.0 · 2026-10-29
+
+- Documentação dos componentes conferida contra as implementações atuais em `src/view/components/`.
+- Exemplos de botão, chip, busca, tag e barra superior alinhados às props, estados, tokens e
+  comportamentos de acessibilidade realmente disponíveis.
+- Registrado o uso de `useTheme()` nos componentes compatíveis e o caráter didático dos exemplos.
+
+## 1.10.0 · 2026-10-29
+
+- Documentação alinhada ao código atual, sem alteração na implementação.
+- Tema claro/escuro documentado conforme `ThemeProvider`, `darkColors` e a
+  [ADR 0036](../docs/adr/0036-tema-escuro-entra-em-escopo.md), incluindo a migração incremental
+  das telas.
+- Tabela de aliases, foco, movimento, `scrim` e API TypeScript de tokens corrigida.
+- Exports do Figma classificados explicitamente como referência visual, não código de produção.
+
 ## 1.9.0 · 2026-10-26
 
 - Filtro do Explorar alinhado ao Figma `02.03` e `02.04` (ADR 0057).

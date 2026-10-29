@@ -56,8 +56,11 @@ Regras de uso dos tokens definidos em [02-tokens.md](02-tokens.md). Voz da marca
 
 - Toque e foco animam em `duration-short2` (100 ms); chips e abas em `duration-short4`
   (200 ms); diálogo e snackbar em `duration-medium2` (300 ms). (Herdado)
-- Com a opção "Remover animações" do Android ativa, troque deslocamentos por esmaecimento;
-  nunca remova o feedback por completo. (Herdado)
+- Os valores conceituais `duration-short2` (100 ms), `duration-short4` (200 ms) e
+  `duration-medium2` (300 ms) correspondem, na API TypeScript atual, respectivamente a
+  `tokens.motion.duration.micro`, `tokens.motion.duration.standard` e
+  `tokens.motion.duration.slow`. Com a opção "Remover animações" do Android ativa, troque
+  deslocamentos por esmaecimento; nunca remova o feedback por completo. (Herdado)
 
 ## Orientação e layout responsivo
 

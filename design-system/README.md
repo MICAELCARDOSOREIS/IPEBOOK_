@@ -1,6 +1,6 @@
 # IpêBook Design System · Sistema de design do app IpêBook
 
-> Versão: 1.0.0 · Disciplinas: IHC e PDM
+> Versão da documentação: 1.11.0 · Disciplinas: IHC e PDM
 >
 > Fonte única do design do app. Conteúdo originalmente trazido do Figma do projeto para
 > `design-kit/` e depois migrado integralmente para cá (ver
@@ -45,7 +45,7 @@ ilustrativa quando não tem foto, para a estante parecer organizada mesmo sem fo
 | Configurações / Perfil | Item de lista, Interruptor, Avatar, Barra superior |
 | Propostas / Concluídos (spec 004) | Abas, Linha de livro, Badge |
 
-Lista completa dos 25 componentes em [04-componentes/](04-componentes/).
+Lista completa dos 26 componentes documentados em [04-componentes/](04-componentes/).
 
 ## 4. Mapa dos arquivos
 
@@ -54,7 +54,7 @@ Lista completa dos 25 componentes em [04-componentes/](04-componentes/).
 | [01-principios.md](01-principios.md) | Valores que guiam as decisões |
 | [02-tokens.md](02-tokens.md) | Tokens primitivos, semânticos e de componente |
 | [03-fundamentos.md](03-fundamentos.md) | Regras de cor, tipografia, espaço, ícones, elevação e movimento |
-| [04-componentes/](04-componentes/) | Um arquivo por componente — os 25 componentes do design, cada um com anatomia, estados, acessibilidade e código React Native |
+| [04-componentes/](04-componentes/) | Um arquivo por componente — os 26 componentes do design, cada um com anatomia, estados, acessibilidade e código React Native |
 | [05-padroes.md](05-padroes.md) | Fluxos: entrar/cadastrar, anunciar livro |
 | [06-acessibilidade.md](06-acessibilidade.md) | Contraste, alvos de toque, foco, leitor de tela |
 | [07-teste-com-ia.md](07-teste-com-ia.md) | Validação do sistema com um assistente de IA |
@@ -64,8 +64,9 @@ Lista completa dos 25 componentes em [04-componentes/](04-componentes/).
 | [CHANGELOG.md](CHANGELOG.md) | Versões e mudanças |
 | [`tokens.json`](tokens.json) | Versão machine-readable dos tokens (dado de apoio, não markdown) |
 
-Esta pasta é autossuficiente: não depende de nenhum outro diretório do repositório além de
-`src/view/tokens.ts` (o módulo de código que consome estes tokens).
+Esta pasta concentra as decisões de design e os exemplos de uso. Para implementar no app, ela
+depende do contrato TypeScript em [`src/view/tokens.ts`](../src/view/tokens.ts), dos componentes
+em [`src/view/components/`](../src/view/components/) e das regras MVVM do projeto.
 
 ## 5. Etiquetas de origem
 
@@ -88,10 +89,11 @@ Pelo menos três decisões Adaptadas ou Novas que expressam a identidade do app:
    recomenda uma única família tipográfica; o app usa a serifa só no logotipo, nos títulos de
    tela raiz e no título do livro, para diferenciar a voz da marca do texto de interface, mantendo
    Roboto para o resto da escala M3.
-4. **Sem dark mode nesta etapa — Adaptado (omissão deliberada).** M3 dá suporte nativo a tema
-   escuro e os valores já existem em `tokens.json`; o escopo atual implementa só o tema claro
-   (ver [ADR 0008](../docs/adr/0008-sem-dark-mode-android-md3-ios-liquid-glass.md)), para não
-   dobrar o trabalho de cada tela nova no MVP.
+4. **Tema claro e escuro — Adaptado.** O app resolve o tema do sistema e permite preferência
+   manual (Sistema, Claro ou Escuro), persistida no dispositivo. A infraestrutura está
+   implementada em `ThemeProvider`/`useTheme`; telas e componentes ainda não migrados para
+   `useTheme` continuam usando a paleta clara como comportamento compatível (ver
+   [ADR 0036](../docs/adr/0036-tema-escuro-entra-em-escopo.md)).
 
 ## 6. Glossário
 
@@ -131,12 +133,16 @@ seção 5, que refletem decisões de escopo já tomadas no projeto.
 Ao gerar ou alterar interface neste projeto:
 
 1. Leia `01-principios.md`, `02-tokens.md` e `03-fundamentos.md` antes de qualquer tela.
-2. Use **somente tokens** (`src/view/tokens.ts`, consumido de `tokens.json`). Nunca
-   escreva cores, tamanhos ou raios literais no código de componente.
+2. Use **somente tokens** ([`src/view/tokens.ts`](../src/view/tokens.ts), orientado por
+   `tokens.json`). Nunca escreva cores, tamanhos ou raios literais no código de componente.
+   Os exemplos dos arquivos de componentes são didáticos; quando mostrarem
+   `tokens.colors`, o código de produção deve obter a paleta resolvida por `useTheme()` se o
+   componente participar do tema.
 3. Para cada componente, siga o arquivo correspondente em `04-componentes/`, incluindo todos os
    estados (padrão, pressionado, foco, desabilitado).
 4. Respeite `06-acessibilidade.md`: contraste mínimo de 4,5:1 para texto, alvo de toque mínimo
    de 48 dp, foco sempre visível.
-5. Não implemente tema escuro nem toggle de tema — fora de escopo (ADR 0008). Se faltar um
-   token, componente ou regra, pergunte ou registre a lacuna; não invente valores.
+5. Respeite o tema resolvido por `useTheme()` em componentes que suportam alternância. Não
+   introduza novas leituras diretas da paleta clara quando o componente já participa do tema.
+   Se faltar um token, componente ou regra, registre a lacuna; não invente valores.
 6. Ao final, liste os tokens e componentes que você usou.
