@@ -49,24 +49,31 @@ describe("BetaInviteScreen (Spec 108)", () => {
 });
 
 describe("Destaques da comunidade e ações de loja do beta (Spec 108)", () => {
-  it("exibe os cartões de destaque na esquerda, avisa para aguardar a lista beta e abre a Play Store após inscrição", async () => {
+  it("exibe os cartões de destaque na esquerda e permite abrir grupo e convite após inscrição", async () => {
     const onOpenUrl = vi.fn();
     const state = { loading: false, error: null, success: true };
     const actions = { submit: vi.fn(), reset: vi.fn() };
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
       screen = await render(
-        <BetaInviteScreen state={state} actions={actions} onOpenUrl={onOpenUrl} />,
+        <BetaInviteScreen state={state} actions={actions} onOpenUrl={onOpenUrl} groupUrl="https://groups.google.com/g/ipebook-testadores" />,
       );
     });
     expect(screen.getByText("Troca, venda e doação")).toBeDefined();
     expect(screen.getByText("Encontros em Piripiri")).toBeDefined();
     expect(screen.getByText("Leitores fundadores")).toBeDefined();
-    expect(screen.getByText(/Aguarde até você ser adicionado na lista de testadores beta/)).toBeDefined();
-    expect(screen.queryByText("Entrar no grupo de testadores")).toBeNull();
 
-    await act(async () => { fireEvent.press(screen.getByText("Abrir na Play Store")); });
-    expect(onOpenUrl).toHaveBeenCalledWith("https://play.google.com/store/apps/details?id=com.ipebook.app");
+    await act(async () => { fireEvent.press(screen.getByText("Abrir teste na Play Store")); });
+    await act(async () => { fireEvent.press(screen.getByText("Entrar no grupo de testadores")); });
+    expect(onOpenUrl.mock.calls.map((c) => c[0])).toEqual([
+      "https://play.google.com/apps/testing/com.ipebook.app?hl=pt-BR",
+      "https://groups.google.com/g/ipebook-testadores",
+    ]);
+
+    await act(async () => {
+      screen.rerender(<BetaInviteScreen state={state} actions={actions} onOpenUrl={onOpenUrl} groupUrl={null} />);
+    });
+    expect(screen.queryByText("Entrar no grupo de testadores")).toBeNull();
   });
 });
 
@@ -103,7 +110,7 @@ describe("Conexão com Google no convite do beta (Spec 108)", () => {
     expect(signInWithGoogle).toHaveBeenCalledTimes(1);
   });
 
-  it("quando autenticado com Google, registra o testador, avisa para aguardar a lista beta e aponta direto para a Play Store", async () => {
+  it("quando autenticado com Google, registra o testador e mostra botão para a Play Store", async () => {
     const authActions = {
       signUp: vi.fn(),
       signIn: vi.fn(),
@@ -129,23 +136,22 @@ describe("Conexão com Google no convite do beta (Spec 108)", () => {
           authState={authState}
           authActions={authActions}
           onOpenUrl={onOpenUrl}
+          groupUrl="https://groups.google.com/g/ipebook-testadores"
         />,
       );
     });
 
     expect(actions.submit).toHaveBeenCalledWith("testador@gmail.com", "Micael Testador");
     expect(screen.getByText("Conta conectada!")).toBeDefined();
-    expect(screen.getByText("Aguardando inclusão na lista beta")).toBeDefined();
-    expect(screen.getByText(/Aguarde até você ser adicionado na lista de testadores beta/)).toBeDefined();
     expect(screen.getByText("testador@gmail.com")).toBeDefined();
-    expect(screen.getByText("Abrir na Play Store")).toBeDefined();
-    expect(screen.queryByText("Entrar no grupo de testadores")).toBeNull();
+    expect(screen.getByText("Abrir teste na Play Store")).toBeDefined();
+    expect(screen.getByText("Entrar no grupo de testadores")).toBeDefined();
     expect(screen.queryByText("Ver o IpêBook na Play Store")).toBeNull();
 
     await act(async () => {
-      fireEvent.press(screen.getByText("Abrir na Play Store"));
+      fireEvent.press(screen.getByText("Abrir teste na Play Store"));
     });
-    expect(onOpenUrl).toHaveBeenCalledWith("https://play.google.com/store/apps/details?id=com.ipebook.app");
+    expect(onOpenUrl).toHaveBeenCalledWith("https://play.google.com/apps/testing/com.ipebook.app?hl=pt-BR");
   });
 
   it("permite sair da conta Google pelo botão de troca de conta", async () => {
