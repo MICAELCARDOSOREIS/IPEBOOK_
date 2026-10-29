@@ -49,7 +49,11 @@ só lugar para depois colocá-los na lista de testadores do Play Console.
 ## Conexão com Google e redirecionamento para a loja
 - O cartão de inscrição oferece o botão destacado "Continuar com Google" (`GoogleLogo`), permitindo ao visitante conectar sua conta Google com 1 toque.
 - Ao autenticar com o Google (ou se já estiver conectado), a tela grava o Gmail e nome em `v2_beta_testers` automaticamente e exibe o estado conectado com o e-mail em destaque.
-- A ação principal passa a ser "Abrir teste na Play Store" (levando a `TESTING_OPT_IN_URL` para aceitar o convite e baixar o app), além do botão para entrar no grupo de testadores e opção de trocar de conta.
+- Para liberação do download no Google Play, a tela guia o usuário em 2 passos sequenciais:
+  1. Entrar no grupo de testadores oficial (`ipebook-testadores@googlegroups.com`), obrigatório para o Google autorizar a conta.
+  2. Aceitar o convite na Play Store (`TESTING_OPT_IN_URL`), acompanhado de nota sobre o tempo de sincronização do Google Play (5 a 15 min).
+- A barra superior conta com link/botão para voltar à página inicial (`/`) e logotipo clicável.
+- O layout web expande a área útil (até 1360px), distribuindo colunas e evitando que o conteúdo fique comprimido no meio da tela.
 - O formulário manual de nome e Gmail permanece disponível como alternativa ("ou informe seu Gmail").
 - No retorno de autenticação web, `/auth/callback` preserva a rota de origem (`/beta`) via `sessionStorage.auth_return_to` para que o retorno volte diretamente para `/beta`.
 
@@ -72,3 +76,4 @@ Cole a lista em *Teste fechado → Testadores → lista de e-mails*.
 | CA8 | Passos de instalação abrem grupo, convite e loja; aviso de espera | `tests/components/betaInviteScreen.test.tsx` |
 | CA7 | Site sem entrar/criar conta e com redirecionamento | `tests/unit/webBetaMode.test.ts`, `tests/components/welcomeWide.test.tsx` |
 | CA9 | Login com Google registra testador e exibe link da loja | `tests/components/betaInviteScreen.test.tsx` |
+| CA10 | Navegação para home e passos guiados para liberação da Play Store | `tests/components/betaInviteScreen.test.tsx` |
