@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Image, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Image, Linking, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
 import { FilledButton } from "@/view/components/FilledButton";
@@ -14,7 +14,6 @@ import { BETA_GROUP_URL, PLAY_STORE_URL, TESTING_OPT_IN_URL } from "@/view/playS
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
-import { WEB_MAX_WIDTH } from "@/view/webLayout";
 import { useAuthViewModel, type AuthActions, type AuthState } from "@/viewmodel/useAuthViewModel";
 import { useBetaSignupViewModel, type BetaSignupActions, type BetaSignupState } from "@/viewmodel/useBetaSignupViewModel";
 import { setAuthReturnTo } from "@/view/auth/authReturnTo";
@@ -305,8 +304,8 @@ export function BetaInviteScreen({
 
   return (
     <SafeAreaView style={styles.page}>
-      <View style={styles.topBar}>
-        <View style={[styles.topBarInner, wide && styles.wideWidth]}>
+      <View style={[styles.topBar, wide && styles.topBarWide]}>
+        <View style={styles.topBarInner}>
           <Pressable
             accessibilityRole="link"
             accessibilityLabel="Ir para a página inicial do IpêBook"
@@ -334,7 +333,7 @@ export function BetaInviteScreen({
         keyboardShouldPersistTaps="handled"
       >
         {wide ? (
-          <View style={[styles.wideRow, styles.wideWidth]}>
+          <View style={styles.wideRow}>
             <View style={styles.wideIntro}>{intro}</View>
             <View style={styles.wideForm}>{formCard}</View>
           </View>
@@ -358,18 +357,20 @@ function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     page: { flex: 1, backgroundColor: colors.background },
     topBar: {
-      paddingHorizontal: tokens.spacing[24],
+      paddingHorizontal: tokens.spacing[20],
       paddingVertical: tokens.spacing[16],
       borderBottomWidth: StyleSheet.hairlineWidth,
       borderBottomColor: colors.m3.outlineVariant,
       backgroundColor: colors.background,
+    },
+    topBarWide: {
+      paddingHorizontal: tokens.spacing[64],
     },
     topBarInner: {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
       width: "100%",
-      alignSelf: "center",
     },
     logoPressable: {
       alignSelf: "center",
@@ -395,19 +396,14 @@ function createStyles(colors: ColorPalette) {
       color: colors.m3.onSurface,
       fontFamily: fontFamily.medium,
     },
-    wideWidth: {
-      maxWidth: 1360,
-      width: "100%",
-      alignSelf: "center",
-    },
     scroll: {
       flexGrow: 1,
-      paddingHorizontal: tokens.spacing[24],
+      paddingHorizontal: tokens.spacing[20],
       paddingTop: tokens.spacing[24],
       paddingBottom: tokens.spacing[48],
     },
     scrollWide: {
-      paddingHorizontal: tokens.spacing[48],
+      paddingHorizontal: tokens.spacing[64],
       paddingTop: tokens.spacing[32],
     },
     narrow: { width: "100%", maxWidth: 560, alignSelf: "center", gap: tokens.spacing[24] },
@@ -415,11 +411,11 @@ function createStyles(colors: ColorPalette) {
       flexDirection: "row",
       alignItems: "flex-start",
       justifyContent: "space-between",
-      gap: 56,
-      paddingTop: tokens.spacing[16],
+      gap: 64,
+      width: "100%",
     },
-    wideIntro: { flex: 1.15, maxWidth: 680 },
-    wideForm: { flex: 1, maxWidth: 500, minWidth: 400 },
+    wideIntro: { flex: 1.3, maxWidth: 920 },
+    wideForm: { flex: 1, maxWidth: 560, minWidth: 440 },
     intro: { gap: tokens.spacing[20] },
     pill: {
       flexDirection: "row",
@@ -433,8 +429,8 @@ function createStyles(colors: ColorPalette) {
     },
     pillText: { ...tokens.typography.labelMedium, color: colors.m3.onSurfaceVariant },
     title: { fontFamily: fontFamily.brand, fontSize: 34, lineHeight: 42, color: colors.m3.onSurface },
-    titleWide: { fontSize: 50, lineHeight: 58 },
-    lead: { ...tokens.typography.bodyLarge, fontSize: 18, lineHeight: 28, color: colors.m3.onSurfaceVariant, maxWidth: 620 },
+    titleWide: { fontSize: 52, lineHeight: 60 },
+    lead: { ...tokens.typography.bodyLarge, fontSize: 18, lineHeight: 28, color: colors.m3.onSurfaceVariant, maxWidth: 820 },
     sectionTitle: { ...tokens.typography.titleMedium, color: colors.m3.onSurface, marginTop: tokens.spacing[8] },
     steps: { gap: tokens.spacing[20] },
     step: { flexDirection: "row", gap: tokens.spacing[16], alignItems: "flex-start" },
