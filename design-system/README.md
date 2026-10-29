@@ -2,8 +2,8 @@
 
 > Versão da documentação: 1.11.0 · Disciplinas: IHC e PDM
 >
-> Fonte única do design do app. Conteúdo originalmente trazido do Figma do projeto para
-> `design-kit/` e depois migrado integralmente para cá (ver
+> Fonte única do design do app. Conteúdo originalmente trazido do Figma do projeto para a pasta
+> histórica `design-kit/` e depois migrado integralmente para cá (ver
 > [ADR 0010](../docs/adr/0010-design-system-substitui-design-kit.md), que substitui o
 > [ADR 0009](../docs/adr/0009-design-kit-tokens-como-fonte-unica.md) — `design-kit/` não existe
 > mais no repositório). Formato exigido pela atividade "Sistema de Design do Trabalho Final", com

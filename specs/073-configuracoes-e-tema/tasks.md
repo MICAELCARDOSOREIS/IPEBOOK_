@@ -23,3 +23,10 @@ Branch: `develop` | Data: 2026-10-26 | Especificação: [spec.md](spec.md) | Pla
 - [x] **T13**: Trocar a linha "Configurações" de Meu perfil por um botão de engrenagem no cabeçalho (`src/view/profile/profileHub.tsx`, rótulo "Abrir configurações", alvo de 48 dp, visível também para visitante) e remover as linhas movidas (FR-001, FR-017).
 - [x] **T14**: Enxugar o contrato de `ProfileHubProps` (saiu Privacy/BlockedUsers/Terms/Help), atualizar `src/app/perfil.tsx` e receber Privacidade e Pessoas bloqueadas em `src/app/perfil/configuracoes.tsx`, renderizando a seção "Conta e dados" em `src/view/profile/settings.tsx` apenas com sessão (FR-016, US4).
 - [x] **T15**: Testes da reorganização: engrenagem navegando, ausência das linhas movidas em Meu perfil, seção "Conta" sumindo para visitante e seção "Conta e dados" aparecendo só com sessão (`tests/components/profileHubView.test.tsx`, `tests/components/settingsView.test.tsx`).
+
+## Rastreabilidade da validação final
+
+As tarefas T06, T08 e T12 cobrem diretamente a tela, a persistência, os estados de limpeza,
+o fallback do armazenamento e a acessibilidade. A coerência visual de tema fica limitada às
+superfícies verificadas e aos componentes integrados ao `ThemeProvider`; a migração dos demais
+componentes permanece uma evolução posterior documentada na ADR 0036.

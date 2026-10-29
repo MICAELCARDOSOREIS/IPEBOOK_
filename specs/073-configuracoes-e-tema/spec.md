@@ -48,10 +48,13 @@ Como pessoa usuária, quero encontrar em Configurações opções que realmente 
 - FR-002: A entrada Configurações deve abrir uma tela dedicada com navegação de retorno.
 - FR-003: A tela deve apresentar uma seção **Aparência** com as opções **Sistema**, **Claro** e **Escuro**.
 - FR-004: Somente uma opção de aparência pode estar selecionada por vez, com estado perceptível visualmente e por tecnologia assistiva.
-- FR-005: A seleção deve ser aplicada imediatamente a todas as superfícies visíveis do aplicativo.
+- FR-005: A seleção deve ser aplicada imediatamente às superfícies integradas ao `ThemeProvider`
+  e às telas verificadas desta entrega; componentes ainda não migrados permanecem fora da
+  garantia de coerência total até sua migração.
 - FR-006: A preferência escolhida deve persistir localmente entre sessões, sem depender de autenticação ou conectividade.
 - FR-007: A opção Sistema deve acompanhar a aparência vigente do dispositivo e reagir a alterações enquanto o aplicativo estiver em uso.
-- FR-008: A moldura do aplicativo e os elementos visuais do sistema devem refletir o tema resolvido, preservando contraste e legibilidade.
+- FR-008: A moldura do aplicativo e os elementos visuais do sistema devem refletir o tema
+  resolvido nas superfícies verificadas, preservando contraste e legibilidade.
 - FR-009: O seletor de aparência não deve permanecer duplicado em Meu perfil após existir na tela dedicada.
 - FR-010: Falhas ao recuperar ou salvar a preferência não devem bloquear o uso; o aplicativo deve continuar seguindo a aparência do sistema.
 - FR-011: Todos os controles novos devem ter alvo de toque de pelo menos 48 dp e rótulos acessíveis em português.
@@ -68,7 +71,8 @@ Como pessoa usuária, quero encontrar em Configurações opções que realmente 
 - SC-002: As três opções de aparência são identificáveis, mutuamente exclusivas e operáveis por toque e leitor de tela em 100% dos cenários de aceite.
 - SC-003: A mudança entre Claro, Escuro e Sistema é perceptível imediatamente, sem exigir reinício ou nova navegação.
 - SC-004: A preferência escolhida permanece ativa após reiniciar o aplicativo em 100% das tentativas de validação local.
-- SC-005: Nenhuma superfície principal ou elemento visual do sistema permanece com aparência conflitante após a troca de tema nas telas verificadas.
+- SC-005: Nenhuma superfície principal ou elemento visual do sistema permanece com aparência
+  conflitante após a troca de tema nas telas verificadas e integradas ao `ThemeProvider`.
 - SC-006: As verificações automatizadas pertinentes ao perfil, às configurações, à persistência e ao contraste são aprovadas sem regressões.
 
 ## Casos de erro e suposições
@@ -78,3 +82,13 @@ Como pessoa usuária, quero encontrar em Configurações opções que realmente 
 - A preferência é do dispositivo, não da conta, e por isso Configurações permanece disponível mesmo sem sessão autenticada.
 - A tela inicialmente agrupava apenas aparência; na continuação (ADR 0058) passaram a compor o hub a limpeza do catálogo offline e as informações do aplicativo, mantendo o mesmo contrato de persistência local.
 - A implementação reutiliza os padrões visuais, de navegação, persistência e acessibilidade já adotados pelo projeto.
+
+## Rastreabilidade da validação final
+
+- **FR-005 e FR-008:** verificados nos componentes e telas que obtêm a paleta por `useTheme()`;
+  a adoção do tema escuro permanece incremental, conforme a ADR 0036.
+- **FR-006:** coberto pelos testes de persistência da preferência e pelo `useThemeViewModel`.
+- **FR-010:** coberto pelos cenários de fallback de preferência ausente ou inválida e pelos
+  testes de erro do armazenamento local.
+- **SC-005:** limitado às telas verificadas nesta entrega; não representa garantia de migração
+  completa de toda a árvore `src/view`.
