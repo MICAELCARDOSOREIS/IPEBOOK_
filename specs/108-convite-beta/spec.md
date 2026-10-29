@@ -36,6 +36,15 @@ só lugar para depois colocá-los na lista de testadores do Play Console.
 - Play Store: `https://play.google.com/store/apps/details?id=com.ipebook.app`
 - Teste fechado: o link de participação aparece após a aprovação da faixa Alpha.
 
+## Entrada automática no teste (Grupo do Google)
+- A lista de testadores do teste fechado é um Grupo do Google com entrada livre; quem entra no
+  grupo vira testador sem ação do desenvolvedor.
+- O `/beta` mostra 3 passos com botão: entrar no grupo (`BETA_GROUP_URL`), aceitar o convite
+  (`https://play.google.com/apps/testing/com.ipebook.app`) e instalar pela Play Store, com aviso de
+  que a liberação pode levar alguns minutos. Sem grupo configurado, o primeiro passo mostra
+  "abre em breve". Configuração em `src/view/playStore.ts`.
+- O formulário continua só para avisos de novas versões.
+
 ## Exportar os e-mails para o Play Console
 ```sql
 select string_agg(email, ',' order by created_at) from public.v2_beta_testers where invited_at is null;
@@ -52,4 +61,5 @@ Cole a lista em *Teste fechado → Testadores → lista de e-mails*.
 | CA4 | Limite global por hora (RN-05) | `npm run test:sql` |
 | CA5 | Tela mostra link da loja, envia, exibe erro e sucesso | `tests/components/betaInviteScreen.test.tsx` |
 | CA6 | Rota `/beta` gerada no build web | `npm run build:web` |
+| CA8 | Passos de instalação abrem grupo, convite e loja; aviso de espera | `tests/components/betaInviteScreen.test.tsx` |
 | CA7 | Site sem entrar/criar conta e com redirecionamento | `tests/unit/webBetaMode.test.ts`, `tests/components/welcomeWide.test.tsx` |

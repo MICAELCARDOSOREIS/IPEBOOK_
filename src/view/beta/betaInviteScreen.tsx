@@ -9,7 +9,7 @@ import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { TextField } from "@/view/components/TextField";
 import { ThemeToggleButton } from "@/view/components/ThemeToggleButton";
 import illustration from "@/view/onboarding/ilustracao-classicos.png";
-import { PLAY_STORE_URL } from "@/view/playStore";
+import { BETA_GROUP_URL, PLAY_STORE_URL, TESTING_OPT_IN_URL } from "@/view/playStore";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
@@ -18,16 +18,24 @@ import { useBetaSignupViewModel, type BetaSignupActions, type BetaSignupState } 
 
 export { PLAY_STORE_URL };
 
-const STEPS: readonly { icon: AppIconName; title: string; text: string }[] = [
-  { icon: "mail", title: "Deixe seu Gmail", text: "Use a conta Google do seu celular Android." },
-  { icon: "bell", title: "Receba o convite", text: "Quando a nova turma abrir, o convite da Play Store chega no seu e-mail." },
-  { icon: "star", title: "Teste por 14 dias", text: "Instale, anuncie, troque e converse. Depois conte o que achou." },
-];
+type InstallStep = { icon: AppIconName; title: string; text: string; action: string; url: string | null };
+
+function installSteps(groupUrl: string | null): readonly InstallStep[] {
+  return [
+    { icon: "person", title: "Entre no grupo de testadores", text: "Abra com a conta Google do seu celular Android e toque em \"Participar do grupo\".", action: "Entrar no grupo", url: groupUrl },
+    { icon: "checkCircle", title: "Aceite o convite do teste", text: "Toque em \"Quero participar\" na página do Google Play.", action: "Aceitar convite", url: TESTING_OPT_IN_URL },
+    { icon: "star", title: "Instale e use por 14 dias", text: "Anuncie, troque, converse e depois conte o que achou.", action: "Instalar na Play Store", url: PLAY_STORE_URL },
+  ];
+}
 
 export type BetaInviteScreenProps = {
   state: BetaSignupState;
   actions: BetaSignupActions;
   onOpenStore?: () => void;
+  /** Abre os links dos passos; nos testes, um espião. */
+  onOpenUrl?: (url: string) => void;
+  /** Grupo do Google dos testadores; `null` enquanto não existir. */
+  groupUrl?: string | null;
 };
 
 /** Página pública `/beta` (Spec 108), ligada ao caso de uso real. */
@@ -41,7 +49,10 @@ export function BetaInviteScreen({
   state,
   actions,
   onOpenStore = () => void Linking.openURL(PLAY_STORE_URL).catch(() => {}),
+  onOpenUrl = (url) => void Linking.openURL(url).catch(() => {}),
+  groupUrl = BETA_GROUP_URL,
 }: BetaInviteScreenProps) {
+  const steps = installSteps(groupUrl);
   const { colors } = useTheme();
   const wide = useIsWideWeb();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -61,8 +72,9 @@ export function BetaInviteScreen({
         O app de troca, venda e doação de livros de Piripiri está chegando à Play Store. Precisamos de
         leitores com celular Android para testar e contar o que achou.
       </Text>
+      <Text style={styles.sectionTitle}>Como instalar</Text>
       <View style={styles.steps}>
-        {STEPS.map((step, index) => (
+        {steps.map((step, index) => (
           <View key={step.title} style={styles.step}>
             <View style={styles.stepIcon}>
               <AppIcon name={step.icon} size={22} color={colors.m3.onPrimaryContainer} />
@@ -70,9 +82,23 @@ export function BetaInviteScreen({
             <View style={styles.stepBody}>
               <Text style={styles.stepTitle}>{`${index + 1}. ${step.title}`}</Text>
               <Text style={styles.stepText}>{step.text}</Text>
+              <View style={styles.stepAction}>
+                {step.url ? (
+                  <OutlinedButton label={step.action} onPress={() => onOpenUrl(step.url as string)} />
+                ) : (
+                  <Text style={styles.soon}>{`${step.action}: abre em breve`}</Text>
+                )}
+              </View>
             </View>
           </View>
         ))}
+      </View>
+      <View style={styles.notice} accessibilityRole="summary">
+        <AppIcon name="info" size={20} color={colors.m3.onSurfaceVariant} />
+        <Text style={styles.noticeText}>
+          A liberação pode levar alguns minutos. Se a Play Store disser que o app não está disponível
+          para você, confira se entrou com o mesmo Gmail do grupo, espere um pouco e tente de novo.
+        </Text>
       </View>
     </View>
   );
@@ -87,8 +113,8 @@ export function BetaInviteScreen({
           <IconBadge icon="mail" tone="donation" size="large" />
           <Text accessibilityRole="alert" style={styles.cardTitle}>Inscrição recebida!</Text>
           <Text style={styles.cardText}>
-            {email.trim() ? `Vamos mandar o convite para ${email.trim().toLowerCase()}.` : "Vamos mandar o convite para seu Gmail."}{" "}
-            Fique de olho na caixa de entrada e no spam.
+            {email.trim() ? `Anotamos ${email.trim().toLowerCase()}.` : "Anotamos seu Gmail."}{" "}
+            Para instalar agora, siga os passos de "Como instalar".
           </Text>
           <OutlinedButton
             label="Inscrever outro e-mail"
@@ -101,8 +127,8 @@ export function BetaInviteScreen({
         </View>
       ) : (
         <>
-          <Text style={styles.cardTitle}>Quero participar</Text>
-          <Text style={styles.cardText}>Leva menos de um minuto.</Text>
+          <Text style={styles.cardTitle}>Receba as novidades</Text>
+          <Text style={styles.cardText}>Deixe seu Gmail para avisarmos quando sair versão nova.</Text>
           <TextField
             label="Seu nome (opcional)"
             value={name}
@@ -123,7 +149,7 @@ export function BetaInviteScreen({
             <Text accessibilityRole="alert" style={styles.error}>{state.error}</Text>
           ) : null}
           <FilledButton
-            label="Quero testar"
+            label="Quero receber avisos"
             loading={state.loading}
             loadingLabel="Enviando inscrição"
             onPress={() => void actions.submit(email, name)}
@@ -132,7 +158,7 @@ export function BetaInviteScreen({
       )}
       <OutlinedButton label="Ver o IpêBook na Play Store" onPress={onOpenStore} />
       <Text style={styles.footnote}>
-        Usamos seu e-mail só para enviar o convite do teste. Política de privacidade em ipebook.app/termos.
+        Usamos seu e-mail só para avisos sobre o teste. Política de privacidade em ipebook.app/termos.
       </Text>
     </View>
   );
@@ -199,8 +225,20 @@ function createStyles(colors: ColorPalette) {
     title: { fontFamily: fontFamily.brand, fontSize: 34, lineHeight: 42, color: colors.m3.onSurface },
     titleWide: { fontSize: 52, lineHeight: 60 },
     lead: { ...tokens.typography.bodyLarge, fontSize: 18, lineHeight: 28, color: colors.m3.onSurfaceVariant, maxWidth: 560 },
-    steps: { gap: tokens.spacing[16], marginTop: tokens.spacing[8] },
-    step: { flexDirection: "row", gap: tokens.spacing[16], alignItems: "center" },
+    sectionTitle: { ...tokens.typography.titleMedium, color: colors.m3.onSurface, marginTop: tokens.spacing[8] },
+    steps: { gap: tokens.spacing[20] },
+    step: { flexDirection: "row", gap: tokens.spacing[16], alignItems: "flex-start" },
+    stepAction: { marginTop: tokens.spacing[8], alignSelf: "flex-start", minWidth: 220 },
+    soon: { ...tokens.typography.labelLarge, color: colors.m3.onSurfaceVariant, paddingVertical: tokens.spacing[8] },
+    notice: {
+      flexDirection: "row",
+      gap: tokens.spacing[12],
+      padding: tokens.spacing[16],
+      borderRadius: tokens.radius.medium,
+      backgroundColor: colors.m3.surfaceContainerHigh,
+      alignItems: "flex-start",
+    },
+    noticeText: { flex: 1, ...bodyMedium, color: colors.m3.onSurfaceVariant },
     stepIcon: {
       width: tokens.spacing[48],
       height: tokens.spacing[48],
