@@ -16,11 +16,8 @@ só lugar para depois colocá-los na lista de testadores do Play Console.
   editar listas de testadores) e enviar e-mail de confirmação.
 
 ## Site só com o convite (por enquanto)
-- Na web, a página inicial troca Entrar/Criar conta por "Quero testar o app" (`/beta`) e
-  "Ver na Play Store"; as demais telas do app redirecionam para `/bem-vindo`.
-- Continuam abertas pelo endereço: `/beta`, `/sobre`, `/ajuda`, `/termos`, `/excluir-conta`,
-  `/entrar`, `/esqueci-senha`, `/redefinir-senha` e `/auth/callback` (a Play Store exige o link de
-  exclusão de conta; o login volta para `/excluir-conta`). O app Android não muda.
+- Na web, a página inicial mostra apenas "Quero testar o app" (`/beta`), sem o botão "Ver na Play Store" e sem Entrar/Criar conta; as demais telas do app redirecionam para `/bem-vindo`.
+- Continuam abertas pelo endereço: `/beta`, `/sobre`, `/ajuda`, `/termos`, `/excluir-conta` e `/auth/callback` (a Play Store exige o link de exclusão de conta; quando sem sessão na web, `/excluir-conta` mostra instrução direta de solicitação por e-mail sem levar para `/entrar`). O app Android não muda.
 - Para reabrir o site completo, desligar `WEB_BETA_ONLY` em `src/view/webBetaMode.ts`.
 
 ## Regras
@@ -34,27 +31,14 @@ só lugar para depois colocá-los na lista de testadores do Play Console.
 
 ## Links
 - Play Store: `https://play.google.com/store/apps/details?id=com.ipebook.app`
-- Teste fechado: o link de participação aparece após a aprovação da faixa Alpha.
 
-## Entrada automática no teste (Grupo do Google)
-- A lista de testadores do teste fechado é um Grupo do Google com entrada livre; quem entra no
-  grupo vira testador sem ação do desenvolvedor.
-- O `/beta` mostra 3 passos com botão: entrar no grupo (`BETA_GROUP_URL`), aceitar o convite
-  (`https://play.google.com/apps/testing/com.ipebook.app`) e instalar pela Play Store, com aviso de
-  que a liberação pode levar alguns minutos. Sem grupo configurado, o primeiro passo mostra
-  "abre em breve". Configuração em `src/view/playStore.ts`.
-- Grupo criado em 2026-10-31: `ipebook-testadores@googlegroups.com` (qualquer pessoa vê e participa; só proprietários postam), configurado como testadores do Teste fechado (Alpha) no lugar das listas de e-mails.
-- O formulário continua só para avisos de novas versões.
-
-## Conexão com Google e redirecionamento para a loja
-- O cartão de inscrição oferece o botão destacado "Continuar com Google" (`GoogleLogo`), permitindo ao visitante conectar sua conta Google com 1 toque.
-- Ao autenticar com o Google (ou se já estiver conectado), a tela grava o Gmail e nome em `v2_beta_testers` automaticamente e exibe o estado conectado com o e-mail em destaque.
-- Para liberação do download no Google Play, a tela guia o usuário em 2 passos sequenciais:
-  1. Entrar no grupo de testadores oficial (`ipebook-testadores@googlegroups.com`), obrigatório para o Google autorizar a conta.
-  2. Aceitar o convite na Play Store (`TESTING_OPT_IN_URL`), acompanhado de nota sobre o tempo de sincronização do Google Play (5 a 15 min).
-- A barra superior conta com link/botão para voltar à página inicial (`/`) e logotipo clicável.
-- O layout web expande a área útil (até 1360px), distribuindo colunas e evitando que o conteúdo fique comprimido no meio da tela.
-- O formulário manual de nome e Gmail permanece disponível como alternativa ("ou informe seu Gmail").
+## Conexão com Google, lista de espera beta e link direto para a Play Store
+- O cartão de inscrição oferece o botão destacado "Continuar com Google" (`GoogleLogo`), permitindo ao visitante conectar sua conta Google com 1 toque (ou digitar nome e Gmail manualmente).
+- Ao autenticar com o Google (ou enviar o formulário), a tela grava o Gmail e nome em `v2_beta_testers` automaticamente.
+- Como a adição na lista de testadores do Google Play Console é feita pelo desenvolvedor a partir dos Gmails inscritos em `v2_beta_testers`, a confirmação orienta claramente o leitor a **aguardar até ser adicionado na lista de testadores beta** e disponibiliza o botão "Abrir na Play Store" apontando direto para `https://play.google.com/store/apps/details?id=com.ipebook.app` (sem exigir inscrição manual em Grupo do Google).
+- A coluna esquerda apresenta 3 cartões de destaque horizontais sobre a comunidade (*Troca, venda e doação*, *Encontros em Piripiri*, *Leitores fundadores*).
+- A barra superior conta com link/botão "Início" para voltar à página inicial (`/`) e logotipo clicável.
+- O layout web ocupa a largura total da tela com margens de `64px`, evitando que o conteúdo fique espremido no centro.
 - No retorno de autenticação web, `/auth/callback` preserva a rota de origem (`/beta`) via `sessionStorage.auth_return_to` para que o retorno volte diretamente para `/beta`.
 
 ## Exportar os e-mails para o Play Console

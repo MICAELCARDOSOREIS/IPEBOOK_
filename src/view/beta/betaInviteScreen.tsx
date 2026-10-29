@@ -10,7 +10,7 @@ import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { TextField } from "@/view/components/TextField";
 import { ThemeToggleButton } from "@/view/components/ThemeToggleButton";
 import illustration from "@/view/onboarding/ilustracao-classicos.png";
-import { BETA_GROUP_URL, PLAY_STORE_URL, TESTING_OPT_IN_URL } from "@/view/playStore";
+import { PLAY_STORE_URL } from "@/view/playStore";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
@@ -60,10 +60,8 @@ export type BetaInviteScreenProps = {
   authState?: AuthState;
   authActions?: AuthActions;
   onOpenStore?: () => void;
-  /** Abre os links dos passos; nos testes, um espião. */
+  /** Abre os links externos; nos testes, um espião. */
   onOpenUrl?: (url: string) => void;
-  /** Grupo do Google dos testadores; `null` enquanto não existir. */
-  groupUrl?: string | null;
   /** Navega de volta para a tela inicial / home. */
   onNavigateHome?: () => void;
 };
@@ -93,9 +91,8 @@ export function BetaInviteScreen({
   actions,
   authState,
   authActions,
-  onOpenStore = () => void Linking.openURL(PLAY_STORE_URL).catch(() => {}),
   onOpenUrl = (url) => void Linking.openURL(url).catch(() => {}),
-  groupUrl = BETA_GROUP_URL,
+  onOpenStore = () => onOpenUrl(PLAY_STORE_URL),
   onNavigateHome = () => {},
 }: BetaInviteScreenProps) {
   const { colors } = useTheme();
@@ -162,7 +159,7 @@ export function BetaInviteScreen({
             <IconBadge icon="checkCircle" tone="action" size="medium" />
             <View style={styles.connectedHeaderText}>
               <Text accessibilityRole="alert" style={styles.cardTitle}>Conta conectada!</Text>
-              <Text style={styles.connectedSubtitle}>Pronto para testar o aplicativo</Text>
+              <Text style={styles.connectedSubtitle}>Aguardando inclusão na lista beta</Text>
             </View>
           </View>
           <View style={styles.connectedBadge}>
@@ -176,20 +173,13 @@ export function BetaInviteScreen({
           </View>
 
           <Text style={styles.connectedNote}>
-            Sua conta Google foi registrada no teste do IpêBook. Toque abaixo para abrir na Google Play Store.
+            Recebemos seu Gmail! Aguarde até você ser adicionado na lista de testadores beta. Assim que seu acesso for liberado, baixe o aplicativo na Play Store pelo botão abaixo.
           </Text>
 
           <FilledButton
-            label="Abrir teste na Play Store"
-            onPress={() => onOpenUrl(TESTING_OPT_IN_URL)}
+            label="Abrir na Play Store"
+            onPress={onOpenStore}
           />
-
-          {groupUrl ? (
-            <OutlinedButton
-              label="Entrar no grupo de testadores"
-              onPress={() => onOpenUrl(groupUrl)}
-            />
-          ) : null}
 
           <Pressable
             accessibilityRole="button"
@@ -206,18 +196,12 @@ export function BetaInviteScreen({
           <Text accessibilityRole="alert" style={styles.cardTitle}>Inscrição recebida!</Text>
           <Text style={styles.cardText}>
             {email.trim() ? `Anotamos ${email.trim().toLowerCase()}.` : "Anotamos seu Gmail."}{" "}
-            Abra a Play Store abaixo para participar do teste no seu Android.
+            Aguarde até você ser adicionado na lista de testadores beta. Assim que for liberado, abra a Play Store abaixo para baixar o aplicativo.
           </Text>
           <FilledButton
-            label="Abrir teste na Play Store"
-            onPress={() => onOpenUrl(TESTING_OPT_IN_URL)}
+            label="Abrir na Play Store"
+            onPress={onOpenStore}
           />
-          {groupUrl ? (
-            <OutlinedButton
-              label="Entrar no grupo de testadores"
-              onPress={() => onOpenUrl(groupUrl)}
-            />
-          ) : null}
           <OutlinedButton
             label="Inscrever outro e-mail"
             onPress={() => {
@@ -230,7 +214,9 @@ export function BetaInviteScreen({
       ) : (
         <>
           <Text style={styles.cardTitle}>Participe do teste</Text>
-          <Text style={styles.cardText}>Conecte seu Gmail com 1 toque para se inscrever e liberar o download na Play Store.</Text>
+          <Text style={styles.cardText}>
+            Conecte sua conta Google para entrar na lista beta. Depois de conectado, aguarde ser adicionado na lista de testadores para baixar na Play Store.
+          </Text>
           <OutlinedButton
             label="Continuar com Google"
             accessibilityLabel="Continuar com Google"
