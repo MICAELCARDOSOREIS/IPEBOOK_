@@ -46,6 +46,13 @@ só lugar para depois colocá-los na lista de testadores do Play Console.
 - Grupo criado em 2026-10-31: `ipebook-testadores@googlegroups.com` (qualquer pessoa vê e participa; só proprietários postam), configurado como testadores do Teste fechado (Alpha) no lugar das listas de e-mails.
 - O formulário continua só para avisos de novas versões.
 
+## Conexão com Google e redirecionamento para a loja
+- O cartão de inscrição oferece o botão destacado "Continuar com Google" (`GoogleLogo`), permitindo ao visitante conectar sua conta Google com 1 toque.
+- Ao autenticar com o Google (ou se já estiver conectado), a tela grava o Gmail e nome em `v2_beta_testers` automaticamente e exibe o estado conectado com o e-mail em destaque.
+- A ação principal passa a ser "Abrir teste na Play Store" (levando a `TESTING_OPT_IN_URL` para aceitar o convite e baixar o app), além do botão para entrar no grupo de testadores e opção de trocar de conta.
+- O formulário manual de nome e Gmail permanece disponível como alternativa ("ou informe seu Gmail").
+- No retorno de autenticação web, `/auth/callback` preserva a rota de origem (`/beta`) via `sessionStorage.auth_return_to` para que o retorno volte diretamente para `/beta`.
+
 ## Exportar os e-mails para o Play Console
 ```sql
 select string_agg(email, ',' order by created_at) from public.v2_beta_testers where invited_at is null;
@@ -64,3 +71,4 @@ Cole a lista em *Teste fechado → Testadores → lista de e-mails*.
 | CA6 | Rota `/beta` gerada no build web | `npm run build:web` |
 | CA8 | Passos de instalação abrem grupo, convite e loja; aviso de espera | `tests/components/betaInviteScreen.test.tsx` |
 | CA7 | Site sem entrar/criar conta e com redirecionamento | `tests/unit/webBetaMode.test.ts`, `tests/components/welcomeWide.test.tsx` |
+| CA9 | Login com Google registra testador e exibe link da loja | `tests/components/betaInviteScreen.test.tsx` |

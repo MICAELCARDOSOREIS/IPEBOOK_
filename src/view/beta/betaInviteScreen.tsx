@@ -1,8 +1,9 @@
-import { useMemo, useState } from "react";
-import { Image, Linking, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Image, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
 import { FilledButton } from "@/view/components/FilledButton";
+import { GoogleLogo } from "@/view/components/GoogleLogo";
 import { IconBadge } from "@/view/components/IconBadge";
 import { Logotipo } from "@/view/components/Logotipo";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
@@ -14,7 +15,9 @@ import { useTheme } from "@/view/theme/ThemeProvider";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { WEB_MAX_WIDTH } from "@/view/webLayout";
+import { useAuthViewModel, type AuthActions, type AuthState } from "@/viewmodel/useAuthViewModel";
 import { useBetaSignupViewModel, type BetaSignupActions, type BetaSignupState } from "@/viewmodel/useBetaSignupViewModel";
+import { setAuthReturnTo } from "@/view/auth/authReturnTo";
 
 export { PLAY_STORE_URL };
 
@@ -31,6 +34,8 @@ function installSteps(groupUrl: string | null): readonly InstallStep[] {
 export type BetaInviteScreenProps = {
   state: BetaSignupState;
   actions: BetaSignupActions;
+  authState?: AuthState;
+  authActions?: AuthActions;
   onOpenStore?: () => void;
   /** Abre os links dos passos; nos testes, um espião. */
   onOpenUrl?: (url: string) => void;
@@ -41,13 +46,16 @@ export type BetaInviteScreenProps = {
 /** Página pública `/beta` (Spec 108), ligada ao caso de uso real. */
 export default function BetaInviteRoute() {
   const [state, actions] = useBetaSignupViewModel();
-  return <BetaInviteScreen state={state} actions={actions} />;
+  const [authState, authActions] = useAuthViewModel();
+  return <BetaInviteScreen state={state} actions={actions} authState={authState} authActions={authActions} />;
 }
 
 /** Convite para testar o app Android e cadastro do Gmail. */
 export function BetaInviteScreen({
   state,
   actions,
+  authState,
+  authActions,
   onOpenStore = () => void Linking.openURL(PLAY_STORE_URL).catch(() => {}),
   onOpenUrl = (url) => void Linking.openURL(url).catch(() => {}),
   groupUrl = BETA_GROUP_URL,
@@ -58,6 +66,27 @@ export function BetaInviteScreen({
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
+  const [googleLoading, setGoogleLoading] = useState(false);
+
+  // Quando o usuário está conectado com o Google, grava sua inscrição automaticamente se ainda não feito.
+  const registeredUserRef = useRef<string | null>(null);
+  useEffect(() => {
+    const currentUserEmail = authState?.user?.email;
+    if (currentUserEmail && registeredUserRef.current !== currentUserEmail) {
+      registeredUserRef.current = currentUserEmail;
+      void actions.submit(currentUserEmail, authState?.user?.name ?? "");
+    }
+  }, [authState?.user?.email, authState?.user?.name, actions]);
+
+  const handleGoogleSignIn = async () => {
+    setAuthReturnTo("/beta");
+    setGoogleLoading(true);
+    try {
+      await authActions?.signInWithGoogle?.();
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
 
   const intro = (
     <View style={styles.intro}>
@@ -108,7 +137,40 @@ export function BetaInviteScreen({
       {wide ? (
         <Image source={illustration} style={styles.cardIllustration} resizeMode="contain" accessible={false} importantForAccessibility="no" />
       ) : null}
-      {state.success ? (
+      {authState?.user ? (
+        <View style={styles.success} accessibilityLiveRegion="polite">
+          <IconBadge icon="checkCircle" tone="donation" size="large" />
+          <Text accessibilityRole="alert" style={styles.cardTitle}>Conta conectada!</Text>
+          <Text style={styles.cardText}>
+            Você está participando do teste com a conta Google:
+          </Text>
+          <View style={styles.connectedBadge}>
+            <AppIcon name="person" size={16} color={colors.m3.primary} />
+            <Text style={styles.connectedEmail}>{authState.user.email}</Text>
+          </View>
+          <Text style={styles.cardNote}>
+            Abra a Play Store para aceitar o convite e baixar o aplicativo.
+          </Text>
+          <FilledButton
+            label="Abrir teste na Play Store"
+            onPress={() => onOpenUrl(TESTING_OPT_IN_URL)}
+          />
+          {groupUrl ? (
+            <OutlinedButton
+              label="Entrar no grupo de testadores"
+              onPress={() => onOpenUrl(groupUrl)}
+            />
+          ) : null}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Usar outra conta Google"
+            onPress={() => void authActions?.signOut?.()}
+            style={styles.switchAccount}
+          >
+            <Text style={styles.switchAccountText}>Usar outra conta Google</Text>
+          </Pressable>
+        </View>
+      ) : state.success ? (
         <View style={styles.success} accessibilityLiveRegion="polite">
           <IconBadge icon="mail" tone="donation" size="large" />
           <Text accessibilityRole="alert" style={styles.cardTitle}>Inscrição recebida!</Text>
@@ -116,6 +178,10 @@ export function BetaInviteScreen({
             {email.trim() ? `Anotamos ${email.trim().toLowerCase()}.` : "Anotamos seu Gmail."}{" "}
             Para instalar agora, siga os passos de "Como instalar".
           </Text>
+          <FilledButton
+            label="Abrir teste na Play Store"
+            onPress={() => onOpenUrl(TESTING_OPT_IN_URL)}
+          />
           <OutlinedButton
             label="Inscrever outro e-mail"
             onPress={() => {
@@ -127,8 +193,21 @@ export function BetaInviteScreen({
         </View>
       ) : (
         <>
-          <Text style={styles.cardTitle}>Receba as novidades</Text>
-          <Text style={styles.cardText}>Deixe seu Gmail para avisarmos quando sair versão nova.</Text>
+          <Text style={styles.cardTitle}>Participe do teste</Text>
+          <Text style={styles.cardText}>Conecte seu Gmail com 1 toque para se inscrever e liberar o download na Play Store.</Text>
+          <OutlinedButton
+            label="Continuar com Google"
+            accessibilityLabel="Continuar com Google"
+            icon={<GoogleLogo size={20} />}
+            loading={googleLoading}
+            disabled={authState?.loading}
+            onPress={() => void handleGoogleSignIn()}
+          />
+          <View style={styles.divider}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>ou digite seu Gmail</Text>
+            <View style={styles.dividerLine} />
+          </View>
           <TextField
             label="Seu nome (opcional)"
             value={name}
@@ -158,7 +237,7 @@ export function BetaInviteScreen({
       )}
       <OutlinedButton label="Ver o IpêBook na Play Store" onPress={onOpenStore} />
       <Text style={styles.footnote}>
-        Usamos seu e-mail só para avisos sobre o teste. Política de privacidade em ipebook.app/termos.
+        Usamos seu e-mail só para o teste fechado. Política de privacidade em ipebook.app/termos.
       </Text>
     </View>
   );
@@ -262,6 +341,49 @@ function createStyles(colors: ColorPalette) {
     cardText: { ...bodyMedium, color: colors.m3.onSurfaceVariant, marginTop: -tokens.spacing[8] },
     success: { gap: tokens.spacing[16], alignItems: "flex-start" },
     error: { ...bodyMedium, color: colors.error },
+    connectedBadge: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[8],
+      paddingHorizontal: tokens.spacing[12],
+      paddingVertical: tokens.spacing[8],
+      backgroundColor: colors.m3.surfaceContainer,
+      borderRadius: tokens.radius.medium,
+      alignSelf: "stretch",
+    },
+    connectedEmail: {
+      ...bodyMedium,
+      fontFamily: fontFamily.medium,
+      color: colors.m3.onSurface,
+    },
+    cardNote: {
+      ...bodyMedium,
+      color: colors.m3.onSurfaceVariant,
+    },
+    switchAccount: {
+      paddingVertical: tokens.spacing[8],
+      alignSelf: "center",
+    },
+    switchAccountText: {
+      ...tokens.typography.labelMedium,
+      color: colors.m3.primary,
+      textDecorationLine: "underline",
+    },
+    divider: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[12],
+      marginVertical: tokens.spacing[4],
+    },
+    dividerLine: {
+      flex: 1,
+      height: StyleSheet.hairlineWidth,
+      backgroundColor: colors.m3.outlineVariant,
+    },
+    dividerText: {
+      ...tokens.typography.labelSmall,
+      color: colors.m3.onSurfaceVariant,
+    },
     footnote: {
       textAlign: "center",
       color: colors.m3.onSurfaceVariant,
