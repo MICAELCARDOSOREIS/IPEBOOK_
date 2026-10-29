@@ -2,7 +2,6 @@ import { useMemo } from "react";
 import { Pressable, StyleSheet, Text } from "react-native";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
-import { useGuardedPress } from "@/view/useGuardedPress";
 
 export type TextButtonProps = {
   label: string;
@@ -23,7 +22,6 @@ export function TextButton({
   accessibilityLabel,
   tone = "default",
 }: TextButtonProps) {
-  const guardedPress = useGuardedPress(onPress);
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   return (
@@ -32,7 +30,7 @@ export function TextButton({
       accessibilityLabel={accessibilityLabel ?? label}
       accessibilityState={{ disabled }}
       disabled={disabled}
-      onPress={guardedPress}
+      onPress={onPress}
       style={styles.button}
     >
       <Text
@@ -57,8 +55,10 @@ function createStyles(colors: ColorPalette) {
       paddingHorizontal: tokens.spacing[16],
     },
     label: {
-      color: colors.m3.primary,
-      ...tokens.typography.labelLarge,
+      color: colors.action,
+      fontSize: tokens.typography.bodyMedium.fontSize,
+      fontFamily: tokens.typography.bodyMedium.fontFamily,
+      fontWeight: "600",
     },
     labelDanger: { color: colors.error },
     labelDisabled: { color: colors.disabledText },

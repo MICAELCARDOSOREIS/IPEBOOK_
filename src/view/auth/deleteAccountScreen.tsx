@@ -4,7 +4,7 @@ import DeleteAccount from "@/view/auth/deleteAccount";
 export type DeleteAccountScreenProps = {
   onBack: () => void;
   onAccountDeleted: () => void;
-  onNavigateToLogin?: () => void;
+  onNavigateToLogin: () => void;
   onEditProfile?: () => void;
 };
 

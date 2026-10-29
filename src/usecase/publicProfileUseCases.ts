@@ -4,10 +4,10 @@ import type { IProfileDataSource } from "@/model/datasources/iProfileDataSource"
 import type { IRatingDataSource } from "@/model/datasources/iRatingDataSource";
 import type { ProfileEdits, PublicProfile } from "@/model/entities/publicProfile";
 import { ValidationError } from "@/model/errors";
-import { normalizeInstagramHandle } from "@/model/validators/instagramValidator";
 import type { IPublicProfileUseCases } from "@/usecase/iPublicProfileUseCases";
 
 const MAX_NAME_LENGTH = 60;
+const MAX_SOCIAL_HANDLE_LENGTH = 60;
 
 function defaultName(userId: string): string {
   return `Usuário #${userId.slice(-4).toUpperCase()}`;
@@ -57,14 +57,9 @@ export class PublicProfileUseCases implements IPublicProfileUseCases {
       throw new ValidationError("A foto deve ser um link (http/https) válido.");
     }
 
-    // O @perfil vira trecho de URL externa nas telas de perfil: só o padrão do Instagram é aceito.
-    let socialHandle: string | undefined;
-    const rawSocialHandle = edits.socialHandle?.trim();
-    if (rawSocialHandle) {
-      socialHandle = normalizeInstagramHandle(rawSocialHandle) ?? undefined;
-      if (!socialHandle) {
-        throw new ValidationError("A rede social deve ser só o @perfil do Instagram (letras, números, ponto e _ até 30), sem link.");
-      }
+    const socialHandle = edits.socialHandle?.trim() || undefined;
+    if (socialHandle && socialHandle.length > MAX_SOCIAL_HANDLE_LENGTH) {
+      throw new ValidationError(`A rede social deve ter até ${MAX_SOCIAL_HANDLE_LENGTH} caracteres.`);
     }
 
     await this.profiles.ensure(userId, defaultName(userId));

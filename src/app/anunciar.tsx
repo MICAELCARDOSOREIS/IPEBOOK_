@@ -1,16 +1,13 @@
-import { useLocalSearchParams } from "expo-router";
-import { backOnce, replaceOnce } from "@/view/pushOnce";
+import { router } from "expo-router";
 import CreateListingScreen from "@/view/listings/createListingScreen";
 
 export default function AnunciarRoute() {
-  const { rascunho } = useLocalSearchParams<{ rascunho?: string }>();
   return (
     <CreateListingScreen
-      initialDraftId={typeof rascunho === "string" ? rascunho : undefined}
-      onCancel={() => backOnce()}
-      onRequireSignIn={() => replaceOnce("/entrar")}
-      onViewMyListings={() => replaceOnce("/meus-anuncios")}
-      onGoHome={() => replaceOnce("/")}
+      onCancel={() => router.back()}
+      onRequireSignIn={() => router.replace("/entrar")}
+      onViewMyListings={() => router.replace("/meus-anuncios")}
+      onGoHome={() => router.replace("/")}
     />
   );
 }

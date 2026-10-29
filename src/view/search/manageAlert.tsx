@@ -36,7 +36,7 @@ export default function ManageAlert({
   if (state.loading) {
     return (
       <SafeAreaView style={styles.page}>
-        <TopAppBar contentMaxWidth={560} title="Gerenciar alerta" onBack={onBack} />
+        <TopAppBar title="Gerenciar alerta" onBack={onBack} />
         <View style={styles.status}>
           <ActivityIndicator color={colors.action} accessibilityLabel="Carregando alerta" />
         </View>
@@ -47,7 +47,7 @@ export default function ManageAlert({
   if (!alert) {
     return (
       <SafeAreaView style={styles.page}>
-        <TopAppBar contentMaxWidth={560} title="Gerenciar alerta" onBack={onBack} />
+        <TopAppBar title="Gerenciar alerta" onBack={onBack} />
         <View style={styles.content}>
           <Text accessibilityRole="header" style={styles.headline}>
             Alerta não encontrado
@@ -63,7 +63,7 @@ export default function ManageAlert({
 
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar contentMaxWidth={560} title="Gerenciar alerta" onBack={onBack} />
+      <TopAppBar title="Gerenciar alerta" onBack={onBack} />
       <ScrollView contentContainerStyle={styles.scroll}>
         <View style={styles.content}>
           <Text accessibilityRole="header" style={styles.headline}>

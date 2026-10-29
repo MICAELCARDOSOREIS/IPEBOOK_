@@ -1,23 +1,14 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { BackHandler, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useMemo, useState } from "react";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import type { Book } from "@/model/entities/book";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
-import { BookCover } from "@/view/components/BookCover";
-import { Tag } from "@/view/components/Tag";
-import { useIsWideWeb } from "@/view/useIsWideWeb";
-import { FilledButton } from "@/view/components/FilledButton";
 import { StepProgress } from "@/view/components/StepProgress";
 import { TextButton } from "@/view/components/TextButton";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { useFormErrorAnnouncer } from "@/view/useFormErrorAnnouncer";
 import { useCreateListingViewModel } from "@/viewmodel/useCreateListingViewModel";
-import { useListingPhotoViewModel } from "@/viewmodel/useListingPhotoViewModel";
-import {
-  validateListingBasics,
-  type ListingBasicsErrors,
-} from "@/viewmodel/listingBasicsValidation";
 import { CreateListingSuccess } from "@/view/listings/createListingSuccess";
 import { CreateListingStep1 } from "@/view/listings/createListingStep1";
 import { CreateListingStep2 } from "@/view/listings/createListingStep2";
@@ -25,8 +16,6 @@ import { CreateListingStep3 } from "@/view/listings/createListingStep3";
 
 export type CreateListingProps = {
   sessionUserId: string | null;
-  /** Rascunho no servidor a retomar (Spec 017), vindo da rota `/rascunhos`. */
-  initialDraftId?: string;
   onCreated?: () => void;
   onCancel?: () => void;
   onViewMyListings?: () => void;
@@ -54,123 +43,26 @@ const STEP_LABELS: Record<number, string> = {
  */
 export default function CreateListing({
   sessionUserId,
-  initialDraftId,
   onCreated,
   onCancel,
   onViewMyListings,
   onGoHome,
 }: CreateListingProps) {
   const [state, actions] = useCreateListingViewModel();
-  const [photoState, photoActions] = useListingPhotoViewModel(sessionUserId);
   const { colors } = useTheme();
-  const wideWeb = useIsWideWeb();
-  const styles = useMemo(() => createStyles(colors, wideWeb), [colors, wideWeb]);
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [step, setStep] = useState(1);
   const [published, setPublished] = useState<Book | null>(null);
-  // Erros da etapa 1 só aparecem depois da primeira tentativa de avançar.
-  const [basicsTouched, setBasicsTouched] = useState(false);
   const errorRef = useFormErrorAnnouncer(state.error);
-  const scrollRef = useRef<React.ComponentRef<typeof ScrollView>>(null);
-  const isMountedRef = useRef(false);
 
   const hasDraftContent = Boolean(
-    state.isbn.trim() ||
-      state.title.trim() ||
+    state.title.trim() ||
       state.author.trim() ||
       state.description.trim() ||
       state.photoUrl.trim() ||
       state.neighborhood.trim() ||
-      state.category.trim() ||
-      state.price.trim() ||
-      state.photos.length > 0 ||
-      state.condition !== null,
+      state.category.trim(),
   );
-
-  useEffect(() => {
-    if (initialDraftId) {
-      let active = true;
-      void actions.loadServerDraft(initialDraftId).then((step) => {
-        if (active && step) {
-          setStep(step);
-        }
-      });
-      return () => {
-        active = false;
-      };
-    }
-    void actions.loadDraft();
-  }, [initialDraftId]);
-
-  useEffect(() => {
-    if (!isMountedRef.current) {
-      isMountedRef.current = true;
-      return;
-    }
-    if (hasDraftContent && !published && !state.success) {
-      void actions.saveDraft();
-    }
-  }, [
-    hasDraftContent,
-    published,
-    state.success,
-    state.isbn,
-    state.title,
-    state.author,
-    state.category,
-    state.modality,
-    state.price,
-    state.neighborhood,
-    state.condition,
-    state.description,
-    state.photoUrl,
-    state.photos,
-    actions,
-  ]);
-
-  const basicsErrors: ListingBasicsErrors = basicsTouched
-    ? validateListingBasics({
-        title: state.title,
-        author: state.author,
-        modality: state.modality,
-        price: state.price,
-      })
-    : {};
-
-  // Cada etapa começa do topo, senão a nova tela abre no meio do conteúdo anterior.
-  useEffect(() => {
-    scrollRef.current?.scrollTo?.({ y: 0, animated: false });
-  }, [step]);
-
-  // No Android, o botão/gesto Voltar recua uma etapa em vez de abandonar o anúncio.
-  useEffect(() => {
-    if (published || step === 1) return;
-    const sub = BackHandler.addEventListener("hardwareBackPress", () => {
-      setStep((current) => current - 1);
-      return true;
-    });
-    return () => sub.remove();
-  }, [published, step]);
-
-  const handleGoToStep2 = () => {
-    const errors = validateListingBasics({
-      title: state.title,
-      author: state.author,
-      modality: state.modality,
-      price: state.price,
-    });
-    if (Object.keys(errors).length > 0) {
-      setBasicsTouched(true);
-      scrollRef.current?.scrollTo?.({ y: 0, animated: true });
-      return;
-    }
-    void actions.saveDraft();
-    setStep(2);
-  };
-
-  const handleGoToStep3 = () => {
-    void actions.saveDraft();
-    setStep(3);
-  };
 
   const handleSubmit = async () => {
     const result = await actions.submit(sessionUserId);
@@ -179,20 +71,6 @@ export default function CreateListing({
       onCreated?.();
     }
   };
-
-  const handleSaveForLater = async () => {
-    const saved = await actions.saveForLater(sessionUserId, step);
-    if (saved) {
-      onCancel?.();
-    }
-  };
-
-  // Com a barra de ações fixa, o erro da submissão fica no fim do conteúdo rolável.
-  useEffect(() => {
-    if (published || !state.error) return;
-    // `scrollToEnd` pode não existir no ambiente de teste do ScrollView.
-    scrollRef.current?.scrollToEnd?.({ animated: true });
-  }, [published, state.error]);
 
   if (published) {
     return (
@@ -213,14 +91,12 @@ export default function CreateListing({
   };
 
   return (
-    <SafeAreaView edges={["top", "left", "right"]} style={styles.page}>
-      <TopAppBar contentMaxWidth={wideWeb ? 1200 : undefined} title={STEP_TITLES[step]} onBack={handleBack} />
+    <SafeAreaView style={styles.page}>
+      <TopAppBar title={STEP_TITLES[step]} onBack={handleBack} />
       <ScrollView
-        ref={scrollRef}
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={wideWeb ? styles.wideLayout : undefined}>
         <View style={styles.content}>
           <StepProgress currentStep={step} totalSteps={TOTAL_STEPS} stepLabel={STEP_LABELS[step]} />
 
@@ -231,7 +107,6 @@ export default function CreateListing({
                 label="Limpar rascunho"
                 onPress={() => {
                   actions.reset();
-                  setBasicsTouched(false);
                   setStep(1);
                 }}
               />
@@ -259,8 +134,8 @@ export default function CreateListing({
               onSetAuthor={actions.setAuthor}
               onSetPrice={actions.setPrice}
               onSetPhotoUrl={actions.setPhotoUrl}
-              fieldErrors={basicsErrors}
               onGoToPhotos={() => setStep(2)}
+              onContinue={() => setStep(2)}
             />
           ) : null}
 
@@ -273,15 +148,8 @@ export default function CreateListing({
               errorRef={errorRef}
               onSetPhotoUrl={actions.setPhotoUrl}
               onRemovePhoto={actions.removePhoto}
-              uploading={photoState.uploading}
-              photoError={photoState.error}
-              onChoosePhoto={(slot, source) => {
-                void photoActions.choose(source).then((url) => {
-                  if (!url) return;
-                  if (slot === "cover") actions.setPhotoUrl(url);
-                  else actions.addPhoto(url);
-                });
-              }}
+              onContinue={() => setStep(3)}
+              onBack={() => setStep(1)}
             />
           ) : null}
 
@@ -298,97 +166,26 @@ export default function CreateListing({
               onSetCategory={actions.setCategory}
               onSetDescription={actions.setDescription}
               onSetNeighborhood={actions.setNeighborhood}
+              onSubmit={() => void handleSubmit()}
+              onBack={() => setStep(2)}
             />
           ) : null}
-        </View>
-        {wideWeb ? (
-          <View style={styles.previewCard} accessibilityLabel="Prévia do anúncio">
-            <Text style={styles.previewLabel}>Prévia do anúncio</Text>
-            <View style={styles.previewBook}>
-              <BookCover id="previa" title={state.title.trim() || "Título do livro"} author={state.author.trim() || undefined} photoUrl={state.photoUrl || undefined} variant="detail" />
-              <Text style={styles.previewTitle}>{state.title.trim() || "Título do livro"}</Text>
-              <Text style={styles.previewAuthor}>{state.author.trim() || "Autor"}</Text>
-              <View style={styles.previewMeta}>
-                <Text style={styles.previewPrice}>
-                  {state.modality === "sale" ? (state.price.trim() ? `R$ ${state.price.trim()}` : "R$ —") : state.modality === "trade" ? "Para trocar" : "Gratuito"}
-                </Text>
-                <Tag variant={state.modality} />
-              </View>
-            </View>
-            <Text style={styles.previewNote}>Só o bairro aparece no anúncio. Seu nome completo e seu e-mail ficam privados.</Text>
-          </View>
-        ) : null}
         </View>
       </ScrollView>
-
-      {/* Barra de ação fixa do Figma: nós `12:269`, `28:750` e `12:413` (`surface-container`). O desvio do teclado é da raiz única (Spec 088). */}
-      <SafeAreaView edges={["bottom"]} style={styles.actionBar}>
-        <View style={styles.actionBarInner}>
-          {step === 1 ? (
-            <FilledButton label="Continuar" onPress={handleGoToStep2} />
-          ) : null}
-
-          {step === 2 ? <FilledButton label="Usar estas fotos" onPress={handleGoToStep3} /> : null}
-
-          {step === 3 ? (
-            <FilledButton
-              label="Publicar anúncio"
-              loading={state.loading}
-              loadingLabel="Publicando"
-              onPress={() => void handleSubmit()}
-            />
-          ) : null}
-
-          {/* Ações secundárias lado a lado: a barra fixa ocupava três linhas e escondia o formulário. */}
-          <View style={styles.secondaryRow}>
-            {step > 1 ? (
-              <TextButton label="Voltar à etapa anterior" disabled={state.loading} onPress={() => setStep(step - 1)} />
-            ) : null}
-            <TextButton
-              label="Salvar para depois"
-              disabled={state.loading}
-              onPress={() => void handleSaveForLater()}
-            />
-          </View>
-        </View>
-      </SafeAreaView>
     </SafeAreaView>
   );
 }
 
-function createStyles(colors: ColorPalette, wideWeb: boolean) {
+function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     page: { flex: 1, backgroundColor: colors.background },
-    scrollContent: { padding: tokens.spacing[16], paddingBottom: tokens.spacing[24] },
-    wideLayout: { flexDirection: "row", alignItems: "flex-start", justifyContent: "center", gap: 48, width: "100%", maxWidth: 1200, alignSelf: "center" },
-    previewCard: { width: 320, gap: 16, padding: 20, borderRadius: tokens.radius.large, backgroundColor: colors.m3.surfaceContainerLow, borderWidth: 1, borderColor: colors.m3.outlineVariant },
-    previewLabel: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
-    previewBook: { gap: 6, padding: 12, borderRadius: 20, backgroundColor: colors.m3.surfaceContainerLowest },
-    previewTitle: { ...tokens.typography.titleMedium, color: colors.m3.onSurface },
-    previewAuthor: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
-    previewMeta: { flexDirection: "row", alignItems: "center", gap: 8 },
-    previewPrice: { ...tokens.typography.labelLarge, color: colors.m3.onSurface },
-    previewNote: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
+    scrollContent: { padding: tokens.spacing[16], paddingBottom: tokens.spacing[48] },
     content: {
-      width: wideWeb ? 640 : "100%",
-      maxWidth: wideWeb ? 720 : 560,
+      width: "100%",
+      maxWidth: 560,
       alignSelf: "center",
       gap: tokens.spacing[16],
     },
-    actionBar: {
-      width: "100%",
-      backgroundColor: colors.m3.surfaceContainer,
-    },
-    actionBarInner: {
-      width: "100%",
-      maxWidth: wideWeb ? 720 : 560,
-      alignSelf: "center",
-      gap: tokens.spacing[8],
-      paddingHorizontal: tokens.spacing[16],
-      paddingTop: tokens.spacing[16],
-      paddingBottom: tokens.spacing[4],
-    },
-    secondaryRow: { flexDirection: "row", justifyContent: "center", flexWrap: "wrap" },
     draftBanner: {
       flexDirection: "row",
       alignItems: "center",

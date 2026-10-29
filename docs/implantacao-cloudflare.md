@@ -39,32 +39,18 @@ Em **Settings** > **Environment variables**, configure as seguintes chaves para 
 | `EXPO_PUBLIC_BACKEND` | `supabase` |
 | `EXPO_PUBLIC_SUPABASE_URL` | `https://xiuuiggpccpgrwkzeloc.supabase.co` |
 | `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | *(Chave anônima pública `sbp_...` do projeto Supabase)* |
-| `EXPO_PUBLIC_AUTH_REDIRECT_URL` | `https://ipebook.app/redefinir-senha` (retorno da recuperação de senha; entra no bundle durante o build) |
-
-### 2.4 Configuração de Domínio Próprio (Custom Domain `ipebook.app`)
-Para vincular o domínio próprio ao projeto no Cloudflare Pages:
-1. No painel da Cloudflare, acesse **Workers & Pages** > projeto `ipebook` > aba **Custom domains**.
-2. Clique em **Set up a custom domain**.
-3. Digite `ipebook.app` e clique em **Continue**.
-4. Se o domínio já estiver sob a mesma conta da Cloudflare, o registro DNS CNAME/apex e o certificado SSL/TLS Universal são provisionados e validados automaticamente.
-5. (Opcional recomendado) Repita o processo para `www.ipebook.app` para garantir o redirecionamento ou cobertura do subdomínio www.
-6. O redirecionamento canônico de `ipebook.pages.dev` é feito por **Bulk Redirects** (ADR 0064), pois o `_redirects` do Pages não aceita origem com domínio. Em **Entrega e desempenho** > **Redirecionamentos em massa**:
-   - Lista `ipebook_canonico`: origem `ipebook.pages.dev`, destino `https://ipebook.app`, status `301`, com *Preservar string de consulta*, *Correspondência de subcaminho* e *Preservar sufixo do caminho* marcados (sem *Incluir subdomínios*, para manter as pré-visualizações).
-   - Regra `ipebook dominio canonico` habilitada e associada à lista.
-   - Verificação: `curl -sI https://ipebook.pages.dev/termos` deve responder `301` com `location: https://ipebook.app/termos`.
+| `EXPO_PUBLIC_AUTH_REDIRECT_URL` | `https://ipebook.pages.dev/entrar` (ou o domínio customizado) |
 
 ---
 
 ## 3. Configuração no Supabase Auth
 
-Para que o fluxo de autenticação por e-mail/magic link, OAuth Google e redefinição de senha funcione no domínio oficial:
+Para que o fluxo de autenticação por e-mail/magic link e redefinição de senha funcione no domínio da Cloudflare:
 1. Acesse o painel do Supabase do projeto `xiuuiggpccpgrwkzeloc`.
 2. Vá em **Authentication** > **URL Configuration**.
-3. Em **Site URL**, configure a URL principal: `https://ipebook.app`.
+3. Em **Site URL**, configure a URL principal (ex.: `https://ipebook.pages.dev`).
 4. Em **Redirect URLs**, adicione:
-   - `https://ipebook.app/**`
-   - `https://www.ipebook.app/**`
-   - `https://ipebook.pages.dev/**` (preservado como fallback)
+   - `https://ipebook.pages.dev/**`
    - `https://*.ipebook.pages.dev/**` (para suportar branches de preview da Cloudflare)
 
 ---
@@ -72,15 +58,12 @@ Para que o fluxo de autenticação por e-mail/magic link, OAuth Google e redefin
 ## 4. Checklist de Verificação Pós-Deploy (Smoke Tests)
 
 Após a conclusão da implantação pela Cloudflare:
-1. **Página Inicial:** Acessar `https://ipebook.app` e conferir o carregamento da vitrine de livros de Piripiri, PI.
-2. **Redirecionamento Canônico:** Acessar `https://ipebook.pages.dev` e verificar se há redirecionamento HTTP 301 automático para `https://ipebook.app`.
-3. **Rotas Estáticas:** Navegar para `/pesquisa`, `/termos`, `/ajuda` e `/entrar`, conferindo ausência de erros no console do navegador.
-4. **Rotas Dinâmicas (F5 direto):** Acessar diretamente uma URL de anúncio (ex.: `https://ipebook.app/livro/fbb7e0a4-378d-4e9e-a61f-13589c381c8c`) e atualizar a página. O navegador deve exibir os detalhes do livro sem retornar erro 404 da CDN.
-5. **Tratamento de 404:** Acessar `https://ipebook.app/rota-inexistente-12345` e conferir a apresentação da tela de recurso não encontrado (`+not-found.html`) com status 404.
-6. **Autenticação:** Testar login ou cadastro com credenciais válidas e verificar persistência de sessão e permissões RLS.
-7. **Rotas dinâmicas novas:** além de `/livro/<id>`, abrir direto `/conversa/<id>`, `/perfil/<id>` e `/denunciar-pessoa/<id>` (F5). Todas dependem de uma regra em `public/_redirects`; `npm run check:build-config` (também na CI) reprova a integração se alguma rota dinâmica de `src/app` ficar sem regra.
-8. **Câmera e APIs de livros:** conferir que o leitor de ISBN pede permissão de câmera (`Permissions-Policy: camera=(self)`) e que a busca por ISBN não é bloqueada pela CSP (`openlibrary.org`, `www.googleapis.com` e `covers.openlibrary.org` estão liberados em `public/_headers`).
-9. **Cabeçalhos HTTP:** Inspecionar resposta com `curl -I https://ipebook.app` e validar presença dos cabeçalhos `X-Content-Type-Options`, `X-Frame-Options` e `Content-Security-Policy`.
+1. **Página Inicial:** Acessar a URL base e conferir o carregamento da vitrine de livros de Piripiri, PI.
+2. **Rotas Estáticas:** Navegar para `/pesquisa`, `/termos`, `/ajuda` e `/entrar`, conferindo ausência de erros no console do navegador.
+3. **Rotas Dinâmicas (F5 direto):** Acessar diretamente uma URL de anúncio (ex.: `/livro/fbb7e0a4-378d-4e9e-a61f-13589c381c8c`) e atualizar a página. O navegador deve exibir os detalhes do livro sem retornar erro 404 da CDN.
+4. **Tratamento de 404:** Acessar `/rota-inexistente-12345` e conferir a apresentação da tela de recurso não encontrado (`+not-found.html`) com status 404.
+5. **Autenticação:** Testar login ou cadastro com credenciais válidas e verificar persistência de sessão e permissões RLS.
+6. **Cabeçalhos HTTP:** Inspecionar resposta com `curl -I https://ipebook.pages.dev` e validar presença dos cabeçalhos `X-Content-Type-Options`, `X-Frame-Options` e `Content-Security-Policy`.
 
 ---
 

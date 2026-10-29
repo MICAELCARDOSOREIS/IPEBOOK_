@@ -27,7 +27,7 @@ describe("SC-005: ver detalhe do livro e solicitar negociação pela tela de det
     expect(screen.getByText("Doação")).toBeDefined();
 
     await act(async () => {
-      fireEvent.press(screen.getByText("Quero receber"));
+      fireEvent.press(screen.getByText("Solicitar negociação"));
     });
 
     expect(screen.getByText("Negociação solicitada")).toBeDefined();

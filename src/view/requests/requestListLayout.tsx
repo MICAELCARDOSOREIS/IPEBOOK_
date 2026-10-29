@@ -3,7 +3,6 @@ import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import type { RequestStatus } from "@/model/entities/bookRequest";
 import type { RequestWithListing } from "@/viewmodel/useSentRequestsViewModel";
-import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
 import { BookCover } from "@/view/components/BookCover";
 import { ErrorState } from "@/view/components/ErrorState";
@@ -15,15 +14,11 @@ import { TopAppBar } from "@/view/components/TopAppBar";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { formatPrice } from "@/view/formatPrice";
-import { WEB_MAX_WIDTH, WEB_GUTTER, useWebColumns } from "@/view/webLayout";
-
-const WIDE_CONTENT_MAX_WIDTH = WEB_MAX_WIDTH;
 
 export const statusLabel: Record<RequestStatus, string> = {
   pending: "Pendente",
   accepted: "Aceito",
   rejected: "Recusado",
-  cancelled: "Cancelado",
 };
 
 type Props = {
@@ -53,26 +48,22 @@ export function RequestListLayout({
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const { isOnline } = useNetworkStatus();
-  // Web larga: coluna mais larga e dois pedidos por linha, em vez de uma faixa estreita no meio.
-  const wide = useIsWideWeb();
-  const listColumns = useWebColumns(2, 3);
   const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "accepted" | "history">("all");
 
   const pendingCount = items.filter((item) => item.request.status === "pending").length;
   const acceptedCount = items.filter((item) => item.request.status === "accepted").length;
-  const isHistory = (status: RequestStatus) => status === "rejected" || status === "cancelled";
-  const historyCount = items.filter((item) => isHistory(item.request.status)).length;
+  const historyCount = items.filter((item) => item.request.status === "rejected").length;
 
   const filteredItems = items.filter((item) => {
     if (statusFilter === "pending") return item.request.status === "pending";
     if (statusFilter === "accepted") return item.request.status === "accepted";
-    if (statusFilter === "history") return isHistory(item.request.status);
+    if (statusFilter === "history") return item.request.status === "rejected";
     return true;
   });
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar title={title} onBack={() => onBack?.()} contentMaxWidth={wide ? WIDE_CONTENT_MAX_WIDTH : undefined} />
-      <View style={[styles.content, wide && styles.contentWide]}>
+      <TopAppBar title={title} onBack={() => onBack?.()} />
+      <View style={styles.content}>
         <View style={styles.heroBox}>
           <Text style={styles.heroTitle}>Sua estante em movimento.</Text>
           <Text style={styles.body}>Acompanhe as propostas dos seus livros.</Text>
@@ -116,30 +107,13 @@ export function RequestListLayout({
         ) : (
           <>
             <FlatList
-              key={wide ? `colunas-${listColumns}` : "uma-coluna"}
-              numColumns={wide ? listColumns : 1}
-              columnWrapperStyle={wide ? styles.columns : undefined}
               data={filteredItems}
               keyExtractor={(item) => item.request.id}
               contentContainerStyle={styles.listContent}
-              // O aviso acompanha o fim da lista, em vez de ficar preso no rodapé da janela.
-              ListFooterComponent={
-                items.length > 0 ? (
-                  <View style={styles.infoCard}>
-                    <IconBadge icon="chat" tone="action" />
-                    <View style={styles.bookInfo}>
-                      <Text style={styles.infoCardTitle}>Tudo pela conversa</Text>
-                      <Text style={styles.body}>
-                        Confira a proposta e combine os detalhes antes de reservar seu livro.
-                      </Text>
-                    </View>
-                  </View>
-                ) : undefined
-              }
               ListEmptyComponent={
                 items.length > 0 ? (
                   <View style={styles.emptyBox}>
-                    <IconBadge icon="swap" tone="neutral" size="large" />
+                    <IconBadge icon="swap" tone="neutral" />
                     <Text style={styles.body}>Nenhum pedido encontrado neste filtro.</Text>
                     <Pressable
                       accessibilityRole="button"
@@ -152,7 +126,7 @@ export function RequestListLayout({
                   </View>
                 ) : (
                   <View style={styles.emptyBox}>
-                    <IconBadge icon="swap" tone="neutral" size="large" />
+                    <IconBadge icon="swap" tone="neutral" />
                     <Text accessibilityRole="header" style={styles.emptyTitle}>
                       Nenhuma proposta ainda
                     </Text>
@@ -161,7 +135,7 @@ export function RequestListLayout({
                 )
               }
               renderItem={({ item }) => (
-                <View style={[styles.item, wide && styles.itemWide]}>
+                <View style={styles.item}>
                   <View style={styles.bookRow}>
                     <BookCover
                       id={item.listing.id}
@@ -189,6 +163,17 @@ export function RequestListLayout({
                 </View>
               )}
             />
+            {items.length > 0 ? (
+              <View style={styles.infoCard}>
+                <IconBadge icon="chat" tone="action" />
+                <View style={styles.bookInfo}>
+                  <Text style={styles.infoCardTitle}>Tudo pela conversa</Text>
+                  <Text style={styles.body}>
+                    Confira a proposta e combine os detalhes antes de reservar seu livro.
+                  </Text>
+                </View>
+              </View>
+            ) : null}
           </>
         )}
       </View>
@@ -247,9 +232,6 @@ function createStyles(colors: ColorPalette) {
     padding: tokens.spacing[24],
     paddingTop: tokens.spacing[32],
   },
-  contentWide: { maxWidth: WEB_MAX_WIDTH, paddingHorizontal: WEB_GUTTER },
-  columns: { gap: tokens.spacing[12] },
-  itemWide: { flex: 1, maxWidth: "50%" },
   back: {
     minHeight: tokens.accessibility.touchTarget,
     justifyContent: "center",
@@ -393,10 +375,6 @@ function createStyles(colors: ColorPalette) {
     color: colors.badge.donation.text,
   },
   rejected: {
-    backgroundColor: colors.disabledBackground,
-    color: colors.secondaryText,
-  },
-  cancelled: {
     backgroundColor: colors.disabledBackground,
     color: colors.secondaryText,
   },

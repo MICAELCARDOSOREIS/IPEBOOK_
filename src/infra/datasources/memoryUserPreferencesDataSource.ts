@@ -18,8 +18,4 @@ export class MemoryUserPreferencesDataSource implements IUserPreferencesDataSour
     this.preferences.set(userId, updated);
     return { ...updated };
   }
-
-  async upsertPreferences(userId: string, patch: UserPreferencesUpdate): Promise<StoredUserPreferences> {
-    return this.upsert(userId, patch);
-  }
 }

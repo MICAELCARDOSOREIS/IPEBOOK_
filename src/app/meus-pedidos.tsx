@@ -1,17 +1,12 @@
-import { pushOnce, replaceOnce } from "@/view/pushOnce";
-import ConversationsScreen from "@/view/conversations/conversations";
+import { router } from "expo-router";
+import SentRequestsScreen from "@/view/requests/sentRequests";
 
-/** Destino "Conversas" da barra de navegação (ADR 0011, Spec 076). */
 export default function MeusPedidosRoute() {
   return (
-    <ConversationsScreen
-      onRequireSignIn={() => replaceOnce("/entrar")}
-      onOpenChat={(id) => pushOnce(`/conversa/${id}` as never)}
-      onOpenNegotiation={(id) => pushOnce(`/negociacao/${id}`)}
-      onReportListing={(id) => pushOnce(`/denunciar/${id}`)}
-      onOpenReceivedRequests={() => pushOnce("/pedidos-recebidos")}
-      onOpenListing={(id) => pushOnce(`/livro/${id}`)}
-      onExplore={() => pushOnce("/pesquisa")}
+    <SentRequestsScreen
+      onBack={() => router.back()}
+      onRequireSignIn={() => router.replace("/entrar")}
+      onNavigateToNegotiationDetail={(id) => router.push(`/negociacao/${id}`)}
     />
   );
 }

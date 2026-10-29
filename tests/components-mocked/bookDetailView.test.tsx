@@ -10,8 +10,7 @@ import BookDetail from "@/view/listings/bookDetail";
 vi.mock("@/viewmodel/useBookDetailViewModel", () => ({ useBookDetailViewModel: vi.fn() }));
 vi.mock("@/viewmodel/useAuthViewModel", () => ({ useAuthViewModel: vi.fn() }));
 vi.mock("@/viewmodel/useRequestNegotiationViewModel", () => ({ useRequestNegotiationViewModel: vi.fn() }));
-vi.mock("@/viewmodel/useShareListingViewModel", () => ({ useShareListingViewModel: vi.fn(), SHARE_BASE_URL: "https://ipebook.app" }));
-vi.mock("react-native-view-shot", () => ({ captureRef: vi.fn().mockResolvedValue("file:///tmp/anuncio.png") }));
+vi.mock("@/viewmodel/useShareListingViewModel", () => ({ useShareListingViewModel: vi.fn() }));
 vi.mock("@/viewmodel/usePublicProfileViewModel", () => ({ usePublicProfileViewModel: vi.fn() }));
 
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
@@ -87,12 +86,11 @@ function setup(
   ]);
   const share = vi.fn().mockResolvedValue(undefined);
   const shareToWhatsApp = vi.fn().mockResolvedValue(undefined);
-  const shareImage = vi.fn().mockResolvedValue(undefined);
   vi.mocked(useShareListingViewModel).mockReturnValue([
     { ...emptyShare, ...options.share },
-    { share, shareImage, shareToWhatsApp, dismissLinkCopied: vi.fn() },
+    { share, shareToWhatsApp, dismissLinkCopied: vi.fn() },
   ]);
-  return { request, share, shareToWhatsApp, shareImage };
+  return { request, share, shareToWhatsApp };
 }
 
 async function renderDetail(props: Partial<React.ComponentProps<typeof BookDetail>> = {}) {
@@ -113,7 +111,7 @@ describe("BookDetail (spec 006, US6/T029)", () => {
     expect(headers).toContain("Dom Casmurro");
     expect(screen.getAllByText("Machado de Assis").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("Venda")).toBeDefined();
-    expect(screen.getByText(/R\$\s*42/)).toBeDefined();
+    expect(screen.getByText("R$ 42.00")).toBeDefined();
   });
 
   it("não mostra preço fora da modalidade venda", async () => {
@@ -128,67 +126,23 @@ describe("BookDetail (spec 006, US6/T029)", () => {
     expect(screen.getByRole("alert").props.children).toBe("Anúncio não encontrado.");
   });
 
-  it.each([
-    ["sale", "Tenho interesse"],
-    ["trade", "Propor troca"],
-    ["donation", "Quero receber"],
-  ] as const)("ação principal de %s é \"%s\" e solicita a negociação (Spec 074, CA1)", async (modality, label) => {
-    const { request } = setup(book({ ownerId: "other", modality, price: modality === "sale" ? 25 : undefined }), user);
+  it("oferece solicitar negociação para outra pessoa autenticada", async () => {
+    const { request } = setup(book({ ownerId: "other" }), user);
     const screen = await renderDetail();
-    await act(async () => { fireEvent.press(screen.getByText(label)); });
+    await act(async () => { fireEvent.press(screen.getByText("Solicitar negociação")); });
     expect(request).toHaveBeenCalledWith("b1", "me");
   });
 
-  it("não oferece ação principal no próprio anúncio, mas mantém compartilhar (Spec 074, CA2)", async () => {
+  it("não oferece solicitar negociação no próprio anúncio", async () => {
     setup(book({ ownerId: "me" }), user);
     const screen = await renderDetail();
-    expect(screen.queryByText("Propor troca")).toBeNull();
-    expect(screen.getByLabelText("Compartilhar anúncio como imagem")).toBeDefined();
+    expect(screen.queryByText("Solicitar negociação")).toBeNull();
   });
 
-  it("não oferece ação principal sem sessão (Spec 074, CA2)", async () => {
+  it("não oferece solicitar negociação sem sessão", async () => {
     setup(book({ ownerId: "other" }), null);
     const screen = await renderDetail();
-    expect(screen.queryByText("Propor troca")).toBeNull();
-  });
-
-  it("mostra valor e etiqueta por modalidade (Spec 074, CA3)", async () => {
-    setup(book({ modality: "trade" }), user);
-    const trade = await renderDetail();
-    expect(trade.getByText("Por outro livro")).toBeDefined();
-    expect(trade.getByText("Troca")).toBeDefined();
-
-    setup(book({ modality: "donation" }), user);
-    const donation = await renderDetail();
-    expect(donation.getByText("Gratuito")).toBeDefined();
-    expect(donation.getByText("Doação")).toBeDefined();
-  });
-
-  it("mostra o cartão da modalidade só em troca e doação (Spec 074, CA4)", async () => {
-    setup(book({ modality: "trade" }), user);
-    const trade = await renderDetail();
-    expect(trade.getByText("Aceita em troca")).toBeDefined();
-    expect(trade.queryByText("Doação para quem vai ler")).toBeNull();
-
-    setup(book({ modality: "donation" }), user);
-    const donation = await renderDetail();
-    expect(donation.getByText("Doação para quem vai ler")).toBeDefined();
-
-    setup(book({ modality: "sale", price: 10 }), user);
-    const sale = await renderDetail();
-    expect(sale.queryByText("Aceita em troca")).toBeNull();
-    expect(sale.queryByText("Doação para quem vai ler")).toBeNull();
-  });
-
-  it("lista conservação, categoria e retirada (Spec 074, CA5)", async () => {
-    setup(book({ condition: "good", category: "Romance", neighborhood: "Fonte dos Matos" }), user);
-    const screen = await renderDetail();
-    expect(screen.getByText("Conservação")).toBeDefined();
-    expect(screen.getByText("Bom estado")).toBeDefined();
-    expect(screen.getByText("Categoria")).toBeDefined();
-    expect(screen.getByText("Romance")).toBeDefined();
-    expect(screen.getByText("Retirada")).toBeDefined();
-    expect(screen.getByText("Fonte dos Matos")).toBeDefined();
+    expect(screen.queryByText("Solicitar negociação")).toBeNull();
   });
 
   it("mostra confirmação quando já solicitada e indica anúncio reservado", async () => {
@@ -207,7 +161,7 @@ describe("BookDetail (spec 006, US6/T029)", () => {
     setup(book({ ownerId: "owner-xyz" }), user, { ownerName: "Joana Lima" });
     const onNavigateToUserProfile = vi.fn();
     const screen = await renderDetail({ onNavigateToUserProfile });
-    await act(async () => { fireEvent.press(screen.getByLabelText("Anunciado por Joana Lima")); });
+    await act(async () => { fireEvent.press(screen.getByText("Anunciado por Joana Lima")); });
     expect(onNavigateToUserProfile).toHaveBeenCalledWith("owner-xyz");
   });
 
@@ -216,8 +170,7 @@ describe("BookDetail (spec 006, US6/T029)", () => {
     setup(book({ ownerId }), user, { ownerName: "Joana Lima" });
     const screen = await renderDetail();
     expect(screen.queryByText(new RegExp(ownerId))).toBeNull();
-    expect(screen.getByLabelText("Anunciado por Joana Lima")).toBeDefined();
-    expect(screen.getByText("Joana Lima")).toBeDefined();
+    expect(screen.getByText("Anunciado por Joana Lima")).toBeDefined();
   });
 
   it("usa rótulo genérico quando o perfil de quem anunciou não está disponível", async () => {
@@ -225,7 +178,7 @@ describe("BookDetail (spec 006, US6/T029)", () => {
     setup(book({ ownerId }), user);
     const screen = await renderDetail();
     expect(screen.queryByText(new RegExp(ownerId))).toBeNull();
-    expect(screen.getByLabelText("Anunciado por outro membro da comunidade")).toBeDefined();
+    expect(screen.getByText("Anunciado por outro membro da comunidade")).toBeDefined();
   });
 
   it("oferece ver fotos em tela cheia quando há foto de capa (Spec 018)", async () => {
@@ -234,24 +187,6 @@ describe("BookDetail (spec 006, US6/T029)", () => {
     const trigger = screen.getByLabelText("Ver fotos do anúncio em tela cheia");
     await act(async () => { fireEvent.press(trigger); });
     expect(screen.getByLabelText("Fechar galeria de fotos")).toBeDefined();
-  });
-
-  it("mostra editora, páginas, ano e a sinopse quando vêm do ISBN (Spec 097)", async () => {
-    setup(book({ synopsis: "Distopia futurista sobre vigilância.", publisher: "Companhia das Letras", pageCount: 416, publicationYear: 2009 }), user);
-    const screen = await renderDetail();
-    expect(screen.getByText("Editora")).toBeDefined();
-    expect(screen.getByText("Companhia das Letras")).toBeDefined();
-    expect(screen.getByText("416")).toBeDefined();
-    expect(screen.getByText("2009")).toBeDefined();
-    expect(screen.getByRole("header", { name: "Sinopse" })).toBeDefined();
-    expect(screen.getByText("Distopia futurista sobre vigilância.")).toBeDefined();
-  });
-
-  it("sem dados da edição, não mostra Editora, Páginas, Ano nem Sinopse (Spec 097)", async () => {
-    setup(book({}), user);
-    const screen = await renderDetail();
-    for (const rotulo of ["Editora", "Páginas", "Ano"]) expect(screen.queryByText(rotulo)).toBeNull();
-    expect(screen.queryByRole("header", { name: "Sinopse" })).toBeNull();
   });
 
   it("não oferece ver fotos quando o anúncio só tem capa ilustrativa (Spec 018)", async () => {
@@ -283,20 +218,19 @@ describe("BookDetail (spec 006, US6/T029)", () => {
     expect(share).toHaveBeenCalledWith("b1");
   });
 
-  it("compartilha a imagem do anúncio com os dados e a captura do cartão (Spec 092)", async () => {
-    const { shareImage } = setup(
+  it("compartilha no WhatsApp com os dados do anúncio (Issue #145)", async () => {
+    const { shareToWhatsApp } = setup(
       book({ ownerId: "other", modality: "sale", price: 42 }),
       null,
     );
     const screen = await renderDetail();
-    await act(async () => { fireEvent.press(screen.getByLabelText("Compartilhar anúncio como imagem")); });
-    expect(shareImage).toHaveBeenCalledWith(
-      "b1",
-      { title: "Dom Casmurro", author: "Machado de Assis", modality: "sale", price: 42 },
-      expect.any(Function),
-    );
-    const capture = vi.mocked(shareImage).mock.calls[0][2] as () => Promise<string>;
-    await expect(capture()).resolves.toBe("file:///tmp/anuncio.png");
+    await act(async () => { fireEvent.press(screen.getByLabelText("Compartilhar no WhatsApp")); });
+    expect(shareToWhatsApp).toHaveBeenCalledWith("b1", {
+      title: "Dom Casmurro",
+      author: "Machado de Assis",
+      modality: "sale",
+      price: 42,
+    });
   });
 
   it("mostra confirmação de link copiado (Spec 019)", async () => {

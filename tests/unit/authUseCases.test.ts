@@ -56,15 +56,6 @@ describe("autenticação: criar conta, entrar e sair (ISO/IEC 25010 - Adequaçã
     await expect(useCases.getSession()).resolves.toBeNull();
   });
 
-  it("autentica com Google e mantém sessão autenticada", async () => {
-    const useCases = new AuthUseCases(new MemoryAuthDataSource());
-    const user = await useCases.signInWithGoogle();
-
-    expect(user.id).toBe("google-dev-user");
-    expect(user.email).toBe("leitor.piripiri@gmail.com");
-    await expect(useCases.getSession()).resolves.toEqual(user);
-  });
-
   it("não troca a senha sem comprovação pelo e-mail", async () => {
     const useCases = new AuthUseCases(new MemoryAuthDataSource());
     await useCases.signUp("pessoa@exemplo.com", "12345678", "Leitora Teste");

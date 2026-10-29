@@ -20,7 +20,6 @@ const fakeUseCases: IBookUseCases = {
 } as unknown as IBookUseCases;
 
 const fakeRateLimiter = {
-  checkAndRecord: vi.fn().mockReturnValue({ allowed: true }),
   checkLimit: vi.fn().mockReturnValue(true),
   recordAttempt: vi.fn(),
   reset: vi.fn(),
@@ -119,58 +118,6 @@ describe("useCreateListingViewModel — Busca por ISBN (Spec 058)", () => {
     expect(hook.current[0].author).toBe("Machado de Assis");
     expect(hook.current[0].photoUrl).toBe("https://exemplo.com/capa.jpg");
     expect(hook.current[0].isbnFeedback?.type).toBe("success");
-  });
-
-  it("guarda sinopse, editora, páginas e ano do ISBN e os envia ao cadastrar o anúncio (Spec 097)", async () => {
-    const fakeMetadataService: IBookMetadataService = {
-      lookupByIsbn: vi.fn().mockResolvedValue({
-        isbn: "9788535914849",
-        title: "1984",
-        author: "George Orwell",
-        synopsis: "Distopia futurista.",
-        publisher: "Companhia das Letras",
-        pageCount: 416,
-        publicationYear: 2009,
-      }),
-    };
-    const hook = await renderHook(fakeMetadataService);
-    act(() => { hook.current[1].setIsbn("978-85-359-1484-9"); });
-    await act(async () => { await hook.current[1].lookupIsbn(); });
-    expect(hook.current[0].edition).toEqual({
-      synopsis: "Distopia futurista.",
-      publisher: "Companhia das Letras",
-      pageCount: 416,
-      publicationYear: 2009,
-    });
-
-    const createListing = vi.fn().mockResolvedValue({ id: "novo" });
-    (fakeUseCases as unknown as { createListing: unknown }).createListing = createListing;
-    act(() => { hook.current[1].setCondition("good"); hook.current[1].setPrice("20"); });
-    await act(async () => { await hook.current[1].submit("dono"); });
-    expect(createListing).toHaveBeenCalledWith(
-      expect.objectContaining({
-        title: "1984",
-        synopsis: "Distopia futurista.",
-        publisher: "Companhia das Letras",
-        pageCount: 416,
-        publicationYear: 2009,
-      }),
-      "dono",
-    );
-  });
-
-  it("uma nova busca troca a edição; sem dados da edição, o anúncio vai sem sinopse", async () => {
-    const lookupByIsbn = vi
-      .fn()
-      .mockResolvedValueOnce({ isbn: "9788535914849", title: "1984", author: "George Orwell", synopsis: "Primeira." })
-      .mockResolvedValueOnce({ isbn: "9788535902778", title: "Outro", author: "Autor" });
-    const hook = await renderHook({ lookupByIsbn });
-    act(() => { hook.current[1].setIsbn("978-85-359-1484-9"); });
-    await act(async () => { await hook.current[1].lookupIsbn(); });
-    expect(hook.current[0].edition.synopsis).toBe("Primeira.");
-    act(() => { hook.current[1].setIsbn("978-85-359-0277-8"); });
-    await act(async () => { await hook.current[1].lookupIsbn(); });
-    expect(hook.current[0].edition).toEqual({});
   });
 
   it("orienta preenchimento manual quando o exemplar não é encontrado", async () => {

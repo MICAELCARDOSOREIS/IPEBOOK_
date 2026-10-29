@@ -19,8 +19,6 @@ function requireSession(sessionUserId: string | null): string {
   return sessionUserId;
 }
 
-type Counterpart = { name: string | null; photoUrl: string | null };
-
 export class BookRequestUseCases implements IBookRequestUseCases {
   constructor(
     private readonly books: IBookDataSource,
@@ -39,7 +37,7 @@ export class BookRequestUseCases implements IBookRequestUseCases {
       throw new ValidationError("Você não pode negociar o próprio anúncio.");
     }
     // FR-003
-    if (listing.status === "reserved" || listing.status === "delivered") {
+    if (listing.status === "reserved") {
       throw new ValidationError("Este anúncio não está mais disponível.");
     }
     // FR-002
@@ -54,20 +52,14 @@ export class BookRequestUseCases implements IBookRequestUseCases {
     const userId = requireSession(sessionUserId);
     const myListings = await this.books.listByOwner(userId);
     const result: RequestWithListing[] = [];
-    const people = new Map<string, Counterpart>();
+    const names = new Map<string, string | null>();
     for (const listing of myListings) {
       const requests = await this.requests.listByListing(listing.id);
       for (const request of requests) {
-        if (!people.has(request.requesterId)) {
-          people.set(request.requesterId, await this.findCounterpart(request.requesterId));
+        if (!names.has(request.requesterId)) {
+          names.set(request.requesterId, await this.findCounterpartName(request.requesterId));
         }
-        const person = people.get(request.requesterId);
-        result.push({
-          request,
-          listing,
-          requesterName: person?.name ?? null,
-          requesterPhotoUrl: person?.photoUrl ?? null,
-        });
+        result.push({ request, listing, requesterName: names.get(request.requesterId) ?? null });
       }
     }
     return result;
@@ -125,21 +117,6 @@ export class BookRequestUseCases implements IBookRequestUseCases {
     return accepted;
   }
 
-  async cancelRequest(requestId: string, sessionUserId: string | null): Promise<BookRequest> {
-    const userId = requireSession(sessionUserId);
-    const request = await this.requests.findById(requestId);
-    if (!request) {
-      throw new ValidationError("Pedido não encontrado.");
-    }
-    if (request.requesterId !== userId) {
-      throw new AuthError("Somente quem fez o pedido pode cancelá-lo.");
-    }
-    if (request.status !== "pending") {
-      throw new ValidationError("Este pedido já foi respondido.");
-    }
-    return this.requests.respond(request.id, "cancelled");
-  }
-
   async getRequestDetail(
     requestId: string,
     sessionUserId: string | null,
@@ -170,25 +147,22 @@ export class BookRequestUseCases implements IBookRequestUseCases {
       book,
       isOwner,
       counterpartId,
-      ...(await this.findCounterpart(counterpartId).then((person) => ({
-        counterpartName: person.name,
-        counterpartPhotoUrl: person.photoUrl,
-      }))),
+      counterpartName: await this.findCounterpartName(counterpartId),
       safeMeetingPoints,
     };
   }
 
   /**
    * O encontro de `06.05` identifica a pessoa pelo nome. Uma falha ao ler o perfil não impede
-   * acompanhar a negociação: a tela recorre ao identificador. A foto vai junto para o avatar (Spec 084).
+   * acompanhar a negociação: a tela recorre ao identificador.
    */
-  private async findCounterpart(counterpartId: string): Promise<Counterpart> {
-    if (!this.profiles) return { name: null, photoUrl: null };
+  private async findCounterpartName(counterpartId: string): Promise<string | null> {
+    if (!this.profiles) return null;
     try {
       const profile = await this.profiles.findById(counterpartId);
-      return { name: profile?.name ?? null, photoUrl: profile?.photoUrl ?? null };
+      return profile?.name ?? null;
     } catch {
-      return { name: null, photoUrl: null };
+      return null;
     }
   }
 }

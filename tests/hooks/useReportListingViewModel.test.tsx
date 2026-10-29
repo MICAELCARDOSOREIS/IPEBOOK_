@@ -10,7 +10,6 @@ const mounted: ReactTestRenderer[] = [];
 
 function stubUseCases(overrides: Partial<IReportUseCases> = {}): IReportUseCases {
   return {
-    submitUserReport: vi.fn(),
     submitReport: vi.fn(async (input, reporterId) => ({
       id: "report-1",
       listingId: input.listingId,

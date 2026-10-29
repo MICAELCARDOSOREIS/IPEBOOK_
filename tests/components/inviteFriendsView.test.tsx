@@ -7,7 +7,6 @@ import type { InviteFriendsState, InviteFriendsActions } from "@/viewmodel/useIn
 vi.mock("@/viewmodel/useInviteFriendsViewModel", () => ({
   useInviteFriendsViewModel: vi.fn(),
 }));
-vi.mock("react-native-view-shot", () => ({ captureRef: vi.fn().mockResolvedValue("file:///tmp/convite.png") }));
 
 import { useInviteFriendsViewModel } from "@/viewmodel/useInviteFriendsViewModel";
 const mockedUseInviteFriendsViewModel = vi.mocked(useInviteFriendsViewModel);
@@ -20,12 +19,11 @@ function mockViewModel(
     sharing: false,
     linkCopied: false,
     error: null,
-    inviteMessage: "Oi! Participe do IpêBook em Piripiri: https://ipebook.app",
-    inviteUrl: "https://ipebook.app",
+    inviteMessage: "Oi! Participe do IpêBook em Piripiri: https://ipebook.pages.dev",
+    inviteUrl: "https://ipebook.pages.dev",
     ...state,
   };
   const fullActions: InviteFriendsActions = {
-    shareImage: vi.fn().mockResolvedValue(undefined),
     shareToWhatsApp: vi.fn().mockResolvedValue(undefined),
     shareNative: vi.fn().mockResolvedValue(undefined),
     copyLink: vi.fn().mockResolvedValue(undefined),
@@ -51,8 +49,47 @@ describe("InviteFriends — Convidar amigos (Figma 08.02, Spec 057)", () => {
     expect(screen.getByText("Convidar amigos")).toBeDefined();
     expect(screen.getByText("Livros ganham vida quando são lidos.")).toBeDefined();
     expect(
-      screen.getByText(/Oi! Participe do IpêBook em Piripiri: https:\/\/ipebook\.app/),
+      screen.getByText(/Oi! Participe do IpêBook em Piripiri: https:\/\/ipebook\.pages\.dev/),
     ).toBeDefined();
+  });
+
+  it("aciona envio pelo WhatsApp ao tocar no botão principal", async () => {
+    const actions = mockViewModel();
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<InviteFriends />);
+    });
+
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Enviar convite pelo WhatsApp"));
+    });
+    expect(actions.shareToWhatsApp).toHaveBeenCalledTimes(1);
+  });
+
+  it("aciona compartilhamento nativo ao tocar em outras opções", async () => {
+    const actions = mockViewModel();
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<InviteFriends />);
+    });
+
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Mais opções de compartilhamento"));
+    });
+    expect(actions.shareNative).toHaveBeenCalledTimes(1);
+  });
+
+  it("aciona cópia de link ao tocar no botão de texto", async () => {
+    const actions = mockViewModel();
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<InviteFriends />);
+    });
+
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Copiar link do aplicativo"));
+    });
+    expect(actions.copyLink).toHaveBeenCalledTimes(1);
   });
 
   it("exibe aviso acessível quando o link foi copiado", async () => {
@@ -65,6 +102,7 @@ describe("InviteFriends — Convidar amigos (Figma 08.02, Spec 057)", () => {
     expect(
       screen.getByText("Link copiado para a área de transferência!"),
     ).toBeDefined();
+    expect(screen.getByText("Link copiado!")).toBeDefined();
   });
 
   it("chama onBack ao acionar o botão de voltar", async () => {
@@ -79,24 +117,5 @@ describe("InviteFriends — Convidar amigos (Figma 08.02, Spec 057)", () => {
       fireEvent.press(screen.getByLabelText("Voltar"));
     });
     expect(onBack).toHaveBeenCalledTimes(1);
-  });
-
-  it("um único botão Compartilhar convite envia imagem e texto, sem os outros botões (Spec 092)", async () => {
-    const actions = mockViewModel();
-    let screen!: Awaited<ReturnType<typeof render>>;
-    await act(async () => {
-      screen = await render(<InviteFriends />);
-    });
-    expect(screen.getByLabelText("Convite para o IpêBook em Piripiri. Acesse ipebook.app")).toBeDefined();
-    await act(async () => {
-      fireEvent.press(screen.getByLabelText("Compartilhar o convite com imagem e texto"));
-    });
-    expect(actions.shareImage).toHaveBeenCalledTimes(1);
-    expect(screen.queryByLabelText("Enviar convite pelo WhatsApp")).toBeNull();
-    expect(screen.queryByLabelText("Mais opções de compartilhamento")).toBeNull();
-    expect(screen.queryByLabelText("Copiar link do aplicativo")).toBeNull();
-    expect(screen.getByText("Texto que vai junto com a imagem")).toBeDefined();
-    const capture = vi.mocked(actions.shareImage).mock.calls[0][0];
-    await expect(capture()).resolves.toBe("file:///tmp/convite.png");
   });
 });

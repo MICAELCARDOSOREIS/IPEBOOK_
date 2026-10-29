@@ -42,7 +42,30 @@ describe("indicador de sessão na Home (ISO/IEC 25010 - Usabilidade)", () => {
     expect(onNavigateToSignIn).toHaveBeenCalledTimes(1);
   });
 
-  it("com sessão, mantém o topo do Figma 02.01: sem e-mail, Entrar, Anunciar, Sair ou atalhos", async () => {
+  it("mostra e-mail da sessão e botão Sair quando autenticado", async () => {
+    mockedUseHomeViewModel.mockReturnValue([baseHomeState, baseHomeActions]);
+    const authState: AuthState = {
+      user: { id: "1", email: "pessoa@exemplo.com" },
+      loading: false,
+      error: null,
+    };
+    const signOut = vi.fn().mockResolvedValue(undefined);
+    const authActions: AuthActions = { signUp: vi.fn(), signIn: vi.fn(), signOut, requestPasswordReset: vi.fn() };
+    mockedUseAuthViewModel.mockReturnValue([authState, authActions]);
+
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<Home />);
+    });
+
+    expect(screen.getByText("Olá, pessoa@exemplo.com")).toBeDefined();
+    await act(async () => {
+      fireEvent.press(screen.getByText("Sair"));
+    });
+    expect(signOut).toHaveBeenCalledTimes(1);
+  });
+
+  it("mostra botão Anunciar quando autenticado e aciona a navegação", async () => {
     mockedUseHomeViewModel.mockReturnValue([baseHomeState, baseHomeActions]);
     const authState: AuthState = {
       user: { id: "1", email: "pessoa@exemplo.com" },
@@ -51,18 +74,17 @@ describe("indicador de sessão na Home (ISO/IEC 25010 - Usabilidade)", () => {
     };
     const authActions: AuthActions = { signUp: vi.fn(), signIn: vi.fn(), signOut: vi.fn(), requestPasswordReset: vi.fn() };
     mockedUseAuthViewModel.mockReturnValue([authState, authActions]);
+    const onNavigateToCreateListing = vi.fn();
 
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
-      screen = await render(<Home />);
+      screen = await render(<Home onNavigateToCreateListing={onNavigateToCreateListing} />);
     });
 
-    expect(screen.queryByText(/pessoa@exemplo\.com/)).toBeNull();
-    for (const label of ["Entrar", "Anunciar", "Sair", "Favoritos", "Meus alertas", "Meus anúncios", "Pedidos recebidos", "Meus pedidos"]) {
-      expect(screen.queryByText(label)).toBeNull();
-    }
-    expect(screen.getByLabelText("Abrir notificações")).toBeDefined();
-    expect(screen.getByLabelText("Selecionar bairro: Centro")).toBeDefined();
+    await act(async () => {
+      fireEvent.press(screen.getByText("Anunciar"));
+    });
+    expect(onNavigateToCreateListing).toHaveBeenCalledTimes(1);
   });
 
   it("não mostra botão Anunciar quando não há sessão autenticada", async () => {

@@ -17,30 +17,17 @@ const AndroidNotificationPriority = {
   LOW: "low",
 };
 
-const __mock = { lastResponse: null, listener: undefined, removed: 0, lastBadge: undefined, channels: [] };
-
 module.exports = {
-  __mock,
   SchedulableTriggerInputTypes,
   AndroidImportance,
   AndroidNotificationPriority,
   setNotificationHandler: () => {},
-  setNotificationChannelAsync: async (channelId, channel) => {
-    __mock.channels.push({ channelId, channel });
-  },
+  setNotificationChannelAsync: async () => {},
   scheduleNotificationAsync: async () => "mock-notification-id",
   cancelScheduledNotificationAsync: async () => {},
-  setBadgeCountAsync: async (count) => {
-    __mock.lastBadge = count;
-    return true;
-  },
   getPermissionsAsync: async () => ({ status: "granted", granted: true }),
   requestPermissionsAsync: async () => ({ status: "granted", granted: true }),
   getExpoPushTokenAsync: async () => ({ data: "ExponentPushToken[mock-token]" }),
   addNotificationReceivedListener: () => ({ remove: () => {} }),
-  addNotificationResponseReceivedListener: (listener) => {
-    __mock.listener = listener;
-    return { remove: () => { __mock.removed += 1; } };
-  },
-  getLastNotificationResponseAsync: async () => __mock.lastResponse,
+  addNotificationResponseReceivedListener: () => ({ remove: () => {} }),
 };

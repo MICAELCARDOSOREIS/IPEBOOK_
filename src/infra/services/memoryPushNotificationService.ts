@@ -19,7 +19,6 @@ export class MemoryPushNotificationService implements IPushNotificationService {
   private pushToken: string | null;
   private scheduled = new Map<string, StoredScheduledNotification>();
   private nextId = 1;
-  private badgeCount = 0;
 
   constructor(initialGranted = true, pushToken: string | null = "ExponentPushToken[mock-local-token]") {
     this.permissionGranted = initialGranted;
@@ -42,20 +41,6 @@ export class MemoryPushNotificationService implements IPushNotificationService {
   async registerForPushNotifications(): Promise<string | null> {
     if (!this.permissionGranted) return null;
     return this.pushToken;
-  }
-
-  private readonly openedListeners = new Set<(target: { url: string | null }) => void>();
-
-  subscribeToOpened(listener: (target: { url: string | null }) => void): () => void {
-    this.openedListeners.add(listener);
-    return () => {
-      this.openedListeners.delete(listener);
-    };
-  }
-
-  /** Simula o toque na notificação, para os testes. */
-  simulateOpened(url: string | null): void {
-    for (const listener of this.openedListeners) listener({ url });
   }
 
   async scheduleLocalNotification(options: NotificationScheduleOptions): Promise<string | null> {
@@ -99,17 +84,7 @@ export class MemoryPushNotificationService implements IPushNotificationService {
         type: "meeting_update",
       },
       triggerSeconds,
-      channelId: "reminders",
     });
-  }
-
-  async setBadgeCount(count: number): Promise<void> {
-    this.badgeCount = Math.max(0, Math.trunc(count));
-  }
-
-  /** Último selo ajustado, para os testes verificarem a sincronização (Spec 099). */
-  getBadgeCount(): number {
-    return this.badgeCount;
   }
 
   async cancelScheduledNotification(notificationId: string): Promise<boolean> {
@@ -123,6 +98,5 @@ export class MemoryPushNotificationService implements IPushNotificationService {
   clear(): void {
     this.scheduled.clear();
     this.nextId = 1;
-    this.badgeCount = 0;
   }
 }
