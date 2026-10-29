@@ -188,3 +188,32 @@ describe("Conexão com Google no convite do beta (Spec 108)", () => {
     expect(signOut).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("Navegação para a Home a partir do Beta (Spec 108)", () => {
+  it("chama onNavigateHome ao clicar no botão 'Início' ou no logotipo", async () => {
+    const onNavigateHome = vi.fn();
+    const state = { loading: false, error: null, success: false };
+    const actions = { submit: vi.fn(), reset: vi.fn() };
+
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(
+        <BetaInviteScreen
+          state={state}
+          actions={actions}
+          onNavigateHome={onNavigateHome}
+        />,
+      );
+    });
+
+    await act(async () => {
+      fireEvent.press(screen.getByText("Início"));
+    });
+    expect(onNavigateHome).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Ir para a página inicial do IpêBook"));
+    });
+    expect(onNavigateHome).toHaveBeenCalledTimes(2);
+  });
+});

@@ -41,13 +41,27 @@ export type BetaInviteScreenProps = {
   onOpenUrl?: (url: string) => void;
   /** Grupo do Google dos testadores; `null` enquanto não existir. */
   groupUrl?: string | null;
+  /** Navega de volta para a tela inicial / home. */
+  onNavigateHome?: () => void;
+};
+
+export type BetaInviteRouteProps = {
+  onNavigateHome?: () => void;
 };
 
 /** Página pública `/beta` (Spec 108), ligada ao caso de uso real. */
-export default function BetaInviteRoute() {
+export default function BetaInviteRoute({ onNavigateHome }: BetaInviteRouteProps = {}) {
   const [state, actions] = useBetaSignupViewModel();
   const [authState, authActions] = useAuthViewModel();
-  return <BetaInviteScreen state={state} actions={actions} authState={authState} authActions={authActions} />;
+  return (
+    <BetaInviteScreen
+      state={state}
+      actions={actions}
+      authState={authState}
+      authActions={authActions}
+      onNavigateHome={onNavigateHome}
+    />
+  );
 }
 
 /** Convite para testar o app Android e cadastro do Gmail. */
@@ -59,6 +73,7 @@ export function BetaInviteScreen({
   onOpenStore = () => void Linking.openURL(PLAY_STORE_URL).catch(() => {}),
   onOpenUrl = (url) => void Linking.openURL(url).catch(() => {}),
   groupUrl = BETA_GROUP_URL,
+  onNavigateHome = () => {},
 }: BetaInviteScreenProps) {
   const steps = installSteps(groupUrl);
   const { colors } = useTheme();
@@ -143,7 +158,7 @@ export function BetaInviteScreen({
             <IconBadge icon="checkCircle" tone="action" size="medium" />
             <View style={styles.connectedHeaderText}>
               <Text accessibilityRole="alert" style={styles.cardTitle}>Conta conectada!</Text>
-              <Text style={styles.connectedSubtitle}>Pronto para testar o aplicativo</Text>
+              <Text style={styles.connectedSubtitle}>E-mail registrado no IpêBook</Text>
             </View>
           </View>
           <View style={styles.connectedBadge}>
@@ -155,19 +170,52 @@ export function BetaInviteScreen({
               <Text style={styles.connectedEmail}>{authState.user.email}</Text>
             </View>
           </View>
-          <Text style={styles.cardNote}>
-            Sua conta Google foi registrada no teste. Toque no botão abaixo para abrir a Play Store em português e aceitar o convite.
+
+          <Text style={styles.connectedInstructions}>
+            Para o Google Play liberar o download no seu Android, siga os 2 passos:
           </Text>
-          <FilledButton
-            label="Abrir teste na Play Store"
-            onPress={() => onOpenUrl(TESTING_OPT_IN_URL)}
-          />
-          {groupUrl ? (
-            <OutlinedButton
-              label="Entrar no grupo de testadores"
-              onPress={() => onOpenUrl(groupUrl)}
+
+          <View style={styles.connectedStep}>
+            <View style={styles.connectedStepHeader}>
+              <View style={styles.stepNumberBadge}>
+                <Text style={styles.stepNumberText}>1</Text>
+              </View>
+              <Text style={styles.connectedStepTitle}>Entre no grupo de testadores</Text>
+            </View>
+            <Text style={styles.connectedStepText}>
+              Exigência da Play Store: abra o grupo com esta conta Google e toque em "Participar do grupo".
+            </Text>
+            {groupUrl ? (
+              <OutlinedButton
+                label="Entrar no grupo de testadores"
+                onPress={() => onOpenUrl(groupUrl)}
+              />
+            ) : null}
+          </View>
+
+          <View style={styles.connectedStep}>
+            <View style={styles.connectedStepHeader}>
+              <View style={styles.stepNumberBadge}>
+                <Text style={styles.stepNumberText}>2</Text>
+              </View>
+              <Text style={styles.connectedStepTitle}>Aceite o convite na Play Store</Text>
+            </View>
+            <Text style={styles.connectedStepText}>
+              Depois de entrar no grupo, abra o convite no Google Play e toque em "Aceitar convite" ou "Tornar-se um testador".
+            </Text>
+            <FilledButton
+              label="Abrir teste na Play Store"
+              onPress={() => onOpenUrl(TESTING_OPT_IN_URL)}
             />
-          ) : null}
+          </View>
+
+          <View style={styles.syncNotice}>
+            <AppIcon name="info" size={18} color={colors.m3.onSurfaceVariant} />
+            <Text style={styles.syncNoticeText}>
+              A liberação pelo Google Play pode levar de 5 a 15 minutos após você entrar no grupo. Se a loja disser que o app não está disponível, aguarde alguns minutos e tente abrir o passo 2 novamente.
+            </Text>
+          </View>
+
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Usar outra conta Google"
@@ -183,10 +231,16 @@ export function BetaInviteScreen({
           <Text accessibilityRole="alert" style={styles.cardTitle}>Inscrição recebida!</Text>
           <Text style={styles.cardText}>
             {email.trim() ? `Anotamos ${email.trim().toLowerCase()}.` : "Anotamos seu Gmail."}{" "}
-            Para instalar agora, siga os passos de "Como instalar" ou abra a Play Store abaixo.
+            Para o Google Play liberar o download no seu Android, siga os passos abaixo:
           </Text>
+          {groupUrl ? (
+            <OutlinedButton
+              label="1. Entrar no grupo de testadores"
+              onPress={() => onOpenUrl(groupUrl)}
+            />
+          ) : null}
           <FilledButton
-            label="Abrir teste na Play Store"
+            label="2. Abrir teste na Play Store"
             onPress={() => onOpenUrl(TESTING_OPT_IN_URL)}
           />
           <OutlinedButton
@@ -253,11 +307,32 @@ export function BetaInviteScreen({
     <SafeAreaView style={styles.page}>
       <View style={styles.topBar}>
         <View style={[styles.topBarInner, wide && styles.wideWidth]}>
-          <Logotipo />
-          <ThemeToggleButton />
+          <Pressable
+            accessibilityRole="link"
+            accessibilityLabel="Ir para a página inicial do IpêBook"
+            onPress={onNavigateHome}
+            style={styles.logoPressable}
+          >
+            <Logotipo />
+          </Pressable>
+          <View style={styles.topBarActions}>
+            <Pressable
+              accessibilityRole="link"
+              accessibilityLabel="Voltar para a página inicial"
+              onPress={onNavigateHome}
+              style={styles.homeLink}
+            >
+              <AppIcon name="home" size={18} color={colors.m3.onSurfaceVariant} />
+              <Text style={styles.homeLinkText}>Início</Text>
+            </Pressable>
+            <ThemeToggleButton />
+          </View>
         </View>
       </View>
-      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        contentContainerStyle={[styles.scroll, wide && styles.scrollWide]}
+        keyboardShouldPersistTaps="handled"
+      >
         {wide ? (
           <View style={[styles.wideRow, styles.wideWidth]}>
             <View style={styles.wideIntro}>{intro}</View>
@@ -284,18 +359,67 @@ function createStyles(colors: ColorPalette) {
     page: { flex: 1, backgroundColor: colors.background },
     topBar: {
       paddingHorizontal: tokens.spacing[24],
-      paddingVertical: tokens.spacing[12],
+      paddingVertical: tokens.spacing[16],
       borderBottomWidth: StyleSheet.hairlineWidth,
       borderBottomColor: colors.m3.outlineVariant,
       backgroundColor: colors.background,
     },
-    topBarInner: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", width: "100%", alignSelf: "center" },
-    wideWidth: { maxWidth: Math.min(WEB_MAX_WIDTH, 1120), width: "100%", alignSelf: "center" },
-    scroll: { flexGrow: 1, paddingHorizontal: tokens.spacing[24], paddingTop: tokens.spacing[24], paddingBottom: tokens.spacing[48] },
+    topBarInner: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      width: "100%",
+      alignSelf: "center",
+    },
+    logoPressable: {
+      alignSelf: "center",
+      cursor: "pointer" as never,
+    },
+    topBarActions: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[12],
+    },
+    homeLink: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[6],
+      paddingVertical: tokens.spacing[8],
+      paddingHorizontal: tokens.spacing[12],
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.m3.surfaceContainerHigh,
+      cursor: "pointer" as never,
+    },
+    homeLinkText: {
+      ...tokens.typography.labelMedium,
+      color: colors.m3.onSurface,
+      fontFamily: fontFamily.medium,
+    },
+    wideWidth: {
+      maxWidth: 1360,
+      width: "100%",
+      alignSelf: "center",
+    },
+    scroll: {
+      flexGrow: 1,
+      paddingHorizontal: tokens.spacing[24],
+      paddingTop: tokens.spacing[24],
+      paddingBottom: tokens.spacing[48],
+    },
+    scrollWide: {
+      paddingHorizontal: tokens.spacing[48],
+      paddingTop: tokens.spacing[32],
+    },
     narrow: { width: "100%", maxWidth: 560, alignSelf: "center", gap: tokens.spacing[24] },
-    wideRow: { flexDirection: "row", alignItems: "flex-start", gap: 64, paddingTop: tokens.spacing[32] },
-    wideIntro: { flex: 1.1 },
-    wideForm: { flex: 1, maxWidth: 480 },
+    wideRow: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+      justifyContent: "space-between",
+      gap: 56,
+      paddingTop: tokens.spacing[16],
+    },
+    wideIntro: { flex: 1.15, maxWidth: 680 },
+    wideForm: { flex: 1, maxWidth: 500, minWidth: 400 },
     intro: { gap: tokens.spacing[20] },
     pill: {
       flexDirection: "row",
@@ -309,8 +433,8 @@ function createStyles(colors: ColorPalette) {
     },
     pillText: { ...tokens.typography.labelMedium, color: colors.m3.onSurfaceVariant },
     title: { fontFamily: fontFamily.brand, fontSize: 34, lineHeight: 42, color: colors.m3.onSurface },
-    titleWide: { fontSize: 52, lineHeight: 60 },
-    lead: { ...tokens.typography.bodyLarge, fontSize: 18, lineHeight: 28, color: colors.m3.onSurfaceVariant, maxWidth: 560 },
+    titleWide: { fontSize: 50, lineHeight: 58 },
+    lead: { ...tokens.typography.bodyLarge, fontSize: 18, lineHeight: 28, color: colors.m3.onSurfaceVariant, maxWidth: 620 },
     sectionTitle: { ...tokens.typography.titleMedium, color: colors.m3.onSurface, marginTop: tokens.spacing[8] },
     steps: { gap: tokens.spacing[20] },
     step: { flexDirection: "row", gap: tokens.spacing[16], alignItems: "flex-start" },
@@ -346,7 +470,7 @@ function createStyles(colors: ColorPalette) {
     cardIllustration: { width: "100%", height: 150 },
     cardTitle: { ...tokens.typography.titleLarge, color: colors.m3.onSurface },
     cardText: { ...bodyMedium, color: colors.m3.onSurfaceVariant, marginTop: -tokens.spacing[8] },
-    success: { gap: tokens.spacing[16], alignItems: "flex-start" },
+    success: { gap: tokens.spacing[16], alignItems: "stretch" },
     error: { ...bodyMedium, color: colors.error },
     connectedCard: { gap: tokens.spacing[16], alignItems: "stretch" },
     connectedHeader: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[12] },
@@ -371,8 +495,66 @@ function createStyles(colors: ColorPalette) {
       fontFamily: fontFamily.medium,
       color: colors.m3.onSurfaceVariant,
     },
-    cardNote: {
+    connectedInstructions: {
       ...bodyMedium,
+      color: colors.m3.onSurface,
+      fontFamily: fontFamily.medium,
+    },
+    connectedStep: {
+      gap: tokens.spacing[8],
+      padding: tokens.spacing[12],
+      borderRadius: tokens.radius.medium,
+      backgroundColor: colors.m3.surfaceContainer,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.m3.outlineVariant,
+    },
+    connectedStepHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[8],
+    },
+    stepNumberBadge: {
+      width: 22,
+      height: 22,
+      borderRadius: 11,
+      backgroundColor: colors.m3.primary,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    stepNumberText: {
+      color: colors.m3.onPrimary,
+      fontFamily: fontFamily.semiBold,
+      fontSize: 12,
+      lineHeight: 14,
+    },
+    connectedStepTitle: {
+      ...tokens.typography.titleMedium,
+      fontSize: 15,
+      lineHeight: 20,
+      color: colors.m3.onSurface,
+      fontFamily: fontFamily.medium,
+    },
+    connectedStepText: {
+      ...bodyMedium,
+      fontSize: 13,
+      lineHeight: 18,
+      color: colors.m3.onSurfaceVariant,
+    },
+    syncNotice: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+      gap: tokens.spacing[8],
+      padding: tokens.spacing[12],
+      borderRadius: tokens.radius.medium,
+      backgroundColor: colors.m3.surfaceContainer,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.m3.outlineVariant,
+    },
+    syncNoticeText: {
+      flex: 1,
+      ...bodyMedium,
+      fontSize: 12,
+      lineHeight: 17,
       color: colors.m3.onSurfaceVariant,
     },
     switchAccount: {
