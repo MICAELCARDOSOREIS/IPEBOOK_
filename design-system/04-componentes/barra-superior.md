@@ -14,7 +14,7 @@ Origem no sistema base: Material 3, Top app bar (small). Situação: **Herdado**
 
 ## Anatomia
 
-1. Barra de 64 px, fundo `surface` (ou uma barra sobreposta quando `floating`)
+1. Barra de 64 px, fundo `surface`
 2. Botão voltar à esquerda
 3. Título centralizado ou à esquerda (nome da tela, nunca de um estado)
 
@@ -27,8 +27,7 @@ Não há variantes — estrutura única em todo o app.
 | Estado | Aparência (tokens) | Comportamento | Acessibilidade |
 | --- | --- | --- | --- |
 | Padrão | fundo `surface` | - | Título lido como cabeçalho da tela |
-| Sobre mapa | `surface-container` + `elevation-3` | A barra cobre a área superior do mapa quando `floating` é verdadeiro | - |
-| Web larga | Trilha de 48 px sem faixa própria | Mostra "Voltar", divisor e título alinhados à coluna de conteúdo | - |
+| Rolada | `elevation-2` | Sombra aparece ao rolar o conteúdo | - |
 
 ## Acessibilidade
 
@@ -44,10 +43,19 @@ Não há variantes — estrutura única em todo o app.
 ## Código
 
 ```tsx
-import { TopAppBar } from "@/view/components/TopAppBar";
+import { Pressable, Text, View } from "react-native";
+import { tokens } from "@/view/tokens";
 
-<TopAppBar title="Detalhe" onBack={goBack} contentMaxWidth={560} />
-
-// Em telas com mapa em tela cheia:
-<TopAppBar title="Combinar encontro" onBack={goBack} floating />
+function BarraSuperior({ titulo, onVoltar }: { titulo: string; onVoltar: () => void }) {
+  return (
+    <View style={{ height: 64, flexDirection: "row", alignItems: "center", backgroundColor: tokens.colors.surface, paddingHorizontal: tokens.spacing[12] }}>
+      <Pressable onPress={onVoltar} accessibilityLabel="Voltar" hitSlop={12}>
+        <Text>←</Text>
+      </Pressable>
+      <Text accessibilityRole="header" style={{ marginLeft: tokens.spacing[12], ...tokens.typography.titleMedium }}>
+        {titulo}
+      </Text>
+    </View>
+  );
+}
 ```

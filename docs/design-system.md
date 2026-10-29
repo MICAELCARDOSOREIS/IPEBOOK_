@@ -36,9 +36,9 @@ A paleta de cores foi extraída e padronizada diretamente a partir das coleçõe
 
 | Token | Hex | Amostra | Finalidade e Justificativa de IHC |
 | :--- | :---: | :---: | :--- |
-| `color.background` | `#FCFAF5` | Creme Claro | Fundo geral do app. É o mesmo valor de `surface` (`design-system/tokens.json`), como nos SVGs Android: as telas e as barras de topo compartilham o tom, e a profundidade vem de `surface-container-*`. |
-| `color.surface` | `#FCFAF5` | Creme Claro | Superfície de cartões, listas e seções elevadas, criando hierarquia de profundidade sutil sem necessidade de sombras pesadas (ADR 0056). |
-| `color.text` | `#3C302A` | Marrom Profundo | Cor principal de leitura e títulos. Proporciona alto contraste (> 8.5:1) sobre `#FCFAF5`, superando o critério WCAG AAA. |
+| `color.background` | `#F6F1E8` | Creme Suave | Fundo geral do app. Reproduz a textura acolhedora de folhas de livro (pólen/creme), reduzindo a fadiga visual em comparação ao branco puro (`#FFFFFF`). |
+| `color.surface` | `#FCFAF5` | Creme Claro | Superfície de cartões, listas e seções elevadas, criando hierarquia de profundidade sutil sem necessidade de sombras pesadas. |
+| `color.text` | `#3C302A` | Marrom Profundo | Cor principal de leitura e títulos. Proporciona alto contraste (> 8.5:1) sobre `#F6F1E8`, superando o critério WCAG AAA. |
 | `color.secondaryText`| `#645B55` | Cinza Acolhedor | Metadados, subtítulos e textos auxiliares (contraste > 4.6:1 sobre o fundo). |
 | `color.action` | `#2C5E45` | Verde Ipê Folha | Ações principais, botões afirmativos e destaque de navegação ativa. Transmite segurança e estabilidade. |
 | `color.actionDeep` | `#2F503D` | Verde Profundo | Estados pressionados de botões e cabeçalhos escuros. |
@@ -62,9 +62,9 @@ Para garantir que pessoas com daltonismo compreendam o anúncio, **cada modalida
 ### 2.3 Capas Ilustrativas (Livros sem foto)
 
 Quando um usuário cadastra um anúncio sem enviar foto da câmera, o app gera uma capa estilizada com fundo editorial:
-- **Azul Noturno:** `#253C4F` (contraste com texto `#F5EFE8`)
-- **Marrom Terra:** `#7B4A2F` (contraste com texto `#F5EFE8`)
-- **Verde Floresta:** `#30574A` (contraste com texto `#F5EFE8`)
+- **Azul Noturno:** `#253C4F` (contraste com texto `#F6F1E8`)
+- **Marrom Terra:** `#633E36` (contraste com texto `#F6F1E8`)
+- **Verde Floresta:** `#30574A` (contraste com texto `#F6F1E8`)
 
 ### 2.4 Estados de Sistema e Feedback
 
@@ -120,7 +120,7 @@ O sistema adota uma escala métrica baseada em múltiplos de **4 e 8 dp**, garan
 - **Medium (`14 px`):** Cards de livros, caixas de diálogo e superfícies de destaque.
 - **Large (`18 px`):** Painéis flutuantes e modais centrais.
 - **Extra Large (`24 px`):** Folhas de ação deslizantes (*bottom sheets*).
-- **Full (`9999 px`):** Badges de modalidade e avatares de usuário. Os chips de filtro usam `radius.small` (8 px), como no Figma `02.01`–`02.04` (ver ADR 0056 e `04-componentes/chip.md`).
+- **Full (`9999 px`):** Chips de filtro, badges de modalidade e avatares de usuário.
 
 ---
 

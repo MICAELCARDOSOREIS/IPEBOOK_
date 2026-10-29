@@ -4,10 +4,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useReceivedRatingsViewModel } from "@/viewmodel/useReceivedRatingsViewModel";
 import { TopAppBar } from "@/view/components/TopAppBar";
-import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
-import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
 
 export type ReceivedRatingsProps = {
   sessionUserId: string | null;
@@ -30,14 +28,12 @@ export function ReceivedRatings({ sessionUserId, onBack }: ReceivedRatingsProps)
   const [state, actions] = useReceivedRatingsViewModel(sessionUserId);
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  // Web larga: coluna mais ampla e dois cartões por linha.
-  const wide = useIsWideWeb();
 
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar contentMaxWidth={wide ? WIDE_CONTENT_MAX_WIDTH : undefined} title="Avaliações recebidas" onBack={onBack} />
+      <TopAppBar title="Avaliações recebidas" onBack={onBack} />
       <ScrollView contentContainerStyle={styles.scroll}>
-        <View style={[styles.content, wide && styles.contentWide]}>
+        <View style={styles.content}>
           {state.loading ? (
             <View style={styles.status}>
               <ActivityIndicator color={colors.action} accessibilityLabel="Carregando avaliações" />
@@ -59,9 +55,9 @@ export function ReceivedRatings({ sessionUserId, onBack }: ReceivedRatingsProps)
               <Text style={styles.emptyText}>Você ainda não recebeu avaliações.</Text>
             </View>
           ) : (
-            <View style={[styles.list, wide && styles.listWide]}>
+            <View style={styles.list}>
               {state.ratings.map((rating) => (
-                <View key={rating.id} style={[styles.card, wide && styles.cardWide]}>
+                <View key={rating.id} style={styles.card}>
                   <Text
                     accessibilityLabel={`Nota ${rating.score} de 5`}
                     style={styles.stars}
@@ -97,8 +93,6 @@ export default function ReceivedRatingsScreen({ onBack, onNavigateToSignIn }: Re
   return <ReceivedRatings sessionUserId={authState.user.id} onBack={onBack} />;
 }
 
-const WIDE_CONTENT_MAX_WIDTH = WEB_MAX_WIDTH;
-
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
   page: { flex: 1, backgroundColor: colors.background },
@@ -119,9 +113,6 @@ function createStyles(colors: ColorPalette) {
   },
   retryText: { ...tokens.typography.bodyMedium, color: colors.action, fontWeight: "600" },
   list: { gap: tokens.spacing[12] },
-  contentWide: { maxWidth: WEB_MAX_WIDTH, paddingHorizontal: WEB_GUTTER },
-  listWide: { flexDirection: "row", flexWrap: "wrap" },
-  cardWide: { flexBasis: "48%", flexGrow: 0 },
   card: {
     backgroundColor: colors.surface,
     borderRadius: tokens.radius.medium,

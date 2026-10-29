@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { notificationUseCases, pushNotificationService } from "@/di/container";
+import { notificationUseCases } from "@/di/container";
 import type { AppNotification } from "@/model/entities/notification";
-import type { IPushNotificationService } from "@/model/services/iPushNotificationService";
 import { DomainError } from "@/model/errors";
 import type { INotificationUseCases } from "@/usecase/iNotificationUseCases";
 
@@ -18,8 +17,6 @@ export type NotificationsState = {
 
 export type NotificationsActions = {
   reload: () => Promise<void>;
-  /** Recarrega sem esconder a lista (puxar para atualizar). */
-  refresh: () => Promise<void>;
   markAsRead: (notificationId: string) => Promise<void>;
   markAllAsRead: () => Promise<void>;
   setFilter: (filter: NotificationFilter) => void;
@@ -28,7 +25,6 @@ export type NotificationsActions = {
 export function useNotificationsViewModel(
   sessionUserId: string | null,
   useCases: INotificationUseCases = notificationUseCases,
-  push: IPushNotificationService = pushNotificationService,
 ): [NotificationsState, NotificationsActions] {
   const [notifications, setNotifications] = useState<readonly AppNotification[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,7 +34,7 @@ export function useNotificationsViewModel(
   const active = useRef(false);
   const request = useRef(0);
 
-  const load = useCallback(async (silent: boolean) => {
+  const reload = useCallback(async () => {
     if (!sessionUserId) {
       setNotifications([]);
       setLoading(false);
@@ -46,10 +42,8 @@ export function useNotificationsViewModel(
       return;
     }
     const current = ++request.current;
-    if (!silent) {
-      setLoading(true);
-      setError(null);
-    }
+    setLoading(true);
+    setError(null);
     try {
       const items = await useCases.listNotifications(sessionUserId);
       if (active.current && current === request.current) {
@@ -68,9 +62,6 @@ export function useNotificationsViewModel(
     }
   }, [sessionUserId, useCases]);
 
-  const reload = useCallback(() => load(false), [load]);
-  const refresh = useCallback(() => load(true), [load]);
-
   useEffect(() => {
     active.current = true;
     void reload();
@@ -78,12 +69,6 @@ export function useNotificationsViewModel(
       active.current = false;
     };
   }, [reload]);
-
-  // Tempo real (Spec 086): notificação nova ou alterada recarrega a lista sem piscar o carregamento
-  useEffect(() => {
-    if (!sessionUserId || !useCases.subscribe) return;
-    return useCases.subscribe(sessionUserId, () => void load(true));
-  }, [sessionUserId, useCases, load]);
 
   const markAsRead = useCallback(
     async (notificationId: string) => {
@@ -120,15 +105,6 @@ export function useNotificationsViewModel(
   const filteredNotifications =
     filter === "unread" ? notifications.filter((n) => !n.read) : notifications;
 
-  // Selo do app acompanha as não lidas (Spec 099): zera ao entrar sem sessão e ao ler tudo.
-  useEffect(() => {
-    if (!sessionUserId) {
-      void push.setBadgeCount(0);
-      return;
-    }
-    void push.setBadgeCount(unreadCount);
-  }, [sessionUserId, unreadCount, push]);
-
   return [
     {
       notifications,
@@ -140,7 +116,6 @@ export function useNotificationsViewModel(
     },
     {
       reload,
-      refresh,
       markAsRead,
       markAllAsRead,
       setFilter,

@@ -42,27 +42,6 @@ export class MemoryAuthDataSource implements IAuthDataSource {
     return user;
   }
 
-  async signInWithGoogle(): Promise<User> {
-    const user: User = {
-      id: "google-dev-user",
-      email: "leitor.piripiri@gmail.com",
-      name: "Leitor IpêBook",
-    };
-    this.session = { ...user };
-    return user;
-  }
-
-  async setSessionFromUrl(url: string): Promise<User> {
-    if (!url) throw new AuthError("URL inválida.");
-    const user: User = {
-      id: "google-dev-user",
-      email: "leitor.piripiri@gmail.com",
-      name: "Leitor IpêBook",
-    };
-    this.session = { ...user };
-    return user;
-  }
-
   async signOut(): Promise<void> {
     this.session = null;
   }

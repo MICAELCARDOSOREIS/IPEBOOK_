@@ -23,9 +23,10 @@
     }
   ],
   "start_url": "/",
-  "background_color": "#FCFAF5",
+  "background_color": "#F6F1E8",
   "theme_color": "#2C5E45",
   "display": "standalone",
+  "orientation": "portrait",
   "scope": "/",
   "lang": "pt-BR"
 }

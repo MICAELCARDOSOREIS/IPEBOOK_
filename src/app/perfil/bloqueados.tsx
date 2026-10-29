@@ -1,6 +1,6 @@
-import { backOnce } from "@/view/pushOnce";
+import { router } from "expo-router";
 import { BlockedUsers } from "@/view/profile/blockedUsers";
 
 export default function BloqueadosRoute() {
-  return <BlockedUsers onBack={() => backOnce()} />;
+  return <BlockedUsers onBack={() => router.back()} />;
 }

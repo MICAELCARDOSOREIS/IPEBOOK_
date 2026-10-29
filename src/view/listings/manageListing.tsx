@@ -12,10 +12,8 @@ import { ErrorState } from "@/view/components/ErrorState";
 import { LoadingState } from "@/view/components/LoadingState";
 import { Tag } from "@/view/components/Tag";
 import { TextButton } from "@/view/components/TextButton";
-import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { useManageListingViewModel } from "@/viewmodel/useManageListingViewModel";
-import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
 
 export type ManageListingProps = {
   bookId: string;
@@ -37,8 +35,6 @@ export default function ManageListing({
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [confirmingRemoval, setConfirmingRemoval] = useState(false);
-  // Web larga: o livro e o estado de um lado, as ações do outro.
-  const wide = useIsWideWeb();
 
   const handleRemove = async () => {
     const removed = await actions.remove();
@@ -49,7 +45,7 @@ export default function ManageListing({
   if (state.loading) {
     return (
       <SafeAreaView style={styles.page}>
-        <TopAppBar contentMaxWidth={wide ? WEB_MAX_WIDTH : 560} title="Gerenciar anúncio" onBack={() => onBack?.()} />
+        <TopAppBar title="Gerenciar anúncio" onBack={() => onBack?.()} />
         <LoadingState label="Carregando anúncio" />
       </SafeAreaView>
     );
@@ -58,7 +54,7 @@ export default function ManageListing({
   if (!state.book) {
     return (
       <SafeAreaView style={styles.page}>
-        <TopAppBar contentMaxWidth={wide ? WEB_MAX_WIDTH : 560} title="Gerenciar anúncio" onBack={() => onBack?.()} />
+        <TopAppBar title="Gerenciar anúncio" onBack={() => onBack?.()} />
         <ErrorState
           message={state.error ?? "Não foi possível carregar o anúncio."}
           onRetry={() => void actions.load()}
@@ -69,19 +65,17 @@ export default function ManageListing({
 
   const { book } = state;
   const paused = book.status === "paused";
-  const reserved = book.status === "reserved" || book.status === "delivered";
+  const reserved = book.status === "reserved";
   const location = [book.neighborhood, book.city, book.state].filter(Boolean).join(" · ");
 
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar contentMaxWidth={wide ? WEB_MAX_WIDTH : 560} title="Gerenciar anúncio" onBack={() => onBack?.()} />
+      <TopAppBar title="Gerenciar anúncio" onBack={() => onBack?.()} />
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={[styles.content, wide && styles.contentWide]}>
+        <View style={styles.content}>
           <Text accessibilityRole="header" style={styles.title}>Seu livro, suas escolhas.</Text>
           <Text style={styles.subtitle}>Acompanhe e atualize esta publicação.</Text>
 
-          <View style={[styles.columns, wide && styles.columnsWide]}>
-          <View style={[styles.column, wide && styles.columnHalf]}>
           <View style={styles.bookRow}>
             <BookCover id={book.id} title={book.title} photoUrl={book.photoUrl} variant="list" />
             <View style={styles.bookTexts}>
@@ -102,21 +96,17 @@ export default function ManageListing({
 
           <View style={[styles.statusBox, paused && styles.statusBoxPaused]}>
             <Text style={styles.statusTitle}>
-              {paused ? "Anúncio pausado" : book.status === "delivered" ? "Livro entregue" : reserved ? "Negociação em andamento" : "Anúncio ativo"}
+              {paused ? "Anúncio pausado" : reserved ? "Negociação em andamento" : "Anúncio ativo"}
             </Text>
             <Text style={styles.statusHint}>
               {paused
                 ? `${book.title} não aparece no catálogo enquanto estiver pausado.`
-                : book.status === "delivered"
-                  ? `${book.title} foi entregue e saiu do catálogo.`
-                  : reserved
+                : reserved
                   ? `${book.title} está reservado para uma negociação aceita.`
                   : `${book.title} está disponível para leitores de Piripiri.`}
             </Text>
           </View>
 
-          </View>
-          <View style={[styles.column, wide && styles.columnHalf]}>
           {state.error ? (
             <Text accessibilityRole="alert" style={styles.errorText}>{state.error}</Text>
           ) : null}
@@ -161,8 +151,6 @@ export default function ManageListing({
             disabled={state.busy}
             onPress={() => setConfirmingRemoval(true)}
           />
-          </View>
-          </View>
         </View>
       </ScrollView>
 
@@ -186,11 +174,6 @@ function createStyles(colors: ColorPalette) {
   page: { flex: 1, backgroundColor: colors.background },
   scrollContent: { padding: tokens.spacing[16], paddingBottom: tokens.spacing[48] },
   content: { width: "100%", maxWidth: 560, alignSelf: "center", gap: tokens.spacing[16] },
-  contentWide: { maxWidth: WEB_MAX_WIDTH, paddingHorizontal: WEB_GUTTER },
-  columns: { gap: tokens.spacing[16] },
-  columnsWide: { flexDirection: "row", alignItems: "flex-start", gap: tokens.spacing[24] },
-  column: { gap: tokens.spacing[16] },
-  columnHalf: { flex: 1 },
   title: {
     fontSize: tokens.typography.displayLarge.fontSize,
     lineHeight: tokens.typography.displayLarge.lineHeight,

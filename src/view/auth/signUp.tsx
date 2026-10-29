@@ -1,16 +1,12 @@
 import { useMemo, useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { AuthShell } from "@/view/auth/AuthShell";
-import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { Checkbox } from "@/view/components/Checkbox";
 import { FilledButton } from "@/view/components/FilledButton";
-import { GoogleLogo } from "@/view/components/GoogleLogo";
 import { Logotipo } from "@/view/components/Logotipo";
-import { Manchete } from "@/view/components/Manchete";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { TextButton } from "@/view/components/TextButton";
 import { TextField } from "@/view/components/TextField";
@@ -34,21 +30,12 @@ export default function SignUp({
 }: SignUpProps = {}) {
   const [state, actions] = useAuthViewModel();
   const { colors } = useTheme();
-  const wideWeb = useIsWideWeb();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [termsError, setTermsError] = useState<string | null>(null);
-  const [googleLoading, setGoogleLoading] = useState(false);
-
-  const handleGoogleSignIn = async () => {
-    setGoogleLoading(true);
-    const success = await actions.signInWithGoogle?.();
-    setGoogleLoading(false);
-    if (success) onAuthenticated?.();
-  };
 
   const handleSubmit = async () => {
     if (!acceptedTerms) {
@@ -61,41 +48,22 @@ export default function SignUp({
   };
 
   return (
-    <AuthShell>
     <SafeAreaView style={styles.page}>
       {onBack ? <TopAppBar title="Criar conta" onBack={onBack} /> : null}
       <ScrollView
-        contentContainerStyle={[styles.centerContainer, wideWeb && { justifyContent: "center" }]}
+        contentContainerStyle={styles.centerContainer}
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.content}>
-          <Logotipo underline />
-          <Manchete texto="Crie sua" realce="conta." />
+          <Logotipo />
+          <Text accessibilityRole="header" style={styles.title}>Crie sua conta</Text>
           <Text style={styles.subtitle}>Anuncie, troque, venda ou doe livros perto de você.</Text>
-
-          <OutlinedButton
-            label="Continuar com Google"
-            accessibilityLabel="Continuar com Google"
-            icon={<GoogleLogo size={20} />}
-            loading={googleLoading}
-            disabled={state.loading}
-            onPress={() => void handleGoogleSignIn()}
-          />
-
-          <View accessibilityRole="none" style={styles.divider}>
-            <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>ou crie com e-mail</Text>
-            <View style={styles.dividerLine} />
-          </View>
 
           <TextField
             label="Nome completo"
             value={name}
             onChangeText={setName}
             autoCapitalize="words"
-            autoComplete="name"
-            textContentType="name"
-            returnKeyType="next"
             editable={!state.loading}
             placeholder="Como você quer ser chamado"
             maxLength={80}
@@ -107,9 +75,6 @@ export default function SignUp({
             onChangeText={setEmail}
             autoCapitalize="none"
             keyboardType="email-address"
-            autoComplete="email"
-            textContentType="emailAddress"
-            returnKeyType="next"
             editable={!state.loading}
             placeholder="voce@exemplo.com"
           />
@@ -119,9 +84,6 @@ export default function SignUp({
             value={password}
             onChangeText={setPassword}
             secureTextEntry
-            autoComplete="new-password"
-            textContentType="newPassword"
-            returnKeyType="done"
             editable={!state.loading}
             helperText="Mínimo de 8 caracteres."
           />
@@ -164,7 +126,6 @@ export default function SignUp({
         </View>
       </ScrollView>
     </SafeAreaView>
-    </AuthShell>
   );
 }
 
@@ -184,24 +145,13 @@ function createStyles(colors: ColorPalette) {
     width: "100%",
     maxWidth: 560,
     alignSelf: "center",
-    gap: tokens.spacing[12],
+    gap: tokens.spacing[16],
   },
-  divider: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: tokens.spacing[12],
-    marginVertical: tokens.spacing[4],
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: colors.border,
-  },
-  dividerText: {
-    color: colors.secondaryText,
-    fontSize: tokens.typography.bodyLarge.fontSize,
-    fontFamily: tokens.typography.bodyLarge.fontFamily,
-    fontWeight: "600",
+  title: {
+    fontSize: tokens.typography.displayLarge.fontSize,
+    lineHeight: tokens.typography.displayLarge.lineHeight,
+    fontFamily: tokens.typography.displayLarge.fontFamily,
+    color: colors.text,
   },
   subtitle: {
     fontSize: tokens.typography.bodyLarge.fontSize,

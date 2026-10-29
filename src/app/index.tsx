@@ -1,9 +1,6 @@
 import { useCallback, useState } from "react";
-import { useFocusEffect } from "expo-router";
-import { pushOnce, replaceOnce } from "@/view/pushOnce";
-import { RequireAuth } from "@/view/components/RequireAuth";
+import { router, useFocusEffect } from "expo-router";
 import Home from "@/view/home";
-import { PushRegistration } from "@/view/components/PushRegistration";
 
 export default function Index() {
   const [focusKey, setFocusKey] = useState(0);
@@ -14,26 +11,26 @@ export default function Index() {
   );
 
   return (
-    // Início exige conta: sem sessão, volta às boas-vindas, mesmo destino do portão de
-    // primeiro acesso (replaceOnce deduplica) — Spec 092.
-    <RequireAuth onRequireSignIn={() => replaceOnce("/bem-vindo")}>
-      <PushRegistration onOpenRoute={(route) => pushOnce(route as never)} />
-      <Home
-        focusKey={focusKey}
-        onNavigateToSignIn={() => pushOnce("/entrar")}
-        onNavigateToBookDetail={(bookId) => pushOnce(`/livro/${bookId}`)}
-        onNavigateToNotifications={() => pushOnce("/notificacoes")}
-        onNavigateToSearch={(filter) => {
-          const params: Record<string, string> = {};
-          if (filter?.modality) params.modalidade = filter.modality;
-          if (filter?.neighborhood) params.bairro = filter.neighborhood;
-          pushOnce(
-            Object.keys(params).length > 0
-              ? { pathname: "/pesquisa", params }
-              : "/pesquisa",
-          );
-        }}
-      />
-    </RequireAuth>
+    <Home
+      focusKey={focusKey}
+      onNavigateToSignIn={() => router.push("/entrar")}
+      onNavigateToCreateListing={() => router.push("/anunciar")}
+      onNavigateToMyListings={() => router.push("/meus-anuncios")}
+      onNavigateToReceivedRequests={() => router.push("/pedidos-recebidos")}
+      onNavigateToSentRequests={() => router.push("/meus-pedidos")}
+      onNavigateToBookDetail={(bookId) => router.push(`/livro/${bookId}`)}
+      onNavigateToTerms={() => router.push("/termos")}
+      onNavigateToHelp={() => router.push("/ajuda")}
+      onNavigateToNotifications={() => router.push("/notificacoes")}
+      onNavigateToFavorites={() => router.push("/favoritos")}
+      onNavigateToAlerts={() => router.push("/alertas")}
+      onNavigateToSearch={(filter) =>
+        router.push(
+          filter?.modality
+            ? { pathname: "/pesquisa", params: { modalidade: filter.modality } }
+            : "/pesquisa",
+        )
+      }
+    />
   );
 }

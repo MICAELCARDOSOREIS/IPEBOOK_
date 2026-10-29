@@ -6,7 +6,6 @@ import type { IUserPreferencesUseCases } from "@/usecase/iUserPreferencesUseCase
 
 export type UserPreferencesState = {
   preferences: UserPreferences | null;
-  pushToken?: string | null;
   loading: boolean;
   saving: boolean;
   error: string | null;
@@ -14,9 +13,6 @@ export type UserPreferencesState = {
 
 export type UserPreferencesActions = {
   update: (edits: UserPreferencesEdits) => Promise<boolean>;
-  setPushToken?: (token: string | null) => Promise<boolean>;
-  /** Recarrega as preferências e limpa as mensagens de erro atuais (usado pelo estado de erro da tela). */
-  reload: () => void;
 };
 
 const GENERIC_ERROR = "Não foi possível carregar suas preferências. Tente novamente.";
@@ -28,7 +24,6 @@ export function useUserPreferencesViewModel(
 ): [UserPreferencesState, UserPreferencesActions] {
   const [state, setState] = useState<UserPreferencesState>({
     preferences: null,
-    pushToken: null,
     loading: true,
     saving: false,
     error: null,
@@ -44,27 +39,18 @@ export function useUserPreferencesViewModel(
 
   useEffect(() => {
     if (!userId) {
-      setState({ preferences: null, pushToken: null, loading: false, saving: false, error: null });
+      setState({ preferences: null, loading: false, saving: false, error: null });
       return;
     }
     setState((previous) => ({ ...previous, loading: true, error: null }));
     void (async () => {
       try {
         const preferences = await useCases.getPreferences(userId);
-        if (active.current) {
-          setState({
-            preferences,
-            pushToken: preferences.pushToken ?? null,
-            loading: false,
-            saving: false,
-            error: null,
-          });
-        }
+        if (active.current) setState({ preferences, loading: false, saving: false, error: null });
       } catch (error) {
         if (active.current) {
           setState({
             preferences: null,
-            pushToken: null,
             loading: false,
             saving: false,
             error: error instanceof DomainError ? error.message : GENERIC_ERROR,
@@ -80,15 +66,7 @@ export function useUserPreferencesViewModel(
       setState((previous) => ({ ...previous, saving: true, error: null }));
       try {
         const preferences = await useCases.updatePreferences(userId, edits);
-        if (active.current) {
-          setState({
-            preferences,
-            pushToken: preferences.pushToken ?? null,
-            loading: false,
-            saving: false,
-            error: null,
-          });
-        }
+        if (active.current) setState({ preferences, loading: false, saving: false, error: null });
         return true;
       } catch (error) {
         if (active.current) {
@@ -104,39 +82,5 @@ export function useUserPreferencesViewModel(
     [userId, useCases],
   );
 
-  const setPushToken = useCallback(
-    async (token: string | null) => {
-      return update({ pushToken: token });
-    },
-    [update],
-  );
-
-  const reload = useCallback(() => {
-    if (!userId) return;
-    setState((previous) => ({ ...previous, loading: true, error: null }));
-    void (async () => {
-      try {
-        const preferences = await useCases.getPreferences(userId);
-        if (active.current) {
-          setState({
-            preferences,
-            pushToken: preferences.pushToken ?? null,
-            loading: false,
-            saving: false,
-            error: null,
-          });
-        }
-      } catch (error) {
-        if (active.current) {
-          setState((previous) => ({
-            ...previous,
-            loading: false,
-            error: error instanceof DomainError ? error.message : GENERIC_ERROR,
-          }));
-        }
-      }
-    })();
-  }, [userId, useCases]);
-
-  return [state, { update, setPushToken, reload }];
+  return [state, { update }];
 }

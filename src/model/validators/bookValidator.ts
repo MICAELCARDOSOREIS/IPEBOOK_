@@ -171,61 +171,6 @@ export function validateBookPayload(input: unknown): BookValidationResult {
   };
 }
 
-/**
- * Validação tolerante de rascunho (Spec 017). Um rascunho é incompleto por natureza,
- * então não exige título, autor nem preço. Ainda assim verifica os campos que, se
- * presentes, precisam manter um formato válido — modalidade, conservação, categoria,
- * descrição e URLs de foto — espelhando os CHECKs do banco que não são flexibilizados.
- */
-export function validateDraftPayload(input: unknown): BookValidationResult {
-  const errors: string[] = [];
-
-  if (!input || typeof input !== "object") {
-    return { isValid: false, errors: ["Dados do rascunho inválidos ou não fornecidos."] };
-  }
-
-  const raw = input as Record<string, unknown>;
-
-  if (typeof raw.ownerId !== "string" || raw.ownerId.trim().length === 0) {
-    errors.push("Identificador do dono é obrigatório.");
-  }
-
-  if (!VALID_MODALITIES.includes(raw.modality as BookModality)) {
-    errors.push("Modalidade deve ser 'sale', 'trade' ou 'donation'.");
-  }
-
-  if (raw.condition !== undefined && raw.condition !== null &&
-    !BOOK_CONDITIONS.includes(raw.condition as BookCondition)) {
-    errors.push("Estado de conservação deve ser 'new', 'good', 'marked' ou 'worn'.");
-  }
-
-  if (raw.category !== undefined && raw.category !== null &&
-    (typeof raw.category !== "string" || raw.category.trim().length > 60)) {
-    errors.push("Categoria deve ter no máximo 60 caracteres.");
-  }
-
-  if (raw.description !== undefined && raw.description !== null &&
-    (typeof raw.description !== "string" || raw.description.trim().length > MAX_BOOK_DESCRIPTION_LENGTH)) {
-    errors.push(`Descrição deve conter no máximo ${MAX_BOOK_DESCRIPTION_LENGTH} caracteres.`);
-  }
-
-  if (raw.photoUrl !== undefined && raw.photoUrl !== null && raw.photoUrl !== "") {
-    if (typeof raw.photoUrl !== "string" || !isValidHttpUrl(raw.photoUrl)) {
-      errors.push("URL da foto de capa deve ser um endereço HTTP ou HTTPS válido.");
-    }
-  }
-
-  if (raw.photos !== undefined && raw.photos !== null) {
-    if (!Array.isArray(raw.photos) || raw.photos.length > MAX_PHOTOS) {
-      errors.push(`Galeria de fotos deve ser uma lista de no máximo ${MAX_PHOTOS} itens.`);
-    } else if (raw.photos.some((item) => typeof item !== "string" || !isValidHttpUrl(item))) {
-      errors.push("Cada foto da galeria deve ser um endereço HTTP ou HTTPS válido.");
-    }
-  }
-
-  return { isValid: errors.length === 0, errors };
-}
-
 export function formatBookDisplay(book: Pick<Book, "title" | "author">): string {
   const title = book.title?.trim() || "Sem título";
   const author = book.author?.trim() || "Autor desconhecido";

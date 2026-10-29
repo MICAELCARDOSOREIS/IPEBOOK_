@@ -1,12 +1,12 @@
-import { backOnce, pushOnce, replaceOnce } from "@/view/pushOnce";
+import { router } from "expo-router";
 import ReceivedRequestsScreen from "@/view/requests/receivedRequests";
 
 export default function PedidosRecebidosRoute() {
   return (
     <ReceivedRequestsScreen
-      onBack={() => backOnce()}
-      onRequireSignIn={() => replaceOnce("/entrar")}
-      onNavigateToNegotiationDetail={(id) => pushOnce(`/negociacao/${id}`)}
+      onBack={() => router.back()}
+      onRequireSignIn={() => router.replace("/entrar")}
+      onNavigateToNegotiationDetail={(id) => router.push(`/negociacao/${id}`)}
     />
   );
 }

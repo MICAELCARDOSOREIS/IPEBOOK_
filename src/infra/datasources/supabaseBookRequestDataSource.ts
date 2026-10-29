@@ -1,6 +1,5 @@
 import type { IBookRequestDataSource } from "@/model/datasources/iBookRequestDataSource";
 import type { BookRequest, RequestStatus } from "@/model/entities/bookRequest";
-import { toDomainError } from "@/infra/supabaseErrors";
 import { DataSourceError } from "@/model/errors";
 import type { SupabaseAppClient } from "@/infra/supabaseClient";
 
@@ -31,7 +30,7 @@ export class SupabaseBookRequestDataSource implements IBookRequestDataSource {
       requester_id: request.requesterId,
       status: request.status,
     }).select(columns).single();
-    if (error || !data) throw toDomainError(error, "Não foi possível solicitar a negociação.");
+    if (error || !data) throw new DataSourceError("Não foi possível solicitar a negociação.");
     return mapRequest(data as RequestRow);
   }
 

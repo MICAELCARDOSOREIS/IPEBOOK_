@@ -30,30 +30,12 @@ describe("BookCover (design-system/04-componentes/capa-ilustrativa.md e Spec 040
     expect(queryByText("Dom Casmurro")).toBeNull();
   });
 
-  it.each([
-    ["d", "estrelas", "list"],
-    ["d", "estrelas", "card"],
-    ["a", "ondas", "carousel"],
-    ["a", "ondas", "detail"],
-    ["b", "ipê", "card"],
-    ["b", "ipê", "list"],
-    ["c", "sol e montanhas", "detail"],
-    ["c", "sol e montanhas", "carousel"],
-  ] as const)("capa sem foto desenha o motivo %s (%s) na variante %s, sem arquivos .svg", async (id, _motivo, variant) => {
-    const { getByLabelText } = await render(
-      <BookCover id={id} title="Grande Sertão" author="Guimarães Rosa" variant={variant} />,
+  it("variante em cartão (≥80px) sobrepõe título e autor", async () => {
+    const { getByText } = await render(
+      <BookCover id="a1" title="Dom Casmurro" author="Machado de Assis" variant="card" />,
     );
-    expect(getByLabelText("Capa ilustrativa de Grande Sertão")).toBeDefined();
-  });
-
-  it.each(["list", "card", "carousel", "detail"] as const)("capa ilustrativa na variante %s é só arte, sem texto sobre ela", async (variant) => {
-    const { queryByText, getByLabelText } = await render(
-      <BookCover id="a1" title="Dom Casmurro" author="Machado de Assis" variant={variant} />,
-    );
-    // O título e o autor aparecem ao lado da capa, nunca por cima da arte; aqui ficam só no texto alternativo.
-    expect(queryByText("Dom Casmurro")).toBeNull();
-    expect(queryByText("Machado de Assis")).toBeNull();
-    expect(getByLabelText("Capa ilustrativa de Dom Casmurro")).toBeDefined();
+    expect(getByText("Dom Casmurro")).toBeDefined();
+    expect(getByText("Machado de Assis")).toBeDefined();
   });
 
   it("renderiza imagem real quando photoUrl é fornecido", async () => {
@@ -202,15 +184,5 @@ describe("BookCover (design-system/04-componentes/capa-ilustrativa.md e Spec 040
       vi.clearAllTimers();
       vi.useRealTimers();
     }
-  });
-
-  it("a lombada sobre a arte pode ser desligada (livro 3D tem a sua)", async () => {
-    const com = await render(<BookCover id="a1" title="Dom Casmurro" variant="detail" />);
-    const sem = await render(<BookCover id="a1" title="Dom Casmurro" variant="detail" showSpine={false} />);
-    const count = (tree: unknown): number => {
-      const node = tree as { children?: unknown[] } | null;
-      return node?.children ? node.children.reduce((sum: number, child) => sum + (typeof child === "object" ? 1 + count(child) : 0), 0) : 0;
-    };
-    expect(count(com.toJSON())).toBeGreaterThan(count(sem.toJSON()));
   });
 });

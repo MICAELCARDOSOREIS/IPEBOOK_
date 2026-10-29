@@ -12,9 +12,8 @@ Origem no sistema base: Material 3, Outlined text field. Situação: **Herdado**
 
 ## Anatomia
 
-1. Rótulo flutuante (token `label-medium`, 12 dp): dentro do campo em repouso e recortado na borda
-   quando há foco ou valor, como no Figma `01.03`, `01.06` e `01.10`
-2. Container contornado de 56 dp com raio de 4 dp (token `outline`)
+1. Rótulo sempre visível acima do campo (token `m3-label-md`)
+2. Container contornado (token `outline`)
 3. Texto do valor (token `m3-body-lg`)
 4. Mensagem de ajuda ou de erro abaixo do campo
 
@@ -29,8 +28,8 @@ Origem no sistema base: Material 3, Outlined text field. Situação: **Herdado**
 
 | Estado | Aparência (tokens) | Comportamento | Acessibilidade |
 | --- | --- | --- | --- |
-| Normal | Borda `outline` 1 dp, rótulo dentro do campo | Aguarda entrada | Rótulo lido junto do campo |
-| Foco | Borda `primary` 2 px, rótulo `primary` no recorte da borda | Cursor piscando | Anunciado como campo de edição em foco |
+| Normal | Borda `outline` | Aguarda entrada | Rótulo lido junto do campo |
+| Foco | Borda `primary` 2 px, rótulo `primary` | Cursor piscando | Anunciado como campo de edição em foco |
 | Erro | Borda e rótulo `error`, mensagem com ícone embaixo | Bloqueia envio até corrigir | Mensagem ligada ao campo por `aria-describedby`/`accessibilityHint` |
 | Desabilitado | Opacidade 38% | Não responde | Anunciado como indisponível |
 

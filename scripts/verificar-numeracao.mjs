@@ -31,9 +31,7 @@ function verificar(rotulo, nomes, padrao) {
 const specs = readdirSync(join(raiz, "specs"), { withFileTypes: true })
   .filter((d) => d.isDirectory())
   .map((d) => d.name);
-const adrs = readdirSync(join(raiz, "docs", "adr")).filter(
-  (n) => /^\d{4}-.+\.md$/.test(n),
-);
+const adrs = readdirSync(join(raiz, "docs", "adr")).filter((n) => n.endsWith(".md"));
 
 const falhas =
   verificar("Spec", specs, /^(\d{3})-/) + verificar("ADR", adrs, /^(\d{4})-/);

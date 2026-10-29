@@ -17,7 +17,6 @@ function mockAuth(state: AuthState, actions: Partial<AuthActions> = {}) {
   const fullActions: AuthActions = {
     signUp: vi.fn().mockResolvedValue(true),
     signIn: vi.fn().mockResolvedValue(true),
-    signInWithGoogle: vi.fn().mockResolvedValue(true),
     signOut: vi.fn().mockResolvedValue(undefined),
     requestPasswordReset: vi.fn().mockResolvedValue("senha-temp"),
     ...actions,
@@ -34,7 +33,7 @@ describe("tela de entrar (ISO/IEC 25010 - Usabilidade e Acessibilidade)", () => 
       screen = await render(<SignIn />);
     });
 
-    expect(screen.getByRole("header", { name: "Sua próxima leitura começa aqui." })).toBeDefined();
+    expect(screen.getByRole("header").props.children).toBe("Sua próxima leitura começa aqui.");
     expect(screen.getByText("Entre com o e-mail e a senha da sua conta.")).toBeDefined();
     expect(screen.getAllByText("Entrar").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByLabelText("E-mail")).toBeDefined();
@@ -142,16 +141,14 @@ describe("tela de criar conta (ISO/IEC 25010 - Usabilidade e Acessibilidade)", (
       screen = await render(<SignUp />);
     });
 
-    const headers = screen.getAllByRole("header").map((node) => node.props.accessibilityLabel ?? node.props.children);
+    const headers = screen.getAllByRole("header").map((node) => node.props.children);
     expect(headers).toContain("IpêBook");
-    expect(headers.some((h) => typeof h === "string" && h.includes("Crie sua"))).toBe(true);
+    expect(headers).toContain("Crie sua conta");
     expect(screen.getAllByText("Criar conta").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByLabelText("Nome completo")).toBeDefined();
     expect(screen.getByLabelText("E-mail")).toBeDefined();
     expect(screen.getByLabelText("Senha")).toBeDefined();
     expect(screen.getByRole("checkbox", { name: "Aceito os termos de uso" })).toBeDefined();
-    expect(screen.getByRole("button", { name: "Continuar com Google" })).toBeDefined();
-    expect(screen.getByText("ou crie com e-mail")).toBeDefined();
   });
 
   it("exibe mensagem de e-mail já cadastrado", async () => {
@@ -162,24 +159,6 @@ describe("tela de criar conta (ISO/IEC 25010 - Usabilidade e Acessibilidade)", (
     });
 
     expect(screen.getByText("Este e-mail já está em uso.")).toBeDefined();
-  });
-
-  it("chama signInWithGoogle e onAuthenticated ao tocar em Continuar com Google", async () => {
-    const signInWithGoogle = vi.fn().mockResolvedValue(true);
-    mockAuth({ user: null, loading: false, error: null }, { signInWithGoogle });
-    const onAuthenticated = vi.fn();
-
-    let screen!: Awaited<ReturnType<typeof render>>;
-    await act(async () => {
-      screen = await render(<SignUp onAuthenticated={onAuthenticated} />);
-    });
-
-    await act(async () => {
-      fireEvent.press(screen.getByRole("button", { name: "Continuar com Google" }));
-    });
-
-    expect(signInWithGoogle).toHaveBeenCalledTimes(1);
-    expect(onAuthenticated).toHaveBeenCalledTimes(1);
   });
 
   it("chama onAuthenticated após criar conta com sucesso", async () => {

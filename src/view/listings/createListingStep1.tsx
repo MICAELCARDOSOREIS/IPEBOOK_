@@ -1,13 +1,13 @@
 import { useMemo, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import type { BookModality } from "@/model/entities/book";
 import type { IsbnFeedback } from "@/viewmodel/useCreateListingViewModel";
-import type { ListingBasicsErrors } from "@/viewmodel/listingBasicsValidation";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { AddPhotoCard } from "@/view/components/AddPhotoCard";
 import { Chip } from "@/view/components/Chip";
-import { AppIcon } from "@/view/components/AppIcon";
+import { FilledButton } from "@/view/components/FilledButton";
+import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { IconBadge } from "@/view/components/IconBadge";
 import { TextField } from "@/view/components/TextField";
 import { BarcodeScannerModal } from "@/view/components/BarcodeScannerModal";
@@ -38,8 +38,8 @@ export type CreateListingStep1Props = {
   onSetAuthor: (author: string) => void;
   onSetPrice: (price: string) => void;
   onSetPhotoUrl: (url: string) => void;
-  fieldErrors?: ListingBasicsErrors;
   onGoToPhotos: () => void;
+  onContinue: () => void;
 };
 
 export function CreateListingStep1({
@@ -62,8 +62,8 @@ export function CreateListingStep1({
   onSetAuthor,
   onSetPrice,
   onSetPhotoUrl,
-  fieldErrors = {},
   onGoToPhotos,
+  onContinue,
 }: CreateListingStep1Props) {
   const { colors } = useTheme();
   const [scannerVisible, setScannerVisible] = useState(false);
@@ -72,22 +72,41 @@ export function CreateListingStep1({
   return (
     <>
       <View style={styles.isbnCard}>
-        {/* Uma linha só, tocável inteira: o ISBN é um atalho, os campos do livro continuam logo abaixo. */}
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Abrir leitor de código de barras pela câmera"
-          accessibilityState={{ disabled: Boolean(loading || lookingUpIsbn) }}
-          disabled={loading || lookingUpIsbn}
-          onPress={() => setScannerVisible(true)}
-          style={styles.isbnHeader}
-        >
-          <IconBadge icon="camera" tone="action" />
+        <View style={styles.isbnHeader}>
+          <IconBadge icon="photo" tone="action" />
           <View style={styles.isbnTexts}>
-            <Text style={styles.isbnTitle}>{lookingUpIsbn ? "Buscando o livro..." : "Escanear código de barras"}</Text>
-            <Text style={styles.hint}>Título e autor entram sozinhos.</Text>
+            <Text style={styles.isbnTitle}>Ler ISBN com a câmera</Text>
+            <Text style={styles.hint}>Preenche título e autor automaticamente.</Text>
           </View>
-          <AppIcon name="chevronRight" size={24} color={colors.m3.onSurfaceVariant} />
-        </Pressable>
+        </View>
+
+        <View style={styles.scanActionRow}>
+          <OutlinedButton
+            label="Escanear com a câmera"
+            accessibilityLabel="Abrir leitor de código de barras pela câmera"
+            disabled={loading || lookingUpIsbn}
+            onPress={() => setScannerVisible(true)}
+          />
+        </View>
+
+        <View style={styles.isbnInputRow}>
+          <View style={styles.isbnFieldWrapper}>
+            <TextField
+              label="Código ISBN"
+              value={isbn ?? ""}
+              onChangeText={onSetIsbn ?? (() => {})}
+              placeholder="Ex: 9788535914849"
+              keyboardType="numeric"
+              editable={!loading && !lookingUpIsbn}
+            />
+          </View>
+          <FilledButton
+            label={lookingUpIsbn ? "Buscando..." : "Buscar"}
+            accessibilityLabel="Buscar dados do livro pelo ISBN"
+            loading={lookingUpIsbn}
+            onPress={() => onLookupIsbn?.()}
+          />
+        </View>
 
         <BarcodeScannerModal
           visible={scannerVisible}
@@ -135,7 +154,6 @@ export function CreateListingStep1({
               key={item.value}
               label={item.label}
               accessibilityLabel={`Modalidade ${item.label}`}
-              tone={colors.badge[item.value]}
               selected={modality === item.value}
               onPress={() => onSetModality(item.value)}
               disabled={loading}
@@ -144,7 +162,6 @@ export function CreateListingStep1({
         </View>
       </View>
 
-      {/* Título e autor ocupam a largura toda: ao lado da foto sobrava uma coluna estreita para digitar. */}
       <View style={styles.photoRow}>
         <AddPhotoCard
           photoUrl={photoUrl}
@@ -152,27 +169,22 @@ export function CreateListingStep1({
           onRemovePhoto={() => onSetPhotoUrl("")}
         />
         <View style={styles.photoTexts}>
-          <Text style={styles.sectionLabel}>Foto de capa</Text>
-          <Text style={styles.hint}>Foto leve, com boa luz. Você pode ajustar na próxima etapa.</Text>
+          <TextField
+            label="Título"
+            value={title}
+            onChangeText={onSetTitle}
+            editable={!loading}
+            placeholder="Ex: Dom Casmurro"
+          />
+          <TextField
+            label="Autor"
+            value={author}
+            onChangeText={onSetAuthor}
+            editable={!loading}
+            placeholder="Ex: Machado de Assis"
+          />
         </View>
       </View>
-
-      <TextField
-        label="Título"
-        value={title}
-        onChangeText={onSetTitle}
-        editable={!loading}
-        placeholder="Ex: Dom Casmurro"
-        error={fieldErrors.title}
-      />
-      <TextField
-        label="Autor"
-        value={author}
-        onChangeText={onSetAuthor}
-        editable={!loading}
-        placeholder="Ex: Machado de Assis"
-        error={fieldErrors.author}
-      />
 
       {modality === "sale" ? (
         <TextField
@@ -182,11 +194,12 @@ export function CreateListingStep1({
           editable={!loading}
           keyboardType="decimal-pad"
           placeholder="Ex: 25,00"
-          error={fieldErrors.price}
         />
       ) : null}
 
-      <Text style={styles.hint}>Conservação e bairro vêm nas próximas etapas.</Text>
+      <Text style={styles.hint}>
+        Foto leve, com boa luz. Conservação e bairro vêm na próxima etapa.
+      </Text>
 
       {error ? (
         <Text
@@ -198,6 +211,8 @@ export function CreateListingStep1({
           {error}
         </Text>
       ) : null}
+
+      <FilledButton label="Continuar" onPress={onContinue} />
     </>
   );
 }
@@ -206,7 +221,7 @@ function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     field: { gap: tokens.spacing[8] },
     isbnCard: {
-      gap: tokens.spacing[8],
+      gap: tokens.spacing[12],
       padding: tokens.spacing[12],
       borderRadius: tokens.radius.medium,
       backgroundColor: colors.m3.surfaceContainerLow,
@@ -226,6 +241,14 @@ function createStyles(colors: ColorPalette) {
     },
     scanActionRow: {
       width: "100%",
+    },
+    isbnInputRow: {
+      flexDirection: "row",
+      gap: tokens.spacing[8],
+      alignItems: "flex-end",
+    },
+    isbnFieldWrapper: {
+      flex: 1,
     },
     isbnFeedback: {
       padding: tokens.spacing[8],
@@ -263,8 +286,8 @@ function createStyles(colors: ColorPalette) {
       textAlign: "center",
     },
     chipRow: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[8] },
-    photoRow: { flexDirection: "row", gap: tokens.spacing[12], alignItems: "center" },
-    photoTexts: { flex: 1, gap: tokens.spacing[4] },
+    photoRow: { flexDirection: "row", gap: tokens.spacing[12], alignItems: "flex-start" },
+    photoTexts: { flex: 1, gap: tokens.spacing[12] },
     sectionLabel: {
       fontSize: tokens.typography.titleMedium.fontSize,
       lineHeight: tokens.typography.titleMedium.lineHeight,

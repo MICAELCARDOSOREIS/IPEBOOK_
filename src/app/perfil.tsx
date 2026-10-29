@@ -1,21 +1,20 @@
-import { pushOnce, replaceOnce } from "@/view/pushOnce";
+import { router } from "expo-router";
 import ProfileHub from "@/view/profile/profileHub";
 
 export default function Perfil() {
   return (
     <ProfileHub
-      requireAuth={false}
-      onNavigateToSignIn={() => pushOnce("/entrar")}
-      onNavigateToEditProfile={() => pushOnce("/perfil/editar")}
-      onNavigateToMyListings={() => pushOnce("/meus-anuncios")}
-      onNavigateToRatings={() => pushOnce("/perfil/avaliacoes")}
-      onNavigateToMeetingHistory={() => pushOnce("/perfil/encontros")}
-      onNavigateToFavorites={() => pushOnce("/favoritos")}
-      onNavigateToNotifications={() => pushOnce("/notificacoes")}
-      onNavigateToSecurity={() => pushOnce("/perfil/seguranca")}
-      onNavigateToInviteFriends={() => pushOnce("/perfil/convidar")}
-      onNavigateToSettings={() => pushOnce("/perfil/configuracoes" as never)}
-      onSignedOut={() => replaceOnce("/entrar")}
+      onNavigateToSignIn={() => router.replace("/entrar")}
+      onNavigateToEditProfile={() => router.push("/perfil/editar")}
+      onNavigateToRatings={() => router.push("/perfil/avaliacoes")}
+      onNavigateToNotifications={() => router.push("/notificacoes")}
+      onNavigateToSecurity={() => router.push("/perfil/seguranca")}
+      onNavigateToPrivacy={() => router.push("/excluir-conta")}
+      onNavigateToBlockedUsers={() => router.push("/perfil/bloqueados")}
+      onNavigateToInviteFriends={() => router.push("/perfil/convidar")}
+      onNavigateToTerms={() => router.push("/termos")}
+      onNavigateToHelp={() => router.push("/ajuda")}
+      onSignedOut={() => router.replace("/entrar")}
     />
   );
 }
