@@ -10,9 +10,7 @@
 
 export const colors = {
   // Identidade e Marca
-  // `background` e `surface` são o mesmo tom no Figma Android (`02.01` em diante): o fundo das
-  // telas é `surface` (`#FCFAF5`), conforme design-system/tokens.json — ADR 0056.
-  background: "#FCFAF5",
+  background: "#F6F1E8",
   surface: "#FCFAF5",
   text: "#3C302A",
   secondaryText: "#645B55",
@@ -24,15 +22,6 @@ export const colors = {
   gold: "#D99719",
   brandBrown: "#58331F",
   brandAmber: "#F2BC45",
-
-  // Ipê da marca (Spec 078): cartão de leitor e ilustração do ipê brotando do livro (assets/logo-clean.png).
-  ipe: {
-    container: "#FCEFCB",
-    onContainer: "#4A2B16",
-    bloom: "#F7C21E",
-    bloomDeep: "#F29A1A",
-    trunk: "#58331F",
-  },
 
   // Estados
   success: "#2F6B4F",
@@ -120,15 +109,6 @@ export const darkColors: ColorPalette = {
   brandBrown: "#e2b48c",
   brandAmber: "#f2bc45",
 
-  // Ipê da marca (Spec 078): mesma árvore, cartão em âmbar escuro para manter contraste.
-  ipe: {
-    container: "#3b2c12",
-    onContainer: "#fbe6b4",
-    bloom: "#F7C21E",
-    bloomDeep: "#F29A1A",
-    trunk: "#e2b48c",
-  },
-
   // Estados
   success: "#9fd4b3",
   error: "#ffb4ab",
@@ -211,16 +191,12 @@ export const spacing = {
   20: 20,
   24: 24,
   32: 32,
-  /** Botão de ícone circular da barra superior e do topo da Home (Figma `01.06`, `02.01`). */
-  40: 40,
   48: 48,
   56: 56,
   64: 64,
 } as const;
 
 export const radius = {
-  /** Campo de texto contornado (M3: container de 4 dp), Figma `01.03`/`01.06`. */
-  extraSmall: 4,
   small: 8,
   medium: 14,
   large: 18,
@@ -253,8 +229,6 @@ export const typography = {
   titleMedium: { fontSize: 18, lineHeight: 26, fontWeight: "600" as const, fontFamily: fontFamily.semiBold },
   bodyLarge: { fontSize: 16, lineHeight: 24, fontWeight: "400" as const, fontFamily: fontFamily.regular },
   bodyMedium: { fontSize: 14, lineHeight: 20, fontWeight: "400" as const, fontFamily: fontFamily.regular },
-  /** m3-label-lg: rótulo de botão e de chip no Figma (`01.03`, `02.01`). */
-  labelLarge: { fontSize: 14, lineHeight: 20, fontWeight: "500" as const, fontFamily: fontFamily.medium },
   labelMedium: { fontSize: 12, lineHeight: 16, fontWeight: "500" as const, fontFamily: fontFamily.medium },
   /** m3-label-sm (02-tokens.md): rótulo da barra de navegação, hora da mensagem, badge. */
   labelSmall: { fontSize: 11, lineHeight: 16, fontWeight: "500" as const, fontFamily: fontFamily.medium },

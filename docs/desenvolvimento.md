@@ -101,7 +101,3 @@ Python 3 é necessário somente para este servidor de conferência. Abrir `http:
 | Push recusado por falta de `workflow` | A autenticação precisa autorizar alteração do arquivo de CI; seguir o fluxo de autenticação da ferramenta Git usada |
 
 Nenhum segredo deve aparecer em exemplos, capturas, logs compartilhados ou commits.
-
-## APK de debug local
-
-`npm run apk:debug` inicia a compilação em segundo plano, desacoplada do terminal (sobrevive ao fechar o terminal ou a sessão de IA). `npm run apk:debug:status` mostra o andamento ou o caminho do APK (`android/app/build/outputs/apk/debug/app-debug.apk`); `bash scripts/gerar-apk-debug.sh esperar` acompanha até o fim. Requer a pasta `android/` (gere com `npx expo prebuild -p android --no-install` após adicionar módulos nativos). O APK de debug carrega o código do Metro (`npx expo start`).

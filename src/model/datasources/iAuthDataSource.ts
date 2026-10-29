@@ -3,8 +3,6 @@ import type { User } from "@/model/entities/user";
 export interface IAuthDataSource {
   signUp(email: string, password: string, name: string): Promise<User>;
   signIn(email: string, password: string): Promise<User>;
-  signInWithGoogle?(): Promise<User>;
-  setSessionFromUrl?(url: string): Promise<User>;
   signOut(): Promise<void>;
   currentUser(): Promise<User | null>;
   /** Solicita um link de recuperação sem revelar se a conta existe. */

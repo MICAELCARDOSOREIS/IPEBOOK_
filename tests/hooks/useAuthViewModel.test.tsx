@@ -375,45 +375,4 @@ describe("useAuthViewModel — limite de tentativas no cliente (ADR 0027)", () =
 
     expect(hook.current[0].error).toMatch(/^Muitas tentativas seguidas\./);
   });
-
-  it("registra cancelamento do Google como info e exibe a mensagem de cancelado", async () => {
-    const logger = silentLogger();
-    const rateLimiter = new ClientRateLimiter();
-    const auth = fakeAuth({
-      signInWithGoogle: async () => {
-        throw new AuthError("Login com Google cancelado.");
-      },
-    });
-    const hook = await renderHook(auth, rateLimiter, logger);
-
-    let ok = true;
-    await act(async () => {
-      ok = Boolean(await hook.current[1].signInWithGoogle?.());
-    });
-
-    expect(ok).toBe(false);
-    expect(hook.current[0].error).toBe("Login com Google cancelado.");
-    expect(logger.info).toHaveBeenCalledWith("Login com Google cancelado pelo usuário");
-    expect(logger.error).not.toHaveBeenCalled();
-  });
-
-  it("registra erro inesperado do Google no nível error", async () => {
-    const logger = silentLogger();
-    const rateLimiter = new ClientRateLimiter();
-    const auth = fakeAuth({
-      signInWithGoogle: async () => {
-        throw new Error("Falha de rede");
-      },
-    });
-    const hook = await renderHook(auth, rateLimiter, logger);
-
-    let ok = true;
-    await act(async () => {
-      ok = Boolean(await hook.current[1].signInWithGoogle?.());
-    });
-
-    expect(ok).toBe(false);
-    expect(hook.current[0].error).toBe("Não foi possível concluir. Tente novamente.");
-    expect(logger.error).toHaveBeenCalledWith("Falha ao autenticar com Google", expect.any(Error));
-  });
 });

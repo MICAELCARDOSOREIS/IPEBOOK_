@@ -51,7 +51,7 @@ export default function EditAlert({ alertId, userId, onBack, onSaved }: EditAler
   if (state.loading) {
     return (
       <SafeAreaView style={styles.page}>
-        <TopAppBar contentMaxWidth={560} title="Editar alerta" onBack={onBack} />
+        <TopAppBar title="Editar alerta" onBack={onBack} />
         <View style={styles.status}>
           <ActivityIndicator color={colors.action} accessibilityLabel="Carregando alerta" />
         </View>
@@ -62,7 +62,7 @@ export default function EditAlert({ alertId, userId, onBack, onSaved }: EditAler
   if (!alert) {
     return (
       <SafeAreaView style={styles.page}>
-        <TopAppBar contentMaxWidth={560} title="Editar alerta" onBack={onBack} />
+        <TopAppBar title="Editar alerta" onBack={onBack} />
         <View style={styles.content}>
           <Text accessibilityRole="header" style={styles.headline}>
             Alerta não encontrado
@@ -75,7 +75,7 @@ export default function EditAlert({ alertId, userId, onBack, onSaved }: EditAler
 
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar contentMaxWidth={560} title="Editar alerta" onBack={onBack} />
+      <TopAppBar title="Editar alerta" onBack={onBack} />
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <View style={styles.content}>
           <Text accessibilityRole="header" style={styles.headline}>
@@ -107,7 +107,6 @@ export default function EditAlert({ alertId, userId, onBack, onSaved }: EditAler
                 <Chip
                   key={modality}
                   label={ALERT_MODALITY_LABELS[modality]}
-                  tone={colors.badge[modality]}
                   selected={modalities.includes(modality)}
                   accessibilityLabel={`Tipo ${ALERT_MODALITY_LABELS[modality]}`}
                   onPress={() => toggle(modality)}

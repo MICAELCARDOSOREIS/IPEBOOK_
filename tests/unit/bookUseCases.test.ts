@@ -269,18 +269,6 @@ describe("updateListing (FR-024 — edição de anúncio)", () => {
     ).rejects.toThrow("Não é possível editar anúncio com negociação aceita em andamento.");
   });
 
-  it.each([
-    ["edita", (uc: BookUseCases, id: string) => uc.updateListing(id, { title: "Novo" }, "owner-1"), "Não é possível editar anúncio com negociação aceita em andamento."],
-    ["pausa", (uc: BookUseCases, id: string) => uc.togglePauseListing(id, "owner-1"), "Não é possível alterar o status de anúncio com negociação aceita."],
-    ["remove", (uc: BookUseCases, id: string) => uc.cancelListing(id, "owner-1"), "Não é possível remover anúncio com negociação aceita em andamento."],
-  ])("livro entregue (Spec 095) não se %s", async (_acao, acao, mensagem) => {
-    const source = new MemoryBookDataSource();
-    const useCases = new BookUseCases(source);
-    const book = await useCases.createListing({ title: "Livro", author: "Autor", modality: "donation" }, "owner-1");
-    await source.updateStatus(book.id, "delivered");
-    await expect(acao(useCases, book.id)).rejects.toThrow(mensagem);
-  });
-
   it("valida título e autor não vazios na edição", async () => {
     const source = new MemoryBookDataSource();
     const useCases = new BookUseCases(source);
@@ -520,53 +508,5 @@ describe("Spec 030 — conservação e descrição no anúncio", () => {
 
     const limpo = await useCases.updateListing(created.id, { description: "" }, "user-42");
     expect(limpo.description).toBeUndefined();
-  });
-});
-
-describe("sinopse e dados da edição do ISBN (Spec 097)", () => {
-  it("grava sinopse, editora, páginas e ano limpos no anúncio e na rascunho", async () => {
-    const source = new MemoryBookDataSource();
-    const useCases = new BookUseCases(source);
-    const book = await useCases.createListing(
-      {
-        title: "1984",
-        author: "George Orwell",
-        modality: "donation",
-        synopsis: "<b>Distopia</b>   futurista.",
-        publisher: " Companhia das Letras ",
-        pageCount: 416,
-        publicationYear: 2009,
-      },
-      "owner-1",
-    );
-    expect(book).toMatchObject({ synopsis: "Distopia futurista.", publisher: "Companhia das Letras", pageCount: 416, publicationYear: 2009 });
-    expect(await useCases.getBookById(book.id)).toMatchObject({ synopsis: "Distopia futurista." });
-
-    const draft = await useCases.saveDraft(
-      { title: "1984", author: "George Orwell", modality: "donation", synopsis: "Rascunho.", pageCount: 100, draftStep: 1 },
-      "owner-1",
-    );
-    expect(draft).toMatchObject({ status: "draft", synopsis: "Rascunho.", pageCount: 100 });
-  });
-
-  it("corta sinopse longa e descarta números inválidos, sem recusar o anúncio", async () => {
-    const useCases = new BookUseCases(new MemoryBookDataSource());
-    const book = await useCases.createListing(
-      { title: "Livro", author: "Autor", modality: "donation", synopsis: "palavra ".repeat(600), pageCount: -4, publicationYear: 99999 },
-      "owner-1",
-    );
-    expect(book.synopsis!.length).toBeLessThanOrEqual(2000);
-    expect(book.synopsis!.endsWith("…")).toBe(true);
-    expect(book.pageCount).toBeUndefined();
-    expect(book.publicationYear).toBeUndefined();
-  });
-
-  it("anúncio sem dados da edição continua sem eles", async () => {
-    const book = await new BookUseCases(new MemoryBookDataSource()).createListing(
-      { title: "Livro", author: "Autor", modality: "donation" },
-      "owner-1",
-    );
-    expect(book.synopsis).toBeUndefined();
-    expect(book.publisher).toBeUndefined();
   });
 });

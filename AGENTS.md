@@ -197,8 +197,6 @@ Plataforma comunitária de circulação e troca de livros em Piripiri, PI. React
 - Pipeline completo de validação local: `npm run validate` (inclui typecheck, linter arquitetural, testes SQL e cobertura com Vitest).
 - Verificação isolada de migrações e RLS via PGlite: `npm run test:sql`.
 - Verificação de fronteiras arquiteturais: `npm run check:architecture`.
-- APK de debug: `npm run apk:debug` (Gradle desacoplado do terminal/sessão; só arm64 por padrão, `APK_ABIS` para outras) e `npm run apk:debug:status`. Log em `android/build-logs/apk-debug.log`. Nunca rodar `./gradlew assembleDebug` preso à sessão.
-- App Bundle de produção local (assinado com a chave do EAS, para a Play Store, sem cota da nuvem): `npm run aab:local`, `npm run aab:local:status` e `npm run aab:local:log` (acompanha ao vivo); saída em `android/build-logs/`.
 - Manter documentação rigorosamente sincronizada com o código: índice de ADRs, contagem de testes em `docs/estado.md` e tabelas em `docs/produto.md`.
 
 ## Conventions that differ from defaults
@@ -211,7 +209,6 @@ Plataforma comunitária de circulação e troca de livros em Piripiri, PI. React
 ## Known pitfalls
 
 - Em ambientes sandbox restritos, o Vitest pode acusar `EROFS` ao tentar criar `.vite-temp/` se `node_modules` estiver somente-leitura; executar fora do isolamento restrito quando necessário.
-- `npx expo install` usa o bun por padrão nesta máquina e deixa `node_modules` fora do `package-lock.json`; instalar com `npx expo install <pacote> --npm` (CI usa `npm ci`).
 - A branch `develop` é a base viva de integração: conferir histórico no Git antes de assumir status de branches remotas.
 
 <!-- /bmad:context -->

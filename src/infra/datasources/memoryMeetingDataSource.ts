@@ -21,30 +21,6 @@ export class MemoryMeetingDataSource implements IMeetingDataSource {
     return found.length > 0 ? { ...found[found.length - 1] } : null;
   }
 
-  async listByRequest(requestId: string): Promise<readonly Meeting[]> {
-    return this.meetings
-      .filter((meeting) => meeting.requestId === requestId)
-      .map((m) => ({ ...m }))
-      .reverse();
-  }
-
-  async listByUser(userId: string): Promise<readonly Meeting[]> {
-    const result: Meeting[] = [];
-    for (const meeting of this.meetings) {
-      const request = await this.requests.findById(meeting.requestId);
-      if (!request) continue;
-      if (request.requesterId === userId) {
-        result.push({ ...meeting });
-        continue;
-      }
-      const book = await this.books.findById(request.listingId);
-      if (book?.ownerId === userId) {
-        result.push({ ...meeting });
-      }
-    }
-    return result.reverse();
-  }
-
   async findById(id: string): Promise<Meeting | null> {
     const found = this.meetings.find((meeting) => meeting.id === id);
     return found ? { ...found } : null;

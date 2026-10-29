@@ -1,11 +1,11 @@
-import { backOnce, replaceOnce } from "@/view/pushOnce";
+import { router } from "expo-router";
 import ReceivedRatingsScreen from "@/view/profile/receivedRatings";
 
 export default function AvaliacoesRoute() {
   return (
     <ReceivedRatingsScreen
-      onBack={() => backOnce()}
-      onNavigateToSignIn={() => replaceOnce("/entrar")}
+      onBack={() => router.back()}
+      onNavigateToSignIn={() => router.replace("/entrar")}
     />
   );
 }

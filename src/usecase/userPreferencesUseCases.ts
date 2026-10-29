@@ -1,35 +1,19 @@
-import type {
-  IUserPreferencesDataSource,
-  StoredUserPreferences,
-  UserPreferencesUpdate,
-} from "@/model/datasources/iUserPreferencesDataSource";
+import type { IUserPreferencesDataSource } from "@/model/datasources/iUserPreferencesDataSource";
 import { PIRIPIRI_NEIGHBORHOODS } from "@/model/entities/location";
-import {
-  NOTIFICATION_TYPES,
-  type NotificationType,
-} from "@/model/entities/notification";
 import type { UserPreferences, UserPreferencesEdits } from "@/model/entities/userPreferences";
 import { ValidationError } from "@/model/errors";
 import type { IUserPreferencesUseCases } from "@/usecase/iUserPreferencesUseCases";
 
-function toPreferences(stored: StoredUserPreferences): UserPreferences {
+function toPreferences(stored: { userId: string; phone?: string; neighborhood?: string }): UserPreferences {
   return {
     userId: stored.userId,
     phone: stored.phone,
     neighborhood: isKnownNeighborhood(stored.neighborhood) ? stored.neighborhood : undefined,
-    ...(stored.pushToken !== undefined ? { pushToken: stored.pushToken } : {}),
-    ...(stored.mutedTypes !== undefined ? { mutedTypes: stored.mutedTypes } : {}),
   };
 }
 
 function isKnownNeighborhood(value: string | undefined): value is UserPreferences["neighborhood"] {
   return value !== undefined && (PIRIPIRI_NEIGHBORHOODS as readonly string[]).includes(value);
-}
-
-/** Mantém só tipos de aviso conhecidos e sem repetição; descarta o que a pessoa não pode escolher (Spec 099). */
-function sanitizeMutedTypes(values: readonly NotificationType[]): NotificationType[] {
-  const known = new Set<string>(NOTIFICATION_TYPES);
-  return [...new Set(values.filter((value) => known.has(value)))];
 }
 
 export class UserPreferencesUseCases implements IUserPreferencesUseCases {
@@ -44,45 +28,17 @@ export class UserPreferencesUseCases implements IUserPreferencesUseCases {
   async updatePreferences(userId: string, edits: UserPreferencesEdits): Promise<UserPreferences> {
     if (!userId) throw new ValidationError("Usuário não encontrado.");
 
-    let phoneToSave: string | undefined;
-    let neighborhoodToSave: string | undefined;
-
-    const existing =
-      edits.phone === undefined ||
-      edits.neighborhood === undefined ||
-      edits.pushToken === undefined ||
-      edits.mutedTypes === undefined
-        ? await this.preferences.findById(userId)
-        : null;
-
-    if (edits.phone !== undefined) {
-      const phoneDigits = edits.phone.replace(/\D/g, "");
-      if (phoneDigits && (phoneDigits.length < 10 || phoneDigits.length > 11)) {
-        throw new ValidationError("Informe um telefone válido com DDD.");
-      }
-      phoneToSave = phoneDigits || undefined;
-    } else {
-      phoneToSave = existing?.phone;
+    const phoneDigits = edits.phone?.replace(/\D/g, "");
+    if (phoneDigits && (phoneDigits.length < 10 || phoneDigits.length > 11)) {
+      throw new ValidationError("Informe um telefone válido com DDD.");
     }
 
-    if (edits.neighborhood !== undefined) {
-      const neighborhood = edits.neighborhood.trim() || undefined;
-      if (neighborhood && !isKnownNeighborhood(neighborhood)) {
-        throw new ValidationError("Selecione um bairro válido de Piripiri.");
-      }
-      neighborhoodToSave = neighborhood;
-    } else {
-      neighborhoodToSave = existing?.neighborhood;
+    const neighborhood = edits.neighborhood?.trim() || undefined;
+    if (neighborhood && !isKnownNeighborhood(neighborhood)) {
+      throw new ValidationError("Selecione um bairro válido de Piripiri.");
     }
 
-    const patch: UserPreferencesUpdate = {
-      phone: phoneToSave,
-      neighborhood: neighborhoodToSave,
-      pushToken: edits.pushToken !== undefined ? edits.pushToken : existing?.pushToken,
-      mutedTypes: edits.mutedTypes !== undefined ? sanitizeMutedTypes(edits.mutedTypes) : existing?.mutedTypes,
-    };
-
-    const updated = await this.preferences.upsert(userId, patch);
+    const updated = await this.preferences.upsert(userId, { phone: phoneDigits || undefined, neighborhood });
     return toPreferences(updated);
   }
 }

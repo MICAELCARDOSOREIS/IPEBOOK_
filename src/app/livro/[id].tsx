@@ -1,5 +1,4 @@
-import { useLocalSearchParams, type Href } from "expo-router";
-import { backOnce, pushOnce } from "@/view/pushOnce";
+import { router, useLocalSearchParams, type Href } from "expo-router";
 import BookDetail from "@/view/listings/bookDetail";
 
 export default function LivroDetalhe() {
@@ -8,11 +7,11 @@ export default function LivroDetalhe() {
   return (
     <BookDetail
       bookId={id}
-      onBack={() => backOnce()}
+      onBack={() => router.back()}
       // Perfil público (somente leitura) de quem anuncia — Spec 018/Issue #73. Distinto da
       // futura rota de edição do próprio perfil (fluxo 07, issues #55/#56).
-      onNavigateToUserProfile={(ownerId) => pushOnce(`/perfil/${ownerId}` as Href)}
-      onNavigateToReport={(bookId) => pushOnce(`/denunciar/${bookId}` as Href)}
+      onNavigateToUserProfile={(ownerId) => router.push(`/perfil/${ownerId}` as Href)}
+      onNavigateToReport={(bookId) => router.push(`/denunciar/${bookId}` as Href)}
     />
   );
 }

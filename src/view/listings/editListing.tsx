@@ -10,16 +10,13 @@ import {
 import { PIRIPIRI_NEIGHBORHOODS } from "@/model/entities/location";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
-import { categoryTone } from "@/view/categoryTone";
 import { AddPhotoCard } from "@/view/components/AddPhotoCard";
 import { Chip } from "@/view/components/Chip";
 import { FilledButton } from "@/view/components/FilledButton";
 import { TextButton } from "@/view/components/TextButton";
 import { TextField } from "@/view/components/TextField";
-import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { useEditListingViewModel } from "@/viewmodel/useEditListingViewModel";
-import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
 
 export type EditListingProps = {
   bookId: string;
@@ -45,11 +42,9 @@ export default function EditListing({
   onCancel,
 }: EditListingProps) {
   const [state, actions] = useEditListingViewModel(bookId, sessionUserId);
-  const { colors, resolvedScheme } = useTheme();
+  const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [showPhotoInput, setShowPhotoInput] = useState(false);
-  // Web larga: foto e identificação de um lado, descrição e venda do outro.
-  const wide = useIsWideWeb();
   const remainingDescriptionChars = MAX_BOOK_DESCRIPTION_LENGTH - state.description.length;
   const descriptionTooLong = remainingDescriptionChars < 0;
 
@@ -61,7 +56,7 @@ export default function EditListing({
   if (state.loading) {
     return (
       <SafeAreaView style={styles.page}>
-        <TopAppBar contentMaxWidth={wide ? WEB_MAX_WIDTH : 480} title="Editar anúncio" onBack={() => onCancel?.()} />
+        <TopAppBar title="Editar anúncio" onBack={() => onCancel?.()} />
         <View style={styles.statusContainer}>
           <ActivityIndicator color={colors.action} accessibilityLabel="Carregando anúncio" />
           <Text style={styles.statusText}>Carregando dados do anúncio…</Text>
@@ -73,7 +68,7 @@ export default function EditListing({
   if (state.error && !state.book) {
     return (
       <SafeAreaView style={styles.page}>
-        <TopAppBar contentMaxWidth={wide ? WEB_MAX_WIDTH : 480} title="Editar anúncio" onBack={() => onCancel?.()} />
+        <TopAppBar title="Editar anúncio" onBack={() => onCancel?.()} />
         <View style={styles.statusContainer}>
           <Text accessibilityRole="alert" style={styles.errorText}>
             {state.error}
@@ -90,16 +85,14 @@ export default function EditListing({
 
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar contentMaxWidth={wide ? WEB_MAX_WIDTH : 480} title="Editar anúncio" onBack={() => onCancel?.()} />
+      <TopAppBar title="Editar anúncio" onBack={() => onCancel?.()} />
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={[styles.content, wide && styles.contentWide]}>
+        <View style={styles.content}>
           <Text style={styles.subtitle}>Atualize as informações do seu livro.</Text>
 
-          <View style={[styles.columns, wide && styles.columnsWide]}>
-          <View style={[styles.column, wide && styles.columnHalf]}>
           <View style={styles.photoSection}>
             <Text style={styles.sectionLabel}>Foto da capa</Text>
             <View style={styles.photoRow}>
@@ -157,7 +150,6 @@ export default function EditListing({
                   key={category}
                   label={category}
                   accessibilityLabel={`Categoria ${category}`}
-                  tone={categoryTone(category, resolvedScheme)}
                   selected={state.category === category}
                   onPress={() => actions.setCategory(state.category === category ? "" : category)}
                   disabled={state.saving}
@@ -184,8 +176,6 @@ export default function EditListing({
             </View>
           </View>
 
-          </View>
-          <View style={[styles.column, wide && styles.columnHalf]}>
           <TextField
             label="Descrição"
             value={state.description}
@@ -214,7 +204,6 @@ export default function EditListing({
                   key={m.value}
                   label={m.label}
                   accessibilityLabel={`Modalidade ${m.label}`}
-                  tone={colors.badge[m.value]}
                   selected={state.modality === m.value}
                   onPress={() => actions.setModality(m.value)}
                   disabled={state.saving}
@@ -258,9 +247,6 @@ export default function EditListing({
                 />
               ))}
             </View>
-          </View>
-
-          </View>
           </View>
 
           {state.error ? (
@@ -317,11 +303,6 @@ function createStyles(colors: ColorPalette) {
     padding: tokens.spacing[24],
     gap: tokens.spacing[16],
   },
-  contentWide: { maxWidth: WEB_MAX_WIDTH, paddingHorizontal: WEB_GUTTER },
-  columns: { gap: tokens.spacing[16] },
-  columnsWide: { flexDirection: "row", alignItems: "flex-start", gap: tokens.spacing[24] },
-  column: { gap: tokens.spacing[16] },
-  columnHalf: { flex: 1 },
   statusContainer: {
     flex: 1,
     justifyContent: "center",

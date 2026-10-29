@@ -31,7 +31,7 @@ quatro variantes vêm do M3; o que muda é só o conjunto reduzido de uso por te
 | Preenchido (filled) | Ação principal | `primary` (fundo), `on-primary` (rótulo) |
 | Contornado (outlined) | Ação alternativa | `outline` (borda), `primary` (rótulo) |
 | Texto (text) | Ação discreta, diálogo | `primary` (rótulo), sem fundo |
-| Perigo (danger) | Rótulo destrutivo em ação já confirmada | `error` no rótulo, sem fundo preenchido |
+| Perigo (danger) | Ação destrutiva | `error` (fundo), `on-error`/branco (rótulo) |
 
 ## Estados
 
@@ -40,7 +40,7 @@ quatro variantes vêm do M3; o que muda é só o conjunto reduzido de uso por te
 | Padrão | `primary`/`outline` conforme variante | Aguarda o toque | Rótulo anunciado como botão |
 | Hover | Camada de 8% da cor do conteúdo | Só Web | - |
 | Pressionado | Camada de 12% (filled) ou 10% (demais) | Ripple ou escurecimento | - |
-| Foco | O componente mantém o alvo de toque; o foco visual de Web deve usar `colors.m3.focusRing`, com 2 px de largura e 4 px de folga | Visível ao navegar por teclado/leitor | Ordem de foco lógica; nunca remova o anel |
+| Foco | Anel sólido de 3 px em `focus-ring`, 2 px de folga | Visível ao navegar por teclado/leitor | Ordem de foco lógica; nunca remova o anel |
 | Desabilitado | `on-surface` 12% no fundo, 38% no rótulo | Não responde | Anunciado como indisponível — prefira deixar ativo e mostrar o erro no campo |
 
 ## Acessibilidade
@@ -77,7 +77,7 @@ function BotaoPreenchido({ label, onPress, disabled }: { label: string; onPress:
     >
       <Text
         style={{
-          color: disabled ? tokens.colors.disabledText : tokens.colors.m3.onPrimary,
+          color: disabled ? tokens.colors.disabledText : "#ffffff",
           ...tokens.typography.labelMedium,
         }}
       >

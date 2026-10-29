@@ -1,6 +1,5 @@
 import { useCallback, useState } from "react";
-import { useFocusEffect } from "expo-router";
-import { backOnce, pushOnce } from "@/view/pushOnce";
+import { router, useFocusEffect } from "expo-router";
 import FavoritesScreen from "@/view/favorites/favoritesScreen";
 
 export default function FavoritesRoute() {
@@ -9,10 +8,10 @@ export default function FavoritesRoute() {
   return (
     <FavoritesScreen
       focusKey={focusKey}
-      onBack={() => backOnce()}
-      onLogin={() => pushOnce({ pathname: "/entrar", params: { retorno: "favoritos" } })}
-      onBook={(id) => pushOnce(`/livro/${id}`)}
-      onNavigateToAlerts={() => pushOnce("/alertas")}
+      onBack={() => router.back()}
+      onLogin={() => router.push({ pathname: "/entrar", params: { retorno: "favoritos" } })}
+      onBook={(id) => router.push(`/livro/${id}`)}
+      onNavigateToAlerts={() => router.push("/alertas")}
     />
   );
 }

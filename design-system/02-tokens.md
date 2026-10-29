@@ -1,10 +1,8 @@
 # Tokens
 
-Fonte conceitual e machine-readable: [`tokens.json`](tokens.json) ([ADR 0010](../docs/adr/0010-design-system-substitui-design-kit.md)).
-Em código, [`src/view/tokens.ts`](../src/view/tokens.ts) expõe a API consumida pelos componentes:
-`colors` (paleta clara), `darkColors` (paleta escura), `spacing`, `radius`, `typography`,
-`motion`, `elevation` e `accessibility`. Os nomes da API TypeScript não são uma cópia literal
-dos nomes M3 do JSON; a tabela de conversão abaixo é o contrato para implementação.
+Fonte canônica: [`tokens.json`](tokens.json) ([ADR 0010](../docs/adr/0010-design-system-substitui-design-kit.md)). Formato do
+nome: `categoria.papel.variação`. Em código, `src/view/tokens.ts` expõe esses mesmos valores
+(tema claro).
 
 ## 1. Primitivos (o valor bruto)
 
@@ -29,7 +27,7 @@ de uma cor-semente única (aqui, o verde ipê-do-cerrado).
 
 ## 2. Semânticos (o significado)
 
-### Cor (temas claro e escuro)
+### Cor (tema claro — tema escuro adiado, ver [01-principios.md](01-principios.md) §5)
 
 | Token | Claro | Uso | Origem |
 | --- | --- | --- | --- |
@@ -46,7 +44,7 @@ de uma cor-semente única (aqui, o verde ipê-do-cerrado).
 | `on-surface` | `#1d1b18` | Texto principal (16,5:1 sobre `surface`) | Herdado |
 | `on-surface-variant` | `#4d4740` | Texto de apoio, ícone inativo (8,8:1) | Herdado |
 | `outline` | `#7e776f` | Borda de campo e botão Contornado (4,2:1) | Herdado |
-| `focus-ring` | `#4e8a68` | Anel de foco (2 px de largura e 4 px de folga na API atual) | Adaptado — cor própria da marca, não o azul padrão do M3 |
+| `focus-ring` | `#4e8a68` | Anel de foco, 3 px por fora (3,9:1 sobre `surface`) | Adaptado — cor própria da marca, não o azul padrão do M3 |
 | `brand-brown` | `#58331f` | Logotipo e títulos da marca (10,6:1) | Novo — papel de marca sem equivalente M3 |
 | `brand-amber` / `cover-sun` | `#f2bc45` / `#ddaf38` | Sol das capas ilustrativas; nunca texto | Novo |
 
@@ -58,7 +56,7 @@ Lista completa (~50 tokens, claro e escuro) em
 | Token | Família | Tamanho | Peso | Altura de linha | Uso | Origem |
 | --- | --- | --- | --- | --- | --- | --- |
 | `displayLarge` (brand-large-title) | Source Serif 4 | 32 px | 700 | 40 px | Título de tela raiz, logotipo | Novo — família extra sobre a escala M3 |
-| `brand-card-title` | Source Serif 4 | 19 px | 700 | 24 px | Título de livro em cartões/linhas de lista e título do estado vazio | Novo — definido no JSON; a escala TypeScript atual usa `fontFamily.brand` com estilos existentes |
+| `brand-card-title` | Source Serif 4 | 19 px | 700 | 24 px | Título de livro em cartões/linhas de lista e título do estado vazio | Novo — não existe ainda em `src/view/tokens.ts`; ver nota abaixo |
 | `m3-title-lg` | Roboto | 22 px | 400 | 28 px | Título da barra superior | Herdado |
 | `m3-body-lg` | Roboto | 16 px | 400 | 24 px | Texto de campo, busca, bolha de mensagem | Herdado |
 | `m3-body-md` | Roboto | 14 px | 400 | 20 px | Texto corrido, descrições | Herdado |
@@ -92,15 +90,13 @@ Escala completa (Android M3, iOS, Web, Documentação) em `tokens.json`, campo
 `tokens.json` usa nomes de papel M3 (`primary`, `on-surface-variant`...); o módulo
 TypeScript consumido pelo código usa uma API própria com um grupo `colors.m3` só para os papéis
 M3 ainda sem equivalente nas chaves antigas (ver [ADR 0010](../docs/adr/0010-design-system-substitui-design-kit.md)).
-Os exemplos de código em [04-componentes/](04-componentes/) são didáticos e podem usar
-`tokens.colors` para manter o exemplo curto. Em produção, componentes que participam do tema
-devem obter a paleta por `useTheme()`; a coluna "Em código" abaixo define os nomes disponíveis,
+Os exemplos de código em [04-componentes/](04-componentes/) usam a coluna "Em código" abaixo —
 **não** os nomes M3 da tabela de cor desta seção.
 
 | Papel M3 (`tokens.json`) | Em código (`tokens.colors`) |
 | --- | --- |
 | `primary` | `action` |
-| `on-primary` | `colors.m3.onPrimary` |
+| `on-primary` | branco literal (`#ffffff`) — ainda não tem token próprio |
 | `surface` | `surface` |
 | `on-surface` | `text` |
 | `on-surface-variant` | `secondaryText` |
@@ -110,13 +106,14 @@ devem obter a paleta por `useTheme()`; a coluna "Em código" abaixo define os no
 | `tertiary-container` / `on-tertiary-container` | `badge.trade.background` / `badge.trade.text` |
 | `doacao-container` / `on-doacao-container` | `badge.donation.background` / `badge.donation.text` |
 | `error` | `error` |
-| `focus-ring` | `colors.m3.focusRing` |
-| `scrim` | não há chave própria em `tokens.ts`; o componente `Dialog` mantém uma constante local documentada |
+| `focus-ring` | não tem token em `tokens.ts` — usar o valor de `tokens.json` (`#4e8a68`) |
+| `scrim` | não tem token em `tokens.ts` — usar o valor de `tokens.json` (`#00000052` claro) |
 | papéis M3 sem chave antiga equivalente (`onSurface`, `surfaceContainer*`, `focusRing` etc.) | `colors.m3.*` |
 
-`on-primary` e `focus-ring` já têm token em `colors.m3`. `scrim` continua sem uma chave
-dedicada na API TypeScript; o `Dialog` usa uma constante local nomeada e vinculada ao token
-conceitual do JSON. Novos componentes não devem repetir essa constante sem necessidade.
+`on-primary`, `focus-ring` e `scrim` são uma lacuna real: ainda não têm token próprio em
+`src/view/tokens.ts`. Até alguém adicioná-los a `colors.m3`, qualquer código novo que precise
+desses papéis deve citar o valor de `tokens.json` num comentário, não escrever o hex
+sem explicação (ver exemplo em [04-componentes/dialogo.md](04-componentes/dialogo.md)).
 
 ## 3. Tokens de componente (onde é usado)
 
@@ -135,17 +132,15 @@ conceitual do JSON. Novos componentes não devem repetir essa constante sem nece
 
 ## 4. Modo escuro
 
-Os tokens semânticos de cor têm valores `light` e `dark` em `tokens.json` (por exemplo,
-`primary` claro `#2c5e45` e escuro `#9fd4b3`). A paleta escura é exposta por `darkColors` e
-selecionada pelo `ThemeProvider`, conforme a preferência resolvida pelo
-`useThemeViewModel`. A mudança de tema altera valores sem mudar a estrutura dos componentes.
-Como a migração foi incremental, componentes que ainda consomem `tokens.colors` diretamente
-permanecem claros até serem migrados.
+Todos os tokens semânticos de cor já têm um valor `dark` equivalente em
+`tokens.json` (ex. `primary` claro `#2c5e45` → escuro `#9fd4b3`), mas **não entram em
+código nesta etapa** — decisão registrada em
+[ADR 0008](../docs/adr/0008-sem-dark-mode-android-md3-ios-liquid-glass.md). Quando o tema escuro
+entrar em escopo, só os tokens semânticos mudam de valor; nenhum componente muda de estrutura.
 
 ## 5. Versão legível por máquina
 
-A versão machine-readable já existe: [`tokens.json`](tokens.json), no formato de tokens do
-artefato original do Figma (campos `name`/`value`/`usage` por token, não o formato W3C Design
-Tokens). [`src/view/tokens.ts`](../src/view/tokens.ts) é o módulo TypeScript mantido para
-consumo em código e deve permanecer sincronizado com os tokens que expõe (ver
-[ADR 0010](../docs/adr/0010-design-system-substitui-design-kit.md)).
+A versão machine-readable já existe: [`tokens.json`](tokens.json), no
+formato de tokens do artifact original do Figma (campos `name`/`value`/`usage` por token, não o
+formato W3C Design Tokens). `src/view/tokens.ts` é o módulo TypeScript gerado a partir dele para
+consumo em código (ver [ADR 0010](../docs/adr/0010-design-system-substitui-design-kit.md)).

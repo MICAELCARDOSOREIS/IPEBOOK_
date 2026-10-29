@@ -1,14 +1,12 @@
 import { useMemo } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { Book, BookModality, BookStatus } from "@/model/entities/book";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { formatPrice } from "@/view/formatPrice";
-import { Chip } from "@/view/components/Chip";
 import { FilledButton } from "@/view/components/FilledButton";
 import { IconBadge } from "@/view/components/IconBadge";
 import { ShelfRow } from "@/view/listings/shelfRow";
-import { useIsWideWeb } from "@/view/useIsWideWeb";
 
 const MODALITY_LABELS: Readonly<Record<BookModality, string>> = {
   sale: "Venda",
@@ -20,8 +18,6 @@ const STATUS_LABELS: Readonly<Record<BookStatus, string>> = {
   available: "Disponível",
   paused: "Pausado",
   reserved: "Reservado",
-  delivered: "Entregue",
-  draft: "Rascunho",
 };
 
 export function listingSummary(book: Book): string {
@@ -47,7 +43,6 @@ export function MyListingsListingsTab({
 }: MyListingsListingsTabProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const wideWeb = useIsWideWeb();
 
   const activeCount = books.filter((b) => b.status === "available").length;
   const pausedCount = books.filter((b) => b.status === "paused").length;
@@ -60,32 +55,37 @@ export function MyListingsListingsTab({
     return true;
   });
 
-  // Cada situação usa a cor da sua etiqueta (Disponível, Pausado, Reservado); "Todos" fica neutro.
-  const filterChips: { key: ListingsFilter; label: string; a11y: string; tone?: { background: string; text: string } }[] = [
+  const filterChips: { key: ListingsFilter; label: string; a11y: string }[] = [
     { key: "all", label: `Todos (${books.length})`, a11y: "Filtrar por Todos" },
-    { key: "active", label: `Ativos (${activeCount})`, a11y: "Filtrar por Ativos", tone: { background: colors.soft, text: colors.action } },
-    { key: "paused", label: `Pausados (${pausedCount})`, a11y: "Filtrar por Pausados", tone: { background: colors.disabledBackground, text: colors.disabledText } },
-    { key: "reserved", label: `Reservados (${reservedCount})`, a11y: "Filtrar por Reservados", tone: colors.badge.reserved },
+    { key: "active", label: `Ativos (${activeCount})`, a11y: "Filtrar por Ativos" },
+    { key: "paused", label: `Pausados (${pausedCount})`, a11y: "Filtrar por Pausados" },
+    { key: "reserved", label: `Reservados (${reservedCount})`, a11y: "Filtrar por Reservados" },
   ];
 
   return (
     <>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
-        {/* Mesmo Chip do resto do app (Home, Explorar, filtros): raio, check e cores iguais. */}
-        {filterChips.map((chip) => (
-          <Chip
-            key={chip.key}
-            label={chip.label}
-            accessibilityLabel={chip.a11y}
-            tone={chip.tone}
-            selected={statusFilter === chip.key}
-            onPress={() => onStatusFilterChange(chip.key)}
-          />
-        ))}
-      </ScrollView>
+      <View style={styles.filterRow}>
+        {filterChips.map((chip) => {
+          const selected = statusFilter === chip.key;
+          return (
+            <Pressable
+              key={chip.key}
+              accessibilityRole="button"
+              accessibilityLabel={chip.a11y}
+              accessibilityState={{ selected }}
+              onPress={() => onStatusFilterChange(chip.key)}
+              style={[styles.filterChip, selected && styles.filterChipSelected]}
+            >
+              <Text style={[styles.filterChipText, selected && styles.filterChipTextSelected]}>
+                {chip.label}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
       {filteredBooks.length === 0 ? (
         <View style={styles.empty}>
-          <IconBadge icon="shelf" tone="neutral" size="large" />
+          <IconBadge icon="shelf" tone="neutral" />
           <Text style={styles.emptyTitle}>Nenhum anúncio encontrado neste filtro.</Text>
           <View style={styles.emptyAction}>
             <FilledButton
@@ -95,36 +95,15 @@ export function MyListingsListingsTab({
           </View>
         </View>
       ) : (
-        <View style={styles.listCard}>
-          <Text style={styles.listTitle}>
-            {`${filteredBooks.length} ${filteredBooks.length === 1 ? "anúncio" : "anúncios"}`}
-          </Text>
-          {wideWeb ? (
-            <View style={styles.tableHeader}>
-              <Text style={[styles.tableHeaderText, { flex: 3 }]}>Livro</Text>
-              <Text style={[styles.tableHeaderText, { flex: 1.5 }]}>Situação</Text>
-              <Text style={[styles.tableHeaderText, { width: 96 }]}>Ação</Text>
-            </View>
-          ) : null}
-          {filteredBooks.map((book) => (
-            <ShelfRow
-              key={book.id}
-              wide={
-                wideWeb
-                  ? {
-                      statusVariant: book.status === "reserved" ? "reserved" : book.modality,
-                      statusLabel: book.status === "available" ? MODALITY_LABELS[book.modality] : STATUS_LABELS[book.status],
-                      offer: book.modality === "sale" && book.price ? formatPrice(book.price) : MODALITY_LABELS[book.modality],
-                    }
-                  : undefined
-              }
-              book={book}
-              summary={listingSummary(book)}
-              accessibilityLabel={`Gerenciar anúncio de ${book.title}`}
-              onPress={() => onNavigateToManageListing?.(book.id)}
-            />
-          ))}
-        </View>
+        filteredBooks.map((book) => (
+          <ShelfRow
+            key={book.id}
+            book={book}
+            summary={listingSummary(book)}
+            accessibilityLabel={`Gerenciar anúncio de ${book.title}`}
+            onPress={() => onNavigateToManageListing?.(book.id)}
+          />
+        ))
       )}
       {/* `05.01` traz a dica de uso depois da lista, não antes dela. */}
       <Text style={styles.orientationHint}>
@@ -138,26 +117,39 @@ function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     filterRow: {
       flexDirection: "row",
+      flexWrap: "wrap",
       gap: tokens.spacing[8],
-      paddingBottom: tokens.spacing[8],
+      marginBottom: tokens.spacing[8],
+    },
+    filterChip: {
+      minHeight: tokens.accessibility.touchTarget,
+      justifyContent: "center",
+      paddingHorizontal: tokens.spacing[12],
+      paddingVertical: tokens.spacing[6],
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+    },
+    filterChipSelected: {
+      backgroundColor: colors.action,
+      borderColor: colors.action,
+    },
+    filterChipText: {
+      ...tokens.typography.labelMedium,
+      color: colors.text,
+    },
+    filterChipTextSelected: {
+      color: colors.surface,
+      fontWeight: "600",
     },
     empty: { paddingTop: tokens.spacing[48], alignItems: "center", gap: tokens.spacing[12] },
     emptyTitle: {
-      ...tokens.typography.bodyLarge,
-      color: colors.m3.onSurface,
+      ...tokens.typography.bodyMedium,
+      color: colors.secondaryText,
       textAlign: "center",
     },
     emptyAction: { marginTop: tokens.spacing[16], width: "100%" },
-    listCard: {
-      paddingHorizontal: tokens.spacing[16],
-      paddingTop: tokens.spacing[16],
-      paddingBottom: tokens.spacing[4],
-      borderRadius: 16,
-      backgroundColor: colors.m3.surfaceContainerLow,
-    },
-    tableHeader: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[16], paddingHorizontal: tokens.spacing[16], paddingVertical: tokens.spacing[12] },
-    tableHeaderText: { ...tokens.typography.labelLarge, color: colors.m3.onSurfaceVariant },
-    listTitle: { ...tokens.typography.titleMedium, color: colors.m3.onSurface },
     orientationHint: {
       ...tokens.typography.bodyMedium,
       color: colors.secondaryText,

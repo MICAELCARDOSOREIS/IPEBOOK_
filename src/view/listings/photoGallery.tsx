@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import {
   FlatList,
   Image,
-  LayoutChangeEvent,
   Modal,
   NativeScrollEvent,
   NativeSyntheticEvent,
@@ -11,32 +10,9 @@ import {
   StyleSheet,
   Text,
   View,
-  useWindowDimensions,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { tokens } from "@/view/tokens";
-
-/** Uma página da galeria: se a foto não carregar, avisa em vez de deixar a tela preta. */
-function GalleryPhoto({ uri, position, width, height }: { uri: string; position: number; width: number; height: number }) {
-  const [failed, setFailed] = useState(false);
-  return (
-    <View style={[styles.photoPage, { width, height }]}>
-      {failed ? (
-        <Text accessibilityRole="alert" style={styles.failedText}>
-          Não foi possível carregar esta foto.
-        </Text>
-      ) : (
-        <Image
-          source={{ uri }}
-          accessibilityLabel={`Foto ${position} do anúncio`}
-          resizeMode="contain"
-          onError={() => setFailed(true)}
-          style={{ width, height }}
-        />
-      )}
-    </View>
-  );
-}
 
 export type PhotoGalleryProps = {
   photos: readonly string[];
@@ -57,16 +33,6 @@ function clampIndex(index: number, length: number): number {
 export function PhotoGallery({ photos, initialIndex = 0, visible, onClose }: PhotoGalleryProps) {
   const [index, setIndex] = useState(clampIndex(initialIndex, photos.length));
   const listRef = useRef<FlatList<string> | null>(null);
-  // Largura e altura em pixels: porcentagem dentro de uma lista horizontal nativa resolve para 0 e a
-  // foto não aparecia (tela preta, só "Foto 1 de 1"). Parte da janela e passa a medir a área real.
-  const window = useWindowDimensions();
-  const [area, setArea] = useState<{ width: number; height: number } | null>(null);
-  const pageWidth = area?.width ?? window.width;
-  const pageHeight = area?.height ?? window.height * 0.7;
-  const handleAreaLayout = (event: LayoutChangeEvent) => {
-    const { width, height } = event.nativeEvent.layout;
-    if (width > 0 && height > 0) setArea({ width, height });
-  };
 
   const goTo = (nextIndex: number) => {
     const clamped = clampIndex(nextIndex, photos.length);
@@ -104,7 +70,7 @@ export function PhotoGallery({ photos, initialIndex = 0, visible, onClose }: Pho
   }, [isWeb, visible, index, onClose]);
 
   return (
-    <Modal visible={visible} animationType="fade" onRequestClose={onClose} transparent={false} statusBarTranslucent navigationBarTranslucent>
+    <Modal visible={visible} animationType="fade" onRequestClose={onClose} transparent={false}>
       <SafeAreaView style={styles.page}>
         <View style={styles.header}>
           <Pressable accessibilityRole="button" accessibilityLabel="Fechar galeria de fotos" onPress={onClose} style={styles.closeButton}>
@@ -112,7 +78,7 @@ export function PhotoGallery({ photos, initialIndex = 0, visible, onClose }: Pho
           </Pressable>
           <Text style={styles.counter}>{`Foto ${index + 1} de ${photos.length}`}</Text>
         </View>
-        <View style={styles.photoArea} onLayout={handleAreaLayout}>
+        <View style={styles.photoArea}>
           <FlatList
             ref={listRef}
             testID="photo-gallery-list"
@@ -122,10 +88,16 @@ export function PhotoGallery({ photos, initialIndex = 0, visible, onClose }: Pho
             showsHorizontalScrollIndicator={false}
             keyExtractor={(uri, itemIndex) => `${uri}-${itemIndex}`}
             initialScrollIndex={clampIndex(initialIndex, photos.length)}
-            getItemLayout={(_, itemIndex) => ({ length: pageWidth, offset: pageWidth * itemIndex, index: itemIndex })}
             onMomentumScrollEnd={handleMomentumScrollEnd}
             renderItem={({ item, index: itemIndex }) => (
-              <GalleryPhoto uri={item} position={itemIndex + 1} width={pageWidth} height={pageHeight} />
+              <View style={styles.photoPage}>
+                <Image
+                  source={{ uri: item }}
+                  accessibilityLabel={`Foto ${itemIndex + 1} do anúncio`}
+                  resizeMode="contain"
+                  style={styles.photo}
+                />
+              </View>
             )}
           />
         </View>
@@ -170,8 +142,8 @@ const styles = StyleSheet.create({
   closeText: { color: "#FFFFFF", fontWeight: "bold", fontSize: tokens.typography.bodyMedium.fontSize },
   counter: { color: "#FFFFFF", fontSize: tokens.typography.bodyMedium.fontSize },
   photoArea: { flex: 1 },
-  photoPage: { alignItems: "center", justifyContent: "center" },
-  failedText: { color: "#FFFFFF", fontSize: tokens.typography.bodyMedium.fontSize, textAlign: "center", padding: tokens.spacing[24] },
+  photoPage: { width: "100%", height: "100%", alignItems: "center", justifyContent: "center" },
+  photo: { width: "100%", height: "100%" },
   navRow: { flexDirection: "row", justifyContent: "space-between", padding: tokens.spacing[16] },
   navButton: { minHeight: tokens.accessibility.touchTarget, justifyContent: "center", paddingHorizontal: tokens.spacing[12] },
   navButtonDisabled: { opacity: 0.4 },

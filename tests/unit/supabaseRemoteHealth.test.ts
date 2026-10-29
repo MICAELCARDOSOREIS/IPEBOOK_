@@ -151,46 +151,6 @@ describe('Diagnóstico de Saúde e Migrações do Supabase Remoto (Spec 049 / AD
       expect(alerts.colunasAusentes).toContain('modalities');
       expect(alerts.colunasValidas).toContain('query');
     });
-
-    it('trata 401 de tabela restrita por RLS como existente (sem falso positivo de coluna ausente)', async () => {
-      // Regressão: v2_negotiation_messages tem revoke para anon (Spec 061); o PostgREST
-      // responde 401 e o diagnóstico não pode concluir que a migração está pendente.
-      const mockFetch = vi.fn().mockImplementation((url: string) => {
-        if (url.includes('v2_negotiation_messages')) {
-          return Promise.resolve({ ok: false, status: 401 });
-        }
-        return Promise.resolve({ ok: true, status: 200 });
-      });
-
-      const resultado = await verificarTabelasEColunas('https://exemplo.supabase.co', 'chave-123', mockFetch);
-      expect(resultado.ok).toBe(true);
-      const msgs = resultado.tabelas.v2_negotiation_messages;
-      expect(msgs.existe).toBe(true);
-      expect(msgs.ok).toBe(true);
-      expect(msgs.restrita).toBe(true);
-      expect(msgs.colunasAusentes).toHaveLength(0);
-    });
-
-    it('trata 401 em sonda de coluna individual como restrita, não como ausente', async () => {
-      const mockFetch = vi.fn().mockImplementation((url: string) => {
-        if (url.includes('v2_blocked_users')) {
-          // Sonda combinada falha (400) e cada sonda por coluna recebe 401 de RLS
-          if (url.includes('select=blocker_id%2Cblocked_id%2Ccreated_at')) {
-            return Promise.resolve({ ok: false, status: 400 });
-          }
-          return Promise.resolve({ ok: false, status: 401 });
-        }
-        return Promise.resolve({ ok: true, status: 200 });
-      });
-
-      const resultado = await verificarTabelasEColunas('https://exemplo.supabase.co', 'chave-123', mockFetch);
-      expect(resultado.ok).toBe(true);
-      const blocked = resultado.tabelas.v2_blocked_users;
-      expect(blocked.existe).toBe(true);
-      expect(blocked.ok).toBe(true);
-      expect(blocked.restrita).toBe(true);
-      expect(blocked.colunasAusentes).toHaveLength(0);
-    });
   });
 
   describe('verificarStorage', () => {
@@ -284,7 +244,7 @@ describe('Diagnóstico de Saúde e Migrações do Supabase Remoto (Spec 049 / AD
       const contextoDiagnostico = {
         conectividade: { ok: true },
         tabelas: {
-          v2_books: { existe: true, colunasValidas: ['title', 'photo_url', 'neighborhood', 'status', 'condition', 'description', 'synopsis'] },
+          v2_books: { existe: true, colunasValidas: ['title', 'photo_url', 'neighborhood', 'status', 'condition', 'description'] },
           v2_book_requests: { existe: true },
           v2_favorites: { existe: true },
           v2_search_alerts: { existe: true, colunasValidas: ['modalities'] },
@@ -292,13 +252,9 @@ describe('Diagnóstico de Saúde e Migrações do Supabase Remoto (Spec 049 / AD
           v2_reports: { existe: true },
           v2_profiles: { existe: true, colunasValidas: ['photo_url', 'social_handle'] },
           v2_ratings: { existe: true },
-          v2_user_preferences: { existe: true, colunasValidas: ['muted_types'] },
+          v2_user_preferences: { existe: true },
           v2_meetings: { existe: true },
           v2_blocked_users: { existe: true },
-          v2_negotiation_messages: { existe: true },
-          v2_hidden_conversations: { existe: true },
-          v2_user_reports: { existe: true },
-          v2_deliveries: { existe: true },
         },
         storage: { ok: true, publico: true },
         rpc: {
@@ -310,8 +266,8 @@ describe('Diagnóstico de Saúde e Migrações do Supabase Remoto (Spec 049 / AD
       };
 
       const resultado = reconciliarMigracoesLocais('supabase/migrations', contextoDiagnostico);
-      expect(resultado.total).toBe(38);
-      expect(resultado.aplicadas).toBe(38);
+      expect(resultado.total).toBe(20);
+      expect(resultado.aplicadas).toBe(20);
       expect(resultado.pendentes).toBe(0);
       expect(resultado.migracoes.every((m: any) => m.status === 'APLICADA')).toBe(true);
     });
@@ -320,7 +276,7 @@ describe('Diagnóstico de Saúde e Migrações do Supabase Remoto (Spec 049 / AD
       const contextoParcial = {
         conectividade: { ok: true },
         tabelas: {
-          v2_books: { existe: true, colunasValidas: ['title', 'photo_url', 'neighborhood', 'status', 'condition', 'description', 'synopsis'] },
+          v2_books: { existe: true, colunasValidas: ['title', 'photo_url', 'neighborhood', 'status', 'condition', 'description'] },
           v2_book_requests: { existe: true },
           v2_favorites: { existe: true },
           v2_search_alerts: { existe: true, colunasValidas: ['query'] }, // sem modalities
@@ -331,7 +287,6 @@ describe('Diagnóstico de Saúde e Migrações do Supabase Remoto (Spec 049 / AD
           v2_user_preferences: { existe: false }, // tabela ausente
           v2_meetings: { existe: false }, // encontros da Spec 052 ainda não aplicados
           v2_blocked_users: { existe: false }, // bloqueios da Spec 056 ainda não aplicados
-          v2_negotiation_messages: { existe: false }, // mensagens da Spec 061 ainda não aplicadas
         },
         storage: { ok: true, publico: true },
         rpc: {
@@ -343,9 +298,9 @@ describe('Diagnóstico de Saúde e Migrações do Supabase Remoto (Spec 049 / AD
       };
 
       const resultado = reconciliarMigracoesLocais('supabase/migrations', contextoParcial);
-      expect(resultado.total).toBe(38);
-      expect(resultado.aplicadas).toBe(21);
-      expect(resultado.pendentes).toBe(17);
+      expect(resultado.total).toBe(20);
+      expect(resultado.aplicadas).toBe(14);
+      expect(resultado.pendentes).toBe(6);
 
       const pendentes = resultado.migracoes.filter((m: any) => m.status === 'PENDENTE');
       const arquivosPendentes = pendentes.map((m: any) => m.arquivo);
@@ -355,8 +310,6 @@ describe('Diagnóstico de Saúde e Migrações do Supabase Remoto (Spec 049 / AD
       expect(arquivosPendentes).toContain('202610210002_modalidades_alerta_busca.sql');
       expect(arquivosPendentes).toContain('202610220001_encontros.sql');
       expect(arquivosPendentes).toContain('202610230002_bloqueio_usuarios.sql');
-      expect(arquivosPendentes).toContain('202610240001_mensagens_negociacao.sql');
-      expect(arquivosPendentes).toContain('202610260001_push_token_preferencias.sql');
     });
   });
 
@@ -403,7 +356,7 @@ describe('Diagnóstico de Saúde e Migrações do Supabase Remoto (Spec 049 / AD
       const parsed = JSON.parse(relatorioJson);
       expect(parsed.ok).toBe(true);
       expect(parsed.url).toBe('https://projeto-vitest.supabase.co');
-      expect(parsed.migracoes.total).toBe(38);
+      expect(parsed.migracoes.total).toBe(20);
     });
 
     it('formata adequadamente falhas e pendências detectadas', async () => {

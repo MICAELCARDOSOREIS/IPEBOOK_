@@ -2,7 +2,6 @@ import { useMemo } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
-import { AppIcon } from "@/view/components/AppIcon";
 
 export type SearchFieldProps = {
   value: string;
@@ -12,12 +11,11 @@ export type SearchFieldProps = {
 };
 
 /** Campo de busca do design system (campo-de-busca.md): pílula com botão Limpar. */
-export function SearchField({ value, onChangeText, placeholder = "Buscar título, autor ou categoria", onSubmitEditing }: SearchFieldProps) {
+export function SearchField({ value, onChangeText, placeholder = "Busque por título ou autor", onSubmitEditing }: SearchFieldProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   return (
     <View style={styles.container}>
-      <AppIcon name="search" size={24} color={colors.secondaryText} />
       <TextInput
         value={value}
         onChangeText={onChangeText}
@@ -48,10 +46,9 @@ function createStyles(colors: ColorPalette) {
       flexDirection: "row",
       alignItems: "center",
       height: 56,
-      backgroundColor: colors.m3.surfaceContainerHigh,
+      backgroundColor: colors.soft,
       borderRadius: tokens.radius.full,
       paddingHorizontal: tokens.spacing[16],
-      gap: tokens.spacing[12],
     },
     input: { flex: 1, color: colors.text, fontSize: tokens.typography.bodyLarge.fontSize },
     clearButton: {

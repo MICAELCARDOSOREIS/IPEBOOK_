@@ -27,8 +27,6 @@ function mapNotification(row: NotificationRow): AppNotification {
   };
 }
 
-let channelSeq = 0;
-
 export class SupabaseNotificationDataSource implements INotificationDataSource {
   constructor(private readonly client: SupabaseAppClient) {}
 
@@ -65,23 +63,6 @@ export class SupabaseNotificationDataSource implements INotificationDataSource {
     if (error) {
       throw new DataSourceError("Não foi possível marcar as notificações como lidas.");
     }
-  }
-
-  subscribeToChanges(userId: string, onChange: () => void): () => void {
-    const channel = this.client
-      // Nome único por assinatura: reusar o mesmo tópico depois de `subscribe()` lança erro do Realtime
-      // (Home, Conversas e a tela de notificações assinam ao mesmo tempo).
-      .channel(`notifications:${userId}:${++channelSeq}`)
-      .on(
-        "postgres_changes" as any,
-        { event: "*", schema: "public", table: "v2_notifications", filter: `user_id=eq.${userId}` },
-        () => onChange(),
-      )
-      .subscribe();
-
-    return () => {
-      this.client.removeChannel(channel);
-    };
   }
 
   async addNotification(notification: AppNotification): Promise<void> {

@@ -59,8 +59,6 @@ export function BarcodeScannerModal({
 
   return (
     <Modal
-      statusBarTranslucent
-      navigationBarTranslucent
       visible={visible}
       animationType="slide"
       presentationStyle="fullScreen"

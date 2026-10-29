@@ -1,16 +1,20 @@
 import { useMemo } from "react";
-import { Image, StyleSheet, View } from "react-native";
+import { Image, StyleSheet, Text, View } from "react-native";
 import { tokens, type ColorPalette } from "@/view/tokens";
-import { IpeMark } from "@/view/components/IpeMark";
 import { useTheme } from "@/view/theme/ThemeProvider";
 
 export type AvatarProps = {
   name: string;
   photoUrl?: string;
-  size?: number;
+  size?: 40 | 64;
 };
 
-/** Avatar do design system (avatar.md): foto quando houver; sem foto, o ipê da marca (Spec 078). */
+function initials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  return parts.slice(0, 2).map((part) => part[0]).join("").toUpperCase();
+}
+
+/** Avatar do design system (avatar.md): foto quando houver, iniciais quando não. */
 export function Avatar({ name, photoUrl, size = 40 }: AvatarProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -26,7 +30,7 @@ export function Avatar({ name, photoUrl, size = 40 }: AvatarProps) {
   }
   return (
     <View accessibilityLabel={name} style={[styles.fallback, dimension]}>
-      <IpeMark size={Math.round(size * 0.72)} testID="avatar-ipe" />
+      <Text style={styles.initials}>{initials(name)}</Text>
     </View>
   );
 }
@@ -36,7 +40,12 @@ function createStyles(colors: ColorPalette) {
     fallback: {
       alignItems: "center",
       justifyContent: "center",
-      backgroundColor: colors.ipe.container,
+      backgroundColor: colors.m3.primaryContainer,
+    },
+    initials: {
+      color: colors.m3.onPrimaryContainer,
+      fontSize: tokens.typography.labelMedium.fontSize,
+      fontWeight: "600",
     },
   });
 }

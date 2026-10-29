@@ -7,8 +7,6 @@ import type { ScheduleMeetingActions, ScheduleMeetingState } from "@/viewmodel/u
 import { MeetingCard } from "@/view/requests/meetingCard";
 import ScheduleMeetingScreen, { ScheduleMeeting } from "@/view/requests/scheduleMeeting";
 
-const openURL = vi.fn();
-vi.mock("expo-linking", () => ({ openURL: (...args: unknown[]) => openURL(...args) }));
 vi.mock("@/viewmodel/useMeetingViewModel", () => ({ useMeetingViewModel: vi.fn() }));
 vi.mock("@/viewmodel/useScheduleMeetingViewModel", () => ({ useScheduleMeetingViewModel: vi.fn() }));
 vi.mock("@/viewmodel/useAuthViewModel", () => ({ useAuthViewModel: vi.fn() }));
@@ -35,7 +33,7 @@ const baseMeeting: Meeting = {
 function mockMeeting(state: Partial<MeetingState>, actions: Partial<MeetingActions> = {}) {
   const full: MeetingActions = { reload: vi.fn(), confirm: vi.fn().mockResolvedValue(true), cancel: vi.fn().mockResolvedValue(true), ...actions };
   vi.mocked(useMeetingViewModel).mockReturnValue([
-    { meeting: null, history: [], loading: false, error: null, busy: false, actionError: null, ...state },
+    { meeting: null, loading: false, error: null, busy: false, actionError: null, ...state },
     full,
   ]);
   return full;
@@ -51,30 +49,13 @@ async function renderCard(userId: string, onScheduleMeeting = vi.fn()) {
   return screen;
 }
 
-describe("cartão do encontro com a entrega concluída (Spec 095)", () => {
-  it("vira um resumo sem reagendar, cancelar, rota nem contagem regressiva", async () => {
-    mockMeeting({ meeting: { ...baseMeeting, status: "confirmed" } });
-    let screen!: Awaited<ReturnType<typeof render>>;
-    await act(async () => {
-      screen = await render(<MeetingCard requestId="r1" sessionUserId="leitora" counterpartName="Ana Paula" concluded />);
-    });
-    expect(screen.getByRole("header", { name: "Encontro realizado" })).toBeDefined();
-    expect(screen.getByText(baseMeeting.pointName)).toBeDefined();
-    expect(screen.getByText("Praça da Bandeira, Centro, Piripiri, PI")).toBeDefined();
-    expect(screen.queryByRole("button", { name: "Reagendar" })).toBeNull();
-    expect(screen.queryByText("Cancelar encontro")).toBeNull();
-    expect(screen.queryByText("Como chegar")).toBeNull();
-    expect(screen.queryByText(/chegue alguns minutos antes/)).toBeNull();
-  });
-});
-
 describe("cartão do encontro (Spec 052, 06.05/06.11/06.12)", () => {
-  it("sem convite, oferece Escolher local e horário", async () => {
+  it("sem convite, oferece Combinar encontro", async () => {
     mockMeeting({ meeting: null });
     const onSchedule = vi.fn();
     const screen = await renderCard("dono", onSchedule);
     expect(screen.getByRole("header", { name: "Combine o encontro" })).toBeDefined();
-    await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Escolher local e horário" })); });
+    await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Combinar encontro" })); });
     expect(onSchedule).toHaveBeenCalledOnce();
   });
 
@@ -82,7 +63,7 @@ describe("cartão do encontro (Spec 052, 06.05/06.11/06.12)", () => {
     const actions = mockMeeting({ meeting: baseMeeting });
     const screen = await renderCard("leitora");
     expect(screen.getByRole("header", { name: "Convite para encontro" })).toBeDefined();
-    expect(screen.getByText("Ana Paula sugeriu este encontro. Confirme se esse horário funciona ou sugira outro.")).toBeDefined();
+    expect(screen.getByText("Ana Paula sugeriu este encontro.")).toBeDefined();
     expect(screen.getByText("Sáb, 24/10 · 15h")).toBeDefined();
     expect(screen.getByText("Praça da Bandeira, Centro, Piripiri, PI")).toBeDefined();
     await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Confirmar encontro" })); });
@@ -94,7 +75,7 @@ describe("cartão do encontro (Spec 052, 06.05/06.11/06.12)", () => {
     mockMeeting({ meeting: baseMeeting });
     const screen = await renderCard("dono");
     expect(screen.getByRole("header", { name: "Aguardando confirmação" })).toBeDefined();
-    expect(screen.getByText("Ana Paula vai confirmar este horário ou sugerir outro. Você recebe um aviso quando responder.")).toBeDefined();
+    expect(screen.getByText("Ana Paula ainda precisa confirmar este encontro.")).toBeDefined();
     expect(screen.queryByRole("button", { name: "Confirmar encontro" })).toBeNull();
     expect(screen.getByRole("button", { name: "Reagendar" })).toBeDefined();
   });
@@ -126,78 +107,6 @@ describe("cartão do encontro (Spec 052, 06.05/06.11/06.12)", () => {
     expect(screen.getByRole("header", { name: "Encontro cancelado" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Combinar novo encontro" })).toBeDefined();
     expect(screen.getByRole("alert").props.children).toBe("Muitas tentativas seguidas.");
-  });
-
-  it("exibe tentativas anteriores no histórico quando houver múltiplos encontros (Spec 071)", async () => {
-    const cancelado: Meeting = { ...baseMeeting, id: "m0", status: "cancelled" };
-    mockMeeting({ meeting: baseMeeting, history: [baseMeeting, cancelado] });
-    const screen = await renderCard("dono");
-    expect(screen.getByText("Tentativas anteriores")).toBeDefined();
-    expect(screen.getByText("Cancelado")).toBeDefined();
-  });
-
-  it("histórico após cancelamento distingue encontros confirmados, propostos e cancelados", async () => {
-    const confirmado: Meeting = { ...baseMeeting, id: "m2", status: "confirmed" };
-    const proposto: Meeting = { ...baseMeeting, id: "m3", status: "proposed" };
-    const cancelado: Meeting = { ...baseMeeting, status: "cancelled" };
-    mockMeeting({ meeting: cancelado, history: [cancelado, confirmado, proposto] });
-    const screen = await renderCard("dono");
-    expect(screen.getByText("Histórico de encontros")).toBeDefined();
-    expect(screen.getByText("Confirmado")).toBeDefined();
-    expect(screen.getByText("Proposto")).toBeDefined();
-    expect(screen.getByText("Cancelado")).toBeDefined();
-  });
-
-  it("tentativas anteriores marcam encontros confirmados e propostos", async () => {
-    const confirmado: Meeting = { ...baseMeeting, id: "m2", status: "confirmed" };
-    const proposto: Meeting = { ...baseMeeting, id: "m3", status: "proposed" };
-    mockMeeting({ meeting: { ...baseMeeting, status: "confirmed" }, history: [baseMeeting, confirmado, proposto] });
-    const screen = await renderCard("dono");
-    expect(screen.getByText("Tentativas anteriores")).toBeDefined();
-    expect(screen.getAllByText("Confirmado").length).toBeGreaterThan(0);
-    expect(screen.getByText("Proposto")).toBeDefined();
-  });
-
-  it("ponto fora da lista de Piripiri abre o mapa pelo nome do local", async () => {
-    openURL.mockReset().mockResolvedValue(undefined);
-    mockMeeting({ meeting: { ...baseMeeting, status: "confirmed", pointName: "Biblioteca do bairro" } });
-    const screen = await renderCard("leitora");
-    await act(async () => {
-      fireEvent.press(screen.getByRole("button", { name: "Como chegar a Biblioteca do bairro" }));
-    });
-    expect(openURL).toHaveBeenCalledWith(expect.stringContaining(encodeURIComponent("Biblioteca do bairro, Piripiri")));
-  });
-
-  it("mostra quanto falta e abre o mapa do ponto escolhido (Spec 079)", async () => {
-    openURL.mockReset().mockResolvedValue(undefined);
-    const amanha = new Date();
-    amanha.setDate(amanha.getDate() + 1);
-    amanha.setHours(15, 0, 0, 0);
-    mockMeeting({ meeting: { ...baseMeeting, status: "confirmed", scheduledAt: amanha.toISOString() } });
-    const screen = await renderCard("leitora");
-    expect(screen.getByText("Amanhã · chegue alguns minutos antes")).toBeDefined();
-    await act(async () => {
-      fireEvent.press(screen.getByRole("button", { name: "Como chegar a Praça da Bandeira (Centro)" }));
-    });
-    expect(openURL).toHaveBeenCalledWith(expect.stringContaining("google.com/maps"));
-  });
-
-  it("avisa quando o horário do encontro já passou e quando o mapa falha (Spec 079)", async () => {
-    openURL.mockReset().mockRejectedValue(new Error("sem app"));
-    mockMeeting({ meeting: { ...baseMeeting, status: "confirmed", scheduledAt: "2020-01-01T15:00:00.000Z" } });
-    const onMeetingChange = vi.fn();
-    let screen!: Awaited<ReturnType<typeof render>>;
-    await act(async () => {
-      screen = await render(
-        <MeetingCard requestId="r1" sessionUserId="leitora" counterpartName="Ana Paula" onMeetingChange={onMeetingChange} />,
-      );
-    });
-    expect(screen.getByText("O horário combinado já passou")).toBeDefined();
-    expect(onMeetingChange).toHaveBeenCalledWith(expect.objectContaining({ status: "confirmed" }));
-    await act(async () => {
-      fireEvent.press(screen.getByRole("button", { name: "Como chegar a Praça da Bandeira (Centro)" }));
-    });
-    expect(screen.getByRole("alert").props.children).toBe("Não foi possível abrir o mapa. Tente novamente.");
   });
 
   it("carregando e erro de carga com nova tentativa", async () => {

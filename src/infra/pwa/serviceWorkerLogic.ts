@@ -103,7 +103,7 @@ export function createOfflineHtmlResponse(): Response {
       body {
         margin: 0;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        background-color: #FCFAF5;
+        background-color: #F6F1E8;
         color: #1F2937;
         display: flex;
         align-items: center;

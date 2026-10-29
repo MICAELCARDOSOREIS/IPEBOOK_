@@ -8,13 +8,10 @@ import { useReceivedRatingsViewModel } from "@/viewmodel/useReceivedRatingsViewM
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
 const mounted: ReactTestRenderer[] = [];
 
-async function renderHook(
-  sessionUserId: string | null,
-  useCases: Partial<IRatingUseCases> & Pick<IRatingUseCases, "listReceivedRatings">,
-) {
+async function renderHook(sessionUserId: string | null, useCases: IRatingUseCases) {
   let result!: ReturnType<typeof useReceivedRatingsViewModel>;
   function HookProbe() {
-    result = useReceivedRatingsViewModel(sessionUserId, useCases as IRatingUseCases);
+    result = useReceivedRatingsViewModel(sessionUserId, useCases);
     return null;
   }
   await act(async () => {

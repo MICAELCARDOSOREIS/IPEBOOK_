@@ -15,10 +15,10 @@ vi.mock("expo-linking", () => ({
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
 const mounted: ReactTestRenderer[] = [];
 
-async function renderHook(useCases: IShareUseCases, shareImageFile?: (uri: string) => Promise<boolean>) {
+async function renderHook(useCases: IShareUseCases) {
   let result!: ReturnType<typeof useShareListingViewModel>;
   function HookProbe() {
-    result = useShareListingViewModel(useCases, shareImageFile);
+    result = useShareListingViewModel(useCases);
     return null;
   }
   await act(async () => {
@@ -53,12 +53,12 @@ describe("testes de hook: useShareListingViewModel (Spec 019)", () => {
   it("compartilha via menu nativo no Android", async () => {
     const originalOS = Platform.OS;
     Platform.OS = "android";
-    const shareSpy = vi.spyOn(Share, "share").mockResolvedValue({ action: "sharedAction", activityType: undefined });
+    const shareSpy = vi.spyOn(Share, "share").mockResolvedValue({ action: "sharedAction" });
     const hook = await renderHook(fakeUseCases);
     await act(async () => {
       await hook.current[1].share("b1");
     });
-    expect(shareSpy).toHaveBeenCalledWith({ message: "https://ipebook.app/livro/b1" });
+    expect(shareSpy).toHaveBeenCalledWith({ message: "ipebook:///livro/b1" });
     expect(hook.current[0]).toEqual({ sharing: false, linkCopied: false, error: null });
     Platform.OS = originalOS;
   });
@@ -72,7 +72,7 @@ describe("testes de hook: useShareListingViewModel (Spec 019)", () => {
     await act(async () => {
       await hook.current[1].share("b1");
     });
-    expect(writeText).toHaveBeenCalledWith("https://ipebook.app/livro/b1");
+    expect(writeText).toHaveBeenCalledWith("ipebook:///livro/b1");
     expect(hook.current[0]).toEqual({ sharing: false, linkCopied: true, error: null });
     Platform.OS = originalOS;
   });
@@ -137,7 +137,7 @@ describe("testes de hook: useShareListingViewModel (Spec 019)", () => {
       Platform.OS = "android";
       const linking = await import("expo-linking");
       vi.mocked(linking.canOpenURL).mockResolvedValue(false);
-      const shareSpy = vi.spyOn(Share, "share").mockResolvedValue({ action: "sharedAction", activityType: undefined });
+      const shareSpy = vi.spyOn(Share, "share").mockResolvedValue({ action: "sharedAction" });
 
       const hook = await renderHook(fakeUseCases);
       await act(async () => {
@@ -164,40 +164,8 @@ describe("testes de hook: useShareListingViewModel (Spec 019)", () => {
 
       expect(webShare).toHaveBeenCalledWith({
         text: expect.stringContaining("Dom Casmurro"),
-        url: "https://ipebook.app/livro/b1",
+        url: "ipebook:///livro/b1",
       });
-      expect(hook.current[0]).toEqual({ sharing: false, linkCopied: true, error: null });
-      Platform.OS = originalOS;
-    });
-
-    it("não mostra erro quando a pessoa cancela o menu de compartilhamento", async () => {
-      const originalOS = Platform.OS;
-      Platform.OS = "web";
-      const cancel = Object.assign(new Error("Share canceled"), { name: "AbortError" });
-      vi.stubGlobal("navigator", { share: vi.fn().mockRejectedValue(cancel), clipboard: { writeText: vi.fn() } });
-
-      const hook = await renderHook(fakeUseCases);
-      await act(async () => {
-        await hook.current[1].shareToWhatsApp("b1", fakeListing);
-      });
-
-      expect(hook.current[0]).toEqual({ sharing: false, linkCopied: false, error: null });
-      Platform.OS = originalOS;
-    });
-
-    it("copia a mensagem quando o navegador recusa a Web Share API", async () => {
-      const originalOS = Platform.OS;
-      Platform.OS = "web";
-      const denied = Object.assign(new Error("Permission denied"), { name: "NotAllowedError" });
-      const writeText = vi.fn().mockResolvedValue(undefined);
-      vi.stubGlobal("navigator", { share: vi.fn().mockRejectedValue(denied), clipboard: { writeText } });
-
-      const hook = await renderHook(fakeUseCases);
-      await act(async () => {
-        await hook.current[1].shareToWhatsApp("b1", fakeListing);
-      });
-
-      expect(writeText).toHaveBeenCalledWith(expect.stringContaining("Dom Casmurro"));
       expect(hook.current[0]).toEqual({ sharing: false, linkCopied: true, error: null });
       Platform.OS = originalOS;
     });
@@ -219,56 +187,3 @@ describe("testes de hook: useShareListingViewModel (Spec 019)", () => {
     });
   });
 });
-
-describe("useShareListingViewModel — imagem do anúncio (Spec 092)", () => {
-  it("captura a imagem e abre a folha de compartilhamento com o arquivo", async () => {
-    const originalOS = Platform.OS;
-    Platform.OS = "android";
-    const shareFile = vi.fn().mockResolvedValue(true);
-    const shareSpy = vi.spyOn(Share, "share").mockResolvedValue({ action: "sharedAction", activityType: undefined });
-    const hook = await renderHook(fakeUseCases, shareFile);
-    const capture = vi.fn().mockResolvedValue("file:///tmp/anuncio.png");
-    await act(async () => { await hook.current[1].shareImage("b1", fakeListing, capture); });
-    expect(shareFile).toHaveBeenCalledWith("file:///tmp/anuncio.png", "Dom Casmurro de Machado de Assis — https://ipebook.app/livro/b1", "Compartilhar anúncio");
-    expect(shareSpy).not.toHaveBeenCalled();
-    expect(hook.current[0]).toEqual({ sharing: false, linkCopied: false, error: null });
-    Platform.OS = originalOS;
-  });
-
-  it("cai no texto com link https quando o aparelho não compartilha arquivos", async () => {
-    const originalOS = Platform.OS;
-    Platform.OS = "android";
-    const shareSpy = vi.spyOn(Share, "share").mockResolvedValue({ action: "sharedAction", activityType: undefined });
-    const hook = await renderHook(fakeUseCases, vi.fn().mockResolvedValue(false));
-    await act(async () => { await hook.current[1].shareImage("b1", fakeListing, vi.fn().mockResolvedValue("file:///x.png")); });
-    expect(shareSpy).toHaveBeenCalledWith({ message: "Dom Casmurro de Machado de Assis — https://ipebook.app/livro/b1" });
-    Platform.OS = originalOS;
-  });
-
-  it("na web copia o texto com o link, sem capturar", async () => {
-    const originalOS = Platform.OS;
-    Platform.OS = "web";
-    const writeText = vi.fn().mockResolvedValue(undefined);
-    vi.stubGlobal("navigator", { clipboard: { writeText } });
-    const capture = vi.fn();
-    const hook = await renderHook(fakeUseCases, vi.fn());
-    await act(async () => { await hook.current[1].shareImage("b1", fakeListing, capture); });
-    expect(capture).not.toHaveBeenCalled();
-    expect(writeText).toHaveBeenCalledWith("Dom Casmurro de Machado de Assis — https://ipebook.app/livro/b1");
-    expect(hook.current[0].linkCopied).toBe(true);
-    Platform.OS = originalOS;
-  });
-
-  it("mostra erro amigável quando a captura falha ou o anúncio é inválido", async () => {
-    const originalOS = Platform.OS;
-    Platform.OS = "android";
-    const hook = await renderHook(fakeUseCases, vi.fn().mockResolvedValue(true));
-    await act(async () => { await hook.current[1].shareImage("b1", fakeListing, vi.fn().mockRejectedValue(new Error("x"))); });
-    expect(hook.current[0].error).toBe("Não foi possível compartilhar o anúncio. Tente novamente.");
-    const invalid = await renderHook({ ...fakeUseCases, buildListingSharePath: () => { throw new ValidationError("Anúncio inválido."); } }, vi.fn());
-    await act(async () => { await invalid.current[1].shareImage("", fakeListing, vi.fn()); });
-    expect(invalid.current[0].error).toBe("Anúncio inválido.");
-    Platform.OS = originalOS;
-  });
-});
-

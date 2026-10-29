@@ -1,10 +1,6 @@
-# IpêBook 🌳📚
+# Ipebook
 
-Plataforma comunitária de troca, venda e doação de livros em **Piripiri, PI**, construída em Expo, React Native, TypeScript e Supabase, com arquitetura MVVM sofisticada em sete camadas e suíte de testes automatizados (**1.798 testes**) baseada na norma **ISO/IEC 25010**.
-
-* 🌐 **Site oficial:** [https://ipebook.app](https://ipebook.app)
-* 🤖 **Convite para o Beta Android (Play Store):** [https://ipebook.app/beta](https://ipebook.app/beta)
-* 📦 **Página na Google Play Store:** [com.ipebook.app](https://play.google.com/store/apps/details?id=com.ipebook.app&hl=pt-BR)
+Base independente em Expo, React Native e TypeScript, com arquitetura MVVM sofisticada em sete camadas e suíte completa de testes automatizados baseada na norma **ISO/IEC 25010**.
 
 Projeto avaliativo do curso de Tecnologia em Análise e Desenvolvimento de Sistemas do IFPI — Campus Piripiri, integrando três disciplinas:
 
@@ -43,14 +39,22 @@ npm run ios      # Dispositivo/Simulador iOS (macOS) — disponível, mas fora d
 
 ---
 
-## 🌐 Publicação Web e Android
+## 🌐 Deploy Web
+
+Com as specs 003 (autenticação e cadastro de anúncio) e 004 (negociação) implementadas, o build
+web passou a ter valor real para publicar.
 
 ```bash
-npm run build:web   # exporta o site estático em dist/ e prepara fontes/rotas para o Cloudflare Pages
+npm run build:web   # gera export estático em dist/ (expo export --platform web)
 ```
 
-* **Web (Cloudflare Pages):** publicado em produção em **[https://ipebook.app](https://ipebook.app)** (`npx wrangler pages deploy dist --project-name ipebook --branch develop`).
-* **Android (Google Play Console):** geração local de AAB/APK (`npm run aab:local`, `npm run apk:debug`) e envio automatizado pela API do Google Play (`npm run play:submit`, documentado em [`docs/loja/publicacao-terminal.md`](docs/loja/publicacao-terminal.md)).
+O repositório está configurado para deploy estático na Vercel (ver [`vercel.json`](vercel.json)):
+`buildCommand` roda `npm run build:web` e `outputDirectory` aponta para `dist/`. Para publicar,
+conectar o repositório a um projeto Vercel (dashboard ou `vercel --prod`) — nenhuma variável de
+ambiente é necessária além das já presentes em `.env`/`app.json`.
+
+Build Android via EAS Build fica para quando houver necessidade de instalar em aparelho fora do
+ambiente de desenvolvimento.
 
 ---
 
@@ -147,7 +151,7 @@ maestro test .maestro/
 * **Instituição:** Instituto Federal do Piauí — Campus Piripiri
 * **Disciplinas:** Engenharia de Software III, Programação para Dispositivos Móveis (PDM) e Interação Humano-Computador (IHC) (Prof. Jeferson Soares)
 * **Integrantes:**
-  1. **Micael Cardoso Reis** ([@MICAELCARDOSOREIS](https://github.com/MICAELCARDOSOREIS))
+  1. **Micael Cardoso Reis** ([@Ghostyxseven](https://github.com/Ghostyxseven))
   2. **Maria Clara Almeida Martins** ([@clarinhamartins](https://github.com/clarinhamartins))
   3. **Antonio Carlos Gomes** ([@gomes738](https://github.com/gomes738))
   4. **Eric Vinícius dos Santos Oliveira** ([@Eric2025gh](https://github.com/Eric2025gh))

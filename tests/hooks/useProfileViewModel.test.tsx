@@ -104,28 +104,4 @@ describe("testes de hook: useProfileViewModel (Spec 006 / Issue #55)", () => {
     expect(ok).toBe(false);
     expect(updateProfile).not.toHaveBeenCalled();
   });
-
-  it("recarrega o perfil pelo reload após falha de carregamento", async () => {
-    let attempts = 0;
-    const getPublicProfile = vi.fn(async () => {
-      attempts += 1;
-      if (attempts === 1) throw new Error("boom");
-      return profile;
-    });
-    const hook = await renderHook("ana", { getPublicProfile, updateProfile: vi.fn() });
-    expect(hook.current[0].error).toBe("Não foi possível carregar o perfil. Tente novamente.");
-    await act(async () => {
-      hook.current[1].reload();
-    });
-    expect(hook.current[0]).toEqual({ profile, loading: false, saving: false, error: null });
-  });
-
-  it("não recarrega sem sessão", async () => {
-    const getPublicProfile = vi.fn();
-    const hook = await renderHook(null, { getPublicProfile, updateProfile: vi.fn() });
-    await act(async () => {
-      hook.current[1].reload();
-    });
-    expect(getPublicProfile).not.toHaveBeenCalled();
-  });
 });
