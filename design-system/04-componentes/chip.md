@@ -4,7 +4,7 @@ Origem no sistema base: Material 3, Filter chip. Situação: **Herdado**.
 
 ## Quando usar
 
-- Filtrar uma lista por modalidade, gênero ou distância (Início, Explorar).
+- Filtrar uma lista por modalidade, gênero ou categoria (Início, Explorar).
 
 ## Quando não usar
 
@@ -31,6 +31,7 @@ Origem no sistema base: Material 3, Filter chip. Situação: **Herdado**.
 | --- | --- | --- |
 | Selecionado | Filtro ativo | `secondary-container` + check |
 | Não selecionado | Filtro disponível | fundo `surface-container-lowest`, borda `outline-variant` |
+| Com tom próprio | Modalidade ou opção com cor semântica | ponto da cor quando não selecionado; fundo e texto do tom quando selecionado |
 | Aplicado (removível) | Filtro já aplicado sobre a lista (`02.04`) | mesma aparência do selecionado, rótulo com `✕` e ação de remover |
 
 O chip **aplicado** não é um novo componente: é o mesmo `Chip` selecionado, com
@@ -50,9 +51,12 @@ A diferença está na intenção: na fileira de cima se escolhe, na de baixo se 
 
 - Visual de 32 dp (ou 40 dp na tela de filtros), mas a área de toque é ampliada para 48 dp
   (`hitSlop={8}`).
-- O check (ou o `✕` do chip aplicado) sinaliza a seleção — não depender só da cor; ver
+- O check sinaliza a seleção — não depender só da cor; ver
   [01-principios.md](../01-principios.md) §2.
-- Papel de `checkbox` com `accessibilityState={{ checked }}`.
+- O filtro aplicado usa o rótulo acessível fornecido pela tela (por exemplo,
+  "Remover filtro Venda"); o caractere `✕` no texto é uma convenção visual da tela, não um
+  estado interno adicional do componente.
+- Papel de `checkbox` com `accessibilityState={{ checked, disabled }}`.
 
 ## Faça e evite
 

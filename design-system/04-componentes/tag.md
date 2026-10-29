@@ -19,7 +19,7 @@ em si é **Novo** (sem papel equivalente no M3).
 
 ## Anatomia
 
-1. Container de cor fixa por significado (token `tag.<modalidade>.bg`)
+1. Container de cor fixa por significado (token `tag.<modalidade>.bg`), com raio de pílula
 2. Texto do nome por extenso (nunca só a cor)
 
 ## Variantes
@@ -29,8 +29,8 @@ em si é **Novo** (sem papel equivalente no M3).
 | Venda | Anúncio de venda | `secondary-container` / `on-secondary-container` |
 | Troca | Anúncio de troca | `tertiary-container` / `on-tertiary-container` |
 | Doação | Anúncio de doação | `doacao-container` / `on-doacao-container` |
-| Reservado | Status reservado | `surface-container-highest` / `on-surface` |
-| Concluído | Status concluído | `primary` / `on-primary` |
+| Reservado | Status reservado | `badge.reserved` |
+| Concluído | Status concluído | `badge.completed` |
 
 ## Estados
 
@@ -45,7 +45,7 @@ Tag não é interativa — não tem hover, pressionado, foco ou desabilitado; é
 - Não se aplica alvo de toque (não é tocável).
 - Contraste texto/fundo mínimo 4,5:1 em todas as variantes (ver tabela em
   [06-acessibilidade.md](../06-acessibilidade.md)); medido em 7:1 para Doação e 12,1:1 para
-  Venda.
+  Venda. A implementação também oferece as variantes `disponível` e `pausado`.
 - A cor nunca é o único sinal: o texto da modalidade sempre acompanha a cor.
 
 ## Faça e evite
@@ -56,20 +56,8 @@ Tag não é interativa — não tem hover, pressionado, foco ou desabilitado; é
 ## Código
 
 ```tsx
-import { Text, View } from "react-native";
-import { tokens } from "@/view/tokens";
+import { Tag } from "@/view/components/Tag";
 
-function Tag({ tipo }: { tipo: "venda" | "troca" | "doacao" }) {
-  const mapa = {
-    venda: { bg: tokens.colors.badge.sale.background, texto: tokens.colors.badge.sale.text, rotulo: "Venda" },
-    troca: { bg: tokens.colors.badge.trade.background, texto: tokens.colors.badge.trade.text, rotulo: "Troca" },
-    doacao: { bg: tokens.colors.badge.donation.background, texto: tokens.colors.badge.donation.text, rotulo: "Doação" },
-  } as const;
-  const { bg, texto, rotulo } = mapa[tipo];
-  return (
-    <View style={{ backgroundColor: bg, borderRadius: tokens.radius.small, paddingHorizontal: tokens.spacing[12], paddingVertical: tokens.spacing[6] }}>
-      <Text style={{ color: texto, ...tokens.typography.labelMedium }}>{rotulo}</Text>
-    </View>
-  );
-}
+<Tag variant="venda" />
+<Tag variant="reservado" label="Reservado" />
 ```

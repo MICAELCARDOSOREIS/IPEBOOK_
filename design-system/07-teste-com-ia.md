@@ -31,10 +31,10 @@
 
 | Desvio | Causa (o que faltava ou estava ambíguo) | Arquivo corrigido |
 | --- | --- | --- |
-| Tokens da tabela de cor (`primary`, `on-surface-variant`...) não batem com os nomes usados nos exemplos de código dos componentes (`tokens.colors.action`, `tokens.colors.secondaryText`...) — a IA teve que adivinhar que a API de código era a certa, sem uma tabela de conversão | `02-tokens.md` definia só os nomes M3 (fonte conceitual); faltava dizer que o código usa outra API (`src/view/tokens.ts`, ADR 0009) | `02-tokens.md` — nova seção "Nomes no código (`src/view/tokens.ts`)" com tabela de conversão papel M3 → chave em código, incluindo os papéis sem token próprio ainda (`on-primary`, `focus-ring`, `scrim`) |
-| O exemplo de código de `dialogo.md` usa a cor do `scrim` como literal (`"#00000052"`), contradizendo a regra do README ("nunca escreva cores... literais no código") | Faltava token de `scrim` em `src/view/tokens.ts`; o README não previa o caso de um token documentado em `tokens.json` mas ainda ausente do módulo de código | `04-componentes/dialogo.md` — literal substituído por uma constante nomeada (`SCRIM_CLARO`) com comentário citando a origem do valor e a lacuna em `tokens.ts` |
-| Não havia tamanho de serifa documentado para título de livro dentro de uma lista/cartão — só o de 32 px da tela raiz (`displayLarge`), grande demais ali; a IA inventou usar a família `brand` no tamanho de `m3-body-lg` | `02-tokens.md` listava só um corte da escala de marca, omitindo o corte "cartão/lista" que já existe em `tokens.json` (`brand-card-title`, 19 px) | `02-tokens.md` — adicionada a linha `brand-card-title` (19 px/24 px/700) na tabela de tipografia |
-| `Chip de filtro` e `BookRow` eram citados no README e no Princípio 3, mas não tinham arquivo próprio em `04-componentes/` (o mínimo de 6 já tinha sido atingido com outros 6) | Decisão de escopo da versão 1.0.0 original (mínimo de 6 componentes) | Resolvido na versão seguinte (ver [CHANGELOG.md](CHANGELOG.md), 1.1.0): os 23 componentes foram migrados para cá, incluindo `04-componentes/chip.md` e `04-componentes/linha-de-livro.md` |
+| Tokens da tabela de cor (`primary`, `on-surface-variant`...) não batem com os nomes usados nos exemplos de código dos componentes (`tokens.colors.action`, `tokens.colors.secondaryText`...) — a IA teve que adivinhar que a API de código era a certa, sem uma tabela de conversão | `02-tokens.md` definia só os nomes M3 (fonte conceitual); faltava dizer que o código usa outra API (`src/view/tokens.ts`, ADR 0009) | Resolvido na tabela "Nomes no código (`src/view/tokens.ts`)"; ela agora também distingue `colors`/`darkColors` e registra os aliases que não têm equivalência exata |
+| O exemplo de código de `dialogo.md` usa a cor do `scrim` como literal (`"#00000052"`), contradizendo a regra do README ("nunca escreva cores... literais no código") | A API TypeScript ainda não possui uma chave de `scrim` | O exemplo usa uma constante local nomeada e documentada; a lacuna permanece explícita porque o código atual ainda funciona assim |
+| Não havia tamanho de serifa documentado para título de livro dentro de uma lista/cartão — só o de 32 px da tela raiz (`displayLarge`), grande demais ali; a IA inventou usar a família `brand` no tamanho de `m3-body-lg` | `02-tokens.md` listava só um corte da escala de marca, omitindo o corte "cartão/lista" que existe em `tokens.json` (`brand-card-title`, 19 px) | Resolvido na tabela de tipografia; a API TypeScript atual continua usando os estilos de marca existentes, sem token `brandCardTitle` dedicado |
+| `Chip de filtro` e `BookRow` eram citados no README e no Princípio 3, mas não tinham arquivo próprio em `04-componentes/` (o mínimo de 6 já tinha sido atingido com outros 6) | Decisão de escopo da versão 1.0.0 original (mínimo de 6 componentes) | Resolvido na versão seguinte (ver [CHANGELOG.md](CHANGELOG.md), 1.1.0): os componentes foram migrados para cá, incluindo `04-componentes/chip.md` e `04-componentes/linha-de-livro.md`; hoje há 26 documentos de componentes |
 
 ## Rodada 2 (após as correções)
 
@@ -49,5 +49,6 @@ ciclo de IA só para confirmar três edições pontuais): reli `02-tokens.md` e
   `tokens.ts`.
 - `brand-card-title` cobre o caso de título de livro em lista/cartão sem precisar reaproveitar o
   tamanho de tela raiz.
-- A lacuna de `Chip`/`BookRow` sem arquivo dedicado continua aberta — decisão consciente de
-  escopo, não um erro a "corrigir" às pressas; registrada acima para a próxima versão.
+- A lacuna de `Chip`/`BookRow` sem arquivo dedicado foi encerrada: ambos possuem documentação
+  própria em `04-componentes/`. O inventário atual do README deve continuar sendo conferido
+  contra a quantidade de arquivos nessa pasta quando novos componentes forem adicionados.

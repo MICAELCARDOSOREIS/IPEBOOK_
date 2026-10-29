@@ -4,6 +4,17 @@
 > Arquivo canônico: [IpêBook (Figma)](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook)
 > Total de telas Android indexadas com SVG local: 137
 
+## Papel destes arquivos
+
+Os arquivos desta pasta são artefatos de referência visual exportados do Figma. Os SVGs servem
+para consulta e comparação visual; os `.tsx` em `context/` são contexto gerado pelo Figma MCP e
+não são telas de produção do Expo. Eles usam HTML, classes de estilo e assets remotos do Figma,
+portanto não devem ser importados pelo app nem tratados como componentes React Native.
+
+Para implementar uma tela, use os tokens e componentes documentados em
+[`../02-tokens.md`](../02-tokens.md) e [`../04-componentes/`](../04-componentes/), seguindo a
+separação MVVM do projeto.
+
 ## 01 · Acesso (17 telas)
 
 | Tela | Node ID | SVG Canônico Local | Link Figma (Modo Dev) |
