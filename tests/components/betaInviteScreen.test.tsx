@@ -64,8 +64,8 @@ describe("Passos de instalação do beta (Spec 108)", () => {
     await act(async () => { fireEvent.press(screen.getByText("Instalar na Play Store")); });
     expect(onOpenUrl.mock.calls.map((c) => c[0])).toEqual([
       "https://groups.google.com/g/ipebook-testadores",
-      "https://play.google.com/apps/testing/com.ipebook.app",
-      "https://play.google.com/store/apps/details?id=com.ipebook.app",
+      "https://play.google.com/apps/testing/com.ipebook.app?hl=pt-BR",
+      "https://play.google.com/store/apps/details?id=com.ipebook.app&hl=pt-BR",
     ]);
     expect(screen.getByText(/alguns minutos/)).toBeDefined();
 
@@ -145,11 +145,12 @@ describe("Conexão com Google no convite do beta (Spec 108)", () => {
     expect(screen.getByText("Conta conectada!")).toBeDefined();
     expect(screen.getByText("testador@gmail.com")).toBeDefined();
     expect(screen.getByText("Abrir teste na Play Store")).toBeDefined();
+    expect(screen.queryByText("Ver o IpêBook na Play Store")).toBeNull();
 
     await act(async () => {
       fireEvent.press(screen.getByText("Abrir teste na Play Store"));
     });
-    expect(onOpenUrl).toHaveBeenCalledWith("https://play.google.com/apps/testing/com.ipebook.app");
+    expect(onOpenUrl).toHaveBeenCalledWith("https://play.google.com/apps/testing/com.ipebook.app?hl=pt-BR");
   });
 
   it("permite sair da conta Google pelo botão de troca de conta", async () => {

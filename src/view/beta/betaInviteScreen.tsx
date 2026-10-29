@@ -138,18 +138,25 @@ export function BetaInviteScreen({
         <Image source={illustration} style={styles.cardIllustration} resizeMode="contain" accessible={false} importantForAccessibility="no" />
       ) : null}
       {authState?.user ? (
-        <View style={styles.success} accessibilityLiveRegion="polite">
-          <IconBadge icon="checkCircle" tone="donation" size="large" />
-          <Text accessibilityRole="alert" style={styles.cardTitle}>Conta conectada!</Text>
-          <Text style={styles.cardText}>
-            Você está participando do teste com a conta Google:
-          </Text>
+        <View style={styles.connectedCard} accessibilityLiveRegion="polite">
+          <View style={styles.connectedHeader}>
+            <IconBadge icon="checkCircle" tone="action" size="medium" />
+            <View style={styles.connectedHeaderText}>
+              <Text accessibilityRole="alert" style={styles.cardTitle}>Conta conectada!</Text>
+              <Text style={styles.connectedSubtitle}>Pronto para testar o aplicativo</Text>
+            </View>
+          </View>
           <View style={styles.connectedBadge}>
-            <AppIcon name="person" size={16} color={colors.m3.primary} />
-            <Text style={styles.connectedEmail}>{authState.user.email}</Text>
+            <AppIcon name="person" size={18} color={colors.m3.primary} />
+            <View style={styles.connectedEmailContainer}>
+              {authState.user.name ? (
+                <Text style={styles.connectedName}>{authState.user.name}</Text>
+              ) : null}
+              <Text style={styles.connectedEmail}>{authState.user.email}</Text>
+            </View>
           </View>
           <Text style={styles.cardNote}>
-            Abra a Play Store para aceitar o convite e baixar o aplicativo.
+            Sua conta Google foi registrada no teste. Toque no botão abaixo para abrir a Play Store em português e aceitar o convite.
           </Text>
           <FilledButton
             label="Abrir teste na Play Store"
@@ -172,11 +179,11 @@ export function BetaInviteScreen({
         </View>
       ) : state.success ? (
         <View style={styles.success} accessibilityLiveRegion="polite">
-          <IconBadge icon="mail" tone="donation" size="large" />
+          <IconBadge icon="mail" tone="action" size="medium" />
           <Text accessibilityRole="alert" style={styles.cardTitle}>Inscrição recebida!</Text>
           <Text style={styles.cardText}>
             {email.trim() ? `Anotamos ${email.trim().toLowerCase()}.` : "Anotamos seu Gmail."}{" "}
-            Para instalar agora, siga os passos de "Como instalar".
+            Para instalar agora, siga os passos de "Como instalar" ou abra a Play Store abaixo.
           </Text>
           <FilledButton
             label="Abrir teste na Play Store"
@@ -233,9 +240,9 @@ export function BetaInviteScreen({
             loadingLabel="Enviando inscrição"
             onPress={() => void actions.submit(email, name)}
           />
+          <OutlinedButton label="Ver o IpêBook na Play Store" onPress={onOpenStore} />
         </>
       )}
-      <OutlinedButton label="Ver o IpêBook na Play Store" onPress={onOpenStore} />
       <Text style={styles.footnote}>
         Usamos seu e-mail só para o teste fechado. Política de privacidade em ipebook.app/termos.
       </Text>
@@ -341,20 +348,28 @@ function createStyles(colors: ColorPalette) {
     cardText: { ...bodyMedium, color: colors.m3.onSurfaceVariant, marginTop: -tokens.spacing[8] },
     success: { gap: tokens.spacing[16], alignItems: "flex-start" },
     error: { ...bodyMedium, color: colors.error },
+    connectedCard: { gap: tokens.spacing[16], alignItems: "stretch" },
+    connectedHeader: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[12] },
+    connectedHeaderText: { flex: 1, gap: 2 },
+    connectedSubtitle: { ...tokens.typography.labelMedium, color: colors.m3.onSurfaceVariant },
     connectedBadge: {
       flexDirection: "row",
       alignItems: "center",
       gap: tokens.spacing[8],
-      paddingHorizontal: tokens.spacing[12],
-      paddingVertical: tokens.spacing[8],
+      paddingHorizontal: tokens.spacing[16],
+      paddingVertical: tokens.spacing[12],
       backgroundColor: colors.m3.surfaceContainer,
       borderRadius: tokens.radius.medium,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.m3.outlineVariant,
       alignSelf: "stretch",
     },
+    connectedEmailContainer: { flex: 1 },
+    connectedName: { ...tokens.typography.labelLarge, color: colors.m3.onSurface },
     connectedEmail: {
       ...bodyMedium,
       fontFamily: fontFamily.medium,
-      color: colors.m3.onSurface,
+      color: colors.m3.onSurfaceVariant,
     },
     cardNote: {
       ...bodyMedium,
