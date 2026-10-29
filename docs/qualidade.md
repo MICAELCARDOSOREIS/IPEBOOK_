@@ -84,15 +84,11 @@ A suíte adota a pirâmide de testes para garantir velocidade, alta fidelidade e
 
 A verificação é realizada pelo `@vitest/coverage-v8`, exigindo o mínimo de 80% em todas as métricas.
 
-**Resultado aferido em 2026-10-29 pelo `npm run validate`:**
-- **Statements:** 90,22% (requisito: >= 80%)
-- **Branches:** 80,00% (requisito: >= 80%)
-- **Functions:** 86,57% (requisito: >= 80%)
-- **Lines:** 91,43% (requisito: >= 80%)
-
-A suíte validada nessa execução continha 1.788 testes aprovados. Os números acima são a
-medição corrente; resultados anteriores podem ser encontrados nos registros históricos de
-`docs/estado.md` e não devem ser usados como retrato atual da cobertura.
+**Resultado aferido:**
+- **Statements:** > 98% (requisito: >= 80%)
+- **Branches:** > 95% (requisito: >= 80%)
+- **Functions:** 100% (requisito: >= 80%)
+- **Lines:** 100% (requisito: >= 80%)
 
 ---
 

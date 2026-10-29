@@ -1,6 +1,6 @@
-import { backOnce } from "@/view/pushOnce";
+import { router } from "expo-router";
 import { Security } from "@/view/profile/security";
 
 export default function SegurancaRoute() {
-  return <Security onBack={() => backOnce()} />;
+  return <Security onBack={() => router.back()} />;
 }

@@ -1,5 +1,4 @@
-import { useLocalSearchParams } from "expo-router";
-import { backOnce, replaceOnce } from "@/view/pushOnce";
+import { router, useLocalSearchParams } from "expo-router";
 import EditListingScreen from "@/view/listings/editListingScreen";
 
 export default function EditarAnuncioRoute() {
@@ -8,9 +7,9 @@ export default function EditarAnuncioRoute() {
   return (
     <EditListingScreen
       bookId={id}
-      onSaved={() => backOnce()}
-      onCancel={() => backOnce()}
-      onRequireSignIn={() => replaceOnce("/entrar")}
+      onSaved={() => router.back()}
+      onCancel={() => router.back()}
+      onRequireSignIn={() => router.replace("/entrar")}
     />
   );
 }

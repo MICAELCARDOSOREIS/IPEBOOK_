@@ -1,6 +1,6 @@
-import { backOnce, pushOnce } from "@/view/pushOnce";
+import { router } from "expo-router";
 import HelpAndFaq from "@/view/help/helpAndFaq";
 
 export default function AjudaRoute() {
-  return <HelpAndFaq onBack={() => backOnce()} onOpenConversations={() => pushOnce("/meus-pedidos")} />;
+  return <HelpAndFaq onBack={() => router.back()} onOpenConversations={() => router.push("/meus-pedidos")} />;
 }

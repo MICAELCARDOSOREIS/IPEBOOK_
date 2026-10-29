@@ -1,28 +1,11 @@
 import { Platform } from "react-native";
 import type * as NotificationsType from "expo-notifications";
-import type { NotificationChannel } from "@/model/entities/notification";
 import type {
   IPushNotificationService,
   MeetingReminderParams,
   NotificationScheduleOptions,
 } from "@/model/services/iPushNotificationService";
 import type { ILogger } from "@/model/services/iLogger";
-
-/**
- * Canais de entrega (Spec 099 / ADR 0075), espelhando `NOTIFICATION_CHANNEL` do modelo. Cada um tem
- * comportamento próprio no Android: `messages` e `reminders` interrompem (heads-up, som e vibração);
- * `updates` é discreto. O canal legacy `default` fica em baixa importância para não repetir o brilho
- * e o toque que antes valiam para tudo.
- */
-const CHANNEL_PRESETS: Record<
-  NotificationChannel | "default",
-  { name: string; importance: "high" | "default"; vibration: boolean }
-> = {
-  messages: { name: "Conversas e propostas", importance: "high", vibration: true },
-  reminders: { name: "Lembretes de encontro", importance: "high", vibration: true },
-  updates: { name: "Avisos e novidades", importance: "default", vibration: false },
-  default: { name: "Lembretes e Avisos Ipebook", importance: "default", vibration: false },
-};
 
 function getNotificationsModule(): typeof NotificationsType | null {
   try {
@@ -56,7 +39,7 @@ export class ExpoPushNotificationService implements IPushNotificationService {
         handleNotification: async () => ({
           shouldShowAlert: true,
           shouldPlaySound: true,
-          shouldSetBadge: true,
+          shouldSetBadge: false,
           shouldShowBanner: true,
           shouldShowList: true,
           priority: Notifications.AndroidNotificationPriority.HIGH,
@@ -64,19 +47,12 @@ export class ExpoPushNotificationService implements IPushNotificationService {
       });
 
       if (Platform.OS === "android") {
-        for (const [channelId, preset] of Object.entries(CHANNEL_PRESETS)) {
-          await Notifications.setNotificationChannelAsync(channelId, {
-            name: preset.name,
-            importance:
-              preset.importance === "high"
-                ? Notifications.AndroidImportance.HIGH
-                : Notifications.AndroidImportance.DEFAULT,
-            vibrationPattern: preset.vibration ? [0, 250, 250, 250] : undefined,
-            lightColor: preset.vibration ? "#2C5E45" : undefined,
-            enableVibrate: preset.vibration,
-            showBadge: true,
-          });
-        }
+        await Notifications.setNotificationChannelAsync("default", {
+          name: "Lembretes e Avisos Ipebook",
+          importance: Notifications.AndroidImportance.HIGH,
+          vibrationPattern: [0, 250, 250, 250],
+          lightColor: "#2C5E45",
+        });
       }
 
       this.initialized = true;
@@ -149,44 +125,19 @@ export class ExpoPushNotificationService implements IPushNotificationService {
     }
   }
 
-  subscribeToOpened(listener: (target: { url: string | null }) => void): () => void {
-    const Notifications = getNotificationsModule();
-    if (!Notifications) return () => {};
-    const notify = (response: NotificationsType.NotificationResponse | null) => {
-      const url = response?.notification.request.content.data?.url;
-      listener({ url: typeof url === "string" ? url : null });
-    };
-    const subscription = Notifications.addNotificationResponseReceivedListener((response) => notify(response));
-    // App aberto pelo toque, estando fechado: a resposta já chegou antes do listener existir.
-    void Notifications.getLastNotificationResponseAsync?.().then((response) => {
-      if (response) notify(response);
-    }).catch(() => {});
-    return () => subscription.remove();
-  }
-
   async scheduleLocalNotification(options: NotificationScheduleOptions): Promise<string | null> {
     const Notifications = await this.ensureInitialized();
     if (!Notifications) return null;
 
     try {
-      const seconds = options.triggerSeconds && options.triggerSeconds > 0 ? options.triggerSeconds : null;
-      // No expo-notifications o canal Android vai no *trigger*, não no conteúdo.
       const trigger: NotificationsType.NotificationTriggerInput =
-        seconds !== null
+        options.triggerSeconds && options.triggerSeconds > 0
           ? {
               type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
-              seconds,
+              seconds: options.triggerSeconds,
               repeats: false,
-              channelId: options.channelId ?? "default",
             }
-          : options.channelId
-            ? {
-                type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
-                seconds: 1,
-                repeats: false,
-                channelId: options.channelId,
-              }
-            : null;
+          : null;
 
       const id = await Notifications.scheduleNotificationAsync({
         content: {
@@ -238,7 +189,6 @@ export class ExpoPushNotificationService implements IPushNotificationService {
         type: "meeting_update",
       },
       triggerSeconds,
-      channelId: "reminders",
     });
   }
 
@@ -251,17 +201,6 @@ export class ExpoPushNotificationService implements IPushNotificationService {
       return true;
     } catch {
       return false;
-    }
-  }
-
-  async setBadgeCount(count: number): Promise<void> {
-    const Notifications = getNotificationsModule();
-    if (!Notifications) return;
-    try {
-      // iOS reflete o selo no ícone; no Android o selo é controlado pelo canal e a chamada é tolerada.
-      await Notifications.setBadgeCountAsync(Math.max(0, Math.trunc(count)));
-    } catch (err) {
-      this.logger?.warn("Não foi possível ajustar o selo de notificações", { err });
     }
   }
 }

@@ -59,11 +59,6 @@ describe("negociação simples (spec 004)", () => {
       await expect(useCases.requestNegotiation("listing-1", "alice")).resolves.toMatchObject({ status: "pending" });
     });
 
-    it("bloqueia anúncio já entregue (Spec 095)", async () => {
-      await books.updateStatus("listing-1", "delivered");
-      await expect(useCases.requestNegotiation("listing-1", "alice")).rejects.toThrow(/não está mais disponível/);
-    });
-
     it("FR-003: bloqueia anúncio reservado", async () => {
       await books.updateStatus("listing-1", "reserved");
       await expect(useCases.requestNegotiation("listing-1", "alice")).rejects.toThrow(/não está mais disponível/);
@@ -91,24 +86,6 @@ describe("negociação simples (spec 004)", () => {
         ["alice", "Alice Souza"],
         ["bob", null],
       ]);
-    });
-
-    it("traz a foto de perfil de quem pediu e da outra pessoa no detalhe (Spec 084)", async () => {
-      const profiles = new MemoryProfileDataSource();
-      await profiles.ensure("alice", "Alice Souza");
-      await profiles.update("alice", { name: "Alice Souza", photoUrl: "https://cdn/alice.jpg" });
-      await profiles.ensure("owner", "Dono");
-      await profiles.update("owner", { name: "Dono", photoUrl: "https://cdn/dono.jpg" });
-      const withProfiles = new BookRequestUseCases(books, requests, profiles);
-      const req = await withProfiles.requestNegotiation("listing-1", "alice");
-
-      const received = await withProfiles.listReceivedRequests("owner");
-      expect(received[0].requesterPhotoUrl).toBe("https://cdn/alice.jpg");
-
-      const asOwner = await withProfiles.getRequestDetail(req.id, "owner");
-      expect(asOwner.counterpartPhotoUrl).toBe("https://cdn/alice.jpg");
-      const asRequester = await withProfiles.getRequestDetail(req.id, "alice");
-      expect(asRequester.counterpartPhotoUrl).toBe("https://cdn/dono.jpg");
     });
 
     it("lista enviados com status atual", async () => {
@@ -172,31 +149,6 @@ describe("negociação simples (spec 004)", () => {
     it("exige sessão e pedido existente", async () => {
       await expect(useCases.respondToRequest("x", "accept", null)).rejects.toBeInstanceOf(AuthError);
       await expect(useCases.respondToRequest("x", "accept", "owner")).rejects.toBeInstanceOf(ValidationError);
-    });
-  });
-
-  describe("cancelRequest (Spec 101)", () => {
-    it("quem pediu cancela o próprio pedido pendente e pode pedir de novo", async () => {
-      const req = await useCases.requestNegotiation("listing-1", "alice");
-      await expect(useCases.cancelRequest(req.id, "alice")).resolves.toMatchObject({ status: "cancelled" });
-      await expect(useCases.requestNegotiation("listing-1", "alice")).resolves.toMatchObject({ status: "pending" });
-    });
-
-    it("só quem pediu pode cancelar", async () => {
-      const req = await useCases.requestNegotiation("listing-1", "alice");
-      await expect(useCases.cancelRequest(req.id, "owner")).rejects.toBeInstanceOf(AuthError);
-      expect((await requests.findById(req.id))?.status).toBe("pending");
-    });
-
-    it("não cancela pedido já respondido", async () => {
-      const req = await useCases.requestNegotiation("listing-1", "alice");
-      await useCases.respondToRequest(req.id, "accept", "owner");
-      await expect(useCases.cancelRequest(req.id, "alice")).rejects.toThrow(/já foi respondido/);
-    });
-
-    it("exige sessão e pedido existente", async () => {
-      await expect(useCases.cancelRequest("x", null)).rejects.toBeInstanceOf(AuthError);
-      await expect(useCases.cancelRequest("x", "alice")).rejects.toBeInstanceOf(ValidationError);
     });
   });
 });

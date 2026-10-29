@@ -8,11 +8,9 @@ import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { Tag } from "@/view/components/Tag";
 import { ALERT_CITY, ALERT_MODALITY_SUMMARY } from "@/view/search/alertLabels";
 import { TopAppBar } from "@/view/components/TopAppBar";
-import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { useSearchAlertsViewModel } from "@/viewmodel/useSearchAlertsViewModel";
-import { WEB_MAX_WIDTH, useWebColumns } from "@/view/webLayout";
 
 export type SearchAlertsProps = {
   userId: string | null;
@@ -33,9 +31,6 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
   const [state, actions] = useSearchAlertsViewModel(userId, initialQuery);
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  // Web larga: coluna mais ampla e dois alertas por linha.
-  const wide = useIsWideWeb();
-  const listColumns = useWebColumns(2, 3);
   const errorId = useId();
   const hasError = Boolean(state.error);
   /**
@@ -46,10 +41,10 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
 
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar title="Meus alertas" onBack={onBack} contentMaxWidth={wide ? WIDE_CONTENT_MAX_WIDTH : undefined} />
+      <TopAppBar title="Meus alertas" onBack={onBack} />
       {!userId ? (
         <View style={styles.centered}>
-          <IconBadge icon="bell" tone="action" size="large" />
+          <IconBadge icon="bell" tone="action" />
           <Text accessibilityRole="header" style={styles.emptyTitle}>
             Entre para criar alertas
           </Text>
@@ -61,7 +56,7 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
           </Pressable>
         </View>
       ) : (
-        <View style={[styles.content, wide && { maxWidth: WIDE_CONTENT_MAX_WIDTH }]}>
+        <View style={styles.content}>
           {showListChrome ? (
             <View style={styles.heroHeader}>
               <Text style={styles.heroTitle}>O próximo livro pode chegar.</Text>
@@ -108,9 +103,6 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
             <ActivityIndicator color={colors.action} accessibilityLabel="Carregando alertas" />
           ) : (
             <FlatList
-              key={wide ? `colunas-${listColumns}` : "uma-coluna"}
-              numColumns={wide ? listColumns : 1}
-              columnWrapperStyle={wide ? { gap: tokens.spacing[12] } : undefined}
               data={state.alerts}
               keyExtractor={(item) => item.id}
               contentContainerStyle={styles.listContent}
@@ -127,7 +119,7 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
                 </View>
               }
               renderItem={({ item }) => (
-                <View style={[styles.alertItem, wide && { flex: 1, maxWidth: "50%" }]}>
+                <View style={styles.alertItem}>
                   <Pressable
                     accessibilityRole="button"
                     accessibilityLabel={`Gerenciar alerta ${item.query}`}
@@ -163,8 +155,6 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
     </SafeAreaView>
   );
 }
-
-const WIDE_CONTENT_MAX_WIDTH = WEB_MAX_WIDTH;
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({

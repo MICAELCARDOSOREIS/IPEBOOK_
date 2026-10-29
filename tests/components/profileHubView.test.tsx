@@ -1,23 +1,18 @@
 import React from "react";
 import { act, cleanup, fireEvent, render } from "@testing-library/react-native";
-import * as Linking from "expo-linking";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { PiripiriNeighborhood } from "@/model/entities/location";
 import type { AuthState } from "@/viewmodel/useAuthViewModel";
 import type { ProfileState } from "@/viewmodel/useProfileViewModel";
 import ProfileHub from "@/view/profile/profileHub";
 
 vi.mock("@/viewmodel/useAuthViewModel", () => ({ useAuthViewModel: vi.fn() }));
 vi.mock("@/viewmodel/useProfileViewModel", () => ({ useProfileViewModel: vi.fn() }));
-vi.mock("@/viewmodel/useUserPreferencesViewModel", () => ({ useUserPreferencesViewModel: vi.fn() }));
 
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useProfileViewModel } from "@/viewmodel/useProfileViewModel";
-import { useUserPreferencesViewModel } from "@/viewmodel/useUserPreferencesViewModel";
 
 const mockedUseAuthViewModel = vi.mocked(useAuthViewModel);
 const mockedUseProfileViewModel = vi.mocked(useProfileViewModel);
-const mockedUsePreferencesViewModel = vi.mocked(useUserPreferencesViewModel);
 
 const fakeProfile: NonNullable<ProfileState["profile"]> = {
   userId: "ana",
@@ -41,24 +36,9 @@ function mockAuth(user: AuthState["user"], signOut = vi.fn().mockResolvedValue(u
 function mockProfile(profile: ProfileState["profile"] = fakeProfile, loading = false) {
   mockedUseProfileViewModel.mockReturnValue([
     { profile, loading, saving: false, error: null },
-    { update: vi.fn().mockResolvedValue(true), reload: vi.fn() },
+    { update: vi.fn().mockResolvedValue(true) },
   ]);
 }
-
-/** Preferências do aplicativo: o cartão do perfil só mostra o bairro que a pessoa escolheu. */
-function mockPreferences(neighborhood?: PiripiriNeighborhood) {
-  mockedUsePreferencesViewModel.mockReturnValue([
-    {
-      preferences: neighborhood ? { userId: "ana", neighborhood } : null,
-      loading: false,
-      saving: false,
-      error: null,
-    },
-    { update: vi.fn().mockResolvedValue(true), reload: vi.fn() },
-  ]);
-}
-
-mockPreferences();
 
 const noop = () => {};
 
@@ -68,6 +48,9 @@ function baseProps(overrides: Partial<React.ComponentProps<typeof ProfileHub>> =
     onNavigateToRatings: noop,
     onNavigateToNotifications: noop,
     onNavigateToSecurity: noop,
+    onNavigateToPrivacy: noop,
+    onNavigateToTerms: noop,
+    onNavigateToHelp: noop,
     onSignedOut: noop,
     ...overrides,
   };
@@ -76,54 +59,6 @@ function baseProps(overrides: Partial<React.ComponentProps<typeof ProfileHub>> =
 describe("Meu perfil — hub de navegação (Figma 07.01)", () => {
   afterEach(() => {
     cleanup();
-  });
-
-  it("leva a Favoritos e alertas (atalho que saiu da Home, Spec 062)", async () => {
-    mockAuth({ id: "ana", email: "ana@exemplo.com" });
-    mockProfile();
-    const onNavigateToFavorites = vi.fn();
-    let screen!: Awaited<ReturnType<typeof render>>;
-    await act(async () => {
-      screen = await render(<ProfileHub {...baseProps({ onNavigateToFavorites })} />);
-    });
-    await act(async () => {
-      fireEvent.press(screen.getByLabelText("Favoritos e alertas"));
-    });
-    expect(onNavigateToFavorites).toHaveBeenCalledTimes(1);
-  });
-
-  it("oferece a engrenagem de Configurações no topo do perfil (Spec 073, ADR 0060)", async () => {
-    mockAuth({ id: "ana", email: "ana@exemplo.com" });
-    mockProfile();
-    const onNavigateToSettings = vi.fn();
-    let screen!: Awaited<ReturnType<typeof render>>;
-    await act(async () => {
-      screen = await render(<ProfileHub {...baseProps({ onNavigateToSettings })} />);
-    });
-    // A entrada é o botão do cabeçalho; a linha "Configurações" saiu da lista (evita duplicação)
-    expect(screen.queryByLabelText("Configurações")).toBeNull();
-    await act(async () => {
-      fireEvent.press(screen.getByLabelText("Abrir configurações"));
-    });
-    expect(onNavigateToSettings).toHaveBeenCalledTimes(1);
-  });
-
-  it("deixa de listar em Meu perfil o que passou para Configurações (ADR 0060)", async () => {
-    mockAuth({ id: "ana", email: "ana@exemplo.com" });
-    mockProfile();
-
-    let screen!: Awaited<ReturnType<typeof render>>;
-    await act(async () => {
-      screen = await render(<ProfileHub {...baseProps()} />);
-    });
-
-    expect(screen.queryByLabelText("Privacidade e dados")).toBeNull();
-    expect(screen.queryByLabelText("Pessoas bloqueadas")).toBeNull();
-    expect(screen.queryByLabelText("Termos e privacidade")).toBeNull();
-    expect(screen.queryByLabelText("Ajuda e suporte")).toBeNull();
-    // o que fica
-    expect(screen.getByLabelText("Notificações")).toBeDefined();
-    expect(screen.getByLabelText("Segurança e verificação")).toBeDefined();
   });
 
   it("mostra nome, estatísticas e aciona a navegação de cada item do menu", async () => {
@@ -205,56 +140,6 @@ describe("Meu perfil — hub de navegação (Figma 07.01)", () => {
     expect(onNavigateToSignIn).toHaveBeenCalledTimes(1);
   });
 
-  it("sem conta (requireAuth=false) mostra estado de convidado sem dados inventados (Spec 048)", async () => {
-    mockAuth(null);
-    mockProfile(null);
-    const onNavigateToSignIn = vi.fn();
-
-    let screen!: Awaited<ReturnType<typeof render>>;
-    await act(async () => {
-      screen = await render(
-        <ProfileHub {...baseProps({ requireAuth: false, onNavigateToSignIn })} />,
-      );
-    });
-
-    // Nenhum nome ou métrica de demonstração deve aparecer
-    expect(screen.getByText("Você ainda não entrou")).toBeDefined();
-    expect(screen.queryByText(/Lucas Andrade/)).toBeNull();
-    expect(screen.queryByText("publicações")).toBeNull();
-    expect(screen.queryByText("Atividade")).toBeNull();
-    expect(screen.queryByText("Sair da conta")).toBeNull();
-    expect(onNavigateToSignIn).not.toHaveBeenCalled();
-
-    await act(async () => {
-      fireEvent.press(screen.getAllByText("Entrar ou criar conta")[0]);
-    });
-    expect(onNavigateToSignIn).toHaveBeenCalledTimes(1);
-  });
-
-  it("visitante ve só o card de entrada e a engrenagem, sem seção Conta (ADR 0060)", async () => {
-    mockAuth(null);
-    mockProfile(null);
-    const onNavigateToSettings = vi.fn();
-
-    let screen!: Awaited<ReturnType<typeof render>>;
-    await act(async () => {
-      screen = await render(
-        <ProfileHub {...baseProps({ requireAuth: false, onNavigateToSettings })} />,
-      );
-    });
-
-    // Sem sessão não há conta para gerenciar: a seção inteira desaparece
-    expect(screen.queryByText("Conta")).toBeNull();
-    expect(screen.queryByLabelText("Notificações")).toBeNull();
-    expect(screen.queryByLabelText("Segurança e verificação")).toBeNull();
-    expect(screen.queryByLabelText("Convidar amigos")).toBeNull();
-    // o acesso a Configurações continua disponível para quem não tem conta
-    await act(async () => {
-      fireEvent.press(screen.getByLabelText("Abrir configurações"));
-    });
-    expect(onNavigateToSettings).toHaveBeenCalledTimes(1);
-  });
-
   it("aciona a navegação para Convidar amigos (Spec 057, Figma 08.02)", async () => {
     mockAuth({ id: "ana", email: "ana@exemplo.com" });
     mockProfile();
@@ -271,111 +156,5 @@ describe("Meu perfil — hub de navegação (Figma 07.01)", () => {
       fireEvent.press(screen.getByLabelText("Convidar amigos"));
     });
     expect(onNavigateToInviteFriends).toHaveBeenCalledTimes(1);
-  });
-
-  it("renderiza cabeçalho editorial, tríade de métricas e seções Atividade e Conta (Spec 065, Figma 07.01)", async () => {
-    mockAuth({ id: "ana", email: "ana@exemplo.com" });
-    mockProfile();
-
-    let screen!: Awaited<ReturnType<typeof render>>;
-    await act(async () => {
-      screen = await render(<ProfileHub {...baseProps()} />);
-    });
-
-    // 1. Título editorial da marca
-    expect(screen.getByRole("header").props.children).toBe("Meu perfil");
-
-    // 2. Tríade de métricas
-    expect(screen.getByText("publicações")).toBeDefined();
-    expect(screen.getByText("trocas")).toBeDefined();
-    expect(screen.getByText("avaliação")).toBeDefined();
-    expect(screen.getByText("3")).toBeDefined(); // completedNegotiations: 3
-    expect(screen.getByText("4.5")).toBeDefined(); // averageRating: 4.5
-
-    // 3. Seções agrupadas
-    expect(screen.getByText("Atividade")).toBeDefined();
-    expect(screen.getByText("Conta")).toBeDefined();
-  });
-
-  it("aciona a navegação para Histórico de encontros (Spec 071)", async () => {
-    mockAuth({ id: "ana", email: "ana@exemplo.com" });
-    mockProfile();
-    const onNavigateToMeetingHistory = vi.fn();
-
-    let screen!: Awaited<ReturnType<typeof render>>;
-    await act(async () => {
-      screen = await render(
-        <ProfileHub {...baseProps({ onNavigateToMeetingHistory })} />,
-      );
-    });
-
-    await act(async () => {
-      fireEvent.press(screen.getByLabelText("Histórico de encontros"));
-    });
-    expect(onNavigateToMeetingHistory).toHaveBeenCalledTimes(1);
-  });
-
-  it("mostra o bairro escolhido pela pessoa no cartão de identidade", async () => {
-    mockAuth({ id: "ana", email: "ana@exemplo.com" });
-    mockProfile();
-    mockPreferences("Petecas");
-
-    let screen!: Awaited<ReturnType<typeof render>>;
-    await act(async () => {
-      screen = await render(<ProfileHub {...baseProps()} />);
-    });
-
-    expect(screen.getByText(/Petecas, Piripiri/)).toBeDefined();
-  });
-
-  it("não inventa bairro quando as preferências estão vazias", async () => {
-    mockAuth({ id: "ana", email: "ana@exemplo.com" });
-    mockProfile();
-    mockPreferences();
-
-    let screen!: Awaited<ReturnType<typeof render>>;
-    await act(async () => {
-      screen = await render(<ProfileHub {...baseProps()} />);
-    });
-
-    expect(screen.getByText(/Piripiri, PI/)).toBeDefined();
-    expect(screen.queryByText(/Centro/)).toBeNull();
-  });
-
-  it("mostra o Instagram e abre o perfil dele (Spec 081)", async () => {
-    mockAuth({ id: "ana", email: "ana@exemplo.com" });
-    mockProfile({ ...fakeProfile, socialHandle: "@ana.lima" });
-    const openURL = vi.spyOn(Linking, "openURL").mockResolvedValue(true);
-    let screen!: Awaited<ReturnType<typeof render>>;
-    await act(async () => {
-      screen = await render(<ProfileHub {...baseProps()} />);
-    });
-    expect(screen.getByText("@ana.lima")).toBeDefined();
-    await act(async () => { fireEvent.press(screen.getByLabelText("Abrir Instagram @ana.lima")); });
-    expect(openURL).toHaveBeenCalledWith("https://instagram.com/ana.lima");
-    openURL.mockRestore();
-  });
-
-  it("sem Instagram oferece adicionar pelo Editar perfil (Spec 081)", async () => {
-    mockAuth({ id: "ana", email: "ana@exemplo.com" });
-    mockProfile(fakeProfile);
-    const onNavigateToEditProfile = vi.fn();
-    let screen!: Awaited<ReturnType<typeof render>>;
-    await act(async () => {
-      screen = await render(<ProfileHub {...baseProps({ onNavigateToEditProfile })} />);
-    });
-    await act(async () => { fireEvent.press(screen.getByText("Adicionar Instagram")); });
-    expect(onNavigateToEditProfile).toHaveBeenCalledTimes(1);
-  });
-
-  it("não mostra o ipê no canto do cartão no Meu perfil e usa singular em 1 publicação (Spec 081)", async () => {
-    mockAuth({ id: "ana", email: "ana@exemplo.com" });
-    mockProfile({ ...fakeProfile, completedNegotiations: 1, photoUrl: "https://exemplo.com/ana.png" });
-    let screen!: Awaited<ReturnType<typeof render>>;
-    await act(async () => {
-      screen = await render(<ProfileHub {...baseProps()} />);
-    });
-    expect(screen.queryByTestId("reader-card-ipe", { includeHiddenElements: true })).toBeNull();
-    expect(screen.getByText("troca")).toBeDefined();
   });
 });

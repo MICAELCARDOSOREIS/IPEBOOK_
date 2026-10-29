@@ -6,8 +6,9 @@ import Welcome from "@/view/onboarding/welcome";
 async function renderWelcome() {
   const onStart = vi.fn();
   const onSignIn = vi.fn();
-  const screen = await render(<Welcome onStart={onStart} onSignIn={onSignIn} />);
-  return { screen, onStart, onSignIn };
+  const onExplore = vi.fn();
+  const screen = await render(<Welcome onStart={onStart} onSignIn={onSignIn} onExplore={onExplore} />);
+  return { screen, onStart, onSignIn, onExplore };
 }
 
 describe("Boas-vindas do primeiro acesso (issue #98)", () => {
@@ -21,15 +22,15 @@ describe("Boas-vindas do primeiro acesso (issue #98)", () => {
     expect(screen.getByLabelText("Modalidades: venda, troca e doação")).toBeTruthy();
   });
 
-  it("encaminha cada ação para o destino correspondente e não oferece catálogo sem conta", async () => {
-    const { screen, onStart, onSignIn } = await renderWelcome();
+  it("encaminha cada ação para o destino correspondente", async () => {
+    const { screen, onStart, onSignIn, onExplore } = await renderWelcome();
 
     fireEvent.press(screen.getByRole("button", { name: "Começar" }));
     fireEvent.press(screen.getByRole("button", { name: "Já tenho conta" }));
+    fireEvent.press(screen.getByRole("button", { name: "Explorar livros sem entrar" }));
 
     expect(onStart).toHaveBeenCalledTimes(1);
     expect(onSignIn).toHaveBeenCalledTimes(1);
-    // Regressão de segurança (Spec 092): não há mais acesso de visitante ao catálogo.
-    expect(screen.queryByRole("button", { name: /Explorar/i })).toBeNull();
+    expect(onExplore).toHaveBeenCalledTimes(1);
   });
 });

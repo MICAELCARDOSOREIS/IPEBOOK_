@@ -1,8 +1,7 @@
-import { useMemo, type ReactNode } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
+import { useMemo } from "react";
+import { ActivityIndicator, Pressable, StyleSheet, Text } from "react-native";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
-import { useGuardedPress } from "@/view/useGuardedPress";
 
 export type OutlinedButtonProps = {
   label: string;
@@ -11,8 +10,6 @@ export type OutlinedButtonProps = {
   disabled?: boolean;
   loadingLabel?: string;
   accessibilityLabel?: string;
-  /** Ícone exibido à esquerda do rótulo (ex.: GoogleLogo). */
-  icon?: ReactNode;
 };
 
 /**
@@ -26,10 +23,8 @@ export function OutlinedButton({
   disabled = false,
   loadingLabel,
   accessibilityLabel,
-  icon,
 }: OutlinedButtonProps) {
   const isDisabled = disabled || loading;
-  const guardedPress = useGuardedPress(onPress);
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   return (
@@ -38,16 +33,13 @@ export function OutlinedButton({
       accessibilityLabel={accessibilityLabel ?? label}
       accessibilityState={{ disabled: isDisabled }}
       disabled={isDisabled}
-      onPress={guardedPress}
+      onPress={onPress}
       style={[styles.button, isDisabled && styles.disabled]}
     >
       {loading ? (
         <ActivityIndicator color={colors.action} accessibilityLabel={loadingLabel ?? label} />
       ) : (
-        <View style={styles.contentRow}>
-          {icon}
-          <Text style={[styles.label, isDisabled && styles.labelDisabled]}>{label}</Text>
-        </View>
+        <Text style={[styles.label, isDisabled && styles.labelDisabled]}>{label}</Text>
       )}
     </Pressable>
   );
@@ -56,26 +48,21 @@ export function OutlinedButton({
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     button: {
-      // Figma `01.03`/`01.04`: mesmo tamanho do preenchido, borda `outline-variant` de 1 dp.
-      minHeight: 52,
+      minHeight: tokens.accessibility.touchTarget,
       justifyContent: "center",
       alignItems: "center",
       borderRadius: tokens.radius.full,
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      borderColor: colors.m3.outline,
       backgroundColor: "transparent",
       paddingHorizontal: tokens.spacing[24],
     },
-    contentRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "center",
-      gap: tokens.spacing[12],
-    },
     disabled: { borderColor: colors.disabledBackground },
     label: {
-      color: colors.m3.onSurface,
-      ...tokens.typography.labelLarge,
+      color: colors.action,
+      fontSize: tokens.typography.bodyLarge.fontSize,
+      fontFamily: tokens.typography.bodyLarge.fontFamily,
+      fontWeight: "600",
     },
     labelDisabled: { color: colors.disabledText },
   });

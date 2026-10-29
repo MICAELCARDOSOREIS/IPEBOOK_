@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { AuthShell } from "@/view/auth/AuthShell";
-import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
@@ -33,7 +31,6 @@ function formatCountdown(seconds: number): string {
 export default function ForgotPassword({ onNavigateToSignIn, onBack }: ForgotPasswordProps = {}) {
   const [state, actions] = useAuthViewModel();
   const { colors } = useTheme();
-  const wideWeb = useIsWideWeb();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [email, setEmail] = useState("");
   const [requested, setRequested] = useState(false);
@@ -69,7 +66,6 @@ export default function ForgotPassword({ onNavigateToSignIn, onBack }: ForgotPas
   };
 
   return (
-    <AuthShell>
     <SafeAreaView style={styles.page}>
       {onBack ? (
         <TopAppBar
@@ -78,7 +74,7 @@ export default function ForgotPassword({ onNavigateToSignIn, onBack }: ForgotPas
         />
       ) : null}
       <ScrollView
-        contentContainerStyle={[styles.centerContainer, wideWeb && { justifyContent: "center" }]}
+        contentContainerStyle={styles.centerContainer}
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.content}>
@@ -86,7 +82,7 @@ export default function ForgotPassword({ onNavigateToSignIn, onBack }: ForgotPas
 
           {requested ? (
             <>
-              <IconBadge icon="mail" tone="donation" size="large" />
+              <IconBadge icon="mail" tone="donation" />
               <Text accessibilityRole="header" style={styles.title}>Confira seu e-mail.</Text>
               <Text style={styles.subtitle}>
                 Se houver uma conta com{" "}
@@ -136,9 +132,6 @@ export default function ForgotPassword({ onNavigateToSignIn, onBack }: ForgotPas
                 onChangeText={setEmail}
                 autoCapitalize="none"
                 keyboardType="email-address"
-                autoComplete="email"
-                textContentType="emailAddress"
-                returnKeyType="done"
                 editable={!state.loading}
                 placeholder="voce@exemplo.com"
               />
@@ -164,7 +157,6 @@ export default function ForgotPassword({ onNavigateToSignIn, onBack }: ForgotPas
         </View>
       </ScrollView>
     </SafeAreaView>
-    </AuthShell>
   );
 }
 

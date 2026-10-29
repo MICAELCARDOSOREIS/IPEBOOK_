@@ -131,50 +131,6 @@ describe("datasources Supabase", () => {
     await expect(denied.completePasswordReset("ipebook://redefinir-senha?code=abc", "nova-senha")).rejects.toThrow("Não foi possível atualizar a senha.");
   });
 
-  it("restaura sessão a partir de deep link OAuth com access_token e refresh_token", async () => {
-    const setSession = vi.fn().mockResolvedValue({
-      data: { user: { id: "google-123", email: "leitor@gmail.com", user_metadata: { full_name: "Micael" } } },
-      error: null,
-    });
-    const auth = new SupabaseAuthDataSource(fakeClient({
-      auth: { setSession, getSession: vi.fn().mockResolvedValue({ data: { session: null }, error: null }) },
-    }), "ipebook://redefinir-senha");
-
-    const user = await auth.setSessionFromUrl("ipebook://auth/callback#access_token=jwt-token&refresh_token=ref-token");
-
-    expect(setSession).toHaveBeenCalledWith({
-      access_token: "jwt-token",
-      refresh_token: "ref-token",
-    });
-    expect(user).toEqual({
-      id: "google-123",
-      email: "leitor@gmail.com",
-      name: "Micael",
-    });
-  });
-
-  it("restaura sessão a partir de deep link OAuth com code de autenticação", async () => {
-    const exchangeCodeForSession = vi.fn().mockResolvedValue({
-      data: { user: { id: "code-user", email: "code@gmail.com" } },
-      error: null,
-    });
-    const auth = new SupabaseAuthDataSource(fakeClient({
-      auth: { exchangeCodeForSession },
-    }), "ipebook://redefinir-senha");
-
-    const user = await auth.setSessionFromUrl("ipebook://auth/callback?code=auth-code-123");
-
-    expect(exchangeCodeForSession).toHaveBeenCalledWith("auth-code-123");
-    expect(user.id).toBe("code-user");
-  });
-
-  it("rejeita URL de callback sem tokens válidos", async () => {
-    const auth = new SupabaseAuthDataSource(fakeClient({ auth: {} }), "ipebook://redefinir-senha");
-    await expect(auth.setSessionFromUrl("ipebook://auth/callback")).rejects.toThrow(
-      "URL de autenticação não contém tokens válidos.",
-    );
-  });
-
   it("exclui conta chamando a RPC delete_user_account e finaliza sessão", async () => {
     const rpc = vi.fn().mockResolvedValue({ data: null, error: null });
     const signOut = vi.fn().mockResolvedValue({ error: null });
@@ -252,31 +208,6 @@ describe("datasources Supabase", () => {
     expect(update).toHaveBeenCalledWith(expect.objectContaining({ condition: "worn" }));
   });
 
-  it("grava e lê sinopse, editora, páginas e ano da edição (Spec 097)", async () => {
-    const row = {
-      id: "livro-9", title: "1984", author: "George Orwell", owner_id: "dono-9", modality: "donation", price: null,
-      status: "available", synopsis: "Distopia.", publisher: "Companhia das Letras", page_count: 416, publication_year: 2009,
-    };
-    const single = vi.fn().mockResolvedValue({ data: row, error: null });
-    const select = vi.fn().mockReturnValue({ single });
-    const insert = vi.fn().mockReturnValue({ select });
-    const update = vi.fn().mockReturnValue({ eq: vi.fn().mockReturnValue({ select }) });
-    const from = vi.fn().mockReturnValue({ insert, update });
-    const books = new SupabaseBookDataSource(fakeClient({ from }));
-
-    const created = await books.create({
-      title: row.title, author: row.author, ownerId: row.owner_id, modality: "donation", status: "available",
-      synopsis: "Distopia.", publisher: "Companhia das Letras", pageCount: 416, publicationYear: 2009,
-    });
-    expect(insert).toHaveBeenCalledWith(
-      expect.objectContaining({ synopsis: "Distopia.", publisher: "Companhia das Letras", page_count: 416, publication_year: 2009 }),
-    );
-    expect(created).toMatchObject({ synopsis: "Distopia.", publisher: "Companhia das Letras", pageCount: 416, publicationYear: 2009 });
-
-    await books.update("livro-9", { synopsis: "Nova.", publisher: undefined, pageCount: 300, publicationYear: 2020 });
-    expect(update).toHaveBeenCalledWith(expect.objectContaining({ synopsis: "Nova.", page_count: 300, publication_year: 2020 }));
-  });
-
   it("omite conservação e descrição quando o registro remoto não tem os campos", async () => {
     const row = {
       id: "livro-3", title: "Iracema", author: "José de Alencar",
@@ -304,12 +235,10 @@ describe("datasources Supabase", () => {
     const order = vi.fn().mockResolvedValue({ data: [row], error: null });
     const maybeSingle = vi.fn().mockResolvedValue({ data: row, error: null });
     const single = vi.fn().mockResolvedValue({ data: { ...row, status: "reserved" }, error: null });
-    const listChain: Record<string, unknown> = { order };
-    listChain.neq = vi.fn(() => listChain);
     const from = vi.fn().mockReturnValue({
       select: vi.fn().mockReturnValue({
         order,
-        neq: listChain.neq,
+        neq: vi.fn().mockReturnValue({ order }),
         eq: vi.fn().mockReturnValue({ maybeSingle, order }),
       }),
       update: vi.fn().mockReturnValue({ eq: vi.fn().mockReturnValue({ select: vi.fn().mockReturnValue({ single }) }) }),
@@ -326,11 +255,9 @@ describe("datasources Supabase", () => {
     const row = { id: "p1", title: "Livro Paginado", author: "Autor", owner_id: "dono", modality: "donation", price: null, status: "available" };
     const range = vi.fn().mockResolvedValue({ data: [row], error: null });
     const order = vi.fn().mockReturnValue({ range });
-    const listChain: Record<string, unknown> = { order };
-    listChain.neq = vi.fn(() => listChain);
     const from = vi.fn().mockReturnValue({
       select: vi.fn().mockReturnValue({
-        neq: listChain.neq,
+        neq: vi.fn().mockReturnValue({ order }),
       }),
     });
     const books = new SupabaseBookDataSource(fakeClient({ from }));
@@ -341,52 +268,31 @@ describe("datasources Supabase", () => {
     expect(result[0].id).toBe("p1");
   });
 
-  it("aplica filtro de bairro e modalidade na consulta remota (Spec 068 / ADR 0051)", async () => {
-    const row = { id: "p2", title: "Livro no Centro", author: "Autor", owner_id: "dono", modality: "donation", price: null, status: "available", neighborhood: "Centro" };
-    const order = vi.fn().mockResolvedValue({ data: [row], error: null });
-    const eqModality = vi.fn().mockReturnValue({ order });
-    const eqNeighborhood = vi.fn().mockReturnValue({ eq: eqModality, order });
-    const neq = vi.fn();
-    neq.mockReturnValue({ neq, eq: eqNeighborhood, order });
-    const from = vi.fn().mockReturnValue({
-      select: vi.fn().mockReturnValue({ neq }),
-    });
-    const books = new SupabaseBookDataSource(fakeClient({ from }));
-    const result = await books.list({ neighborhood: "Centro", modality: "donation" });
-
-    expect(eqNeighborhood).toHaveBeenCalledWith("neighborhood", "Centro");
-    expect(eqModality).toHaveBeenCalledWith("modality", "donation");
-    expect(result).toHaveLength(1);
-    expect(result[0].neighborhood).toBe("Centro");
-  });
-
   it("trata catálogo vazio, livro ausente e falhas do banco sem detalhes internos", async () => {
-    const emptyOrder = vi.fn().mockResolvedValue({ data: [], error: null });
-    const emptyNeq = vi.fn();
-    emptyNeq.mockReturnValue({ order: emptyOrder, neq: emptyNeq });
     const empty = new SupabaseBookDataSource(fakeClient({ from: vi.fn().mockReturnValue({
       select: vi.fn().mockReturnValue({
-        order: emptyOrder,
-        neq: emptyNeq,
+        order: vi.fn().mockResolvedValue({ data: [], error: null }),
+        neq: vi.fn().mockReturnValue({
+          order: vi.fn().mockResolvedValue({ data: [], error: null }),
+        }),
         eq: vi.fn().mockReturnValue({
           maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
-          order: emptyOrder,
+          order: vi.fn().mockResolvedValue({ data: [], error: null }),
         }),
       }),
     }) }));
     await expect(empty.list()).resolves.toEqual([]);
     await expect(empty.findById("ausente")).resolves.toBeNull();
 
-    const failedOrder = vi.fn().mockResolvedValue({ data: null, error: { message: "interno" } });
-    const failedNeq = vi.fn();
-    failedNeq.mockReturnValue({ order: failedOrder, neq: failedNeq });
     const failed = new SupabaseBookDataSource(fakeClient({ from: vi.fn().mockReturnValue({
       select: vi.fn().mockReturnValue({
-        order: failedOrder,
-        neq: failedNeq,
+        order: vi.fn().mockResolvedValue({ data: null, error: { message: "interno" } }),
+        neq: vi.fn().mockReturnValue({
+          order: vi.fn().mockResolvedValue({ data: null, error: { message: "interno" } }),
+        }),
         eq: vi.fn().mockReturnValue({
           maybeSingle: vi.fn().mockResolvedValue({ data: null, error: { message: "interno" } }),
-          order: failedOrder,
+          order: vi.fn().mockResolvedValue({ data: null, error: { message: "interno" } }),
         }),
       }),
       insert: vi.fn().mockReturnValue({ select: vi.fn().mockReturnValue({ single: vi.fn().mockResolvedValue({ data: null, error: { message: "interno" } }) }) }),
@@ -458,28 +364,6 @@ describe("datasources Supabase", () => {
     await expect(requests.listByListing("livro")).rejects.toThrow("Não foi possível carregar os pedidos.");
     await expect(requests.listByRequester("pessoa")).rejects.toThrow("Não foi possível carregar os pedidos.");
     await expect(requests.respond("pedido", "rejected")).rejects.toThrow("Não foi possível responder ao pedido.");
-  });
-
-  it("mapeia notificação sem action_url sem inserir a propriedade actionUrl", async () => {
-    const row = {
-      id: "notif-2",
-      user_id: "user-1",
-      title: "Aviso do sistema",
-      message: "Bem-vindo",
-      type: "system",
-      read: false,
-      created_at: "2026-10-15T12:00:00Z",
-      action_url: null,
-    };
-    const order = vi.fn().mockResolvedValue({ data: [row], error: null });
-    const eqSelect = vi.fn().mockReturnValue({ order });
-    const select = vi.fn().mockReturnValue({ eq: eqSelect });
-    const from = vi.fn().mockReturnValue({ select });
-
-    const notifDs = new SupabaseNotificationDataSource(fakeClient({ from }));
-    const list = await notifDs.listByUser("user-1");
-
-    expect(list[0]).not.toHaveProperty("actionUrl");
   });
 
   it("lista, marca como lida e cria notificações via Supabase com tratamento de erro", async () => {

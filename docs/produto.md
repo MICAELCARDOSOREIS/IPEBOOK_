@@ -3,10 +3,11 @@
 > Beta pública em preparação: Supabase configurado e ativo (`EXPO_PUBLIC_BACKEND=supabase`),
 > restrição geográfica exclusiva para Piripiri, PI implementada (17 bairros, spec 022, ADR 0016),
 > moderação comunitária ativa (spec 011, tabela `v2_reports`), primeiro acesso implementado (spec 026)
-> e histórico recente no dispositivo (spec 027). A publicação Web no Cloudflare Pages foi concluída
-> e conferida em `https://ipebook.app` (spec 025, ADR 0020).
+> e histórico recente no dispositivo (spec 027). A publicação Web no Cloudflare Pages está preparada
+> em código e build (`dist/`, `public/_headers`, `public/_redirects`, spec 025, ADR 0020), aguardando
+> comprovação no ambiente de destino externo (issue #109).
 
-Revisão: 2026-10-29 (base: branch `develop`). Este documento consolida os requisitos implementados e o alinhamento de produto da versão beta.
+Revisão: 2026-10-20 (base: branch `develop`). Este documento consolida os requisitos implementados e o alinhamento de produto da versão beta.
 
 ## Objetivo confirmado
 
@@ -33,30 +34,11 @@ Esta decisão foi trazida do trabalho já em produção da equipe no projeto irm
 | Editar e pausar anúncio | **Implementada** em [specs/024](../specs/024-editar-e-pausar-anuncio/spec.md) (issue #91): rota `/editar-anuncio/[id]`, pausa e retomada de anúncios em `/meus-anuncios` |
 | Conta e autenticação (criar conta, entrar, sair, redefinir senha) | **Implementada** em [specs/003](../specs/003-autenticacao-e-cadastro-de-anuncio/) e [specs/007](../specs/007-contas-persistentes/spec.md): `src/view/auth/`, rotas `/entrar`, `/criar-conta`, `/esqueci-senha` e `/redefinir-senha` |
 | Solicitar e responder negociação simples | **Implementada** em [specs/004](../specs/004-negociacao-simples/) e [specs/009](../specs/009-detalhes-negociacao-encontro/): `BookRequest`, reserva atômica de concorrentes e ponto de encontro seguro em Piripiri na rota `/negociacao/[id]` |
-| Combinar encontro (local, dia e horário) | **Implementada** em [specs/052](../specs/052-combinar-encontro/spec.md) (issue #188): convite, confirmação pela outra pessoa, reagendamento e cancelamento em `/negociacao/[id]` e `/negociacao/[id]/encontro`, com aviso a cada mudança; migração remota aplicada |
+| Combinar encontro (local, dia e horário) | **Implementada** em [specs/052](../specs/052-combinar-encontro/spec.md) (issue #188): convite, confirmação pela outra pessoa, reagendamento e cancelamento em `/negociacao/[id]` e `/negociacao/[id]/encontro`, com aviso a cada mudança; migração remota pendente |
 | Busca, filtros e histórico de buscas | Implementados: busca local por título, autor e categoria opcional; histórico recente no dispositivo ([spec 027](../specs/027-historico-buscas-recentes/spec.md), issue #94), isolado por conta e limpo ao excluir a conta |
 | Boas-vindas e primeiro acesso | **Implementada** em [specs/026](../specs/026-boas-vindas-primeiro-acesso/spec.md) (issue #98): rota `/bem-vindo`, escolha opcional de bairro e persistência de primeiro acesso no dispositivo (ADR 0022) |
 | Denúncias e moderação comunitária | **Implementada** em [specs/011](../specs/011-denuncia-anuncio/spec.md) (issue #79): formulário `/denunciar/[id]`, tabela `v2_reports` e políticas de RLS no Supabase |
 | Restrição geográfica a Piripiri, PI | **Implementada** em [specs/022](../specs/022-restricao-geografica-piripiri/spec.md) (issue #83): 17 bairros oficiais, validação de localidade e selo da beta |
-| Tema escuro e acessibilidade de contraste | **Implementada** em [specs/054](../specs/054-tema-escuro-tokens/spec.md) e [specs/055](../specs/055-tema-escuro-telas-restantes/spec.md) (ADR 0036): alternância claro/escuro/sistema e tokens semânticos |
-| Bloqueio e desbloqueio de usuários | **Implementada** em [specs/056](../specs/056-bloqueio-de-usuarios/spec.md) (ADR 0039): rota `/perfil/bloqueados` e bloqueio mútuo |
-| Convidar amigos e compartilhar app | **Implementada** em [specs/057](../specs/057-convidar-amigos/spec.md) (ADR 0040): rota `/perfil/convidar` e integração WhatsApp |
-| Consulta e leitura de ISBN por câmera | **Implementada** em [specs/058](../specs/058-busca-livro-isbn/spec.md) e [specs/059](../specs/059-scanner-codigo-barras-isbn/spec.md) (ADR 0041/0042): autopreenchimento e scanner |
-| Notificações push locais e lembretes de encontro | **Implementada** em [specs/060](../specs/060-notificacoes-push-e-lembretes/spec.md) (ADR 0043): agendamento 60 min antes do encontro |
-| Push profissional, canais por tipo e preferências de aviso | **Implementada** em [specs/099](../specs/099-preferencias-e-canais-de-notificacao/spec.md) (ADR 0075): canais Android por categoria, agrupamento por negociação, ícone monocromático, selo de não lidas e switches em Configurações (`muted_types`) |
-| Avisos de mensagem nova, pedido recusado e avaliação recebida | **Implementada** em [specs/100](../specs/100-avisos-restantes/spec.md) (ADR 0076): gatilhos no banco, central e push |
-| Cancelar pedido e avisos de livros favoritados | **Implementada** em [specs/101](../specs/101-cancelar-pedido-e-avisos-de-favoritos/spec.md) (ADR 0077): status `cancelled`, botão em Conversas e avisos de preço e disponibilidade |
-| Moderação de denúncias | **Implementada** em [specs/102](../specs/102-moderacao/spec.md) (ADR 0078): fila para moderadores, pausa automática, remoção de anúncio e suspensão de conta |
-| Limites contra abuso | **Implementada** em [specs/103](../specs/103-limites-anti-abuso/spec.md) (ADR 0079): limites diários e por minuto no banco, com mensagem no app |
-| Acompanhamento de erros | **Implementada** em [specs/104](../specs/104-acompanhamento-de-erros/spec.md) (ADR 0080): Sentry sem dados pessoais e tela de erro amigável; liga com `EXPO_PUBLIC_SENTRY_DSN` |
-| Avaliação na loja e atualizações sem loja | **Implementada** em [specs/105](../specs/105-avaliacao-na-loja-e-atualizacoes/spec.md) (ADR 0081): pedido de nota após boa negociação e EAS Update |
-| Login Google nativo | **Implementada** em [specs/106](../specs/106-login-google-nativo/spec.md) (ADR 0082): seletor de contas do Android e `signInWithIdToken`; navegador como reserva |
-| Chat interno na negociação | **Implementada** em [specs/061](../specs/061-chat-mensagens-negociacao/spec.md) (ADR 0044): troca de mensagens transacionais no fluxo de encontro |
-| Conclusão de negociação e avaliação mútua | **Implementada** em [specs/063](../specs/063-concluir-negociacao-avaliacoes/spec.md) (ADR 0046): avaliação mútua de 1 a 5 estrelas |
-| Alinhamento visual total com Figma | **Implementada** em [specs/062](../specs/062-alinhamento-home-figma/spec.md), [064](../specs/064-alinhamento-estante-figma/spec.md), [065](../specs/065-alinhamento-perfil-figma/spec.md) e [066](../specs/066-alinhamento-explorar-figma/spec.md) |
-| Seletor de bairro e filtro territorial | **Implementada** em [specs/067](../specs/067-seletor-bairro-piripiri/spec.md) (ADR 0050): modal de seleção dos 17 bairros de Piripiri, persistência e filtro no catálogo |
-| Seção hiperlocal na Home e consulta remota | **Implementada** em [specs/068](../specs/068-secao-hiperlocal-home-e-filtro-supabase/spec.md) (ADR 0051): carrossel hiperlocal por bairro e filtro remoto no Supabase |
-| Alinhamento visual dos encontros ao Figma | **Implementada** em [specs/069](../specs/069-alinhamento-encontros-negociacao-figma/spec.md) (ADR 0052): polimento visual e tokens M3 em agendamento e resumo de encontros |
 | Troca, doação, empréstimo ou venda | Decidido: venda, troca e doação. Empréstimo não entra no escopo |
 | Leitura de arquivos digitais | Não implementada; fora de escopo — modalidade decidida é livro físico |
 | Banco e sincronização | Backend Supabase oficial configurado e ativo (`EXPO_PUBLIC_BACKEND=supabase`), com RLS, migrações SQL validadas via PGlite e adaptadores de memória para testes rápidos |
@@ -80,7 +62,7 @@ Testes e limitações de cobertura estão em [qualidade.md](qualidade.md). Exist
 ## Regras atuais e limites do domínio
 
 - Backend oficial Supabase integrado (`EXPO_PUBLIC_BACKEND=supabase`) com autenticação, sessão persistente e Row Level Security (RLS) protegendo dados do usuário. Adaptadores em memória mantidos para testes unitários e de integração locais.
-- `Book` contém `id`, `title`, `author`, `category` opcional, `status` (`available`/`reserved`/`paused`/`draft`/`delivered`), `modality` (`sale`/`trade`/`donation`), `price` opcional (obrigatório e > 0 só quando `modality === "sale"`, FR-005), `ownerId`, `photoUrl`, `photos`, `city`, `state` e `neighborhood`.
+- `Book` contém `id`, `title`, `author`, `category` opcional, `status` (`available`/`reserved`/`paused`), `modality` (`sale`/`trade`/`donation`), `price` opcional (obrigatório e > 0 só quando `modality === "sale"`, FR-005), `ownerId`, `photoUrl`, `photos`, `city`, `state` e `neighborhood`.
 - O cadastro e a edição de anúncios exigem sessão ativa (FR-006), associando o anúncio criado à conta autenticada (`ownerId`).
 - A beta atende exclusivamente a cidade de **Piripiri, PI**, com catálogo delimitado a seus 17 bairros oficiais (spec 022, ADR 0016).
 - Moderação comunitária ativa via denúncias de anúncio (`v2_reports`), permitindo sinalizar conteúdos impróprios (spec 011).
@@ -130,11 +112,4 @@ específico, basta atualizar esta tabela.
 
 ## Próximos passos e pendências
 
-Issues antigas citadas aqui (#93 filtros, #73 perfil público, #109 Cloudflare) já foram concluídas; ver `docs/estado.md`. Pendências atuais para o lançamento:
-
-- Aplicar no Supabase remoto as migrações `202610290001_moderacao.sql` e `202610290002_limites_anti_abuso.sql` e cadastrar o primeiro moderador (Spec 102).
-- Criar o projeto no Sentry e configurar `EXPO_PUBLIC_SENTRY_DSN` no `.env` e no EAS (Spec 104).
-- Beta na Play Store: seguir [docs/loja/beta-play-store.md](loja/beta-play-store.md).
-- Revisão jurídica dos termos e da política de privacidade e publicação em um link público.
-- Teste completo no aparelho com duas contas (pedido, chat, encontro, QR, avaliação, avisos e moderação).
-- Avaliar métricas de uso (ex.: PostHog) e um projeto Supabase separado para testes; ambos dependem de conta e decisão de custo.
+As próximas entregas da trilha incluem: comprovação da publicação Web no Cloudflare Pages (issue #109), correções de acessibilidade derivadas da auditoria (#104, #105, #106), filtros e ordenação do catálogo (#93) e perfis de usuário/anunciante (#55 e #73).

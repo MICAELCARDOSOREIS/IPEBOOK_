@@ -55,8 +55,8 @@ import { Modal, Text, View } from "react-native";
 import { tokens } from "@/view/tokens";
 import { BotaoPreenchido } from "./botao";
 
-// Token `scrim` (claro) de design-system/tokens.json — a API TypeScript ainda não possui uma
-// chave dedicada para este papel. A constante nomeada mantém a origem explícita.
+// Token `scrim` (claro) de design-kit/tokens.json — ainda não existe em src/view/tokens.ts
+// (ver a tabela "Nomes no código" em 02-tokens.md). Nomeado e comentado em vez de literal solto.
 const SCRIM_CLARO = "#00000052";
 
 function DialogoConfirmacao({ visivel, titulo, texto, onConfirmar, onCancelar }: { visivel: boolean; titulo: string; texto: string; onConfirmar: () => void; onCancelar: () => void }) {

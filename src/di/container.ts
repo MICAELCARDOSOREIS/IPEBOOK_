@@ -1,7 +1,6 @@
 import { MemoryAuthDataSource } from "@/infra/datasources/memoryAuthDataSource";
 import { MemoryBookDataSource } from "@/infra/datasources/memoryBookDataSource";
 import { MemoryBookRequestDataSource } from "@/infra/datasources/memoryBookRequestDataSource";
-import { MemoryDeliveryDataSource } from "@/infra/datasources/memoryDeliveryDataSource";
 import { MemoryMeetingDataSource } from "@/infra/datasources/memoryMeetingDataSource";
 import { MemoryNetworkStatusDataSource } from "@/infra/datasources/memoryNetworkStatusDataSource";
 import { MemoryNotificationDataSource } from "@/infra/datasources/memoryNotificationDataSource";
@@ -17,7 +16,6 @@ import { SupabaseAuthDataSource } from "@/infra/datasources/supabaseAuthDataSour
 import { SupabaseBookDataSource } from "@/infra/datasources/supabaseBookDataSource";
 import { CachedBookDataSource } from "@/infra/datasources/cachedBookDataSource";
 import { SupabaseBookRequestDataSource } from "@/infra/datasources/supabaseBookRequestDataSource";
-import { SupabaseDeliveryDataSource } from "@/infra/datasources/supabaseDeliveryDataSource";
 import { SupabaseMeetingDataSource } from "@/infra/datasources/supabaseMeetingDataSource";
 import { SupabaseNotificationDataSource } from "@/infra/datasources/supabaseNotificationDataSource";
 import { SupabaseProfileDataSource } from "@/infra/datasources/supabaseProfileDataSource";
@@ -30,7 +28,6 @@ import { createSupabaseAppClient } from "@/infra/supabaseClient";
 import type { IAuthDataSource } from "@/model/datasources/iAuthDataSource";
 import type { IBookDataSource } from "@/model/datasources/iBookDataSource";
 import type { IBookRequestDataSource } from "@/model/datasources/iBookRequestDataSource";
-import type { IDeliveryDataSource } from "@/model/datasources/iDeliveryDataSource";
 import type { IMeetingDataSource } from "@/model/datasources/iMeetingDataSource";
 import type { INetworkStatusDataSource } from "@/model/datasources/iNetworkStatusDataSource";
 import type { INotificationDataSource } from "@/model/datasources/iNotificationDataSource";
@@ -44,8 +41,6 @@ import type { ISearchHistoryDataSource } from "@/model/datasources/iSearchHistor
 import { DataSourceError } from "@/model/errors";
 import { AuthUseCases } from "@/usecase/authUseCases";
 import { BookRequestUseCases } from "@/usecase/bookRequestUseCases";
-import { DeliveryUseCases } from "@/usecase/deliveryUseCases";
-import type { IDeliveryUseCases } from "@/usecase/iDeliveryUseCases";
 import { MeetingUseCases } from "@/usecase/meetingUseCases";
 import type { IMeetingUseCases } from "@/usecase/iMeetingUseCases";
 import { BookUseCases } from "@/usecase/bookUseCases";
@@ -68,13 +63,10 @@ import type { IFavoriteUseCases } from "@/usecase/iFavoriteUseCases";
 import type { IShareUseCases } from "@/usecase/iShareUseCases";
 import type { ISearchAlertUseCases } from "@/usecase/iSearchAlertUseCases";
 import type { ISearchHistoryUseCases } from "@/usecase/iSearchHistoryUseCases";
-import { INITIAL_DEV_BOOKS } from "@/di/seedBooks";
 import { AsyncStorageOnboardingDataSource } from "@/infra/datasources/asyncStorageOnboardingDataSource";
 import { AsyncStorageThemePreferenceDataSource } from "@/infra/datasources/asyncStorageThemePreferenceDataSource";
-import { AsyncStorageLocalCacheDataSource } from "@/infra/datasources/asyncStorageLocalCacheDataSource";
 import { MemoryOnboardingDataSource } from "@/infra/datasources/memoryOnboardingDataSource";
 import { MemoryThemePreferenceDataSource } from "@/infra/datasources/memoryThemePreferenceDataSource";
-import { MemoryLocalCacheDataSource } from "@/infra/datasources/memoryLocalCacheDataSource";
 import { NetInfoNetworkStatusDataSource } from "@/infra/datasources/netInfoNetworkStatusDataSource";
 import { SupabasePhotoStorageDataSource } from "@/infra/datasources/supabasePhotoStorageDataSource";
 import { MemoryPhotoStorageDataSource } from "@/infra/datasources/memoryPhotoStorageDataSource";
@@ -83,15 +75,7 @@ import { SupabaseUserDataExportDataSource } from "@/infra/datasources/supabaseUs
 import type { IPhotoStorageDataSource } from "@/model/datasources/iPhotoStorageDataSource";
 import type { IUserDataExportDataSource } from "@/model/datasources/iUserDataExportDataSource";
 import type { ILogger } from "@/model/services/iLogger";
-import { SafeLogger, reportingSink } from "@/infra/services/safeLogger";
-import { MemoryErrorReporter } from "@/infra/services/memoryErrorReporter";
-import { SentryErrorReporter } from "@/infra/services/sentryErrorReporter";
-import type { IErrorReporter } from "@/model/services/iErrorReporter";
-import { GoogleNativeSignInService } from "@/infra/services/googleNativeSignInService";
-import type { IStoreReviewService } from "@/model/services/iStoreReviewService";
-import { ExpoStoreReviewService } from "@/infra/services/expoStoreReviewService";
-import { MemoryStoreReviewService } from "@/infra/services/memoryStoreReviewService";
-import Constants from "expo-constants";
+import { SafeLogger } from "@/infra/services/safeLogger";
 import type { IRateLimiter } from "@/model/services/iRateLimiter";
 import { ClientRateLimiter } from "@/infra/services/clientRateLimiter";
 import type { IFileDownloadService } from "@/model/services/iFileDownloadService";
@@ -108,31 +92,15 @@ import type { IBlockedUserUseCases } from "@/usecase/iBlockedUserUseCases";
 import { BlockedUserUseCases } from "@/usecase/blockedUserUseCases";
 import { MemoryBlockedUserDataSource } from "@/infra/datasources/memoryBlockedUserDataSource";
 import { SupabaseBlockedUserDataSource } from "@/infra/datasources/supabaseBlockedUserDataSource";
-import type { IMessageDataSource } from "@/model/datasources/iMessageDataSource";
-import { MemoryMessageDataSource } from "@/infra/datasources/memoryMessageDataSource";
-import { SupabaseMessageDataSource } from "@/infra/datasources/supabaseMessageDataSource";
 import { ThemePreferenceUseCases } from "@/usecase/themePreferenceUseCases";
-import type { ILocalCacheUseCases } from "@/usecase/iLocalCacheUseCases";
-import { LocalCacheUseCases } from "@/usecase/localCacheUseCases";
 import { UserDataExportUseCases } from "@/usecase/userDataExportUseCases";
 import { UserPreferencesUseCases } from "@/usecase/userPreferencesUseCases";
-import type { IModerationDataSource } from "@/model/datasources/iModerationDataSource";
-import { MemoryModerationDataSource } from "@/infra/datasources/memoryModerationDataSource";
-import { SupabaseModerationDataSource } from "@/infra/datasources/supabaseModerationDataSource";
-import type { IModerationUseCases } from "@/usecase/iModerationUseCases";
-import { ModerationUseCases } from "@/usecase/moderationUseCases";
-import { MemoryBetaTesterDataSource } from "@/infra/datasources/memoryBetaTesterDataSource";
-import { SupabaseBetaTesterDataSource } from "@/infra/datasources/supabaseBetaTesterDataSource";
-import type { IBetaTesterDataSource } from "@/model/datasources/iBetaTesterDataSource";
-import { BetaSignupUseCases } from "@/usecase/betaSignupUseCases";
-import type { IBetaSignupUseCases } from "@/usecase/iBetaSignupUseCases";
 
 function createDataSources(): {
   auth: IAuthDataSource;
   books: IBookDataSource;
   requests: IBookRequestDataSource;
   meetings: IMeetingDataSource;
-  deliveries: IDeliveryDataSource;
   reports: IReportDataSource;
   notifications: INotificationDataSource;
   favorites: IFavoriteDataSource;
@@ -143,10 +111,6 @@ function createDataSources(): {
   userDataExport: IUserDataExportDataSource;
   userPreferences: IUserPreferencesDataSource;
   blockedUsers: IBlockedUserDataSource;
-  messages: IMessageDataSource;
-  photos: IPhotoStorageDataSource;
-  moderation: IModerationDataSource;
-  betaTesters: IBetaTesterDataSource;
 } {
   const searchHistory = process.env.NODE_ENV === "test"
     ? new MemorySearchHistoryDataSource()
@@ -156,18 +120,13 @@ function createDataSources(): {
     if (!redirectUrl) throw new DataSourceError("Configure o retorno da recuperação de senha.");
     const client = createSupabaseAppClient(
       process.env.EXPO_PUBLIC_SUPABASE_URL ?? "",
-      process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? process.env.EXPO_PUBLIC_SUPABASE_KEY ?? "",
+      process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? "",
     );
     return {
-      auth: new SupabaseAuthDataSource(
-        client,
-        redirectUrl,
-        new GoogleNativeSignInService(process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID),
-      ),
+      auth: new SupabaseAuthDataSource(client, redirectUrl),
       books: new CachedBookDataSource(new SupabaseBookDataSource(client)),
       requests: new SupabaseBookRequestDataSource(client),
       meetings: new SupabaseMeetingDataSource(client),
-      deliveries: new SupabaseDeliveryDataSource(client),
       reports: new SupabaseReportDataSource(client),
       notifications: new SupabaseNotificationDataSource(client),
       favorites: new SupabaseFavoriteDataSource(client),
@@ -178,14 +137,9 @@ function createDataSources(): {
       userDataExport: new SupabaseUserDataExportDataSource(client),
       userPreferences: new SupabaseUserPreferencesDataSource(client),
       blockedUsers: new SupabaseBlockedUserDataSource(client, new SupabaseProfileDataSource(client)),
-      messages: new SupabaseMessageDataSource(client),
-      photos: new SupabasePhotoStorageDataSource(client),
-      moderation: new SupabaseModerationDataSource(client),
-      betaTesters: new SupabaseBetaTesterDataSource(client),
     };
   }
-  const initialBooks = process.env.NODE_ENV === "test" ? [] : INITIAL_DEV_BOOKS;
-  const books = new MemoryBookDataSource(initialBooks);
+  const books = new MemoryBookDataSource();
   const notifications = new MemoryNotificationDataSource();
   const requests = new MemoryBookRequestDataSource();
   const favorites = new MemoryFavoriteDataSource();
@@ -200,7 +154,6 @@ function createDataSources(): {
     books,
     requests,
     meetings: new MemoryMeetingDataSource(requests, books, notifications),
-    deliveries: new MemoryDeliveryDataSource(requests, books, notifications),
     reports,
     notifications,
     favorites,
@@ -213,10 +166,6 @@ function createDataSources(): {
     }),
     userPreferences: new MemoryUserPreferencesDataSource(),
     blockedUsers,
-    messages: new MemoryMessageDataSource(),
-    photos: new MemoryPhotoStorageDataSource(),
-    moderation: new MemoryModerationDataSource(),
-    betaTesters: new MemoryBetaTesterDataSource(),
   };
 }
 
@@ -228,9 +177,6 @@ export const onboardingUseCases: IOnboardingUseCases = new OnboardingUseCases(
 );
 export const themePreferenceUseCases: IThemePreferenceUseCases = new ThemePreferenceUseCases(
   process.env.NODE_ENV === "test" ? new MemoryThemePreferenceDataSource() : new AsyncStorageThemePreferenceDataSource(),
-);
-export const localCacheUseCases: ILocalCacheUseCases = new LocalCacheUseCases(
-  process.env.NODE_ENV === "test" ? new MemoryLocalCacheDataSource() : new AsyncStorageLocalCacheDataSource(),
 );
 export const networkStatusDataSource: INetworkStatusDataSource =
   process.env.NODE_ENV === "test" ? new MemoryNetworkStatusDataSource() : new NetInfoNetworkStatusDataSource();
@@ -257,18 +203,9 @@ export const meetingUseCases: IMeetingUseCases = new MeetingUseCases(
   bookDataSource,
 );
 
-export const deliveryUseCases: IDeliveryUseCases = new DeliveryUseCases(
-  dataSources.deliveries,
-  dataSources.requests,
-  bookDataSource,
-  dataSources.meetings,
-);
-
 export const reportUseCases: IReportUseCases = new ReportUseCases(
   dataSources.reports,
 );
-
-export const betaSignupUseCases: IBetaSignupUseCases = new BetaSignupUseCases(dataSources.betaTesters);
 
 export const notificationUseCases: INotificationUseCases = new NotificationUseCases(
   dataSources.notifications,
@@ -299,52 +236,8 @@ export const blockedUserUseCases: IBlockedUserUseCases = new BlockedUserUseCases
   dataSources.blockedUsers,
 );
 
-import type { NegotiationMessage } from "@/model/entities/negotiationMessage";
-import {
-  getNegotiationMessages,
-  sendNegotiationMessage,
-  type MessageUseCaseContext,
-  type SendMessageParams,
-} from "@/model/usecases/messageUseCases";
-
-export const messageDataSource = dataSources.messages;
-export const messageUseCaseContext: MessageUseCaseContext = {
-  messageDataSource: dataSources.messages,
-  bookRequestDataSource: dataSources.requests,
-  bookDataSource,
-  blockedUserDataSource: dataSources.blockedUsers,
-};
-
-export const negotiationMessageUseCases = {
-  getMessages: (requestId: string, sessionUserId: string) =>
-    getNegotiationMessages(requestId, sessionUserId, messageUseCaseContext),
-  sendMessage: (params: SendMessageParams) =>
-    sendNegotiationMessage(params, messageUseCaseContext),
-  subscribeToMessages: (requestId: string, onMessage: (msg: NegotiationMessage) => void) =>
-    messageDataSource.subscribeToMessages?.(requestId, onMessage) ?? (() => {}),
-  subscribeToAllMessages: (onMessage: (msg: NegotiationMessage) => void) =>
-    messageDataSource.subscribeToAllMessages?.(onMessage) ?? (() => {}),
-  hideConversation: async (requestId: string, userId: string) => {
-    await messageDataSource.hideConversation?.(requestId, userId);
-  },
-  listHiddenConversations: async (userId: string) => (await messageDataSource.listHiddenConversations?.(userId)) ?? {},
-};
-
-const sentryDsn = process.env.EXPO_PUBLIC_SENTRY_DSN;
-/** Sem chave do Sentry (ou em teste) os erros ficam só no aparelho (Spec 104 / ADR 0080). */
-export const errorReporter: IErrorReporter =
-  process.env.NODE_ENV !== "test" && sentryDsn
-    ? new SentryErrorReporter({
-        dsn: sentryDsn,
-        environment: process.env.EXPO_PUBLIC_APP_ENV ?? (__DEV__ ? "development" : "production"),
-        release: Constants.expoConfig?.version,
-      })
-    : new MemoryErrorReporter();
-
 export const logger: ILogger = new SafeLogger(
-  process.env.NODE_ENV === "test"
-    ? { sink: () => {} }
-    : { sink: reportingSink(errorReporter) },
+  process.env.NODE_ENV === "test" ? { sink: () => {} } : {}
 );
 
 export const rateLimiter: IRateLimiter = new ClientRateLimiter();
@@ -356,17 +249,10 @@ export const pwaService: IPwaService = new PwaService(logger);
 import type { IBookMetadataService } from "@/model/services/iBookMetadataService";
 import { MemoryBookMetadataService } from "@/infra/services/memoryBookMetadataService";
 import { OpenLibraryBookMetadataService } from "@/infra/services/openLibraryBookMetadataService";
-import { GoogleBooksBookMetadataService } from "@/infra/services/googleBooksBookMetadataService";
-import { CompositeBookMetadataService } from "@/infra/services/compositeBookMetadataService";
-import { BrasilApiBookMetadataService } from "@/infra/services/brasilApiBookMetadataService";
 
 export const bookMetadataService: IBookMetadataService =
   process.env.NODE_ENV !== "test" && process.env.EXPO_PUBLIC_BACKEND === "supabase"
-    ? new CompositeBookMetadataService([
-        new OpenLibraryBookMetadataService(),
-        new GoogleBooksBookMetadataService(),
-        new BrasilApiBookMetadataService(),
-      ])
+    ? new OpenLibraryBookMetadataService()
     : new MemoryBookMetadataService();
 
 import type { IPushNotificationService } from "@/model/services/iPushNotificationService";
@@ -378,22 +264,4 @@ export const pushNotificationService: IPushNotificationService =
     ? new ExpoPushNotificationService(logger)
     : new MemoryPushNotificationService();
 
-import type { IImagePickerService } from "@/model/services/iImagePickerService";
-import { ExpoImagePickerService } from "@/infra/services/expoImagePickerService";
-import { MemoryImagePickerService } from "@/infra/services/memoryImagePickerService";
-import type { IProfilePhotoUseCases } from "@/usecase/iProfilePhotoUseCases";
-import type { IListingPhotoUseCases } from "@/usecase/iListingPhotoUseCases";
-import { ListingPhotoUseCases } from "@/usecase/listingPhotoUseCases";
-import { ProfilePhotoUseCases } from "@/usecase/profilePhotoUseCases";
 
-/** Foto de perfil pela câmera ou galeria (ADR 0065). */
-export const imagePickerService: IImagePickerService =
-  process.env.NODE_ENV !== "test" ? new ExpoImagePickerService() : new MemoryImagePickerService();
-
-export const profilePhotoUseCases: IProfilePhotoUseCases = new ProfilePhotoUseCases(dataSources.photos);
-export const listingPhotoUseCases: IListingPhotoUseCases = new ListingPhotoUseCases(dataSources.photos);
-
-export const moderationUseCases: IModerationUseCases = new ModerationUseCases(dataSources.moderation);
-
-export const storeReviewService: IStoreReviewService =
-  process.env.NODE_ENV === "test" ? new MemoryStoreReviewService() : new ExpoStoreReviewService();

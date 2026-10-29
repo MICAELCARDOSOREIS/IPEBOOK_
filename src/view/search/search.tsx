@@ -1,18 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useSearchViewModel } from "@/viewmodel/useSearchViewModel";
-import type { SearchModalityFilter } from "@/viewmodel/useSearchViewModel";
-import { SORT_LABELS } from "@/viewmodel/searchFilters";
-import { FilterSheet } from "@/view/search/FilterSheet";
-import { WebFilterSidebar } from "@/view/search/WebFilterSidebar";
-import { useIsWideWeb } from "@/view/useIsWideWeb";
-import { SortSheet } from "@/view/search/SortSheet";
-import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
+import type { SearchModalityFilter, SearchPriceRange, SearchSortOption } from "@/viewmodel/useSearchViewModel";
+import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
-import { categoryTone } from "@/view/categoryTone";
 import { BookCover } from "@/view/components/BookCover";
-import { ModalityCoverArea } from "@/view/components/ModalityCoverArea";
 import { ErrorState } from "@/view/components/ErrorState";
 import { SearchField } from "@/view/components/SearchField";
 import { FavoriteButton } from "@/view/components/FavoriteButton";
@@ -21,16 +14,10 @@ import { Chip } from "@/view/components/Chip";
 import { LoadingState } from "@/view/components/LoadingState";
 import { OfflineState } from "@/view/components/OfflineState";
 import { Tag } from "@/view/components/Tag";
-import { AppIcon } from "@/view/components/AppIcon";
-import { NeighborhoodSelectorModal } from "@/view/components/NeighborhoodSelectorModal";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
-import { useActiveNeighborhood } from "@/viewmodel/useActiveNeighborhood";
-import { WEB_MAX_WIDTH, useWebGridColumns } from "@/view/webLayout";
 
 export type SearchProps = {
-  currentNeighborhood?: string;
-  onSelectNeighborhood?: () => void;
   onNavigateToBookDetail?: (bookId: string) => void;
   onNavigateToAlerts?: (term: string) => void;
   /** Pré-aplica um filtro de modalidade ao abrir, vindo do "Ver mais" da Home (Issue #146). */
@@ -45,29 +32,35 @@ export function parseInitialModality(value: string | string[] | undefined): Sear
   return VALID_INITIAL_MODALITIES.find((modality) => modality === raw);
 }
 
-/** Busca e Exploração (Figma `02.02 · Explorar`, nó `10:2`). */
-export default function Search({
-  currentNeighborhood,
-  onSelectNeighborhood,
-  onNavigateToBookDetail,
-  onNavigateToAlerts,
-  initialModality,
-}: SearchProps = {}) {
-  const neighborhoodHook = useActiveNeighborhood("all");
-  const effectiveNeighborhood =
-    currentNeighborhood !== undefined ? currentNeighborhood : neighborhoodHook.activeNeighborhood;
-  const handleSelectNeighborhood = onSelectNeighborhood ?? neighborhoodHook.openSelector;
+const MODALITY_FILTERS: Array<{ id: SearchModalityFilter; label: string }> = [
+  { id: "all", label: "Todas" },
+  { id: "sale", label: "Venda" },
+  { id: "trade", label: "Troca" },
+  { id: "donation", label: "Doação" },
+];
 
+const PRICE_FILTERS: Array<{ id: SearchPriceRange; label: string }> = [
+  { id: "all", label: "Todos os preços" },
+  { id: "free", label: "Grátis" },
+  { id: "under20", label: "Até R$ 20" },
+  { id: "under50", label: "Até R$ 50" },
+];
+
+const SORT_OPTIONS: Array<{ id: SearchSortOption; label: string }> = [
+  { id: "recent", label: "Recentes" },
+  { id: "title", label: "A-Z" },
+  { id: "price_asc", label: "Menor preço" },
+  { id: "price_desc", label: "Maior preço" },
+];
+
+/** Busca e Exploração (US3, T019, Spec 028, Issue #93): filtra por termo, modalidade, categoria e preço. */
+export default function Search({ onNavigateToBookDetail, onNavigateToAlerts, initialModality }: SearchProps) {
   const [auth] = useAuthViewModel();
-  const { colors, resolvedScheme } = useTheme();
+  const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [state, actions] = useSearchViewModel(auth.user?.id ?? null);
   const { isOnline } = useNetworkStatus();
   const [confirmingClear, setConfirmingClear] = useState(false);
-  const [showFilterSheet, setShowFilterSheet] = useState(false);
-  const wideWeb = useIsWideWeb();
-  const gridColumns = useWebGridColumns();
-  const [showSortSheet, setShowSortSheet] = useState(false);
   const appliedInitialModality = useRef(false);
 
   useEffect(() => {
@@ -78,166 +71,101 @@ export default function Search({
     appliedInitialModality.current = true;
   }, [initialModality, actions]);
 
-  useEffect(() => {
-    if (typeof actions.setNeighborhood === "function") {
-      if (
-        effectiveNeighborhood &&
-        effectiveNeighborhood !== "all" &&
-        effectiveNeighborhood !== "Todos os bairros (Piripiri)"
-      ) {
-        actions.setNeighborhood(effectiveNeighborhood);
-      } else {
-        actions.setNeighborhood("all");
-      }
-    }
-  }, [effectiveNeighborhood, actions]);
-
-  const displayNeighborhood =
-    !effectiveNeighborhood ||
-    effectiveNeighborhood === "all" ||
-    effectiveNeighborhood === "Todos os bairros (Piripiri)"
-      ? "Piripiri (Todos)"
-      : effectiveNeighborhood;
-
-  const handleSelectNeighborhoodOption = (bairro: string) => {
-    void neighborhoodHook.selectNeighborhood(bairro);
-    if (typeof actions.setNeighborhood === "function") {
-      actions.setNeighborhood(bairro);
-    }
-  };
-
-  // A categoria já aparece selecionada na fileira de chips do catálogo; repeti-la nos chips
-  // removíveis duplicaria o mesmo estado em dois lugares da tela.
-  const visibleActiveFilters = state.activeFilters.filter((filter) => filter.key !== "category");
-
-  // Busca e filtros viajam no cabeçalho da própria lista para rolagem natural no mobile.
+  // Busca e filtros viajam no cabeçalho da própria lista: ocupam quase toda a altura da tela em
+  // celular, então precisam rolar junto com os resultados em vez de empurrá-los para fora.
   const listHeader = (
     <View style={styles.filters}>
-      {/* 1. Barra de Topo: Bairro (Pill) e Ações (Limpar filtros / Tune) (Figma nós 137:2457 e 137:2461) */}
-      <View style={styles.topBar}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={`Selecionar bairro: ${displayNeighborhood}`}
-          onPress={handleSelectNeighborhood}
-          style={styles.neighborhoodPill}
-        >
-          <AppIcon name="place" size={20} color={colors.m3.primary} />
-          <Text style={styles.neighborhoodText}>{displayNeighborhood}</Text>
-          <AppIcon name="chevronDown" size={20} color={colors.m3.onSurfaceVariant} />
-        </Pressable>
-
-        <View style={styles.topRightActions}>
-          {state.hasActiveFilters ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Limpar todos os filtros de busca"
-              onPress={actions.resetFilters}
-              style={styles.clearFiltersButton}
-            >
-              <Text style={styles.clearFiltersText}>Limpar filtros</Text>
-            </Pressable>
-          ) : null}
-          {/* Na web larga a coluna "Filtros" já está sempre visível; o atalho só existe nas telas estreitas. */}
-          {wideWeb ? null : (
+      <View style={styles.headerRow}>
+        <Text accessibilityRole="header" style={styles.heading}>Pesquisa</Text>
+        {state.hasActiveFilters ? (
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={
-              state.activeFilterCount > 0 ? `Abrir filtros, ${state.activeFilterCount} ativos` : "Abrir filtros"
-            }
-            onPress={() => {
-              actions.openFilterDraft();
-              setShowFilterSheet(true);
-            }}
-            style={styles.tuneButton}
+            accessibilityLabel="Limpar todos os filtros de busca"
+            onPress={actions.clearFilters}
+            style={styles.clearFiltersButton}
           >
-            <AppIcon name="tune" size={24} color={colors.m3.onSurfaceVariant} />
-            {state.activeFilterCount > 0 ? (
-              <View style={styles.tuneBadge}>
-                <Text style={styles.tuneBadgeText}>{state.activeFilterCount}</Text>
-              </View>
-            ) : null}
+            <Text style={styles.clearFiltersText}>Limpar filtros</Text>
           </Pressable>
-          )}
-        </View>
+        ) : null}
       </View>
 
-      {/* 2. Manchete Editorial (Figma nó 137:2463) */}
-      <View style={styles.heroSection}>
-        <Text accessibilityRole="header" style={styles.heading}>
-          O que vamos ler hoje?
-        </Text>
-        <Text style={styles.subtitle}>
-          Livros novos e seminovos para trocar, comprar ou receber aqui perto.
-        </Text>
-      </View>
-
-      {/* 3. Campo de Busca Integrado M3 (Figma nó 99:1733) */}
       <SearchField
         value={state.term}
         onChangeText={actions.setTerm}
         onSubmitEditing={() => void actions.registerSearch(state.term)}
       />
 
-      {/* 4. Categorias do próprio catálogo em rolagem horizontal (Figma nó 183:3499) */}
-      {state.availableCategories.length > 0 ? (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.quickCategoriesScroll}
-        >
-          <Chip
-            label="Todos"
-            accessibilityLabel="Filtrar por todas as categorias"
-            selected={state.category === "all"}
-            onPress={() => actions.setCategory("all")}
-          />
-          {state.availableCategories.map((category) => (
+      {/* Filtro por Modalidade */}
+      <View style={styles.filterSection}>
+        <Text style={styles.filterLabel}>Modalidade:</Text>
+        <View style={styles.filtersRow}>
+          {MODALITY_FILTERS.map((f) => (
             <Chip
-              key={category}
-              label={category}
-              accessibilityLabel={`Filtrar por categoria ${category}`}
-              tone={categoryTone(category, resolvedScheme)}
-              selected={state.category === category}
-              onPress={() => actions.setCategory(category)}
+              key={f.id}
+              label={f.label}
+              accessibilityLabel={f.id === "all" ? "Filtrar por todas as modalidades" : `Filtrar por ${f.label}`}
+              selected={state.modality === f.id}
+              onPress={() => actions.setModality(f.id)}
             />
           ))}
-        </ScrollView>
+        </View>
+      </View>
+
+      {/* Filtro por Categoria */}
+      {state.availableCategories.length > 0 ? (
+        <View style={styles.filterSection}>
+          <Text style={styles.filterLabel}>Categoria:</Text>
+          <View style={styles.filtersRow}>
+            <Chip
+              label="Todas"
+              accessibilityLabel="Filtrar por todas as categorias"
+              selected={state.category === "all"}
+              onPress={() => actions.setCategory("all")}
+            />
+            {state.availableCategories.map((cat) => (
+              <Chip
+                key={cat}
+                label={cat}
+                accessibilityLabel={`Filtrar por categoria ${cat}`}
+                selected={state.category === cat}
+                onPress={() => actions.setCategory(cat)}
+              />
+            ))}
+          </View>
+        </View>
       ) : null}
 
-      {/* 5. Filtros aplicados como chips removíveis (Figma `02.04 · Explorar com filtro`) */}
-      {visibleActiveFilters.length > 0 ? (
-        <View style={styles.activeFiltersRow}>
-          {visibleActiveFilters.map((filter) => (
-            <Pressable
-              key={filter.key}
-              accessibilityRole="button"
-              accessibilityLabel={`Remover filtro ${filter.label}`}
-              hitSlop={8}
-              onPress={() => actions.removeActiveFilter(filter.key)}
-              style={styles.activeFilterChip}
-            >
-              <Text style={styles.activeFilterText}>{filter.label}</Text>
-              <AppIcon name="close" size={16} color={colors.m3.onSecondaryContainer} />
-            </Pressable>
+      {/* Filtro por Faixa de Preço */}
+      <View style={styles.filterSection}>
+        <Text style={styles.filterLabel}>Preço:</Text>
+        <View style={styles.filtersRow}>
+          {PRICE_FILTERS.map((p) => (
+            <Chip
+              key={p.id}
+              label={p.label}
+              accessibilityLabel={`Filtrar por ${p.label}`}
+              selected={state.priceRange === p.id}
+              onPress={() => actions.setPriceRange(p.id)}
+            />
           ))}
         </View>
-      ) : null}
+      </View>
 
-      {/* 6. Resumo da faixa de resultados e ordenação (Figma `02.04`: "1 livro à venda · Literatura") */}
-      {!state.loading && !state.error && state.books.length > 0 ? (
-        <View style={styles.summaryRow}>
-          <Text numberOfLines={2} style={styles.summaryText}>{state.resultsSummary}</Text>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={`Ordenar por ${SORT_LABELS[state.sortBy]}`}
-            onPress={() => setShowSortSheet(true)}
-            style={styles.sortButton}
-          >
-            <Text style={styles.sortText}>{SORT_LABELS[state.sortBy]}</Text>
-            <AppIcon name="chevronDown" size={16} color={colors.m3.primary} />
-          </Pressable>
+      {/* Ordenação */}
+      <View style={styles.filterSection}>
+        <Text style={styles.filterLabel}>Ordenar por:</Text>
+        <View style={styles.filtersRow}>
+          {SORT_OPTIONS.map((s) => (
+            <Chip
+              key={s.id}
+              label={s.label}
+              accessibilityLabel={`Ordenar por ${s.label}`}
+              selected={state.sortBy === s.id}
+              onPress={() => actions.setSortBy(s.id)}
+            />
+          ))}
         </View>
-      ) : null}
+      </View>
 
       {!state.term.trim() && state.history.length > 0 ? (
         <View style={styles.historySection}>
@@ -267,11 +195,9 @@ export default function Search({
         onCancel={() => setConfirmingClear(false)}
         onConfirm={() => { setConfirmingClear(false); void actions.clearHistory(); }}
       />
+
     </View>
   );
-
-  const neighborhoodApplied = displayNeighborhood !== "Piripiri (Todos)";
-  const onlyNeighborhoodBlocks = neighborhoodApplied && state.matchesInOtherNeighborhoods > 0;
 
   const listEmpty = state.loading ? (
     <LoadingState label="Carregando livros" />
@@ -282,41 +208,15 @@ export default function Search({
       <OfflineState onRetry={() => void actions.reload()} />
     )
   ) : (
-    <View style={[styles.empty, wideWeb && styles.emptyWide]}>
-      {wideWeb ? (
-        <View style={styles.emptyIcon}>
-          <AppIcon name="search" size={32} color={colors.m3.onSurface} />
-        </View>
-      ) : null}
-      <Text style={styles.emptyTitle}>
-        {onlyNeighborhoodBlocks ? `Nenhum livro no ${displayNeighborhood} com essa busca.` : "Nenhum livro encontrado."}
-      </Text>
+    <View style={styles.empty}>
+      <Text style={styles.emptyTitle}>Nenhum livro encontrado.</Text>
       <Text style={styles.body}>
-        {onlyNeighborhoodBlocks
-          ? `Há ${state.matchesInOtherNeighborhoods} ${state.matchesInOtherNeighborhoods === 1 ? "livro" : "livros"} em outros bairros de Piripiri.`
-          : state.activeFilterCount > 0
+        {state.hasActiveFilters
           ? "Nenhum livro corresponde aos filtros selecionados."
-          : state.term.trim()
-            ? `Nenhum livro encontrado para "${state.term.trim()}". Tente outro título, autor ou categoria.`
-            : "Ainda não há livros no catálogo."}
+          : "Ainda não há livros no catálogo."}
       </Text>
-      {onlyNeighborhoodBlocks ? (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Ver em toda Piripiri"
-          onPress={() => handleSelectNeighborhoodOption("Todos os bairros (Piripiri)")}
-          style={styles.emptyActionButton}
-        >
-          <Text style={styles.emptyActionText}>Ver em toda Piripiri</Text>
-        </Pressable>
-      ) : null}
       {state.hasActiveFilters ? (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Limpar filtros e buscar novamente"
-          onPress={actions.clearFilters}
-          style={styles.emptyActionButton}
-        >
+        <Pressable accessibilityRole="button" onPress={actions.clearFilters} style={styles.emptyActionButton}>
           <Text style={styles.emptyActionText}>Limpar filtros</Text>
         </Pressable>
       ) : null}
@@ -329,131 +229,38 @@ export default function Search({
   );
 
   return (
-    <SafeAreaView edges={["top", "left", "right"]} style={styles.page}>
-      <View style={wideWeb ? styles.wideRow : styles.flexOne}>
-      {wideWeb ? (
-        <WebFilterSidebar
-          filters={state.filters}
-          categories={state.availableCategories}
-          hasActiveFilters={state.hasActiveFilters}
-          onModality={actions.setModality}
-          onCondition={actions.setCondition}
-          onCategory={actions.setCategory}
-          onClear={actions.resetFilters}
-        />
-      ) : null}
+    <SafeAreaView style={styles.page}>
       <FlatList
-        key={wideWeb ? `grade-${gridColumns}` : "lista"}
-        numColumns={wideWeb ? gridColumns : 1}
-        columnWrapperStyle={wideWeb ? styles.gridRow : undefined}
         data={state.loading || state.error ? [] : state.books}
         keyExtractor={(book) => book.id}
-        style={styles.flexOne}
-        contentContainerStyle={wideWeb ? styles.contentWide : styles.content}
+        contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
         ListHeaderComponent={listHeader}
         ListEmptyComponent={listEmpty}
-        ListFooterComponent={
-          wideWeb && !state.loading && !state.error && state.books.length > 0 ? (
-            <View style={styles.alertCard}>
-              <AppIcon name="bell" size={24} color={colors.m3.onTertiaryContainer} />
-              <View style={styles.alertCardText}>
-                <Text style={styles.alertCardTitle}>Não achou o livro?</Text>
-                <Text style={styles.alertCardBody}>Crie um alerta e avisamos quando alguém anunciar.</Text>
-              </View>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Criar alerta de busca"
-                onPress={() => onNavigateToAlerts?.(state.term.trim())}
-                style={styles.alertCardButton}
-              >
-                <Text style={styles.alertCardButtonText}>Criar alerta</Text>
-              </Pressable>
-            </View>
-          ) : undefined
-        }
         renderItem={({ item }) => {
-          const priceOrCondition =
-            item.price != null
-              ? `R$ ${item.price.toFixed(2).replace(".", ",")}`
-              : item.modality === "trade"
-              ? "Por outro livro"
-              : "Gratuito";
-
           return (
-            <View style={[styles.card, wideWeb && styles.cardWide, wideWeb && { maxWidth: `${100 / gridColumns}%` }]}>
+            <View style={styles.row}>
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel={`Ver detalhe de ${item.title}, ${item.author}${item.neighborhood ? ` em ${item.neighborhood}` : ""}`}
+                accessibilityLabel={`Ver detalhe de ${item.title}, ${item.author}`}
                 onPress={() => { void actions.registerSearch(state.term); onNavigateToBookDetail?.(item.id); }}
-                style={[styles.cardMain, wideWeb && styles.cardMainWide]}
+                style={styles.rowMain}
               >
-                <ModalityCoverArea modality={item.modality}>
-                  <BookCover id={item.id} title={item.title} photoUrl={item.photoUrl} variant={wideWeb ? "card" : "list"} />
-                </ModalityCoverArea>
-                <View style={[styles.cardInfo, wideWeb && styles.cardInfoWide]}>
-                  <Text numberOfLines={2} style={styles.cardTitle}>{item.title}</Text>
-                  <Text numberOfLines={1} style={styles.cardAuthor}>{item.author}</Text>
-                  <View style={[styles.cardMetaRow, wideWeb && styles.cardMetaRowWide]}>
+                <BookCover id={item.id} title={item.title} photoUrl={item.photoUrl} variant="list" />
+                <View style={styles.rowInfo}>
+                  <View style={styles.rowHeader}>
+                    <Text style={styles.rowTitle}>{item.title}</Text>
                     <Tag variant={item.modality} />
-                    <Text numberOfLines={1} style={styles.priceText}>{priceOrCondition}</Text>
-                    {item.neighborhood ? (
-                      <View style={styles.cardLocationBadge}>
-                        <AppIcon name="place" size={12} color={colors.m3.onSurfaceVariant} />
-                        <Text style={styles.cardLocationText}>{item.neighborhood}</Text>
-                      </View>
-                    ) : null}
                   </View>
+                  <Text style={styles.body}>{item.author}</Text>
                   {item.category ? <Text style={styles.categoryBadge}>{item.category}</Text> : null}
+                  {item.price ? <Text style={styles.priceText}>R$ {item.price.toFixed(2).replace(".", ",")}</Text> : null}
                 </View>
               </Pressable>
-              <View style={[styles.cardActions, wideWeb && styles.cardActionsWide]}>
-                <FavoriteButton bookId={item.id} userId={auth.user?.id ?? null} />
-                {wideWeb ? null : (
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={`Abrir ${item.title}`}
-                  onPress={() => { void actions.registerSearch(state.term); onNavigateToBookDetail?.(item.id); }}
-                  style={styles.chevronButton}
-                >
-                  <AppIcon name="chevronRight" size={24} color={colors.m3.onSurfaceVariant} />
-                </Pressable>
-                )}
-              </View>
+              <FavoriteButton bookId={item.id} userId={auth.user?.id ?? null} />
             </View>
           );
         }}
-      />
-      </View>
-      <FilterSheet
-        visible={showFilterSheet}
-        draftFilters={state.draftFilters}
-        sortBy={state.sortBy}
-        availableCategories={state.availableCategories}
-        resultCount={state.draftResultCount}
-        onChange={actions.updateDraftFilters}
-        onSortChange={actions.setSortBy}
-        onApply={() => {
-          actions.applyDraftFilters();
-          setShowFilterSheet(false);
-        }}
-        onReset={() => {
-          actions.resetFilters();
-          setShowFilterSheet(false);
-        }}
-        onClose={() => setShowFilterSheet(false)}
-      />
-      <SortSheet
-        visible={showSortSheet}
-        selected={state.sortBy}
-        onSelect={actions.setSortBy}
-        onClose={() => setShowSortSheet(false)}
-      />
-      <NeighborhoodSelectorModal
-        visible={neighborhoodHook.isSelectorOpen}
-        currentNeighborhood={effectiveNeighborhood}
-        onSelect={handleSelectNeighborhoodOption}
-        onClose={neighborhoodHook.closeSelector}
       />
     </SafeAreaView>
   );
@@ -461,244 +268,43 @@ export default function Search({
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
-    page: { flex: 1, backgroundColor: colors.background },
-    flexOne: { flex: 1 },
-    // Web larga (Figma `34:229`): filtros fixos à esquerda e resultados em grade de 4 colunas.
-    wideRow: { flex: 1, flexDirection: "row", gap: 24, width: "100%", maxWidth: WEB_MAX_WIDTH, alignSelf: "center", paddingHorizontal: 80, paddingTop: 32 },
-    contentWide: { flexGrow: 1, paddingBottom: tokens.spacing[32], gap: 24 },
-    gridRow: { gap: 24 },
-    cardMainWide: { flexDirection: "column", alignItems: "stretch", gap: 8 },
-    // Na grade, o texto começa logo abaixo da capa para os títulos ficarem alinhados entre colunas.
-    cardInfoWide: { justifyContent: "flex-start" },
-    cardMetaRowWide: { flexWrap: "wrap", rowGap: 4 },
-    cardActionsWide: { position: "absolute", top: 8, right: 8, width: 48 },
-    cardWide: { alignItems: "stretch", paddingLeft: 12, paddingRight: 12, marginBottom: 0, flex: 1, flexDirection: "column", maxWidth: "25%", borderRadius: 20, backgroundColor: colors.m3.surfaceContainerLowest },
-    content: {
-      flexGrow: 1,
-      width: "100%",
-      maxWidth: 720,
-      alignSelf: "center",
-      paddingHorizontal: tokens.spacing[16],
-      paddingTop: tokens.spacing[8],
-      paddingBottom: tokens.spacing[24],
-    },
-    filters: { gap: tokens.spacing[16], marginBottom: tokens.spacing[16] },
-    topBar: {
-      flexDirection: "row",
-      justifyContent: "space-between",
-      alignItems: "center",
-    },
-    neighborhoodPill: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 6,
-      backgroundColor: colors.m3.surfaceContainerHigh,
-      paddingLeft: tokens.spacing[12],
-      paddingRight: tokens.spacing[8],
-      paddingVertical: tokens.spacing[8],
-      borderRadius: tokens.radius.full,
-    },
-    neighborhoodText: {
-      ...tokens.typography.labelMedium,
-      color: colors.text,
-      fontWeight: "500",
-    },
-    topRightActions: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[8],
-    },
-    tuneButton: {
-      width: 48,
-      height: 48,
-      borderRadius: 24,
-      justifyContent: "center",
-      alignItems: "center",
-    },
-    // Contador de filtros aplicados sobre o ícone de ajustes (chip de 18 dp do Material 3).
-    tuneBadge: {
-      position: "absolute",
-      top: 6,
-      right: 6,
-      minWidth: 18,
-      height: 18,
-      paddingHorizontal: 4,
-      borderRadius: tokens.radius.full,
-      backgroundColor: colors.m3.primary,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    tuneBadgeText: {
-      color: colors.m3.onPrimary,
-      fontSize: 11,
-      lineHeight: 14,
-      fontFamily: fontFamily.semiBold,
-    },
-    heroSection: {
-      gap: tokens.spacing[6],
-      marginTop: tokens.spacing[4],
-      marginBottom: tokens.spacing[4],
-    },
-    heading: {
-      fontFamily: fontFamily.brand,
-      fontSize: 28,
-      lineHeight: 34,
-      color: colors.brandBrown,
-      letterSpacing: -0.5,
-    },
-    subtitle: {
-      fontSize: 14,
-      lineHeight: 20,
-      color: colors.secondaryText,
-    },
-    quickCategoriesScroll: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[8],
-      paddingVertical: 2,
-    },
-    clearFiltersButton: {
-      minHeight: tokens.accessibility.touchTarget,
-      justifyContent: "center",
-      paddingHorizontal: tokens.spacing[8],
-    },
-    clearFiltersText: { color: colors.action, fontSize: tokens.typography.bodyMedium.fontSize, fontWeight: "600" },
-    // Chip removível de filtro aplicado (Figma `02.04`): verde `secondaryContainer` com ✕.
-    activeFiltersRow: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[8] },
-    activeFilterChip: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[6],
-      height: tokens.spacing[32],
-      paddingHorizontal: tokens.spacing[12],
-      borderRadius: tokens.radius.small,
-      backgroundColor: colors.m3.secondaryContainer,
-    },
-    activeFilterText: { ...tokens.typography.labelLarge, color: colors.m3.onSecondaryContainer },
-    summaryRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-      gap: tokens.spacing[12],
-    },
-    summaryText: { flex: 1, ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
-    sortButton: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "flex-end",
-      gap: 2,
-      minHeight: tokens.accessibility.touchTarget,
-      paddingLeft: tokens.spacing[8],
-    },
-    sortText: { ...tokens.typography.labelLarge, color: colors.m3.primary },
-    body: { fontSize: tokens.typography.bodyLarge.fontSize, lineHeight: 25, color: colors.secondaryText },
-    empty: { alignItems: "center", paddingTop: tokens.spacing[32], gap: tokens.spacing[8] },
-    emptyWide: { width: "100%", paddingVertical: 48, paddingHorizontal: 48, borderRadius: 28, backgroundColor: colors.m3.surfaceContainerLow, gap: 16 },
-    emptyIcon: { width: 64, height: 64, borderRadius: 32, alignItems: "center", justifyContent: "center", backgroundColor: colors.m3.secondaryContainer },
-    alertCard: { flexDirection: "row", alignItems: "center", gap: 16, paddingHorizontal: 24, paddingVertical: 20, borderRadius: tokens.radius.large, backgroundColor: colors.m3.tertiaryContainer },
-    alertCardText: { flex: 1, gap: 2 },
-    alertCardTitle: { fontFamily: tokens.typography.labelLarge.fontFamily, fontSize: 20, lineHeight: 28, fontWeight: "600", color: colors.m3.onTertiaryContainer },
-    alertCardBody: { ...tokens.typography.bodyLarge, color: colors.m3.onTertiaryContainer },
-    alertCardButton: { height: 52, minWidth: 180, alignItems: "center", justifyContent: "center", borderRadius: tokens.radius.full, backgroundColor: colors.m3.primary },
-    alertCardButtonText: { ...tokens.typography.labelLarge, color: colors.m3.onPrimary },
-    emptyTitle: { fontSize: 19, fontWeight: "600", color: colors.action },
-    emptyActionButton: {
-      minHeight: tokens.accessibility.touchTarget,
-      justifyContent: "center",
-      alignItems: "center",
-      backgroundColor: colors.soft,
-      borderRadius: tokens.radius.small,
-      paddingHorizontal: tokens.spacing[16],
-    },
-    emptyActionText: { color: colors.action, fontWeight: "600", fontSize: 15 },
-    alertLink: { color: colors.action, fontWeight: "600", padding: tokens.spacing[12] },
-    historySection: { gap: tokens.spacing[8] },
-    historyHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-    historyTitle: { fontSize: tokens.typography.labelMedium.fontSize, fontWeight: "600", color: colors.secondaryText },
-    historyChips: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[8] },
-    historyChip: {
-      minHeight: tokens.accessibility.touchTarget,
-      justifyContent: "center",
-      borderRadius: tokens.radius.full,
-      backgroundColor: colors.soft,
-      paddingHorizontal: tokens.spacing[16],
-    },
-    historyChipText: { color: colors.text, fontSize: tokens.typography.bodyLarge.fontSize },
-
-    // Card de Livro (Figma 02.02 · Explorar nós 137:2471 a 137:2490)
-    // Figma: sem borda, background branco (#FFF), sombra dupla elevation level1
-    card: {
-      flexDirection: "row",
-      alignItems: "center",
-      backgroundColor: colors.m3.surfaceContainerLowest,
-      borderRadius: 16,
-      paddingLeft: tokens.spacing[12],
-      paddingRight: tokens.spacing[4],
-      paddingVertical: tokens.spacing[12],
-      marginBottom: tokens.spacing[12],
-      elevation: 2,
-      shadowColor: "#000",
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.22,
-      shadowRadius: 3,
-      gap: 14,
-    },
-    cardMain: {
-      flex: 1,
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 14,
-    },
-    cardInfo: {
-      flex: 1,
-      gap: tokens.spacing[4],
-      justifyContent: "center",
-    },
-    cardTitle: {
-      fontFamily: fontFamily.brand,
-      fontSize: 19,
-      lineHeight: 24,
-      color: colors.text,
-    },
-    cardAuthor: {
-      fontSize: 14,
-      lineHeight: 20,
-      color: colors.secondaryText,
-    },
-    cardMetaRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[8],
-      paddingTop: tokens.spacing[4],
-    },
-    cardLocationBadge: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 2,
-    },
-    cardLocationText: {
-      ...tokens.typography.labelSmall,
-      fontFamily: fontFamily.regular,
-      color: colors.m3.onSurfaceVariant,
-    },
-    priceText: {
-      fontSize: 14,
-      lineHeight: 20,
-      fontWeight: "500",
-      color: colors.text,
-    },
-    cardActions: {
-      flexDirection: "column",
-      alignItems: "center",
-      justifyContent: "center",
-      width: 48,
-    },
-    chevronButton: {
-      width: 48,
-      height: 48,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    categoryBadge: { fontSize: tokens.typography.labelSmall.fontSize, color: colors.secondaryText, fontStyle: "italic" },
+  page: { flex: 1, backgroundColor: colors.background },
+  // `contentContainerStyle` da lista: `flexGrow` deixa o conteúdo ultrapassar a altura da tela,
+  // que é o que permite a rolagem. O `gap` fica no cabeçalho para não afetar as linhas da lista.
+  content: {
+    flexGrow: 1,
+    width: "100%",
+    maxWidth: 720,
+    alignSelf: "center",
+    padding: tokens.spacing[24],
+    paddingBottom: tokens.spacing[24],
+  },
+  filters: { gap: tokens.spacing[16] },
+  headerRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  heading: { fontSize: tokens.typography.titleLarge.fontSize, fontWeight: tokens.typography.titleLarge.fontWeight, color: colors.action },
+  clearFiltersButton: { minHeight: tokens.accessibility.touchTarget, justifyContent: "center", paddingHorizontal: tokens.spacing[8] },
+  clearFiltersText: { color: colors.error, fontSize: tokens.typography.bodyMedium.fontSize, fontWeight: "600" },
+  filterSection: { gap: tokens.spacing[6] },
+  filterLabel: { fontSize: tokens.typography.labelSmall.fontSize, fontWeight: "600", color: colors.secondaryText },
+  filtersRow: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[8] },
+  body: { fontSize: tokens.typography.bodyLarge.fontSize, lineHeight: 25, color: colors.secondaryText },
+  empty: { alignItems: "center", paddingTop: tokens.spacing[32], gap: tokens.spacing[8] },
+  emptyTitle: { fontSize: 19, fontWeight: "600", color: colors.action },
+  emptyActionButton: { minHeight: tokens.accessibility.touchTarget, justifyContent: "center", alignItems: "center", backgroundColor: colors.soft, borderRadius: tokens.radius.small, paddingHorizontal: tokens.spacing[16] },
+  emptyActionText: { color: colors.action, fontWeight: "600", fontSize: 15 },
+  alertLink: { color: colors.action, fontWeight: "600", padding: tokens.spacing[12] },
+  historySection: { gap: tokens.spacing[8] },
+  historyHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  historyTitle: { fontSize: tokens.typography.labelMedium.fontSize, fontWeight: "600", color: colors.secondaryText },
+  historyChips: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[8] },
+  historyChip: { minHeight: tokens.accessibility.touchTarget, justifyContent: "center", borderRadius: tokens.radius.full, backgroundColor: colors.soft, paddingHorizontal: tokens.spacing[16] },
+  historyChipText: { color: colors.text, fontSize: tokens.typography.bodyLarge.fontSize },
+  row: { flexDirection: "row", gap: tokens.spacing[12], paddingVertical: 18, borderBottomWidth: 1, borderBottomColor: colors.border },
+  rowMain: { flex: 1, flexDirection: "row", gap: tokens.spacing[12] },
+  rowInfo: { flex: 1, gap: 4 },
+  rowHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: tokens.spacing[12] },
+  rowTitle: { fontSize: 19, fontWeight: "600", color: colors.action },
+  categoryBadge: { fontSize: tokens.typography.labelSmall.fontSize, color: colors.secondaryText, fontStyle: "italic" },
+  priceText: { fontSize: tokens.typography.bodyMedium.fontSize, fontWeight: "600", color: colors.action },
   });
 }

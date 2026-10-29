@@ -8,10 +8,6 @@ export type MeetingUpdate = Readonly<
 export interface IMeetingDataSource {
   /** Último encontro do pedido, inclusive cancelado; `null` se nunca houve convite. */
   findLatestByRequest(requestId: string): Promise<Meeting | null>;
-  /** Todos os encontros do pedido em ordem cronológica (mais recentes primeiro). */
-  listByRequest(requestId: string): Promise<readonly Meeting[]>;
-  /** Todos os encontros do usuário em suas negociações em Piripiri (Spec 071). */
-  listByUser(userId: string): Promise<readonly Meeting[]>;
   findById(id: string): Promise<Meeting | null>;
   create(meeting: Omit<Meeting, "id" | "status">): Promise<Meeting>;
   /**

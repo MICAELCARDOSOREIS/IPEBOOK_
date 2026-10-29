@@ -5,7 +5,7 @@ L2 a da mais escura (fórmula WCAG). Os seis pares abaixo foram recalculados man
 com os valores documentados em `tokens.json`. Os ~50 tokens de cor restantes não foram
 auditados manualmente — só têm a razão declarada na origem (artifact do Figma).
 
-## Contraste dos pares de cor
+## Contraste dos pares de cor (modo claro — único implementado, ver ADR 0008)
 
 | Par (texto sobre fundo) | Cores | Razão | Mínimo | Resultado |
 | --- | --- | --- | --- | --- |
@@ -26,9 +26,8 @@ auditados manualmente — só têm a razão declarada na origem (artifact do Fig
 
 ## Foco
 
-- Anel sólido em `colors.m3.focusRing`, por fora do componente, com a largura e a folga
-  definidas por `tokens.accessibility.focusWidth` e `tokens.accessibility.focusOffset` — nunca
-  removido, nem em botão nem em campo. A API atual usa 2 px de largura e 4 px de folga.
+- Anel sólido de 3 px em `focus-ring`, por fora do componente, com 2 px de folga — nunca
+  removido, nem em botão nem em campo.
 - Ordem de foco segue a ordem visual de leitura (topo → base, esquerda → direita).
 
 ## Leitor de tela
@@ -45,4 +44,4 @@ auditados manualmente — só têm a razão declarada na origem (artifact do Fig
 - Nenhum componente usa altura fixa em elemento com texto: até 200% do tamanho de fonte do
   sistema, listas e cartões crescem em vez de cortar o texto.
 - Com "Remover animações" ativo no sistema, deslocamentos viram esmaecimento
-  (`tokens.motion.duration.standard`), sem remover o feedback.
+  (`duration-short4`), sem remover o feedback.

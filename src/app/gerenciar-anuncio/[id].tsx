@@ -1,5 +1,4 @@
-import { useLocalSearchParams } from "expo-router";
-import { backOnce, pushOnce, replaceOnce } from "@/view/pushOnce";
+import { router, useLocalSearchParams } from "expo-router";
 import ManageListingScreen from "@/view/listings/manageListingScreen";
 
 export default function GerenciarAnuncioRoute() {
@@ -8,10 +7,10 @@ export default function GerenciarAnuncioRoute() {
   return (
     <ManageListingScreen
       bookId={id}
-      onEdit={(bookId) => pushOnce(`/editar-anuncio/${bookId}`)}
-      onRemoved={() => replaceOnce("/meus-anuncios")}
-      onBack={() => backOnce()}
-      onRequireSignIn={() => replaceOnce("/entrar")}
+      onEdit={(bookId) => router.push(`/editar-anuncio/${bookId}`)}
+      onRemoved={() => router.replace("/meus-anuncios")}
+      onBack={() => router.back()}
+      onRequireSignIn={() => router.replace("/entrar")}
     />
   );
 }

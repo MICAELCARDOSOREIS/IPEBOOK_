@@ -67,7 +67,7 @@ export function carregarConfiguracaoAmbiente(envCustom = null, cwd = process.cwd
 
   const env = envCustom || { ...fileEnv, ...process.env };
   const supabaseUrl = env.EXPO_PUBLIC_SUPABASE_URL || '';
-  const supabaseKey = env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY || env.EXPO_PUBLIC_SUPABASE_KEY || '';
+  const supabaseKey = env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY || '';
 
   if (!supabaseUrl || !supabaseKey) {
     return {
@@ -153,7 +153,6 @@ export const TABELAS_CRITICAS = {
       'photos',
       'condition',
       'description',
-      'synopsis',
     ],
   },
   v2_profiles: {
@@ -191,25 +190,10 @@ export const TABELAS_CRITICAS = {
     descricao: 'Notificações e avisos da plataforma',
     colunas: ['id', 'user_id', 'type', 'title', 'message', 'action_url', 'read', 'created_at'],
   },
-  v2_hidden_conversations: {
-    nome: 'v2_hidden_conversations',
-    descricao: 'Conversas apagadas por cada pessoa (Spec 090)',
-    colunas: ['user_id', 'request_id', 'hidden_at'],
-  },
-  v2_user_reports: {
-    nome: 'v2_user_reports',
-    descricao: 'Denúncias de pessoas feitas no perfil público (Spec 091)',
-    colunas: ['id', 'reporter_id', 'reported_user_id', 'reason', 'details', 'created_at'],
-  },
-  v2_deliveries: {
-    nome: 'v2_deliveries',
-    descricao: 'Entregas concluídas por QR code (Spec 095)',
-    colunas: ['request_id', 'completed_by', 'completed_at'],
-  },
   v2_user_preferences: {
     nome: 'v2_user_preferences',
     descricao: 'Preferências privadas de contato e bairro padrão',
-    colunas: ['user_id', 'phone', 'neighborhood', 'updated_at', 'push_token', 'muted_types'],
+    colunas: ['user_id', 'phone', 'neighborhood', 'updated_at'],
   },
   v2_meetings: {
     nome: 'v2_meetings',
@@ -221,11 +205,6 @@ export const TABELAS_CRITICAS = {
     descricao: 'Relação privada de bloqueio entre pessoas da comunidade (Spec 056 / ADR 0039)',
     colunas: ['blocker_id', 'blocked_id', 'created_at'],
   },
-  v2_negotiation_messages: {
-    nome: 'v2_negotiation_messages',
-    descricao: 'Mensagens e chat da negociação presencial (Spec 061 / ADR 0044)',
-    colunas: ['id', 'request_id', 'sender_id', 'content', 'created_at'],
-  },
 };
 
 /**
@@ -233,7 +212,7 @@ export const TABELAS_CRITICAS = {
  * @param {string} supabaseUrl
  * @param {string} supabaseKey
  * @param {typeof fetch} [fetchFn]
- * @returns {Promise<{ ok: boolean, tabelas: Record<string, { existe: boolean, ok: boolean, restrita?: boolean, descricao: string, colunasValidas: string[], colunasAusentes: string[], erro?: string }> }>}
+ * @returns {Promise<{ ok: boolean, tabelas: Record<string, { existe: boolean, ok: boolean, descricao: string, colunasValidas: string[], colunasAusentes: string[], erro?: string }> }>}
  */
 export async function verificarTabelasEColunas(supabaseUrl, supabaseKey, fetchFn = fetch) {
   const resultados = {};
@@ -264,21 +243,6 @@ export async function verificarTabelasEColunas(supabaseUrl, supabaseKey, fetchFn
         continue;
       }
 
-      // 401/403 com objeto resolvido pelo PostgREST prova que a tabela existe no
-      // esquema; apenas não é legível pela chave anon — RLS rígida conforme migração
-      // (ex.: v2_negotiation_messages revoked para anon). Não contar como ausente.
-      if (res.status === 401 || res.status === 403) {
-        resultados[chaveTabela] = {
-          existe: true,
-          ok: true,
-          restrita: true,
-          descricao: def.descricao,
-          colunasValidas: [],
-          colunasAusentes: [],
-        };
-        continue;
-      }
-
       // Se falhou, verifica se a tabela inteira não existe (404) ou se alguma coluna não existe (400)
       if (res.status === 404) {
         todasOk = false;
@@ -297,7 +261,6 @@ export async function verificarTabelasEColunas(supabaseUrl, supabaseKey, fetchFn
       todasOk = false;
       const colunasValidas = [];
       const colunasAusentes = [];
-      let restrita = false;
 
       for (const col of def.colunas) {
         try {
@@ -311,29 +274,12 @@ export async function verificarTabelasEColunas(supabaseUrl, supabaseKey, fetchFn
 
           if (colRes.ok) {
             colunasValidas.push(col);
-          } else if (colRes.status === 401 || colRes.status === 403) {
-            // Acesso restrito por RLS/grants: impossível verificar a coluna com esta chave;
-            // não contá-la como ausente (falso positivo de migração pendente).
-            restrita = true;
           } else {
             colunasAusentes.push(col);
           }
         } catch {
           colunasAusentes.push(col);
         }
-      }
-
-      if (colunasAusentes.length === 0 && restrita) {
-        todasOk = true;
-        resultados[chaveTabela] = {
-          existe: true,
-          ok: true,
-          restrita: true,
-          descricao: def.descricao,
-          colunasValidas,
-          colunasAusentes: [],
-        };
-        continue;
       }
 
       resultados[chaveTabela] = {
@@ -604,103 +550,6 @@ export const MAPEAMENTO_MIGRACOES = {
     validar: (ctx) => ctx.tabelas.v2_blocked_users?.existe,
     detalhe: 'Tabela public.v2_blocked_users (ADR 0039)',
   },
-  '202610240001_mensagens_negociacao.sql': {
-    titulo: 'Mensagens e chat da negociação presencial',
-    validar: (ctx) => ctx.tabelas.v2_negotiation_messages?.existe,
-    detalhe: 'Tabela public.v2_negotiation_messages (Spec 061 / ADR 0044)',
-  },
-  '202610260001_push_token_preferencias.sql': {
-    titulo: 'Token de notificação push nas preferências privadas',
-    validar: (ctx) =>
-      Boolean(ctx.tabelas.v2_user_preferences?.existe) &&
-      !(ctx.tabelas.v2_user_preferences?.colunasAusentes ?? []).includes('push_token'),
-    detalhe: 'Coluna public.v2_user_preferences.push_token (ADR 0062)',
-  },
-  '202610260002_rascunhos_anuncio.sql': {
-    titulo: 'Rascunhos de anúncio (status draft)',
-    validar: (ctx) => ctx.tabelas.v2_books?.existe,
-    detalhe: 'Coluna draft_step, CHECKs flexibilizados e políticas RLS de rascunho em v2_books (Spec 017)',
-  },
-  '202610260003_tempo_real_conversas_notificacoes.sql': {
-    titulo: 'Conversas e notificações em tempo real',
-    // A publicação não é visível pela API REST; confere as tabelas publicadas
-    validar: (ctx) =>
-      Boolean(ctx.tabelas.v2_negotiation_messages?.existe) && Boolean(ctx.tabelas.v2_notifications?.existe),
-    detalhe: 'Tabelas de mensagens, notificações e pedidos na publicação supabase_realtime (Spec 086)',
-  },
-  '202610270001_conversas_ocultas.sql': {
-    titulo: 'Conversas apagadas por pessoa',
-    validar: (ctx) => Boolean(ctx.tabelas.v2_hidden_conversations?.existe),
-    detalhe: 'Tabela public.v2_hidden_conversations com RLS por dono (Spec 090)',
-  },
-  '202610270002_denuncias_de_pessoas.sql': {
-    titulo: 'Denúncias de pessoas',
-    validar: (ctx) => Boolean(ctx.tabelas.v2_user_reports?.existe),
-    detalhe: 'Tabela public.v2_user_reports com RLS por denunciante (Spec 091)',
-  },
-  '202610280001_entrega_por_qr_code.sql': {
-    titulo: 'Entrega por QR code',
-    validar: (ctx) => Boolean(ctx.tabelas.v2_deliveries?.existe),
-    detalhe: 'Tabela public.v2_deliveries e funções create_delivery_code e complete_delivery (Spec 095)',
-  },
-  // O REST não expõe a constraint nem o gatilho; usa a tabela da migração anterior como indício (aplicar as duas juntas).
-  '202610280002_livro_entregue.sql': {
-    titulo: 'Livro entregue',
-    validar: (ctx) => Boolean(ctx.tabelas.v2_deliveries?.existe),
-    detalhe: 'Status delivered em v2_books e gatilho v2_delivery_marks_book_delivered (Spec 095)',
-  },
-  // O REST não expõe a coluna pushed_at nem o gatilho; usa a tabela da migração de entrega como indício.
-  '202610280003_push_de_avisos.sql': {
-    titulo: 'Push de avisos',
-    validar: (ctx) => Boolean(ctx.tabelas.v2_deliveries?.existe),
-    detalhe: 'Coluna pushed_at, tabela v2_push_settings e gatilhos de push (Spec 096)',
-  },
-  '202610280004_sinopse_edicao_anuncio.sql': {
-    titulo: 'Sinopse e dados da edição',
-    validar: (ctx) => Boolean(ctx.tabelas.v2_books?.colunasValidas?.includes('synopsis')),
-    detalhe: 'Colunas synopsis, publisher, page_count e publication_year em v2_books (Spec 097)',
-  },
-  '202610280005_avisos_de_pedido.sql': {
-    titulo: 'Avisos de pedido recebido e aceito',
-    validar: (ctx) => Boolean(ctx.tabelas.v2_book_requests?.existe),
-    detalhe: 'Gatilho v2_request_notifies e função v2_notify_request_change (Spec 098)',
-  },
-  '202610280006_preferencias_de_aviso.sql': {
-    titulo: 'Preferências por tipo de aviso',
-    validar: (ctx) => Boolean(ctx.tabelas.v2_user_preferences?.colunasValidas?.includes('muted_types')),
-    detalhe: 'Coluna muted_types em v2_user_preferences (Spec 099)',
-  },
-  // O REST não expõe gatilhos; usa a tabela de mensagens como indício.
-  '202610280007_avisos_restantes.sql': {
-    titulo: 'Avisos de mensagem, recusa e avaliação',
-    validar: (ctx) => Boolean(ctx.tabelas.v2_user_preferences?.colunasValidas?.includes('muted_types')),
-    detalhe: 'Gatilhos v2_message_notifies e v2_rating_notifies e aviso request_rejected (Spec 100)',
-  },
-  '202610280008_cancelar_pedido_e_avisos_de_favoritos.sql': {
-    titulo: 'Cancelar pedido e avisos de favoritos',
-    validar: (ctx) => Boolean(ctx.tabelas.v2_user_preferences?.colunasValidas?.includes('muted_types')),
-    detalhe: 'Status cancelled em v2_book_requests e gatilhos de aviso de favoritos (Spec 101)',
-  },
-  '202610290001_moderacao.sql': {
-    titulo: 'Moderação',
-    validar: (ctx) => Boolean(ctx.tabelas.v2_books?.colunasValidas?.includes('synopsis')),
-    detalhe: 'Tabelas v2_moderators e v2_suspended_users, fila e decisões da moderação (Spec 102)',
-  },
-  '202610290002_limites_anti_abuso.sql': {
-    titulo: 'Limites contra abuso',
-    validar: (ctx) => Boolean(ctx.tabelas.v2_books?.colunasValidas?.includes('synopsis')),
-    detalhe: 'Gatilhos v2_*_rate_limit com o código IBLIM (Spec 103)',
-  },
-  '202610300001_correcoes_auditoria_seguranca.sql': {
-    titulo: 'Correções da auditoria de segurança',
-    validar: (ctx) => Boolean(ctx.tabelas.v2_books?.colunasValidas?.includes('synopsis')),
-    detalhe: 'Suspensão completa, exclusão bloqueada para conta suspensa e photo_url só https (Spec 107)',
-  },
-  '202610310001_testadores_beta.sql': {
-    titulo: 'Inscrições para o teste beta',
-    validar: (ctx) => Boolean(ctx.tabelas.v2_books?.colunasValidas?.includes('synopsis')),
-    detalhe: 'Tabela v2_beta_testers fechada e função v2_register_beta_tester (Spec 108)',
-  },
 };
 
 /**
@@ -895,8 +744,6 @@ export function formatarRelatorioTerminal(resultado) {
   for (const [nome, t] of Object.entries(resultado.tabelas.tabelas || {})) {
     if (!t.existe) {
       linhas.push(`   • ${nome.padEnd(22)} ❌ INEXISTENTE (${t.descricao})`);
-    } else if (t.restrita && (!t.colunasValidas || t.colunasValidas.length === 0)) {
-      linhas.push(`   • ${nome.padEnd(22)} 🔒 RESTRITA (existe; RLS bloqueia a chave anon — esperado)`);
     } else if (t.colunasAusentes && t.colunasAusentes.length > 0) {
       linhas.push(`   • ${nome.padEnd(22)} ⚠️  PARCIAL (${t.colunasValidas.length}/${t.colunasValidas.length + t.colunasAusentes.length} colunas)`);
       linhas.push(`     ↳ Ausentes: ${t.colunasAusentes.join(', ')}`);

@@ -4,11 +4,6 @@ import type { IBookMetadataService } from "@/model/services/iBookMetadataService
 
 const TIMEOUT_MS = 5000;
 
-/** Capas `http://` são bloqueadas no Android e na web; troca por `https://`. */
-export function toHttps(url: string | undefined): string | undefined {
-  return url ? url.replace(/^http:\/\//i, "https://") : undefined;
-}
-
 export class OpenLibraryBookMetadataService implements IBookMetadataService {
   constructor(private readonly fetchFn: typeof fetch = fetch) {}
 
@@ -40,16 +35,13 @@ export class OpenLibraryBookMetadataService implements IBookMetadataService {
         ? bookData.authors[0].name
         : "Autor desconhecido";
 
-      // Prefere a capa grande: a média tinha cerca de 180 px e ficava pixelada no detalhe do livro.
-      const large = typeof bookData.cover?.large === "string" ? bookData.cover.large : undefined;
-      const coverUrl = toHttps(large ?? bookData.cover?.medium ?? undefined);
+      const coverUrl = bookData.cover?.medium ?? bookData.cover?.large ?? undefined;
 
       return {
         isbn: clean,
         title: String(bookData.title).trim(),
         author: String(author).trim(),
         coverUrl,
-        ...(large ? { coverIsLarge: true } : {}),
       };
     } catch {
       return null;

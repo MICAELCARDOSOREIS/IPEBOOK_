@@ -30,7 +30,7 @@ export function CreateListingSuccess({
     <SafeAreaView style={styles.page}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.content}>
-          <IconBadge icon="check" tone="action" size="large" />
+          <IconBadge icon="check" tone="action" />
           <Manchete texto="Seu livro ganhou" realce="um novo começo." />
           <Text style={styles.subtitle}>
             O anúncio já aparece para leitores de Piripiri.

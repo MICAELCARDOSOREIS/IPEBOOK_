@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Pressable, SectionList, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import type { AppNotification } from "@/model/entities/notification";
@@ -9,7 +9,6 @@ import { IconBadge, type IconBadgeTone } from "@/view/components/IconBadge";
 import { LoadingState } from "@/view/components/LoadingState";
 import { OfflineState } from "@/view/components/OfflineState";
 import { TopAppBar } from "@/view/components/TopAppBar";
-import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import {
@@ -17,7 +16,6 @@ import {
 } from "@/viewmodel/useNotificationsViewModel";
 import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
 import { groupNotificationsByPeriod, notificationTimeLabel } from "@/viewmodel/notificationGrouping";
-import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
 
 export type NotificationsProps = {
   sessionUserId: string | null;
@@ -33,11 +31,6 @@ const TYPE_BADGES: Record<
 > = {
   request_received: { icon: "mail", tone: "action" },
   request_accepted: { icon: "swap", tone: "trade" },
-  request_rejected: { icon: "mail", tone: "neutral" },
-  request_cancelled: { icon: "mail", tone: "neutral" },
-  favorite_update: { icon: "heart", tone: "donation" },
-  new_message: { icon: "chat", tone: "action" },
-  rating_received: { icon: "star", tone: "donation" },
   safety_tip: { icon: "info", tone: "neutral" },
   system: { icon: "info", tone: "neutral" },
   search_alert_match: { icon: "shelf", tone: "donation" },
@@ -58,19 +51,8 @@ export default function Notifications({
   const [state, actions] = useNotificationsViewModel(sessionUserId);
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  // Web larga: coluna mais ampla em vez de uma faixa estreita no meio.
-  const wide = useIsWideWeb();
   const { isOnline } = useNetworkStatus();
   const handleExplore = onExploreBooks ?? onBack;
-  const [refreshing, setRefreshing] = useState(false);
-  const handleRefresh = async () => {
-    setRefreshing(true);
-    try {
-      await actions.refresh();
-    } finally {
-      setRefreshing(false);
-    }
-  };
   /**
    * Sem nenhuma notificação, `07.05` mostra só o estado vazio: a manchete e os filtros de `07.04`
    * pertencem à lista cheia.
@@ -82,7 +64,7 @@ export default function Notifications({
       <SafeAreaView style={styles.page}>
         <TopAppBar title="Notificações" onBack={() => onBack?.()} />
         <View style={styles.centered}>
-          <IconBadge icon="bell" tone="action" size="large" />
+          <IconBadge icon="bell" tone="action" />
           <Text accessibilityRole="header" style={styles.emptyTitle}>
             Sessão necessária
           </Text>
@@ -102,17 +84,23 @@ export default function Notifications({
 
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar title="Notificações" onBack={() => onBack?.()} contentMaxWidth={wide ? WIDE_CONTENT_MAX_WIDTH : undefined} />
-      {/* Web larga: filtros numa barra lateral fixa e a lista numa coluna de leitura ao lado. */}
-      <View style={[styles.content, wide && styles.contentWide]}>
+      <TopAppBar title="Notificações" onBack={() => onBack?.()} />
+      <View style={styles.content}>
+        {showListChrome && state.unreadCount > 0 ? (
+          <Text style={styles.unreadCounterBadge}>
+            {state.unreadCount === 1
+              ? "1 alerta pendente de leitura"
+              : `${state.unreadCount} alertas pendentes de leitura`}
+          </Text>
+        ) : null}
         {showListChrome ? (
-        <View style={[styles.filterBar, wide && styles.filterBarWide]}>
-          <View accessibilityRole="tablist" style={[styles.filterTabs, wide && styles.filterTabsWide]}>
+        <View style={styles.filterBar}>
+          <View accessibilityRole="tablist" style={styles.filterTabs}>
             <Pressable
               accessibilityRole="tab"
               accessibilityState={{ selected: state.filter === "all" }}
               onPress={() => actions.setFilter("all")}
-              style={[styles.filterChip, wide && styles.filterChipWide, state.filter === "all" && styles.filterChipActive]}
+              style={[styles.filterChip, state.filter === "all" && styles.filterChipActive]}
             >
               <Text
                 style={[
@@ -128,7 +116,7 @@ export default function Notifications({
               accessibilityRole="tab"
               accessibilityState={{ selected: state.filter === "unread" }}
               onPress={() => actions.setFilter("unread")}
-              style={[styles.filterChip, wide && styles.filterChipWide, state.filter === "unread" && styles.filterChipActive]}
+              style={[styles.filterChip, state.filter === "unread" && styles.filterChipActive]}
             >
               <Text
                 style={[
@@ -144,17 +132,15 @@ export default function Notifications({
           {state.unreadCount > 0 ? (
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Marcar todas como lidas"
               onPress={() => void actions.markAllAsRead()}
               style={styles.markAllButton}
             >
-              <Text style={styles.markAllText}>Marcar todas como lidas</Text>
+              <Text style={styles.markAllText}>Marcar lidas</Text>
             </Pressable>
           ) : null}
         </View>
         ) : null}
 
-        <View style={wide ? styles.main : styles.flexOne}>
         {state.loading ? (
           <LoadingState label="Carregando notificações" />
         ) : state.error ? (
@@ -191,7 +177,6 @@ export default function Notifications({
           </View>
         ) : (
           <SectionList
-            testID="notifications-list"
             sections={groupNotificationsByPeriod(state.filteredNotifications).map((section) => ({
               ...section,
               data: [...section.data],
@@ -199,8 +184,6 @@ export default function Notifications({
             keyExtractor={(item) => item.id}
             contentContainerStyle={styles.listContent}
             stickySectionHeadersEnabled={false}
-            refreshing={refreshing}
-            onRefresh={() => void handleRefresh()}
             renderSectionHeader={({ section }) => (
               <Text accessibilityRole="header" style={styles.sectionHeader}>
                 {section.title}
@@ -249,13 +232,10 @@ export default function Notifications({
             }}
           />
         )}
-        </View>
       </View>
     </SafeAreaView>
   );
 }
-
-const WIDE_CONTENT_MAX_WIDTH = WEB_MAX_WIDTH;
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
@@ -274,28 +254,12 @@ function createStyles(colors: ColorPalette) {
     paddingHorizontal: tokens.spacing[16],
     paddingTop: tokens.spacing[8],
   },
-  flexOne: { flex: 1, minHeight: 0 },
-  contentWide: {
-    maxWidth: WEB_MAX_WIDTH,
-    paddingHorizontal: WEB_GUTTER,
-    paddingTop: tokens.spacing[16],
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 48,
+  unreadCounterBadge: {
+    ...tokens.typography.labelMedium,
+    color: colors.actionDeep,
+    fontWeight: "600",
+    marginTop: tokens.spacing[4],
   },
-  // Coluna de leitura: avisos curtos ficam ilegíveis esticados na largura toda.
-  main: { flex: 1, minWidth: 0, maxWidth: 880, alignSelf: "stretch", minHeight: 0 },
-  filterBarWide: {
-    width: 260,
-    flexDirection: "column",
-    alignItems: "stretch",
-    justifyContent: "flex-start",
-    flexWrap: "nowrap",
-    gap: tokens.spacing[16],
-    marginBottom: 0,
-  },
-  filterTabsWide: { flexDirection: "column", gap: tokens.spacing[4] },
-  filterChipWide: { minHeight: 44, paddingHorizontal: tokens.spacing[16], borderWidth: 0, backgroundColor: "transparent" },
   filterBar: {
     flexDirection: "row",
     alignItems: "center",
