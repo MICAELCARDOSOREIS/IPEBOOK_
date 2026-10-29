@@ -78,9 +78,11 @@ export function AboutSections({ onStart, onSignIn, onHelp, onTerms, betaInvite =
           <Pressable accessibilityRole="button" accessibilityLabel={betaInvite ? "Quero testar o app" : "Criar conta grátis"} onPress={onStart} style={styles.cta}>
             <Text style={styles.ctaText}>{betaInvite ? "Quero testar o app" : "Criar conta"}</Text>
           </Pressable>
-          <Pressable accessibilityRole="button" accessibilityLabel={betaInvite ? "Ver na Play Store" : "Já tenho conta, entrar"} onPress={onSignIn} style={styles.outlined}>
-            <Text style={styles.outlinedText}>{betaInvite ? "Ver na Play Store" : "Entrar"}</Text>
-          </Pressable>
+          {betaInvite ? null : (
+            <Pressable accessibilityRole="button" accessibilityLabel="Já tenho conta, entrar" onPress={onSignIn} style={styles.outlined}>
+              <Text style={styles.outlinedText}>Entrar</Text>
+            </Pressable>
+          )}
         </View>
       </View>
 

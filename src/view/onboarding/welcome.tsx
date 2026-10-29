@@ -11,7 +11,6 @@ import { AppIcon } from "@/view/components/AppIcon";
 import { AboutSections } from "@/view/onboarding/aboutSections";
 import { ThemeToggleButton } from "@/view/components/ThemeToggleButton";
 import illustration from "./ilustracao-classicos.png";
-import { WEB_MAX_WIDTH } from "@/view/webLayout";
 
 export type WelcomeProps = {
   onStart: () => void;
@@ -77,9 +76,11 @@ export default function Welcome({ onStart, onSignIn, onHelp, onTerms, betaInvite
               <Pressable accessibilityRole="button" accessibilityLabel={labels.start} onPress={onStart} style={styles.wideCta}>
                 <Text style={styles.wideCtaText}>{labels.start}</Text>
               </Pressable>
-              <Pressable accessibilityRole="button" accessibilityLabel={labels.signIn} onPress={onSignIn} style={styles.wideOutlined}>
-                <Text style={styles.wideOutlinedText}>{labels.signIn}</Text>
-              </Pressable>
+              {betaInvite ? null : (
+                <Pressable accessibilityRole="button" accessibilityLabel={labels.signIn} onPress={onSignIn} style={styles.wideOutlined}>
+                  <Text style={styles.wideOutlinedText}>{labels.signIn}</Text>
+                </Pressable>
+              )}
             </View>
           </View>
           <View style={styles.widePanel}>
@@ -147,7 +148,7 @@ export default function Welcome({ onStart, onSignIn, onHelp, onTerms, betaInvite
 
       <View style={styles.actions}>
         <FilledButton label={betaInvite ? labels.start : "Começar"} onPress={onStart} />
-        <OutlinedButton label={labels.signIn} onPress={onSignIn} />
+        {betaInvite ? null : <OutlinedButton label={labels.signIn} onPress={onSignIn} />}
       </View>
     </ScreenContainer>
   );
@@ -156,20 +157,20 @@ export default function Welcome({ onStart, onSignIn, onHelp, onTerms, betaInvite
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
   wideRoot: { flex: 1, backgroundColor: colors.background },
-  wideContent: { width: "100%", maxWidth: WEB_MAX_WIDTH, alignSelf: "center", paddingHorizontal: 80, paddingTop: 16, paddingBottom: 32, gap: 64 },
-  wideHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", minHeight: 56 },
+  wideContent: { width: "100%", paddingHorizontal: 64, paddingTop: 16, paddingBottom: 32, gap: 64 },
+  wideHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", minHeight: 56, width: "100%" },
   wideHeaderActions: { flexDirection: "row", alignItems: "center", gap: 24 },
   wideLink: { ...tokens.typography.labelLarge, color: colors.m3.primary },
   wideCta: { height: 52, paddingHorizontal: 32, borderRadius: tokens.radius.full, alignItems: "center", justifyContent: "center", backgroundColor: colors.m3.primary },
   wideCtaText: { ...tokens.typography.labelLarge, color: colors.m3.onPrimary },
   wideOutlined: { height: 52, paddingHorizontal: 32, borderRadius: tokens.radius.full, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: colors.m3.outline },
   wideOutlinedText: { ...tokens.typography.labelLarge, color: colors.m3.primary },
-  wideHero: { flexDirection: "row", alignItems: "center", gap: 48 },
-  wideHeroText: { flex: 1, gap: 24, alignItems: "flex-start" },
+  wideHero: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 64, width: "100%" },
+  wideHeroText: { flex: 1.2, gap: 24, alignItems: "flex-start" },
   wideTitle: { fontFamily: fontFamily.brand, fontSize: 56, lineHeight: 64, color: colors.m3.onSurface },
-  wideLead: { ...tokens.typography.bodyLarge, fontSize: 19, lineHeight: 30, color: colors.m3.onSurfaceVariant, maxWidth: 480 },
+  wideLead: { ...tokens.typography.bodyLarge, fontSize: 19, lineHeight: 30, color: colors.m3.onSurfaceVariant, maxWidth: 640 },
   wideActions: { flexDirection: "row", gap: 16 },
-  widePanel: { flex: 1, maxWidth: 560, height: 420, borderRadius: 28, alignItems: "center", justifyContent: "center", backgroundColor: colors.m3.primaryContainer },
+  widePanel: { flex: 1, maxWidth: 640, height: 420, borderRadius: 28, alignItems: "center", justifyContent: "center", backgroundColor: colors.m3.primaryContainer },
   wideIllustration: { width: "90%", height: "90%" },
   wideCards: { flexDirection: "row", gap: 24 },
   wideCard: { flex: 1, gap: 8, padding: 24, borderRadius: tokens.radius.large },
