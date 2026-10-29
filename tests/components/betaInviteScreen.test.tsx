@@ -76,3 +76,114 @@ describe("Passos de instalação do beta (Spec 108)", () => {
     expect(screen.queryByText("Entrar no grupo")).toBeNull();
   });
 });
+
+describe("Conexão com Google no convite do beta (Spec 108)", () => {
+  it("oferece botão 'Continuar com Google' e chama signInWithGoogle", async () => {
+    const signInWithGoogle = vi.fn().mockResolvedValue(true);
+    const authActions = {
+      signUp: vi.fn(),
+      signIn: vi.fn(),
+      signInWithGoogle,
+      signOut: vi.fn(),
+      requestPasswordReset: vi.fn(),
+    };
+    const authState = { user: null, loading: false, error: null };
+    const state = { loading: false, error: null, success: false };
+    const actions = { submit: vi.fn(), reset: vi.fn() };
+
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(
+        <BetaInviteScreen
+          state={state}
+          actions={actions}
+          authState={authState}
+          authActions={authActions}
+        />,
+      );
+    });
+
+    expect(screen.getByText("Continuar com Google")).toBeDefined();
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Continuar com Google"));
+    });
+    expect(signInWithGoogle).toHaveBeenCalledTimes(1);
+  });
+
+  it("quando autenticado com Google, registra o testador e mostra botão para a Play Store", async () => {
+    const authActions = {
+      signUp: vi.fn(),
+      signIn: vi.fn(),
+      signInWithGoogle: vi.fn(),
+      signOut: vi.fn(),
+      requestPasswordReset: vi.fn(),
+    };
+    const authState = {
+      user: { id: "u-1", email: "testador@gmail.com", name: "Micael Testador" },
+      loading: false,
+      error: null,
+    };
+    const state = { loading: false, error: null, success: false };
+    const actions = { submit: vi.fn(), reset: vi.fn() };
+    const onOpenUrl = vi.fn();
+
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(
+        <BetaInviteScreen
+          state={state}
+          actions={actions}
+          authState={authState}
+          authActions={authActions}
+          onOpenUrl={onOpenUrl}
+          groupUrl="https://groups.google.com/g/ipebook-testadores"
+        />,
+      );
+    });
+
+    expect(actions.submit).toHaveBeenCalledWith("testador@gmail.com", "Micael Testador");
+    expect(screen.getByText("Conta conectada!")).toBeDefined();
+    expect(screen.getByText("testador@gmail.com")).toBeDefined();
+    expect(screen.getByText("Abrir teste na Play Store")).toBeDefined();
+
+    await act(async () => {
+      fireEvent.press(screen.getByText("Abrir teste na Play Store"));
+    });
+    expect(onOpenUrl).toHaveBeenCalledWith("https://play.google.com/apps/testing/com.ipebook.app");
+  });
+
+  it("permite sair da conta Google pelo botão de troca de conta", async () => {
+    const signOut = vi.fn().mockResolvedValue(undefined);
+    const authActions = {
+      signUp: vi.fn(),
+      signIn: vi.fn(),
+      signInWithGoogle: vi.fn(),
+      signOut,
+      requestPasswordReset: vi.fn(),
+    };
+    const authState = {
+      user: { id: "u-1", email: "testador@gmail.com", name: "Micael" },
+      loading: false,
+      error: null,
+    };
+    const state = { loading: false, error: null, success: false };
+    const actions = { submit: vi.fn(), reset: vi.fn() };
+
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(
+        <BetaInviteScreen
+          state={state}
+          actions={actions}
+          authState={authState}
+          authActions={authActions}
+        />,
+      );
+    });
+
+    await act(async () => {
+      fireEvent.press(screen.getByText("Usar outra conta Google"));
+    });
+    expect(signOut).toHaveBeenCalledTimes(1);
+  });
+});
