@@ -10,6 +10,10 @@ import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { TextField } from "@/view/components/TextField";
 import { ThemeToggleButton } from "@/view/components/ThemeToggleButton";
 import illustration from "@/view/onboarding/ilustracao-classicos.png";
+import passo1Img from "@/view/beta/passo-1.png";
+import passo2Img from "@/view/beta/passo-2.png";
+import passo3Img from "@/view/beta/passo-3.png";
+import passo4Img from "@/view/beta/passo-4.png";
 import { BETA_GROUP_URL, PLAY_STORE_URL, TESTING_OPT_IN_URL } from "@/view/playStore";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
@@ -105,6 +109,7 @@ export function BetaInviteScreen({
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
 
   // Quando o usuário está conectado com o Google, grava sua inscrição automaticamente se ainda não feito.
   const registeredUserRef = useRef<string | null>(null);
@@ -125,6 +130,45 @@ export function BetaInviteScreen({
       setGoogleLoading(false);
     }
   };
+
+  const helpSteps = [
+    {
+      number: "1",
+      title: "Entre no grupo de testadores",
+      description:
+        "Abra o grupo oficial do IpêBook no Google Grupos e clique em \"Participar do grupo\" no topo ou no centro da página.",
+      image: passo1Img,
+      actionLabel: groupUrl ? "Abrir grupo de testadores" : null,
+      onAction: groupUrl ? () => onOpenUrl(groupUrl) : null,
+    },
+    {
+      number: "2",
+      title: "Confirme sua participação no grupo",
+      description:
+        "Na janela que abrir, clique no botão azul \"Participar do grupo\" no canto inferior direito para confirmar sua entrada.",
+      image: passo2Img,
+      actionLabel: null,
+      onAction: null,
+    },
+    {
+      number: "3",
+      title: "Torne-se um testador no Google Play",
+      description:
+        "Depois de entrar no grupo, abra a página de convite do Google Play e toque no botão azul \"Torne-se um testador\".",
+      image: passo3Img,
+      actionLabel: "Abrir convite no Google Play",
+      onAction: () => onOpenUrl(TESTING_OPT_IN_URL),
+    },
+    {
+      number: "4",
+      title: "Baixe o aplicativo na Play Store",
+      description:
+        "Pronto! Na tela de confirmação (\"Você é um testador\"), toque no link azul \"baixe-o no Google Play\" para instalar o IpêBook no seu Android.",
+      image: passo4Img,
+      actionLabel: "Ir para a Play Store",
+      onAction: onOpenStore,
+    },
+  ];
 
   const intro = (
     <View style={styles.intro}>
@@ -148,6 +192,67 @@ export function BetaInviteScreen({
           </View>
         ))}
       </View>
+
+      <Pressable
+        accessibilityRole="button"
+        accessibilityState={{ expanded: showHelp }}
+        accessibilityLabel={showHelp ? "Ocultar ajuda de como instalar" : "Como instalar? Veja o passo a passo com fotos"}
+        onPress={() => setShowHelp((prev) => !prev)}
+        style={styles.helpButton}
+      >
+        <View style={styles.helpButtonLeft}>
+          <View style={styles.helpIconCircle}>
+            <AppIcon name="info" size={20} color={colors.m3.onPrimaryContainer} />
+          </View>
+          <View style={styles.helpButtonTextCol}>
+            <Text style={styles.helpButtonTitle}>
+              {showHelp ? "Ocultar guia de instalação" : "Precisa de ajuda para instalar?"}
+            </Text>
+            <Text style={styles.helpButtonSubtitle}>
+              {showHelp
+                ? "Toque para recolher as imagens do passo a passo"
+                : "Toque aqui para ver as telas marcadas com o que fazer em cada etapa"}
+            </Text>
+          </View>
+        </View>
+        <AppIcon
+          name={showHelp ? "chevronUp" : "chevronDown"}
+          size={20}
+          color={colors.m3.onSurfaceVariant}
+        />
+      </Pressable>
+
+      {showHelp ? (
+        <View style={styles.helpGuide} accessibilityLiveRegion="polite">
+          <Text accessibilityRole="header" style={styles.helpGuideHeader}>
+            Como liberar e baixar o IpêBook (passo a passo)
+          </Text>
+          {helpSteps.map((step) => (
+            <View key={step.number} style={styles.helpStepCard}>
+              <View style={styles.helpStepHeader}>
+                <View style={styles.helpStepBadge}>
+                  <Text style={styles.helpStepBadgeText}>{step.number}</Text>
+                </View>
+                <View style={styles.helpStepTextCol}>
+                  <Text style={styles.helpStepTitle}>{step.title}</Text>
+                  <Text style={styles.helpStepDesc}>{step.description}</Text>
+                </View>
+              </View>
+              <Image
+                source={step.image}
+                style={styles.helpStepImage}
+                resizeMode="contain"
+                accessibilityLabel={`Imagem demonstrativa do passo ${step.number}: ${step.title}`}
+              />
+              {step.actionLabel && step.onAction ? (
+                <View style={styles.helpStepAction}>
+                  <OutlinedButton label={step.actionLabel} onPress={step.onAction} />
+                </View>
+              ) : null}
+            </View>
+          ))}
+        </View>
+      ) : null}
     </View>
   );
 
@@ -430,6 +535,110 @@ function createStyles(colors: ColorPalette) {
       ...bodyMedium,
       lineHeight: 21,
       opacity: 0.9,
+    },
+    helpButton: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: tokens.spacing[16],
+      paddingHorizontal: tokens.spacing[20],
+      paddingVertical: tokens.spacing[16],
+      borderRadius: 20,
+      backgroundColor: colors.m3.surfaceContainerHigh,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.m3.outlineVariant,
+      cursor: "pointer" as never,
+    },
+    helpButtonLeft: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[16],
+      flex: 1,
+    },
+    helpIconCircle: {
+      width: 40,
+      height: 40,
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.m3.primaryContainer,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    helpButtonTextCol: {
+      flex: 1,
+      gap: 2,
+    },
+    helpButtonTitle: {
+      fontFamily: fontFamily.semiBold,
+      fontSize: 16,
+      lineHeight: 22,
+      color: colors.m3.onSurface,
+    },
+    helpButtonSubtitle: {
+      ...bodyMedium,
+      color: colors.m3.onSurfaceVariant,
+    },
+    helpGuide: {
+      gap: tokens.spacing[20],
+      padding: tokens.spacing[24],
+      borderRadius: 24,
+      backgroundColor: colors.m3.surfaceContainer,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.m3.outlineVariant,
+    },
+    helpGuideHeader: {
+      ...tokens.typography.titleLarge,
+      color: colors.m3.onSurface,
+    },
+    helpStepCard: {
+      gap: tokens.spacing[16],
+      padding: tokens.spacing[20],
+      borderRadius: 20,
+      backgroundColor: colors.m3.surfaceContainerHigh,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.m3.outlineVariant,
+    },
+    helpStepHeader: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+      gap: tokens.spacing[12],
+    },
+    helpStepBadge: {
+      width: 32,
+      height: 32,
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.m3.primary,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    helpStepBadgeText: {
+      fontFamily: fontFamily.semiBold,
+      fontSize: 15,
+      color: colors.m3.onPrimary,
+    },
+    helpStepTextCol: {
+      flex: 1,
+      gap: tokens.spacing[4],
+    },
+    helpStepTitle: {
+      fontFamily: fontFamily.semiBold,
+      fontSize: 17,
+      lineHeight: 24,
+      color: colors.m3.onSurface,
+    },
+    helpStepDesc: {
+      ...bodyMedium,
+      color: colors.m3.onSurfaceVariant,
+    },
+    helpStepImage: {
+      width: "100%",
+      height: 320,
+      borderRadius: tokens.radius.medium,
+      backgroundColor: "#FFFFFF",
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.m3.outlineVariant,
+    },
+    helpStepAction: {
+      alignSelf: "flex-start",
     },
     card: {
       backgroundColor: colors.m3.surfaceContainerHigh,

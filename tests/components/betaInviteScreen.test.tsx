@@ -217,4 +217,31 @@ describe("Navegação para a Home a partir do Beta (Spec 108)", () => {
     });
     expect(onNavigateHome).toHaveBeenCalledTimes(2);
   });
+
+  it("abre e fecha o guia visual passo a passo ao tocar no botão de ajuda", async () => {
+    const state = { loading: false, error: null, success: false };
+    const actions = { submit: vi.fn(), reset: vi.fn() };
+
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<BetaInviteScreen state={state} actions={actions} />);
+    });
+
+    expect(screen.queryByText("Como liberar e baixar o IpêBook (passo a passo)")).toBeNull();
+
+    await act(async () => {
+      fireEvent.press(screen.getByText("Precisa de ajuda para instalar?"));
+    });
+
+    expect(screen.getByText("Como liberar e baixar o IpêBook (passo a passo)")).toBeDefined();
+    expect(screen.getByText("Entre no grupo de testadores")).toBeDefined();
+    expect(screen.getByText("Confirme sua participação no grupo")).toBeDefined();
+    expect(screen.getByText("Torne-se um testador no Google Play")).toBeDefined();
+    expect(screen.getByText("Baixe o aplicativo na Play Store")).toBeDefined();
+
+    await act(async () => {
+      fireEvent.press(screen.getByText("Ocultar guia de instalação"));
+    });
+    expect(screen.queryByText("Como liberar e baixar o IpêBook (passo a passo)")).toBeNull();
+  });
 });

@@ -38,7 +38,7 @@ só lugar para depois colocá-los na lista de testadores do Play Console.
 - O cartão de inscrição oferece o botão destacado "Continuar com Google" (`GoogleLogo`), permitindo ao visitante conectar sua conta Google com 1 toque (ou digitar nome e Gmail manualmente).
 - Ao autenticar com o Google (ou enviar o formulário), a tela grava o Gmail e nome em `v2_beta_testers` automaticamente.
 - A confirmação exibe o botão principal "Abrir teste na Play Store" (`TESTING_OPT_IN_URL`) e o botão "Entrar no grupo de testadores" (`BETA_GROUP_URL`).
-- A coluna esquerda apresenta 3 cartões de destaque horizontais sobre a comunidade (*Troca, venda e doação*, *Encontros em Piripiri*, *Leitores fundadores*).
+- A coluna esquerda apresenta 3 cartões de destaque horizontais sobre a comunidade (*Troca, venda e doação*, *Encontros em Piripiri*, *Leitores fundadores*) e, logo abaixo, o botão expansível **"Precisa de ajuda para instalar?"**, que abre um guia visual em 4 etapas com as capturas de tela reais marcadas em vermelho indicando onde clicar (1. Participar do grupo no Google Grupos, 2. Confirmar entrada no grupo, 3. Toque em "Torne-se um testador" no Google Play, 4. Toque em "baixe-o no Google Play").
 - A barra superior conta com link/botão "Início" para voltar à página inicial (`/`) e logotipo clicável.
 - O layout web ocupa a largura total da tela com margens de `64px`, evitando que o conteúdo fique espremido no centro.
 - No retorno de autenticação web, `/auth/callback` preserva a rota de origem (`/beta`) via `sessionStorage.auth_return_to` para que o retorno volte diretamente para `/beta`.
