@@ -3,9 +3,8 @@
 > Beta pública em preparação: Supabase configurado e ativo (`EXPO_PUBLIC_BACKEND=supabase`),
 > restrição geográfica exclusiva para Piripiri, PI implementada (17 bairros, spec 022, ADR 0016),
 > moderação comunitária ativa (spec 011, tabela `v2_reports`), primeiro acesso implementado (spec 026)
-> e histórico recente no dispositivo (spec 027). A publicação Web no Cloudflare Pages está preparada
-> em código e build (`dist/`, `public/_headers`, `public/_redirects`, spec 025, ADR 0020), aguardando
-> comprovação no ambiente de destino externo (issue #109).
+> e histórico recente no dispositivo (spec 027). A publicação Web no Cloudflare Pages foi concluída
+> e conferida em `https://ipebook.app` (spec 025, ADR 0020).
 
 Revisão: 2026-10-29 (base: branch `develop`). Este documento consolida os requisitos implementados e o alinhamento de produto da versão beta.
 
