@@ -76,16 +76,22 @@ export default function DeleteAccount({
             <View style={styles.card}>
               <IconBadge icon="lock" tone="neutral" size="large" />
               <Text accessibilityRole="header" style={styles.title}>
-                Sessão necessária
+                {onNavigateToLogin ? "Sessão necessária" : "Como excluir sua conta"}
               </Text>
               <Text style={styles.bodyCenter}>
-                Você precisa entrar na sua conta para solicitar a exclusão dos seus dados.
+                {onNavigateToLogin
+                  ? "Você precisa entrar na sua conta para solicitar a exclusão dos seus dados."
+                  : "No aplicativo Android do IpêBook, acesse Perfil → Configurações → Privacidade e dados → Excluir conta. Se preferir, envie um e-mail com o Gmail cadastrado para contato@ipebook.app solicitando a exclusão definitiva dos seus dados (LGPD)."}
               </Text>
               {onNavigateToLogin ? (
                 <View style={styles.fullWidthButton}>
                   <FilledButton label="Entrar na conta" onPress={onNavigateToLogin} />
                 </View>
-              ) : null}
+              ) : (
+                <View style={styles.fullWidthButton}>
+                  <FilledButton label="Voltar ao início" onPress={onBack} />
+                </View>
+              )}
             </View>
           </View>
         </ScrollView>

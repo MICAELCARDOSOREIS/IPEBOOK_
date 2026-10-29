@@ -14,9 +14,6 @@ const ROTAS_LIBERADAS = new Set([
   "/ajuda",
   "/termos",
   "/excluir-conta",
-  "/entrar",
-  "/esqueci-senha",
-  "/redefinir-senha",
   "/auth/callback",
 ]);
 
