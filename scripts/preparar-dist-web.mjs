@@ -33,10 +33,23 @@ if (existsSync(pastaOrigem)) {
 let reescritos = 0;
 for (const arquivo of listar(dist)) {
   if (!/\.(html|js|css|json)$/.test(arquivo)) continue;
-  const conteudo = readFileSync(arquivo, "utf8");
-  if (!conteudo.includes(origem)) continue;
-  writeFileSync(arquivo, conteudo.replaceAll(origem, destino));
-  reescritos += 1;
+  let conteudo = readFileSync(arquivo, "utf8");
+  let mudou = false;
+  if (conteudo.includes(origem)) {
+    conteudo = conteudo.replaceAll(origem, destino);
+    mudou = true;
+  }
+  if (arquivo.endsWith(".html") && conteudo.includes('<link rel="icon" href="/favicon.ico"/>')) {
+    conteudo = conteudo.replaceAll(
+      '<link rel="icon" href="/favicon.ico"/>',
+      '<link rel="icon" href="/favicon.ico?v=2"/>',
+    );
+    mudou = true;
+  }
+  if (mudou) {
+    writeFileSync(arquivo, conteudo);
+    reescritos += 1;
+  }
 }
 
 const naoEncontrado = join(dist, "+not-found.html");

@@ -30,12 +30,14 @@ só lugar para depois colocá-los na lista de testadores do Play Console.
 - **RN-05** Contra spam, no máximo 300 inscrições novas por hora no total (código `IBLIM`).
 
 ## Links
-- Play Store: `https://play.google.com/store/apps/details?id=com.ipebook.app`
+- Play Store: `https://play.google.com/store/apps/details?id=com.ipebook.app&hl=pt-BR`
+- Convite do teste fechado: `https://play.google.com/apps/testing/com.ipebook.app?hl=pt-BR`
+- Grupo do Google dos testadores: `https://groups.google.com/g/ipebook-testadores?hl=pt-BR`
 
-## Conexão com Google, lista de espera beta e link direto para a Play Store
+## Conexão com Google, grupo de testadores e Play Store
 - O cartão de inscrição oferece o botão destacado "Continuar com Google" (`GoogleLogo`), permitindo ao visitante conectar sua conta Google com 1 toque (ou digitar nome e Gmail manualmente).
 - Ao autenticar com o Google (ou enviar o formulário), a tela grava o Gmail e nome em `v2_beta_testers` automaticamente.
-- Como a adição na lista de testadores do Google Play Console é feita pelo desenvolvedor a partir dos Gmails inscritos em `v2_beta_testers`, a confirmação orienta claramente o leitor a **aguardar até ser adicionado na lista de testadores beta** e disponibiliza o botão "Abrir na Play Store" apontando direto para `https://play.google.com/store/apps/details?id=com.ipebook.app` (sem exigir inscrição manual em Grupo do Google).
+- A confirmação exibe o botão principal "Abrir teste na Play Store" (`TESTING_OPT_IN_URL`) e o botão "Entrar no grupo de testadores" (`BETA_GROUP_URL`).
 - A coluna esquerda apresenta 3 cartões de destaque horizontais sobre a comunidade (*Troca, venda e doação*, *Encontros em Piripiri*, *Leitores fundadores*).
 - A barra superior conta com link/botão "Início" para voltar à página inicial (`/`) e logotipo clicável.
 - O layout web ocupa a largura total da tela com margens de `64px`, evitando que o conteúdo fique espremido no centro.
