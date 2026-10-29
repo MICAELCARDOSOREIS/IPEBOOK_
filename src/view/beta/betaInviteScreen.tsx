@@ -20,13 +20,37 @@ import { setAuthReturnTo } from "@/view/auth/authReturnTo";
 
 export { PLAY_STORE_URL };
 
-type InstallStep = { icon: AppIconName; title: string; text: string; action: string; url: string | null };
+type HighlightCard = {
+  icon: AppIconName;
+  title: string;
+  text: string;
+  bg: string;
+  fg: string;
+};
 
-function installSteps(groupUrl: string | null): readonly InstallStep[] {
+function getHighlights(colors: ColorPalette): readonly HighlightCard[] {
   return [
-    { icon: "person", title: "Entre no grupo de testadores", text: "Abra com a conta Google do seu celular Android e toque em \"Participar do grupo\".", action: "Entrar no grupo", url: groupUrl },
-    { icon: "checkCircle", title: "Aceite o convite do teste", text: "Toque em \"Quero participar\" na página do Google Play.", action: "Aceitar convite", url: TESTING_OPT_IN_URL },
-    { icon: "star", title: "Instale e use por 14 dias", text: "Anuncie, troque, converse e depois conte o que achou.", action: "Instalar na Play Store", url: PLAY_STORE_URL },
+    {
+      icon: "swap",
+      title: "Troca, venda e doação",
+      text: "Cadastre livros pelo código ISBN em segundos e negocie sem taxas.",
+      bg: colors.m3.primaryContainer,
+      fg: colors.m3.onPrimaryContainer,
+    },
+    {
+      icon: "place",
+      title: "Encontros em Piripiri",
+      text: "Combine a entrega em locais públicos da cidade com confirmação por QR Code.",
+      bg: colors.m3.tertiaryContainer,
+      fg: colors.m3.onTertiaryContainer,
+    },
+    {
+      icon: "star",
+      title: "Leitores fundadores",
+      text: "Inaugure a estante da comunidade e ajude a testar as novidades antes do lançamento.",
+      bg: colors.m3.doacaoContainer,
+      fg: colors.m3.onDoacaoContainer,
+    },
   ];
 }
 
@@ -74,8 +98,8 @@ export function BetaInviteScreen({
   groupUrl = BETA_GROUP_URL,
   onNavigateHome = () => {},
 }: BetaInviteScreenProps) {
-  const steps = installSteps(groupUrl);
   const { colors } = useTheme();
+  const highlights = useMemo(() => getHighlights(colors), [colors]);
   const wide = useIsWideWeb();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [email, setEmail] = useState("");
@@ -112,36 +136,17 @@ export function BetaInviteScreen({
         Teste o IpêBook antes de todo mundo.
       </Text>
       <Text style={styles.lead}>
-        O app de troca, venda e doação de livros de Piripiri está chegando à Play Store. Precisamos de
-        leitores com celular Android para testar e contar o que achou.
+        O app comunitário de troca, venda e doação de livros de Piripiri está chegando à Play Store.
+        Conecte sua conta Google ao lado, explore a estante da cidade e conte o que achou.
       </Text>
-      <Text style={styles.sectionTitle}>Como instalar</Text>
-      <View style={styles.steps}>
-        {steps.map((step, index) => (
-          <View key={step.title} style={styles.step}>
-            <View style={styles.stepIcon}>
-              <AppIcon name={step.icon} size={22} color={colors.m3.onPrimaryContainer} />
-            </View>
-            <View style={styles.stepBody}>
-              <Text style={styles.stepTitle}>{`${index + 1}. ${step.title}`}</Text>
-              <Text style={styles.stepText}>{step.text}</Text>
-              <View style={styles.stepAction}>
-                {step.url ? (
-                  <OutlinedButton label={step.action} onPress={() => onOpenUrl(step.url as string)} />
-                ) : (
-                  <Text style={styles.soon}>{`${step.action}: abre em breve`}</Text>
-                )}
-              </View>
-            </View>
+      <View style={[styles.highlightGrid, wide && styles.highlightGridWide]}>
+        {highlights.map((item) => (
+          <View key={item.title} style={[styles.highlightCard, { backgroundColor: item.bg }]}>
+            <AppIcon name={item.icon} size={24} color={item.fg} />
+            <Text style={[styles.highlightTitle, { color: item.fg }]}>{item.title}</Text>
+            <Text style={[styles.highlightText, { color: item.fg }]}>{item.text}</Text>
           </View>
         ))}
-      </View>
-      <View style={styles.notice} accessibilityRole="summary">
-        <AppIcon name="info" size={20} color={colors.m3.onSurfaceVariant} />
-        <Text style={styles.noticeText}>
-          A liberação pode levar alguns minutos. Se a Play Store disser que o app não está disponível
-          para você, confira se entrou com o mesmo Gmail do grupo, espere um pouco e tente de novo.
-        </Text>
       </View>
     </View>
   );
@@ -157,7 +162,7 @@ export function BetaInviteScreen({
             <IconBadge icon="checkCircle" tone="action" size="medium" />
             <View style={styles.connectedHeaderText}>
               <Text accessibilityRole="alert" style={styles.cardTitle}>Conta conectada!</Text>
-              <Text style={styles.connectedSubtitle}>E-mail registrado no IpêBook</Text>
+              <Text style={styles.connectedSubtitle}>Pronto para testar o aplicativo</Text>
             </View>
           </View>
           <View style={styles.connectedBadge}>
@@ -170,50 +175,21 @@ export function BetaInviteScreen({
             </View>
           </View>
 
-          <Text style={styles.connectedInstructions}>
-            Para o Google Play liberar o download no seu Android, siga os 2 passos:
+          <Text style={styles.connectedNote}>
+            Sua conta Google foi registrada no teste do IpêBook. Toque abaixo para abrir na Google Play Store.
           </Text>
 
-          <View style={styles.connectedStep}>
-            <View style={styles.connectedStepHeader}>
-              <View style={styles.stepNumberBadge}>
-                <Text style={styles.stepNumberText}>1</Text>
-              </View>
-              <Text style={styles.connectedStepTitle}>Entre no grupo de testadores</Text>
-            </View>
-            <Text style={styles.connectedStepText}>
-              Exigência da Play Store: abra o grupo com esta conta Google e toque em "Participar do grupo".
-            </Text>
-            {groupUrl ? (
-              <OutlinedButton
-                label="Entrar no grupo de testadores"
-                onPress={() => onOpenUrl(groupUrl)}
-              />
-            ) : null}
-          </View>
+          <FilledButton
+            label="Abrir teste na Play Store"
+            onPress={() => onOpenUrl(TESTING_OPT_IN_URL)}
+          />
 
-          <View style={styles.connectedStep}>
-            <View style={styles.connectedStepHeader}>
-              <View style={styles.stepNumberBadge}>
-                <Text style={styles.stepNumberText}>2</Text>
-              </View>
-              <Text style={styles.connectedStepTitle}>Aceite o convite na Play Store</Text>
-            </View>
-            <Text style={styles.connectedStepText}>
-              Depois de entrar no grupo, abra o convite no Google Play e toque em "Aceitar convite" ou "Tornar-se um testador".
-            </Text>
-            <FilledButton
-              label="Abrir teste na Play Store"
-              onPress={() => onOpenUrl(TESTING_OPT_IN_URL)}
+          {groupUrl ? (
+            <OutlinedButton
+              label="Entrar no grupo de testadores"
+              onPress={() => onOpenUrl(groupUrl)}
             />
-          </View>
-
-          <View style={styles.syncNotice}>
-            <AppIcon name="info" size={18} color={colors.m3.onSurfaceVariant} />
-            <Text style={styles.syncNoticeText}>
-              A liberação pelo Google Play pode levar de 5 a 15 minutos após você entrar no grupo. Se a loja disser que o app não está disponível, aguarde alguns minutos e tente abrir o passo 2 novamente.
-            </Text>
-          </View>
+          ) : null}
 
           <Pressable
             accessibilityRole="button"
@@ -230,18 +206,18 @@ export function BetaInviteScreen({
           <Text accessibilityRole="alert" style={styles.cardTitle}>Inscrição recebida!</Text>
           <Text style={styles.cardText}>
             {email.trim() ? `Anotamos ${email.trim().toLowerCase()}.` : "Anotamos seu Gmail."}{" "}
-            Para o Google Play liberar o download no seu Android, siga os passos abaixo:
+            Abra a Play Store abaixo para participar do teste no seu Android.
           </Text>
+          <FilledButton
+            label="Abrir teste na Play Store"
+            onPress={() => onOpenUrl(TESTING_OPT_IN_URL)}
+          />
           {groupUrl ? (
             <OutlinedButton
-              label="1. Entrar no grupo de testadores"
+              label="Entrar no grupo de testadores"
               onPress={() => onOpenUrl(groupUrl)}
             />
           ) : null}
-          <FilledButton
-            label="2. Abrir teste na Play Store"
-            onPress={() => onOpenUrl(TESTING_OPT_IN_URL)}
-          />
           <OutlinedButton
             label="Inscrever outro e-mail"
             onPress={() => {
@@ -416,7 +392,7 @@ function createStyles(colors: ColorPalette) {
     },
     wideIntro: { flex: 1.3, maxWidth: 920 },
     wideForm: { flex: 1, maxWidth: 560, minWidth: 440 },
-    intro: { gap: tokens.spacing[20] },
+    intro: { gap: tokens.spacing[24] },
     pill: {
       flexDirection: "row",
       alignItems: "center",
@@ -429,33 +405,32 @@ function createStyles(colors: ColorPalette) {
     },
     pillText: { ...tokens.typography.labelMedium, color: colors.m3.onSurfaceVariant },
     title: { fontFamily: fontFamily.brand, fontSize: 34, lineHeight: 42, color: colors.m3.onSurface },
-    titleWide: { fontSize: 52, lineHeight: 60 },
+    titleWide: { fontSize: 54, lineHeight: 62 },
     lead: { ...tokens.typography.bodyLarge, fontSize: 18, lineHeight: 28, color: colors.m3.onSurfaceVariant, maxWidth: 820 },
-    sectionTitle: { ...tokens.typography.titleMedium, color: colors.m3.onSurface, marginTop: tokens.spacing[8] },
-    steps: { gap: tokens.spacing[20] },
-    step: { flexDirection: "row", gap: tokens.spacing[16], alignItems: "flex-start" },
-    stepAction: { marginTop: tokens.spacing[8], alignSelf: "flex-start", minWidth: 220 },
-    soon: { ...tokens.typography.labelLarge, color: colors.m3.onSurfaceVariant, paddingVertical: tokens.spacing[8] },
-    notice: {
+    highlightGrid: {
+      gap: tokens.spacing[16],
+      marginTop: tokens.spacing[8],
+    },
+    highlightGridWide: {
       flexDirection: "row",
+      gap: tokens.spacing[20],
+    },
+    highlightCard: {
+      flex: 1,
+      borderRadius: 20,
+      padding: tokens.spacing[20],
       gap: tokens.spacing[12],
-      padding: tokens.spacing[16],
-      borderRadius: tokens.radius.medium,
-      backgroundColor: colors.m3.surfaceContainerHigh,
-      alignItems: "flex-start",
     },
-    noticeText: { flex: 1, ...bodyMedium, color: colors.m3.onSurfaceVariant },
-    stepIcon: {
-      width: tokens.spacing[48],
-      height: tokens.spacing[48],
-      borderRadius: tokens.radius.medium,
-      alignItems: "center",
-      justifyContent: "center",
-      backgroundColor: colors.m3.primaryContainer,
+    highlightTitle: {
+      fontFamily: fontFamily.semiBold,
+      fontSize: 17,
+      lineHeight: 24,
     },
-    stepBody: { flex: 1, gap: 2 },
-    stepTitle: { ...tokens.typography.titleMedium, fontSize: 16, lineHeight: 22, color: colors.m3.onSurface },
-    stepText: { ...bodyMedium, color: colors.m3.onSurfaceVariant },
+    highlightText: {
+      ...bodyMedium,
+      lineHeight: 21,
+      opacity: 0.9,
+    },
     card: {
       backgroundColor: colors.m3.surfaceContainerHigh,
       borderRadius: 24,
@@ -491,66 +466,8 @@ function createStyles(colors: ColorPalette) {
       fontFamily: fontFamily.medium,
       color: colors.m3.onSurfaceVariant,
     },
-    connectedInstructions: {
+    connectedNote: {
       ...bodyMedium,
-      color: colors.m3.onSurface,
-      fontFamily: fontFamily.medium,
-    },
-    connectedStep: {
-      gap: tokens.spacing[8],
-      padding: tokens.spacing[12],
-      borderRadius: tokens.radius.medium,
-      backgroundColor: colors.m3.surfaceContainer,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.m3.outlineVariant,
-    },
-    connectedStepHeader: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[8],
-    },
-    stepNumberBadge: {
-      width: 22,
-      height: 22,
-      borderRadius: 11,
-      backgroundColor: colors.m3.primary,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    stepNumberText: {
-      color: colors.m3.onPrimary,
-      fontFamily: fontFamily.semiBold,
-      fontSize: 12,
-      lineHeight: 14,
-    },
-    connectedStepTitle: {
-      ...tokens.typography.titleMedium,
-      fontSize: 15,
-      lineHeight: 20,
-      color: colors.m3.onSurface,
-      fontFamily: fontFamily.medium,
-    },
-    connectedStepText: {
-      ...bodyMedium,
-      fontSize: 13,
-      lineHeight: 18,
-      color: colors.m3.onSurfaceVariant,
-    },
-    syncNotice: {
-      flexDirection: "row",
-      alignItems: "flex-start",
-      gap: tokens.spacing[8],
-      padding: tokens.spacing[12],
-      borderRadius: tokens.radius.medium,
-      backgroundColor: colors.m3.surfaceContainer,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: colors.m3.outlineVariant,
-    },
-    syncNoticeText: {
-      flex: 1,
-      ...bodyMedium,
-      fontSize: 12,
-      lineHeight: 17,
       color: colors.m3.onSurfaceVariant,
     },
     switchAccount: {

@@ -48,10 +48,10 @@ describe("BetaInviteScreen (Spec 108)", () => {
   });
 });
 
-describe("Passos de instalação do beta (Spec 108)", () => {
-  it("abre grupo, convite e loja; sem grupo, mostra que abre em breve", async () => {
+describe("Destaques da comunidade e ações de loja do beta (Spec 108)", () => {
+  it("exibe os cartões de destaque na esquerda e permite abrir grupo e convite após inscrição", async () => {
     const onOpenUrl = vi.fn();
-    const state = { loading: false, error: null, success: false };
+    const state = { loading: false, error: null, success: true };
     const actions = { submit: vi.fn(), reset: vi.fn() };
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
@@ -59,21 +59,21 @@ describe("Passos de instalação do beta (Spec 108)", () => {
         <BetaInviteScreen state={state} actions={actions} onOpenUrl={onOpenUrl} groupUrl="https://groups.google.com/g/ipebook-testadores" />,
       );
     });
-    await act(async () => { fireEvent.press(screen.getByText("Entrar no grupo")); });
-    await act(async () => { fireEvent.press(screen.getByText("Aceitar convite")); });
-    await act(async () => { fireEvent.press(screen.getByText("Instalar na Play Store")); });
+    expect(screen.getByText("Troca, venda e doação")).toBeDefined();
+    expect(screen.getByText("Encontros em Piripiri")).toBeDefined();
+    expect(screen.getByText("Leitores fundadores")).toBeDefined();
+
+    await act(async () => { fireEvent.press(screen.getByText("Abrir teste na Play Store")); });
+    await act(async () => { fireEvent.press(screen.getByText("Entrar no grupo de testadores")); });
     expect(onOpenUrl.mock.calls.map((c) => c[0])).toEqual([
-      "https://groups.google.com/g/ipebook-testadores",
       "https://play.google.com/apps/testing/com.ipebook.app?hl=pt-BR",
-      "https://play.google.com/store/apps/details?id=com.ipebook.app&hl=pt-BR",
+      "https://groups.google.com/g/ipebook-testadores",
     ]);
-    expect(screen.getByText(/alguns minutos/)).toBeDefined();
 
     await act(async () => {
       screen.rerender(<BetaInviteScreen state={state} actions={actions} onOpenUrl={onOpenUrl} groupUrl={null} />);
     });
-    expect(screen.getByText("Entrar no grupo: abre em breve")).toBeDefined();
-    expect(screen.queryByText("Entrar no grupo")).toBeNull();
+    expect(screen.queryByText("Entrar no grupo de testadores")).toBeNull();
   });
 });
 
