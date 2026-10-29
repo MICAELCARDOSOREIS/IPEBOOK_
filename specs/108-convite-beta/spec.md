@@ -43,6 +43,7 @@ só lugar para depois colocá-los na lista de testadores do Play Console.
   (`https://play.google.com/apps/testing/com.ipebook.app`) e instalar pela Play Store, com aviso de
   que a liberação pode levar alguns minutos. Sem grupo configurado, o primeiro passo mostra
   "abre em breve". Configuração em `src/view/playStore.ts`.
+- Grupo criado em 2026-10-31: `ipebook-testadores@googlegroups.com` (qualquer pessoa vê e participa; só proprietários postam), configurado como testadores do Teste fechado (Alpha) no lugar das listas de e-mails.
 - O formulário continua só para avisos de novas versões.
 
 ## Exportar os e-mails para o Play Console
