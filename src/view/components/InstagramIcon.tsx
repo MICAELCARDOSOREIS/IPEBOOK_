@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { tokens } from "@/view/tokens";
+import { useTheme } from "@/view/theme/ThemeProvider";
 
 export type InstagramIconProps = {
   size?: number;
@@ -7,12 +7,13 @@ export type InstagramIconProps = {
 };
 
 /** Logotipo do Instagram (decorativo): o rótulo acessível fica no link que o contém. */
-export function InstagramIcon({ size = 24, color = tokens.colors.text }: InstagramIconProps) {
+export function InstagramIcon({ size = 24, color }: InstagramIconProps) {
+  const { colors } = useTheme();
   return (
     <Ionicons
       name="logo-instagram"
       size={size}
-      color={color}
+      color={color ?? colors.text}
       accessible={false}
       importantForAccessibility="no-hide-descendants"
     />

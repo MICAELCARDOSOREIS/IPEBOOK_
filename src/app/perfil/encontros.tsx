@@ -1,11 +1,14 @@
-import { backOnce, pushOnce } from "@/view/pushOnce";
+import { backOnce, pushOnce, replaceOnce } from "@/view/pushOnce";
+import { RequireAuth } from "@/view/components/RequireAuth";
 import MeetingHistory from "@/view/profile/meetingHistory";
 
 export default function EncontrosRoute() {
   return (
-    <MeetingHistory
-      onBack={() => backOnce()}
-      onNavigateToNegotiation={(requestId) => pushOnce(`/negociacao/${requestId}`)}
-    />
+    <RequireAuth onRequireSignIn={() => replaceOnce("/entrar")}>
+      <MeetingHistory
+        onBack={() => backOnce()}
+        onNavigateToNegotiation={(requestId) => pushOnce(`/negociacao/${requestId}`)}
+      />
+    </RequireAuth>
   );
 }

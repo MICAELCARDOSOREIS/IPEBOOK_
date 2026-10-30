@@ -24,6 +24,7 @@ import { LoadingState } from "@/view/components/LoadingState";
 import { OfflineState } from "@/view/components/OfflineState";
 import { WEB_MAX_WIDTH } from "@/view/webLayout";
 
+import { withPress } from "@/view/pressFeedback";
 /** "Combinar encontro" do painel largo; some quando a entrega já foi concluída por QR (Spec 095). */
 function CombineAction({ requestId, sessionUserId, onOpen }: { requestId: string; sessionUserId: string; onOpen?: (requestId: string) => void }) {
   const delivery = useDeliveryStatus(requestId, sessionUserId);
@@ -260,7 +261,7 @@ export function Conversations({
                           accessibilityLabel={`Cancelar pedido de ${item.listing.title}`}
                           onPress={() => setToCancel(item)}
                           hitSlop={8}
-                          style={styles.cancelRequest}
+                          style={withPress(styles.cancelRequest)}
                         >
                           <Text style={styles.cancelRequestText}>Cancelar pedido</Text>
                         </Pressable>
@@ -382,7 +383,7 @@ function createStyles(colors: ColorPalette) {
       width: "100%",
       maxWidth: WEB_MAX_WIDTH,
       alignSelf: "center",
-      paddingHorizontal: 80,
+      paddingHorizontal: tokens.spacing[80],
       paddingTop: tokens.spacing[16],
       paddingBottom: tokens.spacing[24],
       // O painel ocupa a janela e cada coluna rola por conta própria, como nos mensageiros.
@@ -396,12 +397,9 @@ function createStyles(colors: ColorPalette) {
       gap: tokens.spacing[6],
     },
     title: {
-      fontFamily: fontFamily.brand,
-      fontSize: 32,
-      lineHeight: 40,
-      fontWeight: "700",
+      ...tokens.typography.brandLargeTitle,
       color: colors.brandBrown,
-      paddingHorizontal: tokens.spacing[20],
+      paddingHorizontal: tokens.spacing[16],
       paddingTop: tokens.spacing[16],
       paddingBottom: tokens.spacing[8],
     },
@@ -413,8 +411,6 @@ function createStyles(colors: ColorPalette) {
     subtitleWide: {
       ...tokens.typography.bodyLarge,
       color: colors.m3.onSurfaceVariant,
-      fontSize: 16,
-      lineHeight: 22,
     },
     // Estado Vazio Web Largo
     emptyContainerWide: {
@@ -426,7 +422,7 @@ function createStyles(colors: ColorPalette) {
       maxWidth: 620,
       alignSelf: "center",
       backgroundColor: colors.m3.surfaceContainerLow,
-      borderRadius: 24,
+      borderRadius: tokens.radius.extraLarge,
       paddingVertical: tokens.spacing[40],
       paddingHorizontal: tokens.spacing[48],
       borderWidth: 1,
@@ -437,18 +433,17 @@ function createStyles(colors: ColorPalette) {
     emptyIconWide: {
       width: 80,
       height: 80,
-      borderRadius: 40,
+      borderRadius: tokens.radius.circle80,
       marginBottom: tokens.spacing[4],
     },
     emptyTitleWide: {
-      fontSize: 26,
-      lineHeight: 34,
+      ...tokens.typography.headlineMedium,
       color: colors.m3.onSurface,
     },
     emptyBodyWide: {
+      ...tokens.typography.subheadline,
       maxWidth: 440,
-      fontSize: 15,
-      lineHeight: 22,
+      lineHeight: tokens.lineHeight[22],
       color: colors.m3.onSurfaceVariant,
     },
     emptyActionWide: {
@@ -468,7 +463,7 @@ function createStyles(colors: ColorPalette) {
     featureCardWide: {
       flex: 1,
       backgroundColor: colors.surface,
-      borderRadius: 16,
+      borderRadius: tokens.radius.card,
       padding: tokens.spacing[20],
       borderWidth: 1,
       borderColor: colors.m3.outlineVariant,
@@ -477,29 +472,26 @@ function createStyles(colors: ColorPalette) {
     featureIconBoxWide: {
       width: 44,
       height: 44,
-      borderRadius: 12,
+      borderRadius: tokens.radius.cardSmall,
       backgroundColor: colors.m3.primaryContainer,
       alignItems: "center",
       justifyContent: "center",
       marginBottom: tokens.spacing[4],
     },
     featureTitleWide: {
-      ...tokens.typography.labelLarge,
+      ...tokens.typography.subheadline,
       color: colors.m3.onSurface,
-      fontWeight: "700",
-      fontSize: 15,
+      fontWeight: tokens.fontWeight.bold,
     },
     featureBodyWide: {
-      ...tokens.typography.bodyMedium,
+      ...tokens.typography.footnote,
       color: colors.m3.onSurfaceVariant,
-      fontSize: 13,
-      lineHeight: 18,
     },
     // Espaço multi-painel para conversas ativas
     wideWorkspace: {
       flex: 1,
       flexDirection: "row",
-      borderRadius: 20,
+      borderRadius: tokens.radius.xl,
       borderWidth: 1,
       borderColor: colors.m3.outlineVariant,
       backgroundColor: colors.surface,
@@ -514,7 +506,7 @@ function createStyles(colors: ColorPalette) {
       backgroundColor: colors.m3.surfaceContainerLow,
     },
     wideListHeader: {
-      paddingHorizontal: tokens.spacing[20],
+      paddingHorizontal: tokens.spacing[16],
       paddingVertical: tokens.spacing[12],
       borderBottomWidth: 1,
       borderBottomColor: colors.m3.outlineVariant,
@@ -523,7 +515,7 @@ function createStyles(colors: ColorPalette) {
     wideListCount: {
       ...tokens.typography.labelMedium,
       color: colors.m3.onSurfaceVariant,
-      fontWeight: "600",
+      fontWeight: tokens.fontWeight.semiBold,
     },
     wideList: {
       paddingBottom: tokens.spacing[24],
@@ -543,17 +535,14 @@ function createStyles(colors: ColorPalette) {
     emptyCenterIconBox: {
       width: 80,
       height: 80,
-      borderRadius: 40,
+      borderRadius: tokens.radius.circle80,
       backgroundColor: colors.m3.surfaceContainerHigh,
       alignItems: "center",
       justifyContent: "center",
       marginBottom: tokens.spacing[8],
     },
     emptyCenterTitle: {
-      fontFamily: fontFamily.brand,
-      fontSize: 20,
-      lineHeight: 26,
-      fontWeight: "700",
+      ...tokens.typography.brandCardTitle,
       color: colors.m3.onSurface,
     },
     emptyCenterBody: {
@@ -565,17 +554,17 @@ function createStyles(colors: ColorPalette) {
     aboutPane: {
       width: 320,
       minHeight: 0,
-      gap: 16,
-      padding: 20,
+      gap: tokens.spacing[16],
+      padding: tokens.spacing[20],
       borderLeftWidth: 1,
       borderLeftColor: colors.m3.outlineVariant,
       backgroundColor: colors.m3.surfaceContainerLow,
     },
     aboutTitle: { ...tokens.typography.titleMedium, color: colors.m3.onSurface },
-    aboutBook: { flexDirection: "row", alignItems: "center", gap: 12 },
-    aboutBookText: { flex: 1, gap: 6, alignItems: "flex-start" },
+    aboutBook: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[12] },
+    aboutBookText: { flex: 1, gap: tokens.spacing[6], alignItems: "flex-start" },
     aboutBookTitle: { ...tokens.typography.labelLarge, color: colors.m3.onSurface },
-    aboutSafe: { gap: 2, padding: 16, borderRadius: tokens.radius.medium, backgroundColor: colors.m3.surfaceContainer },
+    aboutSafe: { gap: tokens.spacing[2], padding: tokens.spacing[16], borderRadius: tokens.radius.medium, backgroundColor: colors.m3.surfaceContainer },
     aboutSafeTitle: { ...tokens.typography.labelLarge, color: colors.m3.onSurface },
     aboutSafeBody: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
     aboutReport: { ...tokens.typography.labelLarge, color: colors.error },
@@ -585,65 +574,67 @@ function createStyles(colors: ColorPalette) {
       alignItems: "center",
       gap: tokens.spacing[16],
       minHeight: 88,
-      paddingHorizontal: tokens.spacing[20],
+      paddingHorizontal: tokens.spacing[16],
       paddingVertical: tokens.spacing[12],
     },
-    rowPressed: { backgroundColor: colors.m3.surfaceContainer },
+    rowPressed: {
+      backgroundColor: colors.m3.surfaceContainer,
+      borderRadius: tokens.shapeMorph.cardPressed,
+      transform: [{ scale: 0.985 }],
+    },
     rowSelected: {
       backgroundColor: colors.m3.secondaryContainer,
       borderLeftWidth: 4,
       borderLeftColor: colors.m3.primary,
     },
-    rowText: { flex: 1, gap: 2 },
+    rowText: { flex: 1, gap: tokens.spacing[2] },
     rowHeader: { flexDirection: "row", alignItems: "baseline", gap: tokens.spacing[8] },
-    name: { flex: 1, ...tokens.typography.bodyLarge, fontWeight: "500", color: colors.m3.onSurface },
-    nameSelected: { fontWeight: "700", color: colors.m3.onSecondaryContainer },
+    name: { flex: 1, ...tokens.typography.bodyLarge, fontWeight: tokens.fontWeight.medium, color: colors.m3.onSurface },
+    nameSelected: { fontWeight: tokens.fontWeight.bold, color: colors.m3.onSecondaryContainer },
     badge: {
       alignSelf: "flex-start",
       paddingHorizontal: tokens.spacing[8],
-      paddingVertical: 2,
-      marginVertical: 2,
+      paddingVertical: tokens.spacing[2],
+      marginVertical: tokens.spacing[2],
       borderRadius: tokens.radius.full,
       backgroundColor: colors.m3.primary,
     },
-    badgeText: { fontSize: 11, lineHeight: 16, fontWeight: "700", color: colors.m3.onPrimary },
-    time: { fontSize: 12, lineHeight: 16, color: colors.m3.onSurfaceVariant },
+    badgeText: { ...tokens.typography.labelSmall, fontWeight: tokens.fontWeight.bold, color: colors.m3.onPrimary },
+    time: { ...tokens.typography.labelMedium, color: colors.m3.onSurfaceVariant },
     preview: { ...tokens.typography.bodyMedium, color: colors.m3.onSurface },
     previewStatus: { color: colors.m3.onSurfaceVariant, fontStyle: "italic" },
-    about: { fontSize: 13, lineHeight: 18, color: colors.m3.primary },
+    about: { ...tokens.typography.labelMedium, color: colors.m3.primary },
     footer: {
-      ...tokens.typography.bodyMedium,
+      ...tokens.typography.labelMedium,
+      fontFamily: fontFamily.regular,
       color: colors.m3.onSurfaceVariant,
-      paddingHorizontal: tokens.spacing[20],
+      paddingHorizontal: tokens.spacing[16],
       paddingTop: tokens.spacing[16],
     },
-    footerError: { ...tokens.typography.bodyMedium, color: colors.error, paddingHorizontal: tokens.spacing[20], paddingTop: tokens.spacing[16] },
+    footerError: { ...tokens.typography.bodyMedium, color: colors.error, paddingHorizontal: tokens.spacing[16], paddingTop: tokens.spacing[16] },
     empty: { alignItems: "center", gap: tokens.spacing[8], paddingTop: tokens.spacing[48], paddingHorizontal: tokens.spacing[24] },
     emptyIcon: {
       width: 72,
       height: 72,
-      borderRadius: 36,
+      borderRadius: tokens.radius.circle72,
       alignItems: "center",
       justifyContent: "center",
       backgroundColor: colors.m3.secondaryContainer,
       marginBottom: tokens.spacing[8],
     },
     emptyTitle: {
-      fontFamily: fontFamily.brand,
-      fontSize: 24,
-      lineHeight: 32,
-      fontWeight: "700",
+      ...tokens.typography.brandTitle,
       color: colors.m3.onSurface,
       textAlign: "center",
     },
     emptyBody: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant, textAlign: "center", maxWidth: 320 },
     emptyAction: { alignSelf: "stretch", marginTop: tokens.spacing[16] },
-    deleteButton: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", position: "absolute", right: 12, top: "50%", marginTop: -20 },
+    deleteButton: { width: tokens.spacing[40], height: tokens.spacing[40], borderRadius: tokens.radius.xl, alignItems: "center", justifyContent: "center", position: "absolute", right: tokens.spacing[12], top: "50%", marginTop: -tokens.spacing[20] },
     // A linha e o apagar são botões irmãos: o navegador não aceita botão dentro de botão.
     rowWrap: { position: "relative" },
-    cancelRequest: { alignSelf: "flex-end", paddingHorizontal: tokens.spacing[20], paddingBottom: tokens.spacing[8], minHeight: 32, justifyContent: "center" },
+    cancelRequest: { alignSelf: "flex-end", paddingHorizontal: tokens.spacing[16], paddingBottom: tokens.spacing[8], minHeight: tokens.spacing[32], justifyContent: "center" },
     cancelRequestText: { ...tokens.typography.labelLarge, color: colors.error },
-    rowWithDelete: { paddingRight: 56 },
+    rowWithDelete: { paddingRight: tokens.spacing[56] },
     deleteButtonHovered: { backgroundColor: colors.m3.surfaceContainerHigh },
   });
 }

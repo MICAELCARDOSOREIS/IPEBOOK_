@@ -8,7 +8,7 @@ import { useProfileSafetyViewModel } from "@/viewmodel/useProfileSafetyViewModel
 import { normalizeInstagramHandle } from "@/model/validators/instagramValidator";
 import { ProfileSafetySheet } from "@/view/listings/profileSafetySheet";
 import { usePublicProfileViewModel } from "@/viewmodel/usePublicProfileViewModel";
-import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
+import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { Avatar } from "@/view/components/Avatar";
 import { AppIcon } from "@/view/components/AppIcon";
@@ -19,6 +19,7 @@ import { UserRatingsPanel } from "@/view/listings/userRatingsPanel";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { WEB_MAX_WIDTH } from "@/view/webLayout";
 
+import { withPress } from "@/view/pressFeedback";
 function formatJoinedAt(joinedAt: string): string {
   const date = new Date(joinedAt);
   if (Number.isNaN(date.getTime())) return "";
@@ -82,7 +83,7 @@ export function PublicProfile({ userId, onBack, onOpenChat, onReportListing, onR
         ) : state.error ? (
           <View style={styles.status}>
             <Text accessibilityRole="alert" style={styles.errorText}>{state.error}</Text>
-            <Pressable accessibilityRole="button" onPress={() => void actions.reload()} style={styles.retryButton}>
+            <Pressable accessibilityRole="button" onPress={() => void actions.reload()} style={withPress(styles.retryButton)}>
               <Text style={styles.retryText}>Tentar novamente</Text>
             </Pressable>
           </View>
@@ -181,7 +182,7 @@ export function PublicProfile({ userId, onBack, onOpenChat, onReportListing, onR
                 accessibilityRole="button"
                 accessibilityLabel="Denunciar ou bloquear"
                 onPress={() => setSafetyOpen(true)}
-                style={styles.safetyButton}
+                style={withPress(styles.safetyButton)}
               >
                 <AppIcon name="flag" size={18} color={colors.error} />
                 <Text style={styles.safetyButtonText}>Denunciar ou bloquear</Text>
@@ -247,7 +248,7 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
       paddingTop: tokens.spacing[48],
     },
     errorText: {
-      fontSize: tokens.typography.bodyMedium.fontSize,
+      ...tokens.typography.bodyMedium,
       color: colors.error,
       textAlign: "center",
     },
@@ -262,9 +263,9 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
       justifyContent: "center",
     },
     retryText: {
-      fontSize: tokens.typography.bodyMedium.fontSize,
+      ...tokens.typography.bodyMedium,
       color: colors.action,
-      fontWeight: "bold",
+      fontWeight: tokens.fontWeight.bold,
     },
     container: {
       gap: tokens.spacing[16],
@@ -277,17 +278,13 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
       paddingVertical: tokens.spacing[16],
     },
     name: {
-      fontFamily: fontFamily.brand,
-      fontSize: 26,
-      lineHeight: 32,
-      fontWeight: "700",
+      ...tokens.typography.brandTitle,
       color: colors.text,
       textAlign: "center",
       paddingHorizontal: tokens.spacing[8],
     },
     subtitle: {
-      fontSize: 14,
-      lineHeight: 20,
+      ...tokens.typography.bodyMedium,
       color: colors.secondaryText,
       textAlign: "center",
     },
@@ -301,15 +298,15 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
       marginTop: tokens.spacing[4],
     },
     socialHandle: {
-      fontSize: 13,
-      fontWeight: "500",
+      ...tokens.typography.footnote,
+      fontWeight: tokens.fontWeight.medium,
       color: colors.action,
     },
     statsRow: wideWeb ? { flexDirection: "row", gap: tokens.spacing[16] } : { gap: tokens.spacing[12] },
     infoCard: {
       flex: wideWeb ? 1 : undefined,
       backgroundColor: colors.surface,
-      borderRadius: 16,
+      borderRadius: tokens.radius.card,
       borderWidth: 1,
       borderColor: colors.m3.outlineVariant,
       padding: tokens.spacing[16],
@@ -318,9 +315,9 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
       gap: tokens.spacing[16],
     },
     cardLeadingBox: {
-      width: 48,
-      height: 48,
-      borderRadius: 12,
+      width: tokens.spacing[48],
+      height: tokens.spacing[48],
+      borderRadius: tokens.radius.cardSmall,
       backgroundColor: colors.m3.surfaceContainerHigh,
       justifyContent: "center",
       alignItems: "center",
@@ -328,27 +325,26 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
     ratingNumberRow: {
       flexDirection: "row",
       alignItems: "center",
-      gap: 2,
+      gap: tokens.spacing[2],
     },
     statLargeValue: {
-      fontSize: 20,
-      fontWeight: "700",
+      ...tokens.typography.titleBlock,
+      fontWeight: tokens.fontWeight.bold,
       color: colors.text,
       textAlign: "center",
     },
     cardHeaderTextCol: {
       flex: 1,
-      gap: 2,
+      gap: tokens.spacing[2],
     },
     cardTitle: {
-      fontSize: 15,
-      fontWeight: "600",
+      ...tokens.typography.subheadline,
+      fontWeight: tokens.fontWeight.semiBold,
       color: colors.text,
     },
     cardSubtitle: {
-      fontSize: 13,
+      ...tokens.typography.footnote,
       color: colors.secondaryText,
-      lineHeight: 18,
     },
     // Web larga: botões lado a lado com largura do conteúdo, centralizados.
     actionsSection: {
@@ -371,7 +367,7 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
     safetyButtonText: {
       ...tokens.typography.labelLarge,
       color: colors.error,
-      fontWeight: "600",
+      fontWeight: tokens.fontWeight.semiBold,
     },
   });
 }

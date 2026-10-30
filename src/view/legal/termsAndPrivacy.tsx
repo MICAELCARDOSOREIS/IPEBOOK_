@@ -8,6 +8,7 @@ import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { WEB_MAX_WIDTH, WEB_GUTTER, useWebColumns, webColumnWidth } from "@/view/webLayout";
 
+import { withPress } from "@/view/pressFeedback";
 export type TermsAndPrivacyProps = {
   onBack?: () => void;
   initialTab?: "terms" | "privacy";
@@ -49,7 +50,7 @@ export default function TermsAndPrivacy({
               accessibilityRole="tab"
               accessibilityState={{ selected: activeTab === "terms" }}
               onPress={() => setActiveTab("terms")}
-              style={[styles.tab, activeTab === "terms" && styles.activeTab]}
+              style={withPress([styles.tab, activeTab === "terms" && styles.activeTab])}
             >
               <Text style={[styles.tabText, activeTab === "terms" && styles.activeTabText]}>
                 Termos de Uso
@@ -59,7 +60,7 @@ export default function TermsAndPrivacy({
               accessibilityRole="tab"
               accessibilityState={{ selected: activeTab === "privacy" }}
               onPress={() => setActiveTab("privacy")}
-              style={[styles.tab, activeTab === "privacy" && styles.activeTab]}
+              style={withPress([styles.tab, activeTab === "privacy" && styles.activeTab])}
             >
               <Text style={[styles.tabText, activeTab === "privacy" && styles.activeTabText]}>
                 Privacidade (LGPD)
@@ -93,7 +94,7 @@ export default function TermsAndPrivacy({
                   accessibilityRole="button"
                   accessibilityLabel="Solicitar exclusão da minha conta e dados"
                   onPress={onNavigateToDeleteAccount}
-                  style={styles.deleteAccountLink}
+                  style={withPress(styles.deleteAccountLink)}
                 >
                   <Text style={styles.deleteAccountText}>
                     Deseja exportar ou excluir sua conta? Gerenciar dados e exclusão definitiva (LGPD)
@@ -130,9 +131,7 @@ function createStyles(colors: ColorPalette) {
     marginBottom: tokens.spacing[16],
   },
   heroTitle: {
-    fontSize: tokens.typography.displayLarge.fontSize,
-    lineHeight: tokens.typography.displayLarge.lineHeight,
-    fontFamily: tokens.typography.displayLarge.fontFamily,
+    ...tokens.typography.displayLarge,
     color: colors.text,
   },
   heroSubtitle: {
@@ -163,7 +162,7 @@ function createStyles(colors: ColorPalette) {
   },
   activeTabText: {
     color: colors.action,
-    fontWeight: "600",
+    fontWeight: tokens.fontWeight.semiBold,
   },
   updatedDate: {
     ...tokens.typography.labelMedium,
@@ -201,7 +200,7 @@ function createStyles(colors: ColorPalette) {
     ...tokens.typography.labelMedium,
     color: colors.error,
     textDecorationLine: "underline",
-    fontWeight: "600",
+    fontWeight: tokens.fontWeight.semiBold,
   },
   });
 }

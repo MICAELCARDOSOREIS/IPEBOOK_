@@ -12,6 +12,7 @@ import { useFormErrorAnnouncer } from "@/view/useFormErrorAnnouncer";
 import { useReportListingViewModel } from "@/viewmodel/useReportListingViewModel";
 import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
 
+import { withPress } from "@/view/pressFeedback";
 export type ReportListingProps = {
   listingId: string;
   listingTitle?: string;
@@ -120,7 +121,7 @@ export default function ReportListing({
                   accessibilityLabel={option.label}
                   accessibilityHint={option.description}
                   onPress={() => actions.setReason(option.key)}
-                  style={[styles.reasonOption, isSelected && styles.reasonOptionSelected]}
+                  style={withPress([styles.reasonOption, isSelected && styles.reasonOptionSelected])}
                 >
                   <View style={[styles.radioCircle, isSelected && styles.radioCircleSelected]}>
                     {isSelected ? <View style={styles.radioDot} /> : null}
@@ -206,9 +207,7 @@ function createStyles(colors: ColorPalette) {
     gap: tokens.spacing[4],
   },
   heroHeadline: {
-    fontSize: tokens.typography.displayLarge.fontSize,
-    lineHeight: tokens.typography.displayLarge.lineHeight,
-    fontFamily: tokens.typography.displayLarge.fontFamily,
+    ...tokens.typography.displayLarge,
     color: colors.text,
   },
   successHeadline: {
@@ -218,7 +217,7 @@ function createStyles(colors: ColorPalette) {
     textAlign: "center",
   },
   bookTitleBold: {
-    fontWeight: "700",
+    fontWeight: tokens.fontWeight.bold,
     color: colors.text,
   },
   title: {
@@ -251,7 +250,7 @@ function createStyles(colors: ColorPalette) {
     borderColor: colors.border,
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 2,
+    marginTop: tokens.spacing[2],
   },
   radioCircleSelected: {
     borderColor: colors.action,
@@ -264,11 +263,11 @@ function createStyles(colors: ColorPalette) {
   },
   reasonTextContainer: {
     flex: 1,
-    gap: 2,
+    gap: tokens.spacing[2],
   },
   reasonLabel: {
     ...tokens.typography.bodyLarge,
-    fontWeight: "600",
+    fontWeight: tokens.fontWeight.semiBold,
     color: colors.text,
   },
   reasonLabelSelected: {

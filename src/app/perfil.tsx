@@ -4,8 +4,7 @@ import ProfileHub from "@/view/profile/profileHub";
 export default function Perfil() {
   return (
     <ProfileHub
-      requireAuth={false}
-      onNavigateToSignIn={() => pushOnce("/entrar")}
+      onNavigateToSignIn={() => replaceOnce("/entrar")}
       onNavigateToEditProfile={() => pushOnce("/perfil/editar")}
       onNavigateToMyListings={() => pushOnce("/meus-anuncios")}
       onNavigateToRatings={() => pushOnce("/perfil/avaliacoes")}

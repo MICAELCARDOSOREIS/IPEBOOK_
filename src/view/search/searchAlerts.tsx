@@ -14,6 +14,7 @@ import { useTheme } from "@/view/theme/ThemeProvider";
 import { useSearchAlertsViewModel } from "@/viewmodel/useSearchAlertsViewModel";
 import { WEB_MAX_WIDTH, useWebColumns } from "@/view/webLayout";
 
+import { withPress } from "@/view/pressFeedback";
 export type SearchAlertsProps = {
   userId: string | null;
   initialQuery?: string;
@@ -56,7 +57,7 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
           <Text style={styles.bodyCenter}>
             Receba um aviso quando alguém anunciar o livro que você procura em Piripiri.
           </Text>
-          <Pressable accessibilityRole="button" onPress={onLogin} style={styles.loginButton}>
+          <Pressable accessibilityRole="button" onPress={onLogin} style={withPress(styles.loginButton)}>
             <Text style={styles.link}>Entrar</Text>
           </Pressable>
         </View>
@@ -132,7 +133,7 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
                     accessibilityRole="button"
                     accessibilityLabel={`Gerenciar alerta ${item.query}`}
                     onPress={() => onManageAlert?.(item.id)}
-                    style={styles.row}
+                    style={withPress(styles.row)}
                   >
                     <AppIcon name="bell" size={24} color={colors.text} />
                     <View style={styles.rowText}>
@@ -191,9 +192,7 @@ function createStyles(colors: ColorPalette) {
     gap: tokens.spacing[4],
   },
   heroTitle: {
-    fontSize: tokens.typography.displayLarge.fontSize,
-    lineHeight: tokens.typography.displayLarge.lineHeight,
-    fontFamily: tokens.typography.displayLarge.fontFamily,
+    ...tokens.typography.displayLarge,
     color: colors.text,
   },
   formCard: {
@@ -245,7 +244,7 @@ function createStyles(colors: ColorPalette) {
   successMessage: {
     ...tokens.typography.bodyMedium,
     color: colors.success,
-    fontWeight: "600",
+    fontWeight: tokens.fontWeight.semiBold,
   },
   searchAction: {
     paddingHorizontal: tokens.spacing[16],
@@ -254,7 +253,7 @@ function createStyles(colors: ColorPalette) {
   link: {
     ...tokens.typography.bodyMedium,
     color: colors.action,
-    fontWeight: "600",
+    fontWeight: tokens.fontWeight.semiBold,
   },
   loginButton: {
     minHeight: tokens.accessibility.touchTarget,
@@ -300,9 +299,7 @@ function createStyles(colors: ColorPalette) {
     gap: tokens.spacing[4],
   },
   activeAlertTitle: {
-    fontSize: tokens.typography.titleMedium.fontSize,
-    lineHeight: tokens.typography.titleMedium.lineHeight,
-    fontFamily: tokens.typography.titleMedium.fontFamily,
+    ...tokens.typography.titleMedium,
     color: colors.text,
   },
   rowText: {

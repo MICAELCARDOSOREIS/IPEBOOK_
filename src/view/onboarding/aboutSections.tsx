@@ -2,12 +2,13 @@ import { useMemo } from "react";
 import * as Linking from "expo-linking";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { AppIcon } from "@/view/components/AppIcon";
-import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
+import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { InstagramIcon } from "@/view/components/InstagramIcon";
 import { INSTAGRAM_HANDLE, INSTAGRAM_URL } from "@/view/instagram";
 import { SUPPORT_EMAIL } from "@/view/supportContact";
 
+import { withPress } from "@/view/pressFeedback";
 export type AboutSectionsProps = {
   onStart: () => void;
   onSignIn: () => void;
@@ -75,11 +76,11 @@ export function AboutSections({ onStart, onSignIn, onHelp, onTerms, betaInvite =
       <View style={styles.finalCta}>
         <Text accessibilityRole="header" style={styles.finalTitle}>Pronto para dar nova vida a um livro?</Text>
         <View style={styles.finalActions}>
-          <Pressable accessibilityRole="button" accessibilityLabel={betaInvite ? "Quero testar o app" : "Criar conta grátis"} onPress={onStart} style={styles.cta}>
+          <Pressable accessibilityRole="button" accessibilityLabel={betaInvite ? "Quero testar o app" : "Criar conta grátis"} onPress={onStart} style={withPress(styles.cta)}>
             <Text style={styles.ctaText}>{betaInvite ? "Quero testar o app" : "Criar conta"}</Text>
           </Pressable>
           {betaInvite ? null : (
-            <Pressable accessibilityRole="button" accessibilityLabel="Já tenho conta, entrar" onPress={onSignIn} style={styles.outlined}>
+            <Pressable accessibilityRole="button" accessibilityLabel="Já tenho conta, entrar" onPress={onSignIn} style={withPress(styles.outlined)}>
               <Text style={styles.outlinedText}>Entrar</Text>
             </Pressable>
           )}
@@ -103,7 +104,7 @@ export function AboutSections({ onStart, onSignIn, onHelp, onTerms, betaInvite =
             accessibilityRole="link"
             accessibilityLabel={`Instagram do IpêBook: @${INSTAGRAM_HANDLE}`}
             onPress={() => void Linking.openURL(INSTAGRAM_URL)}
-            style={styles.instagramLink}
+            style={withPress(styles.instagramLink)}
           >
             <InstagramIcon size={20} color={colors.m3.primary} />
             <Text style={styles.footerLink}>{`@${INSTAGRAM_HANDLE}`}</Text>
@@ -123,32 +124,32 @@ export function AboutSections({ onStart, onSignIn, onHelp, onTerms, betaInvite =
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
-    section: { gap: 32 },
-    sectionTitle: { fontFamily: fontFamily.brand, fontSize: 36, lineHeight: 44, color: colors.m3.onSurface },
-    steps: { flexDirection: "row", gap: 24 },
-    step: { flex: 1, gap: 8, padding: 24, borderRadius: tokens.radius.large, backgroundColor: colors.m3.surfaceContainerLow },
-    stepNumber: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", backgroundColor: colors.m3.primary },
+    section: { gap: tokens.spacing[32] },
+    sectionTitle: { ...tokens.typography.brandDisplayMd, color: colors.m3.onSurface },
+    steps: { flexDirection: "row", gap: tokens.spacing[24] },
+    step: { flex: 1, gap: tokens.spacing[8], padding: tokens.spacing[24], borderRadius: tokens.radius.large, backgroundColor: colors.m3.surfaceContainerLow },
+    stepNumber: { width: tokens.spacing[40], height: tokens.spacing[40], borderRadius: tokens.radius.xl, alignItems: "center", justifyContent: "center", backgroundColor: colors.m3.primary },
     stepNumberText: { ...tokens.typography.titleMedium, color: colors.m3.onPrimary },
-    stepTitle: { fontFamily: fontFamily.medium, fontSize: 20, lineHeight: 28, fontWeight: "600", color: colors.m3.onSurface },
+    stepTitle: { ...tokens.typography.titleBlock, color: colors.m3.onSurface },
     stepText: { ...tokens.typography.bodyLarge, color: colors.m3.onSurfaceVariant },
-    safety: { flexDirection: "row", gap: 48, padding: 40, borderRadius: 28, backgroundColor: colors.m3.primaryContainer, alignItems: "center" },
-    safetyText: { flex: 1, gap: 12 },
-    safetyTitle: { fontFamily: fontFamily.brand, fontSize: 32, lineHeight: 40, color: colors.m3.onPrimaryContainer },
+    safety: { flexDirection: "row", gap: tokens.spacing[48], padding: tokens.spacing[40], borderRadius: tokens.radius.xxl, backgroundColor: colors.m3.primaryContainer, alignItems: "center" },
+    safetyText: { flex: 1, gap: tokens.spacing[12] },
+    safetyTitle: { ...tokens.typography.displayLarge, color: colors.m3.onPrimaryContainer },
     safetyLead: { ...tokens.typography.bodyLarge, color: colors.m3.onPrimaryContainer },
-    safetyList: { flex: 1, gap: 16 },
-    safetyItem: { flexDirection: "row", alignItems: "center", gap: 12 },
+    safetyList: { flex: 1, gap: tokens.spacing[16] },
+    safetyItem: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[12] },
     safetyItemText: { ...tokens.typography.bodyLarge, flex: 1, color: colors.m3.onPrimaryContainer },
-    finalCta: { alignItems: "center", gap: 24, paddingVertical: 24 },
-    finalTitle: { fontFamily: fontFamily.brand, fontSize: 36, lineHeight: 44, textAlign: "center", color: colors.m3.onSurface },
-    finalActions: { flexDirection: "row", gap: 16 },
-    cta: { height: 52, paddingHorizontal: 32, borderRadius: tokens.radius.full, alignItems: "center", justifyContent: "center", backgroundColor: colors.m3.primary },
+    finalCta: { alignItems: "center", gap: tokens.spacing[24], paddingVertical: tokens.spacing[24] },
+    finalTitle: { ...tokens.typography.brandDisplayMd, textAlign: "center", color: colors.m3.onSurface },
+    finalActions: { flexDirection: "row", gap: tokens.spacing[16] },
+    cta: { height: 52, paddingHorizontal: tokens.spacing[32], borderRadius: tokens.radius.full, alignItems: "center", justifyContent: "center", backgroundColor: colors.m3.primary },
     ctaText: { ...tokens.typography.labelLarge, color: colors.m3.onPrimary },
-    outlined: { height: 52, paddingHorizontal: 32, borderRadius: tokens.radius.full, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: colors.m3.outline },
+    outlined: { height: 52, paddingHorizontal: tokens.spacing[32], borderRadius: tokens.radius.full, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: colors.m3.outline },
     outlinedText: { ...tokens.typography.labelLarge, color: colors.m3.primary },
-    footer: { gap: 12, paddingTop: 24, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.m3.outlineVariant },
+    footer: { gap: tokens.spacing[12], paddingTop: tokens.spacing[24], borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.m3.outlineVariant },
     footerBrand: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
-    footerLinks: { flexDirection: "row", gap: 24, flexWrap: "wrap" },
-    instagramLink: { flexDirection: "row", alignItems: "center", gap: 6 },
+    footerLinks: { flexDirection: "row", gap: tokens.spacing[24], flexWrap: "wrap" },
+    instagramLink: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[6] },
     footerLink: { ...tokens.typography.labelLarge, color: colors.m3.primary },
   });
 }

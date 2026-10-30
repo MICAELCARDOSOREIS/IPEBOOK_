@@ -20,6 +20,7 @@ import { PhotoGallery } from "@/view/listings/photoGallery";
 import { BOOK_CONDITION_LABELS, type BookModality } from "@/model/entities/book";
 import { WEB_MAX_WIDTH } from "@/view/webLayout";
 
+import { withPress } from "@/view/pressFeedback";
 function createModalityTag(colors: ColorPalette): Record<BookModality, { background: string; text: string; label: string }> {
   return {
     sale: { background: colors.badge.sale.background, text: colors.badge.sale.text, label: "Venda" },
@@ -60,7 +61,7 @@ function SellerCard({
       accessibilityRole="button"
       accessibilityLabel={label}
       onPress={onPress}
-      style={styles.sellerCard}
+      style={withPress(styles.sellerCard)}
     >
       <View style={styles.sellerInfo}>
         <Avatar name={name || "Comunidade"} photoUrl={profile?.photoUrl} size={40} />
@@ -79,6 +80,7 @@ export type BookDetailProps = {
   onBack: () => void;
   onNavigateToUserProfile?: (ownerId: string) => void;
   onNavigateToReport?: (bookId: string) => void;
+  onNavigateToSignIn?: () => void;
 };
 
 export default function BookDetail({
@@ -86,6 +88,7 @@ export default function BookDetail({
   onBack,
   onNavigateToUserProfile,
   onNavigateToReport,
+  onNavigateToSignIn,
 }: BookDetailProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -149,17 +152,24 @@ export default function BookDetail({
           captureShareImage,
         )
       }
-      style={styles.tonalButton}
+      style={withPress(styles.tonalButton)}
     >
       <Text style={styles.tonalButtonText}>Compartilhar</Text>
     </Pressable>
-    {book.status === "reserved" || book.status === "delivered" || (sessionUserId && book.ownerId !== sessionUserId) ? (
+    {book.status === "reserved" || book.status === "delivered" || !sessionUserId || book.ownerId !== sessionUserId ? (
       <View style={styles.primarySlot}>
         {book.status === "reserved" || book.status === "delivered" ? (
           <View style={styles.statusPill}>
             <Text style={styles.reserved}>{book.status === "delivered" ? "Entregue" : "Reservado"}</Text>
           </View>
-        ) : sessionUserId && book.ownerId !== sessionUserId ? (
+        ) : !sessionUserId ? (
+          onNavigateToSignIn ? (
+            <FilledButton
+              label={primaryActionLabel}
+              onPress={onNavigateToSignIn}
+            />
+          ) : null
+        ) : book.ownerId !== sessionUserId ? (
           negotiation.requestedListingIds.includes(book.id) ? (
             <View style={styles.statusPill}>
               <Text style={styles.requested}>Negociação solicitada</Text>
@@ -230,6 +240,7 @@ export default function BookDetail({
                   author={book.author}
                   description={book.synopsis ?? book.description}
                   publisher={book.publisher}
+                  pageCount={book.pageCount}
                   photoUrl={book.photoUrl}
                   scale={wideWeb ? 1.6 : 1}
                   onPress={photos.length > 0 ? () => setGalleryVisible(true) : undefined}
@@ -241,7 +252,7 @@ export default function BookDetail({
                   accessibilityLabel="Ver fotos do anúncio em tela cheia"
                   onPress={() => setGalleryVisible(true)}
                   hitSlop={8}
-                  style={styles.photosLink}
+                  style={withPress(styles.photosLink)}
                 >
                   <Text style={styles.photosLinkText}>Ver fotos</Text>
                 </Pressable>
@@ -254,7 +265,7 @@ export default function BookDetail({
                       accessibilityRole="button"
                       accessibilityLabel={`Ver foto ${idx + 1} em tela cheia`}
                       onPress={() => setGalleryVisible(true)}
-                      style={[styles.thumb, idx === 0 && styles.thumbActive]}
+                      style={withPress([styles.thumb, idx === 0 && styles.thumbActive])}
                     >
                       <Image source={{ uri: url }} style={styles.thumbImage} resizeMode="cover" accessible={false} />
                     </Pressable>
@@ -369,7 +380,7 @@ export default function BookDetail({
                 accessibilityRole="button"
                 accessibilityLabel="Denunciar anúncio"
                 onPress={() => onNavigateToReport(book.id)}
-                style={styles.reportButton}
+                style={withPress(styles.reportButton)}
               >
                 <AppIcon name="flag" size={18} color={colors.m3.onSurfaceVariant} />
                 <Text style={styles.reportText}>Denunciar anúncio</Text>
@@ -420,7 +431,7 @@ export default function BookDetail({
   );
 }
 
-/** Botão de ícone tonal circular sobre a capa (M3 filled tonal icon button, 40 dp com 48 dp de toque). */
+/** Botão de ícone tonal circular sobre a capa (M3 Expressive filled tonal icon button, 40 dp com 48 dp de toque). */
 function HeroIconButton({
   icon,
   label,
@@ -444,7 +455,10 @@ function HeroIconButton({
       disabled={disabled}
       hitSlop={4}
       onPress={onPress}
-      style={styles.heroIconButton}
+      style={({ pressed }) => [
+        styles.heroIconButton,
+        pressed && !disabled && styles.heroIconButtonPressed,
+      ]}
     >
       <AppIcon name={icon} size={22} color={iconColor ?? colors.m3.onSurface} />
     </Pressable>
@@ -478,23 +492,23 @@ function createStyles(colors: ColorPalette) {
     page: { flex: 1, backgroundColor: colors.background },
     scrollContent: { paddingBottom: tokens.spacing[32] },
     // Web larga (Figma `03.01`): capa à esquerda e cartão de ações à direita, com 48 px entre as colunas.
-    scrollContentWide: { flexDirection: "row", flexWrap: "wrap", alignItems: "flex-start", columnGap: 48, rowGap: 16, width: "100%", maxWidth: WEB_MAX_WIDTH, alignSelf: "center", paddingHorizontal: 80, paddingTop: 32, paddingBottom: tokens.spacing[48] },
-    heroWide: { flex: 1.6, borderRadius: 28, paddingTop: tokens.spacing[16], minHeight: 520 },
-    breadcrumb: { width: "100%", flexDirection: "row", alignItems: "center", gap: 8 },
+    scrollContentWide: { flexDirection: "row", flexWrap: "wrap", alignItems: "flex-start", columnGap: tokens.spacing[48], rowGap: tokens.spacing[16], width: "100%", maxWidth: WEB_MAX_WIDTH, alignSelf: "center", paddingHorizontal: tokens.spacing[80], paddingTop: tokens.spacing[32], paddingBottom: tokens.spacing[48] },
+    heroWide: { flex: 1.6, borderRadius: tokens.radius.xxl, paddingTop: tokens.spacing[16], minHeight: 520 },
+    breadcrumb: { width: "100%", flexDirection: "row", alignItems: "center", gap: tokens.spacing[8] },
     breadcrumbLink: { ...tokens.typography.bodyMedium, color: colors.m3.primary },
     breadcrumbText: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
     breadcrumbSep: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
     breadcrumbCurrent: { ...tokens.typography.bodyMedium, color: colors.m3.onSurface, flexShrink: 1 },
-    safeMeetingCard: { flexDirection: "row", gap: 12, padding: 16, borderRadius: tokens.radius.medium, backgroundColor: colors.m3.surfaceContainer },
-    safeMeetingText: { flex: 1, gap: 2 },
+    safeMeetingCard: { flexDirection: "row", gap: tokens.spacing[12], padding: tokens.spacing[16], borderRadius: tokens.radius.medium, backgroundColor: colors.m3.surfaceContainer },
+    safeMeetingText: { flex: 1, gap: tokens.spacing[2] },
     safeMeetingTitle: { ...tokens.typography.labelLarge, color: colors.m3.onSurface },
     safeMeetingBody: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
-    contentWide: { flex: 1, maxWidth: 440, padding: 24, borderRadius: 20, borderWidth: 1, borderColor: colors.m3.outlineVariant, backgroundColor: colors.m3.surfaceContainerLow },
+    contentWide: { flex: 1, maxWidth: 440, padding: tokens.spacing[24], borderRadius: tokens.radius.xl, borderWidth: 1, borderColor: colors.m3.outlineVariant, backgroundColor: colors.m3.surfaceContainerLow },
     bottomBarWide: { paddingHorizontal: 0, paddingVertical: 0 },
     hero: {
       backgroundColor: colors.m3.surfaceContainerLow,
-      borderBottomLeftRadius: 28,
-      borderBottomRightRadius: 28,
+      borderBottomLeftRadius: tokens.radius.xxl,
+      borderBottomRightRadius: tokens.radius.xxl,
       paddingHorizontal: tokens.spacing[16],
       paddingBottom: tokens.spacing[24],
     },
@@ -507,35 +521,39 @@ function createStyles(colors: ColorPalette) {
     heroIconButton: {
       width: 44,
       height: 44,
-      borderRadius: tokens.radius.full,
+      borderRadius: tokens.shapeMorph.buttonRest,
       alignItems: "center",
       justifyContent: "center",
       backgroundColor: colors.m3.surfaceContainerLowest,
+    },
+    heroIconButtonPressed: {
+      borderRadius: tokens.shapeMorph.buttonPressed,
+      transform: [{ scale: 0.92 }],
     },
     coverArea: { alignItems: "center", paddingTop: tokens.spacing[8] },
     coverAreaWide: { flex: 1, justifyContent: "center", paddingTop: 0 },
     // A área da capa na web larga tem ~520 px de altura; a capa de 218 px ficava perdida nela.
     photosLink: { alignSelf: "center", minHeight: tokens.accessibility.touchTarget, justifyContent: "center", paddingHorizontal: tokens.spacing[16] },
     photosLinkText: { ...tokens.typography.labelLarge, fontFamily: fontFamily.semiBold, color: colors.m3.primary, textDecorationLine: "underline" },
-    thumbRow: { flexDirection: "row", gap: 12, marginTop: tokens.spacing[16] },
-    thumb: { width: 56, height: 72, borderRadius: 8, overflow: "hidden", borderWidth: 2, borderColor: "transparent", backgroundColor: colors.m3.surfaceContainerLowest },
+    thumbRow: { flexDirection: "row", gap: tokens.spacing[12], marginTop: tokens.spacing[16] },
+    thumb: { width: 56, height: 72, borderRadius: tokens.radius.small, overflow: "hidden", borderWidth: 2, borderColor: "transparent", backgroundColor: colors.m3.surfaceContainerLowest },
     thumbActive: { borderColor: colors.m3.primary },
     thumbImage: { width: "100%", height: "100%" },
     photoDots: {
       flexDirection: "row",
       alignItems: "center",
-      gap: 6,
+      gap: tokens.spacing[6],
       marginTop: tokens.spacing[16],
       paddingHorizontal: tokens.spacing[8],
-      paddingVertical: 4,
+      paddingVertical: tokens.spacing[4],
       borderRadius: tokens.radius.full,
       backgroundColor: colors.m3.surfaceContainerLowest,
     },
-    dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.m3.outlineVariant },
+    dot: { width: 6, height: 6, borderRadius: tokens.radius.micro, backgroundColor: colors.m3.outlineVariant },
     dotActive: { backgroundColor: colors.m3.onSurface },
     status: { alignItems: "center", paddingTop: tokens.spacing[48] },
     errorText: {
-      fontSize: tokens.typography.bodyLarge.fontSize,
+      ...tokens.typography.bodyLarge,
       color: colors.error,
       textAlign: "center",
     },
@@ -546,65 +564,62 @@ function createStyles(colors: ColorPalette) {
     },
     titleSection: { gap: tokens.spacing[4] },
     title: {
-      fontFamily: fontFamily.brand,
-      fontSize: 28,
-      lineHeight: 36,
-      fontWeight: "700",
+      ...tokens.typography.brandSection,
       color: colors.m3.onSurface,
     },
-    author: { fontSize: 16, lineHeight: 24, color: colors.m3.onSurfaceVariant },
+    author: { ...tokens.typography.bodyLarge, color: colors.m3.onSurfaceVariant },
     priceRow: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[12] },
-    priceValue: { fontSize: 22, lineHeight: 28, fontWeight: "700", color: colors.m3.onSurface },
-    tag: { borderRadius: tokens.radius.small, paddingHorizontal: tokens.spacing[8], paddingVertical: 2 },
-    tagText: { fontSize: 12, fontWeight: "500", lineHeight: 16 },
+    priceValue: { ...tokens.typography.titleBar, fontWeight: tokens.fontWeight.bold, color: colors.m3.onSurface },
+    tag: { borderRadius: tokens.radius.small, paddingHorizontal: tokens.spacing[8], paddingVertical: tokens.spacing[2] },
+    tagText: { ...tokens.typography.labelMedium },
     modalityCard: {
       flexDirection: "row",
       gap: tokens.spacing[12],
-      borderRadius: 16,
+      borderRadius: tokens.radius.card,
       padding: tokens.spacing[16],
     },
-    modalityCardText: { flex: 1, gap: 2 },
-    modalityCardTitle: { fontSize: 16, lineHeight: 24, fontWeight: "600" },
-    modalityCardBody: { fontSize: 14, lineHeight: 20 },
+    modalityCardText: { flex: 1, gap: tokens.spacing[2] },
+    modalityCardTitle: { ...tokens.typography.bodyLarge, fontWeight: tokens.fontWeight.semiBold },
+    modalityCardBody: { ...tokens.typography.bodyMedium },
     detailList: {
       backgroundColor: colors.m3.surfaceContainerLow,
-      borderRadius: 16,
+      borderRadius: tokens.radius.card,
       paddingHorizontal: tokens.spacing[16],
     },
     detailRow: {
       flexDirection: "row",
       alignItems: "center",
       gap: tokens.spacing[12],
-      minHeight: 56,
+      minHeight: tokens.spacing[56],
     },
     detailRowDivider: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.m3.outlineVariant },
     detailIcon: {
-      width: 32,
-      height: 32,
-      borderRadius: 8,
+      width: tokens.spacing[32],
+      height: tokens.spacing[32],
+      borderRadius: tokens.radius.small,
       alignItems: "center",
       justifyContent: "center",
       backgroundColor: colors.m3.secondaryContainer,
     },
-    detailLabel: { flex: 1, fontSize: 16, lineHeight: 24, color: colors.m3.onSurface },
-    detailValue: { fontSize: 14, lineHeight: 20, color: colors.m3.onSurfaceVariant, maxWidth: "50%" },
+    detailLabel: { flex: 1, ...tokens.typography.bodyLarge, color: colors.m3.onSurface },
+    detailValue: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant, maxWidth: "50%" },
     synopsisSection: { gap: tokens.spacing[8] },
     synopsisTitle: { ...tokens.typography.titleMedium, fontFamily: fontFamily.semiBold, color: colors.m3.onSurface },
-    synopsisText: { fontSize: 15, lineHeight: 23, color: colors.m3.onSurfaceVariant },
-    descriptionText: { fontSize: 16, lineHeight: 24, color: colors.m3.onSurface },
+    synopsisText: { ...tokens.typography.subheadline, lineHeight: tokens.lineHeight[23], color: colors.m3.onSurfaceVariant },
+    descriptionText: { ...tokens.typography.bodyLarge, color: colors.m3.onSurface },
     sellerCard: {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
       backgroundColor: colors.m3.surfaceContainerLow,
-      borderRadius: 16,
+      borderRadius: tokens.radius.card,
       paddingHorizontal: tokens.spacing[16],
-      minHeight: 64,
+      minHeight: tokens.spacing[64],
     },
     sellerInfo: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[12], flex: 1 },
     sellerTextCol: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: tokens.spacing[8] },
-    sellerName: { flexShrink: 1, fontSize: 16, lineHeight: 24, fontWeight: "500", color: colors.m3.onSurface },
-    sellerMeta: { fontSize: 14, color: colors.m3.onSurfaceVariant },
+    sellerName: { flexShrink: 1, ...tokens.typography.bodyLarge, fontWeight: tokens.fontWeight.medium, color: colors.m3.onSurface },
+    sellerMeta: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
     reportButton: {
       minHeight: tokens.accessibility.touchTarget,
       flexDirection: "row",
@@ -612,7 +627,7 @@ function createStyles(colors: ColorPalette) {
       justifyContent: "center",
       gap: tokens.spacing[8],
     },
-    reportText: { color: colors.m3.onSurfaceVariant, fontSize: tokens.typography.labelMedium.fontSize },
+    reportText: { ...tokens.typography.labelMedium, color: colors.m3.onSurfaceVariant },
     bottomBarContainer: { backgroundColor: colors.m3.surfaceContainer },
     bottomBar: {
       flexDirection: "row",
@@ -630,11 +645,11 @@ function createStyles(colors: ColorPalette) {
       backgroundColor: colors.m3.secondaryContainer,
       paddingHorizontal: tokens.spacing[16],
     },
-    tonalButtonText: { fontSize: 16, fontWeight: "600", color: colors.m3.onSecondaryContainer },
+    tonalButtonText: { ...tokens.typography.bodyLarge, fontWeight: tokens.fontWeight.semiBold, color: colors.m3.onSecondaryContainer },
     primarySlot: { flex: 1 },
     statusPill: { alignItems: "center", justifyContent: "center", minHeight: 52 },
-    reserved: { ...tokens.typography.labelLarge, color: colors.m3.onTertiaryContainer, backgroundColor: colors.m3.tertiaryContainer, paddingHorizontal: 16, paddingVertical: 8, borderRadius: tokens.radius.full, overflow: "hidden" },
-    requested: { fontSize: tokens.typography.bodyMedium.fontSize, color: colors.action, fontWeight: "600" },
-    requestError: { fontSize: tokens.typography.bodyMedium.fontSize, color: colors.error },
+    reserved: { ...tokens.typography.labelLarge, color: colors.m3.onTertiaryContainer, backgroundColor: colors.m3.tertiaryContainer, paddingHorizontal: tokens.spacing[16], paddingVertical: tokens.spacing[8], borderRadius: tokens.radius.full, overflow: "hidden" },
+    requested: { ...tokens.typography.bodyMedium, color: colors.action, fontWeight: tokens.fontWeight.semiBold },
+    requestError: { ...tokens.typography.bodyMedium, color: colors.error },
   });
 }

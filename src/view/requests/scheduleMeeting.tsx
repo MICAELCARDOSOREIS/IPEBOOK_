@@ -16,6 +16,7 @@ import { TextButton } from "@/view/components/TextButton";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { MeetingMap } from "@/view/requests/MeetingMap";
 
+import { withPress } from "@/view/pressFeedback";
 /** Parte da altura que o painel do formulário cobre sobre o mapa. */
 const SHEET_FRACTION = 0.6;
 /** Altura do puxador e do trecho do painel que fica à vista quando ele está recolhido (título "Onde" e dica). */
@@ -49,7 +50,7 @@ function OptionChip({ label, accessibilityLabel, selected, onPress, compact, sty
       accessibilityLabel={accessibilityLabel}
       accessibilityState={{ checked: selected }}
       onPress={onPress}
-      style={[styles.chip, compact && styles.chipCompact, selected && styles.chipSelected, selected && styles.chipWithCheck]}
+      style={withPress([styles.chip, compact && styles.chipCompact, selected && styles.chipSelected, selected && styles.chipWithCheck])}
     >
       {selected ? <AppIcon name="check" size={compact ? 16 : 18} color={colors.m3.onSecondaryContainer} /> : null}
       <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{label}</Text>
@@ -184,7 +185,7 @@ export function ScheduleMeeting({ requestId, sessionUserId, onBack, onSent }: Sc
               accessibilityRole="button"
               accessibilityLabel="Expandir a lista de locais"
               onPress={() => setExpanded(true)}
-              style={styles.peek}
+              style={withPress(styles.peek)}
             >
               {selectedPoint ? (
                 <>
@@ -229,7 +230,7 @@ export function ScheduleMeeting({ requestId, sessionUserId, onBack, onSent }: Sc
                       accessibilityLabel={`Local ${point.name}, ${point.recommendedTime}`}
                       accessibilityState={{ checked: selected }}
                       onPress={() => actions.selectPoint(point.name)}
-                      style={[styles.place, selected && styles.placeSelected]}
+                      style={withPress([styles.place, selected && styles.placeSelected])}
                     >
                       <View style={[styles.placeIconBox, selected && styles.placeIconBoxSelected]}>
                         {/* O número é o mesmo do pino no mapa. */}
@@ -350,7 +351,7 @@ function createStyles(colors: ColorPalette) {
       borderTopRightRadius: tokens.radius.extraLarge,
       overflow: "hidden",
       elevation: 8,
-      shadowColor: "#000",
+      shadowColor: colors.m3.shadow,
       shadowOpacity: 0.25,
       shadowRadius: 12,
     },
@@ -475,7 +476,7 @@ function createStyles(colors: ColorPalette) {
       minHeight: tokens.accessibility.touchTarget,
       justifyContent: "center",
       paddingHorizontal: tokens.spacing[16],
-      borderRadius: tokens.radius.small,
+      borderRadius: tokens.shapeMorph.chipUnselected,
       borderWidth: 1,
       borderColor: colors.m3.outline,
       backgroundColor: "transparent",
@@ -485,6 +486,8 @@ function createStyles(colors: ColorPalette) {
     chipSelected: {
       backgroundColor: colors.m3.secondaryContainer,
       borderColor: colors.m3.secondaryContainer,
+      borderRadius: tokens.shapeMorph.chipSelected,
+      borderWidth: 0,
     },
     chipText: {
       ...tokens.typography.bodyMedium,

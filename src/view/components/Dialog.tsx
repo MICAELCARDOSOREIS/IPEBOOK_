@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef } from "react";
-import { ActivityIndicator, Modal, Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { AccessibilityInfo, ActivityIndicator, Animated, Modal, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 
+import { withPress } from "@/view/pressFeedback";
 export type FocusableElement = { focus: () => void };
 
 function focusSafely(element: FocusableElement | null | undefined): void {
@@ -44,13 +45,6 @@ export type DialogProps = {
 };
 
 /**
- * Token scrim de design-system/04-componentes/dialogo.md (#00000052).
- * Véu translúcido escuro que cobre o conteúdo atrás do diálogo — mesmo valor nos dois temas
- * (`design-system/tokens.json`: "scrim" varia pouco entre claro/escuro, dentro da tolerância).
- */
-const SCRIM_COLOR = "#00000052";
-
-/**
  * Diálogo do design system (design-system/04-componentes/dialogo.md).
  * Usado para confirmação de ações irreversíveis ou destrutivas (ex: exclusão de anúncio).
  */
@@ -68,8 +62,32 @@ export function Dialog({
   const cancelRef = useRef<FocusableElement | null>(null);
   const confirmRef = useRef<FocusableElement | null>(null);
   const triggerRef = useRef<FocusableElement | null>(null);
+  const cardScale = useRef(new Animated.Value(visible ? 1 : 0.92)).current;
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+
+  useEffect(() => {
+    if (!visible) {
+      cardScale.setValue(0.92);
+      return;
+    }
+    void Promise.resolve(AccessibilityInfo?.isReduceMotionEnabled?.())
+      .then((reduced) => {
+        if (reduced) {
+          cardScale.setValue(1);
+          return;
+        }
+        Animated.spring(cardScale, {
+          toValue: 1,
+          tension: tokens.spring.spatialSlow.tension,
+          friction: tokens.spring.spatialSlow.friction,
+          useNativeDriver: true,
+        }).start();
+      })
+      .catch(() => {
+        cardScale.setValue(1);
+      });
+  }, [visible, cardScale]);
 
   // Gestão de foco (Web): o diálogo prende o foco enquanto aberto e o devolve ao
   // gatilho ao fechar (design-system/06-acessibilidade.md e 04-componentes/dialogo.md).
@@ -128,10 +146,10 @@ export function Dialog({
           style={StyleSheet.absoluteFill}
           onPress={onCancel}
         />
-        <View
+        <Animated.View
           accessibilityRole="alert"
           accessibilityLabel={title}
-          style={styles.card}
+          style={[styles.card, { transform: [{ scale: cardScale }] }]}
         >
           <Text style={styles.title}>{title}</Text>
           <Text style={styles.message}>{message}</Text>
@@ -143,7 +161,7 @@ export function Dialog({
               accessibilityState={{ disabled: loading }}
               disabled={loading}
               onPress={onCancel}
-              style={styles.cancelButton}
+              style={withPress(styles.cancelButton)}
             >
               <Text style={styles.cancelText}>{cancelLabel}</Text>
             </Pressable>
@@ -154,11 +172,11 @@ export function Dialog({
               accessibilityState={{ disabled: loading }}
               disabled={loading}
               onPress={onConfirm}
-              style={[
+              style={withPress([
                 styles.confirmButton,
                 destructive ? styles.confirmDestructive : styles.confirmDefault,
                 loading && styles.confirmDisabled,
-              ]}
+              ])}
             >
               {loading ? (
                 <ActivityIndicator color={colors.surface} />
@@ -167,7 +185,7 @@ export function Dialog({
               )}
             </Pressable>
           </View>
-        </View>
+        </Animated.View>
       </View>
     </Modal>
   );
@@ -177,7 +195,7 @@ function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     scrim: {
       flex: 1,
-      backgroundColor: SCRIM_COLOR,
+      backgroundColor: colors.m3.scrim,
       justifyContent: "center",
       alignItems: "center",
       padding: tokens.spacing[24],
@@ -190,7 +208,7 @@ function createStyles(colors: ColorPalette) {
       padding: tokens.spacing[24],
       gap: tokens.spacing[16],
       // Elevação M3 level 3 (design-system/04-componentes/dialogo.md)
-      shadowColor: "#000",
+      shadowColor: colors.m3.shadow,
       shadowOffset: { width: 0, height: 3 },
       shadowOpacity: 0.18,
       shadowRadius: 8,
@@ -222,7 +240,7 @@ function createStyles(colors: ColorPalette) {
     cancelText: {
       color: colors.action,
       ...tokens.typography.bodyMedium,
-      fontWeight: "600",
+      fontWeight: tokens.fontWeight.semiBold,
     },
     confirmButton: {
       minHeight: tokens.accessibility.touchTarget,
@@ -244,7 +262,7 @@ function createStyles(colors: ColorPalette) {
     confirmText: {
       color: colors.surface,
       ...tokens.typography.bodyMedium,
-      fontWeight: "600",
+      fontWeight: tokens.fontWeight.semiBold,
     },
   });
 }

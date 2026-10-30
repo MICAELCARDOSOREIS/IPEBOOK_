@@ -142,9 +142,7 @@ function createStyles(colors: ColorPalette) {
     gap: tokens.spacing[16],
   },
   subtitle: {
-    fontSize: tokens.typography.bodyLarge.fontSize,
-    lineHeight: tokens.typography.bodyLarge.lineHeight,
-    fontFamily: tokens.typography.bodyLarge.fontFamily,
+    ...tokens.typography.bodyLarge,
     color: colors.secondaryText,
     marginBottom: tokens.spacing[4],
   },
@@ -160,14 +158,12 @@ function createStyles(colors: ColorPalette) {
     backgroundColor: colors.border,
   },
   dividerText: {
-    fontSize: tokens.typography.bodyMedium.fontSize,
-    fontFamily: tokens.typography.bodyMedium.fontFamily,
+    ...tokens.typography.bodyMedium,
     color: colors.secondaryText,
   },
   error: {
+    ...tokens.typography.bodyMedium,
     color: colors.error,
-    fontSize: tokens.typography.bodyMedium.fontSize,
-    fontFamily: tokens.typography.bodyMedium.fontFamily,
   },
   });
 }

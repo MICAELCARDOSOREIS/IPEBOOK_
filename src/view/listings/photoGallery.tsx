@@ -16,6 +16,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { tokens } from "@/view/tokens";
 
+import { withPress } from "@/view/pressFeedback";
 /** Uma página da galeria: se a foto não carregar, avisa em vez de deixar a tela preta. */
 function GalleryPhoto({ uri, position, width, height }: { uri: string; position: number; width: number; height: number }) {
   const [failed, setFailed] = useState(false);
@@ -107,7 +108,7 @@ export function PhotoGallery({ photos, initialIndex = 0, visible, onClose }: Pho
     <Modal visible={visible} animationType="fade" onRequestClose={onClose} transparent={false} statusBarTranslucent navigationBarTranslucent>
       <SafeAreaView style={styles.page}>
         <View style={styles.header}>
-          <Pressable accessibilityRole="button" accessibilityLabel="Fechar galeria de fotos" onPress={onClose} style={styles.closeButton}>
+          <Pressable accessibilityRole="button" accessibilityLabel="Fechar galeria de fotos" onPress={onClose} style={withPress(styles.closeButton)}>
             <Text style={styles.closeText}>Fechar</Text>
           </Pressable>
           <Text style={styles.counter}>{`Foto ${index + 1} de ${photos.length}`}</Text>
@@ -136,7 +137,7 @@ export function PhotoGallery({ photos, initialIndex = 0, visible, onClose }: Pho
             accessibilityState={{ disabled: index <= 0 }}
             disabled={index <= 0}
             onPress={() => goTo(index - 1)}
-            style={[styles.navButton, index <= 0 ? styles.navButtonDisabled : null]}
+            style={withPress([styles.navButton, index <= 0 ? styles.navButtonDisabled : null])}
           >
             <Text style={styles.navText}>‹ Anterior</Text>
           </Pressable>
@@ -146,7 +147,7 @@ export function PhotoGallery({ photos, initialIndex = 0, visible, onClose }: Pho
             accessibilityState={{ disabled: index >= photos.length - 1 }}
             disabled={index >= photos.length - 1}
             onPress={() => goTo(index + 1)}
-            style={[styles.navButton, index >= photos.length - 1 ? styles.navButtonDisabled : null]}
+            style={withPress([styles.navButton, index >= photos.length - 1 ? styles.navButtonDisabled : null])}
           >
             <Text style={styles.navText}>Próxima ›</Text>
           </Pressable>
@@ -167,13 +168,13 @@ const styles = StyleSheet.create({
     padding: tokens.spacing[16],
   },
   closeButton: { minHeight: tokens.accessibility.touchTarget, justifyContent: "center" },
-  closeText: { color: "#FFFFFF", fontWeight: "bold", fontSize: tokens.typography.bodyMedium.fontSize },
-  counter: { color: "#FFFFFF", fontSize: tokens.typography.bodyMedium.fontSize },
+  closeText: { ...tokens.typography.bodyMedium, color: "#FFFFFF", fontWeight: tokens.fontWeight.bold },
+  counter: { ...tokens.typography.bodyMedium, color: "#FFFFFF" },
   photoArea: { flex: 1 },
   photoPage: { alignItems: "center", justifyContent: "center" },
-  failedText: { color: "#FFFFFF", fontSize: tokens.typography.bodyMedium.fontSize, textAlign: "center", padding: tokens.spacing[24] },
+  failedText: { ...tokens.typography.bodyMedium, color: "#FFFFFF", textAlign: "center", padding: tokens.spacing[24] },
   navRow: { flexDirection: "row", justifyContent: "space-between", padding: tokens.spacing[16] },
   navButton: { minHeight: tokens.accessibility.touchTarget, justifyContent: "center", paddingHorizontal: tokens.spacing[12] },
   navButtonDisabled: { opacity: 0.4 },
-  navText: { color: "#FFFFFF", fontWeight: "bold", fontSize: tokens.typography.bodyMedium.fontSize },
+  navText: { ...tokens.typography.bodyMedium, color: "#FFFFFF", fontWeight: tokens.fontWeight.bold },
 });

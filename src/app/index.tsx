@@ -23,6 +23,8 @@ export default function Index() {
         onNavigateToSignIn={() => pushOnce("/entrar")}
         onNavigateToBookDetail={(bookId) => pushOnce(`/livro/${bookId}`)}
         onNavigateToNotifications={() => pushOnce("/notificacoes")}
+        onNavigateToHelp={() => pushOnce("/ajuda")}
+        onNavigateToTerms={() => pushOnce("/termos")}
         onNavigateToSearch={(filter) => {
           const params: Record<string, string> = {};
           if (filter?.modality) params.modalidade = filter.modality;

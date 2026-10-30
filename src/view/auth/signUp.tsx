@@ -198,27 +198,22 @@ function createStyles(colors: ColorPalette) {
     backgroundColor: colors.border,
   },
   dividerText: {
+    ...tokens.typography.bodyLarge,
     color: colors.secondaryText,
-    fontSize: tokens.typography.bodyLarge.fontSize,
-    fontFamily: tokens.typography.bodyLarge.fontFamily,
-    fontWeight: "600",
+    fontWeight: tokens.fontWeight.semiBold,
   },
   subtitle: {
-    fontSize: tokens.typography.bodyLarge.fontSize,
-    lineHeight: tokens.typography.bodyLarge.lineHeight,
-    fontFamily: tokens.typography.bodyLarge.fontFamily,
+    ...tokens.typography.bodyLarge,
     color: colors.secondaryText,
     marginBottom: tokens.spacing[4],
   },
   error: {
+    ...tokens.typography.bodyMedium,
     color: colors.error,
-    fontSize: tokens.typography.bodyMedium.fontSize,
-    fontFamily: tokens.typography.bodyMedium.fontFamily,
   },
   status: {
+    ...tokens.typography.bodyMedium,
     color: colors.success,
-    fontSize: tokens.typography.bodyMedium.fontSize,
-    fontFamily: tokens.typography.bodyMedium.fontFamily,
   },
   });
 }

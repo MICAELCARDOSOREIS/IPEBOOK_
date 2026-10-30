@@ -6,6 +6,7 @@ import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 
+import { withPress } from "@/view/pressFeedback";
 export type NegotiationRatingModalProps = {
   visible: boolean;
   counterpartName: string;
@@ -107,7 +108,7 @@ export function NegotiationRatingModal({
                       accessibilityState={{ checked: score === selectedScore }}
                       onPress={() => onSelectScore(score)}
                       disabled={isSubmitting}
-                      style={styles.starButton}
+                      style={withPress(styles.starButton)}
                     >
                       <Text style={[styles.starIcon, isFilled ? styles.starFilled : styles.starEmpty]}>
                         ★
@@ -161,7 +162,7 @@ function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     backdrop: {
       flex: 1,
-      backgroundColor: "rgba(0,0,0,0.5)",
+      backgroundColor: colors.m3.scrim,
       justifyContent: "center",
       alignItems: "center",
       padding: tokens.spacing[20],
@@ -201,10 +202,10 @@ function createStyles(colors: ColorPalette) {
       ...tokens.typography.bodyMedium,
       color: colors.secondaryText,
       textAlign: "center",
-      lineHeight: 22,
+      lineHeight: tokens.lineHeight[22],
     },
     counterpartBold: {
-      fontWeight: "700",
+      fontWeight: tokens.fontWeight.bold,
       color: colors.text,
     },
     starRow: {
@@ -228,10 +229,10 @@ function createStyles(colors: ColorPalette) {
       alignItems: "center",
     },
     starIcon: {
-      fontSize: 36,
+      ...tokens.typography.ratingStarInteractive,
     },
     starStatic: {
-      fontSize: 28,
+      ...tokens.typography.ratingStarStatic,
     },
     starFilled: {
       color: colors.highlight,
@@ -242,14 +243,14 @@ function createStyles(colors: ColorPalette) {
     scoreLegend: {
       ...tokens.typography.labelSmall,
       color: colors.action,
-      fontWeight: "600",
+      fontWeight: tokens.fontWeight.semiBold,
       textAlign: "center",
     },
     body: {
       ...tokens.typography.bodyMedium,
       color: colors.secondaryText,
       textAlign: "center",
-      lineHeight: 22,
+      lineHeight: tokens.lineHeight[22],
     },
     errorText: {
       ...tokens.typography.labelSmall,

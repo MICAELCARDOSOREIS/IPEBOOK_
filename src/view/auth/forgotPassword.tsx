@@ -187,21 +187,17 @@ function createStyles(colors: ColorPalette) {
     gap: tokens.spacing[16],
   },
   title: {
-    fontSize: tokens.typography.displayLarge.fontSize,
-    lineHeight: tokens.typography.displayLarge.lineHeight,
-    fontFamily: tokens.typography.displayLarge.fontFamily,
+    ...tokens.typography.displayLarge,
     color: colors.text,
   },
   subtitle: {
-    fontSize: tokens.typography.bodyLarge.fontSize,
-    lineHeight: tokens.typography.bodyLarge.lineHeight,
-    fontFamily: tokens.typography.bodyLarge.fontFamily,
+    ...tokens.typography.bodyLarge,
     color: colors.secondaryText,
   },
   emailHighlight: {
     color: colors.text,
     fontFamily: tokens.typography.bodyLarge.fontFamily,
-    fontWeight: "600",
+    fontWeight: tokens.fontWeight.semiBold,
   },
   resultBox: {
     backgroundColor: colors.m3.surfaceContainerHigh,
@@ -210,34 +206,26 @@ function createStyles(colors: ColorPalette) {
     gap: tokens.spacing[4],
   },
   resultLabel: {
+    ...tokens.typography.titleMedium,
     color: colors.text,
-    fontSize: tokens.typography.titleMedium.fontSize,
-    lineHeight: tokens.typography.titleMedium.lineHeight,
-    fontFamily: tokens.typography.titleMedium.fontFamily,
-    fontWeight: tokens.typography.titleMedium.fontWeight,
   },
   resultHint: {
+    ...tokens.typography.bodyMedium,
     color: colors.secondaryText,
-    fontSize: tokens.typography.bodyMedium.fontSize,
-    lineHeight: tokens.typography.bodyMedium.lineHeight,
-    fontFamily: tokens.typography.bodyMedium.fontFamily,
   },
   countdown: {
+    ...tokens.typography.bodyMedium,
     textAlign: "center",
     color: colors.secondaryText,
-    fontSize: tokens.typography.bodyMedium.fontSize,
-    fontFamily: tokens.typography.bodyMedium.fontFamily,
   },
   footnote: {
+    ...tokens.typography.bodyMedium,
     textAlign: "center",
     color: colors.secondaryText,
-    fontSize: tokens.typography.bodyMedium.fontSize,
-    fontFamily: tokens.typography.bodyMedium.fontFamily,
   },
   error: {
+    ...tokens.typography.bodyMedium,
     color: colors.error,
-    fontSize: tokens.typography.bodyMedium.fontSize,
-    fontFamily: tokens.typography.bodyMedium.fontFamily,
   },
   });
 }

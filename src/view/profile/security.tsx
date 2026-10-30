@@ -88,8 +88,8 @@ function createStyles(colors: ColorPalette) {
     color: colors.text,
   },
   bodyText: { ...tokens.typography.bodyMedium, color: colors.text },
-  highlight: { fontWeight: "700", color: colors.action },
-  successText: { ...tokens.typography.bodyMedium, color: colors.action, fontWeight: "600" },
+  highlight: { fontWeight: tokens.fontWeight.bold, color: colors.action },
+  successText: { ...tokens.typography.bodyMedium, color: colors.action, fontWeight: tokens.fontWeight.semiBold },
   errorText: { ...tokens.typography.bodyMedium, color: colors.error },
   });
 }

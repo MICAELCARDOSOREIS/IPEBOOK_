@@ -15,6 +15,7 @@ import { AppIcon } from "@/view/components/AppIcon";
 import { FilledButton } from "@/view/components/FilledButton";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
 
+import { withPress } from "@/view/pressFeedback";
 export type BarcodeScannerModalProps = {
   visible: boolean;
   onClose: () => void;
@@ -75,7 +76,7 @@ export function BarcodeScannerModal({
             accessibilityLabel="Fechar leitor de código de barras"
             onPress={onClose}
             hitSlop={12}
-            style={styles.closeButton}
+            style={withPress(styles.closeButton)}
           >
             <AppIcon name="close" size={24} color={colors.text} />
           </Pressable>

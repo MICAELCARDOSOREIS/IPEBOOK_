@@ -12,6 +12,7 @@ import { AboutSections } from "@/view/onboarding/aboutSections";
 import { ThemeToggleButton } from "@/view/components/ThemeToggleButton";
 import illustration from "./ilustracao-classicos.png";
 
+import { withPress } from "@/view/pressFeedback";
 export type WelcomeProps = {
   onStart: () => void;
   onSignIn: () => void;
@@ -53,7 +54,7 @@ export default function Welcome({ onStart, onSignIn, onHelp, onTerms, betaInvite
               </Pressable>
             )}
             {betaInvite ? <ThemeToggleButton /> : null}
-            <Pressable accessibilityRole="button" accessibilityLabel={labels.header} onPress={onStart} style={styles.wideCta}>
+            <Pressable accessibilityRole="button" accessibilityLabel={labels.header} onPress={onStart} style={withPress(styles.wideCta)}>
               <Text style={styles.wideCtaText}>{labels.header}</Text>
             </Pressable>
           </View>
@@ -73,11 +74,11 @@ export default function Welcome({ onStart, onSignIn, onHelp, onTerms, betaInvite
               Encontre, troque, venda ou doe livros com quem mora perto de você. Sem taxas e com encontro em local público.
             </Text>
             <View style={styles.wideActions}>
-              <Pressable accessibilityRole="button" accessibilityLabel={labels.start} onPress={onStart} style={styles.wideCta}>
+              <Pressable accessibilityRole="button" accessibilityLabel={labels.start} onPress={onStart} style={withPress(styles.wideCta)}>
                 <Text style={styles.wideCtaText}>{labels.start}</Text>
               </Pressable>
               {betaInvite ? null : (
-                <Pressable accessibilityRole="button" accessibilityLabel={labels.signIn} onPress={onSignIn} style={styles.wideOutlined}>
+                <Pressable accessibilityRole="button" accessibilityLabel={labels.signIn} onPress={onSignIn} style={withPress(styles.wideOutlined)}>
                   <Text style={styles.wideOutlinedText}>{labels.signIn}</Text>
                 </Pressable>
               )}
@@ -157,24 +158,24 @@ export default function Welcome({ onStart, onSignIn, onHelp, onTerms, betaInvite
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
   wideRoot: { flex: 1, backgroundColor: colors.background },
-  wideContent: { width: "100%", paddingHorizontal: 64, paddingTop: 16, paddingBottom: 32, gap: 64 },
+  wideContent: { width: "100%", paddingHorizontal: tokens.spacing[64], paddingTop: tokens.spacing[16], paddingBottom: tokens.spacing[32], gap: tokens.spacing[64] },
   wideHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", minHeight: 56, width: "100%" },
-  wideHeaderActions: { flexDirection: "row", alignItems: "center", gap: 24 },
+  wideHeaderActions: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[24] },
   wideLink: { ...tokens.typography.labelLarge, color: colors.m3.primary },
-  wideCta: { height: 52, paddingHorizontal: 32, borderRadius: tokens.radius.full, alignItems: "center", justifyContent: "center", backgroundColor: colors.m3.primary },
+  wideCta: { height: 52, paddingHorizontal: tokens.spacing[32], borderRadius: tokens.radius.full, alignItems: "center", justifyContent: "center", backgroundColor: colors.m3.primary },
   wideCtaText: { ...tokens.typography.labelLarge, color: colors.m3.onPrimary },
-  wideOutlined: { height: 52, paddingHorizontal: 32, borderRadius: tokens.radius.full, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: colors.m3.outline },
+  wideOutlined: { height: 52, paddingHorizontal: tokens.spacing[32], borderRadius: tokens.radius.full, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: colors.m3.outline },
   wideOutlinedText: { ...tokens.typography.labelLarge, color: colors.m3.primary },
-  wideHero: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 64, width: "100%" },
-  wideHeroText: { flex: 1.2, gap: 24, alignItems: "flex-start" },
-  wideTitle: { fontFamily: fontFamily.brand, fontSize: 56, lineHeight: 64, color: colors.m3.onSurface },
-  wideLead: { ...tokens.typography.bodyLarge, fontSize: 19, lineHeight: 30, color: colors.m3.onSurfaceVariant, maxWidth: 640 },
-  wideActions: { flexDirection: "row", gap: 16 },
-  widePanel: { flex: 1, maxWidth: 640, height: 420, borderRadius: 28, alignItems: "center", justifyContent: "center", backgroundColor: colors.m3.primaryContainer },
+  wideHero: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: tokens.spacing[64], width: "100%" },
+  wideHeroText: { flex: 1.2, gap: tokens.spacing[24], alignItems: "flex-start" },
+  wideTitle: { ...tokens.typography.brandHero, color: colors.m3.onSurface },
+  wideLead: { ...tokens.typography.webLead, color: colors.m3.onSurfaceVariant, maxWidth: 640 },
+  wideActions: { flexDirection: "row", gap: tokens.spacing[16] },
+  widePanel: { flex: 1, maxWidth: 640, height: 420, borderRadius: tokens.radius.xxl, alignItems: "center", justifyContent: "center", backgroundColor: colors.m3.primaryContainer },
   wideIllustration: { width: "90%", height: "90%" },
-  wideCards: { flexDirection: "row", gap: 24 },
-  wideCard: { flex: 1, gap: 8, padding: 24, borderRadius: tokens.radius.large },
-  wideCardTitle: { fontFamily: fontFamily.medium, fontSize: 20, lineHeight: 28, fontWeight: "600" },
+  wideCards: { flexDirection: "row", gap: tokens.spacing[24] },
+  wideCard: { flex: 1, gap: tokens.spacing[8], padding: tokens.spacing[24], borderRadius: tokens.radius.large },
+  wideCardTitle: { ...tokens.typography.titleBlock },
   wideCardText: { ...tokens.typography.bodyLarge },
   wideFooter: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
   header: {
@@ -203,9 +204,7 @@ function createStyles(colors: ColorPalette) {
     color: colors.m3.onSurfaceVariant,
   },
   title: {
-    fontFamily: fontFamily.brand,
-    fontSize: tokens.typography.displayLarge.fontSize,
-    lineHeight: tokens.typography.displayLarge.lineHeight,
+    ...tokens.typography.displayLarge,
     color: colors.m3.onSurface,
   },
   highlight: {

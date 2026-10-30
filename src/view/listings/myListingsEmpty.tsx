@@ -1,10 +1,11 @@
 import { useMemo } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { tokens, fontFamily, type ColorPalette } from "@/view/tokens";
+import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { FilledButton } from "@/view/components/FilledButton";
 import { AppIcon } from "@/view/components/AppIcon";
 
+import { withPress } from "@/view/pressFeedback";
 export type MyListingsEmptyProps = {
   onNavigateToCreateListing?: () => void;
   onNavigateToHelp?: () => void;
@@ -41,7 +42,7 @@ export function MyListingsEmpty({
           accessibilityRole="button"
           accessibilityLabel="Como funciona"
           onPress={onNavigateToHelp}
-          style={styles.howItWorksButton}
+          style={withPress(styles.howItWorksButton)}
         >
           <Text style={styles.howItWorksText}>Como funciona</Text>
         </Pressable>
@@ -61,16 +62,14 @@ function createStyles(colors: ColorPalette) {
     emptyIconContainer: {
       width: 96,
       height: 96,
-      borderRadius: 48,
+      borderRadius: tokens.radius.circle96,
       backgroundColor: colors.m3.secondaryContainer,
       justifyContent: "center",
       alignItems: "center",
       marginBottom: tokens.spacing[8],
     },
     emptyHeadline: {
-      fontFamily: fontFamily.brand,
-      fontSize: 24,
-      lineHeight: 30,
+      ...tokens.typography.brandTitle,
       color: colors.text,
       textAlign: "center",
     },
@@ -88,9 +87,9 @@ function createStyles(colors: ColorPalette) {
       paddingHorizontal: tokens.spacing[16],
     },
     howItWorksText: {
-      ...tokens.typography.labelMedium,
+      ...tokens.typography.labelLarge,
       color: colors.action,
-      fontWeight: "600",
+      fontWeight: tokens.fontWeight.semiBold,
     },
     emptyAction: { marginTop: tokens.spacing[16], width: "100%", maxWidth: 320 },
   });

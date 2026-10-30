@@ -1,6 +1,6 @@
 import { useMemo, type ReactNode } from "react";
 import { Image, StyleSheet, Text, View } from "react-native";
-import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
+import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import authLivros from "@/view/assets/auth-livros.png";
@@ -49,17 +49,17 @@ function createStyles(colors: ColorPalette) {
       width: 640,
       maxWidth: "45%",
       gap: tokens.spacing[24],
-      paddingTop: 96,
-      paddingHorizontal: 80,
+      paddingTop: tokens.spacing[96],
+      paddingHorizontal: tokens.spacing[80],
       backgroundColor: colors.m3.secondaryContainer,
     },
-    brand: { fontFamily: fontFamily.brand, fontSize: 24, letterSpacing: -0.48, color: colors.brandBrown },
-    headline: { fontFamily: fontFamily.brand, fontSize: 36, lineHeight: 41, color: colors.m3.onSecondaryContainer },
-    lead: { ...tokens.typography.bodyLarge, fontSize: 19, lineHeight: 30, color: colors.m3.onSecondaryContainer },
+    brand: { ...tokens.typography.brandTitle, letterSpacing: tokens.letterSpacing.brandTight, color: colors.brandBrown },
+    headline: { ...tokens.typography.brandDisplayMd, color: colors.m3.onSecondaryContainer },
+    lead: { ...tokens.typography.webLead, color: colors.m3.onSecondaryContainer },
     covers: {
       height: 360,
       maxWidth: 480,
-      borderRadius: 28,
+      borderRadius: tokens.radius.xxl,
       backgroundColor: colors.m3.primaryContainer,
       alignItems: "center",
       justifyContent: "center",

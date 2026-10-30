@@ -4,6 +4,7 @@ import { AppIcon } from "@/view/components/AppIcon";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 
+import { withPress } from "@/view/pressFeedback";
 export type OfflineStateProps = {
   onRetry: () => void;
   message?: string;
@@ -29,7 +30,7 @@ export function OfflineState({
         <AppIcon name="wifiOff" color={colors.secondaryText} />
         <Text accessibilityRole="alert" style={styles.message}>{message}</Text>
       </View>
-      <Pressable accessibilityRole="button" onPress={onRetry} style={styles.retry}>
+      <Pressable accessibilityRole="button" onPress={onRetry} style={withPress(styles.retry)}>
         <Text style={styles.retryText}>{retryLabel}</Text>
       </Pressable>
     </View>
@@ -64,7 +65,7 @@ function createStyles(colors: ColorPalette) {
     retryText: {
       ...tokens.typography.bodyMedium,
       color: colors.action,
-      fontWeight: "600",
+      fontWeight: tokens.fontWeight.semiBold,
     },
   });
 }

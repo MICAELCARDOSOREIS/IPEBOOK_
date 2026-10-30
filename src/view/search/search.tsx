@@ -28,6 +28,7 @@ import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
 import { useActiveNeighborhood } from "@/viewmodel/useActiveNeighborhood";
 import { WEB_MAX_WIDTH, useWebGridColumns } from "@/view/webLayout";
 
+import { withPress } from "@/view/pressFeedback";
 export type SearchProps = {
   currentNeighborhood?: string;
   onSelectNeighborhood?: () => void;
@@ -119,7 +120,7 @@ export default function Search({
           accessibilityRole="button"
           accessibilityLabel={`Selecionar bairro: ${displayNeighborhood}`}
           onPress={handleSelectNeighborhood}
-          style={styles.neighborhoodPill}
+          style={withPress(styles.neighborhoodPill)}
         >
           <AppIcon name="place" size={20} color={colors.m3.primary} />
           <Text style={styles.neighborhoodText}>{displayNeighborhood}</Text>
@@ -132,7 +133,7 @@ export default function Search({
               accessibilityRole="button"
               accessibilityLabel="Limpar todos os filtros de busca"
               onPress={actions.resetFilters}
-              style={styles.clearFiltersButton}
+              style={withPress(styles.clearFiltersButton)}
             >
               <Text style={styles.clearFiltersText}>Limpar filtros</Text>
             </Pressable>
@@ -148,7 +149,7 @@ export default function Search({
               actions.openFilterDraft();
               setShowFilterSheet(true);
             }}
-            style={styles.tuneButton}
+            style={withPress(styles.tuneButton)}
           >
             <AppIcon name="tune" size={24} color={colors.m3.onSurfaceVariant} />
             {state.activeFilterCount > 0 ? (
@@ -214,7 +215,7 @@ export default function Search({
               accessibilityLabel={`Remover filtro ${filter.label}`}
               hitSlop={8}
               onPress={() => actions.removeActiveFilter(filter.key)}
-              style={styles.activeFilterChip}
+              style={withPress(styles.activeFilterChip)}
             >
               <Text style={styles.activeFilterText}>{filter.label}</Text>
               <AppIcon name="close" size={16} color={colors.m3.onSecondaryContainer} />
@@ -231,7 +232,7 @@ export default function Search({
             accessibilityRole="button"
             accessibilityLabel={`Ordenar por ${SORT_LABELS[state.sortBy]}`}
             onPress={() => setShowSortSheet(true)}
-            style={styles.sortButton}
+            style={withPress(styles.sortButton)}
           >
             <Text style={styles.sortText}>{SORT_LABELS[state.sortBy]}</Text>
             <AppIcon name="chevronDown" size={16} color={colors.m3.primary} />
@@ -249,7 +250,7 @@ export default function Search({
           </View>
           <View style={styles.historyChips}>
             {state.history.map((item) => (
-              <Pressable key={item} accessibilityRole="button" accessibilityLabel={`Buscar novamente por ${item}`} onPress={() => actions.setTerm(item)} style={styles.historyChip}>
+              <Pressable key={item} accessibilityRole="button" accessibilityLabel={`Buscar novamente por ${item}`} onPress={() => actions.setTerm(item)} style={withPress(styles.historyChip)}>
                 <Text style={styles.historyChipText}>{item}</Text>
               </Pressable>
             ))}
@@ -305,7 +306,7 @@ export default function Search({
           accessibilityRole="button"
           accessibilityLabel="Ver em toda Piripiri"
           onPress={() => handleSelectNeighborhoodOption("Todos os bairros (Piripiri)")}
-          style={styles.emptyActionButton}
+          style={withPress(styles.emptyActionButton)}
         >
           <Text style={styles.emptyActionText}>Ver em toda Piripiri</Text>
         </Pressable>
@@ -315,7 +316,7 @@ export default function Search({
           accessibilityRole="button"
           accessibilityLabel="Limpar filtros e buscar novamente"
           onPress={actions.clearFilters}
-          style={styles.emptyActionButton}
+          style={withPress(styles.emptyActionButton)}
         >
           <Text style={styles.emptyActionText}>Limpar filtros</Text>
         </Pressable>
@@ -365,7 +366,7 @@ export default function Search({
                 accessibilityRole="button"
                 accessibilityLabel="Criar alerta de busca"
                 onPress={() => onNavigateToAlerts?.(state.term.trim())}
-                style={styles.alertCardButton}
+                style={withPress(styles.alertCardButton)}
               >
                 <Text style={styles.alertCardButtonText}>Criar alerta</Text>
               </Pressable>
@@ -386,7 +387,11 @@ export default function Search({
                 accessibilityRole="button"
                 accessibilityLabel={`Ver detalhe de ${item.title}, ${item.author}${item.neighborhood ? ` em ${item.neighborhood}` : ""}`}
                 onPress={() => { void actions.registerSearch(state.term); onNavigateToBookDetail?.(item.id); }}
-                style={[styles.cardMain, wideWeb && styles.cardMainWide]}
+                style={({ pressed }) => [
+                  styles.cardMain,
+                  wideWeb && styles.cardMainWide,
+                  pressed && styles.cardMainPressed,
+                ]}
               >
                 <ModalityCoverArea modality={item.modality}>
                   <BookCover id={item.id} title={item.title} photoUrl={item.photoUrl} variant={wideWeb ? "card" : "list"} />
@@ -414,7 +419,7 @@ export default function Search({
                   accessibilityRole="button"
                   accessibilityLabel={`Abrir ${item.title}`}
                   onPress={() => { void actions.registerSearch(state.term); onNavigateToBookDetail?.(item.id); }}
-                  style={styles.chevronButton}
+                  style={withPress(styles.chevronButton)}
                 >
                   <AppIcon name="chevronRight" size={24} color={colors.m3.onSurfaceVariant} />
                 </Pressable>
@@ -464,15 +469,15 @@ function createStyles(colors: ColorPalette) {
     page: { flex: 1, backgroundColor: colors.background },
     flexOne: { flex: 1 },
     // Web larga (Figma `34:229`): filtros fixos à esquerda e resultados em grade de 4 colunas.
-    wideRow: { flex: 1, flexDirection: "row", gap: 24, width: "100%", maxWidth: WEB_MAX_WIDTH, alignSelf: "center", paddingHorizontal: 80, paddingTop: 32 },
-    contentWide: { flexGrow: 1, paddingBottom: tokens.spacing[32], gap: 24 },
-    gridRow: { gap: 24 },
-    cardMainWide: { flexDirection: "column", alignItems: "stretch", gap: 8 },
+    wideRow: { flex: 1, flexDirection: "row", gap: tokens.spacing[24], width: "100%", maxWidth: WEB_MAX_WIDTH, alignSelf: "center", paddingHorizontal: tokens.spacing[80], paddingTop: tokens.spacing[32] },
+    contentWide: { flexGrow: 1, paddingBottom: tokens.spacing[32], gap: tokens.spacing[24] },
+    gridRow: { gap: tokens.spacing[24] },
+    cardMainWide: { flexDirection: "column", alignItems: "stretch", gap: tokens.spacing[8] },
     // Na grade, o texto começa logo abaixo da capa para os títulos ficarem alinhados entre colunas.
     cardInfoWide: { justifyContent: "flex-start" },
-    cardMetaRowWide: { flexWrap: "wrap", rowGap: 4 },
+    cardMetaRowWide: { flexWrap: "wrap", rowGap: tokens.spacing[4] },
     cardActionsWide: { position: "absolute", top: 8, right: 8, width: 48 },
-    cardWide: { alignItems: "stretch", paddingLeft: 12, paddingRight: 12, marginBottom: 0, flex: 1, flexDirection: "column", maxWidth: "25%", borderRadius: 20, backgroundColor: colors.m3.surfaceContainerLowest },
+    cardWide: { alignItems: "stretch", paddingLeft: tokens.spacing[12], paddingRight: tokens.spacing[12], marginBottom: 0, flex: 1, flexDirection: "column", maxWidth: "25%", borderRadius: tokens.radius.xl, backgroundColor: colors.m3.surfaceContainerLowest },
     content: {
       flexGrow: 1,
       width: "100%",
@@ -491,7 +496,7 @@ function createStyles(colors: ColorPalette) {
     neighborhoodPill: {
       flexDirection: "row",
       alignItems: "center",
-      gap: 6,
+      gap: tokens.spacing[6],
       backgroundColor: colors.m3.surfaceContainerHigh,
       paddingLeft: tokens.spacing[12],
       paddingRight: tokens.spacing[8],
@@ -501,7 +506,7 @@ function createStyles(colors: ColorPalette) {
     neighborhoodText: {
       ...tokens.typography.labelMedium,
       color: colors.text,
-      fontWeight: "500",
+      fontWeight: tokens.fontWeight.medium,
     },
     topRightActions: {
       flexDirection: "row",
@@ -511,7 +516,7 @@ function createStyles(colors: ColorPalette) {
     tuneButton: {
       width: 48,
       height: 48,
-      borderRadius: 24,
+      borderRadius: tokens.radius.extraLarge,
       justifyContent: "center",
       alignItems: "center",
     },
@@ -522,17 +527,16 @@ function createStyles(colors: ColorPalette) {
       right: 6,
       minWidth: 18,
       height: 18,
-      paddingHorizontal: 4,
+      paddingHorizontal: tokens.spacing[4],
       borderRadius: tokens.radius.full,
       backgroundColor: colors.m3.primary,
       alignItems: "center",
       justifyContent: "center",
     },
     tuneBadgeText: {
-      color: colors.m3.onPrimary,
-      fontSize: 11,
-      lineHeight: 14,
+      ...tokens.typography.captionSmall,
       fontFamily: fontFamily.semiBold,
+      color: colors.m3.onPrimary,
     },
     heroSection: {
       gap: tokens.spacing[6],
@@ -540,29 +544,30 @@ function createStyles(colors: ColorPalette) {
       marginBottom: tokens.spacing[4],
     },
     heading: {
-      fontFamily: fontFamily.brand,
-      fontSize: 28,
-      lineHeight: 34,
+      ...tokens.typography.brandLargeTitle,
       color: colors.brandBrown,
-      letterSpacing: -0.5,
+      letterSpacing: tokens.letterSpacing.brandTighter,
     },
     subtitle: {
-      fontSize: 14,
-      lineHeight: 20,
-      color: colors.secondaryText,
+      ...tokens.typography.bodyLarge,
+      color: colors.m3.onSurfaceVariant,
     },
     quickCategoriesScroll: {
       flexDirection: "row",
       alignItems: "center",
       gap: tokens.spacing[8],
-      paddingVertical: 2,
+      paddingVertical: tokens.spacing[2],
     },
     clearFiltersButton: {
       minHeight: tokens.accessibility.touchTarget,
       justifyContent: "center",
       paddingHorizontal: tokens.spacing[8],
     },
-    clearFiltersText: { color: colors.action, fontSize: tokens.typography.bodyMedium.fontSize, fontWeight: "600" },
+    clearFiltersText: {
+      ...tokens.typography.bodyMedium,
+      color: colors.action,
+      fontWeight: tokens.fontWeight.semiBold,
+    },
     // Chip removível de filtro aplicado (Figma `02.04`): verde `secondaryContainer` com ✕.
     activeFiltersRow: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[8] },
     activeFilterChip: {
@@ -571,7 +576,7 @@ function createStyles(colors: ColorPalette) {
       gap: tokens.spacing[6],
       height: tokens.spacing[32],
       paddingHorizontal: tokens.spacing[12],
-      borderRadius: tokens.radius.small,
+      borderRadius: tokens.shapeMorph.chipSelected,
       backgroundColor: colors.m3.secondaryContainer,
     },
     activeFilterText: { ...tokens.typography.labelLarge, color: colors.m3.onSecondaryContainer },
@@ -586,22 +591,22 @@ function createStyles(colors: ColorPalette) {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "flex-end",
-      gap: 2,
+      gap: tokens.spacing[2],
       minHeight: tokens.accessibility.touchTarget,
       paddingLeft: tokens.spacing[8],
     },
     sortText: { ...tokens.typography.labelLarge, color: colors.m3.primary },
-    body: { fontSize: tokens.typography.bodyLarge.fontSize, lineHeight: 25, color: colors.secondaryText },
+    body: { ...tokens.typography.bodyLarge, lineHeight: tokens.lineHeight[25], color: colors.secondaryText },
     empty: { alignItems: "center", paddingTop: tokens.spacing[32], gap: tokens.spacing[8] },
-    emptyWide: { width: "100%", paddingVertical: 48, paddingHorizontal: 48, borderRadius: 28, backgroundColor: colors.m3.surfaceContainerLow, gap: 16 },
-    emptyIcon: { width: 64, height: 64, borderRadius: 32, alignItems: "center", justifyContent: "center", backgroundColor: colors.m3.secondaryContainer },
-    alertCard: { flexDirection: "row", alignItems: "center", gap: 16, paddingHorizontal: 24, paddingVertical: 20, borderRadius: tokens.radius.large, backgroundColor: colors.m3.tertiaryContainer },
-    alertCardText: { flex: 1, gap: 2 },
-    alertCardTitle: { fontFamily: tokens.typography.labelLarge.fontFamily, fontSize: 20, lineHeight: 28, fontWeight: "600", color: colors.m3.onTertiaryContainer },
+    emptyWide: { width: "100%", paddingVertical: tokens.spacing[48], paddingHorizontal: tokens.spacing[48], borderRadius: tokens.radius.xxl, backgroundColor: colors.m3.surfaceContainerLow, gap: tokens.spacing[16] },
+    emptyIcon: { width: 64, height: 64, borderRadius: tokens.radius.circle64, alignItems: "center", justifyContent: "center", backgroundColor: colors.m3.secondaryContainer },
+    alertCard: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[16], paddingHorizontal: tokens.spacing[24], paddingVertical: tokens.spacing[20], borderRadius: tokens.radius.large, backgroundColor: colors.m3.tertiaryContainer },
+    alertCardText: { flex: 1, gap: tokens.spacing[2] },
+    alertCardTitle: { ...tokens.typography.titleBlock, color: colors.m3.onTertiaryContainer },
     alertCardBody: { ...tokens.typography.bodyLarge, color: colors.m3.onTertiaryContainer },
     alertCardButton: { height: 52, minWidth: 180, alignItems: "center", justifyContent: "center", borderRadius: tokens.radius.full, backgroundColor: colors.m3.primary },
     alertCardButtonText: { ...tokens.typography.labelLarge, color: colors.m3.onPrimary },
-    emptyTitle: { fontSize: 19, fontWeight: "600", color: colors.action },
+    emptyTitle: { ...tokens.typography.brandCardTitle, color: colors.action },
     emptyActionButton: {
       minHeight: tokens.accessibility.touchTarget,
       justifyContent: "center",
@@ -610,11 +615,11 @@ function createStyles(colors: ColorPalette) {
       borderRadius: tokens.radius.small,
       paddingHorizontal: tokens.spacing[16],
     },
-    emptyActionText: { color: colors.action, fontWeight: "600", fontSize: 15 },
-    alertLink: { color: colors.action, fontWeight: "600", padding: tokens.spacing[12] },
+    emptyActionText: { ...tokens.typography.subheadline, color: colors.action, fontWeight: tokens.fontWeight.semiBold },
+    alertLink: { color: colors.action, fontWeight: tokens.fontWeight.semiBold, padding: tokens.spacing[12] },
     historySection: { gap: tokens.spacing[8] },
     historyHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-    historyTitle: { fontSize: tokens.typography.labelMedium.fontSize, fontWeight: "600", color: colors.secondaryText },
+    historyTitle: { ...tokens.typography.labelMedium, fontWeight: tokens.fontWeight.semiBold, color: colors.secondaryText },
     historyChips: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[8] },
     historyChip: {
       minHeight: tokens.accessibility.touchTarget,
@@ -623,7 +628,7 @@ function createStyles(colors: ColorPalette) {
       backgroundColor: colors.soft,
       paddingHorizontal: tokens.spacing[16],
     },
-    historyChipText: { color: colors.text, fontSize: tokens.typography.bodyLarge.fontSize },
+    historyChipText: { ...tokens.typography.bodyLarge, color: colors.text },
 
     // Card de Livro (Figma 02.02 · Explorar nós 137:2471 a 137:2490)
     // Figma: sem borda, background branco (#FFF), sombra dupla elevation level1
@@ -631,23 +636,26 @@ function createStyles(colors: ColorPalette) {
       flexDirection: "row",
       alignItems: "center",
       backgroundColor: colors.m3.surfaceContainerLowest,
-      borderRadius: 16,
+      borderRadius: tokens.radius.card,
       paddingLeft: tokens.spacing[12],
       paddingRight: tokens.spacing[4],
       paddingVertical: tokens.spacing[12],
       marginBottom: tokens.spacing[12],
       elevation: 2,
-      shadowColor: "#000",
+      shadowColor: colors.m3.shadow,
       shadowOffset: { width: 0, height: 1 },
       shadowOpacity: 0.22,
       shadowRadius: 3,
-      gap: 14,
+      gap: tokens.spacing[14],
     },
     cardMain: {
       flex: 1,
       flexDirection: "row",
       alignItems: "center",
-      gap: 14,
+      gap: tokens.spacing[14],
+    },
+    cardMainPressed: {
+      transform: [{ scale: 0.985 }],
     },
     cardInfo: {
       flex: 1,
@@ -655,14 +663,11 @@ function createStyles(colors: ColorPalette) {
       justifyContent: "center",
     },
     cardTitle: {
-      fontFamily: fontFamily.brand,
-      fontSize: 19,
-      lineHeight: 24,
+      ...tokens.typography.brandCardTitle,
       color: colors.text,
     },
     cardAuthor: {
-      fontSize: 14,
-      lineHeight: 20,
+      ...tokens.typography.bodyMedium,
       color: colors.secondaryText,
     },
     cardMetaRow: {
@@ -674,7 +679,7 @@ function createStyles(colors: ColorPalette) {
     cardLocationBadge: {
       flexDirection: "row",
       alignItems: "center",
-      gap: 2,
+      gap: tokens.spacing[2],
     },
     cardLocationText: {
       ...tokens.typography.labelSmall,
@@ -682,23 +687,21 @@ function createStyles(colors: ColorPalette) {
       color: colors.m3.onSurfaceVariant,
     },
     priceText: {
-      fontSize: 14,
-      lineHeight: 20,
-      fontWeight: "500",
+      ...tokens.typography.labelLarge,
       color: colors.text,
     },
     cardActions: {
       flexDirection: "column",
       alignItems: "center",
       justifyContent: "center",
-      width: 48,
+      width: tokens.accessibility.touchTarget,
     },
     chevronButton: {
-      width: 48,
-      height: 48,
+      width: tokens.accessibility.touchTarget,
+      height: tokens.accessibility.touchTarget,
       alignItems: "center",
       justifyContent: "center",
     },
-    categoryBadge: { fontSize: tokens.typography.labelSmall.fontSize, color: colors.secondaryText, fontStyle: "italic" },
+    categoryBadge: { ...tokens.typography.labelSmall, color: colors.secondaryText, fontStyle: "italic" },
   });
 }

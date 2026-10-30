@@ -6,15 +6,15 @@ Branch: `develop` | Data: 2026-10-26 | Especificação: [spec.md](spec.md) | Pla
 - [x] **T02**: Criar a rota de navegação `src/app/perfil/configuracoes.tsx` integrando a tela de configurações com `router.back()` (FR-002).
 - [x] **T03**: Adicionar a entrada "Configurações" na seção Conta do `ProfileHub` (`src/view/profile/profileHub.tsx`) com ícone `settings`, rótulo acessível e prop `onNavigateToSettings`, removendo o seletor avulso duplicado de Meu perfil (FR-001, FR-009).
 - [x] **T04**: Conectar a navegação para `/perfil/configuracoes` no roteador do perfil (`src/app/perfil.tsx`).
-- [x] **T05**: Garantir coerência visual do tema com a moldura do sistema configurando `"userInterfaceStyle": "automatic"` em `app.json` e `<StatusBar style="auto" />` em `src/app/_layout.tsx` (FR-007, FR-008).
-- [x] **T06**: Criar a suíte de testes de componente `tests/components/settingsView.test.tsx` validando renderização do título "Configurações", acionamento do botão voltar (`onBack`), presença da seção "Aparência" com radiogroup acessível e opções de tema (SC-001, SC-002, SC-003).
-- [x] **T07**: Atualizar a suíte de testes `tests/components/profileHubView.test.tsx` para verificar o item "Configurações" (label e descrição) e a chamada de `onNavigateToSettings`.
+- [x] **T05**: Garantir coerência visual do tema com a moldura do sistema configurando `"userInterfaceStyle": "automatic"` em `app.json` e `ThemedStatusBar` (`<StatusBar style={resolvedScheme === "dark" ? "light" : "dark"} />`) em `src/app/_layout.tsx` (FR-007, FR-008).
+- [x] **T06** [P]: Criar a suíte de testes de componente `tests/components/settingsView.test.tsx` validando renderização do título "Configurações", acionamento do botão voltar (`onBack`), presença da seção "Aparência" com radiogroup acessível e opções de tema (SC-001, SC-002, SC-003).
+- [x] **T07** [P]: Atualizar a suíte de testes `tests/components/profileHubView.test.tsx` para verificar o item "Configurações" (label e descrição) e a chamada de `onNavigateToSettings`.
 - [x] **T08**: Executar as suítes de testes (`tests/components/profileHubView.test.tsx`, `tests/components/settingsView.test.tsx`, `tests/components/themePreferenceSelector.test.tsx`), verificar a tipagem (`npm run typecheck`) e a conformidade arquitetural (`npm run check:architecture`) (SC-006).
 
 ## Continuação — hub de preferências do dispositivo (ADR 0058, US4)
 
-- [x] **T09**: Criar contrato `ILocalCacheDataSource` (`src/model/datasources/iLocalCacheDataSource.ts`), adaptadores AsyncStorage/Memória reutilizando `BOOKS_LIST_CACHE_KEY` exportada de `cachedBookDataSource.ts`, e `LocalCacheUseCases` com registro em `src/di/container.ts` (FR-012, ADR 0027).
-- [x] **T10**: Criar `useSettingsViewModel` (`src/viewmodel/useSettingsViewModel.ts`) com estados `clearingCache`/`cacheCleared`/`cacheError` e mensagem amigável sem detalhes técnicos (FR-013).
+- [x] **T09** [P]: Criar contrato `ILocalCacheDataSource` (`src/model/datasources/iLocalCacheDataSource.ts`), adaptadores AsyncStorage/Memória reutilizando `BOOKS_LIST_CACHE_KEY` exportada de `cachedBookDataSource.ts`, e `LocalCacheUseCases` com registro em `src/di/container.ts` (FR-012, ADR 0027).
+- [x] **T10** [P]: Criar `useSettingsViewModel` (`src/viewmodel/useSettingsViewModel.ts`) com estados `clearingCache`/`cacheCleared`/`cacheError` e mensagem amigável sem detalhes técnicos (FR-013).
 - [x] **T11**: Expandir a tela Configurações (`src/view/profile/settings.tsx`) com as seções "Dados neste dispositivo" (botão `OutlinedButton` + regiões vivas de sucesso/erro) e "Sobre o IpêBook" (versão via `expo-constants` e atalhos condicionais), ligados na rota `src/app/perfil/configuracoes.tsx` (FR-014, FR-015, US4).
 - [x] **T12**: Testes da continuação: `tests/unit/localCacheUseCases.test.ts`, `tests/unit/asyncStorageLocalCacheDataSource.test.ts`, `tests/hooks/useSettingsViewModel.test.tsx` e novos casos em `tests/components/settingsView.test.tsx`; mock/alias `expo-constants` no Vitest (`tests/mocks/expo-constants.ts`).
 

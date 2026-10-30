@@ -11,6 +11,7 @@ import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { WEB_MAX_WIDTH, WEB_GUTTER, useWebColumns, webColumnWidth } from "@/view/webLayout";
 
+import { withPress } from "@/view/pressFeedback";
 export type HelpAndFaqProps = {
   onBack: () => void;
   /** Abre as negociações em andamento, como o botão "Abrir conversas" do Figma `09.01`. */
@@ -97,7 +98,7 @@ export default function HelpAndFaq({ onBack, onOpenConversations }: HelpAndFaqPr
                   accessibilityRole="button"
                   accessibilityLabel={`Filtrar por ${cat.label}`}
                   onPress={() => setFilter(cat.key)}
-                  style={[styles.filterChip, isSelected && styles.filterChipSelected]}
+                  style={withPress([styles.filterChip, isSelected && styles.filterChipSelected])}
                 >
                   <Text style={[styles.filterText, isSelected && styles.filterTextSelected]}>
                     {cat.label}
@@ -166,9 +167,7 @@ function createStyles(colors: ColorPalette) {
     gap: tokens.spacing[8],
   },
   heroHeadline: {
-    fontSize: tokens.typography.displayLarge.fontSize,
-    lineHeight: tokens.typography.displayLarge.lineHeight,
-    fontFamily: tokens.typography.displayLarge.fontFamily,
+    ...tokens.typography.displayLarge,
     color: colors.text,
   },
   heroSubtitle: {
@@ -181,26 +180,27 @@ function createStyles(colors: ColorPalette) {
     gap: tokens.spacing[8],
   },
   filterChip: {
-    paddingHorizontal: tokens.spacing[12],
+    paddingHorizontal: tokens.spacing[16],
     paddingVertical: tokens.spacing[8],
-    borderRadius: tokens.radius.full,
+    borderRadius: tokens.shapeMorph.chipUnselected,
     borderWidth: 1,
     borderColor: colors.m3.outlineVariant,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.m3.surfaceContainerLowest,
     minHeight: tokens.accessibility.touchTarget,
     justifyContent: "center",
   },
   filterChipSelected: {
-    backgroundColor: colors.action,
-    borderColor: colors.action,
+    backgroundColor: colors.m3.secondaryContainer,
+    borderColor: colors.m3.secondaryContainer,
+    borderRadius: tokens.shapeMorph.chipSelected,
+    borderWidth: 0,
   },
   filterText: {
-    ...tokens.typography.labelMedium,
-    color: colors.text,
+    ...tokens.typography.labelLarge,
+    color: colors.m3.onSurfaceVariant,
   },
   filterTextSelected: {
-    color: colors.surface,
-    fontWeight: "600",
+    color: colors.m3.onSecondaryContainer,
   },
   list: {
     gap: tokens.spacing[12],

@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { StyleSheet, View } from "react-native";
 import qrcode from "qrcode-generator";
+import { tokens } from "@/view/tokens";
 
 export type QrCodeProps = {
   /** Texto codificado no QR. */
@@ -68,6 +69,6 @@ export function QrCode({ value, size = 240, accessibilityLabel = "QR code da ent
 }
 
 const styles = StyleSheet.create({
-  frame: { backgroundColor: "#FFFFFF", borderRadius: 12, overflow: "hidden" },
+  frame: { backgroundColor: "#FFFFFF", borderRadius: tokens.radius.cardSmall, overflow: "hidden" },
   module: { position: "absolute", backgroundColor: "#000000" },
 });

@@ -330,7 +330,7 @@ function createStyles(colors: ColorPalette) {
     gap: tokens.spacing[16],
   },
   statusText: {
-    fontSize: tokens.typography.bodyMedium.fontSize,
+    ...tokens.typography.bodyMedium,
     color: colors.secondaryText,
     textAlign: "center",
   },
@@ -348,8 +348,7 @@ function createStyles(colors: ColorPalette) {
     gap: tokens.spacing[8],
   },
   sectionLabel: {
-    fontSize: tokens.typography.labelMedium.fontSize,
-    fontWeight: tokens.typography.labelMedium.fontWeight,
+    ...tokens.typography.labelMedium,
     color: colors.secondaryText,
   },
   photoRow: {
@@ -368,7 +367,7 @@ function createStyles(colors: ColorPalette) {
   },
   photoHelperTitle: {
     ...tokens.typography.bodyMedium,
-    fontWeight: "600",
+    fontWeight: tokens.fontWeight.semiBold,
     color: colors.text,
   },
   photoHelperText: {
@@ -391,18 +390,18 @@ function createStyles(colors: ColorPalette) {
     borderColor: colors.action,
   },
   locationText: {
-    fontSize: tokens.typography.bodyMedium.fontSize,
+    ...tokens.typography.bodyMedium,
     color: colors.actionDeep,
-    fontWeight: "600",
+    fontWeight: tokens.fontWeight.semiBold,
   },
   errorText: {
-    fontSize: tokens.typography.bodyMedium.fontSize,
+    ...tokens.typography.bodyMedium,
     color: colors.error,
   },
   successText: {
-    fontSize: tokens.typography.bodyMedium.fontSize,
+    ...tokens.typography.bodyMedium,
     color: colors.success,
-    fontWeight: "600",
+    fontWeight: tokens.fontWeight.semiBold,
   },
   actionsContainer: {
     marginTop: tokens.spacing[8],

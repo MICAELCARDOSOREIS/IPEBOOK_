@@ -7,6 +7,7 @@ import { formatPrice } from "@/view/formatPrice";
 import { BookCover } from "@/view/components/BookCover";
 import { Tag } from "@/view/components/Tag";
 
+import { withPress } from "@/view/pressFeedback";
 export type OwnerListingsProps = {
   ownerId: string;
   ownerName: string;
@@ -32,7 +33,7 @@ export function OwnerListings({ ownerId, ownerName, onOpenBook }: OwnerListingsP
             accessibilityRole="button"
             accessibilityLabel={`Ver ${book.title}`}
             onPress={() => onOpenBook?.(book.id)}
-            style={styles.card}
+            style={withPress(styles.card)}
           >
             <BookCover id={book.id} title={book.title} author={book.author} photoUrl={book.photoUrl} variant="card" />
             <Text style={styles.cardTitle} numberOfLines={1}>{book.title}</Text>
@@ -53,12 +54,12 @@ export function OwnerListings({ ownerId, ownerName, onOpenBook }: OwnerListingsP
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     section: { gap: tokens.spacing[16], marginTop: tokens.spacing[16] },
-    title: { ...tokens.typography.titleMedium, fontSize: 20, lineHeight: 28, color: colors.m3.onSurface },
+    title: { ...tokens.typography.titleBar, color: colors.m3.onSurface },
     grid: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[16] },
-    card: { width: 200, gap: 6, padding: 12, borderRadius: 20, backgroundColor: colors.m3.surfaceContainerLowest },
+    card: { width: 200, gap: tokens.spacing[6], padding: tokens.spacing[12], borderRadius: tokens.radius.xl, backgroundColor: colors.m3.surfaceContainerLowest },
     cardTitle: { ...tokens.typography.titleMedium, color: colors.m3.onSurface },
     cardAuthor: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
-    meta: { flexDirection: "row", alignItems: "center", gap: 8 },
+    meta: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[8] },
     price: { ...tokens.typography.labelLarge, color: colors.m3.onSurface },
   });
 }

@@ -13,6 +13,7 @@ import { type ColorPalette, tokens } from "@/view/tokens";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
 
+import { withPress } from "@/view/pressFeedback";
 export type ModerationProps = {
   sessionUserId: string | null;
   onBack: () => void;
@@ -68,7 +69,7 @@ export function Moderation({ sessionUserId, onBack, onOpenListing, onOpenProfile
           ) : state.error ? (
             <View style={styles.card}>
               <Text accessibilityRole="alert" style={styles.error}>{state.error}</Text>
-              <Pressable accessibilityRole="button" onPress={() => void actions.reload()} style={styles.secondary}>
+              <Pressable accessibilityRole="button" onPress={() => void actions.reload()} style={withPress(styles.secondary)}>
                 <Text style={styles.secondaryText}>Tentar de novo</Text>
               </Pressable>
             </View>
@@ -110,7 +111,7 @@ export function Moderation({ sessionUserId, onBack, onOpenListing, onOpenProfile
                       accessibilityLabel={`Arquivar denúncias de ${item.label}`}
                       disabled={busy}
                       onPress={() => void actions.decide(item, "dismiss")}
-                      style={styles.secondary}
+                      style={withPress(styles.secondary)}
                     >
                       <Text style={styles.secondaryText}>Arquivar</Text>
                     </Pressable>
@@ -120,7 +121,7 @@ export function Moderation({ sessionUserId, onBack, onOpenListing, onOpenProfile
                         accessibilityLabel={`Remover anúncio ${item.label}`}
                         disabled={busy}
                         onPress={() => setPending({ item, decision: "remove_listing" })}
-                        style={styles.secondary}
+                        style={withPress(styles.secondary)}
                       >
                         <Text style={styles.dangerText}>Remover anúncio</Text>
                       </Pressable>
@@ -130,7 +131,7 @@ export function Moderation({ sessionUserId, onBack, onOpenListing, onOpenProfile
                       accessibilityLabel={`Suspender conta ligada a ${item.label}`}
                       disabled={busy}
                       onPress={() => setPending({ item, decision: "suspend_user" })}
-                      style={styles.secondary}
+                      style={withPress(styles.secondary)}
                     >
                       <Text style={styles.dangerText}>Suspender conta</Text>
                     </Pressable>

@@ -1,8 +1,9 @@
 import { useMemo, type ReactNode } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Animated, Pressable, StyleSheet, Text, View } from "react-native";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { useGuardedPress } from "@/view/useGuardedPress";
+import { useExpressivePress } from "@/view/useExpressivePress";
 
 export type OutlinedButtonProps = {
   label: string;
@@ -16,8 +17,8 @@ export type OutlinedButtonProps = {
 };
 
 /**
- * Botão contornado do design system (botao.md): ação alternativa à principal, como
- * "Voltar ao login" ou "Já tenho conta". Nunca concorre com o botão preenchido.
+ * Botão contornado do design system (botao.md): ação alternativa à principal, com resposta
+ * M3 Expressive (mola e shape morphing).
  */
 export function OutlinedButton({
   label,
@@ -30,26 +31,35 @@ export function OutlinedButton({
 }: OutlinedButtonProps) {
   const isDisabled = disabled || loading;
   const guardedPress = useGuardedPress(onPress);
+  const { scale, isPressed, onPressIn, onPressOut } = useExpressivePress({ disabled: isDisabled });
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={accessibilityLabel ?? label}
-      accessibilityState={{ disabled: isDisabled }}
-      disabled={isDisabled}
-      onPress={guardedPress}
-      style={[styles.button, isDisabled && styles.disabled]}
-    >
-      {loading ? (
-        <ActivityIndicator color={colors.action} accessibilityLabel={loadingLabel ?? label} />
-      ) : (
-        <View style={styles.contentRow}>
-          {icon}
-          <Text style={[styles.label, isDisabled && styles.labelDisabled]}>{label}</Text>
-        </View>
-      )}
-    </Pressable>
+    <Animated.View style={{ transform: [{ scale }] }}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={accessibilityLabel ?? label}
+        accessibilityState={{ disabled: isDisabled }}
+        disabled={isDisabled}
+        onPress={guardedPress}
+        onPressIn={onPressIn}
+        onPressOut={onPressOut}
+        style={[
+          styles.button,
+          isPressed && !isDisabled && styles.pressedShape,
+          isDisabled && styles.disabled,
+        ]}
+      >
+        {loading ? (
+          <ActivityIndicator color={colors.action} accessibilityLabel={loadingLabel ?? label} />
+        ) : (
+          <View style={styles.contentRow}>
+            {icon}
+            <Text style={[styles.label, isDisabled && styles.labelDisabled]}>{label}</Text>
+          </View>
+        )}
+      </Pressable>
+    </Animated.View>
   );
 }
 
@@ -60,11 +70,14 @@ function createStyles(colors: ColorPalette) {
       minHeight: 52,
       justifyContent: "center",
       alignItems: "center",
-      borderRadius: tokens.radius.full,
+      borderRadius: tokens.shapeMorph.buttonRest,
       borderWidth: 1,
       borderColor: colors.m3.outlineVariant,
       backgroundColor: "transparent",
       paddingHorizontal: tokens.spacing[24],
+    },
+    pressedShape: {
+      borderRadius: tokens.shapeMorph.buttonPressed,
     },
     contentRow: {
       flexDirection: "row",

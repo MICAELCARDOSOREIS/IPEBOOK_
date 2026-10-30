@@ -125,7 +125,7 @@ function createStyles(colors: ColorPalette) {
       ...tokens.typography.bodyMedium,
       color: colors.secondaryText,
       textAlign: "center",
-      lineHeight: 22,
+      lineHeight: tokens.lineHeight[22],
     },
     previewCard: {
       padding: tokens.spacing[16],
@@ -138,12 +138,12 @@ function createStyles(colors: ColorPalette) {
     previewLabel: {
       ...tokens.typography.labelMedium,
       color: colors.actionDeep,
-      fontWeight: "600",
+      fontWeight: tokens.fontWeight.semiBold,
     },
     previewText: {
       ...tokens.typography.bodyMedium,
       color: colors.text,
-      lineHeight: 20,
+      lineHeight: tokens.lineHeight[20],
     },
     feedbackBanner: {
       padding: tokens.spacing[12],
@@ -156,7 +156,7 @@ function createStyles(colors: ColorPalette) {
     feedbackText: {
       ...tokens.typography.bodyMedium,
       color: colors.actionDeep,
-      fontWeight: "600",
+      fontWeight: tokens.fontWeight.semiBold,
     },
     errorBanner: {
       padding: tokens.spacing[12],

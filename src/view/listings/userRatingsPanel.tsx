@@ -39,10 +39,10 @@ export function UserRatingsPanel({ userId }: { userId: string }) {
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
-    panel: { width: 320, gap: 12, padding: 20, borderRadius: tokens.radius.large, backgroundColor: colors.m3.surfaceContainerLow },
-    title: { ...tokens.typography.titleMedium, fontSize: 20, lineHeight: 28, color: colors.m3.onSurface },
-    row: { flexDirection: "row", alignItems: "center", gap: 12 },
-    rowText: { flex: 1, gap: 2 },
+    panel: { width: 320, gap: tokens.spacing[12], padding: tokens.spacing[20], borderRadius: tokens.radius.large, backgroundColor: colors.m3.surfaceContainerLow },
+    title: { ...tokens.typography.titleBar, color: colors.m3.onSurface },
+    row: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[12] },
+    rowText: { flex: 1, gap: tokens.spacing[2] },
     rowName: { ...tokens.typography.labelLarge, color: colors.m3.onSurface },
     stars: { ...tokens.typography.bodyMedium, color: colors.highlight },
   });

@@ -11,5 +11,6 @@ export type ConnectedNavigationBarProps = Omit<NavigationBarProps, "badges"> & {
 export function ConnectedNavigationBar({ pathname, ...props }: ConnectedNavigationBarProps) {
   const [auth] = useAuthViewModel();
   const badges = useNavigationBadgesViewModel(auth.user?.id ?? null, pathname);
+  if (auth.loading || !auth.user) return null;
   return <NavigationBar {...props} badges={badges} />;
 }

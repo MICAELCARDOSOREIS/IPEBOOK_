@@ -5,6 +5,7 @@ import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { AppIcon } from "@/view/components/AppIcon";
 
+import { withPress } from "@/view/pressFeedback";
 export type TextFieldProps = {
   label: string;
   value: string;
@@ -115,7 +116,7 @@ export function TextField({
             accessibilityState={{ selected: revealed }}
             hitSlop={8}
             onPress={() => setRevealed((current) => !current)}
-            style={styles.toggle}
+            style={withPress(styles.toggle)}
           >
             <AppIcon name={revealed ? "visibilityOff" : "visibility"} size={22} color={colors.m3.onSurfaceVariant} />
           </Pressable>

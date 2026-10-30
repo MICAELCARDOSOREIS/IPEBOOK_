@@ -148,9 +148,7 @@ function createStyles(colors: ColorPalette) {
     gap: tokens.spacing[16],
   },
   headline: {
-    fontSize: tokens.typography.displayLarge.fontSize,
-    lineHeight: tokens.typography.displayLarge.lineHeight,
-    fontFamily: tokens.typography.displayLarge.fontFamily,
+    ...tokens.typography.displayLarge,
     color: colors.text,
   },
   body: { ...tokens.typography.bodyMedium, color: colors.secondaryText },

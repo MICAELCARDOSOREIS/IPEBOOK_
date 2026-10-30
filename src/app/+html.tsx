@@ -1,5 +1,6 @@
 import { ScrollViewStyleReset, useServerDocumentContext } from "expo-router/html";
 import type { PropsWithChildren } from "react";
+import { tokens } from "@/view/tokens";
 
 /**
  * HTML raiz da Web (Spec 025 / Issue #121).
@@ -15,7 +16,7 @@ export default function Root({ children }: PropsWithChildren) {
         <meta charSet="utf-8" />
         <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-        <meta name="theme-color" content="#2C5E45" />
+        <meta name="theme-color" content={tokens.colors.action} />
         <meta name="description" content="Marketplace comunitário de livros em Piripiri, PI (venda, troca e doação)" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -32,7 +33,7 @@ export default function Root({ children }: PropsWithChildren) {
             __html: [
               `*{scrollbar-width:thin;scrollbar-color:rgba(128,128,128,.45) transparent}`,
               // Foco de teclado visível nos dois temas: anel escuro com halo claro (WCAG 2.4.7).
-              `:focus-visible{outline:2px solid #1F4A35;outline-offset:2px;box-shadow:0 0 0 5px #CFE8D9;border-radius:8px}`,
+              `:focus-visible{outline:${tokens.accessibility.focusWidth}px solid ${tokens.colors.actionDeep};outline-offset:2px;box-shadow:0 0 0 5px ${tokens.colors.m3.primaryContainer};border-radius:${tokens.radius.small}px}`,
               `[role="button"],[role="link"],[role="tab"],[role="radio"],[role="checkbox"],[role="switch"],[role="search"]{cursor:pointer}`,
               `[aria-disabled="true"]{cursor:not-allowed}`,
               `@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}`,

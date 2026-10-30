@@ -6,6 +6,7 @@ import { meetingMapBounds } from "@/view/meetingMapBounds";
 import { fontFamily, tokens } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 
+import { withPress } from "@/view/pressFeedback";
 type MeetingMapProps = {
   selectedName: string | null;
   /** Altura em px do painel sobreposto; pinos, logo e atribuição ficam acima dele. */
@@ -37,43 +38,43 @@ export function MeetingMap({ selectedName, sheetHeight = 0, onSelect }: MeetingM
       if (sheetHeight > 0) cameraRef.current?.fitBounds(ne, sw, [150, 64, paddingBottom, 64], 400);
       return;
     }
-    cameraRef.current?.setCamera({
-      centerCoordinate: [point.longitude, point.latitude],
-      zoomLevel: 14.5,
-      padding: { paddingTop: 150, paddingBottom, paddingLeft: 64, paddingRight: 64 },
-      animationDuration: 600,
-      animationMode: "easeTo",
-    });
-  }, [selectedName, paddingBottom, sheetHeight]);
+      cameraRef.current?.setCamera({
+        centerCoordinate: [point.longitude, point.latitude],
+        zoomLevel: 14.5,
+        padding: { paddingTop: tokens.spacing[150], paddingBottom, paddingLeft: tokens.spacing[64], paddingRight: tokens.spacing[64] },
+        animationDuration: 600,
+        animationMode: "easeTo",
+      });
+    }, [selectedName, paddingBottom, sheetHeight]);
 
-  if (!token) return null;
+    if (!token) return null;
 
-  const { ne, sw } = meetingMapBounds(PIRIPIRI_MEETING_POINTS);
-  return (
-    <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.m3.surfaceContainerHigh }]}>
-      <Mapbox.MapView
-        style={StyleSheet.absoluteFill}
-        styleURL={resolvedScheme === "dark" ? "mapbox://styles/mapbox/dark-v11" : "mapbox://styles/mapbox/streets-v12"}
-        scaleBarEnabled={false}
-        logoPosition={{ bottom: sheetHeight + 4, left: 4 }}
-        attributionPosition={{ bottom: sheetHeight + 4, right: 4 }}
-        pitchEnabled={false}
-        rotateEnabled={false}
-        accessibilityLabel="Mapa de Piripiri com os pontos de encontro"
-      >
-        <Mapbox.Camera
-          ref={cameraRef}
-          defaultSettings={{
-            bounds: {
-              ne,
-              sw,
-              paddingTop: 150,
-              paddingRight: 64,
-              paddingLeft: 64,
-              paddingBottom,
-            },
-          }}
-        />
+    const { ne, sw } = meetingMapBounds(PIRIPIRI_MEETING_POINTS);
+    return (
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.m3.surfaceContainerHigh }]}>
+        <Mapbox.MapView
+          style={StyleSheet.absoluteFill}
+          styleURL={resolvedScheme === "dark" ? "mapbox://styles/mapbox/dark-v11" : "mapbox://styles/mapbox/streets-v12"}
+          scaleBarEnabled={false}
+          logoPosition={{ bottom: sheetHeight + 4, left: 4 }}
+          attributionPosition={{ bottom: sheetHeight + 4, right: 4 }}
+          pitchEnabled={false}
+          rotateEnabled={false}
+          accessibilityLabel="Mapa de Piripiri com os pontos de encontro"
+        >
+          <Mapbox.Camera
+            ref={cameraRef}
+            defaultSettings={{
+              bounds: {
+                ne,
+                sw,
+                paddingTop: tokens.spacing[150],
+                paddingRight: tokens.spacing[64],
+                paddingLeft: tokens.spacing[64],
+                paddingBottom,
+              },
+            }}
+          />
         {PIRIPIRI_MEETING_POINTS.map((point, index) => ({ point, index }))
           .sort((a, b) => Number(a.point.name === selectedName) - Number(b.point.name === selectedName))
           .map(({ point, index }) => {
@@ -90,11 +91,11 @@ export function MeetingMap({ selectedName, sheetHeight = 0, onSelect }: MeetingM
                 accessibilityLabel={`Escolher o local ${index + 1}, ${point.name}`}
                 accessibilityState={{ selected }}
                 onPress={() => onSelect?.(point.name)}
-                style={[
+                style={withPress([
                   styles.pin,
                   { backgroundColor: selected ? colors.m3.primary : colors.surface, borderColor: colors.m3.primary },
                   selected && styles.pinSelected,
-                ]}
+                ])}
               >
                 <Text style={[styles.pinText, { color: selected ? colors.m3.onPrimary : colors.m3.primary }]}>{index + 1}</Text>
               </Pressable>

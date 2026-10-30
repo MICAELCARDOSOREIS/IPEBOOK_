@@ -17,6 +17,7 @@ import { TopAppBar } from "@/view/components/TopAppBar";
 import { useManageListingViewModel } from "@/viewmodel/useManageListingViewModel";
 import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
 
+import { withPress } from "@/view/pressFeedback";
 export type ManageListingProps = {
   bookId: string;
   sessionUserId: string | null;
@@ -127,7 +128,7 @@ export default function ManageListing({
             accessibilityState={{ disabled: reserved }}
             disabled={reserved}
             onPress={() => onEdit?.(book.id)}
-            style={styles.actionRow}
+            style={withPress(styles.actionRow)}
           >
             <AppIcon name="edit" size={24} color={colors.action} />
             <View style={styles.actionTexts}>
@@ -142,7 +143,7 @@ export default function ManageListing({
             accessibilityState={{ disabled: state.busy || reserved }}
             disabled={state.busy || reserved}
             onPress={() => void actions.togglePause()}
-            style={styles.actionRow}
+            style={withPress(styles.actionRow)}
           >
             <AppIcon name={paused ? "unarchive" : "archive"} size={24} color={colors.action} />
             <View style={styles.actionTexts}>
@@ -192,15 +193,11 @@ function createStyles(colors: ColorPalette) {
   column: { gap: tokens.spacing[16] },
   columnHalf: { flex: 1 },
   title: {
-    fontSize: tokens.typography.displayLarge.fontSize,
-    lineHeight: tokens.typography.displayLarge.lineHeight,
-    fontFamily: tokens.typography.displayLarge.fontFamily,
+    ...tokens.typography.displayLarge,
     color: colors.text,
   },
   subtitle: {
-    fontSize: tokens.typography.bodyLarge.fontSize,
-    lineHeight: tokens.typography.bodyLarge.lineHeight,
-    fontFamily: tokens.typography.bodyLarge.fontFamily,
+    ...tokens.typography.bodyLarge,
     color: colors.secondaryText,
   },
   bookRow: {
@@ -213,26 +210,20 @@ function createStyles(colors: ColorPalette) {
   bookTexts: { flex: 1, gap: tokens.spacing[4] },
   tagRow: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[8] },
   bookTitle: {
-    fontSize: tokens.typography.titleMedium.fontSize,
-    lineHeight: tokens.typography.titleMedium.lineHeight,
-    fontFamily: tokens.typography.titleMedium.fontFamily,
-    fontWeight: tokens.typography.titleMedium.fontWeight,
+    ...tokens.typography.titleMedium,
     color: colors.text,
   },
   bookAuthor: {
-    fontSize: tokens.typography.bodyMedium.fontSize,
-    fontFamily: tokens.typography.bodyMedium.fontFamily,
+    ...tokens.typography.bodyMedium,
     color: colors.secondaryText,
   },
   bookMeta: {
-    fontSize: tokens.typography.bodyMedium.fontSize,
-    fontFamily: tokens.typography.bodyMedium.fontFamily,
+    ...tokens.typography.bodyMedium,
     color: colors.secondaryText,
   },
   price: {
-    fontSize: tokens.typography.bodyMedium.fontSize,
-    fontFamily: tokens.typography.bodyMedium.fontFamily,
-    fontWeight: "600",
+    ...tokens.typography.bodyMedium,
+    fontWeight: tokens.fontWeight.semiBold,
     color: colors.action,
   },
   statusBox: {
@@ -243,15 +234,11 @@ function createStyles(colors: ColorPalette) {
   },
   statusBoxPaused: { backgroundColor: colors.m3.surfaceContainerHigh },
   statusTitle: {
-    fontSize: tokens.typography.titleMedium.fontSize,
-    fontFamily: tokens.typography.titleMedium.fontFamily,
-    fontWeight: tokens.typography.titleMedium.fontWeight,
+    ...tokens.typography.titleMedium,
     color: colors.text,
   },
   statusHint: {
-    fontSize: tokens.typography.bodyMedium.fontSize,
-    lineHeight: tokens.typography.bodyMedium.lineHeight,
-    fontFamily: tokens.typography.bodyMedium.fontFamily,
+    ...tokens.typography.bodyMedium,
     color: colors.secondaryText,
   },
   actionRow: {
@@ -261,24 +248,19 @@ function createStyles(colors: ColorPalette) {
     minHeight: tokens.accessibility.touchTarget,
     paddingVertical: tokens.spacing[8],
   },
-  actionTexts: { flex: 1, gap: 2 },
+  actionTexts: { flex: 1, gap: tokens.spacing[2] },
   actionTitle: {
-    fontSize: tokens.typography.bodyLarge.fontSize,
-    lineHeight: tokens.typography.bodyLarge.lineHeight,
-    fontFamily: tokens.typography.bodyLarge.fontFamily,
-    fontWeight: "600",
+    ...tokens.typography.bodyLarge,
+    fontWeight: tokens.fontWeight.semiBold,
     color: colors.text,
   },
   actionHint: {
-    fontSize: tokens.typography.bodyMedium.fontSize,
-    lineHeight: tokens.typography.bodyMedium.lineHeight,
-    fontFamily: tokens.typography.bodyMedium.fontFamily,
+    ...tokens.typography.bodyMedium,
     color: colors.secondaryText,
   },
   errorText: {
+    ...tokens.typography.bodyMedium,
     color: colors.error,
-    fontSize: tokens.typography.bodyMedium.fontSize,
-    fontFamily: tokens.typography.bodyMedium.fontFamily,
   },
   });
 }

@@ -26,6 +26,7 @@ export function ConnectedWebHeader({ pathname, ...props }: ConnectedWebHeaderPro
   useEffect(() => {
     void refresh();
   }, [pathname, refresh]);
+  if (auth.loading || !auth.user) return null;
   return (
     <WebHeader
       {...props}

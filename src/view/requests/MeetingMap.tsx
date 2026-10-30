@@ -6,6 +6,7 @@ import { PIRIPIRI_MEETING_POINTS } from "@/model/entities/meetingPoint";
 import { meetingMapBounds } from "@/view/meetingMapBounds";
 import { StaticMeetingMap } from "@/view/requests/MeetingMapStatic";
 import { useTheme } from "@/view/theme/ThemeProvider";
+import { elevation, fontFamily, tokens } from "@/view/tokens";
 
 export type MeetingMapProps = {
   selectedName: string | null;
@@ -25,19 +26,19 @@ type MapboxGl = typeof import("mapbox-gl");
 
 /** Cor e tamanho do pino por estado, no mesmo desenho do mapa do app. */
 function paintPin(element: HTMLElement, selected: boolean, colors: { primary: string; onPrimary: string; surface: string }): void {
-  const size = selected ? 48 : 36;
+  const size = selected ? tokens.accessibility.touchTarget : 36;
   Object.assign(element.style, {
     width: `${size}px`,
     height: `${size}px`,
-    borderRadius: "9999px",
+    borderRadius: `${tokens.radius.full}px`,
     border: `2px solid ${colors.primary}`,
     background: selected ? colors.primary : colors.surface,
     color: selected ? colors.onPrimary : colors.primary,
-    font: "700 18px/1 'SourceSerif4_700Bold', serif",
+    font: `700 18px/1 '${fontFamily.brand}', serif`,
     cursor: "pointer",
-    padding: "0",
+    padding: String(tokens.spacing[0]),
     zIndex: selected ? "2" : "1",
-    boxShadow: "0 2px 6px rgba(0,0,0,0.3)",
+    boxShadow: elevation.level2,
   });
   element.setAttribute("aria-pressed", String(selected));
 }

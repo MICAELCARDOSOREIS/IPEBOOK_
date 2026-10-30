@@ -17,7 +17,7 @@ export function ModalityCoverArea({ modality, children }: ModalityCoverAreaProps
       StyleSheet.create({
         area: {
           padding: tokens.spacing[8],
-          borderRadius: 12,
+          borderRadius: tokens.radius.cardSmall,
           alignItems: "center",
           justifyContent: "center",
         },

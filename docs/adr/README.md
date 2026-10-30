@@ -83,5 +83,6 @@
 - [0081 — Atualizações pelo EAS Update com runtime pela versão do app](0081-atualizacoes-eas-update.md)
 - [0082 — Login Google nativo com idToken no Supabase](0082-login-google-nativo.md)
 - [0083 — Correções da auditoria de segurança](0083-correcoes-auditoria-seguranca.md)
+- [0084 — Adoção do Material 3 Expressive no Design System do IpêBook](0084-adocao-material-3-expressive.md)
 
 Preservar registros aceitos; mudanças relevantes geram novo ADR com vínculos de substituição.

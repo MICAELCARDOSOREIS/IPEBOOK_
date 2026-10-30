@@ -23,6 +23,7 @@ import { ErrorState } from "@/view/components/ErrorState";
 import { Tag } from "@/view/components/Tag";
 import { Avatar } from "@/view/components/Avatar";
 
+import { withPress } from "@/view/pressFeedback";
 const COMMUNITY_MEMBER = "Pessoa da comunidade";
 const SUGGESTIONS = [
   "O livro ainda está disponível?",
@@ -102,7 +103,7 @@ export function Chat({ requestId, sessionUserId, onBack, onOpenNegotiation, embe
             accessibilityLabel="Voltar"
             hitSlop={8}
             onPress={onBack ?? (() => {})}
-            style={styles.backButton}
+            style={withPress(styles.backButton)}
           >
             <AppIcon name="back" size={24} color={colors.m3.onSurface} />
           </Pressable>
@@ -129,7 +130,7 @@ export function Chat({ requestId, sessionUserId, onBack, onOpenNegotiation, embe
                 accessibilityRole="button"
                 accessibilityLabel="Combinar encontro na negociação"
                 onPress={() => onOpenNegotiation?.(requestId)}
-                style={styles.combine}
+                style={withPress(styles.combine)}
               >
                 <Text style={styles.combineText}>Combinar</Text>
               </Pressable>
@@ -202,7 +203,7 @@ export function Chat({ requestId, sessionUserId, onBack, onOpenNegotiation, embe
             accessibilityState={{ disabled: !canSend }}
             disabled={!canSend}
             onPress={() => void actions.sendMessage()}
-            style={[styles.send, canSend ? styles.sendActive : null]}
+            style={withPress([styles.send, canSend ? styles.sendActive : null])}
           >
             {state.isSending ? (
               <ActivityIndicator color={colors.m3.onPrimary} />
@@ -247,7 +248,7 @@ function createStyles(colors: ColorPalette) {
       alignItems: "center",
       justifyContent: "center",
     },
-    headerTitle: { flex: 1, ...tokens.typography.titleMedium, fontWeight: "600", color: colors.m3.onSurface },
+    headerTitle: { flex: 1, ...tokens.typography.titleMedium, fontWeight: tokens.fontWeight.semiBold, color: colors.m3.onSurface },
     bookCard: {
       flexDirection: "row",
       alignItems: "center",
@@ -255,31 +256,29 @@ function createStyles(colors: ColorPalette) {
       marginHorizontal: tokens.spacing[16],
       marginBottom: tokens.spacing[8],
       padding: tokens.spacing[12],
-      borderRadius: 16,
+      borderRadius: tokens.radius.card,
       backgroundColor: colors.m3.surfaceContainer,
     },
     bookText: { flex: 1, gap: tokens.spacing[6], alignItems: "flex-start" },
-    bookTitle: { ...tokens.typography.bodyLarge, fontWeight: "500", color: colors.m3.onSurface },
+    bookTitle: { ...tokens.typography.bodyLarge, fontWeight: tokens.fontWeight.medium, color: colors.m3.onSurface },
     // "Combinar" como botão tonal (Spec 089): antes era só um texto verde, sem cara de botão.
     combine: {
-      minHeight: 40,
+      minHeight: tokens.spacing[40],
       justifyContent: "center",
       paddingHorizontal: tokens.spacing[16],
       borderRadius: tokens.radius.full,
       backgroundColor: colors.m3.secondaryContainer,
     },
-    combineText: { ...tokens.typography.labelMedium, fontWeight: "600", color: colors.m3.onSecondaryContainer },
+    combineText: { ...tokens.typography.labelMedium, fontWeight: tokens.fontWeight.semiBold, color: colors.m3.onSecondaryContainer },
     center: { flex: 1, alignItems: "center", justifyContent: "center" },
     // Espaço no fim para a última mensagem não colar no campo de digitar (Spec 089).
     list: { paddingHorizontal: tokens.spacing[16], paddingTop: tokens.spacing[8], paddingBottom: tokens.spacing[24] },
     dayRow: { alignItems: "center", paddingVertical: tokens.spacing[4], marginTop: tokens.spacing[8] },
     dayLabel: {
-      fontSize: 12,
-      lineHeight: 16,
-      fontWeight: "500",
+      ...tokens.typography.labelMedium,
       color: colors.m3.onSurfaceVariant,
       paddingHorizontal: tokens.spacing[12],
-      paddingVertical: 2,
+      paddingVertical: tokens.spacing[2],
       borderRadius: tokens.radius.full,
       backgroundColor: colors.m3.surfaceContainer,
       overflow: "hidden",
@@ -290,19 +289,19 @@ function createStyles(colors: ColorPalette) {
       paddingHorizontal: tokens.spacing[12],
       paddingTop: tokens.spacing[8],
       paddingBottom: tokens.spacing[6],
-      borderRadius: 18,
-      gap: 2,
+      borderRadius: tokens.radius.large,
+      gap: tokens.spacing[2],
     },
     bubbleGrouped: { marginTop: tokens.spacing[4] },
-    bubbleMine: { alignSelf: "flex-end", backgroundColor: colors.m3.secondaryContainer, borderBottomRightRadius: 6 },
-    bubbleOther: { alignSelf: "flex-start", backgroundColor: colors.m3.surfaceContainerHigh, borderBottomLeftRadius: 6 },
+    bubbleMine: { alignSelf: "flex-end", backgroundColor: colors.m3.secondaryContainer, borderBottomRightRadius: tokens.radius.bubbleCorner },
+    bubbleOther: { alignSelf: "flex-start", backgroundColor: colors.m3.surfaceContainerHigh, borderBottomLeftRadius: tokens.radius.bubbleCorner },
     bubbleText: { ...tokens.typography.bodyLarge, color: colors.m3.onSurface },
-    bubbleTime: { fontSize: 11, lineHeight: 14, color: colors.m3.onSurfaceVariant },
+    bubbleTime: { ...tokens.typography.labelSmall, color: colors.m3.onSurfaceVariant },
     empty: { flex: 1, alignItems: "center", justifyContent: "center", gap: tokens.spacing[8], padding: tokens.spacing[24] },
     emptyIcon: {
       width: 64,
       height: 64,
-      borderRadius: 32,
+      borderRadius: tokens.radius.circle64,
       alignItems: "center",
       justifyContent: "center",
       backgroundColor: colors.m3.secondaryContainer,
@@ -318,11 +317,11 @@ function createStyles(colors: ColorPalette) {
       marginHorizontal: tokens.spacing[16],
       paddingHorizontal: tokens.spacing[12],
       paddingVertical: tokens.spacing[8],
-      borderRadius: 12,
+      borderRadius: tokens.radius.cardSmall,
       backgroundColor: colors.errorContainer,
     },
     sendErrorText: { flex: 1, ...tokens.typography.bodyMedium, color: colors.error },
-    retryText: { ...tokens.typography.labelMedium, fontWeight: "600", color: colors.error },
+    retryText: { ...tokens.typography.labelMedium, fontWeight: tokens.fontWeight.semiBold, color: colors.error },
     composer: {
       flexDirection: "row",
       alignItems: "flex-end",
@@ -337,7 +336,7 @@ function createStyles(colors: ColorPalette) {
       maxHeight: 120,
       paddingHorizontal: tokens.spacing[16],
       paddingVertical: tokens.spacing[12],
-      borderRadius: 24,
+      borderRadius: tokens.radius.extraLarge,
       borderWidth: 1,
       borderColor: colors.m3.outline,
       backgroundColor: colors.background,
@@ -347,7 +346,7 @@ function createStyles(colors: ColorPalette) {
     send: {
       width: 48,
       height: 48,
-      borderRadius: 24,
+      borderRadius: tokens.radius.extraLarge,
       alignItems: "center",
       justifyContent: "center",
     },

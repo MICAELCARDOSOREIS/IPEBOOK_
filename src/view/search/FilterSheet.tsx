@@ -7,7 +7,7 @@ import { Chip } from "@/view/components/Chip";
 import { FilledButton } from "@/view/components/FilledButton";
 import { TextButton } from "@/view/components/TextButton";
 import { TopAppBar } from "@/view/components/TopAppBar";
-import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
+import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { categoryTone } from "@/view/categoryTone";
 import {
@@ -214,8 +214,8 @@ export function FilterSheet({
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     page: { flex: 1, backgroundColor: colors.background },
-    scrim: { flex: 1, alignItems: "center", justifyContent: "center", padding: tokens.spacing[24], backgroundColor: "rgba(0,0,0,0.4)" },
-    dialog: { flex: 0, width: "100%", maxWidth: 640, height: "90%", maxHeight: 820, borderRadius: 28, overflow: "hidden" },
+    scrim: { flex: 1, alignItems: "center", justifyContent: "center", padding: tokens.spacing[24], backgroundColor: colors.m3.scrim },
+    dialog: { flex: 0, width: "100%", maxWidth: 640, height: "90%", maxHeight: 820, borderRadius: tokens.radius.xxl, overflow: "hidden" },
     content: {
       paddingHorizontal: tokens.spacing[24],
       paddingTop: tokens.spacing[8],
@@ -224,11 +224,9 @@ function createStyles(colors: ColorPalette) {
     },
     // Figma `02.03`: manchete editorial em Source Serif, logo abaixo da barra superior.
     heading: {
-      fontFamily: fontFamily.brand,
-      fontSize: 24,
-      lineHeight: 30,
+      ...tokens.typography.brandTitle,
       color: colors.text,
-      letterSpacing: -0.3,
+      letterSpacing: tokens.letterSpacing.brandSubtle,
     },
     section: {
       gap: tokens.spacing[12],

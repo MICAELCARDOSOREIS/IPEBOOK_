@@ -35,42 +35,43 @@ funcionalidade independente:
 | Princípio | Verificação |
 |-----------|-------------|
 | Português em documentação e UI | Rótulos, título e descrição em português. |
-| MVVM com DI | Nenhuma lógica nova; reutiliza ThemePreferenceSelector e useTheme. |
-| Domínio puro e TypeScript estrito | Sem novas entidades ou contratos; sem `any`. |
+| MVVM com DI | Reutiliza `ThemePreferenceSelector` e `useTheme`; para limpeza do catálogo offline, introduz `ILocalCacheDataSource`, `LocalCacheUseCases`, `useSettingsViewModel` e registro em `src/di/container.ts`. |
+| Domínio puro e TypeScript estrito | Contrato `ILocalCacheDataSource` e caso de uso `LocalCacheUseCases` puros; sem `any`. |
 | Spec Kit obrigatório | Spec 073 criada antes da implementação. |
-| ADRs | Sem decisão arquitetural nova; reutiliza ADR 0036. |
-| Critérios verificáveis | Testes de componente + typecheck + validate. |
-| Desenvolver em `develop` | Trabalho na branch develop. |
+| ADRs | Reutiliza ADRs 0027 e 0036; escopo expandido e consolidado pelas ADRs 0058 e 0060. |
+| Critérios verificáveis | Testes unitários, de hook e de componente + `typecheck` + `check:architecture`. |
+| Desenvolver em `develop` | Trabalho na branch `develop`. |
 
 ## Arquivos e sequência
 
-### Passo 1 — Tela de Configurações
+### Passo 1 — Tela de Configurações e preferências do dispositivo (ADRs 0036, 0058 e 0060)
 
-- **Criar** `src/view/profile/settings.tsx`: componente `Settings` com `TopAppBar` ("Configurações"), `ThemePreferenceSelector` em seção "Aparência", `SafeAreaView`, `ScrollView`, padrão `createStyles(colors)`.
-- **Criar** `src/app/perfil/configuracoes.tsx`: rota fina que importa `Settings` e passa `onBack={() => router.back()}`.
+- **Criar** `src/model/datasources/iLocalCacheDataSource.ts` e adaptadores AsyncStorage/Memória reutilizando `BOOKS_LIST_CACHE_KEY` de `cachedBookDataSource.ts`, além de `LocalCacheUseCases` registrado em `src/di/container.ts`.
+- **Criar** `src/viewmodel/useSettingsViewModel.ts`: gerencia estados `clearingCache`, `cacheCleared` e `cacheError` com mensagem amigável em português.
+- **Criar** `src/view/profile/settings.tsx`: componente `Settings` com `TopAppBar` ("Configurações"), seções "Aparência" (`ThemePreferenceSelector`), "Conta e dados" (restrita a sessão ativa, com "Privacidade e dados" e "Pessoas bloqueadas"), "Dados neste dispositivo" (limpeza do cache offline com regiões vivas) e "Sobre o IpêBook" (versão via `expo-constants` e atalhos condicionais).
+- **Criar** `src/app/perfil/configuracoes.tsx`: rota fina que importa `Settings` e conecta callbacks de retorno e navegação.
 
-### Passo 2 — Entrada no hub e remoção do seletor duplicado
+### Passo 2 — Entrada no cabeçalho de Meu perfil e enxugamento (ADR 0060)
 
 - **Modificar** `src/view/profile/profileHub.tsx`:
-  - Adicionar prop `onNavigateToSettings` (opcional).
-  - Adicionar item "Configurações" na seção Conta (antes de "Termos e privacidade"), com ícone `settings` (ou `tune`, conforme disponibilidade no AppIcon), descrição "Aparência e preferências do aplicativo".
-  - Remover `<ThemePreferenceSelector />` avulso e a importação correspondente.
-- **Modificar** `src/app/perfil.tsx`: passar `onNavigateToSettings={() => router.push("/perfil/configuracoes")}`.
+  - Adicionar prop `onNavigateToSettings` e botão de engrenagem no cabeçalho (`accessibilityLabel="Abrir configurações"`, alvo de 48 dp, visível também para visitantes).
+  - Remover `<ThemePreferenceSelector />` avulso e enxugar `ProfileHubProps` removendo itens migrados para Configurações (Privacidade, Pessoas bloqueadas, Termos e Ajuda); ocultar a seção "Conta" para visitantes.
+- **Modificar** `src/app/perfil.tsx`: passar `onNavigateToSettings={() => router.push("/perfil/configuracoes")}` e remover props migradas.
 
 ### Passo 3 — Coerência do tema com o sistema
 
 - **Modificar** `app.json`: trocar `"userInterfaceStyle": "light"` por `"userInterfaceStyle": "automatic"`.
-- **Modificar** `src/app/_layout.tsx`: importar `StatusBar` de `expo-status-bar` e renderizá-lo com `style="auto"` dentro do ThemeProvider, para que a barra de status acompanhe o tema resolvido.
+- **Modificar** `src/app/_layout.tsx`: renderizar `ThemedStatusBar` dentro do `ThemeProvider`, sincronizando `<StatusBar style={resolvedScheme === "dark" ? "light" : "dark"} />` com o tema resolvido pelo aplicativo.
 
 ### Passo 4 — Testes
 
-- **Criar** `tests/components/settingsView.test.tsx`: renderiza Settings, verifica título "Configurações", presença do seletor de tema, acessibilidade do radiogroup.
-- **Modificar** `tests/components/profileHubView.test.tsx`: ajustar expectativas — verificar item "Configurações" em vez do seletor de tema avulso; adicionar `onNavigateToSettings` no mock de props.
+- **Criar** `tests/components/settingsView.test.tsx`, `tests/unit/localCacheUseCases.test.ts`, `tests/unit/asyncStorageLocalCacheDataSource.test.ts`, `tests/hooks/useSettingsViewModel.test.tsx` e mock `tests/mocks/expo-constants.ts`.
+- **Modificar** `tests/components/profileHubView.test.tsx`: verificar o botão `"Abrir configurações"` no cabeçalho, ausência das linhas migradas, ocultação da seção "Conta" para visitante e chamada de `onNavigateToSettings`.
 
 ### Passo 5 — Validação
 
 - `npm run typecheck`
-- `npm run test -- tests/components/settingsView.test.tsx tests/components/profileHubView.test.tsx tests/components/themePreferenceSelector.test.tsx tests/unit/themePreferenceUseCases.test.ts`
+- `npm run test -- tests/components/settingsView.test.tsx tests/components/profileHubView.test.tsx tests/components/themePreferenceSelector.test.tsx tests/unit/themePreferenceUseCases.test.ts tests/unit/localCacheUseCases.test.ts tests/unit/asyncStorageLocalCacheDataSource.test.ts tests/hooks/useSettingsViewModel.test.tsx`
 - `npm run check:architecture`
 
 ## Validação
