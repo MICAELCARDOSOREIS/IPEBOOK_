@@ -210,9 +210,24 @@ export default function BookDetail({
             accessibilityRole="button"
             accessibilityLabel={statusA11yLabel}
             onPress={handleStatusPress}
-            style={withPress(styles.statusButton)}
+            style={withPress([
+              styles.statusButton,
+              book.status === "reserved" ? styles.statusButtonReserved : styles.statusButtonDelivered,
+            ])}
           >
-            <Text style={styles.reserved}>{book.status === "delivered" ? "Entregue" : "Reservado"}</Text>
+            <AppIcon
+              name={book.status === "reserved" ? "bookmark" : "checkCircle"}
+              size={18}
+              color={book.status === "reserved" ? colors.m3.onTertiaryContainer : colors.m3.onSurfaceVariant}
+            />
+            <Text
+              style={[
+                styles.statusButtonText,
+                book.status === "reserved" ? styles.statusTextReserved : styles.statusTextDelivered,
+              ]}
+            >
+              {book.status === "delivered" ? "Entregue" : "Reservado"}
+            </Text>
           </Pressable>
         ) : !sessionUserId ? (
           onNavigateToSignIn ? (
@@ -227,9 +242,10 @@ export default function BookDetail({
               accessibilityRole="button"
               accessibilityLabel={statusA11yLabel}
               onPress={handleStatusPress}
-              style={withPress(styles.statusButton)}
+              style={withPress([styles.statusButton, styles.statusButtonRequested])}
             >
-              <Text style={styles.requested}>Negociação solicitada</Text>
+              <AppIcon name="calendar" size={18} color={colors.m3.onSurfaceVariant} />
+              <Text style={[styles.statusButtonText, styles.statusTextRequested]}>Negociação solicitada</Text>
             </Pressable>
           ) : (
             <FilledButton
@@ -735,10 +751,38 @@ function createStyles(colors: ColorPalette) {
     primarySlot: { flex: 1 },
     statusPill: { alignItems: "center", justifyContent: "center", minHeight: 52 },
     statusButton: {
-      alignItems: "center",
-      justifyContent: "center",
+      flex: 1,
       minHeight: 52,
       borderRadius: tokens.radius.full,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: tokens.spacing[8],
+      paddingHorizontal: tokens.spacing[16],
+    },
+    statusButtonReserved: {
+      backgroundColor: colors.m3.tertiaryContainer,
+    },
+    statusButtonDelivered: {
+      backgroundColor: colors.m3.surfaceContainerHighest,
+    },
+    statusButtonRequested: {
+      backgroundColor: colors.m3.surfaceContainerHighest,
+    },
+    statusButtonText: {
+      ...tokens.typography.bodyLarge,
+      fontWeight: tokens.fontWeight.semiBold,
+    },
+    statusTextReserved: {
+      color: colors.m3.onTertiaryContainer,
+    },
+    statusTextDelivered: {
+      color: colors.m3.onSurfaceVariant,
+    },
+    statusTextRequested: {
+      ...tokens.typography.bodyMedium,
+      fontWeight: tokens.fontWeight.semiBold,
+      color: colors.m3.onSurfaceVariant,
     },
     reserved: { ...tokens.typography.labelLarge, color: colors.m3.onTertiaryContainer, backgroundColor: colors.m3.tertiaryContainer, paddingHorizontal: tokens.spacing[16], paddingVertical: tokens.spacing[8], borderRadius: tokens.radius.full, overflow: "hidden" },
     requested: { ...tokens.typography.bodyMedium, color: colors.action, fontWeight: tokens.fontWeight.semiBold },
