@@ -22,6 +22,7 @@ import { LoadingState } from "@/view/components/LoadingState";
 import { OfflineState } from "@/view/components/OfflineState";
 import { Tag } from "@/view/components/Tag";
 import { AppIcon } from "@/view/components/AppIcon";
+import { Snackbar } from "@/view/components/Snackbar";
 import { NeighborhoodSelectorModal } from "@/view/components/NeighborhoodSelectorModal";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
@@ -33,9 +34,11 @@ export type SearchProps = {
   currentNeighborhood?: string;
   onSelectNeighborhood?: () => void;
   onNavigateToBookDetail?: (bookId: string) => void;
-  onNavigateToAlerts?: (term: string) => void;
+  onNavigateToFavorites?: () => void;
   /** Pré-aplica um filtro de modalidade ao abrir, vindo do "Ver mais" da Home (Issue #146). */
   initialModality?: SearchModalityFilter;
+  /** Pré-aplica uma categoria ao abrir, vindo de atalhos e recomendações. */
+  initialCategory?: string;
 };
 
 const VALID_INITIAL_MODALITIES: readonly SearchModalityFilter[] = ["sale", "trade", "donation"];
@@ -51,8 +54,9 @@ export default function Search({
   currentNeighborhood,
   onSelectNeighborhood,
   onNavigateToBookDetail,
-  onNavigateToAlerts,
+  onNavigateToFavorites,
   initialModality,
+  initialCategory,
 }: SearchProps = {}) {
   const neighborhoodHook = useActiveNeighborhood("all");
   const effectiveNeighborhood =
@@ -69,15 +73,21 @@ export default function Search({
   const wideWeb = useIsWideWeb();
   const gridColumns = useWebGridColumns();
   const [showSortSheet, setShowSortSheet] = useState(false);
-  const appliedInitialModality = useRef(false);
+  const appliedInitialFilters = useRef(false);
+  const flatListRef = useRef<FlatList>(null);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    if (appliedInitialModality.current) return;
+    if (appliedInitialFilters.current) return;
     if (initialModality && initialModality !== "all") {
       actions.setModality(initialModality);
     }
-    appliedInitialModality.current = true;
-  }, [initialModality, actions]);
+    if (initialCategory && initialCategory !== "all") {
+      actions.setCategory(initialCategory);
+    }
+    appliedInitialFilters.current = true;
+  }, [initialModality, initialCategory, actions]);
 
   useEffect(() => {
     if (typeof actions.setNeighborhood === "function") {
@@ -138,6 +148,18 @@ export default function Search({
               <Text style={styles.clearFiltersText}>Limpar filtros</Text>
             </Pressable>
           ) : null}
+          {/* Botão de atalho para Favoritos ao lado dos filtros */}
+          {onNavigateToFavorites ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Ver meus livros favoritos"
+              onPress={onNavigateToFavorites}
+              style={withPress(styles.favoritesTopButton)}
+            >
+              <AppIcon name="heart" size={24} color={colors.action} />
+            </Pressable>
+          ) : null}
+
           {/* Na web larga a coluna "Filtros" já está sempre visível; o atalho só existe nas telas estreitas. */}
           {wideWeb ? null : (
           <Pressable
@@ -321,11 +343,6 @@ export default function Search({
           <Text style={styles.emptyActionText}>Limpar filtros</Text>
         </Pressable>
       ) : null}
-      {state.term.trim() ? (
-        <Pressable accessibilityRole="button" onPress={() => onNavigateToAlerts?.(state.term.trim())}>
-          <Text style={styles.alertLink}>Criar alerta para esta busca</Text>
-        </Pressable>
-      ) : null}
     </View>
   );
 
@@ -344,6 +361,7 @@ export default function Search({
         />
       ) : null}
       <FlatList
+        ref={flatListRef}
         key={wideWeb ? `grade-${gridColumns}` : "lista"}
         numColumns={wideWeb ? gridColumns : 1}
         columnWrapperStyle={wideWeb ? styles.gridRow : undefined}
@@ -352,27 +370,13 @@ export default function Search({
         style={styles.flexOne}
         contentContainerStyle={wideWeb ? styles.contentWide : styles.content}
         keyboardShouldPersistTaps="handled"
+        onScroll={(e) => {
+          const offsetY = e.nativeEvent.contentOffset.y;
+          setShowScrollTop(offsetY > 300);
+        }}
+        scrollEventThrottle={16}
         ListHeaderComponent={listHeader}
         ListEmptyComponent={listEmpty}
-        ListFooterComponent={
-          wideWeb && !state.loading && !state.error && state.books.length > 0 ? (
-            <View style={styles.alertCard}>
-              <AppIcon name="bell" size={24} color={colors.m3.onTertiaryContainer} />
-              <View style={styles.alertCardText}>
-                <Text style={styles.alertCardTitle}>Não achou o livro?</Text>
-                <Text style={styles.alertCardBody}>Crie um alerta e avisamos quando alguém anunciar.</Text>
-              </View>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Criar alerta de busca"
-                onPress={() => onNavigateToAlerts?.(state.term.trim())}
-                style={withPress(styles.alertCardButton)}
-              >
-                <Text style={styles.alertCardButtonText}>Criar alerta</Text>
-              </Pressable>
-            </View>
-          ) : undefined
-        }
         renderItem={({ item }) => {
           const priceOrCondition =
             item.price != null
@@ -413,7 +417,17 @@ export default function Search({
                 </View>
               </Pressable>
               <View style={[styles.cardActions, wideWeb && styles.cardActionsWide]}>
-                <FavoriteButton bookId={item.id} userId={auth.user?.id ?? null} />
+                <FavoriteButton
+                  bookId={item.id}
+                  userId={auth.user?.id ?? null}
+                  onToggleSuccess={(selected) => {
+                    setSnackbarMessage(
+                      selected
+                        ? `"${item.title}" foi adicionado aos Favoritos!`
+                        : `"${item.title}" foi removido dos Favoritos.`
+                    );
+                  }}
+                />
                 {wideWeb ? null : (
                 <Pressable
                   accessibilityRole="button"
@@ -430,6 +444,30 @@ export default function Search({
         }}
       />
       </View>
+      {showScrollTop ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Voltar ao topo da lista"
+          onPress={() => flatListRef.current?.scrollToOffset({ offset: 0, animated: true })}
+          style={withPress(styles.scrollTopFab)}
+        >
+          <View style={{ transform: [{ rotate: "180deg" }] }}>
+            <AppIcon name="chevronDown" size={24} color={colors.m3.onPrimaryContainer} />
+          </View>
+        </Pressable>
+      ) : null}
+
+      <View pointerEvents="box-none" style={styles.snackbarContainer}>
+        <Snackbar
+          visible={snackbarMessage !== null}
+          message={snackbarMessage ?? ""}
+          actionLabel={onNavigateToFavorites ? "Ver favoritos" : undefined}
+          onAction={onNavigateToFavorites}
+          onDismiss={() => setSnackbarMessage(null)}
+          duration={3500}
+        />
+      </View>
+
       <FilterSheet
         visible={showFilterSheet}
         draftFilters={state.draftFilters}
@@ -476,7 +514,7 @@ function createStyles(colors: ColorPalette) {
     // Na grade, o texto começa logo abaixo da capa para os títulos ficarem alinhados entre colunas.
     cardInfoWide: { justifyContent: "flex-start" },
     cardMetaRowWide: { flexWrap: "wrap", rowGap: tokens.spacing[4] },
-    cardActionsWide: { position: "absolute", top: 8, right: 8, width: 48 },
+    cardActionsWide: { position: "absolute", top: tokens.spacing[8], right: tokens.spacing[8], width: tokens.accessibility.touchTarget },
     cardWide: { alignItems: "stretch", paddingLeft: tokens.spacing[12], paddingRight: tokens.spacing[12], marginBottom: 0, flex: 1, flexDirection: "column", maxWidth: "25%", borderRadius: tokens.radius.xl, backgroundColor: colors.m3.surfaceContainerLowest },
     content: {
       flexGrow: 1,
@@ -511,11 +549,18 @@ function createStyles(colors: ColorPalette) {
     topRightActions: {
       flexDirection: "row",
       alignItems: "center",
-      gap: tokens.spacing[8],
+      gap: tokens.spacing[4],
+    },
+    favoritesTopButton: {
+      width: tokens.accessibility.touchTarget,
+      height: tokens.accessibility.touchTarget,
+      borderRadius: tokens.radius.extraLarge,
+      justifyContent: "center",
+      alignItems: "center",
     },
     tuneButton: {
-      width: 48,
-      height: 48,
+      width: tokens.accessibility.touchTarget,
+      height: tokens.accessibility.touchTarget,
       borderRadius: tokens.radius.extraLarge,
       justifyContent: "center",
       alignItems: "center",
@@ -523,10 +568,10 @@ function createStyles(colors: ColorPalette) {
     // Contador de filtros aplicados sobre o ícone de ajustes (chip de 18 dp do Material 3).
     tuneBadge: {
       position: "absolute",
-      top: 6,
-      right: 6,
-      minWidth: 18,
-      height: 18,
+      top: tokens.spacing[6],
+      right: tokens.spacing[6],
+      minWidth: tokens.spacing[18],
+      height: tokens.spacing[18],
       paddingHorizontal: tokens.spacing[4],
       borderRadius: tokens.radius.full,
       backgroundColor: colors.m3.primary,
@@ -599,7 +644,7 @@ function createStyles(colors: ColorPalette) {
     body: { ...tokens.typography.bodyLarge, lineHeight: tokens.lineHeight[25], color: colors.secondaryText },
     empty: { alignItems: "center", paddingTop: tokens.spacing[32], gap: tokens.spacing[8] },
     emptyWide: { width: "100%", paddingVertical: tokens.spacing[48], paddingHorizontal: tokens.spacing[48], borderRadius: tokens.radius.xxl, backgroundColor: colors.m3.surfaceContainerLow, gap: tokens.spacing[16] },
-    emptyIcon: { width: 64, height: 64, borderRadius: tokens.radius.circle64, alignItems: "center", justifyContent: "center", backgroundColor: colors.m3.secondaryContainer },
+    emptyIcon: { width: tokens.spacing[64], height: tokens.spacing[64], borderRadius: tokens.radius.circle64, alignItems: "center", justifyContent: "center", backgroundColor: colors.m3.secondaryContainer },
     alertCard: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[16], paddingHorizontal: tokens.spacing[24], paddingVertical: tokens.spacing[20], borderRadius: tokens.radius.large, backgroundColor: colors.m3.tertiaryContainer },
     alertCardText: { flex: 1, gap: tokens.spacing[2] },
     alertCardTitle: { ...tokens.typography.titleBlock, color: colors.m3.onTertiaryContainer },
@@ -634,7 +679,7 @@ function createStyles(colors: ColorPalette) {
     // Figma: sem borda, background branco (#FFF), sombra dupla elevation level1
     card: {
       flexDirection: "row",
-      alignItems: "center",
+      alignItems: "flex-start",
       backgroundColor: colors.m3.surfaceContainerLowest,
       borderRadius: tokens.radius.card,
       paddingLeft: tokens.spacing[12],
@@ -651,7 +696,7 @@ function createStyles(colors: ColorPalette) {
     cardMain: {
       flex: 1,
       flexDirection: "row",
-      alignItems: "center",
+      alignItems: "flex-start",
       gap: tokens.spacing[14],
     },
     cardMainPressed: {
@@ -693,7 +738,8 @@ function createStyles(colors: ColorPalette) {
     cardActions: {
       flexDirection: "column",
       alignItems: "center",
-      justifyContent: "center",
+      justifyContent: "flex-start",
+      alignSelf: "flex-start",
       width: tokens.accessibility.touchTarget,
     },
     chevronButton: {
@@ -703,5 +749,29 @@ function createStyles(colors: ColorPalette) {
       justifyContent: "center",
     },
     categoryBadge: { ...tokens.typography.labelSmall, color: colors.secondaryText, fontStyle: "italic" },
+    scrollTopFab: {
+      position: "absolute",
+      right: tokens.spacing[20],
+      bottom: tokens.spacing[24],
+      width: tokens.accessibility.touchTarget,
+      height: tokens.accessibility.touchTarget,
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.m3.primaryContainer,
+      alignItems: "center",
+      justifyContent: "center",
+      elevation: 4,
+      shadowColor: colors.m3.shadow,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.25,
+      shadowRadius: 4,
+      zIndex: 10,
+    },
+    snackbarContainer: {
+      position: "absolute",
+      left: tokens.spacing[16],
+      right: tokens.spacing[16],
+      bottom: tokens.spacing[16],
+      zIndex: 20,
+    },
   });
 }

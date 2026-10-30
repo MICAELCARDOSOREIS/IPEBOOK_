@@ -17,6 +17,7 @@ import { Snackbar } from "@/view/components/Snackbar";
 import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
 import { Avatar } from "@/view/components/Avatar";
 import { PhotoGallery } from "@/view/listings/photoGallery";
+import { ReservedListingSheet } from "@/view/listings/ReservedListingSheet";
 import { BOOK_CONDITION_LABELS, type BookModality } from "@/model/entities/book";
 import { WEB_MAX_WIDTH } from "@/view/webLayout";
 
@@ -81,6 +82,9 @@ export type BookDetailProps = {
   onNavigateToUserProfile?: (ownerId: string) => void;
   onNavigateToReport?: (bookId: string) => void;
   onNavigateToSignIn?: () => void;
+  onNavigateToManageListing?: (bookId: string) => void;
+  onNavigateToMyRequests?: () => void;
+  onNavigateToCategorySearch?: (category: string) => void;
 };
 
 export default function BookDetail({
@@ -89,6 +93,9 @@ export default function BookDetail({
   onNavigateToUserProfile,
   onNavigateToReport,
   onNavigateToSignIn,
+  onNavigateToManageListing,
+  onNavigateToMyRequests,
+  onNavigateToCategorySearch,
 }: BookDetailProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -99,7 +106,9 @@ export default function BookDetail({
   const [negotiation, negotiationActions] = useRequestNegotiationViewModel();
   const [share, shareActions] = useShareListingViewModel();
   const book = state.book;
+  const [ownerProfileState] = usePublicProfileViewModel(book?.ownerId ?? "");
   const [galleryVisible, setGalleryVisible] = useState(false);
+  const [reservedSheetVisible, setReservedSheetVisible] = useState(false);
   // Imagem de compartilhamento: o cartão fica fora da tela e é capturado em PNG depois que a capa carrega.
   const shareCardRef = useRef<React.ComponentRef<typeof View>>(null);
   const coverSettled = useRef(false);
@@ -138,6 +147,44 @@ export default function BookDetail({
   const wideWeb = useIsWideWeb();
   const heroColors = book ? modalityTag[book.modality] : null;
 
+  const isOwner = Boolean(sessionUserId && book && book.ownerId === sessionUserId);
+  const isRequested = Boolean(book && negotiation.requestedListingIds.includes(book.id));
+
+  const handleStatusPress = () => {
+    if (!book) return;
+    if (book.status === "reserved" || book.status === "delivered") {
+      if (isOwner) {
+        onNavigateToManageListing?.(book.id);
+      } else if (isRequested) {
+        onNavigateToMyRequests?.();
+      } else {
+        setReservedSheetVisible(true);
+      }
+      return;
+    }
+    if (isRequested) {
+      onNavigateToMyRequests?.();
+    }
+  };
+
+  const statusA11yLabel = useMemo(() => {
+    if (!book) return "";
+    if (book.status === "reserved") {
+      if (isOwner) return "Livro reservado. Toque para gerenciar anúncio e acompanhar";
+      if (isRequested) return "Livro reservado para você. Toque para ver seus pedidos";
+      return "Livro reservado. Toque para saber mais e entrar na lista de espera";
+    }
+    if (book.status === "delivered") {
+      if (isOwner) return "Livro entregue. Toque para gerenciar anúncio";
+      if (isRequested) return "Livro entregue. Toque para ver seus pedidos";
+      return "Livro entregue. Toque para saber mais";
+    }
+    if (isRequested) {
+      return "Negociação solicitada. Toque para ver seus pedidos";
+    }
+    return "";
+  }, [book, isOwner, isRequested]);
+
   const actionBar = book && !state.loading ? (
     <View style={[styles.bottomBar, wideWeb && styles.bottomBarWide]}>
     <Pressable
@@ -159,9 +206,14 @@ export default function BookDetail({
     {book.status === "reserved" || book.status === "delivered" || !sessionUserId || book.ownerId !== sessionUserId ? (
       <View style={styles.primarySlot}>
         {book.status === "reserved" || book.status === "delivered" ? (
-          <View style={styles.statusPill}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={statusA11yLabel}
+            onPress={handleStatusPress}
+            style={withPress(styles.statusButton)}
+          >
             <Text style={styles.reserved}>{book.status === "delivered" ? "Entregue" : "Reservado"}</Text>
-          </View>
+          </Pressable>
         ) : !sessionUserId ? (
           onNavigateToSignIn ? (
             <FilledButton
@@ -170,10 +222,15 @@ export default function BookDetail({
             />
           ) : null
         ) : book.ownerId !== sessionUserId ? (
-          negotiation.requestedListingIds.includes(book.id) ? (
-            <View style={styles.statusPill}>
+          isRequested ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={statusA11yLabel}
+              onPress={handleStatusPress}
+              style={withPress(styles.statusButton)}
+            >
               <Text style={styles.requested}>Negociação solicitada</Text>
-            </View>
+            </Pressable>
           ) : (
             <FilledButton
               label={primaryActionLabel}
@@ -243,6 +300,7 @@ export default function BookDetail({
                   pageCount={book.pageCount}
                   photoUrl={book.photoUrl}
                   scale={wideWeb ? 1.6 : 1}
+                  show3dHint
                   onPress={photos.length > 0 ? () => setGalleryVisible(true) : undefined}
                 />
               </View>
@@ -427,6 +485,34 @@ export default function BookDetail({
         message="Link copiado"
         onDismiss={shareActions.dismissLinkCopied}
       />
+
+      {book ? (
+        <ReservedListingSheet
+          visible={reservedSheetVisible}
+          onClose={() => setReservedSheetVisible(false)}
+          status={book.status === "delivered" ? "delivered" : "reserved"}
+          category={book.category}
+          isFavorite={state.isFavorite}
+          favoriteLoading={state.favoriteLoading}
+          onToggleFavorite={() => {
+            if (!sessionUserId) {
+              setReservedSheetVisible(false);
+              onNavigateToSignIn?.();
+              return;
+            }
+            void actions.toggleFavorite(sessionUserId);
+          }}
+          onSearchCategory={(cat) => {
+            setReservedSheetVisible(false);
+            onNavigateToCategorySearch?.(cat);
+          }}
+          onViewOwnerProfile={() => {
+            setReservedSheetVisible(false);
+            onNavigateToUserProfile?.(book.ownerId);
+          }}
+          ownerName={ownerProfileState.profile?.name}
+        />
+      ) : null}
     </SafeAreaView>
   );
 }
@@ -648,6 +734,12 @@ function createStyles(colors: ColorPalette) {
     tonalButtonText: { ...tokens.typography.bodyLarge, fontWeight: tokens.fontWeight.semiBold, color: colors.m3.onSecondaryContainer },
     primarySlot: { flex: 1 },
     statusPill: { alignItems: "center", justifyContent: "center", minHeight: 52 },
+    statusButton: {
+      alignItems: "center",
+      justifyContent: "center",
+      minHeight: 52,
+      borderRadius: tokens.radius.full,
+    },
     reserved: { ...tokens.typography.labelLarge, color: colors.m3.onTertiaryContainer, backgroundColor: colors.m3.tertiaryContainer, paddingHorizontal: tokens.spacing[16], paddingVertical: tokens.spacing[8], borderRadius: tokens.radius.full, overflow: "hidden" },
     requested: { ...tokens.typography.bodyMedium, color: colors.action, fontWeight: tokens.fontWeight.semiBold },
     requestError: { ...tokens.typography.bodyMedium, color: colors.error },
