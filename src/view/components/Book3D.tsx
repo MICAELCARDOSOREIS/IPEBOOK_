@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AccessibilityInfo, PanResponder, StyleSheet, Text, View } from "react-native";
+import { AccessibilityInfo, PanResponder, Pressable, StyleSheet, Text, View } from "react-native";
 import { BookCover, coverBackground } from "@/view/components/BookCover";
 import { bookDepthFromPages, faceContentOpacity, normalizeAngle, projectBookFaces, snapBookAngle, type BookFace } from "@/view/book3dGeometry";
 import { fontFamily, tokens } from "@/view/tokens";
@@ -25,6 +25,10 @@ export type Book3DProps = {
   startAngle?: number;
   /** Exibe uma badge discreta indicando que o modelo é 3D e responde ao toque/giro. */
   show3dHint?: boolean;
+  /** Rótulo de acessibilidade personalizado (ex.: para ver fotos em tela cheia). */
+  accessibilityLabel?: string;
+  /** Papel de acessibilidade personalizado. */
+  accessibilityRole?: "image" | "button";
 };
 
 const BASE_WIDTH = 136;
@@ -51,7 +55,22 @@ function darken(hex: string, amount: number): string {
  * ortogonal feita só com `View` e `scaleX`, sem biblioteca 3D (ver `book3dGeometry.ts`). Solta o dedo, o giro
  * continua e desacelera. Quem pede menos movimento recebe o livro parado, com giro só pelas ações de acessibilidade.
  */
-export function Book3D({ id, title, author, description, publisher, pageCount, photoUrl, onPress, intro = true, scale = 1, startAngle, show3dHint }: Book3DProps) {
+export function Book3D({
+  id,
+  title,
+  author,
+  description,
+  publisher,
+  pageCount,
+  photoUrl,
+  onPress,
+  intro = true,
+  scale = 1,
+  startAngle,
+  show3dHint,
+  accessibilityLabel,
+  accessibilityRole,
+}: Book3DProps) {
   const WIDTH = BASE_WIDTH * scale;
   const HEIGHT = BASE_HEIGHT * scale;
   const DEPTH = bookDepthFromPages(pageCount, BASE_DEPTH) * scale;
@@ -153,21 +172,34 @@ export function Book3D({ id, title, author, description, publisher, pageCount, p
   const total = WIDTH + DEPTH * 2;
 
   return (
-    <View
+    <Pressable
       {...pan.panHandlers}
       accessible
-      accessibilityRole="image"
-      accessibilityLabel={`Capa de ${title}, em 3D. Use as ações para girar o livro.`}
+      accessibilityRole={accessibilityRole ?? (onPress ? "button" : "image")}
+      accessibilityLabel={
+        accessibilityLabel ??
+        (onPress
+          ? `Ver fotos do anúncio em tela cheia. Capa de ${title}.`
+          : `Capa de ${title}, em 3D. Use as ações para girar o livro.`)
+      }
+      onPress={onPress}
       accessibilityActions={[
         { name: "increment", label: "Girar para a esquerda" },
         { name: "decrement", label: "Girar para a direita" },
-        { name: "activate", label: "Voltar para a capa" },
+        { name: "activate", label: onPress ? "Ver fotos" : "Voltar para a capa" },
       ]}
       onAccessibilityAction={(event) => {
         const action = event.nativeEvent.actionName;
-        if (action === "increment") animateTo(angleRef.current + STEP);
-        else if (action === "decrement") animateTo(angleRef.current - STEP);
-        else animateTo(defaultRestAngle);
+        if (action === "activate") {
+          if (onPress) onPress();
+          else animateTo(defaultRestAngle);
+        } else if (action === "increment") {
+          animateTo(angleRef.current + STEP);
+        } else if (action === "decrement") {
+          animateTo(angleRef.current - STEP);
+        } else {
+          animateTo(defaultRestAngle);
+        }
       }}
       style={[styles.stage, { width: total, height: HEIGHT }]}
     >
@@ -205,7 +237,7 @@ export function Book3D({ id, title, author, description, publisher, pageCount, p
           <Text numberOfLines={1} style={styles.hintText}>3D · Toque para virar</Text>
         </View>
       ) : null}
-    </View>
+    </Pressable>
   );
 }
 
