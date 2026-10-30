@@ -38,4 +38,12 @@ describe("contraste de tema claro/escuro (Spec 054 / Issue #144, WCAG AA)", () =
       }
     }
   });
+
+  it("tons de categoria mantêm contraste mínimo nos dois temas", () => {
+    for (const theme of [colors, darkColors]) {
+      for (const tone of theme.categoryTones) {
+        expect(contrastRatio(tone.text, tone.background)).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
+      }
+    }
+  });
 });

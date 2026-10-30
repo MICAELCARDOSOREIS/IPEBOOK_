@@ -19,6 +19,7 @@ import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useDraftsViewModel } from "@/viewmodel/useDraftsViewModel";
 import { WEB_MAX_WIDTH, WEB_GUTTER, useWebColumns, webColumnWidth } from "@/view/webLayout";
 
+import { withPress } from "@/view/pressFeedback";
 const TOTAL_STEPS = 3;
 const WIDE_CONTENT_MAX_WIDTH = WEB_MAX_WIDTH;
 
@@ -116,7 +117,7 @@ export function Drafts({ sessionUserId, onBack, onResume, onNavigateToCreateList
                     accessibilityRole="button"
                     accessibilityLabel={`Rascunho ${title}, ${stepLabel(book)}`}
                     onPress={() => onResume?.(book.id)}
-                    style={styles.cardMain}
+                    style={withPress(styles.cardMain)}
                   >
                     <ModalityCoverArea modality={book.modality}>
                       <BookCover id={book.id} title={title} photoUrl={book.photoUrl} variant="list" />
@@ -234,7 +235,7 @@ function createStyles(colors: ColorPalette) {
     cardSubtitle: { ...tokens.typography.labelMedium, color: colors.secondaryText },
     metaRow: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[8], flexWrap: "wrap" },
     progress: { flexDirection: "row", gap: tokens.spacing[4], marginTop: tokens.spacing[4] },
-    progressSegment: { flex: 1, height: 4, borderRadius: 2, backgroundColor: colors.m3.outlineVariant },
+    progressSegment: { flex: 1, height: 4, borderRadius: tokens.radius.hairline, backgroundColor: colors.m3.outlineVariant },
     progressSegmentDone: { backgroundColor: colors.m3.primary },
     cardError: { ...tokens.typography.bodyMedium, color: colors.error },
     cardActions: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: tokens.spacing[8] },
@@ -248,7 +249,7 @@ function createStyles(colors: ColorPalette) {
     emptyIcon: {
       width: 72,
       height: 72,
-      borderRadius: 36,
+      borderRadius: tokens.radius.circle72,
       alignItems: "center",
       justifyContent: "center",
       backgroundColor: colors.m3.secondaryContainer,

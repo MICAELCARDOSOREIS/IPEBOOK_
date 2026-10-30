@@ -5,6 +5,7 @@ import { useReceivedRequestsViewModel } from "@/viewmodel/useReceivedRequestsVie
 import { RequestListLayout, createRequestStyles } from "@/view/requests/requestListLayout";
 import { useTheme } from "@/view/theme/ThemeProvider";
 
+import { withPress } from "@/view/pressFeedback";
 /** Sem perfil público, a tela não expõe o identificador interno (Spec 043, RN-02). */
 export const COMMUNITY_MEMBER = "Pessoa da comunidade";
 
@@ -48,7 +49,7 @@ export function ReceivedRequests({
                     accessibilityState={{ disabled: busy }}
                     disabled={busy}
                     onPress={() => void actions.accept(request.id)}
-                    style={s.primary}
+                    style={withPress(s.primary)}
                   >
                     <Text style={s.primaryText}>Aceitar</Text>
                   </Pressable>
@@ -57,7 +58,7 @@ export function ReceivedRequests({
                     accessibilityState={{ disabled: busy }}
                     disabled={busy}
                     onPress={() => void actions.reject(request.id)}
-                    style={s.secondary}
+                    style={withPress(s.secondary)}
                   >
                     <Text style={s.secondaryText}>Recusar</Text>
                   </Pressable>
@@ -69,7 +70,7 @@ export function ReceivedRequests({
                 <Pressable
                   accessibilityRole="button"
                   onPress={() => onNavigateToNegotiationDetail?.(request.id)}
-                  style={s.primary}
+                  style={withPress(s.primary)}
                 >
                   <Text style={s.primaryText}>Ver detalhes do encontro</Text>
                 </Pressable>

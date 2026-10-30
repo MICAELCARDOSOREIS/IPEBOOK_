@@ -14,6 +14,7 @@ import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { AppIcon } from "@/view/components/AppIcon";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 
+import { withPress } from "@/view/pressFeedback";
 export type NeighborhoodSelectorModalProps = {
   visible: boolean;
   currentNeighborhood?: string;
@@ -80,7 +81,7 @@ export function NeighborhoodSelectorModal({
               accessibilityRole="button"
               accessibilityLabel="Fechar seletor de bairros"
               onPress={onClose}
-              style={styles.closeButton}
+              style={withPress(styles.closeButton)}
             >
               <AppIcon name="close" size={24} color={colors.m3.onSurfaceVariant} />
             </Pressable>
@@ -103,7 +104,7 @@ export function NeighborhoodSelectorModal({
                 accessibilityRole="button"
                 accessibilityLabel="Limpar busca de bairro"
                 onPress={() => setFilterText("")}
-                style={styles.clearSearchButton}
+                style={withPress(styles.clearSearchButton)}
               >
                 <AppIcon name="close" size={18} color={colors.m3.onSurfaceVariant} />
               </Pressable>
@@ -133,9 +134,10 @@ export function NeighborhoodSelectorModal({
                   accessibilityLabel={label}
                   accessibilityState={{ selected: isSelected }}
                   onPress={() => onSelect(item)}
-                  style={[
+                  style={({ pressed }) => [
                     styles.itemButton,
                     isSelected && styles.itemButtonSelected,
+                    pressed && styles.itemButtonPressed,
                   ]}
                 >
                   <View style={styles.itemLeft}>
@@ -168,12 +170,12 @@ function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     scrim: {
       flex: 1,
-      backgroundColor: "rgba(0,0,0,0.5)",
+      backgroundColor: colors.m3.scrim,
       justifyContent: "flex-end",
     },
     // Web larga: diálogo centralizado em vez de folha inferior esticada pela janela inteira.
     scrimWide: { justifyContent: "center", alignItems: "center", padding: tokens.spacing[24] },
-    dialogWide: { width: "100%", maxWidth: 480, borderRadius: 28 },
+    dialogWide: { width: "100%", maxWidth: 480, borderRadius: tokens.radius.xxl },
     scrimBackdrop: {
       ...StyleSheet.absoluteFill,
     },
@@ -181,15 +183,15 @@ function createStyles(colors: ColorPalette) {
       alignSelf: "center",
       width: 32,
       height: 4,
-      borderRadius: 2,
+      borderRadius: tokens.radius.hairline,
       marginTop: tokens.spacing[12],
       backgroundColor: colors.m3.onSurfaceVariant,
       opacity: 0.4,
     },
     sheetContainer: {
       backgroundColor: colors.surface,
-      borderTopLeftRadius: 24,
-      borderTopRightRadius: 24,
+      borderTopLeftRadius: tokens.radius.extraLarge,
+      borderTopRightRadius: tokens.radius.extraLarge,
       maxHeight: "80%",
       paddingTop: tokens.spacing[16],
       paddingBottom: tokens.spacing[24],
@@ -207,19 +209,17 @@ function createStyles(colors: ColorPalette) {
       flex: 1,
     },
     title: {
-      fontSize: 20,
-      fontFamily: fontFamily.brand,
+      ...tokens.typography.titleBar,
       color: colors.text,
     },
     subtitle: {
-      fontSize: 13,
-      fontFamily: fontFamily.regular,
+      ...tokens.typography.footnote,
       color: colors.m3.onSurfaceVariant,
-      marginTop: 2,
+      marginTop: tokens.spacing[2],
     },
     closeButton: {
-      minWidth: 48,
-      minHeight: 48,
+      minWidth: tokens.accessibility.touchTarget,
+      minHeight: tokens.accessibility.touchTarget,
       justifyContent: "center",
       alignItems: "center",
     },
@@ -227,23 +227,22 @@ function createStyles(colors: ColorPalette) {
       flexDirection: "row",
       alignItems: "center",
       backgroundColor: colors.m3.surfaceContainerHigh,
-      borderRadius: 12,
+      borderRadius: tokens.radius.cardSmall,
       paddingHorizontal: tokens.spacing[12],
-      minHeight: 48,
+      minHeight: tokens.accessibility.touchTarget,
       marginBottom: tokens.spacing[12],
     },
     searchInput: {
       flex: 1,
-      fontSize: 15,
+      ...tokens.typography.subheadline,
       color: colors.text,
-      fontFamily: fontFamily.regular,
       marginLeft: tokens.spacing[8],
       paddingVertical: tokens.spacing[8],
     },
     clearSearchButton: {
       padding: tokens.spacing[4],
-      minWidth: 32,
-      minHeight: 32,
+      minWidth: tokens.spacing[32],
+      minHeight: tokens.spacing[32],
       justifyContent: "center",
       alignItems: "center",
     },
@@ -259,12 +258,17 @@ function createStyles(colors: ColorPalette) {
       justifyContent: "space-between",
       paddingVertical: tokens.spacing[12],
       paddingHorizontal: tokens.spacing[12],
-      minHeight: 48,
-      borderRadius: 12,
-      marginBottom: 4,
+      minHeight: tokens.accessibility.touchTarget,
+      borderRadius: tokens.radius.cardSmall,
+      marginBottom: tokens.spacing[4],
     },
     itemButtonSelected: {
       backgroundColor: colors.m3.secondaryContainer,
+      borderRadius: tokens.shapeMorph.chipSelected,
+    },
+    itemButtonPressed: {
+      transform: [{ scale: 0.98 }],
+      borderRadius: tokens.shapeMorph.chipSelected,
     },
     itemLeft: {
       flexDirection: "row",
@@ -272,9 +276,8 @@ function createStyles(colors: ColorPalette) {
       flex: 1,
     },
     itemText: {
-      fontSize: 16,
+      ...tokens.typography.bodyLarge,
       color: colors.text,
-      fontFamily: fontFamily.regular,
       marginLeft: tokens.spacing[12],
     },
     itemTextSelected: {

@@ -1,13 +1,14 @@
 import { useMemo } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { Book } from "@/model/entities/book";
-import { tokens, fontFamily, type ColorPalette } from "@/view/tokens";
+import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { AppIcon } from "@/view/components/AppIcon";
 import { BookCover } from "@/view/components/BookCover";
 import { ModalityCoverArea } from "@/view/components/ModalityCoverArea";
 import { Tag, type TagProps } from "@/view/components/Tag";
 
+import { withPress } from "@/view/pressFeedback";
 export type ShelfRowProps = {
   book: Book;
   summary: string;
@@ -28,7 +29,7 @@ export function ShelfRow({ book, summary, accessibilityLabel, onPress, wide }: S
         accessibilityRole="button"
         accessibilityLabel={accessibilityLabel}
         onPress={onPress}
-        style={[styles.row, styles.tableRow]}
+        style={withPress([styles.row, styles.tableRow])}
       >
         <View style={styles.cellBook}>
           <BookCover id={book.id} title={book.title} photoUrl={book.photoUrl} variant="list" />
@@ -50,7 +51,7 @@ export function ShelfRow({ book, summary, accessibilityLabel, onPress, wide }: S
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
       onPress={onPress}
-      style={styles.row}
+      style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
     >
       <ModalityCoverArea modality={book.modality}>
         <BookCover id={book.id} title={book.title} photoUrl={book.photoUrl} variant="list" />
@@ -76,6 +77,12 @@ function createStyles(colors: ColorPalette) {
       gap: tokens.spacing[16],
       minHeight: tokens.accessibility.touchTarget,
       paddingVertical: tokens.spacing[12],
+      borderRadius: tokens.shapeMorph.cardRest,
+    },
+    rowPressed: {
+      backgroundColor: colors.m3.surfaceContainerHigh,
+      borderRadius: tokens.shapeMorph.cardPressed,
+      transform: [{ scale: 0.985 }],
     },
     rowText: { flex: 1, gap: tokens.spacing[4] },
     tableRow: { paddingHorizontal: tokens.spacing[16], borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.m3.outlineVariant },
@@ -84,10 +91,8 @@ function createStyles(colors: ColorPalette) {
     cellAction: { width: 96, ...tokens.typography.labelLarge, color: colors.m3.primary },
     tableTitle: { ...tokens.typography.titleMedium, color: colors.m3.onSurface },
     rowTitle: {
-      // Figma `05.01`: título do livro na serifada da marca, 18dp.
-      fontFamily: fontFamily.brand,
-      fontSize: 18,
-      lineHeight: 24,
+      // Figma `05.01` / `02-tokens.md`: título do livro em linhas de lista usa `brandCardTitle`.
+      ...tokens.typography.brandCardTitle,
       color: colors.m3.onSurface,
     },
     rowSummary: {

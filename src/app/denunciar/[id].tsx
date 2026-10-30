@@ -1,15 +1,18 @@
 import { useLocalSearchParams } from "expo-router";
-import { backOnce, pushOnce } from "@/view/pushOnce";
+import { backOnce, pushOnce, replaceOnce } from "@/view/pushOnce";
+import { RequireAuth } from "@/view/components/RequireAuth";
 import ReportListingScreen from "@/view/listings/reportListingScreen";
 
 export default function DenunciarLivro() {
   const { id } = useLocalSearchParams<{ id: string }>();
 
   return (
-    <ReportListingScreen
-      listingId={id}
-      onBack={() => backOnce()}
-      onNavigateToLogin={() => pushOnce("/entrar")}
-    />
+    <RequireAuth onRequireSignIn={() => replaceOnce("/entrar")}>
+      <ReportListingScreen
+        listingId={id}
+        onBack={() => backOnce()}
+        onNavigateToLogin={() => pushOnce("/entrar")}
+      />
+    </RequireAuth>
   );
 }

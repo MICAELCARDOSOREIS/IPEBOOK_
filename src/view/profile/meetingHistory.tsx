@@ -15,6 +15,7 @@ import { TopAppBar } from "@/view/components/TopAppBar";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
 
+import { withPress } from "@/view/pressFeedback";
 export type MeetingHistoryProps = {
   onBack?: () => void;
   onNavigateToNegotiation?: (requestId: string) => void;
@@ -70,7 +71,7 @@ export default function MeetingHistory({ onBack, onNavigateToNegotiation }: Meet
                   accessibilityRole="button"
                   accessibilityLabel={`Encontro em ${meeting.pointName}, ${formatMeetingWhen(meeting.scheduledAt)}. Situação: ${statusInfo.text}`}
                   onPress={() => onNavigateToNegotiation?.(meeting.requestId)}
-                  style={[styles.meetingCard, wide && styles.cardWide]}
+                  style={withPress([styles.meetingCard, wide && styles.cardWide])}
                 >
                   <View style={styles.cardHeader}>
                     <View style={styles.pointHeader}>
@@ -191,19 +192,15 @@ function createStyles(colors: ColorPalette) {
     },
     pointTitle: {
       flex: 1,
-      ...tokens.typography.titleMedium,
-      fontSize: 15,
-      lineHeight: 20,
+      ...tokens.typography.subheadline,
       fontFamily: fontFamily.semiBold,
+      fontWeight: tokens.fontWeight.semiBold,
       color: colors.text,
     },
     pointAddress: {
-      ...tokens.typography.bodyMedium,
-      fontSize: 13,
-      lineHeight: 18,
-      fontFamily: fontFamily.regular,
+      ...tokens.typography.footnote,
       color: colors.m3.onSurfaceVariant,
-      marginLeft: 26,
+      marginLeft: tokens.spacing[26],
     },
     cardFooter: {
       flexDirection: "row",
@@ -227,7 +224,7 @@ function createStyles(colors: ColorPalette) {
     detailLink: {
       flexDirection: "row",
       alignItems: "center",
-      gap: 2,
+      gap: tokens.spacing[2],
     },
     detailLinkText: {
       ...tokens.typography.labelMedium,
@@ -236,7 +233,7 @@ function createStyles(colors: ColorPalette) {
     },
     badge: {
       paddingHorizontal: tokens.spacing[8],
-      paddingVertical: 3,
+      paddingVertical: tokens.spacing[3],
       borderRadius: tokens.radius.small,
       overflow: "hidden",
     },

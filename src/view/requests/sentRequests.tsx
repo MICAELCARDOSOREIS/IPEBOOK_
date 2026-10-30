@@ -5,6 +5,7 @@ import { useSentRequestsViewModel } from "@/viewmodel/useSentRequestsViewModel";
 import { RequestListLayout, createRequestStyles } from "@/view/requests/requestListLayout";
 import { useTheme } from "@/view/theme/ThemeProvider";
 
+import { withPress } from "@/view/pressFeedback";
 export type SentRequestsProps = {
   sessionUserId: string;
   onBack?: () => void;
@@ -35,7 +36,7 @@ export function SentRequests({
             <Pressable
               accessibilityRole="button"
               onPress={() => onNavigateToNegotiationDetail?.(request.id)}
-              style={s.primary}
+              style={withPress(s.primary)}
             >
               <Text style={s.primaryText}>Ver detalhes do encontro</Text>
             </Pressable>

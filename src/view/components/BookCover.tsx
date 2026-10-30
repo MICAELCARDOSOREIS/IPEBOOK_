@@ -27,8 +27,8 @@ export type BookCoverProps = {
   showSpine?: boolean;
 };
 
-/** A cor de cada arte, na mesma ordem de `COVER_ARTS`: noite marrom, árvore petróleo, montanhas verdes e ondas azul-marinho. */
-const COVER_BACKGROUNDS = ["#3A2A20", "#0F4B5B", "#2C5232", "#14284B"] as const;
+/** A cor de cada arte, na mesma ordem de `COVER_ARTS`: noite marrom, árvore petróleo, montanhas verdes e ondas azul-marinho (definida em `tokens.colors.cover.artBackgrounds`). */
+const COVER_BACKGROUNDS = tokens.colors.cover.artBackgrounds;
 /** Proporção da capa no Figma (`02.01`, `02.02`): 55x88dp e 74x119dp, ambas em 5:8. */
 const ASPECT_RATIO = 5 / 8;
 /** Largura canônica de capa em listas no Figma (`05.01`, `02.06`, `04.08`: 55x88dp). */
@@ -54,7 +54,7 @@ const asSource = (art: number | string) => (typeof art === "string" ? { uri: art
 
 /** Quatro capas ilustrativas, recortadas dos cadernos artesanais do design: noite, ondas, árvore e montanhas. */
 const COVER_ARTS = [capaNoite, capaArvore, capaMontanhas, capaOndas] as const;
-const GOLD = "#D9A93A";
+const GOLD = tokens.colors.cover.gold;
 
 /** Hash FNV-1a: espalha ids parecidos (uuid) entre os quatro desenhos; a soma dos caracteres repetia o mesmo. */
 /** Cor da capa ilustrativa deste livro; também serve de cor da lombada e da contracapa no livro 3D. */

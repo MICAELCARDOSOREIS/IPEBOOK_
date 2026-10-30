@@ -22,6 +22,7 @@ import { NegotiationRatingModal } from "@/view/requests/NegotiationRatingModal";
 import { FilledButton } from "@/view/components/FilledButton";
 import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
 
+import { withPress } from "@/view/pressFeedback";
 const WIDE_CONTENT_MAX_WIDTH = WEB_MAX_WIDTH;
 
 export type RequestDetailProps = {
@@ -126,7 +127,7 @@ export function RequestDetail({
               <Pressable
                 accessibilityRole="button"
                 onPress={() => void actions.reload()}
-                style={styles.retryButton}
+                style={withPress(styles.retryButton)}
               >
                 <Text style={styles.retryText}>Tentar novamente</Text>
               </Pressable>
@@ -195,7 +196,7 @@ export function RequestDetail({
                 accessibilityRole="button"
                 accessibilityLabel={`Ver anúncio de ${detail.book.title}`}
                 onPress={() => onNavigateToBookDetail?.(detail.book.id)}
-                style={styles.bookCard}
+                style={withPress(styles.bookCard)}
               >
                 <BookCover
                   id={detail.book.id}
@@ -281,7 +282,7 @@ export function RequestDetail({
                   accessibilityRole="button"
                   accessibilityLabel={`Conversar com ${detail.counterpartName ?? COMMUNITY_MEMBER}`}
                   onPress={() => onOpenChat?.(requestId)}
-                  style={styles.chatButton}
+                  style={withPress(styles.chatButton)}
                 >
                   <AppIcon name="chat" size={18} color={colors.m3.onSecondaryContainer} />
                   <Text style={styles.chatButtonText}>Conversar</Text>
@@ -367,7 +368,7 @@ function createStyles(colors: ColorPalette) {
     progressDot: {
       width: 24,
       height: 24,
-      borderRadius: 12,
+      borderRadius: tokens.radius.cardSmall,
       alignItems: "center",
       justifyContent: "center",
       borderWidth: 1,
@@ -379,8 +380,8 @@ function createStyles(colors: ColorPalette) {
     progressLabelDone: { color: colors.text },
     // Etapa em andamento (Spec 083): contorno e número verdes, rótulo em negrito.
     progressDotCurrent: { borderColor: colors.action, borderWidth: 2 },
-    progressNumberCurrent: { color: colors.action, fontWeight: "700" },
-    progressLabelCurrent: { color: colors.action, fontWeight: "700" },
+    progressNumberCurrent: { color: colors.action, fontWeight: tokens.fontWeight.bold },
+    progressLabelCurrent: { color: colors.action, fontWeight: tokens.fontWeight.bold },
     yourTurn: {
       flexDirection: "row",
       alignItems: "center",
@@ -429,7 +430,7 @@ function createStyles(colors: ColorPalette) {
   retryText: {
     ...tokens.typography.bodyMedium,
     color: colors.action,
-    fontWeight: "600",
+    fontWeight: tokens.fontWeight.semiBold,
   },
   container: { gap: tokens.spacing[16] },
   contentWide: { maxWidth: WEB_MAX_WIDTH, paddingHorizontal: WEB_GUTTER },
@@ -439,9 +440,7 @@ function createStyles(colors: ColorPalette) {
   columnHalf: { flex: 1 },
   // Manchete menor (Spec 083) para a ação do momento caber acima da dobra.
   heroHeadline: {
-    fontSize: 24,
-    lineHeight: 30,
-    fontFamily: tokens.typography.displayLarge.fontFamily,
+    ...tokens.typography.brandTitle,
     color: colors.text,
   },
   successBanner: {
@@ -493,7 +492,7 @@ function createStyles(colors: ColorPalette) {
   },
   price: {
     ...tokens.typography.bodyMedium,
-    fontWeight: "600",
+    fontWeight: tokens.fontWeight.semiBold,
     color: colors.action,
   },
   card: {
@@ -520,7 +519,7 @@ function createStyles(colors: ColorPalette) {
     color: colors.text,
   },
   highlightText: {
-    fontWeight: "700",
+    fontWeight: tokens.fontWeight.bold,
     color: colors.action,
   },
   // Linha da pessoa (Spec 083): avatar, nome, papel e botão tonal "Conversar".
@@ -529,11 +528,11 @@ function createStyles(colors: ColorPalette) {
     alignItems: "center",
     gap: tokens.spacing[12],
     padding: tokens.spacing[12],
-    borderRadius: 16,
+    borderRadius: tokens.radius.card,
     backgroundColor: colors.m3.surfaceContainerLow,
   },
-  personText: { flex: 1, gap: 2 },
-  personName: { ...tokens.typography.bodyLarge, fontWeight: "600", color: colors.m3.onSurface },
+  personText: { flex: 1, gap: tokens.spacing[2] },
+  personName: { ...tokens.typography.bodyLarge, fontWeight: tokens.fontWeight.semiBold, color: colors.m3.onSurface },
   personRole: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
   chatButton: {
     flexDirection: "row",
@@ -546,7 +545,7 @@ function createStyles(colors: ColorPalette) {
   },
   chatButtonText: {
     ...tokens.typography.labelMedium,
-    fontWeight: "600",
+    fontWeight: tokens.fontWeight.semiBold,
     color: colors.m3.onSecondaryContainer,
   },
   });

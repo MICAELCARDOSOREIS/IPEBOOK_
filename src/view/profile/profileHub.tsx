@@ -16,6 +16,7 @@ import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
 
+import { withPress } from "@/view/pressFeedback";
 export type ProfileHubProps = {
   requireAuth?: boolean;
   onNavigateToSignIn?: () => void;
@@ -67,6 +68,7 @@ export default function ProfileHub({
   const [preferencesState] = useUserPreferencesViewModel(userId);
   const [confirmingSignOut, setConfirmingSignOut] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
+  const wideWeb = useIsWideWeb();
 
   useEffect(() => {
     if (requireAuth && !authState.loading && !userId) {
@@ -182,8 +184,6 @@ export default function ProfileHub({
     },
   ];
 
-  const wideWeb = useIsWideWeb();
-
   return (
     <SafeAreaView edges={["top", "left", "right"]} style={styles.page}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
@@ -199,7 +199,7 @@ export default function ProfileHub({
               accessibilityLabel="Abrir configurações"
               hitSlop={8}
               onPress={onNavigateToSettings ?? (() => {})}
-              style={styles.settingsButton}
+              style={({ pressed }) => [styles.settingsButton, pressed && styles.settingsButtonPressed]}
             >
               <AppIcon name="settings" size={24} color={colors.m3.onSurfaceVariant} />
             </Pressable>
@@ -232,7 +232,7 @@ export default function ProfileHub({
                           accessibilityLabel={`Abrir Instagram @${instagramHandle}`}
                           hitSlop={8}
                           onPress={() => void Linking.openURL(`https://instagram.com/${instagramHandle}`)}
-                          style={styles.instagramPill}
+                          style={withPress(styles.instagramPill)}
                         >
                           <AppIcon name="camera" size={14} color={colors.ipe.onContainer} />
                           <Text style={styles.instagramPillText}>{`@${instagramHandle}`}</Text>
@@ -242,7 +242,7 @@ export default function ProfileHub({
                           accessibilityRole="button"
                           hitSlop={8}
                           onPress={onNavigateToEditProfile}
-                          style={styles.instagramPill}
+                          style={withPress(styles.instagramPill)}
                         >
                           <AppIcon name="add" size={14} color={colors.ipe.onContainer} />
                           <Text style={styles.instagramPillText}>Adicionar Instagram</Text>
@@ -256,7 +256,7 @@ export default function ProfileHub({
                     accessibilityRole="button"
                     accessibilityLabel="Editar perfil"
                     onPress={onNavigateToEditProfile}
-                    style={styles.editProfileButton}
+                    style={({ pressed }) => [styles.editProfileButton, pressed && styles.editProfileButtonPressed]}
                   >
                     <Text style={styles.editProfileButtonText}>Editar perfil</Text>
                   </Pressable>
@@ -292,7 +292,7 @@ export default function ProfileHub({
                           accessibilityRole="button"
                           accessibilityLabel={item.label}
                           onPress={item.onPress}
-                          style={styles.menuRow}
+                          style={({ pressed }) => [styles.menuRow, pressed && styles.menuRowPressed]}
                         >
                           <AppIcon name={item.icon} size={24} color={item.iconColor ?? colors.m3.onSurface} />
                           <View style={styles.menuRowText}>
@@ -337,7 +337,7 @@ export default function ProfileHub({
                         accessibilityRole="button"
                         accessibilityLabel={item.label}
                         onPress={item.onPress}
-                        style={styles.menuRow}
+                        style={({ pressed }) => [styles.menuRow, pressed && styles.menuRowPressed]}
                       >
                         <AppIcon name={item.icon} size={24} color={item.iconColor ?? colors.m3.onSurfaceVariant} />
                         <View style={styles.menuRowText}>
@@ -357,7 +357,7 @@ export default function ProfileHub({
                       accessibilityRole="button"
                       accessibilityLabel="Sair da conta"
                       onPress={() => setConfirmingSignOut(true)}
-                      style={styles.menuRow}
+                      style={({ pressed }) => [styles.menuRow, pressed && styles.menuRowPressed]}
                     >
                       <AppIcon name="logout" size={24} color={colors.error} />
                       <View style={styles.menuRowText}>
@@ -392,7 +392,7 @@ function createStyles(colors: ColorPalette) {
     page: { flex: 1, backgroundColor: colors.background },
     scroll: { flexGrow: 1, paddingBottom: tokens.spacing[32] },
     // Web larga (Figma `07.01`): cartão e métricas em largura total, "Atividade" e "Conta" em duas colunas.
-    contentWide: { maxWidth: WEB_MAX_WIDTH, paddingHorizontal: WEB_GUTTER, paddingTop: tokens.spacing[32], flexDirection: "row", flexWrap: "wrap", alignItems: "flex-start", columnGap: 48, rowGap: 24 },
+    contentWide: { maxWidth: WEB_MAX_WIDTH, paddingHorizontal: WEB_GUTTER, paddingTop: tokens.spacing[32], flexDirection: "row", flexWrap: "wrap", alignItems: "flex-start", columnGap: tokens.spacing[48], rowGap: tokens.spacing[24] },
     fullRow: { width: "100%" },
     heroBlock: { width: "100%", gap: tokens.spacing[16] },
     // Web larga: cartão, botão e números numa coluna lateral fixa; Atividade e Conta lado a lado.
@@ -413,29 +413,31 @@ function createStyles(colors: ColorPalette) {
     },
     title: {
       flex: 1,
-      fontFamily: fontFamily.brand,
-      fontSize: 34,
-      lineHeight: 41,
+      ...tokens.typography.brandLargeTitle,
       color: colors.brandBrown,
     },
     // Alvo de toque de 48 dp ao redor da engrenagem (FR-011, Spec 073).
     settingsButton: {
       minWidth: tokens.accessibility.touchTarget,
       minHeight: tokens.accessibility.touchTarget,
+      borderRadius: tokens.shapeMorph.buttonRest,
       alignItems: "center",
       justifyContent: "center",
+    },
+    settingsButtonPressed: {
+      borderRadius: tokens.shapeMorph.buttonPressed,
+      backgroundColor: colors.m3.surfaceContainerHigh,
+      transform: [{ scale: 0.92 }],
     },
     status: { alignItems: "center", paddingVertical: tokens.spacing[32] },
     guestCard: {
       backgroundColor: colors.m3.surfaceContainerLow,
-      borderRadius: 20,
+      borderRadius: tokens.radius.xl,
       padding: tokens.spacing[24],
       gap: tokens.spacing[12],
     },
     guestTitle: {
-      fontFamily: fontFamily.brand,
-      fontSize: 20,
-      lineHeight: 26,
+      ...tokens.typography.brandCardTitle,
       color: colors.text,
     },
     guestText: {
@@ -448,30 +450,32 @@ function createStyles(colors: ColorPalette) {
       alignItems: "center",
       gap: tokens.spacing[4],
       marginTop: tokens.spacing[8],
-      minHeight: 32,
+      minHeight: tokens.spacing[32],
       paddingHorizontal: tokens.spacing[12],
       borderRadius: tokens.radius.full,
       borderWidth: 1,
       borderColor: colors.ipe.onContainer,
     },
-    instagramPillText: { ...tokens.typography.labelMedium, fontWeight: "600", color: colors.ipe.onContainer },
+    instagramPillText: { ...tokens.typography.labelMedium, fontWeight: tokens.fontWeight.semiBold, color: colors.ipe.onContainer },
     editProfileButton: {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
-      height: 48,
+      height: tokens.accessibility.touchTarget,
       borderWidth: 1,
       borderColor: colors.m3.outlineVariant,
-      borderRadius: 24,
+      borderRadius: tokens.shapeMorph.buttonRest,
       backgroundColor: "transparent",
       paddingHorizontal: tokens.spacing[24],
     },
+    editProfileButtonPressed: {
+      borderRadius: tokens.shapeMorph.buttonPressed,
+      backgroundColor: colors.m3.surfaceContainerLow,
+      transform: [{ scale: 0.97 }],
+    },
     editProfileButtonText: {
-      fontSize: 14,
-      lineHeight: 20,
-      fontFamily: fontFamily.medium,
+      ...tokens.typography.labelLarge,
       color: colors.m3.onSurfaceVariant,
-      fontWeight: "500",
     },
     statsContainer: {
       flexDirection: "row",
@@ -481,22 +485,18 @@ function createStyles(colors: ColorPalette) {
     statBox: {
       flex: 1,
       backgroundColor: colors.m3.surfaceContainerLow,
-      borderRadius: 16,
+      borderRadius: tokens.radius.card,
       alignItems: "center",
       justifyContent: "center",
-      gap: 2,
+      gap: tokens.spacing[2],
       paddingVertical: tokens.spacing[8],
     },
     statNumber: {
-      fontFamily: fontFamily.brand,
-      fontSize: 24,
-      lineHeight: 30,
-      fontWeight: "700",
+      ...tokens.typography.brandTitle,
       color: colors.brandBrown,
     },
     statLabel: {
-      fontSize: 12,
-      lineHeight: 16,
+      ...tokens.typography.labelMedium,
       fontFamily: fontFamily.regular,
       color: colors.m3.onSurfaceVariant,
     },
@@ -512,18 +512,15 @@ function createStyles(colors: ColorPalette) {
     },
     // Flor de ipê marcando cada seção (Spec 078).
     sectionBloom: {
-      width: 8,
-      height: 8,
-      borderRadius: 4,
+      width: tokens.spacing[8],
+      height: tokens.spacing[8],
+      borderRadius: tokens.radius.extraSmall,
       backgroundColor: colors.ipe.bloomDeep,
     },
     sectionHeader: {
-      fontSize: 13,
-      lineHeight: 18,
-      fontFamily: fontFamily.medium,
+      ...tokens.typography.labelLarge,
       // Figma `07.01` (conferido em 2026-10-26, Spec 076): rótulo de seção na cor primária.
       color: colors.m3.primary,
-      fontWeight: "500",
     },
     // Figma `07.01`: as linhas de menu ficam direto no fundo da página, sem cartão, borda nem
     // divisórias.
@@ -535,10 +532,16 @@ function createStyles(colors: ColorPalette) {
       alignItems: "center",
       gap: tokens.spacing[16],
       paddingVertical: tokens.spacing[12],
-      paddingHorizontal: tokens.spacing[4],
+      paddingHorizontal: tokens.spacing[8],
       minHeight: tokens.accessibility.touchTarget,
+      borderRadius: tokens.shapeMorph.chipUnselected,
     },
-    menuRowText: { flex: 1, gap: 2 },
+    menuRowPressed: {
+      backgroundColor: colors.m3.surfaceContainerHigh,
+      borderRadius: tokens.shapeMorph.chipSelected,
+      transform: [{ scale: 0.985 }],
+    },
+    menuRowText: { flex: 1, gap: tokens.spacing[2] },
     menuRowTitle: {
       ...tokens.typography.bodyLarge,
       color: colors.m3.onSurface,

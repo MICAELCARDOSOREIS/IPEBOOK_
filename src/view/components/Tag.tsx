@@ -127,11 +127,11 @@ const styles = StyleSheet.create({
   container: {
     alignSelf: "flex-start",
     paddingHorizontal: tokens.spacing[8],
-    paddingVertical: 2,
+    paddingVertical: tokens.spacing[2],
     borderRadius: tokens.radius.full,
   },
   text: {
-    fontSize: 11,
-    fontWeight: "bold",
+    ...tokens.typography.captionSmall,
+    fontWeight: tokens.fontWeight.bold,
   },
 });

@@ -9,6 +9,7 @@ import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
 
+import { withPress } from "@/view/pressFeedback";
 export type ReceivedRatingsProps = {
   sessionUserId: string | null;
   onBack: () => void;
@@ -49,7 +50,7 @@ export function ReceivedRatings({ sessionUserId, onBack }: ReceivedRatingsProps)
                 accessibilityRole="button"
                 accessibilityLabel="Tentar novamente"
                 onPress={() => void actions.reload()}
-                style={styles.retryButton}
+                style={withPress(styles.retryButton)}
               >
                 <Text style={styles.retryText}>Tentar novamente</Text>
               </Pressable>
@@ -117,7 +118,7 @@ function createStyles(colors: ColorPalette) {
     minHeight: tokens.accessibility.touchTarget,
     justifyContent: "center",
   },
-  retryText: { ...tokens.typography.bodyMedium, color: colors.action, fontWeight: "600" },
+  retryText: { ...tokens.typography.bodyMedium, color: colors.action, fontWeight: tokens.fontWeight.semiBold },
   list: { gap: tokens.spacing[12] },
   contentWide: { maxWidth: WEB_MAX_WIDTH, paddingHorizontal: WEB_GUTTER },
   listWide: { flexDirection: "row", flexWrap: "wrap" },
@@ -130,7 +131,7 @@ function createStyles(colors: ColorPalette) {
     padding: tokens.spacing[16],
     gap: tokens.spacing[4],
   },
-  stars: { fontSize: 20, color: colors.highlight },
+  stars: { ...tokens.typography.titleBlock, color: colors.highlight },
   raterName: { ...tokens.typography.titleMedium, fontFamily: tokens.typography.displayLarge.fontFamily, color: colors.text },
   date: { ...tokens.typography.labelMedium, color: colors.secondaryText },
   });

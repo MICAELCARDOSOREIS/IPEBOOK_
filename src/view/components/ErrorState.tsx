@@ -4,6 +4,7 @@ import { AppIcon } from "@/view/components/AppIcon";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 
+import { withPress } from "@/view/pressFeedback";
 export type ErrorStateProps = {
   message: string;
   onRetry: () => void;
@@ -25,7 +26,7 @@ export function ErrorState({ message, onRetry, retryLabel = "Tentar novamente" }
         <AppIcon name="error" color={colors.error} />
         <Text accessibilityRole="alert" style={styles.message}>{message}</Text>
       </View>
-      <Pressable accessibilityRole="button" onPress={onRetry} style={styles.retry}>
+      <Pressable accessibilityRole="button" onPress={onRetry} style={withPress(styles.retry)}>
         <Text style={styles.retryText}>{retryLabel}</Text>
       </Pressable>
     </View>
@@ -59,7 +60,7 @@ function createStyles(colors: ColorPalette) {
     retryText: {
       ...tokens.typography.bodyMedium,
       color: colors.surface,
-      fontWeight: "600",
+      fontWeight: tokens.fontWeight.semiBold,
     },
   });
 }

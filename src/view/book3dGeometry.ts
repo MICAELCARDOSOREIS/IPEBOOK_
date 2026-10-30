@@ -45,3 +45,26 @@ export function faceContentOpacity(face: BookFace, ratio: number): number {
   if (face === "left") return clamp01((ratio - 0.3) / 0.3);
   return 1;
 }
+
+/**
+ * Calcula a espessura base do livro em dp a partir da quantidade de páginas (quando informada).
+ * Sem `pageCount`, mantém o padrão de 28 dp; com `pageCount`, varia entre 18 dp (~80 pág.) e 38 dp (~600+ pág.).
+ */
+export function bookDepthFromPages(pageCount?: number, defaultDepth = 28): number {
+  if (!pageCount || pageCount <= 0) return defaultDepth;
+  const clampedPages = Math.min(600, Math.max(80, pageCount));
+  return Math.round(18 + ((clampedPages - 80) / (600 - 80)) * 20);
+}
+
+/**
+ * Retorna o ângulo de repouso mais próximo (perspectiva da capa, 90° lombada, 180° contracapa, -90° corte das páginas)
+ * para alinhar o livro após o giro manual quando ele para num ângulo intermediário difícil de ler.
+ */
+export function snapBookAngle(angle: number, frontRestAngle = -16): number {
+  const norm = normalizeAngle(angle);
+  if (Math.abs(norm) <= 45) return frontRestAngle;
+  if (norm > 45 && norm <= 135) return 90;
+  if (norm < -45 && norm >= -135) return -90;
+  return 180;
+}
+

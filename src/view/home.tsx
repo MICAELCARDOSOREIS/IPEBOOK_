@@ -9,6 +9,7 @@ import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { AppIcon } from "@/view/components/AppIcon";
 import { BookCover } from "@/view/components/BookCover";
+import { Chip } from "@/view/components/Chip";
 import { ErrorState } from "@/view/components/ErrorState";
 import { LoadingState } from "@/view/components/LoadingState";
 import { OfflineState } from "@/view/components/OfflineState";
@@ -16,8 +17,9 @@ import { NeighborhoodSelectorModal } from "@/view/components/NeighborhoodSelecto
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { ScreenContainer } from "@/view/components/ScreenContainer";
 import type { Book, BookModality } from "@/model/entities/book";
-import { WEB_MAX_WIDTH } from "@/view/webLayout";
+import { WEB_GUTTER, WEB_MAX_WIDTH, useWebGridColumns } from "@/view/webLayout";
 
+import { withPress } from "@/view/pressFeedback";
 const MODALITY_PLURAL = { sale: "livros à venda", trade: "livros para troca", donation: "livros para doação" } as const;
 
 function createModalityTag(colors: ColorPalette): Record<BookModality, { background: string; text: string; label: string }> {
@@ -66,6 +68,7 @@ function CatalogCarousel({
   const styles = useMemo(() => createStyles(colors), [colors]);
   const modalityTag = useMemo(() => createModalityTag(colors), [colors]);
   const wideWeb = useIsWideWeb();
+  const webColumns = useWebGridColumns();
 
   const renderCard = (item: Book, wide = false) => {
     const tag = modalityTag[item.modality];
@@ -77,7 +80,11 @@ function CatalogCarousel({
         accessibilityRole="button"
         accessibilityLabel={`Ver detalhe de ${item.title}, ${item.author}${item.neighborhood ? ` em ${item.neighborhood}` : ""}`}
         onPress={() => onNavigateToBookDetail?.(item.id)}
-        style={[styles.carouselCard, wide && styles.carouselCardWide]}
+        style={({ pressed }) => [
+          styles.carouselCard,
+          wide && styles.carouselCardWide,
+          pressed && styles.carouselCardPressed,
+        ]}
       >
         {/* Fundo da capa na cor da modalidade, como no topo do detalhe do livro. */}
         <View style={[styles.carouselCardCoverArea, wide && styles.carouselCardCoverAreaWide, { backgroundColor: tag.background }]}>
@@ -139,7 +146,7 @@ function CatalogCarousel({
           accessibilityState={{ disabled: index <= 0 }}
           disabled={index <= 0}
           onPress={() => goTo(index - 1)}
-          style={[styles.carouselNavButton, styles.carouselNavButtonLeft]}
+          style={withPress([styles.carouselNavButton, styles.carouselNavButtonLeft])}
         >
           <Text style={styles.carouselNavText}>‹</Text>
         </Pressable>
@@ -149,7 +156,7 @@ function CatalogCarousel({
           accessibilityState={{ disabled: index >= lastIndex }}
           disabled={index >= lastIndex}
           onPress={() => goTo(index + 1)}
-          style={[styles.carouselNavButton, styles.carouselNavButtonRight]}
+          style={withPress([styles.carouselNavButton, styles.carouselNavButtonRight])}
         >
           <Text style={styles.carouselNavText}>›</Text>
         </Pressable>
@@ -157,13 +164,13 @@ function CatalogCarousel({
           accessibilityRole="button"
           accessibilityLabel={viewMoreLabel}
           onPress={onViewMore}
-          style={styles.viewMoreButton}
+          style={withPress(styles.viewMoreButton)}
         >
           <Text style={styles.viewMoreText}>{viewMoreButtonText}</Text>
         </Pressable>
       </View>
       {wideWeb ? (
-        <View style={styles.carouselGrid}>{books.slice(0, 5).map((item) => <View key={item.id} style={styles.carouselGridCell}>{renderCard(item, true)}</View>)}</View>
+        <View style={styles.carouselGrid}>{books.slice(0, webColumns).map((item) => <View key={item.id} style={styles.carouselGridCell}>{renderCard(item, true)}</View>)}</View>
       ) : (
       <View style={styles.carouselRow}>
         <FlatList
@@ -173,6 +180,7 @@ function CatalogCarousel({
           data={books as Book[]}
           keyExtractor={(item) => item.id}
           style={styles.carouselList}
+          contentContainerStyle={styles.carouselListContent}
           renderItem={({ item }) => renderCard(item)}
         />
       </View>
@@ -291,11 +299,12 @@ export default function Home({
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={`Selecionar bairro: ${displayNeighborhood}`}
+          hitSlop={{ top: tokens.spacing[4], bottom: tokens.spacing[4] }}
           onPress={handleSelectNeighborhood}
-          style={styles.neighborhoodPill}
+          style={withPress(styles.neighborhoodPill)}
         >
           <AppIcon name="place" size={20} color={colors.m3.primary} />
-          <Text style={styles.neighborhoodText}>{displayNeighborhood}</Text>
+          <Text numberOfLines={1} style={styles.neighborhoodText}>{displayNeighborhood}</Text>
           <AppIcon name="chevronDown" size={20} color={colors.m3.onSurfaceVariant} />
         </Pressable>
 
@@ -305,8 +314,9 @@ export default function Home({
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel="Entrar no aplicativo"
+                hitSlop={{ top: tokens.spacing[6], bottom: tokens.spacing[6] }}
                 onPress={() => onNavigateToSignIn?.()}
-                style={styles.sessionPill}
+                style={withPress(styles.sessionPill)}
               >
                 <Text style={styles.sessionPillText}>Entrar</Text>
               </Pressable>
@@ -319,8 +329,9 @@ export default function Home({
                   ? `Abrir notificações, ${unreadCount} ${unreadCount === 1 ? "não lida" : "não lidas"}`
                   : "Abrir notificações"
               }
+              hitSlop={{ top: tokens.spacing[4], bottom: tokens.spacing[4], left: tokens.spacing[4], right: tokens.spacing[4] }}
               onPress={() => onNavigateToNotifications?.()}
-              style={styles.notificationButton}
+              style={withPress(styles.notificationButton)}
             >
               <AppIcon name="bell" size={24} color={colors.m3.onSurfaceVariant} />
               {unreadCount > 0 ? (
@@ -381,7 +392,7 @@ export default function Home({
             onNavigateToSearch?.();
           }
         }}
-        style={styles.searchBar}
+        style={withPress(styles.searchBar)}
       >
         <AppIcon name="search" size={24} color={colors.m3.onSurfaceVariant} />
         <Text style={styles.searchPlaceholder}>Buscar título, autor ou categoria</Text>
@@ -393,34 +404,17 @@ export default function Home({
           const isSelected = selectedModality === mod;
           const label = mod === "all" ? "Todos" : mod === "sale" ? "Venda" : mod === "trade" ? "Troca" : "Doação";
           // Cada modalidade tem a sua cor, a mesma das etiquetas dos livros; "Todos" fica neutro.
-          const tone = mod === "all" ? null : colors.badge[mod];
+          const tone = mod === "all" ? undefined : colors.badge[mod];
           return (
-            <Pressable
+            <Chip
               key={mod}
-              accessibilityRole="button"
+              size="compact"
+              label={label}
               accessibilityLabel={`Filtrar por ${label}`}
-              accessibilityState={{ selected: isSelected }}
+              selected={isSelected}
+              tone={tone}
               onPress={() => setSelectedModality(mod)}
-              style={[
-                styles.filterChip,
-                isSelected && styles.filterChipSelected,
-                isSelected && tone ? { backgroundColor: tone.background, borderColor: tone.background } : null,
-                // O pontinho de cor ocupa espaço: reduz o respiro para os quatro chips seguirem numa linha.
-                tone && !isSelected ? { paddingHorizontal: 10 } : null,
-              ]}
-            >
-              {tone && !isSelected ? <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: tone.background, borderWidth: 1, borderColor: tone.text }} /> : null}
-              {isSelected ? <AppIcon name="check" size={18} color={tone?.text ?? colors.m3.onSecondaryContainer} /> : null}
-              <Text
-                style={[
-                  styles.filterChipText,
-                  isSelected && styles.filterChipTextSelected,
-                  isSelected && tone ? { color: tone.text } : null,
-                ]}
-              >
-                {label}
-              </Text>
-            </Pressable>
+            />
           );
         })}
       </View>
@@ -477,7 +471,7 @@ export default function Home({
                     : { modality: selectedModality, neighborhood: "all" },
                 )
               }
-              style={[styles.viewMoreButton, { marginTop: tokens.spacing[12], alignSelf: "flex-start" }]}
+              style={withPress([styles.viewMoreButton, styles.emptyExploreButton])}
             >
               <Text style={styles.viewMoreText}>Explorar toda Piripiri</Text>
             </Pressable>
@@ -491,7 +485,7 @@ export default function Home({
             accessibilityRole="button"
             accessibilityLabel={`Doações da semana: ${donationSummary}`}
             onPress={() => onNavigateToSearch?.({ modality: "donation" })}
-            style={[styles.shortcut, { backgroundColor: colors.m3.doacaoContainer }]}
+            style={withPress([styles.shortcut, { backgroundColor: colors.m3.doacaoContainer }])}
           >
             <AppIcon name="bookmark" size={24} color={colors.m3.onDoacaoContainer} />
             <View style={styles.shortcutText}>
@@ -503,7 +497,7 @@ export default function Home({
             accessibilityRole="button"
             accessibilityLabel="Troque o que já leu"
             onPress={() => onNavigateToSearch?.({ modality: "trade" })}
-            style={[styles.shortcut, { backgroundColor: colors.m3.tertiaryContainer }]}
+            style={withPress([styles.shortcut, { backgroundColor: colors.m3.tertiaryContainer }])}
           >
             <AppIcon name="swap" size={24} color={colors.m3.onTertiaryContainer} />
             <View style={styles.shortcutText}>
@@ -513,7 +507,13 @@ export default function Home({
               </Text>
             </View>
           </Pressable>
-          <View style={[styles.shortcut, { backgroundColor: colors.m3.primaryContainer }]}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Encontro seguro: Locais públicos sugeridos e avaliação depois de cada troca"
+            disabled={!onNavigateToHelp}
+            onPress={() => onNavigateToHelp?.()}
+            style={withPress([styles.shortcut, { backgroundColor: colors.m3.primaryContainer }])}
+          >
             <AppIcon name="checkCircle" size={24} color={colors.m3.onPrimaryContainer} />
             <View style={styles.shortcutText}>
               <Text style={[styles.shortcutTitle, { color: colors.m3.onPrimaryContainer }]}>Encontro seguro</Text>
@@ -521,7 +521,7 @@ export default function Home({
                 Locais públicos sugeridos e avaliação depois de cada troca.
               </Text>
             </View>
-          </View>
+          </Pressable>
         </View>
       ) : (
       <>
@@ -530,10 +530,10 @@ export default function Home({
         accessibilityRole="button"
         accessibilityLabel={`Doações da semana: ${donationSummary}`}
         onPress={() => onNavigateToSearch?.({ modality: "donation" })}
-        style={styles.donationBanner}
+        style={withPress(styles.donationBanner)}
       >
         <View style={styles.donationBannerIconBox}>
-          <AppIcon name="bookmark" size={24} color={colors.m3.onSurfaceVariant} />
+          <AppIcon name="bookmark" size={24} color={colors.m3.onDoacaoContainer} />
         </View>
         <View style={styles.donationBannerTextBox}>
           <Text style={styles.donationBannerTitle}>Doações da semana</Text>
@@ -541,7 +541,7 @@ export default function Home({
             {donationSummary}
           </Text>
         </View>
-        <AppIcon name="chevronRight" size={24} color={colors.m3.onSurfaceVariant} />
+        <AppIcon name="chevronRight" size={24} color={colors.m3.onDoacaoContainer} />
       </Pressable>
       </>
       )}
@@ -553,7 +553,7 @@ export default function Home({
     <ScreenContainer
       edges={["top", "left", "right"]}
       maxWidth={wideWeb ? WEB_MAX_WIDTH : 720}
-      paddingHorizontal={wideWeb ? 80 : undefined}
+      paddingHorizontal={wideWeb ? WEB_GUTTER : undefined}
       overlay={
         <NeighborhoodSelectorModal
           visible={neighborhoodHook.isSelectorOpen}
@@ -579,9 +579,11 @@ function createStyles(colors: ColorPalette) {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
+      gap: tokens.spacing[8],
       marginBottom: tokens.spacing[12],
     },
     neighborhoodPill: {
+      flexShrink: 1,
       flexDirection: "row",
       alignItems: "center",
       gap: tokens.spacing[6],
@@ -592,12 +594,12 @@ function createStyles(colors: ColorPalette) {
       borderRadius: tokens.radius.full,
     },
     neighborhoodText: {
-      ...tokens.typography.bodyMedium,
-      fontFamily: tokens.typography.labelMedium.fontFamily,
-      fontWeight: "500",
+      flexShrink: 1,
+      ...tokens.typography.labelLarge,
       color: colors.m3.onSurface,
     },
     topRightActions: {
+      flexShrink: 0,
       flexDirection: "row",
       alignItems: "center",
       gap: tokens.spacing[8],
@@ -622,7 +624,7 @@ function createStyles(colors: ColorPalette) {
       alignItems: "center",
       justifyContent: "center",
     },
-    notificationBadgeText: { fontSize: 10, lineHeight: 12, fontWeight: "700", color: "#FFFFFF" },
+    notificationBadgeText: { ...tokens.typography.badgeMicro, color: colors.badge.completed.text },
     sessionPill: {
       paddingHorizontal: tokens.spacing[12],
       paddingVertical: tokens.spacing[6],
@@ -633,7 +635,7 @@ function createStyles(colors: ColorPalette) {
     },
     sessionPillText: {
       ...tokens.typography.labelMedium,
-      fontWeight: "600",
+      fontWeight: tokens.fontWeight.semiBold,
       color: colors.action,
     },
 
@@ -646,14 +648,11 @@ function createStyles(colors: ColorPalette) {
       marginBottom: tokens.spacing[20],
     },
     heroTitle: {
-      fontFamily: fontFamily.brand,
-      fontSize: 30,
-      lineHeight: 36,
+      ...tokens.typography.brandLargeTitle,
       color: colors.brandBrown,
     },
     heroTitleWide: {
-      fontSize: 38,
-      lineHeight: 46,
+      ...tokens.typography.brandDisplayMd,
     },
     heroSubtitle: {
       ...tokens.typography.bodyLarge,
@@ -661,33 +660,30 @@ function createStyles(colors: ColorPalette) {
       marginTop: tokens.spacing[8],
     },
     heroSubtitleWide: {
-      fontSize: 18,
-      lineHeight: 26,
+      ...tokens.typography.webLead,
     },
     statsBannerWide: {
       flexDirection: "row",
+      flexWrap: "wrap",
       alignItems: "center",
-      gap: tokens.spacing[32],
+      columnGap: tokens.spacing[32],
+      rowGap: tokens.spacing[16],
       marginTop: tokens.spacing[20],
       paddingVertical: tokens.spacing[16],
       paddingHorizontal: tokens.spacing[24],
       backgroundColor: colors.m3.surfaceContainerLow,
-      borderRadius: 16,
+      borderRadius: tokens.radius.card,
       alignSelf: "flex-start",
     },
     statItemWide: {
       alignItems: "flex-start",
     },
     statNumberWide: {
-      fontFamily: fontFamily.brand,
-      fontSize: 24,
-      lineHeight: 30,
-      fontWeight: "700",
+      ...tokens.typography.brandTitle,
       color: colors.m3.primary,
     },
     statLabelWide: {
-      fontSize: 13,
-      lineHeight: 18,
+      ...tokens.typography.footnote,
       color: colors.m3.onSurfaceVariant,
       marginTop: tokens.spacing[4],
     },
@@ -705,7 +701,7 @@ function createStyles(colors: ColorPalette) {
       backgroundColor: colors.m3.surfaceContainerHigh,
       borderRadius: tokens.radius.full,
       paddingHorizontal: tokens.spacing[16],
-      gap: tokens.spacing[16],
+      gap: tokens.spacing[12],
       marginBottom: tokens.spacing[8],
     },
     searchPlaceholder: {
@@ -720,40 +716,18 @@ function createStyles(colors: ColorPalette) {
       gap: tokens.spacing[8],
       marginBottom: tokens.spacing[24],
     },
-    filterChip: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[6],
-      // Figma `02.01`: os quatro chips cabem em uma linha (333 dp de 345 dp úteis).
-      paddingHorizontal: 14,
-      borderRadius: tokens.radius.small,
-      borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
-      backgroundColor: colors.m3.surfaceContainerLowest,
-      height: tokens.spacing[32],
-    },
-    filterChipSelected: {
-      paddingLeft: tokens.spacing[8],
-      backgroundColor: colors.m3.secondaryContainer,
-      borderColor: colors.m3.secondaryContainer,
-    },
-    filterChipText: {
-      ...tokens.typography.labelLarge,
-      color: colors.m3.onSurfaceVariant,
-    },
-    filterChipTextSelected: {
-      color: colors.m3.onSecondaryContainer,
-    },
 
     // 5. Destaque Comunitário ("Doações da semana")
     donationBanner: {
       flexDirection: "row",
       alignItems: "center",
       paddingHorizontal: tokens.spacing[16],
-      paddingVertical: tokens.spacing[8],
+      paddingVertical: tokens.spacing[12],
       minHeight: tokens.spacing[56],
       gap: tokens.spacing[16],
       marginBottom: tokens.spacing[24],
+      borderRadius: tokens.radius.card,
+      backgroundColor: colors.m3.doacaoContainer,
     },
     donationBannerIconBox: {
       justifyContent: "center",
@@ -761,15 +735,16 @@ function createStyles(colors: ColorPalette) {
     },
     donationBannerTextBox: {
       flex: 1,
-      gap: 2,
+      gap: tokens.spacing[2],
     },
     donationBannerTitle: {
       ...tokens.typography.bodyLarge,
-      color: colors.m3.onSurface,
+      fontWeight: tokens.fontWeight.semiBold,
+      color: colors.m3.onDoacaoContainer,
     },
     donationBannerSubtitle: {
       ...tokens.typography.bodyMedium,
-      color: colors.m3.onSurfaceVariant,
+      color: colors.m3.onDoacaoContainer,
     },
 
     // 6. Carrossel
@@ -783,9 +758,7 @@ function createStyles(colors: ColorPalette) {
     },
     carouselTitle: {
       flexShrink: 1,
-      ...tokens.typography.bodyLarge,
-      fontSize: 22,
-      lineHeight: 28,
+      ...tokens.typography.titleBar,
       color: colors.m3.onSurface,
     },
     viewMoreButton: {
@@ -794,24 +767,23 @@ function createStyles(colors: ColorPalette) {
       justifyContent: "center",
     },
     viewMoreText: {
-      ...tokens.typography.bodyMedium,
-      fontFamily: tokens.typography.labelMedium.fontFamily,
+      ...tokens.typography.labelLarge,
       color: colors.m3.primary,
-      fontWeight: "500",
     },
     carouselRow: { position: "relative" },
-    shortcuts: { flexDirection: "row", gap: 24 },
-    shortcut: { flex: 1, flexDirection: "row", gap: 16, padding: 24, borderRadius: tokens.radius.large },
-    shortcutText: { flex: 1, gap: 4 },
-    shortcutTitle: { fontFamily: fontFamily.medium, fontSize: 20, lineHeight: 28, fontWeight: "600" },
+    shortcuts: { flexDirection: "row", gap: tokens.spacing[24] },
+    shortcut: { flex: 1, flexDirection: "row", gap: tokens.spacing[16], padding: tokens.spacing[24], borderRadius: tokens.radius.large },
+    shortcutText: { flex: 1, gap: tokens.spacing[4] },
+    shortcutTitle: { ...tokens.typography.titleBlock },
     shortcutBody: { ...tokens.typography.bodyMedium },
-    // Web larga (Figma `34:160`): grade de 5 colunas com 24 px de respiro.
-    carouselGrid: { flexDirection: "row", flexWrap: "wrap", gap: 24 },
+    // Web larga (Figma `34:160`): grade de 3 a 5 colunas conforme a largura da janela, com 24 px de respiro.
+    carouselGrid: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[24], alignItems: "stretch" },
     // Cartões com largura máxima para a capa não ficar perdida em faixas largas com poucos livros.
-    carouselGridCell: { flexGrow: 1, flexBasis: 0, minWidth: 180, maxWidth: 260, flexDirection: "column" },
-    carouselCardCoverAreaWide: { paddingVertical: 20 },
-    carouselCardWide: { flex: 1, width: "100%", marginRight: 0, borderRadius: 20, backgroundColor: colors.m3.surfaceContainerLowest },
+    carouselGridCell: { flexGrow: 1, flexBasis: 0, minWidth: 160, maxWidth: 280, flexDirection: "column" },
+    carouselCardCoverAreaWide: { paddingVertical: tokens.spacing[20] },
+    carouselCardWide: { flex: 1, width: "100%", borderRadius: tokens.radius.xl, backgroundColor: colors.m3.surfaceContainerLowest },
     carouselList: { flexGrow: 0 },
+    carouselListContent: { gap: CAROUSEL_ITEM_GAP, alignItems: "stretch" },
     // Figma `02.01`: a faixa mostra dois cartões inteiros, então as setas saem do fluxo e ficam
     // invisíveis sobre o título da seção (texto estático, sem toque) para não roubar o toque dos
     // cartões nem empurrar a lista.
@@ -827,31 +799,36 @@ function createStyles(colors: ColorPalette) {
     },
     carouselNavButtonLeft: { left: 0 },
     carouselNavButtonRight: { left: tokens.accessibility.touchTarget },
-    carouselNavText: { fontSize: 22, color: colors.action, fontWeight: "700" },
+    carouselNavText: { ...tokens.typography.titleBar, color: colors.action, fontWeight: tokens.fontWeight.bold },
     carouselCard: {
+      flex: 1,
       width: CAROUSEL_ITEM_WIDTH,
-      marginRight: CAROUSEL_ITEM_GAP,
       backgroundColor: colors.m3.surfaceContainerLow,
       // Figma `02.01`: cartão de livro com raio de 12 dp e sem sombra.
-      borderRadius: 12,
+      borderRadius: tokens.radius.cardSmall,
       overflow: "hidden",
+    },
+    carouselCardPressed: {
+      borderRadius: tokens.shapeMorph.cardPressed,
+      transform: [{ scale: 0.98 }],
     },
     carouselCardCoverArea: {
       alignItems: "center",
       justifyContent: "center",
       // Figma `02.01`: área de capa com 144 dp (capa de 119 dp + 12,5 dp de folga).
-      paddingVertical: 12,
+      paddingVertical: tokens.spacing[12],
       backgroundColor: colors.m3.surfaceContainerLow,
     },
     carouselCardMeta: {
+      flex: 1,
       paddingHorizontal: tokens.spacing[12],
       paddingVertical: tokens.spacing[12],
-      gap: 2,
+      gap: tokens.spacing[2],
     },
     carouselCardModalityRow: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[8] },
     carouselCardModalityPill: {
       paddingHorizontal: tokens.spacing[8],
-      paddingVertical: 2,
+      paddingVertical: tokens.spacing[2],
       borderRadius: tokens.radius.small,
     },
     carouselCardModality: {
@@ -878,7 +855,7 @@ function createStyles(colors: ColorPalette) {
       flexDirection: "row",
       alignItems: "center",
       gap: tokens.spacing[4],
-      marginTop: 2,
+      marginTop: tokens.spacing[2],
     },
     carouselCardNeighborhood: {
       ...tokens.typography.labelSmall,
@@ -891,6 +868,10 @@ function createStyles(colors: ColorPalette) {
     empty: {
       gap: tokens.spacing[8],
       marginBottom: tokens.spacing[24],
+    },
+    emptyExploreButton: {
+      marginTop: tokens.spacing[12],
+      alignSelf: "flex-start",
     },
     emptyTitle: { ...tokens.typography.bodyLarge, color: colors.m3.onSurface },
     body: {

@@ -62,7 +62,7 @@ describe("Book3D: livro que gira (projeção ortogonal)", () => {
     const normal = flat((await open()).getByLabelText(LABEL).props.style);
     const grande = flat((await open({ scale: 1.6 })).getByLabelText(LABEL).props.style);
     expect(grande.width).toBeCloseTo(normal.width * 1.6, 3);
-    expect(grande.height).toBeCloseTo((normal.height - 16) * 1.6 + 16, 3);
+    expect(grande.height).toBeCloseTo(normal.height * 1.6, 3);
   });
 
   it("pode começar girado, sem animação", async () => {
@@ -104,10 +104,11 @@ describe("Book3D: livro que gira (projeção ortogonal)", () => {
     expect(screen.getByLabelText("Foto da capa de Capitães da Areia")).toBeDefined();
   });
 
-  it("a animação de entrada começa girada e termina de frente", async () => {
+  it("a animação de entrada começa girada e termina em leve perspectiva mostrando a capa e o corte das páginas", async () => {
     const screen = await open({ intro: true });
     await act(async () => { await new Promise((resolve) => setTimeout(resolve, 700)); });
     expect(screen.getByTestId("book3d-face-front")).toBeDefined();
+    expect(screen.getByTestId("book3d-face-right")).toBeDefined();
     expect(screen.queryByTestId("book3d-face-left")).toBeNull();
   });
 
@@ -176,6 +177,37 @@ describe("Book3D: gesto de arrastar", () => {
       });
       expect(screen.queryByTestId("book3d-face-left")).toBeNull();
       gesture.onPanResponderTerminate();
+    } finally {
+      (RN.PanResponder as { create: unknown }).create = original;
+    }
+  });
+
+  it("sem onPress, tocar no livro em repouso vira para a contracapa (180°) e tocar novamente volta para a capa", async () => {
+    const created: Array<Record<string, any>> = [];
+    const RN = await import("react-native");
+    const original = RN.PanResponder.create;
+    (RN.PanResponder as { create: unknown }).create = (config: Record<string, any>) => {
+      created.push(config);
+      return { panHandlers: {} };
+    };
+    try {
+      const screen = await open({ description: "Sinopse na contracapa." });
+      const gesture = created[created.length - 1];
+      await act(async () => {
+        gesture.onPanResponderGrant();
+        gesture.onPanResponderRelease({}, { dx: 0, dy: 0, vx: 0 });
+        await new Promise((resolve) => setTimeout(resolve, 650));
+      });
+      expect(screen.getByTestId("book3d-face-back")).toBeDefined();
+      expect(screen.getByText("Sinopse na contracapa.")).toBeDefined();
+
+      await act(async () => {
+        gesture.onPanResponderGrant();
+        gesture.onPanResponderRelease({}, { dx: 0, dy: 0, vx: 0 });
+        await new Promise((resolve) => setTimeout(resolve, 650));
+      });
+      expect(screen.getByTestId("book3d-face-front")).toBeDefined();
+      expect(screen.queryByTestId("book3d-face-back")).toBeNull();
     } finally {
       (RN.PanResponder as { create: unknown }).create = original;
     }

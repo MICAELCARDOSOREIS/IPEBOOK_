@@ -170,15 +170,11 @@ function createStyles(colors: ColorPalette) {
     gap: tokens.spacing[16],
   },
   title: {
-    fontSize: tokens.typography.displayLarge.fontSize,
-    lineHeight: tokens.typography.displayLarge.lineHeight,
-    fontFamily: tokens.typography.displayLarge.fontFamily,
+    ...tokens.typography.displayLarge,
     color: colors.action,
   },
   subtitle: {
-    fontSize: tokens.typography.bodyLarge.fontSize,
-    lineHeight: tokens.typography.bodyLarge.lineHeight,
-    fontFamily: tokens.typography.bodyLarge.fontFamily,
+    ...tokens.typography.bodyLarge,
     color: colors.secondaryText,
     marginBottom: tokens.spacing[4],
   },
@@ -190,16 +186,13 @@ function createStyles(colors: ColorPalette) {
     padding: tokens.spacing[16],
   },
   message: {
+    ...tokens.typography.bodyMedium,
     color: colors.success,
-    fontSize: tokens.typography.bodyMedium.fontSize,
-    fontFamily: tokens.typography.bodyMedium.fontFamily,
-    lineHeight: 20,
-    fontWeight: "500",
+    fontWeight: tokens.fontWeight.medium,
   },
   error: {
+    ...tokens.typography.bodyMedium,
     color: colors.error,
-    fontSize: tokens.typography.bodyMedium.fontSize,
-    fontFamily: tokens.typography.bodyMedium.fontFamily,
   },
   errorBox: {
     borderWidth: 1,
@@ -209,11 +202,9 @@ function createStyles(colors: ColorPalette) {
     padding: tokens.spacing[16],
   },
   errorMessage: {
+    ...tokens.typography.bodyMedium,
     color: colors.error,
-    fontSize: tokens.typography.bodyMedium.fontSize,
-    fontFamily: tokens.typography.bodyMedium.fontFamily,
-    lineHeight: 20,
-    fontWeight: "500",
+    fontWeight: tokens.fontWeight.medium,
   },
   linkButton: {
     minHeight: tokens.accessibility.touchTarget,
@@ -221,10 +212,9 @@ function createStyles(colors: ColorPalette) {
     alignItems: "center",
   },
   link: {
+    ...tokens.typography.bodyMedium,
     color: colors.action,
-    fontSize: tokens.typography.bodyMedium.fontSize,
-    fontFamily: tokens.typography.bodyMedium.fontFamily,
-    fontWeight: "600",
+    fontWeight: tokens.fontWeight.semiBold,
   },
   });
 }

@@ -14,7 +14,7 @@ import { useProfilePhotoViewModel } from "@/viewmodel/useProfilePhotoViewModel";
 import type { ImageSource } from "@/model/services/iImagePickerService";
 import { PIRIPIRI_NEIGHBORHOODS } from "@/model/entities/location";
 import { normalizeInstagramHandle } from "@/model/validators/instagramValidator";
-import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
+import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { ReaderCard } from "@/view/components/ReaderCard";
 import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
@@ -33,6 +33,7 @@ import { TextField } from "@/view/components/TextField";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
 
+import { withPress } from "@/view/pressFeedback";
 export type ProfileProps = {
   onNavigateToSignIn?: () => void;
   /** Quando presente, exibe a barra superior com "Editar perfil" (Figma `07.02`). */
@@ -397,7 +398,7 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
                     : "Nenhum bairro selecionado. Toque para escolher"
                 }
                 onPress={() => setIsNeighborhoodModalOpen(true)}
-                style={styles.selectorField}
+                style={withPress(styles.selectorField)}
               >
                 <View style={styles.selectorContainer}>
                   <View style={styles.notch}>
@@ -559,19 +560,19 @@ function createStyles(colors: ColorPalette) {
     formSection: {
       gap: tokens.spacing[16],
       padding: tokens.spacing[16],
-      borderRadius: 20,
+      borderRadius: tokens.radius.xl,
       backgroundColor: colors.m3.surfaceContainerLow,
     },
     formSectionHeader: { flexDirection: "row", alignItems: "flex-start", gap: tokens.spacing[12] },
     formSectionIcon: {
       width: 32,
       height: 32,
-      borderRadius: 16,
+      borderRadius: tokens.radius.card,
       alignItems: "center",
       justifyContent: "center",
       backgroundColor: colors.ipe.container,
     },
-    formSectionTitles: { flex: 1, gap: 2 },
+    formSectionTitles: { flex: 1, gap: tokens.spacing[2] },
     formSectionTitle: { ...tokens.typography.titleMedium, color: colors.m3.onSurface },
     formSectionCaption: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
     keyboardView: {
@@ -587,10 +588,7 @@ function createStyles(colors: ColorPalette) {
     column: { gap: tokens.spacing[16] },
     columnHalf: { flex: 1 },
     heroTitle: {
-      fontFamily: fontFamily.brand,
-      fontSize: 30,
-      lineHeight: 38,
-      fontWeight: "700",
+      ...tokens.typography.brandHeadline,
       color: colors.brandBrown,
       // A serifada da marca tem sobrehang à esquerda; um leve respiro evita que a primeira
       // letra encoste e seja recortada pela viewport do ScrollView.
@@ -655,7 +653,7 @@ function createStyles(colors: ColorPalette) {
     },
     sectionLabel: {
       ...tokens.typography.labelMedium,
-      fontWeight: "600",
+      fontWeight: tokens.fontWeight.semiBold,
       color: colors.m3.onSurfaceVariant,
     },
     chipRow: {
@@ -664,8 +662,8 @@ function createStyles(colors: ColorPalette) {
       gap: tokens.spacing[8],
     },
     errorText: {
+      ...tokens.typography.bodyMedium,
       color: colors.error,
-      fontSize: tokens.typography.bodyMedium.fontSize,
       marginTop: tokens.spacing[8],
     },
     errorBanner: {

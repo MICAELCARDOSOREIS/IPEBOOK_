@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AccessibilityInfo, PanResponder, StyleSheet, Text, View } from "react-native";
 import { BookCover, coverBackground } from "@/view/components/BookCover";
-import { faceContentOpacity, normalizeAngle, projectBookFaces, type BookFace } from "@/view/book3dGeometry";
-import { fontFamily } from "@/view/tokens";
+import { bookDepthFromPages, faceContentOpacity, normalizeAngle, projectBookFaces, snapBookAngle, type BookFace } from "@/view/book3dGeometry";
+import { fontFamily, tokens } from "@/view/tokens";
 
 export type Book3DProps = {
   id: string;
@@ -12,6 +12,8 @@ export type Book3DProps = {
   description?: string;
   /** Editora, mostrada no pé da contracapa. */
   publisher?: string;
+  /** Quantidade de páginas, usada para ajustar a espessura da lombada e do corte das folhas. */
+  pageCount?: number;
   photoUrl?: string;
   /** Toque sem arrastar (por exemplo, abrir as fotos); sem isso, o toque volta o livro para a capa. */
   onPress?: () => void;
@@ -26,8 +28,11 @@ export type Book3DProps = {
 const BASE_WIDTH = 136;
 const BASE_HEIGHT = 218;
 const BASE_DEPTH = 28;
-const GOLD = "#D9A93A";
-const PAGE = "#F1E9D6";
+/** Ângulo final da animação de entrada: leve perspectiva (-16°) que deixa visível o corte das páginas ao lado da capa. */
+const INTRO_REST_ANGLE = -16;
+const GOLD = tokens.colors.cover.gold;
+const PAGE = tokens.colors.cover.page;
+const COVER_TEXT = tokens.colors.cover.text;
 /** Graus por dp arrastado. */
 const DRAG_GAIN = 0.7;
 const TAP_SLOP = 6;
@@ -44,12 +49,13 @@ function darken(hex: string, amount: number): string {
  * ortogonal feita só com `View` e `scaleX`, sem biblioteca 3D (ver `book3dGeometry.ts`). Solta o dedo, o giro
  * continua e desacelera. Quem pede menos movimento recebe o livro parado, com giro só pelas ações de acessibilidade.
  */
-export function Book3D({ id, title, author, description, publisher, photoUrl, onPress, intro = true, scale = 1, startAngle = 0 }: Book3DProps) {
+export function Book3D({ id, title, author, description, publisher, pageCount, photoUrl, onPress, intro = true, scale = 1, startAngle }: Book3DProps) {
   const WIDTH = BASE_WIDTH * scale;
   const HEIGHT = BASE_HEIGHT * scale;
-  const DEPTH = BASE_DEPTH * scale;
-  const [angle, setAngle] = useState(normalizeAngle(startAngle));
-  const angleRef = useRef(normalizeAngle(startAngle));
+  const DEPTH = bookDepthFromPages(pageCount, BASE_DEPTH) * scale;
+  const defaultRestAngle = startAngle !== undefined ? startAngle : intro ? INTRO_REST_ANGLE : 0;
+  const [angle, setAngle] = useState(normalizeAngle(defaultRestAngle));
+  const angleRef = useRef(normalizeAngle(defaultRestAngle));
   const reduceMotion = useRef(false);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
   const press = useRef(onPress);
@@ -79,12 +85,17 @@ export function Book3D({ id, title, author, description, publisher, photoUrl, on
   };
   const coast = (velocity: number) => {
     stop();
-    if (reduceMotion.current) return;
+    if (reduceMotion.current) {
+      apply(snapBookAngle(angleRef.current, defaultRestAngle));
+      return;
+    }
     let v = velocity;
     timer.current = setInterval(() => {
       apply(angleRef.current + v * 16 * DRAG_GAIN);
-      v *= 0.94;
-      if (Math.abs(v) < 0.02) stop();
+      v *= 0.92;
+      if (Math.abs(v) < 0.04) {
+        animateTo(snapBookAngle(angleRef.current, defaultRestAngle));
+      }
     }, 16);
   };
 
@@ -96,7 +107,7 @@ export function Book3D({ id, title, author, description, publisher, photoUrl, on
         reduceMotion.current = Boolean(reduced);
         if (intro && !reduced) {
           apply(38);
-          animateTo(0);
+          animateTo(defaultRestAngle);
         }
       })
       .catch(() => {});
@@ -113,6 +124,8 @@ export function Book3D({ id, title, author, description, publisher, photoUrl, on
     () =>
       PanResponder.create({
         onStartShouldSetPanResponder: () => true,
+        onMoveShouldSetPanResponder: (_event, g) => Math.abs(g.dx) > Math.abs(g.dy) && Math.abs(g.dx) > 4,
+        onPanResponderTerminationRequest: (_event, g) => Math.abs(g.dy) > Math.abs(g.dx) && Math.abs(g.dy) > TAP_SLOP,
         onPanResponderGrant: () => {
           stop();
           dragFrom.current = angleRef.current;
@@ -121,7 +134,8 @@ export function Book3D({ id, title, author, description, publisher, photoUrl, on
         onPanResponderRelease: (_event, g) => {
           if (Math.abs(g.dx) < TAP_SLOP && Math.abs(g.dy) < TAP_SLOP) {
             if (press.current) press.current();
-            else animateTo(0);
+            else if (Math.abs(normalizeAngle(angleRef.current - defaultRestAngle)) < 5) animateTo(180);
+            else animateTo(defaultRestAngle);
             return;
           }
           coast(g.vx);
@@ -135,7 +149,6 @@ export function Book3D({ id, title, author, description, publisher, photoUrl, on
 
   const faces = projectBookFaces(angle, WIDTH, DEPTH);
   const total = WIDTH + DEPTH * 2;
-  const shadowWidth = Math.max(DEPTH, ...faces.map((f) => Math.abs(f.center) + f.width / 2)) * 1.6;
 
   return (
     <View
@@ -152,26 +165,35 @@ export function Book3D({ id, title, author, description, publisher, photoUrl, on
         const action = event.nativeEvent.actionName;
         if (action === "increment") animateTo(angleRef.current + STEP);
         else if (action === "decrement") animateTo(angleRef.current - STEP);
-        else animateTo(0);
+        else animateTo(defaultRestAngle);
       }}
-      style={[styles.stage, { width: total, height: HEIGHT + 16 }]}
+      style={[styles.stage, { width: total, height: HEIGHT }]}
     >
-      {/* Sombra no chão: duas elipses, a de dentro mais escura; acompanha a largura do livro girado. */}
-      <View pointerEvents="none" style={[styles.ground, { width: shadowWidth * 1.15, opacity: 0.1 }]} />
-      <View pointerEvents="none" style={[styles.ground, { width: shadowWidth * 0.85, opacity: 0.18 }]} />
       {faces.map(({ face, center, width, shade }) => {
         const size = face === "front" || face === "back" ? WIDTH : DEPTH;
         const fade = faceContentOpacity(face, width / size);
+        // No corte das páginas (face "right"), a altura é levemente menor que a capa dura (degrau de encadernação).
+        const isPageBlock = face === "right";
+        const faceTop = isPageBlock ? Math.max(2, Math.round(3 * scale)) : 0;
+        const faceHeight = isPageBlock ? HEIGHT - faceTop * 2 : HEIGHT;
         return (
           <View
             key={face}
             testID={`book3d-face-${face}`}
             style={[
               styles.face,
-              { left: total / 2 - size / 2, width: size, height: HEIGHT, backgroundColor: face === "front" || face === "back" ? darken(base, 0.1) : undefined, transform: [{ translateX: center }, { scaleX: width / size }] },
+              !isPageBlock && styles.coverShadow,
+              {
+                top: faceTop,
+                left: total / 2 - size / 2,
+                width: size,
+                height: faceHeight,
+                backgroundColor: face === "front" || face === "back" ? darken(base, 0.1) : undefined,
+                transform: [{ translateX: center }, { scaleX: width / size }],
+              },
             ]}
           >
-            <FaceContent face={face} id={id} title={title} author={author} description={description} publisher={publisher} photoUrl={photoUrl} base={base} width={WIDTH} height={HEIGHT} depth={DEPTH} fade={fade} />
+            <FaceContent face={face} id={id} title={title} author={author} description={description} publisher={publisher} photoUrl={photoUrl} base={base} width={WIDTH} height={faceHeight} depth={DEPTH} fade={fade} />
             <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: `rgba(0,0,0,${shade.toFixed(3)})` }]} />
           </View>
         );
@@ -185,6 +207,9 @@ function FaceContent({ face, id, title, author, description, publisher, photoUrl
     return (
       <View style={[styles.fill, { opacity: fade }]}>
         <BookCover id={id} title={title} author={author} photoUrl={photoUrl} variant="detail" width={width} showSpine={false} />
+        {/* Vinco de encadernação junto à lombada (luz + sulco escuro). */}
+        <View pointerEvents="none" style={styles.hingeShadow} />
+        <View pointerEvents="none" style={styles.hingeHighlight} />
       </View>
     );
   }
@@ -239,31 +264,43 @@ function FaceContent({ face, id, title, author, description, publisher, photoUrl
       </View>
     );
   }
-  // Corte das páginas: linhas finas paralelas à lombada.
+  // Corte das páginas: linhas finas paralelas à lombada + sombreamento interno junto às capas.
   return (
     <View style={[styles.fill, { backgroundColor: PAGE }]}>
-      {Array.from({ length: Math.floor(depth / 2.5) }, (_, i) => (
-        <View key={i} style={[styles.pageLine, { left: 2 + i * 2.5 }]} />
+      <View pointerEvents="none" style={styles.pageInnerShadowLeft} />
+      {Array.from({ length: Math.floor(depth / 2.2) }, (_, i) => (
+        <View key={i} style={[styles.pageLine, { left: 2 + i * 2.2 }]} />
       ))}
+      <View pointerEvents="none" style={styles.pageInnerShadowRight} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   stage: { alignItems: "center", justifyContent: "center" },
-  ground: { position: "absolute", bottom: 0, alignSelf: "center", height: 12, borderRadius: 12, backgroundColor: "#000" },
-  face: { position: "absolute", top: 0, overflow: "hidden", borderRadius: 2 },
+  face: { position: "absolute", top: 0, overflow: "hidden", borderRadius: tokens.radius.micro },
+  coverShadow: {
+    elevation: 6,
+    shadowColor: tokens.colors.m3.shadow,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.28,
+    shadowRadius: 10,
+  },
   fill: { flex: 1 },
+  hingeShadow: { position: "absolute", left: 4, top: 0, bottom: 0, width: 2, backgroundColor: "rgba(0,0,0,0.28)" },
+  hingeHighlight: { position: "absolute", left: 6, top: 0, bottom: 0, width: 1, backgroundColor: "rgba(255,255,255,0.16)" },
+  pageInnerShadowLeft: { position: "absolute", left: 0, top: 0, bottom: 0, width: 3, backgroundColor: "rgba(0,0,0,0.12)" },
+  pageInnerShadowRight: { position: "absolute", right: 0, top: 0, bottom: 0, width: 2, backgroundColor: "rgba(0,0,0,0.08)" },
   backFrame: { position: "absolute", left: 12, right: 12, top: 12, bottom: 12, borderWidth: 1, borderColor: GOLD },
   band: { position: "absolute", left: 0, right: 0, height: 1.5, backgroundColor: GOLD },
-  backText: { position: "absolute", left: 0, right: 0, top: 0, bottom: 0, justifyContent: "center", alignItems: "center", gap: 6 },
-  backTitle: { color: "#F5EFE8", fontFamily: fontFamily.brand, textAlign: "center" },
+  backText: { position: "absolute", left: 0, right: 0, top: 0, bottom: 0, justifyContent: "center", alignItems: "center", gap: tokens.spacing[6] },
+  backTitle: { color: COVER_TEXT, fontFamily: fontFamily.brand, textAlign: "center" },
   backAuthor: { color: GOLD, fontFamily: fontFamily.regular, textAlign: "center" },
-  backPublisher: { color: GOLD, fontFamily: fontFamily.semiBold, textAlign: "center", marginTop: 4, letterSpacing: 0.5 },
-  backRule: { width: 28, height: 1, backgroundColor: GOLD, opacity: 0.8, marginVertical: 4 },
-  backDescription: { color: "rgba(245,239,232,0.85)", fontFamily: fontFamily.regular, textAlign: "center" },
-  spineAuthor: { color: "rgba(245,239,232,0.8)", fontFamily: fontFamily.regular, textAlign: "center" },
-  spineText: { color: "#F5EFE8", fontFamily: fontFamily.brand, fontSize: 12, textAlign: "center" },
+  backPublisher: { color: GOLD, fontFamily: fontFamily.semiBold, textAlign: "center", marginTop: tokens.spacing[4], letterSpacing: tokens.letterSpacing.publisher },
+  backRule: { width: 28, height: 1, backgroundColor: GOLD, opacity: 0.8, marginVertical: tokens.spacing[4] },
+  backDescription: { color: COVER_TEXT, opacity: 0.85, fontFamily: fontFamily.regular, textAlign: "center" },
+  spineAuthor: { color: COVER_TEXT, opacity: 0.8, fontFamily: fontFamily.regular, textAlign: "center" },
+  spineText: { color: COVER_TEXT, ...tokens.typography.spineText, textAlign: "center" },
   pageLine: { position: "absolute", top: 0, bottom: 0, width: 0.7, backgroundColor: "rgba(0,0,0,0.14)" },
 });
 

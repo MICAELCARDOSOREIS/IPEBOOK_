@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { faceContentOpacity, normalizeAngle, projectBookFaces } from "@/view/book3dGeometry";
+import { bookDepthFromPages, faceContentOpacity, normalizeAngle, projectBookFaces, snapBookAngle } from "@/view/book3dGeometry";
 
 const W = 136;
 const D = 28;
@@ -100,5 +100,20 @@ describe("conteúdo das faces quase de lado", () => {
       const faces = projectBookFaces(angle, 136, 28);
       expect(faces.length).toBeGreaterThan(0);
     }
+  });
+
+  it("calcula a espessura proporcional à quantidade de páginas e alinha o ângulo de repouso (snap)", () => {
+    expect(bookDepthFromPages(undefined)).toBe(28);
+    expect(bookDepthFromPages(80)).toBe(18);
+    expect(bookDepthFromPages(600)).toBe(38);
+    expect(bookDepthFromPages(340)).toBe(28);
+
+    expect(snapBookAngle(12)).toBe(-16);
+    expect(snapBookAngle(-30)).toBe(-16);
+    expect(snapBookAngle(12, 0)).toBe(0);
+    expect(snapBookAngle(75)).toBe(90);
+    expect(snapBookAngle(-80)).toBe(-90);
+    expect(snapBookAngle(150)).toBe(180);
+    expect(snapBookAngle(-160)).toBe(180);
   });
 });

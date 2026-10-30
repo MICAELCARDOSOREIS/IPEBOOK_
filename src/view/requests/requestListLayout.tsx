@@ -17,6 +17,7 @@ import { useTheme } from "@/view/theme/ThemeProvider";
 import { formatPrice } from "@/view/formatPrice";
 import { WEB_MAX_WIDTH, WEB_GUTTER, useWebColumns } from "@/view/webLayout";
 
+import { withPress } from "@/view/pressFeedback";
 const WIDE_CONTENT_MAX_WIDTH = WEB_MAX_WIDTH;
 
 export const statusLabel: Record<RequestStatus, string> = {
@@ -94,7 +95,11 @@ export function RequestListLayout({
                     accessibilityLabel={chip.a11y}
                     accessibilityState={{ selected }}
                     onPress={() => setStatusFilter(chip.key)}
-                    style={[styles.filterChip, selected && styles.filterChipSelected]}
+                    style={({ pressed }) => [
+                      styles.filterChip,
+                      selected && styles.filterChipSelected,
+                      pressed && styles.filterChipPressed,
+                    ]}
                   >
                     <Text style={[styles.filterChipText, selected && styles.filterChipTextSelected]}>
                       {chip.label}
@@ -145,7 +150,7 @@ export function RequestListLayout({
                       accessibilityRole="button"
                       accessibilityLabel="Ver todos os pedidos"
                       onPress={() => setStatusFilter("all")}
-                      style={styles.filterChip}
+                      style={withPress(styles.filterChip)}
                     >
                       <Text style={styles.link}>Ver todos os pedidos</Text>
                     </Pressable>
@@ -209,7 +214,7 @@ export function createRequestStyles(colors: ColorPalette) {
   primaryText: {
     color: colors.surface,
     ...tokens.typography.bodyLarge,
-    fontWeight: "600",
+    fontWeight: tokens.fontWeight.semiBold,
   },
   secondary: {
     minHeight: tokens.accessibility.touchTarget,
@@ -222,7 +227,7 @@ export function createRequestStyles(colors: ColorPalette) {
   secondaryText: {
     color: colors.action,
     ...tokens.typography.bodyLarge,
-    fontWeight: "600",
+    fontWeight: tokens.fontWeight.semiBold,
   },
   meta: {
     ...tokens.typography.bodyMedium,
@@ -258,7 +263,7 @@ function createStyles(colors: ColorPalette) {
   link: {
     color: colors.action,
     ...tokens.typography.bodyMedium,
-    fontWeight: "600",
+    fontWeight: tokens.fontWeight.semiBold,
   },
   heading: {
     ...tokens.typography.titleLarge,
@@ -279,29 +284,32 @@ function createStyles(colors: ColorPalette) {
   filterChip: {
     minHeight: tokens.accessibility.touchTarget,
     justifyContent: "center",
-    paddingHorizontal: tokens.spacing[12],
+    paddingHorizontal: tokens.spacing[16],
     paddingVertical: tokens.spacing[6],
-    borderRadius: tokens.radius.full,
-    backgroundColor: colors.surface,
+    borderRadius: tokens.shapeMorph.chipUnselected,
+    backgroundColor: colors.m3.surfaceContainerLowest,
     borderWidth: 1,
     borderColor: colors.m3.outlineVariant,
   },
   filterChipSelected: {
-    backgroundColor: colors.action,
-    borderColor: colors.action,
+    backgroundColor: colors.m3.secondaryContainer,
+    borderColor: colors.m3.secondaryContainer,
+    borderRadius: tokens.shapeMorph.chipSelected,
+    borderWidth: 0,
+  },
+  filterChipPressed: {
+    borderRadius: tokens.shapeMorph.chipSelected,
+    transform: [{ scale: 0.96 }],
   },
   filterChipText: {
-    ...tokens.typography.labelMedium,
-    color: colors.text,
+    ...tokens.typography.labelLarge,
+    color: colors.m3.onSurfaceVariant,
   },
   filterChipTextSelected: {
-    color: colors.surface,
-    fontWeight: "600",
+    color: colors.m3.onSecondaryContainer,
   },
   heroTitle: {
-    fontSize: tokens.typography.displayLarge.fontSize,
-    lineHeight: tokens.typography.displayLarge.lineHeight,
-    fontFamily: tokens.typography.displayLarge.fontFamily,
+    ...tokens.typography.displayLarge,
     color: colors.text,
   },
   infoCard: {
@@ -356,7 +364,7 @@ function createStyles(colors: ColorPalette) {
   },
   price: {
     ...tokens.typography.bodyMedium,
-    fontWeight: "600",
+    fontWeight: tokens.fontWeight.semiBold,
     color: colors.action,
   },
   body: {

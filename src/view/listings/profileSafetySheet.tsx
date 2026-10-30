@@ -6,6 +6,7 @@ import { Dialog } from "@/view/components/Dialog";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { tokens, type ColorPalette } from "@/view/tokens";
 
+import { withPress } from "@/view/pressFeedback";
 export type ProfileSafetySheetProps = {
   visible: boolean;
   personName: string;
@@ -57,7 +58,7 @@ export function ProfileSafetySheet({
     <>
       <Modal visible={visible} transparent animationType="fade" statusBarTranslucent navigationBarTranslucent onRequestClose={close}>
         <View style={styles.scrim}>
-          <Pressable accessibilityRole="button" accessibilityLabel="Fechar ao tocar fora" onPress={close} style={styles.backdrop} />
+          <Pressable accessibilityRole="button" accessibilityLabel="Fechar ao tocar fora" onPress={close} style={withPress(styles.backdrop)} />
           <View style={styles.sheet}>
             <View accessible={false} importantForAccessibility="no" style={styles.handle} />
             <Text accessibilityRole="header" style={styles.title}>
@@ -78,7 +79,7 @@ export function ProfileSafetySheet({
                         close();
                         onReportListing(book.id);
                       }}
-                      style={styles.row}
+                      style={withPress(styles.row)}
                     >
                       <AppIcon name="flag" size={20} color={colors.error} />
                       <Text numberOfLines={2} style={styles.rowText}>{book.title}</Text>
@@ -99,7 +100,7 @@ export function ProfileSafetySheet({
                     close();
                     onReportUser();
                   }}
-                  style={styles.row}
+                  style={withPress(styles.row)}
                 >
                   <AppIcon name="flag" size={20} color={colors.error} />
                   <View style={styles.rowTexts}>
@@ -107,7 +108,7 @@ export function ProfileSafetySheet({
                     <Text style={styles.hint}>Conduta abusiva, golpe ou perfil falso.</Text>
                   </View>
                 </Pressable>
-                <Pressable accessibilityRole="button" accessibilityLabel={`Denunciar um anúncio de ${personName}`} onPress={startReport} style={styles.row}>
+                <Pressable accessibilityRole="button" accessibilityLabel={`Denunciar um anúncio de ${personName}`} onPress={startReport} style={withPress(styles.row)}>
                   <AppIcon name="flag" size={20} color={colors.error} />
                   <View style={styles.rowTexts}>
                     <Text style={styles.rowText}>Denunciar um anúncio</Text>
@@ -118,7 +119,7 @@ export function ProfileSafetySheet({
                   accessibilityRole="button"
                   accessibilityLabel={`Bloquear ${personName}`}
                   onPress={() => setConfirmingBlock(true)}
-                  style={styles.row}
+                  style={withPress(styles.row)}
                 >
                   <AppIcon name="block" size={20} color={colors.error} />
                   <View style={styles.rowTexts}>
@@ -132,7 +133,7 @@ export function ProfileSafetySheet({
               </>
             )}
 
-            <Pressable accessibilityRole="button" accessibilityLabel="Cancelar" onPress={close} style={styles.cancel}>
+            <Pressable accessibilityRole="button" accessibilityLabel="Cancelar" onPress={close} style={withPress(styles.cancel)}>
               <Text style={styles.cancelText}>Cancelar</Text>
             </Pressable>
           </View>
@@ -159,12 +160,12 @@ export function ProfileSafetySheet({
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
-    scrim: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "flex-end" },
+    scrim: { flex: 1, backgroundColor: colors.m3.scrim, justifyContent: "flex-end" },
     backdrop: { ...StyleSheet.absoluteFill },
     sheet: {
       backgroundColor: colors.background,
-      borderTopLeftRadius: 28,
-      borderTopRightRadius: 28,
+      borderTopLeftRadius: tokens.radius.xxl,
+      borderTopRightRadius: tokens.radius.xxl,
       paddingHorizontal: tokens.spacing[24],
       paddingBottom: tokens.spacing[24],
       gap: tokens.spacing[8],
@@ -173,7 +174,7 @@ function createStyles(colors: ColorPalette) {
       alignSelf: "center",
       width: 32,
       height: 4,
-      borderRadius: 2,
+      borderRadius: tokens.radius.hairline,
       marginTop: tokens.spacing[12],
       backgroundColor: colors.m3.onSurfaceVariant,
       opacity: 0.4,
@@ -187,7 +188,7 @@ function createStyles(colors: ColorPalette) {
       minHeight: 56,
       paddingVertical: tokens.spacing[8],
     },
-    rowTexts: { flex: 1, gap: 2 },
+    rowTexts: { flex: 1, gap: tokens.spacing[2] },
     rowText: { ...tokens.typography.bodyLarge, color: colors.m3.onSurface, flexShrink: 1 },
     hint: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
     errorText: { ...tokens.typography.bodyMedium, color: colors.error },

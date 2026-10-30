@@ -9,7 +9,7 @@ import { OutlinedButton } from "@/view/components/OutlinedButton";
 
 export type NotFoundProps = {
   onGoHome: () => void;
-  onExplore: () => void;
+  onExplore?: () => void;
 };
 
 /** Rota inexistente: mensagem em português, sem expor o endereço, com saída para o início e a busca. */
@@ -29,7 +29,7 @@ export function NotFound({ onGoHome, onExplore }: NotFoundProps) {
         </Text>
         <View style={styles.actions}>
           <FilledButton label="Ir para o início" onPress={onGoHome} />
-          <OutlinedButton label="Explorar livros" onPress={onExplore} />
+          {onExplore ? <OutlinedButton label="Explorar livros" onPress={onExplore} /> : null}
         </View>
       </View>
     </SafeAreaView>
@@ -40,8 +40,8 @@ function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     page: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.background },
     box: { width: "100%", maxWidth: 420, alignItems: "center", gap: tokens.spacing[12], padding: tokens.spacing[24] },
-    icon: { width: 72, height: 72, borderRadius: 36, alignItems: "center", justifyContent: "center", backgroundColor: colors.m3.secondaryContainer },
-    title: { fontFamily: fontFamily.brand, fontSize: 28, lineHeight: 36, fontWeight: "700", color: colors.m3.onSurface, textAlign: "center" },
+    icon: { width: 72, height: 72, borderRadius: tokens.radius.circle72, alignItems: "center", justifyContent: "center", backgroundColor: colors.m3.secondaryContainer },
+    title: { ...tokens.typography.brandSection, color: colors.m3.onSurface, textAlign: "center" },
     body: { ...tokens.typography.bodyLarge, color: colors.m3.onSurfaceVariant, textAlign: "center" },
     actions: { alignSelf: "stretch", gap: tokens.spacing[8], marginTop: tokens.spacing[12] },
   });

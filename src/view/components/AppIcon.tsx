@@ -2,7 +2,7 @@ import React from "react";
 import { Platform } from "react-native";
 import { SymbolView } from "expo-symbols";
 import { MaterialIcons } from "@expo/vector-icons";
-import { tokens } from "@/view/tokens";
+import { useTheme } from "@/view/theme/ThemeProvider";
 import { FluentIcon, type FluentIconName } from "@/view/components/FluentIcon";
 
 /**
@@ -100,13 +100,16 @@ export interface AppIconProps {
 }
 
 /** Ícone decorativo: o rótulo acessível fica no controle que o contém. */
-export function AppIcon({ name, size = 24, color = tokens.colors.text, filled = false }: AppIconProps) {
+export function AppIcon({ name, size = 24, color, filled = false }: AppIconProps) {
+  const { colors } = useTheme();
+  const resolvedColor = color ?? colors.text;
+
   if (Platform.OS === "ios") {
     return (
       <SymbolView
         name={symbols[name].ios}
         size={size}
-        tintColor={color}
+        tintColor={resolvedColor}
         style={{ width: size, height: size }}
         accessible={false}
         importantForAccessibility="no-hide-descendants"
@@ -117,7 +120,7 @@ export function AppIcon({ name, size = 24, color = tokens.colors.text, filled = 
   if (Platform.OS === "web") {
     const fluentName = fluentCoverage[name];
     if (fluentName) {
-      return <FluentIcon name={fluentName} size={size} color={color} filled={filled} />;
+      return <FluentIcon name={fluentName} size={size} color={resolvedColor} filled={filled} />;
     }
     // Fallback: ícone ainda não migrado para o Fluent 2 (ADR 0014) — usa Material Symbols.
   }
@@ -126,7 +129,7 @@ export function AppIcon({ name, size = 24, color = tokens.colors.text, filled = 
     <MaterialIcons
       name={symbols[name].android.replace(/_/g, "-") as never}
       size={size}
-      color={color}
+      color={resolvedColor}
       accessible={false}
       importantForAccessibility="no-hide-descendants"
     />

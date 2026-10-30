@@ -204,7 +204,7 @@ function createStyles(colors: ColorPalette) {
     headline: { ...tokens.typography.titleLarge, fontFamily: fontFamily.brand, color: colors.m3.onSurface },
     body: { ...tokens.typography.bodyLarge, fontFamily: fontFamily.regular, color: colors.m3.onSurfaceVariant },
     qrBlock: { alignItems: "center", gap: tokens.spacing[12] },
-    code: { ...tokens.typography.displayLarge, fontFamily: fontFamily.brand, fontSize: 28, lineHeight: 36, letterSpacing: 4, color: colors.m3.onSurface },
+    code: { ...tokens.typography.brandSection, letterSpacing: tokens.letterSpacing.code, color: colors.m3.onSurface },
     hint: { ...tokens.typography.bodyMedium, fontFamily: fontFamily.regular, color: colors.m3.onSurfaceVariant },
     expired: { color: colors.error, fontFamily: fontFamily.semiBold },
     camera: { height: 280, borderRadius: tokens.radius.large, overflow: "hidden", backgroundColor: "#000000" },

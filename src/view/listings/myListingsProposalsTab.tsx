@@ -39,19 +39,24 @@ export function MyListingsProposalsTab({
           Nenhuma proposta em aberto. Quando alguém se interessar por um livro seu, ela aparece aqui.
         </Text>
       ) : (
-        proposals.map((item) => (
-          <ShelfRow
-            key={item.request.id}
-            book={item.listing}
-            summary={proposalSummary(item)}
-            accessibilityLabel={`Abrir proposta para ${item.listing.title}`}
-            onPress={() =>
-              item.request.status === "accepted"
-                ? onNavigateToNegotiationDetail?.(item.request.id)
-                : onNavigateToReceivedRequests?.()
-            }
-          />
-        ))
+        <View style={styles.listCard}>
+          <Text style={styles.listTitle}>
+            {`${proposals.length} ${proposals.length === 1 ? "proposta" : "propostas"}`}
+          </Text>
+          {proposals.map((item) => (
+            <ShelfRow
+              key={item.request.id}
+              book={item.listing}
+              summary={proposalSummary(item)}
+              accessibilityLabel={`Abrir proposta para ${item.listing.title}`}
+              onPress={() =>
+                item.request.status === "accepted"
+                  ? onNavigateToNegotiationDetail?.(item.request.id)
+                  : onNavigateToReceivedRequests?.()
+              }
+            />
+          ))}
+        </View>
       )}
       <View style={styles.infoCard}>
         <Text style={styles.infoCardTitle}>Tudo pela conversa</Text>
@@ -70,21 +75,33 @@ function createStyles(colors: ColorPalette) {
       color: colors.secondaryText,
       paddingVertical: tokens.spacing[16],
     },
+    listCard: {
+      gap: tokens.spacing[4],
+      paddingHorizontal: tokens.spacing[16],
+      paddingTop: tokens.spacing[16],
+      paddingBottom: tokens.spacing[4],
+      borderRadius: tokens.radius.card,
+      backgroundColor: colors.m3.surfaceContainerLow,
+    },
+    listTitle: {
+      ...tokens.typography.titleMedium,
+      color: colors.m3.onSurface,
+    },
     infoCard: {
       marginTop: tokens.spacing[16],
       padding: tokens.spacing[16],
       gap: tokens.spacing[4],
-      borderRadius: tokens.radius.medium,
+      borderRadius: tokens.radius.card,
       backgroundColor: colors.m3.surfaceContainer,
     },
     infoCardTitle: {
       ...tokens.typography.bodyLarge,
-      fontWeight: "600",
-      color: colors.text,
+      fontWeight: tokens.fontWeight.semiBold,
+      color: colors.m3.onSurface,
     },
     orientationHint: {
       ...tokens.typography.bodyMedium,
-      color: colors.secondaryText,
+      color: colors.m3.onSurfaceVariant,
       marginTop: tokens.spacing[8],
     },
   });

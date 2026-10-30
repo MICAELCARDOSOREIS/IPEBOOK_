@@ -13,6 +13,7 @@ export default function LivroDetalhe() {
       // futura rota de edição do próprio perfil (fluxo 07, issues #55/#56).
       onNavigateToUserProfile={(ownerId) => pushOnce(`/perfil/${ownerId}` as Href)}
       onNavigateToReport={(bookId) => pushOnce(`/denunciar/${bookId}` as Href)}
+      onNavigateToSignIn={() => pushOnce("/entrar")}
     />
   );
 }

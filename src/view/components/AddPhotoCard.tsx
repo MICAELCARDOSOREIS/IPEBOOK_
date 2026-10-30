@@ -4,6 +4,7 @@ import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { AppIcon } from "@/view/components/AppIcon";
 
+import { withPress } from "@/view/pressFeedback";
 export type AddPhotoCardProps = {
   label?: string;
   onPress: () => void;
@@ -43,7 +44,7 @@ export function AddPhotoCard({
             accessibilityRole="button"
             accessibilityLabel={`Remover ${label.toLowerCase()}`}
             onPress={onRemovePhoto}
-            style={styles.removeButton}
+            style={withPress(styles.removeButton)}
           >
             <AppIcon name="close" color={colors.surface} size={16} />
           </Pressable>
@@ -57,7 +58,7 @@ export function AddPhotoCard({
       accessibilityRole="button"
       accessibilityLabel={`Adicionar ${label.toLowerCase()}`}
       onPress={onPress}
-      style={[styles.card, style]}
+      style={({ pressed }) => [styles.card, style, pressed && styles.cardPressed]}
     >
       <AppIcon name="add" color={colors.action} size={28} />
       <Text style={styles.label}>{label}</Text>
@@ -79,6 +80,11 @@ function createStyles(colors: ColorPalette) {
       backgroundColor: colors.surface,
       overflow: "hidden",
       position: "relative",
+    },
+    cardPressed: {
+      borderRadius: tokens.shapeMorph.cardPressed,
+      backgroundColor: colors.m3.surfaceContainerLow,
+      transform: [{ scale: 0.96 }],
     },
     previewImage: {
       ...StyleSheet.absoluteFill,

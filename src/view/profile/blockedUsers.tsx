@@ -14,6 +14,7 @@ import { useTheme } from "@/view/theme/ThemeProvider";
 import type { BlockedUser } from "@/model/entities/blockedUser";
 import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
 
+import { withPress } from "@/view/pressFeedback";
 export type BlockedUsersProps = {
   onBack: () => void;
 };
@@ -86,7 +87,7 @@ export function BlockedUsers({ onBack }: BlockedUsersProps) {
                       accessibilityRole="button"
                       accessibilityLabel={`Desbloquear ${item.name}`}
                       onPress={() => setTargetToUnblock(item)}
-                      style={styles.unblockButton}
+                      style={withPress(styles.unblockButton)}
                     >
                       <Text style={styles.unblockButtonText}>Desbloquear</Text>
                     </Pressable>
@@ -157,7 +158,7 @@ function createStyles(colors: ColorPalette) {
     emptyIconCircle: {
       width: 64,
       height: 64,
-      borderRadius: 32,
+      borderRadius: tokens.radius.circle64,
       backgroundColor: colors.surface,
       alignItems: "center",
       justifyContent: "center",
@@ -196,11 +197,11 @@ function createStyles(colors: ColorPalette) {
     },
     userText: {
       flex: 1,
-      gap: 2,
+      gap: tokens.spacing[2],
     },
     userName: {
       ...tokens.typography.bodyLarge,
-      fontWeight: "600",
+      fontWeight: tokens.fontWeight.semiBold,
       color: colors.text,
     },
     blockedDate: {

@@ -326,10 +326,7 @@ function createStyles(colors: ColorPalette) {
     },
     historyItemText: {
       flex: 1,
-      ...tokens.typography.bodyMedium,
-      fontSize: 13,
-      lineHeight: 18,
-      fontFamily: fontFamily.regular,
+      ...tokens.typography.footnote,
       color: colors.m3.onSurface,
     },
     historyStatusBadge: {
@@ -338,7 +335,7 @@ function createStyles(colors: ColorPalette) {
       color: colors.m3.onSurfaceVariant,
       backgroundColor: colors.m3.surfaceContainerHighest,
       paddingHorizontal: tokens.spacing[8],
-      paddingVertical: 2,
+      paddingVertical: tokens.spacing[2],
       borderRadius: tokens.radius.small,
       overflow: "hidden",
     },

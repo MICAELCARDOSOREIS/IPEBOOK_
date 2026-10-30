@@ -60,7 +60,7 @@ export function TopAppBar({ title, onBack, floating = false, contentMaxWidth }: 
         accessibilityLabel="Voltar"
         hitSlop={8}
         onPress={guardedBack}
-        style={styles.backButton}
+        style={({ pressed }) => [styles.backButton, pressed && styles.backButtonPressed]}
       >
         <AppIcon name="back" size={24} color={colors.m3.onSurface} />
       </Pressable>
@@ -101,7 +101,7 @@ function createStyles(colors: ColorPalette) {
     barOverlay: {
       backgroundColor: colors.m3.surfaceContainer,
       elevation: 3,
-      shadowColor: "#000",
+      shadowColor: colors.m3.shadow,
       shadowOpacity: 0.15,
       shadowRadius: 4,
       shadowOffset: { width: 0, height: 2 },
@@ -109,17 +109,20 @@ function createStyles(colors: ColorPalette) {
     backButton: {
       width: tokens.spacing[40],
       height: tokens.spacing[40],
-      borderRadius: tokens.radius.full,
+      borderRadius: tokens.shapeMorph.buttonRest,
       justifyContent: "center",
       alignItems: "center",
+    },
+    backButtonPressed: {
+      borderRadius: tokens.shapeMorph.buttonPressed,
+      backgroundColor: colors.m3.surfaceContainerHigh,
+      transform: [{ scale: 0.92 }],
     },
     title: {
       flexShrink: 1,
       color: colors.m3.onSurface,
-      ...tokens.typography.titleLarge,
-      // Figma `01.06`/`01.10`: título da barra superior do Material 3 tem 22 dp.
-      fontSize: 22,
-      lineHeight: 28,
+      ...tokens.typography.titleBar,
+      fontWeight: tokens.fontWeight.semiBold,
     },
   });
 }

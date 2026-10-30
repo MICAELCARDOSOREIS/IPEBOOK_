@@ -19,6 +19,7 @@ import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
 import { groupNotificationsByPeriod, notificationTimeLabel } from "@/viewmodel/notificationGrouping";
 import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
 
+import { withPress } from "@/view/pressFeedback";
 export type NotificationsProps = {
   sessionUserId: string | null;
   onBack?: () => void;
@@ -112,7 +113,7 @@ export default function Notifications({
               accessibilityRole="tab"
               accessibilityState={{ selected: state.filter === "all" }}
               onPress={() => actions.setFilter("all")}
-              style={[styles.filterChip, wide && styles.filterChipWide, state.filter === "all" && styles.filterChipActive]}
+              style={withPress([styles.filterChip, wide && styles.filterChipWide, state.filter === "all" && styles.filterChipActive])}
             >
               <Text
                 style={[
@@ -128,7 +129,7 @@ export default function Notifications({
               accessibilityRole="tab"
               accessibilityState={{ selected: state.filter === "unread" }}
               onPress={() => actions.setFilter("unread")}
-              style={[styles.filterChip, wide && styles.filterChipWide, state.filter === "unread" && styles.filterChipActive]}
+              style={withPress([styles.filterChip, wide && styles.filterChipWide, state.filter === "unread" && styles.filterChipActive])}
             >
               <Text
                 style={[
@@ -146,7 +147,7 @@ export default function Notifications({
               accessibilityRole="button"
               accessibilityLabel="Marcar todas como lidas"
               onPress={() => void actions.markAllAsRead()}
-              style={styles.markAllButton}
+              style={withPress(styles.markAllButton)}
             >
               <Text style={styles.markAllText}>Marcar todas como lidas</Text>
             </Pressable>
@@ -221,7 +222,11 @@ export default function Notifications({
                       onNavigateToAction?.(item.actionUrl);
                     }
                   }}
-                  style={[styles.card, !item.read && styles.cardUnread]}
+                  style={({ pressed }) => [
+                    styles.card,
+                    !item.read && styles.cardUnread,
+                    pressed && styles.cardPressed,
+                  ]}
                 >
                   <View style={styles.cardHeader}>
                     <IconBadge icon={badge.icon} tone={badge.tone} />
@@ -281,7 +286,7 @@ function createStyles(colors: ColorPalette) {
     paddingTop: tokens.spacing[16],
     flexDirection: "row",
     alignItems: "flex-start",
-    gap: 48,
+    gap: tokens.spacing[48],
   },
   // Coluna de leitura: avisos curtos ficam ilegíveis esticados na largura toda.
   main: { flex: 1, minWidth: 0, maxWidth: 880, alignSelf: "stretch", minHeight: 0 },
@@ -311,24 +316,25 @@ function createStyles(colors: ColorPalette) {
   filterChip: {
     minHeight: tokens.spacing[32],
     justifyContent: "center",
-    paddingHorizontal: tokens.spacing[12],
+    paddingHorizontal: tokens.spacing[16],
     paddingVertical: tokens.spacing[6],
-    borderRadius: tokens.radius.full,
-    backgroundColor: colors.surface,
+    borderRadius: tokens.shapeMorph.chipUnselected,
+    backgroundColor: colors.m3.surfaceContainerLowest,
     borderWidth: 1,
     borderColor: colors.m3.outlineVariant,
   },
   filterChipActive: {
-    backgroundColor: colors.action,
-    borderColor: colors.action,
+    backgroundColor: colors.m3.secondaryContainer,
+    borderColor: colors.m3.secondaryContainer,
+    borderRadius: tokens.shapeMorph.chipSelected,
+    borderWidth: 0,
   },
   filterChipText: {
-    ...tokens.typography.labelMedium,
-    color: colors.text,
+    ...tokens.typography.labelLarge,
+    color: colors.m3.onSurfaceVariant,
   },
   filterChipTextActive: {
-    color: colors.surface,
-    fontWeight: "700",
+    color: colors.m3.onSecondaryContainer,
   },
   markAllButton: {
     minHeight: tokens.accessibility.touchTarget,
@@ -339,7 +345,7 @@ function createStyles(colors: ColorPalette) {
   markAllText: {
     ...tokens.typography.labelMedium,
     color: colors.action,
-    fontWeight: "600",
+    fontWeight: tokens.fontWeight.semiBold,
   },
   centered: {
     flex: 1,
@@ -388,11 +394,15 @@ function createStyles(colors: ColorPalette) {
   },
   card: {
     backgroundColor: colors.surface,
-    borderRadius: tokens.radius.medium,
+    borderRadius: tokens.shapeMorph.cardRest,
     padding: tokens.spacing[16],
     borderWidth: 1,
     borderColor: colors.m3.outlineVariant,
     gap: tokens.spacing[8],
+  },
+  cardPressed: {
+    borderRadius: tokens.shapeMorph.cardPressed,
+    transform: [{ scale: 0.985 }],
   },
   cardUnread: {
     borderColor: colors.action,
@@ -410,7 +420,7 @@ function createStyles(colors: ColorPalette) {
     color: colors.text,
   },
   cardTitleUnread: {
-    fontWeight: "700",
+    fontWeight: tokens.fontWeight.bold,
     color: colors.actionDeep,
   },
   unreadDot: {

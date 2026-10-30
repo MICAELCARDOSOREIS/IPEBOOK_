@@ -136,15 +136,11 @@ function createStyles(colors: ColorPalette) {
     sideSlots: { flex: 1, gap: tokens.spacing[12] },
     sideSlot: { minWidth: 0 },
     title: {
-      fontSize: tokens.typography.displayLarge.fontSize,
-      lineHeight: tokens.typography.displayLarge.lineHeight,
-      fontFamily: tokens.typography.displayLarge.fontFamily,
+      ...tokens.typography.displayLarge,
       color: colors.text,
     },
     subtitle: {
-      fontSize: tokens.typography.bodyLarge.fontSize,
-      lineHeight: tokens.typography.bodyLarge.lineHeight,
-      fontFamily: tokens.typography.bodyLarge.fontFamily,
+      ...tokens.typography.bodyLarge,
       color: colors.secondaryText,
     },
     uploadingRow: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[12] },
@@ -155,21 +151,16 @@ function createStyles(colors: ColorPalette) {
       gap: tokens.spacing[4],
     },
     tipTitle: {
-      fontSize: tokens.typography.titleMedium.fontSize,
-      fontFamily: tokens.typography.titleMedium.fontFamily,
-      fontWeight: tokens.typography.titleMedium.fontWeight,
+      ...tokens.typography.titleMedium,
       color: colors.text,
     },
     tipText: {
-      fontSize: tokens.typography.bodyMedium.fontSize,
-      lineHeight: tokens.typography.bodyMedium.lineHeight,
-      fontFamily: tokens.typography.bodyMedium.fontFamily,
+      ...tokens.typography.bodyMedium,
       color: colors.secondaryText,
     },
     errorText: {
+      ...tokens.typography.bodyMedium,
       color: colors.error,
-      fontSize: tokens.typography.bodyMedium.fontSize,
-      fontFamily: tokens.typography.bodyMedium.fontFamily,
     },
   });
 }

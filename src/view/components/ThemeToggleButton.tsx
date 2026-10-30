@@ -14,6 +14,7 @@ export function ThemeToggleButton() {
       onPress={() => void setPreference(dark ? "light" : "dark")}
       style={({ pressed }) => [
         styles.button,
+        pressed && styles.buttonPressed,
         { backgroundColor: pressed ? colors.m3.surfaceContainerHighest : colors.m3.surfaceContainerHigh },
       ]}
     >
@@ -26,8 +27,12 @@ const styles = StyleSheet.create({
   button: {
     width: tokens.spacing[48],
     height: tokens.spacing[48],
-    borderRadius: tokens.radius.full,
+    borderRadius: tokens.shapeMorph.buttonRest,
     alignItems: "center",
     justifyContent: "center",
+  },
+  buttonPressed: {
+    borderRadius: tokens.shapeMorph.buttonPressed,
+    transform: [{ scale: 0.92 }],
   },
 });

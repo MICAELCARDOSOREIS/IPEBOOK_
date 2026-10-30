@@ -15,7 +15,7 @@ O escopo inclui a entrada de Configurações em Meu perfil, a tela de configura�
 Como pessoa usuária, quero acessar Configurações a partir de Meu perfil para encontrar preferências do aplicativo em um local previsível.
 
 - Dado que estou em Meu perfil, quando aciono **Configurações**, então uma tela dedicada é aberta com título, retorno e seção de aparência.
-- Dado que uso leitor de tela, quando foco a entrada, então ela é anunciada como botão e descreve que contém preferências de aparência.
+- Dado que uso leitor de tela, quando foco a entrada de Configurações no cabeçalho, então ela é anunciada como botão com o rótulo **"Abrir configurações"**.
 
 ### US2 — Escolher a aparência (P1)
 

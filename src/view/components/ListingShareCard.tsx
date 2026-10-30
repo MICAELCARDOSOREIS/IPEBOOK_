@@ -1,7 +1,7 @@
 import { type ComponentRef, forwardRef, useMemo } from "react";
 import { Image, StyleSheet, Text, View } from "react-native";
 import type { Book } from "@/model/entities/book";
-import { colors as lightColors, fontFamily, tokens } from "@/view/tokens";
+import { fontFamily, tokens } from "@/view/tokens";
 import { IpeMark } from "@/view/components/IpeMark";
 
 export type ListingShareCardProps = {
@@ -29,7 +29,7 @@ export const ListingShareCard = forwardRef<ComponentRef<typeof View>, ListingSha
   { book, url, onCoverSettled },
   ref,
 ) {
-  const tone = lightColors.badge[book.modality];
+  const tone = tokens.colors.badge[book.modality];
   const display = url.replace(/^https?:\/\//, "");
   const styles = useMemo(() => createStyles(), []);
 
@@ -77,33 +77,34 @@ export const ListingShareCard = forwardRef<ComponentRef<typeof View>, ListingSha
 });
 
 function createStyles() {
-  const brown = "#4A2B16";
+  const light = tokens.colors;
+  const brown = light.ipe.onContainer;
   return StyleSheet.create({
     card: {
       width: 340,
       gap: tokens.spacing[12],
       padding: tokens.spacing[16],
-      borderRadius: 24,
+      borderRadius: tokens.radius.extraLarge,
       borderWidth: 6,
-      borderColor: "#58331F",
-      backgroundColor: "#FCEFCB",
+      borderColor: light.ipe.trunk,
+      backgroundColor: light.ipe.container,
     },
     header: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[8] },
-    brand: { fontFamily: fontFamily.brand, fontSize: 22, lineHeight: 26, fontWeight: "700", color: brown },
-    tagline: { fontSize: 11, lineHeight: 14, fontWeight: "600", letterSpacing: 0.4, color: brown, opacity: 0.8 },
-    coverArea: { alignItems: "center", paddingVertical: tokens.spacing[16], borderRadius: 16 },
-    cover: { width: 150, height: 240, borderRadius: 4, backgroundColor: "#E7E0D7" },
-    placeholder: { alignItems: "center", justifyContent: "center", backgroundColor: "#2F6B4F" },
-    placeholderInitial: { fontFamily: fontFamily.brand, fontSize: 64, color: "rgba(255,255,255,0.9)" },
-    info: { gap: 4 },
+    brand: { ...tokens.typography.titleBar, fontFamily: fontFamily.brand, fontWeight: tokens.fontWeight.bold, color: brown },
+    tagline: { ...tokens.typography.captionSmall, fontWeight: tokens.fontWeight.semiBold, letterSpacing: tokens.letterSpacing.taglineCompact, color: brown, opacity: 0.8 },
+    coverArea: { alignItems: "center", paddingVertical: tokens.spacing[16], borderRadius: tokens.radius.card },
+    cover: { width: 150, height: 240, borderRadius: tokens.radius.extraSmall, backgroundColor: light.m3.surfaceContainerHighest },
+    placeholder: { alignItems: "center", justifyContent: "center", backgroundColor: light.success },
+    placeholderInitial: { fontFamily: fontFamily.brand, fontSize: tokens.fontSize[64], color: light.m3.onPrimary, opacity: 0.9 },
+    info: { gap: tokens.spacing[4] },
     badges: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[8] },
-    badge: { overflow: "hidden", paddingHorizontal: 10, paddingVertical: 3, borderRadius: 8, fontSize: 13, lineHeight: 18, fontWeight: "700" },
-    offer: { fontSize: 20, lineHeight: 26, fontWeight: "700", color: brown },
-    title: { fontFamily: fontFamily.brand, fontSize: 24, lineHeight: 30, fontWeight: "700", color: brown },
-    author: { fontSize: 15, lineHeight: 20, color: brown, opacity: 0.85 },
-    where: { fontSize: 13, lineHeight: 18, fontWeight: "600", color: brown, opacity: 0.8 },
-    linkPill: { alignItems: "center", paddingVertical: tokens.spacing[8], borderRadius: 14, backgroundColor: "#58331F" },
-    linkLabel: { fontSize: 11, lineHeight: 14, fontWeight: "600", letterSpacing: 0.6, textTransform: "uppercase", color: "#FCEFCB", opacity: 0.85 },
-    link: { fontSize: 18, lineHeight: 24, fontWeight: "700", color: "#FCEFCB" },
+    badge: { overflow: "hidden", paddingHorizontal: tokens.spacing[10], paddingVertical: tokens.spacing[3], borderRadius: tokens.radius.small, ...tokens.typography.footnote, fontWeight: tokens.fontWeight.bold },
+    offer: { ...tokens.typography.titleBlock, fontWeight: tokens.fontWeight.bold, color: brown },
+    title: { ...tokens.typography.brandTitle, color: brown },
+    author: { ...tokens.typography.subheadline, color: brown, opacity: 0.85 },
+    where: { ...tokens.typography.footnote, fontWeight: tokens.fontWeight.semiBold, color: brown, opacity: 0.8 },
+    linkPill: { alignItems: "center", paddingVertical: tokens.spacing[8], borderRadius: tokens.radius.medium, backgroundColor: light.ipe.trunk },
+    linkLabel: { ...tokens.typography.captionSmall, fontWeight: tokens.fontWeight.semiBold, letterSpacing: tokens.letterSpacing.tagline, textTransform: "uppercase", color: light.ipe.container, opacity: 0.85 },
+    link: { ...tokens.typography.titleMedium, fontWeight: tokens.fontWeight.bold, color: light.ipe.container },
   });
 }

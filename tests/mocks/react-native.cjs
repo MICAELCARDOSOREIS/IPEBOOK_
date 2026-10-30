@@ -15,6 +15,8 @@ const Pressable = React.forwardRef((props, ref) =>
     "Pressable",
     {
       ...props,
+      // Como no React Native, estilo em função é resolvido com o estado atual (sem toque).
+      style: typeof props.style === "function" ? props.style({ pressed: false }) : props.style,
       accessible: props.accessible !== undefined ? props.accessible : true,
       accessibilityRole: props.accessibilityRole || "button",
       ref,
@@ -147,6 +149,7 @@ const StyleSheet = {
 
 const AccessibilityInfo = {
   isScreenReaderEnabled: () => Promise.resolve(false),
+  isReduceMotionEnabled: () => Promise.resolve(false),
   addEventListener: () => ({ remove: () => {} }),
   announceForAccessibility: () => {},
 };

@@ -360,13 +360,13 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
   return StyleSheet.create({
     page: { flex: 1, backgroundColor: colors.background },
     scrollContent: { padding: tokens.spacing[16], paddingBottom: tokens.spacing[24] },
-    wideLayout: { flexDirection: "row", alignItems: "flex-start", justifyContent: "center", gap: 48, width: "100%", maxWidth: 1200, alignSelf: "center" },
-    previewCard: { width: 320, gap: 16, padding: 20, borderRadius: tokens.radius.large, backgroundColor: colors.m3.surfaceContainerLow, borderWidth: 1, borderColor: colors.m3.outlineVariant },
+    wideLayout: { flexDirection: "row", alignItems: "flex-start", justifyContent: "center", gap: tokens.spacing[48], width: "100%", maxWidth: 1200, alignSelf: "center" },
+    previewCard: { width: 320, gap: tokens.spacing[16], padding: tokens.spacing[20], borderRadius: tokens.radius.large, backgroundColor: colors.m3.surfaceContainerLow, borderWidth: 1, borderColor: colors.m3.outlineVariant },
     previewLabel: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
-    previewBook: { gap: 6, padding: 12, borderRadius: 20, backgroundColor: colors.m3.surfaceContainerLowest },
+    previewBook: { gap: tokens.spacing[6], padding: tokens.spacing[12], borderRadius: tokens.radius.xl, backgroundColor: colors.m3.surfaceContainerLowest },
     previewTitle: { ...tokens.typography.titleMedium, color: colors.m3.onSurface },
     previewAuthor: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
-    previewMeta: { flexDirection: "row", alignItems: "center", gap: 8 },
+    previewMeta: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[8] },
     previewPrice: { ...tokens.typography.labelLarge, color: colors.m3.onSurface },
     previewNote: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
     content: {
@@ -403,7 +403,7 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
     draftBannerText: {
       ...tokens.typography.labelMedium,
       color: colors.actionDeep,
-      fontWeight: "600",
+      fontWeight: tokens.fontWeight.semiBold,
     },
   });
 }

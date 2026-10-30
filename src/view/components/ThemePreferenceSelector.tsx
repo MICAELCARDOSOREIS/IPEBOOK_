@@ -28,10 +28,11 @@ export function ThemePreferenceSelector() {
               accessibilityLabel={`Tema ${option.label}`}
               accessibilityState={{ checked: isSelected }}
               onPress={() => void setPreference(option.value)}
-              style={[
+              style={({ pressed }) => [
                 styles.option,
                 index > 0 && styles.optionDivider,
                 isSelected && styles.optionSelected,
+                pressed && styles.optionPressed,
               ]}
             >
               {isSelected ? <AppIcon name="check" size={18} color={colors.m3.onSecondaryContainer} /> : null}
@@ -65,6 +66,10 @@ function createStyles(colors: ColorPalette) {
     },
     optionDivider: { borderLeftWidth: 1, borderLeftColor: colors.m3.outline },
     optionSelected: { backgroundColor: colors.m3.secondaryContainer },
+    optionPressed: {
+      transform: [{ scale: 0.96 }],
+      borderRadius: tokens.shapeMorph.chipSelected,
+    },
     optionText: {
       ...tokens.typography.labelLarge,
       color: colors.m3.onSurface,

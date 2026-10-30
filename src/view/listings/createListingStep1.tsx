@@ -12,6 +12,7 @@ import { IconBadge } from "@/view/components/IconBadge";
 import { TextField } from "@/view/components/TextField";
 import { BarcodeScannerModal } from "@/view/components/BarcodeScannerModal";
 
+import { withPress } from "@/view/pressFeedback";
 const MODALITIES: { value: BookModality; label: string }[] = [
   { value: "sale", label: "Venda" },
   { value: "trade", label: "Troca" },
@@ -79,7 +80,7 @@ export function CreateListingStep1({
           accessibilityState={{ disabled: Boolean(loading || lookingUpIsbn) }}
           disabled={loading || lookingUpIsbn}
           onPress={() => setScannerVisible(true)}
-          style={styles.isbnHeader}
+          style={withPress(styles.isbnHeader)}
         >
           <IconBadge icon="camera" tone="action" />
           <View style={styles.isbnTexts}>
@@ -249,7 +250,7 @@ function createStyles(colors: ColorPalette) {
     },
     isbnFeedbackTextSuccess: {
       color: colors.actionDeep,
-      fontWeight: "600",
+      fontWeight: tokens.fontWeight.semiBold,
     },
     isbnFeedbackTextInfo: {
       color: colors.secondaryText,
@@ -266,22 +267,16 @@ function createStyles(colors: ColorPalette) {
     photoRow: { flexDirection: "row", gap: tokens.spacing[12], alignItems: "center" },
     photoTexts: { flex: 1, gap: tokens.spacing[4] },
     sectionLabel: {
-      fontSize: tokens.typography.titleMedium.fontSize,
-      lineHeight: tokens.typography.titleMedium.lineHeight,
-      fontFamily: tokens.typography.titleMedium.fontFamily,
-      fontWeight: tokens.typography.titleMedium.fontWeight,
+      ...tokens.typography.titleMedium,
       color: colors.text,
     },
     hint: {
-      fontSize: tokens.typography.bodyMedium.fontSize,
-      lineHeight: tokens.typography.bodyMedium.lineHeight,
-      fontFamily: tokens.typography.bodyMedium.fontFamily,
+      ...tokens.typography.bodyMedium,
       color: colors.secondaryText,
     },
     errorText: {
+      ...tokens.typography.bodyMedium,
       color: colors.error,
-      fontSize: tokens.typography.bodyMedium.fontSize,
-      fontFamily: tokens.typography.bodyMedium.fontFamily,
     },
   });
 }

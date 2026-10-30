@@ -56,7 +56,11 @@ export function SortSheet({ visible, selected, onSelect, onClose }: SortSheetPro
                     onSelect(option);
                     onClose();
                   }}
-                  style={styles.row}
+                  style={({ pressed }) => [
+                    styles.row,
+                    isSelected && styles.rowSelected,
+                    pressed && styles.rowPressed,
+                  ]}
                 >
                   <Text style={[styles.rowLabel, isSelected && styles.rowLabelSelected]}>{SORT_LABELS[option]}</Text>
                   <AppIcon
@@ -76,7 +80,7 @@ export function SortSheet({ visible, selected, onSelect, onClose }: SortSheetPro
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
-    scrim: { flex: 1, justifyContent: "flex-end", backgroundColor: "#00000052" },
+    scrim: { flex: 1, justifyContent: "flex-end", backgroundColor: colors.m3.scrim },
     sheet: {
       backgroundColor: colors.m3.surfaceContainerLow,
       borderTopLeftRadius: tokens.radius.extraLarge,
@@ -99,6 +103,16 @@ function createStyles(colors: ColorPalette) {
       alignItems: "center",
       justifyContent: "space-between",
       minHeight: tokens.accessibility.touchTarget,
+      paddingHorizontal: tokens.spacing[12],
+      borderRadius: tokens.shapeMorph.chipUnselected,
+    },
+    rowSelected: {
+      backgroundColor: colors.m3.secondaryContainer,
+      borderRadius: tokens.shapeMorph.chipSelected,
+    },
+    rowPressed: {
+      transform: [{ scale: 0.98 }],
+      borderRadius: tokens.shapeMorph.chipSelected,
     },
     rowLabel: { ...tokens.typography.bodyLarge, color: colors.m3.onSurface },
     rowLabelSelected: { color: colors.m3.primary, fontFamily: tokens.typography.labelLarge.fontFamily },

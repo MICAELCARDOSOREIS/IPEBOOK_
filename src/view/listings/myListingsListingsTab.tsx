@@ -152,7 +152,7 @@ function createStyles(colors: ColorPalette) {
       paddingHorizontal: tokens.spacing[16],
       paddingTop: tokens.spacing[16],
       paddingBottom: tokens.spacing[4],
-      borderRadius: 16,
+      borderRadius: tokens.radius.card,
       backgroundColor: colors.m3.surfaceContainerLow,
     },
     tableHeader: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[16], paddingHorizontal: tokens.spacing[16], paddingVertical: tokens.spacing[12] },

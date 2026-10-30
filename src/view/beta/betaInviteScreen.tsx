@@ -22,6 +22,7 @@ import { useAuthViewModel, type AuthActions, type AuthState } from "@/viewmodel/
 import { useBetaSignupViewModel, type BetaSignupActions, type BetaSignupState } from "@/viewmodel/useBetaSignupViewModel";
 import { setAuthReturnTo } from "@/view/auth/authReturnTo";
 
+import { withPress } from "@/view/pressFeedback";
 export { PLAY_STORE_URL };
 
 type HighlightCard = {
@@ -198,7 +199,7 @@ export function BetaInviteScreen({
         accessibilityState={{ expanded: showHelp }}
         accessibilityLabel={showHelp ? "Ocultar ajuda de como instalar" : "Como instalar? Veja o passo a passo com fotos"}
         onPress={() => setShowHelp((prev) => !prev)}
-        style={styles.helpButton}
+        style={withPress(styles.helpButton)}
       >
         <View style={styles.helpButtonLeft}>
           <View style={styles.helpIconCircle}>
@@ -300,7 +301,7 @@ export function BetaInviteScreen({
             accessibilityRole="button"
             accessibilityLabel="Usar outra conta Google"
             onPress={() => void authActions?.signOut?.()}
-            style={styles.switchAccount}
+            style={withPress(styles.switchAccount)}
           >
             <Text style={styles.switchAccountText}>Usar outra conta Google</Text>
           </Pressable>
@@ -391,7 +392,7 @@ export function BetaInviteScreen({
             accessibilityRole="link"
             accessibilityLabel="Ir para a página inicial do IpêBook"
             onPress={onNavigateHome}
-            style={styles.logoPressable}
+            style={withPress(styles.logoPressable)}
           >
             <Logotipo />
           </Pressable>
@@ -400,7 +401,7 @@ export function BetaInviteScreen({
               accessibilityRole="link"
               accessibilityLabel="Voltar para a página inicial"
               onPress={onNavigateHome}
-              style={styles.homeLink}
+              style={withPress(styles.homeLink)}
             >
               <AppIcon name="home" size={18} color={colors.m3.onSurfaceVariant} />
               <Text style={styles.homeLinkText}>Início</Text>
@@ -430,11 +431,7 @@ export function BetaInviteScreen({
 }
 
 function createStyles(colors: ColorPalette) {
-  const bodyMedium = {
-    fontSize: tokens.typography.bodyMedium.fontSize,
-    lineHeight: tokens.typography.bodyMedium.lineHeight,
-    fontFamily: tokens.typography.bodyMedium.fontFamily,
-  };
+  const bodyMedium = tokens.typography.bodyMedium;
   return StyleSheet.create({
     page: { flex: 1, backgroundColor: colors.background },
     topBar: {
@@ -492,7 +489,7 @@ function createStyles(colors: ColorPalette) {
       flexDirection: "row",
       alignItems: "flex-start",
       justifyContent: "space-between",
-      gap: 64,
+      gap: tokens.spacing[64],
       width: "100%",
     },
     wideIntro: { flex: 1.3, maxWidth: 920 },
@@ -509,9 +506,9 @@ function createStyles(colors: ColorPalette) {
       backgroundColor: colors.m3.surfaceContainerHigh,
     },
     pillText: { ...tokens.typography.labelMedium, color: colors.m3.onSurfaceVariant },
-    title: { fontFamily: fontFamily.brand, fontSize: 34, lineHeight: 42, color: colors.m3.onSurface },
-    titleWide: { fontSize: 54, lineHeight: 62 },
-    lead: { ...tokens.typography.bodyLarge, fontSize: 18, lineHeight: 28, color: colors.m3.onSurfaceVariant, maxWidth: 820 },
+    title: { ...tokens.typography.brandLargeTitle, color: colors.m3.onSurface },
+    titleWide: { ...tokens.typography.brandHero },
+    lead: { ...tokens.typography.webLead, color: colors.m3.onSurfaceVariant, maxWidth: 820 },
     highlightGrid: {
       gap: tokens.spacing[16],
       marginTop: tokens.spacing[8],
@@ -522,18 +519,16 @@ function createStyles(colors: ColorPalette) {
     },
     highlightCard: {
       flex: 1,
-      borderRadius: 20,
+      borderRadius: tokens.radius.xl,
       padding: tokens.spacing[20],
       gap: tokens.spacing[12],
     },
     highlightTitle: {
-      fontFamily: fontFamily.semiBold,
-      fontSize: 17,
-      lineHeight: 24,
+      ...tokens.typography.titleBlock,
     },
     highlightText: {
       ...bodyMedium,
-      lineHeight: 21,
+      lineHeight: tokens.lineHeight[21],
       opacity: 0.9,
     },
     helpButton: {
@@ -543,7 +538,7 @@ function createStyles(colors: ColorPalette) {
       gap: tokens.spacing[16],
       paddingHorizontal: tokens.spacing[20],
       paddingVertical: tokens.spacing[16],
-      borderRadius: 20,
+      borderRadius: tokens.radius.xl,
       backgroundColor: colors.m3.surfaceContainerHigh,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: colors.m3.outlineVariant,
@@ -556,8 +551,8 @@ function createStyles(colors: ColorPalette) {
       flex: 1,
     },
     helpIconCircle: {
-      width: 40,
-      height: 40,
+      width: tokens.spacing[40],
+      height: tokens.spacing[40],
       borderRadius: tokens.radius.full,
       backgroundColor: colors.m3.primaryContainer,
       alignItems: "center",
@@ -565,12 +560,11 @@ function createStyles(colors: ColorPalette) {
     },
     helpButtonTextCol: {
       flex: 1,
-      gap: 2,
+      gap: tokens.spacing[2],
     },
     helpButtonTitle: {
+      ...tokens.typography.titleMedium,
       fontFamily: fontFamily.semiBold,
-      fontSize: 16,
-      lineHeight: 22,
       color: colors.m3.onSurface,
     },
     helpButtonSubtitle: {
@@ -580,7 +574,7 @@ function createStyles(colors: ColorPalette) {
     helpGuide: {
       gap: tokens.spacing[20],
       padding: tokens.spacing[24],
-      borderRadius: 24,
+      borderRadius: tokens.radius.extraLarge,
       backgroundColor: colors.m3.surfaceContainer,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: colors.m3.outlineVariant,
@@ -592,7 +586,7 @@ function createStyles(colors: ColorPalette) {
     helpStepCard: {
       gap: tokens.spacing[16],
       padding: tokens.spacing[20],
-      borderRadius: 20,
+      borderRadius: tokens.radius.xl,
       backgroundColor: colors.m3.surfaceContainerHigh,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: colors.m3.outlineVariant,
@@ -603,16 +597,17 @@ function createStyles(colors: ColorPalette) {
       gap: tokens.spacing[12],
     },
     helpStepBadge: {
-      width: 32,
-      height: 32,
+      width: tokens.spacing[32],
+      height: tokens.spacing[32],
       borderRadius: tokens.radius.full,
       backgroundColor: colors.m3.primary,
       alignItems: "center",
       justifyContent: "center",
     },
     helpStepBadgeText: {
+      ...tokens.typography.subheadline,
       fontFamily: fontFamily.semiBold,
-      fontSize: 15,
+      fontWeight: tokens.fontWeight.semiBold,
       color: colors.m3.onPrimary,
     },
     helpStepTextCol: {
@@ -620,9 +615,7 @@ function createStyles(colors: ColorPalette) {
       gap: tokens.spacing[4],
     },
     helpStepTitle: {
-      fontFamily: fontFamily.semiBold,
-      fontSize: 17,
-      lineHeight: 24,
+      ...tokens.typography.titleBlock,
       color: colors.m3.onSurface,
     },
     helpStepDesc: {
@@ -633,7 +626,7 @@ function createStyles(colors: ColorPalette) {
       width: "100%",
       height: 320,
       borderRadius: tokens.radius.medium,
-      backgroundColor: "#FFFFFF",
+      backgroundColor: colors.m3.surfaceContainerLowest,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: colors.m3.outlineVariant,
     },
@@ -642,7 +635,7 @@ function createStyles(colors: ColorPalette) {
     },
     card: {
       backgroundColor: colors.m3.surfaceContainerHigh,
-      borderRadius: 24,
+      borderRadius: tokens.radius.extraLarge,
       padding: tokens.spacing[24],
       gap: tokens.spacing[16],
     },
@@ -654,7 +647,7 @@ function createStyles(colors: ColorPalette) {
     error: { ...bodyMedium, color: colors.error },
     connectedCard: { gap: tokens.spacing[16], alignItems: "stretch" },
     connectedHeader: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[12] },
-    connectedHeaderText: { flex: 1, gap: 2 },
+    connectedHeaderText: { flex: 1, gap: tokens.spacing[2] },
     connectedSubtitle: { ...tokens.typography.labelMedium, color: colors.m3.onSurfaceVariant },
     connectedBadge: {
       flexDirection: "row",
@@ -704,11 +697,9 @@ function createStyles(colors: ColorPalette) {
       color: colors.m3.onSurfaceVariant,
     },
     footnote: {
+      ...tokens.typography.labelMedium,
       textAlign: "center",
       color: colors.m3.onSurfaceVariant,
-      fontSize: tokens.typography.labelMedium.fontSize,
-      lineHeight: tokens.typography.labelMedium.lineHeight,
-      fontFamily: tokens.typography.labelMedium.fontFamily,
     },
   });
 }

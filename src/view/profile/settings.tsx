@@ -29,6 +29,7 @@ import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
 
+import { withPress } from "@/view/pressFeedback";
 const WIDE_CONTENT_MAX_WIDTH = WEB_MAX_WIDTH;
 
 export type SettingsProps = {
@@ -216,7 +217,7 @@ export function Settings({
       accessibilityRole="button"
       accessibilityLabel="Editar perfil"
       onPress={onNavigateToEditProfile}
-      style={[styles.accountCard, wide && styles.accountCardWide]}
+      style={withPress([styles.accountCard, wide && styles.accountCardWide])}
     >
       <Avatar
         name={profileState.profile?.name ?? authState.user?.email ?? "Você"}
@@ -475,8 +476,8 @@ function createStyles(colors: ColorPalette) {
     accountAction: { ...tokens.typography.labelLarge, color: colors.m3.primary },
     signOutRow: { alignItems: "center" },
     iconCircle: {
-      width: 40,
-      height: 40,
+      width: tokens.spacing[40],
+      height: tokens.spacing[40],
       borderRadius: tokens.radius.full,
       alignItems: "center",
       justifyContent: "center",
@@ -492,7 +493,7 @@ function createStyles(colors: ColorPalette) {
       padding: tokens.spacing[16],
       gap: tokens.spacing[24],
     },
-    contentWide: { maxWidth: WEB_MAX_WIDTH, paddingHorizontal: WEB_GUTTER, flexDirection: "row", alignItems: "flex-start", gap: 48 },
+    contentWide: { maxWidth: WEB_MAX_WIDTH, paddingHorizontal: WEB_GUTTER, flexDirection: "row", alignItems: "flex-start", gap: tokens.spacing[48] },
     mainStacked: { gap: tokens.spacing[24] },
     // Coluna de leitura: as listas de opções não passam de ~880 px, como nas preferências de sistemas.
     main: { flex: 1, minWidth: 0, maxWidth: 880, gap: tokens.spacing[32] },
@@ -504,12 +505,12 @@ function createStyles(colors: ColorPalette) {
       top: tokens.spacing[16],
     },
     accountCardWide: { flexDirection: "column", alignItems: "flex-start", gap: tokens.spacing[12] },
-    sideNav: { gap: 2 },
+    sideNav: { gap: tokens.spacing[2] },
     sideNavItem: {
       flexDirection: "row",
       alignItems: "center",
       gap: tokens.spacing[12],
-      minHeight: 44,
+      minHeight: tokens.accessibility.touchTarget,
       paddingHorizontal: tokens.spacing[12],
       borderRadius: tokens.radius.full,
     },
@@ -553,7 +554,7 @@ function createStyles(colors: ColorPalette) {
     },
     versionValue: {
       ...tokens.typography.bodyMedium,
-      fontWeight: "600",
+      fontWeight: tokens.fontWeight.semiBold,
       color: colors.text,
     },
     linkRow: {
@@ -572,7 +573,7 @@ function createStyles(colors: ColorPalette) {
       paddingVertical: tokens.spacing[8],
       paddingHorizontal: tokens.spacing[16],
     },
-    linkText: { flex: 1, gap: 2 },
+    linkText: { flex: 1, gap: tokens.spacing[2] },
     linkLabel: {
       ...tokens.typography.bodyMedium,
       color: colors.m3.onSurface,

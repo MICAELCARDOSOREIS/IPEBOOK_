@@ -1,7 +1,6 @@
 import { type ComponentRef, forwardRef, useMemo } from "react";
 import { StyleSheet, Text, View } from "react-native";
-import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
-import { useTheme } from "@/view/theme/ThemeProvider";
+import { fontFamily, tokens } from "@/view/tokens";
 import { IpeMark } from "@/view/components/IpeMark";
 
 export type InviteCardProps = {
@@ -12,11 +11,10 @@ export type InviteCardProps = {
 /**
  * Imagem do convite (Spec 092): é este cartão que a tela captura e envia como PNG, então traz tudo o que o
  * convite precisa dizer, inclusive o link por escrito, já que a imagem compartilhada não leva texto junto.
- * Cores fixas (não seguem o tema escuro): a imagem tem que ficar igual para quem a recebe.
+ * Usa os tokens do tema claro (`tokens.colors`): a imagem tem que ficar igual para quem a recebe.
  */
 export const InviteCard = forwardRef<ComponentRef<typeof View>, InviteCardProps>(function InviteCard({ url }, ref) {
-  const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = useMemo(() => createStyles(), []);
   const display = url.replace(/^https?:\/\//, "").replace(/\/$/, "");
 
   return (
@@ -50,7 +48,8 @@ export const InviteCard = forwardRef<ComponentRef<typeof View>, InviteCardProps>
   );
 });
 
-function createStyles(colors: ColorPalette) {
+function createStyles() {
+  const light = tokens.colors;
   return StyleSheet.create({
     card: {
       alignSelf: "center",
@@ -60,29 +59,29 @@ function createStyles(colors: ColorPalette) {
       gap: tokens.spacing[12],
       paddingVertical: tokens.spacing[24],
       paddingHorizontal: tokens.spacing[20],
-      borderRadius: 24,
+      borderRadius: tokens.radius.extraLarge,
       borderWidth: 6,
-      borderColor: "#58331F",
-      backgroundColor: "#FCEFCB",
+      borderColor: light.ipe.trunk,
+      backgroundColor: light.ipe.container,
     },
-    top: { alignItems: "center", gap: 2 },
-    brand: { fontFamily: fontFamily.brand, fontSize: 30, lineHeight: 36, fontWeight: "700", color: "#4A2B16" },
-    tagline: { fontSize: 12, lineHeight: 16, fontWeight: "600", letterSpacing: 0.6, textTransform: "uppercase", color: "#4A2B16", opacity: 0.8 },
-    title: { fontFamily: fontFamily.brand, fontSize: 26, lineHeight: 32, fontWeight: "700", textAlign: "center", color: "#4A2B16" },
-    body: { fontSize: 15, lineHeight: 22, textAlign: "center", color: "#4A2B16" },
+    top: { alignItems: "center", gap: tokens.spacing[2] },
+    brand: { ...tokens.typography.brandHeadline, color: light.ipe.onContainer },
+    tagline: { ...tokens.typography.labelMedium, fontWeight: tokens.fontWeight.semiBold, letterSpacing: tokens.letterSpacing.tagline, textTransform: "uppercase", color: light.ipe.onContainer, opacity: 0.8 },
+    title: { ...tokens.typography.brandDisplaySm, textAlign: "center", color: light.ipe.onContainer },
+    body: { ...tokens.typography.subheadline, lineHeight: tokens.lineHeight[22], textAlign: "center", color: light.ipe.onContainer },
     chips: { flexDirection: "row", gap: tokens.spacing[8] },
-    chip: { overflow: "hidden", paddingHorizontal: 12, paddingVertical: 4, borderRadius: 8, fontSize: 13, lineHeight: 18, fontWeight: "700" },
-    chipSale: { backgroundColor: "#DCE8DE", color: "#18291F" },
-    chipTrade: { backgroundColor: "#F8D88A", color: "#3A2A10" },
-    chipDonation: { backgroundColor: "#F4DDD3", color: "#6E3A28" },
+    chip: { overflow: "hidden", paddingHorizontal: tokens.spacing[12], paddingVertical: tokens.spacing[4], borderRadius: tokens.radius.small, ...tokens.typography.footnote, fontWeight: tokens.fontWeight.bold },
+    chipSale: { backgroundColor: light.badge.sale.background, color: light.badge.sale.text },
+    chipTrade: { backgroundColor: light.badge.trade.background, color: light.badge.trade.text },
+    chipDonation: { backgroundColor: light.badge.donation.background, color: light.badge.donation.text },
     linkPill: {
       alignSelf: "stretch",
       alignItems: "center",
       paddingVertical: tokens.spacing[12],
-      borderRadius: 16,
-      backgroundColor: "#58331F",
+      borderRadius: tokens.radius.card,
+      backgroundColor: light.ipe.trunk,
     },
-    linkLabel: { fontSize: 12, lineHeight: 16, fontWeight: "600", letterSpacing: 0.6, textTransform: "uppercase", color: "#FCEFCB", opacity: 0.85 },
-    link: { fontSize: 24, lineHeight: 30, fontWeight: "700", color: "#FCEFCB" },
+    linkLabel: { ...tokens.typography.labelMedium, fontWeight: tokens.fontWeight.semiBold, letterSpacing: tokens.letterSpacing.tagline, textTransform: "uppercase", color: light.ipe.container, opacity: 0.85 },
+    link: { ...tokens.typography.brandTitle, color: light.ipe.container },
   });
 }

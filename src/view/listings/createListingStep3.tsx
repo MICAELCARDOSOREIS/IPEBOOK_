@@ -14,6 +14,7 @@ import { Chip } from "@/view/components/Chip";
 import { NeighborhoodSelectorModal } from "@/view/components/NeighborhoodSelectorModal";
 import { TextField } from "@/view/components/TextField";
 
+import { withPress } from "@/view/pressFeedback";
 /** Categorias sugeridas pela etapa de detalhes do Figma (`04.05`). */
 export const LISTING_CATEGORIES = ["Literatura", "Infantil", "Didático", "Romance", "Outros"];
 
@@ -142,7 +143,7 @@ export function CreateListingStep3({
               accessibilityLabel="Limpar bairro selecionado"
               hitSlop={12}
               onPress={() => onSetNeighborhood("")}
-              style={styles.clearButton}
+              style={withPress(styles.clearButton)}
             >
               <AppIcon name="close" size={20} color={colors.m3.onSurfaceVariant} />
             </Pressable>
@@ -183,10 +184,9 @@ function createStyles(colors: ColorPalette) {
     field: { gap: tokens.spacing[8] },
     // `04.05`: rótulo do grupo em 16/24 peso médio sobre `on-surface`.
     sectionLabel: {
-      fontSize: tokens.typography.bodyLarge.fontSize,
-      lineHeight: tokens.typography.bodyLarge.lineHeight,
+      ...tokens.typography.bodyLarge,
       fontFamily: fontFamily.medium,
-      fontWeight: "500",
+      fontWeight: tokens.fontWeight.medium,
       color: colors.text,
     },
     chipRow: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[8] },
@@ -218,16 +218,13 @@ function createStyles(colors: ColorPalette) {
     neighborhoodPlaceholder: { color: colors.m3.onSurfaceVariant },
     clearButton: { width: tokens.spacing[32], height: tokens.spacing[32], justifyContent: "center", alignItems: "center" },
     hint: {
-      fontSize: tokens.typography.bodyMedium.fontSize,
-      lineHeight: tokens.typography.bodyMedium.lineHeight,
-      fontFamily: tokens.typography.bodyMedium.fontFamily,
+      ...tokens.typography.bodyMedium,
       color: colors.secondaryText,
     },
     disabled: { opacity: 0.38 },
     errorText: {
+      ...tokens.typography.bodyMedium,
       color: colors.error,
-      fontSize: tokens.typography.bodyMedium.fontSize,
-      fontFamily: tokens.typography.bodyMedium.fontFamily,
     },
   });
 }

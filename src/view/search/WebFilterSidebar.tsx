@@ -6,6 +6,7 @@ import { AppIcon } from "@/view/components/AppIcon";
 import { BOOK_CONDITIONS, BOOK_CONDITION_LABELS } from "@/model/entities/book";
 import type { SearchConditionFilter, SearchFilters, SearchModalityFilter } from "@/viewmodel/searchFilters";
 
+import { withPress } from "@/view/pressFeedback";
 export type WebFilterSidebarProps = {
   filters: SearchFilters;
   categories: readonly string[];
@@ -53,7 +54,7 @@ export function WebFilterSidebar({
                 accessibilityLabel={`Filtrar por ${item.label}`}
                 accessibilityState={{ selected }}
                 onPress={() => onModality(selected ? "all" : item.value)}
-                style={[styles.chip, selected && styles.chipSelected]}
+                style={withPress([styles.chip, selected && styles.chipSelected])}
               >
                 {selected ? <AppIcon name="check" size={16} color={colors.m3.onSecondaryContainer} /> : null}
                 <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{item.label}</Text>
@@ -108,7 +109,7 @@ function CheckRow({ label, checked, onPress }: { label: string; checked: boolean
       accessibilityLabel={label}
       accessibilityState={{ checked }}
       onPress={onPress}
-      style={styles.checkRow}
+      style={withPress(styles.checkRow)}
     >
       <View style={[styles.box, checked && styles.boxChecked]}>
         {checked ? <AppIcon name="check" size={14} color={colors.m3.onPrimary} /> : null}
@@ -128,29 +129,36 @@ function createStyles(colors: ColorPalette) {
       backgroundColor: colors.m3.surfaceContainerLow,
       alignSelf: "flex-start",
     },
-    panelContent: { gap: 24, padding: 24 },
-    title: { fontFamily: tokens.typography.labelLarge.fontFamily, fontSize: 20, lineHeight: 28, fontWeight: "600", color: colors.m3.onSurface },
-    group: { gap: 4 },
-    groupLabel: { ...tokens.typography.labelLarge, color: colors.m3.onSurface, marginBottom: 6 },
-    chips: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+    panelContent: { gap: tokens.spacing[24], padding: tokens.spacing[24] },
+    title: { ...tokens.typography.titleBlock, color: colors.m3.onSurface },
+    group: { gap: tokens.spacing[4] },
+    groupLabel: { ...tokens.typography.labelLarge, color: colors.m3.onSurface, marginBottom: tokens.spacing[6] },
+    chips: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[8] },
     chip: {
       flexDirection: "row",
       alignItems: "center",
-      gap: 6,
-      height: 32,
-      paddingHorizontal: 16,
-      borderRadius: tokens.radius.small,
+      gap: tokens.spacing[6],
+      height: tokens.spacing[32],
+      paddingHorizontal: tokens.spacing[16],
+      borderRadius: tokens.shapeMorph.chipUnselected,
       borderWidth: 1,
-      borderColor: colors.m3.outline,
+      borderColor: colors.m3.outlineVariant,
+      backgroundColor: colors.m3.surfaceContainerLowest,
     },
-    chipSelected: { backgroundColor: colors.m3.secondaryContainer, borderColor: colors.m3.secondaryContainer, paddingLeft: 8 },
+    chipSelected: {
+      backgroundColor: colors.m3.secondaryContainer,
+      borderColor: colors.m3.secondaryContainer,
+      borderRadius: tokens.shapeMorph.chipSelected,
+      borderWidth: 0,
+      paddingLeft: tokens.spacing[8],
+    },
     chipText: { ...tokens.typography.labelLarge, color: colors.m3.onSurfaceVariant },
     chipTextSelected: { color: colors.m3.onSecondaryContainer },
-    checkRow: { flexDirection: "row", alignItems: "center", gap: 12, minHeight: 40 },
+    checkRow: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[12], minHeight: 40 },
     box: {
       width: 18,
       height: 18,
-      borderRadius: 4,
+      borderRadius: tokens.radius.extraSmall,
       borderWidth: 2,
       borderColor: colors.m3.onSurfaceVariant,
       alignItems: "center",

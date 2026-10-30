@@ -7,7 +7,7 @@ import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useMyListingsViewModel } from "@/viewmodel/useMyListingsViewModel";
 import { useReceivedRequestsViewModel } from "@/viewmodel/useReceivedRequestsViewModel";
 import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
-import { tokens, fontFamily, type ColorPalette } from "@/view/tokens";
+import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
 import { ErrorState } from "@/view/components/ErrorState";
@@ -24,6 +24,7 @@ import {
 import { MyListingsProposalsTab } from "@/view/listings/myListingsProposalsTab";
 import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
 
+import { withPress } from "@/view/pressFeedback";
 export { ShelfRow } from "@/view/listings/shelfRow";
 
 export type MyListingsProps = {
@@ -107,7 +108,7 @@ export function MyListings({
             accessibilityLabel="Voltar"
             hitSlop={12}
             onPress={onBack}
-            style={styles.iconButton}
+            style={withPress(styles.iconButton)}
           >
             <AppIcon name="back" size={24} color={colors.m3.onSurface} />
           </Pressable>
@@ -164,7 +165,7 @@ export function MyListings({
                   accessibilityRole="button"
                   accessibilityLabel="Anunciar novo livro na estante"
                   onPress={onNavigateToCreateListing}
-                  style={styles.webExchangeBannerButton}
+                  style={withPress(styles.webExchangeBannerButton)}
                 >
                   <Text style={styles.webExchangeBannerButtonText}>Anunciar livro</Text>
                 </Pressable>
@@ -202,12 +203,13 @@ export function MyListings({
                     accessibilityLabel={a11yLabel}
                     accessibilityState={{ selected }}
                     onPress={() => setActiveTab(tab.key)}
-                    style={[
+                    style={({ pressed }) => [
                       isIOS ? styles.segmentIOS : styles.segmentAndroid,
                       !isIOS && index > 0 ? styles.segmentAndroidJoined : null,
                       !isIOS && index === 0 ? styles.segmentAndroidFirst : null,
                       !isIOS && index === tabs.length - 1 ? styles.segmentAndroidLast : null,
                       selected ? (isIOS ? styles.segmentIOSSelected : styles.segmentAndroidSelected) : null,
+                      pressed ? styles.segmentPressed : null,
                     ]}
                   >
                     {!isIOS && selected ? (
@@ -215,7 +217,11 @@ export function MyListings({
                     ) : null}
                     <Text
                       numberOfLines={1}
-                      style={[styles.segmentText, wideWeb && styles.segmentTextWide, selected ? styles.segmentTextSelected : null]}
+                      style={[
+                        styles.segmentText,
+                        wideWeb && styles.segmentTextWide,
+                        selected ? (isIOS ? styles.segmentTextSelectedIOS : styles.segmentTextSelected) : null,
+                      ]}
                     >
                       {tab.label}
                     </Text>
@@ -423,7 +429,7 @@ function createStyles(colors: ColorPalette) {
     header: {
       flexDirection: "row",
       alignItems: "center",
-      paddingHorizontal: tokens.spacing[20],
+      paddingHorizontal: tokens.spacing[16],
       paddingTop: tokens.spacing[12],
       paddingBottom: tokens.spacing[12],
       gap: tokens.spacing[8],
@@ -436,30 +442,34 @@ function createStyles(colors: ColorPalette) {
     },
     headerText: { flex: 1 },
     heroTitle: {
-      fontFamily: fontFamily.brand,
-      fontSize: 32,
-      lineHeight: 40,
-      fontWeight: "700",
-      color: colors.m3.onSurface,
+      ...tokens.typography.brandLargeTitle,
+      color: colors.brandBrown,
     },
     heroSubtitle: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
     fab: {
       position: "absolute",
       right: tokens.spacing[16],
       bottom: tokens.spacing[16],
-      width: 56,
-      height: 56,
-      borderRadius: 16,
+      width: tokens.spacing[56],
+      height: tokens.spacing[56],
+      borderRadius: tokens.radius.card,
       alignItems: "center",
       justifyContent: "center",
       backgroundColor: colors.m3.primaryContainer,
       elevation: 6,
-      shadowColor: "#000",
+      shadowColor: colors.m3.shadow,
       shadowOpacity: 0.25,
       shadowRadius: 6,
       shadowOffset: { width: 0, height: 3 },
     },
-    fabPressed: { opacity: 0.9 },
+    fabPressed: {
+      opacity: 0.92,
+      borderRadius: tokens.shapeMorph.cardPressed,
+      transform: [{ scale: 0.94 }],
+    },
+    segmentPressed: {
+      transform: [{ scale: 0.97 }],
+    },
     // Botão tonal com ícone (M3): maior e com cara de botão, em vez de um texto pequeno solto.
     draftsLink: {
       marginLeft: "auto",
@@ -481,23 +491,23 @@ function createStyles(colors: ColorPalette) {
       width: "100%",
       maxWidth: 720,
       alignSelf: "center",
-      paddingHorizontal: tokens.spacing[20],
+      paddingHorizontal: tokens.spacing[16],
     },
     // Web larga (Figma `05.01`): coluna de 1280 px com 80 px de margem e botão "Anunciar livro" em texto.
-    headerWide: { width: "100%", maxWidth: WEB_MAX_WIDTH, alignSelf: "center", paddingHorizontal: 80, paddingTop: 32 },
+    headerWide: { width: "100%", maxWidth: WEB_MAX_WIDTH, alignSelf: "center", paddingHorizontal: tokens.spacing[80], paddingTop: tokens.spacing[32] },
     contentWide: { maxWidth: WEB_MAX_WIDTH, paddingHorizontal: WEB_GUTTER },
     webExchangeBanner: {
       flexDirection: "row",
       alignItems: "center",
       gap: tokens.spacing[16],
       backgroundColor: colors.m3.tertiaryContainer,
-      borderRadius: 16,
+      borderRadius: tokens.radius.card,
       padding: tokens.spacing[20],
       marginBottom: tokens.spacing[8],
     },
     webExchangeBannerIconBox: {
-      width: 48,
-      height: 48,
+      width: tokens.spacing[48],
+      height: tokens.spacing[48],
       borderRadius: tokens.radius.full,
       backgroundColor: colors.m3.surfaceContainerLowest,
       justifyContent: "center",
@@ -508,10 +518,7 @@ function createStyles(colors: ColorPalette) {
       gap: tokens.spacing[4],
     },
     webExchangeBannerTitle: {
-      fontFamily: fontFamily.brand,
-      fontSize: 18,
-      lineHeight: 24,
-      fontWeight: "700",
+      ...tokens.typography.brandCardTitle,
       color: colors.m3.onTertiaryContainer,
     },
     webExchangeBannerSubtitle: {
@@ -519,7 +526,7 @@ function createStyles(colors: ColorPalette) {
       color: colors.m3.onTertiaryContainer,
     },
     webExchangeBannerButton: {
-      height: 44,
+      minHeight: tokens.accessibility.touchTarget,
       paddingHorizontal: tokens.spacing[20],
       borderRadius: tokens.radius.full,
       backgroundColor: colors.m3.primary,
@@ -529,22 +536,22 @@ function createStyles(colors: ColorPalette) {
     webExchangeBannerButtonText: {
       ...tokens.typography.labelLarge,
       color: colors.m3.onPrimary,
-      fontWeight: "600",
+      fontWeight: tokens.fontWeight.semiBold,
     },
     // Folga para o último cartão não ficar escondido atrás do FAB.
-    scroll: { paddingBottom: 96, gap: tokens.spacing[16] },
+    scroll: { paddingBottom: tokens.spacing[96], gap: tokens.spacing[16] },
     statsRow: { flexDirection: "row", gap: tokens.spacing[8] },
     // Web larga: número e rótulo lado a lado em cartões compactos, sem esticar pela largura toda.
     statCardWide: { flex: 0, minWidth: 160, flexDirection: "row", alignItems: "baseline", gap: tokens.spacing[8], paddingHorizontal: tokens.spacing[16] },
     statCard: {
       flex: 1,
-      borderRadius: 16,
+      borderRadius: tokens.radius.card,
       paddingHorizontal: tokens.spacing[12],
       paddingVertical: tokens.spacing[12],
-      gap: 2,
+      gap: tokens.spacing[2],
     },
-    statCount: { fontFamily: fontFamily.brand, fontSize: 24, lineHeight: 30, fontWeight: "700" },
-    statLabel: { fontSize: 13, lineHeight: 18 },
+    statCount: { ...tokens.typography.brandTitle },
+    statLabel: { ...tokens.typography.footnote },
     // Android: segmented buttons M3 (40 dp, contorno, seleção em secondaryContainer com ✓).
     segmentRowAndroid: { flexDirection: "row" },
     segmentAndroid: {
@@ -565,58 +572,59 @@ function createStyles(colors: ColorPalette) {
     // iPhone: controle segmentado do Figma (trilho cinza, segmento selecionado claro e elevado).
     segmentTrackIOS: {
       flexDirection: "row",
-      padding: 2,
-      borderRadius: 9,
+      padding: tokens.spacing[2],
+      borderRadius: tokens.radius.segmentOuter,
       backgroundColor: colors.m3.surfaceContainerHighest,
     },
     segmentIOS: {
       flex: 1,
-      minHeight: 32,
+      minHeight: tokens.spacing[32],
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
       gap: tokens.spacing[4],
-      borderRadius: 7,
+      borderRadius: tokens.radius.segmentInner,
     },
     segmentIOSSelected: {
       backgroundColor: colors.m3.surfaceContainerLowest,
-      shadowColor: "#000",
+      shadowColor: colors.m3.shadow,
       shadowOpacity: 0.12,
       shadowRadius: 4,
       shadowOffset: { width: 0, height: 2 },
     },
     segmentTextWide: { ...tokens.typography.labelLarge },
     segmentText: { ...tokens.typography.labelMedium, color: colors.m3.onSurface },
-    segmentTextSelected: { fontWeight: "600", color: colors.m3.onSecondaryContainer },
+    segmentTextSelected: { fontWeight: tokens.fontWeight.semiBold, color: colors.m3.onSecondaryContainer },
+    segmentTextSelectedIOS: { fontWeight: tokens.fontWeight.semiBold, color: colors.m3.onSurface },
     segmentBadge: {
       minWidth: 18,
       height: 18,
-      borderRadius: 9,
-      paddingHorizontal: 4,
+      borderRadius: tokens.radius.segmentOuter,
+      paddingHorizontal: tokens.spacing[4],
       alignItems: "center",
       justifyContent: "center",
       backgroundColor: colors.error,
     },
-    segmentBadgeText: { fontSize: 11, lineHeight: 14, fontWeight: "700", color: colors.m3.onPrimary },
+    segmentBadgeText: { ...tokens.typography.captionSmall, fontWeight: tokens.fontWeight.bold, color: colors.m3.onPrimary },
     sectionTitle: { ...tokens.typography.titleMedium, color: colors.m3.onSurface },
     attentionCard: {
       gap: tokens.spacing[12],
       padding: tokens.spacing[16],
-      borderRadius: 16,
+      borderRadius: tokens.radius.card,
       backgroundColor: colors.m3.surfaceContainerLow,
     },
     attentionRow: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[12] },
     attentionAvatar: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
+      width: tokens.spacing[40],
+      height: tokens.spacing[40],
+      borderRadius: tokens.radius.full,
       alignItems: "center",
       justifyContent: "center",
       backgroundColor: colors.m3.secondaryContainer,
     },
-    attentionAvatarText: { ...tokens.typography.labelMedium, fontWeight: "600", color: colors.m3.onSecondaryContainer },
-    attentionText: { flex: 1, gap: 2 },
-    attentionTitle: { ...tokens.typography.bodyLarge, fontWeight: "600", color: colors.m3.onSurface },
+    attentionAvatarText: { ...tokens.typography.labelMedium, fontWeight: tokens.fontWeight.semiBold, color: colors.m3.onSecondaryContainer },
+    attentionText: { flex: 1, gap: tokens.spacing[2] },
+    attentionTitle: { ...tokens.typography.bodyLarge, fontWeight: tokens.fontWeight.semiBold, color: colors.m3.onSurface },
     attentionSubtitle: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
     attentionActions: { alignSelf: "flex-end", minWidth: 160 },
     listCard: {
@@ -624,7 +632,7 @@ function createStyles(colors: ColorPalette) {
       paddingHorizontal: tokens.spacing[16],
       paddingTop: tokens.spacing[16],
       paddingBottom: tokens.spacing[4],
-      borderRadius: 16,
+      borderRadius: tokens.radius.card,
       backgroundColor: colors.m3.surfaceContainerLow,
     },
     emptyState: {
@@ -636,17 +644,14 @@ function createStyles(colors: ColorPalette) {
     emptyIcon: {
       width: 72,
       height: 72,
-      borderRadius: 36,
+      borderRadius: tokens.radius.circle72,
       alignItems: "center",
       justifyContent: "center",
       backgroundColor: colors.m3.secondaryContainer,
       marginBottom: tokens.spacing[8],
     },
     emptyTitle: {
-      fontFamily: fontFamily.brand,
-      fontSize: 24,
-      lineHeight: 32,
-      fontWeight: "700",
+      ...tokens.typography.brandTitle,
       color: colors.m3.onSurface,
       textAlign: "center",
     },

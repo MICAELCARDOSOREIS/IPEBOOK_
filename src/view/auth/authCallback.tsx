@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
-import { fontFamily, tokens } from "@/view/tokens";
+import { tokens } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 
 export type AuthCallbackProps = {
@@ -88,18 +88,15 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: tokens.spacing[16],
-    fontSize: 16,
-    fontFamily: fontFamily.regular,
+    ...tokens.typography.bodyLarge,
   },
   errorText: {
-    fontSize: 16,
+    ...tokens.typography.bodyLarge,
     textAlign: "center",
     marginBottom: tokens.spacing[16],
-    fontFamily: fontFamily.regular,
   },
   link: {
-    fontSize: 14,
-    fontWeight: "bold",
-    fontFamily: fontFamily.medium,
+    ...tokens.typography.labelLarge,
+    fontWeight: tokens.fontWeight.bold,
   },
 });

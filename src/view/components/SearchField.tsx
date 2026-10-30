@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
@@ -11,17 +11,20 @@ export type SearchFieldProps = {
   onSubmitEditing?: () => void;
 };
 
-/** Campo de busca do design system (campo-de-busca.md): pílula com botão Limpar. */
+/** Campo de busca M3 Expressive (campo-de-busca.md): pílula com destaque de foco e botão Limpar elástico. */
 export function SearchField({ value, onChangeText, placeholder = "Buscar título, autor ou categoria", onSubmitEditing }: SearchFieldProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const [focused, setFocused] = useState(false);
   return (
-    <View style={styles.container}>
-      <AppIcon name="search" size={24} color={colors.secondaryText} />
+    <View style={[styles.container, focused && styles.containerFocused]}>
+      <AppIcon name="search" size={24} color={focused ? colors.m3.primary : colors.secondaryText} />
       <TextInput
         value={value}
         onChangeText={onChangeText}
         onSubmitEditing={onSubmitEditing}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
         placeholder={placeholder}
         placeholderTextColor={colors.secondaryText}
         accessibilityLabel="Buscar livros"
@@ -33,7 +36,7 @@ export function SearchField({ value, onChangeText, placeholder = "Buscar título
           accessibilityLabel="Limpar busca"
           hitSlop={8}
           onPress={() => onChangeText("")}
-          style={styles.clearButton}
+          style={({ pressed }) => [styles.clearButton, pressed && styles.clearButtonPressed]}
         >
           <Text style={styles.clearIcon}>✕</Text>
         </Pressable>
@@ -47,20 +50,32 @@ function createStyles(colors: ColorPalette) {
     container: {
       flexDirection: "row",
       alignItems: "center",
-      height: 56,
+      height: tokens.spacing[56],
       backgroundColor: colors.m3.surfaceContainerHigh,
       borderRadius: tokens.radius.full,
+      borderWidth: 1.5,
+      borderColor: "transparent",
       paddingHorizontal: tokens.spacing[16],
       gap: tokens.spacing[12],
     },
-    input: { flex: 1, color: colors.text, fontSize: tokens.typography.bodyLarge.fontSize },
+    containerFocused: {
+      backgroundColor: colors.m3.surfaceContainerHighest,
+      borderColor: colors.m3.primary,
+    },
+    input: { flex: 1, ...tokens.typography.bodyLarge, color: colors.text },
     clearButton: {
       minHeight: tokens.accessibility.touchTarget,
       minWidth: tokens.accessibility.touchTarget,
+      borderRadius: tokens.shapeMorph.buttonRest,
       justifyContent: "center",
       alignItems: "center",
     },
-    clearIcon: { color: colors.secondaryText, fontSize: 16 },
+    clearButtonPressed: {
+      borderRadius: tokens.shapeMorph.buttonPressed,
+      backgroundColor: colors.m3.surfaceContainer,
+      transform: [{ scale: 0.9 }],
+    },
+    clearIcon: { color: colors.secondaryText, fontSize: tokens.fontSize[16] },
   });
 }
 

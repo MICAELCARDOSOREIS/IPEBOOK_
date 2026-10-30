@@ -12,6 +12,7 @@ import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useReportUserViewModel } from "@/viewmodel/useReportUserViewModel";
 import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
 
+import { withPress } from "@/view/pressFeedback";
 export type ReportUserProps = {
   userId: string;
   userName?: string;
@@ -86,7 +87,7 @@ export default function ReportUser({ userId, userName, onBack, onNavigateToLogin
                   accessibilityLabel={option.label}
                   accessibilityHint={option.description}
                   onPress={() => actions.setReason(option.key)}
-                  style={[styles.reason, selected && styles.reasonSelected]}
+                  style={withPress([styles.reason, selected && styles.reasonSelected])}
                 >
                   <View style={[styles.radio, selected && styles.radioSelected]}>
                     {selected ? <View style={styles.radioDot} /> : null}
@@ -146,7 +147,7 @@ function createStyles(colors: ColorPalette) {
     centered: { flex: 1, alignItems: "center", justifyContent: "center", gap: tokens.spacing[12], padding: tokens.spacing[24] },
     full: { alignSelf: "stretch" },
     title: { ...tokens.typography.titleMedium, color: colors.m3.onSurface, textAlign: "center" },
-    heading: { ...tokens.typography.titleMedium, fontSize: 22, lineHeight: 28, color: colors.m3.onSurface },
+    heading: { ...tokens.typography.titleLarge, color: colors.m3.onSurface },
     body: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
     reasons: { gap: tokens.spacing[8] },
     reason: {
@@ -160,10 +161,10 @@ function createStyles(colors: ColorPalette) {
       borderColor: colors.m3.outlineVariant,
     },
     reasonSelected: { borderColor: colors.m3.primary, backgroundColor: colors.m3.secondaryContainer },
-    radio: { width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: colors.m3.outline, alignItems: "center", justifyContent: "center" },
+    radio: { width: 20, height: 20, borderRadius: tokens.radius.radio, borderWidth: 2, borderColor: colors.m3.outline, alignItems: "center", justifyContent: "center" },
     radioSelected: { borderColor: colors.m3.primary },
-    radioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.m3.primary },
-    reasonTexts: { flex: 1, gap: 2 },
+    radioDot: { width: 10, height: 10, borderRadius: tokens.radius.dot, backgroundColor: colors.m3.primary },
+    reasonTexts: { flex: 1, gap: tokens.spacing[2] },
     reasonLabel: { ...tokens.typography.bodyLarge, color: colors.m3.onSurface },
     reasonHint: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
     label: { ...tokens.typography.labelLarge, color: colors.m3.onSurface },

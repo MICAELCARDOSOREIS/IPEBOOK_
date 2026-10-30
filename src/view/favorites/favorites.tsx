@@ -13,7 +13,7 @@ import { LoadingState } from "@/view/components/LoadingState";
 import { OfflineState } from "@/view/components/OfflineState";
 import { TextButton } from "@/view/components/TextButton";
 import { TopAppBar } from "@/view/components/TopAppBar";
-import { tokens, fontFamily, type ColorPalette } from "@/view/tokens";
+import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { formatPrice } from "@/view/formatPrice";
 import { useFavoritesViewModel } from "@/viewmodel/useFavoritesViewModel";
@@ -21,6 +21,7 @@ import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
 import { useSearchAlertsViewModel } from "@/viewmodel/useSearchAlertsViewModel";
 import { WEB_MAX_WIDTH, useWebGridColumns } from "@/view/webLayout";
 
+import { withPress } from "@/view/pressFeedback";
 export type FavoritesProps = {
   userId: string | null;
   focusKey?: number;
@@ -91,7 +92,7 @@ export default function Favorites({
                   accessibilityLabel={`Mostrar ${label.toLowerCase()}`}
                   accessibilityState={{ selected }}
                   onPress={() => setStatusFilter(value)}
-                  style={[styles.wideChip, selected && styles.wideChipSelected]}
+                  style={withPress([styles.wideChip, selected && styles.wideChipSelected])}
                 >
                   {selected ? <AppIcon name="check" size={16} color={colors.m3.onSecondaryContainer} /> : null}
                   <Text style={[styles.wideChipText, selected && { color: colors.m3.onSecondaryContainer }]}>{label}</Text>
@@ -108,7 +109,7 @@ export default function Favorites({
             accessibilityRole="tab"
             accessibilityState={{ selected: true }}
             onPress={() => undefined}
-            style={[styles.tab, styles.tabActive]}
+            style={withPress([styles.tab, styles.tabActive])}
           >
             <Text style={[styles.tabLabel, styles.tabLabelActive]}>
               {`Livros (${state.books.length})`}
@@ -118,7 +119,7 @@ export default function Favorites({
             accessibilityRole="tab"
             accessibilityState={{ selected: false }}
             onPress={() => onNavigateToAlerts?.()}
-            style={styles.tab}
+            style={withPress(styles.tab)}
           >
             <Text style={styles.tabLabel}>{`Alertas (${alertsState.alerts.length})`}</Text>
           </Pressable>
@@ -189,7 +190,11 @@ export default function Favorites({
                   accessibilityRole="button"
                   accessibilityLabel={`Ver ${item.title}`}
                   onPress={() => onBook(item.id)}
-                  style={[styles.rowMain, wideWeb && styles.wideCardMain]}
+                  style={({ pressed }) => [
+                    styles.rowMain,
+                    wideWeb && styles.wideCardMain,
+                    pressed && styles.rowMainPressed,
+                  ]}
                 >
                   <ModalityCoverArea modality={item.modality}>
                     <BookCover id={item.id} title={item.title} photoUrl={item.photoUrl} variant="list" />
@@ -212,7 +217,7 @@ export default function Favorites({
                   accessibilityState={{ disabled: state.removingId === item.id }}
                   disabled={state.removingId === item.id}
                   onPress={() => void actions.removeFavorite(item.id)}
-                  style={styles.favoriteButton}
+                  style={withPress(styles.favoriteButton)}
                 >
                   <AppIcon name="heart" size={24} color={colors.action} />
                 </Pressable>
@@ -251,23 +256,22 @@ function createStyles(colors: ColorPalette) {
   },
   tabActive: { borderBottomColor: colors.action },
   tabLabel: {
-    fontSize: tokens.typography.bodyMedium.fontSize,
-    fontFamily: tokens.typography.bodyMedium.fontFamily,
+    ...tokens.typography.bodyMedium,
     color: colors.secondaryText,
   },
-  tabLabelActive: { color: colors.action, fontWeight: "600" },
-  wideHeader: { width: "100%", maxWidth: WEB_MAX_WIDTH, alignSelf: "center", paddingHorizontal: 80, paddingTop: 32, gap: 8 },
-  wideTitle: { fontFamily: tokens.typography.labelLarge.fontFamily, fontSize: 36, lineHeight: 44, fontWeight: "700", color: colors.m3.onSurface },
+  tabLabelActive: { color: colors.action, fontWeight: tokens.fontWeight.semiBold },
+  wideHeader: { width: "100%", maxWidth: WEB_MAX_WIDTH, alignSelf: "center", paddingHorizontal: tokens.spacing[80], paddingTop: tokens.spacing[32], gap: tokens.spacing[8] },
+  wideTitle: { ...tokens.typography.brandDisplayMd, color: colors.brandBrown },
   wideSubtitle: { ...tokens.typography.bodyLarge, color: colors.m3.onSurfaceVariant },
-  wideChips: { flexDirection: "row", gap: 8, paddingTop: 16 },
-  wideChip: { flexDirection: "row", alignItems: "center", gap: 6, height: 32, paddingHorizontal: 16, borderRadius: tokens.radius.small, borderWidth: 1, borderColor: colors.m3.outline },
-  wideChipSelected: { backgroundColor: colors.m3.secondaryContainer, borderColor: colors.m3.secondaryContainer, paddingLeft: 8 },
+  wideChips: { flexDirection: "row", gap: tokens.spacing[8], paddingTop: tokens.spacing[16] },
+  wideChip: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[6], height: tokens.spacing[32], paddingHorizontal: tokens.spacing[16], borderRadius: tokens.shapeMorph.chipUnselected, borderWidth: 1, borderColor: colors.m3.outlineVariant, backgroundColor: colors.m3.surfaceContainerLowest },
+  wideChipSelected: { backgroundColor: colors.m3.secondaryContainer, borderColor: colors.m3.secondaryContainer, borderRadius: tokens.shapeMorph.chipSelected, borderWidth: 0, paddingLeft: tokens.spacing[8] },
   wideChipText: { ...tokens.typography.labelLarge, color: colors.m3.onSurfaceVariant },
-  wideList: { width: "100%", maxWidth: WEB_MAX_WIDTH, alignSelf: "center", paddingHorizontal: 80, paddingVertical: 24, gap: 24 },
-  wideGridRow: { gap: 24 },
-  wideCard: { flex: 1, maxWidth: "25%", flexDirection: "column", alignItems: "stretch", borderRadius: 20, backgroundColor: colors.m3.surfaceContainerLowest, padding: 12 },
+  wideList: { width: "100%", maxWidth: WEB_MAX_WIDTH, alignSelf: "center", paddingHorizontal: tokens.spacing[80], paddingVertical: tokens.spacing[24], gap: tokens.spacing[24] },
+  wideGridRow: { gap: tokens.spacing[24] },
+  wideCard: { flex: 1, maxWidth: "25%", flexDirection: "column", alignItems: "stretch", borderRadius: tokens.radius.xl, backgroundColor: colors.m3.surfaceContainerLowest, padding: tokens.spacing[12] },
   wideCardMain: { flexDirection: "column", alignItems: "stretch" },
-  privacyNote: { flexDirection: "row", alignItems: "center", gap: 16, padding: 16, marginTop: 8, borderRadius: tokens.radius.medium, backgroundColor: colors.m3.surfaceContainer },
+  privacyNote: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[16], padding: tokens.spacing[16], marginTop: tokens.spacing[8], borderRadius: tokens.radius.medium, backgroundColor: colors.m3.surfaceContainer },
   privacyTitle: { ...tokens.typography.labelLarge, color: colors.m3.onSurface },
   privacyBody: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
   list: {
@@ -297,16 +301,14 @@ function createStyles(colors: ColorPalette) {
     color: colors.secondaryText,
   },
   statusTitle: {
-    fontSize: tokens.typography.titleMedium.fontSize,
-    lineHeight: tokens.typography.titleMedium.lineHeight,
+    ...tokens.typography.titleMedium,
     fontFamily: tokens.typography.displayLarge.fontFamily,
-    fontWeight: tokens.typography.titleMedium.fontWeight,
     color: colors.text,
   },
   link: {
     color: colors.action,
     fontFamily: tokens.typography.bodyMedium.fontFamily,
-    fontWeight: "600",
+    fontWeight: tokens.fontWeight.semiBold,
     padding: tokens.spacing[12],
   },
   row: {
@@ -323,21 +325,20 @@ function createStyles(colors: ColorPalette) {
     gap: tokens.spacing[12],
     minHeight: tokens.accessibility.touchTarget,
   },
+  rowMainPressed: {
+    transform: [{ scale: 0.985 }],
+  },
   rowTexts: { flex: 1, gap: tokens.spacing[4] },
   modalityLine: {
     ...tokens.typography.labelMedium,
     color: colors.m3.onSurfaceVariant,
   },
   bookTitle: {
-    fontFamily: fontFamily.brand,
-    fontSize: 18,
-    lineHeight: 24,
+    ...tokens.typography.brandCardTitle,
     color: colors.m3.onSurface,
   },
   bookDetails: {
-    fontSize: tokens.typography.bodyMedium.fontSize,
-    lineHeight: tokens.typography.bodyMedium.lineHeight,
-    fontFamily: tokens.typography.bodyMedium.fontFamily,
+    ...tokens.typography.bodyMedium,
     color: colors.secondaryText,
   },
   favoriteButton: {

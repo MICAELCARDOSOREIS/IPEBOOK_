@@ -12,6 +12,7 @@ import { useTheme } from "@/view/theme/ThemeProvider";
 import { useDeleteAccountViewModel } from "@/viewmodel/useDeleteAccountViewModel";
 import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
 
+import { withPress } from "@/view/pressFeedback";
 export type DeleteAccountProps = {
   sessionUserId: string | null;
   onBack: () => void;
@@ -132,7 +133,7 @@ export default function DeleteAccount({
               accessibilityRole="button"
               accessibilityLabel="Editar informações do perfil: atualize nome e bairro"
               onPress={onEditProfile}
-              style={styles.navigationRow}
+              style={withPress(styles.navigationRow)}
             >
               <IconBadge icon="person" tone="neutral" />
               <View style={styles.navigationRowText}>
@@ -272,9 +273,7 @@ function createStyles(colors: ColorPalette) {
     gap: tokens.spacing[4],
   },
   heroTitle: {
-    fontSize: tokens.typography.displayLarge.fontSize,
-    lineHeight: tokens.typography.displayLarge.lineHeight,
-    fontFamily: tokens.typography.displayLarge.fontFamily,
+    ...tokens.typography.displayLarge,
     color: colors.text,
   },
   heroSubtitle: {
@@ -346,7 +345,7 @@ function createStyles(colors: ColorPalette) {
   exportSuccessText: {
     ...tokens.typography.bodyMedium,
     color: colors.action,
-    fontWeight: "600",
+    fontWeight: tokens.fontWeight.semiBold,
   },
   exportSummaryBox: {
     gap: tokens.spacing[4],
@@ -367,7 +366,7 @@ function createStyles(colors: ColorPalette) {
   },
   warningText: {
     ...tokens.typography.bodyMedium,
-    fontWeight: "600",
+    fontWeight: tokens.fontWeight.semiBold,
     color: colors.text,
   },
   bulletList: {

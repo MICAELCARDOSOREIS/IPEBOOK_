@@ -1,8 +1,9 @@
 import { useMemo } from "react";
-import { Pressable, StyleSheet, Text } from "react-native";
+import { Animated, Pressable, StyleSheet, Text } from "react-native";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { useGuardedPress } from "@/view/useGuardedPress";
+import { useExpressivePress } from "@/view/useExpressivePress";
 
 export type TextButtonProps = {
   label: string;
@@ -24,27 +25,32 @@ export function TextButton({
   tone = "default",
 }: TextButtonProps) {
   const guardedPress = useGuardedPress(onPress);
+  const { scale, isPressed, onPressIn, onPressOut } = useExpressivePress({ disabled, pressedScale: 0.96 });
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={accessibilityLabel ?? label}
-      accessibilityState={{ disabled }}
-      disabled={disabled}
-      onPress={guardedPress}
-      style={styles.button}
-    >
-      <Text
-        style={[
-          styles.label,
-          tone === "danger" && styles.labelDanger,
-          disabled && styles.labelDisabled,
-        ]}
+    <Animated.View style={{ transform: [{ scale }] }}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={accessibilityLabel ?? label}
+        accessibilityState={{ disabled }}
+        disabled={disabled}
+        onPress={guardedPress}
+        onPressIn={onPressIn}
+        onPressOut={onPressOut}
+        style={[styles.button, isPressed && !disabled && styles.buttonPressed]}
       >
-        {label}
-      </Text>
-    </Pressable>
+        <Text
+          style={[
+            styles.label,
+            tone === "danger" && styles.labelDanger,
+            disabled && styles.labelDisabled,
+          ]}
+        >
+          {label}
+        </Text>
+      </Pressable>
+    </Animated.View>
   );
 }
 
@@ -55,6 +61,10 @@ function createStyles(colors: ColorPalette) {
       justifyContent: "center",
       alignItems: "center",
       paddingHorizontal: tokens.spacing[16],
+      borderRadius: tokens.shapeMorph.buttonRest,
+    },
+    buttonPressed: {
+      borderRadius: tokens.shapeMorph.buttonPressed,
     },
     label: {
       color: colors.m3.primary,
