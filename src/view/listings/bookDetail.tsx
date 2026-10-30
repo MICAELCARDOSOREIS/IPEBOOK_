@@ -215,11 +215,6 @@ export default function BookDetail({
               book.status === "reserved" ? styles.statusButtonReserved : styles.statusButtonDelivered,
             ])}
           >
-            <AppIcon
-              name={book.status === "reserved" ? "bookmark" : "checkCircle"}
-              size={18}
-              color={book.status === "reserved" ? colors.m3.onTertiaryContainer : colors.m3.onSurfaceVariant}
-            />
             <Text
               style={[
                 styles.statusButtonText,
@@ -244,7 +239,6 @@ export default function BookDetail({
               onPress={handleStatusPress}
               style={withPress([styles.statusButton, styles.statusButtonRequested])}
             >
-              <AppIcon name="calendar" size={18} color={colors.m3.onSurfaceVariant} />
               <Text style={[styles.statusButtonText, styles.statusTextRequested]}>Negociação solicitada</Text>
             </Pressable>
           ) : (
@@ -754,10 +748,8 @@ function createStyles(colors: ColorPalette) {
       flex: 1,
       minHeight: 52,
       borderRadius: tokens.radius.full,
-      flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
-      gap: tokens.spacing[8],
       paddingHorizontal: tokens.spacing[16],
     },
     statusButtonReserved: {
