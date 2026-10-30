@@ -5,28 +5,38 @@ import { AppIcon } from "@/view/components/AppIcon";
 import { useExpressivePress } from "@/view/useExpressivePress";
 import { useFavoriteButtonViewModel } from "@/viewmodel/useFavoriteButtonViewModel";
 
-export type FavoriteButtonProps = { bookId: string; userId: string | null };
-export function FavoriteButton({ bookId, userId }: FavoriteButtonProps) {
+export type FavoriteButtonProps = {
+  bookId: string;
+  userId: string | null;
+  onToggleSuccess?: (selected: boolean) => void;
+};
+export function FavoriteButton({ bookId, userId, onToggleSuccess }: FavoriteButtonProps) {
   const [state, actions] = useFavoriteButtonViewModel(bookId, userId);
   const { colors } = useTheme();
   const { scale, isPressed, onPressIn, onPressOut } = useExpressivePress({
     disabled: state.loading,
     pressedScale: 0.88,
   });
+
+  const handleToggle = async () => {
+    const wasSelected = state.selected;
+    await actions.toggle();
+    onToggleSuccess?.(!wasSelected);
+  };
   return (
-    <View>
+    <View style={{ alignItems: "center", justifyContent: "center" }}>
       <Animated.View style={{ transform: [{ scale }] }}>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={state.selected ? "Remover dos favoritos" : "Adicionar aos favoritos"}
           accessibilityState={{ disabled: state.loading }}
           disabled={state.loading}
-          onPress={() => void actions.toggle()}
+          onPress={() => void handleToggle()}
           onPressIn={onPressIn}
           onPressOut={onPressOut}
           style={{
-            minWidth: tokens.accessibility.touchTarget,
-            minHeight: tokens.accessibility.touchTarget,
+            width: tokens.accessibility.touchTarget,
+            height: tokens.accessibility.touchTarget,
             borderRadius: isPressed ? tokens.shapeMorph.buttonPressed : tokens.shapeMorph.buttonRest,
             backgroundColor: isPressed ? colors.m3.surfaceContainerHigh : "transparent",
             alignItems: "center",
@@ -41,7 +51,7 @@ export function FavoriteButton({ bookId, userId }: FavoriteButtonProps) {
         </Pressable>
       </Animated.View>
       {state.error ? (
-        <Text accessibilityRole="alert" style={{ color: colors.error }}>
+        <Text accessibilityRole="alert" style={{ color: colors.error, position: "absolute", top: tokens.accessibility.touchTarget, fontSize: tokens.fontSize[10], textAlign: "center" }}>
           {state.error}
         </Text>
       ) : null}

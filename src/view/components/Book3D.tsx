@@ -23,6 +23,8 @@ export type Book3DProps = {
   scale?: number;
   /** Ângulo inicial em graus; 0 mostra a capa. */
   startAngle?: number;
+  /** Exibe uma badge discreta indicando que o modelo é 3D e responde ao toque/giro. */
+  show3dHint?: boolean;
 };
 
 const BASE_WIDTH = 136;
@@ -49,7 +51,7 @@ function darken(hex: string, amount: number): string {
  * ortogonal feita só com `View` e `scaleX`, sem biblioteca 3D (ver `book3dGeometry.ts`). Solta o dedo, o giro
  * continua e desacelera. Quem pede menos movimento recebe o livro parado, com giro só pelas ações de acessibilidade.
  */
-export function Book3D({ id, title, author, description, publisher, pageCount, photoUrl, onPress, intro = true, scale = 1, startAngle }: Book3DProps) {
+export function Book3D({ id, title, author, description, publisher, pageCount, photoUrl, onPress, intro = true, scale = 1, startAngle, show3dHint }: Book3DProps) {
   const WIDTH = BASE_WIDTH * scale;
   const HEIGHT = BASE_HEIGHT * scale;
   const DEPTH = bookDepthFromPages(pageCount, BASE_DEPTH) * scale;
@@ -198,6 +200,11 @@ export function Book3D({ id, title, author, description, publisher, pageCount, p
           </View>
         );
       })}
+      {show3dHint ? (
+        <View pointerEvents="none" style={styles.hintBadge}>
+          <Text style={styles.hintText}>3D · Toque para virar</Text>
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -302,6 +309,22 @@ const styles = StyleSheet.create({
   spineAuthor: { color: COVER_TEXT, opacity: 0.8, fontFamily: fontFamily.regular, textAlign: "center" },
   spineText: { color: COVER_TEXT, ...tokens.typography.spineText, textAlign: "center" },
   pageLine: { position: "absolute", top: 0, bottom: 0, width: 0.7, backgroundColor: "rgba(0,0,0,0.14)" },
+  hintBadge: {
+    position: "absolute",
+    bottom: -10,
+    backgroundColor: "rgba(0,0,0,0.55)",
+    paddingHorizontal: tokens.spacing[8],
+    paddingVertical: 3,
+    borderRadius: tokens.radius.full,
+    zIndex: 20,
+    alignSelf: "center",
+  },
+  hintText: {
+    color: "#FFFFFF",
+    fontFamily: fontFamily.medium,
+    fontSize: tokens.fontSize[11] ?? 11,
+    letterSpacing: 0.3,
+  },
 });
 
 export default Book3D;

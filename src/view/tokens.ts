@@ -247,6 +247,8 @@ export const spacing = {
   12: 12,
   14: 14,
   16: 16,
+  /** Badges compactos de notificação/filtro Material 3 (18 dp). */
+  18: 18,
   20: 20,
   24: 24,
   26: 26,
