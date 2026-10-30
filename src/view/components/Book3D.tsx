@@ -172,7 +172,7 @@ export function Book3D({
   const total = WIDTH + DEPTH * 2;
 
   return (
-    <Pressable
+    <View
       {...pan.panHandlers}
       accessible
       accessibilityRole={accessibilityRole ?? (onPress ? "button" : "image")}
@@ -182,16 +182,16 @@ export function Book3D({
           ? `Ver fotos do anúncio em tela cheia. Capa de ${title}.`
           : `Capa de ${title}, em 3D. Use as ações para girar o livro.`)
       }
-      onPress={onPress}
       accessibilityActions={[
         { name: "increment", label: "Girar para a esquerda" },
         { name: "decrement", label: "Girar para a direita" },
-        { name: "activate", label: onPress ? "Ver fotos" : "Voltar para a capa" },
+        { name: "activate", label: onPress ? "Ver fotos" : "Virar o livro" },
       ]}
       onAccessibilityAction={(event) => {
         const action = event.nativeEvent.actionName;
         if (action === "activate") {
           if (onPress) onPress();
+          else if (Math.abs(normalizeAngle(angleRef.current - defaultRestAngle)) < 5) animateTo(180);
           else animateTo(defaultRestAngle);
         } else if (action === "increment") {
           animateTo(angleRef.current + STEP);
@@ -237,7 +237,7 @@ export function Book3D({
           <Text numberOfLines={1} style={styles.hintText}>3D · Toque para virar</Text>
         </View>
       ) : null}
-    </Pressable>
+    </View>
   );
 }
 
