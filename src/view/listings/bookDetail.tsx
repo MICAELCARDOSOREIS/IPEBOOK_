@@ -300,7 +300,7 @@ export default function BookDetail({
           {book ? (
             <View style={[styles.coverArea, wideWeb && styles.coverAreaWide]}>
               <View>
-                {/* Gira com o dedo; havendo fotos, tocar sem arrastar abre a galeria em tela cheia. */}
+                {/* Livro 3D interativo: arrastar gira 360° com inércia; toque vira para a contracapa (sinopse/dados). */}
                 <Book3D
                   id={book.id}
                   title={book.title}
@@ -310,11 +310,20 @@ export default function BookDetail({
                   pageCount={book.pageCount}
                   photoUrl={book.photoUrl}
                   scale={wideWeb ? 1.6 : 1}
-                  onPress={photos.length > 0 ? () => setGalleryVisible(true) : undefined}
-                  accessibilityLabel={photos.length > 0 ? "Ver fotos do anúncio em tela cheia" : undefined}
-                  accessibilityRole={photos.length > 0 ? "button" : "image"}
                 />
               </View>
+              {photos.length > 0 ? (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Ver fotos do anúncio em tela cheia"
+                  onPress={() => setGalleryVisible(true)}
+                  hitSlop={8}
+                  style={withPress(styles.photosButton)}
+                >
+                  <AppIcon name="camera" size={16} color={colors.m3.primary} />
+                  <Text style={styles.photosButtonText}>Ver fotos</Text>
+                </Pressable>
+              ) : null}
               {photos.length > 1 && wideWeb ? (
                 <View style={styles.thumbRow} accessibilityLabel={`${photos.length} fotos`}>
                   {photos.map((url, idx) => (
@@ -618,6 +627,27 @@ function createStyles(colors: ColorPalette) {
     },
     coverArea: { alignItems: "center", paddingTop: tokens.spacing[8], paddingBottom: tokens.spacing[8] },
     coverAreaWide: { flex: 1, justifyContent: "center", paddingTop: 0 },
+    photosButton: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[6],
+      alignSelf: "center",
+      marginTop: tokens.spacing[12],
+      paddingHorizontal: tokens.spacing[14],
+      paddingVertical: tokens.spacing[6],
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.m3.surfaceContainerLowest,
+      elevation: 1,
+      shadowColor: colors.m3.shadow,
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.1,
+      shadowRadius: 2,
+    },
+    photosButtonText: {
+      ...tokens.typography.labelMedium,
+      fontFamily: fontFamily.semiBold,
+      color: colors.m3.primary,
+    },
     thumbRow: { flexDirection: "row", gap: tokens.spacing[12], marginTop: tokens.spacing[16] },
     thumb: { width: 56, height: 72, borderRadius: tokens.radius.small, overflow: "hidden", borderWidth: 2, borderColor: "transparent", backgroundColor: colors.m3.surfaceContainerLowest },
     thumbActive: { borderColor: colors.m3.primary },
