@@ -202,7 +202,7 @@ export function Book3D({ id, title, author, description, publisher, pageCount, p
       })}
       {show3dHint ? (
         <View pointerEvents="none" style={styles.hintBadge}>
-          <Text style={styles.hintText}>3D · Toque para virar</Text>
+          <Text numberOfLines={1} style={styles.hintText}>3D · Toque para virar</Text>
         </View>
       ) : null}
     </View>
@@ -311,13 +311,17 @@ const styles = StyleSheet.create({
   pageLine: { position: "absolute", top: 0, bottom: 0, width: 0.7, backgroundColor: "rgba(0,0,0,0.14)" },
   hintBadge: {
     position: "absolute",
-    bottom: -10,
-    backgroundColor: "rgba(0,0,0,0.55)",
-    paddingHorizontal: tokens.spacing[8],
-    paddingVertical: 3,
+    left: "100%",
+    marginLeft: tokens.spacing[12],
+    bottom: tokens.spacing[28],
+    backgroundColor: "rgba(0, 0, 0, 0.65)",
+    paddingHorizontal: tokens.spacing[10],
+    paddingVertical: tokens.spacing[6],
     borderRadius: tokens.radius.full,
     zIndex: 20,
-    alignSelf: "center",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: tokens.spacing[4],
   },
   hintText: {
     color: "#FFFFFF",
