@@ -310,7 +310,6 @@ export default function BookDetail({
                   pageCount={book.pageCount}
                   photoUrl={book.photoUrl}
                   scale={wideWeb ? 1.6 : 1}
-                  show3dHint
                   onPress={photos.length > 0 ? () => setGalleryVisible(true) : undefined}
                 />
               </View>
@@ -325,6 +324,9 @@ export default function BookDetail({
                   <Text style={styles.photosLinkText}>Ver fotos</Text>
                 </Pressable>
               ) : null}
+              <View pointerEvents="none" style={styles.hintBadgeHero}>
+                <Text style={styles.hintTextHero}>3D · Toque para virar</Text>
+              </View>
               {photos.length > 1 && wideWeb ? (
                 <View style={styles.thumbRow} accessibilityLabel={`${photos.length} fotos`}>
                   {photos.map((url, idx) => (
@@ -626,8 +628,29 @@ function createStyles(colors: ColorPalette) {
       borderRadius: tokens.shapeMorph.buttonPressed,
       transform: [{ scale: 0.92 }],
     },
-    coverArea: { alignItems: "center", paddingTop: tokens.spacing[8] },
+    coverArea: {
+      position: "relative",
+      alignItems: "center",
+      paddingTop: tokens.spacing[8],
+      paddingBottom: tokens.spacing[8],
+    },
     coverAreaWide: { flex: 1, justifyContent: "center", paddingTop: 0 },
+    hintBadgeHero: {
+      position: "absolute",
+      right: tokens.spacing[16],
+      bottom: tokens.spacing[8],
+      backgroundColor: "rgba(0, 0, 0, 0.60)",
+      paddingHorizontal: tokens.spacing[10],
+      paddingVertical: tokens.spacing[4],
+      borderRadius: tokens.radius.full,
+      zIndex: 20,
+    },
+    hintTextHero: {
+      color: "#FFFFFF",
+      fontFamily: fontFamily.medium,
+      fontSize: tokens.fontSize[11] ?? 11,
+      letterSpacing: 0.3,
+    },
     // A área da capa na web larga tem ~520 px de altura; a capa de 218 px ficava perdida nela.
     photosLink: { alignSelf: "center", minHeight: tokens.accessibility.touchTarget, justifyContent: "center", paddingHorizontal: tokens.spacing[16] },
     photosLinkText: { ...tokens.typography.labelLarge, fontFamily: fontFamily.semiBold, color: colors.m3.primary, textDecorationLine: "underline" },
