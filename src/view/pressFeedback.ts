@@ -1,4 +1,4 @@
-import type { PressableStateCallbackType, StyleProp, ViewStyle } from "react-native";
+import { Platform, type PressableStateCallbackType, type StyleProp, type ViewStyle } from "react-native";
 
 /**
  * Resposta de toque padrão do Material 3 Expressive (Spec 109 / ADR 0084) para elementos tocáveis
@@ -9,8 +9,15 @@ export const expressivePressedStyle: ViewStyle = {
   transform: [{ scale: 0.97 }],
 };
 
-/** Envolve o estilo de um `Pressable` aplicando `expressivePressedStyle` durante o toque. */
+const webPointerStyle: ViewStyle | null =
+  Platform.OS === "web" ? ({ cursor: "pointer", userSelect: "none" } as unknown as ViewStyle) : null;
+
+/** Envolve o estilo de um `Pressable` aplicando `expressivePressedStyle` durante o toque e cursor apropriado na web. */
 export function withPress(style: StyleProp<ViewStyle>) {
-  return ({ pressed }: PressableStateCallbackType): StyleProp<ViewStyle> =>
-    pressed ? [style, expressivePressedStyle] : style;
+  return ({ pressed }: PressableStateCallbackType): StyleProp<ViewStyle> => {
+    if (pressed) {
+      return webPointerStyle ? [webPointerStyle, style, expressivePressedStyle] : [style, expressivePressedStyle];
+    }
+    return webPointerStyle ? [webPointerStyle, style] : style;
+  };
 }

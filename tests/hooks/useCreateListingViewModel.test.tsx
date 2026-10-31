@@ -444,5 +444,103 @@ describe("useCreateListingViewModel (ISO/IEC 25010 - Adequação Funcional)", ()
       expect(store.has(CREATE_LISTING_DRAFT_KEY)).toBe(false);
       expect(hook.current[0].title).toBe("");
     });
+
+    it("gerencia fotos limitando no máximo a 5 fotos", async () => {
+      const hook = await renderHook(stubUseCases());
+      await act(async () => {
+        hook.current[1].addPhoto("foto-1");
+        hook.current[1].addPhoto("foto-2");
+        hook.current[1].addPhoto("foto-3");
+        hook.current[1].addPhoto("foto-4");
+        hook.current[1].addPhoto("foto-5");
+      });
+      expect(hook.current[0].photos).toHaveLength(5);
+
+      // Tenta 6ª foto
+      await act(async () => {
+        hook.current[1].addPhoto("foto-6");
+      });
+      expect(hook.current[0].photos).toHaveLength(5);
+      expect(hook.current[0].error).toContain("máximo 5 fotos");
+
+      // Remove foto
+      await act(async () => {
+        hook.current[1].removePhoto(0);
+      });
+      expect(hook.current[0].photos).toHaveLength(4);
+    });
+
+    it("loadServerDraft retoma rascunho de servidor ou trata status inválido e erro", async () => {
+      const draftBook = {
+        id: "draft-server-1",
+        title: "Livro em Rascunho",
+        author: "Autor Teste",
+        status: "draft" as const,
+        draftStep: 2,
+        modality: "donation" as const,
+      };
+      const nonDraftBook = {
+        ...draftBook,
+        status: "available" as const,
+      };
+      const useCases = stubUseCases({
+        getBookById: vi.fn()
+          .mockResolvedValueOnce(draftBook as never)
+          .mockResolvedValueOnce(nonDraftBook as never)
+          .mockRejectedValueOnce(new Error("Erro ao buscar rascunho")),
+      });
+
+      const hook = await renderHook(useCases);
+
+      // Sucesso
+      let step: number | null = null;
+      await act(async () => {
+        step = await hook.current[1].loadServerDraft("draft-server-1");
+      });
+      expect(step).toBe(2);
+      expect(hook.current[0].title).toBe("Livro em Rascunho");
+
+      // Livro já não é rascunho
+      await act(async () => {
+        step = await hook.current[1].loadServerDraft("draft-server-1");
+      });
+      expect(step).toBeNull();
+
+      // Erro na busca
+      await act(async () => {
+        step = await hook.current[1].loadServerDraft("draft-server-1");
+      });
+      expect(step).toBeNull();
+    });
+
+    it("submit publica rascunho quando draftId está presente", async () => {
+      const draftBook = {
+        id: "draft-123",
+        title: "Rascunho",
+        author: "Autor",
+        status: "draft" as const,
+        modality: "donation" as const,
+      };
+      const publishedBook = {
+        ...draftBook,
+        status: "available" as const,
+      };
+      const useCases = stubUseCases({
+        getBookById: vi.fn().mockResolvedValue(draftBook as never),
+        publishDraft: vi.fn().mockResolvedValue(publishedBook as never),
+      });
+
+      const hook = await renderHook(useCases);
+      await act(async () => {
+        await hook.current[1].loadServerDraft("draft-123");
+      });
+
+      let result: unknown = null;
+      await act(async () => {
+        result = await hook.current[1].submit("user-owner-1");
+      });
+      expect(result).toMatchObject({ status: "available" });
+      expect(useCases.publishDraft).toHaveBeenCalledWith("draft-123", expect.anything(), "user-owner-1");
+    });
   });
 });

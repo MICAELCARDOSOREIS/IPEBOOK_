@@ -42,4 +42,28 @@ describe("useWelcomeGateViewModel (issue #98)", () => {
 
     expect(markWelcomeSeen).toHaveBeenCalledTimes(1);
   });
+
+  it("desmontar antes da resolução ignora a resposta sem atualizar o estado", async () => {
+    let resolvePromise!: (val: boolean) => void;
+    const promise = new Promise<boolean>((res) => { resolvePromise = res; });
+    const useCases = {
+      shouldShowWelcome: vi.fn().mockReturnValue(promise),
+      markWelcomeSeen: vi.fn(),
+    } as unknown as OnboardingUseCases;
+
+    const screen = await render(<GateProbe useCases={useCases} />);
+    expect(screen.getByText("checking")).toBeTruthy();
+
+    screen.unmount();
+    resolvePromise(true);
+  });
+
+  it("utiliza onboardingUseCases padrão quando nenhum for injetado", async () => {
+    function DefaultGateProbe() {
+      const [status] = useWelcomeGateViewModel();
+      return <Text>{status}</Text>;
+    }
+    const screen = await render(<DefaultGateProbe />);
+    expect(await screen.findByText(/show|skip|checking/)).toBeTruthy();
+  });
 });

@@ -8,27 +8,24 @@ import { BookCover } from "@/view/components/BookCover";
 import { ModalityCoverArea } from "@/view/components/ModalityCoverArea";
 import { ErrorState } from "@/view/components/ErrorState";
 import { FilledButton } from "@/view/components/FilledButton";
-import { IconBadge } from "@/view/components/IconBadge";
+import { IpeMark } from "@/view/components/IpeMark";
 import { LoadingState } from "@/view/components/LoadingState";
 import { OfflineState } from "@/view/components/OfflineState";
-import { TextButton } from "@/view/components/TextButton";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { formatPrice } from "@/view/formatPrice";
 import { useFavoritesViewModel } from "@/viewmodel/useFavoritesViewModel";
 import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
-import { useSearchAlertsViewModel } from "@/viewmodel/useSearchAlertsViewModel";
-import { WEB_MAX_WIDTH, useWebGridColumns } from "@/view/webLayout";
-
+import { WEB_GUTTER, WEB_MAX_WIDTH, useWebGridColumns } from "@/view/webLayout";
 import { withPress } from "@/view/pressFeedback";
+
 export type FavoritesProps = {
   userId: string | null;
   focusKey?: number;
   onBack: () => void;
   onLogin: () => void;
   onBook: (id: string) => void;
-  onNavigateToAlerts?: () => void;
   onExploreBooks?: () => void;
 };
 
@@ -46,14 +43,11 @@ export default function Favorites({
   onBack,
   onLogin,
   onBook,
-  onNavigateToAlerts,
   onExploreBooks,
 }: FavoritesProps) {
   const [state, actions] = useFavoritesViewModel(userId);
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  // A aba "Alertas" de `02.06` mostra a contagem ao lado do rótulo, como "Livros (n)".
-  const [alertsState] = useSearchAlertsViewModel(userId);
   const { isOnline } = useNetworkStatus();
   const firstFocus = useRef(true);
 
@@ -103,32 +97,12 @@ export default function Favorites({
         </View>
       ) : null}
 
-      {userId && !wideWeb ? (
-        <View testID="favorites-tablist" accessibilityRole="tablist" style={styles.tabs}>
-          <Pressable
-            accessibilityRole="tab"
-            accessibilityState={{ selected: true }}
-            onPress={() => undefined}
-            style={withPress([styles.tab, styles.tabActive])}
-          >
-            <Text style={[styles.tabLabel, styles.tabLabelActive]}>
-              {`Livros (${state.books.length})`}
-            </Text>
-          </Pressable>
-          <Pressable
-            accessibilityRole="tab"
-            accessibilityState={{ selected: false }}
-            onPress={() => onNavigateToAlerts?.()}
-            style={withPress(styles.tab)}
-          >
-            <Text style={styles.tabLabel}>{`Alertas (${alertsState.alerts.length})`}</Text>
-          </Pressable>
-        </View>
-      ) : null}
-
+      {/* Lista de Favoritos */}
       {!userId ? (
         <View style={styles.status}>
-          <IconBadge icon="heart" tone="action" size="large" />
+          <View style={styles.emptyIpeContainer}>
+            <IpeMark size={72} />
+          </View>
           <Text accessibilityRole="header" style={styles.statusTitle}>
             Entre para ver seus favoritos
           </Text>
@@ -152,6 +126,7 @@ export default function Favorites({
           data={visibleBooks}
           keyExtractor={(book) => book.id}
           contentContainerStyle={wideWeb ? styles.wideList : styles.list}
+          keyboardShouldPersistTaps="handled"
           ListFooterComponent={
             wideWeb && state.books.length > 0 ? (
               <View style={styles.privacyNote}>
@@ -164,13 +139,15 @@ export default function Favorites({
             ) : undefined
           }
           ListEmptyComponent={
-            // `02.14`: título, apoio e ação alinhados à esquerda, sem ícone (Spec 043, RN-10).
             <View style={[styles.emptyBox, wideWeb && styles.emptyBoxWide]}>
+              <View style={styles.emptyIpeContainer}>
+                <IpeMark size={68} />
+              </View>
               <Text accessibilityRole="header" style={styles.emptyHeadline}>
                 Nenhum livro salvo
               </Text>
               <Text style={styles.emptyHint}>
-                Toque em Favoritar no anúncio para guardar os livros que você quer ler.
+                Toque no coração dos anúncios para guardar aqui os livros que você quer ler.
               </Text>
               <FilledButton label="Explorar livros" onPress={onExploreBooks ?? onBack} />
             </View>
@@ -200,8 +177,6 @@ export default function Favorites({
                     <BookCover id={item.id} title={item.title} photoUrl={item.photoUrl} variant="list" />
                   </ModalityCoverArea>
                   <View style={styles.rowTexts}>
-                    {/* Figma `02.06`: linha pequena acima do título — preço quando é venda,
-                        senão a modalidade. Não é pílula de tag. */}
                     <Text style={styles.modalityLine}>
                       {item.modality === "sale" && item.price !== undefined
                         ? formatPrice(item.price)
@@ -219,133 +194,167 @@ export default function Favorites({
                   onPress={() => void actions.removeFavorite(item.id)}
                   style={withPress(styles.favoriteButton)}
                 >
-                  <AppIcon name="heart" size={24} color={colors.action} />
+                  <AppIcon name="heartFill" size={24} color={colors.ipe.bloomDeep} />
                 </Pressable>
               </View>
             );
           }}
         />
       )}
-
-      {userId && onNavigateToAlerts ? (
-        <TextButton label="Ver meus alertas de busca" onPress={() => onNavigateToAlerts()} />
-      ) : null}
     </SafeAreaView>
   );
 }
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
-  page: { flex: 1, backgroundColor: colors.background },
-  tabs: {
-    flexDirection: "row",
-    width: "100%",
-    maxWidth: 720,
-    alignSelf: "center",
-    gap: tokens.spacing[8],
-    paddingHorizontal: tokens.spacing[16],
-    borderBottomWidth: 1,
-    borderBottomColor: colors.m3.outlineVariant,
-  },
-  tab: {
-    minHeight: tokens.accessibility.touchTarget,
-    justifyContent: "center",
-    paddingHorizontal: tokens.spacing[16],
-    borderBottomWidth: 2,
-    borderBottomColor: "transparent",
-  },
-  tabActive: { borderBottomColor: colors.action },
-  tabLabel: {
-    ...tokens.typography.bodyMedium,
-    color: colors.secondaryText,
-  },
-  tabLabelActive: { color: colors.action, fontWeight: tokens.fontWeight.semiBold },
-  wideHeader: { width: "100%", maxWidth: WEB_MAX_WIDTH, alignSelf: "center", paddingHorizontal: tokens.spacing[80], paddingTop: tokens.spacing[32], gap: tokens.spacing[8] },
-  wideTitle: { ...tokens.typography.brandDisplayMd, color: colors.brandBrown },
-  wideSubtitle: { ...tokens.typography.bodyLarge, color: colors.m3.onSurfaceVariant },
-  wideChips: { flexDirection: "row", gap: tokens.spacing[8], paddingTop: tokens.spacing[16] },
-  wideChip: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[6], height: tokens.spacing[32], paddingHorizontal: tokens.spacing[16], borderRadius: tokens.shapeMorph.chipUnselected, borderWidth: 1, borderColor: colors.m3.outlineVariant, backgroundColor: colors.m3.surfaceContainerLowest },
-  wideChipSelected: { backgroundColor: colors.m3.secondaryContainer, borderColor: colors.m3.secondaryContainer, borderRadius: tokens.shapeMorph.chipSelected, borderWidth: 0, paddingLeft: tokens.spacing[8] },
-  wideChipText: { ...tokens.typography.labelLarge, color: colors.m3.onSurfaceVariant },
-  wideList: { width: "100%", maxWidth: WEB_MAX_WIDTH, alignSelf: "center", paddingHorizontal: tokens.spacing[80], paddingVertical: tokens.spacing[24], gap: tokens.spacing[24] },
-  wideGridRow: { gap: tokens.spacing[24] },
-  wideCard: { flex: 1, maxWidth: "25%", flexDirection: "column", alignItems: "stretch", borderRadius: tokens.radius.xl, backgroundColor: colors.m3.surfaceContainerLowest, padding: tokens.spacing[12] },
-  wideCardMain: { flexDirection: "column", alignItems: "stretch" },
-  privacyNote: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[16], padding: tokens.spacing[16], marginTop: tokens.spacing[8], borderRadius: tokens.radius.medium, backgroundColor: colors.m3.surfaceContainer },
-  privacyTitle: { ...tokens.typography.labelLarge, color: colors.m3.onSurface },
-  privacyBody: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
-  list: {
-    width: "100%",
-    maxWidth: 720,
-    alignSelf: "center",
-    padding: tokens.spacing[16],
-    gap: tokens.spacing[8],
-  },
-  status: {
-    width: "100%",
-    maxWidth: 720,
-    alignSelf: "center",
-    alignItems: "center",
-    gap: tokens.spacing[12],
-    padding: tokens.spacing[24],
-  },
-  emptyBoxWide: { maxWidth: 420, alignSelf: "flex-start" },
-  emptyBox: { gap: tokens.spacing[12], paddingVertical: tokens.spacing[24] },
-  emptyHeadline: {
-    ...tokens.typography.titleLarge,
-    fontFamily: tokens.typography.displayLarge.fontFamily,
-    color: colors.text,
-  },
-  emptyHint: {
-    ...tokens.typography.bodyLarge,
-    color: colors.secondaryText,
-  },
-  statusTitle: {
-    ...tokens.typography.titleMedium,
-    fontFamily: tokens.typography.displayLarge.fontFamily,
-    color: colors.text,
-  },
-  link: {
-    color: colors.action,
-    fontFamily: tokens.typography.bodyMedium.fontFamily,
-    fontWeight: tokens.fontWeight.semiBold,
-    padding: tokens.spacing[12],
-  },
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderBottomWidth: 1,
-    borderBottomColor: colors.m3.outlineVariant,
-    paddingVertical: tokens.spacing[12],
-  },
-  rowMain: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: tokens.spacing[12],
-    minHeight: tokens.accessibility.touchTarget,
-  },
-  rowMainPressed: {
-    transform: [{ scale: 0.985 }],
-  },
-  rowTexts: { flex: 1, gap: tokens.spacing[4] },
-  modalityLine: {
-    ...tokens.typography.labelMedium,
-    color: colors.m3.onSurfaceVariant,
-  },
-  bookTitle: {
-    ...tokens.typography.brandCardTitle,
-    color: colors.m3.onSurface,
-  },
-  bookDetails: {
-    ...tokens.typography.bodyMedium,
-    color: colors.secondaryText,
-  },
-  favoriteButton: {
-    minWidth: tokens.accessibility.touchTarget,
-    minHeight: tokens.accessibility.touchTarget,
-    alignItems: "center",
-    justifyContent: "center",
-  },
+    page: { flex: 1, backgroundColor: colors.background },
+    wideHeader: {
+      width: "100%",
+      maxWidth: WEB_MAX_WIDTH,
+      alignSelf: "center",
+      paddingHorizontal: WEB_GUTTER,
+      paddingTop: tokens.spacing[32],
+      gap: tokens.spacing[8],
+    },
+    wideTitle: { ...tokens.typography.brandDisplayMd, color: colors.brandBrown },
+    wideSubtitle: { ...tokens.typography.bodyLarge, color: colors.m3.onSurfaceVariant },
+    wideChips: { flexDirection: "row", gap: tokens.spacing[8], paddingTop: tokens.spacing[16] },
+    wideChip: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[6],
+      height: tokens.spacing[32],
+      paddingHorizontal: tokens.spacing[16],
+      borderRadius: tokens.shapeMorph.chipUnselected,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+      backgroundColor: colors.m3.surfaceContainerLowest,
+    },
+    wideChipSelected: {
+      backgroundColor: colors.m3.secondaryContainer,
+      borderColor: colors.m3.secondaryContainer,
+      borderRadius: tokens.shapeMorph.chipSelected,
+      borderWidth: 0,
+      paddingLeft: tokens.spacing[8],
+    },
+    wideChipText: { ...tokens.typography.labelLarge, color: colors.m3.onSurfaceVariant },
+    wideList: {
+      width: "100%",
+      maxWidth: WEB_MAX_WIDTH,
+      alignSelf: "center",
+      paddingHorizontal: WEB_GUTTER,
+      paddingVertical: tokens.spacing[24],
+      gap: tokens.spacing[24],
+    },
+    wideGridRow: { gap: tokens.spacing[24] },
+    wideCard: {
+      flex: 1,
+      flexDirection: "column",
+      alignItems: "stretch",
+      borderRadius: tokens.radius.xl,
+      backgroundColor: colors.m3.surfaceContainerLowest,
+      padding: tokens.spacing[12],
+    },
+    wideCardMain: { flexDirection: "column", alignItems: "stretch" },
+    privacyNote: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[16],
+      padding: tokens.spacing[16],
+      marginTop: tokens.spacing[8],
+      borderRadius: tokens.radius.medium,
+      backgroundColor: colors.m3.surfaceContainer,
+    },
+    privacyTitle: { ...tokens.typography.labelLarge, color: colors.m3.onSurface },
+    privacyBody: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
+    list: {
+      width: "100%",
+      maxWidth: 720,
+      alignSelf: "center",
+      padding: tokens.spacing[16],
+      gap: tokens.spacing[8],
+    },
+    status: {
+      width: "100%",
+      maxWidth: 720,
+      alignSelf: "center",
+      alignItems: "center",
+      gap: tokens.spacing[12],
+      padding: tokens.spacing[24],
+    },
+    emptyBoxWide: { maxWidth: 420, alignSelf: "flex-start" },
+    emptyBox: { gap: tokens.spacing[12], paddingVertical: tokens.spacing[24] },
+    emptyIpeContainer: {
+      width: 80,
+      height: 80,
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.ipe.container,
+      alignItems: "center",
+      justifyContent: "center",
+      marginBottom: tokens.spacing[6],
+      elevation: 2,
+      shadowColor: colors.m3.shadow,
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.12,
+      shadowRadius: 3,
+    },
+    emptyHeadline: {
+      ...tokens.typography.titleLarge,
+      fontFamily: tokens.typography.displayLarge.fontFamily,
+      color: colors.text,
+    },
+    emptyHint: {
+      ...tokens.typography.bodyLarge,
+      color: colors.secondaryText,
+    },
+    statusTitle: {
+      ...tokens.typography.titleMedium,
+      fontFamily: tokens.typography.displayLarge.fontFamily,
+      color: colors.text,
+    },
+    link: {
+      color: colors.action,
+      fontFamily: tokens.typography.bodyMedium.fontFamily,
+      fontWeight: tokens.fontWeight.semiBold,
+      padding: tokens.spacing[12],
+    },
+    row: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+      borderBottomWidth: 1,
+      borderBottomColor: colors.m3.outlineVariant,
+      paddingVertical: tokens.spacing[12],
+    },
+    rowMain: {
+      flex: 1,
+      flexDirection: "row",
+      alignItems: "flex-start",
+      gap: tokens.spacing[12],
+      minHeight: tokens.accessibility.touchTarget,
+    },
+    rowMainPressed: {
+      transform: [{ scale: 0.985 }],
+    },
+    rowTexts: { flex: 1, gap: tokens.spacing[4] },
+    modalityLine: {
+      ...tokens.typography.labelMedium,
+      color: colors.m3.onSurfaceVariant,
+    },
+    bookTitle: {
+      ...tokens.typography.brandCardTitle,
+      color: colors.m3.onSurface,
+    },
+    bookDetails: {
+      ...tokens.typography.bodyMedium,
+      color: colors.secondaryText,
+    },
+    favoriteButton: {
+      width: tokens.accessibility.touchTarget,
+      height: tokens.accessibility.touchTarget,
+      alignItems: "center",
+      justifyContent: "flex-start",
+      alignSelf: "flex-start",
+      paddingTop: tokens.spacing[2],
+    },
   });
 }

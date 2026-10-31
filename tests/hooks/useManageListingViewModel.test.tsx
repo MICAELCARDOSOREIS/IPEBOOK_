@@ -174,4 +174,26 @@ describe("useManageListingViewModel", () => {
     expect(hook.current[0].removed).toBe(false);
     expect(hook.current[0].error).toBe("Não foi possível concluir a ação. Tente novamente.");
   });
+
+  it("trata erro inesperado em togglePause e DomainError em remove", async () => {
+    const useCases = stubUseCases({
+      togglePauseListing: vi.fn().mockRejectedValue(new Error("Erro 500")),
+      cancelListing: vi.fn().mockRejectedValue(new AuthError("Não autorizado a excluir este anúncio.")),
+    });
+    const hook = await renderHook("b1", "user-1", useCases);
+
+    let pauseOk = true;
+    await act(async () => {
+      pauseOk = await hook.current[1].togglePause();
+    });
+    expect(pauseOk).toBe(false);
+    expect(hook.current[0].error).toBe("Não foi possível concluir a ação. Tente novamente.");
+
+    let removeOk = true;
+    await act(async () => {
+      removeOk = await hook.current[1].remove();
+    });
+    expect(removeOk).toBe(false);
+    expect(hook.current[0].error).toBe("Não autorizado a excluir este anúncio.");
+  });
 });

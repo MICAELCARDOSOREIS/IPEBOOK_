@@ -37,6 +37,9 @@ function stubNotifications(overrides: Partial<INotificationUseCases> = {}): INot
     listNotifications: vi.fn().mockResolvedValue(mockNotifications),
     markAsRead: vi.fn().mockResolvedValue(undefined),
     markAllAsRead: vi.fn().mockResolvedValue(undefined),
+    deleteNotification: vi.fn().mockResolvedValue(undefined),
+    clearAll: vi.fn().mockResolvedValue(undefined),
+    clearRead: vi.fn().mockResolvedValue(undefined),
     ...overrides,
   };
 }
@@ -240,5 +243,52 @@ describe("useNotificationsViewModel", () => {
       mounted.pop()?.unmount();
     });
     expect(unsubscribe).toHaveBeenCalledTimes(1);
+  });
+
+  it("exclui notificação individualmente via deleteNotification", async () => {
+    const deleteNotification = vi.fn().mockResolvedValue(undefined);
+    const useCases = stubNotifications({ deleteNotification });
+
+    const hook = await renderHook("user-1", useCases);
+    expect(hook.current[0].notifications).toHaveLength(2);
+
+    await act(async () => {
+      await hook.current[1].deleteNotification("n-1");
+    });
+
+    expect(deleteNotification).toHaveBeenCalledWith("user-1", "n-1");
+    expect(hook.current[0].notifications).toHaveLength(1);
+    expect(hook.current[0].notifications[0].id).toBe("n-2");
+  });
+
+  it("limpa todas as notificações via clearAll", async () => {
+    const clearAll = vi.fn().mockResolvedValue(undefined);
+    const useCases = stubNotifications({ clearAll });
+
+    const hook = await renderHook("user-1", useCases);
+    expect(hook.current[0].notifications).toHaveLength(2);
+
+    await act(async () => {
+      await hook.current[1].clearAll();
+    });
+
+    expect(clearAll).toHaveBeenCalledWith("user-1");
+    expect(hook.current[0].notifications).toHaveLength(0);
+  });
+
+  it("limpa apenas notificações lidas via clearRead", async () => {
+    const clearRead = vi.fn().mockResolvedValue(undefined);
+    const useCases = stubNotifications({ clearRead });
+
+    const hook = await renderHook("user-1", useCases);
+    expect(hook.current[0].notifications).toHaveLength(2);
+
+    await act(async () => {
+      await hook.current[1].clearRead();
+    });
+
+    expect(clearRead).toHaveBeenCalledWith("user-1");
+    expect(hook.current[0].notifications).toHaveLength(1);
+    expect(hook.current[0].notifications[0].read).toBe(false);
   });
 });

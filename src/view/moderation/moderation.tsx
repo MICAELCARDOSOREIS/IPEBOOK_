@@ -55,6 +55,7 @@ export function Moderation({ sessionUserId, onBack, onOpenListing, onOpenProfile
       <TopAppBar title="Moderação" onBack={onBack} contentMaxWidth={wide ? WEB_MAX_WIDTH : undefined} />
       <ScrollView
         contentContainerStyle={styles.scroll}
+        keyboardShouldPersistTaps="handled"
         refreshControl={
           <RefreshControl refreshing={false} onRefresh={() => void actions.reload()} colors={[colors.action]} tintColor={colors.action} />
         }
