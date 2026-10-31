@@ -1,4 +1,5 @@
 import { Platform } from "react-native";
+import Constants from "expo-constants";
 import type * as NotificationsType from "expo-notifications";
 import type { NotificationChannel } from "@/model/entities/notification";
 import type {
@@ -141,10 +142,24 @@ export class ExpoPushNotificationService implements IPushNotificationService {
     }
 
     try {
-      const tokenResult = await Notifications.getExpoPushTokenAsync();
+      const projectId =
+        Constants.expoConfig?.extra?.eas?.projectId ??
+        Constants.easConfig?.projectId ??
+        "7593e188-168b-4282-87b9-74afae861981";
+
+      const tokenResult = await Notifications.getExpoPushTokenAsync(
+        projectId ? { projectId } : undefined,
+      );
       return tokenResult.data;
-    } catch (err) {
-      this.logger?.warn("Não foi possível obter o token Expo Push", { err });
+    } catch (err: unknown) {
+      const code = (err as { code?: string })?.code;
+      const message = (err as Error)?.message ?? "";
+      if (code === "E_REGISTRATION_FAILED" || message.includes("E_REGISTRATION_FAILED")) {
+        // Esperado em emuladores, simuladores ou dispositivos sem Google Play Services (Spec 096, CA2)
+        this.logger?.info("Push remoto não disponível no ambiente atual (emulador ou sem Google Play Services)", { code });
+      } else {
+        this.logger?.warn("Não foi possível obter o token Expo Push", { err });
+      }
       return null;
     }
   }

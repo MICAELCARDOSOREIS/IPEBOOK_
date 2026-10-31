@@ -30,6 +30,36 @@ export class NotificationUseCases implements INotificationUseCases {
     await this.dataSource.markAllAsRead(sessionUserId);
   }
 
+  async deleteNotification(sessionUserId: string | null, notificationId: string): Promise<void> {
+    if (!sessionUserId) {
+      throw new AuthError("É necessário estar autenticado para excluir notificações.");
+    }
+    if (!notificationId.trim()) {
+      throw new ValidationError("Identificador da notificação é obrigatório.");
+    }
+    if (this.dataSource.deleteNotification) {
+      await this.dataSource.deleteNotification(notificationId);
+    }
+  }
+
+  async clearAll(sessionUserId: string | null): Promise<void> {
+    if (!sessionUserId) {
+      throw new AuthError("É necessário estar autenticado para limpar notificações.");
+    }
+    if (this.dataSource.clearAll) {
+      await this.dataSource.clearAll(sessionUserId);
+    }
+  }
+
+  async clearRead(sessionUserId: string | null): Promise<void> {
+    if (!sessionUserId) {
+      throw new AuthError("É necessário estar autenticado para limpar notificações.");
+    }
+    if (this.dataSource.clearRead) {
+      await this.dataSource.clearRead(sessionUserId);
+    }
+  }
+
   subscribe(sessionUserId: string, onChange: () => void): () => void {
     return this.dataSource.subscribeToChanges?.(sessionUserId, onChange) ?? (() => {});
   }

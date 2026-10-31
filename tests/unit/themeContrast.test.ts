@@ -46,4 +46,20 @@ describe("contraste de tema claro/escuro (Spec 054 / Issue #144, WCAG AA)", () =
       }
     }
   });
+
+  it("tokens de identidade (Livro, Ipê e Folhagem/Verde) mantêm contraste mínimo nos dois temas", () => {
+    // Modo claro
+    expect(contrastRatio(colors.book.ink, colors.book.page)).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
+    expect(contrastRatio(colors.book.inkSecondary, colors.book.page)).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
+    expect(contrastRatio(colors.nature.foliage, colors.book.page)).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
+    expect(contrastRatio(colors.nature.onFoliage, colors.nature.foliage)).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
+    expect(contrastRatio(colors.ipe.onContainer, colors.ipe.container)).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
+
+    // Modo escuro
+    expect(contrastRatio(darkColors.book.ink, darkColors.book.page)).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
+    expect(contrastRatio(darkColors.book.inkSecondary, darkColors.book.page)).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
+    expect(contrastRatio(darkColors.nature.foliage, darkColors.book.page)).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
+    expect(contrastRatio(darkColors.nature.onFoliage, darkColors.nature.foliage)).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
+    expect(contrastRatio(darkColors.ipe.onContainer, darkColors.ipe.container)).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
+  });
 });

@@ -20,6 +20,7 @@ function mock(state: Partial<NotificationsState>, actions: Partial<Notifications
     error: null,
     filter: "all",
     unreadCount: 0,
+    systemPermissionGranted: true,
     ...state,
   };
   const fullActions: NotificationsActions = {
@@ -27,6 +28,9 @@ function mock(state: Partial<NotificationsState>, actions: Partial<Notifications
     refresh: vi.fn().mockResolvedValue(undefined),
     markAsRead: vi.fn(),
     markAllAsRead: vi.fn(),
+    deleteNotification: vi.fn(),
+    clearAll: vi.fn(),
+    clearRead: vi.fn(),
     setFilter: vi.fn(),
     ...actions,
   };

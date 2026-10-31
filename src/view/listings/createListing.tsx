@@ -381,7 +381,7 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
     },
     actionBarInner: {
       width: "100%",
-      maxWidth: wideWeb ? 720 : 560,
+      maxWidth: wideWeb ? 1040 : 560,
       alignSelf: "center",
       gap: tokens.spacing[8],
       paddingHorizontal: tokens.spacing[16],

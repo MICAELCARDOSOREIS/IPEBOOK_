@@ -180,9 +180,9 @@ function createStyles(colors: ColorPalette) {
   },
   successBox: {
     borderWidth: 1,
-    borderColor: colors.success,
-    backgroundColor: colors.soft,
-    borderRadius: tokens.radius.medium,
+    borderColor: colors.m3.outlineVariant,
+    backgroundColor: colors.m3.surfaceContainerLow,
+    borderRadius: tokens.radius.large,
     padding: tokens.spacing[16],
   },
   message: {

@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet } from "react-native";
+import { Platform, Pressable, StyleSheet } from "react-native";
 import { AppIcon } from "@/view/components/AppIcon";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { tokens } from "@/view/tokens";
@@ -30,6 +30,7 @@ const styles = StyleSheet.create({
     borderRadius: tokens.shapeMorph.buttonRest,
     alignItems: "center",
     justifyContent: "center",
+    ...(Platform.OS === "web" ? ({ cursor: "pointer", userSelect: "none" } as never) : {}),
   },
   buttonPressed: {
     borderRadius: tokens.shapeMorph.buttonPressed,

@@ -148,7 +148,7 @@ export function MyListings({
             onNavigateToHelp={onNavigateToHelp}
           />
         ) : (
-          <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+          <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
             {/* Banner de incentivo à circulação na web larga (Figma 05.01) */}
             {wideWeb && onNavigateToCreateListing ? (
               <View style={styles.webExchangeBanner} testID="shelf-exchange-banner">
@@ -493,8 +493,8 @@ function createStyles(colors: ColorPalette) {
       alignSelf: "center",
       paddingHorizontal: tokens.spacing[16],
     },
-    // Web larga (Figma `05.01`): coluna de 1280 px com 80 px de margem e botão "Anunciar livro" em texto.
-    headerWide: { width: "100%", maxWidth: WEB_MAX_WIDTH, alignSelf: "center", paddingHorizontal: tokens.spacing[80], paddingTop: tokens.spacing[32] },
+    // Web larga (Figma `05.01`): coluna com margem padronizada WEB_GUTTER e botão "Anunciar livro" em texto.
+    headerWide: { width: "100%", maxWidth: WEB_MAX_WIDTH, alignSelf: "center", paddingHorizontal: WEB_GUTTER, paddingTop: tokens.spacing[32] },
     contentWide: { maxWidth: WEB_MAX_WIDTH, paddingHorizontal: WEB_GUTTER },
     webExchangeBanner: {
       flexDirection: "row",

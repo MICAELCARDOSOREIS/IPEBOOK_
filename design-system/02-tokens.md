@@ -49,6 +49,12 @@ de uma cor-semente única (aqui, o verde ipê-do-cerrado).
 | `focus-ring` | `#4e8a68` | Anel de foco (2 px de largura e 4 px de folga na API atual) | Adaptado — cor própria da marca, não o azul padrão do M3 |
 | `brand-brown` | `#58331f` | Logotipo e títulos da marca (10,6:1) | Novo — papel de marca sem equivalente M3 |
 | `brand-amber` / `cover-sun` | `#f2bc45` / `#ddaf38` | Sol das capas ilustrativas; nunca texto | Novo |
+| `book-page` | `#fcfaf5` | Papel pólen para leitura confortável sem ofuscamento | Novo — Metáfora do Livro |
+| `book-ink` | `#3c302a` | Tinta mineral/café com contraste AAA (>12:1) | Novo — Metáfora do Livro |
+| `nature-foliage` | `#2c5e45` | Verde botânico da copa do ipê para botões principais | Novo — Metáfora Botânica |
+| `ipe-bloom` | `#f7c21e` | Ouro da florada do ipê para favoritos e medalhões | Novo — Metáfora do Ipê |
+| `ipe-petal-soft` | `#fef6d8` | Chão de pétalas de ipê para fundos e acolhimento | Novo — Metáfora do Ipê |
+| `ipe-ribbon` | `#f7c21e` | Fita marcadora de página de cetim do ipê | Novo — Metáfora do Livro & Ipê |
 
 Lista completa (~50 tokens, claro e escuro) em
 [`tokens.json`](tokens.json), campo `color.tokens`.
@@ -111,6 +117,9 @@ devem obter a paleta por `useTheme()`; a coluna "Em código" abaixo define os no
 | `doacao-container` / `on-doacao-container` | `badge.donation.background` / `badge.donation.text` |
 | `error` | `error` |
 | `focus-ring` | `colors.m3.focusRing` |
+| `book-page` / `book-ink` | `colors.book.page` / `colors.book.ink` |
+| `nature-foliage` / `nature-sprout` | `colors.nature.foliage` / `colors.nature.sprout` |
+| `ipe-bloom` / `ipe-bloom-deep` / `ipe-ribbon` | `colors.ipe.bloom` / `colors.ipe.bloomDeep` / `colors.ipe.ribbon` |
 | `scrim` | não há chave própria em `tokens.ts`; o componente `Dialog` mantém uma constante local documentada |
 | papéis M3 sem chave antiga equivalente (`onSurface`, `surfaceContainer*`, `focusRing` etc.) | `colors.m3.*` |
 
@@ -132,15 +141,20 @@ conceitual do JSON. Novos componentes não devem repetir essa constante sem nece
 | `tag.troca.bg` | `tertiary-container` | Adaptado |
 | `tag.doacao.bg` | `doacao-container` | Novo |
 | `navitem.active.bg` | `secondary-container` | Herdado |
+| `ribbon.ipe` | `colors.ipe.ribbon` | Novo |
 
 ## 4. Modo escuro
 
 Os tokens semânticos de cor têm valores `light` e `dark` em `tokens.json` (por exemplo,
 `primary` claro `#2c5e45` e escuro `#9fd4b3`). A paleta escura é exposta por `darkColors` e
 selecionada pelo `ThemeProvider`, conforme a preferência resolvida pelo
-`useThemeViewModel`. A mudança de tema altera valores sem mudar a estrutura dos componentes.
-Como a migração foi incremental, componentes que ainda consomem `tokens.colors` diretamente
-permanecem claros até serem migrados.
+`useThemeViewModel`. A paleta noturna foi refinada para evitar ofuscamento e fadiga visual:
+- `badge.trade` adota fundo âmbar profundo (`#4A3508`) com texto dourado (`#FFDF99`, 8,5:1);
+- `badge.reserved` usa âmbar escuro (`#483200`) e texto `#FFE088` (8,9:1);
+- `badge.completed` usa verde floresta noturno (`#1B4D36`) e texto `#D0F5DC` (8,3:1);
+- `badge.sale` usa verde botânico escuro (`#1F5139`) e texto `#BBF0CE` (7,3:1);
+- `ipe.container` no escuro usa `#38290E` e texto `#FFE099` (10,5:1).
+Todas as combinações atingem ou superam WCAG AAA para texto e elementos de status.
 
 ## 5. Versão legível por máquina
 

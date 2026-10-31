@@ -70,7 +70,7 @@ export function MyListingsListingsTab({
 
   return (
     <>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow} keyboardShouldPersistTaps="handled">
         {/* Mesmo Chip do resto do app (Home, Explorar, filtros): raio, check e cores iguais. */}
         {filterChips.map((chip) => (
           <Chip

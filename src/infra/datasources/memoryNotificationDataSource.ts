@@ -62,6 +62,18 @@ export class MemoryNotificationDataSource implements INotificationDataSource {
     }
   }
 
+  async deleteNotification(notificationId: string): Promise<void> {
+    this.notifications = this.notifications.filter((n) => n.id !== notificationId);
+  }
+
+  async clearAll(userId: string): Promise<void> {
+    this.notifications = this.notifications.filter((n) => n.userId !== userId);
+  }
+
+  async clearRead(userId: string): Promise<void> {
+    this.notifications = this.notifications.filter((n) => !(n.userId === userId && n.read));
+  }
+
   async addNotification(notification: AppNotification): Promise<void> {
     this.notifications.unshift({ ...notification });
   }

@@ -38,15 +38,15 @@ export function WebHeader({
 }: WebHeaderProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  // Acompanha a coluna de conteúdo das telas: margem fixa, e centralizado em janelas muito largas.
+  // Alinha ao recuo lateral padronizado das telas na web larga (WEB_GUTTER = 64 px, como em Boas-vindas e Beta).
   const { width } = useWindowDimensions();
-  const sideInset = Math.round(Math.max(0, width - WEB_MAX_WIDTH) / 2) + WEB_GUTTER;
+  const sideInset = width >= 960 ? WEB_GUTTER : tokens.spacing[16];
   // Janelas médias (tablet, notebook pequeno): vãos menores para tudo caber sem cortar o avatar.
   const compact = width < 1280;
 
   return (
     <View accessibilityRole="header" testID="web-header" style={[styles.bar, { paddingHorizontal: sideInset }, compact && styles.barCompact]}>
-      <Pressable accessibilityRole="link" accessibilityLabel="IpêBook, ir para o início" onPress={() => onNavigate("home")}>
+      <Pressable accessibilityRole="link" accessibilityLabel="IpêBook, ir para o início" onPress={() => onNavigate("home")} style={withPress(undefined)}>
         <Text style={styles.brand}>IpêBook</Text>
       </Pressable>
 

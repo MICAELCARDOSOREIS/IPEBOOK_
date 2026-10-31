@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { ActivityIndicator, Animated, Pressable, StyleSheet, Text } from "react-native";
+import { ActivityIndicator, Animated, Platform, Pressable, StyleSheet, Text } from "react-native";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { useGuardedPress } from "@/view/useGuardedPress";
@@ -64,11 +64,15 @@ function createStyles(colors: ColorPalette) {
       borderRadius: tokens.shapeMorph.buttonRest,
       backgroundColor: colors.action,
       paddingHorizontal: tokens.spacing[24],
+      ...(Platform.OS === "web" ? ({ cursor: "pointer", userSelect: "none" } as never) : {}),
     },
     pressedShape: {
       borderRadius: tokens.shapeMorph.buttonPressed,
     },
-    disabled: { backgroundColor: colors.disabledBackground },
+    disabled: {
+      backgroundColor: colors.disabledBackground,
+      ...(Platform.OS === "web" ? ({ cursor: "not-allowed" } as never) : {}),
+    },
     label: { color: colors.m3.onPrimary, ...tokens.typography.labelLarge },
     labelDisabled: { color: colors.disabledText },
   });

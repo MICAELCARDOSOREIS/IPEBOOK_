@@ -2,8 +2,8 @@ import { useWindowDimensions } from "react-native";
 
 /** Largura máxima do conteúdo na web larga: acompanha o cabeçalho do site e cresce com a janela. */
 export const WEB_MAX_WIDTH = 1760;
-/** Margem lateral do conteúdo na web larga (a mesma do `WebHeader`). */
-export const WEB_GUTTER = 80;
+/** Margem lateral do conteúdo na web larga (a mesma do `WebHeader` e Boas-Vindas). */
+export const WEB_GUTTER = 64;
 /** A partir daqui as listas e grades ganham uma coluna a mais. */
 export const WEB_EXTRA_COLUMN_WIDTH = 1500;
 

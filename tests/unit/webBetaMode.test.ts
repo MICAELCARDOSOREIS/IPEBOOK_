@@ -14,8 +14,10 @@ describe("webBetaRedirect (Spec 108, site só com o convite do beta)", () => {
     }
   });
 
-  it("não redireciona nada quando o modo está desligado (app nativo)", () => {
-    expect(webBetaRedirect("/", false)).toBeNull();
-    expect(webBetaRedirect("/anunciar", false)).toBeNull();
+  it("não redireciona nada por padrão quando o app completo está ativo na web", () => {
+    expect(webBetaRedirect("/")).toBeNull();
+    expect(webBetaRedirect("/pesquisa")).toBeNull();
+    expect(webBetaRedirect("/anunciar")).toBeNull();
+    expect(webBetaRedirect("/entrar")).toBeNull();
   });
 });

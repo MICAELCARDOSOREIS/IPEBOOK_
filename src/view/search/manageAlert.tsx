@@ -64,7 +64,7 @@ export default function ManageAlert({
   return (
     <SafeAreaView style={styles.page}>
       <TopAppBar contentMaxWidth={560} title="Gerenciar alerta" onBack={onBack} />
-      <ScrollView contentContainerStyle={styles.scroll}>
+      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <View style={styles.content}>
           <Text accessibilityRole="header" style={styles.headline}>
             {`${alert.query}, do seu jeito.`}

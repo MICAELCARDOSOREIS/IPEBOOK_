@@ -66,6 +66,8 @@ describe("Conversations (Spec 076)", () => {
     await act(async () => { fireEvent.press(screen.getByText("Ana Paula")); });
     expect(onOpenChat).toHaveBeenCalledWith("r1");
     await act(async () => { fireEvent.press(screen.getByText("Lucas")); });
+    expect(onOpenChat).toHaveBeenCalledWith("r2");
+    await act(async () => { fireEvent.press(screen.getByText(/nova proposta recebida/i)); });
     expect(onOpenReceivedRequests).toHaveBeenCalledTimes(1);
     await act(async () => { fireEvent.press(screen.getByText("Marina")); });
     expect(onOpenListing).toHaveBeenCalledWith("b3");

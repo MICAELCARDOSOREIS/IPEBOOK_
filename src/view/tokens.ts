@@ -25,12 +25,31 @@ export const colors = {
   brandBrown: "#58331F",
   brandAmber: "#F2BC45",
 
-  // Ipê da marca (Spec 078): cartão de leitor e ilustração do ipê brotando do livro (assets/logo-clean.png).
+  // Metáfora de Identidade: Livro, Ipê e Verde (Folhagem)
+  book: {
+    page: "#FCFAF5",         // Papel pólen para leitura confortável (sem ofuscamento)
+    pageCard: "#F2EDE5",     // Superfície de cartões de livros e listas
+    ink: "#3C302A",          // Tinta café/mineral com contraste AAA sobre a página
+    inkSecondary: "#645B55", // Legendas e metadados de leitura
+    leather: "#58331F",      // Marrom encadernação de capa e serifa da marca
+    paperEdge: "#EADFC9",    // Linha suave de folheio e divisórias
+  },
+
+  nature: {
+    foliage: "#2C5E45",      // Verde botânico da copa do ipê / botões de ação principal
+    foliageDeep: "#2F503D",  // Verde profundo para toques e botões pressionados
+    sprout: "#E7F0EA",       // Verde broto suave para contêineres e tags
+    onFoliage: "#FFFFFF",    // Texto e ícones sobre verde folhagem
+  },
+
+  // Ipê da marca (Spec 078): florada amarela, cartão de leitor e fita marcadora
   ipe: {
     container: "#FCEFCB",
     onContainer: "#4A2B16",
     bloom: "#F7C21E",
     bloomDeep: "#F29A1A",
+    petalSoft: "#FEF6D8",
+    ribbon: "#F7C21E",
     trunk: "#58331F",
   },
 
@@ -73,7 +92,7 @@ export const colors = {
     text: "#F5EFE8",
     gold: "#D9A93A",
     page: "#F1E9D6",
-    artBackgrounds: ["#3A2A20", "#0F4B5B", "#2C5232", "#14284B"],
+    artBackgrounds: ["#3A2A20", "#2C5232", "#14284B"],
   },
 
   // Papéis Material 3 (design-system/tokens.json, tema claro) — para componentes novos
@@ -140,12 +159,31 @@ export const darkColors: ColorPalette = {
   brandBrown: "#e2b48c",
   brandAmber: "#f2bc45",
 
-  // Ipê da marca (Spec 078): mesma árvore, cartão em âmbar escuro para manter contraste.
+  // Metáfora de Identidade: Livro, Ipê e Verde (Tema Escuro)
+  book: {
+    page: "#151311",         // Café noturno profundo
+    pageCard: "#1D1B19",     // Cartão de leitura noturna
+    ink: "#E8E2DB",          // Tinta clara suave com contraste AAA
+    inkSecondary: "#CDC5BC", // Metadados secundários
+    leather: "#E2B48C",      // Carvalho e lombada no modo escuro
+    paperEdge: "#2C2A27",    // Linha de folheio escura
+  },
+
+  nature: {
+    foliage: "#9FD4B3",      // Verde menta luminoso botânico
+    foliageDeep: "#BBF0CE",  // Verde claro destacado
+    sprout: "#364B3E",       // Verde musgo escuro para contêineres
+    onFoliage: "#00381F",    // Texto escuro de alto contraste sobre verde menta
+  },
+
+  // Ipê da marca (Spec 078): florada no tema escuro com alto contraste e aconchego.
   ipe: {
-    container: "#3b2c12",
-    onContainer: "#fbe6b4",
+    container: "#38290E",
+    onContainer: "#FFE099",
     bloom: "#F7C21E",
     bloomDeep: "#F29A1A",
+    petalSoft: "#281E0B",
+    ribbon: "#F7C21E",
     trunk: "#e2b48c",
   },
 
@@ -156,13 +194,13 @@ export const darkColors: ColorPalette = {
   disabledBackground: "#364b3e",
   disabledText: "#cdc5bc",
 
-  // Badges por Modalidade
+  // Badges por Modalidade (adaptados para leitura noturna suave sem ofuscamento)
   badge: {
-    sale: { background: "#364b3e", text: "#d2e8d9" },
-    trade: { background: "#6b4f12", text: "#ffe2a8" },
-    donation: { background: "#5a2f22", text: "#ffdbcf" },
-    reserved: { background: "#F4B942", text: "#3C302A" },
-    completed: { background: "#2F6B4F", text: "#FFFFFF" },
+    sale: { background: "#1F5139", text: "#BBF0CE" },
+    trade: { background: "#4A3508", text: "#FFDF99" },
+    donation: { background: "#5A2F22", text: "#FFDBCF" },
+    reserved: { background: "#483200", text: "#FFE088" },
+    completed: { background: "#1B4D36", text: "#D0F5DC" },
   },
 
   // Tons pastel por categoria de livro no tema escuro (Spec 091).
@@ -186,7 +224,7 @@ export const darkColors: ColorPalette = {
     text: "#F5EFE8",
     gold: "#D9A93A",
     page: "#F1E9D6",
-    artBackgrounds: ["#3A2A20", "#0F4B5B", "#2C5232", "#14284B"],
+    artBackgrounds: ["#3A2A20", "#2C5232", "#14284B"],
   },
 
   // Papéis Material 3 (design-system/tokens.json, tema escuro).

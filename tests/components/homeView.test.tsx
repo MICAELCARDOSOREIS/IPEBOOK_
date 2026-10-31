@@ -44,6 +44,7 @@ describe("testes de componentes: Home View (ISO/IEC 25010 - Usabilidade e Acessi
 
     const subtitle = root.find(
       (node) =>
+        node.props.children === "Compre, troque ou receba livros sob a florada do Ipê de Piripiri." ||
         node.props.children === "Compre, troque ou receba livros de quem mora perto de você."
     );
     expect(subtitle).toBeDefined();

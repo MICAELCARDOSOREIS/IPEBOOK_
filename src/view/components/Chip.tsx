@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Animated, Pressable, StyleSheet, Text, View } from "react-native";
+import { Animated, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { AppIcon } from "@/view/components/AppIcon";
@@ -67,6 +67,7 @@ function createStyles(colors: ColorPalette) {
       borderRadius: tokens.shapeMorph.chipUnselected,
       justifyContent: "center",
       backgroundColor: colors.m3.surfaceContainerLowest,
+      ...(Platform.OS === "web" ? ({ cursor: "pointer", userSelect: "none" } as never) : {}),
     },
     // Figma `02.01`/`02.02`: 32 dp nas fileiras rápidas; `02.03`/`04.05`: 40 dp nos grupos de escolha.
     chipCompact: { height: tokens.spacing[32], paddingHorizontal: tokens.spacing[16] },
@@ -82,7 +83,10 @@ function createStyles(colors: ColorPalette) {
     unselected: { borderWidth: 1, borderColor: colors.m3.outlineVariant },
     withDot: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[8] },
     dot: { width: 10, height: 10, borderRadius: tokens.radius.dot, borderWidth: 1 },
-    disabled: { opacity: 0.38 },
+    disabled: {
+      opacity: 0.38,
+      ...(Platform.OS === "web" ? ({ cursor: "not-allowed" } as never) : {}),
+    },
     label: { color: colors.m3.onSurfaceVariant, ...tokens.typography.labelLarge },
     labelSelected: { color: colors.m3.onSecondaryContainer },
     labelDisabled: { color: colors.disabledText },

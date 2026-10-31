@@ -8,9 +8,11 @@ export type ScreenContainerProps = {
   children: ReactNode;
   /** Cabeçalho fixo no topo da tela (ex.: TopAppBar). Não rola com o conteúdo. */
   header?: ReactNode;
+  /** Controle de puxar para atualizar (RefreshControl). */
+  refreshControl?: React.ReactElement;
   /** Largura máxima da coluna de conteúdo centralizada. Padrão 720 (telas de conteúdo);
-   *  use 560 em telas de formulário/foco. (Origem: 03-fundamentos.md.) */
-  maxWidth?: number;
+   *  use 560 em telas de formulário/foco. Passe `null` para desativar o limite (ex.: na Web larga). */
+  maxWidth?: number | null;
   /** Padding lateral da coluna. Padrão `space-4` (16 px), conforme 03-fundamentos.md. */
   paddingHorizontal?: number;
   /** Padding superior da coluna. Padrão `space-2` (8 px). */
@@ -39,6 +41,7 @@ export type ScreenContainerProps = {
 export function ScreenContainer({
   children,
   header,
+  refreshControl,
   maxWidth = 720,
   paddingHorizontal = tokens.spacing[16],
   paddingTop = tokens.spacing[8],
@@ -53,7 +56,12 @@ export function ScreenContainer({
   const styles = useMemo(() => createStyles(colors), [colors]);
   const columnStyle: StyleProp<ViewStyle> = [
     styles.content,
-    { maxWidth, paddingHorizontal, paddingTop, paddingBottom },
+    {
+      ...(maxWidth !== null && maxWidth !== undefined ? { maxWidth } : {}),
+      paddingHorizontal,
+      paddingTop,
+      paddingBottom,
+    },
     contentStyle,
   ];
 
@@ -61,7 +69,11 @@ export function ScreenContainer({
     <SafeAreaView edges={edges} style={styles.page} testID={testID}>
       {header}
       {scroll ? (
-        <ScrollView contentContainerStyle={columnStyle} keyboardShouldPersistTaps="handled">
+        <ScrollView
+          contentContainerStyle={columnStyle}
+          keyboardShouldPersistTaps="handled"
+          refreshControl={refreshControl}
+        >
           {children}
         </ScrollView>
       ) : (
@@ -74,7 +86,7 @@ export function ScreenContainer({
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
-    page: { flex: 1, backgroundColor: colors.surface },
+    page: { flex: 1, backgroundColor: colors.surface, position: "relative" },
     content: {
       flexGrow: 1,
       width: "100%",

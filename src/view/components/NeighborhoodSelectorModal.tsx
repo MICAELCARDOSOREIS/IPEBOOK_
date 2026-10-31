@@ -1,7 +1,8 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   FlatList,
   Modal,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -46,6 +47,20 @@ export function NeighborhoodSelectorModal({
     if (!term) return allList;
     return allList.filter((name) => name.toLowerCase().includes(term));
   }, [allowAllNeighborhoods, filterText]);
+
+  useEffect(() => {
+    if (Platform.OS !== "web" || !visible) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onClose();
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [visible, onClose]);
 
   if (!visible) return null;
 
@@ -261,6 +276,7 @@ function createStyles(colors: ColorPalette) {
       minHeight: tokens.accessibility.touchTarget,
       borderRadius: tokens.radius.cardSmall,
       marginBottom: tokens.spacing[4],
+      ...(Platform.OS === "web" ? ({ cursor: "pointer", userSelect: "none" } as never) : {}),
     },
     itemButtonSelected: {
       backgroundColor: colors.m3.secondaryContainer,

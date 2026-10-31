@@ -1,4 +1,4 @@
-import { Animated, Pressable, Text, View } from "react-native";
+import { Animated, Platform, Pressable, Text, View } from "react-native";
 import { tokens } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { AppIcon } from "@/view/components/AppIcon";
@@ -41,12 +41,13 @@ export function FavoriteButton({ bookId, userId, onToggleSuccess }: FavoriteButt
             backgroundColor: isPressed ? colors.m3.surfaceContainerHigh : "transparent",
             alignItems: "center",
             justifyContent: "center",
+            ...(Platform.OS === "web" ? ({ cursor: "pointer", userSelect: "none" } as never) : {}),
           }}
         >
           <AppIcon
             name={state.selected ? "heartFill" : "heart"}
             size={24}
-            color={state.selected ? colors.action : colors.m3.primary}
+            color={state.selected ? colors.ipe.bloomDeep : colors.m3.primary}
           />
         </Pressable>
       </Animated.View>

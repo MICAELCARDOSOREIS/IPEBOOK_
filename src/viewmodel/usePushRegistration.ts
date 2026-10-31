@@ -20,9 +20,16 @@ export function usePushRegistration(
 ): void {
   const openRoute = useRef(onOpenRoute);
   openRoute.current = onOpenRoute;
+  const registeredUserId = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!sessionUserId) return;
+    if (!sessionUserId) {
+      registeredUserId.current = null;
+      return;
+    }
+    if (registeredUserId.current === sessionUserId) return;
+    registeredUserId.current = sessionUserId;
+
     let active = true;
     void (async () => {
       try {

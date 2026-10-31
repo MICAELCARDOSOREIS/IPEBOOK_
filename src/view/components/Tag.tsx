@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
+import { AppIcon } from "@/view/components/AppIcon";
 
 export type TagVariant =
   | "sale"
@@ -111,6 +112,7 @@ export function Tag({ variant, label, accessibilityLabel }: TagProps) {
   const variantConfig = useMemo(() => createVariantConfig(colors), [colors]);
   const config = variantConfig[variant] ?? variantConfig.sale;
   const displayText = label ?? config.defaultLabel;
+  const isTrade = variant === "trade" || variant === "troca";
 
   return (
     <View
@@ -118,6 +120,7 @@ export function Tag({ variant, label, accessibilityLabel }: TagProps) {
       accessibilityLabel={accessibilityLabel ?? displayText}
       style={[styles.container, { backgroundColor: config.background }]}
     >
+      {isTrade ? <AppIcon name="swap" size={11} color={config.text} /> : null}
       <Text style={[styles.text, { color: config.text }]}>{displayText}</Text>
     </View>
   );
@@ -126,6 +129,9 @@ export function Tag({ variant, label, accessibilityLabel }: TagProps) {
 const styles = StyleSheet.create({
   container: {
     alignSelf: "flex-start",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: tokens.spacing[4],
     paddingHorizontal: tokens.spacing[8],
     paddingVertical: tokens.spacing[2],
     borderRadius: tokens.radius.full,

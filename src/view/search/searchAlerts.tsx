@@ -115,6 +115,7 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
               data={state.alerts}
               keyExtractor={(item) => item.id}
               contentContainerStyle={styles.listContent}
+              keyboardShouldPersistTaps="handled"
               ListEmptyComponent={
                 <View style={styles.emptyBox}>
                   <Text accessibilityRole="header" style={styles.emptyHeadline}>

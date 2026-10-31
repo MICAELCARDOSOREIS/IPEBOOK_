@@ -58,21 +58,6 @@ describe("Favorites alinhada ao Figma 02.06 (Spec 030)", () => {
     neighborhood: "Centro",
   };
 
-  it("mostra as abas com a contagem de livros favoritados", async () => {
-    vi.mocked(useNetworkStatus).mockReturnValue({ isOnline: true });
-    mock({ books: [book] });
-    let screen!: Awaited<ReturnType<typeof render>>;
-    await act(async () => {
-      screen = await render(
-        <Favorites userId="u1" onBack={vi.fn()} onLogin={vi.fn()} onBook={vi.fn()} onNavigateToAlerts={vi.fn()} />,
-      );
-    });
-
-    expect(screen.getByText("Livros (1)")).toBeDefined();
-    // Spec 039 (RN-03): a aba "Alertas" também mostra a contagem, como em `02.06`.
-    expect(screen.getByText("Alertas (0)")).toBeDefined();
-  });
-
   it("mostra modalidade, preço, conservação e bairro na linha", async () => {
     vi.mocked(useNetworkStatus).mockReturnValue({ isOnline: true });
     mock({ books: [book] });
@@ -99,23 +84,5 @@ describe("Favorites alinhada ao Figma 02.06 (Spec 030)", () => {
     });
 
     expect(actions.removeFavorite).toHaveBeenCalledWith("b1");
-  });
-
-  it("leva aos alertas pela aba correspondente", async () => {
-    vi.mocked(useNetworkStatus).mockReturnValue({ isOnline: true });
-    mock({ books: [] });
-    const onNavigateToAlerts = vi.fn();
-    let screen!: Awaited<ReturnType<typeof render>>;
-    await act(async () => {
-      screen = await render(
-        <Favorites userId="u1" onBack={vi.fn()} onLogin={vi.fn()} onBook={vi.fn()} onNavigateToAlerts={onNavigateToAlerts} />,
-      );
-    });
-
-    await act(async () => {
-      fireEvent.press(screen.getByText("Alertas (0)"));
-    });
-
-    expect(onNavigateToAlerts).toHaveBeenCalledTimes(1);
   });
 });

@@ -31,8 +31,8 @@ export function Security({ onBack }: SecurityProps) {
 
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar title="Segurança e verificação" onBack={onBack} />
-      <ScrollView contentContainerStyle={styles.scroll}>
+      <TopAppBar contentMaxWidth={720} title="Segurança e verificação" onBack={onBack} />
+      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <View style={styles.content}>
           <View style={styles.card}>
             <View style={styles.cardHeaderRow}>

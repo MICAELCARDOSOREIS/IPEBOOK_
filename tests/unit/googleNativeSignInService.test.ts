@@ -98,4 +98,20 @@ describe("SupabaseAuthDataSource com login Google nativo (Spec 106)", () => {
     await source.signOut();
     expect(google.signOut).toHaveBeenCalled();
   });
+
+  it("com Play Services indisponível faz fallback para o navegador em vez de falhar", async () => {
+    const signInWithOAuth = vi.fn().mockResolvedValue({ data: { url: null }, error: { message: "fallback" } });
+    const googleSemPlayServices = {
+      isAvailable: () => true,
+      getIdToken: vi.fn().mockRejectedValue(new AuthError("Atualize o Google Play Services para entrar com Google.")),
+      signOut: vi.fn().mockResolvedValue(undefined),
+    };
+    const source = new SupabaseAuthDataSource(
+      { auth: { signInWithOAuth } } as unknown as SupabaseAppClient,
+      "x",
+      googleSemPlayServices,
+    );
+    await expect(source.signInWithGoogle()).rejects.toThrow("Não foi possível autenticar com o Google. Tente novamente.");
+    expect(signInWithOAuth).toHaveBeenCalled();
+  });
 });

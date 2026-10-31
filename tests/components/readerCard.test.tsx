@@ -23,4 +23,12 @@ describe("ReaderCard e IpeMark (Spec 078)", () => {
     expect(mark.props.accessible).toBe(false);
     expect(mark.props.importantForAccessibility).toBe("no-hide-descendants");
   });
+
+  it("exibe a fase do ciclo do ipê quando informada", async () => {
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<ReaderCard name="Ana Paula" subtitle="Centro, Piripiri" cycleStage="Florada do Ipê" />);
+    });
+    expect(screen.getByText("Florada do Ipê")).toBeDefined();
+  });
 });

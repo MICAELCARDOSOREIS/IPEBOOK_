@@ -156,7 +156,7 @@ export default function Search({
               onPress={onNavigateToFavorites}
               style={withPress(styles.favoritesTopButton)}
             >
-              <AppIcon name="heart" size={24} color={colors.action} />
+              <AppIcon name="heartFill" size={22} color={colors.ipe.bloomDeep} />
             </Pressable>
           ) : null}
 
@@ -207,6 +207,7 @@ export default function Search({
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.quickCategoriesScroll}
+          keyboardShouldPersistTaps="handled"
         >
           <Chip
             label="Todos"
@@ -506,8 +507,8 @@ function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     page: { flex: 1, backgroundColor: colors.background },
     flexOne: { flex: 1 },
-    // Web larga (Figma `34:229`): filtros fixos à esquerda e resultados em grade de 4 colunas.
-    wideRow: { flex: 1, flexDirection: "row", gap: tokens.spacing[24], width: "100%", maxWidth: WEB_MAX_WIDTH, alignSelf: "center", paddingHorizontal: tokens.spacing[80], paddingTop: tokens.spacing[32] },
+    // Web larga: filtros fixos à esquerda e resultados em grade de ponta a ponta.
+    wideRow: { flex: 1, flexDirection: "row", gap: tokens.spacing[32], width: "100%", paddingHorizontal: 64, paddingTop: tokens.spacing[24] },
     contentWide: { flexGrow: 1, paddingBottom: tokens.spacing[32], gap: tokens.spacing[24] },
     gridRow: { gap: tokens.spacing[24] },
     cardMainWide: { flexDirection: "column", alignItems: "stretch", gap: tokens.spacing[8] },

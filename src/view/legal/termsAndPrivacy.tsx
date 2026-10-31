@@ -9,6 +9,9 @@ import { useTheme } from "@/view/theme/ThemeProvider";
 import { WEB_MAX_WIDTH, WEB_GUTTER, useWebColumns, webColumnWidth } from "@/view/webLayout";
 
 import { withPress } from "@/view/pressFeedback";
+
+const TERMS_WIDE_MAX_WIDTH = 1240;
+
 export type TermsAndPrivacyProps = {
   onBack?: () => void;
   initialTab?: "terms" | "privacy";
@@ -36,8 +39,8 @@ export default function TermsAndPrivacy({
 
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar title="Termos e privacidade" onBack={() => onBack?.()} contentMaxWidth={wide ? WEB_MAX_WIDTH : undefined} />
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <TopAppBar title="Termos e privacidade" onBack={() => onBack?.()} contentMaxWidth={wide ? TERMS_WIDE_MAX_WIDTH : undefined} />
+      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
         <View style={[styles.content, wide && styles.contentWide]}>
           <View style={styles.heroHeader}>
             <Text style={styles.heroTitle}>Informação clara para você.</Text>
@@ -123,7 +126,7 @@ function createStyles(colors: ColorPalette) {
     alignSelf: "center",
     padding: tokens.spacing[16],
   },
-  contentWide: { maxWidth: WEB_MAX_WIDTH, paddingHorizontal: WEB_GUTTER },
+  contentWide: { maxWidth: TERMS_WIDE_MAX_WIDTH, alignSelf: "center", paddingHorizontal: tokens.spacing[24] },
   cardListWide: { flexDirection: "row", flexWrap: "wrap", alignItems: "flex-start", columnGap: tokens.spacing[16], rowGap: tokens.spacing[16] },
   fullRow: { width: "100%" },
   heroHeader: {

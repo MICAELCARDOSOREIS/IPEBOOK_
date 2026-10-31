@@ -67,6 +67,40 @@ export class SupabaseNotificationDataSource implements INotificationDataSource {
     }
   }
 
+  async deleteNotification(notificationId: string): Promise<void> {
+    const { error } = await this.client
+      .from("v2_notifications")
+      .delete()
+      .eq("id", notificationId);
+
+    if (error) {
+      throw new DataSourceError("Não foi possível excluir a notificação.");
+    }
+  }
+
+  async clearAll(userId: string): Promise<void> {
+    const { error } = await this.client
+      .from("v2_notifications")
+      .delete()
+      .eq("user_id", userId);
+
+    if (error) {
+      throw new DataSourceError("Não foi possível limpar as notificações.");
+    }
+  }
+
+  async clearRead(userId: string): Promise<void> {
+    const { error } = await this.client
+      .from("v2_notifications")
+      .delete()
+      .eq("user_id", userId)
+      .eq("read", true);
+
+    if (error) {
+      throw new DataSourceError("Não foi possível limpar as notificações lidas.");
+    }
+  }
+
   subscribeToChanges(userId: string, onChange: () => void): () => void {
     const channel = this.client
       // Nome único por assinatura: reusar o mesmo tópico depois de `subscribe()` lança erro do Realtime

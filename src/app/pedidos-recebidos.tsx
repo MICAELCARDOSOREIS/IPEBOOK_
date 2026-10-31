@@ -7,6 +7,7 @@ export default function PedidosRecebidosRoute() {
       onBack={() => backOnce()}
       onRequireSignIn={() => replaceOnce("/entrar")}
       onNavigateToNegotiationDetail={(id) => pushOnce(`/negociacao/${id}`)}
+      onOpenChat={(id) => pushOnce(`/conversa/${id}` as never)}
     />
   );
 }

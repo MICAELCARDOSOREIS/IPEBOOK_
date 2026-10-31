@@ -143,7 +143,17 @@ export class SupabaseAuthDataSource implements IAuthDataSource {
   async signInWithGoogle(): Promise<User> {
     // Nativo com cliente configurado (Spec 106): seletor de contas do Android, sem navegador.
     if (Platform.OS !== "web" && this.nativeGoogle?.isAvailable()) {
-      return this.signInWithNativeGoogle(this.nativeGoogle);
+      try {
+        return await this.signInWithNativeGoogle(this.nativeGoogle);
+      } catch (error) {
+        // Se o Google Play Services não estiver disponível (ex.: Waydroid, AOSP ou aparelhos sem GMS),
+        // faz o fallback suave para o OAuth via navegador em vez de bloquear o login.
+        const isPlayServicesUnavailable =
+          error instanceof AuthError && error.message.includes("Google Play Services");
+        if (!isPlayServicesUnavailable) {
+          throw error;
+        }
+      }
     }
 
     const authClient = this.client.auth as unknown as {

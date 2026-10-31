@@ -18,7 +18,7 @@ export type HelpAndFaqProps = {
   onOpenConversations?: () => void;
 };
 
-const WIDE_CONTENT_MAX_WIDTH = WEB_MAX_WIDTH;
+const WIDE_CONTENT_MAX_WIDTH = 1240;
 
 type CategoryFilter = "todos" | "seguranca" | "regras" | "suporte";
 
@@ -73,7 +73,7 @@ export default function HelpAndFaq({ onBack, onOpenConversations }: HelpAndFaqPr
   return (
     <SafeAreaView style={styles.page}>
       <TopAppBar title="Ajuda" onBack={onBack} contentMaxWidth={wide ? WIDE_CONTENT_MAX_WIDTH : undefined} />
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
         <View style={[styles.content, wide && styles.contentWide]}>
           <View style={styles.headerSection}>
             <Text style={styles.heroHeadline}>Vamos ajudar.</Text>
@@ -205,7 +205,7 @@ function createStyles(colors: ColorPalette) {
   list: {
     gap: tokens.spacing[12],
   },
-  contentWide: { maxWidth: WEB_MAX_WIDTH, paddingHorizontal: WEB_GUTTER },
+  contentWide: { maxWidth: WIDE_CONTENT_MAX_WIDTH, alignSelf: "center", paddingHorizontal: tokens.spacing[24] },
   listWide: { flexDirection: "row", flexWrap: "wrap", alignItems: "flex-start", columnGap: tokens.spacing[16], rowGap: tokens.spacing[16] },
   fullRow: { width: "100%" },
   footerAction: {

@@ -23,7 +23,7 @@ import { FilledButton } from "@/view/components/FilledButton";
 import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
 
 import { withPress } from "@/view/pressFeedback";
-const WIDE_CONTENT_MAX_WIDTH = WEB_MAX_WIDTH;
+const WIDE_CONTENT_MAX_WIDTH = 1200;
 
 export type RequestDetailProps = {
   requestId: string;
@@ -101,6 +101,7 @@ export function RequestDetail({
       <ScrollView
         testID="request-detail-scroll"
         contentContainerStyle={styles.scroll}
+        keyboardShouldPersistTaps="handled"
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -433,9 +434,9 @@ function createStyles(colors: ColorPalette) {
     fontWeight: tokens.fontWeight.semiBold,
   },
   container: { gap: tokens.spacing[16] },
-  contentWide: { maxWidth: WEB_MAX_WIDTH, paddingHorizontal: WEB_GUTTER },
+  contentWide: { maxWidth: WIDE_CONTENT_MAX_WIDTH, alignSelf: "center", paddingHorizontal: tokens.spacing[24] },
   columns: { gap: tokens.spacing[16] },
-  columnsWide: { flexDirection: "row", alignItems: "flex-start" },
+  columnsWide: { flexDirection: "row", alignItems: "flex-start", gap: tokens.spacing[32] },
   column: { gap: tokens.spacing[16] },
   columnHalf: { flex: 1 },
   // Manchete menor (Spec 083) para a ação do momento caber acima da dobra.

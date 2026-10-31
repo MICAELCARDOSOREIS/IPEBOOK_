@@ -100,7 +100,7 @@ export function Drafts({ sessionUserId, onBack, onResume, onNavigateToCreateList
             ) : null}
           </View>
         ) : (
-          <ScrollView contentContainerStyle={[styles.scroll, wide && styles.scrollWide]} showsVerticalScrollIndicator={false}>
+          <ScrollView contentContainerStyle={[styles.scroll, wide && styles.scrollWide]} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
             <Text style={[styles.summary, wide && styles.fullRow]}>
               {state.drafts.length === 1 ? "1 anúncio em andamento" : `${state.drafts.length} anúncios em andamento`}
             </Text>

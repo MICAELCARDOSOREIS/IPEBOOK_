@@ -3,8 +3,8 @@ import { Animated, Image, StyleSheet, Text, View } from "react-native";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { useBookCoverImage } from "@/viewmodel/useBookCoverImage";
+import { IpeRibbon } from "@/view/components/IpeRibbon";
 import capaNoite from "@/view/assets/capas/capa-1.webp";
-import capaArvore from "@/view/assets/capas/capa-2.webp";
 import capaMontanhas from "@/view/assets/capas/capa-3.webp";
 import capaOndas from "@/view/assets/capas/capa-4.webp";
 
@@ -25,9 +25,11 @@ export type BookCoverProps = {
   width?: number;
   /** Desenha a lombada sobre a arte (capa plana). O livro 3D desliga: ele já tem a lombada de verdade. */
   showSpine?: boolean;
+  /** Fita marcadora dourada do Ipê-Amarelo no topo da capa. */
+  showRibbon?: boolean;
 };
 
-/** A cor de cada arte, na mesma ordem de `COVER_ARTS`: noite marrom, árvore petróleo, montanhas verdes e ondas azul-marinho (definida em `tokens.colors.cover.artBackgrounds`). */
+/** A cor de cada arte, na mesma ordem de `COVER_ARTS`: noite marrom, montanhas verdes e ondas azul-marinho (definida em `tokens.colors.cover.artBackgrounds`). */
 const COVER_BACKGROUNDS = tokens.colors.cover.artBackgrounds;
 /** Proporção da capa no Figma (`02.01`, `02.02`): 55x88dp e 74x119dp, ambas em 5:8. */
 const ASPECT_RATIO = 5 / 8;
@@ -52,14 +54,14 @@ const VARIANT_WIDTH: Record<BookCoverVariant, number> = {
 
 const asSource = (art: number | string) => (typeof art === "string" ? { uri: art } : art);
 
-/** Quatro capas ilustrativas, recortadas dos cadernos artesanais do design: noite, ondas, árvore e montanhas. */
-const COVER_ARTS = [capaNoite, capaArvore, capaMontanhas, capaOndas] as const;
+/** Três capas ilustrativas, recortadas dos cadernos artesanais do design: noite, montanhas e ondas. */
+const COVER_ARTS = [capaNoite, capaMontanhas, capaOndas] as const;
 const GOLD = tokens.colors.cover.gold;
 
-/** Hash FNV-1a: espalha ids parecidos (uuid) entre os quatro desenhos; a soma dos caracteres repetia o mesmo. */
+/** Hash FNV-1a: espalha ids parecidos (uuid) entre os desenhos. */
 /** Cor da capa ilustrativa deste livro; também serve de cor da lombada e da contracapa no livro 3D. */
 export function coverBackground(id: string): string {
-  return COVER_BACKGROUNDS[hashId(id) % 4];
+  return COVER_BACKGROUNDS[hashId(id) % COVER_ARTS.length];
 }
 
 function hashId(id: string): number {
@@ -82,6 +84,7 @@ export function BookCover({
   variant = "list",
   width: widthOverride,
   showSpine = true,
+  showRibbon = false,
   timeoutMs,
   maxRetries,
   initialBackoffMs,
@@ -103,7 +106,7 @@ export function BookCover({
 
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const kind = hashId(id) % 4;
+  const kind = hashId(id) % COVER_ARTS.length;
   const backgroundColor = COVER_BACKGROUNDS[kind];
   const width = widthOverride ?? VARIANT_WIDTH[variant] ?? LIST_WIDTH;
   const height = width / ASPECT_RATIO;
@@ -142,6 +145,7 @@ export function BookCover({
             resizeMode="cover"
             style={StyleSheet.absoluteFill}
           />
+          {showRibbon ? <IpeRibbon width={Math.max(8, width * 0.12)} height={Math.max(16, height * 0.18)} /> : null}
         </View>
       );
     }
@@ -186,6 +190,7 @@ export function BookCover({
           ))}
         </View>
       ) : null}
+      {showRibbon ? <IpeRibbon width={Math.max(8, width * 0.12)} height={Math.max(16, height * 0.18)} /> : null}
     </View>
   );
 }

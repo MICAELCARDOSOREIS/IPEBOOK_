@@ -47,7 +47,7 @@ export default function DeleteAccount({
     return (
       <SafeAreaView style={styles.page}>
         <TopAppBar title="Conta excluída" onBack={onBack} contentMaxWidth={wide ? WEB_MAX_WIDTH : undefined} />
-        <ScrollView contentContainerStyle={styles.scrollContent}>
+        <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
           <View style={styles.content}>
             <View style={styles.card}>
               <IconBadge icon="check" tone="action" size="large" />
@@ -72,7 +72,7 @@ export default function DeleteAccount({
     return (
       <SafeAreaView style={styles.page}>
         <TopAppBar title="Privacidade e dados" onBack={onBack} contentMaxWidth={wide ? WEB_MAX_WIDTH : undefined} />
-        <ScrollView contentContainerStyle={styles.scrollContent}>
+        <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
           <View style={styles.content}>
             <View style={styles.card}>
               <IconBadge icon="lock" tone="neutral" size="large" />
@@ -103,7 +103,7 @@ export default function DeleteAccount({
   return (
     <SafeAreaView style={styles.page}>
       <TopAppBar title="Privacidade e dados" onBack={onBack} contentMaxWidth={wide ? WEB_MAX_WIDTH : undefined} />
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
         <View style={[styles.content, wide && styles.contentWide]}>
           <View style={styles.heroHeader}>
             <Text style={styles.heroTitle}>Você no controle.</Text>
