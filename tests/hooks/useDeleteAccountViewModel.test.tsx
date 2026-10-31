@@ -197,4 +197,52 @@ describe("useDeleteAccountViewModel", () => {
     expect(ok).toBe(false);
     expect(hook.current[0].exportError).toBe("Você precisa estar conectado para baixar seus dados.");
   });
+
+  it("trata erro genérico e DomainError no downloadUserData", async () => {
+    const mockExportFail = {
+      exportUserData: vi.fn().mockRejectedValue(new DomainError("Erro ao exportar dados")),
+    };
+    let result!: ReturnType<typeof useDeleteAccountViewModel>;
+    function Probe() {
+      result = useDeleteAccountViewModel(stubAuth(), stubHistory(), mockExportFail as any, { downloadJson: vi.fn() } as any);
+      return null;
+    }
+    await act(async () => {
+      mounted.push(create(createElement(Probe)));
+    });
+
+    let ok = true;
+    await act(async () => {
+      ok = await result[1].downloadUserData("user-1");
+    });
+
+    expect(ok).toBe(false);
+    expect(result[0].exportError).toBe("Erro ao exportar dados");
+  });
+
+  it("trata erro inesperado em deleteAccount e permite reset do estado", async () => {
+    const auth = stubAuth({
+      deleteAccount: vi.fn().mockRejectedValue(new Error("Erro de infraestrutura")),
+    });
+    const hook = await renderHook(auth);
+
+    await act(async () => {
+      hook.current[1].setConfirmed(true);
+    });
+
+    let ok = true;
+    await act(async () => {
+      ok = await hook.current[1].deleteAccount("user-1");
+    });
+
+    expect(ok).toBe(false);
+    expect(hook.current[0].error).toBe("Não foi possível excluir sua conta. Tente novamente.");
+
+    await act(async () => {
+      hook.current[1].reset();
+    });
+
+    expect(hook.current[0].confirmed).toBe(false);
+    expect(hook.current[0].error).toBeNull();
+  });
 });

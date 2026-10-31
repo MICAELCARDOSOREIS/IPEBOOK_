@@ -66,5 +66,33 @@ describe("useModerationViewModel (Spec 102)", () => {
     await act(async () => { hook.current[1].clearActionMessage(); });
     expect(hook.current[0].actionMessage).toBeNull();
     expect(hook.current[0].decidingId).toBeNull();
+
+    // Testa remove_listing e suspend_user
+    const listingItem: ModerationItem = { ...item, kind: "listing", targetId: "b2" };
+    const userItem: ModerationItem = { ...item, kind: "user", targetId: "u2" };
+    const multiCases = new ModerationUseCases(new MemoryModerationDataSource([listingItem, userItem], true));
+    const multiHook = await probe(() => useModerationViewModel("mod", multiCases));
+
+    await act(async () => {
+      await multiHook.current[1].decide(listingItem, "remove_listing");
+    });
+    expect(multiHook.current[0].actionMessage).toBe("Anúncio removido.");
+
+    await act(async () => {
+      await multiHook.current[1].decide(userItem, "suspend_user");
+    });
+    expect(multiHook.current[0].actionMessage).toBe("Conta suspensa.");
+
+    // Falha genérica na decisão
+    const failingCases = {
+      listQueue: async () => [item],
+      decide: async () => { throw new Error("500 fatal"); },
+    } as never;
+    const failingHook = await probe(() => useModerationViewModel("mod", failingCases));
+    await act(async () => {
+      ok = await failingHook.current[1].decide(item, "dismiss");
+    });
+    expect(ok).toBe(false);
+    expect(failingHook.current[0].actionMessage).toBe("Não foi possível registrar a decisão.");
   });
 });

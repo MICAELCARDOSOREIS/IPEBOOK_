@@ -54,6 +54,17 @@ describe("testes de hook: useProfileViewModel (Spec 006 / Issue #55)", () => {
       updateProfile: vi.fn(),
     });
     expect(hook.current[0]).toEqual({ profile, loading: false, saving: false, error: null });
+
+    // Reload com DomainError
+    const getProfileDomainErr = vi.fn(async () => {
+      throw new ValidationError("Perfil suspenso.");
+    });
+    const hookReloadErr = await renderHook("ana", { getPublicProfile: getProfileDomainErr, updateProfile: vi.fn() });
+    expect(hookReloadErr.current[0].error).toBe("Perfil suspenso.");
+    await act(async () => {
+      hookReloadErr.current[1].reload();
+    });
+    expect(hookReloadErr.current[0].error).toBe("Perfil suspenso.");
   });
 
   it("reporta erro de domínio ao carregar", async () => {
@@ -92,6 +103,19 @@ describe("testes de hook: useProfileViewModel (Spec 006 / Issue #55)", () => {
     });
     expect(ok).toBe(false);
     expect(hook.current[0].error).toBe("Não foi possível salvar o perfil. Tente novamente.");
+
+    // Erro de domínio ao salvar
+    const hookDomain = await renderHook("ana", {
+      getPublicProfile: async () => profile,
+      updateProfile: async () => {
+        throw new ValidationError("Nome inválido.");
+      },
+    });
+    await act(async () => {
+      ok = await hookDomain.current[1].update({ name: "X" });
+    });
+    expect(ok).toBe(false);
+    expect(hookDomain.current[0].error).toBe("Nome inválido.");
   });
 
   it("não atualiza sem sessão", async () => {
@@ -118,6 +142,17 @@ describe("testes de hook: useProfileViewModel (Spec 006 / Issue #55)", () => {
       hook.current[1].reload();
     });
     expect(hook.current[0]).toEqual({ profile, loading: false, saving: false, error: null });
+
+    // Reload com DomainError
+    const getProfileDomainErr = vi.fn(async () => {
+      throw new ValidationError("Perfil suspenso.");
+    });
+    const hookReloadErr = await renderHook("ana", { getPublicProfile: getProfileDomainErr, updateProfile: vi.fn() });
+    expect(hookReloadErr.current[0].error).toBe("Perfil suspenso.");
+    await act(async () => {
+      hookReloadErr.current[1].reload();
+    });
+    expect(hookReloadErr.current[0].error).toBe("Perfil suspenso.");
   });
 
   it("não recarrega sem sessão", async () => {

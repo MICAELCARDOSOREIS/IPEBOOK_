@@ -110,5 +110,46 @@ describe("useBlockedUsersViewModel (Spec 056 / ADR 0039)", () => {
 
     expect(success).toBe(false);
     expect(hook.current[0].error).toBe("Falha de conexão ao desbloquear.");
+
+    // Erro genérico ao desbloquear
+    const genericErrUseCases: IBlockedUserUseCases = {
+      listBlockedUsers: async () => [{ userId: "user-1", name: "Carlos", blockedAt: "2026" }],
+      blockUser: async () => {},
+      unblockUser: async () => { throw new Error("Erro 500"); },
+      isBlocked: async () => false,
+    };
+    const hookGeneric = await renderHook("my-user-id", genericErrUseCases);
+    await act(async () => {
+      success = await hookGeneric.current[1].unblockUser("user-1");
+    });
+    expect(success).toBe(false);
+    expect(hookGeneric.current[0].error).toBe("Não foi possível desbloquear.");
+
+    // unblockUser sem sessão
+    const hookNoSession = await renderHook(null, genericErrUseCases);
+    await act(async () => {
+      success = await hookNoSession.current[1].unblockUser("user-1");
+    });
+    expect(success).toBe(false);
+  });
+
+  it("trata DomainError e erro genérico ao listar bloqueados", async () => {
+    const domainErrUseCases: IBlockedUserUseCases = {
+      listBlockedUsers: async () => { throw new DomainError("Erro específico de bloqueio."); },
+      blockUser: async () => {},
+      unblockUser: async () => {},
+      isBlocked: async () => false,
+    };
+    const hookDomain = await renderHook("my-user-id", domainErrUseCases);
+    expect(hookDomain.current[0].error).toBe("Erro específico de bloqueio.");
+
+    const genericErrUseCases: IBlockedUserUseCases = {
+      listBlockedUsers: async () => { throw new Error("Falha geral."); },
+      blockUser: async () => {},
+      unblockUser: async () => {},
+      isBlocked: async () => false,
+    };
+    const hookGeneric = await renderHook("my-user-id", genericErrUseCases);
+    expect(hookGeneric.current[0].error).toBe("Não foi possível carregar as pessoas bloqueadas. Tente novamente.");
   });
 });

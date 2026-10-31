@@ -50,4 +50,23 @@ describe("useReportUserViewModel (Spec 091)", () => {
     expect(hook.current[0].error).toBe("Você já denunciou esta pessoa.");
     expect(hook.current[0].success).toBe(false);
   });
+
+  it("trata erro genérico não-domínio ao submeter denúncia", async () => {
+    const hook = await renderHook(vi.fn().mockRejectedValue(new Error("Erro de rede")));
+    await act(async () => { hook.current[1].setReason("other"); });
+    let ok = true;
+    await act(async () => { ok = await hook.current[1].submit("ana", "me"); });
+    expect(ok).toBe(false);
+    expect(hook.current[0].error).toBe("Não foi possível enviar a denúncia. Tente novamente.");
+  });
+
+  it("envia sem detalhes preenchidos passando undefined", async () => {
+    const submit = vi.fn().mockResolvedValue({});
+    const hook = await renderHook(submit);
+    await act(async () => { hook.current[1].setReason("fake_profile"); });
+    let ok = false;
+    await act(async () => { ok = await hook.current[1].submit("ana", "me"); });
+    expect(ok).toBe(true);
+    expect(submit).toHaveBeenCalledWith({ reportedUserId: "ana", reason: "fake_profile", details: undefined }, "me");
+  });
 });

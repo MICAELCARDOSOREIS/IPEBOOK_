@@ -129,6 +129,73 @@ describe("useInviteFriendsViewModel (Spec 057, Figma 08.02)", () => {
     expect(hook.current[0].linkCopied).toBe(false);
     Platform.OS = originalOS;
   });
+
+  it("cobre fluxos web de shareToWhatsApp e shareNative com e sem navigator.share", async () => {
+    const originalOS = Platform.OS;
+    Platform.OS = "web";
+    const navShare = vi.fn().mockResolvedValue(undefined);
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    vi.stubGlobal("navigator", { share: navShare, clipboard: { writeText } });
+
+    const hook = await renderHook(fakeUseCases);
+    await act(async () => {
+      await hook.current[1].shareToWhatsApp();
+    });
+    expect(navShare).toHaveBeenCalledTimes(1);
+    expect(hook.current[0].linkCopied).toBe(true);
+
+    await act(async () => {
+      await hook.current[1].shareNative();
+    });
+    expect(navShare).toHaveBeenCalledTimes(2);
+
+    // Sem navigator.share
+    vi.stubGlobal("navigator", { clipboard: { writeText } });
+    await act(async () => {
+      await hook.current[1].shareToWhatsApp();
+    });
+    expect(writeText).toHaveBeenCalled();
+
+    await act(async () => {
+      await hook.current[1].shareNative();
+    });
+    expect(writeText).toHaveBeenCalled();
+    Platform.OS = originalOS;
+  });
+
+  it("cobre fallback e erros em copyLink e shareNative no mobile", async () => {
+    const originalOS = Platform.OS;
+    Platform.OS = "android";
+    const shareSpy = vi.spyOn(Share, "share").mockResolvedValue({ action: "sharedAction", activityType: undefined });
+
+    const hook = await renderHook(fakeUseCases);
+    await act(async () => {
+      await hook.current[1].copyLink();
+    });
+    expect(shareSpy).toHaveBeenCalledWith({ message: "https://ipebook.app" });
+    expect(hook.current[0].linkCopied).toBe(true);
+
+    // Erros em shareNative e copyLink
+    shareSpy.mockRejectedValueOnce(new Error("Falha no share"));
+    await act(async () => {
+      await hook.current[1].shareNative();
+    });
+    expect(hook.current[0].error).toBe("Não foi possível compartilhar o convite. Tente novamente.");
+
+    shareSpy.mockRejectedValueOnce(new Error("Falha no copy"));
+    await act(async () => {
+      await hook.current[1].copyLink();
+    });
+    expect(hook.current[0].error).toBe("Não foi possível compartilhar o convite. Tente novamente.");
+
+    // Erro em shareToWhatsApp
+    vi.mocked(Linking.canOpenURL).mockRejectedValueOnce(new Error("Falha canOpen"));
+    await act(async () => {
+      await hook.current[1].shareToWhatsApp();
+    });
+    expect(hook.current[0].error).toBe("Não foi possível compartilhar o convite. Tente novamente.");
+    Platform.OS = originalOS;
+  });
 });
 
 describe("useInviteFriendsViewModel — imagem do convite (Spec 092)", () => {

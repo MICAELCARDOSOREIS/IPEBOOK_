@@ -51,9 +51,9 @@ describe("useRequestNegotiationViewModel (ISO/IEC 25010 - Adequação Funcional)
   it("marca o anúncio como solicitado em caso de sucesso", async () => {
     const { useCases } = setup();
     const hook = await renderHook(() => useRequestNegotiationViewModel(useCases));
-    let ok = false;
+    let ok: unknown = false;
     await act(async () => { ok = await hook.current[1].request("listing-1", "alice"); });
-    expect(ok).toBe(true);
+    expect(Boolean(ok)).toBe(true);
     expect(hook.current[0]).toMatchObject({ pendingListingId: null, requestedListingIds: ["listing-1"], error: null });
   });
 
@@ -71,6 +71,63 @@ describe("useRequestNegotiationViewModel (ISO/IEC 25010 - Adequação Funcional)
     const hook = await renderHook(() => useRequestNegotiationViewModel(failing));
     await act(async () => { await hook.current[1].request("listing-1", "alice"); });
     expect(hook.current[0].error).toBe("Não foi possível solicitar a negociação. Tente novamente.");
+  });
+
+  it("checkActiveRequest lida com pedido existente, ausente e falha", async () => {
+    const { useCases } = setup();
+    const req = await useCases.requestNegotiation("listing-1", "alice");
+    const hook = await renderHook(() => useRequestNegotiationViewModel(useCases));
+
+    let found: unknown;
+    await act(async () => { found = await hook.current[1].checkActiveRequest("listing-1", "alice"); });
+    expect(found).toMatchObject({ id: req.id });
+    expect(hook.current[0].activeRequestId).toBe(req.id);
+    expect(hook.current[0].activeRequestStatus).toBe(req.status);
+    expect(hook.current[0].requestedListingIds).toContain("listing-1");
+
+    // Reexecuta quando já está em requestedListingIds
+    await act(async () => { await hook.current[1].checkActiveRequest("listing-1", "alice"); });
+    expect(hook.current[0].requestedListingIds).toEqual(["listing-1"]);
+
+    // Sem pedido
+    await act(async () => { found = await hook.current[1].checkActiveRequest("listing-1", "bob"); });
+    expect(found).toBeNull();
+
+    // Com falha
+    const throwingUseCases = {
+      getActiveRequest: async () => { throw new Error("Falha de rede"); },
+    } as unknown as IBookRequestUseCases;
+    const failingHook = await renderHook(() => useRequestNegotiationViewModel(throwingUseCases));
+    let errResult: unknown;
+    await act(async () => { errResult = await failingHook.current[1].checkActiveRequest("listing-1", "alice"); });
+    expect(errResult).toBeNull();
+    expect(failingHook.current[0].loadingActiveRequest).toBe(false);
+  });
+
+  it("recupera pedido quando erro indica que já tem um pedido pendente", async () => {
+    const existingReq = { id: "req-recuperado", listingId: "listing-1", requesterId: "alice", status: "pending" as const };
+    const alreadyPendingUseCases = {
+      requestNegotiation: async () => { throw new Error("Você já tem um pedido pendente para este livro."); },
+      getActiveRequest: async () => existingReq,
+    } as unknown as IBookRequestUseCases;
+
+    const hook = await renderHook(() => useRequestNegotiationViewModel(alreadyPendingUseCases));
+    let result: unknown;
+    await act(async () => { result = await hook.current[1].request("listing-1", "alice"); });
+    expect(result).toMatchObject({ id: "req-recuperado" });
+    expect(hook.current[0].activeRequestId).toBe("req-recuperado");
+    expect(hook.current[0].requestedListingIds).toContain("listing-1");
+
+    // Quando getActiveRequest falha mas erro é unique_pending
+    const throwingGetActive = {
+      requestNegotiation: async () => { throw new Error("unique_pending_constraint"); },
+      getActiveRequest: async () => { throw new Error("Falha getActive"); },
+    } as unknown as IBookRequestUseCases;
+
+    const hook2 = await renderHook(() => useRequestNegotiationViewModel(throwingGetActive));
+    let fallbackResult: unknown;
+    await act(async () => { fallbackResult = await hook2.current[1].request("listing-1", "alice"); });
+    expect(fallbackResult).toMatchObject({ listingId: "listing-1", requesterId: "alice", status: "pending" });
   });
 });
 
@@ -110,6 +167,7 @@ describe("useReceivedRequestsViewModel (ISO/IEC 25010 - Adequação Funcional)",
     const { useCases } = setup();
     const flaky: IBookRequestUseCases = {
       ...useCases,
+      getActiveRequest: useCases.getActiveRequest.bind(useCases),
       requestNegotiation: useCases.requestNegotiation.bind(useCases),
       listSentRequests: useCases.listSentRequests.bind(useCases),
       respondToRequest: useCases.respondToRequest.bind(useCases),

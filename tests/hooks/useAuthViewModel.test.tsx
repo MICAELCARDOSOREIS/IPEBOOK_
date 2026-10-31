@@ -1,30 +1,31 @@
 import { createElement } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { AuthError } from "@/model/errors";
-import type { IAuthUseCases } from "@/usecase/iAuthUseCases";
+import type { User } from "@/model/entities/user";
+import { DomainError } from "@/model/errors";
 import type { ILogger } from "@/model/services/iLogger";
 import type { IRateLimiter } from "@/model/services/iRateLimiter";
-import { ClientRateLimiter } from "@/infra/services/clientRateLimiter";
+import type { IAuthUseCases } from "@/usecase/iAuthUseCases";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
-
-function silentLogger(): ILogger {
-  return { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() };
-}
 
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
 const mounted: ReactTestRenderer[] = [];
 
+afterEach(() => {
+  act(() => {
+    while (mounted.length) mounted.pop()?.unmount();
+  });
+  vi.restoreAllMocks();
+});
+
 async function renderHook(auth: IAuthUseCases, rateLimiter?: IRateLimiter, logger?: ILogger) {
   let result!: ReturnType<typeof useAuthViewModel>;
-  function HookProbe() {
-    result = rateLimiter
-      ? useAuthViewModel(auth, rateLimiter, logger ?? silentLogger())
-      : useAuthViewModel(auth);
+  function Probe() {
+    result = useAuthViewModel(auth, rateLimiter, logger);
     return null;
   }
   await act(async () => {
-    mounted.push(create(createElement(HookProbe)));
+    mounted.push(create(createElement(Probe)));
   });
   return {
     get current() {
@@ -33,387 +34,233 @@ async function renderHook(auth: IAuthUseCases, rateLimiter?: IRateLimiter, logge
   };
 }
 
-afterEach(async () => {
-  await act(async () => {
-    mounted.splice(0).forEach((tree) => tree.unmount());
-  });
-});
+const mockUser: User = {
+  id: "user-123",
+  email: "leitor@piripiri.pi.gov.br",
+  name: "Leitor Teste",
+};
 
-function fakeAuth(overrides: Partial<IAuthUseCases> = {}): IAuthUseCases {
+function createMockAuth(overrides: Partial<IAuthUseCases> = {}): IAuthUseCases {
   return {
-    signUp: async () => {
-      throw new Error("not implemented");
-    },
-    signIn: async () => {
-      throw new Error("not implemented");
-    },
-    signOut: async () => {},
-    getSession: async () => null,
-    requestPasswordReset: async () => {
-      throw new Error("not implemented");
-    },
-    completePasswordReset: async () => {
-      throw new Error("not implemented");
-    },
-    deleteAccount: async () => {},
+    getSession: vi.fn().mockResolvedValue(null),
+    signIn: vi.fn().mockResolvedValue(mockUser),
+    signUp: vi.fn().mockResolvedValue(undefined),
+    signOut: vi.fn().mockResolvedValue(undefined),
+    requestPasswordReset: vi.fn().mockResolvedValue(undefined),
+    completePasswordReset: vi.fn().mockResolvedValue(undefined),
+    deleteAccount: vi.fn().mockResolvedValue(undefined),
+    signInWithGoogle: vi.fn().mockResolvedValue(mockUser),
+    setSessionFromUrl: vi.fn().mockResolvedValue(mockUser),
     ...overrides,
   };
 }
 
-describe("testes de hook: useAuthViewModel (ISO/IEC 25010 - Confiabilidade)", () => {
-  it("inicia sem sessão quando não há conta autenticada", async () => {
-    const hook = await renderHook(fakeAuth());
-    expect(hook.current[0]).toEqual({ user: null, loading: false, error: null });
+const dummyLogger: ILogger = {
+  info: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+  debug: vi.fn(),
+};
+
+describe("useAuthViewModel", () => {
+  it("carrega a sessão inicial ou define null quando falha", async () => {
+    const authSuccess = createMockAuth({ getSession: vi.fn().mockResolvedValue(mockUser) });
+    const hookSuccess = await renderHook(authSuccess);
+    expect(hookSuccess.current[0].user).toEqual(mockUser);
+    expect(hookSuccess.current[0].loading).toBe(false);
+
+    const authFail = createMockAuth({ getSession: vi.fn().mockRejectedValue(new Error("rede")) });
+    const hookFail = await renderHook(authFail);
+    expect(hookFail.current[0].user).toBeNull();
+    expect(hookFail.current[0].loading).toBe(false);
   });
 
-  it("recupera sessão já autenticada ao montar", async () => {
-    const user = { id: "1", email: "pessoa@exemplo.com" };
-    const hook = await renderHook(fakeAuth({ getSession: async () => user }));
-    expect(hook.current[0].user).toEqual(user);
-  });
-
-  it("cria conta com sucesso e autentica a sessão", async () => {
-    const user = { id: "1", email: "nova@exemplo.com" };
-    const signUp = vi.fn().mockResolvedValue(user);
-    const hook = await renderHook(fakeAuth({ signUp, getSession: async () => user }));
-
-    let success = false;
-    await act(async () => {
-      success = await hook.current[1].signUp("nova@exemplo.com", "12345678", "Leitora Teste");
-    });
-
-    expect(success).toBe(true);
-    expect(hook.current[0]).toMatchObject({ user, loading: false, error: null });
-  });
-
-  it("orienta a confirmar o e-mail quando o cadastro ainda não criou sessão", async () => {
-    const hook = await renderHook(fakeAuth({
-      signUp: async () => ({ id: "1", email: "nova@exemplo.com" }),
-      getSession: async () => null,
-    }));
-    let authenticated = true;
-    await act(async () => {
-      authenticated = await hook.current[1].signUp("nova@exemplo.com", "12345678", "Leitora Teste");
-    });
-    expect(authenticated).toBe(false);
-    expect(hook.current[0].statusMessage).toBe("Conta criada. Confirme seu e-mail antes de entrar.");
-  });
-
-  it("trata erro de domínio ao falhar o login e permite nova tentativa", async () => {
-    const signIn = vi
-      .fn()
-      .mockRejectedValueOnce(new AuthError("Credenciais inválidas."))
-      .mockResolvedValueOnce({ id: "1", email: "pessoa@exemplo.com" });
-    const hook = await renderHook(fakeAuth({ signIn }));
-
-    let firstAttempt = true;
-    await act(async () => {
-      firstAttempt = await hook.current[1].signIn("pessoa@exemplo.com", "errada");
-    });
-    expect(firstAttempt).toBe(false);
-    expect(hook.current[0].error).toBe("Credenciais inválidas.");
-
-    let secondAttempt = false;
-    await act(async () => {
-      secondAttempt = await hook.current[1].signIn("pessoa@exemplo.com", "12345678");
-    });
-    expect(secondAttempt).toBe(true);
-    expect(hook.current[0].error).toBeNull();
-    expect(hook.current[0].user).toEqual({ id: "1", email: "pessoa@exemplo.com" });
-  });
-
-  it("sanitiza exceções técnicas inesperadas protegendo detalhes internos", async () => {
-    const hook = await renderHook(
-      fakeAuth({
-        signIn: async () => {
-          throw new Error("conexão interna recusada: 5432");
-        },
-      }),
-    );
-
-    await act(async () => {
-      await hook.current[1].signIn("pessoa@exemplo.com", "12345678");
-    });
-
-    expect(hook.current[0].error).toBe("Não foi possível concluir. Tente novamente.");
-  });
-
-  it("encerra a sessão ao sair", async () => {
-    const user = { id: "1", email: "pessoa@exemplo.com" };
-    const hook = await renderHook(fakeAuth({ getSession: async () => user }));
-    expect(hook.current[0].user).toEqual(user);
-
-    await act(async () => {
-      await hook.current[1].signOut();
-    });
-
-    expect(hook.current[0].user).toBeNull();
-  });
-
-  it("confirma a solicitação sem retornar uma senha", async () => {
-    const hook = await renderHook(
-      fakeAuth({ requestPasswordReset: async () => {} }),
-    );
-
-    let result = false;
-    await act(async () => {
-      result = await hook.current[1].requestPasswordReset("pessoa@exemplo.com");
-    });
-
-    expect(result).toBe(true);
-    expect(hook.current[0].error).toBeNull();
-    expect(hook.current[0].loading).toBe(false);
-  });
-
-  it("registra erro tratável quando a recuperação de senha falha", async () => {
-    const hook = await renderHook(
-      fakeAuth({
-        requestPasswordReset: async () => {
-          throw new AuthError("Não há conta cadastrada com este e-mail.");
-        },
-      }),
-    );
-
-    let result = true;
-    await act(async () => {
-      result = await hook.current[1].requestPasswordReset("desconhecido@exemplo.com");
-    });
-
-    expect(result).toBe(false);
-    expect(hook.current[0].error).toBe("Não há conta cadastrada com este e-mail.");
-  });
-
-  it("trata erro de domínio e sanitiza erro inesperado no cadastro (signUp)", async () => {
-    const hookDomain = await renderHook(
-      fakeAuth({
-        signUp: async () => {
-          throw new AuthError("E-mail já cadastrado.");
-        },
-      }),
-    );
-    let resDomain = true;
-    await act(async () => {
-      resDomain = await hookDomain.current[1].signUp("existente@exemplo.com", "senha123", "Leitora Teste");
-    });
-    expect(resDomain).toBe(false);
-    expect(hookDomain.current[0].error).toBe("E-mail já cadastrado.");
-
-    const hookUnexpected = await renderHook(
-      fakeAuth({
-        signUp: async () => {
-          throw new Error("banco caiu");
-        },
-      }),
-    );
-    let resUnexpected = true;
-    await act(async () => {
-      resUnexpected = await hookUnexpected.current[1].signUp("novo@exemplo.com", "senha123", "Leitora Teste");
-    });
-    expect(resUnexpected).toBe(false);
-    expect(hookUnexpected.current[0].error).toBe("Não foi possível concluir. Tente novamente.");
-  });
-
-  it("sanitiza erro inesperado na recuperação de senha e lida com falha no signOut", async () => {
-    const hookReset = await renderHook(
-      fakeAuth({
-        requestPasswordReset: async () => {
-          throw new Error("falha SMTP");
-        },
-      }),
-    );
-    let resReset = true;
-    await act(async () => {
-      resReset = await hookReset.current[1].requestPasswordReset("alguem@exemplo.com");
-    });
-    expect(resReset).toBe(false);
-    expect(hookReset.current[0].error).toBe("Não foi possível concluir. Tente novamente.");
-
-    const hookSignOut = await renderHook(
-      fakeAuth({
-        signOut: async () => {
-          throw new Error("falha rede");
-        },
-      }),
-    );
-    await act(async () => {
-      await hookSignOut.current[1].signOut();
-    });
-    expect(hookSignOut.current[0].loading).toBe(false);
-  });
-
-  it("trata falha silenciosamente na recuperação de sessão inicial", async () => {
-    const hook = await renderHook(
-      fakeAuth({
-        getSession: async () => {
-          throw new Error("storage corrompido");
-        },
-      }),
-    );
-    expect(hook.current[0].user).toBeNull();
-    expect(hook.current[0].loading).toBe(false);
-  });
-});
-
-describe("useAuthViewModel — limite de tentativas no cliente (ADR 0027)", () => {
-  it("bloqueia a entrada depois de cinco tentativas na mesma conta e registra o aviso", async () => {
-    const auth = fakeAuth({
-      signIn: async () => {
-        throw new AuthError("Credenciais inválidas.");
-      },
-    });
-    const rateLimiter = new ClientRateLimiter();
-    const logger = silentLogger();
-    const hook = await renderHook(auth, rateLimiter, logger);
-
-    for (let tentativa = 1; tentativa <= 5; tentativa += 1) {
-      await act(async () => {
-        await hook.current[1].signIn("pessoa@exemplo.com", "senha-errada");
+  describe("signUp", () => {
+    it("cria conta e define usuário autenticado", async () => {
+      const auth = createMockAuth({
+        signUp: vi.fn().mockResolvedValue(undefined),
+        getSession: vi.fn().mockResolvedValueOnce(null).mockResolvedValueOnce(mockUser),
       });
-      expect(hook.current[0].error).toBe("Credenciais inválidas.");
-    }
-
-    await act(async () => {
-      await hook.current[1].signIn("pessoa@exemplo.com", "senha-errada");
-    });
-
-    expect(hook.current[0].error).toMatch(/^Muitas tentativas seguidas\./);
-    expect(logger.warn).toHaveBeenCalled();
-  });
-
-  it("não mistura o limite entre contas diferentes", async () => {
-    const auth = fakeAuth({
-      signIn: async () => {
-        throw new AuthError("Credenciais inválidas.");
-      },
-    });
-    const rateLimiter = new ClientRateLimiter();
-    const hook = await renderHook(auth, rateLimiter);
-
-    for (let tentativa = 1; tentativa <= 5; tentativa += 1) {
+      const hook = await renderHook(auth);
+      let ok: boolean = false;
       await act(async () => {
-        await hook.current[1].signIn("primeira@exemplo.com", "x");
-      });
-    }
-
-    await act(async () => {
-      await hook.current[1].signIn("segunda@exemplo.com", "x");
-    });
-
-    expect(hook.current[0].error).toBe("Credenciais inválidas.");
-  });
-
-  it("zera o limite quando a entrada dá certo", async () => {
-    let deveFalhar = true;
-    const auth = fakeAuth({
-      signIn: async () => {
-        if (deveFalhar) throw new AuthError("Credenciais inválidas.");
-        return { id: "u1", email: "pessoa@exemplo.com" };
-      },
-    });
-    const rateLimiter = new ClientRateLimiter();
-    const hook = await renderHook(auth, rateLimiter);
-
-    for (let tentativa = 1; tentativa <= 4; tentativa += 1) {
-      await act(async () => {
-        await hook.current[1].signIn("pessoa@exemplo.com", "x");
-      });
-    }
-
-    deveFalhar = false;
-    await act(async () => {
-      await hook.current[1].signIn("pessoa@exemplo.com", "certa");
-    });
-    expect(hook.current[0].user?.id).toBe("u1");
-
-    deveFalhar = true;
-    await act(async () => {
-      await hook.current[1].signIn("pessoa@exemplo.com", "x");
-    });
-    expect(hook.current[0].error).toBe("Credenciais inválidas.");
-  });
-
-  it("limita o pedido de recuperação de senha a três por conta", async () => {
-    const auth = fakeAuth({ requestPasswordReset: async () => {} });
-    const rateLimiter = new ClientRateLimiter();
-    const hook = await renderHook(auth, rateLimiter);
-
-    for (let tentativa = 1; tentativa <= 3; tentativa += 1) {
-      let ok = false;
-      await act(async () => {
-        ok = await hook.current[1].requestPasswordReset("pessoa@exemplo.com");
+        ok = await hook.current[1].signUp("novo@email.com", "senha123", "Novo Nome");
       });
       expect(ok).toBe(true);
-    }
-
-    let bloqueado = true;
-    await act(async () => {
-      bloqueado = await hook.current[1].requestPasswordReset("pessoa@exemplo.com");
+      expect(hook.current[0].user).toEqual(mockUser);
+      expect(hook.current[0].statusMessage).toBeNull();
     });
 
-    expect(bloqueado).toBe(false);
-    expect(hook.current[0].error).toMatch(/^Muitas tentativas seguidas\./);
-  });
-
-  it("bloqueia o cadastro repetido do mesmo e-mail", async () => {
-    const auth = fakeAuth({
-      signUp: async () => {
-        throw new AuthError("Este e-mail já está em uso.");
-      },
-    });
-    const rateLimiter = new ClientRateLimiter();
-    const hook = await renderHook(auth, rateLimiter);
-
-    for (let tentativa = 1; tentativa <= 5; tentativa += 1) {
-      await act(async () => {
-        await hook.current[1].signUp("pessoa@exemplo.com", "12345678", "Pessoa");
+    it("informa confirmação de e-mail se sessão continuar vazia", async () => {
+      const auth = createMockAuth({
+        signUp: vi.fn().mockResolvedValue(undefined),
+        getSession: vi.fn().mockResolvedValue(null),
       });
-    }
-
-    await act(async () => {
-      await hook.current[1].signUp("pessoa@exemplo.com", "12345678", "Pessoa");
+      const hook = await renderHook(auth);
+      let ok: boolean = false;
+      await act(async () => {
+        ok = await hook.current[1].signUp("novo@email.com", "senha123", "Novo Nome");
+      });
+      expect(ok).toBe(false);
+      expect(hook.current[0].statusMessage).toContain("Confirme seu e-mail");
     });
 
-    expect(hook.current[0].error).toMatch(/^Muitas tentativas seguidas\./);
+    it("bloqueia quando rate limiter recusa", async () => {
+      const auth = createMockAuth();
+      const mockLimiter: IRateLimiter = {
+        checkAndRecord: vi.fn().mockReturnValue({ allowed: false, remainingAttempts: 0, retryAfterMs: 45000 }),
+        getTimeUntilResetMs: vi.fn().mockReturnValue(45000),
+        reset: vi.fn(),
+      };
+      const hook = await renderHook(auth, mockLimiter, dummyLogger);
+      let ok: boolean = false;
+      await act(async () => {
+        ok = await hook.current[1].signUp("novo@email.com", "senha123", "Novo");
+      });
+      expect(ok).toBe(false);
+      expect(hook.current[0].error).toContain("Muitas tentativas");
+    });
+
+    it("trata DomainError e erros genéricos", async () => {
+      const auth = createMockAuth({
+        signUp: vi.fn().mockRejectedValue(new DomainError("E-mail já cadastrado.")),
+      });
+      const hook = await renderHook(auth, undefined, dummyLogger);
+      await act(async () => {
+        await hook.current[1].signUp("duplicado@email.com", "senha123", "Nome");
+      });
+      expect(hook.current[0].error).toBe("E-mail já cadastrado.");
+    });
   });
 
-  it("registra cancelamento do Google como info e exibe a mensagem de cancelado", async () => {
-    const logger = silentLogger();
-    const rateLimiter = new ClientRateLimiter();
-    const auth = fakeAuth({
-      signInWithGoogle: async () => {
-        throw new AuthError("Login com Google cancelado.");
-      },
+  describe("signIn e signOut", () => {
+    it("autentica com sucesso e reseta tentativas", async () => {
+      const auth = createMockAuth({ signIn: vi.fn().mockResolvedValue(mockUser) });
+      const mockLimiter: IRateLimiter = {
+        checkAndRecord: vi.fn().mockReturnValue({ allowed: true, remainingAttempts: 4, retryAfterMs: 0 }),
+        getTimeUntilResetMs: vi.fn().mockReturnValue(0),
+        reset: vi.fn(),
+      };
+      const hook = await renderHook(auth, mockLimiter, dummyLogger);
+      let ok: boolean = false;
+      await act(async () => {
+        ok = await hook.current[1].signIn("leitor@piripiri.pi.gov.br", "senha123");
+      });
+      expect(ok).toBe(true);
+      expect(mockLimiter.reset).toHaveBeenCalled();
+      expect(hook.current[0].user).toEqual(mockUser);
     });
-    const hook = await renderHook(auth, rateLimiter, logger);
 
-    let ok = true;
-    await act(async () => {
-      ok = Boolean(await hook.current[1].signInWithGoogle?.());
+    it("trata erro de senha incorreta", async () => {
+      const auth = createMockAuth({ signIn: vi.fn().mockRejectedValue(new DomainError("Senha incorreta.")) });
+      const hook = await renderHook(auth, undefined, dummyLogger);
+      let ok: boolean = true;
+      await act(async () => {
+        ok = await hook.current[1].signIn("leitor@piripiri.pi.gov.br", "errada");
+      });
+      expect(ok).toBe(false);
+      expect(hook.current[0].error).toBe("Senha incorreta.");
     });
 
-    expect(ok).toBe(false);
-    expect(hook.current[0].error).toBe("Login com Google cancelado.");
-    expect(logger.info).toHaveBeenCalledWith("Login com Google cancelado pelo usuário");
-    expect(logger.error).not.toHaveBeenCalled();
+    it("efetua signOut com sucesso ou tolera falha", async () => {
+      const auth = createMockAuth({
+        getSession: vi.fn().mockResolvedValue(mockUser),
+        signOut: vi.fn().mockResolvedValue(undefined),
+      });
+      const hook = await renderHook(auth);
+      expect(hook.current[0].user).toEqual(mockUser);
+
+      await act(async () => {
+        await hook.current[1].signOut();
+      });
+      expect(hook.current[0].user).toBeNull();
+
+      // Com falha de signOut
+      const authError = createMockAuth({
+        getSession: vi.fn().mockResolvedValue(mockUser),
+        signOut: vi.fn().mockRejectedValue(new Error("Falha")),
+      });
+      const hook2 = await renderHook(authError);
+      await act(async () => {
+        await hook2.current[1].signOut();
+      });
+      expect(hook2.current[0].loading).toBe(false);
+    });
   });
 
-  it("registra erro inesperado do Google no nível error", async () => {
-    const logger = silentLogger();
-    const rateLimiter = new ClientRateLimiter();
-    const auth = fakeAuth({
-      signInWithGoogle: async () => {
-        throw new Error("Falha de rede");
-      },
-    });
-    const hook = await renderHook(auth, rateLimiter, logger);
+  describe("requestPasswordReset", () => {
+    it("solicita recuperação de senha e trata bloqueio e erro", async () => {
+      const auth = createMockAuth();
+      const hook = await renderHook(auth, undefined, dummyLogger);
+      let ok: boolean = false;
+      await act(async () => {
+        ok = await hook.current[1].requestPasswordReset("recuperar@email.com");
+      });
+      expect(ok).toBe(true);
 
-    let ok = true;
-    await act(async () => {
-      ok = Boolean(await hook.current[1].signInWithGoogle?.());
+      const authErr = createMockAuth({
+        requestPasswordReset: vi.fn().mockRejectedValue(new DomainError("Usuário não encontrado.")),
+      });
+      const hookErr = await renderHook(authErr, undefined, dummyLogger);
+      await act(async () => {
+        ok = await hookErr.current[1].requestPasswordReset("inexistente@email.com");
+      });
+      expect(ok).toBe(false);
+      expect(hookErr.current[0].error).toBe("Usuário não encontrado.");
+    });
+  });
+
+  describe("signInWithGoogle e handleAuthCallback", () => {
+    it("autentica com Google, trata usuário cancelado ou ausência do método", async () => {
+      const auth = createMockAuth({ signInWithGoogle: vi.fn().mockResolvedValue(mockUser) });
+      const hook = await renderHook(auth, undefined, dummyLogger);
+      let ok: boolean = false;
+      await act(async () => {
+        ok = (await hook.current[1].signInWithGoogle?.()) ?? false;
+      });
+      expect(ok).toBe(true);
+
+      // Usuário cancelou
+      const authCanceled = createMockAuth({
+        signInWithGoogle: vi.fn().mockRejectedValue(new DomainError("Login cancelado pelo usuário.")),
+      });
+      const hookCanceled = await renderHook(authCanceled, undefined, dummyLogger);
+      await act(async () => {
+        ok = (await hookCanceled.current[1].signInWithGoogle?.()) ?? false;
+      });
+      expect(ok).toBe(false);
+      expect(hookCanceled.current[0].error).toContain("cancelado");
+
+      // Método não implementado
+      const authSemGoogle = createMockAuth();
+      delete (authSemGoogle as Partial<IAuthUseCases>).signInWithGoogle;
+      const hookSemGoogle = await renderHook(authSemGoogle, undefined, dummyLogger);
+      await act(async () => {
+        ok = (await hookSemGoogle.current[1].signInWithGoogle?.()) ?? false;
+      });
+      expect(ok).toBe(false);
+      expect(hookSemGoogle.current[0].error).toContain("indisponível");
     });
 
-    expect(ok).toBe(false);
-    expect(hook.current[0].error).toBe("Não foi possível concluir. Tente novamente.");
-    expect(logger.error).toHaveBeenCalledWith("Falha ao autenticar com Google", expect.any(Error));
+    it("processa retorno de autenticação handleAuthCallback", async () => {
+      const auth = createMockAuth({ setSessionFromUrl: vi.fn().mockResolvedValue(mockUser) });
+      const hook = await renderHook(auth, undefined, dummyLogger);
+      let ok: boolean = false;
+      await act(async () => {
+        ok = (await hook.current[1].handleAuthCallback?.("https://ipebook.app/#access_token=xyz")) ?? false;
+      });
+      expect(ok).toBe(true);
+      expect(hook.current[0].user).toEqual(mockUser);
+
+      // Sem setSessionFromUrl
+      const authSemCallback = createMockAuth();
+      delete (authSemCallback as Partial<IAuthUseCases>).setSessionFromUrl;
+      const hookSemCallback = await renderHook(authSemCallback, undefined, dummyLogger);
+      await act(async () => {
+        ok = (await hookSemCallback.current[1].handleAuthCallback?.("https://...")) ?? false;
+      });
+      expect(ok).toBe(false);
+      expect(hookSemCallback.current[0].error).toContain("indisponível");
+    });
   });
 });

@@ -270,5 +270,44 @@ describe("useShareListingViewModel — imagem do anúncio (Spec 092)", () => {
     expect(invalid.current[0].error).toBe("Anúncio inválido.");
     Platform.OS = originalOS;
   });
+
+  it("trata AbortError, NotAllowedError e dismissLinkCopied no shareToWhatsApp web", async () => {
+    const originalOS = Platform.OS;
+    Platform.OS = "web";
+
+    // AbortError
+    const abortErr = new Error("Abort");
+    abortErr.name = "AbortError";
+    const navAbort = vi.fn().mockRejectedValue(abortErr);
+    vi.stubGlobal("navigator", { share: navAbort });
+    const hook = await renderHook(fakeUseCases);
+    await act(async () => {
+      await hook.current[1].shareToWhatsApp("b1", fakeListing);
+    });
+    expect(hook.current[0].sharing).toBe(false);
+    expect(hook.current[0].linkCopied).toBe(false);
+
+    // NotAllowedError (recorre à área de transferência)
+    const notAllowedErr = new Error("NotAllowed");
+    notAllowedErr.name = "NotAllowedError";
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    vi.stubGlobal("navigator", {
+      share: vi.fn().mockRejectedValue(notAllowedErr),
+      clipboard: { writeText },
+    });
+    await act(async () => {
+      await hook.current[1].shareToWhatsApp("b1", fakeListing);
+    });
+    expect(writeText).toHaveBeenCalled();
+    expect(hook.current[0].linkCopied).toBe(true);
+
+    // dismissLinkCopied
+    act(() => {
+      hook.current[1].dismissLinkCopied();
+    });
+    expect(hook.current[0].linkCopied).toBe(false);
+
+    Platform.OS = originalOS;
+  });
 });
 

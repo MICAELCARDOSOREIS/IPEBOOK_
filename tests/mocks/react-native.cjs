@@ -237,8 +237,17 @@ const Animated = {
     },
     stop: () => {},
   }),
+  delay: (_time) => ({
+    start: (cb) => {
+      if (cb) cb({ finished: true });
+    },
+    stop: () => {},
+  }),
   View: React.forwardRef((props, ref) =>
     React.createElement("View", { ...props, ref }, props.children)
+  ),
+  Text: React.forwardRef((props, ref) =>
+    React.createElement("Text", { ...props, ref }, props.children)
   ),
 };
 

@@ -56,4 +56,23 @@ describe("useNavigationBadgesViewModel (Spec 091)", () => {
     await act(async () => { mounted.splice(0).forEach((t) => t.unmount()); });
     expect(off).toHaveBeenCalledTimes(1);
   });
+
+  it("funciona quando deps.subscribe não é fornecido", async () => {
+    const list = vi.fn().mockResolvedValue([entry("1", "pending")]);
+    const hook = await renderHook("me", {
+      listReceivedRequests: list,
+    });
+    expect(hook.current.conversations).toBe(1);
+    await act(async () => { mounted.splice(0).forEach((t) => t.unmount()); });
+  });
+
+  it("usa as dependências padrão do container quando nenhum deps é passado", async () => {
+    let result!: ReturnType<typeof useNavigationBadgesViewModel>;
+    function DefaultProbe() {
+      result = useNavigationBadgesViewModel(null, "/");
+      return null;
+    }
+    await act(async () => { mounted.push(create(createElement(DefaultProbe))); });
+    expect(result.conversations).toBe(0);
+  });
 });
