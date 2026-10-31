@@ -2,7 +2,7 @@
 
 Documento consolidado de continuidade técnica e produto do Ipebook (Piripiri, PI).
 
-Conferência atual: **Negociação concluída sai de Propostas (2026-10-29, correção):** depois da entrega por QR o pedido continua `accepted` e só o livro passa a `delivered`; a Estante contava esse pedido como proposta em aberto (aba "Propostas" e seu selo). Agora pedido aceito com livro entregue vai para "Concluídos". Teste de regressão em `tests/components/myListingsView.test.tsx` (falhava antes da correção). Validado com `npm run validate` (**1.788 testes**).
+Conferência atual: **Validação e cobertura global integral (2026-10-31):** pipeline `npm run validate` 100% verde (**1.891 testes em 271 arquivos**, 0 falhas). Cobertura estrita superada em todas as dimensões: **Branches 80,02%** (mínimo 80%), **Statements 90,53%**, **Functions 87,28%**, **Lines 91,54%**. 452 arquivos com arquitetura limpa de imports, 111 specs e 85 ADRs sem colisão, 39 migrações sincronizadas local (PGlite) e remoto (Supabase). Correção do estilo condicional web de feedback de toque (`pressFeedback.ts`) e guard de isolamento de plataforma no chat (`chat.tsx`).
 
 **2026-10-30** (111 Specs e 85 ADRs numerados, verificações locais e SQL/PGlite 100% aprovadas).
 
