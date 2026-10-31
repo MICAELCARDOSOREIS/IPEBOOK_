@@ -1,7 +1,7 @@
 import { router, type Href } from "expo-router";
 
 /** Janela em que um segundo toque para o mesmo destino é tratado como duplo toque. */
-const DOUBLE_TAP_WINDOW_MS = 700;
+const DOUBLE_TAP_WINDOW_MS = 400;
 
 let lastKey = "";
 let lastAt = 0;

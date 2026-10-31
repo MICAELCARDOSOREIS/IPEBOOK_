@@ -35,6 +35,9 @@ const emptyNegotiation: RequestNegotiationState = {
   requestedListingIds: [],
   error: null,
   errorListingId: null,
+  activeRequestId: null,
+  activeRequestStatus: null,
+  loadingActiveRequest: false,
 };
 
 const emptyShare: ShareListingState = {
@@ -83,7 +86,7 @@ function setup(
   const request = vi.fn().mockResolvedValue(true);
   vi.mocked(useRequestNegotiationViewModel).mockReturnValue([
     { ...emptyNegotiation, ...options.negotiation },
-    { request },
+    { request, checkActiveRequest: vi.fn().mockResolvedValue(null) },
   ]);
   const share = vi.fn().mockResolvedValue(undefined);
   const shareToWhatsApp = vi.fn().mockResolvedValue(undefined);

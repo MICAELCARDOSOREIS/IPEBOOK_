@@ -37,7 +37,7 @@ export function ReceivedRatings({ sessionUserId, onBack }: ReceivedRatingsProps)
   return (
     <SafeAreaView style={styles.page}>
       <TopAppBar contentMaxWidth={wide ? WIDE_CONTENT_MAX_WIDTH : undefined} title="Avaliações recebidas" onBack={onBack} />
-      <ScrollView contentContainerStyle={styles.scroll}>
+      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <View style={[styles.content, wide && styles.contentWide]}>
           {state.loading ? (
             <View style={styles.status}>

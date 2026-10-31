@@ -153,4 +153,31 @@ describe("tela de gerenciar anúncio (Figma 04.08)", () => {
     const comErro = await renderScreen();
     expect(comErro.getByText("Você só pode gerenciar seus próprios anúncios.")).toBeDefined();
   });
+
+  it("aciona a visualização pública do anúncio quando disponível", async () => {
+    mockViewModel({});
+    const onViewPublicListing = vi.fn();
+    const screen = await renderScreen({ onViewPublicListing });
+
+    const viewButton = screen.getByLabelText("Ver anúncio como leitor");
+    expect(viewButton).toBeDefined();
+
+    await act(async () => {
+      fireEvent.press(viewButton);
+    });
+
+    expect(onViewPublicListing).toHaveBeenCalledWith("b1");
+  });
+
+  it("permite compartilhar o anúncio", async () => {
+    mockViewModel({});
+    const screen = await renderScreen();
+
+    const shareButton = screen.getByLabelText("Compartilhar anúncio");
+    expect(shareButton).toBeDefined();
+
+    await act(async () => {
+      fireEvent.press(shareButton);
+    });
+  });
 });

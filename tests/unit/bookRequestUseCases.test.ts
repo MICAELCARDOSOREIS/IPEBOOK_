@@ -68,6 +68,16 @@ describe("negociação simples (spec 004)", () => {
       await books.updateStatus("listing-1", "reserved");
       await expect(useCases.requestNegotiation("listing-1", "alice")).rejects.toThrow(/não está mais disponível/);
     });
+
+    it("getActiveRequest: localiza pedido pendente ou aceito do usuário para o anúncio", async () => {
+      expect(await useCases.getActiveRequest("listing-1", "alice")).toBeNull();
+      const created = await useCases.requestNegotiation("listing-1", "alice");
+      const active = await useCases.getActiveRequest("listing-1", "alice");
+      expect(active?.id).toBe(created.id);
+      expect(active?.status).toBe("pending");
+      expect(await useCases.getActiveRequest("listing-1", "bob")).toBeNull();
+      expect(await useCases.getActiveRequest("listing-1", null)).toBeNull();
+    });
   });
 
   describe("listagens", () => {

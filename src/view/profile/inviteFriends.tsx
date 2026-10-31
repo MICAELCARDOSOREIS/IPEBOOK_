@@ -33,7 +33,7 @@ export function InviteFriends({ onBack }: InviteFriendsProps) {
   return (
     <SafeAreaView style={styles.page}>
       <TopAppBar contentMaxWidth={wide ? WEB_MAX_WIDTH : 560} title="Convidar amigos" onBack={() => onBack?.()} />
-      <ScrollView contentContainerStyle={styles.scroll}>
+      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <View style={[styles.content, wide && styles.contentWide]}>
           <View style={styles.header}>
             <IconBadge icon="shelf" tone="action" size="large" />

@@ -1,7 +1,7 @@
 import { useCallback, useRef } from "react";
 
 /** Intervalo em que um segundo toque no mesmo botão é tratado como duplo toque. */
-const DOUBLE_TAP_WINDOW_MS = 600;
+const DOUBLE_TAP_WINDOW_MS = 400;
 
 /** Nos testes de tela os toques sequenciais são legítimos e quase simultâneos; a janela só vale no app. */
 const DEFAULT_WINDOW_MS = process.env.NODE_ENV === "test" ? 0 : DOUBLE_TAP_WINDOW_MS;

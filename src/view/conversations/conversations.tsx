@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { FlatList, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { Chat } from "@/view/conversations/chat";
@@ -22,7 +22,7 @@ import { BookCover } from "@/view/components/BookCover";
 import { Tag } from "@/view/components/Tag";
 import { LoadingState } from "@/view/components/LoadingState";
 import { OfflineState } from "@/view/components/OfflineState";
-import { WEB_MAX_WIDTH } from "@/view/webLayout";
+import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
 
 import { withPress } from "@/view/pressFeedback";
 /** "Combinar encontro" do painel largo; some quando a entrega já foi concluída por QR (Spec 095). */
@@ -101,11 +101,27 @@ export function Conversations({
 
   const selectedItem = state.items.find((item) => item.requestId === selectedId) ?? null;
 
+  const pendingReceivedCount = useMemo(
+    () => state.items.filter((item) => item.kind === "pendingReceived").length,
+    [state.items],
+  );
+
   const open = (item: ConversationItem) => {
-    if (item.kind === "accepted" && wideWeb) setSelectedId(item.requestId);
-    else if (item.kind === "accepted") onOpenChat?.(item.requestId);
-    else if (item.kind === "pendingReceived") onOpenReceivedRequests?.();
-    else onOpenListing?.(item.listing.id);
+    if (item.kind === "accepted" && wideWeb) {
+      setSelectedId(item.requestId);
+      return;
+    }
+    if (item.kind === "accepted" || item.kind === "pendingReceived") {
+      if (onOpenChat) {
+        onOpenChat(item.requestId);
+        return;
+      }
+      if (item.kind === "pendingReceived") {
+        onOpenReceivedRequests?.();
+        return;
+      }
+    }
+    onOpenListing?.(item.listing.id);
   };
 
   return (
@@ -201,6 +217,30 @@ export function Conversations({
                 data={state.items}
                 keyExtractor={(item) => item.requestId}
                 contentContainerStyle={wideWeb ? styles.wideList : styles.list}
+                keyboardShouldPersistTaps="handled"
+                ListHeaderComponent={
+                  pendingReceivedCount > 0 && Boolean(onOpenReceivedRequests) ? (
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={`Você tem ${pendingReceivedCount} ${pendingReceivedCount === 1 ? "nova proposta recebida" : "novas propostas recebidas"}. Toque para abrir pedidos recebidos.`}
+                      onPress={onOpenReceivedRequests}
+                      style={withPress(styles.pendingBanner)}
+                    >
+                      <View style={styles.pendingBannerIcon}>
+                        <AppIcon name="swap" size={18} color={colors.nature.foliage} />
+                      </View>
+                      <View style={styles.pendingBannerContent}>
+                        <Text style={styles.pendingBannerTitle}>
+                          {`${pendingReceivedCount} ${pendingReceivedCount === 1 ? "nova proposta recebida" : "novas propostas recebidas"}`}
+                        </Text>
+                        <Text style={styles.pendingBannerSubtitle}>
+                          Toque para gerenciar e aceitar na lista de pedidos
+                        </Text>
+                      </View>
+                      <AppIcon name="chevronRight" size={18} color={colors.m3.onSurfaceVariant} />
+                    </Pressable>
+                  ) : undefined
+                }
                 renderItem={({ item }) => {
                   const isSelected = wideWeb && item.requestId === selectedId;
                   return (
@@ -377,13 +417,13 @@ function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     page: { flex: 1, backgroundColor: colors.background },
     flexOne: { flex: 1 },
-    // Container web largo padronizado em 1440 px com 80 px de margem lateral (alinhado ao WebHeader).
+    // Container web largo padronizado em WEB_MAX_WIDTH com margem lateral WEB_GUTTER (alinhado ao WebHeader).
     wideContainer: {
       flex: 1,
       width: "100%",
       maxWidth: WEB_MAX_WIDTH,
       alignSelf: "center",
-      paddingHorizontal: tokens.spacing[80],
+      paddingHorizontal: WEB_GUTTER,
       paddingTop: tokens.spacing[16],
       paddingBottom: tokens.spacing[24],
       // O painel ocupa a janela e cada coluna rola por conta própria, como nos mensageiros.
@@ -576,6 +616,7 @@ function createStyles(colors: ColorPalette) {
       minHeight: 88,
       paddingHorizontal: tokens.spacing[16],
       paddingVertical: tokens.spacing[12],
+      ...(Platform.OS === "web" ? ({ cursor: "pointer", userSelect: "none" } as never) : {}),
     },
     rowPressed: {
       backgroundColor: colors.m3.surfaceContainer,
@@ -629,12 +670,56 @@ function createStyles(colors: ColorPalette) {
     },
     emptyBody: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant, textAlign: "center", maxWidth: 320 },
     emptyAction: { alignSelf: "stretch", marginTop: tokens.spacing[16] },
-    deleteButton: { width: tokens.spacing[40], height: tokens.spacing[40], borderRadius: tokens.radius.xl, alignItems: "center", justifyContent: "center", position: "absolute", right: tokens.spacing[12], top: "50%", marginTop: -tokens.spacing[20] },
+    deleteButton: {
+      width: tokens.spacing[40],
+      height: tokens.spacing[40],
+      borderRadius: tokens.radius.xl,
+      alignItems: "center",
+      justifyContent: "center",
+      position: "absolute",
+      right: tokens.spacing[12],
+      top: "50%",
+      marginTop: -tokens.spacing[20],
+      ...(Platform.OS === "web" ? ({ cursor: "pointer", userSelect: "none" } as never) : {}),
+    },
     // A linha e o apagar são botões irmãos: o navegador não aceita botão dentro de botão.
     rowWrap: { position: "relative" },
     cancelRequest: { alignSelf: "flex-end", paddingHorizontal: tokens.spacing[16], paddingBottom: tokens.spacing[8], minHeight: tokens.spacing[32], justifyContent: "center" },
     cancelRequestText: { ...tokens.typography.labelLarge, color: colors.error },
     rowWithDelete: { paddingRight: tokens.spacing[56] },
     deleteButtonHovered: { backgroundColor: colors.m3.surfaceContainerHigh },
+    pendingBanner: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: colors.nature.sprout,
+      borderRadius: tokens.radius.card,
+      padding: tokens.spacing[12],
+      marginHorizontal: tokens.spacing[16],
+      marginBottom: tokens.spacing[12],
+      borderWidth: 1,
+      borderColor: colors.nature.foliage,
+      gap: tokens.spacing[10],
+    },
+    pendingBannerIcon: {
+      width: 36,
+      height: 36,
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.nature.onFoliage,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    pendingBannerContent: {
+      flex: 1,
+      gap: 2,
+    },
+    pendingBannerTitle: {
+      ...tokens.typography.bodyLarge,
+      fontWeight: tokens.fontWeight.bold,
+      color: colors.nature.foliageDeep,
+    },
+    pendingBannerSubtitle: {
+      ...tokens.typography.labelSmall,
+      color: colors.nature.foliageDeep,
+    },
   });
 }

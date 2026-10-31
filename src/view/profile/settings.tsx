@@ -30,7 +30,7 @@ import { useTheme } from "@/view/theme/ThemeProvider";
 import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
 
 import { withPress } from "@/view/pressFeedback";
-const WIDE_CONTENT_MAX_WIDTH = WEB_MAX_WIDTH;
+const WIDE_CONTENT_MAX_WIDTH = 1240;
 
 export type SettingsProps = {
   onBack: () => void;
@@ -195,11 +195,11 @@ export function Settings({
         android_ripple={{ color: colors.m3.surfaceContainerHigh }}
         style={({ pressed }) => [styles.linkRow, index > 0 && styles.linkDivider, pressed && styles.linkPressed]}
       >
-        <View style={styles.iconCircle}>
+        <View style={[styles.iconCircle, getIconToneStyle(link.icon, colors)]}>
           {link.icon === "instagram" ? (
             <InstagramIcon size={20} color={colors.m3.onSecondaryContainer} />
           ) : (
-            <AppIcon name={link.icon} size={20} color={colors.m3.onSecondaryContainer} />
+            <AppIcon name={link.icon} size={20} color={getIconColor(link.icon, colors)} />
           )}
         </View>
         <View style={styles.linkText}>
@@ -239,7 +239,7 @@ export function Settings({
   return (
     <SafeAreaView style={styles.page}>
       <TopAppBar title="Configurações" onBack={onBack} contentMaxWidth={wide ? WIDE_CONTENT_MAX_WIDTH : undefined} />
-      <ScrollView ref={scrollRef} contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+      <ScrollView ref={scrollRef} contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <View style={[styles.content, wide && styles.contentWide]}>
           {wide ? (
             <View style={styles.sidebar}>
@@ -344,6 +344,23 @@ export function Settings({
                 Escolha como o aplicativo aparece para você.
               </Text>
               <ThemePreferenceSelector />
+              <View testID="theme-palette-preview" style={styles.palettePreviewCard}>
+                <Text style={styles.paletteTitle}>Paleta Ipê, Livro & Folhagem</Text>
+                <View style={styles.paletteRow}>
+                  <View style={[styles.paletteBadge, { backgroundColor: colors.ipe.bloom }]}>
+                    <Text style={[styles.paletteBadgeText, { color: colors.ipe.onContainer }]}>Flor do Ipê</Text>
+                  </View>
+                  <View style={[styles.paletteBadge, { backgroundColor: colors.ipe.bloomDeep }]}>
+                    <Text style={[styles.paletteBadgeText, { color: colors.ipe.onContainer }]}>Âmbar Néctar</Text>
+                  </View>
+                  <View style={[styles.paletteBadge, { backgroundColor: colors.book.page, borderWidth: 1, borderColor: colors.book.paperEdge }]}>
+                    <Text style={[styles.paletteBadgeText, { color: colors.book.ink }]}>Papel de Livro</Text>
+                  </View>
+                  <View style={[styles.paletteBadge, { backgroundColor: colors.nature.foliage }]}>
+                    <Text style={[styles.paletteBadgeText, { color: colors.nature.onFoliage }]}>Verde Folha</Text>
+                  </View>
+                </View>
+              </View>
             </View>
           </View>
 
@@ -450,6 +467,40 @@ export function Settings({
 
 export default Settings;
 
+function getIconToneStyle(icon: LinkItem["icon"], colors: ColorPalette) {
+  switch (icon) {
+    case "lock":
+    case "bell":
+    case "place":
+    case "mail":
+      return { backgroundColor: colors.soft };
+    case "block":
+      return { backgroundColor: colors.errorContainer };
+    case "flag":
+      return { backgroundColor: colors.m3.tertiaryContainer };
+    case "instagram":
+      return { backgroundColor: colors.m3.secondaryContainer };
+    default:
+      return { backgroundColor: colors.m3.secondaryContainer };
+  }
+}
+
+function getIconColor(icon: LinkItem["icon"], colors: ColorPalette) {
+  switch (icon) {
+    case "lock":
+    case "bell":
+    case "place":
+    case "mail":
+      return colors.action;
+    case "block":
+      return colors.error;
+    case "flag":
+      return colors.m3.onTertiaryContainer;
+    default:
+      return colors.m3.onSecondaryContainer;
+  }
+}
+
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     page: { flex: 1, backgroundColor: colors.background },
@@ -458,22 +509,56 @@ function createStyles(colors: ColorPalette) {
       padding: tokens.spacing[16],
       borderRadius: tokens.radius.large,
       backgroundColor: colors.m3.surfaceContainerLow,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.03,
+      shadowRadius: 3,
+      elevation: 1,
     },
     listCard: {
       borderRadius: tokens.radius.large,
       overflow: "hidden",
       backgroundColor: colors.m3.surfaceContainerLow,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.03,
+      shadowRadius: 3,
+      elevation: 1,
     },
     accountCard: {
       flexDirection: "row",
       alignItems: "center",
-      gap: tokens.spacing[12],
+      gap: tokens.spacing[16],
       padding: tokens.spacing[16],
       borderRadius: tokens.radius.large,
-      backgroundColor: colors.m3.secondaryContainer,
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.04,
+      shadowRadius: 4,
+      elevation: 1,
     },
-    accountName: { ...tokens.typography.titleMedium, color: colors.m3.onSecondaryContainer },
-    accountAction: { ...tokens.typography.labelLarge, color: colors.m3.primary },
+    accountName: {
+      ...tokens.typography.titleMedium,
+      color: colors.text,
+      fontWeight: tokens.fontWeight.semiBold,
+    },
+    accountAction: {
+      ...tokens.typography.labelLarge,
+      color: colors.action,
+      fontWeight: tokens.fontWeight.semiBold,
+      backgroundColor: colors.soft,
+      paddingHorizontal: tokens.spacing[12],
+      paddingVertical: tokens.spacing[6],
+      borderRadius: tokens.radius.full,
+      overflow: "hidden",
+    },
     signOutRow: { alignItems: "center" },
     iconCircle: {
       width: tokens.spacing[40],
@@ -481,9 +566,12 @@ function createStyles(colors: ColorPalette) {
       borderRadius: tokens.radius.full,
       alignItems: "center",
       justifyContent: "center",
-      backgroundColor: colors.m3.secondaryContainer,
     },
-    linkDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.m3.outlineVariant },
+    linkDivider: {
+      borderTopWidth: 1,
+      borderTopColor: colors.m3.outlineVariant,
+      marginLeft: 68,
+    },
     linkPressed: { backgroundColor: colors.m3.surfaceContainerHigh },
     scroll: { flexGrow: 1, paddingBottom: tokens.spacing[32] },
     content: {
@@ -493,7 +581,14 @@ function createStyles(colors: ColorPalette) {
       padding: tokens.spacing[16],
       gap: tokens.spacing[24],
     },
-    contentWide: { maxWidth: WEB_MAX_WIDTH, paddingHorizontal: WEB_GUTTER, flexDirection: "row", alignItems: "flex-start", gap: tokens.spacing[48] },
+    contentWide: {
+      maxWidth: WIDE_CONTENT_MAX_WIDTH,
+      alignSelf: "center",
+      paddingHorizontal: tokens.spacing[24],
+      flexDirection: "row",
+      alignItems: "flex-start",
+      gap: tokens.spacing[48],
+    },
     mainStacked: { gap: tokens.spacing[24] },
     // Coluna de leitura: as listas de opções não passam de ~880 px, como nas preferências de sistemas.
     main: { flex: 1, minWidth: 0, maxWidth: 880, gap: tokens.spacing[32] },
@@ -517,11 +612,44 @@ function createStyles(colors: ColorPalette) {
     sideNavItemActive: { backgroundColor: colors.m3.surfaceContainerHigh },
     sideNavLabel: { ...tokens.typography.labelLarge, color: colors.m3.onSurface },
     sideSignOut: { alignItems: "flex-start", paddingHorizontal: tokens.spacing[4] },
-    section: { gap: tokens.spacing[8] },
+    palettePreviewCard: {
+      marginTop: tokens.spacing[8],
+      padding: tokens.spacing[14],
+      borderRadius: tokens.radius.cardSmall,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+      gap: tokens.spacing[10],
+    },
+    paletteTitle: {
+      ...tokens.typography.labelMedium,
+      color: colors.secondaryText,
+      fontWeight: tokens.fontWeight.semiBold,
+    },
+    paletteRow: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: tokens.spacing[8],
+    },
+    paletteBadge: {
+      paddingHorizontal: tokens.spacing[12],
+      paddingVertical: tokens.spacing[6],
+      borderRadius: tokens.radius.full,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    paletteBadgeText: {
+      ...tokens.typography.labelSmall,
+      fontWeight: tokens.fontWeight.semiBold,
+    },
+    section: {
+      gap: tokens.spacing[10],
+    },
     sectionHeader: {
       ...tokens.typography.labelLarge,
-      color: colors.m3.primary,
-      paddingHorizontal: tokens.spacing[8],
+      color: colors.m3.onSurfaceVariant,
+      fontWeight: tokens.fontWeight.semiBold,
+      paddingHorizontal: tokens.spacing[12],
     },
     sectionDescription: {
       ...tokens.typography.bodyMedium,
@@ -531,7 +659,9 @@ function createStyles(colors: ColorPalette) {
       ...tokens.typography.bodyMedium,
       color: colors.secondaryText,
       textAlign: "center",
-      paddingHorizontal: tokens.spacing[16],
+      paddingHorizontal: tokens.spacing[20],
+      lineHeight: tokens.lineHeight[20],
+      marginTop: tokens.spacing[4],
     },
     feedbackSuccess: {
       ...tokens.typography.bodyMedium,
@@ -560,27 +690,29 @@ function createStyles(colors: ColorPalette) {
     linkRow: {
       flexDirection: "row",
       alignItems: "center",
-      gap: tokens.spacing[12],
+      gap: tokens.spacing[14],
       minHeight: 64,
-      paddingVertical: tokens.spacing[8],
+      paddingVertical: tokens.spacing[10],
       paddingHorizontal: tokens.spacing[16],
     },
     toggleRow: {
       flexDirection: "row",
       alignItems: "center",
-      gap: tokens.spacing[12],
+      gap: tokens.spacing[14],
       minHeight: 64,
-      paddingVertical: tokens.spacing[8],
+      paddingVertical: tokens.spacing[10],
       paddingHorizontal: tokens.spacing[16],
     },
     linkText: { flex: 1, gap: tokens.spacing[2] },
     linkLabel: {
       ...tokens.typography.bodyMedium,
       color: colors.m3.onSurface,
+      fontWeight: tokens.fontWeight.medium,
     },
     linkDescription: {
       ...tokens.typography.bodyMedium,
       color: colors.secondaryText,
+      lineHeight: tokens.lineHeight[20],
     },
   });
 }

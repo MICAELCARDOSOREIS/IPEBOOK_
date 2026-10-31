@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef } from "react";
-import { AccessibilityInfo, Animated, Pressable, StyleSheet, Text, View } from "react-native";
+import { AccessibilityInfo, Animated, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
@@ -160,6 +160,7 @@ function createStyles(colors: ColorPalette) {
       minWidth: 0,
       alignItems: "center",
       gap: tokens.spacing[4],
+      ...(Platform.OS === "web" ? ({ cursor: "pointer", userSelect: "none" } as never) : {}),
     },
     iconLayer: { zIndex: 1 },
     indicator: {

@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
@@ -19,7 +19,7 @@ import { Avatar } from "@/view/components/Avatar";
 import { PhotoGallery } from "@/view/listings/photoGallery";
 import { ReservedListingSheet } from "@/view/listings/ReservedListingSheet";
 import { BOOK_CONDITION_LABELS, type BookModality } from "@/model/entities/book";
-import { WEB_MAX_WIDTH } from "@/view/webLayout";
+import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
 
 import { withPress } from "@/view/pressFeedback";
 function createModalityTag(colors: ColorPalette): Record<BookModality, { background: string; text: string; label: string }> {
@@ -84,6 +84,7 @@ export type BookDetailProps = {
   onNavigateToSignIn?: () => void;
   onNavigateToManageListing?: (bookId: string) => void;
   onNavigateToMyRequests?: () => void;
+  onNavigateToNegotiation?: (requestId: string) => void;
   onNavigateToCategorySearch?: (category: string) => void;
 };
 
@@ -95,6 +96,7 @@ export default function BookDetail({
   onNavigateToSignIn,
   onNavigateToManageListing,
   onNavigateToMyRequests,
+  onNavigateToNegotiation,
   onNavigateToCategorySearch,
 }: BookDetailProps) {
   const { colors } = useTheme();
@@ -148,7 +150,44 @@ export default function BookDetail({
   const heroColors = book ? modalityTag[book.modality] : null;
 
   const isOwner = Boolean(sessionUserId && book && book.ownerId === sessionUserId);
-  const isRequested = Boolean(book && negotiation.requestedListingIds.includes(book.id));
+  const activeRequestId = negotiation.activeRequestId;
+  const isAccepted = negotiation.activeRequestStatus === "accepted";
+  const isRequested = Boolean(book && (negotiation.requestedListingIds.includes(book.id) || Boolean(activeRequestId)));
+
+  const { checkActiveRequest } = negotiationActions;
+  useEffect(() => {
+    if (book?.id && sessionUserId && book.ownerId !== sessionUserId) {
+      void checkActiveRequest(book.id, sessionUserId);
+    }
+  }, [book?.id, sessionUserId, book?.ownerId, checkActiveRequest]);
+
+  const navigateToActiveNegotiation = useCallback(() => {
+    if (activeRequestId && onNavigateToNegotiation) {
+      onNavigateToNegotiation(activeRequestId);
+    } else {
+      onNavigateToMyRequests?.();
+    }
+  }, [activeRequestId, onNavigateToNegotiation, onNavigateToMyRequests]);
+
+  const handlePrimaryAction = useCallback(async () => {
+    if (!book) return;
+    if (!sessionUserId) {
+      onNavigateToSignIn?.();
+      return;
+    }
+    if (isRequested) {
+      navigateToActiveNegotiation();
+      return;
+    }
+    const created = await negotiationActions.request(book.id, sessionUserId);
+    if (created) {
+      if (onNavigateToNegotiation) {
+        onNavigateToNegotiation(created.id);
+      } else {
+        onNavigateToMyRequests?.();
+      }
+    }
+  }, [book, sessionUserId, isRequested, navigateToActiveNegotiation, negotiationActions, onNavigateToNegotiation, onNavigateToSignIn, onNavigateToMyRequests]);
 
   const handleStatusPress = () => {
     if (!book) return;
@@ -156,14 +195,14 @@ export default function BookDetail({
       if (isOwner) {
         onNavigateToManageListing?.(book.id);
       } else if (isRequested) {
-        onNavigateToMyRequests?.();
+        navigateToActiveNegotiation();
       } else {
         setReservedSheetVisible(true);
       }
       return;
     }
     if (isRequested) {
-      onNavigateToMyRequests?.();
+      navigateToActiveNegotiation();
     }
   };
 
@@ -236,17 +275,27 @@ export default function BookDetail({
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={statusA11yLabel}
-              onPress={handleStatusPress}
-              style={withPress([styles.statusButton, styles.statusButtonRequested])}
+              onPress={navigateToActiveNegotiation}
+              style={withPress([
+                styles.statusButton,
+                isAccepted ? styles.statusButtonAccepted : styles.statusButtonRequested,
+              ])}
             >
-              <Text style={[styles.statusButtonText, styles.statusTextRequested]}>Negociação solicitada</Text>
+              <Text
+                style={[
+                  styles.statusButtonText,
+                  isAccepted ? styles.statusTextAccepted : styles.statusTextRequested,
+                ]}
+              >
+                {isAccepted ? "Combinar encontro" : "Negociação solicitada"}
+              </Text>
             </Pressable>
           ) : (
             <FilledButton
               label={primaryActionLabel}
               loading={negotiation.pendingListingId === book.id}
               loadingLabel="Solicitando negociação"
-              onPress={() => void negotiationActions.request(book.id, sessionUserId)}
+              onPress={handlePrimaryAction}
             />
           )
         ) : null}
@@ -422,6 +471,31 @@ export default function BookDetail({
             {/* 5. Anunciante */}
             <SellerCard ownerId={book.ownerId} onPress={() => onNavigateToUserProfile?.(book.ownerId)} />
 
+            {/* Banner de negociação em andamento quando o usuário já solicitou o livro */}
+            {isRequested && !isOwner ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={isAccepted ? "Pedido aceito! Toque para combinar o encontro" : "Negociação em andamento. Toque para ver detalhes"}
+                onPress={navigateToActiveNegotiation}
+                style={withPress(styles.activeNegotiationBanner)}
+              >
+                <View style={styles.activeNegotiationIconBox}>
+                  <AppIcon name="chat" size={24} color={colors.nature.foliage} />
+                </View>
+                <View style={styles.activeNegotiationContent}>
+                  <Text style={styles.activeNegotiationTitle}>
+                    {isAccepted ? "Pedido aceito!" : "Você já solicitou este exemplar"}
+                  </Text>
+                  <Text style={styles.activeNegotiationBody}>
+                    {isAccepted
+                      ? "Toque aqui para combinar o encontro em Piripiri."
+                      : "Toque aqui para ver a negociação e combinar os detalhes."}
+                  </Text>
+                </View>
+                <AppIcon name="chevronRight" size={20} color={colors.m3.onSurfaceVariant} />
+              </Pressable>
+            ) : null}
+
             {wideWeb ? (
               <View style={styles.safeMeetingCard}>
                 <AppIcon name="place" size={20} color={colors.m3.onSecondaryContainer} />
@@ -435,8 +509,26 @@ export default function BookDetail({
             {state.favoriteError ? (
               <Text accessibilityRole="alert" style={styles.requestError}>{state.favoriteError}</Text>
             ) : null}
-            {negotiation.errorListingId === book.id ? (
-              <Text accessibilityRole="alert" style={styles.requestError}>{negotiation.error}</Text>
+            {negotiation.errorListingId === book.id && !isRequested ? (
+              negotiation.error?.includes("pedido pendente") ? (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Você já tem uma proposta para este anúncio. Toque para ver a negociação"
+                  onPress={navigateToActiveNegotiation}
+                  style={withPress(styles.activeNegotiationBanner)}
+                >
+                  <View style={styles.activeNegotiationIconBox}>
+                    <AppIcon name="chat" size={24} color={colors.nature.foliage} />
+                  </View>
+                  <View style={styles.activeNegotiationContent}>
+                    <Text style={styles.activeNegotiationTitle}>Proposta já enviada</Text>
+                    <Text style={styles.activeNegotiationBody}>Toque aqui para acompanhar a conversa e combinar o encontro.</Text>
+                  </View>
+                  <AppIcon name="chevronRight" size={20} color={colors.m3.onSurfaceVariant} />
+                </Pressable>
+              ) : (
+                <Text accessibilityRole="alert" style={styles.requestError}>{negotiation.error}</Text>
+              )
             ) : null}
             {share.error ? (
               <Text accessibilityRole="alert" style={styles.requestError}>{share.error}</Text>
@@ -586,8 +678,20 @@ function createStyles(colors: ColorPalette) {
     offscreen: { position: "absolute", left: -10000, top: 0 },
     page: { flex: 1, backgroundColor: colors.background },
     scrollContent: { paddingBottom: tokens.spacing[32] },
-    // Web larga (Figma `03.01`): capa à esquerda e cartão de ações à direita, com 48 px entre as colunas.
-    scrollContentWide: { flexDirection: "row", flexWrap: "wrap", alignItems: "flex-start", columnGap: tokens.spacing[48], rowGap: tokens.spacing[16], width: "100%", maxWidth: WEB_MAX_WIDTH, alignSelf: "center", paddingHorizontal: tokens.spacing[80], paddingTop: tokens.spacing[32], paddingBottom: tokens.spacing[48] },
+    // Web larga (Figma `03.01`): capa à esquerda e cartão de ações à direita, centralizado em 1280 px.
+    scrollContentWide: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      alignItems: "flex-start",
+      columnGap: tokens.spacing[48],
+      rowGap: tokens.spacing[16],
+      width: "100%",
+      maxWidth: 1280,
+      alignSelf: "center",
+      paddingHorizontal: WEB_GUTTER,
+      paddingTop: tokens.spacing[32],
+      paddingBottom: tokens.spacing[48],
+    },
     heroWide: { flex: 1.6, borderRadius: tokens.radius.xxl, paddingTop: tokens.spacing[16], minHeight: 520 },
     breadcrumb: { width: "100%", flexDirection: "row", alignItems: "center", gap: tokens.spacing[8] },
     breadcrumbLink: { ...tokens.typography.bodyMedium, color: colors.m3.primary },
@@ -778,6 +882,9 @@ function createStyles(colors: ColorPalette) {
     statusButtonRequested: {
       backgroundColor: colors.m3.surfaceContainerHighest,
     },
+    statusButtonAccepted: {
+      backgroundColor: colors.nature.foliage,
+    },
     statusButtonText: {
       ...tokens.typography.bodyLarge,
       fontWeight: tokens.fontWeight.semiBold,
@@ -792,6 +899,42 @@ function createStyles(colors: ColorPalette) {
       ...tokens.typography.bodyMedium,
       fontWeight: tokens.fontWeight.semiBold,
       color: colors.m3.onSurfaceVariant,
+    },
+    statusTextAccepted: {
+      ...tokens.typography.bodyLarge,
+      fontWeight: tokens.fontWeight.semiBold,
+      color: colors.m3.onPrimary,
+    },
+    activeNegotiationBanner: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: colors.nature.sprout,
+      borderRadius: tokens.radius.card,
+      padding: tokens.spacing[16],
+      gap: tokens.spacing[12],
+      borderWidth: 1,
+      borderColor: colors.nature.foliage,
+    },
+    activeNegotiationIconBox: {
+      width: tokens.spacing[40],
+      height: tokens.spacing[40],
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.nature.onFoliage,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    activeNegotiationContent: {
+      flex: 1,
+      gap: tokens.spacing[2],
+    },
+    activeNegotiationTitle: {
+      ...tokens.typography.bodyLarge,
+      fontWeight: tokens.fontWeight.bold,
+      color: colors.nature.foliageDeep,
+    },
+    activeNegotiationBody: {
+      ...tokens.typography.bodyMedium,
+      color: colors.nature.foliageDeep,
     },
     reserved: { ...tokens.typography.labelLarge, color: colors.m3.onTertiaryContainer, backgroundColor: colors.m3.tertiaryContainer, paddingHorizontal: tokens.spacing[16], paddingVertical: tokens.spacing[8], borderRadius: tokens.radius.full, overflow: "hidden" },
     requested: { ...tokens.typography.bodyMedium, color: colors.action, fontWeight: tokens.fontWeight.semiBold },

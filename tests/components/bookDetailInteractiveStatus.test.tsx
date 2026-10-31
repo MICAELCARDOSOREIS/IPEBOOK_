@@ -60,8 +60,11 @@ function setupDetail(
       requestedListingIds: options.requestedListingIds ?? [],
       error: null,
       errorListingId: null,
+      activeRequestId: null,
+      activeRequestStatus: null,
+      loadingActiveRequest: false,
     },
-    { request: vi.fn() },
+    { request: vi.fn(), checkActiveRequest: vi.fn().mockResolvedValue(null) },
   ]);
   vi.mocked(useShareListingViewModel).mockReturnValue([
     { sharing: false, linkCopied: false, error: null },

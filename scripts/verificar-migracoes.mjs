@@ -55,7 +55,12 @@ if (new Set(versions).size !== versions.length) {
   throw new Error('Há versões duplicadas nas migrações SQL');
 }
 for (const name of migrations) {
-  await db.exec(readFileSync(new URL(`../supabase/migrations/${name}`, import.meta.url), 'utf8'));
+  try {
+    await db.exec(readFileSync(new URL(`../supabase/migrations/${name}`, import.meta.url), 'utf8'));
+  } catch (err) {
+    console.error(`Erro ao aplicar ${name}:`, err.message);
+    throw err;
+  }
 }
 const legacy = await db.query(`select
   (select count(*) from public.listings) as listings,
@@ -695,6 +700,29 @@ await denied('Inscrição acima do limite por hora', () => as('anon', null, `sel
 await as('anon', null, `select public.v2_register_beta_tester('leitor@gmail.com', null)`);
 await db.exec('reset role');
 process.stdout.write('Inscrições do beta (Spec 108): verificadas com sucesso\n');
+
+// Spec 111: Notificações comunitárias e fechamento de ciclos
+const usuarioNovo = '99999999-9999-4999-8999-999999999999';
+await db.exec(`reset role; insert into auth.users (id) values ('${usuarioNovo}');`);
+await as('authenticated', usuarioNovo, `insert into public.v2_profiles (id, name) values ('${usuarioNovo}', 'Novo Leitor')`);
+await db.exec('reset role');
+const notifsOnboarding = await db.query(`select type from public.v2_notifications where user_id = '${usuarioNovo}' order by type`);
+if (notifsOnboarding.rows.length !== 2 || notifsOnboarding.rows[0].type !== 'safety_tip' || notifsOnboarding.rows[1].type !== 'system') {
+  throw new Error(`Onboarding não gerou notificações esperadas: ${JSON.stringify(notifsOnboarding.rows)}`);
+}
+
+// Favorito disponível novamente
+const livroReativado = await db.query(`select id from public.v2_books where status = 'available' and owner_id = '${owner}' limit 1`);
+await as('authenticated', reader, `insert into public.v2_favorites (book_id, user_id) values ('${livroReativado.rows[0].id}', '${reader}')`);
+await db.exec(`reset role; update public.v2_books set status = 'reserved' where id = '${livroReativado.rows[0].id}'`);
+await db.exec(`reset role; delete from public.v2_notifications where user_id = '${reader}' and type = 'favorite_update'`);
+await db.exec(`reset role; update public.v2_books set status = 'available' where id = '${livroReativado.rows[0].id}'`);
+const notifsFav = await db.query(`select title, message from public.v2_notifications where user_id = '${reader}' and type = 'favorite_update'`);
+if (!notifsFav.rows.some(r => r.title.includes('disponível novamente'))) {
+  throw new Error(`Reativação de favorito não gerou aviso: ${JSON.stringify(notifsFav.rows)}`);
+}
+
+process.stdout.write('Notificações comunitárias e fechamento de ciclos (Spec 111): verificadas com sucesso\n');
 
 process.stdout.write('Migrações e cenários SQL locais verificados.\n');
 await db.close();

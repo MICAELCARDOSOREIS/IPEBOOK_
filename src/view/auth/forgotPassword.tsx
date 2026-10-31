@@ -200,18 +200,22 @@ function createStyles(colors: ColorPalette) {
     fontWeight: tokens.fontWeight.semiBold,
   },
   resultBox: {
-    backgroundColor: colors.m3.surfaceContainerHigh,
-    borderRadius: tokens.radius.medium,
+    backgroundColor: colors.m3.surfaceContainerLow,
+    borderRadius: tokens.radius.large,
+    borderWidth: 1,
+    borderColor: colors.m3.outlineVariant,
     padding: tokens.spacing[16],
-    gap: tokens.spacing[4],
+    gap: tokens.spacing[6],
   },
   resultLabel: {
     ...tokens.typography.titleMedium,
     color: colors.text,
+    fontWeight: tokens.fontWeight.bold,
   },
   resultHint: {
     ...tokens.typography.bodyMedium,
     color: colors.secondaryText,
+    lineHeight: tokens.lineHeight[20],
   },
   countdown: {
     ...tokens.typography.bodyMedium,

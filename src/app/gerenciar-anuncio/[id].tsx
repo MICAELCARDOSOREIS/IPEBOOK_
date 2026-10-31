@@ -9,6 +9,7 @@ export default function GerenciarAnuncioRoute() {
     <ManageListingScreen
       bookId={id}
       onEdit={(bookId) => pushOnce(`/editar-anuncio/${bookId}`)}
+      onViewPublicListing={(bookId) => pushOnce(`/livro/${bookId}`)}
       onRemoved={() => replaceOnce("/meus-anuncios")}
       onBack={() => backOnce()}
       onRequireSignIn={() => replaceOnce("/entrar")}

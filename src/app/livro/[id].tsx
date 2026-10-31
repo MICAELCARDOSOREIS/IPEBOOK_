@@ -16,6 +16,7 @@ export default function LivroDetalhe() {
       onNavigateToSignIn={() => pushOnce("/entrar")}
       onNavigateToManageListing={(bookId) => pushOnce(`/gerenciar-anuncio/${bookId}` as Href)}
       onNavigateToMyRequests={() => pushOnce("/meus-pedidos")}
+      onNavigateToNegotiation={(requestId) => pushOnce(`/negociacao/${requestId}` as Href)}
       onNavigateToCategorySearch={(category) => pushOnce({ pathname: "/pesquisa", params: { categoria: category } } as never)}
     />
   );

@@ -44,7 +44,7 @@ export default function MeetingHistory({ onBack, onNavigateToNegotiation }: Meet
   return (
     <SafeAreaView style={styles.page}>
       <TopAppBar contentMaxWidth={wide ? WIDE_CONTENT_MAX_WIDTH : undefined} title="Histórico de encontros" onBack={onBack ?? (() => {})} />
-      <ScrollView contentContainerStyle={[styles.content, wide && styles.contentWide]}>
+      <ScrollView contentContainerStyle={[styles.content, wide && styles.contentWide]} keyboardShouldPersistTaps="handled">
         {state.loading ? (
           <LoadingState label="Carregando encontros…" />
         ) : state.error ? (

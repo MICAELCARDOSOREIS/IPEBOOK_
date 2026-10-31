@@ -14,6 +14,8 @@ export type NotificationsState = {
   error: string | null;
   filter: NotificationFilter;
   unreadCount: number;
+  /** Permissão de notificações concedida no aparelho (Spec 111). null se ainda não checada/web. */
+  systemPermissionGranted: boolean | null;
 };
 
 export type NotificationsActions = {
@@ -22,6 +24,9 @@ export type NotificationsActions = {
   refresh: () => Promise<void>;
   markAsRead: (notificationId: string) => Promise<void>;
   markAllAsRead: () => Promise<void>;
+  deleteNotification: (notificationId: string) => Promise<void>;
+  clearAll: () => Promise<void>;
+  clearRead: () => Promise<void>;
   setFilter: (filter: NotificationFilter) => void;
 };
 
@@ -34,9 +39,25 @@ export function useNotificationsViewModel(
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<NotificationFilter>("all");
+  const [systemPermissionGranted, setSystemPermissionGranted] = useState<boolean | null>(null);
 
   const active = useRef(false);
   const request = useRef(0);
+
+  useEffect(() => {
+    let isMounted = true;
+    void push
+      .getPermissions()
+      .then((granted) => {
+        if (isMounted) setSystemPermissionGranted(granted);
+      })
+      .catch(() => {
+        if (isMounted) setSystemPermissionGranted(null);
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, [push]);
 
   const load = useCallback(async (silent: boolean) => {
     if (!sessionUserId) {
@@ -116,6 +137,48 @@ export function useNotificationsViewModel(
     }
   }, [sessionUserId, useCases]);
 
+  const deleteNotification = useCallback(
+    async (notificationId: string) => {
+      try {
+        await useCases.deleteNotification(sessionUserId, notificationId);
+        setNotifications((prev) => prev.filter((item) => item.id !== notificationId));
+      } catch (err) {
+        setError(
+          err instanceof DomainError
+            ? err.message
+            : "Não foi possível excluir a notificação.",
+        );
+      }
+    },
+    [sessionUserId, useCases],
+  );
+
+  const clearAll = useCallback(async () => {
+    try {
+      await useCases.clearAll(sessionUserId);
+      setNotifications([]);
+    } catch (err) {
+      setError(
+        err instanceof DomainError
+          ? err.message
+          : "Não foi possível limpar as notificações.",
+      );
+    }
+  }, [sessionUserId, useCases]);
+
+  const clearRead = useCallback(async () => {
+    try {
+      await useCases.clearRead(sessionUserId);
+      setNotifications((prev) => prev.filter((item) => !item.read));
+    } catch (err) {
+      setError(
+        err instanceof DomainError
+          ? err.message
+          : "Não foi possível limpar as notificações lidas.",
+      );
+    }
+  }, [sessionUserId, useCases]);
+
   const unreadCount = notifications.filter((n) => !n.read).length;
   const filteredNotifications =
     filter === "unread" ? notifications.filter((n) => !n.read) : notifications;
@@ -137,12 +200,16 @@ export function useNotificationsViewModel(
       error,
       filter,
       unreadCount,
+      systemPermissionGranted,
     },
     {
       reload,
       refresh,
       markAsRead,
       markAllAsRead,
+      deleteNotification,
+      clearAll,
+      clearRead,
       setFilter,
     },
   ];

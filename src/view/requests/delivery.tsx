@@ -80,13 +80,13 @@ export function Delivery({ requestId, sessionUserId, onBack }: DeliveryProps) {
   const title = "Entrega do livro";
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar title={title} onBack={() => onBack?.()} />
+      <TopAppBar contentMaxWidth={560} title={title} onBack={() => onBack?.()} />
       {state.loading ? (
         <LoadingState label="Carregando a entrega" />
       ) : state.loadError ? (
         <ErrorState message={state.loadError} onRetry={() => void actions.reload()} />
       ) : (
-        <ScrollView contentContainerStyle={styles.scroll}>
+        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           <View style={styles.content}>
             {state.completed ? (
               <View style={styles.card} accessibilityLiveRegion="polite">

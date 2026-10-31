@@ -165,6 +165,19 @@ describe("Configurações — tela dedicada (Spec 073, ADR 0036)", () => {
     expect(screen.getByLabelText("Tema Sistema").props.accessibilityState.checked).toBe(false);
   });
 
+  it("exibe a prévia da paleta com Flor do Ipê, Papel de Livro e Verde Folha", async () => {
+    mockSession(true);
+    mockSettings();
+    const { screen } = await renderSettings();
+
+    expect(screen.getByTestId("theme-palette-preview")).toBeDefined();
+    expect(screen.getByText("Paleta Ipê, Livro & Folhagem")).toBeDefined();
+    expect(screen.getByText("Flor do Ipê")).toBeDefined();
+    expect(screen.getByText("Âmbar Néctar")).toBeDefined();
+    expect(screen.getByText("Papel de Livro")).toBeDefined();
+    expect(screen.getByText("Verde Folha")).toBeDefined();
+  });
+
   it("oferece a limpeza dos dados salvos no dispositivo e aciona o use case", async () => {
     mockSession(true);
     const { clearBooksCache } = mockSettings();

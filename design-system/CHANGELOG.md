@@ -2,6 +2,23 @@
 
 Versões no formato `MAIOR.MENOR.CORREÇÃO`. Mudança grande = versão nova.
 
+## 1.12.0 · 2026-10-30
+
+- **Identidade Ipê, Livro & Folhagem Verde e Refinamento do Tema Escuro:**
+  - Inclusão dos tokens semânticos de domínio em `tokens.json` e `tokens.ts`:
+    - `book`: papel pólen suave (`#FCFAF5`), cartão (`#F2EDE5`), tinta café (`#3C302A`) e encadernação em couro (`#58331F`);
+    - `nature`: verde botânico da copa do ipê (`#2C5E45`) e broto suave (`#E7F0EA`);
+    - `ipe`: florada solar (`#F7C21E`), néctar âmbar (`#F29A1A`), chão de pétalas (`#FEF6D8`) e fita marcadora (`#F7C21E`).
+  - **Refinamento do Modo Escuro:**
+    - Badges de modalidade (`trade`, `reserved`, `completed`, `sale`) reestruturados para leitura noturna suave sem ofuscamento, com contraste superior a 7:1 (WCAG AAA);
+    - Superfícies escuras aveludadas em café escuro (`#151311` / `#1D1B19`), evitando distorções em telas OLED.
+  - **Novos Componentes e Interações:**
+    - `IpeRibbon`: fita marcadora de página de cetim do ipê para capas e cartões de livros (`design-system/04-componentes/fita-marcador.md`);
+    - `IpePetalsCelebration`: chuva orgânica de pétalas de ipê para comemorações e conclusões de trocas (`design-system/04-componentes/chuva-petalas.md`);
+    - `ReaderCard`: suporte à fase do Ciclo do Ipê (`cycleStage`: Semente, Broto, Florada, Ipê Frondoso);
+    - `Tag`: ícone semântico `swap` na modalidade Troca no Ipê-Amarelo;
+    - Prévia visual interativa da paleta em Configurações > Aparência.
+
 ## 1.11.0 · 2026-10-29
 
 - Documentação dos componentes conferida contra as implementações atuais em `src/view/components/`.

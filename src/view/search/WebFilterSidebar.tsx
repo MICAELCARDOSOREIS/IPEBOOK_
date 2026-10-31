@@ -39,7 +39,7 @@ export function WebFilterSidebar({
   return (
     <View accessibilityLabel="Filtros" testID="web-filter-sidebar" style={styles.panel}>
       {/* Rola por conta própria: em janelas baixas a coluna não cabe inteira ao lado dos resultados. */}
-      <ScrollView contentContainerStyle={styles.panelContent}>
+      <ScrollView contentContainerStyle={styles.panelContent} keyboardShouldPersistTaps="handled">
       <Text accessibilityRole="header" style={styles.title}>Filtros</Text>
 
       <View style={styles.group}>

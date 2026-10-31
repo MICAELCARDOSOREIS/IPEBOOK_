@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { AppIcon } from "@/view/components/AppIcon";
@@ -69,6 +69,7 @@ function createStyles(colors: ColorPalette) {
       borderRadius: tokens.shapeMorph.buttonRest,
       justifyContent: "center",
       alignItems: "center",
+      ...(Platform.OS === "web" ? ({ cursor: "pointer", userSelect: "none" } as never) : {}),
     },
     clearButtonPressed: {
       borderRadius: tokens.shapeMorph.buttonPressed,

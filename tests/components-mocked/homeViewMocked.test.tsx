@@ -1,8 +1,10 @@
 import React from "react";
+import { View } from "react-native";
 import { act, fireEvent, render, within } from "@testing-library/react-native";
 import { describe, expect, it, vi } from "vitest";
 import type { HomeActions, HomeState } from "@/viewmodel/useHomeViewModel";
-import Home from "@/view/home";
+import Home, { resetAppLaunchCelebrationForTesting } from "@/view/home";
+import { subscribeIpePetals } from "@/view/components/ipeCelebrationController";
 
 // Mock explícito da ViewModel para isolamento determinístico da View
 // Motivo: Simular cenários de rede instável, erro e carregamento contínuo
@@ -13,6 +15,10 @@ vi.mock("@/viewmodel/useHomeViewModel", () => {
   };
 });
 vi.mock("@/viewmodel/useNetworkStatus", () => ({ useNetworkStatus: vi.fn() }));
+vi.mock("@/view/components/IpePetalsCelebration", () => ({
+  IpePetalsCelebration: (props: any) =>
+    props.active ? <View testID={props.testID ?? "ipe-petals-celebration"} /> : null,
+}));
 
 import { useHomeViewModel } from "@/viewmodel/useHomeViewModel";
 import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
@@ -295,6 +301,43 @@ describe("testes de componente com mock: Home (ISO/IEC 25010 - Usabilidade e Con
 
       expect(screen.getAllByText("Crioli").length).toBeGreaterThanOrEqual(2);
       expect(screen.getByLabelText("Ver detalhe de Livro de Crioli, Autor B em Crioli")).toBeDefined();
+    });
+  });
+
+  describe("Micro-interação da florada de Ipê (Controle de disparo)", () => {
+    it("ativa florada apenas na primeira entrada do app e não ao retornar de outra aba, salvo toque no Ipê", async () => {
+      resetAppLaunchCelebrationForTesting();
+      const onPetalTrigger = vi.fn();
+      const unsubscribe = subscribeIpePetals(onPetalTrigger);
+
+      mockedUseHomeViewModel.mockReturnValue([
+        { books: [], loading: false, error: null },
+        { reload: vi.fn() },
+      ]);
+
+      // 1. Primeira entrada do aplicativo
+      await act(async () => {
+        await render(<Home />);
+      });
+      expect(onPetalTrigger).toHaveBeenCalledTimes(1);
+
+      // 2. Simulação de navegação: usuário foi para o Explorar e voltou para a Home (remontagem)
+      let screen2!: Awaited<ReturnType<typeof render>>;
+      await act(async () => {
+        screen2 = await render(<Home />);
+      });
+      // Não deve ter ativado novamente ao voltar!
+      expect(onPetalTrigger).toHaveBeenCalledTimes(1);
+
+      // 3. Toque explícito na árvore do Ipê
+      const ipeButton = screen2.getByLabelText("Celebrar florada do Ipê");
+      await act(async () => {
+        fireEvent.press(ipeButton);
+      });
+      // Deve disparar a florada com o toque do usuário!
+      expect(onPetalTrigger).toHaveBeenCalledTimes(2);
+
+      unsubscribe();
     });
   });
 });

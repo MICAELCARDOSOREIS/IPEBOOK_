@@ -35,6 +35,8 @@ export interface IBookRequestUseCases {
     sessionUserId: string | null,
   ): Promise<BookRequest>;
   getRequestDetail(requestId: string, sessionUserId: string | null): Promise<NegotiationDetail>;
+  /** Busca pedido ativo (pendente ou aceito) do usuário para o anúncio. */
+  getActiveRequest(listingId: string, sessionUserId: string | null): Promise<BookRequest | null>;
   /** Quem pediu desiste do pedido ainda pendente; quem anunciou é avisado (Spec 101). */
   cancelRequest(requestId: string, sessionUserId: string | null): Promise<BookRequest>;
 }

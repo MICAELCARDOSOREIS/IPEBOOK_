@@ -178,6 +178,23 @@ export class BookRequestUseCases implements IBookRequestUseCases {
     };
   }
 
+  async getActiveRequest(listingId: string, sessionUserId: string | null): Promise<BookRequest | null> {
+    if (!sessionUserId) return null;
+    try {
+      const requests = await this.requests.listByListing(listingId);
+      const found = requests.find((r) => r.requesterId === sessionUserId && (r.status === "pending" || r.status === "accepted"));
+      if (found) return found;
+    } catch {
+      // continua para buscar pelos pedidos do solicitante
+    }
+    try {
+      const myRequests = await this.requests.listByRequester(sessionUserId);
+      return myRequests.find((r) => r.listingId === listingId && (r.status === "pending" || r.status === "accepted")) ?? null;
+    } catch {
+      return null;
+    }
+  }
+
   /**
    * O encontro de `06.05` identifica a pessoa pelo nome. Uma falha ao ler o perfil não impede
    * acompanhar a negociação: a tela recorre ao identificador. A foto vai junto para o avatar (Spec 084).

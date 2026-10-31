@@ -121,6 +121,7 @@ export function PhotoGallery({ photos, initialIndex = 0, visible, onClose }: Pho
             horizontal
             pagingEnabled
             showsHorizontalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
             keyExtractor={(uri, itemIndex) => `${uri}-${itemIndex}`}
             initialScrollIndex={clampIndex(initialIndex, photos.length)}
             getItemLayout={(_, itemIndex) => ({ length: pageWidth, offset: pageWidth * itemIndex, index: itemIndex })}

@@ -127,6 +127,7 @@ export function RequestListLayout({
               data={filteredItems}
               keyExtractor={(item) => item.request.id}
               contentContainerStyle={styles.listContent}
+              keyboardShouldPersistTaps="handled"
               // O aviso acompanha o fim da lista, em vez de ficar preso no rodapé da janela.
               ListFooterComponent={
                 items.length > 0 ? (
@@ -172,7 +173,7 @@ export function RequestListLayout({
                       id={item.listing.id}
                       title={item.listing.title}
                       photoUrl={item.listing.photoUrl}
-                      variant="list"
+                      variant={wide ? "card" : "list"}
                     />
                     <View style={styles.bookInfo}>
                       <View style={styles.row}>
@@ -203,36 +204,86 @@ export function RequestListLayout({
 
 export function createRequestStyles(colors: ColorPalette) {
   return StyleSheet.create({
-  actions: { flexDirection: "row", gap: tokens.spacing[12], marginTop: tokens.spacing[8] },
-  primary: {
-    minHeight: tokens.accessibility.touchTarget,
-    justifyContent: "center",
-    paddingHorizontal: tokens.spacing[20],
-    borderRadius: tokens.radius.full,
-    backgroundColor: colors.action,
-  },
-  primaryText: {
-    color: colors.surface,
-    ...tokens.typography.bodyLarge,
-    fontWeight: tokens.fontWeight.semiBold,
-  },
-  secondary: {
-    minHeight: tokens.accessibility.touchTarget,
-    justifyContent: "center",
-    paddingHorizontal: tokens.spacing[20],
-    borderRadius: tokens.radius.full,
-    borderWidth: 1,
-    borderColor: colors.m3.outline,
-  },
-  secondaryText: {
-    color: colors.action,
-    ...tokens.typography.bodyLarge,
-    fontWeight: tokens.fontWeight.semiBold,
-  },
-  meta: {
-    ...tokens.typography.bodyMedium,
-    color: colors.secondaryText,
-  },
+    actions: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      alignItems: "center",
+      gap: tokens.spacing[8],
+      marginTop: tokens.spacing[8],
+    },
+    primary: {
+      minHeight: tokens.accessibility.touchTarget,
+      justifyContent: "center",
+      alignItems: "center",
+      paddingHorizontal: tokens.spacing[20],
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.action,
+    },
+    primaryText: {
+      color: colors.surface,
+      ...tokens.typography.bodyLarge,
+      fontWeight: tokens.fontWeight.semiBold,
+    },
+    secondary: {
+      minHeight: tokens.accessibility.touchTarget,
+      justifyContent: "center",
+      alignItems: "center",
+      paddingHorizontal: tokens.spacing[16],
+      borderRadius: tokens.radius.full,
+      borderWidth: 1,
+      borderColor: colors.m3.outline,
+    },
+    secondaryText: {
+      color: colors.action,
+      ...tokens.typography.bodyLarge,
+      fontWeight: tokens.fontWeight.semiBold,
+    },
+    chatButton: {
+      minHeight: tokens.accessibility.touchTarget,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: tokens.spacing[6],
+      paddingHorizontal: tokens.spacing[16],
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.m3.secondaryContainer,
+    },
+    chatButtonText: {
+      color: colors.m3.onSecondaryContainer,
+      ...tokens.typography.bodyLarge,
+      fontWeight: tokens.fontWeight.semiBold,
+    },
+    requesterRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[12],
+      paddingVertical: tokens.spacing[8],
+      paddingHorizontal: tokens.spacing[12],
+      backgroundColor: colors.m3.surfaceContainer,
+      borderRadius: tokens.radius.medium,
+    },
+    requesterInfo: {
+      flex: 1,
+      gap: 2,
+    },
+    meta: {
+      ...tokens.typography.bodyMedium,
+      fontWeight: tokens.fontWeight.medium,
+      color: colors.m3.onSurface,
+    },
+    hintBox: {
+      backgroundColor: colors.nature.sprout,
+      borderRadius: tokens.radius.medium,
+      padding: tokens.spacing[12],
+      gap: tokens.spacing[4],
+      marginTop: tokens.spacing[6],
+      borderWidth: 1,
+      borderColor: colors.nature.foliage,
+    },
+    hintText: {
+      ...tokens.typography.labelMedium,
+      color: colors.nature.foliageDeep,
+    },
     error: {
       ...tokens.typography.bodyMedium,
       color: colors.error,
@@ -253,8 +304,8 @@ function createStyles(colors: ColorPalette) {
     paddingTop: tokens.spacing[32],
   },
   contentWide: { maxWidth: WEB_MAX_WIDTH, paddingHorizontal: WEB_GUTTER },
-  columns: { gap: tokens.spacing[12] },
-  itemWide: { flex: 1, maxWidth: "50%" },
+  columns: { gap: tokens.spacing[16] },
+  itemWide: { flex: 1, padding: tokens.spacing[20] },
   back: {
     minHeight: tokens.accessibility.touchTarget,
     justifyContent: "center",
@@ -372,8 +423,8 @@ function createStyles(colors: ColorPalette) {
     color: colors.secondaryText,
   },
   item: {
-    backgroundColor: colors.surface,
-    borderRadius: tokens.radius.medium,
+    backgroundColor: colors.m3.surfaceContainerLow,
+    borderRadius: tokens.radius.card,
     borderWidth: 1,
     borderColor: colors.m3.outlineVariant,
     padding: tokens.spacing[16],

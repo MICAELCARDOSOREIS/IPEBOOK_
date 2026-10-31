@@ -186,7 +186,7 @@ export default function ProfileHub({
 
   return (
     <SafeAreaView edges={["top", "left", "right"]} style={styles.page}>
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <View style={[styles.content, wideWeb && styles.contentWide]}>
           {/* Título editorial da marca (Figma 07.01 nó 563:8321: Source Serif 4 Bold 34px, #58331F)
               com entrada de Configurações no topo (ADR 0060), liberada também para visitante */}
@@ -391,8 +391,18 @@ function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     page: { flex: 1, backgroundColor: colors.background },
     scroll: { flexGrow: 1, paddingBottom: tokens.spacing[32] },
-    // Web larga (Figma `07.01`): cartão e métricas em largura total, "Atividade" e "Conta" em duas colunas.
-    contentWide: { maxWidth: WEB_MAX_WIDTH, paddingHorizontal: WEB_GUTTER, paddingTop: tokens.spacing[32], flexDirection: "row", flexWrap: "wrap", alignItems: "flex-start", columnGap: tokens.spacing[48], rowGap: tokens.spacing[24] },
+    // Web larga (Figma `07.01`): cartão e métricas em coluna lateral, "Atividade" e "Conta" lado a lado.
+    contentWide: {
+      maxWidth: 1240,
+      alignSelf: "center",
+      paddingHorizontal: tokens.spacing[24],
+      paddingTop: tokens.spacing[32],
+      flexDirection: "row",
+      flexWrap: "wrap",
+      alignItems: "flex-start",
+      columnGap: tokens.spacing[48],
+      rowGap: tokens.spacing[24],
+    },
     fullRow: { width: "100%" },
     heroBlock: { width: "100%", gap: tokens.spacing[16] },
     // Web larga: cartão, botão e números numa coluna lateral fixa; Atividade e Conta lado a lado.

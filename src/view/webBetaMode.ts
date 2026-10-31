@@ -1,11 +1,9 @@
-import { Platform } from "react-native";
-
 /**
- * Spec 108: por enquanto o site só divulga o teste do app Android. Na web não há catálogo nem
- * cadastro; `/entrar` e `/excluir-conta` ficam acessíveis só pelo endereço, porque a Play Store
- * exige um link público para excluir a conta.
+ * Modo Web ativo com aplicativo completo (catálogo, busca, anúncios, negociações e autenticação).
+ * Conforme Spec 108, para reabrir o site completo, desliga-se WEB_BETA_ONLY aqui.
+ * Quando false, todas as rotas operam normalmente na web com ConnectedWebHeader e ConnectedNavigationBar.
  */
-export const WEB_BETA_ONLY = Platform.OS === "web";
+export const WEB_BETA_ONLY = false;
 
 const ROTAS_LIBERADAS = new Set([
   "/bem-vindo",

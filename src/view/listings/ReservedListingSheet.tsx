@@ -102,7 +102,7 @@ export function ReservedListingSheet({
                   <AppIcon
                     name={isFavorite ? "heartFill" : "heart"}
                     size={22}
-                    color={isFavorite ? colors.action : colors.m3.onSurfaceVariant}
+                    color={isFavorite ? colors.ipe.bloomDeep : colors.m3.onSurfaceVariant}
                   />
                 </View>
                 <View style={styles.actionContent}>

@@ -93,6 +93,7 @@ function createStyles(colors: ColorPalette) {
       height: 32,
       paddingHorizontal: tokens.spacing[12],
       borderRadius: tokens.radius.full,
+      ...(Platform.OS === "web" ? ({ cursor: "pointer", userSelect: "none" } as never) : {}),
     },
     crumbBackActive: { backgroundColor: colors.m3.surfaceContainerHigh },
     crumbBackText: { ...tokens.typography.labelLarge, color: colors.m3.onSurface },
@@ -112,6 +113,7 @@ function createStyles(colors: ColorPalette) {
       borderRadius: tokens.shapeMorph.buttonRest,
       justifyContent: "center",
       alignItems: "center",
+      ...(Platform.OS === "web" ? ({ cursor: "pointer", userSelect: "none" } as never) : {}),
     },
     backButtonPressed: {
       borderRadius: tokens.shapeMorph.buttonPressed,

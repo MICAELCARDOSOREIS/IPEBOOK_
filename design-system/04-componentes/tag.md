@@ -21,13 +21,14 @@ em si é **Novo** (sem papel equivalente no M3).
 
 1. Container de cor fixa por significado (token `tag.<modalidade>.bg`), com raio de pílula
 2. Texto do nome por extenso (nunca só a cor)
+3. Ícone semântico de apoio (ex.: `swap` para a modalidade Troca)
 
 ## Variantes
 
 | Variante | Uso | Tokens |
 | --- | --- | --- |
 | Venda | Anúncio de venda | `secondary-container` / `on-secondary-container` |
-| Troca | Anúncio de troca | `tertiary-container` / `on-tertiary-container` |
+| Troca | Anúncio de troca (com ícone `swap`) | `tertiary-container` / `on-tertiary-container` |
 | Doação | Anúncio de doação | `doacao-container` / `on-doacao-container` |
 | Reservado | Status reservado | `badge.reserved` |
 | Concluído | Status concluído | `badge.completed` |

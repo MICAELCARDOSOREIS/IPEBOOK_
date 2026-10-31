@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { AppState, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Animated, AppState, FlatList, Platform, Pressable, RefreshControl, StyleSheet, Text, View } from "react-native";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useHomeViewModel } from "@/viewmodel/useHomeViewModel";
 import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
@@ -16,10 +16,16 @@ import { OfflineState } from "@/view/components/OfflineState";
 import { NeighborhoodSelectorModal } from "@/view/components/NeighborhoodSelectorModal";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { ScreenContainer } from "@/view/components/ScreenContainer";
+import { IpeMark } from "@/view/components/IpeMark";
+import {
+  checkAndTriggerInitialPetals,
+  resetAppLaunchCelebrationForTesting,
+  triggerIpePetals,
+} from "@/view/components/ipeCelebrationController";
 import type { Book, BookModality } from "@/model/entities/book";
 import { WEB_GUTTER, WEB_MAX_WIDTH, useWebGridColumns } from "@/view/webLayout";
 
-import { withPress } from "@/view/pressFeedback";
+import { expressivePressedStyle, withPress } from "@/view/pressFeedback";
 const MODALITY_PLURAL = { sale: "livros à venda", trade: "livros para troca", donation: "livros para doação" } as const;
 
 function createModalityTag(colors: ColorPalette): Record<BookModality, { background: string; text: string; label: string }> {
@@ -170,7 +176,13 @@ function CatalogCarousel({
         </Pressable>
       </View>
       {wideWeb ? (
-        <View style={styles.carouselGrid}>{books.slice(0, webColumns).map((item) => <View key={item.id} style={styles.carouselGridCell}>{renderCard(item, true)}</View>)}</View>
+        <View style={styles.carouselGrid}>
+          {books.map((item) => (
+            <View key={item.id} style={styles.carouselGridCell}>
+              {renderCard(item, true)}
+            </View>
+          ))}
+        </View>
       ) : (
       <View style={styles.carouselRow}>
         <FlatList
@@ -181,6 +193,7 @@ function CatalogCarousel({
           keyExtractor={(item) => item.id}
           style={styles.carouselList}
           contentContainerStyle={styles.carouselListContent}
+          keyboardShouldPersistTaps="handled"
           renderItem={({ item }) => renderCard(item)}
         />
       </View>
@@ -202,6 +215,8 @@ export type HomeProps = {
   /** Mudar este valor força o catálogo a recarregar (ex.: ao voltar de cadastrar um anúncio). */
   focusKey?: unknown;
 };
+
+export { resetAppLaunchCelebrationForTesting };
 
 export default function Home({
   currentNeighborhood,
@@ -228,7 +243,41 @@ export default function Home({
   const styles = useMemo(() => createStyles(colors), [colors]);
   const modalityTag = useMemo(() => createModalityTag(colors), [colors]);
   const wideWeb = useIsWideWeb();
+  const isWeb = Platform.OS === "web";
   const [selectedModality, setSelectedModality] = useState<BookModality | "all">("all");
+  const [refreshing, setRefreshing] = useState(false);
+  const treeRotate = useRef(new Animated.Value(0)).current;
+
+  // Florada inicial automática disparada apenas na primeira entrada do aplicativo na sessão
+  useEffect(() => {
+    checkAndTriggerInitialPetals();
+  }, []);
+
+  /**
+   * Faz o Ipê balançar graciosamente com a brisa e soltar sua florada de pétalas
+   * douradas pelo aplicativo.
+   */
+  const triggerPetals = useCallback(() => {
+    Animated.sequence([
+      Animated.timing(treeRotate, { toValue: 1, duration: 130, useNativeDriver: !isWeb }),
+      Animated.timing(treeRotate, { toValue: -1, duration: 130, useNativeDriver: !isWeb }),
+      Animated.timing(treeRotate, { toValue: 0.5, duration: 110, useNativeDriver: !isWeb }),
+      Animated.timing(treeRotate, { toValue: 0, duration: 100, useNativeDriver: !isWeb }),
+    ]).start();
+
+    triggerIpePetals();
+  }, [isWeb, treeRotate]);
+
+  /** Ao puxar para atualizar (pull-to-refresh), recarrega o catálogo e desprende pétalas */
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    triggerPetals();
+    try {
+      await Promise.all([actions.reload(), notificationsActions.refresh()]);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const isFirstFocus = useRef(true);
   useEffect(() => {
@@ -269,7 +318,8 @@ export default function Home({
     return filteredBooks.filter((b) => b.neighborhood === effectiveNeighborhood);
   }, [filteredBooks, isSpecificNeighborhood, effectiveNeighborhood]);
 
-  const recentBooks = neighborhoodBooks.slice(0, CAROUSEL_MAX_ITEMS);
+  const maxRecent = wideWeb ? 12 : CAROUSEL_MAX_ITEMS;
+  const recentBooks = neighborhoodBooks.slice(0, maxRecent);
   const donationCount = state.books.filter(
     (book) => book.modality === "donation" && book.status === "available",
   ).length;
@@ -293,9 +343,9 @@ export default function Home({
     : "Perto de você";
 
   const listHeader = (
-    <View style={styles.headerContainer}>
+    <View style={[styles.headerContainer, wideWeb && styles.headerContainerWide]}>
       {/* 1. Barra de Topo: Bairro (Pill), Entrar (sem sessão) e Sino de Notificações */}
-      <View style={styles.topBar}>
+      <View style={[styles.topBar, wideWeb && styles.topBarWide]}>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={`Selecionar bairro: ${displayNeighborhood}`}
@@ -344,61 +394,72 @@ export default function Home({
         )}
       </View>
 
-      {/* 2. Manchete Editorial (Hero do Figma 02.01) */}
+      {/* 2. Manchete Editorial com o Ipê de Piripiri (Figma 02.01 / Spec 078) */}
       <View style={[styles.heroSection, wideWeb && styles.heroSectionWide]}>
-        <Text accessibilityRole="header" style={[styles.heroTitle, wideWeb && styles.heroTitleWide]}>
-          Encontre sua próxima história.
-        </Text>
-        <Text style={[styles.heroSubtitle, wideWeb && styles.heroSubtitleWide]}>
-          Compre, troque ou receba livros de quem mora perto de você.
-        </Text>
-        {wideWeb && totalBooksCount > 0 ? (
-          <View style={styles.statsBannerWide} testID="home-community-stats">
-            <View style={styles.statItemWide}>
-              <Text style={styles.statNumberWide}>{totalBooksCount}</Text>
-              <Text style={styles.statLabelWide}>
-                {totalBooksCount === 1 ? "livro anunciado" : "livros anunciados"}
-              </Text>
-            </View>
-            <View style={styles.statDividerWide} />
-            <View style={styles.statItemWide}>
-              <Text style={styles.statNumberWide}>{uniqueNeighborhoodsCount}</Text>
-              <Text style={styles.statLabelWide}>
-                {uniqueNeighborhoodsCount === 1 ? "bairro com leitores" : "bairros com leitores"}
-              </Text>
-            </View>
-            <View style={styles.statDividerWide} />
-            <View style={styles.statItemWide}>
-              <Text style={styles.statNumberWide}>{donationCount}</Text>
-              <Text style={styles.statLabelWide}>
-                {donationCount === 1 ? "doação disponível" : "doações disponíveis"}
-              </Text>
-            </View>
+        <View style={[styles.heroRow, wideWeb && styles.heroRowWide]}>
+          <View style={[styles.heroTextContainer, wideWeb && styles.heroTextContainerWide]}>
+            <Text accessibilityRole="header" style={[styles.heroTitle, wideWeb && styles.heroTitleWide]}>
+              Encontre sua próxima história.
+            </Text>
+            <Text style={[styles.heroSubtitle, wideWeb && styles.heroSubtitleWide]}>
+              Compre, troque ou receba livros sob a florada do Ipê de Piripiri.
+            </Text>
+
+            {wideWeb && totalBooksCount > 0 ? (
+              <View style={styles.statsBannerWide} testID="home-community-stats">
+                <View style={styles.statItemWide}>
+                  <Text style={styles.statNumberWide}>{totalBooksCount}</Text>
+                  <Text style={styles.statLabelWide}>
+                    {totalBooksCount === 1 ? "livro anunciado" : "livros anunciados"}
+                  </Text>
+                </View>
+                <View style={styles.statDividerWide} />
+                <View style={styles.statItemWide}>
+                  <Text style={styles.statNumberWide}>{uniqueNeighborhoodsCount}</Text>
+                  <Text style={styles.statLabelWide}>
+                    {uniqueNeighborhoodsCount === 1 ? "bairro com leitores" : "bairros com leitores"}
+                  </Text>
+                </View>
+                <View style={styles.statDividerWide} />
+                <View style={styles.statItemWide}>
+                  <Text style={styles.statNumberWide}>{donationCount}</Text>
+                  <Text style={styles.statLabelWide}>
+                    {donationCount === 1 ? "doação disponível" : "doações disponíveis"}
+                  </Text>
+                </View>
+              </View>
+            ) : null}
           </View>
-        ) : null}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Celebrar florada do Ipê"
+            onPress={triggerPetals}
+            style={({ pressed }) => [
+              styles.heroMarkContainer,
+              wideWeb && styles.heroMarkContainerWide,
+              isWeb && ({ cursor: "pointer", userSelect: "none" } as any),
+              pressed && expressivePressedStyle,
+            ]}
+          >
+            <Animated.View
+              style={{
+                transform: [
+                  {
+                    rotate: treeRotate.interpolate({
+                      inputRange: [-1, 0, 1],
+                      outputRange: ["-7deg", "0deg", "7deg"],
+                    }),
+                  },
+                ],
+              }}
+            >
+              <IpeMark size={wideWeb ? 116 : 76} />
+            </Animated.View>
+          </Pressable>
+        </View>
       </View>
 
-      {/* 3. Campo de Busca Integrado */}
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Buscar título, autor ou categoria"
-        onPress={() => {
-          const filter: { modality?: BookModality; neighborhood?: string } = {};
-          if (selectedModality !== "all") filter.modality = selectedModality;
-          if (isCustomNeighborhood) filter.neighborhood = effectiveNeighborhood;
-          if (Object.keys(filter).length > 0) {
-            onNavigateToSearch?.(filter);
-          } else {
-            onNavigateToSearch?.();
-          }
-        }}
-        style={withPress(styles.searchBar)}
-      >
-        <AppIcon name="search" size={24} color={colors.m3.onSurfaceVariant} />
-        <Text style={styles.searchPlaceholder}>Buscar título, autor ou categoria</Text>
-      </Pressable>
-
-      {/* 4. Chips de Filtro Rápido (Todos, Venda, Troca, Doação) */}
+      {/* 3. Chips de Filtro Rápido (Todos, Venda, Troca, Doação) */}
       <View style={styles.chipsContainer}>
         {(["all", "sale", "trade", "donation"] as const).map((mod) => {
           const isSelected = selectedModality === mod;
@@ -554,6 +615,15 @@ export default function Home({
       edges={["top", "left", "right"]}
       maxWidth={wideWeb ? WEB_MAX_WIDTH : 720}
       paddingHorizontal={wideWeb ? WEB_GUTTER : undefined}
+      contentStyle={wideWeb ? styles.wideHomeContent : undefined}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={() => void handleRefresh()}
+          colors={[colors.action, colors.ipe.bloom]}
+          tintColor={colors.ipe.bloom}
+        />
+      }
       overlay={
         <NeighborhoodSelectorModal
           visible={neighborhoodHook.isSelectorOpen}
@@ -570,8 +640,15 @@ export default function Home({
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
+    wideHomeContent: {
+      width: "100%",
+    },
     headerContainer: {
       marginBottom: tokens.spacing[16],
+    },
+    headerContainerWide: {
+      marginBottom: tokens.spacing[24],
+      width: "100%",
     },
 
     // 1. Top bar
@@ -581,6 +658,9 @@ function createStyles(colors: ColorPalette) {
       justifyContent: "space-between",
       gap: tokens.spacing[8],
       marginBottom: tokens.spacing[12],
+    },
+    topBarWide: {
+      marginBottom: tokens.spacing[16],
     },
     neighborhoodPill: {
       flexShrink: 1,
@@ -644,8 +724,9 @@ function createStyles(colors: ColorPalette) {
       marginBottom: tokens.spacing[12],
     },
     heroSectionWide: {
-      paddingVertical: tokens.spacing[16],
-      marginBottom: tokens.spacing[20],
+      paddingVertical: tokens.spacing[24],
+      marginBottom: tokens.spacing[24],
+      width: "100%",
     },
     heroTitle: {
       ...tokens.typography.brandLargeTitle,
@@ -661,6 +742,54 @@ function createStyles(colors: ColorPalette) {
     },
     heroSubtitleWide: {
       ...tokens.typography.webLead,
+    },
+    heroRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: tokens.spacing[16],
+    },
+    heroRowWide: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: tokens.spacing[32],
+    },
+    heroTextContainer: {
+      flex: 1,
+    },
+    heroTextContainerWide: {
+      flex: 1,
+      maxWidth: 960,
+    },
+    heroMarkContainer: {
+      alignItems: "center",
+      justifyContent: "center",
+      padding: tokens.spacing[4],
+    },
+    heroMarkContainerWide: {
+      alignItems: "center",
+      justifyContent: "center",
+      padding: tokens.spacing[16],
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderRadius: tokens.radius.xxl,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+      gap: tokens.spacing[8],
+    },
+    heroPetalsHint: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[6],
+      backgroundColor: colors.ipe.container,
+      paddingHorizontal: tokens.spacing[12],
+      paddingVertical: tokens.spacing[4],
+      borderRadius: tokens.radius.full,
+    },
+    heroPetalsHintText: {
+      ...tokens.typography.labelSmall,
+      color: colors.ipe.bloomDeep,
+      fontWeight: tokens.fontWeight.semiBold,
     },
     statsBannerWide: {
       flexDirection: "row",
@@ -693,23 +822,7 @@ function createStyles(colors: ColorPalette) {
       backgroundColor: colors.m3.outlineVariant,
     },
 
-    // 3. Campo de Busca
-    searchBar: {
-      flexDirection: "row",
-      alignItems: "center",
-      height: tokens.spacing[56],
-      backgroundColor: colors.m3.surfaceContainerHigh,
-      borderRadius: tokens.radius.full,
-      paddingHorizontal: tokens.spacing[16],
-      gap: tokens.spacing[12],
-      marginBottom: tokens.spacing[8],
-    },
-    searchPlaceholder: {
-      ...tokens.typography.bodyLarge,
-      color: colors.m3.onSurfaceVariant,
-    },
-
-    // 4. Chips de Filtro
+    // 3. Chips de Filtro
     chipsContainer: {
       flexDirection: "row",
       flexWrap: "wrap",
@@ -776,10 +889,10 @@ function createStyles(colors: ColorPalette) {
     shortcutText: { flex: 1, gap: tokens.spacing[4] },
     shortcutTitle: { ...tokens.typography.titleBlock },
     shortcutBody: { ...tokens.typography.bodyMedium },
-    // Web larga (Figma `34:160`): grade de 3 a 5 colunas conforme a largura da janela, com 24 px de respiro.
-    carouselGrid: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[24], alignItems: "stretch" },
-    // Cartões com largura máxima para a capa não ficar perdida em faixas largas com poucos livros.
-    carouselGridCell: { flexGrow: 1, flexBasis: 0, minWidth: 160, maxWidth: 280, flexDirection: "column" },
+    // Web larga: grade fluida e responsiva com 24 px de vão entre os livros.
+    carouselGrid: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[24], alignItems: "stretch", width: "100%" },
+    // Cartões flexíveis que preenchem as colunas com base de 220px e limite de 320px.
+    carouselGridCell: { flexGrow: 1, flexBasis: 220, minWidth: 180, maxWidth: 320, flexDirection: "column" },
     carouselCardCoverAreaWide: { paddingVertical: tokens.spacing[20] },
     carouselCardWide: { flex: 1, width: "100%", borderRadius: tokens.radius.xl, backgroundColor: colors.m3.surfaceContainerLowest },
     carouselList: { flexGrow: 0 },

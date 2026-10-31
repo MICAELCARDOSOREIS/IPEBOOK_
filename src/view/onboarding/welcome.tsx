@@ -44,16 +44,16 @@ export default function Welcome({ onStart, onSignIn, onHelp, onTerms, betaInvite
       { label: "Doação", icon: "heart", tone: colors.m3.doacaoContainer, on: colors.m3.onDoacaoContainer, text: "Doe para quem vai ler. Sem cobrança pelo exemplar." },
     ] as const;
     return (
-      <ScrollView style={styles.wideRoot} contentContainerStyle={styles.wideContent}>
+      <ScrollView style={styles.wideRoot} contentContainerStyle={styles.wideContent} keyboardShouldPersistTaps="handled">
         <View style={styles.wideHeader}>
           <Logotipo />
           <View style={styles.wideHeaderActions}>
             {betaInvite ? null : (
-              <Pressable accessibilityRole="button" accessibilityLabel="Entrar" onPress={onSignIn}>
+              <Pressable accessibilityRole="button" accessibilityLabel="Entrar" onPress={onSignIn} style={withPress(undefined)}>
                 <Text style={styles.wideLink}>Entrar</Text>
               </Pressable>
             )}
-            {betaInvite ? <ThemeToggleButton /> : null}
+            <ThemeToggleButton />
             <Pressable accessibilityRole="button" accessibilityLabel={labels.header} onPress={onStart} style={withPress(styles.wideCta)}>
               <Text style={styles.wideCtaText}>{labels.header}</Text>
             </Pressable>

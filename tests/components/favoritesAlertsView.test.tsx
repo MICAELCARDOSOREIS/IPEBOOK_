@@ -39,7 +39,7 @@ describe("favoritos e alertas (spec 016)", () => {
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => { screen = await render(<Favorites userId="usuario-favoritos-vazio-043" onBack={vi.fn()} onLogin={vi.fn()} onBook={vi.fn()} onExploreBooks={onExploreBooks} />); });
     const box = within(screen.getByRole("header", { name: "Nenhum livro salvo" }).parent!);
-    expect(box.getByText("Toque em Favoritar no anúncio para guardar os livros que você quer ler.")).toBeDefined();
+    expect(box.getByText(/Toque (no coração dos anúncios|em Favoritar no anúncio) para guardar (aqui )?os livros que você quer ler\./)).toBeDefined();
     fireEvent.press(box.getByRole("button", { name: "Explorar livros" }));
     expect(onExploreBooks).toHaveBeenCalledOnce();
   });

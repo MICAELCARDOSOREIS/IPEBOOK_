@@ -157,7 +157,7 @@ export function ScheduleMeeting({ requestId, sessionUserId, onBack, onSent }: Sc
         <MeetingMap selectedName={state.pointName} coveredBottom={SHEET_FRACTION} sheetHeight={sheetHeight} onSelect={selectFromMap} />
       ) : null}
       <SafeAreaView style={styles.safe} pointerEvents="box-none" edges={hasMap ? ["bottom", "left", "right"] : undefined}>
-      <TopAppBar floating={hasMap} title={rescheduling ? "Reagendar encontro" : "Combinar encontro"} onBack={() => onBack?.()} />
+      <TopAppBar contentMaxWidth={560} floating={hasMap} title={rescheduling ? "Reagendar encontro" : "Combinar encontro"} onBack={() => onBack?.()} />
       {state.loading ? (
         <LoadingState label="Carregando o encontro" />
       ) : state.loadError ? (
@@ -205,7 +205,7 @@ export function ScheduleMeeting({ requestId, sessionUserId, onBack, onSent }: Sc
               )}
             </Pressable>
           ) : null}
-          <ScrollView ref={scrollRef} scrollEnabled={!hasMap || expanded} style={styles.sheetScroll} contentContainerStyle={styles.scroll}>
+          <ScrollView ref={scrollRef} scrollEnabled={!hasMap || expanded} style={styles.sheetScroll} contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
             <View style={styles.content}>
               {rescheduling ? (
                 <>
@@ -255,7 +255,7 @@ export function ScheduleMeeting({ requestId, sessionUserId, onBack, onSent }: Sc
               </View>
 
               <Text accessibilityRole="header" style={styles.sectionLabel} onLayout={(event) => { dayY.current = event.nativeEvent.layout.y; }}>Dia</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.daysScroll} contentContainerStyle={styles.daysRow}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.daysScroll} contentContainerStyle={styles.daysRow} keyboardShouldPersistTaps="handled">
               <View accessibilityRole="radiogroup" accessibilityLabel="Dia do encontro" style={styles.daysChips}>
                 {state.dayOptions.map((day, index) => (
                   <OptionChip

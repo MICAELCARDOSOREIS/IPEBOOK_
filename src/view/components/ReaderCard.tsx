@@ -16,6 +16,8 @@ export type ReaderCardProps = {
   showMark?: boolean;
   /** Conteúdo extra abaixo da linha de apoio, como o Instagram do Meu perfil (Spec 081). */
   footer?: ReactNode;
+  /** Fase do Ciclo do Ipê (ex.: "Semente", "Broto", "Florada do Ipê", "Ipê Frondoso"). */
+  cycleStage?: string;
 };
 
 /**
@@ -29,6 +31,7 @@ export function ReaderCard({
   eyebrow = "Cartão de leitor",
   showMark = true,
   footer,
+  cycleStage,
 }: ReaderCardProps) {
   const withMark = Boolean(photoUrl) && showMark;
   const { colors } = useTheme();
@@ -47,7 +50,14 @@ export function ReaderCard({
         <Avatar name={name} photoUrl={photoUrl} size={64} />
       </View>
       <View style={[styles.text, withMark ? styles.textWithMark : null]}>
-        <Text style={styles.eyebrow}>{eyebrow}</Text>
+        <View style={styles.eyebrowRow}>
+          <Text style={styles.eyebrow}>{eyebrow}</Text>
+          {cycleStage ? (
+            <View style={styles.cycleBadge}>
+              <Text style={styles.cycleBadgeText}>{cycleStage}</Text>
+            </View>
+          ) : null}
+        </View>
         <Text style={styles.name} numberOfLines={2}>
           {name}
         </Text>
@@ -90,6 +100,22 @@ function createStyles(colors: ColorPalette) {
     },
     text: { flex: 1, gap: tokens.spacing[2] },
     textWithMark: { paddingRight: tokens.spacing[80] },
+    eyebrowRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[8],
+    },
+    cycleBadge: {
+      paddingHorizontal: tokens.spacing[8],
+      paddingVertical: tokens.spacing[2],
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.ipe.bloom,
+    },
+    cycleBadgeText: {
+      ...tokens.typography.labelSmall,
+      fontWeight: tokens.fontWeight.bold,
+      color: colors.ipe.onContainer,
+    },
     eyebrow: {
       ...tokens.typography.labelSmall,
       fontWeight: tokens.fontWeight.semiBold,

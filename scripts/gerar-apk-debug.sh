@@ -58,14 +58,32 @@ fi
 mkdir -p "$PASTA_LOG"
 # Mantém o google-services.json da raiz e o da pasta nativa iguais.
 cp "$RAIZ/google-services.json" "$RAIZ/android/app/google-services.json"
+mkdir -p "$RAIZ/android/app/src/main/assets"
 
 cd "$RAIZ/android"
 rm -f "$PID_ARQ"
-# O próprio processo grava o PID (o setsid pode criar outro processo, e aí o $! não serviria).
-# Só a arquitetura do celular (arm64 por padrão): compilar as 4 do React Native leva ~4x mais tempo.
-# Outra: APK_ABIS="arm64-v8a,x86_64" npm run apk:debug
-ABIS="${APK_ABIS:-arm64-v8a}"
-setsid nohup bash -c 'echo $$ > "$1"; ./gradlew assembleDebug --console=plain -PreactNativeArchitectures="$2"; echo "RESULTADO=$?"' _ "$PID_ARQ" "$ABIS" > "$LOG" 2>&1 < /dev/null &
+echo "INICIADO em $(date -Iseconds)" > "$LOG"
+# ABIs suportadas: compila arm64-v8a (celular real) e x86_64 (Waydroid/emulador) por padrão
+ABIS="${APK_ABIS:-arm64-v8a,x86_64}"
+WORKERS="${GRADLE_WORKERS:-2}"
+JVMARGS="${GRADLE_JVMARGS:--Xmx1536m -XX:+UseG1GC -XX:MaxMetaspaceSize=512m}"
+
+setsid nohup bash -c '
+  echo $$ > "$1"
+  cd "$2"
+  echo "--- 1/2: Gerando bundle JavaScript atualizado ---"
+  nice -n 19 ionice -c 3 npx expo export:embed \
+    --entry-file node_modules/expo-router/entry.js \
+    --platform android \
+    --dev false \
+    --reset-cache \
+    --bundle-output "$2/android/app/src/main/assets/index.android.bundle" \
+    --assets-dest "$2/android/app/src/main/res"
+  echo "--- 2/2: Compilando APK nativo (Gradle assembleDebug) ---"
+  cd "$2/android"
+  nice -n 19 ionice -c 3 ./gradlew assembleDebug --console=plain --max-workers="$3" -Dorg.gradle.jvmargs="$4" -PreactNativeArchitectures="$5"
+  echo "RESULTADO=$?"
+' _ "$PID_ARQ" "$RAIZ" "$WORKERS" "$JVMARGS" "$ABIS" >> "$LOG" 2>&1 < /dev/null &
 for _ in 1 2 3 4 5 6 7 8 9 10; do [[ -s "$PID_ARQ" ]] && break; sleep 0.3; done
 echo "Compilação iniciada em segundo plano (PID $(cat "$PID_ARQ"))."
 echo "Andamento: $0 status   |   Log: $LOG"

@@ -696,6 +696,11 @@ export const MAPEAMENTO_MIGRACOES = {
     validar: (ctx) => Boolean(ctx.tabelas.v2_books?.colunasValidas?.includes('synopsis')),
     detalhe: 'Suspensão completa, exclusão bloqueada para conta suspensa e photo_url só https (Spec 107)',
   },
+  '202610300002_notificacoes_comunitarias.sql': {
+    titulo: 'Notificações comunitárias e fechamento de ciclos',
+    validar: (ctx) => Boolean(ctx.tabelas.v2_notifications?.existe),
+    detalhe: 'Avaliação mútua na entrega, boas-vindas, segurança e reativação de favoritos (Spec 111)',
+  },
   '202610310001_testadores_beta.sql': {
     titulo: 'Inscrições para o teste beta',
     validar: (ctx) => Boolean(ctx.tabelas.v2_books?.colunasValidas?.includes('synopsis')),

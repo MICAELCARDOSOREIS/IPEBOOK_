@@ -43,7 +43,7 @@ export default function ReportListing({
     return (
       <SafeAreaView style={styles.page}>
         <TopAppBar title="Denunciar anúncio" onBack={onBack} contentMaxWidth={wide ? WEB_MAX_WIDTH : undefined} />
-        <ScrollView contentContainerStyle={styles.scrollContent}>
+        <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
           <View style={styles.content}>
             <View style={styles.successCard}>
               <IconBadge icon="check" tone="action" size="large" />
@@ -68,7 +68,7 @@ export default function ReportListing({
     return (
       <SafeAreaView style={styles.page}>
         <TopAppBar title="Denunciar anúncio" onBack={onBack} contentMaxWidth={wide ? WEB_MAX_WIDTH : undefined} />
-        <ScrollView contentContainerStyle={styles.scrollContent}>
+        <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
           <View style={styles.content}>
             <View style={styles.authNotice}>
               <IconBadge icon="flag" tone="neutral" size="large" />
