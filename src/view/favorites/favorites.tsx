@@ -210,7 +210,6 @@ function createStyles(colors: ColorPalette) {
     page: { flex: 1, backgroundColor: colors.background },
     wideHeader: {
       width: "100%",
-      maxWidth: WEB_MAX_WIDTH,
       alignSelf: "center",
       paddingHorizontal: WEB_GUTTER,
       paddingTop: tokens.spacing[32],

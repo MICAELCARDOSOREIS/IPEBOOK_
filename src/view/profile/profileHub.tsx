@@ -251,30 +251,57 @@ export default function ProfileHub({
                     }
                   />
 
-                  {/* Botão Outline "Editar perfil" (Figma 07.01 nó 604:8677: 345x48px, rx 24px, stroke #D3CCC2, sem ícone) */}
+                  {/* Botão Outline "Editar perfil" (Figma 07.01 nó 604:8677: 345x48px, rx 24px, stroke #D3CCC2) */}
                   <Pressable
                     accessibilityRole="button"
                     accessibilityLabel="Editar perfil"
                     onPress={onNavigateToEditProfile}
                     style={({ pressed }) => [styles.editProfileButton, pressed && styles.editProfileButtonPressed]}
                   >
+                    <AppIcon name="edit" size={18} color={colors.m3.primary} />
                     <Text style={styles.editProfileButtonText}>Editar perfil</Text>
                   </Pressable>
 
-                  {/* Tríade de Métricas Comunitárias (Figma 07.01 nó 25:616: 3 caixas de 109.6x76px, rx 16px, fill #F7F3EC) */}
+                  {/* Tríade de Métricas Comunitárias (Figma 07.01 nó 25:616: 3 caixas interativas com atalhos diretos) */}
                   <View style={styles.statsContainer}>
-                    <View style={styles.statBox}>
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={`Minhas publicações: ${totalPublications} ${totalPublications === 1 ? "publicação" : "publicações"}`}
+                      onPress={onNavigateToMyListings ?? (() => {})}
+                      style={({ pressed }) => [styles.statBox, pressed && styles.statBoxPressed]}
+                    >
+                      <View style={styles.statIconBadge}>
+                        <AppIcon name="shelf" size={16} color={colors.m3.primary} />
+                      </View>
                       <Text style={styles.statNumber}>{totalPublications}</Text>
                       <Text style={styles.statLabel}>{totalPublications === 1 ? "publicação" : "publicações"}</Text>
-                    </View>
-                    <View style={styles.statBox}>
+                    </Pressable>
+
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={`Trocas concluídas: ${completedTrocas} ${completedTrocas === 1 ? "troca" : "trocas"}`}
+                      onPress={onNavigateToMeetingHistory ?? (() => {})}
+                      style={({ pressed }) => [styles.statBox, pressed && styles.statBoxPressed]}
+                    >
+                      <View style={styles.statIconBadge}>
+                        <AppIcon name="swap" size={16} color={colors.action} />
+                      </View>
                       <Text style={styles.statNumber}>{completedTrocas}</Text>
                       <Text style={styles.statLabel}>{completedTrocas === 1 ? "troca" : "trocas"}</Text>
-                    </View>
-                    <View style={styles.statBox}>
+                    </Pressable>
+
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={`Avaliações recebidas: ${ratingText}`}
+                      onPress={onNavigateToRatings}
+                      style={({ pressed }) => [styles.statBox, pressed && styles.statBoxPressed]}
+                    >
+                      <View style={styles.statIconBadge}>
+                        <AppIcon name="star" size={16} color={colors.ipe.bloomDeep} />
+                      </View>
                       <Text style={styles.statNumber}>{ratingText}</Text>
                       <Text style={styles.statLabel}>avaliação</Text>
-                    </View>
+                    </Pressable>
                   </View>
 
                   </View>
@@ -294,7 +321,9 @@ export default function ProfileHub({
                           onPress={item.onPress}
                           style={({ pressed }) => [styles.menuRow, pressed && styles.menuRowPressed]}
                         >
-                          <AppIcon name={item.icon} size={24} color={item.iconColor ?? colors.m3.onSurface} />
+                          <View style={styles.menuIconContainer}>
+                            <AppIcon name={item.icon} size={20} color={item.iconColor ?? colors.m3.onSurface} />
+                          </View>
                           <View style={styles.menuRowText}>
                             <Text style={styles.menuRowTitle}>{item.label}</Text>
                             {item.description ? (
@@ -339,7 +368,9 @@ export default function ProfileHub({
                         onPress={item.onPress}
                         style={({ pressed }) => [styles.menuRow, pressed && styles.menuRowPressed]}
                       >
-                        <AppIcon name={item.icon} size={24} color={item.iconColor ?? colors.m3.onSurfaceVariant} />
+                        <View style={styles.menuIconContainer}>
+                          <AppIcon name={item.icon} size={20} color={item.iconColor ?? colors.m3.onSurfaceVariant} />
+                        </View>
                         <View style={styles.menuRowText}>
                           <Text style={styles.menuRowTitle}>{item.label}</Text>
                           {item.description ? (
@@ -359,7 +390,9 @@ export default function ProfileHub({
                       onPress={() => setConfirmingSignOut(true)}
                       style={({ pressed }) => [styles.menuRow, pressed && styles.menuRowPressed]}
                     >
-                      <AppIcon name="logout" size={24} color={colors.error} />
+                      <View style={[styles.menuIconContainer, styles.signOutIconContainer]}>
+                        <AppIcon name="logout" size={20} color={colors.error} />
+                      </View>
                       <View style={styles.menuRowText}>
                         <Text style={[styles.menuRowTitle, styles.signOutText]}>Sair da conta</Text>
                       </View>
@@ -469,35 +502,46 @@ function createStyles(colors: ColorPalette) {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
+      gap: tokens.spacing[8],
       height: tokens.accessibility.touchTarget,
       borderWidth: 1,
       borderColor: colors.m3.outlineVariant,
       borderRadius: tokens.shapeMorph.buttonRest,
-      backgroundColor: "transparent",
+      backgroundColor: colors.m3.surfaceContainerLow,
       paddingHorizontal: tokens.spacing[24],
     },
     editProfileButtonPressed: {
       borderRadius: tokens.shapeMorph.buttonPressed,
-      backgroundColor: colors.m3.surfaceContainerLow,
-      transform: [{ scale: 0.97 }],
+      backgroundColor: colors.m3.surfaceContainerHigh,
+      transform: [{ scale: 0.98 }],
     },
     editProfileButtonText: {
       ...tokens.typography.labelLarge,
-      color: colors.m3.onSurfaceVariant,
+      color: colors.m3.primary,
+      fontWeight: tokens.fontWeight.semiBold,
     },
     statsContainer: {
       flexDirection: "row",
       gap: tokens.spacing[8],
-      height: 76,
+      height: 84,
     },
     statBox: {
       flex: 1,
       backgroundColor: colors.m3.surfaceContainerLow,
       borderRadius: tokens.radius.card,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
       alignItems: "center",
       justifyContent: "center",
       gap: tokens.spacing[2],
       paddingVertical: tokens.spacing[8],
+    },
+    statBoxPressed: {
+      backgroundColor: colors.m3.surfaceContainerHigh,
+      transform: [{ scale: 0.96 }],
+    },
+    statIconBadge: {
+      marginBottom: 2,
     },
     statNumber: {
       ...tokens.typography.brandTitle,
@@ -539,7 +583,7 @@ function createStyles(colors: ColorPalette) {
       flexDirection: "row",
       alignItems: "center",
       gap: tokens.spacing[16],
-      paddingVertical: tokens.spacing[12],
+      paddingVertical: tokens.spacing[8],
       paddingHorizontal: tokens.spacing[8],
       minHeight: tokens.accessibility.touchTarget,
       borderRadius: tokens.shapeMorph.chipUnselected,
@@ -548,6 +592,17 @@ function createStyles(colors: ColorPalette) {
       backgroundColor: colors.m3.surfaceContainerHigh,
       borderRadius: tokens.shapeMorph.chipSelected,
       transform: [{ scale: 0.985 }],
+    },
+    menuIconContainer: {
+      width: 40,
+      height: 40,
+      borderRadius: tokens.radius.medium,
+      backgroundColor: colors.m3.surfaceContainerHigh,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    signOutIconContainer: {
+      backgroundColor: colors.badge.sale.background,
     },
     menuRowText: { flex: 1, gap: tokens.spacing[2] },
     menuRowTitle: {

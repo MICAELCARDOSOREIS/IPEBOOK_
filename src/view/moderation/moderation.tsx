@@ -171,7 +171,7 @@ function createStyles(colors: ColorPalette) {
     page: { flex: 1, backgroundColor: colors.background },
     scroll: { flexGrow: 1 },
     content: { width: "100%", padding: tokens.spacing[24], gap: tokens.spacing[16] },
-    contentWide: { maxWidth: WEB_MAX_WIDTH, paddingHorizontal: WEB_GUTTER },
+    contentWide: { paddingHorizontal: WEB_GUTTER },
     intro: { ...tokens.typography.bodyMedium, color: colors.secondaryText },
     card: {
       backgroundColor: colors.surface,

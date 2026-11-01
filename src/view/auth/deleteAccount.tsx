@@ -231,7 +231,7 @@ export default function DeleteAccount({
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
-  contentWide: { maxWidth: WEB_MAX_WIDTH, paddingHorizontal: WEB_GUTTER },
+  contentWide: { paddingHorizontal: WEB_GUTTER },
   columns: { gap: tokens.spacing[16] },
   columnsWide: { flexDirection: "row", alignItems: "flex-start", gap: tokens.spacing[24] },
   column: { gap: tokens.spacing[16] },

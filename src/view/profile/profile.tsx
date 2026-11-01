@@ -42,7 +42,6 @@ export type ProfileProps = {
 
 const MAX_NAME_LENGTH = 60;
 const MAX_SOCIAL_HANDLE_LENGTH = 60;
-const MAX_PHONE_DIGITS = 11;
 
 /**
  * Atalhos exibidos abaixo do campo de bairro. São os seis primeiros da lista oficial,
@@ -50,21 +49,7 @@ const MAX_PHONE_DIGITS = 11;
  */
 const NEIGHBORHOOD_QUICK_PICKS = 6;
 
-type FieldErrors = Partial<Record<"name" | "photoUrl" | "socialHandle" | "phone", string>>;
-
-/**
- * Máscara progressiva de telefone brasileiro no formulário: aplica (XX) XXXXX-XXXX
- * enquanto a pessoa digita. O caso de uso já normaliza para somente dígitos ao salvar.
- */
-export function formatPhoneMask(raw: string): string {
-  const digits = raw.replace(/\D/g, "").slice(0, MAX_PHONE_DIGITS);
-  if (digits.length <= 2) return digits;
-  const area = digits.slice(0, 2);
-  const rest = digits.slice(2);
-  if (rest.length <= 4) return `(${area}) ${rest}`;
-  if (rest.length <= 8) return `(${area}) ${rest.slice(0, 4)}-${rest.slice(4)}`;
-  return `(${area}) ${rest.slice(0, 5)}-${rest.slice(5)}`;
-}
+type FieldErrors = Partial<Record<"name" | "photoUrl" | "socialHandle", string>>;
 
 /**
  * Validação preventiva espelhando as regras do domínio (`PublicProfileUseCases.updateProfile`
@@ -76,7 +61,6 @@ function validateProfileFields(values: {
   name: string;
   photoUrl: string;
   socialHandle: string;
-  phone: string;
 }): FieldErrors {
   const errors: FieldErrors = {};
   const name = values.name.trim();
@@ -93,11 +77,6 @@ function validateProfileFields(values: {
 
   if (values.socialHandle.trim() && !normalizeInstagramHandle(values.socialHandle)) {
     errors.socialHandle = "Use só letras, números, ponto e _ (até 30), sem link.";
-  }
-
-  const phoneDigits = values.phone.replace(/\D/g, "");
-  if (phoneDigits && (phoneDigits.length < 10 || phoneDigits.length > MAX_PHONE_DIGITS)) {
-    errors.phone = "Informe um telefone válido com DDD.";
   }
 
   return errors;
@@ -121,7 +100,6 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
   const [name, setName] = useState("");
   const [photoUrl, setPhotoUrl] = useState("");
   const [socialHandle, setSocialHandle] = useState("");
-  const [phone, setPhone] = useState("");
   /** null = ainda não escolhido. A tela não atribui um bairro que a pessoa não selecionou. */
   const [neighborhood, setNeighborhood] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -154,7 +132,6 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
 
   useEffect(() => {
     if (!preferencesState.preferences) return;
-    setPhone(preferencesState.preferences.phone ? formatPhoneMask(preferencesState.preferences.phone) : "");
     setNeighborhood(preferencesState.preferences.neighborhood ?? null);
   }, [preferencesState.preferences]);
 
@@ -166,14 +143,10 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
    * Valores carregados servem de linha de base: depois de salvar, os casos de uso devolvem
    * perfil e preferências atualizados e `dirty` volta a ser falso sem código extra.
    */
-  const baselinePhone = preferencesState.preferences?.phone
-    ? formatPhoneMask(preferencesState.preferences.phone)
-    : "";
   const dirty =
     name !== (state.profile?.name ?? "") ||
     photoUrl !== (state.profile?.photoUrl ?? "") ||
     socialHandle !== (state.profile?.socialHandle ?? "") ||
-    phone !== baselinePhone ||
     neighborhood !== (preferencesState.preferences?.neighborhood ?? null);
 
   const dirtyRef = useRef(dirty);
@@ -237,7 +210,7 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
   const error = state.error ?? preferencesState.error;
 
   async function handleSave() {
-    const errors = validateProfileFields({ name, photoUrl, socialHandle, phone });
+    const errors = validateProfileFields({ name, photoUrl, socialHandle });
     setFieldErrors(errors);
     if (Object.keys(errors).length > 0) {
       setBlockedSave(true);
@@ -253,7 +226,6 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
         socialHandle: normalizeInstagramHandle(socialHandle) ?? undefined,
       }),
       preferencesActions.update({
-        phone: phone || undefined,
         neighborhood: neighborhood ?? undefined,
       }),
     ]);
@@ -451,21 +423,8 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
               )}
             </FormSection>
 
-            {/* 5. Contato: privado, só para quem negocia com você */}
-            <FormSection icon="lock" title="Contato para negociar" caption="Só quem negociar com você vê estes dados. Seu e-mail fica privado.">
-              {/* Telefone/WhatsApp */}
-              <TextField
-                label="Telefone/WhatsApp"
-                accessibilityLabel="Telefone/WhatsApp"
-                value={phone}
-                onChangeText={(value) => editField("phone", value, (raw) => setPhone(formatPhoneMask(raw)))}
-                placeholder="(86) 99999-9999"
-                keyboardType="phone-pad"
-                maxLength={15}
-                error={fieldErrors.phone}
-                helperText="Com DDD, para combinar a entrega pelo WhatsApp."
-              />
-
+            {/* 5. Rede social: Instagram para conexão com outros leitores */}
+            <FormSection icon="share" title="Rede social" caption="Seu Instagram público para outros leitores te conhecerem. Seu e-mail permanece privado.">
               {/* Instagram (Spec 081): aceita "@perfil" ou "perfil" e guarda como "@perfil" */}
               <TextField
                 label="Instagram"
