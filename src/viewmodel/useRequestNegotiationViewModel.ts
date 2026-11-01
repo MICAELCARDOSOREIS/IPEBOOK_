@@ -16,7 +16,11 @@ export type RequestNegotiationState = {
 
 export type RequestNegotiationActions = {
   checkActiveRequest: (listingId: string, sessionUserId: string | null) => Promise<BookRequest | null>;
-  request: (listingId: string, sessionUserId: string | null) => Promise<BookRequest | null>;
+  request: (
+    listingId: string,
+    sessionUserId: string | null,
+    options?: { initialMessage?: string; offeredBookId?: string },
+  ) => Promise<BookRequest | null>;
 };
 
 const GENERIC_ERROR = "Não foi possível solicitar a negociação. Tente novamente.";
@@ -84,10 +88,14 @@ export function useRequestNegotiationViewModel(
   );
 
   const request = useCallback(
-    async (listingId: string, sessionUserId: string | null) => {
+    async (
+      listingId: string,
+      sessionUserId: string | null,
+      options?: { initialMessage?: string; offeredBookId?: string },
+    ) => {
       setState((prev) => ({ ...prev, pendingListingId: listingId, error: null, errorListingId: null }));
       try {
-        const created = await useCases.requestNegotiation(listingId, sessionUserId);
+        const created = await useCases.requestNegotiation(listingId, sessionUserId, options);
         if (active.current) {
           setState((prev) => ({
             ...prev,

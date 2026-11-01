@@ -108,7 +108,9 @@ describe("Profile (Spec 006 US4, Issue #55)", () => {
   it("mostra a pré-visualização do cartão de leitor e a atualiza ao digitar o nome (Spec 078, CA4)", async () => {
     setup({ id: "ana", email: "ana@exemplo.com" });
     const screen = await renderProfile();
-    expect(screen.getByText("Assim seu cartão aparece")).toBeDefined();
+    expect(screen.getByText("Seu perfil, do seu jeito.")).toBeDefined();
+    expect(screen.queryByText("Perfil do Leitor")).toBeNull();
+    expect(screen.getByText("Prévia do cartão")).toBeDefined();
     expect(screen.getByLabelText("Cartão de leitor de Ana")).toBeDefined();
     await act(async () => { fireEvent.changeText(screen.getByDisplayValue("Ana"), "Ana Paula"); });
     expect(screen.getByLabelText("Cartão de leitor de Ana Paula")).toBeDefined();
@@ -140,7 +142,7 @@ describe("Profile (Spec 006 US4, Issue #55)", () => {
     const { update, updatePreferences } = setup({ id: "ana", email: "ana@exemplo.com" });
     const screen = await renderProfile();
     await act(async () => {
-      fireEvent.press(screen.getByLabelText("Mostrar atalhos de bairros populares"));
+      fireEvent.press(screen.getByLabelText("Mostrar opções rápidas de bairro"));
     });
     await act(async () => {
       fireEvent.press(screen.getByLabelText("Bairro Centro"));
@@ -249,17 +251,17 @@ describe("Profile (Spec 006 US4, Issue #55)", () => {
     setup({ id: "ana", email: "ana@exemplo.com" });
     const screen = await renderProfile();
     await act(async () => {
-      fireEvent.press(screen.getByLabelText("Mostrar atalhos de bairros populares"));
+      fireEvent.press(screen.getByLabelText("Mostrar opções rápidas de bairro"));
     });
-    expect(screen.getByText("Bairros de Piripiri")).toBeDefined();
-    expect(screen.queryByText("Bairros mais frequentes")).toBeNull();
+    expect(screen.getByText("Acesso rápido")).toBeDefined();
+    expect(screen.queryByText("Bairros populares")).toBeNull();
   });
 
   it("mantém os atalhos de bairro recolhidos por padrão", async () => {
     setup({ id: "ana", email: "ana@exemplo.com" });
     const screen = await renderProfile();
-    expect(screen.getByLabelText("Mostrar atalhos de bairros populares")).toBeDefined();
-    expect(screen.queryByText("Bairros de Piripiri")).toBeNull();
+    expect(screen.getByLabelText("Mostrar opções rápidas de bairro")).toBeDefined();
+    expect(screen.queryByText("Acesso rápido")).toBeNull();
   });
 
   it("volta direto quando não há edição em aberto", async () => {

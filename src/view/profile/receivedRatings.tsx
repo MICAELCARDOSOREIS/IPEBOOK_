@@ -120,7 +120,7 @@ function createStyles(colors: ColorPalette) {
   },
   retryText: { ...tokens.typography.bodyMedium, color: colors.action, fontWeight: tokens.fontWeight.semiBold },
   list: { gap: tokens.spacing[12] },
-  contentWide: { paddingHorizontal: WEB_GUTTER },
+  contentWide: { maxWidth: WIDE_CONTENT_MAX_WIDTH, alignSelf: "center", paddingHorizontal: WEB_GUTTER },
   listWide: { flexDirection: "row", flexWrap: "wrap" },
   cardWide: { flexBasis: "48%", flexGrow: 0 },
   card: {

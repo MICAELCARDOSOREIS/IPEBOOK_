@@ -750,5 +750,48 @@ try {
 }
 process.stdout.write('Suporte a box e coleções de livros (Spec 112): verificado com sucesso\n');
 
+// Spec 113: Melhorias na negociação (initial_message e offered_book_id)
+const livroTroca113Id = '11311311-1131-4113-8113-113113113114';
+await as(
+  'authenticated',
+  reader,
+  `insert into public.v2_books (id, owner_id, title, author, modality)
+   values ('${livroTroca113Id}', '${reader}', 'Livro do Leitor', 'Autor do Leitor', 'trade')`
+);
+const pedido113Id = '11311311-1131-4113-8113-113113113113';
+await as(
+  'authenticated',
+  reader,
+  `insert into public.v2_book_requests (id, listing_id, requester_id, initial_message, offered_book_id)
+   values ('${pedido113Id}', '${livroBox.rows[0].id}', '${reader}', 'Olá, tenho interesse no seu box! Posso trocar pelo meu livro.', '${livroTroca113Id}')`
+);
+
+const pedidoConsultado = await as(
+  'authenticated',
+  owner,
+  `select initial_message, offered_book_id from public.v2_book_requests where id = '${pedido113Id}'`
+);
+if (
+  pedidoConsultado.rows.length !== 1 ||
+  !pedidoConsultado.rows[0].initial_message.includes('tenho interesse no seu box') ||
+  pedidoConsultado.rows[0].offered_book_id !== livroTroca113Id
+) {
+  throw new Error(`Dados de proposta da Spec 113 divergentes: ${JSON.stringify(pedidoConsultado.rows)}`);
+}
+
+// Rejeita initial_message com mais de 500 caracteres
+try {
+  await as(
+    'authenticated',
+    reader,
+    `insert into public.v2_book_requests (listing_id, requester_id, initial_message)
+     values ('${livroBox.rows[0].id}', '${reader}', '${'a'.repeat(501)}')`
+  );
+  throw new Error('Permitiu initial_message com mais de 500 caracteres');
+} catch (e) {
+  if (e.message.includes('Permitiu')) throw e;
+}
+process.stdout.write('Melhorias na negociação (Spec 113): verificadas com sucesso\n');
+
 process.stdout.write('Migrações e cenários SQL locais verificados.\n');
 await db.close();

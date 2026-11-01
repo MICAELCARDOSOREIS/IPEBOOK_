@@ -217,7 +217,7 @@ function createStyles(colors: ColorPalette) {
       alignSelf: "center",
       paddingHorizontal: tokens.spacing[16],
     },
-    contentWide: { paddingHorizontal: WEB_GUTTER },
+    contentWide: { maxWidth: WIDE_CONTENT_MAX_WIDTH, paddingHorizontal: WEB_GUTTER },
     scrollWide: { flexDirection: "row", flexWrap: "wrap", alignItems: "flex-start", columnGap: tokens.spacing[16], rowGap: tokens.spacing[16] },
     fullRow: { width: "100%" },
     scroll: { gap: tokens.spacing[12], paddingBottom: tokens.spacing[24] },

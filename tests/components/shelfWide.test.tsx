@@ -63,4 +63,76 @@ describe("Estante na Web Larga (Spec 093 · Figma 05.01)", () => {
     });
     expect(onNavigateToCreateListing).toHaveBeenCalled();
   });
+
+  it("renderiza tabela na web com colunas completas, autor, bairro e botão de ação", async () => {
+    const bookWithDetails: Book = {
+      id: "b2",
+      title: "Grande Sertão: Veredas",
+      author: "Guimarães Rosa",
+      ownerId: "u1",
+      modality: "sale",
+      price: 45,
+      neighborhood: "Centro",
+      status: "available",
+      isBox: true,
+      boxVolumesCount: 2,
+    };
+    const mockState: MyListingsState = {
+      books: [bookWithDetails],
+      loading: false,
+      error: null,
+      cancellingId: null,
+      cancelError: null,
+      pausingId: null,
+      pauseError: null,
+    };
+    const mockActions: MyListingsActions = {
+      reload: vi.fn(),
+      cancelListing: vi.fn(),
+      togglePauseListing: vi.fn(),
+    };
+    mockedUseMyListings.mockReturnValue([mockState, mockActions]);
+
+    const onNavigateToManageListing = vi.fn();
+    const onNavigateToCreateListing = vi.fn();
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(
+        <MyListings
+          sessionUserId="u1"
+          onNavigateToManageListing={onNavigateToManageListing}
+          onNavigateToCreateListing={onNavigateToCreateListing}
+        />,
+      );
+    });
+
+    // Cabeçalho da tabela web
+    expect(screen.getByText("Livro")).toBeDefined();
+    expect(screen.getByText("Modalidade")).toBeDefined();
+    expect(screen.getByText("Bairro")).toBeDefined();
+    expect(screen.getByText("Situação")).toBeDefined();
+    expect(screen.getByText("Ação")).toBeDefined();
+
+    // Dados na linha da tabela
+    expect(screen.getByText("Grande Sertão: Veredas")).toBeDefined();
+    expect(screen.getByText("Guimarães Rosa")).toBeDefined();
+    expect(screen.getByText("Box (2 vols)")).toBeDefined();
+    expect(screen.getByText("Centro")).toBeDefined();
+    expect(screen.getByText("R$ 45,00")).toBeDefined();
+    expect(screen.getByText("Disponível")).toBeDefined();
+
+    // Botão Editar / Gerenciar
+    const editBtn = screen.getByText("Editar");
+    await act(async () => {
+      fireEvent.press(editBtn);
+    });
+    expect(onNavigateToManageListing).toHaveBeenCalledWith("b2");
+
+    // Botão de anunciar no topo do cabeçalho web
+    const headerAnnounceBtn = screen.getByLabelText("Anunciar livro no topo da estante");
+    await act(async () => {
+      fireEvent.press(headerAnnounceBtn);
+    });
+    expect(onNavigateToCreateListing).toHaveBeenCalled();
+  });
 });

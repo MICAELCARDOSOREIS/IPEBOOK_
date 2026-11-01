@@ -48,7 +48,7 @@ export default function DeleteAccount({
       <SafeAreaView style={styles.page}>
         <TopAppBar title="Conta excluída" onBack={onBack} contentMaxWidth={wide ? WEB_MAX_WIDTH : undefined} />
         <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
-          <View style={styles.content}>
+          <View style={[styles.content, wide && styles.contentWide]}>
             <View style={styles.card}>
               <IconBadge icon="check" tone="action" size="large" />
               <Text accessibilityRole="header" style={styles.successTitle}>
@@ -73,7 +73,7 @@ export default function DeleteAccount({
       <SafeAreaView style={styles.page}>
         <TopAppBar title="Privacidade e dados" onBack={onBack} contentMaxWidth={wide ? WEB_MAX_WIDTH : undefined} />
         <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
-          <View style={styles.content}>
+          <View style={[styles.content, wide && styles.contentWide]}>
             <View style={styles.card}>
               <IconBadge icon="lock" tone="neutral" size="large" />
               <Text accessibilityRole="header" style={styles.title}>
@@ -231,7 +231,11 @@ export default function DeleteAccount({
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
-  contentWide: { paddingHorizontal: WEB_GUTTER },
+  contentWide: {
+    maxWidth: WEB_MAX_WIDTH,
+    alignSelf: "center",
+    paddingHorizontal: WEB_GUTTER,
+  },
   columns: { gap: tokens.spacing[16] },
   columnsWide: { flexDirection: "row", alignItems: "flex-start", gap: tokens.spacing[24] },
   column: { gap: tokens.spacing[16] },
