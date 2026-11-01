@@ -1,15 +1,18 @@
-import { type ReactNode, useMemo, useState } from "react";
-import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import type { RequestStatus } from "@/model/entities/bookRequest";
 import type { RequestWithListing } from "@/viewmodel/useSentRequestsViewModel";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
 import { BookCover } from "@/view/components/BookCover";
+import { Breadcrumb } from "@/view/components/Breadcrumb";
+import { AppIcon } from "@/view/components/AppIcon";
 import { ErrorState } from "@/view/components/ErrorState";
 import { IconBadge } from "@/view/components/IconBadge";
 import { LoadingState } from "@/view/components/LoadingState";
 import { OfflineState } from "@/view/components/OfflineState";
+import { Snackbar } from "@/view/components/Snackbar";
 import { Tag } from "@/view/components/Tag";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { tokens, type ColorPalette } from "@/view/tokens";
@@ -35,8 +38,16 @@ type Props = {
   error: string | null;
   onRetry: () => void;
   onBack?: () => void;
+  showHeroDescription?: boolean;
+  /** Mostra um atalho com a contagem de propostas que aguardam resposta. */
+  showPendingSummary?: boolean;
+  /** Mensagem de retorno após responder a um pedido. */
+  feedbackMessage?: string | null;
+  onDismissFeedback?: () => void;
   renderExtra: (item: RequestWithListing) => ReactNode;
 };
+
+type StatusFilter = "all" | "pending" | "accepted" | "completed" | "history";
 
 /**
  * Estrutura visual comum às telas de pedidos recebidos (`05.03`, `06.03`) e enviados.
@@ -49,6 +60,10 @@ export function RequestListLayout({
   error,
   onRetry,
   onBack,
+  showHeroDescription = true,
+  showPendingSummary = false,
+  feedbackMessage,
+  onDismissFeedback,
   renderExtra,
 }: Props) {
   const { colors } = useTheme();
@@ -57,16 +72,28 @@ export function RequestListLayout({
   // Web larga: coluna mais larga e dois pedidos por linha, em vez de uma faixa estreita no meio.
   const wide = useIsWideWeb();
   const listColumns = useWebColumns(2, 3);
-  const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "accepted" | "history">("all");
+  const [selectedFilter, setSelectedFilter] = useState<StatusFilter | null>(null);
 
   const pendingCount = items.filter((item) => item.request.status === "pending").length;
-  const acceptedCount = items.filter((item) => item.request.status === "accepted").length;
+  const previousPendingCount = useRef(pendingCount);
+  useEffect(() => {
+    const hadPendingRequests = previousPendingCount.current > 0;
+    previousPendingCount.current = pendingCount;
+    if (showPendingSummary && hadPendingRequests && pendingCount === 0) {
+      setSelectedFilter((current) => current === "pending" ? "all" : current);
+    }
+  }, [pendingCount, showPendingSummary]);
+  const statusFilter = selectedFilter ?? "all";
+  const isCompleted = (item: RequestWithListing) => item.request.status === "accepted" && item.listing.status === "delivered";
+  const completedCount = items.filter(isCompleted).length;
+  const acceptedCount = items.filter((item) => item.request.status === "accepted" && !isCompleted(item)).length;
   const isHistory = (status: RequestStatus) => status === "rejected" || status === "cancelled";
   const historyCount = items.filter((item) => isHistory(item.request.status)).length;
 
   const filteredItems = items.filter((item) => {
     if (statusFilter === "pending") return item.request.status === "pending";
-    if (statusFilter === "accepted") return item.request.status === "accepted";
+    if (statusFilter === "accepted") return item.request.status === "accepted" && !isCompleted(item);
+    if (statusFilter === "completed") return isCompleted(item);
     if (statusFilter === "history") return isHistory(item.request.status);
     return true;
   });
@@ -74,16 +101,53 @@ export function RequestListLayout({
     <SafeAreaView style={styles.page}>
       <TopAppBar title={title} onBack={() => onBack?.()} contentMaxWidth={wide ? WIDE_CONTENT_MAX_WIDTH : undefined} />
       <View style={[styles.content, wide && styles.contentWide]}>
+        {wide ? (
+          <Breadcrumb
+            items={[
+              { label: "Estante", onPress: () => onBack?.(), accessibilityLabel: "Voltar para a Estante" },
+              { label: title, isCurrent: true },
+            ]}
+            style={styles.breadcrumb}
+          />
+        ) : null}
         <View style={styles.heroBox}>
           <Text style={styles.heroTitle}>Sua estante em movimento.</Text>
-          <Text style={styles.body}>Acompanhe as propostas dos seus livros.</Text>
+          {showHeroDescription ? (
+            <Text style={styles.body}>Acompanhe as propostas dos seus livros.</Text>
+          ) : null}
+          {showPendingSummary && pendingCount > 0 && statusFilter !== "pending" ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`Ver ${pendingCount} ${pendingCount === 1 ? "pedido pendente" : "pedidos pendentes"}`}
+              accessibilityHint="Mostra apenas os pedidos que aguardam sua resposta."
+              onPress={() => setSelectedFilter("pending")}
+              style={withPress(styles.pendingSummary)}
+            >
+              <IconBadge icon="mail" tone="action" />
+              <View style={styles.pendingSummaryContent}>
+                <Text style={styles.pendingSummaryTitle}>
+                  {pendingCount} {pendingCount === 1 ? "pedido pendente" : "pedidos pendentes"}
+                </Text>
+                <Text style={styles.pendingSummaryBody}>
+                  Toque para ver os pedidos pendentes.
+                </Text>
+              </View>
+              <AppIcon name="chevronRight" size={20} color={colors.action} />
+            </Pressable>
+          ) : null}
           {items.length > 0 ? (
-            <View style={styles.filterRow}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.filterRow}
+              style={styles.filterScrollView}
+            >
               {(
                 [
                   { key: "all", label: `Todos (${items.length})`, a11y: "Filtrar pedidos por Todos" },
                   { key: "pending", label: `Pendentes (${pendingCount})`, a11y: "Filtrar pedidos por Pendentes" },
                   { key: "accepted", label: `Aceitos (${acceptedCount})`, a11y: "Filtrar pedidos por Aceitos" },
+                  { key: "completed", label: `Finalizados (${completedCount})`, a11y: "Filtrar pedidos por Finalizados" },
                   { key: "history", label: `Histórico (${historyCount})`, a11y: "Filtrar pedidos por Histórico" },
                 ] as const
               ).map((chip) => {
@@ -94,20 +158,20 @@ export function RequestListLayout({
                     accessibilityRole="button"
                     accessibilityLabel={chip.a11y}
                     accessibilityState={{ selected }}
-                    onPress={() => setStatusFilter(chip.key)}
-                    style={({ pressed }) => [
+                    onPress={() => setSelectedFilter(chip.key)}
+                    style={withPress([
                       styles.filterChip,
                       selected && styles.filterChipSelected,
-                      pressed && styles.filterChipPressed,
-                    ]}
+                    ])}
                   >
+                    {selected ? <AppIcon name="check" size={16} color={colors.m3.onSecondaryContainer} /> : null}
                     <Text style={[styles.filterChipText, selected && styles.filterChipTextSelected]}>
                       {chip.label}
                     </Text>
                   </Pressable>
                 );
               })}
-            </View>
+            </ScrollView>
           ) : null}
         </View>
         {loading ? (
@@ -150,7 +214,7 @@ export function RequestListLayout({
                     <Pressable
                       accessibilityRole="button"
                       accessibilityLabel="Ver todos os pedidos"
-                      onPress={() => setStatusFilter("all")}
+                      onPress={() => setSelectedFilter("all")}
                       style={withPress(styles.filterChip)}
                     >
                       <Text style={styles.link}>Ver todos os pedidos</Text>
@@ -166,7 +230,9 @@ export function RequestListLayout({
                   </View>
                 )
               }
-              renderItem={({ item }) => (
+              renderItem={({ item }) => {
+                const completed = isCompleted(item);
+                return (
                 <View style={[styles.item, wide && styles.itemWide]}>
                   <View style={styles.bookRow}>
                     <BookCover
@@ -178,8 +244,8 @@ export function RequestListLayout({
                     <View style={styles.bookInfo}>
                       <View style={styles.row}>
                         <Text style={styles.itemTitle}>{item.listing.title}</Text>
-                        <Text style={[styles.badge, styles[item.request.status]]}>
-                          {statusLabel[item.request.status]}
+                        <Text style={[styles.badge, completed ? styles.completed : styles[item.request.status]]}>
+                          {completed ? "Finalizado" : statusLabel[item.request.status]}
                         </Text>
                       </View>
                       <Text style={styles.body}>{item.listing.author}</Text>
@@ -193,11 +259,21 @@ export function RequestListLayout({
                   </View>
                   {renderExtra(item)}
                 </View>
-              )}
+                );
+              }}
             />
           </>
         )}
       </View>
+      {onDismissFeedback ? (
+        <View pointerEvents="box-none" style={styles.snackbarContainer}>
+          <Snackbar
+            visible={feedbackMessage != null}
+            message={feedbackMessage ?? ""}
+            onDismiss={onDismissFeedback}
+          />
+        </View>
+      ) : null}
     </SafeAreaView>
   );
 }
@@ -266,6 +342,65 @@ export function createRequestStyles(colors: ColorPalette) {
       flex: 1,
       gap: 2,
     },
+    receivedDetails: { gap: tokens.spacing[8] },
+    proposalMessage: {
+      padding: tokens.spacing[12],
+      gap: tokens.spacing[6],
+      borderRadius: tokens.radius.medium,
+      backgroundColor: colors.m3.surfaceContainerHigh,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+    },
+    proposalMessageHeading: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[6],
+    },
+    proposalMessageLabel: {
+      ...tokens.typography.labelLarge,
+      color: colors.actionDeep,
+      fontWeight: tokens.fontWeight.semiBold,
+    },
+    proposalMessageText: {
+      ...tokens.typography.bodyMedium,
+      color: colors.m3.onSurface,
+    },
+    offeredBookCard: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[10],
+      padding: tokens.spacing[12],
+      borderRadius: tokens.radius.medium,
+      backgroundColor: colors.m3.surfaceContainerHigh,
+    },
+    offeredBookInfo: { flex: 1, gap: tokens.spacing[2] },
+    offeredBookLabel: {
+      ...tokens.typography.labelSmall,
+      color: colors.secondaryText,
+    },
+    offeredBookTitle: {
+      ...tokens.typography.bodyMedium,
+      color: colors.m3.onSurface,
+      fontWeight: tokens.fontWeight.semiBold,
+    },
+    offeredBookAuthor: {
+      ...tokens.typography.labelSmall,
+      color: colors.secondaryText,
+    },
+    pendingActions: {
+      gap: tokens.spacing[8],
+      marginTop: tokens.spacing[4],
+    },
+    pendingSecondaryActions: {
+      flexDirection: "row",
+      gap: tokens.spacing[8],
+    },
+    fullWidthAction: {
+      width: "100%",
+      flexDirection: "row",
+      gap: tokens.spacing[8],
+    },
+    flexAction: { flex: 1 },
     meta: {
       ...tokens.typography.bodyMedium,
       fontWeight: tokens.fontWeight.medium,
@@ -287,6 +422,7 @@ export function createRequestStyles(colors: ColorPalette) {
     error: {
       ...tokens.typography.bodyMedium,
       color: colors.error,
+      marginTop: tokens.spacing[4],
     },
   });
 }
@@ -295,11 +431,19 @@ function createStyles(colors: ColorPalette) {
   const requestStyles = createRequestStyles(colors);
   return StyleSheet.create({
   page: { flex: 1, backgroundColor: colors.background },
+  snackbarContainer: {
+    position: "absolute",
+    left: tokens.spacing[16],
+    right: tokens.spacing[16],
+    bottom: tokens.spacing[16],
+    zIndex: 20,
+    elevation: 20,
+  },
   content: {
     flex: 1,
     width: "100%",
     padding: tokens.spacing[24],
-    paddingTop: tokens.spacing[32],
+    paddingTop: tokens.spacing[16],
   },
   contentWide: {
     maxWidth: WIDE_CONTENT_MAX_WIDTH,
@@ -324,21 +468,31 @@ function createStyles(colors: ColorPalette) {
     color: colors.text,
     marginBottom: tokens.spacing[8],
   },
+  breadcrumb: {
+    marginBottom: tokens.spacing[8],
+  },
   heroBox: {
-    marginBottom: tokens.spacing[16],
+    marginBottom: tokens.spacing[8],
     gap: tokens.spacing[4],
+  },
+  filterScrollView: {
+    marginTop: tokens.spacing[8],
+    marginBottom: tokens.spacing[4],
   },
   filterRow: {
     flexDirection: "row",
-    flexWrap: "wrap",
+    alignItems: "center",
     gap: tokens.spacing[8],
-    marginTop: tokens.spacing[8],
+    paddingVertical: tokens.spacing[4],
   },
   filterChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: tokens.spacing[6],
     minHeight: tokens.accessibility.touchTarget,
     justifyContent: "center",
     paddingHorizontal: tokens.spacing[16],
-    paddingVertical: tokens.spacing[6],
+    paddingVertical: tokens.spacing[8],
     borderRadius: tokens.shapeMorph.chipUnselected,
     backgroundColor: colors.m3.surfaceContainerLowest,
     borderWidth: 1,
@@ -349,6 +503,7 @@ function createStyles(colors: ColorPalette) {
     borderColor: colors.m3.secondaryContainer,
     borderRadius: tokens.shapeMorph.chipSelected,
     borderWidth: 0,
+    paddingLeft: tokens.spacing[10],
   },
   filterChipPressed: {
     borderRadius: tokens.shapeMorph.chipSelected,
@@ -357,12 +512,14 @@ function createStyles(colors: ColorPalette) {
   filterChipText: {
     ...tokens.typography.labelLarge,
     color: colors.m3.onSurfaceVariant,
+    fontWeight: tokens.fontWeight.medium,
   },
   filterChipTextSelected: {
     color: colors.m3.onSecondaryContainer,
   },
   heroTitle: {
-    ...tokens.typography.displayLarge,
+    ...tokens.typography.titleMedium,
+    fontFamily: tokens.typography.displayLarge.fontFamily,
     color: colors.text,
   },
   infoCard: {
@@ -374,6 +531,28 @@ function createStyles(colors: ColorPalette) {
     gap: tokens.spacing[12],
     marginTop: tokens.spacing[8],
   },
+    pendingSummary: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[12],
+    marginTop: tokens.spacing[4],
+    paddingHorizontal: tokens.spacing[12],
+    paddingVertical: tokens.spacing[8],
+    borderRadius: tokens.radius.medium,
+      borderWidth: 1,
+    borderColor: colors.m3.outlineVariant,
+    backgroundColor: colors.m3.surfaceContainerHigh,
+    },
+  pendingSummaryContent: { flex: 1, gap: tokens.spacing[2] },
+    pendingSummaryTitle: {
+      ...tokens.typography.labelLarge,
+    color: colors.m3.onSurface,
+      fontWeight: tokens.fontWeight.semiBold,
+    },
+    pendingSummaryBody: {
+    ...tokens.typography.labelMedium,
+      color: colors.secondaryText,
+    },
   infoCardTitle: {
     ...tokens.typography.titleMedium,
     fontFamily: tokens.typography.displayLarge.fontFamily,
@@ -452,6 +631,10 @@ function createStyles(colors: ColorPalette) {
   accepted: {
     backgroundColor: colors.badge.donation.background,
     color: colors.badge.donation.text,
+  },
+  completed: {
+    backgroundColor: colors.badge.completed.background,
+    color: colors.badge.completed.text,
   },
   rejected: {
     backgroundColor: colors.disabledBackground,

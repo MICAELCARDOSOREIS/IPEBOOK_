@@ -15,6 +15,7 @@ import { FilledButton } from "@/view/components/FilledButton";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
+import ipeFrame from "@/view/assets/moldura-ipe-perfil.png";
 
 export type ProfileHubProps = {
   requireAuth?: boolean;
@@ -60,7 +61,7 @@ export default function ProfileHub({
   onNavigateToSettings,
   onSignedOut,
 }: ProfileHubProps) {
-  const { colors } = useTheme();
+  const { colors, resolvedScheme } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [authState, authActions] = useAuthViewModel();
   const userId = authState.user?.id ?? null;
@@ -215,13 +216,6 @@ export default function ProfileHub({
               {isSignedIn ? (
                 <>
                   <View style={[styles.heroBlock, wideWeb && styles.heroBlockWide]}>
-                    <Image
-                      source={require("../../../assets/moldura-ipe-perfil.jpeg")}
-                      accessibilityElementsHidden
-                      pointerEvents="none"
-                      resizeMode="contain"
-                      style={styles.ipeFrame}
-                    />
                     <View style={styles.identityRow}>
                       <View style={styles.identityText}>
                         <Text accessibilityRole="header" style={styles.profileName} numberOfLines={2}>
@@ -257,6 +251,13 @@ export default function ProfileHub({
                       </View>
                       <View style={styles.avatarFrame}>
                         <Avatar name={profile.name} photoUrl={profile.photoUrl} size={92} />
+                        <Image
+                          source={ipeFrame}
+                          accessibilityElementsHidden
+                          pointerEvents="none"
+                          resizeMode="contain"
+                          style={styles.avatarIpeFrame}
+                        />
                       </View>
                     </View>
 
@@ -291,7 +292,9 @@ export default function ProfileHub({
                         onPress={onNavigateToRatings}
                         style={({ pressed }) => [styles.statBox, pressed && styles.statBoxPressed]}
                       >
-                        <Text style={styles.statNumber}>{ratingText === "—" ? ratingText : `★ ${ratingText}`}</Text>
+                        <Text style={styles.statNumber}>
+                          {ratingText === "—" ? ratingText : <><Text style={styles.ratingStar}>★</Text> {ratingText}</>}
+                        </Text>
                         <Text style={styles.statLabel}>nota média</Text>
                       </Pressable>
                     </View>
@@ -301,7 +304,11 @@ export default function ProfileHub({
                         accessibilityRole="button"
                         accessibilityLabel="Editar perfil"
                         onPress={onNavigateToEditProfile}
-                        style={({ pressed }) => [styles.editProfileButton, pressed && styles.editProfileButtonPressed]}
+                        style={({ pressed }) => [
+                          styles.editProfileButton,
+                          resolvedScheme === "dark" && styles.editProfileButtonDark,
+                          pressed && styles.editProfileButtonPressed,
+                        ]}
                       >
                         <AppIcon name="edit" size={18} color={colors.ipe.onContainer} />
                         <Text style={styles.editProfileButtonText}>Editar perfil</Text>
@@ -468,14 +475,9 @@ function createStyles(colors: ColorPalette) {
       shadowRadius: 10,
       elevation: 2,
     },
-    ipeFrame: {
-      ...StyleSheet.absoluteFillObject,
-      width: "100%",
-      height: "100%",
-      opacity: 0.1,
-    },
     // Web larga: identidade e métricas numa coluna lateral; Atividade e Conta ao lado.
-    heroBlockWide: { width: 380, position: "sticky" as "relative", top: tokens.spacing[16] },
+    // Sem `sticky`: a seção "Conta" quebra para a linha de baixo e o cartão grudado a cobria ao rolar.
+    heroBlockWide: { width: 380 },
     sectionWide: { flex: 1, flexBasis: 300, minWidth: 300 },
     content: {
       width: "100%",
@@ -565,15 +567,23 @@ function createStyles(colors: ColorPalette) {
       color: colors.m3.onSurfaceVariant,
     },
     avatarFrame: {
-      width: 104,
-      height: 104,
+      width: 116,
+      height: 116,
+      position: "relative",
       padding: tokens.spacing[3],
       borderRadius: tokens.radius.full,
-      borderWidth: 2,
-      borderColor: colors.ipe.bloom,
-      backgroundColor: colors.ipe.petalSoft,
       alignItems: "center",
       justifyContent: "center",
+    },
+    avatarIpeFrame: {
+      position: "absolute",
+      // O vão interno da arte mede 65% da largura (raio 250/768). Com 136px o vão fica ~88px,
+      // um pouco menor que a foto de 92px, para o galho cobrir a borda como uma moldura.
+      // Centralizada explicitamente no contêiner de 116px: (116 - 136) / 2 = -10.
+      top: -10,
+      left: -10,
+      width: 136,
+      height: 136,
     },
     editProfileButton: {
       flexDirection: "row",
@@ -590,6 +600,9 @@ function createStyles(colors: ColorPalette) {
       borderRadius: tokens.shapeMorph.buttonPressed,
       backgroundColor: colors.ipe.bloomDeep,
       transform: [{ scale: 0.98 }],
+    },
+    editProfileButtonDark: {
+      backgroundColor: colors.ipe.bloomDeep,
     },
     editProfileButtonText: {
       ...tokens.typography.labelLarge,
@@ -633,6 +646,9 @@ function createStyles(colors: ColorPalette) {
       lineHeight: 34,
       fontWeight: tokens.fontWeight.bold,
       color: colors.brandBrown,
+    },
+    ratingStar: {
+      color: colors.ipe.bloom,
     },
     statLabel: {
       ...tokens.typography.labelMedium,

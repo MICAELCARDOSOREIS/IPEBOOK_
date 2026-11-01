@@ -1,6 +1,6 @@
 # Tarefas — Especificação 113 (Melhorias na Negociação)
 
-Status geral: [x] Concluído
+Status geral: [ ] Em atualização
 
 ## Fase 1: Banco de Dados e Migração SQL
 - [x] T1.1 Criar migração `supabase/migrations/202610310003_negociacao_melhorias.sql` com `initial_message` e `offered_book_id` em `v2_book_requests`.
@@ -26,3 +26,14 @@ Status geral: [x] Concluído
 - [x] T5.2 Rodar `npm run check:architecture` e `npm run check:numbering`.
 - [x] T5.3 Rodar `npm run test:coverage` garantindo métricas globais ≥ 80%.
 - [x] T5.4 Rodar `npm run validate` e consolidar commit na branch `feat/113-melhorias-na-negociacao`.
+
+## Complemento: pedidos recebidos
+- [x] T6.1 Mostrar a mensagem inicial e o livro oferecido quando disponíveis.
+- [x] T6.2 Destacar a contagem de pendentes e dar prioridade visual a "Aceitar".
+- [x] T6.3 Exibir pedidos entregues como "Finalizados" e separar seus contadores/filtro de "Aceitos".
+- [x] T6.4 Executar `npm run check:architecture` e `git diff --check` após o complemento.
+- [x] T6.5 Executar `npm run typecheck` após o ajuste visual; passou.
+- [x] T6.6 Compactar o topo da tela recebida para mostrar os pedidos com menos rolagem.
+- [ ] T6.7 Conferir a tela em celular, incluindo mensagem e troca sem dados opcionais (pendente: o ADB não iniciou neste ambiente por restrição de permissão).
+- [x] T6.8 Abrir automaticamente em "Pendentes" quando houver propostas aguardando resposta e voltar para "Todos" quando a última for resolvida.
+- [x] T6.9 Mostrar confirmação breve após aceitar ou recusar, sem deslocar a lista.

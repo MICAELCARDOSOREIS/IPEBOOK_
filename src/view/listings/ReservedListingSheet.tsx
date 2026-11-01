@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { AppIcon } from "@/view/components/AppIcon";
 import { TextButton } from "@/view/components/TextButton";
 import { withPress } from "@/view/pressFeedback";
@@ -39,6 +40,7 @@ export function ReservedListingSheet({
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const insets = useSafeAreaInsets();
+  const wideWeb = useIsWideWeb();
 
   const isReserved = status === "reserved";
   const title = isReserved ? "Exemplar Reservado" : "Exemplar Entregue";
@@ -57,7 +59,7 @@ export function ReservedListingSheet({
       accessibilityViewIsModal
       aria-modal
     >
-      <View style={styles.scrim}>
+      <View style={[styles.scrim, wideWeb && styles.scrimWide]}>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Fechar informações da reserva"
@@ -65,8 +67,8 @@ export function ReservedListingSheet({
           onPress={onClose}
         />
 
-        <View style={[styles.sheet, { paddingBottom: tokens.spacing[16] + insets.bottom }]}>
-          <View style={styles.handle} />
+        <View style={[styles.sheet, wideWeb && styles.sheetWide, { paddingBottom: wideWeb ? tokens.spacing[24] : tokens.spacing[16] + insets.bottom }]}>
+          {wideWeb ? null : <View style={styles.handle} />}
 
           {/* Cabeçalho informativo com ícone temático */}
           <View style={styles.headerRow}>
@@ -186,12 +188,22 @@ function createStyles(colors: ColorPalette) {
       backgroundColor: colors.m3.scrim ?? "rgba(0, 0, 0, 0.45)",
       justifyContent: "flex-end",
     },
+    scrimWide: {
+      justifyContent: "center",
+      alignItems: "center",
+      padding: tokens.spacing[24],
+    },
     sheet: {
       backgroundColor: colors.m3.surfaceContainerLow,
       borderTopLeftRadius: tokens.radius.xl,
       borderTopRightRadius: tokens.radius.xl,
       paddingHorizontal: tokens.spacing[20],
       paddingTop: tokens.spacing[12],
+    },
+    sheetWide: {
+      width: "100%",
+      maxWidth: 520,
+      borderRadius: tokens.radius.xl,
     },
     handle: {
       width: 32,

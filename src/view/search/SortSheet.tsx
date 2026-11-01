@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { AppIcon } from "@/view/components/AppIcon";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
@@ -26,6 +27,7 @@ export function SortSheet({ visible, selected, onSelect, onClose }: SortSheetPro
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const insets = useSafeAreaInsets();
+  const wideWeb = useIsWideWeb();
 
   return (
     <Modal
@@ -33,15 +35,15 @@ export function SortSheet({ visible, selected, onSelect, onClose }: SortSheetPro
       navigationBarTranslucent
       visible={visible}
       transparent
-      animationType="slide"
+      animationType={wideWeb ? "fade" : "slide"}
       onRequestClose={onClose}
       accessibilityViewIsModal
       aria-modal
     >
-      <View style={styles.scrim}>
+      <View style={[styles.scrim, wideWeb && styles.scrimWide]}>
         <Pressable accessibilityRole="none" accessibilityLabel="Fechar ordenação" style={StyleSheet.absoluteFill} onPress={onClose} />
-        <View style={[styles.sheet, { paddingBottom: tokens.spacing[16] + insets.bottom }]}>
-          <View style={styles.handle} />
+        <View style={[styles.sheet, wideWeb && styles.sheetWide, { paddingBottom: wideWeb ? tokens.spacing[24] : tokens.spacing[16] + insets.bottom }]}>
+          {wideWeb ? null : <View style={styles.handle} />}
           <Text accessibilityRole="header" style={styles.title}>Ordenar por</Text>
           <View accessibilityRole="radiogroup" accessibilityLabel="Ordenar por">
             {SORT_IDS.map((option) => {
@@ -81,6 +83,7 @@ export function SortSheet({ visible, selected, onSelect, onClose }: SortSheetPro
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     scrim: { flex: 1, justifyContent: "flex-end", backgroundColor: colors.m3.scrim },
+    scrimWide: { justifyContent: "center", alignItems: "center", padding: tokens.spacing[24] },
     sheet: {
       backgroundColor: colors.m3.surfaceContainerLow,
       borderTopLeftRadius: tokens.radius.extraLarge,
@@ -89,6 +92,11 @@ function createStyles(colors: ColorPalette) {
       paddingTop: tokens.spacing[12],
       gap: tokens.spacing[8],
       elevation: 3,
+    },
+    sheetWide: {
+      width: "100%",
+      maxWidth: 440,
+      borderRadius: tokens.radius.extraLarge,
     },
     handle: {
       alignSelf: "center",

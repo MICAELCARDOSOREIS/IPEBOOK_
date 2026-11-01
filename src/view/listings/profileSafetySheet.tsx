@@ -4,6 +4,7 @@ import type { Book } from "@/model/entities/book";
 import { AppIcon } from "@/view/components/AppIcon";
 import { Dialog } from "@/view/components/Dialog";
 import { useTheme } from "@/view/theme/ThemeProvider";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { tokens, type ColorPalette } from "@/view/tokens";
 
 import { withPress } from "@/view/pressFeedback";
@@ -40,6 +41,7 @@ export function ProfileSafetySheet({
 }: ProfileSafetySheetProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const wideWeb = useIsWideWeb();
   const [confirmingBlock, setConfirmingBlock] = useState(false);
   const [choosingListing, setChoosingListing] = useState(false);
 
@@ -57,10 +59,10 @@ export function ProfileSafetySheet({
   return (
     <>
       <Modal visible={visible} transparent animationType="fade" statusBarTranslucent navigationBarTranslucent onRequestClose={close}>
-        <View style={styles.scrim}>
+        <View style={[styles.scrim, wideWeb && styles.scrimWide]}>
           <Pressable accessibilityRole="button" accessibilityLabel="Fechar ao tocar fora" onPress={close} style={withPress(styles.backdrop)} />
-          <View style={styles.sheet}>
-            <View accessible={false} importantForAccessibility="no" style={styles.handle} />
+          <View style={[styles.sheet, wideWeb && styles.sheetWide]}>
+            {wideWeb ? null : <View accessible={false} importantForAccessibility="no" style={styles.handle} />}
             <Text accessibilityRole="header" style={styles.title}>
               {choosingListing ? "Qual anúncio denunciar?" : "Denunciar ou bloquear"}
             </Text>
@@ -161,7 +163,9 @@ export function ProfileSafetySheet({
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     scrim: { flex: 1, backgroundColor: colors.m3.scrim, justifyContent: "flex-end" },
+    scrimWide: { justifyContent: "center", alignItems: "center", padding: tokens.spacing[24] },
     backdrop: { ...StyleSheet.absoluteFill },
+    sheetWide: { width: "100%", maxWidth: 480, borderRadius: tokens.radius.xxl },
     sheet: {
       backgroundColor: colors.background,
       borderTopLeftRadius: tokens.radius.xxl,

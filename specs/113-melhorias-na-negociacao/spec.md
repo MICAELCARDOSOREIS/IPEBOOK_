@@ -39,9 +39,25 @@ Esta especificação unifica a jornada de negociação com foco em simplicidade,
 ### RF-06: Ação Rápida "Adicionar à Agenda"
 - Para encontros confirmados, disponibilizar ação para adicionar o compromisso ao calendário (Google Calendar / link nativo) com o endereço e ponto público de Piripiri preenchidos.
 
+### RF-07: Clareza dos Pedidos Recebidos
+- Em `/pedidos-recebidos`, cada proposta pendente mostra a mensagem inicial e o livro oferecido em troca quando esses dados existirem.
+- Um resumo acessível informa quantos pedidos aguardam resposta e filtra a lista para os pendentes ao ser acionado.
+- A ação "Aceitar" tem destaque e largura suficiente no celular; "Conversar" e "Recusar" permanecem visíveis como alternativas.
+- Ao abrir a tela, pedidos pendentes já aparecem selecionados; depois de resolver a última pendência, a lista volta para "Todos".
+- Após aceitar ou recusar com sucesso, uma confirmação breve informa o resultado sem deslocar a lista.
+- O cabeçalho evita texto redundante e mantém a lista acessível com pouca rolagem em celulares.
+- Sem mensagem ou livro oferecido, o cartão não exibe espaços vazios.
+
+### RF-08: Estado Final da Entrega nas Listas de Pedidos
+- Quando o pedido estiver aceito e o anúncio relacionado estiver marcado como entregue, a lista deve mostrar "Finalizado", não "Aceito".
+- O filtro "Aceitos" exclui negociações já entregues; o filtro "Finalizados" lista essas negociações separadamente.
+
 ## 3. Critérios de Aceite
 1. O leitor pode incluir mensagem opcional e selecionar livro de troca ao solicitar um anúncio.
 2. O topo do chat exibe o estado atual da negociação (encontro, local e entrega) sem obrigar navegação para telas externas.
 3. Eventos de encontro e entrega aparecem de forma clara na cronologia do chat.
 4. Conclusão de entrega via QR code abre imediatamente o modal de avaliação.
 5. Todos os testes passam e a cobertura global de código permanece ≥ 80%.
+6. Pedidos recebidos mostram mensagem e contrapartida disponíveis; o resumo abre os pendentes e as ações são claras em telas estreitas.
+7. Pedido aceito com anúncio entregue aparece como "Finalizado" e nos contadores/filtro de finalizados, não de aceitos.
+8. A tela recebida prioriza pendências ao abrir e confirma respostas concluídas; a confirmação permanece visível mesmo quando o cartão sai do filtro.

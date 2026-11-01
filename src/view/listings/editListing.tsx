@@ -12,6 +12,7 @@ import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { categoryTone } from "@/view/categoryTone";
 import { AddPhotoCard } from "@/view/components/AddPhotoCard";
+import { Breadcrumb } from "@/view/components/Breadcrumb";
 import { Checkbox } from "@/view/components/Checkbox";
 import { Chip } from "@/view/components/Chip";
 import { FilledButton } from "@/view/components/FilledButton";
@@ -99,6 +100,16 @@ export default function EditListing({
         keyboardShouldPersistTaps="handled"
       >
         <View style={[styles.content, wide && styles.contentWide]}>
+          {wide ? (
+            <Breadcrumb
+              items={[
+                { label: "Estante", onPress: () => onCancel?.(), accessibilityLabel: "Voltar para Estante" },
+                { label: state.title || "Anúncio", onPress: () => onCancel?.() },
+                { label: "Editar", isCurrent: true },
+              ]}
+              style={styles.breadcrumb}
+            />
+          ) : null}
           <Text style={styles.subtitle}>Atualize as informações do seu livro.</Text>
 
           <View style={[styles.columns, wide && styles.columnsWide]}>
@@ -345,6 +356,7 @@ function createStyles(colors: ColorPalette) {
     gap: tokens.spacing[16],
   },
   contentWide: { maxWidth: EDIT_WIDE_MAX_WIDTH, alignSelf: "center", paddingHorizontal: WEB_GUTTER },
+  breadcrumb: { marginBottom: tokens.spacing[8] },
   columns: { gap: tokens.spacing[16] },
   columnsWide: { flexDirection: "row", alignItems: "flex-start", gap: tokens.spacing[24] },
   column: { gap: tokens.spacing[16] },
