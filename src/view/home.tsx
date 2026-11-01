@@ -17,6 +17,7 @@ import { NeighborhoodSelectorModal } from "@/view/components/NeighborhoodSelecto
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { ScreenContainer } from "@/view/components/ScreenContainer";
 import { IpeMark } from "@/view/components/IpeMark";
+import { IpeCelebrationOverlay } from "@/view/components/IpeCelebrationOverlay";
 import {
   checkAndTriggerInitialPetals,
   resetAppLaunchCelebrationForTesting,
@@ -369,20 +370,20 @@ export default function Home({
   const listHeader = (
     <View style={[styles.headerContainer, wideWeb && styles.headerContainerWide]}>
       {/* 1. Barra de Topo: Bairro (Pill), Entrar (sem sessão) e Sino de Notificações */}
-      <View style={[styles.topBar, wideWeb && styles.topBarWide]}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={`Selecionar bairro: ${displayNeighborhood}`}
-          hitSlop={{ top: tokens.spacing[4], bottom: tokens.spacing[4] }}
-          onPress={handleSelectNeighborhood}
-          style={withPress(styles.neighborhoodPill)}
-        >
-          <AppIcon name="place" size={20} color={colors.m3.primary} />
-          <Text numberOfLines={1} style={styles.neighborhoodText}>{displayNeighborhood}</Text>
-          <AppIcon name="chevronDown" size={20} color={colors.m3.onSurfaceVariant} />
-        </Pressable>
+      {wideWeb ? null : (
+        <View style={styles.topBar}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`Selecionar bairro: ${displayNeighborhood}`}
+            hitSlop={{ top: tokens.spacing[4], bottom: tokens.spacing[4] }}
+            onPress={handleSelectNeighborhood}
+            style={withPress(styles.neighborhoodPill)}
+          >
+            <AppIcon name="place" size={20} color={colors.m3.primary} />
+            <Text numberOfLines={1} style={styles.neighborhoodText}>{displayNeighborhood}</Text>
+            <AppIcon name="chevronDown" size={20} color={colors.m3.onSurfaceVariant} />
+          </Pressable>
 
-        {wideWeb ? null : (
           <View style={styles.topRightActions}>
             {authState.loading || authState.user ? null : (
               <Pressable
@@ -415,13 +416,28 @@ export default function Home({
               ) : null}
             </Pressable>
           </View>
-        )}
-      </View>
+        </View>
+      )}
 
       {/* 2. Manchete Editorial com o Ipê de Piripiri (Figma 02.01 / Spec 078) */}
       <View style={[styles.heroSection, wideWeb && styles.heroSectionWide]}>
         <View style={[styles.heroRow, wideWeb && styles.heroRowWide]}>
           <View style={[styles.heroTextContainer, wideWeb && styles.heroTextContainerWide]}>
+            {wideWeb ? (
+              <View style={styles.heroLocationRowWide}>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`Selecionar bairro: ${displayNeighborhood}`}
+                  onPress={handleSelectNeighborhood}
+                  style={withPress(styles.neighborhoodPill)}
+                >
+                  <AppIcon name="place" size={18} color={colors.m3.primary} />
+                  <Text numberOfLines={1} style={styles.neighborhoodText}>{displayNeighborhood}</Text>
+                  <AppIcon name="chevronDown" size={18} color={colors.m3.onSurfaceVariant} />
+                </Pressable>
+              </View>
+            ) : null}
+
             <Text accessibilityRole="header" style={[styles.heroTitle, wideWeb && styles.heroTitleWide]}>
               Encontre sua próxima história.
             </Text>
@@ -454,37 +470,127 @@ export default function Home({
               </View>
             ) : null}
           </View>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Celebrar florada do Ipê"
-            onPress={triggerPetals}
-            style={({ pressed }) => [
-              styles.heroMarkContainer,
-              wideWeb && styles.heroMarkContainerWide,
-              isWeb && ({ cursor: "pointer", userSelect: "none" } as any),
-              pressed && expressivePressedStyle,
-            ]}
-          >
-            <Animated.View
-              style={{
-                transform: [
-                  {
-                    rotate: treeRotate.interpolate({
-                      inputRange: [-1, 0, 1],
-                      outputRange: ["-7deg", "0deg", "7deg"],
-                    }),
-                  },
-                ],
-              }}
+
+          {wideWeb ? (
+            <View style={styles.heroAsideWide}>
+              {/* Cartão interativo da Florada do Ipê */}
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Celebrar florada do Ipê"
+                onPress={triggerPetals}
+                style={({ pressed }) => [
+                  styles.heroCelebrationCardWide,
+                  isWeb && ({ cursor: "pointer", userSelect: "none" } as any),
+                  pressed && expressivePressedStyle,
+                ]}
+              >
+                <View style={styles.heroCelebrationRowWide}>
+                  <Animated.View
+                    style={{
+                      transform: [
+                        {
+                          rotate: treeRotate.interpolate({
+                            inputRange: [-1, 0, 1],
+                            outputRange: ["-7deg", "0deg", "7deg"],
+                          }),
+                        },
+                      ],
+                    }}
+                  >
+                    <IpeMark size={92} />
+                  </Animated.View>
+                  <View style={styles.heroCelebrationTextsWide}>
+                    <Text style={styles.heroCelebrationTitleWide}>Florada do Ipê</Text>
+                    <Text style={styles.heroCelebrationBodyWide}>
+                      Toque na árvore para celebrar a leitura e espalhar pétalas douradas por Piripiri.
+                    </Text>
+                  </View>
+                </View>
+              </Pressable>
+
+              {/* Destaques Comunitários: Doações e Trocas */}
+              <View style={styles.heroHighlightsRowWide}>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`Doações da semana: ${donationSummary}`}
+                  onPress={() => onNavigateToSearch?.({ modality: "donation" })}
+                  style={({ pressed }) => [
+                    styles.heroHighlightCardWide,
+                    { backgroundColor: colors.m3.doacaoContainer },
+                    isWeb && ({ cursor: "pointer" } as any),
+                    pressed && expressivePressedStyle,
+                  ]}
+                >
+                  <View style={styles.heroHighlightIconBoxWide}>
+                    <AppIcon name="bookmark" size={18} color={colors.m3.onDoacaoContainer} />
+                  </View>
+                  <View style={styles.heroHighlightTextBoxWide}>
+                    <Text numberOfLines={1} style={[styles.heroHighlightTitleWide, { color: colors.m3.onDoacaoContainer }]}>
+                      Doações
+                    </Text>
+                    <Text numberOfLines={1} style={[styles.heroHighlightSubtitleWide, { color: colors.m3.onDoacaoContainer }]}>
+                      {donationCount > 0 ? `${donationCount} ${donationCount === 1 ? "gratuito" : "gratuitos"}` : "Ver lista"}
+                    </Text>
+                  </View>
+                </Pressable>
+
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Trocar livros com leitores de Piripiri"
+                  onPress={() => onNavigateToSearch?.({ modality: "trade" })}
+                  style={({ pressed }) => [
+                    styles.heroHighlightCardWide,
+                    { backgroundColor: colors.m3.tertiaryContainer },
+                    isWeb && ({ cursor: "pointer" } as any),
+                    pressed && expressivePressedStyle,
+                  ]}
+                >
+                  <View style={styles.heroHighlightIconBoxWide}>
+                    <AppIcon name="swap" size={18} color={colors.m3.onTertiaryContainer} />
+                  </View>
+                  <View style={styles.heroHighlightTextBoxWide}>
+                    <Text numberOfLines={1} style={[styles.heroHighlightTitleWide, { color: colors.m3.onTertiaryContainer }]}>
+                      Trocas
+                    </Text>
+                    <Text numberOfLines={1} style={[styles.heroHighlightSubtitleWide, { color: colors.m3.onTertiaryContainer }]}>
+                      Sem custo
+                    </Text>
+                  </View>
+                </Pressable>
+              </View>
+            </View>
+          ) : (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Celebrar florada do Ipê"
+              onPress={triggerPetals}
+              style={({ pressed }) => [
+                styles.heroMarkContainer,
+                isWeb && ({ cursor: "pointer", userSelect: "none" } as any),
+                pressed && expressivePressedStyle,
+              ]}
             >
-              <IpeMark size={wideWeb ? 116 : 76} />
-            </Animated.View>
-          </Pressable>
+              <Animated.View
+                style={{
+                  transform: [
+                    {
+                      rotate: treeRotate.interpolate({
+                        inputRange: [-1, 0, 1],
+                        outputRange: ["-7deg", "0deg", "7deg"],
+                      }),
+                    },
+                  ],
+                }}
+              >
+                <IpeMark size={76} />
+              </Animated.View>
+            </Pressable>
+          )}
         </View>
       </View>
 
       {/* 3. Chips de Filtro Rápido (Todos, Venda, Troca, Doação) */}
-      <View style={styles.chipsContainer}>
+      <View style={[styles.chipsContainer, wideWeb && styles.chipsContainerWide]}>
         {(["all", "sale", "trade", "donation"] as const).map((mod) => {
           const isSelected = selectedModality === mod;
           const label = mod === "all" ? "Todos" : mod === "sale" ? "Venda" : mod === "trade" ? "Troca" : "Doação";
@@ -649,12 +755,15 @@ export default function Home({
         />
       }
       overlay={
-        <NeighborhoodSelectorModal
-          visible={neighborhoodHook.isSelectorOpen}
-          currentNeighborhood={effectiveNeighborhood}
-          onSelect={neighborhoodHook.selectNeighborhood}
-          onClose={neighborhoodHook.closeSelector}
-        />
+        <>
+          <IpeCelebrationOverlay />
+          <NeighborhoodSelectorModal
+            visible={neighborhoodHook.isSelectorOpen}
+            currentNeighborhood={effectiveNeighborhood}
+            onSelect={neighborhoodHook.selectNeighborhood}
+            onClose={neighborhoodHook.closeSelector}
+          />
+        </>
       }
     >
       {listHeader}
@@ -748,8 +857,12 @@ function createStyles(colors: ColorPalette) {
       marginBottom: tokens.spacing[12],
     },
     heroSectionWide: {
-      paddingVertical: tokens.spacing[24],
+      padding: tokens.spacing[28],
       marginBottom: tokens.spacing[24],
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderRadius: tokens.radius.xxl,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
       width: "100%",
     },
     heroTitle: {
@@ -779,12 +892,97 @@ function createStyles(colors: ColorPalette) {
       justifyContent: "space-between",
       gap: tokens.spacing[32],
     },
+    heroLocationRowWide: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginBottom: tokens.spacing[4],
+    },
     heroTextContainer: {
       flex: 1,
     },
     heroTextContainerWide: {
+      flex: 1.2,
+      minWidth: 320,
+      maxWidth: 640,
+      gap: tokens.spacing[12],
+      justifyContent: "center",
+    },
+    heroAsideWide: {
       flex: 1,
-      maxWidth: 960,
+      maxWidth: 480,
+      minWidth: 320,
+      flexShrink: 0,
+      justifyContent: "center",
+      gap: tokens.spacing[12],
+    },
+    heroCelebrationCardWide: {
+      backgroundColor: colors.m3.surfaceContainerLowest,
+      borderRadius: tokens.radius.xl,
+      borderWidth: 1,
+      borderColor: colors.ipe.bloom,
+      padding: tokens.spacing[16],
+      gap: tokens.spacing[12],
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.04,
+      shadowRadius: 4,
+      elevation: 1,
+    },
+    heroCelebrationRowWide: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[14],
+    },
+    heroCelebrationTextsWide: {
+      flex: 1,
+      gap: tokens.spacing[4],
+    },
+    heroCelebrationTitleWide: {
+      ...tokens.typography.titleMedium,
+      color: colors.brandBrown,
+      fontWeight: tokens.fontWeight.bold,
+    },
+    heroCelebrationBodyWide: {
+      ...tokens.typography.footnote,
+      color: colors.m3.onSurfaceVariant,
+      lineHeight: 18,
+    },
+    heroHighlightsRowWide: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[12],
+    },
+    heroHighlightCardWide: {
+      flex: 1,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[10],
+      paddingVertical: tokens.spacing[12],
+      paddingHorizontal: tokens.spacing[14],
+      borderRadius: tokens.radius.large,
+    },
+    heroHighlightIconBoxWide: {
+      width: 32,
+      height: 32,
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.m3.surfaceContainerLowest,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    heroHighlightTextBoxWide: {
+      flex: 1,
+      gap: tokens.spacing[2],
+    },
+    heroHighlightTitleWide: {
+      ...tokens.typography.labelLarge,
+      fontWeight: tokens.fontWeight.bold,
+    },
+    heroHighlightSubtitleWide: {
+      ...tokens.typography.captionSmall,
+      opacity: 0.9,
+    },
+    chipsContainerWide: {
+      marginBottom: tokens.spacing[20],
     },
     heroMarkContainer: {
       alignItems: "center",
@@ -819,12 +1017,14 @@ function createStyles(colors: ColorPalette) {
       flexDirection: "row",
       flexWrap: "wrap",
       alignItems: "center",
-      columnGap: tokens.spacing[32],
-      rowGap: tokens.spacing[16],
-      marginTop: tokens.spacing[20],
-      paddingVertical: tokens.spacing[16],
-      paddingHorizontal: tokens.spacing[24],
-      backgroundColor: colors.m3.surfaceContainerLow,
+      columnGap: tokens.spacing[28],
+      rowGap: tokens.spacing[12],
+      marginTop: tokens.spacing[8],
+      paddingVertical: tokens.spacing[12],
+      paddingHorizontal: tokens.spacing[20],
+      backgroundColor: colors.m3.surfaceContainerLowest,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
       borderRadius: tokens.radius.card,
       alignSelf: "flex-start",
     },
@@ -920,7 +1120,7 @@ function createStyles(colors: ColorPalette) {
     carouselGrid: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[24], alignItems: "stretch", width: "100%" },
     // Cartões flexíveis que preenchem as colunas com base de 220px e limite de 320px.
     carouselGridCell: { flexGrow: 1, flexBasis: 220, minWidth: 180, maxWidth: 320, flexDirection: "column" },
-    carouselCardCoverAreaWide: { paddingVertical: tokens.spacing[20] },
+    carouselCardCoverAreaWide: { paddingVertical: tokens.spacing[12] },
     carouselCardWide: { flex: 1, width: "100%", borderRadius: tokens.radius.xl, backgroundColor: colors.m3.surfaceContainerLowest },
     carouselList: { flexGrow: 0 },
     carouselListContent: {
