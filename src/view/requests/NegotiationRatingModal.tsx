@@ -137,18 +137,22 @@ export function NegotiationRatingModal({
               ) : null}
 
               <View style={styles.actionRow}>
-                <OutlinedButton
-                  label="Agora não"
-                  accessibilityLabel="Fechar diálogo sem avaliar agora"
-                  disabled={isSubmitting}
-                  onPress={onClose}
-                />
-                <FilledButton
-                  label={isSubmitting ? "Enviando…" : "Enviar avaliação"}
-                  accessibilityLabel="Confirmar e enviar avaliação"
-                  loading={isSubmitting}
-                  onPress={() => void onSubmit()}
-                />
+                <View style={styles.actionSlot}>
+                  <OutlinedButton
+                    label="Agora não"
+                    accessibilityLabel="Fechar diálogo sem avaliar agora"
+                    disabled={isSubmitting}
+                    onPress={onClose}
+                  />
+                </View>
+                <View style={styles.actionSlot}>
+                  <FilledButton
+                    label={isSubmitting ? "Enviando…" : "Enviar avaliação"}
+                    accessibilityLabel="Confirmar e enviar avaliação"
+                    loading={isSubmitting}
+                    onPress={() => void onSubmit()}
+                  />
+                </View>
               </View>
             </View>
           )}
@@ -263,6 +267,9 @@ function createStyles(colors: ColorPalette) {
       width: "100%",
       gap: tokens.spacing[12],
       marginTop: tokens.spacing[8],
+    },
+    actionSlot: {
+      flex: 1,
     },
     buttonContainer: {
       width: "100%",
