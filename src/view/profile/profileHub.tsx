@@ -220,30 +220,32 @@ export default function ProfileHub({
                         <Text accessibilityRole="header" style={styles.profileName} numberOfLines={2}>
                           {profile.name}
                         </Text>
-                        {instagramHandle ? (
-                          <Pressable
-                            accessibilityRole="link"
-                            accessibilityLabel={`Abrir Instagram @${instagramHandle}`}
-                            hitSlop={8}
-                            onPress={() => void Linking.openURL(`https://instagram.com/${instagramHandle}`)}
-                          >
-                            <Text style={styles.identityHandle}>{`@${instagramHandle}`}</Text>
-                          </Pressable>
-                        ) : (
-                          <Pressable
-                            accessibilityRole="button"
-                            accessibilityLabel="Adicionar Instagram ao perfil"
-                            hitSlop={8}
-                            onPress={onNavigateToEditProfile}
-                          >
-                            <Text style={styles.identityHandleAction}>Adicionar Instagram</Text>
-                          </Pressable>
-                        )}
-                        <View style={styles.locationRow}>
-                          <AppIcon name="place" size={16} color={colors.m3.onSurfaceVariant} />
-                          <Text style={styles.locationText}>
-                            {profile.neighborhood ? `${profile.neighborhood}, Piripiri` : "Piripiri, PI"}
-                          </Text>
+                        <View style={styles.identityMetaRow}>
+                          {instagramHandle ? (
+                            <Pressable
+                              accessibilityRole="link"
+                              accessibilityLabel={`Abrir Instagram @${instagramHandle}`}
+                              hitSlop={8}
+                              onPress={() => void Linking.openURL(`https://instagram.com/${instagramHandle}`)}
+                            >
+                              <Text style={styles.identityHandle}>{`@${instagramHandle}`}</Text>
+                            </Pressable>
+                          ) : (
+                            <Pressable
+                              accessibilityRole="button"
+                              accessibilityLabel="Adicionar Instagram ao perfil"
+                              hitSlop={8}
+                              onPress={onNavigateToEditProfile}
+                            >
+                              <Text style={styles.identityHandleAction}>Adicionar Instagram</Text>
+                            </Pressable>
+                          )}
+                          <View style={styles.locationRow}>
+                            <AppIcon name="place" size={16} color={colors.m3.onSurfaceVariant} />
+                            <Text style={styles.locationText}>
+                              {profile.neighborhood ? `${profile.neighborhood}, Piripiri` : "Piripiri, PI"}
+                            </Text>
+                          </View>
                         </View>
                       </View>
                       <View style={styles.avatarFrame}>
@@ -512,6 +514,13 @@ function createStyles(colors: ColorPalette) {
       gap: tokens.spacing[12],
     },
     identityText: { flex: 1, minWidth: 0, gap: tokens.spacing[4] },
+    identityMetaRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      flexWrap: "wrap",
+      columnGap: tokens.spacing[12],
+      rowGap: tokens.spacing[4],
+    },
     profileName: {
       color: colors.brandBrown,
       fontFamily: fontFamily.brand,
