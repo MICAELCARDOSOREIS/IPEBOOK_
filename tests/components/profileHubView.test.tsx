@@ -140,7 +140,7 @@ describe("Meu perfil — hub de navegação (Figma 07.01)", () => {
     });
 
     expect(screen.getByText("Ana Paula")).toBeDefined();
-    expect(screen.getByText("4.5")).toBeDefined();
+    expect(screen.getByText("★ 4.5")).toBeDefined();
     expect(screen.getByText("nota média")).toBeDefined();
 
     await act(async () => {
@@ -310,7 +310,7 @@ describe("Meu perfil — hub de navegação (Figma 07.01)", () => {
     expect(screen.getByText("trocas")).toBeDefined();
     expect(screen.getByText("nota média")).toBeDefined();
     expect(screen.getByText("3")).toBeDefined(); // completedNegotiations: 3
-    expect(screen.getByText("4.5")).toBeDefined(); // averageRating: 4.5
+    expect(screen.getByText("★ 4.5")).toBeDefined(); // averageRating: 4.5
 
     // 3. Seções agrupadas
     expect(screen.getByText("Atividade")).toBeDefined();
