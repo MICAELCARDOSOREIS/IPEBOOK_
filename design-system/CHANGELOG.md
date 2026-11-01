@@ -2,6 +2,65 @@
 
 Versões no formato `MAIOR.MENOR.CORREÇÃO`. Mudança grande = versão nova.
 
+## 1.25.0 · 2026-11-01
+
+- Pedidos recebidos abrem nas propostas pendentes e confirmam aceite ou recusa sem interromper a navegação.
+
+## 1.24.0 · 2026-11-01
+
+- O topo dos pedidos recebidos ficou mais compacto para reduzir a rolagem até os livros.
+
+## 1.23.0 · 2026-11-01
+
+- Cabeçalho e resumo dos pedidos ficaram mais compactos, com superfícies neutras para manter o contraste nos temas claro e escuro.
+
+## 1.22.0 · 2026-11-01
+
+- Listas de pedidos distinguem negociações aceitas de livros já entregues, exibidos como finalizados.
+
+## 1.21.0 · 2026-11-01
+
+- Pedidos recebidos destacam o que aguarda resposta, mostram mensagem e livro oferecido e deixam aceitar como ação principal.
+
+## 1.20.0 · 2026-11-01
+
+- A florada passa sobre o conteúdo sem bloquear toques; algumas peças pousam por um instante nas barras superior e inferior e depois desaparecem.
+
+## 1.19.0 · 2026-11-01
+
+- O amarelo do ipê ficou mais vivo e reconhecível, mantendo o traço botânico vintage, os contornos sépia e as folhas verdes.
+
+## 1.18.0 · 2026-11-01
+
+- A florada ganhou paleta vintage com dourado envelhecido, linhas sépia e folhas compostas verdes.
+
+## 1.17.0 · 2026-11-01
+
+- A queda ganhou inclinações 3D suaves com perspectiva e sombra leve nas flores, sem aumentar a duração.
+
+## 1.16.0 · 2026-11-01
+
+- A entrada da florada ficou mais rápida e menos cadenciada; os atrasos agora variam entre as peças.
+- Flores e pétalas seguem o ipê-amarelo florido sem folhagem, com cálice, garganta e cinco lobos arredondados.
+
+## 1.15.0 · 2026-11-01
+
+- A florada usa ilustrações botânicas próprias de ipê, com corola, nervuras, garganta âmbar e folhagem natural.
+- A queda ganhou ritmos, balanços e rotações variados para flores, pétalas e folhas, com profundidade mais visível.
+
+## 1.14.0 · 2026-11-01
+
+- A florada de entrada agora usa 16 flores e pétalas douradas, com queda breve e poucas peças pousando na barra inferior.
+- Disparos manuais e celebrações continuam usando a florada completa, preservando a folhagem e a animação ampla.
+
+## 1.13.0 · 2026-11-01
+
+- O seletor de aparência passou a usar linhas explicadas e indicador de seleção acessível.
+- Sem preferência salva ou válida, o tema inicia em Claro, independentemente do sistema; Sistema
+  continua disponível como escolha manual.
+- Removida de Configurações a amostra estática de cores da identidade visual, mantendo o foco
+  nos modos Claro, Escuro e Sistema.
+
 ## 1.12.0 · 2026-10-30
 
 - **Identidade Ipê, Livro & Folhagem Verde e Refinamento do Tema Escuro:**

@@ -1,6 +1,6 @@
 # IpêBook Design System · Sistema de design do app IpêBook
 
-> Versão da documentação: 1.11.0 · Disciplinas: IHC e PDM
+> Versão da documentação: 1.25.0 · Disciplinas: IHC e PDM
 >
 > Fonte única do design do app. Conteúdo originalmente trazido do Figma do projeto para a pasta
 > histórica `design-kit/` e depois migrado integralmente para cá (ver
@@ -89,9 +89,10 @@ Pelo menos três decisões Adaptadas ou Novas que expressam a identidade do app:
    recomenda uma única família tipográfica; o app usa a serifa só no logotipo, nos títulos de
    tela raiz e no título do livro, para diferenciar a voz da marca do texto de interface, mantendo
    Roboto para o resto da escala M3.
-4. **Tema claro e escuro — Adaptado.** O app resolve o tema do sistema e permite preferência
-   manual (Sistema, Claro ou Escuro), persistida no dispositivo. A infraestrutura está
-   implementada em `ThemeProvider`/`useTheme`; telas e componentes ainda não migrados para
+4. **Tema claro e escuro — Adaptado.** Na ausência de preferência salva, o app inicia no tema
+   Claro; a pessoa pode escolher manualmente Sistema, Claro ou Escuro, com a escolha persistida
+   no dispositivo. A opção Sistema acompanha o tema do aparelho quando escolhida. A infraestrutura
+   está implementada em `ThemeProvider`/`useTheme`; telas e componentes ainda não migrados para
    `useTheme` continuam usando a paleta clara como comportamento compatível (ver
    [ADR 0036](../docs/adr/0036-tema-escuro-entra-em-escopo.md)).
 
