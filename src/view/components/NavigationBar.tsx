@@ -32,7 +32,7 @@ export function NavigationBar({ active, onNavigate, disabledDestinations = [], b
   const insets = useSafeAreaInsets();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const lastNavigateTime = useRef(0);
-  const DEBOUNCE_MS = 300;
+  const DEBOUNCE_MS = 600;
 
   return (
     <View
@@ -55,7 +55,10 @@ export function NavigationBar({ active, onNavigate, disabledDestinations = [], b
             onPress={() => {
               if (isDisabled || isActive) return;
               const now = Date.now();
-              if (now - lastNavigateTime.current < DEBOUNCE_MS) return;
+              if (now - lastNavigateTime.current < DEBOUNCE_MS) {
+                lastNavigateTime.current = now;
+                return;
+              }
               lastNavigateTime.current = now;
               onNavigate(item.key);
             }}
