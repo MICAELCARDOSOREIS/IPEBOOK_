@@ -628,11 +628,10 @@ function createStyles(colors: ColorPalette) {
     libraryIcon: {
       width: 48,
       height: 48,
-      borderRadius: tokens.radius.medium,
+      borderRadius: tokens.radius.full,
       alignItems: "center",
       justifyContent: "center",
       backgroundColor: colors.ipe.bloom,
-      borderRadius: tokens.radius.full,
     },
     libraryCardText: {
       flex: 1,
