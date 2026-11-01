@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { FilledButton } from "@/view/components/FilledButton";
 import { Logotipo } from "@/view/components/Logotipo";
@@ -28,7 +28,25 @@ export type WelcomeProps = {
  * Ver issue #98 e ADR 0022. O catálogo exige conta (Spec 092): sem sessão, a tela só
  * oferece criar conta ou entrar — não há acesso de visitante.
  */
+const MODALITY_CONFIG = {
+  Venda: {
+    icon: "bookmark" as const,
+    description: "Defina o preço em reais e combine a entrega no seu bairro.",
+  },
+  Troca: {
+    icon: "swap" as const,
+    description: "Ofereça um livro da sua estante e combine a troca sem intermediários.",
+  },
+  Doação: {
+    icon: "heart" as const,
+    description: "Doe para quem vai ler. Sem cobrança pelo exemplar.",
+  },
+} as const;
+
+type ModalityKey = keyof typeof MODALITY_CONFIG;
+
 export default function Welcome({ onStart, onSignIn, onHelp, onTerms, betaInvite = false }: WelcomeProps) {
+  const [selectedModality, setSelectedModality] = useState<ModalityKey | null>(null);
   const labels = betaInvite
     ? { header: "Quero testar", start: "Quero testar o app", signIn: "Ver na Play Store" }
     : { header: "Criar conta", start: "Começar agora", signIn: "Já tenho conta" };
@@ -46,7 +64,7 @@ export default function Welcome({ onStart, onSignIn, onHelp, onTerms, betaInvite
     return (
       <ScrollView style={styles.wideRoot} contentContainerStyle={styles.wideContent} keyboardShouldPersistTaps="handled">
         <View style={styles.wideHeader}>
-          <Logotipo />
+          <Logotipo underline />
           <View style={styles.wideHeaderActions}>
             {betaInvite ? null : (
               <Pressable accessibilityRole="button" accessibilityLabel="Entrar" onPress={onSignIn} style={withPress(undefined)}>
@@ -68,7 +86,9 @@ export default function Welcome({ onStart, onSignIn, onHelp, onTerms, betaInvite
             </View>
             <View>
               <Text accessibilityRole="header" style={styles.wideTitle}>Uma boa história</Text>
-              <Text style={styles.wideTitle}>merece continuar.</Text>
+              <View style={styles.wideHighlight}>
+                <Text style={styles.wideHighlightText}>merece continuar.</Text>
+              </View>
             </View>
             <Text style={styles.wideLead}>
               Encontre, troque, venda ou doe livros com quem mora perto de você. Sem taxas e com encontro em local público.
@@ -113,44 +133,149 @@ export default function Welcome({ onStart, onSignIn, onHelp, onTerms, betaInvite
       contentStyle={{ gap: tokens.spacing[16] }}
     >
       <View style={styles.header}>
-        <Logotipo />
-        <View style={styles.location} accessible accessibilityLabel="Beta exclusiva em Piripiri, PI">
-          <View style={styles.locationDot} />
-          <Text style={styles.locationText}>PIRIPIRI · PIAUÍ</Text>
+        <Logotipo underline />
+        <View style={styles.headerActions}>
+          <View style={styles.location} accessible accessibilityLabel="Beta exclusiva em Piripiri, PI">
+            <View style={styles.locationDot} />
+            <Text style={styles.locationText}>PIRIPIRI · PIAUÍ</Text>
+          </View>
+          <ThemeToggleButton />
         </View>
-        {betaInvite ? <ThemeToggleButton /> : null}
       </View>
 
       <Text accessibilityRole="header" style={styles.title}>Uma boa história</Text>
       <View style={styles.highlight}>
-        <Text style={styles.title}>merece continuar.</Text>
+        <Text style={styles.highlightText}>merece continuar.</Text>
       </View>
 
-      <Image
-        source={illustration}
-        style={styles.illustration}
-        resizeMode="contain"
-        accessible={false}
-        importantForAccessibility="no"
-      />
+      <View style={styles.illustrationWrapper}>
+        <View style={styles.illustrationGlow} />
+        <Image
+          source={illustration}
+          style={styles.illustration}
+          resizeMode="contain"
+          accessible={false}
+          importantForAccessibility="no"
+        />
+      </View>
 
       <Text style={styles.subtitle}>Livros de quem mora perto de você.</Text>
 
       <View style={styles.modalities} accessible accessibilityLabel="Modalidades: venda, troca e doação">
-        {([["Venda", colors.badge.sale], ["Troca", colors.badge.trade], ["Doação", colors.badge.donation]] as const).map(([label, tone]) => (
+        {(
+          [
+            ["Venda", colors.badge.sale],
+            ["Troca", colors.badge.trade],
+            ["Doação", colors.badge.donation],
+          ] as const
+        ).map(([label, tone]) => {
+          const isSelected = selectedModality === label;
+          return (
+            <Pressable
+              key={label}
+              accessibilityRole="button"
+              accessibilityLabel={`${label}: toque para ver detalhes`}
+              accessibilityState={{ selected: isSelected }}
+              onPress={() => setSelectedModality((prev) => (prev === label ? null : label))}
+              style={withPress([
+                styles.modality,
+                {
+                  backgroundColor: isSelected ? tone.background : colors.m3.surfaceContainerLow,
+                  borderColor: isSelected ? tone.text : tone.background,
+                },
+              ])}
+            >
+              <Text
+                style={[
+                  styles.modalityText,
+                  { color: tone.text },
+                ]}
+              >
+                {label}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+
+      {selectedModality ? (
+        <View
+          style={[
+            styles.modalityInfoCard,
+            {
+              backgroundColor:
+                selectedModality === "Venda"
+                  ? colors.badge.sale.background
+                  : selectedModality === "Troca"
+                    ? colors.badge.trade.background
+                    : colors.badge.donation.background,
+            },
+          ]}
+        >
+          <AppIcon
+            name={MODALITY_CONFIG[selectedModality].icon}
+            size={18}
+            color={
+              selectedModality === "Venda"
+                ? colors.badge.sale.text
+                : selectedModality === "Troca"
+                  ? colors.badge.trade.text
+                  : colors.badge.donation.text
+            }
+          />
           <Text
-            key={label}
-            style={[styles.modality, { backgroundColor: tone.background, borderColor: tone.background, color: tone.text }]}
+            style={[
+              styles.modalityInfoText,
+              {
+                color:
+                  selectedModality === "Venda"
+                    ? colors.badge.sale.text
+                    : selectedModality === "Troca"
+                      ? colors.badge.trade.text
+                      : colors.badge.donation.text,
+              },
+            ]}
           >
-            {label}
+            {MODALITY_CONFIG[selectedModality].description}
           </Text>
-        ))}
+        </View>
+      ) : null}
+
+      <View style={styles.trustBadge} accessible accessibilityLabel="Encontros em locais públicos de Piripiri sem taxas">
+        <AppIcon name="place" size={16} color={colors.action} />
+        <Text style={styles.trustBadgeText}>Encontros em locais públicos de Piripiri · Sem taxas</Text>
       </View>
 
       <View style={styles.actions}>
         <FilledButton label={betaInvite ? labels.start : "Começar"} onPress={onStart} />
         {betaInvite ? null : <OutlinedButton label={labels.signIn} onPress={onSignIn} />}
       </View>
+
+      {onHelp || onTerms ? (
+        <View style={styles.footerLinks}>
+          {onHelp ? (
+            <Pressable
+              accessibilityRole="link"
+              accessibilityLabel="Como funciona o IpêBook"
+              onPress={onHelp}
+              style={withPress(styles.footerLink)}
+            >
+              <Text style={styles.footerLinkText}>Como funciona?</Text>
+            </Pressable>
+          ) : null}
+          {onHelp && onTerms ? <Text style={styles.footerLinkSeparator}>·</Text> : null}
+          {onTerms ? (
+            <Pressable
+              accessibilityRole="link"
+              accessibilityLabel="Termos de uso"
+              onPress={onTerms}
+              style={withPress(styles.footerLink)}
+            >
+              <Text style={styles.footerLinkText}>Termos de uso</Text>
+            </Pressable>
+          ) : null}
+        </View>
+      ) : null}
     </ScreenContainer>
   );
 }
@@ -169,6 +294,17 @@ function createStyles(colors: ColorPalette) {
   wideHero: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: tokens.spacing[64], width: "100%" },
   wideHeroText: { flex: 1.2, gap: tokens.spacing[24], alignItems: "flex-start" },
   wideTitle: { ...tokens.typography.brandHero, color: colors.m3.onSurface },
+  wideHighlight: {
+    alignSelf: "flex-start",
+    backgroundColor: colors.ipe.bloom,
+    borderRadius: tokens.radius.full,
+    paddingHorizontal: tokens.spacing[16],
+    paddingVertical: tokens.spacing[4],
+  },
+  wideHighlightText: {
+    ...tokens.typography.brandHero,
+    color: "#281E0B",
+  },
   wideLead: { ...tokens.typography.webLead, color: colors.m3.onSurfaceVariant, maxWidth: 640 },
   wideActions: { flexDirection: "row", gap: tokens.spacing[16] },
   widePanel: { flex: 1, maxWidth: 640, height: 420, borderRadius: tokens.radius.xxl, alignItems: "center", justifyContent: "center", backgroundColor: colors.m3.primaryContainer },
@@ -184,6 +320,11 @@ function createStyles(colors: ColorPalette) {
     justifyContent: "space-between",
     minHeight: accessibility.touchTarget,
   },
+  headerActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: tokens.spacing[8],
+  },
   location: {
     flexDirection: "row",
     alignItems: "center",
@@ -194,10 +335,10 @@ function createStyles(colors: ColorPalette) {
     paddingVertical: tokens.spacing[6],
   },
   locationDot: {
-    width: tokens.spacing[6],
-    height: tokens.spacing[6],
+    width: tokens.spacing[8],
+    height: tokens.spacing[8],
     borderRadius: tokens.radius.full,
-    backgroundColor: colors.action,
+    backgroundColor: colors.ipe.bloom,
   },
   locationText: {
     ...tokens.typography.labelMedium,
@@ -209,9 +350,28 @@ function createStyles(colors: ColorPalette) {
   },
   highlight: {
     alignSelf: "flex-start",
-    backgroundColor: colors.m3.tertiaryContainer,
-    borderRadius: tokens.radius.small,
-    paddingHorizontal: tokens.spacing[6],
+    backgroundColor: colors.ipe.bloom,
+    borderRadius: tokens.radius.full,
+    paddingHorizontal: tokens.spacing[10],
+    paddingVertical: tokens.spacing[2],
+  },
+  highlightText: {
+    ...tokens.typography.displayLarge,
+    color: "#281E0B",
+  },
+  illustrationWrapper: {
+    position: "relative",
+    width: "100%",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  illustrationGlow: {
+    position: "absolute",
+    width: "92%",
+    height: "88%",
+    borderRadius: tokens.radius.xxl,
+    backgroundColor: colors.ipe.container,
+    opacity: 0.55,
   },
   illustration: { width: "100%", height: 300 },
   subtitle: {
@@ -220,15 +380,64 @@ function createStyles(colors: ColorPalette) {
   },
   modalities: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[8] },
   modality: {
-    ...tokens.typography.bodyMedium,
-    fontFamily: fontFamily.medium,
-    color: colors.m3.onSurfaceVariant,
     borderWidth: 1,
-    borderColor: colors.m3.outlineVariant,
-    borderRadius: tokens.radius.small,
+    borderRadius: tokens.radius.full,
     paddingHorizontal: tokens.spacing[16],
     paddingVertical: tokens.spacing[8],
   },
+  modalityText: {
+    ...tokens.typography.bodyMedium,
+    fontFamily: fontFamily.medium,
+  },
+  modalityInfoCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: tokens.spacing[12],
+    paddingHorizontal: tokens.spacing[16],
+    paddingVertical: tokens.spacing[12],
+    borderRadius: tokens.radius.medium,
+  },
+  modalityInfoText: {
+    ...tokens.typography.bodyMedium,
+    flex: 1,
+  },
+  trustBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: tokens.spacing[8],
+    paddingHorizontal: tokens.spacing[12],
+    paddingVertical: tokens.spacing[8],
+    borderRadius: tokens.radius.full,
+    backgroundColor: colors.m3.surfaceContainerLow,
+    borderWidth: 1,
+    borderColor: colors.ipe.container,
+    alignSelf: "flex-start",
+  },
+  trustBadgeText: {
+    ...tokens.typography.labelSmall,
+    color: colors.m3.onSurfaceVariant,
+  },
   actions: { gap: tokens.spacing[12], marginTop: tokens.spacing[16] },
+  footerLinks: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: tokens.spacing[12],
+    paddingTop: tokens.spacing[8],
+  },
+  footerLink: {
+    minHeight: accessibility.touchTarget,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: tokens.spacing[8],
+  },
+  footerLinkText: {
+    ...tokens.typography.labelMedium,
+    color: colors.m3.onSurfaceVariant,
+    textDecorationLine: "underline",
+  },
+  footerLinkSeparator: {
+    color: colors.m3.outlineVariant,
+  },
   });
 }

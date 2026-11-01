@@ -489,13 +489,11 @@ function createStyles(colors: ColorPalette) {
     content: {
       flex: 1,
       width: "100%",
-      maxWidth: 720,
-      alignSelf: "center",
       paddingHorizontal: tokens.spacing[16],
     },
     // Web larga (Figma `05.01`): coluna com margem padronizada WEB_GUTTER e botão "Anunciar livro" em texto.
-    headerWide: { width: "100%", maxWidth: WEB_MAX_WIDTH, alignSelf: "center", paddingHorizontal: WEB_GUTTER, paddingTop: tokens.spacing[32] },
-    contentWide: { maxWidth: WEB_MAX_WIDTH, paddingHorizontal: WEB_GUTTER },
+    headerWide: { width: "100%", alignSelf: "center", paddingHorizontal: WEB_GUTTER, paddingTop: tokens.spacing[32] },
+    contentWide: { paddingHorizontal: WEB_GUTTER },
     webExchangeBanner: {
       flexDirection: "row",
       alignItems: "center",

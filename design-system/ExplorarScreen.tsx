@@ -50,7 +50,7 @@ function BookCover({ idAnuncio, titulo }: { idAnuncio: string; titulo: string })
         shadowOpacity: 0.3,
         shadowRadius: 2,
         shadowOffset: { width: 0, height: 1 },
-        elevation: 1,
+        elevation: 2,
       }}
     />
   );
@@ -82,7 +82,7 @@ function Tag({ tipo }: { tipo: Modalidade }) {
     <View
       style={{
         backgroundColor: bg,
-        borderRadius: tokens.radius.small,
+        borderRadius: tokens.radius.full,
         paddingHorizontal: tokens.spacing[12],
         paddingVertical: tokens.spacing[6],
         alignSelf: "flex-start",
@@ -178,7 +178,7 @@ function ChipDeFiltro({
         borderRadius: tokens.radius.full,
         paddingHorizontal: tokens.spacing[12],
         marginRight: tokens.spacing[8],
-        backgroundColor: selecionado ? tokens.colors.soft : "transparent",
+        backgroundColor: selecionado ? tokens.colors.m3.secondaryContainer : "transparent",
         borderWidth: selecionado ? 0 : 1,
         borderColor: tokens.colors.border,
       }}
@@ -275,7 +275,7 @@ function ItemNavegacao({
       style={{
         flex: 1,
         alignItems: "center",
-        backgroundColor: ativo ? tokens.colors.soft : "transparent",
+        backgroundColor: ativo ? tokens.colors.m3.secondaryContainer : "transparent",
         borderRadius: tokens.radius.full,
         paddingHorizontal: tokens.spacing[16],
         paddingVertical: tokens.spacing[8],

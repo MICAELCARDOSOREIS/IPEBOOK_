@@ -132,8 +132,6 @@ function createStyles(colors: ColorPalette) {
     page: { flex: 1, backgroundColor: colors.background },
     content: {
       width: "100%",
-      maxWidth: 720,
-      alignSelf: "center",
       padding: tokens.spacing[16],
       flexGrow: 1,
     },
@@ -160,7 +158,7 @@ function createStyles(colors: ColorPalette) {
     list: {
       gap: tokens.spacing[12],
     },
-    contentWide: { maxWidth: WEB_MAX_WIDTH, paddingHorizontal: WEB_GUTTER },
+    contentWide: { paddingHorizontal: WEB_GUTTER },
     listWide: { flexDirection: "row", flexWrap: "wrap" },
     fullRow: { width: "100%" },
     cardWide: { flexBasis: "48%", flexGrow: 0 },

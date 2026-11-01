@@ -20,6 +20,10 @@ export const MAX_BOOK_DESCRIPTION_LENGTH = 280;
 export const MAX_BOOK_SYNOPSIS_LENGTH = 2000;
 export const MAX_BOOK_PUBLISHER_LENGTH = 120;
 
+/** Limites de volumes para anúncios de Box / Coleção (Spec 112 / ADR 0086). */
+export const MIN_BOX_VOLUMES = 2;
+export const MAX_BOX_VOLUMES = 100;
+
 export type Book = Readonly<{
   id: string;
   title: string;
@@ -41,6 +45,10 @@ export type Book = Readonly<{
   neighborhood?: string;
   photoUrl?: string;
   photos?: readonly string[];
+  /** Indica se o anúncio é referente a um Box ou Coleção de livros (Spec 112). */
+  isBox?: boolean;
+  /** Quantidade de volumes componentes do box (quando informada). */
+  boxVolumesCount?: number;
   /**
    * Etapa do assistente de publicação em que o rascunho foi salvo (1 Livro, 2 Fotos,
    * 3 Detalhes). Presente apenas em anúncios com status `"draft"` (Spec 017), usada

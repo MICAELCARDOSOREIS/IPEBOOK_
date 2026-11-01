@@ -132,6 +132,22 @@ describe("tela de entrar (ISO/IEC 25010 - Usabilidade e Acessibilidade)", () => 
 
     expect(onNavigateToForgotPassword).toHaveBeenCalledTimes(1);
   });
+
+  it("aciona onBack ao tocar no botão voltar da barra superior", async () => {
+    mockAuth({ user: null, loading: false, error: null });
+    const onBack = vi.fn();
+
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<SignIn onBack={onBack} />);
+    });
+
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Voltar"));
+    });
+
+    expect(onBack).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe("tela de criar conta (ISO/IEC 25010 - Usabilidade e Acessibilidade)", () => {
@@ -220,6 +236,22 @@ describe("tela de criar conta (ISO/IEC 25010 - Usabilidade e Acessibilidade)", (
     });
 
     expect(onNavigateToSignIn).toHaveBeenCalledTimes(1);
+  });
+
+  it("aciona onBack ao tocar no botão voltar da barra superior", async () => {
+    mockAuth({ user: null, loading: false, error: null });
+    const onBack = vi.fn();
+
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<SignUp onBack={onBack} />);
+    });
+
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Voltar"));
+    });
+
+    expect(onBack).toHaveBeenCalledTimes(1);
   });
 });
 

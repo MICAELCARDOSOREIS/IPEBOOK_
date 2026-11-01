@@ -14,6 +14,7 @@ export type WebFilterSidebarProps = {
   onModality: (modality: SearchModalityFilter) => void;
   onCondition: (condition: SearchConditionFilter) => void;
   onCategory: (category: string | "all") => void;
+  onToggleOnlyBoxes?: (onlyBoxes: boolean) => void;
   onClear: () => void;
 };
 
@@ -31,6 +32,7 @@ export function WebFilterSidebar({
   onModality,
   onCondition,
   onCategory,
+  onToggleOnlyBoxes,
   onClear,
 }: WebFilterSidebarProps) {
   const { colors } = useTheme();
@@ -89,6 +91,15 @@ export function WebFilterSidebar({
           ))}
         </View>
       ) : null}
+
+      <View style={styles.group}>
+        <Text style={styles.groupLabel}>Formato</Text>
+        <CheckRow
+          label="Apenas boxes e coleções"
+          checked={Boolean(filters.onlyBoxes)}
+          onPress={() => onToggleOnlyBoxes?.(!filters.onlyBoxes)}
+        />
+      </View>
 
       {hasActiveFilters ? (
         <Pressable accessibilityRole="button" accessibilityLabel="Limpar todos os filtros de busca" onPress={onClear}>

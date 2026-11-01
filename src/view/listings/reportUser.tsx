@@ -139,7 +139,7 @@ function createStyles(colors: ColorPalette) {
     page: { flex: 1, backgroundColor: colors.background },
     scroll: { padding: tokens.spacing[16] },
     content: { width: "100%", maxWidth: 560, alignSelf: "center", gap: tokens.spacing[16] },
-    contentWide: { maxWidth: WEB_MAX_WIDTH, paddingHorizontal: WEB_GUTTER },
+    contentWide: { paddingHorizontal: WEB_GUTTER },
     columns: { gap: tokens.spacing[16] },
     columnsWide: { flexDirection: "row", alignItems: "flex-start", gap: tokens.spacing[24] },
     column: { gap: tokens.spacing[16] },

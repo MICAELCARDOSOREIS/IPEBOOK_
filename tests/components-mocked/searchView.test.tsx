@@ -70,6 +70,7 @@ function setup(
     category: options.category ?? "all",
     condition: options.condition ?? "all",
     priceRange: options.priceRange ?? "all",
+    onlyBoxes: false,
   };
   const activeFilters = deriveActiveFilters(filters);
 
@@ -85,6 +86,7 @@ function setup(
       modality: filters.modality,
       category: filters.category,
       condition: filters.condition,
+      onlyBoxes: false,
       neighborhood: "all",
       priceRange: filters.priceRange,
       sortBy: options.sortBy ?? "recent",
@@ -101,6 +103,7 @@ function setup(
       setModality,
       setCategory,
       setCondition,
+      setOnlyBoxes: vi.fn(),
       setNeighborhood,
       setPriceRange,
       setSortBy,

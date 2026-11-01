@@ -104,6 +104,24 @@ function CatalogCarousel({
                 {tag.label}
               </Text>
             </View>
+            {item.isBox ? (
+              <View
+                style={[
+                  styles.carouselCardModalityPill,
+                  { backgroundColor: colors.m3.secondaryContainer },
+                ]}
+              >
+                <Text
+                  numberOfLines={1}
+                  style={[
+                    styles.carouselCardModality,
+                    { color: colors.m3.onSecondaryContainer },
+                  ]}
+                >
+                  {item.boxVolumesCount ? `Box (${item.boxVolumesCount} vols)` : "Box"}
+                </Text>
+              </View>
+            ) : null}
             {priceSuffix ? (
               <Text numberOfLines={1} style={styles.carouselCardPrice}>
                 {priceSuffix.replace(" · ", "")}
@@ -613,7 +631,6 @@ export default function Home({
   return (
     <ScreenContainer
       edges={["top", "left", "right"]}
-      maxWidth={wideWeb ? WEB_MAX_WIDTH : 720}
       paddingHorizontal={wideWeb ? WEB_GUTTER : undefined}
       contentStyle={wideWeb ? styles.wideHomeContent : undefined}
       refreshControl={
@@ -709,7 +726,7 @@ function createStyles(colors: ColorPalette) {
       paddingHorizontal: tokens.spacing[12],
       paddingVertical: tokens.spacing[6],
       borderRadius: tokens.radius.full,
-      backgroundColor: colors.soft,
+      backgroundColor: colors.m3.surfaceContainerHigh,
       minHeight: 36,
       justifyContent: "center",
     },
@@ -942,7 +959,7 @@ function createStyles(colors: ColorPalette) {
     carouselCardModalityPill: {
       paddingHorizontal: tokens.spacing[8],
       paddingVertical: tokens.spacing[2],
-      borderRadius: tokens.radius.small,
+      borderRadius: tokens.radius.full,
     },
     carouselCardModality: {
       ...tokens.typography.labelMedium,

@@ -135,8 +135,6 @@ function createStyles(colors: ColorPalette) {
     },
     content: {
       width: "100%",
-      maxWidth: 720,
-      alignSelf: "center",
       padding: tokens.spacing[24],
       gap: tokens.spacing[16],
     },
@@ -180,7 +178,7 @@ function createStyles(colors: ColorPalette) {
     list: {
       gap: tokens.spacing[12],
     },
-    contentWide: { maxWidth: WEB_MAX_WIDTH, paddingHorizontal: WEB_GUTTER },
+    contentWide: { paddingHorizontal: WEB_GUTTER },
     listWide: { flexDirection: "row", flexWrap: "wrap" },
     cardWide: { flexBasis: "48%", flexGrow: 0 },
     card: {
@@ -211,7 +209,7 @@ function createStyles(colors: ColorPalette) {
     unblockButton: {
       paddingHorizontal: tokens.spacing[12],
       paddingVertical: tokens.spacing[8],
-      borderRadius: tokens.radius.small,
+      borderRadius: tokens.radius.full,
       borderWidth: 1,
       borderColor: colors.m3.outlineVariant,
       backgroundColor: colors.surface,

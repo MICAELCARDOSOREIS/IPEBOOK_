@@ -421,6 +421,18 @@ export default function BookDetail({
                   {modalityTag[book.modality].label}
                 </Text>
               </View>
+              {book.isBox ? (
+                <View
+                  style={[
+                    styles.tag,
+                    { backgroundColor: colors.m3.secondaryContainer, marginLeft: 8 },
+                  ]}
+                >
+                  <Text style={[styles.tagText, { color: colors.m3.onSecondaryContainer }]}>
+                    {book.boxVolumesCount ? `Box (${book.boxVolumesCount} volumes)` : "Box / Coleção"}
+                  </Text>
+                </View>
+              ) : null}
             </View>
 
             {wideWeb ? actionBar : null}
@@ -448,6 +460,13 @@ export default function BookDetail({
 
             {/* 4. Detalhes: conservação, categoria e retirada */}
             <View style={styles.detailList}>
+              {book.isBox ? (
+                <DetailRow
+                  icon="conservation"
+                  label="Formato"
+                  value={book.boxVolumesCount ? `Box / Coleção (${book.boxVolumesCount} volumes)` : "Box / Coleção"}
+                />
+              ) : null}
               <DetailRow icon="conservation" label="Conservação" value={conditionLabel} />
               <DetailRow icon="category" label="Categoria" value={categoryLabel} />
               {/* Dados da edição, preenchidos pelo ISBN (Spec 097). */}

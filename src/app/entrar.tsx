@@ -16,7 +16,7 @@ export default function Entrar() {
       onNavigateToForgotPassword={() => pushOnce("/esqueci-senha")}
       onBack={() => {
         if (router.canGoBack()) backOnce();
-        else replaceOnce("/");
+        else replaceOnce("/bem-vindo");
       }}
     />
   );

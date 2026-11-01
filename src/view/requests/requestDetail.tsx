@@ -389,7 +389,7 @@ function createStyles(colors: ColorPalette) {
       gap: tokens.spacing[8],
       padding: tokens.spacing[12],
       borderRadius: tokens.radius.medium,
-      backgroundColor: colors.soft,
+      backgroundColor: colors.m3.surfaceContainerHigh,
     },
     yourTurnText: { flex: 1, ...tokens.typography.bodyMedium, color: colors.actionDeep },
   page: { flex: 1, backgroundColor: colors.background },
@@ -397,8 +397,6 @@ function createStyles(colors: ColorPalette) {
   content: {
     flex: 1,
     width: "100%",
-    maxWidth: 720,
-    alignSelf: "center",
     padding: tokens.spacing[16],
   },
   status: {

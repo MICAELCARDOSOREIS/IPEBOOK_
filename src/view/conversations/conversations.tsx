@@ -608,7 +608,7 @@ function createStyles(colors: ColorPalette) {
     aboutSafeTitle: { ...tokens.typography.labelLarge, color: colors.m3.onSurface },
     aboutSafeBody: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
     aboutReport: { ...tokens.typography.labelLarge, color: colors.error },
-    list: { paddingBottom: tokens.spacing[32], width: "100%", maxWidth: 720, alignSelf: "center" },
+    list: { paddingBottom: tokens.spacing[32], width: "100%" },
     row: {
       flexDirection: "row",
       alignItems: "center",

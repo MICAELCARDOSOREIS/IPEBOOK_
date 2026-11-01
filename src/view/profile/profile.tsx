@@ -267,7 +267,6 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
 
   return (
     <ScreenContainer
-      maxWidth={wide ? WEB_MAX_WIDTH : 560}
       paddingHorizontal={wide ? WEB_GUTTER : undefined}
       paddingTop={tokens.spacing[12]}
       paddingBottom={tokens.spacing[32]}

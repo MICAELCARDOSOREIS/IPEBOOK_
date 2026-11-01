@@ -22,6 +22,9 @@ describe("Tag (Design System - ISO/IEC 25010 Usabilidade e Acessibilidade)", () 
 
     const screenPaused = await render(<Tag variant="paused" />);
     expect(screenPaused.getByText("Pausado")).toBeDefined();
+
+    const screenBox = await render(<Tag variant="box" />);
+    expect(screenBox.getByText("Box")).toBeDefined();
   });
 
   it("aceita variantes em português", async () => {

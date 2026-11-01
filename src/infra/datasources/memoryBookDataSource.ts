@@ -26,6 +26,10 @@ export class MemoryBookDataSource implements IBookDataSource {
       available = available.filter((book) => book.modality === options.modality);
     }
 
+    if (options?.onlyBoxes) {
+      available = available.filter((book) => Boolean(book.isBox));
+    }
+
     if (options?.limit !== undefined || options?.offset !== undefined) {
       const offset = Math.max(0, options?.offset ?? 0);
       const limit = Math.max(1, options?.limit ?? 20);

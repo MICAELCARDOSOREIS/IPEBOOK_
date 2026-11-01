@@ -170,7 +170,7 @@ function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     page: { flex: 1, backgroundColor: colors.background },
     scroll: { flexGrow: 1 },
-    content: { width: "100%", maxWidth: 720, alignSelf: "center", padding: tokens.spacing[24], gap: tokens.spacing[16] },
+    content: { width: "100%", padding: tokens.spacing[24], gap: tokens.spacing[16] },
     contentWide: { maxWidth: WEB_MAX_WIDTH, paddingHorizontal: WEB_GUTTER },
     intro: { ...tokens.typography.bodyMedium, color: colors.secondaryText },
     card: {
@@ -192,7 +192,7 @@ function createStyles(colors: ColorPalette) {
       minHeight: 40,
       justifyContent: "center",
       paddingHorizontal: tokens.spacing[12],
-      borderRadius: tokens.radius.small,
+      borderRadius: tokens.radius.full,
       borderWidth: 1,
       borderColor: colors.m3.outlineVariant,
     },

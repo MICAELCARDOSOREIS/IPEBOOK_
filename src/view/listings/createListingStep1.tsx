@@ -234,7 +234,7 @@ function createStyles(colors: ColorPalette) {
       borderWidth: 1,
     },
     isbnFeedbackSuccess: {
-      backgroundColor: colors.soft,
+      backgroundColor: colors.m3.secondaryContainer,
       borderColor: colors.action,
     },
     isbnFeedbackInfo: {

@@ -214,4 +214,50 @@ describe("useEditListingViewModel", () => {
     expect(hook.current[0].saving).toBe(false);
     expect(hook.current[0].error).toBe("Título é obrigatório.");
   });
+
+  it("gerencia campos de box e volumes na edição (Spec 112)", async () => {
+    const useCases = stubUseCases({
+      getBookById: vi.fn().mockResolvedValue({
+        id: "b-box",
+        title: "Box O Senhor dos Anéis",
+        author: "J.R.R. Tolkien",
+        modality: "sale",
+        price: 150,
+        ownerId: "user-1",
+        status: "available",
+        isBox: true,
+        boxVolumesCount: 3,
+      } satisfies Book),
+    });
+
+    const hook = await renderHook("b-box", "user-1", useCases);
+
+    expect(hook.current[0].isBox).toBe(true);
+    expect(hook.current[0].boxVolumesCount).toBe("3");
+
+    await act(async () => {
+      hook.current[1].setBoxVolumesCount("4");
+    });
+    expect(hook.current[0].boxVolumesCount).toBe("4");
+
+    await act(async () => {
+      await hook.current[1].submit();
+    });
+
+    expect(useCases.updateListing).toHaveBeenCalledWith(
+      "b-box",
+      expect.objectContaining({
+        isBox: true,
+        boxVolumesCount: 4,
+      }),
+      "user-1",
+    );
+
+    // Desmarcar box limpa volumes
+    await act(async () => {
+      hook.current[1].setIsBox(false);
+    });
+    expect(hook.current[0].isBox).toBe(false);
+    expect(hook.current[0].boxVolumesCount).toBe("");
+  });
 });

@@ -542,5 +542,42 @@ describe("useCreateListingViewModel (ISO/IEC 25010 - Adequação Funcional)", ()
       expect(result).toMatchObject({ status: "available" });
       expect(useCases.publishDraft).toHaveBeenCalledWith("draft-123", expect.anything(), "user-owner-1");
     });
+
+    it("permite marcar como box e definir quantidade de volumes (Spec 112)", async () => {
+      const useCases = stubUseCases();
+      const hook = await renderHook(useCases);
+
+      act(() => {
+        hook.current[1].setTitle("Coleção Sherlock Holmes");
+        hook.current[1].setAuthor("Arthur Conan Doyle");
+        hook.current[1].setModality("sale");
+        hook.current[1].setPrice("85");
+        hook.current[1].setIsBox(true);
+        hook.current[1].setBoxVolumesCount("4");
+      });
+
+      expect(hook.current[0].isBox).toBe(true);
+      expect(hook.current[0].boxVolumesCount).toBe("4");
+
+      await act(async () => {
+        await hook.current[1].submit("user-owner-1");
+      });
+
+      expect(useCases.createListing).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: "Coleção Sherlock Holmes",
+          isBox: true,
+          boxVolumesCount: 4,
+        }),
+        "user-owner-1",
+      );
+
+      // Desmarcar box limpa volumes no input construído
+      act(() => {
+        hook.current[1].setIsBox(false);
+      });
+      expect(hook.current[0].isBox).toBe(false);
+      expect(hook.current[0].boxVolumesCount).toBe("");
+    });
   });
 });

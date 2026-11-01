@@ -25,10 +25,12 @@ type BookRow = {
   photo_url?: string | null;
   photos?: string[] | null;
   draft_step?: number | null;
+  is_box?: boolean | null;
+  box_volumes_count?: number | null;
 };
 
 const BOOK_COLUMNS =
-  "id,title,author,category,owner_id,modality,price,status,city,state,neighborhood,condition,description,synopsis,publisher,page_count,publication_year,photo_url,photos,draft_step";
+  "id,title,author,category,owner_id,modality,price,status,city,state,neighborhood,condition,description,synopsis,publisher,page_count,publication_year,photo_url,photos,draft_step,is_box,box_volumes_count";
 
 function mapBook(row: BookRow): Book {
   return {
@@ -52,6 +54,8 @@ function mapBook(row: BookRow): Book {
     ...(row.photo_url ? { photoUrl: row.photo_url } : {}),
     ...(row.photos && row.photos.length > 0 ? { photos: row.photos } : {}),
     ...(row.draft_step === null || row.draft_step === undefined ? {} : { draftStep: Number(row.draft_step) }),
+    ...(row.is_box ? { isBox: true } : {}),
+    ...(row.box_volumes_count ? { boxVolumesCount: Number(row.box_volumes_count) } : {}),
   };
 }
 
@@ -77,6 +81,10 @@ export class SupabaseBookDataSource implements IBookDataSource {
 
     if (options?.modality) {
       query = query.eq("modality", options.modality);
+    }
+
+    if (options?.onlyBoxes) {
+      query = query.eq("is_box", true);
     }
 
     let orderedQuery = query.order("created_at", { ascending: false });
@@ -113,6 +121,8 @@ export class SupabaseBookDataSource implements IBookDataSource {
       photo_url: book.photoUrl ?? null,
       photos: book.photos ? Array.from(book.photos) : [],
       draft_step: book.draftStep ?? null,
+      is_box: Boolean(book.isBox),
+      box_volumes_count: book.boxVolumesCount ?? null,
     }).select(BOOK_COLUMNS).single();
     if (error || !data) throw toDomainError(error, "Não foi possível cadastrar o anúncio.");
     return mapBook(data as BookRow);
@@ -144,6 +154,13 @@ export class SupabaseBookDataSource implements IBookDataSource {
     if (partial.photoUrl !== undefined) patch.photo_url = partial.photoUrl ?? null;
     if (partial.photos !== undefined) patch.photos = partial.photos ? Array.from(partial.photos) : [];
     if (partial.draftStep !== undefined) patch.draft_step = partial.draftStep ?? null;
+    if (partial.isBox !== undefined) {
+      patch.is_box = Boolean(partial.isBox);
+      if (!partial.isBox) {
+        patch.box_volumes_count = null;
+      }
+    }
+    if (partial.boxVolumesCount !== undefined) patch.box_volumes_count = partial.boxVolumesCount ?? null;
 
     const { data, error } = await this.client
       .from("v2_books")

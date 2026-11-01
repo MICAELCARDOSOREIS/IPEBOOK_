@@ -413,8 +413,6 @@ function createStyles(colors: ColorPalette) {
     content: {
       flex: 1,
       width: "100%",
-      maxWidth: 720,
-      alignSelf: "center",
       paddingHorizontal: tokens.spacing[16],
       paddingTop: tokens.spacing[8],
     },
@@ -433,7 +431,7 @@ function createStyles(colors: ColorPalette) {
       width: 32,
       height: 32,
       borderRadius: tokens.radius.full,
-      backgroundColor: colors.soft,
+      backgroundColor: colors.m3.secondaryContainer,
       alignItems: "center",
       justifyContent: "center",
     },
@@ -527,7 +525,7 @@ function createStyles(colors: ColorPalette) {
       gap: tokens.spacing[4],
       paddingHorizontal: tokens.spacing[8],
       paddingVertical: tokens.spacing[6],
-      borderRadius: tokens.radius.small,
+      borderRadius: tokens.radius.full,
     },
     actionBtnText: {
       ...tokens.typography.labelMedium,
@@ -615,7 +613,7 @@ function createStyles(colors: ColorPalette) {
       shadowOffset: { width: 0, height: 1 },
       shadowOpacity: 0.05,
       shadowRadius: 3,
-      elevation: 1,
+      elevation: 2,
     },
     cardPressed: {
       backgroundColor: colors.m3.surfaceContainerLow,
@@ -624,7 +622,7 @@ function createStyles(colors: ColorPalette) {
     cardUnread: {
       borderColor: colors.action,
       borderLeftWidth: 4,
-      backgroundColor: colors.soft,
+      backgroundColor: colors.m3.secondaryContainer,
     },
     cardHeader: {
       flexDirection: "row",

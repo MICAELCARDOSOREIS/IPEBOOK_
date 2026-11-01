@@ -122,8 +122,6 @@ function createStyles(colors: ColorPalette) {
   content: {
     flex: 1,
     width: "100%",
-    maxWidth: 720,
-    alignSelf: "center",
     padding: tokens.spacing[16],
   },
   contentWide: { maxWidth: TERMS_WIDE_MAX_WIDTH, alignSelf: "center", paddingHorizontal: tokens.spacing[24] },

@@ -32,6 +32,10 @@ export type CreateListingDraft = {
   photos: readonly string[];
   /** Sinopse e dados da edição vindos do ISBN (Spec 097). */
   edition?: BookEdition;
+  /** Indica se o anúncio é referente a um Box ou Coleção (Spec 112). */
+  isBox?: boolean;
+  /** Quantidade de volumes informada no formulário (string para edição controlada). */
+  boxVolumesCount?: string;
 };
 
 export type IsbnFeedback = {
@@ -55,6 +59,10 @@ export type CreateListingState = {
   photos: readonly string[];
   /** Sinopse e dados da edição vindos do ISBN (Spec 097); vazio sem ISBN ou sem dados. */
   edition: BookEdition;
+  /** Indica se o anúncio é um Box / Coleção de livros (Spec 112). */
+  isBox: boolean;
+  /** Quantidade de volumes (texto controlado no input). */
+  boxVolumesCount: string;
   /** Identificador do rascunho no servidor quando a pessoa retomou um (Spec 017). */
   draftId: string | null;
   loading: boolean;
@@ -78,6 +86,8 @@ export type CreateListingActions = {
   setPhotoUrl: (value: string) => void;
   addPhoto: (value: string) => void;
   removePhoto: (index: number) => void;
+  setIsBox: (value: boolean) => void;
+  setBoxVolumesCount: (value: string) => void;
   saveDraft: () => Promise<void>;
   loadDraft: () => Promise<boolean>;
   clearDraft: () => Promise<void>;
@@ -103,6 +113,8 @@ const INITIAL_STATE: CreateListingState = {
   photoUrl: "",
   photos: [],
   edition: {},
+  isBox: false,
+  boxVolumesCount: "",
   draftId: null,
   loading: false,
   error: null,
@@ -264,6 +276,25 @@ export function useCreateListingViewModel(
     }));
   }, []);
 
+  const setIsBox = useCallback((value: boolean) => {
+    setState((prev) => ({
+      ...prev,
+      isBox: value,
+      boxVolumesCount: value ? prev.boxVolumesCount : "",
+      error: null,
+      success: false,
+    }));
+  }, []);
+
+  const setBoxVolumesCount = useCallback((value: string) => {
+    setState((prev) => ({
+      ...prev,
+      boxVolumesCount: value,
+      error: null,
+      success: false,
+    }));
+  }, []);
+
   const clearDraft = useCallback(async (): Promise<void> => {
     try {
       await AsyncStorage.removeItem(CREATE_LISTING_DRAFT_KEY);
@@ -288,6 +319,8 @@ export function useCreateListingViewModel(
         photoUrl: cur.photoUrl,
         photos: cur.photos,
         edition: cur.edition,
+        isBox: cur.isBox,
+        boxVolumesCount: cur.boxVolumesCount,
       };
       await AsyncStorage.setItem(CREATE_LISTING_DRAFT_KEY, JSON.stringify(draft));
     } catch (err) {
@@ -322,6 +355,9 @@ export function useCreateListingViewModel(
         photoUrl: typeof draft.photoUrl === "string" ? draft.photoUrl : prev.photoUrl,
         photos: Array.isArray(draft.photos) ? draft.photos : prev.photos,
         edition: draft.edition && typeof draft.edition === "object" ? draft.edition : prev.edition,
+        isBox: typeof draft.isBox === "boolean" ? draft.isBox : prev.isBox,
+        boxVolumesCount:
+          typeof draft.boxVolumesCount === "string" ? draft.boxVolumesCount : prev.boxVolumesCount,
       }));
       return true;
     } catch (err) {
@@ -335,6 +371,8 @@ export function useCreateListingViewModel(
     const priceNum = cur.modality === "sale" && cur.price.trim()
       ? Number(cur.price.replace(",", "."))
       : undefined;
+    const volumesNum =
+      cur.isBox && cur.boxVolumesCount.trim() ? Number(cur.boxVolumesCount.trim()) : undefined;
     return {
       title: cur.title,
       author: cur.author,
@@ -349,6 +387,8 @@ export function useCreateListingViewModel(
       ...cur.edition,
       ...(cur.photoUrl.trim() ? { photoUrl: cur.photoUrl.trim() } : {}),
       ...(cur.photos.length > 0 ? { photos: cur.photos } : {}),
+      ...(cur.isBox ? { isBox: true } : {}),
+      ...(cur.isBox && volumesNum ? { boxVolumesCount: volumesNum } : {}),
     };
   }, []);
 
@@ -366,6 +406,8 @@ export function useCreateListingViewModel(
       description: book.description ?? prev.description,
       photoUrl: book.photoUrl ?? prev.photoUrl,
       photos: book.photos ?? prev.photos,
+      isBox: Boolean(book.isBox),
+      boxVolumesCount: book.boxVolumesCount ? String(book.boxVolumesCount) : "",
       edition: {
         ...(book.synopsis ? { synopsis: book.synopsis } : {}),
         ...(book.publisher ? { publisher: book.publisher } : {}),
@@ -479,6 +521,8 @@ export function useCreateListingViewModel(
       setPhotoUrl,
       addPhoto,
       removePhoto,
+      setIsBox,
+      setBoxVolumesCount,
       saveDraft,
       loadDraft,
       clearDraft,

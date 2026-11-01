@@ -71,7 +71,7 @@ function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
   page: { flex: 1, backgroundColor: colors.background },
   scroll: { flexGrow: 1 },
-  content: { width: "100%", maxWidth: 720, alignSelf: "center", padding: tokens.spacing[24] },
+  content: { width: "100%", padding: tokens.spacing[24] },
   card: {
     backgroundColor: colors.surface,
     borderRadius: tokens.radius.medium,

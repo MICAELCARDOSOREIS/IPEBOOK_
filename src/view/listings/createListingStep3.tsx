@@ -10,6 +10,7 @@ import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { categoryTone } from "@/view/categoryTone";
 import { AppIcon } from "@/view/components/AppIcon";
+import { Checkbox } from "@/view/components/Checkbox";
 import { Chip } from "@/view/components/Chip";
 import { NeighborhoodSelectorModal } from "@/view/components/NeighborhoodSelectorModal";
 import { TextField } from "@/view/components/TextField";
@@ -23,6 +24,8 @@ export type CreateListingStep3Props = {
   category: string;
   description: string;
   neighborhood: string;
+  isBox?: boolean;
+  boxVolumesCount?: string;
   loading: boolean;
   error: string | null;
   errorRef?: React.Ref<any>;
@@ -30,6 +33,8 @@ export type CreateListingStep3Props = {
   onSetCategory: (category: string) => void;
   onSetDescription: (description: string) => void;
   onSetNeighborhood: (neighborhood: string) => void;
+  onSetIsBox?: (isBox: boolean) => void;
+  onSetBoxVolumesCount?: (count: string) => void;
 };
 
 /**
@@ -42,6 +47,8 @@ export function CreateListingStep3({
   category,
   description,
   neighborhood,
+  isBox = false,
+  boxVolumesCount = "",
   loading,
   error,
   errorRef,
@@ -49,6 +56,8 @@ export function CreateListingStep3({
   onSetCategory,
   onSetDescription,
   onSetNeighborhood,
+  onSetIsBox,
+  onSetBoxVolumesCount,
 }: CreateListingStep3Props) {
   const { colors, resolvedScheme } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -91,6 +100,30 @@ export function CreateListingStep3({
             />
           ))}
         </View>
+      </View>
+
+      <View style={styles.field}>
+        <Text style={styles.sectionLabel}>Formato do anúncio</Text>
+        <Checkbox
+          label="Box ou coleção de livros"
+          description="Marque se este anúncio reúne mais de um volume"
+          checked={Boolean(isBox)}
+          onChange={(checked) => onSetIsBox?.(checked)}
+          disabled={loading}
+        />
+        {isBox ? (
+          <View style={styles.boxVolumesContainer}>
+            <TextField
+              label="Quantidade de volumes (opcional)"
+              value={boxVolumesCount}
+              onChangeText={(text) => onSetBoxVolumesCount?.(text)}
+              editable={!loading}
+              placeholder="Ex: 3, 5, 7"
+              keyboardType="number-pad"
+              helperText="De 2 a 100 volumes componentes da coleção"
+            />
+          </View>
+        ) : null}
       </View>
 
       <TextField
@@ -182,6 +215,7 @@ export function CreateListingStep3({
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     field: { gap: tokens.spacing[8] },
+    boxVolumesContainer: { marginTop: tokens.spacing[4], paddingLeft: tokens.spacing[32] },
     // `04.05`: rótulo do grupo em 16/24 peso médio sobre `on-surface`.
     sectionLabel: {
       ...tokens.typography.bodyLarge,

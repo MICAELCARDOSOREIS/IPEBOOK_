@@ -104,7 +104,7 @@ function createStyles(colors: ColorPalette) {
       alignSelf: "center",
       gap: tokens.spacing[24],
     },
-    contentWide: { maxWidth: WEB_MAX_WIDTH, paddingHorizontal: WEB_GUTTER },
+    contentWide: { paddingHorizontal: WEB_GUTTER },
     columns: { gap: tokens.spacing[24] },
     columnsWide: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[48] },
     column: { gap: tokens.spacing[24] },
@@ -148,7 +148,7 @@ function createStyles(colors: ColorPalette) {
     feedbackBanner: {
       padding: tokens.spacing[12],
       borderRadius: tokens.radius.medium,
-      backgroundColor: colors.soft,
+      backgroundColor: colors.m3.surfaceContainerHigh,
       borderWidth: 1,
       borderColor: colors.action,
       alignItems: "center",

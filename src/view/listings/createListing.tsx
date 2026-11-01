@@ -291,6 +291,8 @@ export default function CreateListing({
               category={state.category}
               description={state.description}
               neighborhood={state.neighborhood}
+              isBox={state.isBox}
+              boxVolumesCount={state.boxVolumesCount}
               loading={state.loading}
               error={state.error}
               errorRef={errorRef}
@@ -298,6 +300,8 @@ export default function CreateListing({
               onSetCategory={actions.setCategory}
               onSetDescription={actions.setDescription}
               onSetNeighborhood={actions.setNeighborhood}
+              onSetIsBox={actions.setIsBox}
+              onSetBoxVolumesCount={actions.setBoxVolumesCount}
             />
           ) : null}
         </View>
@@ -313,6 +317,12 @@ export default function CreateListing({
                   {state.modality === "sale" ? (state.price.trim() ? `R$ ${state.price.trim()}` : "R$ —") : state.modality === "trade" ? "Para trocar" : "Gratuito"}
                 </Text>
                 <Tag variant={state.modality} />
+                {state.isBox ? (
+                  <Tag
+                    variant="box"
+                    label={state.boxVolumesCount ? `Box (${state.boxVolumesCount} vols)` : "Box"}
+                  />
+                ) : null}
               </View>
             </View>
             <Text style={styles.previewNote}>Só o bairro aparece no anúncio. Seu nome completo e seu e-mail ficam privados.</Text>
@@ -396,7 +406,7 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
       paddingHorizontal: tokens.spacing[12],
       paddingVertical: tokens.spacing[6],
       borderRadius: tokens.radius.medium,
-      backgroundColor: colors.soft,
+      backgroundColor: colors.m3.surfaceContainerHigh,
       borderWidth: 1,
       borderColor: colors.m3.outlineVariant,
     },
