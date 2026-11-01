@@ -56,10 +56,12 @@ export default function ManageListing({
     await shareActions.share(state.book.id);
   };
 
+  const contentMaxWidth = wide ? 1040 : 560;
+
   if (state.loading) {
     return (
       <SafeAreaView style={styles.page}>
-        <TopAppBar contentMaxWidth={wide ? WEB_MAX_WIDTH : 560} title="Gerenciar anúncio" onBack={() => onBack?.()} />
+        <TopAppBar contentMaxWidth={contentMaxWidth} title="Gerenciar anúncio" onBack={() => onBack?.()} />
         <LoadingState label="Carregando anúncio" />
       </SafeAreaView>
     );
@@ -68,7 +70,7 @@ export default function ManageListing({
   if (!state.book) {
     return (
       <SafeAreaView style={styles.page}>
-        <TopAppBar contentMaxWidth={wide ? WEB_MAX_WIDTH : 560} title="Gerenciar anúncio" onBack={() => onBack?.()} />
+        <TopAppBar contentMaxWidth={contentMaxWidth} title="Gerenciar anúncio" onBack={() => onBack?.()} />
         <ErrorState
           message={state.error ?? "Não foi possível carregar o anúncio."}
           onRetry={() => void actions.load()}
@@ -112,7 +114,7 @@ export default function ManageListing({
 
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar contentMaxWidth={wide ? WEB_MAX_WIDTH : 560} title="Gerenciar anúncio" onBack={() => onBack?.()} />
+      <TopAppBar contentMaxWidth={contentMaxWidth} title="Gerenciar anúncio" onBack={() => onBack?.()} />
       <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
         <View style={[styles.content, wide && styles.contentWide]}>
           <Text accessibilityRole="header" style={styles.title}>Seu livro, suas escolhas.</Text>
@@ -359,7 +361,7 @@ function createStyles(colors: ColorPalette) {
     page: { flex: 1, backgroundColor: colors.background },
     scrollContent: { padding: tokens.spacing[16], paddingBottom: tokens.spacing[48] },
     content: { width: "100%", maxWidth: 560, alignSelf: "center", gap: tokens.spacing[16] },
-    contentWide: { paddingHorizontal: WEB_GUTTER },
+    contentWide: { maxWidth: 1040, paddingHorizontal: WEB_GUTTER },
     columns: { gap: tokens.spacing[16] },
     columnsWide: { flexDirection: "row", alignItems: "flex-start", gap: tokens.spacing[24] },
     column: { gap: tokens.spacing[16] },

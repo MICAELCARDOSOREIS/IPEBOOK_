@@ -28,7 +28,11 @@ export class BookRequestUseCases implements IBookRequestUseCases {
     private readonly profiles?: IProfileDataSource,
   ) {}
 
-  async requestNegotiation(listingId: string, sessionUserId: string | null): Promise<BookRequest> {
+  async requestNegotiation(
+    listingId: string,
+    sessionUserId: string | null,
+    options?: { initialMessage?: string; offeredBookId?: string },
+  ): Promise<BookRequest> {
     const userId = requireSession(sessionUserId);
     const listing = await this.books.findById(listingId);
     if (!listing) {
@@ -47,7 +51,40 @@ export class BookRequestUseCases implements IBookRequestUseCases {
     if (existing.some((r) => r.requesterId === userId && r.status === "pending")) {
       throw new ValidationError("Você já tem um pedido pendente para este anúncio.");
     }
-    return this.requests.create({ listingId, requesterId: userId, status: "pending" });
+
+    let trimmedMessage: string | undefined = undefined;
+    if (options?.initialMessage !== undefined && options?.initialMessage !== null) {
+      const msg = options.initialMessage.trim();
+      if (msg.length > 500) {
+        throw new ValidationError("A mensagem inicial não pode ultrapassar 500 caracteres.");
+      }
+      if (msg.length > 0) {
+        trimmedMessage = msg;
+      }
+    }
+
+    let validOfferedBookId: string | undefined = undefined;
+    if (options?.offeredBookId) {
+      const offered = await this.books.findById(options.offeredBookId);
+      if (!offered) {
+        throw new ValidationError("Livro de troca não encontrado.");
+      }
+      if (offered.ownerId !== userId) {
+        throw new ValidationError("O livro oferecido para troca deve ser de sua propriedade.");
+      }
+      if (offered.status !== "available") {
+        throw new ValidationError("O livro oferecido para troca não está disponível.");
+      }
+      validOfferedBookId = offered.id;
+    }
+
+    return this.requests.create({
+      listingId,
+      requesterId: userId,
+      status: "pending",
+      initialMessage: trimmedMessage,
+      offeredBookId: validOfferedBookId,
+    });
   }
 
   async listReceivedRequests(sessionUserId: string | null): Promise<readonly RequestWithListing[]> {
@@ -62,11 +99,13 @@ export class BookRequestUseCases implements IBookRequestUseCases {
           people.set(request.requesterId, await this.findCounterpart(request.requesterId));
         }
         const person = people.get(request.requesterId);
+        const offeredBook = request.offeredBookId ? await this.books.findById(request.offeredBookId) : null;
         result.push({
           request,
           listing,
           requesterName: person?.name ?? null,
           requesterPhotoUrl: person?.photoUrl ?? null,
+          offeredBook,
         });
       }
     }
@@ -80,7 +119,8 @@ export class BookRequestUseCases implements IBookRequestUseCases {
     for (const request of requests) {
       const listing = await this.books.findById(request.listingId);
       if (listing) {
-        result.push({ request, listing });
+        const offeredBook = request.offeredBookId ? await this.books.findById(request.offeredBookId) : null;
+        result.push({ request, listing, offeredBook });
       }
     }
     return result;
@@ -164,6 +204,7 @@ export class BookRequestUseCases implements IBookRequestUseCases {
     const safeMeetingPoints: readonly MeetingPoint[] = PIRIPIRI_MEETING_POINTS;
 
     const counterpartId = isOwner ? request.requesterId : book.ownerId;
+    const offeredBook = request.offeredBookId ? await this.books.findById(request.offeredBookId) : null;
 
     return {
       request,
@@ -175,6 +216,7 @@ export class BookRequestUseCases implements IBookRequestUseCases {
         counterpartPhotoUrl: person.photoUrl,
       }))),
       safeMeetingPoints,
+      offeredBook,
     };
   }
 

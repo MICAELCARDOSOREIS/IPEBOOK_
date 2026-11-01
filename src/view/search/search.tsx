@@ -27,7 +27,7 @@ import { NeighborhoodSelectorModal } from "@/view/components/NeighborhoodSelecto
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
 import { useActiveNeighborhood } from "@/viewmodel/useActiveNeighborhood";
-import { WEB_MAX_WIDTH, useWebGridColumns } from "@/view/webLayout";
+import { WEB_GUTTER, WEB_MAX_WIDTH, useWebGridColumns } from "@/view/webLayout";
 
 import { withPress } from "@/view/pressFeedback";
 export type SearchProps = {
@@ -515,7 +515,16 @@ function createStyles(colors: ColorPalette) {
     page: { flex: 1, backgroundColor: colors.background },
     flexOne: { flex: 1 },
     // Web larga: filtros fixos à esquerda e resultados em grade de ponta a ponta.
-    wideRow: { flex: 1, flexDirection: "row", gap: tokens.spacing[32], width: "100%", paddingTop: tokens.spacing[24] },
+    wideRow: {
+      flex: 1,
+      flexDirection: "row",
+      gap: tokens.spacing[32],
+      width: "100%",
+      maxWidth: WEB_MAX_WIDTH,
+      alignSelf: "center",
+      paddingHorizontal: WEB_GUTTER,
+      paddingTop: tokens.spacing[24],
+    },
     contentWide: { flexGrow: 1, paddingBottom: tokens.spacing[32], gap: tokens.spacing[24] },
     gridRow: { gap: tokens.spacing[24] },
     cardMainWide: { flexDirection: "column", alignItems: "stretch", gap: tokens.spacing[8] },

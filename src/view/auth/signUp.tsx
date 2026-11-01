@@ -182,7 +182,10 @@ export default function SignUp({
                 onPress={() => void handleSubmit()}
               />
 
-              <OutlinedButton label="Já tenho conta" onPress={() => onNavigateToSignIn?.()} />
+              <View style={styles.footerRow}>
+                <Text style={styles.footerPrompt}>Já tem uma conta?</Text>
+                <TextButton label="Já tenho conta" onPress={() => onNavigateToSignIn?.()} />
+              </View>
             </>
           )}
         </View>
@@ -209,6 +212,17 @@ function createStyles(colors: ColorPalette) {
     maxWidth: 560,
     alignSelf: "center",
     gap: tokens.spacing[12],
+  },
+  footerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: tokens.spacing[6],
+    marginTop: tokens.spacing[8],
+  },
+  footerPrompt: {
+    ...tokens.typography.bodyMedium,
+    color: colors.secondaryText,
   },
   divider: {
     flexDirection: "row",

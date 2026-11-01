@@ -6,6 +6,7 @@ export default function Perfil() {
     <ProfileHub
       onNavigateToSignIn={() => replaceOnce("/entrar")}
       onNavigateToEditProfile={() => pushOnce("/perfil/editar")}
+      onNavigateToCreateListing={() => pushOnce("/anunciar")}
       onNavigateToMyListings={() => pushOnce("/meus-anuncios")}
       onNavigateToRatings={() => pushOnce("/perfil/avaliacoes")}
       onNavigateToMeetingHistory={() => pushOnce("/perfil/encontros")}

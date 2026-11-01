@@ -567,7 +567,7 @@ function createStyles(colors: ColorPalette) {
       width: "100%",
       maxWidth: WEB_MAX_WIDTH,
       alignSelf: "center",
-      paddingHorizontal: tokens.spacing[32],
+      paddingHorizontal: WEB_GUTTER,
       paddingTop: tokens.spacing[32],
       paddingBottom: tokens.spacing[16],
     },
@@ -575,7 +575,7 @@ function createStyles(colors: ColorPalette) {
       width: "100%",
       maxWidth: WEB_MAX_WIDTH,
       alignSelf: "center",
-      paddingHorizontal: tokens.spacing[32],
+      paddingHorizontal: WEB_GUTTER,
     },
     segmentRowWide: {
       alignSelf: "flex-start",

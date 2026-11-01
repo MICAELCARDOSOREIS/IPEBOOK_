@@ -4,6 +4,7 @@ import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useBookDetailViewModel } from "@/viewmodel/useBookDetailViewModel";
+import { useMyListingsViewModel } from "@/viewmodel/useMyListingsViewModel";
 import { usePublicProfileViewModel } from "@/viewmodel/usePublicProfileViewModel";
 import { useRequestNegotiationViewModel } from "@/viewmodel/useRequestNegotiationViewModel";
 import { SHARE_BASE_URL, useShareListingViewModel } from "@/viewmodel/useShareListingViewModel";
@@ -18,7 +19,8 @@ import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
 import { Avatar } from "@/view/components/Avatar";
 import { PhotoGallery } from "@/view/listings/photoGallery";
 import { ReservedListingSheet } from "@/view/listings/ReservedListingSheet";
-import { BOOK_CONDITION_LABELS, type BookModality } from "@/model/entities/book";
+import { ProposalSheet } from "@/view/listings/ProposalSheet";
+import { BOOK_CONDITION_LABELS, type Book, type BookModality } from "@/model/entities/book";
 import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
 
 import { withPress } from "@/view/pressFeedback";
@@ -111,6 +113,13 @@ export default function BookDetail({
   const [ownerProfileState] = usePublicProfileViewModel(book?.ownerId ?? "");
   const [galleryVisible, setGalleryVisible] = useState(false);
   const [reservedSheetVisible, setReservedSheetVisible] = useState(false);
+  const [proposalSheetVisible, setProposalSheetVisible] = useState(false);
+  const [myListingsState] = useMyListingsViewModel(
+    proposalSheetVisible && book?.modality === "trade" ? sessionUserId : null,
+  );
+  const [proposalSubmitting, setProposalSubmitting] = useState(false);
+  const [proposalError, setProposalError] = useState<string | null>(null);
+
   // Imagem de compartilhamento: o cartão fica fora da tela e é capturado em PNG depois que a capa carrega.
   const shareCardRef = useRef<React.ComponentRef<typeof View>>(null);
   const coverSettled = useRef(false);
@@ -169,7 +178,7 @@ export default function BookDetail({
     }
   }, [activeRequestId, onNavigateToNegotiation, onNavigateToMyRequests]);
 
-  const handlePrimaryAction = useCallback(async () => {
+  const handlePrimaryAction = useCallback(() => {
     if (!book) return;
     if (!sessionUserId) {
       onNavigateToSignIn?.();
@@ -179,15 +188,33 @@ export default function BookDetail({
       navigateToActiveNegotiation();
       return;
     }
-    const created = await negotiationActions.request(book.id, sessionUserId);
-    if (created) {
-      if (onNavigateToNegotiation) {
-        onNavigateToNegotiation(created.id);
-      } else {
-        onNavigateToMyRequests?.();
+    setProposalError(null);
+    setProposalSheetVisible(true);
+  }, [book, sessionUserId, isRequested, navigateToActiveNegotiation, onNavigateToSignIn]);
+
+  const handleProposalSubmit = useCallback(
+    async (options: { initialMessage?: string; offeredBookId?: string }) => {
+      if (!book || !sessionUserId) return;
+      setProposalSubmitting(true);
+      setProposalError(null);
+      try {
+        const created = await negotiationActions.request(book.id, sessionUserId, options);
+        if (created) {
+          setProposalSheetVisible(false);
+          if (onNavigateToNegotiation) {
+            onNavigateToNegotiation(created.id);
+          } else {
+            onNavigateToMyRequests?.();
+          }
+        }
+      } catch (err) {
+        setProposalError(err instanceof Error ? err.message : "Não foi possível enviar a proposta.");
+      } finally {
+        setProposalSubmitting(false);
       }
-    }
-  }, [book, sessionUserId, isRequested, navigateToActiveNegotiation, negotiationActions, onNavigateToNegotiation, onNavigateToSignIn, onNavigateToMyRequests]);
+    },
+    [book, sessionUserId, negotiationActions, onNavigateToNegotiation, onNavigateToMyRequests],
+  );
 
   const handleStatusPress = () => {
     if (!book) return;
@@ -633,6 +660,19 @@ export default function BookDetail({
           ownerName={ownerProfileState.profile?.name}
         />
       ) : null}
+
+      {book ? (
+        <ProposalSheet
+          visible={proposalSheetVisible}
+          onClose={() => setProposalSheetVisible(false)}
+          targetBook={book}
+          userBooks={myListingsState.books}
+          loadingBooks={myListingsState.loading}
+          submitting={proposalSubmitting}
+          error={proposalError}
+          onSubmit={handleProposalSubmit}
+        />
+      ) : null}
     </SafeAreaView>
   );
 }
@@ -697,7 +737,7 @@ function createStyles(colors: ColorPalette) {
     offscreen: { position: "absolute", left: -10000, top: 0 },
     page: { flex: 1, backgroundColor: colors.background },
     scrollContent: { paddingBottom: tokens.spacing[32] },
-    // Web larga (Figma `03.01`): capa à esquerda e cartão de ações à direita, centralizado em 1280 px.
+    // Web larga (Figma `03.01`): capa à esquerda e cartão de ações à direita, centralizado em WEB_MAX_WIDTH.
     scrollContentWide: {
       flexDirection: "row",
       flexWrap: "wrap",
@@ -705,7 +745,7 @@ function createStyles(colors: ColorPalette) {
       columnGap: tokens.spacing[48],
       rowGap: tokens.spacing[16],
       width: "100%",
-      maxWidth: 1280,
+      maxWidth: WEB_MAX_WIDTH,
       alignSelf: "center",
       paddingHorizontal: WEB_GUTTER,
       paddingTop: tokens.spacing[32],

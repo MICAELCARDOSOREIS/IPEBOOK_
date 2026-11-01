@@ -11,6 +11,8 @@ export default function ConversaRoute() {
       onBack={() => backOnce()}
       onRequireSignIn={() => replaceOnce("/entrar")}
       onOpenNegotiation={(requestId) => pushOnce(`/negociacao/${requestId}`)}
+      onOpenDelivery={(requestId) => pushOnce(`/negociacao/${requestId}/entrega` as never)}
+      onScheduleMeeting={(requestId) => pushOnce(`/negociacao/${requestId}/encontro` as never)}
     />
   );
 }

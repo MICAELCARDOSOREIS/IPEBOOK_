@@ -209,6 +209,76 @@ describe("negociação simples (spec 004)", () => {
       await expect(useCases.cancelRequest("x", "alice")).rejects.toBeInstanceOf(ValidationError);
     });
   });
+
+  describe("melhorias na proposta de negociação (Spec 113)", () => {
+    it("permite enviar mensagem inicial válida", async () => {
+      const created = await useCases.requestNegotiation("listing-1", "alice", {
+        initialMessage: "Olá! Gostaria muito de ler esse livro, estudo perto da Praça da Bandeira.",
+      });
+      expect(created.initialMessage).toBe(
+        "Olá! Gostaria muito de ler esse livro, estudo perto da Praça da Bandeira.",
+      );
+    });
+
+    it("rejeita mensagem inicial com mais de 500 caracteres", async () => {
+      const longMessage = "a".repeat(501);
+      await expect(
+        useCases.requestNegotiation("listing-1", "alice", { initialMessage: longMessage }),
+      ).rejects.toThrow(/não pode ultrapassar 500 caracteres/);
+    });
+
+    it("permite anexar livro de troca próprio e disponível", async () => {
+      const aliceBook = await books.create({
+        title: "Dom Casmurro",
+        author: "Machado de Assis",
+        ownerId: "alice",
+        modality: "trade",
+        status: "available",
+      });
+
+      const created = await useCases.requestNegotiation("listing-1", "alice", {
+        initialMessage: "Troco pelo meu Dom Casmurro!",
+        offeredBookId: aliceBook.id,
+      });
+
+      expect(created.offeredBookId).toBe(aliceBook.id);
+
+      const detail = await useCases.getRequestDetail(created.id, "alice");
+      expect(detail.offeredBook?.title).toBe("Dom Casmurro");
+
+      const received = await useCases.listReceivedRequests("owner");
+      expect(received[0].offeredBook?.id).toBe(aliceBook.id);
+
+      const sent = await useCases.listSentRequests("alice");
+      expect(sent[0].offeredBook?.id).toBe(aliceBook.id);
+    });
+
+    it("rejeita livro de troca inexistente", async () => {
+      await expect(
+        useCases.requestNegotiation("listing-1", "alice", { offeredBookId: "inexistente" }),
+      ).rejects.toThrow(/Livro de troca não encontrado/);
+    });
+
+    it("rejeita livro de troca que não pertence ao solicitante", async () => {
+      await expect(
+        useCases.requestNegotiation("listing-1", "alice", { offeredBookId: "listing-2" }),
+      ).rejects.toThrow(/deve ser de sua propriedade/);
+    });
+
+    it("rejeita livro de troca que não está disponível", async () => {
+      const unavailableBook = await books.create({
+        title: "Vidas Secas",
+        author: "Graciliano Ramos",
+        ownerId: "alice",
+        modality: "trade",
+        status: "reserved",
+      });
+
+      await expect(
+        useCases.requestNegotiation("listing-1", "alice", { offeredBookId: unavailableBook.id }),
+      ).rejects.toThrow(/não está disponível/);
+    });
+  });
 });
 
 describe("MemoryBookRequestDataSource", () => {

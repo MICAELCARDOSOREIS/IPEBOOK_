@@ -5,6 +5,7 @@ import {
   Pressable,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
 } from "react-native";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
@@ -45,7 +46,7 @@ const MAX_SOCIAL_HANDLE_LENGTH = 60;
 
 /**
  * Atalhos exibidos abaixo do campo de bairro. São os seis primeiros da lista oficial,
- * não um ranking de frequência: o rótulo diz "Bairros de Piripiri" para não inventar dado.
+ * não um ranking de frequência: a interface chama o grupo de "Acesso rápido".
  */
 const NEIGHBORHOOD_QUICK_PICKS = 6;
 
@@ -90,6 +91,8 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
   const { colors } = useTheme();
   // Web larga: coluna mais larga, com cartão e foto de um lado e dados e contato do outro.
   const wide = useIsWideWeb();
+  const { width: viewportWidth } = useWindowDimensions();
+  const stackPhotoActions = viewportWidth < 380;
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [authState] = useAuthViewModel();
   const userId = authState.user?.id ?? null;
@@ -237,12 +240,15 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
     preferencesActions.reload();
   }
 
+  const contentMaxWidth = wide ? 1040 : 560;
+
   return (
     <ScreenContainer
+      maxWidth={contentMaxWidth}
       paddingHorizontal={wide ? WEB_GUTTER : undefined}
       paddingTop={tokens.spacing[12]}
-      paddingBottom={tokens.spacing[32]}
-      header={<TopAppBar contentMaxWidth={wide ? WEB_MAX_WIDTH : 560} title="Editar perfil" onBack={requestBack} />}
+      paddingBottom={!wide && state.profile ? tokens.spacing[96] : tokens.spacing[32]}
+      header={<TopAppBar contentMaxWidth={contentMaxWidth} title="Editar perfil" onBack={requestBack} />}
       overlay={
         <>
           <NeighborhoodSelectorModal
@@ -267,6 +273,18 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
             }}
             onCancel={() => setDiscardOpen(false)}
           />
+          {!wide && state.profile && !loading ? (
+            <View pointerEvents="box-none" style={styles.stickyActionContainer}>
+              <View style={styles.stickyActionContent}>
+                <FilledButton
+                  label="Salvar alterações"
+                  loading={saving}
+                  loadingLabel="Salvando perfil"
+                  onPress={() => void handleSave()}
+                />
+              </View>
+            </View>
+          ) : null}
           <Snackbar
             visible={saved}
             message="Perfil atualizado"
@@ -286,160 +304,188 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
             {/* 1. Manchete Editorial (Figma 07.02) */}
             <View style={styles.heroSection}>
               <Text accessibilityRole="header" style={styles.heroTitle}>
-                Seu jeito de ler.
+                Seu perfil, do seu jeito.
               </Text>
               <Text style={styles.heroSubtitle}>
-                Atualize as informações que aparecem no seu perfil.
+                Atualize como você aparece para a comunidade.
               </Text>
             </View>
 
             <View style={[styles.columns, wide && styles.columnsWide]}>
-            <View style={[styles.column, wide && styles.columnHalf]}>
-            {/* 2. Pré-visualização ao vivo do cartão de leitor (Spec 078), no lugar do avatar solto do 07.02 */}
-            <View style={styles.avatarSection}>
-              <Text style={styles.previewLabel}>Assim seu cartão aparece</Text>
-              <ReaderCard
-                name={name.trim() || "Você"}
-                photoUrl={photoUrl.trim() || undefined}
-                subtitle={neighborhood ? `${neighborhood}, Piripiri` : "Piripiri, PI"}
-              />
-            </View>
-
-            {/* 3. Foto pela galeria ou câmera (Spec 081, ADR 0065); o resultado aparece no cartão acima */}
-            <FormSection icon="camera" title="Foto do cartão" caption="Escolha da galeria ou tire na hora. Sem foto, o cartão mostra o ipê.">
-              <View style={styles.photoActions}>
-                <View style={styles.photoAction}>
-                  <OutlinedButton
-                    label="Galeria"
-                    accessibilityLabel="Escolher foto da galeria"
-                    icon={<AppIcon name="photo" size={18} color={colors.m3.primary} />}
-                    disabled={photo.uploading}
-                    onPress={() => void pickPhoto("library")}
-                  />
-                </View>
-                <View style={styles.photoAction}>
-                  <OutlinedButton
-                    label="Câmera"
-                    accessibilityLabel="Tirar foto com a câmera"
-                    icon={<AppIcon name="camera" size={18} color={colors.m3.primary} />}
-                    disabled={photo.uploading}
-                    onPress={() => void pickPhoto("camera")}
-                  />
-                </View>
-              </View>
-              {photo.uploading ? <LoadingState label="Enviando foto" /> : null}
-              {photo.error ? (
-                <Text accessibilityRole="alert" style={styles.errorText}>
-                  {photo.error}
-                </Text>
-              ) : null}
-              {photoUrl.trim() && !photo.uploading ? (
-                <TextButton
-                  label="Remover foto"
-                  accessibilityLabel="Remover foto do perfil"
-                  onPress={() => editField("photoUrl", "", setPhotoUrl)}
-                />
-              ) : null}
-            </FormSection>
-
-            </View>
-            <View style={[styles.column, wide && styles.columnHalf]}>
-            {/* 4. Sobre você: nome e bairro. A cidade é fixa (Piripiri, PI) e vai na legenda, sem campo desabilitado. */}
-            <FormSection icon="person" title="Sobre você" caption="Aparece no seu perfil público, em Piripiri, PI.">
-              {/* Nome */}
-              <TextField
-                label="Nome"
-                accessibilityLabel="Nome público"
-                value={name}
-                onChangeText={(value) => editField("name", value, setName)}
-                placeholder="Seu nome"
-                autoCapitalize="words"
-                maxLength={MAX_NAME_LENGTH}
-                error={fieldErrors.name}
-                helperText={fieldErrors.name ? undefined : `${name.trim().length}/${MAX_NAME_LENGTH}`}
-                helperTextAlign="right"
-              />
-
-              {/* Bairro (Campo interativo contornado com seletor no Figma 07.02) */}
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={
-                  neighborhood
-                    ? `Bairro selecionado: ${neighborhood}. Toque para alterar`
-                    : "Nenhum bairro selecionado. Toque para escolher"
-                }
-                onPress={() => setIsNeighborhoodModalOpen(true)}
-                style={withPress(styles.selectorField)}
-              >
-                <View style={styles.selectorContainer}>
-                  <View style={styles.notch}>
-                    <Text style={styles.floatingLabel}>Bairro</Text>
-                  </View>
-                  <Text style={neighborhood ? styles.fieldValue : styles.fieldPlaceholder}>
-                    {neighborhood ?? "Selecionar bairro"}
-                  </Text>
-                  <AppIcon
-                    name="chevronDown"
-                    size={20}
-                    color={colors.m3.onSurfaceVariant}
-                  />
-                </View>
-              </Pressable>
-
-              {/* Atalhos de bairro: recolhidos por padrão para um seletor mais limpo; o seletor
-                  acima abre a lista completa e o link abaixo revela os primeiros da lista oficial. */}
-              {showNeighborhoodPicks ? (
-                <View style={styles.neighborhoodChipsArea}>
-                  <View style={styles.chipsHeader}>
-                    <Text style={styles.sectionLabel}>Bairros de Piripiri</Text>
-                    <TextButton
-                      label="Recolher"
-                      accessibilityLabel="Recolher atalhos de bairros"
-                      onPress={() => setShowNeighborhoodPicks(false)}
-                    />
-                  </View>
-                  <View style={styles.chipRow}>
-                    {PIRIPIRI_NEIGHBORHOODS.slice(0, NEIGHBORHOOD_QUICK_PICKS).map((item) => (
-                      <Chip
-                        key={item}
-                        size="compact"
-                        label={item}
-                        accessibilityLabel={`Bairro ${item}`}
-                        selected={neighborhood === item}
-                        onPress={() => setNeighborhood(item)}
+              {/* Coluna 1: Cartão e Foto */}
+              <View style={[styles.column, wide && styles.columnHalf]}>
+                <FormSection
+                  icon="person"
+                  title="Cartão do leitor"
+                  caption="Seu cartão aparece nos anúncios e nas trocas da comunidade."
+                >
+                  <View style={styles.avatarSection}>
+                    <View style={styles.previewHeaderRow}>
+                      <Text style={styles.previewLabel}>Prévia do cartão</Text>
+                      <View style={styles.previewBadge}>
+                        <AppIcon name="visibility" size={12} color={colors.brandBrown} />
+                        <Text style={styles.previewBadgeText}>Ao vivo</Text>
+                      </View>
+                    </View>
+                    <View style={styles.cardPreviewContainer}>
+                      <ReaderCard
+                        name={name.trim() || "Você"}
+                        photoUrl={photoUrl.trim() || undefined}
+                        subtitle={neighborhood ? `${neighborhood}, Piripiri` : "Piripiri, PI"}
                       />
-                    ))}
+                    </View>
                   </View>
-                  <Text style={styles.chipsHelper}>
-                    Não achou o seu? Toque em "Selecionar bairro" para ver a lista completa.
-                  </Text>
-                </View>
-              ) : (
-                <TextButton
-                  label="Ver bairros populares"
-                  accessibilityLabel="Mostrar atalhos de bairros populares"
-                  onPress={() => setShowNeighborhoodPicks(true)}
-                />
-              )}
-            </FormSection>
 
-            {/* 5. Rede social: Instagram para conexão com outros leitores */}
-            <FormSection icon="share" title="Rede social" caption="Seu Instagram público para outros leitores te conhecerem. Seu e-mail permanece privado.">
-              {/* Instagram (Spec 081): aceita "@perfil" ou "perfil" e guarda como "@perfil" */}
-              <TextField
-                label="Instagram"
-                accessibilityLabel="Instagram"
-                value={socialHandle}
-                onChangeText={(value) => editField("socialHandle", value, setSocialHandle)}
-                placeholder="@seuperfil"
-                autoCapitalize="none"
-                maxLength={MAX_SOCIAL_HANDLE_LENGTH}
-                error={fieldErrors.socialHandle}
-                helperText={fieldErrors.socialHandle ? undefined : "Opcional. Só o @, sem link."}
-              />
-            </FormSection>
+                  <View style={styles.photoActionsBlock}>
+                    <Text style={styles.photoActionsLabel}>Foto de perfil</Text>
+                    <View style={[styles.photoActions, stackPhotoActions && styles.photoActionsStacked]}>
+                      <View style={styles.photoAction}>
+                        <OutlinedButton
+                          label="Escolher foto"
+                          accessibilityLabel="Escolher foto da galeria"
+                          icon={<AppIcon name="photo" size={18} color={colors.m3.primary} />}
+                          disabled={photo.uploading}
+                          onPress={() => void pickPhoto("library")}
+                        />
+                      </View>
+                      <View style={styles.photoAction}>
+                        <OutlinedButton
+                          label="Tirar foto"
+                          accessibilityLabel="Tirar foto com a câmera"
+                          icon={<AppIcon name="camera" size={18} color={colors.m3.primary} />}
+                          disabled={photo.uploading}
+                          onPress={() => void pickPhoto("camera")}
+                        />
+                      </View>
+                    </View>
+                    {photo.uploading ? <LoadingState label="Enviando foto" /> : null}
+                    {photo.error ? (
+                      <Text accessibilityRole="alert" style={styles.errorText}>
+                        {photo.error}
+                      </Text>
+                    ) : null}
+                    {photoUrl.trim() && !photo.uploading ? (
+                      <View style={styles.removePhotoRow}>
+                        <TextButton
+                          label="Remover foto"
+                          accessibilityLabel="Remover foto do perfil"
+                          onPress={() => editField("photoUrl", "", setPhotoUrl)}
+                        />
+                      </View>
+                    ) : null}
+                  </View>
+                </FormSection>
+              </View>
 
-            </View>
+              {/* Coluna 2: Dados Comunitários */}
+              <View style={[styles.column, wide && styles.columnHalf]}>
+                <FormSection
+                  icon="shelf"
+                  title="Sobre você"
+                  caption="Nome, bairro e Instagram que aparecem no seu perfil público."
+                >
+                  {/* Nome */}
+                  <TextField
+                    label="Nome público"
+                    accessibilityLabel="Nome público"
+                    value={name}
+                    onChangeText={(value) => editField("name", value, setName)}
+                    placeholder="Seu nome"
+                    autoCapitalize="words"
+                    maxLength={MAX_NAME_LENGTH}
+                    error={fieldErrors.name}
+                    helperText={fieldErrors.name ? undefined : `${name.trim().length}/${MAX_NAME_LENGTH}`}
+                    helperTextAlign="right"
+                  />
+
+                  {/* Bairro */}
+                  <View style={styles.fieldWrapper}>
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={
+                        neighborhood
+                          ? `Bairro selecionado: ${neighborhood}. Toque para alterar`
+                          : "Nenhum bairro selecionado. Toque para escolher"
+                      }
+                      onPress={() => setIsNeighborhoodModalOpen(true)}
+                      style={withPress(styles.selectorField)}
+                    >
+                      <View style={styles.selectorContainer}>
+                        <View style={styles.notch}>
+                          <Text style={styles.floatingLabel}>Bairro</Text>
+                        </View>
+                        <View style={styles.selectorContentRow}>
+                          <View style={styles.selectorIconWrap}>
+                            <AppIcon
+                              name="place"
+                              size={18}
+                              color={neighborhood ? colors.m3.primary : colors.m3.onSurfaceVariant}
+                            />
+                          </View>
+                          <Text style={neighborhood ? styles.fieldValue : styles.fieldPlaceholder}>
+                            {neighborhood ?? "Selecionar bairro"}
+                          </Text>
+                        </View>
+                        <AppIcon
+                          name="chevronDown"
+                          size={20}
+                          color={colors.m3.onSurfaceVariant}
+                        />
+                      </View>
+                    </Pressable>
+                  </View>
+
+                  {/* Atalhos de bairro */}
+                  {showNeighborhoodPicks ? (
+                    <View style={styles.neighborhoodChipsArea}>
+                      <View style={styles.chipsHeader}>
+                        <Text style={styles.sectionLabel}>Acesso rápido</Text>
+                        <TextButton
+                          label="Ocultar"
+                          accessibilityLabel="Ocultar opções rápidas de bairro"
+                          onPress={() => setShowNeighborhoodPicks(false)}
+                        />
+                      </View>
+                      <View style={styles.chipRow}>
+                        {PIRIPIRI_NEIGHBORHOODS.slice(0, NEIGHBORHOOD_QUICK_PICKS).map((item) => (
+                          <Chip
+                            key={item}
+                            size="compact"
+                            label={item}
+                            accessibilityLabel={`Bairro ${item}`}
+                            selected={neighborhood === item}
+                            onPress={() => setNeighborhood(item)}
+                          />
+                        ))}
+                      </View>
+                      <Text style={styles.chipsHelper}>
+                        Escolha uma opção ou abra a lista completa no campo Bairro.
+                      </Text>
+                    </View>
+                  ) : (
+                    <View style={styles.quickPicksToggleRow}>
+                      <TextButton
+                        label="Opções rápidas de bairro"
+                        accessibilityLabel="Mostrar opções rápidas de bairro"
+                        onPress={() => setShowNeighborhoodPicks(true)}
+                      />
+                    </View>
+                  )}
+
+                  {/* Instagram */}
+                  <TextField
+                    label="Instagram"
+                    accessibilityLabel="Instagram"
+                    value={socialHandle}
+                    onChangeText={(value) => editField("socialHandle", value, setSocialHandle)}
+                    placeholder="@seuperfil"
+                    autoCapitalize="none"
+                    maxLength={MAX_SOCIAL_HANDLE_LENGTH}
+                    error={fieldErrors.socialHandle}
+                    helperText={fieldErrors.socialHandle ? undefined : "Opcional. Informe seu usuário, com ou sem @."}
+                  />
+                </FormSection>
+              </View>
             </View>
 
             {/* Resumo acessível: o foco não pula para o campo com erro, então a região viva
@@ -463,15 +509,17 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
               </View>
             ) : null}
 
-            {/* 4. Ação Principal Fixa: "Salvar alterações" (Figma 07.02) */}
-            <View style={styles.actionContainer}>
-              <FilledButton
-                label="Salvar alterações"
-                loading={saving}
-                loadingLabel="Salvando perfil"
-                onPress={() => void handleSave()}
-              />
-            </View>
+            {/* Na web larga, a ação fica no fluxo do formulário; no celular, fica fixa no rodapé. */}
+            {wide ? (
+              <View style={styles.actionContainer}>
+                <FilledButton
+                  label="Salvar alterações"
+                  loading={saving}
+                  loadingLabel="Salvando perfil"
+                  onPress={() => void handleSave()}
+                />
+              </View>
+            ) : null}
           </View>
         )}
       </View>
@@ -513,34 +561,56 @@ function FormSection({
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
+    photoActionsBlock: {
+      gap: tokens.spacing[8],
+      paddingTop: tokens.spacing[8],
+    },
+    photoActionsLabel: {
+      ...tokens.typography.labelMedium,
+      color: colors.m3.onSurfaceVariant,
+      fontWeight: tokens.fontWeight.semiBold,
+    },
     photoActions: { flexDirection: "row", gap: tokens.spacing[12] },
+    photoActionsStacked: { flexDirection: "column" },
     photoAction: { flex: 1 },
+    removePhotoRow: {
+      alignSelf: "flex-start",
+      paddingTop: tokens.spacing[4],
+    },
     formSection: {
-      gap: tokens.spacing[16],
+      gap: tokens.spacing[14],
       padding: tokens.spacing[16],
       borderRadius: tokens.radius.xl,
       backgroundColor: colors.m3.surfaceContainerLow,
+      shadowColor: colors.m3.shadow,
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.18,
+      shadowRadius: 1.5,
+      elevation: 1,
     },
     formSectionHeader: { flexDirection: "row", alignItems: "flex-start", gap: tokens.spacing[12] },
     formSectionIcon: {
-      width: 32,
-      height: 32,
+      width: 36,
+      height: 36,
       borderRadius: tokens.radius.card,
       alignItems: "center",
       justifyContent: "center",
       backgroundColor: colors.ipe.container,
     },
     formSectionTitles: { flex: 1, gap: tokens.spacing[2] },
-    formSectionTitle: { ...tokens.typography.titleMedium, color: colors.m3.onSurface },
+    formSectionTitle: { ...tokens.typography.titleMedium, color: colors.m3.onSurface, fontWeight: tokens.fontWeight.semiBold },
     formSectionCaption: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
     keyboardView: {
       width: "100%",
     },
     formContainer: {
       width: "100%",
-      gap: tokens.spacing[16],
+      gap: tokens.spacing[20],
     },
-    heroSection: {},
+    heroSection: {
+      paddingBottom: tokens.spacing[4],
+      gap: tokens.spacing[4],
+    },
     columns: { gap: tokens.spacing[16] },
     columnsWide: { flexDirection: "row", alignItems: "flex-start", gap: tokens.spacing[24] },
     column: { gap: tokens.spacing[16] },
@@ -561,7 +631,32 @@ function createStyles(colors: ColorPalette) {
     avatarSection: {
       gap: tokens.spacing[8],
     },
-    previewLabel: { ...tokens.typography.labelMedium, color: colors.m3.onSurfaceVariant },
+    previewHeaderRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+    },
+    previewBadge: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[4],
+      backgroundColor: colors.ipe.container,
+      paddingHorizontal: tokens.spacing[8],
+      paddingVertical: tokens.spacing[2],
+      borderRadius: tokens.radius.full,
+    },
+    previewBadgeText: {
+      ...tokens.typography.labelSmall,
+      color: colors.brandBrown,
+      fontWeight: tokens.fontWeight.medium,
+    },
+    previewLabel: { ...tokens.typography.labelMedium, color: colors.m3.onSurfaceVariant, fontWeight: tokens.fontWeight.semiBold },
+    cardPreviewContainer: {
+      width: "100%",
+    },
+    fieldWrapper: {
+      width: "100%",
+    },
     selectorField: {
       width: "100%",
     },
@@ -574,7 +669,22 @@ function createStyles(colors: ColorPalette) {
       borderWidth: 1,
       borderColor: colors.m3.outline,
       paddingHorizontal: tokens.spacing[16],
+      paddingVertical: tokens.spacing[8],
       backgroundColor: "transparent",
+    },
+    selectorContentRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[12],
+      flex: 1,
+    },
+    selectorIconWrap: {
+      width: 28,
+      height: 28,
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.m3.surfaceContainerHighest,
+      alignItems: "center",
+      justifyContent: "center",
     },
     notch: {
       position: "absolute",
@@ -582,7 +692,7 @@ function createStyles(colors: ColorPalette) {
       left: tokens.spacing[8],
       paddingHorizontal: tokens.spacing[4],
       borderRadius: tokens.radius.extraSmall,
-      backgroundColor: colors.surface,
+      backgroundColor: colors.m3.surfaceContainerLow,
     },
     floatingLabel: {
       ...tokens.typography.labelMedium,
@@ -596,13 +706,22 @@ function createStyles(colors: ColorPalette) {
       ...tokens.typography.bodyLarge,
       color: colors.m3.onSurfaceVariant,
     },
+    quickPicksToggleRow: {
+      alignSelf: "flex-start",
+      marginTop: -tokens.spacing[4],
+    },
     chipsHelper: {
       ...tokens.typography.bodyMedium,
       color: colors.m3.onSurfaceVariant,
     },
     neighborhoodChipsArea: {
       marginTop: tokens.spacing[4],
-      gap: tokens.spacing[8],
+      gap: tokens.spacing[12],
+      padding: tokens.spacing[16],
+      borderRadius: tokens.radius.large,
+      backgroundColor: colors.m3.surfaceContainerHighest,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
     },
     chipsHeader: {
       flexDirection: "row",
@@ -630,26 +749,48 @@ function createStyles(colors: ColorPalette) {
       alignItems: "center",
       justifyContent: "space-between",
       gap: tokens.spacing[12],
-      borderRadius: tokens.radius.medium,
+      borderRadius: tokens.radius.large,
       borderWidth: 1,
       borderColor: colors.error,
+      backgroundColor: colors.errorContainer,
       paddingHorizontal: tokens.spacing[16],
-      paddingVertical: tokens.spacing[12],
+      paddingVertical: tokens.spacing[14],
     },
     errorBannerText: {
       flex: 1,
-      color: colors.error,
+      color: colors.m3.onErrorContainer,
       ...tokens.typography.bodyMedium,
     },
     actionContainer: {
       marginTop: tokens.spacing[8],
       width: "100%",
     },
+    stickyActionContainer: {
+      position: "absolute",
+      left: 0,
+      right: 0,
+      bottom: 0,
+      borderTopWidth: 1,
+      borderTopColor: colors.m3.outlineVariant,
+      backgroundColor: colors.surface,
+    },
+    stickyActionContent: {
+      width: "100%",
+      maxWidth: 560,
+      alignSelf: "center",
+      paddingHorizontal: tokens.spacing[16],
+      paddingVertical: tokens.spacing[12],
+    },
     guestCard: {
-      gap: tokens.spacing[12],
-      borderRadius: tokens.radius.large,
+      gap: tokens.spacing[16],
+      borderRadius: tokens.radius.xl,
       backgroundColor: colors.m3.surfaceContainerLow,
       padding: tokens.spacing[24],
+      shadowColor: colors.m3.shadow,
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.18,
+      shadowRadius: 1.5,
+      elevation: 1,
     },
     guestTitle: {
       ...tokens.typography.titleLarge,
