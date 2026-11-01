@@ -301,7 +301,11 @@ function createStyles(colors: ColorPalette) {
     padding: tokens.spacing[24],
     paddingTop: tokens.spacing[32],
   },
-  contentWide: { paddingHorizontal: WEB_GUTTER },
+  contentWide: {
+    maxWidth: WIDE_CONTENT_MAX_WIDTH,
+    alignSelf: "center",
+    paddingHorizontal: WEB_GUTTER,
+  },
   columns: { gap: tokens.spacing[16] },
   itemWide: { flex: 1, padding: tokens.spacing[20] },
   back: {
