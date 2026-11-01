@@ -453,7 +453,7 @@ function createStyles(colors: ColorPalette) {
     contentWide: {
       maxWidth: WIDE_CONTENT_MAX_WIDTH,
       alignSelf: "center",
-      paddingHorizontal: tokens.spacing[24],
+      paddingHorizontal: WEB_GUTTER,
       paddingTop: tokens.spacing[16],
       flexDirection: "row",
       alignItems: "flex-start",

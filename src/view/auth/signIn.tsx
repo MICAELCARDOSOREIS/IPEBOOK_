@@ -103,6 +103,10 @@ export default function SignIn({
             editable={!state.loading}
           />
 
+          <View style={styles.forgotPasswordRow}>
+            <TextButton label="Esqueci minha senha" onPress={() => onNavigateToForgotPassword?.()} />
+          </View>
+
           {state.error ? (
             <Text accessibilityRole="alert" style={styles.error}>{state.error}</Text>
           ) : null}
@@ -114,8 +118,10 @@ export default function SignIn({
             onPress={() => void handleSubmit()}
           />
 
-          <TextButton label="Esqueci minha senha" onPress={() => onNavigateToForgotPassword?.()} />
-          <TextButton label="Criar uma conta" onPress={() => onNavigateToSignUp?.()} />
+          <View style={styles.footerRow}>
+            <Text style={styles.footerPrompt}>Ainda não tem conta?</Text>
+            <TextButton label="Criar uma conta" onPress={() => onNavigateToSignUp?.()} />
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -160,6 +166,21 @@ function createStyles(colors: ColorPalette) {
   dividerText: {
     ...tokens.typography.bodyMedium,
     color: colors.secondaryText,
+  },
+  forgotPasswordRow: {
+    alignSelf: "flex-end",
+    marginTop: -tokens.spacing[8],
+  },
+  footerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: tokens.spacing[6],
+    marginTop: tokens.spacing[8],
+  },
+  footerPrompt: {
+    ...tokens.typography.bodyMedium,
+    color: colors.m3.onSurfaceVariant,
   },
   error: {
     ...tokens.typography.bodyMedium,

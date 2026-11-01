@@ -8,7 +8,7 @@ import { useProfileViewModel } from "@/viewmodel/useProfileViewModel";
 import { useMyListingsViewModel } from "@/viewmodel/useMyListingsViewModel";
 import { useUserPreferencesViewModel } from "@/viewmodel/useUserPreferencesViewModel";
 import { normalizeInstagramHandle } from "@/model/validators/instagramValidator";
-import { ReaderCard } from "@/view/components/ReaderCard";
+import { Avatar } from "@/view/components/Avatar";
 import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
 import { Dialog } from "@/view/components/Dialog";
 import { FilledButton } from "@/view/components/FilledButton";
@@ -16,11 +16,11 @@ import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
 
-import { withPress } from "@/view/pressFeedback";
 export type ProfileHubProps = {
   requireAuth?: boolean;
   onNavigateToSignIn?: () => void;
   onNavigateToEditProfile: () => void;
+  onNavigateToCreateListing?: () => void;
   onNavigateToMyListings?: () => void;
   onNavigateToRatings: () => void;
   onNavigateToMeetingHistory?: () => void;
@@ -43,12 +43,13 @@ type MenuItem = {
 };
 
 /**
- * Hub de navegação e identidade do usuário fiel ao Figma `07.01 · Meu perfil` (`25:524`).
+ * Meu perfil organiza identidade social, métricas comunitárias e os atalhos próprios do IpêBook.
  */
 export default function ProfileHub({
   requireAuth = true,
   onNavigateToSignIn,
   onNavigateToEditProfile,
+  onNavigateToCreateListing,
   onNavigateToMyListings,
   onNavigateToRatings,
   onNavigateToMeetingHistory,
@@ -213,97 +214,100 @@ export default function ProfileHub({
             <>
               {isSignedIn ? (
                 <>
-                  {/* Cartão de leitor com o ipê da marca (Spec 078), no lugar do cartão neutro do Figma 07.01 */}
                   <View style={[styles.heroBlock, wideWeb && styles.heroBlockWide]}>
-                  <ReaderCard
-                    name={profile.name}
-                    photoUrl={profile.photoUrl}
-                    subtitle={`${
-                      profile.ratingCount > 0
-                        ? `★ ${profile.averageRating?.toFixed(1)} (${profile.ratingCount} ${profile.ratingCount > 1 ? "avaliações" : "avaliação"})`
-                        : "Sem avaliações ainda"
-                    } · ${profile.neighborhood ? `${profile.neighborhood}, Piripiri` : "Piripiri, PI"}`}
-                    showMark={false}
-                    footer={
-                      /* Instagram dentro do cartão (Spec 081): abre o perfil; sem @, leva ao Editar perfil */
-                      instagramHandle ? (
-                        <Pressable
-                          accessibilityRole="link"
-                          accessibilityLabel={`Abrir Instagram @${instagramHandle}`}
-                          hitSlop={8}
-                          onPress={() => void Linking.openURL(`https://instagram.com/${instagramHandle}`)}
-                          style={withPress(styles.instagramPill)}
-                        >
-                          <AppIcon name="camera" size={14} color={colors.ipe.onContainer} />
-                          <Text style={styles.instagramPillText}>{`@${instagramHandle}`}</Text>
-                        </Pressable>
-                      ) : (
-                        <Pressable
-                          accessibilityRole="button"
-                          hitSlop={8}
-                          onPress={onNavigateToEditProfile}
-                          style={withPress(styles.instagramPill)}
-                        >
-                          <AppIcon name="add" size={14} color={colors.ipe.onContainer} />
-                          <Text style={styles.instagramPillText}>Adicionar Instagram</Text>
-                        </Pressable>
-                      )
-                    }
-                  />
-
-                  {/* Botão Outline "Editar perfil" (Figma 07.01 nó 604:8677: 345x48px, rx 24px, stroke #D3CCC2) */}
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel="Editar perfil"
-                    onPress={onNavigateToEditProfile}
-                    style={({ pressed }) => [styles.editProfileButton, pressed && styles.editProfileButtonPressed]}
-                  >
-                    <AppIcon name="edit" size={18} color={colors.m3.primary} />
-                    <Text style={styles.editProfileButtonText}>Editar perfil</Text>
-                  </Pressable>
-
-                  {/* Tríade de Métricas Comunitárias (Figma 07.01 nó 25:616: 3 caixas interativas com atalhos diretos) */}
-                  <View style={styles.statsContainer}>
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel={`Minhas publicações: ${totalPublications} ${totalPublications === 1 ? "publicação" : "publicações"}`}
-                      onPress={onNavigateToMyListings ?? (() => {})}
-                      style={({ pressed }) => [styles.statBox, pressed && styles.statBoxPressed]}
-                    >
-                      <View style={styles.statIconBadge}>
-                        <AppIcon name="shelf" size={16} color={colors.m3.primary} />
+                    <View style={styles.identityRow}>
+                      <View style={styles.identityText}>
+                        <Text accessibilityRole="header" style={styles.profileName} numberOfLines={2}>
+                          {profile.name}
+                        </Text>
+                        {instagramHandle ? (
+                          <Pressable
+                            accessibilityRole="link"
+                            accessibilityLabel={`Abrir Instagram @${instagramHandle}`}
+                            hitSlop={8}
+                            onPress={() => void Linking.openURL(`https://instagram.com/${instagramHandle}`)}
+                          >
+                            <Text style={styles.identityHandle}>{`@${instagramHandle}`}</Text>
+                          </Pressable>
+                        ) : (
+                          <Pressable
+                            accessibilityRole="button"
+                            accessibilityLabel="Adicionar Instagram ao perfil"
+                            hitSlop={8}
+                            onPress={onNavigateToEditProfile}
+                          >
+                            <Text style={styles.identityHandleAction}>Adicionar Instagram</Text>
+                          </Pressable>
+                        )}
+                        <View style={styles.locationRow}>
+                          <AppIcon name="place" size={16} color={colors.m3.onSurfaceVariant} />
+                          <Text style={styles.locationText}>
+                            {profile.neighborhood ? `${profile.neighborhood}, Piripiri` : "Piripiri, PI"}
+                          </Text>
+                        </View>
                       </View>
-                      <Text style={styles.statNumber}>{totalPublications}</Text>
-                      <Text style={styles.statLabel}>{totalPublications === 1 ? "publicação" : "publicações"}</Text>
-                    </Pressable>
+                      <View style={styles.avatarFrame}>
+                        <Avatar name={profile.name} photoUrl={profile.photoUrl} size={88} />
+                      </View>
+                    </View>
 
                     <Pressable
                       accessibilityRole="button"
-                      accessibilityLabel={`Trocas concluídas: ${completedTrocas} ${completedTrocas === 1 ? "troca" : "trocas"}`}
-                      onPress={onNavigateToMeetingHistory ?? (() => {})}
-                      style={({ pressed }) => [styles.statBox, pressed && styles.statBoxPressed]}
+                      accessibilityLabel="Editar perfil"
+                      onPress={onNavigateToEditProfile}
+                      style={({ pressed }) => [styles.editProfileButton, pressed && styles.editProfileButtonPressed]}
                     >
-                      <View style={styles.statIconBadge}>
-                        <AppIcon name="swap" size={16} color={colors.action} />
-                      </View>
-                      <Text style={styles.statNumber}>{completedTrocas}</Text>
-                      <Text style={styles.statLabel}>{completedTrocas === 1 ? "troca" : "trocas"}</Text>
+                      <AppIcon name="edit" size={18} color={colors.m3.primary} />
+                      <Text style={styles.editProfileButtonText}>Editar perfil</Text>
                     </Pressable>
 
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel={`Avaliações recebidas: ${ratingText}`}
-                      onPress={onNavigateToRatings}
-                      style={({ pressed }) => [styles.statBox, pressed && styles.statBoxPressed]}
-                    >
-                      <View style={styles.statIconBadge}>
-                        <AppIcon name="star" size={16} color={colors.ipe.bloomDeep} />
-                      </View>
-                      <Text style={styles.statNumber}>{ratingText}</Text>
-                      <Text style={styles.statLabel}>avaliação</Text>
-                    </Pressable>
-                  </View>
+                    <View style={styles.statsContainer}>
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel={`Minhas publicações: ${totalPublications} ${totalPublications === 1 ? "publicação" : "publicações"}`}
+                        onPress={onNavigateToMyListings ?? (() => {})}
+                        style={({ pressed }) => [styles.statBox, pressed && styles.statBoxPressed]}
+                      >
+                        <Text style={styles.statNumber}>{totalPublications}</Text>
+                        <Text style={styles.statLabel}>{totalPublications === 1 ? "publicação" : "publicações"}</Text>
+                      </Pressable>
 
+                      <View style={styles.statDivider} />
+
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel={`Trocas concluídas: ${completedTrocas} ${completedTrocas === 1 ? "troca" : "trocas"}`}
+                        onPress={onNavigateToMeetingHistory ?? (() => {})}
+                        style={({ pressed }) => [styles.statBox, pressed && styles.statBoxPressed]}
+                      >
+                        <Text style={styles.statNumber}>{completedTrocas}</Text>
+                        <Text style={styles.statLabel}>{completedTrocas === 1 ? "troca" : "trocas"}</Text>
+                      </Pressable>
+
+                      <View style={styles.statDivider} />
+
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel={`Avaliações recebidas: ${ratingText}`}
+                        onPress={onNavigateToRatings}
+                        style={({ pressed }) => [styles.statBox, pressed && styles.statBoxPressed]}
+                      >
+                        <Text style={styles.statNumber}>{ratingText}</Text>
+                        <Text style={styles.statLabel}>nota média</Text>
+                      </Pressable>
+                    </View>
+
+                    {onNavigateToCreateListing ? (
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel="Publicar um livro"
+                        onPress={onNavigateToCreateListing}
+                        style={({ pressed }) => [styles.publishButton, pressed && styles.publishButtonPressed]}
+                      >
+                        <AppIcon name="add" size={20} color={colors.m3.onPrimary} />
+                        <Text style={styles.publishButtonText}>Publicar um livro</Text>
+                      </Pressable>
+                    ) : null}
                   </View>
 
                   {/* Seção 1: Atividade (Figma 07.01 nó 604:8684: altura 36px, cor #2C5E45) */}
@@ -428,7 +432,7 @@ function createStyles(colors: ColorPalette) {
     contentWide: {
       maxWidth: 1240,
       alignSelf: "center",
-      paddingHorizontal: tokens.spacing[24],
+      paddingHorizontal: WEB_GUTTER,
       paddingTop: tokens.spacing[32],
       flexDirection: "row",
       flexWrap: "wrap",
@@ -438,8 +442,8 @@ function createStyles(colors: ColorPalette) {
     },
     fullRow: { width: "100%" },
     heroBlock: { width: "100%", gap: tokens.spacing[16] },
-    // Web larga: cartão, botão e números numa coluna lateral fixa; Atividade e Conta lado a lado.
-    heroBlockWide: { width: 360, position: "sticky" as "relative", top: tokens.spacing[16] },
+    // Web larga: identidade e métricas numa coluna lateral; Atividade e Conta ao lado.
+    heroBlockWide: { width: 380, position: "sticky" as "relative", top: tokens.spacing[16] },
     sectionWide: { flex: 1, flexBasis: 300, minWidth: 300 },
     content: {
       width: "100%",
@@ -454,7 +458,7 @@ function createStyles(colors: ColorPalette) {
     },
     title: {
       flex: 1,
-      ...tokens.typography.brandLargeTitle,
+      ...tokens.typography.brandTitle,
       color: colors.brandBrown,
     },
     // Alvo de toque de 48 dp ao redor da engrenagem (FR-011, Spec 073).
@@ -485,30 +489,64 @@ function createStyles(colors: ColorPalette) {
       ...tokens.typography.bodyMedium,
       color: colors.m3.onSurfaceVariant,
     },
-    instagramPill: {
+    identityRow: {
+      minHeight: 100,
       flexDirection: "row",
-      alignSelf: "flex-start",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: tokens.spacing[12],
+    },
+    identityText: { flex: 1, minWidth: 0, gap: tokens.spacing[4] },
+    profileName: {
+      color: colors.brandBrown,
+      fontFamily: fontFamily.brand,
+      fontSize: 34,
+      lineHeight: 41,
+      fontWeight: tokens.fontWeight.bold,
+    },
+    identityHandle: {
+      ...tokens.typography.bodyLarge,
+      fontFamily: fontFamily.semiBold,
+      fontWeight: tokens.fontWeight.semiBold,
+      color: colors.m3.onSurfaceVariant,
+    },
+    identityHandleAction: {
+      ...tokens.typography.bodyMedium,
+      fontWeight: tokens.fontWeight.semiBold,
+      color: colors.m3.primary,
+    },
+    locationRow: {
+      flexDirection: "row",
       alignItems: "center",
       gap: tokens.spacing[4],
-      marginTop: tokens.spacing[8],
-      minHeight: tokens.spacing[32],
-      paddingHorizontal: tokens.spacing[12],
-      borderRadius: tokens.radius.full,
-      borderWidth: 1,
-      borderColor: colors.ipe.onContainer,
+      marginTop: tokens.spacing[2],
     },
-    instagramPillText: { ...tokens.typography.labelMedium, fontWeight: tokens.fontWeight.semiBold, color: colors.ipe.onContainer },
+    locationText: {
+      ...tokens.typography.bodyMedium,
+      color: colors.m3.onSurfaceVariant,
+    },
+    avatarFrame: {
+      width: 100,
+      height: 100,
+      padding: tokens.spacing[3],
+      borderRadius: tokens.radius.full,
+      borderWidth: 2,
+      borderColor: colors.ipe.bloom,
+      backgroundColor: colors.ipe.petalSoft,
+      alignItems: "center",
+      justifyContent: "center",
+    },
     editProfileButton: {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
       gap: tokens.spacing[8],
-      height: tokens.accessibility.touchTarget,
+      alignSelf: "flex-start",
+      minHeight: tokens.accessibility.touchTarget,
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
-      borderRadius: tokens.shapeMorph.buttonRest,
-      backgroundColor: colors.m3.surfaceContainerLow,
-      paddingHorizontal: tokens.spacing[24],
+      borderColor: colors.ipe.bloom,
+      borderRadius: tokens.radius.full,
+      paddingHorizontal: tokens.spacing[16],
     },
     editProfileButtonPressed: {
       borderRadius: tokens.shapeMorph.buttonPressed,
@@ -522,35 +560,57 @@ function createStyles(colors: ColorPalette) {
     },
     statsContainer: {
       flexDirection: "row",
-      gap: tokens.spacing[8],
-      height: 84,
+      alignItems: "center",
+      minHeight: 76,
+      marginTop: tokens.spacing[4],
     },
     statBox: {
       flex: 1,
-      backgroundColor: colors.m3.surfaceContainerLow,
-      borderRadius: tokens.radius.card,
-      borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
-      alignItems: "center",
+      minWidth: 0,
+      minHeight: tokens.accessibility.touchTarget,
+      alignItems: "flex-start",
       justifyContent: "center",
       gap: tokens.spacing[2],
-      paddingVertical: tokens.spacing[8],
+      paddingHorizontal: tokens.spacing[8],
+      borderRadius: tokens.radius.small,
     },
     statBoxPressed: {
-      backgroundColor: colors.m3.surfaceContainerHigh,
-      transform: [{ scale: 0.96 }],
+      backgroundColor: colors.m3.surfaceContainerLow,
     },
-    statIconBadge: {
-      marginBottom: 2,
+    statDivider: {
+      width: 1,
+      height: tokens.spacing[40],
+      backgroundColor: colors.m3.outlineVariant,
     },
     statNumber: {
-      ...tokens.typography.brandTitle,
+      fontFamily: fontFamily.brand,
+      fontSize: 28,
+      lineHeight: 34,
+      fontWeight: tokens.fontWeight.bold,
       color: colors.brandBrown,
     },
     statLabel: {
       ...tokens.typography.labelMedium,
-      fontFamily: fontFamily.regular,
       color: colors.m3.onSurfaceVariant,
+    },
+    publishButton: {
+      minHeight: 48,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: tokens.spacing[8],
+      borderRadius: tokens.shapeMorph.buttonRest,
+      backgroundColor: colors.m3.primary,
+      paddingHorizontal: tokens.spacing[20],
+    },
+    publishButtonPressed: {
+      borderRadius: tokens.shapeMorph.buttonPressed,
+      opacity: 0.88,
+    },
+    publishButtonText: {
+      ...tokens.typography.labelLarge,
+      color: colors.m3.onPrimary,
+      fontWeight: tokens.fontWeight.semiBold,
     },
     section: {
       gap: tokens.spacing[4],

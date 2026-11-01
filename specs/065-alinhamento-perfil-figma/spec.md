@@ -7,23 +7,24 @@ Esta especificação estabelece o alinhamento visual e estrutural da tela **Meu 
 
 A tela centraliza a identidade do leitor em Piripiri, métricas comunitárias (publicações, trocas concluídas e média de avaliação), botão outline de edição e lista agrupada por seções semânticas (*"Atividade"* e *"Conta"*).
 
+> **Atualização visual (31 de outubro de 2026):** o topo segue o modelo de perfil social enviado pelo usuário: nome e identificação em destaque, avatar à direita e métricas em uma faixa horizontal. Os atalhos permanecem restritos às funções próprias do IpêBook.
+
 ---
 
 ## 2. Requisitos de Usuário e Negócio
 
 ### RN-01: Cabeçalho Editorial "Meu perfil"
-- A tela deve exibir no topo a manchete editorial `"Meu perfil"` na tipografia serifada da marca (`tokens.fontFamily.brand`, 34px, cor `tokens.colors.brandBrown` `#58331F`).
+- A tela deve exibir no topo o título `"Meu perfil"` na tipografia serifada da marca (`tokens.fontFamily.brand`, 24px, cor `tokens.colors.brandBrown` `#58331F`).
 - Sendo destino raiz da barra de navegação ([ADR 0011](file:///home/usermicael/Projetos/IPEBOOK_/docs/adr/0011-navegacao-por-barra-inferior.md)), não possui botão de voltar.
 
-### RN-02: Card de Identidade e Botão Outline "Editar perfil"
-- O card de identidade deve adotar container suave (`colors.m3.surfaceContainer` / `#f7f3ec`, `borderRadius: 20`):
-  - Avatar do usuário (monograma ou foto).
-  - Nome em destaque com serifa da marca (`fontFamily.brand`, 24px, `onSurface`).
-  - Linha de apoio com localização comunitária (ex: `"Centro, Piripiri"` ou `"Piripiri, PI"`).
-- Logo abaixo do card de identidade, disponibilizar o botão outline proeminente `"Editar perfil"` no padrão M3 (borda sutil, cantos arredondados e alvo de toque acessível).
+### RN-02: Identidade e ação de edição
+- Exibir o nome em destaque à esquerda e o avatar circular à direita.
+- Abaixo do nome, exibir o Instagram quando cadastrado; quando estiver ausente, oferecer o atalho `"Adicionar Instagram"` para a edição do perfil.
+- Exibir o bairro escolhido ou `"Piripiri, PI"` como localização de apoio.
+- Manter `"Editar perfil"` como ação própria do IpêBook, com alvo de toque acessível.
 
-### RN-03: Painel de Métricas Comunitárias (Tríade M3)
-- O perfil deve exibir 3 cards lado a lado com fundo `#f7f3ec`, altura 76px e cantos arredondados (16px):
+### RN-03: Métricas Comunitárias em faixa
+- Exibir três métricas lado a lado, sem cartões individuais, com números em destaque e rótulos abaixo:
   1. **Publicações:** total de livros anunciados pelo usuário (ex: `5`).
   2. **Trocas:** total de negociações finalizadas com sucesso (ex: `8`).
   3. **Avaliação:** média das avaliações recebidas da comunidade (ex: `4,9` ou `—`).
@@ -49,9 +50,9 @@ A tela centraliza a identidade do leitor em Piripiri, métricas comunitárias (p
 
 ## 3. Critérios de Aceite
 
-1. O cabeçalho exibe `"Meu perfil"` com serifa da marca em `brandBrown`.
-2. O card de identidade traz avatar, nome em serifa e botão outline `"Editar perfil"`.
-3. A tríade de métricas exibe os contadores de publicações, trocas e avaliação média.
+1. O cabeçalho exibe `"Meu perfil"` com serifa da marca em `brandBrown`, abaixo do nome do leitor em destaque.
+2. O cabeçalho de identidade traz nome, avatar, identificação social ou atalho para adicioná-la e localização.
+3. As métricas em faixa exibem publicações, trocas e avaliação média.
 4. As seções *"Atividade"* e *"Conta"* agrupam os itens com cabeçalhos legíveis e chevrons padronizados.
 5. O botão *"Sair da conta"* abre o modal de confirmação e encerra a sessão corretamente.
 6. 100% dos testes unitários, de componente e integração passam na suíte (`npm test`).

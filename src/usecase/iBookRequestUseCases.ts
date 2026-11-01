@@ -9,6 +9,8 @@ export type RequestWithListing = Readonly<{
   requesterName?: string | null;
   /** Foto de perfil de quem pediu, só nos recebidos; `null` sem foto (Spec 084). */
   requesterPhotoUrl?: string | null;
+  /** Livro oferecido em troca pelo solicitante, se aplicável. */
+  offeredBook?: Book | null;
 }>;
 
 export type RequestResponse = "accept" | "reject";
@@ -23,10 +25,16 @@ export type NegotiationDetail = Readonly<{
   /** Foto de perfil da contraparte; `null` sem foto ou sem perfil (Spec 084). */
   counterpartPhotoUrl?: string | null;
   safeMeetingPoints: readonly MeetingPoint[];
+  /** Livro oferecido em troca pelo solicitante, quando houver contrapartida (Spec 113). */
+  offeredBook?: Book | null;
 }>;
 
 export interface IBookRequestUseCases {
-  requestNegotiation(listingId: string, sessionUserId: string | null): Promise<BookRequest>;
+  requestNegotiation(
+    listingId: string,
+    sessionUserId: string | null,
+    options?: { initialMessage?: string; offeredBookId?: string },
+  ): Promise<BookRequest>;
   listReceivedRequests(sessionUserId: string | null): Promise<readonly RequestWithListing[]>;
   listSentRequests(sessionUserId: string | null): Promise<readonly RequestWithListing[]>;
   respondToRequest(

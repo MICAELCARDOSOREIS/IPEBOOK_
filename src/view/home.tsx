@@ -94,7 +94,13 @@ function CatalogCarousel({
       >
         {/* Fundo da capa na cor da modalidade, como no topo do detalhe do livro. */}
         <View style={[styles.carouselCardCoverArea, wide && styles.carouselCardCoverAreaWide, { backgroundColor: tag.background }]}>
-          <BookCover id={item.id} title={item.title} photoUrl={item.photoUrl} variant={wide ? "detail" : "card"} />
+          <BookCover
+            id={item.id}
+            title={item.title}
+            photoUrl={item.photoUrl}
+            variant={wide ? "detail" : "card"}
+            showRibbon={item.modality === "donation" || item.modality === "trade"}
+          />
         </View>
         <View style={styles.carouselCardMeta}>
           {/* Modalidade em etiqueta colorida (a mesma cor dos filtros e do detalhe), preço ao lado. */}
@@ -132,7 +138,7 @@ function CatalogCarousel({
           <Text numberOfLines={1} style={styles.carouselCardAuthor}>{item.author}</Text>
           {item.neighborhood ? (
             <View style={styles.carouselCardLocationRow}>
-              <AppIcon name="place" size={14} color={colors.m3.onSurfaceVariant} />
+              <AppIcon name="place" size={14} color={colors.action} />
               <Text numberOfLines={1} style={styles.carouselCardNeighborhood}>
                 {item.neighborhood}
               </Text>
@@ -631,6 +637,7 @@ export default function Home({
   return (
     <ScreenContainer
       edges={["top", "left", "right"]}
+      maxWidth={wideWeb ? WEB_MAX_WIDTH : 720}
       paddingHorizontal={wideWeb ? WEB_GUTTER : undefined}
       contentStyle={wideWeb ? styles.wideHomeContent : undefined}
       refreshControl={
@@ -900,7 +907,10 @@ function createStyles(colors: ColorPalette) {
       ...tokens.typography.labelLarge,
       color: colors.m3.primary,
     },
-    carouselRow: { position: "relative" },
+    carouselRow: {
+      position: "relative",
+      marginHorizontal: -tokens.spacing[16],
+    },
     shortcuts: { flexDirection: "row", gap: tokens.spacing[24] },
     shortcut: { flex: 1, flexDirection: "row", gap: tokens.spacing[16], padding: tokens.spacing[24], borderRadius: tokens.radius.large },
     shortcutText: { flex: 1, gap: tokens.spacing[4] },
@@ -913,7 +923,11 @@ function createStyles(colors: ColorPalette) {
     carouselCardCoverAreaWide: { paddingVertical: tokens.spacing[20] },
     carouselCardWide: { flex: 1, width: "100%", borderRadius: tokens.radius.xl, backgroundColor: colors.m3.surfaceContainerLowest },
     carouselList: { flexGrow: 0 },
-    carouselListContent: { gap: CAROUSEL_ITEM_GAP, alignItems: "stretch" },
+    carouselListContent: {
+      paddingHorizontal: tokens.spacing[16],
+      gap: CAROUSEL_ITEM_GAP,
+      alignItems: "stretch",
+    },
     // Figma `02.01`: a faixa mostra dois cartões inteiros, então as setas saem do fluxo e ficam
     // invisíveis sobre o título da seção (texto estático, sem toque) para não roubar o toque dos
     // cartões nem empurrar a lista.

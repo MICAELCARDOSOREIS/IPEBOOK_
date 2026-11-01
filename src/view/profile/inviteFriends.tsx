@@ -30,9 +30,11 @@ export function InviteFriends({ onBack }: InviteFriendsProps) {
   // A imagem do convite é este cartão: captura em PNG e abre a folha de compartilhamento do sistema.
   const captureInvite = () => captureRef(cardRef, { format: "png", quality: 1, result: "tmpfile" });
 
+  const contentMaxWidth = wide ? 960 : 560;
+
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar contentMaxWidth={wide ? WEB_MAX_WIDTH : 560} title="Convidar amigos" onBack={() => onBack?.()} />
+      <TopAppBar contentMaxWidth={contentMaxWidth} title="Convidar amigos" onBack={() => onBack?.()} />
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <View style={[styles.content, wide && styles.contentWide]}>
           <View style={styles.header}>
@@ -104,7 +106,7 @@ function createStyles(colors: ColorPalette) {
       alignSelf: "center",
       gap: tokens.spacing[24],
     },
-    contentWide: { paddingHorizontal: WEB_GUTTER },
+    contentWide: { maxWidth: 960, paddingHorizontal: WEB_GUTTER },
     columns: { gap: tokens.spacing[24] },
     columnsWide: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[48] },
     column: { gap: tokens.spacing[24] },

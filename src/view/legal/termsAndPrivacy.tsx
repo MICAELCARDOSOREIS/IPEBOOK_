@@ -124,7 +124,7 @@ function createStyles(colors: ColorPalette) {
     width: "100%",
     padding: tokens.spacing[16],
   },
-  contentWide: { maxWidth: TERMS_WIDE_MAX_WIDTH, alignSelf: "center", paddingHorizontal: tokens.spacing[24] },
+  contentWide: { maxWidth: TERMS_WIDE_MAX_WIDTH, alignSelf: "center", paddingHorizontal: WEB_GUTTER },
   cardListWide: { flexDirection: "row", flexWrap: "wrap", alignItems: "flex-start", columnGap: tokens.spacing[16], rowGap: tokens.spacing[16] },
   fullRow: { width: "100%" },
   heroHeader: {
