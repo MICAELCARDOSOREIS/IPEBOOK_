@@ -320,6 +320,7 @@ describe("testes de componente com mock: Home (ISO/IEC 25010 - Usabilidade e Con
         await render(<Home />);
       });
       expect(onPetalTrigger).toHaveBeenCalledTimes(1);
+      expect(onPetalTrigger).toHaveBeenNthCalledWith(1, "entry");
 
       // 2. Simulação de navegação: usuário foi para o Explorar e voltou para a Home (remontagem)
       let screen2!: Awaited<ReturnType<typeof render>>;
@@ -336,6 +337,7 @@ describe("testes de componente com mock: Home (ISO/IEC 25010 - Usabilidade e Con
       });
       // Deve disparar a florada com o toque do usuário!
       expect(onPetalTrigger).toHaveBeenCalledTimes(2);
+      expect(onPetalTrigger).toHaveBeenNthCalledWith(2, "celebration");
 
       unsubscribe();
     });
