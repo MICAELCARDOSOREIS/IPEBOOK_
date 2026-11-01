@@ -37,6 +37,23 @@ describe("useGuardedPress (Spec 091)", () => {
     expect(onPress).toHaveBeenCalledTimes(2);
   });
 
+  it("ignora rajada de múltiplos cliques rápidos (triplo toque)", () => {
+    const onPress = vi.fn();
+    const press = mountHook(onPress, 600);
+    press(); // 1º toque (executa)
+    vi.setSystemTime(new Date("2026-10-27T12:00:00.200"));
+    press(); // 2º toque (bloqueia e renova)
+    vi.setSystemTime(new Date("2026-10-27T12:00:00.400"));
+    press(); // 3º toque (continua bloqueado)
+    vi.setSystemTime(new Date("2026-10-27T12:00:00.550"));
+    press(); // 4º toque
+    expect(onPress).toHaveBeenCalledTimes(1);
+
+    vi.setSystemTime(new Date("2026-10-27T12:00:02.000"));
+    press();
+    expect(onPress).toHaveBeenCalledTimes(2);
+  });
+
   it("sem janela (testes) deixa passar toques seguidos", () => {
     const onPress = vi.fn();
     const press = mountHook(onPress, 0);

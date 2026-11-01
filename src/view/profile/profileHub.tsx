@@ -1,6 +1,6 @@
 import * as Linking from "expo-linking";
 import { useMemo, useState, useEffect } from "react";
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
@@ -215,6 +215,13 @@ export default function ProfileHub({
               {isSignedIn ? (
                 <>
                   <View style={[styles.heroBlock, wideWeb && styles.heroBlockWide]}>
+                    <Image
+                      source={require("../../../assets/moldura-ipe-perfil.jpeg")}
+                      accessibilityElementsHidden
+                      pointerEvents="none"
+                      resizeMode="contain"
+                      style={styles.ipeFrame}
+                    />
                     <View style={styles.identityRow}>
                       <View style={styles.identityText}>
                         <Text accessibilityRole="header" style={styles.profileName} numberOfLines={2}>
@@ -249,7 +256,7 @@ export default function ProfileHub({
                         </View>
                       </View>
                       <View style={styles.avatarFrame}>
-                        <Avatar name={profile.name} photoUrl={profile.photoUrl} size={88} />
+                        <Avatar name={profile.name} photoUrl={profile.photoUrl} size={92} />
                       </View>
                     </View>
 
@@ -447,17 +454,25 @@ function createStyles(colors: ColorPalette) {
     fullRow: { width: "100%" },
     heroBlock: {
       width: "100%",
-      gap: tokens.spacing[16],
+      position: "relative",
+      overflow: "hidden",
+      gap: tokens.spacing[8],
       borderRadius: tokens.radius.xl,
-      backgroundColor: colors.ipe.petalSoft,
+      backgroundColor: colors.m3.surfaceContainerLow,
       borderWidth: 1,
-      borderColor: colors.ipe.bloom,
+      borderColor: colors.book.paperEdge,
       padding: tokens.spacing[16],
       shadowColor: colors.ipe.trunk,
       shadowOffset: { width: 0, height: 3 },
       shadowOpacity: 0.08,
       shadowRadius: 10,
       elevation: 2,
+    },
+    ipeFrame: {
+      ...StyleSheet.absoluteFillObject,
+      width: "100%",
+      height: "100%",
+      opacity: 0.1,
     },
     // Web larga: identidade e métricas numa coluna lateral; Atividade e Conta ao lado.
     heroBlockWide: { width: 380, position: "sticky" as "relative", top: tokens.spacing[16] },
@@ -550,8 +565,8 @@ function createStyles(colors: ColorPalette) {
       color: colors.m3.onSurfaceVariant,
     },
     avatarFrame: {
-      width: 100,
-      height: 100,
+      width: 104,
+      height: 104,
       padding: tokens.spacing[3],
       borderRadius: tokens.radius.full,
       borderWidth: 2,
@@ -590,7 +605,7 @@ function createStyles(colors: ColorPalette) {
       flexDirection: "row",
       alignItems: "center",
       minHeight: 84,
-      marginTop: tokens.spacing[8],
+      marginTop: 0,
       paddingVertical: tokens.spacing[4],
     },
     statBox: {
