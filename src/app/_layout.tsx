@@ -46,6 +46,18 @@ function ThemedStatusBar() {
   return <StatusBar style={resolvedScheme === "dark" ? "light" : "dark"} />;
 }
 
+function ThemedStack() {
+  const { colors } = useTheme();
+  return (
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        contentStyle: { backgroundColor: colors.surface },
+      }}
+    />
+  );
+}
+
 // Acompanhamento de erros (Spec 104): sem EXPO_PUBLIC_SENTRY_DSN, não envia nada.
 startErrorReporting();
 
@@ -102,7 +114,7 @@ export default function RootLayout() {
               onOpenNotifications={() => pushOnce("/notificacoes")}
             />
           ) : null}
-          <Stack screenOptions={{ headerShown: false }} />
+          <ThemedStack />
           {activeDestination && !wideWeb && !WEB_BETA_ONLY ? (
             <ConnectedNavigationBar active={activeDestination} pathname={pathname} onNavigate={navigateTo} />
           ) : null}

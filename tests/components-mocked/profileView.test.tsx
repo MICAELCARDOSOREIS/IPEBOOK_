@@ -127,21 +127,18 @@ describe("Profile (Spec 006 US4, Issue #55)", () => {
     expect(screen.getByText("Usuário não encontrado.")).toBeDefined();
   });
 
-  it("preenche telefone e bairro com as preferências carregadas (Issue #141)", async () => {
+  it("preenche o bairro e não exibe campo de telefone (Issue #141)", async () => {
     setup(
       { id: "ana", email: "ana@exemplo.com" },
       { preferences: { userId: "ana", phone: "86999998888", neighborhood: "Centro" } },
     );
     const screen = await renderProfile();
-    expect(screen.getByDisplayValue("(86) 99999-8888")).toBeDefined();
+    expect(screen.queryByLabelText("Telefone/WhatsApp")).toBeNull();
   });
 
-  it("salva telefone e bairro selecionado (Issue #141)", async () => {
+  it("salva o bairro selecionado sem exigir telefone (Issue #141)", async () => {
     const { update, updatePreferences } = setup({ id: "ana", email: "ana@exemplo.com" });
     const screen = await renderProfile();
-    await act(async () => {
-      fireEvent.changeText(screen.getByLabelText("Telefone/WhatsApp"), "86988887777");
-    });
     await act(async () => {
       fireEvent.press(screen.getByLabelText("Mostrar atalhos de bairros populares"));
     });
@@ -150,7 +147,7 @@ describe("Profile (Spec 006 US4, Issue #55)", () => {
     });
     await act(async () => { fireEvent.press(screen.getByText(/Salvar/)); });
     expect(update).toHaveBeenCalledWith({ name: "Ana", photoUrl: undefined, socialHandle: undefined });
-    expect(updatePreferences).toHaveBeenCalledWith({ phone: "(86) 98888-7777", neighborhood: "Centro" });
+    expect(updatePreferences).toHaveBeenCalledWith({ neighborhood: "Centro" });
   });
 
   it("mostra erro de domínio das preferências", async () => {
@@ -200,15 +197,12 @@ describe("Profile (Spec 006 US4, Issue #55)", () => {
     expect(update).toHaveBeenCalledWith({ name: "Ana", photoUrl: undefined, socialHandle: "@ana.lima_" });
   });
 
-  it("valida telefone incompleto em linha ao salvar", async () => {
+  it("não exibe nem valida campo de telefone ao salvar perfil", async () => {
     const { updatePreferences } = setup({ id: "ana", email: "ana@exemplo.com" });
     const screen = await renderProfile();
-    await act(async () => {
-      fireEvent.changeText(screen.getByLabelText("Telefone/WhatsApp"), "86999");
-    });
+    expect(screen.queryByLabelText("Telefone/WhatsApp")).toBeNull();
     await act(async () => { fireEvent.press(screen.getByText(/Salvar/)); });
-    expect(screen.getByText("Informe um telefone válido com DDD.")).toBeDefined();
-    expect(updatePreferences).not.toHaveBeenCalled();
+    expect(updatePreferences).toHaveBeenCalledWith({ neighborhood: undefined });
   });
 
   it("limpa o erro em linha quando a pessoa corrige o campo", async () => {

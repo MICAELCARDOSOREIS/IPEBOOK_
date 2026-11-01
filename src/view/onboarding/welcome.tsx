@@ -64,7 +64,7 @@ export default function Welcome({ onStart, onSignIn, onHelp, onTerms, betaInvite
     return (
       <ScrollView style={styles.wideRoot} contentContainerStyle={styles.wideContent} keyboardShouldPersistTaps="handled">
         <View style={styles.wideHeader}>
-          <Logotipo underline />
+          <Logotipo />
           <View style={styles.wideHeaderActions}>
             {betaInvite ? null : (
               <Pressable accessibilityRole="button" accessibilityLabel="Entrar" onPress={onSignIn} style={withPress(undefined)}>
@@ -86,9 +86,7 @@ export default function Welcome({ onStart, onSignIn, onHelp, onTerms, betaInvite
             </View>
             <View>
               <Text accessibilityRole="header" style={styles.wideTitle}>Uma boa história</Text>
-              <View style={styles.wideHighlight}>
-                <Text style={styles.wideHighlightText}>merece continuar.</Text>
-              </View>
+              <Text style={styles.wideTitle}>merece continuar.</Text>
             </View>
             <Text style={styles.wideLead}>
               Encontre, troque, venda ou doe livros com quem mora perto de você. Sem taxas e com encontro em local público.
@@ -133,31 +131,26 @@ export default function Welcome({ onStart, onSignIn, onHelp, onTerms, betaInvite
       contentStyle={{ gap: tokens.spacing[16] }}
     >
       <View style={styles.header}>
-        <Logotipo underline />
-        <View style={styles.headerActions}>
-          <View style={styles.location} accessible accessibilityLabel="Beta exclusiva em Piripiri, PI">
-            <View style={styles.locationDot} />
-            <Text style={styles.locationText}>PIRIPIRI · PIAUÍ</Text>
-          </View>
-          <ThemeToggleButton />
+        <Logotipo />
+        <View style={styles.location} accessible accessibilityLabel="Beta exclusiva em Piripiri, PI">
+          <View style={styles.locationDot} />
+          <Text style={styles.locationText}>PIRIPIRI · PIAUÍ</Text>
         </View>
+        {betaInvite ? <ThemeToggleButton /> : null}
       </View>
 
       <Text accessibilityRole="header" style={styles.title}>Uma boa história</Text>
       <View style={styles.highlight}>
-        <Text style={styles.highlightText}>merece continuar.</Text>
+        <Text style={styles.title}>merece continuar.</Text>
       </View>
 
-      <View style={styles.illustrationWrapper}>
-        <View style={styles.illustrationGlow} />
-        <Image
-          source={illustration}
-          style={styles.illustration}
-          resizeMode="contain"
-          accessible={false}
-          importantForAccessibility="no"
-        />
-      </View>
+      <Image
+        source={illustration}
+        style={styles.illustration}
+        resizeMode="contain"
+        accessible={false}
+        importantForAccessibility="no"
+      />
 
       <Text style={styles.subtitle}>Livros de quem mora perto de você.</Text>
 
@@ -294,17 +287,6 @@ function createStyles(colors: ColorPalette) {
   wideHero: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: tokens.spacing[64], width: "100%" },
   wideHeroText: { flex: 1.2, gap: tokens.spacing[24], alignItems: "flex-start" },
   wideTitle: { ...tokens.typography.brandHero, color: colors.m3.onSurface },
-  wideHighlight: {
-    alignSelf: "flex-start",
-    backgroundColor: colors.ipe.bloom,
-    borderRadius: tokens.radius.full,
-    paddingHorizontal: tokens.spacing[16],
-    paddingVertical: tokens.spacing[4],
-  },
-  wideHighlightText: {
-    ...tokens.typography.brandHero,
-    color: "#281E0B",
-  },
   wideLead: { ...tokens.typography.webLead, color: colors.m3.onSurfaceVariant, maxWidth: 640 },
   wideActions: { flexDirection: "row", gap: tokens.spacing[16] },
   widePanel: { flex: 1, maxWidth: 640, height: 420, borderRadius: tokens.radius.xxl, alignItems: "center", justifyContent: "center", backgroundColor: colors.m3.primaryContainer },
@@ -320,11 +302,6 @@ function createStyles(colors: ColorPalette) {
     justifyContent: "space-between",
     minHeight: accessibility.touchTarget,
   },
-  headerActions: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: tokens.spacing[8],
-  },
   location: {
     flexDirection: "row",
     alignItems: "center",
@@ -335,10 +312,10 @@ function createStyles(colors: ColorPalette) {
     paddingVertical: tokens.spacing[6],
   },
   locationDot: {
-    width: tokens.spacing[8],
-    height: tokens.spacing[8],
+    width: tokens.spacing[6],
+    height: tokens.spacing[6],
     borderRadius: tokens.radius.full,
-    backgroundColor: colors.ipe.bloom,
+    backgroundColor: colors.action,
   },
   locationText: {
     ...tokens.typography.labelMedium,
@@ -350,28 +327,9 @@ function createStyles(colors: ColorPalette) {
   },
   highlight: {
     alignSelf: "flex-start",
-    backgroundColor: colors.ipe.bloom,
+    backgroundColor: colors.m3.tertiaryContainer,
     borderRadius: tokens.radius.full,
-    paddingHorizontal: tokens.spacing[10],
-    paddingVertical: tokens.spacing[2],
-  },
-  highlightText: {
-    ...tokens.typography.displayLarge,
-    color: "#281E0B",
-  },
-  illustrationWrapper: {
-    position: "relative",
-    width: "100%",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  illustrationGlow: {
-    position: "absolute",
-    width: "92%",
-    height: "88%",
-    borderRadius: tokens.radius.xxl,
-    backgroundColor: colors.ipe.container,
-    opacity: 0.55,
+    paddingHorizontal: tokens.spacing[6],
   },
   illustration: { width: "100%", height: 300 },
   subtitle: {
