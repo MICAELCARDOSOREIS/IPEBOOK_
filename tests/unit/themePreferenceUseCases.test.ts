@@ -4,15 +4,15 @@ import type { IThemePreferenceDataSource } from "@/model/datasources/iThemePrefe
 import { ThemePreferenceUseCases } from "@/usecase/themePreferenceUseCases";
 
 describe("ThemePreferenceUseCases (Spec 054 / Issue #144)", () => {
-  it("começa seguindo o tema do sistema e persiste a escolha manual", async () => {
+  it("começa no tema claro e persiste a escolha manual", async () => {
     const useCases = new ThemePreferenceUseCases(new MemoryThemePreferenceDataSource());
 
-    expect(await useCases.getPreference()).toBe("system");
+    expect(await useCases.getPreference()).toBe("light");
     await useCases.setPreference("dark");
     expect(await useCases.getPreference()).toBe("dark");
   });
 
-  it("volta para 'system' quando a leitura do armazenamento falha, sem bloquear o app", async () => {
+  it("volta para 'light' quando a leitura do armazenamento falha, sem bloquear o app", async () => {
     const broken: IThemePreferenceDataSource = {
       getPreference: async () => {
         throw new Error("armazenamento indisponível");
@@ -20,7 +20,7 @@ describe("ThemePreferenceUseCases (Spec 054 / Issue #144)", () => {
       setPreference: async () => undefined,
     };
 
-    expect(await new ThemePreferenceUseCases(broken).getPreference()).toBe("system");
+    expect(await new ThemePreferenceUseCases(broken).getPreference()).toBe("light");
   });
 
   it("não lança erro quando a gravação falha; a preferência só não persiste entre sessões", async () => {
