@@ -215,19 +215,6 @@ export default function ProfileHub({
               {isSignedIn ? (
                 <>
                   <View style={[styles.heroBlock, wideWeb && styles.heroBlockWide]}>
-                    <View style={styles.libraryCardHeader}>
-                      <View style={styles.libraryIcon}>
-                        <AppIcon name="shelf" size={24} color={colors.ipe.onContainer} />
-                      </View>
-                      <View style={styles.libraryCardText}>
-                        <Text style={styles.libraryCardTitle}>Minha biblioteca</Text>
-                        <Text style={styles.libraryCardDescription}>
-                          {totalPublications > 0
-                            ? `${totalPublications} ${totalPublications === 1 ? "livro publicado" : "livros publicados"}`
-                            : "Compartilhe seu primeiro livro com a comunidade"}
-                        </Text>
-                      </View>
-                    </View>
                     <View style={styles.identityRow}>
                       <View style={styles.identityText}>
                         <Text accessibilityRole="header" style={styles.profileName} numberOfLines={2}>
@@ -305,7 +292,7 @@ export default function ProfileHub({
                         onPress={onNavigateToRatings}
                         style={({ pressed }) => [styles.statBox, pressed && styles.statBoxPressed]}
                       >
-                        <Text style={styles.statNumber}>{ratingText}</Text>
+                        <Text style={styles.statNumber}>{ratingText === "—" ? ratingText : `★ ${ratingText}`}</Text>
                         <Text style={styles.statLabel}>nota média</Text>
                       </Pressable>
                     </View>
@@ -587,17 +574,18 @@ function createStyles(colors: ColorPalette) {
     statsContainer: {
       flexDirection: "row",
       alignItems: "center",
-      minHeight: 76,
-      marginTop: tokens.spacing[4],
+      minHeight: 84,
+      marginTop: tokens.spacing[8],
+      paddingVertical: tokens.spacing[4],
     },
     statBox: {
       flex: 1,
       minWidth: 0,
       minHeight: tokens.accessibility.touchTarget,
-      alignItems: "flex-start",
+      alignItems: "center",
       justifyContent: "center",
       gap: tokens.spacing[2],
-      paddingHorizontal: tokens.spacing[8],
+      paddingHorizontal: tokens.spacing[4],
       borderRadius: tokens.radius.small,
     },
     statBoxPressed: {
@@ -605,8 +593,9 @@ function createStyles(colors: ColorPalette) {
     },
     statDivider: {
       width: 1,
-      height: tokens.spacing[40],
-      backgroundColor: colors.m3.outlineVariant,
+      height: tokens.spacing[32],
+      backgroundColor: colors.ipe.bloom,
+      opacity: 0.65,
     },
     statNumber: {
       fontFamily: fontFamily.brand,
@@ -618,33 +607,6 @@ function createStyles(colors: ColorPalette) {
     statLabel: {
       ...tokens.typography.labelMedium,
       color: colors.m3.onSurfaceVariant,
-    },
-    libraryCardHeader: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[12],
-      paddingBottom: tokens.spacing[4],
-    },
-    libraryIcon: {
-      width: 48,
-      height: 48,
-      borderRadius: tokens.radius.full,
-      alignItems: "center",
-      justifyContent: "center",
-      backgroundColor: colors.ipe.bloom,
-    },
-    libraryCardText: {
-      flex: 1,
-      gap: tokens.spacing[2],
-    },
-    libraryCardTitle: {
-      ...tokens.typography.titleMedium,
-      color: colors.ipe.onContainer,
-      fontWeight: tokens.fontWeight.bold,
-    },
-    libraryCardDescription: {
-      ...tokens.typography.bodyMedium,
-      color: colors.ipe.onContainer,
     },
     publishButton: {
       minHeight: 48,
