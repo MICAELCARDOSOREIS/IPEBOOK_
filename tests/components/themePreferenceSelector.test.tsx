@@ -17,14 +17,17 @@ async function renderSelector() {
 }
 
 describe("alternador de tema (Spec 054 / Issue #144, ADR 0036)", () => {
-  it("mostra as três opções de tema com 'Sistema' selecionado por padrão", async () => {
+  it("mostra as três opções de tema com 'Claro' selecionado por padrão", async () => {
     const screen = await renderSelector();
 
     const group = screen.getByTestId("theme-toggle-radiogroup");
     expect(group.props.accessibilityRole).toBe("radiogroup");
-    expect(screen.getByLabelText("Tema Sistema").props.accessibilityState.checked).toBe(true);
-    expect(screen.getByLabelText("Tema Claro").props.accessibilityState.checked).toBe(false);
+    expect(screen.getByLabelText("Tema Sistema").props.accessibilityState.checked).toBe(false);
+    expect(screen.getByLabelText("Tema Claro").props.accessibilityState.checked).toBe(true);
     expect(screen.getByLabelText("Tema Escuro").props.accessibilityState.checked).toBe(false);
+    expect(screen.getByLabelText("Tema Sistema").props.accessibilityHint).toBe("Acompanha a aparência do seu aparelho.");
+    expect(screen.getByText("Usa fundos claros no aplicativo.")).toBeDefined();
+    expect(screen.getByText("Usa fundos escuros no aplicativo.")).toBeDefined();
   });
 
   it("alterna para o tema escuro ao tocar na opção 'Escuro'", async () => {

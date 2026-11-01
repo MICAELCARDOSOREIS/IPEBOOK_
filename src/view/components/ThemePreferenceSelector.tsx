@@ -5,38 +5,52 @@ import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { AppIcon } from "@/view/components/AppIcon";
 
-const THEME_OPTIONS: { value: ThemePreference; label: string }[] = [
-  { value: "system", label: "Sistema" },
-  { value: "light", label: "Claro" },
-  { value: "dark", label: "Escuro" },
+const THEME_OPTIONS: { value: ThemePreference; label: string; description: string }[] = [
+  { value: "system", label: "Sistema", description: "Acompanha a aparência do seu aparelho." },
+  { value: "light", label: "Claro", description: "Usa fundos claros no aplicativo." },
+  { value: "dark", label: "Escuro", description: "Usa fundos escuros no aplicativo." },
 ];
 
-/** Alternador de aparência (Spec 054, ADR 0036): Sistema, Claro ou Escuro, como botão segmentado M3. */
+/** Seletor de aparência (Spec 054, ADR 0036): opções explicadas em linhas de seleção acessíveis. */
 export function ThemePreferenceSelector() {
   const { colors, preference, setPreference } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   return (
     <View style={styles.section}>
-      <View testID="theme-toggle-radiogroup" accessibilityRole="radiogroup" style={styles.row}>
-        {THEME_OPTIONS.map((option, index) => {
+      <View
+        testID="theme-toggle-radiogroup"
+        accessibilityRole="radiogroup"
+        accessibilityLabel="Tema do aplicativo"
+        style={styles.row}
+      >
+        {THEME_OPTIONS.map((option) => {
           const isSelected = preference === option.value;
           return (
             <Pressable
               key={option.value}
               accessibilityRole="radio"
               accessibilityLabel={`Tema ${option.label}`}
+              accessibilityHint={option.description}
               accessibilityState={{ checked: isSelected }}
               onPress={() => void setPreference(option.value)}
               style={({ pressed }) => [
                 styles.option,
-                index > 0 && styles.optionDivider,
                 isSelected && styles.optionSelected,
                 pressed && styles.optionPressed,
               ]}
             >
-              {isSelected ? <AppIcon name="check" size={18} color={colors.m3.onSecondaryContainer} /> : null}
-              <Text style={[styles.optionText, isSelected && styles.optionTextSelected]}>{option.label}</Text>
+              <View style={styles.optionCopy}>
+                <Text style={[styles.optionText, isSelected && styles.optionTextSelected]}>{option.label}</Text>
+                <Text style={[styles.optionDescription, isSelected && styles.optionDescriptionSelected]}>
+                  {option.description}
+                </Text>
+              </View>
+              <AppIcon
+                name={isSelected ? "radioOn" : "radioOff"}
+                size={22}
+                color={isSelected ? colors.m3.primary : colors.m3.onSurfaceVariant}
+              />
             </Pressable>
           );
         })}
@@ -49,31 +63,39 @@ function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     section: { gap: tokens.spacing[8] },
     row: {
-      flexDirection: "row",
-      borderRadius: tokens.radius.full,
-      borderWidth: 1,
-      borderColor: colors.m3.outline,
-      overflow: "hidden",
+      gap: tokens.spacing[8],
     },
     option: {
-      flex: 1,
       minHeight: tokens.accessibility.touchTarget,
       flexDirection: "row",
       alignItems: "center",
-      justifyContent: "center",
-      gap: tokens.spacing[8],
-      paddingHorizontal: tokens.spacing[12],
+      justifyContent: "space-between",
+      gap: tokens.spacing[16],
+      paddingHorizontal: tokens.spacing[16],
+      paddingVertical: tokens.spacing[12],
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+      borderRadius: tokens.radius.large,
+      backgroundColor: colors.m3.surfaceContainerLow,
     },
-    optionDivider: { borderLeftWidth: 1, borderLeftColor: colors.m3.outline },
-    optionSelected: { backgroundColor: colors.m3.secondaryContainer },
+    optionSelected: {
+      borderColor: colors.m3.primary,
+      backgroundColor: colors.m3.primaryContainer,
+    },
     optionPressed: {
-      transform: [{ scale: 0.96 }],
-      borderRadius: tokens.shapeMorph.chipSelected,
+      opacity: 0.86,
+      transform: [{ scale: 0.99 }],
     },
+    optionCopy: { flex: 1, gap: tokens.spacing[2] },
     optionText: {
       ...tokens.typography.labelLarge,
       color: colors.m3.onSurface,
     },
-    optionTextSelected: { color: colors.m3.onSecondaryContainer },
+    optionTextSelected: { color: colors.m3.onPrimaryContainer },
+    optionDescription: {
+      ...tokens.typography.footnote,
+      color: colors.m3.onSurfaceVariant,
+    },
+    optionDescriptionSelected: { color: colors.m3.onPrimaryContainer },
   });
 }

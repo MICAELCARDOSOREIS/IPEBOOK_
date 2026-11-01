@@ -21,7 +21,7 @@ export function useThemeViewModel(
   useCases: IThemePreferenceUseCases = themePreferenceUseCases,
 ): [ThemeViewModelState, ThemeViewModelActions] {
   const systemScheme = useColorScheme();
-  const [preference, setPreferenceState] = useState<ThemePreference>("system");
+  const [preference, setPreferenceState] = useState<ThemePreference>("light");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

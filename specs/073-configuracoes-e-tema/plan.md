@@ -48,7 +48,7 @@ funcionalidade independente:
 
 - **Criar** `src/model/datasources/iLocalCacheDataSource.ts` e adaptadores AsyncStorage/Memória reutilizando `BOOKS_LIST_CACHE_KEY` de `cachedBookDataSource.ts`, além de `LocalCacheUseCases` registrado em `src/di/container.ts`.
 - **Criar** `src/viewmodel/useSettingsViewModel.ts`: gerencia estados `clearingCache`, `cacheCleared` e `cacheError` com mensagem amigável em português.
-- **Criar** `src/view/profile/settings.tsx`: componente `Settings` com `TopAppBar` ("Configurações"), seções "Aparência" (`ThemePreferenceSelector`), "Conta e dados" (restrita a sessão ativa, com "Privacidade e dados" e "Pessoas bloqueadas"), "Dados neste dispositivo" (limpeza do cache offline com regiões vivas) e "Sobre o IpêBook" (versão via `expo-constants` e atalhos condicionais).
+- **Criar** `src/view/profile/settings.tsx`: componente `Settings` com `TopAppBar` ("Configurações"), todas as seções recolhidas até expansão, incluindo "Aparência" (`ThemePreferenceSelector` com opções explicadas e selecionáveis, iniciando em Claro até haver preferência salva), resumo visual da conta com atalho claro de edição, "Conta e dados" (restrita a sessão ativa, com "Privacidade e dados" e "Pessoas bloqueadas"), "Armazenamento e histórico" (remoção confirmada do catálogo offline e das buscas recentes, com regiões vivas) e "Sobre o IpêBook" (versão via `expo-constants` e atalhos condicionais).
 - **Criar** `src/app/perfil/configuracoes.tsx`: rota fina que importa `Settings` e conecta callbacks de retorno e navegação.
 
 ### Passo 2 — Entrada no cabeçalho de Meu perfil e enxugamento (ADR 0060)

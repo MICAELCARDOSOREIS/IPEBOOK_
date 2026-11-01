@@ -17,7 +17,6 @@ import { ThemeProvider, useTheme } from "@/view/theme/ThemeProvider";
 import { KeyboardAwareRoot } from "@/view/components/KeyboardAwareRoot";
 import { WEB_BETA_ONLY, webBetaRedirect } from "@/view/webBetaMode";
 import { BrandSplashScreen } from "@/view/components/BrandSplashScreen";
-import { IpeCelebrationOverlay } from "@/view/components/IpeCelebrationOverlay";
 import { PushRegistration } from "@/view/components/PushRegistration";
 
 /** Rotas de nível superior (ADR 0011) — rotas de fluxo (entrar, anunciar, etc.) não entram aqui. */
@@ -120,7 +119,6 @@ export default function RootLayout() {
           ) : null}
         </KeyboardAwareRoot>
       </InitialRouteGate>
-      <IpeCelebrationOverlay />
       <BrandSplashScreen />
     </ThemeProvider>
   );

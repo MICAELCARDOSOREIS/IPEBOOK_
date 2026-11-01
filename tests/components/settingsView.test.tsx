@@ -95,6 +95,12 @@ describe("Configurações — tela dedicada (Spec 073, ADR 0036)", () => {
     return { screen, onBack };
   }
 
+  async function expandSettingsSection(screen: Awaited<ReturnType<typeof render>>, label: string) {
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText(label));
+    });
+  }
+
   it("renderiza o título 'Configurações' na TopAppBar e aciona onBack ao tocar no botão voltar", async () => {
     mockSession(true);
     mockSettings();
@@ -104,6 +110,9 @@ describe("Configurações — tela dedicada (Spec 073, ADR 0036)", () => {
     const headers = screen.getAllByRole("header");
     const titles = headers.map((h) => h.props.children);
     expect(titles).toContain("Configurações");
+    for (const label of ["Preferências", "Notificações", "Aparência", "Armazenamento e histórico", "Sobre o IpêBook"]) {
+      expect(screen.getByLabelText(label).props.accessibilityState.expanded).toBe(false);
+    }
 
     // Botão voltar aciona onBack
     const backButton = screen.getByLabelText("Voltar");
@@ -125,7 +134,9 @@ describe("Configurações — tela dedicada (Spec 073, ADR 0036)", () => {
     const headers = screen.getAllByRole("header");
     const titles = headers.map((h) => h.props.children);
     expect(titles).toContain("Aparência");
-    expect(screen.getByText("Escolha como o aplicativo aparece para você.")).toBeDefined();
+    expect(screen.queryByLabelText("Tema Sistema")).toBeNull();
+    await expandSettingsSection(screen, "Aparência");
+    expect(screen.getByText("A preferência escolhida é aplicada imediatamente.")).toBeDefined();
 
     // Radiogroup acessível
     const group = screen.getByTestId("theme-toggle-radiogroup");
@@ -145,16 +156,22 @@ describe("Configurações — tela dedicada (Spec 073, ADR 0036)", () => {
     expect(claroOption.props.accessibilityRole).toBe("radio");
     expect(escuroOption.props.accessibilityRole).toBe("radio");
 
-    // Sistema selecionado por padrão
-    expect(sistemaOption.props.accessibilityState.checked).toBe(true);
-    expect(claroOption.props.accessibilityState.checked).toBe(false);
+    // Claro selecionado por padrão no primeiro acesso.
+    expect(sistemaOption.props.accessibilityState.checked).toBe(false);
+    expect(claroOption.props.accessibilityState.checked).toBe(true);
     expect(escuroOption.props.accessibilityState.checked).toBe(false);
+
+    await expandSettingsSection(screen, "Preferências");
+    expect(screen.getByLabelText("Preferências").props.accessibilityState.expanded).toBe(true);
+    expect(screen.getByLabelText("Aparência").props.accessibilityState.expanded).toBe(false);
+    expect(screen.queryByLabelText("Tema Sistema")).toBeNull();
   });
 
   it("alterna a opção de tema ao selecionar Claro ou Escuro", async () => {
     mockSession(true);
     mockSettings();
     const { screen } = await renderSettings();
+    await expandSettingsSection(screen, "Aparência");
 
     const escuroOption = screen.getByLabelText("Tema Escuro");
     await act(async () => {
@@ -163,30 +180,54 @@ describe("Configurações — tela dedicada (Spec 073, ADR 0036)", () => {
 
     expect(escuroOption.props.accessibilityState.checked).toBe(true);
     expect(screen.getByLabelText("Tema Sistema").props.accessibilityState.checked).toBe(false);
+    expect(screen.getByLabelText("Tema Claro").props.accessibilityState.checked).toBe(false);
   });
 
-  it("exibe a prévia da paleta com Flor do Ipê, Papel de Livro e Verde Folha", async () => {
+  it("não mostra as cores da identidade visual como opções de aparência", async () => {
     mockSession(true);
     mockSettings();
     const { screen } = await renderSettings();
 
-    expect(screen.getByTestId("theme-palette-preview")).toBeDefined();
-    expect(screen.getByText("Paleta Ipê, Livro & Folhagem")).toBeDefined();
-    expect(screen.getByText("Flor do Ipê")).toBeDefined();
-    expect(screen.getByText("Âmbar Néctar")).toBeDefined();
-    expect(screen.getByText("Papel de Livro")).toBeDefined();
-    expect(screen.getByText("Verde Folha")).toBeDefined();
+    await expandSettingsSection(screen, "Aparência");
+    expect(screen.queryByTestId("theme-palette-preview")).toBeNull();
+    expect(screen.queryByText("Cores da identidade visual")).toBeNull();
+    expect(screen.queryByText("Flor do Ipê")).toBeNull();
+    expect(screen.queryByText("Âmbar Néctar")).toBeNull();
+    expect(screen.queryByText("Papel de Livro")).toBeNull();
+    expect(screen.queryByText("Verde Folha")).toBeNull();
   });
 
-  it("oferece a limpeza dos dados salvos no dispositivo e aciona o use case", async () => {
+  it("explica e confirma a remoção da cópia do catálogo", async () => {
     mockSession(true);
     const { clearBooksCache } = mockSettings();
     const { screen } = await renderSettings();
 
-    expect(screen.getAllByRole("header").map((h) => h.props.children)).toContain("Dados neste dispositivo");
+    expect(screen.getAllByRole("header").map((h) => h.props.children)).toContain("Armazenamento e histórico");
+    expect(screen.queryByLabelText("Remover cópia do catálogo deste aparelho")).toBeNull();
+
+    expect(screen.getByLabelText("Armazenamento e histórico").props.accessibilityState.expanded).toBe(false);
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Armazenamento e histórico"));
+    });
+    expect(screen.getByLabelText("Armazenamento e histórico").props.accessibilityState.expanded).toBe(true);
 
     await act(async () => {
-      fireEvent.press(screen.getByLabelText("Limpar dados salvos no dispositivo"));
+      fireEvent.press(screen.getByLabelText("Remover cópia do catálogo deste aparelho"));
+    });
+
+    expect(screen.getByText(/remove a cópia do catálogo salva neste aparelho/i)).toBeDefined();
+    expect(clearBooksCache).not.toHaveBeenCalled();
+
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Cancelar"));
+    });
+    expect(clearBooksCache).not.toHaveBeenCalled();
+
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Remover cópia do catálogo deste aparelho"));
+    });
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Remover cópia"));
     });
 
     expect(clearBooksCache).toHaveBeenCalledTimes(1);
@@ -200,7 +241,8 @@ describe("Configurações — tela dedicada (Spec 073, ADR 0036)", () => {
     ]);
     const { screen } = await renderSettings();
 
-    expect(screen.getByText("Dados salvos limpos deste dispositivo.")).toBeDefined();
+    await expandSettingsSection(screen, "Armazenamento e histórico");
+    expect(screen.getByText("Cópia do catálogo removida deste aparelho.")).toBeDefined();
   });
 
   it("exibe erro amigável sem detalhes técnicos quando a limpeza falha", async () => {
@@ -209,7 +251,7 @@ describe("Configurações — tela dedicada (Spec 073, ADR 0036)", () => {
       {
         clearingCache: false,
         cacheCleared: false,
-        cacheError: "Não foi possível limpar os dados salvos. Tente novamente.",
+        cacheError: "Não foi possível remover a cópia do catálogo. Tente novamente.",
         clearingHistory: false,
         historyCleared: false,
         historyError: null,
@@ -218,8 +260,9 @@ describe("Configurações — tela dedicada (Spec 073, ADR 0036)", () => {
     ]);
     const { screen } = await renderSettings();
 
-    expect(screen.getByText("Não foi possível limpar os dados salvos. Tente novamente.")).toBeDefined();
-    expect(screen.queryByText("Dados salvos limpos deste dispositivo.")).toBeNull();
+    await expandSettingsSection(screen, "Armazenamento e histórico");
+    expect(screen.getByText("Não foi possível remover a cópia do catálogo. Tente novamente.")).toBeDefined();
+    expect(screen.queryByText("Cópia do catálogo removida deste aparelho.")).toBeNull();
   });
 
   it("mostra a versão do aplicativo e só exibe atalhos com navegação", async () => {
@@ -228,6 +271,7 @@ describe("Configurações — tela dedicada (Spec 073, ADR 0036)", () => {
     const onNavigateToHelp = vi.fn();
     const { screen } = await renderSettings({ onNavigateToHelp });
 
+    await expandSettingsSection(screen, "Sobre o IpêBook");
     expect(screen.getAllByRole("header").map((h) => h.props.children)).toContain("Sobre o IpêBook");
     expect(screen.getByText("Versão")).toBeDefined();
 
@@ -249,6 +293,7 @@ describe("Configurações — tela dedicada (Spec 073, ADR 0036)", () => {
     const onNavigateToBlockedUsers = vi.fn();
     const { screen } = await renderSettings({ onNavigateToPrivacy, onNavigateToBlockedUsers });
 
+    await expandSettingsSection(screen, "Conta e dados");
     expect(screen.getAllByRole("header").map((h) => h.props.children)).toContain("Conta e dados");
     expect(screen.getByText("Baixe seus dados ou exclua sua conta")).toBeDefined();
 
@@ -270,9 +315,13 @@ describe("Configurações — tela dedicada (Spec 073, ADR 0036)", () => {
     const onSignedOut = vi.fn();
     const { screen } = await renderSettings({ onNavigateToEditProfile, onSignedOut });
 
+    expect(screen.getByText("Conta conectada")).toBeDefined();
     expect(screen.getByText("Ana Paula")).toBeDefined();
-    await act(async () => { fireEvent.press(screen.getByLabelText("Editar perfil")); });
+    expect(screen.getByText("ana@exemplo.com")).toBeDefined();
+    expect(screen.getByLabelText("Editar perfil de Ana Paula").props.accessibilityHint).toContain("ana@exemplo.com");
+    await act(async () => { fireEvent.press(screen.getByLabelText("Editar perfil de Ana Paula")); });
     expect(onNavigateToEditProfile).toHaveBeenCalledTimes(1);
+    await expandSettingsSection(screen, "Preferências");
     expect(screen.getByLabelText("Bairro padrão")).toBeDefined();
 
     await act(async () => { fireEvent.press(screen.getByText("Sair da conta")); });
@@ -289,11 +338,13 @@ describe("Configurações — tela dedicada (Spec 073, ADR 0036)", () => {
     const { screen } = await renderSettings();
     expect(screen.queryByLabelText("Editar perfil")).toBeNull();
     expect(screen.queryByText("Sair da conta")).toBeNull();
+    await expandSettingsSection(screen, "Preferências");
     expect(screen.getByLabelText("Bairro padrão")).toBeDefined();
-    expect(screen.getByLabelText("Limpar histórico de buscas deste aparelho")).toBeDefined();
+    await expandSettingsSection(screen, "Armazenamento e histórico");
+    expect(screen.getByLabelText("Apagar histórico de buscas deste aparelho")).toBeDefined();
   });
 
-  it("limpa o histórico de buscas ao tocar no botão (Spec 091)", async () => {
+  it("pede confirmação antes de apagar o histórico de buscas (Spec 091)", async () => {
     mockSession(true);
     const clearSearchHistory = vi.fn().mockResolvedValue(undefined);
     mockedUseSettingsViewModel.mockReturnValue([
@@ -301,7 +352,14 @@ describe("Configurações — tela dedicada (Spec 073, ADR 0036)", () => {
       { clearBooksCache: vi.fn(), clearSearchHistory },
     ]);
     const { screen } = await renderSettings();
-    await act(async () => { fireEvent.press(screen.getByLabelText("Limpar histórico de buscas deste aparelho")); });
+    await expandSettingsSection(screen, "Armazenamento e histórico");
+    await act(async () => { fireEvent.press(screen.getByLabelText("Apagar histórico de buscas deste aparelho")); });
+    expect(screen.getByText("Esta ação apaga as buscas recentes guardadas neste aparelho. As demais informações do IpêBook continuam iguais.")).toBeDefined();
+    expect(clearSearchHistory).not.toHaveBeenCalled();
+    await act(async () => { fireEvent.press(screen.getByLabelText("Cancelar")); });
+    expect(clearSearchHistory).not.toHaveBeenCalled();
+    await act(async () => { fireEvent.press(screen.getByLabelText("Apagar histórico de buscas deste aparelho")); });
+    await act(async () => { fireEvent.press(screen.getByLabelText("Apagar histórico")); });
     expect(clearSearchHistory).toHaveBeenCalledWith("ana");
   });
 
@@ -310,6 +368,7 @@ describe("Configurações — tela dedicada (Spec 073, ADR 0036)", () => {
     mockSettings();
     const open = vi.spyOn(Linking, "openURL").mockResolvedValue(true as never);
     const { screen } = await renderSettings();
+    await expandSettingsSection(screen, "Sobre o IpêBook");
     expect(screen.getByText("ipebook738@gmail.com")).toBeDefined();
     await act(async () => { fireEvent.press(screen.getByLabelText("Falar com a equipe")); });
     expect(open).toHaveBeenCalledTimes(1);
@@ -323,6 +382,7 @@ describe("Configurações — tela dedicada (Spec 073, ADR 0036)", () => {
     mockSettings();
     const onNavigateToAbout = vi.fn();
     const { screen } = await renderSettings({ onNavigateToAbout });
+    await expandSettingsSection(screen, "Sobre o IpêBook");
     await act(async () => { fireEvent.press(screen.getByLabelText("Conhecer o IpêBook")); });
     expect(onNavigateToAbout).toHaveBeenCalledTimes(1);
   });
@@ -332,6 +392,7 @@ describe("Configurações — tela dedicada (Spec 073, ADR 0036)", () => {
     mockSettings();
     const open = vi.spyOn(Linking, "openURL").mockResolvedValue(true as never);
     const { screen } = await renderSettings();
+    await expandSettingsSection(screen, "Sobre o IpêBook");
     expect(screen.getByText("@ipebook")).toBeDefined();
     await act(async () => { fireEvent.press(screen.getByLabelText("Siga o IpêBook no Instagram")); });
     expect(open).toHaveBeenCalledWith("https://instagram.com/ipebook");
@@ -344,6 +405,7 @@ describe("Configurações — tela dedicada (Spec 073, ADR 0036)", () => {
     const { screen } = await renderSettings();
 
     expect(screen.getAllByRole("header").map((h) => h.props.children)).toContain("Notificações");
+    await expandSettingsSection(screen, "Notificações");
     for (const category of Object.values(NOTIFICATION_PREFERENCE_CATEGORIES)) {
       expect(screen.getByLabelText(`${category.label}: ativada`)).toBeDefined();
     }
@@ -367,6 +429,7 @@ describe("Configurações — tela dedicada (Spec 073, ADR 0036)", () => {
     mockSettings();
     mockNotifPrefs({ error: "Não foi possível salvar suas preferências de notificação." });
     const { screen } = await renderSettings();
+    await expandSettingsSection(screen, "Notificações");
     expect(screen.getByText("Não foi possível salvar suas preferências de notificação.")).toBeDefined();
   });
 });
