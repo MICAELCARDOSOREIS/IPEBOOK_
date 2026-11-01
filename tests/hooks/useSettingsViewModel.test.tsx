@@ -58,7 +58,7 @@ describe("useSettingsViewModel — Configurações (Spec 073)", () => {
 
     expect(hook.current[0].clearingCache).toBe(false);
     expect(hook.current[0].cacheCleared).toBe(false);
-    expect(hook.current[0].cacheError).toBe("Não foi possível limpar os dados salvos. Tente novamente.");
+    expect(hook.current[0].cacheError).toBe("Não foi possível remover a cópia do catálogo. Tente novamente.");
     expect(hook.current[0].cacheError).not.toContain("storage indisponível");
   });
 });
@@ -90,6 +90,6 @@ describe("useSettingsViewModel — histórico de buscas (Spec 091)", () => {
     const hook = await renderWithHistory(vi.fn().mockRejectedValue(new Error("x")));
     await act(async () => { await hook.current[1].clearSearchHistory(null); });
     expect(hook.current[0].historyCleared).toBe(false);
-    expect(hook.current[0].historyError).toBe("Não foi possível limpar o histórico de buscas. Tente novamente.");
+    expect(hook.current[0].historyError).toBe("Não foi possível apagar o histórico de buscas. Tente novamente.");
   });
 });

@@ -21,9 +21,9 @@ describe("AsyncStorageThemePreferenceDataSource (Spec 054 / Issue #144)", () => 
     store.clear();
   });
 
-  it("retorna 'system' quando nada foi salvo ainda", async () => {
+  it("retorna 'light' quando nada foi salvo ainda", async () => {
     const ds = new AsyncStorageThemePreferenceDataSource();
-    expect(await ds.getPreference()).toBe("system");
+    expect(await ds.getPreference()).toBe("light");
   });
 
   it("salva e recupera a preferência escolhida", async () => {
@@ -33,9 +33,9 @@ describe("AsyncStorageThemePreferenceDataSource (Spec 054 / Issue #144)", () => 
     expect(store.get(THEME_PREFERENCE_KEY)).toBe("dark");
   });
 
-  it("retorna 'system' quando o valor salvo é inválido", async () => {
+  it("retorna 'light' quando o valor salvo é inválido", async () => {
     store.set(THEME_PREFERENCE_KEY, "neon");
     const ds = new AsyncStorageThemePreferenceDataSource();
-    expect(await ds.getPreference()).toBe("system");
+    expect(await ds.getPreference()).toBe("light");
   });
 });

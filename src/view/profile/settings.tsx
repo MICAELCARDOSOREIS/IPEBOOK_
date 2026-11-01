@@ -9,7 +9,7 @@ import { InstagramIcon } from "@/view/components/InstagramIcon";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { ThemePreferenceSelector } from "@/view/components/ThemePreferenceSelector";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
-import { AppIcon } from "@/view/components/AppIcon";
+import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
 import { Avatar } from "@/view/components/Avatar";
 import { Dialog } from "@/view/components/Dialog";
 import { NeighborhoodSelectorModal } from "@/view/components/NeighborhoodSelectorModal";
@@ -57,6 +57,8 @@ type LinkItem = {
   onPress?: () => void;
 };
 
+type SettingsSectionKey = "account" | "preferences" | "notifications" | "appearance" | "device" | "about";
+
 /**
  * Tela de configurações do aplicativo (Spec 073, ADR 0058 e ADR 0060).
  * Hub de preferências: aparência, dados do dispositivo, gestão da conta e informações do
@@ -89,6 +91,8 @@ export function Settings({
   const [profileState] = usePublicProfileViewModel(sessionUserId ?? "");
   const neighborhood = useActiveNeighborhood("all");
   const [confirmingSignOut, setConfirmingSignOut] = useState(false);
+  const [confirmingCleanup, setConfirmingCleanup] = useState<"catalog" | "history" | null>(null);
+  const [expandedSection, setExpandedSection] = useState<SettingsSectionKey | null>(null);
   const [signingOut, setSigningOut] = useState(false);
   const defaultNeighborhoodLabel =
     neighborhood.activeNeighborhood === "all" || neighborhood.activeNeighborhood === "Todos os bairros (Piripiri)"
@@ -109,6 +113,31 @@ export function Settings({
   const [notifPrefs, notifActions] = useNotificationPreferencesViewModel(sessionUserId);
   const version = Constants.expoConfig?.version ?? null;
   const isModerator = useIsModerator(sessionUserId);
+
+  async function handleConfirmCleanup() {
+    if (confirmingCleanup === "catalog") {
+      await actions.clearBooksCache();
+    } else if (confirmingCleanup === "history") {
+      await actions.clearSearchHistory(sessionUserId);
+    }
+    setConfirmingCleanup(null);
+  }
+
+  const cleanupDialogOptions = {
+    catalog: {
+      title: "Remover a cópia do catálogo?",
+      message: "Esta ação remove a cópia do catálogo salva neste aparelho. Você poderá baixá-la de novo depois. Seus anúncios, conversas e conta não serão apagados.",
+      confirmLabel: "Remover cópia",
+      loading: state.clearingCache,
+    },
+    history: {
+      title: "Apagar histórico de buscas?",
+      message: "Esta ação apaga as buscas recentes guardadas neste aparelho. As demais informações do IpêBook continuam iguais.",
+      confirmLabel: "Apagar histórico",
+      loading: state.clearingHistory,
+    },
+  } as const;
+  const cleanupDialog = confirmingCleanup ? cleanupDialogOptions[confirmingCleanup] : null;
 
   // Gestão da conta veio de Meu perfil (ADR 0060) e só aparece com sessão
   const accountLinks: LinkItem[] = hasAccount
@@ -181,7 +210,7 @@ export function Settings({
     { key: "preferences", label: "Preferências", icon: "place" as const },
     ...(hasAccount ? [{ key: "notifications", label: "Notificações", icon: "bell" as const }] : []),
     { key: "appearance", label: "Aparência", icon: "visibility" as const },
-    { key: "device", label: "Dados neste dispositivo", icon: "document" as const },
+    { key: "device", label: "Armazenamento e histórico", icon: "document" as const },
     { key: "about", label: "Sobre o IpêBook", icon: "info" as const },
   ];
 
@@ -211,28 +240,62 @@ export function Settings({
     );
   }
 
+  function renderSectionHeader(sectionKey: SettingsSectionKey, label: string, icon: AppIconName) {
+    const expanded = expandedSection === sectionKey;
+    return (
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={label}
+        accessibilityState={{ expanded }}
+        onPress={() => setExpandedSection((previous) => (previous === sectionKey ? null : sectionKey))}
+        android_ripple={{ color: colors.m3.surfaceContainerHigh }}
+        style={withPress(styles.disclosureHeader)}
+      >
+        <View style={styles.sectionHeaderRow}>
+          <View style={styles.sectionHeaderIcon}>
+            <AppIcon name={icon} size={18} color={colors.ipe.onContainer} />
+          </View>
+          <Text accessibilityRole="header" style={styles.sectionHeader}>
+            {label}
+          </Text>
+        </View>
+        <AppIcon name={expanded ? "chevronUp" : "chevronDown"} size={20} color={colors.m3.onSurfaceVariant} />
+      </Pressable>
+    );
+  }
+
+  const accountDisplayName = profileState.profile?.name || "Minha conta";
+  const accountEmail = authState.user?.email ?? null;
+
   // Cartão da conta (Spec 091): quem está logada e atalho para editar o perfil.
   const accountCard = hasAccount ? (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel="Editar perfil"
+      accessibilityLabel={`Editar perfil de ${accountDisplayName}`}
+      accessibilityHint={accountEmail ? `E-mail ${accountEmail}. Abre os dados para edição.` : "Abre os dados do seu perfil para edição."}
       onPress={onNavigateToEditProfile}
       style={withPress([styles.accountCard, wide && styles.accountCardWide])}
     >
-      <Avatar
-        name={profileState.profile?.name ?? authState.user?.email ?? "Você"}
-        photoUrl={profileState.profile?.photoUrl ?? undefined}
-        size={56}
-      />
-      <View style={styles.linkText}>
-        <Text numberOfLines={1} style={styles.accountName}>
-          {profileState.profile?.name ?? "Minha conta"}
-        </Text>
-        <Text numberOfLines={1} style={styles.linkDescription}>
-          {authState.user?.email}
-        </Text>
+      <View style={styles.accountIdentity}>
+        <Avatar
+          name={profileState.profile?.name || accountEmail || "Você"}
+          photoUrl={profileState.profile?.photoUrl ?? undefined}
+          size={64}
+        />
+        <View style={styles.accountInfo}>
+          <Text style={styles.accountEyebrow}>Conta conectada</Text>
+          <Text numberOfLines={1} style={styles.accountName}>
+            {accountDisplayName}
+          </Text>
+          <Text numberOfLines={1} style={styles.linkDescription}>
+            {accountEmail ?? "E-mail não informado"}
+          </Text>
+        </View>
       </View>
-      <Text style={styles.accountAction}>Editar</Text>
+      <View style={styles.accountAction}>
+        <AppIcon name="edit" size={16} color={colors.m3.onSurfaceVariant} />
+        <Text style={styles.accountActionText}>Editar</Text>
+      </View>
     </Pressable>
   ) : null;
 
@@ -274,160 +337,142 @@ export function Settings({
           {/* Conta e dados (ADR 0060): só com sessão, e primeiro por ser o que mais importa */}
           {accountLinks.length > 0 ? (
             <View style={styles.section} onLayout={(event) => { sectionY.current["account"] = event.nativeEvent.layout.y; }}>
-              <Text accessibilityRole="header" style={styles.sectionHeader}>
-                Conta e dados
-              </Text>
-              <View style={styles.listCard}>{accountLinks.map(renderLink)}</View>
+              {renderSectionHeader("account", "Conta e dados", "person")}
+              {expandedSection === "account" ? <View style={styles.listCard}>{accountLinks.map(renderLink)}</View> : null}
             </View>
           ) : null}
 
           {/* Preferências de uso (Spec 091): o bairro com que a Home e a Explorar abrem */}
           <View style={styles.section} onLayout={(event) => { sectionY.current["preferences"] = event.nativeEvent.layout.y; }}>
-            <Text accessibilityRole="header" style={styles.sectionHeader}>
-              Preferências
-            </Text>
-            <View style={styles.listCard}>
-              {renderLink({
-                key: "neighborhood",
-                icon: "place",
-                label: "Bairro padrão",
-                description: `${defaultNeighborhoodLabel} · usado para mostrar livros perto de você`,
-                onPress: neighborhood.openSelector,
-              }, 0)}
-            </View>
+            {renderSectionHeader("preferences", "Preferências", "place")}
+            {expandedSection === "preferences" ? (
+              <View style={styles.listCard}>
+                {renderLink({
+                  key: "neighborhood",
+                  icon: "place",
+                  label: "Bairro padrão",
+                  description: `${defaultNeighborhoodLabel} · usado para mostrar livros perto de você`,
+                  onPress: neighborhood.openSelector,
+                }, 0)}
+              </View>
+            ) : null}
           </View>
 
           {/* Notificações (Spec 099 / ADR 0075): a pessoa escolhe quais avisos chegam por push */}
           {hasAccount ? (
             <View style={styles.section} onLayout={(event) => { sectionY.current["notifications"] = event.nativeEvent.layout.y; }}>
-              <Text accessibilityRole="header" style={styles.sectionHeader}>
-                Notificações
-              </Text>
-              <View style={styles.listCard}>
-                {(Object.keys(NOTIFICATION_PREFERENCE_CATEGORIES) as NotificationPreferenceKey[]).map(
-                  (key, index) => {
-                    const category = NOTIFICATION_PREFERENCE_CATEGORIES[key];
-                    return (
-                      <View key={key} style={[styles.toggleRow, index > 0 && styles.linkDivider]}>
-                        <View style={styles.linkText}>
-                          <Text style={styles.linkLabel}>{category.label}</Text>
-                          <Text style={styles.linkDescription}>{category.description}</Text>
-                        </View>
-                        <Switch
-                          value={notifPrefs.enabled[key]}
-                          onValueChange={(value) => void notifActions.setEnabled(key, value)}
-                          accessibilityRole="switch"
-                          accessibilityLabel={`${category.label}: ${notifPrefs.enabled[key] ? "ativada" : "desativada"}`}
-                          trackColor={{ false: colors.m3.outlineVariant, true: colors.action }}
-                          thumbColor={notifPrefs.enabled[key] ? colors.surface : colors.m3.surfaceContainerHigh}
-                        />
-                      </View>
-                    );
-                  },
-                )}
-              </View>
-              {notifPrefs.error ? (
-                <Text accessibilityLiveRegion="polite" style={styles.feedbackError}>
-                  {notifPrefs.error}
-                </Text>
+              {renderSectionHeader("notifications", "Notificações", "bell")}
+              {expandedSection === "notifications" ? (
+                <>
+                  <View style={styles.listCard}>
+                    {(Object.keys(NOTIFICATION_PREFERENCE_CATEGORIES) as NotificationPreferenceKey[]).map(
+                      (key, index) => {
+                        const category = NOTIFICATION_PREFERENCE_CATEGORIES[key];
+                        return (
+                          <View key={key} style={[styles.toggleRow, index > 0 && styles.linkDivider]}>
+                            <View style={styles.linkText}>
+                              <Text style={styles.linkLabel}>{category.label}</Text>
+                              <Text style={styles.linkDescription}>{category.description}</Text>
+                            </View>
+                            <Switch
+                              value={notifPrefs.enabled[key]}
+                              onValueChange={(value) => void notifActions.setEnabled(key, value)}
+                              accessibilityRole="switch"
+                              accessibilityLabel={`${category.label}: ${notifPrefs.enabled[key] ? "ativada" : "desativada"}`}
+                              trackColor={{ false: colors.m3.outlineVariant, true: colors.action }}
+                              thumbColor={notifPrefs.enabled[key] ? colors.surface : colors.m3.surfaceContainerHigh}
+                            />
+                          </View>
+                        );
+                      },
+                    )}
+                  </View>
+                  {notifPrefs.error ? (
+                    <Text accessibilityLiveRegion="polite" style={styles.feedbackError}>
+                      {notifPrefs.error}
+                    </Text>
+                  ) : null}
+                </>
               ) : null}
             </View>
           ) : null}
 
           {/* Aparência (Spec 073 FR-003, ADR 0036) */}
           <View style={styles.section} onLayout={(event) => { sectionY.current["appearance"] = event.nativeEvent.layout.y; }}>
-            <Text accessibilityRole="header" style={styles.sectionHeader}>
-              Aparência
-            </Text>
-            <View style={styles.card}>
-              <Text style={styles.sectionDescription}>
-                Escolha como o aplicativo aparece para você.
-              </Text>
-              <ThemePreferenceSelector />
-              <View testID="theme-palette-preview" style={styles.palettePreviewCard}>
-                <Text style={styles.paletteTitle}>Paleta Ipê, Livro & Folhagem</Text>
-                <View style={styles.paletteRow}>
-                  <View style={[styles.paletteBadge, { backgroundColor: colors.ipe.bloom }]}>
-                    <Text style={[styles.paletteBadgeText, { color: colors.ipe.onContainer }]}>Flor do Ipê</Text>
-                  </View>
-                  <View style={[styles.paletteBadge, { backgroundColor: colors.ipe.bloomDeep }]}>
-                    <Text style={[styles.paletteBadgeText, { color: colors.ipe.onContainer }]}>Âmbar Néctar</Text>
-                  </View>
-                  <View style={[styles.paletteBadge, { backgroundColor: colors.book.page, borderWidth: 1, borderColor: colors.book.paperEdge }]}>
-                    <Text style={[styles.paletteBadgeText, { color: colors.book.ink }]}>Papel de Livro</Text>
-                  </View>
-                  <View style={[styles.paletteBadge, { backgroundColor: colors.nature.foliage }]}>
-                    <Text style={[styles.paletteBadgeText, { color: colors.nature.onFoliage }]}>Verde Folha</Text>
-                  </View>
-                </View>
+            {renderSectionHeader("appearance", "Aparência", "visibility")}
+            {expandedSection === "appearance" ? (
+              <View style={styles.card}>
+                <Text style={styles.sectionDescription}>
+                  A preferência escolhida é aplicada imediatamente.
+                </Text>
+                <ThemePreferenceSelector />
               </View>
-            </View>
+            ) : null}
           </View>
 
-          {/* Dados neste dispositivo (Spec 073): limpeza do catálogo offline */}
+          {/* Armazenamento e histórico: cópia offline do catálogo e buscas recentes */}
           <View style={styles.section} onLayout={(event) => { sectionY.current["device"] = event.nativeEvent.layout.y; }}>
-            <Text accessibilityRole="header" style={styles.sectionHeader}>
-              Dados neste dispositivo
-            </Text>
-            <View style={styles.card}>
-              <Text style={styles.sectionDescription}>
-                O IpêBook guarda uma cópia do catálogo de Piripiri para abrir rápido mesmo sem
-                internet. Limpar não apaga seus anúncios nem remove sua conta.
-              </Text>
-              <OutlinedButton
-                label="Limpar dados salvos"
-                accessibilityLabel="Limpar dados salvos no dispositivo"
-                loading={state.clearingCache}
-                loadingLabel="Limpando dados salvos"
-                onPress={() => void actions.clearBooksCache()}
-              />
-              <OutlinedButton
-                label="Limpar histórico de buscas"
-                accessibilityLabel="Limpar histórico de buscas deste aparelho"
-                loading={state.clearingHistory}
-                loadingLabel="Limpando histórico de buscas"
-                onPress={() => void actions.clearSearchHistory(sessionUserId)}
-              />
-              {state.historyCleared ? (
-                <Text accessibilityLiveRegion="polite" style={styles.feedbackSuccess}>
-                  Histórico de buscas limpo.
+            {renderSectionHeader("device", "Armazenamento e histórico", "document")}
+            {expandedSection === "device" ? (
+              <View style={styles.card}>
+                <Text style={styles.sectionDescription}>
+                  Uma cópia do catálogo fica salva para abrir livros sem internet. Removê-la libera espaço; ela pode ser baixada novamente. O histórico de buscas também fica salvo aqui e pode ser apagado separadamente.
                 </Text>
-              ) : null}
-              {state.historyError ? (
-                <Text accessibilityLiveRegion="polite" style={styles.feedbackError}>
-                  {state.historyError}
-                </Text>
-              ) : null}
-              {state.cacheCleared ? (
-                <Text accessibilityLiveRegion="polite" style={styles.feedbackSuccess}>
-                  Dados salvos limpos deste dispositivo.
-                </Text>
-              ) : null}
-              {state.cacheError ? (
-                <Text accessibilityLiveRegion="polite" style={styles.feedbackError}>
-                  {state.cacheError}
-                </Text>
-              ) : null}
-            </View>
+                <OutlinedButton
+                  label="Remover cópia do catálogo"
+                  accessibilityLabel="Remover cópia do catálogo deste aparelho"
+                  loading={state.clearingCache}
+                  loadingLabel="Removendo cópia do catálogo"
+                  onPress={() => setConfirmingCleanup("catalog")}
+                />
+                <OutlinedButton
+                  label="Apagar histórico de buscas"
+                  accessibilityLabel="Apagar histórico de buscas deste aparelho"
+                  loading={state.clearingHistory}
+                  loadingLabel="Apagando histórico de buscas"
+                  onPress={() => setConfirmingCleanup("history")}
+                />
+                {state.historyCleared ? (
+                  <Text accessibilityLiveRegion="polite" style={styles.feedbackSuccess}>
+                    Histórico de buscas apagado.
+                  </Text>
+                ) : null}
+                {state.historyError ? (
+                  <Text accessibilityLiveRegion="polite" style={styles.feedbackError}>
+                    {state.historyError}
+                  </Text>
+                ) : null}
+                {state.cacheCleared ? (
+                  <Text accessibilityLiveRegion="polite" style={styles.feedbackSuccess}>
+                    Cópia do catálogo removida deste aparelho.
+                  </Text>
+                ) : null}
+                {state.cacheError ? (
+                  <Text accessibilityLiveRegion="polite" style={styles.feedbackError}>
+                    {state.cacheError}
+                  </Text>
+                ) : null}
+              </View>
+            ) : null}
           </View>
 
           {/* Sobre e atalhos (Spec 073) */}
           <View style={styles.section} onLayout={(event) => { sectionY.current["about"] = event.nativeEvent.layout.y; }}>
-            <Text accessibilityRole="header" style={styles.sectionHeader}>
-              Sobre o IpêBook
-            </Text>
-            <View style={styles.listCard}>
-              {aboutLinks.map(renderLink)}
-              <View style={[styles.versionRow, aboutLinks.length > 0 && styles.linkDivider]}>
-                <Text style={styles.versionLabel}>Versão</Text>
-                <Text
-                  accessibilityLabel={`Versão do aplicativo ${version ?? "desconhecida"}`}
-                  style={styles.versionValue}
-                >
-                  {version ?? "—"}
-                </Text>
+            {renderSectionHeader("about", "Sobre o IpêBook", "info")}
+            {expandedSection === "about" ? (
+              <View style={styles.listCard}>
+                {aboutLinks.map(renderLink)}
+                <View style={[styles.versionRow, aboutLinks.length > 0 && styles.linkDivider]}>
+                  <Text style={styles.versionLabel}>Versão</Text>
+                  <Text
+                    accessibilityLabel={`Versão do aplicativo ${version ?? "desconhecida"}`}
+                    style={styles.versionValue}
+                  >
+                    {version ?? "—"}
+                  </Text>
+                </View>
               </View>
-            </View>
+            ) : null}
           </View>
 
           {hasAccount && !wide ? (
@@ -450,6 +495,19 @@ export function Settings({
         onSelect={(name) => void neighborhood.selectNeighborhood(name)}
         onClose={neighborhood.closeSelector}
       />
+      {cleanupDialog ? (
+        <Dialog
+          visible
+          title={cleanupDialog.title}
+          message={cleanupDialog.message}
+          confirmLabel={cleanupDialog.confirmLabel}
+          cancelLabel="Cancelar"
+          destructive
+          loading={cleanupDialog.loading}
+          onConfirm={() => void handleConfirmCleanup()}
+          onCancel={() => setConfirmingCleanup(null)}
+        />
+      ) : null}
       <Dialog
         visible={confirmingSignOut}
         title="Sair da conta?"
@@ -507,7 +565,7 @@ function createStyles(colors: ColorPalette) {
     card: {
       gap: tokens.spacing[12],
       padding: tokens.spacing[16],
-      borderRadius: tokens.radius.large,
+      borderRadius: tokens.radius.xl,
       backgroundColor: colors.m3.surfaceContainerLow,
       borderWidth: 1,
       borderColor: colors.m3.outlineVariant,
@@ -518,9 +576,9 @@ function createStyles(colors: ColorPalette) {
       elevation: 2,
     },
     listCard: {
-      borderRadius: tokens.radius.large,
+      borderRadius: tokens.radius.xl,
       overflow: "hidden",
-      backgroundColor: colors.m3.surfaceContainerLow,
+      backgroundColor: colors.m3.surfaceContainer,
       borderWidth: 1,
       borderColor: colors.m3.outlineVariant,
       shadowColor: "#000",
@@ -534,15 +592,28 @@ function createStyles(colors: ColorPalette) {
       alignItems: "center",
       gap: tokens.spacing[16],
       padding: tokens.spacing[16],
-      borderRadius: tokens.radius.large,
-      backgroundColor: colors.m3.surfaceContainerLow,
+      borderRadius: tokens.radius.xl,
+      backgroundColor: colors.m3.surfaceContainer,
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      borderColor: colors.ipe.bloom,
       shadowColor: "#000",
       shadowOffset: { width: 0, height: 1 },
       shadowOpacity: 0.04,
       shadowRadius: 4,
       elevation: 2,
+    },
+    accountIdentity: {
+      flex: 1,
+      minWidth: 0,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[12],
+    },
+    accountInfo: { flex: 1, minWidth: 0, gap: tokens.spacing[2] },
+    accountEyebrow: {
+      ...tokens.typography.labelSmall,
+      color: colors.secondaryText,
+      fontWeight: tokens.fontWeight.semiBold,
     },
     accountName: {
       ...tokens.typography.titleMedium,
@@ -550,14 +621,16 @@ function createStyles(colors: ColorPalette) {
       fontWeight: tokens.fontWeight.semiBold,
     },
     accountAction: {
-      ...tokens.typography.labelLarge,
-      color: colors.action,
+      minHeight: tokens.accessibility.touchTarget,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: tokens.spacing[4],
+    },
+    accountActionText: {
+      ...tokens.typography.labelMedium,
+      color: colors.m3.onSurfaceVariant,
       fontWeight: tokens.fontWeight.semiBold,
-      backgroundColor: colors.m3.secondaryContainer,
-      paddingHorizontal: tokens.spacing[12],
-      paddingVertical: tokens.spacing[6],
-      borderRadius: tokens.radius.full,
-      overflow: "hidden",
     },
     signOutRow: { alignItems: "center" },
     iconCircle: {
@@ -577,7 +650,7 @@ function createStyles(colors: ColorPalette) {
     content: {
       width: "100%",
       padding: tokens.spacing[16],
-      gap: tokens.spacing[24],
+      gap: tokens.spacing[20],
     },
     contentWide: {
       maxWidth: WIDE_CONTENT_MAX_WIDTH,
@@ -587,9 +660,9 @@ function createStyles(colors: ColorPalette) {
       alignItems: "flex-start",
       gap: tokens.spacing[48],
     },
-    mainStacked: { gap: tokens.spacing[24] },
+    mainStacked: { gap: tokens.spacing[20] },
     // Coluna de leitura: as listas de opções não passam de ~880 px, como nas preferências de sistemas.
-    main: { flex: 1, minWidth: 0, maxWidth: 880, gap: tokens.spacing[32] },
+    main: { flex: 1, minWidth: 0, maxWidth: 880, gap: tokens.spacing[28] },
     sidebar: {
       width: 300,
       gap: tokens.spacing[16],
@@ -610,44 +683,36 @@ function createStyles(colors: ColorPalette) {
     sideNavItemActive: { backgroundColor: colors.m3.surfaceContainerHigh },
     sideNavLabel: { ...tokens.typography.labelLarge, color: colors.m3.onSurface },
     sideSignOut: { alignItems: "flex-start", paddingHorizontal: tokens.spacing[4] },
-    palettePreviewCard: {
-      marginTop: tokens.spacing[8],
-      padding: tokens.spacing[14],
-      borderRadius: tokens.radius.cardSmall,
-      backgroundColor: colors.surface,
-      borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
-      gap: tokens.spacing[10],
-    },
-    paletteTitle: {
-      ...tokens.typography.labelMedium,
-      color: colors.secondaryText,
-      fontWeight: tokens.fontWeight.semiBold,
-    },
-    paletteRow: {
-      flexDirection: "row",
-      flexWrap: "wrap",
-      gap: tokens.spacing[8],
-    },
-    paletteBadge: {
-      paddingHorizontal: tokens.spacing[12],
-      paddingVertical: tokens.spacing[6],
-      borderRadius: tokens.radius.full,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    paletteBadgeText: {
-      ...tokens.typography.labelSmall,
-      fontWeight: tokens.fontWeight.semiBold,
-    },
     section: {
       gap: tokens.spacing[10],
     },
+    sectionHeaderRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[10],
+      paddingHorizontal: tokens.spacing[4],
+    },
+    disclosureHeader: {
+      minHeight: tokens.spacing[48],
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      borderRadius: tokens.radius.medium,
+      paddingVertical: tokens.spacing[8],
+      paddingHorizontal: tokens.spacing[4],
+    },
+    sectionHeaderIcon: {
+      width: tokens.spacing[32],
+      height: tokens.spacing[32],
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.ipe.container,
+      alignItems: "center",
+      justifyContent: "center",
+    },
     sectionHeader: {
-      ...tokens.typography.labelLarge,
-      color: colors.m3.onSurfaceVariant,
+      ...tokens.typography.brandCardTitle,
+      color: colors.brandBrown,
       fontWeight: tokens.fontWeight.semiBold,
-      paddingHorizontal: tokens.spacing[12],
     },
     sectionDescription: {
       ...tokens.typography.bodyMedium,

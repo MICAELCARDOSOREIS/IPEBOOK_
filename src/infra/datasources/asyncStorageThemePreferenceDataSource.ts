@@ -7,7 +7,7 @@ export const THEME_PREFERENCE_KEY = "ipebook.preferenciaDeTema";
 export class AsyncStorageThemePreferenceDataSource implements IThemePreferenceDataSource {
   async getPreference(): Promise<ThemePreference> {
     const stored = await AsyncStorage.getItem(THEME_PREFERENCE_KEY);
-    return isThemePreference(stored) ? stored : "system";
+    return isThemePreference(stored) ? stored : "light";
   }
 
   async setPreference(preference: ThemePreference) {

@@ -15,7 +15,7 @@ Branch: `develop` | Data: 2026-10-26 | Especificação: [spec.md](spec.md) | Pla
 
 - [x] **T09** [P]: Criar contrato `ILocalCacheDataSource` (`src/model/datasources/iLocalCacheDataSource.ts`), adaptadores AsyncStorage/Memória reutilizando `BOOKS_LIST_CACHE_KEY` exportada de `cachedBookDataSource.ts`, e `LocalCacheUseCases` com registro em `src/di/container.ts` (FR-012, ADR 0027).
 - [x] **T10** [P]: Criar `useSettingsViewModel` (`src/viewmodel/useSettingsViewModel.ts`) com estados `clearingCache`/`cacheCleared`/`cacheError` e mensagem amigável sem detalhes técnicos (FR-013).
-- [x] **T11**: Expandir a tela Configurações (`src/view/profile/settings.tsx`) com as seções "Dados neste dispositivo" (botão `OutlinedButton` + regiões vivas de sucesso/erro) e "Sobre o IpêBook" (versão via `expo-constants` e atalhos condicionais), ligados na rota `src/app/perfil/configuracoes.tsx` (FR-014, FR-015, US4).
+- [x] **T11**: Expandir a tela Configurações (`src/view/profile/settings.tsx`) com as seções "Armazenamento e histórico" (botões `OutlinedButton` + regiões vivas de sucesso/erro) e "Sobre o IpêBook" (versão via `expo-constants` e atalhos condicionais), ligados na rota `src/app/perfil/configuracoes.tsx` (FR-014, FR-015, US4).
 - [x] **T12**: Testes da continuação: `tests/unit/localCacheUseCases.test.ts`, `tests/unit/asyncStorageLocalCacheDataSource.test.ts`, `tests/hooks/useSettingsViewModel.test.tsx` e novos casos em `tests/components/settingsView.test.tsx`; mock/alias `expo-constants` no Vitest (`tests/mocks/expo-constants.ts`).
 
 ## Continuação — perfil curto, Configurações no topo (ADR 0060)
@@ -30,3 +30,10 @@ As tarefas T06, T08 e T12 cobrem diretamente a tela, a persistência, os estados
 o fallback do armazenamento e a acessibilidade. A coerência visual de tema fica limitada às
 superfícies verificadas e aos componentes integrados ao `ThemeProvider`; a migração dos demais
 componentes permanece uma evolução posterior documentada na ADR 0036.
+
+## Continuação — clareza e confirmação das ações locais (2026-11-01)
+
+- [ ] **T16**: Atualizar Configurações para manter recolhidas as ações de armazenamento até a expansão da seção e confirmar a remoção do catálogo offline e do histórico de buscas; atualizar os cenários existentes em `tests/components/settingsView.test.tsx` e validar os critérios FR-018, FR-019 e SC-007.
+- [ ] **T17**: Recolher inicialmente todas as seções de Configurações, permitir uma seção expandida por vez com cabeçalhos acessíveis e atualizar os cenários existentes em `tests/components/settingsView.test.tsx`; validar o critério FR-020 e SC-008.
+- [ ] **T18**: Melhorar `ThemePreferenceSelector` com opções em linhas acessíveis, descrições diretas e estado selecionado mais visível; remover a amostra de cores da seção e definir Claro como padrão sem preferência salva; atualizar os cenários existentes e validar FR-003, FR-006, FR-010, FR-021, FR-022 e SC-009–SC-011.
+- [ ] **T19**: Clarificar o cartão da conta em Configurações com rótulo, dados da pessoa e ação de edição identificável; atualizar o cenário existente e validar FR-023 e SC-012.

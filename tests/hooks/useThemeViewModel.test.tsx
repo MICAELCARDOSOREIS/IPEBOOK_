@@ -31,7 +31,7 @@ afterEach(async () => {
   __setMockColorScheme("light");
 });
 
-function fakeUseCases(preference: "system" | "light" | "dark" = "system"): IThemePreferenceUseCases {
+function fakeUseCases(preference: "system" | "light" | "dark" = "light"): IThemePreferenceUseCases {
   let stored = preference;
   return {
     getPreference: vi.fn(async () => stored),
@@ -61,8 +61,10 @@ describe("useThemeViewModel (Spec 054 / Issue #144)", () => {
   });
 
   it("persiste a troca manual de preferência", async () => {
-    const useCases = fakeUseCases("system");
+    __setMockColorScheme("dark");
+    const useCases = fakeUseCases();
     const hook = await renderHook(useCases);
+    expect(hook.current[0]).toEqual({ preference: "light", resolvedScheme: "light", loading: false });
 
     await act(async () => {
       await hook.current[1].setPreference("dark");

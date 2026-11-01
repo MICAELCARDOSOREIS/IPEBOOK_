@@ -18,10 +18,10 @@ export type SettingsActions = {
   clearSearchHistory: (sessionUserId: string | null) => Promise<void>;
 };
 
-const CLEAR_ERROR = "Não foi possível limpar os dados salvos. Tente novamente.";
-const HISTORY_ERROR = "Não foi possível limpar o histórico de buscas. Tente novamente.";
+const CLEAR_ERROR = "Não foi possível remover a cópia do catálogo. Tente novamente.";
+const HISTORY_ERROR = "Não foi possível apagar o histórico de buscas. Tente novamente.";
 
-/** Preferências do dispositivo da tela Configurações (Spec 073): limpeza do catálogo offline. */
+/** Ações locais da tela Configurações: remover a cópia offline do catálogo e o histórico de buscas. */
 export function useSettingsViewModel(
   useCases: ILocalCacheUseCases = localCacheUseCases,
   history: ISearchHistoryUseCases = searchHistoryUseCases,

@@ -11,7 +11,7 @@ export type ThemeContextValue = {
 };
 
 const defaultValue: ThemeContextValue = {
-  preference: "system",
+  preference: "light",
   resolvedScheme: "light",
   colors,
   setPreference: async () => undefined,

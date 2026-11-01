@@ -5,12 +5,12 @@ import type { IThemePreferenceUseCases } from "@/usecase/iThemePreferenceUseCase
 export class ThemePreferenceUseCases implements IThemePreferenceUseCases {
   constructor(private readonly themePreference: IThemePreferenceDataSource) {}
 
-  /** Se o armazenamento falhar na leitura, segue o tema do sistema: nunca trava a tela. */
+  /** Se o armazenamento falhar na leitura, usa o tema claro: nunca trava a tela. */
   async getPreference(): Promise<ThemePreference> {
     try {
       return await this.themePreference.getPreference();
     } catch {
-      return "system";
+      return "light";
     }
   }
 
