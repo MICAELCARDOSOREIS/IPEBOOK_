@@ -11,6 +11,7 @@ import { usePublicProfileViewModel } from "@/viewmodel/usePublicProfileViewModel
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { Avatar } from "@/view/components/Avatar";
+import { Breadcrumb } from "@/view/components/Breadcrumb";
 import { AppIcon } from "@/view/components/AppIcon";
 import { FilledButton } from "@/view/components/FilledButton";
 import { TopAppBar } from "@/view/components/TopAppBar";
@@ -89,6 +90,16 @@ export function PublicProfile({ userId, onBack, onOpenChat, onReportListing, onR
           </View>
         ) : profile ? (
           <View style={styles.container}>
+            {wideWeb ? (
+              <Breadcrumb
+                items={[
+                  { label: "Início", onPress: () => onBack?.(), accessibilityLabel: "Voltar para o início" },
+                  { label: "Comunidade" },
+                  { label: profile.name, isCurrent: true },
+                ]}
+                style={styles.breadcrumb}
+              />
+            ) : null}
             {/* 2. Identidade (Avatar 80px + Nome em Serifa + Subtítulo) */}
             <View style={styles.identitySection}>
               <Avatar name={profile.name} photoUrl={profile.photoUrl} size={80} />
@@ -269,6 +280,9 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
     },
     container: {
       gap: tokens.spacing[16],
+    },
+    breadcrumb: {
+      marginBottom: tokens.spacing[4],
     },
     wideBelow: { flexDirection: "row", alignItems: "flex-start", gap: tokens.spacing[24] },
     wideBelowMain: { flex: 1 },

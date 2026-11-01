@@ -11,6 +11,7 @@ import { SHARE_BASE_URL, useShareListingViewModel } from "@/viewmodel/useShareLi
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { captureRef } from "react-native-view-shot";
+import { Breadcrumb } from "@/view/components/Breadcrumb";
 import { Book3D } from "@/view/components/Book3D";
 import { ListingShareCard } from "@/view/components/ListingShareCard";
 import { FilledButton } from "@/view/components/FilledButton";
@@ -335,15 +336,21 @@ export default function BookDetail({
     <SafeAreaView edges={["left", "right"]} style={styles.page}>
       <ScrollView contentContainerStyle={wideWeb ? styles.scrollContentWide : styles.scrollContent} keyboardShouldPersistTaps="handled">
         {wideWeb ? (
-          <View accessibilityRole="header" style={styles.breadcrumb}>
-            <Pressable accessibilityRole="link" accessibilityLabel="Voltar para Explorar" onPress={onBack}>
-              <Text style={styles.breadcrumbLink}>Explorar</Text>
-            </Pressable>
-            {book?.category ? <Text style={styles.breadcrumbSep}>›</Text> : null}
-            {book?.category ? <Text style={styles.breadcrumbText}>{book.category}</Text> : null}
-            {book ? <Text style={styles.breadcrumbSep}>›</Text> : null}
-            {book ? <Text numberOfLines={1} style={styles.breadcrumbCurrent}>{book.title}</Text> : null}
-          </View>
+          <Breadcrumb
+            items={[
+              { label: "Explorar", onPress: onBack, accessibilityLabel: "Voltar para Explorar" },
+              ...(book?.category
+                ? [
+                    {
+                      label: book.category,
+                      onPress: onNavigateToCategorySearch ? () => onNavigateToCategorySearch(book.category as string) : undefined,
+                      accessibilityLabel: `Ver livros de ${book.category}`,
+                    },
+                  ]
+                : []),
+              ...(book ? [{ label: book.title, isCurrent: true }] : []),
+            ]}
+          />
         ) : null}
         {/* 1. Capa em destaque na cor da modalidade (Figma `03.01`–`03.03`), indo até a barra de status. */}
         <View
@@ -752,11 +759,6 @@ function createStyles(colors: ColorPalette) {
       paddingBottom: tokens.spacing[48],
     },
     heroWide: { flex: 1.6, borderRadius: tokens.radius.xxl, paddingTop: tokens.spacing[16], minHeight: 520 },
-    breadcrumb: { width: "100%", flexDirection: "row", alignItems: "center", gap: tokens.spacing[8] },
-    breadcrumbLink: { ...tokens.typography.bodyMedium, color: colors.m3.primary },
-    breadcrumbText: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
-    breadcrumbSep: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
-    breadcrumbCurrent: { ...tokens.typography.bodyMedium, color: colors.m3.onSurface, flexShrink: 1 },
     safeMeetingCard: { flexDirection: "row", gap: tokens.spacing[12], padding: tokens.spacing[16], borderRadius: tokens.radius.medium, backgroundColor: colors.m3.surfaceContainer },
     safeMeetingText: { flex: 1, gap: tokens.spacing[2] },
     safeMeetingTitle: { ...tokens.typography.labelLarge, color: colors.m3.onSurface },

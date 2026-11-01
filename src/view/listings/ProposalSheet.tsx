@@ -11,6 +11,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
 import type { Book } from "@/model/entities/book";
 import { AppIcon } from "@/view/components/AppIcon";
 import { BookCover } from "@/view/components/BookCover";
@@ -44,6 +45,7 @@ export function ProposalSheet({
 }: ProposalSheetProps) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
+  const wideWeb = useIsWideWeb();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   const [message, setMessage] = useState("");
@@ -75,7 +77,7 @@ export function ProposalSheet({
       accessibilityViewIsModal
       aria-modal
     >
-      <View style={styles.scrim}>
+      <View style={[styles.scrim, wideWeb && styles.scrimWide]}>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Fechar formulário de proposta"
@@ -83,8 +85,8 @@ export function ProposalSheet({
           onPress={onClose}
         />
 
-        <View style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, tokens.spacing[16]) }]}>
-          <View style={styles.dragHandle} />
+        <View style={[styles.sheet, wideWeb && styles.sheetWide, { paddingBottom: Math.max(insets.bottom, tokens.spacing[16]) }]}>
+          {wideWeb ? null : <View style={styles.dragHandle} />}
 
           <View style={styles.header}>
             <View style={styles.headerTitleRow}>
@@ -261,6 +263,11 @@ function createStyles(colors: ColorPalette) {
       backgroundColor: "rgba(0, 0, 0, 0.45)",
       justifyContent: "flex-end",
     },
+    scrimWide: {
+      justifyContent: "center",
+      alignItems: "center",
+      padding: tokens.spacing[24],
+    },
     sheet: {
       backgroundColor: colors.surface,
       borderTopLeftRadius: tokens.radius.extraLarge,
@@ -271,6 +278,11 @@ function createStyles(colors: ColorPalette) {
       shadowOpacity: 0.15,
       shadowRadius: 10,
       elevation: 8,
+    },
+    sheetWide: {
+      width: "100%",
+      maxWidth: 540,
+      borderRadius: tokens.radius.extraLarge,
     },
     dragHandle: {
       width: 36,

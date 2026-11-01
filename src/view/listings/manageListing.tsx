@@ -6,6 +6,7 @@ import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { formatPrice } from "@/view/formatPrice";
 import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
+import { Breadcrumb } from "@/view/components/Breadcrumb";
 import { BookCover } from "@/view/components/BookCover";
 import { Dialog } from "@/view/components/Dialog";
 import { ErrorState } from "@/view/components/ErrorState";
@@ -117,6 +118,15 @@ export default function ManageListing({
       <TopAppBar contentMaxWidth={contentMaxWidth} title="Gerenciar anúncio" onBack={() => onBack?.()} />
       <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
         <View style={[styles.content, wide && styles.contentWide]}>
+          {wide ? (
+            <Breadcrumb
+              items={[
+                { label: "Estante", onPress: onBack, accessibilityLabel: "Voltar para Estante" },
+                { label: book.title, isCurrent: true },
+              ]}
+              style={styles.breadcrumb}
+            />
+          ) : null}
           <Text accessibilityRole="header" style={styles.title}>Seu livro, suas escolhas.</Text>
           <Text style={styles.subtitle}>Acompanhe e atualize esta publicação.</Text>
 
@@ -362,6 +372,7 @@ function createStyles(colors: ColorPalette) {
     scrollContent: { padding: tokens.spacing[16], paddingBottom: tokens.spacing[48] },
     content: { width: "100%", maxWidth: 560, alignSelf: "center", gap: tokens.spacing[16] },
     contentWide: { maxWidth: 1040, paddingHorizontal: WEB_GUTTER },
+    breadcrumb: { marginBottom: tokens.spacing[8] },
     columns: { gap: tokens.spacing[16] },
     columnsWide: { flexDirection: "row", alignItems: "flex-start", gap: tokens.spacing[24] },
     column: { gap: tokens.spacing[16] },

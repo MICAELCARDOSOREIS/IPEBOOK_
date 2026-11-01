@@ -25,3 +25,13 @@
 3. **Fase 3: Timeline e Cartão de Status no Chat** (status card no topo, eventos na timeline).
 4. **Fase 4: Modal de Proposta e Avaliação Direta** (ProposalSheet e fluxo da entrega).
 5. **Fase 5: Validação, Testes e Verificação Completa** (`npm run validate`, cobertura ≥ 80%).
+
+## Complemento de interface — pedidos recebidos
+- Manter a tela na camada View: aproveitar `request.initialMessage` e `item.offeredBook`, já fornecidos pelos casos de uso.
+- Em `RequestListLayout`, habilitar apenas para recebidos um resumo acessível que filtra os pedidos pendentes.
+- Compactar o topo em celulares: ocultar a descrição repetida, reduzir título, margens e cartão de resumo.
+- No cartão recebido, exibir os dados opcionais da proposta e ordenar visualmente as ações com "Aceitar" como ação principal.
+- Ao abrir pedidos recebidos com pendências, selecionar o filtro "Pendentes" por padrão; ao resolver a última pendência, retornar a "Todos". Preservar os demais filtros escolhidos explicitamente pela pessoa.
+- Usar Snackbar sobreposto à lista para confirmar aceite ou recusa concluídos, sem adicionar estado de negócio ao ViewModel.
+- Derivar "Finalizado" do estado `delivered` do anúncio, separar essa contagem do filtro de aceitos e manter o contrato de pedido intacto.
+- Verificar tipagem, diff e apresentação em celular; não alterar banco, contratos ou ViewModel.

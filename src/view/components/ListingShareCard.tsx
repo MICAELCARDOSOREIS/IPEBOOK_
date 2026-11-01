@@ -47,6 +47,7 @@ export const ListingShareCard = forwardRef<ComponentRef<typeof View>, ListingSha
         {book.photoUrl ? (
           <Image
             source={{ uri: book.photoUrl }}
+            accessibilityLabel={`Capa de ${book.title}`}
             resizeMode="cover"
             style={styles.cover}
             onLoadEnd={onCoverSettled}

@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import type { ImageSource } from "@/model/services/iImagePickerService";
 import { AppIcon } from "@/view/components/AppIcon";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { tokens, type ColorPalette } from "@/view/tokens";
 
@@ -17,12 +18,13 @@ export type PhotoSourceSheetProps = {
 export function PhotoSourceSheet({ visible, title = "Adicionar foto", onChoose, onClose }: PhotoSourceSheetProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const wideWeb = useIsWideWeb();
   return (
     <Modal visible={visible} transparent animationType="fade" statusBarTranslucent navigationBarTranslucent onRequestClose={onClose}>
-      <View style={styles.scrim}>
+      <View style={[styles.scrim, wideWeb && styles.scrimWide]}>
         <Pressable accessibilityRole="button" accessibilityLabel="Fechar ao tocar fora" onPress={onClose} style={StyleSheet.absoluteFill} />
-        <View style={styles.sheet}>
-          <View accessible={false} importantForAccessibility="no" style={styles.handle} />
+        <View style={[styles.sheet, wideWeb && styles.sheetWide]}>
+          {wideWeb ? null : <View accessible={false} importantForAccessibility="no" style={styles.handle} />}
           <Text accessibilityRole="header" style={styles.title}>{title}</Text>
           <Pressable
             accessibilityRole="button"
@@ -54,6 +56,7 @@ export function PhotoSourceSheet({ visible, title = "Adicionar foto", onChoose, 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     scrim: { flex: 1, backgroundColor: colors.m3.scrim, justifyContent: "flex-end" },
+    scrimWide: { justifyContent: "center", alignItems: "center", padding: tokens.spacing[24] },
     sheet: {
       backgroundColor: colors.background,
       borderTopLeftRadius: tokens.radius.xxl,
@@ -61,6 +64,11 @@ function createStyles(colors: ColorPalette) {
       paddingHorizontal: tokens.spacing[24],
       paddingBottom: tokens.spacing[24],
       gap: tokens.spacing[4],
+    },
+    sheetWide: {
+      width: "100%",
+      maxWidth: 440,
+      borderRadius: tokens.radius.xxl,
     },
     handle: { alignSelf: "center", width: 32, height: 4, borderRadius: tokens.radius.hairline, marginTop: tokens.spacing[12], backgroundColor: colors.m3.onSurfaceVariant, opacity: 0.4 },
     title: { ...tokens.typography.titleMedium, color: colors.m3.onSurface, paddingVertical: tokens.spacing[8] },

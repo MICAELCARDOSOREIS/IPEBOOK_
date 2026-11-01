@@ -17,7 +17,7 @@ export function UserRatingsPanel({ userId }: { userId: string }) {
   if (state.loading || state.error || state.ratings.length === 0) return null;
 
   return (
-    <View style={styles.panel} testID="user-ratings-panel" accessibilityLabel="Avaliações">
+    <View style={styles.panel} testID="user-ratings-panel">
       <Text accessibilityRole="header" style={styles.title}>Avaliações</Text>
       {state.ratings.slice(0, 6).map((rating) => {
         const name = rating.raterName ?? COMMUNITY_MEMBER;
@@ -39,7 +39,7 @@ export function UserRatingsPanel({ userId }: { userId: string }) {
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
-    panel: { width: 320, gap: tokens.spacing[12], padding: tokens.spacing[20], borderRadius: tokens.radius.large, backgroundColor: colors.m3.surfaceContainerLow },
+    panel: { width: 320, maxWidth: "35%", flexShrink: 0, gap: tokens.spacing[12], padding: tokens.spacing[20], borderRadius: tokens.radius.large, backgroundColor: colors.m3.surfaceContainerLow },
     title: { ...tokens.typography.titleBar, color: colors.m3.onSurface },
     row: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[12] },
     rowText: { flex: 1, gap: tokens.spacing[2] },
