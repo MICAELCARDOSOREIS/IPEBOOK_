@@ -298,15 +298,30 @@ export default function ProfileHub({
                     </View>
 
                     {onNavigateToCreateListing ? (
-                      <Pressable
-                        accessibilityRole="button"
-                        accessibilityLabel="Publicar um livro"
-                        onPress={onNavigateToCreateListing}
-                        style={({ pressed }) => [styles.publishButton, pressed && styles.publishButtonPressed]}
-                      >
-                        <AppIcon name="add" size={20} color={colors.m3.onPrimary} />
-                        <Text style={styles.publishButtonText}>Publicar um livro</Text>
-                      </Pressable>
+                      <View style={styles.libraryCard}>
+                        <View style={styles.libraryCardHeader}>
+                          <View style={styles.libraryIcon}>
+                            <AppIcon name="shelf" size={24} color={colors.ipe.onContainer} />
+                          </View>
+                          <View style={styles.libraryCardText}>
+                            <Text style={styles.libraryCardTitle}>Minha biblioteca</Text>
+                            <Text style={styles.libraryCardDescription}>
+                              {totalPublications > 0
+                                ? `${totalPublications} ${totalPublications === 1 ? "livro publicado" : "livros publicados"}`
+                                : "Compartilhe seu primeiro livro com a comunidade"}
+                            </Text>
+                          </View>
+                        </View>
+                        <Pressable
+                          accessibilityRole="button"
+                          accessibilityLabel="Publicar um livro"
+                          onPress={onNavigateToCreateListing}
+                          style={({ pressed }) => [styles.publishButton, pressed && styles.publishButtonPressed]}
+                        >
+                          <AppIcon name="add" size={20} color={colors.m3.onPrimary} />
+                          <Text style={styles.publishButtonText}>Publicar um livro</Text>
+                        </Pressable>
+                      </View>
                     ) : null}
                   </View>
 
@@ -592,6 +607,38 @@ function createStyles(colors: ColorPalette) {
     statLabel: {
       ...tokens.typography.labelMedium,
       color: colors.m3.onSurfaceVariant,
+    },
+    libraryCard: {
+      gap: tokens.spacing[12],
+      borderRadius: tokens.radius.xl,
+      backgroundColor: colors.ipe.container,
+      padding: tokens.spacing[16],
+    },
+    libraryCardHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[12],
+    },
+    libraryIcon: {
+      width: 48,
+      height: 48,
+      borderRadius: tokens.radius.medium,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: colors.ipe.bloom,
+    },
+    libraryCardText: {
+      flex: 1,
+      gap: tokens.spacing[2],
+    },
+    libraryCardTitle: {
+      ...tokens.typography.titleMedium,
+      color: colors.ipe.onContainer,
+      fontWeight: tokens.fontWeight.bold,
+    },
+    libraryCardDescription: {
+      ...tokens.typography.bodyMedium,
+      color: colors.ipe.onContainer,
     },
     publishButton: {
       minHeight: 48,
