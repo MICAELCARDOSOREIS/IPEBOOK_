@@ -251,16 +251,6 @@ export default function ProfileHub({
                       </View>
                     </View>
 
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel="Editar perfil"
-                      onPress={onNavigateToEditProfile}
-                      style={({ pressed }) => [styles.editProfileButton, pressed && styles.editProfileButtonPressed]}
-                    >
-                      <AppIcon name="edit" size={18} color={colors.m3.primary} />
-                      <Text style={styles.editProfileButtonText}>Editar perfil</Text>
-                    </Pressable>
-
                     <View style={styles.statsContainer}>
                       <Pressable
                         accessibilityRole="button"
@@ -297,7 +287,18 @@ export default function ProfileHub({
                       </Pressable>
                     </View>
 
-                    {onNavigateToCreateListing ? (
+                    <View style={styles.primaryActions}>
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel="Editar perfil"
+                        onPress={onNavigateToEditProfile}
+                        style={({ pressed }) => [styles.editProfileButton, pressed && styles.editProfileButtonPressed]}
+                      >
+                        <AppIcon name="edit" size={18} color={colors.ipe.onContainer} />
+                        <Text style={styles.editProfileButtonText}>Editar perfil</Text>
+                      </Pressable>
+
+                      {onNavigateToCreateListing ? (
                         <Pressable
                           accessibilityRole="button"
                           accessibilityLabel="Publicar um livro"
@@ -307,7 +308,8 @@ export default function ProfileHub({
                           <AppIcon name="add" size={20} color={colors.m3.onPrimary} />
                           <Text style={styles.publishButtonText}>Publicar um livro</Text>
                         </Pressable>
-                    ) : null}
+                      ) : null}
+                    </View>
                   </View>
 
                   {/* Seção 1: Atividade (Figma 07.01 nó 604:8684: altura 36px, cor #2C5E45) */}
@@ -554,22 +556,26 @@ function createStyles(colors: ColorPalette) {
       alignItems: "center",
       justifyContent: "center",
       gap: tokens.spacing[8],
-      alignSelf: "flex-start",
+      flex: 1,
       minHeight: tokens.accessibility.touchTarget,
-      borderWidth: 1,
-      borderColor: colors.ipe.bloom,
+      backgroundColor: colors.ipe.bloom,
       borderRadius: tokens.radius.full,
       paddingHorizontal: tokens.spacing[16],
     },
     editProfileButtonPressed: {
       borderRadius: tokens.shapeMorph.buttonPressed,
-      backgroundColor: colors.m3.surfaceContainerHigh,
+      backgroundColor: colors.ipe.bloomDeep,
       transform: [{ scale: 0.98 }],
     },
     editProfileButtonText: {
       ...tokens.typography.labelLarge,
-      color: colors.m3.primary,
+      color: colors.ipe.onContainer,
       fontWeight: tokens.fontWeight.semiBold,
+    },
+    primaryActions: {
+      flexDirection: "row",
+      alignItems: "stretch",
+      gap: tokens.spacing[8],
     },
     statsContainer: {
       flexDirection: "row",
@@ -609,6 +615,7 @@ function createStyles(colors: ColorPalette) {
       color: colors.m3.onSurfaceVariant,
     },
     publishButton: {
+      flex: 1,
       minHeight: 48,
       flexDirection: "row",
       alignItems: "center",
