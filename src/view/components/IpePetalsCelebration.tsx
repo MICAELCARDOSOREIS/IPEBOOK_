@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Animated,
-  Dimensions,
   Easing,
   Image,
   Platform,
@@ -13,20 +12,22 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { tokens } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
-import ipePetala1 from "@/view/assets/ipe-petala-1.png";
-import ipePetala2 from "@/view/assets/ipe-petala-2.png";
-import ipeFlorBlossom from "@/view/assets/ipe-flor-blossom.png";
-import ipeFolha1 from "@/view/assets/ipe-folha-1.png";
-import ipeFolha2 from "@/view/assets/ipe-folha-2.png";
-import ipeFolhaSeca from "@/view/assets/ipe-folha-seca.png";
+import type { IpePetalVariant } from "@/view/components/ipeCelebrationController";
+import ipeFloradaNatural from "@/view/assets/ipe-florada-natural.png";
+import ipeFlorTrombetaNatural from "@/view/assets/ipe-flor-trombeta-natural.png";
+import ipePetalaNatural from "@/view/assets/ipe-petala-natural.png";
+import ipeFolhaNatural from "@/view/assets/ipe-folha-natural.png";
 
 const PETAL_COUNT = 38;
+const ENTRY_PETAL_COUNT = 16;
 const BOTTOM_NAV_HEIGHT = 80;
 
 export type IpePetalsCelebrationProps = {
   /** Se a animação está ativa (padrão: true). */
   active?: boolean;
-  /** Chamado quando a chuva de pétalas termina naturalmente (~5 a 6.2s). */
+  /** Variação curta de entrada ou florada completa disparada pela pessoa. */
+  variant?: IpePetalVariant;
+  /** Chamado quando a animação termina naturalmente. */
   onComplete?: () => void;
   /** Identificador para testes. */
   testID?: string;
@@ -45,22 +46,33 @@ type PetalConfig = {
   delay: number;
   duration: number;
   rotation: number;
-  imageType: "blossom" | "trumpet" | "petal" | "leafGreen" | "leafPalmate" | "leafDry";
+  tiltX: number;
+  tiltY: number;
+  spinDirection: number;
+  depthScale: number;
+  opacity: number;
+  imageType: "blossom" | "trumpet" | "petal" | "leaf";
   layer: "foreground" | "midground" | "background";
-  /** Se pousa suavemente sobre o nav bar formando um tapete visível de pétalas */
-  settlesOnGround: boolean;
+  /** Posição onde a peça pousa por um instante antes de desaparecer. */
+  restingPlace: "none" | "topBar" | "bottomBar";
   restingAngle: number;
   restingYOffset: number;
 };
 
+/** Variação determinística: a florada mantém o mesmo ritmo entre renderizações. */
+function variation(index: number, salt: number): number {
+  const value = Math.sin((index + 1) * 127.1 + (salt + 1) * 311.7) * 43758.5453;
+  return value - Math.floor(value);
+}
+
 /**
- * Chuva de pétalas de Ipê-Amarelo: micro-interação comemorativa inspirada
- * na florada real de Piripiri. Queda ágil, graciosa e alegre de pétalas
- * douradas ao vento (~5 a 6.2 segundos).
+ * Florada de Ipê-Amarelo: entrada suave na primeira visita e celebração completa
+ * em ações iniciadas pela pessoa, com pétalas douradas ao vento.
  * Puramente visual, sem interferir na árvore de acessibilidade nem no toque.
  */
 export function IpePetalsCelebration({
   active = true,
+  variant = "celebration",
   onComplete,
   testID = "ipe-petals-celebration",
   message,
@@ -77,79 +89,106 @@ export function IpePetalsCelebration({
   const onCompleteRef = useRef(onComplete);
   onCompleteRef.current = onComplete;
 
-  // Gera configs determinísticas por pétala botânica de Ipê
+  // Gera configs determinísticas com variações orgânicas de tamanho, vento e profundidade.
   const petals = useMemo<PetalConfig[]>(() => {
-    return Array.from({ length: PETAL_COUNT }, (_, index) => {
-      const step = index / PETAL_COUNT;
-      const layer: PetalConfig["layer"] =
-        index % 3 === 0 ? "foreground" : index % 3 === 1 ? "midground" : "background";
+    const count = variant === "entry" ? ENTRY_PETAL_COUNT : PETAL_COUNT;
+    return Array.from({ length: count }, (_, index) => {
+      const step = (index + 0.5) / count;
+      const depth = variation(index, 1);
+      const layer: PetalConfig["layer"] = depth < 0.25 ? "foreground" : depth < 0.7 ? "midground" : "background";
 
-      // Mistura botânica da florada: ~75% flores e pétalas douradas, ~25% folhas verdes e secas
-      const typeIndex = index % 8;
-      const imageType: PetalConfig["imageType"] =
-        typeIndex === 0 || typeIndex === 4
+      // Mantém algumas folhas verdes junto das flores e pétalas em cada variação.
+      const imageRoll = variation(index, 10);
+      let imageType: PetalConfig["imageType"];
+      if (variant === "entry") {
+        imageType = imageRoll < 0.2
           ? "blossom"
-          : typeIndex === 1 || typeIndex === 5
+          : imageRoll < 0.62
             ? "trumpet"
-            : typeIndex === 2 || typeIndex === 6
-              ? "petal"
-              : typeIndex === 3
-                ? "leafGreen"
-                : index % 2 === 0
-                  ? "leafPalmate"
-                  : "leafDry";
+            : imageRoll < 0.86
+              ? "leaf"
+              : "petal";
+      } else if (imageRoll < 0.24) {
+        imageType = "blossom";
+      } else if (imageRoll < 0.62) {
+        imageType = "trumpet";
+      } else if (imageRoll < 0.82) {
+        imageType = "leaf";
+      } else {
+        imageType = "petal";
+      }
 
-      // Proporções botânicas naturais
-      let baseWidth = layer === "foreground" ? 38 : layer === "midground" ? 32 : 26;
+      let baseWidth = layer === "foreground" ? 40 : layer === "midground" ? 34 : 27;
       let ratio = 1.0;
 
       if (imageType === "blossom") {
-        baseWidth = layer === "foreground" ? 42 : layer === "midground" ? 35 : 28;
+        baseWidth = layer === "foreground" ? 56 : layer === "midground" ? 47 : 38;
         ratio = 1.0;
       } else if (imageType === "trumpet") {
-        baseWidth = layer === "foreground" ? 40 : layer === "midground" ? 34 : 28;
-        ratio = 1.06;
+        baseWidth = layer === "foreground" ? 48 : layer === "midground" ? 41 : 33;
+        ratio = 1.0;
       } else if (imageType === "petal") {
-        baseWidth = layer === "foreground" ? 34 : layer === "midground" ? 28 : 24;
-        ratio = 1.25;
-      } else if (imageType === "leafGreen" || imageType === "leafDry") {
-        baseWidth = layer === "foreground" ? 22 : layer === "midground" ? 18 : 15;
-        ratio = 2.0;
-      } else if (imageType === "leafPalmate") {
-        baseWidth = layer === "foreground" ? 44 : layer === "midground" ? 36 : 28;
+        baseWidth = layer === "foreground" ? 38 : layer === "midground" ? 32 : 25;
+        ratio = 1.34;
+      } else if (imageType === "leaf") {
+        baseWidth = layer === "foreground" ? 34 : layer === "midground" ? 29 : 23;
         ratio = 1.0;
       }
 
       const width = baseWidth + (index % 3) * 2;
       const height = Math.round(width * ratio);
 
-      // Cerca de 40% das pétalas pousam na barra de navegação inferior (onde o usuário vê com clareza)
-      const settlesOnGround = index % 3 === 0 || index % 7 === 0;
-      const restingAngle = ((index * 37) % 56) - 28;
-      // Distribui suavemente no topo e corpo do nav bar
-      const restingYOffset = ((index % 5) * 6) - 8;
+      // Algumas peças pousam brevemente na barra superior ou inferior e depois somem.
+      const settles = variation(index, 11) < (variant === "entry" ? 0.2 : 0.4);
+      const restingPlace: PetalConfig["restingPlace"] = !settles
+        ? "none"
+        : variation(index, 15) < 0.4
+          ? "topBar"
+          : "bottomBar";
+      const randomAngle = variation(index, 2);
+      const restingAngle = imageType === "petal" || imageType === "leaf"
+        ? randomAngle * 360
+        : (randomAngle - 0.5) * 70;
+      const restingYOffset = Math.round((variation(index, 3) - 0.5) * 24);
+      const driftMagnitude = variant === "entry" ? 20 + variation(index, 4) * 30 : 28 + variation(index, 4) * 42;
+      const windFactor = imageType === "petal" ? 1 : imageType === "leaf" ? 1.12 : 0.68;
+      const tiltRange = imageType === "petal" ? 44 : imageType === "leaf" ? 48 : imageType === "blossom" ? 26 : 34;
+      const startXRatio = Math.max(0.015, Math.min(0.985, step + (variation(index, 5) - 0.5) * 0.085));
+      const baseDuration = layer === "foreground" ? 0 : layer === "midground" ? 280 : 560;
+      const typeDuration = imageType === "blossom" ? 0.86 : imageType === "trumpet" ? 0.92 : imageType === "leaf" ? 0.96 : 1.08;
+      const duration = (variant === "entry"
+        ? 2000 + baseDuration * 0.35 + variation(index, 6) * 400
+        : 3300 + baseDuration * 0.65 + variation(index, 6) * 550) * typeDuration
+        + (restingPlace === "none" ? 0 : 750 + variation(index, 16) * 300);
 
       return {
         id: index,
-        startXRatio: step,
-        driftX: (index % 2 === 0 ? 1 : -1) * (26 + ((index * 9) % 36)),
+        startXRatio,
+        driftX: (variation(index, 7) - 0.5) * 2 * driftMagnitude * windFactor,
         width,
         height,
-        // Disparos espalhados no primeiro 1.5s
-        delay: (index * 85) % 1500,
-        // Queda viva e graciosa: 4.6s a 6.0s
-        duration: 4600 + (index % 5) * 320,
-        rotation: (index * 43) % 360,
+        delay: variant === "entry"
+          ? variation(index, 8) * 460
+          : variation(index, 8) * 900,
+        duration,
+        rotation: imageType === "petal" || imageType === "leaf"
+          ? randomAngle * 360
+          : (randomAngle - 0.5) * 70,
+        tiltX: (variation(index, 12) - 0.5) * tiltRange,
+        tiltY: (variation(index, 13) - 0.5) * tiltRange,
+        spinDirection: variation(index, 9) > 0.5 ? 1 : -1,
+        depthScale: layer === "foreground" ? 1.08 : layer === "midground" ? 0.94 : 0.78,
+        opacity: layer === "foreground" ? 1 : layer === "midground" ? 0.82 : 0.64,
         imageType,
         layer,
-        settlesOnGround,
+        restingPlace,
         restingAngle,
         restingYOffset,
       };
     });
-  }, []);
+  }, [variant]);
 
-  const animValues = useRef(Array.from({ length: PETAL_COUNT }, () => new Animated.Value(0))).current;
+  const animValues = useMemo(() => petals.map(() => new Animated.Value(0)), [petals]);
   const messageAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -159,9 +198,7 @@ export function IpePetalsCelebration({
     animValues.forEach((anim) => anim.setValue(0));
     messageAnim.setValue(0);
 
-    const easingFn = typeof Easing?.out === "function" && typeof Easing?.quad === "function"
-      ? Easing.out(Easing.quad)
-      : undefined;
+    const easingFn = Easing?.linear ?? ((t: number) => t);
 
     const isWeb = Platform.OS === "web";
     const animations = animValues.map((anim, i) => {
@@ -257,76 +294,142 @@ export function IpePetalsCelebration({
 
       {petals.map((petal, index) => {
         const anim = animValues[index];
-        // Pouso exatamente sobre a barra de navegação inferior (Tab Bar)
+        const settles = petal.restingPlace !== "none";
         const navBarHeight = BOTTOM_NAV_HEIGHT + insets.bottom;
         const navBarTop = effectiveHeight - navBarHeight;
-        const groundY =
+        const bottomBarY =
           bottomOffset !== undefined && bottomOffset > 0
             ? Math.max(100, effectiveHeight - bottomOffset - (petal.height * 0.45 + petal.restingYOffset))
             : Math.max(100, navBarTop + 24 + petal.restingYOffset);
+        const topBarY = Math.max(0, (tokens.spacing[40] - petal.height) / 2 + petal.restingYOffset);
+        const restingY = petal.restingPlace === "topBar" ? topBarY : bottomBarY;
         const startX = petal.startXRatio * (screenWidth - 48) + 24;
 
-        // Pouso suave no nav bar, ou voo livre além da tela
-        const translateY = petal.settlesOnGround
+        // A curva desacelera no pouso e segura a peça na barra antes do desaparecimento.
+        const translateY = settles
           ? anim.interpolate({
-              inputRange: [0, 0.45, 0.72, 0.78, 0.84, 1],
-              outputRange: [-60, groundY * 0.48, groundY - 5, groundY, groundY, groundY],
+              inputRange: [0, 0.1, 0.26, 0.48, 0.68, 0.74, 0.8, 0.94, 1],
+              outputRange: [-72, -10, restingY * 0.08, restingY * 0.3, restingY * 0.58, restingY * 0.78, restingY, restingY, restingY],
             })
           : anim.interpolate({
-              inputRange: [0, 1],
-              outputRange: [-60, effectiveHeight + 60],
+              inputRange: [0, 0.08, 0.24, 0.48, 0.7, 0.88, 1],
+              outputRange: [-72, -8, effectiveHeight * 0.1, effectiveHeight * 0.34, effectiveHeight * 0.62, effectiveHeight * 0.86, effectiveHeight + 60],
             });
 
-        // Oscilação lateral ampla e natural (como brisa no sertão de Piripiri)
-        const finalDrift = petal.driftX * 0.55;
-        const translateX = petal.settlesOnGround
+        // A brisa muda de direção aos poucos, com um balanço diferente em cada peça.
+        const finalDrift = petal.driftX * 0.35;
+        const translateX = settles
           ? anim.interpolate({
-              inputRange: [0, 0.25, 0.5, 0.76, 1],
-              outputRange: [0, petal.driftX, -petal.driftX * 0.35, finalDrift, finalDrift],
+              inputRange: [0, 0.18, 0.38, 0.58, 0.72, 0.8, 0.94, 1],
+              outputRange: [0, petal.driftX * 0.28, petal.driftX * 0.72, -petal.driftX * 0.24, -petal.driftX * 0.58, finalDrift, finalDrift, finalDrift],
             })
           : anim.interpolate({
-              inputRange: [0, 0.2, 0.45, 0.7, 0.9, 1],
+              inputRange: [0, 0.14, 0.32, 0.5, 0.68, 0.84, 1],
+              outputRange: [0, petal.driftX * 0.25, petal.driftX * 0.78, -petal.driftX * 0.32, -petal.driftX * 0.72, petal.driftX * 0.3, 0],
+            });
+
+        // Flores balançam; pétalas giram e mudam de lado mais depressa no ar.
+        const flutter = petal.imageType === "petal" ? 48 : petal.imageType === "leaf" ? 40 : 15;
+        const direction = petal.spinDirection;
+        const rotate = settles
+          ? anim.interpolate({
+              inputRange: [0, 0.22, 0.47, 0.68, 0.8, 0.94, 1],
               outputRange: [
-                0,
-                petal.driftX,
-                -petal.driftX * 0.7,
-                petal.driftX * 0.85,
-                -petal.driftX * 0.4,
-                0,
+                `${petal.rotation}deg`,
+                `${petal.rotation + flutter * direction}deg`,
+                `${petal.rotation - flutter * 0.65 * direction}deg`,
+                `${petal.rotation + flutter * 0.45 * direction}deg`,
+                `${petal.restingAngle}deg`,
+                `${petal.restingAngle}deg`,
+                `${petal.restingAngle}deg`,
+              ],
+            })
+          : anim.interpolate({
+              inputRange: [0, 0.2, 0.44, 0.68, 0.84, 1],
+              outputRange: [
+                `${petal.rotation}deg`,
+                `${petal.rotation + flutter * direction}deg`,
+                `${petal.rotation - flutter * direction}deg`,
+                `${petal.rotation + 75 * direction}deg`,
+                `${petal.rotation + 135 * direction}deg`,
+                `${petal.rotation + 190 * direction}deg`,
               ],
             });
 
-        // Giro no próprio eixo; repousa suavemente no ângulo natural ao pousar
-        const rotate = petal.settlesOnGround
+        const rotateX = settles
           ? anim.interpolate({
-              inputRange: [0, 0.76, 1],
-              outputRange: [`${petal.rotation}deg`, `${petal.restingAngle}deg`, `${petal.restingAngle}deg`],
+              inputRange: [0, 0.18, 0.4, 0.62, 0.8, 0.94, 1],
+              outputRange: [
+                `${petal.tiltX * 0.35}deg`,
+                `${petal.tiltX}deg`,
+                `${petal.tiltX * -0.55}deg`,
+                `${petal.tiltX * 0.7}deg`,
+                `${petal.tiltX * 0.2}deg`,
+                `${petal.tiltX * 0.2}deg`,
+                `${petal.tiltX * 0.2}deg`,
+              ],
             })
           : anim.interpolate({
-              inputRange: [0, 1],
-              outputRange: [`${petal.rotation}deg`, `${petal.rotation + 150}deg`],
+              inputRange: [0, 0.18, 0.4, 0.62, 0.82, 1],
+              outputRange: [
+                `${petal.tiltX * 0.35}deg`,
+                `${petal.tiltX}deg`,
+                `${petal.tiltX * -0.55}deg`,
+                `${petal.tiltX * 0.7}deg`,
+                `${petal.tiltX * -0.3}deg`,
+                `${petal.tiltX * 0.2}deg`,
+              ],
             });
-
-        // Efeito 3D sutil de pétala oscilando no ar que se aquieta no nav bar
-        const scaleX = petal.settlesOnGround
+        const rotateY = settles
           ? anim.interpolate({
-              inputRange: [0, 0.25, 0.5, 0.76, 1],
-              outputRange: [1, 0.7, 0.95, 0.85, 0.85],
+              inputRange: [0, 0.2, 0.43, 0.66, 0.8, 0.94, 1],
+              outputRange: [
+                `${petal.tiltY * -0.3}deg`,
+                `${petal.tiltY * 0.75}deg`,
+                `${petal.tiltY * -0.8}deg`,
+                `${petal.tiltY}deg`,
+                `${petal.tiltY * 0.25}deg`,
+                `${petal.tiltY * 0.25}deg`,
+                `${petal.tiltY * 0.25}deg`,
+              ],
             })
           : anim.interpolate({
-              inputRange: [0, 0.25, 0.5, 0.75, 1],
-              outputRange: [1, 0.65, 0.95, 0.7, 0.9],
+              inputRange: [0, 0.2, 0.43, 0.66, 0.84, 1],
+              outputRange: [
+                `${petal.tiltY * -0.3}deg`,
+                `${petal.tiltY * 0.75}deg`,
+                `${petal.tiltY * -0.8}deg`,
+                `${petal.tiltY}deg`,
+                `${petal.tiltY * -0.45}deg`,
+                `${petal.tiltY * 0.25}deg`,
+              ],
             });
 
-        const scale = anim.interpolate({
-          inputRange: [0, 0.1, 0.9, 1],
-          outputRange: [0.85, 1, 1, 0.85],
-        });
-
-        // Pétalas no nav bar permanecem 100% visíveis compondo o tapete dourado até desvanecerem no fim
-        const opacity = petal.settlesOnGround
+        // A pétala vira de lado com o vento; as flores mantêm a forma enquanto balançam.
+        const scaleX = settles
           ? anim.interpolate({
-              inputRange: [0, 0.05, 0.82, 0.92, 1],
+              inputRange: [0, 0.22, 0.48, 0.72, 0.8, 0.94, 1],
+              outputRange: [1, petal.imageType === "petal" ? 0.86 : petal.imageType === "leaf" ? 0.8 : 0.96, 1, 0.9, 0.94, 0.94, 0.94],
+            })
+          : anim.interpolate({
+              inputRange: [0, 0.2, 0.44, 0.68, 0.84, 1],
+              outputRange: [1, petal.imageType === "petal" ? 0.78 : petal.imageType === "leaf" ? 0.74 : 0.94, 1.02, 0.82, 1, 0.9],
+            });
+
+        const scale = settles
+          ? anim.interpolate({
+              inputRange: [0, 0.12, 0.8, 0.94, 1],
+              outputRange: [petal.depthScale * 0.9, petal.depthScale, petal.depthScale, petal.depthScale, petal.depthScale],
+            })
+          : anim.interpolate({
+              inputRange: [0, 0.12, 0.84, 1],
+              outputRange: [petal.depthScale * 0.9, petal.depthScale, petal.depthScale, petal.depthScale * 0.94],
+            });
+
+        // As peças pousadas ficam visíveis brevemente e somem no fim da animação.
+        const opacity = settles
+          ? anim.interpolate({
+              inputRange: [0, 0.05, 0.8, 0.94, 1],
               outputRange: [0, 1, 1, 1, 0],
             })
           : anim.interpolate({
@@ -336,16 +439,12 @@ export function IpePetalsCelebration({
 
         const imageSource =
           petal.imageType === "blossom"
-            ? ipeFlorBlossom
-            : petal.imageType === "trumpet"
-              ? ipePetala1
-              : petal.imageType === "petal"
-                ? ipePetala2
-                : petal.imageType === "leafGreen"
-                  ? ipeFolha1
-                  : petal.imageType === "leafPalmate"
-                    ? ipeFolha2
-                    : ipeFolhaSeca;
+            ? ipeFloradaNatural
+            : petal.imageType === "petal"
+              ? ipePetalaNatural
+              : petal.imageType === "leaf"
+                ? ipeFolhaNatural
+                : ipeFlorTrombetaNatural;
 
         return (
           <Animated.View
@@ -356,7 +455,17 @@ export function IpePetalsCelebration({
                 left: startX,
                 width: petal.width,
                 height: petal.height,
-                transform: [{ translateY }, { translateX }, { rotate }, { scaleX }, { scale }],
+                zIndex: petal.layer === "foreground" ? 3 : petal.layer === "midground" ? 2 : 1,
+                transform: [
+                  { translateY },
+                  { translateX },
+                  { rotate },
+                  { rotateX },
+                  { rotateY },
+                  { scaleX },
+                  { scale },
+                  { perspective: 700 },
+                ],
                 opacity,
               },
             ]}
@@ -364,7 +473,7 @@ export function IpePetalsCelebration({
             <Image
               source={imageSource}
               resizeMode="contain"
-              style={styles.petalImage}
+              style={[styles.petalImage, { opacity: petal.opacity }]}
             />
           </Animated.View>
         );

@@ -1,14 +1,13 @@
-type Listener = () => void;
+export type IpePetalVariant = "entry" | "celebration";
+
+type Listener = (variant: IpePetalVariant) => void;
 const listeners = new Set<Listener>();
 
 let hasCelebratedInitialAppLaunch = false;
 
-/**
- * Dispara a florada comemorativa de flores e folhas de Ipê sobre toda a aplicação
- * (cobrindo a tela e a barra de navegação inferior).
- */
-export function triggerIpePetals() {
-  listeners.forEach((listener) => listener());
+/** Dispara uma entrada breve ou a florada completa sobre a tela e a barra de navegação. */
+export function triggerIpePetals(variant: IpePetalVariant = "celebration") {
+  listeners.forEach((listener) => listener(variant));
 }
 
 /**
@@ -22,14 +21,14 @@ export function subscribeIpePetals(listener: Listener) {
 }
 
 /**
- * Dispara a florada automaticamente apenas na primeira entrada do aplicativo na sessão.
+ * Dispara uma queda breve apenas na primeira entrada do aplicativo na sessão.
  * Ao navegar entre abas ("Explorar", "Pesquisa", "Perfil") e retornar para o "Início",
  * a florada não se repete sozinha.
  */
 export function checkAndTriggerInitialPetals() {
   if (!hasCelebratedInitialAppLaunch) {
     hasCelebratedInitialAppLaunch = true;
-    triggerIpePetals();
+    triggerIpePetals("entry");
   }
 }
 

@@ -3,24 +3,25 @@
 > [!NOTE]
 > **IMPLEMENTADO**: Implementado em `src/view/components/IpePetalsCelebration.tsx`.
 
-Origem no sistema base: **Novo** — micro-interação comemorativa inspirada na florada e queda natural das pétalas do Ipê-Amarelo em Piripiri. Substitui confetes genéricos por uma celebração artesanal e poética da comunidade.
+Origem no sistema base: **Novo** — micro-interação comemorativa inspirada na florada do Ipê-Amarelo em Piripiri. As ilustrações usam amarelo solar mais reconhecível, com acabamento botânico vintage: contorno sépia, nervuras finas e folhas verdes compostas.
 
 ## Quando usar
 
-- Conclusão de uma negociação ou troca de livros entre vizinhos.
-- Primeiro anúncio de livro publicado pela pessoa.
-- Confirmação de doação concluída.
+- Na primeira entrada da pessoa na Home da sessão, usando a variação breve de acolhimento (`variant="entry"`).
+- Em uma celebração iniciada pela pessoa ou após uma conquista, usando a florada completa (`variant="celebration"`).
 
 ## Quando não usar
 
 - Em ações corriqueiras (como favoritar um livro ou navegar entre abas).
 - Em momentos de erro ou cancelamento.
 
-## Anatomia
+## Variações
 
-1. 14 pétalas orgânicas em formato de amêndoa/folha
-2. Tons alternados da florada (`colors.ipe.bloom` dourado e `colors.ipe.bloomDeep` âmbar)
-3. Trajetória suave de queda com oscilação lateral senoidal e rotação suave
+- **Entrada:** 16 flores, pétalas e algumas folhas verdes, surgem em momentos diferentes ao longo de cerca de 2,5 a 3,5 segundos; algumas pousam brevemente no topo ou na barra inferior e depois desaparecem.
+- **Celebração:** 38 flores, pétalas e folhas, em uma queda mais ampla de cerca de 4 a 5,5 segundos, com alguns pousos breves antes do desaparecimento.
+- Cada peça recebe profundidade, tamanho, duração, balanço lateral e giro próprios. Inclinações `rotateX`/`rotateY` com perspectiva e sombra leve criam volume; flores agrupadas balançam suavemente e pétalas e folhas oscilam mais com o vento.
+- Na Home, a florada passa à frente dos cartões e da barra superior; algumas flores pousam por um instante nas barras superior e inferior e desaparecem. A camada não bloqueia toques.
+- Os arquivos PNG da animação são renderizados dos SVGs de mesmo nome em `src/view/assets/`, para manter boa definição em telas com alta densidade.
 
 ## Acessibilidade
 
@@ -33,6 +34,6 @@ Origem no sistema base: **Novo** — micro-interação comemorativa inspirada na
 ```tsx
 import { IpePetalsCelebration } from "@/view/components/IpePetalsCelebration";
 
-// Disparado na tela de parabéns ou sucesso:
-<IpePetalsCelebration active={showCelebration} onComplete={() => setShowCelebration(false)} />
+// Celebração completa em uma tela de parabéns ou sucesso:
+<IpePetalsCelebration active={showCelebration} variant="celebration" onComplete={() => setShowCelebration(false)} />
 ```
