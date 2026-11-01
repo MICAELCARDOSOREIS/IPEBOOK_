@@ -119,18 +119,32 @@ export function MyListings({
           </Text>
           <Text style={styles.heroSubtitle}>Seus livros em Piripiri</Text>
         </View>
-        {onNavigateToDrafts ? (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Ver rascunhos"
-            hitSlop={12}
-            onPress={onNavigateToDrafts}
-            style={({ pressed }) => [styles.draftsLink, pressed && styles.draftsLinkPressed]}
-          >
-            <AppIcon name="document" size={20} color={colors.m3.onSecondaryContainer} />
-            <Text style={styles.draftsLinkText}>Rascunhos</Text>
-          </Pressable>
-        ) : null}
+        <View style={styles.headerActions}>
+          {onNavigateToDrafts ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Ver rascunhos"
+              hitSlop={12}
+              onPress={onNavigateToDrafts}
+              style={({ pressed }) => [styles.draftsLink, pressed && styles.draftsLinkPressed]}
+            >
+              <AppIcon name="document" size={20} color={colors.m3.onSecondaryContainer} />
+              <Text style={styles.draftsLinkText}>Rascunhos</Text>
+            </Pressable>
+          ) : null}
+          {wideWeb && onNavigateToCreateListing ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Anunciar livro no topo da estante"
+              hitSlop={12}
+              onPress={onNavigateToCreateListing}
+              style={withPress(styles.announceButtonHeader)}
+            >
+              <AppIcon name="add" size={18} color={colors.m3.onPrimary} />
+              <Text style={styles.announceButtonHeaderText}>Anunciar livro</Text>
+            </Pressable>
+          ) : null}
+        </View>
       </View>
 
       <View style={[styles.content, wideWeb && styles.contentWide]}>
@@ -191,7 +205,10 @@ export function MyListings({
             <View
               testID="my-listings-tablist"
               accessibilityRole="tablist"
-              style={isIOS ? styles.segmentTrackIOS : styles.segmentRowAndroid}
+              style={[
+                isIOS ? styles.segmentTrackIOS : styles.segmentRowAndroid,
+                wideWeb && styles.segmentRowWide,
+              ]}
             >
               {tabs.map((tab, index) => {
                 const selected = activeTab === tab.key;
@@ -292,9 +309,28 @@ export function MyListings({
             ) : (
               <View style={styles.listCard}>
                 <Text style={styles.sectionTitle}>Concluídos</Text>
+                {wideWeb ? (
+                  <View style={styles.tableHeader}>
+                    <Text style={[styles.tableHeaderText, { flex: 3, minWidth: 220 }]}>Livro</Text>
+                    <Text style={[styles.tableHeaderText, { flex: 1.5, minWidth: 120 }]}>Modalidade</Text>
+                    <Text style={[styles.tableHeaderText, { flex: 1.5, minWidth: 120 }]}>Histórico</Text>
+                    <Text style={[styles.tableHeaderText, { flex: 1.2, minWidth: 100 }]}>Situação</Text>
+                    <Text style={[styles.tableHeaderText, { width: 110, textAlign: "right" }]}>Ação</Text>
+                  </View>
+                ) : null}
                 {concludedProposals.map((item) => (
                   <ShelfRow
                     key={item.request.id}
+                    wide={
+                      wideWeb
+                        ? {
+                            statusVariant: "completed",
+                            statusLabel: "Concluído",
+                            offer: MODALITY_LABEL[item.listing.modality],
+                            actionLabel: "Ver histórico",
+                          }
+                        : undefined
+                    }
                     book={item.listing}
                     summary={`${item.requesterName ?? COMMUNITY_MEMBER} · Concluído · ${MODALITY_LABEL[item.listing.modality]}`}
                     accessibilityLabel={`Ver histórico de ${item.listing.title}`}
@@ -304,6 +340,16 @@ export function MyListings({
                 {deliveredBooks.map((book) => (
                   <ShelfRow
                     key={book.id}
+                    wide={
+                      wideWeb
+                        ? {
+                            statusVariant: "completed",
+                            statusLabel: "Entregue",
+                            offer: MODALITY_LABEL[book.modality],
+                            actionLabel: "Gerenciar",
+                          }
+                        : undefined
+                    }
                     book={book}
                     summary={`Entregue · ${MODALITY_LABEL[book.modality]}`}
                     accessibilityLabel={`Ver ${book.title}`}
@@ -486,14 +532,65 @@ function createStyles(colors: ColorPalette) {
       ...tokens.typography.labelLarge,
       color: colors.m3.onSecondaryContainer,
     },
+    headerActions: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[12],
+      marginLeft: "auto",
+    },
+    announceButtonHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[8],
+      height: tokens.accessibility.touchTarget,
+      paddingHorizontal: tokens.spacing[18],
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.m3.primary,
+      elevation: 2,
+      shadowColor: colors.m3.shadow,
+      shadowOpacity: 0.15,
+      shadowRadius: 4,
+      shadowOffset: { width: 0, height: 2 },
+    },
+    announceButtonHeaderText: {
+      ...tokens.typography.labelLarge,
+      fontWeight: tokens.fontWeight.semiBold,
+      color: colors.m3.onPrimary,
+    },
     content: {
       flex: 1,
       width: "100%",
       paddingHorizontal: tokens.spacing[16],
     },
-    // Web larga (Figma `05.01`): coluna com margem padronizada WEB_GUTTER e botão "Anunciar livro" em texto.
-    headerWide: { width: "100%", alignSelf: "center", paddingHorizontal: WEB_GUTTER, paddingTop: tokens.spacing[32] },
-    contentWide: { paddingHorizontal: WEB_GUTTER },
+    // Web larga (Figma `05.01`): coluna centralizada em WEB_MAX_WIDTH com respiro editorial.
+    headerWide: {
+      width: "100%",
+      maxWidth: WEB_MAX_WIDTH,
+      alignSelf: "center",
+      paddingHorizontal: tokens.spacing[32],
+      paddingTop: tokens.spacing[32],
+      paddingBottom: tokens.spacing[16],
+    },
+    contentWide: {
+      width: "100%",
+      maxWidth: WEB_MAX_WIDTH,
+      alignSelf: "center",
+      paddingHorizontal: tokens.spacing[32],
+    },
+    segmentRowWide: {
+      alignSelf: "flex-start",
+      minWidth: 380,
+      maxWidth: 520,
+      marginBottom: tokens.spacing[4],
+    },
+    tableHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[16],
+      paddingHorizontal: tokens.spacing[16],
+      paddingVertical: tokens.spacing[12],
+    },
+    tableHeaderText: { ...tokens.typography.labelLarge, color: colors.m3.onSurfaceVariant },
     webExchangeBanner: {
       flexDirection: "row",
       alignItems: "center",
