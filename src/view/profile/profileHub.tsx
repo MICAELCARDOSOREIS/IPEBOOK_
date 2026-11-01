@@ -458,8 +458,15 @@ function createStyles(colors: ColorPalette) {
       width: "100%",
       gap: tokens.spacing[16],
       borderRadius: tokens.radius.xl,
-      backgroundColor: colors.ipe.container,
+      backgroundColor: colors.ipe.petalSoft,
+      borderWidth: 1,
+      borderColor: colors.ipe.bloom,
       padding: tokens.spacing[16],
+      shadowColor: colors.ipe.trunk,
+      shadowOffset: { width: 0, height: 3 },
+      shadowOpacity: 0.08,
+      shadowRadius: 10,
+      elevation: 2,
     },
     // Web larga: identidade e métricas numa coluna lateral; Atividade e Conta ao lado.
     heroBlockWide: { width: 380, position: "sticky" as "relative", top: tokens.spacing[16] },
@@ -616,6 +623,7 @@ function createStyles(colors: ColorPalette) {
       flexDirection: "row",
       alignItems: "center",
       gap: tokens.spacing[12],
+      paddingBottom: tokens.spacing[4],
     },
     libraryIcon: {
       width: 48,
@@ -624,6 +632,7 @@ function createStyles(colors: ColorPalette) {
       alignItems: "center",
       justifyContent: "center",
       backgroundColor: colors.ipe.bloom,
+      borderRadius: tokens.radius.full,
     },
     libraryCardText: {
       flex: 1,
