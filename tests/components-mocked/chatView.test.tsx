@@ -1,11 +1,25 @@
 import { act, fireEvent, render } from "@testing-library/react-native";
+import * as Linking from "expo-linking";
 import { describe, expect, it, vi } from "vitest";
 import type { Book } from "@/model/entities/book";
 import type { NegotiationChatState } from "@/viewmodel/useNegotiationChatViewModel";
+import type { NegotiationDetail } from "@/usecase/iBookRequestUseCases";
+import { addMeetingToCalendar } from "@/view/calendarIntegration";
 import { Chat } from "@/view/conversations/chat";
 
 vi.mock("@/viewmodel/useRequestDetailViewModel", () => ({ useRequestDetailViewModel: vi.fn() }));
 vi.mock("@/viewmodel/useNegotiationChatViewModel", () => ({ useNegotiationChatViewModel: vi.fn() }));
+const mockMeetingActions = { reload: vi.fn(), confirm: vi.fn() };
+let mockMeetingState: { meeting: any; loading: boolean } = { meeting: null, loading: false };
+vi.mock("@/viewmodel/useMeetingViewModel", () => ({
+  useMeetingViewModel: vi.fn(() => [mockMeetingState, mockMeetingActions]),
+}));
+vi.mock("@/view/calendarIntegration", () => ({
+  addMeetingToCalendar: vi.fn().mockResolvedValue(true),
+}));
+vi.mock("expo-linking", () => ({
+  openURL: vi.fn().mockResolvedValue(undefined),
+}));
 // Entrega por QR (Spec 095): começa sem conclusão.
 let deliveryCompleted: Record<string, unknown> | null = null;
 vi.mock("@/viewmodel/useDeliveryViewModel", () => ({
@@ -17,7 +31,12 @@ import { useNegotiationChatViewModel } from "@/viewmodel/useNegotiationChatViewM
 
 const book: Book = { id: "b1", title: "Dom Casmurro", author: "Machado", ownerId: "ana", modality: "trade", status: "reserved" };
 
-function setup(chat: Partial<NegotiationChatState> = {}) {
+function setup(
+  chat: Partial<NegotiationChatState> = {},
+  detailOverride: Partial<NegotiationDetail> = {},
+  detailActionsOverride: { reload?: any; respond?: any } = {},
+) {
+  const detailActions = { reload: vi.fn(), respond: vi.fn().mockResolvedValue(true), ...detailActionsOverride };
   vi.mocked(useRequestDetailViewModel).mockReturnValue([
     {
       detail: {
@@ -28,18 +47,19 @@ function setup(chat: Partial<NegotiationChatState> = {}) {
         counterpartName: "Ana Paula",
         counterpartPhotoUrl: "https://cdn/ana.jpg",
         safeMeetingPoints: [],
+        ...detailOverride,
       },
       loading: false,
       error: null,
     },
-    { reload: vi.fn() },
+    detailActions,
   ]);
   const actions = { setInputText: vi.fn(), sendMessage: vi.fn().mockResolvedValue(true), retryLastMessage: vi.fn(), reload: vi.fn() };
   vi.mocked(useNegotiationChatViewModel).mockReturnValue([
     { messages: [], inputText: "", isLoading: false, isSending: false, error: null, sendError: null, ...chat },
     actions,
   ]);
-  return actions;
+  return { actions, detailActions };
 }
 
 async function renderChat(props: Partial<Parameters<typeof Chat>[0]> = {}) {
@@ -63,7 +83,7 @@ describe("Chat em tela cheia (Spec 082)", () => {
   });
 
   it("separa balões meus e da outra pessoa com horário e envia pelo botão (CA3)", async () => {
-    const actions = setup({
+    const { actions } = setup({
       inputText: "Combinado",
       messages: [
         { id: "m1", requestId: "r1", senderId: "ana", content: "Pode ser sábado?", createdAt: "2026-10-26T09:02:00" },
@@ -78,7 +98,7 @@ describe("Chat em tela cheia (Spec 082)", () => {
   });
 
   it("na conversa vazia, a sugestão preenche o campo (CA4)", async () => {
-    const actions = setup();
+    const { actions } = setup();
     const screen = await renderChat();
     expect(screen.getByText("Comece a conversa")).toBeDefined();
     await act(async () => { fireEvent.press(screen.getByText("O livro ainda está disponível?")); });
@@ -130,10 +150,197 @@ describe("Chat em tela cheia (Spec 082)", () => {
   });
 
   it("mostra a falha de envio com Reenviar", async () => {
-    const actions = setup({ sendError: "Sem conexão." });
+    const { actions } = setup({ sendError: "Sem conexão." });
     const screen = await renderChat();
     expect(screen.getByText("Sem conexão.")).toBeDefined();
     await act(async () => { fireEvent.press(screen.getByText("Reenviar")); });
     expect(actions.retryLastMessage).toHaveBeenCalledTimes(1);
+  });
+
+  describe("Melhorias na negociação (Spec 113)", () => {
+    const offeredBook: Book = {
+      id: "b2",
+      title: "Memórias Póstumas",
+      author: "Machado de Assis",
+      ownerId: "me",
+      modality: "trade",
+      status: "available",
+    };
+
+    it("dono vê proposta pendente com mensagem e contrapartida, podendo aceitar", async () => {
+      const { detailActions } = setup(
+        {},
+        {
+          isOwner: true,
+          request: {
+            id: "r1",
+            listingId: "b1",
+            requesterId: "ana",
+            status: "pending",
+            initialMessage: "Olá, tenho interesse!",
+            offeredBookId: "b2",
+          },
+          offeredBook,
+        },
+      );
+      const screen = await renderChat();
+      expect(screen.getByText("Nova proposta recebida")).toBeDefined();
+      expect(screen.getByText('Mensagem de Ana Paula:')).toBeDefined();
+      expect(screen.getByText('"Olá, tenho interesse!"')).toBeDefined();
+      expect(screen.getByText("Livro oferecido em troca:")).toBeDefined();
+      expect(screen.getByText("Memórias Póstumas")).toBeDefined();
+
+      await act(async () => {
+        fireEvent.press(screen.getByRole("button", { name: "Aceitar proposta" }));
+      });
+      expect(detailActions.respond).toHaveBeenCalledWith("accept");
+    });
+
+    it("dono pode recusar a proposta recebida", async () => {
+      const { detailActions } = setup(
+        {},
+        {
+          isOwner: true,
+          request: {
+            id: "r1",
+            listingId: "b1",
+            requesterId: "ana",
+            status: "pending",
+          },
+        },
+      );
+      const screen = await renderChat();
+      await act(async () => {
+        fireEvent.press(screen.getByRole("button", { name: "Recusar proposta" }));
+      });
+      expect(detailActions.respond).toHaveBeenCalledWith("reject");
+    });
+
+    it("exibe mensagem de erro quando o aceite da proposta falha", async () => {
+      setup(
+        {},
+        {
+          isOwner: true,
+          request: {
+            id: "r1",
+            listingId: "b1",
+            requesterId: "ana",
+            status: "pending",
+          },
+        },
+        { respond: vi.fn().mockRejectedValue(new Error("Falha ao aceitar")) },
+      );
+      const screen = await renderChat();
+      await act(async () => {
+        fireEvent.press(screen.getByRole("button", { name: "Aceitar proposta" }));
+      });
+      expect(screen.getByText("Não foi possível aceitar a proposta. Tente novamente.")).toBeDefined();
+    });
+
+    it("exibe mensagem de erro quando a recusa da proposta falha", async () => {
+      setup(
+        {},
+        {
+          isOwner: true,
+          request: {
+            id: "r1",
+            listingId: "b1",
+            requesterId: "ana",
+            status: "pending",
+          },
+        },
+        { respond: vi.fn().mockRejectedValue(new Error("Falha ao recusar")) },
+      );
+      const screen = await renderChat();
+      await act(async () => {
+        fireEvent.press(screen.getByRole("button", { name: "Recusar proposta" }));
+      });
+      expect(screen.getByText("Não foi possível recusar a proposta.")).toBeDefined();
+    });
+
+    it("interessado vê banner informativo de proposta enviada com sua mensagem e livro", async () => {
+      setup(
+        {},
+        {
+          isOwner: false,
+          request: {
+            id: "r1",
+            listingId: "b1",
+            requesterId: "me",
+            status: "pending",
+            initialMessage: "Troca pelo meu?",
+            offeredBookId: "b2",
+          },
+          offeredBook,
+        },
+      );
+      const screen = await renderChat();
+      expect(
+        screen.getByText("Sua proposta foi enviada. O bate-papo será liberado assim que o anunciante aceitar."),
+      ).toBeDefined();
+      expect(screen.getByText('Sua mensagem: "Troca pelo meu?"')).toBeDefined();
+      expect(screen.getByText("Livro oferecido: Memórias Póstumas")).toBeDefined();
+      expect(screen.getByText("Proposta em análise")).toBeDefined();
+    });
+
+    it("renderiza balões de evento do encontro e entrega na linha do tempo", async () => {
+      mockMeetingState = {
+        meeting: {
+          id: "m1",
+          requestId: "r1",
+          pointName: "Praça da Bandeira",
+          scheduledAt: "2026-11-05T14:00:00.000Z",
+          status: "confirmed",
+          suggestedBy: "ana",
+        },
+        loading: false,
+      };
+      deliveryCompleted = { requestId: "r1", completedBy: "me", completedAt: "2026-11-05T15:00:00.000Z" };
+
+      setup({ messages: [] });
+      const screen = await renderChat();
+
+      expect(screen.getByText("Encontro confirmado em Praça da Bandeira")).toBeDefined();
+      expect(screen.getByText("Livro entregue presencialmente com sucesso!")).toBeDefined();
+
+      mockMeetingState = { meeting: null, loading: false };
+      deliveryCompleted = null;
+    });
+
+    it("permite abrir direções no mapa, adicionar à agenda e ir para entrega", async () => {
+      mockMeetingState = {
+        meeting: {
+          id: "m1",
+          requestId: "r1",
+          pointName: "Praça da Bandeira",
+          scheduledAt: "2026-11-05T14:00:00.000Z",
+          status: "confirmed",
+          suggestedBy: "ana",
+        },
+        loading: false,
+      };
+
+      setup();
+      const onScheduleMeeting = vi.fn();
+      const onOpenDelivery = vi.fn();
+      const screen = await renderChat({ onScheduleMeeting, onOpenDelivery });
+
+      await act(async () => {
+        fireEvent.press(screen.getByRole("button", { name: "Como chegar" }));
+      });
+      expect(Linking.openURL).toHaveBeenCalled();
+
+      await act(async () => {
+        fireEvent.press(screen.getByRole("button", { name: "Adicionar à agenda" }));
+      });
+      expect(addMeetingToCalendar).toHaveBeenCalled();
+
+      await act(async () => {
+        fireEvent.press(screen.getByRole("button", { name: "Entrega do livro" }));
+      });
+      expect(onOpenDelivery).toHaveBeenCalledWith("r1");
+
+      mockMeetingState = { meeting: null, loading: false };
+    });
   });
 });

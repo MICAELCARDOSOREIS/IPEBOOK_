@@ -9,16 +9,21 @@ import {
   TextInput,
   View,
 } from "react-native";
+import * as Linking from "expo-linking";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useNegotiationChatViewModel } from "@/viewmodel/useNegotiationChatViewModel";
 import { useRequestDetailViewModel } from "@/viewmodel/useRequestDetailViewModel";
 import { useDeliveryStatus } from "@/viewmodel/useDeliveryViewModel";
-import { buildChatTimeline, formatBubbleTime, type ChatTimelineItem } from "@/viewmodel/chatTimeline";
+import { useMeetingViewModel } from "@/viewmodel/useMeetingViewModel";
+import { buildChatTimeline, formatBubbleTime, type ChatEvent, type ChatTimelineItem } from "@/viewmodel/chatTimeline";
+import { PIRIPIRI_MEETING_POINTS } from "@/model/entities/meetingPoint";
+import { addMeetingToCalendar } from "@/view/calendarIntegration";
+import { NegotiationStatusCard } from "./NegotiationStatusCard";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
-import { AppIcon } from "@/view/components/AppIcon";
+import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
 import { BookCover } from "@/view/components/BookCover";
 import { Chip } from "@/view/components/Chip";
 import { ErrorState } from "@/view/components/ErrorState";
@@ -39,17 +44,30 @@ export type ChatProps = {
   onBack?: () => void;
   /** "Combinar": abre a negociação para marcar o encontro (`/negociacao/[id]`). */
   onOpenNegotiation?: (requestId: string) => void;
+  /** Atalho direto para a tela de entrega do livro (`/negociacao/[id]/entrega`). */
+  onOpenDelivery?: (requestId: string) => void;
+  /** Atalho direto para agendar o encontro (`/negociacao/[id]/encontro`). */
+  onScheduleMeeting?: (requestId: string) => void;
   /** Painel da web larga: a lista e o "Combinar encontro" já estão nas colunas vizinhas. */
   embedded?: boolean;
 };
 
 /** Conversa em tela cheia, Figma `06.02 · Conversa com Ana Paula` (Spec 082). */
-export function Chat({ requestId, sessionUserId, onBack, onOpenNegotiation, embedded = false }: ChatProps) {
+export function Chat({
+  requestId,
+  sessionUserId,
+  onBack,
+  onOpenNegotiation,
+  onOpenDelivery,
+  onScheduleMeeting,
+  embedded = false,
+}: ChatProps) {
   const { colors } = useTheme();
   const wideWeb = useIsWideWeb();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [detailState, detailActions] = useRequestDetailViewModel(requestId, sessionUserId);
   const [state, actions] = useNegotiationChatViewModel(requestId, sessionUserId);
+  const [meetingState, meetingActions] = useMeetingViewModel(requestId, sessionUserId);
   const [respondingProposal, setRespondingProposal] = useState(false);
   const [proposalError, setProposalError] = useState<string | null>(null);
 
@@ -59,6 +77,7 @@ export function Chat({ requestId, sessionUserId, onBack, onOpenNegotiation, embe
     try {
       await detailActions.respond?.("accept");
       await actions.reload();
+      await meetingActions.reload();
     } catch {
       setProposalError("Não foi possível aceitar a proposta. Tente novamente.");
     } finally {
@@ -83,9 +102,64 @@ export function Chat({ requestId, sessionUserId, onBack, onOpenNegotiation, embe
 
   const detail = detailState.detail;
   const name = detail?.counterpartName ?? COMMUNITY_MEMBER;
-  const timeline = useMemo(() => buildChatTimeline(state.messages), [state.messages]);
+
+  const events = useMemo<ChatEvent[]>(() => {
+    const list: ChatEvent[] = [];
+    if (meetingState.meeting) {
+      if (meetingState.meeting.status === "proposed") {
+        list.push({
+          id: "ev-meeting-proposed",
+          type: "meeting_proposed",
+          description: `Encontro sugerido em ${meetingState.meeting.pointName}`,
+          timestamp: meetingState.meeting.scheduledAt,
+          icon: "calendar",
+        });
+      } else if (meetingState.meeting.status === "confirmed") {
+        list.push({
+          id: "ev-meeting-confirmed",
+          type: "meeting_confirmed",
+          description: `Encontro confirmado em ${meetingState.meeting.pointName}`,
+          timestamp: meetingState.meeting.scheduledAt,
+          icon: "checkCircle",
+        });
+      }
+    }
+    if (delivery.completed) {
+      list.push({
+        id: "ev-delivery-completed",
+        type: "delivery_confirmed",
+        description: "Livro entregue presencialmente com sucesso!",
+        timestamp: new Date().toISOString(),
+        icon: "checkCircle",
+      });
+    }
+    return list;
+  }, [meetingState.meeting, delivery.completed]);
+
+  const timeline = useMemo(
+    () => buildChatTimeline(state.messages, new Date(), events),
+    [state.messages, events],
+  );
   const canSend = state.inputText.trim().length > 0 && !state.isSending;
   const isWebStandalone = wideWeb && !embedded;
+
+  const handleOpenDirections = () => {
+    if (!meetingState.meeting) return;
+    const point = PIRIPIRI_MEETING_POINTS.find((p) => p.name === meetingState.meeting?.pointName);
+    const query = point ? `${point.name}, ${point.address}` : `${meetingState.meeting.pointName}, Piripiri - PI`;
+    void Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`);
+  };
+
+  const handleAddToCalendar = async () => {
+    if (!meetingState.meeting || !detail) return;
+    const point = PIRIPIRI_MEETING_POINTS.find((p) => p.name === meetingState.meeting?.pointName);
+    await addMeetingToCalendar({
+      title: `Entrega do livro: ${detail.book.title} (IpêBook)`,
+      details: `Encontro com ${name} em Piripiri.`,
+      location: point ? `${point.name} (${point.address})` : meetingState.meeting.pointName,
+      scheduledAt: meetingState.meeting.scheduledAt,
+    });
+  };
 
   // Ao abrir e a cada mensagem nova, a última fica visível (Spec 082).
   useEffect(() => {
@@ -103,6 +177,17 @@ export function Chat({ requestId, sessionUserId, onBack, onOpenNegotiation, embe
       return (
         <View style={styles.dayRow}>
           <Text style={styles.dayLabel}>{item.label}</Text>
+        </View>
+      );
+    }
+    if (item.kind === "event") {
+      const iconName: AppIconName = item.event.icon ?? "info";
+      return (
+        <View style={styles.eventRow}>
+          <View style={styles.eventBadge}>
+            <AppIcon name={iconName} size={14} color={colors.nature.foliage} />
+            <Text style={styles.eventText}>{item.event.description}</Text>
+          </View>
         </View>
       );
     }
@@ -190,6 +275,21 @@ export function Chat({ requestId, sessionUserId, onBack, onOpenNegotiation, embe
               </View>
             ) : null}
 
+            {detail && detail.request.status === "accepted" ? (
+              <NegotiationStatusCard
+                meeting={meetingState.meeting}
+                requestStatus={detail.request.status}
+                counterpartName={name}
+                sessionUserId={sessionUserId}
+                deliveryCompleted={Boolean(delivery.completed)}
+                onCombineMeeting={() => (onScheduleMeeting ? onScheduleMeeting(requestId) : onOpenNegotiation?.(requestId))}
+                onConfirmMeeting={() => void meetingActions.confirm()}
+                onOpenDelivery={() => (onOpenDelivery ? onOpenDelivery(requestId) : onOpenNegotiation?.(requestId))}
+                onOpenDirections={handleOpenDirections}
+                onAddToCalendar={() => void handleAddToCalendar()}
+              />
+            ) : null}
+
             {detail && detail.isOwner && detail.request.status === "pending" ? (
               <View style={[styles.proposalCard, isWebStandalone && styles.proposalCardWide]}>
                 <View style={styles.proposalHeader}>
@@ -199,10 +299,31 @@ export function Chat({ requestId, sessionUserId, onBack, onOpenNegotiation, embe
                   <View style={styles.proposalText}>
                     <Text style={styles.proposalTitle}>Nova proposta recebida</Text>
                     <Text style={styles.proposalSubtitle}>
-                      Tire dúvidas por aqui ou aceite para reservar e combinar o encontro.
+                      Aceite para reservar o livro e liberar a conversa para combinar a entrega.
                     </Text>
                   </View>
                 </View>
+
+                {detail.request.initialMessage ? (
+                  <View style={styles.proposalInitialMessageBox}>
+                    <Text style={styles.proposalInitialMessageLabel}>Mensagem de {name}:</Text>
+                    <Text style={styles.proposalInitialMessageText}>"{detail.request.initialMessage}"</Text>
+                  </View>
+                ) : null}
+
+                {detail.offeredBook ? (
+                  <View style={styles.proposalOfferedBookBox}>
+                    <Text style={styles.proposalOfferedBookLabel}>Livro oferecido em troca:</Text>
+                    <View style={styles.proposalOfferedBookRow}>
+                      <BookCover id={detail.offeredBook.id} title={detail.offeredBook.title} photoUrl={detail.offeredBook.photoUrl} variant="list" />
+                      <View style={styles.proposalOfferedBookText}>
+                        <Text style={styles.proposalOfferedBookTitle} numberOfLines={1}>{detail.offeredBook.title}</Text>
+                        <Text style={styles.proposalOfferedBookAuthor} numberOfLines={1}>{detail.offeredBook.author}</Text>
+                      </View>
+                    </View>
+                  </View>
+                ) : null}
+
                 <View style={styles.proposalActions}>
                   <Pressable
                     accessibilityRole="button"
@@ -230,9 +351,21 @@ export function Chat({ requestId, sessionUserId, onBack, onOpenNegotiation, embe
             {detail && !detail.isOwner && detail.request.status === "pending" ? (
               <View style={[styles.buyerProposalBanner, isWebStandalone && styles.buyerProposalBannerWide]}>
                 <AppIcon name="info" size={16} color={colors.m3.onSecondaryContainer} />
-                <Text style={styles.buyerProposalText}>
-                  Sua proposta foi enviada. Converse por aqui enquanto o anunciante avalia.
-                </Text>
+                <View style={styles.buyerProposalTextContainer}>
+                  <Text style={styles.buyerProposalText}>
+                    Sua proposta foi enviada. O bate-papo será liberado assim que o anunciante aceitar.
+                  </Text>
+                  {detail.request.initialMessage ? (
+                    <Text style={styles.buyerProposalSubtext} numberOfLines={2}>
+                      Sua mensagem: "{detail.request.initialMessage}"
+                    </Text>
+                  ) : null}
+                  {detail.offeredBook ? (
+                    <Text style={styles.buyerProposalSubtext} numberOfLines={1}>
+                      Livro oferecido: {detail.offeredBook.title}
+                    </Text>
+                  ) : null}
+                </View>
               </View>
             ) : null}
 
@@ -568,6 +701,81 @@ function createStyles(colors: ColorPalette) {
       flex: 1,
       ...tokens.typography.labelSmall,
       color: colors.m3.onSecondaryContainer,
+    },
+    buyerProposalTextContainer: {
+      flex: 1,
+      gap: tokens.spacing[2],
+    },
+    buyerProposalSubtext: {
+      ...tokens.typography.labelSmall,
+      color: colors.m3.onSecondaryContainer,
+      opacity: 0.85,
+    },
+    eventRow: {
+      alignItems: "center",
+      marginVertical: tokens.spacing[8],
+      paddingHorizontal: tokens.spacing[16],
+    },
+    eventBadge: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[6],
+      backgroundColor: colors.nature.sprout,
+      paddingHorizontal: tokens.spacing[12],
+      paddingVertical: tokens.spacing[6],
+      borderRadius: tokens.radius.full,
+      borderWidth: 1,
+      borderColor: colors.nature.foliage + "40",
+    },
+    eventText: {
+      ...tokens.typography.labelSmall,
+      color: colors.nature.foliageDeep,
+      fontWeight: tokens.fontWeight.medium,
+    },
+    proposalInitialMessageBox: {
+      backgroundColor: colors.m3.surfaceContainerLowest,
+      padding: tokens.spacing[10],
+      borderRadius: tokens.radius.cardSmall,
+      gap: tokens.spacing[2],
+    },
+    proposalInitialMessageLabel: {
+      ...tokens.typography.labelSmall,
+      color: colors.nature.foliageDeep,
+      fontWeight: tokens.fontWeight.semiBold,
+    },
+    proposalInitialMessageText: {
+      ...tokens.typography.bodyMedium,
+      color: colors.m3.onSurface,
+      fontStyle: "italic",
+    },
+    proposalOfferedBookBox: {
+      backgroundColor: colors.m3.surfaceContainerLowest,
+      padding: tokens.spacing[10],
+      borderRadius: tokens.radius.cardSmall,
+      gap: tokens.spacing[6],
+    },
+    proposalOfferedBookLabel: {
+      ...tokens.typography.labelSmall,
+      color: colors.nature.foliageDeep,
+      fontWeight: tokens.fontWeight.semiBold,
+    },
+    proposalOfferedBookRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[10],
+    },
+    proposalOfferedBookText: {
+      flex: 1,
+      gap: tokens.spacing[2],
+    },
+    proposalOfferedBookTitle: {
+      ...tokens.typography.bodyMedium,
+      fontWeight: tokens.fontWeight.semiBold,
+      color: colors.m3.onSurface,
+    },
+    proposalOfferedBookAuthor: {
+      ...tokens.typography.labelSmall,
+      color: colors.m3.onSurfaceVariant,
     },
     pageWeb: {
       backgroundColor: colors.m3.surfaceContainerLowest,

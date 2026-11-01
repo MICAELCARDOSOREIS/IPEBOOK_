@@ -86,5 +86,6 @@
 - [0084 — Adoção do Material 3 Expressive no Design System do IpêBook](0084-adocao-material-3-expressive.md)
 - [0085 — Notificações comunitárias e fechamento de ciclos de interação](0085-notificacoes-comunitarias-e-fechamento-de-ciclos.md)
 - [0086 — Suporte a box e coleções de livros no catálogo e no anúncio](0086-suporte-a-box-e-colecoes-de-livros.md)
+- [0087 — Fluxo unificado e melhorias na negociação](0087-fluxo-unificado-e-melhorias-na-negociacao.md)
 
 Preservar registros aceitos; mudanças relevantes geram novo ADR com vínculos de substituição.

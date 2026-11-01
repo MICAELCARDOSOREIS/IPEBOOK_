@@ -6,6 +6,7 @@ import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { COMMUNITY_MEMBER } from "@/view/requests/receivedRequests";
 import { ShelfRow } from "@/view/listings/shelfRow";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
 
 const MODALITY_LABELS: Readonly<Record<BookModality, string>> = {
   sale: "Venda",
@@ -31,6 +32,7 @@ export function MyListingsProposalsTab({
 }: MyListingsProposalsTabProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const wideWeb = useIsWideWeb();
 
   return (
     <>
@@ -43,9 +45,28 @@ export function MyListingsProposalsTab({
           <Text style={styles.listTitle}>
             {`${proposals.length} ${proposals.length === 1 ? "proposta" : "propostas"}`}
           </Text>
+          {wideWeb ? (
+            <View style={styles.tableHeader}>
+              <Text style={[styles.tableHeaderText, { flex: 3, minWidth: 220 }]}>Livro</Text>
+              <Text style={[styles.tableHeaderText, { flex: 1.5, minWidth: 120 }]}>Modalidade</Text>
+              <Text style={[styles.tableHeaderText, { flex: 1.5, minWidth: 120 }]}>Bairro</Text>
+              <Text style={[styles.tableHeaderText, { flex: 1.2, minWidth: 100 }]}>Situação</Text>
+              <Text style={[styles.tableHeaderText, { width: 110, textAlign: "right" }]}>Ação</Text>
+            </View>
+          ) : null}
           {proposals.map((item) => (
             <ShelfRow
               key={item.request.id}
+              wide={
+                wideWeb
+                  ? {
+                      statusVariant: item.request.status === "accepted" ? "completed" : "reserved",
+                      statusLabel: item.request.status === "accepted" ? "Aceita" : "Pendente",
+                      offer: MODALITY_LABELS[item.listing.modality],
+                      actionLabel: "Ver proposta",
+                    }
+                  : undefined
+              }
               book={item.listing}
               summary={proposalSummary(item)}
               accessibilityLabel={`Abrir proposta para ${item.listing.title}`}
@@ -87,6 +108,14 @@ function createStyles(colors: ColorPalette) {
       ...tokens.typography.titleMedium,
       color: colors.m3.onSurface,
     },
+    tableHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[16],
+      paddingHorizontal: tokens.spacing[16],
+      paddingVertical: tokens.spacing[12],
+    },
+    tableHeaderText: { ...tokens.typography.labelLarge, color: colors.m3.onSurfaceVariant },
     infoCard: {
       marginTop: tokens.spacing[16],
       padding: tokens.spacing[16],

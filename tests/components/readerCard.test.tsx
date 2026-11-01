@@ -11,6 +11,7 @@ describe("ReaderCard e IpeMark (Spec 078)", () => {
     });
     expect(screen.getByText("Ana Paula")).toBeDefined();
     expect(screen.getByText("Centro, Piripiri")).toBeDefined();
+    expect(screen.queryByText("IPEBOOK")).toBeNull();
     expect(screen.getByLabelText("Cartão de leitor de Ana Paula")).toBeDefined();
   });
 

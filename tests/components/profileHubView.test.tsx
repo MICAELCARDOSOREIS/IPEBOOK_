@@ -140,7 +140,8 @@ describe("Meu perfil — hub de navegação (Figma 07.01)", () => {
     });
 
     expect(screen.getByText("Ana Paula")).toBeDefined();
-    expect(screen.getByText(/★ 4.5 \(2 avaliações\)/)).toBeDefined();
+    expect(screen.getByText("★ 4.5")).toBeDefined();
+    expect(screen.getByText("nota média")).toBeDefined();
 
     await act(async () => {
       fireEvent.press(screen.getByLabelText("Editar perfil"));
@@ -151,6 +152,25 @@ describe("Meu perfil — hub de navegação (Figma 07.01)", () => {
       fireEvent.press(screen.getByLabelText("Avaliações recebidas"));
     });
     expect(onNavigateToRatings).toHaveBeenCalledTimes(1);
+  });
+
+  it("oferece publicar um livro como ação principal do perfil", async () => {
+    mockAuth({ id: "ana", email: "ana@exemplo.com" });
+    mockProfile();
+    const onNavigateToCreateListing = vi.fn();
+
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(
+        <ProfileHub {...baseProps({ onNavigateToCreateListing })} />,
+      );
+    });
+
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Publicar um livro"));
+    });
+
+    expect(onNavigateToCreateListing).toHaveBeenCalledTimes(1);
   });
 
   it("confirma e executa o logout ao tocar em Sair da conta", async () => {
@@ -273,7 +293,7 @@ describe("Meu perfil — hub de navegação (Figma 07.01)", () => {
     expect(onNavigateToInviteFriends).toHaveBeenCalledTimes(1);
   });
 
-  it("renderiza cabeçalho editorial, tríade de métricas e seções Atividade e Conta (Spec 065, Figma 07.01)", async () => {
+  it("renderiza a identidade, métricas em faixa e seções Atividade e Conta (Spec 065)", async () => {
     mockAuth({ id: "ana", email: "ana@exemplo.com" });
     mockProfile();
 
@@ -283,14 +303,14 @@ describe("Meu perfil — hub de navegação (Figma 07.01)", () => {
     });
 
     // 1. Título editorial da marca
-    expect(screen.getByRole("header").props.children).toBe("Meu perfil");
+    expect(screen.getAllByRole("header")[0].props.children).toBe("Meu perfil");
 
-    // 2. Tríade de métricas
+    // 2. Métricas comunitárias em faixa
     expect(screen.getByText("publicações")).toBeDefined();
     expect(screen.getByText("trocas")).toBeDefined();
-    expect(screen.getByText("avaliação")).toBeDefined();
+    expect(screen.getByText("nota média")).toBeDefined();
     expect(screen.getByText("3")).toBeDefined(); // completedNegotiations: 3
-    expect(screen.getByText("4.5")).toBeDefined(); // averageRating: 4.5
+    expect(screen.getByText("★ 4.5")).toBeDefined(); // averageRating: 4.5
 
     // 3. Seções agrupadas
     expect(screen.getByText("Atividade")).toBeDefined();
@@ -368,14 +388,14 @@ describe("Meu perfil — hub de navegação (Figma 07.01)", () => {
     expect(onNavigateToEditProfile).toHaveBeenCalledTimes(1);
   });
 
-  it("não mostra o ipê no canto do cartão no Meu perfil e usa singular em 1 publicação (Spec 081)", async () => {
+  it("mostra a foto na identidade e usa singular em 1 troca (Spec 081)", async () => {
     mockAuth({ id: "ana", email: "ana@exemplo.com" });
     mockProfile({ ...fakeProfile, completedNegotiations: 1, photoUrl: "https://exemplo.com/ana.png" });
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
       screen = await render(<ProfileHub {...baseProps()} />);
     });
-    expect(screen.queryByTestId("reader-card-ipe", { includeHiddenElements: true })).toBeNull();
+    expect(screen.getByLabelText("Ana Paula")).toBeDefined();
     expect(screen.getByText("troca")).toBeDefined();
   });
 });

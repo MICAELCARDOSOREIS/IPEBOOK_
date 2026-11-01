@@ -101,9 +101,11 @@ export function MyListingsListingsTab({
           </Text>
           {wideWeb ? (
             <View style={styles.tableHeader}>
-              <Text style={[styles.tableHeaderText, { flex: 3 }]}>Livro</Text>
-              <Text style={[styles.tableHeaderText, { flex: 1.5 }]}>Situação</Text>
-              <Text style={[styles.tableHeaderText, { width: 96 }]}>Ação</Text>
+              <Text style={[styles.tableHeaderText, { flex: 3, minWidth: 220 }]}>Livro</Text>
+              <Text style={[styles.tableHeaderText, { flex: 1.5, minWidth: 120 }]}>Modalidade</Text>
+              <Text style={[styles.tableHeaderText, { flex: 1.5, minWidth: 120 }]}>Bairro</Text>
+              <Text style={[styles.tableHeaderText, { flex: 1.2, minWidth: 100 }]}>Situação</Text>
+              <Text style={[styles.tableHeaderText, { width: 110, textAlign: "right" }]}>Ação</Text>
             </View>
           ) : null}
           {filteredBooks.map((book) => (
@@ -112,9 +114,17 @@ export function MyListingsListingsTab({
               wide={
                 wideWeb
                   ? {
-                      statusVariant: book.status === "reserved" ? "reserved" : book.modality,
-                      statusLabel: book.status === "available" ? MODALITY_LABELS[book.modality] : STATUS_LABELS[book.status],
-                      offer: book.modality === "sale" && book.price ? formatPrice(book.price) : MODALITY_LABELS[book.modality],
+                      statusVariant:
+                        book.status === "available"
+                          ? "available"
+                          : book.status === "reserved"
+                            ? "reserved"
+                            : "paused",
+                      statusLabel: STATUS_LABELS[book.status],
+                      offer:
+                        book.modality === "sale" && book.price
+                          ? formatPrice(book.price)
+                          : MODALITY_LABELS[book.modality],
                     }
                   : undefined
               }

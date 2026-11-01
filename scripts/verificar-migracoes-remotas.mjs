@@ -711,6 +711,11 @@ export const MAPEAMENTO_MIGRACOES = {
     validar: (ctx) => Boolean(ctx.tabelas.v2_books?.colunasValidas?.includes('synopsis')),
     detalhe: 'Colunas is_box e box_volumes_count em v2_books (Spec 112)',
   },
+  '202610310003_negociacao_melhorias.sql': {
+    titulo: 'Melhorias na negociação',
+    validar: (ctx) => Boolean(ctx.tabelas.v2_book_requests?.existe),
+    detalhe: 'Colunas initial_message e offered_book_id em v2_book_requests (Spec 113)',
+  },
 };
 
 /**

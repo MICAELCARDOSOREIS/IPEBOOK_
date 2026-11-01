@@ -12,7 +12,7 @@ import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { useSearchAlertsViewModel } from "@/viewmodel/useSearchAlertsViewModel";
-import { WEB_MAX_WIDTH, useWebColumns } from "@/view/webLayout";
+import { WEB_GUTTER, WEB_MAX_WIDTH, useWebColumns } from "@/view/webLayout";
 
 import { withPress } from "@/view/pressFeedback";
 export type SearchAlertsProps = {
@@ -62,7 +62,7 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
           </Pressable>
         </View>
       ) : (
-        <View style={[styles.content, wide && { maxWidth: WIDE_CONTENT_MAX_WIDTH }]}>
+        <View style={[styles.content, wide && styles.contentWide]}>
           {showListChrome ? (
             <View style={styles.heroHeader}>
               <Text style={styles.heroTitle}>O próximo livro pode chegar.</Text>
@@ -176,6 +176,11 @@ function createStyles(colors: ColorPalette) {
     width: "100%",
     padding: tokens.spacing[24],
     gap: tokens.spacing[16],
+  },
+  contentWide: {
+    maxWidth: WEB_MAX_WIDTH,
+    alignSelf: "center",
+    paddingHorizontal: WEB_GUTTER,
   },
   centered: {
     flex: 1,

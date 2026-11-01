@@ -5,6 +5,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { buildDeliveryPayload, normalizeDeliveryCode, parseDeliveryPayload } from "@/model/entities/delivery";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useDeliveryViewModel } from "@/viewmodel/useDeliveryViewModel";
+import { useRequestDetailViewModel } from "@/viewmodel/useRequestDetailViewModel";
+import { useNegotiationRatingViewModel } from "@/viewmodel/useNegotiationRatingViewModel";
+import { NegotiationRatingModal } from "@/view/requests/NegotiationRatingModal";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { AppIcon } from "@/view/components/AppIcon";
@@ -49,6 +52,24 @@ function formatClock(seconds: number): string {
  */
 export function Delivery({ requestId, sessionUserId, onBack }: DeliveryProps) {
   const [state, actions] = useDeliveryViewModel(requestId, sessionUserId);
+  const [detailState] = useRequestDetailViewModel(requestId, sessionUserId);
+  const counterpartId = detailState.detail?.counterpartId ?? "";
+  const counterpartName = detailState.detail?.counterpartName ?? "Pessoa da comunidade";
+  const [ratingState, ratingActions] = useNegotiationRatingViewModel(
+    requestId,
+    sessionUserId,
+    counterpartId,
+  );
+  const [ratingModalVisible, setRatingModalVisible] = useState(false);
+  const previouslyCompleted = useRef(state.completed);
+
+  useEffect(() => {
+    if (!previouslyCompleted.current && state.completed && !ratingState.userRating) {
+      setRatingModalVisible(true);
+    }
+    previouslyCompleted.current = state.completed;
+  }, [state.completed, ratingState.userRating]);
+
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const secondsLeft = useSecondsLeft(state.code?.expiresAt ?? null);
@@ -93,9 +114,14 @@ export function Delivery({ requestId, sessionUserId, onBack }: DeliveryProps) {
                 <IconBadge icon="check" tone="action" />
                 <Text accessibilityRole="header" style={styles.headline}>Entrega concluída!</Text>
                 <Text style={styles.body}>
-                  Vocês confirmaram a entrega do livro. Volte à negociação para avaliar a experiência.
+                  Vocês confirmaram a entrega do livro em Piripiri. Conte como foi sua experiência na negociação.
                 </Text>
-                <FilledButton label="Voltar à negociação" onPress={() => onBack?.()} />
+                <FilledButton
+                  label={ratingState.userRating ? "Avaliação já enviada" : "Avaliar negociação"}
+                  disabled={Boolean(ratingState.userRating)}
+                  onPress={() => setRatingModalVisible(true)}
+                />
+                <OutlinedButton label="Voltar à negociação" onPress={() => onBack?.()} />
               </View>
             ) : state.role === "giver" ? (
               <View style={styles.card}>
@@ -169,6 +195,17 @@ export function Delivery({ requestId, sessionUserId, onBack }: DeliveryProps) {
           </View>
         </ScrollView>
       )}
+      <NegotiationRatingModal
+        visible={ratingModalVisible}
+        counterpartName={counterpartName}
+        selectedScore={ratingState.selectedScore}
+        onSelectScore={ratingActions.setSelectedScore}
+        onSubmit={ratingActions.submitRating}
+        onClose={() => setRatingModalVisible(false)}
+        isSubmitting={ratingState.isSubmitting}
+        submitError={ratingState.submitError}
+        isSuccess={ratingState.isSuccess}
+      />
     </SafeAreaView>
   );
 }

@@ -4,8 +4,9 @@ import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { FilledButton } from "@/view/components/FilledButton";
 import { AppIcon } from "@/view/components/AppIcon";
-
+import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { withPress } from "@/view/pressFeedback";
+
 export type MyListingsEmptyProps = {
   onNavigateToCreateListing?: () => void;
   onNavigateToHelp?: () => void;
@@ -20,9 +21,10 @@ export function MyListingsEmpty({
 }: MyListingsEmptyProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const wideWeb = useIsWideWeb();
 
   return (
-    <View style={styles.empty}>
+    <View style={[styles.empty, wideWeb && styles.emptyWide]}>
       <View style={styles.emptyIconContainer}>
         <AppIcon name="shelf" size={44} color={colors.m3.onSecondaryContainer} />
       </View>
@@ -58,6 +60,15 @@ function createStyles(colors: ColorPalette) {
       alignItems: "center",
       gap: tokens.spacing[12],
       paddingHorizontal: tokens.spacing[16],
+    },
+    emptyWide: {
+      maxWidth: 520,
+      alignSelf: "center",
+      paddingVertical: tokens.spacing[40],
+      paddingHorizontal: tokens.spacing[32],
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderRadius: tokens.radius.xl,
+      marginTop: tokens.spacing[24],
     },
     emptyIconContainer: {
       width: 96,

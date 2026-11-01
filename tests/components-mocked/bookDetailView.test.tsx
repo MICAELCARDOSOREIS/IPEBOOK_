@@ -13,6 +13,9 @@ vi.mock("@/viewmodel/useRequestNegotiationViewModel", () => ({ useRequestNegotia
 vi.mock("@/viewmodel/useShareListingViewModel", () => ({ useShareListingViewModel: vi.fn(), SHARE_BASE_URL: "https://ipebook.app" }));
 vi.mock("react-native-view-shot", () => ({ captureRef: vi.fn().mockResolvedValue("file:///tmp/anuncio.png") }));
 vi.mock("@/viewmodel/usePublicProfileViewModel", () => ({ usePublicProfileViewModel: vi.fn() }));
+vi.mock("@/viewmodel/useMyListingsViewModel", () => ({
+  useMyListingsViewModel: vi.fn().mockReturnValue([{ books: [], loading: false, error: null }, { reload: vi.fn() }]),
+}));
 
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useBookDetailViewModel } from "@/viewmodel/useBookDetailViewModel";
@@ -139,7 +142,9 @@ describe("BookDetail (spec 006, US6/T029)", () => {
     const { request } = setup(book({ ownerId: "other", modality, price: modality === "sale" ? 25 : undefined }), user);
     const screen = await renderDetail();
     await act(async () => { fireEvent.press(screen.getByText(label)); });
-    expect(request).toHaveBeenCalledWith("b1", "me");
+    const confirmLabel = modality === "trade" ? "Enviar proposta de troca" : "Confirmar interesse";
+    await act(async () => { fireEvent.press(screen.getByText(confirmLabel)); });
+    expect(request).toHaveBeenCalledWith("b1", "me", expect.anything());
   });
 
   it("não oferece ação principal no próprio anúncio, mas mantém compartilhar (Spec 074, CA2)", async () => {

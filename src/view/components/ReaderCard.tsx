@@ -40,16 +40,10 @@ export function ReaderCard({
   return (
     <View accessible={!footer} accessibilityLabel={`Cartão de leitor de ${name}`} style={styles.card}>
       <View style={styles.spine} />
-      {/* Sem foto o próprio avatar já é o ipê; o selo no canto só entra quando há foto. */}
-      {withMark ? (
-        <View style={styles.mark}>
-          <IpeMark size={76} testID="reader-card-ipe" />
-        </View>
-      ) : null}
       <View style={styles.avatarRing}>
         <Avatar name={name} photoUrl={photoUrl} size={64} />
       </View>
-      <View style={[styles.text, withMark ? styles.textWithMark : null]}>
+      <View style={styles.text}>
         <View style={styles.eyebrowRow}>
           <Text style={styles.eyebrow}>{eyebrow}</Text>
           {cycleStage ? (
@@ -66,6 +60,11 @@ export function ReaderCard({
         </Text>
         {footer}
       </View>
+      {withMark ? (
+        <View style={styles.mark}>
+          <IpeMark size={52} testID="reader-card-ipe" />
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -75,33 +74,40 @@ function createStyles(colors: ColorPalette) {
     card: {
       flexDirection: "row",
       alignItems: "center",
-      gap: tokens.spacing[16],
+      gap: tokens.spacing[12],
       minHeight: 112,
       paddingVertical: tokens.spacing[16],
-      paddingLeft: tokens.spacing[24],
-      paddingRight: tokens.spacing[16],
-      borderRadius: tokens.radius.xl,
+      paddingLeft: tokens.spacing[32],
+      paddingRight: tokens.spacing[12],
+      borderRadius: tokens.radius.medium,
       overflow: "hidden",
-      backgroundColor: colors.ipe.container,
+      backgroundColor: colors.ipe.petalSoft,
     },
     spine: {
       position: "absolute",
       left: 0,
       top: 0,
       bottom: 0,
-      width: 8,
+      width: 22,
+      alignItems: "center",
+      justifyContent: "center",
       backgroundColor: colors.ipe.trunk,
     },
-    mark: { position: "absolute", right: tokens.spacing[12], top: 0, bottom: 0, justifyContent: "center" },
+    mark: {
+      width: tokens.spacing[56],
+      flexShrink: 0,
+      alignItems: "center",
+      justifyContent: "center",
+    },
     avatarRing: {
       padding: tokens.spacing[3],
       borderRadius: tokens.radius.full,
       backgroundColor: colors.ipe.bloom,
     },
-    text: { flex: 1, gap: tokens.spacing[2] },
-    textWithMark: { paddingRight: tokens.spacing[80] },
+    text: { flex: 1, minWidth: 0, gap: tokens.spacing[4] },
     eyebrowRow: {
       flexDirection: "row",
+      flexWrap: "wrap",
       alignItems: "center",
       gap: tokens.spacing[8],
     },

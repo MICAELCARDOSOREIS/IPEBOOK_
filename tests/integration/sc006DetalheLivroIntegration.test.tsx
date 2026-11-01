@@ -30,6 +30,10 @@ describe("SC-005: ver detalhe do livro e solicitar negociação pela tela de det
       fireEvent.press(screen.getByText("Quero receber"));
     });
 
+    await act(async () => {
+      fireEvent.press(screen.getByText("Confirmar interesse"));
+    });
+
     expect(screen.getByText("Negociação solicitada")).toBeDefined();
 
     await authUseCases.signOut();

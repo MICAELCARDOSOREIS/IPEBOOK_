@@ -203,7 +203,7 @@ function createStyles(colors: ColorPalette) {
   list: {
     gap: tokens.spacing[12],
   },
-  contentWide: { maxWidth: WIDE_CONTENT_MAX_WIDTH, alignSelf: "center", paddingHorizontal: tokens.spacing[24] },
+  contentWide: { maxWidth: WIDE_CONTENT_MAX_WIDTH, alignSelf: "center", paddingHorizontal: WEB_GUTTER },
   listWide: { flexDirection: "row", flexWrap: "wrap", alignItems: "flex-start", columnGap: tokens.spacing[16], rowGap: tokens.spacing[16] },
   fullRow: { width: "100%" },
   footerAction: {

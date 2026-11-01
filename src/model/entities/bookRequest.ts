@@ -5,4 +5,6 @@ export type BookRequest = Readonly<{
   listingId: string;
   requesterId: string;
   status: RequestStatus;
+  initialMessage?: string;
+  offeredBookId?: string;
 }>;
