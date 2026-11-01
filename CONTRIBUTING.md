@@ -129,3 +129,23 @@ depois) o que for afetado:
 
 O [modelo de PR](.github/PULL_REQUEST_TEMPLATE.md) reúne esses itens num checklist visível a
 cada entrega. Mesmo sem abrir PR, use a mesma lista antes de considerar a tarefa concluída.
+
+
+---
+
+## 👥 7. Equipe
+
+Integrantes do projeto Ipebook. A autoria de cada commit reflete quem de fato escreveu o código;
+a participação de cada integrante é construída com trabalho real — ver `docs/tarefas-equipe.md`
+para tarefas disponíveis e abertas a quem quiser pegar.
+
+| Integrante | GitHub |
+| --- | --- |
+| Micael Cardoso Reis (responsável geral) | [@MICAELCARDOSOREIS](https://github.com/MICAELCARDOSOREIS) |
+| Maria Clara Almeida Martins | [@clarinhamartins](https://github.com/clarinhamartins) |
+| Antonio Carlos Gomes | [@gomes738](https://github.com/gomes738) |
+| Eric Vinícius dos Santos Oliveira | [@Eric2025gh](https://github.com/Eric2025gh) |
+
+> Regra de integridade: nenhum integrante deve atribuir commits a colegas que não os escreveram
+> para inflar participação. Isso compromete a rastreabilidade do projeto e, sendo um trabalho de
+> disciplina, pode configurar fraude acadêmica para o grupo inteiro.
