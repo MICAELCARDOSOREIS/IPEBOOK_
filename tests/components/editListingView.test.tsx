@@ -25,6 +25,8 @@ function mockViewModel(state: EditListingState, actions: Partial<EditListingActi
     setPhotoUrl: vi.fn(),
     addPhoto: vi.fn(),
     removePhoto: vi.fn(),
+    setIsBox: vi.fn(),
+    setBoxVolumesCount: vi.fn(),
     submit: vi.fn().mockResolvedValue(null),
     ...actions,
   };
@@ -56,6 +58,8 @@ const loadedState: EditListingState = {
   description: "Marcas leves",
   photoUrl: "",
   photos: [],
+  isBox: false,
+  boxVolumesCount: "",
   loading: false,
   saving: false,
   error: null,

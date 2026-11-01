@@ -298,8 +298,6 @@ function createStyles(colors: ColorPalette) {
   content: {
     flex: 1,
     width: "100%",
-    maxWidth: 720,
-    alignSelf: "center",
     padding: tokens.spacing[24],
     paddingTop: tokens.spacing[32],
   },
@@ -366,7 +364,7 @@ function createStyles(colors: ColorPalette) {
   infoCard: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: colors.soft,
+    backgroundColor: colors.m3.surfaceContainerHigh,
     borderRadius: tokens.radius.medium,
     padding: tokens.spacing[16],
     gap: tokens.spacing[12],

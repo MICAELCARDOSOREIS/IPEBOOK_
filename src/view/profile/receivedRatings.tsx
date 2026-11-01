@@ -104,7 +104,7 @@ function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
   page: { flex: 1, backgroundColor: colors.background },
   scroll: { flexGrow: 1 },
-  content: { width: "100%", maxWidth: 720, alignSelf: "center", padding: tokens.spacing[24] },
+  content: { width: "100%", padding: tokens.spacing[24] },
   status: { alignItems: "center", gap: tokens.spacing[16], paddingTop: tokens.spacing[48] },
   errorText: { ...tokens.typography.bodyMedium, color: colors.error, textAlign: "center" },
   emptyText: { ...tokens.typography.bodyMedium, color: colors.secondaryText, textAlign: "center" },
@@ -120,7 +120,7 @@ function createStyles(colors: ColorPalette) {
   },
   retryText: { ...tokens.typography.bodyMedium, color: colors.action, fontWeight: tokens.fontWeight.semiBold },
   list: { gap: tokens.spacing[12] },
-  contentWide: { maxWidth: WEB_MAX_WIDTH, paddingHorizontal: WEB_GUTTER },
+  contentWide: { paddingHorizontal: WEB_GUTTER },
   listWide: { flexDirection: "row", flexWrap: "wrap" },
   cardWide: { flexBasis: "48%", flexGrow: 0 },
   card: {

@@ -13,9 +13,11 @@ export type SearchFilters = Readonly<{
   category: string | "all";
   condition: SearchConditionFilter;
   priceRange: SearchPriceRange;
+  /** Restringe o catálogo a apenas boxes e coleções de livros (Spec 112). */
+  onlyBoxes?: boolean;
 }>;
 
-export type SearchFilterKey = "modality" | "category" | "condition" | "priceRange";
+export type SearchFilterKey = "modality" | "category" | "condition" | "priceRange" | "onlyBoxes";
 
 /** Filtro já aplicado, exibido como chip removível no Figma `02.04 · Explorar com filtro`. */
 export type ActiveFilter = Readonly<{
@@ -34,6 +36,7 @@ export const DEFAULT_SEARCH_FILTERS: SearchFilters = {
   category: "all",
   condition: "all",
   priceRange: "all",
+  onlyBoxes: false,
 };
 
 export const MODALITY_FILTER_LABELS: Readonly<Record<SearchModalityFilter, string>> = {
@@ -120,6 +123,7 @@ export function filterBooks(books: readonly Book[], query: SearchQuery): Book[] 
     if (query.filters.category !== "all" && book.category?.trim().toLowerCase() !== normalizedCategory) return false;
     if (!matchesNeighborhood(book, query.neighborhood)) return false;
     if (!matchesPrice(book, query.filters.priceRange)) return false;
+    if (query.filters.onlyBoxes && !book.isBox) return false;
     return matchesCondition(book, query.filters.condition);
   });
 }
@@ -157,6 +161,9 @@ export function activeFilters(filters: SearchFilters): ActiveFilter[] {
   if (filters.priceRange !== "all") {
     list.push({ key: "priceRange", label: PRICE_FILTER_LABELS[filters.priceRange] });
   }
+  if (filters.onlyBoxes) {
+    list.push({ key: "onlyBoxes", label: "Boxes e coleções" });
+  }
   return list;
 }
 
@@ -165,6 +172,7 @@ export function removeFilter(filters: SearchFilters, key: SearchFilterKey): Sear
   if (key === "modality") return { ...filters, modality: "all" };
   if (key === "category") return { ...filters, category: "all" };
   if (key === "condition") return { ...filters, condition: "all" };
+  if (key === "onlyBoxes") return { ...filters, onlyBoxes: false };
   return { ...filters, priceRange: "all" };
 }
 
@@ -173,6 +181,9 @@ export function describeResults(count: number, filters: SearchFilters): string {
   const countLabel = `${count} ${count === 1 ? "livro" : "livros"}`;
   const head = filters.modality === "all" ? countLabel : `${countLabel} ${MODALITY_SUMMARY[filters.modality]}`;
   const details: string[] = [];
+  if (filters.onlyBoxes) {
+    details.push("Boxes e coleções");
+  }
   if (filters.category !== "all") {
     details.push(filters.category);
   }

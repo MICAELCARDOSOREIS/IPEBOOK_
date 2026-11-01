@@ -63,7 +63,7 @@ export function MyListingsListingsTab({
   // Cada situação usa a cor da sua etiqueta (Disponível, Pausado, Reservado); "Todos" fica neutro.
   const filterChips: { key: ListingsFilter; label: string; a11y: string; tone?: { background: string; text: string } }[] = [
     { key: "all", label: `Todos (${books.length})`, a11y: "Filtrar por Todos" },
-    { key: "active", label: `Ativos (${activeCount})`, a11y: "Filtrar por Ativos", tone: { background: colors.soft, text: colors.action } },
+    { key: "active", label: `Ativos (${activeCount})`, a11y: "Filtrar por Ativos", tone: { background: colors.m3.secondaryContainer, text: colors.action } },
     { key: "paused", label: `Pausados (${pausedCount})`, a11y: "Filtrar por Pausados", tone: { background: colors.disabledBackground, text: colors.disabledText } },
     { key: "reserved", label: `Reservados (${reservedCount})`, a11y: "Filtrar por Reservados", tone: colors.badge.reserved },
   ];

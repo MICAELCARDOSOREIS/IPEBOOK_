@@ -299,6 +299,35 @@ describe("datasources Supabase", () => {
     );
   });
 
+  it("grava e lê campos de box e coleções de livros (Spec 112)", async () => {
+    const row = {
+      id: "livro-box-1", title: "Box Harry Potter", author: "J.K. Rowling",
+      owner_id: "dono-box", modality: "sale", price: 250, status: "available",
+      is_box: true, box_volumes_count: 7,
+    };
+    const single = vi.fn().mockResolvedValue({ data: row, error: null });
+    const select = vi.fn().mockReturnValue({ single });
+    const insert = vi.fn().mockReturnValue({ select });
+    const update = vi.fn().mockReturnValue({ eq: vi.fn().mockReturnValue({ select }) });
+    const from = vi.fn().mockReturnValue({ insert, update });
+    const books = new SupabaseBookDataSource(fakeClient({ from }));
+
+    const created = await books.create({
+      title: row.title, author: row.author, ownerId: row.owner_id,
+      modality: "sale", price: 250, status: "available",
+      isBox: true, boxVolumesCount: 7,
+    });
+    expect(insert).toHaveBeenCalledWith(
+      expect.objectContaining({ is_box: true, box_volumes_count: 7 }),
+    );
+    expect(created).toMatchObject({ isBox: true, boxVolumesCount: 7 });
+
+    await books.update("livro-box-1", { isBox: false, boxVolumesCount: undefined });
+    expect(update).toHaveBeenCalledWith(
+      expect.objectContaining({ is_box: false, box_volumes_count: null }),
+    );
+  });
+
   it("lista, consulta e atualiza livros com os dados remotos", async () => {
     const row = { id: "1", title: "Livro", author: "Autora", owner_id: "dono", modality: "donation", price: null, status: "available" };
     const order = vi.fn().mockResolvedValue({ data: [row], error: null });

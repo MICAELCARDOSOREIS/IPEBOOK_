@@ -140,6 +140,26 @@ export function FilterSheet({
           ) : null}
 
           <View style={styles.section}>
+            <Text style={styles.sectionLabel}>Formato</Text>
+            <View style={styles.chipsRow}>
+              <Chip
+                size="regular"
+                label="Todos"
+                accessibilityLabel="Todos os formatos"
+                selected={!draftFilters.onlyBoxes}
+                onPress={() => onChange({ onlyBoxes: false })}
+              />
+              <Chip
+                size="regular"
+                label="Boxes e coleções"
+                accessibilityLabel="Apenas boxes e coleções"
+                selected={Boolean(draftFilters.onlyBoxes)}
+                onPress={() => onChange({ onlyBoxes: true })}
+              />
+            </View>
+          </View>
+
+          <View style={styles.section}>
             <Text style={styles.sectionLabel}>Condição do livro</Text>
             <View style={styles.chipsRow}>
               {CONDITION_IDS.map((condition) => (

@@ -12,6 +12,7 @@ import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { categoryTone } from "@/view/categoryTone";
 import { AddPhotoCard } from "@/view/components/AddPhotoCard";
+import { Checkbox } from "@/view/components/Checkbox";
 import { Chip } from "@/view/components/Chip";
 import { FilledButton } from "@/view/components/FilledButton";
 import { TextButton } from "@/view/components/TextButton";
@@ -183,6 +184,30 @@ export default function EditListing({
                 />
               ))}
             </View>
+          </View>
+
+          <View style={styles.field}>
+            <Text style={styles.sectionLabel}>Formato do anúncio</Text>
+            <Checkbox
+              label="Box ou coleção de livros"
+              description="Marque se este anúncio reúne mais de um volume"
+              checked={Boolean(state.isBox)}
+              onChange={actions.setIsBox}
+              disabled={state.saving}
+            />
+            {state.isBox ? (
+              <View style={{ marginTop: tokens.spacing[8], paddingLeft: tokens.spacing[32] }}>
+                <TextField
+                  label="Quantidade de volumes (opcional)"
+                  value={state.boxVolumesCount}
+                  onChangeText={actions.setBoxVolumesCount}
+                  editable={!state.saving}
+                  placeholder="Ex: 3, 5, 7"
+                  keyboardType="number-pad"
+                  helperText="De 2 a 100 volumes componentes da coleção"
+                />
+              </View>
+            ) : null}
           </View>
 
           </View>
@@ -385,7 +410,7 @@ function createStyles(colors: ColorPalette) {
   locationContainer: {
     paddingVertical: tokens.spacing[12],
     paddingHorizontal: tokens.spacing[16],
-    backgroundColor: colors.soft,
+    backgroundColor: colors.m3.surfaceContainerHigh,
     borderRadius: tokens.radius.small,
     borderWidth: 1,
     borderColor: colors.action,

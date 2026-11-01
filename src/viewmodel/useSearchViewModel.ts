@@ -39,6 +39,7 @@ export type SearchState = {
   modality: SearchModalityFilter;
   category: string | "all";
   condition: SearchConditionFilter;
+  onlyBoxes: boolean;
   neighborhood: string | "all";
   priceRange: SearchPriceRange;
   sortBy: SearchSortOption;
@@ -63,6 +64,7 @@ export type SearchActions = {
   setModality: (modality: SearchModalityFilter) => void;
   setCategory: (category: string | "all") => void;
   setCondition: (condition: SearchConditionFilter) => void;
+  setOnlyBoxes: (onlyBoxes: boolean) => void;
   setNeighborhood: (neighborhood: string | "all") => void;
   setPriceRange: (range: SearchPriceRange) => void;
   setSortBy: (sortBy: SearchSortOption) => void;
@@ -186,6 +188,7 @@ export function useSearchViewModel(
       modality: filters.modality,
       category: filters.category,
       condition: filters.condition,
+      onlyBoxes: Boolean(filters.onlyBoxes),
       neighborhood,
       priceRange: filters.priceRange,
       sortBy,
@@ -206,6 +209,7 @@ export function useSearchViewModel(
       setModality: (modality) => setFilters((current) => ({ ...current, modality })),
       setCategory: (category) => setFilters((current) => ({ ...current, category })),
       setCondition: (condition) => setFilters((current) => ({ ...current, condition })),
+      setOnlyBoxes: (onlyBoxes) => setFilters((current) => ({ ...current, onlyBoxes })),
       setNeighborhood,
       setPriceRange: (priceRange) => setFilters((current) => ({ ...current, priceRange })),
       setSortBy,

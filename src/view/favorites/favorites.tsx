@@ -269,15 +269,11 @@ function createStyles(colors: ColorPalette) {
     privacyBody: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
     list: {
       width: "100%",
-      maxWidth: 720,
-      alignSelf: "center",
       padding: tokens.spacing[16],
       gap: tokens.spacing[8],
     },
     status: {
       width: "100%",
-      maxWidth: 720,
-      alignSelf: "center",
       alignItems: "center",
       gap: tokens.spacing[12],
       padding: tokens.spacing[24],

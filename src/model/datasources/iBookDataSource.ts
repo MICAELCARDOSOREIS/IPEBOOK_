@@ -5,6 +5,7 @@ export type ListBooksOptions = {
   offset?: number;
   neighborhood?: string;
   modality?: Book["modality"];
+  onlyBoxes?: boolean;
 };
 
 export interface IBookDataSource {

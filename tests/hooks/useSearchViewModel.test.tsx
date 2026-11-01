@@ -394,4 +394,22 @@ describe("testes de hook: useSearchViewModel (ISO/IEC 25010 - Adequação Funcio
     expect(hook.current[0].hasActiveFilters).toBe(false);
     expect(hook.current[0].books).toEqual(books);
   });
+
+  it("filtra apenas boxes e coleções via setOnlyBoxes (Spec 112)", async () => {
+    const list = [
+      { id: "1", title: "Livro avulso", author: "A1", ownerId: "u1", modality: "sale" as const, status: "available" as const, isBox: false },
+      { id: "2", title: "Box Harry Potter", author: "A2", ownerId: "u2", modality: "sale" as const, status: "available" as const, isBox: true, boxVolumesCount: 7 },
+    ];
+    const hook = await renderHook({ listBooks: async () => list });
+
+    await act(async () => {
+      hook.current[1].setOnlyBoxes(true);
+    });
+
+    expect(hook.current[0].onlyBoxes).toBe(true);
+    expect(hook.current[0].books).toEqual([list[1]]);
+    expect(hook.current[0].activeFilters).toContainEqual(
+      expect.objectContaining({ key: "onlyBoxes", label: "Boxes e coleções" }),
+    );
+  });
 });

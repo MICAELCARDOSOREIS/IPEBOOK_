@@ -12,6 +12,7 @@ export type TagVariant =
   | "completed"
   | "paused"
   | "available"
+  | "box"
   | "venda"
   | "troca"
   | "doacao"
@@ -91,14 +92,19 @@ function createVariantConfig(
       defaultLabel: "Pausado",
     },
     available: {
-      background: colors.soft,
+      background: colors.m3.secondaryContainer,
       text: colors.action,
       defaultLabel: "Disponível",
     },
     disponivel: {
-      background: colors.soft,
+      background: colors.m3.secondaryContainer,
       text: colors.action,
       defaultLabel: "Disponível",
+    },
+    box: {
+      background: colors.m3.secondaryContainer,
+      text: colors.m3.onSecondaryContainer,
+      defaultLabel: "Box",
     },
   };
 }

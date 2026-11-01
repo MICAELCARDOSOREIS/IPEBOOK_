@@ -12,7 +12,7 @@ export default function RedefinirSenhaRoute() {
       onNavigateToForgotPassword={() => replaceOnce("/esqueci-senha")}
       onBack={() => {
         if (router.canGoBack()) backOnce();
-        else replaceOnce("/");
+        else replaceOnce("/bem-vindo");
       }}
     />
   );

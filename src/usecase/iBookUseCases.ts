@@ -19,6 +19,10 @@ export type CreateListingInput = Readonly<{
   publicationYear?: number;
   photoUrl?: string;
   photos?: readonly string[];
+  /** Indica se é um box/coleção de livros (Spec 112). */
+  isBox?: boolean;
+  /** Quantidade de volumes (de 2 a 100). */
+  boxVolumesCount?: number;
 }>;
 
 export type UpdateListingInput = Readonly<{
@@ -34,6 +38,10 @@ export type UpdateListingInput = Readonly<{
   description?: string;
   photoUrl?: string;
   photos?: readonly string[];
+  /** Indica se é um box/coleção de livros (Spec 112). */
+  isBox?: boolean;
+  /** Quantidade de volumes (de 2 a 100). */
+  boxVolumesCount?: number;
 }>;
 
 export type SaveDraftInput = CreateListingInput & {

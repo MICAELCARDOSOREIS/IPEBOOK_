@@ -473,7 +473,7 @@ function getIconToneStyle(icon: LinkItem["icon"], colors: ColorPalette) {
     case "bell":
     case "place":
     case "mail":
-      return { backgroundColor: colors.soft };
+      return { backgroundColor: colors.m3.surfaceContainerHigh };
     case "block":
       return { backgroundColor: colors.errorContainer };
     case "flag":
@@ -515,7 +515,7 @@ function createStyles(colors: ColorPalette) {
       shadowOffset: { width: 0, height: 1 },
       shadowOpacity: 0.03,
       shadowRadius: 3,
-      elevation: 1,
+      elevation: 2,
     },
     listCard: {
       borderRadius: tokens.radius.large,
@@ -527,7 +527,7 @@ function createStyles(colors: ColorPalette) {
       shadowOffset: { width: 0, height: 1 },
       shadowOpacity: 0.03,
       shadowRadius: 3,
-      elevation: 1,
+      elevation: 2,
     },
     accountCard: {
       flexDirection: "row",
@@ -542,7 +542,7 @@ function createStyles(colors: ColorPalette) {
       shadowOffset: { width: 0, height: 1 },
       shadowOpacity: 0.04,
       shadowRadius: 4,
-      elevation: 1,
+      elevation: 2,
     },
     accountName: {
       ...tokens.typography.titleMedium,
@@ -553,7 +553,7 @@ function createStyles(colors: ColorPalette) {
       ...tokens.typography.labelLarge,
       color: colors.action,
       fontWeight: tokens.fontWeight.semiBold,
-      backgroundColor: colors.soft,
+      backgroundColor: colors.m3.secondaryContainer,
       paddingHorizontal: tokens.spacing[12],
       paddingVertical: tokens.spacing[6],
       borderRadius: tokens.radius.full,
@@ -576,8 +576,6 @@ function createStyles(colors: ColorPalette) {
     scroll: { flexGrow: 1, paddingBottom: tokens.spacing[32] },
     content: {
       width: "100%",
-      maxWidth: 720,
-      alignSelf: "center",
       padding: tokens.spacing[16],
       gap: tokens.spacing[24],
     },

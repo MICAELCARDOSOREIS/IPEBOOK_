@@ -252,7 +252,7 @@ function createStyles(colors: ColorPalette) {
       width: 28,
       height: 28,
       borderRadius: tokens.radius.full,
-      backgroundColor: colors.soft,
+      backgroundColor: colors.m3.secondaryContainer,
       alignItems: "center",
       justifyContent: "center",
     },

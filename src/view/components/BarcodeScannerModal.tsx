@@ -92,7 +92,7 @@ export function BarcodeScannerModal({
           </View>
         ) : !permission.granted ? (
           <View style={styles.permissionContainer}>
-            <View style={[styles.iconCircle, { backgroundColor: colors.soft }]}>
+            <View style={[styles.iconCircle, { backgroundColor: colors.m3.surfaceContainerHigh }]}>
               <AppIcon name="camera" size={40} color={colors.action} />
             </View>
             <Text style={[styles.permissionTitle, { color: colors.text }]}>

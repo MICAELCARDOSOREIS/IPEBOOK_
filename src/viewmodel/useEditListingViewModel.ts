@@ -16,6 +16,8 @@ export type EditListingState = {
   description: string;
   photoUrl: string;
   photos: readonly string[];
+  isBox: boolean;
+  boxVolumesCount: string;
   loading: boolean;
   saving: boolean;
   error: string | null;
@@ -35,6 +37,8 @@ export type EditListingActions = {
   setPhotoUrl: (value: string) => void;
   addPhoto: (value: string) => void;
   removePhoto: (index: number) => void;
+  setIsBox: (value: boolean) => void;
+  setBoxVolumesCount: (value: string) => void;
   submit: () => Promise<Book | null>;
 };
 
@@ -50,6 +54,8 @@ const INITIAL_STATE: EditListingState = {
   description: "",
   photoUrl: "",
   photos: [],
+  isBox: false,
+  boxVolumesCount: "",
   loading: true,
   saving: false,
   error: null,
@@ -99,6 +105,8 @@ export function useEditListingViewModel(
         description: book.description ?? "",
         photoUrl: book.photoUrl ?? "",
         photos: book.photos ?? [],
+        isBox: Boolean(book.isBox),
+        boxVolumesCount: book.boxVolumesCount ? String(book.boxVolumesCount) : "",
         loading: false,
         saving: false,
         error: null,
@@ -181,12 +189,36 @@ export function useEditListingViewModel(
     }));
   }, []);
 
+  const setIsBox = useCallback((value: boolean) => {
+    setState((prev) => ({
+      ...prev,
+      isBox: value,
+      boxVolumesCount: value ? prev.boxVolumesCount : "",
+      error: null,
+      success: false,
+    }));
+  }, []);
+
+  const setBoxVolumesCount = useCallback((value: string) => {
+    setState((prev) => ({
+      ...prev,
+      boxVolumesCount: value,
+      error: null,
+      success: false,
+    }));
+  }, []);
+
   const submit = useCallback(async (): Promise<Book | null> => {
     setState((prev) => ({ ...prev, saving: true, error: null, success: false }));
 
     const priceNum =
       state.modality === "sale" && state.price.trim()
         ? Number(state.price.replace(",", "."))
+        : undefined;
+
+    const volumesNum =
+      state.isBox && state.boxVolumesCount.trim()
+        ? Number(state.boxVolumesCount.trim())
         : undefined;
 
     try {
@@ -203,6 +235,8 @@ export function useEditListingViewModel(
           description: state.description.trim() || undefined,
           photoUrl: state.photoUrl.trim() || undefined,
           photos: state.photos.length > 0 ? state.photos : undefined,
+          isBox: state.isBox,
+          boxVolumesCount: state.isBox ? volumesNum : undefined,
         },
         sessionUserId,
       );
@@ -235,6 +269,8 @@ export function useEditListingViewModel(
     state.description,
     state.photoUrl,
     state.photos,
+    state.isBox,
+    state.boxVolumesCount,
     useCases,
   ]);
 
@@ -261,6 +297,8 @@ export function useEditListingViewModel(
       setPhotoUrl,
       addPhoto,
       removePhoto,
+      setIsBox,
+      setBoxVolumesCount,
       submit,
     },
   ];

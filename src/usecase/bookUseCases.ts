@@ -42,6 +42,8 @@ export class BookUseCases implements IBookUseCases {
       description: sanitizedDescription,
       photoUrl: input.photoUrl,
       photos: input.photos,
+      isBox: input.isBox === true,
+      boxVolumesCount: input.isBox ? input.boxVolumesCount : undefined,
     };
 
     const validation = validateBookPayload(payload);
@@ -65,6 +67,8 @@ export class BookUseCases implements IBookUseCases {
       ...normalizeEdition(input),
       ...(input.photoUrl?.trim() ? { photoUrl: input.photoUrl.trim() } : {}),
       ...(input.photos && input.photos.length > 0 ? { photos: input.photos } : {}),
+      isBox: input.isBox === true,
+      ...(input.isBox && input.boxVolumesCount ? { boxVolumesCount: input.boxVolumesCount } : {}),
     });
     await this.alerts?.matchNewBook(book);
     return book;
@@ -152,6 +156,12 @@ export class BookUseCases implements IBookUseCases {
       : book.description;
     const nextPhotoUrl = input.photoUrl !== undefined ? input.photoUrl : book.photoUrl;
     const nextPhotos = input.photos !== undefined ? input.photos : book.photos;
+    const nextIsBox = input.isBox !== undefined ? input.isBox : Boolean(book.isBox);
+    const nextBoxVolumesCount = nextIsBox
+      ? input.boxVolumesCount !== undefined
+        ? input.boxVolumesCount
+        : book.boxVolumesCount
+      : undefined;
 
     const validation = validateBookPayload({
       id: book.id,
@@ -168,6 +178,8 @@ export class BookUseCases implements IBookUseCases {
       description: nextDescription,
       photoUrl: nextPhotoUrl,
       photos: nextPhotos,
+      isBox: nextIsBox,
+      boxVolumesCount: nextBoxVolumesCount,
     });
     if (!validation.isValid) {
       throw new ValidationError(validation.errors[0]);
@@ -186,6 +198,8 @@ export class BookUseCases implements IBookUseCases {
       description: nextDescription,
       photoUrl: nextPhotoUrl?.trim(),
       photos: nextPhotos,
+      isBox: nextIsBox,
+      boxVolumesCount: nextBoxVolumesCount,
     });
   }
 
@@ -251,6 +265,8 @@ export class BookUseCases implements IBookUseCases {
       photos: input.photos,
       status: "draft" as const,
       draftStep: input.draftStep,
+      isBox: input.isBox === true,
+      boxVolumesCount: input.isBox ? input.boxVolumesCount : undefined,
     };
 
     const validation = validateDraftPayload(candidate);
@@ -272,6 +288,8 @@ export class BookUseCases implements IBookUseCases {
       ...normalizeEdition(input),
       photoUrl: input.photoUrl?.trim(),
       photos: input.photos,
+      isBox: input.isBox === true,
+      ...(input.isBox && input.boxVolumesCount ? { boxVolumesCount: input.boxVolumesCount } : {}),
     };
 
     if (input.draftId) {
@@ -352,6 +370,8 @@ export class BookUseCases implements IBookUseCases {
       description: sanitizedDescription,
       photoUrl: input.photoUrl,
       photos: input.photos,
+      isBox: input.isBox === true,
+      boxVolumesCount: input.isBox ? input.boxVolumesCount : undefined,
     });
     if (!validation.isValid) {
       throw new ValidationError(validation.errors[0]);
@@ -371,6 +391,8 @@ export class BookUseCases implements IBookUseCases {
       ...(input.photoUrl?.trim() ? { photoUrl: input.photoUrl.trim() } : {}),
       ...(input.photos && input.photos.length > 0 ? { photos: input.photos } : {}),
       status: "available",
+      isBox: input.isBox === true,
+      ...(input.isBox && input.boxVolumesCount ? { boxVolumesCount: input.boxVolumesCount } : {}),
     });
     await this.alerts?.matchNewBook(book);
     return book;

@@ -410,8 +410,6 @@ function createStyles(colors: ColorPalette) {
     sectionWide: { flex: 1, flexBasis: 300, minWidth: 300 },
     content: {
       width: "100%",
-      maxWidth: 720,
-      alignSelf: "center",
       paddingHorizontal: tokens.spacing[24],
       paddingTop: tokens.spacing[12],
       gap: tokens.spacing[16],

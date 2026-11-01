@@ -238,7 +238,6 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
       paddingHorizontal: tokens.spacing[16],
       paddingTop: tokens.spacing[8],
       paddingBottom: tokens.spacing[32],
-      maxWidth: wideWeb ? WEB_MAX_WIDTH : 720,
       width: "100%",
       alignSelf: "center",
     },

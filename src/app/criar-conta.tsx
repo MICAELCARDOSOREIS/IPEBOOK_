@@ -10,7 +10,7 @@ export default function CriarConta() {
       onNavigateToTerms={() => pushOnce("/termos")}
       onBack={() => {
         if (router.canGoBack()) backOnce();
-        else replaceOnce("/");
+        else replaceOnce("/bem-vindo");
       }}
     />
   );

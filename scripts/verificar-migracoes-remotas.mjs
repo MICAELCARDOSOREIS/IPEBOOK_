@@ -706,6 +706,11 @@ export const MAPEAMENTO_MIGRACOES = {
     validar: (ctx) => Boolean(ctx.tabelas.v2_books?.colunasValidas?.includes('synopsis')),
     detalhe: 'Tabela v2_beta_testers fechada e função v2_register_beta_tester (Spec 108)',
   },
+  '202610310002_anuncio_box_de_livros.sql': {
+    titulo: 'Suporte a box e coleções de livros',
+    validar: (ctx) => Boolean(ctx.tabelas.v2_books?.colunasValidas?.includes('synopsis')),
+    detalhe: 'Colunas is_box e box_volumes_count em v2_books (Spec 112)',
+  },
 };
 
 /**

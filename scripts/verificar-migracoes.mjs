@@ -724,5 +724,31 @@ if (!notifsFav.rows.some(r => r.title.includes('disponível novamente'))) {
 
 process.stdout.write('Notificações comunitárias e fechamento de ciclos (Spec 111): verificadas com sucesso\n');
 
+// Spec 112: Anúncio de box de livros (is_box e box_volumes_count)
+const livroBox = await db.query(`select id, is_box, box_volumes_count from public.v2_books where owner_id = '${owner}' limit 1`);
+if (livroBox.rows[0].is_box !== false || livroBox.rows[0].box_volumes_count !== null) {
+  throw new Error(`Valores padrão de box incorretos: ${JSON.stringify(livroBox.rows[0])}`);
+}
+await as('authenticated', owner, `update public.v2_books set is_box = true, box_volumes_count = 7 where id = '${livroBox.rows[0].id}'`);
+const boxAtualizado = await db.query(`select is_box, box_volumes_count from public.v2_books where id = '${livroBox.rows[0].id}'`);
+if (boxAtualizado.rows[0].is_box !== true || boxAtualizado.rows[0].box_volumes_count !== 7) {
+  throw new Error(`Atualização de box falhou: ${JSON.stringify(boxAtualizado.rows[0])}`);
+}
+// Rejeita volume menor que 2
+try {
+  await as('authenticated', owner, `update public.v2_books set box_volumes_count = 1 where id = '${livroBox.rows[0].id}'`);
+  throw new Error('Permitiu box_volumes_count = 1');
+} catch (e) {
+  if (e.message.includes('Permitiu')) throw e;
+}
+// Rejeita volume sem is_box = true
+try {
+  await as('authenticated', owner, `update public.v2_books set is_box = false, box_volumes_count = 3 where id = '${livroBox.rows[0].id}'`);
+  throw new Error('Permitiu box_volumes_count sem is_box = true');
+} catch (e) {
+  if (e.message.includes('Permitiu')) throw e;
+}
+process.stdout.write('Suporte a box e coleções de livros (Spec 112): verificado com sucesso\n');
+
 process.stdout.write('Migrações e cenários SQL locais verificados.\n');
 await db.close();

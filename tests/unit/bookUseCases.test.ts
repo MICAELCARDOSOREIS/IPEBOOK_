@@ -570,3 +570,89 @@ describe("sinopse e dados da edição do ISBN (Spec 097)", () => {
     expect(book.publisher).toBeUndefined();
   });
 });
+
+describe("suporte a box e coleções de livros (Spec 112)", () => {
+  it("cria anúncio como box com contagem de volumes e persiste no repositório", async () => {
+    const source = new MemoryBookDataSource();
+    const useCases = new BookUseCases(source);
+
+    const created = await useCases.createListing(
+      {
+        title: "Box O Senhor dos Anéis",
+        author: "J.R.R. Tolkien",
+        modality: "sale",
+        price: 180,
+        isBox: true,
+        boxVolumesCount: 3,
+      },
+      "user-box",
+    );
+
+    expect(created.isBox).toBe(true);
+    expect(created.boxVolumesCount).toBe(3);
+
+    const buscado = await useCases.getBookById(created.id);
+    expect(buscado.isBox).toBe(true);
+    expect(buscado.boxVolumesCount).toBe(3);
+  });
+
+  it("atualiza anúncio para definir formato de box", async () => {
+    const source = new MemoryBookDataSource();
+    const useCases = new BookUseCases(source);
+
+    const created = await useCases.createListing(
+      {
+        title: "Saga Harry Potter",
+        author: "J.K. Rowling",
+        modality: "trade",
+      },
+      "user-box",
+    );
+    expect(created.isBox).toBeFalsy();
+
+    const atualizado = await useCases.updateListing(
+      created.id,
+      {
+        isBox: true,
+        boxVolumesCount: 7,
+      },
+      "user-box",
+    );
+
+    expect(atualizado.isBox).toBe(true);
+    expect(atualizado.boxVolumesCount).toBe(7);
+  });
+
+  it("filtra apenas boxes ao listar livros com onlyBoxes", async () => {
+    const source = new MemoryBookDataSource([
+      { id: "1", title: "Livro avulso", author: "A1", ownerId: "u1", modality: "donation", status: "available", isBox: false },
+      { id: "2", title: "Box Crônicas de Nárnia", author: "C.S. Lewis", ownerId: "u1", modality: "sale", price: 120, status: "available", isBox: true, boxVolumesCount: 7 },
+    ]);
+    const useCases = new BookUseCases(source);
+
+    const boxes = await useCases.listBooks({ onlyBoxes: true });
+    expect(boxes).toHaveLength(1);
+    expect(boxes[0].id).toBe("2");
+    expect(boxes[0].isBox).toBe(true);
+  });
+
+  it("salva e recupera rascunho com dados de box", async () => {
+    const source = new MemoryBookDataSource();
+    const useCases = new BookUseCases(source);
+
+    const draft = await useCases.saveDraft(
+      {
+        title: "Box Percy Jackson",
+        author: "Rick Riordan",
+        modality: "trade",
+        isBox: true,
+        boxVolumesCount: 5,
+        draftStep: 3,
+      },
+      "user-box",
+    );
+
+    expect(draft.isBox).toBe(true);
+    expect(draft.boxVolumesCount).toBe(5);
+  });
+});

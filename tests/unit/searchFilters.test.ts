@@ -111,4 +111,44 @@ describe("searchFilters (Spec 028 · Figma 02.03/02.04)", () => {
       { key: "condition", label: "Desgastado" },
     ]);
   });
+
+  it("filtra apenas boxes e coleções de livros (Spec 112)", () => {
+    const books = [
+      book({ id: "1", title: "Livro avulso", isBox: false }),
+      book({ id: "2", title: "Box Harry Potter", isBox: true, boxVolumesCount: 7 }),
+      book({ id: "3", title: "Trilogia Fundação", isBox: true, boxVolumesCount: 3 }),
+    ];
+
+    const filtrados = filterBooks(books, {
+      term: "",
+      filters: withFilters({ onlyBoxes: true }),
+      neighborhood: "all",
+    });
+
+    expect(filtrados).toHaveLength(2);
+    expect(filtrados.map((b) => b.id)).toEqual(["2", "3"]);
+  });
+
+  it("gera chip e gerencia remoção do filtro de boxes (Spec 112)", () => {
+    const filters = withFilters({ onlyBoxes: true, category: "Ficção" });
+
+    expect(activeFilters(filters)).toContainEqual({
+      key: "onlyBoxes",
+      label: "Boxes e coleções",
+    });
+    expect(countActiveFilters(filters)).toBe(2);
+
+    const semBox = removeFilter(filters, "onlyBoxes");
+    expect(semBox.onlyBoxes).toBe(false);
+    expect(countActiveFilters(semBox)).toBe(1);
+  });
+
+  it("inclui 'Box/Coleção' na descrição resumida dos resultados (Spec 112)", () => {
+    expect(describeResults(2, withFilters({ onlyBoxes: true }))).toBe(
+      "2 livros · Boxes e coleções",
+    );
+    expect(describeResults(1, withFilters({ onlyBoxes: true, modality: "sale" }))).toBe(
+      "1 livro à venda · Boxes e coleções",
+    );
+  });
 });

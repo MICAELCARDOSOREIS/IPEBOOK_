@@ -358,6 +358,7 @@ export default function Search({
           onModality={actions.setModality}
           onCondition={actions.setCondition}
           onCategory={actions.setCategory}
+          onToggleOnlyBoxes={actions.setOnlyBoxes}
           onClear={actions.resetFilters}
         />
       ) : null}
@@ -406,6 +407,12 @@ export default function Search({
                   <Text numberOfLines={1} style={styles.cardAuthor}>{item.author}</Text>
                   <View style={[styles.cardMetaRow, wideWeb && styles.cardMetaRowWide]}>
                     <Tag variant={item.modality} />
+                    {item.isBox ? (
+                      <Tag
+                        variant="box"
+                        label={item.boxVolumesCount ? `Box (${item.boxVolumesCount} vols)` : "Box"}
+                      />
+                    ) : null}
                     <Text numberOfLines={1} style={styles.priceText}>{priceOrCondition}</Text>
                     {item.neighborhood ? (
                       <View style={styles.cardLocationBadge}>
@@ -508,7 +515,7 @@ function createStyles(colors: ColorPalette) {
     page: { flex: 1, backgroundColor: colors.background },
     flexOne: { flex: 1 },
     // Web larga: filtros fixos à esquerda e resultados em grade de ponta a ponta.
-    wideRow: { flex: 1, flexDirection: "row", gap: tokens.spacing[32], width: "100%", paddingHorizontal: 64, paddingTop: tokens.spacing[24] },
+    wideRow: { flex: 1, flexDirection: "row", gap: tokens.spacing[32], width: "100%", paddingTop: tokens.spacing[24] },
     contentWide: { flexGrow: 1, paddingBottom: tokens.spacing[32], gap: tokens.spacing[24] },
     gridRow: { gap: tokens.spacing[24] },
     cardMainWide: { flexDirection: "column", alignItems: "stretch", gap: tokens.spacing[8] },
@@ -520,8 +527,6 @@ function createStyles(colors: ColorPalette) {
     content: {
       flexGrow: 1,
       width: "100%",
-      maxWidth: 720,
-      alignSelf: "center",
       paddingHorizontal: tokens.spacing[16],
       paddingTop: tokens.spacing[8],
       paddingBottom: tokens.spacing[24],
@@ -657,7 +662,7 @@ function createStyles(colors: ColorPalette) {
       minHeight: tokens.accessibility.touchTarget,
       justifyContent: "center",
       alignItems: "center",
-      backgroundColor: colors.soft,
+      backgroundColor: colors.m3.surfaceContainerHigh,
       borderRadius: tokens.radius.small,
       paddingHorizontal: tokens.spacing[16],
     },
@@ -671,7 +676,7 @@ function createStyles(colors: ColorPalette) {
       minHeight: tokens.accessibility.touchTarget,
       justifyContent: "center",
       borderRadius: tokens.radius.full,
-      backgroundColor: colors.soft,
+      backgroundColor: colors.m3.surfaceContainerHigh,
       paddingHorizontal: tokens.spacing[16],
     },
     historyChipText: { ...tokens.typography.bodyLarge, color: colors.text },
