@@ -215,6 +215,19 @@ export default function ProfileHub({
               {isSignedIn ? (
                 <>
                   <View style={[styles.heroBlock, wideWeb && styles.heroBlockWide]}>
+                    <View style={styles.libraryCardHeader}>
+                      <View style={styles.libraryIcon}>
+                        <AppIcon name="shelf" size={24} color={colors.ipe.onContainer} />
+                      </View>
+                      <View style={styles.libraryCardText}>
+                        <Text style={styles.libraryCardTitle}>Minha biblioteca</Text>
+                        <Text style={styles.libraryCardDescription}>
+                          {totalPublications > 0
+                            ? `${totalPublications} ${totalPublications === 1 ? "livro publicado" : "livros publicados"}`
+                            : "Compartilhe seu primeiro livro com a comunidade"}
+                        </Text>
+                      </View>
+                    </View>
                     <View style={styles.identityRow}>
                       <View style={styles.identityText}>
                         <Text accessibilityRole="header" style={styles.profileName} numberOfLines={2}>
@@ -298,20 +311,6 @@ export default function ProfileHub({
                     </View>
 
                     {onNavigateToCreateListing ? (
-                      <View style={styles.libraryCard}>
-                        <View style={styles.libraryCardHeader}>
-                          <View style={styles.libraryIcon}>
-                            <AppIcon name="shelf" size={24} color={colors.ipe.onContainer} />
-                          </View>
-                          <View style={styles.libraryCardText}>
-                            <Text style={styles.libraryCardTitle}>Minha biblioteca</Text>
-                            <Text style={styles.libraryCardDescription}>
-                              {totalPublications > 0
-                                ? `${totalPublications} ${totalPublications === 1 ? "livro publicado" : "livros publicados"}`
-                                : "Compartilhe seu primeiro livro com a comunidade"}
-                            </Text>
-                          </View>
-                        </View>
                         <Pressable
                           accessibilityRole="button"
                           accessibilityLabel="Publicar um livro"
@@ -321,7 +320,6 @@ export default function ProfileHub({
                           <AppIcon name="add" size={20} color={colors.m3.onPrimary} />
                           <Text style={styles.publishButtonText}>Publicar um livro</Text>
                         </Pressable>
-                      </View>
                     ) : null}
                   </View>
 
@@ -456,7 +454,13 @@ function createStyles(colors: ColorPalette) {
       rowGap: tokens.spacing[24],
     },
     fullRow: { width: "100%" },
-    heroBlock: { width: "100%", gap: tokens.spacing[16] },
+    heroBlock: {
+      width: "100%",
+      gap: tokens.spacing[16],
+      borderRadius: tokens.radius.xl,
+      backgroundColor: colors.ipe.container,
+      padding: tokens.spacing[16],
+    },
     // Web larga: identidade e métricas numa coluna lateral; Atividade e Conta ao lado.
     heroBlockWide: { width: 380, position: "sticky" as "relative", top: tokens.spacing[16] },
     sectionWide: { flex: 1, flexBasis: 300, minWidth: 300 },
@@ -607,12 +611,6 @@ function createStyles(colors: ColorPalette) {
     statLabel: {
       ...tokens.typography.labelMedium,
       color: colors.m3.onSurfaceVariant,
-    },
-    libraryCard: {
-      gap: tokens.spacing[12],
-      borderRadius: tokens.radius.xl,
-      backgroundColor: colors.ipe.container,
-      padding: tokens.spacing[16],
     },
     libraryCardHeader: {
       flexDirection: "row",

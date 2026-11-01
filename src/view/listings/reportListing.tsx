@@ -44,7 +44,7 @@ export default function ReportListing({
       <SafeAreaView style={styles.page}>
         <TopAppBar title="Denunciar anúncio" onBack={onBack} contentMaxWidth={wide ? WEB_MAX_WIDTH : undefined} />
         <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
-          <View style={styles.content}>
+          <View style={[styles.content, wide && styles.contentWide]}>
             <View style={styles.successCard}>
               <IconBadge icon="check" tone="action" size="large" />
               <Text accessibilityRole="header" style={styles.successTitle}>
@@ -69,7 +69,7 @@ export default function ReportListing({
       <SafeAreaView style={styles.page}>
         <TopAppBar title="Denunciar anúncio" onBack={onBack} contentMaxWidth={wide ? WEB_MAX_WIDTH : undefined} />
         <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
-          <View style={styles.content}>
+          <View style={[styles.content, wide && styles.contentWide]}>
             <View style={styles.authNotice}>
               <IconBadge icon="flag" tone="neutral" size="large" />
               <Text accessibilityRole="header" style={styles.title}>
@@ -182,7 +182,11 @@ export default function ReportListing({
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
   page: { flex: 1, backgroundColor: colors.background },
-  contentWide: { paddingHorizontal: WEB_GUTTER },
+  contentWide: {
+    maxWidth: WEB_MAX_WIDTH,
+    alignSelf: "center",
+    paddingHorizontal: WEB_GUTTER,
+  },
   columns: { gap: tokens.spacing[16] },
   columnsWide: { flexDirection: "row", alignItems: "flex-start", gap: tokens.spacing[24] },
   column: { gap: tokens.spacing[16] },
