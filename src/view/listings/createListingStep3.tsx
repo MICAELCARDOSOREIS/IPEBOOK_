@@ -8,6 +8,7 @@ import {
 } from "@/model/entities/book";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { categoryTone } from "@/view/categoryTone";
 import { AppIcon } from "@/view/components/AppIcon";
 import { Checkbox } from "@/view/components/Checkbox";
@@ -60,7 +61,8 @@ export function CreateListingStep3({
   onSetBoxVolumesCount,
 }: CreateListingStep3Props) {
   const { colors, resolvedScheme } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const wideWeb = useIsWideWeb();
+  const styles = useMemo(() => createStyles(colors, wideWeb), [colors, wideWeb]);
   const [neighborhoodPickerVisible, setNeighborhoodPickerVisible] = useState(false);
 
   const descriptionTooLong = description.length > MAX_BOOK_DESCRIPTION_LENGTH;
@@ -161,7 +163,7 @@ export function CreateListingStep3({
             loading && styles.disabled,
           ]}
         >
-          <View pointerEvents="none" style={[styles.notch, { backgroundColor: colors.background }]}>
+          <View pointerEvents="none" style={[styles.notch, { backgroundColor: wideWeb ? colors.m3.surfaceContainerLowest : colors.background }]}>
             <Text style={styles.floatingLabel}>Bairro para retirada</Text>
           </View>
           <Text
@@ -212,7 +214,7 @@ export function CreateListingStep3({
   );
 }
 
-function createStyles(colors: ColorPalette) {
+function createStyles(colors: ColorPalette, wideWeb: boolean) {
   return StyleSheet.create({
     field: { gap: tokens.spacing[8] },
     boxVolumesContainer: { marginTop: tokens.spacing[4], paddingLeft: tokens.spacing[32] },
@@ -230,10 +232,10 @@ function createStyles(colors: ColorPalette) {
       alignItems: "center",
       gap: tokens.spacing[8],
       paddingHorizontal: tokens.spacing[16],
-      borderRadius: tokens.radius.extraSmall,
+      borderRadius: tokens.radius.medium,
       borderWidth: 1,
       borderColor: colors.m3.outline,
-      backgroundColor: "transparent",
+      backgroundColor: wideWeb ? colors.m3.surfaceContainerLow : "transparent",
     },
     neighborhoodFieldPressed: { borderColor: colors.action },
     notch: {

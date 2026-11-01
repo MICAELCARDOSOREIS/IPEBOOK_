@@ -5,19 +5,61 @@ import type { IsbnFeedback } from "@/viewmodel/useCreateListingViewModel";
 import type { ListingBasicsErrors } from "@/viewmodel/listingBasicsValidation";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { AddPhotoCard } from "@/view/components/AddPhotoCard";
 import { Chip } from "@/view/components/Chip";
-import { AppIcon } from "@/view/components/AppIcon";
+import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
 import { IconBadge } from "@/view/components/IconBadge";
 import { TextField } from "@/view/components/TextField";
 import { BarcodeScannerModal } from "@/view/components/BarcodeScannerModal";
 
 import { withPress } from "@/view/pressFeedback";
-const MODALITIES: { value: BookModality; label: string }[] = [
-  { value: "sale", label: "Venda" },
-  { value: "trade", label: "Troca" },
-  { value: "donation", label: "Doação" },
+const MODALITIES: { value: BookModality; label: string; icon: AppIconName; desc: string }[] = [
+  { value: "sale", label: "Venda", icon: "category", desc: "Defina um preço justo em R$" },
+  { value: "trade", label: "Troca", icon: "swap", desc: "Troque por outros livros" },
+  { value: "donation", label: "Doação", icon: "heart", desc: "Compartilhe gratuitamente" },
 ];
+
+function getModalityTheme(modality: BookModality, colors: ColorPalette) {
+  switch (modality) {
+    case "sale":
+      return {
+        accent: colors.action,
+        bgSelected: colors.badge.sale.background,
+        textSelected: colors.badge.sale.text,
+        iconBgSelected: colors.soft,
+        iconBgUnselected: colors.soft,
+        iconColorSelected: colors.action,
+        iconColorUnselected: colors.action,
+        radioBorder: colors.action,
+        radioInner: colors.action,
+      };
+    case "trade":
+      return {
+        accent: colors.gold,
+        bgSelected: colors.badge.trade.background,
+        textSelected: colors.badge.trade.text,
+        iconBgSelected: colors.ipe.container,
+        iconBgUnselected: colors.ipe.container,
+        iconColorSelected: colors.gold,
+        iconColorUnselected: colors.gold,
+        radioBorder: colors.gold,
+        radioInner: colors.gold,
+      };
+    case "donation":
+      return {
+        accent: colors.badge.donation.text,
+        bgSelected: colors.badge.donation.background,
+        textSelected: colors.badge.donation.text,
+        iconBgSelected: colors.m3.doacaoContainer,
+        iconBgUnselected: colors.m3.doacaoContainer,
+        iconColorSelected: colors.badge.donation.text,
+        iconColorUnselected: colors.badge.donation.text,
+        radioBorder: colors.badge.donation.text,
+        radioInner: colors.badge.donation.text,
+      };
+  }
+}
 
 export type CreateListingStep1Props = {
   isbn?: string;
@@ -67,28 +109,51 @@ export function CreateListingStep1({
   onGoToPhotos,
 }: CreateListingStep1Props) {
   const { colors } = useTheme();
+  const wideWeb = useIsWideWeb();
   const [scannerVisible, setScannerVisible] = useState(false);
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = useMemo(() => createStyles(colors, wideWeb), [colors, wideWeb]);
 
   return (
     <>
-      <View style={styles.isbnCard}>
-        {/* Uma linha só, tocável inteira: o ISBN é um atalho, os campos do livro continuam logo abaixo. */}
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Abrir leitor de código de barras pela câmera"
-          accessibilityState={{ disabled: Boolean(loading || lookingUpIsbn) }}
-          disabled={loading || lookingUpIsbn}
-          onPress={() => setScannerVisible(true)}
-          style={withPress(styles.isbnHeader)}
-        >
-          <IconBadge icon="camera" tone="action" />
-          <View style={styles.isbnTexts}>
-            <Text style={styles.isbnTitle}>{lookingUpIsbn ? "Buscando o livro..." : "Escanear código de barras"}</Text>
-            <Text style={styles.hint}>Título e autor entram sozinhos.</Text>
+      <View style={wideWeb ? styles.webIsbnCard : styles.isbnCard}>
+        {wideWeb ? (
+          <View style={styles.webIsbnHeader}>
+            <View style={styles.webIsbnTextsRow}>
+              <IconBadge icon="camera" tone="action" />
+              <View style={styles.isbnTexts}>
+                <Text style={styles.isbnTitle}>{lookingUpIsbn ? "Buscando o livro..." : "Escanear código de barras"}</Text>
+                <Text style={styles.hint}>Aponte o código de barras ou ISBN na câmera para autocompletar os dados.</Text>
+              </View>
+            </View>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Abrir leitor de código de barras pela câmera"
+              accessibilityState={{ disabled: Boolean(loading || lookingUpIsbn) }}
+              disabled={loading || lookingUpIsbn}
+              onPress={() => setScannerVisible(true)}
+              style={withPress(styles.webScanButton)}
+            >
+              <AppIcon name="camera" size={16} color={colors.action} />
+              <Text style={styles.webScanButtonText}>Usar câmera</Text>
+            </Pressable>
           </View>
-          <AppIcon name="chevronRight" size={24} color={colors.m3.onSurfaceVariant} />
-        </Pressable>
+        ) : (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Abrir leitor de código de barras pela câmera"
+            accessibilityState={{ disabled: Boolean(loading || lookingUpIsbn) }}
+            disabled={loading || lookingUpIsbn}
+            onPress={() => setScannerVisible(true)}
+            style={withPress(styles.isbnHeader)}
+          >
+            <IconBadge icon="camera" tone="action" />
+            <View style={styles.isbnTexts}>
+              <Text style={styles.isbnTitle}>{lookingUpIsbn ? "Buscando o livro..." : "Escanear código de barras"}</Text>
+              <Text style={styles.hint}>Título e autor entram sozinhos.</Text>
+            </View>
+            <AppIcon name="chevronRight" size={24} color={colors.m3.onSurfaceVariant} />
+          </Pressable>
+        )}
 
         <BarcodeScannerModal
           visible={scannerVisible}
@@ -126,27 +191,100 @@ export function CreateListingStep1({
           </View>
         ) : null}
       </View>
-      <Text style={styles.dividerText}>ou preencha manualmente</Text>
+
+      <View style={wideWeb ? styles.webDividerContainer : undefined}>
+        {wideWeb ? <View style={styles.webDividerLine} /> : null}
+        <Text style={wideWeb ? styles.webDividerText : styles.dividerText}>ou preencha manualmente</Text>
+        {wideWeb ? <View style={styles.webDividerLine} /> : null}
+      </View>
 
       <View style={styles.field}>
         <Text style={styles.sectionLabel}>Modalidade</Text>
-        <View style={styles.chipRow}>
-          {MODALITIES.map((item) => (
-            <Chip
-              key={item.value}
-              label={item.label}
-              accessibilityLabel={`Modalidade ${item.label}`}
-              tone={colors.badge[item.value]}
-              selected={modality === item.value}
-              onPress={() => onSetModality(item.value)}
-              disabled={loading}
-            />
-          ))}
-        </View>
+        {wideWeb ? (
+          <View style={styles.webModalitiesGrid}>
+            {MODALITIES.map((item) => {
+              const isSelected = modality === item.value;
+              const theme = getModalityTheme(item.value, colors);
+              return (
+                <Pressable
+                  key={item.value}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Modalidade ${item.label}`}
+                  accessibilityState={{ selected: isSelected }}
+                  onPress={() => onSetModality(item.value)}
+                  disabled={loading}
+                  style={withPress([
+                    styles.webModalityCard,
+                    {
+                      borderColor: isSelected ? theme.accent : colors.m3.outlineVariant,
+                      backgroundColor: isSelected ? theme.bgSelected : colors.m3.surfaceContainerLow,
+                    },
+                  ])}
+                >
+                  <View style={styles.webModalityHeader}>
+                    <View
+                      style={[
+                        styles.webModalityIconBadge,
+                        {
+                          backgroundColor: isSelected ? theme.iconBgSelected : theme.iconBgUnselected,
+                        },
+                      ]}
+                    >
+                      <AppIcon
+                        name={item.icon}
+                        size={18}
+                        color={isSelected ? theme.iconColorSelected : theme.iconColorUnselected}
+                      />
+                    </View>
+                    <View
+                      style={[
+                        styles.webModalityRadio,
+                        { borderColor: isSelected ? theme.radioBorder : colors.m3.outlineVariant },
+                      ]}
+                    >
+                      {isSelected ? (
+                        <View style={[styles.webModalityRadioInner, { backgroundColor: theme.radioInner }]} />
+                      ) : null}
+                    </View>
+                  </View>
+                  <Text
+                    style={[
+                      styles.webModalityTitle,
+                      isSelected && { color: theme.textSelected, fontWeight: tokens.fontWeight.bold },
+                    ]}
+                  >
+                    {item.label}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.webModalityDesc,
+                      isSelected && { color: theme.textSelected, opacity: 0.85 },
+                    ]}
+                  >
+                    {item.desc}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        ) : (
+          <View style={styles.chipRow}>
+            {MODALITIES.map((item) => (
+              <Chip
+                key={item.value}
+                label={item.label}
+                accessibilityLabel={`Modalidade ${item.label}`}
+                tone={colors.badge[item.value]}
+                selected={modality === item.value}
+                onPress={() => onSetModality(item.value)}
+                disabled={loading}
+              />
+            ))}
+          </View>
+        )}
       </View>
 
-      {/* Título e autor ocupam a largura toda: ao lado da foto sobrava uma coluna estreita para digitar. */}
-      <View style={styles.photoRow}>
+      <View style={wideWeb ? styles.webPhotoCard : styles.photoRow}>
         <AddPhotoCard
           photoUrl={photoUrl}
           onPress={onGoToPhotos}
@@ -154,7 +292,11 @@ export function CreateListingStep1({
         />
         <View style={styles.photoTexts}>
           <Text style={styles.sectionLabel}>Foto de capa</Text>
-          <Text style={styles.hint}>Foto leve, com boa luz. Você pode ajustar na próxima etapa.</Text>
+          <Text style={styles.hint}>
+            {wideWeb
+              ? "Foto nítida e bem iluminada do seu livro. Você poderá adicionar mais fotos na próxima etapa."
+              : "Foto leve, com boa luz. Você pode ajustar na próxima etapa."}
+          </Text>
         </View>
       </View>
 
@@ -166,26 +308,55 @@ export function CreateListingStep1({
         placeholder="Ex: Dom Casmurro"
         error={fieldErrors.title}
       />
-      <TextField
-        label="Autor"
-        value={author}
-        onChangeText={onSetAuthor}
-        editable={!loading}
-        placeholder="Ex: Machado de Assis"
-        error={fieldErrors.author}
-      />
 
-      {modality === "sale" ? (
-        <TextField
-          label="Preço (R$)"
-          value={price}
-          onChangeText={onSetPrice}
-          editable={!loading}
-          keyboardType="decimal-pad"
-          placeholder="Ex: 25,00"
-          error={fieldErrors.price}
-        />
-      ) : null}
+      {wideWeb && modality === "sale" ? (
+        <View style={styles.webFieldsRow}>
+          <View style={styles.webAuthorCol}>
+            <TextField
+              label="Autor"
+              value={author}
+              onChangeText={onSetAuthor}
+              editable={!loading}
+              placeholder="Ex: Machado de Assis"
+              error={fieldErrors.author}
+            />
+          </View>
+          <View style={styles.webPriceCol}>
+            <TextField
+              label="Preço (R$)"
+              value={price}
+              onChangeText={onSetPrice}
+              editable={!loading}
+              keyboardType="decimal-pad"
+              placeholder="Ex: 25,00"
+              error={fieldErrors.price}
+            />
+          </View>
+        </View>
+      ) : (
+        <>
+          <TextField
+            label="Autor"
+            value={author}
+            onChangeText={onSetAuthor}
+            editable={!loading}
+            placeholder="Ex: Machado de Assis"
+            error={fieldErrors.author}
+          />
+
+          {modality === "sale" ? (
+            <TextField
+              label="Preço (R$)"
+              value={price}
+              onChangeText={onSetPrice}
+              editable={!loading}
+              keyboardType="decimal-pad"
+              placeholder="Ex: 25,00"
+              error={fieldErrors.price}
+            />
+          ) : null}
+        </>
+      )}
 
       <Text style={styles.hint}>Conservação e bairro vêm nas próximas etapas.</Text>
 
@@ -203,7 +374,7 @@ export function CreateListingStep1({
   );
 }
 
-function createStyles(colors: ColorPalette) {
+function createStyles(colors: ColorPalette, wideWeb: boolean) {
   return StyleSheet.create({
     field: { gap: tokens.spacing[8] },
     isbnCard: {
@@ -214,10 +385,46 @@ function createStyles(colors: ColorPalette) {
       borderWidth: 1,
       borderColor: colors.m3.outlineVariant,
     },
+    webIsbnCard: {
+      gap: tokens.spacing[12],
+      padding: tokens.spacing[16],
+      borderRadius: tokens.radius.large,
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+    },
     isbnHeader: {
       flexDirection: "row",
       alignItems: "center",
       gap: tokens.spacing[12],
+    },
+    webIsbnHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: tokens.spacing[16],
+    },
+    webIsbnTextsRow: {
+      flex: 1,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[12],
+    },
+    webScanButton: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[8],
+      paddingVertical: tokens.spacing[8],
+      paddingHorizontal: tokens.spacing[16],
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.m3.surfaceContainerLowest,
+      borderWidth: 1,
+      borderColor: colors.action,
+    },
+    webScanButtonText: {
+      ...tokens.typography.labelMedium,
+      color: colors.action,
+      fontWeight: tokens.fontWeight.semiBold,
     },
     isbnTexts: { flex: 1, gap: tokens.spacing[4] },
     isbnTitle: {
@@ -263,9 +470,106 @@ function createStyles(colors: ColorPalette) {
       color: colors.secondaryText,
       textAlign: "center",
     },
+    webDividerContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[16],
+      marginVertical: tokens.spacing[4],
+    },
+    webDividerLine: {
+      flex: 1,
+      height: 1,
+      backgroundColor: colors.m3.outlineVariant,
+    },
+    webDividerText: {
+      ...tokens.typography.labelMedium,
+      color: colors.secondaryText,
+    },
     chipRow: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[8] },
+    webModalitiesGrid: {
+      flexDirection: "row",
+      gap: tokens.spacing[12],
+      width: "100%",
+    },
+    webModalityCard: {
+      flex: 1,
+      padding: tokens.spacing[16],
+      borderRadius: tokens.radius.large,
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderWidth: 1.5,
+      borderColor: colors.m3.outlineVariant,
+      gap: tokens.spacing[8],
+    },
+    webModalityCardSelected: {
+      borderColor: colors.action,
+      backgroundColor: colors.m3.secondaryContainer,
+    },
+    webModalityHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+    },
+    webModalityIconBadge: {
+      width: 32,
+      height: 32,
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.m3.surfaceContainerHigh,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    webModalityIconBadgeSelected: {
+      backgroundColor: colors.soft,
+    },
+    webModalityRadio: {
+      width: 18,
+      height: 18,
+      borderRadius: tokens.radius.full,
+      borderWidth: 2,
+      borderColor: colors.m3.outlineVariant,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    webModalityRadioSelected: {
+      borderColor: colors.action,
+    },
+    webModalityRadioInner: {
+      width: 10,
+      height: 10,
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.action,
+    },
+    webModalityTitle: {
+      ...tokens.typography.titleMedium,
+      fontWeight: tokens.fontWeight.semiBold,
+      color: colors.text,
+    },
+    webModalityTitleSelected: {
+      color: colors.actionDeep,
+    },
+    webModalityDesc: {
+      ...tokens.typography.footnote,
+      color: colors.secondaryText,
+      lineHeight: 16,
+    },
     photoRow: { flexDirection: "row", gap: tokens.spacing[12], alignItems: "center" },
+    webPhotoCard: {
+      flexDirection: "row",
+      gap: tokens.spacing[16],
+      alignItems: "center",
+      padding: tokens.spacing[14],
+      borderRadius: tokens.radius.large,
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+    },
     photoTexts: { flex: 1, gap: tokens.spacing[4] },
+    webFieldsRow: {
+      flexDirection: "row",
+      gap: tokens.spacing[16],
+      alignItems: "flex-start",
+    },
+    webAuthorCol: { flex: 1.6 },
+    webPriceCol: { flex: 1 },
     sectionLabel: {
       ...tokens.typography.titleMedium,
       color: colors.text,

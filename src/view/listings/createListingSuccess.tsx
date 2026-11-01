@@ -154,6 +154,7 @@ function createStyles(colors: ColorPalette) {
     page: {
       flex: 1,
       backgroundColor: colors.background,
+      position: "relative",
     },
     scrollContent: {
       paddingHorizontal: tokens.spacing[20],
