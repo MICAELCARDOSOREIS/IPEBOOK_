@@ -147,10 +147,32 @@ maestro test .maestro/
 * **Instituição:** Instituto Federal do Piauí — Campus Piripiri
 * **Disciplinas:** Engenharia de Software III, Programação para Dispositivos Móveis (PDM) e Interação Humano-Computador (IHC) (Prof. Jeferson Soares)
 * **Integrantes:**
-  1. **Micael Cardoso Reis** ([@MICAELCARDOSOREIS](https://github.com/MICAELCARDOSOREIS))
-  2. **Maria Clara Almeida Martins** ([@clarinhamartins](https://github.com/clarinhamartins))
-  3. **Antonio Carlos Gomes** ([@gomes738](https://github.com/gomes738))
-  4. **Eric Vinícius dos Santos Oliveira** ([@Eric2025gh](https://github.com/Eric2025gh))
+
+<table>
+  <tr>
+    <td align="center">
+      <a href="https://github.com/MICAELCARDOSOREIS"><img src="https://github.com/MICAELCARDOSOREIS.png?size=120" width="120" alt="Micael Cardoso Reis"/></a><br/>
+      <sub><b>Micael Cardoso Reis</b></sub><br/>
+      <a href="https://github.com/MICAELCARDOSOREIS">@MICAELCARDOSOREIS</a>
+    </td>
+    <td align="center">
+      <a href="https://github.com/clarinhamartins"><img src="https://github.com/clarinhamartins.png?size=120" width="120" alt="Maria Clara Almeida Martins"/></a><br/>
+      <sub><b>Maria Clara Almeida Martins</b></sub><br/>
+      <a href="https://github.com/clarinhamartins">@clarinhamartins</a>
+    </td>
+    <td align="center">
+      <a href="https://github.com/gomes738"><img src="https://github.com/gomes738.png?size=120" width="120" alt="Antonio Carlos Gomes"/></a><br/>
+      <sub><b>Antonio Carlos Gomes</b></sub><br/>
+      <a href="https://github.com/gomes738">@gomes738</a>
+    </td>
+    <td align="center">
+      <a href="https://github.com/Eric2025gh"><img src="https://github.com/Eric2025gh.png?size=120" width="120" alt="Eric Vinícius dos Santos Oliveira"/></a><br/>
+      <sub><b>Eric Vinícius dos Santos Oliveira</b></sub><br/>
+      <a href="https://github.com/Eric2025gh">@Eric2025gh</a>
+    </td>
+  </tr>
+</table>
+
 * Mais detalhes em [`docs/equipe.md`](docs/equipe.md).
 
 ---
