@@ -17,7 +17,7 @@ import { TopAppBar } from "@/view/components/TopAppBar";
 import { OwnerListings } from "@/view/listings/ownerListings";
 import { UserRatingsPanel } from "@/view/listings/userRatingsPanel";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
-import { WEB_MAX_WIDTH } from "@/view/webLayout";
+import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
 
 import { withPress } from "@/view/pressFeedback";
 function formatJoinedAt(joinedAt: string): string {
@@ -235,10 +235,11 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
   return StyleSheet.create({
     page: { flex: 1, backgroundColor: colors.background },
     scrollContent: {
-      paddingHorizontal: tokens.spacing[16],
+      paddingHorizontal: wideWeb ? WEB_GUTTER : tokens.spacing[16],
       paddingTop: tokens.spacing[8],
       paddingBottom: tokens.spacing[32],
       width: "100%",
+      maxWidth: wideWeb ? WEB_MAX_WIDTH : 640,
       alignSelf: "center",
     },
     status: {

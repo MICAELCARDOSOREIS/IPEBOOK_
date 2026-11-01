@@ -7,6 +7,7 @@ import { ScreenContainer } from "@/view/components/ScreenContainer";
 import { accessibility, fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
+import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
 import { AppIcon } from "@/view/components/AppIcon";
 import { AboutSections } from "@/view/onboarding/aboutSections";
 import { ThemeToggleButton } from "@/view/components/ThemeToggleButton";
@@ -276,7 +277,15 @@ export default function Welcome({ onStart, onSignIn, onHelp, onTerms, betaInvite
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
   wideRoot: { flex: 1, backgroundColor: colors.background },
-  wideContent: { width: "100%", paddingHorizontal: tokens.spacing[64], paddingTop: tokens.spacing[16], paddingBottom: tokens.spacing[32], gap: tokens.spacing[64] },
+  wideContent: {
+    width: "100%",
+    maxWidth: WEB_MAX_WIDTH,
+    alignSelf: "center",
+    paddingHorizontal: WEB_GUTTER,
+    paddingTop: tokens.spacing[16],
+    paddingBottom: tokens.spacing[32],
+    gap: tokens.spacing[64],
+  },
   wideHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", minHeight: 56, width: "100%" },
   wideHeaderActions: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[24] },
   wideLink: { ...tokens.typography.labelLarge, color: colors.m3.primary },

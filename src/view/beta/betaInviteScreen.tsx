@@ -18,6 +18,7 @@ import { BETA_GROUP_URL, PLAY_STORE_URL, TESTING_OPT_IN_URL } from "@/view/playS
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
+import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
 import { useAuthViewModel, type AuthActions, type AuthState } from "@/viewmodel/useAuthViewModel";
 import { useBetaSignupViewModel, type BetaSignupActions, type BetaSignupState } from "@/viewmodel/useBetaSignupViewModel";
 import { setAuthReturnTo } from "@/view/auth/authReturnTo";
@@ -442,13 +443,15 @@ function createStyles(colors: ColorPalette) {
       backgroundColor: colors.background,
     },
     topBarWide: {
-      paddingHorizontal: tokens.spacing[64],
+      paddingHorizontal: WEB_GUTTER,
     },
     topBarInner: {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
       width: "100%",
+      maxWidth: WEB_MAX_WIDTH,
+      alignSelf: "center",
     },
     logoPressable: {
       alignSelf: "center",
@@ -481,7 +484,7 @@ function createStyles(colors: ColorPalette) {
       paddingBottom: tokens.spacing[48],
     },
     scrollWide: {
-      paddingHorizontal: tokens.spacing[64],
+      paddingHorizontal: WEB_GUTTER,
       paddingTop: tokens.spacing[32],
     },
     narrow: { width: "100%", maxWidth: 560, alignSelf: "center", gap: tokens.spacing[24] },
@@ -491,6 +494,8 @@ function createStyles(colors: ColorPalette) {
       justifyContent: "space-between",
       gap: tokens.spacing[64],
       width: "100%",
+      maxWidth: WEB_MAX_WIDTH,
+      alignSelf: "center",
     },
     wideIntro: { flex: 1.3, maxWidth: 920 },
     wideForm: { flex: 1, maxWidth: 560, minWidth: 440 },

@@ -23,7 +23,7 @@ import { FilledButton } from "@/view/components/FilledButton";
 import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
 
 import { withPress } from "@/view/pressFeedback";
-const WIDE_CONTENT_MAX_WIDTH = 1200;
+const WIDE_CONTENT_MAX_WIDTH = WEB_MAX_WIDTH;
 
 export type RequestDetailProps = {
   requestId: string;
@@ -432,7 +432,7 @@ function createStyles(colors: ColorPalette) {
     fontWeight: tokens.fontWeight.semiBold,
   },
   container: { gap: tokens.spacing[16] },
-  contentWide: { maxWidth: WIDE_CONTENT_MAX_WIDTH, alignSelf: "center", paddingHorizontal: tokens.spacing[24] },
+  contentWide: { maxWidth: WIDE_CONTENT_MAX_WIDTH, alignSelf: "center", paddingHorizontal: WEB_GUTTER },
   columns: { gap: tokens.spacing[16] },
   columnsWide: { flexDirection: "row", alignItems: "flex-start", gap: tokens.spacing[32] },
   column: { gap: tokens.spacing[16] },

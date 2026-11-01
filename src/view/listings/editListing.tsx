@@ -18,6 +18,7 @@ import { FilledButton } from "@/view/components/FilledButton";
 import { TextButton } from "@/view/components/TextButton";
 import { TextField } from "@/view/components/TextField";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
+import { WEB_GUTTER } from "@/view/webLayout";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { useEditListingViewModel } from "@/viewmodel/useEditListingViewModel";
 
@@ -343,7 +344,7 @@ function createStyles(colors: ColorPalette) {
     padding: tokens.spacing[24],
     gap: tokens.spacing[16],
   },
-  contentWide: { maxWidth: EDIT_WIDE_MAX_WIDTH, alignSelf: "center", paddingHorizontal: tokens.spacing[24] },
+  contentWide: { maxWidth: EDIT_WIDE_MAX_WIDTH, alignSelf: "center", paddingHorizontal: WEB_GUTTER },
   columns: { gap: tokens.spacing[16] },
   columnsWide: { flexDirection: "row", alignItems: "flex-start", gap: tokens.spacing[24] },
   column: { gap: tokens.spacing[16] },
