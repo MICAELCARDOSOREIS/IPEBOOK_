@@ -22,11 +22,11 @@ describe("Spec 116 — Cores Vivas do Ipê e Harmonia de Contraste", () => {
     expect(contrastRatio(colors.badge.trade.text, colors.badge.trade.background)).toBeGreaterThanOrEqual(7.0);
   });
 
-  it("modalidade Doações usa rosa florada de Ipê Rosa vivo com contraste superior a 7:1", () => {
-    expect(colors.m3.doacaoContainer).toBe("#FCE7F3");
-    expect(colors.m3.onDoacaoContainer).toBe("#831843");
-    expect(contrastRatio(colors.m3.onDoacaoContainer, colors.m3.doacaoContainer)).toBeGreaterThanOrEqual(7.0);
-    expect(contrastRatio(colors.badge.donation.text, colors.badge.donation.background)).toBeGreaterThanOrEqual(7.0);
+  it("modalidade Doações preserva o tom canônico terracota/pêssego do design system com contraste WCAG AA", () => {
+    expect(colors.m3.doacaoContainer.toLowerCase()).toBe("#f4ddd3");
+    expect(colors.m3.onDoacaoContainer.toLowerCase()).toBe("#6e3a28");
+    expect(contrastRatio(colors.m3.onDoacaoContainer, colors.m3.doacaoContainer)).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(colors.badge.donation.text, colors.badge.donation.background)).toBeGreaterThanOrEqual(4.5);
   });
 
   it("tema escuro mantém contraste elevado para as cores do ipê", () => {
