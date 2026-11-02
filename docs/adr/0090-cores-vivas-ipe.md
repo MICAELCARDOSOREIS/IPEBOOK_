@@ -18,7 +18,7 @@ A identidade visual do IpêBook é fundamentada na floração do ipê em Piripir
 1. **Ajuste dos Tokens de Identidade:**
    - **Ipê Amarelo:** Elevar o tom dourado solar de `ipe.bloom` para `#F59E0B`, `ipe.bloomDeep` para `#D97706`, `ipe.container` para `#FEF3C7` e `ipe.petalSoft` para `#FFFDF0`.
    - **Modalidade Trocas:** Atualizar `m3.tertiaryContainer` e `badge.trade.background` para `#FDE68A`, associado ao texto `#451A03`, proporcionando contraste de 12.0:1 (padrão WCAG AAA).
-   - **Modalidade Doações (Ipê Rosa):** Atualizar `m3.doacaoContainer` e `badge.donation.background` para `#FCE7F3`, associado ao texto `#831843`, proporcionando contraste de 8.2:1 (padrão WCAG AAA).
+   - **Modalidade Doações:** Preservar o tom canônico terracota/pêssego do design system em `m3.doacaoContainer` e `badge.donation.background` (`#F4DDD3` com texto `#6E3A28`), mantendo a identidade original sem desvio para rosa.
    - **Modalidade Venda (Folhagem):** Atualizar `badge.sale.background` para `#DCFCE7` com texto `#14532D`, proporcionando contraste de 8.3:1 (padrão WCAG AAA).
 2. **Revitalização do Card Florada do Ipê no Hero:**
    - Adotar fundo dourado suave acolhedor (`colors.ipe.petalSoft`), borda viva de 1.5px em `colors.ipe.bloomDeep` e sombra calorosa.

@@ -19,7 +19,7 @@ A identidade visual do IpêBook é inspirada na florada dos ipês de Piripiri (P
 1. **Tokens de Identidade do Ipê (`src/view/tokens.ts`):**
    - Elevar a vivacidade e o calor do **Ipê Amarelo**: `bloom` em amarelo ouro solar (`#F59E0B` / `#FFB800`), `bloomDeep` em âmbar dourado (`#D97706`), `container` em creme dourado luminoso (`#FEF08A` / `#FEF3C7`) e `onContainer` em madeira nobre profunda (`#451A03` / `#3A1E08`).
    - Elevar o destaque de **Trocas**: `m3.tertiaryContainer` e `badge.trade` com o dourado vivo do Ipê Amarelo (`#FDE68A`) e texto de alto contraste (`#451A03`).
-   - Elevar o destaque de **Doações**: `m3.doacaoContainer` e `badge.donation` com o rosa floral vibrante do Ipê Rosa (`#FCE7F3`) e texto carmim profundo (`#831843`).
+   - Preservar o tom canônico de **Doações**: manter `m3.doacaoContainer` e `badge.donation` no tom terracota/pêssego original do design system (`#F4DDD3` com texto `#6E3A28`), evitando desvios para rosa e mantendo harmonia com a identidade.
    - Tema escuro (`darkColors`): preservar harmonia noturna com contraste elevado e calor âmbar/ouro noturno.
 2. **Card da Florada do Ipê no Hero da Home (`src/view/home.tsx`):**
    - Substituir o fundo branco genérico por um tom suave de pétalas douradas (`colors.ipe.petalSoft` / `#FFFDF0`).
@@ -36,5 +36,5 @@ A identidade visual do IpêBook é inspirada na florada dos ipês de Piripiri (P
 |---|---|---|
 | CA1 | Todos os pares de texto e fundo dos tokens de identidade e badges mantêm contraste ≥ 4.5:1 no tema claro e escuro. | `npm test tests/unit/themeContrast.test.ts` |
 | CA2 | Card da Florada do Ipê na Home exibe fundo dourado de pétalas e borda âmbar viva. | Testes de renderização e inspeção visual |
-| CA3 | Cards de Trocas e Doações exibem cores vivas de Ipê Amarelo e Ipê Rosa com contraste legível. | Testes de componentes da Home |
+| CA3 | Card de Trocas exibe o ouro vivo de Ipê Amarelo e Doações preserva o tom canônico terracota do design system. | Testes de componentes da Home |
 | CA4 | Pétalas da animação da Florada possuem opacidade e vivacidade adequadas. | Teste de unidade / componente |
