@@ -20,10 +20,10 @@ export const colors = {
   actionDeep: "#2F503D",
   soft: "#E7F0EA",
   border: "#8F8478",
-  highlight: "#F4B942",
-  gold: "#D99719",
+  highlight: "#F59E0B",
+  gold: "#D97706",
   brandBrown: "#58331F",
-  brandAmber: "#F2BC45",
+  brandAmber: "#F59E0B",
 
   // Metáfora de Identidade: Livro, Ipê e Verde (Folhagem)
   book: {
@@ -42,15 +42,15 @@ export const colors = {
     onFoliage: "#FFFFFF",    // Texto e ícones sobre verde folhagem
   },
 
-  // Ipê da marca (Spec 078): florada amarela, cartão de leitor e fita marcadora
+  // Ipê da marca (Spec 078, Spec 116): florada amarela viva, cartão de leitor e fita marcadora
   ipe: {
-    container: "#FCEFCB",
-    onContainer: "#4A2B16",
-    bloom: "#F7C21E",
-    bloomDeep: "#F29A1A",
-    petalSoft: "#FEF6D8",
-    ribbon: "#F7C21E",
-    trunk: "#58331F",
+    container: "#FEF3C7",    // Amarelo florada luminoso, solar e aconchegante
+    onContainer: "#451A03",  // Marrom tronco profundo de alto contraste (AAA > 12:1)
+    bloom: "#F59E0B",        // Amarelo ouro solar radiante de ipê em plena florada
+    bloomDeep: "#D97706",    // Âmbar dourado vivo (tubo e sépalas da flor)
+    petalSoft: "#FFFBEB",    // Pétala solar fresca de ipê
+    ribbon: "#F59E0B",       // Fita marcadora dourada
+    trunk: "#58331F",        // Tronco nobre
   },
 
   // Estados
@@ -62,10 +62,10 @@ export const colors = {
 
   // Badges por Modalidade
   badge: {
-    sale: { background: "#DCE8DE", text: "#18291F" },
-    trade: { background: "#F8D88A", text: "#3A2A10" },
-    donation: { background: "#F4DDD3", text: "#6E3A28" },
-    reserved: { background: "#F4B942", text: "#3C302A" },
+    sale: { background: "#DCFCE7", text: "#14532D" },
+    trade: { background: "#FDE68A", text: "#451A03" },
+    donation: { background: "#FCE7F3", text: "#831843" },
+    reserved: { background: "#FDE047", text: "#3C302A" },
     completed: { background: "#2F6B4F", text: "#FFFFFF" },
   },
 
@@ -115,10 +115,10 @@ export const colors = {
     outlineVariant: "#d3ccc2",
     secondaryContainer: "#dce8de",
     onSecondaryContainer: "#18291f",
-    tertiaryContainer: "#f8d88a",
-    onTertiaryContainer: "#3a2a10",
-    doacaoContainer: "#f4ddd3",
-    onDoacaoContainer: "#6e3a28",
+    tertiaryContainer: "#FDE68A",
+    onTertiaryContainer: "#451A03",
+    doacaoContainer: "#FCE7F3",
+    onDoacaoContainer: "#831843",
     errorContainerM3: "#f9dedc",
     onErrorContainer: "#410e0b",
     inverseSurface: "#322f2b",
@@ -154,10 +154,10 @@ export const darkColors: ColorPalette = {
   actionDeep: "#bbf0ce",
   soft: "#364b3e",
   border: "#968f86",
-  highlight: "#F4B942",
-  gold: "#D99719",
+  highlight: "#F59E0B",
+  gold: "#D97706",
   brandBrown: "#e2b48c",
-  brandAmber: "#f2bc45",
+  brandAmber: "#f59e0b",
 
   // Metáfora de Identidade: Livro, Ipê e Verde (Tema Escuro)
   book: {
@@ -176,14 +176,14 @@ export const darkColors: ColorPalette = {
     onFoliage: "#00381F",    // Texto escuro de alto contraste sobre verde menta
   },
 
-  // Ipê da marca (Spec 078): florada no tema escuro com alto contraste e aconchego.
+  // Ipê da marca (Spec 078, Spec 116): florada no tema escuro com alto contraste e aconchego.
   ipe: {
     container: "#38290E",
     onContainer: "#FFE099",
-    bloom: "#F7C21E",
-    bloomDeep: "#F29A1A",
+    bloom: "#F59E0B",
+    bloomDeep: "#D97706",
     petalSoft: "#281E0B",
-    ribbon: "#F7C21E",
+    ribbon: "#F59E0B",
     trunk: "#e2b48c",
   },
 
@@ -197,8 +197,8 @@ export const darkColors: ColorPalette = {
   // Badges por Modalidade (adaptados para leitura noturna suave sem ofuscamento)
   badge: {
     sale: { background: "#1F5139", text: "#BBF0CE" },
-    trade: { background: "#4A3508", text: "#FFDF99" },
-    donation: { background: "#5A2F22", text: "#FFDBCF" },
+    trade: { background: "#4D380A", text: "#FED766" },
+    donation: { background: "#541C38", text: "#FBCFE8" },
     reserved: { background: "#483200", text: "#FFE088" },
     completed: { background: "#1B4D36", text: "#D0F5DC" },
   },
@@ -246,10 +246,10 @@ export const darkColors: ColorPalette = {
     outlineVariant: "#4b4640",
     secondaryContainer: "#364b3e",
     onSecondaryContainer: "#d2e8d9",
-    tertiaryContainer: "#543c0a",
-    onTertiaryContainer: "#ffe088",
-    doacaoContainer: "#5a2f22",
-    onDoacaoContainer: "#ffdbcf",
+    tertiaryContainer: "#4D380A",
+    onTertiaryContainer: "#FED766",
+    doacaoContainer: "#541C38",
+    onDoacaoContainer: "#FBCFE8",
     errorContainerM3: "#8c1d18",
     onErrorContainer: "#ffdad6",
     inverseSurface: "#e8e2db",
