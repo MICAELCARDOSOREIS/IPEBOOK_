@@ -5,7 +5,7 @@ import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { AppIcon } from "@/view/components/AppIcon";
 import type { NavigationDestination } from "@/view/components/NavigationBar";
-
+import { useGuardedPress } from "@/view/useGuardedPress";
 import { withPress } from "@/view/pressFeedback";
 export type WebHeaderProps = {
   active?: NavigationDestination;
@@ -43,18 +43,21 @@ export function WebHeader({
   const sideInset = width >= 960 ? WEB_GUTTER : tokens.spacing[16];
   // Janelas médias (tablet, notebook pequeno): vãos menores para tudo caber sem cortar o avatar.
   const compact = width < 1280;
+  const guardedNavigate = useGuardedPress(onNavigate);
+  const guardedAnnounce = useGuardedPress(onAnnounce);
+  const guardedOpenNotifications = useGuardedPress(onOpenNotifications);
 
   return (
     <View accessibilityRole="header" testID="web-header" style={[styles.bar, { paddingHorizontal: sideInset }, compact && styles.barCompact]}>
       <View style={styles.inner}>
-        <Pressable accessibilityRole="link" accessibilityLabel="IpêBook, ir para o início" onPress={() => onNavigate("home")} style={withPress(styles.brandLink)}>
+        <Pressable accessibilityRole="link" accessibilityLabel="IpêBook, ir para o início" onPress={() => guardedNavigate("home")} style={withPress(styles.brandLink)}>
           <Text style={styles.brand}>IpêBook</Text>
         </Pressable>
 
         <Pressable
           accessibilityRole="search"
           accessibilityLabel="Buscar título, autor ou categoria"
-          onPress={() => onNavigate("search")}
+          onPress={() => guardedNavigate("search")}
           style={withPress(styles.search)}
         >
           <View style={styles.searchLeftRow}>
@@ -73,7 +76,7 @@ export function WebHeader({
                 key={link.key}
                 accessibilityRole="tab"
                 accessibilityState={{ selected: isActive }}
-                onPress={() => onNavigate(link.key)}
+                onPress={() => guardedNavigate(link.key)}
                 style={withPress(styles.link)}
               >
                 <Text style={[styles.linkText, isActive && styles.linkTextActive]}>{link.label}</Text>
@@ -83,7 +86,7 @@ export function WebHeader({
           })}
         </View>
 
-        <Pressable accessibilityRole="button" accessibilityLabel="Anunciar um livro" onPress={onAnnounce} style={withPress(styles.announce)}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Anunciar um livro" onPress={guardedAnnounce} style={withPress(styles.announce)}>
           <AppIcon name="add" size={18} color={colors.m3.onPrimary} />
           <Text style={styles.announceText}>Anunciar</Text>
         </Pressable>
@@ -91,7 +94,7 @@ export function WebHeader({
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={badgeCount > 0 ? `Conversas, ${badgeCount} com proposta` : "Conversas"}
-          onPress={() => onNavigate("conversations")}
+          onPress={() => guardedNavigate("conversations")}
           style={withPress(styles.iconButton)}
         >
           <AppIcon name="chat" size={22} color={colors.m3.onSurface} />
@@ -106,7 +109,7 @@ export function WebHeader({
                 ? `Abrir notificações, ${notificationCount} ${notificationCount === 1 ? "não lida" : "não lidas"}`
                 : "Abrir notificações"
             }
-            onPress={onOpenNotifications}
+            onPress={guardedOpenNotifications}
             style={withPress(styles.iconButton)}
           >
             <AppIcon name="bell" size={22} color={colors.m3.onSurface} />
@@ -118,7 +121,7 @@ export function WebHeader({
           </Pressable>
         ) : null}
 
-        <Pressable accessibilityRole="button" accessibilityLabel="Meu perfil" onPress={() => onNavigate("profile")} style={withPress(styles.avatar)}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Meu perfil" onPress={() => guardedNavigate("profile")} style={withPress(styles.avatar)}>
           {initials ? <Text style={styles.avatarText}>{initials}</Text> : <AppIcon name="person" size={20} color={colors.brandBrown} />}
         </Pressable>
       </View>
