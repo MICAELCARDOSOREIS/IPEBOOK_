@@ -12,10 +12,12 @@ vi.mock("expo-linking", () => ({ openURL: (...args: unknown[]) => openURL(...arg
 vi.mock("@/viewmodel/useMeetingViewModel", () => ({ useMeetingViewModel: vi.fn() }));
 vi.mock("@/viewmodel/useScheduleMeetingViewModel", () => ({ useScheduleMeetingViewModel: vi.fn() }));
 vi.mock("@/viewmodel/useAuthViewModel", () => ({ useAuthViewModel: vi.fn() }));
+vi.mock("@/view/useIsWideWeb", () => ({ useIsWideWeb: vi.fn(() => false) }));
 
 import { useMeetingViewModel } from "@/viewmodel/useMeetingViewModel";
 import { useScheduleMeetingViewModel } from "@/viewmodel/useScheduleMeetingViewModel";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
 
 // Desmonta cada árvore: um diálogo modal aberto esconderia as telas dos testes seguintes.
 afterEach(async () => {
@@ -218,7 +220,7 @@ function mockSchedule(state: Partial<ScheduleMeetingState>, submit = vi.fn().moc
   vi.mocked(useScheduleMeetingViewModel).mockReturnValue([
     {
       mode: "propose", loading: false, loadError: null, pointName: null, dayIndex: null, hour: null,
-      dayOptions: dias, timeSlots: [9, 10, 15, 17], submitting: false, error: null, ...state,
+      dayOptions: dias, timeSlots: [9, 10, 15, 17], isPointOpenOnDay: true, submitting: false, error: null, ...state,
     },
     actions,
   ]);
@@ -283,5 +285,40 @@ describe("combinar e reagendar encontro (Spec 052, 06.04/06.13)", () => {
     const onRequireSignIn = vi.fn();
     await act(async () => { await render(<ScheduleMeetingScreen requestId="r1" onRequireSignIn={onRequireSignIn} />); });
     expect(onRequireSignIn).toHaveBeenCalledOnce();
+  });
+
+  it("renderiza layout de duas colunas na web larga (Spec 114)", async () => {
+    vi.mocked(useIsWideWeb).mockReturnValue(true);
+    try {
+      mockSchedule({ pointName: "Praça da Bandeira (Centro)", dayIndex: 1, hour: 15 });
+      let screen!: Awaited<ReturnType<typeof render>>;
+      await act(async () => {
+        screen = await render(<ScheduleMeeting requestId="r1" sessionUserId="dono" />);
+      });
+      expect(screen.getByText(/Pontos de Encontro em Piripiri/i)).toBeDefined();
+      expect(screen.getByRole("button", { name: "Enviar convite" })).toBeDefined();
+    } finally {
+      vi.mocked(useIsWideWeb).mockReturnValue(false);
+    }
+  });
+
+  it("desabilita botão de envio quando o formulário estiver incompleto (Spec 114)", async () => {
+    mockSchedule({ pointName: null, dayIndex: null, hour: null });
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<ScheduleMeeting requestId="r1" sessionUserId="dono" />);
+    });
+    const btn = screen.getByRole("button", { name: "Enviar convite" });
+    expect(btn.props.accessibilityState).toMatchObject({ disabled: true });
+  });
+
+  it("exibe aviso quando o local não abre no dia selecionado (Spec 114)", async () => {
+    mockSchedule({ pointName: "Museu de Piripiri", dayIndex: 1, hour: null, isPointOpenOnDay: false });
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<ScheduleMeeting requestId="r1" sessionUserId="dono" />);
+    });
+    expect(screen.getByText(/O Campus IFPI e o Museu funcionam exclusivamente em dias úteis/i)).toBeDefined();
+    expect(screen.getByText(/O local selecionado não abre aos finais de semana/i)).toBeDefined();
   });
 });

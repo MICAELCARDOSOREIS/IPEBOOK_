@@ -13,6 +13,7 @@ type MeetingMapProps = {
   sheetHeight?: number;
   /** Só o mapa web usa. */
   coveredBottom?: number;
+  compactPadding?: boolean;
   /** Toque no pino escolhe o local. */
   onSelect?: (name: string) => void;
 };

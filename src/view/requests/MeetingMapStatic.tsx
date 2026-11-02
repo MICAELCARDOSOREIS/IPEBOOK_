@@ -11,6 +11,8 @@ export type StaticMeetingMapProps = {
   selectedName: string | null;
   /** Fração da altura coberta pelo painel sobreposto; os pinos ficam enquadrados acima dela. */
   coveredBottom?: number;
+  /** Modo de padding compacto para contêiner desktop. */
+  compactPadding?: boolean;
 };
 
 /**
@@ -18,7 +20,7 @@ export type StaticMeetingMapProps = {
  * quando o navegador não tem WebGL (Spec 094, ADR 0072). Sem token ou com falha de rede some em silêncio: a
  * lista de locais continua sendo a forma de escolher.
  */
-export function StaticMeetingMap({ selectedName, coveredBottom = 0 }: StaticMeetingMapProps) {
+export function StaticMeetingMap({ selectedName, coveredBottom = 0, compactPadding = false }: StaticMeetingMapProps) {
   const { colors, resolvedScheme } = useTheme();
   const [failed, setFailed] = useState(false);
   const [box, setBox] = useState<{ width: number; height: number } | null>(null);
@@ -29,6 +31,9 @@ export function StaticMeetingMap({ selectedName, coveredBottom = 0 }: StaticMeet
     const scale = MAX_SIDE / Math.max(box.width, box.height);
     const width = Math.max(1, Math.round(box.width * scale));
     const height = Math.max(1, Math.round(box.height * scale));
+    const padding: [number, number, number, number] = compactPadding
+      ? [48, 40, 48, 40]
+      : [64, 56, height * coveredBottom + 48, 56];
     return buildMeetingMapUrl({
       points: PIRIPIRI_MEETING_POINTS,
       selectedName,
@@ -36,9 +41,9 @@ export function StaticMeetingMap({ selectedName, coveredBottom = 0 }: StaticMeet
       width,
       height,
       dark: resolvedScheme === "dark",
-      padding: [64, 56, height * coveredBottom + 48, 56],
+      padding,
     });
-  }, [token, box, selectedName, resolvedScheme, coveredBottom]);
+  }, [token, box, selectedName, resolvedScheme, coveredBottom, compactPadding]);
 
   if (!token || failed) return null;
   const selectedNumber = PIRIPIRI_MEETING_POINTS.findIndex((point) => point.name === selectedName) + 1;

@@ -107,8 +107,34 @@ describe("NegotiationStatusCard", () => {
     expect(onAddToCalendar).toHaveBeenCalled();
   });
 
-  it("renderiza proposta de encontro recebida com botão de confirmação", async () => {
+  it("renderiza ação de reagendamento quando o encontro estiver confirmado (Spec 114)", async () => {
+    const onRescheduleMeeting = vi.fn();
+
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(
+        <NegotiationStatusCard
+          meeting={confirmedMeeting}
+          requestStatus="accepted"
+          counterpartName="João"
+          sessionUserId="me"
+          deliveryCompleted={false}
+          onRescheduleMeeting={onRescheduleMeeting}
+        />,
+      );
+    });
+
+    const btn = screen.getByLabelText("Reagendar encontro");
+    expect(btn).toBeTruthy();
+    await act(async () => {
+      fireEvent.press(btn);
+    });
+    expect(onRescheduleMeeting).toHaveBeenCalledOnce();
+  });
+
+  it("renderiza proposta de encontro recebida com botão de confirmação e sugerir outro horário (Spec 114)", async () => {
     const onConfirmMeeting = vi.fn();
+    const onSuggestOtherTime = vi.fn();
 
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
@@ -120,6 +146,7 @@ describe("NegotiationStatusCard", () => {
           sessionUserId="me"
           deliveryCompleted={false}
           onConfirmMeeting={onConfirmMeeting}
+          onSuggestOtherTime={onSuggestOtherTime}
         />,
       );
     });
@@ -129,6 +156,13 @@ describe("NegotiationStatusCard", () => {
       fireEvent.press(screen.getByLabelText("Confirmar encontro"));
     });
     expect(onConfirmMeeting).toHaveBeenCalled();
+
+    const suggestBtn = screen.getByLabelText("Sugerir outro horário");
+    expect(suggestBtn).toBeTruthy();
+    await act(async () => {
+      fireEvent.press(suggestBtn);
+    });
+    expect(onSuggestOtherTime).toHaveBeenCalled();
   });
 
   it("renderiza estado sem encontro e botão para combinar", async () => {
