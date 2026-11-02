@@ -180,4 +180,23 @@ describe("ScheduleMeeting em Desktop Largo (Web, useIsWideWeb)", () => {
     expect(screen.getByText("Escolha o local na lista ao lado ou no mapa")).toBeDefined();
     expect(screen.getByText(/Pontos monitorados e centrais em Piripiri/)).toBeDefined();
   });
+
+  it("renderiza ScrollView principal na página para permitir rolagem fluida e adaptação em qualquer altura de janela", async () => {
+    mockSchedule({
+      pointName: "Praça da Bandeira (Centro)",
+      dayIndex: 0,
+      hour: 15,
+    });
+
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(
+        <ScheduleMeeting requestId="req-1" sessionUserId="user-1" />,
+      );
+    });
+
+    // O botão de envio e o resumo estão dentro do fluxo da página com scroll global
+    expect(screen.getByRole("button", { name: "Enviar convite" })).toBeDefined();
+    expect(screen.getByText(/Praça da Bandeira · Sex, 23\/10 · 15h/)).toBeDefined();
+  });
 });

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Animated, PanResponder, Pressable, ScrollView, StyleSheet, Text, View, type ScrollViewInstance } from "react-native";
+import { Animated, PanResponder, Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions, type ScrollViewInstance } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { PIRIPIRI_MEETING_POINTS } from "@/model/entities/meetingPoint";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
@@ -70,6 +70,7 @@ export function ScheduleMeeting({ requestId, sessionUserId, onBack, onSent }: Sc
   const rescheduling = state.mode === "reschedule";
   const { colors } = useTheme();
   const wideWeb = useIsWideWeb();
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const styles = useMemo(() => createStyles(colors), [colors]);
   // Com token, o mapa é o fundo da tela e o formulário sobe num painel; sem token, o painel ocupa tudo.
   const hasMap = Boolean(process.env.EXPO_PUBLIC_MAPBOX_TOKEN);
@@ -157,6 +158,9 @@ export function ScheduleMeeting({ requestId, sessionUserId, onBack, onSent }: Sc
   })();
 
   if (wideWeb && !state.loading && !state.loadError) {
+    const isStacked = windowWidth < 1024;
+    const mapViewportHeight = windowHeight < 760 ? 320 : 400;
+
     return (
       <View style={styles.page}>
         <SafeAreaView style={styles.safe}>
@@ -165,206 +169,214 @@ export function ScheduleMeeting({ requestId, sessionUserId, onBack, onSent }: Sc
             title={rescheduling ? "Reagendar encontro" : "Combinar encontro"}
             onBack={() => onBack?.()}
           />
-          <View style={styles.wideContainer}>
-            {/* Coluna Esquerda: Formulário de Agendamento */}
-            <View style={styles.wideFormCol}>
-              <ScrollView
-                ref={scrollRef}
-                style={styles.wideFormScroll}
-                contentContainerStyle={styles.wideFormContent}
-                keyboardShouldPersistTaps="handled"
-              >
-                <View style={styles.whereHeader}>
-                  <Text accessibilityRole="header" style={styles.wideHeadline}>
-                    {rescheduling ? "Encontre um novo horário." : "Escolha onde e quando encontrar"}
-                  </Text>
-                  <Text style={styles.wideBody}>
-                    {rescheduling
-                      ? "Escolha uma nova data e envie a sugestão para a outra pessoa."
-                      : "Ponto público e seguro em Piripiri para realizar a entrega presencial."}
-                  </Text>
-                </View>
-
-                {/* 1. Onde */}
-                <View style={styles.whereHeader}>
-                  <Text accessibilityRole="header" style={styles.sectionLabel}>Onde</Text>
-                  <Text style={styles.whereHint}>
-                    {hasMap ? "Clique num pino do mapa ou escolha na lista." : "Escolha um ponto público e seguro em Piripiri."}
-                  </Text>
-                </View>
-
-                <View accessibilityRole="radiogroup" accessibilityLabel="Local do encontro" style={styles.places}>
-                  {PIRIPIRI_MEETING_POINTS.map((point, index) => {
-                    const selected = state.pointName === point.name;
-                    const isWeekdayOnly = point.recommendedTime.includes("úteis");
-                    return (
-                      <Pressable
-                        key={point.name}
-                        accessibilityRole="radio"
-                        accessibilityLabel={`Local ${point.name}, ${point.recommendedTime}`}
-                        accessibilityState={{ checked: selected }}
-                        onPress={() => actions.selectPoint(point.name)}
-                        style={withPress([styles.widePlaceCard, selected && styles.widePlaceCardSelected])}
-                      >
-                        <View style={[styles.widePlaceNumberBox, selected && styles.widePlaceNumberBoxSelected]}>
-                          <Text
-                            accessibilityElementsHidden
-                            importantForAccessibility="no"
-                            style={[styles.widePlaceNumberText, selected && styles.widePlaceNumberTextSelected]}
-                          >
-                            {index + 1}
-                          </Text>
-                        </View>
-                        <View style={styles.widePlaceInfo}>
-                          <View style={styles.widePlaceTitleRow}>
-                            <Text style={[styles.widePlaceName, selected && styles.widePlaceNameSelected]}>{point.name}</Text>
-                            <View style={[styles.wideTag, !isWeekdayOnly && styles.wideTagDaily]}>
-                              <Text style={[styles.wideTagText, !isWeekdayOnly && styles.wideTagDailyText]}>
-                                {isWeekdayOnly ? "Dias úteis" : "Diário"}
-                              </Text>
-                            </View>
-                          </View>
-                          <Text style={styles.widePlaceAddress}>{point.address}</Text>
-                          <Text style={styles.widePlaceTime}>{point.recommendedTime}</Text>
-                        </View>
-                        <View style={[styles.radio, selected && styles.radioSelected]}>
-                          {selected ? <View style={styles.radioDot} /> : null}
-                        </View>
-                      </Pressable>
-                    );
-                  })}
-                </View>
-
-                {/* 2. Dia */}
-                <Text accessibilityRole="header" style={styles.sectionLabel}>Dia</Text>
-                <View accessibilityRole="radiogroup" accessibilityLabel="Dia do encontro" style={styles.wideDaysGrid}>
-                  {state.dayOptions.map((day, index) => (
-                    <OptionChip
-                      key={day.toISOString()}
-                      label={formatMeetingDay(day)}
-                      accessibilityLabel={`Dia ${spokenMeetingDay(day)}`}
-                      selected={state.dayIndex === index}
-                      onPress={() => actions.selectDay(index)}
-                      styles={styles}
-                    />
-                  ))}
-                </View>
-
-                {/* 3. Horário */}
-                <Text accessibilityRole="header" style={styles.sectionLabel}>Horário</Text>
-                {!state.isPointOpenOnDay && state.dayIndex !== null ? (
-                  <View style={styles.closedNotice}>
-                    <Text style={styles.closedNoticeText}>
-                      O Campus IFPI e o Museu funcionam exclusivamente em dias úteis (segunda a sexta-feira). Escolha um dia útil para este local ou selecione uma das praças para os fins de semana.
+          <ScrollView
+            ref={scrollRef}
+            style={styles.widePageScroll}
+            contentContainerStyle={styles.widePageScrollContent}
+            keyboardShouldPersistTaps="handled"
+          >
+            <View style={[styles.wideContainer, isStacked && styles.wideContainerStacked]}>
+              {/* Coluna Esquerda: Formulário de Agendamento */}
+              <View style={[styles.wideFormCol, isStacked && styles.wideColFull]}>
+                <View style={styles.wideFormContent}>
+                  <View style={styles.whereHeader}>
+                    <Text accessibilityRole="header" style={styles.wideHeadline}>
+                      {rescheduling ? "Encontre um novo horário." : "Escolha onde e quando encontrar"}
+                    </Text>
+                    <Text style={styles.wideBody}>
+                      {rescheduling
+                        ? "Escolha uma nova data e envie a sugestão para a outra pessoa."
+                        : "Ponto público e seguro em Piripiri para realizar a entrega presencial."}
                     </Text>
                   </View>
-                ) : (
-                  <View accessibilityRole="radiogroup" accessibilityLabel="Horário do encontro" style={styles.wideHoursGrid}>
-                    {state.timeSlots.map((hour) => (
+
+                  {/* 1. Onde */}
+                  <View style={styles.whereHeader}>
+                    <Text accessibilityRole="header" style={styles.sectionLabel}>Onde</Text>
+                    <Text style={styles.whereHint}>
+                      {hasMap ? "Clique num pino do mapa ou escolha na lista." : "Escolha um ponto público e seguro em Piripiri."}
+                    </Text>
+                  </View>
+
+                  <View accessibilityRole="radiogroup" accessibilityLabel="Local do encontro" style={styles.places}>
+                    {PIRIPIRI_MEETING_POINTS.map((point, index) => {
+                      const selected = state.pointName === point.name;
+                      const isWeekdayOnly = point.recommendedTime.includes("úteis");
+                      return (
+                        <Pressable
+                          key={point.name}
+                          accessibilityRole="radio"
+                          accessibilityLabel={`Local ${point.name}, ${point.recommendedTime}`}
+                          accessibilityState={{ checked: selected }}
+                          onPress={() => actions.selectPoint(point.name)}
+                          style={withPress([styles.widePlaceCard, selected && styles.widePlaceCardSelected])}
+                        >
+                          <View style={[styles.widePlaceNumberBox, selected && styles.widePlaceNumberBoxSelected]}>
+                            <Text
+                              accessibilityElementsHidden
+                              importantForAccessibility="no"
+                              style={[styles.widePlaceNumberText, selected && styles.widePlaceNumberTextSelected]}
+                            >
+                              {index + 1}
+                            </Text>
+                          </View>
+                          <View style={styles.widePlaceInfo}>
+                            <View style={styles.widePlaceTitleRow}>
+                              <Text style={[styles.widePlaceName, selected && styles.widePlaceNameSelected]}>{point.name}</Text>
+                              <View style={[styles.wideTag, !isWeekdayOnly && styles.wideTagDaily]}>
+                                <Text style={[styles.wideTagText, !isWeekdayOnly && styles.wideTagDailyText]}>
+                                  {isWeekdayOnly ? "Dias úteis" : "Diário"}
+                                </Text>
+                              </View>
+                            </View>
+                            <Text style={styles.widePlaceAddress}>{point.address}</Text>
+                            <Text style={styles.widePlaceTime}>{point.recommendedTime}</Text>
+                          </View>
+                          <View style={[styles.radio, selected && styles.radioSelected]}>
+                            {selected ? <View style={styles.radioDot} /> : null}
+                          </View>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+
+                  {/* 2. Dia */}
+                  <Text accessibilityRole="header" style={styles.sectionLabel}>Dia</Text>
+                  <View accessibilityRole="radiogroup" accessibilityLabel="Dia do encontro" style={styles.wideDaysGrid}>
+                    {state.dayOptions.map((day, index) => (
                       <OptionChip
-                        key={hour}
-                        compact
-                        label={`${hour}h`}
-                        accessibilityLabel={`Horário ${hour}h`}
-                        selected={state.hour === hour}
-                        onPress={() => actions.selectHour(hour)}
+                        key={day.toISOString()}
+                        label={formatMeetingDay(day)}
+                        accessibilityLabel={`Dia ${spokenMeetingDay(day)}`}
+                        selected={state.dayIndex === index}
+                        onPress={() => actions.selectDay(index)}
                         styles={styles}
                       />
                     ))}
                   </View>
-                )}
 
-                {state.error ? (
-                  <Text ref={errorRef} accessibilityRole="alert" accessibilityLiveRegion="assertive" style={styles.error}>
-                    {state.error}
-                  </Text>
-                ) : null}
-              </ScrollView>
-
-              {/* Rodapé da Coluna Esquerda: Resumo e Ação */}
-              <View style={styles.footer}>
-                <View style={styles.footerContent}>
-                  <View accessibilityLiveRegion="polite" style={styles.summary}>
-                    <AppIcon name={summary.complete ? "check" : "info"} size={18} color={summary.complete ? colors.m3.primary : colors.m3.onSurfaceVariant} />
-                    <Text numberOfLines={2} style={[styles.summaryText, summary.complete && styles.summaryTextDone]}>{summary.text}</Text>
-                  </View>
-                  <FilledButton
-                    label={rescheduling ? "Enviar nova sugestão" : "Enviar convite"}
-                    disabled={!summary.complete}
-                    loading={state.submitting}
-                    loadingLabel="Enviando"
-                    onPress={async () => {
-                      if (await actions.submit()) onSent?.();
-                    }}
-                  />
-                  {rescheduling ? <TextButton label="Cancelar" onPress={() => onBack?.()} /> : null}
-                </View>
-              </View>
-            </View>
-
-            {/* Coluna Direita: Mapa e Detalhes do Local */}
-            <View style={styles.wideMapColumn}>
-              <View style={styles.wideMapCard}>
-                <View style={styles.wideMapCardHeader}>
-                  <View style={styles.wideMapCardTitleGroup}>
-                    <AppIcon name="place" size={18} color={colors.m3.primary} />
-                    <Text style={styles.wideMapCardTitle}>Pontos de Encontro em Piripiri</Text>
-                  </View>
-                  <Text style={styles.wideMapCardSubtitle}>4 locais públicos oficiais</Text>
-                </View>
-
-                <View style={styles.wideMapViewport}>
-                  {hasMap ? (
-                    <MeetingMap selectedName={state.pointName} compactPadding onSelect={selectFromMap} />
-                  ) : (
-                    <StaticMeetingMap selectedName={state.pointName} compactPadding />
-                  )}
-                  {!hasMap && !process.env.EXPO_PUBLIC_MAPBOX_TOKEN ? (
-                    <View style={styles.wideMapEmptyFallback}>
-                      <AppIcon name="place" size={32} color={colors.m3.primary} />
-                      <Text style={styles.wideMapEmptyFallbackTitle}>4 Pontos Seguros em Piripiri</Text>
-                      <Text style={styles.wideMapEmptyFallbackText}>
-                        Praça da Bandeira, Praça de Eventos, Museu de Perypery e Campus IFPI.
+                  {/* 3. Horário */}
+                  <Text accessibilityRole="header" style={styles.sectionLabel}>Horário</Text>
+                  {!state.isPointOpenOnDay && state.dayIndex !== null ? (
+                    <View style={styles.closedNotice}>
+                      <Text style={styles.closedNoticeText}>
+                        O Campus IFPI e o Museu funcionam exclusivamente em dias úteis (segunda a sexta-feira). Escolha um dia útil para este local ou selecione uma das praças para os fins de semana.
                       </Text>
                     </View>
+                  ) : (
+                    <View accessibilityRole="radiogroup" accessibilityLabel="Horário do encontro" style={styles.wideHoursGrid}>
+                      {state.timeSlots.map((hour) => (
+                        <OptionChip
+                          key={hour}
+                          compact
+                          label={`${hour}h`}
+                          accessibilityLabel={`Horário ${hour}h`}
+                          selected={state.hour === hour}
+                          onPress={() => actions.selectHour(hour)}
+                          styles={styles}
+                        />
+                      ))}
+                    </View>
+                  )}
+
+                  {state.error ? (
+                    <Text ref={errorRef} accessibilityRole="alert" accessibilityLiveRegion="assertive" style={styles.error}>
+                      {state.error}
+                    </Text>
                   ) : null}
                 </View>
 
-                <View style={styles.wideMapCardFooter}>
-                  <View style={styles.wideMapFooterRow}>
-                    <View style={styles.peekBadge}>
-                      <Text style={styles.peekBadgeText}>
-                        {selectedPoint ? PIRIPIRI_MEETING_POINTS.indexOf(selectedPoint) + 1 : "✓"}
-                      </Text>
+                {/* Rodapé da Coluna Esquerda: Resumo e Ação */}
+                <View style={styles.wideFormFooter}>
+                  <View style={styles.wideFormFooterContent}>
+                    <View accessibilityLiveRegion="polite" style={styles.summary}>
+                      <AppIcon name={summary.complete ? "check" : "info"} size={18} color={summary.complete ? colors.m3.primary : colors.m3.onSurfaceVariant} />
+                      <Text numberOfLines={2} style={[styles.summaryText, summary.complete && styles.summaryTextDone]}>{summary.text}</Text>
                     </View>
-                    <View style={styles.wideMapFooterTextCol}>
-                      <Text numberOfLines={1} style={styles.wideMapFooterTitle}>
-                        {selectedPoint ? selectedPoint.name : "Escolha o local na lista ao lado ou no mapa"}
-                      </Text>
-                      <Text numberOfLines={2} style={styles.wideMapFooterSubtitle}>
-                        {selectedPoint
-                          ? `${selectedPoint.address} · ${selectedPoint.recommendedTime}`
-                          : "Pontos monitorados e centrais em Piripiri, ideais para troca segura de livros."}
-                      </Text>
-                    </View>
+                    <FilledButton
+                      label={rescheduling ? "Enviar nova sugestão" : "Enviar convite"}
+                      disabled={!summary.complete}
+                      loading={state.submitting}
+                      loadingLabel="Enviando"
+                      onPress={async () => {
+                        if (await actions.submit()) onSent?.();
+                      }}
+                    />
+                    {rescheduling ? <TextButton label="Cancelar" onPress={() => onBack?.()} /> : null}
                   </View>
                 </View>
               </View>
 
-              {/* Card de Dicas de Segurança Comunitária */}
-              <View style={styles.wideSafetyCard}>
-                <View style={styles.wideSafetyHeader}>
-                  <AppIcon name="checkCircle" size={18} color={colors.nature.foliage} />
-                  <Text style={styles.wideSafetyTitle}>Dicas de Segurança Comunitária</Text>
+              {/* Coluna Direita: Mapa e Detalhes do Local */}
+              <View
+                style={[
+                  styles.wideMapColumn,
+                  isStacked && styles.wideColFull,
+                  Platform.OS === "web" && !isStacked && styles.wideMapSticky,
+                ]}
+              >
+                <View style={styles.wideMapCard}>
+                  <View style={styles.wideMapCardHeader}>
+                    <View style={styles.wideMapCardTitleGroup}>
+                      <AppIcon name="place" size={18} color={colors.m3.primary} />
+                      <Text style={styles.wideMapCardTitle}>Pontos de Encontro em Piripiri</Text>
+                    </View>
+                    <Text style={styles.wideMapCardSubtitle}>4 locais públicos oficiais</Text>
+                  </View>
+
+                  <View style={[styles.wideMapViewport, { height: mapViewportHeight }]}>
+                    {hasMap ? (
+                      <MeetingMap selectedName={state.pointName} compactPadding onSelect={selectFromMap} />
+                    ) : (
+                      <StaticMeetingMap selectedName={state.pointName} compactPadding />
+                    )}
+                    {!hasMap && !process.env.EXPO_PUBLIC_MAPBOX_TOKEN ? (
+                      <View style={styles.wideMapEmptyFallback}>
+                        <AppIcon name="place" size={32} color={colors.m3.primary} />
+                        <Text style={styles.wideMapEmptyFallbackTitle}>4 Pontos Seguros em Piripiri</Text>
+                        <Text style={styles.wideMapEmptyFallbackText}>
+                          Praça da Bandeira, Praça de Eventos, Museu de Perypery e Campus IFPI.
+                        </Text>
+                      </View>
+                    ) : null}
+                  </View>
+
+                  <View style={styles.wideMapCardFooter}>
+                    <View style={styles.wideMapFooterRow}>
+                      <View style={styles.peekBadge}>
+                        <Text style={styles.peekBadgeText}>
+                          {selectedPoint ? PIRIPIRI_MEETING_POINTS.indexOf(selectedPoint) + 1 : "✓"}
+                        </Text>
+                      </View>
+                      <View style={styles.wideMapFooterTextCol}>
+                        <Text numberOfLines={1} style={styles.wideMapFooterTitle}>
+                          {selectedPoint ? selectedPoint.name : "Escolha o local na lista ao lado ou no mapa"}
+                        </Text>
+                        <Text numberOfLines={2} style={styles.wideMapFooterSubtitle}>
+                          {selectedPoint
+                            ? `${selectedPoint.address} · ${selectedPoint.recommendedTime}`
+                            : "Pontos monitorados e centrais em Piripiri, ideais para troca segura de livros."}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
                 </View>
-                <Text style={styles.wideSafetyText}>
-                  • Prefira horários durante o dia e com circulação de pedestres.{"\n"}
-                  • Encontros nos pontos sugeridos garantem visibilidade e tranquilidade.{"\n"}
-                  • Confira o estado do livro no momento da entrega presencial.
-                </Text>
+
+                {/* Card de Dicas de Segurança Comunitária */}
+                <View style={styles.wideSafetyCard}>
+                  <View style={styles.wideSafetyHeader}>
+                    <AppIcon name="checkCircle" size={18} color={colors.nature.foliage} />
+                    <Text style={styles.wideSafetyTitle}>Dicas de Segurança Comunitária</Text>
+                  </View>
+                  <Text style={styles.wideSafetyText}>
+                    • Prefira horários durante o dia e com circulação de pedestres.{"\n"}
+                    • Encontros nos pontos sugeridos garantem visibilidade e tranquilidade.{"\n"}
+                    • Confira o estado do livro no momento da entrega presencial.
+                  </Text>
+                </View>
               </View>
             </View>
-          </View>
+          </ScrollView>
         </SafeAreaView>
       </View>
     );
@@ -740,18 +752,35 @@ function createStyles(colors: ColorPalette) {
       padding: tokens.spacing[16],
     },
     footerContent: { width: "100%", maxWidth: 560, alignSelf: "center", gap: tokens.spacing[8] },
+    widePageScroll: {
+      flex: 1,
+      width: "100%",
+    },
+    widePageScrollContent: {
+      paddingBottom: tokens.spacing[48],
+    },
     wideContainer: {
       maxWidth: 1180,
       width: "100%",
       alignSelf: "center",
-      flex: 1,
       flexDirection: "row",
       gap: tokens.spacing[24],
       padding: tokens.spacing[24],
       alignItems: "flex-start",
     },
+    wideContainerStacked: {
+      flexDirection: "column",
+      paddingHorizontal: tokens.spacing[16],
+    },
+    wideColFull: {
+      width: "100%",
+      maxWidth: "100%",
+      minWidth: "100%",
+    },
     wideFormCol: {
-      width: 520,
+      flex: 1,
+      minWidth: 320,
+      maxWidth: 560,
       backgroundColor: colors.m3.surfaceContainerLow,
       borderRadius: tokens.radius.large,
       borderWidth: 1,
@@ -762,13 +791,18 @@ function createStyles(colors: ColorPalette) {
       shadowRadius: 10,
       elevation: 2,
     },
-    wideFormScroll: {
-      flex: 1,
-      maxHeight: 720,
-    },
     wideFormContent: {
       padding: tokens.spacing[20],
       gap: tokens.spacing[16],
+    },
+    wideFormFooter: {
+      borderTopWidth: 1,
+      borderTopColor: colors.m3.outlineVariant,
+      backgroundColor: colors.m3.surfaceContainerLow,
+      padding: tokens.spacing[16],
+    },
+    wideFormFooterContent: {
+      gap: tokens.spacing[12],
     },
     wideHeadline: {
       ...tokens.typography.headlineMedium,
@@ -828,6 +862,8 @@ function createStyles(colors: ColorPalette) {
       gap: tokens.spacing[8],
     },
     widePlaceName: {
+      flex: 1,
+      flexShrink: 1,
       ...tokens.typography.bodyLarge,
       fontFamily: fontFamily.semiBold,
       color: colors.m3.onSurface,
@@ -878,8 +914,14 @@ function createStyles(colors: ColorPalette) {
     },
     wideMapColumn: {
       flex: 1,
-      minWidth: 440,
+      minWidth: 320,
+      maxWidth: 580,
       gap: tokens.spacing[16],
+    },
+    wideMapSticky: {
+      position: (Platform.OS === "web" ? ("sticky" as "relative") : "relative"),
+      top: tokens.spacing[24],
+      zIndex: 1,
     },
     wideMapCard: {
       borderRadius: tokens.radius.large,
