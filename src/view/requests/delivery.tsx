@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { Platform, ScrollView, StyleSheet, Text, View } from "react-native";
 import { CameraView, useCameraPermissions, type BarcodeScanningResult } from "expo-camera";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { buildDeliveryPayload, normalizeDeliveryCode, parseDeliveryPayload } from "@/model/entities/delivery";
+import type { Book } from "@/model/entities/book";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useDeliveryViewModel } from "@/viewmodel/useDeliveryViewModel";
 import { useRequestDetailViewModel } from "@/viewmodel/useRequestDetailViewModel";
@@ -11,14 +12,20 @@ import { NegotiationRatingModal } from "@/view/requests/NegotiationRatingModal";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { AppIcon } from "@/view/components/AppIcon";
+import { Avatar } from "@/view/components/Avatar";
+import { BookCover } from "@/view/components/BookCover";
 import { ErrorState } from "@/view/components/ErrorState";
 import { FilledButton } from "@/view/components/FilledButton";
+import { formatPrice } from "@/view/formatPrice";
 import { IconBadge } from "@/view/components/IconBadge";
 import { LoadingState } from "@/view/components/LoadingState";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { QrCode } from "@/view/components/QrCode";
+import { Tag } from "@/view/components/Tag";
 import { TextField } from "@/view/components/TextField";
 import { TopAppBar } from "@/view/components/TopAppBar";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
+import { WEB_MAX_WIDTH } from "@/view/webLayout";
 
 export type DeliveryProps = {
   requestId: string;
@@ -47,8 +54,71 @@ function formatClock(seconds: number): string {
   return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
 }
 
+export type DeliveryBookSummaryProps = {
+  book: Book;
+  counterpartName: string | null;
+  counterpartPhotoUrl?: string | null;
+  role: "giver" | "receiver" | null;
+};
+
+export function DeliveryBookSummaryCard({
+  book,
+  counterpartName,
+  counterpartPhotoUrl,
+  role,
+}: DeliveryBookSummaryProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createSummaryStyles(colors), [colors]);
+  const roleLabel = role === "giver" ? "Entregando para" : "Recebendo de";
+
+  return (
+    <View style={styles.card} accessibilityLabel={`Livro da entrega: ${book.title}, ${roleLabel} ${counterpartName ?? "pessoa da comunidade"}`}>
+      <View style={styles.coverWrapper}>
+        <BookCover id={book.id} title={book.title} photoUrl={book.photoUrl} variant="list" width={64} />
+      </View>
+      <View style={styles.detailsCol}>
+        <View style={styles.metaRow}>
+          <Tag variant={book.modality} />
+          {book.price ? <Text style={styles.price}>{formatPrice(book.price)}</Text> : null}
+        </View>
+        <Text numberOfLines={2} style={styles.title}>
+          {book.title}
+        </Text>
+        <Text numberOfLines={1} style={styles.author}>
+          {book.author}
+        </Text>
+        <View style={styles.counterpartRow}>
+          <Avatar size={22} name={counterpartName ?? "Pessoa da comunidade"} photoUrl={counterpartPhotoUrl || undefined} />
+          <Text numberOfLines={1} style={styles.counterpartText}>
+            {roleLabel} <Text style={styles.counterpartName}>{counterpartName ?? "Pessoa da comunidade"}</Text>
+          </Text>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+function DeliveryTipsCard({ colors }: { colors: ColorPalette }) {
+  const styles = useMemo(() => createTipsStyles(colors), [colors]);
+  return (
+    <View style={styles.card}>
+      <View style={styles.header}>
+        <AppIcon name="info" size={20} color={colors.nature.foliage} />
+        <Text style={styles.title}>Dicas para a Entrega Presencial</Text>
+      </View>
+      <Text style={styles.body}>
+        • Realizem a troca em um dos 4 pontos públicos e seguros de Piripiri.
+        {"\n\n"}
+        • Confira o estado do livro, páginas e conservação antes de confirmar a entrega.
+        {"\n\n"}
+        • A leitura do QR code ou digitação do código conclui a negociação e permite a avaliação mútua.
+      </Text>
+    </View>
+  );
+}
+
 /**
- * Entrega do livro (Spec 095, ADR 0070): quem anunciou mostra o QR e quem recebeu o lê ou digita o código.
+ * Entrega do livro (Spec 095, Spec 115, ADR 0070, ADR 0089): quem anunciou mostra o QR e quem recebeu o lê ou digita o código.
  */
 export function Delivery({ requestId, sessionUserId, onBack }: DeliveryProps) {
   const [state, actions] = useDeliveryViewModel(requestId, sessionUserId);
@@ -70,6 +140,7 @@ export function Delivery({ requestId, sessionUserId, onBack }: DeliveryProps) {
     previouslyCompleted.current = state.completed;
   }, [state.completed, ratingState.userRating]);
 
+  const wide = useIsWideWeb();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const secondsLeft = useSecondsLeft(state.code?.expiresAt ?? null);
@@ -98,100 +169,151 @@ export function Delivery({ requestId, sessionUserId, onBack }: DeliveryProps) {
     });
   }
 
+  const detail = detailState.detail;
+  const bookSummary = detail?.book ? (
+    <DeliveryBookSummaryCard
+      book={detail.book}
+      counterpartName={counterpartName}
+      counterpartPhotoUrl={detail.counterpartPhotoUrl}
+      role={state.role}
+    />
+  ) : null;
+
+  function renderActionCard() {
+    if (state.completed) {
+      return (
+        <View style={styles.card} accessibilityLiveRegion="polite">
+          <IconBadge icon="check" tone="action" />
+          <Text accessibilityRole="header" style={styles.headline}>Entrega concluída!</Text>
+          <Text style={styles.body}>
+            Vocês confirmaram a entrega do livro em Piripiri. Conte como foi sua experiência na negociação.
+          </Text>
+          <FilledButton
+            label={ratingState.userRating ? "Avaliação já enviada" : "Avaliar negociação"}
+            disabled={Boolean(ratingState.userRating)}
+            onPress={() => setRatingModalVisible(true)}
+          />
+          <OutlinedButton label="Voltar à negociação" onPress={() => onBack?.()} />
+        </View>
+      );
+    }
+
+    if (state.role === "giver") {
+      return (
+        <View style={styles.card}>
+          <Text accessibilityRole="header" style={styles.headline}>Mostre este QR para quem recebe o livro</Text>
+          <Text style={styles.body}>A pessoa lê o QR no app dela e a entrega é concluída para as duas.</Text>
+          {state.code ? (
+            <View style={styles.qrBlock}>
+              <QrCode
+                value={buildDeliveryPayload(requestId, state.code.code)}
+                size={wide ? 260 : 248}
+                accessibilityLabel="QR code da entrega. Se preferir, informe o código por voz ou texto."
+              />
+              <Text selectable accessibilityLabel={`Código ${state.code.code.split("").join(" ")}`} style={styles.code}>
+                {groupCode(state.code.code)}
+              </Text>
+              <Text style={[styles.hint, expired && styles.expired]} accessibilityLiveRegion="polite">
+                {expired ? "Código expirado. Gere outro." : `Vale por ${formatClock(secondsLeft ?? 0)}`}
+              </Text>
+            </View>
+          ) : null}
+          <OutlinedButton
+            label={state.code ? "Gerar novo código" : "Gerar código"}
+            disabled={state.generating}
+            onPress={() => void actions.generate()}
+          />
+        </View>
+      );
+    }
+
+    return (
+      <View style={styles.card}>
+        <Text accessibilityRole="header" style={styles.headline}>Confirme que recebeu o livro</Text>
+        <Text style={styles.body}>Aponte a câmera para o QR que a outra pessoa mostra ou digite o código.</Text>
+        {Platform.OS !== "web" ? (
+          permission?.granted ? (
+            <View style={styles.camera}>
+              <CameraView
+                style={StyleSheet.absoluteFill}
+                facing="back"
+                barcodeScannerSettings={{ barcodeTypes: ["qr"] }}
+                onBarcodeScanned={handleScanned}
+              />
+            </View>
+          ) : (
+            <View style={styles.permission}>
+              <AppIcon name="camera" size={32} color={colors.m3.primary} />
+              <Text style={styles.body}>Permita a câmera para ler o QR ou digite o código abaixo.</Text>
+              <OutlinedButton label="Permitir câmera" onPress={() => void requestPermission()} />
+            </View>
+          )
+        ) : (
+          <View style={styles.webNoticeBlock}>
+            <AppIcon name="info" size={20} color={colors.m3.primary} />
+            <Text style={styles.webNoticeText}>
+              Na versão web, digite o código de 8 caracteres exibido no celular de quem entrega.
+            </Text>
+          </View>
+        )}
+        <TextField
+          label="Código da entrega"
+          value={typed}
+          onChangeText={(value) => setTyped(normalizeDeliveryCode(value).slice(0, 8))}
+          autoCapitalize="characters"
+          maxLength={8}
+          helperText="8 caracteres, como K7M2QXWA"
+          returnKeyType="done"
+          onSubmitEditing={() => void actions.confirm(typed)}
+        />
+        <FilledButton
+          label="Confirmar entrega"
+          loading={state.confirming}
+          loadingLabel="Confirmando"
+          disabled={typed.length !== 8}
+          onPress={() => void actions.confirm(typed)}
+        />
+      </View>
+    );
+  }
+
   const title = "Entrega do livro";
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar contentMaxWidth={560} title={title} onBack={() => onBack?.()} />
+      <TopAppBar contentMaxWidth={wide ? WEB_MAX_WIDTH : 560} title={title} onBack={() => onBack?.()} />
       {state.loading ? (
         <LoadingState label="Carregando a entrega" />
       ) : state.loadError ? (
         <ErrorState message={state.loadError} onRetry={() => void actions.reload()} />
       ) : (
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-          <View style={styles.content}>
-            {state.completed ? (
-              <View style={styles.card} accessibilityLiveRegion="polite">
-                <IconBadge icon="check" tone="action" />
-                <Text accessibilityRole="header" style={styles.headline}>Entrega concluída!</Text>
-                <Text style={styles.body}>
-                  Vocês confirmaram a entrega do livro em Piripiri. Conte como foi sua experiência na negociação.
-                </Text>
-                <FilledButton
-                  label={ratingState.userRating ? "Avaliação já enviada" : "Avaliar negociação"}
-                  disabled={Boolean(ratingState.userRating)}
-                  onPress={() => setRatingModalVisible(true)}
-                />
-                <OutlinedButton label="Voltar à negociação" onPress={() => onBack?.()} />
-              </View>
-            ) : state.role === "giver" ? (
-              <View style={styles.card}>
-                <Text accessibilityRole="header" style={styles.headline}>Mostre este QR para quem recebe o livro</Text>
-                <Text style={styles.body}>A pessoa lê o QR no app dela e a entrega é concluída para as duas.</Text>
-                {state.code ? (
-                  <View style={styles.qrBlock}>
-                    <QrCode
-                      value={buildDeliveryPayload(requestId, state.code.code)}
-                      size={248}
-                      accessibilityLabel="QR code da entrega. Se preferir, informe o código por voz ou texto."
-                    />
-                    <Text selectable accessibilityLabel={`Código ${state.code.code.split("").join(" ")}`} style={styles.code}>
-                      {groupCode(state.code.code)}
+          <View style={[styles.content, wide && styles.contentWide]}>
+            {wide ? (
+              <View style={styles.wideGrid}>
+                <View style={styles.wideSideCol}>
+                  {bookSummary}
+                  <DeliveryTipsCard colors={colors} />
+                </View>
+                <View style={styles.wideMainCol}>
+                  {renderActionCard()}
+                  {scanError || state.error ? (
+                    <Text accessibilityRole="alert" accessibilityLiveRegion="assertive" style={styles.error}>
+                      {scanError ?? state.error}
                     </Text>
-                    <Text style={[styles.hint, expired && styles.expired]} accessibilityLiveRegion="polite">
-                      {expired ? "Código expirado. Gere outro." : `Vale por ${formatClock(secondsLeft ?? 0)}`}
-                    </Text>
-                  </View>
-                ) : null}
-                <OutlinedButton
-                  label={state.code ? "Gerar novo código" : "Gerar código"}
-                  disabled={state.generating}
-                  onPress={() => void actions.generate()}
-                />
+                  ) : null}
+                </View>
               </View>
             ) : (
-              <View style={styles.card}>
-                <Text accessibilityRole="header" style={styles.headline}>Confirme que recebeu o livro</Text>
-                <Text style={styles.body}>Aponte a câmera para o QR que a outra pessoa mostra ou digite o código.</Text>
-                {permission?.granted ? (
-                  <View style={styles.camera}>
-                    <CameraView
-                      style={StyleSheet.absoluteFill}
-                      facing="back"
-                      barcodeScannerSettings={{ barcodeTypes: ["qr"] }}
-                      onBarcodeScanned={handleScanned}
-                    />
-                  </View>
-                ) : (
-                  <View style={styles.permission}>
-                    <AppIcon name="camera" size={32} color={colors.m3.primary} />
-                    <Text style={styles.body}>Permita a câmera para ler o QR ou digite o código abaixo.</Text>
-                    <OutlinedButton label="Permitir câmera" onPress={() => void requestPermission()} />
-                  </View>
-                )}
-                <TextField
-                  label="Código da entrega"
-                  value={typed}
-                  onChangeText={(value) => setTyped(normalizeDeliveryCode(value).slice(0, 8))}
-                  autoCapitalize="characters"
-                  maxLength={8}
-                  helperText="8 caracteres, como K7M2QXWA"
-                  returnKeyType="done"
-                  onSubmitEditing={() => void actions.confirm(typed)}
-                />
-                <FilledButton
-                  label="Confirmar entrega"
-                  loading={state.confirming}
-                  loadingLabel="Confirmando"
-                  disabled={typed.length !== 8}
-                  onPress={() => void actions.confirm(typed)}
-                />
-              </View>
+              <>
+                {bookSummary}
+                {renderActionCard()}
+                {scanError || state.error ? (
+                  <Text accessibilityRole="alert" accessibilityLiveRegion="assertive" style={styles.error}>
+                    {scanError ?? state.error}
+                  </Text>
+                ) : null}
+              </>
             )}
-            {scanError || state.error ? (
-              <Text accessibilityRole="alert" accessibilityLiveRegion="assertive" style={styles.error}>
-                {scanError ?? state.error}
-              </Text>
-            ) : null}
           </View>
         </ScrollView>
       )}
@@ -232,6 +354,24 @@ function createStyles(colors: ColorPalette) {
     page: { flex: 1, backgroundColor: colors.surface },
     scroll: { paddingBottom: tokens.spacing[24] },
     content: { width: "100%", maxWidth: 560, alignSelf: "center", padding: tokens.spacing[16], gap: tokens.spacing[16] },
+    contentWide: { maxWidth: WEB_MAX_WIDTH, paddingHorizontal: tokens.spacing[24] },
+    wideGrid: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+      gap: tokens.spacing[24],
+      width: "100%",
+    },
+    wideSideCol: {
+      flex: 1,
+      minWidth: 360,
+      maxWidth: 460,
+      gap: tokens.spacing[16],
+    },
+    wideMainCol: {
+      flex: 1.3,
+      minWidth: 440,
+      gap: tokens.spacing[16],
+    },
     card: {
       gap: tokens.spacing[16],
       padding: tokens.spacing[16],
@@ -252,6 +392,107 @@ function createStyles(colors: ColorPalette) {
       borderRadius: tokens.radius.large,
       backgroundColor: colors.m3.surfaceContainerHigh,
     },
+    webNoticeBlock: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[10],
+      padding: tokens.spacing[12],
+      borderRadius: tokens.radius.medium,
+      backgroundColor: colors.m3.surfaceContainerHigh,
+    },
+    webNoticeText: {
+      flex: 1,
+      ...tokens.typography.bodyMedium,
+      fontFamily: fontFamily.regular,
+      color: colors.m3.onSurface,
+    },
     error: { ...tokens.typography.bodyMedium, fontFamily: fontFamily.medium, color: colors.error },
+  });
+}
+
+function createSummaryStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+    card: {
+      flexDirection: "row",
+      gap: tokens.spacing[12],
+      padding: tokens.spacing[14],
+      borderRadius: tokens.radius.large,
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+      alignItems: "center",
+    },
+    coverWrapper: {
+      borderRadius: tokens.radius.small,
+      overflow: "hidden",
+    },
+    detailsCol: {
+      flex: 1,
+      gap: tokens.spacing[4],
+    },
+    metaRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[8],
+    },
+    price: {
+      ...tokens.typography.labelMedium,
+      fontFamily: fontFamily.semiBold,
+      color: colors.m3.primary,
+    },
+    title: {
+      ...tokens.typography.titleMedium,
+      fontFamily: fontFamily.brand,
+      color: colors.m3.onSurface,
+    },
+    author: {
+      ...tokens.typography.bodyMedium,
+      fontFamily: fontFamily.regular,
+      color: colors.m3.onSurfaceVariant,
+    },
+    counterpartRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[6],
+      marginTop: tokens.spacing[2],
+    },
+    counterpartText: {
+      ...tokens.typography.footnote,
+      fontFamily: fontFamily.regular,
+      color: colors.m3.onSurfaceVariant,
+    },
+    counterpartName: {
+      fontFamily: fontFamily.semiBold,
+      color: colors.m3.onSurface,
+    },
+  });
+}
+
+function createTipsStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+    card: {
+      padding: tokens.spacing[16],
+      borderRadius: tokens.radius.large,
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+      gap: tokens.spacing[10],
+    },
+    header: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[8],
+    },
+    title: {
+      ...tokens.typography.titleMedium,
+      fontFamily: fontFamily.semiBold,
+      color: colors.nature.foliage,
+    },
+    body: {
+      ...tokens.typography.bodyMedium,
+      fontFamily: fontFamily.regular,
+      color: colors.m3.onSurfaceVariant,
+      lineHeight: 20,
+    },
   });
 }

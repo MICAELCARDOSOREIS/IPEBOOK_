@@ -26,9 +26,35 @@ vi.mock("expo-camera", () => ({
 }));
 vi.mock("@/viewmodel/useDeliveryViewModel", () => ({ useDeliveryViewModel: vi.fn() }));
 vi.mock("@/viewmodel/useAuthViewModel", () => ({ useAuthViewModel: vi.fn() }));
+vi.mock("@/view/useIsWideWeb", () => ({ useIsWideWeb: vi.fn(() => false) }));
+vi.mock("@/viewmodel/useRequestDetailViewModel", () => ({
+  useRequestDetailViewModel: vi.fn(() => [
+    {
+      detail: {
+        book: {
+          id: "livro-1",
+          title: "Grande Sertão: Veredas",
+          author: "Guimarães Rosa",
+          modality: "trade",
+          photoUrl: null,
+        },
+        counterpartId: "u2",
+        counterpartName: "João Santos",
+        counterpartPhotoUrl: null,
+        isOwner: true,
+        request: { id: "req-1", listingId: "livro-1", requesterId: "u2", status: "accepted" },
+        safeMeetingPoints: [],
+      },
+      loading: false,
+      error: null,
+    },
+    { reload: vi.fn() },
+  ]),
+}));
 
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useDeliveryViewModel } from "@/viewmodel/useDeliveryViewModel";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
 
 const REQUEST = "3301dadb-0181-4b91-8266-2bd2f363f5f5";
 const base: DeliveryState = {
@@ -190,5 +216,35 @@ describe("rota da entrega: exige sessão", () => {
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => { screen = await render(<DeliveryScreen requestId={REQUEST} />); });
     expect(screen.getByRole("header", { name: "Confirme que recebeu o livro" })).toBeDefined();
+  });
+});
+
+describe("Melhorias na entrega do livro (Spec 115)", () => {
+  beforeEach(() => {
+    actions = { generate: vi.fn().mockResolvedValue(undefined), confirm: vi.fn().mockResolvedValue(true), reload: vi.fn() };
+  });
+
+  it("exibe o resumo contextual do livro e da contraparte comunitária", async () => {
+    mockState({ role: "giver", code: { code: "K7M2QXWA", expiresAt: new Date(Date.now() + 10 * 60_000).toISOString() } });
+    const screen = await open();
+    expect(screen.getByText("Grande Sertão: Veredas")).toBeDefined();
+    expect(screen.getByText("Guimarães Rosa")).toBeDefined();
+    expect(screen.getByText("Troca")).toBeDefined();
+    expect(screen.getByText("João Santos")).toBeDefined();
+    expect(screen.getByText(/Entregando para/)).toBeDefined();
+  });
+
+  it("renderiza layout em 2 colunas com dicas de entrega na web larga", async () => {
+    vi.mocked(useIsWideWeb).mockReturnValue(true);
+    try {
+      mockState({ role: "giver", code: { code: "K7M2QXWA", expiresAt: new Date(Date.now() + 10 * 60_000).toISOString() } });
+      const screen = await open();
+      expect(screen.getByText("Grande Sertão: Veredas")).toBeDefined();
+      expect(screen.getByText("Dicas para a Entrega Presencial")).toBeDefined();
+      expect(screen.getByText(/Realizem a troca em um dos 4 pontos públicos e seguros de Piripiri/)).toBeDefined();
+      expect(screen.getByRole("header", { name: "Mostre este QR para quem recebe o livro" })).toBeDefined();
+    } finally {
+      vi.mocked(useIsWideWeb).mockReturnValue(false);
+    }
   });
 });
