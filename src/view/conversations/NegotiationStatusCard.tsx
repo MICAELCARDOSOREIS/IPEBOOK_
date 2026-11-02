@@ -17,6 +17,8 @@ export type NegotiationStatusCardProps = {
   deliveryCompleted: boolean;
   onCombineMeeting?: () => void;
   onConfirmMeeting?: () => void;
+  onSuggestOtherTime?: () => void;
+  onRescheduleMeeting?: () => void;
   onOpenDelivery?: () => void;
   onOpenRating?: () => void;
   onOpenDirections?: () => void;
@@ -31,6 +33,8 @@ export function NegotiationStatusCard({
   deliveryCompleted,
   onCombineMeeting,
   onConfirmMeeting,
+  onSuggestOtherTime,
+  onRescheduleMeeting,
   onOpenDelivery,
   onOpenRating,
   onOpenDirections,
@@ -126,6 +130,18 @@ export function NegotiationStatusCard({
               <Text style={styles.actionButtonSecondaryText}>Adicionar à agenda</Text>
             </Pressable>
           ) : null}
+
+          {onRescheduleMeeting ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Reagendar encontro"
+              onPress={onRescheduleMeeting}
+              style={withPress(styles.actionButtonSecondary)}
+            >
+              <AppIcon name="swap" size={16} color={colors.m3.onSurface} />
+              <Text style={styles.actionButtonSecondaryText}>Reagendar</Text>
+            </Pressable>
+          ) : null}
         </View>
       </View>
     );
@@ -153,16 +169,32 @@ export function NegotiationStatusCard({
           </View>
         </View>
 
-        {!isProposer && onConfirmMeeting ? (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Confirmar encontro"
-            onPress={onConfirmMeeting}
-            style={withPress(styles.actionButtonPrimary)}
-          >
-            <Text style={styles.actionButtonPrimaryText}>Confirmar encontro</Text>
-          </Pressable>
-        ) : null}
+        <View style={styles.actionsGrid}>
+          {!isProposer && onConfirmMeeting ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Confirmar encontro"
+              onPress={onConfirmMeeting}
+              style={withPress(styles.actionButtonPrimary)}
+            >
+              <Text style={styles.actionButtonPrimaryText}>Confirmar encontro</Text>
+            </Pressable>
+          ) : null}
+
+          {(onSuggestOtherTime ?? onCombineMeeting) ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={isProposer ? "Alterar data sugerida" : "Sugerir outro horário"}
+              onPress={onSuggestOtherTime ?? onCombineMeeting}
+              style={withPress(styles.actionButtonSecondary)}
+            >
+              <AppIcon name="calendar" size={16} color={colors.m3.onSurface} />
+              <Text style={styles.actionButtonSecondaryText}>
+                {isProposer ? "Alterar sugestão" : "Sugerir outro horário"}
+              </Text>
+            </Pressable>
+          ) : null}
+        </View>
       </View>
     );
   }

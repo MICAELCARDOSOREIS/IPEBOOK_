@@ -14,6 +14,8 @@ export type MeetingMapProps = {
   coveredBottom?: number;
   /** Altura em px do painel sobreposto; pinos, logo e atribuição ficam acima dele. */
   sheetHeight?: number;
+  /** Modo de padding compacto para exibição em contêiner/card desktop. */
+  compactPadding?: boolean;
   /** Toque no pino escolhe o local. */
   onSelect?: (name: string) => void;
 };
@@ -52,13 +54,13 @@ export function MeetingMap(props: MeetingMapProps) {
   const token = process.env.EXPO_PUBLIC_MAPBOX_TOKEN;
   const [useStatic, setUseStatic] = useState(false);
   if (!token) return null;
-  if (useStatic) return <StaticMeetingMap selectedName={props.selectedName} coveredBottom={props.coveredBottom} />;
+  if (useStatic) return <StaticMeetingMap selectedName={props.selectedName} coveredBottom={props.coveredBottom} compactPadding={props.compactPadding} />;
   return <InteractiveWebMap {...props} token={token} onUnavailable={() => setUseStatic(true)} />;
 }
 
 type InteractiveProps = MeetingMapProps & { token: string; onUnavailable: () => void };
 
-function InteractiveWebMap({ selectedName, coveredBottom = 0, sheetHeight = 0, onSelect, token, onUnavailable }: InteractiveProps) {
+function InteractiveWebMap({ selectedName, coveredBottom = 0, sheetHeight = 0, compactPadding = false, onSelect, token, onUnavailable }: InteractiveProps) {
   const { colors, resolvedScheme } = useTheme();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapboxMap | null>(null);
@@ -85,7 +87,12 @@ function InteractiveWebMap({ selectedName, coveredBottom = 0, sheetHeight = 0, o
           container,
           style: dark ? "mapbox://styles/mapbox/dark-v11" : "mapbox://styles/mapbox/streets-v12",
           bounds: [sw, ne],
-          fitBoundsOptions: { padding: { top: TOP_PADDING, bottom: 48, left: SIDE_PADDING, right: SIDE_PADDING }, duration: 0 },
+          fitBoundsOptions: {
+            padding: compactPadding
+              ? { top: 48, bottom: 48, left: 32, right: 32 }
+              : { top: TOP_PADDING, bottom: 48, left: SIDE_PADDING, right: SIDE_PADDING },
+            duration: 0,
+          },
           pitchWithRotate: false,
           dragRotate: false,
           touchPitch: false,
@@ -141,8 +148,12 @@ function InteractiveWebMap({ selectedName, coveredBottom = 0, sheetHeight = 0, o
     const map = mapRef.current;
     const container = containerRef.current;
     if (!ready || !map || !container) return;
-    const bottom = (sheetHeight > 0 ? sheetHeight : container.clientHeight * coveredBottom) + 48;
-    const padding = { top: TOP_PADDING, bottom, left: SIDE_PADDING, right: SIDE_PADDING };
+    const bottom = compactPadding
+      ? 48
+      : (sheetHeight > 0 ? sheetHeight : container.clientHeight * coveredBottom) + 48;
+    const top = compactPadding ? 48 : TOP_PADDING;
+    const side = compactPadding ? 32 : SIDE_PADDING;
+    const padding = { top, bottom, left: side, right: side };
     const point = PIRIPIRI_MEETING_POINTS.find((item) => item.name === selectedName);
     if (point) {
       map.easeTo({ center: [point.longitude, point.latitude], zoom: SELECTED_ZOOM, padding, duration: 600 });
@@ -150,16 +161,17 @@ function InteractiveWebMap({ selectedName, coveredBottom = 0, sheetHeight = 0, o
       const { ne, sw } = meetingMapBounds(PIRIPIRI_MEETING_POINTS);
       map.fitBounds([sw, ne], { padding, duration: 400 });
     }
-  }, [ready, selectedName, sheetHeight, coveredBottom]);
+  }, [ready, selectedName, sheetHeight, coveredBottom, compactPadding]);
 
   // Logo e atribuição do Mapbox ficam logo acima do painel, sem escondê-los (termos de uso).
   useEffect(() => {
     const container = containerRef.current;
     if (!ready || !container) return;
+    const bottomPx = compactPadding ? "8px" : `${sheetHeight}px`;
     container.querySelectorAll<HTMLElement>(".mapboxgl-ctrl-bottom-left, .mapboxgl-ctrl-bottom-right").forEach((corner) => {
-      corner.style.bottom = `${sheetHeight}px`;
+      corner.style.bottom = bottomPx;
     });
-  }, [ready, sheetHeight]);
+  }, [ready, sheetHeight, compactPadding]);
 
   return (
     <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.m3.surfaceContainerHigh }]}>

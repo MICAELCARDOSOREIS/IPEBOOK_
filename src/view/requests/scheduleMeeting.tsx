@@ -15,6 +15,8 @@ import { LoadingState } from "@/view/components/LoadingState";
 import { TextButton } from "@/view/components/TextButton";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { MeetingMap } from "@/view/requests/MeetingMap";
+import { StaticMeetingMap } from "@/view/requests/MeetingMapStatic";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
 
 import { withPress } from "@/view/pressFeedback";
 /** Parte da altura que o painel do formulário cobre sobre o mapa. */
@@ -67,6 +69,7 @@ export function ScheduleMeeting({ requestId, sessionUserId, onBack, onSent }: Sc
   const errorRef = useFormErrorAnnouncer(state.error);
   const rescheduling = state.mode === "reschedule";
   const { colors } = useTheme();
+  const wideWeb = useIsWideWeb();
   const styles = useMemo(() => createStyles(colors), [colors]);
   // Com token, o mapa é o fundo da tela e o formulário sobe num painel; sem token, o painel ocupa tudo.
   const hasMap = Boolean(process.env.EXPO_PUBLIC_MAPBOX_TOKEN);
@@ -140,6 +143,9 @@ export function ScheduleMeeting({ requestId, sessionUserId, onBack, onSent }: Sc
   const selectedPoint = PIRIPIRI_MEETING_POINTS.find((item) => item.name === state.pointName) ?? null;
 
   const summary = (() => {
+    if (!state.isPointOpenOnDay && state.dayIndex !== null) {
+      return { complete: false, text: "O local selecionado não abre aos finais de semana." };
+    }
     const missing = [
       state.pointName ? null : "o local",
       state.dayIndex === null ? "o dia" : null,
@@ -149,6 +155,220 @@ export function ScheduleMeeting({ requestId, sessionUserId, onBack, onSent }: Sc
     const point = PIRIPIRI_MEETING_POINTS.find((item) => item.name === state.pointName);
     return { complete: true, text: `${point?.name.replace(/ \(.*\)$/, "")} · ${formatMeetingDay(state.dayOptions[state.dayIndex as number])} · ${state.hour}h` };
   })();
+
+  if (wideWeb && !state.loading && !state.loadError) {
+    return (
+      <View style={styles.page}>
+        <SafeAreaView style={styles.safe}>
+          <TopAppBar
+            contentMaxWidth={1180}
+            title={rescheduling ? "Reagendar encontro" : "Combinar encontro"}
+            onBack={() => onBack?.()}
+          />
+          <View style={styles.wideContainer}>
+            {/* Coluna Esquerda: Formulário de Agendamento */}
+            <View style={styles.wideFormCol}>
+              <ScrollView
+                ref={scrollRef}
+                style={styles.wideFormScroll}
+                contentContainerStyle={styles.wideFormContent}
+                keyboardShouldPersistTaps="handled"
+              >
+                <View style={styles.whereHeader}>
+                  <Text accessibilityRole="header" style={styles.wideHeadline}>
+                    {rescheduling ? "Encontre um novo horário." : "Escolha onde e quando encontrar"}
+                  </Text>
+                  <Text style={styles.wideBody}>
+                    {rescheduling
+                      ? "Escolha uma nova data e envie a sugestão para a outra pessoa."
+                      : "Ponto público e seguro em Piripiri para realizar a entrega presencial."}
+                  </Text>
+                </View>
+
+                {/* 1. Onde */}
+                <View style={styles.whereHeader}>
+                  <Text accessibilityRole="header" style={styles.sectionLabel}>Onde</Text>
+                  <Text style={styles.whereHint}>
+                    {hasMap ? "Clique num pino do mapa ou escolha na lista." : "Escolha um ponto público e seguro em Piripiri."}
+                  </Text>
+                </View>
+
+                <View accessibilityRole="radiogroup" accessibilityLabel="Local do encontro" style={styles.places}>
+                  {PIRIPIRI_MEETING_POINTS.map((point, index) => {
+                    const selected = state.pointName === point.name;
+                    const isWeekdayOnly = point.recommendedTime.includes("úteis");
+                    return (
+                      <Pressable
+                        key={point.name}
+                        accessibilityRole="radio"
+                        accessibilityLabel={`Local ${point.name}, ${point.recommendedTime}`}
+                        accessibilityState={{ checked: selected }}
+                        onPress={() => actions.selectPoint(point.name)}
+                        style={withPress([styles.widePlaceCard, selected && styles.widePlaceCardSelected])}
+                      >
+                        <View style={[styles.widePlaceNumberBox, selected && styles.widePlaceNumberBoxSelected]}>
+                          <Text
+                            accessibilityElementsHidden
+                            importantForAccessibility="no"
+                            style={[styles.widePlaceNumberText, selected && styles.widePlaceNumberTextSelected]}
+                          >
+                            {index + 1}
+                          </Text>
+                        </View>
+                        <View style={styles.widePlaceInfo}>
+                          <View style={styles.widePlaceTitleRow}>
+                            <Text style={[styles.widePlaceName, selected && styles.widePlaceNameSelected]}>{point.name}</Text>
+                            <View style={[styles.wideTag, !isWeekdayOnly && styles.wideTagDaily]}>
+                              <Text style={[styles.wideTagText, !isWeekdayOnly && styles.wideTagDailyText]}>
+                                {isWeekdayOnly ? "Dias úteis" : "Diário"}
+                              </Text>
+                            </View>
+                          </View>
+                          <Text style={styles.widePlaceAddress}>{point.address}</Text>
+                          <Text style={styles.widePlaceTime}>{point.recommendedTime}</Text>
+                        </View>
+                        <View style={[styles.radio, selected && styles.radioSelected]}>
+                          {selected ? <View style={styles.radioDot} /> : null}
+                        </View>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+
+                {/* 2. Dia */}
+                <Text accessibilityRole="header" style={styles.sectionLabel}>Dia</Text>
+                <View accessibilityRole="radiogroup" accessibilityLabel="Dia do encontro" style={styles.wideDaysGrid}>
+                  {state.dayOptions.map((day, index) => (
+                    <OptionChip
+                      key={day.toISOString()}
+                      label={formatMeetingDay(day)}
+                      accessibilityLabel={`Dia ${spokenMeetingDay(day)}`}
+                      selected={state.dayIndex === index}
+                      onPress={() => actions.selectDay(index)}
+                      styles={styles}
+                    />
+                  ))}
+                </View>
+
+                {/* 3. Horário */}
+                <Text accessibilityRole="header" style={styles.sectionLabel}>Horário</Text>
+                {!state.isPointOpenOnDay && state.dayIndex !== null ? (
+                  <View style={styles.closedNotice}>
+                    <Text style={styles.closedNoticeText}>
+                      O Campus IFPI e o Museu funcionam exclusivamente em dias úteis (segunda a sexta-feira). Escolha um dia útil para este local ou selecione uma das praças para os fins de semana.
+                    </Text>
+                  </View>
+                ) : (
+                  <View accessibilityRole="radiogroup" accessibilityLabel="Horário do encontro" style={styles.wideHoursGrid}>
+                    {state.timeSlots.map((hour) => (
+                      <OptionChip
+                        key={hour}
+                        compact
+                        label={`${hour}h`}
+                        accessibilityLabel={`Horário ${hour}h`}
+                        selected={state.hour === hour}
+                        onPress={() => actions.selectHour(hour)}
+                        styles={styles}
+                      />
+                    ))}
+                  </View>
+                )}
+
+                {state.error ? (
+                  <Text ref={errorRef} accessibilityRole="alert" accessibilityLiveRegion="assertive" style={styles.error}>
+                    {state.error}
+                  </Text>
+                ) : null}
+              </ScrollView>
+
+              {/* Rodapé da Coluna Esquerda: Resumo e Ação */}
+              <View style={styles.footer}>
+                <View style={styles.footerContent}>
+                  <View accessibilityLiveRegion="polite" style={styles.summary}>
+                    <AppIcon name={summary.complete ? "check" : "info"} size={18} color={summary.complete ? colors.m3.primary : colors.m3.onSurfaceVariant} />
+                    <Text numberOfLines={2} style={[styles.summaryText, summary.complete && styles.summaryTextDone]}>{summary.text}</Text>
+                  </View>
+                  <FilledButton
+                    label={rescheduling ? "Enviar nova sugestão" : "Enviar convite"}
+                    disabled={!summary.complete}
+                    loading={state.submitting}
+                    loadingLabel="Enviando"
+                    onPress={async () => {
+                      if (await actions.submit()) onSent?.();
+                    }}
+                  />
+                  {rescheduling ? <TextButton label="Cancelar" onPress={() => onBack?.()} /> : null}
+                </View>
+              </View>
+            </View>
+
+            {/* Coluna Direita: Mapa e Detalhes do Local */}
+            <View style={styles.wideMapColumn}>
+              <View style={styles.wideMapCard}>
+                <View style={styles.wideMapCardHeader}>
+                  <View style={styles.wideMapCardTitleGroup}>
+                    <AppIcon name="place" size={18} color={colors.m3.primary} />
+                    <Text style={styles.wideMapCardTitle}>Pontos de Encontro em Piripiri</Text>
+                  </View>
+                  <Text style={styles.wideMapCardSubtitle}>4 locais públicos oficiais</Text>
+                </View>
+
+                <View style={styles.wideMapViewport}>
+                  {hasMap ? (
+                    <MeetingMap selectedName={state.pointName} compactPadding onSelect={selectFromMap} />
+                  ) : (
+                    <StaticMeetingMap selectedName={state.pointName} compactPadding />
+                  )}
+                  {!hasMap && !process.env.EXPO_PUBLIC_MAPBOX_TOKEN ? (
+                    <View style={styles.wideMapEmptyFallback}>
+                      <AppIcon name="place" size={32} color={colors.m3.primary} />
+                      <Text style={styles.wideMapEmptyFallbackTitle}>4 Pontos Seguros em Piripiri</Text>
+                      <Text style={styles.wideMapEmptyFallbackText}>
+                        Praça da Bandeira, Praça de Eventos, Museu de Perypery e Campus IFPI.
+                      </Text>
+                    </View>
+                  ) : null}
+                </View>
+
+                <View style={styles.wideMapCardFooter}>
+                  <View style={styles.wideMapFooterRow}>
+                    <View style={styles.peekBadge}>
+                      <Text style={styles.peekBadgeText}>
+                        {selectedPoint ? PIRIPIRI_MEETING_POINTS.indexOf(selectedPoint) + 1 : "✓"}
+                      </Text>
+                    </View>
+                    <View style={styles.wideMapFooterTextCol}>
+                      <Text numberOfLines={1} style={styles.wideMapFooterTitle}>
+                        {selectedPoint ? selectedPoint.name : "Escolha o local na lista ao lado ou no mapa"}
+                      </Text>
+                      <Text numberOfLines={2} style={styles.wideMapFooterSubtitle}>
+                        {selectedPoint
+                          ? `${selectedPoint.address} · ${selectedPoint.recommendedTime}`
+                          : "Pontos monitorados e centrais em Piripiri, ideais para troca segura de livros."}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+              </View>
+
+              {/* Card de Dicas de Segurança Comunitária */}
+              <View style={styles.wideSafetyCard}>
+                <View style={styles.wideSafetyHeader}>
+                  <AppIcon name="checkCircle" size={18} color={colors.nature.foliage} />
+                  <Text style={styles.wideSafetyTitle}>Dicas de Segurança Comunitária</Text>
+                </View>
+                <Text style={styles.wideSafetyText}>
+                  • Prefira horários durante o dia e com circulação de pedestres.{"\n"}
+                  • Encontros nos pontos sugeridos garantem visibilidade e tranquilidade.{"\n"}
+                  • Confira o estado do livro no momento da entrega presencial.
+                </Text>
+              </View>
+            </View>
+          </View>
+        </SafeAreaView>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.page}>
@@ -271,19 +491,27 @@ export function ScheduleMeeting({ requestId, sessionUserId, onBack, onSent }: Sc
               </ScrollView>
 
               <Text accessibilityRole="header" style={styles.sectionLabel}>Horário</Text>
-              <View accessibilityRole="radiogroup" accessibilityLabel="Horário do encontro" style={styles.chips}>
-                {state.timeSlots.map((hour) => (
-                  <OptionChip
-                    key={hour}
-                    compact
-                    label={`${hour}h`}
-                    accessibilityLabel={`Horário ${hour}h`}
-                    selected={state.hour === hour}
-                    onPress={() => actions.selectHour(hour)}
-                    styles={styles}
-                  />
-                ))}
-              </View>
+              {!state.isPointOpenOnDay && state.dayIndex !== null ? (
+                <View style={styles.closedNotice}>
+                  <Text style={styles.closedNoticeText}>
+                    O Campus IFPI e o Museu funcionam exclusivamente em dias úteis (segunda a sexta-feira). Escolha um dia útil para este local ou escolha uma das praças para os fins de semana.
+                  </Text>
+                </View>
+              ) : (
+                <View accessibilityRole="radiogroup" accessibilityLabel="Horário do encontro" style={styles.chips}>
+                  {state.timeSlots.map((hour) => (
+                    <OptionChip
+                      key={hour}
+                      compact
+                      label={`${hour}h`}
+                      accessibilityLabel={`Horário ${hour}h`}
+                      selected={state.hour === hour}
+                      onPress={() => actions.selectHour(hour)}
+                      styles={styles}
+                    />
+                  ))}
+                </View>
+              )}
 
               {state.error ? (
                 <Text ref={errorRef} accessibilityRole="alert" accessibilityLiveRegion="assertive" style={styles.error}>
@@ -301,6 +529,7 @@ export function ScheduleMeeting({ requestId, sessionUserId, onBack, onSent }: Sc
               </View>
               <FilledButton
                 label={rescheduling ? "Enviar nova sugestão" : "Enviar convite"}
+                disabled={!summary.complete}
                 loading={state.submitting}
                 loadingLabel="Enviando"
                 onPress={async () => {
@@ -471,6 +700,7 @@ function createStyles(colors: ColorPalette) {
     daysScroll: { marginHorizontal: -tokens.spacing[16] },
     daysRow: { paddingHorizontal: tokens.spacing[16] },
     daysChips: { flexDirection: "row", gap: tokens.spacing[8] },
+    daysChipsWrap: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[8] },
     chips: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[8] },
     chip: {
       minHeight: tokens.accessibility.touchTarget,
@@ -510,5 +740,268 @@ function createStyles(colors: ColorPalette) {
       padding: tokens.spacing[16],
     },
     footerContent: { width: "100%", maxWidth: 560, alignSelf: "center", gap: tokens.spacing[8] },
+    wideContainer: {
+      maxWidth: 1180,
+      width: "100%",
+      alignSelf: "center",
+      flex: 1,
+      flexDirection: "row",
+      gap: tokens.spacing[24],
+      padding: tokens.spacing[24],
+      alignItems: "flex-start",
+    },
+    wideFormCol: {
+      width: 520,
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderRadius: tokens.radius.large,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+      overflow: "hidden",
+      shadowColor: colors.m3.shadow,
+      shadowOpacity: 0.05,
+      shadowRadius: 10,
+      elevation: 2,
+    },
+    wideFormScroll: {
+      flex: 1,
+      maxHeight: 720,
+    },
+    wideFormContent: {
+      padding: tokens.spacing[20],
+      gap: tokens.spacing[16],
+    },
+    wideHeadline: {
+      ...tokens.typography.headlineMedium,
+      fontFamily: fontFamily.brand,
+      color: colors.m3.onSurface,
+    },
+    wideBody: {
+      ...tokens.typography.bodyMedium,
+      fontFamily: fontFamily.regular,
+      color: colors.m3.onSurfaceVariant,
+      lineHeight: 20,
+    },
+    widePlaceCard: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[12],
+      minHeight: tokens.accessibility.touchTarget,
+      paddingVertical: tokens.spacing[12],
+      paddingHorizontal: tokens.spacing[14],
+      borderRadius: tokens.radius.medium,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+      backgroundColor: colors.surface,
+    },
+    widePlaceCardSelected: {
+      borderColor: colors.m3.primary,
+      borderWidth: 2,
+      backgroundColor: colors.m3.surfaceContainerHighest,
+    },
+    widePlaceNumberBox: {
+      width: 36,
+      height: 36,
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.m3.surfaceContainerHigh,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    widePlaceNumberBoxSelected: {
+      backgroundColor: colors.m3.secondaryContainer,
+    },
+    widePlaceNumberText: {
+      ...tokens.typography.titleMedium,
+      fontFamily: fontFamily.brand,
+      color: colors.m3.onSurfaceVariant,
+    },
+    widePlaceNumberTextSelected: {
+      color: colors.m3.onSecondaryContainer,
+    },
+    widePlaceInfo: {
+      flex: 1,
+      gap: tokens.spacing[2],
+    },
+    widePlaceTitleRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: tokens.spacing[8],
+    },
+    widePlaceName: {
+      ...tokens.typography.bodyLarge,
+      fontFamily: fontFamily.semiBold,
+      color: colors.m3.onSurface,
+    },
+    widePlaceNameSelected: {
+      color: colors.m3.primary,
+    },
+    wideTag: {
+      paddingHorizontal: tokens.spacing[8],
+      paddingVertical: tokens.spacing[2],
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.m3.surfaceContainerHighest,
+    },
+    wideTagDaily: {
+      backgroundColor: colors.m3.secondaryContainer,
+    },
+    wideTagText: {
+      ...tokens.typography.labelSmall,
+      fontFamily: fontFamily.medium,
+      color: colors.m3.onSurfaceVariant,
+      fontSize: 11,
+    },
+    wideTagDailyText: {
+      ...tokens.typography.labelSmall,
+      fontFamily: fontFamily.semiBold,
+      color: colors.m3.onSecondaryContainer,
+      fontSize: 11,
+    },
+    widePlaceAddress: {
+      ...tokens.typography.footnote,
+      fontFamily: fontFamily.regular,
+      color: colors.m3.onSurfaceVariant,
+    },
+    widePlaceTime: {
+      ...tokens.typography.labelSmall,
+      fontFamily: fontFamily.regular,
+      color: colors.m3.outline,
+    },
+    wideDaysGrid: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: tokens.spacing[8],
+    },
+    wideHoursGrid: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: tokens.spacing[8],
+    },
+    wideMapColumn: {
+      flex: 1,
+      minWidth: 440,
+      gap: tokens.spacing[16],
+    },
+    wideMapCard: {
+      borderRadius: tokens.radius.large,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+      overflow: "hidden",
+      backgroundColor: colors.m3.surfaceContainerHigh,
+      shadowColor: colors.m3.shadow,
+      shadowOpacity: 0.08,
+      shadowRadius: 12,
+      elevation: 3,
+    },
+    wideMapCardHeader: {
+      paddingHorizontal: tokens.spacing[16],
+      paddingVertical: tokens.spacing[12],
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.m3.outlineVariant,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+    },
+    wideMapCardTitleGroup: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[8],
+    },
+    wideMapCardTitle: {
+      ...tokens.typography.titleMedium,
+      fontFamily: fontFamily.semiBold,
+      color: colors.m3.onSurface,
+    },
+    wideMapCardSubtitle: {
+      ...tokens.typography.labelSmall,
+      fontFamily: fontFamily.regular,
+      color: colors.m3.onSurfaceVariant,
+    },
+    wideMapViewport: {
+      height: 440,
+      position: "relative",
+      overflow: "hidden",
+      backgroundColor: colors.m3.surfaceContainerHighest,
+    },
+    wideMapCardFooter: {
+      padding: tokens.spacing[14],
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderTopWidth: 1,
+      borderTopColor: colors.m3.outlineVariant,
+    },
+    wideMapFooterRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[12],
+    },
+    wideMapFooterTextCol: {
+      flex: 1,
+      gap: tokens.spacing[2],
+    },
+    wideMapFooterTitle: {
+      ...tokens.typography.bodyMedium,
+      fontFamily: fontFamily.semiBold,
+      color: colors.m3.onSurface,
+    },
+    wideMapFooterSubtitle: {
+      ...tokens.typography.footnote,
+      fontFamily: fontFamily.regular,
+      color: colors.m3.onSurfaceVariant,
+    },
+    wideMapEmptyFallback: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+      padding: tokens.spacing[24],
+      gap: tokens.spacing[12],
+    },
+    wideMapEmptyFallbackTitle: {
+      ...tokens.typography.titleMedium,
+      fontFamily: fontFamily.brand,
+      color: colors.m3.onSurface,
+      textAlign: "center",
+    },
+    wideMapEmptyFallbackText: {
+      ...tokens.typography.bodyMedium,
+      fontFamily: fontFamily.regular,
+      color: colors.m3.onSurfaceVariant,
+      textAlign: "center",
+      lineHeight: 20,
+    },
+    wideSafetyCard: {
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderRadius: tokens.radius.medium,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+      padding: tokens.spacing[14],
+      gap: tokens.spacing[8],
+    },
+    wideSafetyHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[8],
+    },
+    wideSafetyTitle: {
+      ...tokens.typography.labelLarge,
+      fontFamily: fontFamily.semiBold,
+      color: colors.nature.foliage,
+    },
+    wideSafetyText: {
+      ...tokens.typography.footnote,
+      fontFamily: fontFamily.regular,
+      color: colors.m3.onSurfaceVariant,
+      lineHeight: 18,
+    },
+    closedNotice: {
+      backgroundColor: colors.errorContainer,
+      borderRadius: tokens.radius.medium,
+      padding: tokens.spacing[12],
+      marginTop: tokens.spacing[4],
+    },
+    closedNoticeText: {
+      ...tokens.typography.bodyMedium,
+      fontFamily: fontFamily.medium,
+      color: colors.error,
+    },
   });
 }

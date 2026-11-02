@@ -4,11 +4,16 @@ import {
   meetingUseCases,
   rateLimiter as defaultRateLimiter,
 } from "@/di/container";
-import { MEETING_TIME_SLOTS, type Meeting } from "@/model/entities/meeting";
+import { type Meeting } from "@/model/entities/meeting";
 import { DomainError } from "@/model/errors";
 import type { ILogger } from "@/model/services/iLogger";
 import type { IRateLimiter } from "@/model/services/iRateLimiter";
-import { meetingDayOptions, meetingScheduledAt } from "@/model/validators/meetingValidator";
+import {
+  isMeetingPointOpenOnDay,
+  meetingDayOptions,
+  meetingScheduledAt,
+  meetingTimeSlotsForPoint,
+} from "@/model/validators/meetingValidator";
 import type { IMeetingUseCases } from "@/usecase/iMeetingUseCases";
 import { formKey, guardFormSubmit } from "@/viewmodel/formRateLimit";
 
@@ -23,6 +28,7 @@ export type ScheduleMeetingState = {
   hour: number | null;
   dayOptions: readonly Date[];
   timeSlots: readonly number[];
+  isPointOpenOnDay: boolean;
   submitting: boolean;
   error: string | null;
 };
@@ -77,12 +83,13 @@ export function useScheduleMeetingViewModel(
         // Reagendar parte do encontro atual: local, dia (se ainda na janela) e horário.
         const scheduled = ongoing ? new Date(ongoing.scheduledAt) : null;
         const dayIndex = scheduled ? dayOptions.findIndex((day) => sameDay(day, scheduled)) : -1;
+        const validSlots = meetingTimeSlotsForPoint(ongoing?.pointName ?? null, scheduled);
         setState((previous) => ({
           ...previous,
           loading: false,
           pointName: ongoing?.pointName ?? null,
           dayIndex: dayIndex >= 0 ? dayIndex : null,
-          hour: scheduled && MEETING_TIME_SLOTS.includes(scheduled.getHours()) ? scheduled.getHours() : null,
+          hour: scheduled && validSlots.includes(scheduled.getHours()) ? scheduled.getHours() : null,
         }));
       } catch (error) {
         if (active.current) {
@@ -99,8 +106,28 @@ export function useScheduleMeetingViewModel(
     };
   }, [useCases, requestId, sessionUserId, dayOptions]);
 
-  const selectPoint = useCallback((pointName: string) => setState((p) => ({ ...p, pointName, error: null })), []);
-  const selectDay = useCallback((dayIndex: number) => setState((p) => ({ ...p, dayIndex, error: null })), []);
+  const selectPoint = useCallback(
+    (pointName: string) =>
+      setState((p) => {
+        const day = p.dayIndex !== null ? dayOptions[p.dayIndex] : null;
+        const allowed = meetingTimeSlotsForPoint(pointName, day);
+        const hourValid = p.hour !== null && allowed.includes(p.hour);
+        return { ...p, pointName, hour: hourValid ? p.hour : null, error: null };
+      }),
+    [dayOptions],
+  );
+
+  const selectDay = useCallback(
+    (dayIndex: number) =>
+      setState((p) => {
+        const day = dayOptions[dayIndex] ?? null;
+        const allowed = meetingTimeSlotsForPoint(p.pointName, day);
+        const hourValid = p.hour !== null && allowed.includes(p.hour);
+        return { ...p, dayIndex, hour: hourValid ? p.hour : null, error: null };
+      }),
+    [dayOptions],
+  );
+
   const selectHour = useCallback((hour: number) => setState((p) => ({ ...p, hour, error: null })), []);
 
   const submit = useCallback(async (): Promise<boolean> => {
@@ -137,8 +164,18 @@ export function useScheduleMeetingViewModel(
     }
   }, [state, rateLimiter, requestId, dayOptions, current, useCases, sessionUserId, logger]);
 
+  const currentDay = state.dayIndex !== null ? dayOptions[state.dayIndex] : null;
+  const timeSlots = useMemo(
+    () => meetingTimeSlotsForPoint(state.pointName, currentDay),
+    [state.pointName, currentDay],
+  );
+  const isPointOpenOnDay = useMemo(
+    () => isMeetingPointOpenOnDay(state.pointName, currentDay),
+    [state.pointName, currentDay],
+  );
+
   return [
-    { ...state, mode: current ? "reschedule" : "propose", dayOptions, timeSlots: MEETING_TIME_SLOTS },
+    { ...state, mode: current ? "reschedule" : "propose", dayOptions, timeSlots, isPointOpenOnDay },
     { selectPoint, selectDay, selectHour, submit },
   ];
 }

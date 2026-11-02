@@ -99,6 +99,31 @@ describe("useScheduleMeetingViewModel (Spec 052, 06.04/06.13)", () => {
     expect(new Date(meeting!.scheduledAt).getHours()).toBe(17);
   });
 
+  it("restringe horários e invalida hora fora do expediente do Museu (Spec 114)", async () => {
+    const hook = await renderSchedule("dono");
+    // Sexta-feira: dia 2026-10-23 (índice 0)
+    await act(async () => {
+      hook.current[1].selectPoint("Museu de Piripiri");
+      hook.current[1].selectDay(0);
+    });
+    expect(hook.current[0].timeSlots).toEqual([8, 9, 10, 11, 12, 13, 14, 15, 16, 17]);
+    expect(hook.current[0].isPointOpenOnDay).toBe(true);
+
+    await act(async () => {
+      hook.current[1].selectHour(10);
+    });
+    expect(hook.current[0].hour).toBe(10);
+
+    // Mudar para Sábado: dia 2026-10-24 (índice 1)
+    await act(async () => {
+      hook.current[1].selectDay(1);
+    });
+    // O Museu fecha aos fins de semana, slots vazios e hora resetada para null
+    expect(hook.current[0].timeSlots).toHaveLength(0);
+    expect(hook.current[0].isPointOpenOnDay).toBe(false);
+    expect(hook.current[0].hour).toBeNull();
+  });
+
   it("mostra o erro de domínio e o de carga", async () => {
     const failing: IMeetingUseCases = { ...useCases, getMeeting: vi.fn().mockRejectedValue(new Error("rede")) } as unknown as IMeetingUseCases;
     const broken = await renderSchedule("dono", failing);

@@ -284,6 +284,8 @@ export function Chat({
                 deliveryCompleted={Boolean(delivery.completed)}
                 onCombineMeeting={() => (onScheduleMeeting ? onScheduleMeeting(requestId) : onOpenNegotiation?.(requestId))}
                 onConfirmMeeting={() => void meetingActions.confirm()}
+                onSuggestOtherTime={() => (onScheduleMeeting ? onScheduleMeeting(requestId) : onOpenNegotiation?.(requestId))}
+                onRescheduleMeeting={() => (onScheduleMeeting ? onScheduleMeeting(requestId) : onOpenNegotiation?.(requestId))}
                 onOpenDelivery={() => (onOpenDelivery ? onOpenDelivery(requestId) : onOpenNegotiation?.(requestId))}
                 onOpenDirections={handleOpenDirections}
                 onAddToCalendar={() => void handleAddToCalendar()}
