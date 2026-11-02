@@ -47,6 +47,34 @@ describe("pushOnce (Spec 091 / Spec 113)", () => {
     pushOnce("/livro/2" as never);
     expect(router.push).toHaveBeenCalledTimes(2);
   });
+
+  it("reconhece o mesmo destino em formatos alternativos (objeto vs string e parâmetros ordenados)", () => {
+    // 1º toque via objeto
+    pushOnce({ pathname: "/pesquisa", params: { categoria: "Ficção", bairro: "Centro" } } as never);
+    expect(router.push).toHaveBeenCalledTimes(1);
+
+    // 2º toque rápido via string com query equivalente
+    pushOnce("/pesquisa?bairro=Centro&categoria=Ficção" as never);
+    expect(router.push).toHaveBeenCalledTimes(1);
+
+    // 3º toque rápido via objeto com ordem inversa de chaves
+    pushOnce({ pathname: "/pesquisa", params: { bairro: "Centro", categoria: "Ficção" } } as never);
+    expect(router.push).toHaveBeenCalledTimes(1);
+
+    // 4º toque rápido para rota dinâmica interpolada
+    _resetPushOnceState();
+    pushOnce({ pathname: "/alertas/[id]", params: { id: "xyz" } } as never);
+    expect(router.push).toHaveBeenCalledTimes(2);
+    pushOnce("/alertas/xyz" as never);
+    expect(router.push).toHaveBeenCalledTimes(2); // Bloqueado, mesma rota canônica
+  });
+
+  it("normaliza barras finais redundantes", () => {
+    pushOnce("/sobre/" as never);
+    expect(router.push).toHaveBeenCalledTimes(1);
+    pushOnce("/sobre" as never);
+    expect(router.push).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe("backOnce e replaceOnce (Spec 092 / Spec 113)", () => {
@@ -85,5 +113,13 @@ describe("backOnce e replaceOnce (Spec 092 / Spec 113)", () => {
     vi.setSystemTime(new Date("2026-10-27T13:00:02"));
     replaceOnce({ pathname: "/alertas", params: { termo: "a" } } as never);
     expect(router.replace).toHaveBeenCalledTimes(2);
+  });
+
+  it("bloqueia push repetido quando um replace recente para o mesmo destino ocorreu", () => {
+    replaceOnce("/entrar" as never);
+    expect(router.replace).toHaveBeenCalledTimes(1);
+
+    pushOnce("/entrar" as never);
+    expect(router.push).not.toHaveBeenCalled(); // Bloqueado pois é o mesmo destino canônico recente
   });
 });
