@@ -89,5 +89,6 @@
 - [0087 — Fluxo unificado e melhorias na negociação](0087-fluxo-unificado-e-melhorias-na-negociacao.md)
 - [0088 — Melhorias de usabilidade, consistência e layout web em combinar encontro](0088-melhorias-combinar-encontro.md)
 - [0089 — Melhorias de contexto, acessibilidade e layout web na entrega do livro](0089-melhorias-entrega-livro.md)
+- [0090 — Revitalização das cores do ipê na identidade visual](0090-cores-vivas-ipe.md)
 
 Preservar registros aceitos; mudanças relevantes geram novo ADR com vínculos de substituição.
