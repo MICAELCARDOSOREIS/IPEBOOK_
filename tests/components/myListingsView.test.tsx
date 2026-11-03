@@ -546,4 +546,20 @@ describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
     expect(style.borderRadius).toBe(trackRadius);
     Platform.OS = originalOS;
   });
+
+  it("exibe botão de 1 toque para compartilhamento no WhatsApp em cada card de livro (Spec 122)", async () => {
+    mockViewModel({
+      books: [
+        { id: "b-whats-1", title: "Dom Casmurro", author: "Machado de Assis", modality: "sale", price: 20, ownerId: "user-1", status: "available" },
+      ],
+    });
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<MyListings sessionUserId="user-1" />);
+    });
+
+    const shareBtn = screen.getByLabelText("Compartilhar Dom Casmurro no WhatsApp");
+    expect(shareBtn).toBeDefined();
+    fireEvent.press(shareBtn);
+  });
 });

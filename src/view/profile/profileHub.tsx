@@ -342,6 +342,55 @@ export default function ProfileHub({
                     </View>
                   </View>
 
+                  {/* Selos Comunitários de Piripiri (Spec 122) */}
+                  <View style={[styles.badgesSection, wideWeb && styles.sectionWide]}>
+                    <View style={styles.sectionHeaderRow}>
+                      <View style={styles.sectionBloom} />
+                      <Text accessibilityRole="header" style={styles.sectionHeader}>Selos Comunitários de Piripiri</Text>
+                    </View>
+                    <View style={styles.badgesRow}>
+                      <View
+                        style={styles.badgeItem}
+                        accessibilityRole="text"
+                        accessibilityLabel={`Selo Leitor de Piripiri: ${profile.neighborhood || "Comunidade"}`}
+                      >
+                        <View style={[styles.badgeIconBox, { backgroundColor: colors.nature.sprout }]}>
+                          <AppIcon name="place" size={20} color={colors.nature.foliage} />
+                        </View>
+                        <Text style={styles.badgeTitle} numberOfLines={1}>Leitor de Piripiri</Text>
+                        <Text style={styles.badgeDesc} numberOfLines={1}>{profile.neighborhood || "Comunidade"}</Text>
+                      </View>
+
+                      <View
+                        style={styles.badgeItem}
+                        accessibilityRole="text"
+                        accessibilityLabel={`Selo Ponto Seguro: ${completedTrocas} ${completedTrocas === 1 ? "encontro realizado" : "encontros realizados"}`}
+                      >
+                        <View style={[styles.badgeIconBox, { backgroundColor: colors.m3.secondaryContainer }]}>
+                          <AppIcon name="checkCircle" size={20} color={colors.action} />
+                        </View>
+                        <Text style={styles.badgeTitle} numberOfLines={1}>Ponto Seguro</Text>
+                        <Text style={styles.badgeDesc} numberOfLines={1}>
+                          {completedTrocas > 0 ? `${completedTrocas} ${completedTrocas === 1 ? "concluído" : "concluídos"}` : "Locais públicos"}
+                        </Text>
+                      </View>
+
+                      <View
+                        style={styles.badgeItem}
+                        accessibilityRole="text"
+                        accessibilityLabel={`Selo Estante Ativa: ${totalPublications} ${totalPublications === 1 ? "livro publicado" : "livros publicados"}`}
+                      >
+                        <View style={[styles.badgeIconBox, { backgroundColor: colors.ipe.container }]}>
+                          <AppIcon name="shelf" size={20} color={colors.ipe.onContainer} />
+                        </View>
+                        <Text style={styles.badgeTitle} numberOfLines={1}>Estante Ativa</Text>
+                        <Text style={styles.badgeDesc} numberOfLines={1}>
+                          {totalPublications > 0 ? `${totalPublications} ${totalPublications === 1 ? "obra" : "obras"}` : "Compartilhe"}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+
                   {/* Seção 1: Atividade (Figma 07.01 nó 604:8684: altura 36px, cor #2C5E45) */}
                   <View style={[styles.section, wideWeb && styles.sectionWide]}>
                     <View style={styles.sectionHeaderRow}>
@@ -627,6 +676,44 @@ function createStyles(colors: ColorPalette) {
       flexDirection: "row",
       alignItems: "stretch",
       gap: tokens.spacing[8],
+    },
+    badgesSection: {
+      width: "100%",
+      marginTop: tokens.spacing[8],
+    },
+    badgesRow: {
+      flexDirection: "row",
+      gap: tokens.spacing[8],
+      marginTop: tokens.spacing[8],
+    },
+    badgeItem: {
+      flex: 1,
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderRadius: tokens.radius.card,
+      padding: tokens.spacing[12],
+      alignItems: "center",
+      gap: tokens.spacing[4],
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+    },
+    badgeIconBox: {
+      width: 36,
+      height: 36,
+      borderRadius: tokens.radius.full,
+      alignItems: "center",
+      justifyContent: "center",
+      marginBottom: tokens.spacing[2],
+    },
+    badgeTitle: {
+      ...tokens.typography.labelSmall,
+      fontWeight: tokens.fontWeight.bold,
+      color: colors.m3.onSurface,
+      textAlign: "center",
+    },
+    badgeDesc: {
+      ...tokens.typography.footnote,
+      color: colors.m3.onSurfaceVariant,
+      textAlign: "center",
     },
     statsContainer: {
       flexDirection: "row",

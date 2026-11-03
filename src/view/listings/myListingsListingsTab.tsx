@@ -37,6 +37,7 @@ export type MyListingsListingsTabProps = {
   statusFilter: ListingsFilter;
   onStatusFilterChange: (filter: ListingsFilter) => void;
   onNavigateToManageListing?: (bookId: string) => void;
+  onShareWhatsApp?: (book: Book) => void;
 };
 
 export function MyListingsListingsTab({
@@ -44,6 +45,7 @@ export function MyListingsListingsTab({
   statusFilter,
   onStatusFilterChange,
   onNavigateToManageListing,
+  onShareWhatsApp,
 }: MyListingsListingsTabProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -132,6 +134,7 @@ export function MyListingsListingsTab({
               summary={listingSummary(book)}
               accessibilityLabel={`Gerenciar anúncio de ${book.title}`}
               onPress={() => onNavigateToManageListing?.(book.id)}
+              onShareWhatsApp={onShareWhatsApp ? () => onShareWhatsApp(book) : undefined}
             />
           ))}
         </View>
