@@ -3,6 +3,7 @@ import { Pressable, Text, View } from "react-native";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useSentRequestsViewModel } from "@/viewmodel/useSentRequestsViewModel";
 import { RequestListLayout, createRequestStyles } from "@/view/requests/requestListLayout";
+import { useGuardedPress } from "@/view/useGuardedPress";
 import { useTheme } from "@/view/theme/ThemeProvider";
 
 import { withPress } from "@/view/pressFeedback";
@@ -21,6 +22,11 @@ export function SentRequests({
   const { colors } = useTheme();
   const s = useMemo(() => createRequestStyles(colors), [colors]);
 
+  const guardedBack = onBack ? useGuardedPress(onBack) : undefined;
+  const guardedNavigateToNegotiationDetail = onNavigateToNegotiationDetail
+    ? useGuardedPress((id: string) => onNavigateToNegotiationDetail(id))
+    : undefined;
+
   return (
     <RequestListLayout
       title="Meus pedidos"
@@ -29,13 +35,13 @@ export function SentRequests({
       loading={state.loading}
       error={state.error}
       onRetry={() => void actions.reload()}
-      onBack={onBack}
+      onBack={guardedBack}
       renderExtra={({ request }) =>
         request.status === "accepted" ? (
           <View style={s.actions}>
             <Pressable
               accessibilityRole="button"
-              onPress={() => onNavigateToNegotiationDetail?.(request.id)}
+              onPress={() => guardedNavigateToNegotiationDetail?.(request.id)}
               style={withPress(s.primary)}
             >
               <Text style={s.primaryText}>Ver detalhes do encontro</Text>
@@ -60,16 +66,22 @@ export default function SentRequestsScreen({
 }: SentRequestsScreenProps = {}) {
   const [authState] = useAuthViewModel();
 
+  const guardedBack = onBack ? useGuardedPress(onBack) : undefined;
+  const guardedRequireSignIn = onRequireSignIn ? useGuardedPress(onRequireSignIn) : undefined;
+  const guardedNavigateToNegotiationDetail = onNavigateToNegotiationDetail
+    ? useGuardedPress((id: string) => onNavigateToNegotiationDetail(id))
+    : undefined;
+
   useEffect(() => {
-    if (!authState.loading && !authState.user) onRequireSignIn?.();
-  }, [authState.loading, authState.user, onRequireSignIn]);
+    if (!authState.loading && !authState.user) guardedRequireSignIn?.();
+  }, [authState.loading, authState.user, guardedRequireSignIn]);
 
   if (authState.loading || !authState.user) return null;
   return (
     <SentRequests
       sessionUserId={authState.user.id}
-      onBack={onBack}
-      onNavigateToNegotiationDetail={onNavigateToNegotiationDetail}
+      onBack={guardedBack}
+      onNavigateToNegotiationDetail={guardedNavigateToNegotiationDetail}
     />
   );
 }

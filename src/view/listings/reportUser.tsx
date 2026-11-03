@@ -8,6 +8,8 @@ import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
+import { useGuardedPress } from "@/view/useGuardedPress";
+import { scrollBottomPadding, standardVerticalScrollProps } from "@/view/scrollProps";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useReportUserViewModel } from "@/viewmodel/useReportUserViewModel";
 import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
@@ -30,10 +32,13 @@ export default function ReportUser({ userId, userName, onBack, onNavigateToLogin
   const wide = useIsWideWeb();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
+  const guardedBack = useGuardedPress(onBack);
+  const guardedNavigateToLogin = onNavigateToLogin ? useGuardedPress(onNavigateToLogin) : undefined;
+
   if (state.success) {
     return (
       <SafeAreaView style={styles.page}>
-        <TopAppBar contentMaxWidth={wide ? WEB_MAX_WIDTH : 560} title="Denunciar pessoa" onBack={onBack} />
+        <TopAppBar contentMaxWidth={wide ? WEB_MAX_WIDTH : 560} title="Denunciar pessoa" onBack={guardedBack} />
         <View style={styles.centered}>
           <IconBadge icon="check" tone="action" size="large" />
           <Text accessibilityRole="header" style={styles.title}>Denúncia enviada</Text>
@@ -41,7 +46,7 @@ export default function ReportUser({ userId, userName, onBack, onNavigateToLogin
             Recebemos sua denúncia. A equipe vai analisar o relato em até 24 horas. Obrigado por ajudar a manter a comunidade segura.
           </Text>
           <View style={styles.full}>
-            <FilledButton label="Voltar ao perfil" onPress={onBack} />
+            <FilledButton label="Voltar ao perfil" onPress={guardedBack} />
           </View>
         </View>
       </SafeAreaView>
@@ -51,14 +56,14 @@ export default function ReportUser({ userId, userName, onBack, onNavigateToLogin
   if (!sessionUserId) {
     return (
       <SafeAreaView style={styles.page}>
-        <TopAppBar contentMaxWidth={wide ? WEB_MAX_WIDTH : 560} title="Denunciar pessoa" onBack={onBack} />
+        <TopAppBar contentMaxWidth={wide ? WEB_MAX_WIDTH : 560} title="Denunciar pessoa" onBack={guardedBack} />
         <View style={styles.centered}>
           <IconBadge icon="flag" tone="neutral" size="large" />
           <Text accessibilityRole="header" style={styles.title}>Identificação necessária</Text>
           <Text style={styles.body}>Apenas pessoas com conta podem denunciar, para evitar abusos.</Text>
-          {onNavigateToLogin ? (
+          {guardedNavigateToLogin ? (
             <View style={styles.full}>
-              <FilledButton label="Entrar na minha conta" onPress={onNavigateToLogin} />
+              <FilledButton label="Entrar na minha conta" onPress={guardedNavigateToLogin} />
             </View>
           ) : null}
         </View>
@@ -68,8 +73,12 @@ export default function ReportUser({ userId, userName, onBack, onNavigateToLogin
 
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar contentMaxWidth={wide ? WEB_MAX_WIDTH : 560} title="Denunciar pessoa" onBack={onBack} />
-      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+      <TopAppBar contentMaxWidth={wide ? WEB_MAX_WIDTH : 560} title="Denunciar pessoa" onBack={guardedBack} />
+      <ScrollView
+        {...standardVerticalScrollProps}
+        contentContainerStyle={[styles.scroll, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
+        keyboardShouldPersistTaps="handled"
+      >
         <View style={[styles.content, wide && styles.contentWide]}>
           <Text style={styles.heading}>{userName ? `O que aconteceu com ${userName}?` : "O que aconteceu?"}</Text>
           <Text style={styles.body}>Sua denúncia é anônima. A equipe analisa em até 24 horas.</Text>

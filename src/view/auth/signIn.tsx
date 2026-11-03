@@ -14,6 +14,8 @@ import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { TextButton } from "@/view/components/TextButton";
 import { TextField } from "@/view/components/TextField";
 import { TopAppBar } from "@/view/components/TopAppBar";
+import { useGuardedPress } from "@/view/useGuardedPress";
+import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 
 export type SignInProps = {
   onAuthenticated?: () => void;
@@ -29,6 +31,10 @@ export default function SignIn({
   onNavigateToForgotPassword,
   onBack,
 }: SignInProps = {}) {
+  const guardedBack = useGuardedPress(onBack);
+  const guardedAuthenticated = useGuardedPress(onAuthenticated);
+  const guardedSignUp = useGuardedPress(onNavigateToSignUp);
+  const guardedForgotPassword = useGuardedPress(onNavigateToForgotPassword);
   const [state, actions] = useAuthViewModel();
   const { colors } = useTheme();
   const wideWeb = useIsWideWeb();
@@ -41,21 +47,25 @@ export default function SignIn({
     setGoogleLoading(true);
     const success = await actions.signInWithGoogle?.();
     setGoogleLoading(false);
-    if (success) onAuthenticated?.();
+    if (success) guardedAuthenticated();
   };
 
   const handleSubmit = async () => {
     const success = await actions.signIn(email, password);
-    if (success) onAuthenticated?.();
+    if (success) guardedAuthenticated();
   };
 
   return (
     <AuthShell>
     <SafeAreaView style={styles.page}>
-      {onBack ? <TopAppBar title="Entrar com e-mail" onBack={onBack} /> : null}
+      {onBack ? <TopAppBar title="Entrar com e-mail" onBack={guardedBack} /> : null}
       <ScrollView
-        contentContainerStyle={[styles.centerContainer, wideWeb && { justifyContent: "center" }]}
-        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={[
+          styles.centerContainer,
+          wideWeb && { justifyContent: "center" },
+          { paddingBottom: scrollBottomPadding.withoutBottomBar },
+        ]}
+        {...standardVerticalScrollProps}
       >
         <View style={styles.content}>
           <Logotipo underline />
@@ -104,7 +114,7 @@ export default function SignIn({
           />
 
           <View style={styles.forgotPasswordRow}>
-            <TextButton label="Esqueci minha senha" onPress={() => onNavigateToForgotPassword?.()} />
+            <TextButton label="Esqueci minha senha" onPress={guardedForgotPassword} />
           </View>
 
           {state.error ? (
@@ -120,7 +130,7 @@ export default function SignIn({
 
           <View style={styles.footerRow}>
             <Text style={styles.footerPrompt}>Ainda não tem conta?</Text>
-            <TextButton label="Criar uma conta" onPress={() => onNavigateToSignUp?.()} />
+            <TextButton label="Criar uma conta" onPress={guardedSignUp} />
           </View>
         </View>
       </ScrollView>

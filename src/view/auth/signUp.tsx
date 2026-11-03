@@ -16,6 +16,8 @@ import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { TextButton } from "@/view/components/TextButton";
 import { TextField } from "@/view/components/TextField";
 import { TopAppBar } from "@/view/components/TopAppBar";
+import { useGuardedPress } from "@/view/useGuardedPress";
+import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 
 export type SignUpProps = {
   onAuthenticated?: () => void;
@@ -33,6 +35,10 @@ export default function SignUp({
   onNavigateToTerms,
   onBack,
 }: SignUpProps = {}) {
+  const guardedBack = useGuardedPress(onBack);
+  const guardedAuthenticated = useGuardedPress(onAuthenticated);
+  const guardedSignIn = useGuardedPress(onNavigateToSignIn);
+  const guardedTerms = useGuardedPress(onNavigateToTerms);
   const [state, actions] = useAuthViewModel();
   const { colors } = useTheme();
   const wideWeb = useIsWideWeb();
@@ -48,7 +54,7 @@ export default function SignUp({
     setGoogleLoading(true);
     const success = await actions.signInWithGoogle?.();
     setGoogleLoading(false);
-    if (success) onAuthenticated?.();
+    if (success) guardedAuthenticated();
   };
 
   const handleSubmit = async () => {
@@ -58,16 +64,20 @@ export default function SignUp({
     }
     setTermsError(null);
     const success = await actions.signUp(email, password, name);
-    if (success) onAuthenticated?.();
+    if (success) guardedAuthenticated();
   };
 
   return (
     <AuthShell>
     <SafeAreaView style={styles.page}>
-      {onBack ? <TopAppBar title="Criar conta" onBack={onBack} /> : null}
+      {onBack ? <TopAppBar title="Criar conta" onBack={guardedBack} /> : null}
       <ScrollView
-        contentContainerStyle={[styles.centerContainer, wideWeb && { justifyContent: "center" }]}
-        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={[
+          styles.centerContainer,
+          wideWeb && { justifyContent: "center" },
+          { paddingBottom: scrollBottomPadding.withoutBottomBar },
+        ]}
+        {...standardVerticalScrollProps}
       >
         <View style={styles.content}>
           <Logotipo underline />
@@ -91,7 +101,7 @@ export default function SignUp({
 
               <FilledButton
                 label="Ir para o login"
-                onPress={() => onNavigateToSignIn?.()}
+                onPress={guardedSignIn}
               />
             </View>
           ) : (
@@ -167,7 +177,7 @@ export default function SignUp({
               {onNavigateToTerms ? (
                 <TextButton
                   label="Ler os termos de uso e a política de privacidade"
-                  onPress={() => onNavigateToTerms()}
+                  onPress={guardedTerms}
                 />
               ) : null}
 
@@ -184,7 +194,7 @@ export default function SignUp({
 
               <View style={styles.footerRow}>
                 <Text style={styles.footerPrompt}>Já tem uma conta?</Text>
-                <TextButton label="Já tenho conta" onPress={() => onNavigateToSignIn?.()} />
+                <TextButton label="Já tenho conta" onPress={guardedSignIn} />
               </View>
             </>
           )}

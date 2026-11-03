@@ -10,8 +10,9 @@ import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { WEB_MAX_WIDTH, WEB_GUTTER, useWebColumns, webColumnWidth } from "@/view/webLayout";
-
 import { withPress } from "@/view/pressFeedback";
+import { useGuardedPress } from "@/view/useGuardedPress";
+import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 export type HelpAndFaqProps = {
   onBack: () => void;
   /** Abre as negociações em andamento, como o botão "Abrir conversas" do Figma `09.01`. */
@@ -41,6 +42,8 @@ function normalizeSearchText(value: string): string {
  * Figma `09.01 · Ajuda` (`145:2702` / Web `370:17541`).
  */
 export default function HelpAndFaq({ onBack, onOpenConversations }: HelpAndFaqProps) {
+  const guardedBack = useGuardedPress(onBack);
+  const guardedOpenConversations = useGuardedPress(onOpenConversations);
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [filter, setFilter] = useState<CategoryFilter>("todos");
@@ -72,8 +75,11 @@ export default function HelpAndFaq({ onBack, onOpenConversations }: HelpAndFaqPr
 
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar title="Ajuda" onBack={onBack} contentMaxWidth={wide ? WIDE_CONTENT_MAX_WIDTH : undefined} />
-      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+      <TopAppBar title="Ajuda" onBack={guardedBack} contentMaxWidth={wide ? WIDE_CONTENT_MAX_WIDTH : undefined} />
+      <ScrollView
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
+        {...standardVerticalScrollProps}
+      >
         <View style={[styles.content, wide && styles.contentWide]}>
           <View style={styles.headerSection}>
             <Text style={styles.heroHeadline}>Vamos ajudar.</Text>
@@ -138,7 +144,7 @@ export default function HelpAndFaq({ onBack, onOpenConversations }: HelpAndFaqPr
               <OutlinedButton
                 label="Abrir conversas"
                 accessibilityLabel="Abrir conversas: suas negociações em andamento"
-                onPress={onOpenConversations}
+                onPress={guardedOpenConversations}
               />
             </View>
           ) : null}

@@ -14,6 +14,8 @@ import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { TextButton } from "@/view/components/TextButton";
 import { TextField } from "@/view/components/TextField";
 import { TopAppBar } from "@/view/components/TopAppBar";
+import { useGuardedPress } from "@/view/useGuardedPress";
+import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 
 export type ForgotPasswordProps = {
   onNavigateToSignIn?: () => void;
@@ -31,6 +33,8 @@ function formatCountdown(seconds: number): string {
 
 /** Figma `01.04 · Recuperar acesso` (nó `6:534`) e `01.05 · Confira seu e-mail` (nó `6:597`). */
 export default function ForgotPassword({ onNavigateToSignIn, onBack }: ForgotPasswordProps = {}) {
+  const guardedBack = useGuardedPress(onBack);
+  const guardedSignIn = useGuardedPress(onNavigateToSignIn);
   const [state, actions] = useAuthViewModel();
   const { colors } = useTheme();
   const wideWeb = useIsWideWeb();
@@ -74,12 +78,16 @@ export default function ForgotPassword({ onNavigateToSignIn, onBack }: ForgotPas
       {onBack ? (
         <TopAppBar
           title={requested ? "Confira seu e-mail" : "Recuperar acesso"}
-          onBack={onBack}
+          onBack={guardedBack}
         />
       ) : null}
       <ScrollView
-        contentContainerStyle={[styles.centerContainer, wideWeb && { justifyContent: "center" }]}
-        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={[
+          styles.centerContainer,
+          wideWeb && { justifyContent: "center" },
+          { paddingBottom: scrollBottomPadding.withoutBottomBar },
+        ]}
+        {...standardVerticalScrollProps}
       >
         <View style={styles.content}>
           <Logotipo underline />
@@ -101,7 +109,7 @@ export default function ForgotPassword({ onNavigateToSignIn, onBack }: ForgotPas
                 </Text>
               </View>
 
-              <FilledButton label="Voltar ao login" onPress={() => onNavigateToSignIn?.()} />
+              <FilledButton label="Voltar ao login" onPress={guardedSignIn} />
 
               <OutlinedButton
                 label="Corrigir e-mail"
@@ -154,7 +162,7 @@ export default function ForgotPassword({ onNavigateToSignIn, onBack }: ForgotPas
                 onPress={() => void handleSubmit()}
               />
 
-              <OutlinedButton label="Voltar ao login" onPress={() => onNavigateToSignIn?.()} />
+              <OutlinedButton label="Voltar ao login" onPress={guardedSignIn} />
 
               <Text style={styles.footnote}>
                 Se você lembrar sua senha, faça login normalmente.

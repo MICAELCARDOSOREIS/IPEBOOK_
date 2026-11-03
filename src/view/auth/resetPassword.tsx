@@ -10,6 +10,8 @@ import { TopAppBar } from "@/view/components/TopAppBar";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { useResetPasswordViewModel } from "@/viewmodel/useResetPasswordViewModel";
+import { useGuardedPress } from "@/view/useGuardedPress";
+import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 
 export type ResetPasswordProps = {
   link: string | null;
@@ -28,6 +30,9 @@ export default function ResetPassword({
   onNavigateToForgotPassword,
   onBack,
 }: ResetPasswordProps) {
+  const guardedBack = useGuardedPress(onBack);
+  const guardedSignIn = useGuardedPress(onNavigateToSignIn);
+  const guardedForgotPassword = useGuardedPress(onNavigateToForgotPassword);
   const [state, actions] = useResetPasswordViewModel();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -52,12 +57,15 @@ export default function ResetPassword({
         {onBack ? (
           <TopAppBar
             title={state.success ? "Senha atualizada" : state.linkExpired ? "Link expirado" : "Nova senha"}
-            onBack={onBack}
+            onBack={guardedBack}
           />
         ) : null}
         <ScrollView
-          contentContainerStyle={styles.centerContainer}
-          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={[
+            styles.centerContainer,
+            { paddingBottom: scrollBottomPadding.withoutBottomBar },
+          ]}
+          {...standardVerticalScrollProps}
         >
           <View style={styles.content}>
             {state.linkExpired ? (
@@ -74,7 +82,7 @@ export default function ResetPassword({
                 </View>
                 <FilledButton
                   label="Solicitar novo link"
-                  onPress={() => onNavigateToForgotPassword?.()}
+                  onPress={guardedForgotPassword}
                 />
               </>
             ) : state.success ? (
@@ -93,7 +101,7 @@ export default function ResetPassword({
                 </View>
                 <FilledButton
                   label="Ir para o login"
-                  onPress={() => onNavigateToSignIn?.()}
+                  onPress={guardedSignIn}
                 />
               </>
             ) : (
@@ -143,7 +151,7 @@ export default function ResetPassword({
               </>
             )}
 
-            <TextButton label="Voltar ao login" onPress={() => onNavigateToSignIn?.()} />
+            <TextButton label="Voltar ao login" onPress={guardedSignIn} />
           </View>
         </ScrollView>
       </SafeAreaView>

@@ -7,8 +7,9 @@ import { TopAppBar } from "@/view/components/TopAppBar";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { WEB_MAX_WIDTH, WEB_GUTTER, useWebColumns, webColumnWidth } from "@/view/webLayout";
-
 import { withPress } from "@/view/pressFeedback";
+import { useGuardedPress } from "@/view/useGuardedPress";
+import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 
 const TERMS_WIDE_MAX_WIDTH = 1240;
 
@@ -28,6 +29,8 @@ export default function TermsAndPrivacy({
   initialTab = "terms",
   onNavigateToDeleteAccount,
 }: TermsAndPrivacyProps = {}) {
+  const guardedBack = useGuardedPress(onBack);
+  const guardedDeleteAccount = useGuardedPress(onNavigateToDeleteAccount);
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [activeTab, setActiveTab] = useState<"terms" | "privacy">(initialTab);
@@ -39,8 +42,11 @@ export default function TermsAndPrivacy({
 
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar title="Termos e privacidade" onBack={() => onBack?.()} contentMaxWidth={wide ? TERMS_WIDE_MAX_WIDTH : undefined} />
-      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+      <TopAppBar title="Termos e privacidade" onBack={guardedBack} contentMaxWidth={wide ? TERMS_WIDE_MAX_WIDTH : undefined} />
+      <ScrollView
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
+        {...standardVerticalScrollProps}
+      >
         <View style={[styles.content, wide && styles.contentWide]}>
           <View style={styles.heroHeader}>
             <Text style={styles.heroTitle}>Informação clara para você.</Text>
@@ -96,7 +102,7 @@ export default function TermsAndPrivacy({
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel="Solicitar exclusão da minha conta e dados"
-                  onPress={onNavigateToDeleteAccount}
+                  onPress={guardedDeleteAccount}
                   style={withPress(styles.deleteAccountLink)}
                 >
                   <Text style={styles.deleteAccountText}>

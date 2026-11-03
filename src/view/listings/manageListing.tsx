@@ -63,6 +63,19 @@ export default function ManageListing({
     await shareActions.share(state.book.id);
   };
 
+  const handleShareWhatsApp = async () => {
+    if (!state.book) return;
+    await shareActions.shareToWhatsApp(state.book.id, {
+      title: state.book.title,
+      author: state.book.author,
+      modality: state.book.modality,
+      price: state.book.price,
+      neighborhood: state.book.neighborhood,
+      isBox: state.book.isBox,
+      boxVolumesCount: state.book.boxVolumesCount,
+    });
+  };
+
   const contentMaxWidth = wide ? 1040 : 560;
 
   if (state.loading) {
@@ -289,7 +302,27 @@ export default function ManageListing({
                   </Pressable>
                 ) : null}
 
-                {/* 3. Compartilhar Anúncio */}
+                {/* 3. Divulgar no WhatsApp */}
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Divulgar no WhatsApp"
+                  onPress={() => void handleShareWhatsApp()}
+                  style={({ pressed }) => [
+                    styles.actionCard,
+                    pressed && styles.actionCardPressed,
+                  ]}
+                >
+                  <View style={[styles.actionIconWrapper, { backgroundColor: colors.nature.sprout }]}>
+                    <AppIcon name="whatsapp" size={22} color={colors.nature.foliage} />
+                  </View>
+                  <View style={styles.actionTexts}>
+                    <Text style={styles.actionTitle}>Divulgar no WhatsApp</Text>
+                    <Text style={styles.actionHint}>Envie direto para status e grupos de Piripiri.</Text>
+                  </View>
+                  <AppIcon name="chevronRight" size={20} color={colors.secondaryText} />
+                </Pressable>
+
+                {/* 4. Compartilhar Anúncio */}
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel="Compartilhar anúncio"
@@ -304,7 +337,7 @@ export default function ManageListing({
                   </View>
                   <View style={styles.actionTexts}>
                     <Text style={styles.actionTitle}>Compartilhar anúncio</Text>
-                    <Text style={styles.actionHint}>Divulgue o livro para leitores ou grupos de Piripiri.</Text>
+                    <Text style={styles.actionHint}>Copie o link ou envie por outros aplicativos.</Text>
                   </View>
                   <AppIcon name="chevronRight" size={20} color={colors.secondaryText} />
                 </Pressable>

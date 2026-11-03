@@ -180,4 +180,16 @@ describe("tela de gerenciar anúncio (Figma 04.08)", () => {
       fireEvent.press(shareButton);
     });
   });
+
+  it("permite divulgar o anúncio no WhatsApp (Spec 118)", async () => {
+    mockViewModel({});
+    const screen = await renderScreen();
+
+    const whatsappButton = screen.getByLabelText("Divulgar no WhatsApp");
+    expect(whatsappButton).toBeDefined();
+
+    await act(async () => {
+      fireEvent.press(whatsappButton);
+    });
+  });
 });

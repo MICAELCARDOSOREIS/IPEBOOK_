@@ -8,8 +8,9 @@ import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
-
 import { withPress } from "@/view/pressFeedback";
+import { useGuardedPress } from "@/view/useGuardedPress";
+import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 export type ReceivedRatingsProps = {
   sessionUserId: string | null;
   onBack: () => void;
@@ -28,6 +29,7 @@ function stars(score: number): string {
 
 /** Figma `07.03 · Avaliações recebidas` (`145:2486` / Web `370:16701`). */
 export function ReceivedRatings({ sessionUserId, onBack }: ReceivedRatingsProps) {
+  const guardedBack = useGuardedPress(onBack);
   const [state, actions] = useReceivedRatingsViewModel(sessionUserId);
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -36,8 +38,11 @@ export function ReceivedRatings({ sessionUserId, onBack }: ReceivedRatingsProps)
 
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar contentMaxWidth={wide ? WIDE_CONTENT_MAX_WIDTH : undefined} title="Avaliações recebidas" onBack={onBack} />
-      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+      <TopAppBar contentMaxWidth={wide ? WIDE_CONTENT_MAX_WIDTH : undefined} title="Avaliações recebidas" onBack={guardedBack} />
+      <ScrollView
+        contentContainerStyle={[styles.scroll, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
+        {...standardVerticalScrollProps}
+      >
         <View style={[styles.content, wide && styles.contentWide]}>
           {state.loading ? (
             <View style={styles.status}>

@@ -261,8 +261,36 @@ export default function BookDetail({
     return "";
   }, [book, isOwner, isRequested]);
 
+  const handleShareToWhatsApp = useCallback(() => {
+    if (!book) return;
+    void shareActions.shareToWhatsApp(
+      book.id,
+      {
+        title: book.title,
+        author: book.author,
+        modality: book.modality,
+        price: book.price,
+        neighborhood: book.neighborhood,
+        isBox: book.isBox,
+        boxVolumesCount: book.boxVolumesCount,
+      },
+      captureShareImage,
+    );
+  }, [book, shareActions, captureShareImage]);
+
   const actionBar = book && !state.loading ? (
     <View style={[styles.bottomBar, wideWeb && styles.bottomBarWide]}>
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel="Compartilhar anúncio no WhatsApp"
+      accessibilityState={{ disabled: share.sharing }}
+      disabled={share.sharing}
+      onPress={handleShareToWhatsApp}
+      style={withPress(styles.whatsappButton)}
+    >
+      <AppIcon name="whatsapp" size={18} color={colors.nature.foliage} />
+      <Text style={styles.whatsappButtonText}>WhatsApp</Text>
+    </Pressable>
     <Pressable
       accessibilityRole="button"
       accessibilityLabel="Compartilhar anúncio como imagem"
@@ -271,13 +299,22 @@ export default function BookDetail({
       onPress={() =>
         void shareActions.shareImage(
           book.id,
-          { title: book.title, author: book.author, modality: book.modality, price: book.price },
+          {
+            title: book.title,
+            author: book.author,
+            modality: book.modality,
+            price: book.price,
+            neighborhood: book.neighborhood,
+            isBox: book.isBox,
+            boxVolumesCount: book.boxVolumesCount,
+          },
           captureShareImage,
         )
       }
       style={withPress(styles.tonalButton)}
     >
-      <Text style={styles.tonalButtonText}>Compartilhar</Text>
+      <AppIcon name="share" size={18} color={colors.m3.onSecondaryContainer} />
+      <Text style={styles.tonalButtonText}>{wideWeb ? "Outros apps" : "Outros"}</Text>
     </Pressable>
     {book.status === "reserved" || book.status === "delivered" || !sessionUserId || book.ownerId !== sessionUserId ? (
       <View style={styles.primarySlot}>
@@ -373,6 +410,13 @@ export default function BookDetail({
             {/* Na web larga o caminho "Explorar › …" acima já volta; a seta sobre a capa sobrava. */}
             {wideWeb ? <View /> : <HeroIconButton icon="back" label="Voltar" onPress={guardedBack} />}
             <View style={styles.heroBarTrailing}>
+              <HeroIconButton
+                icon="whatsapp"
+                label="Compartilhar anúncio no WhatsApp"
+                disabled={share.sharing}
+                iconColor={colors.nature.foliage}
+                onPress={handleShareToWhatsApp}
+              />
               <HeroIconButton
                 icon="share"
                 label="Compartilhar anúncio"
@@ -923,14 +967,32 @@ function createStyles(colors: ColorPalette) {
       paddingHorizontal: tokens.spacing[16],
       paddingVertical: tokens.spacing[12],
     },
+    whatsappButton: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: tokens.spacing[6],
+      minHeight: 52,
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.nature.sprout,
+      paddingHorizontal: tokens.spacing[12],
+      borderWidth: 1,
+      borderColor: colors.nature.foliage,
+    },
+    whatsappButtonText: {
+      ...tokens.typography.labelLarge,
+      fontFamily: fontFamily.semiBold,
+      color: colors.nature.foliage,
+    },
     tonalButton: {
-      flex: 1,
+      flexDirection: "row",
       minHeight: 52,
       borderRadius: tokens.radius.full,
       alignItems: "center",
       justifyContent: "center",
+      gap: tokens.spacing[6],
       backgroundColor: colors.m3.secondaryContainer,
-      paddingHorizontal: tokens.spacing[16],
+      paddingHorizontal: tokens.spacing[12],
     },
     tonalButtonText: { ...tokens.typography.bodyLarge, fontWeight: tokens.fontWeight.semiBold, color: colors.m3.onSecondaryContainer },
     primarySlot: { flex: 1 },
