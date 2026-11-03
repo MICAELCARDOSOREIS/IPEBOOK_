@@ -141,7 +141,7 @@ export default function Search({
           style={withPress(styles.neighborhoodPill)}
         >
           <AppIcon name="place" size={20} color={colors.m3.primary} />
-          <Text style={styles.neighborhoodText}>{displayNeighborhood}</Text>
+          <Text numberOfLines={1} style={styles.neighborhoodText}>{displayNeighborhood}</Text>
           <AppIcon name="chevronDown" size={20} color={colors.m3.onSurfaceVariant} />
         </Pressable>
 
@@ -162,9 +162,10 @@ export default function Search({
               accessibilityRole="button"
               accessibilityLabel="Ver meus livros favoritos"
               onPress={guardedNavigateToFavorites}
-              style={withPress(styles.favoritesTopButton)}
+              style={withPress([styles.favoritesTopButton, wideWeb && styles.favoritesTopButtonWide])}
             >
-              <AppIcon name="heartFill" size={22} color={colors.ipe.bloomDeep} />
+              <AppIcon name="heartFill" size={wideWeb ? 18 : 20} color={colors.ipe.bloomDeep} />
+              {wideWeb ? <Text style={styles.favoritesButtonText}>Favoritos</Text> : null}
             </Pressable>
           ) : null}
 
@@ -181,7 +182,7 @@ export default function Search({
             }}
             style={withPress(styles.tuneButton)}
           >
-            <AppIcon name="tune" size={24} color={colors.m3.onSurfaceVariant} />
+            <AppIcon name="tune" size={20} color={colors.m3.onSurfaceVariant} />
             {state.activeFilterCount > 0 ? (
               <View style={styles.tuneBadge}>
                 <Text style={styles.tuneBadgeText}>{state.activeFilterCount}</Text>
@@ -554,46 +555,64 @@ function createStyles(colors: ColorPalette) {
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "center",
+      minHeight: tokens.spacing[40],
     },
     neighborhoodPill: {
+      flexShrink: 1,
       flexDirection: "row",
       alignItems: "center",
       gap: tokens.spacing[6],
       backgroundColor: colors.m3.surfaceContainerHigh,
       paddingLeft: tokens.spacing[12],
       paddingRight: tokens.spacing[8],
-      paddingVertical: tokens.spacing[8],
+      height: tokens.spacing[40],
       borderRadius: tokens.radius.full,
     },
     neighborhoodText: {
+      flexShrink: 1,
       ...tokens.typography.labelMedium,
       color: colors.text,
       fontWeight: tokens.fontWeight.medium,
     },
     topRightActions: {
+      flexShrink: 0,
       flexDirection: "row",
       alignItems: "center",
-      gap: tokens.spacing[4],
+      gap: tokens.spacing[8],
     },
     favoritesTopButton: {
-      width: tokens.accessibility.touchTarget,
-      height: tokens.accessibility.touchTarget,
-      borderRadius: tokens.radius.extraLarge,
+      width: tokens.spacing[40],
+      height: tokens.spacing[40],
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.m3.surfaceContainerHigh,
       justifyContent: "center",
       alignItems: "center",
     },
+    favoritesTopButtonWide: {
+      width: "auto",
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[6],
+      paddingHorizontal: tokens.spacing[14],
+    },
+    favoritesButtonText: {
+      ...tokens.typography.labelMedium,
+      color: colors.text,
+      fontWeight: tokens.fontWeight.medium,
+    },
     tuneButton: {
-      width: tokens.accessibility.touchTarget,
-      height: tokens.accessibility.touchTarget,
-      borderRadius: tokens.radius.extraLarge,
+      width: tokens.spacing[40],
+      height: tokens.spacing[40],
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.m3.surfaceContainerHigh,
       justifyContent: "center",
       alignItems: "center",
     },
     // Contador de filtros aplicados sobre o ícone de ajustes (chip de 18 dp do Material 3).
     tuneBadge: {
       position: "absolute",
-      top: tokens.spacing[6],
-      right: tokens.spacing[6],
+      top: -2,
+      right: -2,
       minWidth: tokens.spacing[18],
       height: tokens.spacing[18],
       paddingHorizontal: tokens.spacing[4],
