@@ -18,6 +18,8 @@ import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useDraftsViewModel } from "@/viewmodel/useDraftsViewModel";
 import { WEB_MAX_WIDTH, WEB_GUTTER, useWebColumns, webColumnWidth } from "@/view/webLayout";
+import { useGuardedPress } from "@/view/useGuardedPress";
+import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 
 import { withPress } from "@/view/pressFeedback";
 const TOTAL_STEPS = 3;
@@ -49,6 +51,9 @@ export type DraftsProps = {
  * pessoa parou e descartar com confirmação.
  */
 export function Drafts({ sessionUserId, onBack, onResume, onNavigateToCreateListing, focusKey = 0 }: DraftsProps) {
+  const guardedBack = useGuardedPress(onBack);
+  const guardedResume = useGuardedPress(onResume);
+  const guardedCreate = useGuardedPress(onNavigateToCreateListing);
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [state, actions] = useDraftsViewModel(sessionUserId);
@@ -77,7 +82,7 @@ export function Drafts({ sessionUserId, onBack, onResume, onNavigateToCreateList
 
   return (
     <SafeAreaView edges={["top", "left", "right"]} style={styles.page}>
-      <TopAppBar contentMaxWidth={wide ? WIDE_CONTENT_MAX_WIDTH : 560} title="Rascunhos" onBack={onBack ?? (() => {})} />
+      <TopAppBar contentMaxWidth={wide ? WIDE_CONTENT_MAX_WIDTH : 560} title="Rascunhos" onBack={guardedBack} />
       <View style={[styles.content, wide && styles.contentWide]}>
         {state.loading ? (
           <LoadingState label="Carregando seus rascunhos" />
@@ -95,12 +100,15 @@ export function Drafts({ sessionUserId, onBack, onResume, onNavigateToCreateList
             </Text>
             {onNavigateToCreateListing ? (
               <View style={styles.emptyAction}>
-                <FilledButton label="Anunciar um livro" onPress={onNavigateToCreateListing} />
+                <FilledButton label="Anunciar um livro" onPress={guardedCreate} />
               </View>
             ) : null}
           </View>
         ) : (
-          <ScrollView contentContainerStyle={[styles.scroll, wide && styles.scrollWide]} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+          <ScrollView
+            contentContainerStyle={[styles.scroll, wide && styles.scrollWide, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
+            {...standardVerticalScrollProps}
+          >
             <Text style={[styles.summary, wide && styles.fullRow]}>
               {state.drafts.length === 1 ? "1 anúncio em andamento" : `${state.drafts.length} anúncios em andamento`}
             </Text>
@@ -116,7 +124,7 @@ export function Drafts({ sessionUserId, onBack, onResume, onNavigateToCreateList
                   <Pressable
                     accessibilityRole="button"
                     accessibilityLabel={`Rascunho ${title}, ${stepLabel(book)}`}
-                    onPress={() => onResume?.(book.id)}
+                    onPress={() => guardedResume(book.id)}
                     style={withPress(styles.cardMain)}
                   >
                     <ModalityCoverArea modality={book.modality}>

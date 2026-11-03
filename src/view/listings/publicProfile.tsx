@@ -21,6 +21,8 @@ import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
 
 import { withPress } from "@/view/pressFeedback";
+import { useGuardedPress } from "@/view/useGuardedPress";
+import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 function formatJoinedAt(joinedAt: string): string {
   const date = new Date(joinedAt);
   if (Number.isNaN(date.getTime())) return "";
@@ -44,6 +46,11 @@ export type PublicProfileProps = {
  * Perfil público do membro da comunidade (Figma `03.04 · Perfil de Ana Paula`, nó `19:21`).
  */
 export function PublicProfile({ userId, onBack, onOpenChat, onReportListing, onReportUser, onOpenBook }: PublicProfileProps) {
+  const guardedBack = useGuardedPress(onBack);
+  const guardedOpenChat = useGuardedPress(onOpenChat);
+  const guardedReportListing = useGuardedPress(onReportListing);
+  const guardedReportUser = useGuardedPress(onReportUser);
+  const guardedOpenBook = useGuardedPress(onOpenBook);
   const wideWeb = useIsWideWeb();
   const [state, actions] = usePublicProfileViewModel(userId);
   const [auth] = useAuthViewModel();
@@ -53,7 +60,7 @@ export function PublicProfile({ userId, onBack, onOpenChat, onReportListing, onR
   const styles = useMemo(() => createStyles(colors, wideWeb), [colors, wideWeb]);
   const [safetyOpen, setSafetyOpen] = useState(false);
   const [safety, safetyActions] = useProfileSafetyViewModel(auth.user?.id ?? null, userId);
-  const chat = useChatWithUser(auth.user?.id ?? null, userId, (requestId) => onOpenChat?.(requestId));
+  const chat = useChatWithUser(auth.user?.id ?? null, userId, (requestId) => guardedOpenChat(requestId));
   const profile = state.profile;
   // Só exibe o link quando o valor gravado respeita o padrão do Instagram (regra do domínio).
   const instagramHandle = normalizeInstagramHandle(profile?.socialHandle)?.slice(1) ?? null;
@@ -74,9 +81,12 @@ export function PublicProfile({ userId, onBack, onOpenChat, onReportListing, onR
   return (
     <SafeAreaView edges={["top", "left", "right"]} style={styles.page}>
       {/* 1. Barra Superior M3 Oficial com botão voltar e título padronizado */}
-      <TopAppBar contentMaxWidth={wideWeb ? WEB_MAX_WIDTH : undefined} title="Perfil" onBack={() => onBack?.()} />
+      <TopAppBar contentMaxWidth={wideWeb ? WEB_MAX_WIDTH : undefined} title="Perfil" onBack={guardedBack} />
 
-      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
+        {...standardVerticalScrollProps}
+      >
         {state.loading ? (
           <View style={styles.status}>
             <ActivityIndicator color={colors.action} accessibilityLabel="Carregando perfil" />
@@ -93,7 +103,7 @@ export function PublicProfile({ userId, onBack, onOpenChat, onReportListing, onR
             {wideWeb ? (
               <Breadcrumb
                 items={[
-                  { label: "Início", onPress: () => onBack?.(), accessibilityLabel: "Voltar para o início" },
+                  { label: "Início", onPress: guardedBack, accessibilityLabel: "Voltar para o início" },
                   { label: "Comunidade" },
                   { label: profile.name, isCurrent: true },
                 ]}
@@ -203,7 +213,7 @@ export function PublicProfile({ userId, onBack, onOpenChat, onReportListing, onR
             {wideWeb ? (
               <View style={styles.wideBelow}>
                 <View style={styles.wideBelowMain}>
-                  <OwnerListings ownerId={userId} ownerName={profile.name} onOpenBook={onOpenBook} />
+                  <OwnerListings ownerId={userId} ownerName={profile.name} onOpenBook={guardedOpenBook} />
                 </View>
                 <UserRatingsPanel userId={userId} />
               </View>
@@ -220,13 +230,13 @@ export function PublicProfile({ userId, onBack, onOpenChat, onReportListing, onR
           blocking={safety.blocking}
           error={safety.error}
           onLoadListings={() => void safetyActions.loadListings()}
-          onReportListing={(listingId) => onReportListing?.(listingId)}
-          onReportUser={() => onReportUser?.(userId, profile.name)}
+          onReportListing={(listingId) => guardedReportListing(listingId)}
+          onReportUser={() => guardedReportUser(userId, profile.name)}
           onConfirmBlock={() => {
             void safetyActions.block().then((ok) => {
               if (ok) {
                 setSafetyOpen(false);
-                onBack?.();
+                guardedBack();
               }
             });
           }}

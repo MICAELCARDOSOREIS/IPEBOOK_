@@ -13,8 +13,9 @@ import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { useSearchAlertsViewModel } from "@/viewmodel/useSearchAlertsViewModel";
 import { WEB_GUTTER, WEB_MAX_WIDTH, useWebColumns } from "@/view/webLayout";
-
 import { withPress } from "@/view/pressFeedback";
+import { useGuardedPress } from "@/view/useGuardedPress";
+import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 export type SearchAlertsProps = {
   userId: string | null;
   initialQuery?: string;
@@ -31,6 +32,10 @@ export type SearchAlertsProps = {
  * `02.09`–`02.13` (`254:4285`–`254:4728` / Web `370:15901`–`370:16061`).
  */
 export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogin, onSearchBooks, onManageAlert }: SearchAlertsProps) {
+  const guardedBack = useGuardedPress(onBack);
+  const guardedLogin = useGuardedPress(onLogin);
+  const guardedSearchBooks = useGuardedPress(onSearchBooks);
+  const guardedManageAlert = useGuardedPress(onManageAlert);
   const [state, actions] = useSearchAlertsViewModel(userId, initialQuery);
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -47,7 +52,7 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
 
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar title="Meus alertas" onBack={onBack} contentMaxWidth={wide ? WIDE_CONTENT_MAX_WIDTH : undefined} />
+      <TopAppBar title="Meus alertas" onBack={guardedBack} contentMaxWidth={wide ? WIDE_CONTENT_MAX_WIDTH : undefined} />
       {!userId ? (
         <View style={styles.centered}>
           <IconBadge icon="bell" tone="action" size="large" />
@@ -57,7 +62,7 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
           <Text style={styles.bodyCenter}>
             Receba um aviso quando alguém anunciar o livro que você procura em Piripiri.
           </Text>
-          <Pressable accessibilityRole="button" onPress={onLogin} style={withPress(styles.loginButton)}>
+          <Pressable accessibilityRole="button" onPress={guardedLogin} style={withPress(styles.loginButton)}>
             <Text style={styles.link}>Entrar</Text>
           </Pressable>
         </View>
@@ -114,8 +119,11 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
               columnWrapperStyle={wide ? { gap: tokens.spacing[12] } : undefined}
               data={state.alerts}
               keyExtractor={(item) => item.id}
-              contentContainerStyle={styles.listContent}
-              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={[
+                styles.listContent,
+                { paddingBottom: scrollBottomPadding.withoutBottomBar },
+              ]}
+              {...standardVerticalScrollProps}
               ListEmptyComponent={
                 <View style={styles.emptyBox}>
                   <Text accessibilityRole="header" style={styles.emptyHeadline}>
@@ -125,7 +133,7 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
                     Busque um título ou tema e ative um alerta para receber novidades.
                   </Text>
                   {/* `02.13`: a ação vem logo depois do texto, não presa ao rodapé (Spec 043, RN-11). */}
-                  {onSearchBooks ? <FilledButton label="Procurar um livro" onPress={onSearchBooks} /> : null}
+                  {onSearchBooks ? <FilledButton label="Procurar um livro" onPress={guardedSearchBooks} /> : null}
                 </View>
               }
               renderItem={({ item }) => (
@@ -133,7 +141,7 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
                   <Pressable
                     accessibilityRole="button"
                     accessibilityLabel={`Gerenciar alerta ${item.query}`}
-                    onPress={() => onManageAlert?.(item.id)}
+                    onPress={() => guardedManageAlert(item.id)}
                     style={withPress(styles.row)}
                   >
                     <AppIcon name="bell" size={24} color={colors.text} />
@@ -157,7 +165,7 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
           )}
           {onSearchBooks && showListChrome ? (
             <View style={styles.searchAction}>
-              <OutlinedButton label="Procurar outro livro" onPress={onSearchBooks} />
+              <OutlinedButton label="Procurar outro livro" onPress={guardedSearchBooks} />
             </View>
           ) : null}
         </View>

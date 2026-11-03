@@ -14,6 +14,8 @@ import { TextButton } from "@/view/components/TextButton";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { AppIcon } from "@/view/components/AppIcon";
 import { IpePetalsCelebration } from "@/view/components/IpePetalsCelebration";
+import { useGuardedPress } from "@/view/useGuardedPress";
+import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 
 export type CreateListingSuccessProps = {
   published: Book;
@@ -26,6 +28,8 @@ export function CreateListingSuccess({
   onViewMyListings,
   onGoHome,
 }: CreateListingSuccessProps) {
+  const guardedViewMyListings = useGuardedPress(onViewMyListings);
+  const guardedGoHome = useGuardedPress(onGoHome);
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
@@ -43,7 +47,10 @@ export function CreateListingSuccess({
   return (
     <SafeAreaView style={styles.page}>
       <IpePetalsCelebration />
-      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
+        {...standardVerticalScrollProps}
+      >
         <View style={styles.content}>
           <View style={styles.headerBlock}>
             <View style={styles.badgeContainer}>
@@ -134,14 +141,14 @@ export function CreateListingSuccess({
           <View style={styles.actionsBlock}>
             <FilledButton
               label="Ver estante"
-              onPress={() => onViewMyListings?.()}
+              onPress={guardedViewMyListings}
             />
             <OutlinedButton
               label="Compartilhar anúncio"
               icon={<AppIcon name="share" size={18} color={colors.action} />}
               onPress={() => void handleShare()}
             />
-            <TextButton label="Voltar ao início" onPress={() => onGoHome?.()} />
+            <TextButton label="Voltar ao início" onPress={guardedGoHome} />
           </View>
         </View>
       </ScrollView>

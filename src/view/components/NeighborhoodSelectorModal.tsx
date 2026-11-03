@@ -9,6 +9,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { PIRIPIRI_NEIGHBORHOODS } from "@/model/entities/location";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
@@ -35,6 +36,7 @@ export function NeighborhoodSelectorModal({
   allowAllNeighborhoods = true,
 }: NeighborhoodSelectorModalProps) {
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [filterText, setFilterText] = useState("");
   const wideWeb = useIsWideWeb();
@@ -81,7 +83,14 @@ export function NeighborhoodSelectorModal({
           onPress={onClose}
           style={styles.scrimBackdrop}
         />
-        <View style={[styles.sheetContainer, wideWeb && styles.dialogWide]}>
+        <View
+          style={[
+            styles.sheetContainer,
+            wideWeb
+              ? styles.dialogWide
+              : { paddingBottom: Math.max(tokens.spacing[24], insets.bottom + tokens.spacing[12]) },
+          ]}
+        >
           {/* Alça da folha (M3): indica que é uma folha inferior que se fecha. */}
           {wideWeb ? null : <View accessible={false} importantForAccessibility="no" style={styles.handle} />}
           {/* Cabeçalho */}
@@ -131,7 +140,10 @@ export function NeighborhoodSelectorModal({
             data={filteredItems}
             keyExtractor={(item) => item}
             style={styles.list}
-            contentContainerStyle={styles.listContent}
+            contentContainerStyle={[
+              styles.listContent,
+              !wideWeb && { paddingBottom: Math.max(tokens.spacing[16], insets.bottom + tokens.spacing[8]) },
+            ]}
             keyboardShouldPersistTaps="handled"
             renderItem={({ item }) => {
               const isAll = item === ALL_NEIGHBORHOODS_LABEL;

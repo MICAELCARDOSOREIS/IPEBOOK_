@@ -21,6 +21,8 @@ import { groupNotificationsByPeriod, notificationTimeLabel } from "@/viewmodel/n
 import { resolveNotificationRoute } from "@/viewmodel/notificationRoute";
 import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
 import { withPress } from "@/view/pressFeedback";
+import { useGuardedPress } from "@/view/useGuardedPress";
+import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 
 export type NotificationsProps = {
   sessionUserId: string | null;
@@ -58,12 +60,15 @@ export default function Notifications({
   onNavigateToAction,
   onExploreBooks,
 }: NotificationsProps) {
+  const guardedBack = useGuardedPress(onBack);
+  const guardedLogin = useGuardedPress(onNavigateToLogin);
+  const guardedAction = useGuardedPress(onNavigateToAction);
+  const guardedExplore = useGuardedPress(onExploreBooks ?? onBack);
   const [state, actions] = useNotificationsViewModel(sessionUserId);
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const wide = useIsWideWeb();
   const { isOnline } = useNetworkStatus();
-  const handleExplore = onExploreBooks ?? onBack;
   const [refreshing, setRefreshing] = useState(false);
   const [confirmClearAllVisible, setConfirmClearAllVisible] = useState(false);
 
@@ -82,7 +87,7 @@ export default function Notifications({
   if (!sessionUserId) {
     return (
       <SafeAreaView style={styles.page}>
-        <TopAppBar title="Notificações" onBack={() => onBack?.()} />
+        <TopAppBar title="Notificações" onBack={guardedBack} />
         <View style={styles.centered}>
           <View style={styles.emptyIconCircle}>
             <AppIcon name="bell" size={32} color={colors.action} />
@@ -96,7 +101,7 @@ export default function Notifications({
           <View style={styles.buttonWrapper}>
             <FilledButton
               label="Entrar na conta"
-              onPress={() => onNavigateToLogin?.()}
+              onPress={guardedLogin}
             />
           </View>
         </View>
@@ -108,7 +113,7 @@ export default function Notifications({
     <SafeAreaView style={styles.page}>
       <TopAppBar
         title="Notificações"
-        onBack={() => onBack?.()}
+        onBack={guardedBack}
         contentMaxWidth={wide ? WIDE_CONTENT_MAX_WIDTH : undefined}
       />
       <View style={[styles.content, wide && styles.contentWide]}>
@@ -242,11 +247,11 @@ export default function Notifications({
                     onPress={() => actions.setFilter("all")}
                   />
                 </View>
-              ) : handleExplore ? (
+              ) : guardedExplore ? (
                 <View style={styles.buttonWrapper}>
                   <FilledButton
                     label="Explorar livros"
-                    onPress={handleExplore}
+                    onPress={guardedExplore}
                   />
                 </View>
               ) : null}
@@ -254,16 +259,19 @@ export default function Notifications({
           ) : (
             <SectionList
               testID="notifications-list"
-              keyboardShouldPersistTaps="handled"
               sections={groupNotificationsByPeriod(state.filteredNotifications).map((section) => ({
                 ...section,
                 data: [...section.data],
               }))}
               keyExtractor={(item) => item.id}
-              contentContainerStyle={styles.listContent}
+              contentContainerStyle={[
+                styles.listContent,
+                { paddingBottom: scrollBottomPadding.withoutBottomBar },
+              ]}
               stickySectionHeadersEnabled={false}
               refreshing={refreshing}
               onRefresh={() => void handleRefresh()}
+              {...standardVerticalScrollProps}
               renderSectionHeader={({ section }) => (
                 <View style={styles.sectionHeaderContainer}>
                   <Text accessibilityRole="header" style={styles.sectionHeader}>
@@ -291,7 +299,7 @@ export default function Notifications({
                         void actions.markAsRead(item.id);
                       }
                       if (destination) {
-                        onNavigateToAction?.(destination);
+                        guardedAction(destination);
                       }
                     }}
                     style={({ pressed }) => [
