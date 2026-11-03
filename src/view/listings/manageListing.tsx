@@ -19,6 +19,8 @@ import { useManageListingViewModel } from "@/viewmodel/useManageListingViewModel
 import { useShareListingViewModel } from "@/viewmodel/useShareListingViewModel";
 import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
 import { withPress } from "@/view/pressFeedback";
+import { useGuardedPress } from "@/view/useGuardedPress";
+import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 
 export type ManageListingProps = {
   bookId: string;
@@ -38,6 +40,10 @@ export default function ManageListing({
   onRemoved,
   onBack,
 }: ManageListingProps) {
+  const guardedBack = useGuardedPress(onBack);
+  const guardedEdit = useGuardedPress(onEdit);
+  const guardedViewPublic = useGuardedPress(onViewPublicListing);
+  const guardedRemoved = useGuardedPress(onRemoved);
   const [state, actions] = useManageListingViewModel(bookId, sessionUserId);
   const [shareState, shareActions] = useShareListingViewModel();
   const { colors } = useTheme();
@@ -49,7 +55,7 @@ export default function ManageListing({
   const handleRemove = async () => {
     const removed = await actions.remove();
     setConfirmingRemoval(false);
-    if (removed) onRemoved?.();
+    if (removed) guardedRemoved();
   };
 
   const handleShare = async () => {
@@ -62,7 +68,7 @@ export default function ManageListing({
   if (state.loading) {
     return (
       <SafeAreaView style={styles.page}>
-        <TopAppBar contentMaxWidth={contentMaxWidth} title="Gerenciar anúncio" onBack={() => onBack?.()} />
+        <TopAppBar contentMaxWidth={contentMaxWidth} title="Gerenciar anúncio" onBack={guardedBack} />
         <LoadingState label="Carregando anúncio" />
       </SafeAreaView>
     );
@@ -71,7 +77,7 @@ export default function ManageListing({
   if (!state.book) {
     return (
       <SafeAreaView style={styles.page}>
-        <TopAppBar contentMaxWidth={contentMaxWidth} title="Gerenciar anúncio" onBack={() => onBack?.()} />
+        <TopAppBar contentMaxWidth={contentMaxWidth} title="Gerenciar anúncio" onBack={guardedBack} />
         <ErrorState
           message={state.error ?? "Não foi possível carregar o anúncio."}
           onRetry={() => void actions.load()}
@@ -115,13 +121,16 @@ export default function ManageListing({
 
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar contentMaxWidth={contentMaxWidth} title="Gerenciar anúncio" onBack={() => onBack?.()} />
-      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+      <TopAppBar contentMaxWidth={contentMaxWidth} title="Gerenciar anúncio" onBack={guardedBack} />
+      <ScrollView
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
+        {...standardVerticalScrollProps}
+      >
         <View style={[styles.content, wide && styles.contentWide]}>
           {wide ? (
             <Breadcrumb
               items={[
-                { label: "Estante", onPress: onBack, accessibilityLabel: "Voltar para Estante" },
+                { label: "Estante", onPress: guardedBack, accessibilityLabel: "Voltar para Estante" },
                 { label: book.title, isCurrent: true },
               ]}
               style={styles.breadcrumb}
@@ -237,7 +246,7 @@ export default function ManageListing({
                   accessibilityLabel="Editar anúncio"
                   accessibilityState={{ disabled: reserved }}
                   disabled={reserved}
-                  onPress={() => onEdit?.(book.id)}
+                  onPress={() => guardedEdit(book.id)}
                   style={({ pressed }) => [
                     styles.actionCard,
                     reserved && styles.actionCardDisabled,
@@ -263,7 +272,7 @@ export default function ManageListing({
                   <Pressable
                     accessibilityRole="button"
                     accessibilityLabel="Ver anúncio como leitor"
-                    onPress={() => onViewPublicListing(book.id)}
+                    onPress={() => guardedViewPublic(book.id)}
                     style={({ pressed }) => [
                       styles.actionCard,
                       pressed && styles.actionCardPressed,

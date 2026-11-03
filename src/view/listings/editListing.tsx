@@ -22,6 +22,8 @@ import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { WEB_GUTTER } from "@/view/webLayout";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { useEditListingViewModel } from "@/viewmodel/useEditListingViewModel";
+import { useGuardedPress } from "@/view/useGuardedPress";
+import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 
 const EDIT_WIDE_MAX_WIDTH = 1080;
 
@@ -48,6 +50,8 @@ export default function EditListing({
   onSaved,
   onCancel,
 }: EditListingProps) {
+  const guardedCancel = useGuardedPress(onCancel);
+  const guardedSaved = useGuardedPress(onSaved);
   const [state, actions] = useEditListingViewModel(bookId, sessionUserId);
   const { colors, resolvedScheme } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -59,13 +63,13 @@ export default function EditListing({
 
   const handleSubmit = async () => {
     const result = await actions.submit();
-    if (result) onSaved?.();
+    if (result) guardedSaved();
   };
 
   if (state.loading) {
     return (
       <SafeAreaView style={styles.page}>
-        <TopAppBar contentMaxWidth={wide ? EDIT_WIDE_MAX_WIDTH : 480} title="Editar anúncio" onBack={() => onCancel?.()} />
+        <TopAppBar contentMaxWidth={wide ? EDIT_WIDE_MAX_WIDTH : 480} title="Editar anúncio" onBack={guardedCancel} />
         <View style={styles.statusContainer}>
           <ActivityIndicator color={colors.action} accessibilityLabel="Carregando anúncio" />
           <Text style={styles.statusText}>Carregando dados do anúncio…</Text>
@@ -77,14 +81,14 @@ export default function EditListing({
   if (state.error && !state.book) {
     return (
       <SafeAreaView style={styles.page}>
-        <TopAppBar contentMaxWidth={wide ? EDIT_WIDE_MAX_WIDTH : 480} title="Editar anúncio" onBack={() => onCancel?.()} />
+        <TopAppBar contentMaxWidth={wide ? EDIT_WIDE_MAX_WIDTH : 480} title="Editar anúncio" onBack={guardedCancel} />
         <View style={styles.statusContainer}>
           <Text accessibilityRole="alert" style={styles.errorText}>
             {state.error}
           </Text>
           {onCancel && (
             <View style={styles.backButtonContainer}>
-              <FilledButton label="Voltar" onPress={onCancel} />
+              <FilledButton label="Voltar" onPress={guardedCancel} />
             </View>
           )}
         </View>
@@ -94,10 +98,10 @@ export default function EditListing({
 
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar contentMaxWidth={wide ? EDIT_WIDE_MAX_WIDTH : 480} title="Editar anúncio" onBack={() => onCancel?.()} />
+      <TopAppBar contentMaxWidth={wide ? EDIT_WIDE_MAX_WIDTH : 480} title="Editar anúncio" onBack={guardedCancel} />
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
+        {...standardVerticalScrollProps}
       >
         <View style={[styles.content, wide && styles.contentWide]}>
           {wide ? (
@@ -327,7 +331,7 @@ export default function EditListing({
                 <TextButton
                   label="Cancelar"
                   disabled={state.saving}
-                  onPress={onCancel}
+                  onPress={guardedCancel}
                 />
               </View>
             )}

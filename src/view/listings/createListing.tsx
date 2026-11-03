@@ -24,6 +24,8 @@ import { CreateListingSuccess } from "@/view/listings/createListingSuccess";
 import { CreateListingStep1 } from "@/view/listings/createListingStep1";
 import { CreateListingStep2 } from "@/view/listings/createListingStep2";
 import { CreateListingStep3 } from "@/view/listings/createListingStep3";
+import { useGuardedPress } from "@/view/useGuardedPress";
+import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 
 export type CreateListingProps = {
   sessionUserId: string | null;
@@ -62,6 +64,10 @@ export default function CreateListing({
   onViewMyListings,
   onGoHome,
 }: CreateListingProps) {
+  const guardedCancel = useGuardedPress(onCancel);
+  const guardedViewMyListings = useGuardedPress(onViewMyListings);
+  const guardedGoHome = useGuardedPress(onGoHome);
+  const guardedCreated = useGuardedPress(onCreated);
   const [state, actions] = useCreateListingViewModel();
   const [photoState, photoActions] = useListingPhotoViewModel(sessionUserId);
   const { colors } = useTheme();
@@ -178,14 +184,14 @@ export default function CreateListing({
     const result = await actions.submit(sessionUserId);
     if (result) {
       setPublished(result);
-      onCreated?.();
+      guardedCreated();
     }
   };
 
   const handleSaveForLater = async () => {
     const saved = await actions.saveForLater(sessionUserId, step);
     if (saved) {
-      onCancel?.();
+      guardedCancel();
     }
   };
 
@@ -200,8 +206,8 @@ export default function CreateListing({
     return (
       <CreateListingSuccess
         published={published}
-        onViewMyListings={onViewMyListings}
-        onGoHome={onGoHome}
+        onViewMyListings={guardedViewMyListings}
+        onGoHome={guardedGoHome}
       />
     );
   }
@@ -211,7 +217,7 @@ export default function CreateListing({
       setStep(step - 1);
       return;
     }
-    onCancel?.();
+    guardedCancel();
   };
 
   return (
@@ -219,8 +225,8 @@ export default function CreateListing({
       <TopAppBar contentMaxWidth={wideWeb ? 1040 : undefined} title={STEP_TITLES[step]} onBack={handleBack} />
       <ScrollView
         ref={scrollRef}
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: wideWeb ? 160 : scrollBottomPadding.withoutBottomBar }]}
+        {...standardVerticalScrollProps}
       >
         <View style={wideWeb ? styles.wideLayout : undefined}>
         <View style={styles.content}>

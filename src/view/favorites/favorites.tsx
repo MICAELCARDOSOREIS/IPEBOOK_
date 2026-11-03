@@ -19,6 +19,8 @@ import { useFavoritesViewModel } from "@/viewmodel/useFavoritesViewModel";
 import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
 import { WEB_GUTTER, WEB_MAX_WIDTH, useWebGridColumns } from "@/view/webLayout";
 import { withPress } from "@/view/pressFeedback";
+import { useGuardedPress } from "@/view/useGuardedPress";
+import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 
 export type FavoritesProps = {
   userId: string | null;
@@ -45,6 +47,10 @@ export default function Favorites({
   onBook,
   onExploreBooks,
 }: FavoritesProps) {
+  const guardedBack = useGuardedPress(onBack);
+  const guardedLogin = useGuardedPress(onLogin);
+  const guardedBook = useGuardedPress(onBook);
+  const guardedExploreBooks = useGuardedPress(onExploreBooks ?? onBack);
   const [state, actions] = useFavoritesViewModel(userId);
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -68,7 +74,7 @@ export default function Favorites({
 
   return (
     <SafeAreaView style={styles.page}>
-      {wideWeb ? null : <TopAppBar title="Favoritos" onBack={onBack} />}
+      {wideWeb ? null : <TopAppBar title="Favoritos" onBack={guardedBack} />}
 
       {wideWeb && userId ? (
         <View style={styles.wideHeader}>
@@ -106,7 +112,7 @@ export default function Favorites({
           <Text accessibilityRole="header" style={styles.statusTitle}>
             Entre para ver seus favoritos
           </Text>
-          <Pressable accessibilityRole="button" onPress={onLogin}>
+          <Pressable accessibilityRole="button" onPress={guardedLogin}>
             <Text style={styles.link}>Entrar</Text>
           </Pressable>
         </View>
@@ -125,8 +131,11 @@ export default function Favorites({
           columnWrapperStyle={wideWeb ? styles.wideGridRow : undefined}
           data={visibleBooks}
           keyExtractor={(book) => book.id}
-          contentContainerStyle={wideWeb ? styles.wideList : styles.list}
-          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={[
+            wideWeb ? styles.wideList : styles.list,
+            { paddingBottom: scrollBottomPadding.withoutBottomBar },
+          ]}
+          {...standardVerticalScrollProps}
           ListFooterComponent={
             wideWeb && state.books.length > 0 ? (
               <View style={styles.privacyNote}>
@@ -149,7 +158,7 @@ export default function Favorites({
               <Text style={styles.emptyHint}>
                 Toque no coração dos anúncios para guardar aqui os livros que você quer ler.
               </Text>
-              <FilledButton label="Explorar livros" onPress={onExploreBooks ?? onBack} />
+              <FilledButton label="Explorar livros" onPress={guardedExploreBooks} />
             </View>
           }
           renderItem={({ item }) => {
@@ -166,7 +175,7 @@ export default function Favorites({
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel={`Ver ${item.title}`}
-                  onPress={() => onBook(item.id)}
+                  onPress={() => guardedBook(item.id)}
                   style={({ pressed }) => [
                     styles.rowMain,
                     wideWeb && styles.wideCardMain,
