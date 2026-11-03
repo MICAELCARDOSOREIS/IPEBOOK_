@@ -26,6 +26,8 @@ import { TextField } from "@/view/components/TextField";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { WEB_MAX_WIDTH } from "@/view/webLayout";
+import { useGuardedPress } from "@/view/useGuardedPress";
+import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 
 export type DeliveryProps = {
   requestId: string;
@@ -121,6 +123,7 @@ function DeliveryTipsCard({ colors }: { colors: ColorPalette }) {
  * Entrega do livro (Spec 095, Spec 115, ADR 0070, ADR 0089): quem anunciou mostra o QR e quem recebeu o lê ou digita o código.
  */
 export function Delivery({ requestId, sessionUserId, onBack }: DeliveryProps) {
+  const guardedBack = useGuardedPress(onBack);
   const [state, actions] = useDeliveryViewModel(requestId, sessionUserId);
   const [detailState] = useRequestDetailViewModel(requestId, sessionUserId);
   const counterpartId = detailState.detail?.counterpartId ?? "";
@@ -280,13 +283,13 @@ export function Delivery({ requestId, sessionUserId, onBack }: DeliveryProps) {
   const title = "Entrega do livro";
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar contentMaxWidth={wide ? WEB_MAX_WIDTH : 560} title={title} onBack={() => onBack?.()} />
+      <TopAppBar contentMaxWidth={wide ? WEB_MAX_WIDTH : 560} title={title} onBack={guardedBack} />
       {state.loading ? (
         <LoadingState label="Carregando a entrega" />
       ) : state.loadError ? (
         <ErrorState message={state.loadError} onRetry={() => void actions.reload()} />
       ) : (
-        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+        <ScrollView {...standardVerticalScrollProps} contentContainerStyle={[styles.scroll, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}>
           <View style={[styles.content, wide && styles.contentWide]}>
             {wide ? (
               <View style={styles.wideGrid}>

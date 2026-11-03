@@ -23,6 +23,8 @@ import { ReservedListingSheet } from "@/view/listings/ReservedListingSheet";
 import { ProposalSheet } from "@/view/listings/ProposalSheet";
 import { BOOK_CONDITION_LABELS, type Book, type BookModality } from "@/model/entities/book";
 import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
+import { useGuardedPress } from "@/view/useGuardedPress";
+import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 
 import { withPress } from "@/view/pressFeedback";
 function createModalityTag(colors: ColorPalette): Record<BookModality, { background: string; text: string; label: string }> {
@@ -120,6 +122,13 @@ export default function BookDetail({
   );
   const [proposalSubmitting, setProposalSubmitting] = useState(false);
   const [proposalError, setProposalError] = useState<string | null>(null);
+
+  const guardedBack = useGuardedPress(onBack);
+  const guardedNavigateToUserProfile = useGuardedPress((ownerId: string) => onNavigateToUserProfile?.(ownerId));
+  const guardedNavigateToReport = useGuardedPress((id: string) => onNavigateToReport?.(id));
+  const guardedNavigateToSignIn = useGuardedPress(onNavigateToSignIn);
+  const guardedNavigateToManageListing = useGuardedPress((id: string) => onNavigateToManageListing?.(id));
+  const guardedNavigateToNegotiation = useGuardedPress((requestId: string) => onNavigateToNegotiation?.(requestId));
 
   // Imagem de compartilhamento: o cartão fica fora da tela e é capturado em PNG depois que a capa carrega.
   const shareCardRef = useRef<React.ComponentRef<typeof View>>(null);
@@ -334,11 +343,11 @@ export default function BookDetail({
 
   return (
     <SafeAreaView edges={["left", "right"]} style={styles.page}>
-      <ScrollView contentContainerStyle={wideWeb ? styles.scrollContentWide : styles.scrollContent} keyboardShouldPersistTaps="handled">
+      <ScrollView {...standardVerticalScrollProps} contentContainerStyle={[wideWeb ? styles.scrollContentWide : styles.scrollContent, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}>
         {wideWeb ? (
           <Breadcrumb
             items={[
-              { label: "Explorar", onPress: onBack, accessibilityLabel: "Voltar para Explorar" },
+              { label: "Explorar", onPress: guardedBack, accessibilityLabel: "Voltar para Explorar" },
               ...(book?.category
                 ? [
                     {
@@ -362,7 +371,7 @@ export default function BookDetail({
         >
           <View style={styles.heroBar}>
             {/* Na web larga o caminho "Explorar › …" acima já volta; a seta sobre a capa sobrava. */}
-            {wideWeb ? <View /> : <HeroIconButton icon="back" label="Voltar" onPress={onBack} />}
+            {wideWeb ? <View /> : <HeroIconButton icon="back" label="Voltar" onPress={guardedBack} />}
             <View style={styles.heroBarTrailing}>
               <HeroIconButton
                 icon="share"
@@ -522,7 +531,7 @@ export default function BookDetail({
             ) : null}
 
             {/* 5. Anunciante */}
-            <SellerCard ownerId={book.ownerId} onPress={() => onNavigateToUserProfile?.(book.ownerId)} />
+            <SellerCard ownerId={book.ownerId} onPress={() => guardedNavigateToUserProfile(book.ownerId)} />
 
             {/* Banner de negociação em andamento quando o usuário já solicitou o livro */}
             {isRequested && !isOwner ? (
@@ -591,7 +600,7 @@ export default function BookDetail({
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel="Denunciar anúncio"
-                onPress={() => onNavigateToReport(book.id)}
+                onPress={() => guardedNavigateToReport(book.id)}
                 style={withPress(styles.reportButton)}
               >
                 <AppIcon name="flag" size={18} color={colors.m3.onSurfaceVariant} />

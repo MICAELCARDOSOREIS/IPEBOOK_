@@ -21,6 +21,8 @@ import { useDeliveryStatus } from "@/viewmodel/useDeliveryViewModel";
 import { NegotiationRatingModal } from "@/view/requests/NegotiationRatingModal";
 import { FilledButton } from "@/view/components/FilledButton";
 import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
+import { useGuardedPress } from "@/view/useGuardedPress";
+import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 
 import { withPress } from "@/view/pressFeedback";
 const WIDE_CONTENT_MAX_WIDTH = WEB_MAX_WIDTH;
@@ -86,6 +88,12 @@ export function RequestDetail({
   // Concluída pela entrega por QR (Spec 095); a avaliação sozinha vale para negociações anteriores.
   const completed = Boolean(delivery.completed) || Boolean(ratingState.userRating);
   const meetingConfirmed = meeting?.status === "confirmed";
+
+  const guardedBack = useGuardedPress(onBack);
+  const guardedNavigateToBookDetail = useGuardedPress((bookId: string) => onNavigateToBookDetail?.(bookId));
+  const guardedScheduleMeeting = useGuardedPress(onScheduleMeeting);
+  const guardedOpenChat = useGuardedPress((id: string) => onOpenChat?.(id));
+  const guardedOpenDelivery = useGuardedPress(onOpenDelivery);
   const awaitingMyConfirmation =
     meeting?.status === "proposed" && meeting.proposedBy !== sessionUserId;
   const progress = [
@@ -97,11 +105,11 @@ export function RequestDetail({
 
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar title="Acompanhar encontro" onBack={() => onBack?.()} contentMaxWidth={wide ? WIDE_CONTENT_MAX_WIDTH : undefined} />
+      <TopAppBar title="Acompanhar encontro" onBack={guardedBack} contentMaxWidth={wide ? WIDE_CONTENT_MAX_WIDTH : undefined} />
       <ScrollView
         testID="request-detail-scroll"
-        contentContainerStyle={styles.scroll}
-        keyboardShouldPersistTaps="handled"
+        {...standardVerticalScrollProps}
+        contentContainerStyle={[styles.scroll, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -196,7 +204,7 @@ export function RequestDetail({
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel={`Ver anúncio de ${detail.book.title}`}
-                onPress={() => onNavigateToBookDetail?.(detail.book.id)}
+                onPress={() => guardedNavigateToBookDetail(detail.book.id)}
                 style={withPress(styles.bookCard)}
               >
                 <BookCover
@@ -282,7 +290,7 @@ export function RequestDetail({
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel={`Conversar com ${detail.counterpartName ?? COMMUNITY_MEMBER}`}
-                  onPress={() => onOpenChat?.(requestId)}
+                  onPress={() => guardedOpenChat(requestId)}
                   style={withPress(styles.chatButton)}
                 >
                   <AppIcon name="chat" size={18} color={colors.m3.onSecondaryContainer} />

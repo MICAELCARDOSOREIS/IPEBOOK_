@@ -23,6 +23,8 @@ import { Tag } from "@/view/components/Tag";
 import { LoadingState } from "@/view/components/LoadingState";
 import { OfflineState } from "@/view/components/OfflineState";
 import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
+import { useGuardedPress } from "@/view/useGuardedPress";
+import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 
 import { withPress } from "@/view/pressFeedback";
 /** "Combinar encontro" do painel largo; some quando a entrega já foi concluída por QR (Spec 095). */
@@ -63,6 +65,13 @@ export function Conversations({
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [state, actions] = useConversationsViewModel(sessionUserId);
   const { isOnline } = useNetworkStatus();
+
+  const guardedOpenChat = useGuardedPress((id: string) => onOpenChat?.(id));
+  const guardedOpenNegotiation = useGuardedPress((id: string) => onOpenNegotiation?.(id));
+  const guardedReportListing = useGuardedPress((id: string) => onReportListing?.(id));
+  const guardedOpenReceivedRequests = useGuardedPress(onOpenReceivedRequests);
+  const guardedOpenListing = useGuardedPress((id: string) => onOpenListing?.(id));
+  const guardedExplore = useGuardedPress(onExplore);
   // O rótulo "agora" / "10 min" envelhece sozinho: a tela recalcula a cada minuto sem recarregar a lista (Spec 089).
   const [now, setNow] = useState(() => new Date());
   useEffect(() => {
@@ -113,15 +122,15 @@ export function Conversations({
     }
     if (item.kind === "accepted" || item.kind === "pendingReceived") {
       if (onOpenChat) {
-        onOpenChat(item.requestId);
+        guardedOpenChat(item.requestId);
         return;
       }
       if (item.kind === "pendingReceived") {
-        onOpenReceivedRequests?.();
+        guardedOpenReceivedRequests();
         return;
       }
     }
-    onOpenListing?.(item.listing.id);
+    guardedOpenListing(item.listing.id);
   };
 
   return (
@@ -162,7 +171,7 @@ export function Conversations({
               </Text>
               {onExplore ? (
                 <View style={[styles.emptyAction, wideWeb && styles.emptyActionWide]}>
-                  <FilledButton label="Encontrar um livro" onPress={onExplore} />
+                  <FilledButton label="Encontrar um livro" onPress={guardedExplore} />
                 </View>
               ) : null}
             </View>
@@ -214,16 +223,16 @@ export function Conversations({
                 </View>
               ) : null}
               <FlatList
+                {...standardVerticalScrollProps}
                 data={state.items}
                 keyExtractor={(item) => item.requestId}
-                contentContainerStyle={wideWeb ? styles.wideList : styles.list}
-                keyboardShouldPersistTaps="handled"
+                contentContainerStyle={wideWeb ? styles.wideList : [styles.list, { paddingBottom: scrollBottomPadding.withBottomBar }]}
                 ListHeaderComponent={
                   pendingReceivedCount > 0 && Boolean(onOpenReceivedRequests) ? (
                     <Pressable
                       accessibilityRole="button"
                       accessibilityLabel={`Você tem ${pendingReceivedCount} ${pendingReceivedCount === 1 ? "nova proposta recebida" : "novas propostas recebidas"}. Toque para abrir pedidos recebidos.`}
-                      onPress={onOpenReceivedRequests}
+                      onPress={guardedOpenReceivedRequests}
                       style={withPress(styles.pendingBanner)}
                     >
                       <View style={styles.pendingBannerIcon}>

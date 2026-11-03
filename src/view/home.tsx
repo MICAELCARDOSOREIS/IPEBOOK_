@@ -16,6 +16,8 @@ import { OfflineState } from "@/view/components/OfflineState";
 import { NeighborhoodSelectorModal } from "@/view/components/NeighborhoodSelectorModal";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { ScreenContainer } from "@/view/components/ScreenContainer";
+import { useGuardedPress } from "@/view/useGuardedPress";
+import { standardHorizontalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 import { IpeMark } from "@/view/components/IpeMark";
 import { IpeCelebrationOverlay } from "@/view/components/IpeCelebrationOverlay";
 import {
@@ -76,6 +78,7 @@ function CatalogCarousel({
   const modalityTag = useMemo(() => createModalityTag(colors), [colors]);
   const wideWeb = useIsWideWeb();
   const webColumns = useWebGridColumns();
+  const guardedNavigateToBookDetail = useGuardedPress((id: string) => onNavigateToBookDetail?.(id));
 
   const renderCard = (item: Book, wide = false) => {
     const tag = modalityTag[item.modality];
@@ -86,7 +89,7 @@ function CatalogCarousel({
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`Ver detalhe de ${item.title}, ${item.author}${item.neighborhood ? ` em ${item.neighborhood}` : ""}`}
-        onPress={() => onNavigateToBookDetail?.(item.id)}
+        onPress={() => guardedNavigateToBookDetail(item.id)}
         style={({ pressed }) => [
           styles.carouselCard,
           wide && styles.carouselCardWide,
@@ -213,12 +216,11 @@ function CatalogCarousel({
         <FlatList
           ref={listRef}
           horizontal
-          showsHorizontalScrollIndicator={false}
+          {...standardHorizontalScrollProps}
           data={books as Book[]}
           keyExtractor={(item) => item.id}
           style={styles.carouselList}
           contentContainerStyle={styles.carouselListContent}
-          keyboardShouldPersistTaps="handled"
           renderItem={({ item }) => renderCard(item)}
         />
       </View>
@@ -272,6 +274,13 @@ export default function Home({
   const [selectedModality, setSelectedModality] = useState<BookModality | "all">("all");
   const [refreshing, setRefreshing] = useState(false);
   const treeRotate = useRef(new Animated.Value(0)).current;
+
+  const guardedNavigateToSignIn = useGuardedPress(onNavigateToSignIn);
+  const guardedNavigateToBookDetail = useGuardedPress(onNavigateToBookDetail);
+  const guardedNavigateToNotifications = useGuardedPress(onNavigateToNotifications);
+  const guardedNavigateToTerms = useGuardedPress(onNavigateToTerms);
+  const guardedNavigateToHelp = useGuardedPress(onNavigateToHelp);
+  const guardedNavigateToSearch = useGuardedPress(onNavigateToSearch);
 
   // Florada inicial automática disparada apenas na primeira entrada do aplicativo na sessão
   useEffect(() => {
@@ -390,7 +399,7 @@ export default function Home({
                 accessibilityRole="button"
                 accessibilityLabel="Entrar no aplicativo"
                 hitSlop={{ top: tokens.spacing[6], bottom: tokens.spacing[6] }}
-                onPress={() => onNavigateToSignIn?.()}
+                onPress={() => guardedNavigateToSignIn()}
                 style={withPress(styles.sessionPill)}
               >
                 <Text style={styles.sessionPillText}>Entrar</Text>
@@ -405,7 +414,7 @@ export default function Home({
                   : "Abrir notificações"
               }
               hitSlop={{ top: tokens.spacing[4], bottom: tokens.spacing[4], left: tokens.spacing[4], right: tokens.spacing[4] }}
-              onPress={() => onNavigateToNotifications?.()}
+              onPress={() => guardedNavigateToNotifications()}
               style={withPress(styles.notificationButton)}
             >
               <AppIcon name="bell" size={24} color={colors.m3.onSurfaceVariant} />
@@ -513,7 +522,7 @@ export default function Home({
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel={`Doações da semana: ${donationSummary}`}
-                  onPress={() => onNavigateToSearch?.({ modality: "donation" })}
+                  onPress={() => guardedNavigateToSearch({ modality: "donation" })}
                   style={({ pressed }) => [
                     styles.heroHighlightCardWide,
                     { backgroundColor: colors.m3.doacaoContainer },
@@ -537,7 +546,7 @@ export default function Home({
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel="Trocar livros com leitores de Piripiri"
-                  onPress={() => onNavigateToSearch?.({ modality: "trade" })}
+                  onPress={() => guardedNavigateToSearch({ modality: "trade" })}
                   style={({ pressed }) => [
                     styles.heroHighlightCardWide,
                     { backgroundColor: colors.m3.tertiaryContainer },
@@ -624,15 +633,15 @@ export default function Home({
           title="Recém-adicionados"
           displayTitle={carouselDisplayTitle}
           books={recentBooks}
-          onNavigateToBookDetail={onNavigateToBookDetail}
+          onNavigateToBookDetail={guardedNavigateToBookDetail}
           onViewMore={() => {
             const filter: { modality?: BookModality; neighborhood?: string } = {};
             if (selectedModality !== "all") filter.modality = selectedModality;
             if (isCustomNeighborhood) filter.neighborhood = effectiveNeighborhood;
             if (Object.keys(filter).length > 0) {
-              onNavigateToSearch?.(filter);
+              guardedNavigateToSearch(filter);
             } else {
-              onNavigateToSearch?.();
+              guardedNavigateToSearch();
             }
           }}
           viewMoreLabel="Ver mais livros recém-adicionados"
@@ -656,7 +665,7 @@ export default function Home({
               accessibilityRole="button"
               accessibilityLabel="Ver livros em toda Piripiri"
               onPress={() =>
-                onNavigateToSearch?.(
+                guardedNavigateToSearch(
                   selectedModality === "all"
                     ? { neighborhood: "all" }
                     : { modality: selectedModality, neighborhood: "all" },
@@ -675,7 +684,7 @@ export default function Home({
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={`Doações da semana: ${donationSummary}`}
-            onPress={() => onNavigateToSearch?.({ modality: "donation" })}
+            onPress={() => guardedNavigateToSearch({ modality: "donation" })}
             style={withPress([styles.shortcut, { backgroundColor: colors.m3.doacaoContainer }])}
           >
             <AppIcon name="bookmark" size={24} color={colors.m3.onDoacaoContainer} />
@@ -687,7 +696,7 @@ export default function Home({
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Troque o que já leu"
-            onPress={() => onNavigateToSearch?.({ modality: "trade" })}
+            onPress={() => guardedNavigateToSearch({ modality: "trade" })}
             style={withPress([styles.shortcut, { backgroundColor: colors.m3.tertiaryContainer }])}
           >
             <AppIcon name="swap" size={24} color={colors.m3.onTertiaryContainer} />
@@ -702,7 +711,7 @@ export default function Home({
             accessibilityRole="button"
             accessibilityLabel="Encontro seguro: Locais públicos sugeridos e avaliação depois de cada troca"
             disabled={!onNavigateToHelp}
-            onPress={() => onNavigateToHelp?.()}
+            onPress={() => guardedNavigateToHelp()}
             style={withPress([styles.shortcut, { backgroundColor: colors.m3.primaryContainer }])}
           >
             <AppIcon name="checkCircle" size={24} color={colors.m3.onPrimaryContainer} />
@@ -720,7 +729,7 @@ export default function Home({
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`Doações da semana: ${donationSummary}`}
-        onPress={() => onNavigateToSearch?.({ modality: "donation" })}
+        onPress={() => guardedNavigateToSearch({ modality: "donation" })}
         style={withPress(styles.donationBanner)}
       >
         <View style={styles.donationBannerIconBox}>
@@ -745,6 +754,7 @@ export default function Home({
       edges={["top", "left", "right"]}
       maxWidth={wideWeb ? WEB_MAX_WIDTH : 720}
       paddingHorizontal={wideWeb ? WEB_GUTTER : undefined}
+      paddingBottom={wideWeb ? tokens.spacing[32] : scrollBottomPadding.withBottomBar}
       contentStyle={wideWeb ? styles.wideHomeContent : undefined}
       refreshControl={
         <RefreshControl
