@@ -141,6 +141,7 @@ export default function Notifications({
             <View accessibilityRole="tablist" style={[styles.filterTabs, wide && styles.filterTabsWide]}>
               <Pressable
                 accessibilityRole="tab"
+                accessibilityLabel={`Todas (${state.notifications.length})`}
                 accessibilityState={{ selected: state.filter === "all" }}
                 onPress={() => actions.setFilter("all")}
                 style={withPress([
@@ -161,6 +162,7 @@ export default function Notifications({
 
               <Pressable
                 accessibilityRole="tab"
+                accessibilityLabel={`Não lidas (${state.unreadCount})`}
                 accessibilityState={{ selected: state.filter === "unread" }}
                 onPress={() => actions.setFilter("unread")}
                 style={withPress([

@@ -26,7 +26,7 @@ export function ErrorState({ message, onRetry, retryLabel = "Tentar novamente" }
         <AppIcon name="error" color={colors.error} />
         <Text accessibilityRole="alert" style={styles.message}>{message}</Text>
       </View>
-      <Pressable accessibilityRole="button" onPress={onRetry} style={withPress(styles.retry)}>
+      <Pressable accessibilityRole="button" accessibilityLabel={retryLabel} onPress={onRetry} style={withPress(styles.retry)}>
         <Text style={styles.retryText}>{retryLabel}</Text>
       </Pressable>
     </View>

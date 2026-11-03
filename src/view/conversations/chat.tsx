@@ -426,7 +426,7 @@ export function Chat({
             {state.sendError ? (
               <View accessibilityRole="alert" style={styles.sendError}>
                 <Text style={styles.sendErrorText}>{state.sendError}</Text>
-                <Pressable accessibilityRole="button" onPress={() => void actions.retryLastMessage()} hitSlop={8}>
+                <Pressable accessibilityRole="button" accessibilityLabel="Reenviar mensagem" onPress={() => void actions.retryLastMessage()} hitSlop={8}>
                   <Text style={styles.retryText}>Reenviar</Text>
                 </Pressable>
               </View>

@@ -77,7 +77,7 @@ export function Moderation({ sessionUserId, onBack, onOpenListing, onOpenProfile
           ) : state.error ? (
             <View style={styles.card}>
               <Text accessibilityRole="alert" style={styles.error}>{state.error}</Text>
-              <Pressable accessibilityRole="button" onPress={() => void actions.reload()} style={withPress(styles.secondary)}>
+              <Pressable accessibilityRole="button" accessibilityLabel="Tentar de novo" onPress={() => void actions.reload()} style={withPress(styles.secondary)}>
                 <Text style={styles.secondaryText}>Tentar de novo</Text>
               </Pressable>
             </View>

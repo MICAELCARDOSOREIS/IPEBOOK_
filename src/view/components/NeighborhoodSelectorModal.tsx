@@ -118,6 +118,7 @@ export function NeighborhoodSelectorModal({
               style={styles.searchInput}
               placeholder="Buscar bairro em Piripiri..."
               placeholderTextColor={colors.m3.onSurfaceVariant}
+              accessibilityLabel="Buscar bairro em Piripiri"
               value={filterText}
               onChangeText={setFilterText}
               autoCapitalize="words"

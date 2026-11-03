@@ -94,7 +94,7 @@ export function PublicProfile({ userId, onBack, onOpenChat, onReportListing, onR
         ) : state.error ? (
           <View style={styles.status}>
             <Text accessibilityRole="alert" style={styles.errorText}>{state.error}</Text>
-            <Pressable accessibilityRole="button" onPress={() => void actions.reload()} style={withPress(styles.retryButton)}>
+            <Pressable accessibilityRole="button" accessibilityLabel="Tentar novamente" onPress={() => void actions.reload()} style={withPress(styles.retryButton)}>
               <Text style={styles.retryText}>Tentar novamente</Text>
             </Pressable>
           </View>

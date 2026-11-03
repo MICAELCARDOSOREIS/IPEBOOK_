@@ -57,6 +57,7 @@ export default function TermsAndPrivacy({
           <View testID="terms-privacy-tablist" accessibilityRole="tablist" style={styles.tabs}>
             <Pressable
               accessibilityRole="tab"
+              accessibilityLabel="Termos de Uso"
               accessibilityState={{ selected: activeTab === "terms" }}
               onPress={() => setActiveTab("terms")}
               style={withPress([styles.tab, activeTab === "terms" && styles.activeTab])}
@@ -67,6 +68,7 @@ export default function TermsAndPrivacy({
             </Pressable>
             <Pressable
               accessibilityRole="tab"
+              accessibilityLabel="Privacidade (LGPD)"
               accessibilityState={{ selected: activeTab === "privacy" }}
               onPress={() => setActiveTab("privacy")}
               style={withPress([styles.tab, activeTab === "privacy" && styles.activeTab])}

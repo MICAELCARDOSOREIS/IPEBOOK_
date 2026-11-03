@@ -133,7 +133,7 @@ export default function Favorites({
           <Text accessibilityRole="header" style={styles.statusTitle}>
             Entre para ver seus favoritos
           </Text>
-          <Pressable accessibilityRole="button" onPress={guardedLogin}>
+          <Pressable accessibilityRole="button" accessibilityLabel="Entrar" onPress={guardedLogin}>
             <Text style={styles.link}>Entrar</Text>
           </Pressable>
         </View>

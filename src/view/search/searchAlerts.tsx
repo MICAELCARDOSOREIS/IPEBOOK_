@@ -62,7 +62,7 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
           <Text style={styles.bodyCenter}>
             Receba um aviso quando alguém anunciar o livro que você procura em Piripiri.
           </Text>
-          <Pressable accessibilityRole="button" onPress={guardedLogin} style={withPress(styles.loginButton)}>
+          <Pressable accessibilityRole="button" accessibilityLabel="Entrar" onPress={guardedLogin} style={withPress(styles.loginButton)}>
             <Text style={styles.link}>Entrar</Text>
           </Pressable>
         </View>
