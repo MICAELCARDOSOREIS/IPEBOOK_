@@ -23,6 +23,8 @@ import {
 } from "@/view/listings/myListingsListingsTab";
 import { MyListingsProposalsTab } from "@/view/listings/myListingsProposalsTab";
 import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
+import { useGuardedPress } from "@/view/useGuardedPress";
+import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 
 import { withPress } from "@/view/pressFeedback";
 export { ShelfRow } from "@/view/listings/shelfRow";
@@ -64,6 +66,13 @@ export function MyListings({
   const { isOnline } = useNetworkStatus();
   const [activeTab, setActiveTab] = useState<ShelfTab>("listings");
   const [statusFilter, setStatusFilter] = useState<ListingsFilter>("all");
+
+  const guardedCreateListing = useGuardedPress(onNavigateToCreateListing);
+  const guardedDrafts = useGuardedPress(onNavigateToDrafts);
+  const guardedManageListing = useGuardedPress((id: string) => onNavigateToManageListing?.(id));
+  const guardedHelp = useGuardedPress(onNavigateToHelp);
+  const guardedReceivedRequests = useGuardedPress(onNavigateToReceivedRequests);
+  const guardedNegotiationDetail = useGuardedPress((id: string) => onNavigateToNegotiationDetail?.(id));
 
   // Spec 043 RN-03: a aba conta as propostas recebidas em aberto, não os livros reservados.
   // O pedido continua "aceito" depois da entrega por QR; o que marca a conclusão é o livro entregue.
@@ -125,7 +134,7 @@ export function MyListings({
               accessibilityRole="button"
               accessibilityLabel="Ver rascunhos"
               hitSlop={12}
-              onPress={onNavigateToDrafts}
+              onPress={guardedDrafts}
               style={({ pressed }) => [styles.draftsLink, pressed && styles.draftsLinkPressed]}
             >
               <AppIcon name="document" size={20} color={colors.m3.onSecondaryContainer} />
@@ -137,7 +146,7 @@ export function MyListings({
               accessibilityRole="button"
               accessibilityLabel="Anunciar livro no topo da estante"
               hitSlop={12}
-              onPress={onNavigateToCreateListing}
+              onPress={guardedCreateListing}
               style={withPress(styles.announceButtonHeader)}
             >
               <AppIcon name="add" size={18} color={colors.m3.onPrimary} />
@@ -158,11 +167,11 @@ export function MyListings({
           )
         ) : state.books.length === 0 ? (
           <MyListingsEmpty
-            onNavigateToCreateListing={onNavigateToCreateListing}
-            onNavigateToHelp={onNavigateToHelp}
+            onNavigateToCreateListing={guardedCreateListing}
+            onNavigateToHelp={guardedHelp}
           />
         ) : (
-          <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+          <ScrollView {...standardVerticalScrollProps} contentContainerStyle={[styles.scroll, { paddingBottom: scrollBottomPadding.withBottomBar }]}>
             {/* Banner de incentivo à circulação na web larga (Figma 05.01) */}
             {wideWeb && onNavigateToCreateListing ? (
               <View style={styles.webExchangeBanner} testID="shelf-exchange-banner">
@@ -178,7 +187,7 @@ export function MyListings({
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel="Anunciar novo livro na estante"
-                  onPress={onNavigateToCreateListing}
+                  onPress={guardedCreateListing}
                   style={withPress(styles.webExchangeBannerButton)}
                 >
                   <Text style={styles.webExchangeBannerButtonText}>Anunciar livro</Text>
@@ -273,7 +282,7 @@ export function MyListings({
                       </View>
                     </View>
                     <View style={styles.attentionActions}>
-                      <FilledButton label="Ver proposta" onPress={() => onNavigateToReceivedRequests?.()} />
+                      <FilledButton label="Ver proposta" onPress={() => guardedReceivedRequests()} />
                     </View>
                   </View>
                 ) : null}
@@ -281,7 +290,7 @@ export function MyListings({
                   books={activeBooks}
                   statusFilter={statusFilter}
                   onStatusFilterChange={setStatusFilter}
-                  onNavigateToManageListing={onNavigateToManageListing}
+                  onNavigateToManageListing={guardedManageListing}
                 />
               </>
             ) : activeTab === "proposals" ? (
@@ -295,8 +304,8 @@ export function MyListings({
               ) : (
                 <MyListingsProposalsTab
                   proposals={proposals}
-                  onNavigateToReceivedRequests={onNavigateToReceivedRequests}
-                  onNavigateToNegotiationDetail={onNavigateToNegotiationDetail}
+                  onNavigateToReceivedRequests={guardedReceivedRequests}
+                  onNavigateToNegotiationDetail={guardedNegotiationDetail}
                 />
               )
             ) : concludedProposals.length === 0 && deliveredBooks.length === 0 ? (
@@ -334,7 +343,7 @@ export function MyListings({
                     book={item.listing}
                     summary={`${item.requesterName ?? COMMUNITY_MEMBER} · Concluído · ${MODALITY_LABEL[item.listing.modality]}`}
                     accessibilityLabel={`Ver histórico de ${item.listing.title}`}
-                    onPress={() => onNavigateToNegotiationDetail?.(item.request.id)}
+                    onPress={() => guardedNegotiationDetail(item.request.id)}
                   />
                 ))}
                 {deliveredBooks.map((book) => (
@@ -353,7 +362,7 @@ export function MyListings({
                     book={book}
                     summary={`Entregue · ${MODALITY_LABEL[book.modality]}`}
                     accessibilityLabel={`Ver ${book.title}`}
-                    onPress={() => onNavigateToManageListing?.(book.id)}
+                    onPress={() => guardedManageListing(book.id)}
                   />
                 ))}
               </View>
@@ -366,7 +375,7 @@ export function MyListings({
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Anunciar livro"
-          onPress={onNavigateToCreateListing}
+          onPress={guardedCreateListing}
           android_ripple={{ color: colors.m3.onPrimaryContainer, borderless: false }}
           style={({ pressed }) => [styles.fab, pressed && styles.fabPressed]}
         >

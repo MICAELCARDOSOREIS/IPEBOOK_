@@ -90,5 +90,6 @@
 - [0088 — Melhorias de usabilidade, consistência e layout web em combinar encontro](0088-melhorias-combinar-encontro.md)
 - [0089 — Melhorias de contexto, acessibilidade e layout web na entrega do livro](0089-melhorias-entrega-livro.md)
 - [0090 — Revitalização das cores do ipê na identidade visual](0090-cores-vivas-ipe.md)
+- [0091 — Padronização universal de rolagem e blindagem contra duplo toque](0091-padronizacao-de-rolagem-e-blindagem-duplo-toque.md)
 
 Preservar registros aceitos; mudanças relevantes geram novo ADR com vínculos de substituição.

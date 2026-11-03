@@ -28,6 +28,7 @@ import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
+import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 
 import { withPress } from "@/view/pressFeedback";
 const WIDE_CONTENT_MAX_WIDTH = 1240;
@@ -302,7 +303,7 @@ export function Settings({
   return (
     <SafeAreaView style={styles.page}>
       <TopAppBar title="Configurações" onBack={onBack} contentMaxWidth={wide ? WIDE_CONTENT_MAX_WIDTH : undefined} />
-      <ScrollView ref={scrollRef} contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+      <ScrollView ref={scrollRef} {...standardVerticalScrollProps} contentContainerStyle={[styles.scroll, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}>
         <View style={[styles.content, wide && styles.contentWide]}>
           {wide ? (
             <View style={styles.sidebar}>

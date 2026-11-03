@@ -29,6 +29,8 @@ import { Chip } from "@/view/components/Chip";
 import { ErrorState } from "@/view/components/ErrorState";
 import { Tag } from "@/view/components/Tag";
 import { Avatar } from "@/view/components/Avatar";
+import { useGuardedPress } from "@/view/useGuardedPress";
+import { standardVerticalScrollProps } from "@/view/scrollProps";
 
 import { withPress } from "@/view/pressFeedback";
 const COMMUNITY_MEMBER = "Pessoa da comunidade";
@@ -70,6 +72,11 @@ export function Chat({
   const [meetingState, meetingActions] = useMeetingViewModel(requestId, sessionUserId);
   const [respondingProposal, setRespondingProposal] = useState(false);
   const [proposalError, setProposalError] = useState<string | null>(null);
+
+  const guardedBack = useGuardedPress(onBack);
+  const guardedOpenNegotiation = useGuardedPress((id: string) => onOpenNegotiation?.(id));
+  const guardedOpenDelivery = useGuardedPress((id: string) => onOpenDelivery?.(id));
+  const guardedScheduleMeeting = useGuardedPress((id: string) => onScheduleMeeting?.(id));
 
   const handleAcceptProposal = async () => {
     setRespondingProposal(true);
@@ -221,7 +228,7 @@ export function Chat({
                 accessibilityRole="button"
                 accessibilityLabel="Voltar"
                 hitSlop={8}
-                onPress={onBack ?? (() => {})}
+                onPress={guardedBack}
                 style={withPress(styles.backButton)}
               >
                 <AppIcon name="back" size={24} color={colors.m3.onSurface} />
@@ -242,7 +249,7 @@ export function Chat({
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel="Combinar encontro na negociação"
-                onPress={() => onOpenNegotiation?.(requestId)}
+                onPress={() => guardedOpenNegotiation(requestId)}
                 style={withPress(styles.webCombineButton)}
               >
                 <AppIcon name="place" size={16} color={colors.m3.onPrimary} />
@@ -266,7 +273,7 @@ export function Chat({
                   <Pressable
                     accessibilityRole="button"
                     accessibilityLabel="Combinar encontro na negociação"
-                    onPress={() => onOpenNegotiation?.(requestId)}
+                    onPress={() => guardedOpenNegotiation(requestId)}
                     style={withPress(styles.combine)}
                   >
                     <Text style={styles.combineText}>Combinar</Text>
@@ -282,11 +289,11 @@ export function Chat({
                 counterpartName={name}
                 sessionUserId={sessionUserId}
                 deliveryCompleted={Boolean(delivery.completed)}
-                onCombineMeeting={() => (onScheduleMeeting ? onScheduleMeeting(requestId) : onOpenNegotiation?.(requestId))}
+                onCombineMeeting={() => (onScheduleMeeting ? guardedScheduleMeeting(requestId) : guardedOpenNegotiation(requestId))}
                 onConfirmMeeting={() => void meetingActions.confirm()}
-                onSuggestOtherTime={() => (onScheduleMeeting ? onScheduleMeeting(requestId) : onOpenNegotiation?.(requestId))}
-                onRescheduleMeeting={() => (onScheduleMeeting ? onScheduleMeeting(requestId) : onOpenNegotiation?.(requestId))}
-                onOpenDelivery={() => (onOpenDelivery ? onOpenDelivery(requestId) : onOpenNegotiation?.(requestId))}
+                onSuggestOtherTime={() => (onScheduleMeeting ? guardedScheduleMeeting(requestId) : guardedOpenNegotiation(requestId))}
+                onRescheduleMeeting={() => (onScheduleMeeting ? guardedScheduleMeeting(requestId) : guardedOpenNegotiation(requestId))}
+                onOpenDelivery={() => (onOpenDelivery ? guardedOpenDelivery(requestId) : guardedOpenNegotiation(requestId))}
                 onOpenDirections={handleOpenDirections}
                 onAddToCalendar={() => void handleAddToCalendar()}
               />
@@ -405,11 +412,11 @@ export function Chat({
             ) : (
               <FlatList
                 ref={listRef}
+                {...standardVerticalScrollProps}
                 data={timeline}
                 keyExtractor={(item) => item.key}
                 renderItem={renderItem}
                 contentContainerStyle={[styles.list, isWebStandalone && styles.listWide]}
-                keyboardShouldPersistTaps="handled"
                 initialNumToRender={timeline.length}
                 onContentSizeChange={scrollToLatest}
                 onLayout={scrollToLatest}

@@ -28,6 +28,8 @@ import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
 import { useActiveNeighborhood } from "@/viewmodel/useActiveNeighborhood";
 import { WEB_GUTTER, WEB_MAX_WIDTH, useWebGridColumns } from "@/view/webLayout";
+import { useGuardedPress } from "@/view/useGuardedPress";
+import { standardVerticalScrollProps, standardHorizontalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 
 import { withPress } from "@/view/pressFeedback";
 export type SearchProps = {
@@ -77,6 +79,12 @@ export default function Search({
   const flatListRef = useRef<FlatList>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState<string | null>(null);
+
+  const guardedNavigateToBookDetail = useGuardedPress((bookId: string) => {
+    void actions.registerSearch(state.term);
+    onNavigateToBookDetail?.(bookId);
+  });
+  const guardedNavigateToFavorites = useGuardedPress(onNavigateToFavorites);
 
   useEffect(() => {
     if (appliedInitialFilters.current) return;
@@ -153,7 +161,7 @@ export default function Search({
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Ver meus livros favoritos"
-              onPress={onNavigateToFavorites}
+              onPress={guardedNavigateToFavorites}
               style={withPress(styles.favoritesTopButton)}
             >
               <AppIcon name="heartFill" size={22} color={colors.ipe.bloomDeep} />
@@ -205,9 +213,8 @@ export default function Search({
       {state.availableCategories.length > 0 ? (
         <ScrollView
           horizontal
-          showsHorizontalScrollIndicator={false}
+          {...standardHorizontalScrollProps}
           contentContainerStyle={styles.quickCategoriesScroll}
-          keyboardShouldPersistTaps="handled"
         >
           <Chip
             label="Todos"
@@ -364,14 +371,14 @@ export default function Search({
       ) : null}
       <FlatList
         ref={flatListRef}
+        {...standardVerticalScrollProps}
         key={wideWeb ? `grade-${gridColumns}` : "lista"}
         numColumns={wideWeb ? gridColumns : 1}
         columnWrapperStyle={wideWeb ? styles.gridRow : undefined}
         data={state.loading || state.error ? [] : state.books}
         keyExtractor={(book) => book.id}
         style={styles.flexOne}
-        contentContainerStyle={wideWeb ? styles.contentWide : styles.content}
-        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={wideWeb ? styles.contentWide : [styles.content, { paddingBottom: scrollBottomPadding.withBottomBar }]}
         onScroll={(e) => {
           const offsetY = e.nativeEvent.contentOffset.y;
           setShowScrollTop(offsetY > 300);
@@ -392,7 +399,7 @@ export default function Search({
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel={`Ver detalhe de ${item.title}, ${item.author}${item.neighborhood ? ` em ${item.neighborhood}` : ""}`}
-                onPress={() => { void actions.registerSearch(state.term); onNavigateToBookDetail?.(item.id); }}
+                onPress={() => guardedNavigateToBookDetail(item.id)}
                 style={({ pressed }) => [
                   styles.cardMain,
                   wideWeb && styles.cardMainWide,
@@ -440,7 +447,7 @@ export default function Search({
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel={`Abrir ${item.title}`}
-                  onPress={() => { void actions.registerSearch(state.term); onNavigateToBookDetail?.(item.id); }}
+                  onPress={() => guardedNavigateToBookDetail(item.id)}
                   style={withPress(styles.chevronButton)}
                 >
                   <AppIcon name="chevronRight" size={24} color={colors.m3.onSurfaceVariant} />
@@ -470,7 +477,7 @@ export default function Search({
           visible={snackbarMessage !== null}
           message={snackbarMessage ?? ""}
           actionLabel={onNavigateToFavorites ? "Ver favoritos" : undefined}
-          onAction={onNavigateToFavorites}
+          onAction={guardedNavigateToFavorites}
           onDismiss={() => setSnackbarMessage(null)}
           duration={3500}
         />

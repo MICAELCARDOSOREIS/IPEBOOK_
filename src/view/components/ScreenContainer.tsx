@@ -3,6 +3,7 @@ import { ScrollView, StyleSheet, View, type StyleProp, type ViewStyle } from "re
 import { SafeAreaView, type Edge } from "react-native-safe-area-context";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
+import { standardVerticalScrollProps } from "@/view/scrollProps";
 
 export type ScreenContainerProps = {
   children: ReactNode;
@@ -70,8 +71,8 @@ export function ScreenContainer({
       {header}
       {scroll ? (
         <ScrollView
+          {...standardVerticalScrollProps}
           contentContainerStyle={columnStyle}
-          keyboardShouldPersistTaps="handled"
           refreshControl={refreshControl}
         >
           {children}

@@ -17,6 +17,8 @@ import { TopAppBar } from "@/view/components/TopAppBar";
 import { MeetingMap } from "@/view/requests/MeetingMap";
 import { StaticMeetingMap } from "@/view/requests/MeetingMapStatic";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
+import { useGuardedPress } from "@/view/useGuardedPress";
+import { standardVerticalScrollProps, standardHorizontalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 
 import { withPress } from "@/view/pressFeedback";
 /** Parte da altura que o painel do formulário cobre sobre o mapa. */
@@ -65,6 +67,7 @@ function OptionChip({ label, accessibilityLabel, selected, onPress, compact, sty
  * local entre os pontos seguros, dia nos próximos sete dias e faixa de horário.
  */
 export function ScheduleMeeting({ requestId, sessionUserId, onBack, onSent }: ScheduleMeetingProps) {
+  const guardedBack = useGuardedPress(onBack);
   const [state, actions] = useScheduleMeetingViewModel(requestId, sessionUserId);
   const errorRef = useFormErrorAnnouncer(state.error);
   const rescheduling = state.mode === "reschedule";
@@ -167,13 +170,13 @@ export function ScheduleMeeting({ requestId, sessionUserId, onBack, onSent }: Sc
           <TopAppBar
             contentMaxWidth={1180}
             title={rescheduling ? "Reagendar encontro" : "Combinar encontro"}
-            onBack={() => onBack?.()}
+            onBack={guardedBack}
           />
           <ScrollView
             ref={scrollRef}
             style={styles.widePageScroll}
-            contentContainerStyle={styles.widePageScrollContent}
-            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={[styles.widePageScrollContent, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
+            {...standardVerticalScrollProps}
           >
             <View style={[styles.wideContainer, isStacked && styles.wideContainerStacked]}>
               {/* Coluna Esquerda: Formulário de Agendamento */}
@@ -302,7 +305,7 @@ export function ScheduleMeeting({ requestId, sessionUserId, onBack, onSent }: Sc
                         if (await actions.submit()) onSent?.();
                       }}
                     />
-                    {rescheduling ? <TextButton label="Cancelar" onPress={() => onBack?.()} /> : null}
+                    {rescheduling ? <TextButton label="Cancelar" onPress={guardedBack} /> : null}
                   </View>
                 </View>
               </View>
@@ -389,11 +392,11 @@ export function ScheduleMeeting({ requestId, sessionUserId, onBack, onSent }: Sc
         <MeetingMap selectedName={state.pointName} coveredBottom={SHEET_FRACTION} sheetHeight={sheetHeight} onSelect={selectFromMap} />
       ) : null}
       <SafeAreaView style={styles.safe} pointerEvents="box-none" edges={hasMap ? ["bottom", "left", "right"] : undefined}>
-      <TopAppBar contentMaxWidth={560} floating={hasMap} title={rescheduling ? "Reagendar encontro" : "Combinar encontro"} onBack={() => onBack?.()} />
+      <TopAppBar contentMaxWidth={560} floating={hasMap} title={rescheduling ? "Reagendar encontro" : "Combinar encontro"} onBack={guardedBack} />
       {state.loading ? (
         <LoadingState label="Carregando o encontro" />
       ) : state.loadError ? (
-        <ErrorState message={state.loadError} onRetry={() => onBack?.()} />
+        <ErrorState message={state.loadError} onRetry={guardedBack} />
       ) : (
         <View style={styles.stage} pointerEvents="box-none" onLayout={(event) => setStageHeight(Math.round(event.nativeEvent.layout.height))}>
           <Animated.View
@@ -437,7 +440,13 @@ export function ScheduleMeeting({ requestId, sessionUserId, onBack, onSent }: Sc
               )}
             </Pressable>
           ) : null}
-          <ScrollView ref={scrollRef} scrollEnabled={!hasMap || expanded} style={styles.sheetScroll} contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+          <ScrollView
+            ref={scrollRef}
+            scrollEnabled={!hasMap || expanded}
+            style={styles.sheetScroll}
+            contentContainerStyle={[styles.scroll, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
+            {...standardVerticalScrollProps}
+          >
             <View style={styles.content}>
               {rescheduling ? (
                 <>
@@ -487,7 +496,12 @@ export function ScheduleMeeting({ requestId, sessionUserId, onBack, onSent }: Sc
               </View>
 
               <Text accessibilityRole="header" style={styles.sectionLabel} onLayout={(event) => { dayY.current = event.nativeEvent.layout.y; }}>Dia</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.daysScroll} contentContainerStyle={styles.daysRow} keyboardShouldPersistTaps="handled">
+              <ScrollView
+                horizontal
+                style={styles.daysScroll}
+                contentContainerStyle={styles.daysRow}
+                {...standardHorizontalScrollProps}
+              >
               <View accessibilityRole="radiogroup" accessibilityLabel="Dia do encontro" style={styles.daysChips}>
                 {state.dayOptions.map((day, index) => (
                   <OptionChip
@@ -548,7 +562,7 @@ export function ScheduleMeeting({ requestId, sessionUserId, onBack, onSent }: Sc
                   if (await actions.submit()) onSent?.();
                 }}
               />
-              {rescheduling ? <TextButton label="Cancelar" onPress={() => onBack?.()} /> : null}
+              {rescheduling ? <TextButton label="Cancelar" onPress={guardedBack} /> : null}
             </View>
           </View>
           </Animated.View>

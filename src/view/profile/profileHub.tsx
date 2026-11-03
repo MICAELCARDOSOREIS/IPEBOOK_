@@ -15,6 +15,8 @@ import { FilledButton } from "@/view/components/FilledButton";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
+import { useGuardedPress } from "@/view/useGuardedPress";
+import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 import ipeFrame from "@/view/assets/moldura-ipe-perfil.png";
 
 export type ProfileHubProps = {
@@ -72,6 +74,18 @@ export default function ProfileHub({
   const [signingOut, setSigningOut] = useState(false);
   const wideWeb = useIsWideWeb();
 
+  const guardedNavigateToSignIn = useGuardedPress(onNavigateToSignIn);
+  const guardedNavigateToEditProfile = useGuardedPress(onNavigateToEditProfile);
+  const guardedNavigateToCreateListing = useGuardedPress(onNavigateToCreateListing);
+  const guardedNavigateToMyListings = useGuardedPress(onNavigateToMyListings);
+  const guardedNavigateToRatings = useGuardedPress(onNavigateToRatings);
+  const guardedNavigateToMeetingHistory = useGuardedPress(onNavigateToMeetingHistory);
+  const guardedNavigateToFavorites = useGuardedPress(onNavigateToFavorites);
+  const guardedNavigateToNotifications = useGuardedPress(onNavigateToNotifications);
+  const guardedNavigateToSecurity = useGuardedPress(onNavigateToSecurity);
+  const guardedNavigateToInviteFriends = useGuardedPress(onNavigateToInviteFriends);
+  const guardedNavigateToSettings = useGuardedPress(onNavigateToSettings);
+
   useEffect(() => {
     if (requireAuth && !authState.loading && !userId) {
       onNavigateToSignIn?.();
@@ -120,7 +134,7 @@ export default function ProfileHub({
       iconColor: colors.text,
       label: "Minhas publicações",
       description: `${activeBooks} ativas · ${reservedBooks} reservada${reservedBooks !== 1 ? "s" : ""}`,
-      onPress: onNavigateToMyListings ?? (() => {}),
+      onPress: guardedNavigateToMyListings,
       showChevron: true,
     },
     {
@@ -132,7 +146,7 @@ export default function ProfileHub({
         profile.ratingCount > 0
           ? `★ ${ratingText} em ${completedTrocas} trocas`
           : "Veja o que a comunidade disse sobre você",
-      onPress: onNavigateToRatings,
+      onPress: guardedNavigateToRatings,
       showChevron: true,
     },
     {
@@ -141,7 +155,7 @@ export default function ProfileHub({
       iconColor: colors.text,
       label: "Histórico de encontros",
       description: "Encontros nos pontos seguros de Piripiri",
-      onPress: onNavigateToMeetingHistory ?? (() => {}),
+      onPress: guardedNavigateToMeetingHistory,
       showChevron: true,
     },
     {
@@ -150,7 +164,7 @@ export default function ProfileHub({
       iconColor: colors.text,
       label: "Favoritos e alertas",
       description: "Livros salvos e alertas de busca",
-      onPress: onNavigateToFavorites ?? (() => {}),
+      onPress: guardedNavigateToFavorites,
       showChevron: true,
     },
   ];
@@ -163,7 +177,7 @@ export default function ProfileHub({
       iconColor: colors.m3.onSurfaceVariant,
       label: "Notificações",
       description: "Alertas de pedidos, mensagens e buscas",
-      onPress: onNavigateToNotifications,
+      onPress: guardedNavigateToNotifications,
       showChevron: true,
     },
     {
@@ -172,7 +186,7 @@ export default function ProfileHub({
       iconColor: colors.text,
       label: "Segurança e verificação",
       description: "Alterar senha da conta",
-      onPress: onNavigateToSecurity,
+      onPress: guardedNavigateToSecurity,
       showChevron: true,
     },
     {
@@ -181,14 +195,14 @@ export default function ProfileHub({
       iconColor: colors.m3.onSurfaceVariant,
       label: "Convidar amigos",
       description: "Divulgue o IpêBook e ajude a comunidade a crescer",
-      onPress: onNavigateToInviteFriends ?? (() => {}),
+      onPress: guardedNavigateToInviteFriends,
       showChevron: true,
     },
   ];
 
   return (
     <SafeAreaView edges={["top", "left", "right"]} style={styles.page}>
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+      <ScrollView {...standardVerticalScrollProps} contentContainerStyle={[styles.scroll, { paddingBottom: scrollBottomPadding.withBottomBar }]}>
         <View style={[styles.content, wideWeb && styles.contentWide]}>
           {/* Título editorial da marca (Figma 07.01 nó 563:8321: Source Serif 4 Bold 34px, #58331F)
               com entrada de Configurações no topo (ADR 0060), liberada também para visitante */}
@@ -200,7 +214,7 @@ export default function ProfileHub({
               accessibilityRole="button"
               accessibilityLabel="Abrir configurações"
               hitSlop={8}
-              onPress={onNavigateToSettings ?? (() => {})}
+              onPress={guardedNavigateToSettings}
               style={({ pressed }) => [styles.settingsButton, pressed && styles.settingsButtonPressed]}
             >
               <AppIcon name="settings" size={24} color={colors.m3.onSurfaceVariant} />
@@ -236,7 +250,7 @@ export default function ProfileHub({
                               accessibilityRole="button"
                               accessibilityLabel="Adicionar Instagram ao perfil"
                               hitSlop={8}
-                              onPress={onNavigateToEditProfile}
+                              onPress={guardedNavigateToEditProfile}
                             >
                               <Text style={styles.identityHandleAction}>Adicionar Instagram</Text>
                             </Pressable>
@@ -265,7 +279,7 @@ export default function ProfileHub({
                       <Pressable
                         accessibilityRole="button"
                         accessibilityLabel={`Minhas publicações: ${totalPublications} ${totalPublications === 1 ? "publicação" : "publicações"}`}
-                        onPress={onNavigateToMyListings ?? (() => {})}
+                        onPress={guardedNavigateToMyListings}
                         style={({ pressed }) => [styles.statBox, pressed && styles.statBoxPressed]}
                       >
                         <Text style={styles.statNumber}>{totalPublications}</Text>
@@ -277,7 +291,7 @@ export default function ProfileHub({
                       <Pressable
                         accessibilityRole="button"
                         accessibilityLabel={`Trocas concluídas: ${completedTrocas} ${completedTrocas === 1 ? "troca" : "trocas"}`}
-                        onPress={onNavigateToMeetingHistory ?? (() => {})}
+                        onPress={guardedNavigateToMeetingHistory}
                         style={({ pressed }) => [styles.statBox, pressed && styles.statBoxPressed]}
                       >
                         <Text style={styles.statNumber}>{completedTrocas}</Text>
@@ -289,7 +303,7 @@ export default function ProfileHub({
                       <Pressable
                         accessibilityRole="button"
                         accessibilityLabel={`Avaliações recebidas: ${ratingText}`}
-                        onPress={onNavigateToRatings}
+                        onPress={guardedNavigateToRatings}
                         style={({ pressed }) => [styles.statBox, pressed && styles.statBoxPressed]}
                       >
                         <Text style={styles.statNumber}>
@@ -303,7 +317,7 @@ export default function ProfileHub({
                       <Pressable
                         accessibilityRole="button"
                         accessibilityLabel="Editar perfil"
-                        onPress={onNavigateToEditProfile}
+                        onPress={guardedNavigateToEditProfile}
                         style={({ pressed }) => [
                           styles.editProfileButton,
                           resolvedScheme === "dark" && styles.editProfileButtonDark,
@@ -318,7 +332,7 @@ export default function ProfileHub({
                         <Pressable
                           accessibilityRole="button"
                           accessibilityLabel="Publicar um livro"
-                          onPress={onNavigateToCreateListing}
+                          onPress={guardedNavigateToCreateListing}
                           style={({ pressed }) => [styles.publishButton, pressed && styles.publishButtonPressed]}
                         >
                           <AppIcon name="add" size={20} color={colors.m3.onPrimary} />
@@ -369,7 +383,7 @@ export default function ProfileHub({
                   </Text>
                   <FilledButton
                     label="Entrar ou criar conta"
-                    onPress={onNavigateToSignIn ?? (() => {})}
+                    onPress={guardedNavigateToSignIn}
                   />
                 </View>
               )}
