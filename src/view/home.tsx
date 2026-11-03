@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Animated, AppState, FlatList, Platform, Pressable, RefreshControl, StyleSheet, Text, View } from "react-native";
+import { Animated, AppState, FlatList, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useHomeViewModel } from "@/viewmodel/useHomeViewModel";
 import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
@@ -608,25 +608,51 @@ export default function Home({
       </View>
 
       {/* 3. Chips de Filtro Rápido (Todos, Venda, Troca, Doação) */}
-      <View style={[styles.chipsContainer, wideWeb && styles.chipsContainerWide]}>
-        {(["all", "sale", "trade", "donation"] as const).map((mod) => {
-          const isSelected = selectedModality === mod;
-          const label = mod === "all" ? "Todos" : mod === "sale" ? "Venda" : mod === "trade" ? "Troca" : "Doação";
-          // Cada modalidade tem a sua cor, a mesma das etiquetas dos livros; "Todos" fica neutro.
-          const tone = mod === "all" ? undefined : colors.badge[mod];
-          return (
-            <Chip
-              key={mod}
-              size="compact"
-              label={label}
-              accessibilityLabel={`Filtrar por ${label}`}
-              selected={isSelected}
-              tone={tone}
-              onPress={() => setSelectedModality(mod)}
-            />
-          );
-        })}
-      </View>
+      {wideWeb ? (
+        <View style={styles.chipsContainerWide}>
+          {(["all", "sale", "trade", "donation"] as const).map((mod) => {
+            const isSelected = selectedModality === mod;
+            const label = mod === "all" ? "Todos" : mod === "sale" ? "Venda" : mod === "trade" ? "Troca" : "Doação";
+            const tone = mod === "all" ? undefined : colors.badge[mod];
+            return (
+              <Chip
+                key={mod}
+                size="compact"
+                label={label}
+                accessibilityLabel={`Filtrar por ${label}`}
+                selected={isSelected}
+                tone={tone}
+                onPress={() => setSelectedModality(mod)}
+              />
+            );
+          })}
+        </View>
+      ) : (
+        <ScrollView
+          horizontal
+          {...standardHorizontalScrollProps}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.chipsScroll}
+          style={styles.chipsScrollView}
+        >
+          {(["all", "sale", "trade", "donation"] as const).map((mod) => {
+            const isSelected = selectedModality === mod;
+            const label = mod === "all" ? "Todos" : mod === "sale" ? "Venda" : mod === "trade" ? "Troca" : "Doação";
+            const tone = mod === "all" ? undefined : colors.badge[mod];
+            return (
+              <Chip
+                key={mod}
+                size="compact"
+                label={label}
+                accessibilityLabel={`Filtrar por ${label}`}
+                selected={isSelected}
+                tone={tone}
+                onPress={() => setSelectedModality(mod)}
+              />
+            );
+          })}
+        </ScrollView>
+      )}
 
       {/* 5. "Perto de você" (Figma 02.01): carrossel ou estado de carregamento, erro ou vazio */}
       {state.loading ? (
@@ -660,47 +686,51 @@ export default function Home({
       ) : (
         <View style={styles.empty}>
           <Text accessibilityRole="header" style={styles.carouselTitle}>{carouselDisplayTitle}</Text>
-          <View style={styles.emptyIpeContainer}>
-            <IpeMark size={56} />
-          </View>
-          <Text style={styles.emptyTitle}>
-            {state.books.length > 0 && isSpecificNeighborhood
-              ? `Ainda não há ${selectedModality === "all" ? "livros" : MODALITY_PLURAL[selectedModality]} no ${effectiveNeighborhood}.`
-              : "Ainda não há livros por aqui."}
-          </Text>
-          <Text style={styles.body}>
-            {state.books.length > 0 && isSpecificNeighborhood
-              ? "Seja a primeira pessoa a fazer a estante circular no seu bairro, ou explore livros em toda Piripiri."
-              : "Quando houver livros disponíveis, eles aparecerão neste espaço."}
-          </Text>
-          <View style={styles.emptyActionsRow}>
-            {state.books.length > 0 && isSpecificNeighborhood ? (
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Ver livros em toda Piripiri"
-                onPress={() => {
-                  neighborhoodHook.selectNeighborhood("Todos os bairros (Piripiri)");
-                  guardedNavigateToSearch(
-                    selectedModality === "all"
-                      ? { neighborhood: "all" }
-                      : { modality: selectedModality, neighborhood: "all" },
-                  );
-                }}
-                style={withPress([styles.viewMoreButton, styles.emptyExploreButton])}
-              >
-                <Text style={styles.viewMoreText}>Explorar toda Piripiri</Text>
-              </Pressable>
-            ) : null}
-            {isSpecificNeighborhood ? (
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Selecionar outro bairro"
-                onPress={handleSelectNeighborhood}
-                style={withPress(styles.emptySecondaryButton)}
-              >
-                <Text style={styles.emptySecondaryButtonText}>Trocar bairro</Text>
-              </Pressable>
-            ) : null}
+          <View style={styles.emptyCard}>
+            <View style={styles.emptyIpeContainer}>
+              <IpeMark size={52} />
+            </View>
+            <Text style={styles.emptyTitle}>
+              {state.books.length > 0 && isSpecificNeighborhood
+                ? `Ainda não há ${selectedModality === "all" ? "livros" : MODALITY_PLURAL[selectedModality]} no ${effectiveNeighborhood}.`
+                : "Ainda não há livros por aqui."}
+            </Text>
+            <Text style={styles.body}>
+              {state.books.length > 0 && isSpecificNeighborhood
+                ? "Seja a primeira pessoa a fazer a estante circular no seu bairro, ou explore livros em toda Piripiri."
+                : "Quando houver livros disponíveis, eles aparecerão neste espaço."}
+            </Text>
+            <View style={styles.emptyActionsRow}>
+              {state.books.length > 0 && isSpecificNeighborhood ? (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Ver livros em toda Piripiri"
+                  onPress={() => {
+                    neighborhoodHook.selectNeighborhood("Todos os bairros (Piripiri)");
+                    guardedNavigateToSearch(
+                      selectedModality === "all"
+                        ? { neighborhood: "all" }
+                        : { modality: selectedModality, neighborhood: "all" },
+                    );
+                  }}
+                  style={withPress(styles.emptyPrimaryButton)}
+                >
+                  <AppIcon name="search" size={18} color={colors.m3.onPrimary} />
+                  <Text style={styles.emptyPrimaryButtonText}>Explorar toda Piripiri</Text>
+                </Pressable>
+              ) : null}
+              {isSpecificNeighborhood ? (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Selecionar outro bairro"
+                  onPress={handleSelectNeighborhood}
+                  style={withPress(styles.emptySecondaryButton)}
+                >
+                  <AppIcon name="place" size={16} color={colors.m3.onSurfaceVariant} />
+                  <Text style={styles.emptySecondaryButtonText}>Trocar bairro</Text>
+                </Pressable>
+              ) : null}
+            </View>
           </View>
         </View>
       )}
@@ -1087,7 +1117,17 @@ function createStyles(colors: ColorPalette) {
       flexDirection: "row",
       flexWrap: "wrap",
       gap: tokens.spacing[8],
-      marginBottom: tokens.spacing[24],
+      marginBottom: tokens.spacing[20],
+    },
+    chipsScrollView: {
+      marginBottom: tokens.spacing[20],
+      marginHorizontal: -tokens.spacing[16],
+    },
+    chipsScroll: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[8],
+      paddingHorizontal: tokens.spacing[16],
     },
 
     // 5. Destaque Comunitário ("Doações da semana")
@@ -1095,14 +1135,18 @@ function createStyles(colors: ColorPalette) {
       flexDirection: "row",
       alignItems: "center",
       paddingHorizontal: tokens.spacing[16],
-      paddingVertical: tokens.spacing[12],
-      minHeight: tokens.spacing[56],
-      gap: tokens.spacing[16],
+      paddingVertical: tokens.spacing[14],
+      minHeight: tokens.spacing[64],
+      gap: tokens.spacing[14],
       marginBottom: tokens.spacing[24],
-      borderRadius: tokens.radius.card,
+      borderRadius: tokens.radius.xl,
       backgroundColor: colors.m3.doacaoContainer,
     },
     donationBannerIconBox: {
+      width: tokens.spacing[40],
+      height: tokens.spacing[40],
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.m3.surfaceContainerLowest,
       justifyContent: "center",
       alignItems: "center",
     },
@@ -1265,46 +1309,72 @@ function createStyles(colors: ColorPalette) {
 
     // 8. Estado vazio e rodapé
     empty: {
-      gap: tokens.spacing[8],
+      gap: tokens.spacing[12],
       marginBottom: tokens.spacing[24],
     },
+    emptyCard: {
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderRadius: tokens.radius.xl,
+      padding: tokens.spacing[20],
+      gap: tokens.spacing[10],
+      alignItems: "flex-start",
+    },
     emptyIpeContainer: {
-      width: 72,
-      height: 72,
+      width: tokens.spacing[64],
+      height: tokens.spacing[64],
       borderRadius: tokens.radius.full,
       backgroundColor: colors.ipe.container,
       alignItems: "center",
       justifyContent: "center",
-      marginBottom: tokens.spacing[8],
-      alignSelf: "flex-start",
+      marginBottom: tokens.spacing[4],
     },
     emptyActionsRow: {
       flexDirection: "row",
       flexWrap: "wrap",
-      gap: tokens.spacing[12],
-      marginTop: tokens.spacing[12],
+      gap: tokens.spacing[10],
+      marginTop: tokens.spacing[8],
       alignItems: "center",
     },
+    emptyPrimaryButton: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[8],
+      height: tokens.spacing[40],
+      paddingHorizontal: tokens.spacing[18],
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.m3.primary,
+    },
+    emptyPrimaryButtonText: {
+      ...tokens.typography.labelLarge,
+      color: colors.m3.onPrimary,
+      fontWeight: tokens.fontWeight.semiBold,
+    },
     emptySecondaryButton: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[6],
+      height: tokens.spacing[40],
       paddingHorizontal: tokens.spacing[16],
-      paddingVertical: tokens.spacing[8],
       borderRadius: tokens.radius.full,
       borderWidth: 1,
       borderColor: colors.m3.outlineVariant,
-      backgroundColor: colors.m3.surfaceContainerLow,
+      backgroundColor: colors.m3.surfaceContainerLowest,
     },
     emptySecondaryButtonText: {
-      ...tokens.typography.labelMedium,
+      ...tokens.typography.labelLarge,
       color: colors.m3.onSurfaceVariant,
       fontWeight: tokens.fontWeight.medium,
     },
-    emptyExploreButton: {
-      alignSelf: "flex-start",
+    emptyTitle: {
+      ...tokens.typography.titleMedium,
+      fontFamily: fontFamily.semiBold,
+      color: colors.m3.onSurface,
+      lineHeight: tokens.lineHeight[24],
     },
-    emptyTitle: { ...tokens.typography.bodyLarge, color: colors.m3.onSurface },
     body: {
       ...tokens.typography.bodyMedium,
       color: colors.m3.onSurfaceVariant,
+      lineHeight: tokens.lineHeight[20],
     },
   });
 }
