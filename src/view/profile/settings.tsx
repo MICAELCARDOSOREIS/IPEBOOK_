@@ -117,7 +117,7 @@ export function Settings({
     try {
       await authActions.signOut();
       setConfirmingSignOut(false);
-      guardedSignedOut();
+      guardedSignedOut?.();
     } finally {
       setSigningOut(false);
     }

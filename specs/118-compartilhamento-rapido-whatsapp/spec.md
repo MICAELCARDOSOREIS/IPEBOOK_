@@ -1,6 +1,6 @@
 # Especificação 118 — Compartilhamento Rápido no WhatsApp e Grupos de Piripiri
 
-**Status:** Em implementação  
+**Status:** Concluída  
 **Data:** 3 de novembro de 2026  
 **Contexto:** UX / Viralidade / Comunidade de Piripiri / Mobile / Web  
 **ADR vinculada:** [0092](../../docs/adr/0092-compartilhamento-rapido-whatsapp.md)
