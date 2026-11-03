@@ -650,6 +650,9 @@ export default function Home({
       ) : (
         <View style={styles.empty}>
           <Text accessibilityRole="header" style={styles.carouselTitle}>{carouselDisplayTitle}</Text>
+          <View style={styles.emptyIpeContainer}>
+            <IpeMark size={56} />
+          </View>
           <Text style={styles.emptyTitle}>
             {state.books.length > 0 && isSpecificNeighborhood
               ? `Ainda não há ${selectedModality === "all" ? "livros" : MODALITY_PLURAL[selectedModality]} no ${effectiveNeighborhood}.`
@@ -657,25 +660,38 @@ export default function Home({
           </Text>
           <Text style={styles.body}>
             {state.books.length > 0 && isSpecificNeighborhood
-              ? "Seja a primeira pessoa a anunciar neste bairro ou explore livros de toda Piripiri."
+              ? "Seja a primeira pessoa a fazer a estante circular no seu bairro, ou explore livros em toda Piripiri."
               : "Quando houver livros disponíveis, eles aparecerão neste espaço."}
           </Text>
-          {state.books.length > 0 && isSpecificNeighborhood && filteredBooks.length > 0 ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Ver livros em toda Piripiri"
-              onPress={() =>
-                guardedNavigateToSearch(
-                  selectedModality === "all"
-                    ? { neighborhood: "all" }
-                    : { modality: selectedModality, neighborhood: "all" },
-                )
-              }
-              style={withPress([styles.viewMoreButton, styles.emptyExploreButton])}
-            >
-              <Text style={styles.viewMoreText}>Explorar toda Piripiri</Text>
-            </Pressable>
-          ) : null}
+          <View style={styles.emptyActionsRow}>
+            {state.books.length > 0 && isSpecificNeighborhood ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Ver livros em toda Piripiri"
+                onPress={() => {
+                  neighborhoodHook.selectNeighborhood("Todos os bairros (Piripiri)");
+                  guardedNavigateToSearch(
+                    selectedModality === "all"
+                      ? { neighborhood: "all" }
+                      : { modality: selectedModality, neighborhood: "all" },
+                  );
+                }}
+                style={withPress([styles.viewMoreButton, styles.emptyExploreButton])}
+              >
+                <Text style={styles.viewMoreText}>Explorar toda Piripiri</Text>
+              </Pressable>
+            ) : null}
+            {isSpecificNeighborhood ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Selecionar outro bairro"
+                onPress={handleSelectNeighborhood}
+                style={withPress(styles.emptySecondaryButton)}
+              >
+                <Text style={styles.emptySecondaryButtonText}>Trocar bairro</Text>
+              </Pressable>
+            ) : null}
+          </View>
         </View>
       )}
 
@@ -1223,8 +1239,37 @@ function createStyles(colors: ColorPalette) {
       gap: tokens.spacing[8],
       marginBottom: tokens.spacing[24],
     },
-    emptyExploreButton: {
+    emptyIpeContainer: {
+      width: 72,
+      height: 72,
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.ipe.container,
+      alignItems: "center",
+      justifyContent: "center",
+      marginBottom: tokens.spacing[8],
+      alignSelf: "flex-start",
+    },
+    emptyActionsRow: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: tokens.spacing[12],
       marginTop: tokens.spacing[12],
+      alignItems: "center",
+    },
+    emptySecondaryButton: {
+      paddingHorizontal: tokens.spacing[16],
+      paddingVertical: tokens.spacing[8],
+      borderRadius: tokens.radius.full,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+      backgroundColor: colors.m3.surfaceContainerLow,
+    },
+    emptySecondaryButtonText: {
+      ...tokens.typography.labelMedium,
+      color: colors.m3.onSurfaceVariant,
+      fontWeight: tokens.fontWeight.medium,
+    },
+    emptyExploreButton: {
       alignSelf: "flex-start",
     },
     emptyTitle: { ...tokens.typography.bodyLarge, color: colors.m3.onSurface },

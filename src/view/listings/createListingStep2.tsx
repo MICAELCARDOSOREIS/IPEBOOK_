@@ -118,8 +118,8 @@ export function CreateListingStep2({
         </View>
         <Text style={styles.tipText}>
           {wideWeb
-            ? "Fotografe em local com boa luz natural, preferencialmente sobre uma mesa ou superfície lisa. A capa inteira deve estar visível e legível para quem busca em Piripiri."
-            : "Luz natural, fundo liso e a capa inteira no quadro."}
+            ? "Fotografe em local com boa luz natural. Além da capa inteira, mostre a lombada e o corte das páginas para quem busca em Piripiri conferir a real conservação do livro."
+            : "Luz natural, fundo liso e capa inteira no quadro. Fotos da lombada e do corte das páginas ajudam a conferir a conservação do exemplar."}
         </Text>
       </View>
 

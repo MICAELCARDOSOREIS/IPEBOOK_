@@ -46,6 +46,23 @@ for (const arquivo of listar(dist)) {
     );
     mudou = true;
   }
+  if (arquivo.endsWith(".html") && !conteudo.includes('property="og:')) {
+    const fallbackOg = [
+      '<meta property="og:site_name" content="IpêBook Piripiri"/>',
+      '<meta property="og:type" content="website"/>',
+      '<meta property="og:title" content="IpêBook · Circulação Comunitária de Livros em Piripiri"/>',
+      '<meta property="og:description" content="Compre, troque ou receba livros sob a florada do Ipê em Piripiri, PI. Negociação direta e pontos de encontro seguros!"/>',
+      '<meta property="og:image" content="https://ipebook.app/icone-512.png"/>',
+      '<meta property="og:image:width" content="512"/>',
+      '<meta property="og:image:height" content="512"/>',
+      '<meta name="twitter:card" content="summary"/>',
+      '<meta name="twitter:title" content="IpêBook · Livros em Piripiri"/>',
+      '<meta name="twitter:description" content="Marketplace comunitário de livros em Piripiri, PI (venda, troca e doação)."/>',
+      '<meta name="twitter:image" content="https://ipebook.app/icone-512.png"/>',
+    ].join("");
+    conteudo = conteudo.replace("</head>", `${fallbackOg}</head>`);
+    mudou = true;
+  }
   if (mudou) {
     writeFileSync(arquivo, conteudo);
     reescritos += 1;

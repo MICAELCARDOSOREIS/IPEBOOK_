@@ -6,11 +6,10 @@ import { AppIcon } from "@/view/components/AppIcon";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import {
+  SORT_IDS,
   SORT_LABELS,
   type SearchSortOption,
 } from "@/viewmodel/searchFilters";
-
-const SORT_IDS: readonly SearchSortOption[] = ["recent", "title", "price_asc", "price_desc"];
 
 export type SortSheetProps = {
   visible: boolean;

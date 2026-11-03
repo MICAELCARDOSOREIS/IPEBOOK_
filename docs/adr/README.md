@@ -92,5 +92,8 @@
 - [0090 — Revitalização das cores do ipê na identidade visual](0090-cores-vivas-ipe.md)
 - [0091 — Padronização universal de rolagem e blindagem contra duplo toque](0091-padronizacao-de-rolagem-e-blindagem-duplo-toque.md)
 - [0092 — Compartilhamento rápido no WhatsApp e grupos de Piripiri](0092-compartilhamento-rapido-whatsapp.md)
+- [0093 — Open Graph dinâmico para compartilhamento de livros no WhatsApp](0093-open-graph-cards-compartilhamento.md)
+- [0094 — Refinamentos visuais e interativos das telas](0094-refinamentos-visuais-e-interativos-das-telas.md)
+- [0095 — Estratégia de ordenação avançada no catálogo comunitário de Piripiri](0095-ordenacao-avancada-catalogo.md)
 
 Preservar registros aceitos; mudanças relevantes geram novo ADR com vínculos de substituição.

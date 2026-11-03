@@ -71,7 +71,25 @@ describe("searchFilters (Spec 028 · Figma 02.03/02.04)", () => {
     expect(sorted.map((item) => item.title)).toEqual(["A", "B"]);
     expect(books.map((item) => item.title)).toEqual(["B", "A"]);
     expect(sortBooks(books, "price_asc").map((item) => item.price)).toEqual([10, 40]);
+    expect(sortBooks(books, "price_desc").map((item) => item.price)).toEqual([40, 10]);
     expect(sortBooks(books, "recent")).toEqual(books);
+  });
+
+  it("ordena por bairros de Piripiri e prioriza o bairro ativo do leitor (Spec 121, ADR 0095)", () => {
+    const list = [
+      book({ id: "1", title: "Livro 1", neighborhood: "Floresta" }),
+      book({ id: "2", title: "Livro 2", neighborhood: "Centro" }),
+      book({ id: "3", title: "Livro 3", neighborhood: "Pacavira" }),
+      book({ id: "4", title: "Livro 4", neighborhood: undefined }),
+    ];
+
+    // Sem bairro preferido: agrupa alfabeticamente por bairro, sem bairro ao final
+    const byNeighborhood = sortBooks(list, "neighborhood");
+    expect(byNeighborhood.map((b) => b.neighborhood)).toEqual(["Centro", "Floresta", "Pacavira", undefined]);
+
+    // Com bairro preferido 'Pacavira': Pacavira vem em primeiro lugar
+    const withPreferred = sortBooks(list, "neighborhood", "Pacavira");
+    expect(withPreferred.map((b) => b.neighborhood)).toEqual(["Pacavira", "Centro", "Floresta", undefined]);
   });
 
   it("gera os chips dos filtros aplicados na ordem do Figma 02.04", () => {

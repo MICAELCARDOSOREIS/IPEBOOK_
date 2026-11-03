@@ -21,6 +21,8 @@ import { Avatar } from "@/view/components/Avatar";
 import { PhotoGallery } from "@/view/listings/photoGallery";
 import { ReservedListingSheet } from "@/view/listings/ReservedListingSheet";
 import { ProposalSheet } from "@/view/listings/ProposalSheet";
+import { buildBookOpenGraph } from "@/model/formatters/openGraphFormatter";
+import { updateWebSocialMeta } from "@/view/webMeta";
 import { BOOK_CONDITION_LABELS, type Book, type BookModality } from "@/model/entities/book";
 import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
 import { useGuardedPress } from "@/view/useGuardedPress";
@@ -71,9 +73,15 @@ function SellerCard({
     >
       <View style={styles.sellerInfo}>
         <Avatar name={name || "Comunidade"} photoUrl={profile?.photoUrl} size={40} />
-        <View style={styles.sellerTextCol}>
-          <Text style={styles.sellerName}>{name || "Membro da comunidade"}</Text>
-          <Text style={styles.sellerMeta}>{metaText}</Text>
+        <View style={styles.sellerColumn}>
+          <View style={styles.sellerTextCol}>
+            <Text style={styles.sellerName}>{name || "Membro da comunidade"}</Text>
+            <Text style={styles.sellerMeta}>{metaText}</Text>
+          </View>
+          <View style={styles.sellerTrustRow}>
+            <AppIcon name="place" size={13} color={colors.nature.foliage} />
+            <Text style={styles.sellerTrustText}>Ponto Seguro de Piripiri · Confirmação por QR Code</Text>
+          </View>
         </View>
       </View>
       <AppIcon name="chevronRight" size={24} color={colors.m3.onSurfaceVariant} />
@@ -122,6 +130,22 @@ export default function BookDetail({
   );
   const [proposalSubmitting, setProposalSubmitting] = useState(false);
   const [proposalError, setProposalError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!book) return;
+    const meta = buildBookOpenGraph({
+      id: book.id,
+      title: book.title,
+      author: book.author,
+      tradeType: book.modality === "sale" ? "sell" : book.modality,
+      price: book.price,
+      photoUrl: book.photoUrl,
+      neighborhood: book.neighborhood,
+      isBox: book.isBox,
+      boxVolumesCount: book.boxVolumesCount,
+    });
+    updateWebSocialMeta(meta);
+  }, [book]);
 
   const guardedBack = useGuardedPress(onBack);
   const guardedNavigateToUserProfile = useGuardedPress((ownerId: string) => onNavigateToUserProfile?.(ownerId));
@@ -948,7 +972,10 @@ function createStyles(colors: ColorPalette) {
       minHeight: tokens.spacing[64],
     },
     sellerInfo: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[12], flex: 1 },
+    sellerColumn: { flex: 1, gap: tokens.spacing[2], paddingVertical: tokens.spacing[8] },
     sellerTextCol: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: tokens.spacing[8] },
+    sellerTrustRow: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[4] },
+    sellerTrustText: { ...tokens.typography.labelSmall, color: colors.nature.foliage, fontWeight: tokens.fontWeight.medium },
     sellerName: { flexShrink: 1, ...tokens.typography.bodyLarge, fontWeight: tokens.fontWeight.medium, color: colors.m3.onSurface },
     sellerMeta: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
     reportButton: {

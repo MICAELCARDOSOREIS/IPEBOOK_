@@ -4,13 +4,22 @@ import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { AppIcon } from "@/view/components/AppIcon";
 import { BOOK_CONDITIONS, BOOK_CONDITION_LABELS } from "@/model/entities/book";
-import type { SearchConditionFilter, SearchFilters, SearchModalityFilter } from "@/viewmodel/searchFilters";
+import {
+  SORT_IDS,
+  SORT_LABELS,
+  type SearchConditionFilter,
+  type SearchFilters,
+  type SearchModalityFilter,
+  type SearchSortOption,
+} from "@/viewmodel/searchFilters";
 
 import { withPress } from "@/view/pressFeedback";
 export type WebFilterSidebarProps = {
   filters: SearchFilters;
   categories: readonly string[];
   hasActiveFilters: boolean;
+  sortBy?: SearchSortOption;
+  onSortChange?: (sortBy: SearchSortOption) => void;
   onModality: (modality: SearchModalityFilter) => void;
   onCondition: (condition: SearchConditionFilter) => void;
   onCategory: (category: string | "all") => void;
@@ -29,6 +38,8 @@ export function WebFilterSidebar({
   filters,
   categories,
   hasActiveFilters,
+  sortBy,
+  onSortChange,
   onModality,
   onCondition,
   onCategory,
@@ -100,6 +111,30 @@ export function WebFilterSidebar({
           onPress={() => onToggleOnlyBoxes?.(!filters.onlyBoxes)}
         />
       </View>
+
+      {onSortChange ? (
+        <View style={styles.group}>
+          <Text style={styles.groupLabel}>Ordenar por</Text>
+          <View style={styles.chips}>
+            {SORT_IDS.map((opt) => {
+              const selected = sortBy === opt;
+              return (
+                <Pressable
+                  key={opt}
+                  accessibilityRole="radio"
+                  accessibilityLabel={`Ordenar por ${SORT_LABELS[opt]}`}
+                  accessibilityState={{ selected }}
+                  onPress={() => onSortChange(opt)}
+                  style={withPress([styles.chip, selected && styles.chipSelected])}
+                >
+                  {selected ? <AppIcon name="check" size={16} color={colors.m3.onSecondaryContainer} /> : null}
+                  <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{SORT_LABELS[opt]}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
+      ) : null}
 
       {hasActiveFilters ? (
         <Pressable accessibilityRole="button" accessibilityLabel="Limpar todos os filtros de busca" onPress={onClear}>
