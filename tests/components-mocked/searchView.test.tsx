@@ -360,4 +360,17 @@ describe("Search (spec 006, US3/T019, Spec 028, Issue #93)", () => {
     expect(screen.getByText("Centro")).toBeDefined();
     expect(screen.getByLabelText("Ver detalhe de Dom Casmurro, Machado de Assis em Centro")).toBeDefined();
   });
+
+  it("aciona o atalho para a tela de favoritos ao tocar no botão da barra superior", async () => {
+    setup([book({})]);
+    const onNavigateToFavorites = vi.fn();
+    const screen = await renderSearch({ onNavigateToFavorites });
+
+    const favButton = screen.getByLabelText("Ver meus livros favoritos");
+    expect(favButton).toBeDefined();
+    await act(async () => {
+      fireEvent.press(favButton);
+    });
+    expect(onNavigateToFavorites).toHaveBeenCalledTimes(1);
+  });
 });
