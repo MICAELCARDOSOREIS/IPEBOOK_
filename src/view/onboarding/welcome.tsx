@@ -78,12 +78,12 @@ export default function Welcome({ onStart, onSignIn, onHelp, onTerms, betaInvite
           <Logotipo />
           <View style={styles.wideHeaderActions}>
             {betaInvite ? null : (
-              <Pressable accessibilityRole="button" accessibilityLabel="Entrar" onPress={onSignIn} style={withPress(undefined)}>
+              <Pressable accessibilityRole="button" accessibilityLabel="Entrar" onPress={guardedSignIn} style={withPress(undefined)}>
                 <Text style={styles.wideLink}>Entrar</Text>
               </Pressable>
             )}
             <ThemeToggleButton />
-            <Pressable accessibilityRole="button" accessibilityLabel={labels.header} onPress={onStart} style={withPress(styles.wideCta)}>
+            <Pressable accessibilityRole="button" accessibilityLabel={labels.header} onPress={guardedStart} style={withPress(styles.wideCta)}>
               <Text style={styles.wideCtaText}>{labels.header}</Text>
             </Pressable>
           </View>
@@ -103,11 +103,11 @@ export default function Welcome({ onStart, onSignIn, onHelp, onTerms, betaInvite
               Encontre, troque, venda ou doe livros com quem mora perto de você. Sem taxas e com encontro em local público.
             </Text>
             <View style={styles.wideActions}>
-              <Pressable accessibilityRole="button" accessibilityLabel={labels.start} onPress={onStart} style={withPress(styles.wideCta)}>
+              <Pressable accessibilityRole="button" accessibilityLabel={labels.start} onPress={guardedStart} style={withPress(styles.wideCta)}>
                 <Text style={styles.wideCtaText}>{labels.start}</Text>
               </Pressable>
               {betaInvite ? null : (
-                <Pressable accessibilityRole="button" accessibilityLabel={labels.signIn} onPress={onSignIn} style={withPress(styles.wideOutlined)}>
+                <Pressable accessibilityRole="button" accessibilityLabel={labels.signIn} onPress={guardedSignIn} style={withPress(styles.wideOutlined)}>
                   <Text style={styles.wideOutlinedText}>{labels.signIn}</Text>
                 </Pressable>
               )}

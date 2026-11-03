@@ -85,4 +85,40 @@ describe("Favorites alinhada ao Figma 02.06 (Spec 030)", () => {
 
     expect(actions.removeFavorite).toHaveBeenCalledWith("b1");
   });
+
+  it("exibe chips de filtro no celular e nota de privacidade no rodapé (Spec 120)", async () => {
+    vi.mocked(useNetworkStatus).mockReturnValue({ isOnline: true });
+    mock({
+      books: [
+        { ...book, id: "b1", title: "Livro Disponível", status: "available" as const },
+        { ...book, id: "b2", title: "Livro Reservado", status: "reserved" as const },
+      ],
+    });
+
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(
+        <Favorites userId="u1" onBack={vi.fn()} onLogin={vi.fn()} onBook={vi.fn()} />
+      );
+    });
+
+    expect(screen.getByLabelText("Mostrar todos")).toBeDefined();
+    expect(screen.getByLabelText("Mostrar disponíveis")).toBeDefined();
+    expect(screen.getByLabelText("Mostrar reservados")).toBeDefined();
+    expect(screen.getByText("Favoritos ficam só com você")).toBeDefined();
+
+    // Filtra para mostrar apenas disponíveis
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Mostrar disponíveis"));
+    });
+    expect(screen.getByText("Livro Disponível")).toBeDefined();
+    expect(screen.queryByText("Livro Reservado")).toBeNull();
+
+    // Filtra para mostrar apenas reservados
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Mostrar reservados"));
+    });
+    expect(screen.queryByText("Livro Disponível")).toBeNull();
+    expect(screen.getByText("Livro Reservado")).toBeDefined();
+  });
 });

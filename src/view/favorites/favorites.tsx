@@ -76,6 +76,27 @@ export default function Favorites({
     <SafeAreaView style={styles.page}>
       {wideWeb ? null : <TopAppBar title="Favoritos" onBack={guardedBack} />}
 
+      {!wideWeb && userId && state.books.length > 0 ? (
+        <View style={styles.mobileChipsRow}>
+          {([["all", "Todos"], ["available", "Disponíveis"], ["reserved", "Reservados"]] as const).map(([value, label]) => {
+            const selected = statusFilter === value;
+            return (
+              <Pressable
+                key={value}
+                accessibilityRole="button"
+                accessibilityLabel={`Mostrar ${label.toLowerCase()}`}
+                accessibilityState={{ selected }}
+                onPress={() => setStatusFilter(value)}
+                style={withPress([styles.mobileChip, selected && styles.mobileChipSelected])}
+              >
+                {selected ? <AppIcon name="check" size={14} color={colors.m3.onSecondaryContainer} /> : null}
+                <Text style={[styles.mobileChipText, selected && { color: colors.m3.onSecondaryContainer }]}>{label}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      ) : null}
+
       {wideWeb && userId ? (
         <View style={styles.wideHeader}>
           <Text accessibilityRole="header" style={styles.wideTitle}>Favoritos</Text>
@@ -137,8 +158,8 @@ export default function Favorites({
           ]}
           {...standardVerticalScrollProps}
           ListFooterComponent={
-            wideWeb && state.books.length > 0 ? (
-              <View style={styles.privacyNote}>
+            state.books.length > 0 ? (
+              <View style={[styles.privacyNote, wideWeb && styles.privacyNoteWide]}>
                 <AppIcon name="info" size={20} color={colors.m3.onSurfaceVariant} />
                 <View style={{ flex: 1 }}>
                   <Text style={styles.privacyTitle}>Favoritos ficam só com você</Text>
@@ -247,6 +268,37 @@ function createStyles(colors: ColorPalette) {
       paddingLeft: tokens.spacing[8],
     },
     wideChipText: { ...tokens.typography.labelLarge, color: colors.m3.onSurfaceVariant },
+    mobileChipsRow: {
+      flexDirection: "row",
+      paddingHorizontal: tokens.spacing[16],
+      paddingVertical: tokens.spacing[8],
+      gap: tokens.spacing[8],
+    },
+    mobileChip: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[4],
+      paddingHorizontal: tokens.spacing[12],
+      paddingVertical: tokens.spacing[6],
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+    },
+    mobileChipSelected: {
+      backgroundColor: colors.m3.secondaryContainer,
+      borderColor: "transparent",
+    },
+    mobileChipText: {
+      ...tokens.typography.labelMedium,
+      color: colors.m3.onSurfaceVariant,
+      fontWeight: tokens.fontWeight.medium,
+    },
+    privacyNoteWide: {
+      maxWidth: WEB_MAX_WIDTH,
+      alignSelf: "center",
+      width: "100%",
+    },
     wideList: {
       width: "100%",
       maxWidth: WEB_MAX_WIDTH,

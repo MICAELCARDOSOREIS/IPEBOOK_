@@ -445,40 +445,55 @@ export function Chat({
                 </Text>
               </View>
             ) : (
-            <View style={[styles.composer, isWebStandalone && styles.composerWide]}>
-              <TextInput
-                accessibilityLabel="Campo de mensagem"
-                value={state.inputText}
-                onChangeText={actions.setInputText}
-                onKeyPress={(e: any) => {
-                  if (Platform.OS === "web" && e.nativeEvent.key === "Enter" && !e.nativeEvent.shiftKey) {
-                    e.preventDefault?.();
-                    if (canSend) {
-                      void actions.sendMessage();
+            <>
+              {state.inputText.length >= 800 ? (
+                <View style={styles.charCountRow}>
+                  <Text
+                    style={[
+                      styles.charCountText,
+                      state.inputText.length >= 980 && styles.charCountWarn,
+                    ]}
+                    accessibilityLiveRegion="polite"
+                  >
+                    {`${state.inputText.length}/1000`}
+                  </Text>
+                </View>
+              ) : null}
+              <View style={[styles.composer, isWebStandalone && styles.composerWide]}>
+                <TextInput
+                  accessibilityLabel="Campo de mensagem"
+                  value={state.inputText}
+                  onChangeText={actions.setInputText}
+                  onKeyPress={(e: any) => {
+                    if (Platform.OS === "web" && e.nativeEvent.key === "Enter" && !e.nativeEvent.shiftKey) {
+                      e.preventDefault?.();
+                      if (canSend) {
+                        void actions.sendMessage();
+                      }
                     }
-                  }
-                }}
-                placeholder="Escreva uma mensagem"
-                placeholderTextColor={colors.m3.onSurfaceVariant}
-                multiline
-                maxLength={1000}
-                style={styles.input}
-              />
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Enviar mensagem"
-                accessibilityState={{ disabled: !canSend }}
-                disabled={!canSend}
-                onPress={() => void actions.sendMessage()}
-                style={withPress([styles.send, canSend ? styles.sendActive : null])}
-              >
-                {state.isSending ? (
-                  <ActivityIndicator color={colors.m3.onPrimary} />
-                ) : (
-                  <AppIcon name="send" size={22} color={canSend ? colors.m3.onPrimary : colors.m3.onSurfaceVariant} />
-                )}
-              </Pressable>
-            </View>
+                  }}
+                  placeholder="Escreva uma mensagem"
+                  placeholderTextColor={colors.m3.onSurfaceVariant}
+                  multiline
+                  maxLength={1000}
+                  style={styles.input}
+                />
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Enviar mensagem"
+                  accessibilityState={{ disabled: !canSend }}
+                  disabled={!canSend}
+                  onPress={() => void actions.sendMessage()}
+                  style={withPress([styles.send, canSend ? styles.sendActive : null])}
+                >
+                  {state.isSending ? (
+                    <ActivityIndicator color={colors.m3.onPrimary} />
+                  ) : (
+                    <AppIcon name="send" size={22} color={canSend ? colors.m3.onPrimary : colors.m3.onSurfaceVariant} />
+                  )}
+                </Pressable>
+              </View>
+            </>
             )}
           </View>
         </View>
@@ -594,6 +609,20 @@ function createStyles(colors: ColorPalette) {
     },
     sendErrorText: { flex: 1, ...tokens.typography.bodyMedium, color: colors.error },
     retryText: { ...tokens.typography.labelMedium, fontWeight: tokens.fontWeight.semiBold, color: colors.error },
+    charCountRow: {
+      alignItems: "flex-end",
+      paddingHorizontal: tokens.spacing[20],
+      paddingTop: tokens.spacing[4],
+      backgroundColor: colors.m3.surfaceContainer,
+    },
+    charCountText: {
+      ...tokens.typography.labelSmall,
+      color: colors.m3.onSurfaceVariant,
+    },
+    charCountWarn: {
+      color: colors.error,
+      fontWeight: tokens.fontWeight.bold,
+    },
     composer: {
       flexDirection: "row",
       alignItems: "flex-end",

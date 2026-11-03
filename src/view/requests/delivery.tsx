@@ -148,6 +148,7 @@ export function Delivery({ requestId, sessionUserId, onBack }: DeliveryProps) {
   const styles = useMemo(() => createStyles(colors), [colors]);
   const secondsLeft = useSecondsLeft(state.code?.expiresAt ?? null);
   const expired = secondsLeft === 0;
+  const isExpiringSoon = !expired && secondsLeft !== null && secondsLeft <= 30;
 
   const [permission, requestPermission] = useCameraPermissions();
   const [typed, setTyped] = useState("");
@@ -216,8 +217,19 @@ export function Delivery({ requestId, sessionUserId, onBack }: DeliveryProps) {
               <Text selectable accessibilityLabel={`Código ${state.code.code.split("").join(" ")}`} style={styles.code}>
                 {groupCode(state.code.code)}
               </Text>
-              <Text style={[styles.hint, expired && styles.expired]} accessibilityLiveRegion="polite">
-                {expired ? "Código expirado. Gere outro." : `Vale por ${formatClock(secondsLeft ?? 0)}`}
+              <Text
+                style={[
+                  styles.hint,
+                  expired && styles.expired,
+                  isExpiringSoon && styles.expiringSoon,
+                ]}
+                accessibilityLiveRegion="polite"
+              >
+                {expired
+                  ? "Código expirado. Gere outro."
+                  : isExpiringSoon
+                    ? `Expira em breve (${secondsLeft}s). Gere outro se precisar.`
+                    : `Vale por ${formatClock(secondsLeft ?? 0)}`}
               </Text>
             </View>
           ) : null}
@@ -387,6 +399,7 @@ function createStyles(colors: ColorPalette) {
     code: { ...tokens.typography.brandSection, letterSpacing: tokens.letterSpacing.code, color: colors.m3.onSurface },
     hint: { ...tokens.typography.bodyMedium, fontFamily: fontFamily.regular, color: colors.m3.onSurfaceVariant },
     expired: { color: colors.error, fontFamily: fontFamily.semiBold },
+    expiringSoon: { color: colors.ipe.bloomDeep, fontFamily: fontFamily.semiBold },
     camera: { height: 280, borderRadius: tokens.radius.large, overflow: "hidden", backgroundColor: "#000000" },
     permission: {
       alignItems: "center",

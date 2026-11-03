@@ -103,6 +103,12 @@ describe("Entrega do livro (Spec 095, CA6/CA7)", () => {
     expect(screen.getByText("Código expirado. Gere outro.")).toBeDefined();
   });
 
+  it("anunciante: destaca visualmente quando o código está nos últimos 30 segundos de validade (Spec 120)", async () => {
+    mockState({ code: { code: "K7M2QXWA", expiresAt: new Date(Date.now() + 20_000).toISOString() } });
+    const screen = await open();
+    expect(screen.getByText(/Expira em breve \(20s\)\. Gere outro se precisar/)).toBeDefined();
+  });
+
   it("leitor: só habilita Confirmar com os 8 caracteres e confirma o código digitado", async () => {
     mockState({ role: "receiver" });
     const screen = await open();

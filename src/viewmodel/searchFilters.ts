@@ -3,7 +3,7 @@ import { BOOK_CONDITION_LABELS } from "@/model/entities/book";
 
 export type SearchModalityFilter = BookModality | "all";
 export type SearchPriceRange = "all" | "free" | "under20" | "under50";
-export type SearchSortOption = "recent" | "title" | "price_asc" | "price_desc";
+export type SearchSortOption = "recent" | "price_asc" | "price_desc" | "neighborhood" | "title";
 /** Conservação do exemplar: "all" ou uma das condições do catálogo (Figma `02.03` e `34:229`). */
 export type SearchConditionFilter = "all" | BookCondition;
 
@@ -58,11 +58,20 @@ export const CONDITION_FILTER_LABELS: Readonly<Record<SearchConditionFilter, str
   ...BOOK_CONDITION_LABELS,
 };
 
+export const SORT_IDS: readonly SearchSortOption[] = [
+  "recent",
+  "price_asc",
+  "price_desc",
+  "neighborhood",
+  "title",
+];
+
 export const SORT_LABELS: Readonly<Record<SearchSortOption, string>> = {
   recent: "Mais recentes",
-  title: "A-Z",
   price_asc: "Menor preço",
   price_desc: "Maior preço",
+  neighborhood: "Bairros de Piripiri",
+  title: "A-Z",
 };
 
 /** Trecho do resumo do Figma `02.04`: "1 livro à venda · Literatura". */
@@ -129,7 +138,11 @@ export function filterBooks(books: readonly Book[], query: SearchQuery): Book[] 
 }
 
 /** Ordena sem mutar a lista recebida; `recent` preserva a ordem do datasource. */
-export function sortBooks(books: readonly Book[], sortBy: SearchSortOption): Book[] {
+export function sortBooks(
+  books: readonly Book[],
+  sortBy: SearchSortOption,
+  preferredNeighborhood?: string | null,
+): Book[] {
   if (sortBy === "title") {
     return [...books].sort((a, b) => a.title.localeCompare(b.title, "pt-BR"));
   }
@@ -138,6 +151,38 @@ export function sortBooks(books: readonly Book[], sortBy: SearchSortOption): Boo
   }
   if (sortBy === "price_desc") {
     return [...books].sort((a, b) => (b.price ?? 0) - (a.price ?? 0));
+  }
+  if (sortBy === "neighborhood") {
+    const preferred = preferredNeighborhood?.trim().toLowerCase();
+    const hasPreferred =
+      Boolean(preferred) &&
+      preferred !== "all" &&
+      preferred !== "todos os bairros (piripiri)" &&
+      preferred !== "todos os bairros";
+
+    return [...books].sort((a, b) => {
+      const aBairro = a.neighborhood?.trim().toLowerCase();
+      const bBairro = b.neighborhood?.trim().toLowerCase();
+
+      // Se houver bairro preferido/ativo do leitor, exemplares desse bairro vêm primeiro
+      if (hasPreferred) {
+        const aMatches = aBairro === preferred;
+        const bMatches = bBairro === preferred;
+        if (aMatches && !bMatches) return -1;
+        if (!aMatches && bMatches) return 1;
+      }
+
+      // Entre outros bairros, agrupa por nome do bairro de Piripiri alfabeticamente
+      if (aBairro && bBairro) {
+        const cmp = aBairro.localeCompare(bBairro, "pt-BR");
+        if (cmp !== 0) return cmp;
+        return a.title.localeCompare(b.title, "pt-BR");
+      }
+      if (aBairro && !bBairro) return -1;
+      if (!aBairro && bBairro) return 1;
+
+      return a.title.localeCompare(b.title, "pt-BR");
+    });
   }
   return [...books];
 }

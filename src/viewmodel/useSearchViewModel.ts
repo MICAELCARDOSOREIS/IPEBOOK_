@@ -111,7 +111,7 @@ export function useSearchViewModel(
   }, [homeState.books]);
 
   const filteredBooks = useMemo(
-    () => sortBooks(filterBooks(homeState.books, { term, filters, neighborhood }), sortBy),
+    () => sortBooks(filterBooks(homeState.books, { term, filters, neighborhood }), sortBy, neighborhood),
     [homeState.books, term, filters, neighborhood, sortBy],
   );
 

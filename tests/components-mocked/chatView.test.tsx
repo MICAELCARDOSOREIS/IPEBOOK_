@@ -342,5 +342,13 @@ describe("Chat em tela cheia (Spec 082)", () => {
 
       mockMeetingState = { meeting: null, loading: false };
     });
+
+    it("exibe contador de caracteres quando a mensagem atinge 800 caracteres (Spec 120)", async () => {
+      const longText = "a".repeat(850);
+      setup({ inputText: longText });
+      const screen = await renderChat();
+
+      expect(screen.getByText("850/1000")).toBeDefined();
+    });
   });
 });

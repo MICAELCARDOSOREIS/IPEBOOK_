@@ -362,6 +362,8 @@ export default function Search({
           filters={state.filters}
           categories={state.availableCategories}
           hasActiveFilters={state.hasActiveFilters}
+          sortBy={state.sortBy}
+          onSortChange={actions.setSortBy}
           onModality={actions.setModality}
           onCondition={actions.setCondition}
           onCategory={actions.setCategory}
