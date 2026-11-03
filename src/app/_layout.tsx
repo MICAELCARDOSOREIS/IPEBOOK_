@@ -5,6 +5,7 @@ import { pushOnce, replaceOnce } from "@/view/pushOnce";
 import * as ScreenOrientation from "expo-screen-orientation";
 import { StatusBar } from "expo-status-bar";
 import { Platform } from "react-native";
+import { SafeAreaProvider, initialWindowMetrics } from "react-native-safe-area-context";
 import { useIpebookFonts } from "@/view/useIpebookFonts";
 import { ConnectedNavigationBar } from "@/view/components/ConnectedNavigationBar";
 import { ConnectedWebHeader } from "@/view/components/ConnectedWebHeader";
@@ -99,27 +100,29 @@ export default function RootLayout() {
   if (!fontsLoaded) return null;
 
   return (
-    <ThemeProvider>
-      <ThemedStatusBar />
-      <PushRegistration onOpenRoute={(route) => pushOnce(route as never)} />
-      <InitialRouteGate pathname={pathname} onShowWelcome={() => replaceOnce("/bem-vindo")}>
-        <KeyboardAwareRoot>
-          {wideWeb && !WEB_BETA_ONLY && !AUTH_ROUTES.has(pathname) ? (
-            <ConnectedWebHeader
-              active={activeDestination}
-              pathname={pathname}
-              onNavigate={navigateTo}
-              onAnnounce={() => pushOnce("/anunciar")}
-              onOpenNotifications={() => pushOnce("/notificacoes")}
-            />
-          ) : null}
-          <ThemedStack />
-          {activeDestination && !wideWeb && !WEB_BETA_ONLY ? (
-            <ConnectedNavigationBar active={activeDestination} pathname={pathname} onNavigate={navigateTo} />
-          ) : null}
-        </KeyboardAwareRoot>
-      </InitialRouteGate>
-      <BrandSplashScreen />
-    </ThemeProvider>
+    <SafeAreaProvider initialMetrics={initialWindowMetrics}>
+      <ThemeProvider>
+        <ThemedStatusBar />
+        <PushRegistration onOpenRoute={(route) => pushOnce(route as never)} />
+        <InitialRouteGate pathname={pathname} onShowWelcome={() => replaceOnce("/bem-vindo")}>
+          <KeyboardAwareRoot>
+            {wideWeb && !WEB_BETA_ONLY && !AUTH_ROUTES.has(pathname) ? (
+              <ConnectedWebHeader
+                active={activeDestination}
+                pathname={pathname}
+                onNavigate={navigateTo}
+                onAnnounce={() => pushOnce("/anunciar")}
+                onOpenNotifications={() => pushOnce("/notificacoes")}
+              />
+            ) : null}
+            <ThemedStack />
+            {activeDestination && !wideWeb && !WEB_BETA_ONLY ? (
+              <ConnectedNavigationBar active={activeDestination} pathname={pathname} onNavigate={navigateTo} />
+            ) : null}
+          </KeyboardAwareRoot>
+        </InitialRouteGate>
+        <BrandSplashScreen />
+      </ThemeProvider>
+    </SafeAreaProvider>
   );
 }

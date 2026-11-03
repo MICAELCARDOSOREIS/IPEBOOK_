@@ -64,4 +64,25 @@ describe("NavigationBar (design-system/04-componentes/barra-de-navegacao.md, ADR
     fireEvent.press(profileTab);
     expect(onNavigate).not.toHaveBeenCalled();
   });
+
+  it("eleva os itens e aplica padding seguro contra a barra de navegação do sistema (3 botões Android / Home Indicator)", async () => {
+    const safeArea = await import("react-native-safe-area-context");
+    const spy = vi.spyOn(safeArea, "useSafeAreaInsets").mockReturnValue({
+      top: 24,
+      bottom: 48, // Altura padrão da barra nativa de 3 botões do Android
+      left: 0,
+      right: 0,
+    });
+
+    const { getByTestId } = await render(<NavigationBar active="home" onNavigate={() => {}} />);
+    const tablist = getByTestId("navigation-bar-tablist");
+
+    // paddingBottom deve acomodar os 48dp da barra do sistema com respiro (48 + 8 = 56dp)
+    const styleObj = Array.isArray(tablist.props.style)
+      ? Object.assign({}, ...tablist.props.style.flat().filter(Boolean))
+      : tablist.props.style;
+
+    expect(styleObj.paddingBottom).toBeGreaterThanOrEqual(56);
+    spy.mockRestore();
+  });
 });
