@@ -72,6 +72,7 @@ const symbols = {
   block: { ios: "nosign", android: "block", web: "block" },
   share: { ios: "square.and.arrow.up", android: "share", web: "share" },
   conservation: { ios: "book.closed", android: "menu_book", web: "menu_book" },
+  whatsapp: { ios: "message.fill", android: "chat", web: "chat" },
   category: { ios: "tag", android: "sell", web: "sell" },
   more: { ios: "ellipsis", android: "more_horiz", web: "more_horiz" },
   visibilityOff: { ios: "eye.slash", android: "visibility_off", web: "visibility_off" },

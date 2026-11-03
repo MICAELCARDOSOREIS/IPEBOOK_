@@ -12,6 +12,8 @@ import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { ALERT_CITY, ALERT_MODALITY_LABELS } from "@/view/search/alertLabels";
 import { useSearchAlertsViewModel } from "@/viewmodel/useSearchAlertsViewModel";
+import { useGuardedPress } from "@/view/useGuardedPress";
+import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 
 export type EditAlertProps = {
   alertId: string;
@@ -23,6 +25,8 @@ export type EditAlertProps = {
 
 /** Figma `02.10 · Editar alerta` (`254:4437`). */
 export default function EditAlert({ alertId, userId, onBack, onSaved }: EditAlertProps) {
+  const guardedBack = useGuardedPress(onBack);
+  const guardedSaved = useGuardedPress(onSaved);
   const [state, actions] = useSearchAlertsViewModel(userId);
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -51,7 +55,7 @@ export default function EditAlert({ alertId, userId, onBack, onSaved }: EditAler
   if (state.loading) {
     return (
       <SafeAreaView style={styles.page}>
-        <TopAppBar contentMaxWidth={560} title="Editar alerta" onBack={onBack} />
+        <TopAppBar contentMaxWidth={560} title="Editar alerta" onBack={guardedBack} />
         <View style={styles.status}>
           <ActivityIndicator color={colors.action} accessibilityLabel="Carregando alerta" />
         </View>
@@ -62,7 +66,7 @@ export default function EditAlert({ alertId, userId, onBack, onSaved }: EditAler
   if (!alert) {
     return (
       <SafeAreaView style={styles.page}>
-        <TopAppBar contentMaxWidth={560} title="Editar alerta" onBack={onBack} />
+        <TopAppBar contentMaxWidth={560} title="Editar alerta" onBack={guardedBack} />
         <View style={styles.content}>
           <Text accessibilityRole="header" style={styles.headline}>
             Alerta não encontrado
@@ -75,8 +79,11 @@ export default function EditAlert({ alertId, userId, onBack, onSaved }: EditAler
 
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar contentMaxWidth={560} title="Editar alerta" onBack={onBack} />
-      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+      <TopAppBar contentMaxWidth={560} title="Editar alerta" onBack={guardedBack} />
+      <ScrollView
+        contentContainerStyle={[styles.scroll, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
+        {...standardVerticalScrollProps}
+      >
         <View style={styles.content}>
           <Text accessibilityRole="header" style={styles.headline}>
             Ajuste sua busca.
@@ -135,11 +142,11 @@ export default function EditAlert({ alertId, userId, onBack, onSaved }: EditAler
                 return;
               }
               void actions.update(alert.id, term, modalities).then((saved) => {
-                if (saved) onSaved();
+                if (saved) guardedSaved();
               });
             }}
           />
-          <TextButton label="Cancelar" onPress={onBack} />
+          <TextButton label="Cancelar" onPress={guardedBack} />
         </View>
       </ScrollView>
     </SafeAreaView>

@@ -33,8 +33,8 @@ import { TextButton } from "@/view/components/TextButton";
 import { TextField } from "@/view/components/TextField";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
-
 import { withPress } from "@/view/pressFeedback";
+import { useGuardedPress } from "@/view/useGuardedPress";
 export type ProfileProps = {
   onNavigateToSignIn?: () => void;
   /** Quando presente, exibe a barra superior com "Editar perfil" (Figma `07.02`). */
@@ -88,6 +88,7 @@ function validateProfileFields(values: {
  * e ao padrão do Design System v1.8.0 (ScreenContainer, M3 Outlined fields, tokens centralizados).
  */
 export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
+  const guardedSignIn = useGuardedPress(onNavigateToSignIn);
   const { colors } = useTheme();
   // Web larga: coluna mais larga, com cartão e foto de um lado e dados e contato do outro.
   const wide = useIsWideWeb();
@@ -162,6 +163,7 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
     if (dirty) setDiscardOpen(true);
     else onBack?.();
   }
+  const guardedBack = useGuardedPress(requestBack);
 
   // Volte físico do Android: fecha o modal de bairros, pergunta antes de descartar e, com a
   // tela limpa, deixa o sistema navegar (retorna false).
@@ -195,14 +197,14 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
         maxWidth={560}
         paddingTop={tokens.spacing[12]}
         paddingBottom={tokens.spacing[32]}
-        header={<TopAppBar contentMaxWidth={560} title="Editar perfil" onBack={onBack ?? (() => {})} />}
+        header={<TopAppBar contentMaxWidth={560} title="Editar perfil" onBack={guardedBack} />}
       >
         <View style={styles.guestCard}>
           <Text style={styles.guestTitle}>Entre para editar seu perfil</Text>
           <Text style={styles.guestText}>
             Suas informações ficam guardadas na sua conta. Entre ou crie uma para continuar.
           </Text>
-          <FilledButton label="Entrar ou criar conta" onPress={onNavigateToSignIn ?? (() => {})} />
+          <FilledButton label="Entrar ou criar conta" onPress={guardedSignIn} />
         </View>
       </ScreenContainer>
     );
@@ -248,7 +250,7 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
       paddingHorizontal={wide ? WEB_GUTTER : undefined}
       paddingTop={tokens.spacing[12]}
       paddingBottom={!wide && state.profile ? tokens.spacing[96] : tokens.spacing[32]}
-      header={<TopAppBar contentMaxWidth={contentMaxWidth} title="Editar perfil" onBack={requestBack} />}
+      header={<TopAppBar contentMaxWidth={contentMaxWidth} title="Editar perfil" onBack={guardedBack} />}
       overlay={
         <>
           <NeighborhoodSelectorModal

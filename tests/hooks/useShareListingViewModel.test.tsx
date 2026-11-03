@@ -42,6 +42,7 @@ afterEach(async () => {
 const fakeUseCases: IShareUseCases = {
   buildListingSharePath: (bookId) => `/livro/${bookId}`,
   buildShareMessage: (listing, url) => `${listing.title} de ${listing.author} — ${url}`,
+  buildWhatsAppShareMessage: (listing, url) => `${listing.title} de ${listing.author} — ${url}`,
   buildWhatsAppShareUrl: (message) => `whatsapp://send?text=${encodeURIComponent(message)}`,
   buildInviteMessage: () => "",
   buildWhatsAppInviteUrl: () => "",
@@ -98,6 +99,7 @@ describe("testes de hook: useShareListingViewModel (Spec 019)", () => {
         throw new ValidationError("Anúncio inválido.");
       },
       buildShareMessage: () => "",
+      buildWhatsAppShareMessage: () => "",
       buildWhatsAppShareUrl: () => "",
       buildInviteMessage: () => "",
       buildWhatsAppInviteUrl: () => "",
@@ -215,6 +217,27 @@ describe("testes de hook: useShareListingViewModel (Spec 019)", () => {
 
       expect(writeText).toHaveBeenCalledWith(expect.stringContaining("Dom Casmurro"));
       expect(hook.current[0]).toEqual({ sharing: false, linkCopied: true, error: null });
+      Platform.OS = originalOS;
+    });
+
+    it("compartilha imagem com legenda no WhatsApp quando capture é fornecido (Spec 118)", async () => {
+      const originalOS = Platform.OS;
+      Platform.OS = "android";
+      const shareFile = vi.fn().mockResolvedValue(true);
+      const hook = await renderHook(fakeUseCases, shareFile);
+      const capture = vi.fn().mockResolvedValue("file:///tmp/card-whatsapp.png");
+
+      await act(async () => {
+        await hook.current[1].shareToWhatsApp("b1", fakeListing, capture);
+      });
+
+      expect(capture).toHaveBeenCalled();
+      expect(shareFile).toHaveBeenCalledWith(
+        "file:///tmp/card-whatsapp.png",
+        expect.stringContaining("Dom Casmurro"),
+        "Compartilhar anúncio no WhatsApp",
+      );
+      expect(hook.current[0]).toEqual({ sharing: false, linkCopied: false, error: null });
       Platform.OS = originalOS;
     });
   });

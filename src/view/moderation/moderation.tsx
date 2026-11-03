@@ -10,7 +10,9 @@ import { Snackbar } from "@/view/components/Snackbar";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { type ColorPalette, tokens } from "@/view/tokens";
+import { useGuardedPress } from "@/view/useGuardedPress";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
+import { scrollBottomPadding, standardVerticalScrollProps } from "@/view/scrollProps";
 import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
 
 import { withPress } from "@/view/pressFeedback";
@@ -44,6 +46,10 @@ export function Moderation({ sessionUserId, onBack, onOpenListing, onOpenProfile
   const wide = useIsWideWeb();
   const [pending, setPending] = useState<Pending | null>(null);
 
+  const guardedBack = useGuardedPress(onBack);
+  const guardedOpenListing = useGuardedPress((id: string) => onOpenListing?.(id));
+  const guardedOpenProfile = useGuardedPress((id: string) => onOpenProfile?.(id));
+
   async function confirm() {
     if (!pending) return;
     const ok = await actions.decide(pending.item, pending.decision);
@@ -52,9 +58,10 @@ export function Moderation({ sessionUserId, onBack, onOpenListing, onOpenProfile
 
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar title="Moderação" onBack={onBack} contentMaxWidth={wide ? WEB_MAX_WIDTH : undefined} />
+      <TopAppBar title="Moderação" onBack={guardedBack} contentMaxWidth={wide ? WEB_MAX_WIDTH : undefined} />
       <ScrollView
-        contentContainerStyle={styles.scroll}
+        {...standardVerticalScrollProps}
+        contentContainerStyle={[styles.scroll, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
         keyboardShouldPersistTaps="handled"
         refreshControl={
           <RefreshControl refreshing={false} onRefresh={() => void actions.reload()} colors={[colors.action]} tintColor={colors.action} />
@@ -96,7 +103,7 @@ export function Moderation({ sessionUserId, onBack, onOpenListing, onOpenProfile
                   <Pressable
                     accessibilityRole="link"
                     accessibilityLabel={`Abrir ${item.label}`}
-                    onPress={() => (isListing ? onOpenListing?.(item.targetId) : onOpenProfile?.(item.targetId))}
+                    onPress={() => (isListing ? guardedOpenListing(item.targetId) : guardedOpenProfile(item.targetId))}
                   >
                     <Text style={styles.label} numberOfLines={2}>{item.label}</Text>
                   </Pressable>

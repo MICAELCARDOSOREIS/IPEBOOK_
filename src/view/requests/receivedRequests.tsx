@@ -3,6 +3,7 @@ import { Pressable, Text, View } from "react-native";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useReceivedRequestsViewModel } from "@/viewmodel/useReceivedRequestsViewModel";
 import { RequestListLayout, createRequestStyles } from "@/view/requests/requestListLayout";
+import { useGuardedPress } from "@/view/useGuardedPress";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { Avatar } from "@/view/components/Avatar";
 import { AppIcon } from "@/view/components/AppIcon";
@@ -31,6 +32,12 @@ export function ReceivedRequests({
   const { colors } = useTheme();
   const s = useMemo(() => createRequestStyles(colors), [colors]);
 
+  const guardedBack = onBack ? useGuardedPress(onBack) : undefined;
+  const guardedNavigateToNegotiationDetail = onNavigateToNegotiationDetail
+    ? useGuardedPress((id: string) => onNavigateToNegotiationDetail(id))
+    : undefined;
+  const guardedOpenChat = onOpenChat ? useGuardedPress((id: string) => onOpenChat(id)) : undefined;
+
   const handleResponse = async (requestId: string, response: "accept" | "reject") => {
     const succeeded = response === "accept"
       ? await actions.accept(requestId)
@@ -49,7 +56,7 @@ export function ReceivedRequests({
       loading={state.loading}
       error={state.error}
       onRetry={() => void actions.reload()}
-      onBack={onBack}
+      onBack={guardedBack}
       showHeroDescription={false}
       showPendingSummary
       feedbackMessage={feedbackMessage}
@@ -114,11 +121,11 @@ export function ReceivedRequests({
                     <Text style={s.primaryText}>{busy ? "Respondendo…" : "Aceitar"}</Text>
                   </Pressable>
                   <View style={s.pendingSecondaryActions}>
-                    {onOpenChat ? (
+                    {guardedOpenChat ? (
                       <Pressable
                         accessibilityRole="button"
                         accessibilityLabel={`Conversar com ${requesterName ?? COMMUNITY_MEMBER}`}
-                        onPress={() => onOpenChat(request.id)}
+                        onPress={() => guardedOpenChat(request.id)}
                         style={withPress([s.chatButton, s.flexAction])}
                       >
                         <AppIcon name="chat" size={18} color={colors.m3.onSecondaryContainer} />
@@ -131,7 +138,7 @@ export function ReceivedRequests({
                       accessibilityState={{ disabled: busy, busy }}
                       disabled={busy}
                       onPress={() => void handleResponse(request.id, "reject")}
-                      style={withPress([s.secondary, onOpenChat ? s.flexAction : s.fullWidthAction])}
+                      style={withPress([s.secondary, guardedOpenChat ? s.flexAction : s.fullWidthAction])}
                     >
                       <Text style={s.secondaryText}>Recusar</Text>
                     </Pressable>
@@ -144,7 +151,7 @@ export function ReceivedRequests({
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel="Ver detalhes do encontro"
-                  onPress={() => onNavigateToNegotiationDetail?.(request.id)}
+                  onPress={() => guardedNavigateToNegotiationDetail?.(request.id)}
                   style={withPress(s.primary)}
                 >
                   <Text style={s.primaryText}>Ver detalhes do encontro</Text>

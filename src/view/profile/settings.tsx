@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Switch, Text, View, type ScrollViewInstance } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Constants from "expo-constants";
@@ -29,7 +29,7 @@ import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
 import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
-
+import { useGuardedPress } from "@/view/useGuardedPress";
 import { withPress } from "@/view/pressFeedback";
 const WIDE_CONTENT_MAX_WIDTH = 1240;
 
@@ -79,6 +79,18 @@ export function Settings({
   onNavigateToNotifications,
   onSignedOut,
 }: SettingsProps) {
+  const fallbackBack = useCallback(() => {}, []);
+  const guardedBack = useGuardedPress(onBack ?? fallbackBack);
+  const guardedTerms = onNavigateToTerms ? useGuardedPress(onNavigateToTerms) : undefined;
+  const guardedHelp = onNavigateToHelp ? useGuardedPress(onNavigateToHelp) : undefined;
+  const guardedPrivacy = onNavigateToPrivacy ? useGuardedPress(onNavigateToPrivacy) : undefined;
+  const guardedBlockedUsers = onNavigateToBlockedUsers ? useGuardedPress(onNavigateToBlockedUsers) : undefined;
+  const guardedModeration = onNavigateToModeration ? useGuardedPress(onNavigateToModeration) : undefined;
+  const guardedAbout = onNavigateToAbout ? useGuardedPress(onNavigateToAbout) : undefined;
+  const guardedEditProfile = onNavigateToEditProfile ? useGuardedPress(onNavigateToEditProfile) : undefined;
+  const guardedSecurity = onNavigateToSecurity ? useGuardedPress(onNavigateToSecurity) : undefined;
+  const guardedNotifications = onNavigateToNotifications ? useGuardedPress(onNavigateToNotifications) : undefined;
+  const guardedSignedOut = onSignedOut ? useGuardedPress(onSignedOut) : undefined;
   const { colors } = useTheme();
   // Web larga: barra lateral com a conta e o índice das seções, e as seções empilhadas ao lado.
   const wide = useIsWideWeb();
@@ -105,7 +117,7 @@ export function Settings({
     try {
       await authActions.signOut();
       setConfirmingSignOut(false);
-      onSignedOut?.();
+      guardedSignedOut();
     } finally {
       setSigningOut(false);
     }
@@ -148,28 +160,28 @@ export function Settings({
           icon: "lock" as const,
           label: "Segurança e verificação",
           description: "Senha, e-mail e confirmação da conta",
-          onPress: onNavigateToSecurity,
+          onPress: onNavigateToSecurity ? guardedSecurity : undefined,
         },
         {
           key: "notifications",
           icon: "bell" as const,
           label: "Central de notificações",
           description: "Propostas, mensagens e avisos de novos livros",
-          onPress: onNavigateToNotifications,
+          onPress: onNavigateToNotifications ? guardedNotifications : undefined,
         },
         {
           key: "privacy",
           icon: "visibility" as const,
           label: "Privacidade e dados",
           description: "Baixe seus dados ou exclua sua conta",
-          onPress: onNavigateToPrivacy,
+          onPress: onNavigateToPrivacy ? guardedPrivacy : undefined,
         },
         {
           key: "blocked",
           icon: "block" as const,
           label: "Pessoas bloqueadas",
           description: "Gerencie quem não pode interagir com você",
-          onPress: onNavigateToBlockedUsers,
+          onPress: onNavigateToBlockedUsers ? guardedBlockedUsers : undefined,
         },
         ...(isModerator
           ? [
@@ -178,7 +190,7 @@ export function Settings({
                 icon: "flag" as const,
                 label: "Moderação",
                 description: "Analise as denúncias da comunidade",
-                onPress: onNavigateToModeration,
+                onPress: onNavigateToModeration ? guardedModeration : undefined,
               },
             ]
           : []),
@@ -186,8 +198,8 @@ export function Settings({
     : [];
 
   const aboutLinks: LinkItem[] = [
-    { key: "about", icon: "info" as const, label: "Conhecer o IpêBook", description: "Como funciona, segurança e a comunidade de Piripiri", onPress: onNavigateToAbout },
-    { key: "help", icon: "info" as const, label: "Ajuda e suporte", onPress: onNavigateToHelp },
+    { key: "about", icon: "info" as const, label: "Conhecer o IpêBook", description: "Como funciona, segurança e a comunidade de Piripiri", onPress: onNavigateToAbout ? guardedAbout : undefined },
+    { key: "help", icon: "info" as const, label: "Ajuda e suporte", onPress: onNavigateToHelp ? guardedHelp : undefined },
     {
       key: "instagram",
       icon: "instagram" as const,
@@ -202,7 +214,7 @@ export function Settings({
       description: SUPPORT_EMAIL,
       onPress: () => void Linking.openURL(supportMailtoUrl(version)),
     },
-    { key: "terms", icon: "document" as const, label: "Termos e privacidade", onPress: onNavigateToTerms },
+    { key: "terms", icon: "document" as const, label: "Termos e privacidade", onPress: onNavigateToTerms ? guardedTerms : undefined },
   ].filter((link) => link.onPress);
 
   // Índice da barra lateral (web larga): leva até cada seção da coluna principal.
@@ -274,7 +286,7 @@ export function Settings({
       accessibilityRole="button"
       accessibilityLabel={`Editar perfil de ${accountDisplayName}`}
       accessibilityHint={accountEmail ? `E-mail ${accountEmail}. Abre os dados para edição.` : "Abre os dados do seu perfil para edição."}
-      onPress={onNavigateToEditProfile}
+      onPress={guardedEditProfile}
       style={withPress([styles.accountCard, wide && styles.accountCardWide])}
     >
       <View style={styles.accountIdentity}>
@@ -302,7 +314,7 @@ export function Settings({
 
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar title="Configurações" onBack={onBack} contentMaxWidth={wide ? WIDE_CONTENT_MAX_WIDTH : undefined} />
+      <TopAppBar title="Configurações" onBack={guardedBack} contentMaxWidth={wide ? WIDE_CONTENT_MAX_WIDTH : undefined} />
       <ScrollView ref={scrollRef} {...standardVerticalScrollProps} contentContainerStyle={[styles.scroll, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}>
         <View style={[styles.content, wide && styles.contentWide]}>
           {wide ? (

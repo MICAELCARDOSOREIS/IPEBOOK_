@@ -20,8 +20,48 @@ export class ShareUseCases implements IShareUseCases {
     return `"${listing.title}" de ${listing.author} — ${MODALITY_LABELS[listing.modality]}${priceText}.\nConfira no IpêBook: ${url}`;
   }
 
-  buildWhatsAppShareUrl(message: string): string {
-    return `whatsapp://send?text=${encodeURIComponent(message)}`;
+  buildWhatsAppShareMessage(listing: ShareableListing, url: string): string {
+    const boxText = listing.isBox
+      ? ` 📦 Box / Coleção${listing.boxVolumesCount ? ` (${listing.boxVolumesCount} volumes)` : ""}`
+      : "";
+
+    let modalityText = "";
+    if (listing.modality === "sale") {
+      const priceFormatted = listing.price ? `R$ ${listing.price.toFixed(2).replace(".", ",")}` : "";
+      modalityText = priceFormatted ? `💰 Venda: ${priceFormatted}` : "💰 Venda";
+    } else if (listing.modality === "trade") {
+      modalityText = "🔄 Disponível para troca";
+    } else {
+      modalityText = "🎁 Doação gratuita para quem vai ler";
+    }
+
+    const hasNeighborhood =
+      listing.neighborhood &&
+      listing.neighborhood !== "Todos os bairros (Piripiri)" &&
+      listing.neighborhood !== "all";
+
+    const neighborhoodText = hasNeighborhood
+      ? `📍 Bairro ${listing.neighborhood}, Piripiri · PI`
+      : "📍 Piripiri · PI";
+
+    return [
+      `📚 *${listing.title.trim()}*${boxText}`,
+      `✍️ Autor(a): ${listing.author.trim()}`,
+      `🌿 ${modalityText}`,
+      neighborhoodText,
+      `🤝 Combine a retirada em um Ponto Seguro da cidade!`,
+      ``,
+      `👉 Veja fotos e combine a entrega no IpêBook:`,
+      url.trim(),
+    ].join("\n");
+  }
+
+  buildWhatsAppShareUrl(message: string, isWeb: boolean = false): string {
+    const encoded = encodeURIComponent(message);
+    if (isWeb) {
+      return `https://api.whatsapp.com/send?text=${encoded}`;
+    }
+    return `whatsapp://send?text=${encoded}`;
   }
 
   buildInviteMessage(url: string = "https://ipebook.app"): string {

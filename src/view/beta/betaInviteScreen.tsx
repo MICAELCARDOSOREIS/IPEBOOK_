@@ -17,7 +17,9 @@ import passo4Img from "@/view/beta/passo-4.png";
 import { BETA_GROUP_URL, PLAY_STORE_URL, TESTING_OPT_IN_URL } from "@/view/playStore";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
+import { useGuardedPress } from "@/view/useGuardedPress";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
+import { scrollBottomPadding, standardVerticalScrollProps } from "@/view/scrollProps";
 import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
 import { useAuthViewModel, type AuthActions, type AuthState } from "@/viewmodel/useAuthViewModel";
 import { useBetaSignupViewModel, type BetaSignupActions, type BetaSignupState } from "@/viewmodel/useBetaSignupViewModel";
@@ -113,6 +115,10 @@ export function BetaInviteScreen({
   const [googleLoading, setGoogleLoading] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
 
+  const guardedNavigateHome = useGuardedPress(onNavigateHome);
+  const guardedOpenStore = useGuardedPress(onOpenStore);
+  const guardedOpenUrl = useGuardedPress((url: string) => onOpenUrl(url));
+
   // Quando o usuário está conectado com o Google, grava sua inscrição automaticamente se ainda não feito.
   const registeredUserRef = useRef<string | null>(null);
   useEffect(() => {
@@ -141,7 +147,7 @@ export function BetaInviteScreen({
         "Abra o grupo oficial do IpêBook no Google Grupos e clique em \"Participar do grupo\" no topo ou no centro da página.",
       image: passo1Img,
       actionLabel: groupUrl ? "Abrir grupo de testadores" : null,
-      onAction: groupUrl ? () => onOpenUrl(groupUrl) : null,
+      onAction: groupUrl ? () => guardedOpenUrl(groupUrl) : null,
     },
     {
       number: "2",
@@ -159,7 +165,7 @@ export function BetaInviteScreen({
         "Depois de entrar no grupo, abra a página de convite do Google Play e toque no botão azul \"Torne-se um testador\".",
       image: passo3Img,
       actionLabel: "Abrir convite no Google Play",
-      onAction: () => onOpenUrl(TESTING_OPT_IN_URL),
+      onAction: () => guardedOpenUrl(TESTING_OPT_IN_URL),
     },
     {
       number: "4",
@@ -168,7 +174,7 @@ export function BetaInviteScreen({
         "Pronto! Na tela de confirmação (\"Você é um testador\"), toque no link azul \"baixe-o no Google Play\" para instalar o IpêBook no seu Android.",
       image: passo4Img,
       actionLabel: "Ir para a Play Store",
-      onAction: onOpenStore,
+      onAction: guardedOpenStore,
     },
   ];
 
@@ -288,13 +294,13 @@ export function BetaInviteScreen({
 
           <FilledButton
             label="Abrir teste na Play Store"
-            onPress={() => onOpenUrl(TESTING_OPT_IN_URL)}
+            onPress={() => guardedOpenUrl(TESTING_OPT_IN_URL)}
           />
 
           {groupUrl ? (
             <OutlinedButton
               label="Entrar no grupo de testadores"
-              onPress={() => onOpenUrl(groupUrl)}
+              onPress={() => guardedOpenUrl(groupUrl)}
             />
           ) : null}
 
@@ -376,7 +382,7 @@ export function BetaInviteScreen({
             loadingLabel="Enviando inscrição"
             onPress={() => void actions.submit(email, name)}
           />
-          <OutlinedButton label="Ver o IpêBook na Play Store" onPress={onOpenStore} />
+          <OutlinedButton label="Ver o IpêBook na Play Store" onPress={guardedOpenStore} />
         </>
       )}
       <Text style={styles.footnote}>
@@ -392,7 +398,7 @@ export function BetaInviteScreen({
           <Pressable
             accessibilityRole="link"
             accessibilityLabel="Ir para a página inicial do IpêBook"
-            onPress={onNavigateHome}
+            onPress={guardedNavigateHome}
             style={withPress(styles.logoPressable)}
           >
             <Logotipo />
@@ -401,7 +407,7 @@ export function BetaInviteScreen({
             <Pressable
               accessibilityRole="link"
               accessibilityLabel="Voltar para a página inicial"
-              onPress={onNavigateHome}
+              onPress={guardedNavigateHome}
               style={withPress(styles.homeLink)}
             >
               <AppIcon name="home" size={18} color={colors.m3.onSurfaceVariant} />
@@ -412,7 +418,8 @@ export function BetaInviteScreen({
         </View>
       </View>
       <ScrollView
-        contentContainerStyle={[styles.scroll, wide && styles.scrollWide]}
+        {...standardVerticalScrollProps}
+        contentContainerStyle={[styles.scroll, wide && styles.scrollWide, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
         keyboardShouldPersistTaps="handled"
       >
         {wide ? (

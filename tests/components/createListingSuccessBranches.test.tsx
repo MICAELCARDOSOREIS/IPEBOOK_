@@ -11,6 +11,8 @@ describe("ramos simples de telas de anúncio (Spec 092)", () => {
   it("anúncio publicado mostra o preço só quando existe", async () => {
     const withPrice = await render(<CreateListingSuccess published={book({ price: 25 })} />);
     expect(withPrice.getByText("R$ 25,00")).toBeDefined();
+    expect(withPrice.getByLabelText("Divulgar no WhatsApp")).toBeDefined();
+    expect(withPrice.getByLabelText("Compartilhar anúncio")).toBeDefined();
     const free = await render(<CreateListingSuccess published={book({ modality: "donation", price: undefined })} />);
     expect(free.getAllByText("Dom Casmurro").length).toBeGreaterThan(0);
   });

@@ -13,8 +13,9 @@ import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import type { BlockedUser } from "@/model/entities/blockedUser";
 import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
-
 import { withPress } from "@/view/pressFeedback";
+import { useGuardedPress } from "@/view/useGuardedPress";
+import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 export type BlockedUsersProps = {
   onBack: () => void;
 };
@@ -24,6 +25,7 @@ export type BlockedUsersProps = {
  * Lista pessoas bloqueadas pelo usuário com opção de desbloqueio confirmado.
  */
 export function BlockedUsers({ onBack }: BlockedUsersProps) {
+  const guardedBack = useGuardedPress(onBack);
   const [authState] = useAuthViewModel();
   // Web larga: coluna mais ampla e dois cartões por linha.
   const wide = useIsWideWeb();
@@ -44,8 +46,11 @@ export function BlockedUsers({ onBack }: BlockedUsersProps) {
 
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar contentMaxWidth={wide ? WIDE_CONTENT_MAX_WIDTH : undefined} title="Pessoas bloqueadas" onBack={onBack} />
-      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+      <TopAppBar contentMaxWidth={wide ? WIDE_CONTENT_MAX_WIDTH : undefined} title="Pessoas bloqueadas" onBack={guardedBack} />
+      <ScrollView
+        contentContainerStyle={[styles.scroll, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
+        {...standardVerticalScrollProps}
+      >
         <View style={[styles.content, wide && styles.contentWide]}>
           <Text style={styles.introText}>
             Pessoas bloqueadas não podem visualizar seus anúncios, enviar propostas de livros nem combinar encontros com você em Piripiri.

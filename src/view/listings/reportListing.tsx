@@ -9,6 +9,8 @@ import { TopAppBar } from "@/view/components/TopAppBar";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { useFormErrorAnnouncer } from "@/view/useFormErrorAnnouncer";
+import { useGuardedPress } from "@/view/useGuardedPress";
+import { scrollBottomPadding, standardVerticalScrollProps } from "@/view/scrollProps";
 import { useReportListingViewModel } from "@/viewmodel/useReportListingViewModel";
 import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
 
@@ -39,11 +41,18 @@ export default function ReportListing({
   const styles = useMemo(() => createStyles(colors), [colors]);
   const errorRef = useFormErrorAnnouncer(state.error);
 
+  const guardedBack = useGuardedPress(onBack);
+  const guardedNavigateToLogin = onNavigateToLogin ? useGuardedPress(onNavigateToLogin) : undefined;
+
   if (state.success) {
     return (
       <SafeAreaView style={styles.page}>
-        <TopAppBar title="Denunciar anúncio" onBack={onBack} contentMaxWidth={wide ? WEB_MAX_WIDTH : undefined} />
-        <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+        <TopAppBar title="Denunciar anúncio" onBack={guardedBack} contentMaxWidth={wide ? WEB_MAX_WIDTH : undefined} />
+        <ScrollView
+          {...standardVerticalScrollProps}
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
+          keyboardShouldPersistTaps="handled"
+        >
           <View style={[styles.content, wide && styles.contentWide]}>
             <View style={styles.successCard}>
               <IconBadge icon="check" tone="action" size="large" />
@@ -55,7 +64,7 @@ export default function ReportListing({
                 A equipe vai analisar o relato em até 24 horas. Obrigado por ajudar a manter a comunidade IpêBook segura em Piripiri.
               </Text>
               <View style={styles.fullWidthButton}>
-                <FilledButton label="Voltar ao anúncio" onPress={onBack} />
+                <FilledButton label="Voltar ao anúncio" onPress={guardedBack} />
               </View>
             </View>
           </View>
@@ -67,8 +76,12 @@ export default function ReportListing({
   if (!sessionUserId) {
     return (
       <SafeAreaView style={styles.page}>
-        <TopAppBar title="Denunciar anúncio" onBack={onBack} contentMaxWidth={wide ? WEB_MAX_WIDTH : undefined} />
-        <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+        <TopAppBar title="Denunciar anúncio" onBack={guardedBack} contentMaxWidth={wide ? WEB_MAX_WIDTH : undefined} />
+        <ScrollView
+          {...standardVerticalScrollProps}
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
+          keyboardShouldPersistTaps="handled"
+        >
           <View style={[styles.content, wide && styles.contentWide]}>
             <View style={styles.authNotice}>
               <IconBadge icon="flag" tone="neutral" size="large" />
@@ -78,9 +91,9 @@ export default function ReportListing({
               <Text style={styles.bodyCenter}>
                 Para evitar abusos e manter o respeito na comunidade, apenas pessoas autenticadas podem denunciar anúncios.
               </Text>
-              {onNavigateToLogin ? (
+              {guardedNavigateToLogin ? (
                 <View style={styles.fullWidthButton}>
-                  <FilledButton label="Entrar na minha conta" onPress={onNavigateToLogin} />
+                  <FilledButton label="Entrar na minha conta" onPress={guardedNavigateToLogin} />
                 </View>
               ) : null}
             </View>
@@ -92,8 +105,12 @@ export default function ReportListing({
 
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar title="Denunciar anúncio" onBack={onBack} contentMaxWidth={wide ? WEB_MAX_WIDTH : undefined} />
-      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+      <TopAppBar title="Denunciar anúncio" onBack={guardedBack} contentMaxWidth={wide ? WEB_MAX_WIDTH : undefined} />
+      <ScrollView
+        {...standardVerticalScrollProps}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
+        keyboardShouldPersistTaps="handled"
+      >
         <View style={[styles.content, wide && styles.contentWide]}>
           {listingTitle ? (
             <Text style={styles.bookContext}>

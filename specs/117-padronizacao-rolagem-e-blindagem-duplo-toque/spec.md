@@ -35,18 +35,26 @@ Em dispositivos móveis e emuladores, dois fatores geravam atrito na usabilidade
    - `ScreenContainer`: incorporar nativamente `standardVerticalScrollProps` quando `scrollable` for verdadeiro.
    - `Home`, `Busca`, `Meus Livros`, `Conversas`, `Central do Perfil`: aplicação dos padrões verticais e horizontais, além de `paddingBottom: 96`.
    - Telas de fluxo: `Configurações`, `Detalhe do Livro`, `Chat`, `Detalhe do Pedido`, `Entrega do Livro`, `Combinar Encontro`.
-3. **Blindagem contra Duplo Toque (`useGuardedPress`):**
+3. **Blindagem contra Duplo Toque (`useGuardedPress`) e Cobertura Universal em Toda a Aplicação:**
    - Envolver todos os callbacks de navegação e abertura de telas (`onNavigateToBookDetail`, `onNavigateToSignIn`, `onNavigateToUserProfile`, `onBack`, `onOpenNegotiation`, etc.) com `useGuardedPress(callback, 600)` para descarte imediato no hardware de toques repetidos.
+   - Aplicação consistente e completa em **todos os fluxos do app**:
+     - **Telas Principais (Tabs):** `Home`, `Busca`, `Meus Livros`, `Conversas`, `Central do Perfil`.
+     - **Anúncios e Livros:** `Detalhe do Livro`, `Criar Anúncio`, `Sucesso do Anúncio`, `Editar Anúncio`, `Rascunhos`, `Gerenciar Anúncio`, `Perfil Público`.
+     - **Pedidos e Negociações:** `Detalhe do Pedido`, `Chat`, `Entrega do Livro`, `Combinar Encontro`, `Pedidos Recebidos`, `Meus Pedidos`, `RequestListLayout`.
+     - **Favoritos, Notificações e Alertas:** `Favoritos`, `Notificações`, `Alertas de Busca`, `Gerenciar Alerta`, `Editar Alerta`.
+     - **Perfil e Conta:** `Configurações`, `Perfil`, `Avaliações Recebidas`, `Histórico de Encontros`, `Segurança`, `Convidar Amigos`, `Usuários Bloqueados`.
+     - **Autenticação e Entrada:** `Entrar`, `Cadastrar`, `Esqueci Minha Senha`, `Redefinir Senha`, `Excluir Conta`, `Boas-vindas (Onboarding)`.
+     - **Ajuda, Termos e Outros:** `Ajuda e Perguntas Frequentes`, `Termos e Privacidade`, `Moderação`, `Convite Beta Android`, `Denunciar Anúncio`, `Denunciar Pessoa`.
 4. **Testes e Validação:**
    - Teste unitário dedicado `tests/unit/scrollProps.test.ts` cobrindo todas as propriedades e constantes.
-   - Suíte de 1.976 testes automatizados validada com 100% de sucesso.
+   - Suíte de 1.976+ testes automatizados validada com 100% de sucesso.
 
 ## 3. Critérios de Aceite
 
 | # | Critério | Verificação |
 |---|---|---|
-| CA1 | Todas as rolagens verticais das telas principais dispensam teclado no arrasto (`keyboardDismissMode="on-drag"`), ocultam o indicador cinza e desativam o overscroll. | `tests/unit/scrollProps.test.ts` e inspeção de código |
+| CA1 | Todas as rolagens verticais das telas e formulários dispensam teclado no arrasto (`keyboardDismissMode="on-drag"`), ocultam o indicador cinza e desativam o overscroll. | `tests/unit/scrollProps.test.ts` e inspeção de código |
 | CA2 | Rolagens horizontais de carrosséis e categorias ocultam o indicador horizontal. | `tests/unit/scrollProps.test.ts` e inspeção de código |
-| CA3 | Telas com barra inferior de navegação possuem padding seguro de 96px ao final da rolagem, impedindo sobreposição de conteúdo. | Inspeção de estilos e layouts |
-| CA4 | Toques rápidos repetidos em cards de livros, atalhos de perfil e botões de navegação não disparam chamadas duplicadas. | `useGuardedPress.test.ts` e testes de componentes |
+| CA3 | Telas com barra inferior de navegação possuem padding seguro de 96px ao final da rolagem e telas de fluxo/detalhe possuem 32px, impedindo sobreposição de conteúdo. | Inspeção de estilos e layouts |
+| CA4 | Toques rápidos repetidos em cards de livros, atalhos de perfil, botões de ação e botões de navegação não disparam chamadas duplicadas. | `useGuardedPress.test.ts` e testes de componentes |
 | CA5 | 100% dos testes existentes continuam passando sem regressões. | `npm test -- --run` (1976/1976 aprovados) |

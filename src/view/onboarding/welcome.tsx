@@ -11,6 +11,8 @@ import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
 import { AppIcon } from "@/view/components/AppIcon";
 import { AboutSections } from "@/view/onboarding/aboutSections";
 import { ThemeToggleButton } from "@/view/components/ThemeToggleButton";
+import { useGuardedPress } from "@/view/useGuardedPress";
+import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 import illustration from "./ilustracao-classicos.png";
 
 import { withPress } from "@/view/pressFeedback";
@@ -47,6 +49,10 @@ const MODALITY_CONFIG = {
 type ModalityKey = keyof typeof MODALITY_CONFIG;
 
 export default function Welcome({ onStart, onSignIn, onHelp, onTerms, betaInvite = false }: WelcomeProps) {
+  const guardedStart = useGuardedPress(onStart);
+  const guardedSignIn = useGuardedPress(onSignIn);
+  const guardedHelp = useGuardedPress(onHelp);
+  const guardedTerms = useGuardedPress(onTerms);
   const [selectedModality, setSelectedModality] = useState<ModalityKey | null>(null);
   const labels = betaInvite
     ? { header: "Quero testar", start: "Quero testar o app", signIn: "Ver na Play Store" }
@@ -63,7 +69,11 @@ export default function Welcome({ onStart, onSignIn, onHelp, onTerms, betaInvite
       { label: "Doação", icon: "heart", tone: colors.m3.doacaoContainer, on: colors.m3.onDoacaoContainer, text: "Doe para quem vai ler. Sem cobrança pelo exemplar." },
     ] as const;
     return (
-      <ScrollView style={styles.wideRoot} contentContainerStyle={styles.wideContent} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        style={styles.wideRoot}
+        contentContainerStyle={[styles.wideContent, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
+        {...standardVerticalScrollProps}
+      >
         <View style={styles.wideHeader}>
           <Logotipo />
           <View style={styles.wideHeaderActions}>
@@ -118,7 +128,7 @@ export default function Welcome({ onStart, onSignIn, onHelp, onTerms, betaInvite
           ))}
         </View>
 
-        <AboutSections onStart={onStart} onSignIn={onSignIn} onHelp={onHelp} onTerms={onTerms} betaInvite={betaInvite} />
+        <AboutSections onStart={guardedStart} onSignIn={guardedSignIn} onHelp={guardedHelp} onTerms={guardedTerms} betaInvite={betaInvite} />
       </ScrollView>
     );
   }
@@ -241,8 +251,8 @@ export default function Welcome({ onStart, onSignIn, onHelp, onTerms, betaInvite
       </View>
 
       <View style={styles.actions}>
-        <FilledButton label={betaInvite ? labels.start : "Começar"} onPress={onStart} />
-        {betaInvite ? null : <OutlinedButton label={labels.signIn} onPress={onSignIn} />}
+        <FilledButton label={betaInvite ? labels.start : "Começar"} onPress={guardedStart} />
+        {betaInvite ? null : <OutlinedButton label={labels.signIn} onPress={guardedSignIn} />}
       </View>
 
       {onHelp || onTerms ? (
@@ -251,7 +261,7 @@ export default function Welcome({ onStart, onSignIn, onHelp, onTerms, betaInvite
             <Pressable
               accessibilityRole="link"
               accessibilityLabel="Como funciona o IpêBook"
-              onPress={onHelp}
+              onPress={guardedHelp}
               style={withPress(styles.footerLink)}
             >
               <Text style={styles.footerLinkText}>Como funciona?</Text>
@@ -262,7 +272,7 @@ export default function Welcome({ onStart, onSignIn, onHelp, onTerms, betaInvite
             <Pressable
               accessibilityRole="link"
               accessibilityLabel="Termos de uso"
-              onPress={onTerms}
+              onPress={guardedTerms}
               style={withPress(styles.footerLink)}
             >
               <Text style={styles.footerLinkText}>Termos de uso</Text>

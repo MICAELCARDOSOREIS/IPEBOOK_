@@ -11,6 +11,8 @@ import { captureRef } from "react-native-view-shot";
 import { InviteCard } from "@/view/components/InviteCard";
 import { useInviteFriendsViewModel } from "@/viewmodel/useInviteFriendsViewModel";
 import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
+import { useGuardedPress } from "@/view/useGuardedPress";
+import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 
 export type InviteFriendsProps = {
   onBack?: () => void;
@@ -20,6 +22,7 @@ export type InviteFriendsProps = {
  * Tela de convite de amigos e compartilhamento da comunidade (Figma `08.02 · Convidar amigos`).
  */
 export function InviteFriends({ onBack }: InviteFriendsProps) {
+  const guardedBack = useGuardedPress(onBack);
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [state, actions] = useInviteFriendsViewModel();
@@ -34,8 +37,11 @@ export function InviteFriends({ onBack }: InviteFriendsProps) {
 
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar contentMaxWidth={contentMaxWidth} title="Convidar amigos" onBack={() => onBack?.()} />
-      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+      <TopAppBar contentMaxWidth={contentMaxWidth} title="Convidar amigos" onBack={guardedBack} />
+      <ScrollView
+        contentContainerStyle={[styles.scroll, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
+        {...standardVerticalScrollProps}
+      >
         <View style={[styles.content, wide && styles.contentWide]}>
           <View style={styles.header}>
             <IconBadge icon="shelf" tone="action" size="large" />

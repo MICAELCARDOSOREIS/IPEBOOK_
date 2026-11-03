@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import type { RequestStatus } from "@/model/entities/bookRequest";
@@ -16,8 +16,10 @@ import { Snackbar } from "@/view/components/Snackbar";
 import { Tag } from "@/view/components/Tag";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { tokens, type ColorPalette } from "@/view/tokens";
+import { useGuardedPress } from "@/view/useGuardedPress";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { formatPrice } from "@/view/formatPrice";
+import { scrollBottomPadding, standardVerticalScrollProps } from "@/view/scrollProps";
 import { WEB_MAX_WIDTH, WEB_GUTTER, useWebColumns } from "@/view/webLayout";
 
 import { withPress } from "@/view/pressFeedback";
@@ -97,14 +99,18 @@ export function RequestListLayout({
     if (statusFilter === "history") return isHistory(item.request.status);
     return true;
   });
+
+  const fallbackBack = useCallback(() => {}, []);
+  const guardedBack = useGuardedPress(onBack ?? fallbackBack);
+
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar title={title} onBack={() => onBack?.()} contentMaxWidth={wide ? WIDE_CONTENT_MAX_WIDTH : undefined} />
+      <TopAppBar title={title} onBack={guardedBack} contentMaxWidth={wide ? WIDE_CONTENT_MAX_WIDTH : undefined} />
       <View style={[styles.content, wide && styles.contentWide]}>
         {wide ? (
           <Breadcrumb
             items={[
-              { label: "Estante", onPress: () => onBack?.(), accessibilityLabel: "Voltar para a Estante" },
+              { label: "Estante", onPress: guardedBack, accessibilityLabel: "Voltar para a Estante" },
               { label: title, isCurrent: true },
             ]}
             style={styles.breadcrumb}
@@ -185,12 +191,13 @@ export function RequestListLayout({
         ) : (
           <>
             <FlatList
+              {...standardVerticalScrollProps}
               key={wide ? `colunas-${listColumns}` : "uma-coluna"}
               numColumns={wide ? listColumns : 1}
               columnWrapperStyle={wide ? styles.columns : undefined}
               data={filteredItems}
               keyExtractor={(item) => item.request.id}
-              contentContainerStyle={styles.listContent}
+              contentContainerStyle={[styles.listContent, { paddingBottom: scrollBottomPadding.withBottomBar }]}
               keyboardShouldPersistTaps="handled"
               // O aviso acompanha o fim da lista, em vez de ficar preso no rodapé da janela.
               ListFooterComponent={

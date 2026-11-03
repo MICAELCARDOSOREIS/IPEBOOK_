@@ -11,8 +11,9 @@ import { useFormErrorAnnouncer } from "@/view/useFormErrorAnnouncer";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { useDeleteAccountViewModel } from "@/viewmodel/useDeleteAccountViewModel";
 import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
-
 import { withPress } from "@/view/pressFeedback";
+import { useGuardedPress } from "@/view/useGuardedPress";
+import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 export type DeleteAccountProps = {
   sessionUserId: string | null;
   onBack: () => void;
@@ -35,6 +36,10 @@ export default function DeleteAccount({
   onNavigateToLogin,
   onEditProfile,
 }: DeleteAccountProps) {
+  const guardedBack = useGuardedPress(onBack);
+  const guardedAccountDeleted = useGuardedPress(onAccountDeleted);
+  const guardedLogin = useGuardedPress(onNavigateToLogin);
+  const guardedEditProfile = useGuardedPress(onEditProfile);
   const [state, actions] = useDeleteAccountViewModel();
   const exportErrorRef = useFormErrorAnnouncer(state.exportError);
   const errorRef = useFormErrorAnnouncer(state.error);
@@ -46,8 +51,11 @@ export default function DeleteAccount({
   if (state.success) {
     return (
       <SafeAreaView style={styles.page}>
-        <TopAppBar title="Conta excluída" onBack={onBack} contentMaxWidth={wide ? WEB_MAX_WIDTH : undefined} />
-        <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+        <TopAppBar title="Conta excluída" onBack={guardedBack} contentMaxWidth={wide ? WEB_MAX_WIDTH : undefined} />
+        <ScrollView
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
+          {...standardVerticalScrollProps}
+        >
           <View style={[styles.content, wide && styles.contentWide]}>
             <View style={styles.card}>
               <IconBadge icon="check" tone="action" size="large" />
@@ -59,7 +67,7 @@ export default function DeleteAccount({
                 Seu perfil e seus anúncios ficaram indisponíveis. Sua conta e seus dados pessoais foram removidos da nossa base em conformidade com a LGPD.
               </Text>
               <View style={styles.fullWidthButton}>
-                <FilledButton label="Voltar à tela inicial" onPress={onAccountDeleted} />
+                <FilledButton label="Voltar à tela inicial" onPress={guardedAccountDeleted} />
               </View>
             </View>
           </View>
@@ -71,8 +79,11 @@ export default function DeleteAccount({
   if (!sessionUserId) {
     return (
       <SafeAreaView style={styles.page}>
-        <TopAppBar title="Privacidade e dados" onBack={onBack} contentMaxWidth={wide ? WEB_MAX_WIDTH : undefined} />
-        <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+        <TopAppBar title="Privacidade e dados" onBack={guardedBack} contentMaxWidth={wide ? WEB_MAX_WIDTH : undefined} />
+        <ScrollView
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
+          {...standardVerticalScrollProps}
+        >
           <View style={[styles.content, wide && styles.contentWide]}>
             <View style={styles.card}>
               <IconBadge icon="lock" tone="neutral" size="large" />
@@ -86,11 +97,11 @@ export default function DeleteAccount({
               </Text>
               {onNavigateToLogin ? (
                 <View style={styles.fullWidthButton}>
-                  <FilledButton label="Entrar na conta" onPress={onNavigateToLogin} />
+                  <FilledButton label="Entrar na conta" onPress={guardedLogin} />
                 </View>
               ) : (
                 <View style={styles.fullWidthButton}>
-                  <FilledButton label="Voltar ao início" onPress={onBack} />
+                  <FilledButton label="Voltar ao início" onPress={guardedBack} />
                 </View>
               )}
             </View>
@@ -102,8 +113,11 @@ export default function DeleteAccount({
 
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar title="Privacidade e dados" onBack={onBack} contentMaxWidth={wide ? WEB_MAX_WIDTH : undefined} />
-      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+      <TopAppBar title="Privacidade e dados" onBack={guardedBack} contentMaxWidth={wide ? WEB_MAX_WIDTH : undefined} />
+      <ScrollView
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
+        {...standardVerticalScrollProps}
+      >
         <View style={[styles.content, wide && styles.contentWide]}>
           <View style={styles.heroHeader}>
             <Text style={styles.heroTitle}>Você no controle.</Text>
@@ -132,7 +146,7 @@ export default function DeleteAccount({
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Editar informações do perfil: atualize nome e bairro"
-              onPress={onEditProfile}
+              onPress={guardedEditProfile}
               style={withPress(styles.navigationRow)}
             >
               <IconBadge icon="person" tone="neutral" />

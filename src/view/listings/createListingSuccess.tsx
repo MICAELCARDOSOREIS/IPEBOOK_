@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from "react";
-import { ScrollView, Share, StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import type { Book } from "@/model/entities/book";
 import { tokens, type ColorPalette } from "@/view/tokens";
@@ -13,9 +13,11 @@ import { Tag } from "@/view/components/Tag";
 import { TextButton } from "@/view/components/TextButton";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { AppIcon } from "@/view/components/AppIcon";
+import { Snackbar } from "@/view/components/Snackbar";
 import { IpePetalsCelebration } from "@/view/components/IpePetalsCelebration";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
+import { useShareListingViewModel } from "@/viewmodel/useShareListingViewModel";
 
 export type CreateListingSuccessProps = {
   published: Book;
@@ -32,17 +34,23 @@ export function CreateListingSuccess({
   const guardedGoHome = useGuardedPress(onGoHome);
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const [shareState, shareActions] = useShareListingViewModel();
 
-  const handleShare = useCallback(async () => {
-    try {
-      await Share.share({
-        message: `Acabei de anunciar o livro "${published.title}" no IPEBOOK! Venha conferir na comunidade de leitores de Piripiri: https://ipebook.com.br/livro/${published.id}`,
-        title: published.title,
-      });
-    } catch {
-      // Ignora cancelamentos de compartilhamento
-    }
-  }, [published.id, published.title]);
+  const handleShareWhatsApp = useCallback(() => {
+    void shareActions.shareToWhatsApp(published.id, {
+      title: published.title,
+      author: published.author,
+      modality: published.modality,
+      price: published.price,
+      neighborhood: published.neighborhood,
+      isBox: published.isBox,
+      boxVolumesCount: published.boxVolumesCount,
+    });
+  }, [published, shareActions]);
+
+  const handleShare = useCallback(() => {
+    void shareActions.share(published.id);
+  }, [published.id, shareActions]);
 
   return (
     <SafeAreaView style={styles.page}>
@@ -139,19 +147,29 @@ export function CreateListingSuccess({
 
           {/* Ações */}
           <View style={styles.actionsBlock}>
-            <FilledButton
-              label="Ver estante"
-              onPress={guardedViewMyListings}
+            <OutlinedButton
+              label="Divulgar no WhatsApp"
+              icon={<AppIcon name="whatsapp" size={18} color={colors.nature.foliage} />}
+              onPress={handleShareWhatsApp}
             />
             <OutlinedButton
               label="Compartilhar anúncio"
               icon={<AppIcon name="share" size={18} color={colors.action} />}
-              onPress={() => void handleShare()}
+              onPress={handleShare}
+            />
+            <FilledButton
+              label="Ver estante"
+              onPress={guardedViewMyListings}
             />
             <TextButton label="Voltar ao início" onPress={guardedGoHome} />
           </View>
         </View>
       </ScrollView>
+      <Snackbar
+        visible={shareState.linkCopied}
+        message="Link do anúncio copiado para a área de transferência!"
+        onDismiss={shareActions.dismissLinkCopied}
+      />
     </SafeAreaView>
   );
 }
@@ -293,6 +311,14 @@ function createStyles(colors: ColorPalette) {
     actionsBlock: {
       gap: tokens.spacing[10],
       marginTop: tokens.spacing[4],
+    },
+    whatsappButton: {
+      backgroundColor: colors.nature.foliage,
+    },
+    whatsappButtonText: {
+      color: "#FFFFFF",
+      fontFamily: tokens.typography.labelLarge.fontFamily,
+      fontWeight: tokens.fontWeight.semiBold,
     },
   });
 }

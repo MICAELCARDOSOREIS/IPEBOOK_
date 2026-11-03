@@ -42,6 +42,7 @@ afterEach(async () => {
 const fakeUseCases: IShareUseCases = {
   buildListingSharePath: () => "/livro/1",
   buildShareMessage: () => "mensagem",
+  buildWhatsAppShareMessage: () => "mensagem",
   buildWhatsAppShareUrl: (msg) => `whatsapp://send?text=${encodeURIComponent(msg)}`,
   buildInviteMessage: (url = "https://ipebook.app") =>
     `Venha para o IpêBook em Piripiri: ${url}`,

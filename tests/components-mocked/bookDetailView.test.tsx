@@ -300,11 +300,27 @@ describe("BookDetail (spec 006, US6/T029)", () => {
     await act(async () => { fireEvent.press(screen.getByLabelText("Compartilhar anúncio como imagem")); });
     expect(shareImage).toHaveBeenCalledWith(
       "b1",
-      { title: "Dom Casmurro", author: "Machado de Assis", modality: "sale", price: 42 },
+      expect.objectContaining({ title: "Dom Casmurro", author: "Machado de Assis", modality: "sale", price: 42 }),
       expect.any(Function),
     );
     const capture = vi.mocked(shareImage).mock.calls[0][2] as () => Promise<string>;
     await expect(capture()).resolves.toBe("file:///tmp/anuncio.png");
+  });
+
+  it("compartilha no WhatsApp ao tocar no botão dedicado do WhatsApp (Spec 118)", async () => {
+    const { shareToWhatsApp } = setup(
+      book({ ownerId: "other", modality: "sale", price: 42, neighborhood: "Centro" }),
+      null,
+    );
+    const screen = await renderDetail();
+    const whatsappButtons = screen.getAllByLabelText("Compartilhar anúncio no WhatsApp");
+    expect(whatsappButtons.length).toBeGreaterThanOrEqual(1);
+    await act(async () => { fireEvent.press(whatsappButtons[0]); });
+    expect(shareToWhatsApp).toHaveBeenCalledWith(
+      "b1",
+      expect.objectContaining({ title: "Dom Casmurro", modality: "sale", price: 42, neighborhood: "Centro" }),
+      expect.any(Function),
+    );
   });
 
   it("mostra confirmação de link copiado (Spec 019)", async () => {

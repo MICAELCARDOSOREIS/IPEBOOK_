@@ -14,14 +14,17 @@ import { LoadingState } from "@/view/components/LoadingState";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
-
 import { withPress } from "@/view/pressFeedback";
+import { useGuardedPress } from "@/view/useGuardedPress";
+import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 export type MeetingHistoryProps = {
   onBack?: () => void;
   onNavigateToNegotiation?: (requestId: string) => void;
 };
 
 export default function MeetingHistory({ onBack, onNavigateToNegotiation }: MeetingHistoryProps) {
+  const guardedBack = useGuardedPress(onBack);
+  const guardedNegotiation = useGuardedPress(onNavigateToNegotiation);
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [authState] = useAuthViewModel();
@@ -43,8 +46,11 @@ export default function MeetingHistory({ onBack, onNavigateToNegotiation }: Meet
 
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar contentMaxWidth={wide ? WIDE_CONTENT_MAX_WIDTH : undefined} title="Histórico de encontros" onBack={onBack ?? (() => {})} />
-      <ScrollView contentContainerStyle={[styles.content, wide && styles.contentWide]} keyboardShouldPersistTaps="handled">
+      <TopAppBar contentMaxWidth={wide ? WIDE_CONTENT_MAX_WIDTH : undefined} title="Histórico de encontros" onBack={guardedBack} />
+      <ScrollView
+        contentContainerStyle={[styles.content, wide && styles.contentWide, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
+        {...standardVerticalScrollProps}
+      >
         {state.loading ? (
           <LoadingState label="Carregando encontros…" />
         ) : state.error ? (
@@ -70,7 +76,7 @@ export default function MeetingHistory({ onBack, onNavigateToNegotiation }: Meet
                   key={meeting.id}
                   accessibilityRole="button"
                   accessibilityLabel={`Encontro em ${meeting.pointName}, ${formatMeetingWhen(meeting.scheduledAt)}. Situação: ${statusInfo.text}`}
-                  onPress={() => onNavigateToNegotiation?.(meeting.requestId)}
+                  onPress={() => guardedNegotiation(meeting.requestId)}
                   style={withPress([styles.meetingCard, wide && styles.cardWide])}
                 >
                   <View style={styles.cardHeader}>

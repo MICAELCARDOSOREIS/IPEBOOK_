@@ -7,6 +7,8 @@ import { IconBadge } from "@/view/components/IconBadge";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
+import { useGuardedPress } from "@/view/useGuardedPress";
+import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 
 export type SecurityProps = {
   onBack: () => void;
@@ -18,6 +20,7 @@ export type SecurityProps = {
  * recuperação de acesso (`01.04`/`01.05`), em vez de uma troca com senha atual no app.
  */
 export function Security({ onBack }: SecurityProps) {
+  const guardedBack = useGuardedPress(onBack);
   const [authState, authActions] = useAuthViewModel();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -31,8 +34,11 @@ export function Security({ onBack }: SecurityProps) {
 
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar contentMaxWidth={720} title="Segurança e verificação" onBack={onBack} />
-      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+      <TopAppBar contentMaxWidth={720} title="Segurança e verificação" onBack={guardedBack} />
+      <ScrollView
+        contentContainerStyle={[styles.scroll, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
+        {...standardVerticalScrollProps}
+      >
         <View style={styles.content}>
           <View style={styles.card}>
             <View style={styles.cardHeaderRow}>

@@ -9,6 +9,8 @@ import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { ALERT_MODALITY_SUMMARY, ALERT_CITY } from "@/view/search/alertLabels";
 import { useSearchAlertsViewModel } from "@/viewmodel/useSearchAlertsViewModel";
+import { useGuardedPress } from "@/view/useGuardedPress";
+import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 
 export type ManageAlertProps = {
   alertId: string;
@@ -27,6 +29,9 @@ export default function ManageAlert({
   onEditAlert,
   onAlertDeleted,
 }: ManageAlertProps) {
+  const guardedBack = useGuardedPress(onBack);
+  const guardedEdit = useGuardedPress(onEditAlert);
+  const guardedAlertDeleted = useGuardedPress(onAlertDeleted);
   const [state, actions] = useSearchAlertsViewModel(userId);
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -36,7 +41,7 @@ export default function ManageAlert({
   if (state.loading) {
     return (
       <SafeAreaView style={styles.page}>
-        <TopAppBar contentMaxWidth={560} title="Gerenciar alerta" onBack={onBack} />
+        <TopAppBar contentMaxWidth={560} title="Gerenciar alerta" onBack={guardedBack} />
         <View style={styles.status}>
           <ActivityIndicator color={colors.action} accessibilityLabel="Carregando alerta" />
         </View>
@@ -47,7 +52,7 @@ export default function ManageAlert({
   if (!alert) {
     return (
       <SafeAreaView style={styles.page}>
-        <TopAppBar contentMaxWidth={560} title="Gerenciar alerta" onBack={onBack} />
+        <TopAppBar contentMaxWidth={560} title="Gerenciar alerta" onBack={guardedBack} />
         <View style={styles.content}>
           <Text accessibilityRole="header" style={styles.headline}>
             Alerta não encontrado
@@ -55,7 +60,7 @@ export default function ManageAlert({
           <Text style={styles.body}>
             Ele pode ter sido excluído. Volte para a lista e confira seus alertas.
           </Text>
-          <OutlinedButton label="Voltar aos alertas" onPress={onBack} />
+          <OutlinedButton label="Voltar aos alertas" onPress={guardedBack} />
         </View>
       </SafeAreaView>
     );
@@ -63,8 +68,11 @@ export default function ManageAlert({
 
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar contentMaxWidth={560} title="Gerenciar alerta" onBack={onBack} />
-      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+      <TopAppBar contentMaxWidth={560} title="Gerenciar alerta" onBack={guardedBack} />
+      <ScrollView
+        contentContainerStyle={[styles.scroll, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
+        {...standardVerticalScrollProps}
+      >
         <View style={styles.content}>
           <Text accessibilityRole="header" style={styles.headline}>
             {`${alert.query}, do seu jeito.`}
@@ -98,7 +106,7 @@ export default function ManageAlert({
           <OutlinedButton
             label="Editar alerta"
             accessibilityLabel={`Editar alerta ${alert.query}`}
-            onPress={() => onEditAlert(alert.id)}
+            onPress={() => guardedEdit(alert.id)}
           />
           <OutlinedButton
             label={alert.active ? "Pausar alerta" : "Retomar alerta"}
@@ -126,7 +134,7 @@ export default function ManageAlert({
         onConfirm={() => {
           setConfirmingDelete(false);
           void actions.remove(alert.id).then((removed) => {
-            if (removed) onAlertDeleted();
+            if (removed) guardedAlertDeleted();
           });
         }}
       />

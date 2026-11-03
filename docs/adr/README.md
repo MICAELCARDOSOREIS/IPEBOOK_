@@ -91,5 +91,6 @@
 - [0089 — Melhorias de contexto, acessibilidade e layout web na entrega do livro](0089-melhorias-entrega-livro.md)
 - [0090 — Revitalização das cores do ipê na identidade visual](0090-cores-vivas-ipe.md)
 - [0091 — Padronização universal de rolagem e blindagem contra duplo toque](0091-padronizacao-de-rolagem-e-blindagem-duplo-toque.md)
+- [0092 — Compartilhamento rápido no WhatsApp e grupos de Piripiri](0092-compartilhamento-rapido-whatsapp.md)
 
 Preservar registros aceitos; mudanças relevantes geram novo ADR com vínculos de substituição.
