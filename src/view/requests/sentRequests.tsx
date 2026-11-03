@@ -41,6 +41,7 @@ export function SentRequests({
           <View style={s.actions}>
             <Pressable
               accessibilityRole="button"
+              accessibilityLabel="Ver detalhes do encontro"
               onPress={() => guardedNavigateToNegotiationDetail?.(request.id)}
               style={withPress(s.primary)}
             >

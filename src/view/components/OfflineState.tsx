@@ -30,7 +30,7 @@ export function OfflineState({
         <AppIcon name="wifiOff" color={colors.secondaryText} />
         <Text accessibilityRole="alert" style={styles.message}>{message}</Text>
       </View>
-      <Pressable accessibilityRole="button" onPress={onRetry} style={withPress(styles.retry)}>
+      <Pressable accessibilityRole="button" accessibilityLabel={retryLabel} onPress={onRetry} style={withPress(styles.retry)}>
         <Text style={styles.retryText}>{retryLabel}</Text>
       </Pressable>
     </View>

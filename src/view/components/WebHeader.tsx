@@ -75,6 +75,7 @@ export function WebHeader({
               <Pressable
                 key={link.key}
                 accessibilityRole="tab"
+                accessibilityLabel={link.label}
                 accessibilityState={{ selected: isActive }}
                 onPress={() => guardedNavigate(link.key)}
                 style={withPress(styles.link)}

@@ -135,6 +135,7 @@ export function RequestDetail({
               </Text>
               <Pressable
                 accessibilityRole="button"
+                accessibilityLabel="Tentar novamente"
                 onPress={() => void actions.reload()}
                 style={withPress(styles.retryButton)}
               >
