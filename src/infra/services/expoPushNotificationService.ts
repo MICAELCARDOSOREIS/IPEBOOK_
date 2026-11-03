@@ -73,7 +73,7 @@ export class ExpoPushNotificationService implements IPushNotificationService {
                 ? Notifications.AndroidImportance.HIGH
                 : Notifications.AndroidImportance.DEFAULT,
             vibrationPattern: preset.vibration ? [0, 250, 250, 250] : undefined,
-            lightColor: preset.vibration ? "#2C5E45" : undefined,
+            lightColor: preset.vibration ? "#2B6334" : undefined,
             enableVibrate: preset.vibration,
             showBadge: true,
           });

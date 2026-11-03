@@ -40,7 +40,7 @@
       "bundler": "metro",
       "output": "static",
       "favicon": "./assets/favicon.png",
-      "themeColor": "#2C5E45",
+      "themeColor": "#2B6334",
       "backgroundColor": "#FCFAF5",
       "description": "Marketplace comunitário de livros em Piripiri, PI (venda, troca e doação)"
     },
@@ -59,7 +59,7 @@
         "expo-notifications",
         {
           "icon": "./assets/notificacao-icone.png",
-          "color": "#2C5E45",
+          "color": "#2B6334",
           "defaultChannel": "updates"
         }
       ],
