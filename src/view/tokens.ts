@@ -44,12 +44,12 @@ export const colors = {
 
   // Ipê da marca (Spec 078, Spec 116): florada amarela viva, cartão de leitor e fita marcadora
   ipe: {
-    container: "#FEF3C7",    // Amarelo florada luminoso, solar e aconchegante
+    container: "#FEF08A",    // Amarelo florada solar vivo e luminoso
     onContainer: "#451A03",  // Marrom tronco profundo de alto contraste (AAA > 12:1)
-    bloom: "#F59E0B",        // Amarelo ouro solar radiante de ipê em plena florada
-    bloomDeep: "#D97706",    // Âmbar dourado vivo (tubo e sépalas da flor)
-    petalSoft: "#FFFBEB",    // Pétala solar fresca de ipê
-    ribbon: "#F59E0B",       // Fita marcadora dourada
+    bloom: "#FACC15",        // Amarelo ouro solar radiante de ipê em plena florada
+    bloomDeep: "#EAB308",    // Dourado vivo (tubo e sépalas da flor)
+    petalSoft: "#FEF9C3",    // Pétala solar fresca de ipê
+    ribbon: "#FACC15",       // Fita marcadora dourada
     trunk: "#58331F",        // Tronco nobre
   },
 
@@ -179,11 +179,11 @@ export const darkColors: ColorPalette = {
   // Ipê da marca (Spec 078, Spec 116): florada no tema escuro com alto contraste e aconchego.
   ipe: {
     container: "#38290E",
-    onContainer: "#FFE099",
-    bloom: "#F59E0B",
-    bloomDeep: "#D97706",
+    onContainer: "#FEF08A",
+    bloom: "#FACC15",
+    bloomDeep: "#EAB308",
     petalSoft: "#281E0B",
-    ribbon: "#F59E0B",
+    ribbon: "#FACC15",
     trunk: "#e2b48c",
   },
 
