@@ -34,11 +34,15 @@ export function NavigationBar({ active, onNavigate, disabledDestinations = [], b
   const lastNavigateTime = useRef(0);
   const DEBOUNCE_MS = 600;
 
+  // Em celulares com barra de 3 botões (Android) ou Home Indicator (iOS),
+  // insets.bottom eleva os itens acima dos controles do sistema operacional para evitar sobreposição.
+  const paddingBottom = Math.max(tokens.spacing[16], insets.bottom + tokens.spacing[8]);
+
   return (
     <View
       testID="navigation-bar-tablist"
       accessibilityRole="tablist"
-      style={[styles.bar, { paddingBottom: tokens.spacing[16] + insets.bottom }]}
+      style={[styles.bar, { paddingBottom }]}
     >
       {ITEMS.map((item) => {
         const isActive = item.key === active;
