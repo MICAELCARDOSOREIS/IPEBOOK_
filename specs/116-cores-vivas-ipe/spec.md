@@ -1,6 +1,6 @@
 # Spec 116 — Cores Vivas do Ipê na Identidade Visual e Home
 
-**Status:** Em implementação  
+**Status:** Concluída  
 **Data:** 2 de novembro de 2026  
 **Contexto:** IHC / Identidade Visual / Home / Temas  
 **ADR vinculada:** [0090](../../docs/adr/0090-cores-vivas-ipe.md)
