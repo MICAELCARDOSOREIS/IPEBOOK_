@@ -1,6 +1,6 @@
 # Especificação 112 — Suporte a Box e Coleções de Livros
 
-Status: aprovada; implementação em andamento. ADR: [0086](../../docs/adr/0086-suporte-a-box-e-colecoes-de-livros.md).
+Status: Concluída. ADR: [0086](../../docs/adr/0086-suporte-a-box-e-colecoes-de-livros.md).
 
 ## Objetivo
 Permitir que leitores da comunidade de Piripiri anunciem, gerenciem e encontrem boxes, coleções e conjuntos com múltiplos volumes (ex: trilogias, sagas completas e coleções didáticas) de maneira clara e distinta de livros individuais, com indicação do número de volumes e destaque visual nos cartões e detalhes do livro.

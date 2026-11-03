@@ -1,6 +1,6 @@
 # Especificação 111 — Notificações comunitárias e fechamento de ciclos de interação
 
-Status: especificada; implementação em andamento. ADR: [0085](../../docs/adr/0085-notificacoes-comunitarias-e-fechamento-de-ciclos.md).
+Status: Concluída. ADR: [0085](../../docs/adr/0085-notificacoes-comunitarias-e-fechamento-de-ciclos.md).
 
 ## Objetivo
 Implementar os fluxos de notificação faltantes no ecossistema do IpêBook para garantir o fechamento de ciclos (avaliação pós-entrega, reabertura de livros favoritos, feedback de denúncias), acolhimento de novos leitores com diretrizes de segurança nos Pontos Seguros de Piripiri, e transparência sobre permissões de notificação do sistema.
