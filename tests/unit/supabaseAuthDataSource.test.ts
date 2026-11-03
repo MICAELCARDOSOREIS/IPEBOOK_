@@ -80,6 +80,61 @@ describe("SupabaseAuthDataSource (Issue #97)", () => {
     );
   });
 
+  it("signIn lança mensagem amigável de conexão quando a rede falha", async () => {
+    const client = fakeClient({
+      signInWithPassword: vi.fn().mockResolvedValue({
+        data: { user: null },
+        error: { message: "Network request failed", status: 0 },
+      }),
+    });
+    const ds = new SupabaseAuthDataSource(client, "https://app/redefinir-senha");
+    await expect(ds.signIn("a@b.com", "senha12345")).rejects.toThrow(
+      "Sem conexão com a internet. Verifique sua rede e tente novamente.",
+    );
+  });
+
+  it("signUp lança mensagem amigável de conexão quando a rede falha", async () => {
+    const client = fakeClient({
+      signUp: vi.fn().mockResolvedValue({
+        data: { user: null },
+        error: { message: "Failed to fetch", status: 0 },
+      }),
+    });
+    const ds = new SupabaseAuthDataSource(client, "https://app/redefinir-senha");
+    await expect(ds.signUp("a@b.com", "senha12345", "Nome")).rejects.toThrow(
+      "Sem conexão com a internet. Verifique sua rede e tente novamente.",
+    );
+  });
+
+  it("requestPasswordReset lança mensagem amigável de conexão quando a rede falha", async () => {
+    const client = fakeClient({
+      resetPasswordForEmail: vi.fn().mockResolvedValue({
+        error: { message: "fetch failed" },
+      }),
+    });
+    const ds = new SupabaseAuthDataSource(client, "https://app/redefinir-senha");
+    await expect(ds.requestPasswordReset("a@b.com")).rejects.toThrow(
+      "Sem conexão com a internet. Verifique sua rede e tente novamente.",
+    );
+  });
+
+  it("signIn encerra com mensagem de timeout quando a conexão fica travada", async () => {
+    vi.useFakeTimers();
+    try {
+      const client = fakeClient({
+        signInWithPassword: vi.fn(() => new Promise(() => {})),
+      });
+      const ds = new SupabaseAuthDataSource(client, "https://app/redefinir-senha");
+      const expectation = expect(ds.signIn("a@b.com", "senha12345")).rejects.toThrow(
+        "Tempo limite de conexão esgotado. Verifique sua internet e tente novamente.",
+      );
+      await vi.advanceTimersByTimeAsync(16_000);
+      await expectation;
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("completePasswordReset lança ExpiredLinkError quando não há link", async () => {
     const client = fakeClient({});
     const ds = new SupabaseAuthDataSource(client, "https://app/redefinir-senha");

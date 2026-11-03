@@ -6,6 +6,52 @@ import { AuthError, EmailAlreadyRegisteredError, ExpiredLinkError } from "@/mode
 import type { SupabaseAppClient } from "@/infra/supabaseClient";
 import type { INativeGoogleSignIn } from "@/model/services/iNativeGoogleSignIn";
 
+/** Mensagens e limites de tempo para proteção contra requisições travadas sem internet. */
+export const AUTH_NETWORK_ERROR_MESSAGE = "Sem conexão com a internet. Verifique sua rede e tente novamente.";
+export const AUTH_TIMEOUT_ERROR_MESSAGE = "Tempo limite de conexão esgotado. Verifique sua internet e tente novamente.";
+export const AUTH_REQUEST_TIMEOUT_MS = 15_000;
+
+function isNetworkError(error: unknown): boolean {
+  if (!error) return false;
+  const msg = String(
+    (error && typeof error === "object" && "message" in error ? (error as { message?: unknown }).message : "") ||
+      error,
+  ).toLowerCase();
+  const name = String(
+    (error && typeof error === "object" && "name" in error ? (error as { name?: unknown }).name : "") || "",
+  ).toLowerCase();
+  return (
+    name.includes("abort") ||
+    name.includes("timeout") ||
+    msg.includes("network request failed") ||
+    msg.includes("failed to fetch") ||
+    msg.includes("fetch failed") ||
+    msg.includes("networkerror") ||
+    msg.includes("network error") ||
+    msg.includes("connection refused") ||
+    msg.includes("timeout") ||
+    msg.includes("econnrefused") ||
+    msg.includes("ehostunreach") ||
+    msg.includes("enotfound")
+  );
+}
+
+async function withAuthTimeout<T>(
+  promise: Promise<T>,
+  ms = AUTH_REQUEST_TIMEOUT_MS,
+  timeoutMessage = AUTH_TIMEOUT_ERROR_MESSAGE,
+): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new AuthError(timeoutMessage)), ms);
+  });
+  try {
+    return await Promise.race([promise, timeoutPromise]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
 /** Nome informado no cadastro, guardado em `user_metadata.full_name` (ver Spec 030). */
 function readFullName(user: { user_metadata?: Record<string, unknown> | null }): string | undefined {
   const value = user.user_metadata?.full_name;
@@ -16,6 +62,13 @@ function translateSupabaseAuthError(error: { message?: string; status?: number; 
   isEmailRegistered: boolean;
   message: string;
 } {
+  if (isNetworkError(error)) {
+    return {
+      isEmailRegistered: false,
+      message: AUTH_NETWORK_ERROR_MESSAGE,
+    };
+  }
+
   const code = (error.code ?? "").toLowerCase();
   const msg = (error.message ?? "").toLowerCase();
   const status = error.status;
@@ -83,61 +136,88 @@ export class SupabaseAuthDataSource implements IAuthDataSource {
   ) {}
 
   async signUp(email: string, password: string, name: string): Promise<User> {
-    const { data, error } = await this.client.auth.signUp({
-      email,
-      password,
-      options: { data: { full_name: name } },
-    });
-    if (error) {
-      if (typeof __DEV__ !== "undefined" && __DEV__) {
-        console.warn("[SupabaseAuthDataSource.signUp] Erro retornado pelo Supabase:", {
-          message: error.message,
-          status: error.status,
-          code: error.code,
-        });
-      }
-      const translated = translateSupabaseAuthError(error);
-      if (translated.isEmailRegistered) {
-        throw new EmailAlreadyRegisteredError(translated.message);
-      }
-      throw new AuthError(translated.message);
-    }
-    if (!data.user?.email) {
-      throw new AuthError("Não foi possível criar a conta. Tente novamente.");
-    }
-    /**
-     * Supabase responde com sucesso (sem erro) e `identities: []` quando o e-mail já está
-     * cadastrado e confirmado — nenhuma conta nova é criada nem e-mail é enviado. Sem esta
-     * checagem, a pessoa via a tela como se a conta tivesse sido criada (Issue #97).
-     */
-    if (data.user.identities?.length === 0) {
-      throw new EmailAlreadyRegisteredError("Este e-mail já está cadastrado. Entre com sua senha.");
-    }
-    return { id: data.user.id, email: data.user.email, name: readFullName(data.user) ?? name };
-  }
-
-  async signIn(email: string, password: string): Promise<User> {
-    const { data, error } = await this.client.auth.signInWithPassword({ email, password });
-    if (error || !data.user?.email) {
+    try {
+      const { data, error } = await withAuthTimeout(
+        this.client.auth.signUp({
+          email,
+          password,
+          options: { data: { full_name: name } },
+        }),
+      );
       if (error) {
         if (typeof __DEV__ !== "undefined" && __DEV__) {
-          console.warn("[SupabaseAuthDataSource.signIn] Erro retornado pelo Supabase:", {
+          console.warn("[SupabaseAuthDataSource.signUp] Erro retornado pelo Supabase:", {
             message: error.message,
             status: error.status,
             code: error.code,
           });
         }
-        const msg = (error.message ?? "").toLowerCase();
-        if (msg.includes("email not confirmed")) {
-          throw new AuthError("Confirme seu e-mail antes de entrar. Verifique sua caixa de entrada.");
+        const translated = translateSupabaseAuthError(error);
+        if (translated.isEmailRegistered) {
+          throw new EmailAlreadyRegisteredError(translated.message);
         }
-        if (error.status === 429 || msg.includes("security purposes") || msg.includes("rate limit")) {
-          throw new AuthError("Muitas tentativas em pouco tempo. Aguarde alguns instantes antes de tentar novamente.");
-        }
+        throw new AuthError(translated.message);
       }
-      throw new AuthError("Credenciais inválidas ou conta ainda não confirmada.");
+      if (!data.user?.email) {
+        throw new AuthError("Não foi possível criar a conta. Tente novamente.");
+      }
+      /**
+       * Supabase responde com sucesso (sem erro) e `identities: []` quando o e-mail já está
+       * cadastrado e confirmado — nenhuma conta nova é criada nem e-mail é enviado. Sem esta
+       * checagem, a pessoa via a tela como se a conta tivesse sido criada (Issue #97).
+       */
+      if (data.user.identities?.length === 0) {
+        throw new EmailAlreadyRegisteredError("Este e-mail já está cadastrado. Entre com sua senha.");
+      }
+      return { id: data.user.id, email: data.user.email, name: readFullName(data.user) ?? name };
+    } catch (error) {
+      if (error instanceof EmailAlreadyRegisteredError || error instanceof AuthError) {
+        throw error;
+      }
+      if (isNetworkError(error)) {
+        throw new AuthError(AUTH_NETWORK_ERROR_MESSAGE);
+      }
+      throw error;
     }
-    return { id: data.user.id, email: data.user.email, name: readFullName(data.user) };
+  }
+
+  async signIn(email: string, password: string): Promise<User> {
+    try {
+      const { data, error } = await withAuthTimeout(
+        this.client.auth.signInWithPassword({ email, password }),
+      );
+      if (error || !data.user?.email) {
+        if (error) {
+          if (typeof __DEV__ !== "undefined" && __DEV__) {
+            console.warn("[SupabaseAuthDataSource.signIn] Erro retornado pelo Supabase:", {
+              message: error.message,
+              status: error.status,
+              code: error.code,
+            });
+          }
+          if (isNetworkError(error)) {
+            throw new AuthError(AUTH_NETWORK_ERROR_MESSAGE);
+          }
+          const msg = (error.message ?? "").toLowerCase();
+          if (msg.includes("email not confirmed")) {
+            throw new AuthError("Confirme seu e-mail antes de entrar. Verifique sua caixa de entrada.");
+          }
+          if (error.status === 429 || msg.includes("security purposes") || msg.includes("rate limit")) {
+            throw new AuthError("Muitas tentativas em pouco tempo. Aguarde alguns instantes antes de tentar novamente.");
+          }
+        }
+        throw new AuthError("Credenciais inválidas ou conta ainda não confirmada.");
+      }
+      return { id: data.user.id, email: data.user.email, name: readFullName(data.user) };
+    } catch (error) {
+      if (error instanceof AuthError) {
+        throw error;
+      }
+      if (isNetworkError(error)) {
+        throw new AuthError(AUTH_NETWORK_ERROR_MESSAGE);
+      }
+      throw error;
+    }
   }
 
   async signInWithGoogle(): Promise<User> {
@@ -273,11 +353,22 @@ export class SupabaseAuthDataSource implements IAuthDataSource {
   }
 
   async requestPasswordReset(email: string): Promise<void> {
-    const { error } = await this.client.auth.resetPasswordForEmail(email, {
-      redirectTo: this.recoveryRedirectUrl,
-    });
-    if (error) {
-      throw new AuthError("Não foi possível solicitar a recuperação. Tente novamente.");
+    try {
+      const { error } = await withAuthTimeout(
+        this.client.auth.resetPasswordForEmail(email, {
+          redirectTo: this.recoveryRedirectUrl,
+        }),
+      );
+      if (error) {
+        if (isNetworkError(error)) {
+          throw new AuthError(AUTH_NETWORK_ERROR_MESSAGE);
+        }
+        throw new AuthError("Não foi possível solicitar a recuperação. Tente novamente.");
+      }
+    } catch (error) {
+      if (error instanceof AuthError) throw error;
+      if (isNetworkError(error)) throw new AuthError(AUTH_NETWORK_ERROR_MESSAGE);
+      throw error;
     }
   }
 
