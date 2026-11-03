@@ -62,6 +62,7 @@ describe("Conversations (Spec 076)", () => {
     expect(screen.getByText("Pode ser sábado na praça?")).toBeDefined();
     expect(screen.getByText("9h")).toBeDefined();
     expect(screen.getByText("Sobre Dom Casmurro")).toBeDefined();
+    expect(screen.getAllByText("Troca").length).toBeGreaterThan(0);
 
     await act(async () => { fireEvent.press(screen.getByText("Ana Paula")); });
     expect(onOpenChat).toHaveBeenCalledWith("r1");

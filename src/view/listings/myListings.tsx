@@ -6,6 +6,7 @@ import type { BookModality } from "@/model/entities/book";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useMyListingsViewModel } from "@/viewmodel/useMyListingsViewModel";
 import { useReceivedRequestsViewModel } from "@/viewmodel/useReceivedRequestsViewModel";
+import { useShareListingViewModel } from "@/viewmodel/useShareListingViewModel";
 import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
@@ -63,9 +64,22 @@ export function MyListings({
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [state, actions] = useMyListingsViewModel(sessionUserId);
   const [received] = useReceivedRequestsViewModel(sessionUserId);
+  const [, shareActions] = useShareListingViewModel();
   const { isOnline } = useNetworkStatus();
   const [activeTab, setActiveTab] = useState<ShelfTab>("listings");
   const [statusFilter, setStatusFilter] = useState<ListingsFilter>("all");
+
+  const handleShareBook = (book: (typeof state.books)[number]) => {
+    void shareActions.shareToWhatsApp(book.id, {
+      title: book.title,
+      author: book.author,
+      modality: book.modality,
+      price: book.price,
+      neighborhood: book.neighborhood,
+      isBox: book.isBox,
+      boxVolumesCount: book.boxVolumesCount,
+    });
+  };
 
   const guardedCreateListing = useGuardedPress(onNavigateToCreateListing);
   const guardedDrafts = useGuardedPress(onNavigateToDrafts);
@@ -291,6 +305,7 @@ export function MyListings({
                   statusFilter={statusFilter}
                   onStatusFilterChange={setStatusFilter}
                   onNavigateToManageListing={guardedManageListing}
+                  onShareWhatsApp={handleShareBook}
                 />
               </>
             ) : activeTab === "proposals" ? (

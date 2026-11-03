@@ -51,6 +51,7 @@ export function carouselOffsetFor(index: number): number {
 type CatalogCarouselProps = {
   title: string;
   displayTitle?: string;
+  badgeText?: string;
   books: readonly Book[];
   onNavigateToBookDetail?: (bookId: string) => void;
   onViewMore: () => void;
@@ -64,6 +65,7 @@ type CatalogCarouselProps = {
 function CatalogCarousel({
   title,
   displayTitle,
+  badgeText,
   books,
   onNavigateToBookDetail,
   onViewMore,
@@ -163,14 +165,21 @@ function CatalogCarousel({
   return (
     <View style={styles.carouselSection} testID={`carousel-${title}`}>
       <View style={styles.carouselHeader}>
-        <Text
-          accessibilityRole="header"
-          accessibilityLabel={title}
-          numberOfLines={1}
-          style={styles.carouselTitle}
-        >
-          {displayTitle ?? title}
-        </Text>
+        <View style={styles.carouselTitleGroup}>
+          <Text
+            accessibilityRole="header"
+            accessibilityLabel={title}
+            numberOfLines={1}
+            style={styles.carouselTitle}
+          >
+            {displayTitle ?? title}
+          </Text>
+          {badgeText ? (
+            <View style={styles.carouselBadge}>
+              <Text style={styles.carouselBadgeText}>{badgeText}</Text>
+            </View>
+          ) : null}
+        </View>
         {/* Figma `02.01` não mostra setas: o carrossel rola por gesto. Estes botões ficam invisíveis
             sobre o título da seção — área sem toque de cartão — para leitores de tela e teclado
             paginarem item a item. */}
@@ -632,6 +641,7 @@ export default function Home({
         <CatalogCarousel
           title="Recém-adicionados"
           displayTitle={carouselDisplayTitle}
+          badgeText={`${neighborhoodBooks.length} ${neighborhoodBooks.length === 1 ? "livro" : "livros"}`}
           books={recentBooks}
           onNavigateToBookDetail={guardedNavigateToBookDetail}
           onViewMore={() => {
@@ -1119,10 +1129,29 @@ function createStyles(colors: ColorPalette) {
       justifyContent: "space-between",
       marginBottom: tokens.spacing[12],
     },
+    carouselTitleGroup: {
+      flex: 1,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[8],
+      marginRight: tokens.spacing[8],
+    },
     carouselTitle: {
       flexShrink: 1,
       ...tokens.typography.titleBar,
       color: colors.m3.onSurface,
+    },
+    carouselBadge: {
+      paddingHorizontal: tokens.spacing[8],
+      paddingVertical: tokens.spacing[2],
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.m3.secondaryContainer,
+      alignSelf: "center",
+    },
+    carouselBadgeText: {
+      ...tokens.typography.labelSmall,
+      fontWeight: tokens.fontWeight.bold,
+      color: colors.m3.onSecondaryContainer,
     },
     viewMoreButton: {
       flexShrink: 0,

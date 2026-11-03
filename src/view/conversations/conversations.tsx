@@ -273,6 +273,7 @@ export function Conversations({
                           <Text style={[styles.name, isSelected && styles.nameSelected]} numberOfLines={1}>
                             {item.otherName}
                           </Text>
+                          <Tag variant={item.listing.modality} />
                           {item.lastMessageAt ? (
                             <Text style={styles.time}>{formatConversationTime(item.lastMessageAt, now)}</Text>
                           ) : null}
@@ -288,9 +289,12 @@ export function Conversations({
                         >
                           {item.preview}
                         </Text>
-                        <Text style={styles.about} numberOfLines={1}>
-                          {`Sobre ${item.listing.title}`}
-                        </Text>
+                        <View style={styles.aboutRow}>
+                          <Tag variant={item.listing.modality} />
+                          <Text style={styles.about} numberOfLines={1}>
+                            {`Sobre ${item.listing.title}`}
+                          </Text>
+                        </View>
                       </View>
                     </Pressable>
                       {/* Na web larga não há toque longo: o apagar fica visível na própria linha. */}
@@ -638,7 +642,7 @@ function createStyles(colors: ColorPalette) {
       borderLeftColor: colors.m3.primary,
     },
     rowText: { flex: 1, gap: tokens.spacing[2] },
-    rowHeader: { flexDirection: "row", alignItems: "baseline", gap: tokens.spacing[8] },
+    rowHeader: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[8] },
     name: { flex: 1, ...tokens.typography.bodyLarge, fontWeight: tokens.fontWeight.medium, color: colors.m3.onSurface },
     nameSelected: { fontWeight: tokens.fontWeight.bold, color: colors.m3.onSecondaryContainer },
     badge: {
@@ -653,7 +657,13 @@ function createStyles(colors: ColorPalette) {
     time: { ...tokens.typography.labelMedium, color: colors.m3.onSurfaceVariant },
     preview: { ...tokens.typography.bodyMedium, color: colors.m3.onSurface },
     previewStatus: { color: colors.m3.onSurfaceVariant, fontStyle: "italic" },
-    about: { ...tokens.typography.labelMedium, color: colors.m3.primary },
+    aboutRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[8],
+      marginTop: tokens.spacing[2],
+    },
+    about: { ...tokens.typography.labelMedium, color: colors.m3.primary, flex: 1 },
     footer: {
       ...tokens.typography.labelMedium,
       fontFamily: fontFamily.regular,

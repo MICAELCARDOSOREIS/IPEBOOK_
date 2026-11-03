@@ -14,12 +14,14 @@ export type ShelfRowProps = {
   summary: string;
   accessibilityLabel: string;
   onPress: () => void;
+  /** Dispara compartilhamento formatado no WhatsApp de 1 toque (Spec 122). */
+  onShareWhatsApp?: () => void;
   /** Web larga (Figma `05.01`): linha de tabela com a situação em etiqueta e a ação "Editar". */
   wide?: { statusVariant: TagProps["variant"]; statusLabel: string; offer: string; actionLabel?: string };
 };
 
 /** Linha da estante: capa, título, resumo e seta de avanço, como em `05.01` e `05.03`. */
-export function ShelfRow({ book, summary, accessibilityLabel, onPress, wide }: ShelfRowProps) {
+export function ShelfRow({ book, summary, accessibilityLabel, onPress, onShareWhatsApp, wide }: ShelfRowProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
@@ -73,6 +75,20 @@ export function ShelfRow({ book, summary, accessibilityLabel, onPress, wide }: S
           <Tag variant={wide.statusVariant} label={wide.statusLabel} />
         </View>
         <View style={styles.cellActionBox}>
+          {onShareWhatsApp ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`Compartilhar ${book.title} no WhatsApp`}
+              hitSlop={8}
+              onPress={(e) => {
+                e?.stopPropagation?.();
+                onShareWhatsApp();
+              }}
+              style={withPress(styles.whatsappButton)}
+            >
+              <AppIcon name="whatsapp" size={18} color={colors.nature.foliage} />
+            </Pressable>
+          ) : null}
           <View style={styles.actionButton}>
             <Text style={styles.cellAction}>{actionText}</Text>
             <AppIcon name="chevronRight" size={16} color={colors.m3.primary} />
@@ -100,7 +116,23 @@ export function ShelfRow({ book, summary, accessibilityLabel, onPress, wide }: S
           {summary}
         </Text>
       </View>
-      <AppIcon name="chevronRight" size={24} color={colors.m3.onSurfaceVariant} />
+      <View style={styles.trailingActions}>
+        {onShareWhatsApp ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`Compartilhar ${book.title} no WhatsApp`}
+            hitSlop={8}
+            onPress={(e) => {
+              e?.stopPropagation?.();
+              onShareWhatsApp();
+            }}
+            style={withPress(styles.whatsappButton)}
+          >
+            <AppIcon name="whatsapp" size={20} color={colors.nature.foliage} />
+          </Pressable>
+        ) : null}
+        <AppIcon name="chevronRight" size={24} color={colors.m3.onSurfaceVariant} />
+      </View>
     </Pressable>
   );
 }
@@ -134,7 +166,20 @@ function createStyles(colors: ColorPalette) {
     cellNeighborhood: { flex: 1.5, minWidth: 120, flexDirection: "row", alignItems: "center", gap: tokens.spacing[4] },
     cellNeighborhoodText: { ...tokens.typography.footnote, color: colors.m3.onSurfaceVariant },
     cellStatus: { flex: 1.2, minWidth: 100, alignItems: "flex-start" },
-    cellActionBox: { width: 110, alignItems: "flex-end" },
+    cellActionBox: { minWidth: 140, flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: tokens.spacing[8] },
+    trailingActions: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[8],
+    },
+    whatsappButton: {
+      width: 36,
+      height: 36,
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.nature.sprout,
+      alignItems: "center",
+      justifyContent: "center",
+    },
     actionButton: {
       flexDirection: "row",
       alignItems: "center",
