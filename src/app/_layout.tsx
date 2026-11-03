@@ -100,7 +100,7 @@ export default function RootLayout() {
   if (!fontsLoaded) return null;
 
   return (
-    <SafeAreaProvider initialMetrics={initialWindowMetrics}>
+    <SafeAreaProvider initialMetrics={Platform.OS === "web" ? initialWindowMetrics : undefined}>
       <ThemeProvider>
         <ThemedStatusBar />
         <PushRegistration onOpenRoute={(route) => pushOnce(route as never)} />
