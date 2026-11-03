@@ -8,13 +8,13 @@ describe("buildMeetingMapUrl (Spec 094)", () => {
   it("numera os quatro pontos e destaca só o selecionado em verde", () => {
     const url = buildMeetingMapUrl({ ...base, selectedName: PIRIPIRI_MEETING_POINTS[1].name });
     expect(url).toContain("pin-l-1+6b7280(-41.7935589,-4.2900535)");
-    expect(url).toContain("pin-l-2+2c5e45(-41.7777509,-4.2741994)");
-    expect(url.match(/2c5e45/g)).toHaveLength(1);
+    expect(url).toContain("pin-l-2+2b6334(-41.7777509,-4.2741994)");
+    expect(url.match(/2b6334/g)).toHaveLength(1);
     expect(url).toContain("/auto/560x240@2x");
   });
 
   it("sem seleção não destaca nenhum ponto", () => {
-    expect(buildMeetingMapUrl({ ...base, selectedName: null })).not.toContain("2c5e45");
+    expect(buildMeetingMapUrl({ ...base, selectedName: null })).not.toContain("2b6334");
   });
 
   it("no tema escuro os pinos não selecionados são claros", () => {

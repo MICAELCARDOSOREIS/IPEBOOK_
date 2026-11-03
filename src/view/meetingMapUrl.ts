@@ -11,7 +11,7 @@ export type MeetingMapOptions = {
   padding?: readonly [number, number, number, number];
 };
 
-const SELECTED_COLOR = "2c5e45";
+const SELECTED_COLOR = "2b6334";
 const OTHER_COLOR = "6b7280";
 const OTHER_COLOR_DARK = "e5e7eb";
 

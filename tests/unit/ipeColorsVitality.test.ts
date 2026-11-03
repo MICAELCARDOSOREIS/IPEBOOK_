@@ -5,14 +5,31 @@ import { colors, darkColors } from "@/view/tokens";
 describe("Spec 116 — Cores Vivas do Ipê e Harmonia de Contraste", () => {
   it("tokens de ipê amarelo possuem tons de florada solar viva (não cinzentos ou desbotados)", () => {
     // Ipê Amarelo vivo
-    expect(colors.ipe.bloom).toBe("#F59E0B");
-    expect(colors.ipe.bloomDeep).toBe("#D97706");
-    expect(colors.ipe.container).toBe("#FEF3C7");
-    expect(colors.ipe.petalSoft).toBe("#FFFBEB");
+    expect(colors.ipe.bloom).toBe("#FACC15");
+    expect(colors.ipe.bloomDeep).toBe("#EAB308");
+    expect(colors.ipe.container).toBe("#FEF08A");
+    expect(colors.ipe.petalSoft).toBe("#FEF9C3");
     expect(colors.ipe.onContainer).toBe("#451A03");
 
     // Contraste do texto sobre o container do ipê no tema claro atinge padrão AAA (>= 7:1)
     expect(contrastRatio(colors.ipe.onContainer, colors.ipe.container)).toBeGreaterThanOrEqual(7.0);
+  });
+
+  it("tokens de verde folha de ipê possuem tom botânico vivo e acolhedor (WCAG AA e AAA)", () => {
+    // Verde Folha de Ipê natural
+    expect(colors.action).toBe("#2B6334");
+    expect(colors.nature.foliage).toBe("#2B6334");
+    expect(colors.m3.primary).toBe("#2b6334");
+    expect(colors.m3.onPrimary).toBe("#ffffff");
+
+    // Contraste sobre superfície e sobre primary
+    expect(contrastRatio(colors.action, colors.surface)).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(colors.m3.onPrimary, colors.m3.primary)).toBeGreaterThanOrEqual(7.0);
+
+    // Contêineres de broto suave e modalidade Venda
+    expect(contrastRatio(colors.m3.onPrimaryContainer, colors.m3.primaryContainer)).toBeGreaterThanOrEqual(7.0);
+    expect(contrastRatio(colors.m3.onSecondaryContainer, colors.m3.secondaryContainer)).toBeGreaterThanOrEqual(7.0);
+    expect(contrastRatio(colors.badge.sale.text, colors.badge.sale.background)).toBeGreaterThanOrEqual(7.0);
   });
 
   it("modalidade Trocas usa ouro de Ipê Amarelo vivo com contraste superior a 7:1", () => {

@@ -15,7 +15,7 @@ describe("componentes de ícones (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
   });
 
   it("AppIcon: renderiza com cor e tamanho customizados", async () => {
-    const { toJSON } = await render(<AppIcon name="search" size={32} color="#2C5E45" />);
+    const { toJSON } = await render(<AppIcon name="search" size={32} color="#2B6334" />);
     const tree = toJSON();
     expect(tree).toBeDefined();
   });

@@ -16,9 +16,9 @@ export const colors = {
   surface: "#FCFAF5",
   text: "#3C302A",
   secondaryText: "#645B55",
-  action: "#2C5E45",
-  actionDeep: "#2F503D",
-  soft: "#E7F0EA",
+  action: "#2B6334",
+  actionDeep: "#1E4E27",
+  soft: "#EBF4EC",
   border: "#8F8478",
   highlight: "#F59E0B",
   gold: "#D97706",
@@ -36,9 +36,9 @@ export const colors = {
   },
 
   nature: {
-    foliage: "#2C5E45",      // Verde botânico da copa do ipê / botões de ação principal
-    foliageDeep: "#2F503D",  // Verde profundo para toques e botões pressionados
-    sprout: "#E7F0EA",       // Verde broto suave para contêineres e tags
+    foliage: "#2B6334",      // Verde botânico folha de ipê / botões de ação principal
+    foliageDeep: "#1E4E27",  // Verde profundo para toques e botões pressionados
+    sprout: "#EBF4EC",       // Verde broto suave para contêineres e tags
     onFoliage: "#FFFFFF",    // Texto e ícones sobre verde folhagem
   },
 
@@ -54,19 +54,19 @@ export const colors = {
   },
 
   // Estados
-  success: "#2F6B4F",
+  success: "#2B6334",
   error: "#B3261E",
   errorContainer: "#F9DEDC",
-  disabledBackground: "#E7F0EA",
+  disabledBackground: "#EBF4EC",
   disabledText: "#645B55",
 
   // Badges por Modalidade
   badge: {
-    sale: { background: "#DCFCE7", text: "#14532D" },
+    sale: { background: "#E0F5E2", text: "#154D1F" },
     trade: { background: "#FDE68A", text: "#451A03" },
     donation: { background: "#F4DDD3", text: "#6E3A28" },
     reserved: { background: "#FDE047", text: "#3C302A" },
-    completed: { background: "#2F6B4F", text: "#FFFFFF" },
+    completed: { background: "#2B6334", text: "#FFFFFF" },
   },
 
   // Tons pastel por categoria de livro (Spec 091) — mesmo par sempre para a mesma categoria.
@@ -98,11 +98,11 @@ export const colors = {
   // Papéis Material 3 (design-system/tokens.json, tema claro) — para componentes novos
   // (Button, TextField, Chip, Tag, Dialog etc.) das specs 003/004.
   m3: {
-    primary: "#2c5e45",
+    primary: "#2b6334",
     onPrimary: "#ffffff",
-    primaryContainer: "#cfe9d7",
-    onPrimaryContainer: "#0f2c1d",
-    secondary: "#4d6356",
+    primaryContainer: "#d2ebd4",
+    onPrimaryContainer: "#0a2d12",
+    secondary: "#4b644f",
     onSecondary: "#ffffff",
     onSurface: "#1d1b18",
     onSurfaceVariant: "#4d4740",
@@ -113,8 +113,8 @@ export const colors = {
     surfaceContainerHighest: "#e6e0d7",
     outline: "#7e776f",
     outlineVariant: "#d3ccc2",
-    secondaryContainer: "#dce8de",
-    onSecondaryContainer: "#18291f",
+    secondaryContainer: "#dce9dc",
+    onSecondaryContainer: "#132a17",
     tertiaryContainer: "#FDE68A",
     onTertiaryContainer: "#451A03",
     doacaoContainer: "#f4ddd3",
@@ -123,7 +123,7 @@ export const colors = {
     onErrorContainer: "#410e0b",
     inverseSurface: "#322f2b",
     inverseOnSurface: "#f5efe8",
-    focusRing: "#4e8a68",
+    focusRing: "#498a54",
     scrim: "#00000052",
     shadow: "#000000",
   },
@@ -150,9 +150,9 @@ export const darkColors: ColorPalette = {
   surface: "#1d1b19",
   text: "#e8e2db",
   secondaryText: "#cdc5bc",
-  action: "#9fd4b3",
-  actionDeep: "#bbf0ce",
-  soft: "#364b3e",
+  action: "#98D6A2",
+  actionDeep: "#B4E8BD",
+  soft: "#27422C",
   border: "#968f86",
   highlight: "#F59E0B",
   gold: "#D97706",
@@ -170,10 +170,10 @@ export const darkColors: ColorPalette = {
   },
 
   nature: {
-    foliage: "#9FD4B3",      // Verde menta luminoso botânico
-    foliageDeep: "#BBF0CE",  // Verde claro destacado
-    sprout: "#364B3E",       // Verde musgo escuro para contêineres
-    onFoliage: "#00381F",    // Texto escuro de alto contraste sobre verde menta
+    foliage: "#98D6A2",      // Verde broto/folha de ipê luminoso botânico
+    foliageDeep: "#B4E8BD",  // Verde claro destacado
+    sprout: "#27422C",       // Verde musgo escuro para contêineres
+    onFoliage: "#053712",    // Texto escuro de alto contraste sobre verde folha
   },
 
   // Ipê da marca (Spec 078, Spec 116): florada no tema escuro com alto contraste e aconchego.
@@ -188,19 +188,19 @@ export const darkColors: ColorPalette = {
   },
 
   // Estados
-  success: "#9fd4b3",
+  success: "#98D6A2",
   error: "#ffb4ab",
   errorContainer: "#8c1d18",
-  disabledBackground: "#364b3e",
+  disabledBackground: "#27422C",
   disabledText: "#cdc5bc",
 
   // Badges por Modalidade (adaptados para leitura noturna suave sem ofuscamento)
   badge: {
-    sale: { background: "#1F5139", text: "#BBF0CE" },
+    sale: { background: "#184E21", text: "#B4E8BD" },
     trade: { background: "#4D380A", text: "#FED766" },
     donation: { background: "#5A2F22", text: "#FFDBCF" },
     reserved: { background: "#483200", text: "#FFE088" },
-    completed: { background: "#1B4D36", text: "#D0F5DC" },
+    completed: { background: "#15451C", text: "#D0F5DC" },
   },
 
   // Tons pastel por categoria de livro no tema escuro (Spec 091).
@@ -229,12 +229,12 @@ export const darkColors: ColorPalette = {
 
   // Papéis Material 3 (design-system/tokens.json, tema escuro).
   m3: {
-    primary: "#9fd4b3",
-    onPrimary: "#00381f",
-    primaryContainer: "#1f5139",
-    onPrimaryContainer: "#bbf0ce",
-    secondary: "#b4ccbc",
-    onSecondary: "#203529",
+    primary: "#98d6a2",
+    onPrimary: "#053712",
+    primaryContainer: "#184e21",
+    onPrimaryContainer: "#b4e8bd",
+    secondary: "#b2cbb5",
+    onSecondary: "#1b361f",
     onSurface: "#e8e2db",
     onSurfaceVariant: "#cdc5bc",
     surfaceContainerLowest: "#0f0e0c",
@@ -244,8 +244,8 @@ export const darkColors: ColorPalette = {
     surfaceContainerHighest: "#373431",
     outline: "#968f86",
     outlineVariant: "#4b4640",
-    secondaryContainer: "#364b3e",
-    onSecondaryContainer: "#d2e8d9",
+    secondaryContainer: "#324936",
+    onSecondaryContainer: "#d0e7d3",
     tertiaryContainer: "#4D380A",
     onTertiaryContainer: "#FED766",
     doacaoContainer: "#5a2f22",
@@ -254,7 +254,7 @@ export const darkColors: ColorPalette = {
     onErrorContainer: "#ffdad6",
     inverseSurface: "#e8e2db",
     inverseOnSurface: "#322f2b",
-    focusRing: "#4e8a68",
+    focusRing: "#498a54",
     scrim: "#00000052",
     shadow: "#000000",
   },

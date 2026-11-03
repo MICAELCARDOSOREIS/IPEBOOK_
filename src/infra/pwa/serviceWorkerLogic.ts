@@ -120,10 +120,10 @@ export function createOfflineHtmlResponse(): Response {
         text-align: center;
         box-shadow: 0 4px 12px rgba(0,0,0,0.08);
       }
-      h1 { color: #2C5E45; font-size: 22px; margin-bottom: 12px; }
+      h1 { color: #2B6334; font-size: 22px; margin-bottom: 12px; }
       p { font-size: 15px; line-height: 1.5; color: #4B5563; margin-bottom: 24px; }
       button {
-        background: #2C5E45;
+        background: #2B6334;
         color: #FFFFFF;
         border: none;
         padding: 12px 24px;
