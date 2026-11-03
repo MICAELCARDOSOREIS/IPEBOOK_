@@ -1,7 +1,7 @@
 # Spec 110 — Ações Interativas de Reserva e Acompanhamento no Detalhe do Livro (Material 3 Expressive)
 
 **Data:** 30 de outubro de 2026  
-**Status:** Em implementação  
+**Status:** Concluída  
 **Telas afetadas:**  
 - `src/view/listings/bookDetail.tsx` (rota `/livro/[id]`)  
 - `src/view/listings/ReservedListingSheet.tsx` (novo componente de folha M3)  

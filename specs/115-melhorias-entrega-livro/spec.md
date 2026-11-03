@@ -3,7 +3,7 @@
 ## 1. Identificação
 - **Número:** 115
 - **Título:** Melhorias de Contexto, Acessibilidade e Layout Web na Entrega do Livro
-- **Status:** Proposta / Em implementação
+- **Status:** Concluída
 - **Data:** 2026-11-02
 - **Autor:** Antigravity / Micael
 - **ADR Vinculado:** [ADR 0089](../../docs/adr/0089-melhorias-entrega-livro.md)
