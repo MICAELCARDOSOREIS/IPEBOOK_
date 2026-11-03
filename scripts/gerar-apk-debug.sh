@@ -15,7 +15,13 @@ LOG="$PASTA_LOG/apk-debug.log"
 PID_ARQ="$PASTA_LOG/apk-debug.pid"
 APK="$RAIZ/android/app/build/outputs/apk/debug/app-debug.apk"
 
-rodando() { [[ -f "$PID_ARQ" ]] && kill -0 "$(cat "$PID_ARQ")" 2>/dev/null; }
+rodando() {
+  if [[ -f "$PID_ARQ" ]] && kill -0 "$(cat "$PID_ARQ")" 2>/dev/null; then
+    return 0
+  fi
+  # Suporte a ambientes com isolamento de namespace de PID
+  pgrep -f "expo export:embed|gradlew assembleDebug" >/dev/null 2>&1
+}
 
 status() {
   if rodando; then
@@ -56,6 +62,8 @@ if [[ ! -d "$RAIZ/android" ]]; then
 fi
 
 mkdir -p "$PASTA_LOG"
+# Libera daemons do Gradle parados antes da compilação para evitar conflitos de lock e memória
+if [[ -x "$RAIZ/android/gradlew" ]]; then (cd "$RAIZ/android" && ./gradlew --stop >/dev/null 2>&1 || true); fi
 # Mantém o google-services.json da raiz e o da pasta nativa iguais.
 cp "$RAIZ/google-services.json" "$RAIZ/android/app/google-services.json"
 mkdir -p "$RAIZ/android/app/src/main/assets"
@@ -71,6 +79,7 @@ JVMARGS="${GRADLE_JVMARGS:--Xmx1536m -XX:+UseG1GC -XX:MaxMetaspaceSize=512m}"
 setsid nohup bash -c '
   echo $$ > "$1"
   cd "$2"
+  export SENTRY_DISABLE_AUTO_UPLOAD=true
   echo "--- 1/2: Gerando bundle JavaScript atualizado ---"
   nice -n 19 ionice -c 3 npx expo export:embed \
     --entry-file node_modules/expo-router/entry.js \
