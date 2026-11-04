@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { FlatList, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
@@ -48,6 +48,8 @@ export type ConversationsProps = {
   onOpenListing?: (bookId: string) => void;
   /** Estado vazio (`06.09`): leva à busca de livros. */
   onExplore?: () => void;
+  /** Muda quando a tela volta ao foco; recarrega a lista (ex.: depois de aceitar um pedido). */
+  focusKey?: number;
 };
 
 /** Figma `06.01 · Conversas` (`27:519`) e `06.09 · Conversas · vazio` (`254:5566`), Spec 076. */
@@ -59,12 +61,22 @@ export function Conversations({
   onOpenReceivedRequests,
   onOpenListing,
   onExplore,
+  focusKey,
 }: ConversationsProps) {
   const { colors } = useTheme();
   const wideWeb = useIsWideWeb();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [state, actions] = useConversationsViewModel(sessionUserId);
   const { isOnline } = useNetworkStatus();
+
+  // A primeira carga já vem do ViewModel; recarrega só quando a tela volta ao foco depois.
+  const { reload } = actions;
+  const lastFocusKey = useRef(focusKey);
+  useEffect(() => {
+    if (focusKey === lastFocusKey.current) return;
+    lastFocusKey.current = focusKey;
+    void reload();
+  }, [focusKey, reload]);
 
   const guardedOpenChat = useGuardedPress((id: string) => onOpenChat?.(id));
   const guardedOpenNegotiation = useGuardedPress((id: string) => onOpenNegotiation?.(id));

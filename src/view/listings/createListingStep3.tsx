@@ -173,19 +173,26 @@ export function CreateListingStep3({
             {neighborhood ? `${neighborhood}, Piripiri` : "Selecione em qual bairro a entrega ocorre"}
           </Text>
           {neighborhood ? (
+            <View style={styles.clearButton} />
+          ) : (
+            <AppIcon name="chevronDown" size={20} color={colors.m3.onSurfaceVariant} />
+          )}
+        </Pressable>
+        {/* Fora do campo: na web, botão dentro de botão é HTML inválido. */}
+        {neighborhood ? (
+          <View pointerEvents="box-none" style={styles.clearButtonOverlay}>
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Limpar bairro selecionado"
               hitSlop={12}
+              disabled={loading}
               onPress={() => onSetNeighborhood("")}
               style={withPress(styles.clearButton)}
             >
               <AppIcon name="close" size={20} color={colors.m3.onSurfaceVariant} />
             </Pressable>
-          ) : (
-            <AppIcon name="chevronDown" size={20} color={colors.m3.onSurfaceVariant} />
-          )}
-        </Pressable>
+          </View>
+        ) : null}
         <Text style={styles.hint}>Só o bairro aparece no anúncio.</Text>
       </View>
 
@@ -253,6 +260,13 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
     },
     neighborhoodPlaceholder: { color: colors.m3.onSurfaceVariant },
     clearButton: { width: tokens.spacing[32], height: tokens.spacing[32], justifyContent: "center", alignItems: "center" },
+    clearButtonOverlay: {
+      position: "absolute",
+      top: 0,
+      right: tokens.spacing[16],
+      height: tokens.spacing[56],
+      justifyContent: "center",
+    },
     hint: {
       ...tokens.typography.bodyMedium,
       color: colors.secondaryText,
