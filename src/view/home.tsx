@@ -609,7 +609,7 @@ export default function Home({
 
       {/* 3. Chips de Filtro Rápido (Todos, Venda, Troca, Doação) */}
       {wideWeb ? (
-        <View style={styles.chipsContainerWide}>
+        <View style={styles.chipsContainerWide} testID="home-quick-filter-chips">
           {(["all", "sale", "trade", "donation"] as const).map((mod) => {
             const isSelected = selectedModality === mod;
             const label = mod === "all" ? "Todos" : mod === "sale" ? "Venda" : mod === "trade" ? "Troca" : "Doação";
@@ -1048,6 +1048,10 @@ function createStyles(colors: ColorPalette) {
       opacity: 0.9,
     },
     chipsContainerWide: {
+      flexDirection: "row",
+      alignItems: "center",
+      flexWrap: "wrap",
+      gap: tokens.spacing[8],
       marginBottom: tokens.spacing[20],
     },
     heroMarkContainer: {
