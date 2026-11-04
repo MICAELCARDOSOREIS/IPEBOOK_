@@ -92,12 +92,12 @@ acima.
 A verificação é realizada pelo `@vitest/coverage-v8`, exigindo o mínimo de 80% em todas as métricas.
 
 **Resultado aferido em 2026-11-04 pelo `npm run validate`:**
-- **Statements:** 91,12% (requisito: >= 80%)
+- **Statements:** 91,14% (requisito: >= 80%)
 - **Branches:** 80,51% (requisito: >= 80%)
 - **Functions:** 87,84% (requisito: >= 80%)
-- **Lines:** 92,22% (requisito: >= 80%)
+- **Lines:** 92,25% (requisito: >= 80%)
 
-A suíte validada nessa execução continha 2.042 testes aprovados em 288 arquivos. Os números acima
+A suíte validada nessa execução continha 2.043 testes aprovados em 288 arquivos. Os números acima
 são a medição corrente; resultados anteriores podem ser encontrados nos registros históricos de
 `docs/estado.md` e não devem ser usados como retrato atual da cobertura.
 
@@ -110,8 +110,9 @@ felizes; por isso o limite não foi elevado artificialmente.
 O `npm run lint` executa o Biome sobre `src/`, `tests/`, `functions/` e `scripts/`. A configuração
 em [`biome.json`](../biome.json) usa o preset recomendado, formatter desativado e rebaixa para aviso
 (ou desativa pontualmente) as regras cuja correção exigiria refatoração ampla fora do escopo. Na
-medição de 2026-11-04 o resultado foi de 0 erros, 509 avisos e 34 informações; a CI executa a mesma
-verificação.
+medição de 2026-11-04 o resultado foi de 0 erros e 337 avisos (eram 509 antes das correções automáticas
+da Spec 123); a CI executa a mesma verificação. A regra `useHookAtTopLevel` (Rules of Hooks) permanece
+no nível padrão de erro.
 
 A auditoria de dependências de produção (`npm audit --omit=dev`) aponta 13 vulnerabilidades
 (2 altas, 10 moderadas e 1 baixa), sem nenhuma crítica. As correções automáticas disponíveis
