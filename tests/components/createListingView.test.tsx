@@ -279,10 +279,17 @@ describe("etapa 3 do anúncio — Detalhes (Figma 04.05)", () => {
     const screen = await renderScreen();
     await goToStep(screen, 3);
 
-    expect(screen.getByLabelText("Bairro para retirada: Centro. Alterar bairro")).toBeDefined();
+    const field = screen.getByLabelText("Bairro para retirada: Centro. Alterar bairro");
+    // Regressão: na web, o botão de limpar dentro do campo gerava `<button>` aninhado.
+    const clear = screen.getByLabelText("Limpar bairro selecionado");
+    let ancestor = clear.parent;
+    while (ancestor) {
+      expect(ancestor).not.toBe(field);
+      ancestor = ancestor.parent;
+    }
 
     await act(async () => {
-      fireEvent.press(screen.getByLabelText("Limpar bairro selecionado"));
+      fireEvent.press(clear);
     });
 
     expect(actions.setNeighborhood).toHaveBeenCalledWith("");
