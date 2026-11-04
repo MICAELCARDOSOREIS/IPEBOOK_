@@ -109,6 +109,38 @@ describe("tela de Detalhes da Negociação (ISO/IEC 25010 - Usabilidade e Acessi
     expect(onOpenChat).toHaveBeenCalledWith("req-1");
   });
 
+  it("pedido pendente mostra Aguardando resposta e não tenta carregar o encontro (regressão)", async () => {
+    mockViewModel({
+      detail: { ...fakeDetail, isOwner: false, request: { ...fakeDetail.request, status: "pending" } },
+      loading: false,
+      error: null,
+    });
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<RequestDetail requestId="req-1" sessionUserId="comprador-1" />);
+    });
+    expect(screen.getByLabelText("Etapa atual: Aguardando resposta")).toBeDefined();
+    expect(screen.queryByText("Aceita")).toBeNull();
+    expect(screen.getByTestId("request-status-card")).toBeDefined();
+    expect(screen.getByText("Quem anunciou ainda não respondeu. O encontro é combinado depois do aceite.")).toBeDefined();
+    expect(screen.queryByText("Combine o encontro")).toBeNull();
+  });
+
+  it("pedido recusado esconde o andamento e informa o encerramento", async () => {
+    mockViewModel({
+      detail: { ...fakeDetail, request: { ...fakeDetail.request, status: "rejected" } },
+      loading: false,
+      error: null,
+    });
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<RequestDetail requestId="req-1" sessionUserId="vendedor-1" />);
+    });
+    expect(screen.getByText("Pedido recusado")).toBeDefined();
+    expect(screen.queryByRole("progressbar")).toBeNull();
+    expect(screen.queryByText("Combine o encontro")).toBeNull();
+  });
+
   it("destaca a etapa atual e mostra o encontro antes da pessoa (Spec 083, CA2/CA4)", async () => {
     mockViewModel({ detail: fakeDetail, loading: false, error: null });
     let screen!: Awaited<ReturnType<typeof render>>;

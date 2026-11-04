@@ -119,7 +119,7 @@ export default function Notifications({
       <View style={[styles.content, wide && styles.contentWide]}>
         {state.systemPermissionGranted === false ? (
           <View
-            style={styles.permissionBanner}
+            style={[styles.permissionBanner, wide && styles.permissionBannerWide]}
             accessible={true}
             accessibilityRole="alert"
             testID="permission-alert"
@@ -466,9 +466,13 @@ function createStyles(colors: ColorPalette) {
       paddingHorizontal: WEB_GUTTER,
       paddingTop: tokens.spacing[16],
       flexDirection: "row",
+      flexWrap: "wrap",
       alignItems: "flex-start",
-      gap: tokens.spacing[48],
+      columnGap: tokens.spacing[48],
+      rowGap: tokens.spacing[16],
     },
+    // Aviso de permissão ocupa a linha inteira; filtros e lista ficam lado a lado abaixo dele.
+    permissionBannerWide: { width: "100%", marginBottom: 0 },
     main: { flex: 1, minWidth: 0, maxWidth: 880, alignSelf: "stretch", minHeight: 0 },
     filterBarWide: {
       width: 260,

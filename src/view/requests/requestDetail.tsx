@@ -96,8 +96,12 @@ export function RequestDetail({
   const guardedOpenDelivery = useGuardedPress(onOpenDelivery);
   const awaitingMyConfirmation =
     meeting?.status === "proposed" && meeting.proposedBy !== sessionUserId;
+  // Pedido ainda sem resposta ou encerrado: não há encontro a combinar.
+  const requestStatus = detail?.request.status;
+  const awaitingAnswer = requestStatus === "pending";
+  const closed = requestStatus === "rejected" || requestStatus === "cancelled";
   const progress = [
-    { label: "Aceita", done: true },
+    { label: awaitingAnswer ? "Aguardando resposta" : "Aceita", done: !awaitingAnswer },
     { label: meetingConfirmed ? "Encontro combinado" : "Combinar encontro", done: meetingConfirmed || completed },
     { label: "Concluída", done: completed },
   ];
@@ -163,6 +167,7 @@ export function RequestDetail({
               ) : null}
 
               {/* Onde a negociação está: aceita → encontro combinado → concluída. */}
+              {closed ? null : (
               <View
                 accessible
                 accessibilityRole="progressbar"
@@ -191,6 +196,7 @@ export function RequestDetail({
                   );
                 })}
               </View>
+              )}
               {awaitingMyConfirmation && !completed ? (
                 <View accessibilityRole="alert" style={styles.yourTurn}>
                   <AppIcon name="info" size={18} color={colors.actionDeep} />
@@ -227,15 +233,33 @@ export function RequestDetail({
                 </View>
               </Pressable>
 
-              <MeetingCard
-                requestId={requestId}
-                sessionUserId={sessionUserId}
-                counterpartName={detail.counterpartName ?? COMMUNITY_MEMBER}
-                focusKey={(focusKey ?? 0) + refreshCount}
-                onScheduleMeeting={onScheduleMeeting}
-                onMeetingChange={handleMeetingChange}
-                concluded={Boolean(delivery.completed)}
-              />
+              {awaitingAnswer || closed ? (
+                <View style={styles.card} testID="request-status-card">
+                  <View style={styles.cardHeaderRow}>
+                    <IconBadge icon="calendar" tone="neutral" />
+                    <Text accessibilityRole="header" style={styles.sectionHeader}>
+                      {awaitingAnswer ? "Aguardando resposta" : requestStatus === "rejected" ? "Pedido recusado" : "Pedido cancelado"}
+                    </Text>
+                  </View>
+                  <Text style={styles.bodyText}>
+                    {awaitingAnswer
+                      ? detail.isOwner
+                        ? "Aceite ou recuse este pedido em Pedidos recebidos. O encontro é combinado depois do aceite."
+                        : "Quem anunciou ainda não respondeu. O encontro é combinado depois do aceite."
+                      : "Esta negociação foi encerrada e não terá encontro."}
+                  </Text>
+                </View>
+              ) : (
+                <MeetingCard
+                  requestId={requestId}
+                  sessionUserId={sessionUserId}
+                  counterpartName={detail.counterpartName ?? COMMUNITY_MEMBER}
+                  focusKey={(focusKey ?? 0) + refreshCount}
+                  onScheduleMeeting={onScheduleMeeting}
+                  onMeetingChange={handleMeetingChange}
+                  concluded={Boolean(delivery.completed)}
+                />
+              )}
               </View>
               <View style={[styles.column, wide && styles.columnHalf]}>
 
