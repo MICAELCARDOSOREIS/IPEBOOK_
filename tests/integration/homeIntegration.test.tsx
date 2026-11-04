@@ -1,5 +1,6 @@
 import React from "react";
 import { act, render } from "@testing-library/react-native";
+import { Text, View } from "react-native";
 import { describe, expect, it } from "vitest";
 import { MemoryBookDataSource } from "@/infra/datasources/memoryBookDataSource";
 import { BookUseCases } from "@/usecase/bookUseCases";
@@ -19,20 +20,27 @@ describe("testes de integração: View + ViewModel + UseCase + Datasource (ISO/I
 
     // 3. Componente integrado alimentado pelo caso de uso real
     function IntegratedHome() {
-            const [state] = useHomeViewModel(useCases);
+      const [state] = useHomeViewModel(useCases);
 
       return (
         <React.Fragment>
-          {state.loading && <div>Carregando...</div>}
+          {state.loading && <Text>Carregando...</Text>}
           {state.books.map((b) => (
-            <div key={b.id}>
-              <span>{b.title}</span>
-              <span>{b.author}</span>
-            </div>
+            <View key={b.id}>
+              <Text>{b.title}</Text>
+              <Text>{b.author}</Text>
+            </View>
           ))}
         </React.Fragment>
       );
     }
+
+    let integrated!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      integrated = await render(<IntegratedHome />);
+    });
+    expect(integrated.getByText("O Tempo e o Vento")).toBeDefined();
+    expect(integrated.getByText("Torto Arado")).toBeDefined();
 
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {

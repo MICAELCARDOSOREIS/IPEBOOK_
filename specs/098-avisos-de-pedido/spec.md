@@ -1,6 +1,6 @@
 # Especificação 098 — Avisos de pedido recebido e aceito
 
-Status: implementada e testada localmente; migração aguardando aplicação no Supabase remoto. ADR: [0074](../../docs/adr/0074-avisos-de-pedido-recebido-e-aceito.md).
+Status: implementada e testada localmente; migração aplicada e verificada no Supabase remoto. ADR: [0074](../../docs/adr/0074-avisos-de-pedido-recebido-e-aceito.md).
 
 ## Objetivo
 Garantir que o anunciante seja notificado no aplicativo e via push no celular assim que alguém manifestar interesse em seu livro ("Tenho interesse"), e que o solicitante seja notificado assim que o pedido for aceito para combinar a entrega.

@@ -15,7 +15,7 @@ A tela centraliza a identidade do leitor em Piripiri, métricas comunitárias (p
 
 ### RN-01: Cabeçalho Editorial "Meu perfil"
 - A tela deve exibir no topo o título `"Meu perfil"` na tipografia serifada da marca (`tokens.fontFamily.brand`, 24px, cor `tokens.colors.brandBrown` `#58331F`).
-- Sendo destino raiz da barra de navegação ([ADR 0011](file:///home/usermicael/Projetos/IPEBOOK_/docs/adr/0011-navegacao-por-barra-inferior.md)), não possui botão de voltar.
+- Sendo destino raiz da barra de navegação ([ADR 0011](../../docs/adr/0011-navegacao-tres-destinos.md)), não possui botão de voltar.
 
 ### RN-02: Identidade e ação de edição
 - Exibir o nome em destaque à esquerda e o avatar circular à direita.
@@ -41,7 +41,7 @@ A tela centraliza a identidade do leitor em Piripiri, métricas comunitárias (p
     - `Convidar amigos` (compartilhamento do aplicativo).
     - `Termos e privacidade` e `Ajuda`.
     - `Sair da conta` (ação com confirmação em modal seguro).
-- Substituir chevrons em caractere de texto (`›`) pelo ícone canônico `chevronRight` de [`AppIcon`](file:///home/usermicael/Projetos/IPEBOOK_/src/view/components/AppIcon.tsx).
+- Substituir chevrons em caractere de texto (`›`) pelo ícone canônico `chevronRight` de [`AppIcon`](../../src/view/components/AppIcon.tsx).
 
 ### RN-05: Seletor de Tema
 - O seletor de preferências de aparência (`ThemePreferenceSelector`) deve permanecer integrado na seção de configurações da conta com acessibilidade total (ISO/IEC 25010).

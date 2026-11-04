@@ -15,14 +15,20 @@ npm test
 # Execução com relatório e conferência de cobertura de código (mínimo 80%)
 npm run test:coverage
 
-# Validação unificada obrigatória (TypeScript + Arquitetura + Cobertura)
+# Análise estática com Biome (0 erros; avisos não bloqueiam)
+npm run lint
+
+# Validação unificada obrigatória (TypeScript + Lint + Arquitetura + SQL + Cobertura)
 npm run validate
 
 # Verificação do build estático web
 npm run build:web
 ```
 
-O comando `npm run validate` é rigoroso e composto: caso qualquer checagem estática, regra arquitetural ou teste falhe, o processo é abortado imediatamente com código de saída diferente de zero.
+O comando `npm run validate` é rigoroso e composto: caso qualquer checagem estática, regra
+arquitetural ou teste falhe, o processo é abortado imediatamente com código de saída diferente de
+zero. O Biome é executado com o formatter desativado: ele aponta problemas de correção, segurança
+e complexidade sem reformatar a base existente.
 
 Desde a spec 007, `validate` também executa `npm run test:sql`, que aplica as migrações em
 PostgreSQL local via PGlite e verifica cenários de acesso permitido e negado. Esse teste não
@@ -38,7 +44,7 @@ A qualidade do software do Ipebook foi projetada com base no modelo de produto d
 | :--- | :--- | :--- | :--- |
 | **Adequação Funcional** (*Functional Suitability*) | **Completude e Corretude** | Regras puras de domínio validam títulos, autores, sanitização de strings, limites mínimos/máximos e casos de borda; casos de uso orquestram e isolam dados sem mutações colaterais. | [`tests/unit/bookValidator.test.ts`](../tests/unit/bookValidator.test.ts)<br>[`tests/unit/bookUseCases.test.ts`](../tests/unit/bookUseCases.test.ts)<br>[`tests/integration/homeIntegration.test.tsx`](../tests/integration/homeIntegration.test.tsx) |
 | **Confiabilidade** (*Reliability*) | **Tolerância a Falhas e Recuperabilidade** | A camada de ViewModel gerencia concorrência (descarte de requisições antigas em corridas assíncronas), intercepta falhas técnicas para nunca expor dados internos sensíveis ao usuário e fornece mecanismo determinístico de retry. | [`tests/hooks/useHomeViewModel.test.tsx`](../tests/hooks/useHomeViewModel.test.tsx)<br>[`tests/components-mocked/homeViewMocked.test.tsx`](../tests/components-mocked/homeViewMocked.test.tsx) |
-| **Usabilidade** (*Usability*) | **Acessibilidade e Operabilidade** | A View expõe semântica nativa clara (`accessibilityRole` de `header`, `alert` e `button`), rótulos para leitores de tela (`accessibilityLabel`) e oculta elementos puramente decorativos (`accessible={false}`). | [`tests/components/homeView.test.tsx`](../tests/components/homeView.test.tsx)<br>[`.maestro/03-acessibilidade-e-elementos.yaml`](../.maestro/03-acessibilidade-e-elementos.yaml) |
+| **Usabilidade** (*Usability*) | **Acessibilidade e Operabilidade** | A View expõe semântica nativa clara (`accessibilityRole` de `header`, `alert` e `button`), rótulos para leitores de tela (`accessibilityLabel`) e oculta elementos puramente decorativos (`accessible={false}`). | [`tests/components/homeView.test.tsx`](../tests/components/homeView.test.tsx) e inspeção manual com leitor de tela |
 
 ---
 
@@ -47,13 +53,11 @@ A qualidade do software do Ipebook foi projetada com base no modelo de produto d
 A suíte adota a pirâmide de testes para garantir velocidade, alta fidelidade e facilidade de manutenção:
 
 ```text
-               /              /  \      E2E (.maestro/)
-             /    \     3 fluxos declarativos mobile
-            /------           /        \   Integração (tests/integration/)
-          /          \  View + ViewModel + UseCase + DataSource real
-         /------------        /              \  Componentes com RNTL e Mocks (tests/components/ e tests/components-mocked/)
-       /                \ Renderização semântica, acessibilidade e isolamento de tela
-      /------------------     /                    \ Unitários e Hooks (tests/unit/ e tests/hooks/)
+          /------------\  Integração (tests/integration/)
+        /              \ View + ViewModel + UseCase + DataSource real
+       /----------------\  Componentes com RNTL e Mocks (tests/components/ e tests/components-mocked/)
+      /                  \ Renderização semântica, acessibilidade e isolamento de tela
+     /--------------------\  Unitários e Hooks (tests/unit/ e tests/hooks/)
     /                      \ Regras puras, validadores e ciclo de vida de ViewModel
    /------------------------```
 
@@ -73,10 +77,13 @@ A suíte adota a pirâmide de testes para garantir velocidade, alta fidelidade e
 ### 3.5. Testes de Integração Real (`tests/integration/`)
 - **`homeIntegration.test.tsx` (2 testes):** Exercita o fluxo completo de ponta a ponta sem nenhum mock de regra de negócio, ligando `MemoryBookDataSource` -> `BookUseCases` -> `useHomeViewModel` -> Renderização nativa da View.
 
-### 3.6. Testes Ponta a Ponta Mobile (`.maestro/`)
-- **`01-catalogo-inicial.yaml`:** Fluxo E2E de inicialização e visualização do catálogo inicial.
-- **`02-recuperacao-erro-retry.yaml`:** Fluxo E2E de recuperação e nova tentativa.
-- **`03-acessibilidade-e-elementos.yaml`:** Fluxo E2E de acessibilidade e rolagem.
+### 3.6. Validação manual em dispositivo
+
+Não há suíte End-to-End automatizada no repositório. Os fluxos que exigem dispositivo real
+(login com Google, câmera e leitura de QR entre dois aparelhos, mapa, notificações push e leitor
+de tela) são conferidos manualmente antes de cada publicação. Essa verificação é complementar:
+não substitui os testes automatizados de domínio, ViewModel, componentes e integração descritos
+acima.
 
 ---
 
@@ -84,15 +91,42 @@ A suíte adota a pirâmide de testes para garantir velocidade, alta fidelidade e
 
 A verificação é realizada pelo `@vitest/coverage-v8`, exigindo o mínimo de 80% em todas as métricas.
 
-**Resultado aferido em 2026-10-29 pelo `npm run validate`:**
-- **Statements:** 90,22% (requisito: >= 80%)
-- **Branches:** 80,00% (requisito: >= 80%)
-- **Functions:** 86,57% (requisito: >= 80%)
-- **Lines:** 91,43% (requisito: >= 80%)
+**Resultado aferido em 2026-11-04 pelo `npm run validate`:**
+- **Statements:** 91,12% (requisito: >= 80%)
+- **Branches:** 80,51% (requisito: >= 80%)
+- **Functions:** 87,84% (requisito: >= 80%)
+- **Lines:** 92,22% (requisito: >= 80%)
 
-A suíte validada nessa execução continha 1.788 testes aprovados. Os números acima são a
-medição corrente; resultados anteriores podem ser encontrados nos registros históricos de
+A suíte validada nessa execução continha 2.042 testes aprovados em 288 arquivos. Os números acima
+são a medição corrente; resultados anteriores podem ser encontrados nos registros históricos de
 `docs/estado.md` e não devem ser usados como retrato atual da cobertura.
+
+A cobertura de branches permanece com margem estreita sobre o mínimo de 80%. Elevá-la de forma
+segura exige cobrir ramificações de ViewModels grandes, e não apenas acrescentar testes de caminho
+felizes; por isso o limite não foi elevado artificialmente.
+
+### 4.1. Lint e dependências
+
+O `npm run lint` executa o Biome sobre `src/`, `tests/`, `functions/` e `scripts/`. A configuração
+em [`biome.json`](../biome.json) usa o preset recomendado, formatter desativado e rebaixa para aviso
+(ou desativa pontualmente) as regras cuja correção exigiria refatoração ampla fora do escopo. Na
+medição de 2026-11-04 o resultado foi de 0 erros, 509 avisos e 34 informações; a CI executa a mesma
+verificação.
+
+A auditoria de dependências de produção (`npm audit --omit=dev`) aponta 13 vulnerabilidades
+(2 altas, 10 moderadas e 1 baixa), sem nenhuma crítica. As correções automáticas disponíveis
+exigiriam mudanças incompatíveis em módulos do Expo (`expo@51`), então não foram aplicadas. Foram
+aplicados apenas `overrides` pontuais e compatíveis em `package.json`:
+
+| Pacote | Versão forçada | Origem | Efeito |
+| :--- | :--- | :--- | :--- |
+| `shell-quote` | `1.12.0` | `react-devtools-core` | Remove a vulnerabilidade crítica |
+| `node-forge` | `1.4.3` | `@expo/code-signing-certificates` | Remove a vulnerabilidade alta |
+
+As pendências restantes vêm de `glob`, `minimatch`, `zod` e `deepmerge` transitivos do Expo e do
+Sentry. `glob` e `minimatch` já estão na versão mais recente da linha usada e continuam sinalizados;
+`deepmerge` não tem correção publicada. A recomendação é reavaliar quando o Expo publicar uma
+versão compatível, sem forçar downgrade da stack.
 
 ---
 
@@ -105,12 +139,12 @@ Este guia foi elaborado para apoiar a apresentação técnica perante os avaliad
 
 ### P2: "Como vocês comprovaram a qualidade segundo a norma ISO/IEC 25010?"
 > **Resposta:** *"Mapeamos três características centrais da ISO/IEC 25010 diretamente para testes automatizados reproduzíveis:*
-> 1. *Adequação Funcional: garantida por 17 testes unitários e de integração que validam regras de cadastro, limites de caracteres e consistência de dados;*
+> 1. *Adequação Funcional: garantida por testes unitários e de integração que validam regras de cadastro, limites de caracteres e consistência de dados;*
 > 2. *Confiabilidade: comprovada por testes de hooks que simulam falhas de rede, sanitizam mensagens para evitar vazamento de dados internos e protegem contra condições de corrida;*
-> 3. *Usabilidade: atestada por testes com React Native Testing Library que verificam acessibilidade para leitores de tela (papéis de header, alert e button) e fluxos E2E com Maestro."*
+> 3. *Usabilidade: atestada por testes com React Native Testing Library que verificam acessibilidade para leitores de tela (papéis de header, alert e button), complementados por inspeção manual em dispositivo."*
 
-### P3: "Por que usaram Maestro em vez de Playwright para os testes ponta a ponta?"
-> **Resposta:** *"O Ipebook é uma aplicação mobile React Native/Expo. O Playwright é projetado primordialmente para a web desktop e depende de drivers de navegador que não reproduzem a árvore de acessibilidade nem os gestos nativos de dispositivos móveis. O Maestro é a ferramenta declarativa de ponta para automação mobile real, testando o aplicativo diretamente no emulador Android e no simulador iOS sem instrumentação invasiva ou dependências frágeis."*
+### P3: "Por que não há testes End-to-End automatizados?"
+> **Resposta:** *"O projeto já teve fluxos declarativos de E2E, mas eles foram removidos quando deixaram de ser executados na CI e passaram a divergir da interface. Em vez de manter uma suíte que não rodava, optamos por não alegar uma cobertura que não existe: os fluxos que dependem de dispositivo (login com Google, câmera e QR entre dois aparelhos, mapa, push e leitor de tela) são verificados manualmente antes de cada publicação. A automação cobre domínio, ViewModels, componentes e integração entre camadas, que é onde os defeitos de lógica aparecem com mais frequência."*
 
 ### P4: "Como garantiram que os testes não quebrem por acoplamento com detalhes de implementação?"
 > **Resposta:** *"Seguimos os princípios da Testing Library: testamos o que o usuário vê e como ele interage. Em vez de verificar estados internos ou instâncias de classes, consultamos a tela por `getByRole`, `getByText` e `getByLabelText`. Mocks foram utilizados de forma estrita e fundamentada apenas onde era necessário isolar cenários não-determinísticos (como simular queda instantânea de rede no teste de componente mockado)."*

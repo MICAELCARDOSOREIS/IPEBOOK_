@@ -1,6 +1,6 @@
 # IpêBook 🌳📚
 
-Plataforma comunitária de troca, venda e doação de livros em **Piripiri, PI**, construída em Expo, React Native, TypeScript e Supabase, com arquitetura MVVM sofisticada em sete camadas e suíte de testes automatizados (**1.798 testes**) baseada na norma **ISO/IEC 25010**.
+Plataforma comunitária de troca, venda e doação de livros em **Piripiri, PI**, construída em Expo, React Native, TypeScript e Supabase, com arquitetura MVVM sofisticada em sete camadas e suíte de testes automatizados (**2.042 testes em 288 arquivos**) baseada na norma **ISO/IEC 25010**.
 
 * 🌐 **Site oficial:** [https://ipebook.app](https://ipebook.app)
 * 🤖 **Convite para o Beta Android (Play Store):** [https://ipebook.app/beta](https://ipebook.app/beta)
@@ -70,7 +70,10 @@ npm run test:coverage
 # Ou diretamente pelo parâmetro nativo:
 npm test -- --coverage
 
-# 3. Execução agregada de validação (Typescript estrito + Arquitetura + Cobertura)
+# 3. Análise estática com Biome (0 erros bloqueantes)
+npm run lint
+
+# 4. Execução agregada de validação (TypeScript estrito + Lint + Arquitetura + SQL + Cobertura)
 npm run validate
 ```
 
@@ -83,7 +86,6 @@ npm run validate
 | **Testes de Componentes** | `tests/components/` | Renderização semântica da View, cabeçalhos, rótulos de acessibilidade (`accessibilityRole`) e estado vazio. | RNTL (`homeView.test.tsx`) |
 | **Componentes com Mock** | `tests/components-mocked/` | Isolamento determinístico da View para forçar cenários extremos (falha de rede, carregamento, botão de retry). | RNTL com `vi.mock` (`homeViewMocked.test.tsx`) |
 | **Testes de Integração** | `tests/integration/` | Integração real entre múltiplas camadas: View + ViewModel + Casos de Uso + Repositório em memória sem mocks de negócio. | RNTL integrado (`homeIntegration.test.tsx`) |
-| **Testes End-to-End (E2E)** | `.maestro/` | 3 fluxos críticos reais executados em dispositivo ou emulador móvel. | Maestro (`01-catalogo-inicial.yaml`, `02-recuperacao-erro-retry.yaml`, `03-acessibilidade-e-elementos.yaml`) |
 
 ---
 
@@ -107,18 +109,17 @@ Conforme as diretrizes da disciplina, o projeto adotou três características es
 * **Por que é importante:** Garantir que pessoas usuárias de tecnologias assistivas (leitores de tela) possam navegar e operar o acervo de livros com clareza semântica.
 * **Funcionalidade / Tela:** Estrutura semântica e botões na tela Home ([`src/view/home.tsx`](src/view/home.tsx)).
 * **Como foi atendida:** Uso de propriedades semânticas nativas (`accessibilityRole="header"`, `accessibilityRole="alert"`, `accessibilityLabel="Carregando livros"` e `accessible={false}` em adereços visuais).
-* **Teste comprovatório:** [`tests/components/homeView.test.tsx`](tests/components/homeView.test.tsx) e fluxo E2E [`03-acessibilidade-e-elementos.yaml`](.maestro/03-acessibilidade-e-elementos.yaml).
+* **Teste comprovatório:** [`tests/components/homeView.test.tsx`](tests/components/homeView.test.tsx). Complemento por inspeção manual em dispositivo com leitor de tela.
 
 ---
 
-## 📱 Execução dos Testes E2E com Maestro
+## 📱 Validação manual em dispositivo
 
-Consulte as instruções detalhadas em [`.maestro/README.md`](.maestro/README.md).
-
-```bash
-# Executar suíte E2E completa no emulador:
-maestro test .maestro/
-```
+O projeto não mantém hoje uma suíte de testes End-to-End automatizada. Os fluxos que dependem de
+dispositivo (login com Google, câmera/QR em dois aparelhos, mapa, push e leitor de tela) são
+verificados manualmente antes de cada publicação, conforme o roteiro em
+[`docs/qualidade.md`](docs/qualidade.md). Os testes automatizados cobrem domínio, ViewModels,
+componentes e integração entre camadas.
 
 ---
 

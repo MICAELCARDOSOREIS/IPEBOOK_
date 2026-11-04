@@ -3,9 +3,8 @@
 As tarefas T003–T014 dependem de `specs/003-autenticacao-e-cadastro-de-anuncio/tasks.md`
 (T001–T017) implementadas. O modelo T001/T002 pôde ser antecipado.
 
-Responsável: **Antonio Carlos Gomes** (domínio de Negociação, ver
-[docs/DIVISAO_FEATURES.md do projeto irmão](/home/usermicael/Projetos/IpeBook/docs/DIVISAO_FEATURES.md)),
-todas as tarefas abaixo.
+Responsável: **Antonio Carlos Gomes** (domínio de Negociação, conforme a divisão de features do
+projeto irmão da equipe, fora deste repositório), todas as tarefas abaixo.
 
 - [x] T001 Criar `src/model/entities/bookRequest.ts` e acrescentar `status` a
       `src/model/entities/book.ts`.

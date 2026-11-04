@@ -26,6 +26,9 @@ jobs:
       - name: Verificar tipagem TypeScript
         run: npm run typecheck
 
+      - name: Verificar lint (Biome)
+        run: npm run lint
+
       - name: Verificar conformidade arquitetural (7 camadas MVVM)
         run: npm run check:architecture
 
