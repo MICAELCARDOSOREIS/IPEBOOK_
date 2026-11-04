@@ -29,7 +29,7 @@ type BookRow = {
   box_volumes_count?: number | null;
 };
 
-const BOOK_COLUMNS =
+export const BOOK_COLUMNS =
   "id,title,author,category,owner_id,modality,price,status,city,state,neighborhood,condition,description,synopsis,publisher,page_count,publication_year,photo_url,photos,draft_step,is_box,box_volumes_count";
 
 function mapBook(row: BookRow): Book {
