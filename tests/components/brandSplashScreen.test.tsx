@@ -1,6 +1,6 @@
 
 import { act, render } from "@testing-library/react-native";
-import { describe, expect, it, } from "vitest";
+import { describe, expect, it } from "vitest";
 import { BrandSplashScreen } from "@/view/components/BrandSplashScreen";
 
 describe("BrandSplashScreen (Spec 111 / Identidade visual)", () => {

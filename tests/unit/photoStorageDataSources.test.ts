@@ -5,7 +5,7 @@ import {
   SupabasePhotoStorageDataSource,
 } from "@/infra/datasources/supabasePhotoStorageDataSource";
 import { MemoryPhotoStorageDataSource } from "@/infra/datasources/memoryPhotoStorageDataSource";
-import { DataSourceError, } from "@/model/errors";
+import { DataSourceError } from "@/model/errors";
 import type { SupabaseAppClient } from "@/infra/supabaseClient";
 
 function fakeClient(storageImpl: unknown): SupabaseAppClient {

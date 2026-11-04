@@ -32,7 +32,7 @@ import { Snackbar } from "@/view/components/Snackbar";
 import { TextButton } from "@/view/components/TextButton";
 import { TextField } from "@/view/components/TextField";
 import { TopAppBar } from "@/view/components/TopAppBar";
-import { WEB_GUTTER, } from "@/view/webLayout";
+import { WEB_GUTTER } from "@/view/webLayout";
 import { withPress } from "@/view/pressFeedback";
 import { useGuardedPress } from "@/view/useGuardedPress";
 export type ProfileProps = {
