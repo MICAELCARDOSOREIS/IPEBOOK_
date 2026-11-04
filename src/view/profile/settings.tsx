@@ -81,16 +81,26 @@ export function Settings({
 }: SettingsProps) {
   const fallbackBack = useCallback(() => {}, []);
   const guardedBack = useGuardedPress(onBack ?? fallbackBack);
-  const guardedTerms = onNavigateToTerms ? useGuardedPress(onNavigateToTerms) : undefined;
-  const guardedHelp = onNavigateToHelp ? useGuardedPress(onNavigateToHelp) : undefined;
-  const guardedPrivacy = onNavigateToPrivacy ? useGuardedPress(onNavigateToPrivacy) : undefined;
-  const guardedBlockedUsers = onNavigateToBlockedUsers ? useGuardedPress(onNavigateToBlockedUsers) : undefined;
-  const guardedModeration = onNavigateToModeration ? useGuardedPress(onNavigateToModeration) : undefined;
-  const guardedAbout = onNavigateToAbout ? useGuardedPress(onNavigateToAbout) : undefined;
-  const guardedEditProfile = onNavigateToEditProfile ? useGuardedPress(onNavigateToEditProfile) : undefined;
-  const guardedSecurity = onNavigateToSecurity ? useGuardedPress(onNavigateToSecurity) : undefined;
-  const guardedNotifications = onNavigateToNotifications ? useGuardedPress(onNavigateToNotifications) : undefined;
-  const guardedSignedOut = onSignedOut ? useGuardedPress(onSignedOut) : undefined;
+  const guardedTermsPress = useGuardedPress(onNavigateToTerms);
+  const guardedTerms = onNavigateToTerms ? guardedTermsPress : undefined;
+  const guardedHelpPress = useGuardedPress(onNavigateToHelp);
+  const guardedHelp = onNavigateToHelp ? guardedHelpPress : undefined;
+  const guardedPrivacyPress = useGuardedPress(onNavigateToPrivacy);
+  const guardedPrivacy = onNavigateToPrivacy ? guardedPrivacyPress : undefined;
+  const guardedBlockedUsersPress = useGuardedPress(onNavigateToBlockedUsers);
+  const guardedBlockedUsers = onNavigateToBlockedUsers ? guardedBlockedUsersPress : undefined;
+  const guardedModerationPress = useGuardedPress(onNavigateToModeration);
+  const guardedModeration = onNavigateToModeration ? guardedModerationPress : undefined;
+  const guardedAboutPress = useGuardedPress(onNavigateToAbout);
+  const guardedAbout = onNavigateToAbout ? guardedAboutPress : undefined;
+  const guardedEditProfilePress = useGuardedPress(onNavigateToEditProfile);
+  const guardedEditProfile = onNavigateToEditProfile ? guardedEditProfilePress : undefined;
+  const guardedSecurityPress = useGuardedPress(onNavigateToSecurity);
+  const guardedSecurity = onNavigateToSecurity ? guardedSecurityPress : undefined;
+  const guardedNotificationsPress = useGuardedPress(onNavigateToNotifications);
+  const guardedNotifications = onNavigateToNotifications ? guardedNotificationsPress : undefined;
+  const guardedSignedOutPress = useGuardedPress(onSignedOut);
+  const guardedSignedOut = onSignedOut ? guardedSignedOutPress : undefined;
   const { colors } = useTheme();
   // Web larga: barra lateral com a conta e o índice das seções, e as seções empilhadas ao lado.
   const wide = useIsWideWeb();

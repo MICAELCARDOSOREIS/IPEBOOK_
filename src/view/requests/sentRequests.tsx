@@ -22,10 +22,10 @@ export function SentRequests({
   const { colors } = useTheme();
   const s = useMemo(() => createRequestStyles(colors), [colors]);
 
-  const guardedBack = onBack ? useGuardedPress(onBack) : undefined;
-  const guardedNavigateToNegotiationDetail = onNavigateToNegotiationDetail
-    ? useGuardedPress((id: string) => onNavigateToNegotiationDetail(id))
-    : undefined;
+  const guardedBackPress = useGuardedPress(onBack);
+  const guardedBack = onBack ? guardedBackPress : undefined;
+  const guardedNavigateToNegotiationDetailPress = useGuardedPress((id: string) => onNavigateToNegotiationDetail?.(id));
+  const guardedNavigateToNegotiationDetail = onNavigateToNegotiationDetail ? guardedNavigateToNegotiationDetailPress : undefined;
 
   return (
     <RequestListLayout
@@ -67,11 +67,12 @@ export default function SentRequestsScreen({
 }: SentRequestsScreenProps = {}) {
   const [authState] = useAuthViewModel();
 
-  const guardedBack = onBack ? useGuardedPress(onBack) : undefined;
-  const guardedRequireSignIn = onRequireSignIn ? useGuardedPress(onRequireSignIn) : undefined;
-  const guardedNavigateToNegotiationDetail = onNavigateToNegotiationDetail
-    ? useGuardedPress((id: string) => onNavigateToNegotiationDetail(id))
-    : undefined;
+  const guardedBackPress = useGuardedPress(onBack);
+  const guardedBack = onBack ? guardedBackPress : undefined;
+  const guardedRequireSignInPress = useGuardedPress(onRequireSignIn);
+  const guardedRequireSignIn = onRequireSignIn ? guardedRequireSignInPress : undefined;
+  const guardedNavigateToNegotiationDetailPress = useGuardedPress((id: string) => onNavigateToNegotiationDetail?.(id));
+  const guardedNavigateToNegotiationDetail = onNavigateToNegotiationDetail ? guardedNavigateToNegotiationDetailPress : undefined;
 
   useEffect(() => {
     if (!authState.loading && !authState.user) guardedRequireSignIn?.();
