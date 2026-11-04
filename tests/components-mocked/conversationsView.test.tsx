@@ -74,6 +74,21 @@ describe("Conversations (Spec 076)", () => {
     expect(onOpenListing).toHaveBeenCalledWith("b3");
   });
 
+  it("recarrega a lista quando a tela volta ao foco (regressão: selo Nova proposta ficava após aceitar)", async () => {
+    const reload = vi.fn().mockResolvedValue(undefined);
+    vi.mocked(useConversationsViewModel).mockReturnValue([
+      { items, loading: false, error: null },
+      { reload, deleteConversation, cancelRequest },
+    ]);
+    const screen = await renderView({ focusKey: 1 });
+    expect(reload).not.toHaveBeenCalled();
+
+    await act(async () => {
+      screen.rerender(<Conversations sessionUserId="me" focusKey={2} />);
+    });
+    expect(reload).toHaveBeenCalledTimes(1);
+  });
+
   it("mostra o estado vazio do 06.09 com Encontrar um livro (Spec 082)", async () => {
     setup({ items: [] });
     const onExplore = vi.fn();
