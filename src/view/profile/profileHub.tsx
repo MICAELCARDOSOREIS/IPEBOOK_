@@ -225,11 +225,12 @@ export default function ProfileHub({
             <View style={styles.status}>
               <ActivityIndicator color={colors.m3.primary} accessibilityLabel="Carregando perfil" />
             </View>
-          ) : (
-            <>
-              {isSignedIn ? (
-                <>
-                  <View style={[styles.heroBlock, wideWeb && styles.heroBlockWide]}>
+          ) : isSignedIn ? (
+            wideWeb ? (
+              <View style={styles.wideGrid} testID="profile-wide-grid">
+                <View style={styles.wideSideCol}>
+                  {/* Cartão de identidade, métricas e ações */}
+                  <View style={[styles.heroBlock, styles.heroBlockWide]}>
                     <View style={styles.identityRow}>
                       <View style={styles.identityText}>
                         <Text accessibilityRole="header" style={styles.profileName} numberOfLines={2}>
@@ -343,7 +344,7 @@ export default function ProfileHub({
                   </View>
 
                   {/* Selos Comunitários de Piripiri (Spec 122) */}
-                  <View style={[styles.badgesSection, wideWeb && styles.sectionWide]}>
+                  <View style={[styles.badgesSection, styles.badgesSectionWide]} testID="profile-badges-section">
                     <View style={styles.sectionHeaderRow}>
                       <View style={styles.sectionBloom} />
                       <Text accessibilityRole="header" style={styles.sectionHeader}>Selos Comunitários de Piripiri</Text>
@@ -357,8 +358,8 @@ export default function ProfileHub({
                         <View style={[styles.badgeIconBox, { backgroundColor: colors.nature.sprout }]}>
                           <AppIcon name="place" size={20} color={colors.nature.foliage} />
                         </View>
-                        <Text style={styles.badgeTitle} numberOfLines={1}>Leitor de Piripiri</Text>
-                        <Text style={styles.badgeDesc} numberOfLines={1}>{profile.neighborhood || "Comunidade"}</Text>
+                        <Text style={styles.badgeTitle} numberOfLines={2}>Leitor de Piripiri</Text>
+                        <Text style={styles.badgeDesc} numberOfLines={2}>{profile.neighborhood || "Comunidade"}</Text>
                       </View>
 
                       <View
@@ -369,8 +370,8 @@ export default function ProfileHub({
                         <View style={[styles.badgeIconBox, { backgroundColor: colors.m3.secondaryContainer }]}>
                           <AppIcon name="checkCircle" size={20} color={colors.action} />
                         </View>
-                        <Text style={styles.badgeTitle} numberOfLines={1}>Ponto Seguro</Text>
-                        <Text style={styles.badgeDesc} numberOfLines={1}>
+                        <Text style={styles.badgeTitle} numberOfLines={2}>Ponto Seguro</Text>
+                        <Text style={styles.badgeDesc} numberOfLines={2}>
                           {completedTrocas > 0 ? `${completedTrocas} ${completedTrocas === 1 ? "concluído" : "concluídos"}` : "Locais públicos"}
                         </Text>
                       </View>
@@ -383,63 +384,297 @@ export default function ProfileHub({
                         <View style={[styles.badgeIconBox, { backgroundColor: colors.ipe.container }]}>
                           <AppIcon name="shelf" size={20} color={colors.ipe.onContainer} />
                         </View>
-                        <Text style={styles.badgeTitle} numberOfLines={1}>Estante Ativa</Text>
-                        <Text style={styles.badgeDesc} numberOfLines={1}>
+                        <Text style={styles.badgeTitle} numberOfLines={2}>Estante Ativa</Text>
+                        <Text style={styles.badgeDesc} numberOfLines={2}>
                           {totalPublications > 0 ? `${totalPublications} ${totalPublications === 1 ? "obra" : "obras"}` : "Compartilhe"}
                         </Text>
                       </View>
                     </View>
                   </View>
+                </View>
 
-                  {/* Seção 1: Atividade (Figma 07.01 nó 604:8684: altura 36px, cor #2C5E45) */}
-                  <View style={[styles.section, wideWeb && styles.sectionWide]}>
-                    <View style={styles.sectionHeaderRow}>
-                      <View style={styles.sectionBloom} />
-                      <Text style={styles.sectionHeader}>Atividade</Text>
+                {/* Coluna Principal da Web Larga: Atividade e Conta lado a lado */}
+                <View style={styles.wideMainCol}>
+                  <View style={styles.wideSectionsRow}>
+                    {/* Seção 1: Atividade */}
+                    <View style={[styles.section, styles.sectionWide]}>
+                      <View style={styles.sectionHeaderRow}>
+                        <View style={styles.sectionBloom} />
+                        <Text style={styles.sectionHeader}>Atividade</Text>
+                      </View>
+                      <View style={styles.cardGroup}>
+                        {activityItems.map((item) => (
+                          <Pressable
+                            key={item.key}
+                            accessibilityRole="button"
+                            accessibilityLabel={item.label}
+                            onPress={item.onPress}
+                            style={({ pressed }) => [styles.menuRow, pressed && styles.menuRowPressed]}
+                          >
+                            <View style={styles.menuIconContainer}>
+                              <AppIcon name={item.icon} size={20} color={item.iconColor ?? colors.m3.onSurface} />
+                            </View>
+                            <View style={styles.menuRowText}>
+                              <Text style={styles.menuRowTitle}>{item.label}</Text>
+                              {item.description ? (
+                                <Text style={styles.menuRowDescription}>{item.description}</Text>
+                              ) : null}
+                            </View>
+                            {item.showChevron ? (
+                              <AppIcon name="chevronRight" size={20} color={colors.m3.onSurfaceVariant} />
+                            ) : null}
+                          </Pressable>
+                        ))}
+                      </View>
                     </View>
-                    <View style={styles.cardGroup}>
-                      {activityItems.map((item) => (
+
+                    {/* Seção 2: Conta */}
+                    <View style={[styles.section, styles.sectionWide]}>
+                      <View style={styles.sectionHeaderRow}>
+                        <View style={styles.sectionBloom} />
+                        <Text style={styles.sectionHeader}>Conta</Text>
+                      </View>
+                      <View style={styles.cardGroup}>
+                        {accountItems.map((item) => (
+                          <Pressable
+                            key={item.key}
+                            accessibilityRole="button"
+                            accessibilityLabel={item.label}
+                            onPress={item.onPress}
+                            style={({ pressed }) => [styles.menuRow, pressed && styles.menuRowPressed]}
+                          >
+                            <View style={styles.menuIconContainer}>
+                              <AppIcon name={item.icon} size={20} color={item.iconColor ?? colors.m3.onSurfaceVariant} />
+                            </View>
+                            <View style={styles.menuRowText}>
+                              <Text style={styles.menuRowTitle}>{item.label}</Text>
+                              {item.description ? (
+                                <Text style={styles.menuRowDescription}>{item.description}</Text>
+                              ) : null}
+                            </View>
+                            {item.showChevron ? (
+                              <AppIcon name="chevronRight" size={20} color={colors.m3.onSurfaceVariant} />
+                            ) : null}
+                          </Pressable>
+                        ))}
+
+                        {/* Sair da conta (Figma 07.01 nó 25:674: sem chevron) */}
                         <Pressable
-                          key={item.key}
                           accessibilityRole="button"
-                          accessibilityLabel={item.label}
-                          onPress={item.onPress}
+                          accessibilityLabel="Sair da conta"
+                          onPress={() => setConfirmingSignOut(true)}
                           style={({ pressed }) => [styles.menuRow, pressed && styles.menuRowPressed]}
                         >
-                          <View style={styles.menuIconContainer}>
-                            <AppIcon name={item.icon} size={20} color={item.iconColor ?? colors.m3.onSurface} />
+                          <View style={[styles.menuIconContainer, styles.signOutIconContainer]}>
+                            <AppIcon name="logout" size={20} color={colors.error} />
                           </View>
                           <View style={styles.menuRowText}>
-                            <Text style={styles.menuRowTitle}>{item.label}</Text>
-                            {item.description ? (
-                              <Text style={styles.menuRowDescription}>{item.description}</Text>
-                            ) : null}
+                            <Text style={[styles.menuRowTitle, styles.signOutText]}>Sair da conta</Text>
                           </View>
-                          {item.showChevron ? (
-                            <AppIcon name="chevronRight" size={20} color={colors.m3.onSurfaceVariant} />
-                          ) : null}
                         </Pressable>
-                      ))}
+                      </View>
                     </View>
                   </View>
-                </>
-              ) : (
-                /* Estado de convidado: sem conta não há identidade nem atividade a exibir */
-                <View style={[styles.guestCard, wideWeb && styles.fullRow]}>
-                  <Text style={styles.guestTitle}>Você ainda não entrou</Text>
-                  <Text style={styles.guestText}>
-                    Crie uma conta grátis para publicar livros, favoritar buscas e negociar trocas em Piripiri.
-                  </Text>
-                  <FilledButton
-                    label="Entrar ou criar conta"
-                    onPress={guardedNavigateToSignIn}
-                  />
                 </View>
-              )}
+              </View>
+            ) : (
+              <>
+                <View style={styles.heroBlock}>
+                  <View style={styles.identityRow}>
+                    <View style={styles.identityText}>
+                      <Text accessibilityRole="header" style={styles.profileName} numberOfLines={2}>
+                        {profile.name}
+                      </Text>
+                      <View style={styles.identityMetaRow}>
+                        {instagramHandle ? (
+                          <Pressable
+                            accessibilityRole="link"
+                            accessibilityLabel={`Abrir Instagram @${instagramHandle}`}
+                            hitSlop={8}
+                            onPress={() => void Linking.openURL(`https://instagram.com/${instagramHandle}`)}
+                          >
+                            <Text style={styles.identityHandle}>{`@${instagramHandle}`}</Text>
+                          </Pressable>
+                        ) : (
+                          <Pressable
+                            accessibilityRole="button"
+                            accessibilityLabel="Adicionar Instagram ao perfil"
+                            hitSlop={8}
+                            onPress={guardedNavigateToEditProfile}
+                          >
+                            <Text style={styles.identityHandleAction}>Adicionar Instagram</Text>
+                          </Pressable>
+                        )}
+                        <View style={styles.locationRow}>
+                          <AppIcon name="place" size={16} color={colors.m3.onSurfaceVariant} />
+                          <Text style={styles.locationText}>
+                            {profile.neighborhood ? `${profile.neighborhood}, Piripiri` : "Piripiri, PI"}
+                          </Text>
+                        </View>
+                      </View>
+                    </View>
+                    <View style={styles.avatarFrame}>
+                      <Avatar name={profile.name} photoUrl={profile.photoUrl} size={92} />
+                      <Image
+                        source={ipeFrame}
+                        accessibilityElementsHidden
+                        pointerEvents="none"
+                        resizeMode="contain"
+                        style={styles.avatarIpeFrame}
+                      />
+                    </View>
+                  </View>
 
-              {/* Seção 2: Conta (Figma 07.01 nó 604:8686). Sem sessão não há conta para gerenciar (ADR 0060). */}
-              {isSignedIn ? (
-                <View style={[styles.section, wideWeb && styles.sectionWide]}>
+                  <View style={styles.statsContainer}>
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={`Minhas publicações: ${totalPublications} ${totalPublications === 1 ? "publicação" : "publicações"}`}
+                      onPress={guardedNavigateToMyListings}
+                      style={({ pressed }) => [styles.statBox, pressed && styles.statBoxPressed]}
+                    >
+                      <Text style={styles.statNumber}>{totalPublications}</Text>
+                      <Text style={styles.statLabel}>{totalPublications === 1 ? "publicação" : "publicações"}</Text>
+                    </Pressable>
+
+                    <View style={styles.statDivider} />
+
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={`Trocas concluídas: ${completedTrocas} ${completedTrocas === 1 ? "troca" : "trocas"}`}
+                      onPress={guardedNavigateToMeetingHistory}
+                      style={({ pressed }) => [styles.statBox, pressed && styles.statBoxPressed]}
+                    >
+                      <Text style={styles.statNumber}>{completedTrocas}</Text>
+                      <Text style={styles.statLabel}>{completedTrocas === 1 ? "troca" : "trocas"}</Text>
+                    </Pressable>
+
+                    <View style={styles.statDivider} />
+
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={`Avaliações recebidas: ${ratingText}`}
+                      onPress={guardedNavigateToRatings}
+                      style={({ pressed }) => [styles.statBox, pressed && styles.statBoxPressed]}
+                    >
+                      <Text style={styles.statNumber}>
+                        {ratingText === "—" ? ratingText : <><Text style={styles.ratingStar}>★</Text> {ratingText}</>}
+                      </Text>
+                      <Text style={styles.statLabel}>nota média</Text>
+                    </Pressable>
+                  </View>
+
+                  <View style={styles.primaryActions}>
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel="Editar perfil"
+                      onPress={guardedNavigateToEditProfile}
+                      style={({ pressed }) => [
+                        styles.editProfileButton,
+                        resolvedScheme === "dark" && styles.editProfileButtonDark,
+                        pressed && styles.editProfileButtonPressed,
+                      ]}
+                    >
+                      <AppIcon name="edit" size={18} color={colors.ipe.onContainer} />
+                      <Text style={styles.editProfileButtonText}>Editar perfil</Text>
+                    </Pressable>
+
+                    {onNavigateToCreateListing ? (
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel="Publicar um livro"
+                        onPress={guardedNavigateToCreateListing}
+                        style={({ pressed }) => [styles.publishButton, pressed && styles.publishButtonPressed]}
+                      >
+                        <AppIcon name="add" size={20} color={colors.m3.onPrimary} />
+                        <Text style={styles.publishButtonText}>Publicar um livro</Text>
+                      </Pressable>
+                    ) : null}
+                  </View>
+                </View>
+
+                {/* Selos Comunitários de Piripiri (Spec 122) */}
+                <View style={styles.badgesSection} testID="profile-badges-section">
+                  <View style={styles.sectionHeaderRow}>
+                    <View style={styles.sectionBloom} />
+                    <Text accessibilityRole="header" style={styles.sectionHeader}>Selos Comunitários de Piripiri</Text>
+                  </View>
+                  <View style={styles.badgesRow}>
+                    <View
+                      style={styles.badgeItem}
+                      accessibilityRole="text"
+                      accessibilityLabel={`Selo Leitor de Piripiri: ${profile.neighborhood || "Comunidade"}`}
+                    >
+                      <View style={[styles.badgeIconBox, { backgroundColor: colors.nature.sprout }]}>
+                        <AppIcon name="place" size={20} color={colors.nature.foliage} />
+                      </View>
+                      <Text style={styles.badgeTitle} numberOfLines={2}>Leitor de Piripiri</Text>
+                      <Text style={styles.badgeDesc} numberOfLines={2}>{profile.neighborhood || "Comunidade"}</Text>
+                    </View>
+
+                    <View
+                      style={styles.badgeItem}
+                      accessibilityRole="text"
+                      accessibilityLabel={`Selo Ponto Seguro: ${completedTrocas} ${completedTrocas === 1 ? "encontro realizado" : "encontros realizados"}`}
+                    >
+                      <View style={[styles.badgeIconBox, { backgroundColor: colors.m3.secondaryContainer }]}>
+                        <AppIcon name="checkCircle" size={20} color={colors.action} />
+                      </View>
+                      <Text style={styles.badgeTitle} numberOfLines={2}>Ponto Seguro</Text>
+                      <Text style={styles.badgeDesc} numberOfLines={2}>
+                        {completedTrocas > 0 ? `${completedTrocas} ${completedTrocas === 1 ? "concluído" : "concluídos"}` : "Locais públicos"}
+                      </Text>
+                    </View>
+
+                    <View
+                      style={styles.badgeItem}
+                      accessibilityRole="text"
+                      accessibilityLabel={`Selo Estante Ativa: ${totalPublications} ${totalPublications === 1 ? "livro publicado" : "livros publicados"}`}
+                    >
+                      <View style={[styles.badgeIconBox, { backgroundColor: colors.ipe.container }]}>
+                        <AppIcon name="shelf" size={20} color={colors.ipe.onContainer} />
+                      </View>
+                      <Text style={styles.badgeTitle} numberOfLines={2}>Estante Ativa</Text>
+                      <Text style={styles.badgeDesc} numberOfLines={2}>
+                        {totalPublications > 0 ? `${totalPublications} ${totalPublications === 1 ? "obra" : "obras"}` : "Compartilhe"}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+
+                {/* Seção 1: Atividade (Figma 07.01 nó 604:8684: altura 36px, cor #2C5E45) */}
+                <View style={styles.section}>
+                  <View style={styles.sectionHeaderRow}>
+                    <View style={styles.sectionBloom} />
+                    <Text style={styles.sectionHeader}>Atividade</Text>
+                  </View>
+                  <View style={styles.cardGroup}>
+                    {activityItems.map((item) => (
+                      <Pressable
+                        key={item.key}
+                        accessibilityRole="button"
+                        accessibilityLabel={item.label}
+                        onPress={item.onPress}
+                        style={({ pressed }) => [styles.menuRow, pressed && styles.menuRowPressed]}
+                      >
+                        <View style={styles.menuIconContainer}>
+                          <AppIcon name={item.icon} size={20} color={item.iconColor ?? colors.m3.onSurface} />
+                        </View>
+                        <View style={styles.menuRowText}>
+                          <Text style={styles.menuRowTitle}>{item.label}</Text>
+                          {item.description ? (
+                            <Text style={styles.menuRowDescription}>{item.description}</Text>
+                          ) : null}
+                        </View>
+                        {item.showChevron ? (
+                          <AppIcon name="chevronRight" size={20} color={colors.m3.onSurfaceVariant} />
+                        ) : null}
+                      </Pressable>
+                    ))}
+                  </View>
+                </View>
+
+                {/* Seção 2: Conta (Figma 07.01 nó 604:8686). Sem sessão não há conta para gerenciar (ADR 0060). */}
+                <View style={styles.section}>
                   <View style={styles.sectionHeaderRow}>
                     <View style={styles.sectionBloom} />
                     <Text style={styles.sectionHeader}>Conta</Text>
@@ -484,8 +719,20 @@ export default function ProfileHub({
                     </Pressable>
                   </View>
                 </View>
-              ) : null}
-            </>
+              </>
+            )
+          ) : (
+            /* Estado de convidado: sem conta não há identidade nem atividade a exibir */
+            <View style={[styles.guestCard, wideWeb && styles.fullRow]}>
+              <Text style={styles.guestTitle}>Você ainda não entrou</Text>
+              <Text style={styles.guestText}>
+                Crie uma conta grátis para publicar livros, favoritar buscas e negociar trocas em Piripiri.
+              </Text>
+              <FilledButton
+                label="Entrar ou criar conta"
+                onPress={guardedNavigateToSignIn}
+              />
+            </View>
           )}
         </View>
       </ScrollView>
@@ -515,13 +762,30 @@ function createStyles(colors: ColorPalette) {
       alignSelf: "center",
       paddingHorizontal: WEB_GUTTER,
       paddingTop: tokens.spacing[32],
-      flexDirection: "row",
-      flexWrap: "wrap",
-      alignItems: "flex-start",
-      columnGap: tokens.spacing[48],
-      rowGap: tokens.spacing[24],
+      gap: tokens.spacing[24],
     },
     fullRow: { width: "100%" },
+    wideGrid: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+      gap: tokens.spacing[32],
+      width: "100%",
+    },
+    wideSideCol: {
+      width: 380,
+      gap: tokens.spacing[20],
+    },
+    wideMainCol: {
+      flex: 1,
+      minWidth: 480,
+    },
+    wideSectionsRow: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: tokens.spacing[24],
+      alignItems: "flex-start",
+      width: "100%",
+    },
     heroBlock: {
       width: "100%",
       position: "relative",
@@ -538,10 +802,9 @@ function createStyles(colors: ColorPalette) {
       shadowRadius: 10,
       elevation: 2,
     },
-    // Web larga: identidade e métricas numa coluna lateral; Atividade e Conta ao lado.
-    // Sem `sticky`: a seção "Conta" quebra para a linha de baixo e o cartão grudado a cobria ao rolar.
-    heroBlockWide: { width: 380 },
-    sectionWide: { flex: 1, flexBasis: 300, minWidth: 300 },
+    heroBlockWide: { width: "100%" },
+    badgesSectionWide: { width: "100%", marginTop: 0 },
+    sectionWide: { flex: 1, minWidth: 260 },
     content: {
       width: "100%",
       paddingHorizontal: tokens.spacing[24],
@@ -690,8 +953,11 @@ function createStyles(colors: ColorPalette) {
       flex: 1,
       backgroundColor: colors.m3.surfaceContainerLow,
       borderRadius: tokens.radius.card,
-      padding: tokens.spacing[12],
+      paddingVertical: tokens.spacing[12],
+      paddingHorizontal: tokens.spacing[6],
+      minHeight: 104,
       alignItems: "center",
+      justifyContent: "flex-start",
       gap: tokens.spacing[4],
       borderWidth: 1,
       borderColor: colors.m3.outlineVariant,
