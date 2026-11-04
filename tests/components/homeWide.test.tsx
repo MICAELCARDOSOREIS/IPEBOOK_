@@ -57,8 +57,9 @@ describe("Home na Web Larga (Spec 093 · Figma 02.01)", () => {
     expect(screen.queryByLabelText("Entrar no aplicativo")).toBeNull();
     expect(screen.queryByLabelText("Abrir notificações")).toBeNull();
 
-    // Exibe o banner de estatísticas comunitárias no hero
+    // Exibe o banner de estatísticas comunitárias no hero e chips de filtro em linha
     expect(screen.getByTestId("home-community-stats")).toBeDefined();
+    expect(screen.getByTestId("home-quick-filter-chips")).toBeDefined();
     expect(screen.getAllByText("2")).toHaveLength(2);
     expect(screen.getByText("livros anunciados")).toBeDefined();
     expect(screen.getByText("bairros com leitores")).toBeDefined();

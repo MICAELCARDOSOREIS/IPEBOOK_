@@ -63,6 +63,9 @@ export function Chip({ label, selected, onPress, disabled = false, accessibility
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
+    container: {
+      alignSelf: "flex-start",
+    },
     chip: {
       borderRadius: tokens.shapeMorph.chipUnselected,
       justifyContent: "center",
