@@ -105,3 +105,7 @@ Nenhum segredo deve aparecer em exemplos, capturas, logs compartilhados ou commi
 ## APK de debug local
 
 `npm run apk:debug` inicia a compilação em segundo plano, desacoplada do terminal (sobrevive ao fechar o terminal ou a sessão de IA). `npm run apk:debug:status` mostra o andamento ou o caminho do APK (`android/app/build/outputs/apk/debug/app-debug.apk`); `bash scripts/gerar-apk-debug.sh esperar` acompanha até o fim. Requer a pasta `android/` (gere com `npx expo prebuild -p android --no-install` após adicionar módulos nativos). O APK de debug carrega o código do Metro (`npx expo start`).
+
+## APK de release local (produção autônoma)
+
+`npm run apk:release` inicia a compilação do APK de release em segundo plano, desacoplada do terminal. Diferente do debug, este APK é 100% autônomo (não necessita do servidor Metro), executa com bytecode pré-compilado pelo motor Hermes, minificação R8/ProGuard e compressão de recursos. O arquivo final é gerado em `android/app/build/outputs/apk/release/app-release.apk`. Para acompanhar o andamento, use `npm run apk:release:status` ou `npm run apk:release:log`.
