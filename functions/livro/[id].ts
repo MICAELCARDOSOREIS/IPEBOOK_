@@ -44,10 +44,11 @@ export const onRequest: PagesFunction = async (context) => {
   }
 
   try {
-    const supabaseUrl = env.EXPO_PUBLIC_SUPABASE_URL || "https://kxyjafjvxovlqaswddas.supabase.co";
-    const supabaseKey = env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY || env.EXPO_PUBLIC_SUPABASE_KEY || "";
+    // Sem fallback embutido: o projeto Supabase é definido apenas pelas variáveis do Cloudflare Pages.
+    const supabaseUrl = env.EXPO_PUBLIC_SUPABASE_URL ?? "";
+    const supabaseKey = env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? env.EXPO_PUBLIC_SUPABASE_KEY ?? "";
 
-    if (!supabaseUrl || !supabaseKey) {
+    if (!supabaseUrl.startsWith("https://") || !supabaseKey) {
       return response;
     }
 
@@ -55,15 +56,19 @@ export const onRequest: PagesFunction = async (context) => {
     const timeout = setTimeout(() => controller.abort(), 1800);
 
     const apiUrl = `${supabaseUrl}/rest/v1/v2_books?id=eq.${encodeURIComponent(bookId)}&select=id,title,author,trade_type,price,photo_url,bairro,is_box,box_volumes_count`;
-    const res = await fetch(apiUrl, {
-      headers: {
-        apikey: supabaseKey,
-        Authorization: `Bearer ${supabaseKey}`,
-        Accept: "application/json",
-      },
-      signal: controller.signal,
-    });
-    clearTimeout(timeout);
+    let res: Response;
+    try {
+      res = await fetch(apiUrl, {
+        headers: {
+          apikey: supabaseKey,
+          Authorization: `Bearer ${supabaseKey}`,
+          Accept: "application/json",
+        },
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
 
     if (!res.ok) {
       return response;

@@ -1,6 +1,6 @@
 # Especificação 095 — Concluir a negociação por QR code
 
-Status: implementada e verificada localmente; migração ainda não aplicada no Supabase remoto. ADR: [0070](../../docs/adr/0070-conclusao-por-qr-code.md).
+Status: implementada e testada localmente; migração aplicada e verificada no Supabase remoto. ADR: [0070](../../docs/adr/0070-conclusao-por-qr-code.md).
 
 ## Objetivo
 Depois que o encontro está confirmado, a pessoa que entrega o livro mostra um QR code e a outra o lê. A leitura conclui a negociação para as duas e leva à avaliação. Isso prova que as duas estiveram juntas e substitui o cartão "Concluir negociação", retirado da tela "Acompanhar encontro".

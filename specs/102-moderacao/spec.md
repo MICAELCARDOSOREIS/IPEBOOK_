@@ -1,6 +1,6 @@
 # Especificação 102 — Moderação de denúncias
 
-Status: implementada e testada localmente; migração `202610290001_moderacao.sql` aguardando aplicação no Supabase remoto. ADR: [0078](../../docs/adr/0078-moderacao.md).
+Status: implementada e testada localmente; migração aplicada e verificada no Supabase remoto. ADR: [0078](../../docs/adr/0078-moderacao.md).
 
 ## Objetivo
 Dar destino às denúncias de anúncios (Spec 011) e de pessoas (Spec 091): uma fila para moderadores decidirem, com pausa automática de anúncios muito denunciados.

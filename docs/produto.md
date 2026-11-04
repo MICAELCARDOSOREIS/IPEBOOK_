@@ -6,7 +6,7 @@
 > e histórico recente no dispositivo (spec 027). A publicação Web no Cloudflare Pages foi concluída
 > e conferida em `https://ipebook.app` (spec 025, ADR 0020).
 
-Revisão: 2026-10-29 (base: branch `develop`). Este documento consolida os requisitos implementados e o alinhamento de produto da versão beta.
+Revisão: 2026-11-04 (base: branch `develop`). Este documento consolida os requisitos implementados e o alinhamento de produto da versão beta.
 
 ## Objetivo confirmado
 
@@ -130,10 +130,9 @@ específico, basta atualizar esta tabela.
 
 ## Próximos passos e pendências
 
-Issues antigas citadas aqui (#93 filtros, #73 perfil público, #109 Cloudflare) já foram concluídas; ver `docs/estado.md`. Pendências atuais para o lançamento:
+Issues antigas citadas aqui (#93 filtros, #73 perfil público, #109 Cloudflare) já foram concluídas; ver `docs/estado.md`. As migrações de moderação e limites anti-abuso já estão aplicadas no Supabase remoto (41/41), e o projeto do Sentry já foi criado com DSN no `.env` e no EAS. Pendências atuais para o lançamento:
 
-- Aplicar no Supabase remoto as migrações `202610290001_moderacao.sql` e `202610290002_limites_anti_abuso.sql` e cadastrar o primeiro moderador (Spec 102).
-- Criar o projeto no Sentry e configurar `EXPO_PUBLIC_SENTRY_DSN` no `.env` e no EAS (Spec 104).
+- Cadastrar o primeiro moderador (Spec 102).
 - Beta na Play Store: seguir [docs/loja/beta-play-store.md](loja/beta-play-store.md).
 - Revisão jurídica dos termos e da política de privacidade e publicação em um link público.
 - Teste completo no aparelho com duas contas (pedido, chat, encontro, QR, avaliação, avisos e moderação).

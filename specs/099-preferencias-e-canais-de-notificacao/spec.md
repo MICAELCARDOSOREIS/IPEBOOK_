@@ -1,6 +1,6 @@
 # Especificação 099 — Preferências de aviso, canais de entrega e push profissional
 
-Status: implementada e testada localmente; migração aguardando aplicação no Supabase remoto. ADR: [0075](../../docs/adr/0075-preferencias-e-canais-de-notificacao.md).
+Status: implementada e testada localmente; migração aplicada e verificada no Supabase remoto. ADR: [0075](../../docs/adr/0075-preferencias-e-canais-de-notificacao.md).
 
 ## Objetivo
 Tornar a experiência de notificações e push profissional, garantindo destaque adequado no Android (canais específicos, som, vibração e banner heads-up para propostas e encontros), agrupamento inteligente de avisos da mesma negociação, silhueta correta da marca na barra de status, sincronização do selo numérico de não lidas no ícone do app e controle granular pelo usuário em Configurações.

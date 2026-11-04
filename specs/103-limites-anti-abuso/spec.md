@@ -1,6 +1,6 @@
 # Especificação 103 — Limites contra abuso
 
-Status: implementada e testada localmente; migração `202610290002_limites_anti_abuso.sql` aguardando aplicação no Supabase remoto. ADR: [0079](../../docs/adr/0079-limites-anti-abuso.md).
+Status: implementada e testada localmente; migração aplicada e verificada no Supabase remoto. ADR: [0079](../../docs/adr/0079-limites-anti-abuso.md).
 
 ## Objetivo
 Conter spam e abuso por conta logada sem atrapalhar o uso normal, com mensagem clara quando o limite é atingido.

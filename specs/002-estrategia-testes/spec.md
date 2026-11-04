@@ -3,6 +3,10 @@
 Data: 2026-10-13. Branch: `develop`. Tipo: Funcionalidade / Engenharia de Qualidade.
 Contexto: Trabalho Final de Engenharia de Software III (IFPI Piripiri - Prof. Jeferson Soares).
 
+> **Atualização (2026-11-04):** o item 7 do escopo e o CA07 (fluxos E2E com Maestro em `.maestro/`)
+> não representam o estado atual. Os fluxos foram removidos quando deixaram de ser executados e
+> mantidos; a validação em dispositivo passou a ser manual. Ver [`docs/qualidade.md`](../../docs/qualidade.md).
+
 ## Objetivo e Usuário
 Oferecer à equipe e aos avaliadores uma suíte de testes automatizados completa, robusta, determinística e com alta cobertura no aplicativo Ipebook, alinhada aos padrões da ISO/IEC 25010 e apta a comprovar o funcionamento de regras de negócio, componentes visuais, hooks, integrações e fluxos de usuário ponta a ponta.
 
@@ -20,7 +24,7 @@ Fora do escopo: Playwright (vedado expressamente nas regras globais e na constit
 
 ## Critérios de Aceite
 - **CA01 (Unitários):** Suíte testa funções e regras de validação/formatação de livros com cenários de sucesso, falha e casos de borda (ex: campos vazios, limites, caracteres especiais).
-- **CA02 (Componentes):** Testes com RNTL renderizam [`src/view/home.tsx`](file:///home/usermicael/IPEBOOK_/src/view/home.tsx) e verificam acessibilidade (`accessibilityRole`), textos semânticos e estados de tela.
+- **CA02 (Componentes):** Testes com RNTL renderizam [`src/view/home.tsx`](../../src/view/home.tsx) e verificam acessibilidade (`accessibilityRole`), textos semânticos e estados de tela.
 - **CA03 (Componentes com Mock):** Teste de componente isolando o hook de ViewModel com mock explícito para simular estados de carregamento forçado e falha de rede sem efeitos colaterais.
 - **CA04 (Hooks):** Testes com `renderHook` validam estado inicial, transição para carregado, tratamento de erros e resiliência a condições de corrida (*race conditions*).
 - **CA05 (Cobertura de Código):** Execução de `npm test -- --coverage` gera relatório v8 e atinge no mínimo 80% em statements, branches, functions e lines.

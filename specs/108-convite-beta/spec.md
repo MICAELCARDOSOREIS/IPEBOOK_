@@ -1,6 +1,6 @@
 # Especificação 108 — Página de convite para o beta na Play Store
 
-Status: implementada localmente; migração, publicação remota e conferência em produção pendentes.
+Status: implementada e testada localmente; migração aplicada no Supabase remoto; conferência em produção pendente.
 
 ## Objetivo
 Chamar leitores de Piripiri para testar o app Android antes do lançamento, juntando os Gmails num
