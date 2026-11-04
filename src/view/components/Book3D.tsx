@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AccessibilityInfo, PanResponder, Pressable, StyleSheet, Text, View } from "react-native";
+import { AccessibilityInfo, PanResponder, StyleSheet, Text, View } from "react-native";
 import { BookCover, coverBackground } from "@/view/components/BookCover";
 import { bookDepthFromPages, faceContentOpacity, normalizeAngle, projectBookFaces, snapBookAngle, type BookFace } from "@/view/book3dGeometry";
 import { fontFamily, tokens } from "@/view/tokens";
@@ -100,7 +100,7 @@ export function Book3D({
     const start = Date.now();
     timer.current = setInterval(() => {
       const t = Math.min(1, (Date.now() - start) / 500);
-      apply(from + delta * (1 - Math.pow(1 - t, 3)));
+      apply(from + delta * (1 - (1 - t) ** 3));
       if (t >= 1) stop();
     }, 16);
   };

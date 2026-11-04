@@ -1,4 +1,4 @@
-import React from "react";
+
 import { act, cleanup, fireEvent, render } from "@testing-library/react-native";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { InviteFriends } from "@/view/profile/inviteFriends";

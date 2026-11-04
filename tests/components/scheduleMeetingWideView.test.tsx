@@ -1,7 +1,6 @@
-import React from "react";
+
 import { act, cleanup, fireEvent, render, within } from "@testing-library/react-native";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { PIRIPIRI_MEETING_POINTS } from "@/model/entities/meetingPoint";
 import { ScheduleMeeting } from "@/view/requests/scheduleMeeting";
 import { useScheduleMeetingViewModel, type ScheduleMeetingActions, type ScheduleMeetingState } from "@/viewmodel/useScheduleMeetingViewModel";
 

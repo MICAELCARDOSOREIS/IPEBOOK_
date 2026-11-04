@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { bookRequestUseCases } from "@/di/container";
 import type { BookRequest, RequestStatus } from "@/model/entities/bookRequest";
-import { DomainError, ValidationError } from "@/model/errors";
+import { DomainError, } from "@/model/errors";
 import type { IBookRequestUseCases } from "@/usecase/iBookRequestUseCases";
 
 export type RequestNegotiationState = {

@@ -1,4 +1,4 @@
-import React from "react";
+
 import { act, fireEvent, render } from "@testing-library/react-native";
 import { afterEach, describe, expect, it } from "vitest";
 import { PIRIPIRI_MEETING_POINTS } from "@/model/entities/meetingPoint";

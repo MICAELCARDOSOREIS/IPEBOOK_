@@ -1,4 +1,4 @@
-import React from "react";
+
 import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render } from "@testing-library/react-native";
 import { SearchField } from "@/view/components/SearchField";

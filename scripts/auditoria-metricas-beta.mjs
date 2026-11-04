@@ -19,7 +19,7 @@ import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { PGlite } from '@electric-sql/pglite';
-import { LIVROS_SEMENTE_PIRIPIRI, gerarSqlSeed } from './popular-catalogo-piripiri.mjs';
+import { gerarSqlSeed } from './popular-catalogo-piripiri.mjs';
 
 export const PIRIPIRI_NEIGHBORHOODS = [
   'Centro',

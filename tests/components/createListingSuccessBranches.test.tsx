@@ -1,4 +1,4 @@
-import React from "react";
+
 import { render } from "@testing-library/react-native";
 import { describe, expect, it } from "vitest";
 import type { Book } from "@/model/entities/book";
