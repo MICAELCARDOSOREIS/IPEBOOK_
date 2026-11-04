@@ -74,7 +74,7 @@ echo "INICIADO em $(date -Iseconds)" > "$LOG"
 # ABIs suportadas: compila arm64-v8a (celular real) e x86_64 (Waydroid/emulador) por padrão
 ABIS="${APK_ABIS:-arm64-v8a,x86_64}"
 WORKERS="${GRADLE_WORKERS:-2}"
-JVMARGS="${GRADLE_JVMARGS:--Xmx1536m -XX:+UseG1GC -XX:MaxMetaspaceSize=512m}"
+JVMARGS="${GRADLE_JVMARGS:--Xmx3584m -XX:+UseG1GC -XX:MaxMetaspaceSize=512m}"
 
 setsid nohup bash -c '
   echo $$ > "$1"
