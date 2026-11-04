@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Stack, router, usePathname, type ErrorBoundaryProps, type Href } from "expo-router";
+import { Stack, usePathname, type ErrorBoundaryProps, type Href } from "expo-router";
 import { AppErrorFallback, startErrorReporting } from "@/view/components/AppErrorFallback";
 import { pushOnce, replaceOnce } from "@/view/pushOnce";
 import * as ScreenOrientation from "expo-screen-orientation";
@@ -12,7 +12,6 @@ import { ConnectedWebHeader } from "@/view/components/ConnectedWebHeader";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { pageTitleFor } from "@/view/pageTitle";
 import type { NavigationDestination } from "@/view/components/NavigationBar";
-import { PwaRegister } from "@/view/components/PwaRegister";
 import { InitialRouteGate } from "@/view/onboarding/initialRouteGate";
 import { ThemeProvider, useTheme } from "@/view/theme/ThemeProvider";
 import { KeyboardAwareRoot } from "@/view/components/KeyboardAwareRoot";

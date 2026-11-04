@@ -1,4 +1,4 @@
-import React from "react";
+
 import { act, render, waitFor } from "@testing-library/react-native";
 import { describe, expect, it, vi } from "vitest";
 import type { AuthActions, AuthState } from "@/viewmodel/useAuthViewModel";

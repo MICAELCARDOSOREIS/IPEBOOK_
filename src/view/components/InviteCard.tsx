@@ -1,6 +1,6 @@
 import { type ComponentRef, forwardRef, useMemo } from "react";
 import { StyleSheet, Text, View } from "react-native";
-import { fontFamily, tokens } from "@/view/tokens";
+import { tokens } from "@/view/tokens";
 import { IpeMark } from "@/view/components/IpeMark";
 
 export type InviteCardProps = {

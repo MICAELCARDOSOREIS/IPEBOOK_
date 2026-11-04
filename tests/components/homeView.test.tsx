@@ -1,6 +1,6 @@
-import React from "react";
+import type React from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, } from "vitest";
 import Home from "@/view/home";
 
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });

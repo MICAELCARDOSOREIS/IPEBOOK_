@@ -27,7 +27,7 @@ import { usePublicProfileViewModel } from "@/viewmodel/usePublicProfileViewModel
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
-import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
+import { WEB_GUTTER } from "@/view/webLayout";
 import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { withPress } from "@/view/pressFeedback";

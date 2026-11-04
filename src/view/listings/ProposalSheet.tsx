@@ -2,7 +2,6 @@ import { useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Modal,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -19,7 +18,7 @@ import { FilledButton } from "@/view/components/FilledButton";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { Tag } from "@/view/components/Tag";
 import { withPress } from "@/view/pressFeedback";
-import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
+import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 
 export type ProposalSheetProps = {

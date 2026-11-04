@@ -17,8 +17,7 @@ import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { useManageListingViewModel } from "@/viewmodel/useManageListingViewModel";
 import { useShareListingViewModel } from "@/viewmodel/useShareListingViewModel";
-import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
-import { withPress } from "@/view/pressFeedback";
+import { WEB_GUTTER } from "@/view/webLayout";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 

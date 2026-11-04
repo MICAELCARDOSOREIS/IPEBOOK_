@@ -1,6 +1,6 @@
-import React from "react";
+
 import { View } from "react-native";
-import { act, fireEvent, render, within } from "@testing-library/react-native";
+import { act, fireEvent, render, } from "@testing-library/react-native";
 import { describe, expect, it, vi } from "vitest";
 import type { HomeActions, HomeState } from "@/viewmodel/useHomeViewModel";
 import Home, { resetAppLaunchCelebrationForTesting } from "@/view/home";

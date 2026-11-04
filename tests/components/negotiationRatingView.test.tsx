@@ -71,7 +71,7 @@ describe("NegotiationRatingModal (Spec 063 / ADR 0046)", () => {
     const root = tree.root;
     // Verifica presença do nome da contraparte
     const textNodes = root.findAllByType(Text);
-    const texts = textNodes.map((n) => n.props.children).flat().join(" ");
+    const texts = textNodes.flatMap((n) => n.props.children).join(" ");
     expect(texts).toContain("Carlos Silva");
     expect(texts).toContain("Avaliar negociação");
 
@@ -142,7 +142,7 @@ describe("NegotiationRatingModal (Spec 063 / ADR 0046)", () => {
 
     const root = tree.root;
     const textNodes = root.findAllByType(Text);
-    const texts = textNodes.map((n) => n.props.children).flat().join(" ");
+    const texts = textNodes.flatMap((n) => n.props.children).join(" ");
     expect(texts).toContain("Avaliação enviada!");
 
     const closeBtn = root.findByProps({ accessibilityLabel: "Fechar diálogo de avaliação" });

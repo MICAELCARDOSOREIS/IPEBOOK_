@@ -19,7 +19,7 @@ import {
 import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
 import { groupNotificationsByPeriod, notificationTimeLabel } from "@/viewmodel/notificationGrouping";
 import { resolveNotificationRoute } from "@/viewmodel/notificationRoute";
-import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
+import { WEB_GUTTER, } from "@/view/webLayout";
 import { withPress } from "@/view/pressFeedback";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";

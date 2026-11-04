@@ -39,7 +39,7 @@ export function mascararUrl(url) {
  * @returns {{ ok: boolean, supabaseUrl: string, supabaseKey: string, maskedUrl: string, error?: string }}
  */
 export function carregarConfiguracaoAmbiente(envCustom = null, cwd = process.cwd()) {
-  let fileEnv = {};
+  const fileEnv = {};
   if (!envCustom) {
     const envPath = resolve(cwd, '.env');
     if (existsSync(envPath)) {
