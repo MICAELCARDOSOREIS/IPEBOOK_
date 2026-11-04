@@ -24,7 +24,7 @@ export function Chip({ label, selected, onPress, disabled = false, accessibility
   const { scale, isPressed, onPressIn, onPressOut } = useExpressivePress({ disabled, pressedScale: 0.95 });
 
   return (
-    <Animated.View style={{ transform: [{ scale }] }}>
+    <Animated.View style={[styles.container, { transform: [{ scale }] }]}>
       <Pressable
         accessibilityRole="checkbox"
         accessibilityLabel={accessibilityLabel ?? label}
