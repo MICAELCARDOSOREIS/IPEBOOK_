@@ -10,7 +10,7 @@ import { FilledButton } from "@/view/components/FilledButton";
 import { captureRef } from "react-native-view-shot";
 import { InviteCard } from "@/view/components/InviteCard";
 import { useInviteFriendsViewModel } from "@/viewmodel/useInviteFriendsViewModel";
-import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
+import { WEB_GUTTER } from "@/view/webLayout";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef } from "react";
-import { Animated, Image, StyleSheet, Text, View } from "react-native";
-import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
+import { Animated, Image, StyleSheet, View } from "react-native";
+import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { useBookCoverImage } from "@/viewmodel/useBookCoverImage";
 import { IpeRibbon } from "@/view/components/IpeRibbon";

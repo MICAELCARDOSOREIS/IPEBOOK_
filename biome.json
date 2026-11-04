@@ -23,8 +23,7 @@
       "preset": "recommended",
       "correctness": {
         "noComponentHookFactories": "off",
-        "useExhaustiveDependencies": "warn",
-        "useHookAtTopLevel": "warn"
+        "useExhaustiveDependencies": "warn"
       },
       "suspicious": {
         "noArrayIndexKey": "warn",

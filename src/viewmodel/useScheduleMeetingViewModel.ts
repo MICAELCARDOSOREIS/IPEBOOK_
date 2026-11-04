@@ -4,7 +4,7 @@ import {
   meetingUseCases,
   rateLimiter as defaultRateLimiter,
 } from "@/di/container";
-import { type Meeting } from "@/model/entities/meeting";
+import type { Meeting } from "@/model/entities/meeting";
 import { DomainError } from "@/model/errors";
 import type { ILogger } from "@/model/services/iLogger";
 import type { IRateLimiter } from "@/model/services/iRateLimiter";

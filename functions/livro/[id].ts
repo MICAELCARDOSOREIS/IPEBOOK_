@@ -19,6 +19,19 @@ interface EventContext<Env, P extends string, Data> {
   data: Data;
 }
 
+/** Colunas reais de `v2_books` lidas pela function (mesmos nomes do esquema em `supabase/migrations/`). */
+export const OPEN_GRAPH_BOOK_COLUMNS = [
+  "id",
+  "title",
+  "author",
+  "modality",
+  "price",
+  "photo_url",
+  "neighborhood",
+  "is_box",
+  "box_volumes_count",
+] as const;
+
 type PagesFunction<TEnv = Env> = (
   context: EventContext<TEnv, "id", unknown>,
 ) => Response | Promise<Response>;
@@ -55,7 +68,7 @@ export const onRequest: PagesFunction = async (context) => {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 1800);
 
-    const apiUrl = `${supabaseUrl}/rest/v1/v2_books?id=eq.${encodeURIComponent(bookId)}&select=id,title,author,trade_type,price,photo_url,bairro,is_box,box_volumes_count`;
+    const apiUrl = `${supabaseUrl}/rest/v1/v2_books?id=eq.${encodeURIComponent(bookId)}&select=${OPEN_GRAPH_BOOK_COLUMNS.join(",")}`;
     let res: Response;
     try {
       res = await fetch(apiUrl, {
@@ -78,10 +91,10 @@ export const onRequest: PagesFunction = async (context) => {
       id: string;
       title: string;
       author: string;
-      trade_type: "sell" | "trade" | "donation";
+      modality: "sale" | "trade" | "donation";
       price?: number | null;
       photo_url?: string | null;
-      bairro?: string | null;
+      neighborhood?: string | null;
       is_box?: boolean | null;
       box_volumes_count?: number | null;
     }>;
@@ -95,10 +108,10 @@ export const onRequest: PagesFunction = async (context) => {
       id: book.id,
       title: book.title,
       author: book.author,
-      tradeType: book.trade_type,
+      tradeType: book.modality === "sale" ? "sell" : book.modality,
       price: book.price,
       photoUrl: book.photo_url,
-      bairro: book.bairro,
+      neighborhood: book.neighborhood,
       isBox: book.is_box,
       boxVolumesCount: book.box_volumes_count,
     });

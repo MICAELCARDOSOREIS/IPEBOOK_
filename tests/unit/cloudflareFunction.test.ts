@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { onRequest } from "../../functions/livro/[id]";
+import { OPEN_GRAPH_BOOK_COLUMNS, onRequest } from "../../functions/livro/[id]";
+import { BOOK_COLUMNS } from "@/infra/datasources/supabaseBookDataSource";
 
 describe("Cloudflare Pages Function /livro/[id] (Spec 119)", () => {
   it("enriquece HTML com metadados do livro ao consultar Supabase com sucesso", async () => {
@@ -7,10 +8,10 @@ describe("Cloudflare Pages Function /livro/[id] (Spec 119)", () => {
       id: "livro-teste-1",
       title: "Torto Arado",
       author: "Itamar Vieira Junior",
-      trade_type: "sell" as const,
+      modality: "sale" as const,
       price: 32,
       photo_url: "https://imagens.exemplo.com/torto-arado.jpg",
-      bairro: "Fonte dos Matos",
+      neighborhood: "Fonte dos Matos",
       is_box: false,
       box_volumes_count: null,
     };
@@ -26,10 +27,11 @@ describe("Cloudflare Pages Function /livro/[id] (Spec 119)", () => {
 
     // Mock global fetch para simular resposta do Supabase REST
     const originalFetch = globalThis.fetch;
-    globalThis.fetch = vi.fn().mockResolvedValue({
+    const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => [mockBook],
     } as unknown as Response);
+    globalThis.fetch = fetchMock;
 
     try {
       const response = await onRequest({
@@ -51,6 +53,10 @@ describe("Cloudflare Pages Function /livro/[id] (Spec 119)", () => {
       expect(text).toContain('<meta property="og:title" content="Torto Arado · Itamar Vieira Junior | IpêBook Piripiri" />');
       expect(text).toContain('<meta property="og:image" content="https://imagens.exemplo.com/torto-arado.jpg" />');
       expect(text).toContain("Fonte dos Matos");
+      expect(text).toContain("Venda: R$ 32,00");
+
+      const requestedUrl = new URL(String(fetchMock.mock.calls[0][0]));
+      expect(requestedUrl.searchParams.get("select")).toBe(OPEN_GRAPH_BOOK_COLUMNS.join(","));
     } finally {
       globalThis.fetch = originalFetch;
     }
@@ -90,5 +96,11 @@ describe("Cloudflare Pages Function /livro/[id] (Spec 119)", () => {
     } finally {
       globalThis.fetch = originalFetch;
     }
+  });
+
+  it("consulta apenas colunas que existem em v2_books (mesmas lidas pelo app)", () => {
+    const realColumns = new Set(BOOK_COLUMNS.split(","));
+    const unknown = OPEN_GRAPH_BOOK_COLUMNS.filter((column) => !realColumns.has(column));
+    expect(unknown).toEqual([]);
   });
 });

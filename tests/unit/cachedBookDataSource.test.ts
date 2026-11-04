@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import type { Book } from "@/model/entities/book";
 import type { IBookDataSource } from "@/model/datasources/iBookDataSource";
-import { CachedBookDataSource, IKeyValueStorage } from "@/infra/datasources/cachedBookDataSource";
+import { CachedBookDataSource, type IKeyValueStorage } from "@/infra/datasources/cachedBookDataSource";
 
 class MockStorage implements IKeyValueStorage {
   private data = new Map<string, string>();

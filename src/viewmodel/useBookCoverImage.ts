@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { BookCoverCache, bookCoverCache as defaultCache } from "./bookCoverCache";
+import { type BookCoverCache, bookCoverCache as defaultCache } from "./bookCoverCache";
 
 export type BookCoverImageStatus = "idle" | "loading" | "loaded" | "error";
 

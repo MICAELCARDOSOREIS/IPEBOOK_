@@ -1,4 +1,4 @@
-import {
+import type {
   IRateLimiter,
   RateLimitCheckResult,
 } from "@/model/services/iRateLimiter";

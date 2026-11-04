@@ -1,4 +1,4 @@
-import React from "react";
+
 import { describe, expect, it, vi } from "vitest";
 import { render, fireEvent } from "@testing-library/react-native";
 import { AddPhotoCard } from "@/view/components/AddPhotoCard";

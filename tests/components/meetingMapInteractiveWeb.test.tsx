@@ -1,4 +1,4 @@
-import React from "react";
+import type React from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PIRIPIRI_MEETING_POINTS } from "@/model/entities/meetingPoint";

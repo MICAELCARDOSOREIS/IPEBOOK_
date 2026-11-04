@@ -52,7 +52,7 @@ export class BookRequestUseCases implements IBookRequestUseCases {
       throw new ValidationError("Você já tem um pedido pendente para este anúncio.");
     }
 
-    let trimmedMessage: string | undefined = undefined;
+    let trimmedMessage: string | undefined;
     if (options?.initialMessage !== undefined && options?.initialMessage !== null) {
       const msg = options.initialMessage.trim();
       if (msg.length > 500) {
@@ -63,7 +63,7 @@ export class BookRequestUseCases implements IBookRequestUseCases {
       }
     }
 
-    let validOfferedBookId: string | undefined = undefined;
+    let validOfferedBookId: string | undefined;
     if (options?.offeredBookId) {
       const offered = await this.books.findById(options.offeredBookId);
       if (!offered) {

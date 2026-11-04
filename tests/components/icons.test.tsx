@@ -1,4 +1,4 @@
-import React from "react";
+
 import { afterEach, describe, expect, it } from "vitest";
 import { render } from "@testing-library/react-native";
 import { Platform, View } from "react-native";

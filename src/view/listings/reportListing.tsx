@@ -42,7 +42,8 @@ export default function ReportListing({
   const errorRef = useFormErrorAnnouncer(state.error);
 
   const guardedBack = useGuardedPress(onBack);
-  const guardedNavigateToLogin = onNavigateToLogin ? useGuardedPress(onNavigateToLogin) : undefined;
+  const guardedNavigateToLoginPress = useGuardedPress(onNavigateToLogin);
+  const guardedNavigateToLogin = onNavigateToLogin ? guardedNavigateToLoginPress : undefined;
 
   if (state.success) {
     return (

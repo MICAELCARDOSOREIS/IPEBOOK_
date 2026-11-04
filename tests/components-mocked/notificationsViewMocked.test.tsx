@@ -1,4 +1,4 @@
-import React from "react";
+
 import { act, render } from "@testing-library/react-native";
 import { describe, expect, it, vi } from "vitest";
 import type { NotificationsActions, NotificationsState } from "@/viewmodel/useNotificationsViewModel";

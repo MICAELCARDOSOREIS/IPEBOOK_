@@ -1,4 +1,4 @@
-import React from "react";
+
 import { act, fireEvent, render } from "@testing-library/react-native";
 import { describe, expect, it, vi } from "vitest";
 import type { FavoritesActions, FavoritesState } from "@/viewmodel/useFavoritesViewModel";

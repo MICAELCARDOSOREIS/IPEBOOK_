@@ -2,7 +2,7 @@ import { createElement } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Book } from "@/model/entities/book";
-import { DataSourceError, DomainError, ValidationError } from "@/model/errors";
+import { DataSourceError, ValidationError } from "@/model/errors";
 import type { IBookUseCases } from "@/usecase/iBookUseCases";
 import { useEditListingViewModel } from "@/viewmodel/useEditListingViewModel";
 

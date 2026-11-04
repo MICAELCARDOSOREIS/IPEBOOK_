@@ -1,4 +1,4 @@
-import React from "react";
+
 import { act, cleanup, fireEvent, render, within } from "@testing-library/react-native";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Meeting } from "@/model/entities/meeting";

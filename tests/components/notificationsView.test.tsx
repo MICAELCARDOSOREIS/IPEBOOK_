@@ -1,5 +1,4 @@
-import React from "react";
-import { Alert } from "react-native";
+
 import { act, fireEvent, render } from "@testing-library/react-native";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import Notifications from "@/view/notifications/notifications";
