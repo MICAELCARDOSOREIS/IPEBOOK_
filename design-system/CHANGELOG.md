@@ -2,6 +2,17 @@
 
 Versões no formato `MAIOR.MENOR.CORREÇÃO`. Mudança grande = versão nova.
 
+## 1.26.0 · 2026-11-04
+
+- Sincronizados os valores documentados de cor e contraste com `tokens.json` e
+  `src/view/tokens.ts`.
+- Atualizado o inventário para 28 documentos em `04-componentes/`, com classificação entre
+  componentes-base, padrões compostos e componentes de domínio.
+- Corrigido o exemplo histórico de `ExplorarScreen.tsx` para usar os nomes atuais da API e
+  identificado o código de produção em `src/view/search/`.
+- Documentado que os exports do Figma preservam fallbacks históricos e não são código de
+  produção.
+
 ## 1.25.0 · 2026-11-01
 
 - Pedidos recebidos abrem nas propostas pendentes e confirmam aceite ou recusa sem interromper a navegação.
@@ -289,6 +300,5 @@ Versões no formato `MAIOR.MENOR.CORREÇÃO`. Mudança grande = versão nova.
   - `05-padroes.md`: fluxos "Entrar/Criar conta" e "Anunciar livro", com estados de carregando,
     erro, vazio e sucesso.
   - `06-acessibilidade.md`: tabela de contraste com os 6 pares já verificados na Tarefa 26.
-  - `07-teste-com-ia.md`: teste cego com um assistente de IA construindo a tela Explorar.
-- Ajustes feitos após o teste com IA: ver [07-teste-com-ia.md](07-teste-com-ia.md), seção
-  "Desvios e correções na documentação".
+  - Protótipo histórico da tela Explorar revisado para usar os aliases atuais de tokens.
+- Ajustes de documentação e tokens validados pelo script `npm run check:design-system`.
