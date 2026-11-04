@@ -1,8 +1,9 @@
-// Tela "Explorar" — IpêBook
-// Construída só com tokens e componentes descritos em design-system/*.md.
-// Esta tela NÃO é um exemplo documentado (README §3 só cobre Entrar/Criar conta e Anunciar
-// livro); os trechos abaixo foram inferidos a partir de 02-tokens.md, 03-fundamentos.md e
-// 04-componentes/*.md. Pontos inventados estão marcados com comentário "// INVENTADO:".
+// Protótipo histórico da tela "Explorar" — IpêBook.
+// Este arquivo não é importado pelas rotas do Expo e não é código de produção. Ele registra a
+// referência visual histórica; a implementação real está em src/view/search/search.tsx e
+// src/view/search/FilterSheet.tsx.
+// Os componentes locais abaixo são deliberadamente didáticos e não substituem os componentes
+// compartilhados de src/view/components/.
 
 import React, { useState } from "react";
 import { FlatList, Pressable, Text, TextInput, View } from "react-native";
@@ -23,7 +24,7 @@ interface Livro {
 
 // ---------------------------------------------------------------------------
 // BookCover (Capa ilustrativa) — 04-componentes/capa-ilustrativa.md
-// Variante "Capa em lista" (44 px, só a arte, sem texto sobreposto)
+// Variante histórica da rodada de teste (44 px, só a arte, sem texto sobreposto).
 // ---------------------------------------------------------------------------
 const CORES_CAPA = [
   tokens.colors.cover.blue,
@@ -94,10 +95,8 @@ function Tag({ tipo }: { tipo: Modalidade }) {
 }
 
 // ---------------------------------------------------------------------------
-// Campo de busca — INVENTADO (ver item 3 do relatório): não há arquivo próprio para
-// "Campo de busca", só Campo de texto (TextField, contornado) e a regra de fundo em
-// 03-fundamentos.md ("busca ... em surface-container-high") e de raio em 02-tokens.md
-// ("radius-full ... busca"). Combinei essas duas regras com a anatomia do TextField.
+// Campo de busca — composição didática do protótipo histórico. A implementação compartilhada
+// usada pelo app está em src/view/components/SearchField.tsx.
 // ---------------------------------------------------------------------------
 function CampoDeBusca({
   value,
@@ -112,15 +111,14 @@ function CampoDeBusca({
       style={{
         flexDirection: "row",
         alignItems: "center",
-        backgroundColor: tokens.colors.surfaceContainerHigh, // INVENTADO: nome de token composto
+        backgroundColor: tokens.colors.m3.surfaceContainerHigh,
         borderRadius: tokens.radius.full,
         paddingHorizontal: tokens.spacing[16],
         height: 48, // alvo de toque mínimo de 48 dp (06-acessibilidade.md)
       }}
     >
       <Text
-        // INVENTADO: ícone de lupa — não há token de ícone específico documentado para busca,
-        // só a regra geral "Material Symbols Outlined, 24 px, on-surface-variant quando inativo"
+        // O protótipo usa um caractere para manter o arquivo autônomo; a produção usa AppIcon.
         accessibilityElementsHidden
         importantForAccessibility="no"
         style={{ color: tokens.colors.secondaryText, marginRight: tokens.spacing[8], fontSize: 20 }}
@@ -149,11 +147,8 @@ function CampoDeBusca({
 }
 
 // ---------------------------------------------------------------------------
-// Chip de filtro — INVENTADO (ver item 3): README cita "Chip de filtro" como necessário
-// para Início/Explorar, mas o arquivo de referência está em design-kit/components/Chip/,
-// que a tarefa pediu para não ler. Implementei só com a regra geral de
-// 01-principios.md §2 ("chip selecionado tem ícone de check, não só a cor de fundo") e
-// 06-acessibilidade.md ("Chip 32 px, área de toque ampliada para 48 dp").
+// Chip de filtro — composição didática. A implementação compartilhada está em
+// src/view/components/Chip.tsx.
 // ---------------------------------------------------------------------------
 function ChipDeFiltro({
   rotulo,
@@ -199,10 +194,8 @@ function ChipDeFiltro({
 }
 
 // ---------------------------------------------------------------------------
-// BookRow (Linha de livro) — INVENTADO (ver item 3): citado no README e em
-// 01-principios.md §3 ("BookRow mostra 'Machado de Assis · Centro'"), mas sem arquivo
-// próprio em 04-componentes/. Montei a partir de BookCover (lista, 44 px) + Tag +
-// tipografia (m3-body-lg para título, m3-body-md para autor/bairro).
+// BookRow (Linha de livro) — composição didática. O documento correspondente registra que o
+// padrão é composto diretamente nas telas reais, em vez de um componente genérico.
 // ---------------------------------------------------------------------------
 function BookRow({ livro, onPress }: { livro: Livro; onPress: () => void }) {
   return (
@@ -213,7 +206,7 @@ function BookRow({ livro, onPress }: { livro: Livro; onPress: () => void }) {
       style={{
         flexDirection: "row",
         alignItems: "center",
-        backgroundColor: tokens.colors.surfaceContainerLow, // cartões/campos (03-fundamentos.md)
+        backgroundColor: tokens.colors.m3.surfaceContainerLow, // cartões/campos (03-fundamentos.md)
         borderRadius: tokens.radius.large,
         padding: tokens.spacing[12],
         marginBottom: tokens.spacing[8],
@@ -227,9 +220,8 @@ function BookRow({ livro, onPress }: { livro: Livro; onPress: () => void }) {
           style={{
             color: tokens.colors.text,
             // Princípio 4: título do livro usa a serifa da marca.
-            // INVENTADO: não há um tamanho de serifa "pequeno" documentado — displayLarge
-            // (32 px) é só para título de tela raiz/logotipo, grande demais para uma linha
-            // de lista. Usei a família da marca com o tamanho do corpo (m3-body-lg).
+            // O protótipo preserva a escolha tipográfica da rodada de avaliação; a produção
+            // usa a tipografia definida por BookCover e pelas telas de busca/listagem.
             fontFamily: tokens.typography.brandFamily,
             fontSize: tokens.typography.bodyLarge.fontSize,
             lineHeight: tokens.typography.bodyLarge.lineHeight,
@@ -314,7 +306,7 @@ function BarraDeNavegacao({ ativo }: { ativo: string }) {
 }
 
 // ---------------------------------------------------------------------------
-// Dados de exemplo — INVENTADO só para a tela ser plausível, não vem de nenhum arquivo.
+// Dados de exemplo — somente para tornar o protótipo histórico executável; não são dados reais.
 // ---------------------------------------------------------------------------
 const LIVROS_EXEMPLO: Livro[] = [
   { id: "1", titulo: "Dom Casmurro", autor: "Machado de Assis", bairro: "Centro", modalidade: "venda" },
@@ -357,8 +349,7 @@ export default function ExplorarScreen() {
         <CampoDeBusca value={busca} onChangeText={setBusca} />
       </View>
 
-      {/* Chips de filtro por modalidade — INVENTADO: lista de rótulos não vem de nenhum
-          arquivo, só a existência do componente "Chip de filtro" no README. */}
+      {/* Chips de filtro por modalidade — dados didáticos do protótipo histórico. */}
       <View
         style={{
           flexDirection: "row",
@@ -374,8 +365,7 @@ export default function ExplorarScreen() {
       </View>
 
       {resultados.length === 0 ? (
-        // Estado vazio — INVENTADO: README cita "Estado vazio" só para a tela Estante;
-        // reaproveitei a ideia para Explorar sem busca correspondente, sem texto oficial.
+        // Estado vazio — composição didática; o fluxo real usa os estados de search.tsx.
         <View
           style={{
             flex: 1,

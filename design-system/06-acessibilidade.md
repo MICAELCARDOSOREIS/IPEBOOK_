@@ -2,8 +2,8 @@
 
 Razão de contraste = (L1 + 0,05) / (L2 + 0,05), com L1 a luminância relativa da cor mais clara e
 L2 a da mais escura (fórmula WCAG). Os seis pares abaixo foram recalculados manualmente e batem
-com os valores documentados em `tokens.json`. Os ~50 tokens de cor restantes não foram
-auditados manualmente — só têm a razão declarada na origem (artifact do Figma).
+com os valores documentados em `tokens.json`. Os demais tokens de cor não foram auditados manualmente — só têm a razão declarada na origem
+(artefato do Figma).
 
 ## Contraste dos pares de cor
 
@@ -13,7 +13,7 @@ auditados manualmente — só têm a razão declarada na origem (artifact do Fig
 | `on-surface-variant` sobre `surface` | `#4d4740` sobre `#fcfaf5` | 8,79:1 | 4,5:1 | Aprovado |
 | `error` sobre `surface` | `#b3261e` sobre `#fcfaf5` | 6,27:1 | 4,5:1 | Aprovado |
 | `focus-ring` sobre `surface` | `#4e8a68` sobre `#fcfaf5` | 3,90:1 | 3:1 (elemento gráfico/foco) | Aprovado |
-| `on-secondary-container` sobre `secondary-container` | `#18291f` sobre `#dce8de` | 12,10:1 | 4,5:1 | Aprovado |
+| `on-secondary-container` sobre `secondary-container` | `#132a17` sobre `#dce9dc` | 12,20:1 | 4,5:1 | Aprovado |
 | `on-doacao-container` sobre `doacao-container` | `#6e3a28` sobre `#f4ddd3` | 7,02:1 | 4,5:1 | Aprovado |
 
 ## Alvos de toque

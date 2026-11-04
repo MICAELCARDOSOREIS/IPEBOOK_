@@ -1,10 +1,12 @@
 # Tokens
 
-Fonte conceitual e machine-readable: [`tokens.json`](tokens.json) ([ADR 0010](../docs/adr/0010-design-system-substitui-design-kit.md)).
-Em código, [`src/view/tokens.ts`](../src/view/tokens.ts) expõe a API consumida pelos componentes:
+Fonte canônica dos valores: [`tokens.json`](tokens.json) ([ADR 0010](../docs/adr/0010-design-system-substitui-design-kit.md)).
+Em código, [`src/view/tokens.ts`](../src/view/tokens.ts) é o espelho tipado que expõe a API consumida pelos componentes:
 `colors` (paleta clara), `darkColors` (paleta escura), `spacing`, `radius`, `typography`,
 `motion`, `elevation` e `accessibility`. Os nomes da API TypeScript não são uma cópia literal
-dos nomes M3 do JSON; a tabela de conversão abaixo é o contrato para implementação.
+dos nomes M3 do JSON; a tabela de conversão abaixo é o contrato para implementação. Em caso de
+divergência, o valor do JSON canônico prevalece e o módulo TypeScript deve ser atualizado no
+mesmo trabalho.
 
 ## 1. Primitivos (o valor bruto)
 
@@ -33,9 +35,9 @@ de uma cor-semente única (aqui, o verde ipê-do-cerrado).
 
 | Token | Claro | Uso | Origem |
 | --- | --- | --- | --- |
-| `primary` | `#2c5e45` | Ação principal, item ativo, links, progresso (7,2:1 sobre `surface`) | Herdado (papel `primary` do M3; valor é a cor-semente da marca) |
+| `primary` | `#2b6334` | Ação principal, item ativo, links, progresso (7,2:1 sobre `surface`) | Herdado (papel `primary` do M3; valor é a cor-semente da marca) |
 | `on-primary` | `#ffffff` | Texto/ícone sobre `primary` (7,5:1) | Herdado |
-| `secondary-container` | `#dce8de` | Tag Venda, chip selecionado, item ativo da navegação | Adaptado — M3 define o papel; o uso fixo "sempre Venda" é da marca |
+| `secondary-container` | `#dce9dc` | Tag Venda, chip selecionado, item ativo da navegação | Adaptado — M3 define o papel; o uso fixo "sempre Venda" é da marca |
 | `tertiary-container` | `#f8d88a` | Tag Troca | Adaptado — mesmo motivo |
 | `doacao-container` | `#f4ddd3` | Tag Doação | **Novo** — quarto papel de contêiner que o M3 não define |
 | `on-doacao-container` | `#6e3a28` | Texto sobre `doacao-container` (7:1) | Novo |
@@ -46,12 +48,12 @@ de uma cor-semente única (aqui, o verde ipê-do-cerrado).
 | `on-surface` | `#1d1b18` | Texto principal (16,5:1 sobre `surface`) | Herdado |
 | `on-surface-variant` | `#4d4740` | Texto de apoio, ícone inativo (8,8:1) | Herdado |
 | `outline` | `#7e776f` | Borda de campo e botão Contornado (4,2:1) | Herdado |
-| `focus-ring` | `#4e8a68` | Anel de foco (2 px de largura e 4 px de folga na API atual) | Adaptado — cor própria da marca, não o azul padrão do M3 |
+| `focus-ring` | `#4e8a68` | Anel de foco (2 px de largura e 4 px de folga na API TypeScript) | Adaptado — cor própria da marca, não o azul padrão do M3 |
 | `brand-brown` | `#58331f` | Logotipo e títulos da marca (10,6:1) | Novo — papel de marca sem equivalente M3 |
 | `brand-amber` / `cover-sun` | `#f2bc45` / `#ddaf38` | Sol das capas ilustrativas; nunca texto | Novo |
 | `book-page` | `#fcfaf5` | Papel pólen para leitura confortável sem ofuscamento | Novo — Metáfora do Livro |
 | `book-ink` | `#3c302a` | Tinta mineral/café com contraste AAA (>12:1) | Novo — Metáfora do Livro |
-| `nature-foliage` | `#2c5e45` | Verde botânico da copa do ipê para botões principais | Novo — Metáfora Botânica |
+| `nature-foliage` | `#2b6334` | Verde botânico da copa do ipê para botões principais | Novo — Metáfora Botânica |
 | `ipe-bloom` | `#f7c21e` | Ouro da florada do ipê para favoritos e medalhões | Novo — Metáfora do Ipê |
 | `ipe-petal-soft` | `#fef6d8` | Chão de pétalas de ipê para fundos e acolhimento | Novo — Metáfora do Ipê |
 | `ipe-ribbon` | `#f7c21e` | Fita marcadora de página de cetim do ipê | Novo — Metáfora do Livro & Ipê |
@@ -146,7 +148,7 @@ conceitual do JSON. Novos componentes não devem repetir essa constante sem nece
 ## 4. Modo escuro
 
 Os tokens semânticos de cor têm valores `light` e `dark` em `tokens.json` (por exemplo,
-`primary` claro `#2c5e45` e escuro `#9fd4b3`). A paleta escura é exposta por `darkColors` e
+`primary` claro `#2b6334` e escuro `#98d6a2`). A paleta escura é exposta por `darkColors` e
 selecionada pelo `ThemeProvider`, conforme a preferência resolvida pelo
 `useThemeViewModel`. A paleta noturna foi refinada para evitar ofuscamento e fadiga visual:
 - `badge.trade` adota fundo âmbar profundo (`#4A3508`) com texto dourado (`#FFDF99`, 8,5:1);

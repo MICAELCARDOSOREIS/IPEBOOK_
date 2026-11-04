@@ -11,6 +11,12 @@ para consulta e comparação visual; os `.tsx` em `context/` são contexto gerad
 não são telas de produção do Expo. Eles usam HTML, classes de estilo e assets remotos do Figma,
 portanto não devem ser importados pelo app nem tratados como componentes React Native.
 
+As exportações preservam os valores disponíveis no momento da extração (2026-10-24) e podem
+conter fallbacks de tokens históricos. Para implementar ou validar uma tela, prevalecem
+[`../tokens.json`](../tokens.json), [`../../src/view/tokens.ts`](../../src/view/tokens.ts) e
+os componentes reais do app. Os exports não são atualizados automaticamente quando a paleta
+canônica muda.
+
 Para implementar uma tela, use os tokens e componentes documentados em
 [`../02-tokens.md`](../02-tokens.md) e [`../04-componentes/`](../04-componentes/), seguindo a
 separação MVVM do projeto.
