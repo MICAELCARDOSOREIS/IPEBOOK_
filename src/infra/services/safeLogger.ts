@@ -1,4 +1,4 @@
-import { ILogger, LogEntry, LogLevel } from "@/model/services/iLogger";
+import type { ILogger, LogEntry, LogLevel } from "@/model/services/iLogger";
 
 const SENSITIVE_KEYS = new Set([
   "password",

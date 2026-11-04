@@ -1,4 +1,4 @@
-import React from "react";
+import type React from "react";
 import { act, fireEvent, render, cleanup } from "@testing-library/react-native";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Platform } from "react-native";

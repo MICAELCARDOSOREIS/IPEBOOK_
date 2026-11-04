@@ -1,4 +1,4 @@
-import React from "react";
+
 import { act, render } from "@testing-library/react-native";
 import { describe, expect, it } from "vitest";
 import { MemoryAuthDataSource } from "@/infra/datasources/memoryAuthDataSource";

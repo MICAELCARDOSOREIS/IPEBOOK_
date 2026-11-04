@@ -1,4 +1,4 @@
-import React from "react";
+import type React from "react";
 import { act, render } from "@testing-library/react-native";
 import { describe, expect, it, vi } from "vitest";
 import { Book3D } from "@/view/components/Book3D";

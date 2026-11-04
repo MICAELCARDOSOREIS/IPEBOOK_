@@ -1,4 +1,4 @@
-import React from "react";
+
 import { render } from "@testing-library/react-native";
 import { describe, expect, it } from "vitest";
 import { IpeRibbon } from "@/view/components/IpeRibbon";

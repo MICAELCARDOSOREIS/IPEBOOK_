@@ -1,4 +1,4 @@
-import { type Href } from "expo-router";
+import type { Href } from "expo-router";
 import { backOnce, pushOnce } from "@/view/pushOnce";
 import NotificationsScreen from "@/view/notifications/notificationsScreen";
 

@@ -1,4 +1,4 @@
-import React from "react";
+
 import { fireEvent, render } from "@testing-library/react-native";
 import { describe, expect, it, vi } from "vitest";
 import WelcomeRoute from "@/view/onboarding/welcomeRoute";

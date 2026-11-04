@@ -1,4 +1,4 @@
-import React from "react";
+
 import { act, render } from "@testing-library/react-native";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { BookCover } from "@/view/components/BookCover";

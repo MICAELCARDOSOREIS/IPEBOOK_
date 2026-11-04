@@ -32,11 +32,12 @@ export function ReceivedRequests({
   const { colors } = useTheme();
   const s = useMemo(() => createRequestStyles(colors), [colors]);
 
-  const guardedBack = onBack ? useGuardedPress(onBack) : undefined;
-  const guardedNavigateToNegotiationDetail = onNavigateToNegotiationDetail
-    ? useGuardedPress((id: string) => onNavigateToNegotiationDetail(id))
-    : undefined;
-  const guardedOpenChat = onOpenChat ? useGuardedPress((id: string) => onOpenChat(id)) : undefined;
+  const guardedBackPress = useGuardedPress(onBack);
+  const guardedBack = onBack ? guardedBackPress : undefined;
+  const guardedNavigateToNegotiationDetailPress = useGuardedPress((id: string) => onNavigateToNegotiationDetail?.(id));
+  const guardedNavigateToNegotiationDetail = onNavigateToNegotiationDetail ? guardedNavigateToNegotiationDetailPress : undefined;
+  const guardedOpenChatPress = useGuardedPress((id: string) => onOpenChat?.(id));
+  const guardedOpenChat = onOpenChat ? guardedOpenChatPress : undefined;
 
   const handleResponse = async (requestId: string, response: "accept" | "reject") => {
     const succeeded = response === "accept"

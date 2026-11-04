@@ -1,4 +1,4 @@
-import React from "react";
+
 
 /**
  * Ícones Fluent 2 System Icons (Microsoft, MIT) para a Web (ADR 0014).

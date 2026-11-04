@@ -23,7 +23,7 @@ import { ReservedListingSheet } from "@/view/listings/ReservedListingSheet";
 import { ProposalSheet } from "@/view/listings/ProposalSheet";
 import { buildBookOpenGraph } from "@/model/formatters/openGraphFormatter";
 import { updateWebSocialMeta } from "@/view/webMeta";
-import { BOOK_CONDITION_LABELS, type Book, type BookModality } from "@/model/entities/book";
+import { BOOK_CONDITION_LABELS, type BookModality } from "@/model/entities/book";
 import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";

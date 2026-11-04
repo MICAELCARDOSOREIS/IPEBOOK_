@@ -2,7 +2,6 @@ import { useMemo } from "react";
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { AppIcon } from "@/view/components/AppIcon";
 import { Chip } from "@/view/components/Chip";
 import { FilledButton } from "@/view/components/FilledButton";
 import { TextButton } from "@/view/components/TextButton";

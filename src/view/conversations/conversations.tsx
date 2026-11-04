@@ -228,7 +228,7 @@ export function Conversations({
                 keyExtractor={(item) => item.requestId}
                 contentContainerStyle={wideWeb ? styles.wideList : [styles.list, { paddingBottom: scrollBottomPadding.withBottomBar }]}
                 ListHeaderComponent={
-                  pendingReceivedCount > 0 && Boolean(onOpenReceivedRequests) ? (
+                  pendingReceivedCount > 0 && onOpenReceivedRequests ? (
                     <Pressable
                       accessibilityRole="button"
                       accessibilityLabel={`Você tem ${pendingReceivedCount} ${pendingReceivedCount === 1 ? "nova proposta recebida" : "novas propostas recebidas"}. Toque para abrir pedidos recebidos.`}

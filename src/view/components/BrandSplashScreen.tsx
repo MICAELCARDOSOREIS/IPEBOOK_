@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Animated, Platform, StyleSheet, Text, View } from "react-native";
+import { Animated, Platform, StyleSheet, Text } from "react-native";
 import { IpeMark } from "@/view/components/IpeMark";
 import { Logotipo } from "@/view/components/Logotipo";
 import { useTheme } from "@/view/theme/ThemeProvider";

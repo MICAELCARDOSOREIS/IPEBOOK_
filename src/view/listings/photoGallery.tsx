@@ -2,10 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import {
   FlatList,
   Image,
-  LayoutChangeEvent,
+  type LayoutChangeEvent,
   Modal,
-  NativeScrollEvent,
-  NativeSyntheticEvent,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
   Platform,
   Pressable,
   StyleSheet,
