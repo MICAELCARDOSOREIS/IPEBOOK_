@@ -10,12 +10,15 @@ export function internalRouteOf(url: string | null): string | null {
 /**
  * Notificações push (Spec 096): depois do login, obtém o token do Expo e o grava nas preferências uma só vez;
  * ao tocar numa notificação, abre a rota do aviso. Qualquer falha é silenciosa: o app segue sem push (CA2).
+ * O token só é pedido com a permissão concedida (`permissionReady`), senão o próprio Expo abriria o aviso
+ * nativo sem explicação — a Spec 020 pede a tela de motivo antes (CA2).
  */
 export function usePushRegistration(
   sessionUserId: string | null,
   onOpenRoute: (route: string) => void,
   push: IPushNotificationService,
   preferences: IUserPreferencesUseCases,
+  permissionReady: boolean,
 ): void {
   const openRoute = useRef(onOpenRoute);
   openRoute.current = onOpenRoute;
@@ -26,6 +29,7 @@ export function usePushRegistration(
       registeredUserId.current = null;
       return;
     }
+    if (!permissionReady) return;
     if (registeredUserId.current === sessionUserId) return;
     registeredUserId.current = sessionUserId;
 
@@ -44,7 +48,7 @@ export function usePushRegistration(
     return () => {
       active = false;
     };
-  }, [sessionUserId, push, preferences]);
+  }, [sessionUserId, permissionReady, push, preferences]);
 
   useEffect(() => {
     if (!sessionUserId) return;

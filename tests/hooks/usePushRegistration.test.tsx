@@ -17,22 +17,39 @@ function fakePreferences(current: { pushToken?: string | null } = {}) {
   } as unknown as IUserPreferencesUseCases & { updatePreferences: ReturnType<typeof vi.fn>; getPreferences: ReturnType<typeof vi.fn> };
 }
 
+type ProbeProps = { id: string | null; ready: boolean };
+let deps: {
+  push: MemoryPushNotificationService;
+  preferences: IUserPreferencesUseCases;
+  onOpenRoute: (route: string) => void;
+} = { push: new MemoryPushNotificationService(), preferences: fakePreferences(), onOpenRoute: () => {} };
+
+function Probe({ id, ready }: ProbeProps) {
+  usePushRegistration(id, deps.onOpenRoute, deps.push, deps.preferences, ready);
+  return null;
+}
+
 async function mount(
   userId: string | null,
   push: MemoryPushNotificationService,
   preferences: IUserPreferencesUseCases,
   onOpenRoute: (route: string) => void = () => {},
+  permissionReady = true,
 ) {
-  function Probe({ id }: { id: string | null }) {
-    usePushRegistration(id, onOpenRoute, push, preferences);
-    return null;
-  }
+  deps = { push, preferences, onOpenRoute };
   let renderer!: ReactTestRenderer;
   await act(async () => {
-    renderer = create(createElement(Probe, { id: userId }));
+    renderer = create(createElement(Probe, { id: userId, ready: permissionReady }));
     mounted.push(renderer);
   });
   return renderer;
+}
+
+/** Re-renderiza com a permissão recém-concedida pelo aviso explicativo (Spec 020). */
+async function setPermissionReady(renderer: ReactTestRenderer, ready: boolean) {
+  await act(async () => {
+    renderer.update(createElement(Probe, { id: "u1", ready }));
+  });
 }
 
 describe("usePushRegistration (Spec 096)", () => {
@@ -49,8 +66,27 @@ describe("usePushRegistration (Spec 096)", () => {
     expect(preferences.updatePreferences).not.toHaveBeenCalled();
   });
 
-  it("CA2: sem permissão, sem token ou sem login, não grava nada", async () => {
-    const semPermissao = fakePreferences();
+  it("Spec 020: sem a permissão concedida não pede o token, então o aviso nativo não aparece sozinho", async () => {
+    const preferences = fakePreferences();
+    await mount("u1", new MemoryPushNotificationService(true, "ExponentPushToken[x]"), preferences, () => {}, false);
+    expect(preferences.updatePreferences).not.toHaveBeenCalled();
+    expect(preferences.getPreferences).not.toHaveBeenCalled();
+  });
+
+  it("Spec 020: depois que o aviso explicativo concede a permissão o token é gravado", async () => {
+    const preferences = fakePreferences();
+    const renderer = await mount(
+      "u1",
+      new MemoryPushNotificationService(true, "ExponentPushToken[depois]"),
+      preferences,
+      () => {},
+      false,
+    );
+    await setPermissionReady(renderer, true);
+    expect(preferences.updatePreferences).toHaveBeenCalledWith("u1", { pushToken: "ExponentPushToken[depois]" });
+  });
+
+  it("CA2: sem permissão, sem token ou sem login, não grava nada", async () => {    const semPermissao = fakePreferences();
     await mount("u1", new MemoryPushNotificationService(false), semPermissao);
     const semToken = fakePreferences();
     await mount("u1", new MemoryPushNotificationService(true, null), semToken);

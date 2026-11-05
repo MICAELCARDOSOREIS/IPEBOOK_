@@ -1,6 +1,6 @@
 # IpêBook 🌳📚
 
-Plataforma comunitária de troca, venda e doação de livros em **Piripiri, PI**, construída em Expo, React Native, TypeScript e Supabase, com arquitetura MVVM sofisticada em sete camadas e suíte de testes automatizados (**2.084 testes em 293 arquivos**) baseada na norma **ISO/IEC 25010**.
+Plataforma comunitária de troca, venda e doação de livros em **Piripiri, PI**, construída em Expo, React Native, TypeScript e Supabase, com arquitetura MVVM sofisticada em sete camadas e suíte de testes automatizados (**2.109 testes em 297 arquivos**) baseada na norma **ISO/IEC 25010**.
 
 * 🌐 **Site oficial:** [https://ipebook.app](https://ipebook.app)
 * 🤖 **Convite para o Beta Android (Play Store):** [https://ipebook.app/beta](https://ipebook.app/beta)
