@@ -1,20 +1,28 @@
-import { makeAuthViewModel, makeMyListingsViewModel, makeProfileViewModel, makeUserPreferencesViewModel } from "@/di/container";
-import * as Linking from "expo-linking";
 import { useMemo, useState, useEffect } from "react";
-import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
+import {
+  makeAuthViewModel,
+  makeMyListingsViewModel,
+  makeProfileViewModel,
+  makeUserPreferencesViewModel,
+} from "@/di/container";
 import { normalizeInstagramHandle } from "@/model/validators/instagramValidator";
-import { Avatar } from "@/view/components/Avatar";
-import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
+import { AppIcon } from "@/view/components/AppIcon";
 import { Dialog } from "@/view/components/Dialog";
 import { FilledButton } from "@/view/components/FilledButton";
-import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
+import {
+  ProfileCommunityBadges,
+  ProfileIdentityCard,
+  ProfileMenuSection,
+  type ProfileMenuItem,
+} from "@/view/profile/ProfileHubSections";
+import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { WEB_GUTTER } from "@/view/webLayout";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
-import ipeFrame from "@/view/assets/moldura-ipe-perfil.png";
 
 export type ProfileHubProps = {
   requireAuth?: boolean;
@@ -30,16 +38,6 @@ export type ProfileHubProps = {
   onNavigateToInviteFriends?: () => void;
   onNavigateToSettings?: () => void;
   onSignedOut: () => void;
-};
-
-type MenuItem = {
-  key: string;
-  icon: AppIconName;
-  iconColor?: string;
-  label: string;
-  description?: string;
-  onPress: () => void;
-  showChevron?: boolean;
 };
 
 /**
@@ -60,7 +58,7 @@ export default function ProfileHub({
   onNavigateToSettings,
   onSignedOut,
 }: ProfileHubProps) {
-  const { colors, resolvedScheme } = useTheme();
+  const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [authState, authActions] = makeAuthViewModel();
   const userId = authState.user?.id ?? null;
@@ -124,7 +122,7 @@ export default function ProfileHub({
   }
 
   // Itens da seção "Atividade" (Figma 07.01 nós 25:627, 25:638)
-  const activityItems: MenuItem[] = [
+  const activityItems: ProfileMenuItem[] = [
     {
       key: "my-listings",
       icon: "shelf",
@@ -167,7 +165,7 @@ export default function ProfileHub({
   ];
 
   // Seção "Conta" enxuta (ADR 0060): o que é preferência do aplicativo mora em Configurações
-  const accountItems: MenuItem[] = [
+  const accountItems: ProfileMenuItem[] = [
     {
       key: "notifications",
       icon: "bell",
@@ -226,496 +224,71 @@ export default function ProfileHub({
             wideWeb ? (
               <View style={styles.wideGrid} testID="profile-wide-grid">
                 <View style={styles.wideSideCol}>
-                  {/* Cartão de identidade, métricas e ações */}
-                  <View style={[styles.heroBlock, styles.heroBlockWide]}>
-                    <View style={styles.identityRow}>
-                      <View style={styles.identityText}>
-                        <Text accessibilityRole="header" style={styles.profileName} numberOfLines={2}>
-                          {profile.name}
-                        </Text>
-                        <View style={styles.identityMetaRow}>
-                          {instagramHandle ? (
-                            <Pressable
-                              accessibilityRole="link"
-                              accessibilityLabel={`Abrir Instagram @${instagramHandle}`}
-                              hitSlop={8}
-                              onPress={() => void Linking.openURL(`https://instagram.com/${instagramHandle}`)}
-                            >
-                              <Text style={styles.identityHandle}>{`@${instagramHandle}`}</Text>
-                            </Pressable>
-                          ) : (
-                            <Pressable
-                              accessibilityRole="button"
-                              accessibilityLabel="Adicionar Instagram ao perfil"
-                              hitSlop={8}
-                              onPress={guardedNavigateToEditProfile}
-                            >
-                              <Text style={styles.identityHandleAction}>Adicionar Instagram</Text>
-                            </Pressable>
-                          )}
-                          <View style={styles.locationRow}>
-                            <AppIcon name="place" size={16} color={colors.m3.onSurfaceVariant} />
-                            <Text style={styles.locationText}>
-                              {profile.neighborhood ? `${profile.neighborhood}, Piripiri` : "Piripiri, PI"}
-                            </Text>
-                          </View>
-                        </View>
-                      </View>
-                      <View style={styles.avatarFrame}>
-                        <Avatar name={profile.name} photoUrl={profile.photoUrl} size={92} />
-                        <Image
-                          source={ipeFrame}
-                          accessibilityElementsHidden
-                          pointerEvents="none"
-                          resizeMode="contain"
-                          style={styles.avatarIpeFrame}
-                        />
-                      </View>
-                    </View>
-
-                    <View style={styles.statsContainer}>
-                      <Pressable
-                        accessibilityRole="button"
-                        accessibilityLabel={`Minhas publicações: ${totalPublications} ${totalPublications === 1 ? "publicação" : "publicações"}`}
-                        onPress={guardedNavigateToMyListings}
-                        style={({ pressed }) => [styles.statBox, pressed && styles.statBoxPressed]}
-                      >
-                        <Text style={styles.statNumber}>{totalPublications}</Text>
-                        <Text style={styles.statLabel}>{totalPublications === 1 ? "publicação" : "publicações"}</Text>
-                      </Pressable>
-
-                      <View style={styles.statDivider} />
-
-                      <Pressable
-                        accessibilityRole="button"
-                        accessibilityLabel={`Trocas concluídas: ${completedTrocas} ${completedTrocas === 1 ? "troca" : "trocas"}`}
-                        onPress={guardedNavigateToMeetingHistory}
-                        style={({ pressed }) => [styles.statBox, pressed && styles.statBoxPressed]}
-                      >
-                        <Text style={styles.statNumber}>{completedTrocas}</Text>
-                        <Text style={styles.statLabel}>{completedTrocas === 1 ? "troca" : "trocas"}</Text>
-                      </Pressable>
-
-                      <View style={styles.statDivider} />
-
-                      <Pressable
-                        accessibilityRole="button"
-                        accessibilityLabel={`Avaliações recebidas: ${ratingText}`}
-                        onPress={guardedNavigateToRatings}
-                        style={({ pressed }) => [styles.statBox, pressed && styles.statBoxPressed]}
-                      >
-                        <Text style={styles.statNumber}>
-                          {ratingText === "—" ? ratingText : <><Text style={styles.ratingStar}>★</Text> {ratingText}</>}
-                        </Text>
-                        <Text style={styles.statLabel}>nota média</Text>
-                      </Pressable>
-                    </View>
-
-                    <View style={styles.primaryActions}>
-                      <Pressable
-                        accessibilityRole="button"
-                        accessibilityLabel="Editar perfil"
-                        onPress={guardedNavigateToEditProfile}
-                        style={({ pressed }) => [
-                          styles.editProfileButton,
-                          resolvedScheme === "dark" && styles.editProfileButtonDark,
-                          pressed && styles.editProfileButtonPressed,
-                        ]}
-                      >
-                        <AppIcon name="edit" size={18} color={colors.ipe.onContainer} />
-                        <Text style={styles.editProfileButtonText}>Editar perfil</Text>
-                      </Pressable>
-
-                      {onNavigateToCreateListing ? (
-                        <Pressable
-                          accessibilityRole="button"
-                          accessibilityLabel="Publicar um livro"
-                          onPress={guardedNavigateToCreateListing}
-                          style={({ pressed }) => [styles.publishButton, pressed && styles.publishButtonPressed]}
-                        >
-                          <AppIcon name="add" size={20} color={colors.m3.onPrimary} />
-                          <Text style={styles.publishButtonText}>Publicar um livro</Text>
-                        </Pressable>
-                      ) : null}
-                    </View>
-                  </View>
-
-                  {/* Selos Comunitários de Piripiri (Spec 122) */}
-                  <View style={[styles.badgesSection, styles.badgesSectionWide]} testID="profile-badges-section">
-                    <View style={styles.sectionHeaderRow}>
-                      <View style={styles.sectionBloom} />
-                      <Text accessibilityRole="header" style={styles.sectionHeader}>Selos Comunitários de Piripiri</Text>
-                    </View>
-                    <View style={styles.badgesRow}>
-                      <View
-                        style={styles.badgeItem}
-                        accessibilityRole="text"
-                        accessibilityLabel={`Selo Leitor de Piripiri: ${profile.neighborhood || "Comunidade"}`}
-                      >
-                        <View style={[styles.badgeIconBox, { backgroundColor: colors.nature.sprout }]}>
-                          <AppIcon name="place" size={20} color={colors.nature.foliage} />
-                        </View>
-                        <Text style={styles.badgeTitle} numberOfLines={2}>Leitor de Piripiri</Text>
-                        <Text style={styles.badgeDesc} numberOfLines={2}>{profile.neighborhood || "Comunidade"}</Text>
-                      </View>
-
-                      <View
-                        style={styles.badgeItem}
-                        accessibilityRole="text"
-                        accessibilityLabel={`Selo Ponto Seguro: ${completedTrocas} ${completedTrocas === 1 ? "encontro realizado" : "encontros realizados"}`}
-                      >
-                        <View style={[styles.badgeIconBox, { backgroundColor: colors.m3.secondaryContainer }]}>
-                          <AppIcon name="checkCircle" size={20} color={colors.action} />
-                        </View>
-                        <Text style={styles.badgeTitle} numberOfLines={2}>Ponto Seguro</Text>
-                        <Text style={styles.badgeDesc} numberOfLines={2}>
-                          {completedTrocas > 0 ? `${completedTrocas} ${completedTrocas === 1 ? "concluído" : "concluídos"}` : "Locais públicos"}
-                        </Text>
-                      </View>
-
-                      <View
-                        style={styles.badgeItem}
-                        accessibilityRole="text"
-                        accessibilityLabel={`Selo Estante Ativa: ${totalPublications} ${totalPublications === 1 ? "livro publicado" : "livros publicados"}`}
-                      >
-                        <View style={[styles.badgeIconBox, { backgroundColor: colors.ipe.container }]}>
-                          <AppIcon name="shelf" size={20} color={colors.ipe.onContainer} />
-                        </View>
-                        <Text style={styles.badgeTitle} numberOfLines={2}>Estante Ativa</Text>
-                        <Text style={styles.badgeDesc} numberOfLines={2}>
-                          {totalPublications > 0 ? `${totalPublications} ${totalPublications === 1 ? "obra" : "obras"}` : "Compartilhe"}
-                        </Text>
-                      </View>
-                    </View>
-                  </View>
+                  <ProfileIdentityCard
+                    name={profile.name}
+                    photoUrl={profile.photoUrl}
+                    neighborhood={profile.neighborhood}
+                    instagramHandle={instagramHandle}
+                    totalPublications={totalPublications}
+                    completedTrocas={completedTrocas}
+                    ratingText={ratingText}
+                    wideWeb
+                    onEditProfile={guardedNavigateToEditProfile}
+                    onCreateListing={onNavigateToCreateListing ? guardedNavigateToCreateListing : undefined}
+                    onMyListings={guardedNavigateToMyListings}
+                    onMeetingHistory={guardedNavigateToMeetingHistory}
+                    onRatings={guardedNavigateToRatings}
+                  />
+                  <ProfileCommunityBadges
+                    neighborhood={profile.neighborhood}
+                    completedTrocas={completedTrocas}
+                    totalPublications={totalPublications}
+                    wideWeb
+                  />
                 </View>
 
                 {/* Coluna Principal da Web Larga: Atividade e Conta lado a lado */}
                 <View style={styles.wideMainCol}>
                   <View style={styles.wideSectionsRow}>
-                    {/* Seção 1: Atividade */}
-                    <View style={[styles.section, styles.sectionWide]}>
-                      <View style={styles.sectionHeaderRow}>
-                        <View style={styles.sectionBloom} />
-                        <Text style={styles.sectionHeader}>Atividade</Text>
-                      </View>
-                      <View style={styles.cardGroup}>
-                        {activityItems.map((item) => (
-                          <Pressable
-                            key={item.key}
-                            accessibilityRole="button"
-                            accessibilityLabel={item.label}
-                            onPress={item.onPress}
-                            style={({ pressed }) => [styles.menuRow, pressed && styles.menuRowPressed]}
-                          >
-                            <View style={styles.menuIconContainer}>
-                              <AppIcon name={item.icon} size={20} color={item.iconColor ?? colors.m3.onSurface} />
-                            </View>
-                            <View style={styles.menuRowText}>
-                              <Text style={styles.menuRowTitle}>{item.label}</Text>
-                              {item.description ? (
-                                <Text style={styles.menuRowDescription}>{item.description}</Text>
-                              ) : null}
-                            </View>
-                            {item.showChevron ? (
-                              <AppIcon name="chevronRight" size={20} color={colors.m3.onSurfaceVariant} />
-                            ) : null}
-                          </Pressable>
-                        ))}
-                      </View>
-                    </View>
-
-                    {/* Seção 2: Conta */}
-                    <View style={[styles.section, styles.sectionWide]}>
-                      <View style={styles.sectionHeaderRow}>
-                        <View style={styles.sectionBloom} />
-                        <Text style={styles.sectionHeader}>Conta</Text>
-                      </View>
-                      <View style={styles.cardGroup}>
-                        {accountItems.map((item) => (
-                          <Pressable
-                            key={item.key}
-                            accessibilityRole="button"
-                            accessibilityLabel={item.label}
-                            onPress={item.onPress}
-                            style={({ pressed }) => [styles.menuRow, pressed && styles.menuRowPressed]}
-                          >
-                            <View style={styles.menuIconContainer}>
-                              <AppIcon name={item.icon} size={20} color={item.iconColor ?? colors.m3.onSurfaceVariant} />
-                            </View>
-                            <View style={styles.menuRowText}>
-                              <Text style={styles.menuRowTitle}>{item.label}</Text>
-                              {item.description ? (
-                                <Text style={styles.menuRowDescription}>{item.description}</Text>
-                              ) : null}
-                            </View>
-                            {item.showChevron ? (
-                              <AppIcon name="chevronRight" size={20} color={colors.m3.onSurfaceVariant} />
-                            ) : null}
-                          </Pressable>
-                        ))}
-
-                        {/* Sair da conta (Figma 07.01 nó 25:674: sem chevron) */}
-                        <Pressable
-                          accessibilityRole="button"
-                          accessibilityLabel="Sair da conta"
-                          onPress={() => setConfirmingSignOut(true)}
-                          style={({ pressed }) => [styles.menuRow, pressed && styles.menuRowPressed]}
-                        >
-                          <View style={[styles.menuIconContainer, styles.signOutIconContainer]}>
-                            <AppIcon name="logout" size={20} color={colors.error} />
-                          </View>
-                          <View style={styles.menuRowText}>
-                            <Text style={[styles.menuRowTitle, styles.signOutText]}>Sair da conta</Text>
-                          </View>
-                        </Pressable>
-                      </View>
-                    </View>
+                    <ProfileMenuSection title="Atividade" items={activityItems} wideWeb />
+                    <ProfileMenuSection
+                      title="Conta"
+                      items={accountItems}
+                      wideWeb
+                      defaultIconColor={colors.m3.onSurfaceVariant}
+                      onSignOut={() => setConfirmingSignOut(true)}
+                    />
                   </View>
                 </View>
               </View>
             ) : (
               <>
-                <View style={styles.heroBlock}>
-                  <View style={styles.identityRow}>
-                    <View style={styles.identityText}>
-                      <Text accessibilityRole="header" style={styles.profileName} numberOfLines={2}>
-                        {profile.name}
-                      </Text>
-                      <View style={styles.identityMetaRow}>
-                        {instagramHandle ? (
-                          <Pressable
-                            accessibilityRole="link"
-                            accessibilityLabel={`Abrir Instagram @${instagramHandle}`}
-                            hitSlop={8}
-                            onPress={() => void Linking.openURL(`https://instagram.com/${instagramHandle}`)}
-                          >
-                            <Text style={styles.identityHandle}>{`@${instagramHandle}`}</Text>
-                          </Pressable>
-                        ) : (
-                          <Pressable
-                            accessibilityRole="button"
-                            accessibilityLabel="Adicionar Instagram ao perfil"
-                            hitSlop={8}
-                            onPress={guardedNavigateToEditProfile}
-                          >
-                            <Text style={styles.identityHandleAction}>Adicionar Instagram</Text>
-                          </Pressable>
-                        )}
-                        <View style={styles.locationRow}>
-                          <AppIcon name="place" size={16} color={colors.m3.onSurfaceVariant} />
-                          <Text style={styles.locationText}>
-                            {profile.neighborhood ? `${profile.neighborhood}, Piripiri` : "Piripiri, PI"}
-                          </Text>
-                        </View>
-                      </View>
-                    </View>
-                    <View style={styles.avatarFrame}>
-                      <Avatar name={profile.name} photoUrl={profile.photoUrl} size={92} />
-                      <Image
-                        source={ipeFrame}
-                        accessibilityElementsHidden
-                        pointerEvents="none"
-                        resizeMode="contain"
-                        style={styles.avatarIpeFrame}
-                      />
-                    </View>
-                  </View>
-
-                  <View style={styles.statsContainer}>
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel={`Minhas publicações: ${totalPublications} ${totalPublications === 1 ? "publicação" : "publicações"}`}
-                      onPress={guardedNavigateToMyListings}
-                      style={({ pressed }) => [styles.statBox, pressed && styles.statBoxPressed]}
-                    >
-                      <Text style={styles.statNumber}>{totalPublications}</Text>
-                      <Text style={styles.statLabel}>{totalPublications === 1 ? "publicação" : "publicações"}</Text>
-                    </Pressable>
-
-                    <View style={styles.statDivider} />
-
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel={`Trocas concluídas: ${completedTrocas} ${completedTrocas === 1 ? "troca" : "trocas"}`}
-                      onPress={guardedNavigateToMeetingHistory}
-                      style={({ pressed }) => [styles.statBox, pressed && styles.statBoxPressed]}
-                    >
-                      <Text style={styles.statNumber}>{completedTrocas}</Text>
-                      <Text style={styles.statLabel}>{completedTrocas === 1 ? "troca" : "trocas"}</Text>
-                    </Pressable>
-
-                    <View style={styles.statDivider} />
-
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel={`Avaliações recebidas: ${ratingText}`}
-                      onPress={guardedNavigateToRatings}
-                      style={({ pressed }) => [styles.statBox, pressed && styles.statBoxPressed]}
-                    >
-                      <Text style={styles.statNumber}>
-                        {ratingText === "—" ? ratingText : <><Text style={styles.ratingStar}>★</Text> {ratingText}</>}
-                      </Text>
-                      <Text style={styles.statLabel}>nota média</Text>
-                    </Pressable>
-                  </View>
-
-                  <View style={styles.primaryActions}>
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel="Editar perfil"
-                      onPress={guardedNavigateToEditProfile}
-                      style={({ pressed }) => [
-                        styles.editProfileButton,
-                        resolvedScheme === "dark" && styles.editProfileButtonDark,
-                        pressed && styles.editProfileButtonPressed,
-                      ]}
-                    >
-                      <AppIcon name="edit" size={18} color={colors.ipe.onContainer} />
-                      <Text style={styles.editProfileButtonText}>Editar perfil</Text>
-                    </Pressable>
-
-                    {onNavigateToCreateListing ? (
-                      <Pressable
-                        accessibilityRole="button"
-                        accessibilityLabel="Publicar um livro"
-                        onPress={guardedNavigateToCreateListing}
-                        style={({ pressed }) => [styles.publishButton, pressed && styles.publishButtonPressed]}
-                      >
-                        <AppIcon name="add" size={20} color={colors.m3.onPrimary} />
-                        <Text style={styles.publishButtonText}>Publicar um livro</Text>
-                      </Pressable>
-                    ) : null}
-                  </View>
-                </View>
-
-                {/* Selos Comunitários de Piripiri (Spec 122) */}
-                <View style={styles.badgesSection} testID="profile-badges-section">
-                  <View style={styles.sectionHeaderRow}>
-                    <View style={styles.sectionBloom} />
-                    <Text accessibilityRole="header" style={styles.sectionHeader}>Selos Comunitários de Piripiri</Text>
-                  </View>
-                  <View style={styles.badgesRow}>
-                    <View
-                      style={styles.badgeItem}
-                      accessibilityRole="text"
-                      accessibilityLabel={`Selo Leitor de Piripiri: ${profile.neighborhood || "Comunidade"}`}
-                    >
-                      <View style={[styles.badgeIconBox, { backgroundColor: colors.nature.sprout }]}>
-                        <AppIcon name="place" size={20} color={colors.nature.foliage} />
-                      </View>
-                      <Text style={styles.badgeTitle} numberOfLines={2}>Leitor de Piripiri</Text>
-                      <Text style={styles.badgeDesc} numberOfLines={2}>{profile.neighborhood || "Comunidade"}</Text>
-                    </View>
-
-                    <View
-                      style={styles.badgeItem}
-                      accessibilityRole="text"
-                      accessibilityLabel={`Selo Ponto Seguro: ${completedTrocas} ${completedTrocas === 1 ? "encontro realizado" : "encontros realizados"}`}
-                    >
-                      <View style={[styles.badgeIconBox, { backgroundColor: colors.m3.secondaryContainer }]}>
-                        <AppIcon name="checkCircle" size={20} color={colors.action} />
-                      </View>
-                      <Text style={styles.badgeTitle} numberOfLines={2}>Ponto Seguro</Text>
-                      <Text style={styles.badgeDesc} numberOfLines={2}>
-                        {completedTrocas > 0 ? `${completedTrocas} ${completedTrocas === 1 ? "concluído" : "concluídos"}` : "Locais públicos"}
-                      </Text>
-                    </View>
-
-                    <View
-                      style={styles.badgeItem}
-                      accessibilityRole="text"
-                      accessibilityLabel={`Selo Estante Ativa: ${totalPublications} ${totalPublications === 1 ? "livro publicado" : "livros publicados"}`}
-                    >
-                      <View style={[styles.badgeIconBox, { backgroundColor: colors.ipe.container }]}>
-                        <AppIcon name="shelf" size={20} color={colors.ipe.onContainer} />
-                      </View>
-                      <Text style={styles.badgeTitle} numberOfLines={2}>Estante Ativa</Text>
-                      <Text style={styles.badgeDesc} numberOfLines={2}>
-                        {totalPublications > 0 ? `${totalPublications} ${totalPublications === 1 ? "obra" : "obras"}` : "Compartilhe"}
-                      </Text>
-                    </View>
-                  </View>
-                </View>
-
-                {/* Seção 1: Atividade (Figma 07.01 nó 604:8684: altura 36px, cor #2C5E45) */}
-                <View style={styles.section}>
-                  <View style={styles.sectionHeaderRow}>
-                    <View style={styles.sectionBloom} />
-                    <Text style={styles.sectionHeader}>Atividade</Text>
-                  </View>
-                  <View style={styles.cardGroup}>
-                    {activityItems.map((item) => (
-                      <Pressable
-                        key={item.key}
-                        accessibilityRole="button"
-                        accessibilityLabel={item.label}
-                        onPress={item.onPress}
-                        style={({ pressed }) => [styles.menuRow, pressed && styles.menuRowPressed]}
-                      >
-                        <View style={styles.menuIconContainer}>
-                          <AppIcon name={item.icon} size={20} color={item.iconColor ?? colors.m3.onSurface} />
-                        </View>
-                        <View style={styles.menuRowText}>
-                          <Text style={styles.menuRowTitle}>{item.label}</Text>
-                          {item.description ? (
-                            <Text style={styles.menuRowDescription}>{item.description}</Text>
-                          ) : null}
-                        </View>
-                        {item.showChevron ? (
-                          <AppIcon name="chevronRight" size={20} color={colors.m3.onSurfaceVariant} />
-                        ) : null}
-                      </Pressable>
-                    ))}
-                  </View>
-                </View>
-
-                {/* Seção 2: Conta (Figma 07.01 nó 604:8686). Sem sessão não há conta para gerenciar (ADR 0060). */}
-                <View style={styles.section}>
-                  <View style={styles.sectionHeaderRow}>
-                    <View style={styles.sectionBloom} />
-                    <Text style={styles.sectionHeader}>Conta</Text>
-                  </View>
-                  <View style={styles.cardGroup}>
-                    {accountItems.map((item) => (
-                      <Pressable
-                        key={item.key}
-                        accessibilityRole="button"
-                        accessibilityLabel={item.label}
-                        onPress={item.onPress}
-                        style={({ pressed }) => [styles.menuRow, pressed && styles.menuRowPressed]}
-                      >
-                        <View style={styles.menuIconContainer}>
-                          <AppIcon name={item.icon} size={20} color={item.iconColor ?? colors.m3.onSurfaceVariant} />
-                        </View>
-                        <View style={styles.menuRowText}>
-                          <Text style={styles.menuRowTitle}>{item.label}</Text>
-                          {item.description ? (
-                            <Text style={styles.menuRowDescription}>{item.description}</Text>
-                          ) : null}
-                        </View>
-                        {item.showChevron ? (
-                          <AppIcon name="chevronRight" size={20} color={colors.m3.onSurfaceVariant} />
-                        ) : null}
-                      </Pressable>
-                    ))}
-
-                    {/* Sair da conta (Figma 07.01 nó 25:674: sem chevron) */}
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel="Sair da conta"
-                      onPress={() => setConfirmingSignOut(true)}
-                      style={({ pressed }) => [styles.menuRow, pressed && styles.menuRowPressed]}
-                    >
-                      <View style={[styles.menuIconContainer, styles.signOutIconContainer]}>
-                        <AppIcon name="logout" size={20} color={colors.error} />
-                      </View>
-                      <View style={styles.menuRowText}>
-                        <Text style={[styles.menuRowTitle, styles.signOutText]}>Sair da conta</Text>
-                      </View>
-                    </Pressable>
-                  </View>
-                </View>
+                <ProfileIdentityCard
+                  name={profile.name}
+                  photoUrl={profile.photoUrl}
+                  neighborhood={profile.neighborhood}
+                  instagramHandle={instagramHandle}
+                  totalPublications={totalPublications}
+                  completedTrocas={completedTrocas}
+                  ratingText={ratingText}
+                  onEditProfile={guardedNavigateToEditProfile}
+                  onCreateListing={onNavigateToCreateListing ? guardedNavigateToCreateListing : undefined}
+                  onMyListings={guardedNavigateToMyListings}
+                  onMeetingHistory={guardedNavigateToMeetingHistory}
+                  onRatings={guardedNavigateToRatings}
+                />
+                <ProfileCommunityBadges
+                  neighborhood={profile.neighborhood}
+                  completedTrocas={completedTrocas}
+                  totalPublications={totalPublications}
+                />
+                <ProfileMenuSection title="Atividade" items={activityItems} />
+                <ProfileMenuSection
+                  title="Conta"
+                  items={accountItems}
+                  defaultIconColor={colors.m3.onSurfaceVariant}
+                  onSignOut={() => setConfirmingSignOut(true)}
+                />
               </>
             )
           ) : (
@@ -783,25 +356,6 @@ function createStyles(colors: ColorPalette) {
       alignItems: "flex-start",
       width: "100%",
     },
-    heroBlock: {
-      width: "100%",
-      position: "relative",
-      overflow: "hidden",
-      gap: tokens.spacing[8],
-      borderRadius: tokens.radius.xl,
-      backgroundColor: colors.m3.surfaceContainerLow,
-      borderWidth: 1,
-      borderColor: colors.book.paperEdge,
-      padding: tokens.spacing[16],
-      shadowColor: colors.ipe.trunk,
-      shadowOffset: { width: 0, height: 3 },
-      shadowOpacity: 0.08,
-      shadowRadius: 10,
-      elevation: 2,
-    },
-    heroBlockWide: { width: "100%" },
-    badgesSectionWide: { width: "100%", marginTop: 0 },
-    sectionWide: { flex: 1, minWidth: 260 },
     content: {
       width: "100%",
       paddingHorizontal: tokens.spacing[24],
@@ -846,259 +400,5 @@ function createStyles(colors: ColorPalette) {
       ...tokens.typography.bodyMedium,
       color: colors.m3.onSurfaceVariant,
     },
-    identityRow: {
-      minHeight: 100,
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-      gap: tokens.spacing[12],
-    },
-    identityText: { flex: 1, minWidth: 0, gap: tokens.spacing[4] },
-    identityMetaRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      flexWrap: "wrap",
-      columnGap: tokens.spacing[12],
-      rowGap: tokens.spacing[4],
-    },
-    profileName: {
-      color: colors.brandBrown,
-      fontFamily: fontFamily.brand,
-      fontSize: 34,
-      lineHeight: 41,
-      fontWeight: tokens.fontWeight.bold,
-    },
-    identityHandle: {
-      ...tokens.typography.bodyLarge,
-      fontFamily: fontFamily.semiBold,
-      fontWeight: tokens.fontWeight.semiBold,
-      color: colors.m3.onSurfaceVariant,
-    },
-    identityHandleAction: {
-      ...tokens.typography.bodyMedium,
-      fontWeight: tokens.fontWeight.semiBold,
-      color: colors.m3.primary,
-    },
-    locationRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[4],
-      marginTop: tokens.spacing[2],
-    },
-    locationText: {
-      ...tokens.typography.bodyMedium,
-      color: colors.m3.onSurfaceVariant,
-    },
-    avatarFrame: {
-      width: 116,
-      height: 116,
-      position: "relative",
-      padding: tokens.spacing[3],
-      borderRadius: tokens.radius.full,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    avatarIpeFrame: {
-      position: "absolute",
-      // O vão interno da arte mede 65% da largura (raio 250/768). Com 136px o vão fica ~88px,
-      // um pouco menor que a foto de 92px, para o galho cobrir a borda como uma moldura.
-      // Centralizada explicitamente no contêiner de 116px: (116 - 136) / 2 = -10.
-      top: -10,
-      left: -10,
-      width: 136,
-      height: 136,
-    },
-    editProfileButton: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "center",
-      gap: tokens.spacing[8],
-      flex: 1,
-      minHeight: tokens.accessibility.touchTarget,
-      backgroundColor: colors.ipe.bloom,
-      borderRadius: tokens.radius.full,
-      paddingHorizontal: tokens.spacing[16],
-    },
-    editProfileButtonPressed: {
-      borderRadius: tokens.shapeMorph.buttonPressed,
-      backgroundColor: colors.ipe.bloomDeep,
-      transform: [{ scale: 0.98 }],
-    },
-    editProfileButtonDark: {
-      backgroundColor: colors.ipe.bloomDeep,
-    },
-    editProfileButtonText: {
-      ...tokens.typography.labelLarge,
-      color: colors.ipe.onContainer,
-      fontWeight: tokens.fontWeight.semiBold,
-    },
-    primaryActions: {
-      flexDirection: "row",
-      alignItems: "stretch",
-      gap: tokens.spacing[8],
-    },
-    badgesSection: {
-      width: "100%",
-      marginTop: tokens.spacing[8],
-    },
-    badgesRow: {
-      flexDirection: "row",
-      gap: tokens.spacing[8],
-      marginTop: tokens.spacing[8],
-    },
-    badgeItem: {
-      flex: 1,
-      backgroundColor: colors.m3.surfaceContainerLow,
-      borderRadius: tokens.radius.card,
-      paddingVertical: tokens.spacing[12],
-      paddingHorizontal: tokens.spacing[6],
-      minHeight: 104,
-      alignItems: "center",
-      justifyContent: "flex-start",
-      gap: tokens.spacing[4],
-      borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
-    },
-    badgeIconBox: {
-      width: 36,
-      height: 36,
-      borderRadius: tokens.radius.full,
-      alignItems: "center",
-      justifyContent: "center",
-      marginBottom: tokens.spacing[2],
-    },
-    badgeTitle: {
-      ...tokens.typography.labelSmall,
-      fontWeight: tokens.fontWeight.bold,
-      color: colors.m3.onSurface,
-      textAlign: "center",
-    },
-    badgeDesc: {
-      ...tokens.typography.footnote,
-      color: colors.m3.onSurfaceVariant,
-      textAlign: "center",
-    },
-    statsContainer: {
-      flexDirection: "row",
-      alignItems: "center",
-      minHeight: 84,
-      marginTop: 0,
-      paddingVertical: tokens.spacing[4],
-    },
-    statBox: {
-      flex: 1,
-      minWidth: 0,
-      minHeight: tokens.accessibility.touchTarget,
-      alignItems: "center",
-      justifyContent: "center",
-      gap: tokens.spacing[2],
-      paddingHorizontal: tokens.spacing[4],
-      borderRadius: tokens.radius.small,
-    },
-    statBoxPressed: {
-      backgroundColor: colors.m3.surfaceContainerLow,
-    },
-    statDivider: {
-      width: 1,
-      height: tokens.spacing[32],
-      backgroundColor: colors.ipe.bloom,
-      opacity: 0.65,
-    },
-    statNumber: {
-      fontFamily: fontFamily.brand,
-      fontSize: 28,
-      lineHeight: 34,
-      fontWeight: tokens.fontWeight.bold,
-      color: colors.brandBrown,
-    },
-    ratingStar: {
-      color: colors.ipe.bloom,
-    },
-    statLabel: {
-      ...tokens.typography.labelMedium,
-      color: colors.m3.onSurfaceVariant,
-    },
-    publishButton: {
-      flex: 1,
-      minHeight: 48,
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "center",
-      gap: tokens.spacing[8],
-      borderRadius: tokens.shapeMorph.buttonRest,
-      backgroundColor: colors.m3.primary,
-      paddingHorizontal: tokens.spacing[20],
-    },
-    publishButtonPressed: {
-      borderRadius: tokens.shapeMorph.buttonPressed,
-      opacity: 0.88,
-    },
-    publishButtonText: {
-      ...tokens.typography.labelLarge,
-      color: colors.m3.onPrimary,
-      fontWeight: tokens.fontWeight.semiBold,
-    },
-    section: {
-      gap: tokens.spacing[4],
-    },
-    sectionHeaderRow: {
-      height: 36,
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[8],
-      paddingHorizontal: tokens.spacing[4],
-    },
-    // Flor de ipê marcando cada seção (Spec 078).
-    sectionBloom: {
-      width: tokens.spacing[8],
-      height: tokens.spacing[8],
-      borderRadius: tokens.radius.extraSmall,
-      backgroundColor: colors.ipe.bloomDeep,
-    },
-    sectionHeader: {
-      ...tokens.typography.labelLarge,
-      // Figma `07.01` (conferido em 2026-10-26, Spec 076): rótulo de seção na cor primária.
-      color: colors.m3.primary,
-    },
-    // Figma `07.01`: as linhas de menu ficam direto no fundo da página, sem cartão, borda nem
-    // divisórias.
-    cardGroup: {
-      backgroundColor: "transparent",
-    },
-    menuRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[16],
-      paddingVertical: tokens.spacing[8],
-      paddingHorizontal: tokens.spacing[8],
-      minHeight: tokens.accessibility.touchTarget,
-      borderRadius: tokens.shapeMorph.chipUnselected,
-    },
-    menuRowPressed: {
-      backgroundColor: colors.m3.surfaceContainerHigh,
-      borderRadius: tokens.shapeMorph.chipSelected,
-      transform: [{ scale: 0.985 }],
-    },
-    menuIconContainer: {
-      width: 40,
-      height: 40,
-      borderRadius: tokens.radius.medium,
-      backgroundColor: colors.m3.surfaceContainerHigh,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    signOutIconContainer: {
-      backgroundColor: colors.badge.sale.background,
-    },
-    menuRowText: { flex: 1, gap: tokens.spacing[2] },
-    menuRowTitle: {
-      ...tokens.typography.bodyLarge,
-      color: colors.m3.onSurface,
-    },
-    menuRowDescription: {
-      ...tokens.typography.bodyMedium,
-      color: colors.m3.onSurfaceVariant,
-    },
-    signOutText: { color: colors.error },
   });
 }

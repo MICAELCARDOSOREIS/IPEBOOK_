@@ -1,21 +1,27 @@
-import { makeAuthViewModel, makeBookDetailViewModel, makeMyListingsViewModel, makePublicProfileViewModel, makeRequestNegotiationViewModel, makeShareListingViewModel } from "@/di/container";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
+import {
+  makeAuthViewModel,
+  makeBookDetailViewModel,
+  makeMyListingsViewModel,
+  makePublicProfileViewModel,
+  makeRequestNegotiationViewModel,
+  makeShareListingViewModel,
+} from "@/di/container";
 import { SHARE_BASE_URL } from "@/viewmodel/useShareListingViewModel";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { captureRef } from "react-native-view-shot";
 import { Breadcrumb } from "@/view/components/Breadcrumb";
-import { Book3D } from "@/view/components/Book3D";
 import { ErrorState } from "@/view/components/ErrorState";
 import { ListingShareCard } from "@/view/components/ListingShareCard";
 import { LoadingState } from "@/view/components/LoadingState";
 import { FilledButton } from "@/view/components/FilledButton";
 import { Snackbar } from "@/view/components/Snackbar";
-import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
-import { Avatar } from "@/view/components/Avatar";
+import { AppIcon } from "@/view/components/AppIcon";
+import { BookDetailHeroSection, DetailRow, SellerCard } from "@/view/listings/BookDetailSections";
 import { PhotoGallery } from "@/view/listings/photoGallery";
 import { ReservedListingSheet } from "@/view/listings/ReservedListingSheet";
 import { ProposalSheet } from "@/view/listings/ProposalSheet";
@@ -33,58 +39,6 @@ function createModalityTag(colors: ColorPalette): Record<BookModality, { backgro
     trade: { background: colors.badge.trade.background, text: colors.badge.trade.text, label: "Troca" },
     donation: { background: colors.badge.donation.background, text: colors.badge.donation.text, label: "Doação" },
   };
-}
-
-/** Texto usado enquanto o perfil carrega ou quando ele não pôde ser lido. */
-const OWNER_FALLBACK_LABEL = "Anunciado por outro membro da comunidade";
-
-/**
- * Card do anunciante (Figma `03.01 · O Pequeno Príncipe`, nó `Material 3 · Link · Anunciante`).
- */
-function SellerCard({
-  ownerId,
-  onPress,
-}: {
-  ownerId: string;
-  onPress?: () => void;
-}) {
-  const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
-  const [profileState] = makePublicProfileViewModel(ownerId);
-  const profile = profileState.profile;
-  const name = profile?.name?.trim();
-  const label = name ? `Anunciado por ${name}` : OWNER_FALLBACK_LABEL;
-
-  const ratingText = profile?.averageRating != null
-    ? `★ ${profile.averageRating.toFixed(1).replace(".", ",")} · `
-    : "";
-  const exchangesCount = profile?.completedNegotiations ?? 0;
-  const exchangesText = `${exchangesCount} ${exchangesCount === 1 ? "troca" : "trocas"}`;
-  const metaText = `${ratingText}${exchangesText}`;
-
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      onPress={onPress}
-      style={withPress(styles.sellerCard)}
-    >
-      <View style={styles.sellerInfo}>
-        <Avatar name={name || "Comunidade"} photoUrl={profile?.photoUrl} size={40} />
-        <View style={styles.sellerColumn}>
-          <View style={styles.sellerTextCol}>
-            <Text style={styles.sellerName}>{name || "Membro da comunidade"}</Text>
-            <Text style={styles.sellerMeta}>{metaText}</Text>
-          </View>
-          <View style={styles.sellerTrustRow}>
-            <AppIcon name="place" size={13} color={colors.nature.foliage} />
-            <Text style={styles.sellerTrustText}>Ponto Seguro de Piripiri · Confirmação por QR Code</Text>
-          </View>
-        </View>
-      </View>
-      <AppIcon name="chevronRight" size={24} color={colors.m3.onSurfaceVariant} />
-    </Pressable>
-  );
 }
 
 export type BookDetailProps = {
@@ -421,92 +375,21 @@ export default function BookDetail({
           />
         ) : null}
         {/* 1. Capa em destaque na cor da modalidade (Figma `03.01`–`03.03`), indo até a barra de status. */}
-        <View
-          style={[
-            styles.hero,
-            wideWeb ? styles.heroWide : { paddingTop: insets.top + tokens.spacing[8] },
-            heroColors ? { backgroundColor: heroColors.background } : null,
-          ]}
-        >
-          <View style={styles.heroBar}>
-            {/* Na web larga o caminho "Explorar › …" acima já volta; a seta sobre a capa sobrava. */}
-            {wideWeb ? <View /> : <HeroIconButton icon="back" label="Voltar" onPress={guardedBack} />}
-            <View style={styles.heroBarTrailing}>
-              <HeroIconButton
-                icon="whatsapp"
-                label="Compartilhar anúncio no WhatsApp"
-                disabled={share.sharing}
-                iconColor={colors.nature.foliage}
-                onPress={handleShareToWhatsApp}
-              />
-              <HeroIconButton
-                icon="share"
-                label="Compartilhar anúncio"
-                disabled={share.sharing}
-                onPress={() => void shareActions.share(book?.id ?? bookId)}
-              />
-              <HeroIconButton
-                icon={state.isFavorite ? "heartFill" : "heart"}
-                label={state.isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
-                disabled={state.favoriteLoading}
-                iconColor={state.isFavorite ? colors.ipe.bloomDeep : undefined}
-                onPress={() => void actions.toggleFavorite(sessionUserId)}
-              />
-            </View>
-          </View>
-
-          {book ? (
-            <View style={[styles.coverArea, wideWeb && styles.coverAreaWide]}>
-              <View>
-                {/* Livro 3D interativo: arrastar gira 360° com inércia; toque vira para a contracapa (sinopse/dados). */}
-                <Book3D
-                  id={book.id}
-                  title={book.title}
-                  author={book.author}
-                  description={book.synopsis ?? book.description}
-                  publisher={book.publisher}
-                  pageCount={book.pageCount}
-                  photoUrl={book.photoUrl}
-                  scale={wideWeb ? 1.6 : 1}
-                />
-              </View>
-              {photos.length > 0 ? (
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel="Ver fotos do anúncio em tela cheia"
-                  onPress={() => setGalleryVisible(true)}
-                  hitSlop={8}
-                  style={withPress(styles.photosButton)}
-                >
-                  <AppIcon name="camera" size={16} color={colors.m3.primary} />
-                  <Text style={styles.photosButtonText}>Ver fotos</Text>
-                </Pressable>
-              ) : null}
-              {photos.length > 1 && wideWeb ? (
-                <View style={styles.thumbRow} accessibilityLabel={`${photos.length} fotos`}>
-                  {photos.map((url, idx) => (
-                    <Pressable
-                      key={`${url}-${idx}`}
-                      accessibilityRole="button"
-                      accessibilityLabel={`Ver foto ${idx + 1} em tela cheia`}
-                      onPress={() => setGalleryVisible(true)}
-                      style={withPress([styles.thumb, idx === 0 && styles.thumbActive])}
-                    >
-                      <Image source={{ uri: url }} style={styles.thumbImage} resizeMode="cover" accessible={false} />
-                    </Pressable>
-                  ))}
-                </View>
-              ) : null}
-              {photos.length > 1 && !wideWeb ? (
-                <View style={styles.photoDots} accessibilityLabel={`${photos.length} fotos`}>
-                  {photos.map((_, idx) => (
-                    <View key={idx} style={[styles.dot, idx === 0 && styles.dotActive]} />
-                  ))}
-                </View>
-              ) : null}
-            </View>
-          ) : null}
-        </View>
+        <BookDetailHeroSection
+          book={book}
+          photos={photos}
+          wideWeb={wideWeb}
+          topInset={insets.top}
+          heroBackgroundColor={heroColors?.background}
+          sharing={share.sharing}
+          isFavorite={state.isFavorite}
+          favoriteLoading={state.favoriteLoading}
+          onBack={guardedBack}
+          onShareWhatsApp={handleShareToWhatsApp}
+          onShareLink={() => void shareActions.share(book?.id ?? bookId)}
+          onToggleFavorite={() => void actions.toggleFavorite(sessionUserId)}
+          onOpenGallery={() => setGalleryVisible(true)}
+        />
 
         {state.loading ? (
           <View style={styles.status}>
@@ -597,7 +480,7 @@ export default function BookDetail({
             ) : null}
 
             {/* 5. Anunciante */}
-            <SellerCard ownerId={book.ownerId} onPress={() => guardedNavigateToUserProfile(book.ownerId)} />
+            <SellerCard profile={ownerProfileState.profile} onPress={() => guardedNavigateToUserProfile(book.ownerId)} />
 
             {/* Banner de negociação em andamento quando o usuário já solicitou o livro */}
             {isRequested && !isOwner ? (
@@ -759,55 +642,6 @@ export default function BookDetail({
   );
 }
 
-/** Botão de ícone tonal circular sobre a capa (M3 Expressive filled tonal icon button, 40 dp com 48 dp de toque). */
-function HeroIconButton({
-  icon,
-  label,
-  onPress,
-  disabled = false,
-  iconColor,
-}: {
-  icon: AppIconName;
-  label: string;
-  onPress: () => void;
-  disabled?: boolean;
-  iconColor?: string;
-}) {
-  const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      accessibilityState={{ disabled }}
-      disabled={disabled}
-      hitSlop={4}
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.heroIconButton,
-        pressed && !disabled && styles.heroIconButtonPressed,
-      ]}
-    >
-      <AppIcon name={icon} size={22} color={iconColor ?? colors.m3.onSurface} />
-    </Pressable>
-  );
-}
-
-/** Linha da lista de detalhes (Figma `03.01`: ícone em selo, rótulo à esquerda, valor à direita). */
-function DetailRow({ icon, label, value, last = false }: { icon: AppIconName; label: string; value: string; last?: boolean }) {
-  const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
-  return (
-    <View style={[styles.detailRow, !last && styles.detailRowDivider]}>
-      <View style={styles.detailIcon}>
-        <AppIcon name={icon} size={18} color={colors.m3.onSecondaryContainer} />
-      </View>
-      <Text style={styles.detailLabel}>{label}</Text>
-      <Text style={styles.detailValue} numberOfLines={1}>{value}</Text>
-    </View>
-  );
-}
-
 const PRIMARY_ACTION_LABEL: Record<BookModality, string> = {
   sale: "Tenho interesse",
   trade: "Propor troca",
@@ -833,77 +667,12 @@ function createStyles(colors: ColorPalette) {
       paddingTop: tokens.spacing[32],
       paddingBottom: tokens.spacing[48],
     },
-    heroWide: { flex: 1.6, borderRadius: tokens.radius.xxl, paddingTop: tokens.spacing[16], minHeight: 520 },
     safeMeetingCard: { flexDirection: "row", gap: tokens.spacing[12], padding: tokens.spacing[16], borderRadius: tokens.radius.medium, backgroundColor: colors.m3.surfaceContainer },
     safeMeetingText: { flex: 1, gap: tokens.spacing[2] },
     safeMeetingTitle: { ...tokens.typography.labelLarge, color: colors.m3.onSurface },
     safeMeetingBody: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
     contentWide: { flex: 1, maxWidth: 440, padding: tokens.spacing[24], borderRadius: tokens.radius.xl, borderWidth: 1, borderColor: colors.m3.outlineVariant, backgroundColor: colors.m3.surfaceContainerLow },
     bottomBarWide: { paddingHorizontal: 0, paddingVertical: 0 },
-    hero: {
-      backgroundColor: colors.m3.surfaceContainerLow,
-      borderBottomLeftRadius: tokens.radius.xxl,
-      borderBottomRightRadius: tokens.radius.xxl,
-      paddingHorizontal: tokens.spacing[16],
-      paddingBottom: tokens.spacing[24],
-    },
-    heroBar: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-    },
-    heroBarTrailing: { flexDirection: "row", gap: tokens.spacing[8] },
-    heroIconButton: {
-      width: 44,
-      height: 44,
-      borderRadius: tokens.shapeMorph.buttonRest,
-      alignItems: "center",
-      justifyContent: "center",
-      backgroundColor: colors.m3.surfaceContainerLowest,
-    },
-    heroIconButtonPressed: {
-      borderRadius: tokens.shapeMorph.buttonPressed,
-      transform: [{ scale: 0.92 }],
-    },
-    coverArea: { alignItems: "center", paddingTop: tokens.spacing[8], paddingBottom: tokens.spacing[8] },
-    coverAreaWide: { flex: 1, justifyContent: "center", paddingTop: 0 },
-    photosButton: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[6],
-      alignSelf: "center",
-      marginTop: tokens.spacing[12],
-      paddingHorizontal: tokens.spacing[14],
-      paddingVertical: tokens.spacing[6],
-      borderRadius: tokens.radius.full,
-      backgroundColor: colors.m3.surfaceContainerLowest,
-      elevation: 1,
-      shadowColor: colors.m3.shadow,
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.1,
-      shadowRadius: 2,
-    },
-    photosButtonText: {
-      ...tokens.typography.labelMedium,
-      fontFamily: fontFamily.semiBold,
-      color: colors.m3.primary,
-    },
-    thumbRow: { flexDirection: "row", gap: tokens.spacing[12], marginTop: tokens.spacing[16] },
-    thumb: { width: 56, height: 72, borderRadius: tokens.radius.small, overflow: "hidden", borderWidth: 2, borderColor: "transparent", backgroundColor: colors.m3.surfaceContainerLowest },
-    thumbActive: { borderColor: colors.m3.primary },
-    thumbImage: { width: "100%", height: "100%" },
-    photoDots: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[6],
-      marginTop: tokens.spacing[16],
-      paddingHorizontal: tokens.spacing[8],
-      paddingVertical: tokens.spacing[4],
-      borderRadius: tokens.radius.full,
-      backgroundColor: colors.m3.surfaceContainerLowest,
-    },
-    dot: { width: 6, height: 6, borderRadius: tokens.radius.micro, backgroundColor: colors.m3.outlineVariant },
-    dotActive: { backgroundColor: colors.m3.onSurface },
     status: { alignItems: "center", paddingTop: tokens.spacing[48] },
     errorText: {
       ...tokens.typography.bodyLarge,
@@ -939,43 +708,10 @@ function createStyles(colors: ColorPalette) {
       borderRadius: tokens.radius.card,
       paddingHorizontal: tokens.spacing[16],
     },
-    detailRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[12],
-      minHeight: tokens.spacing[56],
-    },
-    detailRowDivider: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.m3.outlineVariant },
-    detailIcon: {
-      width: tokens.spacing[32],
-      height: tokens.spacing[32],
-      borderRadius: tokens.radius.small,
-      alignItems: "center",
-      justifyContent: "center",
-      backgroundColor: colors.m3.secondaryContainer,
-    },
-    detailLabel: { flex: 1, ...tokens.typography.bodyLarge, color: colors.m3.onSurface },
-    detailValue: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant, maxWidth: "50%" },
     synopsisSection: { gap: tokens.spacing[8] },
     synopsisTitle: { ...tokens.typography.titleMedium, fontFamily: fontFamily.semiBold, color: colors.m3.onSurface },
     synopsisText: { ...tokens.typography.subheadline, lineHeight: tokens.lineHeight[23], color: colors.m3.onSurfaceVariant },
     descriptionText: { ...tokens.typography.bodyLarge, color: colors.m3.onSurface },
-    sellerCard: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-      backgroundColor: colors.m3.surfaceContainerLow,
-      borderRadius: tokens.radius.card,
-      paddingHorizontal: tokens.spacing[16],
-      minHeight: tokens.spacing[64],
-    },
-    sellerInfo: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[12], flex: 1 },
-    sellerColumn: { flex: 1, gap: tokens.spacing[2], paddingVertical: tokens.spacing[8] },
-    sellerTextCol: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: tokens.spacing[8] },
-    sellerTrustRow: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[4] },
-    sellerTrustText: { ...tokens.typography.labelSmall, color: colors.nature.foliage, fontWeight: tokens.fontWeight.medium },
-    sellerName: { flexShrink: 1, ...tokens.typography.bodyLarge, fontWeight: tokens.fontWeight.medium, color: colors.m3.onSurface },
-    sellerMeta: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
     reportButton: {
       minHeight: tokens.accessibility.touchTarget,
       flexDirection: "row",
