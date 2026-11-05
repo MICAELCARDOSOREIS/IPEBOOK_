@@ -5,6 +5,7 @@ import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { formatPrice } from "@/view/formatPrice";
 import { BookCover } from "@/view/components/BookCover";
+import { ErrorState } from "@/view/components/ErrorState";
 import { Tag } from "@/view/components/Tag";
 
 import { withPress } from "@/view/pressFeedback";
@@ -18,10 +19,20 @@ export type OwnerListingsProps = {
 export function OwnerListings({ ownerId, ownerName, onOpenBook }: OwnerListingsProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const [state] = useHomeViewModel();
+  const [state, actions] = useHomeViewModel();
+
+  if (state.loading) return null;
+  if (state.error) {
+    return (
+      <View style={styles.section} testID="owner-listings-error">
+        <ErrorState message={state.error} onRetry={() => void actions.reload()} />
+      </View>
+    );
+  }
+
   const books = state.books.filter((book) => book.ownerId === ownerId && book.status !== "draft");
 
-  if (state.loading || books.length === 0) return null;
+  if (books.length === 0) return null;
 
   return (
     <View style={styles.section} testID="owner-listings">

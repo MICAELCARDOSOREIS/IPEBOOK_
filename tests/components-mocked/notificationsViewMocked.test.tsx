@@ -1,5 +1,5 @@
 
-import { act, render } from "@testing-library/react-native";
+import { act, fireEvent, render } from "@testing-library/react-native";
 import { describe, expect, it, vi } from "vitest";
 import type { NotificationsActions, NotificationsState } from "@/viewmodel/useNotificationsViewModel";
 import Notifications from "@/view/notifications/notifications";
@@ -82,5 +82,24 @@ describe("Notifications — puxar para atualizar e rótulos (Spec 091)", () => {
     });
     expect(screen.getByLabelText("Marcar todas como lidas")).toBeDefined();
     expect(screen.queryByText("1 alerta pendente de leitura")).toBeNull();
+  });
+});
+
+describe("Notifications — estado vazio leva ao catálogo", () => {
+  it("pressiona 'Explorar livros' e chama a ação da rota, não o retorno", async () => {
+    mock({});
+    const onBack = vi.fn();
+    const onExploreBooks = vi.fn();
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<Notifications sessionUserId="u" onBack={onBack} onExploreBooks={onExploreBooks} />);
+    });
+
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Explorar livros" }));
+    });
+
+    expect(onExploreBooks).toHaveBeenCalledTimes(1);
+    expect(onBack).not.toHaveBeenCalled();
   });
 });

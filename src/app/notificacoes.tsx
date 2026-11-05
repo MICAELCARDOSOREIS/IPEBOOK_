@@ -7,6 +7,7 @@ export default function NotificationsRoute() {
     <NotificationsScreen
       onBack={() => backOnce()}
       onNavigateToLogin={() => pushOnce("/entrar")}
+      onExploreBooks={() => pushOnce("/")}
       onNavigateToAction={(actionUrl) => {
         if (!actionUrl) return;
         const destination = actionUrl.startsWith("/") ? actionUrl : `/${actionUrl}`;

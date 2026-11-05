@@ -14,6 +14,7 @@ export default function FavoritesRoute() {
         onBack={() => backOnce()}
         onLogin={() => pushOnce({ pathname: "/entrar", params: { retorno: "favoritos" } })}
         onBook={(id) => pushOnce(`/livro/${id}`)}
+        onExploreBooks={() => pushOnce("/")}
         onNavigateToAlerts={() => pushOnce("/alertas")}
       />
     </RequireAuth>

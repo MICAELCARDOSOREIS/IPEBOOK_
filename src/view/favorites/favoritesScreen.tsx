@@ -7,6 +7,8 @@ export type FavoritesScreenProps = {
   onLogin: () => void;
   onBook: (id: string) => void;
   onNavigateToAlerts?: () => void;
+  /** Ação do estado vazio; sem ela o botão "Explorar livros" cairia no retorno. */
+  onExploreBooks: () => void;
 };
 
 export default function FavoritesScreen(props: FavoritesScreenProps) {
