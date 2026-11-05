@@ -15,6 +15,7 @@ import { useProfilePhotoViewModel } from "@/viewmodel/useProfilePhotoViewModel";
 import type { ImageSource } from "@/model/services/iImagePickerService";
 import { PIRIPIRI_NEIGHBORHOODS } from "@/model/entities/location";
 import { normalizeInstagramHandle } from "@/model/validators/instagramValidator";
+import { sanitizeTextInput } from "@/model/validators/textSanitizer";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { ReaderCard } from "@/view/components/ReaderCard";
@@ -64,7 +65,7 @@ function validateProfileFields(values: {
   socialHandle: string;
 }): FieldErrors {
   const errors: FieldErrors = {};
-  const name = values.name.trim();
+  const name = sanitizeTextInput(values.name);
   if (!name) {
     errors.name = "Informe um nome público.";
   } else if (name.length > MAX_NAME_LENGTH) {
@@ -72,8 +73,8 @@ function validateProfileFields(values: {
   }
 
   const photoUrl = values.photoUrl.trim();
-  if (photoUrl && !/^https?:\/\//i.test(photoUrl)) {
-    errors.photoUrl = "A foto deve ser um link (http/https) válido.";
+  if (photoUrl && !/^https:\/\//i.test(photoUrl)) {
+    errors.photoUrl = "A foto deve ser um link https válido.";
   }
 
   if (values.socialHandle.trim() && !normalizeInstagramHandle(values.socialHandle)) {
