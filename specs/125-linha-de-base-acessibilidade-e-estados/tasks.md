@@ -10,13 +10,13 @@ Dependem da Spec 125. Cada tarefa lista sua verificação. Nenhuma tarefa muda r
 ## Fase 2 — barreiras e foco dos modais (D1)
 
 - [x] **T003** Aplicar a barreira de acessibilidade em `src/view/components/PhotoSourceSheet.tsx:23` e `src/view/components/BarcodeScannerModal.tsx:62`. Verificação: T001 verde; teste de componente cobre a folha de origem da foto e o leitor de ISBN abertos.
-- [ ] **T004** Reaproveitar o mecanismo de prisão de foco do `Dialog` (função pura `resolveDialogTabWrap`, `docs/auditoria-acessibilidade.md:105-110`) nos dois modais na Web, em vez de duplicar lógica. Verificação: teste unitário da função reaproveitada; registrar no PR que o exercício ponta a ponta depende de navegador conectado (limitação já registrada na auditoria da Issue #96).
+- [x] **T004** Reaproveitar o mecanismo de prisão de foco do `Dialog` (função pura `resolveDialogTabWrap`, `docs/auditoria-acessibilidade.md:105-110`) nos dois modais na Web, em vez de duplicar lógica. Verificação: teste unitário da função reaproveitada; registrar no PR que o exercício ponta a ponta depende de navegador conectado (limitação já registrada na auditoria da Issue #96).
 
 ## Fase 3 — estados padrão (D4, D5)
 
 - [x] **T005** Acrescentar `accessibilityLiveRegion="polite"` em `ErrorState.tsx:27` e `OfflineState.tsx:31`. Verificação: T002 verde.
-- [ ] **T006** Substituir o tratamento próprio de erro em `src/view/listings/bookDetail.tsx:515-519` por `ErrorState` com `reload` do ViewModel. Verificação: teste de regressão em `tests/components/bookDetailView.test.tsx` falha antes e passa depois.
-- [ ] **T007** Substituir o erro-as-hint e o carregando próprio em `src/view/search/searchAlerts.tsx:90,99,114` por `ErrorState`/`LoadingState` (+ `OfflineState` quando offline). Verificação: idem em `tests/components/favoritesAlertsView.test.tsx` (arquivo compartilhado: conferir com o autor do trabalho em curso antes de editar).
+- [x] **T006** Substituir o tratamento próprio de erro em `src/view/listings/bookDetail.tsx:515-519` por `ErrorState` com `reload` do ViewModel. Verificação: teste de regressão em `tests/components-mocked/bookDetailView.test.tsx` falha antes e passa depois.
+- [x] **T007** Substituir o erro-as-hint e o carregando próprio em `src/view/search/searchAlerts.tsx:90,99,114` por `ErrorState`/`LoadingState` (+ `OfflineState` quando offline). Verificação: idem em `tests/components/favoritesAlertsView.test.tsx`.
 
 ## Fase 4 — toque, quebra e rótulos (D2, D3, D6, D7)
 
@@ -28,7 +28,7 @@ Dependem da Spec 125. Cada tarefa lista sua verificação. Nenhuma tarefa muda r
 ## Fase 5 — fechamento
 
 - [x] **T012** Atualizar `design-system/06-acessibilidade.md` (seções de alvo de toque e leitor de tela) com o padrão de `hitSlop` e o requisito de barreira em todo modal, e `docs/adr/README.md` com o índice do ADR 0097.
-- [ ] **T013** Rodar `npm run validate` integral e atualizar o bloco "Conferência atual" de `docs/estado.md` e a abertura do `README.md` com os números reais da execução (spec 125, ADR 0097 e testes novos), conferidos por `npm run check:docs`.
+- [x] **T013** Rodar `npm run validate` integral e atualizar o bloco "Conferência atual" de `docs/estado.md` e a abertura do `README.md` com os números reais da execução (spec 125, ADR 0097 e testes novos), conferidos por `npm run check:docs`.
 
 ## Risco e ordenação
 
@@ -36,26 +36,23 @@ T001 e T002 vêm primeiro: sem a verificação que falha, as correções das fas
 
 ## Status da execução (2026-11-05)
 
-- Concluídas e verificadas: T001, T002, T003, T005, T008, T009, T010, T011, T012.
+- Concluídas e verificadas: T001, T002, T003, T004, T005, T006, T007, T008, T009, T010, T011, T012, T013.
 - **T008 (desvio na web):** o pino web é um `<button>` criado fora do React Native, então `hitSlop`
   não se aplica. A área de toque foi completada com uma extensão invisível
   `[data-pino-mapa][aria-pressed="false"]::after` no CSS global de `src/app/+html.tsx`, com o
   deslocamento derivado de `tokens.accessibility.touchTarget`; a arte continua em 36 px. No nativo
   foi `hitSlop={PIN_HIT_SLOP}` (`MeetingMap.native.tsx`). Verificações:
   `tests/unit/interactiveAccessibility.test.ts` e `tests/components/meetingMapInteractiveWeb.test.tsx`.
-- **T004 (em curso por outro agente, 2026-11-05):** `PhotoSourceSheet.tsx` e `BarcodeScannerModal.tsx`
-  passaram a importar `useModalFocusTrap`/`FocusableElement` de `Dialog.tsx` com refs nos botões —
-  exatamente o reaproveitamento previsto aqui. Não duplicar o trabalho; o exercício em navegador
-  conectado continua registrado como limitação da auditoria da Issue #96.
-- **T006 (em curso por outro agente, 2026-11-05):** `bookDetail.tsx` já trocou o `ActivityIndicator` e o
-  texto de erro próprios por `LoadingState` e `ErrorState`; conferir o teste de regressão dessa tela
-  quando o arquivo for commitado.
-- **T007 (em curso por outro agente, 2026-11-05):** `searchAlerts.tsx` já renderiza `LoadingState`,
-  `ErrorState` com `actions.reload()` e `OfflineState` a partir de `state.loadError`, e o ViewModel
-  passou a separar `loadError` do erro de formulário. Conferir o teste de regressão dessa tela
-  quando o arquivo for commitado.
-- **T013 (parcial):** `typecheck`, `lint`, `check:architecture`, `check:design-system`,
-  `check:numbering`, `check:build-config`, `test:sql` e a suíte completa aprovados em 2026-11-05
-  (2.077 testes em 292 arquivos, Branches 81,07%). Falta apenas `check:docs`: as métricas de
-  `docs/estado.md` e `README.md` estão sujas com o trabalho em curso de outro agente e precisam ser
-  gravadas com os números da execução final delas, não com os desta entrega.
+- **T004:** extraído o hook compartilhado `useModalFocusTrap` em `src/view/components/Dialog.tsx`
+  (reaproveitando `resolveDialogTabWrap`, fechamento com `Escape` e devolução de foco ao gatilho) e
+  aplicado em `Dialog.tsx`, `PhotoSourceSheet.tsx`, `BarcodeScannerModal.tsx`,
+  `NeighborhoodSelectorModal.tsx`, `profileSafetySheet.tsx` e `photoGallery.tsx`. O exercício em
+  navegador conectado continua registrado como limitação da auditoria da Issue #96.
+- **T006:** `bookDetail.tsx` passou a usar `LoadingState` e `ErrorState` com `actions.reload()`,
+  coberto pelo teste de regressão em `tests/components-mocked/bookDetailView.test.tsx`.
+- **T007:** `searchAlerts.tsx` passou a renderizar `LoadingState`, `ErrorState` com `actions.reload()`
+  e `OfflineState` a partir de `state.loadError` (separado do erro de validação do formulário em
+  `useSearchAlertsViewModel.ts`), coberto pelo teste de regressão em
+  `tests/components/favoritesAlertsView.test.tsx`.
+- **T013:** `npm run validate` integral aprovado em 2026-11-05 (2.079 testes em 292 arquivos,
+  Branches 81,15%) e sincronia de `docs/estado.md` e `README.md` conferida por `npm run check:docs`.

@@ -27,8 +27,6 @@ export function resolveNotificationRoute(notification: Pick<AppNotification, "ty
       return "/favoritos";
     case "search_alert_match":
       return "/pesquisa";
-    case "safety_tip":
-    case "system":
     default:
       return "/ajuda";
   }

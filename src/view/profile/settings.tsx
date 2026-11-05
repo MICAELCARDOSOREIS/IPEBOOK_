@@ -359,14 +359,14 @@ export function Settings({
 
           {/* Conta e dados (ADR 0060): só com sessão, e primeiro por ser o que mais importa */}
           {accountLinks.length > 0 ? (
-            <View style={styles.section} onLayout={(event) => { sectionY.current["account"] = event.nativeEvent.layout.y; }}>
+            <View style={styles.section} onLayout={(event) => { sectionY.current.account = event.nativeEvent.layout.y; }}>
               {renderSectionHeader("account", "Conta e dados", "person")}
               {expandedSection === "account" ? <View style={styles.listCard}>{accountLinks.map(renderLink)}</View> : null}
             </View>
           ) : null}
 
           {/* Preferências de uso (Spec 091): o bairro com que a Home e a Explorar abrem */}
-          <View style={styles.section} onLayout={(event) => { sectionY.current["preferences"] = event.nativeEvent.layout.y; }}>
+          <View style={styles.section} onLayout={(event) => { sectionY.current.preferences = event.nativeEvent.layout.y; }}>
             {renderSectionHeader("preferences", "Preferências", "place")}
             {expandedSection === "preferences" ? (
               <View style={styles.listCard}>
@@ -383,7 +383,7 @@ export function Settings({
 
           {/* Notificações (Spec 099 / ADR 0075): a pessoa escolhe quais avisos chegam por push */}
           {hasAccount ? (
-            <View style={styles.section} onLayout={(event) => { sectionY.current["notifications"] = event.nativeEvent.layout.y; }}>
+            <View style={styles.section} onLayout={(event) => { sectionY.current.notifications = event.nativeEvent.layout.y; }}>
               {renderSectionHeader("notifications", "Notificações", "bell")}
               {expandedSection === "notifications" ? (
                 <>
@@ -421,7 +421,7 @@ export function Settings({
           ) : null}
 
           {/* Aparência (Spec 073 FR-003, ADR 0036) */}
-          <View style={styles.section} onLayout={(event) => { sectionY.current["appearance"] = event.nativeEvent.layout.y; }}>
+          <View style={styles.section} onLayout={(event) => { sectionY.current.appearance = event.nativeEvent.layout.y; }}>
             {renderSectionHeader("appearance", "Aparência", "visibility")}
             {expandedSection === "appearance" ? (
               <View style={styles.card}>
@@ -434,7 +434,7 @@ export function Settings({
           </View>
 
           {/* Armazenamento e histórico: cópia offline do catálogo e buscas recentes */}
-          <View style={styles.section} onLayout={(event) => { sectionY.current["device"] = event.nativeEvent.layout.y; }}>
+          <View style={styles.section} onLayout={(event) => { sectionY.current.device = event.nativeEvent.layout.y; }}>
             {renderSectionHeader("device", "Armazenamento e histórico", "document")}
             {expandedSection === "device" ? (
               <View style={styles.card}>
@@ -480,7 +480,7 @@ export function Settings({
           </View>
 
           {/* Sobre e atalhos (Spec 073) */}
-          <View style={styles.section} onLayout={(event) => { sectionY.current["about"] = event.nativeEvent.layout.y; }}>
+          <View style={styles.section} onLayout={(event) => { sectionY.current.about = event.nativeEvent.layout.y; }}>
             {renderSectionHeader("about", "Sobre o IpêBook", "info")}
             {expandedSection === "about" ? (
               <View style={styles.listCard}>

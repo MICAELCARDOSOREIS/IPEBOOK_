@@ -255,7 +255,7 @@ export function RequestDetail({
                   sessionUserId={sessionUserId}
                   counterpartName={detail.counterpartName ?? COMMUNITY_MEMBER}
                   focusKey={(focusKey ?? 0) + refreshCount}
-                  onScheduleMeeting={onScheduleMeeting}
+                  onScheduleMeeting={guardedScheduleMeeting}
                   onMeetingChange={handleMeetingChange}
                   concluded={Boolean(delivery.completed)}
                 />
@@ -292,7 +292,7 @@ export function RequestDetail({
                       <FilledButton
                         label={delivery.role === "giver" ? "Mostrar QR da entrega" : "Ler QR da entrega"}
                         disabled={delivery.loading || !delivery.role}
-                        onPress={() => onOpenDelivery?.()}
+                        onPress={guardedOpenDelivery}
                       />
                     </>
                   )}

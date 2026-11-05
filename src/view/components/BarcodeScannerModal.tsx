@@ -12,6 +12,7 @@ import { CameraView, useCameraPermissions, type BarcodeScanningResult } from "ex
 import { spacing, radius, typography, accessibility } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { AppIcon } from "@/view/components/AppIcon";
+import { type FocusableElement, useModalFocusTrap } from "@/view/components/Dialog";
 import { FilledButton } from "@/view/components/FilledButton";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
 
@@ -35,6 +36,9 @@ export function BarcodeScannerModal({
   const [permission, requestPermission] = useCameraPermissions();
   const [hasScanned, setHasScanned] = useState(false);
   const scanLockRef = useRef(false);
+  const closeRef = useRef<FocusableElement | null>(null);
+
+  useModalFocusTrap(visible, () => [closeRef.current], onClose);
 
   useEffect(() => {
     if (visible) {
@@ -73,6 +77,7 @@ export function BarcodeScannerModal({
         <View style={[styles.header, { borderBottomColor: colors.border }]}>
           <Text style={[styles.headerTitle, { color: colors.text }]}>Escanear ISBN</Text>
           <Pressable
+            ref={closeRef as never}
             accessibilityRole="button"
             accessibilityLabel="Fechar leitor de código de barras"
             onPress={onClose}

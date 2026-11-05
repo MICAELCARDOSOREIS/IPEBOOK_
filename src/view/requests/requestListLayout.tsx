@@ -189,9 +189,8 @@ export function RequestListLayout({
             <OfflineState onRetry={onRetry} />
           )
         ) : (
-          <>
-            <FlatList
-              {...standardVerticalScrollProps}
+          <FlatList
+            {...standardVerticalScrollProps}
               key={wide ? `colunas-${listColumns}` : "uma-coluna"}
               numColumns={wide ? listColumns : 1}
               columnWrapperStyle={wide ? styles.columns : undefined}
@@ -269,7 +268,6 @@ export function RequestListLayout({
                 );
               }}
             />
-          </>
         )}
       </View>
       {onDismissFeedback ? (

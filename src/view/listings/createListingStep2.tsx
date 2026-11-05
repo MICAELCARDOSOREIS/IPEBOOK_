@@ -40,7 +40,7 @@ export function CreateListingStep2({
   const [showLinkField, setShowLinkField] = useState(false);
   const { colors } = useTheme();
   const wideWeb = useIsWideWeb();
-  const styles = useMemo(() => createStyles(colors, wideWeb), [colors, wideWeb]);
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   return (
     <>
@@ -137,7 +137,7 @@ export function CreateListingStep2({
   );
 }
 
-function createStyles(colors: ColorPalette, wideWeb: boolean) {
+function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     photoGrid: { flexDirection: "row", gap: tokens.spacing[12] },
     webPhotoGrid: {

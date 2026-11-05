@@ -424,7 +424,7 @@ function createStyles(colors: ColorPalette) {
     },
     bookOptionSelected: {
       borderColor: colors.action,
-      backgroundColor: colors.nature.sprout + "40",
+      backgroundColor: `${colors.nature.sprout}40`,
     },
     radioCircle: {
       width: 20,

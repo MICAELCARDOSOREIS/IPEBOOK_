@@ -3,6 +3,7 @@ import { act, create, type ReactTestRenderer } from "react-test-renderer";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { useNegotiationChatViewModel } from "@/viewmodel/useNegotiationChatViewModel";
 import type { NegotiationMessage } from "@/model/entities/negotiationMessage";
+import { DataSourceError } from "@/model/errors";
 
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
 const mounted: ReactTestRenderer[] = [];
@@ -69,7 +70,7 @@ describe("Hook useNegotiationChatViewModel (Spec 061 / ADR 0044)", () => {
   it("trata erro ao carregar mensagens", async () => {
     const mockUseCases: MockUseCases = {
       getMessages: async () => {
-        throw new Error("Falha de conexão com o banco");
+        throw new DataSourceError("Falha de conexão com o banco");
       },
       sendMessage: async () => {
         throw new Error("Não implementado");
@@ -122,7 +123,7 @@ describe("Hook useNegotiationChatViewModel (Spec 061 / ADR 0044)", () => {
       sendMessage: async (p) => {
         if (failFirst) {
           failFirst = false;
-          throw new Error("Falha na rede ao enviar mensagem.");
+          throw new DataSourceError("Falha na rede ao enviar mensagem.");
         }
         return {
           id: "msg-3",

@@ -78,9 +78,10 @@ function setup(
     },
     { reload: vi.fn() },
   ]);
+  const reload = vi.fn();
   vi.mocked(useBookDetailViewModel).mockReturnValue([
     { book, loading: options.loading ?? false, error: options.error ?? null, isFavorite: false, favoriteError: null, favoriteLoading: false },
-    { reload: vi.fn(), toggleFavorite: vi.fn() },
+    { reload, toggleFavorite: vi.fn() },
   ]);
   vi.mocked(useAuthViewModel).mockReturnValue([
     { user, loading: false, error: null },
@@ -98,7 +99,7 @@ function setup(
     { ...emptyShare, ...options.share },
     { share, shareImage, shareToWhatsApp, dismissLinkCopied: vi.fn() },
   ]);
-  return { request, share, shareToWhatsApp, shareImage };
+  return { request, share, shareToWhatsApp, shareImage, reload };
 }
 
 async function renderDetail(props: Partial<React.ComponentProps<typeof BookDetail>> = {}) {
@@ -128,10 +129,13 @@ describe("BookDetail (spec 006, US6/T029)", () => {
     expect(screen.queryByText(/R\$/)).toBeNull();
   });
 
-  it("mostra erro de domínio quando o livro não é encontrado (FR-009)", async () => {
-    setup(null, user, { error: "Anúncio não encontrado." });
+  it("mostra erro de domínio quando o livro não é encontrado e permite tentar novamente (FR-009, Spec 125)", async () => {
+    const { reload } = setup(null, user, { error: "Anúncio não encontrado." });
     const screen = await renderDetail();
     expect(screen.getByRole("alert").props.children).toBe("Anúncio não encontrado.");
+    const retryButton = screen.getByRole("button", { name: "Tentar novamente" });
+    await act(async () => { fireEvent.press(retryButton); });
+    expect(reload).toHaveBeenCalledTimes(1);
   });
 
   it.each([

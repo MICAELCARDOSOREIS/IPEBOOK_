@@ -112,4 +112,87 @@ describe("autenticação: criar conta, entrar e sair (ISO/IEC 25010 - Adequaçã
       "Credenciais inválidas.",
     );
   });
+
+  it("propaga o nome ao perfil público no signUp, signInWithGoogle e setSessionFromUrl, ignorando falhas do perfil", async () => {
+    const ensure = async (userId: string, defaultName: string) => {
+      if (userId === "erro-perfil") throw new Error("Falha transitória");
+      return { userId, name: defaultName, joinedAt: "2026-10-20T00:00:00Z" };
+    };
+    const baseAuth = new MemoryAuthDataSource();
+    const useCases = new AuthUseCases(baseAuth, {
+      ensure,
+      findById: async () => null,
+      update: async () => {
+        throw new Error("não usado");
+      },
+    });
+
+    const created = await useCases.signUp("novo@exemplo.com", "12345678", "Ana Maria");
+    expect(created.email).toBe("novo@exemplo.com");
+
+    const googleUser = await useCases.signInWithGoogle();
+    expect(googleUser.id).toBe("google-dev-user");
+
+    await expect(useCases.completePasswordReset(null, "123")).rejects.toThrow(ValidationError);
+    await expect(useCases.completePasswordReset("token", "12345678")).rejects.toThrow();
+  });
+
+  it("trata signInWithGoogle e setSessionFromUrl ausentes ou pendentes no datasource", async () => {
+    const ensured: Array<{ id: string; name: string }> = [];
+    const minimalDataSource = {
+      signUp: async () => ({ id: "erro-perfil", email: "a@b.com" }),
+      signIn: async () => ({ id: "1", email: "a@b.com" }),
+      signOut: async () => {},
+      currentUser: async () => null,
+      requestPasswordReset: async () => {},
+      completePasswordReset: async () => {},
+      deleteAccount: async () => {},
+    };
+    const useCasesWithoutOptional = new AuthUseCases(minimalDataSource, {
+      ensure: async () => {
+        throw new Error("falha ignorada");
+      },
+      findById: async () => null,
+      update: async () => {
+        throw new Error("não usado");
+      },
+    });
+
+    await expect(useCasesWithoutOptional.signUp("a@b.com", "12345678", "Nome")).resolves.toEqual({
+      id: "erro-perfil",
+      email: "a@b.com",
+    });
+    await expect(useCasesWithoutOptional.signInWithGoogle()).rejects.toThrow("Login com Google indisponível.");
+    await expect(useCasesWithoutOptional.setSessionFromUrl("https://ipebook.app/auth/callback")).rejects.toThrow(
+      "Processamento de retorno de autenticação indisponível.",
+    );
+
+    const useCasesWithSessionUrl = new AuthUseCases(
+      {
+        ...minimalDataSource,
+        signInWithGoogle: async () => ({ id: "pending", email: "" }),
+        setSessionFromUrl: async (url) =>
+          url.includes("sem-nome")
+            ? { id: "u-sem-nome", email: "u@b.com", name: "" }
+            : { id: "pending", email: "" },
+      },
+      {
+        ensure: async (id, name) => {
+          ensured.push({ id, name });
+          return { userId: id, name, joinedAt: "2026-10-20T00:00:00Z" };
+        },
+        findById: async () => null,
+        update: async () => {
+          throw new Error("não usado");
+        },
+      },
+    );
+
+    await useCasesWithSessionUrl.signInWithGoogle();
+    await useCasesWithSessionUrl.setSessionFromUrl("https://ipebook.app/auth/callback?pending=1");
+    expect(ensured).toHaveLength(0);
+
+    await useCasesWithSessionUrl.setSessionFromUrl("https://ipebook.app/auth/callback?sem-nome=1");
+    expect(ensured).toEqual([{ id: "u-sem-nome", name: "Leitor IpêBook" }]);
+  });
 });

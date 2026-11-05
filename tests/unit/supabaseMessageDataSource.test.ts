@@ -13,7 +13,7 @@ const sampleRow = {
 
 function fakeClient(queryResult: { data: unknown; error: unknown } = { data: null, error: null }) {
   const chain: Record<string, ReturnType<typeof vi.fn>> & { then?: any } = {};
-  for (const method of ["select", "eq", "order", "insert"]) {
+  for (const method of ["select", "eq", "order", "insert", "upsert"]) {
     chain[method] = vi.fn(() => chain);
   }
   chain.single = vi.fn().mockResolvedValue(queryResult);
@@ -138,6 +138,39 @@ describe("SupabaseMessageDataSource (Spec 061 / ADR 0044)", () => {
     });
 
     // Cleanup
+    unsubscribe();
+    expect(client.removeChannel).toHaveBeenCalledWith(mockChannel);
+  });
+
+  it("oculta e lista conversas ocultas, tratando erros do banco", async () => {
+    const okClient = fakeClient({
+      data: [{ request_id: "req-1", hidden_at: "2026-10-27T10:00:00.000Z" }],
+      error: null,
+    });
+    const ds = new SupabaseMessageDataSource(okClient.client);
+
+    await expect(ds.hideConversation("req-1", "user-1")).resolves.toBeUndefined();
+    const hidden = await ds.listHiddenConversations("user-1");
+    expect(hidden).toEqual({ "req-1": "2026-10-27T10:00:00.000Z" });
+
+    const errClient = fakeClient({ data: null, error: { message: "falha" } });
+    const errDs = new SupabaseMessageDataSource(errClient.client);
+    await expect(errDs.hideConversation("req-1", "user-1")).rejects.toThrow(DataSourceError);
+    await expect(errDs.listHiddenConversations("user-1")).rejects.toThrow(DataSourceError);
+  });
+
+  it("assina todas as mensagens em tempo real via subscribeToAllMessages", () => {
+    const { client, mockChannel, triggerPayload } = fakeClient();
+    const ds = new SupabaseMessageDataSource(client);
+    const onMessage = vi.fn();
+
+    const unsubscribe = ds.subscribeToAllMessages(onMessage);
+    triggerPayload({});
+    expect(onMessage).not.toHaveBeenCalled();
+
+    triggerPayload({ new: sampleRow });
+    expect(onMessage).toHaveBeenCalledTimes(1);
+
     unsubscribe();
     expect(client.removeChannel).toHaveBeenCalledWith(mockChannel);
   });

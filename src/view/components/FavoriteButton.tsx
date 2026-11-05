@@ -3,6 +3,7 @@ import { tokens } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { AppIcon } from "@/view/components/AppIcon";
 import { useExpressivePress } from "@/view/useExpressivePress";
+import { useGuardedPress } from "@/view/useGuardedPress";
 import { useFavoriteButtonViewModel } from "@/viewmodel/useFavoriteButtonViewModel";
 
 export type FavoriteButtonProps = {
@@ -18,11 +19,11 @@ export function FavoriteButton({ bookId, userId, onToggleSuccess }: FavoriteButt
     pressedScale: 0.88,
   });
 
-  const handleToggle = async () => {
+  const handleToggle = useGuardedPress(async () => {
     const wasSelected = state.selected;
     await actions.toggle();
     onToggleSuccess?.(!wasSelected);
-  };
+  });
   return (
     <View style={{ alignItems: "center", justifyContent: "center" }}>
       <Animated.View style={{ transform: [{ scale }] }}>
@@ -31,7 +32,7 @@ export function FavoriteButton({ bookId, userId, onToggleSuccess }: FavoriteButt
           accessibilityLabel={state.selected ? "Remover dos favoritos" : "Adicionar aos favoritos"}
           accessibilityState={{ disabled: state.loading }}
           disabled={state.loading}
-          onPress={() => void handleToggle()}
+          onPress={handleToggle}
           onPressIn={onPressIn}
           onPressOut={onPressOut}
           style={{

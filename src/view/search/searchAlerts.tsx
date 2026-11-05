@@ -1,9 +1,12 @@
 import { useId, useMemo } from "react";
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { AppIcon } from "@/view/components/AppIcon";
+import { ErrorState } from "@/view/components/ErrorState";
 import { FilledButton } from "@/view/components/FilledButton";
 import { IconBadge } from "@/view/components/IconBadge";
+import { LoadingState } from "@/view/components/LoadingState";
+import { OfflineState } from "@/view/components/OfflineState";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { Tag } from "@/view/components/Tag";
 import { ALERT_CITY, ALERT_MODALITY_SUMMARY } from "@/view/search/alertLabels";
@@ -11,6 +14,7 @@ import { TopAppBar } from "@/view/components/TopAppBar";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
+import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
 import { useSearchAlertsViewModel } from "@/viewmodel/useSearchAlertsViewModel";
 import { WEB_GUTTER, WEB_MAX_WIDTH, useWebColumns } from "@/view/webLayout";
 import { withPress } from "@/view/pressFeedback";
@@ -37,13 +41,16 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
   const guardedSearchBooks = useGuardedPress(onSearchBooks);
   const guardedManageAlert = useGuardedPress(onManageAlert);
   const [state, actions] = useSearchAlertsViewModel(userId, initialQuery);
+  const { isOnline } = useNetworkStatus();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   // Web larga: coluna mais ampla e dois alertas por linha.
   const wide = useIsWideWeb();
   const listColumns = useWebColumns(2, 3);
   const errorId = useId();
-  const hasError = Boolean(state.error);
+  const loadError = state.loadError ?? null;
+  const formError = loadError ? null : state.error;
+  const hasError = Boolean(formError);
   /**
    * Sem alertas, `02.08` dispensa a manchete da lista cheia. O formulário permanece porque o alerta
    * também nasce aqui (Spec 016), além de `02.06`.
@@ -87,7 +94,7 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
               accessibilityLabel="Termo do alerta"
               value={state.query}
               onChangeText={actions.setQuery}
-              accessibilityHint={hasError ? state.error ?? undefined : undefined}
+              accessibilityHint={hasError ? formError ?? undefined : undefined}
               aria-describedby={hasError ? errorId : undefined}
               placeholder="Título ou autor"
               placeholderTextColor={colors.secondaryText}
@@ -96,7 +103,7 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
             />
             {hasError ? (
               <Text nativeID={errorId} accessibilityRole="alert" style={styles.error}>
-                {state.error}
+                {formError}
               </Text>
             ) : null}
             {state.message ? (
@@ -111,7 +118,13 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
           </View>
 
           {state.loading ? (
-            <ActivityIndicator color={colors.action} accessibilityLabel="Carregando alertas" />
+            <LoadingState label="Carregando alertas" />
+          ) : loadError ? (
+            isOnline ? (
+              <ErrorState message={loadError} onRetry={() => void actions.reload()} />
+            ) : (
+              <OfflineState onRetry={() => void actions.reload()} />
+            )
           ) : (
             <FlatList
               key={wide ? `colunas-${listColumns}` : "uma-coluna"}
