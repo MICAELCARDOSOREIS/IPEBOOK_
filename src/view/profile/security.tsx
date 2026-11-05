@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
+import { makeAuthViewModel } from "@/di/container";
 import { FilledButton } from "@/view/components/FilledButton";
 import { IconBadge } from "@/view/components/IconBadge";
 import { TopAppBar } from "@/view/components/TopAppBar";
@@ -21,7 +21,7 @@ export type SecurityProps = {
  */
 export function Security({ onBack }: SecurityProps) {
   const guardedBack = useGuardedPress(onBack);
-  const [authState, authActions] = useAuthViewModel();
+  const [authState, authActions] = makeAuthViewModel();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [sent, setSent] = useState(false);

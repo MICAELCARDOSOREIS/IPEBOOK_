@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { imagePickerService, profilePhotoUseCases } from "@/di/container";
 import { DomainError } from "@/model/errors";
 import type { IImagePickerService, ImageSource } from "@/model/services/iImagePickerService";
 import type { IProfilePhotoUseCases } from "@/usecase/iProfilePhotoUseCases";
@@ -14,8 +13,8 @@ const UPLOAD_ERROR = "Não foi possível enviar a foto. Tente novamente.";
  */
 export function useProfilePhotoViewModel(
   sessionUserId: string | null,
-  picker: IImagePickerService = imagePickerService,
-  useCases: IProfilePhotoUseCases = profilePhotoUseCases,
+  picker: IImagePickerService,
+  useCases: IProfilePhotoUseCases,
 ): [ProfilePhotoState, { choose: (source: ImageSource) => Promise<string | null>; clearError: () => void }] {
   const [state, setState] = useState<ProfilePhotoState>({ uploading: false, error: null });
   const active = useRef(true);

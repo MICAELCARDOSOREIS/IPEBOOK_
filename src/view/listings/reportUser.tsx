@@ -10,8 +10,7 @@ import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { scrollBottomPadding, standardVerticalScrollProps } from "@/view/scrollProps";
-import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
-import { useReportUserViewModel } from "@/viewmodel/useReportUserViewModel";
+import { makeAuthViewModel, makeReportUserViewModel } from "@/di/container";
 import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
 
 import { withPress } from "@/view/pressFeedback";
@@ -24,9 +23,9 @@ export type ReportUserProps = {
 
 /** "Denunciar pessoa" (Spec 091): motivo, detalhes opcionais e confirmação, no padrão de "Denunciar anúncio". */
 export default function ReportUser({ userId, userName, onBack, onNavigateToLogin }: ReportUserProps) {
-  const [auth] = useAuthViewModel();
+  const [auth] = makeAuthViewModel();
   const sessionUserId = auth.user?.id ?? null;
-  const [state, actions] = useReportUserViewModel();
+  const [state, actions] = makeReportUserViewModel();
   const { colors } = useTheme();
   // Web larga: motivos de um lado, detalhes e envio do outro.
   const wide = useIsWideWeb();

@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { userPreferencesUseCases } from "@/di/container";
 import type { UserPreferences, UserPreferencesEdits } from "@/model/entities/userPreferences";
 import { DomainError } from "@/model/errors";
 import type { IUserPreferencesUseCases } from "@/usecase/iUserPreferencesUseCases";
@@ -24,7 +23,7 @@ const GENERIC_SAVE_ERROR = "Não foi possível salvar suas preferências. Tente 
 
 export function useUserPreferencesViewModel(
   userId: string | null,
-  useCases: IUserPreferencesUseCases = userPreferencesUseCases,
+  useCases: IUserPreferencesUseCases,
 ): [UserPreferencesState, UserPreferencesActions] {
   const [state, setState] = useState<UserPreferencesState>({
     preferences: null,

@@ -8,10 +8,12 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
-import { useProfileViewModel } from "@/viewmodel/useProfileViewModel";
-import { useUserPreferencesViewModel } from "@/viewmodel/useUserPreferencesViewModel";
-import { useProfilePhotoViewModel } from "@/viewmodel/useProfilePhotoViewModel";
+import {
+  makeAuthViewModel,
+  makeProfilePhotoViewModel,
+  makeProfileViewModel,
+  makeUserPreferencesViewModel,
+} from "@/di/container";
 import type { ImageSource } from "@/model/services/iImagePickerService";
 import { PIRIPIRI_NEIGHBORHOODS } from "@/model/entities/location";
 import { normalizeInstagramHandle } from "@/model/validators/instagramValidator";
@@ -96,11 +98,11 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
   const { width: viewportWidth } = useWindowDimensions();
   const stackPhotoActions = viewportWidth < 380;
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const [authState] = useAuthViewModel();
+  const [authState] = makeAuthViewModel();
   const userId = authState.user?.id ?? null;
-  const [photo, photoActions] = useProfilePhotoViewModel(userId);
-  const [state, actions] = useProfileViewModel(userId);
-  const [preferencesState, preferencesActions] = useUserPreferencesViewModel(userId);
+  const [photo, photoActions] = makeProfilePhotoViewModel(userId);
+  const [state, actions] = makeProfileViewModel(userId);
+  const [preferencesState, preferencesActions] = makeUserPreferencesViewModel(userId);
 
   const [name, setName] = useState("");
   const [photoUrl, setPhotoUrl] = useState("");

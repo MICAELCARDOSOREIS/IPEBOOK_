@@ -1,13 +1,13 @@
 import { useEffect, useMemo } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { errorReporter, makeStartErrorReporting } from "@/di/container";
 import type { IErrorReporter } from "@/model/services/iErrorReporter";
 import { ErrorState } from "@/view/components/ErrorState";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { type ColorPalette, tokens } from "@/view/tokens";
-import { appErrorReporter } from "@/viewmodel/errorReporting";
 
-export { startErrorReporting } from "@/viewmodel/errorReporting";
+export const startErrorReporting = makeStartErrorReporting;
 
 export type AppErrorFallbackProps = {
   error: Error;
@@ -16,7 +16,7 @@ export type AppErrorFallbackProps = {
 };
 
 /** Tela mostrada quando uma tela quebra (Spec 104): avisa sem detalhes técnicos e envia o erro ao Sentry. */
-export function AppErrorFallback({ error, retry, reporter = appErrorReporter }: AppErrorFallbackProps) {
+export function AppErrorFallback({ error, retry, reporter = errorReporter }: AppErrorFallbackProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
 

@@ -10,13 +10,10 @@ import { IconBadge, type IconBadgeTone } from "@/view/components/IconBadge";
 import { LoadingState } from "@/view/components/LoadingState";
 import { OfflineState } from "@/view/components/OfflineState";
 import { TopAppBar } from "@/view/components/TopAppBar";
+import { makeNetworkStatus, makeNotificationsViewModel } from "@/di/container";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
-import {
-  useNotificationsViewModel,
-} from "@/viewmodel/useNotificationsViewModel";
-import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
 import { groupNotificationsByPeriod, notificationTimeLabel } from "@/viewmodel/notificationGrouping";
 import { resolveNotificationRoute } from "@/viewmodel/notificationRoute";
 import { WEB_GUTTER } from "@/view/webLayout";
@@ -64,11 +61,11 @@ export default function Notifications({
   const guardedLogin = useGuardedPress(onNavigateToLogin);
   const guardedAction = useGuardedPress(onNavigateToAction);
   const guardedExplore = useGuardedPress(onExploreBooks ?? onBack);
-  const [state, actions] = useNotificationsViewModel(sessionUserId);
+  const [state, actions] = makeNotificationsViewModel(sessionUserId);
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const wide = useIsWideWeb();
-  const { isOnline } = useNetworkStatus();
+  const { isOnline } = makeNetworkStatus();
   const [refreshing, setRefreshing] = useState(false);
   const [confirmClearAllVisible, setConfirmClearAllVisible] = useState(false);
 

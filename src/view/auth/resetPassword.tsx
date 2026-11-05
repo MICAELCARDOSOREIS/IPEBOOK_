@@ -9,7 +9,7 @@ import { TextField } from "@/view/components/TextField";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
-import { useResetPasswordViewModel } from "@/viewmodel/useResetPasswordViewModel";
+import { makeResetPasswordViewModel } from "@/di/container";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 
@@ -33,7 +33,7 @@ export default function ResetPassword({
   const guardedBack = useGuardedPress(onBack);
   const guardedSignIn = useGuardedPress(onNavigateToSignIn);
   const guardedForgotPassword = useGuardedPress(onNavigateToForgotPassword);
-  const [state, actions] = useResetPasswordViewModel();
+  const [state, actions] = makeResetPasswordViewModel();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [password, setPassword] = useState("");

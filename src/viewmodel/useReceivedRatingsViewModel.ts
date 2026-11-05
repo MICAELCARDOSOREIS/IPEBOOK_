@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ratingUseCases } from "@/di/container";
 import { DomainError } from "@/model/errors";
 import type { IRatingUseCases, ReceivedRating } from "@/usecase/iRatingUseCases";
 
@@ -17,7 +16,7 @@ const GENERIC_ERROR = "Não foi possível carregar suas avaliações. Tente nova
 
 export function useReceivedRatingsViewModel(
   sessionUserId: string | null,
-  useCases: IRatingUseCases = ratingUseCases,
+  useCases: IRatingUseCases,
 ): [ReceivedRatingsState, ReceivedRatingsActions] {
   const [state, setState] = useState<ReceivedRatingsState>({
     ratings: [],

@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Pressable, Text, View } from "react-native";
-import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
-import { useReceivedRequestsViewModel } from "@/viewmodel/useReceivedRequestsViewModel";
+import { makeAuthViewModel, makeReceivedRequestsViewModel } from "@/di/container";
 import { RequestListLayout, createRequestStyles } from "@/view/requests/requestListLayout";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { useTheme } from "@/view/theme/ThemeProvider";
@@ -27,7 +26,7 @@ export function ReceivedRequests({
   onNavigateToNegotiationDetail,
   onOpenChat,
 }: ReceivedRequestsProps) {
-  const [state, actions] = useReceivedRequestsViewModel(sessionUserId);
+  const [state, actions] = makeReceivedRequestsViewModel(sessionUserId);
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
   const { colors } = useTheme();
   const s = useMemo(() => createRequestStyles(colors), [colors]);
@@ -193,7 +192,7 @@ export default function ReceivedRequestsScreen({
   onNavigateToNegotiationDetail,
   onOpenChat,
 }: ReceivedRequestsScreenProps = {}) {
-  const [authState] = useAuthViewModel();
+  const [authState] = makeAuthViewModel();
 
   useEffect(() => {
     if (!authState.loading && !authState.user) onRequireSignIn?.();

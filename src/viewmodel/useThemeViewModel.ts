@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
 import { useColorScheme } from "react-native";
-import { themePreferenceUseCases } from "@/di/container";
 import type { ThemePreference } from "@/model/entities/themePreference";
 import type { IThemePreferenceUseCases } from "@/usecase/iThemePreferenceUseCases";
 
@@ -18,7 +17,7 @@ export type ThemeViewModelActions = {
 
 /** Resolve a preferência salva + o tema do sistema no tema efetivo (ADR 0036). */
 export function useThemeViewModel(
-  useCases: IThemePreferenceUseCases = themePreferenceUseCases,
+  useCases: IThemePreferenceUseCases,
 ): [ThemeViewModelState, ThemeViewModelActions] {
   const systemScheme = useColorScheme();
   const [preference, setPreferenceState] = useState<ThemePreference>("light");

@@ -1,8 +1,7 @@
 import { useMemo, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
-import { useBlockedUsersViewModel } from "@/viewmodel/useBlockedUsersViewModel";
+import { makeAuthViewModel, makeBlockedUsersViewModel } from "@/di/container";
 import { Avatar } from "@/view/components/Avatar";
 import { Dialog } from "@/view/components/Dialog";
 import { Snackbar } from "@/view/components/Snackbar";
@@ -26,11 +25,11 @@ export type BlockedUsersProps = {
  */
 export function BlockedUsers({ onBack }: BlockedUsersProps) {
   const guardedBack = useGuardedPress(onBack);
-  const [authState] = useAuthViewModel();
+  const [authState] = makeAuthViewModel();
   // Web larga: coluna mais ampla e dois cartões por linha.
   const wide = useIsWideWeb();
   const sessionUserId = authState.user?.id ?? null;
-  const [state, actions] = useBlockedUsersViewModel(sessionUserId);
+  const [state, actions] = makeBlockedUsersViewModel(sessionUserId);
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
 

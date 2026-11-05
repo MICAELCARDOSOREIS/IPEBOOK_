@@ -1,5 +1,4 @@
 import { useCallback, useMemo, useState } from "react";
-import { userPreferencesUseCases } from "@/di/container";
 import type { NotificationType } from "@/model/entities/notification";
 import type { IUserPreferencesUseCases } from "@/usecase/iUserPreferencesUseCases";
 import { useUserPreferencesViewModel } from "@/viewmodel/useUserPreferencesViewModel";
@@ -55,7 +54,7 @@ export type NotificationPreferencesActions = {
  */
 export function useNotificationPreferencesViewModel(
   sessionUserId: string | null,
-  useCases: IUserPreferencesUseCases = userPreferencesUseCases,
+  useCases: IUserPreferencesUseCases,
 ): [NotificationPreferencesState, NotificationPreferencesActions] {
   const [prefs, actions] = useUserPreferencesViewModel(sessionUserId, useCases);
   const [feedbackError, setFeedbackError] = useState<string | null>(null);

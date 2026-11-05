@@ -1,9 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  logger as defaultLogger,
-  meetingUseCases,
-  rateLimiter as defaultRateLimiter,
-} from "@/di/container";
 import type { Meeting } from "@/model/entities/meeting";
 import { DomainError } from "@/model/errors";
 import type { ILogger } from "@/model/services/iLogger";
@@ -54,10 +49,10 @@ function sameDay(a: Date, b: Date): boolean {
 export function useScheduleMeetingViewModel(
   requestId: string,
   sessionUserId: string | null,
-  useCases: IMeetingUseCases = meetingUseCases,
+  useCases: IMeetingUseCases,
   now: () => Date = systemNow,
-  rateLimiter: IRateLimiter = defaultRateLimiter,
-  logger: ILogger = defaultLogger,
+  rateLimiter: IRateLimiter,
+  logger: ILogger,
 ): [ScheduleMeetingState, ScheduleMeetingActions] {
   const dayOptions = useMemo(() => meetingDayOptions(now()), [now]);
   const [current, setCurrent] = useState<Meeting | null>(null);

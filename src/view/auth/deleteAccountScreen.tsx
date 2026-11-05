@@ -1,4 +1,4 @@
-import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
+import { makeAuthViewModel } from "@/di/container";
 import DeleteAccount from "@/view/auth/deleteAccount";
 
 export type DeleteAccountScreenProps = {
@@ -14,7 +14,7 @@ export default function DeleteAccountScreen({
   onNavigateToLogin,
   onEditProfile,
 }: DeleteAccountScreenProps) {
-  const [authState] = useAuthViewModel();
+  const [authState] = makeAuthViewModel();
 
   return (
     <DeleteAccount

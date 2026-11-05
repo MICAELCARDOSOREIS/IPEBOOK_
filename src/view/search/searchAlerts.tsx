@@ -14,8 +14,7 @@ import { TopAppBar } from "@/view/components/TopAppBar";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
-import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
-import { makeSearchAlertsViewModel } from "@/di/container";
+import { makeNetworkStatus, makeSearchAlertsViewModel } from "@/di/container";
 import { WEB_GUTTER, WEB_MAX_WIDTH, useWebColumns } from "@/view/webLayout";
 import { withPress } from "@/view/pressFeedback";
 import { useGuardedPress } from "@/view/useGuardedPress";
@@ -41,7 +40,7 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
   const guardedSearchBooks = useGuardedPress(onSearchBooks);
   const guardedManageAlert = useGuardedPress(onManageAlert);
   const [state, actions] = makeSearchAlertsViewModel(userId, initialQuery);
-  const { isOnline } = useNetworkStatus();
+  const { isOnline } = makeNetworkStatus();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   // Web larga: coluna mais ampla e dois alertas por linha.

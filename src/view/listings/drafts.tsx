@@ -15,8 +15,7 @@ import { TextButton } from "@/view/components/TextButton";
 import { LoadingState } from "@/view/components/LoadingState";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
-import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
-import { makeDraftsViewModel } from "@/di/container";
+import { makeAuthViewModel, makeDraftsViewModel } from "@/di/container";
 import { WEB_MAX_WIDTH, WEB_GUTTER, useWebColumns, webColumnWidth } from "@/view/webLayout";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
@@ -194,7 +193,7 @@ export default function DraftsScreen({
   onResume,
   onNavigateToCreateListing,
 }: DraftsScreenProps = {}) {
-  const [authState] = useAuthViewModel();
+  const [authState] = makeAuthViewModel();
 
   useEffect(() => {
     if (!authState.loading && !authState.user) {

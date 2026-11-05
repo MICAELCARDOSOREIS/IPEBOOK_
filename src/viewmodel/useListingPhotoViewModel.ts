@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { imagePickerService, listingPhotoUseCases } from "@/di/container";
 import { DomainError } from "@/model/errors";
 import type { IImagePickerService, ImageSource } from "@/model/services/iImagePickerService";
 import type { IListingPhotoUseCases } from "@/usecase/iListingPhotoUseCases";
@@ -16,8 +15,8 @@ const COVER_ASPECT = [5, 8] as const;
  */
 export function useListingPhotoViewModel(
   sessionUserId: string | null,
-  picker: IImagePickerService = imagePickerService,
-  useCases: IListingPhotoUseCases = listingPhotoUseCases,
+  picker: IImagePickerService,
+  useCases: IListingPhotoUseCases,
 ): [ListingPhotoState, { choose: (source: ImageSource) => Promise<string | null>; clearError: () => void }] {
   const [state, setState] = useState<ListingPhotoState>({ uploading: false, error: null });
   const active = useRef(true);

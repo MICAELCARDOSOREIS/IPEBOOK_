@@ -66,13 +66,15 @@ describe("useNavigationBadgesViewModel (Spec 091)", () => {
     await act(async () => { mounted.splice(0).forEach((t) => t.unmount()); });
   });
 
-  it("usa as dependências padrão do container quando nenhum deps é passado", async () => {
+  it("retorna zero quando sessionUserId é nulo mesmo com deps injetadas", async () => {
+    const list = vi.fn().mockResolvedValue([entry("1", "pending")]);
     let result!: ReturnType<typeof useNavigationBadgesViewModel>;
-    function DefaultProbe() {
-      result = useNavigationBadgesViewModel(null, "/");
+    function NullSessionProbe() {
+      result = useNavigationBadgesViewModel(null, "/", { listReceivedRequests: list });
       return null;
     }
-    await act(async () => { mounted.push(create(createElement(DefaultProbe))); });
+    await act(async () => { mounted.push(create(createElement(NullSessionProbe))); });
     expect(result.conversations).toBe(0);
+    expect(list).not.toHaveBeenCalled();
   });
 });

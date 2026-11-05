@@ -1,9 +1,6 @@
+import { makeAuthViewModel, makeHomeViewModel, makeNetworkStatus, makeNotificationsViewModel } from "@/di/container";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Animated, AppState, FlatList, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
-import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
-import { makeHomeViewModel } from "@/di/container";
-import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
-import { useNotificationsViewModel } from "@/viewmodel/useNotificationsViewModel";
 import { useActiveNeighborhood } from "@/viewmodel/useActiveNeighborhood";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
@@ -269,11 +266,11 @@ export default function Home({
   const handleSelectNeighborhood = onSelectNeighborhood ?? neighborhoodHook.openSelector;
 
   const [state, actions] = makeHomeViewModel();
-  const [authState] = useAuthViewModel();
+  const [authState] = makeAuthViewModel();
   // Só o contador de não lidas: convite e resposta de encontro chegam por aqui, em tempo real (Spec 086).
-  const [notificationsState, notificationsActions] = useNotificationsViewModel(authState.user?.id ?? null);
+  const [notificationsState, notificationsActions] = makeNotificationsViewModel(authState.user?.id ?? null);
   const unreadCount = notificationsState.unreadCount;
-  const { isOnline } = useNetworkStatus();
+  const { isOnline } = makeNetworkStatus();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const wideWeb = useIsWideWeb();

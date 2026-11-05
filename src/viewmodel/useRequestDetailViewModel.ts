@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { bookRequestUseCases } from "@/di/container";
 import { DomainError } from "@/model/errors";
 import type { IBookRequestUseCases, NegotiationDetail } from "@/usecase/iBookRequestUseCases";
 
@@ -19,7 +18,7 @@ const GENERIC_ERROR = "Não foi possível carregar os detalhes da negociação. 
 export function useRequestDetailViewModel(
   requestId: string,
   sessionUserId: string | null,
-  useCases: IBookRequestUseCases = bookRequestUseCases,
+  useCases: IBookRequestUseCases,
 ): [RequestDetailState, RequestDetailActions] {
   const [state, setState] = useState<RequestDetailState>({
     detail: null,

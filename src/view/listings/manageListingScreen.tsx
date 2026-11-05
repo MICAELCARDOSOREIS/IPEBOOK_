@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
+import { makeAuthViewModel } from "@/di/container";
 import ManageListing from "@/view/listings/manageListing";
 
 export type ManageListingScreenProps = {
@@ -19,7 +19,7 @@ export default function ManageListingScreen({
   onBack,
   onRequireSignIn,
 }: ManageListingScreenProps) {
-  const [authState] = useAuthViewModel();
+  const [authState] = makeAuthViewModel();
 
   useEffect(() => {
     if (!authState.loading && !authState.user) {

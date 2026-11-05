@@ -2,8 +2,12 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Meeting } from "@/model/entities/meeting";
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
-import { useRequestDetailViewModel } from "@/viewmodel/useRequestDetailViewModel";
+import {
+  makeAuthViewModel,
+  makeDeliveryStatus,
+  makeNegotiationRatingViewModel,
+  makeRequestDetailViewModel,
+} from "@/di/container";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { formatPrice } from "@/view/formatPrice";
@@ -16,8 +20,6 @@ import { TopAppBar } from "@/view/components/TopAppBar";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { Avatar } from "@/view/components/Avatar";
 import { AppIcon } from "@/view/components/AppIcon";
-import { useNegotiationRatingViewModel } from "@/viewmodel/useNegotiationRatingViewModel";
-import { useDeliveryStatus } from "@/viewmodel/useDeliveryViewModel";
 import { NegotiationRatingModal } from "@/view/requests/NegotiationRatingModal";
 import { FilledButton } from "@/view/components/FilledButton";
 import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
@@ -55,7 +57,7 @@ export function RequestDetail({
   onOpenDelivery,
   focusKey,
 }: RequestDetailProps) {
-  const [state, actions] = useRequestDetailViewModel(requestId, sessionUserId);
+  const [state, actions] = makeRequestDetailViewModel(requestId, sessionUserId);
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const detail = state.detail;
@@ -75,13 +77,13 @@ export function RequestDetail({
   }
 
   const counterpartId = detail?.counterpartId ?? "";
-  const [ratingState, ratingActions] = useNegotiationRatingViewModel(
+  const [ratingState, ratingActions] = makeNegotiationRatingViewModel(
     requestId,
     sessionUserId,
     counterpartId,
   );
 
-  const delivery = useDeliveryStatus(requestId, sessionUserId, (focusKey ?? 0) + refreshCount);
+  const delivery = makeDeliveryStatus(requestId, sessionUserId, (focusKey ?? 0) + refreshCount);
   const [ratingModalVisible, setRatingModalVisible] = useState(false);
   // Web larga: coluna mais larga; livro e encontro de um lado, entrega e pessoa do outro.
   const wide = useIsWideWeb();
@@ -371,7 +373,7 @@ export default function RequestDetailScreen({
   onOpenDelivery,
   focusKey,
 }: RequestDetailScreenProps) {
-  const [authState] = useAuthViewModel();
+  const [authState] = makeAuthViewModel();
 
   useEffect(() => {
     if (!authState.loading && !authState.user) {

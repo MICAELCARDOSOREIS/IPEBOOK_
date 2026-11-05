@@ -3,8 +3,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { PIRIPIRI_MEETING_POINTS } from "@/model/entities/meetingPoint";
 import type { Meeting } from "@/model/entities/meeting";
-import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
-import { useUserMeetingsViewModel } from "@/viewmodel/useUserMeetingsViewModel";
+import { makeAuthViewModel, makeUserMeetingsViewModel } from "@/di/container";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { formatMeetingWhen } from "@/view/meetingFormat";
@@ -27,11 +26,11 @@ export default function MeetingHistory({ onBack, onNavigateToNegotiation }: Meet
   const guardedNegotiation = useGuardedPress(onNavigateToNegotiation);
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const [authState] = useAuthViewModel();
+  const [authState] = makeAuthViewModel();
   // Web larga: coluna mais ampla e dois cartões por linha.
   const wide = useIsWideWeb();
   const userId = authState.user?.id ?? null;
-  const [state, actions] = useUserMeetingsViewModel(userId);
+  const [state, actions] = makeUserMeetingsViewModel(userId);
 
   function getStatusLabel(meeting: Meeting): { text: string; isPast: boolean } {
     if (meeting.status === "cancelled") {

@@ -9,7 +9,7 @@ import { IconBadge } from "@/view/components/IconBadge";
 import { FilledButton } from "@/view/components/FilledButton";
 import { captureRef } from "react-native-view-shot";
 import { InviteCard } from "@/view/components/InviteCard";
-import { useInviteFriendsViewModel } from "@/viewmodel/useInviteFriendsViewModel";
+import { makeInviteFriendsViewModel } from "@/di/container";
 import { WEB_GUTTER } from "@/view/webLayout";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
@@ -25,7 +25,7 @@ export function InviteFriends({ onBack }: InviteFriendsProps) {
   const guardedBack = useGuardedPress(onBack);
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const [state, actions] = useInviteFriendsViewModel();
+  const [state, actions] = makeInviteFriendsViewModel();
   // Web larga: o cartão do convite de um lado, texto e ação do outro.
   const wide = useIsWideWeb();
   const cardRef = useRef<React.ComponentRef<typeof View>>(null);

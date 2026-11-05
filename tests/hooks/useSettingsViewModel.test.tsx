@@ -2,15 +2,23 @@ import { createElement } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ILocalCacheUseCases } from "@/usecase/iLocalCacheUseCases";
+import type { ISearchHistoryUseCases } from "@/usecase/iSearchHistoryUseCases";
 import { useSettingsViewModel } from "@/viewmodel/useSettingsViewModel";
 
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
 const mounted: ReactTestRenderer[] = [];
 
-async function renderHook(useCases: ILocalCacheUseCases) {
+async function renderHook(
+  useCases: ILocalCacheUseCases,
+  history: ISearchHistoryUseCases = {
+    listTerms: vi.fn(),
+    registerSearch: vi.fn(),
+    clearHistory: vi.fn(),
+  } as unknown as ISearchHistoryUseCases,
+) {
   let result!: ReturnType<typeof useSettingsViewModel>;
   function HookProbe() {
-    result = useSettingsViewModel(useCases);
+    result = useSettingsViewModel(useCases, history);
     return null;
   }
   await act(async () => {

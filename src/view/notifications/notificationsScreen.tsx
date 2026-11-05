@@ -1,4 +1,4 @@
-import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
+import { makeAuthViewModel } from "@/di/container";
 import Notifications from "@/view/notifications/notifications";
 
 export type NotificationsScreenProps = {
@@ -15,7 +15,7 @@ export default function NotificationsScreen({
   onNavigateToAction,
   onExploreBooks,
 }: NotificationsScreenProps) {
-  const [authState] = useAuthViewModel();
+  const [authState] = makeAuthViewModel();
 
   return (
     <Notifications

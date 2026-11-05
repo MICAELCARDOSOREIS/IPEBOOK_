@@ -4,7 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import type { RequestStatus } from "@/model/entities/bookRequest";
 import type { RequestWithListing } from "@/viewmodel/useSentRequestsViewModel";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
-import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
+import { makeNetworkStatus } from "@/di/container";
 import { BookCover } from "@/view/components/BookCover";
 import { Breadcrumb } from "@/view/components/Breadcrumb";
 import { AppIcon } from "@/view/components/AppIcon";
@@ -70,7 +70,7 @@ export function RequestListLayout({
 }: Props) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const { isOnline } = useNetworkStatus();
+  const { isOnline } = makeNetworkStatus();
   // Web larga: coluna mais larga e dois pedidos por linha, em vez de uma faixa estreita no meio.
   const wide = useIsWideWeb();
   const listColumns = useWebColumns(2, 3);

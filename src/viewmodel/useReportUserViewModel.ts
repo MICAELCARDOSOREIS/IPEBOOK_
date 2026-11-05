@@ -1,5 +1,4 @@
 import { useCallback, useRef, useState } from "react";
-import { reportUseCases } from "@/di/container";
 import type { UserReportReason } from "@/model/entities/report";
 import { DomainError } from "@/model/errors";
 import type { IReportUseCases } from "@/usecase/iReportUseCases";
@@ -22,7 +21,7 @@ const INITIAL: ReportUserState = { reason: null, details: "", loading: false, er
 const GENERIC_ERROR = "Não foi possível enviar a denúncia. Tente novamente.";
 
 /** Denúncia de pessoa a partir do perfil público (Spec 091). */
-export function useReportUserViewModel(useCases: IReportUseCases = reportUseCases): [ReportUserState, ReportUserActions] {
+export function useReportUserViewModel(useCases: IReportUseCases): [ReportUserState, ReportUserActions] {
   const [state, setState] = useState<ReportUserState>(INITIAL);
   const sending = useRef(false);
 

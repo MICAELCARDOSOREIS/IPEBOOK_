@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Platform, Share } from "react-native";
 import * as Linking from "expo-linking";
-import { shareUseCases } from "@/di/container";
 import { DomainError } from "@/model/errors";
 import type { IShareUseCases } from "@/usecase/iShareUseCases";
 import { defaultShareImageFile, type ShareImageFile } from "@/viewmodel/shareImageFile";
@@ -29,7 +28,7 @@ const DEFAULT_APP_URL = "https://ipebook.app";
 type WebNavigatorWithShare = Navigator & { share?: (data: { text?: string; url?: string }) => Promise<void> };
 
 export function useInviteFriendsViewModel(
-  useCases: IShareUseCases = shareUseCases,
+  useCases: IShareUseCases,
   appUrl: string = DEFAULT_APP_URL,
   shareImageFile: ShareImageFile = defaultShareImageFile,
 ): [InviteFriendsState, InviteFriendsActions] {

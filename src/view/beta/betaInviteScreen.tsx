@@ -21,8 +21,9 @@ import { useGuardedPress } from "@/view/useGuardedPress";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { scrollBottomPadding, standardVerticalScrollProps } from "@/view/scrollProps";
 import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
-import { useAuthViewModel, type AuthActions, type AuthState } from "@/viewmodel/useAuthViewModel";
-import { useBetaSignupViewModel, type BetaSignupActions, type BetaSignupState } from "@/viewmodel/useBetaSignupViewModel";
+import { makeAuthViewModel, makeBetaSignupViewModel } from "@/di/container";
+import type { AuthActions, AuthState } from "@/viewmodel/useAuthViewModel";
+import type { BetaSignupActions, BetaSignupState } from "@/viewmodel/useBetaSignupViewModel";
 import { setAuthReturnTo } from "@/view/auth/authReturnTo";
 
 import { withPress } from "@/view/pressFeedback";
@@ -82,8 +83,8 @@ export type BetaInviteRouteProps = {
 
 /** Página pública `/beta` (Spec 108), ligada ao caso de uso real. */
 export default function BetaInviteRoute({ onNavigateHome }: BetaInviteRouteProps = {}) {
-  const [state, actions] = useBetaSignupViewModel();
-  const [authState, authActions] = useAuthViewModel();
+  const [state, actions] = makeBetaSignupViewModel();
+  const [authState, authActions] = makeAuthViewModel();
   return (
     <BetaInviteScreen
       state={state}

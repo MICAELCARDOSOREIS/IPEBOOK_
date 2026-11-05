@@ -1,16 +1,10 @@
 import { useEffect, useState } from "react";
-import { bookRequestUseCases, notificationUseCases } from "@/di/container";
 import type { RequestWithListing } from "@/usecase/iBookRequestUseCases";
 
 export type NavigationBadgesDeps = {
   listReceivedRequests: (sessionUserId: string | null) => Promise<readonly RequestWithListing[]>;
   /** Avisa quando chega algo novo (pedido recebido gera notificação); retorna o cancelamento. */
   subscribe?: (sessionUserId: string, onChange: () => void) => () => void;
-};
-
-const defaultDeps: NavigationBadgesDeps = {
-  listReceivedRequests: (id) => bookRequestUseCases.listReceivedRequests(id),
-  subscribe: (id, onChange) => notificationUseCases.subscribe?.(id, onChange) ?? (() => {}),
 };
 
 export type NavigationBadges = { conversations: number };
@@ -24,7 +18,7 @@ const NONE: NavigationBadges = { conversations: 0 };
 export function useNavigationBadgesViewModel(
   sessionUserId: string | null,
   refreshKey: string,
-  deps: NavigationBadgesDeps = defaultDeps,
+  deps: NavigationBadgesDeps,
 ): NavigationBadges {
   const [badges, setBadges] = useState<NavigationBadges>(NONE);
 

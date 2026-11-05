@@ -15,9 +15,9 @@ import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { AppIcon } from "@/view/components/AppIcon";
 import { Snackbar } from "@/view/components/Snackbar";
 import { IpePetalsCelebration } from "@/view/components/IpePetalsCelebration";
+import { makeShareListingViewModel } from "@/di/container";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
-import { useShareListingViewModel } from "@/viewmodel/useShareListingViewModel";
 
 export type CreateListingSuccessProps = {
   published: Book;
@@ -34,7 +34,7 @@ export function CreateListingSuccess({
   const guardedGoHome = useGuardedPress(onGoHome);
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const [shareState, shareActions] = useShareListingViewModel();
+  const [shareState, shareActions] = makeShareListingViewModel();
 
   const handleShareWhatsApp = useCallback(() => {
     void shareActions.shareToWhatsApp(published.id, {

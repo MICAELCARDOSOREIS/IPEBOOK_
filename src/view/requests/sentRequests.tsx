@@ -1,7 +1,6 @@
 import { useEffect, useMemo } from "react";
 import { Pressable, Text, View } from "react-native";
-import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
-import { useSentRequestsViewModel } from "@/viewmodel/useSentRequestsViewModel";
+import { makeAuthViewModel, makeSentRequestsViewModel } from "@/di/container";
 import { RequestListLayout, createRequestStyles } from "@/view/requests/requestListLayout";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { useTheme } from "@/view/theme/ThemeProvider";
@@ -18,7 +17,7 @@ export function SentRequests({
   onBack,
   onNavigateToNegotiationDetail,
 }: SentRequestsProps) {
-  const [state, actions] = useSentRequestsViewModel(sessionUserId);
+  const [state, actions] = makeSentRequestsViewModel(sessionUserId);
   const { colors } = useTheme();
   const s = useMemo(() => createRequestStyles(colors), [colors]);
 
@@ -65,7 +64,7 @@ export default function SentRequestsScreen({
   onRequireSignIn,
   onNavigateToNegotiationDetail,
 }: SentRequestsScreenProps = {}) {
-  const [authState] = useAuthViewModel();
+  const [authState] = makeAuthViewModel();
 
   const guardedBackPress = useGuardedPress(onBack);
   const guardedBack = onBack ? guardedBackPress : undefined;

@@ -2,8 +2,7 @@ import { useMemo, useState } from "react";
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { type ModerationDecision, type ModerationItem, REPORT_REASON_LABEL } from "@/model/entities/moderation";
-import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
-import { useModerationViewModel } from "@/viewmodel/useModerationViewModel";
+import { makeAuthViewModel, makeModerationViewModel } from "@/di/container";
 import { AppIcon } from "@/view/components/AppIcon";
 import { Dialog } from "@/view/components/Dialog";
 import { Snackbar } from "@/view/components/Snackbar";
@@ -40,7 +39,7 @@ const CONFIRM: Record<Pending["decision"], { title: string; message: (label: str
 
 /** Fila da moderação (Spec 102 / ADR 0078): denúncias abertas agrupadas por anúncio ou pessoa. */
 export function Moderation({ sessionUserId, onBack, onOpenListing, onOpenProfile }: ModerationProps) {
-  const [state, actions] = useModerationViewModel(sessionUserId);
+  const [state, actions] = makeModerationViewModel(sessionUserId);
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const wide = useIsWideWeb();
@@ -168,7 +167,7 @@ export function Moderation({ sessionUserId, onBack, onOpenListing, onOpenProfile
 }
 
 export default function ModerationScreen(props: Omit<ModerationProps, "sessionUserId">) {
-  const [authState] = useAuthViewModel();
+  const [authState] = makeAuthViewModel();
   if (authState.loading) return null;
   return <Moderation sessionUserId={authState.user?.id ?? null} {...props} />;
 }

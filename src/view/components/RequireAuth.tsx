@@ -1,6 +1,6 @@
 import { useEffect, type ReactNode } from "react";
+import { makeAuthViewModel } from "@/di/container";
 import { LoadingState } from "@/view/components/LoadingState";
-import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 
 export type RequireAuthProps = {
   /** Chamada quando a pessoa não tem sessão ativa (ex.: replaceOnce("/entrar")). */
@@ -14,7 +14,7 @@ export type RequireAuthProps = {
  * nada é renderizado e a rota de destino é acionada uma única vez.
  */
 export function RequireAuth({ onRequireSignIn, children }: RequireAuthProps) {
-  const [authState] = useAuthViewModel();
+  const [authState] = makeAuthViewModel();
 
   useEffect(() => {
     if (!authState.loading && !authState.user) onRequireSignIn();

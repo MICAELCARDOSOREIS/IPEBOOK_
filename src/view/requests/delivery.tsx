@@ -4,10 +4,12 @@ import { CameraView, useCameraPermissions, type BarcodeScanningResult } from "ex
 import { SafeAreaView } from "react-native-safe-area-context";
 import { buildDeliveryPayload, normalizeDeliveryCode, parseDeliveryPayload } from "@/model/entities/delivery";
 import type { Book } from "@/model/entities/book";
-import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
-import { useDeliveryViewModel } from "@/viewmodel/useDeliveryViewModel";
-import { useRequestDetailViewModel } from "@/viewmodel/useRequestDetailViewModel";
-import { useNegotiationRatingViewModel } from "@/viewmodel/useNegotiationRatingViewModel";
+import {
+  makeAuthViewModel,
+  makeDeliveryViewModel,
+  makeNegotiationRatingViewModel,
+  makeRequestDetailViewModel,
+} from "@/di/container";
 import { NegotiationRatingModal } from "@/view/requests/NegotiationRatingModal";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
@@ -124,11 +126,11 @@ function DeliveryTipsCard({ colors }: { colors: ColorPalette }) {
  */
 export function Delivery({ requestId, sessionUserId, onBack }: DeliveryProps) {
   const guardedBack = useGuardedPress(onBack);
-  const [state, actions] = useDeliveryViewModel(requestId, sessionUserId);
-  const [detailState] = useRequestDetailViewModel(requestId, sessionUserId);
+  const [state, actions] = makeDeliveryViewModel(requestId, sessionUserId);
+  const [detailState] = makeRequestDetailViewModel(requestId, sessionUserId);
   const counterpartId = detailState.detail?.counterpartId ?? "";
   const counterpartName = detailState.detail?.counterpartName ?? "Pessoa da comunidade";
-  const [ratingState, ratingActions] = useNegotiationRatingViewModel(
+  const [ratingState, ratingActions] = makeNegotiationRatingViewModel(
     requestId,
     sessionUserId,
     counterpartId,
@@ -354,7 +356,7 @@ export type DeliveryScreenProps = {
 };
 
 export default function DeliveryScreen({ requestId, onBack, onRequireSignIn }: DeliveryScreenProps) {
-  const [authState] = useAuthViewModel();
+  const [authState] = makeAuthViewModel();
 
   useEffect(() => {
     if (!authState.loading && !authState.user) onRequireSignIn?.();

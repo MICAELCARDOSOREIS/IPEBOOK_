@@ -14,8 +14,7 @@ import { StepProgress } from "@/view/components/StepProgress";
 import { TextButton } from "@/view/components/TextButton";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { useFormErrorAnnouncer } from "@/view/useFormErrorAnnouncer";
-import { makeCreateListingViewModel } from "@/di/container";
-import { useListingPhotoViewModel } from "@/viewmodel/useListingPhotoViewModel";
+import { makeCreateListingViewModel, makeListingPhotoViewModel } from "@/di/container";
 import {
   validateListingBasics,
   type ListingBasicsErrors,
@@ -69,7 +68,7 @@ export default function CreateListing({
   const guardedGoHome = useGuardedPress(onGoHome);
   const guardedCreated = useGuardedPress(onCreated);
   const [state, actions] = makeCreateListingViewModel();
-  const [photoState, photoActions] = useListingPhotoViewModel(sessionUserId);
+  const [photoState, photoActions] = makeListingPhotoViewModel(sessionUserId);
   const { colors } = useTheme();
   const wideWeb = useIsWideWeb();
   const styles = useMemo(() => createStyles(colors, wideWeb), [colors, wideWeb]);

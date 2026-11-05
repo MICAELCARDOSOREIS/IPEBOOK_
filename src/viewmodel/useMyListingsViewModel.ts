@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { bookUseCases } from "@/di/container";
 import type { Book } from "@/model/entities/book";
 import { DomainError } from "@/model/errors";
 import type { IBookUseCases } from "@/usecase/iBookUseCases";
@@ -22,7 +21,7 @@ export type MyListingsActions = {
 
 export function useMyListingsViewModel(
   sessionUserId: string | null,
-  books: IBookUseCases = bookUseCases,
+  books: IBookUseCases,
 ): [MyListingsState, MyListingsActions] {
   const [state, setState] = useState<MyListingsState>({
     books: [],

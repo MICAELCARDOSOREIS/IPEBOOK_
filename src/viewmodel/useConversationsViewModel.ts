@@ -1,5 +1,4 @@
 import { useCallback, useEffect } from "react";
-import { bookRequestUseCases, negotiationMessageUseCases, notificationUseCases, publicProfileUseCases } from "@/di/container";
 import type { Book } from "@/model/entities/book";
 import type { RequestWithListing } from "@/usecase/iBookRequestUseCases";
 import type { NegotiationMessage } from "@/model/entities/negotiationMessage";
@@ -25,7 +24,7 @@ export type ConversationsState = {
   error: string | null;
 };
 
-/** Dependências injetáveis para teste; o padrão usa o container. */
+/** Dependências injetáveis para teste; a composição padrão fica em `src/di/container.ts`. */
 export type ConversationsDeps = {
   listSentRequests: (sessionUserId: string | null) => Promise<readonly RequestWithListing[]>;
   listReceivedRequests: (sessionUserId: string | null) => Promise<readonly RequestWithListing[]>;
@@ -39,28 +38,6 @@ export type ConversationsDeps = {
   cancelRequest?: (requestId: string, sessionUserId: string) => Promise<unknown>;
   /** Avisa em tempo real que algo mudou (mensagem nova, pedido novo ou respondido); retorna o cancelamento. */
   subscribe?: (sessionUserId: string, onChange: () => void) => () => void;
-};
-
-const defaultDeps: ConversationsDeps = {
-  listSentRequests: (id) => bookRequestUseCases.listSentRequests(id),
-  listReceivedRequests: (id) => bookRequestUseCases.listReceivedRequests(id),
-  getMessages: (requestId, sessionUserId) => negotiationMessageUseCases.getMessages(requestId, sessionUserId),
-  hideConversation: (requestId, userId) => negotiationMessageUseCases.hideConversation(requestId, userId),
-  listHiddenConversations: (userId) => negotiationMessageUseCases.listHiddenConversations(userId),
-  cancelRequest: (requestId, userId) => bookRequestUseCases.cancelRequest(requestId, userId),
-  getProfile: async (userId) => {
-    const profile = await publicProfileUseCases.getPublicProfile(userId);
-    return { name: profile.name ?? null, photoUrl: profile.photoUrl ?? null };
-  },
-  // Pedidos novos e respostas geram notificação; mensagens chegam pela tabela de mensagens (Spec 086)
-  subscribe: (sessionUserId, onChange) => {
-    const offMessages = negotiationMessageUseCases.subscribeToAllMessages(() => onChange());
-    const offNotifications = notificationUseCases.subscribe?.(sessionUserId, onChange) ?? (() => {});
-    return () => {
-      offMessages();
-      offNotifications();
-    };
-  },
 };
 
 /** Maior que qualquer data ISO: ordena a proposta recebida pendente antes das conversas. */
@@ -135,7 +112,7 @@ export type ConversationsActions = {
 
 export function useConversationsViewModel(
   sessionUserId: string | null,
-  deps: ConversationsDeps = defaultDeps,
+  deps: ConversationsDeps,
 ): [ConversationsState, ConversationsActions] {
   const load = useCallback(async () => {
     if (!sessionUserId) return [];

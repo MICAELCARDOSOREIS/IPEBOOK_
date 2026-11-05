@@ -1,8 +1,7 @@
 import { useEffect, useMemo } from "react";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
-import { useReceivedRatingsViewModel } from "@/viewmodel/useReceivedRatingsViewModel";
+import { makeAuthViewModel, makeReceivedRatingsViewModel } from "@/di/container";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { tokens, type ColorPalette } from "@/view/tokens";
@@ -30,7 +29,7 @@ function stars(score: number): string {
 /** Figma `07.03 · Avaliações recebidas` (`145:2486` / Web `370:16701`). */
 export function ReceivedRatings({ sessionUserId, onBack }: ReceivedRatingsProps) {
   const guardedBack = useGuardedPress(onBack);
-  const [state, actions] = useReceivedRatingsViewModel(sessionUserId);
+  const [state, actions] = makeReceivedRatingsViewModel(sessionUserId);
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   // Web larga: coluna mais ampla e dois cartões por linha.
@@ -92,7 +91,7 @@ export type ReceivedRatingsScreenProps = {
 };
 
 export default function ReceivedRatingsScreen({ onBack, onNavigateToSignIn }: ReceivedRatingsScreenProps) {
-  const [authState] = useAuthViewModel();
+  const [authState] = makeAuthViewModel();
 
   useEffect(() => {
     if (!authState.loading && !authState.user) onNavigateToSignIn?.();

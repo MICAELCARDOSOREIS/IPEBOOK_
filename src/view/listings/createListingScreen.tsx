@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
+import { makeAuthViewModel } from "@/di/container";
 import CreateListing from "@/view/listings/createListing";
 
 export type CreateListingScreenProps = {
@@ -20,7 +20,7 @@ export default function CreateListingScreen({
   onGoHome,
   initialDraftId,
 }: CreateListingScreenProps = {}) {
-  const [authState] = useAuthViewModel();
+  const [authState] = makeAuthViewModel();
 
   useEffect(() => {
     if (!authState.loading && !authState.user) {

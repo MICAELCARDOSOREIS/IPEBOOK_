@@ -14,16 +14,18 @@ import { Avatar } from "@/view/components/Avatar";
 import { Dialog } from "@/view/components/Dialog";
 import { NeighborhoodSelectorModal } from "@/view/components/NeighborhoodSelectorModal";
 import { TextButton } from "@/view/components/TextButton";
-import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
-import { useSettingsViewModel } from "@/viewmodel/useSettingsViewModel";
-import { useIsModerator } from "@/viewmodel/useModerationViewModel";
+import {
+  makeAuthViewModel,
+  makeIsModerator,
+  makeNotificationPreferencesViewModel,
+  makePublicProfileViewModel,
+  makeSettingsViewModel,
+} from "@/di/container";
 import {
   NOTIFICATION_PREFERENCE_CATEGORIES,
-  useNotificationPreferencesViewModel,
   type NotificationPreferenceKey,
 } from "@/viewmodel/useNotificationPreferencesViewModel";
 import { useActiveNeighborhood } from "@/viewmodel/useActiveNeighborhood";
-import { usePublicProfileViewModel } from "@/viewmodel/usePublicProfileViewModel";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
@@ -108,10 +110,10 @@ export function Settings({
   const mainY = useRef(0);
   const sectionY = useRef<Record<string, number>>({});
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const [authState, authActions] = useAuthViewModel();
+  const [authState, authActions] = makeAuthViewModel();
   const hasAccount = !!authState.user?.id;
   const sessionUserId = authState.user?.id ?? null;
-  const [profileState] = usePublicProfileViewModel(sessionUserId ?? "");
+  const [profileState] = makePublicProfileViewModel(sessionUserId ?? "");
   const neighborhood = useActiveNeighborhood("all");
   const [confirmingSignOut, setConfirmingSignOut] = useState(false);
   const [confirmingCleanup, setConfirmingCleanup] = useState<"catalog" | "history" | null>(null);
@@ -132,10 +134,10 @@ export function Settings({
       setSigningOut(false);
     }
   }
-  const [state, actions] = useSettingsViewModel();
-  const [notifPrefs, notifActions] = useNotificationPreferencesViewModel(sessionUserId);
+  const [state, actions] = makeSettingsViewModel();
+  const [notifPrefs, notifActions] = makeNotificationPreferencesViewModel(sessionUserId);
   const version = Constants.expoConfig?.version ?? null;
-  const isModerator = useIsModerator(sessionUserId);
+  const isModerator = makeIsModerator(sessionUserId);
 
   async function handleConfirmCleanup() {
     if (confirmingCleanup === "catalog") {

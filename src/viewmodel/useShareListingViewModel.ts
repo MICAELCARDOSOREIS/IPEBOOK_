@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Platform, Share } from "react-native";
 import * as Linking from "expo-linking";
-import { shareUseCases } from "@/di/container";
 import { DomainError } from "@/model/errors";
 import type { IShareUseCases, ShareableListing } from "@/usecase/iShareUseCases";
 import { defaultShareImageFile, type ShareImageFile } from "@/viewmodel/shareImageFile";
@@ -32,7 +31,7 @@ export const SHARE_BASE_URL = "https://ipebook.app";
 type WebNavigatorWithShare = Navigator & { share?: (data: { text?: string; url?: string }) => Promise<void> };
 
 export function useShareListingViewModel(
-  useCases: IShareUseCases = shareUseCases,
+  useCases: IShareUseCases,
   shareImageFile: ShareImageFile = defaultShareImageFile,
 ): [ShareListingState, ShareListingActions] {
   const [state, setState] = useState<ShareListingState>({

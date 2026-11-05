@@ -145,14 +145,19 @@ describe("testes de hook: useReceivedRatingsViewModel (ISO/IEC 25010 - Confiabil
     expect(hook.current[0].ratings).toEqual([fakeRating]);
   });
 
-  it("usa as dependências padrão de container quando nenhum useCase é injetado", async () => {
+  it("encerra o carregamento imediatamente quando sessionUserId é nulo", async () => {
+    const useCases: IRatingUseCases = {
+      getNegotiationRating: vi.fn(),
+      submitRating: vi.fn(),
+      listReceivedRatings: vi.fn().mockResolvedValue([]),
+    };
     let result!: ReturnType<typeof useReceivedRatingsViewModel>;
-    function DefaultProbe() {
-      result = useReceivedRatingsViewModel(null);
+    function NullUserProbe() {
+      result = useReceivedRatingsViewModel(null, useCases);
       return null;
     }
     await act(async () => {
-      mounted.push(create(createElement(DefaultProbe)));
+      mounted.push(create(createElement(NullUserProbe)));
     });
 
     expect(result[0].loading).toBe(false);

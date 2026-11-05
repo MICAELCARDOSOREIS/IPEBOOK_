@@ -1,9 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  logger as defaultLogger,
-  meetingUseCases,
-  rateLimiter as defaultRateLimiter,
-} from "@/di/container";
 import type { Meeting } from "@/model/entities/meeting";
 import { DomainError } from "@/model/errors";
 import type { ILogger } from "@/model/services/iLogger";
@@ -35,9 +30,9 @@ const MEETING_ATTEMPTS = 3;
 export function useMeetingViewModel(
   requestId: string,
   sessionUserId: string | null,
-  useCases: IMeetingUseCases = meetingUseCases,
-  rateLimiter: IRateLimiter = defaultRateLimiter,
-  logger: ILogger = defaultLogger,
+  useCases: IMeetingUseCases,
+  rateLimiter: IRateLimiter,
+  logger: ILogger,
 ): [MeetingState, MeetingActions] {
   const [state, setState] = useState<MeetingState>({
     meeting: null,
