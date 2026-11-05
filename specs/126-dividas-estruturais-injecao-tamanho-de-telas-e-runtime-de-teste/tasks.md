@@ -26,7 +26,7 @@ completa roda no fim do lote.
 
 ## Fase 3 — E2: extração de seções de tela (uma tela por entrega)
 
-- [x] **T011** Definir o teto por arquivo no plano de extração, considerando as cinco telas de T003 e o custo de manter `styles` compartilhadas (`VIEW_FILE_LINE_CEILING = 900` em `scripts/verificar-arquitetura.mjs`, com `VIEW_SIZE_EXCEPTIONS` zerada).
+- [x] **T011** Definir o teto por arquivo no plano de extração, considerando as cinco telas de T003 e o custo de manter `styles` compartilhadas (`VIEW_FILE_LINE_CEILING = 900` em `scripts/verificar-arquitetura.mjs`, com `VIEW_SIZE_EXCEPTIONS` removida após a extração das cinco telas).
 - [x] **T012** Extrair seções de `home.tsx` (1.381 → 842 linhas) em componentes de `src/view/home/CatalogCarousel.tsx` (`CatalogCarousel`, `HomeShortcutsSection`, `HomeEmptyCatalogSection`), com testes de componente em `tests/components/extractedViewSections.test.tsx`.
 - [x] **T013** Repetir a extração em `profileHub.tsx` (1.107 → 402 linhas, `src/view/profile/ProfileHubSections.tsx`), `bookDetail.tsx` (1.104 → 833 linhas, `src/view/listings/BookDetailSections.tsx`), `scheduleMeeting.tsx` (1.063 → 558 linhas, `src/view/requests/ScheduleMeetingWideLayout.tsx`) e `chat.tsx` (900 → 693 linhas, `src/view/conversations/ChatProposalCards.tsx`), mantendo a rota de `src/app/` importando a mesma composição em cada passo.
 - [x] **T014** Conferir, para cada tela extraída, que os testes antigos de comportamento continuam valendo sem reescrever expectativa (`homeView.test.tsx`, `profileHubView.test.tsx`, `bookDetailView.test.tsx`, `scheduleMeetingView.test.tsx` e `chatView.test.tsx` passaram integralmente sem alteração de expectativa).
