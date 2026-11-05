@@ -2,7 +2,7 @@ import { Linking } from "react-native";
 import Welcome from "@/view/onboarding/welcome";
 import { PLAY_STORE_URL } from "@/view/playStore";
 import { WEB_BETA_ONLY } from "@/view/webBetaMode";
-import { useWelcomeGateViewModel } from "@/viewmodel/useWelcomeGateViewModel";
+import { makeWelcomeGateViewModel } from "@/di/container";
 
 export type WelcomeDestination = "/criar-conta" | "/entrar";
 
@@ -25,7 +25,7 @@ export default function WelcomeRoute({
   onJoinBeta = () => {},
   onOpenStore = () => void Linking.openURL(PLAY_STORE_URL).catch(() => {}),
 }: WelcomeRouteProps) {
-  const [, dismiss] = useWelcomeGateViewModel();
+  const [, dismiss] = makeWelcomeGateViewModel();
 
   const finish = (destination: WelcomeDestination) => {
     void dismiss();

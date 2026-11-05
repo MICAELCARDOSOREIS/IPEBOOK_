@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from "react";
-import { favoriteUseCases } from "@/di/container";
 import type { Book } from "@/model/entities/book";
 import { DomainError } from "@/model/errors";
 import type { IFavoriteUseCases } from "@/usecase/iFavoriteUseCases";
@@ -16,7 +15,7 @@ export type FavoritesActions = {
   removeFavorite: (bookId: string) => Promise<boolean>;
 };
 
-export function useFavoritesViewModel(userId: string | null, useCases: IFavoriteUseCases = favoriteUseCases): [FavoritesState, FavoritesActions] {
+export function useFavoritesViewModel(userId: string | null, useCases: IFavoriteUseCases): [FavoritesState, FavoritesActions] {
   const [state, setState] = useState<FavoritesState>({
     books: [],
     loading: Boolean(userId),

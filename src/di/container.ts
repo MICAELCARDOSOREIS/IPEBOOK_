@@ -397,3 +397,23 @@ export const moderationUseCases: IModerationUseCases = new ModerationUseCases(da
 
 export const storeReviewService: IStoreReviewService =
   process.env.NODE_ENV === "test" ? new MemoryStoreReviewService() : new ExpoStoreReviewService();
+
+// Spec 126 / ADR 0098: fábricas de ViewModel. O ViewModel recebe as dependências por parâmetro e a
+// composição fica aqui; a View chama a fábrica e nenhum arquivo de src/viewmodel/ importa o container.
+import { useFavoriteButtonViewModel } from "@/viewmodel/useFavoriteButtonViewModel";
+import { useFavoritesViewModel } from "@/viewmodel/useFavoritesViewModel";
+import { useHomeViewModel } from "@/viewmodel/useHomeViewModel";
+import { useSearchAlertsViewModel } from "@/viewmodel/useSearchAlertsViewModel";
+import { useSearchViewModel } from "@/viewmodel/useSearchViewModel";
+import { useWelcomeGateViewModel } from "@/viewmodel/useWelcomeGateViewModel";
+
+/** Lote catálogo (T004): início, busca, favoritos e alertas. */
+export const makeHomeViewModel = () => useHomeViewModel(bookUseCases);
+export const makeSearchViewModel = (userId: string | null) =>
+  useSearchViewModel(userId, bookUseCases, searchHistoryUseCases);
+export const makeFavoritesViewModel = (userId: string | null) => useFavoritesViewModel(userId, favoriteUseCases);
+export const makeFavoriteButtonViewModel = (bookId: string, userId: string | null) =>
+  useFavoriteButtonViewModel(bookId, userId, favoriteUseCases);
+export const makeSearchAlertsViewModel = (userId: string | null, initialQuery = "") =>
+  useSearchAlertsViewModel(userId, initialQuery, searchAlertUseCases);
+export const makeWelcomeGateViewModel = () => useWelcomeGateViewModel(onboardingUseCases);

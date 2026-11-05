@@ -15,7 +15,7 @@ import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
-import { useSearchAlertsViewModel } from "@/viewmodel/useSearchAlertsViewModel";
+import { makeSearchAlertsViewModel } from "@/di/container";
 import { WEB_GUTTER, WEB_MAX_WIDTH, useWebColumns } from "@/view/webLayout";
 import { withPress } from "@/view/pressFeedback";
 import { useGuardedPress } from "@/view/useGuardedPress";
@@ -40,7 +40,7 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
   const guardedLogin = useGuardedPress(onLogin);
   const guardedSearchBooks = useGuardedPress(onSearchBooks);
   const guardedManageAlert = useGuardedPress(onManageAlert);
-  const [state, actions] = useSearchAlertsViewModel(userId, initialQuery);
+  const [state, actions] = makeSearchAlertsViewModel(userId, initialQuery);
   const { isOnline } = useNetworkStatus();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);

@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { bookUseCases } from "@/di/container";
 import type { Book } from "@/model/entities/book";
 import { DomainError } from "@/model/errors";
 import type { IBookUseCases } from "@/usecase/iBookUseCases";
@@ -14,9 +13,7 @@ export type HomeActions = {
   reload: () => Promise<void>;
 };
 
-export function useHomeViewModel(
-  books: IBookUseCases = bookUseCases,
-): [HomeState, HomeActions] {
+export function useHomeViewModel(books: IBookUseCases): [HomeState, HomeActions] {
   const [state, setState] = useState<HomeState>({
     books: [],
     loading: true,

@@ -4,7 +4,7 @@ import { useTheme } from "@/view/theme/ThemeProvider";
 import { AppIcon } from "@/view/components/AppIcon";
 import { useExpressivePress } from "@/view/useExpressivePress";
 import { useGuardedPress } from "@/view/useGuardedPress";
-import { useFavoriteButtonViewModel } from "@/viewmodel/useFavoriteButtonViewModel";
+import { makeFavoriteButtonViewModel } from "@/di/container";
 
 export type FavoriteButtonProps = {
   bookId: string;
@@ -12,7 +12,7 @@ export type FavoriteButtonProps = {
   onToggleSuccess?: (selected: boolean) => void;
 };
 export function FavoriteButton({ bookId, userId, onToggleSuccess }: FavoriteButtonProps) {
-  const [state, actions] = useFavoriteButtonViewModel(bookId, userId);
+  const [state, actions] = makeFavoriteButtonViewModel(bookId, userId);
   const { colors } = useTheme();
   const { scale, isPressed, onPressIn, onPressOut } = useExpressivePress({
     disabled: state.loading,

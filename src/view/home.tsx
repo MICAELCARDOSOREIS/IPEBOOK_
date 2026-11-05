@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Animated, AppState, FlatList, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
-import { useHomeViewModel } from "@/viewmodel/useHomeViewModel";
+import { makeHomeViewModel } from "@/di/container";
 import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
 import { useNotificationsViewModel } from "@/viewmodel/useNotificationsViewModel";
 import { useActiveNeighborhood } from "@/viewmodel/useActiveNeighborhood";
@@ -268,7 +268,7 @@ export default function Home({
   const effectiveNeighborhood = currentNeighborhood ?? neighborhoodHook.activeNeighborhood;
   const handleSelectNeighborhood = onSelectNeighborhood ?? neighborhoodHook.openSelector;
 
-  const [state, actions] = useHomeViewModel();
+  const [state, actions] = makeHomeViewModel();
   const [authState] = useAuthViewModel();
   // Só o contador de não lidas: convite e resposta de encontro chegam por aqui, em tempo real (Spec 086).
   const [notificationsState, notificationsActions] = useNotificationsViewModel(authState.user?.id ?? null);

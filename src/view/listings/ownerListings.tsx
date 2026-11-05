@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { useHomeViewModel } from "@/viewmodel/useHomeViewModel";
+import { makeHomeViewModel } from "@/di/container";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { formatPrice } from "@/view/formatPrice";
@@ -19,7 +19,7 @@ export type OwnerListingsProps = {
 export function OwnerListings({ ownerId, ownerName, onOpenBook }: OwnerListingsProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const [state, actions] = useHomeViewModel();
+  const [state, actions] = makeHomeViewModel();
 
   if (state.loading) return null;
   if (state.error) {

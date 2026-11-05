@@ -27,9 +27,6 @@ const VIEWMODEL_DI_EXCEPTIONS = new Set([
   "viewmodel/useDeliveryViewModel.ts",
   "viewmodel/useDraftsViewModel.ts",
   "viewmodel/useEditListingViewModel.ts",
-  "viewmodel/useFavoriteButtonViewModel.ts",
-  "viewmodel/useFavoritesViewModel.ts",
-  "viewmodel/useHomeViewModel.ts",
   "viewmodel/useInviteFriendsViewModel.ts",
   "viewmodel/useListingPhotoViewModel.ts",
   "viewmodel/useManageListingViewModel.ts",
@@ -56,15 +53,12 @@ const VIEWMODEL_DI_EXCEPTIONS = new Set([
   "viewmodel/useRequestNegotiationViewModel.ts",
   "viewmodel/useResetPasswordViewModel.ts",
   "viewmodel/useScheduleMeetingViewModel.ts",
-  "viewmodel/useSearchAlertsViewModel.ts",
-  "viewmodel/useSearchViewModel.ts",
   "viewmodel/useSentRequestsViewModel.ts",
   "viewmodel/useSettingsViewModel.ts",
   "viewmodel/useShareListingViewModel.ts",
   "viewmodel/useThemeViewModel.ts",
   "viewmodel/useUserMeetingsViewModel.ts",
   "viewmodel/useUserPreferencesViewModel.ts",
-  "viewmodel/useWelcomeGateViewModel.ts",
 ]);
 const seenViewModelDiImports = new Set();
 

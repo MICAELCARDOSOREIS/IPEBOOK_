@@ -1,5 +1,5 @@
 import { useEffect, type ReactNode } from "react";
-import { useWelcomeGateViewModel } from "@/viewmodel/useWelcomeGateViewModel";
+import { makeWelcomeGateViewModel } from "@/di/container";
 
 export type InitialRouteGateProps = {
   pathname: string;
@@ -13,7 +13,7 @@ export type InitialRouteGateProps = {
  * decisão está pendente, a rota inicial não aparece para evitar piscar o catálogo.
  */
 export function InitialRouteGate({ pathname, onShowWelcome, children }: InitialRouteGateProps) {
-  const [status] = useWelcomeGateViewModel();
+  const [status] = makeWelcomeGateViewModel();
 
   useEffect(() => {
     if (status === "show" && pathname === "/") onShowWelcome();

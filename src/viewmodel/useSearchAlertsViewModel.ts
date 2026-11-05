@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from "react";
-import { searchAlertUseCases } from "@/di/container";
 import type { BookModality } from "@/model/entities/book";
 import type { SearchAlert } from "@/model/entities/searchAlert";
 import { DomainError } from "@/model/errors";
@@ -22,7 +21,7 @@ export type SearchAlertsActions = {
   remove: (id: string) => Promise<boolean>;
 };
 
-export function useSearchAlertsViewModel(userId: string | null, initialQuery = "", useCases: ISearchAlertUseCases = searchAlertUseCases): [SearchAlertsState, SearchAlertsActions] {
+export function useSearchAlertsViewModel(userId: string | null, initialQuery: string, useCases: ISearchAlertUseCases): [SearchAlertsState, SearchAlertsActions] {
   const [state, setState] = useState<SearchAlertsState>({ alerts: [], query: initialQuery, loading: Boolean(userId), error: null, loadError: null, message: null });
   const reload = useCallback(async () => {
     if (!userId) { setState((prev) => ({ ...prev, loading: false, loadError: null })); return; }

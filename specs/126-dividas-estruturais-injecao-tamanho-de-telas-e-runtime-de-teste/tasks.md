@@ -16,7 +16,7 @@ Cada lote: o ViewModel passa a receber dependências por parâmetro obrigatório
 entra em `src/di/container.ts`, a View chama a fábrica, o arquivo sai da lista de T001 e a suíte
 completa roda no fim do lote.
 
-- [ ] **T004** Lote catálogo: ViewModels de início, busca, favoritos e alertas.
+- [x] **T004** Lote catálogo: ViewModels de início, busca, favoritos e alertas. Concluído em 2026-11-05 com `useHomeViewModel`, `useSearchViewModel`, `useFavoritesViewModel`, `useFavoriteButtonViewModel`, `useSearchAlertsViewModel` e `useWelcomeGateViewModel` sem importar `@/di/container`, as seis fábricas `make…` em `src/di/container.ts` e as dez Views do fluxo chamando-as. Verificação: `npm run check:architecture` com a lista de exceções reduzida de 50 para 44, sonda de mutação reprovando a reinserção do import, suíte completa com 2.079 testes em 292 arquivos.
 - [ ] **T005** Lote anúncios: criar, editar, gerenciar, estante e perfil público.
 - [ ] **T006** Lote pedidos, encontro e entrega.
 - [ ] **T007** Lote conversas e notificações — inclui os quatro sem parâmetro hoje (`useNegotiationChatViewModel.ts`, `useConversationsViewModel.ts`, `useChatWithUser.ts`, `useNegotiationRatingViewModel.ts`, `useNavigationBadgesViewModel.ts`).
