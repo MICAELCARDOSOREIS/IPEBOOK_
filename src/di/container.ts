@@ -378,6 +378,24 @@ export const pushNotificationService: IPushNotificationService =
     ? new ExpoPushNotificationService(logger)
     : new MemoryPushNotificationService();
 
+import type { IPermissionService } from "@/model/services/iPermissionService";
+import type { IPermissionPromptUseCases } from "@/usecase/iPermissionPromptUseCases";
+import { PermissionPromptUseCases } from "@/usecase/permissionPromptUseCases";
+import { AsyncStoragePermissionAskDataSource } from "@/infra/datasources/asyncStoragePermissionAskDataSource";
+import { MemoryPermissionAskDataSource } from "@/infra/datasources/memoryPermissionAskDataSource";
+
+/** Permissão de notificação do aparelho vista pelo prompt da Spec 020 (o serviço do push já sabe consultar e pedir). */
+const notificationsPermissionService: IPermissionService = {
+  isGranted: () => pushNotificationService.getPermissions(),
+  request: () => pushNotificationService.requestPermissions(),
+};
+export const notificationsPermissionPromptUseCases: IPermissionPromptUseCases = new PermissionPromptUseCases(
+  notificationsPermissionService,
+  process.env.NODE_ENV === "test"
+    ? new MemoryPermissionAskDataSource()
+    : new AsyncStoragePermissionAskDataSource("notifications"),
+);
+
 import type { IImagePickerService } from "@/model/services/iImagePickerService";
 import { ExpoImagePickerService } from "@/infra/services/expoImagePickerService";
 import { MemoryImagePickerService } from "@/infra/services/memoryImagePickerService";
@@ -485,6 +503,7 @@ import { useNegotiationRatingViewModel } from "@/viewmodel/useNegotiationRatingV
 import { useNotificationPreferencesViewModel } from "@/viewmodel/useNotificationPreferencesViewModel";
 import { useNotificationsViewModel } from "@/viewmodel/useNotificationsViewModel";
 import { usePushRegistration } from "@/viewmodel/usePushRegistration";
+import { usePermissionPromptViewModel } from "@/viewmodel/usePermissionPromptViewModel";
 import { useReceivedRatingsViewModel } from "@/viewmodel/useReceivedRatingsViewModel";
 
 const defaultConversationsDeps: ConversationsDeps = {
@@ -542,7 +561,12 @@ export const makeNotificationPreferencesViewModel = (sessionUserId: string | nul
 export const makePushRegistration = (
   sessionUserId: string | null,
   onOpenRoute: (route: string) => void,
-) => usePushRegistration(sessionUserId, onOpenRoute, pushNotificationService, userPreferencesUseCases);
+  permissionReady: boolean,
+) =>
+  usePushRegistration(sessionUserId, onOpenRoute, pushNotificationService, userPreferencesUseCases, permissionReady);
+/** Prompt de permissão de notificação (Spec 020): explica o motivo antes do aviso nativo, uma vez por aparelho. */
+export const makeNotificationsPromptViewModel = () =>
+  usePermissionPromptViewModel(notificationsPermissionPromptUseCases);
 export const makeReceivedRatingsViewModel = (sessionUserId: string | null) =>
   useReceivedRatingsViewModel(sessionUserId, ratingUseCases);
 

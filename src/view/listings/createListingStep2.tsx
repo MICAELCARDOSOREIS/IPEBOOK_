@@ -6,6 +6,7 @@ import { useTheme } from "@/view/theme/ThemeProvider";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { AddPhotoCard } from "@/view/components/AddPhotoCard";
 import { PhotoSourceSheet } from "@/view/components/PhotoSourceSheet";
+import { PermissionPromptDialog } from "@/view/components/PermissionPromptDialog";
 import { TextButton } from "@/view/components/TextButton";
 import { TextField } from "@/view/components/TextField";
 import { AppIcon } from "@/view/components/AppIcon";
@@ -37,6 +38,7 @@ export function CreateListingStep2({
   photoError,
 }: CreateListingStep2Props) {
   const [sheetSlot, setSheetSlot] = useState<"cover" | "extra" | null>(null);
+  const [pendingPhoto, setPendingPhoto] = useState<{ slot: "cover" | "extra"; source: ImageSource } | null>(null);
   const [showLinkField, setShowLinkField] = useState(false);
   const { colors } = useTheme();
   const wideWeb = useIsWideWeb();
@@ -83,7 +85,12 @@ export function CreateListingStep2({
         </View>
       ) : null}
       {photoError ? (
-        <Text accessibilityRole="alert" style={styles.errorText}>{photoError}</Text>
+        <View>
+          <Text accessibilityRole="alert" style={styles.errorText}>{photoError}</Text>
+          <Text style={styles.tipText}>
+            Dá para publicar sem foto: enquanto não houver imagem, usamos uma capa ilustrativa do livro.
+          </Text>
+        </View>
       ) : null}
 
       {showLinkField ? (
@@ -106,9 +113,22 @@ export function CreateListingStep2({
         onChoose={(source) => {
           const slot = sheetSlot;
           setSheetSlot(null);
-          if (slot) onChoosePhoto?.(slot, source);
+          // O motivo do acesso à câmera/galeria vem antes do prompt nativo (Spec 020, CA2).
+          if (slot) setPendingPhoto({ slot, source });
         }}
         onClose={() => setSheetSlot(null)}
+      />
+
+      <PermissionPromptDialog
+        permission="photos"
+        status={pendingPhoto ? "explain" : "idle"}
+        onAllow={() => {
+          const pending = pendingPhoto;
+          setPendingPhoto(null);
+          if (pending) onChoosePhoto?.(pending.slot, pending.source);
+        }}
+        onLater={() => setPendingPhoto(null)}
+        onDismiss={() => setPendingPhoto(null)}
       />
 
       <View style={wideWeb ? styles.webTipBox : styles.tipBox}>
