@@ -96,5 +96,6 @@
 - [0094 — Refinamentos visuais e interativos das telas](0094-refinamentos-visuais-e-interativos-das-telas.md)
 - [0095 — Estratégia de ordenação avançada no catálogo comunitário de Piripiri](0095-ordenacao-avancada-catalogo.md)
 - [0096 — Aprimoramento das telas da barra de navegação e IHC](0096-aprimoramento-telas-barra-navegacao.md)
+- [0097 — Linha de base de acessibilidade e estados das telas](0097-linha-de-base-acessibilidade-e-estados-das-telas.md)
 
 Preservar registros aceitos; mudanças relevantes geram novo ADR com vínculos de substituição.
