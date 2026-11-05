@@ -1,3 +1,10 @@
+import {
+  makeAuthViewModel,
+  makeDeliveryStatus,
+  makeMeetingViewModel,
+  makeNegotiationChatViewModel,
+  makeRequestDetailViewModel,
+} from "@/di/container";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -11,11 +18,6 @@ import {
 } from "react-native";
 import * as Linking from "expo-linking";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
-import { useNegotiationChatViewModel } from "@/viewmodel/useNegotiationChatViewModel";
-import { useRequestDetailViewModel } from "@/viewmodel/useRequestDetailViewModel";
-import { useDeliveryStatus } from "@/viewmodel/useDeliveryViewModel";
-import { useMeetingViewModel } from "@/viewmodel/useMeetingViewModel";
 import { buildChatTimeline, formatBubbleTime, type ChatEvent, type ChatTimelineItem } from "@/viewmodel/chatTimeline";
 import { PIRIPIRI_MEETING_POINTS } from "@/model/entities/meetingPoint";
 import { addMeetingToCalendar } from "@/view/calendarIntegration";
@@ -67,9 +69,9 @@ export function Chat({
   const { colors } = useTheme();
   const wideWeb = useIsWideWeb();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const [detailState, detailActions] = useRequestDetailViewModel(requestId, sessionUserId);
-  const [state, actions] = useNegotiationChatViewModel(requestId, sessionUserId);
-  const [meetingState, meetingActions] = useMeetingViewModel(requestId, sessionUserId);
+  const [detailState, detailActions] = makeRequestDetailViewModel(requestId, sessionUserId);
+  const [state, actions] = makeNegotiationChatViewModel(requestId, sessionUserId);
+  const [meetingState, meetingActions] = makeMeetingViewModel(requestId, sessionUserId);
   const [respondingProposal, setRespondingProposal] = useState(false);
   const [proposalError, setProposalError] = useState<string | null>(null);
 
@@ -104,7 +106,7 @@ export function Chat({
     }
   };
   // Entrega concluída por QR (Spec 095): não há mais o que combinar.
-  const delivery = useDeliveryStatus(requestId, sessionUserId);
+  const delivery = makeDeliveryStatus(requestId, sessionUserId);
   const listRef = useRef<FlatList<ChatTimelineItem>>(null);
 
   const detail = detailState.detail;
@@ -505,7 +507,7 @@ export function Chat({
 export type ChatScreenProps = Omit<ChatProps, "sessionUserId"> & { onRequireSignIn?: () => void };
 
 export default function ChatScreen({ onRequireSignIn, ...props }: ChatScreenProps) {
-  const [authState] = useAuthViewModel();
+  const [authState] = makeAuthViewModel();
   useEffect(() => {
     if (!authState.loading && !authState.user) onRequireSignIn?.();
   }, [authState.loading, authState.user, onRequireSignIn]);

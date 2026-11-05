@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { StyleSheet, Text, View } from "react-native";
-import { useReceivedRatingsViewModel } from "@/viewmodel/useReceivedRatingsViewModel";
+import { makeReceivedRatingsViewModel } from "@/di/container";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { Avatar } from "@/view/components/Avatar";
@@ -12,7 +12,7 @@ export function UserRatingsPanel({ userId }: { userId: string }) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   // O caso de uso lista as avaliações recebidas pelo id informado; aqui o id é o da pessoa do perfil.
-  const [state] = useReceivedRatingsViewModel(userId);
+  const [state] = makeReceivedRatingsViewModel(userId);
 
   if (state.loading || state.error || state.ratings.length === 0) return null;
 

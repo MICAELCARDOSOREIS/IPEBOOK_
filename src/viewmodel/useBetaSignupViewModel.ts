@@ -1,5 +1,4 @@
 import { useCallback, useState } from "react";
-import { betaSignupUseCases } from "@/di/container";
 import { DomainError } from "@/model/errors";
 import type { IBetaSignupUseCases } from "@/usecase/iBetaSignupUseCases";
 
@@ -15,7 +14,7 @@ export type BetaSignupActions = {
 };
 
 export function useBetaSignupViewModel(
-  useCases: IBetaSignupUseCases = betaSignupUseCases,
+  useCases: IBetaSignupUseCases,
 ): [BetaSignupState, BetaSignupActions] {
   const [state, setState] = useState<BetaSignupState>({ loading: false, error: null, success: false });
 

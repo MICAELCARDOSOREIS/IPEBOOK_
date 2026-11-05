@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
+import { makeAuthViewModel } from "@/di/container";
 import { tokens } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 
@@ -12,7 +12,7 @@ export type AuthCallbackProps = {
 };
 
 export default function AuthCallback({ url, onSuccess, onBackToSignIn }: AuthCallbackProps) {
-  const [state, actions] = useAuthViewModel();
+  const [state, actions] = makeAuthViewModel();
   const { colors } = useTheme();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 

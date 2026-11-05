@@ -1,12 +1,9 @@
+import { makeAuthViewModel, makeMyListingsViewModel, makeProfileViewModel, makeUserPreferencesViewModel } from "@/di/container";
 import * as Linking from "expo-linking";
 import { useMemo, useState, useEffect } from "react";
 import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
-import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
-import { useProfileViewModel } from "@/viewmodel/useProfileViewModel";
-import { useMyListingsViewModel } from "@/viewmodel/useMyListingsViewModel";
-import { useUserPreferencesViewModel } from "@/viewmodel/useUserPreferencesViewModel";
 import { normalizeInstagramHandle } from "@/model/validators/instagramValidator";
 import { Avatar } from "@/view/components/Avatar";
 import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
@@ -65,11 +62,11 @@ export default function ProfileHub({
 }: ProfileHubProps) {
   const { colors, resolvedScheme } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const [authState, authActions] = useAuthViewModel();
+  const [authState, authActions] = makeAuthViewModel();
   const userId = authState.user?.id ?? null;
-  const [state] = useProfileViewModel(userId);
-  const [myListingsState] = useMyListingsViewModel(userId);
-  const [preferencesState] = useUserPreferencesViewModel(userId);
+  const [state] = makeProfileViewModel(userId);
+  const [myListingsState] = makeMyListingsViewModel(userId);
+  const [preferencesState] = makeUserPreferencesViewModel(userId);
   const [confirmingSignOut, setConfirmingSignOut] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const wideWeb = useIsWideWeb();

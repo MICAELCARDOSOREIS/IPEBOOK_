@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { publicProfileUseCases } from "@/di/container";
 import type { ProfileEdits, PublicProfile } from "@/model/entities/publicProfile";
 import { DomainError } from "@/model/errors";
 import type { IPublicProfileUseCases } from "@/usecase/iPublicProfileUseCases";
@@ -22,7 +21,7 @@ const GENERIC_SAVE_ERROR = "Não foi possível salvar o perfil. Tente novamente.
 
 export function useProfileViewModel(
   userId: string | null,
-  useCases: IPublicProfileUseCases = publicProfileUseCases,
+  useCases: IPublicProfileUseCases,
 ): [ProfileState, ProfileActions] {
   const [state, setState] = useState<ProfileState>({
     profile: null,

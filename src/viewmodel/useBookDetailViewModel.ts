@@ -1,6 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { bookUseCases } from "@/di/container";
-import { favoriteUseCases } from "@/di/container";
 import type { Book } from "@/model/entities/book";
 import { DomainError } from "@/model/errors";
 import type { IBookUseCases } from "@/usecase/iBookUseCases";
@@ -24,8 +22,8 @@ const GENERIC_ERROR = "Não foi possível carregar o anúncio. Tente novamente."
 
 export function useBookDetailViewModel(
   bookId: string,
-  useCases: IBookUseCases = bookUseCases,
-  favorites: IFavoriteUseCases = favoriteUseCases,
+  useCases: IBookUseCases,
+  favorites: IFavoriteUseCases,
   userId: string | null = null,
 ): [BookDetailState, BookDetailActions] {
   const [state, setState] = useState<BookDetailState>({ book: null, loading: true, error: null, isFavorite: false, favoriteError: null, favoriteLoading: false });

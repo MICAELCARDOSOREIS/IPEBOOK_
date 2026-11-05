@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { blockedUserUseCases } from "@/di/container";
 import type { BlockedUser } from "@/model/entities/blockedUser";
 import { DomainError } from "@/model/errors";
 import type { IBlockedUserUseCases } from "@/usecase/iBlockedUserUseCases";
@@ -22,7 +21,7 @@ const GENERIC_ERROR = "Não foi possível carregar as pessoas bloqueadas. Tente 
 
 export function useBlockedUsersViewModel(
   sessionUserId: string | null,
-  useCases: IBlockedUserUseCases = blockedUserUseCases,
+  useCases: IBlockedUserUseCases,
 ): [BlockedUsersState, BlockedUsersActions] {
   const [state, setState] = useState<BlockedUsersState>({
     blockedUsers: [],

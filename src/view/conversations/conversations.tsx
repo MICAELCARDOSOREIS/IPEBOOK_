@@ -2,15 +2,17 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { FlatList, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
+import {
+  makeAuthViewModel,
+  makeConversationsViewModel,
+  makeDeliveryStatus,
+  makeNetworkStatus,
+} from "@/di/container";
 import { Chat } from "@/view/conversations/chat";
-import { useDeliveryStatus } from "@/viewmodel/useDeliveryViewModel";
-import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import {
   formatConversationTime,
-  useConversationsViewModel,
   type ConversationItem,
 } from "@/viewmodel/useConversationsViewModel";
-import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { AppIcon } from "@/view/components/AppIcon";
@@ -29,7 +31,7 @@ import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollP
 import { withPress } from "@/view/pressFeedback";
 /** "Combinar encontro" do painel largo; some quando a entrega já foi concluída por QR (Spec 095). */
 function CombineAction({ requestId, sessionUserId, onOpen }: { requestId: string; sessionUserId: string; onOpen?: (requestId: string) => void }) {
-  const delivery = useDeliveryStatus(requestId, sessionUserId);
+  const delivery = makeDeliveryStatus(requestId, sessionUserId);
   if (delivery.completed) return null;
   return <FilledButton label="Combinar encontro" onPress={() => onOpen?.(requestId)} />;
 }
@@ -66,8 +68,8 @@ export function Conversations({
   const { colors } = useTheme();
   const wideWeb = useIsWideWeb();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const [state, actions] = useConversationsViewModel(sessionUserId);
-  const { isOnline } = useNetworkStatus();
+  const [state, actions] = makeConversationsViewModel(sessionUserId);
+  const { isOnline } = makeNetworkStatus();
 
   // A primeira carga já vem do ViewModel; recarrega só quando a tela volta ao foco depois.
   const { reload } = actions;
@@ -428,7 +430,7 @@ export type ConversationsScreenProps = Omit<ConversationsProps, "sessionUserId">
 };
 
 export default function ConversationsScreen({ onRequireSignIn, ...props }: ConversationsScreenProps = {}) {
-  const [authState] = useAuthViewModel();
+  const [authState] = makeAuthViewModel();
 
   useEffect(() => {
     if (!authState.loading && !authState.user) onRequireSignIn?.();

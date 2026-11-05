@@ -3,7 +3,7 @@ import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { AuthShell } from "@/view/auth/AuthShell";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
-import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
+import { makeAuthViewModel } from "@/di/container";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { Checkbox } from "@/view/components/Checkbox";
@@ -39,7 +39,7 @@ export default function SignUp({
   const guardedAuthenticated = useGuardedPress(onAuthenticated);
   const guardedSignIn = useGuardedPress(onNavigateToSignIn);
   const guardedTerms = useGuardedPress(onNavigateToTerms);
-  const [state, actions] = useAuthViewModel();
+  const [state, actions] = makeAuthViewModel();
   const { colors } = useTheme();
   const wideWeb = useIsWideWeb();
   const styles = useMemo(() => createStyles(colors), [colors]);

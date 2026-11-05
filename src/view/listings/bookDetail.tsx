@@ -1,13 +1,9 @@
+import { makeAuthViewModel, makeBookDetailViewModel, makeMyListingsViewModel, makePublicProfileViewModel, makeRequestNegotiationViewModel, makeShareListingViewModel } from "@/di/container";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
-import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
-import { useBookDetailViewModel } from "@/viewmodel/useBookDetailViewModel";
-import { useMyListingsViewModel } from "@/viewmodel/useMyListingsViewModel";
-import { usePublicProfileViewModel } from "@/viewmodel/usePublicProfileViewModel";
-import { useRequestNegotiationViewModel } from "@/viewmodel/useRequestNegotiationViewModel";
-import { SHARE_BASE_URL, useShareListingViewModel } from "@/viewmodel/useShareListingViewModel";
+import { SHARE_BASE_URL } from "@/viewmodel/useShareListingViewModel";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { captureRef } from "react-native-view-shot";
@@ -54,7 +50,7 @@ function SellerCard({
 }) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const [profileState] = usePublicProfileViewModel(ownerId);
+  const [profileState] = makePublicProfileViewModel(ownerId);
   const profile = profileState.profile;
   const name = profile?.name?.trim();
   const label = name ? `Anunciado por ${name}` : OWNER_FALLBACK_LABEL;
@@ -117,17 +113,17 @@ export default function BookDetail({
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const modalityTag = useMemo(() => createModalityTag(colors), [colors]);
-  const [authState] = useAuthViewModel();
+  const [authState] = makeAuthViewModel();
   const sessionUserId = authState.user?.id ?? null;
-  const [state, actions] = useBookDetailViewModel(bookId, undefined, undefined, sessionUserId);
-  const [negotiation, negotiationActions] = useRequestNegotiationViewModel();
-  const [share, shareActions] = useShareListingViewModel();
+  const [state, actions] = makeBookDetailViewModel(bookId, sessionUserId);
+  const [negotiation, negotiationActions] = makeRequestNegotiationViewModel();
+  const [share, shareActions] = makeShareListingViewModel();
   const book = state.book;
-  const [ownerProfileState] = usePublicProfileViewModel(book?.ownerId ?? "");
+  const [ownerProfileState] = makePublicProfileViewModel(book?.ownerId ?? "");
   const [galleryVisible, setGalleryVisible] = useState(false);
   const [reservedSheetVisible, setReservedSheetVisible] = useState(false);
   const [proposalSheetVisible, setProposalSheetVisible] = useState(false);
-  const [myListingsState] = useMyListingsViewModel(
+  const [myListingsState] = makeMyListingsViewModel(
     proposalSheetVisible && book?.modality === "trade" ? sessionUserId : null,
   );
   const [proposalSubmitting, setProposalSubmitting] = useState(false);

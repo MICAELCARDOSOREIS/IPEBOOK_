@@ -1,10 +1,4 @@
 import { useCallback, useState } from "react";
-import {
-  authUseCases,
-  fileDownloadService,
-  searchHistoryUseCases,
-  userDataExportUseCases,
-} from "@/di/container";
 import { DomainError } from "@/model/errors";
 import type { IFileDownloadService } from "@/model/services/iFileDownloadService";
 import type { IAuthUseCases } from "@/usecase/iAuthUseCases";
@@ -51,10 +45,10 @@ const GENERIC_ERROR = "Não foi possível excluir sua conta. Tente novamente.";
 const EXPORT_ERROR = "Não foi possível exportar seus dados no momento. Tente novamente.";
 
 export function useDeleteAccountViewModel(
-  auth: IAuthUseCases = authUseCases,
-  history: ISearchHistoryUseCases = searchHistoryUseCases,
-  exportUseCases: IUserDataExportUseCases = userDataExportUseCases,
-  download: IFileDownloadService = fileDownloadService,
+  auth: IAuthUseCases,
+  history: ISearchHistoryUseCases,
+  exportUseCases: IUserDataExportUseCases,
+  download: IFileDownloadService,
 ): [DeleteAccountState, DeleteAccountActions] {
   const [state, setState] = useState<DeleteAccountState>(INITIAL_STATE);
 

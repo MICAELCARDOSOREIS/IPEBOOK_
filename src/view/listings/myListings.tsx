@@ -3,11 +3,13 @@ import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-n
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import type { BookModality } from "@/model/entities/book";
-import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
-import { useMyListingsViewModel } from "@/viewmodel/useMyListingsViewModel";
-import { useReceivedRequestsViewModel } from "@/viewmodel/useReceivedRequestsViewModel";
-import { useShareListingViewModel } from "@/viewmodel/useShareListingViewModel";
-import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
+import {
+  makeAuthViewModel,
+  makeMyListingsViewModel,
+  makeNetworkStatus,
+  makeReceivedRequestsViewModel,
+  makeShareListingViewModel,
+} from "@/di/container";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
@@ -62,10 +64,10 @@ export function MyListings({
 }: MyListingsProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const [state, actions] = useMyListingsViewModel(sessionUserId);
-  const [received] = useReceivedRequestsViewModel(sessionUserId);
-  const [, shareActions] = useShareListingViewModel();
-  const { isOnline } = useNetworkStatus();
+  const [state, actions] = makeMyListingsViewModel(sessionUserId);
+  const [received] = makeReceivedRequestsViewModel(sessionUserId);
+  const [, shareActions] = makeShareListingViewModel();
+  const { isOnline } = makeNetworkStatus();
   const [activeTab, setActiveTab] = useState<ShelfTab>("listings");
   const [statusFilter, setStatusFilter] = useState<ListingsFilter>("all");
 
@@ -469,7 +471,7 @@ export default function MyListingsScreen({
   onNavigateToReceivedRequests,
   onNavigateToNegotiationDetail,
 }: MyListingsScreenProps = {}) {
-  const [authState] = useAuthViewModel();
+  const [authState] = makeAuthViewModel();
 
   useEffect(() => {
     if (!authState.loading && !authState.user) {

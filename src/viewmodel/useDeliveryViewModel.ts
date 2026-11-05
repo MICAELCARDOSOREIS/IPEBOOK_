@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { deliveryUseCases } from "@/di/container";
 import type { Delivery, DeliveryCode } from "@/model/entities/delivery";
 import { DomainError } from "@/model/errors";
 import type { DeliveryRole, IDeliveryUseCases } from "@/usecase/iDeliveryUseCases";
@@ -39,7 +38,7 @@ function messageOf(error: unknown, fallback: string): string {
 export function useDeliveryViewModel(
   requestId: string,
   sessionUserId: string | null,
-  useCases: IDeliveryUseCases = deliveryUseCases,
+  useCases: IDeliveryUseCases,
   pollMs: number = POLL_MS,
 ): [DeliveryState, DeliveryActions] {
   const [state, setState] = useState<DeliveryState>({
@@ -125,7 +124,7 @@ export function useDeliveryStatus(
   requestId: string,
   sessionUserId: string | null,
   refreshKey: number = 0,
-  useCases: IDeliveryUseCases = deliveryUseCases,
+  useCases: IDeliveryUseCases,
 ): DeliveryStatus {
   const [status, setStatus] = useState<DeliveryStatus>({ loading: true, role: null, completed: null });
   useEffect(() => {

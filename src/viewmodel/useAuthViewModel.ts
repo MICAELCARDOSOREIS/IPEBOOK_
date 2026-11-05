@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { authUseCases, logger as defaultLogger, rateLimiter as defaultRateLimiter } from "@/di/container";
 import type { User } from "@/model/entities/user";
 import { DomainError } from "@/model/errors";
 import type { ILogger } from "@/model/services/iLogger";
@@ -26,9 +25,9 @@ export type AuthActions = {
 const GENERIC_ERROR = "Não foi possível concluir. Tente novamente.";
 
 export function useAuthViewModel(
-  auth: IAuthUseCases = authUseCases,
-  rateLimiter: IRateLimiter = defaultRateLimiter,
-  logger: ILogger = defaultLogger,
+  auth: IAuthUseCases,
+  rateLimiter: IRateLimiter,
+  logger: ILogger,
 ): [AuthState, AuthActions] {
   const [state, setState] = useState<AuthState>({
     user: null,

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { Rating } from "@/model/entities/rating";
-import { ratingUseCases, storeReviewService } from "@/di/container";
+import type { IStoreReviewService } from "@/model/services/iStoreReviewService";
+import type { IRatingUseCases } from "@/usecase/iRatingUseCases";
 
 export type NegotiationRatingState = {
   isLoading: boolean;
@@ -27,8 +28,8 @@ export function useNegotiationRatingViewModel(
   requestId: string,
   sessionUserId: string | null,
   ratedUserId: string,
-  useCases = ratingUseCases,
-  storeReview = storeReviewService,
+  useCases: IRatingUseCases,
+  storeReview: IStoreReviewService,
 ): [NegotiationRatingState, NegotiationRatingActions] {
   const [userRating, setUserRating] = useState<Rating | null>(null);
   const [selectedScore, setSelectedScore] = useState<number>(5);

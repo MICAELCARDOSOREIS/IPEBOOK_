@@ -1,16 +1,10 @@
 import { useCallback, useRef, useState } from "react";
-import { blockedUserUseCases, bookUseCases } from "@/di/container";
 import type { Book } from "@/model/entities/book";
 import { DomainError } from "@/model/errors";
 
 export type ProfileSafetyDeps = {
   blockUser: (sessionUserId: string | null, targetUserId: string) => Promise<void>;
   listBooks: () => Promise<readonly Book[]>;
-};
-
-const defaultDeps: ProfileSafetyDeps = {
-  blockUser: (sessionUserId, targetUserId) => blockedUserUseCases.blockUser(sessionUserId, targetUserId),
-  listBooks: () => bookUseCases.listBooks(),
 };
 
 export type ProfileSafetyState = {
@@ -36,7 +30,7 @@ export type ProfileSafetyActions = {
 export function useProfileSafetyViewModel(
   sessionUserId: string | null,
   targetUserId: string,
-  deps: ProfileSafetyDeps = defaultDeps,
+  deps: ProfileSafetyDeps,
 ): [ProfileSafetyState, ProfileSafetyActions] {
   const [state, setState] = useState<ProfileSafetyState>({
     listings: null,

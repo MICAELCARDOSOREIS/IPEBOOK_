@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
+import { makeAuthViewModel } from "@/di/container";
 import EditListing from "@/view/listings/editListing";
 
 export type EditListingScreenProps = {
@@ -15,7 +15,7 @@ export default function EditListingScreen({
   onCancel,
   onRequireSignIn,
 }: EditListingScreenProps) {
-  const [authState] = useAuthViewModel();
+  const [authState] = makeAuthViewModel();
 
   useEffect(() => {
     if (!authState.loading && !authState.user) {

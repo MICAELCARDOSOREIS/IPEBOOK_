@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { meetingUseCases as defaultMeetingUseCases } from "@/di/container";
 import type { Meeting } from "@/model/entities/meeting";
 import { DomainError } from "@/model/errors";
 import type { IMeetingUseCases } from "@/usecase/iMeetingUseCases";
@@ -19,7 +18,7 @@ const LOAD_ERROR = "Não foi possível carregar o histórico de encontros. Tente
 /** Histórico geral de encontros do usuário em suas trocas e vendas em Piripiri (Spec 071). */
 export function useUserMeetingsViewModel(
   sessionUserId: string | null,
-  meetingUseCases: IMeetingUseCases = defaultMeetingUseCases,
+  meetingUseCases: IMeetingUseCases,
 ): [UserMeetingsState, UserMeetingsActions] {
   const [state, setState] = useState<UserMeetingsState>({
     meetings: [],

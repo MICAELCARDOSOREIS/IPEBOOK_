@@ -1,5 +1,4 @@
 import { type MutableRefObject, useCallback, useEffect, useRef, useState } from "react";
-import { bookRequestUseCases } from "@/di/container";
 import { DomainError } from "@/model/errors";
 import type { IBookRequestUseCases, RequestWithListing } from "@/usecase/iBookRequestUseCases";
 
@@ -61,7 +60,7 @@ export function useRequestList<T = RequestWithListing>(
 
 export function useSentRequestsViewModel(
   sessionUserId: string | null,
-  useCases: IBookRequestUseCases = bookRequestUseCases,
+  useCases: IBookRequestUseCases,
 ): [RequestListState, { reload: () => Promise<void> }] {
   const load = useCallback(() => useCases.listSentRequests(sessionUserId), [useCases, sessionUserId]);
   const [state, reload] = useRequestList(load);

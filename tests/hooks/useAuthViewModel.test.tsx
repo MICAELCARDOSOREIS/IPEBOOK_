@@ -18,7 +18,17 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-async function renderHook(auth: IAuthUseCases, rateLimiter?: IRateLimiter, logger?: ILogger) {
+const defaultLimiter: IRateLimiter = {
+  checkAndRecord: vi.fn().mockReturnValue({ allowed: true, remainingAttempts: 5, retryAfterMs: 0 }),
+  getTimeUntilResetMs: vi.fn().mockReturnValue(0),
+  reset: vi.fn(),
+};
+
+async function renderHook(
+  auth: IAuthUseCases,
+  rateLimiter: IRateLimiter = defaultLimiter,
+  logger: ILogger = dummyLogger,
+) {
   let result!: ReturnType<typeof useAuthViewModel>;
   function Probe() {
     result = useAuthViewModel(auth, rateLimiter, logger);

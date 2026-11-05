@@ -44,7 +44,11 @@ function stubNotifications(overrides: Partial<INotificationUseCases> = {}): INot
   };
 }
 
-async function renderHook(sessionUserId: string | null, useCases: INotificationUseCases, push?: IPushNotificationService) {
+async function renderHook(
+  sessionUserId: string | null,
+  useCases: INotificationUseCases,
+  push: IPushNotificationService = new MemoryPushNotificationService(),
+) {
   let result!: ReturnType<typeof useNotificationsViewModel>;
   function HookProbe() {
     result = useNotificationsViewModel(sessionUserId, useCases, push);

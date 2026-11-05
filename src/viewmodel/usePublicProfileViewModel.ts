@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { publicProfileUseCases } from "@/di/container";
 import { DomainError } from "@/model/errors";
 import type { PublicProfile } from "@/model/entities/publicProfile";
 import type { IPublicProfileUseCases } from "@/usecase/iPublicProfileUseCases";
@@ -18,7 +17,7 @@ const GENERIC_ERROR = "Não foi possível carregar o perfil. Tente novamente.";
 
 export function usePublicProfileViewModel(
   userId: string,
-  useCases: IPublicProfileUseCases = publicProfileUseCases,
+  useCases: IPublicProfileUseCases,
 ): [PublicProfileState, PublicProfileActions] {
   const [state, setState] = useState<PublicProfileState>({
     profile: null,

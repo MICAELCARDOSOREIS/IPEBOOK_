@@ -25,7 +25,6 @@ describe("startErrorReporting (Spec 104)", () => {
     const { startErrorReporting } = await import("@/viewmodel/errorReporting");
     const reporter = { init: vi.fn(), captureException: vi.fn() };
     startErrorReporting(reporter);
-    startErrorReporting();
     expect(reporter.init).toHaveBeenCalledTimes(1);
   });
 });

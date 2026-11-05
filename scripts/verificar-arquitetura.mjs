@@ -14,48 +14,7 @@ const allowed = {
 };
 
 // Spec 126 / ADR 0098 (T001): lista de exceções decrescente (catraca) para viewmodel -> @/di.
-const VIEWMODEL_DI_EXCEPTIONS = new Set([
-  "viewmodel/errorReporting.ts",
-  "viewmodel/useAuthViewModel.ts",
-  "viewmodel/useBetaSignupViewModel.ts",
-  "viewmodel/useBlockedUsersViewModel.ts",
-  "viewmodel/useBookDetailViewModel.ts",
-  "viewmodel/useChatWithUser.ts",
-  "viewmodel/useConversationsViewModel.ts",
-  "viewmodel/useDeleteAccountViewModel.ts",
-  "viewmodel/useDeliveryViewModel.ts",
-  "viewmodel/useInviteFriendsViewModel.ts",
-  "viewmodel/useListingPhotoViewModel.ts",
-  "viewmodel/useMeetingViewModel.ts",
-  "viewmodel/useModerationViewModel.ts",
-  "viewmodel/useMyListingsViewModel.ts",
-  "viewmodel/useNavigationBadgesViewModel.ts",
-  "viewmodel/useNegotiationChatViewModel.ts",
-  "viewmodel/useNegotiationRatingViewModel.ts",
-  "viewmodel/useNetworkStatus.ts",
-  "viewmodel/useNotificationPreferencesViewModel.ts",
-  "viewmodel/useNotificationsViewModel.ts",
-  "viewmodel/useProfilePhotoViewModel.ts",
-  "viewmodel/useProfileSafetyViewModel.ts",
-  "viewmodel/useProfileViewModel.ts",
-  "viewmodel/usePublicProfileViewModel.ts",
-  "viewmodel/usePushRegistration.ts",
-  "viewmodel/usePwaViewModel.ts",
-  "viewmodel/useReceivedRatingsViewModel.ts",
-  "viewmodel/useReceivedRequestsViewModel.ts",
-  "viewmodel/useReportListingViewModel.ts",
-  "viewmodel/useReportUserViewModel.ts",
-  "viewmodel/useRequestDetailViewModel.ts",
-  "viewmodel/useRequestNegotiationViewModel.ts",
-  "viewmodel/useResetPasswordViewModel.ts",
-  "viewmodel/useScheduleMeetingViewModel.ts",
-  "viewmodel/useSentRequestsViewModel.ts",
-  "viewmodel/useSettingsViewModel.ts",
-  "viewmodel/useShareListingViewModel.ts",
-  "viewmodel/useThemeViewModel.ts",
-  "viewmodel/useUserMeetingsViewModel.ts",
-  "viewmodel/useUserPreferencesViewModel.ts",
-]);
+const VIEWMODEL_DI_EXCEPTIONS = new Set([]);
 const seenViewModelDiImports = new Set();
 
 // Spec 126 (T003): teto de linhas por arquivo de tela em src/view/ com catraca para as 5 telas acima de 900 linhas.

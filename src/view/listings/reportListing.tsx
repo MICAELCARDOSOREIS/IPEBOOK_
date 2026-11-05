@@ -11,7 +11,7 @@ import { useTheme } from "@/view/theme/ThemeProvider";
 import { useFormErrorAnnouncer } from "@/view/useFormErrorAnnouncer";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { scrollBottomPadding, standardVerticalScrollProps } from "@/view/scrollProps";
-import { useReportListingViewModel } from "@/viewmodel/useReportListingViewModel";
+import { makeReportListingViewModel } from "@/di/container";
 import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
 
 import { withPress } from "@/view/pressFeedback";
@@ -34,7 +34,7 @@ export default function ReportListing({
   onBack,
   onNavigateToLogin,
 }: ReportListingProps) {
-  const [state, actions] = useReportListingViewModel();
+  const [state, actions] = makeReportListingViewModel();
   const { colors } = useTheme();
   // Web larga: coluna mais larga, com o conteúdo dividido em duas colunas.
   const wide = useIsWideWeb();

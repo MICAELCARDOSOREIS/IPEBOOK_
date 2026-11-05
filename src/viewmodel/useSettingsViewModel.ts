@@ -1,5 +1,4 @@
 import { useCallback, useState } from "react";
-import { localCacheUseCases, searchHistoryUseCases } from "@/di/container";
 import type { ILocalCacheUseCases } from "@/usecase/iLocalCacheUseCases";
 import type { ISearchHistoryUseCases } from "@/usecase/iSearchHistoryUseCases";
 
@@ -23,8 +22,8 @@ const HISTORY_ERROR = "Não foi possível apagar o histórico de buscas. Tente n
 
 /** Ações locais da tela Configurações: remover a cópia offline do catálogo e o histórico de buscas. */
 export function useSettingsViewModel(
-  useCases: ILocalCacheUseCases = localCacheUseCases,
-  history: ISearchHistoryUseCases = searchHistoryUseCases,
+  useCases: ILocalCacheUseCases,
+  history: ISearchHistoryUseCases,
 ): [SettingsState, SettingsActions] {
   const [state, setState] = useState<SettingsState>({
     clearingCache: false,

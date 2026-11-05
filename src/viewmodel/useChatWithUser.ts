@@ -1,15 +1,9 @@
 import { useCallback, useRef, useState } from "react";
-import { bookRequestUseCases } from "@/di/container";
 import type { RequestWithListing } from "@/usecase/iBookRequestUseCases";
 
 export type ChatWithUserDeps = {
   listSentRequests: (sessionUserId: string | null) => Promise<readonly RequestWithListing[]>;
   listReceivedRequests: (sessionUserId: string | null) => Promise<readonly RequestWithListing[]>;
-};
-
-const defaultDeps: ChatWithUserDeps = {
-  listSentRequests: (id) => bookRequestUseCases.listSentRequests(id),
-  listReceivedRequests: (id) => bookRequestUseCases.listReceivedRequests(id),
 };
 
 export const NO_CONVERSATION_MESSAGE =
@@ -36,7 +30,7 @@ export function useChatWithUser(
   sessionUserId: string | null,
   userId: string,
   onOpenChat: (requestId: string) => void,
-  deps: ChatWithUserDeps = defaultDeps,
+  deps: ChatWithUserDeps,
 ): { busy: boolean; notice: string | null; start: () => Promise<void> } {
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);

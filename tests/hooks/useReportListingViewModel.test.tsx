@@ -2,6 +2,8 @@ import { createElement } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { DuplicateReportError, ValidationError } from "@/model/errors";
+import type { ILogger } from "@/model/services/iLogger";
+import type { IRateLimiter } from "@/model/services/iRateLimiter";
 import type { IReportUseCases } from "@/usecase/iReportUseCases";
 import { useReportListingViewModel } from "@/viewmodel/useReportListingViewModel";
 
@@ -23,10 +25,18 @@ function stubUseCases(overrides: Partial<IReportUseCases> = {}): IReportUseCases
   };
 }
 
-async function renderHook(useCases: IReportUseCases) {
+async function renderHook(
+  useCases: IReportUseCases,
+  rateLimiter: IRateLimiter = {
+    checkAndRecord: vi.fn().mockReturnValue({ allowed: true, remainingAttempts: 3, retryAfterMs: 0 }),
+    getTimeUntilResetMs: vi.fn().mockReturnValue(0),
+    reset: vi.fn(),
+  },
+  logger: ILogger = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() },
+) {
   let result!: ReturnType<typeof useReportListingViewModel>;
   function HookProbe() {
-    result = useReportListingViewModel(useCases);
+    result = useReportListingViewModel(useCases, rateLimiter, logger);
     return null;
   }
   await act(async () => {

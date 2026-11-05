@@ -9,7 +9,7 @@ import { TopAppBar } from "@/view/components/TopAppBar";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useFormErrorAnnouncer } from "@/view/useFormErrorAnnouncer";
 import { useTheme } from "@/view/theme/ThemeProvider";
-import { useDeleteAccountViewModel } from "@/viewmodel/useDeleteAccountViewModel";
+import { makeDeleteAccountViewModel } from "@/di/container";
 import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
 import { withPress } from "@/view/pressFeedback";
 import { useGuardedPress } from "@/view/useGuardedPress";
@@ -40,7 +40,7 @@ export default function DeleteAccount({
   const guardedAccountDeleted = useGuardedPress(onAccountDeleted);
   const guardedLogin = useGuardedPress(onNavigateToLogin);
   const guardedEditProfile = useGuardedPress(onEditProfile);
-  const [state, actions] = useDeleteAccountViewModel();
+  const [state, actions] = makeDeleteAccountViewModel();
   const exportErrorRef = useFormErrorAnnouncer(state.exportError);
   const errorRef = useFormErrorAnnouncer(state.error);
   const { colors } = useTheme();

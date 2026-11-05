@@ -15,8 +15,7 @@ import { TopAppBar } from "@/view/components/TopAppBar";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { formatPrice } from "@/view/formatPrice";
-import { makeFavoritesViewModel } from "@/di/container";
-import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
+import { makeFavoritesViewModel, makeNetworkStatus } from "@/di/container";
 import { WEB_GUTTER, WEB_MAX_WIDTH, useWebGridColumns } from "@/view/webLayout";
 import { withPress } from "@/view/pressFeedback";
 import { useGuardedPress } from "@/view/useGuardedPress";
@@ -54,7 +53,7 @@ export default function Favorites({
   const [state, actions] = makeFavoritesViewModel(userId);
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const { isOnline } = useNetworkStatus();
+  const { isOnline } = makeNetworkStatus();
   const firstFocus = useRef(true);
 
   useEffect(() => {

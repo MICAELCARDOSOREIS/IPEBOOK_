@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { notificationUseCases, pushNotificationService } from "@/di/container";
 import type { AppNotification } from "@/model/entities/notification";
 import type { IPushNotificationService } from "@/model/services/iPushNotificationService";
 import { DomainError } from "@/model/errors";
@@ -32,8 +31,8 @@ export type NotificationsActions = {
 
 export function useNotificationsViewModel(
   sessionUserId: string | null,
-  useCases: INotificationUseCases = notificationUseCases,
-  push: IPushNotificationService = pushNotificationService,
+  useCases: INotificationUseCases,
+  push: IPushNotificationService,
 ): [NotificationsState, NotificationsActions] {
   const [notifications, setNotifications] = useState<readonly AppNotification[]>([]);
   const [loading, setLoading] = useState(true);

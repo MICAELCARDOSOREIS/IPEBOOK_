@@ -1,5 +1,4 @@
 import { useEffect, useRef } from "react";
-import { pushNotificationService, userPreferencesUseCases } from "@/di/container";
 import type { IPushNotificationService } from "@/model/services/iPushNotificationService";
 import type { IUserPreferencesUseCases } from "@/usecase/iUserPreferencesUseCases";
 
@@ -15,8 +14,8 @@ export function internalRouteOf(url: string | null): string | null {
 export function usePushRegistration(
   sessionUserId: string | null,
   onOpenRoute: (route: string) => void,
-  push: IPushNotificationService = pushNotificationService,
-  preferences: IUserPreferencesUseCases = userPreferencesUseCases,
+  push: IPushNotificationService,
+  preferences: IUserPreferencesUseCases,
 ): void {
   const openRoute = useRef(onOpenRoute);
   openRoute.current = onOpenRoute;

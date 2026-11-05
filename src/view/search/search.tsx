@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { makeSearchViewModel } from "@/di/container";
+import { makeAuthViewModel, makeNetworkStatus, makeSearchViewModel } from "@/di/container";
 import type { SearchModalityFilter } from "@/viewmodel/useSearchViewModel";
 import { SORT_LABELS } from "@/viewmodel/searchFilters";
 import { FilterSheet } from "@/view/search/FilterSheet";
@@ -24,8 +24,6 @@ import { Tag } from "@/view/components/Tag";
 import { AppIcon } from "@/view/components/AppIcon";
 import { Snackbar } from "@/view/components/Snackbar";
 import { NeighborhoodSelectorModal } from "@/view/components/NeighborhoodSelectorModal";
-import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
-import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
 import { useActiveNeighborhood } from "@/viewmodel/useActiveNeighborhood";
 import { WEB_GUTTER, WEB_MAX_WIDTH, useWebGridColumns } from "@/view/webLayout";
 import { useGuardedPress } from "@/view/useGuardedPress";
@@ -65,11 +63,11 @@ export default function Search({
     currentNeighborhood !== undefined ? currentNeighborhood : neighborhoodHook.activeNeighborhood;
   const handleSelectNeighborhood = onSelectNeighborhood ?? neighborhoodHook.openSelector;
 
-  const [auth] = useAuthViewModel();
+  const [auth] = makeAuthViewModel();
   const { colors, resolvedScheme } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [state, actions] = makeSearchViewModel(auth.user?.id ?? null);
-  const { isOnline } = useNetworkStatus();
+  const { isOnline } = makeNetworkStatus();
   const [confirmingClear, setConfirmingClear] = useState(false);
   const [showFilterSheet, setShowFilterSheet] = useState(false);
   const wideWeb = useIsWideWeb();

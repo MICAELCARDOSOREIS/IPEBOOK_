@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from "react";
-import { moderationUseCases } from "@/di/container";
 import type { ModerationDecision, ModerationItem } from "@/model/entities/moderation";
 import type { IModerationUseCases } from "@/usecase/iModerationUseCases";
 import { messageOf, useRequestList } from "@/viewmodel/useSentRequestsViewModel";
@@ -29,7 +28,7 @@ const DONE: Record<ModerationDecision, string> = {
 /** Fila da moderação (Spec 102): carrega, decide e recarrega. */
 export function useModerationViewModel(
   sessionUserId: string | null,
-  useCases: IModerationUseCases = moderationUseCases,
+  useCases: IModerationUseCases,
 ): [ModerationState, ModerationActions] {
   const load = useCallback(() => useCases.listQueue(sessionUserId), [useCases, sessionUserId]);
   const [list, reload, active] = useRequestList<ModerationItem>(load, LOAD_ERROR);
@@ -63,7 +62,7 @@ export function useModerationViewModel(
 /** Se a conta atual é moderadora (mostra o acesso em Configurações). */
 export function useIsModerator(
   sessionUserId: string | null,
-  useCases: IModerationUseCases = moderationUseCases,
+  useCases: IModerationUseCases,
 ): boolean {
   const [moderator, setModerator] = useState(false);
   useEffect(() => {

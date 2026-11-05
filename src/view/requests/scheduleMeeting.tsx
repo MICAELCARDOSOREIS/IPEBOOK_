@@ -1,9 +1,8 @@
+import { makeAuthViewModel, makeScheduleMeetingViewModel } from "@/di/container";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Animated, PanResponder, Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions, type ScrollViewInstance } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { PIRIPIRI_MEETING_POINTS } from "@/model/entities/meetingPoint";
-import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
-import { useScheduleMeetingViewModel } from "@/viewmodel/useScheduleMeetingViewModel";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { formatMeetingDay, spokenMeetingDay } from "@/view/meetingFormat";
@@ -68,7 +67,7 @@ function OptionChip({ label, accessibilityLabel, selected, onPress, compact, sty
  */
 export function ScheduleMeeting({ requestId, sessionUserId, onBack, onSent }: ScheduleMeetingProps) {
   const guardedBack = useGuardedPress(onBack);
-  const [state, actions] = useScheduleMeetingViewModel(requestId, sessionUserId);
+  const [state, actions] = makeScheduleMeetingViewModel(requestId, sessionUserId);
   const errorRef = useFormErrorAnnouncer(state.error);
   const rescheduling = state.mode === "reschedule";
   const { colors } = useTheme();
@@ -581,7 +580,7 @@ export type ScheduleMeetingScreenProps = {
 };
 
 export default function ScheduleMeetingScreen({ requestId, onBack, onRequireSignIn, onSent }: ScheduleMeetingScreenProps) {
-  const [authState] = useAuthViewModel();
+  const [authState] = makeAuthViewModel();
 
   useEffect(() => {
     if (!authState.loading && !authState.user) onRequireSignIn?.();

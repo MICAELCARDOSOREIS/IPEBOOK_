@@ -418,12 +418,17 @@ export const makeSearchAlertsViewModel = (userId: string | null, initialQuery = 
   useSearchAlertsViewModel(userId, initialQuery, searchAlertUseCases);
 export const makeWelcomeGateViewModel = () => useWelcomeGateViewModel(onboardingUseCases);
 
+import { useBookDetailViewModel } from "@/viewmodel/useBookDetailViewModel";
 import { useCreateListingViewModel } from "@/viewmodel/useCreateListingViewModel";
 import { useDraftsViewModel } from "@/viewmodel/useDraftsViewModel";
 import { useEditListingViewModel } from "@/viewmodel/useEditListingViewModel";
+import { useListingPhotoViewModel } from "@/viewmodel/useListingPhotoViewModel";
 import { useManageListingViewModel } from "@/viewmodel/useManageListingViewModel";
+import { useMyListingsViewModel } from "@/viewmodel/useMyListingsViewModel";
+import { usePublicProfileViewModel } from "@/viewmodel/usePublicProfileViewModel";
+import { useShareListingViewModel } from "@/viewmodel/useShareListingViewModel";
 
-/** Sub-lote anúncios (T004 parcial): criar, editar, gerenciar e rascunhos. */
+/** Lote anúncios (T005): criar, editar, gerenciar, rascunhos, detalhe, foto, estante, perfil público e compartilhamento. */
 export const makeCreateListingViewModel = () =>
   useCreateListingViewModel(bookUseCases, rateLimiter, logger, bookMetadataService);
 export const makeEditListingViewModel = (bookId: string, sessionUserId: string | null) =>
@@ -431,3 +436,169 @@ export const makeEditListingViewModel = (bookId: string, sessionUserId: string |
 export const makeManageListingViewModel = (bookId: string, sessionUserId: string | null) =>
   useManageListingViewModel(bookId, sessionUserId, bookUseCases);
 export const makeDraftsViewModel = (sessionUserId: string | null) => useDraftsViewModel(sessionUserId, bookUseCases);
+export const makeBookDetailViewModel = (bookId: string, userId: string | null = null) =>
+  useBookDetailViewModel(bookId, bookUseCases, favoriteUseCases, userId);
+export const makeListingPhotoViewModel = (sessionUserId: string | null) =>
+  useListingPhotoViewModel(sessionUserId, imagePickerService, listingPhotoUseCases);
+export const makeMyListingsViewModel = (sessionUserId: string | null) =>
+  useMyListingsViewModel(sessionUserId, bookUseCases);
+export const makePublicProfileViewModel = (userId: string) =>
+  usePublicProfileViewModel(userId, publicProfileUseCases);
+export const makeShareListingViewModel = () => useShareListingViewModel(shareUseCases);
+
+import { useDeliveryStatus, useDeliveryViewModel } from "@/viewmodel/useDeliveryViewModel";
+import { useMeetingViewModel } from "@/viewmodel/useMeetingViewModel";
+import { useReceivedRequestsViewModel } from "@/viewmodel/useReceivedRequestsViewModel";
+import { useRequestDetailViewModel } from "@/viewmodel/useRequestDetailViewModel";
+import { useRequestNegotiationViewModel } from "@/viewmodel/useRequestNegotiationViewModel";
+import { useScheduleMeetingViewModel } from "@/viewmodel/useScheduleMeetingViewModel";
+import { useSentRequestsViewModel } from "@/viewmodel/useSentRequestsViewModel";
+import { useUserMeetingsViewModel } from "@/viewmodel/useUserMeetingsViewModel";
+
+/** Lote pedidos, encontro e entrega (T006). */
+export const makeRequestNegotiationViewModel = () => useRequestNegotiationViewModel(bookRequestUseCases);
+export const makeReceivedRequestsViewModel = (sessionUserId: string | null) =>
+  useReceivedRequestsViewModel(sessionUserId, bookRequestUseCases);
+export const makeSentRequestsViewModel = (sessionUserId: string | null) =>
+  useSentRequestsViewModel(sessionUserId, bookRequestUseCases);
+export const makeRequestDetailViewModel = (requestId: string, sessionUserId: string | null) =>
+  useRequestDetailViewModel(requestId, sessionUserId, bookRequestUseCases);
+export const makeMeetingViewModel = (requestId: string, sessionUserId: string | null) =>
+  useMeetingViewModel(requestId, sessionUserId, meetingUseCases, rateLimiter, logger);
+export const makeScheduleMeetingViewModel = (requestId: string, sessionUserId: string | null) =>
+  useScheduleMeetingViewModel(requestId, sessionUserId, meetingUseCases, undefined, rateLimiter, logger);
+export const makeUserMeetingsViewModel = (sessionUserId: string | null) =>
+  useUserMeetingsViewModel(sessionUserId, meetingUseCases);
+export const makeDeliveryViewModel = (requestId: string, sessionUserId: string | null) =>
+  useDeliveryViewModel(requestId, sessionUserId, deliveryUseCases);
+export const makeDeliveryStatus = (
+  requestId: string,
+  sessionUserId: string | null,
+  refreshKey = 0,
+) => useDeliveryStatus(requestId, sessionUserId, refreshKey, deliveryUseCases);
+
+import { useChatWithUser, type ChatWithUserDeps } from "@/viewmodel/useChatWithUser";
+import { useConversationsViewModel, type ConversationsDeps } from "@/viewmodel/useConversationsViewModel";
+import { useNavigationBadgesViewModel, type NavigationBadgesDeps } from "@/viewmodel/useNavigationBadgesViewModel";
+import { useNegotiationChatViewModel } from "@/viewmodel/useNegotiationChatViewModel";
+import { useNegotiationRatingViewModel } from "@/viewmodel/useNegotiationRatingViewModel";
+import { useNotificationPreferencesViewModel } from "@/viewmodel/useNotificationPreferencesViewModel";
+import { useNotificationsViewModel } from "@/viewmodel/useNotificationsViewModel";
+import { usePushRegistration } from "@/viewmodel/usePushRegistration";
+import { useReceivedRatingsViewModel } from "@/viewmodel/useReceivedRatingsViewModel";
+
+const defaultConversationsDeps: ConversationsDeps = {
+  listSentRequests: (id) => bookRequestUseCases.listSentRequests(id),
+  listReceivedRequests: (id) => bookRequestUseCases.listReceivedRequests(id),
+  getMessages: (requestId, sessionUserId) => negotiationMessageUseCases.getMessages(requestId, sessionUserId),
+  hideConversation: (requestId, userId) => negotiationMessageUseCases.hideConversation(requestId, userId),
+  listHiddenConversations: (userId) => negotiationMessageUseCases.listHiddenConversations(userId),
+  cancelRequest: (requestId, userId) => bookRequestUseCases.cancelRequest(requestId, userId),
+  getProfile: async (userId) => {
+    const profile = await publicProfileUseCases.getPublicProfile(userId);
+    return { name: profile.name ?? null, photoUrl: profile.photoUrl ?? null };
+  },
+  subscribe: (sessionUserId, onChange) => {
+    const offMessages = negotiationMessageUseCases.subscribeToAllMessages(() => onChange());
+    const offNotifications = notificationUseCases.subscribe?.(sessionUserId, onChange) ?? (() => {});
+    return () => {
+      offMessages();
+      offNotifications();
+    };
+  },
+};
+
+const defaultChatWithUserDeps: ChatWithUserDeps = {
+  listSentRequests: (id) => bookRequestUseCases.listSentRequests(id),
+  listReceivedRequests: (id) => bookRequestUseCases.listReceivedRequests(id),
+};
+
+const defaultNavigationBadgesDeps: NavigationBadgesDeps = {
+  listReceivedRequests: (id) => bookRequestUseCases.listReceivedRequests(id),
+  subscribe: (id, onChange) => notificationUseCases.subscribe?.(id, onChange) ?? (() => {}),
+};
+
+/** Lote conversas e notificações (T007). */
+export const makeNegotiationChatViewModel = (requestId: string, sessionUserId: string) =>
+  useNegotiationChatViewModel(requestId, sessionUserId, negotiationMessageUseCases);
+export const makeConversationsViewModel = (sessionUserId: string | null) =>
+  useConversationsViewModel(sessionUserId, defaultConversationsDeps);
+export const makeChatWithUser = (
+  sessionUserId: string | null,
+  userId: string,
+  onOpenChat: (requestId: string) => void,
+) => useChatWithUser(sessionUserId, userId, onOpenChat, defaultChatWithUserDeps);
+export const makeNegotiationRatingViewModel = (
+  requestId: string,
+  sessionUserId: string | null,
+  ratedUserId: string,
+) => useNegotiationRatingViewModel(requestId, sessionUserId, ratedUserId, ratingUseCases, storeReviewService);
+export const makeNavigationBadgesViewModel = (sessionUserId: string | null, refreshKey: string) =>
+  useNavigationBadgesViewModel(sessionUserId, refreshKey, defaultNavigationBadgesDeps);
+export const makeNotificationsViewModel = (sessionUserId: string | null) =>
+  useNotificationsViewModel(sessionUserId, notificationUseCases, pushNotificationService);
+export const makeNotificationPreferencesViewModel = (sessionUserId: string | null) =>
+  useNotificationPreferencesViewModel(sessionUserId, userPreferencesUseCases);
+export const makePushRegistration = (
+  sessionUserId: string | null,
+  onOpenRoute: (route: string) => void,
+) => usePushRegistration(sessionUserId, onOpenRoute, pushNotificationService, userPreferencesUseCases);
+export const makeReceivedRatingsViewModel = (sessionUserId: string | null) =>
+  useReceivedRatingsViewModel(sessionUserId, ratingUseCases);
+
+import { startErrorReporting } from "@/viewmodel/errorReporting";
+import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
+import { useBetaSignupViewModel } from "@/viewmodel/useBetaSignupViewModel";
+import { useBlockedUsersViewModel } from "@/viewmodel/useBlockedUsersViewModel";
+import { useDeleteAccountViewModel } from "@/viewmodel/useDeleteAccountViewModel";
+import { useInviteFriendsViewModel } from "@/viewmodel/useInviteFriendsViewModel";
+import { useIsModerator, useModerationViewModel } from "@/viewmodel/useModerationViewModel";
+import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
+import { useProfilePhotoViewModel } from "@/viewmodel/useProfilePhotoViewModel";
+import { useProfileSafetyViewModel, type ProfileSafetyDeps } from "@/viewmodel/useProfileSafetyViewModel";
+import { useProfileViewModel } from "@/viewmodel/useProfileViewModel";
+import { usePwaViewModel, type UsePwaViewModelOptions } from "@/viewmodel/usePwaViewModel";
+import { useReportListingViewModel } from "@/viewmodel/useReportListingViewModel";
+import { useReportUserViewModel } from "@/viewmodel/useReportUserViewModel";
+import { useResetPasswordViewModel } from "@/viewmodel/useResetPasswordViewModel";
+import { useSettingsViewModel } from "@/viewmodel/useSettingsViewModel";
+import { useThemeViewModel } from "@/viewmodel/useThemeViewModel";
+import { useUserPreferencesViewModel } from "@/viewmodel/useUserPreferencesViewModel";
+
+const defaultProfileSafetyDeps: ProfileSafetyDeps = {
+  blockUser: (sessionUserId, targetUserId) => blockedUserUseCases.blockUser(sessionUserId, targetUserId),
+  listBooks: () => bookUseCases.listBooks(),
+};
+
+/** Lote conta, preferências, moderação e relatórios (T008). */
+export const makeStartErrorReporting = (reporter: IErrorReporter = errorReporter) =>
+  startErrorReporting(reporter);
+export const makeAuthViewModel = () => useAuthViewModel(authUseCases, rateLimiter, logger);
+export const makeBetaSignupViewModel = () => useBetaSignupViewModel(betaSignupUseCases);
+export const makeBlockedUsersViewModel = (sessionUserId: string | null) =>
+  useBlockedUsersViewModel(sessionUserId, blockedUserUseCases);
+export const makeDeleteAccountViewModel = () =>
+  useDeleteAccountViewModel(authUseCases, searchHistoryUseCases, userDataExportUseCases, fileDownloadService);
+export const makeInviteFriendsViewModel = () => useInviteFriendsViewModel(shareUseCases);
+export const makeModerationViewModel = (sessionUserId: string | null) =>
+  useModerationViewModel(sessionUserId, moderationUseCases);
+export const makeIsModerator = (sessionUserId: string | null) =>
+  useIsModerator(sessionUserId, moderationUseCases);
+export const makeNetworkStatus = () => useNetworkStatus(networkStatusDataSource);
+export const makeProfilePhotoViewModel = (sessionUserId: string | null) =>
+  useProfilePhotoViewModel(sessionUserId, imagePickerService, profilePhotoUseCases);
+export const makeProfileSafetyViewModel = (sessionUserId: string | null, targetUserId: string) =>
+  useProfileSafetyViewModel(sessionUserId, targetUserId, defaultProfileSafetyDeps);
+export const makeProfileViewModel = (userId: string | null) =>
+  useProfileViewModel(userId, publicProfileUseCases);
+export const makePwaViewModel = (options: Partial<UsePwaViewModelOptions> = {}) =>
+  usePwaViewModel({ pwaService: options.pwaService ?? pwaService, autoRegister: options.autoRegister });
+export const makeReportListingViewModel = () =>
+  useReportListingViewModel(reportUseCases, rateLimiter, logger);
+export const makeReportUserViewModel = () => useReportUserViewModel(reportUseCases);
+export const makeResetPasswordViewModel = () => useResetPasswordViewModel(authUseCases);
+export const makeSettingsViewModel = () =>
+  useSettingsViewModel(localCacheUseCases, searchHistoryUseCases);
+export const makeThemeViewModel = () => useThemeViewModel(themePreferenceUseCases);
+export const makeUserPreferencesViewModel = (userId: string | null) =>
+  useUserPreferencesViewModel(userId, userPreferencesUseCases);

@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as Linking from "expo-linking";
 import { StyleSheet, Text, View } from "react-native";
+import { makeMeetingViewModel } from "@/di/container";
 import type { Meeting } from "@/model/entities/meeting";
 import { PIRIPIRI_MEETING_POINTS } from "@/model/entities/meetingPoint";
-import { useMeetingViewModel } from "@/viewmodel/useMeetingViewModel";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { describeMeetingCountdown, formatMeetingWhen } from "@/view/meetingFormat";
@@ -41,7 +41,7 @@ export function MeetingCard({
   onMeetingChange,
   concluded = false,
 }: MeetingCardProps) {
-  const [state, actions] = useMeetingViewModel(requestId, sessionUserId);
+  const [state, actions] = makeMeetingViewModel(requestId, sessionUserId);
   const [confirmingCancel, setConfirmingCancel] = useState(false);
   const [mapError, setMapError] = useState<string | null>(null);
 

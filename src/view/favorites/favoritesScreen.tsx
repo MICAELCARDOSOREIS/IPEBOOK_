@@ -1,4 +1,4 @@
-import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
+import { makeAuthViewModel } from "@/di/container";
 import Favorites from "@/view/favorites/favorites";
 
 export type FavoritesScreenProps = {
@@ -12,6 +12,6 @@ export type FavoritesScreenProps = {
 };
 
 export default function FavoritesScreen(props: FavoritesScreenProps) {
-  const [auth] = useAuthViewModel();
+  const [auth] = makeAuthViewModel();
   return <Favorites {...props} userId={auth.user?.id ?? null} />;
 }

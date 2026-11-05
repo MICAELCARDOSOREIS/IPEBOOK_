@@ -15,8 +15,7 @@ import { Tag } from "@/view/components/Tag";
 import { TextButton } from "@/view/components/TextButton";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { TopAppBar } from "@/view/components/TopAppBar";
-import { makeManageListingViewModel } from "@/di/container";
-import { useShareListingViewModel } from "@/viewmodel/useShareListingViewModel";
+import { makeManageListingViewModel, makeShareListingViewModel } from "@/di/container";
 import { WEB_GUTTER } from "@/view/webLayout";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
@@ -44,7 +43,7 @@ export default function ManageListing({
   const guardedViewPublic = useGuardedPress(onViewPublicListing);
   const guardedRemoved = useGuardedPress(onRemoved);
   const [state, actions] = makeManageListingViewModel(bookId, sessionUserId);
-  const [shareState, shareActions] = useShareListingViewModel();
+  const [shareState, shareActions] = makeShareListingViewModel();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [confirmingRemoval, setConfirmingRemoval] = useState(false);

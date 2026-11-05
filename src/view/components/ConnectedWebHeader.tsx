@@ -1,8 +1,6 @@
 import { useEffect } from "react";
+import { makeAuthViewModel, makeNavigationBadgesViewModel, makeNotificationsViewModel } from "@/di/container";
 import { WebHeader, type WebHeaderProps } from "@/view/components/WebHeader";
-import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
-import { useNotificationsViewModel } from "@/viewmodel/useNotificationsViewModel";
-import { useNavigationBadgesViewModel } from "@/viewmodel/useNavigationBadgesViewModel";
 
 export type ConnectedWebHeaderProps = Omit<WebHeaderProps, "initials" | "badgeCount" | "notificationCount"> & {
   /** Rota atual: ao mudar de tela os selos são recalculados. */
@@ -18,9 +16,9 @@ function initialsOf(name?: string, email?: string): string {
 
 /** Cabeçalho Web com avatar da pessoa logada, selo de propostas em "Conversas" e sino de notificações. */
 export function ConnectedWebHeader({ pathname, ...props }: ConnectedWebHeaderProps) {
-  const [auth] = useAuthViewModel();
-  const badges = useNavigationBadgesViewModel(auth.user?.id ?? null, pathname);
-  const [notifications, notificationsActions] = useNotificationsViewModel(auth.user?.id ?? null);
+  const [auth] = makeAuthViewModel();
+  const badges = makeNavigationBadgesViewModel(auth.user?.id ?? null, pathname);
+  const [notifications, notificationsActions] = makeNotificationsViewModel(auth.user?.id ?? null);
   // Ao mudar de tela o selo do sino é recalculado, como o das conversas.
   const { refresh } = notificationsActions;
   useEffect(() => {

@@ -2,12 +2,14 @@ import { useMemo, useState } from "react";
 import * as Linking from "expo-linking";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
-import { useChatWithUser } from "@/viewmodel/useChatWithUser";
-import { useProfileSafetyViewModel } from "@/viewmodel/useProfileSafetyViewModel";
+import {
+  makeAuthViewModel,
+  makeChatWithUser,
+  makeProfileSafetyViewModel,
+  makePublicProfileViewModel,
+} from "@/di/container";
 import { normalizeInstagramHandle } from "@/model/validators/instagramValidator";
 import { ProfileSafetySheet } from "@/view/listings/profileSafetySheet";
-import { usePublicProfileViewModel } from "@/viewmodel/usePublicProfileViewModel";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { Avatar } from "@/view/components/Avatar";
@@ -52,15 +54,15 @@ export function PublicProfile({ userId, onBack, onOpenChat, onReportListing, onR
   const guardedReportUser = useGuardedPress(onReportUser);
   const guardedOpenBook = useGuardedPress(onOpenBook);
   const wideWeb = useIsWideWeb();
-  const [state, actions] = usePublicProfileViewModel(userId);
-  const [auth] = useAuthViewModel();
+  const [state, actions] = makePublicProfileViewModel(userId);
+  const [auth] = makeAuthViewModel();
   // No próprio perfil não faz sentido conversar consigo nem se denunciar
   const isOwnProfile = Boolean(auth.user?.id) && auth.user?.id === userId;
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors, wideWeb), [colors, wideWeb]);
   const [safetyOpen, setSafetyOpen] = useState(false);
-  const [safety, safetyActions] = useProfileSafetyViewModel(auth.user?.id ?? null, userId);
-  const chat = useChatWithUser(auth.user?.id ?? null, userId, (requestId) => guardedOpenChat(requestId));
+  const [safety, safetyActions] = makeProfileSafetyViewModel(auth.user?.id ?? null, userId);
+  const chat = makeChatWithUser(auth.user?.id ?? null, userId, (requestId) => guardedOpenChat(requestId));
   const profile = state.profile;
   // Só exibe o link quando o valor gravado respeita o padrão do Instagram (regra do domínio).
   const instagramHandle = normalizeInstagramHandle(profile?.socialHandle)?.slice(1) ?? null;

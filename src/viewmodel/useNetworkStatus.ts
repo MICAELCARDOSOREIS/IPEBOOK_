@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { networkStatusDataSource } from "@/di/container";
 import type { INetworkStatusDataSource } from "@/model/datasources/iNetworkStatusDataSource";
 
 /**
@@ -8,7 +7,7 @@ import type { INetworkStatusDataSource } from "@/model/datasources/iNetworkStatu
  * retorno do datasource, para não piscar "sem conexão" por um instante no carregamento inicial.
  */
 export function useNetworkStatus(
-  dataSource: INetworkStatusDataSource = networkStatusDataSource,
+  dataSource: INetworkStatusDataSource,
 ): { isOnline: boolean } {
   const [isOnline, setIsOnline] = useState(true);
 

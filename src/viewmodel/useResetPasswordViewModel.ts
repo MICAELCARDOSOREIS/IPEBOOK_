@@ -1,5 +1,4 @@
 import { useCallback, useState } from "react";
-import { authUseCases } from "@/di/container";
 import { DomainError, ExpiredLinkError } from "@/model/errors";
 import type { IAuthUseCases } from "@/usecase/iAuthUseCases";
 
@@ -15,7 +14,7 @@ export type ResetPasswordActions = {
 };
 
 export function useResetPasswordViewModel(
-  auth: IAuthUseCases = authUseCases,
+  auth: IAuthUseCases,
 ): [ResetPasswordState, ResetPasswordActions] {
   const [state, setState] = useState<ResetPasswordState>({
     loading: false,

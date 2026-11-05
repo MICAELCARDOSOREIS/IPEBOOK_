@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import type { NegotiationMessage } from "@/model/entities/negotiationMessage";
 import { DomainError } from "@/model/errors";
-import { negotiationMessageUseCases } from "@/di/container";
 
 export type NegotiationChatState = {
   messages: NegotiationMessage[];
@@ -32,7 +31,7 @@ export type NegotiationChatUseCases = {
 export function useNegotiationChatViewModel(
   requestId: string,
   sessionUserId: string,
-  useCases: NegotiationChatUseCases = negotiationMessageUseCases
+  useCases: NegotiationChatUseCases,
 ): [NegotiationChatState, NegotiationChatActions] {
   const [messages, setMessages] = useState<NegotiationMessage[]>([]);
   const [inputText, setInputText] = useState("");
