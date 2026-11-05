@@ -32,6 +32,9 @@ jobs:
       - name: Verificar conformidade arquitetural (7 camadas MVVM)
         run: npm run check:architecture
 
+      - name: Verificar Design System (tokens, contraste e documentos de componentes)
+        run: npm run check:design-system
+
       - name: Verificar numeração de specs e ADRs
         run: npm run check:numbering
 
@@ -43,6 +46,9 @@ jobs:
 
       - name: Executar testes unitários e cobertura de código
         run: npm run test:coverage
+
+      - name: Verificar sincronia das métricas documentadas
+        run: npm run check:docs
 
       - name: Compilar pacote Web estático
         run: npm run build:web
