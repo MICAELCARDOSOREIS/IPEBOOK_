@@ -11,7 +11,7 @@ import { TopAppBar } from "@/view/components/TopAppBar";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { ALERT_CITY, ALERT_MODALITY_LABELS } from "@/view/search/alertLabels";
-import { useSearchAlertsViewModel } from "@/viewmodel/useSearchAlertsViewModel";
+import { makeSearchAlertsViewModel } from "@/di/container";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 
@@ -27,7 +27,7 @@ export type EditAlertProps = {
 export default function EditAlert({ alertId, userId, onBack, onSaved }: EditAlertProps) {
   const guardedBack = useGuardedPress(onBack);
   const guardedSaved = useGuardedPress(onSaved);
-  const [state, actions] = useSearchAlertsViewModel(userId);
+  const [state, actions] = makeSearchAlertsViewModel(userId);
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const alert = state.alerts.find((item) => item.id === alertId);

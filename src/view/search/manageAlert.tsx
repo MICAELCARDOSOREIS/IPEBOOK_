@@ -8,7 +8,7 @@ import { TopAppBar } from "@/view/components/TopAppBar";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { ALERT_MODALITY_SUMMARY, ALERT_CITY } from "@/view/search/alertLabels";
-import { useSearchAlertsViewModel } from "@/viewmodel/useSearchAlertsViewModel";
+import { makeSearchAlertsViewModel } from "@/di/container";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 
@@ -32,7 +32,7 @@ export default function ManageAlert({
   const guardedBack = useGuardedPress(onBack);
   const guardedEdit = useGuardedPress(onEditAlert);
   const guardedAlertDeleted = useGuardedPress(onAlertDeleted);
-  const [state, actions] = useSearchAlertsViewModel(userId);
+  const [state, actions] = makeSearchAlertsViewModel(userId);
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [confirmingDelete, setConfirmingDelete] = useState(false);

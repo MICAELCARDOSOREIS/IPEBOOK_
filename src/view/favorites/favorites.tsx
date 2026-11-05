@@ -15,7 +15,7 @@ import { TopAppBar } from "@/view/components/TopAppBar";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { formatPrice } from "@/view/formatPrice";
-import { useFavoritesViewModel } from "@/viewmodel/useFavoritesViewModel";
+import { makeFavoritesViewModel } from "@/di/container";
 import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
 import { WEB_GUTTER, WEB_MAX_WIDTH, useWebGridColumns } from "@/view/webLayout";
 import { withPress } from "@/view/pressFeedback";
@@ -51,7 +51,7 @@ export default function Favorites({
   const guardedLogin = useGuardedPress(onLogin);
   const guardedBook = useGuardedPress(onBook);
   const guardedExploreBooks = useGuardedPress(onExploreBooks ?? onBack);
-  const [state, actions] = useFavoritesViewModel(userId);
+  const [state, actions] = makeFavoritesViewModel(userId);
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const { isOnline } = useNetworkStatus();

@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { bookUseCases, searchHistoryUseCases } from "@/di/container";
 import type { Book } from "@/model/entities/book";
 import type { IBookUseCases } from "@/usecase/iBookUseCases";
 import type { ISearchHistoryUseCases } from "@/usecase/iSearchHistoryUseCases";
@@ -86,9 +85,9 @@ export type SearchActions = {
 
 /** Busca client-side (FR-005, Spec 028, Issue #93): filtra e ordena o catálogo por termo, modalidade, categoria, preço e conservação. */
 export function useSearchViewModel(
-  userId: string | null = null,
-  books: IBookUseCases = bookUseCases,
-  history: ISearchHistoryUseCases = searchHistoryUseCases,
+  userId: string | null,
+  books: IBookUseCases,
+  history: ISearchHistoryUseCases,
 ): [SearchState, SearchActions] {
   const [homeState, homeActions] = useHomeViewModel(books);
   const [term, setTerm] = useState("");

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useSearchViewModel } from "@/viewmodel/useSearchViewModel";
+import { makeSearchViewModel } from "@/di/container";
 import type { SearchModalityFilter } from "@/viewmodel/useSearchViewModel";
 import { SORT_LABELS } from "@/viewmodel/searchFilters";
 import { FilterSheet } from "@/view/search/FilterSheet";
@@ -68,7 +68,7 @@ export default function Search({
   const [auth] = useAuthViewModel();
   const { colors, resolvedScheme } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const [state, actions] = useSearchViewModel(auth.user?.id ?? null);
+  const [state, actions] = makeSearchViewModel(auth.user?.id ?? null);
   const { isOnline } = useNetworkStatus();
   const [confirmingClear, setConfirmingClear] = useState(false);
   const [showFilterSheet, setShowFilterSheet] = useState(false);

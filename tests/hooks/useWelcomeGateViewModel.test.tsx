@@ -2,6 +2,7 @@
 import { render } from "@testing-library/react-native";
 import { Text } from "react-native";
 import { describe, expect, it, vi } from "vitest";
+import { makeWelcomeGateViewModel } from "@/di/container";
 import { MemoryOnboardingDataSource } from "@/infra/datasources/memoryOnboardingDataSource";
 import { OnboardingUseCases } from "@/usecase/onboardingUseCases";
 import { useWelcomeGateViewModel } from "@/viewmodel/useWelcomeGateViewModel";
@@ -58,12 +59,12 @@ describe("useWelcomeGateViewModel (issue #98)", () => {
     resolvePromise(true);
   });
 
-  it("utiliza onboardingUseCases padrão quando nenhum for injetado", async () => {
-    function DefaultGateProbe() {
-      const [status] = useWelcomeGateViewModel();
+  it("a fábrica do container monta o gate com os casos de uso de onboarding (Spec 126 T004)", async () => {
+    function FactoryGateProbe() {
+      const [status] = makeWelcomeGateViewModel();
       return <Text>{status}</Text>;
     }
-    const screen = await render(<DefaultGateProbe />);
+    const screen = await render(<FactoryGateProbe />);
     expect(await screen.findByText(/show|skip|checking/)).toBeTruthy();
   });
 });
