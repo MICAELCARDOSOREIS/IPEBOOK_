@@ -3,7 +3,7 @@ import { makeAuthViewModel, makeNotificationsPromptViewModel, makePushRegistrati
 import { PermissionPromptDialog } from "@/view/components/PermissionPromptDialog";
 
 export type PushRegistrationProps = {
-  /** Rota atual: renova a leitura da sessão a cada navegação, porque o login acontece em outra tela. */
+  /** Rota atual: renova sessão e permissão a cada navegação, porque login e aviso acontecem em outras telas. */
   pathname: string;
   /** Abre a rota do aviso tocado (por exemplo, `/negociacao/<id>`). */
   onOpenRoute: (route: string) => void;
@@ -24,8 +24,10 @@ export function PushRegistration({ pathname, onOpenRoute }: PushRegistrationProp
   }, [pathname, sessionUserId, authActions]);
 
   useEffect(() => {
+    // A permissão também pode ser concedida em outra tela (Central de notificações, Spec 127):
+    // reler a cada navegação é o que libera o registro do token na mesma execução.
     if (sessionUserId) void promptActions.refresh();
-  }, [sessionUserId, promptActions]);
+  }, [sessionUserId, pathname, promptActions]);
 
   makePushRegistration(sessionUserId, onOpenRoute, prompt.granted);
 

@@ -154,6 +154,8 @@ aviso anterior ao da Spec 020, de outra tela, e não foi alterado.
   Android isso costuma funcionar, mas há histórico de transição de modal duplo; se aparecer na beta,
   mover o motivo para dentro do `PhotoSourceSheet` resolve.
 - Depois da recusa, a reativação é orientada pelos Ajustes do aparelho. Um controle em "Central de
-  notificações" que reabra o prompt fica como acompanhamento da spec.
+  notificações" que reabra o prompt fica como acompanhamento da spec. Entregue pela Spec 127 em
+  2026-11-05: a banner "Notificações desativadas" passou a ter o botão "Pedir permissão de novo", que
+  reabre exatamente o mesmo `PermissionPromptDialog` (ver `specs/127-reativar-avisos-de-dentro-do-app/validacao.md`).
 - Nenhuma tela do app pede permissão de localização: a beta escolhe o bairro manualmente dentro de
   Piripiri, então não existe prompt nativo de GPS a explicar (escopo da própria spec, Seção 2).

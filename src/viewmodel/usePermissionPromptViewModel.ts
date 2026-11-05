@@ -19,6 +19,8 @@ export type PermissionPromptActions = {
   decline: () => Promise<void>;
   /** Fecha o aviso de recurso indisponível sem alterar o registro. */
   dismiss: () => void;
+  /** Reabre a explicação a pedido da pessoa, mesmo depois de já ter perguntado (Spec 127). */
+  reopen: () => void;
 };
 
 /**
@@ -65,9 +67,11 @@ export function usePermissionPromptViewModel(
 
   const dismiss = useCallback(() => write({ status: "idle" }), [write]);
 
+  const reopen = useCallback(() => write({ status: "explain" }), [write]);
+
   const actions = useMemo<PermissionPromptActions>(
-    () => ({ refresh, approve, decline, dismiss }),
-    [refresh, approve, decline, dismiss],
+    () => ({ refresh, approve, decline, dismiss, reopen }),
+    [refresh, approve, decline, dismiss, reopen],
   );
   return [state, actions];
 }
