@@ -13,9 +13,7 @@ const allowed = {
   di: ["di", "infra", "model", "usecase", "viewmodel"],
 };
 
-// Spec 126 / ADR 0098 (T001 / T010): zero exceções para viewmodel -> @/di.
-const VIEWMODEL_DI_EXCEPTIONS = new Set([]);
-const seenViewModelDiImports = new Set();
+// Spec 126 / ADR 0098 (T010): regra absoluta — nenhum arquivo de src/viewmodel/ importa @/di.
 
 // Spec 126 (T003 / T011-T013): teto de 900 linhas por arquivo de tela em src/view/ (0 exceções).
 const VIEW_FILE_LINE_CEILING = 900;
@@ -61,11 +59,8 @@ async function inspect(directory) {
       }
       const destination = target.split(/[\\/]/)[0];
       if (layer === "viewmodel" && destination === "di") {
-        seenViewModelDiImports.add(relative);
-        if (!VIEWMODEL_DI_EXCEPTIONS.has(relative)) {
-          const line = source.getLineAndCharacterOfPosition(node.getStart(source)).line + 1;
-          failures.push(`${relative}:${line}: importação de ${specifier} viola ADR 0098 (viewmodel não deve importar @/di).`);
-        }
+        const line = source.getLineAndCharacterOfPosition(node.getStart(source)).line + 1;
+        failures.push(`${relative}:${line}: importação de ${specifier} viola ADR 0098 (viewmodel não deve importar @/di).`);
         return;
       }
       if (!allowed[layer].includes(destination)) failures.push(`${relative}: importação de ${specifier} viola a camada.`);
@@ -108,11 +103,6 @@ async function inspectComponentTestsForParent(directory) {
 for (const layer of Object.keys(allowed)) await readdir(path.join(root, layer));
 await inspect(root);
 
-for (const exempted of VIEWMODEL_DI_EXCEPTIONS) {
-  if (!seenViewModelDiImports.has(exempted)) {
-    failures.push(`${exempted}: já não importa @/di; remova da lista VIEWMODEL_DI_EXCEPTIONS em scripts/verificar-arquitetura.mjs.`);
-  }
-}
 for (const [exempted] of VIEW_SIZE_EXCEPTIONS) {
   if (!seenOversizedViews.has(exempted)) {
     failures.push(`${exempted}: já está abaixo de ${VIEW_FILE_LINE_CEILING} linhas; remova de VIEW_SIZE_EXCEPTIONS em scripts/verificar-arquitetura.mjs.`);
