@@ -2,6 +2,9 @@ import { createElement } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AuthError, ValidationError } from "@/model/errors";
+import type { IBookMetadataService } from "@/model/services/iBookMetadataService";
+import type { ILogger } from "@/model/services/iLogger";
+import type { IRateLimiter } from "@/model/services/iRateLimiter";
 import type { IBookUseCases } from "@/usecase/iBookUseCases";
 
 const store = new Map<string, string>();
@@ -26,6 +29,14 @@ import {
 
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
 const mounted: ReactTestRenderer[] = [];
+
+const fakeRateLimiter = {
+  checkAndRecord: vi.fn(() => ({ allowed: true, remainingAttempts: 5, retryAfterMs: 0 })),
+  reset: vi.fn(),
+  getTimeUntilResetMs: vi.fn(() => 0),
+} as unknown as IRateLimiter;
+const fakeLogger = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() } as unknown as ILogger;
+const fakeMetadataService = { lookupByIsbn: vi.fn(async () => null) } as unknown as IBookMetadataService;
 
 function stubUseCases(overrides: Partial<IBookUseCases> = {}): IBookUseCases {
   return {
@@ -65,7 +76,7 @@ function stubUseCases(overrides: Partial<IBookUseCases> = {}): IBookUseCases {
 async function renderHook(useCases: IBookUseCases) {
   let result!: ReturnType<typeof useCreateListingViewModel>;
   function HookProbe() {
-    result = useCreateListingViewModel(useCases);
+    result = useCreateListingViewModel(useCases, fakeRateLimiter, fakeLogger, fakeMetadataService);
     return null;
   }
   await act(async () => {

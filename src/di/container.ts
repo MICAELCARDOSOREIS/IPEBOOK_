@@ -417,3 +417,17 @@ export const makeFavoriteButtonViewModel = (bookId: string, userId: string | nul
 export const makeSearchAlertsViewModel = (userId: string | null, initialQuery = "") =>
   useSearchAlertsViewModel(userId, initialQuery, searchAlertUseCases);
 export const makeWelcomeGateViewModel = () => useWelcomeGateViewModel(onboardingUseCases);
+
+import { useCreateListingViewModel } from "@/viewmodel/useCreateListingViewModel";
+import { useDraftsViewModel } from "@/viewmodel/useDraftsViewModel";
+import { useEditListingViewModel } from "@/viewmodel/useEditListingViewModel";
+import { useManageListingViewModel } from "@/viewmodel/useManageListingViewModel";
+
+/** Sub-lote anúncios (T004 parcial): criar, editar, gerenciar e rascunhos. */
+export const makeCreateListingViewModel = () =>
+  useCreateListingViewModel(bookUseCases, rateLimiter, logger, bookMetadataService);
+export const makeEditListingViewModel = (bookId: string, sessionUserId: string | null) =>
+  useEditListingViewModel(bookId, sessionUserId, bookUseCases);
+export const makeManageListingViewModel = (bookId: string, sessionUserId: string | null) =>
+  useManageListingViewModel(bookId, sessionUserId, bookUseCases);
+export const makeDraftsViewModel = (sessionUserId: string | null) => useDraftsViewModel(sessionUserId, bookUseCases);
