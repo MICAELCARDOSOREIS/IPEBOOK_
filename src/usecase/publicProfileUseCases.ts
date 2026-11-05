@@ -5,6 +5,7 @@ import type { IRatingDataSource } from "@/model/datasources/iRatingDataSource";
 import type { ProfileEdits, PublicProfile } from "@/model/entities/publicProfile";
 import { ValidationError } from "@/model/errors";
 import { normalizeInstagramHandle } from "@/model/validators/instagramValidator";
+import { sanitizeTextInput } from "@/model/validators/textSanitizer";
 import type { IPublicProfileUseCases } from "@/usecase/iPublicProfileUseCases";
 
 const MAX_NAME_LENGTH = 60;
@@ -48,13 +49,15 @@ export class PublicProfileUseCases implements IPublicProfileUseCases {
 
   async updateProfile(userId: string, edits: ProfileEdits): Promise<PublicProfile> {
     if (!userId) throw new ValidationError("Usuário não encontrado.");
-    const name = edits.name.trim();
+    // O nome é exibido a terceiros em cards e conversas: mesmo tratamento antifake dos demais textos livres.
+    const name = sanitizeTextInput(edits.name);
     if (!name) throw new ValidationError("Informe um nome público.");
     if (name.length > MAX_NAME_LENGTH) throw new ValidationError(`O nome público deve ter até ${MAX_NAME_LENGTH} caracteres.`);
 
     const photoUrl = edits.photoUrl?.trim() || undefined;
-    if (photoUrl && !/^https?:\/\//i.test(photoUrl)) {
-      throw new ValidationError("A foto deve ser um link (http/https) válido.");
+    // O CHECK `v2_profiles_photo_url_https` recusa qualquer esquema que não seja https; o cliente falha antes.
+    if (photoUrl && !/^https:\/\//i.test(photoUrl)) {
+      throw new ValidationError("A foto deve ser um link https válido.");
     }
 
     // O @perfil vira trecho de URL externa nas telas de perfil: só o padrão do Instagram é aceito.
