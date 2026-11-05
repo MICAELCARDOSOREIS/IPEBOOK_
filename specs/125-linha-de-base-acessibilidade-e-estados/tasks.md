@@ -43,10 +43,19 @@ T001 e T002 vêm primeiro: sem a verificação que falha, as correções das fas
   deslocamento derivado de `tokens.accessibility.touchTarget`; a arte continua em 36 px. No nativo
   foi `hitSlop={PIN_HIT_SLOP}` (`MeetingMap.native.tsx`). Verificações:
   `tests/unit/interactiveAccessibility.test.ts` e `tests/components/meetingMapInteractiveWeb.test.tsx`.
-- **T004 (pendente):** depende de reaproveitar a prisão de foco do `Dialog` nos dois modais na web;
-  exige exercício em navegador conectado, registrado como limitação na auditoria da Issue #96.
-- **T006 e T007 (bloqueadas):** `src/view/listings/bookDetail.tsx` e `src/view/search/searchAlerts.tsx`
-  estão com edição de outro agente nesta data. Não mexer sem coordenação; os critérios D4/D5 da Spec
-  125 permanecem abertos para essas duas telas.
-- **T013:** `npm run validate` integral e sincronia de `docs/estado.md`/`README.md` pelos números da
-  execução.
+- **T004 (em curso por outro agente, 2026-11-05):** `PhotoSourceSheet.tsx` e `BarcodeScannerModal.tsx`
+  passaram a importar `useModalFocusTrap`/`FocusableElement` de `Dialog.tsx` com refs nos botões —
+  exatamente o reaproveitamento previsto aqui. Não duplicar o trabalho; o exercício em navegador
+  conectado continua registrado como limitação da auditoria da Issue #96.
+- **T006 (em curso por outro agente, 2026-11-05):** `bookDetail.tsx` já trocou o `ActivityIndicator` e o
+  texto de erro próprios por `LoadingState` e `ErrorState`; conferir o teste de regressão dessa tela
+  quando o arquivo for commitado.
+- **T007 (em curso por outro agente, 2026-11-05):** `searchAlerts.tsx` já renderiza `LoadingState`,
+  `ErrorState` com `actions.reload()` e `OfflineState` a partir de `state.loadError`, e o ViewModel
+  passou a separar `loadError` do erro de formulário. Conferir o teste de regressão dessa tela
+  quando o arquivo for commitado.
+- **T013 (parcial):** `typecheck`, `lint`, `check:architecture`, `check:design-system`,
+  `check:numbering`, `check:build-config`, `test:sql` e a suíte completa aprovados em 2026-11-05
+  (2.077 testes em 292 arquivos, Branches 81,07%). Falta apenas `check:docs`: as métricas de
+  `docs/estado.md` e `README.md` estão sujas com o trabalho em curso de outro agente e precisam ser
+  gravadas com os números da execução final delas, não com os desta entrega.
