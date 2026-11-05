@@ -185,9 +185,10 @@ describe("etapa 2 do anúncio — Fotos (Figma 04.04)", () => {
     const flatten = (style: unknown): Record<string, unknown> =>
       Array.isArray(style) ? Object.assign({}, ...style.flat(Infinity).filter(Boolean)) : (style as Record<string, unknown>);
     expect(flatten(screen.getByLabelText("Adicionar foto da capa").props.style).flex).toBe(2);
-    const spine = screen.getByLabelText("Adicionar lombada");
-    expect(within(spine.parent!).getByLabelText("Adicionar páginas")).toBeDefined();
-    expect(within(spine.parent!).queryByLabelText("Adicionar foto da capa")).toBeNull();
+    const sideSlots = within(screen.getByTestId("step2-side-slots"));
+    expect(sideSlots.getByLabelText("Adicionar lombada")).toBeDefined();
+    expect(sideSlots.getByLabelText("Adicionar páginas")).toBeDefined();
+    expect(sideSlots.queryByLabelText("Adicionar foto da capa")).toBeNull();
     expect(screen.getByText("Dica de foto")).toBeDefined();
   });
 

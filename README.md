@@ -121,6 +121,8 @@ verificados manualmente antes de cada publicação, conforme o roteiro em
 [`docs/qualidade.md`](docs/qualidade.md). Os testes automatizados cobrem domínio, ViewModels,
 componentes e integração entre camadas.
 
+> **Limites do runtime de testes de componentes (Spec 126, CA7):** as suítes em `tests/components/` e `tests/components-mocked/` executam em Node sobre `tests/mocks/react-native.ts`. Esse ambiente preserva a árvore de elementos, propriedades de acessibilidade (`accessibilityRole`, `accessibilityLabel`, `accessibilityLiveRegion`), eventos e objetos `style` declarados, mas **não executa um motor de layout real** (Yoga/DOM): ele não valida largura calculada em pixels, colisão visual nem quebra efetiva de linha. Asserções de teste devem usar apenas contratos públicos (papel acessível, rótulo, `testID`, estilo declarado), sendo proibido o acoplamento estrutural via `.parent!` (vigiado por `npm run check:architecture`). A validação sensorial e de layout real permanece manual em aparelho ou navegador.
+
 ---
 
 ## 🗣️ Guia para Defesa Oral com o Professor

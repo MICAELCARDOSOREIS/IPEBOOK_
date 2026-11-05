@@ -39,7 +39,8 @@ describe("favoritos e alertas (spec 016)", () => {
     const onExploreBooks = vi.fn();
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => { screen = await render(<Favorites userId="usuario-favoritos-vazio-043" onBack={vi.fn()} onLogin={vi.fn()} onBook={vi.fn()} onExploreBooks={onExploreBooks} />); });
-    const box = within(screen.getByRole("header", { name: "Nenhum livro salvo" }).parent!);
+    const box = within(screen.getByTestId("favorites-empty-state"));
+    expect(box.getByRole("header", { name: "Nenhum livro salvo" })).toBeDefined();
     expect(box.getByText(/Toque (no coração dos anúncios|em Favoritar no anúncio) para guardar (aqui )?os livros que você quer ler\./)).toBeDefined();
     fireEvent.press(box.getByRole("button", { name: "Explorar livros" }));
     expect(onExploreBooks).toHaveBeenCalledOnce();
@@ -49,7 +50,8 @@ describe("favoritos e alertas (spec 016)", () => {
     const onSearchBooks = vi.fn();
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => { screen = await render(<SearchAlerts userId="usuario-alertas-vazio-043" onBack={vi.fn()} onLogin={vi.fn()} onSearchBooks={onSearchBooks} />); });
-    const box = within(screen.getByRole("header", { name: "Nenhum alerta criado" }).parent!);
+    const box = within(screen.getByTestId("search-alerts-empty-state"));
+    expect(box.getByRole("header", { name: "Nenhum alerta criado" })).toBeDefined();
     fireEvent.press(box.getByRole("button", { name: "Procurar um livro" }));
     expect(onSearchBooks).toHaveBeenCalledOnce();
     expect(screen.getAllByRole("button", { name: "Procurar um livro" })).toHaveLength(1);

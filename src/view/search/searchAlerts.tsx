@@ -138,7 +138,7 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
               ]}
               {...standardVerticalScrollProps}
               ListEmptyComponent={
-                <View style={styles.emptyBox}>
+                <View testID="search-alerts-empty-state" style={styles.emptyBox}>
                   <Text accessibilityRole="header" style={styles.emptyHeadline}>
                     Nenhum alerta criado
                   </Text>

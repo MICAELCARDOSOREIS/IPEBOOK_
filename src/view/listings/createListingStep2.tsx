@@ -58,7 +58,7 @@ export function CreateListingStep2({
           onRemovePhoto={() => onSetPhotoUrl("")}
           style={wideWeb ? styles.webCoverSlot : styles.coverSlot}
         />
-        <View style={wideWeb ? styles.webSideSlots : styles.sideSlots}>
+        <View testID="step2-side-slots" style={wideWeb ? styles.webSideSlots : styles.sideSlots}>
           <AddPhotoCard
             label="Lombada"
             photoUrl={photos[0]}
