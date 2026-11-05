@@ -1,0 +1,53 @@
+# Tarefas — Spec 126 (Dívidas estruturais: injeção, tamanho de telas e runtime de teste)
+
+Dependem da Spec 126 e do ADR 0098. Seguem a regra do projeto: primeiro a verificação que falha,
+depois a mudança de estrutura. Nenhuma tarefa altera texto, rota ou regra de negócio vista pelo
+usuário; nenhuma usa Playwright.
+
+## Fase 1 — verificações com efeito de catraca
+
+- [ ] **T001** Em `scripts/verificar-arquitetura.mjs`, retirar a aresta `viewmodel → di` da matriz `allowed` e adicionar a regra que reprova import de `@/di` em `src/viewmodel/**`, com **lista de exceções explícita** contendo os 50 arquivos atuais. Verificação: `npm run check:architecture` passa com a lista cheia; reprova ao importar `@/di` em um arquivo fora da lista e ao adicionar arquivo novo à lista sem mover o código correspondente.
+- [ ] **T002** Criar a varredura de `.parent!` em `tests/components*` com teto = 5 (as ocorrências de `createListingView.test.tsx`, `favoritesAlertsView.test.tsx` e `stepProgress.test.tsx`), embutida no `check:architecture` ou em script próprio chamado pelo `validate`. Verificação: passa hoje, reprova se aparecer a sexta.
+- [ ] **T003** Criar a catraca de tamanho de arquivo de tela: teto definido no plano de extração, com a lista das cinco telas acima do teto (`home.tsx` 1.381, `profileHub.tsx` 1.107, `bookDetail.tsx` 1.104, `scheduleMeeting.tsx` 1.063, `chat.tsx` 900) registrada e decrescente. Verificação: o script falha contra o estado atual com a lista vazia e passa com ela; cresce a lista ⇒ falha.
+
+## Fase 2 — E1: injeção de dependência (ADR 0098), em lotes por fluxo
+
+Cada lote: o ViewModel passa a receber dependências por parâmetro obrigatório, a fábrica `make…`
+entra em `src/di/container.ts`, a View chama a fábrica, o arquivo sai da lista de T001 e a suíte
+completa roda no fim do lote.
+
+- [ ] **T004** Lote catálogo: ViewModels de início, busca, favoritos e alertas.
+- [ ] **T005** Lote anúncios: criar, editar, gerenciar, estante e perfil público.
+- [ ] **T006** Lote pedidos, encontro e entrega.
+- [ ] **T007** Lote conversas e notificações — inclui os quatro sem parâmetro hoje (`useNegotiationChatViewModel.ts`, `useConversationsViewModel.ts`, `useChatWithUser.ts`, `useNegotiationRatingViewModel.ts`, `useNavigationBadgesViewModel.ts`).
+- [ ] **T008** Lote conta e preferências: entrada, cadastro, redefinição, configurações, bloqueios, segurança e os contratos de efeito colateral (`useNetworkStatus.ts`, `usePwaViewModel.ts`, `errorReporting.ts`).
+- [ ] **T009** Para cada um dos 9 ViewModels que hoje não expõem parâmetro, acrescentar ao menos um teste que exercita sucesso e falha de datasource por injeção real, sem `vi.mock` do módulo do ViewModel. Verificação: CA2 da Spec 126.
+- [ ] **T010** Lista de exceções de T001 zerada; remover a lista e deixar a regra absoluta. Verificação: `grep -r "from \"@/di" src/viewmodel` vazio e `npm run check:architecture` verde.
+
+## Fase 3 — E2: extração de seções de tela (uma tela por entrega)
+
+- [ ] **T011** Definir o teto por arquivo no plano de extração, considerando as cinco telas de T003 e o custo de manter `styles` compartilhadas.
+- [ ] **T012** Extrair seções de `home.tsx` (1.381 linhas) em componentes de `src/view/home/`, com teste de componente por seção nos estados carregando, erro, vazio e sucesso, reutilizando os componentes de sistema padronizados pela Spec 125.
+- [ ] **T013** Repetir a extração em `profileHub.tsx`, `bookDetail.tsx`, `scheduleMeeting.tsx` e `chat.tsx`, uma tela por vez, mantendo a rota de `src/app/` importando a mesma composição em cada passo.
+- [ ] **T014** Conferir, para cada tela extraída, que os testes antigos de comportamento continuam valendo sem reescrever expectativa — quando uma expectativa mudar, registrar o motivo na entrega (era sustentada só pelo mock).
+
+## Fase 4 — E3: runtime de teste
+
+- [ ] **T015** Spike em uma tela piloto: verificar se as asserções de apresentação sobrevivem sem a emulação de `tests/mocks/react-native.ts`, sem instalar Playwright. Resultado documentado (o que passou, o que quebrou, o que não é verificável neste ambiente).
+- [ ] **T016** Decidir no resultado do spike: manter o mock com regras vigiadas (T002) ou adotar runtime adicional; se houver troca de infraestrutura de teste, registrar em ADR novo com alternativas e consequências.
+- [ ] **T017** Eliminar as 5 asserções `.parent!`, expressando cada expectativa por contrato público (papel acessível, rótulo, `testID`, estilo declarado). Verificação: T002 com teto rebaixado a zero.
+- [ ] **T018** Escrever em `docs/estado.md` e no README de testes o que é validado por suíte e o que depende de conferência em dispositivo, sem afirmar validação de layout onde não houve. Verificação: CA7 da Spec 126.
+
+## Ordenação, riscos e estado atual
+
+- A Fase 1 vem antes: sem catraca, a migração de 50 arquivos e a extração de cinco telas não têm como
+  provar que não regrediram (mesmo critério usado na Spec 125).
+- Fases 2 e 3 não se misturam em um mesmo commit: uma muda imports e composição, outra muda a
+  estrutura da View.
+- **Bloqueio em 2026-11-05:** `src/viewmodel/useNegotiationChatViewModel.ts`,
+  `src/viewmodel/notificationRoute.ts`, `src/view/listings/bookDetail.tsx`,
+  `src/view/search/searchAlerts.tsx` e `tests/components/favoritesAlertsView.test.tsx` estão com
+  edição de outro agente nesta data. Nenhuma tarefa desta spec foi iniciada; T001 e T002 tocam só
+  `scripts/` e podem começar quando aqueles arquivos estiverem commitados, para não medir a base
+  errada.
+- E2 não tem prazo e entra na fila somente quando não houver defeito de usuário aberto na mesma tela.

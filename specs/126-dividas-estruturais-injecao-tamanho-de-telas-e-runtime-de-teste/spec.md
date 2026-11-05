@@ -55,7 +55,11 @@ alterar proteções remotas.
    testes, com o que foi conferido por teste automatizado e o que depende de conferência em
    dispositivo — sem afirmar que layout foi validado onde não foi.
 
-## Comportamento esperado na transição
+## Artefatos e transição
+
+- Decisão arquitetural de E1: `docs/adr/0098-estrategia-de-injecao-de-dependencia-nos-viewmodels.md`.
+- Decomposição em tarefas (ordem, lotes e verificações): `tasks.md` nesta pasta. O teto por arquivo
+  de tela é definido na Fase 3 de `tasks.md` (T011), não antecipado aqui.
 
 E1 e E2 são mudanças de estrutura com risco de regressão silenciosa; cada entrega deve ser
 pequena e reversível:
