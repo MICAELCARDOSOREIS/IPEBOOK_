@@ -1,5 +1,6 @@
 
 import { act, fireEvent, render } from "@testing-library/react-native";
+import { StyleSheet } from "react-native";
 import { describe, expect, it, vi } from "vitest";
 import type { EditListingState, EditListingActions } from "@/viewmodel/useEditListingViewModel";
 import EditListing from "@/view/listings/editListing";
@@ -244,5 +245,17 @@ describe("Spec 030 — edição alinhada ao Figma 04.09", () => {
 
     expect(screen.getByText("Limite excedido em 2 caracteres")).toBeDefined();
     expect(screen.getByText("A descrição deve ter no máximo 280 caracteres.")).toBeDefined();
+  });
+
+  it("linha de categorias quebra os chips em telas estreitas (Spec 125 D3)", async () => {
+    mockViewModel(loadedState);
+
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<EditListing bookId="b1" sessionUserId="user-1" />);
+    });
+
+    const row = StyleSheet.flatten(screen.getByTestId("edit-listing-category-row").props.style);
+    expect(row.flexWrap).toBe("wrap");
   });
 });

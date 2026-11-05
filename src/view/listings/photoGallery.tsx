@@ -105,7 +105,7 @@ export function PhotoGallery({ photos, initialIndex = 0, visible, onClose }: Pho
   }, [isWeb, visible, index, onClose]);
 
   return (
-    <Modal visible={visible} animationType="fade" onRequestClose={onClose} transparent={false} statusBarTranslucent navigationBarTranslucent>
+    <Modal accessibilityViewIsModal visible={visible} animationType="fade" onRequestClose={onClose} transparent={false} statusBarTranslucent navigationBarTranslucent>
       <SafeAreaView style={styles.page}>
         <View style={styles.header}>
           <Pressable accessibilityRole="button" accessibilityLabel="Fechar galeria de fotos" onPress={onClose} style={withPress(styles.closeButton)}>

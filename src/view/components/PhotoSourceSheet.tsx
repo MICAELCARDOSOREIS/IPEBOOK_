@@ -20,7 +20,7 @@ export function PhotoSourceSheet({ visible, title = "Adicionar foto", onChoose, 
   const styles = useMemo(() => createStyles(colors), [colors]);
   const wideWeb = useIsWideWeb();
   return (
-    <Modal visible={visible} transparent animationType="fade" statusBarTranslucent navigationBarTranslucent onRequestClose={onClose}>
+    <Modal accessibilityViewIsModal visible={visible} transparent animationType="fade" statusBarTranslucent navigationBarTranslucent onRequestClose={onClose}>
       <View style={[styles.scrim, wideWeb && styles.scrimWide]}>
         <Pressable accessibilityRole="button" accessibilityLabel="Fechar ao tocar fora" onPress={onClose} style={StyleSheet.absoluteFill} />
         <View style={[styles.sheet, wideWeb && styles.sheetWide]}>

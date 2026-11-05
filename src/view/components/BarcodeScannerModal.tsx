@@ -64,6 +64,7 @@ export function BarcodeScannerModal({
       navigationBarTranslucent
       visible={visible}
       animationType="slide"
+      accessibilityViewIsModal
       presentationStyle="fullScreen"
       onRequestClose={onClose}
     >

@@ -36,6 +36,10 @@ export default function Root({ children }: PropsWithChildren) {
               `:focus-visible{outline:${tokens.accessibility.focusWidth}px solid ${tokens.colors.actionDeep};outline-offset:2px;box-shadow:0 0 0 5px ${tokens.colors.m3.primaryContainer};border-radius:${tokens.radius.small}px}`,
               `[role="button"],[role="link"],[role="tab"],[role="radio"],[role="checkbox"],[role="switch"],[role="search"]{cursor:pointer}`,
               `[aria-disabled="true"]{cursor:not-allowed}`,
+              // Pino do mapa (web): o círculo é desenhado com 36px; uma extensão invisível de
+              // ${(tokens.accessibility.touchTarget - 36) / 2}px leva a área de toque aos ${tokens.accessibility.touchTarget}px
+              // mínimos sem mudar o desenho (Spec 125, ADR 0097). O elemento já é posicionado pelo CSS do mapbox-gl.
+              `[data-pino-mapa][aria-pressed="false"]::after{content:"";position:absolute;inset:-${(tokens.accessibility.touchTarget - 36) / 2}px}`,
               `@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}`,
             ].join(""),
           }}

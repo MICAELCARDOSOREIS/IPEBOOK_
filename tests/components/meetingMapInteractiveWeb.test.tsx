@@ -96,6 +96,7 @@ describe("mapa interativo da web (Spec 094, ADR 0072)", () => {
     expect(gl.markers.map((m) => m.lngLat)).toEqual(PIRIPIRI_MEETING_POINTS.map((p) => [p.longitude, p.latitude]));
     expect(gl.elements.map((e) => e.textContent)).toEqual(["1", "2", "3", "4"]);
     expect(gl.elements[2].attrs["aria-label"]).toBe(`Escolher o local 3, ${PIRIPIRI_MEETING_POINTS[2].name}`);
+    expect(gl.elements.every((e) => "data-pino-mapa" in e.attrs)).toBe(true);
   });
 
   it("tocar no pino escolhe o local, mesmo com a função trocada depois", async () => {

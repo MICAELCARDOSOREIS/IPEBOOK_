@@ -169,7 +169,7 @@ export default function EditListing({
 
           <View style={styles.field}>
             <Text style={styles.sectionLabel}>Categoria</Text>
-            <View style={styles.modalityRow}>
+            <View style={styles.modalityRow} testID="edit-listing-category-row">
               {CATEGORIES.map((category) => (
                 <Chip
                   key={category}
@@ -422,6 +422,7 @@ function createStyles(colors: ColorPalette) {
   },
   modalityRow: {
     flexDirection: "row",
+    flexWrap: "wrap",
     gap: tokens.spacing[8],
   },
   locationContainer: {

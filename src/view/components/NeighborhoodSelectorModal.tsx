@@ -68,6 +68,7 @@ export function NeighborhoodSelectorModal({
 
   return (
     <Modal
+      accessibilityViewIsModal
       animationType="fade"
       transparent
       // Tela cheia: o véu cobre também as barras do sistema (sem faixas claras em cima e embaixo).

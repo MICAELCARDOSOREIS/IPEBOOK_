@@ -91,7 +91,7 @@ describe("tela de Termos e Privacidade (ISO/IEC 25010 - Usabilidade e Conformida
 
     expect(screen.getByText("Portabilidade e Exclusão (LGPD — Art. 18)")).toBeDefined();
     const deleteLink = screen.getByRole("button", {
-      name: "Solicitar exclusão da minha conta e dados",
+      name: "Abrir gerenciamento de exportação e exclusão dos meus dados",
     });
     await act(async () => {
       fireEvent.press(deleteLink);

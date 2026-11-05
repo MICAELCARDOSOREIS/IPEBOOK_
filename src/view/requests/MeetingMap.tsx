@@ -101,6 +101,7 @@ function InteractiveWebMap({ selectedName, coveredBottom = 0, sheetHeight = 0, c
         markersRef.current = PIRIPIRI_MEETING_POINTS.map((point, index) => {
           const element = document.createElement("button");
           element.type = "button";
+          element.setAttribute("data-pino-mapa", "");
           element.textContent = String(index + 1);
           element.setAttribute("aria-label", `Escolher o local ${index + 1}, ${point.name}`);
           element.addEventListener("click", () => latest.current.onSelect?.(point.name));
