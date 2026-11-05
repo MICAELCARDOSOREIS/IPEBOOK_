@@ -4,6 +4,7 @@ import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 
 import { withPress } from "@/view/pressFeedback";
+import { useGuardedPress } from "@/view/useGuardedPress";
 export type FocusableElement = { focus: () => void };
 
 function focusSafely(element: FocusableElement | null | undefined): void {
@@ -30,6 +31,57 @@ export function resolveDialogTabWrap(
   if (event.shiftKey && activeElement === first) return last;
   if (!event.shiftKey && activeElement === last) return first;
   return null;
+}
+
+/**
+ * Gestão de foco no Web para modais e folhas: move o foco para o primeiro elemento
+ * interativo ao abrir, cicla Tab/Shift+Tab dentro do modal, fecha com Escape e
+ * devolve o foco ao elemento gatilho ao fechar.
+ */
+export function useModalFocusTrap(
+  visible: boolean,
+  getFocusables: () => readonly (FocusableElement | null)[],
+  onClose: () => void,
+  disabled = false,
+): void {
+  const triggerRef = useRef<FocusableElement | null>(null);
+  const getFocusablesRef = useRef(getFocusables);
+  getFocusablesRef.current = getFocusables;
+  const isWeb = Platform.OS === "web" && typeof document !== "undefined";
+
+  useEffect(() => {
+    if (!isWeb) return;
+    if (visible) {
+      triggerRef.current = (document.activeElement as unknown as FocusableElement) ?? null;
+      const firstFocusable = disabled ? null : getFocusablesRef.current().find((el) => el != null) ?? null;
+      focusSafely(firstFocusable);
+    } else {
+      focusSafely(triggerRef.current);
+      triggerRef.current = null;
+    }
+  }, [visible, disabled, isWeb]);
+
+  useEffect(() => {
+    if (!isWeb || !visible) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onClose();
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const focusables = getFocusablesRef.current().filter(isFocusable);
+      const next = resolveDialogTabWrap(focusables, document.activeElement, event);
+      if (next) {
+        event.preventDefault();
+        focusSafely(next);
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown, true);
+    return () => {
+      if (typeof document !== "undefined") document.removeEventListener("keydown", handleKeyDown, true);
+    };
+  }, [visible, onClose, isWeb]);
 }
 
 export type DialogProps = {
@@ -61,10 +113,11 @@ export function Dialog({
 }: DialogProps) {
   const cancelRef = useRef<FocusableElement | null>(null);
   const confirmRef = useRef<FocusableElement | null>(null);
-  const triggerRef = useRef<FocusableElement | null>(null);
   const cardScale = useRef(new Animated.Value(visible ? 1 : 0.92)).current;
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const guardedCancel = useGuardedPress(onCancel);
+  const guardedConfirm = useGuardedPress(onConfirm);
 
   useEffect(() => {
     if (!visible) {
@@ -92,41 +145,7 @@ export function Dialog({
   // Gestão de foco (Web): o diálogo prende o foco enquanto aberto e o devolve ao
   // gatilho ao fechar (design-system/06-acessibilidade.md e 04-componentes/dialogo.md).
   // Native (iOS/Android) já recebe isso do leitor de tela via accessibilityViewIsModal.
-  const isWeb = Platform.OS === "web" && typeof document !== "undefined";
-
-  useEffect(() => {
-    if (!isWeb) return;
-    if (visible) {
-      triggerRef.current = (document.activeElement as unknown as FocusableElement) ?? null;
-      const firstFocusable = loading ? null : cancelRef.current ?? confirmRef.current;
-      focusSafely(firstFocusable);
-    } else {
-      focusSafely(triggerRef.current);
-      triggerRef.current = null;
-    }
-  }, [visible, loading, isWeb]);
-
-  useEffect(() => {
-    if (!isWeb || !visible) return;
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        onCancel();
-        return;
-      }
-      if (event.key !== "Tab") return;
-      const focusables = [cancelRef.current, confirmRef.current].filter(isFocusable);
-      const next = resolveDialogTabWrap(focusables, document.activeElement, event);
-      if (next) {
-        event.preventDefault();
-        focusSafely(next);
-      }
-    };
-    document.addEventListener("keydown", handleKeyDown, true);
-    return () => {
-      if (typeof document !== "undefined") document.removeEventListener("keydown", handleKeyDown, true);
-    };
-  }, [visible, onCancel, isWeb]);
+  useModalFocusTrap(visible, () => [cancelRef.current, confirmRef.current], onCancel, loading);
 
   return (
     <Modal
@@ -144,7 +163,7 @@ export function Dialog({
           accessibilityRole="none"
           accessibilityLabel="Fechar diálogo"
           style={StyleSheet.absoluteFill}
-          onPress={onCancel}
+          onPress={guardedCancel}
         />
         <Animated.View
           accessibilityRole="alert"
@@ -160,7 +179,7 @@ export function Dialog({
               accessibilityLabel={cancelLabel}
               accessibilityState={{ disabled: loading }}
               disabled={loading}
-              onPress={onCancel}
+              onPress={guardedCancel}
               style={withPress(styles.cancelButton)}
             >
               <Text style={styles.cancelText}>{cancelLabel}</Text>
@@ -171,7 +190,7 @@ export function Dialog({
               accessibilityLabel={confirmLabel}
               accessibilityState={{ disabled: loading }}
               disabled={loading}
-              onPress={onConfirm}
+              onPress={guardedConfirm}
               style={withPress([
                 styles.confirmButton,
                 destructive ? styles.confirmDestructive : styles.confirmDefault,

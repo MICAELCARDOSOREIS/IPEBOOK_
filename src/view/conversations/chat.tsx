@@ -763,7 +763,7 @@ function createStyles(colors: ColorPalette) {
       paddingVertical: tokens.spacing[6],
       borderRadius: tokens.radius.full,
       borderWidth: 1,
-      borderColor: colors.nature.foliage + "40",
+      borderColor: `${colors.nature.foliage}40`,
     },
     eventText: {
       ...tokens.typography.labelSmall,

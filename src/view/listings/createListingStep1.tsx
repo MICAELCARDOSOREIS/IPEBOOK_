@@ -86,11 +86,11 @@ export type CreateListingStep1Props = {
 };
 
 export function CreateListingStep1({
-  isbn,
+  isbn: _isbn,
   lookingUpIsbn,
   isbnFeedback,
-  onSetIsbn,
-  onLookupIsbn,
+  onSetIsbn: _onSetIsbn,
+  onLookupIsbn: _onLookupIsbn,
   onScanBarcode,
   modality,
   title,
@@ -111,7 +111,7 @@ export function CreateListingStep1({
   const { colors } = useTheme();
   const wideWeb = useIsWideWeb();
   const [scannerVisible, setScannerVisible] = useState(false);
-  const styles = useMemo(() => createStyles(colors, wideWeb), [colors, wideWeb]);
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   return (
     <>
@@ -374,7 +374,7 @@ export function CreateListingStep1({
   );
 }
 
-function createStyles(colors: ColorPalette, wideWeb: boolean) {
+function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     field: { gap: tokens.spacing[8] },
     isbnCard: {

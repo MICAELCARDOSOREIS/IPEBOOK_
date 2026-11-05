@@ -3,6 +3,7 @@ import type { IMessageDataSource } from "@/model/datasources/iMessageDataSource"
 import type { IBookRequestDataSource } from "@/model/datasources/iBookRequestDataSource";
 import type { IBookDataSource } from "@/model/datasources/iBookDataSource";
 import type { IBlockedUserDataSource } from "@/model/datasources/iBlockedUserDataSource";
+import { AuthError, DomainError, ValidationError } from "@/model/errors";
 import { validateNegotiationMessage } from "@/model/validators/messageValidator";
 
 export type MessageUseCaseContext = {
@@ -22,16 +23,16 @@ async function getNegotiationParticipants(
 ): Promise<{ requesterId: string; ownerId: string }> {
   const request = await bookRequestDataSource.findById(requestId);
   if (!request) {
-    throw new Error("Pedido não encontrado.");
+    throw new DomainError("Pedido não encontrado.");
   }
 
   if (request.status !== "accepted") {
-    throw new Error("Apenas pedidos aceitos possuem canal de mensagens ativo.");
+    throw new DomainError("Apenas pedidos aceitos possuem canal de mensagens ativo.");
   }
 
   const book = await bookDataSource.findById(request.listingId);
   if (!book) {
-    throw new Error("Livro da negociação não encontrado.");
+    throw new DomainError("Livro da negociação não encontrado.");
   }
 
   return {
@@ -55,7 +56,7 @@ export async function getNegotiationMessages(
   );
 
   if (sessionUserId !== requesterId && sessionUserId !== ownerId) {
-    throw new Error("Não autorizado a acessar as mensagens deste pedido.");
+    throw new AuthError("Não autorizado a acessar as mensagens deste pedido.");
   }
 
   return context.messageDataSource.getMessagesByRequestId(requestId);
@@ -81,12 +82,12 @@ export async function sendNegotiationMessage(
   );
 
   if (params.senderId !== requesterId && params.senderId !== ownerId) {
-    throw new Error("Não autorizado a enviar mensagens neste pedido.");
+    throw new AuthError("Não autorizado a enviar mensagens neste pedido.");
   }
 
   const validation = validateNegotiationMessage(params.content);
   if (!validation.success) {
-    throw new Error(validation.error);
+    throw new ValidationError(validation.error);
   }
 
   // Verifica bloqueio de usuários (Spec 056 / ADR 0039)
@@ -97,7 +98,7 @@ export async function sendNegotiationMessage(
       recipientId
     );
     if (isBlocked) {
-      throw new Error("Não é possível enviar mensagens para um usuário bloqueado.");
+      throw new DomainError("Não é possível enviar mensagens para um usuário bloqueado.");
     }
   }
 

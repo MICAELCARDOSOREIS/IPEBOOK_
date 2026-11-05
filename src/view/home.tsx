@@ -26,7 +26,7 @@ import {
   triggerIpePetals,
 } from "@/view/components/ipeCelebrationController";
 import type { Book, BookModality } from "@/model/entities/book";
-import { WEB_GUTTER, WEB_MAX_WIDTH, useWebGridColumns } from "@/view/webLayout";
+import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
 
 import { expressivePressedStyle, withPress } from "@/view/pressFeedback";
 const MODALITY_PLURAL = { sale: "livros à venda", trade: "livros para troca", donation: "livros para doação" } as const;
@@ -79,7 +79,6 @@ function CatalogCarousel({
   const styles = useMemo(() => createStyles(colors), [colors]);
   const modalityTag = useMemo(() => createModalityTag(colors), [colors]);
   const wideWeb = useIsWideWeb();
-  const webColumns = useWebGridColumns();
   const guardedNavigateToBookDetail = useGuardedPress((id: string) => onNavigateToBookDetail?.(id));
 
   const renderCard = (item: Book, wide = false) => {
@@ -260,7 +259,7 @@ export default function Home({
   onNavigateToSignIn,
   onNavigateToBookDetail,
   onNavigateToNotifications,
-  onNavigateToTerms,
+  onNavigateToTerms: _onNavigateToTerms,
   onNavigateToHelp,
   onNavigateToSearch,
   focusKey,
@@ -277,7 +276,6 @@ export default function Home({
   const { isOnline } = useNetworkStatus();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const modalityTag = useMemo(() => createModalityTag(colors), [colors]);
   const wideWeb = useIsWideWeb();
   const isWeb = Platform.OS === "web";
   const [selectedModality, setSelectedModality] = useState<BookModality | "all">("all");
@@ -287,7 +285,6 @@ export default function Home({
   const guardedNavigateToSignIn = useGuardedPress(onNavigateToSignIn);
   const guardedNavigateToBookDetail = useGuardedPress(onNavigateToBookDetail);
   const guardedNavigateToNotifications = useGuardedPress(onNavigateToNotifications);
-  const guardedNavigateToTerms = useGuardedPress(onNavigateToTerms);
   const guardedNavigateToHelp = useGuardedPress(onNavigateToHelp);
   const guardedNavigateToSearch = useGuardedPress(onNavigateToSearch);
 

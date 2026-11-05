@@ -356,7 +356,7 @@ export function Conversations({
             {/* Painel Central: Chat da negociação selecionada ou placeholder */}
             {wideWeb && selectedId ? (
               <View style={styles.widePane} testID="conversation-pane">
-                <Chat embedded requestId={selectedId} sessionUserId={sessionUserId} onOpenNegotiation={onOpenNegotiation} />
+                <Chat embedded requestId={selectedId} sessionUserId={sessionUserId} onOpenNegotiation={guardedOpenNegotiation} />
               </View>
             ) : wideWeb ? (
               <View style={[styles.widePane, styles.widePaneEmpty]}>
@@ -381,13 +381,13 @@ export function Conversations({
                     <Tag variant={selectedItem.listing.modality} />
                   </View>
                 </View>
-                <CombineAction requestId={selectedItem.requestId} sessionUserId={sessionUserId} onOpen={onOpenNegotiation} />
+                <CombineAction requestId={selectedItem.requestId} sessionUserId={sessionUserId} onOpen={guardedOpenNegotiation} />
                 <View style={styles.aboutSafe}>
                   <Text style={styles.aboutSafeTitle}>Encontro seguro</Text>
                   <Text style={styles.aboutSafeBody}>Locais públicos e horário de movimento em Piripiri.</Text>
                 </View>
                 {onReportListing ? (
-                  <Pressable accessibilityRole="button" accessibilityLabel="Denunciar anúncio" onPress={() => onReportListing(selectedItem.listing.id)}>
+                  <Pressable accessibilityRole="button" accessibilityLabel="Denunciar anúncio" onPress={() => guardedReportListing(selectedItem.listing.id)}>
                     <Text style={styles.aboutReport}>Denunciar anúncio</Text>
                   </Pressable>
                 ) : null}

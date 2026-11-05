@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import type { NegotiationMessage } from "@/model/entities/negotiationMessage";
+import { DomainError } from "@/model/errors";
 import { negotiationMessageUseCases } from "@/di/container";
 
 export type NegotiationChatState = {
@@ -53,7 +54,7 @@ export function useNegotiationChatViewModel(
       const list = await useCases.getMessages(requestId, sessionUserId);
       setMessages(list);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Erro ao carregar mensagens.";
+      const msg = err instanceof DomainError ? err.message : "Erro ao carregar mensagens.";
       setError(msg);
     } finally {
       setIsLoading(false);
@@ -98,7 +99,7 @@ export function useNegotiationChatViewModel(
         setLastFailedText(null);
         return true;
       } catch (err) {
-        const msg = err instanceof Error ? err.message : "Não foi possível enviar a mensagem.";
+        const msg = err instanceof DomainError ? err.message : "Não foi possível enviar a mensagem.";
         setSendError(msg);
         setLastFailedText(trimmed);
         return false;

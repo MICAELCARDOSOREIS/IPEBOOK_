@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   FlatList,
   Modal,
@@ -14,6 +14,7 @@ import { PIRIPIRI_NEIGHBORHOODS } from "@/model/entities/location";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { AppIcon } from "@/view/components/AppIcon";
+import { type FocusableElement, useModalFocusTrap } from "@/view/components/Dialog";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 
 import { withPress } from "@/view/pressFeedback";
@@ -50,19 +51,10 @@ export function NeighborhoodSelectorModal({
     return allList.filter((name) => name.toLowerCase().includes(term));
   }, [allowAllNeighborhoods, filterText]);
 
-  useEffect(() => {
-    if (Platform.OS !== "web" || !visible) return;
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        onClose();
-      }
-    };
-    document.addEventListener("keydown", handleKeyDown);
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [visible, onClose]);
+  const closeRef = useRef<FocusableElement | null>(null);
+  const searchInputRef = useRef<FocusableElement | null>(null);
+
+  useModalFocusTrap(visible, () => [searchInputRef.current, closeRef.current], onClose);
 
   if (!visible) return null;
 
@@ -103,6 +95,7 @@ export function NeighborhoodSelectorModal({
               <Text style={styles.subtitle}>Piripiri · Piauí</Text>
             </View>
             <Pressable
+              ref={closeRef as never}
               accessibilityRole="button"
               accessibilityLabel="Fechar seletor de bairros"
               onPress={onClose}
@@ -116,6 +109,7 @@ export function NeighborhoodSelectorModal({
           <View style={styles.searchBox}>
             <AppIcon name="search" size={20} color={colors.m3.onSurfaceVariant} />
             <TextInput
+              ref={searchInputRef as never}
               style={styles.searchInput}
               placeholder="Buscar bairro em Piripiri..."
               placeholderTextColor={colors.m3.onSurfaceVariant}

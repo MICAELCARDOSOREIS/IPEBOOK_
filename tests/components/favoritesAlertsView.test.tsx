@@ -3,7 +3,8 @@ import { act, fireEvent, render, within } from "@testing-library/react-native";
 import { describe, expect, it, vi } from "vitest";
 import Favorites from "@/view/favorites/favorites";
 import SearchAlerts from "@/view/search/searchAlerts";
-import { bookUseCases, favoriteUseCases } from "@/di/container";
+import { FavoriteButton } from "@/view/components/FavoriteButton";
+import { bookUseCases, favoriteUseCases, searchAlertUseCases } from "@/di/container";
 
 describe("favoritos e alertas (spec 016)", () => {
   it("orienta a entrar sem perder a tela de favoritos", async () => {
@@ -100,6 +101,67 @@ describe("favoritos e alertas (spec 016)", () => {
     expect(screen.getByRole("button", { name: "Gerenciar alerta Clarice" })).toBeDefined();
     fireEvent.press(screen.getByRole("button", { name: "Procurar outro livro" }));
     expect(onSearchBooks).toHaveBeenCalledTimes(1);
+  });
+
+  it("FavoriteButton alterna favorito, notifica onToggleSuccess e mostra erro quando sem sessão", async () => {
+    const userId = "usuario-btn-favorito";
+    const book = await bookUseCases.createListing(
+      { title: "Livro Favoritável", author: "Autor", modality: "donation" },
+      userId,
+    );
+    const onToggleSuccess = vi.fn();
+
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<FavoriteButton bookId={book.id} userId={userId} onToggleSuccess={onToggleSuccess} />);
+    });
+
+    const addBtn = screen.getByRole("button", { name: "Adicionar aos favoritos" });
+    await act(async () => {
+      fireEvent(addBtn, "pressIn");
+    });
+    await act(async () => {
+      fireEvent(addBtn, "pressOut");
+    });
+    await act(async () => {
+      fireEvent.press(addBtn);
+    });
+    expect(onToggleSuccess).toHaveBeenCalledWith(true);
+    expect(screen.getByRole("button", { name: "Remover dos favoritos" })).toBeDefined();
+
+    let unauthScreen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      unauthScreen = await render(<FavoriteButton bookId={book.id} userId={null} />);
+    });
+    await act(async () => {
+      fireEvent.press(unauthScreen.getByRole("button", { name: "Adicionar aos favoritos" }));
+    });
+    expect(unauthScreen.getByRole("alert")).toBeDefined();
+  });
+
+  it("SearchAlerts exibe ErrorState com Tentar novamente quando a listagem falha e não associa erro de carga ao campo (Spec 125 T007)", async () => {
+    const listSpy = vi
+      .spyOn(searchAlertUseCases, "listAlerts")
+      .mockRejectedValueOnce(new Error("falha de rede"))
+      .mockResolvedValueOnce([]);
+
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<SearchAlerts userId="usuario-erro-carga-alerta" onBack={vi.fn()} onLogin={vi.fn()} />);
+    });
+
+    expect(screen.getByRole("alert").props.children).toBe("Não foi possível carregar alertas.");
+    const input = screen.getByLabelText("Termo do alerta");
+    expect(input.props["aria-describedby"]).toBeUndefined();
+    expect(input.props.accessibilityHint).toBeUndefined();
+
+    const retryBtn = screen.getByRole("button", { name: "Tentar novamente" });
+    await act(async () => {
+      fireEvent.press(retryBtn);
+    });
+    expect(listSpy).toHaveBeenCalledTimes(2);
+    expect(screen.getByRole("header", { name: "Nenhum alerta criado" })).toBeDefined();
+    listSpy.mockRestore();
   });
 
 });

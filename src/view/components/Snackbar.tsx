@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef } from "react";
 import { AccessibilityInfo, Animated, Pressable, StyleSheet, Text } from "react-native";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { tokens, type ColorPalette } from "@/view/tokens";
+import { useGuardedPress } from "@/view/useGuardedPress";
 
 export type SnackbarProps = {
   visible: boolean;
@@ -28,6 +29,7 @@ export function Snackbar({
   const { colors, resolvedScheme } = useTheme();
   const styles = useMemo(() => createStyles(colors, resolvedScheme), [colors, resolvedScheme]);
   const scale = useRef(new Animated.Value(0.95)).current;
+  const guardedAction = useGuardedPress(onAction);
 
   useEffect(() => {
     if (!visible) {
@@ -77,7 +79,7 @@ export function Snackbar({
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={actionLabel}
-          onPress={onAction}
+          onPress={guardedAction}
           style={({ pressed }) => [styles.actionButton, pressed && styles.actionButtonPressed]}
         >
           <Text style={styles.actionText}>{actionLabel}</Text>

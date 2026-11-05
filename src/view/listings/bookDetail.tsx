@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
@@ -13,7 +13,9 @@ import { useTheme } from "@/view/theme/ThemeProvider";
 import { captureRef } from "react-native-view-shot";
 import { Breadcrumb } from "@/view/components/Breadcrumb";
 import { Book3D } from "@/view/components/Book3D";
+import { ErrorState } from "@/view/components/ErrorState";
 import { ListingShareCard } from "@/view/components/ListingShareCard";
+import { LoadingState } from "@/view/components/LoadingState";
 import { FilledButton } from "@/view/components/FilledButton";
 import { Snackbar } from "@/view/components/Snackbar";
 import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
@@ -206,16 +208,16 @@ export default function BookDetail({
 
   const navigateToActiveNegotiation = useCallback(() => {
     if (activeRequestId && onNavigateToNegotiation) {
-      onNavigateToNegotiation(activeRequestId);
+      guardedNavigateToNegotiation(activeRequestId);
     } else {
       onNavigateToMyRequests?.();
     }
-  }, [activeRequestId, onNavigateToNegotiation, onNavigateToMyRequests]);
+  }, [activeRequestId, onNavigateToNegotiation, guardedNavigateToNegotiation, onNavigateToMyRequests]);
 
   const handlePrimaryAction = useCallback(() => {
     if (!book) return;
     if (!sessionUserId) {
-      onNavigateToSignIn?.();
+      guardedNavigateToSignIn();
       return;
     }
     if (isRequested) {
@@ -224,7 +226,7 @@ export default function BookDetail({
     }
     setProposalError(null);
     setProposalSheetVisible(true);
-  }, [book, sessionUserId, isRequested, navigateToActiveNegotiation, onNavigateToSignIn]);
+  }, [book, sessionUserId, isRequested, navigateToActiveNegotiation, guardedNavigateToSignIn]);
 
   const handleProposalSubmit = useCallback(
     async (options: { initialMessage?: string; offeredBookId?: string }) => {
@@ -236,7 +238,7 @@ export default function BookDetail({
         if (created) {
           setProposalSheetVisible(false);
           if (onNavigateToNegotiation) {
-            onNavigateToNegotiation(created.id);
+            guardedNavigateToNegotiation(created.id);
           } else {
             onNavigateToMyRequests?.();
           }
@@ -247,14 +249,14 @@ export default function BookDetail({
         setProposalSubmitting(false);
       }
     },
-    [book, sessionUserId, negotiationActions, onNavigateToNegotiation, onNavigateToMyRequests],
+    [book, sessionUserId, negotiationActions, onNavigateToNegotiation, guardedNavigateToNegotiation, onNavigateToMyRequests],
   );
 
   const handleStatusPress = () => {
     if (!book) return;
     if (book.status === "reserved" || book.status === "delivered") {
       if (isOwner) {
-        onNavigateToManageListing?.(book.id);
+        guardedNavigateToManageListing(book.id);
       } else if (isRequested) {
         navigateToActiveNegotiation();
       } else {
@@ -365,7 +367,7 @@ export default function BookDetail({
           onNavigateToSignIn ? (
             <FilledButton
               label={primaryActionLabel}
-              onPress={onNavigateToSignIn}
+              onPress={guardedNavigateToSignIn}
             />
           ) : null
         ) : book.ownerId !== sessionUserId ? (
@@ -512,11 +514,11 @@ export default function BookDetail({
 
         {state.loading ? (
           <View style={styles.status}>
-            <ActivityIndicator color={colors.action} accessibilityLabel="Carregando anúncio" />
+            <LoadingState label="Carregando anúncio" />
           </View>
         ) : state.error ? (
           <View style={styles.status}>
-            <Text accessibilityRole="alert" style={styles.errorText}>{state.error}</Text>
+            <ErrorState message={state.error} onRetry={() => void actions.reload()} />
           </View>
         ) : book ? (
           <View style={[styles.content, wideWeb && styles.contentWide]}>

@@ -52,7 +52,7 @@ export function NegotiationStatusCard({
     return (
       <View style={[styles.card, styles.cardSuccess]}>
         <View style={styles.contentRow}>
-          <View style={[styles.iconBox, { backgroundColor: colors.nature.foliage + "20" }]}>
+          <View style={[styles.iconBox, { backgroundColor: `${colors.nature.foliage}20` }]}>
             <AppIcon name="checkCircle" size={20} color={colors.nature.foliage} />
           </View>
           <View style={styles.textContainer}>
@@ -83,7 +83,7 @@ export function NegotiationStatusCard({
     return (
       <View style={[styles.card, styles.cardConfirmed]}>
         <View style={styles.contentRow}>
-          <View style={[styles.iconBox, { backgroundColor: colors.action + "20" }]}>
+          <View style={[styles.iconBox, { backgroundColor: `${colors.action}20` }]}>
             <AppIcon name="place" size={20} color={colors.action} />
           </View>
           <View style={styles.textContainer}>
@@ -239,16 +239,16 @@ function createStyles(colors: ColorPalette) {
       gap: tokens.spacing[12],
     },
     cardSuccess: {
-      backgroundColor: colors.nature.foliage + "10",
-      borderColor: colors.nature.foliage + "30",
+      backgroundColor: `${colors.nature.foliage}10`,
+      borderColor: `${colors.nature.foliage}30`,
     },
     cardConfirmed: {
       backgroundColor: colors.surface,
-      borderColor: colors.action + "30",
+      borderColor: `${colors.action}30`,
     },
     cardProposed: {
       backgroundColor: colors.surface,
-      borderColor: colors.highlight + "40",
+      borderColor: `${colors.highlight}40`,
     },
     cardEmpty: {
       backgroundColor: colors.surface,

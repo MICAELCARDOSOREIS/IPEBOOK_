@@ -1,7 +1,8 @@
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import type { ImageSource } from "@/model/services/iImagePickerService";
 import { AppIcon } from "@/view/components/AppIcon";
+import { type FocusableElement, useModalFocusTrap } from "@/view/components/Dialog";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { tokens, type ColorPalette } from "@/view/tokens";
@@ -19,6 +20,12 @@ export function PhotoSourceSheet({ visible, title = "Adicionar foto", onChoose, 
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const wideWeb = useIsWideWeb();
+  const cameraRef = useRef<FocusableElement | null>(null);
+  const libraryRef = useRef<FocusableElement | null>(null);
+  const cancelRef = useRef<FocusableElement | null>(null);
+
+  useModalFocusTrap(visible, () => [cameraRef.current, libraryRef.current, cancelRef.current], onClose);
+
   return (
     <Modal accessibilityViewIsModal visible={visible} transparent animationType="fade" statusBarTranslucent navigationBarTranslucent onRequestClose={onClose}>
       <View style={[styles.scrim, wideWeb && styles.scrimWide]}>
@@ -27,6 +34,7 @@ export function PhotoSourceSheet({ visible, title = "Adicionar foto", onChoose, 
           {wideWeb ? null : <View accessible={false} importantForAccessibility="no" style={styles.handle} />}
           <Text accessibilityRole="header" style={styles.title}>{title}</Text>
           <Pressable
+            ref={cameraRef as never}
             accessibilityRole="button"
             accessibilityLabel="Tirar foto com a câmera"
             onPress={() => onChoose("camera")}
@@ -36,6 +44,7 @@ export function PhotoSourceSheet({ visible, title = "Adicionar foto", onChoose, 
             <Text style={styles.rowText}>Tirar foto</Text>
           </Pressable>
           <Pressable
+            ref={libraryRef as never}
             accessibilityRole="button"
             accessibilityLabel="Escolher foto da galeria"
             onPress={() => onChoose("library")}
@@ -44,7 +53,7 @@ export function PhotoSourceSheet({ visible, title = "Adicionar foto", onChoose, 
             <AppIcon name="photo" size={22} color={colors.m3.primary} />
             <Text style={styles.rowText}>Escolher da galeria</Text>
           </Pressable>
-          <Pressable accessibilityRole="button" accessibilityLabel="Cancelar" onPress={onClose} style={withPress(styles.cancel)}>
+          <Pressable ref={cancelRef as never} accessibilityRole="button" accessibilityLabel="Cancelar" onPress={onClose} style={withPress(styles.cancel)}>
             <Text style={styles.cancelText}>Cancelar</Text>
           </Pressable>
         </View>

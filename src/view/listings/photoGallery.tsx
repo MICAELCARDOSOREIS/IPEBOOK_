@@ -14,6 +14,7 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { type FocusableElement, useModalFocusTrap } from "@/view/components/Dialog";
 import { tokens } from "@/view/tokens";
 
 import { withPress } from "@/view/pressFeedback";
@@ -58,6 +59,11 @@ function clampIndex(index: number, length: number): number {
 export function PhotoGallery({ photos, initialIndex = 0, visible, onClose }: PhotoGalleryProps) {
   const [index, setIndex] = useState(clampIndex(initialIndex, photos.length));
   const listRef = useRef<FlatList<string> | null>(null);
+  const closeRef = useRef<FocusableElement | null>(null);
+  const prevRef = useRef<FocusableElement | null>(null);
+  const nextRef = useRef<FocusableElement | null>(null);
+
+  useModalFocusTrap(visible, () => [closeRef.current, prevRef.current, nextRef.current], onClose);
   // Largura e altura em pixels: porcentagem dentro de uma lista horizontal nativa resolve para 0 e a
   // foto não aparecia (tela preta, só "Foto 1 de 1"). Parte da janela e passa a medir a área real.
   const window = useWindowDimensions();
@@ -86,10 +92,7 @@ export function PhotoGallery({ photos, initialIndex = 0, visible, onClose }: Pho
   useEffect(() => {
     if (!isWeb || !visible) return;
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        onClose();
-      } else if (event.key === "ArrowRight") {
+      if (event.key === "ArrowRight") {
         event.preventDefault();
         goTo(index + 1);
       } else if (event.key === "ArrowLeft") {
@@ -108,7 +111,7 @@ export function PhotoGallery({ photos, initialIndex = 0, visible, onClose }: Pho
     <Modal accessibilityViewIsModal visible={visible} animationType="fade" onRequestClose={onClose} transparent={false} statusBarTranslucent navigationBarTranslucent>
       <SafeAreaView style={styles.page}>
         <View style={styles.header}>
-          <Pressable accessibilityRole="button" accessibilityLabel="Fechar galeria de fotos" onPress={onClose} style={withPress(styles.closeButton)}>
+          <Pressable ref={closeRef as never} accessibilityRole="button" accessibilityLabel="Fechar galeria de fotos" onPress={onClose} style={withPress(styles.closeButton)}>
             <Text style={styles.closeText}>Fechar</Text>
           </Pressable>
           <Text style={styles.counter}>{`Foto ${index + 1} de ${photos.length}`}</Text>
@@ -133,6 +136,7 @@ export function PhotoGallery({ photos, initialIndex = 0, visible, onClose }: Pho
         </View>
         <View style={styles.navRow}>
           <Pressable
+            ref={prevRef as never}
             accessibilityRole="button"
             accessibilityLabel="Foto anterior"
             accessibilityState={{ disabled: index <= 0 }}
@@ -143,6 +147,7 @@ export function PhotoGallery({ photos, initialIndex = 0, visible, onClose }: Pho
             <Text style={styles.navText}>‹ Anterior</Text>
           </Pressable>
           <Pressable
+            ref={nextRef as never}
             accessibilityRole="button"
             accessibilityLabel="Próxima foto"
             accessibilityState={{ disabled: index >= photos.length - 1 }}

@@ -1,8 +1,8 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import type { Book } from "@/model/entities/book";
 import { AppIcon } from "@/view/components/AppIcon";
-import { Dialog } from "@/view/components/Dialog";
+import { Dialog, type FocusableElement, useModalFocusTrap } from "@/view/components/Dialog";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { tokens, type ColorPalette } from "@/view/tokens";
@@ -44,12 +44,22 @@ export function ProfileSafetySheet({
   const wideWeb = useIsWideWeb();
   const [confirmingBlock, setConfirmingBlock] = useState(false);
   const [choosingListing, setChoosingListing] = useState(false);
+  const reportUserRef = useRef<FocusableElement | null>(null);
+  const reportListingRef = useRef<FocusableElement | null>(null);
+  const blockRef = useRef<FocusableElement | null>(null);
+  const cancelRef = useRef<FocusableElement | null>(null);
 
   const close = () => {
     setChoosingListing(false);
     setConfirmingBlock(false);
     onClose();
   };
+
+  useModalFocusTrap(
+    visible && !confirmingBlock,
+    () => [reportUserRef.current, reportListingRef.current, blockRef.current, cancelRef.current],
+    close,
+  );
 
   const startReport = () => {
     setChoosingListing(true);
@@ -96,6 +106,7 @@ export function ProfileSafetySheet({
             ) : (
               <>
                 <Pressable
+                  ref={reportUserRef as never}
                   accessibilityRole="button"
                   accessibilityLabel={`Denunciar ${personName}`}
                   onPress={() => {
@@ -110,7 +121,7 @@ export function ProfileSafetySheet({
                     <Text style={styles.hint}>Conduta abusiva, golpe ou perfil falso.</Text>
                   </View>
                 </Pressable>
-                <Pressable accessibilityRole="button" accessibilityLabel={`Denunciar um anúncio de ${personName}`} onPress={startReport} style={withPress(styles.row)}>
+                <Pressable ref={reportListingRef as never} accessibilityRole="button" accessibilityLabel={`Denunciar um anúncio de ${personName}`} onPress={startReport} style={withPress(styles.row)}>
                   <AppIcon name="flag" size={20} color={colors.error} />
                   <View style={styles.rowTexts}>
                     <Text style={styles.rowText}>Denunciar um anúncio</Text>
@@ -118,6 +129,7 @@ export function ProfileSafetySheet({
                   </View>
                 </Pressable>
                 <Pressable
+                  ref={blockRef as never}
                   accessibilityRole="button"
                   accessibilityLabel={`Bloquear ${personName}`}
                   onPress={() => setConfirmingBlock(true)}
@@ -135,7 +147,7 @@ export function ProfileSafetySheet({
               </>
             )}
 
-            <Pressable accessibilityRole="button" accessibilityLabel="Cancelar" onPress={close} style={withPress(styles.cancel)}>
+            <Pressable ref={cancelRef as never} accessibilityRole="button" accessibilityLabel="Cancelar" onPress={close} style={withPress(styles.cancel)}>
               <Text style={styles.cancelText}>Cancelar</Text>
             </Pressable>
           </View>

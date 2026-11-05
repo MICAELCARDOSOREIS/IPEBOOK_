@@ -3,6 +3,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render } from "@testing-library/react-native";
 import { Platform } from "react-native";
 import { Dialog, resolveDialogTabWrap, type FocusableElement } from "@/view/components/Dialog";
+import { PhotoSourceSheet } from "@/view/components/PhotoSourceSheet";
+import { BarcodeScannerModal } from "@/view/components/BarcodeScannerModal";
 
 describe("Dialog (design-system/04-componentes/dialogo.md)", () => {
   afterEach(() => {
@@ -255,6 +257,39 @@ describe("Dialog (design-system/04-componentes/dialogo.md)", () => {
           />,
         ),
       ).resolves.toBeDefined();
+    });
+
+    it("PhotoSourceSheet e BarcodeScannerModal reaproveitam a gestão de foco (Esc fecha e foco retorna ao gatilho, Spec 125 T004)", async () => {
+      Platform.OS = "web";
+      const fakeDocument = installFakeDocument();
+      const trigger = { focus: vi.fn() };
+      fakeDocument.activeElement = trigger;
+
+      const onClosePhoto = vi.fn();
+      const photoScreen = await render(
+        <PhotoSourceSheet visible={true} onChoose={() => {}} onClose={onClosePhoto} />,
+      );
+      fakeDocument.dispatch({ key: "Escape" });
+      expect(onClosePhoto).toHaveBeenCalledTimes(1);
+
+      await photoScreen.rerender(
+        <PhotoSourceSheet visible={false} onChoose={() => {}} onClose={onClosePhoto} />,
+      );
+      expect(trigger.focus).toHaveBeenCalledTimes(1);
+
+      trigger.focus.mockClear();
+      fakeDocument.activeElement = trigger;
+      const onCloseScanner = vi.fn();
+      const scannerScreen = await render(
+        <BarcodeScannerModal visible={true} onClose={onCloseScanner} onScan={() => {}} />,
+      );
+      fakeDocument.dispatch({ key: "Escape" });
+      expect(onCloseScanner).toHaveBeenCalledTimes(1);
+
+      await scannerScreen.rerender(
+        <BarcodeScannerModal visible={false} onClose={onCloseScanner} onScan={() => {}} />,
+      );
+      expect(trigger.focus).toHaveBeenCalledTimes(1);
     });
   });
 });
