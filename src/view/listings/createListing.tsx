@@ -14,7 +14,7 @@ import { StepProgress } from "@/view/components/StepProgress";
 import { TextButton } from "@/view/components/TextButton";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { useFormErrorAnnouncer } from "@/view/useFormErrorAnnouncer";
-import { useCreateListingViewModel } from "@/viewmodel/useCreateListingViewModel";
+import { makeCreateListingViewModel } from "@/di/container";
 import { useListingPhotoViewModel } from "@/viewmodel/useListingPhotoViewModel";
 import {
   validateListingBasics,
@@ -68,7 +68,7 @@ export default function CreateListing({
   const guardedViewMyListings = useGuardedPress(onViewMyListings);
   const guardedGoHome = useGuardedPress(onGoHome);
   const guardedCreated = useGuardedPress(onCreated);
-  const [state, actions] = useCreateListingViewModel();
+  const [state, actions] = makeCreateListingViewModel();
   const [photoState, photoActions] = useListingPhotoViewModel(sessionUserId);
   const { colors } = useTheme();
   const wideWeb = useIsWideWeb();

@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { bookUseCases } from "@/di/container";
 import type { Book } from "@/model/entities/book";
 import { DomainError } from "@/model/errors";
 import type { IBookUseCases } from "@/usecase/iBookUseCases";
@@ -24,7 +23,7 @@ export type DraftsActions = {
  */
 export function useDraftsViewModel(
   sessionUserId: string | null,
-  useCases: IBookUseCases = bookUseCases,
+  useCases: IBookUseCases,
 ): [DraftsState, DraftsActions] {
   const [state, setState] = useState<DraftsState>({
     drafts: [],

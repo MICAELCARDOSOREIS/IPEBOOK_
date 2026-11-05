@@ -1,11 +1,5 @@
 import { useCallback, useRef, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import {
-  bookMetadataService as defaultMetadataService,
-  bookUseCases,
-  logger as defaultLogger,
-  rateLimiter as defaultRateLimiter,
-} from "@/di/container";
 import type { Book, BookCondition, BookModality } from "@/model/entities/book";
 import { DomainError } from "@/model/errors";
 import { isValidIsbn, normalizeIsbn } from "@/model/isbn";
@@ -124,10 +118,10 @@ const INITIAL_STATE: CreateListingState = {
 const GENERIC_ERROR = "Não foi possível cadastrar o anúncio. Tente novamente.";
 
 export function useCreateListingViewModel(
-  useCases: IBookUseCases = bookUseCases,
-  rateLimiter: IRateLimiter = defaultRateLimiter,
-  logger: ILogger = defaultLogger,
-  metadataService: IBookMetadataService = defaultMetadataService,
+  useCases: IBookUseCases,
+  rateLimiter: IRateLimiter,
+  logger: ILogger,
+  metadataService: IBookMetadataService,
 ): [CreateListingState, CreateListingActions] {
   const [state, setState] = useState<CreateListingState>(INITIAL_STATE);
   const stateRef = useRef(state);

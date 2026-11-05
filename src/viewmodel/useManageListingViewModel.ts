@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { bookUseCases } from "@/di/container";
 import type { Book } from "@/model/entities/book";
 import { DomainError } from "@/model/errors";
 import type { IBookUseCases } from "@/usecase/iBookUseCases";
@@ -25,7 +24,7 @@ const ACTION_ERROR = "Não foi possível concluir a ação. Tente novamente.";
 export function useManageListingViewModel(
   bookId: string,
   sessionUserId: string | null,
-  useCases: IBookUseCases = bookUseCases,
+  useCases: IBookUseCases,
 ): [ManageListingState, ManageListingActions] {
   const [state, setState] = useState<ManageListingState>({
     book: null,

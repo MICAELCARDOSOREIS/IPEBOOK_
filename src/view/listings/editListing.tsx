@@ -21,7 +21,7 @@ import { TextField } from "@/view/components/TextField";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { WEB_GUTTER } from "@/view/webLayout";
 import { TopAppBar } from "@/view/components/TopAppBar";
-import { useEditListingViewModel } from "@/viewmodel/useEditListingViewModel";
+import { makeEditListingViewModel } from "@/di/container";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 
@@ -52,7 +52,7 @@ export default function EditListing({
 }: EditListingProps) {
   const guardedCancel = useGuardedPress(onCancel);
   const guardedSaved = useGuardedPress(onSaved);
-  const [state, actions] = useEditListingViewModel(bookId, sessionUserId);
+  const [state, actions] = makeEditListingViewModel(bookId, sessionUserId);
   const { colors, resolvedScheme } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [showPhotoInput, setShowPhotoInput] = useState(false);

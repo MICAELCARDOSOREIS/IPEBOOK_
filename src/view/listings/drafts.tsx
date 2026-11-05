@@ -16,7 +16,7 @@ import { LoadingState } from "@/view/components/LoadingState";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
-import { useDraftsViewModel } from "@/viewmodel/useDraftsViewModel";
+import { makeDraftsViewModel } from "@/di/container";
 import { WEB_MAX_WIDTH, WEB_GUTTER, useWebColumns, webColumnWidth } from "@/view/webLayout";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
@@ -56,7 +56,7 @@ export function Drafts({ sessionUserId, onBack, onResume, onNavigateToCreateList
   const guardedCreate = useGuardedPress(onNavigateToCreateListing);
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const [state, actions] = useDraftsViewModel(sessionUserId);
+  const [state, actions] = makeDraftsViewModel(sessionUserId);
   const [toDiscard, setToDiscard] = useState<Book | null>(null);
   // Web larga: coluna mais larga e dois rascunhos por linha, em vez de uma faixa estreita no meio.
   const wide = useIsWideWeb();

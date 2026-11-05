@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { bookUseCases } from "@/di/container";
 import type { Book, BookCondition, BookModality } from "@/model/entities/book";
 import { DomainError } from "@/model/errors";
 import type { IBookUseCases } from "@/usecase/iBookUseCases";
@@ -67,7 +66,7 @@ const GENERIC_ERROR = "Não foi possível atualizar o anúncio. Tente novamente.
 export function useEditListingViewModel(
   bookId: string,
   sessionUserId: string | null,
-  useCases: IBookUseCases = bookUseCases,
+  useCases: IBookUseCases,
 ): [EditListingState, EditListingActions] {
   const [state, setState] = useState<EditListingState>(INITIAL_STATE);
   const active = useRef(false);
