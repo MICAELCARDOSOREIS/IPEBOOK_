@@ -13,19 +13,13 @@ const allowed = {
   di: ["di", "infra", "model", "usecase", "viewmodel"],
 };
 
-// Spec 126 / ADR 0098 (T001): lista de exceções decrescente (catraca) para viewmodel -> @/di.
+// Spec 126 / ADR 0098 (T001 / T010): zero exceções para viewmodel -> @/di.
 const VIEWMODEL_DI_EXCEPTIONS = new Set([]);
 const seenViewModelDiImports = new Set();
 
-// Spec 126 (T003): teto de linhas por arquivo de tela em src/view/ com catraca para as 5 telas acima de 900 linhas.
+// Spec 126 (T003 / T011-T013): teto de 900 linhas por arquivo de tela em src/view/ (0 exceções).
 const VIEW_FILE_LINE_CEILING = 900;
-const VIEW_SIZE_EXCEPTIONS = new Map([
-  ["view/home.tsx", 1385],
-  ["view/profile/profileHub.tsx", 1110],
-  ["view/listings/bookDetail.tsx", 1110],
-  ["view/requests/scheduleMeeting.tsx", 1070],
-  ["view/conversations/chat.tsx", 905],
-]);
+const VIEW_SIZE_EXCEPTIONS = new Map([]);
 const seenOversizedViews = new Set();
 
 // Spec 126 (T002 / T017): teto de ocorrências de `.parent!` em tests/components*.

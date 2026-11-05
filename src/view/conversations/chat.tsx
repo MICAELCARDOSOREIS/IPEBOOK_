@@ -1,10 +1,3 @@
-import {
-  makeAuthViewModel,
-  makeDeliveryStatus,
-  makeMeetingViewModel,
-  makeNegotiationChatViewModel,
-  makeRequestDetailViewModel,
-} from "@/di/container";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -18,10 +11,18 @@ import {
 } from "react-native";
 import * as Linking from "expo-linking";
 import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  makeAuthViewModel,
+  makeDeliveryStatus,
+  makeMeetingViewModel,
+  makeNegotiationChatViewModel,
+  makeRequestDetailViewModel,
+} from "@/di/container";
 import { buildChatTimeline, formatBubbleTime, type ChatEvent, type ChatTimelineItem } from "@/viewmodel/chatTimeline";
 import { PIRIPIRI_MEETING_POINTS } from "@/model/entities/meetingPoint";
 import { addMeetingToCalendar } from "@/view/calendarIntegration";
 import { NegotiationStatusCard } from "./NegotiationStatusCard";
+import { BuyerPendingProposalBanner, OwnerPendingProposalCard } from "./ChatProposalCards";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
@@ -302,82 +303,24 @@ export function Chat({
             ) : null}
 
             {detail && detail.isOwner && detail.request.status === "pending" ? (
-              <View style={[styles.proposalCard, isWebStandalone && styles.proposalCardWide]}>
-                <View style={styles.proposalHeader}>
-                  <View style={styles.proposalIconBox}>
-                    <AppIcon name="swap" size={18} color={colors.nature.foliage} />
-                  </View>
-                  <View style={styles.proposalText}>
-                    <Text style={styles.proposalTitle}>Nova proposta recebida</Text>
-                    <Text style={styles.proposalSubtitle}>
-                      Aceite para reservar o livro e liberar a conversa para combinar a entrega.
-                    </Text>
-                  </View>
-                </View>
-
-                {detail.request.initialMessage ? (
-                  <View style={styles.proposalInitialMessageBox}>
-                    <Text style={styles.proposalInitialMessageLabel}>Mensagem de {name}:</Text>
-                    <Text style={styles.proposalInitialMessageText}>"{detail.request.initialMessage}"</Text>
-                  </View>
-                ) : null}
-
-                {detail.offeredBook ? (
-                  <View style={styles.proposalOfferedBookBox}>
-                    <Text style={styles.proposalOfferedBookLabel}>Livro oferecido em troca:</Text>
-                    <View style={styles.proposalOfferedBookRow}>
-                      <BookCover id={detail.offeredBook.id} title={detail.offeredBook.title} photoUrl={detail.offeredBook.photoUrl} variant="list" />
-                      <View style={styles.proposalOfferedBookText}>
-                        <Text style={styles.proposalOfferedBookTitle} numberOfLines={1}>{detail.offeredBook.title}</Text>
-                        <Text style={styles.proposalOfferedBookAuthor} numberOfLines={1}>{detail.offeredBook.author}</Text>
-                      </View>
-                    </View>
-                  </View>
-                ) : null}
-
-                <View style={styles.proposalActions}>
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel="Aceitar proposta"
-                    disabled={respondingProposal}
-                    onPress={() => void handleAcceptProposal()}
-                    style={withPress(styles.proposalAcceptButton)}
-                  >
-                    <Text style={styles.proposalAcceptText}>Aceitar proposta</Text>
-                  </Pressable>
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel="Recusar proposta"
-                    disabled={respondingProposal}
-                    onPress={() => void handleRejectProposal()}
-                    style={withPress(styles.proposalRejectButton)}
-                  >
-                    <Text style={styles.proposalRejectText}>Recusar</Text>
-                  </Pressable>
-                </View>
-                {proposalError ? <Text style={styles.proposalError}>{proposalError}</Text> : null}
-              </View>
+              <OwnerPendingProposalCard
+                counterpartName={name}
+                initialMessage={detail.request.initialMessage}
+                offeredBook={detail.offeredBook}
+                isWebStandalone={isWebStandalone}
+                responding={respondingProposal}
+                error={proposalError}
+                onAccept={() => void handleAcceptProposal()}
+                onReject={() => void handleRejectProposal()}
+              />
             ) : null}
 
             {detail && !detail.isOwner && detail.request.status === "pending" ? (
-              <View style={[styles.buyerProposalBanner, isWebStandalone && styles.buyerProposalBannerWide]}>
-                <AppIcon name="info" size={16} color={colors.m3.onSecondaryContainer} />
-                <View style={styles.buyerProposalTextContainer}>
-                  <Text style={styles.buyerProposalText}>
-                    Sua proposta foi enviada. O bate-papo será liberado assim que o anunciante aceitar.
-                  </Text>
-                  {detail.request.initialMessage ? (
-                    <Text style={styles.buyerProposalSubtext} numberOfLines={2}>
-                      Sua mensagem: "{detail.request.initialMessage}"
-                    </Text>
-                  ) : null}
-                  {detail.offeredBook ? (
-                    <Text style={styles.buyerProposalSubtext} numberOfLines={1}>
-                      Livro oferecido: {detail.offeredBook.title}
-                    </Text>
-                  ) : null}
-                </View>
-              </View>
+              <BuyerPendingProposalBanner
+                initialMessage={detail.request.initialMessage}
+                offeredBook={detail.offeredBook}
+                isWebStandalone={isWebStandalone}
+              />
             ) : null}
 
             {state.isLoading ? (
@@ -654,103 +597,6 @@ function createStyles(colors: ColorPalette) {
       justifyContent: "center",
     },
     sendActive: { backgroundColor: colors.m3.primary },
-    proposalCard: {
-      backgroundColor: colors.nature.sprout,
-      marginHorizontal: tokens.spacing[16],
-      marginTop: tokens.spacing[8],
-      borderRadius: tokens.radius.card,
-      padding: tokens.spacing[12],
-      gap: tokens.spacing[8],
-      borderWidth: 1,
-      borderColor: colors.nature.foliage,
-    },
-    proposalHeader: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[8],
-    },
-    proposalIconBox: {
-      width: 32,
-      height: 32,
-      borderRadius: tokens.radius.full,
-      backgroundColor: colors.nature.onFoliage,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    proposalText: {
-      flex: 1,
-      gap: 2,
-    },
-    proposalTitle: {
-      ...tokens.typography.bodyLarge,
-      fontWeight: tokens.fontWeight.bold,
-      color: colors.nature.foliageDeep,
-    },
-    proposalSubtitle: {
-      ...tokens.typography.labelSmall,
-      color: colors.nature.foliageDeep,
-    },
-    proposalActions: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[8],
-      marginTop: tokens.spacing[4],
-    },
-    proposalAcceptButton: {
-      flex: 1,
-      minHeight: 40,
-      backgroundColor: colors.nature.foliage,
-      borderRadius: tokens.radius.full,
-      alignItems: "center",
-      justifyContent: "center",
-      paddingHorizontal: tokens.spacing[12],
-    },
-    proposalAcceptText: {
-      ...tokens.typography.bodyMedium,
-      fontWeight: tokens.fontWeight.semiBold,
-      color: colors.nature.onFoliage,
-    },
-    proposalRejectButton: {
-      minHeight: 40,
-      borderRadius: tokens.radius.full,
-      alignItems: "center",
-      justifyContent: "center",
-      paddingHorizontal: tokens.spacing[16],
-      borderWidth: 1,
-      borderColor: colors.m3.outline,
-    },
-    proposalRejectText: {
-      ...tokens.typography.bodyMedium,
-      color: colors.m3.onSurfaceVariant,
-    },
-    proposalError: {
-      ...tokens.typography.labelSmall,
-      color: colors.error,
-    },
-    buyerProposalBanner: {
-      flexDirection: "row",
-      alignItems: "center",
-      backgroundColor: colors.m3.secondaryContainer,
-      marginHorizontal: tokens.spacing[16],
-      marginTop: tokens.spacing[8],
-      borderRadius: tokens.radius.small,
-      padding: tokens.spacing[10],
-      gap: tokens.spacing[8],
-    },
-    buyerProposalText: {
-      flex: 1,
-      ...tokens.typography.labelSmall,
-      color: colors.m3.onSecondaryContainer,
-    },
-    buyerProposalTextContainer: {
-      flex: 1,
-      gap: tokens.spacing[2],
-    },
-    buyerProposalSubtext: {
-      ...tokens.typography.labelSmall,
-      color: colors.m3.onSecondaryContainer,
-      opacity: 0.85,
-    },
     eventRow: {
       alignItems: "center",
       marginVertical: tokens.spacing[8],
@@ -771,51 +617,6 @@ function createStyles(colors: ColorPalette) {
       ...tokens.typography.labelSmall,
       color: colors.nature.foliageDeep,
       fontWeight: tokens.fontWeight.medium,
-    },
-    proposalInitialMessageBox: {
-      backgroundColor: colors.m3.surfaceContainerLowest,
-      padding: tokens.spacing[10],
-      borderRadius: tokens.radius.cardSmall,
-      gap: tokens.spacing[2],
-    },
-    proposalInitialMessageLabel: {
-      ...tokens.typography.labelSmall,
-      color: colors.nature.foliageDeep,
-      fontWeight: tokens.fontWeight.semiBold,
-    },
-    proposalInitialMessageText: {
-      ...tokens.typography.bodyMedium,
-      color: colors.m3.onSurface,
-      fontStyle: "italic",
-    },
-    proposalOfferedBookBox: {
-      backgroundColor: colors.m3.surfaceContainerLowest,
-      padding: tokens.spacing[10],
-      borderRadius: tokens.radius.cardSmall,
-      gap: tokens.spacing[6],
-    },
-    proposalOfferedBookLabel: {
-      ...tokens.typography.labelSmall,
-      color: colors.nature.foliageDeep,
-      fontWeight: tokens.fontWeight.semiBold,
-    },
-    proposalOfferedBookRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[10],
-    },
-    proposalOfferedBookText: {
-      flex: 1,
-      gap: tokens.spacing[2],
-    },
-    proposalOfferedBookTitle: {
-      ...tokens.typography.bodyMedium,
-      fontWeight: tokens.fontWeight.semiBold,
-      color: colors.m3.onSurface,
-    },
-    proposalOfferedBookAuthor: {
-      ...tokens.typography.labelSmall,
-      color: colors.m3.onSurfaceVariant,
     },
     pageWeb: {
       backgroundColor: colors.m3.surfaceContainerLowest,
@@ -876,14 +677,6 @@ function createStyles(colors: ColorPalette) {
       backgroundColor: colors.m3.surfaceContainerLow,
       borderWidth: 1,
       borderColor: colors.m3.outlineVariant,
-    },
-    proposalCardWide: {
-      marginHorizontal: tokens.spacing[20],
-      marginTop: tokens.spacing[12],
-    },
-    buyerProposalBannerWide: {
-      marginHorizontal: tokens.spacing[20],
-      marginTop: tokens.spacing[12],
     },
     listWide: {
       paddingHorizontal: tokens.spacing[24],
