@@ -169,7 +169,7 @@ export default function Favorites({
             ) : undefined
           }
           ListEmptyComponent={
-            <View style={[styles.emptyBox, wideWeb && styles.emptyBoxWide]}>
+            <View testID="favorites-empty-state" style={[styles.emptyBox, wideWeb && styles.emptyBoxWide]}>
               <View style={styles.emptyIpeContainer}>
                 <IpeMark size={68} />
               </View>

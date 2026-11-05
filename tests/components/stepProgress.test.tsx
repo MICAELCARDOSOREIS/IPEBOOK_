@@ -34,7 +34,8 @@ describe("StepProgress (design-system/04-componentes/indicador-de-etapas.md)", (
     );
     const dot = getByTestId("step-progress-end-dot");
     // O ponto divide o contêiner com a barra; os rótulos ficam fora dele.
-    const trackArea = within(dot.parent!);
+    const trackArea = within(getByTestId("step-progress-track-area"));
+    expect(trackArea.getByTestId("step-progress-end-dot")).toBeDefined();
     expect(trackArea.getByTestId("step-progress-fill")).toBeDefined();
     expect(trackArea.queryByText("Livro")).toBeNull();
     const flatten = (style: unknown) => (Array.isArray(style) ? Object.assign({}, ...style) : style);

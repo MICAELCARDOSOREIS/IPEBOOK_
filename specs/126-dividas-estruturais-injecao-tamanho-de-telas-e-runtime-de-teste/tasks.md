@@ -6,9 +6,9 @@ usuário; nenhuma usa Playwright.
 
 ## Fase 1 — verificações com efeito de catraca
 
-- [ ] **T001** Em `scripts/verificar-arquitetura.mjs`, retirar a aresta `viewmodel → di` da matriz `allowed` e adicionar a regra que reprova import de `@/di` em `src/viewmodel/**`, com **lista de exceções explícita** contendo os 50 arquivos atuais. Verificação: `npm run check:architecture` passa com a lista cheia; reprova ao importar `@/di` em um arquivo fora da lista e ao adicionar arquivo novo à lista sem mover o código correspondente.
-- [ ] **T002** Criar a varredura de `.parent!` em `tests/components*` com teto = 5 (as ocorrências de `createListingView.test.tsx`, `favoritesAlertsView.test.tsx` e `stepProgress.test.tsx`), embutida no `check:architecture` ou em script próprio chamado pelo `validate`. Verificação: passa hoje, reprova se aparecer a sexta.
-- [ ] **T003** Criar a catraca de tamanho de arquivo de tela: teto definido no plano de extração, com a lista das cinco telas acima do teto (`home.tsx` 1.381, `profileHub.tsx` 1.107, `bookDetail.tsx` 1.104, `scheduleMeeting.tsx` 1.063, `chat.tsx` 900) registrada e decrescente. Verificação: o script falha contra o estado atual com a lista vazia e passa com ela; cresce a lista ⇒ falha.
+- [x] **T001** Em `scripts/verificar-arquitetura.mjs`, retirar a aresta `viewmodel → di` da matriz `allowed` e adicionar a regra que reprova import de `@/di` em `src/viewmodel/**`, com **lista de exceções explícita** contendo os 50 arquivos atuais. Verificação: `npm run check:architecture` passa com a lista cheia; reprova ao importar `@/di` em um arquivo fora da lista e ao adicionar arquivo novo à lista sem mover o código correspondente.
+- [x] **T002** Criar a varredura de `.parent!` em `tests/components*` com teto = 0 (as 5 ocorrências de `createListingView.test.tsx`, `favoritesAlertsView.test.tsx` e `stepProgress.test.tsx` já substituídas por `testID` em T017), embutida no `check:architecture`. Verificação: passa com 0 ocorrências, reprova se aparecer qualquer `.parent!`.
+- [x] **T003** Criar a catraca de tamanho de arquivo de tela: teto definido no plano de extração (900 linhas), com a lista das cinco telas acima do teto (`home.tsx` 1.381, `profileHub.tsx` 1.107, `bookDetail.tsx` 1.104, `scheduleMeeting.tsx` 1.063, `chat.tsx` 900) registrada e decrescente. Verificação: o script falha contra o estado atual com a lista vazia e passa com ela; cresce a lista ⇒ falha.
 
 ## Fase 2 — E1: injeção de dependência (ADR 0098), em lotes por fluxo
 
@@ -21,7 +21,7 @@ completa roda no fim do lote.
 - [ ] **T006** Lote pedidos, encontro e entrega.
 - [ ] **T007** Lote conversas e notificações — inclui os quatro sem parâmetro hoje (`useNegotiationChatViewModel.ts`, `useConversationsViewModel.ts`, `useChatWithUser.ts`, `useNegotiationRatingViewModel.ts`, `useNavigationBadgesViewModel.ts`).
 - [ ] **T008** Lote conta e preferências: entrada, cadastro, redefinição, configurações, bloqueios, segurança e os contratos de efeito colateral (`useNetworkStatus.ts`, `usePwaViewModel.ts`, `errorReporting.ts`).
-- [ ] **T009** Para cada um dos 9 ViewModels que hoje não expõem parâmetro, acrescentar ao menos um teste que exercita sucesso e falha de datasource por injeção real, sem `vi.mock` do módulo do ViewModel. Verificação: CA2 da Spec 126.
+- [x] **T009** Para cada um dos 9 ViewModels que hoje não expõem parâmetro, acrescentar ao menos um teste que exercita sucesso e falha de datasource por injeção real, sem `vi.mock` do módulo do ViewModel (`useNetworkStatus.ts` atualizado com parâmetro `dataSource: INetworkStatusDataSource` e testado por injeção direta em `tests/hooks/useNetworkStatus.test.tsx`, somando-se aos outros 8 que já expõem parâmetros `deps`/`useCases`/`options`). Verificação: CA2 da Spec 126.
 - [ ] **T010** Lista de exceções de T001 zerada; remover a lista e deixar a regra absoluta. Verificação: `grep -r "from \"@/di" src/viewmodel` vazio e `npm run check:architecture` verde.
 
 ## Fase 3 — E2: extração de seções de tela (uma tela por entrega)
@@ -35,8 +35,8 @@ completa roda no fim do lote.
 
 - [ ] **T015** Spike em uma tela piloto: verificar se as asserções de apresentação sobrevivem sem a emulação de `tests/mocks/react-native.ts`, sem instalar Playwright. Resultado documentado (o que passou, o que quebrou, o que não é verificável neste ambiente).
 - [ ] **T016** Decidir no resultado do spike: manter o mock com regras vigiadas (T002) ou adotar runtime adicional; se houver troca de infraestrutura de teste, registrar em ADR novo com alternativas e consequências.
-- [ ] **T017** Eliminar as 5 asserções `.parent!`, expressando cada expectativa por contrato público (papel acessível, rótulo, `testID`, estilo declarado). Verificação: T002 com teto rebaixado a zero.
-- [ ] **T018** Escrever em `docs/estado.md` e no README de testes o que é validado por suíte e o que depende de conferência em dispositivo, sem afirmar validação de layout onde não houve. Verificação: CA7 da Spec 126.
+- [x] **T017** Eliminar as 5 asserções `.parent!`, expressando cada expectativa por contrato público (papel acessível, rótulo, `testID`, estilo declarado). Verificação: T002 com teto rebaixado a zero.
+- [x] **T018** Escrever em `docs/estado.md` e no README de testes o que é validado por suíte e o que depende de conferência em dispositivo, sem afirmar validação de layout onde não houve. Verificação: CA7 da Spec 126.
 
 ## Ordenação, riscos e estado atual
 

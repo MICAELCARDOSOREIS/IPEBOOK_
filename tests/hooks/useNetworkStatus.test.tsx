@@ -2,6 +2,7 @@ import { createElement } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { INetworkStatusDataSource } from "@/model/datasources/iNetworkStatusDataSource";
+import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
 
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
 const mounted: ReactTestRenderer[] = [];
@@ -19,16 +20,12 @@ afterEach(() => {
     const renderer = mounted.pop();
     act(() => renderer?.unmount());
   }
-  vi.resetModules();
-  vi.doUnmock("@/di/container");
 });
 
 async function renderNetworkStatus(dataSource: INetworkStatusDataSource) {
-  vi.doMock("@/di/container", () => ({ networkStatusDataSource: dataSource }));
-  const { useNetworkStatus } = await import("@/viewmodel/useNetworkStatus");
   let hookResult: { isOnline: boolean } | undefined;
   function Probe() {
-    hookResult = useNetworkStatus();
+    hookResult = useNetworkStatus(dataSource);
     return null;
   }
   let renderer!: ReactTestRenderer;
