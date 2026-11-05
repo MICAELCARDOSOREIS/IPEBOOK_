@@ -89,4 +89,19 @@ describe("usePermissionPromptViewModel (Spec 020 T004)", () => {
     expect(prompts.markAsked).toHaveBeenCalledTimes(1);
     expect(view.getState().status).toBe("idle");
   });
+
+  it("Spec 127: reopen reabre a explicação a pedido, mesmo depois de a pergunta já ter sido registrada", async () => {
+    const prompts = fakeUseCases("asked");
+    const view = await mount(prompts);
+    await act(async () => void (await view.actions().refresh()));
+    expect(view.getState().status).toBe("idle");
+
+    await act(async () => view.actions().reopen());
+    expect(view.getState()).toEqual({ status: "explain", granted: false });
+    expect(prompts.resolve).toHaveBeenCalledTimes(1);
+    expect(prompts.request).not.toHaveBeenCalled();
+
+    await act(async () => void (await view.actions().approve()));
+    expect(prompts.request).toHaveBeenCalledTimes(1);
+  });
 });

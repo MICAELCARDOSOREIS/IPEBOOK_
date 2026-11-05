@@ -4,7 +4,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { PERMISSION_PROMPT_COPY } from "@/view/components/PermissionPromptDialog";
 import { PushRegistration } from "@/view/components/PushRegistration";
 
-const registro = vi.hoisted(() => ({ calls: [] as Array<string | null> }));
+const registro = vi.hoisted(() => ({
+  calls: [] as Array<string | null>,
+  permissionReady: [] as boolean[],
+}));
 const auth = vi.hoisted(() => ({
   user: { id: "u1" } as { id: string } | null,
   actions: { refreshSession: vi.fn() },
@@ -14,8 +17,9 @@ const prompt = vi.hoisted(() => ({
   actions: { refresh: vi.fn(), approve: vi.fn(), decline: vi.fn(), dismiss: vi.fn() },
 }));
 vi.mock("@/viewmodel/usePushRegistration", () => ({
-  usePushRegistration: (userId: string | null) => {
+  usePushRegistration: (userId: string | null, _route: unknown, _svc: unknown, _prefs: unknown, ready: boolean) => {
     registro.calls.push(userId);
+    registro.permissionReady.push(ready);
   },
 }));
 vi.mock("@/viewmodel/useAuthViewModel", () => ({
@@ -28,6 +32,7 @@ vi.mock("@/viewmodel/usePermissionPromptViewModel", () => ({
 describe("PushRegistration (Spec 096 e Spec 020)", () => {
   afterEach(() => {
     registro.calls.length = 0;
+    registro.permissionReady.length = 0;
     auth.user = { id: "u1" };
     auth.actions.refreshSession.mockReset();
     prompt.state = { status: "idle", granted: true };
@@ -73,6 +78,23 @@ describe("PushRegistration (Spec 096 e Spec 020)", () => {
     });
     expect(auth.actions.refreshSession).toHaveBeenCalledTimes(1);
     expect(prompt.actions.refresh).toHaveBeenCalled();
+  });
+
+  it("Spec 127: navegar reavalia a permissão, então conceder em outra tela libera o token na mesma execução", async () => {
+    prompt.state = { status: "idle", granted: false };
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<PushRegistration pathname="/" onOpenRoute={() => {}} />);
+    });
+    expect(prompt.actions.refresh).toHaveBeenCalledTimes(1);
+    expect(registro.permissionReady.at(-1)).toBe(false);
+
+    prompt.state = { status: "idle", granted: true };
+    await act(async () => {
+      screen.rerender(<PushRegistration pathname="/notificacoes" onOpenRoute={() => {}} />);
+    });
+    expect(prompt.actions.refresh).toHaveBeenCalledTimes(2);
+    expect(registro.permissionReady.at(-1)).toBe(true);
   });
 
   it("CA2: ao entrar na conta explica o motivo dos avisos antes do prompt nativo", async () => {

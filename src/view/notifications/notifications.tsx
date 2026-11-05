@@ -9,8 +9,14 @@ import { FilledButton } from "@/view/components/FilledButton";
 import { IconBadge, type IconBadgeTone } from "@/view/components/IconBadge";
 import { LoadingState } from "@/view/components/LoadingState";
 import { OfflineState } from "@/view/components/OfflineState";
+import { OutlinedButton } from "@/view/components/OutlinedButton";
+import { PermissionPromptDialog } from "@/view/components/PermissionPromptDialog";
 import { TopAppBar } from "@/view/components/TopAppBar";
-import { makeNetworkStatus, makeNotificationsViewModel } from "@/di/container";
+import {
+  makeNetworkStatus,
+  makeNotificationsPromptViewModel,
+  makeNotificationsViewModel,
+} from "@/di/container";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
@@ -62,6 +68,8 @@ export default function Notifications({
   const guardedAction = useGuardedPress(onNavigateToAction);
   const guardedExplore = useGuardedPress(onExploreBooks ?? onBack);
   const [state, actions] = makeNotificationsViewModel(sessionUserId);
+  const [prompt, promptActions] = makeNotificationsPromptViewModel();
+  const guardedAskPermission = useGuardedPress(promptActions.reopen);
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const wide = useIsWideWeb();
@@ -114,7 +122,7 @@ export default function Notifications({
         contentMaxWidth={wide ? WIDE_CONTENT_MAX_WIDTH : undefined}
       />
       <View style={[styles.content, wide && styles.contentWide]}>
-        {state.systemPermissionGranted === false ? (
+        {state.systemPermissionGranted === false && !prompt.granted ? (
           <View
             style={[styles.permissionBanner, wide && styles.permissionBannerWide]}
             accessible={true}
@@ -129,6 +137,13 @@ export default function Notifications({
               <Text style={styles.permissionBannerDescription}>
                 Ative as notificações do IpêBook nas configurações do aparelho para não perder propostas nem lembretes de encontros presenciais.
               </Text>
+              <View style={styles.permissionBannerAction}>
+                <OutlinedButton
+                  label="Pedir permissão de novo"
+                  accessibilityLabel="Pedir permissão de avisos novamente ao aparelho"
+                  onPress={guardedAskPermission}
+                />
+              </View>
             </View>
           </View>
         ) : null}
@@ -388,6 +403,15 @@ export default function Notifications({
         }}
         onCancel={() => setConfirmClearAllVisible(false)}
       />
+
+      {/* Reabrir o aviso explicativo: a pessoa pediu no botão da banner, então o prompt nativo vem depois. */}
+      <PermissionPromptDialog
+        permission="notifications"
+        status={prompt.status}
+        onAllow={() => void promptActions.approve()}
+        onLater={() => void promptActions.decline()}
+        onDismiss={promptActions.dismiss}
+      />
     </SafeAreaView>
   );
 }
@@ -456,6 +480,8 @@ function createStyles(colors: ColorPalette) {
       color: colors.secondaryText,
       lineHeight: 18,
     },
+    // Controle para reabrir o aviso explicativo depois de uma recusa (Spec 127).
+    permissionBannerAction: { marginTop: tokens.spacing[10], maxWidth: 320 },
     flexOne: { flex: 1, minHeight: 0 },
     contentWide: {
       maxWidth: WIDE_CONTENT_MAX_WIDTH,

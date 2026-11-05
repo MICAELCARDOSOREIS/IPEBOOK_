@@ -66,4 +66,5 @@
   câmera, anterior e independente do `PermissionPromptDialog` desta spec; não foi unificado.
 - Reativar avisos de dentro do app depois da recusa: hoje a explicação é a orientação para os
   Ajustes do aparelho. Um controle em "Central de notificações" que reabra o prompt fica como
-  acompanhamento.
+  acompanhamento. Entregue pela Spec 127 (`specs/127-reativar-avisos-de-dentro-do-app/`), em
+  2026-11-05.
