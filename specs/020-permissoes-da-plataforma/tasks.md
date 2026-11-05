@@ -27,7 +27,11 @@
   da tela. O pedido silencioso que a raiz fazia antes foi removido: `usePushRegistration` agora só
   busca o token do Expo com `permissionReady` verdadeiro, então `requestPermissionsAsync` do
   `expoPushNotificationService` não roda mais sem a pessoa ter tocado em "Permitir avisos". A
-  fábrica `makeNotificationsPromptViewModel` está em `src/di/container.ts`.
+  fábrica `makeNotificationsPromptViewModel` está em `src/di/container.ts`. A verificação em
+  navegador mostrou que o aviso ainda não saía na mesma execução do cadastro — cada tela tem seu
+  estado de sessão, e a raiz montou antes de existir conta — então `useAuthViewModel` passou a expor
+  `refreshSession` e `PushRegistration` recebe a rota atual (`pathname`) para reler a sessão enquanto
+  não houver conta logada.
 - [x] T006 Integrar o prompt de permissão de câmera/fotos ao fluxo de anunciar, com fallback pra
   capa ilustrativa quando negado. Em `src/view/listings/createListingStep2.tsx`, escolher
   "Tirar foto" ou "Escolher da galeria" abre primeiro o `PermissionPromptDialog` com
@@ -45,16 +49,21 @@
   `tests/components/createListingStep2.test.tsx` (motivo antes do seletor, "Publicar sem foto" e a
   saída da recusa).
 - [x] T008 Executar `npm run validate` e `npm run build:web`, registrar em `validacao.md`. Feito em
-  2026-11-05: pipeline integral verde (2.109 testes em 297 arquivos, 0 violações de arquitetura,
-  branches 81,39%) e build web exportado com sucesso, tudo registrado em
-  `specs/020-permissoes-da-plataforma/validacao.md`, que também lista a limitação da ausência de
-  verificação em aparelho.
+  2026-11-05: pipeline integral verde (2.113 testes em 297 arquivos na reexecução, 0 violações de
+  arquitetura, branches 81,39%) e build web exportado com sucesso, tudo registrado em
+  `specs/020-permissoes-da-plataforma/validacao.md`. Na mesma data os fluxos foram conferidos em
+  navegador real por CDP (Chrome headless, sem Playwright, modo memória): explicação antes de
+  qualquer prompt nativo, um único prompt por decisão, estado de recusa com o caminho dos Ajustes e
+  publicação do anúncio sem foto concluída. Falta apenas a passada em aparelho físico, registrada
+  como limitação.
 
 ## Fora do que estava previsto
 
 - Localização: nenhuma tela pede permissão de localização do aparelho — a beta escolhe o bairro
   manualmente dentro de Piripiri, então não há prompt nativo a explicar (decisão registrada no
   escopo da própria spec).
+- Leitor de código de barras: `BarcodeScannerModal` (etapa 1 de anunciar) tem a própria explicação de
+  câmera, anterior e independente do `PermissionPromptDialog` desta spec; não foi unificado.
 - Reativar avisos de dentro do app depois da recusa: hoje a explicação é a orientação para os
   Ajustes do aparelho. Um controle em "Central de notificações" que reabra o prompt fica como
   acompanhamento.

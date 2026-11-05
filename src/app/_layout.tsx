@@ -104,7 +104,7 @@ export default function RootLayout() {
       <ThemeProvider>
         <ThemedStatusBar />
         <PwaRegister />
-        <PushRegistration onOpenRoute={(route) => pushOnce(route as never)} />
+        <PushRegistration pathname={pathname} onOpenRoute={(route) => pushOnce(route as never)} />
         <InitialRouteGate pathname={pathname} onShowWelcome={() => replaceOnce("/bem-vindo")}>
           <KeyboardAwareRoot>
             {wideWeb && !WEB_BETA_ONLY && !AUTH_ROUTES.has(pathname) ? (

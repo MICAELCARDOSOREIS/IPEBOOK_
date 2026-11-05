@@ -44,7 +44,9 @@ fotos`, `11.05 · Fotos não permitidas`.
   (`status === "denied"` do `PermissionPromptDialog`, mais o alerta do seletor de fotos.)
 - [x] Negar permissão de fotos no fluxo de anunciar não impede publicar o anúncio — ele segue
   com a capa ilustrativa (ver `design-system/04-componentes/capa-ilustrativa.md`). O botão
-  "Publicar sem foto" dispensa o acesso e `photoUrl` continua opcional na publicação.
+  "Publicar sem foto" dispensa o acesso e `photoUrl` continua opcional na publicação. Conferido em
+  navegador real: publicado sem foto, com o seletor nativo nunca aberto por essa escolha (evidência
+  em `validacao.md`).
 - [x] Cobertura de testes acima de 80% e zero violações em `npm run check:architecture`.
   Medido em 2026-11-05: 0 violações em 473 arquivos; cobertura global acima do mínimo de 80% das
   quatro dimensões (números na Seção 1 de `docs/estado.md` após o `npm run validate`).

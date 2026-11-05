@@ -273,4 +273,39 @@ describe("useAuthViewModel", () => {
       expect(hookSemCallback.current[0].error).toContain("indisponível");
     });
   });
+
+  describe("refreshSession (Spec 020 T005)", () => {
+    it("publica a conta que apareceu no aparelho depois de a tela ter montado", async () => {
+      const auth = createMockAuth();
+      const hook = await renderHook(auth, undefined, dummyLogger);
+      expect(hook.current[0].user).toBeNull();
+
+      vi.mocked(auth.getSession).mockResolvedValueOnce(mockUser);
+      await act(async () => {
+        await hook.current[1].refreshSession?.();
+      });
+      expect(hook.current[0].user).toEqual(mockUser);
+      expect(hook.current[0].loading).toBe(false);
+    });
+
+    it("não redesenha quando a sessão lida é a mesma conta", async () => {
+      const auth = createMockAuth({ getSession: vi.fn().mockResolvedValue(mockUser) });
+      const hook = await renderHook(auth, undefined, dummyLogger);
+      const estadoAntes = hook.current[0];
+      await act(async () => {
+        await hook.current[1].refreshSession?.();
+      });
+      expect(hook.current[0]).toBe(estadoAntes);
+    });
+
+    it("mantém o estado quando a leitura da sessão falha", async () => {
+      const auth = createMockAuth({ getSession: vi.fn().mockRejectedValue(new Error("sem armazenamento")) });
+      const hook = await renderHook(auth, undefined, dummyLogger);
+      await act(async () => {
+        await hook.current[1].refreshSession?.();
+      });
+      expect(hook.current[0].user).toBeNull();
+      expect(hook.current[0].error).toBeNull();
+    });
+  });
 });

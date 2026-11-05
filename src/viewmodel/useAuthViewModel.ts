@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { User } from "@/model/entities/user";
 import { DomainError } from "@/model/errors";
 import type { ILogger } from "@/model/services/iLogger";
@@ -20,6 +20,8 @@ export type AuthActions = {
   handleAuthCallback?: (url: string) => Promise<boolean>;
   signOut: () => Promise<void>;
   requestPasswordReset: (email: string) => Promise<boolean>;
+  /** Relê a sessão gravada no aparelho, sem recarregar a tela. */
+  refreshSession?: () => Promise<void>;
 };
 
 const GENERIC_ERROR = "Não foi possível concluir. Tente novamente.";
@@ -207,5 +209,22 @@ export function useAuthViewModel(
     }
   }, [auth]);
 
-  return [state, { signUp, signIn, signInWithGoogle, handleAuthCallback, signOut, requestPasswordReset }];
+  // Cada tela tem seu próprio estado de sessão: quem sobe o app antes do login precisa reler a sessão
+  // para que o aviso de permissão apareça na mesma execução (Spec 020 T005).
+  const refreshSession = useCallback(async () => {
+    try {
+      const user = await auth.getSession();
+      if (!active.current) return;
+      setState((previous) => (previous.user?.id === user?.id ? previous : { ...previous, user, loading: false, error: null }));
+    } catch {
+      /* sem sessão lida: mantém o estado, o app continua funcionando */
+    }
+  }, [auth]);
+
+  const actions = useMemo<AuthActions>(
+    () => ({ signUp, signIn, signInWithGoogle, handleAuthCallback, signOut, requestPasswordReset, refreshSession }),
+    [signUp, signIn, signInWithGoogle, handleAuthCallback, signOut, requestPasswordReset, refreshSession],
+  );
+
+  return [state, actions];
 }
