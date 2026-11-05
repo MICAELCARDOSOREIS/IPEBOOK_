@@ -21,6 +21,10 @@ type MeetingMapProps = {
 const token = process.env.EXPO_PUBLIC_MAPBOX_TOKEN;
 if (token) void Mapbox.setAccessToken(token);
 
+const PIN_SIZE = 36;
+/** Completa a área de toque do pino até o mínimo de acessibilidade sem alterar o desenho. */
+const PIN_HIT_SLOP = Math.max(0, (tokens.accessibility.touchTarget - PIN_SIZE) / 2);
+
 /**
  * Mapa interativo do Mapbox (app nativo): zoom, arraste e toque no pino para escolher o ponto. Sem token não
  * renderiza; a lista de locais continua sendo a forma de escolher (Spec 094, ADR 0068).
@@ -91,6 +95,7 @@ export function MeetingMap({ selectedName, sheetHeight = 0, onSelect }: MeetingM
                 accessibilityRole="button"
                 accessibilityLabel={`Escolher o local ${index + 1}, ${point.name}`}
                 accessibilityState={{ selected }}
+                hitSlop={PIN_HIT_SLOP}
                 onPress={() => onSelect?.(point.name)}
                 style={withPress([
                   styles.pin,
@@ -110,8 +115,8 @@ export function MeetingMap({ selectedName, sheetHeight = 0, onSelect }: MeetingM
 
 const styles = StyleSheet.create({
   pin: {
-    width: 36,
-    height: 36,
+    width: PIN_SIZE,
+    height: PIN_SIZE,
     borderRadius: tokens.radius.full,
     borderWidth: 2,
     alignItems: "center",

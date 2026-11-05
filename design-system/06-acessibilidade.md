@@ -19,10 +19,18 @@ com os valores documentados em `tokens.json`. Os demais tokens de cor não foram
 ## Alvos de toque
 
 - Mínimo de 48 dp em todo elemento tocável (Android/Web): botão (52 px, 48 px nas variantes
-  Texto/Perigo), item da barra de navegação, campo de texto.
+  Texto/Perigo), item da barra de navegação, campo de texto. O número vem de
+  `tokens.accessibility.touchTarget`; nenhum componente fixa 48 como literal solto.
 - Chip (32 px) e Tag (20 px, não tocável) são menores visualmente, mas a área de toque do Chip é
   ampliada para 48 dp por padding invisível — confirmar em cada componente de
   [04-componentes/](04-componentes/).
+- Padrão quando a arte precisa ficar menor que 48 dp (pino do mapa, ícone pequeno): ampliar a área
+  de toque com `hitSlop` no nativo, calculado a partir do token —
+  `const PIN_HIT_SLOP = Math.max(0, (tokens.accessibility.touchTarget - PIN_SIZE) / 2)` — e com uma
+  extensão invisível (`::after`) na web, definida no CSS global de `src/app/+html.tsx`. O desenho
+  permanece 36 dp; o toque chega a 48 dp.
+- Linhas de escolhas (chips, modalidades) usam `flexDirection: "row"` com `flexWrap: "wrap"`, para
+  quebra em telas estreitas e texto ampliado em vez de corte.
 
 ## Foco
 
@@ -39,6 +47,15 @@ com os valores documentados em `tokens.json`. Os demais tokens de cor não foram
   (equivalente React Native de `role="status"`).
 - Diálogo prende o foco e devolve ao gatilho ao fechar (ver
   [04-componentes/dialogo.md](04-componentes/dialogo.md)).
+- Todo `<Modal>` declara a barreira da camada de trás com `accessibilityViewIsModal` (e
+  `navigationBarTranslucent`/`statusBarTranslucent` no Android); a verificação
+  `npm run check:design-system` reprova modal sem barreira.
+- Estados de tela usam os componentes padrão — `LoadingState`, `ErrorState` e `OfflineState` —, com
+  `accessibilityRole="alert"` e `accessibilityLiveRegion="polite"` no texto de erro/offline, para que
+  o leitor de tela anuncie a falha sem mover o foco. A tela não monta texto de erro ou de carregamento
+  próprio fora desses componentes (Spec 125, ADR 0097).
+- Rótulo de botão descreve o destino da ação, não o mecanismo ("Abrir gerenciamento de exportação e
+  exclusão dos meus dados", em vez de "Solicitar exclusão").
 
 ## Texto ampliado e movimento
 

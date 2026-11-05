@@ -58,7 +58,7 @@ export function ProfileSafetySheet({
 
   return (
     <>
-      <Modal visible={visible} transparent animationType="fade" statusBarTranslucent navigationBarTranslucent onRequestClose={close}>
+      <Modal accessibilityViewIsModal={visible && !confirmingBlock} visible={visible} transparent animationType="fade" statusBarTranslucent navigationBarTranslucent onRequestClose={close}>
         <View style={[styles.scrim, wideWeb && styles.scrimWide]}>
           <Pressable accessibilityRole="button" accessibilityLabel="Fechar ao tocar fora" onPress={close} style={withPress(styles.backdrop)} />
           <View style={[styles.sheet, wideWeb && styles.sheetWide]}>

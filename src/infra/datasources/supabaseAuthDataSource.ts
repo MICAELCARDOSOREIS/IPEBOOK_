@@ -3,6 +3,7 @@ import { Platform } from "react-native";
 import type { IAuthDataSource } from "@/model/datasources/iAuthDataSource";
 import type { User } from "@/model/entities/user";
 import { AuthError, EmailAlreadyRegisteredError, ExpiredLinkError } from "@/model/errors";
+import { MIN_PASSWORD_LENGTH } from "@/model/validators/authValidator";
 import type { SupabaseAppClient } from "@/infra/supabaseClient";
 import type { INativeGoogleSignIn } from "@/model/services/iNativeGoogleSignIn";
 
@@ -101,7 +102,7 @@ function translateSupabaseAuthError(error: { message?: string; status?: number; 
   if (code === "weak_password" || msg.includes("password should be at least")) {
     return {
       isEmailRegistered: false,
-      message: "A senha deve conter no mínimo 6 caracteres.",
+      message: `A senha deve conter no mínimo ${MIN_PASSWORD_LENGTH} caracteres.`,
     };
   }
 

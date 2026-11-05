@@ -103,7 +103,7 @@ export default function TermsAndPrivacy({
                 </Text>
                 <Pressable
                   accessibilityRole="button"
-                  accessibilityLabel="Solicitar exclusão da minha conta e dados"
+                  accessibilityLabel="Abrir gerenciamento de exportação e exclusão dos meus dados"
                   onPress={guardedDeleteAccount}
                   style={withPress(styles.deleteAccountLink)}
                 >

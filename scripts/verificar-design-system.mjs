@@ -37,6 +37,15 @@ function contraste(primeiro, segundo) {
   return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
 }
 
+function arquivosTsx(dir, acumulado = []) {
+  for (const entrada of readdirSync(join(raiz, dir), { withFileTypes: true })) {
+    const caminho = `${dir}/${entrada.name}`;
+    if (entrada.isDirectory()) arquivosTsx(caminho, acumulado);
+    else if (entrada.name.endsWith(".tsx")) acumulado.push(caminho);
+  }
+  return acumulado;
+}
+
 const tokens = json("design-system/tokens.json");
 const tokenPorNome = new Map(tokens.color.tokens.map((token) => [token.name, token.value]));
 const tokensTs = ler("src/view/tokens.ts");
@@ -83,6 +92,18 @@ conferir("README declara 28 componentes", readme.includes("28 componentes"), "co
 const exemplo = ler("design-system/ExplorarScreen.tsx");
 conferir("Exemplo histórico usa aliases M3 válidos", exemplo.includes("tokens.colors.m3.surfaceContainerHigh") && exemplo.includes("tokens.colors.m3.surfaceContainerLow"), "alias inexistente usado no exemplo");
 conferir("Exports do Figma são classificados como históricos", ler("design-system/figma-exports/README.md").includes("fallbacks de tokens históricos"), "limitação não documentada");
+
+console.log("\x1b[36m▶ Barreira de acessibilidade dos modais\x1b[0m");
+const modaisSemBarreira = arquivosTsx("src/view").filter((caminho) => {
+  const fonte = ler(caminho);
+  // "<Modal" seguido de espaço, ">" ou "/" — não confunde com <ModalityCoverArea e afins.
+  return /<Modal[\s>/]/.test(fonte) && !fonte.includes("accessibilityViewIsModal");
+});
+conferir(
+  "Todo <Modal> declara accessibilityViewIsModal",
+  modaisSemBarreira.length === 0,
+  modaisSemBarreira.length === 0 ? "todos os modais barreados" : `${modaisSemBarreira.length} arquivo(s): ${modaisSemBarreira.join(", ")}`,
+);
 
 if (falhas.length > 0) {
   console.error(`\n${falhas.length} verificação(ões) falharam.`);

@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { SupabaseAuthDataSource } from "@/infra/datasources/supabaseAuthDataSource";
 import { AuthError, EmailAlreadyRegisteredError, ExpiredLinkError } from "@/model/errors";
+import { MIN_PASSWORD_LENGTH, validateNewPassword } from "@/model/validators/authValidator";
 import type { SupabaseAppClient } from "@/infra/supabaseClient";
 
 function fakeClient(auth: Record<string, unknown>): SupabaseAppClient {
@@ -52,6 +53,20 @@ describe("SupabaseAuthDataSource (Issue #97)", () => {
     await expect(ds.signUp("a@b.com", "senha12345", "Nome")).rejects.toThrow(
       "Muitas tentativas em pouco tempo. Aguarde alguns instantes antes de tentar novamente.",
     );
+  });
+
+  it("lança AuthError com a mensagem de senha derivada do validador (Spec 125 D6)", async () => {
+    const client = fakeClient({
+      signUp: vi.fn().mockResolvedValue({
+        data: { user: null },
+        error: { message: "Password should be at least 6 characters.", status: 400, code: "weak_password" },
+      }),
+    });
+    const ds = new SupabaseAuthDataSource(client, "https://app/redefinir-senha");
+    await expect(ds.signUp("a@b.com", "senha12345", "Nome")).rejects.toThrow(
+      `A senha deve conter no mínimo ${MIN_PASSWORD_LENGTH} caracteres.`,
+    );
+    expect(validateNewPassword("a".repeat(MIN_PASSWORD_LENGTH - 1)).isValid).toBe(false);
   });
 
   it("lança EmailAlreadyRegisteredError quando o Supabase retorna erro de usuário existente", async () => {
