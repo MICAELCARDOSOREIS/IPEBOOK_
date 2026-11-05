@@ -1,6 +1,6 @@
 # IpêBook Design System · Sistema de design do app IpêBook
 
-> Versão da documentação: 1.25.0 · Disciplinas: IHC e PDM
+> Versão da documentação: 1.26.0 · Disciplinas: IHC e PDM
 >
 > Fonte única do design do app. Conteúdo originalmente trazido do Figma do projeto para a pasta
 > histórica `design-kit/` e depois migrado integralmente para cá (ver

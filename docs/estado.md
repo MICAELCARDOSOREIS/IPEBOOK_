@@ -2,7 +2,9 @@
 
 Documento consolidado de continuidade técnica e produto do Ipebook (Piripiri, PI).
 
-Conferência atual: **Validação e cobertura global integral (2026-11-04):** pipeline de testes 100% verde (**2.047 testes em 289 arquivos**, 0 falhas). Supabase remoto 100% íntegro e sincronizado (**41 de 41 migrações locais aplicadas e verificadas** via `npm run health:supabase:remote`). Compilação Web (`npm run build:web`) aprovada gerando 45 rotas estáticas em `dist/`. Cobertura estrita superada em todas as dimensões: **Branches 80,58%** (mínimo 80%), **Statements 91,15%**, **Functions 87,85%**, **Lines 92,26%**. Lint com Biome sem erros (**334 avisos**). 459 arquivos com arquitetura limpa de imports, 124 specs e 96 ADRs sem colisão.
+Conferência atual: **Validação local integral (2026-11-05):** `npm run validate` 100% verde (**2.052 testes em 290 arquivos**, 0 falhas), cobrindo typecheck, lint, arquitetura, design system, numeração, config de build, SQL no PGlite e cobertura. Supabase remoto 100% íntegro e sincronizado (**41 de 41 migrações locais aplicadas e verificadas** via `npm run health:supabase:remote`). Compilação Web (`npm run build:web`) aprovada em 2026-11-04 com 45 rotas estáticas em `dist/`, o mesmo total de arquivos `.tsx` de rota em `src/app/`. Cobertura estrita superada em todas as dimensões: **Branches 80,58%** (mínimo 80%), **Statements 91,15%**, **Functions 87,85%**, **Lines 92,26%**. Lint com Biome sem erros (**337 avisos**). 459 arquivos com arquitetura limpa de imports, 124 specs e 96 ADRs sem colisão. A sincronia destes números com o repositório passou a ser verificada por `npm run check:docs` (etapa final do `validate` e da CI): as demais entradas deste documento são crônica por entrega e preservam os números da data em que foram feitas.
+
+**Correções da análise integral de 2026-11-05:** a auditoria integral (interface, arquitetura, testes, segurança e documentação) não encontrou defeito funcional nem falha de RLS, e resultou em quatro ajustes. (1) O nome público do perfil passou por `sanitizeTextInput` em `PublicProfileUseCases.updateProfile` — era o único texto livre exibido a terceiros sem sanitização — e a validação de `photoUrl` deixou de aceitar `http://`, alinhando-se ao CHECK `v2_profiles_photo_url_https` que já recusava o esquema no banco (a tela de Edição de perfil usa a mesma regra). Testes de regressão: remover tags do nome e recusar `http` falham antes da correção e passam depois. (2) Criado `scripts/verificar-documentacao.mjs` (`npm run check:docs`), que confere as métricas atuais de `docs/estado.md` e `README.md` contra o repositório — na primeira execução apontou 5 divergências. (3) A CI passou a executar `check:design-system` e `check:docs`, que só rodavam localmente. (4) O texto da Seção 1 e as rotas documentadas foram ressincronizados (estavam em 2026-10-26: 1.205 testes, 21 migrações e 32 rotas). **Pendências registradas na análise, não corrigidas aqui por exigirem spec própria:** service locator em 50 ViewModels (`@/di` direto em vez de injeção), `src/app/**` fora da cobertura e sem nenhum teste, `tests/mocks/react-native.ts` emulando o runtime (a View fica verde sem layout real), e os componentes acima de 900 linhas (`home.tsx`, `profileHub.tsx`, `bookDetail.tsx`, `scheduleMeeting.tsx`).
 
 **Correções do teste manual (2026-11-04, Spec 124):** (1) `RequestDetail` mostrava a etapa "Aceita" e o erro do encontro em pedidos ainda pendentes; agora mostra "Aguardando resposta" e, para pedidos recusados ou cancelados, informa o encerramento sem carregar o encontro. (2) Conversas recarrega ao voltar ao foco (`focusKey` em `/meus-pedidos`), e o selo "Nova proposta" some depois do aceite. (3) Na web larga, o aviso de permissão de Notificações ocupa a linha inteira e não espreme mais o estado vazio. (4) O botão "Limpar bairro" de Criar anúncio saiu de dentro do campo (antes gerava `<button>` aninhado na web). Testes de regressão falham antes e passam depois; `npm run validate` (2.047 testes) aprovado.
 
@@ -247,44 +249,58 @@ Google Maps/Apple Maps) ainda pendente — ver `specs/037-pontos-encontro-mapa/v
 
 Todas as métricas abaixo foram aferidas diretamente por execução dos scripts de validação:
 
-- **Testes automatizados**: **1205 testes passando** em **171 arquivos de teste** (`npm run validate`), cobrindo entidades, validadores, casos de uso, adaptadores, viewmodels, componentes e integração.
-- **Cobertura de código**: Statements 89,8%, Branches 80,53%, Functions 88,33%, Lines 91,09%.
-- **Integridade arquitetural**: **100% em conformidade (327 arquivos verificados)** no MVVM sofisticado em sete camadas (`app`, `view`, `viewmodel`, `usecase`, `model`, `infra`, `di`), verificado pelo comando `npm run check:architecture` (0 violações). Apenas `src/di/container.ts` e testes têm permissão para instanciar ou importar adaptadores de `src/infra/`.
-- **Validação de banco e migrações SQL**: **21 migrações** descobertas e executadas em ordem no PGlite (`npm run test:sql`), com rejeição de versões duplicadas e políticas/RPCs 100% aprovadas. No Supabase remoto, **21 de 21 aplicadas e verificadas** (`npm run health:supabase:remote` com exit 0 em 2026-10-26, incluindo `202610240001_mensagens_negociacao.sql` — Spec 061 / ADR 0044).
+- **Testes automatizados**: **2.052 testes em 290 arquivos** (`npm run validate`, conferido em 2026-11-05), cobrindo entidades, validadores, casos de uso, adaptadores, viewmodels, componentes e integração. O total sai do relatório do Vitest (`coverage/relatorio-testes.json`), gerado pelo próprio `npm run test:coverage`.
+- **Cobertura de código**: Statements 91,15%, Branches 80,58%, Functions 87,85%, Lines 92,26% (mínimo de 80% nas quatro dimensões). Ficam fora da medição `src/app/**` e `**/*.d.ts` (`vitest.config.mts`).
+- **Integridade arquitetural**: **459 arquivos com arquitetura limpa de imports** no MVVM de sete camadas (`app`, `view`, `viewmodel`, `usecase`, `model`, `infra`, `di`), verificado por `npm run check:architecture` com 0 violações. Apenas `src/di/container.ts` e os testes importam adaptadores de `src/infra/`.
+- **Validação de banco e migrações SQL**: **41 migrações** descobertas e executadas em ordem no PGlite (`npm run test:sql`), com rejeição de versões duplicadas e 83 checagens de autorização negativa (RLS e RPCs) aprovadas. No Supabase remoto, **41 de 41 aplicadas e verificadas** (`npm run health:supabase:remote` com exit 0 em 2026-11-05).
+- **Planejamento e decisões**: 124 specs e 96 ADRs sem colisão (`npm run check:numbering`); `docs/adr/README.md` indexa os 96 registros.
+- **Sincronia da documentação**: `npm run check:docs` (`scripts/verificar-documentacao.mjs`) compara as métricas acima com o repositório e é etapa final do `validate` e da CI.
 - **Semente Oficial da Beta (`npm run db:seed`)**: Script `scripts/popular-catalogo-piripiri.mjs` gerando 10 anúncios realistas distribuídos pelos bairros de Piripiri, PI com exportação SQL via `--sql`.
-- **Backend Supabase**: Configurado para desenvolvimento; as 21 migrações aplicadas no banco remoto e o diagnóstico `health:supabase:remote` cobrindo as tabelas operacionais, com `202610240001_mensagens_negociacao.sql` aplicada e verificada em 2026-10-26.
-- **Rotas Web compiladas (`npm run build:web`)**: Exportação estática do Expo Router gerou com sucesso o pacote web em `dist/`, totalizando **32 rotas estáticas** (as rotas `/perfil/editar`, `/perfil/avaliacoes` e `/perfil/seguranca` foram acrescentadas pela Spec 048, e `/perfil/configuracoes` pela Spec 073):
+- **Rotas (`src/app/`)**: 45 rotas estáticas com suporte PWA; a exportação Web (`npm run build:web`) gera `dist/` com o mesmo conjunto:
   - `/` (Catálogo e vitrine inicial com selo da beta em Piripiri, PI)
-  - `/perfil` (Perfil do usuário autenticado)
-  - `/perfil/configuracoes` (Configurações e tema do aplicativo - Spec 073)
-  - `/perfil/editar` (Edição do perfil próprio - Spec 048)
-  - `/perfil/avaliacoes` (Avaliações recebidas - Spec 048)
-  - `/perfil/seguranca` (Segurança e verificação, envia link de redefinição de senha - Spec 048)
-  - `/perfil/[userId]` (Perfil público, somente leitura, de quem anuncia — nome, avaliação média e negociações concluídas - Spec 018, Issue #73)
-  - `/bem-vindo` (Boas-vindas e primeiro acesso com escolha opcional de bairro - Spec 026, ADR 0022)
-  - `/pesquisa` (Busca no catálogo por termo e filtros, com histórico recente no dispositivo - Spec 027)
-  - `/livro/[id]` (Detalhes completos do anúncio, capa com foto real/fallback, dados do autor e do anunciante)
-  - `/anunciar` (Formulário de cadastro de anúncio com upload/remoção de foto e 17 bairros de Piripiri)
-  - `/editar-anuncio/[id]` (Edição completa de anúncios cadastrados pelo usuário - Spec 024, ADR 0018)
-  - `/gerenciar-anuncio/[id]` (Gerenciamento de um anúncio: estado atual, editar, pausar/retomar e excluir - Spec 030)
-  - `/meus-anuncios` (Listagem de anúncios do usuário, com opções de editar, pausar/retomar, exclusão confirmada via Diálogo e feedbacks via Snackbar)
-  - `/pedidos-recebidos` (Propostas recebidas de interessados, com aceitar e recusar)
-  - `/meus-pedidos` (Propostas enviadas pelo usuário)
-  - `/negociacao/[id]` (Detalhes do encontro acordado com pontos públicos seguros em Piripiri)
-  - `/favoritos` (Livros marcados como favoritos pelo usuário)
+  - `/404` (Página de erro do export estático)
+  - `/ajuda` (Central de ajuda, FAQ e dicas de segurança comunitária em Piripiri)
   - `/alertas` (Criação e listagem de alertas de busca, com acesso ao gerenciamento individual)
   - `/alertas/[id]` (Gerenciamento, pausa/retomada e exclusão confirmada de um alerta)
   - `/alertas/[id]/editar` (Edição do termo e das modalidades do alerta)
-  - `/notificacoes` (Central de notificações com filtros de lidas/não lidas)
-  - `/denunciar/[id]` (Formulário de denúncia de anúncio e moderação comunitária - Spec 011)
-  - `/ajuda` (Central de ajuda, FAQ e dicas de segurança comunitária em Piripiri)
-  - `/termos` (Termos de uso e política de privacidade LGPD)
-  - `/excluir-conta` (Direito ao esquecimento LGPD com digitação da palavra EXCLUIR)
-  - `/entrar` (Login de usuário com e-mail e senha)
+  - `/anunciar` (Formulário de cadastro de anúncio com upload/remoção de foto e 17 bairros de Piripiri)
+  - `/auth/callback` (Retorno do provedor de login e retomada do destino salvo)
+  - `/bem-vindo` (Boas-vindas e primeiro acesso com escolha opcional de bairro - Spec 026, ADR 0022)
+  - `/beta` (Convite e inscrição do teste beta Android - Spec 104)
+  - `/conversa/[id]` (Conversa da negociação por pedido - Specs 076 e 089)
   - `/criar-conta` (Registro de nova conta)
+  - `/denunciar/[id]` (Formulário de denúncia de anúncio e moderação comunitária - Spec 011)
+  - `/denunciar-pessoa/[userId]` (Denúncia de pessoa, exige sessão)
+  - `/editar-anuncio/[id]` (Edição completa de anúncios cadastrados pelo usuário - Spec 024, ADR 0018)
+  - `/entrar` (Login de usuário com e-mail e senha)
   - `/esqueci-senha` (Solicitação de link de redefinição de senha)
-  - `/redefinir-senha` (Definição de nova senha via token)
+  - `/excluir-conta` (Direito ao esquecimento LGPD com digitação da palavra EXCLUIR)
+  - `/favoritos` (Livros marcados como favoritos pelo usuário)
+  - `/gerenciar-anuncio/[id]` (Gerenciamento de um anúncio: estado atual, editar, pausar/retomar e excluir - Spec 030)
+  - `/livro/[id]` (Detalhes completos do anúncio, capa com foto real/fallback, dados do autor e do anunciante)
+  - `/meus-anuncios` (Listagem de anúncios do usuário, com editar, pausar/retomar e excluir)
+  - `/meus-pedidos` (Propostas enviadas pelo usuário)
+  - `/moderacao` (Painel de moderação, autorizado pela RPC `v2_is_moderator`)
+  - `/negociacao/[id]` (Detalhes do encontro acordado com pontos públicos seguros em Piripiri)
+  - `/negociacao/[id]/encontro` (Tela de combinar encontro - Spec 114)
+  - `/negociacao/[id]/entrega` (Entrega do livro por QR Code - Spec 115)
   - `/+not-found` (Página de rota não encontrada)
+  - `/notificacoes` (Central de notificações com filtros de lidas/não lidas)
+  - `/pedidos-recebidos` (Propostas recebidas de interessados, com aceitar e recusar)
+  - `/perfil` (Perfil do usuário autenticado)
+  - `/perfil/avaliacoes` (Avaliações recebidas - Spec 048)
+  - `/perfil/bloqueados` (Pessoas bloqueadas)
+  - `/perfil/configuracoes` (Configurações e tema do aplicativo - Spec 073)
+  - `/perfil/convidar` (Convite de amigos por link)
+  - `/perfil/editar` (Edição do perfil próprio - Spec 048)
+  - `/perfil/encontros` (Histórico de encontros - Spec 071)
+  - `/perfil/seguranca` (Segurança e verificação, envia link de redefinição de senha - Spec 048)
+  - `/perfil/[userId]` (Perfil público, somente leitura, de quem anuncia — nome, avaliação média e negociações concluídas - Spec 018, Issue #73)
+  - `/pesquisa` (Busca no catálogo por termo e filtros, com histórico recente no dispositivo - Spec 027)
+  - `/rascunhos` (Rascunhos de anúncio salvos no dispositivo)
+  - `/redefinir-senha` (Definição de nova senha via token)
+  - `/sobre` (Sobre o projeto e a iniciativa comunitária)
+  - `/termos` (Termos de uso e política de privacidade LGPD)
   - `/_sitemap` (Mapa de rotas)
 
 ---
@@ -293,7 +309,7 @@ Todas as métricas abaixo foram aferidas diretamente por execução dos scripts 
 
 O inventário de design (`design-system/telas-android-figma.md`) lista 137 telas no Figma correspondentes a todos os fluxos conceituais explorados durante a fase inicial de IHC.
 
-No app ativo em desenvolvimento, 32 rotas cobrem as jornadas essenciais da beta. A discrepância numérica entre 137 e 32 decorre de **decisões deliberadas de escopo e arquitetura**, devidamente documentadas em ADRs:
+No app ativo em desenvolvimento, 45 rotas cobrem as jornadas essenciais da beta. A discrepância numérica entre 137 e 45 decorre de **decisões deliberadas de escopo e arquitetura**, devidamente documentadas em ADRs:
 
 1. **Fluxo 05 · Estante (fora de escopo pelo ADR 0011)**:
    - O Figma previa uma aba "Estante" dedicada à catalogação pessoal de livros lidos/a ler.
@@ -464,3 +480,54 @@ No app ativo em desenvolvimento, 32 rotas cobrem as jornadas essenciais da beta.
 - `specs/071-historico-encontros-negociacao/`: Histórico de encontros na negociação e perfil (Figma `06.05`, `06.11`, `07.01`, ADR 0054).
 - `specs/072-alinhamento-global-figma/`: Alinhamento global das telas Android ao Figma Material 3 (137 telas, Grupos A a F, ADR 0055 e ADR 0056).
 - `specs/073-configuracoes-e-tema/`: Configurações e tema do perfil — tela dedicada `/perfil/configuracoes`, seleção entre Sistema, Claro e Escuro e integração à moldura do sistema (ADR 0036).
+- `specs/074-detalhe-livro-material3/`: Detalhe do livro no padrão Figma `03 · Livro e comunidade` com Material 3.
+- `specs/075-estante-material3/`: Estante no padrão Figma `05.04`–`05.08` (Material 3 no Android, visual do Figma no iPhone).
+- `specs/076-conversas-e-perfil/`: Aba Conversas como lista de conversas (Figma `06.01`/`06.09`) e ajustes do Meu perfil (`07.01`).
+- `specs/077-anuncio-usabilidade/`: Usabilidade do fluxo de anúncio.
+- `specs/078-perfil-identidade-ipe/`: Meu perfil e Editar perfil com a identidade Ipê + livro.
+- `specs/079-acompanhar-encontro/`: Usabilidade do acompanhamento do encontro.
+- `specs/080-acompanhar-encontro-refinos/`: Refinos do acompanhamento do encontro.
+- `specs/081-editar-perfil-foto-instagram/`: Editar perfil com foto pela câmera ou galeria e Instagram.
+- `specs/082-conversa-tela-cheia/`: Conversa em tela cheia (Figma `06.02`) e Conversas vazia (`06.09`).
+- `specs/083-acompanhar-encontro-hierarquia/`: Acompanhar encontro com a ação atual no topo.
+- `specs/084-foto-contraparte-e-encontro/`: Foto da outra pessoa na negociação e encontro mais leve.
+- `specs/085-login-google-deep-link/`: Login com Google retorna ao app (Expo Go e app instalado) por deep link.
+- `specs/086-tempo-real-conversas-notificacoes/`: Conversas e notificações em tempo real.
+- `specs/087-fotos-menores-e-supabase-ativo/`: Fotos menores e Supabase sempre ativo.
+- `specs/088-teclado-android-nos-formularios/`: Teclado não cobre os campos no Android.
+- `specs/089-conversas-ordem-tempo-e-chat/`: Conversas com proposta no topo, tempo vivo e chat mais legível.
+- `specs/090-apagar-conversa/`: Apagar conversa.
+- `specs/091-melhorias-ux-conversas-anuncio-e-seguranca/`: Melhorias de usabilidade em chat, anúncio, cores, perfil e segurança.
+- `specs/092-fotos-do-anuncio-configuracoes-e-formularios/`: Fotos do anúncio, Configurações e formulários.
+- `specs/093-aprimoramentos-web-responsiva/`: Aprimoramentos da experiência Web responsiva e desktop largo.
+- `specs/094-mapa-combinar-encontro/`: Mapa do Mapbox em "Combinar encontro".
+- `specs/095-conclusao-por-qr-code/`: Conclusão da negociação por QR code.
+- `specs/096-notificacoes-push-reais/`: Notificações push fora do app.
+- `specs/097-sinopse-e-edicao-pelo-isbn/`: Sinopse e dados da edição obtidos pelo ISBN.
+- `specs/098-avisos-de-pedido/`: Avisos de pedido recebido e aceito.
+- `specs/099-preferencias-e-canais-de-notificacao/`: Preferências de aviso, canais de entrega e push profissional.
+- `specs/100-avisos-restantes/`: Avisos de mensagem, pedido recusado e avaliação.
+- `specs/101-cancelar-pedido-e-avisos-de-favoritos/`: Cancelar pedido e avisos de livros favoritados.
+- `specs/102-moderacao/`: Moderação de denúncias.
+- `specs/103-limites-anti-abuso/`: Limites contra abuso.
+- `specs/104-acompanhamento-de-erros/`: Acompanhamento de erros com Sentry.
+- `specs/105-avaliacao-na-loja-e-atualizacoes/`: Avaliação na loja e atualizações sem loja.
+- `specs/106-login-google-nativo/`: Login Google nativo no Android.
+- `specs/107-correcoes-auditoria-seguranca/`: Correções da auditoria de segurança.
+- `specs/108-convite-beta/`: Página de convite para o beta na Play Store.
+- `specs/109-m3-expressive/`: Adoção do Material 3 Expressive.
+- `specs/110-acoes-reserva-detalhe-livro/`: Ações interativas de reserva e acompanhamento no detalhe do livro.
+- `specs/111-notificacoes-comunitarias-e-fechamento-de-ciclos/`: Notificações comunitárias e fechamento de ciclos de interação.
+- `specs/112-anuncio-box-de-livros/`: Suporte a box e coleções de livros (ADR 0086).
+- `specs/113-melhorias-na-negociacao/`: Fluxo unificado e melhorias na negociação (ADR 0087).
+- `specs/114-melhorias-combinar-encontro/`: Usabilidade e consistência em Combinar Encontro (ADR 0088).
+- `specs/115-melhorias-entrega-livro/`: Contexto, acessibilidade e layout web na entrega do livro (ADR 0089).
+- `specs/116-cores-vivas-ipe/`: Cores vivas do ipê na identidade visual e na Home.
+- `specs/117-padronizacao-rolagem-e-blindagem-duplo-toque/`: Padronização de rolagem e blindagem contra duplo toque.
+- `specs/118-compartilhamento-rapido-whatsapp/`: Compartilhamento rápido no WhatsApp e grupos de Piripiri (ADR 0092).
+- `specs/119-open-graph-cards-compartilhamento/`: Pré-visualização de links (Open Graph Cards) no WhatsApp e redes sociais.
+- `specs/120-refinamentos-visuais-e-interativos-das-telas/`: Refinamentos visuais e interativos das telas.
+- `specs/121-ordenacao-avancada-catalogo/`: Ordenação avançada no catálogo e pesquisa (bairro, preço e recência).
+- `specs/122-aprimoramento-telas-barra-navegacao/`: Aprimoramento das telas da barra de navegação e IHC (ADR 0096).
+- `specs/123-correcoes-analise-integral/`: Correções da análise integral (colunas do Open Graph, Rules of Hooks, avisos do Biome).
+- `specs/124-correcoes-teste-manual/`: Correções do teste manual da Spec 123 (etapa do pedido, recarga de conversas, notificações e bairro).

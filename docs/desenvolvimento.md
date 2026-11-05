@@ -52,7 +52,7 @@ Em outra máquina, substituir apenas o caminho pelo diretório do clone. `npm ci
 | `npm run check:numbering` | Falha se duas specs ou dois ADRs usarem o mesmo número |
 | `npm run test:sql` | Executa migrações e cenários de RLS em PostgreSQL local via PGlite |
 | `npm test` | Executa a suíte uma vez |
-| `npm run validate` | Executa tipos, lint, arquitetura, SQL e testes, interrompendo em falhas |
+| `npm run validate` | Executa tipos, lint, arquitetura, design system, numeração, config de build, SQL, testes com cobertura e sincronia da documentação, interrompendo em falhas |
 | `npm run build:web` | Exporta arquivos estáticos para `dist/` |
 
 Para Android/iOS é necessário preparar o ambiente nativo e um cliente compatível com o SDK utilizado. O simulador iOS local depende de macOS. Nesta entrega não há validação em dispositivo ou emulador; executar o comando não garante que o ambiente nativo esteja preparado.
