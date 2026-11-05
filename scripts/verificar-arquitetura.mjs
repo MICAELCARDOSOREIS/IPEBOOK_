@@ -15,10 +15,8 @@ const allowed = {
 
 // Spec 126 / ADR 0098 (T010): regra absoluta — nenhum arquivo de src/viewmodel/ importa @/di.
 
-// Spec 126 (T003 / T011-T013): teto de 900 linhas por arquivo de tela em src/view/ (0 exceções).
+// Spec 126 (T003 / T011-T013): regra absoluta — teto de 900 linhas por arquivo de tela em src/view/.
 const VIEW_FILE_LINE_CEILING = 900;
-const VIEW_SIZE_EXCEPTIONS = new Map([]);
-const seenOversizedViews = new Set();
 
 // Spec 126 (T002 / T017): teto de ocorrências de `.parent!` em tests/components*.
 const MAX_COMPONENT_TEST_PARENT_USAGES = 0;
@@ -39,13 +37,7 @@ async function inspect(directory) {
     if (layer === "view") {
       const lineCount = content.split("\n").length;
       if (lineCount > VIEW_FILE_LINE_CEILING) {
-        seenOversizedViews.add(relative);
-        const cap = VIEW_SIZE_EXCEPTIONS.get(relative);
-        if (cap === undefined) {
-          failures.push(`${relative}: ${lineCount} linhas excede o teto de ${VIEW_FILE_LINE_CEILING} linhas (Spec 126 E2).`);
-        } else if (lineCount > cap) {
-          failures.push(`${relative}: ${lineCount} linhas excede a catraca máxima registrada de ${cap} linhas (Spec 126 E2).`);
-        }
+        failures.push(`${relative}: ${lineCount} linhas excede o teto de ${VIEW_FILE_LINE_CEILING} linhas (Spec 126 E2).`);
       }
     }
     const source = ts.createSourceFile(fullPath, content, ts.ScriptTarget.Latest, true);
@@ -102,12 +94,6 @@ async function inspectComponentTestsForParent(directory) {
 
 for (const layer of Object.keys(allowed)) await readdir(path.join(root, layer));
 await inspect(root);
-
-for (const [exempted] of VIEW_SIZE_EXCEPTIONS) {
-  if (!seenOversizedViews.has(exempted)) {
-    failures.push(`${exempted}: já está abaixo de ${VIEW_FILE_LINE_CEILING} linhas; remova de VIEW_SIZE_EXCEPTIONS em scripts/verificar-arquitetura.mjs.`);
-  }
-}
 
 const componentTestDirs = [path.resolve("tests/components"), path.resolve("tests/components-mocked")];
 let allParentUsages = [];
