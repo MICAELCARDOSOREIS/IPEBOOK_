@@ -111,4 +111,23 @@ describe("OwnerListings (perfil público na web larga)", () => {
 
     expect(screen.queryByTestId("owner-listings")).toBeNull();
   });
+
+  it("mostra o erro com tentativa nova em vez de esconder a seção", async () => {
+    const reload = vi.fn();
+    mockedUseHomeViewModel.mockReturnValue([
+      { books: [], loading: false, error: "Não foi possível carregar os anúncios." },
+      { reload },
+    ]);
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<OwnerListings ownerId="ana" ownerName="Ana Paula" />);
+    });
+
+    expect(screen.getByTestId("owner-listings-error")).toBeDefined();
+    expect(screen.getByText("Não foi possível carregar os anúncios.")).toBeDefined();
+
+    fireEvent.press(screen.getByLabelText("Tentar novamente"));
+
+    expect(reload).toHaveBeenCalledTimes(1);
+  });
 });

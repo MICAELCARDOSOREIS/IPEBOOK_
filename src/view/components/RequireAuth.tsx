@@ -1,4 +1,5 @@
 import { useEffect, type ReactNode } from "react";
+import { LoadingState } from "@/view/components/LoadingState";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 
 export type RequireAuthProps = {
@@ -9,8 +10,8 @@ export type RequireAuthProps = {
 
 /**
  * Rede de segurança de acesso (Spec 092): o catálogo só é servido a pessoas conectadas.
- * Enquanto a sessão é verificada ou quando não há usuário, nada é renderizado e a rota
- * de destino é acionada uma única vez — o mesmo padrão de `MyListingsScreen`.
+ * Enquanto a sessão é verificada mostra o estado de carregamento; quando não há usuário,
+ * nada é renderizado e a rota de destino é acionada uma única vez.
  */
 export function RequireAuth({ onRequireSignIn, children }: RequireAuthProps) {
   const [authState] = useAuthViewModel();
@@ -19,6 +20,7 @@ export function RequireAuth({ onRequireSignIn, children }: RequireAuthProps) {
     if (!authState.loading && !authState.user) onRequireSignIn();
   }, [authState.loading, authState.user, onRequireSignIn]);
 
-  if (authState.loading || !authState.user) return null;
+  if (authState.loading) return <LoadingState label="Verificando sua sessão" />;
+  if (!authState.user) return null;
   return <>{children}</>;
 }

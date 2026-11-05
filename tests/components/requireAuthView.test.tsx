@@ -52,7 +52,7 @@ describe("RequireAuth: catálogo só para pessoa conectada (Spec 092)", () => {
     expect(screen.queryByText("catálogo")).toBeNull();
   });
 
-  it("não renderiza nem redireciona enquanto a sessão é verificada", async () => {
+  it("não redireciona enquanto a sessão é verificada e mostra o carregamento", async () => {
     mockAuth(null, true);
     const onRequireSignIn = vi.fn();
     const screen = await render(
@@ -63,6 +63,7 @@ describe("RequireAuth: catálogo só para pessoa conectada (Spec 092)", () => {
 
     expect(onRequireSignIn).not.toHaveBeenCalled();
     expect(screen.queryByText("catálogo")).toBeNull();
+    expect(screen.getByText(/Verificando sua sessão/)).toBeDefined();
   });
 
   it("renderiza o conteúdo com sessão ativa, sem redirecionar", async () => {

@@ -145,6 +145,7 @@ describe("Notifications Component (Spec 015)", () => {
           onBack={() => {}}
           onNavigateToLogin={() => {}}
           onNavigateToAction={() => {}}
+          onExploreBooks={() => {}}
         />,
       );
     });
