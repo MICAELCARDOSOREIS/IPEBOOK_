@@ -793,5 +793,33 @@ try {
 }
 process.stdout.write('Melhorias na negociação (Spec 113): verificadas com sucesso\n');
 
+// Spec 128 / ADR 0099: Política de versão do app na Play Store (v2_app_version_policy)
+const politicaAnon = await as(
+  'anon',
+  null,
+  `select platform, latest_version, min_supported_version, release_notes, store_url
+   from public.v2_app_version_policy where platform = 'android'`
+);
+if (
+  politicaAnon.rows.length !== 1 ||
+  politicaAnon.rows[0].latest_version !== '0.1.0' ||
+  politicaAnon.rows[0].min_supported_version !== '0.1.0'
+) {
+  throw new Error(`Política inicial de versão inválida: ${JSON.stringify(politicaAnon.rows)}`);
+}
+await denied('Visitante altera política de versão', () =>
+  as('anon', null, `update public.v2_app_version_policy set latest_version = '9.9.9' where platform = 'android'`)
+);
+await denied('Usuário autenticado altera política de versão', () =>
+  as('authenticated', owner, `update public.v2_app_version_policy set latest_version = '9.9.9' where platform = 'android'`)
+);
+await denied('Usuário autenticado insere política de versão', () =>
+  as('authenticated', owner, `insert into public.v2_app_version_policy (platform, latest_version, min_supported_version) values ('ios', '0.1.0', '0.1.0')`)
+);
+await denied('Usuário autenticado remove política de versão', () =>
+  as('authenticated', owner, `delete from public.v2_app_version_policy where platform = 'android'`)
+);
+process.stdout.write('Política de versão do app (Spec 128): verificada com sucesso\n');
+
 process.stdout.write('Migrações e cenários SQL locais verificados.\n');
 await db.close();
