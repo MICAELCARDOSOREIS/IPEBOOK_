@@ -244,4 +244,22 @@ describe("SupabaseAuthDataSource (Issue #97)", () => {
     await ds.deleteAccount("u1");
     expect(ordem).toEqual(["remove:u1/avatar.jpg,u1/livro1/capa.jpg", "rpc"]);
   });
+
+  it("não exclui a conta quando a limpeza do storage falha", async () => {
+    const rpc = vi.fn();
+    const client = {
+      auth: { signOut: vi.fn() },
+      storage: {
+        from: vi.fn(() => ({
+          list: vi.fn().mockResolvedValue({ data: null, error: new Error("storage indisponível") }),
+          remove: vi.fn(),
+        })),
+      },
+      rpc,
+    } as unknown as SupabaseAppClient;
+    const ds = new SupabaseAuthDataSource(client, "https://app/redefinir-senha");
+
+    await expect(ds.deleteAccount("u1")).rejects.toBeInstanceOf(AuthError);
+    expect(rpc).not.toHaveBeenCalled();
+  });
 });

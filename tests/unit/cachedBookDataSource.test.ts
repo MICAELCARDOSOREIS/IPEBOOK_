@@ -65,7 +65,7 @@ describe("CachedBookDataSource (Resiliência e Offline-first)", () => {
 
     const savedInStorage = await storage.getItem("ipebook:cache:books:list");
     expect(savedInStorage).not.toBeNull();
-    const parsed = JSON.parse(savedInStorage!);
+    const parsed = JSON.parse(savedInStorage ?? "");
     expect(parsed.data).toEqual(sampleBooks);
   });
 
@@ -110,6 +110,27 @@ describe("CachedBookDataSource (Resiliência e Offline-first)", () => {
     const cachedDs = new CachedBookDataSource(primary, { storage });
 
     await expect(cachedDs.list()).rejects.toThrow("Supabase indisponível");
+  });
+
+  it("não usa cache expirado no fallback offline", async () => {
+    const primary: IBookDataSource = {
+      list: vi.fn().mockRejectedValue(new Error("Supabase indisponível")),
+      findById: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      updateStatus: vi.fn(),
+      delete: vi.fn(),
+      listByOwner: vi.fn(),
+    };
+    const storage = new MockStorage();
+    await storage.setItem(
+      "ipebook:cache:books:list",
+      JSON.stringify({ timestamp: Date.now() - 10_000, data: sampleBooks }),
+    );
+    const cachedDs = new CachedBookDataSource(primary, { storage, ttlMs: 1_000 });
+
+    await expect(cachedDs.list()).rejects.toThrow("Supabase indisponível");
+    expect(await storage.getItem("ipebook:cache:books:list")).toBeNull();
   });
 
   it("encontra livro por ID no cache se a rede falhar", async () => {

@@ -47,6 +47,10 @@ export class CachedBookDataSource implements IBookDataSource {
       const raw = await this.storage.getItem(key);
       if (!raw) return null;
       const parsed: CachePayload<T> = JSON.parse(raw);
+      if (!Number.isFinite(parsed.timestamp) || Date.now() - parsed.timestamp > this.ttlMs) {
+        await this.storage.removeItem(key);
+        return null;
+      }
       return parsed.data;
     } catch {
       return null;
