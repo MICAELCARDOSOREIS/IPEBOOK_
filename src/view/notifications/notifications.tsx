@@ -11,6 +11,7 @@ import { LoadingState } from "@/view/components/LoadingState";
 import { OfflineState } from "@/view/components/OfflineState";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { PermissionPromptDialog } from "@/view/components/PermissionPromptDialog";
+import { Snackbar } from "@/view/components/Snackbar";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import {
   makeNetworkStatus,
@@ -389,6 +390,12 @@ export default function Notifications({
           )}
         </View>
       </View>
+
+      <Snackbar
+        visible={state.actionError !== null}
+        message={state.actionError ?? ""}
+        onDismiss={actions.clearActionError}
+      />
 
       <Dialog
         visible={confirmClearAllVisible}

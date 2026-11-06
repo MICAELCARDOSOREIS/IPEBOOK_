@@ -187,7 +187,8 @@ describe("useNotificationsViewModel", () => {
     });
 
     const [state] = hook.current;
-    expect(state.error).toBe("Não foi possível marcar a notificação como lida.");
+    expect(state.actionError).toBe("Não foi possível marcar a notificação como lida.");
+    expect(state.error).toBeNull();
   });
 
   it("captura erro genérico ao falhar em markAllAsRead", async () => {
@@ -201,7 +202,7 @@ describe("useNotificationsViewModel", () => {
     });
 
     const [state] = hook.current;
-    expect(state.error).toBe("Não foi possível marcar todas as notificações como lidas.");
+    expect(state.actionError).toBe("Não foi possível marcar todas as notificações como lidas.");
   });
 
   it("mostra a mensagem do DomainError ao falhar em marcar como lida", async () => {
@@ -214,12 +215,12 @@ describe("useNotificationsViewModel", () => {
     await act(async () => {
       await hook.current[1].markAsRead("n-1");
     });
-    expect(hook.current[0].error).toBe("Sem permissão");
+    expect(hook.current[0].actionError).toBe("Sem permissão");
 
     await act(async () => {
       await hook.current[1].markAllAsRead();
     });
-    expect(hook.current[0].error).toBe("Sem permissão em lote");
+    expect(hook.current[0].actionError).toBe("Sem permissão em lote");
   });
 
   it("recarrega sozinha quando chega notificação em tempo real e cancela ao desmontar (Spec 086)", async () => {

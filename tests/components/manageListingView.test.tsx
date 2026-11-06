@@ -86,6 +86,10 @@ describe("tela de gerenciar anúncio (Figma 04.08)", () => {
     expect(screen.getByText("Negociação em andamento")).toBeDefined();
     expect(screen.getByLabelText("Editar anúncio").props.accessibilityState.disabled).toBe(true);
     expect(screen.getByLabelText("Pausar anúncio").props.accessibilityState.disabled).toBe(true);
+    expect(screen.getByRole("button", { name: "Excluir anúncio" }).props.accessibilityState.disabled).toBe(true);
+    expect(
+      screen.getByText("Conclua ou cancele a negociação em andamento para excluir este anúncio."),
+    ).toBeDefined();
   });
 
   it("aciona a edição do anúncio", async () => {

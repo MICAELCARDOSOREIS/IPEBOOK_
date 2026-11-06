@@ -18,7 +18,7 @@ function mockAuth(state: AuthState, actions: Partial<AuthActions> = {}) {
     signUp: vi.fn().mockResolvedValue(true),
     signIn: vi.fn().mockResolvedValue(true),
     signInWithGoogle: vi.fn().mockResolvedValue(true),
-    signOut: vi.fn().mockResolvedValue(undefined),
+    signOut: vi.fn().mockResolvedValue(true),
     requestPasswordReset: vi.fn().mockResolvedValue("senha-temp"),
     ...actions,
   };
@@ -41,14 +41,44 @@ describe("tela de entrar (ISO/IEC 25010 - Usabilidade e Acessibilidade)", () => 
     expect(screen.getByLabelText("Senha")).toBeDefined();
   });
 
-  it("exibe indicador de carregamento enquanto autentica", async () => {
+  it("não mostra o carregamento de envio durante a verificação inicial da sessão", async () => {
     mockAuth({ user: null, loading: true, error: null });
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
       screen = await render(<SignIn />);
     });
 
+    expect(screen.queryByLabelText("Entrando")).toBeNull();
+    expect(screen.getByRole("button", { name: "Entrar" })).toBeDefined();
+  });
+
+  it("exibe indicador de carregamento apenas enquanto autentica", async () => {
+    let resolveSignIn!: (value: boolean) => void;
+    const signIn = vi.fn().mockImplementation(
+      () => new Promise<boolean>((resolve) => { resolveSignIn = resolve; }),
+    );
+    mockAuth({ user: null, loading: false, error: null }, { signIn });
+
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<SignIn />);
+    });
+
+    await act(async () => {
+      fireEvent.changeText(screen.getByLabelText("E-mail"), "pessoa@exemplo.com");
+      fireEvent.changeText(screen.getByLabelText("Senha"), "12345678");
+    });
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Entrar" }));
+    });
+
     expect(screen.getByLabelText("Entrando")).toBeDefined();
+
+    await act(async () => {
+      resolveSignIn(false);
+    });
+
+    expect(screen.queryByLabelText("Entrando")).toBeNull();
   });
 
   it("exibe mensagem de erro de credenciais inválidas", async () => {
@@ -305,6 +335,23 @@ describe("tela de esqueceu a senha (ISO/IEC 25010 - Usabilidade e Acessibilidade
 
     expect(screen.getByRole("alert")).toBeDefined();
     expect(screen.getByText("Recuperação por e-mail indisponível no modo local.")).toBeDefined();
+  });
+
+  it("não solicita o link sem informar o e-mail", async () => {
+    const requestPasswordReset = vi.fn().mockResolvedValue(true);
+    mockAuth({ user: null, loading: false, error: null }, { requestPasswordReset });
+
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<ForgotPassword />);
+    });
+
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Enviar link" }));
+    });
+
+    expect(requestPasswordReset).not.toHaveBeenCalled();
+    expect(screen.getByText("Informe o e-mail da sua conta.")).toBeDefined();
   });
 
   it("aciona a navegação de volta ao login", async () => {

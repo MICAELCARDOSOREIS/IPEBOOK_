@@ -16,6 +16,8 @@ import { useGuardedPress } from "@/view/useGuardedPress";
 import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 export type DeleteAccountProps = {
   sessionUserId: string | null;
+  /** Verdadeiro enquanto a sessão gravada ainda está sendo lida. */
+  sessionLoading?: boolean;
   onBack: () => void;
   onAccountDeleted: () => void;
   onNavigateToLogin?: () => void;
@@ -31,6 +33,7 @@ export type DeleteAccountProps = {
  */
 export default function DeleteAccount({
   sessionUserId,
+  sessionLoading = false,
   onBack,
   onAccountDeleted,
   onNavigateToLogin,
@@ -69,6 +72,30 @@ export default function DeleteAccount({
               <View style={styles.fullWidthButton}>
                 <FilledButton label="Voltar à tela inicial" onPress={guardedAccountDeleted} />
               </View>
+            </View>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
+
+  if (!sessionUserId && sessionLoading) {
+    return (
+      <SafeAreaView style={styles.page}>
+        <TopAppBar title="Privacidade e dados" onBack={guardedBack} contentMaxWidth={wide ? WEB_MAX_WIDTH : undefined} />
+        <ScrollView
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
+          {...standardVerticalScrollProps}
+        >
+          <View style={[styles.content, wide && styles.contentWide]}>
+            <View style={styles.card}>
+              <IconBadge icon="lock" tone="neutral" size="large" />
+              <Text accessibilityRole="header" style={styles.title}>
+                Verificando sua sessão
+              </Text>
+              <Text style={styles.bodyCenter}>
+                Aguarde enquanto confirmamos sua conta.
+              </Text>
             </View>
           </View>
         </ScrollView>
@@ -187,7 +214,7 @@ export default function DeleteAccount({
               label={state.exporting ? "Gerando arquivo..." : "Solicitar meus dados"}
               accessibilityLabel="Baixar meus dados pessoais em formato JSON"
               loading={state.exporting}
-              disabled={state.exporting}
+              disabled={state.exporting || state.loading}
               onPress={() => void actions.downloadUserData(sessionUserId)}
             />
           </View>
@@ -216,6 +243,7 @@ export default function DeleteAccount({
             accessibilityLabel="Estou ciente de que a exclusão da minha conta é definitiva e não pode ser desfeita"
             checked={state.confirmed}
             onChange={actions.setConfirmed}
+            disabled={state.loading || state.exporting}
           />
 
           {state.error ? (
@@ -233,6 +261,7 @@ export default function DeleteAccount({
             label="Confirmar e excluir minha conta"
             loading={state.loading}
             loadingLabel="Excluindo conta..."
+            disabled={state.loading || state.exporting}
             onPress={() => void actions.deleteAccount(sessionUserId)}
           />
           </View>

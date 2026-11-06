@@ -357,10 +357,11 @@ export default function CreateListing({
                 onRemovePhoto={actions.removePhoto}
                 uploading={photoState.uploading}
                 photoError={photoState.error}
-                onChoosePhoto={(slot, source) => {
+                onChoosePhoto={(slot, source, slotIndex) => {
                   void photoActions.choose(source).then((url) => {
                     if (!url) return;
                     if (slot === "cover") actions.setPhotoUrl(url);
+                    else if (slotIndex !== undefined && slotIndex < state.photos.length) actions.setPhotoAt(slotIndex, url);
                     else actions.addPhoto(url);
                   });
                 }}

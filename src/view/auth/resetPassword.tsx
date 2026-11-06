@@ -42,7 +42,19 @@ export default function ResetPassword({
 
   const handleSubmit = async () => {
     setValidationError(null);
-    if (confirmPassword && password !== confirmPassword) {
+    if (!password) {
+      setValidationError("Informe a nova senha.");
+      return;
+    }
+    if (password.length < 8) {
+      setValidationError("A nova senha deve ter pelo menos 8 caracteres.");
+      return;
+    }
+    if (!confirmPassword) {
+      setValidationError("Confirme a nova senha.");
+      return;
+    }
+    if (password !== confirmPassword) {
       setValidationError("As senhas não coincidem.");
       return;
     }
@@ -139,7 +151,9 @@ export default function ResetPassword({
                 />
 
                 {errorMessage ? (
-                  <Text accessibilityRole="alert" style={styles.error}>{errorMessage}</Text>
+                  <Text accessibilityRole="alert" accessibilityLiveRegion="assertive" style={styles.error}>
+                    {errorMessage}
+                  </Text>
                 ) : null}
 
                 <FilledButton
@@ -148,10 +162,10 @@ export default function ResetPassword({
                   loadingLabel="Salvando senha"
                   onPress={() => void handleSubmit()}
                 />
+
+                <TextButton label="Voltar ao login" disabled={state.loading} onPress={guardedSignIn} />
               </>
             )}
-
-            <TextButton label="Voltar ao login" onPress={guardedSignIn} />
           </View>
         </ScrollView>
       </SafeAreaView>

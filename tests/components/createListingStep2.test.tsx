@@ -17,7 +17,7 @@ describe("CreateListingStep2 — câmera e galeria (Spec 092)", () => {
     expect(screen.getByText(PERMISSION_PROMPT_COPY.photos.title)).toBeDefined();
     expect(onChoosePhoto).not.toHaveBeenCalled();
     await act(async () => { fireEvent.press(screen.getByLabelText(PERMISSION_PROMPT_COPY.photos.allow)); });
-    expect(onChoosePhoto).toHaveBeenCalledWith("cover", "library");
+    expect(onChoosePhoto).toHaveBeenCalledWith("cover", "library", undefined);
   });
 
   it("a câmera do slot extra também passa pelo motivo antes de abrir", async () => {
@@ -27,7 +27,7 @@ describe("CreateListingStep2 — câmera e galeria (Spec 092)", () => {
     await act(async () => { fireEvent.press(screen.getByLabelText("Tirar foto com a câmera")); });
     expect(onChoosePhoto).not.toHaveBeenCalled();
     await act(async () => { fireEvent.press(screen.getByLabelText(PERMISSION_PROMPT_COPY.photos.allow)); });
-    expect(onChoosePhoto).toHaveBeenCalledWith("extra", "camera");
+    expect(onChoosePhoto).toHaveBeenCalledWith("extra", "camera", 0);
   });
 
   it("CA4: 'publicar sem foto' não pede acesso nenhum e não chama o seletor", async () => {

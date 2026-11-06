@@ -349,7 +349,7 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
                           label="Escolher foto"
                           accessibilityLabel="Escolher foto da galeria"
                           icon={<AppIcon name="photo" size={18} color={colors.m3.primary} />}
-                          disabled={photo.uploading}
+                          disabled={photo.uploading || saving}
                           onPress={() => void pickPhoto("library")}
                         />
                       </View>
@@ -358,7 +358,7 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
                           label="Tirar foto"
                           accessibilityLabel="Tirar foto com a câmera"
                           icon={<AppIcon name="camera" size={18} color={colors.m3.primary} />}
-                          disabled={photo.uploading}
+                          disabled={photo.uploading || saving}
                           onPress={() => void pickPhoto("camera")}
                         />
                       </View>
@@ -374,6 +374,7 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
                         <TextButton
                           label="Remover foto"
                           accessibilityLabel="Remover foto do perfil"
+                          disabled={saving}
                           onPress={() => editField("photoUrl", "", setPhotoUrl)}
                         />
                       </View>
@@ -398,6 +399,7 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
                     placeholder="Seu nome"
                     autoCapitalize="words"
                     maxLength={MAX_NAME_LENGTH}
+                    editable={!saving}
                     error={fieldErrors.name}
                     helperText={fieldErrors.name ? undefined : `${name.trim().length}/${MAX_NAME_LENGTH}`}
                     helperTextAlign="right"
@@ -412,6 +414,7 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
                           ? `Bairro selecionado: ${neighborhood}. Toque para alterar`
                           : "Nenhum bairro selecionado. Toque para escolher"
                       }
+                      disabled={saving}
                       onPress={() => setIsNeighborhoodModalOpen(true)}
                       style={withPress(styles.selectorField)}
                     >
@@ -459,6 +462,7 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
                             label={item}
                             accessibilityLabel={`Bairro ${item}`}
                             selected={neighborhood === item}
+                            disabled={saving}
                             onPress={() => setNeighborhood(item)}
                           />
                         ))}
@@ -486,6 +490,7 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
                     placeholder="@seuperfil"
                     autoCapitalize="none"
                     maxLength={MAX_SOCIAL_HANDLE_LENGTH}
+                    editable={!saving}
                     error={fieldErrors.socialHandle}
                     helperText={fieldErrors.socialHandle ? undefined : "Opcional. Informe seu usuário, com ou sem @."}
                   />

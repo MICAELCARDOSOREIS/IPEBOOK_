@@ -13,10 +13,11 @@ import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
 vi.mocked(useNetworkStatus).mockReturnValue({ isOnline: true });
 
 function mock(state: Partial<FavoritesState>, actions: Partial<FavoritesActions> = {}) {
-  const fullState: FavoritesState = { books: [], loading: false, error: null, removingId: null, ...state };
+  const fullState: FavoritesState = { books: [], loading: false, error: null, removingId: null, actionError: null, ...state };
   const fullActions: FavoritesActions = {
     reload: vi.fn(),
     removeFavorite: vi.fn().mockResolvedValue(true),
+    clearActionError: vi.fn(),
     ...actions,
   };
   vi.mocked(useFavoritesViewModel).mockReturnValue([fullState, fullActions]);
@@ -84,6 +85,19 @@ describe("Favorites alinhada ao Figma 02.06 (Spec 030)", () => {
     });
 
     expect(actions.removeFavorite).toHaveBeenCalledWith("b1");
+  });
+
+  it("mantém a lista visível quando a remoção falha e só avisa pelo snackbar", async () => {
+    vi.mocked(useNetworkStatus).mockReturnValue({ isOnline: true });
+    mock({ books: [book], actionError: "Não foi possível atualizar o favorito." });
+
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<Favorites userId="u1" onBack={vi.fn()} onLogin={vi.fn()} onBook={vi.fn()} />);
+    });
+
+    expect(screen.getByText("O Pequeno Príncipe")).toBeDefined();
+    expect(screen.getByText("Não foi possível atualizar o favorito.")).toBeDefined();
   });
 
   it("exibe chips de filtro no celular e nota de privacidade no rodapé (Spec 120)", async () => {

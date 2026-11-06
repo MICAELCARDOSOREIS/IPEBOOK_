@@ -174,7 +174,7 @@ export function ScheduleMeeting({ requestId, sessionUserId, onBack, onSent }: Sc
       {state.loading ? (
         <LoadingState label="Carregando o encontro" />
       ) : state.loadError ? (
-        <ErrorState message={state.loadError} onRetry={guardedBack} />
+        <ErrorState message={state.loadError} onRetry={() => void actions.reload()} />
       ) : (
         <View style={styles.stage} pointerEvents="box-none" onLayout={(event) => setStageHeight(Math.round(event.nativeEvent.layout.height))}>
           <Animated.View

@@ -5,6 +5,7 @@ import { AppIcon } from "@/view/components/AppIcon";
 import { BookCover } from "@/view/components/BookCover";
 import { IpeMark } from "@/view/components/IpeMark";
 import { withPress } from "@/view/pressFeedback";
+import { formatPrice } from "@/view/formatPrice";
 import { standardHorizontalScrollProps } from "@/view/scrollProps";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
@@ -70,7 +71,7 @@ export function CatalogCarousel({
   const renderCard = (item: Book, wide = false) => {
     const tag = modalityTag[item.modality];
     const priceSuffix = item.modality === "sale" && item.price != null
-      ? ` · R$ ${item.price.toFixed(2).replace(".", ",")}`
+      ? ` · ${formatPrice(item.price)}`
       : "";
     return (
       <Pressable

@@ -49,22 +49,34 @@ export default function SignUp({
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [termsError, setTermsError] = useState<string | null>(null);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const busy = submitting || googleLoading;
 
   const handleGoogleSignIn = async () => {
+    if (busy) return;
     setGoogleLoading(true);
-    const success = await actions.signInWithGoogle?.();
-    setGoogleLoading(false);
-    if (success) guardedAuthenticated();
+    try {
+      const success = await actions.signInWithGoogle?.();
+      if (success) guardedAuthenticated();
+    } finally {
+      setGoogleLoading(false);
+    }
   };
 
   const handleSubmit = async () => {
+    if (busy) return;
     if (!acceptedTerms) {
       setTermsError(TERMS_ERROR);
       return;
     }
     setTermsError(null);
-    const success = await actions.signUp(email, password, name);
-    if (success) guardedAuthenticated();
+    setSubmitting(true);
+    try {
+      const success = await actions.signUp(email, password, name);
+      if (success) guardedAuthenticated();
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -114,7 +126,7 @@ export default function SignUp({
                 accessibilityLabel="Continuar com Google"
                 icon={<GoogleLogo size={20} />}
                 loading={googleLoading}
-                disabled={state.loading}
+                disabled={busy}
                 onPress={() => void handleGoogleSignIn()}
               />
 
@@ -132,7 +144,7 @@ export default function SignUp({
                 autoComplete="name"
                 textContentType="name"
                 returnKeyType="next"
-                editable={!state.loading}
+                editable={!busy}
                 placeholder="Como você quer ser chamado"
                 maxLength={80}
               />
@@ -146,7 +158,7 @@ export default function SignUp({
                 autoComplete="email"
                 textContentType="emailAddress"
                 returnKeyType="next"
-                editable={!state.loading}
+                editable={!busy}
                 placeholder="voce@exemplo.com"
               />
 
@@ -158,7 +170,7 @@ export default function SignUp({
                 autoComplete="new-password"
                 textContentType="newPassword"
                 returnKeyType="done"
-                editable={!state.loading}
+                editable={!busy}
                 helperText="Mínimo de 8 caracteres."
               />
 
@@ -171,30 +183,34 @@ export default function SignUp({
                   if (checked) setTermsError(null);
                 }}
                 error={termsError}
-                disabled={state.loading}
+                disabled={busy}
               />
 
               {onNavigateToTerms ? (
                 <TextButton
                   label="Ler os termos de uso e a política de privacidade"
+                  disabled={busy}
                   onPress={guardedTerms}
                 />
               ) : null}
 
               {state.error ? (
-                <Text accessibilityRole="alert" style={styles.error}>{state.error}</Text>
+                <Text accessibilityRole="alert" accessibilityLiveRegion="assertive" style={styles.error}>
+                  {state.error}
+                </Text>
               ) : null}
 
               <FilledButton
                 label="Criar conta"
-                loading={state.loading}
+                loading={submitting}
                 loadingLabel="Criando conta"
+                disabled={busy}
                 onPress={() => void handleSubmit()}
               />
 
               <View style={styles.footerRow}>
                 <Text style={styles.footerPrompt}>Já tem uma conta?</Text>
-                <TextButton label="Já tenho conta" onPress={guardedSignIn} />
+                <TextButton label="Já tenho conta" disabled={busy} onPress={guardedSignIn} />
               </View>
             </>
           )}

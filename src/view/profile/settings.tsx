@@ -119,6 +119,7 @@ export function Settings({
   const [confirmingCleanup, setConfirmingCleanup] = useState<"catalog" | "history" | null>(null);
   const [expandedSection, setExpandedSection] = useState<SettingsSectionKey | null>(null);
   const [signingOut, setSigningOut] = useState(false);
+  const [signOutError, setSignOutError] = useState<string | null>(null);
   const defaultNeighborhoodLabel =
     neighborhood.activeNeighborhood === "all" || neighborhood.activeNeighborhood === "Todos os bairros (Piripiri)"
       ? "Todos os bairros"
@@ -126,8 +127,13 @@ export function Settings({
 
   async function handleSignOut() {
     setSigningOut(true);
+    setSignOutError(null);
     try {
-      await authActions.signOut();
+      const ok = await authActions.signOut();
+      if (!ok) {
+        setSignOutError("Não foi possível sair da conta. Tente novamente.");
+        return;
+      }
       setConfirmingSignOut(false);
       guardedSignedOut?.();
     } finally {
@@ -348,7 +354,7 @@ export function Settings({
               </View>
               {hasAccount ? (
                 <View style={styles.sideSignOut}>
-                  <TextButton label="Sair da conta" tone="danger" onPress={() => setConfirmingSignOut(true)} />
+                  <TextButton label="Sair da conta" tone="danger" onPress={() => { setSignOutError(null); setConfirmingSignOut(true); }} />
                 </View>
               ) : null}
             </View>
@@ -502,7 +508,7 @@ export function Settings({
 
           {hasAccount && !wide ? (
             <View style={styles.signOutRow}>
-              <TextButton label="Sair da conta" tone="danger" onPress={() => setConfirmingSignOut(true)} />
+              <TextButton label="Sair da conta" tone="danger" onPress={() => { setSignOutError(null); setConfirmingSignOut(true); }} />
             </View>
           ) : null}
 
@@ -536,13 +542,16 @@ export function Settings({
       <Dialog
         visible={confirmingSignOut}
         title="Sair da conta?"
-        message="Você volta a ver só o catálogo. Seus anúncios e conversas continuam salvos."
+        message={signOutError ?? "Você volta a ver só o catálogo. Seus anúncios e conversas continuam salvos."}
         confirmLabel="Sair"
         cancelLabel="Ficar"
         destructive
         loading={signingOut}
         onConfirm={() => void handleSignOut()}
-        onCancel={() => setConfirmingSignOut(false)}
+        onCancel={() => {
+          setConfirmingSignOut(false);
+          setSignOutError(null);
+        }}
       />
     </SafeAreaView>
   );

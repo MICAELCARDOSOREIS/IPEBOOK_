@@ -20,7 +20,7 @@ export type CreateListingStep2Props = {
   onSetPhotoUrl: (url: string) => void;
   onRemovePhoto: (index: number) => void;
   /** Foto nova pela câmera ou galeria (Spec 092); `cover` é a capa, `extra` as demais. */
-  onChoosePhoto?: (slot: "cover" | "extra", source: ImageSource) => void;
+  onChoosePhoto?: (slot: "cover" | "extra", source: ImageSource, slotIndex?: number) => void;
   uploading?: boolean;
   photoError?: string | null;
 };
@@ -37,8 +37,12 @@ export function CreateListingStep2({
   uploading = false,
   photoError,
 }: CreateListingStep2Props) {
-  const [sheetSlot, setSheetSlot] = useState<"cover" | "extra" | null>(null);
-  const [pendingPhoto, setPendingPhoto] = useState<{ slot: "cover" | "extra"; source: ImageSource } | null>(null);
+  const [sheetSlot, setSheetSlot] = useState<{ slot: "cover" | "extra"; index?: number } | null>(null);
+  const [pendingPhoto, setPendingPhoto] = useState<{
+    slot: "cover" | "extra";
+    index?: number;
+    source: ImageSource;
+  } | null>(null);
   const [showLinkField, setShowLinkField] = useState(false);
   const { colors } = useTheme();
   const wideWeb = useIsWideWeb();
@@ -56,7 +60,7 @@ export function CreateListingStep2({
         <AddPhotoCard
           label="Foto da capa"
           photoUrl={photoUrl}
-          onPress={() => setSheetSlot("cover")}
+          onPress={() => setSheetSlot({ slot: "cover" })}
           onRemovePhoto={() => onSetPhotoUrl("")}
           style={wideWeb ? styles.webCoverSlot : styles.coverSlot}
         />
@@ -64,14 +68,14 @@ export function CreateListingStep2({
           <AddPhotoCard
             label="Lombada"
             photoUrl={photos[0]}
-            onPress={() => setSheetSlot("extra")}
+            onPress={() => setSheetSlot({ slot: "extra", index: 0 })}
             onRemovePhoto={() => onRemovePhoto(0)}
             style={wideWeb ? styles.webSideSlot : styles.sideSlot}
           />
           <AddPhotoCard
             label="Páginas"
             photoUrl={photos[1]}
-            onPress={() => setSheetSlot("extra")}
+            onPress={() => setSheetSlot({ slot: "extra", index: 1 })}
             onRemovePhoto={() => onRemovePhoto(1)}
             style={wideWeb ? styles.webSideSlot : styles.sideSlot}
           />
@@ -109,12 +113,12 @@ export function CreateListingStep2({
 
       <PhotoSourceSheet
         visible={sheetSlot !== null}
-        title={sheetSlot === "cover" ? "Foto da capa" : "Mais uma foto"}
+        title={sheetSlot?.slot === "cover" ? "Foto da capa" : "Mais uma foto"}
         onChoose={(source) => {
           const slot = sheetSlot;
           setSheetSlot(null);
           // O motivo do acesso à câmera/galeria vem antes do prompt nativo (Spec 020, CA2).
-          if (slot) setPendingPhoto({ slot, source });
+          if (slot) setPendingPhoto({ ...slot, source });
         }}
         onClose={() => setSheetSlot(null)}
       />
@@ -125,7 +129,7 @@ export function CreateListingStep2({
         onAllow={() => {
           const pending = pendingPhoto;
           setPendingPhoto(null);
-          if (pending) onChoosePhoto?.(pending.slot, pending.source);
+          if (pending) onChoosePhoto?.(pending.slot, pending.source, pending.index);
         }}
         onLater={() => setPendingPhoto(null)}
         onDismiss={() => setPendingPhoto(null)}

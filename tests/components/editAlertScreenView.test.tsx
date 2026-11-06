@@ -14,7 +14,7 @@ const mockedUseAuthViewModel = vi.mocked(useAuthViewModel);
 const actions: AuthActions = {
   signUp: vi.fn().mockResolvedValue(false),
   signIn: vi.fn().mockResolvedValue(false),
-  signOut: vi.fn().mockResolvedValue(undefined),
+  signOut: vi.fn().mockResolvedValue(true),
   requestPasswordReset: vi.fn().mockResolvedValue(false),
 };
 

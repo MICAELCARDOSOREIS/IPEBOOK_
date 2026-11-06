@@ -103,6 +103,7 @@ export default function HelpAndFaq({ onBack, onOpenConversations }: HelpAndFaqPr
                   key={cat.key}
                   accessibilityRole="button"
                   accessibilityLabel={`Filtrar por ${cat.label}`}
+                  accessibilityState={{ selected: isSelected }}
                   onPress={() => setFilter(cat.key)}
                   style={withPress([styles.filterChip, isSelected && styles.filterChipSelected])}
                 >

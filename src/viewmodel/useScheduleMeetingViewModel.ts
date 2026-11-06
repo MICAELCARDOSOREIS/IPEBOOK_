@@ -29,6 +29,7 @@ export type ScheduleMeetingState = {
 };
 
 export type ScheduleMeetingActions = {
+  reload: () => Promise<void>;
   selectPoint: (pointName: string) => void;
   selectDay: (index: number) => void;
   selectHour: (hour: number) => void;
@@ -67,39 +68,43 @@ export function useScheduleMeetingViewModel(
   });
   const active = useRef(false);
 
-  useEffect(() => {
-    active.current = true;
-    void (async () => {
-      try {
-        const meeting = await useCases.getMeeting(requestId, sessionUserId);
-        if (!active.current) return;
-        const ongoing = meeting && meeting.status !== "cancelled" ? meeting : null;
-        setCurrent(ongoing);
-        // Reagendar parte do encontro atual: local, dia (se ainda na janela) e horário.
-        const scheduled = ongoing ? new Date(ongoing.scheduledAt) : null;
-        const dayIndex = scheduled ? dayOptions.findIndex((day) => sameDay(day, scheduled)) : -1;
-        const validSlots = meetingTimeSlotsForPoint(ongoing?.pointName ?? null, scheduled);
+  const reload = useCallback(async () => {
+    if (!active.current) return;
+    setState((previous) => ({ ...previous, loading: true, loadError: null }));
+    try {
+      const meeting = await useCases.getMeeting(requestId, sessionUserId);
+      if (!active.current) return;
+      const ongoing = meeting && meeting.status !== "cancelled" ? meeting : null;
+      setCurrent(ongoing);
+      // Reagendar parte do encontro atual: local, dia (se ainda na janela) e horário.
+      const scheduled = ongoing ? new Date(ongoing.scheduledAt) : null;
+      const dayIndex = scheduled ? dayOptions.findIndex((day) => sameDay(day, scheduled)) : -1;
+      const validSlots = meetingTimeSlotsForPoint(ongoing?.pointName ?? null, scheduled);
+      setState((previous) => ({
+        ...previous,
+        loading: false,
+        pointName: ongoing?.pointName ?? null,
+        dayIndex: dayIndex >= 0 ? dayIndex : null,
+        hour: scheduled && validSlots.includes(scheduled.getHours()) ? scheduled.getHours() : null,
+      }));
+    } catch (error) {
+      if (active.current) {
         setState((previous) => ({
           ...previous,
           loading: false,
-          pointName: ongoing?.pointName ?? null,
-          dayIndex: dayIndex >= 0 ? dayIndex : null,
-          hour: scheduled && validSlots.includes(scheduled.getHours()) ? scheduled.getHours() : null,
+          loadError: error instanceof DomainError ? error.message : LOAD_ERROR,
         }));
-      } catch (error) {
-        if (active.current) {
-          setState((previous) => ({
-            ...previous,
-            loading: false,
-            loadError: error instanceof DomainError ? error.message : LOAD_ERROR,
-          }));
-        }
       }
-    })();
+    }
+  }, [useCases, requestId, sessionUserId, dayOptions]);
+
+  useEffect(() => {
+    active.current = true;
+    void reload();
     return () => {
       active.current = false;
     };
-  }, [useCases, requestId, sessionUserId, dayOptions]);
+  }, [reload]);
 
   const selectPoint = useCallback(
     (pointName: string) =>
@@ -171,6 +176,6 @@ export function useScheduleMeetingViewModel(
 
   return [
     { ...state, mode: current ? "reschedule" : "propose", dayOptions, timeSlots, isPointOpenOnDay },
-    { selectPoint, selectDay, selectHour, submit },
+    { reload, selectPoint, selectDay, selectHour, submit },
   ];
 }

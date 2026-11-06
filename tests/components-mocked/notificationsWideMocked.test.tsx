@@ -17,6 +17,7 @@ describe("Notificações na web larga", () => {
       filteredNotifications: [],
       loading: false,
       error: null,
+      actionError: null,
       filter: "all",
       unreadCount: 0,
       systemPermissionGranted: false,
@@ -29,6 +30,7 @@ describe("Notificações na web larga", () => {
       deleteNotification: vi.fn(),
       clearAll: vi.fn(),
       clearRead: vi.fn(),
+      clearActionError: vi.fn(),
       setFilter: vi.fn(),
     } satisfies NotificationsActions;
     vi.mocked(useNotificationsViewModel).mockReturnValue([state, actions]);

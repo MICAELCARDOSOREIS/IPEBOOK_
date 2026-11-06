@@ -68,7 +68,7 @@ export function useReportListingViewModel(
         return false;
       }
 
-      const guard = guardFormSubmit(rateLimiter, formKey("report:submit", listingId), 3);
+      const guard = guardFormSubmit(rateLimiter, formKey(`report:submit:${listingId}`, sessionUserId), 3);
       if (!guard.allowed) {
         logger.warn("Denúncia bloqueada pelo limite de tentativas do cliente");
         setState((prev) => ({ ...prev, loading: false, error: guard.message }));

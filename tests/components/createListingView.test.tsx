@@ -29,6 +29,7 @@ function mockViewModel(state: CreateListingState, actions: Partial<CreateListing
     setDescription: vi.fn(),
     setPhotoUrl: vi.fn(),
     addPhoto: vi.fn(),
+    setPhotoAt: vi.fn(),
     removePhoto: vi.fn(),
     setIsBox: vi.fn(),
     setBoxVolumesCount: vi.fn(),

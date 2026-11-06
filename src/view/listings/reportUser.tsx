@@ -71,6 +71,22 @@ export default function ReportUser({ userId, userName, onBack, onNavigateToLogin
     );
   }
 
+  if (sessionUserId && userId === sessionUserId) {
+    return (
+      <SafeAreaView style={styles.page}>
+        <TopAppBar contentMaxWidth={wide ? WEB_MAX_WIDTH : 560} title="Denunciar pessoa" onBack={guardedBack} />
+        <View style={styles.centered}>
+          <IconBadge icon="flag" tone="neutral" size="large" />
+          <Text accessibilityRole="header" style={styles.title}>Não é possível denunciar a própria conta</Text>
+          <Text style={styles.body}>A denúncia serve para relatar o comportamento de outra pessoa da comunidade.</Text>
+          <View style={styles.full}>
+            <FilledButton label="Voltar" onPress={guardedBack} />
+          </View>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.page}>
       <TopAppBar contentMaxWidth={wide ? WEB_MAX_WIDTH : 560} title="Denunciar pessoa" onBack={guardedBack} />
@@ -133,6 +149,7 @@ export default function ReportUser({ userId, userName, onBack, onNavigateToLogin
             label="Enviar denúncia"
             loading={state.loading}
             loadingLabel="Enviando"
+            disabled={state.loading}
             onPress={() => void actions.submit(userId, sessionUserId)}
           />
           </View>

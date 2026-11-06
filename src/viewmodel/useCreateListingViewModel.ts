@@ -79,6 +79,7 @@ export type CreateListingActions = {
   setDescription: (value: string) => void;
   setPhotoUrl: (value: string) => void;
   addPhoto: (value: string) => void;
+  setPhotoAt: (index: number, value: string) => void;
   removePhoto: (index: number) => void;
   setIsBox: (value: boolean) => void;
   setBoxVolumesCount: (value: string) => void;
@@ -255,6 +256,18 @@ export function useCreateListingViewModel(
       return {
         ...prev,
         photos: [...prev.photos, value],
+        error: null,
+        success: false,
+      };
+    });
+  }, []);
+
+  const setPhotoAt = useCallback((index: number, value: string) => {
+    setState((prev) => {
+      if (index < 0 || index >= prev.photos.length) return prev;
+      return {
+        ...prev,
+        photos: prev.photos.map((photo, i) => (i === index ? value : photo)),
         error: null,
         success: false,
       };
@@ -465,6 +478,18 @@ export function useCreateListingViewModel(
       setState((prev) => ({ ...prev, loading: true, error: null, success: false }));
 
       const input = buildInput();
+      if (input.modality === "sale" && input.price !== undefined && (!Number.isFinite(input.price) || input.price <= 0)) {
+        setState((prev) => ({ ...prev, loading: false, error: "Informe um preço maior que zero." }));
+        return null;
+      }
+      if (input.boxVolumesCount !== undefined && (!Number.isFinite(input.boxVolumesCount) || input.boxVolumesCount < 2)) {
+        setState((prev) => ({
+          ...prev,
+          loading: false,
+          error: "Informe uma quantidade de volumes entre 2 e 100.",
+        }));
+        return null;
+      }
       const draftId = stateRef.current.draftId;
       try {
         const book = draftId
@@ -514,6 +539,7 @@ export function useCreateListingViewModel(
       setDescription,
       setPhotoUrl,
       addPhoto,
+      setPhotoAt,
       removePhoto,
       setIsBox,
       setBoxVolumesCount,

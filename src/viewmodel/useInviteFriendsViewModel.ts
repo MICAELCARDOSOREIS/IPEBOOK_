@@ -8,6 +8,8 @@ import { defaultShareImageFile, type ShareImageFile } from "@/viewmodel/shareIma
 export type InviteFriendsState = {
   sharing: boolean;
   linkCopied: boolean;
+  /** Folha de compartilhamento do aparelho aberta: o convite está pronto para enviar. */
+  shared: boolean;
   error: string | null;
   inviteMessage: string;
   inviteUrl: string;
@@ -20,6 +22,7 @@ export type InviteFriendsActions = {
   shareNative: () => Promise<void>;
   copyLink: () => Promise<void>;
   dismissLinkCopied: () => void;
+  dismissShared: () => void;
 };
 
 const GENERIC_ERROR = "Não foi possível compartilhar o convite. Tente novamente.";
@@ -36,6 +39,7 @@ export function useInviteFriendsViewModel(
   const [state, setState] = useState<InviteFriendsState>({
     sharing: false,
     linkCopied: false,
+    shared: false,
     error: null,
     inviteMessage: message,
     inviteUrl: appUrl,
@@ -54,7 +58,7 @@ export function useInviteFriendsViewModel(
     async (capture: () => Promise<string>) => {
       if (busy.current) return;
       busy.current = true;
-      setState((prev) => ({ ...prev, sharing: true, error: null }));
+      setState((prev) => ({ ...prev, sharing: true, shared: false, error: null }));
       try {
         // Na web não há arquivo para a folha do sistema: copia o texto com o link.
         if (Platform.OS === "web") {
@@ -64,7 +68,7 @@ export function useInviteFriendsViewModel(
         }
         const shared = await shareImageFile(await capture(), message, "Convidar amigos para o IpêBook");
         if (!shared) await Share.share({ message });
-        if (active.current) setState((prev) => ({ ...prev, sharing: false, linkCopied: false, error: null }));
+        if (active.current) setState((prev) => ({ ...prev, sharing: false, shared: true, error: null }));
       } catch (error) {
         if (active.current) {
           setState((prev) => ({
@@ -81,16 +85,17 @@ export function useInviteFriendsViewModel(
   );
 
   const shareToWhatsApp = useCallback(async () => {
-    setState((prev) => ({ ...prev, sharing: true, error: null }));
+    setState((prev) => ({ ...prev, sharing: true, shared: false, error: null }));
     try {
       if (Platform.OS === "web") {
         const webNavigator = navigator as WebNavigatorWithShare;
         if (typeof webNavigator.share === "function") {
           await webNavigator.share({ text: message, url: appUrl });
+          if (active.current) setState((prev) => ({ ...prev, sharing: false, shared: true, error: null }));
         } else {
           await navigator.clipboard.writeText(message);
+          if (active.current) setState((prev) => ({ ...prev, sharing: false, linkCopied: true, error: null }));
         }
-        if (active.current) setState((prev) => ({ ...prev, sharing: false, linkCopied: true, error: null }));
         return;
       }
 
@@ -101,7 +106,7 @@ export function useInviteFriendsViewModel(
       } else {
         await Share.share({ message });
       }
-      if (active.current) setState((prev) => ({ ...prev, sharing: false, linkCopied: false, error: null }));
+      if (active.current) setState((prev) => ({ ...prev, sharing: false, shared: true, error: null }));
     } catch (error) {
       if (active.current) {
         setState((prev) => ({
@@ -115,13 +120,13 @@ export function useInviteFriendsViewModel(
   }, [appUrl, message, useCases]);
 
   const shareNative = useCallback(async () => {
-    setState((prev) => ({ ...prev, sharing: true, error: null }));
+    setState((prev) => ({ ...prev, sharing: true, shared: false, error: null }));
     try {
       if (Platform.OS === "web") {
         const webNavigator = navigator as WebNavigatorWithShare;
         if (typeof webNavigator.share === "function") {
           await webNavigator.share({ text: message, url: appUrl });
-          if (active.current) setState((prev) => ({ ...prev, sharing: false, linkCopied: false, error: null }));
+          if (active.current) setState((prev) => ({ ...prev, sharing: false, shared: true, error: null }));
         } else {
           await navigator.clipboard.writeText(message);
           if (active.current) setState((prev) => ({ ...prev, sharing: false, linkCopied: true, error: null }));
@@ -130,7 +135,7 @@ export function useInviteFriendsViewModel(
       }
 
       await Share.share({ message });
-      if (active.current) setState((prev) => ({ ...prev, sharing: false, linkCopied: false, error: null }));
+      if (active.current) setState((prev) => ({ ...prev, sharing: false, shared: true, error: null }));
     } catch (error) {
       if (active.current) {
         setState((prev) => ({
@@ -147,10 +152,12 @@ export function useInviteFriendsViewModel(
     try {
       if (Platform.OS === "web") {
         await navigator.clipboard.writeText(appUrl);
+        if (active.current) setState((prev) => ({ ...prev, linkCopied: true, shared: false, error: null }));
       } else {
+        // No aparelho não há área de transferência no fluxo: abre a folha de compartilhamento.
         await Share.share({ message: appUrl });
+        if (active.current) setState((prev) => ({ ...prev, linkCopied: false, shared: true, error: null }));
       }
-      if (active.current) setState((prev) => ({ ...prev, linkCopied: true, error: null }));
     } catch (error) {
       if (active.current) {
         setState((prev) => ({
@@ -165,5 +172,9 @@ export function useInviteFriendsViewModel(
     if (active.current) setState((prev) => ({ ...prev, linkCopied: false }));
   }, []);
 
-  return [state, { shareImage, shareToWhatsApp, shareNative, copyLink, dismissLinkCopied }];
+  const dismissShared = useCallback(() => {
+    if (active.current) setState((prev) => ({ ...prev, shared: false }));
+  }, []);
+
+  return [state, { shareImage, shareToWhatsApp, shareNative, copyLink, dismissLinkCopied, dismissShared }];
 }

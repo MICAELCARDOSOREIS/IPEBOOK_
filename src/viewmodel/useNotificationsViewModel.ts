@@ -11,6 +11,8 @@ export type NotificationsState = {
   filteredNotifications: readonly AppNotification[];
   loading: boolean;
   error: string | null;
+  /** Falha de uma ação (marcar, excluir, limpar); não substitui a lista carregada. */
+  actionError: string | null;
   filter: NotificationFilter;
   unreadCount: number;
   /** Permissão de notificações concedida no aparelho (Spec 111). null se ainda não checada/web. */
@@ -26,6 +28,7 @@ export type NotificationsActions = {
   deleteNotification: (notificationId: string) => Promise<void>;
   clearAll: () => Promise<void>;
   clearRead: () => Promise<void>;
+  clearActionError: () => void;
   setFilter: (filter: NotificationFilter) => void;
 };
 
@@ -37,6 +40,7 @@ export function useNotificationsViewModel(
   const [notifications, setNotifications] = useState<readonly AppNotification[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [filter, setFilter] = useState<NotificationFilter>("all");
   const [systemPermissionGranted, setSystemPermissionGranted] = useState<boolean | null>(null);
 
@@ -113,7 +117,7 @@ export function useNotificationsViewModel(
           prev.map((item) => (item.id === notificationId ? { ...item, read: true } : item)),
         );
       } catch (err) {
-        setError(
+        setActionError(
           err instanceof DomainError
             ? err.message
             : "Não foi possível marcar a notificação como lida.",
@@ -128,7 +132,7 @@ export function useNotificationsViewModel(
       await useCases.markAllAsRead(sessionUserId);
       setNotifications((prev) => prev.map((item) => ({ ...item, read: true })));
     } catch (err) {
-      setError(
+      setActionError(
         err instanceof DomainError
           ? err.message
           : "Não foi possível marcar todas as notificações como lidas.",
@@ -142,7 +146,7 @@ export function useNotificationsViewModel(
         await useCases.deleteNotification(sessionUserId, notificationId);
         setNotifications((prev) => prev.filter((item) => item.id !== notificationId));
       } catch (err) {
-        setError(
+        setActionError(
           err instanceof DomainError
             ? err.message
             : "Não foi possível excluir a notificação.",
@@ -157,7 +161,7 @@ export function useNotificationsViewModel(
       await useCases.clearAll(sessionUserId);
       setNotifications([]);
     } catch (err) {
-      setError(
+      setActionError(
         err instanceof DomainError
           ? err.message
           : "Não foi possível limpar as notificações.",
@@ -170,13 +174,17 @@ export function useNotificationsViewModel(
       await useCases.clearRead(sessionUserId);
       setNotifications((prev) => prev.filter((item) => !item.read));
     } catch (err) {
-      setError(
+      setActionError(
         err instanceof DomainError
           ? err.message
           : "Não foi possível limpar as notificações lidas.",
       );
     }
   }, [sessionUserId, useCases]);
+
+  const clearActionError = useCallback(() => {
+    setActionError(null);
+  }, []);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
   const filteredNotifications =
@@ -197,6 +205,7 @@ export function useNotificationsViewModel(
       filteredNotifications,
       loading,
       error,
+      actionError,
       filter,
       unreadCount,
       systemPermissionGranted,
@@ -209,6 +218,7 @@ export function useNotificationsViewModel(
       deleteNotification,
       clearAll,
       clearRead,
+      clearActionError,
       setFilter,
     },
   ];

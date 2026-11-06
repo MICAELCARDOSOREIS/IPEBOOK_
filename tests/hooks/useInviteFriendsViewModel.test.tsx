@@ -55,6 +55,7 @@ describe("useInviteFriendsViewModel (Spec 057, Figma 08.02)", () => {
     const hook = await renderHook(fakeUseCases);
     expect(hook.current[0].sharing).toBe(false);
     expect(hook.current[0].linkCopied).toBe(false);
+    expect(hook.current[0].shared).toBe(false);
     expect(hook.current[0].error).toBeNull();
     expect(hook.current[0].inviteMessage).toContain("IpêBook");
   });
@@ -74,6 +75,8 @@ describe("useInviteFriendsViewModel (Spec 057, Figma 08.02)", () => {
       expect.stringContaining("whatsapp://send?text="),
     );
     expect(hook.current[0].sharing).toBe(false);
+    expect(hook.current[0].shared).toBe(true);
+    expect(hook.current[0].linkCopied).toBe(false);
     Platform.OS = originalOS;
   });
 
@@ -91,6 +94,7 @@ describe("useInviteFriendsViewModel (Spec 057, Figma 08.02)", () => {
     expect(shareSpy).toHaveBeenCalledWith({
       message: expect.stringContaining("IpêBook em Piripiri"),
     });
+    expect(hook.current[0].shared).toBe(true);
     Platform.OS = originalOS;
   });
 
@@ -107,6 +111,7 @@ describe("useInviteFriendsViewModel (Spec 057, Figma 08.02)", () => {
     expect(shareSpy).toHaveBeenCalledWith({
       message: expect.stringContaining("IpêBook em Piripiri"),
     });
+    expect(hook.current[0].shared).toBe(true);
     Platform.OS = originalOS;
   });
 
@@ -123,6 +128,7 @@ describe("useInviteFriendsViewModel (Spec 057, Figma 08.02)", () => {
 
     expect(writeText).toHaveBeenCalledWith("https://ipebook.app");
     expect(hook.current[0].linkCopied).toBe(true);
+    expect(hook.current[0].shared).toBe(false);
 
     act(() => {
       hook.current[1].dismissLinkCopied();
@@ -143,12 +149,19 @@ describe("useInviteFriendsViewModel (Spec 057, Figma 08.02)", () => {
       await hook.current[1].shareToWhatsApp();
     });
     expect(navShare).toHaveBeenCalledTimes(1);
-    expect(hook.current[0].linkCopied).toBe(true);
+    expect(hook.current[0].shared).toBe(true);
+    expect(hook.current[0].linkCopied).toBe(false);
 
     await act(async () => {
       await hook.current[1].shareNative();
     });
     expect(navShare).toHaveBeenCalledTimes(2);
+    expect(hook.current[0].shared).toBe(true);
+
+    act(() => {
+      hook.current[1].dismissShared();
+    });
+    expect(hook.current[0].shared).toBe(false);
 
     // Sem navigator.share
     vi.stubGlobal("navigator", { clipboard: { writeText } });
@@ -156,11 +169,14 @@ describe("useInviteFriendsViewModel (Spec 057, Figma 08.02)", () => {
       await hook.current[1].shareToWhatsApp();
     });
     expect(writeText).toHaveBeenCalled();
+    expect(hook.current[0].linkCopied).toBe(true);
+    expect(hook.current[0].shared).toBe(false);
 
     await act(async () => {
       await hook.current[1].shareNative();
     });
     expect(writeText).toHaveBeenCalled();
+    expect(hook.current[0].linkCopied).toBe(true);
     Platform.OS = originalOS;
   });
 
@@ -174,7 +190,8 @@ describe("useInviteFriendsViewModel (Spec 057, Figma 08.02)", () => {
       await hook.current[1].copyLink();
     });
     expect(shareSpy).toHaveBeenCalledWith({ message: "https://ipebook.app" });
-    expect(hook.current[0].linkCopied).toBe(true);
+    expect(hook.current[0].shared).toBe(true);
+    expect(hook.current[0].linkCopied).toBe(false);
 
     // Erros em shareNative e copyLink
     shareSpy.mockRejectedValueOnce(new Error("Falha no share"));
@@ -211,6 +228,7 @@ describe("useInviteFriendsViewModel — imagem do convite (Spec 092)", () => {
     expect(shareFile).toHaveBeenCalledWith("file:///tmp/convite.png", expect.stringContaining("IpêBook"), "Convidar amigos para o IpêBook");
     expect(share).not.toHaveBeenCalled();
     expect(hook.current[0].sharing).toBe(false);
+    expect(hook.current[0].shared).toBe(true);
     expect(hook.current[0].error).toBeNull();
   });
 
@@ -220,6 +238,7 @@ describe("useInviteFriendsViewModel — imagem do convite (Spec 092)", () => {
     const hook = await renderHook(fakeUseCases, undefined, vi.fn().mockResolvedValue(false));
     await act(async () => { await hook.current[1].shareImage(vi.fn().mockResolvedValue("file:///x.png")); });
     expect(share).toHaveBeenCalledWith({ message: expect.stringContaining("IpêBook") });
+    expect(hook.current[0].shared).toBe(true);
   });
 
   it("na web copia o texto com o link, sem capturar", async () => {
@@ -232,6 +251,7 @@ describe("useInviteFriendsViewModel — imagem do convite (Spec 092)", () => {
     expect(capture).not.toHaveBeenCalled();
     expect(writeText).toHaveBeenCalledWith(expect.stringContaining("IpêBook"));
     expect(hook.current[0].linkCopied).toBe(true);
+    expect(hook.current[0].shared).toBe(false);
   });
 
   it("mostra erro amigável quando a captura falha e ignora segundo toque em andamento", async () => {

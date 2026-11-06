@@ -42,17 +42,29 @@ export default function SignIn({
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const busy = submitting || googleLoading;
 
   const handleGoogleSignIn = async () => {
+    if (busy) return;
     setGoogleLoading(true);
-    const success = await actions.signInWithGoogle?.();
-    setGoogleLoading(false);
-    if (success) guardedAuthenticated();
+    try {
+      const success = await actions.signInWithGoogle?.();
+      if (success) guardedAuthenticated();
+    } finally {
+      setGoogleLoading(false);
+    }
   };
 
   const handleSubmit = async () => {
-    const success = await actions.signIn(email, password);
-    if (success) guardedAuthenticated();
+    if (busy) return;
+    setSubmitting(true);
+    try {
+      const success = await actions.signIn(email, password);
+      if (success) guardedAuthenticated();
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -78,7 +90,7 @@ export default function SignIn({
             accessibilityLabel="Continuar com Google"
             icon={<GoogleLogo size={20} />}
             loading={googleLoading}
-            disabled={state.loading}
+            disabled={busy}
             onPress={() => void handleGoogleSignIn()}
           />
 
@@ -97,7 +109,7 @@ export default function SignIn({
             autoComplete="email"
             textContentType="emailAddress"
             returnKeyType="next"
-            editable={!state.loading}
+            editable={!busy}
             placeholder="voce@exemplo.com"
           />
 
@@ -110,27 +122,34 @@ export default function SignIn({
             textContentType="password"
             returnKeyType="done"
             onSubmitEditing={() => void handleSubmit()}
-            editable={!state.loading}
+            editable={!busy}
           />
 
           <View style={styles.forgotPasswordRow}>
-            <TextButton label="Esqueci minha senha" onPress={guardedForgotPassword} />
+            <TextButton
+              label="Esqueci minha senha"
+              disabled={busy}
+              onPress={guardedForgotPassword}
+            />
           </View>
 
           {state.error ? (
-            <Text accessibilityRole="alert" style={styles.error}>{state.error}</Text>
+            <Text accessibilityRole="alert" accessibilityLiveRegion="assertive" style={styles.error}>
+              {state.error}
+            </Text>
           ) : null}
 
           <FilledButton
             label="Entrar"
-            loading={state.loading}
+            loading={submitting}
             loadingLabel="Entrando"
+            disabled={busy}
             onPress={() => void handleSubmit()}
           />
 
           <View style={styles.footerRow}>
             <Text style={styles.footerPrompt}>Ainda não tem conta?</Text>
-            <TextButton label="Criar uma conta" onPress={guardedSignUp} />
+            <TextButton label="Criar uma conta" disabled={busy} onPress={guardedSignUp} />
           </View>
         </View>
       </ScrollView>

@@ -19,6 +19,7 @@ export default function DeleteAccountScreen({
   return (
     <DeleteAccount
       sessionUserId={authState.user?.id ?? null}
+      sessionLoading={authState.loading && !authState.user}
       onBack={onBack}
       onEditProfile={onEditProfile}
       onAccountDeleted={onAccountDeleted}

@@ -1,4 +1,4 @@
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { tokens, type ColorPalette } from "@/view/tokens";
@@ -26,6 +26,18 @@ export function InviteFriends({ onBack }: InviteFriendsProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [state, actions] = makeInviteFriendsViewModel();
+
+  // Os avisos são de uma ação pontual: saem sozinhos para não ficarem presos na tela.
+  useEffect(() => {
+    if (!state.linkCopied) return;
+    const timer = setTimeout(actions.dismissLinkCopied, 4000);
+    return () => clearTimeout(timer);
+  }, [state.linkCopied, actions.dismissLinkCopied]);
+  useEffect(() => {
+    if (!state.shared) return;
+    const timer = setTimeout(actions.dismissShared, 4000);
+    return () => clearTimeout(timer);
+  }, [state.shared, actions.dismissShared]);
   // Web larga: o cartão do convite de um lado, texto e ação do outro.
   const wide = useIsWideWeb();
   const cardRef = useRef<React.ComponentRef<typeof View>>(null);
@@ -70,6 +82,16 @@ export function InviteFriends({ onBack }: InviteFriendsProps) {
               style={styles.feedbackBanner}
             >
               <Text style={styles.feedbackText}>Link copiado para a área de transferência!</Text>
+            </View>
+          ) : null}
+
+          {state.shared ? (
+            <View
+              accessibilityRole="alert"
+              accessibilityLiveRegion="polite"
+              style={styles.feedbackBanner}
+            >
+              <Text style={styles.feedbackText}>Convite pronto. Escolha o app para enviar.</Text>
             </View>
           ) : null}
 

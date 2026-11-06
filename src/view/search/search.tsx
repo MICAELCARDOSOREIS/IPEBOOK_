@@ -11,6 +11,7 @@ import { SortSheet } from "@/view/search/SortSheet";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { categoryTone } from "@/view/categoryTone";
+import { formatPrice } from "@/view/formatPrice";
 import { BookCover } from "@/view/components/BookCover";
 import { ModalityCoverArea } from "@/view/components/ModalityCoverArea";
 import { ErrorState } from "@/view/components/ErrorState";
@@ -390,7 +391,7 @@ export default function Search({
         renderItem={({ item }) => {
           const priceOrCondition =
             item.price != null
-              ? `R$ ${item.price.toFixed(2).replace(".", ",")}`
+              ? formatPrice(item.price)
               : item.modality === "trade"
               ? "Por outro livro"
               : "Gratuito";
