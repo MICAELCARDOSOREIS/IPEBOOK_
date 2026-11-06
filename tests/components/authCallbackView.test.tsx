@@ -17,7 +17,7 @@ function mockAuth(state: AuthState, actions: Partial<AuthActions> = {}) {
     signIn: vi.fn().mockResolvedValue(true),
     signInWithGoogle: vi.fn().mockResolvedValue(true),
     handleAuthCallback: vi.fn().mockResolvedValue(true),
-    signOut: vi.fn().mockResolvedValue(undefined),
+    signOut: vi.fn().mockResolvedValue(true),
     requestPasswordReset: vi.fn().mockResolvedValue(true),
     ...actions,
   };

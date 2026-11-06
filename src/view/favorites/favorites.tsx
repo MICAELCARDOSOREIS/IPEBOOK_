@@ -11,6 +11,7 @@ import { FilledButton } from "@/view/components/FilledButton";
 import { IpeMark } from "@/view/components/IpeMark";
 import { LoadingState } from "@/view/components/LoadingState";
 import { OfflineState } from "@/view/components/OfflineState";
+import { Snackbar } from "@/view/components/Snackbar";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
@@ -230,6 +231,11 @@ export default function Favorites({
           }}
         />
       )}
+      <Snackbar
+        visible={state.actionError !== null}
+        message={state.actionError ?? ""}
+        onDismiss={actions.clearActionError}
+      />
     </SafeAreaView>
   );
 }

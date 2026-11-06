@@ -27,6 +27,7 @@ function mockSchedule(
   submit = vi.fn().mockResolvedValue(true),
 ) {
   const actions: ScheduleMeetingActions = {
+    reload: vi.fn(),
     selectPoint: vi.fn(),
     selectDay: vi.fn(),
     selectHour: vi.fn(),

@@ -18,6 +18,7 @@ function mock(state: Partial<NotificationsState>, actions: Partial<Notifications
     filteredNotifications: [],
     loading: false,
     error: null,
+    actionError: null,
     filter: "all",
     unreadCount: 0,
     systemPermissionGranted: true,
@@ -31,6 +32,7 @@ function mock(state: Partial<NotificationsState>, actions: Partial<Notifications
     deleteNotification: vi.fn(),
     clearAll: vi.fn(),
     clearRead: vi.fn(),
+    clearActionError: vi.fn(),
     setFilter: vi.fn(),
     ...actions,
   };
@@ -72,6 +74,22 @@ describe("Notifications — puxar para atualizar e rótulos (Spec 091)", () => {
       await screen.getByTestId("notifications-list").props.onRefresh();
     });
     expect(actions.refresh).toHaveBeenCalledTimes(1);
+  });
+
+  it("mantém a lista visível quando uma ação falha e só avisa pelo snackbar", async () => {
+    mock({
+      notifications: [item],
+      filteredNotifications: [item],
+      unreadCount: 1,
+      actionError: "Não foi possível excluir a notificação.",
+    });
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<Notifications sessionUserId="u" />);
+    });
+
+    expect(screen.getByText("Nova proposta")).toBeDefined();
+    expect(screen.getByText("Não foi possível excluir a notificação.")).toBeDefined();
   });
 
   it("oferece 'Marcar todas como lidas' e não repete a contagem de pendentes", async () => {

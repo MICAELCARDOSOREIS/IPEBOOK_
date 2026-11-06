@@ -109,7 +109,8 @@ describe("useBlockedUsersViewModel (Spec 056 / ADR 0039)", () => {
     });
 
     expect(success).toBe(false);
-    expect(hook.current[0].error).toBe("Falha de conexão ao desbloquear.");
+    expect(hook.current[0].actionMessage).toBe("Falha de conexão ao desbloquear.");
+    expect(hook.current[0].error).toBeNull();
 
     // Erro genérico ao desbloquear
     const genericErrUseCases: IBlockedUserUseCases = {
@@ -123,7 +124,7 @@ describe("useBlockedUsersViewModel (Spec 056 / ADR 0039)", () => {
       success = await hookGeneric.current[1].unblockUser("user-1");
     });
     expect(success).toBe(false);
-    expect(hookGeneric.current[0].error).toBe("Não foi possível desbloquear.");
+    expect(hookGeneric.current[0].actionMessage).toBe("Não foi possível desbloquear.");
 
     // unblockUser sem sessão
     const hookNoSession = await renderHook(null, genericErrUseCases);

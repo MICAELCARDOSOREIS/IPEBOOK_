@@ -122,6 +122,19 @@ describe("cartão do encontro (Spec 052, 06.05/06.11/06.12)", () => {
     expect(actions.cancel).toHaveBeenCalledOnce();
   });
 
+  it("mantém o diálogo de cancelamento aberto quando a falha impede o cancelamento", async () => {
+    mockMeeting(
+      { meeting: { ...baseMeeting, status: "confirmed" }, actionError: "Não foi possível atualizar o encontro. Tente novamente." },
+      { cancel: vi.fn().mockResolvedValue(false) },
+    );
+    const screen = await renderCard("leitora");
+
+    await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Cancelar encontro" })); });
+    await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Cancelar encontro" })); });
+
+    expect(screen.getByText("Cancelar este encontro?")).toBeDefined();
+  });
+
   it("cancelado: avisa e oferece novo convite (06.12); erros aparecem como alerta", async () => {
     mockMeeting({ meeting: { ...baseMeeting, status: "cancelled" }, actionError: "Muitas tentativas seguidas." });
     const screen = await renderCard("dono");
@@ -216,7 +229,7 @@ describe("cartão do encontro (Spec 052, 06.05/06.11/06.12)", () => {
 const dias = [new Date(2026, 9, 23), new Date(2026, 9, 24)];
 
 function mockSchedule(state: Partial<ScheduleMeetingState>, submit = vi.fn().mockResolvedValue(true)) {
-  const actions: ScheduleMeetingActions = { selectPoint: vi.fn(), selectDay: vi.fn(), selectHour: vi.fn(), submit };
+  const actions: ScheduleMeetingActions = { reload: vi.fn(), selectPoint: vi.fn(), selectDay: vi.fn(), selectHour: vi.fn(), submit };
   vi.mocked(useScheduleMeetingViewModel).mockReturnValue([
     {
       mode: "propose", loading: false, loadError: null, pointName: null, dayIndex: null, hour: null,
@@ -274,9 +287,11 @@ describe("combinar e reagendar encontro (Spec 052, 06.04/06.13)", () => {
     await act(async () => { screen = await render(<ScheduleMeeting requestId="r1" sessionUserId="dono" />); });
     expect(screen.getByLabelText("Carregando o encontro")).toBeDefined();
 
-    mockSchedule({ loadError: "Você não participa desta negociação." });
+    const retryActions = mockSchedule({ loadError: "Você não participa desta negociação." });
     await act(async () => { screen = await render(<ScheduleMeeting requestId="r1" sessionUserId="intrusa" />); });
     expect(screen.getByText("Você não participa desta negociação.")).toBeDefined();
+    await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Tentar novamente" })); });
+    expect(retryActions.reload).toHaveBeenCalledOnce();
 
     vi.mocked(useAuthViewModel).mockReturnValue([
       { user: null, loading: false, error: null },

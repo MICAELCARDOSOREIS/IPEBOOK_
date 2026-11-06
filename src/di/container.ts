@@ -619,7 +619,7 @@ export const makePwaViewModel = (options: Partial<UsePwaViewModelOptions> = {}) 
   usePwaViewModel({ pwaService: options.pwaService ?? pwaService, autoRegister: options.autoRegister });
 export const makeReportListingViewModel = () =>
   useReportListingViewModel(reportUseCases, rateLimiter, logger);
-export const makeReportUserViewModel = () => useReportUserViewModel(reportUseCases);
+export const makeReportUserViewModel = () => useReportUserViewModel(reportUseCases, rateLimiter);
 export const makeResetPasswordViewModel = () => useResetPasswordViewModel(authUseCases);
 export const makeSettingsViewModel = () =>
   useSettingsViewModel(localCacheUseCases, searchHistoryUseCases);

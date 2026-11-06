@@ -195,10 +195,27 @@ describe("useAuthViewModel", () => {
         await hook2.current[1].signOut();
       });
       expect(hook2.current[0].loading).toBe(false);
+      expect(hook2.current[0].user).toEqual(mockUser);
+      expect(hook2.current[0].error).toBe("Não foi possível sair da conta. Tente novamente.");
     });
   });
 
   describe("requestPasswordReset", () => {
+    it("recusa a recuperação sem e-mail sem chamar o caso de uso", async () => {
+      const requestPasswordReset = vi.fn().mockResolvedValue(undefined);
+      const auth = createMockAuth({ requestPasswordReset });
+      const hook = await renderHook(auth, undefined, dummyLogger);
+
+      let ok = true;
+      await act(async () => {
+        ok = await hook.current[1].requestPasswordReset("   ");
+      });
+
+      expect(ok).toBe(false);
+      expect(requestPasswordReset).not.toHaveBeenCalled();
+      expect(hook.current[0].error).toBe("Informe o e-mail da sua conta.");
+    });
+
     it("solicita recuperação de senha e trata bloqueio e erro", async () => {
       const auth = createMockAuth();
       const hook = await renderHook(auth, undefined, dummyLogger);

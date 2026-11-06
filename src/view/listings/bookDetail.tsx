@@ -12,6 +12,7 @@ import {
 } from "@/di/container";
 import { SHARE_BASE_URL } from "@/viewmodel/useShareListingViewModel";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
+import { formatPrice } from "@/view/formatPrice";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { captureRef } from "react-native-view-shot";
 import { Breadcrumb } from "@/view/components/Breadcrumb";
@@ -128,7 +129,7 @@ export default function BookDetail({
   const formattedPrice = useMemo(() => {
     if (!book) return "";
     if (book.modality === "sale" && book.price != null) {
-      return `R$ ${book.price.toFixed(2).replace(".", ",")}`;
+      return formatPrice(book.price);
     }
     if (book.modality === "trade") {
       return "Por outro livro";

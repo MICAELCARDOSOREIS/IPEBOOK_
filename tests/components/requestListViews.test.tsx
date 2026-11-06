@@ -147,7 +147,7 @@ describe("SentRequests e ReceivedRequests Views (ISO/IEC 25010 - Adequação Fun
     });
 
     it("exibe botões de Aceitar e Recusar para pedidos pendentes e dispara actions", async () => {
-      const accept = vi.fn();
+      const accept = vi.fn().mockResolvedValue(true);
       const reject = vi.fn();
       mockedUseReceived.mockReturnValue([
         { items: [mockReceivedItemPending], loading: false, error: null, respondingId: null, respondError: null, respondErrorId: null },
@@ -165,12 +165,39 @@ describe("SentRequests e ReceivedRequests Views (ISO/IEC 25010 - Adequação Fun
       await act(async () => {
         fireEvent.press(screen.getByText("Aceitar"));
       });
+      // Aceitar reserva o anúncio e recusa os concorrentes: só depois da confirmação.
+      expect(accept).not.toHaveBeenCalled();
+      expect(screen.getByText("Aceitar este pedido?")).toBeDefined();
+      expect(screen.getByText(/recusados automaticamente/)).toBeDefined();
+
+      await act(async () => {
+        fireEvent.press(screen.getByText("Aceitar pedido"));
+      });
       expect(accept).toHaveBeenCalledWith("req-2");
 
       await act(async () => {
         fireEvent.press(screen.getByText("Recusar"));
       });
       expect(reject).toHaveBeenCalledWith("req-2");
+    });
+
+    it("mantém o diálogo de aceite aberto quando a resposta falha", async () => {
+      const accept = vi.fn().mockResolvedValue(false);
+      mockedUseReceived.mockReturnValue([
+        { items: [mockReceivedItemPending], loading: false, error: null, respondingId: null, respondError: null, respondErrorId: null },
+        { reload: vi.fn(), accept, reject: vi.fn() },
+      ]);
+
+      const screen = await render(<ReceivedRequests sessionUserId="user-me" />);
+      await act(async () => {
+        fireEvent.press(screen.getByText("Aceitar"));
+      });
+      await act(async () => {
+        fireEvent.press(screen.getByText("Aceitar pedido"));
+      });
+
+      expect(accept).toHaveBeenCalledWith("req-2");
+      expect(screen.getByText("Aceitar este pedido?")).toBeDefined();
     });
 
     it("exibe botão de ver detalhes do encontro para pedidos aceitos e alerta de erro de resposta", async () => {

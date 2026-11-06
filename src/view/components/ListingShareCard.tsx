@@ -2,6 +2,7 @@ import { type ComponentRef, forwardRef, useMemo } from "react";
 import { Image, StyleSheet, Text, View } from "react-native";
 import type { Book } from "@/model/entities/book";
 import { fontFamily, tokens } from "@/view/tokens";
+import { formatPrice } from "@/view/formatPrice";
 import { IpeMark } from "@/view/components/IpeMark";
 
 export type ListingShareCardProps = {
@@ -15,7 +16,7 @@ export type ListingShareCardProps = {
 const MODALITY_LABELS = { sale: "Venda", trade: "Troca", donation: "Doação" } as const;
 
 function offerText(book: ListingShareCardProps["book"]): string {
-  if (book.modality === "sale" && book.price != null) return `R$ ${book.price.toFixed(2).replace(".", ",")}`;
+  if (book.modality === "sale" && book.price != null) return formatPrice(book.price);
   if (book.modality === "trade") return "Aceita troca";
   return "Gratuito";
 }

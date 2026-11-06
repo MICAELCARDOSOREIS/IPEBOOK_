@@ -11,6 +11,7 @@ import {
 import { normalizeInstagramHandle } from "@/model/validators/instagramValidator";
 import { AppIcon } from "@/view/components/AppIcon";
 import { Dialog } from "@/view/components/Dialog";
+import { ErrorState } from "@/view/components/ErrorState";
 import { FilledButton } from "@/view/components/FilledButton";
 import {
   ProfileCommunityBadges,
@@ -62,11 +63,12 @@ export default function ProfileHub({
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [authState, authActions] = makeAuthViewModel();
   const userId = authState.user?.id ?? null;
-  const [state] = makeProfileViewModel(userId);
+  const [state, profileActions] = makeProfileViewModel(userId);
   const [myListingsState] = makeMyListingsViewModel(userId);
   const [preferencesState] = makeUserPreferencesViewModel(userId);
   const [confirmingSignOut, setConfirmingSignOut] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
+  const [signOutError, setSignOutError] = useState<string | null>(null);
   const wideWeb = useIsWideWeb();
 
   const guardedNavigateToSignIn = useGuardedPress(onNavigateToSignIn);
@@ -115,10 +117,18 @@ export default function ProfileHub({
 
   async function handleConfirmSignOut() {
     setSigningOut(true);
-    await authActions.signOut();
-    setSigningOut(false);
-    setConfirmingSignOut(false);
-    onSignedOut();
+    setSignOutError(null);
+    try {
+      const ok = await authActions.signOut();
+      if (!ok) {
+        setSignOutError("Não foi possível sair da conta. Tente novamente.");
+        return;
+      }
+      setConfirmingSignOut(false);
+      onSignedOut();
+    } finally {
+      setSigningOut(false);
+    }
   }
 
   // Itens da seção "Atividade" (Figma 07.01 nós 25:627, 25:638)
@@ -195,6 +205,11 @@ export default function ProfileHub({
     },
   ];
 
+  function openSignOutDialog() {
+    setSignOutError(null);
+    setConfirmingSignOut(true);
+  }
+
   return (
     <SafeAreaView edges={["top", "left", "right"]} style={styles.page}>
       <ScrollView {...standardVerticalScrollProps} contentContainerStyle={[styles.scroll, { paddingBottom: scrollBottomPadding.withBottomBar }]}>
@@ -220,6 +235,8 @@ export default function ProfileHub({
             <View style={styles.status}>
               <ActivityIndicator color={colors.m3.primary} accessibilityLabel="Carregando perfil" />
             </View>
+          ) : isSignedIn && state.error && !state.profile ? (
+            <ErrorState message={state.error} onRetry={profileActions.reload} />
           ) : isSignedIn ? (
             wideWeb ? (
               <View style={styles.wideGrid} testID="profile-wide-grid">
@@ -256,7 +273,7 @@ export default function ProfileHub({
                       items={accountItems}
                       wideWeb
                       defaultIconColor={colors.m3.onSurfaceVariant}
-                      onSignOut={() => setConfirmingSignOut(true)}
+                      onSignOut={openSignOutDialog}
                     />
                   </View>
                 </View>
@@ -287,7 +304,7 @@ export default function ProfileHub({
                   title="Conta"
                   items={accountItems}
                   defaultIconColor={colors.m3.onSurfaceVariant}
-                  onSignOut={() => setConfirmingSignOut(true)}
+                  onSignOut={openSignOutDialog}
                 />
               </>
             )
@@ -310,13 +327,16 @@ export default function ProfileHub({
       <Dialog
         visible={confirmingSignOut}
         title="Sair da conta?"
-        message="Você precisará entrar novamente para acessar seus anúncios e negociações."
+        message={signOutError ?? "Você precisará entrar novamente para acessar seus anúncios e negociações."}
         confirmLabel="Sair"
         cancelLabel="Cancelar"
         destructive
         loading={signingOut}
         onConfirm={() => void handleConfirmSignOut()}
-        onCancel={() => setConfirmingSignOut(false)}
+        onCancel={() => {
+          setConfirmingSignOut(false);
+          setSignOutError(null);
+        }}
       />
     </SafeAreaView>
   );

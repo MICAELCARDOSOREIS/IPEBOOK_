@@ -7,6 +7,7 @@ import { useTheme } from "@/view/theme/ThemeProvider";
 import { Avatar } from "@/view/components/Avatar";
 import { AppIcon } from "@/view/components/AppIcon";
 import { BookCover } from "@/view/components/BookCover";
+import { Dialog } from "@/view/components/Dialog";
 import { Tag } from "@/view/components/Tag";
 
 import { withPress } from "@/view/pressFeedback";
@@ -28,6 +29,7 @@ export function ReceivedRequests({
 }: ReceivedRequestsProps) {
   const [state, actions] = makeReceivedRequestsViewModel(sessionUserId);
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
+  const [pendingAccept, setPendingAccept] = useState<{ requestId: string; requesterName: string | null } | null>(null);
   const { colors } = useTheme();
   const s = useMemo(() => createRequestStyles(colors), [colors]);
 
@@ -46,9 +48,21 @@ export function ReceivedRequests({
     if (succeeded) {
       setFeedbackMessage(response === "accept" ? "Pedido aceito. O anúncio foi reservado." : "Pedido recusado.");
     }
+    return Boolean(succeeded);
   };
 
+  const confirmAccept = async () => {
+    if (!pendingAccept) return;
+    const succeeded = await handleResponse(pendingAccept.requestId, "accept");
+    if (succeeded) setPendingAccept(null);
+  };
+
+  // O diálogo fica aberto quando a resposta falha: o motivo precisa aparecer dentro dele.
+  const acceptError =
+    pendingAccept !== null && state.respondErrorId === pendingAccept.requestId ? state.respondError : null;
+
   return (
+    <>
     <RequestListLayout
       title="Pedidos recebidos"
       emptyText="Você ainda não recebeu pedidos para os seus anúncios."
@@ -114,7 +128,7 @@ export function ReceivedRequests({
                     accessibilityHint="Aceita o pedido e reserva este anúncio."
                     accessibilityState={{ disabled: busy, busy }}
                     disabled={busy}
-                    onPress={() => void handleResponse(request.id, "accept")}
+                    onPress={() => setPendingAccept({ requestId: request.id, requesterName: requesterName ?? null })}
                     style={withPress([s.primary, s.fullWidthAction])}
                   >
                     <AppIcon name="check" size={18} color={colors.surface} />
@@ -176,6 +190,17 @@ export function ReceivedRequests({
         );
       }}
     />
+    <Dialog
+      visible={pendingAccept !== null}
+      title="Aceitar este pedido?"
+      message={acceptError ?? `${pendingAccept?.requesterName ?? COMMUNITY_MEMBER} terá o anúncio reservado. Os outros pedidos pendentes para este livro são recusados automaticamente.`}
+      confirmLabel="Aceitar pedido"
+      cancelLabel="Voltar"
+      loading={pendingAccept !== null && state.respondingId === pendingAccept.requestId}
+      onConfirm={() => void confirmAccept()}
+      onCancel={() => setPendingAccept(null)}
+    />
+    </>
   );
 }
 

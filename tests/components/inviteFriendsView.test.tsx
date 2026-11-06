@@ -19,6 +19,7 @@ function mockViewModel(
   const fullState: InviteFriendsState = {
     sharing: false,
     linkCopied: false,
+    shared: false,
     error: null,
     inviteMessage: "Oi! Participe do IpêBook em Piripiri: https://ipebook.app",
     inviteUrl: "https://ipebook.app",
@@ -30,6 +31,7 @@ function mockViewModel(
     shareNative: vi.fn().mockResolvedValue(undefined),
     copyLink: vi.fn().mockResolvedValue(undefined),
     dismissLinkCopied: vi.fn(),
+    dismissShared: vi.fn(),
     ...actions,
   };
   mockedUseInviteFriendsViewModel.mockReturnValue([fullState, fullActions]);
@@ -65,6 +67,16 @@ describe("InviteFriends — Convidar amigos (Figma 08.02, Spec 057)", () => {
     expect(
       screen.getByText("Link copiado para a área de transferência!"),
     ).toBeDefined();
+  });
+
+  it("confirma quando a folha de compartilhamento foi aberta", async () => {
+    mockViewModel({ shared: true });
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<InviteFriends />);
+    });
+
+    expect(screen.getByText("Convite pronto. Escolha o app para enviar.")).toBeDefined();
   });
 
   it("chama onBack ao acionar o botão de voltar", async () => {

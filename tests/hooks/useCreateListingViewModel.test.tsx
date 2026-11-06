@@ -293,6 +293,50 @@ describe("useCreateListingViewModel (ISO/IEC 25010 - Adequação Funcional)", ()
     expect(hook.current[0].photos).toEqual(["https://exemplo.com/foto2.jpg"]);
   });
 
+  it("substitui a foto do slot escolhido com setPhotoAt", async () => {
+    const hook = await renderHook(stubUseCases());
+
+    await act(async () => {
+      hook.current[1].addPhoto("https://exemplo.com/lombada.jpg");
+      hook.current[1].addPhoto("https://exemplo.com/paginas.jpg");
+    });
+
+    await act(async () => {
+      hook.current[1].setPhotoAt(1, "https://exemplo.com/paginas-nova.jpg");
+    });
+
+    expect(hook.current[0].photos).toEqual([
+      "https://exemplo.com/lombada.jpg",
+      "https://exemplo.com/paginas-nova.jpg",
+    ]);
+
+    await act(async () => {
+      hook.current[1].setPhotoAt(9, "https://exemplo.com/fora.jpg");
+    });
+    expect(hook.current[0].photos).toHaveLength(2);
+  });
+
+  it("recusa preço não numérico antes de chamar createListing", async () => {
+    const mock = stubUseCases();
+    const hook = await renderHook(mock);
+
+    await act(async () => {
+      hook.current[1].setTitle("Livro Teste");
+      hook.current[1].setAuthor("Autor Teste");
+      hook.current[1].setPrice("abc");
+    });
+
+    let result: unknown = "pendente";
+    await act(async () => {
+      result = await hook.current[1].submit("user-1");
+    });
+
+    expect(result).toBeNull();
+    expect(hook.current[0].error).toBe("Informe um preço maior que zero.");
+    expect(hook.current[0].loading).toBe(false);
+    expect(mock.createListing).not.toHaveBeenCalled();
+  });
+
   it("bloqueia adicionar mais de 5 fotos na galeria", async () => {
     const hook = await renderHook(stubUseCases());
 

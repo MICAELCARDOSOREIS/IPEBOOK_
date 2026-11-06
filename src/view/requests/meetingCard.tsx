@@ -256,8 +256,7 @@ export function MeetingCard({
         loading={state.busy}
         onCancel={() => setConfirmingCancel(false)}
         onConfirm={async () => {
-          await actions.cancel();
-          setConfirmingCancel(false);
+          if (await actions.cancel()) setConfirmingCancel(false);
         }}
       />
     </View>

@@ -30,7 +30,7 @@ const fakeProfile: NonNullable<ProfileState["profile"]> = {
   socialHandle: undefined,
 };
 
-function mockAuth(user: AuthState["user"], signOut = vi.fn().mockResolvedValue(undefined)) {
+function mockAuth(user: AuthState["user"], signOut = vi.fn().mockResolvedValue(true)) {
   mockedUseAuthViewModel.mockReturnValue([
     { user, loading: false, error: null },
     { signUp: vi.fn(), signIn: vi.fn(), signOut, requestPasswordReset: vi.fn() },
@@ -38,11 +38,17 @@ function mockAuth(user: AuthState["user"], signOut = vi.fn().mockResolvedValue(u
   return { signOut };
 }
 
-function mockProfile(profile: ProfileState["profile"] = fakeProfile, loading = false) {
+function mockProfile(
+  profile: ProfileState["profile"] = fakeProfile,
+  loading = false,
+  error: string | null = null,
+) {
+  const reload = vi.fn();
   mockedUseProfileViewModel.mockReturnValue([
-    { profile, loading, saving: false, error: null },
-    { update: vi.fn().mockResolvedValue(true), reload: vi.fn() },
+    { profile, loading, saving: false, error },
+    { update: vi.fn().mockResolvedValue(true), reload },
   ]);
+  return { reload };
 }
 
 /** Preferências do aplicativo: o cartão do perfil só mostra o bairro que a pessoa escolheu. */
@@ -193,6 +199,43 @@ describe("Meu perfil — hub de navegação (Figma 07.01)", () => {
 
     expect(signOut).toHaveBeenCalledTimes(1);
     expect(onSignedOut).toHaveBeenCalledTimes(1);
+  });
+
+  it("mantém o diálogo de saída aberto e avisa quando o logout falha", async () => {
+    mockAuth({ id: "ana", email: "ana@exemplo.com" }, vi.fn().mockResolvedValue(false));
+    mockProfile();
+    const onSignedOut = vi.fn();
+
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<ProfileHub {...baseProps({ onSignedOut })} />);
+    });
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Sair da conta"));
+    });
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Sair"));
+    });
+
+    expect(onSignedOut).not.toHaveBeenCalled();
+    expect(screen.getByText("Sair da conta?")).toBeDefined();
+    expect(screen.getByText("Não foi possível sair da conta. Tente novamente.")).toBeDefined();
+  });
+
+  it("mostra o erro de carga do perfil e tenta novamente ao tocar em Tentar novamente", async () => {
+    mockAuth({ id: "ana", email: "ana@exemplo.com" });
+    const { reload } = mockProfile(null, false, "Não foi possível carregar o perfil. Tente novamente.");
+
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<ProfileHub {...baseProps()} />);
+    });
+
+    expect(screen.getByText("Não foi possível carregar o perfil. Tente novamente.")).toBeDefined();
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Tentar novamente"));
+    });
+    expect(reload).toHaveBeenCalledTimes(1);
   });
 
   it("cancelar no diálogo de saída não desconecta a conta", async () => {

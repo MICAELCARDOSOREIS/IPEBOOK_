@@ -4,6 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { makeAuthViewModel, makeBlockedUsersViewModel } from "@/di/container";
 import { Avatar } from "@/view/components/Avatar";
 import { Dialog } from "@/view/components/Dialog";
+import { ErrorState } from "@/view/components/ErrorState";
 import { Snackbar } from "@/view/components/Snackbar";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
@@ -60,11 +61,7 @@ export function BlockedUsers({ onBack }: BlockedUsersProps) {
               <ActivityIndicator color={colors.action} accessibilityLabel="Carregando pessoas bloqueadas" />
             </View>
           ) : state.error ? (
-            <View style={styles.card}>
-              <Text accessibilityRole="alert" style={styles.errorText}>
-                {state.error}
-              </Text>
-            </View>
+            <ErrorState message={state.error} onRetry={() => void actions.reload()} />
           ) : state.blockedUsers.length === 0 ? (
             <View style={styles.emptyContainer}>
               <View style={styles.emptyIconCircle}>
@@ -90,6 +87,8 @@ export function BlockedUsers({ onBack }: BlockedUsersProps) {
                     <Pressable
                       accessibilityRole="button"
                       accessibilityLabel={`Desbloquear ${item.name}`}
+                      accessibilityState={{ disabled: state.unblockingId === item.userId }}
+                      disabled={state.unblockingId === item.userId}
                       onPress={() => setTargetToUnblock(item)}
                       style={withPress(styles.unblockButton)}
                     >
@@ -113,6 +112,7 @@ export function BlockedUsers({ onBack }: BlockedUsersProps) {
         }
         confirmLabel="Desbloquear"
         cancelLabel="Cancelar"
+        loading={state.unblockingId !== null}
         onConfirm={() => void handleConfirmUnblock()}
         onCancel={() => setTargetToUnblock(null)}
       />
@@ -211,6 +211,8 @@ function createStyles(colors: ColorPalette) {
       color: colors.secondaryText,
     },
     unblockButton: {
+      minHeight: tokens.accessibility.touchTarget,
+      justifyContent: "center",
       paddingHorizontal: tokens.spacing[12],
       paddingVertical: tokens.spacing[8],
       borderRadius: tokens.radius.full,

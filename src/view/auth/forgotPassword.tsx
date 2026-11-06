@@ -40,9 +40,12 @@ export default function ForgotPassword({ onNavigateToSignIn, onBack }: ForgotPas
   const wideWeb = useIsWideWeb();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [email, setEmail] = useState("");
+  const [emailError, setEmailError] = useState<string | null>(null);
   const [requested, setRequested] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(RESEND_SECONDS);
+  const [submitting, setSubmitting] = useState(false);
   const mounted = useRef(true);
+  const sending = useRef(false);
 
   useEffect(() => {
     mounted.current = true;
@@ -59,17 +62,38 @@ export default function ForgotPassword({ onNavigateToSignIn, onBack }: ForgotPas
     return () => clearInterval(timer);
   }, [requested, secondsLeft]);
 
+  const normalizedEmail = email.trim();
+
+  const sendLink = async (): Promise<boolean> => {
+    if (!normalizedEmail) {
+      setEmailError("Informe o e-mail da sua conta.");
+      return false;
+    }
+    if (sending.current) return false;
+    sending.current = true;
+    setEmailError(null);
+    setSubmitting(true);
+    try {
+      const result = await actions.requestPasswordReset(normalizedEmail);
+      return Boolean(result && mounted.current);
+    } finally {
+      sending.current = false;
+      if (mounted.current) setSubmitting(false);
+    }
+  };
+
   const handleSubmit = async () => {
-    const result = await actions.requestPasswordReset(email);
-    if (result && mounted.current) {
+    const sent = await sendLink();
+    if (sent) {
+      setEmail(normalizedEmail);
       setRequested(true);
       setSecondsLeft(RESEND_SECONDS);
     }
   };
 
   const handleResend = async () => {
-    const result = await actions.requestPasswordReset(email);
-    if (result && mounted.current) setSecondsLeft(RESEND_SECONDS);
+    const sent = await sendLink();
+    if (sent) setSecondsLeft(RESEND_SECONDS);
   };
 
   return (
@@ -103,16 +127,27 @@ export default function ForgotPassword({ onNavigateToSignIn, onBack }: ForgotPas
               </Text>
 
               <View style={styles.resultBox}>
-                <Text accessibilityRole="alert" style={styles.resultLabel}>Não chegou?</Text>
+                <Text style={styles.resultLabel}>Não chegou?</Text>
                 <Text style={styles.resultHint}>
                   Confira a caixa de spam ou verifique se o endereço está correto.
                 </Text>
               </View>
 
-              <FilledButton label="Voltar ao login" onPress={guardedSignIn} />
+              {state.error ? (
+                <Text accessibilityRole="alert" accessibilityLiveRegion="assertive" style={styles.error}>
+                  {state.error}
+                </Text>
+              ) : null}
+
+              <FilledButton
+                label="Voltar ao login"
+                disabled={submitting}
+                onPress={guardedSignIn}
+              />
 
               <OutlinedButton
                 label="Corrigir e-mail"
+                disabled={submitting}
                 onPress={() => {
                   setRequested(false);
                   setSecondsLeft(RESEND_SECONDS);
@@ -126,7 +161,7 @@ export default function ForgotPassword({ onNavigateToSignIn, onBack }: ForgotPas
               ) : (
                 <TextButton
                   label="Reenviar link"
-                  disabled={state.loading}
+                  disabled={submitting}
                   onPress={() => void handleResend()}
                 />
               )}
@@ -141,28 +176,45 @@ export default function ForgotPassword({ onNavigateToSignIn, onBack }: ForgotPas
               <TextField
                 label="E-mail"
                 value={email}
-                onChangeText={setEmail}
+                onChangeText={(text) => {
+                  setEmail(text);
+                  if (emailError) setEmailError(null);
+                }}
                 autoCapitalize="none"
                 keyboardType="email-address"
                 autoComplete="email"
                 textContentType="emailAddress"
                 returnKeyType="done"
-                editable={!state.loading}
+                onSubmitEditing={() => void handleSubmit()}
+                editable={!submitting}
                 placeholder="voce@exemplo.com"
               />
 
+              {emailError ? (
+                <Text accessibilityRole="alert" accessibilityLiveRegion="assertive" style={styles.error}>
+                  {emailError}
+                </Text>
+              ) : null}
+
               {state.error ? (
-                <Text accessibilityRole="alert" style={styles.error}>{state.error}</Text>
+                <Text accessibilityRole="alert" accessibilityLiveRegion="assertive" style={styles.error}>
+                  {state.error}
+                </Text>
               ) : null}
 
               <FilledButton
                 label="Enviar link"
-                loading={state.loading}
+                loading={submitting}
                 loadingLabel="Enviando link"
+                disabled={submitting}
                 onPress={() => void handleSubmit()}
               />
 
-              <OutlinedButton label="Voltar ao login" onPress={guardedSignIn} />
+              <OutlinedButton
+                label="Voltar ao login"
+                disabled={submitting}
+                onPress={guardedSignIn}
+              />
 
               <Text style={styles.footnote}>
                 Se você lembrar sua senha, faça login normalmente.

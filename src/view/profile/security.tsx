@@ -12,6 +12,7 @@ import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollP
 
 export type SecurityProps = {
   onBack: () => void;
+  onNavigateToLogin?: () => void;
 };
 
 /**
@@ -19,17 +20,28 @@ export type SecurityProps = {
  * Altera a senha por link enviado ao e-mail da conta, reaproveitando o fluxo já existente de
  * recuperação de acesso (`01.04`/`01.05`), em vez de uma troca com senha atual no app.
  */
-export function Security({ onBack }: SecurityProps) {
+export function Security({ onBack, onNavigateToLogin }: SecurityProps) {
   const guardedBack = useGuardedPress(onBack);
+  const guardedLogin = useGuardedPress(onNavigateToLogin);
   const [authState, authActions] = makeAuthViewModel();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [sent, setSent] = useState(false);
-  const email = authState.user?.email ?? "";
+  const [sending, setSending] = useState(false);
+  const email = authState.user?.email?.trim() ?? "";
+  const checkingSession = authState.loading && !authState.user;
+  const canSend = Boolean(email) && !sending && !checkingSession;
 
   async function handleSendLink() {
-    const result = await authActions.requestPasswordReset(email);
-    if (result) setSent(true);
+    if (!canSend) return;
+    setSent(false);
+    setSending(true);
+    try {
+      const result = await authActions.requestPasswordReset(email);
+      if (result) setSent(true);
+    } finally {
+      setSending(false);
+    }
   }
 
   return (
@@ -45,25 +57,43 @@ export function Security({ onBack }: SecurityProps) {
               <IconBadge icon="lock" tone="neutral" />
               <Text accessibilityRole="header" style={styles.sectionHeader}>Alterar senha</Text>
             </View>
-            <Text style={styles.bodyText}>
-              Enviaremos um link de redefinição de senha para{" "}
-              <Text style={styles.highlight}>{email}</Text>. Abra o link para escolher uma nova
-              senha.
-            </Text>
-            {sent ? (
-              <Text accessibilityRole="alert" style={styles.successText}>
-                Link enviado. Confira sua caixa de entrada (e o spam).
-              </Text>
-            ) : null}
-            {authState.error ? (
-              <Text accessibilityRole="alert" style={styles.errorText}>{authState.error}</Text>
-            ) : null}
-            <FilledButton
-              label={sent ? "Reenviar link" : "Enviar link de redefinição"}
-              loading={authState.loading}
-              loadingLabel="Enviando link"
-              onPress={() => void handleSendLink()}
-            />
+            {checkingSession ? (
+              <Text style={styles.bodyText}>Verificando sua sessão...</Text>
+            ) : email ? (
+              <>
+                <Text style={styles.bodyText}>
+                  Enviaremos um link de redefinição de senha para{" "}
+                  <Text style={styles.highlight}>{email}</Text>. Abra o link para escolher uma nova
+                  senha.
+                </Text>
+                {sent ? (
+                  <Text accessibilityRole="alert" accessibilityLiveRegion="polite" style={styles.successText}>
+                    Link enviado. Confira sua caixa de entrada (e o spam).
+                  </Text>
+                ) : null}
+                {authState.error ? (
+                  <Text accessibilityRole="alert" accessibilityLiveRegion="assertive" style={styles.errorText}>
+                    {authState.error}
+                  </Text>
+                ) : null}
+                <FilledButton
+                  label={sent ? "Reenviar link" : "Enviar link de redefinição"}
+                  loading={sending}
+                  loadingLabel="Enviando link"
+                  disabled={!canSend}
+                  onPress={() => void handleSendLink()}
+                />
+              </>
+            ) : (
+              <>
+                <Text style={styles.bodyText}>
+                  Entre na sua conta para enviar o link de redefinição de senha.
+                </Text>
+                {onNavigateToLogin ? (
+                  <FilledButton label="Entrar na conta" onPress={guardedLogin} />
+                ) : null}
+              </>
+            )}
           </View>
         </View>
       </ScrollView>

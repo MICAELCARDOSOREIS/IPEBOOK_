@@ -18,7 +18,7 @@ export type AuthActions = {
   signIn: (email: string, password: string) => Promise<boolean>;
   signInWithGoogle?: () => Promise<boolean>;
   handleAuthCallback?: (url: string) => Promise<boolean>;
-  signOut: () => Promise<void>;
+  signOut: () => Promise<boolean>;
   requestPasswordReset: (email: string) => Promise<boolean>;
   /** Relê a sessão gravada no aparelho, sem recarregar a tela. */
   refreshSession?: () => Promise<void>;
@@ -121,7 +121,16 @@ export function useAuthViewModel(
   );
 
   const requestPasswordReset = useCallback(async (email: string) => {
-    const guard = guardFormSubmit(rateLimiter, formKey("auth:resetRequest", email), 3);
+    const normalizedEmail = email.trim();
+    if (!normalizedEmail) {
+      setState((previous) => ({
+        ...previous,
+        loading: false,
+        error: "Informe o e-mail da sua conta.",
+      }));
+      return false;
+    }
+    const guard = guardFormSubmit(rateLimiter, formKey("auth:resetRequest", normalizedEmail), 3);
     if (!guard.allowed) {
       logger.warn("Pedido de recuperação bloqueado pelo limite de tentativas do cliente");
       setState((previous) => ({ ...previous, loading: false, error: guard.message }));
@@ -129,7 +138,7 @@ export function useAuthViewModel(
     }
     setState((previous) => ({ ...previous, loading: true, error: null }));
     try {
-      await auth.requestPasswordReset(email);
+      await auth.requestPasswordReset(normalizedEmail);
       if (active.current) setState((previous) => ({ ...previous, loading: false, error: null }));
       return true;
     } catch (error) {
@@ -204,8 +213,16 @@ export function useAuthViewModel(
     try {
       await auth.signOut();
       if (active.current) setState({ user: null, loading: false, error: null });
+      return true;
     } catch {
-      if (active.current) setState((previous) => ({ ...previous, loading: false }));
+      if (active.current) {
+        setState((previous) => ({
+          ...previous,
+          loading: false,
+          error: "Não foi possível sair da conta. Tente novamente.",
+        }));
+      }
+      return false;
     }
   }, [auth]);
 

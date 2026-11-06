@@ -215,10 +215,28 @@ export function useEditListingViewModel(
         ? Number(state.price.replace(",", "."))
         : undefined;
 
+    if (priceNum !== undefined && (!Number.isFinite(priceNum) || priceNum <= 0)) {
+      setState((prev) => ({
+        ...prev,
+        saving: false,
+        error: "Informe um preço maior que zero.",
+      }));
+      return null;
+    }
+
     const volumesNum =
       state.isBox && state.boxVolumesCount.trim()
         ? Number(state.boxVolumesCount.trim())
         : undefined;
+
+    if (volumesNum !== undefined && (!Number.isFinite(volumesNum) || volumesNum < 2)) {
+      setState((prev) => ({
+        ...prev,
+        saving: false,
+        error: "Informe uma quantidade de volumes entre 2 e 100.",
+      }));
+      return null;
+    }
 
     try {
       const updated = await useCases.updateListing(

@@ -200,6 +200,25 @@ describe("useEditListingViewModel", () => {
     );
   });
 
+  it("recusa preço não numérico antes de chamar updateListing", async () => {
+    const useCases = stubUseCases();
+    const hook = await renderHook("b1", "user-1", useCases);
+
+    await act(async () => {
+      hook.current[1].setPrice("abc");
+    });
+
+    let updatedBook: Book | null = null;
+    await act(async () => {
+      updatedBook = await hook.current[1].submit();
+    });
+
+    expect(updatedBook).toBeNull();
+    expect(hook.current[0].error).toBe("Informe um preço maior que zero.");
+    expect(hook.current[0].saving).toBe(false);
+    expect(useCases.updateListing).not.toHaveBeenCalled();
+  });
+
   it("captura erro ao submeter e atribui mensagem amigável", async () => {
     const useCases = stubUseCases({
       updateListing: vi.fn().mockRejectedValue(new ValidationError("Título é obrigatório.")),

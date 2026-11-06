@@ -55,7 +55,7 @@ function mockNotifPrefs(overrides: Partial<ReturnType<typeof useNotificationPref
 }
 
 /** Configurações mostra gestão de conta apenas com sessão (ADR 0060). */
-function mockSession(signedIn: boolean) {
+function mockSession(signedIn: boolean, signOut = vi.fn().mockResolvedValue(true)) {
   mockedUseAuthViewModel.mockReturnValue([
     {
       user: signedIn ? { id: "ana", email: "ana@exemplo.com" } : null,
@@ -65,10 +65,11 @@ function mockSession(signedIn: boolean) {
     {
       signUp: vi.fn(),
       signIn: vi.fn(),
-      signOut: vi.fn(),
+      signOut,
       requestPasswordReset: vi.fn(),
     },
   ]);
+  return { signOut };
 }
 
 describe("Configurações — tela dedicada (Spec 073, ADR 0036)", () => {
@@ -330,6 +331,20 @@ describe("Configurações — tela dedicada (Spec 073, ADR 0036)", () => {
     expect(mockedUseAuthViewModel.mock.results[0].value[1].signOut).toHaveBeenCalled();
     await act(async () => {});
     expect(onSignedOut).toHaveBeenCalledTimes(1);
+  });
+
+  it("mantém o diálogo de saída aberto e avisa quando o logout falha", async () => {
+    mockSession(true, vi.fn().mockResolvedValue(false));
+    mockSettings();
+    const onSignedOut = vi.fn();
+    const { screen } = await renderSettings({ onSignedOut });
+
+    await act(async () => { fireEvent.press(screen.getByText("Sair da conta")); });
+    await act(async () => { fireEvent.press(screen.getByText("Sair")); });
+
+    expect(onSignedOut).not.toHaveBeenCalled();
+    expect(screen.getByText("Sair da conta?")).toBeDefined();
+    expect(screen.getByText("Não foi possível sair da conta. Tente novamente.")).toBeDefined();
   });
 
   it("não mostra conta nem sair sem sessão, mas mantém bairro padrão e histórico (Spec 091)", async () => {

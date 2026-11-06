@@ -382,9 +382,14 @@ export default function ManageListing({
                 <TextButton
                   label="Excluir anúncio"
                   tone="danger"
-                  disabled={state.busy}
+                  disabled={state.busy || reserved}
                   onPress={() => setConfirmingRemoval(true)}
                 />
+                {reserved ? (
+                  <Text style={styles.deleteHint}>
+                    Conclua ou cancele a negociação em andamento para excluir este anúncio.
+                  </Text>
+                ) : null}
               </View>
             </View>
           </View>
@@ -579,6 +584,12 @@ function createStyles(colors: ColorPalette) {
     deleteSection: {
       marginTop: tokens.spacing[8],
       alignItems: "center",
+    },
+    deleteHint: {
+      ...tokens.typography.bodyMedium,
+      color: colors.secondaryText,
+      textAlign: "center",
+      marginTop: tokens.spacing[4],
     },
     errorText: {
       ...tokens.typography.bodyMedium,
