@@ -8,11 +8,13 @@ import {
   validateSignUpPayload,
 } from "@/model/validators/authValidator";
 import type { IAuthUseCases } from "@/usecase/iAuthUseCases";
+import type { ILocalCacheUseCases } from "@/usecase/iLocalCacheUseCases";
 
 export class AuthUseCases implements IAuthUseCases {
   constructor(
     private readonly dataSource: IAuthDataSource,
     private readonly profiles?: IProfileDataSource,
+    private readonly localCache?: ILocalCacheUseCases,
   ) {}
 
   async signUp(email: string, password: string, name: string): Promise<User> {
@@ -88,9 +90,10 @@ export class AuthUseCases implements IAuthUseCases {
   }
 
   async deleteAccount(sessionUserId: string | null): Promise<void> {
-    if (!sessionUserId || !sessionUserId.trim()) {
+    if (!sessionUserId?.trim()) {
       throw new AuthError("Sessão obrigatória para excluir a conta.");
     }
     await this.dataSource.deleteAccount(sessionUserId.trim());
+    await this.localCache?.clearBooksCache();
   }
 }

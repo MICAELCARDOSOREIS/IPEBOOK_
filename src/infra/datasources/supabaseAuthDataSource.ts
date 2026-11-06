@@ -418,24 +418,28 @@ export class SupabaseAuthDataSource implements IAuthDataSource {
     await this.client.auth.signOut();
   }
 
-  /** Remove a pasta `<userId>/` do bucket de fotos (arquivos soltos e um nível de subpastas por livro). */
+  /** Remove todos os objetos da pasta `<userId>/` antes de concluir a exclusão da conta. */
   private async removeUserPhotos(userId: string): Promise<void> {
-    try {
-      const bucket = this.client.storage.from(BUCKET_NAME);
-      const paths: string[] = [];
-      const { data: raiz } = await bucket.list(userId);
-      for (const item of raiz ?? []) {
+    const bucket = this.client.storage.from(BUCKET_NAME);
+    const paths: string[] = [];
+    const directories = [userId];
+    while (directories.length > 0) {
+      const directory = directories.shift();
+      if (!directory) break;
+      const { data, error } = await bucket.list(directory, { limit: 1000, offset: 0 });
+      if (error) throw new AuthError("Não foi possível preparar a exclusão das fotos.");
+      for (const item of data ?? []) {
+        const path = `${directory}/${item.name}`;
         if (item.id) {
-          paths.push(`${userId}/${item.name}`);
-          continue;
+          paths.push(path);
+        } else {
+          directories.push(path);
         }
-        const { data: arquivos } = await bucket.list(`${userId}/${item.name}`);
-        for (const arquivo of arquivos ?? []) paths.push(`${userId}/${item.name}/${arquivo.name}`);
       }
-      if (paths.length > 0) await bucket.remove(paths);
-    } catch {
-      // A exclusão da conta não pode travar por falha no storage.
     }
+    if (paths.length === 0) return;
+    const { error } = await bucket.remove(paths);
+    if (error) throw new AuthError("Não foi possível excluir as fotos da conta.");
   }
 }
 

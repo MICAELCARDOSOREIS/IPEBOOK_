@@ -25,6 +25,7 @@ expo-env.d.ts
 supabase/.temp/
 .claude/
 .qoder/
+.idea/
 bun.lock
 
 # Configuração do Firebase do Android (por ambiente; não vai ao repositório)

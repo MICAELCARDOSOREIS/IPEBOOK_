@@ -726,6 +726,11 @@ export const MAPEAMENTO_MIGRACOES = {
     validar: (ctx) => Boolean(ctx.tabelas.v2_app_version_policy?.existe),
     detalhe: 'Tabela public.v2_app_version_policy (Spec 128)',
   },
+  '202611060002_endurecer_alertas_e_notificacoes.sql': {
+    titulo: 'Endurecimento de alertas e notificações',
+    validar: (ctx) => Boolean(ctx.tabelas.v2_search_alerts?.existe && ctx.tabelas.v2_notifications?.existe),
+    detalhe: 'Limites de alertas/favoritos e fan-out de notificações',
+  },
 };
 
 /**

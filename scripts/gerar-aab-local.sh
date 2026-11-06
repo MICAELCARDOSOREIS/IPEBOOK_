@@ -60,7 +60,7 @@ TOKEN_ARQ="$HOME/.config/ipebook/sentry-auth-token"
 if [[ -z "${SENTRY_AUTH_TOKEN:-}" && -r "$TOKEN_ARQ" ]]; then export SENTRY_AUTH_TOKEN="$(cat "$TOKEN_ARQ")"; fi
 if [[ -n "${SENTRY_AUTH_TOKEN:-}" ]]; then SEM_UPLOAD=false; else SEM_UPLOAD=true; fi
 setsid nohup env SENTRY_DISABLE_AUTO_UPLOAD="$SEM_UPLOAD" GOOGLE_SERVICES_JSON="$RAIZ/google-services.json" EAS_LOCAL_BUILD_WORKINGDIR="$PASTA/tmp/eas-$$" \
-  bash -c 'echo $$ > "$1"; npx -y eas-cli build -p android --profile "$2" --local --non-interactive --output "$3"; r=$?; echo "ARQUIVO=$3"; echo "RESULTADO=$r"' \
+  bash -c 'echo $$ > "$1"; npx --no-install eas-cli build -p android --profile "$2" --local --non-interactive --output "$3"; r=$?; echo "ARQUIVO=$3"; echo "RESULTADO=$r"' \
   _ "$PID_ARQ" "$PERFIL" "$SAIDA" > "$LOG" 2>&1 < /dev/null &
 for _ in 1 2 3 4 5 6 7 8 9 10; do [[ -s "$PID_ARQ" ]] && break; sleep 0.3; done
 echo "Geração do .aab ($PERFIL) iniciada em segundo plano (PID $(cat "$PID_ARQ"))."

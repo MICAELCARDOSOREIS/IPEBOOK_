@@ -27,4 +27,4 @@ fi
 
 echo "Enviando $(basename "$AAB") para a Google Play..."
 cd "$RAIZ"
-npx -y eas-cli submit --platform android --profile production --path "$AAB" --non-interactive --wait
+npx --no-install eas-cli submit --platform android --profile production --path "$AAB" --non-interactive --wait

@@ -178,8 +178,9 @@ describe("datasources Supabase", () => {
   it("exclui conta chamando a RPC delete_user_account e finaliza sessão", async () => {
     const rpc = vi.fn().mockResolvedValue({ data: null, error: null });
     const signOut = vi.fn().mockResolvedValue({ error: null });
+    const list = vi.fn().mockResolvedValue({ data: [], error: null });
     const auth = new SupabaseAuthDataSource(
-      fakeClient({ rpc, auth: { signOut } }),
+      fakeClient({ rpc, auth: { signOut }, storage: { from: vi.fn(() => ({ list, remove: vi.fn() })) } }),
       "https://ipebook.exemplo/app/redefinir-senha",
     );
 
@@ -192,8 +193,9 @@ describe("datasources Supabase", () => {
   it("lança AuthError ao falhar na RPC de exclusão de conta", async () => {
     const rpc = vi.fn().mockResolvedValue({ data: null, error: { message: "negado" } });
     const signOut = vi.fn().mockResolvedValue({ error: null });
+    const list = vi.fn().mockResolvedValue({ data: [], error: null });
     const auth = new SupabaseAuthDataSource(
-      fakeClient({ rpc, auth: { signOut } }),
+      fakeClient({ rpc, auth: { signOut }, storage: { from: vi.fn(() => ({ list, remove: vi.fn() })) } }),
       "https://ipebook.exemplo/app/redefinir-senha",
     );
 
