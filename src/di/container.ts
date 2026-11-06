@@ -126,6 +126,14 @@ import { SupabaseBetaTesterDataSource } from "@/infra/datasources/supabaseBetaTe
 import type { IBetaTesterDataSource } from "@/model/datasources/iBetaTesterDataSource";
 import { BetaSignupUseCases } from "@/usecase/betaSignupUseCases";
 import type { IBetaSignupUseCases } from "@/usecase/iBetaSignupUseCases";
+import { SupabaseAppVersionPolicyDataSource } from "@/infra/datasources/supabaseAppVersionPolicyDataSource";
+import { MemoryAppVersionPolicyDataSource } from "@/infra/datasources/memoryAppVersionPolicyDataSource";
+import { AsyncStorageAppUpdateDismissDataSource } from "@/infra/datasources/asyncStorageAppUpdateDismissDataSource";
+import { MemoryAppUpdateDismissDataSource } from "@/infra/datasources/memoryAppUpdateDismissDataSource";
+import { ExpoAppStoreLauncherService } from "@/infra/services/expoAppStoreLauncherService";
+import { MemoryAppStoreLauncherService } from "@/infra/services/memoryAppStoreLauncherService";
+import { AppUpdateUseCases } from "@/usecase/appUpdateUseCases";
+import { useAppUpdateViewModel } from "@/viewmodel/useAppUpdateViewModel";
 
 function createDataSources(): {
   auth: IAuthDataSource;
@@ -222,6 +230,24 @@ function createDataSources(): {
 
 const dataSources = createDataSources();
 const bookDataSource = dataSources.books;
+
+const appUpdatePolicyDataSource =
+  process.env.NODE_ENV !== "test" && process.env.EXPO_PUBLIC_BACKEND === "supabase"
+    ? new SupabaseAppVersionPolicyDataSource(
+        createSupabaseAppClient(
+          process.env.EXPO_PUBLIC_SUPABASE_URL ?? "",
+          process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? process.env.EXPO_PUBLIC_SUPABASE_KEY ?? "",
+        ),
+      )
+    : new MemoryAppVersionPolicyDataSource();
+export const appUpdateUseCases = new AppUpdateUseCases(
+  appUpdatePolicyDataSource,
+  process.env.NODE_ENV === "test"
+    ? new MemoryAppUpdateDismissDataSource()
+    : new AsyncStorageAppUpdateDismissDataSource(),
+  process.env.NODE_ENV === "test" ? new MemoryAppStoreLauncherService() : new ExpoAppStoreLauncherService(),
+  Constants.expoConfig?.version ?? "0.0.0",
+);
 
 export const onboardingUseCases: IOnboardingUseCases = new OnboardingUseCases(
   process.env.NODE_ENV === "test" ? new MemoryOnboardingDataSource() : new AsyncStorageOnboardingDataSource(),
@@ -435,6 +461,7 @@ export const makeFavoriteButtonViewModel = (bookId: string, userId: string | nul
 export const makeSearchAlertsViewModel = (userId: string | null, initialQuery = "") =>
   useSearchAlertsViewModel(userId, initialQuery, searchAlertUseCases);
 export const makeWelcomeGateViewModel = () => useWelcomeGateViewModel(onboardingUseCases);
+export const makeAppUpdateViewModel = () => useAppUpdateViewModel(appUpdateUseCases);
 
 import { useBookDetailViewModel } from "@/viewmodel/useBookDetailViewModel";
 import { useCreateListingViewModel } from "@/viewmodel/useCreateListingViewModel";

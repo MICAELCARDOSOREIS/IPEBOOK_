@@ -166,6 +166,11 @@ export const TABELAS_CRITICAS = {
     descricao: 'Pedidos e negociações de livros',
     colunas: ['id', 'listing_id', 'requester_id', 'status', 'created_at'],
   },
+  v2_app_version_policy: {
+    nome: 'v2_app_version_policy',
+    descricao: 'Política pública de atualização do app Android (Spec 128)',
+    colunas: ['platform', 'latest_version', 'min_supported_version', 'release_notes', 'store_url'],
+  },
   v2_favorites: {
     nome: 'v2_favorites',
     descricao: 'Livros favoritos marcados por leitores',
@@ -715,6 +720,11 @@ export const MAPEAMENTO_MIGRACOES = {
     titulo: 'Melhorias na negociação',
     validar: (ctx) => Boolean(ctx.tabelas.v2_book_requests?.existe),
     detalhe: 'Colunas initial_message e offered_book_id em v2_book_requests (Spec 113)',
+  },
+  '202611060001_politica_versao_app.sql': {
+    titulo: 'Política de versão do aplicativo',
+    validar: (ctx) => Boolean(ctx.tabelas.v2_app_version_policy?.existe),
+    detalhe: 'Tabela public.v2_app_version_policy (Spec 128)',
   },
 };
 

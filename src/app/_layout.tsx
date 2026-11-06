@@ -19,6 +19,7 @@ import { WEB_BETA_ONLY, webBetaRedirect } from "@/view/webBetaMode";
 import { BrandSplashScreen } from "@/view/components/BrandSplashScreen";
 import { PushRegistration } from "@/view/components/PushRegistration";
 import { PwaRegister } from "@/view/components/PwaRegister";
+import { AppUpdateGate } from "@/view/components/AppUpdateGate";
 
 /** Rotas de nível superior (ADR 0011) — rotas de fluxo (entrar, anunciar, etc.) não entram aqui. */
 const ROOT_DESTINATIONS: Record<string, NavigationDestination> = {
@@ -123,6 +124,7 @@ export default function RootLayout() {
           </KeyboardAwareRoot>
         </InitialRouteGate>
         <BrandSplashScreen />
+        <AppUpdateGate />
       </ThemeProvider>
     </SafeAreaProvider>
   );

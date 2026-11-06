@@ -90,6 +90,7 @@ export type DialogProps = {
   message: string;
   confirmLabel: string;
   cancelLabel?: string;
+  showCancel?: boolean;
   destructive?: boolean;
   loading?: boolean;
   onConfirm: () => void;
@@ -106,6 +107,7 @@ export function Dialog({
   message,
   confirmLabel,
   cancelLabel = "Cancelar",
+  showCancel = true,
   destructive = false,
   loading = false,
   onConfirm,
@@ -145,7 +147,7 @@ export function Dialog({
   // Gestão de foco (Web): o diálogo prende o foco enquanto aberto e o devolve ao
   // gatilho ao fechar (design-system/06-acessibilidade.md e 04-componentes/dialogo.md).
   // Native (iOS/Android) já recebe isso do leitor de tela via accessibilityViewIsModal.
-  useModalFocusTrap(visible, () => [cancelRef.current, confirmRef.current], onCancel, loading);
+  useModalFocusTrap(visible, () => [showCancel ? cancelRef.current : null, confirmRef.current], onCancel, loading);
 
   return (
     <Modal
@@ -154,17 +156,19 @@ export function Dialog({
       visible={visible}
       transparent
       animationType="fade"
-      onRequestClose={onCancel}
+      onRequestClose={showCancel ? onCancel : undefined}
       accessibilityViewIsModal
       aria-modal
     >
       <View style={styles.scrim}>
-        <Pressable
-          accessibilityRole="none"
-          accessibilityLabel="Fechar diálogo"
-          style={StyleSheet.absoluteFill}
-          onPress={guardedCancel}
-        />
+        {showCancel ? (
+          <Pressable
+            accessibilityRole="none"
+            accessibilityLabel="Fechar diálogo"
+            style={StyleSheet.absoluteFill}
+            onPress={guardedCancel}
+          />
+        ) : null}
         <Animated.View
           accessibilityRole="alert"
           accessibilityLabel={title}
@@ -173,17 +177,19 @@ export function Dialog({
           <Text style={styles.title}>{title}</Text>
           <Text style={styles.message}>{message}</Text>
           <View style={styles.actions}>
-            <Pressable
-              ref={cancelRef as never}
-              accessibilityRole="button"
-              accessibilityLabel={cancelLabel}
-              accessibilityState={{ disabled: loading }}
-              disabled={loading}
-              onPress={guardedCancel}
-              style={withPress(styles.cancelButton)}
-            >
-              <Text style={styles.cancelText}>{cancelLabel}</Text>
-            </Pressable>
+            {showCancel ? (
+              <Pressable
+                ref={cancelRef as never}
+                accessibilityRole="button"
+                accessibilityLabel={cancelLabel}
+                accessibilityState={{ disabled: loading }}
+                disabled={loading}
+                onPress={guardedCancel}
+                style={withPress(styles.cancelButton)}
+              >
+                <Text style={styles.cancelText}>{cancelLabel}</Text>
+              </Pressable>
+            ) : null}
             <Pressable
               ref={confirmRef as never}
               accessibilityRole="button"

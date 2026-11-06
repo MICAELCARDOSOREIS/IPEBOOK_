@@ -284,6 +284,7 @@ describe('Diagnóstico de Saúde e Migrações do Supabase Remoto (Spec 049 / AD
       const contextoDiagnostico = {
         conectividade: { ok: true },
         tabelas: {
+          v2_app_version_policy: { existe: true },
           v2_books: { existe: true, colunasValidas: ['title', 'photo_url', 'neighborhood', 'status', 'condition', 'description', 'synopsis'] },
           v2_book_requests: { existe: true },
           v2_favorites: { existe: true },
@@ -310,8 +311,8 @@ describe('Diagnóstico de Saúde e Migrações do Supabase Remoto (Spec 049 / AD
       };
 
       const resultado = reconciliarMigracoesLocais('supabase/migrations', contextoDiagnostico);
-      expect(resultado.total).toBe(41);
-      expect(resultado.aplicadas).toBe(41);
+      expect(resultado.total).toBe(42);
+      expect(resultado.aplicadas).toBe(42);
       expect(resultado.pendentes).toBe(0);
       expect(resultado.migracoes.every((m: any) => m.status === 'APLICADA')).toBe(true);
     });
@@ -320,6 +321,7 @@ describe('Diagnóstico de Saúde e Migrações do Supabase Remoto (Spec 049 / AD
       const contextoParcial = {
         conectividade: { ok: true },
         tabelas: {
+          v2_app_version_policy: { existe: false },
           v2_books: { existe: true, colunasValidas: ['title', 'photo_url', 'neighborhood', 'status', 'condition', 'description', 'synopsis'] },
           v2_book_requests: { existe: true },
           v2_favorites: { existe: true },
@@ -343,9 +345,9 @@ describe('Diagnóstico de Saúde e Migrações do Supabase Remoto (Spec 049 / AD
       };
 
       const resultado = reconciliarMigracoesLocais('supabase/migrations', contextoParcial);
-      expect(resultado.total).toBe(41);
+      expect(resultado.total).toBe(42);
       expect(resultado.aplicadas).toBe(24);
-      expect(resultado.pendentes).toBe(17);
+      expect(resultado.pendentes).toBe(18);
 
       const pendentes = resultado.migracoes.filter((m: any) => m.status === 'PENDENTE');
       const arquivosPendentes = pendentes.map((m: any) => m.arquivo);
@@ -403,7 +405,7 @@ describe('Diagnóstico de Saúde e Migrações do Supabase Remoto (Spec 049 / AD
       const parsed = JSON.parse(relatorioJson);
       expect(parsed.ok).toBe(true);
       expect(parsed.url).toBe('https://projeto-vitest.supabase.co');
-      expect(parsed.migracoes.total).toBe(41);
+      expect(parsed.migracoes.total).toBe(42);
     });
 
     it('formata adequadamente falhas e pendências detectadas', async () => {
