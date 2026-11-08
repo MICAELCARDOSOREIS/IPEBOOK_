@@ -4,10 +4,11 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@/viewmodel/useAuthViewModel", () => ({ useAuthViewModel: vi.fn() }));
 vi.mock("@/view/listings/editListing", () => ({ default: () => null }));
-vi.mock("@/view/search/manageAlert", () => ({ default: () => null }));
+vi.mock("@/view/search/manageAlert", () => ({ default: vi.fn(() => null) }));
 
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import EditListingScreen from "@/view/listings/editListingScreen";
+import ManageAlert from "@/view/search/manageAlert";
 import ManageAlertScreen from "@/view/search/manageAlertScreen";
 
 const noopActions = {} as ReturnType<typeof useAuthViewModel>[1];
@@ -33,7 +34,9 @@ describe("telas-contêiner que dependem da sessão (Spec 092)", () => {
   it("Gerenciar alerta repassa a pessoa logada ou nulo", async () => {
     auth({ id: "u1", email: "a@b.c" });
     await act(async () => { await render(<ManageAlertScreen alertId="a1" onBack={() => {}} onEditAlert={() => {}} onAlertDeleted={() => {}} />); });
+    expect(vi.mocked(ManageAlert).mock.lastCall?.[0]).toMatchObject({ alertId: "a1", userId: "u1" });
     auth(null);
     await act(async () => { await render(<ManageAlertScreen alertId="a1" onBack={() => {}} onEditAlert={() => {}} onAlertDeleted={() => {}} />); });
+    expect(vi.mocked(ManageAlert).mock.lastCall?.[0]).toMatchObject({ alertId: "a1", userId: null });
   });
 });
