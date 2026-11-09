@@ -104,54 +104,62 @@ export function CatalogCarousel({
           />
         </View>
         <View style={styles.carouselCardMeta}>
-          <View style={styles.carouselCardModalityRow}>
-            <View style={[styles.carouselCardModalityPill, { backgroundColor: tag.background }]}>
-              <Text numberOfLines={1} style={[styles.carouselCardModality, { color: tag.text }]}>
-                {tag.label}
-              </Text>
-            </View>
-            {item.isBox ? (
-              <View
-                style={[
-                  styles.carouselCardModalityPill,
-                  { backgroundColor: colors.m3.secondaryContainer },
-                ]}
-              >
-                <Text
-                  numberOfLines={1}
-                  style={[
-                    styles.carouselCardModality,
-                    { color: colors.m3.onSecondaryContainer },
-                  ]}
-                >
-                  {item.boxVolumesCount ? `Box (${item.boxVolumesCount} vols)` : "Box"}
+          <View style={styles.carouselCardTopGroup}>
+            <View style={styles.carouselCardModalityRow}>
+              <View style={[styles.carouselCardModalityPill, { backgroundColor: tag.background }]}>
+                <Text numberOfLines={1} style={[styles.carouselCardModality, { color: tag.text }]}>
+                  {tag.label}
                 </Text>
               </View>
-            ) : null}
-            <Text numberOfLines={1} style={styles.carouselCardPrice}>
-              {priceText}
-            </Text>
-          </View>
-          <Text numberOfLines={2} style={styles.carouselCardTitle}>{item.title}</Text>
-          <Text numberOfLines={1} style={styles.carouselCardAuthor}>{item.author}</Text>
-          {item.neighborhood ? (
-            <View style={styles.carouselCardLocationRow}>
-              <AppIcon name="place" size={13} color={colors.nature.foliageDeep} />
-              <Text numberOfLines={1} style={styles.carouselCardNeighborhood}>
-                {item.neighborhood}
+              {item.isBox ? (
+                <View
+                  style={[
+                    styles.carouselCardModalityPill,
+                    { backgroundColor: colors.m3.secondaryContainer },
+                  ]}
+                >
+                  <Text
+                    numberOfLines={1}
+                    style={[
+                      styles.carouselCardModality,
+                      { color: colors.m3.onSecondaryContainer },
+                    ]}
+                  >
+                    {item.boxVolumesCount ? `Box (${item.boxVolumesCount} vols)` : "Box"}
+                  </Text>
+                </View>
+              ) : null}
+              <Text numberOfLines={1} style={styles.carouselCardPrice}>
+                {priceText}
               </Text>
             </View>
-          ) : null}
-          {item.status === "reserved" ? (
-            <View
-              style={[
-                styles.carouselCardModalityPill,
-                { backgroundColor: colors.badge.donation.background, alignSelf: "flex-start", marginTop: 2 },
-              ]}
-            >
-              <Text style={[styles.carouselCardModality, { color: colors.badge.donation.text }]}>
-                Reservado
-              </Text>
+            <View style={styles.carouselCardTitleBlock}>
+              <Text numberOfLines={2} style={styles.carouselCardTitle}>{item.title}</Text>
+              <Text numberOfLines={1} style={styles.carouselCardAuthor}>{item.author}</Text>
+            </View>
+          </View>
+          {item.neighborhood || item.status === "reserved" ? (
+            <View style={styles.carouselCardFooterRow}>
+              {item.neighborhood ? (
+                <View style={styles.carouselCardLocationRow}>
+                  <AppIcon name="place" size={13} color={colors.nature.foliageDeep} />
+                  <Text numberOfLines={1} style={styles.carouselCardNeighborhood}>
+                    {item.neighborhood}
+                  </Text>
+                </View>
+              ) : null}
+              {item.status === "reserved" ? (
+                <View
+                  style={[
+                    styles.carouselCardModalityPill,
+                    { backgroundColor: colors.badge.donation.background },
+                  ]}
+                >
+                  <Text style={[styles.carouselCardModality, { color: colors.badge.donation.text }]}>
+                    Reservado
+                  </Text>
+                </View>
+              ) : null}
             </View>
           ) : null}
         </View>
@@ -607,12 +615,19 @@ function createStyles(colors: ColorPalette) {
     },
     carouselCardMeta: {
       flex: 1,
-      paddingHorizontal: tokens.spacing[10],
+      justifyContent: "space-between",
+      paddingHorizontal: tokens.spacing[12],
       paddingVertical: tokens.spacing[10],
-      gap: tokens.spacing[2],
+      gap: tokens.spacing[6],
       backgroundColor: colors.m3.surfaceContainerLowest,
       borderBottomLeftRadius: tokens.radius.large,
       borderBottomRightRadius: tokens.radius.large,
+    },
+    carouselCardTopGroup: {
+      gap: tokens.spacing[6],
+    },
+    carouselCardTitleBlock: {
+      gap: 2,
     },
     carouselCardModalityRow: { flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: tokens.spacing[6] },
     carouselCardModalityPill: {
@@ -633,43 +648,55 @@ function createStyles(colors: ColorPalette) {
       ...tokens.typography.brandCardTitle,
       fontSize: 15,
       lineHeight: 19,
-      minHeight: 38,
       color: colors.m3.onSurface,
     },
     carouselCardAuthor: {
       ...tokens.typography.bodyMedium,
       fontSize: 12,
-      lineHeight: 15,
+      lineHeight: 16,
       color: colors.m3.onSurfaceVariant,
     },
     carouselCardReserved: {
       ...tokens.typography.labelMedium,
       color: colors.m3.onTertiaryContainer,
     },
+    carouselCardFooterRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      flexWrap: "wrap",
+      gap: tokens.spacing[6],
+      marginTop: "auto",
+      paddingTop: tokens.spacing[2],
+    },
     carouselCardLocationRow: {
       flexDirection: "row",
       alignItems: "center",
       gap: tokens.spacing[4],
-      marginTop: tokens.spacing[2],
+      flexShrink: 1,
     },
     carouselCardNeighborhood: {
       ...tokens.typography.labelSmall,
       fontFamily: fontFamily.regular,
       color: colors.m3.onSurfaceVariant,
+      flexShrink: 1,
     },
     booksGridContainer: {
       flexDirection: "row",
       flexWrap: "wrap",
       justifyContent: "space-between",
+      alignItems: "stretch",
       rowGap: tokens.spacing[14],
     },
     booksGridContainerWide: {
       flexDirection: "row",
       flexWrap: "wrap",
+      alignItems: "stretch",
       gap: tokens.spacing[16],
     },
     booksGridCell: {
       width: "48%",
+      alignSelf: "stretch",
     },
     booksGridCellWide: {
       flexGrow: 1,
