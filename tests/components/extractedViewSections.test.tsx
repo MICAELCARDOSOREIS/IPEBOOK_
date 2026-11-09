@@ -84,6 +84,28 @@ describe("Seções extraídas das telas (Spec 126 — E2 / CA5)", () => {
       fireEvent.press(screen.getByLabelText("Selecionar outro bairro"));
     });
     expect(onChangeNeighborhood).toHaveBeenCalledTimes(1);
+
+    const onResetModality = vi.fn();
+    await act(async () => {
+      screen.rerender(
+        <HomeEmptyCatalogSection
+          carouselDisplayTitle="Perto de você"
+          hasAnyBooks
+          isSpecificNeighborhood={false}
+          effectiveNeighborhood="Todos os bairros (Piripiri)"
+          selectedModality="trade"
+          onExploreAllPiripiri={onExploreAll}
+          onChangeNeighborhood={onChangeNeighborhood}
+          onResetModality={onResetModality}
+        />,
+      );
+    });
+
+    expect(screen.getByText("Ainda não há livros para troca em Piripiri.")).toBeDefined();
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Ver todas as modalidades"));
+    });
+    expect(onResetModality).toHaveBeenCalledTimes(1);
   });
 
   it("renderiza ProfileIdentityCard, ProfileCommunityBadges e ProfileMenuSection", async () => {

@@ -15,6 +15,11 @@ export type HomeActions = {
 
 let sessionBooksCache: readonly Book[] | null = null;
 
+export function getCachedCatalogBookById(bookId: string): Book | null {
+  if (process.env.NODE_ENV === "test" || !sessionBooksCache) return null;
+  return sessionBooksCache.find((b) => b.id === bookId) ?? null;
+}
+
 export function useHomeViewModel(books: IBookUseCases): [HomeState, HomeActions] {
   const isTest = process.env.NODE_ENV === "test";
   const initialBooks = !isTest && sessionBooksCache ? sessionBooksCache : [];

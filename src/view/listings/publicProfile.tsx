@@ -91,7 +91,7 @@ export function PublicProfile({ userId, onBack, onOpenChat, onReportListing, onR
         {...standardVerticalScrollProps}
       >
         {state.loading ? (
-          <LoadingState label="Carregando perfil" variant="profile" />
+          <LoadingState label="Carregando perfil" variant="publicProfile" />
         ) : state.error ? (
           <View style={styles.status}>
             <Text accessibilityRole="alert" style={styles.errorText}>{state.error}</Text>

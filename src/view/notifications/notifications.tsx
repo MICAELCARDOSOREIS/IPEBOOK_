@@ -235,7 +235,7 @@ export default function Notifications({
 
         <View style={wide ? styles.main : styles.flexOne}>
           {state.loading ? (
-            <LoadingState label="Carregando notificações" />
+            <LoadingState label="Carregando notificações" variant="conversations" />
           ) : state.error ? (
             isOnline ? (
               <ErrorState message={state.error} onRetry={() => void actions.reload()} />

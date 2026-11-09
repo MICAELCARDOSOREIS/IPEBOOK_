@@ -94,16 +94,19 @@ describe("ShareUseCases (Spec 019)", () => {
     expect(message).toContain("📍 Piripiri · PI");
   });
 
-  it("monta mensagem rica para WhatsApp para doação (Spec 118)", () => {
+  it("monta mensagem rica para WhatsApp para doação com categoria e conservação (Spec 118)", () => {
     const message = useCases.buildWhatsAppShareMessage(
       {
         title: "Quarto de Despejo",
         author: "Carolina Maria de Jesus",
         modality: "donation",
+        category: "Literatura",
+        condition: "good",
       },
       "https://ipebook.app/livro/b12",
     );
 
     expect(message).toContain("🎁 Doação gratuita para quem vai ler");
+    expect(message).toContain("📖 Literatura · Bom estado");
   });
 });

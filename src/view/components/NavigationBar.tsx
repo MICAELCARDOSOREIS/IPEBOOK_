@@ -19,8 +19,6 @@ const ITEMS: ReadonlyArray<{ key: NavigationDestination; label: string; icon: Ap
   { key: "home", label: "Início", icon: "home" },
   { key: "search", label: "Explorar", icon: "search" },
   { key: "shelf", label: "Estante", icon: "shelf" },
-  { key: "conversations", label: "Conversas", icon: "chat" },
-  { key: "profile", label: "Perfil", icon: "person" },
 ];
 
 /** Barra de navegação do design system (barra-de-navegacao.md), Material 3 como no Figma `02.01`:

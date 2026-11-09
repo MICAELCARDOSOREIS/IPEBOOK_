@@ -160,4 +160,14 @@ describe("Conversations (Spec 076)", () => {
     await act(async () => { fireEvent.press(screen.getByText("Sim, cancelar")); });
     expect(screen.getByText("Não foi possível cancelar o pedido. Tente novamente.")).toBeDefined();
   });
+
+  it("renderiza botão Voltar no cabeçalho mobile quando onBack é informado", async () => {
+    setup({ items });
+    const onBack = vi.fn();
+    const screen = await renderView({ onBack });
+    const backBtn = screen.getByLabelText("Voltar");
+    expect(backBtn).toBeDefined();
+    await act(async () => { fireEvent.press(backBtn); });
+    expect(onBack).toHaveBeenCalledTimes(1);
+  });
 });

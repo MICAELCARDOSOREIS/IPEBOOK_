@@ -59,7 +59,18 @@ export default function ManageListing({
 
   const handleShare = async () => {
     if (!state.book) return;
-    await shareActions.share(state.book.id);
+    await shareActions.share(state.book.id, {
+      title: state.book.title,
+      author: state.book.author,
+      modality: state.book.modality,
+      price: state.book.price,
+      neighborhood: state.book.neighborhood,
+      condition: state.book.condition,
+      category: state.book.category,
+      isBox: state.book.isBox,
+      boxVolumesCount: state.book.boxVolumesCount,
+      photoUrl: state.book.photoUrl,
+    });
   };
 
   const handleShareWhatsApp = async () => {
@@ -70,8 +81,11 @@ export default function ManageListing({
       modality: state.book.modality,
       price: state.book.price,
       neighborhood: state.book.neighborhood,
+      condition: state.book.condition,
+      category: state.book.category,
       isBox: state.book.isBox,
       boxVolumesCount: state.book.boxVolumesCount,
+      photoUrl: state.book.photoUrl,
     });
   };
 
@@ -81,7 +95,7 @@ export default function ManageListing({
     return (
       <SafeAreaView style={styles.page}>
         <TopAppBar contentMaxWidth={contentMaxWidth} title="Gerenciar anúncio" onBack={guardedBack} />
-        <LoadingState label="Carregando anúncio" variant="detail" />
+        <LoadingState label="Carregando anúncio" variant="manage" />
       </SafeAreaView>
     );
   }

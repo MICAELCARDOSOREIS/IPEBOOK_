@@ -26,14 +26,21 @@ export type AuthActions = {
 
 const GENERIC_ERROR = "Não foi possível concluir. Tente novamente.";
 
+let sessionAuthCache: { resolved: boolean; user: User | null } = {
+  resolved: false,
+  user: null,
+};
+
 export function useAuthViewModel(
   auth: IAuthUseCases,
   rateLimiter: IRateLimiter,
   logger: ILogger,
 ): [AuthState, AuthActions] {
+  const isTest = process.env.NODE_ENV === "test";
+  const hasCachedSession = !isTest && sessionAuthCache.resolved;
   const [state, setState] = useState<AuthState>({
-    user: null,
-    loading: true,
+    user: hasCachedSession ? sessionAuthCache.user : null,
+    loading: !hasCachedSession,
     error: null,
   });
   const active = useRef(false);
@@ -43,20 +50,23 @@ export function useAuthViewModel(
     void (async () => {
       try {
         const user = await auth.getSession();
+        if (!isTest) sessionAuthCache = { resolved: true, user };
         if (active.current) setState({ user, loading: false, error: null });
       } catch {
+        if (!isTest) sessionAuthCache = { resolved: true, user: null };
         if (active.current) setState({ user: null, loading: false, error: null });
       }
     })();
     return () => {
       active.current = false;
     };
-  }, [auth]);
+  }, [auth, isTest]);
 
   const run = useCallback(async (action: () => Promise<User>) => {
     setState((previous) => ({ ...previous, loading: true, error: null }));
     try {
       const user = await action();
+      if (!isTest) sessionAuthCache = { resolved: true, user };
       if (active.current) setState({ user, loading: false, error: null });
       return true;
     } catch (error) {
@@ -69,7 +79,7 @@ export function useAuthViewModel(
       }
       return false;
     }
-  }, []);
+  }, [isTest]);
 
   const signUp = useCallback(async (email: string, password: string, name: string) => {
     const guard = guardFormSubmit(rateLimiter, formKey("auth:signUp", email));
@@ -82,6 +92,7 @@ export function useAuthViewModel(
     try {
       await auth.signUp(email, password, name);
       const user = await auth.getSession();
+      if (!isTest) sessionAuthCache = { resolved: true, user };
       if (active.current) setState({
         user,
         loading: false,
@@ -98,7 +109,7 @@ export function useAuthViewModel(
       logger.error("Falha ao criar conta", error);
       return false;
     }
-  }, [auth, rateLimiter, logger]);
+  }, [auth, rateLimiter, logger, isTest]);
 
   const signIn = useCallback(
     async (email: string, password: string) => {
@@ -161,6 +172,7 @@ export function useAuthViewModel(
         throw new DomainError("Login com Google indisponível.");
       }
       const user = await auth.signInWithGoogle();
+      if (!isTest) sessionAuthCache = { resolved: true, user };
       if (active.current) {
         setState({ user, loading: false, error: null, statusMessage: null });
       }
@@ -181,7 +193,7 @@ export function useAuthViewModel(
       }
       return false;
     }
-  }, [auth, logger]);
+  }, [auth, logger, isTest]);
 
   const handleAuthCallback = useCallback(async (url: string) => {
     setState((previous) => ({ ...previous, loading: true, error: null }));
@@ -190,6 +202,7 @@ export function useAuthViewModel(
         throw new DomainError("Processamento de retorno de autenticação indisponível.");
       }
       const user = await auth.setSessionFromUrl(url);
+      if (!isTest) sessionAuthCache = { resolved: true, user };
       if (active.current) {
         setState({ user, loading: false, error: null, statusMessage: null });
       }
@@ -206,12 +219,13 @@ export function useAuthViewModel(
       logger.error("Falha ao processar callback de autenticação", error);
       return false;
     }
-  }, [auth, logger]);
+  }, [auth, logger, isTest]);
 
   const signOut = useCallback(async () => {
     setState((previous) => ({ ...previous, loading: true, error: null }));
     try {
       await auth.signOut();
+      if (!isTest) sessionAuthCache = { resolved: true, user: null };
       if (active.current) setState({ user: null, loading: false, error: null });
       return true;
     } catch {
@@ -224,19 +238,20 @@ export function useAuthViewModel(
       }
       return false;
     }
-  }, [auth]);
+  }, [auth, isTest]);
 
   // Cada tela tem seu próprio estado de sessão: quem sobe o app antes do login precisa reler a sessão
   // para que o aviso de permissão apareça na mesma execução (Spec 020 T005).
   const refreshSession = useCallback(async () => {
     try {
       const user = await auth.getSession();
+      if (!isTest) sessionAuthCache = { resolved: true, user };
       if (!active.current) return;
       setState((previous) => (previous.user?.id === user?.id ? previous : { ...previous, user, loading: false, error: null }));
     } catch {
       /* sem sessão lida: mantém o estado, o app continua funcionando */
     }
-  }, [auth]);
+  }, [auth, isTest]);
 
   const actions = useMemo<AuthActions>(
     () => ({ signUp, signIn, signInWithGoogle, handleAuthCallback, signOut, requestPasswordReset, refreshSession }),

@@ -64,6 +64,15 @@ export function coverBackground(id: string): string {
   return COVER_BACKGROUNDS[hashId(id) % COVER_ARTS.length];
 }
 
+/** Devolve a arte ilustrativa determinística e a cor de fundo correspondentes ao `id` do livro. */
+export function getIllustrativeCover(id: string): { source: { uri: string } | number; backgroundColor: string } {
+  const kind = hashId(id) % COVER_ARTS.length;
+  return {
+    source: asSource(COVER_ARTS[kind]),
+    backgroundColor: COVER_BACKGROUNDS[kind],
+  };
+}
+
 function hashId(id: string): number {
   let hash = 2166136261;
   for (const char of id) {
