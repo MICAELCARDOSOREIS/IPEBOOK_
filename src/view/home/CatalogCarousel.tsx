@@ -20,9 +20,9 @@ export const MODALITY_PLURAL = {
 
 function createModalityTag(colors: ColorPalette): Record<BookModality, { background: string; text: string; label: string }> {
   return {
-    sale: { background: colors.badge.sale.background, text: colors.badge.sale.text, label: "Venda" },
-    trade: { background: colors.badge.trade.background, text: colors.badge.trade.text, label: "Troca" },
-    donation: { background: colors.badge.donation.background, text: colors.badge.donation.text, label: "Doação" },
+    sale: { background: colors.nature.foliageDeep, text: "#FFFFFF", label: "Venda" },
+    trade: { background: colors.brandBrown, text: "#FFFFFF", label: "Troca" },
+    donation: { background: colors.ipe.bloom, text: colors.ipe.onContainer, label: "Doação" },
   };
 }
 
@@ -294,13 +294,13 @@ export function HomeShortcutsSection({
       style={withPress(styles.donationBanner)}
     >
       <View style={styles.donationBannerIconBox}>
-        <AppIcon name="bookmark" size={24} color={colors.m3.onDoacaoContainer} />
+        <AppIcon name="bookmark" size={24} color={colors.ipe.onContainer} />
       </View>
       <View style={styles.donationBannerTextBox}>
         <Text style={styles.donationBannerTitle}>Doações da semana</Text>
         <Text style={styles.donationBannerSubtitle}>{donationSummary}</Text>
       </View>
-      <AppIcon name="chevronRight" size={24} color={colors.m3.onDoacaoContainer} />
+      <AppIcon name="chevronRight" size={24} color={colors.ipe.onContainer} />
     </Pressable>
   );
 }
@@ -415,13 +415,13 @@ function createStyles(colors: ColorPalette) {
       gap: tokens.spacing[14],
       marginBottom: tokens.spacing[24],
       borderRadius: tokens.radius.xl,
-      backgroundColor: colors.m3.doacaoContainer,
+      backgroundColor: colors.ipe.bloom,
     },
     donationBannerIconBox: {
       width: tokens.spacing[40],
       height: tokens.spacing[40],
       borderRadius: tokens.radius.full,
-      backgroundColor: colors.m3.surfaceContainerLowest,
+      backgroundColor: "#ffffff",
       justifyContent: "center",
       alignItems: "center",
     },
@@ -432,11 +432,11 @@ function createStyles(colors: ColorPalette) {
     donationBannerTitle: {
       ...tokens.typography.bodyLarge,
       fontWeight: tokens.fontWeight.semiBold,
-      color: colors.m3.onDoacaoContainer,
+      color: colors.ipe.onContainer,
     },
     donationBannerSubtitle: {
       ...tokens.typography.bodyMedium,
-      color: colors.m3.onDoacaoContainer,
+      color: colors.ipe.onContainer,
     },
     carouselSection: { marginBottom: tokens.spacing[24] },
     carouselHeader: {

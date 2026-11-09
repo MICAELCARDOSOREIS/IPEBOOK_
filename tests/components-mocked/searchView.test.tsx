@@ -373,4 +373,23 @@ describe("Search (spec 006, US3/T019, Spec 028, Issue #93)", () => {
     });
     expect(onNavigateToFavorites).toHaveBeenCalledTimes(1);
   });
+
+  it("exibe o botão de voltar ao topo após rolagem e aciona retorno", async () => {
+    setup([book({})]);
+    const screen = await renderSearch();
+
+    expect(screen.queryByLabelText("Voltar ao topo da lista")).toBeNull();
+
+    const flatList = screen.getByTestId("search-flatlist");
+    await act(async () => {
+      fireEvent.scroll(flatList, { nativeEvent: { contentOffset: { y: 350 } } });
+    });
+
+    const scrollTopBtn = screen.getByLabelText("Voltar ao topo da lista");
+    expect(scrollTopBtn).toBeDefined();
+
+    await act(async () => {
+      fireEvent.press(scrollTopBtn);
+    });
+  });
 });
