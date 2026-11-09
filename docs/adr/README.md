@@ -99,5 +99,6 @@
 - [0097 — Linha de base de acessibilidade e estados das telas](0097-linha-de-base-acessibilidade-e-estados-das-telas.md)
 - [0098 — Estratégia de injeção de dependência nos ViewModels](0098-estrategia-de-injecao-de-dependencia-nos-viewmodels.md)
 - [0099 — Verificação de versão no Supabase e modal de atualização na Play Store](0099-verificacao-de-versao-e-atualizacao-na-loja.md)
+- [0100 — In-App Updates nativas da Google Play Store](0100-google-play-in-app-updates.md)
 
 Preservar registros aceitos; mudanças relevantes geram novo ADR com vínculos de substituição.
