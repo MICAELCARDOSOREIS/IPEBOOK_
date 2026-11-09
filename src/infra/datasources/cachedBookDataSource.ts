@@ -23,23 +23,29 @@ const DEFAULT_TTL_MS = 5 * 60 * 1000; // 5 minutos
 export const DEFAULT_PREFIX = "ipebook:cache:books";
 /** Chave do catálogo offline; exportada para a limpeza em Configurações (Spec 073). */
 export const BOOKS_LIST_CACHE_KEY = `${DEFAULT_PREFIX}:list`;
+export const BOOKS_OWNER_CACHE_PREFIX = `${DEFAULT_PREFIX}:owner:`;
 
 /**
  * Decorator resiliente para IBookDataSource que adiciona cache local (Offline First)
- * e fallback automático para os últimos dados consultados caso a rede falhe.
+ * e fallback automático para os últimos dados consultados caso a rede falhe (Spec 130 / ADR 0101).
  */
 export class CachedBookDataSource implements IBookDataSource {
   private readonly primary: IBookDataSource;
   private readonly storage: IKeyValueStorage;
+  private readonly prefix: string;
   private readonly listKey: string;
   private readonly ttlMs: number;
 
   constructor(primary: IBookDataSource, options: CachedBookDataSourceOptions = {}) {
     this.primary = primary;
     this.storage = options.storage ?? AsyncStorage;
-    const prefix = options.cacheKeyPrefix ?? DEFAULT_PREFIX;
-    this.listKey = `${prefix}:list`;
+    this.prefix = options.cacheKeyPrefix ?? DEFAULT_PREFIX;
+    this.listKey = `${this.prefix}:list`;
     this.ttlMs = options.ttlMs ?? DEFAULT_TTL_MS;
+  }
+
+  private ownerListKey(ownerId: string): string {
+    return `${this.prefix}:owner:${ownerId}`;
   }
 
   private async readCache<T>(key: string): Promise<T | null> {
@@ -69,9 +75,12 @@ export class CachedBookDataSource implements IBookDataSource {
     }
   }
 
-  private async invalidate(): Promise<void> {
+  private async invalidate(ownerId?: string): Promise<void> {
     try {
       await this.storage.removeItem(this.listKey);
+      if (ownerId) {
+        await this.storage.removeItem(this.ownerListKey(ownerId));
+      }
     } catch {
       // Ignora erro de limpeza
     }
@@ -111,19 +120,19 @@ export class CachedBookDataSource implements IBookDataSource {
 
   async create(book: Omit<Book, "id">): Promise<Book> {
     const created = await this.primary.create(book);
-    await this.invalidate();
+    await this.invalidate(book.ownerId);
     return created;
   }
 
   async update(id: string, data: Partial<Omit<Book, "id" | "ownerId">>): Promise<Book> {
     const updated = await this.primary.update(id, data);
-    await this.invalidate();
+    await this.invalidate(updated.ownerId);
     return updated;
   }
 
   async updateStatus(id: string, status: Book["status"]): Promise<Book> {
     const updated = await this.primary.updateStatus(id, status);
-    await this.invalidate();
+    await this.invalidate(updated.ownerId);
     return updated;
   }
 
@@ -133,6 +142,17 @@ export class CachedBookDataSource implements IBookDataSource {
   }
 
   async listByOwner(ownerId: string): Promise<readonly Book[]> {
-    return this.primary.listByOwner(ownerId);
+    const key = this.ownerListKey(ownerId);
+    try {
+      const fresh = await this.primary.listByOwner(ownerId);
+      await this.writeCache(key, fresh);
+      return fresh;
+    } catch (networkError) {
+      const cached = await this.readCache<Book[]>(key);
+      if (cached && cached.length > 0) {
+        return cached;
+      }
+      throw networkError;
+    }
   }
 }
