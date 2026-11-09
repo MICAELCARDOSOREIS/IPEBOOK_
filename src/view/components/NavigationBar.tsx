@@ -40,68 +40,75 @@ export function NavigationBar({ active, onNavigate, disabledDestinations = [], b
     <View
       testID="navigation-bar-tablist"
       accessibilityRole="tablist"
-      style={[styles.bar, { paddingBottom }]}
+      pointerEvents="box-none"
+      style={[styles.floatingWrapper, { paddingBottom }]}
     >
-      {ITEMS.map((item) => {
-        const isActive = item.key === active;
-        const isDisabled = disabledDestinations.includes(item.key);
-        const badgeCount = badges[item.key] ?? 0;
-        const baseLabel = isDisabled ? `${item.label} (em breve)` : item.label;
-        return (
-          <Pressable
-            key={item.key}
-            accessibilityRole="tab"
-            accessibilityState={isDisabled ? { selected: isActive, disabled: true } : { selected: isActive }}
-            accessibilityLabel={badgeCount > 0 ? `${baseLabel}, ${badgeCount} ${badgeCount === 1 ? "nova" : "novas"}` : baseLabel}
-            disabled={isDisabled}
-            onPress={() => {
-              if (isDisabled || isActive) return;
-              const now = Date.now();
-              if (now - lastNavigateTime.current < DEBOUNCE_MS) {
+      <View style={styles.dock}>
+        {ITEMS.map((item) => {
+          const isActive = item.key === active;
+          const isDisabled = disabledDestinations.includes(item.key);
+          const badgeCount = badges[item.key] ?? 0;
+          const baseLabel = isDisabled ? `${item.label} (em breve)` : item.label;
+          return (
+            <Pressable
+              key={item.key}
+              accessibilityRole="tab"
+              accessibilityState={isDisabled ? { selected: isActive, disabled: true } : { selected: isActive }}
+              accessibilityLabel={badgeCount > 0 ? `${baseLabel}, ${badgeCount} ${badgeCount === 1 ? "nova" : "novas"}` : baseLabel}
+              disabled={isDisabled}
+              onPress={() => {
+                if (isDisabled || isActive) return;
+                const now = Date.now();
+                if (now - lastNavigateTime.current < DEBOUNCE_MS) {
+                  lastNavigateTime.current = now;
+                  return;
+                }
                 lastNavigateTime.current = now;
-                return;
-              }
-              lastNavigateTime.current = now;
-              onNavigate(item.key);
-            }}
-            style={[styles.item, isDisabled && styles.itemDisabled]}
-          >
-            {({ pressed }) => (
-              <>
-                <View
-                  style={[
-                    styles.indicator,
-                    pressed && !isDisabled && styles.indicatorPressed,
-                    pressed && !isActive && !isDisabled && styles.indicatorInactivePressed,
-                  ]}
-                >
-                  <ActiveIndicator active={isActive} color={colors.m3.secondaryContainer} />
-                  {/* Na web a pílula (posicionada) seria pintada por cima do ícone: ele sobe uma camada. */}
-                  <View style={styles.iconLayer}>
-                    <AppIcon
-                      name={item.icon}
-                      size={24}
-                      filled={isActive}
-                      color={isDisabled ? colors.secondaryText : isActive ? colors.m3.onSecondaryContainer : colors.m3.onSurfaceVariant}
-                    />
-                  </View>
-                  {badgeCount > 0 ? (
-                    <View style={styles.badge}>
-                      <Text style={styles.badgeText}>{badgeCount > 9 ? "9+" : String(badgeCount)}</Text>
+                onNavigate(item.key);
+              }}
+              style={({ pressed }) => [
+                styles.item,
+                pressed && !isDisabled && styles.itemPressed,
+                isDisabled && styles.itemDisabled,
+              ]}
+            >
+              {({ pressed }) => (
+                <>
+                  <View
+                    style={[
+                      styles.indicator,
+                      pressed && !isDisabled && styles.indicatorPressed,
+                      pressed && !isActive && !isDisabled && styles.indicatorInactivePressed,
+                    ]}
+                  >
+                    <ActiveIndicator active={isActive} color={colors.m3.secondaryContainer} />
+                    {/* Na web a pílula (posicionada) seria pintada por cima do ícone: ele sobe uma camada. */}
+                    <View style={styles.iconLayer}>
+                      <AppIcon
+                        name={item.icon}
+                        size={24}
+                        filled={isActive}
+                        color={isDisabled ? colors.secondaryText : isActive ? colors.m3.onSecondaryContainer : colors.m3.onSurfaceVariant}
+                      />
                     </View>
-                  ) : null}
-                </View>
-                <Text
-                  numberOfLines={1}
-                  style={[styles.label, isActive && styles.labelActive, isDisabled && styles.labelDisabled]}
-                >
-                  {item.label}
-                </Text>
-              </>
-            )}
-          </Pressable>
-        );
-      })}
+                    {badgeCount > 0 ? (
+                      <View style={styles.badge}>
+                        <Text style={styles.badgeText}>{badgeCount > 9 ? "9+" : String(badgeCount)}</Text>
+                      </View>
+                    ) : null}
+                  </View>
+                  <Text
+                    numberOfLines={1}
+                    style={[styles.label, isActive && styles.labelActive, isDisabled && styles.labelDisabled]}
+                  >
+                    {item.label}
+                  </Text>
+                </>
+              )}
+            </Pressable>
+          );
+        })}
+      </View>
     </View>
   );
 }
@@ -146,30 +153,54 @@ function ActiveIndicator({ active, color }: { active: boolean; color: string }) 
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
-    bar: {
+    floatingWrapper: {
+      position: "absolute",
+      left: 0,
+      right: 0,
+      bottom: 0,
+      zIndex: 100,
+      alignItems: "center",
+      justifyContent: "flex-end",
+      paddingHorizontal: tokens.spacing[16],
+      backgroundColor: "transparent",
+      pointerEvents: "box-none",
+    },
+    dock: {
       flexDirection: "row",
       justifyContent: "space-around",
-      backgroundColor: colors.m3.surfaceContainer,
-      paddingTop: tokens.spacing[12],
-      paddingBottom: tokens.spacing[16],
-      // Elevação nível 2 do M3: separa a barra do conteúdo sem borda.
-      elevation: 3,
-      zIndex: 1,
+      alignItems: "center",
+      width: "100%",
+      maxWidth: 420,
+      backgroundColor: colors.m3.surfaceContainerHighest,
+      borderRadius: tokens.radius.full,
+      paddingVertical: tokens.spacing[8],
+      paddingHorizontal: tokens.spacing[8],
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+      // Sombra e elevação flutuante expressiva do Material 3
+      elevation: 8,
       shadowColor: colors.m3.shadow,
-      shadowOffset: { width: 0, height: -1 },
-      shadowOpacity: 0.12,
-      shadowRadius: 4,
+      shadowOffset: { width: 0, height: 6 },
+      shadowOpacity: 0.16,
+      shadowRadius: 16,
+      ...(Platform.OS === "web"
+        ? ({
+            backdropFilter: "blur(20px)",
+            WebkitBackdropFilter: "blur(20px)",
+          } as never)
+        : {}),
     },
     item: {
       flex: 1,
       minWidth: 0,
       alignItems: "center",
-      gap: tokens.spacing[4],
+      gap: 2,
+      paddingVertical: 2,
       ...(Platform.OS === "web" ? ({ cursor: "pointer", userSelect: "none" } as never) : {}),
     },
     iconLayer: { zIndex: 1 },
     indicator: {
-      width: 64,
+      width: 60,
       height: tokens.spacing[32],
       borderRadius: tokens.radius.full,
       justifyContent: "center",
@@ -179,24 +210,26 @@ function createStyles(colors: ColorPalette) {
       transform: [{ scale: 0.94 }],
     },
     indicatorInactivePressed: {
-      backgroundColor: colors.m3.surfaceContainerHighest,
+      backgroundColor: colors.m3.surfaceContainer,
     },
     badge: {
       position: "absolute",
       top: -2,
-      right: 10,
+      right: 8,
       minWidth: 16,
       height: 16,
       paddingHorizontal: tokens.spacing[4],
-      borderRadius: tokens.radius.small,
+      borderRadius: tokens.radius.full,
+      borderWidth: 1.5,
+      borderColor: colors.surface,
       alignItems: "center",
       justifyContent: "center",
       backgroundColor: colors.error,
     },
     badgeText: { ...tokens.typography.captionSmall, fontWeight: tokens.fontWeight.bold, color: colors.surface },
-    itemPressed: { opacity: 0.7 },
+    itemPressed: { opacity: 0.8 },
     itemDisabled: { opacity: 0.38 },
-    label: { color: colors.m3.onSurfaceVariant, ...tokens.typography.labelMedium },
+    label: { color: colors.m3.onSurfaceVariant, ...tokens.typography.labelSmall },
     labelActive: { color: colors.m3.onSurface, fontWeight: tokens.fontWeight.bold },
     labelDisabled: { opacity: 0.7 },
   });
