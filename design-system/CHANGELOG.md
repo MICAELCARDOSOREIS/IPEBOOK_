@@ -2,6 +2,12 @@
 
 Versões no formato `MAIOR.MENOR.CORREÇÃO`. Mudança grande = versão nova.
 
+## 1.27.0 · 2026-11-09
+
+- **Cores Canônicas das Modalidades e Vitrine da Home:** restaurada e documentada a identidade visual das modalidades com caixas cromáticas sob a capa (`carouselCardCoverArea`) e badges no carrossel (`CatalogCarousel`): Verde Folhagem (`#1E4E27`) para Venda, Marrom Tronco/Couro (`#58331F`) para Troca e Amarelo Ouro Solar (`#F5B718`) para Doação.
+- **Florada do Ipê e Doações (`ipe-bloom`):** consolidado o token canônico `#F5B718` (RGB `245, 183, 24`) para o banner "Doações da semana", fita marcadora e ponto colorido nos chips de filtro rápido, garantindo contraste 8,3:1 (AAA) com texto marrom profundo (`#451A03`).
+- **Barra de Navegação Flutuante (Dock):** documentada a anatomia em cápsula suspensa (`radius.full`), fundo em superfície acolhedora (`colors.surface`, `#FCFAF5`), elevação 6 e rótulo ativo destacado em `colors.m3.primary` (`#2B6334`).
+
 ## 1.26.0 · 2026-11-04
 
 - Sincronizados os valores documentados de cor e contraste com `tokens.json` e

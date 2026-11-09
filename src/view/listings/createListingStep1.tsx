@@ -193,10 +193,10 @@ export function CreateListingStep1({
         ) : null}
       </View>
 
-      <View style={wideWeb ? styles.webDividerContainer : undefined}>
-        {wideWeb ? <View style={styles.webDividerLine} /> : null}
+      <View style={wideWeb ? styles.webDividerContainer : styles.dividerContainer}>
+        <View style={styles.dividerLine} />
         <Text style={wideWeb ? styles.webDividerText : styles.dividerText}>ou preencha manualmente</Text>
-        {wideWeb ? <View style={styles.webDividerLine} /> : null}
+        <View style={styles.dividerLine} />
       </View>
 
       <View style={styles.field}>
@@ -285,7 +285,7 @@ export function CreateListingStep1({
         )}
       </View>
 
-      <View style={wideWeb ? styles.webPhotoCard : styles.photoRow}>
+      <View style={wideWeb ? styles.webPhotoCard : styles.photoCard}>
         <AddPhotoCard
           photoUrl={photoUrl}
           onPress={onGoToPhotos}
@@ -301,18 +301,42 @@ export function CreateListingStep1({
         </View>
       </View>
 
-      <TextField
-        label="Título"
-        value={title}
-        onChangeText={onSetTitle}
-        editable={!loading}
-        placeholder="Ex: Dom Casmurro"
-        error={fieldErrors.title}
-      />
+      <View style={styles.fieldsContainer}>
+        <TextField
+          label="Título"
+          value={title}
+          onChangeText={onSetTitle}
+          editable={!loading}
+          placeholder="Ex: Dom Casmurro"
+          error={fieldErrors.title}
+        />
 
-      {wideWeb && modality === "sale" ? (
-        <View style={styles.webFieldsRow}>
-          <View style={styles.webAuthorCol}>
+        {wideWeb && modality === "sale" ? (
+          <View style={styles.webFieldsRow}>
+            <View style={styles.webAuthorCol}>
+              <TextField
+                label="Autor"
+                value={author}
+                onChangeText={onSetAuthor}
+                editable={!loading}
+                placeholder="Ex: Machado de Assis"
+                error={fieldErrors.author}
+              />
+            </View>
+            <View style={styles.webPriceCol}>
+              <TextField
+                label="Preço (R$)"
+                value={price}
+                onChangeText={onSetPrice}
+                editable={!loading}
+                keyboardType="decimal-pad"
+                placeholder="Ex: 25,00"
+                error={fieldErrors.price}
+              />
+            </View>
+          </View>
+        ) : (
+          <>
             <TextField
               label="Autor"
               value={author}
@@ -321,45 +345,26 @@ export function CreateListingStep1({
               placeholder="Ex: Machado de Assis"
               error={fieldErrors.author}
             />
-          </View>
-          <View style={styles.webPriceCol}>
-            <TextField
-              label="Preço (R$)"
-              value={price}
-              onChangeText={onSetPrice}
-              editable={!loading}
-              keyboardType="decimal-pad"
-              placeholder="Ex: 25,00"
-              error={fieldErrors.price}
-            />
-          </View>
-        </View>
-      ) : (
-        <>
-          <TextField
-            label="Autor"
-            value={author}
-            onChangeText={onSetAuthor}
-            editable={!loading}
-            placeholder="Ex: Machado de Assis"
-            error={fieldErrors.author}
-          />
 
-          {modality === "sale" ? (
-            <TextField
-              label="Preço (R$)"
-              value={price}
-              onChangeText={onSetPrice}
-              editable={!loading}
-              keyboardType="decimal-pad"
-              placeholder="Ex: 25,00"
-              error={fieldErrors.price}
-            />
-          ) : null}
-        </>
-      )}
+            {modality === "sale" ? (
+              <TextField
+                label="Preço (R$)"
+                value={price}
+                onChangeText={onSetPrice}
+                editable={!loading}
+                keyboardType="decimal-pad"
+                placeholder="Ex: 25,00"
+                error={fieldErrors.price}
+              />
+            ) : null}
+          </>
+        )}
+      </View>
 
-      <Text style={styles.hint}>Conservação e bairro vêm nas próximas etapas.</Text>
+      <View style={styles.nextStepsNote}>
+        <AppIcon name="info" size={16} color={colors.secondaryText} />
+        <Text style={styles.hint}>Conservação e bairro vêm nas próximas etapas.</Text>
+      </View>
 
       {error ? <InlineErrorCard textRef={errorRef} message={error} /> : null}
     </>
@@ -457,6 +462,17 @@ function createStyles(colors: ColorPalette) {
     isbnFeedbackTextError: {
       color: colors.error,
     },
+    dividerContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[12],
+      marginVertical: tokens.spacing[4],
+    },
+    dividerLine: {
+      flex: 1,
+      height: 1,
+      backgroundColor: colors.m3.outlineVariant,
+    },
     dividerText: {
       ...tokens.typography.labelMedium,
       color: colors.secondaryText,
@@ -544,6 +560,25 @@ function createStyles(colors: ColorPalette) {
       lineHeight: 16,
     },
     photoRow: { flexDirection: "row", gap: tokens.spacing[12], alignItems: "center" },
+    photoCard: {
+      flexDirection: "row",
+      gap: tokens.spacing[12],
+      alignItems: "center",
+      padding: tokens.spacing[12],
+      borderRadius: tokens.radius.medium,
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+    },
+    fieldsContainer: {
+      gap: tokens.spacing[16],
+    },
+    nextStepsNote: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[8],
+      paddingVertical: tokens.spacing[2],
+    },
     webPhotoCard: {
       flexDirection: "row",
       gap: tokens.spacing[16],

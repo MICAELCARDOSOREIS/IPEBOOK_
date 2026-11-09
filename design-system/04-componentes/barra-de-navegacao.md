@@ -16,16 +16,19 @@ comportamento do M3); os cinco destinos fixos são **Adaptado** — decisão de 
 
 ## Anatomia
 
-1. Até cinco itens, cada um com ícone + rótulo sempre visível
-2. Indicador de item ativo em pílula (token `navitem.active.bg`)
-3. Badge numérico opcional (ex. mensagens não lidas em Conversas)
+1. Container flutuante em cápsula suspensa (`radius.full`), com fundo `surface` (`#FCFAF5`), borda `outline-variant` e elevação 6 (sombra difusa M3 Expressive)
+2. Até cinco itens, cada um com ícone + rótulo sempre visível
+3. Indicador de item ativo em pílula (token `secondary-container`, `#D2EBD4`)
+4. Rótulo ativo em destaque com a cor da marca (`m3.primary`, `#2B6334`)
+5. Badge numérico opcional (ex. mensagens não lidas em Conversas)
 
 ## Variantes
 
 | Variante | Uso | Tokens |
 | --- | --- | --- |
-| Item inativo | Destino não selecionado | `on-surface-variant` |
-| Item ativo | Destino atual | pílula `secondary-container`, ícone/rótulo `on-secondary-container` |
+| Container flutuante (Dock) | Cápsula suspensa com rolagem de conteúdo sob a barra | Fundo `surface` (`#FCFAF5`), borda `outline-variant`, elevação 6 |
+| Item inativo | Destino não selecionado | Ícone e rótulo `on-surface-variant` (`#4D4740`) |
+| Item ativo | Destino atual | Pílula `secondary-container` (`#D2EBD4`), ícone `on-secondary-container`, rótulo em negrito `primary` (`#2B6334`) |
 
 ## Estados
 
