@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { FlatList, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import type { Book, BookModality } from "@/model/entities/book";
 import { AppIcon } from "@/view/components/AppIcon";
 import { BookCover } from "@/view/components/BookCover";
@@ -237,6 +237,7 @@ export function HomeShortcutsSection({
 }: HomeShortcutsSectionProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const [isBannerHovered, setIsBannerHovered] = useState(false);
 
   if (wideWeb) {
     return (
@@ -290,17 +291,25 @@ export function HomeShortcutsSection({
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={`Doações da semana: ${donationSummary}`}
+      onHoverIn={() => setIsBannerHovered(true)}
+      onHoverOut={() => setIsBannerHovered(false)}
       onPress={() => onNavigateToSearch({ modality: "donation" })}
-      style={withPress(styles.donationBanner)}
+      style={({ pressed }) => [
+        styles.donationBanner,
+        isBannerHovered && styles.donationBannerHovered,
+        pressed && styles.donationBannerPressed,
+      ]}
     >
       <View style={styles.donationBannerIconBox}>
-        <AppIcon name="bookmark" size={24} color={colors.ipe.onContainer} />
+        <AppIcon name="bookmark" size={22} color={colors.ipe.onContainer} />
       </View>
       <View style={styles.donationBannerTextBox}>
         <Text style={styles.donationBannerTitle}>Doações da semana</Text>
         <Text style={styles.donationBannerSubtitle}>{donationSummary}</Text>
       </View>
-      <AppIcon name="chevronRight" size={24} color={colors.ipe.onContainer} />
+      <View style={[styles.donationBannerChevronBox, isBannerHovered && styles.donationBannerChevronBoxHovered]}>
+        <AppIcon name="chevronRight" size={22} color={colors.ipe.onContainer} />
+      </View>
     </Pressable>
   );
 }
@@ -416,27 +425,70 @@ function createStyles(colors: ColorPalette) {
       marginBottom: tokens.spacing[24],
       borderRadius: tokens.radius.xl,
       backgroundColor: colors.ipe.bloom,
+      borderWidth: 1,
+      borderColor: "rgba(69, 26, 3, 0.08)",
+      elevation: 2,
+      shadowColor: colors.ipe.trunk,
+      shadowOffset: { width: 0, height: 3 },
+      shadowOpacity: 0.12,
+      shadowRadius: 8,
+      ...(Platform.OS === "web"
+        ? ({
+            cursor: "pointer",
+            userSelect: "none",
+          } as never)
+        : {}),
+    },
+    donationBannerHovered: {
+      transform: [{ scale: 1.01 }],
+      elevation: 4,
+      shadowOpacity: 0.18,
+      shadowRadius: 12,
+    },
+    donationBannerPressed: {
+      transform: [{ scale: 0.985 }],
+      opacity: 0.92,
     },
     donationBannerIconBox: {
       width: tokens.spacing[40],
       height: tokens.spacing[40],
       borderRadius: tokens.radius.full,
-      backgroundColor: "#ffffff",
+      backgroundColor: colors.ipe.petalSoft,
       justifyContent: "center",
       alignItems: "center",
+      elevation: 1,
+      shadowColor: colors.ipe.trunk,
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.08,
+      shadowRadius: 3,
     },
     donationBannerTextBox: {
       flex: 1,
       gap: tokens.spacing[2],
     },
     donationBannerTitle: {
-      ...tokens.typography.bodyLarge,
-      fontWeight: tokens.fontWeight.semiBold,
+      fontFamily: tokens.fontFamily.brand,
+      fontSize: 18,
+      lineHeight: 22,
+      fontWeight: tokens.fontWeight.bold,
       color: colors.ipe.onContainer,
     },
     donationBannerSubtitle: {
-      ...tokens.typography.bodyMedium,
+      fontFamily: tokens.fontFamily.regular,
+      fontSize: 14,
+      lineHeight: 18,
       color: colors.ipe.onContainer,
+      opacity: 0.88,
+    },
+    donationBannerChevronBox: {
+      width: tokens.spacing[28],
+      height: tokens.spacing[28],
+      borderRadius: tokens.radius.full,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    donationBannerChevronBoxHovered: {
+      transform: [{ translateX: 2 }],
     },
     carouselSection: { marginBottom: tokens.spacing[24] },
     carouselHeader: {
