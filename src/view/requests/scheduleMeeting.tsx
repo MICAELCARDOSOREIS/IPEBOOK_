@@ -172,9 +172,13 @@ export function ScheduleMeeting({ requestId, sessionUserId, onBack, onSent }: Sc
       <SafeAreaView style={styles.safe} pointerEvents="box-none" edges={hasMap ? ["bottom", "left", "right"] : undefined}>
       <TopAppBar contentMaxWidth={560} floating={hasMap} title={rescheduling ? "Reagendar encontro" : "Combinar encontro"} onBack={guardedBack} />
       {state.loading ? (
-        <LoadingState label="Carregando o encontro" variant="detail" />
+        <View style={styles.loadingContainer}>
+          <LoadingState label="Carregando o encontro" variant="detail" />
+        </View>
       ) : state.loadError ? (
-        <ErrorState message={state.loadError} onRetry={() => void actions.reload()} />
+        <View style={styles.loadingContainer}>
+          <ErrorState message={state.loadError} onRetry={() => void actions.reload()} />
+        </View>
       ) : (
         <View style={styles.stage} pointerEvents="box-none" onLayout={(event) => setStageHeight(Math.round(event.nativeEvent.layout.height))}>
           <Animated.View
@@ -371,6 +375,14 @@ function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     page: { flex: 1, backgroundColor: colors.surface },
     safe: { flex: 1 },
+    loadingContainer: {
+      flex: 1,
+      width: "100%",
+      maxWidth: 560,
+      alignSelf: "center",
+      paddingHorizontal: tokens.spacing[16],
+      paddingTop: tokens.spacing[16],
+    },
     stage: { flex: 1 },
     sheet: {
       position: "absolute",
