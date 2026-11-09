@@ -132,6 +132,8 @@ import { AsyncStorageAppUpdateDismissDataSource } from "@/infra/datasources/asyn
 import { MemoryAppUpdateDismissDataSource } from "@/infra/datasources/memoryAppUpdateDismissDataSource";
 import { ExpoAppStoreLauncherService } from "@/infra/services/expoAppStoreLauncherService";
 import { MemoryAppStoreLauncherService } from "@/infra/services/memoryAppStoreLauncherService";
+import { GooglePlayInAppUpdateService } from "@/infra/services/googlePlayInAppUpdateService";
+import { MemoryInAppUpdateService } from "@/infra/services/memoryInAppUpdateService";
 import { AppUpdateUseCases } from "@/usecase/appUpdateUseCases";
 import { useAppUpdateViewModel } from "@/viewmodel/useAppUpdateViewModel";
 
@@ -247,6 +249,7 @@ export const appUpdateUseCases = new AppUpdateUseCases(
     : new AsyncStorageAppUpdateDismissDataSource(),
   process.env.NODE_ENV === "test" ? new MemoryAppStoreLauncherService() : new ExpoAppStoreLauncherService(),
   Constants.expoConfig?.version ?? "0.0.0",
+  process.env.NODE_ENV === "test" ? new MemoryInAppUpdateService() : new GooglePlayInAppUpdateService(),
 );
 
 export const onboardingUseCases: IOnboardingUseCases = new OnboardingUseCases(
