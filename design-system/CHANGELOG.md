@@ -2,6 +2,11 @@
 
 Versões no formato `MAIOR.MENOR.CORREÇÃO`. Mudança grande = versão nova.
 
+## 1.28.0 · 2026-11-09
+
+- **Cores Exclusivas por Situação e Filtro de Anúncios:** estabelecidas cores semânticas próprias para cada status de anúncio da estante e tags (`Tag.tsx`, `MyListingsListingsTab.tsx`): **Ativos** em Verde Folhagem canônico (`#1E4E27` / `#FFFFFF`), **Pausados** em Cinza Ardósia / Grafite neutro (`#52525B` / `#FFFFFF`), e **Reservados** em Amarelo Ouro Solar de Ipê (`#F5B718` / `#451A03`). Elimina a confusão de bolinhas pastel idênticas entre ativos e pausados.
+- **Abas da Estante com Identidade Cromática:** as abas principais de Meus Anúncios (`myListings.tsx`) ganham distinção por significado — `Anúncios` (verde canônico), `Propostas` (marrom nobre de negociação com badge de contagem) e `Concluídos` (verde esmeralda) com pontos indicadores inativos e state layer correspondente.
+
 ## 1.27.0 · 2026-11-09
 
 - **Cores Canônicas das Modalidades e Vitrine da Home:** restaurada e documentada a identidade visual das modalidades com caixas cromáticas sob a capa (`carouselCardCoverArea`) e badges no carrossel (`CatalogCarousel`): Verde Folhagem (`#1E4E27`) para Venda, Marrom Tronco/Couro (`#58331F`) para Troca e Amarelo Ouro Solar (`#F5B718`) para Doação.
