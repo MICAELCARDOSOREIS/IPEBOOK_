@@ -1,34 +1,52 @@
 import { useMemo } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { AppIcon } from "@/view/components/AppIcon";
-import { tokens, type ColorPalette } from "@/view/tokens";
-import { useTheme } from "@/view/theme/ThemeProvider";
-
 import { withPress } from "@/view/pressFeedback";
+import { useTheme } from "@/view/theme/ThemeProvider";
+import { type ColorPalette, tokens } from "@/view/tokens";
+
 export type ErrorStateProps = {
   message: string;
   onRetry: () => void;
   retryLabel?: string;
+  testID?: string;
 };
 
 /**
- * Estado de erro genérico do design system (design-system/04-componentes/estados-do-sistema.md).
- * Usado quando uma chamada a datasource falha (erro do servidor, dado inválido). A ação de
- * tentar de novo é sempre explícita (botão), nunca automática.
+ * Estado de erro padronizado e acolhedor (Spec 131 / ADR 0102).
+ * Exibido em formato de cartão centralizado quando uma operação ou busca falha.
  */
-export function ErrorState({ message, onRetry, retryLabel = "Tentar novamente" }: ErrorStateProps) {
+export function ErrorState({
+  message,
+  onRetry,
+  retryLabel = "Tentar novamente",
+  testID = "error-state-card",
+}: ErrorStateProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   return (
-    <View style={styles.container}>
-      <View style={styles.row}>
-        <AppIcon name="error" color={colors.error} />
-        <Text accessibilityRole="alert" accessibilityLiveRegion="polite" style={styles.message}>{message}</Text>
+    <View testID={testID} style={styles.container}>
+      <View style={styles.card}>
+        <View style={styles.iconCircle}>
+          <AppIcon name="error" size={24} color={colors.error} />
+        </View>
+        <Text
+          accessibilityRole="alert"
+          accessibilityLiveRegion="polite"
+          style={styles.message}
+        >
+          {message}
+        </Text>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={retryLabel}
+          onPress={onRetry}
+          style={withPress(styles.retry)}
+        >
+          <Text style={styles.retryText}>{retryLabel}</Text>
+        </Pressable>
       </View>
-      <Pressable accessibilityRole="button" accessibilityLabel={retryLabel} onPress={onRetry} style={withPress(styles.retry)}>
-        <Text style={styles.retryText}>{retryLabel}</Text>
-      </Pressable>
     </View>
   );
 }
@@ -36,30 +54,49 @@ export function ErrorState({ message, onRetry, retryLabel = "Tentar novamente" }
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     container: {
-      gap: tokens.spacing[16],
-      alignItems: "flex-start",
+      width: "100%",
       paddingVertical: tokens.spacing[24],
-    },
-    row: {
-      flexDirection: "row",
+      paddingHorizontal: tokens.spacing[16],
       alignItems: "center",
-      gap: tokens.spacing[12],
+      justifyContent: "center",
+    },
+    card: {
+      width: "100%",
+      maxWidth: 480,
+      alignItems: "center",
+      gap: tokens.spacing[16],
+      padding: tokens.spacing[24],
+      backgroundColor: colors.book.pageCard,
+      borderRadius: tokens.radius.card,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+    },
+    iconCircle: {
+      width: 48,
+      height: 48,
+      borderRadius: 24,
+      backgroundColor: colors.errorContainer,
+      alignItems: "center",
+      justifyContent: "center",
     },
     message: {
-      flex: 1,
-      color: colors.secondaryText,
       ...tokens.typography.bodyMedium,
+      color: colors.text,
+      textAlign: "center",
+      lineHeight: 22,
     },
     retry: {
       minHeight: tokens.accessibility.touchTarget,
       justifyContent: "center",
-      paddingHorizontal: tokens.spacing[20],
-      borderRadius: tokens.radius.small,
+      alignItems: "center",
+      paddingHorizontal: tokens.spacing[24],
+      borderRadius: tokens.radius.full,
       backgroundColor: colors.action,
+      marginTop: tokens.spacing[4],
     },
     retryText: {
-      ...tokens.typography.bodyMedium,
-      color: colors.surface,
+      ...tokens.typography.labelLarge,
+      color: colors.nature.onFoliage,
       fontWeight: tokens.fontWeight.semiBold,
     },
   });

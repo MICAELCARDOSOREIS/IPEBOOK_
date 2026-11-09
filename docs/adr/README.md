@@ -101,5 +101,6 @@
 - [0099 — Verificação de versão no Supabase e modal de atualização na Play Store](0099-verificacao-de-versao-e-atualizacao-na-loja.md)
 - [0100 — In-App Updates nativas da Google Play Store](0100-google-play-in-app-updates.md)
 - [0101 — Banner global de conectividade, cache offline da estante e blindagem de ações offline](0101-banner-de-conexao-e-cache-da-estante.md)
+- [0102 — Padronização visual de erros no front-end, auto-recuperação do OfflineState e tratamento semântico de rede](0102-design-de-erros-e-auto-recuperacao-offline.md)
 
 Preservar registros aceitos; mudanças relevantes geram novo ADR com vínculos de substituição.
