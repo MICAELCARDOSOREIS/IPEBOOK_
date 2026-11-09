@@ -5,6 +5,7 @@ import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
 import { FilledButton } from "@/view/components/FilledButton";
 import { GoogleLogo } from "@/view/components/GoogleLogo";
 import { IconBadge } from "@/view/components/IconBadge";
+import { InlineErrorCard } from "@/view/components/InlineErrorCard";
 import { Logotipo } from "@/view/components/Logotipo";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { TextField } from "@/view/components/TextField";
@@ -374,9 +375,7 @@ export function BetaInviteScreen({
             editable={!state.loading}
             placeholder="voce@gmail.com"
           />
-          {state.error ? (
-            <Text accessibilityRole="alert" style={styles.error}>{state.error}</Text>
-          ) : null}
+          {state.error ? <InlineErrorCard message={state.error} /> : null}
           <FilledButton
             label="Quero receber avisos"
             loading={state.loading}

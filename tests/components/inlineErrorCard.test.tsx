@@ -10,7 +10,7 @@ describe("InlineErrorCard (Spec 131 / ADR 0102)", () => {
     });
     const card = screen.getByTestId("inline-error-card");
     expect(card).toBeDefined();
-    expect(card.props.accessibilityRole).toBe("alert");
+    expect(screen.getByRole("alert")).toBeDefined();
     expect(screen.getByText("E-mail inválido para o cadastro.")).toBeDefined();
   });
 

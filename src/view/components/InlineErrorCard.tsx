@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { type Ref, useMemo } from "react";
 import { type StyleProp, StyleSheet, Text, View, type ViewStyle } from "react-native";
 import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
 import { useTheme } from "@/view/theme/ThemeProvider";
@@ -9,6 +9,7 @@ export type InlineErrorCardProps = {
   icon?: AppIconName;
   style?: StyleProp<ViewStyle>;
   testID?: string;
+  textRef?: Ref<any>;
 };
 
 /**
@@ -20,6 +21,7 @@ export function InlineErrorCard({
   icon = "error",
   style,
   testID = "inline-error-card",
+  textRef,
 }: InlineErrorCardProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -29,12 +31,18 @@ export function InlineErrorCard({
   return (
     <View
       testID={testID}
-      accessibilityRole="alert"
       accessibilityLiveRegion="polite"
       style={[styles.container, style]}
     >
       <AppIcon name={icon} size={18} color={colors.error} />
-      <Text style={styles.message}>{message}</Text>
+      <Text
+        ref={textRef}
+        accessibilityRole="alert"
+        accessibilityLiveRegion="assertive"
+        style={styles.message}
+      >
+        {message}
+      </Text>
     </View>
   );
 }
