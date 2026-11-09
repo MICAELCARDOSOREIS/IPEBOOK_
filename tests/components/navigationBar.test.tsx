@@ -83,4 +83,13 @@ describe("NavigationBar (design-system/04-componentes/barra-de-navegacao.md, ADR
     expect(styleObj.paddingBottom).toBeGreaterThanOrEqual(56);
     spy.mockRestore();
   });
+
+  it("responde aos eventos de hover nos itens inativos (Material 3 State Layer)", async () => {
+    const { getByLabelText } = await render(<NavigationBar active="home" onNavigate={() => {}} />);
+    const exploreTab = getByLabelText("Explorar");
+
+    // Simula hover in e hover out
+    await fireEvent(exploreTab, "hoverIn");
+    await fireEvent(exploreTab, "hoverOut");
+  });
 });

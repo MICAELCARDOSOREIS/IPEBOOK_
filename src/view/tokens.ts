@@ -62,9 +62,9 @@ export const colors = {
 
   // Badges por Modalidade
   badge: {
-    sale: { background: "#E0F5E2", text: "#154D1F" },
-    trade: { background: "#FDE68A", text: "#451A03" },
-    donation: { background: "#F4DDD3", text: "#6E3A28" },
+    sale: { background: "#1E4E27", text: "#FFFFFF" },
+    trade: { background: "#58331F", text: "#FFFFFF" },
+    donation: { background: "#F59E0B", text: "#451A03" },
     reserved: { background: "#FDE047", text: "#3C302A" },
     completed: { background: "#2B6334", text: "#FFFFFF" },
   },

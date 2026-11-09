@@ -45,7 +45,7 @@ export function Chip({ label, selected, onPress, disabled = false, accessibility
         ]}
       >
         {selected ? <AppIcon name="check" size={18} color={tone?.text ?? colors.m3.onSecondaryContainer} /> : null}
-        {tone && !selected ? <View style={[styles.dot, { backgroundColor: tone.background, borderColor: tone.text }]} /> : null}
+        {tone && !selected ? <View style={[styles.dot, { backgroundColor: tone.background, borderColor: tone.background }]} /> : null}
         <Text
           style={[
             styles.label,
