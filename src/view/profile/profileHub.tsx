@@ -5,6 +5,7 @@ import { useIsWideWeb } from "@/view/useIsWideWeb";
 import {
   makeAuthViewModel,
   makeMyListingsViewModel,
+  makeNotificationsViewModel,
   makeProfileViewModel,
   makeUserPreferencesViewModel,
 } from "@/di/container";
@@ -41,6 +42,8 @@ export type ProfileHubProps = {
   onNavigateToInviteFriends?: () => void;
   onNavigateToSettings?: () => void;
   onSignedOut: () => void;
+  /** Contador manual de notificações não lidas (útil para testes determinísticos). */
+  unreadNotificationsCount?: number;
 };
 
 /**
@@ -61,12 +64,15 @@ export default function ProfileHub({
   onNavigateToInviteFriends,
   onNavigateToSettings,
   onSignedOut,
+  unreadNotificationsCount: explicitUnreadCount,
 }: ProfileHubProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [authState, authActions] = makeAuthViewModel();
   const userId = authState.user?.id ?? null;
   const [state, profileActions] = makeProfileViewModel(userId);
+  const [notificationsState] = makeNotificationsViewModel(userId);
+  const unreadNotificationsCount = explicitUnreadCount ?? notificationsState.unreadCount;
   const [myListingsState] = makeMyListingsViewModel(userId);
   const [preferencesState] = makeUserPreferencesViewModel(userId);
   const [confirmingSignOut, setConfirmingSignOut] = useState(false);
@@ -186,6 +192,7 @@ export default function ProfileHub({
       iconColor: colors.m3.onSurfaceVariant,
       label: "Notificações",
       description: "Alertas de pedidos, mensagens e buscas",
+      badgeCount: unreadNotificationsCount,
       onPress: guardedNavigateToNotifications,
       showChevron: true,
     },
@@ -235,15 +242,38 @@ export default function ProfileHub({
             <Text accessibilityRole="header" style={styles.title}>
               Meu perfil
             </Text>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Abrir configurações"
-              hitSlop={8}
-              onPress={guardedNavigateToSettings}
-              style={({ pressed }) => [styles.settingsButton, pressed && styles.settingsButtonPressed]}
-            >
-              <AppIcon name="settings" size={24} color={colors.m3.onSurfaceVariant} />
-            </Pressable>
+            <View style={styles.headerActions}>
+              <Pressable
+                testID="profile-notifications-button"
+                accessibilityRole="button"
+                accessibilityLabel={
+                  unreadNotificationsCount > 0
+                    ? `Abrir notificações, ${unreadNotificationsCount} ${unreadNotificationsCount === 1 ? "não lida" : "não lidas"}`
+                    : "Abrir notificações"
+                }
+                hitSlop={8}
+                onPress={guardedNavigateToNotifications}
+                style={({ pressed }) => [styles.settingsButton, pressed && styles.settingsButtonPressed]}
+              >
+                <AppIcon name="bell" size={24} color={colors.m3.onSurfaceVariant} />
+                {unreadNotificationsCount > 0 ? (
+                  <View style={styles.notificationBadge} testID="profile-notifications-badge">
+                    <Text style={styles.notificationBadgeText}>
+                      {unreadNotificationsCount > 9 ? "9+" : unreadNotificationsCount}
+                    </Text>
+                  </View>
+                ) : null}
+              </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Abrir configurações"
+                hitSlop={8}
+                onPress={guardedNavigateToSettings}
+                style={({ pressed }) => [styles.settingsButton, pressed && styles.settingsButtonPressed]}
+              >
+                <AppIcon name="settings" size={24} color={colors.m3.onSurfaceVariant} />
+              </Pressable>
+            </View>
           </View>
 
           {state.loading && !state.profile && isSignedIn ? (
@@ -404,6 +434,28 @@ function createStyles(colors: ColorPalette) {
       flex: 1,
       ...tokens.typography.brandTitle,
       color: colors.brandBrown,
+    },
+    headerActions: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[4],
+    },
+    notificationBadge: {
+      position: "absolute",
+      top: 4,
+      right: 4,
+      minWidth: 18,
+      height: 18,
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.error,
+      alignItems: "center",
+      justifyContent: "center",
+      paddingHorizontal: tokens.spacing[4],
+    },
+    notificationBadgeText: {
+      ...tokens.typography.badgeMicro,
+      color: colors.badge.completed.text,
+      fontWeight: "700",
     },
     // Alvo de toque de 48 dp ao redor da engrenagem (FR-011, Spec 073).
     settingsButton: {

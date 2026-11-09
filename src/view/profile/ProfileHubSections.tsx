@@ -13,6 +13,7 @@ export type ProfileMenuItem = {
   iconColor?: string;
   label: string;
   description?: string;
+  badgeCount?: number;
   onPress: () => void;
   showChevron?: boolean;
 };
@@ -285,6 +286,13 @@ export function ProfileMenuSection({
                 <Text style={styles.menuRowDescription}>{item.description}</Text>
               ) : null}
             </View>
+            {item.badgeCount && item.badgeCount > 0 ? (
+              <View style={styles.menuBadge}>
+                <Text style={styles.menuBadgeText}>
+                  {item.badgeCount > 9 ? "9+" : item.badgeCount}
+                </Text>
+              </View>
+            ) : null}
             {item.showChevron ? (
               <AppIcon name="chevronRight" size={20} color={colors.m3.onSurfaceVariant} />
             ) : null}
@@ -579,5 +587,20 @@ function createStyles(colors: ColorPalette) {
       color: colors.m3.onSurfaceVariant,
     },
     signOutText: { color: colors.error },
+    menuBadge: {
+      minWidth: 20,
+      height: 20,
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.error,
+      alignItems: "center",
+      justifyContent: "center",
+      paddingHorizontal: tokens.spacing[6],
+      marginRight: tokens.spacing[4],
+    },
+    menuBadgeText: {
+      ...tokens.typography.badgeMicro,
+      color: colors.badge.completed.text,
+      fontWeight: "700",
+    },
   });
 }
