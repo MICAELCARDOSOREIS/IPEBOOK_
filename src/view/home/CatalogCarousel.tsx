@@ -79,27 +79,23 @@ export function CatalogCarousel({
         accessibilityLabel={`Ver detalhe de ${item.title}, ${item.author}${item.neighborhood ? ` em ${item.neighborhood}` : ""}`}
         onPress={() => guardedNavigateToBookDetail(item.id)}
         style={({ pressed }) => [
-          styles.carouselCard,
-          wide && styles.carouselCardWide,
-          pressed && styles.carouselCardPressed,
+          styles.listCard,
+          wide && styles.listCardWide,
+          pressed && styles.listCardPressed,
         ]}
       >
-        <View style={[styles.carouselCardCoverArea, wide && styles.carouselCardCoverAreaWide, { backgroundColor: tag.background }]}>
+        <View style={[styles.listCardCoverArea, { backgroundColor: tag.background }]}>
           <BookCover
             id={item.id}
             title={item.title}
             photoUrl={item.photoUrl}
-            variant={wide ? "detail" : "card"}
+            variant="list"
             showRibbon={item.modality === "donation" || item.modality === "trade"}
           />
         </View>
-        <View style={styles.carouselCardMeta}>
-          <View style={styles.carouselCardModalityRow}>
-            <View style={[styles.carouselCardModalityPill, { backgroundColor: tag.background }]}>
-              <Text numberOfLines={1} style={[styles.carouselCardModality, { color: tag.text }]}>
-                {tag.label}
-              </Text>
-            </View>
+        <View style={styles.listCardContent}>
+          <View style={styles.listCardTitleRow}>
+            <Text numberOfLines={1} style={styles.listCardTitle}>{item.title}</Text>
             {item.isBox ? (
               <View
                 style={[
@@ -118,23 +114,36 @@ export function CatalogCarousel({
                 </Text>
               </View>
             ) : null}
+          </View>
+          <Text numberOfLines={1} style={styles.listCardAuthor}>{item.author}</Text>
+          <View style={styles.listCardMetaRow}>
+            <View style={[styles.carouselCardModalityPill, { backgroundColor: tag.background }]}>
+              <Text numberOfLines={1} style={[styles.carouselCardModality, { color: tag.text }]}>
+                {tag.label}
+              </Text>
+            </View>
             {priceSuffix ? (
-              <Text numberOfLines={1} style={styles.carouselCardPrice}>
+              <Text numberOfLines={1} style={styles.listCardPrice}>
                 {priceSuffix.replace(" · ", "")}
               </Text>
             ) : null}
+            {item.neighborhood ? (
+              <View style={styles.listCardLocationRow}>
+                <AppIcon name="place" size={13} color={colors.m3.onSurfaceVariant} />
+                <Text numberOfLines={1} style={styles.listCardNeighborhood}>
+                  {item.neighborhood}
+                </Text>
+              </View>
+            ) : null}
+            {item.status === "reserved" ? (
+              <View style={[styles.carouselCardModalityPill, { backgroundColor: colors.badge.donation.background }]}>
+                <Text style={[styles.carouselCardModality, { color: colors.badge.donation.text }]}>Reservado</Text>
+              </View>
+            ) : null}
           </View>
-          <Text numberOfLines={2} style={styles.carouselCardTitle}>{item.title}</Text>
-          <Text numberOfLines={1} style={styles.carouselCardAuthor}>{item.author}</Text>
-          {item.neighborhood ? (
-            <View style={styles.carouselCardLocationRow}>
-              <AppIcon name="place" size={14} color={colors.action} />
-              <Text numberOfLines={1} style={styles.carouselCardNeighborhood}>
-                {item.neighborhood}
-              </Text>
-            </View>
-          ) : null}
-          {item.status === "reserved" ? <Text style={styles.carouselCardReserved}>Reservado</Text> : null}
+        </View>
+        <View style={styles.listCardTrailing}>
+          <AppIcon name="chevronRight" size={20} color={colors.m3.onSurfaceVariant} />
         </View>
       </Pressable>
     );
@@ -193,28 +202,13 @@ export function CatalogCarousel({
           <Text style={styles.viewMoreText}>{viewMoreButtonText}</Text>
         </Pressable>
       </View>
-      {wideWeb ? (
-        <View style={styles.carouselGrid}>
-          {books.map((item) => (
-            <View key={item.id} style={styles.carouselGridCell}>
-              {renderCard(item, true)}
-            </View>
-          ))}
-        </View>
-      ) : (
-        <View style={styles.carouselRow}>
-          <FlatList
-            ref={listRef}
-            horizontal
-            {...standardHorizontalScrollProps}
-            data={books as Book[]}
-            keyExtractor={(item) => item.id}
-            style={styles.carouselList}
-            contentContainerStyle={styles.carouselListContent}
-            renderItem={({ item }) => renderCard(item)}
-          />
-        </View>
-      )}
+      <View style={[styles.booksListContainer, wideWeb && styles.booksListContainerWide]}>
+        {books.map((item) => (
+          <View key={item.id} style={wideWeb ? styles.booksListCellWide : styles.booksListCell}>
+            {renderCard(item, wideWeb)}
+          </View>
+        ))}
+      </View>
     </View>
   );
 }
@@ -622,6 +616,103 @@ function createStyles(colors: ColorPalette) {
       ...tokens.typography.labelSmall,
       fontFamily: fontFamily.regular,
       color: colors.m3.onSurfaceVariant,
+    },
+    listCard: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderRadius: tokens.radius.medium,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.m3.outlineVariant,
+      padding: tokens.spacing[12],
+      gap: tokens.spacing[12],
+      ...(Platform.OS === "web"
+        ? ({
+            cursor: "pointer",
+            transition: "all 0.15s ease",
+          } as never)
+        : {}),
+    },
+    listCardWide: {
+      flex: 1,
+      minWidth: 280,
+    },
+    listCardPressed: {
+      backgroundColor: colors.m3.surfaceContainerHigh,
+      transform: [{ scale: 0.99 }],
+    },
+    listCardCoverArea: {
+      width: 52,
+      height: 72,
+      borderRadius: tokens.radius.cardSmall,
+      overflow: "hidden",
+      alignItems: "center",
+      justifyContent: "center",
+      flexShrink: 0,
+    },
+    listCardContent: {
+      flex: 1,
+      gap: tokens.spacing[2],
+      justifyContent: "center",
+    },
+    listCardTitleRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[8],
+    },
+    listCardTitle: {
+      flexShrink: 1,
+      ...tokens.typography.titleMedium,
+      fontWeight: tokens.fontWeight.bold,
+      color: colors.m3.onSurface,
+    },
+    listCardAuthor: {
+      ...tokens.typography.bodyMedium,
+      color: colors.m3.onSurfaceVariant,
+    },
+    listCardMetaRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      flexWrap: "wrap",
+      gap: tokens.spacing[8],
+      marginTop: tokens.spacing[2],
+    },
+    listCardPrice: {
+      ...tokens.typography.labelMedium,
+      fontWeight: tokens.fontWeight.bold,
+      color: colors.m3.onSurface,
+    },
+    listCardLocationRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 2,
+    },
+    listCardNeighborhood: {
+      ...tokens.typography.labelSmall,
+      fontFamily: fontFamily.regular,
+      color: colors.m3.onSurfaceVariant,
+    },
+    listCardTrailing: {
+      alignItems: "center",
+      justifyContent: "center",
+      paddingLeft: tokens.spacing[4],
+    },
+    booksListContainer: {
+      flexDirection: "column",
+      gap: tokens.spacing[10],
+    },
+    booksListContainerWide: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: tokens.spacing[16],
+    },
+    booksListCell: {
+      width: "100%",
+    },
+    booksListCellWide: {
+      flexGrow: 1,
+      flexBasis: "48%",
+      minWidth: 320,
     },
     empty: {
       gap: tokens.spacing[12],
