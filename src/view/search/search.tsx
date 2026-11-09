@@ -305,7 +305,7 @@ export default function Search({
   const onlyNeighborhoodBlocks = neighborhoodApplied && state.matchesInOtherNeighborhoods > 0;
 
   const listEmpty = state.loading ? (
-    <LoadingState label="Carregando livros" />
+    <LoadingState label="Carregando livros" variant="catalog" />
   ) : state.error ? (
     isOnline ? (
       <ErrorState message={state.error} onRetry={() => void actions.reload()} />

@@ -394,7 +394,7 @@ export default function BookDetail({
 
         {state.loading ? (
           <View style={styles.status}>
-            <LoadingState label="Carregando anúncio" />
+            <LoadingState label="Carregando anúncio" variant="detail" />
           </View>
         ) : state.error ? (
           <View style={styles.status}>

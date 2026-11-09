@@ -62,6 +62,12 @@ describe("GoogleNativeSignInService (Spec 106)", () => {
     await service.getIdToken();
     await expect(service.signOut()).resolves.toBeUndefined();
   });
+
+  it("no Expo Go no iOS (sem módulo nativo RNGoogleSignin) fica indisponível sem quebrar a inicialização", async () => {
+    const service = new GoogleNativeSignInService("web.apps.googleusercontent.com");
+    expect(service.isAvailable()).toBe(false);
+    await expect(service.getIdToken()).rejects.toBeInstanceOf(AuthError);
+  });
 });
 
 describe("SupabaseAuthDataSource com login Google nativo (Spec 106)", () => {

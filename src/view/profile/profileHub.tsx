@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import {
@@ -13,6 +13,7 @@ import { AppIcon } from "@/view/components/AppIcon";
 import { Dialog } from "@/view/components/Dialog";
 import { ErrorState } from "@/view/components/ErrorState";
 import { FilledButton } from "@/view/components/FilledButton";
+import { LoadingState } from "@/view/components/LoadingState";
 import {
   ProfileCommunityBadges,
   ProfileIdentityCard,
@@ -231,10 +232,8 @@ export default function ProfileHub({
             </Pressable>
           </View>
 
-          {state.loading && isSignedIn ? (
-            <View style={styles.status}>
-              <ActivityIndicator color={colors.m3.primary} accessibilityLabel="Carregando perfil" />
-            </View>
+          {state.loading && !state.profile && isSignedIn ? (
+            <LoadingState label="Carregando perfil" variant="profile" />
           ) : isSignedIn && state.error && !state.profile ? (
             <ErrorState message={state.error} onRetry={profileActions.reload} />
           ) : isSignedIn ? (

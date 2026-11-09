@@ -313,6 +313,7 @@ export type HomeEmptyCatalogSectionProps = {
   selectedModality: BookModality | "all";
   onExploreAllPiripiri: () => void;
   onChangeNeighborhood: () => void;
+  onResetModality?: () => void;
 };
 
 /**
@@ -326,51 +327,78 @@ export function HomeEmptyCatalogSection({
   selectedModality,
   onExploreAllPiripiri,
   onChangeNeighborhood,
+  onResetModality,
 }: HomeEmptyCatalogSectionProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
+  const isFilteredByModalityOnly =
+    hasAnyBooks && !isSpecificNeighborhood && selectedModality !== "all";
+
+  const titleText =
+    hasAnyBooks && isSpecificNeighborhood
+      ? `Ainda não há ${selectedModality === "all" ? "livros" : MODALITY_PLURAL[selectedModality]} no ${effectiveNeighborhood}.`
+      : isFilteredByModalityOnly
+        ? `Ainda não há ${MODALITY_PLURAL[selectedModality]} em Piripiri.`
+        : "Ainda não há livros por aqui.";
+
+  const bodyText =
+    hasAnyBooks && isSpecificNeighborhood
+      ? "Seja a primeira pessoa a fazer a estante circular no seu bairro ou explore livros em toda Piripiri."
+      : isFilteredByModalityOnly
+        ? "Explore todas as modalidades disponíveis na estante comunitária."
+        : "Quando houver livros disponíveis, eles aparecerão neste espaço.";
+
+  const showExploreAll = hasAnyBooks && isSpecificNeighborhood;
+  const showChangeNeighborhood = hasAnyBooks && isSpecificNeighborhood;
+  const showResetModality = isFilteredByModalityOnly && Boolean(onResetModality);
+  const hasActions = showExploreAll || showChangeNeighborhood || showResetModality;
+
   return (
     <View style={styles.empty}>
       <Text accessibilityRole="header" style={styles.carouselTitle}>{carouselDisplayTitle}</Text>
-      <View style={styles.emptyCard}>
+      <View testID="home-empty-catalog-card" style={styles.emptyCard}>
         <View style={styles.emptyIpeContainer}>
-          <IpeMark size={52} />
+          <IpeMark size={56} />
         </View>
-        <Text style={styles.emptyTitle}>
-          {hasAnyBooks && isSpecificNeighborhood
-            ? `Ainda não há ${selectedModality === "all" ? "livros" : MODALITY_PLURAL[selectedModality]} no ${effectiveNeighborhood}.`
-            : "Ainda não há livros por aqui."}
-        </Text>
-        <Text style={styles.body}>
-          {hasAnyBooks && isSpecificNeighborhood
-            ? "Seja a primeira pessoa a fazer a estante circular no seu bairro, ou explore livros em toda Piripiri."
-            : "Quando houver livros disponíveis, eles aparecerão neste espaço."}
-        </Text>
-        <View style={styles.emptyActionsRow}>
-          {hasAnyBooks && isSpecificNeighborhood ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Ver livros em toda Piripiri"
-              onPress={onExploreAllPiripiri}
-              style={withPress(styles.emptyPrimaryButton)}
-            >
-              <AppIcon name="search" size={18} color={colors.m3.onPrimary} />
-              <Text style={styles.emptyPrimaryButtonText}>Explorar toda Piripiri</Text>
-            </Pressable>
-          ) : null}
-          {isSpecificNeighborhood ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Selecionar outro bairro"
-              onPress={onChangeNeighborhood}
-              style={withPress(styles.emptySecondaryButton)}
-            >
-              <AppIcon name="place" size={16} color={colors.m3.onSurfaceVariant} />
-              <Text style={styles.emptySecondaryButtonText}>Trocar bairro</Text>
-            </Pressable>
-          ) : null}
-        </View>
+        <Text style={styles.emptyTitle}>{titleText}</Text>
+        <Text style={styles.body}>{bodyText}</Text>
+        {hasActions ? (
+          <View style={styles.emptyActionsRow}>
+            {showExploreAll ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Ver livros em toda Piripiri"
+                onPress={onExploreAllPiripiri}
+                style={withPress(styles.emptyPrimaryButton)}
+              >
+                <AppIcon name="search" size={18} color={colors.m3.onPrimary} />
+                <Text style={styles.emptyPrimaryButtonText}>Explorar toda Piripiri</Text>
+              </Pressable>
+            ) : null}
+            {showChangeNeighborhood ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Selecionar outro bairro"
+                onPress={onChangeNeighborhood}
+                style={withPress(styles.emptySecondaryButton)}
+              >
+                <AppIcon name="place" size={16} color={colors.m3.onSurfaceVariant} />
+                <Text style={styles.emptySecondaryButtonText}>Trocar bairro</Text>
+              </Pressable>
+            ) : null}
+            {showResetModality ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Ver todas as modalidades"
+                onPress={onResetModality}
+                style={withPress(styles.emptyPrimaryButton)}
+              >
+                <Text style={styles.emptyPrimaryButtonText}>Ver todos os livros</Text>
+              </Pressable>
+            ) : null}
+          </View>
+        ) : null}
       </View>
     </View>
   );
@@ -548,15 +576,19 @@ function createStyles(colors: ColorPalette) {
       marginBottom: tokens.spacing[24],
     },
     emptyCard: {
-      backgroundColor: colors.m3.surfaceContainerLow,
-      borderRadius: tokens.radius.xl,
-      padding: tokens.spacing[20],
-      gap: tokens.spacing[10],
-      alignItems: "flex-start",
+      width: "100%",
+      backgroundColor: colors.book.pageCard,
+      borderRadius: tokens.radius.card,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+      paddingVertical: tokens.spacing[24],
+      paddingHorizontal: tokens.spacing[24],
+      gap: tokens.spacing[12],
+      alignItems: "center",
     },
     emptyIpeContainer: {
-      width: tokens.spacing[64],
-      height: tokens.spacing[64],
+      width: 72,
+      height: 72,
       borderRadius: tokens.radius.full,
       backgroundColor: colors.ipe.container,
       alignItems: "center",
@@ -566,16 +598,18 @@ function createStyles(colors: ColorPalette) {
     emptyActionsRow: {
       flexDirection: "row",
       flexWrap: "wrap",
-      gap: tokens.spacing[10],
+      justifyContent: "center",
+      gap: tokens.spacing[12],
       marginTop: tokens.spacing[8],
       alignItems: "center",
     },
     emptyPrimaryButton: {
       flexDirection: "row",
       alignItems: "center",
+      justifyContent: "center",
       gap: tokens.spacing[8],
-      height: tokens.spacing[40],
-      paddingHorizontal: tokens.spacing[18],
+      minHeight: tokens.accessibility.touchTarget,
+      paddingHorizontal: tokens.spacing[20],
       borderRadius: tokens.radius.full,
       backgroundColor: colors.m3.primary,
     },
@@ -587,9 +621,10 @@ function createStyles(colors: ColorPalette) {
     emptySecondaryButton: {
       flexDirection: "row",
       alignItems: "center",
+      justifyContent: "center",
       gap: tokens.spacing[6],
-      height: tokens.spacing[40],
-      paddingHorizontal: tokens.spacing[16],
+      minHeight: tokens.accessibility.touchTarget,
+      paddingHorizontal: tokens.spacing[18],
       borderRadius: tokens.radius.full,
       borderWidth: 1,
       borderColor: colors.m3.outlineVariant,
@@ -605,11 +640,14 @@ function createStyles(colors: ColorPalette) {
       fontFamily: fontFamily.semiBold,
       color: colors.m3.onSurface,
       lineHeight: tokens.lineHeight[24],
+      textAlign: "center",
     },
     body: {
       ...tokens.typography.bodyMedium,
       color: colors.m3.onSurfaceVariant,
       lineHeight: tokens.lineHeight[20],
+      textAlign: "center",
+      maxWidth: 440,
     },
   });
 }

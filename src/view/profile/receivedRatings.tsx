@@ -1,7 +1,8 @@
 import { useEffect, useMemo } from "react";
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { makeAuthViewModel, makeReceivedRatingsViewModel } from "@/di/container";
+import { LoadingState } from "@/view/components/LoadingState";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { tokens, type ColorPalette } from "@/view/tokens";
@@ -44,9 +45,7 @@ export function ReceivedRatings({ sessionUserId, onBack }: ReceivedRatingsProps)
       >
         <View style={[styles.content, wide && styles.contentWide]}>
           {state.loading ? (
-            <View style={styles.status}>
-              <ActivityIndicator color={colors.action} accessibilityLabel="Carregando avaliações" />
-            </View>
+            <LoadingState label="Carregando avaliações" />
           ) : state.error ? (
             <View style={styles.status}>
               <Text accessibilityRole="alert" style={styles.errorText}>{state.error}</Text>

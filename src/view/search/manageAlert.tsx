@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Dialog } from "@/view/components/Dialog";
+import { LoadingState } from "@/view/components/LoadingState";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { TextButton } from "@/view/components/TextButton";
 import { TopAppBar } from "@/view/components/TopAppBar";
@@ -42,8 +43,8 @@ export default function ManageAlert({
     return (
       <SafeAreaView style={styles.page}>
         <TopAppBar contentMaxWidth={560} title="Gerenciar alerta" onBack={guardedBack} />
-        <View style={styles.status}>
-          <ActivityIndicator color={colors.action} accessibilityLabel="Carregando alerta" />
+        <View style={styles.content}>
+          <LoadingState label="Carregando alerta" />
         </View>
       </SafeAreaView>
     );
