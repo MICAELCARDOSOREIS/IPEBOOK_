@@ -19,6 +19,19 @@ describe("toDomainError (Spec 103)", () => {
     }
   });
 
+  it("falhas de transporte de rede viram DataSourceError com mensagem amigável de conexão (Spec 131 / ADR 0102)", () => {
+    for (const raw of [
+      new Error("Network request failed"),
+      new TypeError("Failed to fetch"),
+      { message: "NetworkError when attempting to fetch resource." },
+      new DOMException("The operation was aborted", "AbortError"),
+    ]) {
+      const error = toDomainError(raw, "fallback genérico");
+      expect(error).toBeInstanceOf(DataSourceError);
+      expect(error.message).toBe("Sem conexão com a internet. Verifique sua rede e tente novamente.");
+    }
+  });
+
   it("o pedido mostra o limite para a pessoa", async () => {
     const single = vi.fn().mockResolvedValue({ data: null, error: { code: "IBLIM", message: "Limite de 10 pedidos por dia atingido." } });
     const chain = { insert: vi.fn(() => chain), select: vi.fn(() => chain), single };
