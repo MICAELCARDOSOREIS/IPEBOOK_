@@ -21,6 +21,15 @@ export type MyListingsActions = {
 
 const sessionMyListingsCache = new Map<string, readonly Book[]>();
 
+export function getCachedMyListingById(bookId: string): Book | null {
+  if (process.env.NODE_ENV === "test") return null;
+  for (const list of sessionMyListingsCache.values()) {
+    const found = list.find((b) => b.id === bookId);
+    if (found) return found;
+  }
+  return null;
+}
+
 export function useMyListingsViewModel(
   sessionUserId: string | null,
   books: IBookUseCases,

@@ -36,21 +36,29 @@ export function CreateListingSuccess({
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [shareState, shareActions] = makeShareListingViewModel();
 
-  const handleShareWhatsApp = useCallback(() => {
-    void shareActions.shareToWhatsApp(published.id, {
+  const shareableListing = useMemo(
+    () => ({
       title: published.title,
       author: published.author,
       modality: published.modality,
       price: published.price,
       neighborhood: published.neighborhood,
+      condition: published.condition,
+      category: published.category,
       isBox: published.isBox,
       boxVolumesCount: published.boxVolumesCount,
-    });
-  }, [published, shareActions]);
+      photoUrl: published.photoUrl,
+    }),
+    [published],
+  );
+
+  const handleShareWhatsApp = useCallback(() => {
+    void shareActions.shareToWhatsApp(published.id, shareableListing);
+  }, [published.id, shareableListing, shareActions]);
 
   const handleShare = useCallback(() => {
-    void shareActions.share(published.id);
-  }, [published.id, shareActions]);
+    void shareActions.share(published.id, shareableListing);
+  }, [published.id, shareableListing, shareActions]);
 
   return (
     <SafeAreaView style={styles.page}>

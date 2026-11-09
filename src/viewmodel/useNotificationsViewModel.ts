@@ -32,13 +32,20 @@ export type NotificationsActions = {
   setFilter: (filter: NotificationFilter) => void;
 };
 
+const sessionNotificationsCache = new Map<string, readonly AppNotification[]>();
+
 export function useNotificationsViewModel(
   sessionUserId: string | null,
   useCases: INotificationUseCases,
   push: IPushNotificationService,
 ): [NotificationsState, NotificationsActions] {
-  const [notifications, setNotifications] = useState<readonly AppNotification[]>([]);
-  const [loading, setLoading] = useState(true);
+  const isTest = process.env.NODE_ENV === "test";
+  const initialCached =
+    !isTest && sessionUserId ? (sessionNotificationsCache.get(sessionUserId) ?? null) : null;
+  const [notifications, setNotifications] = useState<readonly AppNotification[]>(
+    initialCached ?? [],
+  );
+  const [loading, setLoading] = useState(initialCached === null);
   const [error, setError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [filter, setFilter] = useState<NotificationFilter>("all");
@@ -71,11 +78,12 @@ export function useNotificationsViewModel(
     }
     const current = ++request.current;
     if (!silent) {
-      setLoading(true);
+      setLoading((prevLoading) => prevLoading || (!isTest && !sessionNotificationsCache.has(sessionUserId)));
       setError(null);
     }
     try {
       const items = await useCases.listNotifications(sessionUserId);
+      if (!isTest && sessionUserId) sessionNotificationsCache.set(sessionUserId, items);
       if (active.current && current === request.current) {
         setNotifications(items);
         setLoading(false);

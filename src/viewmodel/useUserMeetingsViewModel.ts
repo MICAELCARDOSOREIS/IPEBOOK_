@@ -14,28 +14,37 @@ export type UserMeetingsActions = {
 };
 
 const LOAD_ERROR = "Não foi possível carregar o histórico de encontros. Tente novamente.";
+const sessionMeetingsCache = new Map<string, readonly Meeting[]>();
 
 /** Histórico geral de encontros do usuário em suas trocas e vendas em Piripiri (Spec 071). */
 export function useUserMeetingsViewModel(
   sessionUserId: string | null,
   meetingUseCases: IMeetingUseCases,
 ): [UserMeetingsState, UserMeetingsActions] {
+  const isTest = process.env.NODE_ENV === "test";
+  const initialCached =
+    !isTest && sessionUserId ? (sessionMeetingsCache.get(sessionUserId) ?? null) : null;
   const [state, setState] = useState<UserMeetingsState>({
-    meetings: [],
-    loading: true,
+    meetings: initialCached ?? [],
+    loading: initialCached === null,
     error: null,
   });
   const active = useRef(false);
 
   const reload = useCallback(async () => {
     if (!active.current) return;
-    setState((previous) => ({ ...previous, loading: true, error: null }));
+    setState((previous) => ({
+      ...previous,
+      loading: previous.meetings.length === 0 && (!sessionUserId || !sessionMeetingsCache.has(sessionUserId)),
+      error: null,
+    }));
     try {
       if (!sessionUserId) {
         if (active.current) setState({ meetings: [], loading: false, error: null });
         return;
       }
       const list = await meetingUseCases.getUserMeetingHistory(sessionUserId);
+      if (!isTest) sessionMeetingsCache.set(sessionUserId, list);
       if (active.current) setState({ meetings: list, loading: false, error: null });
     } catch (error) {
       if (active.current) {
@@ -46,7 +55,7 @@ export function useUserMeetingsViewModel(
         }));
       }
     }
-  }, [sessionUserId, meetingUseCases]);
+  }, [sessionUserId, meetingUseCases, isTest]);
 
   useEffect(() => {
     active.current = true;

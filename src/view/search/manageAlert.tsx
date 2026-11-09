@@ -44,7 +44,7 @@ export default function ManageAlert({
       <SafeAreaView style={styles.page}>
         <TopAppBar contentMaxWidth={560} title="Gerenciar alerta" onBack={guardedBack} />
         <View style={styles.content}>
-          <LoadingState label="Carregando alerta" />
+          <LoadingState label="Carregando alerta" variant="form" />
         </View>
       </SafeAreaView>
     );
