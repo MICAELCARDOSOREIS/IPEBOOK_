@@ -12,10 +12,19 @@ describe("LoadingState (design-system/04-componentes/estados-do-sistema.md, Issu
     expect(getByText("Carregando…")).toBeDefined();
   });
 
-  it("aceita um rótulo customizado por tela", async () => {
-    const { getByLabelText, getByText } = await render(<LoadingState label="Carregando livros" />);
+  it("aceita um rótulo customizado por tela e renderiza variantes de esqueleto (Spec 132)", async () => {
+    const { getByLabelText, getByText, getByTestId } = await render(
+      <LoadingState label="Carregando livros" variant="catalog" />,
+    );
     expect(getByLabelText("Carregando livros")).toBeDefined();
     expect(getByText("Carregando livros…")).toBeDefined();
+    expect(getByTestId("skeleton-variant-catalog")).toBeDefined();
+
+    const profileSkeleton = await render(<LoadingState label="Carregando perfil" variant="profile" />);
+    expect(profileSkeleton.getByTestId("skeleton-variant-profile")).toBeDefined();
+
+    const detailSkeleton = await render(<LoadingState label="Carregando anúncio" variant="detail" />);
+    expect(detailSkeleton.getByTestId("skeleton-variant-detail")).toBeDefined();
   });
 });
 

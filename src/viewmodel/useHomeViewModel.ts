@@ -13,10 +13,14 @@ export type HomeActions = {
   reload: () => Promise<void>;
 };
 
+let sessionBooksCache: readonly Book[] | null = null;
+
 export function useHomeViewModel(books: IBookUseCases): [HomeState, HomeActions] {
+  const isTest = process.env.NODE_ENV === "test";
+  const initialBooks = !isTest && sessionBooksCache ? sessionBooksCache : [];
   const [state, setState] = useState<HomeState>({
-    books: [],
-    loading: true,
+    books: initialBooks,
+    loading: initialBooks.length === 0,
     error: null,
   });
   const active = useRef(false);
@@ -25,9 +29,10 @@ export function useHomeViewModel(books: IBookUseCases): [HomeState, HomeActions]
   const reload = useCallback(async () => {
     if (!active.current) return;
     const current = ++request.current;
-    setState((previous) => ({ ...previous, loading: true, error: null }));
+    setState((previous) => ({ ...previous, loading: previous.books.length === 0, error: null }));
     try {
       const result = await books.listBooks();
+      if (!isTest) sessionBooksCache = result;
       if (active.current && current === request.current) {
         setState({ books: result, loading: false, error: null });
       }
@@ -43,7 +48,7 @@ export function useHomeViewModel(books: IBookUseCases): [HomeState, HomeActions]
         }));
       }
     }
-  }, [books]);
+  }, [books, isTest]);
 
   useEffect(() => {
     active.current = true;

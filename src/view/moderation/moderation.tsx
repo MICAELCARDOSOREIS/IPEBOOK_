@@ -1,11 +1,12 @@
 import { useMemo, useState } from "react";
-import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { type ModerationDecision, type ModerationItem, REPORT_REASON_LABEL } from "@/model/entities/moderation";
 import { makeAuthViewModel, makeModerationViewModel } from "@/di/container";
 import { AppIcon } from "@/view/components/AppIcon";
 import { Dialog } from "@/view/components/Dialog";
 import { InlineErrorCard } from "@/view/components/InlineErrorCard";
+import { LoadingState } from "@/view/components/LoadingState";
 import { Snackbar } from "@/view/components/Snackbar";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { useTheme } from "@/view/theme/ThemeProvider";
@@ -73,7 +74,7 @@ export function Moderation({ sessionUserId, onBack, onOpenListing, onOpenProfile
           </Text>
 
           {state.loading && state.items.length === 0 ? (
-            <ActivityIndicator color={colors.action} accessibilityLabel="Carregando denúncias" />
+            <LoadingState label="Carregando denúncias" />
           ) : state.error ? (
             <View style={styles.card}>
               <InlineErrorCard message={state.error} />

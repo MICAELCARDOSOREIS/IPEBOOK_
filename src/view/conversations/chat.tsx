@@ -33,6 +33,7 @@ import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
 import { BookCover } from "@/view/components/BookCover";
 import { Chip } from "@/view/components/Chip";
 import { ErrorState } from "@/view/components/ErrorState";
+import { LoadingState } from "@/view/components/LoadingState";
 import { Tag } from "@/view/components/Tag";
 import { Avatar } from "@/view/components/Avatar";
 import { useGuardedPress } from "@/view/useGuardedPress";
@@ -331,9 +332,7 @@ export function Chat({
             ) : null}
 
             {state.isLoading ? (
-              <View style={styles.center}>
-                <ActivityIndicator color={colors.action} accessibilityLabel="Carregando mensagens" />
-              </View>
+              <LoadingState label="Carregando mensagens" />
             ) : detail?.request.status === "pending" ? (
               <View style={styles.empty}>
                 <View style={styles.emptyIcon}>
