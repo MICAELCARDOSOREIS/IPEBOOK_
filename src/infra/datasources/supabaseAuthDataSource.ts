@@ -347,10 +347,14 @@ export class SupabaseAuthDataSource implements IAuthDataSource {
   }
 
   async currentUser(): Promise<User | null> {
-    const { data, error } = await this.client.auth.getSession();
-    if (error) throw new AuthError("Não foi possível conferir a sessão.");
-    const user = data.session?.user;
-    return user?.email ? { id: user.id, email: user.email, name: readFullName(user) } : null;
+    try {
+      const { data, error } = await withAuthTimeout(this.client.auth.getSession(), 3500);
+      if (error) return null;
+      const user = data.session?.user;
+      return user?.email ? { id: user.id, email: user.email, name: readFullName(user) } : null;
+    } catch {
+      return null;
+    }
   }
 
   async requestPasswordReset(email: string): Promise<void> {

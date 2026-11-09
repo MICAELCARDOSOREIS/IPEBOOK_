@@ -49,7 +49,12 @@ export function useAuthViewModel(
     active.current = true;
     void (async () => {
       try {
-        const user = await auth.getSession();
+        const timeoutPromise = isTest
+          ? null
+          : new Promise<null>((resolve) => setTimeout(() => resolve(null), 3500));
+        const user = timeoutPromise
+          ? await Promise.race([auth.getSession(), timeoutPromise])
+          : await auth.getSession();
         if (!isTest) sessionAuthCache = { resolved: true, user };
         if (active.current) setState({ user, loading: false, error: null });
       } catch {

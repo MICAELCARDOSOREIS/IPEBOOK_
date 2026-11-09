@@ -19,10 +19,15 @@ vi.mock("@/viewmodel/useNotificationsViewModel", () => ({
   ]),
 }));
 
+vi.mock("@/viewmodel/useNetworkStatus", () => ({
+  useNetworkStatus: vi.fn(() => ({ isOnline: true })),
+}));
+
 import { ConnectedNavigationBar } from "@/view/components/ConnectedNavigationBar";
 import { ConnectedWebHeader } from "@/view/components/ConnectedWebHeader";
 import { RequireAuth } from "@/view/components/RequireAuth";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
+import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
 
 const mockedAuth = vi.mocked(useAuthViewModel);
 
@@ -77,6 +82,22 @@ describe("RequireAuth: catálogo só para pessoa conectada (Spec 092)", () => {
 
     expect(onRequireSignIn).not.toHaveBeenCalled();
     expect(screen.getByText("catálogo")).toBeTruthy();
+  });
+
+  it("exibe estado offline amigável quando sem conexão e sem sessão", async () => {
+    vi.mocked(useNetworkStatus).mockReturnValueOnce({ isOnline: false });
+    mockAuth(null, false);
+    const onRequireSignIn = vi.fn();
+    const screen = await render(
+      <RequireAuth onRequireSignIn={onRequireSignIn}>
+        <Text>catálogo</Text>
+      </RequireAuth>,
+    );
+
+    expect(onRequireSignIn).not.toHaveBeenCalled();
+    expect(screen.getByText("Você está sem conexão com a internet.")).toBeDefined();
+    expect(screen.getByText("Tentar novamente")).toBeDefined();
+    expect(screen.getByText("Ir para o início")).toBeDefined();
   });
 });
 
