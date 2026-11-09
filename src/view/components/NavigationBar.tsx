@@ -21,18 +21,66 @@ const ITEMS: ReadonlyArray<{ key: NavigationDestination; label: string; icon: Ap
   { key: "shelf", label: "Estante", icon: "shelf" },
 ];
 
+const INDICATOR_WIDTH = 64;
+const DOCK_HORIZONTAL_PADDING = tokens.spacing[12]; // 12
+const INITIAL_DOCK_MAX_WIDTH = 328;
+
+/**
+ * Calcula a posição horizontal X da pílula deslizante centralizada sobre o item `index`.
+ */
+function getPillTargetX(index: number, totalItems: number, containerWidth: number): number {
+  if (index < 0 || totalItems <= 0) return 0;
+  const availableWidth = Math.max(0, containerWidth - DOCK_HORIZONTAL_PADDING * 2);
+  const itemWidth = availableWidth / totalItems;
+  return DOCK_HORIZONTAL_PADDING + index * itemWidth + (itemWidth - INDICATOR_WIDTH) / 2;
+}
+
 /** Barra de navegação do design system (barra-de-navegacao.md), Material 3 Expressive como no Figma `02.01`:
- * dock flutuante em pílula com superfície tonal M3, indicador ativo em pílula de 64x32 dp que se expande ao
- * selecionar, ícone preenchido só no destino ativo, rótulo abaixo e suporte a hover e transluscência na web.
- * Restrita a 3 destinos (ADR 0011).
+ * dock flutuante em pílula com superfície tonal M3, indicador ativo único que desliza suavemente entre abas
+ * com física de mola espacial (`tokens.spring.spatialStandard`), ícones com micro-bounce na seleção,
+ * rótulo abaixo, suporte a hover no desktop e transluscência web. Restrita a 3 destinos (ADR 0011).
  */
 export function NavigationBar({ active, onNavigate, disabledDestinations = [], badges = {} }: NavigationBarProps) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [hoveredKey, setHoveredKey] = useState<NavigationDestination | null>(null);
+  const [dockWidth, setDockWidth] = useState(INITIAL_DOCK_MAX_WIDTH);
   const lastNavigateTime = useRef(0);
   const DEBOUNCE_MS = 600;
+
+  const activeIndex = ITEMS.findIndex((item) => item.key === active);
+  const hasActiveItem = activeIndex >= 0;
+
+  // Posição inicial da pílula deslizante sem flash/salto no primeiro frame
+  const initialX = useMemo(
+    () => getPillTargetX(Math.max(0, activeIndex), ITEMS.length, INITIAL_DOCK_MAX_WIDTH),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
+  const slideAnim = useRef(new Animated.Value(initialX)).current;
+
+  // Anima a pílula deslizante quando a aba ativa ou a largura do dock muda
+  useEffect(() => {
+    if (!hasActiveItem) return;
+    const targetX = getPillTargetX(activeIndex, ITEMS.length, dockWidth);
+    void Promise.resolve(AccessibilityInfo?.isReduceMotionEnabled?.())
+      .then((reduced) => {
+        if (reduced) {
+          slideAnim.setValue(targetX);
+          return;
+        }
+        Animated.spring(slideAnim, {
+          toValue: targetX,
+          tension: tokens.spring.spatialStandard.tension,
+          friction: tokens.spring.spatialStandard.friction,
+          useNativeDriver: true,
+        }).start();
+      })
+      .catch(() => {
+        slideAnim.setValue(targetX);
+      });
+  }, [activeIndex, dockWidth, hasActiveItem, slideAnim]);
 
   // Em celulares com barra de 3 botões (Android) ou Home Indicator (iOS),
   // insets.bottom eleva os itens acima dos controles do sistema operacional para evitar sobreposição.
@@ -45,7 +93,29 @@ export function NavigationBar({ active, onNavigate, disabledDestinations = [], b
       pointerEvents="box-none"
       style={[styles.floatingWrapper, { paddingBottom }]}
     >
-      <View style={styles.dock}>
+      <View
+        style={styles.dock}
+        onLayout={(e) => {
+          const w = e.nativeEvent.layout.width;
+          if (w > 0 && Math.abs(w - dockWidth) > 1) {
+            setDockWidth(w);
+          }
+        }}
+      >
+        {/* Pílula Deslizante Contínua Material 3 Expressive */}
+        {hasActiveItem ? (
+          <Animated.View
+            pointerEvents="none"
+            testID="navigation-bar-active-pill"
+            style={[
+              styles.slidingPill,
+              {
+                transform: [{ translateX: slideAnim }],
+              },
+            ]}
+          />
+        ) : null}
+
         {ITEMS.map((item) => {
           const isActive = item.key === active;
           const isDisabled = disabledDestinations.includes(item.key);
@@ -87,16 +157,20 @@ export function NavigationBar({ active, onNavigate, disabledDestinations = [], b
                       pressed && !isActive && !isDisabled && styles.indicatorInactivePressed,
                     ]}
                   >
-                    <ActiveIndicator active={isActive} color={colors.m3.secondaryContainer} />
-                    {/* Na web a pílula (posicionada) seria pintada por cima do ícone: ele sobe uma camada. */}
-                    <View style={styles.iconLayer}>
-                      <AppIcon
-                        name={item.icon}
-                        size={24}
-                        filled={isActive}
-                        color={isDisabled ? colors.secondaryText : isActive ? colors.m3.onSecondaryContainer : isHovered ? colors.m3.onSurface : colors.m3.onSurfaceVariant}
-                      />
-                    </View>
+                    {/* Ícone com micro-bounce elástico no momento da ativação */}
+                    <TabIconWithBounce
+                      name={item.icon}
+                      active={isActive}
+                      color={
+                        isDisabled
+                          ? colors.secondaryText
+                          : isActive
+                            ? colors.m3.onSecondaryContainer
+                            : isHovered
+                              ? colors.m3.onSurface
+                              : colors.m3.onSurfaceVariant
+                      }
+                    />
                     {badgeCount > 0 ? (
                       <View style={styles.badge}>
                         <Text style={styles.badgeText}>{badgeCount > 9 ? "9+" : String(badgeCount)}</Text>
@@ -124,50 +198,60 @@ export function NavigationBar({ active, onNavigate, disabledDestinations = [], b
   );
 }
 
-/** Pílula de seleção M3 Expressive: expande do centro com física de mola espacial (`tokens.spring.spatialStandard`). */
-function ActiveIndicator({ active, color }: { active: boolean; color: string }) {
-  const progress = useRef(new Animated.Value(active ? 1 : 0)).current;
+/** Ícone de aba com micro-animação de mola (*spring pop*) ao ser ativado */
+function TabIconWithBounce({
+  name,
+  active,
+  color,
+}: {
+  name: AppIconName;
+  active: boolean;
+  color: string;
+}) {
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const isFirstRender = useRef(true);
+
   useEffect(() => {
-    const target = active ? 1 : 0;
-    void Promise.resolve(AccessibilityInfo?.isReduceMotionEnabled?.())
-      .then((reduced) => {
-        if (reduced) {
-          progress.setValue(target);
-          return;
-        }
-        Animated.spring(progress, {
-          toValue: target,
-          tension: tokens.spring.spatialStandard.tension,
-          friction: tokens.spring.spatialStandard.friction,
-          useNativeDriver: true,
-        }).start();
-      })
-      .catch(() => {
-        progress.setValue(target);
-      });
-  }, [active, progress]);
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    if (active) {
+      scaleAnim.setValue(0.86);
+      void Promise.resolve(AccessibilityInfo?.isReduceMotionEnabled?.())
+        .then((reduced) => {
+          if (reduced) {
+            scaleAnim.setValue(1);
+            return;
+          }
+          Animated.spring(scaleAnim, {
+            toValue: 1,
+            tension: tokens.spring.spatialStandard.tension,
+            friction: tokens.spring.spatialStandard.friction,
+            useNativeDriver: true,
+          }).start();
+        })
+        .catch(() => {
+          scaleAnim.setValue(1);
+        });
+    }
+  }, [active, scaleAnim]);
+
   return (
-    <Animated.View
-      pointerEvents="none"
-      style={[
-        StyleSheet.absoluteFill,
-        {
-          backgroundColor: color,
-          borderRadius: tokens.radius.full,
-          opacity: progress.interpolate({ inputRange: [0, 1], outputRange: [0, 1], extrapolate: "clamp" }),
-          transform: [
-            { scaleX: progress.interpolate({ inputRange: [0, 1], outputRange: [0.35, 1] }) },
-            { scaleY: progress.interpolate({ inputRange: [0, 1], outputRange: [0.85, 1] }) },
-          ],
-        },
-      ]}
-    />
+    <Animated.View style={[stylesLocal.iconLayer, { transform: [{ scale: scaleAnim }] }]}>
+      <AppIcon name={name} size={24} filled={active} color={color} />
+    </Animated.View>
   );
 }
 
+const stylesLocal = StyleSheet.create({
+  iconLayer: { zIndex: 1 },
+});
+
 function createStyles(colors: ColorPalette) {
   const isWeb = Platform.OS === "web";
-  const webDockBg = colors.surface === "#FCFAF5" ? "rgba(252, 250, 245, 0.92)" : "rgba(29, 27, 25, 0.90)";
+  const webDockBg =
+    colors.surface === "#FCFAF5" ? "rgba(252, 250, 245, 0.92)" : "rgba(29, 27, 25, 0.90)";
 
   return StyleSheet.create({
     floatingWrapper: {
@@ -183,15 +267,16 @@ function createStyles(colors: ColorPalette) {
       pointerEvents: "box-none",
     },
     dock: {
+      position: "relative",
       flexDirection: "row",
       justifyContent: "space-around",
       alignItems: "center",
       width: "100%",
-      maxWidth: 328,
+      maxWidth: INITIAL_DOCK_MAX_WIDTH,
       backgroundColor: isWeb ? webDockBg : colors.surface,
       borderRadius: tokens.radius.full,
       paddingVertical: tokens.spacing[8],
-      paddingHorizontal: tokens.spacing[12],
+      paddingHorizontal: DOCK_HORIZONTAL_PADDING,
       borderWidth: 1,
       borderColor: colors.m3.outlineVariant,
       overflow: "hidden",
@@ -207,17 +292,27 @@ function createStyles(colors: ColorPalette) {
           } as never)
         : {}),
     },
+    slidingPill: {
+      position: "absolute",
+      top: tokens.spacing[8] + tokens.spacing[4], // alinhado verticalmente com o centro dos indicadores (12dp)
+      left: 0,
+      width: INDICATOR_WIDTH,
+      height: tokens.spacing[32],
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.m3.secondaryContainer,
+      zIndex: 0,
+    },
     item: {
       flex: 1,
       minWidth: 0,
       alignItems: "center",
       gap: tokens.spacing[4],
       paddingVertical: tokens.spacing[4],
+      zIndex: 1,
       ...(isWeb ? ({ cursor: "pointer", userSelect: "none" } as never) : {}),
     },
-    iconLayer: { zIndex: 1 },
     indicator: {
-      width: 64,
+      width: INDICATOR_WIDTH,
       height: tokens.spacing[32],
       borderRadius: tokens.radius.full,
       justifyContent: "center",
@@ -246,6 +341,7 @@ function createStyles(colors: ColorPalette) {
       alignItems: "center",
       justifyContent: "center",
       backgroundColor: colors.error,
+      zIndex: 2,
     },
     badgeText: { ...tokens.typography.captionSmall, fontWeight: tokens.fontWeight.bold, color: colors.surface },
     itemPressed: { opacity: 0.8 },

@@ -54,9 +54,17 @@ de uma cor-semente única (aqui, o verde ipê-do-cerrado).
 | `book-page` | `#fcfaf5` | Papel pólen para leitura confortável sem ofuscamento | Novo — Metáfora do Livro |
 | `book-ink` | `#3c302a` | Tinta mineral/café com contraste AAA (>12:1) | Novo — Metáfora do Livro |
 | `nature-foliage` | `#2b6334` | Verde botânico da copa do ipê para botões principais | Novo — Metáfora Botânica |
-| `ipe-bloom` | `#f7c21e` | Ouro da florada do ipê para favoritos e medalhões | Novo — Metáfora do Ipê |
+| `nature-foliage-deep` | `#1e4e27` | Verde folhagem profundo para área da capa de livros à Venda e foco | Novo — Metáfora Botânica |
+| `ipe-bloom` | `#F5B718` | Amarelo ouro canônico da florada do ipê para banner de doações, capa/tag de Doação e favoritos | Novo — Metáfora do Ipê |
 | `ipe-petal-soft` | `#fef6d8` | Chão de pétalas de ipê para fundos e acolhimento | Novo — Metáfora do Ipê |
-| `ipe-ribbon` | `#f7c21e` | Fita marcadora de página de cetim do ipê | Novo — Metáfora do Livro & Ipê |
+| `ipe-ribbon` | `#F5B718` | Fita marcadora de página de cetim do ipê | Novo — Metáfora do Livro & Ipê |
+
+### Cores Canônicas por Modalidade na Vitrine e Filtros
+
+Para manter a fidelidade editorial desenhada para o IpêBook (Figma `02.01 · Início`, ADR 0104):
+- **Venda:** Verde Folhagem Profundo (`#1E4E27`, `tokens.colors.nature.foliageDeep`) na área superior da capa (`carouselCardCoverArea`), badge em pílula verde com texto branco (`#FFFFFF`) e ponto sólido verde no chip.
+- **Troca:** Marrom Tronco/Couro (`#58331F`, `tokens.colors.brandBrown`) na área superior da capa, badge em pílula marrom com texto branco (`#FFFFFF`) e ponto sólido marrom no chip.
+- **Doação:** Amarelo Ouro Solar (`#F5B718`, `tokens.colors.ipe.bloom`) na área superior da capa, badge em pílula amarela com texto marrom tronco profundo (`#451A03`, contraste AAA 8,3:1), ponto sólido amarelo no chip e fundo do banner comunitário *"Doações da semana"*.
 
 Lista completa (~50 tokens, claro e escuro) em
 [`tokens.json`](tokens.json), campo `color.tokens`.

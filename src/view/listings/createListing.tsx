@@ -319,7 +319,7 @@ export default function CreateListing({
             </View>
           ) : null}
 
-          <View style={wideWeb ? styles.formCardWeb : undefined}>
+          <View style={wideWeb ? styles.formCardWeb : styles.formCardMobile}>
             {step === 1 ? (
               <CreateListingStep1
                 isbn={state.isbn}
@@ -646,6 +646,10 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
       ...tokens.typography.footnote,
       color: colors.secondaryText,
       fontSize: 12,
+    },
+    formCardMobile: {
+      width: "100%",
+      gap: tokens.spacing[16],
     },
     formCardWeb: {
       width: "100%",

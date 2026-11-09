@@ -103,5 +103,6 @@
 - [0101 — Banner global de conectividade, cache offline da estante e blindagem de ações offline](0101-banner-de-conexao-e-cache-da-estante.md)
 - [0102 — Padronização visual de erros no front-end, auto-recuperação do OfflineState e tratamento semântico de rede](0102-design-de-erros-e-auto-recuperacao-offline.md)
 - [0103 — Esqueletos de carregamento (Skeleton Loading) e revalidação sem bloqueio (Stale-While-Revalidate)](0103-esqueletos-de-carregamento-e-cache-instantaneo.md)
+- [0104 — Cores canônicas das modalidades e fidelidade visual da vitrine da Home](0104-cores-canonicas-modalidades-e-vitrine-home.md)
 
 Preservar registros aceitos; mudanças relevantes geram novo ADR com vínculos de substituição.

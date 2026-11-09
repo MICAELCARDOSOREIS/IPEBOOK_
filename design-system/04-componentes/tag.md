@@ -27,11 +27,14 @@ em si é **Novo** (sem papel equivalente no M3).
 
 | Variante | Uso | Tokens |
 | --- | --- | --- |
-| Venda | Anúncio de venda | `secondary-container` / `on-secondary-container` |
-| Troca | Anúncio de troca (com ícone `swap`) | `tertiary-container` / `on-tertiary-container` |
-| Doação | Anúncio de doação | `doacao-container` / `on-doacao-container` |
+| Venda | Anúncio de venda | `badge.sale` (`#1E4E27` / `#FFFFFF`) ou `secondary-container` |
+| Troca | Anúncio de troca (com ícone `swap`) | `badge.trade` (`#58331F` / `#FFFFFF`) ou `tertiary-container` |
+| Doação | Anúncio de doação | `badge.donation` (`#F5B718` / `#451A03`) ou `doacao-container` |
 | Reservado | Status reservado | `badge.reserved` |
 | Concluído | Status concluído | `badge.completed` |
+
+> [!TIP]
+> **Vitrine do Catálogo e Carrossel (Figma `02.01`):** Os cartões de livros e tags destacadas utilizam as cores canônicas de domínio: Verde Folhagem (`#1E4E27`) para Venda, Marrom Madeira (`#58331F`) para Troca e Amarelo Ouro Solar (`#F5B718`) para Doação, harmonizando o fundo superior da capa (`carouselCardCoverArea`) e a pílula de identificação com contraste AAA.
 
 ## Estados
 

@@ -92,4 +92,10 @@ describe("NavigationBar (design-system/04-componentes/barra-de-navegacao.md, ADR
     await fireEvent(exploreTab, "hoverIn");
     await fireEvent(exploreTab, "hoverOut");
   });
+
+  it("renderiza a pílula ativa deslizante contínua para o destino ativo (Material 3 Expressive)", async () => {
+    const { getByTestId } = await render(<NavigationBar active="home" onNavigate={() => {}} />);
+    const activePill = getByTestId("navigation-bar-active-pill");
+    expect(activePill).toBeDefined();
+  });
 });
