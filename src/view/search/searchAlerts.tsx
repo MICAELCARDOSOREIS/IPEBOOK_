@@ -1,6 +1,6 @@
 import { useId, useMemo } from "react";
 import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { ScreenContainer } from "@/view/components/ScreenContainer";
 import { AppIcon } from "@/view/components/AppIcon";
 import { ErrorState } from "@/view/components/ErrorState";
 import { FilledButton } from "@/view/components/FilledButton";
@@ -57,8 +57,20 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
   const showListChrome = state.loading || state.alerts.length > 0;
 
   return (
-    <SafeAreaView style={styles.page}>
-      <TopAppBar title="Meus alertas" onBack={guardedBack} contentMaxWidth={wide ? WIDE_CONTENT_MAX_WIDTH : undefined} />
+    <ScreenContainer
+      maxWidth={720}
+      scroll={false}
+      paddingHorizontal={0}
+      paddingTop={0}
+      paddingBottom={0}
+      header={
+        <TopAppBar
+          title="Meus alertas"
+          onBack={guardedBack}
+          contentMaxWidth={wide ? WIDE_CONTENT_MAX_WIDTH : undefined}
+        />
+      }
+    >
       {!userId ? (
         <View style={styles.centered}>
           <IconBadge icon="bell" tone="action" size="large" />
@@ -182,7 +194,7 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
           ) : null}
         </View>
       )}
-    </SafeAreaView>
+    </ScreenContainer>
   );
 }
 
