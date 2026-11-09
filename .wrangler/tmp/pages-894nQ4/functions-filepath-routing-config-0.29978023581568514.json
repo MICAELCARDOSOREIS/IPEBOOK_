@@ -1,0 +1,13 @@
+{
+  "routes": [
+    {
+      "routePath": "/livro/:id",
+      "mountPath": "/livro",
+      "method": "",
+      "module": [
+        "livro/[id].ts:onRequest"
+      ]
+    }
+  ],
+  "baseURL": "/"
+}

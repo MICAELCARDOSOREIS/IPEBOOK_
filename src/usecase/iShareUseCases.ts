@@ -1,4 +1,4 @@
-import type { BookModality } from "@/model/entities/book";
+import type { BookCondition, BookModality } from "@/model/entities/book";
 
 export type ShareableListing = Readonly<{
   title: string;
@@ -8,6 +8,9 @@ export type ShareableListing = Readonly<{
   neighborhood?: string | null;
   isBox?: boolean;
   boxVolumesCount?: number | null;
+  condition?: BookCondition;
+  category?: string;
+  photoUrl?: string;
 }>;
 
 export interface IShareUseCases {

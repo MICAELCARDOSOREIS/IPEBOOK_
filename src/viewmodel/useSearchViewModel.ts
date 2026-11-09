@@ -122,7 +122,9 @@ export function useSearchViewModel(
   // Com um bairro escolhido, avisa quando o vazio vem só do bairro (os mesmos filtros achariam livros em outro).
   const matchesInOtherNeighborhoods = useMemo(
     () =>
-      neighborhood === "all" || neighborhood === "Todos os bairros"
+      neighborhood === "all" ||
+      neighborhood === "Todos os bairros" ||
+      neighborhood === "Todos os bairros (Piripiri)"
         ? 0
         : filterBooks(homeState.books, { term, filters, neighborhood: "all" }).length,
     [homeState.books, term, filters, neighborhood],
@@ -131,7 +133,10 @@ export function useSearchViewModel(
   const activeFilters = useMemo(() => deriveActiveFilters(filters), [filters]);
 
   const hasActiveFilters = useMemo(() => {
-    const hasNeighborhood = neighborhood !== "all" && neighborhood !== "Todos os bairros";
+    const hasNeighborhood =
+      neighborhood !== "all" &&
+      neighborhood !== "Todos os bairros" &&
+      neighborhood !== "Todos os bairros (Piripiri)";
     return Boolean(term.trim()) || hasNeighborhood || activeFilters.length > 0;
   }, [term, neighborhood, activeFilters]);
 

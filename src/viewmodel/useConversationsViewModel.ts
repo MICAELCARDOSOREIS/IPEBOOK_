@@ -73,11 +73,20 @@ async function buildItem(
   sessionUserId: string,
   sent: boolean,
   deps: ConversationsDeps,
+  profileMemo: Map<string, Promise<{ name: string | null; photoUrl: string | null }>>,
 ): Promise<{ item: ConversationItem; sortKey: string }> {
   const { request, listing } = entry;
-  const other = sent
-    ? await safely(deps.getProfile(listing.ownerId), { name: null, photoUrl: null })
-    : { name: entry.requesterName ?? null, photoUrl: entry.requesterPhotoUrl ?? null };
+  let other: { name: string | null; photoUrl: string | null };
+  if (sent) {
+    let pending = profileMemo.get(listing.ownerId);
+    if (!pending) {
+      pending = safely(deps.getProfile(listing.ownerId), { name: null, photoUrl: null });
+      profileMemo.set(listing.ownerId, pending);
+    }
+    other = await pending;
+  } else {
+    other = { name: entry.requesterName ?? null, photoUrl: entry.requesterPhotoUrl ?? null };
+  }
   const base = { requestId: request.id, listing, otherName: other.name || COMMUNITY_MEMBER, otherPhotoUrl: other.photoUrl };
 
   if (request.status === "pending") {
@@ -116,15 +125,18 @@ export function useConversationsViewModel(
 ): [ConversationsState, ConversationsActions] {
   const load = useCallback(async () => {
     if (!sessionUserId) return [];
-    const [sent, received] = await Promise.all([
+    const [sent, received, hidden] = await Promise.all([
       deps.listSentRequests(sessionUserId),
       deps.listReceivedRequests(sessionUserId),
+      deps.listHiddenConversations
+        ? safely(deps.listHiddenConversations(sessionUserId), {})
+        : Promise.resolve({} as Record<string, string>),
     ]);
     const open = (list: readonly RequestWithListing[]) => list.filter((e) => e.request.status !== "rejected" && e.request.status !== "cancelled");
-    const hidden = deps.listHiddenConversations ? await safely(deps.listHiddenConversations(sessionUserId), {}) : {};
+    const profileMemo = new Map<string, Promise<{ name: string | null; photoUrl: string | null }>>();
     const built = await Promise.all([
-      ...open(sent).map((e) => buildItem(e, sessionUserId, true, deps)),
-      ...open(received).map((e) => buildItem(e, sessionUserId, false, deps)),
+      ...open(sent).map((e) => buildItem(e, sessionUserId, true, deps, profileMemo)),
+      ...open(received).map((e) => buildItem(e, sessionUserId, false, deps, profileMemo)),
     ]);
     // Conversa apagada some, a menos que tenha chegado mensagem depois de apagar (Spec 090).
     const visible = built.filter(({ item }) => {
@@ -134,7 +146,11 @@ export function useConversationsViewModel(
     return visible.sort((a, b) => b.sortKey.localeCompare(a.sortKey)).map((b) => b.item);
   }, [sessionUserId, deps]);
 
-  const [state, reload] = useRequestList<ConversationItem>(load, LOAD_ERROR);
+  const [state, reload] = useRequestList<ConversationItem>(
+    load,
+    LOAD_ERROR,
+    sessionUserId ? `conversations:${sessionUserId}` : undefined,
+  );
 
   useEffect(() => {
     if (!sessionUserId || !deps.subscribe) return;

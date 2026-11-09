@@ -8,31 +8,31 @@ describe("NavigationBar (design-system/04-componentes/barra-de-navegacao.md, ADR
     cleanup();
   });
 
-  it("mostra os cinco destinos principais da aplicação", async () => {
-    const { getByLabelText } = await render(<NavigationBar active="home" onNavigate={() => {}} />);
+  it("mostra os três destinos principais da barra inferior (Conversas e Perfil ficam no topo da Home)", async () => {
+    const { getByLabelText, queryByLabelText } = await render(<NavigationBar active="home" onNavigate={() => {}} />);
     expect(getByLabelText("Início")).toBeDefined();
     expect(getByLabelText("Explorar")).toBeDefined();
     expect(getByLabelText("Estante")).toBeDefined();
-    expect(getByLabelText("Conversas")).toBeDefined();
-    expect(getByLabelText("Perfil")).toBeDefined();
+    expect(queryByLabelText("Conversas")).toBeNull();
+    expect(queryByLabelText("Perfil")).toBeNull();
   });
 
   it("mostra selo numérico no destino, limita a 9+ e anuncia a contagem (Spec 091)", async () => {
     const { getByLabelText, getByText, queryByText } = await render(
-      <NavigationBar active="home" onNavigate={() => {}} badges={{ conversations: 2, shelf: 12, profile: 0 }} />,
+      <NavigationBar active="home" onNavigate={() => {}} badges={{ home: 2, shelf: 12, search: 0 }} />,
     );
-    expect(getByLabelText("Conversas, 2 novas")).toBeDefined();
+    expect(getByLabelText("Início, 2 novas")).toBeDefined();
     expect(getByText("2")).toBeDefined();
     expect(getByText("9+")).toBeDefined();
     expect(getByLabelText("Estante, 12 novas")).toBeDefined();
-    expect(getByLabelText("Perfil")).toBeDefined();
+    expect(getByLabelText("Explorar")).toBeDefined();
     expect(queryByText("0")).toBeNull();
   });
 
   it("agrupa as abas em um contêiner com papel tablist", async () => {
     const { getByTestId, getAllByRole } = await render(<NavigationBar active="home" onNavigate={() => {}} />);
     expect(getByTestId("navigation-bar-tablist").props.accessibilityRole).toBe("tablist");
-    expect(getAllByRole("tab")).toHaveLength(5);
+    expect(getAllByRole("tab")).toHaveLength(3);
   });
 
   it("anuncia o destino atual como selecionado e os demais como não selecionados", async () => {
@@ -40,28 +40,26 @@ describe("NavigationBar (design-system/04-componentes/barra-de-navegacao.md, ADR
     expect(getByLabelText("Explorar").props.accessibilityState).toEqual({ selected: true });
     expect(getByLabelText("Início").props.accessibilityState).toEqual({ selected: false });
     expect(getByLabelText("Estante").props.accessibilityState).toEqual({ selected: false });
-    expect(getByLabelText("Conversas").props.accessibilityState).toEqual({ selected: false });
-    expect(getByLabelText("Perfil").props.accessibilityState).toEqual({ selected: false });
   });
 
   it("chama onNavigate com o destino tocado", async () => {
     const onNavigate = vi.fn();
     const { getByLabelText } = await render(<NavigationBar active="home" onNavigate={onNavigate} />);
-    fireEvent.press(getByLabelText("Perfil"));
-    expect(onNavigate).toHaveBeenCalledWith("profile");
+    fireEvent.press(getByLabelText("Estante"));
+    expect(onNavigate).toHaveBeenCalledWith("shelf");
   });
 
   it("desabilita destinos indicados em disabledDestinations e não dispara onNavigate", async () => {
     const onNavigate = vi.fn();
     const { getByLabelText } = await render(
-      <NavigationBar active="home" disabledDestinations={["profile"]} onNavigate={onNavigate} />
+      <NavigationBar active="home" disabledDestinations={["shelf"]} onNavigate={onNavigate} />
     );
 
-    const profileTab = getByLabelText("Perfil (em breve)");
-    expect(profileTab).toBeDefined();
-    expect(profileTab.props.accessibilityState).toEqual({ selected: false, disabled: true });
+    const shelfTab = getByLabelText("Estante (em breve)");
+    expect(shelfTab).toBeDefined();
+    expect(shelfTab.props.accessibilityState).toEqual({ selected: false, disabled: true });
 
-    fireEvent.press(profileTab);
+    fireEvent.press(shelfTab);
     expect(onNavigate).not.toHaveBeenCalled();
   });
 

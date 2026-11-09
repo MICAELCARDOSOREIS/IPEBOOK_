@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Meeting } from "@/model/entities/meeting";
-import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { LoadingState } from "@/view/components/LoadingState";
 import {
   makeAuthViewModel,
   makeDeliveryStatus,
@@ -127,13 +128,11 @@ export function RequestDetail({
       >
         <View style={[styles.content, wide && styles.contentWide]}>
           {state.loading && !detail ? (
-            <View style={styles.status}>
-              <ActivityIndicator
-                color={colors.action}
-                accessibilityLabel="Carregando detalhes da negociação"
-              />
-              <Text style={styles.body}>Carregando detalhes…</Text>
-            </View>
+            <LoadingState
+              label="Carregando detalhes da negociação"
+              srText="Carregando detalhes…"
+              variant="detail"
+            />
           ) : state.error ? (
             <View style={styles.status}>
               <Text accessibilityRole="alert" style={styles.errorText}>

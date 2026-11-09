@@ -78,8 +78,11 @@ export function MyListings({
       modality: book.modality,
       price: book.price,
       neighborhood: book.neighborhood,
+      condition: book.condition,
+      category: book.category,
       isBox: book.isBox,
       boxVolumesCount: book.boxVolumesCount,
+      photoUrl: book.photoUrl,
     });
   };
 
@@ -174,7 +177,7 @@ export function MyListings({
 
       <View style={[styles.content, wideWeb && styles.contentWide]}>
         {state.loading ? (
-          <LoadingState label="Carregando seus anúncios" />
+          <LoadingState label="Carregando seus anúncios" variant="shelf" />
         ) : state.error ? (
           isOnline ? (
             <ErrorState message={state.error} onRetry={() => void actions.reload()} />

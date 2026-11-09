@@ -58,7 +58,7 @@ export default function EditAlert({ alertId, userId, onBack, onSaved }: EditAler
       <SafeAreaView style={styles.page}>
         <TopAppBar contentMaxWidth={560} title="Editar alerta" onBack={guardedBack} />
         <View style={styles.content}>
-          <LoadingState label="Carregando alerta" />
+          <LoadingState label="Carregando alerta" variant="form" />
         </View>
       </SafeAreaView>
     );

@@ -10,8 +10,18 @@ Eliminar a sensação de demora e as telas em branco com spinners soltos durante
 ## Regras de negócio
 
 - **RN-01 (Esqueletos estruturais sem textos visíveis):** O componente `LoadingState` deve renderizar blocos de esqueleto pulsantes ("caixinhas" com cantos arredondados nas cores de superfície do tema claro/escuro) representando cartões, avatares e linhas de conteúdo, sem mostrar frases de "Carregando..." na interface visual, mantendo `accessibilityLabel={label}` e nó acessível oculto para leitores de tela.
-- **RN-02 (Variantes de esqueleto por contexto):** `LoadingState` deve suportar as variantes `"list"` (padrão), `"profile"` (layout de Meu Perfil e Perfil Público com cartão de identidade, métricas, botões, 3 selos comunitários e lista de atalhos), `"catalog"` (grade/carrossel de livros) e `"detail"` (detalhe de anúncio/pedido).
-- **RN-03 (Unificação nas telas com spinner solto):** Telas que ainda exibiam `<ActivityIndicator />` solto em estado de carregamento (`profileHub.tsx`, `publicProfile.tsx`, `receivedRatings.tsx`, `blockedUsers.tsx`, `moderation.tsx`, `editAlert.tsx`, `manageAlert.tsx`, `chat.tsx`) devem usar o esqueleto visual.
+- **RN-02 (Variantes de esqueleto fiéis à anatomia de cada página):** `LoadingState` (apoiado por `LoadingSkeletonVariants`) deve suportar 10 variantes que desenham o layout exato de cada página sem repetir cabeçalhos ou chips já visíveis:
+  - `"shelf"` (Estante): 3 caixinhas coloridas de resumo (à venda, em troca, para doar), barra segmentada de 3 abas (`Anúncios | Propostas | Concluídos`), fileira de chips de status e card agrupador com linhas de livros e ícone circular de WhatsApp.
+  - `"catalog"` (Explorar): barra de contagem/ordenação (`"12 livros" --- "Mais recentes"`) e cartões horizontais de livro (capa à esquerda, título, autor, pílula de modalidade + preço + bairro, coração e seta à direita).
+  - `"homeCarousel"` (Início): cabeçalho da seção `"Perto de você"` com badge e carrossel horizontal de cartões verticais de `168px`.
+  - `"profile"` (Meu Perfil): cartão de identidade com avatar à direita, 3 métricas, 2 botões em pílula, 3 Selos Comunitários e linhas de Atividade.
+  - `"publicProfile"` (Perfil Público): avatar circular centralizado de `80px`, nome/handle centralizados, 3 cartões de estatísticas e lista de livros publicados.
+  - `"conversations"` (Conversas, Notificações e Pessoas Bloqueadas): cartões horizontais com avatar circular de `48px` à esquerda, nome/horário, prévia e pílula de modalidade.
+  - `"detail"` (Detalhe do Livro, Entrega, Encontro e Negociação): bloco de título/autor/preço abaixo do hero, cartão de especificações e cartão do anunciante.
+  - `"manage"` (Gerenciar Anúncio): cartão resumo do livro e 4 cartões de ação empilhados.
+  - `"form"` (Editar Perfil, Editar Anúncio e Alertas): cabeçalho, campos de formulário, pílulas de seleção e botão de ação.
+  - `"list"` (Favoritos, Rascunhos, Pedidos e Encontros): cartões horizontais com miniatura à esquerda e metadados à direita.
+- **RN-03 (Unificação nas telas com spinner solto):** Telas que ainda exibiam `<ActivityIndicator />` solto em estado de carregamento (`profileHub.tsx`, `publicProfile.tsx`, `editListing.tsx`, `requestDetail.tsx`, `receivedRatings.tsx`, `blockedUsers.tsx`, `moderation.tsx`, `editAlert.tsx`, `manageAlert.tsx`, `chat.tsx`) devem usar o esqueleto visual correspondente à sua página.
 - **RN-04 (Revalidação silenciosa / Stale-While-Revalidate):** Nos ViewModels `useProfileViewModel`, `useHomeViewModel` e `useMyListingsViewModel`, quando já houver dados carregados (ou em cache de sessão), uma nova montagem ou recarregamento não deve apagar os dados existentes nem bloquear a tela com `loading: true`, atualizando os dados em segundo plano.
 
 ## Critérios de aceite

@@ -34,8 +34,7 @@ As opções anteriores de compartilhamento sofriam de:
 3. **Interface e Pontos de Acesso:**
    - **`src/view/components/AppIcon.tsx`:** inclusão do ícone `whatsapp`.
    - **`src/view/listings/bookDetail.tsx`:**
-     - Botão de 1 toque no WhatsApp com destaque na barra inferior móvel e no painel desktop.
-     - Atalho na barra superior do Hero.
+     - Atalho de 1 toque no WhatsApp na barra superior do Hero (evitando duplicar botões de compartilhamento na barra inferior de ação principal).
    - **`src/view/listings/createListingSuccess.tsx`:**
      - Botão em destaque "Divulgar no WhatsApp" logo após publicar o livro.
    - **`src/view/listings/manageListing.tsx`:**

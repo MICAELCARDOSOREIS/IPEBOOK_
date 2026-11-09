@@ -21,13 +21,42 @@ describe("ListingShareCard (Spec 092)", () => {
     expect(onCoverSettled).not.toHaveBeenCalled();
   });
 
-  it("sem foto usa a inicial; troca e doação mostram a oferta certa; sem bairro não mostra local", async () => {
-    const trade = await render(<ListingShareCard book={{ ...book, photoUrl: undefined, modality: "trade", neighborhood: undefined }} url="https://ipebook.app/livro/b1" />);
-    expect(trade.getByText("D")).toBeDefined();
+  it("sem foto usa a capa ilustrativa do IpêBook; troca e doação mostram a oferta certa; exibe categoria e conservação", async () => {
+    const trade = await render(
+      <ListingShareCard
+        book={{
+          ...book,
+          photoUrl: undefined,
+          modality: "trade",
+          neighborhood: undefined,
+          condition: "good",
+          category: "Romance",
+          isBox: true,
+          boxVolumesCount: 3,
+        }}
+        url="https://ipebook.app/livro/b1"
+      />,
+    );
+    expect(trade.getByLabelText("Capa ilustrativa de Dom Casmurro")).toBeDefined();
     expect(trade.getByText("Aceita troca")).toBeDefined();
+    expect(trade.getByText("Box (3 vol.)")).toBeDefined();
+    expect(trade.getByText("Romance · Bom estado")).toBeDefined();
     expect(trade.queryByText("Centro, Piripiri")).toBeNull();
     const donation = await render(<ListingShareCard book={{ ...book, modality: "donation", price: undefined }} url="https://ipebook.app/livro/b2" />);
     expect(donation.getByText("Gratuito")).toBeDefined();
     await act(async () => { fireEvent(donation.getByText("Gratuito"), "layout"); });
+  });
+
+  it("cai para a capa ilustrativa quando a foto do anúncio falha ao carregar", async () => {
+    const onCoverSettled = vi.fn();
+    const screen = await render(
+      <ListingShareCard book={book} url="https://ipebook.app/livro/b1" onCoverSettled={onCoverSettled} />,
+    );
+    const photo = screen.getByLabelText("Capa de Dom Casmurro");
+    await act(async () => {
+      fireEvent(photo, "error");
+    });
+    expect(onCoverSettled).toHaveBeenCalledTimes(1);
+    expect(screen.getByLabelText("Capa ilustrativa de Dom Casmurro")).toBeDefined();
   });
 });

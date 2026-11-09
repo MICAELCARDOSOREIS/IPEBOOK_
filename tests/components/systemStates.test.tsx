@@ -23,8 +23,34 @@ describe("LoadingState (design-system/04-componentes/estados-do-sistema.md, Issu
     const profileSkeleton = await render(<LoadingState label="Carregando perfil" variant="profile" />);
     expect(profileSkeleton.getByTestId("skeleton-variant-profile")).toBeDefined();
 
+    const publicProfileSkeleton = await render(
+      <LoadingState label="Carregando perfil" variant="publicProfile" />,
+    );
+    expect(publicProfileSkeleton.getByTestId("skeleton-variant-publicProfile")).toBeDefined();
+
+    const shelfSkeleton = await render(
+      <LoadingState label="Carregando seus anúncios" variant="shelf" />,
+    );
+    expect(shelfSkeleton.getByTestId("skeleton-variant-shelf")).toBeDefined();
+
+    const homeCarouselSkeleton = await render(
+      <LoadingState label="Carregando livros" variant="homeCarousel" />,
+    );
+    expect(homeCarouselSkeleton.getByTestId("skeleton-variant-homeCarousel")).toBeDefined();
+
+    const conversationsSkeleton = await render(
+      <LoadingState label="Carregando conversas" variant="conversations" />,
+    );
+    expect(conversationsSkeleton.getByTestId("skeleton-variant-conversations")).toBeDefined();
+
     const detailSkeleton = await render(<LoadingState label="Carregando anúncio" variant="detail" />);
     expect(detailSkeleton.getByTestId("skeleton-variant-detail")).toBeDefined();
+
+    const manageSkeleton = await render(<LoadingState label="Carregando anúncio" variant="manage" />);
+    expect(manageSkeleton.getByTestId("skeleton-variant-manage")).toBeDefined();
+
+    const formSkeleton = await render(<LoadingState label="Carregando alerta" variant="form" />);
+    expect(formSkeleton.getByTestId("skeleton-variant-form")).toBeDefined();
   });
 });
 

@@ -21,13 +21,18 @@ export type DraftsActions = {
  * anúncios com status `draft`, permite descartar (com confirmação tratada na View) e
  * expõe o estado vazio para a tela não-autenticada ou sem rascunhos.
  */
+const sessionDraftsCache = new Map<string, readonly Book[]>();
+
 export function useDraftsViewModel(
   sessionUserId: string | null,
   useCases: IBookUseCases,
 ): [DraftsState, DraftsActions] {
+  const isTest = process.env.NODE_ENV === "test";
+  const initialCached =
+    !isTest && sessionUserId ? (sessionDraftsCache.get(sessionUserId) ?? null) : null;
   const [state, setState] = useState<DraftsState>({
-    drafts: [],
-    loading: true,
+    drafts: initialCached ?? [],
+    loading: initialCached === null,
     error: null,
     discardingId: null,
     discardError: null,
@@ -38,9 +43,15 @@ export function useDraftsViewModel(
   const reload = useCallback(async () => {
     if (!active.current) return;
     const current = ++request.current;
-    setState((previous) => ({ ...previous, loading: true, error: null, discardError: null }));
+    setState((previous) => ({
+      ...previous,
+      loading: previous.drafts.length === 0 && (!sessionUserId || !sessionDraftsCache.has(sessionUserId)),
+      error: null,
+      discardError: null,
+    }));
     try {
       const result = await useCases.listDrafts(sessionUserId);
+      if (!isTest && sessionUserId) sessionDraftsCache.set(sessionUserId, result);
       if (active.current && current === request.current) {
         setState((previous) => ({ ...previous, drafts: result, loading: false, error: null }));
       }
@@ -56,7 +67,7 @@ export function useDraftsViewModel(
         }));
       }
     }
-  }, [useCases, sessionUserId]);
+  }, [useCases, sessionUserId, isTest]);
 
   const discardDraft = useCallback(
     async (bookId: string): Promise<boolean> => {

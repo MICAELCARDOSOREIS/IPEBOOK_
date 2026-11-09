@@ -1,9 +1,12 @@
+import { Platform } from "react-native";
+
 /**
- * Modo Web ativo com aplicativo completo (catálogo, busca, anúncios, negociações e autenticação).
- * Conforme Spec 108, para reabrir o site completo, desliga-se WEB_BETA_ONLY aqui.
- * Quando false, todas as rotas operam normalmente na web com ConnectedWebHeader e ConnectedNavigationBar.
+ * Spec 108: por enquanto o site só divulga o teste do app Android. Na web não há catálogo nem
+ * cadastro; `/excluir-conta` fica acessível pelo endereço, porque a Play Store exige um link
+ * público para excluir a conta.
+ * Para reabrir o site completo no futuro, desligar `WEB_BETA_ONLY` aqui.
  */
-export const WEB_BETA_ONLY = false;
+export const WEB_BETA_ONLY = Platform.OS === "web";
 
 const ROTAS_LIBERADAS = new Set([
   "/bem-vindo",

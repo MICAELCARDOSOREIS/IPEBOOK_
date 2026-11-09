@@ -299,7 +299,7 @@ export function Delivery({ requestId, sessionUserId, onBack }: DeliveryProps) {
     <SafeAreaView style={styles.page}>
       <TopAppBar contentMaxWidth={wide ? WEB_MAX_WIDTH : 560} title={title} onBack={guardedBack} />
       {state.loading ? (
-        <LoadingState label="Carregando a entrega" />
+        <LoadingState label="Carregando a entrega" variant="detail" />
       ) : state.loadError ? (
         <ErrorState message={state.loadError} onRetry={() => void actions.reload()} />
       ) : (

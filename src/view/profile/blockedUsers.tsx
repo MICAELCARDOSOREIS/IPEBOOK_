@@ -58,7 +58,7 @@ export function BlockedUsers({ onBack }: BlockedUsersProps) {
           </Text>
 
           {state.loading ? (
-            <LoadingState label="Carregando pessoas bloqueadas" />
+            <LoadingState label="Carregando pessoas bloqueadas" variant="conversations" />
           ) : state.error ? (
             <ErrorState message={state.error} onRetry={() => void actions.reload()} />
           ) : state.blockedUsers.length === 0 ? (
