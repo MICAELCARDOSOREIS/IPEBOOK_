@@ -30,8 +30,10 @@ em si é **Novo** (sem papel equivalente no M3).
 | Venda | Anúncio de venda | `badge.sale` (`#1E4E27` / `#FFFFFF`) ou `secondary-container` |
 | Troca | Anúncio de troca (com ícone `swap`) | `badge.trade` (`#58331F` / `#FFFFFF`) ou `tertiary-container` |
 | Doação | Anúncio de doação | `badge.donation` (`#F5B718` / `#451A03`) ou `doacao-container` |
-| Reservado | Status reservado | `badge.reserved` |
-| Concluído | Status concluído | `badge.completed` |
+| Ativo / Disponível | Anúncio ativo em circulação | `badge.available` (`#1E4E27` / `#FFFFFF`) |
+| Pausado | Anúncio temporariamente suspenso | `badge.paused` (`#52525B` / `#FFFFFF`) |
+| Reservado | Status reservado sob negociação | `badge.reserved` (`#F5B718` / `#451A03`) |
+| Concluído | Status de livro entregue / concluído | `badge.completed` (`#2B6334` / `#FFFFFF`) |
 
 > [!TIP]
 > **Vitrine do Catálogo e Carrossel (Figma `02.01`):** Os cartões de livros e tags destacadas utilizam as cores canônicas de domínio: Verde Folhagem (`#1E4E27`) para Venda, Marrom Madeira (`#58331F`) para Troca e Amarelo Ouro Solar (`#F5B718`) para Doação, harmonizando o fundo superior da capa (`carouselCardCoverArea`) e a pílula de identificação com contraste AAA.

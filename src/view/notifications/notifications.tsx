@@ -77,6 +77,7 @@ export default function Notifications({
   const { isOnline } = makeNetworkStatus();
   const [refreshing, setRefreshing] = useState(false);
   const [confirmClearAllVisible, setConfirmClearAllVisible] = useState(false);
+  const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -200,7 +201,10 @@ export default function Notifications({
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel="Marcar todas como lidas"
-                  onPress={() => void actions.markAllAsRead()}
+                  onPress={() => {
+                    void actions.markAllAsRead();
+                    setFeedbackMessage("Todas as notificações foram marcadas como lidas.");
+                  }}
                   style={withPress(styles.actionBtn)}
                 >
                   <AppIcon name="check" size={16} color={colors.action} />
@@ -212,9 +216,13 @@ export default function Notifications({
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel="Limpar notificações lidas"
-                  onPress={() => void actions.clearRead()}
+                  onPress={() => {
+                    void actions.clearRead();
+                    setFeedbackMessage("Notificações lidas foram removidas.");
+                  }}
                   style={withPress(styles.actionBtn)}
                 >
+                  <AppIcon name="check" size={14} color={colors.secondaryText} />
                   <Text style={styles.actionBtnSecondaryText}>Limpar lidas</Text>
                 </Pressable>
               ) : null}
@@ -226,6 +234,7 @@ export default function Notifications({
                   onPress={() => setConfirmClearAllVisible(true)}
                   style={withPress(styles.actionBtn)}
                 >
+                  <AppIcon name="delete" size={14} color={colors.error} />
                   <Text style={styles.actionBtnDangerText}>Limpar tudo</Text>
                 </Pressable>
               ) : null}
@@ -354,6 +363,7 @@ export default function Notifications({
                         onPress={(e) => {
                           e?.stopPropagation?.();
                           void actions.deleteNotification(item.id);
+                          setFeedbackMessage("Notificação excluída.");
                         }}
                         style={styles.deleteIconButton}
                       >
@@ -363,13 +373,6 @@ export default function Notifications({
                           color={colors.secondaryText}
                         />
                       </Pressable>
-
-                      {/* Seta indicando ação de toque */}
-                      <AppIcon
-                        name="chevronRight"
-                        size={20}
-                        color={colors.secondaryText}
-                      />
                     </View>
 
                     {/* Mensagem e horário curto na mesma linha (Spec 043 RN-12 / Figma 07.04) */}
@@ -392,9 +395,12 @@ export default function Notifications({
       </View>
 
       <Snackbar
-        visible={state.actionError !== null}
-        message={state.actionError ?? ""}
-        onDismiss={actions.clearActionError}
+        visible={state.actionError !== null || feedbackMessage !== null}
+        message={state.actionError ?? feedbackMessage ?? ""}
+        onDismiss={() => {
+          if (state.actionError) actions.clearActionError();
+          if (feedbackMessage) setFeedbackMessage(null);
+        }}
       />
 
       <Dialog
@@ -407,6 +413,7 @@ export default function Notifications({
         onConfirm={() => {
           setConfirmClearAllVisible(false);
           void actions.clearAll();
+          setFeedbackMessage("Todas as notificações foram limpas.");
         }}
         onCancel={() => setConfirmClearAllVisible(false)}
       />
@@ -438,9 +445,8 @@ function createStyles(colors: ColorPalette) {
     sectionHeader: {
       ...tokens.typography.labelMedium,
       color: colors.secondaryText,
-      fontWeight: tokens.fontWeight.semiBold,
-      textTransform: "uppercase",
-      letterSpacing: 0.8,
+      fontWeight: tokens.fontWeight.bold,
+      letterSpacing: 0.5,
     },
     sectionHeaderLine: {
       flex: 1,
@@ -519,9 +525,9 @@ function createStyles(colors: ColorPalette) {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
-      marginBottom: tokens.spacing[12],
+      marginBottom: tokens.spacing[16],
       flexWrap: "wrap",
-      gap: tokens.spacing[8],
+      rowGap: tokens.spacing[10],
     },
     filterTabs: {
       flexDirection: "row",
@@ -532,7 +538,7 @@ function createStyles(colors: ColorPalette) {
       justifyContent: "center",
       paddingHorizontal: tokens.spacing[16],
       paddingVertical: tokens.spacing[6],
-      borderRadius: tokens.shapeMorph.chipUnselected,
+      borderRadius: tokens.radius.full,
       backgroundColor: colors.m3.surfaceContainerLowest,
       borderWidth: 1,
       borderColor: colors.m3.outlineVariant,
@@ -540,7 +546,7 @@ function createStyles(colors: ColorPalette) {
     filterChipActive: {
       backgroundColor: colors.m3.secondaryContainer,
       borderColor: colors.m3.secondaryContainer,
-      borderRadius: tokens.shapeMorph.chipSelected,
+      borderRadius: tokens.radius.full,
       borderWidth: 0,
     },
     filterChipText: {
@@ -563,13 +569,14 @@ function createStyles(colors: ColorPalette) {
       gap: tokens.spacing[8],
     },
     actionBtn: {
-      minHeight: tokens.accessibility.touchTarget,
+      minHeight: tokens.spacing[32],
       flexDirection: "row",
       alignItems: "center",
       gap: tokens.spacing[4],
-      paddingHorizontal: tokens.spacing[8],
+      paddingHorizontal: tokens.spacing[12],
       paddingVertical: tokens.spacing[6],
       borderRadius: tokens.radius.full,
+      backgroundColor: colors.m3.surfaceContainerLow,
     },
     actionBtnText: {
       ...tokens.typography.labelMedium,
@@ -647,26 +654,26 @@ function createStyles(colors: ColorPalette) {
       gap: tokens.spacing[12],
     },
     card: {
-      backgroundColor: colors.surface,
-      borderRadius: tokens.radius.cardSmall,
+      backgroundColor: colors.m3.surfaceContainerLowest,
+      borderRadius: tokens.radius.card,
       padding: tokens.spacing[16],
       borderWidth: 1,
       borderColor: colors.m3.outlineVariant,
       gap: tokens.spacing[10],
       shadowColor: colors.m3.shadow,
       shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.05,
-      shadowRadius: 3,
-      elevation: 2,
+      shadowOpacity: 0.04,
+      shadowRadius: 4,
+      elevation: 1,
     },
     cardPressed: {
       backgroundColor: colors.m3.surfaceContainerLow,
-      transform: [{ scale: 0.99 }],
+      transform: [{ scale: 0.985 }],
     },
     cardUnread: {
       borderColor: colors.action,
       borderLeftWidth: 4,
-      backgroundColor: colors.m3.secondaryContainer,
+      backgroundColor: colors.m3.surfaceContainerLow,
     },
     cardHeader: {
       flexDirection: "row",
@@ -684,6 +691,7 @@ function createStyles(colors: ColorPalette) {
     },
     cardTitle: {
       ...tokens.typography.titleMedium,
+      fontWeight: tokens.fontWeight.semiBold,
       color: colors.text,
       flex: 1,
     },
@@ -720,12 +728,12 @@ function createStyles(colors: ColorPalette) {
       backgroundColor: colors.action,
     },
     deleteIconButton: {
-      minWidth: 32,
-      minHeight: 32,
+      width: 32,
+      height: 32,
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.m3.surfaceContainerLow,
       justifyContent: "center",
       alignItems: "center",
-      padding: tokens.spacing[4],
-      borderRadius: tokens.radius.full,
     },
     cardMessage: {
       ...tokens.typography.bodyMedium,
@@ -736,10 +744,13 @@ function createStyles(colors: ColorPalette) {
       flexDirection: "row",
       alignItems: "center",
       gap: tokens.spacing[4],
-      paddingTop: tokens.spacing[4],
+      paddingTop: tokens.spacing[10],
+      marginTop: tokens.spacing[2],
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: colors.m3.outlineVariant,
     },
     actionHintText: {
-      ...tokens.typography.labelSmall,
+      ...tokens.typography.labelMedium,
       color: colors.action,
       fontWeight: tokens.fontWeight.semiBold,
     },

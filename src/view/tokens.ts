@@ -60,13 +60,15 @@ export const colors = {
   disabledBackground: "#EBF4EC",
   disabledText: "#645B55",
 
-  // Badges por Modalidade
+  // Badges por Modalidade e Status (ADR 0104)
   badge: {
     sale: { background: "#1E4E27", text: "#FFFFFF" },
     trade: { background: "#58331F", text: "#FFFFFF" },
     donation: { background: "#F5B718", text: "#451A03" },
-    reserved: { background: "#FDE047", text: "#3C302A" },
+    reserved: { background: "#F5B718", text: "#451A03" },
     completed: { background: "#2B6334", text: "#FFFFFF" },
+    paused: { background: "#52525B", text: "#FFFFFF" },
+    available: { background: "#1E4E27", text: "#FFFFFF" },
   },
 
   // Tons pastel por categoria de livro (Spec 091) — mesmo par sempre para a mesma categoria.
@@ -194,13 +196,15 @@ export const darkColors: ColorPalette = {
   disabledBackground: "#27422C",
   disabledText: "#cdc5bc",
 
-  // Badges por Modalidade (adaptados para leitura noturna suave sem ofuscamento)
+  // Badges por Modalidade e Status (adaptados para leitura noturna suave sem ofuscamento)
   badge: {
     sale: { background: "#184E21", text: "#B4E8BD" },
     trade: { background: "#4D380A", text: "#FED766" },
     donation: { background: "#5A2F22", text: "#FFDBCF" },
     reserved: { background: "#483200", text: "#FFE088" },
     completed: { background: "#15451C", text: "#D0F5DC" },
+    paused: { background: "#3F3F46", text: "#E4E4E7" },
+    available: { background: "#184E21", text: "#B4E8BD" },
   },
 
   // Tons pastel por categoria de livro no tema escuro (Spec 091).
