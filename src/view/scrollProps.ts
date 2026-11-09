@@ -31,8 +31,8 @@ export const standardHorizontalScrollProps = {
  * fique colado no fim da tela ou encoberto pela barra inferior de navegação.
  */
 export const scrollBottomPadding = {
-  /** Telas com barra inferior de navegação ativa no mobile (~80 dp de barra + margem segura) */
-  withBottomBar: 96,
+  /** Telas com barra inferior de navegação flutuante ativa no mobile (cápsula flutuante + margem segura) */
+  withBottomBar: 104,
   /** Telas secundárias sem barra inferior de navegação */
   withoutBottomBar: tokens.spacing[32],
 } as const;
