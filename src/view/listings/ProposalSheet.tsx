@@ -15,6 +15,7 @@ import type { Book } from "@/model/entities/book";
 import { AppIcon } from "@/view/components/AppIcon";
 import { BookCover } from "@/view/components/BookCover";
 import { FilledButton } from "@/view/components/FilledButton";
+import { InlineErrorCard } from "@/view/components/InlineErrorCard";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { Tag } from "@/view/components/Tag";
 import { withPress } from "@/view/pressFeedback";
@@ -228,11 +229,7 @@ export function ProposalSheet({
               </View>
             ) : null}
 
-            {error ? (
-              <View accessibilityRole="alert" style={styles.errorBox}>
-                <Text style={styles.errorText}>{error}</Text>
-              </View>
-            ) : null}
+            {error ? <InlineErrorCard message={error} /> : null}
           </ScrollView>
 
           {/* Botões de Ação */}
