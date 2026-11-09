@@ -172,7 +172,7 @@ export function ScheduleMeeting({ requestId, sessionUserId, onBack, onSent }: Sc
       <SafeAreaView style={styles.safe} pointerEvents="box-none" edges={hasMap ? ["bottom", "left", "right"] : undefined}>
       <TopAppBar contentMaxWidth={560} floating={hasMap} title={rescheduling ? "Reagendar encontro" : "Combinar encontro"} onBack={guardedBack} />
       {state.loading ? (
-        <LoadingState label="Carregando o encontro" />
+        <LoadingState label="Carregando o encontro" variant="detail" />
       ) : state.loadError ? (
         <ErrorState message={state.loadError} onRetry={() => void actions.reload()} />
       ) : (

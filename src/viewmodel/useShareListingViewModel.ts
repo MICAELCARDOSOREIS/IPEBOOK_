@@ -12,7 +12,7 @@ export type ShareListingState = {
 };
 
 export type ShareListingActions = {
-  share: (bookId: string) => Promise<void>;
+  share: (bookId: string, listing?: ShareableListing, capture?: () => Promise<string>) => Promise<void>;
   /** Captura a imagem do anúncio (`capture` devolve o PNG) e abre a folha de compartilhamento (Spec 092). */
   shareImage: (bookId: string, listing: ShareableListing, capture: () => Promise<string>) => Promise<void>;
   /** Compartilhamento dedicado ao WhatsApp (Spec 118 / Issue #145), com texto formatado, suporte a imagem e fallback. */
@@ -49,16 +49,49 @@ export function useShareListingViewModel(
   }, []);
 
   const share = useCallback(
-    async (bookId: string) => {
+    async (bookId: string, listing?: ShareableListing, capture?: () => Promise<string>) => {
       setState((prev) => ({ ...prev, sharing: true, error: null }));
       try {
         const path = useCases.buildListingSharePath(bookId);
         const url = `${SHARE_BASE_URL}${path}`;
+        const message = listing
+          ? useCases.buildWhatsAppShareMessage
+            ? useCases.buildWhatsAppShareMessage(listing, url)
+            : useCases.buildShareMessage(listing, url)
+          : url;
+
         if (Platform.OS === "web") {
-          await navigator.clipboard.writeText(url);
+          const webNavigator = navigator as WebNavigatorWithShare;
+          if (listing && typeof webNavigator?.share === "function") {
+            try {
+              await webNavigator.share({ text: message, url });
+              if (active.current) setState({ sharing: false, linkCopied: true, error: null });
+              return;
+            } catch (shareError) {
+              const name = (shareError as { name?: string } | null)?.name;
+              if (name === "AbortError") {
+                if (active.current) setState({ sharing: false, linkCopied: false, error: null });
+                return;
+              }
+              if (name !== "NotAllowedError") throw shareError;
+            }
+          }
+          await navigator.clipboard.writeText(message);
           if (active.current) setState({ sharing: false, linkCopied: true, error: null });
         } else {
-          await Share.share({ message: url });
+          if (listing && capture) {
+            try {
+              const imageUri = await capture();
+              const sharedWithFile = await shareImageFile(imageUri, message, "Compartilhar anúncio");
+              if (sharedWithFile) {
+                if (active.current) setState({ sharing: false, linkCopied: false, error: null });
+                return;
+              }
+            } catch {
+              // Prossegue para o compartilhamento nativo do texto com link se a captura falhar
+            }
+          }
+          await Share.share({ message });
           if (active.current) setState({ sharing: false, linkCopied: false, error: null });
         }
       } catch (error) {
@@ -71,7 +104,7 @@ export function useShareListingViewModel(
         }
       }
     },
-    [useCases],
+    [useCases, shareImageFile],
   );
 
   const shareToWhatsApp = useCallback(

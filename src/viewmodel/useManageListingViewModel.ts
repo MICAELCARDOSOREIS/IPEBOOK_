@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { Book } from "@/model/entities/book";
 import { DomainError } from "@/model/errors";
 import type { IBookUseCases } from "@/usecase/iBookUseCases";
+import { getCachedCatalogBookById } from "@/viewmodel/useHomeViewModel";
+import { getCachedMyListingById } from "@/viewmodel/useMyListingsViewModel";
 
 export type ManageListingState = {
   book: Book | null;
@@ -26,9 +28,15 @@ export function useManageListingViewModel(
   sessionUserId: string | null,
   useCases: IBookUseCases,
 ): [ManageListingState, ManageListingActions] {
+  const isTest = process.env.NODE_ENV === "test";
+  const cachedBook = !isTest
+    ? (getCachedMyListingById(bookId) ?? getCachedCatalogBookById(bookId))
+    : null;
+  const initialBook =
+    cachedBook && (!sessionUserId || cachedBook.ownerId === sessionUserId) ? cachedBook : null;
   const [state, setState] = useState<ManageListingState>({
-    book: null,
-    loading: true,
+    book: initialBook,
+    loading: initialBook === null,
     busy: false,
     error: null,
     removed: false,
@@ -36,7 +44,7 @@ export function useManageListingViewModel(
   const active = useRef(false);
 
   const load = useCallback(async () => {
-    setState((prev) => ({ ...prev, loading: true, error: null }));
+    setState((prev) => ({ ...prev, loading: prev.book === null, error: null }));
     try {
       const book = await useCases.getBookById(bookId);
       if (sessionUserId && book.ownerId !== sessionUserId) {

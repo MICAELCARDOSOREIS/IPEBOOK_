@@ -29,6 +29,28 @@ export type OpenGraphMetadata = {
 export const DEFAULT_OG_IMAGE = "https://ipebook.app/icone-512.png";
 export const DEFAULT_SITE_NAME = "IpêBook Piripiri";
 
+const ILLUSTRATIVE_COVER_URLS = [
+  "https://ipebook.app/capas/capa-1.webp",
+  "https://ipebook.app/capas/capa-3.webp",
+  "https://ipebook.app/capas/capa-4.webp",
+] as const;
+
+function hashBookId(id: string): number {
+  let hash = 2166136261;
+  for (const char of id) {
+    hash ^= char.charCodeAt(0);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
+/** Devolve a URL pública da capa ilustrativa determinística associada ao identificador do livro. */
+export function getIllustrativeCoverUrl(bookId: string): string {
+  const cleanId = bookId?.trim();
+  if (!cleanId) return DEFAULT_OG_IMAGE;
+  return ILLUSTRATIVE_COVER_URLS[hashBookId(cleanId) % ILLUSTRATIVE_COVER_URLS.length];
+}
+
 /**
  * Constrói os metadados de Open Graph para um livro do catálogo de Piripiri.
  */
@@ -50,7 +72,10 @@ export function buildBookOpenGraph(book: OpenGraphBookInput): OpenGraphMetadata 
   const boxDetail = isBox ? `Coleção completa com ${book.boxVolumesCount} volumes. ` : "";
   const description = `${modality} ${location}. ${boxDetail}Acesse o IpêBook para ver detalhes e combinar a entrega segura!`;
 
-  const validPhoto = book.photoUrl && book.photoUrl.startsWith("http") ? book.photoUrl : DEFAULT_OG_IMAGE;
+  const validPhoto =
+    book.photoUrl && book.photoUrl.startsWith("http")
+      ? book.photoUrl
+      : getIllustrativeCoverUrl(book.id);
 
   return {
     title: pageTitle,

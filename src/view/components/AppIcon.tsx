@@ -104,11 +104,12 @@ export interface AppIconProps {
 export function AppIcon({ name, size = 24, color, filled = false }: AppIconProps) {
   const { colors } = useTheme();
   const resolvedColor = color ?? colors.text;
+  const symbolEntry = symbols[name] ?? symbols.info;
 
   if (Platform.OS === "ios") {
     return (
       <SymbolView
-        name={symbols[name].ios}
+        name={symbolEntry.ios}
         size={size}
         tintColor={resolvedColor}
         style={{ width: size, height: size }}
@@ -128,7 +129,7 @@ export function AppIcon({ name, size = 24, color, filled = false }: AppIconProps
 
   return (
     <MaterialIcons
-      name={symbols[name].android.replace(/_/g, "-") as never}
+      name={symbolEntry.android.replace(/_/g, "-") as never}
       size={size}
       color={resolvedColor}
       accessible={false}

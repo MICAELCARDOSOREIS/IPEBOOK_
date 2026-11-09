@@ -28,6 +28,7 @@ import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollP
 
 export type ProfileHubProps = {
   requireAuth?: boolean;
+  onBack?: () => void;
   onNavigateToSignIn?: () => void;
   onNavigateToEditProfile: () => void;
   onNavigateToCreateListing?: () => void;
@@ -47,6 +48,7 @@ export type ProfileHubProps = {
  */
 export default function ProfileHub({
   requireAuth = true,
+  onBack,
   onNavigateToSignIn,
   onNavigateToEditProfile,
   onNavigateToCreateListing,
@@ -72,6 +74,7 @@ export default function ProfileHub({
   const [signOutError, setSignOutError] = useState<string | null>(null);
   const wideWeb = useIsWideWeb();
 
+  const guardedBack = useGuardedPress(onBack);
   const guardedNavigateToSignIn = useGuardedPress(onNavigateToSignIn);
   const guardedNavigateToEditProfile = useGuardedPress(onNavigateToEditProfile);
   const guardedNavigateToCreateListing = useGuardedPress(onNavigateToCreateListing);
@@ -218,6 +221,17 @@ export default function ProfileHub({
           {/* Título editorial da marca (Figma 07.01 nó 563:8321: Source Serif 4 Bold 34px, #58331F)
               com entrada de Configurações no topo (ADR 0060), liberada também para visitante */}
           <View style={[styles.headerRow, wideWeb && styles.fullRow]}>
+            {!wideWeb && onBack ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Voltar"
+                hitSlop={8}
+                onPress={guardedBack}
+                style={({ pressed }) => [styles.settingsButton, pressed && styles.settingsButtonPressed]}
+              >
+                <AppIcon name="back" size={24} color={colors.m3.onSurface} />
+              </Pressable>
+            ) : null}
             <Text accessibilityRole="header" style={styles.title}>
               Meu perfil
             </Text>

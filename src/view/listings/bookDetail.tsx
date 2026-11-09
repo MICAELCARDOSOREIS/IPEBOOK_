@@ -238,121 +238,97 @@ export default function BookDetail({
     return "";
   }, [book, isOwner, isRequested]);
 
-  const handleShareToWhatsApp = useCallback(() => {
-    if (!book) return;
-    void shareActions.shareToWhatsApp(
-      book.id,
-      {
-        title: book.title,
-        author: book.author,
-        modality: book.modality,
-        price: book.price,
-        neighborhood: book.neighborhood,
-        isBox: book.isBox,
-        boxVolumesCount: book.boxVolumesCount,
-      },
-      captureShareImage,
-    );
-  }, [book, shareActions, captureShareImage]);
-
-  const actionBar = book && !state.loading ? (
-    <View style={[styles.bottomBar, wideWeb && styles.bottomBarWide]}>
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel="Compartilhar anúncio no WhatsApp"
-      accessibilityState={{ disabled: share.sharing }}
-      disabled={share.sharing}
-      onPress={handleShareToWhatsApp}
-      style={withPress(styles.whatsappButton)}
-    >
-      <AppIcon name="whatsapp" size={18} color={colors.nature.foliage} />
-      <Text style={styles.whatsappButtonText}>WhatsApp</Text>
-    </Pressable>
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel="Compartilhar anúncio como imagem"
-      accessibilityState={{ disabled: share.sharing }}
-      disabled={share.sharing}
-      onPress={() =>
-        void shareActions.shareImage(
-          book.id,
-          {
+  const shareableListing = useMemo(
+    () =>
+      book
+        ? {
             title: book.title,
             author: book.author,
             modality: book.modality,
             price: book.price,
             neighborhood: book.neighborhood,
+            condition: book.condition,
+            category: book.category,
             isBox: book.isBox,
             boxVolumesCount: book.boxVolumesCount,
-          },
-          captureShareImage,
-        )
-      }
-      style={withPress(styles.tonalButton)}
-    >
-      <AppIcon name="share" size={18} color={colors.m3.onSecondaryContainer} />
-      <Text style={styles.tonalButtonText}>{wideWeb ? "Outros apps" : "Outros"}</Text>
-    </Pressable>
-    {book.status === "reserved" || book.status === "delivered" || !sessionUserId || book.ownerId !== sessionUserId ? (
-      <View style={styles.primarySlot}>
-        {book.status === "reserved" || book.status === "delivered" ? (
+            photoUrl: book.photoUrl,
+          }
+        : undefined,
+    [book],
+  );
+
+  const handleShareToWhatsApp = useCallback(() => {
+    if (!book || !shareableListing) return;
+    void shareActions.shareToWhatsApp(book.id, shareableListing, captureShareImage);
+  }, [book, shareableListing, shareActions, captureShareImage]);
+
+  const handleShareLink = useCallback(() => {
+    void shareActions.share(book?.id ?? bookId, shareableListing, captureShareImage);
+  }, [book?.id, bookId, shareableListing, shareActions, captureShareImage]);
+
+  const primaryActionNode =
+    book && !state.loading ? (
+      book.status === "reserved" || book.status === "delivered" ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={statusA11yLabel}
+          onPress={handleStatusPress}
+          style={withPress([
+            styles.statusButton,
+            book.status === "reserved" ? styles.statusButtonReserved : styles.statusButtonDelivered,
+          ])}
+        >
+          <Text
+            style={[
+              styles.statusButtonText,
+              book.status === "reserved" ? styles.statusTextReserved : styles.statusTextDelivered,
+            ]}
+          >
+            {book.status === "delivered" ? "Entregue" : "Reservado"}
+          </Text>
+        </Pressable>
+      ) : !sessionUserId ? (
+        onNavigateToSignIn ? (
+          <FilledButton
+            label={primaryActionLabel}
+            onPress={guardedNavigateToSignIn}
+          />
+        ) : null
+      ) : book.ownerId !== sessionUserId ? (
+        isRequested ? (
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={statusA11yLabel}
-            onPress={handleStatusPress}
+            onPress={navigateToActiveNegotiation}
             style={withPress([
               styles.statusButton,
-              book.status === "reserved" ? styles.statusButtonReserved : styles.statusButtonDelivered,
+              isAccepted ? styles.statusButtonAccepted : styles.statusButtonRequested,
             ])}
           >
             <Text
               style={[
                 styles.statusButtonText,
-                book.status === "reserved" ? styles.statusTextReserved : styles.statusTextDelivered,
+                isAccepted ? styles.statusTextAccepted : styles.statusTextRequested,
               ]}
             >
-              {book.status === "delivered" ? "Entregue" : "Reservado"}
+              {isAccepted ? "Combinar encontro" : "Negociação solicitada"}
             </Text>
           </Pressable>
-        ) : !sessionUserId ? (
-          onNavigateToSignIn ? (
-            <FilledButton
-              label={primaryActionLabel}
-              onPress={guardedNavigateToSignIn}
-            />
-          ) : null
-        ) : book.ownerId !== sessionUserId ? (
-          isRequested ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={statusA11yLabel}
-              onPress={navigateToActiveNegotiation}
-              style={withPress([
-                styles.statusButton,
-                isAccepted ? styles.statusButtonAccepted : styles.statusButtonRequested,
-              ])}
-            >
-              <Text
-                style={[
-                  styles.statusButtonText,
-                  isAccepted ? styles.statusTextAccepted : styles.statusTextRequested,
-                ]}
-              >
-                {isAccepted ? "Combinar encontro" : "Negociação solicitada"}
-              </Text>
-            </Pressable>
-          ) : (
-            <FilledButton
-              label={primaryActionLabel}
-              loading={negotiation.pendingListingId === book.id}
-              loadingLabel="Solicitando negociação"
-              onPress={handlePrimaryAction}
-            />
-          )
-        ) : null}
-      </View>
-    ) : null}
-  </View>
+        ) : (
+          <FilledButton
+            label={primaryActionLabel}
+            loading={negotiation.pendingListingId === book.id}
+            loadingLabel="Solicitando negociação"
+            onPress={handlePrimaryAction}
+          />
+        )
+      ) : null
+    ) : null;
+
+  const actionBar = primaryActionNode ? (
+    <View style={[styles.bottomBar, wideWeb && styles.bottomBarWide]}>
+      <View style={styles.primarySlot}>{primaryActionNode}</View>
+    </View>
   ) : null;
 
   return (
@@ -387,7 +363,7 @@ export default function BookDetail({
           favoriteLoading={state.favoriteLoading}
           onBack={guardedBack}
           onShareWhatsApp={handleShareToWhatsApp}
-          onShareLink={() => void shareActions.share(book?.id ?? bookId)}
+          onShareLink={handleShareLink}
           onToggleFavorite={() => void actions.toggleFavorite(sessionUserId)}
           onOpenGallery={() => setGalleryVisible(true)}
         />
@@ -578,8 +554,8 @@ export default function BookDetail({
         </View>
       ) : null}
 
-      {/* 6. Barra fixa inferior: Compartilhar (tonal) + ação principal por modalidade */}
-      {book && !state.loading && !wideWeb ? (
+      {/* 6. Barra fixa inferior: ação principal por modalidade */}
+      {actionBar && !wideWeb ? (
         <SafeAreaView edges={["bottom"]} style={styles.bottomBarContainer}>
           {actionBar}
         </SafeAreaView>
@@ -729,36 +705,7 @@ function createStyles(colors: ColorPalette) {
       paddingHorizontal: tokens.spacing[16],
       paddingVertical: tokens.spacing[12],
     },
-    whatsappButton: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "center",
-      gap: tokens.spacing[6],
-      minHeight: 52,
-      borderRadius: tokens.radius.full,
-      backgroundColor: colors.nature.sprout,
-      paddingHorizontal: tokens.spacing[12],
-      borderWidth: 1,
-      borderColor: colors.nature.foliage,
-    },
-    whatsappButtonText: {
-      ...tokens.typography.labelLarge,
-      fontFamily: fontFamily.semiBold,
-      color: colors.nature.foliage,
-    },
-    tonalButton: {
-      flexDirection: "row",
-      minHeight: 52,
-      borderRadius: tokens.radius.full,
-      alignItems: "center",
-      justifyContent: "center",
-      gap: tokens.spacing[6],
-      backgroundColor: colors.m3.secondaryContainer,
-      paddingHorizontal: tokens.spacing[12],
-    },
-    tonalButtonText: { ...tokens.typography.bodyLarge, fontWeight: tokens.fontWeight.semiBold, color: colors.m3.onSecondaryContainer },
     primarySlot: { flex: 1 },
-    statusPill: { alignItems: "center", justifyContent: "center", minHeight: 52 },
     statusButton: {
       flex: 1,
       minHeight: 52,

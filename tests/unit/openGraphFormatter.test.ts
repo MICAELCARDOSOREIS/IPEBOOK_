@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildBookOpenGraph,
   buildOpenGraphHtmlTags,
+  getIllustrativeCoverUrl,
   injectOpenGraphIntoHtml,
   DEFAULT_OG_IMAGE,
   DEFAULT_SITE_NAME,
@@ -27,7 +28,7 @@ describe("openGraphFormatter (Spec 119, ADR 0093)", () => {
     expect(meta.siteName).toBe(DEFAULT_SITE_NAME);
   });
 
-  it("monta metadados para anúncio de doação sem bairro e sem foto usando imagem fallback", () => {
+  it("monta metadados para anúncio de doação sem bairro e sem foto usando a capa ilustrativa do livro", () => {
     const meta = buildBookOpenGraph({
       id: "livro-456",
       title: "O Alquimista",
@@ -38,7 +39,9 @@ describe("openGraphFormatter (Spec 119, ADR 0093)", () => {
 
     expect(meta.title).toBe("O Alquimista · Paulo Coelho | IpêBook Piripiri");
     expect(meta.description).toContain("🎁 Doação gratuita em Piripiri - PI.");
-    expect(meta.image).toBe(DEFAULT_OG_IMAGE);
+    expect(meta.image).toBe(getIllustrativeCoverUrl("livro-456"));
+    expect(meta.image).toMatch(/^https:\/\/ipebook\.app\/capas\/capa-[134]\.webp$/);
+    expect(getIllustrativeCoverUrl("")).toBe(DEFAULT_OG_IMAGE);
     expect(meta.url).toBe("https://ipebook.app/livro/livro-456");
   });
 

@@ -21,7 +21,11 @@ export function useReceivedRequestsViewModel(
   useCases: IBookRequestUseCases,
 ): [ReceivedRequestsState, ReceivedRequestsActions] {
   const load = useCallback(() => useCases.listReceivedRequests(sessionUserId), [useCases, sessionUserId]);
-  const [listState, reload, active] = useRequestList(load);
+  const [listState, reload, active] = useRequestList(
+    load,
+    undefined,
+    sessionUserId ? `received:${sessionUserId}` : undefined,
+  );
   const [respondingId, setRespondingId] = useState<string | null>(null);
   const [respondError, setRespondError] = useState<{ id: string; message: string } | null>(null);
 
