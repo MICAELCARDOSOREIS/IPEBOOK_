@@ -53,9 +53,27 @@ export function FavoriteButton({ bookId, userId, onToggleSuccess }: FavoriteButt
         </Pressable>
       </Animated.View>
       {state.error ? (
-        <Text accessibilityRole="alert" style={{ color: colors.error, position: "absolute", top: tokens.accessibility.touchTarget, fontSize: tokens.fontSize[10], textAlign: "center" }}>
-          {state.error}
-        </Text>
+        <View
+          style={{
+            position: "absolute",
+            top: tokens.accessibility.touchTarget + 4,
+            paddingHorizontal: tokens.spacing[8],
+            paddingVertical: tokens.spacing[2],
+            backgroundColor: colors.errorContainer,
+            borderRadius: tokens.radius.small,
+            borderWidth: 1,
+            borderColor: colors.error,
+            zIndex: 10,
+          }}
+        >
+          <Text
+            accessibilityRole="alert"
+            accessibilityLiveRegion="polite"
+            style={{ color: colors.text, fontSize: tokens.fontSize[10], textAlign: "center", fontWeight: "500" }}
+          >
+            {state.error}
+          </Text>
+        </View>
       ) : null}
     </View>
   );

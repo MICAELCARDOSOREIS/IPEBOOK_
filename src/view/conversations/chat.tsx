@@ -376,7 +376,8 @@ export function Chat({
             )}
 
             {state.sendError ? (
-              <View accessibilityRole="alert" style={styles.sendError}>
+              <View accessibilityRole="alert" style={styles.sendErrorCard}>
+                <AppIcon name="error" size={18} color={colors.error} />
                 <Text style={styles.sendErrorText}>{state.sendError}</Text>
                 <Pressable accessibilityRole="button" accessibilityLabel="Reenviar mensagem" onPress={() => void actions.retryLastMessage()} hitSlop={8}>
                   <Text style={styles.retryText}>Reenviar</Text>
@@ -557,19 +558,22 @@ function createStyles(colors: ColorPalette) {
     emptyTitle: { ...tokens.typography.titleMedium, color: colors.m3.onSurface },
     emptyBody: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant, textAlign: "center", maxWidth: 300 },
     suggestions: { flexDirection: "row", flexWrap: "wrap", justifyContent: "center", gap: tokens.spacing[8], marginTop: tokens.spacing[8] },
-    sendError: {
+    sendErrorCard: {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
       gap: tokens.spacing[12],
       marginHorizontal: tokens.spacing[16],
+      marginVertical: tokens.spacing[8],
       paddingHorizontal: tokens.spacing[12],
       paddingVertical: tokens.spacing[8],
-      borderRadius: tokens.radius.cardSmall,
+      borderRadius: tokens.radius.medium,
       backgroundColor: colors.errorContainer,
+      borderWidth: 1,
+      borderColor: colors.error,
     },
-    sendErrorText: { flex: 1, ...tokens.typography.bodyMedium, color: colors.error },
-    retryText: { ...tokens.typography.labelMedium, fontWeight: tokens.fontWeight.semiBold, color: colors.error },
+    sendErrorText: { flex: 1, ...tokens.typography.bodyMedium, color: colors.text, fontWeight: "500" },
+    retryText: { ...tokens.typography.labelMedium, fontWeight: tokens.fontWeight.bold, color: colors.error },
     charCountRow: {
       alignItems: "flex-end",
       paddingHorizontal: tokens.spacing[20],
