@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppIcon } from "@/view/components/AppIcon";
@@ -13,7 +13,8 @@ export type HomeFloatingChatButtonProps = {
 /**
  * Botão Flutuante de Mensagens/Conversas (FAB Material 3 - Estilo Ipêbook)
  * Renderizado no canto inferior direito da Home em telas móveis, posicionado
- * com respiro harmônico acima da barra de navegação flutuante.
+ * com respiro harmônico acima da barra de navegação flutuante, com acabamento
+ * translúcido em vidro, borda sutil e state layer de hover.
  */
 export function HomeFloatingChatButton({
   badgeCount = 0,
@@ -22,6 +23,8 @@ export function HomeFloatingChatButton({
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const [isHovered, setIsHovered] = useState(false);
+
   // Posiciona o botão flutuante com respiro harmônico de 16px acima do topo da barra de navegação flutuante
   const navBarPaddingBottom = Math.max(tokens.spacing[20], insets.bottom + tokens.spacing[10]);
   const navBarDockHeight = 64;
@@ -36,10 +39,13 @@ export function HomeFloatingChatButton({
           ? `Abrir mensagens flutuante, ${badgeCount} ${badgeCount === 1 ? "nova" : "novas"}`
           : "Abrir mensagens flutuante"
       }
+      onHoverIn={() => setIsHovered(true)}
+      onHoverOut={() => setIsHovered(false)}
       onPress={onPress}
       style={({ pressed }) => [
         styles.floatingChatButton,
         { bottom },
+        isHovered && styles.floatingChatButtonHovered,
         pressed && styles.floatingChatButtonPressed,
       ]}
     >
@@ -56,6 +62,10 @@ export function HomeFloatingChatButton({
 }
 
 function createStyles(colors: ColorPalette) {
+  const isWeb = Platform.OS === "web";
+  const webFabBg =
+    colors.surface === "#FCFAF5" ? "rgba(235, 244, 236, 0.92)" : "rgba(39, 66, 44, 0.90)";
+
   return StyleSheet.create({
     floatingChatButton: {
       position: "absolute",
@@ -63,7 +73,9 @@ function createStyles(colors: ColorPalette) {
       width: 56,
       height: 56,
       borderRadius: tokens.radius.card,
-      backgroundColor: colors.nature.sprout,
+      backgroundColor: isWeb ? webFabBg : colors.nature.sprout,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
       alignItems: "center",
       justifyContent: "center",
       elevation: 6,
@@ -72,12 +84,20 @@ function createStyles(colors: ColorPalette) {
       shadowOpacity: 0.2,
       shadowRadius: 8,
       zIndex: 90,
-      ...(Platform.OS === "web"
+      ...(isWeb
         ? ({
             cursor: "pointer",
             userSelect: "none",
+            backdropFilter: "blur(16px)",
+            WebkitBackdropFilter: "blur(16px)",
           } as never)
         : {}),
+    },
+    floatingChatButtonHovered: {
+      transform: [{ scale: 1.05 }],
+      elevation: 8,
+      shadowOpacity: 0.26,
+      shadowRadius: 12,
     },
     floatingChatButtonPressed: {
       transform: [{ scale: 0.94 }],

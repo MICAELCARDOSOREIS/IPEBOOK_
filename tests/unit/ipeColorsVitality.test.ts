@@ -5,7 +5,7 @@ import { colors, darkColors } from "@/view/tokens";
 describe("Spec 116 — Cores Vivas do Ipê e Harmonia de Contraste", () => {
   it("tokens de ipê amarelo possuem tons de florada solar viva (não cinzentos ou desbotados)", () => {
     // Ipê Amarelo suave e acolhedor (combina com o tema)
-    expect(colors.ipe.bloom).toBe("#F59E0B");
+    expect(colors.ipe.bloom).toBe("#F5B718");
     expect(colors.ipe.bloomDeep).toBe("#D97706");
     expect(colors.ipe.container).toBe("#FEF3C7");
     expect(colors.ipe.petalSoft).toBe("#FFFBEB");

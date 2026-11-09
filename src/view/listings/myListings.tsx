@@ -230,14 +230,18 @@ export function MyListings({
               </View>
             ) : null}
 
-            {/* Resumo por modalidade */}
+            {/* Resumo por modalidade (cores canônicas da ADR 0104 / tokens.colors.badge) */}
             <View style={styles.statsRow}>
               {stats.map((stat) => (
                 <View
                   key={stat.key}
                   accessible
                   accessibilityLabel={`${stat.count} ${stat.label}`}
-                  style={[styles.statCard, wideWeb && styles.statCardWide, { backgroundColor: colors.badge[stat.key].background }]}
+                  style={[
+                    styles.statCard,
+                    wideWeb && styles.statCardWide,
+                    { backgroundColor: colors.badge[stat.key].background },
+                  ]}
                 >
                   <Text style={[styles.statCount, { color: colors.badge[stat.key].text }]}>{stat.count}</Text>
                   <Text style={[styles.statLabel, { color: colors.badge[stat.key].text }]}>{stat.label}</Text>
@@ -245,16 +249,20 @@ export function MyListings({
               ))}
             </View>
 
-            {/* Abas: segmented buttons M3 no Android; controle segmentado do Figma no iPhone. */}
-            <View
+            {/* Abas: em estilo pílulas/chips em scroll horizontal consistente com o restante do app */}
+            <ScrollView
               testID="my-listings-tablist"
               accessibilityRole="tablist"
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.tabsScrollContent}
               style={[
                 isIOS ? styles.segmentTrackIOS : styles.segmentRowAndroid,
                 wideWeb && styles.segmentRowWide,
               ]}
+              keyboardShouldPersistTaps="handled"
             >
-              {tabs.map((tab, index) => {
+              {tabs.map((tab) => {
                 const selected = activeTab === tab.key;
                 const a11yLabel = tab.badge ? `${tab.label}, ${tab.badge} em aberto` : tab.label;
                 return (
@@ -265,23 +273,19 @@ export function MyListings({
                     accessibilityState={{ selected }}
                     onPress={() => setActiveTab(tab.key)}
                     style={({ pressed }) => [
-                      isIOS ? styles.segmentIOS : styles.segmentAndroid,
-                      !isIOS && index > 0 ? styles.segmentAndroidJoined : null,
-                      !isIOS && index === 0 ? styles.segmentAndroidFirst : null,
-                      !isIOS && index === tabs.length - 1 ? styles.segmentAndroidLast : null,
-                      selected ? (isIOS ? styles.segmentIOSSelected : styles.segmentAndroidSelected) : null,
-                      pressed ? styles.segmentPressed : null,
+                      styles.tabChip,
+                      selected ? styles.tabChipSelected : styles.tabChipUnselected,
+                      pressed && styles.tabChipPressed,
                     ]}
                   >
-                    {!isIOS && selected ? (
+                    {selected ? (
                       <AppIcon name="check" size={16} color={colors.m3.onSecondaryContainer} />
                     ) : null}
                     <Text
                       numberOfLines={1}
                       style={[
-                        styles.segmentText,
-                        wideWeb && styles.segmentTextWide,
-                        selected ? (isIOS ? styles.segmentTextSelectedIOS : styles.segmentTextSelected) : null,
+                        styles.tabChipText,
+                        selected ? styles.tabChipTextSelected : styles.tabChipTextUnselected,
                       ]}
                     >
                       {tab.label}
@@ -294,7 +298,7 @@ export function MyListings({
                   </Pressable>
                 );
               })}
-            </View>
+            </ScrollView>
 
             {activeTab === "listings" ? (
               <>
@@ -682,33 +686,62 @@ function createStyles(colors: ColorPalette) {
     scroll: { paddingBottom: tokens.spacing[96], gap: tokens.spacing[16] },
     statsRow: { flexDirection: "row", gap: tokens.spacing[8] },
     // Web larga: número e rótulo lado a lado em cartões compactos, sem esticar pela largura toda.
-    statCardWide: { flex: 0, minWidth: 160, flexDirection: "row", alignItems: "baseline", gap: tokens.spacing[8], paddingHorizontal: tokens.spacing[16] },
+    statCardWide: { flex: 0, minWidth: 160, paddingHorizontal: tokens.spacing[16] },
     statCard: {
       flex: 1,
       borderRadius: tokens.radius.card,
-      paddingHorizontal: tokens.spacing[12],
+      paddingHorizontal: tokens.spacing[14],
       paddingVertical: tokens.spacing[12],
       gap: tokens.spacing[2],
+      elevation: 1,
+      shadowColor: colors.m3.shadow,
+      shadowOpacity: 0.08,
+      shadowRadius: 3,
+      shadowOffset: { width: 0, height: 1 },
     },
-    statCount: { ...tokens.typography.brandTitle },
-    statLabel: { ...tokens.typography.footnote },
-    // Android: segmented buttons M3 (40 dp, contorno, seleção em secondaryContainer com ✓).
+    statCount: { ...tokens.typography.brandTitle, fontSize: 22, lineHeight: 26 },
+    statLabel: { ...tokens.typography.footnote, fontWeight: tokens.fontWeight.semiBold, opacity: 0.95 },
+    // Abas em estilo pílulas/chips com rolagem horizontal (consistente com o resto do app)
     segmentRowAndroid: { flexDirection: "row" },
-    segmentAndroid: {
-      flex: 1,
-      minHeight: tokens.accessibility.touchTarget,
+    tabsScrollContent: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[8],
+      paddingRight: tokens.spacing[16],
+    },
+    tabChip: {
+      minHeight: tokens.spacing[40],
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
-      gap: tokens.spacing[4],
-      paddingHorizontal: tokens.spacing[8],
-      borderWidth: 1,
-      borderColor: colors.m3.outline,
+      gap: tokens.spacing[6],
+      paddingHorizontal: tokens.spacing[16],
+      borderRadius: tokens.radius.full,
     },
-    segmentAndroidJoined: { marginLeft: -1 },
-    segmentAndroidFirst: { borderTopLeftRadius: tokens.radius.full, borderBottomLeftRadius: tokens.radius.full },
-    segmentAndroidLast: { borderTopRightRadius: tokens.radius.full, borderBottomRightRadius: tokens.radius.full },
-    segmentAndroidSelected: { backgroundColor: colors.m3.secondaryContainer },
+    tabChipUnselected: {
+      backgroundColor: colors.m3.surfaceContainerLowest,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+    },
+    tabChipSelected: {
+      backgroundColor: colors.m3.secondaryContainer,
+      borderWidth: 1,
+      borderColor: "transparent",
+    },
+    tabChipPressed: {
+      opacity: 0.85,
+      transform: [{ scale: 0.97 }],
+    },
+    tabChipText: {
+      ...tokens.typography.labelLarge,
+    },
+    tabChipTextUnselected: {
+      color: colors.m3.onSurfaceVariant,
+    },
+    tabChipTextSelected: {
+      color: colors.m3.onSecondaryContainer,
+      fontWeight: tokens.fontWeight.semiBold,
+    },
     // iPhone: controle segmentado do Figma (trilho cinza, segmento selecionado claro e elevado).
     segmentTrackIOS: {
       flexDirection: "row",
