@@ -74,4 +74,28 @@ describe("Topo da Home — Botão de perfil e sem sino de notificações (Spec 0
     fireEvent.press(chatFab);
     expect(onNavigateToConversations).toHaveBeenCalledTimes(1);
   });
+
+  it("renderiza o botão flutuante de mensagens com badge singular (1) e limite (9+)", async () => {
+    const fn = vi.fn();
+    let screen1!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen1 = await render(<Home onNavigateToConversations={fn} conversationsBadgeCount={1} />);
+    });
+    expect(screen1.getByRole("button", { name: "Abrir mensagens flutuante, 1 nova" })).toBeDefined();
+    expect(screen1.getByText("1")).toBeDefined();
+
+    let screen10!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen10 = await render(<Home onNavigateToConversations={fn} conversationsBadgeCount={12} />);
+    });
+    expect(screen10.getByRole("button", { name: "Abrir mensagens flutuante, 12 novas" })).toBeDefined();
+    expect(screen10.getByText("9+")).toBeDefined();
+
+    let screen0!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen0 = await render(<Home onNavigateToConversations={fn} conversationsBadgeCount={0} />);
+    });
+    expect(screen0.getByRole("button", { name: "Abrir mensagens flutuante" })).toBeDefined();
+    expect(screen0.queryByTestId("home-floating-chat-badge")).toBeNull();
+  });
 });

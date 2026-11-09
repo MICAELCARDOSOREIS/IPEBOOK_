@@ -348,7 +348,9 @@ export function Chat({
                 </Text>
               </View>
             ) : state.error ? (
-              <ErrorState message={state.error} onRetry={() => void actions.reload()} />
+              <View style={styles.loadingContainer}>
+                <ErrorState message={state.error} onRetry={() => void actions.reload()} />
+              </View>
             ) : timeline.length === 0 ? (
               <View style={styles.empty}>
                 <View style={styles.emptyIcon}>

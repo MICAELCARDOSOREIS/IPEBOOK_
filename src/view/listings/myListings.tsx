@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import type { BookModality } from "@/model/entities/book";
 import {
@@ -124,7 +124,12 @@ export function MyListings({
   ];
   const isIOS = Platform.OS === "ios";
   const wideWeb = useIsWideWeb();
+  const insets = useSafeAreaInsets();
   const hasBooks = !state.loading && !state.error && state.books.length > 0;
+  // Posiciona o FAB com respiro harmônico de 16px acima do topo da barra de navegação flutuante
+  const navBarPaddingBottom = Math.max(tokens.spacing[16], insets.bottom + tokens.spacing[8]);
+  const navBarDockHeight = 64;
+  const fabBottom = navBarPaddingBottom + navBarDockHeight + tokens.spacing[16];
 
   return (
     <SafeAreaView edges={["top", "left", "right"]} style={styles.page}>
@@ -190,7 +195,18 @@ export function MyListings({
             onNavigateToHelp={guardedHelp}
           />
         ) : (
-          <ScrollView {...standardVerticalScrollProps} contentContainerStyle={[styles.scroll, { paddingBottom: scrollBottomPadding.withBottomBar }]}>
+          <ScrollView
+            {...standardVerticalScrollProps}
+            contentContainerStyle={[
+              styles.scroll,
+              {
+                paddingBottom:
+                  hasBooks && onNavigateToCreateListing && !wideWeb
+                    ? scrollBottomPadding.withBottomBarAndFab
+                    : scrollBottomPadding.withBottomBar,
+              },
+            ]}
+          >
             {/* Banner de incentivo à circulação na web larga (Figma 05.01) */}
             {wideWeb && onNavigateToCreateListing ? (
               <View style={styles.webExchangeBanner} testID="shelf-exchange-banner">
@@ -397,7 +413,7 @@ export function MyListings({
           accessibilityLabel="Anunciar livro"
           onPress={guardedCreateListing}
           android_ripple={{ color: colors.m3.onPrimaryContainer, borderless: false }}
-          style={({ pressed }) => [styles.fab, pressed && styles.fabPressed]}
+          style={({ pressed }) => [styles.fab, { bottom: fabBottom }, pressed && styles.fabPressed]}
         >
           <AppIcon name="add" size={24} color={colors.m3.onPrimaryContainer} />
         </Pressable>
@@ -524,7 +540,6 @@ function createStyles(colors: ColorPalette) {
     fab: {
       position: "absolute",
       right: tokens.spacing[16],
-      bottom: tokens.spacing[16],
       width: tokens.spacing[56],
       height: tokens.spacing[56],
       borderRadius: tokens.radius.card,
@@ -536,6 +551,7 @@ function createStyles(colors: ColorPalette) {
       shadowOpacity: 0.25,
       shadowRadius: 6,
       shadowOffset: { width: 0, height: 3 },
+      zIndex: 90,
     },
     fabPressed: {
       opacity: 0.92,
