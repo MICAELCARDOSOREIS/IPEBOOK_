@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Animated, AppState, Image, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
+import type { Book } from "@/model/entities/book";
 import {
   makeAuthViewModel,
   makeHomeViewModel,
