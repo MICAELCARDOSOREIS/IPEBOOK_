@@ -4,6 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { USER_REPORT_REASONS } from "@/model/entities/report";
 import { FilledButton } from "@/view/components/FilledButton";
 import { IconBadge } from "@/view/components/IconBadge";
+import { InlineErrorCard } from "@/view/components/InlineErrorCard";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { tokens, type ColorPalette } from "@/view/tokens";
@@ -141,9 +142,7 @@ export default function ReportUser({ userId, userName, onBack, onNavigateToLogin
             style={styles.input}
           />
 
-          {state.error ? (
-            <Text accessibilityRole="alert" style={styles.error}>{state.error}</Text>
-          ) : null}
+          {state.error ? <InlineErrorCard message={state.error} /> : null}
 
           <FilledButton
             label="Enviar denúncia"

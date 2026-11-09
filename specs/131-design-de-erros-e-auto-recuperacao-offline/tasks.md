@@ -3,7 +3,8 @@
 - [x] **Tarefa 1: Componente `InlineErrorCard` e padronização visual de erros**
   - [x] 1.1 Criar `src/view/components/InlineErrorCard.tsx` com design harmonioso ao tema.
   - [x] 1.2 Aplicar em `src/view/conversations/chat.tsx` (para `sendError`) e `src/view/components/FavoriteButton.tsx`.
-  - [x] 1.3 Criar testes em `tests/components/inlineErrorCard.test.tsx`.
+  - [x] 1.3 Aplicar em todas as telas restantes com erros inline (`reportUser.tsx`, `meetingCard.tsx`, `manageListing.tsx`, `ProposalSheet.tsx`, `betaInviteScreen.tsx`, `resetPassword.tsx`, `moderation.tsx` e `createListingStep{1,2,3}.tsx`).
+  - [x] 1.4 Criar testes em `tests/components/inlineErrorCard.test.tsx`.
 
 - [x] **Tarefa 2: Refinamento de `ErrorState` e `OfflineState`**
   - [x] 2.1 Refinar layout visual de `ErrorState.tsx` com card centralizado acolhedor.
