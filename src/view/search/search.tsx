@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { ScreenContainer } from "@/view/components/ScreenContainer";
 import { makeAuthViewModel, makeNetworkStatus, makeSearchViewModel } from "@/di/container";
 import type { SearchModalityFilter } from "@/viewmodel/useSearchViewModel";
 import { SORT_LABELS } from "@/viewmodel/searchFilters";
@@ -366,7 +366,72 @@ export default function Search({
   );
 
   return (
-    <SafeAreaView edges={["top", "left", "right"]} style={styles.page}>
+    <ScreenContainer
+      edges={["top", "left", "right"]}
+      maxWidth={wideWeb ? WEB_MAX_WIDTH : 720}
+      scroll={false}
+      paddingHorizontal={0}
+      paddingTop={0}
+      paddingBottom={0}
+      overlay={
+        <>
+          {showScrollTop ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Voltar ao topo da lista"
+              onPress={() => flatListRef.current?.scrollToOffset({ offset: 0, animated: true })}
+              style={withPress(styles.scrollTopFab)}
+            >
+              <View style={{ transform: [{ rotate: "180deg" }] }}>
+                <AppIcon name="chevronDown" size={24} color={colors.m3.onPrimaryContainer} />
+              </View>
+            </Pressable>
+          ) : null}
+
+          <View pointerEvents="box-none" style={styles.snackbarContainer}>
+            <Snackbar
+              visible={snackbarMessage !== null}
+              message={snackbarMessage ?? ""}
+              actionLabel={onNavigateToFavorites ? "Ver favoritos" : undefined}
+              onAction={guardedNavigateToFavorites}
+              onDismiss={() => setSnackbarMessage(null)}
+              duration={3500}
+            />
+          </View>
+
+          <FilterSheet
+            visible={showFilterSheet}
+            draftFilters={state.draftFilters}
+            sortBy={state.sortBy}
+            availableCategories={state.availableCategories}
+            resultCount={state.draftResultCount}
+            onChange={actions.updateDraftFilters}
+            onSortChange={actions.setSortBy}
+            onApply={() => {
+              actions.applyDraftFilters();
+              setShowFilterSheet(false);
+            }}
+            onReset={() => {
+              actions.resetFilters();
+              setShowFilterSheet(false);
+            }}
+            onClose={() => setShowFilterSheet(false)}
+          />
+          <SortSheet
+            visible={showSortSheet}
+            selected={state.sortBy}
+            onSelect={actions.setSortBy}
+            onClose={() => setShowSortSheet(false)}
+          />
+          <NeighborhoodSelectorModal
+            visible={neighborhoodHook.isSelectorOpen}
+            currentNeighborhood={effectiveNeighborhood}
+            onSelect={handleSelectNeighborhoodOption}
+            onClose={neighborhoodHook.closeSelector}
+          />
+        </>
+      }
+    >
       <View style={wideWeb ? styles.wideRow : styles.flexOne}>
       {wideWeb ? (
         <WebFilterSidebar
@@ -472,61 +537,7 @@ export default function Search({
         }}
       />
       </View>
-      {showScrollTop ? (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Voltar ao topo da lista"
-          onPress={() => flatListRef.current?.scrollToOffset({ offset: 0, animated: true })}
-          style={withPress(styles.scrollTopFab)}
-        >
-          <View style={{ transform: [{ rotate: "180deg" }] }}>
-            <AppIcon name="chevronDown" size={24} color={colors.m3.onPrimaryContainer} />
-          </View>
-        </Pressable>
-      ) : null}
-
-      <View pointerEvents="box-none" style={styles.snackbarContainer}>
-        <Snackbar
-          visible={snackbarMessage !== null}
-          message={snackbarMessage ?? ""}
-          actionLabel={onNavigateToFavorites ? "Ver favoritos" : undefined}
-          onAction={guardedNavigateToFavorites}
-          onDismiss={() => setSnackbarMessage(null)}
-          duration={3500}
-        />
-      </View>
-
-      <FilterSheet
-        visible={showFilterSheet}
-        draftFilters={state.draftFilters}
-        sortBy={state.sortBy}
-        availableCategories={state.availableCategories}
-        resultCount={state.draftResultCount}
-        onChange={actions.updateDraftFilters}
-        onSortChange={actions.setSortBy}
-        onApply={() => {
-          actions.applyDraftFilters();
-          setShowFilterSheet(false);
-        }}
-        onReset={() => {
-          actions.resetFilters();
-          setShowFilterSheet(false);
-        }}
-        onClose={() => setShowFilterSheet(false)}
-      />
-      <SortSheet
-        visible={showSortSheet}
-        selected={state.sortBy}
-        onSelect={actions.setSortBy}
-        onClose={() => setShowSortSheet(false)}
-      />
-      <NeighborhoodSelectorModal
-        visible={neighborhoodHook.isSelectorOpen}
-        currentNeighborhood={effectiveNeighborhood}
-        onSelect={handleSelectNeighborhoodOption}
-        onClose={neighborhoodHook.closeSelector}
-      />
-    </SafeAreaView>
+    </ScreenContainer>
   );
 }
 
