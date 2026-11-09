@@ -138,7 +138,9 @@ export default function Favorites({
           </Pressable>
         </View>
       ) : state.loading ? (
-        <LoadingState label="Carregando favoritos" />
+        <View style={styles.loadingContainer}>
+          <LoadingState label="Carregando favoritos" />
+        </View>
       ) : state.error ? (
         isOnline ? (
           <ErrorState message={state.error} onRetry={() => void actions.reload()} />
@@ -243,6 +245,11 @@ export default function Favorites({
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     page: { flex: 1, backgroundColor: colors.background },
+    loadingContainer: {
+      flex: 1,
+      paddingHorizontal: tokens.spacing[16],
+      paddingTop: tokens.spacing[8],
+    },
     wideHeader: {
       width: "100%",
       maxWidth: WEB_MAX_WIDTH,

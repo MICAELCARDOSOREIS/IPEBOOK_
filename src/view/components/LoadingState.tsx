@@ -15,6 +15,8 @@ export type LoadingStateProps = {
   srText?: string;
   /** Formato estrutural das caixinhas de esqueleto (Spec 132 / ADR 0103). */
   variant?: LoadingSkeletonVariant;
+  /** Estilos customizados adicionais para o container do esqueleto. */
+  style?: any;
 };
 
 /**
@@ -26,6 +28,7 @@ export function LoadingState({
   label = "Carregando",
   srText,
   variant = "list",
+  style,
 }: LoadingStateProps) {
   const styles = useMemo(() => createStyles(), []);
   const pulseAnim = useRef(new Animated.Value(0.5)).current;
@@ -66,7 +69,7 @@ export function LoadingState({
     <View
       testID={`loading-skeleton-${variant}`}
       accessibilityLiveRegion="polite"
-      style={styles.container}
+      style={[styles.container, style]}
     >
       {/* Nó acessível para leitores de tela e contratos de acessibilidade, sem exibir texto visual */}
       <View accessibilityLabel={label} style={styles.srOnly}>
