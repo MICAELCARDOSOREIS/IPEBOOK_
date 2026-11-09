@@ -106,29 +106,31 @@ export function CatalogCarousel({
         <View style={styles.carouselCardMeta}>
           <View style={styles.carouselCardTopGroup}>
             <View style={styles.carouselCardModalityRow}>
-              <View style={[styles.carouselCardModalityPill, { backgroundColor: tag.background }]}>
-                <Text numberOfLines={1} style={[styles.carouselCardModality, { color: tag.text }]}>
-                  {tag.label}
-                </Text>
-              </View>
-              {item.isBox ? (
-                <View
-                  style={[
-                    styles.carouselCardModalityPill,
-                    { backgroundColor: colors.m3.secondaryContainer },
-                  ]}
-                >
-                  <Text
-                    numberOfLines={1}
-                    style={[
-                      styles.carouselCardModality,
-                      { color: colors.m3.onSecondaryContainer },
-                    ]}
-                  >
-                    {item.boxVolumesCount ? `Box (${item.boxVolumesCount} vols)` : "Box"}
+              <View style={styles.carouselCardPillsGroup}>
+                <View style={[styles.carouselCardModalityPill, { backgroundColor: tag.background }]}>
+                  <Text numberOfLines={1} style={[styles.carouselCardModality, { color: tag.text }]}>
+                    {tag.label}
                   </Text>
                 </View>
-              ) : null}
+                {item.isBox ? (
+                  <View
+                    style={[
+                      styles.carouselCardModalityPill,
+                      { backgroundColor: colors.m3.secondaryContainer },
+                    ]}
+                  >
+                    <Text
+                      numberOfLines={1}
+                      style={[
+                        styles.carouselCardModality,
+                        { color: colors.m3.onSecondaryContainer },
+                      ]}
+                    >
+                      {item.boxVolumesCount ? `Box (${item.boxVolumesCount} vols)` : "Box"}
+                    </Text>
+                  </View>
+                ) : null}
+              </View>
               <Text numberOfLines={1} style={styles.carouselCardPrice}>
                 {priceText}
               </Text>
@@ -138,30 +140,26 @@ export function CatalogCarousel({
               <Text numberOfLines={1} style={styles.carouselCardAuthor}>{item.author}</Text>
             </View>
           </View>
-          {item.neighborhood || item.status === "reserved" ? (
-            <View style={styles.carouselCardFooterRow}>
-              {item.neighborhood ? (
-                <View style={styles.carouselCardLocationRow}>
-                  <AppIcon name="place" size={13} color={colors.nature.foliageDeep} />
-                  <Text numberOfLines={1} style={styles.carouselCardNeighborhood}>
-                    {item.neighborhood}
-                  </Text>
-                </View>
-              ) : null}
-              {item.status === "reserved" ? (
-                <View
-                  style={[
-                    styles.carouselCardModalityPill,
-                    { backgroundColor: colors.badge.donation.background },
-                  ]}
-                >
-                  <Text style={[styles.carouselCardModality, { color: colors.badge.donation.text }]}>
-                    Reservado
-                  </Text>
-                </View>
-              ) : null}
+          <View style={styles.carouselCardFooterRow}>
+            <View style={styles.carouselCardLocationRow}>
+              <AppIcon name="place" size={13} color={colors.nature.foliageDeep} />
+              <Text numberOfLines={1} style={styles.carouselCardNeighborhood}>
+                {item.neighborhood || "Piripiri"}
+              </Text>
             </View>
-          ) : null}
+            {item.status === "reserved" ? (
+              <View
+                style={[
+                  styles.carouselCardReservedPill,
+                  { backgroundColor: colors.badge.donation.background },
+                ]}
+              >
+                <Text style={[styles.carouselCardReservedText, { color: colors.badge.donation.text }]}>
+                  Reservado
+                </Text>
+              </View>
+            ) : null}
+          </View>
         </View>
       </Pressable>
     );
@@ -617,48 +615,75 @@ function createStyles(colors: ColorPalette) {
       flex: 1,
       justifyContent: "space-between",
       paddingHorizontal: tokens.spacing[12],
-      paddingVertical: tokens.spacing[10],
-      gap: tokens.spacing[6],
+      paddingTop: tokens.spacing[12],
+      paddingBottom: tokens.spacing[10],
+      gap: tokens.spacing[8],
       backgroundColor: colors.m3.surfaceContainerLowest,
       borderBottomLeftRadius: tokens.radius.large,
       borderBottomRightRadius: tokens.radius.large,
     },
     carouselCardTopGroup: {
-      gap: tokens.spacing[6],
+      gap: tokens.spacing[8],
     },
     carouselCardTitleBlock: {
-      gap: 2,
+      gap: 3,
     },
-    carouselCardModalityRow: { flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: tokens.spacing[6] },
+    carouselCardModalityRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      flexWrap: "wrap",
+      gap: tokens.spacing[6],
+    },
+    carouselCardPillsGroup: {
+      flexDirection: "row",
+      alignItems: "center",
+      flexWrap: "wrap",
+      gap: tokens.spacing[6],
+    },
     carouselCardModalityPill: {
       paddingHorizontal: tokens.spacing[8],
-      paddingVertical: tokens.spacing[2],
+      paddingVertical: 3,
       borderRadius: tokens.radius.full,
     },
     carouselCardModality: {
-      ...tokens.typography.labelMedium,
+      ...tokens.typography.labelSmall,
+      fontWeight: tokens.fontWeight.bold,
       color: colors.m3.onSurfaceVariant,
     },
     carouselCardPrice: {
-      ...tokens.typography.labelMedium,
+      ...tokens.typography.labelLarge,
+      fontSize: 13,
+      lineHeight: 18,
       fontWeight: tokens.fontWeight.bold,
       color: colors.nature.foliageDeep,
     },
     carouselCardTitle: {
       ...tokens.typography.brandCardTitle,
-      fontSize: 15,
-      lineHeight: 19,
+      fontSize: 16,
+      lineHeight: 20,
       color: colors.m3.onSurface,
     },
     carouselCardAuthor: {
       ...tokens.typography.bodyMedium,
-      fontSize: 12,
+      fontSize: 12.5,
       lineHeight: 16,
       color: colors.m3.onSurfaceVariant,
     },
     carouselCardReserved: {
       ...tokens.typography.labelMedium,
       color: colors.m3.onTertiaryContainer,
+    },
+    carouselCardReservedPill: {
+      paddingHorizontal: tokens.spacing[8],
+      paddingVertical: 2,
+      borderRadius: tokens.radius.full,
+    },
+    carouselCardReservedText: {
+      ...tokens.typography.captionSmall,
+      fontSize: 11,
+      lineHeight: 14,
+      fontWeight: tokens.fontWeight.bold,
     },
     carouselCardFooterRow: {
       flexDirection: "row",
@@ -667,7 +692,9 @@ function createStyles(colors: ColorPalette) {
       flexWrap: "wrap",
       gap: tokens.spacing[6],
       marginTop: "auto",
-      paddingTop: tokens.spacing[2],
+      paddingTop: tokens.spacing[8],
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: colors.m3.outlineVariant,
     },
     carouselCardLocationRow: {
       flexDirection: "row",
@@ -677,7 +704,9 @@ function createStyles(colors: ColorPalette) {
     },
     carouselCardNeighborhood: {
       ...tokens.typography.labelSmall,
-      fontFamily: fontFamily.regular,
+      fontSize: 12,
+      lineHeight: 16,
+      fontFamily: fontFamily.medium,
       color: colors.m3.onSurfaceVariant,
       flexShrink: 1,
     },
