@@ -237,7 +237,7 @@ export function LoadingSkeletonContent({ variant }: { variant: LoadingSkeletonVa
     case "conversations":
       return (
         <View style={styles.wrapper} testID="skeleton-variant-conversations">
-          {[0, 1, 2, 3].map((idx) => (
+          {[0, 1, 2, 3, 4].map((idx) => (
             <View key={idx} style={styles.listCardSkeleton}>
               <View style={styles.avatarCircle48} />
               <View style={styles.linesCol}>
@@ -678,12 +678,13 @@ function createStyles(colors: ColorPalette) {
     listCardSkeleton: {
       flexDirection: "row",
       alignItems: "center",
-      gap: tokens.spacing[12],
+      gap: tokens.spacing[14],
       backgroundColor: colors.m3.surfaceContainerLow,
       borderRadius: tokens.radius.large,
       borderWidth: 1,
       borderColor: colors.m3.outlineVariant,
-      padding: tokens.spacing[16],
+      paddingHorizontal: tokens.spacing[16],
+      paddingVertical: tokens.spacing[14],
     },
     listThumbBox: {
       width: 56,

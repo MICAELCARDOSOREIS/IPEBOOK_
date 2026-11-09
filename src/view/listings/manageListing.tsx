@@ -95,7 +95,9 @@ export default function ManageListing({
     return (
       <SafeAreaView style={styles.page}>
         <TopAppBar contentMaxWidth={contentMaxWidth} title="Gerenciar anúncio" onBack={guardedBack} />
-        <LoadingState label="Carregando anúncio" variant="manage" />
+        <View style={styles.loadingContainer}>
+          <LoadingState label="Carregando anúncio" variant="manage" />
+        </View>
       </SafeAreaView>
     );
   }
@@ -427,6 +429,7 @@ export default function ManageListing({
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     page: { flex: 1, backgroundColor: colors.background },
+    loadingContainer: { flex: 1, padding: tokens.spacing[16] },
     scrollContent: { padding: tokens.spacing[16], paddingBottom: tokens.spacing[48] },
     content: { width: "100%", maxWidth: 560, alignSelf: "center", gap: tokens.spacing[16] },
     contentWide: { maxWidth: 1040, paddingHorizontal: WEB_GUTTER },
