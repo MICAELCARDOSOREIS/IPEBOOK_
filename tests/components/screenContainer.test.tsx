@@ -168,7 +168,7 @@ describe("ScreenContainer (design-system/03-fundamentos.md, orientação e layou
         <Text>Conteúdo</Text>
       </ScreenContainer>,
     );
-    expect(StyleSheet.flatten(raiz.props.style as never).backgroundColor).toBe(darkColors.surface);
+    expect(StyleSheet.flatten(raiz.props.style as never)).toMatchObject({ backgroundColor: darkColors.surface });
     expect(darkColors.surface).not.toBe(colors.surface);
   });
 });

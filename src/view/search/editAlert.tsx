@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { StyleSheet, Text, View } from "react-native";
+import { ScreenContainer } from "@/view/components/ScreenContainer";
 import type { BookModality } from "@/model/entities/book";
 import { ALL_ALERT_MODALITIES } from "@/model/entities/searchAlert";
 import { Chip } from "@/view/components/Chip";
@@ -55,102 +55,107 @@ export default function EditAlert({ alertId, userId, onBack, onSaved }: EditAler
 
   if (state.loading) {
     return (
-      <SafeAreaView style={styles.page}>
-        <TopAppBar contentMaxWidth={560} title="Editar alerta" onBack={guardedBack} />
-        <View style={styles.content}>
-          <LoadingState label="Carregando alerta" variant="form" />
-        </View>
-      </SafeAreaView>
+      <ScreenContainer
+        maxWidth={560}
+        paddingHorizontal={tokens.spacing[24]}
+        paddingTop={tokens.spacing[24]}
+        header={<TopAppBar contentMaxWidth={560} title="Editar alerta" onBack={guardedBack} />}
+        contentStyle={styles.content}
+      >
+        <LoadingState label="Carregando alerta" variant="form" />
+      </ScreenContainer>
     );
   }
 
   if (!alert) {
     return (
-      <SafeAreaView style={styles.page}>
-        <TopAppBar contentMaxWidth={560} title="Editar alerta" onBack={guardedBack} />
-        <View style={styles.content}>
-          <Text accessibilityRole="header" style={styles.headline}>
-            Alerta não encontrado
-          </Text>
-          <Text style={styles.body}>Ele pode ter sido excluído enquanto você editava.</Text>
-        </View>
-      </SafeAreaView>
+      <ScreenContainer
+        maxWidth={560}
+        paddingHorizontal={tokens.spacing[24]}
+        paddingTop={tokens.spacing[24]}
+        header={<TopAppBar contentMaxWidth={560} title="Editar alerta" onBack={guardedBack} />}
+        contentStyle={styles.content}
+      >
+        <Text accessibilityRole="header" style={styles.headline}>
+          Alerta não encontrado
+        </Text>
+        <Text style={styles.body}>Ele pode ter sido excluído enquanto você editava.</Text>
+      </ScreenContainer>
     );
   }
 
   return (
-    <SafeAreaView style={styles.page}>
-      <TopAppBar contentMaxWidth={560} title="Editar alerta" onBack={guardedBack} />
-      <ScrollView
-        contentContainerStyle={[styles.scroll, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
-        {...standardVerticalScrollProps}
-      >
-        <View style={styles.content}>
-          <Text accessibilityRole="header" style={styles.headline}>
-            Ajuste sua busca.
-          </Text>
-          <Text style={styles.body}>
-            Estas preferências serão usadas nos próximos avisos.
-          </Text>
+    <ScreenContainer
+      maxWidth={560}
+      paddingHorizontal={tokens.spacing[24]}
+      paddingTop={tokens.spacing[24]}
+      paddingBottom={scrollBottomPadding.withoutBottomBar}
+      header={<TopAppBar contentMaxWidth={560} title="Editar alerta" onBack={guardedBack} />}
+      contentStyle={styles.content}
+    >
+      <Text accessibilityRole="header" style={styles.headline}>
+        Ajuste sua busca.
+      </Text>
+      <Text style={styles.body}>
+        Estas preferências serão usadas nos próximos avisos.
+      </Text>
 
-          <TextField
-            label="O que você procura?"
-            value={term}
-            onChangeText={setTerm}
-            maxLength={100}
-          />
+      <TextField
+        label="O que você procura?"
+        value={term}
+        onChangeText={setTerm}
+        maxLength={100}
+      />
 
-          <TextField
-            label="Cidade"
-            value={ALERT_CITY}
-            onChangeText={() => {}}
-            editable={false}
-            helperText="O IpêBook atende apenas Piripiri por enquanto."
-          />
+      <TextField
+        label="Cidade"
+        value={ALERT_CITY}
+        onChangeText={() => {}}
+        editable={false}
+        helperText="O IpêBook atende apenas Piripiri por enquanto."
+      />
 
-          <View style={styles.field}>
-            <Text style={styles.sectionLabel}>Tipo de anúncio</Text>
-            <View style={styles.chipRow}>
-              {ALL_ALERT_MODALITIES.map((modality) => (
-                <Chip
-                  key={modality}
-                  label={ALERT_MODALITY_LABELS[modality]}
-                  tone={colors.badge[modality]}
-                  selected={modalities.includes(modality)}
-                  accessibilityLabel={`Tipo ${ALERT_MODALITY_LABELS[modality]}`}
-                  onPress={() => toggle(modality)}
-                />
-              ))}
-            </View>
-            {modalityError ? (
-              <Text accessibilityRole="alert" style={styles.error}>{modalityError}</Text>
-            ) : (
-              <Text style={styles.hint}>Selecione pelo menos um tipo.</Text>
-            )}
-          </View>
-
-          {state.error ? (
-            <Text accessibilityRole="alert" style={styles.error}>
-              {state.error}
-            </Text>
-          ) : null}
-
-          <FilledButton
-            label="Salvar alterações"
-            onPress={() => {
-              if (modalities.length === 0) {
-                setModalityError("Selecione pelo menos um tipo.");
-                return;
-              }
-              void actions.update(alert.id, term, modalities).then((saved) => {
-                if (saved) guardedSaved();
-              });
-            }}
-          />
-          <TextButton label="Cancelar" onPress={guardedBack} />
+      <View style={styles.field}>
+        <Text style={styles.sectionLabel}>Tipo de anúncio</Text>
+        <View style={styles.chipRow}>
+          {ALL_ALERT_MODALITIES.map((modality) => (
+            <Chip
+              key={modality}
+              label={ALERT_MODALITY_LABELS[modality]}
+              tone={colors.badge[modality]}
+              selected={modalities.includes(modality)}
+              accessibilityLabel={`Tipo ${ALERT_MODALITY_LABELS[modality]}`}
+              onPress={() => toggle(modality)}
+            />
+          ))}
         </View>
-      </ScrollView>
-    </SafeAreaView>
+        {modalityError ? (
+          <Text accessibilityRole="alert" style={styles.error}>{modalityError}</Text>
+        ) : (
+          <Text style={styles.hint}>Selecione pelo menos um tipo.</Text>
+        )}
+      </View>
+
+      {state.error ? (
+        <Text accessibilityRole="alert" style={styles.error}>
+          {state.error}
+        </Text>
+      ) : null}
+
+      <FilledButton
+        label="Salvar alterações"
+        onPress={() => {
+          if (modalities.length === 0) {
+            setModalityError("Selecione pelo menos um tipo.");
+            return;
+          }
+          void actions.update(alert.id, term, modalities).then((saved) => {
+            if (saved) guardedSaved();
+          });
+        }}
+      />
+      <TextButton label="Cancelar" onPress={guardedBack} />
+    </ScreenContainer>
   );
 }
 
