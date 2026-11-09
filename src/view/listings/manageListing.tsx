@@ -106,10 +106,12 @@ export default function ManageListing({
     return (
       <SafeAreaView style={styles.page}>
         <TopAppBar contentMaxWidth={contentMaxWidth} title="Gerenciar anúncio" onBack={guardedBack} />
-        <ErrorState
-          message={state.error ?? "Não foi possível carregar o anúncio."}
-          onRetry={() => void actions.load()}
-        />
+        <View style={styles.loadingContainer}>
+          <ErrorState
+            message={state.error ?? "Não foi possível carregar o anúncio."}
+            onRetry={() => void actions.load()}
+          />
+        </View>
       </SafeAreaView>
     );
   }

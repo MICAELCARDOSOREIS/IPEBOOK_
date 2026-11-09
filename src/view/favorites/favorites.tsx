@@ -142,11 +142,13 @@ export default function Favorites({
           <LoadingState label="Carregando favoritos" />
         </View>
       ) : state.error ? (
-        isOnline ? (
-          <ErrorState message={state.error} onRetry={() => void actions.reload()} />
-        ) : (
-          <OfflineState onRetry={() => void actions.reload()} />
-        )
+        <View style={styles.loadingContainer}>
+          {isOnline ? (
+            <ErrorState message={state.error} onRetry={() => void actions.reload()} />
+          ) : (
+            <OfflineState onRetry={() => void actions.reload()} />
+          )}
+        </View>
       ) : (
         <FlatList
           key={wideWeb ? `grade-${gridColumns}` : "lista"}

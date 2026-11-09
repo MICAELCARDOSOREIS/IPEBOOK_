@@ -22,7 +22,10 @@ export function HomeFloatingChatButton({
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const bottom = Math.max(insets.bottom, 12) + 76;
+  // Posiciona o botão flutuante com respiro harmônico de 16px acima do topo da barra de navegação flutuante
+  const navBarPaddingBottom = Math.max(tokens.spacing[16], insets.bottom + tokens.spacing[8]);
+  const navBarDockHeight = 64;
+  const bottom = navBarPaddingBottom + navBarDockHeight + tokens.spacing[16];
 
   return (
     <Pressable
@@ -56,7 +59,6 @@ function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     floatingChatButton: {
       position: "absolute",
-      bottom: 104,
       right: tokens.spacing[16],
       width: 56,
       height: 56,
@@ -69,7 +71,7 @@ function createStyles(colors: ColorPalette) {
       shadowOffset: { width: 0, height: 4 },
       shadowOpacity: 0.2,
       shadowRadius: 8,
-      zIndex: 40,
+      zIndex: 90,
       ...(Platform.OS === "web"
         ? ({
             cursor: "pointer",

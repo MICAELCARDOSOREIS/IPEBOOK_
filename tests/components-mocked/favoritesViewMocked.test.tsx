@@ -44,6 +44,30 @@ describe("Favorites com ViewModel mockado (Issue #76)", () => {
     });
     expect(screen.getByText("Você está sem conexão com a internet.")).toBeDefined();
   });
+
+  it("mostra o estado de carregamento com LoadingState", async () => {
+    vi.mocked(useNetworkStatus).mockReturnValue({ isOnline: true });
+    mock({ loading: true });
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<Favorites userId="u1" onBack={vi.fn()} onLogin={vi.fn()} onBook={vi.fn()} />);
+    });
+    expect(screen.getByTestId("loading-skeleton-list")).toBeDefined();
+  });
+
+  it("mostra o aviso para entrar quando não há userId", async () => {
+    mock({});
+    const onLogin = vi.fn();
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<Favorites userId={null} onBack={vi.fn()} onLogin={onLogin} onBook={vi.fn()} />);
+    });
+    expect(screen.getByText("Entre para ver seus favoritos")).toBeDefined();
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Entrar" }));
+    });
+    expect(onLogin).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe("Favorites alinhada ao Figma 02.06 (Spec 030)", () => {
