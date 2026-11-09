@@ -11,6 +11,7 @@ import { AppIcon } from "@/view/components/AppIcon";
 import { Dialog } from "@/view/components/Dialog";
 import { FilledButton } from "@/view/components/FilledButton";
 import { IconBadge } from "@/view/components/IconBadge";
+import { InlineErrorCard } from "@/view/components/InlineErrorCard";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { TextButton } from "@/view/components/TextButton";
 
@@ -70,7 +71,7 @@ export function MeetingCard({
   if (state.error) {
     return (
       <View style={styles.card}>
-        <Text accessibilityRole="alert" style={styles.error}>{state.error}</Text>
+        <InlineErrorCard message={state.error} />
         <TextButton label="Tentar novamente" onPress={() => void actions.reload()} />
       </View>
     );
@@ -78,7 +79,7 @@ export function MeetingCard({
 
   const meeting = state.meeting;
   const actionError = state.actionError ? (
-    <Text accessibilityRole="alert" style={styles.error}>{state.actionError}</Text>
+    <InlineErrorCard message={state.actionError} />
   ) : null;
 
   if (!meeting || meeting.status === "cancelled") {

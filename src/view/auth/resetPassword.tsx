@@ -4,6 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { AuthShell } from "@/view/auth/AuthShell";
 import { FilledButton } from "@/view/components/FilledButton";
 import { IconBadge } from "@/view/components/IconBadge";
+import { InlineErrorCard } from "@/view/components/InlineErrorCard";
 import { TextButton } from "@/view/components/TextButton";
 import { TextField } from "@/view/components/TextField";
 import { TopAppBar } from "@/view/components/TopAppBar";
@@ -87,11 +88,7 @@ export default function ResetPassword({
                 <Text style={styles.subtitle}>
                   Esse link de recuperação não é mais válido. Solicite um novo link para continuar.
                 </Text>
-                <View style={styles.errorBox}>
-                  <Text accessibilityRole="alert" style={styles.errorMessage}>
-                    Link de recuperação inválido ou expirado.
-                  </Text>
-                </View>
+                <InlineErrorCard message="Link de recuperação inválido ou expirado." />
                 <FilledButton
                   label="Solicitar novo link"
                   onPress={guardedForgotPassword}
@@ -150,11 +147,7 @@ export default function ResetPassword({
                   editable={!state.loading}
                 />
 
-                {errorMessage ? (
-                  <Text accessibilityRole="alert" accessibilityLiveRegion="assertive" style={styles.error}>
-                    {errorMessage}
-                  </Text>
-                ) : null}
+                {errorMessage ? <InlineErrorCard message={errorMessage} /> : null}
 
                 <FilledButton
                   label="Salvar nova senha"

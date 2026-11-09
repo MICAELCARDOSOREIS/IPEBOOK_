@@ -10,6 +10,7 @@ import { AddPhotoCard } from "@/view/components/AddPhotoCard";
 import { Chip } from "@/view/components/Chip";
 import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
 import { IconBadge } from "@/view/components/IconBadge";
+import { InlineErrorCard } from "@/view/components/InlineErrorCard";
 import { TextField } from "@/view/components/TextField";
 import { BarcodeScannerModal } from "@/view/components/BarcodeScannerModal";
 
@@ -360,16 +361,7 @@ export function CreateListingStep1({
 
       <Text style={styles.hint}>Conservação e bairro vêm nas próximas etapas.</Text>
 
-      {error ? (
-        <Text
-          ref={errorRef}
-          accessibilityRole="alert"
-          accessibilityLiveRegion="assertive"
-          style={styles.errorText}
-        >
-          {error}
-        </Text>
-      ) : null}
+      {error ? <InlineErrorCard textRef={errorRef} message={error} /> : null}
     </>
   );
 }

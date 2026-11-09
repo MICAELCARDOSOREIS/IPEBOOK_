@@ -13,6 +13,7 @@ import { categoryTone } from "@/view/categoryTone";
 import { AppIcon } from "@/view/components/AppIcon";
 import { Checkbox } from "@/view/components/Checkbox";
 import { Chip } from "@/view/components/Chip";
+import { InlineErrorCard } from "@/view/components/InlineErrorCard";
 import { NeighborhoodSelectorModal } from "@/view/components/NeighborhoodSelectorModal";
 import { TextField } from "@/view/components/TextField";
 
@@ -196,16 +197,7 @@ export function CreateListingStep3({
         <Text style={styles.hint}>Só o bairro aparece no anúncio.</Text>
       </View>
 
-      {error ? (
-        <Text
-          ref={errorRef}
-          accessibilityRole="alert"
-          accessibilityLiveRegion="assertive"
-          style={styles.errorText}
-        >
-          {error}
-        </Text>
-      ) : null}
+      {error ? <InlineErrorCard textRef={errorRef} message={error} /> : null}
 
       <NeighborhoodSelectorModal
         visible={neighborhoodPickerVisible}

@@ -10,6 +10,7 @@ import { Breadcrumb } from "@/view/components/Breadcrumb";
 import { BookCover } from "@/view/components/BookCover";
 import { Dialog } from "@/view/components/Dialog";
 import { ErrorState } from "@/view/components/ErrorState";
+import { InlineErrorCard } from "@/view/components/InlineErrorCard";
 import { LoadingState } from "@/view/components/LoadingState";
 import { Tag } from "@/view/components/Tag";
 import { TextButton } from "@/view/components/TextButton";
@@ -246,9 +247,7 @@ export default function ManageListing({
 
             {/* Coluna da Direita: Ações de Gerenciamento */}
             <View style={[styles.column, wide && styles.columnHalf]}>
-              {state.error ? (
-                <Text accessibilityRole="alert" style={styles.errorText}>{state.error}</Text>
-              ) : null}
+              {state.error ? <InlineErrorCard message={state.error} /> : null}
 
               <View style={styles.actionsContainer}>
                 {/* 1. Editar Anúncio */}

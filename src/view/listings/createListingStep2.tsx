@@ -10,6 +10,7 @@ import { PermissionPromptDialog } from "@/view/components/PermissionPromptDialog
 import { TextButton } from "@/view/components/TextButton";
 import { TextField } from "@/view/components/TextField";
 import { AppIcon } from "@/view/components/AppIcon";
+import { InlineErrorCard } from "@/view/components/InlineErrorCard";
 
 export type CreateListingStep2Props = {
   photoUrl: string;
@@ -89,8 +90,8 @@ export function CreateListingStep2({
         </View>
       ) : null}
       {photoError ? (
-        <View>
-          <Text accessibilityRole="alert" style={styles.errorText}>{photoError}</Text>
+        <View style={styles.photoErrorBlock}>
+          <InlineErrorCard message={photoError} />
           <Text style={styles.tipText}>
             Dá para publicar sem foto: enquanto não houver imagem, usamos uma capa ilustrativa do livro.
           </Text>
@@ -147,16 +148,7 @@ export function CreateListingStep2({
         </Text>
       </View>
 
-      {error ? (
-        <Text
-          ref={errorRef}
-          accessibilityRole="alert"
-          accessibilityLiveRegion="assertive"
-          style={styles.errorText}
-        >
-          {error}
-        </Text>
-      ) : null}
+      {error ? <InlineErrorCard textRef={errorRef} message={error} /> : null}
     </>
   );
 }
@@ -222,6 +214,9 @@ function createStyles(colors: ColorPalette) {
       ...tokens.typography.bodyMedium,
       color: colors.secondaryText,
       lineHeight: 20,
+    },
+    photoErrorBlock: {
+      gap: tokens.spacing[8],
     },
     errorText: {
       ...tokens.typography.bodyMedium,
