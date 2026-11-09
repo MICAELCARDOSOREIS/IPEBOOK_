@@ -332,7 +332,9 @@ export function Chat({
             ) : null}
 
             {state.isLoading ? (
-              <LoadingState label="Carregando mensagens" />
+              <View style={styles.loadingContainer}>
+                <LoadingState label="Carregando mensagens" />
+              </View>
             ) : detail?.request.status === "pending" ? (
               <View style={styles.empty}>
                 <View style={styles.emptyIcon}>
@@ -480,6 +482,7 @@ function createStyles(colors: ColorPalette) {
     closedNoticeText: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant, textAlign: "center" },
     page: { flex: 1, minHeight: 0, backgroundColor: colors.background },
     flex: { flex: 1, minHeight: 0 },
+    loadingContainer: { flex: 1, paddingHorizontal: tokens.spacing[16], paddingTop: tokens.spacing[12] },
     header: {
       flexDirection: "row",
       alignItems: "center",

@@ -21,6 +21,8 @@ export default function Index() {
         onNavigateToSignIn={() => pushOnce("/entrar")}
         onNavigateToBookDetail={(bookId) => pushOnce(`/livro/${bookId}`)}
         onNavigateToNotifications={() => pushOnce("/notificacoes")}
+        onNavigateToConversations={() => pushOnce("/meus-pedidos")}
+        onNavigateToProfile={() => pushOnce("/perfil")}
         onNavigateToHelp={() => pushOnce("/ajuda")}
         onNavigateToTerms={() => pushOnce("/termos")}
         onNavigateToSearch={(filter) => {
