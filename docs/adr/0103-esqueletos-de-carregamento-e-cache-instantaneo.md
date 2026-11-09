@@ -13,11 +13,7 @@ Ao navegar entre as abas e telas do IpêBook (como *Meu Perfil*, *Início*, *Exp
 
 1. **Esqueletos visuais pulsantes (`SkeletonLoading` / `LoadingState`):**
    - Transformar o componente universal `LoadingState` e criar variantes estruturais de esqueleto ("caixinhas" pulsantes com opacidade animada entre `0.45` e `0.9` usando `colors.m3.surfaceContainerHighest` e `colors.m3.surfaceContainerHigh`), sem exibir textos soltos no lugar dos componentes, mas preservando rigorosamente a acessibilidade para leitores de tela (`accessibilityLabel={label}` e texto oculto visualmente para compatibilidade com a suíte de testes e TalkBack/VoiceOver).
-   - Criar variantes de layout de esqueleto (`variant?: "list" | "profile" | "catalog" | "detail"`), onde:
-     - `"profile"` desenha o esqueleto fiel da tela *Meu Perfil* (cartão de identidade com avatar circular, linhas de nome/handle, 3 caixinhas de métricas, 2 pílulas de botões, 3 caixinhas de Selos Comunitários e linhas de atalhos de Atividade).
-     - `"catalog"` desenha caixinhas de filtros e grade/carrossel de livros.
-     - `"detail"` desenha o bloco de capa/resumo e cartões de detalhes.
-     - `"list"` (padrão) desenha cartões horizontais empilhados com miniatura/ícone e linhas de título/subtítulo.
+   - Criar 10 variantes de layout de esqueleto em `LoadingSkeletonVariants.tsx` (`variant?: "list" | "profile" | "publicProfile" | "catalog" | "homeCarousel" | "shelf" | "conversations" | "detail" | "manage" | "form"`), garantindo que cada tela exiba sombras/caixinhas idênticas à sua anatomia real (ex.: 3 caixinhas de resumo + abas + chips + card agrupador na *Estante*; barra de contagem/ordenação + cards horizontais no *Explorar*; carrossel de cards verticais de `168px` no *Início*; avatar circular centralizado no *Perfil Público*; lista com avatar circular em *Conversas*).
    - Substituir os `ActivityIndicator` isolados de carregamento de tela (`profileHub.tsx`, `publicProfile.tsx`, `editListing.tsx`, `receivedRatings.tsx`, `blockedUsers.tsx`, `requestDetail.tsx`, `editAlert.tsx`, `manageAlert.tsx`, `moderation.tsx` e `chat.tsx`) pelo `LoadingState` com esqueleto visual.
 
 2. **Cache em memória de sessão com Stale-While-Revalidate nos ViewModels principais:**

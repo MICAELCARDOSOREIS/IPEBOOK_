@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import type { BookCondition, BookModality } from "@/model/entities/book";
 import {
@@ -16,6 +16,7 @@ import { Breadcrumb } from "@/view/components/Breadcrumb";
 import { Checkbox } from "@/view/components/Checkbox";
 import { Chip } from "@/view/components/Chip";
 import { FilledButton } from "@/view/components/FilledButton";
+import { LoadingState } from "@/view/components/LoadingState";
 import { TextButton } from "@/view/components/TextButton";
 import { TextField } from "@/view/components/TextField";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
@@ -71,8 +72,11 @@ export default function EditListing({
       <SafeAreaView style={styles.page}>
         <TopAppBar contentMaxWidth={wide ? EDIT_WIDE_MAX_WIDTH : 480} title="Editar anúncio" onBack={guardedCancel} />
         <View style={styles.statusContainer}>
-          <ActivityIndicator color={colors.action} accessibilityLabel="Carregando anúncio" />
-          <Text style={styles.statusText}>Carregando dados do anúncio…</Text>
+          <LoadingState
+            label="Carregando anúncio"
+            srText="Carregando dados do anúncio…"
+            variant="form"
+          />
         </View>
       </SafeAreaView>
     );

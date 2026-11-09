@@ -60,8 +60,16 @@ export default function Search({
   initialCategory,
 }: SearchProps = {}) {
   const neighborhoodHook = useActiveNeighborhood("all");
+  const [selectedNeighborhoodOverride, setSelectedNeighborhoodOverride] = useState<string | null>(null);
+  useEffect(() => {
+    setSelectedNeighborhoodOverride(null);
+  }, [currentNeighborhood]);
   const effectiveNeighborhood =
-    currentNeighborhood !== undefined ? currentNeighborhood : neighborhoodHook.activeNeighborhood;
+    selectedNeighborhoodOverride !== null
+      ? selectedNeighborhoodOverride
+      : currentNeighborhood !== undefined
+        ? currentNeighborhood
+        : neighborhoodHook.activeNeighborhood;
   const handleSelectNeighborhood = onSelectNeighborhood ?? neighborhoodHook.openSelector;
 
   const [auth] = makeAuthViewModel();
@@ -118,9 +126,12 @@ export default function Search({
       : effectiveNeighborhood;
 
   const handleSelectNeighborhoodOption = (bairro: string) => {
+    setSelectedNeighborhoodOverride(bairro);
     void neighborhoodHook.selectNeighborhood(bairro);
     if (typeof actions.setNeighborhood === "function") {
-      actions.setNeighborhood(bairro);
+      actions.setNeighborhood(
+        bairro === "Todos os bairros (Piripiri)" ? "all" : bairro,
+      );
     }
   };
 

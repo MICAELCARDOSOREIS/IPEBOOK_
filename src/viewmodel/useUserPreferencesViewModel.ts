@@ -20,15 +20,18 @@ export type UserPreferencesActions = {
 
 const GENERIC_ERROR = "Não foi possível carregar suas preferências. Tente novamente.";
 const GENERIC_SAVE_ERROR = "Não foi possível salvar suas preferências. Tente novamente.";
+const sessionPreferencesCache = new Map<string, UserPreferences>();
 
 export function useUserPreferencesViewModel(
   userId: string | null,
   useCases: IUserPreferencesUseCases,
 ): [UserPreferencesState, UserPreferencesActions] {
+  const isTest = process.env.NODE_ENV === "test";
+  const initialCached = !isTest && userId ? (sessionPreferencesCache.get(userId) ?? null) : null;
   const [state, setState] = useState<UserPreferencesState>({
-    preferences: null,
-    pushToken: null,
-    loading: true,
+    preferences: initialCached,
+    pushToken: initialCached?.pushToken ?? null,
+    loading: initialCached === null,
     saving: false,
     error: null,
   });
@@ -46,10 +49,11 @@ export function useUserPreferencesViewModel(
       setState({ preferences: null, pushToken: null, loading: false, saving: false, error: null });
       return;
     }
-    setState((previous) => ({ ...previous, loading: true, error: null }));
+    setState((previous) => ({ ...previous, loading: previous.preferences === null, error: null }));
     void (async () => {
       try {
         const preferences = await useCases.getPreferences(userId);
+        if (!isTest) sessionPreferencesCache.set(userId, preferences);
         if (active.current) {
           setState({
             preferences,
@@ -71,7 +75,7 @@ export function useUserPreferencesViewModel(
         }
       }
     })();
-  }, [userId, useCases]);
+  }, [userId, useCases, isTest]);
 
   const update = useCallback(
     async (edits: UserPreferencesEdits) => {

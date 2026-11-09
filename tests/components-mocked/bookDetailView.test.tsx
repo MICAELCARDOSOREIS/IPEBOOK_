@@ -151,11 +151,12 @@ describe("BookDetail (spec 006, US6/T029)", () => {
     expect(request).toHaveBeenCalledWith("b1", "me", expect.anything());
   });
 
-  it("não oferece ação principal no próprio anúncio, mas mantém compartilhar (Spec 074, CA2)", async () => {
+  it("não oferece ação principal no próprio anúncio, mas mantém compartilhar na barra superior (Spec 074, CA2)", async () => {
     setup(book({ ownerId: "me" }), user);
     const screen = await renderDetail();
     expect(screen.queryByText("Propor troca")).toBeNull();
-    expect(screen.getByLabelText("Compartilhar anúncio como imagem")).toBeDefined();
+    expect(screen.getByLabelText("Compartilhar anúncio")).toBeDefined();
+    expect(screen.getByLabelText("Compartilhar anúncio no WhatsApp")).toBeDefined();
   });
 
   it("não oferece ação principal sem sessão (Spec 074, CA2)", async () => {
@@ -288,43 +289,32 @@ describe("BookDetail (spec 006, US6/T029)", () => {
     expect(onBack).toHaveBeenCalledTimes(1);
   });
 
-  it("oferece compartilhar mesmo sem sessão (Spec 019)", async () => {
+  it("oferece compartilhar com dados completos e captura de imagem mesmo sem sessão (Spec 019, Spec 092)", async () => {
     const { share } = setup(book({ ownerId: "other" }), null);
     const screen = await renderDetail();
     await act(async () => { fireEvent.press(screen.getByLabelText("Compartilhar anúncio")); });
-    expect(share).toHaveBeenCalledWith("b1");
-  });
-
-  it("compartilha a imagem do anúncio com os dados e a captura do cartão (Spec 092)", async () => {
-    const { shareImage } = setup(
-      book({ ownerId: "other", modality: "sale", price: 42 }),
-      null,
-    );
-    const screen = await renderDetail();
-    await act(async () => { fireEvent.press(screen.getByLabelText("Compartilhar anúncio como imagem")); });
-    expect(shareImage).toHaveBeenCalledWith(
+    expect(share).toHaveBeenCalledWith(
       "b1",
-      expect.objectContaining({ title: "Dom Casmurro", author: "Machado de Assis", modality: "sale", price: 42 }),
+      expect.objectContaining({ title: "Dom Casmurro", author: "Machado de Assis", modality: "trade" }),
       expect.any(Function),
     );
-    const capture = vi.mocked(shareImage).mock.calls[0][2] as () => Promise<string>;
-    await expect(capture()).resolves.toBe("file:///tmp/anuncio.png");
   });
 
-  it("compartilha no WhatsApp ao tocar no botão dedicado do WhatsApp (Spec 118)", async () => {
+  it("compartilha no WhatsApp ao tocar no botão da barra superior com os dados e a captura do cartão (Spec 092, Spec 118)", async () => {
     const { shareToWhatsApp } = setup(
       book({ ownerId: "other", modality: "sale", price: 42, neighborhood: "Centro" }),
       null,
     );
     const screen = await renderDetail();
-    const whatsappButtons = screen.getAllByLabelText("Compartilhar anúncio no WhatsApp");
-    expect(whatsappButtons.length).toBeGreaterThanOrEqual(1);
-    await act(async () => { fireEvent.press(whatsappButtons[0]); });
+    const whatsappButton = screen.getByLabelText("Compartilhar anúncio no WhatsApp");
+    await act(async () => { fireEvent.press(whatsappButton); });
     expect(shareToWhatsApp).toHaveBeenCalledWith(
       "b1",
-      expect.objectContaining({ title: "Dom Casmurro", modality: "sale", price: 42, neighborhood: "Centro" }),
+      expect.objectContaining({ title: "Dom Casmurro", author: "Machado de Assis", modality: "sale", price: 42, neighborhood: "Centro" }),
       expect.any(Function),
     );
+    const capture = vi.mocked(shareToWhatsApp).mock.calls[0][2] as () => Promise<string>;
+    await expect(capture()).resolves.toBe("file:///tmp/anuncio.png");
   });
 
   it("mostra confirmação de link copiado (Spec 019)", async () => {

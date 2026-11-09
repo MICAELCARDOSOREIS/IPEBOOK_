@@ -1,5 +1,6 @@
 import { useEffect, type ReactNode } from "react";
 import { makeWelcomeGateViewModel } from "@/di/container";
+import { WEB_BETA_ONLY } from "@/view/webBetaMode";
 
 export type InitialRouteGateProps = {
   pathname: string;
@@ -21,7 +22,7 @@ export function InitialRouteGate({ pathname, onShowWelcome, children }: InitialR
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status]);
 
-  if (status === "checking" && pathname === "/") return null;
+  if (!WEB_BETA_ONLY && status === "checking" && pathname === "/") return null;
   return <>{children}</>;
 }
 

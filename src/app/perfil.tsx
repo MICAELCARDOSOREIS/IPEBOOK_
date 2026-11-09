@@ -1,9 +1,14 @@
-import { pushOnce, replaceOnce } from "@/view/pushOnce";
+import { router } from "expo-router";
+import { backOnce, pushOnce, replaceOnce } from "@/view/pushOnce";
 import ProfileHub from "@/view/profile/profileHub";
 
 export default function Perfil() {
   return (
     <ProfileHub
+      onBack={() => {
+        if (router.canGoBack()) backOnce();
+        else replaceOnce("/");
+      }}
       onNavigateToSignIn={() => replaceOnce("/entrar")}
       onNavigateToEditProfile={() => pushOnce("/perfil/editar")}
       onNavigateToCreateListing={() => pushOnce("/anunciar")}

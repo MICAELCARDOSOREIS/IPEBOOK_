@@ -301,7 +301,7 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
       {/* O desvio do teclado é da raiz única (KeyboardAwareRoot, Spec 088). */}
       <View style={styles.keyboardView}>
         {loading ? (
-          <LoadingState label="Carregando perfil" />
+          <LoadingState label="Carregando perfil" variant="form" />
         ) : error && !state.profile ? (
           <ErrorState message={error} onRetry={handleRetryLoad} />
         ) : (
