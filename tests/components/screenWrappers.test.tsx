@@ -180,6 +180,19 @@ describe("Screen Wrappers e Gates de Sessão (ISO/IEC 25010 - Usabilidade e Segu
       });
       expect(screen.getByText("ReportListing: book-denounce - rep-1")).toBeDefined();
     });
+
+    it("repasse de listingId e null para sessionUserId quando deslogado", async () => {
+      mockedUseAuth.mockReturnValue([{ user: null, loading: false, error: null }, {} as any]);
+      mockedUseBookDetail.mockReturnValue([{ book: { title: "Livro Denunciado" } } as any, {} as any]);
+
+      let screen!: Awaited<ReturnType<typeof render>>;
+      await act(async () => {
+        screen = await render(
+          <ReportListingScreen listingId="book-denounce" onBack={() => {}} onNavigateToLogin={() => {}} />,
+        );
+      });
+      expect(screen.getByText("ReportListing: book-denounce - null")).toBeDefined();
+    });
   });
 
   describe("FavoritesScreen", () => {
@@ -192,6 +205,17 @@ describe("Screen Wrappers e Gates de Sessão (ISO/IEC 25010 - Usabilidade e Segu
         );
       });
       expect(screen.getByText("Favorites: fav-user")).toBeDefined();
+    });
+
+    it("renderiza Favorites passando null quando não há usuário na sessão", async () => {
+      mockedUseAuth.mockReturnValue([{ user: null, loading: false, error: null }, {} as any]);
+      let screen!: Awaited<ReturnType<typeof render>>;
+      await act(async () => {
+        screen = await render(
+          <FavoritesScreen onBook={() => {}} onLogin={() => {}} onBack={() => {}} onExploreBooks={() => {}} />,
+        );
+      });
+      expect(screen.getByText("Favorites: null")).toBeDefined();
     });
   });
 
