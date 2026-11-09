@@ -438,7 +438,7 @@ export default function Home({
           {(["all", "sale", "trade", "donation"] as const).map((mod) => {
             const isSelected = selectedModality === mod;
             const label = mod === "all" ? "Todos" : mod === "sale" ? "Venda" : mod === "trade" ? "Troca" : "Doação";
-            const tone = mod === "all" ? undefined : colors.badge[mod];
+            const tone = mod === "all" ? { background: colors.nature.foliage, text: "#FFFFFF" } : colors.badge[mod];
             return (
               <Chip
                 key={mod}
@@ -463,7 +463,7 @@ export default function Home({
           {(["all", "sale", "trade", "donation"] as const).map((mod) => {
             const isSelected = selectedModality === mod;
             const label = mod === "all" ? "Todos" : mod === "sale" ? "Venda" : mod === "trade" ? "Troca" : "Doação";
-            const tone = mod === "all" ? undefined : colors.badge[mod];
+            const tone = mod === "all" ? { background: colors.nature.foliage, text: "#FFFFFF" } : colors.badge[mod];
             return (
               <Chip
                 key={mod}
