@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Animated, FlatList, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ScreenContainer } from "@/view/components/ScreenContainer";
 import { makeAuthViewModel, makeNetworkStatus, makeSearchViewModel } from "@/di/container";
@@ -380,20 +380,11 @@ export default function Search({
       overlay={
         <>
           {showScrollTop ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Voltar ao topo da lista"
+            <SearchScrollTopButton
+              bottom={floatingBottom}
+              colors={colors}
               onPress={() => flatListRef.current?.scrollToOffset?.({ offset: 0, animated: true })}
-              style={({ pressed }) => [
-                styles.scrollTopFab,
-                { bottom: floatingBottom },
-                pressed && styles.scrollTopFabPressed,
-              ]}
-            >
-              <View style={{ transform: [{ rotate: "180deg" }] }}>
-                <AppIcon name="chevronDown" size={24} color={colors.nature.foliage} />
-              </View>
-            </Pressable>
+            />
           ) : null}
 
           <View pointerEvents="box-none" style={[styles.snackbarContainer, { bottom: wideWeb ? tokens.spacing[16] : floatingBottom }]}>
@@ -822,26 +813,6 @@ function createStyles(colors: ColorPalette) {
       justifyContent: "center",
     },
     categoryBadge: { ...tokens.typography.labelSmall, color: colors.secondaryText, fontStyle: "italic" },
-    scrollTopFab: {
-      position: "absolute",
-      right: tokens.spacing[16],
-      width: tokens.spacing[48],
-      height: tokens.spacing[48],
-      borderRadius: tokens.radius.full,
-      backgroundColor: colors.nature.sprout,
-      alignItems: "center",
-      justifyContent: "center",
-      elevation: 6,
-      shadowColor: colors.m3.shadow,
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.2,
-      shadowRadius: 8,
-      zIndex: 90,
-    },
-    scrollTopFabPressed: {
-      transform: [{ scale: 0.94 }],
-      opacity: 0.9,
-    },
     snackbarContainer: {
       position: "absolute",
       left: tokens.spacing[16],
@@ -851,3 +822,94 @@ function createStyles(colors: ColorPalette) {
     },
   });
 }
+
+function SearchScrollTopButton({
+  bottom,
+  onPress,
+  colors,
+}: {
+  bottom: number;
+  onPress: () => void;
+  colors: ColorPalette;
+}) {
+  const [isHovered, setIsHovered] = useState(false);
+  const scaleAnim = useRef(new Animated.Value(0.7)).current;
+
+  useEffect(() => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      tension: tokens.spring.spatialStandard.tension,
+      friction: tokens.spring.spatialStandard.friction,
+      useNativeDriver: true,
+    }).start();
+  }, [scaleAnim]);
+
+  const isWeb = Platform.OS === "web";
+  const webFabBg =
+    colors.surface === "#FCFAF5" ? "rgba(235, 244, 236, 0.92)" : "rgba(39, 66, 44, 0.90)";
+
+  return (
+    <Animated.View
+      style={{
+        position: "absolute",
+        right: tokens.spacing[16],
+        bottom,
+        zIndex: 90,
+        transform: [{ scale: scaleAnim }],
+      }}
+    >
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Voltar ao topo da lista"
+        onHoverIn={() => setIsHovered(true)}
+        onHoverOut={() => setIsHovered(false)}
+        onPress={onPress}
+        style={({ pressed }) => [
+          stylesScrollTop.scrollTopFab,
+          {
+            backgroundColor: isWeb ? webFabBg : colors.nature.sprout,
+            borderColor: colors.m3.outlineVariant,
+            shadowColor: colors.m3.shadow,
+          },
+          isHovered && stylesScrollTop.scrollTopFabHovered,
+          pressed && stylesScrollTop.scrollTopFabPressed,
+        ]}
+      >
+        <AppIcon name="chevronUp" size={24} color={colors.nature.foliage} />
+      </Pressable>
+    </Animated.View>
+  );
+}
+
+const stylesScrollTop = StyleSheet.create({
+  scrollTopFab: {
+    width: tokens.spacing[48],
+    height: tokens.spacing[48],
+    borderRadius: tokens.radius.full,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    elevation: 6,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    ...(Platform.OS === "web"
+      ? ({
+          cursor: "pointer",
+          userSelect: "none",
+          backdropFilter: "blur(16px)",
+          WebkitBackdropFilter: "blur(16px)",
+        } as never)
+      : {}),
+  },
+  scrollTopFabHovered: {
+    transform: [{ scale: 1.06 }],
+    elevation: 8,
+    shadowOpacity: 0.26,
+    shadowRadius: 12,
+  },
+  scrollTopFabPressed: {
+    transform: [{ scale: 0.94 }],
+    opacity: 0.9,
+  },
+});

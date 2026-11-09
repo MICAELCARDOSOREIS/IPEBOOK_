@@ -86,7 +86,7 @@ export function ShelfRow({ book, summary, accessibilityLabel, onPress, onShareWh
               }}
               style={withPress(styles.whatsappButton)}
             >
-              <AppIcon name="whatsapp" size={18} color={colors.nature.foliage} />
+              <AppIcon name="share" size={18} color={colors.nature.foliage} />
             </Pressable>
           ) : null}
           <View style={styles.actionButton}>
@@ -109,12 +109,36 @@ export function ShelfRow({ book, summary, accessibilityLabel, onPress, onShareWh
         <BookCover id={book.id} title={book.title} photoUrl={book.photoUrl} variant="list" />
       </ModalityCoverArea>
       <View style={styles.rowText}>
-        <Text style={styles.rowTitle} numberOfLines={2}>
-          {book.title}
-        </Text>
-        <Text style={styles.rowSummary} numberOfLines={2}>
-          {summary}
-        </Text>
+        <View style={styles.titleRow}>
+          <Text style={styles.rowTitle} numberOfLines={2}>
+            {book.title}
+          </Text>
+          {book.isBox ? (
+            <Tag
+              variant="box"
+              label={book.boxVolumesCount ? `Box (${book.boxVolumesCount} vols)` : "Box"}
+            />
+          ) : null}
+        </View>
+        {book.author ? (
+          <Text style={styles.rowAuthor} numberOfLines={1}>
+            {book.author}
+          </Text>
+        ) : null}
+        <View style={styles.metaRow}>
+          <Tag
+            variant={
+              book.status === "reserved"
+                ? "reserved"
+                : book.status === "paused"
+                  ? "paused"
+                  : book.modality
+            }
+          />
+          <Text style={styles.rowSummary} numberOfLines={1}>
+            {summary}
+          </Text>
+        </View>
       </View>
       <View style={styles.trailingActions}>
         {onShareWhatsApp ? (
@@ -128,7 +152,7 @@ export function ShelfRow({ book, summary, accessibilityLabel, onPress, onShareWh
             }}
             style={withPress(styles.whatsappButton)}
           >
-            <AppIcon name="whatsapp" size={20} color={colors.nature.foliage} />
+            <AppIcon name="share" size={18} color={colors.nature.foliage} />
           </Pressable>
         ) : null}
         <AppIcon name="chevronRight" size={24} color={colors.m3.onSurfaceVariant} />
@@ -153,6 +177,21 @@ function createStyles(colors: ColorPalette) {
       transform: [{ scale: 0.985 }],
     },
     rowText: { flex: 1, gap: tokens.spacing[4] },
+    rowTitle: {
+      ...tokens.typography.brandCardTitle,
+      color: colors.m3.onSurface,
+    },
+    rowAuthor: {
+      ...tokens.typography.labelMedium,
+      color: colors.m3.onSurfaceVariant,
+    },
+    metaRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[8],
+      marginTop: tokens.spacing[2],
+      flexWrap: "wrap",
+    },
     titleRow: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[8] },
     tableRow: {
       paddingHorizontal: tokens.spacing[16],
@@ -192,11 +231,6 @@ function createStyles(colors: ColorPalette) {
     cellAction: { ...tokens.typography.labelMedium, fontWeight: tokens.fontWeight.semiBold, color: colors.m3.onSecondaryContainer },
     tableTitle: { ...tokens.typography.brandCardTitle, color: colors.m3.onSurface },
     tableAuthor: { ...tokens.typography.footnote, color: colors.m3.onSurfaceVariant },
-    rowTitle: {
-      // Figma `05.01` / `02-tokens.md`: título do livro em linhas de lista usa `brandCardTitle`.
-      ...tokens.typography.brandCardTitle,
-      color: colors.m3.onSurface,
-    },
     rowSummary: {
       ...tokens.typography.bodyMedium,
       color: colors.m3.onSurfaceVariant,

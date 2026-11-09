@@ -7,6 +7,7 @@ import { formatPrice } from "@/view/formatPrice";
 import { Chip } from "@/view/components/Chip";
 import { FilledButton } from "@/view/components/FilledButton";
 import { IconBadge } from "@/view/components/IconBadge";
+import { AppIcon } from "@/view/components/AppIcon";
 import { ShelfRow } from "@/view/listings/shelfRow";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 
@@ -72,7 +73,12 @@ export function MyListingsListingsTab({
 
   return (
     <>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.filterRow}
+        keyboardShouldPersistTaps="handled"
+      >
         {/* Mesmo Chip do resto do app (Home, Explorar, filtros): raio, check e cores iguais. */}
         {filterChips.map((chip) => (
           <Chip
@@ -139,10 +145,13 @@ export function MyListingsListingsTab({
           ))}
         </View>
       )}
-      {/* `05.01` traz a dica de uso depois da lista, não antes dela. */}
-      <Text style={styles.orientationHint}>
-        Toque em um livro para editar, pausar ou marcar como concluído.
-      </Text>
+      {/* `05.01` traz a dica de uso depois da lista, com ícone informativo para clareza ergonômica. */}
+      <View style={styles.orientationBox}>
+        <AppIcon name="info" size={16} color={colors.secondaryText} />
+        <Text style={styles.orientationHint}>
+          Toque em um livro para editar, pausar ou marcar como concluído.
+        </Text>
+      </View>
     </>
   );
 }
@@ -153,6 +162,7 @@ function createStyles(colors: ColorPalette) {
       flexDirection: "row",
       gap: tokens.spacing[8],
       paddingBottom: tokens.spacing[8],
+      paddingRight: tokens.spacing[16],
     },
     empty: { paddingTop: tokens.spacing[48], alignItems: "center", gap: tokens.spacing[12] },
     emptyTitle: {
@@ -171,10 +181,17 @@ function createStyles(colors: ColorPalette) {
     tableHeader: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[16], paddingHorizontal: tokens.spacing[16], paddingVertical: tokens.spacing[12] },
     tableHeaderText: { ...tokens.typography.labelLarge, color: colors.m3.onSurfaceVariant },
     listTitle: { ...tokens.typography.titleMedium, color: colors.m3.onSurface },
+    orientationBox: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[8],
+      marginTop: tokens.spacing[10],
+      paddingHorizontal: tokens.spacing[4],
+    },
     orientationHint: {
-      ...tokens.typography.bodyMedium,
+      ...tokens.typography.labelSmall,
       color: colors.secondaryText,
-      marginTop: tokens.spacing[8],
+      flex: 1,
     },
   });
 }

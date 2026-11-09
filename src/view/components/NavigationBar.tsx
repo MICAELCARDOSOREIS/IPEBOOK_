@@ -21,9 +21,11 @@ const ITEMS: ReadonlyArray<{ key: NavigationDestination; label: string; icon: Ap
   { key: "shelf", label: "Estante", icon: "shelf" },
 ];
 
-const INDICATOR_WIDTH = 64;
-const DOCK_HORIZONTAL_PADDING = tokens.spacing[12]; // 12
-const INITIAL_DOCK_MAX_WIDTH = 328;
+const INDICATOR_WIDTH = 68;
+const INDICATOR_HEIGHT = 36;
+const DOCK_HORIZONTAL_PADDING = tokens.spacing[16]; // 16
+const DOCK_VERTICAL_PADDING = tokens.spacing[10]; // 10
+const INITIAL_DOCK_MAX_WIDTH = 356;
 
 /**
  * Calcula a posição horizontal X da pílula deslizante centralizada sobre o item `index`.
@@ -239,7 +241,7 @@ function TabIconWithBounce({
 
   return (
     <Animated.View style={[stylesLocal.iconLayer, { transform: [{ scale: scaleAnim }] }]}>
-      <AppIcon name={name} size={24} filled={active} color={color} />
+      <AppIcon name={name} size={26} filled={active} color={color} />
     </Animated.View>
   );
 }
@@ -275,7 +277,7 @@ function createStyles(colors: ColorPalette) {
       maxWidth: INITIAL_DOCK_MAX_WIDTH,
       backgroundColor: isWeb ? webDockBg : colors.surface,
       borderRadius: tokens.radius.full,
-      paddingVertical: tokens.spacing[8],
+      paddingVertical: DOCK_VERTICAL_PADDING,
       paddingHorizontal: DOCK_HORIZONTAL_PADDING,
       borderWidth: 1,
       borderColor: colors.m3.outlineVariant,
@@ -294,10 +296,10 @@ function createStyles(colors: ColorPalette) {
     },
     slidingPill: {
       position: "absolute",
-      top: tokens.spacing[8] + tokens.spacing[4], // alinhado verticalmente com o centro dos indicadores (12dp)
+      top: DOCK_VERTICAL_PADDING + tokens.spacing[4], // alinhado verticalmente com o centro dos indicadores (14dp)
       left: 0,
       width: INDICATOR_WIDTH,
-      height: tokens.spacing[32],
+      height: INDICATOR_HEIGHT,
       borderRadius: tokens.radius.full,
       backgroundColor: colors.m3.secondaryContainer,
       zIndex: 0,
@@ -313,7 +315,7 @@ function createStyles(colors: ColorPalette) {
     },
     indicator: {
       width: INDICATOR_WIDTH,
-      height: tokens.spacing[32],
+      height: INDICATOR_HEIGHT,
       borderRadius: tokens.radius.full,
       justifyContent: "center",
       alignItems: "center",
@@ -348,9 +350,9 @@ function createStyles(colors: ColorPalette) {
     itemDisabled: { opacity: 0.38 },
     label: {
       color: colors.m3.onSurfaceVariant,
-      fontSize: 12,
+      fontSize: 13,
       fontWeight: "500",
-      letterSpacing: 0.2,
+      letterSpacing: 0.25,
       textAlign: "center",
     },
     labelHovered: {

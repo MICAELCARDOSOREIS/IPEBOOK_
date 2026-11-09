@@ -269,50 +269,55 @@ export function ProfileMenuSection({
         <Text style={styles.sectionHeader}>{title}</Text>
       </View>
       <View style={styles.cardGroup}>
-        {items.map((item) => (
-          <Pressable
-            key={item.key}
-            accessibilityRole="button"
-            accessibilityLabel={item.label}
-            onPress={item.onPress}
-            style={({ pressed }) => [styles.menuRow, pressed && styles.menuRowPressed]}
-          >
-            <View style={styles.menuIconContainer}>
-              <AppIcon name={item.icon} size={20} color={item.iconColor ?? defaultIconColor ?? colors.m3.onSurface} />
-            </View>
-            <View style={styles.menuRowText}>
-              <Text style={styles.menuRowTitle}>{item.label}</Text>
-              {item.description ? (
-                <Text style={styles.menuRowDescription}>{item.description}</Text>
-              ) : null}
-            </View>
-            {item.badgeCount && item.badgeCount > 0 ? (
-              <View style={styles.menuBadge}>
-                <Text style={styles.menuBadgeText}>
-                  {item.badgeCount > 9 ? "9+" : item.badgeCount}
-                </Text>
+        {items.map((item, index) => (
+          <View key={item.key}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={item.label}
+              onPress={item.onPress}
+              style={({ pressed }) => [styles.menuRow, pressed && styles.menuRowPressed]}
+            >
+              <View style={styles.menuIconContainer}>
+                <AppIcon name={item.icon} size={20} color={item.iconColor ?? defaultIconColor ?? colors.m3.onSurface} />
               </View>
-            ) : null}
-            {item.showChevron ? (
-              <AppIcon name="chevronRight" size={20} color={colors.m3.onSurfaceVariant} />
-            ) : null}
-          </Pressable>
+              <View style={styles.menuRowText}>
+                <Text style={styles.menuRowTitle}>{item.label}</Text>
+                {item.description ? (
+                  <Text style={styles.menuRowDescription}>{item.description}</Text>
+                ) : null}
+              </View>
+              {item.badgeCount && item.badgeCount > 0 ? (
+                <View style={styles.menuBadge}>
+                  <Text style={styles.menuBadgeText}>
+                    {item.badgeCount > 9 ? "9+" : item.badgeCount}
+                  </Text>
+                </View>
+              ) : null}
+              {item.showChevron ? (
+                <AppIcon name="chevronRight" size={20} color={colors.m3.onSurfaceVariant} />
+              ) : null}
+            </Pressable>
+            {index < items.length - 1 ? <View style={styles.menuDivider} /> : null}
+          </View>
         ))}
 
         {onSignOut ? (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Sair da conta"
-            onPress={onSignOut}
-            style={({ pressed }) => [styles.menuRow, pressed && styles.menuRowPressed]}
-          >
-            <View style={[styles.menuIconContainer, styles.signOutIconContainer]}>
-              <AppIcon name="logout" size={20} color={colors.error} />
-            </View>
-            <View style={styles.menuRowText}>
-              <Text style={[styles.menuRowTitle, styles.signOutText]}>Sair da conta</Text>
-            </View>
-          </Pressable>
+          <>
+            <View style={styles.menuDivider} />
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Sair da conta"
+              onPress={onSignOut}
+              style={({ pressed }) => [styles.menuRow, pressed && styles.menuRowPressed]}
+            >
+              <View style={[styles.menuIconContainer, styles.signOutIconContainer]}>
+                <AppIcon name="logout" size={20} color={colors.error} />
+              </View>
+              <View style={styles.menuRowText}>
+                <Text style={[styles.menuRowTitle, styles.signOutText]}>Sair da conta</Text>
+              </View>
+            </Pressable>
+          </>
         ) : null}
       </View>
     </View>
@@ -441,22 +446,27 @@ function createStyles(colors: ColorPalette) {
       flex: 1,
       backgroundColor: colors.m3.surfaceContainerLow,
       borderRadius: tokens.radius.card,
-      paddingVertical: tokens.spacing[12],
+      paddingVertical: tokens.spacing[14],
       paddingHorizontal: tokens.spacing[6],
-      minHeight: 104,
+      minHeight: 110,
       alignItems: "center",
-      justifyContent: "flex-start",
+      justifyContent: "center",
       gap: tokens.spacing[4],
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      borderColor: colors.book.paperEdge,
+      elevation: 1,
+      shadowColor: colors.ipe.trunk,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.05,
+      shadowRadius: 4,
     },
     badgeIconBox: {
-      width: 36,
-      height: 36,
+      width: 42,
+      height: 42,
       borderRadius: tokens.radius.full,
       alignItems: "center",
       justifyContent: "center",
-      marginBottom: tokens.spacing[2],
+      marginBottom: tokens.spacing[4],
     },
     badgeTitle: {
       ...tokens.typography.labelSmall,
@@ -533,60 +543,80 @@ function createStyles(colors: ColorPalette) {
       gap: tokens.spacing[4],
     },
     sectionHeaderRow: {
-      height: 36,
       flexDirection: "row",
       alignItems: "center",
       gap: tokens.spacing[8],
       paddingHorizontal: tokens.spacing[4],
+      marginTop: tokens.spacing[4],
+      marginBottom: tokens.spacing[4],
     },
     sectionBloom: {
-      width: tokens.spacing[8],
-      height: tokens.spacing[8],
-      borderRadius: tokens.radius.extraSmall,
-      backgroundColor: colors.ipe.bloomDeep,
+      width: 4,
+      height: 16,
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.ipe.bloom,
     },
     sectionHeader: {
       ...tokens.typography.labelLarge,
-      color: colors.m3.primary,
+      fontSize: 15,
+      lineHeight: 20,
+      color: colors.brandBrown,
+      fontWeight: tokens.fontWeight.bold,
     },
     cardGroup: {
-      backgroundColor: "transparent",
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderRadius: tokens.radius.card,
+      borderWidth: 1,
+      borderColor: colors.book.paperEdge,
+      overflow: "hidden",
+      elevation: 1,
+      shadowColor: colors.ipe.trunk,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.05,
+      shadowRadius: 6,
+    },
+    menuDivider: {
+      height: 1,
+      backgroundColor: colors.m3.outlineVariant,
+      opacity: 0.35,
+      marginLeft: 72,
     },
     menuRow: {
       flexDirection: "row",
       alignItems: "center",
       gap: tokens.spacing[16],
-      paddingVertical: tokens.spacing[8],
-      paddingHorizontal: tokens.spacing[8],
+      paddingVertical: tokens.spacing[12],
+      paddingHorizontal: tokens.spacing[16],
       minHeight: tokens.accessibility.touchTarget,
-      borderRadius: tokens.shapeMorph.chipUnselected,
     },
     menuRowPressed: {
       backgroundColor: colors.m3.surfaceContainerHigh,
-      borderRadius: tokens.shapeMorph.chipSelected,
-      transform: [{ scale: 0.985 }],
     },
     menuIconContainer: {
       width: 40,
       height: 40,
-      borderRadius: tokens.radius.medium,
+      borderRadius: tokens.radius.full,
       backgroundColor: colors.m3.surfaceContainerHigh,
       alignItems: "center",
       justifyContent: "center",
     },
     signOutIconContainer: {
-      backgroundColor: colors.badge.sale.background,
+      backgroundColor: colors.errorContainer,
     },
     menuRowText: { flex: 1, gap: tokens.spacing[2] },
     menuRowTitle: {
       ...tokens.typography.bodyLarge,
+      fontWeight: tokens.fontWeight.medium,
       color: colors.m3.onSurface,
     },
     menuRowDescription: {
       ...tokens.typography.bodyMedium,
       color: colors.m3.onSurfaceVariant,
     },
-    signOutText: { color: colors.error },
+    signOutText: {
+      color: colors.error,
+      fontWeight: tokens.fontWeight.semiBold,
+    },
     menuBadge: {
       minWidth: 20,
       height: 20,

@@ -223,7 +223,13 @@ export default function ProfileHub({
 
   return (
     <SafeAreaView edges={["top", "left", "right"]} style={styles.page}>
-      <ScrollView {...standardVerticalScrollProps} contentContainerStyle={[styles.scroll, { paddingBottom: scrollBottomPadding.withBottomBar }]}>
+      <ScrollView
+        {...standardVerticalScrollProps}
+        contentContainerStyle={[
+          styles.scroll,
+          { paddingBottom: wideWeb ? tokens.spacing[32] : 160 },
+        ]}
+      >
         <View style={[styles.content, wideWeb && styles.contentWide]}>
           {/* Título editorial da marca (Figma 07.01 nó 563:8321: Source Serif 4 Bold 34px, #58331F)
               com entrada de Configurações no topo (ADR 0060), liberada também para visitante */}
