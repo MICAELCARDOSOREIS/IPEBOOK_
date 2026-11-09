@@ -42,14 +42,14 @@ export const colors = {
     onFoliage: "#FFFFFF",    // Texto e ícones sobre verde folhagem
   },
 
-  // Ipê da marca (Spec 078, Spec 116): florada amarela suave, aconchegante e harmoniosa
+  // Ipê da marca (Spec 078, Spec 116): florada amarela solar radiante e harmoniosa
   ipe: {
     container: "#FEF3C7",    // Amarelo florada suave, solar e acolhedor (combina com o fundo pólen)
     onContainer: "#451A03",  // Marrom tronco profundo de alto contraste (AAA > 12:1)
-    bloom: "#F59E0B",        // Âmbar dourado nobre de ipê em florada
+    bloom: "#F5B718",        // Amarelo ouro solar radiante de ipê em plena florada
     bloomDeep: "#D97706",    // Âmbar dourado vivo (tubo e sépalas da flor)
     petalSoft: "#FFFBEB",    // Pétala solar fresca de ipê
-    ribbon: "#F59E0B",       // Fita marcadora dourada
+    ribbon: "#F5B718",       // Fita marcadora dourada
     trunk: "#58331F",        // Tronco nobre
   },
 
@@ -64,7 +64,7 @@ export const colors = {
   badge: {
     sale: { background: "#1E4E27", text: "#FFFFFF" },
     trade: { background: "#58331F", text: "#FFFFFF" },
-    donation: { background: "#F59E0B", text: "#451A03" },
+    donation: { background: "#F5B718", text: "#451A03" },
     reserved: { background: "#FDE047", text: "#3C302A" },
     completed: { background: "#2B6334", text: "#FFFFFF" },
   },
