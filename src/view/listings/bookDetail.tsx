@@ -650,7 +650,14 @@ function createStyles(colors: ColorPalette) {
     safeMeetingBody: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
     contentWide: { flex: 1, maxWidth: 440, padding: tokens.spacing[24], borderRadius: tokens.radius.xl, borderWidth: 1, borderColor: colors.m3.outlineVariant, backgroundColor: colors.m3.surfaceContainerLow },
     bottomBarWide: { paddingHorizontal: 0, paddingVertical: 0 },
-    status: { alignItems: "center", paddingTop: tokens.spacing[48] },
+    status: {
+      width: "100%",
+      maxWidth: 640,
+      alignSelf: "center",
+      paddingHorizontal: tokens.spacing[16],
+      paddingTop: tokens.spacing[20],
+      alignItems: "center",
+    },
     errorText: {
       ...tokens.typography.bodyLarge,
       color: colors.error,
