@@ -70,9 +70,13 @@ export function CatalogCarousel({
 
   const renderCard = (item: Book, wide = false) => {
     const tag = modalityTag[item.modality];
-    const priceSuffix = item.modality === "sale" && item.price != null
-      ? ` · ${formatPrice(item.price)}`
-      : "";
+    const priceText =
+      item.modality === "sale" && item.price != null
+        ? formatPrice(item.price)
+        : item.modality === "donation"
+          ? "Gratuito"
+          : "Para troca";
+
     return (
       <Pressable
         accessibilityRole="button"
@@ -84,12 +88,18 @@ export function CatalogCarousel({
           pressed && styles.carouselCardPressed,
         ]}
       >
-        <View style={[styles.carouselCardCoverArea, wide && styles.carouselCardCoverAreaWide, { backgroundColor: tag.background }]}>
+        <View
+          style={[
+            styles.carouselCardCoverArea,
+            wide && styles.carouselCardCoverAreaWide,
+            { backgroundColor: tag.background },
+          ]}
+        >
           <BookCover
             id={item.id}
             title={item.title}
             photoUrl={item.photoUrl}
-            variant={wide ? "detail" : "card"}
+            variant="card"
             showRibbon={item.modality === "donation" || item.modality === "trade"}
           />
         </View>
@@ -118,23 +128,32 @@ export function CatalogCarousel({
                 </Text>
               </View>
             ) : null}
-            {priceSuffix ? (
-              <Text numberOfLines={1} style={styles.carouselCardPrice}>
-                {priceSuffix.replace(" · ", "")}
-              </Text>
-            ) : null}
+            <Text numberOfLines={1} style={styles.carouselCardPrice}>
+              {priceText}
+            </Text>
           </View>
           <Text numberOfLines={2} style={styles.carouselCardTitle}>{item.title}</Text>
           <Text numberOfLines={1} style={styles.carouselCardAuthor}>{item.author}</Text>
           {item.neighborhood ? (
             <View style={styles.carouselCardLocationRow}>
-              <AppIcon name="place" size={14} color={colors.action} />
+              <AppIcon name="place" size={13} color={colors.nature.foliageDeep} />
               <Text numberOfLines={1} style={styles.carouselCardNeighborhood}>
                 {item.neighborhood}
               </Text>
             </View>
           ) : null}
-          {item.status === "reserved" ? <Text style={styles.carouselCardReserved}>Reservado</Text> : null}
+          {item.status === "reserved" ? (
+            <View
+              style={[
+                styles.carouselCardModalityPill,
+                { backgroundColor: colors.badge.donation.background, alignSelf: "flex-start", marginTop: 2 },
+              ]}
+            >
+              <Text style={[styles.carouselCardModality, { color: colors.badge.donation.text }]}>
+                Reservado
+              </Text>
+            </View>
+          ) : null}
         </View>
       </Pressable>
     );
@@ -193,28 +212,24 @@ export function CatalogCarousel({
           <Text style={styles.viewMoreText}>{viewMoreButtonText}</Text>
         </Pressable>
       </View>
-      {wideWeb ? (
-        <View style={styles.carouselGrid}>
-          {books.map((item) => (
-            <View key={item.id} style={styles.carouselGridCell}>
-              {renderCard(item, true)}
-            </View>
-          ))}
-        </View>
-      ) : (
-        <View style={styles.carouselRow}>
-          <FlatList
-            ref={listRef}
-            horizontal
-            {...standardHorizontalScrollProps}
-            data={books as Book[]}
-            keyExtractor={(item) => item.id}
-            style={styles.carouselList}
-            contentContainerStyle={styles.carouselListContent}
-            renderItem={({ item }) => renderCard(item)}
-          />
-        </View>
-      )}
+      <View style={[styles.booksGridContainer, wideWeb && styles.booksGridContainerWide]}>
+        {books.map((item) => (
+          <View key={item.id} style={wideWeb ? styles.booksGridCellWide : styles.booksGridCell}>
+            {renderCard(item, wideWeb)}
+          </View>
+        ))}
+      </View>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`Explorar catálogo completo de ${title}`}
+        onPress={onViewMore}
+        style={withPress(styles.viewMoreBottomButton)}
+      >
+        <Text style={styles.viewMoreBottomText}>
+          {viewMoreButtonText === "Ver mais" ? "Ver mais no Explorar" : viewMoreButtonText}
+        </Text>
+        <AppIcon name="chevronRight" size={16} color={colors.nature.foliageDeep} />
+      </Pressable>
     </View>
   );
 }
@@ -565,10 +580,17 @@ function createStyles(colors: ColorPalette) {
     carouselNavText: { ...tokens.typography.titleBar, color: colors.action, fontWeight: tokens.fontWeight.bold },
     carouselCard: {
       flex: 1,
-      width: CAROUSEL_ITEM_WIDTH,
-      backgroundColor: colors.m3.surfaceContainerLow,
-      borderRadius: tokens.radius.cardSmall,
+      width: "100%",
+      backgroundColor: colors.m3.surfaceContainerLowest,
+      borderRadius: tokens.radius.large,
       overflow: "hidden",
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+      elevation: 2,
+      shadowColor: colors.ipe.trunk,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.08,
+      shadowRadius: 6,
     },
     carouselCardPressed: {
       borderRadius: tokens.shapeMorph.cardPressed,
@@ -578,15 +600,21 @@ function createStyles(colors: ColorPalette) {
       alignItems: "center",
       justifyContent: "center",
       paddingVertical: tokens.spacing[12],
-      backgroundColor: colors.m3.surfaceContainerLow,
+      minHeight: 124,
+      borderTopLeftRadius: tokens.radius.large,
+      borderTopRightRadius: tokens.radius.large,
+      overflow: "hidden",
     },
     carouselCardMeta: {
       flex: 1,
-      paddingHorizontal: tokens.spacing[12],
-      paddingVertical: tokens.spacing[12],
+      paddingHorizontal: tokens.spacing[10],
+      paddingVertical: tokens.spacing[10],
       gap: tokens.spacing[2],
+      backgroundColor: colors.m3.surfaceContainerLowest,
+      borderBottomLeftRadius: tokens.radius.large,
+      borderBottomRightRadius: tokens.radius.large,
     },
-    carouselCardModalityRow: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[8] },
+    carouselCardModalityRow: { flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: tokens.spacing[6] },
     carouselCardModalityPill: {
       paddingHorizontal: tokens.spacing[8],
       paddingVertical: tokens.spacing[2],
@@ -597,15 +625,21 @@ function createStyles(colors: ColorPalette) {
       color: colors.m3.onSurfaceVariant,
     },
     carouselCardPrice: {
-      ...tokens.typography.labelLarge,
-      color: colors.m3.onSurface,
+      ...tokens.typography.labelMedium,
+      fontWeight: tokens.fontWeight.bold,
+      color: colors.nature.foliageDeep,
     },
     carouselCardTitle: {
-      ...tokens.typography.bodyLarge,
+      ...tokens.typography.brandCardTitle,
+      fontSize: 15,
+      lineHeight: 19,
+      minHeight: 38,
       color: colors.m3.onSurface,
     },
     carouselCardAuthor: {
       ...tokens.typography.bodyMedium,
+      fontSize: 12,
+      lineHeight: 15,
       color: colors.m3.onSurfaceVariant,
     },
     carouselCardReserved: {
@@ -622,6 +656,49 @@ function createStyles(colors: ColorPalette) {
       ...tokens.typography.labelSmall,
       fontFamily: fontFamily.regular,
       color: colors.m3.onSurfaceVariant,
+    },
+    booksGridContainer: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      justifyContent: "space-between",
+      rowGap: tokens.spacing[14],
+    },
+    booksGridContainerWide: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: tokens.spacing[16],
+    },
+    booksGridCell: {
+      width: "48%",
+    },
+    booksGridCellWide: {
+      flexGrow: 1,
+      flexBasis: 200,
+      minWidth: 180,
+      maxWidth: 300,
+    },
+    viewMoreBottomButton: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: tokens.spacing[8],
+      backgroundColor: colors.m3.surfaceContainerLowest,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+      borderRadius: tokens.radius.full,
+      paddingVertical: tokens.spacing[12],
+      paddingHorizontal: tokens.spacing[20],
+      marginTop: tokens.spacing[16],
+      elevation: 1,
+      shadowColor: colors.ipe.trunk,
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.05,
+      shadowRadius: 4,
+    },
+    viewMoreBottomText: {
+      ...tokens.typography.labelLarge,
+      fontWeight: tokens.fontWeight.bold,
+      color: colors.nature.foliageDeep,
     },
     empty: {
       gap: tokens.spacing[12],
