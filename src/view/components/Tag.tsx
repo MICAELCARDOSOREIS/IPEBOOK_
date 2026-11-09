@@ -82,23 +82,23 @@ function createVariantConfig(
       defaultLabel: "Concluído",
     },
     paused: {
-      background: colors.disabledBackground,
-      text: colors.disabledText,
+      background: colors.badge.paused.background,
+      text: colors.badge.paused.text,
       defaultLabel: "Pausado",
     },
     pausado: {
-      background: colors.disabledBackground,
-      text: colors.disabledText,
+      background: colors.badge.paused.background,
+      text: colors.badge.paused.text,
       defaultLabel: "Pausado",
     },
     available: {
-      background: colors.m3.secondaryContainer,
-      text: colors.action,
+      background: colors.badge.available.background,
+      text: colors.badge.available.text,
       defaultLabel: "Disponível",
     },
     disponivel: {
-      background: colors.m3.secondaryContainer,
-      text: colors.action,
+      background: colors.badge.available.background,
+      text: colors.badge.available.text,
       defaultLabel: "Disponível",
     },
     box: {

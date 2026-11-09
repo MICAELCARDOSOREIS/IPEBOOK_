@@ -21,11 +21,11 @@ const ITEMS: ReadonlyArray<{ key: NavigationDestination; label: string; icon: Ap
   { key: "shelf", label: "Estante", icon: "shelf" },
 ];
 
-const INDICATOR_WIDTH = 68;
-const INDICATOR_HEIGHT = 36;
-const DOCK_HORIZONTAL_PADDING = tokens.spacing[16]; // 16
-const DOCK_VERTICAL_PADDING = tokens.spacing[10]; // 10
-const INITIAL_DOCK_MAX_WIDTH = 356;
+const INDICATOR_WIDTH = tokens.spacing[40] + tokens.spacing[28]; // 68 dp (touch target amplo M3 Expressive)
+const INDICATOR_HEIGHT = tokens.spacing[32] + tokens.spacing[4]; // 36 dp
+const DOCK_HORIZONTAL_PADDING = tokens.spacing[16]; // 16 dp
+const DOCK_VERTICAL_PADDING = tokens.spacing[10]; // 10 dp
+const INITIAL_DOCK_MAX_WIDTH = 356; // Largura balanceada para 3 abas sem distorção das bordas pílula
 
 /**
  * Calcula a posição horizontal X da pílula deslizante centralizada sobre o item `index`.
@@ -350,18 +350,21 @@ function createStyles(colors: ColorPalette) {
     itemDisabled: { opacity: 0.38 },
     label: {
       color: colors.m3.onSurfaceVariant,
-      fontSize: 13,
-      fontWeight: "500",
+      fontFamily: tokens.fontFamily.medium,
+      fontSize: tokens.fontSize[13],
+      fontWeight: tokens.fontWeight.medium,
       letterSpacing: 0.25,
       textAlign: "center",
     },
     labelHovered: {
       color: colors.m3.onSurface,
-      fontWeight: "600",
+      fontFamily: tokens.fontFamily.semiBold,
+      fontWeight: tokens.fontWeight.semiBold,
     },
     labelActive: {
       color: colors.m3.primary,
-      fontWeight: "700",
+      fontFamily: tokens.fontFamily.semiBold,
+      fontWeight: tokens.fontWeight.bold,
     },
     labelDisabled: { opacity: 0.7 },
   });

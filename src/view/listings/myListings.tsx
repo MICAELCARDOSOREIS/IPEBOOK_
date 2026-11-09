@@ -117,10 +117,15 @@ export function MyListings({
     { key: "trade", count: countBy("trade"), label: "em troca" },
     { key: "donation", count: countBy("donation"), label: "para doar" },
   ];
-  const tabs: { key: ShelfTab; label: string; badge?: number }[] = [
-    { key: "listings", label: "Anúncios" },
-    { key: "proposals", label: "Propostas", badge: proposals.length },
-    { key: "concluded", label: "Concluídos" },
+  const tabs: {
+    key: ShelfTab;
+    label: string;
+    badge?: number;
+    tone: { background: string; text: string };
+  }[] = [
+    { key: "listings", label: "Anúncios", tone: colors.badge.available },
+    { key: "proposals", label: "Propostas", badge: proposals.length, tone: colors.badge.trade },
+    { key: "concluded", label: "Concluídos", tone: colors.badge.completed },
   ];
   const isIOS = Platform.OS === "ios";
   const wideWeb = useIsWideWeb();
@@ -274,18 +279,24 @@ export function MyListings({
                     onPress={() => setActiveTab(tab.key)}
                     style={({ pressed }) => [
                       styles.tabChip,
-                      selected ? styles.tabChipSelected : styles.tabChipUnselected,
+                      selected
+                        ? [styles.tabChipSelected, { backgroundColor: tab.tone.background }]
+                        : styles.tabChipUnselected,
                       pressed && styles.tabChipPressed,
                     ]}
                   >
                     {selected ? (
-                      <AppIcon name="check" size={16} color={colors.m3.onSecondaryContainer} />
+                      <AppIcon name="check" size={16} color={tab.tone.text} />
+                    ) : !tab.badge ? (
+                      <View style={[styles.tabChipDot, { backgroundColor: tab.tone.background }]} />
                     ) : null}
                     <Text
                       numberOfLines={1}
                       style={[
                         styles.tabChipText,
-                        selected ? styles.tabChipTextSelected : styles.tabChipTextUnselected,
+                        selected
+                          ? [styles.tabChipTextSelected, { color: tab.tone.text }]
+                          : styles.tabChipTextUnselected,
                       ]}
                     >
                       {tab.label}
@@ -714,9 +725,14 @@ function createStyles(colors: ColorPalette) {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
-      gap: tokens.spacing[6],
+      gap: tokens.spacing[8],
       paddingHorizontal: tokens.spacing[16],
       borderRadius: tokens.radius.full,
+    },
+    tabChipDot: {
+      width: 10,
+      height: 10,
+      borderRadius: tokens.radius.dot,
     },
     tabChipUnselected: {
       backgroundColor: colors.m3.surfaceContainerLowest,
