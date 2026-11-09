@@ -89,8 +89,8 @@ export default function Favorites({
                 onPress={() => setStatusFilter(value)}
                 style={withPress([styles.mobileChip, selected && styles.mobileChipSelected])}
               >
-                {selected ? <AppIcon name="check" size={14} color={colors.m3.onSecondaryContainer} /> : null}
-                <Text style={[styles.mobileChipText, selected && { color: colors.m3.onSecondaryContainer }]}>{label}</Text>
+                {selected ? <AppIcon name="check" size={14} color={colors.nature.onFoliage} /> : null}
+                <Text style={[styles.mobileChipText, selected && { color: colors.nature.onFoliage, fontWeight: tokens.fontWeight.semiBold }]}>{label}</Text>
               </Pressable>
             );
           })}
@@ -115,8 +115,8 @@ export default function Favorites({
                   onPress={() => setStatusFilter(value)}
                   style={withPress([styles.wideChip, selected && styles.wideChipSelected])}
                 >
-                  {selected ? <AppIcon name="check" size={16} color={colors.m3.onSecondaryContainer} /> : null}
-                  <Text style={[styles.wideChipText, selected && { color: colors.m3.onSecondaryContainer }]}>{label}</Text>
+                  {selected ? <AppIcon name="check" size={16} color={colors.nature.onFoliage} /> : null}
+                  <Text style={[styles.wideChipText, selected && { color: colors.nature.onFoliage, fontWeight: tokens.fontWeight.semiBold }]}>{label}</Text>
                 </Pressable>
               );
             })}
@@ -275,8 +275,8 @@ function createStyles(colors: ColorPalette) {
       backgroundColor: colors.m3.surfaceContainerLowest,
     },
     wideChipSelected: {
-      backgroundColor: colors.m3.secondaryContainer,
-      borderColor: colors.m3.secondaryContainer,
+      backgroundColor: colors.nature.foliage,
+      borderColor: colors.nature.foliage,
       borderRadius: tokens.shapeMorph.chipSelected,
       borderWidth: 0,
       paddingLeft: tokens.spacing[8],
@@ -300,7 +300,7 @@ function createStyles(colors: ColorPalette) {
       borderColor: colors.m3.outlineVariant,
     },
     mobileChipSelected: {
-      backgroundColor: colors.m3.secondaryContainer,
+      backgroundColor: colors.nature.foliage,
       borderColor: "transparent",
     },
     mobileChipText: {

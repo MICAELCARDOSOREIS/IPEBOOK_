@@ -43,6 +43,7 @@ export class MemoryBookDataSource implements IBookDataSource {
     const created: Book = {
       ...book,
       id: `book-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+      createdAt: (book as Book).createdAt ?? new Date().toISOString(),
     };
     this.books.push({ ...created });
     return { ...created };

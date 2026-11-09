@@ -62,6 +62,19 @@ export type HomeProps = {
 
 export { resetAppLaunchCelebrationForTesting };
 
+function getBookRecency(book: Book): number {
+  if (book.createdAt) {
+    const time = new Date(book.createdAt).getTime();
+    if (!Number.isNaN(time)) return time;
+  }
+  const match = book.id.match(/^book-(\d+)/);
+  if (match) {
+    const time = Number(match[1]);
+    if (!Number.isNaN(time)) return time;
+  }
+  return 0;
+}
+
 export default function Home({
   currentNeighborhood,
   onSelectNeighborhood,
@@ -181,8 +194,17 @@ export default function Home({
     return filteredBooks.filter((b) => b.neighborhood === effectiveNeighborhood);
   }, [filteredBooks, isSpecificNeighborhood, effectiveNeighborhood]);
 
-  const maxRecent = wideWeb ? 12 : CAROUSEL_MAX_ITEMS;
-  const recentBooks = neighborhoodBooks.slice(0, maxRecent);
+  const sortedNeighborhoodBooks = useMemo(() => {
+    return [...neighborhoodBooks].sort((a, b) => {
+      const recencyA = getBookRecency(a);
+      const recencyB = getBookRecency(b);
+      if (recencyA !== recencyB) return recencyB - recencyA;
+      return 0;
+    });
+  }, [neighborhoodBooks]);
+
+  const maxRecent = CAROUSEL_MAX_ITEMS;
+  const recentBooks = sortedNeighborhoodBooks.slice(0, maxRecent);
   const donationCount = state.books.filter(
     (book) => book.modality === "donation" && book.status === "available",
   ).length;
@@ -506,7 +528,7 @@ export default function Home({
             }
           }}
           viewMoreLabel="Ver mais livros recém-adicionados"
-          viewMoreButtonText="Ver todos"
+          viewMoreButtonText="Ver mais"
         />
       ) : (
         <HomeEmptyCatalogSection

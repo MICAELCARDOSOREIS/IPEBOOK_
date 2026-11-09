@@ -44,7 +44,7 @@ export function Chip({ label, selected, onPress, disabled = false, accessibility
           disabled && styles.disabled,
         ]}
       >
-        {selected ? <AppIcon name="check" size={18} color={tone?.text ?? colors.m3.onSecondaryContainer} /> : null}
+        {selected ? <AppIcon name="check" size={18} color={tone?.text ?? colors.nature.onFoliage} /> : null}
         {tone && !selected ? <View style={[styles.dot, { backgroundColor: tone.background, borderColor: tone.background }]} /> : null}
         <Text
           style={[
@@ -76,7 +76,7 @@ function createStyles(colors: ColorPalette) {
     chipCompact: { height: tokens.spacing[32], paddingHorizontal: tokens.spacing[16] },
     chipRegular: { height: tokens.spacing[40], paddingHorizontal: tokens.spacing[20] },
     selected: {
-      backgroundColor: colors.m3.secondaryContainer,
+      backgroundColor: colors.nature.foliage,
       borderWidth: 0,
       borderRadius: tokens.shapeMorph.chipSelected,
     },
@@ -91,7 +91,7 @@ function createStyles(colors: ColorPalette) {
       ...(Platform.OS === "web" ? ({ cursor: "not-allowed" } as never) : {}),
     },
     label: { color: colors.m3.onSurfaceVariant, ...tokens.typography.labelLarge },
-    labelSelected: { color: colors.m3.onSecondaryContainer },
+    labelSelected: { color: colors.nature.onFoliage, fontWeight: tokens.fontWeight.medium },
     labelDisabled: { color: colors.disabledText },
   });
 }

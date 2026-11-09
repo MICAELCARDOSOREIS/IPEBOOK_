@@ -127,7 +127,7 @@ export function WebFilterSidebar({
                   onPress={() => onSortChange(opt)}
                   style={withPress([styles.chip, selected && styles.chipSelected])}
                 >
-                  {selected ? <AppIcon name="check" size={16} color={colors.m3.onSecondaryContainer} /> : null}
+                  {selected ? <AppIcon name="check" size={16} color={colors.nature.onFoliage} /> : null}
                   <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{SORT_LABELS[opt]}</Text>
                 </Pressable>
               );
@@ -192,14 +192,14 @@ function createStyles(colors: ColorPalette) {
       backgroundColor: colors.m3.surfaceContainerLowest,
     },
     chipSelected: {
-      backgroundColor: colors.m3.secondaryContainer,
-      borderColor: colors.m3.secondaryContainer,
+      backgroundColor: colors.nature.foliage,
+      borderColor: colors.nature.foliage,
       borderRadius: tokens.shapeMorph.chipSelected,
       borderWidth: 0,
       paddingLeft: tokens.spacing[8],
     },
     chipText: { ...tokens.typography.labelLarge, color: colors.m3.onSurfaceVariant },
-    chipTextSelected: { color: colors.m3.onSecondaryContainer },
+    chipTextSelected: { color: colors.nature.onFoliage, fontWeight: tokens.fontWeight.semiBold },
     checkRow: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[12], minHeight: 40 },
     box: {
       width: 18,

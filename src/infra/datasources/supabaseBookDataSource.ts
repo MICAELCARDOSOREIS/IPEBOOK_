@@ -27,10 +27,11 @@ type BookRow = {
   draft_step?: number | null;
   is_box?: boolean | null;
   box_volumes_count?: number | null;
+  created_at?: string | null;
 };
 
 export const BOOK_COLUMNS =
-  "id,title,author,category,owner_id,modality,price,status,city,state,neighborhood,condition,description,synopsis,publisher,page_count,publication_year,photo_url,photos,draft_step,is_box,box_volumes_count";
+  "id,title,author,category,owner_id,modality,price,status,city,state,neighborhood,condition,description,synopsis,publisher,page_count,publication_year,photo_url,photos,draft_step,is_box,box_volumes_count,created_at";
 
 function mapBook(row: BookRow): Book {
   return {
@@ -56,6 +57,7 @@ function mapBook(row: BookRow): Book {
     ...(row.draft_step === null || row.draft_step === undefined ? {} : { draftStep: Number(row.draft_step) }),
     ...(row.is_box ? { isBox: true } : {}),
     ...(row.box_volumes_count ? { boxVolumesCount: Number(row.box_volumes_count) } : {}),
+    ...(row.created_at ? { createdAt: row.created_at } : {}),
   };
 }
 

@@ -195,8 +195,8 @@ function createStyles(colors: ColorPalette) {
     justifyContent: "center",
   },
   filterChipSelected: {
-    backgroundColor: colors.m3.secondaryContainer,
-    borderColor: colors.m3.secondaryContainer,
+    backgroundColor: colors.nature.foliage,
+    borderColor: colors.nature.foliage,
     borderRadius: tokens.shapeMorph.chipSelected,
     borderWidth: 0,
   },
@@ -205,7 +205,8 @@ function createStyles(colors: ColorPalette) {
     color: colors.m3.onSurfaceVariant,
   },
   filterTextSelected: {
-    color: colors.m3.onSecondaryContainer,
+    color: colors.nature.onFoliage,
+    fontWeight: tokens.fontWeight.semiBold,
   },
   list: {
     gap: tokens.spacing[12],
