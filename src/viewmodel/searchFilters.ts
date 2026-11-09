@@ -118,7 +118,13 @@ export function matchesCondition(book: Book, condition: SearchConditionFilter): 
 }
 
 function matchesNeighborhood(book: Book, neighborhood: string): boolean {
-  if (neighborhood === "all" || neighborhood === "Todos os bairros") return true;
+  if (
+    neighborhood === "all" ||
+    neighborhood === "Todos os bairros" ||
+    neighborhood === "Todos os bairros (Piripiri)"
+  ) {
+    return true;
+  }
   return book.neighborhood?.trim().toLowerCase() === neighborhood.trim().toLowerCase();
 }
 

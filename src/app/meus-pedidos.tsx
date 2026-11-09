@@ -1,9 +1,9 @@
 import { useCallback, useRef, useState } from "react";
-import { useFocusEffect } from "expo-router";
-import { pushOnce, replaceOnce } from "@/view/pushOnce";
+import { router, useFocusEffect } from "expo-router";
+import { backOnce, pushOnce, replaceOnce } from "@/view/pushOnce";
 import ConversationsScreen from "@/view/conversations/conversations";
 
-/** Destino "Conversas" da barra de navegação (ADR 0011, Spec 076). */
+/** Tela de "Conversas" acessada pelo atalho no topo da Home (Spec 076). */
 export default function MeusPedidosRoute() {
   const [focusKey, setFocusKey] = useState(0);
   const hasFocused = useRef(false);
@@ -19,6 +19,10 @@ export default function MeusPedidosRoute() {
   return (
     <ConversationsScreen
       focusKey={focusKey}
+      onBack={() => {
+        if (router.canGoBack()) backOnce();
+        else replaceOnce("/");
+      }}
       onRequireSignIn={() => replaceOnce("/entrar")}
       onOpenChat={(id) => pushOnce(`/conversa/${id}` as never)}
       onOpenNegotiation={(id) => pushOnce(`/negociacao/${id}`)}

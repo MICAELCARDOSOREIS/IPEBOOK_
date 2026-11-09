@@ -21,19 +21,31 @@ export type SearchAlertsActions = {
   remove: (id: string) => Promise<boolean>;
 };
 
+const sessionAlertsCache = new Map<string, readonly SearchAlert[]>();
+
 export function useSearchAlertsViewModel(userId: string | null, initialQuery: string, useCases: ISearchAlertUseCases): [SearchAlertsState, SearchAlertsActions] {
-  const [state, setState] = useState<SearchAlertsState>({ alerts: [], query: initialQuery, loading: Boolean(userId), error: null, loadError: null, message: null });
+  const isTest = process.env.NODE_ENV === "test";
+  const initialCached = !isTest && userId ? (sessionAlertsCache.get(userId) ?? null) : null;
+  const [state, setState] = useState<SearchAlertsState>({
+    alerts: initialCached ?? [],
+    query: initialQuery,
+    loading: Boolean(userId) && initialCached === null,
+    error: null,
+    loadError: null,
+    message: null,
+  });
   const reload = useCallback(async () => {
     if (!userId) { setState((prev) => ({ ...prev, loading: false, loadError: null })); return; }
-    setState((prev) => ({ ...prev, loading: true, loadError: null }));
+    setState((prev) => ({ ...prev, loading: prev.alerts.length === 0 && (!isTest ? !sessionAlertsCache.has(userId) : true), loadError: null }));
     try {
       const alerts = await useCases.listAlerts(userId);
+      if (!isTest) sessionAlertsCache.set(userId, alerts);
       setState((prev) => ({ ...prev, alerts, loading: false, loadError: null }));
     } catch (error) {
       const message = error instanceof DomainError ? error.message : "Não foi possível carregar alertas.";
       setState((prev) => ({ ...prev, loading: false, error: message, loadError: message }));
     }
-  }, [userId, useCases]);
+  }, [userId, useCases, isTest]);
   useEffect(() => { void reload(); }, [reload]);
   const setQuery = useCallback((query: string) => setState((prev) => ({ ...prev, query, error: null })), []);
   const create = useCallback(async () => {

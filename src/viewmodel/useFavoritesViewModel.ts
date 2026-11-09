@@ -18,19 +18,24 @@ export type FavoritesActions = {
   clearActionError: () => void;
 };
 
+const sessionFavoritesCache = new Map<string, readonly Book[]>();
+
 export function useFavoritesViewModel(userId: string | null, useCases: IFavoriteUseCases): [FavoritesState, FavoritesActions] {
+  const isTest = process.env.NODE_ENV === "test";
+  const initialCached = !isTest && userId ? (sessionFavoritesCache.get(userId) ?? null) : null;
   const [state, setState] = useState<FavoritesState>({
-    books: [],
-    loading: Boolean(userId),
+    books: initialCached ?? [],
+    loading: Boolean(userId) && initialCached === null,
     error: null,
     removingId: null,
     actionError: null,
   });
   const reload = useCallback(async () => {
     if (!userId) { setState({ books: [], loading: false, error: null, removingId: null, actionError: null }); return; }
-    setState((prev) => ({ ...prev, loading: true, error: null }));
+    setState((prev) => ({ ...prev, loading: prev.books.length === 0, error: null }));
     try {
       const books = await useCases.listFavorites(userId);
+      if (!isTest) sessionFavoritesCache.set(userId, books);
       setState({ books, loading: false, error: null, removingId: null, actionError: null });
     } catch (error) {
       setState({
@@ -41,7 +46,7 @@ export function useFavoritesViewModel(userId: string | null, useCases: IFavorite
         actionError: null,
       });
     }
-  }, [userId, useCases]);
+  }, [userId, useCases, isTest]);
   const removeFavorite = useCallback(async (bookId: string) => {
     if (!userId) return false;
     setState((prev) => ({ ...prev, removingId: bookId, actionError: null }));

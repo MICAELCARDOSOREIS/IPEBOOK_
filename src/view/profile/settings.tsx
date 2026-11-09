@@ -271,7 +271,12 @@ export function Settings({
     );
   }
 
-  function renderSectionHeader(sectionKey: SettingsSectionKey, label: string, icon: AppIconName) {
+  function renderSectionHeader(
+    sectionKey: SettingsSectionKey,
+    label: string,
+    subtitle: string,
+    icon: AppIconName,
+  ) {
     const expanded = expandedSection === sectionKey;
     return (
       <Pressable
@@ -280,17 +285,24 @@ export function Settings({
         accessibilityState={{ expanded }}
         onPress={() => setExpandedSection((previous) => (previous === sectionKey ? null : sectionKey))}
         android_ripple={{ color: colors.m3.surfaceContainerHigh }}
-        style={withPress(styles.disclosureHeader)}
+        style={withPress([styles.disclosureHeader, expanded && styles.disclosureHeaderExpanded])}
       >
         <View style={styles.sectionHeaderRow}>
           <View style={styles.sectionHeaderIcon}>
-            <AppIcon name={icon} size={18} color={colors.ipe.onContainer} />
+            <AppIcon name={icon} size={20} color={colors.m3.onSecondaryContainer} />
           </View>
-          <Text accessibilityRole="header" style={styles.sectionHeader}>
-            {label}
-          </Text>
+          <View style={styles.sectionHeaderTextCol}>
+            <Text accessibilityRole="header" style={styles.sectionHeader}>
+              {label}
+            </Text>
+            <Text numberOfLines={1} style={styles.sectionSubtitle}>
+              {subtitle}
+            </Text>
+          </View>
         </View>
-        <AppIcon name={expanded ? "chevronUp" : "chevronDown"} size={20} color={colors.m3.onSurfaceVariant} />
+        <View style={[styles.chevronBadge, expanded && styles.chevronBadgeExpanded]}>
+          <AppIcon name={expanded ? "chevronUp" : "chevronDown"} size={18} color={colors.m3.onSurfaceVariant} />
+        </View>
       </Pressable>
     );
   }
@@ -324,7 +336,7 @@ export function Settings({
         </View>
       </View>
       <View style={styles.accountAction}>
-        <AppIcon name="edit" size={16} color={colors.m3.onSurfaceVariant} />
+        <AppIcon name="edit" size={16} color={colors.m3.onSecondaryContainer} />
         <Text style={styles.accountActionText}>Editar</Text>
       </View>
     </Pressable>
@@ -367,17 +379,17 @@ export function Settings({
 
           {/* Conta e dados (ADR 0060): só com sessão, e primeiro por ser o que mais importa */}
           {accountLinks.length > 0 ? (
-            <View style={styles.section} onLayout={(event) => { sectionY.current.account = event.nativeEvent.layout.y; }}>
-              {renderSectionHeader("account", "Conta e dados", "person")}
-              {expandedSection === "account" ? <View style={styles.listCard}>{accountLinks.map(renderLink)}</View> : null}
+            <View style={styles.sectionCard} onLayout={(event) => { sectionY.current.account = event.nativeEvent.layout.y; }}>
+              {renderSectionHeader("account", "Conta e dados", "Segurança, notificações, privacidade e bloqueios", "person")}
+              {expandedSection === "account" ? <View style={styles.sectionBodyList}>{accountLinks.map(renderLink)}</View> : null}
             </View>
           ) : null}
 
           {/* Preferências de uso (Spec 091): o bairro com que a Home e a Explorar abrem */}
-          <View style={styles.section} onLayout={(event) => { sectionY.current.preferences = event.nativeEvent.layout.y; }}>
-            {renderSectionHeader("preferences", "Preferências", "place")}
+          <View style={styles.sectionCard} onLayout={(event) => { sectionY.current.preferences = event.nativeEvent.layout.y; }}>
+            {renderSectionHeader("preferences", "Preferências", `Bairro padrão: ${defaultNeighborhoodLabel}`, "place")}
             {expandedSection === "preferences" ? (
-              <View style={styles.listCard}>
+              <View style={styles.sectionBodyList}>
                 {renderLink({
                   key: "neighborhood",
                   icon: "place",
@@ -391,48 +403,46 @@ export function Settings({
 
           {/* Notificações (Spec 099 / ADR 0075): a pessoa escolhe quais avisos chegam por push */}
           {hasAccount ? (
-            <View style={styles.section} onLayout={(event) => { sectionY.current.notifications = event.nativeEvent.layout.y; }}>
-              {renderSectionHeader("notifications", "Notificações", "bell")}
+            <View style={styles.sectionCard} onLayout={(event) => { sectionY.current.notifications = event.nativeEvent.layout.y; }}>
+              {renderSectionHeader("notifications", "Notificações", "Propostas, lembretes de encontro e alertas", "bell")}
               {expandedSection === "notifications" ? (
-                <>
-                  <View style={styles.listCard}>
-                    {(Object.keys(NOTIFICATION_PREFERENCE_CATEGORIES) as NotificationPreferenceKey[]).map(
-                      (key, index) => {
-                        const category = NOTIFICATION_PREFERENCE_CATEGORIES[key];
-                        return (
-                          <View key={key} style={[styles.toggleRow, index > 0 && styles.linkDivider]}>
-                            <View style={styles.linkText}>
-                              <Text style={styles.linkLabel}>{category.label}</Text>
-                              <Text style={styles.linkDescription}>{category.description}</Text>
-                            </View>
-                            <Switch
-                              value={notifPrefs.enabled[key]}
-                              onValueChange={(value) => void notifActions.setEnabled(key, value)}
-                              accessibilityRole="switch"
-                              accessibilityLabel={`${category.label}: ${notifPrefs.enabled[key] ? "ativada" : "desativada"}`}
-                              trackColor={{ false: colors.m3.outlineVariant, true: colors.action }}
-                              thumbColor={notifPrefs.enabled[key] ? colors.surface : colors.m3.surfaceContainerHigh}
-                            />
+                <View style={styles.sectionBodyList}>
+                  {(Object.keys(NOTIFICATION_PREFERENCE_CATEGORIES) as NotificationPreferenceKey[]).map(
+                    (key, index) => {
+                      const category = NOTIFICATION_PREFERENCE_CATEGORIES[key];
+                      return (
+                        <View key={key} style={[styles.toggleRow, index > 0 && styles.linkDivider]}>
+                          <View style={styles.linkText}>
+                            <Text style={styles.linkLabel}>{category.label}</Text>
+                            <Text style={styles.linkDescription}>{category.description}</Text>
                           </View>
-                        );
-                      },
-                    )}
-                  </View>
+                          <Switch
+                            value={notifPrefs.enabled[key]}
+                            onValueChange={(value) => void notifActions.setEnabled(key, value)}
+                            accessibilityRole="switch"
+                            accessibilityLabel={`${category.label}: ${notifPrefs.enabled[key] ? "ativada" : "desativada"}`}
+                            trackColor={{ false: colors.m3.outlineVariant, true: colors.action }}
+                            thumbColor={notifPrefs.enabled[key] ? colors.surface : colors.m3.surfaceContainerHigh}
+                          />
+                        </View>
+                      );
+                    },
+                  )}
                   {notifPrefs.error ? (
-                    <Text accessibilityLiveRegion="polite" style={styles.feedbackError}>
+                    <Text accessibilityLiveRegion="polite" style={[styles.feedbackError, styles.inlineFeedback]}>
                       {notifPrefs.error}
                     </Text>
                   ) : null}
-                </>
+                </View>
               ) : null}
             </View>
           ) : null}
 
           {/* Aparência (Spec 073 FR-003, ADR 0036) */}
-          <View style={styles.section} onLayout={(event) => { sectionY.current.appearance = event.nativeEvent.layout.y; }}>
-            {renderSectionHeader("appearance", "Aparência", "visibility")}
+          <View style={styles.sectionCard} onLayout={(event) => { sectionY.current.appearance = event.nativeEvent.layout.y; }}>
+            {renderSectionHeader("appearance", "Aparência", "Tema claro, escuro ou padrão do sistema", "visibility")}
             {expandedSection === "appearance" ? (
-              <View style={styles.card}>
+              <View style={styles.sectionBodyCard}>
                 <Text style={styles.sectionDescription}>
                   A preferência escolhida é aplicada imediatamente.
                 </Text>
@@ -442,10 +452,10 @@ export function Settings({
           </View>
 
           {/* Armazenamento e histórico: cópia offline do catálogo e buscas recentes */}
-          <View style={styles.section} onLayout={(event) => { sectionY.current.device = event.nativeEvent.layout.y; }}>
-            {renderSectionHeader("device", "Armazenamento e histórico", "document")}
+          <View style={styles.sectionCard} onLayout={(event) => { sectionY.current.device = event.nativeEvent.layout.y; }}>
+            {renderSectionHeader("device", "Armazenamento e histórico", "Catálogo offline e histórico de buscas", "document")}
             {expandedSection === "device" ? (
-              <View style={styles.card}>
+              <View style={styles.sectionBodyCard}>
                 <Text style={styles.sectionDescription}>
                   Uma cópia do catálogo fica salva para abrir livros sem internet. Removê-la libera espaço; ela pode ser baixada novamente. O histórico de buscas também fica salvo aqui e pode ser apagado separadamente.
                 </Text>
@@ -488,10 +498,10 @@ export function Settings({
           </View>
 
           {/* Sobre e atalhos (Spec 073) */}
-          <View style={styles.section} onLayout={(event) => { sectionY.current.about = event.nativeEvent.layout.y; }}>
-            {renderSectionHeader("about", "Sobre o IpêBook", "info")}
+          <View style={styles.sectionCard} onLayout={(event) => { sectionY.current.about = event.nativeEvent.layout.y; }}>
+            {renderSectionHeader("about", "Sobre o IpêBook", "Ajuda, suporte, redes sociais e termos", "info")}
             {expandedSection === "about" ? (
-              <View style={styles.listCard}>
+              <View style={styles.sectionBodyList}>
                 {aboutLinks.map(renderLink)}
                 <View style={[styles.versionRow, aboutLinks.length > 0 && styles.linkDivider]}>
                   <Text style={styles.versionLabel}>Versão</Text>
@@ -596,45 +606,15 @@ function getIconColor(icon: LinkItem["icon"], colors: ColorPalette) {
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     page: { flex: 1, backgroundColor: colors.background },
-    card: {
-      gap: tokens.spacing[12],
-      padding: tokens.spacing[16],
-      borderRadius: tokens.radius.xl,
-      backgroundColor: colors.m3.surfaceContainerLow,
-      borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
-      shadowColor: "#000",
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.03,
-      shadowRadius: 3,
-      elevation: 2,
-    },
-    listCard: {
-      borderRadius: tokens.radius.xl,
-      overflow: "hidden",
-      backgroundColor: colors.m3.surfaceContainer,
-      borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
-      shadowColor: "#000",
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.03,
-      shadowRadius: 3,
-      elevation: 2,
-    },
     accountCard: {
       flexDirection: "row",
       alignItems: "center",
       gap: tokens.spacing[16],
       padding: tokens.spacing[16],
       borderRadius: tokens.radius.xl,
-      backgroundColor: colors.m3.surfaceContainer,
+      backgroundColor: colors.m3.surfaceContainerLow,
       borderWidth: 1,
-      borderColor: colors.ipe.bloom,
-      shadowColor: "#000",
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.04,
-      shadowRadius: 4,
-      elevation: 2,
+      borderColor: colors.m3.outlineVariant,
     },
     accountIdentity: {
       flex: 1,
@@ -655,18 +635,22 @@ function createStyles(colors: ColorPalette) {
       fontWeight: tokens.fontWeight.semiBold,
     },
     accountAction: {
-      minHeight: tokens.accessibility.touchTarget,
+      minHeight: 36,
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
-      gap: tokens.spacing[4],
+      gap: tokens.spacing[6],
+      paddingHorizontal: tokens.spacing[12],
+      paddingVertical: tokens.spacing[6],
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.m3.secondaryContainer,
     },
     accountActionText: {
       ...tokens.typography.labelMedium,
-      color: colors.m3.onSurfaceVariant,
+      color: colors.m3.onSecondaryContainer,
       fontWeight: tokens.fontWeight.semiBold,
     },
-    signOutRow: { alignItems: "center" },
+    signOutRow: { alignItems: "center", paddingTop: tokens.spacing[4] },
     iconCircle: {
       width: tokens.spacing[40],
       height: tokens.spacing[40],
@@ -684,7 +668,7 @@ function createStyles(colors: ColorPalette) {
     content: {
       width: "100%",
       padding: tokens.spacing[16],
-      gap: tokens.spacing[20],
+      gap: tokens.spacing[12],
     },
     contentWide: {
       maxWidth: WIDE_CONTENT_MAX_WIDTH,
@@ -694,9 +678,9 @@ function createStyles(colors: ColorPalette) {
       alignItems: "flex-start",
       gap: tokens.spacing[48],
     },
-    mainStacked: { gap: tokens.spacing[20] },
+    mainStacked: { gap: tokens.spacing[12] },
     // Coluna de leitura: as listas de opções não passam de ~880 px, como nas preferências de sistemas.
-    main: { flex: 1, minWidth: 0, maxWidth: 880, gap: tokens.spacing[28] },
+    main: { flex: 1, minWidth: 0, maxWidth: 880, gap: tokens.spacing[16] },
     sidebar: {
       width: 300,
       gap: tokens.spacing[16],
@@ -717,36 +701,78 @@ function createStyles(colors: ColorPalette) {
     sideNavItemActive: { backgroundColor: colors.m3.surfaceContainerHigh },
     sideNavLabel: { ...tokens.typography.labelLarge, color: colors.m3.onSurface },
     sideSignOut: { alignItems: "flex-start", paddingHorizontal: tokens.spacing[4] },
-    section: {
-      gap: tokens.spacing[10],
+    sectionCard: {
+      borderRadius: tokens.radius.xl,
+      overflow: "hidden",
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
     },
     sectionHeaderRow: {
+      flex: 1,
+      minWidth: 0,
       flexDirection: "row",
       alignItems: "center",
-      gap: tokens.spacing[10],
-      paddingHorizontal: tokens.spacing[4],
+      gap: tokens.spacing[12],
+    },
+    sectionHeaderTextCol: {
+      flex: 1,
+      minWidth: 0,
+      gap: tokens.spacing[2],
     },
     disclosureHeader: {
-      minHeight: tokens.spacing[48],
+      minHeight: 68,
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
-      borderRadius: tokens.radius.medium,
-      paddingVertical: tokens.spacing[8],
-      paddingHorizontal: tokens.spacing[4],
+      gap: tokens.spacing[12],
+      paddingVertical: tokens.spacing[12],
+      paddingHorizontal: tokens.spacing[16],
+    },
+    disclosureHeaderExpanded: {
+      backgroundColor: colors.m3.surfaceContainer,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.m3.outlineVariant,
     },
     sectionHeaderIcon: {
-      width: tokens.spacing[32],
-      height: tokens.spacing[32],
-      borderRadius: tokens.radius.full,
-      backgroundColor: colors.ipe.container,
+      width: tokens.spacing[40],
+      height: tokens.spacing[40],
+      borderRadius: tokens.radius.medium,
+      backgroundColor: colors.m3.secondaryContainer,
       alignItems: "center",
       justifyContent: "center",
     },
     sectionHeader: {
-      ...tokens.typography.brandCardTitle,
-      color: colors.brandBrown,
+      ...tokens.typography.titleMedium,
+      color: colors.m3.onSurface,
       fontWeight: tokens.fontWeight.semiBold,
+    },
+    sectionSubtitle: {
+      ...tokens.typography.labelMedium,
+      color: colors.m3.onSurfaceVariant,
+    },
+    chevronBadge: {
+      width: tokens.spacing[32],
+      height: tokens.spacing[32],
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.m3.surfaceContainerHigh,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    chevronBadgeExpanded: {
+      backgroundColor: colors.m3.secondaryContainer,
+    },
+    sectionBodyList: {
+      backgroundColor: colors.m3.surfaceContainerLow,
+    },
+    sectionBodyCard: {
+      gap: tokens.spacing[12],
+      padding: tokens.spacing[16],
+      backgroundColor: colors.m3.surfaceContainerLow,
+    },
+    inlineFeedback: {
+      paddingHorizontal: tokens.spacing[16],
+      paddingBottom: tokens.spacing[12],
     },
     sectionDescription: {
       ...tokens.typography.bodyMedium,
