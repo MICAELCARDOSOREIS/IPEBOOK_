@@ -1,5 +1,5 @@
 import { useMemo, type ReactNode } from "react";
-import { ScrollView, StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
+import { ScrollView, StyleSheet, View, type RefreshControlProps, type StyleProp, type ViewStyle } from "react-native";
 import { SafeAreaView, type Edge } from "react-native-safe-area-context";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
@@ -10,7 +10,7 @@ export type ScreenContainerProps = {
   /** Cabeçalho fixo no topo da tela (ex.: TopAppBar). Não rola com o conteúdo. */
   header?: ReactNode;
   /** Controle de puxar para atualizar (RefreshControl). */
-  refreshControl?: React.ReactElement;
+  refreshControl?: React.ReactElement<RefreshControlProps>;
   /** Largura máxima da coluna de conteúdo centralizada. Padrão 720 (telas de conteúdo);
    *  use 560 em telas de formulário/foco. Passe `null` para desativar o limite (ex.: na Web larga). */
   maxWidth?: number | null;
