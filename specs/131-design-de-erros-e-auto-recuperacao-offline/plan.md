@@ -5,8 +5,8 @@
 ### 1. Componente `InlineErrorCard`
 - Criar `src/view/components/InlineErrorCard.tsx`:
   - Recebe `message: string`, `style?: StyleProp<ViewStyle>`, `icon?: AppIconName`.
-  - Exibe container com `colors.errorContainer`, borda `colors.error`, ícone `error`, texto com contraste legível e acessibilidade (`accessibilityRole="alert"`, `accessibilityLiveRegion="polite"`).
-  - Usar no `src/view/conversations/chat.tsx` (para `sendError`) e no `src/view/components/FavoriteButton.tsx` (para erro de favoritar).
+  - Exibe container com `colors.errorContainer`, borda `colors.error`, ícone `error`, texto com contraste legível e acessibilidade (`accessibilityRole="alert"`, `accessibilityLiveRegion="assertive"`).
+  - Usar no `src/view/conversations/chat.tsx` (para `sendError`), `src/view/components/FavoriteButton.tsx`, `src/view/listings/reportUser.tsx`, `src/view/requests/meetingCard.tsx`, `src/view/listings/manageListing.tsx`, `src/view/listings/ProposalSheet.tsx`, `src/view/beta/betaInviteScreen.tsx`, `src/view/auth/resetPassword.tsx`, `src/view/moderation/moderation.tsx` e `src/view/listings/createListingStep{1,2,3}.tsx`.
 
 ### 2. Refinamento de `ErrorState` e `OfflineState`
 - Em `src/view/components/ErrorState.tsx`:

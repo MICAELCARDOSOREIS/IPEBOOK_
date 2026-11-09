@@ -5,6 +5,7 @@ import { type ModerationDecision, type ModerationItem, REPORT_REASON_LABEL } fro
 import { makeAuthViewModel, makeModerationViewModel } from "@/di/container";
 import { AppIcon } from "@/view/components/AppIcon";
 import { Dialog } from "@/view/components/Dialog";
+import { InlineErrorCard } from "@/view/components/InlineErrorCard";
 import { Snackbar } from "@/view/components/Snackbar";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { useTheme } from "@/view/theme/ThemeProvider";
@@ -75,7 +76,7 @@ export function Moderation({ sessionUserId, onBack, onOpenListing, onOpenProfile
             <ActivityIndicator color={colors.action} accessibilityLabel="Carregando denúncias" />
           ) : state.error ? (
             <View style={styles.card}>
-              <Text accessibilityRole="alert" style={styles.error}>{state.error}</Text>
+              <InlineErrorCard message={state.error} />
               <Pressable accessibilityRole="button" accessibilityLabel="Tentar de novo" onPress={() => void actions.reload()} style={withPress(styles.secondary)}>
                 <Text style={styles.secondaryText}>Tentar de novo</Text>
               </Pressable>
