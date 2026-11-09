@@ -33,6 +33,8 @@ export const standardHorizontalScrollProps = {
 export const scrollBottomPadding = {
   /** Telas com barra inferior de navegação flutuante ativa no mobile (cápsula flutuante + margem segura) */
   withBottomBar: 104,
+  /** Telas com barra inferior de navegação e botão flutuante de mensagens (FAB) */
+  withBottomBarAndFab: 168,
   /** Telas secundárias sem barra inferior de navegação */
   withoutBottomBar: tokens.spacing[32],
 } as const;

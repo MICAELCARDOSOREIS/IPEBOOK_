@@ -542,7 +542,7 @@ export default function Home({
       edges={["top", "left", "right"]}
       maxWidth={wideWeb ? WEB_MAX_WIDTH : 720}
       paddingHorizontal={wideWeb ? WEB_GUTTER : undefined}
-      paddingBottom={wideWeb ? tokens.spacing[32] : scrollBottomPadding.withBottomBar}
+      paddingBottom={wideWeb ? tokens.spacing[32] : scrollBottomPadding.withBottomBarAndFab}
       contentStyle={wideWeb ? styles.wideHomeContent : undefined}
       refreshControl={
         <RefreshControl

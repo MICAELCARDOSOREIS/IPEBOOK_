@@ -299,9 +299,13 @@ export function Delivery({ requestId, sessionUserId, onBack }: DeliveryProps) {
     <SafeAreaView style={styles.page}>
       <TopAppBar contentMaxWidth={wide ? WEB_MAX_WIDTH : 560} title={title} onBack={guardedBack} />
       {state.loading ? (
-        <LoadingState label="Carregando a entrega" variant="detail" />
+        <View style={styles.loadingContainer}>
+          <LoadingState label="Carregando a entrega" variant="detail" />
+        </View>
       ) : state.loadError ? (
-        <ErrorState message={state.loadError} onRetry={() => void actions.reload()} />
+        <View style={styles.loadingContainer}>
+          <ErrorState message={state.loadError} onRetry={() => void actions.reload()} />
+        </View>
       ) : (
         <ScrollView {...standardVerticalScrollProps} contentContainerStyle={[styles.scroll, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}>
           <View style={[styles.content, wide && styles.contentWide]}>
@@ -369,6 +373,13 @@ export default function DeliveryScreen({ requestId, onBack, onRequireSignIn }: D
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     page: { flex: 1, backgroundColor: colors.surface },
+    loadingContainer: {
+      width: "100%",
+      maxWidth: 560,
+      alignSelf: "center",
+      paddingHorizontal: tokens.spacing[16],
+      paddingTop: tokens.spacing[16],
+    },
     scroll: { paddingBottom: tokens.spacing[24] },
     content: { width: "100%", maxWidth: 560, alignSelf: "center", padding: tokens.spacing[16], gap: tokens.spacing[16] },
     contentWide: { maxWidth: WEB_MAX_WIDTH, paddingHorizontal: tokens.spacing[24] },
