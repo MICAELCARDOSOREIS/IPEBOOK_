@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppIcon } from "@/view/components/AppIcon";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
@@ -11,14 +12,17 @@ export type HomeFloatingChatButtonProps = {
 
 /**
  * Botão Flutuante de Mensagens/Conversas (FAB Material 3 - Estilo Ipêbook)
- * Renderizado no canto inferior direito da Home em telas móveis.
+ * Renderizado no canto inferior direito da Home em telas móveis, posicionado
+ * com respiro harmônico acima da barra de navegação flutuante.
  */
 export function HomeFloatingChatButton({
   badgeCount = 0,
   onPress,
 }: HomeFloatingChatButtonProps) {
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const bottom = Math.max(insets.bottom, 12) + 76;
 
   return (
     <Pressable
@@ -32,6 +36,7 @@ export function HomeFloatingChatButton({
       onPress={onPress}
       style={({ pressed }) => [
         styles.floatingChatButton,
+        { bottom },
         pressed && styles.floatingChatButtonPressed,
       ]}
     >
