@@ -1,10 +1,11 @@
 import { useMemo, useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { makeAuthViewModel, makeBlockedUsersViewModel } from "@/di/container";
 import { Avatar } from "@/view/components/Avatar";
 import { Dialog } from "@/view/components/Dialog";
 import { ErrorState } from "@/view/components/ErrorState";
+import { LoadingState } from "@/view/components/LoadingState";
 import { Snackbar } from "@/view/components/Snackbar";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
@@ -57,9 +58,7 @@ export function BlockedUsers({ onBack }: BlockedUsersProps) {
           </Text>
 
           {state.loading ? (
-            <View style={styles.status}>
-              <ActivityIndicator color={colors.action} accessibilityLabel="Carregando pessoas bloqueadas" />
-            </View>
+            <LoadingState label="Carregando pessoas bloqueadas" />
           ) : state.error ? (
             <ErrorState message={state.error} onRetry={() => void actions.reload()} />
           ) : state.blockedUsers.length === 0 ? (

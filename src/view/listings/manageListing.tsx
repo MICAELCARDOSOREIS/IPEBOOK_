@@ -81,7 +81,7 @@ export default function ManageListing({
     return (
       <SafeAreaView style={styles.page}>
         <TopAppBar contentMaxWidth={contentMaxWidth} title="Gerenciar anúncio" onBack={guardedBack} />
-        <LoadingState label="Carregando anúncio" />
+        <LoadingState label="Carregando anúncio" variant="detail" />
       </SafeAreaView>
     );
   }

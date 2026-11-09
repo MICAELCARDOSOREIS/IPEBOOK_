@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import * as Linking from "expo-linking";
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   makeAuthViewModel,
@@ -16,6 +16,7 @@ import { Avatar } from "@/view/components/Avatar";
 import { Breadcrumb } from "@/view/components/Breadcrumb";
 import { AppIcon } from "@/view/components/AppIcon";
 import { FilledButton } from "@/view/components/FilledButton";
+import { LoadingState } from "@/view/components/LoadingState";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { OwnerListings } from "@/view/listings/ownerListings";
 import { UserRatingsPanel } from "@/view/listings/userRatingsPanel";
@@ -90,9 +91,7 @@ export function PublicProfile({ userId, onBack, onOpenChat, onReportListing, onR
         {...standardVerticalScrollProps}
       >
         {state.loading ? (
-          <View style={styles.status}>
-            <ActivityIndicator color={colors.action} accessibilityLabel="Carregando perfil" />
-          </View>
+          <LoadingState label="Carregando perfil" variant="profile" />
         ) : state.error ? (
           <View style={styles.status}>
             <Text accessibilityRole="alert" style={styles.errorText}>{state.error}</Text>
