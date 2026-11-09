@@ -95,13 +95,15 @@ export function CatalogCarousel({
             { backgroundColor: tag.background },
           ]}
         >
-          <BookCover
-            id={item.id}
-            title={item.title}
-            photoUrl={item.photoUrl}
-            variant="card"
-            showRibbon={item.modality === "donation" || item.modality === "trade"}
-          />
+          <View style={styles.coverShadowWrap}>
+            <BookCover
+              id={item.id}
+              title={item.title}
+              photoUrl={item.photoUrl}
+              variant="card"
+              showRibbon={item.modality === "donation" || item.modality === "trade"}
+            />
+          </View>
         </View>
         <View style={styles.carouselCardMeta}>
           <View style={styles.carouselCardTopGroup}>
@@ -158,7 +160,18 @@ export function CatalogCarousel({
                   Reservado
                 </Text>
               </View>
-            ) : null}
+            ) : (
+              <View
+                style={[
+                  styles.carouselCardReservedPill,
+                  { backgroundColor: colors.nature.sprout },
+                ]}
+              >
+                <Text style={[styles.carouselCardReservedText, { color: colors.nature.foliageDeep }]}>
+                  Disponível
+                </Text>
+              </View>
+            )}
           </View>
         </View>
       </Pressable>
@@ -216,6 +229,7 @@ export function CatalogCarousel({
           style={withPress(styles.viewMoreButton)}
         >
           <Text style={styles.viewMoreText}>{viewMoreButtonText}</Text>
+          <AppIcon name="chevronRight" size={16} color={colors.m3.primary} />
         </Pressable>
       </View>
       <View style={[styles.booksGridContainer, wideWeb && styles.booksGridContainerWide]}>
@@ -545,6 +559,9 @@ function createStyles(colors: ColorPalette) {
     },
     viewMoreButton: {
       flexShrink: 0,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 2,
       minHeight: tokens.accessibility.touchTarget,
       justifyContent: "center",
     },
@@ -605,11 +622,19 @@ function createStyles(colors: ColorPalette) {
     carouselCardCoverArea: {
       alignItems: "center",
       justifyContent: "center",
-      paddingVertical: tokens.spacing[12],
-      minHeight: 124,
+      paddingVertical: tokens.spacing[10],
+      minHeight: 114,
       borderTopLeftRadius: tokens.radius.large,
       borderTopRightRadius: tokens.radius.large,
       overflow: "hidden",
+    },
+    coverShadowWrap: {
+      borderRadius: tokens.radius.cardSmall,
+      elevation: 6,
+      shadowColor: "#000000",
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.3,
+      shadowRadius: 6,
     },
     carouselCardMeta: {
       flex: 1,
