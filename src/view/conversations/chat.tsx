@@ -17,7 +17,10 @@ import {
   makeMeetingViewModel,
   makeNegotiationChatViewModel,
   makeRequestDetailViewModel,
+  networkStatusDataSource as defaultNetworkStatusDataSource,
 } from "@/di/container";
+import type { INetworkStatusDataSource } from "@/model/datasources/iNetworkStatusDataSource";
+import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
 import { buildChatTimeline, formatBubbleTime, type ChatEvent, type ChatTimelineItem } from "@/viewmodel/chatTimeline";
 import { PIRIPIRI_MEETING_POINTS } from "@/model/entities/meetingPoint";
 import { addMeetingToCalendar } from "@/view/calendarIntegration";
@@ -55,6 +58,8 @@ export type ChatProps = {
   onScheduleMeeting?: (requestId: string) => void;
   /** Painel da web larga: a lista e o "Combinar encontro" já estão nas colunas vizinhas. */
   embedded?: boolean;
+  /** Provedor de status de rede (Spec 130 / ADR 0101). */
+  networkStatusDataSource?: INetworkStatusDataSource;
 };
 
 /** Conversa em tela cheia, Figma `06.02 · Conversa com Ana Paula` (Spec 082). */
@@ -66,7 +71,9 @@ export function Chat({
   onOpenDelivery,
   onScheduleMeeting,
   embedded = false,
+  networkStatusDataSource = defaultNetworkStatusDataSource,
 }: ChatProps) {
+  const { isOnline } = useNetworkStatus(networkStatusDataSource);
   const { colors } = useTheme();
   const wideWeb = useIsWideWeb();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -150,7 +157,7 @@ export function Chat({
     () => buildChatTimeline(state.messages, new Date(), events),
     [state.messages, events],
   );
-  const canSend = state.inputText.trim().length > 0 && !state.isSending;
+  const canSend = state.inputText.trim().length > 0 && !state.isSending && isOnline;
   const isWebStandalone = wideWeb && !embedded;
 
   const handleOpenDirections = () => {
@@ -404,6 +411,12 @@ export function Chat({
                   </Text>
                 </View>
               ) : null}
+              {!isOnline ? (
+                <View accessibilityRole="alert" style={styles.offlineNotice}>
+                  <AppIcon name="wifiOff" size={14} color={colors.secondaryText} />
+                  <Text style={styles.offlineNoticeText}>Sem conexão para enviar mensagens</Text>
+                </View>
+              ) : null}
               <View style={[styles.composer, isWebStandalone && styles.composerWide]}>
                 <TextInput
                   accessibilityLabel="Campo de mensagem"
@@ -425,10 +438,13 @@ export function Chat({
                 />
                 <Pressable
                   accessibilityRole="button"
-                  accessibilityLabel="Enviar mensagem"
+                  accessibilityLabel={!isOnline ? "Envio indisponível sem conexão" : "Enviar mensagem"}
                   accessibilityState={{ disabled: !canSend }}
                   disabled={!canSend}
-                  onPress={() => void actions.sendMessage()}
+                  onPress={() => {
+                    if (!canSend) return;
+                    void actions.sendMessage();
+                  }}
                   style={withPress([styles.send, canSend ? styles.sendActive : null])}
                 >
                   {state.isSending ? (
@@ -690,6 +706,19 @@ function createStyles(colors: ColorPalette) {
       backgroundColor: colors.m3.surfaceContainerLow,
       borderTopWidth: 1,
       borderTopColor: colors.m3.outlineVariant,
+    },
+    offlineNotice: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: tokens.spacing[6],
+      paddingVertical: tokens.spacing[4],
+      paddingHorizontal: tokens.spacing[16],
+      backgroundColor: colors.m3.surfaceContainerLow,
+    },
+    offlineNoticeText: {
+      ...tokens.typography.labelSmall,
+      color: colors.secondaryText,
     },
   });
 }

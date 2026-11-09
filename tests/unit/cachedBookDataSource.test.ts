@@ -183,4 +183,64 @@ describe("CachedBookDataSource (Resiliência e Offline-first)", () => {
     // O cache deve ter sido invalidado
     expect(await storage.getItem("ipebook:cache:books:list")).toBeNull();
   });
+
+  it("armazena e recupera os livros da estante do anunciante offline (Spec 130 / ADR 0101)", async () => {
+    const ownerBooks = [sampleBooks[0]];
+    const primary: IBookDataSource = {
+      list: vi.fn(),
+      findById: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      updateStatus: vi.fn(),
+      delete: vi.fn(),
+      listByOwner: vi
+        .fn()
+        .mockResolvedValueOnce(ownerBooks)
+        .mockRejectedValueOnce(new Error("Network failed")),
+    };
+
+    const storage = new MockStorage();
+    const cachedDs = new CachedBookDataSource(primary, { storage });
+
+    // 1ª chamada: online
+    const resultOnline = await cachedDs.listByOwner("user-1");
+    expect(resultOnline).toEqual(ownerBooks);
+    expect(primary.listByOwner).toHaveBeenCalledTimes(1);
+
+    const savedInStorage = await storage.getItem("ipebook:cache:books:owner:user-1");
+    expect(savedInStorage).not.toBeNull();
+
+    // 2ª chamada: offline
+    const resultOffline = await cachedDs.listByOwner("user-1");
+    expect(resultOffline).toEqual(ownerBooks);
+    expect(primary.listByOwner).toHaveBeenCalledTimes(2);
+  });
+
+  it("invalida o cache da estante do anunciante ao criar novo livro (Spec 130 / ADR 0101)", async () => {
+    const primary: IBookDataSource = {
+      list: vi.fn(),
+      findById: vi.fn(),
+      create: vi.fn().mockResolvedValue({ ...sampleBooks[0], id: "novo", ownerId: "user-1" }),
+      update: vi.fn(),
+      updateStatus: vi.fn(),
+      delete: vi.fn(),
+      listByOwner: vi.fn().mockResolvedValue([sampleBooks[0]]),
+    };
+
+    const storage = new MockStorage();
+    const cachedDs = new CachedBookDataSource(primary, { storage });
+
+    await cachedDs.listByOwner("user-1");
+    expect(await storage.getItem("ipebook:cache:books:owner:user-1")).not.toBeNull();
+
+    await cachedDs.create({
+      title: "Outro Livro",
+      author: "Outro Autor",
+      status: "available",
+      modality: "donation",
+      ownerId: "user-1",
+    });
+
+    expect(await storage.getItem("ipebook:cache:books:owner:user-1")).toBeNull();
+  });
 });

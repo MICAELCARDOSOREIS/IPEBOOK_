@@ -1,12 +1,29 @@
 import type { INetworkStatusDataSource } from "@/model/datasources/iNetworkStatusDataSource";
 
-/** Sempre reporta conectado; usado em testes e no modo em memória, onde não há rede real. */
+/** Reporta status de rede; usado em testes e no modo em memória. */
 export class MemoryNetworkStatusDataSource implements INetworkStatusDataSource {
-  async isOnline() {
-    return true;
+  private online: boolean;
+  private readonly listeners = new Set<(isOnline: boolean) => void>();
+
+  constructor(initial = true) {
+    this.online = initial;
   }
 
-  subscribe() {
-    return () => {};
+  async isOnline() {
+    return this.online;
+  }
+
+  subscribe(onChange: (isOnline: boolean) => void) {
+    this.listeners.add(onChange);
+    return () => {
+      this.listeners.delete(onChange);
+    };
+  }
+
+  setOnline(online: boolean) {
+    this.online = online;
+    for (const listener of this.listeners) {
+      listener(online);
+    }
   }
 }
