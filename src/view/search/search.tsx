@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ScreenContainer } from "@/view/components/ScreenContainer";
 import { makeAuthViewModel, makeNetworkStatus, makeSearchViewModel } from "@/di/container";
 import type { SearchModalityFilter } from "@/viewmodel/useSearchViewModel";
@@ -86,6 +87,9 @@ export default function Search({
   const flatListRef = useRef<FlatList>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState<string | null>(null);
+  const insets = useSafeAreaInsets();
+  const navBarPaddingBottom = Math.max(tokens.spacing[20], insets.bottom + tokens.spacing[10]);
+  const floatingBottom = wideWeb ? tokens.spacing[32] : navBarPaddingBottom + 64 + tokens.spacing[16];
 
   const guardedNavigateToBookDetail = useGuardedPress((bookId: string) => {
     void actions.registerSearch(state.term);
@@ -379,16 +383,20 @@ export default function Search({
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Voltar ao topo da lista"
-              onPress={() => flatListRef.current?.scrollToOffset({ offset: 0, animated: true })}
-              style={withPress(styles.scrollTopFab)}
+              onPress={() => flatListRef.current?.scrollToOffset?.({ offset: 0, animated: true })}
+              style={({ pressed }) => [
+                styles.scrollTopFab,
+                { bottom: floatingBottom },
+                pressed && styles.scrollTopFabPressed,
+              ]}
             >
               <View style={{ transform: [{ rotate: "180deg" }] }}>
-                <AppIcon name="chevronDown" size={24} color={colors.m3.onPrimaryContainer} />
+                <AppIcon name="chevronDown" size={24} color={colors.nature.foliage} />
               </View>
             </Pressable>
           ) : null}
 
-          <View pointerEvents="box-none" style={styles.snackbarContainer}>
+          <View pointerEvents="box-none" style={[styles.snackbarContainer, { bottom: wideWeb ? tokens.spacing[16] : floatingBottom }]}>
             <Snackbar
               visible={snackbarMessage !== null}
               message={snackbarMessage ?? ""}
@@ -449,6 +457,7 @@ export default function Search({
       ) : null}
       <FlatList
         ref={flatListRef}
+        testID="search-flatlist"
         {...standardVerticalScrollProps}
         key={wideWeb ? `grade-${gridColumns}` : "lista"}
         numColumns={wideWeb ? gridColumns : 1}
@@ -456,7 +465,7 @@ export default function Search({
         data={state.loading || state.error ? [] : state.books}
         keyExtractor={(book) => book.id}
         style={styles.flexOne}
-        contentContainerStyle={wideWeb ? styles.contentWide : [styles.content, { paddingBottom: scrollBottomPadding.withBottomBar }]}
+        contentContainerStyle={wideWeb ? styles.contentWide : [styles.content, { paddingBottom: scrollBottomPadding.withBottomBarAndFab }]}
         onScroll={(e) => {
           const offsetY = e.nativeEvent.contentOffset.y;
           setShowScrollTop(offsetY > 300);
@@ -815,20 +824,23 @@ function createStyles(colors: ColorPalette) {
     categoryBadge: { ...tokens.typography.labelSmall, color: colors.secondaryText, fontStyle: "italic" },
     scrollTopFab: {
       position: "absolute",
-      right: tokens.spacing[20],
-      bottom: tokens.spacing[24],
-      width: tokens.accessibility.touchTarget,
-      height: tokens.accessibility.touchTarget,
+      right: tokens.spacing[16],
+      width: tokens.spacing[48],
+      height: tokens.spacing[48],
       borderRadius: tokens.radius.full,
-      backgroundColor: colors.m3.primaryContainer,
+      backgroundColor: colors.nature.sprout,
       alignItems: "center",
       justifyContent: "center",
-      elevation: 4,
+      elevation: 6,
       shadowColor: colors.m3.shadow,
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.25,
-      shadowRadius: 4,
-      zIndex: 10,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.2,
+      shadowRadius: 8,
+      zIndex: 90,
+    },
+    scrollTopFabPressed: {
+      transform: [{ scale: 0.94 }],
+      opacity: 0.9,
     },
     snackbarContainer: {
       position: "absolute",

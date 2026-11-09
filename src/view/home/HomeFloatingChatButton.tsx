@@ -23,7 +23,7 @@ export function HomeFloatingChatButton({
   const insets = useSafeAreaInsets();
   const styles = useMemo(() => createStyles(colors), [colors]);
   // Posiciona o botão flutuante com respiro harmônico de 16px acima do topo da barra de navegação flutuante
-  const navBarPaddingBottom = Math.max(tokens.spacing[16], insets.bottom + tokens.spacing[8]);
+  const navBarPaddingBottom = Math.max(tokens.spacing[20], insets.bottom + tokens.spacing[10]);
   const navBarDockHeight = 64;
   const bottom = navBarPaddingBottom + navBarDockHeight + tokens.spacing[16];
 

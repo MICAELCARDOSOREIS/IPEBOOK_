@@ -127,7 +127,7 @@ export function MyListings({
   const insets = useSafeAreaInsets();
   const hasBooks = !state.loading && !state.error && state.books.length > 0;
   // Posiciona o FAB com respiro harmônico de 16px acima do topo da barra de navegação flutuante
-  const navBarPaddingBottom = Math.max(tokens.spacing[16], insets.bottom + tokens.spacing[8]);
+  const navBarPaddingBottom = Math.max(tokens.spacing[20], insets.bottom + tokens.spacing[10]);
   const navBarDockHeight = 64;
   const fabBottom = navBarPaddingBottom + navBarDockHeight + tokens.spacing[16];
 

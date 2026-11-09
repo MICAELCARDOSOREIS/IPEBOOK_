@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AccessibilityInfo, Animated, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { tokens, type ColorPalette } from "@/view/tokens";
@@ -21,20 +21,22 @@ const ITEMS: ReadonlyArray<{ key: NavigationDestination; label: string; icon: Ap
   { key: "shelf", label: "Estante", icon: "shelf" },
 ];
 
-/** Barra de navegação do design system (barra-de-navegacao.md), Material 3 como no Figma `02.01`:
- * barra em `surface-container` de 80 dp, indicador ativo em pílula de 64x32 dp que se expande ao
- * selecionar, ícone preenchido só no destino ativo e rótulo abaixo. Restrita a 5 destinos (ADR 0011).
+/** Barra de navegação do design system (barra-de-navegacao.md), Material 3 Expressive como no Figma `02.01`:
+ * dock flutuante em pílula com superfície tonal M3, indicador ativo em pílula de 64x32 dp que se expande ao
+ * selecionar, ícone preenchido só no destino ativo, rótulo abaixo e suporte a hover e transluscência na web.
+ * Restrita a 3 destinos (ADR 0011).
  */
 export function NavigationBar({ active, onNavigate, disabledDestinations = [], badges = {} }: NavigationBarProps) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const [hoveredKey, setHoveredKey] = useState<NavigationDestination | null>(null);
   const lastNavigateTime = useRef(0);
   const DEBOUNCE_MS = 600;
 
   // Em celulares com barra de 3 botões (Android) ou Home Indicator (iOS),
   // insets.bottom eleva os itens acima dos controles do sistema operacional para evitar sobreposição.
-  const paddingBottom = Math.max(tokens.spacing[16], insets.bottom + tokens.spacing[8]);
+  const paddingBottom = Math.max(tokens.spacing[20], insets.bottom + tokens.spacing[10]);
 
   return (
     <View
@@ -47,6 +49,7 @@ export function NavigationBar({ active, onNavigate, disabledDestinations = [], b
         {ITEMS.map((item) => {
           const isActive = item.key === active;
           const isDisabled = disabledDestinations.includes(item.key);
+          const isHovered = hoveredKey === item.key;
           const badgeCount = badges[item.key] ?? 0;
           const baseLabel = isDisabled ? `${item.label} (em breve)` : item.label;
           return (
@@ -56,6 +59,8 @@ export function NavigationBar({ active, onNavigate, disabledDestinations = [], b
               accessibilityState={isDisabled ? { selected: isActive, disabled: true } : { selected: isActive }}
               accessibilityLabel={badgeCount > 0 ? `${baseLabel}, ${badgeCount} ${badgeCount === 1 ? "nova" : "novas"}` : baseLabel}
               disabled={isDisabled}
+              onHoverIn={() => setHoveredKey(item.key)}
+              onHoverOut={() => setHoveredKey((prev) => (prev === item.key ? null : prev))}
               onPress={() => {
                 if (isDisabled || isActive) return;
                 const now = Date.now();
@@ -78,6 +83,7 @@ export function NavigationBar({ active, onNavigate, disabledDestinations = [], b
                     style={[
                       styles.indicator,
                       pressed && !isDisabled && styles.indicatorPressed,
+                      isHovered && !isActive && !isDisabled && styles.indicatorHovered,
                       pressed && !isActive && !isDisabled && styles.indicatorInactivePressed,
                     ]}
                   >
@@ -88,7 +94,7 @@ export function NavigationBar({ active, onNavigate, disabledDestinations = [], b
                         name={item.icon}
                         size={24}
                         filled={isActive}
-                        color={isDisabled ? colors.secondaryText : isActive ? colors.m3.onSecondaryContainer : colors.m3.onSurfaceVariant}
+                        color={isDisabled ? colors.secondaryText : isActive ? colors.m3.onSecondaryContainer : isHovered ? colors.m3.onSurface : colors.m3.onSurfaceVariant}
                       />
                     </View>
                     {badgeCount > 0 ? (
@@ -99,7 +105,12 @@ export function NavigationBar({ active, onNavigate, disabledDestinations = [], b
                   </View>
                   <Text
                     numberOfLines={1}
-                    style={[styles.label, isActive && styles.labelActive, isDisabled && styles.labelDisabled]}
+                    style={[
+                      styles.label,
+                      isActive && styles.labelActive,
+                      isHovered && !isActive && !isDisabled && styles.labelHovered,
+                      isDisabled && styles.labelDisabled,
+                    ]}
                   >
                     {item.label}
                   </Text>
@@ -144,7 +155,10 @@ function ActiveIndicator({ active, color }: { active: boolean; color: string }) 
           backgroundColor: color,
           borderRadius: tokens.radius.full,
           opacity: progress.interpolate({ inputRange: [0, 1], outputRange: [0, 1], extrapolate: "clamp" }),
-          transform: [{ scaleX: progress.interpolate({ inputRange: [0, 1], outputRange: [0.35, 1] }) }],
+          transform: [
+            { scaleX: progress.interpolate({ inputRange: [0, 1], outputRange: [0.35, 1] }) },
+            { scaleY: progress.interpolate({ inputRange: [0, 1], outputRange: [0.85, 1] }) },
+          ],
         },
       ]}
     />
@@ -152,6 +166,9 @@ function ActiveIndicator({ active, color }: { active: boolean; color: string }) 
 }
 
 function createStyles(colors: ColorPalette) {
+  const isWeb = Platform.OS === "web";
+  const webDockBg = colors.surface === "#FCFAF5" ? "rgba(252, 250, 245, 0.92)" : "rgba(29, 27, 25, 0.90)";
+
   return StyleSheet.create({
     floatingWrapper: {
       position: "absolute",
@@ -170,20 +187,20 @@ function createStyles(colors: ColorPalette) {
       justifyContent: "space-around",
       alignItems: "center",
       width: "100%",
-      maxWidth: 420,
-      backgroundColor: colors.m3.surfaceContainerHighest,
+      maxWidth: 328,
+      backgroundColor: isWeb ? webDockBg : colors.surface,
       borderRadius: tokens.radius.full,
       paddingVertical: tokens.spacing[8],
-      paddingHorizontal: tokens.spacing[8],
+      paddingHorizontal: tokens.spacing[12],
       borderWidth: 1,
       borderColor: colors.m3.outlineVariant,
-      // Sombra e elevação flutuante expressiva do Material 3
-      elevation: 8,
+      overflow: "hidden",
+      elevation: 6,
       shadowColor: colors.m3.shadow,
-      shadowOffset: { width: 0, height: 6 },
-      shadowOpacity: 0.16,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.14,
       shadowRadius: 16,
-      ...(Platform.OS === "web"
+      ...(isWeb
         ? ({
             backdropFilter: "blur(20px)",
             WebkitBackdropFilter: "blur(20px)",
@@ -194,17 +211,21 @@ function createStyles(colors: ColorPalette) {
       flex: 1,
       minWidth: 0,
       alignItems: "center",
-      gap: 2,
-      paddingVertical: 2,
-      ...(Platform.OS === "web" ? ({ cursor: "pointer", userSelect: "none" } as never) : {}),
+      gap: tokens.spacing[4],
+      paddingVertical: tokens.spacing[4],
+      ...(isWeb ? ({ cursor: "pointer", userSelect: "none" } as never) : {}),
     },
     iconLayer: { zIndex: 1 },
     indicator: {
-      width: 60,
+      width: 64,
       height: tokens.spacing[32],
       borderRadius: tokens.radius.full,
       justifyContent: "center",
       alignItems: "center",
+    },
+    indicatorHovered: {
+      backgroundColor: colors.m3.surfaceContainerHighest,
+      opacity: 0.8,
     },
     indicatorPressed: {
       transform: [{ scale: 0.94 }],
@@ -229,8 +250,21 @@ function createStyles(colors: ColorPalette) {
     badgeText: { ...tokens.typography.captionSmall, fontWeight: tokens.fontWeight.bold, color: colors.surface },
     itemPressed: { opacity: 0.8 },
     itemDisabled: { opacity: 0.38 },
-    label: { color: colors.m3.onSurfaceVariant, ...tokens.typography.labelSmall },
-    labelActive: { color: colors.m3.onSurface, fontWeight: tokens.fontWeight.bold },
+    label: {
+      color: colors.m3.onSurfaceVariant,
+      fontSize: 12,
+      fontWeight: "500",
+      letterSpacing: 0.2,
+      textAlign: "center",
+    },
+    labelHovered: {
+      color: colors.m3.onSurface,
+      fontWeight: "600",
+    },
+    labelActive: {
+      color: colors.m3.primary,
+      fontWeight: "700",
+    },
     labelDisabled: { opacity: 0.7 },
   });
 }
