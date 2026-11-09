@@ -178,7 +178,7 @@ export function IpePetalsCelebration({
         tiltY: (variation(index, 13) - 0.5) * tiltRange,
         spinDirection: variation(index, 9) > 0.5 ? 1 : -1,
         depthScale: layer === "foreground" ? 1.08 : layer === "midground" ? 0.94 : 0.78,
-        opacity: layer === "foreground" ? 1 : layer === "midground" ? 0.96 : 0.88,
+        opacity: layer === "foreground" ? 1 : layer === "midground" ? 0.98 : 0.95,
         imageType,
         layer,
         restingPlace,

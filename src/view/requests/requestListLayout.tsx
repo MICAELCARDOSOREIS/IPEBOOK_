@@ -170,7 +170,7 @@ export function RequestListLayout({
                       selected && styles.filterChipSelected,
                     ])}
                   >
-                    {selected ? <AppIcon name="check" size={16} color={colors.m3.onSecondaryContainer} /> : null}
+                    {selected ? <AppIcon name="check" size={16} color={colors.nature.onFoliage} /> : null}
                     <Text style={[styles.filterChipText, selected && styles.filterChipTextSelected]}>
                       {chip.label}
                     </Text>
@@ -504,8 +504,8 @@ function createStyles(colors: ColorPalette) {
     borderColor: colors.m3.outlineVariant,
   },
   filterChipSelected: {
-    backgroundColor: colors.m3.secondaryContainer,
-    borderColor: colors.m3.secondaryContainer,
+    backgroundColor: colors.nature.foliage,
+    borderColor: colors.nature.foliage,
     borderRadius: tokens.shapeMorph.chipSelected,
     borderWidth: 0,
     paddingLeft: tokens.spacing[10],
@@ -520,7 +520,8 @@ function createStyles(colors: ColorPalette) {
     fontWeight: tokens.fontWeight.medium,
   },
   filterChipTextSelected: {
-    color: colors.m3.onSecondaryContainer,
+    color: colors.nature.onFoliage,
+    fontWeight: tokens.fontWeight.semiBold,
   },
   heroTitle: {
     ...tokens.typography.titleMedium,

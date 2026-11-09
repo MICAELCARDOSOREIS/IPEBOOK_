@@ -55,4 +55,6 @@ export type Book = Readonly<{
    * para retomar o fluxo exatamente de onde a pessoa parou.
    */
   draftStep?: number;
+  /** Data/hora ISO de criação do anúncio para ordenação por mais recentes na vitrine. */
+  createdAt?: string;
 }>;

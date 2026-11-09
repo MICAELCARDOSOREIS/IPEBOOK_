@@ -29,7 +29,7 @@ function createModalityTag(colors: ColorPalette): Record<BookModality, { backgro
 const CAROUSEL_ITEM_WIDTH = 168;
 const CAROUSEL_ITEM_GAP = tokens.spacing[12];
 const CAROUSEL_ITEM_STRIDE = CAROUSEL_ITEM_WIDTH + CAROUSEL_ITEM_GAP;
-export const CAROUSEL_MAX_ITEMS = 8;
+export const CAROUSEL_MAX_ITEMS = 4;
 
 export function carouselOffsetFor(index: number): number {
   return index * CAROUSEL_ITEM_STRIDE;
@@ -57,7 +57,7 @@ export function CatalogCarousel({
   onNavigateToBookDetail,
   onViewMore,
   viewMoreLabel,
-  viewMoreButtonText = "Ver todos",
+  viewMoreButtonText = "Ver mais",
 }: CatalogCarouselProps) {
   const [index, setIndex] = useState(0);
   const listRef = useRef<FlatList<Book> | null>(null);

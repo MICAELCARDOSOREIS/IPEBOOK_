@@ -544,8 +544,8 @@ function createStyles(colors: ColorPalette) {
       borderColor: colors.m3.outlineVariant,
     },
     filterChipActive: {
-      backgroundColor: colors.m3.secondaryContainer,
-      borderColor: colors.m3.secondaryContainer,
+      backgroundColor: colors.nature.foliage,
+      borderColor: colors.nature.foliage,
       borderRadius: tokens.radius.full,
       borderWidth: 0,
     },
@@ -554,7 +554,7 @@ function createStyles(colors: ColorPalette) {
       color: colors.m3.onSurfaceVariant,
     },
     filterChipTextActive: {
-      color: colors.m3.onSecondaryContainer,
+      color: colors.nature.onFoliage,
       fontWeight: tokens.fontWeight.semiBold,
     },
     actionButtonsRow: {

@@ -263,7 +263,7 @@ export default function Search({
               style={withPress(styles.activeFilterChip)}
             >
               <Text style={styles.activeFilterText}>{filter.label}</Text>
-              <AppIcon name="close" size={16} color={colors.m3.onSecondaryContainer} />
+              <AppIcon name="close" size={16} color={colors.nature.onFoliage} />
             </Pressable>
           ))}
         </View>
@@ -686,9 +686,9 @@ function createStyles(colors: ColorPalette) {
       height: tokens.spacing[32],
       paddingHorizontal: tokens.spacing[12],
       borderRadius: tokens.shapeMorph.chipSelected,
-      backgroundColor: colors.m3.secondaryContainer,
+      backgroundColor: colors.nature.foliage,
     },
-    activeFilterText: { ...tokens.typography.labelLarge, color: colors.m3.onSecondaryContainer },
+    activeFilterText: { ...tokens.typography.labelLarge, color: colors.nature.onFoliage, fontWeight: tokens.fontWeight.semiBold },
     summaryRow: {
       flexDirection: "row",
       alignItems: "center",
