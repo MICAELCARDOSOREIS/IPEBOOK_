@@ -181,13 +181,17 @@ export function Conversations({
         </View>
 
         {state.loading && state.items.length === 0 ? (
-          <LoadingState label="Carregando conversas" variant="conversations" />
+          <View style={wideWeb ? styles.wideLoading : styles.loadingContainer}>
+            <LoadingState label="Carregando conversas" variant="conversations" />
+          </View>
         ) : state.error ? (
-          isOnline ? (
-            <ErrorState message={state.error} onRetry={() => void actions.reload()} />
-          ) : (
-            <OfflineState onRetry={() => void actions.reload()} />
-          )
+          <View style={wideWeb ? styles.wideLoading : styles.loadingContainer}>
+            {isOnline ? (
+              <ErrorState message={state.error} onRetry={() => void actions.reload()} />
+            ) : (
+              <OfflineState onRetry={() => void actions.reload()} />
+            )}
+          </View>
         ) : state.items.length === 0 ? (
           /* Estado Vazio (Figma 06.09 com refinamento para desktop largo) */
           <View style={wideWeb ? styles.emptyContainerWide : styles.flexOne}>
@@ -479,6 +483,8 @@ function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     page: { flex: 1, backgroundColor: colors.background },
     flexOne: { flex: 1 },
+    loadingContainer: { flex: 1, paddingHorizontal: tokens.spacing[16], paddingTop: tokens.spacing[8] },
+    wideLoading: { width: "100%", maxWidth: 380, paddingTop: tokens.spacing[12] },
     // Container web largo padronizado em WEB_MAX_WIDTH com margem lateral WEB_GUTTER (alinhado ao WebHeader).
     wideContainer: {
       flex: 1,
@@ -491,16 +497,14 @@ function createStyles(colors: ColorPalette) {
       // O painel ocupa a janela e cada coluna rola por conta própria, como nos mensageiros.
       minHeight: 0,
     },
-    mobileHeader: {
-      paddingBottom: tokens.spacing[8],
-    },
+    mobileHeader: { paddingBottom: tokens.spacing[12] },
     mobileHeaderWithBack: {
       flexDirection: "row",
       alignItems: "center",
       gap: tokens.spacing[8],
       paddingHorizontal: tokens.spacing[16],
       paddingTop: tokens.spacing[12],
-      paddingBottom: tokens.spacing[8],
+      paddingBottom: tokens.spacing[12],
     },
     backButton: {
       width: tokens.spacing[40],
@@ -692,7 +696,7 @@ function createStyles(colors: ColorPalette) {
     aboutSafeTitle: { ...tokens.typography.labelLarge, color: colors.m3.onSurface },
     aboutSafeBody: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
     aboutReport: { ...tokens.typography.labelLarge, color: colors.error },
-    list: { paddingBottom: tokens.spacing[32], paddingTop: tokens.spacing[4], width: "100%" },
+    list: { paddingBottom: tokens.spacing[32], paddingTop: tokens.spacing[8], width: "100%" },
     row: {
       flexDirection: "row",
       alignItems: "center",

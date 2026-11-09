@@ -1,6 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Animated, AppState, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
-import { makeAuthViewModel, makeHomeViewModel, makeNetworkStatus, makeNotificationsViewModel } from "@/di/container";
+import { Animated, AppState, Image, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
+import {
+  makeAuthViewModel,
+  makeHomeViewModel,
+  makeNavigationBadgesViewModel,
+  makeNetworkStatus,
+  makeNotificationsViewModel,
+  makeProfileViewModel,
+} from "@/di/container";
 import { useActiveNeighborhood } from "@/viewmodel/useActiveNeighborhood";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
@@ -24,10 +31,10 @@ import { standardHorizontalScrollProps, scrollBottomPadding } from "@/view/scrol
 import { IpeMark } from "@/view/components/IpeMark";
 import { IpeCelebrationOverlay } from "@/view/components/IpeCelebrationOverlay";
 import {
-  checkAndTriggerInitialPetals,
   resetAppLaunchCelebrationForTesting,
   triggerIpePetals,
 } from "@/view/components/ipeCelebrationController";
+import { HomeFloatingChatButton } from "@/view/home/HomeFloatingChatButton";
 import type { BookModality } from "@/model/entities/book";
 import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
 
@@ -41,6 +48,10 @@ export type HomeProps = {
   onNavigateToSignIn?: () => void;
   onNavigateToBookDetail?: (bookId: string) => void;
   onNavigateToNotifications?: () => void;
+  onNavigateToConversations?: () => void;
+  onNavigateToProfile?: () => void;
+  /** Contador manual de conversas/mensagens não lidas (útil para testes determinísticos). */
+  conversationsBadgeCount?: number;
   onNavigateToTerms?: () => void;
   onNavigateToHelp?: () => void;
   /** "Ver mais" das seções destacadas; `modality` e `neighborhood` pré-aplicam filtros na Pesquisa. */
@@ -57,6 +68,9 @@ export default function Home({
   onNavigateToSignIn,
   onNavigateToBookDetail,
   onNavigateToNotifications,
+  onNavigateToConversations,
+  onNavigateToProfile,
+  conversationsBadgeCount: explicitConversationsBadgeCount,
   onNavigateToTerms: _onNavigateToTerms,
   onNavigateToHelp,
   onNavigateToSearch,
@@ -68,9 +82,11 @@ export default function Home({
 
   const [state, actions] = makeHomeViewModel();
   const [authState] = makeAuthViewModel();
-  // Só o contador de não lidas: convite e resposta de encontro chegam por aqui, em tempo real (Spec 086).
-  const [notificationsState, notificationsActions] = makeNotificationsViewModel(authState.user?.id ?? null);
-  const unreadCount = notificationsState.unreadCount;
+  const [profileState] = makeProfileViewModel(authState.user?.id ?? null);
+  // Mantém refresh em segundo plano para manter estado atualizado ao puxar para atualizar
+  const [, notificationsActions] = makeNotificationsViewModel(authState.user?.id ?? null);
+  const navBadges = makeNavigationBadgesViewModel(authState.user?.id ?? null, "home");
+  const conversationsBadgeCount = explicitConversationsBadgeCount ?? navBadges.conversations;
   const { isOnline } = makeNetworkStatus();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -82,18 +98,28 @@ export default function Home({
 
   const guardedNavigateToSignIn = useGuardedPress(onNavigateToSignIn);
   const guardedNavigateToBookDetail = useGuardedPress(onNavigateToBookDetail);
-  const guardedNavigateToNotifications = useGuardedPress(onNavigateToNotifications);
+  const handleProfilePress = useCallback(() => {
+    if (onNavigateToProfile) {
+      onNavigateToProfile();
+    } else if (!authState.user && onNavigateToSignIn) {
+      onNavigateToSignIn();
+    }
+  }, [onNavigateToProfile, authState.user, onNavigateToSignIn]);
+  const guardedNavigateToProfile = useGuardedPress(handleProfilePress);
+  const handleConversationsPress = useCallback(() => {
+    if (onNavigateToConversations) {
+      onNavigateToConversations();
+    } else if (!authState.user && onNavigateToSignIn) {
+      onNavigateToSignIn();
+    }
+  }, [onNavigateToConversations, authState.user, onNavigateToSignIn]);
+  const guardedNavigateToConversations = useGuardedPress(handleConversationsPress);
   const guardedNavigateToHelp = useGuardedPress(onNavigateToHelp);
   const guardedNavigateToSearch = useGuardedPress(onNavigateToSearch);
 
-  // Florada inicial automática disparada apenas na primeira entrada do aplicativo na sessão
-  useEffect(() => {
-    checkAndTriggerInitialPetals();
-  }, []);
-
   /**
    * Faz o Ipê balançar graciosamente com a brisa e soltar sua florada de pétalas
-   * douradas pelo aplicativo.
+   * douradas pelo aplicativo ao clicar na árvore.
    */
   const triggerPetals = useCallback(() => {
     Animated.sequence([
@@ -106,10 +132,9 @@ export default function Home({
     triggerIpePetals();
   }, [isWeb, treeRotate]);
 
-  /** Ao puxar para atualizar (pull-to-refresh), recarrega o catálogo e desprende pétalas */
+  /** Ao puxar para atualizar (pull-to-refresh), recarrega o catálogo sem soltar pétalas */
   const handleRefresh = async () => {
     setRefreshing(true);
-    triggerPetals();
     try {
       await Promise.all([actions.reload(), notificationsActions.refresh()]);
     } finally {
@@ -198,7 +223,31 @@ export default function Home({
           </Pressable>
 
           <View style={styles.topRightActions}>
-            {authState.loading || authState.user ? null : (
+            {authState.loading ? null : authState.user ? (
+              <Pressable
+                testID="home-top-profile-button"
+                accessibilityRole="button"
+                accessibilityLabel={
+                  authState.user.name ? `Meu perfil, ${authState.user.name}` : "Meu perfil"
+                }
+                hitSlop={{ top: tokens.spacing[4], bottom: tokens.spacing[4], left: tokens.spacing[4], right: tokens.spacing[4] }}
+                onPress={() => guardedNavigateToProfile()}
+                style={({ pressed }) => [
+                  styles.profileButton,
+                  pressed && styles.profileButtonPressed,
+                ]}
+              >
+                {profileState.profile?.photoUrl ? (
+                  <Image
+                    source={{ uri: profileState.profile.photoUrl }}
+                    accessibilityLabel={authState.user.name ?? "Meu perfil"}
+                    style={styles.profileAvatarImage}
+                  />
+                ) : (
+                  <AppIcon name="person" size={22} color={colors.m3.onSurfaceVariant} />
+                )}
+              </Pressable>
+            ) : (
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel="Entrar no aplicativo"
@@ -209,25 +258,6 @@ export default function Home({
                 <Text style={styles.sessionPillText}>Entrar</Text>
               </Pressable>
             )}
-
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={
-                unreadCount > 0
-                  ? `Abrir notificações, ${unreadCount} ${unreadCount === 1 ? "não lida" : "não lidas"}`
-                  : "Abrir notificações"
-              }
-              hitSlop={{ top: tokens.spacing[4], bottom: tokens.spacing[4], left: tokens.spacing[4], right: tokens.spacing[4] }}
-              onPress={() => guardedNavigateToNotifications()}
-              style={withPress(styles.notificationButton)}
-            >
-              <AppIcon name="bell" size={24} color={colors.m3.onSurfaceVariant} />
-              {unreadCount > 0 ? (
-                <View style={styles.notificationBadge}>
-                  <Text style={styles.notificationBadgeText}>{unreadCount > 9 ? "9+" : unreadCount}</Text>
-                </View>
-              ) : null}
-            </Pressable>
           </View>
         </View>
       )}
@@ -531,6 +561,12 @@ export default function Home({
             onSelect={neighborhoodHook.selectNeighborhood}
             onClose={neighborhoodHook.closeSelector}
           />
+          {!wideWeb && (onNavigateToConversations || onNavigateToSignIn) ? (
+            <HomeFloatingChatButton
+              badgeCount={conversationsBadgeCount}
+              onPress={() => guardedNavigateToConversations()}
+            />
+          ) : null}
         </>
       }
     >
@@ -585,27 +621,24 @@ function createStyles(colors: ColorPalette) {
       alignItems: "center",
       gap: tokens.spacing[8],
     },
-    notificationButton: {
+    profileButton: {
       width: tokens.spacing[40],
       height: tokens.spacing[40],
       borderRadius: tokens.radius.full,
-      backgroundColor: colors.m3.surfaceContainerLowest,
-      justifyContent: "center",
+      backgroundColor: colors.m3.surfaceContainerHigh,
       alignItems: "center",
+      justifyContent: "center",
+      overflow: "hidden",
     },
-    notificationBadge: {
-      position: "absolute",
-      top: 2,
-      right: 2,
-      minWidth: 16,
-      height: 16,
-      paddingHorizontal: tokens.spacing[4],
+    profileButtonPressed: {
+      transform: [{ scale: 0.94 }],
+      backgroundColor: colors.m3.surfaceContainerHighest,
+    },
+    profileAvatarImage: {
+      width: tokens.spacing[40],
+      height: tokens.spacing[40],
       borderRadius: tokens.radius.full,
-      backgroundColor: colors.error,
-      alignItems: "center",
-      justifyContent: "center",
     },
-    notificationBadgeText: { ...tokens.typography.badgeMicro, color: colors.badge.completed.text },
     sessionPill: {
       paddingHorizontal: tokens.spacing[12],
       paddingVertical: tokens.spacing[6],

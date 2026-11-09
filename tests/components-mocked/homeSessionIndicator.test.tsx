@@ -61,7 +61,8 @@ describe("indicador de sessão na Home (ISO/IEC 25010 - Usabilidade)", () => {
     for (const label of ["Entrar", "Anunciar", "Sair", "Favoritos", "Meus alertas", "Meus anúncios", "Pedidos recebidos", "Meus pedidos"]) {
       expect(screen.queryByText(label)).toBeNull();
     }
-    expect(screen.getByLabelText("Abrir notificações")).toBeDefined();
+    expect(screen.getByTestId("home-top-profile-button")).toBeDefined();
+    expect(screen.queryByLabelText(/Abrir notificações/)).toBeNull();
     expect(screen.getByLabelText("Selecionar bairro: Centro")).toBeDefined();
   });
 
