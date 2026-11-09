@@ -1,17 +1,21 @@
 import { useEffect, useRef } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
-import Mapbox from "@rnmapbox/maps";
+import { NativeModules, Pressable, StyleSheet, Text, TurboModuleRegistry, View } from "react-native";
+import type MapboxNamespace from "@rnmapbox/maps";
 import { PIRIPIRI_MEETING_POINTS } from "@/model/entities/meetingPoint";
 import { meetingMapBounds } from "@/view/meetingMapBounds";
+import { StaticMeetingMap } from "@/view/requests/MeetingMapStatic";
 import { fontFamily, tokens } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 
 import { withPress } from "@/view/pressFeedback";
+
+type MapboxModule = typeof MapboxNamespace;
+
 type MeetingMapProps = {
   selectedName: string | null;
   /** Altura em px do painel sobreposto; pinos, logo e atribuição ficam acima dele. */
   sheetHeight?: number;
-  /** Só o mapa web usa. */
+  /** Usado no fallback estático (ex.: Expo Go) e na web. */
   coveredBottom?: number;
   compactPadding?: boolean;
   /** Toque no pino escolhe o local. */
@@ -19,7 +23,37 @@ type MeetingMapProps = {
 };
 
 const token = process.env.EXPO_PUBLIC_MAPBOX_TOKEN;
-if (token) void Mapbox.setAccessToken(token);
+let cachedMapbox: MapboxModule | null | undefined;
+let tokenConfigured = false;
+
+/**
+ * Carrega o `@rnmapbox/maps` apenas quando o binário nativo possui os módulos do Mapbox (APK/AAB).
+ * No Expo Go (iOS/Android), o import estático lançava erro ao avaliar a rota de agendamento.
+ */
+function getMapboxModule(): MapboxModule | null {
+  if (cachedMapbox !== undefined) return cachedMapbox;
+  const nativeModules = NativeModules as Record<string, unknown> | undefined;
+  const turboRegistry = TurboModuleRegistry as { get?: (name: string) => unknown } | undefined;
+  const hasNativeModule = Boolean(nativeModules?.RNMBXModule);
+  const hasCameraTurboModule =
+    typeof turboRegistry?.get === "function" ? Boolean(turboRegistry.get("RNMBXCameraModule")) : true;
+  if (!hasNativeModule || !hasCameraTurboModule) {
+    cachedMapbox = null;
+    return null;
+  }
+  try {
+    const loaded = require("@rnmapbox/maps") as { default?: MapboxModule } & MapboxModule;
+    cachedMapbox = loaded.default ?? loaded;
+    if (token && cachedMapbox && !tokenConfigured) {
+      tokenConfigured = true;
+      void cachedMapbox.setAccessToken(token);
+    }
+    return cachedMapbox;
+  } catch {
+    cachedMapbox = null;
+    return null;
+  }
+}
 
 const PIN_SIZE = 36;
 /** Completa a área de toque do pino até o mínimo de acessibilidade sem alterar o desenho. */
@@ -27,15 +61,18 @@ const PIN_HIT_SLOP = Math.max(0, (tokens.accessibility.touchTarget - PIN_SIZE) /
 
 /**
  * Mapa interativo do Mapbox (app nativo): zoom, arraste e toque no pino para escolher o ponto. Sem token não
- * renderiza; a lista de locais continua sendo a forma de escolher (Spec 094, ADR 0068).
+ * renderiza; no Expo Go (sem módulo nativo do Mapbox) cai para o mapa estático, e a lista de locais continua
+ * sendo a forma de escolher (Spec 094, ADR 0068).
  */
-export function MeetingMap({ selectedName, sheetHeight = 0, onSelect }: MeetingMapProps) {
+export function MeetingMap({ selectedName, sheetHeight = 0, coveredBottom = 0, compactPadding = false, onSelect }: MeetingMapProps) {
   const { colors, resolvedScheme } = useTheme();
-  const cameraRef = useRef<Mapbox.Camera>(null);
+  const cameraRef = useRef<MapboxNamespace.Camera>(null);
   const paddingBottom = sheetHeight + 48;
+  const Mapbox = getMapboxModule();
 
   // Ao escolher um local (pela lista ou pelo pino), aproxima o mapa dele, acima do painel.
   useEffect(() => {
+    if (!Mapbox) return;
     const point = PIRIPIRI_MEETING_POINTS.find((item) => item.name === selectedName);
     if (!point) {
       // Sem escolha, enquadra todos os pinos na área visível (acima do painel e abaixo da barra).
@@ -43,43 +80,46 @@ export function MeetingMap({ selectedName, sheetHeight = 0, onSelect }: MeetingM
       if (sheetHeight > 0) cameraRef.current?.fitBounds(ne, sw, [150, 64, paddingBottom, 64], 400);
       return;
     }
-      cameraRef.current?.setCamera({
-        centerCoordinate: [point.longitude, point.latitude],
-        zoomLevel: 14.5,
-        padding: { paddingTop: tokens.spacing[150], paddingBottom, paddingLeft: tokens.spacing[64], paddingRight: tokens.spacing[64] },
-        animationDuration: 600,
-        animationMode: "easeTo",
-      });
-    }, [selectedName, paddingBottom, sheetHeight]);
+    cameraRef.current?.setCamera({
+      centerCoordinate: [point.longitude, point.latitude],
+      zoomLevel: 14.5,
+      padding: { paddingTop: tokens.spacing[150], paddingBottom, paddingLeft: tokens.spacing[64], paddingRight: tokens.spacing[64] },
+      animationDuration: 600,
+      animationMode: "easeTo",
+    });
+  }, [Mapbox, selectedName, paddingBottom, sheetHeight]);
 
-    if (!token) return null;
+  if (!token) return null;
+  if (!Mapbox) {
+    return <StaticMeetingMap selectedName={selectedName} coveredBottom={coveredBottom} compactPadding={compactPadding} />;
+  }
 
-    const { ne, sw } = meetingMapBounds(PIRIPIRI_MEETING_POINTS);
-    return (
-      <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.m3.surfaceContainerHigh }]}>
-        <Mapbox.MapView
-          style={StyleSheet.absoluteFill}
-          styleURL={resolvedScheme === "dark" ? "mapbox://styles/mapbox/dark-v11" : "mapbox://styles/mapbox/streets-v12"}
-          scaleBarEnabled={false}
-          logoPosition={{ bottom: sheetHeight + 4, left: 4 }}
-          attributionPosition={{ bottom: sheetHeight + 4, right: 4 }}
-          pitchEnabled={false}
-          rotateEnabled={false}
-          accessibilityLabel="Mapa de Piripiri com os pontos de encontro"
-        >
-          <Mapbox.Camera
-            ref={cameraRef}
-            defaultSettings={{
-              bounds: {
-                ne,
-                sw,
-                paddingTop: tokens.spacing[150],
-                paddingRight: tokens.spacing[64],
-                paddingLeft: tokens.spacing[64],
-                paddingBottom,
-              },
-            }}
-          />
+  const { ne, sw } = meetingMapBounds(PIRIPIRI_MEETING_POINTS);
+  return (
+    <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.m3.surfaceContainerHigh }]}>
+      <Mapbox.MapView
+        style={StyleSheet.absoluteFill}
+        styleURL={resolvedScheme === "dark" ? "mapbox://styles/mapbox/dark-v11" : "mapbox://styles/mapbox/streets-v12"}
+        scaleBarEnabled={false}
+        logoPosition={{ bottom: sheetHeight + 4, left: 4 }}
+        attributionPosition={{ bottom: sheetHeight + 4, right: 4 }}
+        pitchEnabled={false}
+        rotateEnabled={false}
+        accessibilityLabel="Mapa de Piripiri com os pontos de encontro"
+      >
+        <Mapbox.Camera
+          ref={cameraRef}
+          defaultSettings={{
+            bounds: {
+              ne,
+              sw,
+              paddingTop: tokens.spacing[150],
+              paddingRight: tokens.spacing[64],
+              paddingLeft: tokens.spacing[64],
+              paddingBottom,
+            },
+          }}
+        />
         {PIRIPIRI_MEETING_POINTS.map((point, index) => ({ point, index }))
           .sort((a, b) => Number(a.point.name === selectedName) - Number(b.point.name === selectedName))
           .map(({ point, index }) => {
