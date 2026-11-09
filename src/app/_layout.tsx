@@ -20,6 +20,7 @@ import { BrandSplashScreen } from "@/view/components/BrandSplashScreen";
 import { PushRegistration } from "@/view/components/PushRegistration";
 import { PwaRegister } from "@/view/components/PwaRegister";
 import { AppUpdateGate } from "@/view/components/AppUpdateGate";
+import { ConnectionStatusBanner } from "@/view/components/ConnectionStatusBanner";
 
 /** Rotas de nível superior (ADR 0011) — rotas de fluxo (entrar, anunciar, etc.) não entram aqui. */
 const ROOT_DESTINATIONS: Record<string, NavigationDestination> = {
@@ -104,6 +105,7 @@ export default function RootLayout() {
     <SafeAreaProvider initialMetrics={Platform.OS === "web" ? initialWindowMetrics : undefined}>
       <ThemeProvider>
         <ThemedStatusBar />
+        <ConnectionStatusBanner />
         <PwaRegister />
         <PushRegistration pathname={pathname} onOpenRoute={(route) => pushOnce(route as never)} />
         <InitialRouteGate pathname={pathname} onShowWelcome={() => replaceOnce("/bem-vindo")}>
