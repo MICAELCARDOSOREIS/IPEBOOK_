@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import type { BookModality } from "@/model/entities/book";
 import { ALL_ALERT_MODALITIES } from "@/model/entities/searchAlert";
 import { Chip } from "@/view/components/Chip";
 import { FilledButton } from "@/view/components/FilledButton";
+import { LoadingState } from "@/view/components/LoadingState";
 import { TextButton } from "@/view/components/TextButton";
 import { TextField } from "@/view/components/TextField";
 import { TopAppBar } from "@/view/components/TopAppBar";
@@ -56,8 +57,8 @@ export default function EditAlert({ alertId, userId, onBack, onSaved }: EditAler
     return (
       <SafeAreaView style={styles.page}>
         <TopAppBar contentMaxWidth={560} title="Editar alerta" onBack={guardedBack} />
-        <View style={styles.status}>
-          <ActivityIndicator color={colors.action} accessibilityLabel="Carregando alerta" />
+        <View style={styles.content}>
+          <LoadingState label="Carregando alerta" />
         </View>
       </SafeAreaView>
     );
