@@ -184,15 +184,21 @@ export default function Welcome({ onStart, onSignIn, onHelp, onTerms, betaInvite
               style={withPress([
                 styles.modality,
                 {
-                  backgroundColor: isSelected ? tone.background : colors.m3.surfaceContainerLow,
-                  borderColor: isSelected ? tone.text : tone.background,
+                  backgroundColor: isSelected ? tone.background : colors.m3.surfaceContainerLowest,
+                  borderColor: tone.background,
                 },
               ])}
             >
+              <View
+                style={[
+                  styles.modalityDot,
+                  { backgroundColor: isSelected ? tone.text : tone.background },
+                ]}
+              />
               <Text
                 style={[
                   styles.modalityText,
-                  { color: tone.text },
+                  { color: isSelected ? tone.text : colors.m3.onSurface },
                 ]}
               >
                 {label}
@@ -357,14 +363,22 @@ function createStyles(colors: ColorPalette) {
   },
   modalities: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[8] },
   modality: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: tokens.spacing[8],
     borderWidth: 1,
     borderRadius: tokens.radius.full,
     paddingHorizontal: tokens.spacing[16],
     paddingVertical: tokens.spacing[8],
   },
+  modalityDot: {
+    width: 8,
+    height: 8,
+    borderRadius: tokens.radius.full,
+  },
   modalityText: {
     ...tokens.typography.bodyMedium,
-    fontFamily: fontFamily.medium,
+    fontFamily: fontFamily.semiBold,
   },
   modalityInfoCard: {
     flexDirection: "row",
