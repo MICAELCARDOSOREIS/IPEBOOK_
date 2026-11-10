@@ -21,11 +21,11 @@ const ITEMS: ReadonlyArray<{ key: NavigationDestination; label: string; icon: Ap
   { key: "shelf", label: "Estante", icon: "shelf" },
 ];
 
-const INDICATOR_WIDTH = tokens.spacing[40] + tokens.spacing[28]; // 68 dp (touch target amplo M3 Expressive)
-const INDICATOR_HEIGHT = tokens.spacing[32] + tokens.spacing[4]; // 36 dp
-const DOCK_HORIZONTAL_PADDING = tokens.spacing[16]; // 16 dp
-const DOCK_VERTICAL_PADDING = tokens.spacing[10]; // 10 dp
-const INITIAL_DOCK_MAX_WIDTH = 356; // Largura balanceada para 3 abas sem distorção das bordas pílula
+const INDICATOR_WIDTH = tokens.spacing[40] + tokens.spacing[24]; // 64 dp (proporção áurea do M3)
+const INDICATOR_HEIGHT = tokens.spacing[32]; // 32 dp (altura compacta e elegante)
+const DOCK_HORIZONTAL_PADDING = tokens.spacing[12]; // 12 dp
+const DOCK_VERTICAL_PADDING = tokens.spacing[6]; // 6 dp (respiro equilibrado)
+const INITIAL_DOCK_MAX_WIDTH = 340; // Largura balanceada para 3 abas sem distorção das bordas pílula
 
 /**
  * Calcula a posição horizontal X da pílula deslizante centralizada sobre o item `index`.
@@ -85,8 +85,8 @@ export function NavigationBar({ active, onNavigate, disabledDestinations = [], b
   }, [activeIndex, dockWidth, hasActiveItem, slideAnim]);
 
   // Em celulares com barra de 3 botões (Android) ou Home Indicator (iOS),
-  // insets.bottom eleva os itens acima dos controles do sistema operacional para evitar sobreposição.
-  const paddingBottom = Math.max(tokens.spacing[20], insets.bottom + tokens.spacing[10]);
+  // posiciona a cápsula com respiro sutil e ergonômico acima dos controles sem invadir a tela.
+  const paddingBottom = insets.bottom > 0 ? insets.bottom + tokens.spacing[8] : tokens.spacing[12];
 
   return (
     <View
@@ -241,7 +241,7 @@ function TabIconWithBounce({
 
   return (
     <Animated.View style={[stylesLocal.iconLayer, { transform: [{ scale: scaleAnim }] }]}>
-      <AppIcon name={name} size={26} filled={active} color={color} />
+      <AppIcon name={name} size={24} filled={active} color={color} />
     </Animated.View>
   );
 }
@@ -282,11 +282,11 @@ function createStyles(colors: ColorPalette) {
       borderWidth: 1,
       borderColor: colors.m3.outlineVariant,
       overflow: "hidden",
-      elevation: 6,
+      elevation: 4,
       shadowColor: colors.m3.shadow,
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.14,
-      shadowRadius: 16,
+      shadowOffset: { width: 0, height: 3 },
+      shadowOpacity: 0.12,
+      shadowRadius: 12,
       ...(isWeb
         ? ({
             backdropFilter: "blur(20px)",
@@ -296,7 +296,7 @@ function createStyles(colors: ColorPalette) {
     },
     slidingPill: {
       position: "absolute",
-      top: DOCK_VERTICAL_PADDING + tokens.spacing[4], // alinhado verticalmente com o centro dos indicadores (14dp)
+      top: DOCK_VERTICAL_PADDING + 2, // alinhado verticalmente com o centro do indicador de 32dp
       left: 0,
       width: INDICATOR_WIDTH,
       height: INDICATOR_HEIGHT,
@@ -308,8 +308,8 @@ function createStyles(colors: ColorPalette) {
       flex: 1,
       minWidth: 0,
       alignItems: "center",
-      gap: tokens.spacing[4],
-      paddingVertical: tokens.spacing[4],
+      gap: 2,
+      paddingVertical: 2,
       zIndex: 1,
       ...(isWeb ? ({ cursor: "pointer", userSelect: "none" } as never) : {}),
     },
@@ -332,8 +332,8 @@ function createStyles(colors: ColorPalette) {
     },
     badge: {
       position: "absolute",
-      top: -2,
-      right: 8,
+      top: -3,
+      right: 10,
       minWidth: 16,
       height: 16,
       paddingHorizontal: tokens.spacing[4],
@@ -351,9 +351,10 @@ function createStyles(colors: ColorPalette) {
     label: {
       color: colors.m3.onSurfaceVariant,
       fontFamily: tokens.fontFamily.medium,
-      fontSize: tokens.fontSize[13],
+      fontSize: tokens.fontSize[12],
+      lineHeight: tokens.fontSize[16],
       fontWeight: tokens.fontWeight.medium,
-      letterSpacing: 0.25,
+      letterSpacing: 0.2,
       textAlign: "center",
     },
     labelHovered: {
