@@ -1,30 +1,31 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { BackHandler, ScrollView, StyleSheet, Text, View } from "react-native";
+import { BackHandler, Platform, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { makeCreateListingViewModel, makeListingPhotoViewModel } from "@/di/container";
 import type { Book } from "@/model/entities/book";
 import { BOOK_CONDITION_LABELS } from "@/model/entities/book";
-import { tokens, type ColorPalette } from "@/view/tokens";
-import { useTheme } from "@/view/theme/ThemeProvider";
-import { BookCover } from "@/view/components/BookCover";
 import { AppIcon } from "@/view/components/AppIcon";
-import { Tag } from "@/view/components/Tag";
-import { useIsWideWeb } from "@/view/useIsWideWeb";
+import { BookCover } from "@/view/components/BookCover";
 import { FilledButton } from "@/view/components/FilledButton";
 import { StepProgress } from "@/view/components/StepProgress";
+import { Tag } from "@/view/components/Tag";
 import { TextButton } from "@/view/components/TextButton";
 import { TopAppBar } from "@/view/components/TopAppBar";
-import { useFormErrorAnnouncer } from "@/view/useFormErrorAnnouncer";
-import { makeCreateListingViewModel, makeListingPhotoViewModel } from "@/di/container";
-import {
-  validateListingBasics,
-  type ListingBasicsErrors,
-} from "@/viewmodel/listingBasicsValidation";
-import { CreateListingSuccess } from "@/view/listings/createListingSuccess";
 import { CreateListingStep1 } from "@/view/listings/createListingStep1";
 import { CreateListingStep2 } from "@/view/listings/createListingStep2";
 import { CreateListingStep3 } from "@/view/listings/createListingStep3";
+import { CreateListingSuccess } from "@/view/listings/createListingSuccess";
+import { scrollBottomPadding, standardVerticalScrollProps } from "@/view/scrollProps";
+import { useTheme } from "@/view/theme/ThemeProvider";
+import { type ColorPalette, tokens } from "@/view/tokens";
+import { useFormErrorAnnouncer } from "@/view/useFormErrorAnnouncer";
 import { useGuardedPress } from "@/view/useGuardedPress";
-import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
+import { useKeyboardVisible } from "@/view/useKeyboardVisible";
+import {
+  type ListingBasicsErrors,
+  validateListingBasics,
+} from "@/viewmodel/listingBasicsValidation";
 
 export type CreateListingProps = {
   sessionUserId: string | null;
@@ -44,11 +45,7 @@ const STEP_TITLES: Record<number, string> = {
   3: "Detalhes do livro",
 };
 
-const STEP_LABELS: Record<number, string> = {
-  1: "Livro",
-  2: "Fotos",
-  3: "Detalhes",
-};
+const STEP_LABELS: Record<number, string> = { 1: "Livro", 2: "Fotos", 3: "Detalhes" };
 
 /**
  * Fluxo de publicação em três etapas, conforme o Figma `04.01 · Anunciar — etapa 1` (nó
@@ -71,6 +68,7 @@ export default function CreateListing({
   const [photoState, photoActions] = makeListingPhotoViewModel(sessionUserId);
   const { colors } = useTheme();
   const wideWeb = useIsWideWeb();
+  const isKeyboardVisible = useKeyboardVisible();
   const styles = useMemo(() => createStyles(colors, wideWeb), [colors, wideWeb]);
   const [step, setStep] = useState(1);
   const [published, setPublished] = useState<Book | null>(null);
@@ -219,12 +217,32 @@ export default function CreateListing({
     guardedCancel();
   };
 
+  const handleFocusField = (_fieldName: string, yOffset: number) => {
+    if (wideWeb) return;
+    // No mobile, rola para posicionar o campo com 20dp de respiro na área visível
+    setTimeout(() => {
+      scrollRef.current?.scrollTo({
+        y: Math.max(0, yOffset - 20),
+        animated: true,
+      });
+    }, 100);
+  };
+
   return (
     <SafeAreaView edges={["top", "left", "right"]} style={styles.page}>
       <TopAppBar contentMaxWidth={wideWeb ? 1040 : undefined} title={STEP_TITLES[step]} onBack={handleBack} />
       <ScrollView
         ref={scrollRef}
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: wideWeb ? 160 : scrollBottomPadding.withoutBottomBar }]}
+        contentContainerStyle={[
+          styles.scrollContent,
+          {
+            paddingBottom: wideWeb
+              ? 160
+              : isKeyboardVisible
+                ? 320
+                : scrollBottomPadding.withoutBottomBar,
+          },
+        ]}
         {...standardVerticalScrollProps}
       >
         <View style={wideWeb ? styles.wideLayout : undefined}>
@@ -288,7 +306,7 @@ export default function CreateListing({
                   </View>
                   <View style={styles.webStepTextCol}>
                     <Text style={[styles.webStepTitle, step === 3 && styles.webStepTitleActive]}>3. Detalhes</Text>
-                    <Text style={styles.webStepSubtitle}>Estado e bairro</Text>
+                    <Text style={styles.webStepSubtitle}>Conservação e detalhes</Text>
                   </View>
                 </View>
               </View>
@@ -343,6 +361,7 @@ export default function CreateListing({
                 onSetPhotoUrl={actions.setPhotoUrl}
                 fieldErrors={basicsErrors}
                 onGoToPhotos={() => setStep(2)}
+                onFocusField={handleFocusField}
               />
             ) : null}
 
@@ -385,6 +404,7 @@ export default function CreateListing({
                 onSetNeighborhood={actions.setNeighborhood}
                 onSetIsBox={actions.setIsBox}
                 onSetBoxVolumesCount={actions.setBoxVolumesCount}
+                onFocusField={handleFocusField}
               />
             ) : null}
           </View>
@@ -452,76 +472,79 @@ export default function CreateListing({
         </View>
       </ScrollView>
 
-      {/* Barra de ação */}
-      <SafeAreaView edges={["bottom"]} style={styles.actionBar}>
-        <View style={styles.actionBarInner}>
-          {wideWeb ? (
-            <View style={styles.webActionRow}>
-              <View style={styles.webSecondaryActions}>
-                <TextButton
-                  label="Salvar para depois"
-                  disabled={state.loading}
-                  onPress={() => void handleSaveForLater()}
-                />
-              </View>
-              <View style={styles.webPrimaryActions}>
-                {step > 1 ? (
+      {/* Barra de ação: oculta no mobile enquanto o teclado estiver aberto para não encobrir os inputs */}
+      {!wideWeb && isKeyboardVisible ? null : (
+        <SafeAreaView edges={["bottom"]} style={styles.actionBar}>
+          <View style={styles.actionBarInner}>
+            {wideWeb ? (
+              <View style={styles.webActionRow}>
+                <View style={styles.webSecondaryActions}>
                   <TextButton
-                    label="Voltar à etapa anterior"
+                    label="Salvar para depois"
                     disabled={state.loading}
-                    onPress={() => setStep(step - 1)}
+                    onPress={() => void handleSaveForLater()}
                   />
-                ) : null}
-                <View style={styles.webPrimaryButtonWrapper}>
-                  {step === 1 ? (
-                    <FilledButton label="Continuar" onPress={handleGoToStep2} />
-                  ) : null}
-
-                  {step === 2 ? <FilledButton label="Usar estas fotos" onPress={handleGoToStep3} /> : null}
-
-                  {step === 3 ? (
-                    <FilledButton
-                      label="Publicar anúncio"
-                      loading={state.loading}
-                      loadingLabel="Publicando"
-                      onPress={() => void handleSubmit()}
+                </View>
+                <View style={styles.webPrimaryActions}>
+                  {step > 1 ? (
+                    <TextButton
+                      label="Voltar à etapa anterior"
+                      disabled={state.loading}
+                      onPress={() => setStep(step - 1)}
                     />
                   ) : null}
+                  <View style={styles.webPrimaryButtonWrapper}>
+                    {step === 1 ? (
+                      <FilledButton label="Continuar" onPress={handleGoToStep2} />
+                    ) : null}
+
+                    {step === 2 ? <FilledButton label="Usar estas fotos" onPress={handleGoToStep3} /> : null}
+
+                    {step === 3 ? (
+                      <FilledButton
+                        label="Publicar anúncio"
+                        loading={state.loading}
+                        loadingLabel="Publicando"
+                        onPress={() => void handleSubmit()}
+                      />
+                    ) : null}
+                  </View>
                 </View>
               </View>
-            </View>
-          ) : (
-            <View style={styles.actionButtonsCol}>
-              {step === 1 ? (
-                <FilledButton label="Continuar" onPress={handleGoToStep2} />
-              ) : null}
-
-              {step === 2 ? <FilledButton label="Usar estas fotos" onPress={handleGoToStep3} /> : null}
-
-              {step === 3 ? (
-                <FilledButton
-                  label="Publicar anúncio"
-                  loading={state.loading}
-                  loadingLabel="Publicando"
-                  onPress={() => void handleSubmit()}
-                />
-              ) : null}
-
-              {/* Ações secundárias lado a lado */}
-              <View style={styles.secondaryRow}>
-                {step > 1 ? (
-                  <TextButton label="Voltar à etapa anterior" disabled={state.loading} onPress={() => setStep(step - 1)} />
+            ) : (
+              <View style={styles.actionButtonsCol}>
+                {step === 1 ? (
+                  <FilledButton label="Continuar" onPress={handleGoToStep2} />
                 ) : null}
-                <TextButton
-                  label="Salvar para depois"
-                  disabled={state.loading}
-                  onPress={() => void handleSaveForLater()}
-                />
+
+                {step === 2 ? <FilledButton label="Usar estas fotos" onPress={handleGoToStep3} /> : null}
+
+                {step === 3 ? (
+                  <FilledButton
+                    label="Publicar anúncio"
+                    loading={state.loading}
+                    loadingLabel="Publicando"
+                    onPress={() => void handleSubmit()}
+                  />
+                ) : null}
+
+                {/* Ações secundárias organizadas lado a lado sem quebra */}
+                <View style={[styles.secondaryRow, step === 1 && styles.secondaryRowSingle]}>
+                  {step > 1 ? (
+                    <TextButton label="Voltar" accessibilityLabel="Voltar à etapa anterior" disabled={state.loading} onPress={() => setStep(step - 1)} />
+                  ) : null}
+                  <TextButton
+                    label="Salvar rascunho"
+                    accessibilityLabel="Salvar rascunho para depois"
+                    disabled={state.loading}
+                    onPress={() => void handleSaveForLater()}
+                  />
+                </View>
               </View>
-            </View>
-          )}
-        </View>
-      </SafeAreaView>
+            )}
+          </View>
+        </SafeAreaView>
+      )}
     </SafeAreaView>
   );
 }
@@ -820,8 +843,8 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
       maxWidth: wideWeb ? 1040 : 560,
       alignSelf: "center",
       paddingHorizontal: tokens.spacing[16],
-      paddingTop: tokens.spacing[12],
-      paddingBottom: tokens.spacing[12],
+      paddingTop: tokens.spacing[8],
+      paddingBottom: tokens.spacing[8],
     },
     webActionRow: {
       flexDirection: "row",
@@ -844,9 +867,17 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
     },
     actionButtonsCol: {
       width: wideWeb ? 640 : "100%",
-      gap: tokens.spacing[8],
+      gap: tokens.spacing[4],
     },
-    secondaryRow: { flexDirection: "row", justifyContent: "center", flexWrap: "wrap", gap: tokens.spacing[8] },
+    secondaryRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      paddingHorizontal: tokens.spacing[8],
+    },
+    secondaryRowSingle: {
+      justifyContent: "center",
+    },
     draftBanner: {
       flexDirection: "row",
       alignItems: "center",
