@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Animated, Platform, Pressable, Text, View } from "react-native";
 import { tokens } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
@@ -14,12 +15,20 @@ export type FavoriteButtonProps = {
 export function FavoriteButton({ bookId, userId, onToggleSuccess }: FavoriteButtonProps) {
   const [state, actions] = makeFavoriteButtonViewModel(bookId, userId);
   const { colors } = useTheme();
+  const [showToggleError, setShowToggleError] = useState(false);
   const { scale, isPressed, onPressIn, onPressOut } = useExpressivePress({
     disabled: state.loading,
     pressedScale: 0.88,
   });
 
+  useEffect(() => {
+    if (!showToggleError || !state.error) return;
+    const timer = setTimeout(() => setShowToggleError(false), 3500);
+    return () => clearTimeout(timer);
+  }, [showToggleError, state.error]);
+
   const handleToggle = useGuardedPress(async () => {
+    setShowToggleError(true);
     const wasSelected = state.selected;
     await actions.toggle();
     onToggleSuccess?.(!wasSelected);
@@ -52,13 +61,15 @@ export function FavoriteButton({ bookId, userId, onToggleSuccess }: FavoriteButt
           />
         </Pressable>
       </Animated.View>
-      {state.error ? (
+      {showToggleError && state.error ? (
         <View
           style={{
             position: "absolute",
             top: tokens.accessibility.touchTarget + 4,
+            right: 0,
+            minWidth: 168,
             paddingHorizontal: tokens.spacing[8],
-            paddingVertical: tokens.spacing[2],
+            paddingVertical: tokens.spacing[4],
             backgroundColor: colors.errorContainer,
             borderRadius: tokens.radius.small,
             borderWidth: 1,

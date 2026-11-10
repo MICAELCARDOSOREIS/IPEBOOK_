@@ -232,13 +232,30 @@ export function CatalogCarousel({
           <AppIcon name="chevronRight" size={16} color={colors.m3.primary} />
         </Pressable>
       </View>
-      <View style={[styles.booksGridContainer, wideWeb && styles.booksGridContainerWide]}>
-        {books.map((item) => (
-          <View key={item.id} style={wideWeb ? styles.booksGridCellWide : styles.booksGridCell}>
-            {renderCard(item, wideWeb)}
-          </View>
-        ))}
-      </View>
+      {wideWeb ? (
+        <View style={styles.booksGridContainerWide}>
+          {books.map((item) => (
+            <View key={item.id} style={styles.booksGridCellWide}>
+              {renderCard(item, true)}
+            </View>
+          ))}
+        </View>
+      ) : (
+        <View style={styles.booksGridContainer}>
+          {Array.from({ length: Math.ceil(books.length / 2) }, (_, rowIndex) => {
+            const pair = books.slice(rowIndex * 2, rowIndex * 2 + 2);
+            return (
+              <View key={pair.map((b) => b.id).join("-")} style={styles.booksGridRow}>
+                {pair.map((item) => (
+                  <View key={item.id} style={styles.booksGridCell}>
+                    {renderCard(item, false)}
+                  </View>
+                ))}
+              </View>
+            );
+          })}
+        </View>
+      )}
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`Explorar catálogo completo de ${title}`}
@@ -736,11 +753,13 @@ function createStyles(colors: ColorPalette) {
       flexShrink: 1,
     },
     booksGridContainer: {
+      flexDirection: "column",
+      gap: tokens.spacing[14],
+    },
+    booksGridRow: {
       flexDirection: "row",
-      flexWrap: "wrap",
       justifyContent: "space-between",
       alignItems: "stretch",
-      rowGap: tokens.spacing[14],
     },
     booksGridContainerWide: {
       flexDirection: "row",
@@ -749,7 +768,8 @@ function createStyles(colors: ColorPalette) {
       gap: tokens.spacing[16],
     },
     booksGridCell: {
-      width: "48%",
+      width: "48.2%",
+      flexDirection: "column",
       alignSelf: "stretch",
     },
     booksGridCellWide: {
@@ -757,6 +777,7 @@ function createStyles(colors: ColorPalette) {
       flexBasis: 200,
       minWidth: 180,
       maxWidth: 300,
+      flexDirection: "column",
     },
     viewMoreBottomButton: {
       flexDirection: "row",
