@@ -421,7 +421,9 @@ function createStyles(colors: ColorPalette) {
       transform: [{ scale: 0.98 }],
     },
     editProfileButtonDark: {
-      backgroundColor: colors.ipe.bloomDeep,
+      backgroundColor: colors.ipe.container,
+      borderWidth: 1,
+      borderColor: colors.ipe.bloom,
     },
     editProfileButtonText: {
       ...tokens.typography.labelLarge,
@@ -629,7 +631,7 @@ function createStyles(colors: ColorPalette) {
     },
     menuBadgeText: {
       ...tokens.typography.badgeMicro,
-      color: colors.badge.completed.text,
+      color: colors.surface,
       fontWeight: "700",
     },
   });

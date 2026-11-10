@@ -46,6 +46,17 @@ describe("contraste de tema claro/escuro (Spec 054 / Issue #144, WCAG AA)", () =
       for (const badge of Object.values(theme.badge)) {
         expect(contrastRatio(badge.text, badge.background)).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
       }
+      // Badge de contagem sobre cor de erro (NavigationBar, ProfileHub, ProfileMenuSection)
+      expect(contrastRatio(theme.surface, theme.error)).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
+    }
+    // No modo escuro, pontos/indicadores (dots) escolhem a cor de maior contraste (background ou text) sobre a superfície
+    for (const badge of Object.values(darkColors.badge)) {
+      const bestDotColor =
+        contrastRatio(badge.background, darkColors.m3.surfaceContainerLowest) >=
+        contrastRatio(badge.text, darkColors.m3.surfaceContainerLowest)
+          ? badge.background
+          : badge.text;
+      expect(contrastRatio(bestDotColor, darkColors.m3.surfaceContainerLowest)).toBeGreaterThanOrEqual(3.0);
     }
   });
 
@@ -70,6 +81,7 @@ describe("contraste de tema claro/escuro (Spec 054 / Issue #144, WCAG AA)", () =
     expect(contrastRatio(darkColors.book.inkSecondary, darkColors.book.page)).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
     expect(contrastRatio(darkColors.nature.foliage, darkColors.book.page)).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
     expect(contrastRatio(darkColors.nature.onFoliage, darkColors.nature.foliage)).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
+    expect(contrastRatio(darkColors.nature.onFoliage, darkColors.actionDeep)).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
     expect(contrastRatio(darkColors.ipe.onContainer, darkColors.ipe.container)).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
   });
 });

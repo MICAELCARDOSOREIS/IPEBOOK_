@@ -40,7 +40,7 @@ describe("datasources Supabase", () => {
       signOut: vi.fn().mockResolvedValue({ error: { message: "interno" } }),
     } }), "ipebook://redefinir-senha");
     await expect(auth.signUp("pessoa@exemplo.com", "senha1234", "Leitora Teste")).rejects.toThrow("Não foi possível criar a conta.");
-    await expect(auth.currentUser()).rejects.toThrow("Não foi possível conferir a sessão.");
+    await expect(auth.currentUser()).resolves.toBeNull();
     await expect(auth.signOut()).rejects.toThrow("Não foi possível sair.");
   });
 
@@ -529,11 +529,18 @@ describe("datasources Supabase", () => {
     const select = vi.fn().mockReturnValue({ eq: eqSelect });
     const eqUpdate = vi.fn().mockResolvedValue({ error: null });
     const update = vi.fn().mockReturnValue({ eq: eqUpdate });
+    const eqDelete2 = vi.fn().mockResolvedValue({ error: null });
+    const eqDelete = vi.fn().mockImplementation(() => ({
+      ...Promise.resolve({ error: null }),
+      then: (r: any) => Promise.resolve({ error: null }).then(r),
+      eq: eqDelete2,
+    }));
+    const del = vi.fn().mockReturnValue({ eq: eqDelete });
     const insert = vi.fn().mockResolvedValue({ error: null });
 
     const from = vi.fn().mockImplementation((table: string) => {
       expect(table).toBe("v2_notifications");
-      return { select, update, insert };
+      return { select, update, insert, delete: del };
     });
 
     const notifDs = new SupabaseNotificationDataSource(fakeClient({ from }));
@@ -545,6 +552,9 @@ describe("datasources Supabase", () => {
 
     await expect(notifDs.markAsRead("notif-1")).resolves.toBeUndefined();
     await expect(notifDs.markAllAsRead("user-1")).resolves.toBeUndefined();
+    await expect(notifDs.deleteNotification("notif-1")).resolves.toBeUndefined();
+    await expect(notifDs.clearAll("user-1")).resolves.toBeUndefined();
+    await expect(notifDs.clearRead("user-1")).resolves.toBeUndefined();
     await expect(
       notifDs.addNotification({
         id: "notif-2",
@@ -565,14 +575,24 @@ describe("datasources Supabase", () => {
     const select = vi.fn().mockReturnValue({ eq: eqSelect });
     const eqUpdate = vi.fn().mockResolvedValue({ error });
     const update = vi.fn().mockReturnValue({ eq: eqUpdate });
+    const eqDelete2 = vi.fn().mockResolvedValue({ error });
+    const eqDelete = vi.fn().mockImplementation(() => ({
+      ...Promise.resolve({ error }),
+      then: (r: any) => Promise.resolve({ error }).then(r),
+      eq: eqDelete2,
+    }));
+    const del = vi.fn().mockReturnValue({ eq: eqDelete });
     const insert = vi.fn().mockResolvedValue({ error });
 
-    const from = vi.fn().mockReturnValue({ select, update, insert });
+    const from = vi.fn().mockReturnValue({ select, update, insert, delete: del });
     const notifDs = new SupabaseNotificationDataSource(fakeClient({ from }));
 
     await expect(notifDs.listByUser("user-1")).rejects.toThrow("Não foi possível carregar as notificações.");
     await expect(notifDs.markAsRead("notif-1")).rejects.toThrow("Não foi possível atualizar a notificação.");
     await expect(notifDs.markAllAsRead("user-1")).rejects.toThrow("Não foi possível marcar as notificações como lidas.");
+    await expect(notifDs.deleteNotification("notif-1")).rejects.toThrow("Não foi possível excluir a notificação.");
+    await expect(notifDs.clearAll("user-1")).rejects.toThrow("Não foi possível limpar as notificações.");
+    await expect(notifDs.clearRead("user-1")).rejects.toThrow("Não foi possível limpar as notificações lidas.");
     await expect(
       notifDs.addNotification({
         id: "notif-2",

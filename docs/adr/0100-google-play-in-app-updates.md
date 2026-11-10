@@ -1,29 +1,32 @@
 # 0100. Verificação automática direta de atualizações na Google Play Store
 
 - **Status:** Aceito
-- **Data:** 2026-11-09
+- **Data:** 2026-11-09 (atualizado em 2026-11-10)
 - **Contexto:** Ciclo de vida do aplicativo Android / Distribuição na Google Play Store / Automação de releases
 - **Especificação:** [129](../../specs/129-in-app-updates-google-play/spec.md)
 
 ## Contexto
 
-Com a implementação da Spec 128 (ADR 0099), o IpêBook passou a exibir aviso de atualização e redirecionamento para a Google Play Store baseado em uma tabela remota de política (`v2_app_version_policy`) no Supabase.
+Com a implementação da Spec 128 (ADR 0099), o IpêBook passou a exibir aviso de atualização e redirecionamento para a Google Play Store baseado na tabela remota `v2_app_version_policy` no Supabase.
 
-Embora esse mecanismo funcione e permita bloqueio emergencial (`min_supported_version`), ele exige uma etapa operacional manual a cada publicação: após o Google aprovar a nova versão no Play Console, o mantenedor precisa rodar um `UPDATE` no Supabase com a nova `latest_version`.
-
-O objetivo desta decisão é complementar a arquitetura com verificação direta na Google Play, permitindo que o aplicativo descubra autonomamente quando há uma nova versão disponível na loja.
+No entanto, o perfil de produção no `eas.json` utiliza `"autoIncrement": true`, que incrementa automaticamente o `versionCode` inteiro do Android (ex.: de `10` para `11`) mantendo o campo `"version": "0.1.0"` do `app.json`. Além disso, depender exclusivamente do Supabase exige atualizar manualmente o banco a cada nova versão liberada no Google Play Console.
 
 ## Decisão
 
-1. **Adotar a abstração `IInAppUpdateService` no domínio (`src/model/services/iInAppUpdateService.ts`):**
-   - Define o contrato para verificação de disponibilidade de atualização e disparo do fluxo nativo ou redirecionamento direto.
-2. **Implementar `MemoryInAppUpdateService` e provedor nativo resiliente:**
-   - Permite 100% de cobertura nos testes unitários e de integração sem depender de mock complexo de bibliotecas nativas.
-   - Em caso de indisponibilidade da loja, falhas de rede ou ambiente não-Google, o sistema cai com segurança para a política remota do Supabase ou encerra com `up_to_date`.
-3. **Composição em `AppUpdateUseCases`:**
-   - `AppUpdateUseCases` passa a orquestrar a verificação da loja nativa com fallback para a política remota.
+1. **Módulo nativo Android `IpebookPlayUpdate` via Config Plugin (`app.config.js`):**
+   - Injetar a biblioteca oficial `com.google.android.play:app-update:2.1.0` no `android/app/build.gradle` e registrar `IpebookPlayUpdatePackage` em `MainApplication.kt` durante o `expo prebuild`.
+   - Expor `checkStoreUpdate()` (que consulta `AppUpdateManagerFactory.create(context).appUpdateInfo` na Google Play Store e lê `versionCode` e `versionName` reais do `PackageInfo` instalado) e `startUpdateFlow()` (que inicia o fluxo oficial de atualização da Play Store).
+
+2. **Implementação real em `GooglePlayInAppUpdateService` (`src/infra/services/googlePlayInAppUpdateService.ts`):**
+   - No Android, consulta `NativeModules.IpebookPlayUpdate.checkStoreUpdate()`.
+   - Quando executado em um binário anterior que ainda não possua `IpebookPlayUpdate`, recorre a `NativeModules.RNSentry.fetchNativeRelease()` para obter o `versionCode` nativo real instalado.
+   - Em caso de falha, ausência da Play Store ou ambiente Web, retorna `{ isUpdateAvailable: false }` sem interromper a abertura do aplicativo.
+
+3. **Identificação de versão por `versionCode` em `AppUpdateUseCases` e `evaluateAppUpdateStatus`:**
+   - Como a API `AppUpdateInfo` da Google Play informa a disponibilidade por `availableVersionCode()`, `AppUpdateUseCases` compõe a chave da versão disponível como `${installedVersion}+${versionCode}` (ex.: `0.1.0+11`) quando `versionName` não muda. Assim, se a pessoa escolher **"Agora não"** para o build `11`, o aviso é dispensado apenas para `0.1.0+11` e volta a aparecer automaticamente no build `12` (`0.1.0+12`).
+   - O fallback da política remota (`v2_app_version_policy`) também passa a considerar `latest_version_code` e `min_supported_version_code` quando presentes.
 
 ## Consequências
 
-- **Positivas:** Detecção automática de releases da Google Play Store sem necessidade de intervenção manual no banco a cada release; preservação de testes rápidos em Vitest; total isolamento por inversão de dependência (MVVM limpo).
-- **Negativas:** Requer orquestração cuidadosa de timeout e tratamento de exceções para garantir que a inicialização do app nunca seja bloqueada por lentidão da rede.
+- **Positivas:** Detecção 100% automática de novas builds na Google Play Store mesmo quando apenas o `versionCode` sobe no EAS Build; zero dependências de pacotes npm de terceiros não mantidos (usa diretamente a biblioteca oficial do Google Play Core via Config Plugin próprio); preservação do fallback via Supabase para bloqueio emergencial (`min_supported_version`).
+- **Negativas:** O módulo nativo `IpebookPlayUpdate` passa a integrar o binário Android a partir do próximo build `.aab` gerado com `npm run aab:local`.

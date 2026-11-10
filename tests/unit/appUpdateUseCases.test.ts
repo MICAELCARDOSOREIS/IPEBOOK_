@@ -48,6 +48,19 @@ describe("regras de atualização do app", () => {
     expect(evaluateAppUpdateStatus("0.2.0", policy)).toBe("up_to_date");
   });
 
+  it("avalia atualização por versionCode quando o semver coincide", () => {
+    const sameSemverPolicy: AppVersionPolicy = {
+      ...policy,
+      latestVersion: "0.1.0",
+      minSupportedVersion: "0.1.0",
+      latestVersionCode: 11,
+      minSupportedVersionCode: 10,
+    };
+    expect(evaluateAppUpdateStatus("0.1.0", sameSemverPolicy, 9)).toBe("required");
+    expect(evaluateAppUpdateStatus("0.1.0", sameSemverPolicy, 10)).toBe("optional");
+    expect(evaluateAppUpdateStatus("0.1.0", sameSemverPolicy, 11)).toBe("up_to_date");
+  });
+
   it("dispensa a versão opcional, mas mantém a atualização obrigatória", async () => {
     const optional = createUseCases();
     expect((await optional.useCases.checkUpdate()).status).toBe("optional");
@@ -89,6 +102,34 @@ describe("regras de atualização do app", () => {
     await ctx.useCases.openStore("https://play.google.com/store/apps/details?id=com.ipebook.app");
     expect(spy).toHaveBeenCalled();
     expect(ctx.storeLauncher.openStore).not.toHaveBeenCalled();
+  });
+
+  it("diferencia builds da Play Store por versionCode (0.1.0+11 vs 0.1.0+12) ao dispensar", async () => {
+    const inAppService = new MemoryInAppUpdateService({
+      isUpdateAvailable: true,
+      versionCode: 11,
+      installedVersionCode: 10,
+      installedVersionName: "0.1.0",
+    });
+    const ctx = createUseCases(null, inAppService);
+
+    const firstCheck = await ctx.useCases.checkUpdate();
+    expect(firstCheck.status).toBe("optional");
+    expect(firstCheck.policy?.latestVersion).toBe("0.1.0+11");
+
+    await ctx.useCases.dismiss(firstCheck.policy!.latestVersion);
+    expect((await ctx.useCases.checkUpdate()).status).toBe("up_to_date");
+
+    // Quando sai o build 12 na Play Store, o aviso volta a aparecer
+    inAppService.setMockInfo({
+      isUpdateAvailable: true,
+      versionCode: 12,
+      installedVersionCode: 10,
+      installedVersionName: "0.1.0",
+    });
+    const secondCheck = await ctx.useCases.checkUpdate();
+    expect(secondCheck.status).toBe("optional");
+    expect(secondCheck.policy?.latestVersion).toBe("0.1.0+12");
   });
 
   it("ignora atualização da loja se o usuário já tiver dispensado aquela versão", async () => {

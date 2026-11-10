@@ -62,7 +62,7 @@ export function MyListings({
   onNavigateToReceivedRequests,
   onNavigateToNegotiationDetail,
 }: MyListingsProps) {
-  const { colors } = useTheme();
+  const { colors, resolvedScheme } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [state, actions] = makeMyListingsViewModel(sessionUserId);
   const [received] = makeReceivedRequestsViewModel(sessionUserId);
@@ -288,7 +288,12 @@ export function MyListings({
                     {selected ? (
                       <AppIcon name="check" size={16} color={tab.tone.text} />
                     ) : !tab.badge ? (
-                      <View style={[styles.tabChipDot, { backgroundColor: tab.tone.background }]} />
+                      <View
+                        style={[
+                          styles.tabChipDot,
+                          { backgroundColor: resolvedScheme === "dark" ? tab.tone.text : tab.tone.background },
+                        ]}
+                      />
                     ) : null}
                     <Text
                       numberOfLines={1}

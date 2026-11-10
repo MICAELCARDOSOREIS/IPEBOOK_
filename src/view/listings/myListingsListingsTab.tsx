@@ -65,7 +65,7 @@ export function MyListingsListingsTab({
 
   // Cada situação usa a sua cor canônica exclusiva (Todos verde vivo botânico, Ativo verde floresta escuro, Pausado cinza ardósia, Reservado amarelo ouro).
   const filterChips: { key: ListingsFilter; label: string; a11y: string; tone?: { background: string; text: string } }[] = [
-    { key: "all", label: `Todos (${books.length})`, a11y: "Filtrar por Todos", tone: { background: colors.nature.foliage, text: "#FFFFFF" } },
+    { key: "all", label: `Todos (${books.length})`, a11y: "Filtrar por Todos", tone: { background: colors.nature.foliage, text: colors.nature.onFoliage } },
     { key: "active", label: `Ativos (${activeCount})`, a11y: "Filtrar por Ativos", tone: colors.badge.available },
     { key: "paused", label: `Pausados (${pausedCount})`, a11y: "Filtrar por Pausados", tone: colors.badge.paused },
     { key: "reserved", label: `Reservados (${reservedCount})`, a11y: "Filtrar por Reservados", tone: colors.badge.reserved },
@@ -146,7 +146,7 @@ export function MyListingsListingsTab({
         </View>
       )}
       {/* `05.01` traz a dica de uso depois da lista, com ícone informativo para clareza ergonômica. */}
-      <View style={styles.orientationBox}>
+      <View style={[styles.orientationBox, !wideWeb && styles.orientationBoxMobile]}>
         <AppIcon name="info" size={16} color={colors.secondaryText} />
         <Text style={styles.orientationHint}>
           Toque em um livro para editar, pausar ou marcar como concluído.
@@ -190,6 +190,9 @@ function createStyles(colors: ColorPalette) {
       gap: tokens.spacing[8],
       marginTop: tokens.spacing[10],
       paddingHorizontal: tokens.spacing[4],
+    },
+    orientationBoxMobile: {
+      paddingRight: tokens.spacing[64],
     },
     orientationHint: {
       ...tokens.typography.labelSmall,

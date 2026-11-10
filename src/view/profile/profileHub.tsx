@@ -460,7 +460,7 @@ function createStyles(colors: ColorPalette) {
     },
     notificationBadgeText: {
       ...tokens.typography.badgeMicro,
-      color: colors.badge.completed.text,
+      color: colors.surface,
       fontWeight: "700",
     },
     // Alvo de toque de 48 dp ao redor da engrenagem (FR-011, Spec 073).

@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { Animated, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
+import { contrastRatio } from "@/view/theme/contrastRatio";
 import { AppIcon } from "@/view/components/AppIcon";
 import { useExpressivePress } from "@/view/useExpressivePress";
 
@@ -22,6 +23,13 @@ export function Chip({ label, selected, onPress, disabled = false, accessibility
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const { scale, isPressed, onPressIn, onPressOut } = useExpressivePress({ disabled, pressedScale: 0.95 });
+  const dotColor = useMemo(() => {
+    if (!tone) return undefined;
+    const surface = colors.m3.surfaceContainerLowest;
+    return contrastRatio(tone.background, surface) >= contrastRatio(tone.text, surface)
+      ? tone.background
+      : tone.text;
+  }, [tone, colors.m3.surfaceContainerLowest]);
 
   return (
     <Animated.View style={[styles.container, { transform: [{ scale }] }]}>
@@ -45,7 +53,7 @@ export function Chip({ label, selected, onPress, disabled = false, accessibility
         ]}
       >
         {selected ? <AppIcon name="check" size={18} color={tone?.text ?? colors.nature.onFoliage} /> : null}
-        {tone && !selected ? <View style={[styles.dot, { backgroundColor: tone.background, borderColor: tone.background }]} /> : null}
+        {tone && !selected ? <View style={[styles.dot, { backgroundColor: dotColor, borderColor: dotColor }]} /> : null}
         <Text
           style={[
             styles.label,
