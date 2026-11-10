@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { makeAuthViewModel } from "@/di/container";
+import { InlineErrorCard } from "@/view/components/InlineErrorCard";
+import { ScreenContainer } from "@/view/components/ScreenContainer";
 import { tokens } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 
@@ -50,10 +51,14 @@ export default function AuthCallback({ url, onSuccess, onBackToSignIn }: AuthCal
   }, [url]);
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <ScreenContainer
+      maxWidth={560}
+      scroll={false}
+      contentStyle={styles.container}
+    >
       {errorMessage ? (
         <View style={styles.content}>
-          <Text style={[styles.errorText, { color: colors.error }]}>{errorMessage}</Text>
+          <InlineErrorCard message={errorMessage} style={styles.errorCard} />
           {onBackToSignIn ? (
             <Text
               style={[styles.link, { color: colors.action }]}
@@ -71,7 +76,7 @@ export default function AuthCallback({ url, onSuccess, onBackToSignIn }: AuthCal
           </Text>
         </View>
       )}
-    </SafeAreaView>
+    </ScreenContainer>
   );
 }
 
@@ -82,18 +87,19 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   content: {
+    width: "100%",
+    maxWidth: 400,
     padding: tokens.spacing[24],
     alignItems: "center",
     justifyContent: "center",
+    gap: tokens.spacing[16],
+  },
+  errorCard: {
+    width: "100%",
   },
   loadingText: {
     marginTop: tokens.spacing[16],
     ...tokens.typography.bodyLarge,
-  },
-  errorText: {
-    ...tokens.typography.bodyLarge,
-    textAlign: "center",
-    marginBottom: tokens.spacing[16],
   },
   link: {
     ...tokens.typography.labelLarge,
