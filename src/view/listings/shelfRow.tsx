@@ -1,8 +1,9 @@
 import { useMemo } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { Book } from "@/model/entities/book";
-import { tokens, type ColorPalette } from "@/view/tokens";
+import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
+import { formatPrice } from "@/view/formatPrice";
 import { AppIcon } from "@/view/components/AppIcon";
 import { BookCover } from "@/view/components/BookCover";
 import { ModalityCoverArea } from "@/view/components/ModalityCoverArea";
@@ -98,47 +99,73 @@ export function ShelfRow({ book, summary, accessibilityLabel, onPress, onShareWh
     );
   }
 
+  const offerText =
+    book.modality === "sale" && book.price != null
+      ? formatPrice(book.price)
+      : book.modality === "donation"
+        ? "Gratuito"
+        : "Para troca";
+
+  const statusTone =
+    book.status === "reserved"
+      ? { background: colors.badge.donation.background, text: colors.badge.donation.text, label: "Reservado" }
+      : book.status === "paused"
+        ? { background: colors.badge.paused.background, text: colors.badge.paused.text, label: "Pausado" }
+        : book.status === "delivered"
+          ? { background: colors.m3.secondaryContainer, text: colors.m3.onSecondaryContainer, label: "Concluído" }
+          : { background: colors.nature.sprout, text: colors.nature.foliageDeep, label: "Disponível" };
+
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
       onPress={onPress}
-      style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
+      style={({ pressed }) => [styles.row, styles.mobileCard, pressed && styles.rowPressed]}
     >
       <ModalityCoverArea modality={book.modality}>
         <BookCover id={book.id} title={book.title} photoUrl={book.photoUrl} variant="list" />
       </ModalityCoverArea>
       <View style={styles.rowText}>
-        <View style={styles.titleRow}>
+        <View style={styles.modalityPriceRow}>
+          <View style={styles.modalityBadgesGroup}>
+            <Tag variant={book.modality} />
+            {book.isBox ? (
+              <Tag
+                variant="box"
+                label={book.boxVolumesCount ? `Box (${book.boxVolumesCount} vols)` : "Box"}
+              />
+            ) : null}
+          </View>
+          <Text style={styles.priceText} numberOfLines={1}>
+            {offerText}
+          </Text>
+        </View>
+        <View style={styles.titleBlock}>
           <Text style={styles.rowTitle} numberOfLines={2}>
             {book.title}
           </Text>
-          {book.isBox ? (
-            <Tag
-              variant="box"
-              label={book.boxVolumesCount ? `Box (${book.boxVolumesCount} vols)` : "Box"}
-            />
+          {book.author ? (
+            <Text style={styles.rowAuthor} numberOfLines={1}>
+              {book.author}
+            </Text>
           ) : null}
         </View>
-        {book.author ? (
-          <Text style={styles.rowAuthor} numberOfLines={1}>
-            {book.author}
-          </Text>
-        ) : null}
-        <View style={styles.metaRow}>
-          <Tag
-            variant={
-              book.status === "reserved"
-                ? "reserved"
-                : book.status === "paused"
-                  ? "paused"
-                  : book.modality
-            }
-          />
-          <Text style={styles.rowSummary} numberOfLines={1}>
-            {summary}
-          </Text>
+        <View style={styles.footerRow}>
+          <View style={styles.locationRow}>
+            <AppIcon name="place" size={13} color={colors.nature.foliageDeep} />
+            <Text style={styles.locationText} numberOfLines={1}>
+              {book.neighborhood || "Piripiri"}
+            </Text>
+          </View>
+          <View style={[styles.statusPill, { backgroundColor: statusTone.background }]}>
+            <Text style={[styles.statusPillText, { color: statusTone.text }]}>
+              {statusTone.label}
+            </Text>
+          </View>
         </View>
+        <Text style={styles.srOnlySummary} numberOfLines={1}>
+          {summary}
+        </Text>
       </View>
       <View style={styles.trailingActions}>
         {onShareWhatsApp ? (
@@ -155,7 +182,7 @@ export function ShelfRow({ book, summary, accessibilityLabel, onPress, onShareWh
             <AppIcon name="share" size={18} color={colors.nature.foliage} />
           </Pressable>
         ) : null}
-        <AppIcon name="chevronRight" size={24} color={colors.m3.onSurfaceVariant} />
+        <AppIcon name="chevronRight" size={22} color={colors.m3.onSurfaceVariant} />
       </View>
     </Pressable>
   );
@@ -166,24 +193,105 @@ function createStyles(colors: ColorPalette) {
     row: {
       flexDirection: "row",
       alignItems: "center",
-      gap: tokens.spacing[16],
+      gap: tokens.spacing[14],
       minHeight: tokens.accessibility.touchTarget,
       paddingVertical: tokens.spacing[12],
       borderRadius: tokens.shapeMorph.cardRest,
+    },
+    mobileCard: {
+      backgroundColor: colors.m3.surfaceContainerLowest,
+      borderRadius: tokens.radius.large,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+      paddingHorizontal: tokens.spacing[12],
+      paddingVertical: tokens.spacing[12],
+      elevation: 2,
+      shadowColor: colors.ipe.trunk,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.08,
+      shadowRadius: 6,
     },
     rowPressed: {
       backgroundColor: colors.m3.surfaceContainerHigh,
       borderRadius: tokens.shapeMorph.cardPressed,
       transform: [{ scale: 0.985 }],
     },
-    rowText: { flex: 1, gap: tokens.spacing[4] },
+    rowText: { flex: 1, gap: tokens.spacing[6] },
+    modalityPriceRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      flexWrap: "wrap",
+      gap: tokens.spacing[6],
+    },
+    modalityBadgesGroup: {
+      flexDirection: "row",
+      alignItems: "center",
+      flexWrap: "wrap",
+      gap: tokens.spacing[6],
+    },
+    priceText: {
+      ...tokens.typography.labelLarge,
+      fontSize: 13,
+      lineHeight: 18,
+      fontWeight: tokens.fontWeight.bold,
+      color: colors.nature.foliageDeep,
+    },
+    titleBlock: {
+      gap: 2,
+    },
     rowTitle: {
       ...tokens.typography.brandCardTitle,
+      fontSize: 16,
+      lineHeight: 20,
       color: colors.m3.onSurface,
     },
     rowAuthor: {
-      ...tokens.typography.labelMedium,
+      ...tokens.typography.bodyMedium,
+      fontSize: 12.5,
+      lineHeight: 16,
       color: colors.m3.onSurfaceVariant,
+    },
+    footerRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      flexWrap: "wrap",
+      gap: tokens.spacing[6],
+      paddingTop: tokens.spacing[6],
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: colors.m3.outlineVariant,
+    },
+    locationRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[4],
+      flexShrink: 1,
+    },
+    locationText: {
+      ...tokens.typography.labelSmall,
+      fontSize: 12,
+      lineHeight: 16,
+      fontFamily: fontFamily.medium,
+      color: colors.m3.onSurfaceVariant,
+      flexShrink: 1,
+    },
+    statusPill: {
+      paddingHorizontal: tokens.spacing[8],
+      paddingVertical: 2,
+      borderRadius: tokens.radius.full,
+    },
+    statusPillText: {
+      ...tokens.typography.captionSmall,
+      fontSize: 11,
+      lineHeight: 14,
+      fontWeight: tokens.fontWeight.bold,
+    },
+    srOnlySummary: {
+      position: "absolute",
+      width: 0,
+      height: 0,
+      opacity: 0,
     },
     metaRow: {
       flexDirection: "row",

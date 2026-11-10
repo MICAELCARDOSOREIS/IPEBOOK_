@@ -103,7 +103,7 @@ export function MyListingsListingsTab({
           </View>
         </View>
       ) : (
-        <View style={styles.listCard}>
+        <View style={wideWeb ? styles.listCardWide : styles.listSectionMobile}>
           <Text style={styles.listTitle}>
             {`${filteredBooks.length} ${filteredBooks.length === 1 ? "anúncio" : "anúncios"}`}
           </Text>
@@ -171,7 +171,10 @@ function createStyles(colors: ColorPalette) {
       textAlign: "center",
     },
     emptyAction: { marginTop: tokens.spacing[16], width: "100%" },
-    listCard: {
+    listSectionMobile: {
+      gap: tokens.spacing[12],
+    },
+    listCardWide: {
       paddingHorizontal: tokens.spacing[16],
       paddingTop: tokens.spacing[16],
       paddingBottom: tokens.spacing[4],
@@ -180,7 +183,7 @@ function createStyles(colors: ColorPalette) {
     },
     tableHeader: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[16], paddingHorizontal: tokens.spacing[16], paddingVertical: tokens.spacing[12] },
     tableHeaderText: { ...tokens.typography.labelLarge, color: colors.m3.onSurfaceVariant },
-    listTitle: { ...tokens.typography.titleMedium, color: colors.m3.onSurface },
+    listTitle: { ...tokens.typography.titleMedium, color: colors.m3.onSurface, paddingHorizontal: tokens.spacing[4] },
     orientationBox: {
       flexDirection: "row",
       alignItems: "center",
