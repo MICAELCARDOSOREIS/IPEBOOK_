@@ -115,7 +115,9 @@ function createStyles(colors: ColorPalette) {
       paddingHorizontal: tokens.spacing[8],
       paddingVertical: tokens.spacing[2],
       borderRadius: tokens.radius.full,
-      backgroundColor: colors.ipe.bloom,
+      backgroundColor: colors.ipe.container,
+      borderWidth: 1,
+      borderColor: colors.ipe.bloom,
     },
     cycleBadgeText: {
       ...tokens.typography.labelSmall,

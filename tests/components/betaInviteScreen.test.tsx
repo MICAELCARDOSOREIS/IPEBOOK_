@@ -1,8 +1,10 @@
 import { act, fireEvent, render } from "@testing-library/react-native";
+import { StyleSheet } from "react-native";
 import { describe, expect, it, vi } from "vitest";
 import { MemoryBetaTesterDataSource } from "@/infra/datasources/memoryBetaTesterDataSource";
 import { BetaSignupUseCases } from "@/usecase/betaSignupUseCases";
 import { BetaInviteScreen } from "@/view/beta/betaInviteScreen";
+import { colors } from "@/view/tokens";
 import { useBetaSignupViewModel } from "@/viewmodel/useBetaSignupViewModel";
 
 function Harness({ dataSource, onOpenStore }: { dataSource: MemoryBetaTesterDataSource; onOpenStore: () => void }) {
@@ -62,6 +64,9 @@ describe("Destaques da comunidade e ações de loja do beta (Spec 108)", () => {
     expect(screen.getByText("Troca, venda e doação")).toBeDefined();
     expect(screen.getByText("Encontros em Piripiri")).toBeDefined();
     expect(screen.getByText("Leitores fundadores")).toBeDefined();
+    expect(StyleSheet.flatten(screen.getByText("Troca, venda e doação").props.style).color).toBe(colors.badge.sale.text);
+    expect(StyleSheet.flatten(screen.getByText("Encontros em Piripiri").props.style).color).toBe(colors.badge.trade.text);
+    expect(StyleSheet.flatten(screen.getByText("Leitores fundadores").props.style).color).toBe(colors.badge.donation.text);
 
     await act(async () => { fireEvent.press(screen.getByText("Abrir teste na Play Store")); });
     await act(async () => { fireEvent.press(screen.getByText("Entrar no grupo de testadores")); });

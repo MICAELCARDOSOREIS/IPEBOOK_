@@ -20,9 +20,9 @@ export const MODALITY_PLURAL = {
 
 function createModalityTag(colors: ColorPalette): Record<BookModality, { background: string; text: string; label: string }> {
   return {
-    sale: { background: colors.nature.foliageDeep, text: "#FFFFFF", label: "Venda" },
-    trade: { background: colors.brandBrown, text: "#FFFFFF", label: "Troca" },
-    donation: { background: colors.ipe.bloom, text: colors.ipe.onContainer, label: "Doação" },
+    sale: { ...colors.badge.sale, label: "Venda" },
+    trade: { ...colors.badge.trade, label: "Troca" },
+    donation: { ...colors.badge.donation, label: "Doação" },
   };
 }
 
@@ -153,10 +153,10 @@ export function CatalogCarousel({
               <View
                 style={[
                   styles.carouselCardReservedPill,
-                  { backgroundColor: colors.badge.donation.background },
+                  { backgroundColor: colors.badge.reserved.background },
                 ]}
               >
-                <Text style={[styles.carouselCardReservedText, { color: colors.badge.donation.text }]}>
+                <Text style={[styles.carouselCardReservedText, { color: colors.badge.reserved.text }]}>
                   Reservado
                 </Text>
               </View>
@@ -287,7 +287,7 @@ export function HomeShortcutsSection({
   onNavigateToSearch,
   onNavigateToHelp,
 }: HomeShortcutsSectionProps) {
-  const { colors } = useTheme();
+  const { colors, resolvedScheme } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [isBannerHovered, setIsBannerHovered] = useState(false);
 
@@ -298,24 +298,24 @@ export function HomeShortcutsSection({
           accessibilityRole="button"
           accessibilityLabel={`Doações da semana: ${donationSummary}`}
           onPress={() => onNavigateToSearch({ modality: "donation" })}
-          style={withPress([styles.shortcut, { backgroundColor: colors.m3.doacaoContainer }])}
+          style={withPress([styles.shortcut, { backgroundColor: colors.badge.donation.background }])}
         >
-          <AppIcon name="bookmark" size={24} color={colors.m3.onDoacaoContainer} />
+          <AppIcon name="bookmark" size={24} color={colors.badge.donation.text} />
           <View style={styles.shortcutText}>
-            <Text style={[styles.shortcutTitle, { color: colors.m3.onDoacaoContainer }]}>Doações da semana</Text>
-            <Text style={[styles.shortcutBody, { color: colors.m3.onDoacaoContainer }]}>{donationSummary}</Text>
+            <Text style={[styles.shortcutTitle, { color: colors.badge.donation.text }]}>Doações da semana</Text>
+            <Text style={[styles.shortcutBody, { color: colors.badge.donation.text }]}>{donationSummary}</Text>
           </View>
         </Pressable>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Troque o que já leu"
           onPress={() => onNavigateToSearch({ modality: "trade" })}
-          style={withPress([styles.shortcut, { backgroundColor: colors.m3.tertiaryContainer }])}
+          style={withPress([styles.shortcut, { backgroundColor: colors.badge.trade.background }])}
         >
-          <AppIcon name="swap" size={24} color={colors.m3.onTertiaryContainer} />
+          <AppIcon name="swap" size={24} color={colors.badge.trade.text} />
           <View style={styles.shortcutText}>
-            <Text style={[styles.shortcutTitle, { color: colors.m3.onTertiaryContainer }]}>Troque o que já leu</Text>
-            <Text style={[styles.shortcutBody, { color: colors.m3.onTertiaryContainer }]}>
+            <Text style={[styles.shortcutTitle, { color: colors.badge.trade.text }]}>Troque o que já leu</Text>
+            <Text style={[styles.shortcutBody, { color: colors.badge.trade.text }]}>
               Proponha uma troca direto pelo chat, sem intermediários.
             </Text>
           </View>
@@ -325,12 +325,12 @@ export function HomeShortcutsSection({
           accessibilityLabel="Encontro seguro: Locais públicos sugeridos e avaliação depois de cada troca"
           disabled={!onNavigateToHelp}
           onPress={() => onNavigateToHelp?.()}
-          style={withPress([styles.shortcut, { backgroundColor: colors.m3.primaryContainer }])}
+          style={withPress([styles.shortcut, { backgroundColor: colors.badge.sale.background }])}
         >
-          <AppIcon name="checkCircle" size={24} color={colors.m3.onPrimaryContainer} />
+          <AppIcon name="checkCircle" size={24} color={colors.badge.sale.text} />
           <View style={styles.shortcutText}>
-            <Text style={[styles.shortcutTitle, { color: colors.m3.onPrimaryContainer }]}>Encontro seguro</Text>
-            <Text style={[styles.shortcutBody, { color: colors.m3.onPrimaryContainer }]}>
+            <Text style={[styles.shortcutTitle, { color: colors.badge.sale.text }]}>Encontro seguro</Text>
+            <Text style={[styles.shortcutBody, { color: colors.badge.sale.text }]}>
               Locais públicos sugeridos e avaliação depois de cada troca.
             </Text>
           </View>
@@ -348,6 +348,7 @@ export function HomeShortcutsSection({
       onPress={() => onNavigateToSearch({ modality: "donation" })}
       style={({ pressed }) => [
         styles.donationBanner,
+        resolvedScheme === "dark" && styles.donationBannerDark,
         isBannerHovered && styles.donationBannerHovered,
         pressed && styles.donationBannerPressed,
       ]}
@@ -490,6 +491,10 @@ function createStyles(colors: ColorPalette) {
             userSelect: "none",
           } as never)
         : {}),
+    },
+    donationBannerDark: {
+      backgroundColor: colors.ipe.container,
+      borderColor: colors.ipe.bloom,
     },
     donationBannerHovered: {
       transform: [{ scale: 1.01 }],
@@ -799,7 +804,8 @@ function createStyles(colors: ColorPalette) {
     },
     viewMoreBottomText: {
       ...tokens.typography.labelLarge,
-      fontWeight: tokens.fontWeight.bold,
+      fontFamily: fontFamily.semiBold,
+      fontWeight: tokens.fontWeight.semiBold,
       color: colors.nature.foliageDeep,
     },
     empty: {

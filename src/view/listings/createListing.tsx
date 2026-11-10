@@ -241,7 +241,7 @@ export default function CreateListing({
                     ]}
                   >
                     {step > 1 ? (
-                      <AppIcon name="check" size={14} color="#FFF" />
+                      <AppIcon name="check" size={14} color={colors.nature.onFoliage} />
                     ) : (
                       <Text style={[styles.webStepBadgeText, step === 1 && styles.webStepBadgeTextActive]}>1</Text>
                     )}
@@ -263,7 +263,7 @@ export default function CreateListing({
                     ]}
                   >
                     {step > 2 ? (
-                      <AppIcon name="check" size={14} color="#FFF" />
+                      <AppIcon name="check" size={14} color={colors.nature.onFoliage} />
                     ) : (
                       <Text style={[styles.webStepBadgeText, step === 2 && styles.webStepBadgeTextActive]}>2</Text>
                     )}
@@ -595,7 +595,7 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
       fontWeight: tokens.fontWeight.bold,
     },
     webStepBadgeTextActive: {
-      color: "#FFFFFF",
+      color: colors.m3.onPrimary,
     },
     webStepTextCol: {
       gap: 2,

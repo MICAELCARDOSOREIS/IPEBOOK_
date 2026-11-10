@@ -296,4 +296,39 @@ describe("useNotificationsViewModel", () => {
     expect(hook.current[0].notifications).toHaveLength(1);
     expect(hook.current[0].notifications[0].read).toBe(false);
   });
+
+  it("mantém o cache de sessão sincronizado ao limpar tudo, evitando reaparecimento ao reabrir a tela", async () => {
+    const originalEnv = process.env.NODE_ENV;
+    try {
+      process.env.NODE_ENV = "development";
+      const listNotifications = vi.fn().mockResolvedValue(mockNotifications);
+      const clearAll = vi.fn().mockResolvedValue(undefined);
+      const useCases = stubNotifications({ listNotifications, clearAll });
+
+      // Primeira abertura: carrega notificações e popula cache
+      const hook1 = await renderHook("user-cache-test", useCases);
+      expect(hook1.current[0].notifications).toHaveLength(2);
+
+      // Usuário clica em limpar tudo
+      await act(async () => {
+        await hook1.current[1].clearAll();
+      });
+      expect(hook1.current[0].notifications).toHaveLength(0);
+
+      // Usuário sai da tela (desmonta)
+      const r1 = mounted.pop();
+      await act(async () => {
+        r1?.unmount();
+      });
+
+      // Usuário reabre a tela (monta novamente com o mesmo usuário)
+      listNotifications.mockResolvedValueOnce([]);
+      const hook2 = await renderHook("user-cache-test", useCases);
+
+      // Não pode ressurgir com notificações antigas via cache
+      expect(hook2.current[0].notifications).toHaveLength(0);
+    } finally {
+      process.env.NODE_ENV = originalEnv;
+    }
+  });
 });

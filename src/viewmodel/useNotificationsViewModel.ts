@@ -34,6 +34,14 @@ export type NotificationsActions = {
 
 const sessionNotificationsCache = new Map<string, readonly AppNotification[]>();
 
+export function clearSessionNotificationsCache(userId?: string): void {
+  if (userId) {
+    sessionNotificationsCache.delete(userId);
+  } else {
+    sessionNotificationsCache.clear();
+  }
+}
+
 export function useNotificationsViewModel(
   sessionUserId: string | null,
   useCases: INotificationUseCases,
@@ -121,9 +129,13 @@ export function useNotificationsViewModel(
     async (notificationId: string) => {
       try {
         await useCases.markAsRead(sessionUserId, notificationId);
-        setNotifications((prev) =>
-          prev.map((item) => (item.id === notificationId ? { ...item, read: true } : item)),
-        );
+        setNotifications((prev) => {
+          const next = prev.map((item) =>
+            item.id === notificationId ? { ...item, read: true } : item,
+          );
+          if (!isTest && sessionUserId) sessionNotificationsCache.set(sessionUserId, next);
+          return next;
+        });
       } catch (err) {
         setActionError(
           err instanceof DomainError
@@ -132,13 +144,17 @@ export function useNotificationsViewModel(
         );
       }
     },
-    [sessionUserId, useCases],
+    [sessionUserId, useCases, isTest],
   );
 
   const markAllAsRead = useCallback(async () => {
     try {
       await useCases.markAllAsRead(sessionUserId);
-      setNotifications((prev) => prev.map((item) => ({ ...item, read: true })));
+      setNotifications((prev) => {
+        const next = prev.map((item) => ({ ...item, read: true }));
+        if (!isTest && sessionUserId) sessionNotificationsCache.set(sessionUserId, next);
+        return next;
+      });
     } catch (err) {
       setActionError(
         err instanceof DomainError
@@ -146,13 +162,17 @@ export function useNotificationsViewModel(
           : "Não foi possível marcar todas as notificações como lidas.",
       );
     }
-  }, [sessionUserId, useCases]);
+  }, [sessionUserId, useCases, isTest]);
 
   const deleteNotification = useCallback(
     async (notificationId: string) => {
       try {
         await useCases.deleteNotification(sessionUserId, notificationId);
-        setNotifications((prev) => prev.filter((item) => item.id !== notificationId));
+        setNotifications((prev) => {
+          const next = prev.filter((item) => item.id !== notificationId);
+          if (!isTest && sessionUserId) sessionNotificationsCache.set(sessionUserId, next);
+          return next;
+        });
       } catch (err) {
         setActionError(
           err instanceof DomainError
@@ -161,12 +181,13 @@ export function useNotificationsViewModel(
         );
       }
     },
-    [sessionUserId, useCases],
+    [sessionUserId, useCases, isTest],
   );
 
   const clearAll = useCallback(async () => {
     try {
       await useCases.clearAll(sessionUserId);
+      if (!isTest && sessionUserId) sessionNotificationsCache.set(sessionUserId, []);
       setNotifications([]);
     } catch (err) {
       setActionError(
@@ -175,12 +196,16 @@ export function useNotificationsViewModel(
           : "Não foi possível limpar as notificações.",
       );
     }
-  }, [sessionUserId, useCases]);
+  }, [sessionUserId, useCases, isTest]);
 
   const clearRead = useCallback(async () => {
     try {
       await useCases.clearRead(sessionUserId);
-      setNotifications((prev) => prev.filter((item) => !item.read));
+      setNotifications((prev) => {
+        const next = prev.filter((item) => !item.read);
+        if (!isTest && sessionUserId) sessionNotificationsCache.set(sessionUserId, next);
+        return next;
+      });
     } catch (err) {
       setActionError(
         err instanceof DomainError
@@ -188,7 +213,7 @@ export function useNotificationsViewModel(
           : "Não foi possível limpar as notificações lidas.",
       );
     }
-  }, [sessionUserId, useCases]);
+  }, [sessionUserId, useCases, isTest]);
 
   const clearActionError = useCallback(() => {
     setActionError(null);

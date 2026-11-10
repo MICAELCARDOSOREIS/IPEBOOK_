@@ -4,7 +4,7 @@ import { FilledButton } from "@/view/components/FilledButton";
 import { Logotipo } from "@/view/components/Logotipo";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { ScreenContainer } from "@/view/components/ScreenContainer";
-import { accessibility, fontFamily, tokens, type ColorPalette } from "@/view/tokens";
+import { accessibility, colors as lightColors, fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
@@ -62,11 +62,12 @@ export default function Welcome({ onStart, onSignIn, onHelp, onTerms, betaInvite
   const wideWeb = useIsWideWeb();
 
   // Web larga (Figma `01.01` Web `146:457`): cabeçalho, chamada em duas colunas, três modalidades e rodapé.
+  // Cores canônicas vibrantes de modalidade fixadas com alto contraste (ADR 0104) nos dois modos de tema.
   if (wideWeb) {
     const cards = [
-      { label: "Venda", icon: "bookmark", tone: colors.m3.primaryContainer, on: colors.m3.onPrimaryContainer, text: "Defina o preço em reais e combine a entrega no seu bairro." },
-      { label: "Troca", icon: "swap", tone: colors.m3.tertiaryContainer, on: colors.m3.onTertiaryContainer, text: "Ofereça um livro da sua estante e explique as condições." },
-      { label: "Doação", icon: "heart", tone: colors.m3.doacaoContainer, on: colors.m3.onDoacaoContainer, text: "Doe para quem vai ler. Sem cobrança pelo exemplar." },
+      { label: "Venda", icon: MODALITY_CONFIG.Venda.icon, tone: lightColors.badge.sale.background, on: lightColors.badge.sale.text, text: MODALITY_CONFIG.Venda.description },
+      { label: "Troca", icon: MODALITY_CONFIG.Troca.icon, tone: lightColors.badge.trade.background, on: lightColors.badge.trade.text, text: MODALITY_CONFIG.Troca.description },
+      { label: "Doação", icon: MODALITY_CONFIG.Doação.icon, tone: lightColors.badge.donation.background, on: lightColors.badge.donation.text, text: MODALITY_CONFIG.Doação.description },
     ] as const;
     return (
       <ScrollView
@@ -97,7 +98,9 @@ export default function Welcome({ onStart, onSignIn, onHelp, onTerms, betaInvite
             </View>
             <View>
               <Text accessibilityRole="header" style={styles.wideTitle}>Uma boa história</Text>
-              <Text style={styles.wideTitle}>merece continuar.</Text>
+              <View style={styles.highlight}>
+                <Text style={[styles.wideTitle, styles.highlightText]}>merece continuar.</Text>
+              </View>
             </View>
             <Text style={styles.wideLead}>
               Encontre, troque, venda ou doe livros com quem mora perto de você. Sem taxas e com encontro em local público.
@@ -152,7 +155,7 @@ export default function Welcome({ onStart, onSignIn, onHelp, onTerms, betaInvite
 
       <Text accessibilityRole="header" style={styles.title}>Uma boa história</Text>
       <View style={styles.highlight}>
-        <Text style={styles.title}>merece continuar.</Text>
+        <Text style={[styles.title, styles.highlightText]}>merece continuar.</Text>
       </View>
 
       <Image
@@ -353,8 +356,11 @@ function createStyles(colors: ColorPalette) {
   highlight: {
     alignSelf: "flex-start",
     backgroundColor: colors.m3.tertiaryContainer,
-    borderRadius: tokens.radius.full,
+    borderRadius: tokens.radius.small,
     paddingHorizontal: tokens.spacing[6],
+  },
+  highlightText: {
+    color: colors.m3.onTertiaryContainer,
   },
   illustration: { width: "100%", height: 300 },
   subtitle: {

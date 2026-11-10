@@ -731,6 +731,11 @@ export const MAPEAMENTO_MIGRACOES = {
     validar: (ctx) => Boolean(ctx.tabelas.v2_search_alerts?.existe && ctx.tabelas.v2_notifications?.existe),
     detalhe: 'Limites de alertas/favoritos e fan-out de notificações',
   },
+  '202611100001_exclusao_de_notificacoes.sql': {
+    titulo: 'Exclusão e limpeza de notificações pela pessoa titular',
+    validar: (ctx) => Boolean(ctx.tabelas.v2_notifications?.existe),
+    detalhe: 'Política RLS e permissão de exclusão em v2_notifications',
+  },
 };
 
 /**
