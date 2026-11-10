@@ -98,4 +98,39 @@ describe("NavigationBar (design-system/04-componentes/barra-de-navegacao.md, ADR
     const activePill = getByTestId("navigation-bar-active-pill");
     expect(activePill).toBeDefined();
   });
+
+  it("não renderiza pílula ativa quando o destino ativo não pertence à barra inferior (ex.: conversas ou perfil)", async () => {
+    const { queryByTestId } = await render(<NavigationBar active="profile" onNavigate={() => {}} />);
+    expect(queryByTestId("navigation-bar-active-pill")).toBeNull();
+  });
+
+  it("aplica padding mínimo de 12dp quando insets.bottom é zero", async () => {
+    const safeArea = await import("react-native-safe-area-context");
+    const spy = vi.spyOn(safeArea, "useSafeAreaInsets").mockReturnValue({
+      top: 0,
+      bottom: 0,
+      left: 0,
+      right: 0,
+    });
+
+    const { getByTestId } = await render(<NavigationBar active="home" onNavigate={() => {}} />);
+    const tablist = getByTestId("navigation-bar-tablist");
+    const styleObj = Array.isArray(tablist.props.style)
+      ? Object.assign({}, ...tablist.props.style.flat().filter(Boolean))
+      : tablist.props.style;
+
+    expect(styleObj.paddingBottom).toBe(12);
+    spy.mockRestore();
+  });
+
+  it("ignora duplo toque rápido no mesmo destino ou destino diferente (debounce)", async () => {
+    const onNavigate = vi.fn();
+    const { getByLabelText } = await render(<NavigationBar active="home" onNavigate={onNavigate} />);
+    const shelfTab = getByLabelText("Estante");
+
+    fireEvent.press(shelfTab);
+    fireEvent.press(shelfTab);
+
+    expect(onNavigate).toHaveBeenCalledTimes(1);
+  });
 });

@@ -41,17 +41,10 @@ export function LoadingSkeletonContent({ variant }: { variant: LoadingSkeletonVa
             </View>
           </View>
 
-          {/* Barra segmentada de 3 abas (Anúncios | Propostas | Concluídos) */}
-          <View style={styles.shelfSegmentedBar}>
-            <View style={styles.shelfSegmentActive}>
-              <View style={[styles.blockOnPrimary, styles.h12, styles.w60]} />
-            </View>
-            <View style={styles.shelfSegmentInactive}>
-              <View style={[styles.blockSubtle, styles.h12, styles.w60]} />
-            </View>
-            <View style={styles.shelfSegmentInactive}>
-              <View style={[styles.blockSubtle, styles.h12, styles.w60]} />
-            </View>
+          {/* Linha de resumo e seletor no estilo do Explorar ("3 anúncios" --- "Anúncios v") */}
+          <View style={styles.shelfSummaryRow}>
+            <View style={[styles.block, styles.h12, styles.w35]} />
+            <View style={[styles.blockSubtle, styles.h12, styles.w25]} />
           </View>
 
           {/* Fileira de chips (Todos | Ativos | Pausados | Reservados) */}
@@ -391,6 +384,7 @@ function createStyles(colors: ColorPalette) {
     h22: { height: 22 },
     h24: { height: 24 },
     h28: { height: 28 },
+    w25: { width: "25%" },
     w35: { width: "35%" },
     w40: { width: "40%" },
     w50: { width: "50%" },
@@ -432,6 +426,12 @@ function createStyles(colors: ColorPalette) {
       paddingVertical: tokens.spacing[14],
       paddingHorizontal: tokens.spacing[12],
       gap: tokens.spacing[8],
+    },
+    shelfSummaryRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      paddingVertical: tokens.spacing[4],
     },
     shelfSegmentedBar: {
       flexDirection: "row",

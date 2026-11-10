@@ -2,7 +2,7 @@
 
 Documento consolidado de continuidade técnica e produto do Ipebook (Piripiri, PI).
 
-Conferência atual: **Migração das telas de autenticação para ScreenContainer, foco sequencial e erros acessíveis (2026-11-10, Spec 133, ADR 0106, Issue #217):** migração completa das 6 telas da trilha de autenticação (`signIn`, `signUp`, `forgotPassword`, `resetPassword`, `deleteAccount`, `authCallback`) para o componente do design system `ScreenContainer` com `maxWidth={560}` e padding lateral `space-4` (16 dp), eliminação do encapsulamento manual com `SafeAreaView`, encadeamento de foco de teclado virtual em formulários sequenciais (`returnKeyType="next"`) e unificação dos alertas de erro através do componente acessível `InlineErrorCard`. A suíte contém **2.207 testes em 311 arquivos**; Supabase remoto está preparado para **43 migrações locais**. `npm run validate` e `npm run build:web` aprovados nesta entrega. 495 arquivos estão com arquitetura limpa de imports, 133 specs e 105 ADRs sem colisão. A sincronia destes números com o repositório é verificada por `npm run check:docs`; as demais entradas deste documento são crônica por entrega e preservam os números da data em que foram feitas.
+Conferência atual: **Migração das telas de autenticação para ScreenContainer, foco sequencial e erros acessíveis (2026-11-10, Spec 133, ADR 0106, Issue #217):** migração completa das 6 telas da trilha de autenticação (`signIn`, `signUp`, `forgotPassword`, `resetPassword`, `deleteAccount`, `authCallback`) para o componente do design system `ScreenContainer` com `maxWidth={560}` e padding lateral `space-4` (16 dp), eliminação do encapsulamento manual com `SafeAreaView`, encadeamento de foco de teclado virtual em formulários sequenciais (`returnKeyType="next"`) e unificação dos alertas de erro através do componente acessível `InlineErrorCard`. A suíte contém **2.220 testes em 314 arquivos**; Supabase remoto está preparado para **43 migrações locais**. `npm run validate` e `npm run build:web` aprovados nesta entrega. 498 arquivos estão com arquitetura limpa de imports, 134 specs e 106 ADRs sem colisão. A sincronia destes números com o repositório é verificada por `npm run check:docs`; as demais entradas deste documento são crônica por entrega e preservam os números da data em que foram feitas.
 
 **Design harmonioso de erros no front-end e auto-recuperação offline (2026-11-09, Spec 131, ADR 0102):** componente `InlineErrorCard` criado e aplicado em todas as telas e fluxos de formulário/ação (`chat.tsx`, `reportUser.tsx`, `meetingCard.tsx`, `manageListing.tsx`, `ProposalSheet.tsx`, `betaInviteScreen.tsx`, `resetPassword.tsx`, `moderation.tsx`, `createListingStep{1,2,3}.tsx`) para feedback visual de erro acolhedor; `ErrorState` e `OfflineState` com design em cartão centralizado e auto-recuperação automática ao reconectar internet; tradução semântica de falhas de transporte em `toDomainError`.
 
@@ -267,12 +267,12 @@ Google Maps/Apple Maps) ainda pendente — ver `specs/037-pontos-encontro-mapa/v
 
 Todas as métricas abaixo foram aferidas diretamente por execução dos scripts de validação:
 
-- **Testes automatizados**: **2.207 testes em 311 arquivos** (contagem atual conferida em 2026-11-10), cobrindo entidades, validadores, casos de uso, adaptadores, viewmodels, componentes, rotas (`src/app/**`) e integração. O total sai do relatório do Vitest (`coverage/relatorio-testes.json`), gerado pelo próprio `npm run test:coverage`.
+- **Testes automatizados**: **2.220 testes em 314 arquivos** (contagem atual conferida em 2026-11-10), cobrindo entidades, validadores, casos de uso, adaptadores, viewmodels, componentes, rotas (`src/app/**`) e integração. O total sai do relatório do Vitest (`coverage/relatorio-testes.json`), gerado pelo próprio `npm run test:coverage`.
 - **Cobertura de código**: Statements 91,68%, Branches 81,12%, Functions 88,88%, Lines 92,93% (mínimo de 80% nas quatro dimensões, incluindo `src/app/**`). Ficam fora da medição apenas `**/*.d.ts` (`vitest.config.mts`).
 - **Escopo e limites do runtime de testes (Spec 126, CA7)**: os testes de componentes rodam sobre `tests/mocks/react-native.ts` em Node, validando contratos públicos (papéis semânticos, rótulos acessíveis, eventos, `testID` e estilos declarados), sem motor de layout real (Yoga/DOM). O acoplamento `.parent!` é bloqueado por `npm run check:architecture` (0 ocorrências permitidas); a conferência de layout calculado, truncamento visual e leitores de tela reais (TalkBack/VoiceOver) depende de validação manual em dispositivo ou navegador.
-- **Integridade arquitetural**: **495 arquivos com arquitetura limpa de imports** no MVVM de sete camadas (`app`, `view`, `viewmodel`, `usecase`, `model`, `infra`, `di`), verificado por `npm run check:architecture` com 0 violações. Apenas `src/di/container.ts` e os testes importam adaptadores de `src/infra/`.
+- **Integridade arquitetural**: **498 arquivos com arquitetura limpa de imports** no MVVM de sete camadas (`app`, `view`, `viewmodel`, `usecase`, `model`, `infra`, `di`), verificado por `npm run check:architecture` com 0 violações. Apenas `src/di/container.ts` e os testes importam adaptadores de `src/infra/`.
 - **Validação de banco e migrações SQL**: **43 migrações** descobertas e executadas em ordem no PGlite (`npm run test:sql`), com rejeição de versões duplicadas e 83 checagens de autorização negativa (RLS e RPCs) aprovadas. No Supabase remoto, **43 de 43 aplicadas e verificadas** (`npm run health:supabase:remote` com exit 0 em 2026-11-05).
-- **Planejamento e decisões**: 133 specs e 105 ADRs sem colisão (`npm run check:numbering`); `docs/adr/README.md` indexa os 105 registros.
+- **Planejamento e decisões**: 134 specs e 106 ADRs sem colisão (`npm run check:numbering`); `docs/adr/README.md` indexa os 106 registros.
 - **Sincronia da documentação**: `npm run check:docs` (`scripts/verificar-documentacao.mjs`) compara as métricas acima com o repositório e é etapa final do `validate` e da CI.
 - **Semente Oficial da Beta (`npm run db:seed`)**: Script `scripts/popular-catalogo-piripiri.mjs` gerando 10 anúncios realistas distribuídos pelos bairros de Piripiri, PI com exportação SQL via `--sql`.
 - **Rotas (`src/app/`)**: 46 rotas estáticas com suporte PWA; a exportação Web (`npm run build:web`) gera `dist/` com o mesmo conjunto:
@@ -417,10 +417,28 @@ No app ativo em desenvolvimento, 45 rotas cobrem as jornadas essenciais da beta.
 
 - Todas as issues atribuídas a `pessoa:micael` foram concluídas, testadas, integradas em `develop` e encerradas no GitHub (incluindo #93, #109, #115, #116, #117, #121, #123, #126 a #130 e Spec 029).
 
-### Issues Abertas da Maria Clara (`pessoa:maria-clara`)
+### Issues Concluídas da Maria Clara (`pessoa:maria-clara`)
 
-1. **#55, #56, #74, #97 e #141 a #147**:
-   - Backlog de interface e fluxos complementares do Figma atribuído a Maria Clara (`pessoa:maria-clara`), totalizando 11 issues abertas em acompanhamento.
+- Todas as issues sob responsabilidade da Maria Clara (`pessoa:maria-clara`) foram integralmente desenvolvidas, testadas e integradas em `develop`, cobrindo:
+  - **#55 e #73:** Perfil próprio e perfil público do anunciante com galeria de fotos (PR #155).
+  - **#56:** Redesign V1 de navegação, Home, Pesquisa e detalhe do livro (PR #168).
+  - **#74 e #145:** Compartilhamento de anúncios no WhatsApp com formatação rica (PR #183).
+  - **#76:** Estados globais de interface: carregamento (`Skeleton`), perda de conexão (`OfflineState`) e erros (ADR 0028).
+  - **#94 e #95:** Histórico de buscas recentes no dispositivo e gerenciamento/edição de alertas de busca.
+  - **#96:** Auditoria técnica de acessibilidade WCAG 2.1 AA nas 20 telas da aplicação.
+  - **#97 e #98:** Tratamento de links mágicos expirados, e-mails duplicados e tela de boas-vindas com onboarding.
+  - **#104, #105 e #106:** Correções de acessibilidade para TalkBack, navegação por teclado e `tablist`.
+  - **#141:** Preferências privadas do perfil (telefone e bairro padrão de Piripiri) (PR #170).
+  - **#142:** Pontos de encontro hiperlocais com endereço, horários e rotas no mapa (PR #175).
+  - **#143:** Galeria interativa com suporte a gestos de swipe horizontal por toque e atalhos de teclado (PR #180).
+  - **#144 e #189:** Tema escuro dinâmico completo em componentes e em todas as 28 telas do app (PR #190, PR #195).
+  - **#146:** Seções dinâmicas na Home: recém-adicionados e livros para doação (PR #184).
+  - **#147:** Anúncio e foco sonoro em mensagens de erro de formulário (PR #186).
+  - **#215:** Migração das telas de busca e alertas para `ScreenContainer` (PR #215).
+
+### Nova Tarefa em Aberto para Maria Clara (`pessoa:maria-clara`)
+
+- **Issue #217 (Spec 133 / ADR 0106):** Migração das Telas de Autenticação para `ScreenContainer` e Aprimoramento de IHC (encadeamento de teclado, `InlineErrorCard` e padronização ergonômica em `src/view/auth/`), conforme documentado em `docs/tarefas-equipe.md` e aberta no GitHub (#217).
 
 ---
 
@@ -557,3 +575,5 @@ No app ativo em desenvolvimento, 45 rotas cobrem as jornadas essenciais da beta.
 - `specs/129-in-app-updates-google-play/`: Verificação automática de atualizações na Google Play Store com In-App Updates nativo e fallback para a política remota do Supabase (ADR 0100).
 - `specs/130-resiliencia-offline-e-banner-conexao/`: Banner global de conectividade, cache offline da estante e blindagem de ações offline (ADR 0101).
 - `specs/131-design-de-erros-e-auto-recuperacao-offline/`: Design harmonioso de erros visuais, auto-recuperação de conexão e tratamento de rede (ADR 0102).
+- `specs/132-esqueletos-de-carregamento-e-cache-instantaneo/`: Esqueletos de carregamento (Skeleton Loading) e abertura instantânea de telas (ADR 0103).
+- `specs/133-telas-autenticacao-screen-container-e-ihc/`: Migração das telas de autenticação para ScreenContainer e aprimoramento de IHC (ADR 0106, Maria Clara).
