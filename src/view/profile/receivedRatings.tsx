@@ -22,9 +22,12 @@ function formatDate(isoDate: string): string {
   return new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "long", year: "numeric" }).format(date);
 }
 
-function stars(score: number): string {
-  const rounded = Math.round(score);
-  return "★".repeat(rounded) + "☆".repeat(Math.max(0, 5 - rounded));
+function starParts(score: number): { filled: string; empty: string } {
+  const rounded = Math.max(0, Math.min(5, Math.round(score)));
+  return {
+    filled: "★".repeat(rounded),
+    empty: "☆".repeat(5 - rounded),
+  };
 }
 
 /** Figma `07.03 · Avaliações recebidas` (`145:2486` / Web `370:16701`). */
@@ -64,18 +67,22 @@ export function ReceivedRatings({ sessionUserId, onBack }: ReceivedRatingsProps)
             </View>
           ) : (
             <View style={[styles.list, wide && styles.listWide]}>
-              {state.ratings.map((rating) => (
-                <View key={rating.id} style={[styles.card, wide && styles.cardWide]}>
-                  <Text
-                    accessibilityLabel={`Nota ${rating.score} de 5`}
-                    style={styles.stars}
-                  >
-                    {stars(rating.score)}
-                  </Text>
-                  <Text style={styles.raterName}>{rating.raterName ?? "Pessoa da comunidade"}</Text>
-                  <Text style={styles.date}>{formatDate(rating.createdAt)}</Text>
-                </View>
-              ))}
+              {state.ratings.map((rating) => {
+                const { filled, empty } = starParts(rating.score);
+                return (
+                  <View key={rating.id} style={[styles.card, wide && styles.cardWide]}>
+                    <Text
+                      accessibilityLabel={`Nota ${rating.score} de 5`}
+                      style={styles.stars}
+                    >
+                      {filled}
+                      {empty ? <Text style={styles.starsEmpty}>{empty}</Text> : null}
+                    </Text>
+                    <Text style={styles.raterName}>{rating.raterName ?? "Pessoa da comunidade"}</Text>
+                    <Text style={styles.date}>{formatDate(rating.createdAt)}</Text>
+                  </View>
+                );
+              })}
             </View>
           )}
         </View>
@@ -135,6 +142,7 @@ function createStyles(colors: ColorPalette) {
     gap: tokens.spacing[4],
   },
   stars: { ...tokens.typography.titleBlock, color: colors.highlight },
+  starsEmpty: { color: colors.m3.outline },
   raterName: { ...tokens.typography.titleMedium, fontFamily: tokens.typography.displayLarge.fontFamily, color: colors.text },
   date: { ...tokens.typography.labelMedium, color: colors.secondaryText },
   });

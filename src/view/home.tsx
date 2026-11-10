@@ -382,19 +382,19 @@ export default function Home({
                   onPress={() => guardedNavigateToSearch({ modality: "donation" })}
                   style={({ pressed }) => [
                     styles.heroHighlightCardWide,
-                    { backgroundColor: colors.m3.doacaoContainer },
+                    { backgroundColor: colors.badge.donation.background },
                     isWeb && ({ cursor: "pointer" } as any),
                     pressed && expressivePressedStyle,
                   ]}
                 >
                   <View style={styles.heroHighlightIconBoxWide}>
-                    <AppIcon name="bookmark" size={18} color={colors.m3.onDoacaoContainer} />
+                    <AppIcon name="bookmark" size={18} color={colors.badge.donation.text} />
                   </View>
                   <View style={styles.heroHighlightTextBoxWide}>
-                    <Text numberOfLines={1} style={[styles.heroHighlightTitleWide, { color: colors.m3.onDoacaoContainer }]}>
+                    <Text numberOfLines={1} style={[styles.heroHighlightTitleWide, { color: colors.badge.donation.text }]}>
                       Doações
                     </Text>
-                    <Text numberOfLines={1} style={[styles.heroHighlightSubtitleWide, { color: colors.m3.onDoacaoContainer }]}>
+                    <Text numberOfLines={1} style={[styles.heroHighlightSubtitleWide, { color: colors.badge.donation.text }]}>
                       {donationCount > 0 ? `${donationCount} ${donationCount === 1 ? "gratuito" : "gratuitos"}` : "Ver lista"}
                     </Text>
                   </View>
@@ -406,19 +406,19 @@ export default function Home({
                   onPress={() => guardedNavigateToSearch({ modality: "trade" })}
                   style={({ pressed }) => [
                     styles.heroHighlightCardWide,
-                    { backgroundColor: colors.m3.tertiaryContainer },
+                    { backgroundColor: colors.badge.trade.background },
                     isWeb && ({ cursor: "pointer" } as any),
                     pressed && expressivePressedStyle,
                   ]}
                 >
                   <View style={styles.heroHighlightIconBoxWide}>
-                    <AppIcon name="swap" size={18} color={colors.m3.onTertiaryContainer} />
+                    <AppIcon name="swap" size={18} color={colors.badge.trade.text} />
                   </View>
                   <View style={styles.heroHighlightTextBoxWide}>
-                    <Text numberOfLines={1} style={[styles.heroHighlightTitleWide, { color: colors.m3.onTertiaryContainer }]}>
+                    <Text numberOfLines={1} style={[styles.heroHighlightTitleWide, { color: colors.badge.trade.text }]}>
                       Trocas
                     </Text>
-                    <Text numberOfLines={1} style={[styles.heroHighlightSubtitleWide, { color: colors.m3.onTertiaryContainer }]}>
+                    <Text numberOfLines={1} style={[styles.heroHighlightSubtitleWide, { color: colors.badge.trade.text }]}>
                       Sem custo
                     </Text>
                   </View>
@@ -461,7 +461,7 @@ export default function Home({
           {(["all", "sale", "trade", "donation"] as const).map((mod) => {
             const isSelected = selectedModality === mod;
             const label = mod === "all" ? "Todos" : mod === "sale" ? "Venda" : mod === "trade" ? "Troca" : "Doação";
-            const tone = mod === "all" ? { background: colors.nature.foliage, text: "#FFFFFF" } : colors.badge[mod];
+            const tone = mod === "all" ? { background: colors.nature.foliage, text: colors.nature.onFoliage } : colors.badge[mod];
             return (
               <Chip
                 key={mod}
@@ -486,7 +486,7 @@ export default function Home({
           {(["all", "sale", "trade", "donation"] as const).map((mod) => {
             const isSelected = selectedModality === mod;
             const label = mod === "all" ? "Todos" : mod === "sale" ? "Venda" : mod === "trade" ? "Troca" : "Doação";
-            const tone = mod === "all" ? { background: colors.nature.foliage, text: "#FFFFFF" } : colors.badge[mod];
+            const tone = mod === "all" ? { background: colors.nature.foliage, text: colors.nature.onFoliage } : colors.badge[mod];
             return (
               <Chip
                 key={mod}

@@ -1,26 +1,29 @@
 import { router } from "expo-router";
 import { backOnce, pushOnce, replaceOnce } from "@/view/pushOnce";
+import { RequireAuth } from "@/view/components/RequireAuth";
 import ProfileHub from "@/view/profile/profileHub";
 
 export default function Perfil() {
   return (
-    <ProfileHub
-      onBack={() => {
-        if (router.canGoBack()) backOnce();
-        else replaceOnce("/");
-      }}
-      onNavigateToSignIn={() => replaceOnce("/entrar")}
-      onNavigateToEditProfile={() => pushOnce("/perfil/editar")}
-      onNavigateToCreateListing={() => pushOnce("/anunciar")}
-      onNavigateToMyListings={() => pushOnce("/meus-anuncios")}
-      onNavigateToRatings={() => pushOnce("/perfil/avaliacoes")}
-      onNavigateToMeetingHistory={() => pushOnce("/perfil/encontros")}
-      onNavigateToFavorites={() => pushOnce("/favoritos")}
-      onNavigateToNotifications={() => pushOnce("/notificacoes")}
-      onNavigateToSecurity={() => pushOnce("/perfil/seguranca")}
-      onNavigateToInviteFriends={() => pushOnce("/perfil/convidar")}
-      onNavigateToSettings={() => pushOnce("/perfil/configuracoes" as never)}
-      onSignedOut={() => replaceOnce("/entrar")}
-    />
+    <RequireAuth onRequireSignIn={() => replaceOnce("/entrar")}>
+      <ProfileHub
+        onBack={() => {
+          if (router.canGoBack()) backOnce();
+          else replaceOnce("/");
+        }}
+        onNavigateToSignIn={() => replaceOnce("/entrar")}
+        onNavigateToEditProfile={() => pushOnce("/perfil/editar")}
+        onNavigateToCreateListing={() => pushOnce("/anunciar")}
+        onNavigateToMyListings={() => pushOnce("/meus-anuncios")}
+        onNavigateToRatings={() => pushOnce("/perfil/avaliacoes")}
+        onNavigateToMeetingHistory={() => pushOnce("/perfil/encontros")}
+        onNavigateToFavorites={() => pushOnce("/favoritos")}
+        onNavigateToNotifications={() => pushOnce("/notificacoes")}
+        onNavigateToSecurity={() => pushOnce("/perfil/seguranca")}
+        onNavigateToInviteFriends={() => pushOnce("/perfil/convidar")}
+        onNavigateToSettings={() => pushOnce("/perfil/configuracoes" as never)}
+        onSignedOut={() => replaceOnce("/bem-vindo")}
+      />
+    </RequireAuth>
   );
 }

@@ -324,7 +324,7 @@ function createStyles(colors: ColorPalette) {
       backgroundColor: colors.nature.foliage,
     },
     whatsappButtonText: {
-      color: "#FFFFFF",
+      color: colors.nature.onFoliage,
       fontFamily: tokens.typography.labelLarge.fontFamily,
       fontWeight: tokens.fontWeight.semiBold,
     },

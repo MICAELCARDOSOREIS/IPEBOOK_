@@ -1,6 +1,7 @@
 import { useCallback, useState } from "react";
 import { useFocusEffect } from "expo-router";
 import { backOnce, pushOnce, replaceOnce } from "@/view/pushOnce";
+import { RequireAuth } from "@/view/components/RequireAuth";
 import DraftsScreen from "@/view/listings/drafts";
 
 export default function RascunhosRoute() {
@@ -8,12 +9,14 @@ export default function RascunhosRoute() {
   const [focusKey, setFocusKey] = useState(0);
   useFocusEffect(useCallback(() => { setFocusKey((key) => key + 1); }, []));
   return (
-    <DraftsScreen
-      focusKey={focusKey}
-      onBack={() => backOnce()}
-      onRequireSignIn={() => replaceOnce("/entrar")}
-      onResume={(bookId) => pushOnce(`/anunciar?rascunho=${bookId}` as never)}
-      onNavigateToCreateListing={() => pushOnce("/anunciar")}
-    />
+    <RequireAuth onRequireSignIn={() => replaceOnce("/entrar")}>
+      <DraftsScreen
+        focusKey={focusKey}
+        onBack={() => backOnce()}
+        onRequireSignIn={() => replaceOnce("/entrar")}
+        onResume={(bookId) => pushOnce(`/anunciar?rascunho=${bookId}` as never)}
+        onNavigateToCreateListing={() => pushOnce("/anunciar")}
+      />
+    </RequireAuth>
   );
 }

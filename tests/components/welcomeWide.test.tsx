@@ -1,6 +1,8 @@
 
 import { act, fireEvent, render } from "@testing-library/react-native";
+import { StyleSheet } from "react-native";
 import { describe, expect, it, vi } from "vitest";
+import { colors } from "@/view/tokens";
 
 vi.mock("@/view/useIsWideWeb", () => ({ useIsWideWeb: () => true, WIDE_WEB_MIN_WIDTH: 960 }));
 
@@ -24,6 +26,17 @@ describe("Boas-vindas na web larga: página que apresenta o app (Spec 092)", () 
     expect(onHelp).toHaveBeenCalledTimes(1);
     // Regressão de segurança (Spec 092): sem botão de catálogo para visitantes.
     expect(screen.queryByLabelText(/Explorar/i)).toBeNull();
+  });
+
+  it("aplica as cores canônicas da marca nos cartões de Venda, Troca e Doação (ADR 0104)", async () => {
+    const screen = await render(<Welcome onStart={vi.fn()} onSignIn={vi.fn()} />);
+    const vendaTitle = screen.getByText("Venda");
+    const trocaTitle = screen.getByText("Troca");
+    const doacaoTitle = screen.getByText("Doação");
+
+    expect(StyleSheet.flatten(vendaTitle.props.style).color).toBe(colors.badge.sale.text);
+    expect(StyleSheet.flatten(trocaTitle.props.style).color).toBe(colors.badge.trade.text);
+    expect(StyleSheet.flatten(doacaoTitle.props.style).color).toBe(colors.badge.donation.text);
   });
 });
 

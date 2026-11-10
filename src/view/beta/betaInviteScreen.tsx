@@ -17,7 +17,7 @@ import passo3Img from "@/view/beta/passo-3.png";
 import passo4Img from "@/view/beta/passo-4.png";
 import { BETA_GROUP_URL, PLAY_STORE_URL, TESTING_OPT_IN_URL } from "@/view/playStore";
 import { useTheme } from "@/view/theme/ThemeProvider";
-import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
+import { fontFamily, colors as lightColors, tokens, type ColorPalette } from "@/view/tokens";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { scrollBottomPadding, standardVerticalScrollProps } from "@/view/scrollProps";
@@ -38,28 +38,28 @@ type HighlightCard = {
   fg: string;
 };
 
-function getHighlights(colors: ColorPalette): readonly HighlightCard[] {
+function getHighlights(): readonly HighlightCard[] {
   return [
     {
       icon: "swap",
       title: "Troca, venda e doação",
       text: "Cadastre livros pelo código ISBN em segundos e negocie sem taxas.",
-      bg: colors.m3.primaryContainer,
-      fg: colors.m3.onPrimaryContainer,
+      bg: lightColors.badge.sale.background,
+      fg: lightColors.badge.sale.text,
     },
     {
       icon: "place",
       title: "Encontros em Piripiri",
       text: "Combine a entrega em locais públicos da cidade com confirmação por QR Code.",
-      bg: colors.m3.tertiaryContainer,
-      fg: colors.m3.onTertiaryContainer,
+      bg: lightColors.badge.trade.background,
+      fg: lightColors.badge.trade.text,
     },
     {
       icon: "star",
       title: "Leitores fundadores",
       text: "Inaugure a estante da comunidade e ajude a testar as novidades antes do lançamento.",
-      bg: colors.m3.doacaoContainer,
-      fg: colors.m3.onDoacaoContainer,
+      bg: lightColors.badge.donation.background,
+      fg: lightColors.badge.donation.text,
     },
   ];
 }
@@ -109,7 +109,7 @@ export function BetaInviteScreen({
   onNavigateHome = () => {},
 }: BetaInviteScreenProps) {
   const { colors } = useTheme();
-  const highlights = useMemo(() => getHighlights(colors), [colors]);
+  const highlights = useMemo(() => getHighlights(), []);
   const wide = useIsWideWeb();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [email, setEmail] = useState("");
@@ -365,6 +365,7 @@ export function BetaInviteScreen({
             onChangeText={setName}
             autoCapitalize="words"
             editable={!state.loading}
+            labelBackgroundColor={colors.m3.surfaceContainerHigh}
           />
           <TextField
             label="Gmail"
@@ -374,6 +375,7 @@ export function BetaInviteScreen({
             keyboardType="email-address"
             editable={!state.loading}
             placeholder="voce@gmail.com"
+            labelBackgroundColor={colors.m3.surfaceContainerHigh}
           />
           {state.error ? <InlineErrorCard message={state.error} /> : null}
           <FilledButton

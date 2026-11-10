@@ -22,6 +22,7 @@ import { Dialog } from "@/view/components/Dialog";
 import { Chip } from "@/view/components/Chip";
 import { LoadingState } from "@/view/components/LoadingState";
 import { OfflineState } from "@/view/components/OfflineState";
+import { SearchBookCard } from "@/view/search/SearchBookCard";
 import { Tag } from "@/view/components/Tag";
 import { AppIcon } from "@/view/components/AppIcon";
 import { Snackbar } from "@/view/components/Snackbar";
@@ -465,93 +466,22 @@ export default function Search({
         scrollEventThrottle={16}
         ListHeaderComponent={listHeader}
         ListEmptyComponent={listEmpty}
-        renderItem={({ item }) => {
-          const priceOrCondition =
-            item.price != null
-              ? formatPrice(item.price)
-              : item.modality === "trade"
-              ? "Por outro livro"
-              : "Gratuito";
-
-          const statusTone =
-            item.status === "reserved"
-              ? { background: colors.badge.donation.background, text: colors.badge.donation.text, label: "Reservado" }
-              : { background: colors.nature.sprout, text: colors.nature.foliageDeep, label: "Disponível" };
-
-          return (
-            <View style={[styles.card, wideWeb && styles.cardWide, wideWeb && { maxWidth: `${100 / gridColumns}%` }]}>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={`Ver detalhe de ${item.title}, ${item.author}${item.neighborhood ? ` em ${item.neighborhood}` : ""}`}
-                onPress={() => guardedNavigateToBookDetail(item.id)}
-                style={({ pressed }) => [
-                  styles.cardMain,
-                  wideWeb && styles.cardMainWide,
-                  pressed && styles.cardMainPressed,
-                ]}
-              >
-                <ModalityCoverArea modality={item.modality}>
-                  <BookCover id={item.id} title={item.title} photoUrl={item.photoUrl} variant={wideWeb ? "card" : "list"} />
-                </ModalityCoverArea>
-                <View style={[styles.cardInfo, wideWeb && styles.cardInfoWide]}>
-                  <View style={[styles.cardMetaRow, wideWeb && styles.cardMetaRowWide]}>
-                    <View style={styles.cardBadgesGroup}>
-                      <Tag variant={item.modality} />
-                      {item.isBox ? (
-                        <Tag
-                          variant="box"
-                          label={item.boxVolumesCount ? `Box (${item.boxVolumesCount} vols)` : "Box"}
-                        />
-                      ) : null}
-                    </View>
-                    <Text numberOfLines={1} style={styles.priceText}>{priceOrCondition}</Text>
-                  </View>
-                  <View style={styles.cardTitleBlock}>
-                    <Text numberOfLines={2} style={styles.cardTitle}>{item.title}</Text>
-                    <Text numberOfLines={1} style={styles.cardAuthor}>{item.author}</Text>
-                    {item.category ? <Text numberOfLines={1} style={styles.categoryBadge}>{item.category}</Text> : null}
-                  </View>
-                  <View style={styles.cardFooterRow}>
-                    <View style={styles.cardLocationBadge}>
-                      <AppIcon name="place" size={13} color={colors.nature.foliageDeep} />
-                      <Text numberOfLines={1} style={styles.cardLocationText}>
-                        {item.neighborhood || "Piripiri"}
-                      </Text>
-                    </View>
-                    <View style={[styles.cardStatusPill, { backgroundColor: statusTone.background }]}>
-                      <Text style={[styles.cardStatusPillText, { color: statusTone.text }]}>
-                        {statusTone.label}
-                      </Text>
-                    </View>
-                  </View>
-                </View>
-              </Pressable>
-              <View style={[styles.cardActions, wideWeb && styles.cardActionsWide]}>
-                <FavoriteButton
-                  bookId={item.id}
-                  userId={auth.user?.id ?? null}
-                  onToggleSuccess={(selected) => {
-                    setSnackbarMessage(
-                      selected
-                        ? `"${item.title}" foi adicionado aos Favoritos!`
-                        : `"${item.title}" foi removido dos Favoritos.`
-                    );
-                  }}
-                />
-                {wideWeb ? null : (
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={`Abrir ${item.title}`}
-                  onPress={() => guardedNavigateToBookDetail(item.id)}
-                  style={withPress(styles.chevronButton)}
-                >
-                  <AppIcon name="chevronRight" size={24} color={colors.m3.onSurfaceVariant} />
-                </Pressable>
-                )}
-              </View>
-            </View>
-          );
-        }}
+        renderItem={({ item }) => (
+          <SearchBookCard
+            item={item}
+            wideWeb={wideWeb}
+            gridColumns={gridColumns}
+            userId={auth.user?.id ?? null}
+            onPress={() => guardedNavigateToBookDetail(item.id)}
+            onFavoriteToggle={(selected) => {
+              setSnackbarMessage(
+                selected
+                  ? `"${item.title}" foi adicionado aos Favoritos!`
+                  : `"${item.title}" foi removido dos Favoritos.`
+              );
+            }}
+          />
+        )}
       />
       </View>
     </ScreenContainer>
@@ -756,125 +686,6 @@ function createStyles(colors: ColorPalette) {
     },
     historyChipText: { ...tokens.typography.bodyLarge, color: colors.text },
 
-    // Card de Livro (Figma 02.02 · Explorar nós 137:2471 a 137:2490)
-    // Figma: sem borda, background branco (#FFF), sombra dupla elevation level1
-    card: {
-      flexDirection: "row",
-      alignItems: "center",
-      backgroundColor: colors.m3.surfaceContainerLowest,
-      borderRadius: tokens.radius.large,
-      borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
-      paddingLeft: tokens.spacing[12],
-      paddingRight: tokens.spacing[6],
-      paddingVertical: tokens.spacing[12],
-      marginBottom: tokens.spacing[12],
-      elevation: 2,
-      shadowColor: colors.ipe.trunk,
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.08,
-      shadowRadius: 6,
-      gap: tokens.spacing[8],
-    },
-    cardMain: {
-      flex: 1,
-      minWidth: 0,
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[12],
-    },
-    cardMainPressed: {
-      transform: [{ scale: 0.985 }],
-    },
-    cardInfo: {
-      flex: 1,
-      minWidth: 0,
-      gap: tokens.spacing[6],
-      justifyContent: "center",
-    },
-    cardTitleBlock: {
-      gap: 2,
-    },
-    cardTitle: {
-      ...tokens.typography.brandCardTitle,
-      fontSize: 16,
-      lineHeight: 20,
-      color: colors.text,
-    },
-    cardAuthor: {
-      ...tokens.typography.bodyMedium,
-      fontSize: 13,
-      lineHeight: 17,
-      color: colors.secondaryText,
-    },
-    cardMetaRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-      flexWrap: "wrap",
-      gap: tokens.spacing[6],
-    },
-    cardBadgesGroup: {
-      flexDirection: "row",
-      alignItems: "center",
-      flexWrap: "wrap",
-      gap: tokens.spacing[6],
-    },
-    cardFooterRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-      flexWrap: "wrap",
-      gap: tokens.spacing[6],
-      paddingTop: tokens.spacing[6],
-      borderTopWidth: StyleSheet.hairlineWidth,
-      borderTopColor: colors.m3.outlineVariant,
-    },
-    cardLocationBadge: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[4],
-      flexShrink: 1,
-    },
-    cardLocationText: {
-      ...tokens.typography.labelSmall,
-      fontSize: 12,
-      lineHeight: 16,
-      fontFamily: fontFamily.medium,
-      color: colors.m3.onSurfaceVariant,
-      flexShrink: 1,
-    },
-    cardStatusPill: {
-      paddingHorizontal: tokens.spacing[8],
-      paddingVertical: 2,
-      borderRadius: tokens.radius.full,
-    },
-    cardStatusPillText: {
-      ...tokens.typography.captionSmall,
-      fontSize: 11,
-      lineHeight: 14,
-      fontWeight: tokens.fontWeight.bold,
-    },
-    priceText: {
-      ...tokens.typography.labelLarge,
-      fontSize: 13,
-      lineHeight: 18,
-      fontWeight: tokens.fontWeight.bold,
-      color: colors.nature.foliageDeep,
-    },
-    cardActions: {
-      flexDirection: "column",
-      alignItems: "center",
-      justifyContent: "space-between",
-      alignSelf: "stretch",
-      width: tokens.accessibility.touchTarget,
-    },
-    chevronButton: {
-      width: tokens.accessibility.touchTarget,
-      height: tokens.accessibility.touchTarget,
-      alignItems: "center",
-      justifyContent: "center",
-    },
     categoryBadge: { ...tokens.typography.labelSmall, color: colors.secondaryText, fontStyle: "italic" },
     snackbarContainer: {
       position: "absolute",

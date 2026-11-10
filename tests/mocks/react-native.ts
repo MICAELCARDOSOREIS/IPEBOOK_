@@ -186,6 +186,8 @@ export const Platform = {
   select: (obj: any) => obj.ios ?? obj.default,
 };
 
+export const NativeModules: Record<string, any> = {};
+
 export let mockColorScheme: "light" | "dark" | null = "light";
 export const useColorScheme = () => mockColorScheme;
 export function __setMockColorScheme(scheme: "light" | "dark" | null) {
@@ -289,6 +291,7 @@ export default {
   BackHandler,
   Keyboard,
   Platform,
+  NativeModules,
   Share,
   Animated,
   PanResponder,

@@ -1,5 +1,6 @@
 import {
   evaluateAppUpdateStatus,
+  formatPolicyVersionKey,
   type AppUpdateResult,
 } from "@/model/entities/appUpdate";
 import type { IAppVersionPolicyDataSource } from "@/model/datasources/iAppVersionPolicyDataSource";
@@ -14,16 +15,32 @@ export class AppUpdateUseCases {
     private readonly storeLauncher: IAppStoreLauncherService,
     private readonly installedVersion = "0.0.0",
     private readonly inAppUpdateService?: IInAppUpdateService,
+    private readonly installedVersionCode?: number,
   ) {}
 
   async checkUpdate(): Promise<AppUpdateResult> {
     try {
+      let currentVersion = this.installedVersion;
+      let currentVersionCode = this.installedVersionCode;
+
       // 1. Tenta verificar diretamente na loja (Google Play In-App Updates)
       if (this.inAppUpdateService) {
         try {
           const storeInfo = await this.inAppUpdateService.checkStoreUpdate();
+          if (storeInfo.installedVersionName) {
+            currentVersion = storeInfo.installedVersionName;
+          }
+          if (typeof storeInfo.installedVersionCode === "number") {
+            currentVersionCode = storeInfo.installedVersionCode;
+          }
           if (storeInfo.isUpdateAvailable) {
-            const detectedVersion = storeInfo.versionName || "99.99.99";
+            const hasDistinctVersionName =
+              Boolean(storeInfo.versionName) && storeInfo.versionName !== currentVersion;
+            const detectedVersion = hasDistinctVersionName
+              ? (storeInfo.versionName as string)
+              : typeof storeInfo.versionCode === "number" && storeInfo.versionCode > 0
+                ? `${currentVersion}+${storeInfo.versionCode}`
+                : storeInfo.versionName || "99.99.99";
             const dismissed = await this.dismissDataSource.getDismissedVersion();
             if (dismissed === detectedVersion) {
               return { status: "up_to_date", policy: null };
@@ -33,7 +50,8 @@ export class AppUpdateUseCases {
               policy: {
                 platform: "android",
                 latestVersion: detectedVersion,
-                minSupportedVersion: this.installedVersion,
+                minSupportedVersion: currentVersion,
+                latestVersionCode: storeInfo.versionCode,
                 releaseNotes: null,
                 storeUrl: "https://play.google.com/store/apps/details?id=com.ipebook.app&hl=pt-BR",
               },
@@ -45,9 +63,12 @@ export class AppUpdateUseCases {
       }
 
       // 2. Fallback para a política remota do Supabase
-      const policy = await this.policyDataSource.getPolicy();
-      if (!policy) return { status: "up_to_date", policy: null };
-      const status = evaluateAppUpdateStatus(this.installedVersion, policy);
+      const rawPolicy = await this.policyDataSource.getPolicy();
+      if (!rawPolicy) return { status: "up_to_date", policy: null };
+      const status = evaluateAppUpdateStatus(currentVersion, rawPolicy, currentVersionCode);
+      const versionKey =
+        compareSemverOrCodeKey(currentVersion, rawPolicy) ? formatPolicyVersionKey(rawPolicy) : rawPolicy.latestVersion;
+      const policy = versionKey !== rawPolicy.latestVersion ? { ...rawPolicy, latestVersion: versionKey } : rawPolicy;
       if (status === "optional" && (await this.dismissDataSource.getDismissedVersion()) === policy.latestVersion) {
         return { status: "up_to_date", policy };
       }
@@ -68,4 +89,8 @@ export class AppUpdateUseCases {
     }
     await this.storeLauncher.openStore(storeUrl);
   }
+}
+
+function compareSemverOrCodeKey(installedVersion: string, policy: { latestVersion: string; latestVersionCode?: number }): boolean {
+  return installedVersion === policy.latestVersion && typeof policy.latestVersionCode === "number" && policy.latestVersionCode > 1;
 }

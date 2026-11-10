@@ -176,6 +176,7 @@ import AuthCallbackRoute from "@/app/auth/callback";
 import BemVindo from "@/app/bem-vindo";
 import Beta from "@/app/beta";
 import ConversaRoute from "@/app/conversa/[id]";
+import ConversasRoute from "@/app/conversas";
 import CriarConta from "@/app/criar-conta";
 import DenunciarPessoa from "@/app/denunciar-pessoa/[userId]";
 import DenunciarLivro from "@/app/denunciar/[id]";
@@ -417,6 +418,13 @@ describe("Rotas em src/app/** — contratos de parâmetros, guards e navegação
     invokeAllCallbacks("ChatScreenStub");
 
     await renderRoute(<MeusPedidosRoute />);
+    invokeAllCallbacks("ConversationsScreenStub");
+
+    await renderRoute(<ConversasRoute />);
+    invokeAllCallbacks("ConversationsScreenStub");
+
+    mockCanGoBack.mockReturnValueOnce(false);
+    await renderRoute(<ConversasRoute />);
     invokeAllCallbacks("ConversationsScreenStub");
 
     await renderRoute(<PedidosRecebidosRoute />);
