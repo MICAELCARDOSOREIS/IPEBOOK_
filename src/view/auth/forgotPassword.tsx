@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { StyleSheet, Text, View } from "react-native";
 import { AuthShell } from "@/view/auth/AuthShell";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { makeAuthViewModel } from "@/di/container";
@@ -8,14 +7,16 @@ import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { FilledButton } from "@/view/components/FilledButton";
 import { IconBadge } from "@/view/components/IconBadge";
+import { InlineErrorCard } from "@/view/components/InlineErrorCard";
 import { Logotipo } from "@/view/components/Logotipo";
 import { Manchete } from "@/view/components/Manchete";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
+import { ScreenContainer } from "@/view/components/ScreenContainer";
 import { TextButton } from "@/view/components/TextButton";
 import { TextField } from "@/view/components/TextField";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { useGuardedPress } from "@/view/useGuardedPress";
-import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
+import { scrollBottomPadding } from "@/view/scrollProps";
 
 export type ForgotPasswordProps = {
   onNavigateToSignIn?: () => void;
@@ -98,198 +99,168 @@ export default function ForgotPassword({ onNavigateToSignIn, onBack }: ForgotPas
 
   return (
     <AuthShell>
-    <SafeAreaView style={styles.page}>
-      {onBack ? (
-        <TopAppBar
-          title={requested ? "Confira seu e-mail" : "Recuperar acesso"}
-          onBack={guardedBack}
-        />
-      ) : null}
-      <ScrollView
-        contentContainerStyle={[
-          styles.centerContainer,
+      <ScreenContainer
+        maxWidth={560}
+        paddingTop={tokens.spacing[16]}
+        paddingBottom={scrollBottomPadding.withoutBottomBar}
+        header={
+          onBack ? (
+            <TopAppBar
+              contentMaxWidth={560}
+              title={requested ? "Confira seu e-mail" : "Recuperar acesso"}
+              onBack={guardedBack}
+            />
+          ) : undefined
+        }
+        contentStyle={[
+          styles.content,
           wideWeb && { justifyContent: "center" },
-          { paddingBottom: scrollBottomPadding.withoutBottomBar },
         ]}
-        {...standardVerticalScrollProps}
       >
-        <View style={styles.content}>
-          <Logotipo underline />
+        <Logotipo underline />
 
-          {requested ? (
-            <>
-              <IconBadge icon="mail" tone="donation" size="large" />
-              <Text accessibilityRole="header" style={styles.title}>Confira seu e-mail.</Text>
-              <Text style={styles.subtitle}>
-                Se houver uma conta com{" "}
-                {email ? <Text style={styles.emailHighlight}>{email}</Text> : "este endereço"}, você
-                vai receber um link para criar uma nova senha.
+        {requested ? (
+          <>
+            <IconBadge icon="mail" tone="donation" size="large" />
+            <Text accessibilityRole="header" style={styles.title}>Confira seu e-mail.</Text>
+            <Text style={styles.subtitle}>
+              Se houver uma conta com{" "}
+              {email ? <Text style={styles.emailHighlight}>{email}</Text> : "este endereço"}, você
+              vai receber um link para criar uma nova senha.
+            </Text>
+
+            <View style={styles.resultBox}>
+              <Text style={styles.resultLabel}>Não chegou?</Text>
+              <Text style={styles.resultHint}>
+                Confira a caixa de spam ou verifique se o endereço está correto.
               </Text>
+            </View>
 
-              <View style={styles.resultBox}>
-                <Text style={styles.resultLabel}>Não chegou?</Text>
-                <Text style={styles.resultHint}>
-                  Confira a caixa de spam ou verifique se o endereço está correto.
-                </Text>
-              </View>
+            {state.error ? <InlineErrorCard message={state.error} /> : null}
 
-              {state.error ? (
-                <Text accessibilityRole="alert" accessibilityLiveRegion="assertive" style={styles.error}>
-                  {state.error}
-                </Text>
-              ) : null}
+            <FilledButton
+              label="Voltar ao login"
+              disabled={submitting}
+              onPress={guardedSignIn}
+            />
 
-              <FilledButton
-                label="Voltar ao login"
-                disabled={submitting}
-                onPress={guardedSignIn}
-              />
+            <OutlinedButton
+              label="Corrigir e-mail"
+              disabled={submitting}
+              onPress={() => {
+                setRequested(false);
+                setSecondsLeft(RESEND_SECONDS);
+              }}
+            />
 
-              <OutlinedButton
-                label="Corrigir e-mail"
-                disabled={submitting}
-                onPress={() => {
-                  setRequested(false);
-                  setSecondsLeft(RESEND_SECONDS);
-                }}
-              />
-
-              {secondsLeft > 0 ? (
-                <Text style={styles.countdown}>
-                  {`Você pode reenviar o link em ${formatCountdown(secondsLeft)}.`}
-                </Text>
-              ) : (
-                <TextButton
-                  label="Reenviar link"
-                  disabled={submitting}
-                  onPress={() => void handleResend()}
-                />
-              )}
-            </>
-          ) : (
-            <>
-              <Manchete texto="Recupere seu" realce="acesso." />
-              <Text style={styles.subtitle}>
-                Digite seu e-mail para receber as instruções de redefinição de senha.
+            {secondsLeft > 0 ? (
+              <Text style={styles.countdown}>
+                {`Você pode reenviar o link em ${formatCountdown(secondsLeft)}.`}
               </Text>
-
-              <TextField
-                label="E-mail"
-                value={email}
-                onChangeText={(text) => {
-                  setEmail(text);
-                  if (emailError) setEmailError(null);
-                }}
-                autoCapitalize="none"
-                keyboardType="email-address"
-                autoComplete="email"
-                textContentType="emailAddress"
-                returnKeyType="done"
-                onSubmitEditing={() => void handleSubmit()}
-                editable={!submitting}
-                placeholder="voce@exemplo.com"
-              />
-
-              {emailError ? (
-                <Text accessibilityRole="alert" accessibilityLiveRegion="assertive" style={styles.error}>
-                  {emailError}
-                </Text>
-              ) : null}
-
-              {state.error ? (
-                <Text accessibilityRole="alert" accessibilityLiveRegion="assertive" style={styles.error}>
-                  {state.error}
-                </Text>
-              ) : null}
-
-              <FilledButton
-                label="Enviar link"
-                loading={submitting}
-                loadingLabel="Enviando link"
+            ) : (
+              <TextButton
+                label="Reenviar link"
                 disabled={submitting}
-                onPress={() => void handleSubmit()}
+                onPress={() => void handleResend()}
               />
+            )}
+          </>
+        ) : (
+          <>
+            <Manchete texto="Recupere seu" realce="acesso." />
+            <Text style={styles.subtitle}>
+              Digite seu e-mail para receber as instruções de redefinição de senha.
+            </Text>
 
-              <OutlinedButton
-                label="Voltar ao login"
-                disabled={submitting}
-                onPress={guardedSignIn}
-              />
+            <TextField
+              label="E-mail"
+              value={email}
+              onChangeText={(text) => {
+                setEmail(text);
+                if (emailError) setEmailError(null);
+              }}
+              autoCapitalize="none"
+              keyboardType="email-address"
+              autoComplete="email"
+              textContentType="emailAddress"
+              returnKeyType="done"
+              onSubmitEditing={() => void handleSubmit()}
+              editable={!submitting}
+              placeholder="voce@exemplo.com"
+            />
 
-              <Text style={styles.footnote}>
-                Se você lembrar sua senha, faça login normalmente.
-              </Text>
-            </>
-          )}
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+            {emailError ? <InlineErrorCard message={emailError} /> : null}
+            {state.error ? <InlineErrorCard message={state.error} /> : null}
+
+            <FilledButton
+              label="Enviar link"
+              loading={submitting}
+              loadingLabel="Enviando link"
+              disabled={submitting}
+              onPress={() => void handleSubmit()}
+            />
+
+            <OutlinedButton
+              label="Voltar ao login"
+              disabled={submitting}
+              onPress={guardedSignIn}
+            />
+
+            <Text style={styles.footnote}>
+              Se você lembrar sua senha, faça login normalmente.
+            </Text>
+          </>
+        )}
+      </ScreenContainer>
     </AuthShell>
   );
 }
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
-  page: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  centerContainer: {
-    flexGrow: 1,
-    paddingHorizontal: tokens.spacing[24],
-    paddingTop: tokens.spacing[24],
-    paddingBottom: tokens.spacing[32],
-  },
-  content: {
-    width: "100%",
-    maxWidth: 560,
-    alignSelf: "center",
-    gap: tokens.spacing[16],
-  },
-  title: {
-    ...tokens.typography.displayLarge,
-    color: colors.text,
-  },
-  subtitle: {
-    ...tokens.typography.bodyLarge,
-    color: colors.secondaryText,
-  },
-  emailHighlight: {
-    color: colors.text,
-    fontFamily: tokens.typography.bodyLarge.fontFamily,
-    fontWeight: tokens.fontWeight.semiBold,
-  },
-  resultBox: {
-    backgroundColor: colors.m3.surfaceContainerLow,
-    borderRadius: tokens.radius.large,
-    borderWidth: 1,
-    borderColor: colors.m3.outlineVariant,
-    padding: tokens.spacing[16],
-    gap: tokens.spacing[6],
-  },
-  resultLabel: {
-    ...tokens.typography.titleMedium,
-    color: colors.text,
-    fontWeight: tokens.fontWeight.bold,
-  },
-  resultHint: {
-    ...tokens.typography.bodyMedium,
-    color: colors.secondaryText,
-    lineHeight: tokens.lineHeight[20],
-  },
-  countdown: {
-    ...tokens.typography.bodyMedium,
-    textAlign: "center",
-    color: colors.secondaryText,
-  },
-  footnote: {
-    ...tokens.typography.bodyMedium,
-    textAlign: "center",
-    color: colors.secondaryText,
-  },
-  error: {
-    ...tokens.typography.bodyMedium,
-    color: colors.error,
-  },
+    content: {
+      gap: tokens.spacing[16],
+    },
+    title: {
+      ...tokens.typography.displayLarge,
+      color: colors.text,
+    },
+    subtitle: {
+      ...tokens.typography.bodyLarge,
+      color: colors.secondaryText,
+    },
+    emailHighlight: {
+      color: colors.text,
+      fontFamily: tokens.typography.bodyLarge.fontFamily,
+      fontWeight: tokens.fontWeight.semiBold,
+    },
+    resultBox: {
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderRadius: tokens.radius.large,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+      padding: tokens.spacing[16],
+      gap: tokens.spacing[6],
+    },
+    resultLabel: {
+      ...tokens.typography.titleMedium,
+      color: colors.text,
+      fontWeight: tokens.fontWeight.bold,
+    },
+    resultHint: {
+      ...tokens.typography.bodyMedium,
+      color: colors.secondaryText,
+      lineHeight: tokens.lineHeight[20],
+    },
+    countdown: {
+      ...tokens.typography.bodyMedium,
+      textAlign: "center",
+      color: colors.secondaryText,
+    },
+    footnote: {
+      ...tokens.typography.bodyMedium,
+      textAlign: "center",
+      color: colors.secondaryText,
+    },
   });
 }
