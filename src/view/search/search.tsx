@@ -89,7 +89,8 @@ export default function Search({
   const [snackbarMessage, setSnackbarMessage] = useState<string | null>(null);
   const insets = useSafeAreaInsets();
   const navBarPaddingBottom = Math.max(tokens.spacing[20], insets.bottom + tokens.spacing[10]);
-  const floatingBottom = wideWeb ? tokens.spacing[32] : navBarPaddingBottom + 64 + tokens.spacing[16];
+  const navBarDockHeight = 88;
+  const floatingBottom = wideWeb ? tokens.spacing[32] : navBarPaddingBottom + navBarDockHeight + tokens.spacing[16];
 
   const guardedNavigateToBookDetail = useGuardedPress((bookId: string) => {
     void actions.registerSearch(state.term);
@@ -777,6 +778,7 @@ function createStyles(colors: ColorPalette) {
     },
     cardMain: {
       flex: 1,
+      minWidth: 0,
       flexDirection: "row",
       alignItems: "center",
       gap: tokens.spacing[12],
@@ -786,6 +788,7 @@ function createStyles(colors: ColorPalette) {
     },
     cardInfo: {
       flex: 1,
+      minWidth: 0,
       gap: tokens.spacing[6],
       justifyContent: "center",
     },
