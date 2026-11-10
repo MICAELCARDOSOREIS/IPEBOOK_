@@ -1,9 +1,10 @@
 import { useMemo } from "react";
-import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { Checkbox } from "@/view/components/Checkbox";
 import { FilledButton } from "@/view/components/FilledButton";
 import { IconBadge } from "@/view/components/IconBadge";
+import { InlineErrorCard } from "@/view/components/InlineErrorCard";
+import { ScreenContainer } from "@/view/components/ScreenContainer";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { tokens, type ColorPalette } from "@/view/tokens";
@@ -13,7 +14,8 @@ import { makeDeleteAccountViewModel } from "@/di/container";
 import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
 import { withPress } from "@/view/pressFeedback";
 import { useGuardedPress } from "@/view/useGuardedPress";
-import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
+import { scrollBottomPadding } from "@/view/scrollProps";
+
 export type DeleteAccountProps = {
   sessionUserId: string | null;
   /** Verdadeiro enquanto a sessão gravada ainda está sendo lida. */
@@ -53,108 +55,102 @@ export default function DeleteAccount({
 
   if (state.success) {
     return (
-      <SafeAreaView style={styles.page}>
-        <TopAppBar title="Conta excluída" onBack={guardedBack} contentMaxWidth={wide ? WEB_MAX_WIDTH : undefined} />
-        <ScrollView
-          contentContainerStyle={[styles.scrollContent, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
-          {...standardVerticalScrollProps}
-        >
-          <View style={[styles.content, wide && styles.contentWide]}>
-            <View style={styles.card}>
-              <IconBadge icon="check" tone="action" size="large" />
-              <Text accessibilityRole="header" style={styles.successTitle}>
-                Conta excluída
-              </Text>
-              <Text style={styles.successHeadline}>Sua conta foi excluída.</Text>
-              <Text style={styles.bodyCenter}>
-                Seu perfil e seus anúncios ficaram indisponíveis. Sua conta e seus dados pessoais foram removidos da nossa base em conformidade com a LGPD.
-              </Text>
-              <View style={styles.fullWidthButton}>
-                <FilledButton label="Voltar à tela inicial" onPress={guardedAccountDeleted} />
-              </View>
-            </View>
+      <ScreenContainer
+        maxWidth={560}
+        paddingTop={tokens.spacing[16]}
+        paddingBottom={scrollBottomPadding.withoutBottomBar}
+        header={<TopAppBar contentMaxWidth={560} title="Conta excluída" onBack={guardedBack} />}
+        contentStyle={styles.centerContainer}
+      >
+        <View style={styles.card}>
+          <IconBadge icon="check" tone="action" size="large" />
+          <Text accessibilityRole="header" style={styles.successTitle}>
+            Conta excluída
+          </Text>
+          <Text style={styles.successHeadline}>Sua conta foi excluída.</Text>
+          <Text style={styles.bodyCenter}>
+            Seu perfil e seus anúncios ficaram indisponíveis. Sua conta e seus dados pessoais foram removidos da nossa base em conformidade com a LGPD.
+          </Text>
+          <View style={styles.fullWidthButton}>
+            <FilledButton label="Voltar à tela inicial" onPress={guardedAccountDeleted} />
           </View>
-        </ScrollView>
-      </SafeAreaView>
+        </View>
+      </ScreenContainer>
     );
   }
 
   if (!sessionUserId && sessionLoading) {
     return (
-      <SafeAreaView style={styles.page}>
-        <TopAppBar title="Privacidade e dados" onBack={guardedBack} contentMaxWidth={wide ? WEB_MAX_WIDTH : undefined} />
-        <ScrollView
-          contentContainerStyle={[styles.scrollContent, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
-          {...standardVerticalScrollProps}
-        >
-          <View style={[styles.content, wide && styles.contentWide]}>
-            <View style={styles.card}>
-              <IconBadge icon="lock" tone="neutral" size="large" />
-              <Text accessibilityRole="header" style={styles.title}>
-                Verificando sua sessão
-              </Text>
-              <Text style={styles.bodyCenter}>
-                Aguarde enquanto confirmamos sua conta.
-              </Text>
-            </View>
-          </View>
-        </ScrollView>
-      </SafeAreaView>
+      <ScreenContainer
+        maxWidth={560}
+        paddingTop={tokens.spacing[16]}
+        paddingBottom={scrollBottomPadding.withoutBottomBar}
+        header={<TopAppBar contentMaxWidth={560} title="Privacidade e dados" onBack={guardedBack} />}
+        contentStyle={styles.centerContainer}
+      >
+        <View style={styles.card}>
+          <IconBadge icon="lock" tone="neutral" size="large" />
+          <Text accessibilityRole="header" style={styles.title}>
+            Verificando sua sessão
+          </Text>
+          <Text style={styles.bodyCenter}>
+            Aguarde enquanto confirmamos sua conta.
+          </Text>
+        </View>
+      </ScreenContainer>
     );
   }
 
   if (!sessionUserId) {
     return (
-      <SafeAreaView style={styles.page}>
-        <TopAppBar title="Privacidade e dados" onBack={guardedBack} contentMaxWidth={wide ? WEB_MAX_WIDTH : undefined} />
-        <ScrollView
-          contentContainerStyle={[styles.scrollContent, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
-          {...standardVerticalScrollProps}
-        >
-          <View style={[styles.content, wide && styles.contentWide]}>
-            <View style={styles.card}>
-              <IconBadge icon="lock" tone="neutral" size="large" />
-              <Text accessibilityRole="header" style={styles.title}>
-                {onNavigateToLogin ? "Sessão necessária" : "Como excluir sua conta"}
-              </Text>
-              <Text style={styles.bodyCenter}>
-                {onNavigateToLogin
-                  ? "Você precisa entrar na sua conta para solicitar a exclusão dos seus dados."
-                  : "No aplicativo Android do IpêBook, acesse Perfil → Configurações → Privacidade e dados → Excluir conta. Se preferir, envie um e-mail com o Gmail cadastrado para contato@ipebook.app solicitando a exclusão definitiva dos seus dados (LGPD)."}
-              </Text>
-              {onNavigateToLogin ? (
-                <View style={styles.fullWidthButton}>
-                  <FilledButton label="Entrar na conta" onPress={guardedLogin} />
-                </View>
-              ) : (
-                <View style={styles.fullWidthButton}>
-                  <FilledButton label="Voltar ao início" onPress={guardedBack} />
-                </View>
-              )}
+      <ScreenContainer
+        maxWidth={560}
+        paddingTop={tokens.spacing[16]}
+        paddingBottom={scrollBottomPadding.withoutBottomBar}
+        header={<TopAppBar contentMaxWidth={560} title="Privacidade e dados" onBack={guardedBack} />}
+        contentStyle={styles.centerContainer}
+      >
+        <View style={styles.card}>
+          <IconBadge icon="lock" tone="neutral" size="large" />
+          <Text accessibilityRole="header" style={styles.title}>
+            {onNavigateToLogin ? "Sessão necessária" : "Como excluir sua conta"}
+          </Text>
+          <Text style={styles.bodyCenter}>
+            {onNavigateToLogin
+              ? "Você precisa entrar na sua conta para solicitar a exclusão dos seus dados."
+              : "No aplicativo Android do IpêBook, acesse Perfil → Configurações → Privacidade e dados → Excluir conta. Se preferir, envie um e-mail com o Gmail cadastrado para contato@ipebook.app solicitando a exclusão definitiva dos seus dados (LGPD)."}
+          </Text>
+          {onNavigateToLogin ? (
+            <View style={styles.fullWidthButton}>
+              <FilledButton label="Entrar na conta" onPress={guardedLogin} />
             </View>
-          </View>
-        </ScrollView>
-      </SafeAreaView>
+          ) : (
+            <View style={styles.fullWidthButton}>
+              <FilledButton label="Voltar ao início" onPress={guardedBack} />
+            </View>
+          )}
+        </View>
+      </ScreenContainer>
     );
   }
 
   return (
-    <SafeAreaView style={styles.page}>
-      <TopAppBar title="Privacidade e dados" onBack={guardedBack} contentMaxWidth={wide ? WEB_MAX_WIDTH : undefined} />
-      <ScrollView
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
-        {...standardVerticalScrollProps}
-      >
-        <View style={[styles.content, wide && styles.contentWide]}>
-          <View style={styles.heroHeader}>
-            <Text style={styles.heroTitle}>Você no controle.</Text>
-            <Text style={styles.heroSubtitle}>
-              Entenda quais informações ficam visíveis.
-            </Text>
-          </View>
+    <ScreenContainer
+      maxWidth={wide ? WEB_MAX_WIDTH : 560}
+      paddingTop={tokens.spacing[16]}
+      paddingBottom={scrollBottomPadding.withoutBottomBar}
+      header={<TopAppBar contentMaxWidth={wide ? WEB_MAX_WIDTH : 560} title="Privacidade e dados" onBack={guardedBack} />}
+      contentStyle={[styles.content, wide && styles.contentWide]}
+    >
+      <View style={styles.heroHeader}>
+        <Text style={styles.heroTitle}>Você no controle.</Text>
+        <Text style={styles.heroSubtitle}>
+          Entenda quais informações ficam visíveis.
+        </Text>
+      </View>
 
-          <View style={[styles.columns, wide && styles.columnsWide]}>
-          <View style={[styles.column, wide && styles.columnHalf]}>
+      <View style={[styles.columns, wide && styles.columnsWide]}>
+        <View style={[styles.column, wide && styles.columnHalf]}>
           <View style={styles.privacyInfoCard}>
             <Text style={styles.privacyInfoTitle}>Seu perfil público</Text>
             <Text style={styles.exportText}>
@@ -201,14 +197,7 @@ export default function DeleteAccount({
               </View>
             ) : null}
             {state.exportError ? (
-              <Text
-                ref={exportErrorRef}
-                accessibilityRole="alert"
-                accessibilityLiveRegion="assertive"
-                style={styles.errorText}
-              >
-                {state.exportError}
-              </Text>
+              <InlineErrorCard textRef={exportErrorRef} message={state.exportError} />
             ) : null}
             <FilledButton
               label={state.exporting ? "Gerando arquivo..." : "Solicitar meus dados"}
@@ -218,9 +207,9 @@ export default function DeleteAccount({
               onPress={() => void actions.downloadUserData(sessionUserId)}
             />
           </View>
+        </View>
 
-          </View>
-          <View style={[styles.column, wide && styles.columnHalf]}>
+        <View style={[styles.column, wide && styles.columnHalf]}>
           <View style={styles.warningCard}>
             <View style={styles.cardHeaderRow}>
               <IconBadge icon="error" tone="error" />
@@ -247,14 +236,7 @@ export default function DeleteAccount({
           />
 
           {state.error ? (
-            <Text
-              ref={errorRef}
-              accessibilityRole="alert"
-              accessibilityLiveRegion="assertive"
-              style={styles.errorText}
-            >
-              {state.error}
-            </Text>
+            <InlineErrorCard textRef={errorRef} message={state.error} />
           ) : null}
 
           <FilledButton
@@ -264,166 +246,157 @@ export default function DeleteAccount({
             disabled={state.loading || state.exporting}
             onPress={() => void actions.deleteAccount(sessionUserId)}
           />
-          </View>
-          </View>
         </View>
-      </ScrollView>
-    </SafeAreaView>
+      </View>
+    </ScreenContainer>
   );
 }
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
-  contentWide: {
-    maxWidth: WEB_MAX_WIDTH,
-    alignSelf: "center",
-    paddingHorizontal: WEB_GUTTER,
-  },
-  columns: { gap: tokens.spacing[16] },
-  columnsWide: { flexDirection: "row", alignItems: "flex-start", gap: tokens.spacing[24] },
-  column: { gap: tokens.spacing[16] },
-  columnHalf: { flex: 1 },
-  navigationRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: tokens.spacing[12],
-    paddingVertical: tokens.spacing[12],
-    paddingHorizontal: tokens.spacing[16],
-    borderRadius: tokens.radius.medium,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  navigationRowText: { flex: 1, gap: tokens.spacing[4] },
-  navigationRowTitle: {
-    ...tokens.typography.titleMedium,
-    color: colors.text,
-  },
-  navigationChevron: {
-    ...tokens.typography.titleMedium,
-    color: colors.secondaryText,
-  },
-  page: { flex: 1, backgroundColor: colors.background },
-  scrollContent: {
-    flexGrow: 1,
-    paddingBottom: tokens.spacing[48],
-  },
-  content: {
-    flex: 1,
-    width: "100%",
-    padding: tokens.spacing[24],
-    gap: tokens.spacing[20],
-  },
-  heroHeader: {
-    gap: tokens.spacing[4],
-  },
-  heroTitle: {
-    ...tokens.typography.displayLarge,
-    color: colors.text,
-  },
-  heroSubtitle: {
-    ...tokens.typography.bodyLarge,
-    color: colors.secondaryText,
-  },
-  privacyInfoCard: {
-    padding: tokens.spacing[16],
-    backgroundColor: colors.m3.surfaceContainerLow,
-    borderRadius: tokens.radius.medium,
-    borderWidth: 1,
-    borderColor: colors.m3.outlineVariant,
-    gap: tokens.spacing[8],
-  },
-  privacyInfoTitle: {
-    ...tokens.typography.titleMedium,
-    fontFamily: tokens.typography.displayLarge.fontFamily,
-    color: colors.text,
-  },
-  successHeadline: {
-    ...tokens.typography.titleMedium,
-    fontFamily: tokens.typography.displayLarge.fontFamily,
-    color: colors.text,
-    textAlign: "center",
-  },
-  card: {
-    padding: tokens.spacing[24],
-    backgroundColor: colors.surface,
-    borderRadius: tokens.radius.large,
-    borderWidth: 1,
-    borderColor: colors.m3.outlineVariant,
-    gap: tokens.spacing[16],
-    alignItems: "center",
-    marginTop: tokens.spacing[24],
-  },
-  fullWidthButton: {
-    width: "100%",
-  },
-  cardHeaderRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: tokens.spacing[12],
-  },
-  title: {
-    ...tokens.typography.titleLarge,
-    fontFamily: tokens.typography.displayLarge.fontFamily,
-    color: colors.text,
-    textAlign: "center",
-  },
-  successTitle: {
-    ...tokens.typography.titleLarge,
-    fontFamily: tokens.typography.displayLarge.fontFamily,
-    color: colors.action,
-    textAlign: "center",
-  },
-  bodyCenter: {
-    ...tokens.typography.bodyMedium,
-    color: colors.secondaryText,
-    textAlign: "center",
-  },
-  exportSection: {
-    gap: tokens.spacing[12],
-    paddingTop: tokens.spacing[8],
-  },
-  exportText: {
-    ...tokens.typography.bodyMedium,
-    color: colors.text,
-  },
-  exportSuccessText: {
-    ...tokens.typography.bodyMedium,
-    color: colors.action,
-    fontWeight: tokens.fontWeight.semiBold,
-  },
-  exportSummaryBox: {
-    gap: tokens.spacing[4],
-  },
-  warningCard: {
-    padding: tokens.spacing[16],
-    backgroundColor: colors.errorContainer,
-    borderRadius: tokens.radius.medium,
-    gap: tokens.spacing[12],
-    borderWidth: 1,
-    borderColor: colors.error,
-  },
-  warningTitle: {
-    flex: 1,
-    ...tokens.typography.titleMedium,
-    fontFamily: tokens.typography.displayLarge.fontFamily,
-    color: colors.error,
-  },
-  warningText: {
-    ...tokens.typography.bodyMedium,
-    fontWeight: tokens.fontWeight.semiBold,
-    color: colors.text,
-  },
-  bulletList: {
-    gap: tokens.spacing[8],
-  },
-  bulletItem: {
-    ...tokens.typography.bodyMedium,
-    color: colors.secondaryText,
-  },
-  errorText: {
-    ...tokens.typography.bodyMedium,
-    color: colors.error,
-  },
+    contentWide: {
+      maxWidth: WEB_MAX_WIDTH,
+      alignSelf: "center",
+      paddingHorizontal: WEB_GUTTER,
+    },
+    columns: { gap: tokens.spacing[16] },
+    columnsWide: { flexDirection: "row", alignItems: "flex-start", gap: tokens.spacing[24] },
+    column: { gap: tokens.spacing[16] },
+    columnHalf: { flex: 1 },
+    navigationRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[12],
+      paddingVertical: tokens.spacing[12],
+      paddingHorizontal: tokens.spacing[16],
+      borderRadius: tokens.radius.medium,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    navigationRowText: { flex: 1, gap: tokens.spacing[4] },
+    navigationRowTitle: {
+      ...tokens.typography.titleMedium,
+      color: colors.text,
+    },
+    navigationChevron: {
+      ...tokens.typography.titleMedium,
+      color: colors.secondaryText,
+    },
+    content: {
+      gap: tokens.spacing[20],
+    },
+    centerContainer: {
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    heroHeader: {
+      gap: tokens.spacing[4],
+    },
+    heroTitle: {
+      ...tokens.typography.displayLarge,
+      color: colors.text,
+    },
+    heroSubtitle: {
+      ...tokens.typography.bodyLarge,
+      color: colors.secondaryText,
+    },
+    privacyInfoCard: {
+      padding: tokens.spacing[16],
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderRadius: tokens.radius.medium,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+      gap: tokens.spacing[8],
+    },
+    privacyInfoTitle: {
+      ...tokens.typography.titleMedium,
+      fontFamily: tokens.typography.displayLarge.fontFamily,
+      color: colors.text,
+    },
+    successHeadline: {
+      ...tokens.typography.titleMedium,
+      fontFamily: tokens.typography.displayLarge.fontFamily,
+      color: colors.text,
+      textAlign: "center",
+    },
+    card: {
+      width: "100%",
+      padding: tokens.spacing[24],
+      backgroundColor: colors.surface,
+      borderRadius: tokens.radius.large,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+      gap: tokens.spacing[16],
+      alignItems: "center",
+      marginTop: tokens.spacing[24],
+    },
+    fullWidthButton: {
+      width: "100%",
+    },
+    cardHeaderRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[12],
+    },
+    title: {
+      ...tokens.typography.titleLarge,
+      fontFamily: tokens.typography.displayLarge.fontFamily,
+      color: colors.text,
+      textAlign: "center",
+    },
+    successTitle: {
+      ...tokens.typography.titleLarge,
+      fontFamily: tokens.typography.displayLarge.fontFamily,
+      color: colors.action,
+      textAlign: "center",
+    },
+    bodyCenter: {
+      ...tokens.typography.bodyMedium,
+      color: colors.secondaryText,
+      textAlign: "center",
+    },
+    exportSection: {
+      gap: tokens.spacing[12],
+      paddingTop: tokens.spacing[8],
+    },
+    exportText: {
+      ...tokens.typography.bodyMedium,
+      color: colors.text,
+    },
+    exportSuccessText: {
+      ...tokens.typography.bodyMedium,
+      color: colors.action,
+      fontWeight: tokens.fontWeight.semiBold,
+    },
+    exportSummaryBox: {
+      gap: tokens.spacing[4],
+    },
+    warningCard: {
+      padding: tokens.spacing[16],
+      backgroundColor: colors.errorContainer,
+      borderRadius: tokens.radius.medium,
+      gap: tokens.spacing[12],
+      borderWidth: 1,
+      borderColor: colors.error,
+    },
+    warningTitle: {
+      flex: 1,
+      ...tokens.typography.titleMedium,
+      fontFamily: tokens.typography.displayLarge.fontFamily,
+      color: colors.error,
+    },
+    warningText: {
+      ...tokens.typography.bodyMedium,
+      fontWeight: tokens.fontWeight.semiBold,
+      color: colors.text,
+    },
+    bulletList: {
+      gap: tokens.spacing[8],
+    },
+    bulletItem: {
+      ...tokens.typography.bodyMedium,
+      color: colors.secondaryText,
+    },
   });
 }

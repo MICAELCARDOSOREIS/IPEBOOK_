@@ -1,4 +1,4 @@
-import { useId, useMemo, useState } from "react";
+import { useId, useMemo, useState, type ComponentRef, type Ref } from "react";
 import type { KeyboardTypeOptions, ReturnKeyTypeOptions, TextInputProps } from "react-native";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { tokens, type ColorPalette } from "@/view/tokens";
@@ -6,6 +6,9 @@ import { useTheme } from "@/view/theme/ThemeProvider";
 import { AppIcon } from "@/view/components/AppIcon";
 
 import { withPress } from "@/view/pressFeedback";
+
+export type TextInputInstance = ComponentRef<typeof TextInput>;
+
 export type TextFieldProps = {
   label: string;
   value: string;
@@ -33,6 +36,8 @@ export type TextFieldProps = {
   returnKeyType?: ReturnKeyTypeOptions;
   /** Toque na ação do teclado; no último campo costuma enviar o formulário. */
   onSubmitEditing?: () => void;
+  /** Referência ao elemento TextInput para controle de foco programático (Spec 133 / Issue #217). */
+  inputRef?: Ref<TextInputInstance>;
 };
 
 /**
@@ -61,6 +66,7 @@ export function TextField({
   textContentType,
   returnKeyType,
   onSubmitEditing,
+  inputRef,
 }: TextFieldProps) {
   const [focused, setFocused] = useState(false);
   // Campo de senha ganha o olho de mostrar/ocultar (some a dúvida de ter digitado errado no celular).
@@ -85,6 +91,7 @@ export function TextField({
         ]}
       >
         <TextInput
+          ref={inputRef}
           accessibilityLabel={accessibilityLabel ?? label}
           accessibilityHint={hasError ? error ?? undefined : undefined}
           aria-describedby={hasError ? errorId : undefined}
