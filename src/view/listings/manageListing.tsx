@@ -294,7 +294,7 @@ export default function ManageListing({
             {/* Caixa de Status do Anúncio */}
             <View
               accessible={true}
-              accessibilityRole="region"
+              accessibilityRole="summary"
               accessibilityLiveRegion="polite"
               accessibilityLabel={`Status do anúncio: ${statusConfig.title}. ${statusConfig.hint}`}
               style={[
