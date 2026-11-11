@@ -31,7 +31,6 @@ import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 
-import { DraftsCard } from "@/view/listings/DraftsCard";
 import { withPress } from "@/view/pressFeedback";
 export { ShelfRow } from "@/view/listings/shelfRow";
 
@@ -169,19 +168,25 @@ export function MyListings({
           <Text style={styles.heroSubtitle}>Seus livros em Piripiri</Text>
         </View>
         <View style={styles.headerActions}>
-          {/* Botão Rascunhos no header só aparece quando não há livros publicados (lista vazia).
-              Quando há livros, o card DraftsCard dentro da ScrollView assume esse papel,
-              pois o header some ao rolar e o card permanece visível. */}
-          {onNavigateToDrafts && !hasBooks ? (
+          {/* Botão Rascunhos no topo ao lado do título da Estante */}
+          {onNavigateToDrafts ? (
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Ver rascunhos"
+              accessibilityLabel={
+                draftsState.drafts.length > 0
+                  ? `Ver ${draftsState.drafts.length} ${draftsState.drafts.length === 1 ? "rascunho" : "rascunhos"}`
+                  : "Ver rascunhos"
+              }
               hitSlop={12}
               onPress={guardedDrafts}
               style={({ pressed }) => [styles.draftsLink, pressed && styles.draftsLinkPressed]}
             >
-              <AppIcon name="document" size={20} color={colors.m3.onSecondaryContainer} />
-              <Text style={styles.draftsLinkText}>Rascunhos</Text>
+              <AppIcon name="document" size={18} color={colors.m3.onSecondaryContainer} />
+              <Text style={styles.draftsLinkText}>
+                {draftsState.drafts.length > 0
+                  ? `Rascunhos (${draftsState.drafts.length})`
+                  : "Rascunhos"}
+              </Text>
             </Pressable>
           ) : null}
           {wideWeb && onNavigateToCreateListing ? (
@@ -226,11 +231,6 @@ export function MyListings({
               },
             ]}
           >
-            {/* Card de rascunhos: destaque quando há rascunhos salvos (Spec 017) */}
-            {onNavigateToDrafts && hasBooks ? (
-              <DraftsCard onPress={guardedDrafts} />
-            ) : null}
-
             {/* Banner de incentivo à circulação na web larga (Figma 05.01) */}
             {wideWeb && onNavigateToCreateListing ? (
               <View style={styles.webExchangeBanner} testID="shelf-exchange-banner">
@@ -772,50 +772,6 @@ function createStyles(colors: ColorPalette) {
     },
     // Abas em estilo pílulas/chips com rolagem horizontal (consistente com o resto do app)
     segmentRowAndroid: { flexDirection: "row" },
-    tabsScrollContent: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[8],
-      paddingRight: tokens.spacing[16],
-    },
-    tabChip: {
-      minHeight: tokens.spacing[40],
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "center",
-      gap: tokens.spacing[8],
-      paddingHorizontal: tokens.spacing[16],
-      borderRadius: tokens.radius.full,
-    },
-    tabChipDot: {
-      width: 10,
-      height: 10,
-      borderRadius: tokens.radius.dot,
-    },
-    tabChipUnselected: {
-      backgroundColor: colors.m3.surfaceContainerLowest,
-      borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
-    },
-    tabChipSelected: {
-      backgroundColor: colors.m3.secondaryContainer,
-      borderWidth: 1,
-      borderColor: "transparent",
-    },
-    tabChipPressed: {
-      opacity: 0.85,
-      transform: [{ scale: 0.97 }],
-    },
-    tabChipText: {
-      ...tokens.typography.labelLarge,
-    },
-    tabChipTextUnselected: {
-      color: colors.m3.onSurfaceVariant,
-    },
-    tabChipTextSelected: {
-      color: colors.m3.onSecondaryContainer,
-      fontWeight: tokens.fontWeight.semiBold,
-    },
     // iPhone: controle segmentado do Figma (trilho cinza, segmento selecionado claro e elevado).
     segmentTrackIOS: {
       flexDirection: "row",
@@ -823,36 +779,6 @@ function createStyles(colors: ColorPalette) {
       borderRadius: tokens.radius.segmentOuter,
       backgroundColor: colors.m3.surfaceContainerHighest,
     },
-    segmentIOS: {
-      flex: 1,
-      minHeight: tokens.spacing[32],
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "center",
-      gap: tokens.spacing[4],
-      borderRadius: tokens.radius.segmentInner,
-    },
-    segmentIOSSelected: {
-      backgroundColor: colors.m3.surfaceContainerLowest,
-      shadowColor: colors.m3.shadow,
-      shadowOpacity: 0.12,
-      shadowRadius: 4,
-      shadowOffset: { width: 0, height: 2 },
-    },
-    segmentTextWide: { ...tokens.typography.labelLarge },
-    segmentText: { ...tokens.typography.labelMedium, color: colors.m3.onSurface },
-    segmentTextSelected: { fontWeight: tokens.fontWeight.semiBold, color: colors.m3.onSecondaryContainer },
-    segmentTextSelectedIOS: { fontWeight: tokens.fontWeight.semiBold, color: colors.m3.onSurface },
-    segmentBadge: {
-      minWidth: 18,
-      height: 18,
-      borderRadius: tokens.radius.segmentOuter,
-      paddingHorizontal: tokens.spacing[4],
-      alignItems: "center",
-      justifyContent: "center",
-      backgroundColor: colors.error,
-    },
-    segmentBadgeText: { ...tokens.typography.captionSmall, fontWeight: tokens.fontWeight.bold, color: colors.m3.onPrimary },
     sectionTitle: { ...tokens.typography.titleMedium, color: colors.m3.onSurface },
     attentionCard: {
       gap: tokens.spacing[12],
