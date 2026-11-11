@@ -148,7 +148,7 @@ export function PublicProfile({ userId, onBack, onOpenChat, onReportListing, onR
                       <Text style={[styles.statLargeValue, styles.statValueRating]}>
                         {profile.averageRating?.toFixed(1)}
                       </Text>
-                      <AppIcon name="star" size={12} color={colors.highlight} />
+                      <AppIcon name="star" size={11} color={colors.highlight} />
                     </View>
                   ) : (
                     <AppIcon name="star" size={22} color={colors.ipe.bloomDeep} />
@@ -413,8 +413,9 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
       shadowOffset: { width: 0, height: 1 },
     },
     cardLeadingBox: {
-      width: 48,
+      minWidth: 48,
       height: 48,
+      paddingHorizontal: tokens.spacing[8],
       borderRadius: tokens.radius.medium,
       justifyContent: "center",
       alignItems: "center",
@@ -437,16 +438,20 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
     ratingNumberRow: {
       flexDirection: "row",
       alignItems: "center",
-      gap: tokens.spacing[2],
+      justifyContent: "center",
+      gap: 3,
     },
     statLargeValue: {
-      ...tokens.typography.titleLarge,
+      fontSize: 20,
+      lineHeight: 24,
       fontFamily: fontFamily.semiBold,
       fontWeight: tokens.fontWeight.bold,
       color: colors.text,
       textAlign: "center",
     },
     statValueRating: {
+      fontSize: 15,
+      lineHeight: 18,
       color: colors.ipe.onContainer,
     },
     statValueTrades: {
