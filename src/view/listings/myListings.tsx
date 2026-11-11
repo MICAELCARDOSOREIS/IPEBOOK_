@@ -274,33 +274,33 @@ export function MyListings({
               ))}
             </View>
 
-            {/* Seletor de abas da estante (Anúncios, Propostas, Concluídos) no padrão do Explorar (Figma 02.04 / 05.01) */}
-            <View
-              testID="my-listings-tablist"
-              style={[
-                styles.summaryRow,
-                wideWeb && styles.summaryRowWide,
-                isIOS ? styles.segmentTrackIOS : styles.segmentRowAndroid,
-              ]}
-            >
-              <Text style={styles.summaryText}>
-                {activeTab === "listings"
-                  ? `${activeBooks.length} ${activeBooks.length === 1 ? "anúncio na estante" : "anúncios na estante"}`
-                  : activeTab === "proposals"
-                  ? `${proposals.length} ${proposals.length === 1 ? "proposta em aberto" : "propostas em aberto"}`
-                  : "Livros concluídos e entregues"}
-              </Text>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={`Exibir: ${currentTabLabel}`}
-                testID="my-listings-tab-selector"
-                onPress={() => setShowTabSheet(true)}
-                style={withPress(styles.sortButton)}
+            {/* Seletor de abas da estante (Anúncios, Propostas, Concluídos) e contagem contextual */}
+            {activeTab !== "listings" ? (
+              <View
+                testID="my-listings-tablist"
+                style={[
+                  styles.summaryRow,
+                  wideWeb && styles.summaryRowWide,
+                  isIOS ? styles.segmentTrackIOS : styles.segmentRowAndroid,
+                ]}
               >
-                <Text style={styles.sortText}>{currentTabLabel}</Text>
-                <AppIcon name="chevronDown" size={16} color={colors.m3.primary} />
-              </Pressable>
-            </View>
+                <Text style={styles.summaryText}>
+                  {activeTab === "proposals"
+                    ? `${proposals.length} ${proposals.length === 1 ? "proposta em aberto" : "propostas em aberto"}`
+                    : "Livros concluídos e entregues"}
+                </Text>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`Exibir: ${currentTabLabel}`}
+                  testID="my-listings-tab-selector"
+                  onPress={() => setShowTabSheet(true)}
+                  style={withPress(styles.sortButton)}
+                >
+                  <Text style={styles.sortText}>{currentTabLabel}</Text>
+                  <AppIcon name="chevronDown" size={16} color={colors.m3.primary} />
+                </Pressable>
+              </View>
+            ) : null}
 
             {activeTab === "listings" ? (
               <>
@@ -333,6 +333,30 @@ export function MyListings({
                   onStatusFilterChange={setStatusFilter}
                   onNavigateToManageListing={guardedManageListing}
                   onShareWhatsApp={handleShareBook}
+                  tabSelector={
+                    <View
+                      testID="my-listings-tablist"
+                      style={[
+                        styles.summaryRow,
+                        wideWeb && styles.summaryRowWide,
+                        isIOS ? styles.segmentTrackIOS : styles.segmentRowAndroid,
+                      ]}
+                    >
+                      <Text style={styles.summaryText}>
+                        {`${activeBooks.length} ${activeBooks.length === 1 ? "anúncio na estante" : "anúncios na estante"}`}
+                      </Text>
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel={`Exibir: ${currentTabLabel}`}
+                        testID="my-listings-tab-selector"
+                        onPress={() => setShowTabSheet(true)}
+                        style={withPress(styles.sortButton)}
+                      >
+                        <Text style={styles.sortText}>{currentTabLabel}</Text>
+                        <AppIcon name="chevronDown" size={16} color={colors.m3.primary} />
+                      </Pressable>
+                    </View>
+                  }
                   onNavigateToNegotiationForBook={(bookId) => {
                     const item = proposals.find((p) => p.listing.id === bookId);
                     if (item) guardedNegotiationDetail(item.request.id);
@@ -715,13 +739,15 @@ function createStyles(colors: ColorPalette) {
     },
     statCount: { ...tokens.typography.brandTitle, fontSize: 22, lineHeight: 26 },
     statLabel: { ...tokens.typography.footnote, fontWeight: tokens.fontWeight.semiBold, opacity: 0.95 },
-    // Linha de resumo e seletor da estante (estilo 'Mais recentes' do Explorar, Figma 02.04 / 05.01)
+    // Linha de resumo e seletor da estante (estilo 'Mais recentes' do Explorar, abaixo dos chips)
     summaryRow: {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
       gap: tokens.spacing[12],
-      paddingVertical: tokens.spacing[4],
+      paddingVertical: tokens.spacing[6],
+      marginTop: tokens.spacing[4],
+      marginBottom: tokens.spacing[4],
     },
     summaryRowWide: {
       paddingVertical: tokens.spacing[8],
