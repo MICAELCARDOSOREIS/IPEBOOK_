@@ -26,6 +26,8 @@ export function ConnectedWebHeader({ pathname, ...props }: ConnectedWebHeaderPro
     if (userId) void refresh();
   }, [pathname, refresh, userId]);
 
+  if (auth.loading || !auth.user) return null;
+
   return (
     <WebHeader
       {...props}
