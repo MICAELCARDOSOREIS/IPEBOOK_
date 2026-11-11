@@ -44,6 +44,8 @@ export type MyListingsListingsTabProps = {
   onNavigateToNegotiationForBook?: (bookId: string) => void;
   /** Seletor de abas e resumo da estante posicionado logo abaixo dos chips de filtro. */
   tabSelector?: React.ReactNode;
+  /** Oculta a barra de filtros se ela já for renderizada externamente na tela pai */
+  hideFilterBar?: boolean;
 };
 
 export function MyListingsListingsTab({
@@ -54,6 +56,7 @@ export function MyListingsListingsTab({
   onShareWhatsApp,
   onNavigateToNegotiationForBook,
   tabSelector,
+  hideFilterBar = false,
 }: MyListingsListingsTabProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -81,41 +84,43 @@ export function MyListingsListingsTab({
   return (
     <>
       {/* Fileira horizontal única de filtros no padrão da Home e do Explorar */}
-      {wideWeb ? (
-        <View style={styles.filterRowWide}>
-          {filterChips.map((chip) => (
-            <Chip
-              key={chip.key}
-              size="compact"
-              label={chip.label}
-              accessibilityLabel={chip.a11y}
-              tone={chip.tone}
-              selected={statusFilter === chip.key}
-              onPress={() => onStatusFilterChange(chip.key)}
-            />
-          ))}
-        </View>
-      ) : (
-        <ScrollView
-          horizontal
-          {...standardHorizontalScrollProps}
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.filterScroll}
-          style={styles.filterScrollView}
-        >
-          {filterChips.map((chip) => (
-            <Chip
-              key={chip.key}
-              size="compact"
-              label={chip.label}
-              accessibilityLabel={chip.a11y}
-              tone={chip.tone}
-              selected={statusFilter === chip.key}
-              onPress={() => onStatusFilterChange(chip.key)}
-            />
-          ))}
-        </ScrollView>
-      )}
+      {!hideFilterBar ? (
+        wideWeb ? (
+          <View style={styles.filterRowWide}>
+            {filterChips.map((chip) => (
+              <Chip
+                key={chip.key}
+                size="compact"
+                label={chip.label}
+                accessibilityLabel={chip.a11y}
+                tone={chip.tone}
+                selected={statusFilter === chip.key}
+                onPress={() => onStatusFilterChange(chip.key)}
+              />
+            ))}
+          </View>
+        ) : (
+          <ScrollView
+            horizontal
+            {...standardHorizontalScrollProps}
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.filterScroll}
+            style={styles.filterScrollView}
+          >
+            {filterChips.map((chip) => (
+              <Chip
+                key={chip.key}
+                size="compact"
+                label={chip.label}
+                accessibilityLabel={chip.a11y}
+                tone={chip.tone}
+                selected={statusFilter === chip.key}
+                onPress={() => onStatusFilterChange(chip.key)}
+              />
+            ))}
+          </ScrollView>
+        )
+      ) : null}
       {tabSelector}
       {filteredBooks.length === 0 ? (
         <View style={styles.empty}>

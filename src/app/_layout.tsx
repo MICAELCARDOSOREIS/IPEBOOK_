@@ -88,6 +88,20 @@ export default function RootLayout() {
     });
   }, []);
 
+  // Oculta o botão flutuante de ferramentas de desenvolvimento (FAB Tools) do expo-dev-client
+  // para evitar sobreposição nos cabeçalhos e botões da interface.
+  useEffect(() => {
+    if (Platform.OS !== "web" && typeof __DEV__ !== "undefined" && __DEV__) {
+      import("expo-dev-menu")
+        .then((DevMenu) => {
+          DevMenu.setToolsButtonVisible?.(false);
+        })
+        .catch(() => {
+          /* ignora silenciosamente se o dev-menu não estiver ativo */
+        });
+    }
+  }, []);
+
   // Web: a aba mostra a tela atual em vez da URL.
   useEffect(() => {
     if (Platform.OS === "web" && typeof document !== "undefined") document.title = pageTitleFor(pathname);

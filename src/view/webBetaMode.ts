@@ -1,12 +1,12 @@
 import { Platform } from "react-native";
 
 /**
- * Spec 108: por enquanto o site só divulga o teste do app Android. Na web não há catálogo nem
- * cadastro; `/excluir-conta` fica acessível pelo endereço, porque a Play Store exige um link
- * público para excluir a conta.
- * Para reabrir o site completo no futuro, desligar `WEB_BETA_ONLY` aqui.
+ * Modo Web completo com autenticação obrigatória (Spec 092 e Spec 108):
+ * O site completo fica liberado na Web para pessoas autenticadas.
+ * O catálogo, perfil, anúncios e navegação exigem estar conectado com o login (RequireAuth).
+ * Sem login ativo, o usuário é direcionado para entrar/criar conta.
  */
-export const WEB_BETA_ONLY = Platform.OS === "web";
+export const WEB_BETA_ONLY = false;
 
 const ROTAS_LIBERADAS = new Set([
   "/bem-vindo",
