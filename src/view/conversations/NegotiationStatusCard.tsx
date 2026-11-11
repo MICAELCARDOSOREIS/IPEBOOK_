@@ -4,7 +4,7 @@ import type { Meeting } from "@/model/entities/meeting";
 import { PIRIPIRI_MEETING_POINTS } from "@/model/entities/meetingPoint";
 import type { RequestStatus } from "@/model/entities/bookRequest";
 import { formatMeetingWhen } from "@/view/meetingFormat";
-import { tokens, type ColorPalette } from "@/view/tokens";
+import { tokens, type ColorPalette, fontFamily } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { AppIcon } from "@/view/components/AppIcon";
 import { withPress } from "@/view/pressFeedback";
@@ -15,6 +15,9 @@ export type NegotiationStatusCardProps = {
   counterpartName: string;
   sessionUserId: string;
   deliveryCompleted: boolean;
+  embedded?: boolean;
+  combineAccessibilityLabel?: string;
+  combineButtonLabel?: string;
   onCombineMeeting?: () => void;
   onConfirmMeeting?: () => void;
   onSuggestOtherTime?: () => void;
@@ -31,6 +34,9 @@ export function NegotiationStatusCard({
   counterpartName,
   sessionUserId,
   deliveryCompleted,
+  embedded,
+  combineAccessibilityLabel,
+  combineButtonLabel,
   onCombineMeeting,
   onConfirmMeeting,
   onSuggestOtherTime,
@@ -50,7 +56,7 @@ export function NegotiationStatusCard({
   // 1. Entrega já concluída com sucesso
   if (deliveryCompleted) {
     return (
-      <View style={[styles.card, styles.cardSuccess]}>
+      <View style={[styles.card, styles.cardSuccess, embedded && styles.cardEmbedded]}>
         <View style={styles.contentRow}>
           <View style={[styles.iconBox, { backgroundColor: `${colors.nature.foliage}20` }]}>
             <AppIcon name="checkCircle" size={20} color={colors.nature.foliage} />
@@ -81,7 +87,7 @@ export function NegotiationStatusCard({
     const whenFormatted = formatMeetingWhen(meeting.scheduledAt);
 
     return (
-      <View style={[styles.card, styles.cardConfirmed]}>
+      <View style={[styles.card, styles.cardConfirmed, embedded && styles.cardEmbedded]}>
         <View style={styles.contentRow}>
           <View style={[styles.iconBox, { backgroundColor: `${colors.action}20` }]}>
             <AppIcon name="place" size={20} color={colors.action} />
@@ -154,7 +160,7 @@ export function NegotiationStatusCard({
     const whenFormatted = formatMeetingWhen(meeting.scheduledAt);
 
     return (
-      <View style={[styles.card, styles.cardProposed]}>
+      <View style={[styles.card, styles.cardProposed, embedded && styles.cardEmbedded]}>
         <View style={styles.contentRow}>
           <View style={[styles.iconBox, { backgroundColor: colors.ipe.container }]}>
             <AppIcon name="calendar" size={20} color={colors.action} />
@@ -201,10 +207,10 @@ export function NegotiationStatusCard({
 
   // 4. Nenhum encontro agendado ainda
   return (
-    <View style={[styles.card, styles.cardEmpty]}>
+    <View style={[styles.card, styles.cardEmpty, embedded && styles.cardEmbedded]}>
       <View style={styles.contentRow}>
-        <View style={[styles.iconBox, { backgroundColor: colors.soft }]}>
-          <AppIcon name="place" size={20} color={colors.action} />
+        <View style={[styles.iconBox, { backgroundColor: colors.nature.sprout }]}>
+          <AppIcon name="place" size={20} color={colors.nature.foliage} />
         </View>
         <View style={styles.textContainer}>
           <Text style={styles.title}>Nenhum encontro marcado</Text>
@@ -213,14 +219,17 @@ export function NegotiationStatusCard({
       </View>
 
       {onCombineMeeting ? (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Combinar encontro"
-          onPress={onCombineMeeting}
-          style={withPress(styles.actionButtonPrimary)}
-        >
-          <Text style={styles.actionButtonPrimaryText}>Combinar encontro</Text>
-        </Pressable>
+        <View style={styles.actionsGrid}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={combineAccessibilityLabel ?? "Combinar encontro"}
+            onPress={onCombineMeeting}
+            style={withPress(styles.actionButtonPrimary)}
+          >
+            <AppIcon name="place" size={16} color={colors.nature.onFoliage} />
+            <Text style={styles.actionButtonPrimaryText}>{combineButtonLabel ?? "Combinar"}</Text>
+          </Pressable>
+        </View>
       ) : null}
     </View>
   );
@@ -253,6 +262,17 @@ function createStyles(colors: ColorPalette) {
     cardEmpty: {
       backgroundColor: colors.surface,
       borderColor: colors.border,
+    },
+    cardEmbedded: {
+      marginHorizontal: 0,
+      marginBottom: 0,
+      borderWidth: 0,
+      borderRadius: 0,
+      backgroundColor: "transparent",
+      padding: 0,
+      paddingTop: tokens.spacing[12],
+      borderTopWidth: 1,
+      borderTopColor: colors.m3.outlineVariant,
     },
     contentRow: {
       flexDirection: "row",
@@ -292,6 +312,8 @@ function createStyles(colors: ColorPalette) {
       marginTop: tokens.spacing[4],
     },
     actionButtonPrimary: {
+      flexDirection: "row",
+      gap: tokens.spacing[6],
       backgroundColor: colors.action,
       paddingVertical: tokens.spacing[8],
       paddingHorizontal: tokens.spacing[16],
