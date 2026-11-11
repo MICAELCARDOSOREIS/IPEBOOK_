@@ -570,15 +570,18 @@ function createStyles(colors: ColorPalette) {
     },
     carouselBadge: {
       paddingHorizontal: tokens.spacing[8],
-      paddingVertical: tokens.spacing[2],
+      paddingVertical: 2,
       borderRadius: tokens.radius.full,
-      backgroundColor: colors.m3.secondaryContainer,
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
       alignSelf: "center",
     },
     carouselBadgeText: {
       ...tokens.typography.labelSmall,
-      fontWeight: tokens.fontWeight.bold,
-      color: colors.m3.onSecondaryContainer,
+      fontSize: 12,
+      fontWeight: tokens.fontWeight.medium,
+      color: colors.m3.onSurfaceVariant,
     },
     viewMoreButton: {
       flexShrink: 0,
