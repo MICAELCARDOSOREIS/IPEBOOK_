@@ -49,7 +49,9 @@ export function SellerCard({
             <Text style={styles.sellerMeta}>{metaText}</Text>
           </View>
           <View style={styles.sellerTrustRow}>
-            <AppIcon name="place" size={13} color={colors.nature.foliage} />
+            <View style={styles.sellerTrustIconBox}>
+              <AppIcon name="place" size={13} color={colors.nature.foliage} />
+            </View>
             <Text style={styles.sellerTrustText}>Ponto Seguro de Piripiri · Confirmação por QR Code</Text>
           </View>
         </View>
@@ -329,8 +331,15 @@ function createStyles(colors: ColorPalette) {
     sellerInfo: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[12], flex: 1 },
     sellerColumn: { flex: 1, gap: tokens.spacing[2], paddingVertical: tokens.spacing[8] },
     sellerTextCol: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: tokens.spacing[8] },
-    sellerTrustRow: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[4] },
-    sellerTrustText: { ...tokens.typography.labelSmall, color: colors.nature.foliage, fontWeight: tokens.fontWeight.medium },
+    sellerTrustRow: { flexDirection: "row", alignItems: "flex-start", gap: tokens.spacing[4] },
+    sellerTrustIconBox: { paddingTop: 2 },
+    sellerTrustText: {
+      flex: 1,
+      flexShrink: 1,
+      ...tokens.typography.labelSmall,
+      color: colors.nature.foliage,
+      fontWeight: tokens.fontWeight.medium,
+    },
     sellerName: { flexShrink: 1, ...tokens.typography.bodyLarge, fontWeight: tokens.fontWeight.medium, color: colors.m3.onSurface },
     sellerMeta: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
   });

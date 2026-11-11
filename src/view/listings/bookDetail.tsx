@@ -322,6 +322,11 @@ export default function BookDetail({
             onPress={handlePrimaryAction}
           />
         )
+      ) : isOwner && onNavigateToManageListing ? (
+        <FilledButton
+          label="Gerenciar anúncio"
+          onPress={() => guardedNavigateToManageListing(book.id)}
+        />
       ) : null
     ) : null;
 
@@ -341,7 +346,7 @@ export default function BookDetail({
             paddingBottom:
               !wideWeb && actionBar
                 ? scrollBottomPadding.withBottomBar
-                : scrollBottomPadding.withoutBottomBar,
+                : scrollBottomPadding.withoutBottomBar + insets.bottom,
           },
         ]}
       >

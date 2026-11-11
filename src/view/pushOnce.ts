@@ -7,19 +7,20 @@ import { router, type Href } from "expo-router";
  * ou toques retardados re-empilhem a mesma tela.
  * Em testes unitários mantém 1000 ms para manter compatibilidade com temporizadores simulados.
  */
-const DOUBLE_TAP_WINDOW_MS = process.env.NODE_ENV === "test" ? 1000 : 1500;
+const DOUBLE_TAP_WINDOW_MS = process.env.NODE_ENV === "test" ? 1000 : 600;
 
 /**
  * Janela mínima global de transição entre quaisquer navegações para frente (push/replace),
- * evitando abrir telas diferentes em paralelo se a pessoa tocar com múltiplos dedos ou em rápida sucessão.
+ * evitando abrir telas diferentes em paralelo se a pessoa tocar com múltiplos dedos ao mesmo tempo.
+ * Mantida em 200 ms no celular para transições ágeis e sem sensação de travamento entre abas.
  * Em testes unitários mantém 0 para não interferir em asserções de rotas sequenciais distintas.
  */
-const GLOBAL_TRANSITION_WINDOW_MS = process.env.NODE_ENV === "test" ? 0 : 750;
+const GLOBAL_TRANSITION_WINDOW_MS = process.env.NODE_ENV === "test" ? 0 : 200;
 
 /**
  * Janela de bloqueio de duplo clique no botão voltar (evita fechar 2 ou 3 telas de uma vez).
  */
-const BACK_WINDOW_MS = 750;
+const BACK_WINDOW_MS = 400;
 
 let lastKey = "";
 let lastAt = 0;
@@ -118,7 +119,6 @@ function isRepeat(key: string, windowMs = DOUBLE_TAP_WINDOW_MS): boolean {
 
   // 2. Transição global: impede duas navegações para frente simultâneas ou navegação durante transição de voltar
   if (key !== "back" && GLOBAL_TRANSITION_WINDOW_MS > 0 && now - lastGlobalNavAt < GLOBAL_TRANSITION_WINDOW_MS) {
-    lastGlobalNavAt = now;
     return true;
   }
 

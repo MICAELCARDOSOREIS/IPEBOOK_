@@ -49,7 +49,7 @@ export function NavigationBar({ active, onNavigate, disabledDestinations = [], b
   const [hoveredKey, setHoveredKey] = useState<NavigationDestination | null>(null);
   const [dockWidth, setDockWidth] = useState(INITIAL_DOCK_MAX_WIDTH);
   const lastNavigateTime = useRef(0);
-  const DEBOUNCE_MS = 600;
+  const DEBOUNCE_MS = 200;
 
   const activeIndex = ITEMS.findIndex((item) => item.key === active);
   const hasActiveItem = activeIndex >= 0;
@@ -137,7 +137,6 @@ export function NavigationBar({ active, onNavigate, disabledDestinations = [], b
                 if (isDisabled || isActive) return;
                 const now = Date.now();
                 if (now - lastNavigateTime.current < DEBOUNCE_MS) {
-                  lastNavigateTime.current = now;
                   return;
                 }
                 lastNavigateTime.current = now;
