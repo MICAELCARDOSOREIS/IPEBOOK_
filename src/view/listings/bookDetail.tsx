@@ -333,7 +333,18 @@ export default function BookDetail({
 
   return (
     <SafeAreaView edges={["left", "right"]} style={styles.page}>
-      <ScrollView {...standardVerticalScrollProps} contentContainerStyle={[wideWeb ? styles.scrollContentWide : styles.scrollContent, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}>
+      <ScrollView
+        {...standardVerticalScrollProps}
+        contentContainerStyle={[
+          wideWeb ? styles.scrollContentWide : styles.scrollContent,
+          {
+            paddingBottom:
+              !wideWeb && actionBar
+                ? scrollBottomPadding.withBottomBar
+                : scrollBottomPadding.withoutBottomBar,
+          },
+        ]}
+      >
         {wideWeb ? (
           <Breadcrumb
             items={[
