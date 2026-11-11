@@ -55,7 +55,8 @@ function ThemedStack() {
       screenOptions={{
         headerShown: false,
         contentStyle: { backgroundColor: colors.surface },
-        animation: Platform.OS === "android" ? "none" : "default",
+        animation: "fade",
+        animationDuration: 180,
       }}
     />
   );
