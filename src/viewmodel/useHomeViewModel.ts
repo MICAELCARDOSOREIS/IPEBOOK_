@@ -14,6 +14,8 @@ export type HomeActions = {
 };
 
 let sessionBooksCache: readonly Book[] | null = null;
+let lastSessionBooksLoadAt = 0;
+const CATALOG_CACHE_TTL_MS = 60_000; // 1 minuto de frescor para navegação instantânea entre abas
 
 export function getCachedCatalogBookById(bookId: string): Book | null {
   if (process.env.NODE_ENV === "test" || !sessionBooksCache) return null;
@@ -37,7 +39,10 @@ export function useHomeViewModel(books: IBookUseCases): [HomeState, HomeActions]
     setState((previous) => ({ ...previous, loading: previous.books.length === 0, error: null }));
     try {
       const result = await books.listBooks();
-      if (!isTest) sessionBooksCache = result;
+      if (!isTest) {
+        sessionBooksCache = result;
+        lastSessionBooksLoadAt = Date.now();
+      }
       if (active.current && current === request.current) {
         setState({ books: result, loading: false, error: null });
       }
@@ -57,12 +62,20 @@ export function useHomeViewModel(books: IBookUseCases): [HomeState, HomeActions]
 
   useEffect(() => {
     active.current = true;
+    const now = Date.now();
+    // Se o catálogo já está em cache e foi carregado há menos de 1 minuto, não refaz requisição na montagem
+    if (!isTest && sessionBooksCache && sessionBooksCache.length > 0 && now - lastSessionBooksLoadAt < CATALOG_CACHE_TTL_MS) {
+      return () => {
+        active.current = false;
+        request.current += 1;
+      };
+    }
     void reload();
     return () => {
       active.current = false;
       request.current += 1;
     };
-  }, [reload]);
+  }, [reload, isTest]);
 
   return [state, { reload }];
 }

@@ -48,10 +48,17 @@ export function NavigationBar({ active, onNavigate, disabledDestinations = [], b
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [hoveredKey, setHoveredKey] = useState<NavigationDestination | null>(null);
   const [dockWidth, setDockWidth] = useState(INITIAL_DOCK_MAX_WIDTH);
+  const [optimisticActive, setOptimisticActive] = useState<NavigationDestination>(active);
   const lastNavigateTime = useRef(0);
-  const DEBOUNCE_MS = 100;
+  const DEBOUNCE_MS = 60;
 
-  const activeIndex = ITEMS.findIndex((item) => item.key === active);
+  // Sincroniza quando a rota ativa é confirmada ou muda externamente
+  useEffect(() => {
+    setOptimisticActive(active);
+  }, [active]);
+
+  const currentActive = optimisticActive ?? active;
+  const activeIndex = ITEMS.findIndex((item) => item.key === currentActive);
   const hasActiveItem = activeIndex >= 0;
 
   // Posição inicial da pílula deslizante sem flash/salto no primeiro frame
@@ -119,7 +126,7 @@ export function NavigationBar({ active, onNavigate, disabledDestinations = [], b
         ) : null}
 
         {ITEMS.map((item) => {
-          const isActive = item.key === active;
+          const isActive = item.key === currentActive;
           const isDisabled = disabledDestinations.includes(item.key);
           const isHovered = hoveredKey === item.key;
           const badgeCount = badges[item.key] ?? 0;
@@ -134,12 +141,13 @@ export function NavigationBar({ active, onNavigate, disabledDestinations = [], b
               onHoverIn={() => setHoveredKey(item.key)}
               onHoverOut={() => setHoveredKey((prev) => (prev === item.key ? null : prev))}
               onPress={() => {
-                if (isDisabled || isActive) return;
+                if (isDisabled || currentActive === item.key) return;
                 const now = Date.now();
                 if (now - lastNavigateTime.current < DEBOUNCE_MS) {
                   return;
                 }
                 lastNavigateTime.current = now;
+                setOptimisticActive(item.key);
                 onNavigate(item.key);
               }}
               style={({ pressed }) => [
