@@ -171,7 +171,11 @@ export function MyListingsListingsTab({
               }
               book={book}
               summary={listingSummary(book)}
-              accessibilityLabel={`Gerenciar anúncio de ${book.title}`}
+              accessibilityLabel={
+                book.status === "reserved" && onNavigateToNegotiationForBook
+                  ? `Ver negociação de ${book.title}`
+                  : `Gerenciar anúncio de ${book.title}`
+              }
               onPress={() => onNavigateToManageListing?.(book.id)}
               onShareWhatsApp={onShareWhatsApp ? () => onShareWhatsApp(book) : undefined}
               onNavigateToNegotiation={

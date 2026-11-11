@@ -58,7 +58,7 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
 
   return (
     <ScreenContainer
-      maxWidth={720}
+      maxWidth={wide ? WIDE_CONTENT_MAX_WIDTH : 720}
       scroll={false}
       paddingHorizontal={0}
       paddingTop={0}
@@ -141,6 +141,7 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
               key={wide ? `colunas-${listColumns}` : "uma-coluna"}
               numColumns={wide ? listColumns : 1}
               columnWrapperStyle={wide ? { gap: tokens.spacing[12] } : undefined}
+              style={styles.flexOne}
               data={state.alerts}
               keyExtractor={(item) => item.id}
               contentContainerStyle={[
@@ -202,9 +203,11 @@ const WIDE_CONTENT_MAX_WIDTH = WEB_MAX_WIDTH;
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
-  page: { flex: 1, backgroundColor: colors.background },
+  page: { flex: 1, backgroundColor: colors.background, minHeight: 0 },
+  flexOne: { flex: 1, minHeight: 0 },
   content: {
     flex: 1,
+    minHeight: 0,
     width: "100%",
     padding: tokens.spacing[24],
     gap: tokens.spacing[16],
@@ -213,6 +216,7 @@ function createStyles(colors: ColorPalette) {
     maxWidth: WEB_MAX_WIDTH,
     alignSelf: "center",
     paddingHorizontal: WEB_GUTTER,
+    minHeight: 0,
   },
   centered: {
     flex: 1,

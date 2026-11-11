@@ -192,30 +192,6 @@ export function ShelfRow({ book, summary, accessibilityLabel, onPress, onShareWh
           <AppIcon name="chevronRight" size={22} color={colors.m3.onSurfaceVariant} />
         </View>
       </Pressable>
-      {hasNegotiationAction ? (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={`Ver negociação de ${book.title}`}
-          hitSlop={8}
-          onPress={(e) => {
-            e?.stopPropagation?.();
-            onNavigateToNegotiation?.();
-          }}
-          style={({ pressed }) => [
-            styles.negotiationFooterBar,
-            pressed && styles.negotiationFooterBarPressed,
-          ]}
-        >
-          <View style={styles.negotiationFooterLeft}>
-            <AppIcon name="chat" size={15} color={colors.nature.foliageDeep} />
-            <Text style={styles.negotiationFooterLabel}>Negociação em andamento</Text>
-          </View>
-          <View style={styles.negotiationFooterRight}>
-            <Text style={styles.negotiationFooterAction}>Ver negociação</Text>
-            <AppIcon name="chevronRight" size={16} color={colors.nature.foliageDeep} />
-          </View>
-        </Pressable>
-      ) : null}
     </View>
   );
 }
@@ -315,47 +291,6 @@ function createStyles(colors: ColorPalette) {
       fontSize: 11,
       lineHeight: 14,
       fontWeight: tokens.fontWeight.bold,
-    },
-    negotiationFooterBar: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-      paddingHorizontal: tokens.spacing[12],
-      paddingVertical: tokens.spacing[8],
-      backgroundColor: colors.nature.sprout,
-      borderTopWidth: StyleSheet.hairlineWidth,
-      borderTopColor: colors.m3.outlineVariant,
-      minHeight: tokens.accessibility.touchTarget,
-    },
-    negotiationFooterBarPressed: {
-      backgroundColor: colors.m3.primaryContainer,
-    },
-    negotiationFooterLeft: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[6],
-      flexShrink: 1,
-    },
-    negotiationFooterLabel: {
-      ...tokens.typography.labelSmall,
-      fontSize: 12,
-      lineHeight: 16,
-      fontFamily: fontFamily.medium,
-      color: colors.m3.onSurfaceVariant,
-    },
-    negotiationFooterRight: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[2],
-      flexShrink: 0,
-    },
-    negotiationFooterAction: {
-      ...tokens.typography.labelSmall,
-      fontSize: 12,
-      lineHeight: 16,
-      fontWeight: tokens.fontWeight.bold,
-      fontFamily: fontFamily.semiBold,
-      color: colors.nature.foliageDeep,
     },
     srOnlySummary: {
       position: "absolute",
