@@ -366,7 +366,8 @@ describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
     expect(screen.getByText("Ana Paula · proposta recebida · Troca")).toBeDefined();
     expect(screen.getByText("Pessoa da comunidade · negociação aceita · Troca")).toBeDefined();
     expect(screen.queryByText(/Caio/)).toBeNull();
-    expect(screen.queryByText("Todos (1)")).toBeNull();
+    // A barra de abas e filtros permanece acessível no topo para retorno em 1 toque
+    expect(screen.getByText("Todos (1)")).toBeDefined();
     expect(screen.getByText("Tudo pela conversa")).toBeDefined();
 
     const rows = screen.getAllByRole("button", { name: "Abrir proposta para Dom Casmurro" });

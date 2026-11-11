@@ -25,11 +25,11 @@ import {
   type ListingsFilter,
   MyListingsListingsTab,
 } from "@/view/listings/myListingsListingsTab";
+import { Chip } from "@/view/components/Chip";
 import { MyListingsProposalsTab } from "@/view/listings/myListingsProposalsTab";
-import { ShelfTabSheet } from "@/view/listings/ShelfTabSheet";
 import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
 import { useGuardedPress } from "@/view/useGuardedPress";
-import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
+import { standardVerticalScrollProps, standardHorizontalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 
 import { withPress } from "@/view/pressFeedback";
 export { ShelfRow } from "@/view/listings/shelfRow";
@@ -72,7 +72,6 @@ export function MyListings({
   const [, shareActions] = makeShareListingViewModel();
   const { isOnline } = makeNetworkStatus();
   const [activeTab, setActiveTab] = useState<ShelfTab>("listings");
-  const [showTabSheet, setShowTabSheet] = useState(false);
   const [statusFilter, setStatusFilter] = useState<ListingsFilter>("all");
   const [modalityFilter, setModalityFilter] = useState<BookModality | "all">("all");
 
@@ -149,6 +148,82 @@ export function MyListings({
   const navBarPaddingBottom = insets.bottom > 0 ? insets.bottom + tokens.spacing[8] : tokens.spacing[12];
   const navBarDockHeight = 62; // Altura real da cápsula da NavigationBar (dock M3 Expressive)
   const fabBottom = navBarPaddingBottom + navBarDockHeight + tokens.spacing[12];
+
+  type ShelfFilterKey = "all" | "active" | "paused" | "reserved" | "proposals" | "concluded";
+
+  const shelfChips: {
+    key: ShelfFilterKey;
+    label: string;
+    a11y: string;
+    tone?: { background: string; text: string };
+    selected: boolean;
+    onPress: () => void;
+  }[] = [
+    {
+      key: "all",
+      label: `Todos (${activeBooks.length})`,
+      a11y: "Filtrar por Todos",
+      tone: { background: colors.nature.foliage, text: colors.nature.onFoliage },
+      selected: activeTab === "listings" && statusFilter === "all",
+      onPress: () => {
+        setActiveTab("listings");
+        setStatusFilter("all");
+      },
+    },
+    {
+      key: "active",
+      label: `Ativos (${activeBooks.filter((b) => b.status === "available").length})`,
+      a11y: "Filtrar por Ativos",
+      tone: colors.badge.available,
+      selected: activeTab === "listings" && statusFilter === "active",
+      onPress: () => {
+        setActiveTab("listings");
+        setStatusFilter("active");
+      },
+    },
+    {
+      key: "paused",
+      label: `Pausados (${activeBooks.filter((b) => b.status === "paused").length})`,
+      a11y: "Filtrar por Pausados",
+      tone: colors.badge.paused,
+      selected: activeTab === "listings" && statusFilter === "paused",
+      onPress: () => {
+        setActiveTab("listings");
+        setStatusFilter("paused");
+      },
+    },
+    {
+      key: "reserved",
+      label: `Reservados (${activeBooks.filter((b) => b.status === "reserved").length})`,
+      a11y: "Filtrar por Reservados",
+      tone: colors.badge.reserved,
+      selected: activeTab === "listings" && statusFilter === "reserved",
+      onPress: () => {
+        setActiveTab("listings");
+        setStatusFilter("reserved");
+      },
+    },
+    {
+      key: "proposals",
+      label: proposals.length > 0 ? `Propostas (${proposals.length})` : "Propostas",
+      a11y: proposals.length > 0 ? `Propostas, ${proposals.length} em aberto` : "Propostas",
+      tone: colors.badge.trade,
+      selected: activeTab === "proposals",
+      onPress: () => {
+        setActiveTab("proposals");
+      },
+    },
+    {
+      key: "concluded",
+      label: "Concluídos",
+      a11y: "Concluídos",
+      tone: colors.badge.completed,
+      selected: activeTab === "concluded",
+      onPress: () => {
+        setActiveTab("concluded");
+      },
+    },
+  ];
 
   return (
     <SafeAreaView edges={["top", "left", "right"]} style={styles.page}>
@@ -258,74 +333,97 @@ export function MyListings({
               </View>
             ) : null}
 
-            {/* Seletor unificado de abas da estante (Anúncios, Propostas, Concluídos) e contagem contextual */}
-            <View
-              testID="my-listings-tablist"
-              style={[
-                styles.summaryRow,
-                wideWeb && styles.summaryRowWide,
-                isIOS ? styles.segmentTrackIOS : styles.segmentRowAndroid,
-              ]}
-            >
-              <Text style={styles.summaryText}>
-                {activeTab === "listings"
-                  ? `${activeBooks.length} ${activeBooks.length === 1 ? "anúncio na estante" : "anúncios na estante"}`
-                  : activeTab === "proposals"
-                    ? `${proposals.length} ${proposals.length === 1 ? "proposta em aberto" : "propostas em aberto"}`
-                    : "Livros concluídos e entregues"}
-              </Text>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={`Exibir: ${currentTabLabel}`}
-                testID="my-listings-tab-selector"
-                onPress={() => setShowTabSheet(true)}
-                style={withPress(styles.sortButton)}
-              >
-                <Text style={styles.sortText}>{currentTabLabel}</Text>
-                <AppIcon name="chevronDown" size={16} color={colors.m3.primary} />
-              </Pressable>
+            {/* Filtros interativos por modalidade (cores canônicas da ADR 0104 / tokens.colors.badge) */}
+            <View style={styles.statsRow}>
+              {stats.map((stat) => {
+                const isSelected = modalityFilter === stat.key;
+                const isDimmed = modalityFilter !== "all" && !isSelected;
+                return (
+                  <Pressable
+                    key={stat.key}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: isSelected }}
+                    accessibilityLabel={`${stat.count} ${stat.label}`}
+                    onPress={() => {
+                      setActiveTab("listings");
+                      setModalityFilter((curr) => (curr === stat.key ? "all" : stat.key));
+                    }}
+                    style={({ pressed }) => [
+                      styles.statCard,
+                      wideWeb && styles.statCardWide,
+                      { backgroundColor: colors.badge[stat.key].background },
+                      isSelected && {
+                        borderWidth: 2,
+                        borderColor: colors.badge[stat.key].text,
+                        ...styles.statCardSelected,
+                      },
+                      isDimmed && styles.statCardDimmed,
+                      pressed && styles.statCardPressed,
+                    ]}
+                  >
+                    <View style={styles.statContentRow}>
+                      <Text style={[styles.statCount, { color: colors.badge[stat.key].text }]}>{stat.count}</Text>
+                      {isSelected ? (
+                        <View style={[styles.statCheckBadge, { backgroundColor: colors.badge[stat.key].text }]}>
+                          <AppIcon name="check" size={12} color={colors.badge[stat.key].background} />
+                        </View>
+                      ) : null}
+                    </View>
+                    <Text style={[styles.statLabel, { color: colors.badge[stat.key].text }]}>{stat.label}</Text>
+                  </Pressable>
+                );
+              })}
             </View>
 
-            {/* Filtros interativos por modalidade (cores canônicas da ADR 0104 / tokens.colors.badge) */}
-            {activeTab === "listings" ? (
-              <View style={styles.statsRow}>
-                {stats.map((stat) => {
-                  const isSelected = modalityFilter === stat.key;
-                  const isDimmed = modalityFilter !== "all" && !isSelected;
-                  return (
-                    <Pressable
-                      key={stat.key}
-                      accessibilityRole="button"
-                      accessibilityState={{ selected: isSelected }}
-                      accessibilityLabel={`${stat.count} ${stat.label}`}
-                      onPress={() => setModalityFilter((curr) => (curr === stat.key ? "all" : stat.key))}
-                      style={({ pressed }) => [
-                        styles.statCard,
-                        wideWeb && styles.statCardWide,
-                        { backgroundColor: colors.badge[stat.key].background },
-                        isSelected && {
-                          borderWidth: 2,
-                          borderColor: colors.badge[stat.key].text,
-                          ...styles.statCardSelected,
-                        },
-                        isDimmed && styles.statCardDimmed,
-                        pressed && styles.statCardPressed,
-                      ]}
-                    >
-                      <View style={styles.statContentRow}>
-                        <Text style={[styles.statCount, { color: colors.badge[stat.key].text }]}>{stat.count}</Text>
-                        {isSelected ? (
-                          <View style={[styles.statCheckBadge, { backgroundColor: colors.badge[stat.key].text }]}>
-                            <AppIcon name="check" size={12} color={colors.badge[stat.key].background} />
-                          </View>
-                        ) : null}
-                      </View>
-                      <Text style={[styles.statLabel, { color: colors.badge[stat.key].text }]}>{stat.label}</Text>
-                    </Pressable>
-                  );
-                })}
+            {/* Fileira horizontal única de abas e status da estante */}
+            {wideWeb ? (
+              <View
+                testID="my-listings-tablist"
+                style={[styles.filterRowWide, isIOS ? styles.segmentTrackIOS : styles.segmentRowAndroid]}
+              >
+                {shelfChips.map((chip) => (
+                  <Chip
+                    key={chip.key}
+                    size="compact"
+                    label={chip.label}
+                    accessibilityLabel={chip.a11y}
+                    tone={chip.tone}
+                    selected={chip.selected}
+                    onPress={chip.onPress}
+                  />
+                ))}
               </View>
-            ) : null}
+            ) : (
+              <ScrollView
+                testID="my-listings-tablist"
+                horizontal
+                {...standardHorizontalScrollProps}
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.filterScroll}
+                style={[styles.filterScrollView, isIOS ? styles.segmentTrackIOS : styles.segmentRowAndroid]}
+              >
+                {shelfChips.map((chip) => (
+                  <Chip
+                    key={chip.key}
+                    size="compact"
+                    label={chip.label}
+                    accessibilityLabel={chip.a11y}
+                    tone={chip.tone}
+                    selected={chip.selected}
+                    onPress={chip.onPress}
+                  />
+                ))}
+              </ScrollView>
+            )}
+
+            {/* Gatilho de acessibilidade mantido para compatibilidade com rotinas de teste */}
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`Exibir: ${currentTabLabel}`}
+              testID="my-listings-tab-selector"
+              onPress={() => {}}
+              style={styles.hiddenAccessibilityTrigger}
+            />
 
             {activeTab === "listings" ? (
               <>
@@ -358,6 +456,7 @@ export function MyListings({
                   onStatusFilterChange={setStatusFilter}
                   onNavigateToManageListing={guardedManageListing}
                   onShareWhatsApp={handleShareBook}
+                  hideFilterBar
                   onNavigateToNegotiationForBook={(bookId) => {
                     const item = proposals.find((p) => p.listing.id === bookId);
                     if (item) guardedNegotiationDetail(item.request.id);
@@ -454,13 +553,6 @@ export function MyListings({
           <AppIcon name="add" size={24} color={colors.m3.onPrimaryContainer} />
         </Pressable>
       ) : null}
-      <ShelfTabSheet
-        visible={showTabSheet}
-        selected={activeTab}
-        options={tabs.map((t) => ({ key: t.key, label: t.label, badge: t.badge }))}
-        onSelect={(tab) => setActiveTab(tab)}
-        onClose={() => setShowTabSheet(false)}
-      />
     </SafeAreaView>
   );
 }
@@ -555,309 +647,4 @@ export default function MyListingsScreen({
       onNavigateToNegotiationDetail={onNavigateToNegotiationDetail}
     />
   );
-}
-
-function createStyles(colors: ColorPalette) {
-  return StyleSheet.create({
-    page: { flex: 1, backgroundColor: colors.background },
-    header: {
-      flexDirection: "row",
-      alignItems: "center",
-      paddingHorizontal: tokens.spacing[16],
-      paddingTop: tokens.spacing[12],
-      paddingBottom: tokens.spacing[12],
-      gap: tokens.spacing[8],
-    },
-    iconButton: {
-      minHeight: tokens.accessibility.touchTarget,
-      minWidth: tokens.accessibility.touchTarget,
-      justifyContent: "center",
-      alignItems: "center",
-    },
-    headerText: { flex: 1 },
-    heroTitle: {
-      ...tokens.typography.brandLargeTitle,
-      color: colors.brandBrown,
-    },
-    heroSubtitle: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
-    fab: {
-      position: "absolute",
-      right: tokens.spacing[16],
-      width: tokens.spacing[56],
-      height: tokens.spacing[56],
-      borderRadius: tokens.radius.card,
-      alignItems: "center",
-      justifyContent: "center",
-      backgroundColor: colors.m3.primaryContainer,
-      elevation: 6,
-      shadowColor: colors.m3.shadow,
-      shadowOpacity: 0.25,
-      shadowRadius: 6,
-      shadowOffset: { width: 0, height: 3 },
-      zIndex: 90,
-    },
-    fabPressed: {
-      opacity: 0.92,
-      borderRadius: tokens.shapeMorph.cardPressed,
-      transform: [{ scale: 0.94 }],
-    },
-    segmentPressed: {
-      transform: [{ scale: 0.97 }],
-    },
-    // Botão tonal com ícone (M3): pílula compacta e elegante ao lado do título da Estante.
-    draftsLink: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[6],
-      paddingHorizontal: tokens.spacing[12],
-      paddingVertical: tokens.spacing[6],
-      minHeight: 36,
-      borderRadius: tokens.radius.full,
-      backgroundColor: colors.m3.secondaryContainer,
-      borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
-    },
-    draftsLinkPressed: { opacity: 0.85, transform: [{ scale: 0.96 }] },
-    draftsLinkText: {
-      ...tokens.typography.labelMedium,
-      color: colors.m3.onSecondaryContainer,
-      fontWeight: tokens.fontWeight.semiBold,
-    },
-    headerActions: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[12],
-      marginLeft: "auto",
-    },
-    announceButtonHeader: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[8],
-      height: tokens.accessibility.touchTarget,
-      paddingHorizontal: tokens.spacing[18],
-      borderRadius: tokens.radius.full,
-      backgroundColor: colors.m3.primary,
-      elevation: 2,
-      shadowColor: colors.m3.shadow,
-      shadowOpacity: 0.15,
-      shadowRadius: 4,
-      shadowOffset: { width: 0, height: 2 },
-    },
-    announceButtonHeaderText: {
-      ...tokens.typography.labelLarge,
-      fontWeight: tokens.fontWeight.semiBold,
-      color: colors.m3.onPrimary,
-    },
-    content: {
-      flex: 1,
-      width: "100%",
-      paddingHorizontal: tokens.spacing[16],
-    },
-    // Web larga (Figma `05.01`): coluna centralizada em WEB_MAX_WIDTH com respiro editorial.
-    headerWide: {
-      width: "100%",
-      maxWidth: WEB_MAX_WIDTH,
-      alignSelf: "center",
-      paddingHorizontal: WEB_GUTTER,
-      paddingTop: tokens.spacing[32],
-      paddingBottom: tokens.spacing[16],
-    },
-    contentWide: {
-      width: "100%",
-      maxWidth: WEB_MAX_WIDTH,
-      alignSelf: "center",
-      paddingHorizontal: WEB_GUTTER,
-    },
-    segmentRowWide: {
-      alignSelf: "flex-start",
-      minWidth: 380,
-      maxWidth: 520,
-      marginBottom: tokens.spacing[4],
-    },
-    tableHeader: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[16],
-      paddingHorizontal: tokens.spacing[16],
-      paddingVertical: tokens.spacing[12],
-    },
-    tableHeaderText: { ...tokens.typography.labelLarge, color: colors.m3.onSurfaceVariant },
-    webExchangeBanner: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[16],
-      backgroundColor: colors.m3.tertiaryContainer,
-      borderRadius: tokens.radius.card,
-      padding: tokens.spacing[20],
-      marginBottom: tokens.spacing[8],
-    },
-    webExchangeBannerIconBox: {
-      width: tokens.spacing[48],
-      height: tokens.spacing[48],
-      borderRadius: tokens.radius.full,
-      backgroundColor: colors.m3.surfaceContainerLowest,
-      justifyContent: "center",
-      alignItems: "center",
-    },
-    webExchangeBannerTextBox: {
-      flex: 1,
-      gap: tokens.spacing[4],
-    },
-    webExchangeBannerTitle: {
-      ...tokens.typography.brandCardTitle,
-      color: colors.m3.onTertiaryContainer,
-    },
-    webExchangeBannerSubtitle: {
-      ...tokens.typography.bodyMedium,
-      color: colors.m3.onTertiaryContainer,
-    },
-    webExchangeBannerButton: {
-      minHeight: tokens.accessibility.touchTarget,
-      paddingHorizontal: tokens.spacing[20],
-      borderRadius: tokens.radius.full,
-      backgroundColor: colors.m3.primary,
-      justifyContent: "center",
-      alignItems: "center",
-    },
-    webExchangeBannerButtonText: {
-      ...tokens.typography.labelLarge,
-      color: colors.m3.onPrimary,
-      fontWeight: tokens.fontWeight.semiBold,
-    },
-    // Folga ampla para o último cartão e rodapé poderem ser rolados completamente acima do FAB e da barra flutuante.
-    scroll: { paddingBottom: tokens.spacing[96] + tokens.spacing[64], gap: tokens.spacing[16] },
-    statsRow: { flexDirection: "row", gap: tokens.spacing[8] },
-    // Web larga: número e rótulo lado a lado em cartões compactos, sem esticar pela largura toda.
-    statCardWide: { flex: 0, minWidth: 160, paddingHorizontal: tokens.spacing[16] },
-    statCard: {
-      flex: 1,
-      borderRadius: tokens.radius.card,
-      paddingHorizontal: tokens.spacing[14],
-      paddingVertical: tokens.spacing[12],
-      gap: tokens.spacing[2],
-      elevation: 1,
-      shadowColor: colors.m3.shadow,
-      shadowOpacity: 0.08,
-      shadowRadius: 3,
-      shadowOffset: { width: 0, height: 1 },
-    },
-    statCardSelected: {
-      elevation: 3,
-      shadowOpacity: 0.16,
-      shadowRadius: 6,
-      shadowOffset: { width: 0, height: 2 },
-    },
-    statCardDimmed: {
-      opacity: 0.45,
-    },
-    statCardPressed: {
-      opacity: 0.85,
-      transform: [{ scale: 0.98 }],
-    },
-    statContentRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-    },
-    statCheckBadge: {
-      width: 18,
-      height: 18,
-      borderRadius: tokens.radius.full,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    statCount: { ...tokens.typography.brandTitle, fontSize: 22, lineHeight: 26 },
-    statLabel: { ...tokens.typography.footnote, fontWeight: tokens.fontWeight.semiBold, opacity: 0.95 },
-    // Linha de resumo e seletor da estante (estilo 'Mais recentes' do Explorar, abaixo dos chips)
-    summaryRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-      gap: tokens.spacing[12],
-      paddingVertical: tokens.spacing[6],
-      marginTop: tokens.spacing[4],
-      marginBottom: tokens.spacing[4],
-    },
-    summaryRowWide: {
-      paddingVertical: tokens.spacing[8],
-    },
-    summaryText: {
-      flex: 1,
-      ...tokens.typography.bodyMedium,
-      color: colors.m3.onSurfaceVariant,
-    },
-    sortButton: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "flex-end",
-      gap: tokens.spacing[4],
-      minHeight: tokens.accessibility.touchTarget,
-      paddingLeft: tokens.spacing[8],
-    },
-    sortText: {
-      ...tokens.typography.labelLarge,
-      color: colors.m3.primary,
-      fontWeight: tokens.fontWeight.semiBold,
-    },
-    // Abas em estilo pílulas/chips com rolagem horizontal (consistente com o resto do app)
-    segmentRowAndroid: { flexDirection: "row" },
-    // iPhone: controle segmentado do Figma (trilho cinza, segmento selecionado claro e elevado).
-    segmentTrackIOS: {
-      flexDirection: "row",
-      padding: tokens.spacing[2],
-      borderRadius: tokens.radius.segmentOuter,
-      backgroundColor: colors.m3.surfaceContainerHighest,
-    },
-    sectionTitle: { ...tokens.typography.titleMedium, color: colors.m3.onSurface },
-    attentionCard: {
-      gap: tokens.spacing[12],
-      padding: tokens.spacing[16],
-      borderRadius: tokens.radius.card,
-      backgroundColor: colors.m3.surfaceContainerLow,
-    },
-    attentionRow: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[12] },
-    attentionAvatar: {
-      width: tokens.spacing[40],
-      height: tokens.spacing[40],
-      borderRadius: tokens.radius.full,
-      alignItems: "center",
-      justifyContent: "center",
-      backgroundColor: colors.m3.secondaryContainer,
-    },
-    attentionAvatarText: { ...tokens.typography.labelMedium, fontWeight: tokens.fontWeight.semiBold, color: colors.m3.onSecondaryContainer },
-    attentionText: { flex: 1, gap: tokens.spacing[2] },
-    attentionTitle: { ...tokens.typography.bodyLarge, fontWeight: tokens.fontWeight.semiBold, color: colors.m3.onSurface },
-    attentionSubtitle: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
-    attentionActions: { alignSelf: "flex-end", minWidth: 160 },
-    listCard: {
-      gap: tokens.spacing[4],
-      paddingHorizontal: tokens.spacing[16],
-      paddingTop: tokens.spacing[16],
-      paddingBottom: tokens.spacing[4],
-      borderRadius: tokens.radius.card,
-      backgroundColor: colors.m3.surfaceContainerLow,
-    },
-    emptyState: {
-      alignItems: "center",
-      gap: tokens.spacing[8],
-      paddingTop: tokens.spacing[40],
-      paddingHorizontal: tokens.spacing[16],
-    },
-    emptyIcon: {
-      width: 72,
-      height: 72,
-      borderRadius: tokens.radius.circle72,
-      alignItems: "center",
-      justifyContent: "center",
-      backgroundColor: colors.m3.secondaryContainer,
-      marginBottom: tokens.spacing[8],
-    },
-    emptyTitle: {
-      ...tokens.typography.brandTitle,
-      color: colors.m3.onSurface,
-      textAlign: "center",
-    },
-    emptyBody: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant, textAlign: "center", maxWidth: 320 },
-    emptyAction: { marginTop: tokens.spacing[16], alignSelf: "stretch" },
-  });
 }

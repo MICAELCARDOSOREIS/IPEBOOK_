@@ -78,7 +78,7 @@ export function ShelfRow({ book, summary, accessibilityLabel, onPress, onShareWh
           <Tag variant={wide.statusVariant} label={wide.statusLabel} />
         </View>
         <View style={styles.cellActionBox}>
-          {onShareWhatsApp ? (
+          {onShareWhatsApp && book.status === "available" ? (
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={`Compartilhar ${book.title} no WhatsApp`}
@@ -89,7 +89,7 @@ export function ShelfRow({ book, summary, accessibilityLabel, onPress, onShareWh
               }}
               style={withPress(styles.whatsappButton)}
             >
-              <AppIcon name="whatsapp" size={18} color={colors.nature.foliage} />
+              <AppIcon name="share" size={18} color={colors.nature.foliage} />
             </Pressable>
           ) : null}
           <View style={styles.actionButton}>
@@ -117,123 +117,132 @@ export function ShelfRow({ book, summary, accessibilityLabel, onPress, onShareWh
           ? { background: colors.m3.secondaryContainer, text: colors.m3.onSecondaryContainer, label: "Concluído" }
           : { background: colors.badge.available.background, text: colors.badge.available.text, label: "Disponível" };
 
+  const hasNegotiationAction = book.status === "reserved" && Boolean(onNavigateToNegotiation);
+  const handleCardPress = hasNegotiationAction ? onNavigateToNegotiation! : onPress;
+
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={accessibilityLabel}
-      onPress={onPress}
-      style={({ pressed }) => [styles.row, styles.mobileCard, pressed && styles.rowPressed]}
-    >
-      <ModalityCoverArea modality={book.modality}>
-        <BookCover id={book.id} title={book.title} photoUrl={book.photoUrl} variant="list" />
-      </ModalityCoverArea>
-      <View style={styles.rowText}>
-        <View style={styles.modalityPriceRow}>
-          <View style={styles.modalityBadgesGroup}>
-            <Tag variant={book.modality} />
-            {book.isBox ? (
-              <Tag
-                variant="box"
-                label={book.boxVolumesCount ? `Box (${book.boxVolumesCount} vols)` : "Box"}
-              />
+    <View style={styles.mobileCardContainer}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={accessibilityLabel}
+        onPress={handleCardPress}
+        style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
+      >
+        <ModalityCoverArea modality={book.modality}>
+          <BookCover id={book.id} title={book.title} photoUrl={book.photoUrl} variant="list" />
+        </ModalityCoverArea>
+        <View style={styles.rowText}>
+          <View style={styles.modalityPriceRow}>
+            <View style={styles.modalityBadgesGroup}>
+              <Tag variant={book.modality} />
+              {book.isBox ? (
+                <Tag
+                  variant="box"
+                  label={book.boxVolumesCount ? `Box (${book.boxVolumesCount} vols)` : "Box"}
+                />
+              ) : null}
+            </View>
+            <Text style={styles.priceText} numberOfLines={1}>
+              {offerText}
+            </Text>
+          </View>
+          <View style={styles.titleBlock}>
+            <Text style={styles.rowTitle} numberOfLines={2}>
+              {book.title}
+            </Text>
+            {book.author ? (
+              <Text style={styles.rowAuthor} numberOfLines={1}>
+                {book.author}
+              </Text>
             ) : null}
           </View>
-          <Text style={styles.priceText} numberOfLines={1}>
-            {offerText}
+          <View style={styles.footerRow}>
+            <View style={styles.locationRow}>
+              <AppIcon name="place" size={13} color={colors.nature.foliageDeep} />
+              <Text style={styles.locationText} numberOfLines={1}>
+                {book.neighborhood || "Piripiri"}
+              </Text>
+            </View>
+            <View style={[styles.statusPill, { backgroundColor: statusTone.background }]}>
+              <Text style={[styles.statusPillText, { color: statusTone.text }]}>
+                {statusTone.label}
+              </Text>
+            </View>
+          </View>
+          <Text style={styles.srOnlySummary} numberOfLines={1}>
+            {summary}
           </Text>
         </View>
-        <View style={styles.titleBlock}>
-          <Text style={styles.rowTitle} numberOfLines={2}>
-            {book.title}
-          </Text>
-          {book.author ? (
-            <Text style={styles.rowAuthor} numberOfLines={1}>
-              {book.author}
-            </Text>
+        <View style={styles.trailingActions}>
+          {onShareWhatsApp && book.status === "available" ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`Compartilhar ${book.title} no WhatsApp`}
+              hitSlop={8}
+              onPress={(e) => {
+                e?.stopPropagation?.();
+                onShareWhatsApp();
+              }}
+              style={withPress(styles.whatsappButton)}
+            >
+              <AppIcon name="share" size={18} color={colors.nature.foliage} />
+            </Pressable>
           ) : null}
+          <AppIcon name="chevronRight" size={22} color={colors.m3.onSurfaceVariant} />
         </View>
-        <View style={styles.footerRow}>
-          <View style={styles.locationRow}>
-            <AppIcon name="place" size={13} color={colors.nature.foliageDeep} />
-            <Text style={styles.locationText} numberOfLines={1}>
-              {book.neighborhood || "Piripiri"}
-            </Text>
+      </Pressable>
+      {hasNegotiationAction ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Ver negociação de ${book.title}`}
+          hitSlop={8}
+          onPress={(e) => {
+            e?.stopPropagation?.();
+            onNavigateToNegotiation?.();
+          }}
+          style={({ pressed }) => [
+            styles.negotiationFooterBar,
+            pressed && styles.negotiationFooterBarPressed,
+          ]}
+        >
+          <View style={styles.negotiationFooterLeft}>
+            <AppIcon name="chat" size={15} color={colors.nature.foliageDeep} />
+            <Text style={styles.negotiationFooterLabel}>Negociação em andamento</Text>
           </View>
-          <View style={[styles.statusPill, { backgroundColor: statusTone.background }]}>
-            <Text style={[styles.statusPillText, { color: statusTone.text }]}>
-              {statusTone.label}
-            </Text>
+          <View style={styles.negotiationFooterRight}>
+            <Text style={styles.negotiationFooterAction}>Ver negociação</Text>
+            <AppIcon name="chevronRight" size={16} color={colors.nature.foliageDeep} />
           </View>
-        </View>
-        {/* Ação da negociação em linha própria: mantém a situação sempre na mesma posição
-            (ao lado do bairro) em todos os cartões, sem depender de quebra do rodapé. */}
-        {book.status === "reserved" && onNavigateToNegotiation ? (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={`Ver negociação de ${book.title}`}
-            hitSlop={8}
-            onPress={(e) => {
-              e?.stopPropagation?.();
-              onNavigateToNegotiation();
-            }}
-            style={withPress(styles.negotiationButton)}
-          >
-            <AppIcon name="chat" size={14} color={colors.m3.onPrimaryContainer} />
-            <Text style={styles.negotiationButtonText}>Ver negociação</Text>
-          </Pressable>
-        ) : null}
-        <Text style={styles.srOnlySummary} numberOfLines={1}>
-          {summary}
-        </Text>
-      </View>
-      <View style={styles.trailingActions}>
-        {onShareWhatsApp ? (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={`Compartilhar ${book.title} no WhatsApp`}
-            hitSlop={8}
-            onPress={(e) => {
-              e?.stopPropagation?.();
-              onShareWhatsApp();
-            }}
-            style={withPress(styles.whatsappButton)}
-          >
-            <AppIcon name="whatsapp" size={18} color={colors.nature.foliage} />
-          </Pressable>
-        ) : null}
-        <AppIcon name="chevronRight" size={22} color={colors.m3.onSurfaceVariant} />
-      </View>
-    </Pressable>
+        </Pressable>
+      ) : null}
+    </View>
   );
 }
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
-    row: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[14],
-      minHeight: tokens.accessibility.touchTarget,
-      paddingVertical: tokens.spacing[12],
-      borderRadius: tokens.shapeMorph.cardRest,
-    },
-    mobileCard: {
+    mobileCardContainer: {
       backgroundColor: colors.m3.surfaceContainerLowest,
       borderRadius: tokens.radius.card,
       borderWidth: 1,
       borderColor: colors.m3.outlineVariant,
-      paddingHorizontal: tokens.spacing[12],
-      paddingVertical: tokens.spacing[12],
       elevation: 2,
       shadowColor: colors.ipe.trunk,
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.08,
       shadowRadius: 6,
+      overflow: "hidden",
+    },
+    row: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[14],
+      minHeight: tokens.accessibility.touchTarget,
+      paddingHorizontal: tokens.spacing[12],
+      paddingVertical: tokens.spacing[12],
     },
     rowPressed: {
       backgroundColor: colors.m3.surfaceContainerHigh,
-      borderRadius: tokens.shapeMorph.cardPressed,
-      transform: [{ scale: 0.96 }],
     },
     rowText: { flex: 1, gap: tokens.spacing[6] },
     modalityPriceRow: {
@@ -306,22 +315,46 @@ function createStyles(colors: ColorPalette) {
       lineHeight: 14,
       fontWeight: tokens.fontWeight.bold,
     },
-    negotiationButton: {
+    negotiationFooterBar: {
       flexDirection: "row",
-      alignSelf: "flex-end",
       alignItems: "center",
-      gap: tokens.spacing[4],
-      paddingHorizontal: tokens.spacing[10],
-      paddingVertical: tokens.spacing[4],
-      borderRadius: tokens.radius.full,
+      justifyContent: "space-between",
+      paddingHorizontal: tokens.spacing[12],
+      paddingVertical: tokens.spacing[8],
+      backgroundColor: colors.nature.sprout,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: colors.m3.outlineVariant,
+      minHeight: tokens.accessibility.touchTarget,
+    },
+    negotiationFooterBarPressed: {
       backgroundColor: colors.m3.primaryContainer,
     },
-    negotiationButtonText: {
-      ...tokens.typography.captionSmall,
-      fontSize: 11,
-      lineHeight: 14,
-      fontWeight: tokens.fontWeight.semiBold,
-      color: colors.m3.onPrimaryContainer,
+    negotiationFooterLeft: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[6],
+      flexShrink: 1,
+    },
+    negotiationFooterLabel: {
+      ...tokens.typography.labelSmall,
+      fontSize: 12,
+      lineHeight: 16,
+      fontFamily: fontFamily.medium,
+      color: colors.m3.onSurfaceVariant,
+    },
+    negotiationFooterRight: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[2],
+      flexShrink: 0,
+    },
+    negotiationFooterAction: {
+      ...tokens.typography.labelSmall,
+      fontSize: 12,
+      lineHeight: 16,
+      fontWeight: tokens.fontWeight.bold,
+      fontFamily: fontFamily.semiBold,
+      color: colors.nature.foliageDeep,
     },
     srOnlySummary: {
       position: "absolute",
