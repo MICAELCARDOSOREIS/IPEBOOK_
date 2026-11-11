@@ -274,7 +274,7 @@ function createStyles(colors: ColorPalette) {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
-      flexWrap: "wrap",
+      flexWrap: "nowrap",
       gap: tokens.spacing[6],
       paddingTop: tokens.spacing[6],
       borderTopWidth: StyleSheet.hairlineWidth,
@@ -295,6 +295,7 @@ function createStyles(colors: ColorPalette) {
       flexShrink: 1,
     },
     statusPill: {
+      flexShrink: 0,
       paddingHorizontal: tokens.spacing[8],
       paddingVertical: 2,
       borderRadius: tokens.radius.full,
