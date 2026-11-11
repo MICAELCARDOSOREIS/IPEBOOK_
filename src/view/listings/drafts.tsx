@@ -9,6 +9,7 @@ import { BookCover } from "@/view/components/BookCover";
 import { Dialog } from "@/view/components/Dialog";
 import { ErrorState } from "@/view/components/ErrorState";
 import { FilledButton } from "@/view/components/FilledButton";
+import { InlineErrorCard } from "@/view/components/InlineErrorCard";
 import { ModalityCoverArea } from "@/view/components/ModalityCoverArea";
 import { Tag } from "@/view/components/Tag";
 import { TextButton } from "@/view/components/TextButton";
@@ -19,8 +20,9 @@ import { makeAuthViewModel, makeDraftsViewModel } from "@/di/container";
 import { WEB_MAX_WIDTH, WEB_GUTTER, useWebColumns, webColumnWidth } from "@/view/webLayout";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
-
+import { formatPrice } from "@/view/formatPrice";
 import { withPress } from "@/view/pressFeedback";
+
 const TOTAL_STEPS = 3;
 const WIDE_CONTENT_MAX_WIDTH = WEB_MAX_WIDTH;
 
@@ -29,6 +31,8 @@ const STEP_LABELS: Record<number, string> = {
   2: "nas fotos",
   3: "nos detalhes",
 };
+
+const STEP_NAMES = ["Livro", "Fotos", "Detalhes"];
 
 function stepLabel(book: Book): string {
   const step = book.draftStep ?? 1;
@@ -90,13 +94,21 @@ export function Drafts({ sessionUserId, onBack, onResume, onNavigateToCreateList
         ) : state.drafts.length === 0 ? (
           <View style={styles.empty}>
             <View style={styles.emptyIcon}>
-              <AppIcon name="document" size={32} color={colors.m3.onSecondaryContainer} />
+              <AppIcon name="document" size={36} color={colors.m3.onSecondaryContainer} />
             </View>
-            <Text accessibilityRole="header" style={styles.emptyTitle}>Nenhum rascunho por aqui</Text>
+            <Text accessibilityRole="header" style={styles.emptyTitle}>
+              Nenhum rascunho por aqui
+            </Text>
             <Text style={styles.emptySubtitle}>
               Quando você começar a anunciar um livro e escolher "Salvar para depois", ele aparece
               aqui para você retomar de onde parou.
             </Text>
+            <View style={styles.tipCard}>
+              <AppIcon name="info" size={18} color={colors.m3.primary} />
+              <Text style={styles.tipText}>
+                Dica: Você não precisa cadastrar tudo de uma vez. Comece pelo título e adicione fotos ou detalhes quando for mais conveniente.
+              </Text>
+            </View>
             {onNavigateToCreateListing ? (
               <View style={styles.emptyAction}>
                 <FilledButton label="Anunciar um livro" onPress={guardedCreate} />
@@ -114,20 +126,39 @@ export function Drafts({ sessionUserId, onBack, onResume, onNavigateToCreateList
               { paddingBottom: scrollBottomPadding.withoutBottomBar },
             ]}
             ListHeaderComponent={
-              <>
-                <Text style={[styles.summary, wide && styles.fullRow]}>
-                  {state.drafts.length === 1 ? "1 anúncio em andamento" : `${state.drafts.length} anúncios em andamento`}
-                </Text>
+              <View style={[styles.headerSection, wide && styles.fullRow]}>
+                <View style={styles.summaryContainer}>
+                  <View style={styles.summaryBadge}>
+                    <AppIcon name="document" size={16} color={colors.m3.primary} />
+                    <Text style={styles.summary}>
+                      {state.drafts.length === 1 ? "1 anúncio em andamento" : `${state.drafts.length} anúncios em andamento`}
+                    </Text>
+                  </View>
+                  <Text style={styles.summaryHint}>Toque no cartão ou em "Retomar" para continuar seu cadastro</Text>
+                </View>
                 {state.discardError ? (
-                  <Text accessibilityRole="alert" style={[styles.cardError, wide && styles.fullRow]}>{state.discardError}</Text>
+                  <InlineErrorCard
+                    message={state.discardError}
+                    style={styles.discardErrorCard}
+                  />
                 ) : null}
-              </>
+              </View>
+            }
+            ListFooterComponent={
+              <View style={[styles.footerTip, wide && styles.fullRow]}>
+                <AppIcon name="lock" size={16} color={colors.m3.onSurfaceVariant} />
+                <Text style={styles.footerTipText}>
+                  Seus rascunhos são particulares e seguros. Ninguém na comunidade vê o livro até você concluir a publicação.
+                </Text>
+              </View>
             }
             ItemSeparatorComponent={() => <View style={{ height: tokens.spacing[12] }} />}
             renderItem={({ item: book }) => {
               const step = Math.min(Math.max(book.draftStep ?? 1, 1), TOTAL_STEPS);
               const title = book.title?.trim() || "Sem título";
               const discarding = state.discardingId === book.id;
+              const hasPrice = book.modality === "sale" && book.price != null && book.price > 0;
+
               return (
                 <View style={[styles.card, wide && columnWidth]}>
                   <Pressable
@@ -140,20 +171,56 @@ export function Drafts({ sessionUserId, onBack, onResume, onNavigateToCreateList
                       <BookCover id={book.id} title={title} photoUrl={book.photoUrl} variant="list" />
                     </ModalityCoverArea>
                     <View style={styles.cardTexts}>
-                      <Text numberOfLines={2} style={styles.cardTitle}>{title}</Text>
-                      <Text numberOfLines={1} style={styles.cardAuthor}>{book.author?.trim() || "Autor não informado"}</Text>
                       <View style={styles.metaRow}>
                         <Tag variant={book.modality} />
+                        {hasPrice ? (
+                          <View style={styles.priceBadge}>
+                            <Text style={styles.priceBadgeText}>{formatPrice(book.price ?? 0)}</Text>
+                          </View>
+                        ) : null}
+                      </View>
+                      <Text numberOfLines={2} style={styles.cardTitle}>
+                        {title}
+                      </Text>
+                      <Text numberOfLines={1} style={styles.cardAuthor}>
+                        {book.author?.trim() || "Autor não informado"}
+                      </Text>
+                      <View style={styles.stepInfoRow}>
+                        <AppIcon name="edit" size={14} color={colors.m3.primary} />
                         <Text style={styles.cardSubtitle}>{stepLabel(book)}</Text>
                       </View>
-                      {/* Andamento: três etapas, as já alcançadas preenchidas */}
-                      <View accessible={false} importantForAccessibility="no" style={styles.progress}>
-                        {Array.from({ length: TOTAL_STEPS }, (_, index) => (
-                          <View key={index} style={[styles.progressSegment, index < step && styles.progressSegmentDone]} />
-                        ))}
+                      {/* Barra de andamento visual: três etapas preenchidas proporcionalmente */}
+                      <View accessible={false} importantForAccessibility="no" style={styles.progressContainer}>
+                        <View style={styles.progress}>
+                          {Array.from({ length: TOTAL_STEPS }, (_, index) => (
+                            <View
+                              key={index}
+                              style={[
+                                styles.progressSegment,
+                                index < step && styles.progressSegmentDone,
+                              ]}
+                            />
+                          ))}
+                        </View>
+                        <View style={styles.progressLabels}>
+                          {STEP_NAMES.map((name, idx) => (
+                            <Text
+                              key={name}
+                              style={[
+                                styles.progressLabelText,
+                                idx < step && styles.progressLabelTextActive,
+                              ]}
+                            >
+                              {name}
+                            </Text>
+                          ))}
+                        </View>
                       </View>
                     </View>
                   </Pressable>
+
+                  <View style={styles.cardDivider} />
+
                   <View style={styles.cardActions}>
                     <TextButton
                       label={discarding ? "Descartando…" : "Descartar"}
@@ -163,7 +230,11 @@ export function Drafts({ sessionUserId, onBack, onResume, onNavigateToCreateList
                       onPress={() => setToDiscard(book)}
                     />
                     <View style={styles.resumeWrap}>
-                      <FilledButton label="Retomar" accessibilityLabel="Retomar rascunho" onPress={() => onResume?.(book.id)} />
+                      <FilledButton
+                        label="Retomar"
+                        accessibilityLabel="Retomar rascunho"
+                        onPress={() => guardedResume(book.id)}
+                      />
                     </View>
                   </View>
                 </View>
@@ -235,32 +306,151 @@ function createStyles(colors: ColorPalette) {
       paddingHorizontal: tokens.spacing[16],
     },
     contentWide: { maxWidth: WIDE_CONTENT_MAX_WIDTH, paddingHorizontal: WEB_GUTTER },
-    scrollWide: { flexDirection: "row", flexWrap: "wrap", alignItems: "flex-start", columnGap: tokens.spacing[16], rowGap: tokens.spacing[16] },
+    scrollWide: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      alignItems: "flex-start",
+      columnGap: tokens.spacing[16],
+      rowGap: tokens.spacing[16],
+    },
     fullRow: { width: "100%" },
     scroll: { gap: tokens.spacing[12], paddingBottom: tokens.spacing[24] },
-    summary: { ...tokens.typography.labelLarge, color: colors.m3.primary, paddingTop: tokens.spacing[4] },
-    card: {
+    headerSection: {
       gap: tokens.spacing[8],
-      padding: tokens.spacing[12],
-      borderRadius: tokens.radius.large,
-      backgroundColor: colors.m3.surfaceContainerLow,
+      paddingVertical: tokens.spacing[4],
     },
-    cardMain: { flexDirection: "row", gap: tokens.spacing[12], alignItems: "center" },
+    summaryContainer: {
+      gap: tokens.spacing[2],
+      paddingVertical: tokens.spacing[4],
+    },
+    summaryBadge: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[6],
+    },
+    summary: {
+      ...tokens.typography.labelLarge,
+      color: colors.m3.primary,
+      fontWeight: tokens.fontWeight.semiBold,
+    },
+    summaryHint: {
+      ...tokens.typography.footnote,
+      color: colors.m3.onSurfaceVariant,
+    },
+    discardErrorCard: {
+      marginTop: tokens.spacing[4],
+    },
+    card: {
+      gap: tokens.spacing[12],
+      padding: tokens.spacing[16],
+      borderRadius: tokens.radius.card,
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+      elevation: 1,
+      shadowColor: colors.m3.shadow,
+      shadowOpacity: 0.06,
+      shadowRadius: 4,
+      shadowOffset: { width: 0, height: 2 },
+    },
+    cardMain: {
+      flexDirection: "row",
+      gap: tokens.spacing[14],
+      alignItems: "flex-start",
+    },
     cardTexts: { flex: 1, gap: tokens.spacing[4] },
-    cardTitle: { ...tokens.typography.titleMedium, color: colors.text },
-    cardAuthor: { ...tokens.typography.bodyMedium, color: colors.secondaryText },
-    cardSubtitle: { ...tokens.typography.labelMedium, color: colors.secondaryText },
-    metaRow: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[8], flexWrap: "wrap" },
-    progress: { flexDirection: "row", gap: tokens.spacing[4], marginTop: tokens.spacing[4] },
-    progressSegment: { flex: 1, height: 4, borderRadius: tokens.radius.hairline, backgroundColor: colors.m3.outlineVariant },
-    progressSegmentDone: { backgroundColor: colors.m3.primary },
-    cardError: { ...tokens.typography.bodyMedium, color: colors.error },
-    cardActions: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: tokens.spacing[8] },
-    resumeWrap: { flex: 1, maxWidth: 200 },
+    metaRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[8],
+      flexWrap: "wrap",
+      marginBottom: tokens.spacing[2],
+    },
+    priceBadge: {
+      backgroundColor: colors.m3.secondaryContainer,
+      paddingHorizontal: tokens.spacing[8],
+      paddingVertical: tokens.spacing[2],
+      borderRadius: tokens.radius.full,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+    },
+    priceBadgeText: {
+      ...tokens.typography.labelSmall,
+      fontWeight: tokens.fontWeight.semiBold,
+      color: colors.m3.onSecondaryContainer,
+    },
+    cardTitle: {
+      ...tokens.typography.titleMedium,
+      color: colors.text,
+      fontWeight: tokens.fontWeight.semiBold,
+      lineHeight: 22,
+    },
+    cardAuthor: {
+      ...tokens.typography.bodyMedium,
+      color: colors.secondaryText,
+    },
+    stepInfoRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[4],
+      marginTop: tokens.spacing[2],
+    },
+    cardSubtitle: {
+      ...tokens.typography.labelMedium,
+      color: colors.m3.primary,
+      fontWeight: tokens.fontWeight.medium,
+    },
+    progressContainer: {
+      gap: tokens.spacing[4],
+      marginTop: tokens.spacing[6],
+    },
+    progress: {
+      flexDirection: "row",
+      gap: tokens.spacing[6],
+    },
+    progressSegment: {
+      flex: 1,
+      height: 5,
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.m3.surfaceContainerHighest,
+    },
+    progressSegmentDone: {
+      backgroundColor: colors.m3.primary,
+    },
+    progressLabels: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      paddingHorizontal: tokens.spacing[2],
+    },
+    progressLabelText: {
+      ...tokens.typography.captionSmall,
+      fontSize: 10,
+      color: colors.m3.onSurfaceVariant,
+      opacity: 0.7,
+    },
+    progressLabelTextActive: {
+      color: colors.m3.primary,
+      fontWeight: tokens.fontWeight.semiBold,
+      opacity: 1,
+    },
+    cardDivider: {
+      height: 1,
+      backgroundColor: colors.m3.surfaceContainerHighest,
+    },
+    cardActions: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: tokens.spacing[12],
+    },
+    resumeWrap: {
+      flex: 1,
+      maxWidth: 160,
+    },
     empty: {
       paddingTop: tokens.spacing[32],
       alignItems: "center",
-      gap: tokens.spacing[8],
+      gap: tokens.spacing[10],
       paddingHorizontal: tokens.spacing[16],
     },
     emptyIcon: {
@@ -270,15 +460,61 @@ function createStyles(colors: ColorPalette) {
       alignItems: "center",
       justifyContent: "center",
       backgroundColor: colors.m3.secondaryContainer,
-      marginBottom: tokens.spacing[8],
+      marginBottom: tokens.spacing[4],
     },
-    emptyTitle: { ...tokens.typography.titleMedium, color: colors.text, textAlign: "center" },
+    emptyTitle: {
+      ...tokens.typography.brandTitle,
+      fontSize: 22,
+      lineHeight: 28,
+      color: colors.text,
+      textAlign: "center",
+    },
     emptySubtitle: {
       ...tokens.typography.bodyMedium,
       color: colors.secondaryText,
       textAlign: "center",
-      maxWidth: 320,
+      maxWidth: 360,
+      lineHeight: 20,
     },
-    emptyAction: { alignSelf: "center", width: "100%", maxWidth: 320, marginTop: tokens.spacing[16] },
+    tipCard: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+      gap: tokens.spacing[10],
+      padding: tokens.spacing[12],
+      borderRadius: tokens.radius.card,
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+      marginTop: tokens.spacing[12],
+      maxWidth: 380,
+    },
+    tipText: {
+      ...tokens.typography.footnote,
+      color: colors.m3.onSecondaryContainer,
+      flex: 1,
+      lineHeight: 18,
+    },
+    emptyAction: {
+      alignSelf: "center",
+      width: "100%",
+      maxWidth: 320,
+      marginTop: tokens.spacing[16],
+    },
+    footerTip: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: tokens.spacing[8],
+      paddingVertical: tokens.spacing[16],
+      paddingHorizontal: tokens.spacing[12],
+      marginTop: tokens.spacing[8],
+    },
+    footerTipText: {
+      ...tokens.typography.captionSmall,
+      color: colors.m3.onSurfaceVariant,
+      textAlign: "center",
+      flex: 1,
+      maxWidth: 420,
+    },
   });
 }
