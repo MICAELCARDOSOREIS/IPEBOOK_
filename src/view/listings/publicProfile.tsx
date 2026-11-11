@@ -238,13 +238,13 @@ export function PublicProfile({ userId, onBack, onOpenChat, onReportListing, onR
             {wideWeb ? (
               <View style={styles.wideBelow}>
                 <View style={styles.wideBelowMain}>
-                  <OwnerListings ownerId={userId} ownerName={profile.name} onOpenBook={guardedOpenBook} />
+                  <OwnerListings ownerId={userId} ownerName={profile.name} onOpenBook={guardedOpenBook} wideWeb={wideWeb} />
                 </View>
                 <UserRatingsPanel userId={userId} wideWeb={wideWeb} />
               </View>
             ) : (
               <View style={styles.mobileBelow}>
-                <OwnerListings ownerId={userId} ownerName={profile.name} onOpenBook={guardedOpenBook} />
+                <OwnerListings ownerId={userId} ownerName={profile.name} onOpenBook={guardedOpenBook} wideWeb={wideWeb} />
                 <UserRatingsPanel userId={userId} wideWeb={wideWeb} />
               </View>
             )}
