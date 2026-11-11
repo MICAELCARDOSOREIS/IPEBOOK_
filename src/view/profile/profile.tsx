@@ -31,6 +31,7 @@ import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { NeighborhoodSelectorModal } from "@/view/components/NeighborhoodSelectorModal";
 import { ScreenContainer } from "@/view/components/ScreenContainer";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
+import { useKeyboardVisible } from "@/view/useKeyboardVisible";
 import { Snackbar } from "@/view/components/Snackbar";
 import { TextButton } from "@/view/components/TextButton";
 import { TextField } from "@/view/components/TextField";
@@ -95,6 +96,7 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
   const { colors } = useTheme();
   // Web larga: coluna mais larga, com cartão e foto de um lado e dados e contato do outro.
   const wide = useIsWideWeb();
+  const isKeyboardVisible = useKeyboardVisible();
   const { width: viewportWidth } = useWindowDimensions();
   const stackPhotoActions = viewportWidth < 380;
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -278,7 +280,7 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
             }}
             onCancel={() => setDiscardOpen(false)}
           />
-          {!wide && state.profile && !loading ? (
+          {!wide && state.profile && !loading && !isKeyboardVisible ? (
             <View pointerEvents="box-none" style={styles.stickyActionContainer}>
               <View style={styles.stickyActionContent}>
                 <FilledButton
@@ -400,6 +402,7 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
                     autoCapitalize="words"
                     maxLength={MAX_NAME_LENGTH}
                     editable={!saving}
+                    returnKeyType="next"
                     error={fieldErrors.name}
                     helperText={fieldErrors.name ? undefined : `${name.trim().length}/${MAX_NAME_LENGTH}`}
                     helperTextAlign="right"
@@ -491,6 +494,7 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
                     autoCapitalize="none"
                     maxLength={MAX_SOCIAL_HANDLE_LENGTH}
                     editable={!saving}
+                    returnKeyType="done"
                     error={fieldErrors.socialHandle}
                     helperText={fieldErrors.socialHandle ? undefined : "Opcional. Informe seu usuário, com ou sem @."}
                   />

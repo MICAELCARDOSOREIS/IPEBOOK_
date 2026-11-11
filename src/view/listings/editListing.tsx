@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import type { BookCondition, BookModality } from "@/model/entities/book";
@@ -20,6 +20,7 @@ import { LoadingState } from "@/view/components/LoadingState";
 import { TextButton } from "@/view/components/TextButton";
 import { TextField } from "@/view/components/TextField";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
+import { useKeyboardVisible } from "@/view/useKeyboardVisible";
 import { WEB_GUTTER } from "@/view/webLayout";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { makeEditListingViewModel } from "@/di/container";
@@ -59,8 +60,27 @@ export default function EditListing({
   const [showPhotoInput, setShowPhotoInput] = useState(false);
   // Web larga: foto e identificação de um lado, descrição e venda do outro.
   const wide = useIsWideWeb();
+  const isKeyboardVisible = useKeyboardVisible();
+  const scrollRef = useRef<any>(null);
+  const authorInputRef = useRef<any>(null);
+  const descInputRef = useRef<any>(null);
+  const priceInputRef = useRef<any>(null);
+  const titleY = useRef(140);
+  const authorY = useRef(220);
+  const descY = useRef(320);
+  const priceY = useRef(460);
   const remainingDescriptionChars = MAX_BOOK_DESCRIPTION_LENGTH - state.description.length;
   const descriptionTooLong = remainingDescriptionChars < 0;
+
+  const handleFocusField = (yOffset: number) => {
+    if (wide) return;
+    setTimeout(() => {
+      scrollRef.current?.scrollTo({
+        y: Math.max(0, yOffset - 24),
+        animated: true,
+      });
+    }, 100);
+  };
 
   const handleSubmit = async () => {
     const result = await actions.submit();
@@ -104,7 +124,17 @@ export default function EditListing({
     <SafeAreaView style={styles.page}>
       <TopAppBar contentMaxWidth={wide ? EDIT_WIDE_MAX_WIDTH : 480} title="Editar anúncio" onBack={guardedCancel} />
       <ScrollView
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
+        ref={scrollRef}
+        contentContainerStyle={[
+          styles.scrollContent,
+          {
+            paddingBottom: wide
+              ? tokens.spacing[48]
+              : isKeyboardVisible
+                ? 300
+                : scrollBottomPadding.withoutBottomBar,
+          },
+        ]}
         {...standardVerticalScrollProps}
       >
         <View style={[styles.content, wide && styles.contentWide]}>
@@ -155,21 +185,40 @@ export default function EditListing({
             </View>
           </View>
 
-          <TextField
-            label="Título do livro"
-            value={state.title}
-            onChangeText={actions.setTitle}
-            editable={!state.saving}
-            placeholder="Ex: Dom Casmurro"
-          />
+          <View
+            onLayout={(event) => {
+              titleY.current = event.nativeEvent.layout.y;
+            }}
+          >
+            <TextField
+              label="Título do livro"
+              value={state.title}
+              onChangeText={actions.setTitle}
+              editable={!state.saving}
+              placeholder="Ex: Dom Casmurro"
+              returnKeyType="next"
+              onSubmitEditing={() => authorInputRef.current?.focus()}
+              onFocus={() => handleFocusField(titleY.current)}
+            />
+          </View>
 
-          <TextField
-            label="Autor do livro"
-            value={state.author}
-            onChangeText={actions.setAuthor}
-            editable={!state.saving}
-            placeholder="Ex: Machado de Assis"
-          />
+          <View
+            onLayout={(event) => {
+              authorY.current = event.nativeEvent.layout.y;
+            }}
+          >
+            <TextField
+              inputRef={authorInputRef}
+              label="Autor do livro"
+              value={state.author}
+              onChangeText={actions.setAuthor}
+              editable={!state.saving}
+              placeholder="Ex: Machado de Assis"
+              returnKeyType="next"
+              onSubmitEditing={() => descInputRef.current?.focus()}
+              onFocus={() => handleFocusField(authorY.current)}
+            />
+          </View>
 
           <View style={styles.field}>
             <Text style={styles.sectionLabel}>Categoria</Text>
@@ -232,20 +281,29 @@ export default function EditListing({
 
           </View>
           <View style={[styles.column, wide && styles.columnHalf]}>
-          <TextField
-            label="Descrição"
-            value={state.description}
-            onChangeText={actions.setDescription}
-            editable={!state.saving}
-            placeholder="Ex: Marcas leves de uso, páginas completas."
-            maxLength={MAX_BOOK_DESCRIPTION_LENGTH}
-            helperText={`${state.description.length}/${MAX_BOOK_DESCRIPTION_LENGTH}`}
-            error={
-              descriptionTooLong
-                ? `A descrição deve ter no máximo ${MAX_BOOK_DESCRIPTION_LENGTH} caracteres.`
-                : undefined
-            }
-          />
+          <View
+            onLayout={(event) => {
+              descY.current = event.nativeEvent.layout.y;
+            }}
+          >
+            <TextField
+              inputRef={descInputRef}
+              label="Descrição"
+              value={state.description}
+              onChangeText={actions.setDescription}
+              editable={!state.saving}
+              placeholder="Ex: Marcas leves de uso, páginas completas."
+              maxLength={MAX_BOOK_DESCRIPTION_LENGTH}
+              helperText={`${state.description.length}/${MAX_BOOK_DESCRIPTION_LENGTH}`}
+              multiline
+              onFocus={() => handleFocusField(descY.current)}
+              error={
+                descriptionTooLong
+                  ? `A descrição deve ter no máximo ${MAX_BOOK_DESCRIPTION_LENGTH} caracteres.`
+                  : undefined
+              }
+            />
+          </View>
           <Text style={styles.photoHelperText}>
             {remainingDescriptionChars >= 0
               ? `Restam ${remainingDescriptionChars} caracteres`
@@ -270,15 +328,24 @@ export default function EditListing({
           </View>
 
           {state.modality === "sale" && (
-            <TextField
-              label="Preço do livro"
-              value={state.price}
-              onChangeText={actions.setPrice}
-              editable={!state.saving}
-              keyboardType="decimal-pad"
-              placeholder="Ex: 29,90"
-              helperText="Informe o valor em reais (R$)"
-            />
+            <View
+              onLayout={(event) => {
+                priceY.current = event.nativeEvent.layout.y;
+              }}
+            >
+              <TextField
+                inputRef={priceInputRef}
+                label="Preço do livro"
+                value={state.price}
+                onChangeText={actions.setPrice}
+                editable={!state.saving}
+                keyboardType="decimal-pad"
+                placeholder="Ex: 29,90"
+                helperText="Informe o valor em reais (R$)"
+                returnKeyType="done"
+                onFocus={() => handleFocusField(priceY.current)}
+              />
+            </View>
           )}
 
           <View style={styles.field}>

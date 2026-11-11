@@ -16,7 +16,6 @@ import { ErrorState } from "@/view/components/ErrorState";
 import { FilledButton } from "@/view/components/FilledButton";
 import { LoadingState } from "@/view/components/LoadingState";
 import {
-  ProfileCommunityBadges,
   ProfileIdentityCard,
   ProfileMenuSection,
   type ProfileMenuItem,
@@ -305,12 +304,6 @@ export default function ProfileHub({
                     onMeetingHistory={guardedNavigateToMeetingHistory}
                     onRatings={guardedNavigateToRatings}
                   />
-                  <ProfileCommunityBadges
-                    neighborhood={profile.neighborhood}
-                    completedTrocas={completedTrocas}
-                    totalPublications={totalPublications}
-                    wideWeb
-                  />
                 </View>
 
                 {/* Coluna Principal da Web Larga: Atividade e Conta lado a lado */}
@@ -342,11 +335,6 @@ export default function ProfileHub({
                   onMyListings={guardedNavigateToMyListings}
                   onMeetingHistory={guardedNavigateToMeetingHistory}
                   onRatings={guardedNavigateToRatings}
-                />
-                <ProfileCommunityBadges
-                  neighborhood={profile.neighborhood}
-                  completedTrocas={completedTrocas}
-                  totalPublications={totalPublications}
                 />
                 <ProfileMenuSection title="Atividade" items={activityItems} />
                 <ProfileMenuSection

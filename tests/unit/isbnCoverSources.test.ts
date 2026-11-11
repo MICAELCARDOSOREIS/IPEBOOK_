@@ -21,9 +21,31 @@ describe("capas do ISBN (Spec 092)", () => {
 
   it("Google Books devolve título, autor e capa ampliada sem a dobra de página", async () => {
     const thumb = "http://books.google.com/books/content?id=abc&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api";
-    const fetchFn = ok({ items: [{ volumeInfo: { title: " Capitães da Areia ", authors: ["Jorge Amado"], imageLinks: { thumbnail: thumb } } }] });
+    const fetchFn = ok({
+      items: [
+        {
+          volumeInfo: {
+            title: " Capitães da Areia ",
+            authors: ["Jorge Amado"],
+            description: "História dos meninos de Salvador.",
+            publisher: "Companhia das Letras",
+            pageCount: 280,
+            publishedDate: "2008-05-12",
+            imageLinks: { thumbnail: thumb },
+          },
+        },
+      ],
+    });
     const result = await new GoogleBooksBookMetadataService(fetchFn as never).lookupByIsbn(ISBN);
-    expect(result).toMatchObject({ title: "Capitães da Areia", author: "Jorge Amado", coverIsLarge: true });
+    expect(result).toMatchObject({
+      title: "Capitães da Areia",
+      author: "Jorge Amado",
+      synopsis: "História dos meninos de Salvador.",
+      publisher: "Companhia das Letras",
+      pageCount: 280,
+      publicationYear: 2008,
+      coverIsLarge: true,
+    });
     expect(result?.coverUrl).toBe("https://books.google.com/books/content?id=abc&printsec=frontcover&img=1&zoom=3&source=gbs_api");
     expect(largeGoogleCover(undefined)).toBeUndefined();
   });

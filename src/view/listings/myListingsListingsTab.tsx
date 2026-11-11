@@ -39,6 +39,8 @@ export type MyListingsListingsTabProps = {
   onStatusFilterChange: (filter: ListingsFilter) => void;
   onNavigateToManageListing?: (bookId: string) => void;
   onShareWhatsApp?: (book: Book) => void;
+  /** Navega para a negociação ativa de um livro reservado. */
+  onNavigateToNegotiationForBook?: (bookId: string) => void;
 };
 
 export function MyListingsListingsTab({
@@ -47,6 +49,7 @@ export function MyListingsListingsTab({
   onStatusFilterChange,
   onNavigateToManageListing,
   onShareWhatsApp,
+  onNavigateToNegotiationForBook,
 }: MyListingsListingsTabProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -104,17 +107,19 @@ export function MyListingsListingsTab({
         </View>
       ) : (
         <View style={wideWeb ? styles.listCardWide : styles.listSectionMobile}>
-          <Text style={styles.listTitle}>
-            {`${filteredBooks.length} ${filteredBooks.length === 1 ? "anúncio" : "anúncios"}`}
-          </Text>
           {wideWeb ? (
-            <View style={styles.tableHeader}>
-              <Text style={[styles.tableHeaderText, { flex: 3, minWidth: 220 }]}>Livro</Text>
-              <Text style={[styles.tableHeaderText, { flex: 1.5, minWidth: 120 }]}>Modalidade</Text>
-              <Text style={[styles.tableHeaderText, { flex: 1.5, minWidth: 120 }]}>Bairro</Text>
-              <Text style={[styles.tableHeaderText, { flex: 1.2, minWidth: 100 }]}>Situação</Text>
-              <Text style={[styles.tableHeaderText, { width: 110, textAlign: "right" }]}>Ação</Text>
-            </View>
+            <>
+              <Text style={styles.listTitle}>
+                {`${filteredBooks.length} ${filteredBooks.length === 1 ? "anúncio" : "anúncios"}`}
+              </Text>
+              <View style={styles.tableHeader}>
+                <Text style={[styles.tableHeaderText, { flex: 3, minWidth: 220 }]}>Livro</Text>
+                <Text style={[styles.tableHeaderText, { flex: 1.5, minWidth: 120 }]}>Modalidade</Text>
+                <Text style={[styles.tableHeaderText, { flex: 1.5, minWidth: 120 }]}>Bairro</Text>
+                <Text style={[styles.tableHeaderText, { flex: 1.2, minWidth: 100 }]}>Situação</Text>
+                <Text style={[styles.tableHeaderText, { width: 110, textAlign: "right" }]}>Ação</Text>
+              </View>
+            </>
           ) : null}
           {filteredBooks.map((book) => (
             <ShelfRow
@@ -141,6 +146,11 @@ export function MyListingsListingsTab({
               accessibilityLabel={`Gerenciar anúncio de ${book.title}`}
               onPress={() => onNavigateToManageListing?.(book.id)}
               onShareWhatsApp={onShareWhatsApp ? () => onShareWhatsApp(book) : undefined}
+              onNavigateToNegotiation={
+                book.status === "reserved" && onNavigateToNegotiationForBook
+                  ? () => onNavigateToNegotiationForBook(book.id)
+                  : undefined
+              }
             />
           ))}
         </View>
@@ -162,7 +172,7 @@ function createStyles(colors: ColorPalette) {
       flexDirection: "row",
       gap: tokens.spacing[8],
       paddingBottom: tokens.spacing[8],
-      paddingRight: tokens.spacing[16],
+      paddingRight: tokens.spacing[28],
     },
     empty: { paddingTop: tokens.spacing[48], alignItems: "center", gap: tokens.spacing[12] },
     emptyTitle: {
@@ -190,6 +200,7 @@ function createStyles(colors: ColorPalette) {
       gap: tokens.spacing[8],
       marginTop: tokens.spacing[10],
       paddingHorizontal: tokens.spacing[4],
+      paddingBottom: tokens.spacing[8],
     },
     orientationBoxMobile: {
       paddingRight: tokens.spacing[64],

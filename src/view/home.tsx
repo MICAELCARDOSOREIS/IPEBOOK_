@@ -889,7 +889,8 @@ function createStyles(colors: ColorPalette) {
       flexDirection: "row",
       alignItems: "center",
       gap: tokens.spacing[8],
-      paddingHorizontal: tokens.spacing[16],
+      paddingLeft: tokens.spacing[16],
+      paddingRight: tokens.spacing[28],
     },
   });
 }
