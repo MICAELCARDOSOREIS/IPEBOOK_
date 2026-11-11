@@ -580,6 +580,9 @@ export default function MyListingsScreen({
   onNavigateToReceivedRequests,
   onNavigateToNegotiationDetail,
 }: MyListingsScreenProps = {}) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+  const wideWeb = useIsWideWeb();
   const [authState] = makeAuthViewModel();
 
   useEffect(() => {
@@ -588,7 +591,25 @@ export default function MyListingsScreen({
     }
   }, [authState.loading, authState.user, onRequireSignIn]);
 
-  if (authState.loading || !authState.user) return null;
+  if (authState.loading) {
+    return (
+      <SafeAreaView edges={["top", "left", "right"]} style={styles.page}>
+        <View style={[styles.header, wideWeb && styles.headerWide]}>
+          <View style={styles.headerText}>
+            <Text accessibilityRole="header" style={styles.heroTitle}>
+              Estante
+            </Text>
+            <Text style={styles.heroSubtitle}>Seus livros em Piripiri</Text>
+          </View>
+        </View>
+        <View style={[styles.content, wideWeb && styles.contentWide]}>
+          <LoadingState label="Carregando sua estante" variant="shelf" />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (!authState.user) return null;
 
   return (
     <MyListings
