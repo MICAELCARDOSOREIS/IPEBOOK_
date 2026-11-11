@@ -2,16 +2,15 @@
  * IpêBook — Tokens de Design (IHC / UI)
  * Fonte canônica: design-system/tokens.json (ver ADR 0010). `colors` é o tema claro; `darkColors`
  * (mesma forma) é o tema escuro, habilitado pela ADR 0036 — ver `src/view/theme/ThemeProvider.tsx`
- * e `useTheme()` para o consumo dinâmico. `design-tokens.json` na raiz foi substituído por este
- * arquivo e removido (ver Tarefa 26).
+ * e `useTheme()` para o consumo dinâmico.
  *
  * Regra de Camada MVVM: Pertence estritamente à camada de View (UI).
  */
 
 export const colors = {
   // Identidade e Marca
-  // `background` e `surface` são o mesmo tom no Figma Android (`02.01` em diante): o fundo das
-  // telas é `surface` (`#FCFAF5`), conforme design-system/tokens.json — ADR 0056.
+  // `background` e `surface` compartilham o mesmo tom (#FCFAF5) no tema claro, garantindo
+  // conforto de leitura visual pólen e superfície editorial contínua (ADR 0056).
   background: "#FCFAF5",
   surface: "#FCFAF5",
   text: "#3C302A",
@@ -82,7 +81,7 @@ export const colors = {
   ],
 
   // Capas ilustrativas (quando anúncio não tem imagem) — as 5 cores do catálogo de componentes
-  // do Figma (capa-ilustrativa.md): Azul, Marrom, Verde, Vinho, Mostarda, além dos fundos das 4 artes
+  // (capa-ilustrativa.md): Azul, Marrom, Verde, Vinho, Mostarda, além dos fundos das artes
   // artesanais (noite, árvore, montanhas, ondas), dourado da lombada e folha de papel do livro 3D.
   cover: {
     blue: "#253C4F",
@@ -296,7 +295,7 @@ export const spacing = {
   26: 26,
   28: 28,
   32: 32,
-  /** Botão de ícone circular da barra superior e do topo da Home (Figma `01.06`, `02.01`). */
+  /** Botão de ícone circular da barra superior e do topo da Home (40 dp). */
   40: 40,
   48: 48,
   56: 56,
@@ -315,7 +314,7 @@ export const radius = {
   hairline: 2,
   /** Lombada e face do livro 3D e pontos indicadores (3 dp). */
   micro: 3,
-  /** Campo de texto contornado (M3: container de 4 dp), Figma `01.03`/`01.06`. */
+  /** Campo de texto contornado (M3: container de 4 dp). */
   extraSmall: 4,
   /** Ponto de notificação e bolinha central do botão de rádio (5 dp). */
   dot: 5,
@@ -356,14 +355,14 @@ export const accessibility = {
 
 /**
  * Nomes das fontes carregadas por `useIpebookFonts` (ver `src/view/useIpebookFonts.ts`).
- * Source Serif 4 Bold é a marca (ADR 0007); Roboto é a interface — ver a nota naquele arquivo
- * sobre por que é Roboto e não Roboto Flex.
+ * Source Serif 4 Bold é a marca (ADR 0007); Plus Jakarta Sans é a interface (ADR 0107)
+ * com proporções humanistas, curvas acolhedoras e excelente legibilidade nos pesos 400/500/600.
  */
 export const fontFamily = {
   brand: "SourceSerif4_700Bold",
-  regular: "Roboto_400Regular",
-  medium: "Roboto_500Medium",
-  semiBold: "Roboto_600SemiBold",
+  regular: "PlusJakartaSans_400Regular",
+  medium: "PlusJakartaSans_500Medium",
+  semiBold: "PlusJakartaSans_600SemiBold",
 } as const;
 
 export const fontWeight = {
@@ -445,10 +444,10 @@ export const typography = {
   titleMedium: { fontSize: 18, lineHeight: 26, fontWeight: "600" as const, fontFamily: fontFamily.semiBold },
   bodyLarge: { fontSize: 16, lineHeight: 24, fontWeight: "400" as const, fontFamily: fontFamily.regular },
   bodyMedium: { fontSize: 14, lineHeight: 20, fontWeight: "400" as const, fontFamily: fontFamily.regular },
-  /** m3-label-lg: rótulo de botão e de chip no Figma (`01.03`, `02.01`). */
+  /** m3-label-lg: rótulo de botão preenchido e de chips de seleção. */
   labelLarge: { fontSize: 14, lineHeight: 20, fontWeight: "500" as const, fontFamily: fontFamily.medium },
   labelMedium: { fontSize: 12, lineHeight: 16, fontWeight: "500" as const, fontFamily: fontFamily.medium },
-  /** m3-label-sm (02-tokens.md): rótulo da barra de navegação, hora da mensagem, badge. */
+  /** m3-label-sm: rótulo da barra de navegação, hora da mensagem e badges compactos. */
   labelSmall: { fontSize: 11, lineHeight: 16, fontWeight: "500" as const, fontFamily: fontFamily.medium },
   // Estilos tipográficos da Marca (design-system/tokens.json → Marca)
   brandHero: { fontSize: 56, lineHeight: 64, fontWeight: "700" as const, fontFamily: fontFamily.brand },

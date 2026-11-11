@@ -79,8 +79,8 @@ Quando um usuário cadastra um anúncio sem enviar foto da câmera, o app gera u
 A tipografia do IpêBook equilibra o conforto ergonômico da leitura em dispositivos móveis com a elegância do meio editorial.
 
 ### 3.1 Famílias Tipográficas
-- **Interface e Controles (UI):** **Roboto** (Google Fonts / Sistema Nativo). Sans-serif versátil, neutra e com legibilidade otimizada para renderização em densidades variadas de pixels.
-- **Identidade e Títulos de Destaque (Brand):** **Source Serif 4 Bold** (conforme [ADR 0007](adr/0007-serifa-da-marca.md)). Serifa humanista inspirada na tradição tipográfica de livros impressos, aplicada no logotipo e no cabeçalho inicial.
+- **Interface e Controles (UI):** **Plus Jakarta Sans** (Google Fonts / `@expo-google-fonts/plus-jakarta-sans`, conforme [ADR 0107](adr/0107-adocao-plus-jakarta-sans-na-interface.md)). Sans-serif geométrica moderna com proporções humanistas, curvas acolhedoras e excelente legibilidade nos pesos Regular (400), Medium (500) e SemiBold (600).
+- **Identidade e Títulos de Destaque (Brand):** **Source Serif 4 Bold** (conforme [ADR 0007](adr/0007-serifa-da-marca.md)). Serifa clássica inspirada na tradição tipográfica de livros impressos, aplicada no logotipo, manchetes poéticas e cabeçalhos de grande impacto.
 
 ### 3.2 Escala Tipográfica Formal
 

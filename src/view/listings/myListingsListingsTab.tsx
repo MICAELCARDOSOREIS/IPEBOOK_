@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import type { Book, BookModality, BookStatus } from "@/model/entities/book";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
@@ -10,7 +10,6 @@ import { IconBadge } from "@/view/components/IconBadge";
 import { AppIcon } from "@/view/components/AppIcon";
 import { ShelfRow } from "@/view/listings/shelfRow";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
-import { standardHorizontalScrollProps } from "@/view/scrollProps";
 
 const MODALITY_LABELS: Readonly<Record<BookModality, string>> = {
   sale: "Venda",
@@ -42,6 +41,8 @@ export type MyListingsListingsTabProps = {
   onShareWhatsApp?: (book: Book) => void;
   /** Navega para a negociação ativa de um livro reservado. */
   onNavigateToNegotiationForBook?: (bookId: string) => void;
+  /** Seletor de abas e resumo da estante posicionado logo abaixo dos chips de filtro. */
+  tabSelector?: React.ReactNode;
 };
 
 export function MyListingsListingsTab({
@@ -51,6 +52,7 @@ export function MyListingsListingsTab({
   onNavigateToManageListing,
   onShareWhatsApp,
   onNavigateToNegotiationForBook,
+  tabSelector,
 }: MyListingsListingsTabProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -77,11 +79,9 @@ export function MyListingsListingsTab({
 
   return (
     <>
-      <ScrollView
-        horizontal
-        {...standardHorizontalScrollProps}
-        contentContainerStyle={styles.filterRow}
-      >
+      {/* Quebra em duas fileiras no mobile: os quatro status cabem na tela sem rolagem
+          horizontal, evitando que "Reservados" fique invisível em telas estreitas. */}
+      <View style={styles.filterRow}>
         {/* Mesmo Chip do resto do app (Home, Explorar, filtros): raio, check e cores iguais. */}
         {filterChips.map((chip) => (
           <Chip
@@ -93,7 +93,7 @@ export function MyListingsListingsTab({
             onPress={() => onStatusFilterChange(chip.key)}
           />
         ))}
-      </ScrollView>
+      </View>
       {filteredBooks.length === 0 ? (
         <View style={styles.empty}>
           <IconBadge icon="shelf" tone="neutral" size="large" />
@@ -170,9 +170,9 @@ function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     filterRow: {
       flexDirection: "row",
+      flexWrap: "wrap",
       gap: tokens.spacing[8],
       paddingBottom: tokens.spacing[8],
-      paddingRight: tokens.spacing[28],
     },
     empty: { paddingTop: tokens.spacing[48], alignItems: "center", gap: tokens.spacing[12] },
     emptyTitle: {

@@ -40,6 +40,7 @@
     "prepare": "git config core.hooksPath .githooks || true"
   },
   "dependencies": {
+    "@expo-google-fonts/plus-jakarta-sans": "^0.4.2",
     "@expo-google-fonts/roboto": "^0.4.3",
     "@expo-google-fonts/source-serif-4": "^0.4.2",
     "@expo/vector-icons": "^15.1.1",
