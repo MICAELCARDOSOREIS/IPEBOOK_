@@ -419,6 +419,12 @@ describe("Rotas em src/app/** — contratos de parâmetros, guards e navegação
 
     await renderRoute(<MeusPedidosRoute />);
     invokeAllCallbacks("ConversationsScreenStub");
+    mockCanGoBack.mockReturnValueOnce(false);
+    getStub("ConversationsScreenStub").onBack();
+    expect(mockReplaceOnce).toHaveBeenCalledWith("/");
+    mockCanGoBack.mockReturnValueOnce(true);
+    getStub("ConversationsScreenStub").onBack();
+    expect(mockBackOnce).toHaveBeenCalled();
 
     await renderRoute(<ConversasRoute />);
     invokeAllCallbacks("ConversationsScreenStub");
@@ -564,9 +570,15 @@ describe("Rotas em src/app/** — contratos de parâmetros, guards e navegação
     invokeAllCallbacks("DeleteAccountScreenStub");
     mockCanGoBack.mockReturnValue(false);
     getStub("DeleteAccountScreenStub").onBack();
+    expect(mockReplaceOnce).toHaveBeenCalledWith("/bem-vindo");
+    getStub("DeleteAccountScreenStub").onAccountDeleted();
+    getStub("DeleteAccountScreenStub").onNavigateToLogin?.();
+    getStub("DeleteAccountScreenStub").onEditProfile?.();
 
     await renderRoute(<NaoEncontrado />);
     invokeAllCallbacks("NotFoundStub");
+    getStub("NotFoundStub").onGoHome();
+    getStub("NotFoundStub").onExplore?.();
 
     mockCanGoBack.mockReturnValue(true);
     await renderRoute(<TermosRoute />);

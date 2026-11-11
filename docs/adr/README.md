@@ -107,5 +107,6 @@
 - [0105 — Crossref como quarta fonte pública e gratuita de metadados de ISBN](0105-crossref-como-quarta-fonte-isbn.md)
 - [0106 — Migração das telas de autenticação para ScreenContainer e aprimoramentos de IHC e foco](0106-migracao-telas-autenticacao-screen-container-e-ihc.md)
 - [0107 — Adoção da Plus Jakarta Sans na interface do IpêBook](0107-adocao-plus-jakarta-sans-na-interface.md)
+- [0108 — Adequação do PWA no iPhone/Safari ao Apple HIG](0108-pwa-iphone-safari-apple-hig.md)
 
 Preservar registros aceitos; mudanças relevantes geram novo ADR com vínculos de substituição.

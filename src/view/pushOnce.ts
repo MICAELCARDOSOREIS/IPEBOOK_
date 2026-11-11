@@ -93,9 +93,16 @@ export function replaceOnce(href: Href): void {
   router.replace(href);
 }
 
-/** `router.back` com proteção contra duplo toque (evita fechar 2 ou 3 telas de uma vez). */
-export function backOnce(): void {
+/**
+ * `router.back` com proteção contra duplo toque (evita fechar 2 ou 3 telas de uma vez)
+ * e fallback para telas acessadas diretamente sem histórico anterior no modo PWA standalone (Spec 135 / ADR 0108 / Issue #220).
+ */
+export function backOnce(fallbackRoute: Href = "/"): void {
   if (isRepeat("back", BACK_WINDOW_MS)) return;
+  if (typeof router.canGoBack === "function" && !router.canGoBack()) {
+    router.replace(fallbackRoute);
+    return;
+  }
   router.back();
 }
 
