@@ -99,34 +99,50 @@ export default function Favorites({
 
       {wideWeb && userId ? (
         <View style={styles.wideHeader}>
-          <Text accessibilityRole="header" style={styles.wideTitle}>Favoritos</Text>
-          <Text style={styles.wideSubtitle}>
-            {`${state.books.length} ${state.books.length === 1 ? "livro salvo" : "livros salvos"} · avisamos se o preço ou a disponibilidade mudar.`}
-          </Text>
-          <View style={styles.wideChips}>
-            {([["all", "Todos"], ["available", "Disponíveis"], ["reserved", "Reservados"]] as const).map(([value, label]) => {
-              const selected = statusFilter === value;
-              return (
-                <Pressable
-                  key={value}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Mostrar ${label.toLowerCase()}`}
-                  accessibilityState={{ selected }}
-                  onPress={() => setStatusFilter(value)}
-                  style={withPress([styles.wideChip, selected && styles.wideChipSelected])}
-                >
-                  {selected ? <AppIcon name="check" size={16} color={colors.nature.onFoliage} /> : null}
-                  <Text style={[styles.wideChipText, selected && { color: colors.nature.onFoliage, fontWeight: tokens.fontWeight.semiBold }]}>{label}</Text>
-                </Pressable>
-              );
-            })}
+          <View style={styles.wideHeaderLeft}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Voltar"
+              onPress={guardedBack}
+              style={withPress(styles.wideBackButton)}
+            >
+              <AppIcon name="back" size={20} color={colors.m3.onSurface} />
+            </Pressable>
+            <View>
+              <Text accessibilityRole="header" style={styles.wideTitle}>Favoritos</Text>
+              <Text style={styles.wideSubtitle}>
+                {state.books.length > 0
+                  ? `${state.books.length} ${state.books.length === 1 ? "livro salvo" : "livros salvos"} · avisamos se o preço ou a disponibilidade mudar.`
+                  : "Seus livros salvos aparecerão aqui."}
+              </Text>
+            </View>
           </View>
+          {state.books.length > 0 ? (
+            <View style={styles.wideChips}>
+              {([["all", "Todos"], ["available", "Disponíveis"], ["reserved", "Reservados"]] as const).map(([value, label]) => {
+                const selected = statusFilter === value;
+                return (
+                  <Pressable
+                    key={value}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Mostrar ${label.toLowerCase()}`}
+                    accessibilityState={{ selected }}
+                    onPress={() => setStatusFilter(value)}
+                    style={withPress([styles.wideChip, selected && styles.wideChipSelected])}
+                  >
+                    {selected ? <AppIcon name="check" size={16} color={colors.nature.onFoliage} /> : null}
+                    <Text style={[styles.wideChipText, selected && { color: colors.nature.onFoliage, fontWeight: tokens.fontWeight.semiBold }]}>{label}</Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          ) : null}
         </View>
       ) : null}
 
       {/* Lista de Favoritos */}
       {!userId ? (
-        <View style={styles.status}>
+        <View style={[styles.status, wideWeb && styles.statusWide]}>
           <View style={styles.emptyIpeContainer}>
             <IpeMark size={72} />
           </View>
@@ -151,6 +167,7 @@ export default function Favorites({
         </View>
       ) : (
         <FlatList
+          style={styles.flexOne}
           key={wideWeb ? `grade-${gridColumns}` : "lista"}
           numColumns={wideWeb ? gridColumns : 1}
           columnWrapperStyle={wideWeb ? styles.wideGridRow : undefined}
@@ -228,7 +245,7 @@ export default function Favorites({
                   onPress={() => void actions.removeFavorite(item.id)}
                   style={withPress(styles.favoriteButton)}
                 >
-                  <AppIcon name="heartFill" size={24} color={colors.ipe.bloomDeep} />
+                  <AppIcon name="heartFill" size={24} color={colors.ipe.bloom} />
                 </Pressable>
               </View>
             );
@@ -246,7 +263,8 @@ export default function Favorites({
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
-    page: { flex: 1, backgroundColor: colors.background },
+    page: { flex: 1, minHeight: 0, backgroundColor: colors.background },
+    flexOne: { flex: 1 },
     loadingContainer: {
       flex: 1,
       paddingHorizontal: tokens.spacing[16],
@@ -257,8 +275,23 @@ function createStyles(colors: ColorPalette) {
       maxWidth: WEB_MAX_WIDTH,
       alignSelf: "center",
       paddingHorizontal: WEB_GUTTER,
-      paddingTop: tokens.spacing[32],
+      paddingTop: tokens.spacing[24],
       gap: tokens.spacing[8],
+    },
+    wideHeaderLeft: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[16],
+    },
+    wideBackButton: {
+      width: tokens.spacing[40],
+      height: tokens.spacing[40],
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.m3.surfaceContainerHigh,
+      alignItems: "center",
+      justifyContent: "center",
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
     },
     wideTitle: { ...tokens.typography.brandDisplayMd, color: colors.brandBrown },
     wideSubtitle: { ...tokens.typography.bodyLarge, color: colors.m3.onSurfaceVariant },
@@ -354,8 +387,34 @@ function createStyles(colors: ColorPalette) {
       gap: tokens.spacing[12],
       padding: tokens.spacing[24],
     },
-    emptyBoxWide: { maxWidth: 420, alignSelf: "flex-start" },
-    emptyBox: { gap: tokens.spacing[12], paddingVertical: tokens.spacing[24] },
+    statusWide: {
+      maxWidth: 640,
+      width: "100%",
+      alignSelf: "center",
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderRadius: tokens.radius.card,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+      padding: tokens.spacing[40],
+      marginTop: tokens.spacing[32],
+    },
+    emptyBox: {
+      gap: tokens.spacing[12],
+      paddingVertical: tokens.spacing[24],
+      alignItems: "center",
+    },
+    emptyBoxWide: {
+      maxWidth: 640,
+      width: "100%",
+      alignSelf: "center",
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderRadius: tokens.radius.card,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+      padding: tokens.spacing[40],
+      marginTop: tokens.spacing[24],
+      alignItems: "center",
+    },
     emptyIpeContainer: {
       width: 80,
       height: 80,
@@ -374,10 +433,13 @@ function createStyles(colors: ColorPalette) {
       ...tokens.typography.titleLarge,
       fontFamily: tokens.typography.displayLarge.fontFamily,
       color: colors.text,
+      textAlign: "center",
     },
     emptyHint: {
       ...tokens.typography.bodyLarge,
       color: colors.secondaryText,
+      textAlign: "center",
+      maxWidth: 420,
     },
     statusTitle: {
       ...tokens.typography.titleMedium,
