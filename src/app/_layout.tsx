@@ -55,16 +55,9 @@ function ThemedStack() {
       screenOptions={{
         headerShown: false,
         contentStyle: { backgroundColor: colors.surface },
-        animation: Platform.OS === "android" ? "fade" : "default",
-        animationDuration: 150,
+        animation: Platform.OS === "android" ? "none" : "default",
       }}
-    >
-      <Stack.Screen name="index" options={{ animation: "none" }} />
-      <Stack.Screen name="pesquisa" options={{ animation: "none" }} />
-      <Stack.Screen name="meus-anuncios" options={{ animation: "none" }} />
-      <Stack.Screen name="meus-pedidos" options={{ animation: "none" }} />
-      <Stack.Screen name="perfil" options={{ animation: "none" }} />
-    </Stack>
+    />
   );
 }
 
