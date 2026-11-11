@@ -273,27 +273,37 @@ export function Chat({
             {/* Embutido na web larga, o livro já aparece no painel "Sobre a negociação" ao lado. */}
             {detail && !embedded ? (
               <View style={[styles.bookCard, isWebStandalone && styles.bookCardWide]}>
-                <BookCover id={detail.book.id} title={detail.book.title} photoUrl={detail.book.photoUrl} variant="list" />
-                <View style={styles.bookText}>
-                  <Text style={styles.bookTitle} numberOfLines={1}>
-                    {detail.book.title}
-                  </Text>
-                  <Tag variant={detail.book.modality} />
+                <View style={styles.bookRow}>
+                  <BookCover id={detail.book.id} title={detail.book.title} photoUrl={detail.book.photoUrl} variant="list" />
+                  <View style={styles.bookText}>
+                    <Text style={styles.bookTitle} numberOfLines={2}>
+                      {detail.book.title}
+                    </Text>
+                    <Tag variant={detail.book.modality} />
+                  </View>
                 </View>
-                {embedded || delivery.completed || detail.request.status !== "accepted" ? null : (
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel="Combinar encontro na negociação"
-                    onPress={() => guardedOpenNegotiation(requestId)}
-                    style={withPress(styles.combine)}
-                  >
-                    <Text style={styles.combineText}>Combinar</Text>
-                  </Pressable>
-                )}
+                {detail.request.status === "accepted" ? (
+                  <NegotiationStatusCard
+                    embedded
+                    combineAccessibilityLabel="Combinar encontro na negociação"
+                    meeting={meetingState.meeting}
+                    requestStatus={detail.request.status}
+                    counterpartName={name}
+                    sessionUserId={sessionUserId}
+                    deliveryCompleted={Boolean(delivery.completed)}
+                    onCombineMeeting={() => (onScheduleMeeting ? guardedScheduleMeeting(requestId) : guardedOpenNegotiation(requestId))}
+                    onConfirmMeeting={() => void meetingActions.confirm()}
+                    onSuggestOtherTime={() => (onScheduleMeeting ? guardedScheduleMeeting(requestId) : guardedOpenNegotiation(requestId))}
+                    onRescheduleMeeting={() => (onScheduleMeeting ? guardedScheduleMeeting(requestId) : guardedOpenNegotiation(requestId))}
+                    onOpenDelivery={() => (onOpenDelivery ? guardedOpenDelivery(requestId) : guardedOpenNegotiation(requestId))}
+                    onOpenDirections={handleOpenDirections}
+                    onAddToCalendar={() => void handleAddToCalendar()}
+                  />
+                ) : null}
               </View>
             ) : null}
 
-            {detail && detail.request.status === "accepted" ? (
+            {detail && embedded && detail.request.status === "accepted" ? (
               <NegotiationStatusCard
                 meeting={meetingState.meeting}
                 requestStatus={detail.request.status}
@@ -367,6 +377,7 @@ export function Chat({
             ) : (
               <FlatList
                 ref={listRef}
+                style={styles.flex}
                 {...standardVerticalScrollProps}
                 data={timeline}
                 keyExtractor={(item) => item.key}
@@ -506,18 +517,17 @@ function createStyles(colors: ColorPalette) {
     },
     headerTitle: { flex: 1, ...tokens.typography.titleMedium, fontWeight: tokens.fontWeight.semiBold, color: colors.m3.onSurface },
     bookCard: {
-      flexDirection: "row",
-      alignItems: "center",
       gap: tokens.spacing[12],
       marginHorizontal: tokens.spacing[16],
       marginTop: tokens.spacing[10],
       marginBottom: tokens.spacing[8],
       padding: tokens.spacing[12],
       borderRadius: tokens.radius.card,
-      backgroundColor: colors.m3.surfaceContainerLow,
+      backgroundColor: colors.surface,
       borderWidth: 1,
       borderColor: colors.m3.outlineVariant,
     },
+    bookRow: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[12] },
     bookText: { flex: 1, gap: tokens.spacing[6], alignItems: "flex-start" },
     bookTitle: { ...tokens.typography.bodyLarge, fontWeight: tokens.fontWeight.medium, color: colors.m3.onSurface },
     // "Combinar" como botão tonal (Spec 089): antes era só um texto verde, sem cara de botão.
