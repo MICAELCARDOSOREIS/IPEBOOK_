@@ -191,7 +191,7 @@ export function BetaInviteScreen({
       </Text>
       <Text style={styles.lead}>
         O app comunitário de troca, venda e doação de livros de Piripiri está chegando à Play Store.
-        Conecte sua conta Google ao lado, explore a estante da cidade e conte o que achou.
+        Conecte sua conta Google {wide ? "ao lado" : "abaixo"}, explore a estante da cidade e conte o que achou.
       </Text>
       <View style={[styles.highlightGrid, wide && styles.highlightGridWide]}>
         {highlights.map((item) => (

@@ -131,12 +131,15 @@ export default function HelpAndFaq({ onBack, onOpenConversations }: HelpAndFaqPr
                 />
               </View>
             ) : (
-              filteredItems.map((item) => (
-                <View key={item.id} style={[styles.faqCard, wide && columnWidth]}>
-                  <Text style={styles.question}>{item.question}</Text>
-                  <Text style={styles.answer}>{item.answer}</Text>
-                </View>
-              ))
+              filteredItems.map((item, index) => {
+                const isOddLast = wide && index === filteredItems.length - 1 && filteredItems.length % 2 === 1;
+                return (
+                  <View key={item.id} style={[styles.faqCard, wide && (isOddLast ? styles.fullRow : columnWidth)]}>
+                    <Text style={styles.question}>{item.question}</Text>
+                    <Text style={styles.answer}>{item.answer}</Text>
+                  </View>
+                );
+              })
             )}
           </View>
 

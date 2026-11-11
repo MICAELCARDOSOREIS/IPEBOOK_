@@ -16,6 +16,7 @@ import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { AppIcon } from "@/view/components/AppIcon";
 import { type FocusableElement, useModalFocusTrap } from "@/view/components/Dialog";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
+import { standardVerticalScrollProps } from "@/view/scrollProps";
 
 import { withPress } from "@/view/pressFeedback";
 export type NeighborhoodSelectorModalProps = {
@@ -117,6 +118,8 @@ export function NeighborhoodSelectorModal({
               value={filterText}
               onChangeText={setFilterText}
               autoCapitalize="words"
+              autoCorrect={false}
+              returnKeyType="search"
               clearButtonMode="while-editing"
             />
             {filterText.length > 0 ? (
@@ -133,6 +136,7 @@ export function NeighborhoodSelectorModal({
 
           {/* Lista de bairros */}
           <FlatList
+            {...standardVerticalScrollProps}
             data={filteredItems}
             keyExtractor={(item) => item}
             style={styles.list}
@@ -140,7 +144,21 @@ export function NeighborhoodSelectorModal({
               styles.listContent,
               !wideWeb && { paddingBottom: Math.max(tokens.spacing[16], insets.bottom + tokens.spacing[8]) },
             ]}
-            keyboardShouldPersistTaps="handled"
+            ListEmptyComponent={
+              <View style={styles.emptyContainer}>
+                <Text style={styles.emptyText}>
+                  Nenhum bairro encontrado para "{filterText}".
+                </Text>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Limpar busca de bairro e mostrar todos"
+                  onPress={() => setFilterText("")}
+                  style={withPress(styles.emptyAction)}
+                >
+                  <Text style={styles.emptyActionText}>Ver todos os bairros</Text>
+                </Pressable>
+              </View>
+            }
             renderItem={({ item }) => {
               const isAll = item === ALL_NEIGHBORHOODS_LABEL;
               const isSelected =
@@ -307,6 +325,31 @@ function createStyles(colors: ColorPalette) {
     itemTextSelected: {
       fontFamily: fontFamily.semiBold,
       color: colors.m3.onSecondaryContainer,
+    },
+    emptyContainer: {
+      paddingVertical: tokens.spacing[24],
+      paddingHorizontal: tokens.spacing[16],
+      alignItems: "center",
+      gap: tokens.spacing[12],
+    },
+    emptyText: {
+      ...tokens.typography.bodyMedium,
+      color: colors.secondaryText,
+      textAlign: "center",
+    },
+    emptyAction: {
+      minHeight: tokens.accessibility.touchTarget,
+      paddingVertical: tokens.spacing[8],
+      paddingHorizontal: tokens.spacing[16],
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.m3.secondaryContainer,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    emptyActionText: {
+      ...tokens.typography.labelMedium,
+      color: colors.m3.onSecondaryContainer,
+      fontFamily: fontFamily.semiBold,
     },
   });
 }

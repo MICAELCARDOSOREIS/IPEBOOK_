@@ -142,10 +142,10 @@ export function MyListings({
   const wideWeb = useIsWideWeb();
   const insets = useSafeAreaInsets();
   const hasBooks = !state.loading && !state.error && state.books.length > 0;
-  // Posiciona o FAB com respiro harmônico de 16px acima do topo da barra de navegação flutuante (64dp)
-  const navBarPaddingBottom = insets.bottom > 0 ? insets.bottom + tokens.spacing[8] : tokens.spacing[12];
-  const navBarDockHeight = 64;
-  const fabBottom = navBarPaddingBottom + navBarDockHeight + tokens.spacing[16];
+  // Posiciona o FAB logo acima da barra de navegação flutuante (88dp)
+  const navBarPaddingBottom = Math.max(tokens.spacing[20], insets.bottom + tokens.spacing[10]);
+  const navBarDockHeight = 88;
+  const fabBottom = navBarPaddingBottom + navBarDockHeight;
 
   return (
     <SafeAreaView edges={["top", "left", "right"]} style={styles.page}>

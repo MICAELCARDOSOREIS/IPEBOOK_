@@ -21,6 +21,7 @@ import { Tag } from "@/view/components/Tag";
 import { withPress } from "@/view/pressFeedback";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
+import { standardVerticalScrollProps } from "@/view/scrollProps";
 
 export type ProposalSheetProps = {
   visible: boolean;
@@ -109,9 +110,9 @@ export function ProposalSheet({
           </View>
 
           <ScrollView
+            {...standardVerticalScrollProps}
             style={styles.content}
             contentContainerStyle={styles.contentContainer}
-            keyboardShouldPersistTaps="handled"
           >
             {/* Resumo do livro alvo */}
             <View style={styles.targetBookCard}>

@@ -19,7 +19,7 @@ import { tokens, type ColorPalette } from "@/view/tokens";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { formatPrice } from "@/view/formatPrice";
-import { scrollBottomPadding, standardVerticalScrollProps } from "@/view/scrollProps";
+import { scrollBottomPadding, standardHorizontalScrollProps, standardVerticalScrollProps } from "@/view/scrollProps";
 import { WEB_MAX_WIDTH, WEB_GUTTER, useWebColumns } from "@/view/webLayout";
 
 import { withPress } from "@/view/pressFeedback";
@@ -144,7 +144,7 @@ export function RequestListLayout({
           {items.length > 0 ? (
             <ScrollView
               horizontal
-              showsHorizontalScrollIndicator={false}
+              {...standardHorizontalScrollProps}
               contentContainerStyle={styles.filterRow}
               style={styles.filterScrollView}
             >

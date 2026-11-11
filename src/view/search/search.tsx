@@ -3,7 +3,7 @@ import { Animated, FlatList, Platform, Pressable, ScrollView, StyleSheet, Text, 
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ScreenContainer } from "@/view/components/ScreenContainer";
 import { makeAuthViewModel, makeNetworkStatus, makeSearchViewModel } from "@/di/container";
-import type { SearchModalityFilter } from "@/viewmodel/useSearchViewModel";
+import type { SearchModalityFilter, SearchFilters, SearchSortOption } from "@/viewmodel/useSearchViewModel";
 import { SORT_LABELS } from "@/viewmodel/searchFilters";
 import { FilterSheet } from "@/view/search/FilterSheet";
 import { WebFilterSidebar } from "@/view/search/WebFilterSidebar";
@@ -28,6 +28,7 @@ import { AppIcon } from "@/view/components/AppIcon";
 import { Snackbar } from "@/view/components/Snackbar";
 import { NeighborhoodSelectorModal } from "@/view/components/NeighborhoodSelectorModal";
 import { useActiveNeighborhood } from "@/viewmodel/useActiveNeighborhood";
+import { usePersistedSearchFilters } from "@/viewmodel/usePersistedSearchFilters";
 import { WEB_GUTTER, WEB_MAX_WIDTH, useWebGridColumns } from "@/view/webLayout";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { standardVerticalScrollProps, standardHorizontalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
@@ -88,6 +89,9 @@ export default function Search({
   const flatListRef = useRef<FlatList>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState<string | null>(null);
+  const [snackbarAction, setSnackbarAction] = useState<{ label: string; onPress: () => void } | null>(null);
+  const clearedSnapshotRef = useRef<{ term: string; filters: SearchFilters; sortBy: SearchSortOption; neighborhood: string | "all" } | null>(null);
+  const { persisted, loaded: persistedLoaded, persist } = usePersistedSearchFilters();
   const insets = useSafeAreaInsets();
   const navBarPaddingBottom = Math.max(tokens.spacing[20], insets.bottom + tokens.spacing[10]);
   const navBarDockHeight = 88;
@@ -98,6 +102,46 @@ export default function Search({
     onNavigateToBookDetail?.(bookId);
   });
   const guardedNavigateToFavorites = useGuardedPress(onNavigateToFavorites);
+
+  const undoClear = () => {
+    const snapshot = clearedSnapshotRef.current;
+    if (!snapshot) return;
+    actions.setTerm(snapshot.term);
+    actions.setModality(snapshot.filters.modality);
+    actions.setCategory(snapshot.filters.category);
+    actions.setCondition(snapshot.filters.condition);
+    actions.setOnlyBoxes(Boolean(snapshot.filters.onlyBoxes));
+    actions.setPriceRange(snapshot.filters.priceRange);
+    actions.setSortBy(snapshot.sortBy);
+    actions.setNeighborhood(snapshot.neighborhood);
+    clearedSnapshotRef.current = null;
+    setSnackbarMessage(null);
+    setSnackbarAction(null);
+  };
+
+  const handleResetFilters = () => {
+    clearedSnapshotRef.current = {
+      term: state.term,
+      filters: state.filters,
+      sortBy: state.sortBy,
+      neighborhood: state.neighborhood,
+    };
+    actions.resetFilters();
+    setSnackbarMessage("Filtros limpos");
+    setSnackbarAction({ label: "Desfazer", onPress: undoClear });
+  };
+
+  const handleClearFilters = () => {
+    clearedSnapshotRef.current = {
+      term: state.term,
+      filters: state.filters,
+      sortBy: state.sortBy,
+      neighborhood: state.neighborhood,
+    };
+    actions.clearFilters();
+    setSnackbarMessage("Busca reiniciada");
+    setSnackbarAction({ label: "Desfazer", onPress: undoClear });
+  };
 
   useEffect(() => {
     if (appliedInitialFilters.current) return;
@@ -123,6 +167,25 @@ export default function Search({
       }
     }
   }, [effectiveNeighborhood, actions]);
+
+  // Aplica filtros persistidos entre sessões apenas quando aberto sem intenção de navegação.
+  useEffect(() => {
+    if (!persistedLoaded || !persisted) return;
+    if (initialModality || initialCategory) return;
+    actions.setModality(persisted.filters.modality);
+    actions.setCategory(persisted.filters.category);
+    actions.setCondition(persisted.filters.condition);
+    actions.setPriceRange(persisted.filters.priceRange);
+    actions.setOnlyBoxes(Boolean(persisted.filters.onlyBoxes));
+    actions.setSortBy(persisted.sortBy);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [persistedLoaded, persisted]);
+
+  // Persiste filtros e ordenação atuais após a primeira leitura do storage.
+  useEffect(() => {
+    if (!persistedLoaded) return;
+    persist(state.filters, state.sortBy);
+  }, [persistedLoaded, state.filters, state.sortBy, persist]);
 
   const displayNeighborhood =
     !effectiveNeighborhood ||
@@ -166,7 +229,7 @@ export default function Search({
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Limpar todos os filtros de busca"
-              onPress={actions.resetFilters}
+              onPress={handleResetFilters}
               style={withPress(styles.clearFiltersButton)}
             >
               <Text style={styles.clearFiltersText}>Limpar filtros</Text>
@@ -365,7 +428,7 @@ export default function Search({
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Limpar filtros e buscar novamente"
-          onPress={actions.clearFilters}
+          onPress={handleClearFilters}
           style={withPress(styles.emptyActionButton)}
         >
           <Text style={styles.emptyActionText}>Limpar filtros</Text>
@@ -396,9 +459,13 @@ export default function Search({
             <Snackbar
               visible={snackbarMessage !== null}
               message={snackbarMessage ?? ""}
-              actionLabel={onNavigateToFavorites ? "Ver favoritos" : undefined}
-              onAction={guardedNavigateToFavorites}
-              onDismiss={() => setSnackbarMessage(null)}
+              actionLabel={snackbarAction?.label}
+              onAction={snackbarAction?.onPress}
+              onDismiss={() => {
+                setSnackbarMessage(null);
+                setSnackbarAction(null);
+                clearedSnapshotRef.current = null;
+              }}
               duration={3500}
             />
           </View>
@@ -416,8 +483,16 @@ export default function Search({
               setShowFilterSheet(false);
             }}
             onReset={() => {
+              clearedSnapshotRef.current = {
+                term: state.term,
+                filters: state.filters,
+                sortBy: state.sortBy,
+                neighborhood: state.neighborhood,
+              };
               actions.resetFilters();
               setShowFilterSheet(false);
+              setSnackbarMessage("Filtros limpos");
+              setSnackbarAction({ label: "Desfazer", onPress: undoClear });
             }}
             onClose={() => setShowFilterSheet(false)}
           />
@@ -481,6 +556,9 @@ export default function Search({
                 selected
                   ? `"${item.title}" foi adicionado aos Favoritos!`
                   : `"${item.title}" foi removido dos Favoritos.`
+              );
+              setSnackbarAction(
+                onNavigateToFavorites ? { label: "Ver favoritos", onPress: guardedNavigateToFavorites } : null,
               );
             }}
           />
@@ -670,9 +748,11 @@ function createStyles(colors: ColorPalette) {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "flex-end",
-      gap: tokens.spacing[2],
-      minHeight: tokens.accessibility.touchTarget,
-      paddingLeft: tokens.spacing[8],
+      gap: tokens.spacing[4],
+      height: tokens.spacing[40],
+      paddingHorizontal: tokens.spacing[12],
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.m3.surfaceContainerHigh,
     },
     sortText: { ...tokens.typography.labelLarge, color: colors.m3.primary },
     body: { ...tokens.typography.bodyLarge, lineHeight: tokens.lineHeight[25], color: colors.secondaryText },
