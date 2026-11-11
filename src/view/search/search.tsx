@@ -172,12 +172,13 @@ export default function Search({
   useEffect(() => {
     if (!persistedLoaded || !persisted) return;
     if (initialModality || initialCategory) return;
-    actions.setModality(persisted.filters.modality);
-    actions.setCategory(persisted.filters.category);
-    actions.setCondition(persisted.filters.condition);
-    actions.setPriceRange(persisted.filters.priceRange);
-    actions.setOnlyBoxes(Boolean(persisted.filters.onlyBoxes));
-    actions.setSortBy(persisted.sortBy);
+    const f = persisted.filters;
+    if (f.modality !== "all") actions.setModality(f.modality);
+    if (f.category !== "all") actions.setCategory(f.category);
+    if (f.condition !== "all") actions.setCondition(f.condition);
+    if (f.priceRange !== "all") actions.setPriceRange(f.priceRange);
+    if (f.onlyBoxes) actions.setOnlyBoxes(true);
+    if (persisted.sortBy !== "recent") actions.setSortBy(persisted.sortBy);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [persistedLoaded, persisted]);
 
