@@ -163,18 +163,17 @@ export function Dialog({
       <View style={styles.scrim}>
         {showCancel ? (
           <Pressable
-            accessibilityRole="none"
-            accessibilityLabel="Fechar diálogo"
+            accessibilityRole="button"
+            accessibilityLabel="Fechar diálogo ao tocar fora"
             style={StyleSheet.absoluteFill}
             onPress={guardedCancel}
           />
         ) : null}
         <Animated.View
-          accessibilityRole="alert"
-          accessibilityLabel={title}
+          accessibilityRole="alertdialog"
           style={[styles.card, { transform: [{ scale: cardScale }] }]}
         >
-          <Text style={styles.title}>{title}</Text>
+          <Text accessibilityRole="header" style={styles.title}>{title}</Text>
           <Text style={styles.message}>{message}</Text>
           <View style={styles.actions}>
             {showCancel ? (
@@ -204,7 +203,7 @@ export function Dialog({
               ])}
             >
               {loading ? (
-                <ActivityIndicator color={colors.surface} />
+                <ActivityIndicator accessibilityLabel="Confirmando ação..." color={colors.surface} />
               ) : (
                 <Text style={styles.confirmText}>{confirmLabel}</Text>
               )}
@@ -229,7 +228,7 @@ function createStyles(colors: ColorPalette) {
       width: "100%",
       maxWidth: 420,
       backgroundColor: colors.surface,
-      borderRadius: tokens.radius.extraLarge,
+      borderRadius: tokens.radius.xxl,
       padding: tokens.spacing[24],
       gap: tokens.spacing[16],
       // Elevação M3 level 3 (design-system/04-componentes/dialogo.md)

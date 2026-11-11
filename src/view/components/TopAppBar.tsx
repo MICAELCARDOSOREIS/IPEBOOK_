@@ -48,8 +48,8 @@ export function TopAppBar({ title, onBack, floating = false, contentMaxWidth }: 
           <AppIcon name="back" size={18} color={colors.m3.onSurface} />
           <Text style={styles.crumbBackText}>Voltar</Text>
         </Pressable>
-        <View accessible={false} style={styles.crumbDivider} />
-        <Text accessibilityRole="header" numberOfLines={1} style={styles.crumbTitle}>{title}</Text>
+        <View accessible={false} aria-hidden={true} style={styles.crumbDivider} />
+        <Text accessibilityRole="header" accessibilityLabel={title} numberOfLines={1} style={styles.crumbTitle}>{title}</Text>
       </View>
     );
   }
@@ -62,9 +62,11 @@ export function TopAppBar({ title, onBack, floating = false, contentMaxWidth }: 
         onPress={guardedBack}
         style={({ pressed }) => [styles.backButton, pressed && styles.backButtonPressed]}
       >
-        <AppIcon name="back" size={24} color={colors.m3.onSurface} />
+        <View style={styles.backIconWrapper}>
+          <AppIcon name="back" size={24} color={colors.m3.onSurface} />
+        </View>
       </Pressable>
-      <Text accessibilityRole="header" numberOfLines={1} style={styles.title}>{title}</Text>
+      <Text accessibilityRole="header" accessibilityLabel={title} numberOfLines={1} style={styles.title}>{title}</Text>
     </View>
   );
 }
@@ -75,7 +77,8 @@ function createStyles(colors: ColorPalette) {
       height: tokens.spacing[64],
       flexDirection: "row",
       alignItems: "center",
-      paddingHorizontal: tokens.spacing[8],
+      paddingLeft: tokens.spacing[24],
+      paddingRight: tokens.spacing[16],
       gap: tokens.spacing[12],
       backgroundColor: colors.surface,
     },
@@ -98,7 +101,7 @@ function createStyles(colors: ColorPalette) {
     crumbBackActive: { backgroundColor: colors.m3.surfaceContainerHigh },
     crumbBackText: { ...tokens.typography.labelLarge, color: colors.m3.onSurface },
     crumbDivider: { width: 1, height: 16, backgroundColor: colors.m3.outlineVariant },
-    crumbTitle: { flexShrink: 1, ...tokens.typography.titleMedium, color: colors.m3.onSurfaceVariant },
+    crumbTitle: { flexShrink: 1, ...tokens.typography.titleMedium, color: colors.m3.onSurface },
     barOverlay: {
       backgroundColor: colors.m3.surfaceContainer,
       elevation: 3,
@@ -115,10 +118,13 @@ function createStyles(colors: ColorPalette) {
       alignItems: "center",
       ...(Platform.OS === "web" ? ({ cursor: "pointer", userSelect: "none" } as never) : {}),
     },
+    backIconWrapper: {
+      marginLeft: -2,
+    },
     backButtonPressed: {
       borderRadius: tokens.shapeMorph.buttonPressed,
       backgroundColor: colors.m3.surfaceContainerHigh,
-      transform: [{ scale: 0.92 }],
+      transform: [{ scale: 0.96 }],
     },
     title: {
       flexShrink: 1,

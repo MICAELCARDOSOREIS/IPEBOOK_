@@ -39,13 +39,14 @@ export function OutlinedButton({
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={accessibilityLabel ?? label}
-        accessibilityState={{ disabled: isDisabled }}
+        accessibilityState={loading ? { disabled: isDisabled, busy: true } : { disabled: isDisabled }}
         disabled={isDisabled}
         onPress={guardedPress}
         onPressIn={onPressIn}
         onPressOut={onPressOut}
         style={[
           styles.button,
+          Boolean(icon) && styles.buttonWithIcon,
           isPressed && !isDisabled && styles.pressedShape,
           isDisabled && styles.disabled,
         ]}
@@ -54,7 +55,11 @@ export function OutlinedButton({
           <ActivityIndicator color={colors.action} accessibilityLabel={loadingLabel ?? label} />
         ) : (
           <View style={styles.contentRow}>
-            {icon}
+            {icon ? (
+              <View accessible={false} aria-hidden={true}>
+                {icon}
+              </View>
+            ) : null}
             <Text style={[styles.label, isDisabled && styles.labelDisabled]}>{label}</Text>
           </View>
         )}
@@ -66,16 +71,19 @@ export function OutlinedButton({
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     button: {
-      // Figma `01.03`/`01.04`: mesmo tamanho do preenchido, borda `outline-variant` de 1 dp.
       minHeight: 52,
       justifyContent: "center",
       alignItems: "center",
       borderRadius: tokens.shapeMorph.buttonRest,
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      borderColor: colors.m3.outline,
       backgroundColor: "transparent",
       paddingHorizontal: tokens.spacing[24],
       ...(Platform.OS === "web" ? ({ cursor: "pointer", userSelect: "none" } as never) : {}),
+    },
+    buttonWithIcon: {
+      paddingLeft: tokens.spacing[16],
+      paddingRight: tokens.spacing[24],
     },
     pressedShape: {
       borderRadius: tokens.shapeMorph.buttonPressed,

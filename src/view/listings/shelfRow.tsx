@@ -17,12 +17,14 @@ export type ShelfRowProps = {
   onPress: () => void;
   /** Dispara compartilhamento formatado no WhatsApp de 1 toque (Spec 122). */
   onShareWhatsApp?: () => void;
+  /** Navega diretamente para a negociação ativa quando o livro está reservado. */
+  onNavigateToNegotiation?: () => void;
   /** Web larga (Figma `05.01`): linha de tabela com a situação em etiqueta e a ação "Editar". */
   wide?: { statusVariant: TagProps["variant"]; statusLabel: string; offer: string; actionLabel?: string };
 };
 
 /** Linha da estante: capa, título, resumo e seta de avanço, como em `05.01` e `05.03`. */
-export function ShelfRow({ book, summary, accessibilityLabel, onPress, onShareWhatsApp, wide }: ShelfRowProps) {
+export function ShelfRow({ book, summary, accessibilityLabel, onPress, onShareWhatsApp, onNavigateToNegotiation, wide }: ShelfRowProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
@@ -87,7 +89,7 @@ export function ShelfRow({ book, summary, accessibilityLabel, onPress, onShareWh
               }}
               style={withPress(styles.whatsappButton)}
             >
-              <AppIcon name="share" size={18} color={colors.nature.foliage} />
+              <AppIcon name="whatsapp" size={18} color={colors.nature.foliage} />
             </Pressable>
           ) : null}
           <View style={styles.actionButton}>
@@ -113,7 +115,7 @@ export function ShelfRow({ book, summary, accessibilityLabel, onPress, onShareWh
         ? { background: colors.badge.paused.background, text: colors.badge.paused.text, label: "Pausado" }
         : book.status === "delivered"
           ? { background: colors.m3.secondaryContainer, text: colors.m3.onSecondaryContainer, label: "Concluído" }
-          : { background: colors.nature.sprout, text: colors.nature.foliageDeep, label: "Disponível" };
+          : { background: colors.badge.available.background, text: colors.badge.available.text, label: "Disponível" };
 
   return (
     <Pressable
@@ -157,10 +159,27 @@ export function ShelfRow({ book, summary, accessibilityLabel, onPress, onShareWh
               {book.neighborhood || "Piripiri"}
             </Text>
           </View>
-          <View style={[styles.statusPill, { backgroundColor: statusTone.background }]}>
-            <Text style={[styles.statusPillText, { color: statusTone.text }]}>
-              {statusTone.label}
-            </Text>
+          <View style={styles.footerRight}>
+            <View style={[styles.statusPill, { backgroundColor: statusTone.background }]}>
+              <Text style={[styles.statusPillText, { color: statusTone.text }]}>
+                {statusTone.label}
+              </Text>
+            </View>
+            {book.status === "reserved" && onNavigateToNegotiation ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`Ver negociação de ${book.title}`}
+                hitSlop={8}
+                onPress={(e) => {
+                  e?.stopPropagation?.();
+                  onNavigateToNegotiation();
+                }}
+                style={withPress(styles.negotiationButton)}
+              >
+                <AppIcon name="chat" size={14} color={colors.m3.onPrimaryContainer} />
+                <Text style={styles.negotiationButtonText}>Ver negociação</Text>
+              </Pressable>
+            ) : null}
           </View>
         </View>
         <Text style={styles.srOnlySummary} numberOfLines={1}>
@@ -179,7 +198,7 @@ export function ShelfRow({ book, summary, accessibilityLabel, onPress, onShareWh
             }}
             style={withPress(styles.whatsappButton)}
           >
-            <AppIcon name="share" size={18} color={colors.nature.foliage} />
+            <AppIcon name="whatsapp" size={18} color={colors.nature.foliage} />
           </Pressable>
         ) : null}
         <AppIcon name="chevronRight" size={22} color={colors.m3.onSurfaceVariant} />
@@ -200,7 +219,7 @@ function createStyles(colors: ColorPalette) {
     },
     mobileCard: {
       backgroundColor: colors.m3.surfaceContainerLowest,
-      borderRadius: tokens.radius.large,
+      borderRadius: tokens.radius.card,
       borderWidth: 1,
       borderColor: colors.m3.outlineVariant,
       paddingHorizontal: tokens.spacing[12],
@@ -214,7 +233,7 @@ function createStyles(colors: ColorPalette) {
     rowPressed: {
       backgroundColor: colors.m3.surfaceContainerHigh,
       borderRadius: tokens.shapeMorph.cardPressed,
-      transform: [{ scale: 0.985 }],
+      transform: [{ scale: 0.96 }],
     },
     rowText: { flex: 1, gap: tokens.spacing[6] },
     modalityPriceRow: {
@@ -235,6 +254,7 @@ function createStyles(colors: ColorPalette) {
       fontSize: 13,
       lineHeight: 18,
       fontWeight: tokens.fontWeight.bold,
+      fontVariant: ["tabular-nums"],
       color: colors.nature.foliageDeep,
     },
     titleBlock: {
@@ -243,13 +263,11 @@ function createStyles(colors: ColorPalette) {
     rowTitle: {
       ...tokens.typography.brandCardTitle,
       fontSize: 16,
-      lineHeight: 20,
+      lineHeight: 22,
       color: colors.m3.onSurface,
     },
     rowAuthor: {
-      ...tokens.typography.bodyMedium,
-      fontSize: 12.5,
-      lineHeight: 16,
+      ...tokens.typography.footnote,
       color: colors.m3.onSurfaceVariant,
     },
     footerRow: {
@@ -261,6 +279,13 @@ function createStyles(colors: ColorPalette) {
       paddingTop: tokens.spacing[6],
       borderTopWidth: StyleSheet.hairlineWidth,
       borderTopColor: colors.m3.outlineVariant,
+    },
+    footerRight: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[6],
+      flexWrap: "wrap",
+      justifyContent: "flex-end",
     },
     locationRow: {
       flexDirection: "row",
@@ -286,6 +311,22 @@ function createStyles(colors: ColorPalette) {
       fontSize: 11,
       lineHeight: 14,
       fontWeight: tokens.fontWeight.bold,
+    },
+    negotiationButton: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[4],
+      paddingHorizontal: tokens.spacing[10],
+      paddingVertical: tokens.spacing[4],
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.m3.primaryContainer,
+    },
+    negotiationButtonText: {
+      ...tokens.typography.captionSmall,
+      fontSize: 11,
+      lineHeight: 14,
+      fontWeight: tokens.fontWeight.semiBold,
+      color: colors.m3.onPrimaryContainer,
     },
     srOnlySummary: {
       position: "absolute",

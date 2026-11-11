@@ -250,8 +250,8 @@ function createStyles(colors: ColorPalette) {
     },
     heroBarTrailing: { flexDirection: "row", gap: tokens.spacing[8] },
     heroIconButton: {
-      width: 44,
-      height: 44,
+      width: tokens.accessibility.touchTarget,
+      height: tokens.accessibility.touchTarget,
       borderRadius: tokens.shapeMorph.buttonRest,
       alignItems: "center",
       justifyContent: "center",
@@ -259,7 +259,7 @@ function createStyles(colors: ColorPalette) {
     },
     heroIconButtonPressed: {
       borderRadius: tokens.shapeMorph.buttonPressed,
-      transform: [{ scale: 0.92 }],
+      transform: [{ scale: 0.96 }],
     },
     coverArea: { alignItems: "center", paddingTop: tokens.spacing[8], paddingBottom: tokens.spacing[8] },
     coverAreaWide: { flex: 1, justifyContent: "center", paddingTop: 0 },

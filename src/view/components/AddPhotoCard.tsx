@@ -43,6 +43,7 @@ export function AddPhotoCard({
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={`Remover ${label.toLowerCase()}`}
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
             onPress={onRemovePhoto}
             style={withPress(styles.removeButton)}
           >

@@ -33,7 +33,7 @@ export function FilledButton({
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={accessibilityLabel ?? label}
-        accessibilityState={{ disabled: isDisabled }}
+        accessibilityState={loading ? { disabled: isDisabled, busy: true } : { disabled: isDisabled }}
         disabled={isDisabled}
         onPress={guardedPress}
         onPressIn={onPressIn}

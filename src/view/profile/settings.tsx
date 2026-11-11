@@ -411,7 +411,15 @@ export function Settings({
                     (key, index) => {
                       const category = NOTIFICATION_PREFERENCE_CATEGORIES[key];
                       return (
-                        <View key={key} style={[styles.toggleRow, index > 0 && styles.linkDivider]}>
+                        <Pressable
+                          key={key}
+                          onPress={() => void notifActions.setEnabled(key, !notifPrefs.enabled[key])}
+                          style={({ pressed }) => [
+                            styles.toggleRow,
+                            index > 0 && styles.linkDivider,
+                            pressed && styles.linkPressed,
+                          ]}
+                        >
                           <View style={styles.linkText}>
                             <Text style={styles.linkLabel}>{category.label}</Text>
                             <Text style={styles.linkDescription}>{category.description}</Text>
@@ -433,7 +441,7 @@ export function Settings({
                                 : colors.m3.outline
                             }
                           />
-                        </View>
+                        </Pressable>
                       );
                     },
                   )}

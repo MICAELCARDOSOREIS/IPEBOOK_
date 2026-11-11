@@ -107,7 +107,7 @@ export default function SignUp({
             </Text>
 
             <View style={styles.resultBox}>
-              <Text accessibilityRole="alert" style={styles.resultLabel}>Não encontrou a mensagem?</Text>
+              <Text style={styles.resultLabel}>Não encontrou a mensagem?</Text>
               <Text style={styles.resultHint}>
                 Verifique a pasta de spam, lixo eletrônico ou a aba de promoções do seu provedor.
               </Text>
@@ -250,9 +250,8 @@ function createStyles(colors: ColorPalette) {
       backgroundColor: colors.border,
     },
     dividerText: {
-      ...tokens.typography.bodyLarge,
+      ...tokens.typography.bodyMedium,
       color: colors.secondaryText,
-      fontWeight: tokens.fontWeight.semiBold,
     },
     subtitle: {
       ...tokens.typography.bodyLarge,
