@@ -74,6 +74,7 @@ export function MyListings({
   const [activeTab, setActiveTab] = useState<ShelfTab>("listings");
   const [showTabSheet, setShowTabSheet] = useState(false);
   const [statusFilter, setStatusFilter] = useState<ListingsFilter>("all");
+  const [modalityFilter, setModalityFilter] = useState<BookModality | "all">("all");
 
   const handleShareBook = (book: (typeof state.books)[number]) => {
     void shareActions.shareToWhatsApp(book.id, {
@@ -110,6 +111,9 @@ export function MyListings({
 
   // Livro entregue sai de Anúncios; em Concluídos entra quando não há pedido concluído que já o mostre.
   const activeBooks = state.books.filter((b) => b.status !== "delivered");
+  const displayedBooks = activeBooks.filter((b) =>
+    modalityFilter === "all" ? true : b.modality === modalityFilter,
+  );
   const deliveredBooks = state.books.filter(
     (b) => b.status === "delivered" && !concludedProposals.some((item) => item.listing.id === b.id),
   );
@@ -254,51 +258,72 @@ export function MyListings({
               </View>
             ) : null}
 
-            {/* Resumo por modalidade (cores canônicas da ADR 0104 / tokens.colors.badge) — somente leitura.
-                O filtro acionável é a fileira de chips de status logo abaixo; estes cartões não são botões. */}
-            <View style={styles.statsRow}>
-              {stats.map((stat) => (
-                <View
-                  key={stat.key}
-                  accessible
-                  accessibilityLabel={`${stat.count} ${stat.label}`}
-                  style={[
-                    styles.statCard,
-                    wideWeb && styles.statCardWide,
-                    { backgroundColor: colors.badge[stat.key].background },
-                  ]}
-                >
-                  <Text style={[styles.statCount, { color: colors.badge[stat.key].text }]}>{stat.count}</Text>
-                  <Text style={[styles.statLabel, { color: colors.badge[stat.key].text }]}>{stat.label}</Text>
-                </View>
-              ))}
-            </View>
-
-            {/* Seletor de abas da estante (Anúncios, Propostas, Concluídos) e contagem contextual */}
-            {activeTab !== "listings" ? (
-              <View
-                testID="my-listings-tablist"
-                style={[
-                  styles.summaryRow,
-                  wideWeb && styles.summaryRowWide,
-                  isIOS ? styles.segmentTrackIOS : styles.segmentRowAndroid,
-                ]}
-              >
-                <Text style={styles.summaryText}>
-                  {activeTab === "proposals"
+            {/* Seletor unificado de abas da estante (Anúncios, Propostas, Concluídos) e contagem contextual */}
+            <View
+              testID="my-listings-tablist"
+              style={[
+                styles.summaryRow,
+                wideWeb && styles.summaryRowWide,
+                isIOS ? styles.segmentTrackIOS : styles.segmentRowAndroid,
+              ]}
+            >
+              <Text style={styles.summaryText}>
+                {activeTab === "listings"
+                  ? `${activeBooks.length} ${activeBooks.length === 1 ? "anúncio na estante" : "anúncios na estante"}`
+                  : activeTab === "proposals"
                     ? `${proposals.length} ${proposals.length === 1 ? "proposta em aberto" : "propostas em aberto"}`
                     : "Livros concluídos e entregues"}
-                </Text>
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={`Exibir: ${currentTabLabel}`}
-                  testID="my-listings-tab-selector"
-                  onPress={() => setShowTabSheet(true)}
-                  style={withPress(styles.sortButton)}
-                >
-                  <Text style={styles.sortText}>{currentTabLabel}</Text>
-                  <AppIcon name="chevronDown" size={16} color={colors.m3.primary} />
-                </Pressable>
+              </Text>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`Exibir: ${currentTabLabel}`}
+                testID="my-listings-tab-selector"
+                onPress={() => setShowTabSheet(true)}
+                style={withPress(styles.sortButton)}
+              >
+                <Text style={styles.sortText}>{currentTabLabel}</Text>
+                <AppIcon name="chevronDown" size={16} color={colors.m3.primary} />
+              </Pressable>
+            </View>
+
+            {/* Filtros interativos por modalidade (cores canônicas da ADR 0104 / tokens.colors.badge) */}
+            {activeTab === "listings" ? (
+              <View style={styles.statsRow}>
+                {stats.map((stat) => {
+                  const isSelected = modalityFilter === stat.key;
+                  const isDimmed = modalityFilter !== "all" && !isSelected;
+                  return (
+                    <Pressable
+                      key={stat.key}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected: isSelected }}
+                      accessibilityLabel={`${stat.count} ${stat.label}`}
+                      onPress={() => setModalityFilter((curr) => (curr === stat.key ? "all" : stat.key))}
+                      style={({ pressed }) => [
+                        styles.statCard,
+                        wideWeb && styles.statCardWide,
+                        { backgroundColor: colors.badge[stat.key].background },
+                        isSelected && {
+                          borderWidth: 2,
+                          borderColor: colors.badge[stat.key].text,
+                          ...styles.statCardSelected,
+                        },
+                        isDimmed && styles.statCardDimmed,
+                        pressed && styles.statCardPressed,
+                      ]}
+                    >
+                      <View style={styles.statContentRow}>
+                        <Text style={[styles.statCount, { color: colors.badge[stat.key].text }]}>{stat.count}</Text>
+                        {isSelected ? (
+                          <View style={[styles.statCheckBadge, { backgroundColor: colors.badge[stat.key].text }]}>
+                            <AppIcon name="check" size={12} color={colors.badge[stat.key].background} />
+                          </View>
+                        ) : null}
+                      </View>
+                      <Text style={[styles.statLabel, { color: colors.badge[stat.key].text }]}>{stat.label}</Text>
+                    </Pressable>
+                  );
+                })}
               </View>
             ) : null}
 
@@ -328,35 +353,11 @@ export function MyListings({
                   </View>
                 ) : null}
                 <MyListingsListingsTab
-                  books={activeBooks}
+                  books={displayedBooks}
                   statusFilter={statusFilter}
                   onStatusFilterChange={setStatusFilter}
                   onNavigateToManageListing={guardedManageListing}
                   onShareWhatsApp={handleShareBook}
-                  tabSelector={
-                    <View
-                      testID="my-listings-tablist"
-                      style={[
-                        styles.summaryRow,
-                        wideWeb && styles.summaryRowWide,
-                        isIOS ? styles.segmentTrackIOS : styles.segmentRowAndroid,
-                      ]}
-                    >
-                      <Text style={styles.summaryText}>
-                        {`${activeBooks.length} ${activeBooks.length === 1 ? "anúncio na estante" : "anúncios na estante"}`}
-                      </Text>
-                      <Pressable
-                        accessibilityRole="button"
-                        accessibilityLabel={`Exibir: ${currentTabLabel}`}
-                        testID="my-listings-tab-selector"
-                        onPress={() => setShowTabSheet(true)}
-                        style={withPress(styles.sortButton)}
-                      >
-                        <Text style={styles.sortText}>{currentTabLabel}</Text>
-                        <AppIcon name="chevronDown" size={16} color={colors.m3.primary} />
-                      </Pressable>
-                    </View>
-                  }
                   onNavigateToNegotiationForBook={(bookId) => {
                     const item = proposals.find((p) => p.listing.id === bookId);
                     if (item) guardedNegotiationDetail(item.request.id);
@@ -739,6 +740,31 @@ function createStyles(colors: ColorPalette) {
       shadowOpacity: 0.08,
       shadowRadius: 3,
       shadowOffset: { width: 0, height: 1 },
+    },
+    statCardSelected: {
+      elevation: 3,
+      shadowOpacity: 0.16,
+      shadowRadius: 6,
+      shadowOffset: { width: 0, height: 2 },
+    },
+    statCardDimmed: {
+      opacity: 0.45,
+    },
+    statCardPressed: {
+      opacity: 0.85,
+      transform: [{ scale: 0.98 }],
+    },
+    statContentRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+    },
+    statCheckBadge: {
+      width: 18,
+      height: 18,
+      borderRadius: tokens.radius.full,
+      alignItems: "center",
+      justifyContent: "center",
     },
     statCount: { ...tokens.typography.brandTitle, fontSize: 22, lineHeight: 26 },
     statLabel: { ...tokens.typography.footnote, fontWeight: tokens.fontWeight.semiBold, opacity: 0.95 },
