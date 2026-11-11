@@ -17,14 +17,15 @@ function initialsOf(name?: string, email?: string): string {
 /** Cabeçalho Web com avatar da pessoa logada, selo de propostas em "Conversas" e sino de notificações. */
 export function ConnectedWebHeader({ pathname, ...props }: ConnectedWebHeaderProps) {
   const [auth] = makeAuthViewModel();
-  const badges = makeNavigationBadgesViewModel(auth.user?.id ?? null, pathname);
-  const [notifications, notificationsActions] = makeNotificationsViewModel(auth.user?.id ?? null);
+  const userId = auth.user?.id ?? null;
+  const badges = makeNavigationBadgesViewModel(userId, pathname);
+  const [notifications, notificationsActions] = makeNotificationsViewModel(userId);
   // Ao mudar de tela o selo do sino é recalculado, como o das conversas.
   const { refresh } = notificationsActions;
   useEffect(() => {
-    void refresh();
-  }, [pathname, refresh]);
-  if (auth.loading || !auth.user) return null;
+    if (userId) void refresh();
+  }, [pathname, refresh, userId]);
+
   return (
     <WebHeader
       {...props}

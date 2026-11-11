@@ -723,8 +723,8 @@ function createStyles(colors: ColorPalette) {
       color: colors.m3.onPrimary,
       fontWeight: tokens.fontWeight.semiBold,
     },
-    // Folga para o último cartão não ficar escondido atrás do FAB.
-    scroll: { paddingBottom: tokens.spacing[96], gap: tokens.spacing[16] },
+    // Folga ampla para o último cartão e rodapé poderem ser rolados completamente acima do FAB e da barra flutuante.
+    scroll: { paddingBottom: tokens.spacing[96] + tokens.spacing[64], gap: tokens.spacing[16] },
     statsRow: { flexDirection: "row", gap: tokens.spacing[8] },
     // Web larga: número e rótulo lado a lado em cartões compactos, sem esticar pela largura toda.
     statCardWide: { flex: 0, minWidth: 160, paddingHorizontal: tokens.spacing[16] },

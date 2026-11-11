@@ -12,7 +12,6 @@ import { FilledButton } from "@/view/components/FilledButton";
 import { InlineErrorCard } from "@/view/components/InlineErrorCard";
 import { ModalityCoverArea } from "@/view/components/ModalityCoverArea";
 import { Tag } from "@/view/components/Tag";
-import { TextButton } from "@/view/components/TextButton";
 import { LoadingState } from "@/view/components/LoadingState";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
@@ -161,6 +160,36 @@ export function Drafts({ sessionUserId, onBack, onResume, onNavigateToCreateList
 
               return (
                 <View style={[styles.card, wide && columnWidth]}>
+                  {/* Linha superior: Tag da modalidade à esquerda e ação sutil de descartar à direita */}
+                  <View style={styles.cardHeader}>
+                    <View style={styles.metaRow}>
+                      <Tag variant={book.modality} />
+                      {hasPrice ? (
+                        <View style={styles.priceBadge}>
+                          <Text style={styles.priceBadgeText}>{formatPrice(book.price ?? 0)}</Text>
+                        </View>
+                      ) : null}
+                    </View>
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel="Descartar rascunho"
+                      disabled={discarding}
+                      hitSlop={8}
+                      onPress={() => setToDiscard(book)}
+                      style={({ pressed }) => [
+                        styles.topDiscardButton,
+                        pressed && styles.topDiscardButtonPressed,
+                        discarding && styles.topDiscardButtonDisabled,
+                      ]}
+                    >
+                      <AppIcon name="delete" size={14} color={colors.m3.onSurfaceVariant} />
+                      <Text style={styles.topDiscardText}>
+                        {discarding ? "Descartando…" : "Descartar"}
+                      </Text>
+                    </Pressable>
+                  </View>
+
+                  {/* Corpo do cartão: capa e detalhes */}
                   <Pressable
                     accessibilityRole="button"
                     accessibilityLabel={`Rascunho ${title}, ${stepLabel(book)}`}
@@ -171,14 +200,6 @@ export function Drafts({ sessionUserId, onBack, onResume, onNavigateToCreateList
                       <BookCover id={book.id} title={title} photoUrl={book.photoUrl} variant="list" />
                     </ModalityCoverArea>
                     <View style={styles.cardTexts}>
-                      <View style={styles.metaRow}>
-                        <Tag variant={book.modality} />
-                        {hasPrice ? (
-                          <View style={styles.priceBadge}>
-                            <Text style={styles.priceBadgeText}>{formatPrice(book.price ?? 0)}</Text>
-                          </View>
-                        ) : null}
-                      </View>
                       <Text numberOfLines={2} style={styles.cardTitle}>
                         {title}
                       </Text>
@@ -221,21 +242,13 @@ export function Drafts({ sessionUserId, onBack, onResume, onNavigateToCreateList
 
                   <View style={styles.cardDivider} />
 
-                  <View style={styles.cardActions}>
-                    <TextButton
-                      label={discarding ? "Descartando…" : "Descartar"}
-                      accessibilityLabel="Descartar rascunho"
-                      tone="danger"
-                      disabled={discarding}
-                      onPress={() => setToDiscard(book)}
+                  {/* Rodapé do cartão: botão Retomar amplo e ergonômico */}
+                  <View style={styles.cardActionsFull}>
+                    <FilledButton
+                      label="Retomar"
+                      accessibilityLabel="Retomar rascunho"
+                      onPress={() => guardedResume(book.id)}
                     />
-                    <View style={styles.resumeWrap}>
-                      <FilledButton
-                        label="Retomar"
-                        accessibilityLabel="Retomar rascunho"
-                        onPress={() => guardedResume(book.id)}
-                      />
-                    </View>
                   </View>
                 </View>
               );
@@ -341,8 +354,8 @@ function createStyles(colors: ColorPalette) {
       marginTop: tokens.spacing[4],
     },
     card: {
-      gap: tokens.spacing[12],
-      padding: tokens.spacing[16],
+      gap: tokens.spacing[10],
+      padding: tokens.spacing[14],
       borderRadius: tokens.radius.card,
       backgroundColor: colors.m3.surfaceContainerLow,
       borderWidth: 1,
@@ -353,9 +366,37 @@ function createStyles(colors: ColorPalette) {
       shadowRadius: 4,
       shadowOffset: { width: 0, height: 2 },
     },
+    cardHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: tokens.spacing[8],
+    },
+    topDiscardButton: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[4],
+      paddingHorizontal: tokens.spacing[8],
+      paddingVertical: tokens.spacing[4],
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.m3.surfaceContainerHighest,
+      minHeight: 28,
+    },
+    topDiscardButtonPressed: {
+      opacity: 0.7,
+      transform: [{ scale: 0.96 }],
+    },
+    topDiscardButtonDisabled: {
+      opacity: 0.5,
+    },
+    topDiscardText: {
+      ...tokens.typography.labelSmall,
+      color: colors.m3.onSurfaceVariant,
+      fontWeight: tokens.fontWeight.medium,
+    },
     cardMain: {
       flexDirection: "row",
-      gap: tokens.spacing[14],
+      gap: tokens.spacing[12],
       alignItems: "flex-start",
     },
     cardTexts: { flex: 1, gap: tokens.spacing[4] },
@@ -364,7 +405,6 @@ function createStyles(colors: ColorPalette) {
       alignItems: "center",
       gap: tokens.spacing[8],
       flexWrap: "wrap",
-      marginBottom: tokens.spacing[2],
     },
     priceBadge: {
       backgroundColor: colors.m3.secondaryContainer,
@@ -436,16 +476,10 @@ function createStyles(colors: ColorPalette) {
     cardDivider: {
       height: 1,
       backgroundColor: colors.m3.surfaceContainerHighest,
+      marginTop: tokens.spacing[2],
     },
-    cardActions: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-      gap: tokens.spacing[12],
-    },
-    resumeWrap: {
-      flex: 1,
-      maxWidth: 160,
+    cardActionsFull: {
+      width: "100%",
     },
     empty: {
       paddingTop: tokens.spacing[32],

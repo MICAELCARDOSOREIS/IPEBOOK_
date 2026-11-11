@@ -6,7 +6,7 @@ import { Platform } from "react-native";
  * público para excluir a conta.
  * Para reabrir o site completo no futuro, desligar `WEB_BETA_ONLY` aqui.
  */
-export const WEB_BETA_ONLY = Platform.OS === "web";
+export const WEB_BETA_ONLY = false;
 
 const ROTAS_LIBERADAS = new Set([
   "/bem-vindo",
