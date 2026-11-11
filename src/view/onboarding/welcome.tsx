@@ -78,12 +78,17 @@ export default function Welcome({ onStart, onSignIn, onHelp, onTerms, betaInvite
         <View style={styles.wideHeader}>
           <Logotipo />
           <View style={styles.wideHeaderActions}>
+            <ThemeToggleButton />
             {betaInvite ? null : (
-              <Pressable accessibilityRole="button" accessibilityLabel="Entrar" onPress={guardedSignIn} style={withPress(undefined)}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Entrar"
+                onPress={guardedSignIn}
+                style={withPress(styles.wideSignInButton)}
+              >
                 <Text style={styles.wideLink}>Entrar</Text>
               </Pressable>
             )}
-            <ThemeToggleButton />
             <Pressable accessibilityRole="button" accessibilityLabel={labels.header} onPress={guardedStart} style={withPress(styles.wideCta)}>
               <Text style={styles.wideCtaText}>{labels.header}</Text>
             </Pressable>
@@ -306,7 +311,8 @@ function createStyles(colors: ColorPalette) {
     gap: tokens.spacing[64],
   },
   wideHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", minHeight: 56, width: "100%" },
-  wideHeaderActions: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[24] },
+  wideHeaderActions: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[16] },
+  wideSignInButton: { height: 48, paddingHorizontal: tokens.spacing[16], borderRadius: tokens.radius.full, alignItems: "center", justifyContent: "center" },
   wideLink: { ...tokens.typography.labelLarge, color: colors.m3.primary },
   wideCta: { height: 52, paddingHorizontal: tokens.spacing[32], borderRadius: tokens.radius.full, alignItems: "center", justifyContent: "center", backgroundColor: colors.m3.primary },
   wideCtaText: { ...tokens.typography.labelLarge, color: colors.m3.onPrimary },
