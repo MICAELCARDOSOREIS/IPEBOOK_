@@ -187,9 +187,9 @@ export default function ForgotPassword({ onNavigateToSignIn, onBack }: ForgotPas
               onSubmitEditing={() => void handleSubmit()}
               editable={!submitting}
               placeholder="voce@exemplo.com"
+              error={emailError ?? undefined}
             />
 
-            {emailError ? <InlineErrorCard message={emailError} /> : null}
             {state.error ? <InlineErrorCard message={state.error} /> : null}
 
             <FilledButton

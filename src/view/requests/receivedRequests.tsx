@@ -124,7 +124,7 @@ export function ReceivedRequests({
                 <View style={s.pendingActions}>
                   <Pressable
                     accessibilityRole="button"
-                    accessibilityLabel="Aceitar"
+                    accessibilityLabel={`Aceitar proposta de ${requesterName ?? COMMUNITY_MEMBER} para o anúncio ${item.listing.title}`}
                     accessibilityHint="Aceita o pedido e reserva este anúncio."
                     accessibilityState={{ disabled: busy, busy }}
                     disabled={busy}
@@ -148,7 +148,7 @@ export function ReceivedRequests({
                     ) : null}
                     <Pressable
                       accessibilityRole="button"
-                      accessibilityLabel="Recusar"
+                      accessibilityLabel={`Recusar proposta de ${requesterName ?? COMMUNITY_MEMBER} para o anúncio ${item.listing.title}`}
                       accessibilityState={{ disabled: busy, busy }}
                       disabled={busy}
                       onPress={() => void handleResponse(request.id, "reject")}

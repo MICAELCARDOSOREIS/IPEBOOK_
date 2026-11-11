@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import {
+  AccessibilityInfo,
   ActivityIndicator,
   Modal,
   Pressable,
@@ -55,6 +56,7 @@ export function BarcodeScannerModal({
     if (result.data) {
       scanLockRef.current = true;
       setHasScanned(true);
+      AccessibilityInfo.announceForAccessibility?.(`Código ${result.data} detectado com sucesso.`);
       onScan(result.data);
       onClose();
     }
@@ -75,7 +77,7 @@ export function BarcodeScannerModal({
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
         {/* Barra Superior */}
         <View style={[styles.header, { borderBottomColor: colors.border }]}>
-          <Text style={[styles.headerTitle, { color: colors.text }]}>Escanear ISBN</Text>
+          <Text accessibilityRole="header" style={[styles.headerTitle, { color: colors.text }]}>Escanear ISBN</Text>
           <Pressable
             ref={closeRef as never}
             accessibilityRole="button"
@@ -92,7 +94,7 @@ export function BarcodeScannerModal({
         {!permission ? (
           <View style={styles.centerContainer}>
             <ActivityIndicator size="large" color={colors.action} />
-            <Text style={[styles.statusText, { color: colors.secondaryText }]}>
+            <Text accessibilityRole="status" accessibilityLiveRegion="polite" style={[styles.statusText, { color: colors.secondaryText }]}>
               Iniciando câmera...
             </Text>
           </View>
@@ -101,7 +103,7 @@ export function BarcodeScannerModal({
             <View style={[styles.iconCircle, { backgroundColor: colors.m3.surfaceContainerHigh }]}>
               <AppIcon name="camera" size={40} color={colors.action} />
             </View>
-            <Text style={[styles.permissionTitle, { color: colors.text }]}>
+            <Text accessibilityRole="header" style={[styles.permissionTitle, { color: colors.text }]}>
               Permissão de Câmera Necessária
             </Text>
             <Text style={[styles.permissionMessage, { color: colors.secondaryText }]}>
