@@ -603,21 +603,24 @@ function createStyles(colors: ColorPalette) {
     segmentPressed: {
       transform: [{ scale: 0.97 }],
     },
-    // Botão tonal com ícone (M3): maior e com cara de botão, em vez de um texto pequeno solto.
+    // Botão tonal com ícone (M3): pílula compacta e elegante ao lado do título da Estante.
     draftsLink: {
-      marginLeft: "auto",
-      minHeight: tokens.accessibility.touchTarget,
       flexDirection: "row",
       alignItems: "center",
-      gap: tokens.spacing[8],
-      paddingHorizontal: tokens.spacing[16],
+      gap: tokens.spacing[6],
+      paddingHorizontal: tokens.spacing[12],
+      paddingVertical: tokens.spacing[6],
+      minHeight: 36,
       borderRadius: tokens.radius.full,
       backgroundColor: colors.m3.secondaryContainer,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
     },
-    draftsLinkPressed: { opacity: 0.85 },
+    draftsLinkPressed: { opacity: 0.85, transform: [{ scale: 0.96 }] },
     draftsLinkText: {
-      ...tokens.typography.labelLarge,
+      ...tokens.typography.labelMedium,
       color: colors.m3.onSecondaryContainer,
+      fontWeight: tokens.fontWeight.semiBold,
     },
     headerActions: {
       flexDirection: "row",
