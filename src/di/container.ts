@@ -389,13 +389,15 @@ import { OpenLibraryBookMetadataService } from "@/infra/services/openLibraryBook
 import { GoogleBooksBookMetadataService } from "@/infra/services/googleBooksBookMetadataService";
 import { CompositeBookMetadataService } from "@/infra/services/compositeBookMetadataService";
 import { BrasilApiBookMetadataService } from "@/infra/services/brasilApiBookMetadataService";
+import { CrossrefBookMetadataService } from "@/infra/services/crossrefBookMetadataService";
 
 export const bookMetadataService: IBookMetadataService =
   process.env.NODE_ENV !== "test" && process.env.EXPO_PUBLIC_BACKEND === "supabase"
     ? new CompositeBookMetadataService([
-        new OpenLibraryBookMetadataService(),
-        new GoogleBooksBookMetadataService(),
         new BrasilApiBookMetadataService(),
+        new GoogleBooksBookMetadataService(),
+        new OpenLibraryBookMetadataService(),
+        new CrossrefBookMetadataService(),
       ])
     : new MemoryBookMetadataService();
 

@@ -288,6 +288,9 @@ describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
     });
 
     // Livro sem reserva com proposta pendente: antes a aba mostrava "Propostas (0)".
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText(/Exibir:/i));
+    });
     expect(screen.getByLabelText("Propostas, 2 em aberto")).toBeDefined();
     await act(async () => {
       fireEvent.press(screen.getByLabelText("Propostas, 2 em aberto"));
@@ -318,6 +321,9 @@ describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
       screen = await render(<MyListings sessionUserId="user-1" />);
+    });
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText(/Exibir:/i));
     });
     await act(async () => {
       fireEvent.press(screen.getByLabelText("Propostas"));
@@ -357,6 +363,9 @@ describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
     });
 
     // Só a negociação ainda em andamento conta como proposta em aberto.
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText(/Exibir:/i));
+    });
     expect(screen.getByLabelText("Propostas, 1 em aberto")).toBeDefined();
     await act(async () => {
       fireEvent.press(screen.getByLabelText("Propostas, 1 em aberto"));
@@ -364,6 +373,9 @@ describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
     expect(screen.getByText("Bia · negociação aceita · Doação")).toBeDefined();
     expect(screen.queryByText(/Ana/)).toBeNull();
 
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText(/Exibir:/i));
+    });
     await act(async () => {
       fireEvent.press(screen.getByLabelText("Concluídos"));
     });
@@ -390,6 +402,9 @@ describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
       screen = await render(<MyListings sessionUserId="user-1" />);
     });
     expect(screen.queryByText("Entregue")).toBeNull();
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText(/Exibir:/i));
+    });
     await act(async () => {
       fireEvent.press(screen.getByLabelText("Concluídos"));
     });
@@ -495,6 +510,9 @@ describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
       screen = await render(<MyListings sessionUserId="user-1" />);
     });
 
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText(/Exibir:/i));
+    });
     expect(screen.getByLabelText("Concluídos")).toBeDefined();
 
     await act(async () => {

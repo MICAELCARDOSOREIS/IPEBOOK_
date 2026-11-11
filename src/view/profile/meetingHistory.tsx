@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { PIRIPIRI_MEETING_POINTS } from "@/model/entities/meetingPoint";
 import type { Meeting } from "@/model/entities/meeting";
@@ -46,15 +46,16 @@ export default function MeetingHistory({ onBack, onNavigateToNegotiation }: Meet
   return (
     <SafeAreaView style={styles.page}>
       <TopAppBar contentMaxWidth={wide ? WIDE_CONTENT_MAX_WIDTH : undefined} title="Histórico de encontros" onBack={guardedBack} />
-      <ScrollView
-        contentContainerStyle={[styles.content, wide && styles.contentWide, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
-        {...standardVerticalScrollProps}
-      >
-        {state.loading ? (
+      {state.loading ? (
+        <View style={[styles.content, wide && styles.contentWide]}>
           <LoadingState label="Carregando encontros…" />
-        ) : state.error ? (
+        </View>
+      ) : state.error ? (
+        <View style={[styles.content, wide && styles.contentWide]}>
           <ErrorState message={state.error} onRetry={() => void actions.reload()} />
-        ) : state.meetings.length === 0 ? (
+        </View>
+      ) : state.meetings.length === 0 ? (
+        <View style={[styles.content, wide && styles.contentWide]}>
           <View style={styles.emptyContainer}>
             <AppIcon name="calendar" size={48} color={colors.m3.onSurfaceVariant} />
             <Text style={styles.emptyTitle}>Nenhum encontro registrado</Text>
@@ -62,70 +63,81 @@ export default function MeetingHistory({ onBack, onNavigateToNegotiation }: Meet
               Quando você aceitar ou propor trocas, os encontros nos 4 pontos seguros de Piripiri aparecerão aqui.
             </Text>
           </View>
-        ) : (
-          <View style={[styles.list, wide && styles.listWide]}>
+        </View>
+      ) : (
+        <FlatList
+          data={state.meetings}
+          keyExtractor={(item) => item.id}
+          {...standardVerticalScrollProps}
+          contentContainerStyle={[
+            styles.content,
+            wide && styles.contentWide,
+            wide && styles.listWide,
+            { paddingBottom: scrollBottomPadding.withoutBottomBar },
+          ]}
+          ListHeaderComponent={
             <Text style={[styles.summaryText, wide && styles.fullRow]}>
               {state.meetings.length} {state.meetings.length === 1 ? "encontro registrado" : "encontros registrados"} nos pontos públicos de Piripiri
             </Text>
-            {state.meetings.map((meeting) => {
-              const point = PIRIPIRI_MEETING_POINTS.find((p) => p.name === meeting.pointName);
-              const statusInfo = getStatusLabel(meeting);
-              return (
-                <Pressable
-                  key={meeting.id}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Encontro em ${meeting.pointName}, ${formatMeetingWhen(meeting.scheduledAt)}. Situação: ${statusInfo.text}`}
-                  onPress={() => guardedNegotiation(meeting.requestId)}
-                  style={withPress([styles.meetingCard, wide && styles.cardWide])}
-                >
-                  <View style={styles.cardHeader}>
-                    <View style={styles.pointHeader}>
-                      <AppIcon name="place" size={20} color={colors.m3.primary} />
-                      <Text style={styles.pointTitle}>{meeting.pointName}</Text>
-                    </View>
-                    <View
+          }
+          ItemSeparatorComponent={() => <View style={{ height: tokens.spacing[12] }} />}
+          renderItem={({ item: meeting }) => {
+            const point = PIRIPIRI_MEETING_POINTS.find((p) => p.name === meeting.pointName);
+            const statusInfo = getStatusLabel(meeting);
+            return (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`Encontro em ${meeting.pointName}, ${formatMeetingWhen(meeting.scheduledAt)}. Situação: ${statusInfo.text}`}
+                onPress={() => guardedNegotiation(meeting.requestId)}
+                style={withPress([styles.meetingCard, wide && styles.cardWide])}
+              >
+                <View style={styles.cardHeader}>
+                  <View style={styles.pointHeader}>
+                    <AppIcon name="place" size={20} color={colors.m3.primary} />
+                    <Text style={styles.pointTitle}>{meeting.pointName}</Text>
+                  </View>
+                  <View
+                    style={[
+                      styles.badge,
+                      meeting.status === "cancelled"
+                        ? styles.badgeCancelled
+                        : statusInfo.text === "Realizado"
+                          ? styles.badgeCompleted
+                          : styles.badgeActive,
+                    ]}
+                  >
+                    <Text
                       style={[
-                        styles.badge,
+                        styles.badgeText,
                         meeting.status === "cancelled"
-                          ? styles.badgeCancelled
+                          ? styles.badgeTextCancelled
                           : statusInfo.text === "Realizado"
-                            ? styles.badgeCompleted
-                            : styles.badgeActive,
+                            ? styles.badgeTextCompleted
+                            : styles.badgeTextActive,
                       ]}
                     >
-                      <Text
-                        style={[
-                          styles.badgeText,
-                          meeting.status === "cancelled"
-                            ? styles.badgeTextCancelled
-                            : statusInfo.text === "Realizado"
-                              ? styles.badgeTextCompleted
-                              : styles.badgeTextActive,
-                        ]}
-                      >
-                        {statusInfo.text}
-                      </Text>
-                    </View>
+                      {statusInfo.text}
+                    </Text>
                   </View>
+                </View>
 
-                  {point ? <Text style={styles.pointAddress}>{point.address}</Text> : null}
+                {point ? <Text style={styles.pointAddress}>{point.address}</Text> : null}
 
-                  <View style={styles.cardFooter}>
-                    <View style={styles.footerRow}>
-                      <AppIcon name="calendar" size={16} color={colors.m3.onSurfaceVariant} />
-                      <Text style={styles.footerText}>{formatMeetingWhen(meeting.scheduledAt)}</Text>
-                    </View>
-                    <View style={styles.detailLink}>
-                      <Text style={styles.detailLinkText}>Ver negociação</Text>
-                      <AppIcon name="chevronRight" size={16} color={colors.m3.primary} />
-                    </View>
+                <View style={styles.cardFooter}>
+                  <View style={styles.footerRow}>
+                    <AppIcon name="calendar" size={16} color={colors.m3.onSurfaceVariant} />
+                    <Text style={styles.footerText}>{formatMeetingWhen(meeting.scheduledAt)}</Text>
                   </View>
-                </Pressable>
-              );
-            })}
-          </View>
-        )}
-      </ScrollView>
+                  <View style={styles.detailLink}>
+                    <Text style={styles.detailLinkText}>Ver negociação</Text>
+                    <AppIcon name="chevronRight" size={16} color={colors.m3.primary} />
+                  </View>
+                </View>
+              </Pressable>
+            );
+          }}
+        />
+      )}
     </SafeAreaView>
   );
 }
