@@ -230,7 +230,7 @@ O projeto Ipebook evoluiu significativamente durante a fase de validação com l
 - **Frames no Figma:** `05.01 · Estante` (`25:302`)
 - **O que mudou no código:** 
   - FAB posicionado 16px acima da barra de navegação flutuante.
-  - Carrossel horizontal de filtros de status (`Todos`, `Ativos`, `Pausados`, `Reservados`).
+  - Filtros de status (`Todos`, `Ativos`, `Pausados`, `Reservados`) em fileira que quebra em duas linhas no mobile, para que os quatro fiquem visíveis sem rolagem horizontal.
   - Linhas da estante com raios concêntricos (16dp card / 12dp capa) e botão direto de WhatsApp.
   - Entrelinha de títulos de 2 linhas ajustada para 22dp para evitar colisões tipográficas.
 - **Como atualizar no Figma:** Reposicionar o FAB para não cobrir a barra de navegação e inserir o botão de WhatsApp nas linhas.

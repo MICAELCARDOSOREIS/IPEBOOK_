@@ -94,6 +94,7 @@ export function MyListingsListingsTab({
           />
         ))}
       </View>
+      {tabSelector}
       {filteredBooks.length === 0 ? (
         <View style={styles.empty}>
           <IconBadge icon="shelf" tone="neutral" size="large" />
