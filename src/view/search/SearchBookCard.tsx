@@ -9,6 +9,7 @@ import { FavoriteButton } from "@/view/components/FavoriteButton";
 import { formatPrice } from "@/view/formatPrice";
 import { tokens, fontFamily, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
+import { webColumnWidth } from "@/view/webLayout";
 
 export type SearchBookCardProps = {
   item: Book;
@@ -39,11 +40,13 @@ export function SearchBookCard({
 
   const statusTone =
     item.status === "reserved"
-      ? { background: colors.badge.donation.background, text: colors.badge.donation.text, label: "Reservado" }
+      ? { background: colors.badge.reserved.background, text: colors.badge.reserved.text, label: "Reservado" }
+      : item.status === "paused"
+      ? { background: colors.badge.paused.background, text: colors.badge.paused.text, label: "Pausado" }
       : { background: colors.nature.sprout, text: colors.nature.foliageDeep, label: "Disponível" };
 
   return (
-    <View style={[styles.card, wideWeb && styles.cardWide, wideWeb && { maxWidth: `${100 / gridColumns}%` }]}>
+    <View style={[styles.card, wideWeb && styles.cardWide, wideWeb && { maxWidth: webColumnWidth(gridColumns) }]}>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`Ver detalhe de ${item.title}, ${item.author}${item.neighborhood ? ` em ${item.neighborhood}` : ""}`}
@@ -96,14 +99,16 @@ export function SearchBookCard({
           userId={userId}
           onToggleSuccess={onFavoriteToggle}
         />
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={`Abrir ${item.title}`}
-          onPress={onPress}
-          style={styles.chevronButton}
-        >
-          <AppIcon name="chevronRight" size={18} color={colors.nature.foliage} />
-        </Pressable>
+        {!wideWeb ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`Abrir ${item.title}`}
+            onPress={onPress}
+            style={styles.chevronButton}
+          >
+            <AppIcon name="chevronRight" size={18} color={colors.nature.foliage} />
+          </Pressable>
+        ) : null}
       </View>
     </View>
   );
@@ -131,8 +136,14 @@ function createCardStyles(colors: ColorPalette) {
     },
     cardWide: {
       flex: 1,
-      marginHorizontal: tokens.spacing[6],
-      marginBottom: tokens.spacing[16],
+      minWidth: 0,
+      flexDirection: "column",
+      alignItems: "stretch",
+      padding: tokens.spacing[12],
+      marginHorizontal: 0,
+      marginBottom: tokens.spacing[20],
+      position: "relative",
+      borderRadius: tokens.radius.xl,
     },
     cardMain: {
       flex: 1,
@@ -141,7 +152,11 @@ function createCardStyles(colors: ColorPalette) {
       alignItems: "center",
       gap: tokens.spacing[12],
     },
-    cardMainWide: {},
+    cardMainWide: {
+      flexDirection: "column",
+      alignItems: "stretch",
+      gap: tokens.spacing[10],
+    },
     cardMainPressed: {
       transform: [{ scale: 0.985 }],
     },
@@ -152,22 +167,24 @@ function createCardStyles(colors: ColorPalette) {
       justifyContent: "center",
     },
     cardInfoWide: {
-      paddingRight: tokens.spacing[8],
+      justifyContent: "flex-start",
+      paddingRight: 0,
+      gap: tokens.spacing[8],
     },
     cardTitleBlock: {
       gap: 2,
     },
     cardTitle: {
       ...tokens.typography.brandCardTitle,
-      fontSize: 16,
+      fontSize: 15,
       lineHeight: 20,
-      color: colors.text,
+      color: colors.m3.onSurface,
     },
     cardAuthor: {
       ...tokens.typography.bodyMedium,
       fontSize: 13,
       lineHeight: 17,
-      color: colors.secondaryText,
+      color: colors.m3.onSurfaceVariant,
     },
     categoryBadge: {
       ...tokens.typography.captionSmall,
@@ -181,7 +198,10 @@ function createCardStyles(colors: ColorPalette) {
       flexWrap: "wrap",
       gap: tokens.spacing[6],
     },
-    cardMetaRowWide: {},
+    cardMetaRowWide: {
+      flexWrap: "wrap",
+      rowGap: tokens.spacing[4],
+    },
     cardBadgesGroup: {
       flexDirection: "row",
       alignItems: "center",
@@ -192,7 +212,7 @@ function createCardStyles(colors: ColorPalette) {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
-      flexWrap: "wrap",
+      flexWrap: "nowrap",
       gap: tokens.spacing[6],
       paddingTop: tokens.spacing[6],
       borderTopWidth: StyleSheet.hairlineWidth,
@@ -213,6 +233,7 @@ function createCardStyles(colors: ColorPalette) {
       flexShrink: 1,
     },
     cardStatusPill: {
+      flexShrink: 0,
       paddingHorizontal: tokens.spacing[8],
       paddingVertical: 2,
       borderRadius: tokens.radius.full,
@@ -238,7 +259,16 @@ function createCardStyles(colors: ColorPalette) {
       alignSelf: "stretch",
       width: tokens.accessibility.touchTarget,
     },
-    cardActionsWide: {},
+    cardActionsWide: {
+      position: "absolute",
+      top: tokens.spacing[14],
+      right: tokens.spacing[14],
+      flexDirection: "row",
+      width: "auto",
+      height: "auto",
+      alignSelf: "auto",
+      zIndex: 2,
+    },
     chevronButton: {
       width: tokens.accessibility.touchTarget,
       height: tokens.accessibility.touchTarget,

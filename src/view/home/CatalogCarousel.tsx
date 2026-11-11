@@ -723,6 +723,7 @@ function createStyles(colors: ColorPalette) {
       color: colors.m3.onTertiaryContainer,
     },
     carouselCardReservedPill: {
+      flexShrink: 0,
       paddingHorizontal: tokens.spacing[8],
       paddingVertical: 2,
       borderRadius: tokens.radius.full,
@@ -737,7 +738,7 @@ function createStyles(colors: ColorPalette) {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
-      flexWrap: "wrap",
+      flexWrap: "nowrap",
       gap: tokens.spacing[6],
       marginTop: "auto",
       paddingTop: tokens.spacing[8],

@@ -69,7 +69,7 @@ export function WebFilterSidebar({
                 onPress={() => onModality(selected ? "all" : item.value)}
                 style={withPress([styles.chip, selected && styles.chipSelected])}
               >
-                {selected ? <AppIcon name="check" size={16} color={colors.m3.onSecondaryContainer} /> : null}
+                {selected ? <AppIcon name="check" size={16} color={colors.nature.onFoliage} /> : null}
                 <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{item.label}</Text>
               </Pressable>
             );
