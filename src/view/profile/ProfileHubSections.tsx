@@ -274,6 +274,7 @@ export function ProfileMenuSection({
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={item.label}
+              accessibilityHint={item.description}
               onPress={item.onPress}
               style={({ pressed }) => [styles.menuRow, pressed && styles.menuRowPressed]}
             >
@@ -515,7 +516,7 @@ function createStyles(colors: ColorPalette) {
       color: colors.brandBrown,
     },
     ratingStar: {
-      color: colors.ipe.bloom,
+      color: colors.ipe.bloomDeep,
     },
     statLabel: {
       ...tokens.typography.labelMedium,

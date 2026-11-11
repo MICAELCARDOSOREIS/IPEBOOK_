@@ -99,7 +99,6 @@ export function SearchBookCard({
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={`Abrir ${item.title}`}
-          hitSlop={tokens.spacing[8]}
           onPress={onPress}
           style={styles.chevronButton}
         >
@@ -229,6 +228,7 @@ function createCardStyles(colors: ColorPalette) {
       fontSize: 13,
       lineHeight: 18,
       fontWeight: tokens.fontWeight.bold,
+      fontVariant: ["tabular-nums"],
       color: colors.nature.foliageDeep,
     },
     cardActions: {

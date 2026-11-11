@@ -639,7 +639,7 @@ function createStyles(colors: ColorPalette) {
     },
     carouselCardPressed: {
       borderRadius: tokens.shapeMorph.cardPressed,
-      transform: [{ scale: 0.98 }],
+      transform: [{ scale: 0.96 }],
     },
     carouselCardCoverArea: {
       alignItems: "center",
@@ -703,18 +703,19 @@ function createStyles(colors: ColorPalette) {
       fontSize: 13,
       lineHeight: 18,
       fontWeight: tokens.fontWeight.bold,
+      fontVariant: ["tabular-nums"],
       color: colors.nature.foliageDeep,
     },
     carouselCardTitle: {
       ...tokens.typography.brandCardTitle,
-      fontSize: 16,
+      fontSize: 14,
       lineHeight: 20,
       color: colors.m3.onSurface,
     },
     carouselCardAuthor: {
-      ...tokens.typography.bodyMedium,
-      fontSize: 12.5,
-      lineHeight: 16,
+      ...tokens.typography.footnote,
+      fontSize: 13,
+      lineHeight: 18,
       color: colors.m3.onSurfaceVariant,
     },
     carouselCardReserved: {
@@ -728,8 +729,8 @@ function createStyles(colors: ColorPalette) {
     },
     carouselCardReservedText: {
       ...tokens.typography.captionSmall,
-      fontSize: 11,
-      lineHeight: 14,
+      fontSize: 12,
+      lineHeight: 16,
       fontWeight: tokens.fontWeight.bold,
     },
     carouselCardFooterRow: {

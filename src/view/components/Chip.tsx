@@ -22,7 +22,7 @@ export type ChipProps = {
 export function Chip({ label, selected, onPress, disabled = false, accessibilityLabel, size = "compact", tone }: ChipProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const { scale, isPressed, onPressIn, onPressOut } = useExpressivePress({ disabled, pressedScale: 0.95 });
+  const { scale, isPressed, onPressIn, onPressOut } = useExpressivePress({ disabled, pressedScale: 0.96 });
   const dotColor = useMemo(() => {
     if (!tone) return undefined;
     const surface = colors.m3.surfaceContainerLowest;
@@ -55,6 +55,7 @@ export function Chip({ label, selected, onPress, disabled = false, accessibility
         {selected ? <AppIcon name="check" size={18} color={tone?.text ?? colors.nature.onFoliage} /> : null}
         {tone && !selected ? <View style={[styles.dot, { backgroundColor: dotColor, borderColor: dotColor }]} /> : null}
         <Text
+          numberOfLines={1}
           style={[
             styles.label,
             selected && styles.labelSelected,
@@ -91,7 +92,7 @@ function createStyles(colors: ColorPalette) {
     pressedShape: {
       borderRadius: tokens.shapeMorph.chipSelected,
     },
-    unselected: { borderWidth: 1, borderColor: colors.m3.outlineVariant },
+    unselected: { borderWidth: 1, borderColor: colors.m3.outline },
     withDot: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[8] },
     dot: { width: 10, height: 10, borderRadius: tokens.radius.dot, borderWidth: 1 },
     disabled: {

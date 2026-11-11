@@ -38,6 +38,10 @@ export type TextFieldProps = {
   onSubmitEditing?: () => void;
   /** Referência ao elemento TextInput para controle de foco programático (Spec 133 / Issue #217). */
   inputRef?: Ref<TextInputInstance>;
+  /** Callback executada quando o campo ganha foco (útil para auto-scroll e IHC). */
+  onFocus?: () => void;
+  /** Callback executada quando o campo perde o foco. */
+  onBlur?: () => void;
 };
 
 /**
@@ -67,6 +71,8 @@ export function TextField({
   returnKeyType,
   onSubmitEditing,
   inputRef,
+  onFocus,
+  onBlur,
 }: TextFieldProps) {
   const [focused, setFocused] = useState(false);
   // Campo de senha ganha o olho de mostrar/ocultar (some a dúvida de ter digitado errado no celular).
@@ -94,6 +100,8 @@ export function TextField({
           ref={inputRef}
           accessibilityLabel={accessibilityLabel ?? label}
           accessibilityHint={hasError ? error ?? undefined : undefined}
+          accessibilityState={{ disabled: !editable }}
+          aria-invalid={hasError}
           aria-describedby={hasError ? errorId : undefined}
           value={value}
           onChangeText={onChangeText}
@@ -112,15 +120,21 @@ export function TextField({
           multiline={multiline}
           numberOfLines={multiline ? 4 : undefined}
           textAlignVertical={multiline ? "top" : "center"}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
+          onFocus={() => {
+            setFocused(true);
+            onFocus?.();
+          }}
+          onBlur={() => {
+            setFocused(false);
+            onBlur?.();
+          }}
           style={[styles.input, multiline && styles.inputMultiline, secureTextEntry && styles.inputWithToggle]}
         />
         {secureTextEntry ? (
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={revealed ? "Ocultar senha" : "Mostrar senha"}
-            accessibilityState={{ selected: revealed }}
+            accessibilityState={{ expanded: revealed }}
             hitSlop={8}
             onPress={() => setRevealed((current) => !current)}
             style={withPress(styles.toggle)}
@@ -152,6 +166,8 @@ export function TextField({
         <Text
           nativeID={errorId}
           accessibilityRole="alert"
+          accessibilityLiveRegion="polite"
+          aria-live="polite"
           style={[styles.errorText, helperTextAlign === "right" && styles.supportingRight]}
         >
           {error}
@@ -208,6 +224,7 @@ function createStyles(colors: ColorPalette) {
       position: "absolute",
       left: tokens.spacing[16],
       right: tokens.spacing[16],
+      top: tokens.spacing[16],
       ...tokens.typography.bodyLarge,
     },
     restingLabelMultiline: { top: tokens.spacing[16] },

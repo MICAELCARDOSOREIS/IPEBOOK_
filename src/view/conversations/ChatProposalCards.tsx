@@ -182,7 +182,7 @@ function createStyles(colors: ColorPalette) {
     },
     proposalAcceptButton: {
       flex: 1,
-      minHeight: 40,
+      minHeight: tokens.accessibility.touchTarget,
       backgroundColor: colors.nature.foliage,
       borderRadius: tokens.radius.full,
       alignItems: "center",
@@ -195,7 +195,7 @@ function createStyles(colors: ColorPalette) {
       color: colors.nature.onFoliage,
     },
     proposalRejectButton: {
-      minHeight: 40,
+      minHeight: tokens.accessibility.touchTarget,
       borderRadius: tokens.radius.full,
       alignItems: "center",
       justifyContent: "center",
