@@ -94,7 +94,7 @@ export function BarcodeScannerModal({
         {!permission ? (
           <View style={styles.centerContainer}>
             <ActivityIndicator size="large" color={colors.action} />
-            <Text accessibilityRole="status" accessibilityLiveRegion="polite" style={[styles.statusText, { color: colors.secondaryText }]}>
+            <Text accessibilityRole="text" accessibilityLiveRegion="polite" style={[styles.statusText, { color: colors.secondaryText }]}>
               Iniciando câmera...
             </Text>
           </View>

@@ -170,7 +170,7 @@ export function Dialog({
           />
         ) : null}
         <Animated.View
-          accessibilityRole="alertdialog"
+          accessibilityRole="alert"
           style={[styles.card, { transform: [{ scale: cardScale }] }]}
         >
           <Text accessibilityRole="header" style={styles.title}>{title}</Text>

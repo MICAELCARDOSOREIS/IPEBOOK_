@@ -88,7 +88,7 @@ describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
     expect(screen.getByLabelText("0 para doar")).toBeDefined();
   });
 
-  it("apresenta o resumo por modalidade como informação, sem prometer ação de filtro", async () => {
+  it("permite filtrar por modalidade tocando nos cartões de resumo", async () => {
     const base = { author: "A", ownerId: "user-1", status: "available" as const };
     mockViewModel({
       books: [
@@ -101,10 +101,22 @@ describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
       screen = await render(<MyListings sessionUserId="user-1" />);
     });
 
-    // Continua legível por leitores de tela...
-    expect(screen.getByLabelText("1 à venda")).toBeDefined();
-    // ...mas não se anuncia como botão acionável (o filtro real é a fileira de chips).
-    expect(screen.queryByRole("button", { name: "1 à venda" })).toBeNull();
+    const saleButton = screen.getByRole("button", { name: "1 à venda" });
+    expect(saleButton).toBeDefined();
+
+    // Ao tocar no cartão "1 à venda", filtra os livros para exibir apenas venda
+    await act(async () => {
+      fireEvent.press(saleButton);
+    });
+    expect(screen.getByText("V1")).toBeDefined();
+    expect(screen.queryByText("D1")).toBeNull();
+
+    // Ao tocar novamente, desmarca o filtro e volta a exibir ambos
+    await act(async () => {
+      fireEvent.press(saleButton);
+    });
+    expect(screen.getByText("V1")).toBeDefined();
+    expect(screen.getByText("D1")).toBeDefined();
   });
 
   it("mantém a situação no rodapé e abre a negociação pelo botão próprio do cartão reservado", async () => {
