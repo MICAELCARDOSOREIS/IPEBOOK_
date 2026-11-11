@@ -17,7 +17,7 @@ import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { formatPrice } from "@/view/formatPrice";
 import { makeFavoritesViewModel, makeNetworkStatus } from "@/di/container";
-import { WEB_GUTTER, WEB_MAX_WIDTH, useWebGridColumns } from "@/view/webLayout";
+import { WEB_GUTTER, WEB_MAX_WIDTH, useWebGridColumns, webColumnWidth } from "@/view/webLayout";
 import { withPress } from "@/view/pressFeedback";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
@@ -196,7 +196,7 @@ export default function Favorites({
               .join(" · ");
 
             return (
-              <View style={[styles.row, wideWeb && styles.wideCard, wideWeb && { maxWidth: `${100 / gridColumns}%` }]}>
+              <View style={[styles.row, wideWeb && styles.wideCard, wideWeb && { maxWidth: webColumnWidth(gridColumns) }]}>
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel={`Ver ${item.title}`}
@@ -324,6 +324,7 @@ function createStyles(colors: ColorPalette) {
     wideGridRow: { gap: tokens.spacing[24] },
     wideCard: {
       flex: 1,
+      minWidth: 0,
       flexDirection: "column",
       alignItems: "stretch",
       borderRadius: tokens.radius.xl,
