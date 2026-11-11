@@ -11,7 +11,6 @@ import { InlineErrorCard } from "@/view/components/InlineErrorCard";
 import { LoadingState } from "@/view/components/LoadingState";
 import { ScreenContainer } from "@/view/components/ScreenContainer";
 import { Tag } from "@/view/components/Tag";
-import { TextButton } from "@/view/components/TextButton";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { formatPrice } from "@/view/formatPrice";
 import { useTheme } from "@/view/theme/ThemeProvider";
@@ -475,28 +474,54 @@ export default function ManageListing({
               </Pressable>
             </View>
 
-            {/* Grupo 4: Zona de Perigo / Exclusão Definitiva */}
-            <View style={styles.dangerZone}>
-              <View style={styles.dangerZoneHeader}>
-                <AppIcon name="delete" size={18} color={colors.error} />
-                <Text style={styles.dangerZoneTitle}>Zona de exclusão</Text>
-              </View>
-              <Text style={styles.dangerZoneDescription}>
-                Remover o livro cancela a publicação de forma definitiva e o retira da sua estante.
+            {/* Grupo 4: Exclusão Definitiva */}
+            <View style={styles.actionGroup}>
+              <Text accessibilityRole="header" style={styles.sectionHeaderTitle}>
+                Exclusão
               </Text>
-              <View style={styles.deleteButtonContainer}>
-                <TextButton
-                  label="Excluir anúncio"
-                  tone="danger"
-                  accessibilityLabel="Excluir anúncio"
-                  disabled={state.busy || reserved}
-                  onPress={() => setConfirmingRemoval(true)}
+
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Excluir anúncio"
+                accessibilityHint="Abre o diálogo de confirmação para remover definitivamente este anúncio da sua estante."
+                accessibilityState={{ disabled: state.busy || reserved }}
+                disabled={state.busy || reserved}
+                onPress={() => setConfirmingRemoval(true)}
+                style={({ pressed }) => [
+                  styles.deleteCard,
+                  (state.busy || reserved) && styles.actionCardDisabled,
+                  pressed && !(state.busy || reserved) && styles.deleteCardPressed,
+                ]}
+              >
+                <View style={styles.deleteIconWrapper}>
+                  <AppIcon
+                    name="delete"
+                    size={22}
+                    color={reserved ? colors.secondaryText : colors.error}
+                  />
+                </View>
+                <View style={styles.actionTexts}>
+                  <Text style={[styles.deleteActionTitle, (state.busy || reserved) && styles.textDisabled]}>
+                    Excluir anúncio
+                  </Text>
+                  <Text style={styles.deleteActionHint}>
+                    Cancela a publicação e remove o livro da sua estante.
+                  </Text>
+                </View>
+                <AppIcon
+                  name="chevronRight"
+                  size={20}
+                  color={reserved ? colors.secondaryText : colors.error}
                 />
-              </View>
+              </Pressable>
+
               {reserved ? (
-                <Text style={styles.deleteHint}>
-                  Conclua ou cancele a negociação em andamento para excluir este anúncio.
-                </Text>
+                <View style={styles.reservedWarningBox}>
+                  <AppIcon name="info" size={16} color={colors.actionDeep} />
+                  <Text style={styles.deleteHint}>
+                    Conclua ou cancele a negociação em andamento para excluir este anúncio.
+                  </Text>
+                </View>
               ) : null}
             </View>
           </View>
@@ -723,38 +748,58 @@ function createStyles(colors: ColorPalette) {
     textDisabled: {
       color: colors.secondaryText,
     },
-    dangerZone: {
-      marginTop: tokens.spacing[8],
-      backgroundColor: colors.m3.surfaceContainerLow,
-      borderRadius: tokens.radius.medium,
+    deleteCard: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[12],
+      backgroundColor: colors.surface,
+      borderRadius: tokens.radius.card,
       borderWidth: 1,
       borderColor: colors.m3.outlineVariant,
       padding: tokens.spacing[14],
-      gap: tokens.spacing[6],
+      minHeight: tokens.accessibility.touchTarget,
+      elevation: 1,
+      shadowColor: colors.m3.shadow,
+      shadowOpacity: 0.04,
+      shadowRadius: 3,
+      shadowOffset: { width: 0, height: 1 },
     },
-    dangerZoneHeader: {
-      flexDirection: "row",
+    deleteCardPressed: {
+      backgroundColor: colors.m3.surfaceContainerLow,
+      transform: [{ scale: 0.98 }],
+    },
+    deleteIconWrapper: {
+      width: 44,
+      height: 44,
+      borderRadius: tokens.radius.cardSmall,
+      backgroundColor: colors.errorContainer,
       alignItems: "center",
-      gap: tokens.spacing[6],
+      justifyContent: "center",
     },
-    dangerZoneTitle: {
-      ...tokens.typography.labelLarge,
+    deleteActionTitle: {
+      ...tokens.typography.bodyLarge,
+      fontFamily: fontFamily.semiBold,
       color: colors.error,
-      fontWeight: tokens.fontWeight.semiBold,
     },
-    dangerZoneDescription: {
+    deleteActionHint: {
       ...tokens.typography.footnote,
-      color: colors.secondaryText,
+      color: colors.m3.onSurfaceVariant,
       lineHeight: 18,
     },
-    deleteButtonContainer: {
-      alignItems: "flex-start",
-      paddingTop: tokens.spacing[4],
+    reservedWarningBox: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[8],
+      backgroundColor: colors.ipe.petalSoft,
+      padding: tokens.spacing[10],
+      borderRadius: tokens.radius.cardSmall,
+      marginTop: tokens.spacing[4],
     },
     deleteHint: {
       ...tokens.typography.footnote,
       color: colors.secondaryText,
-      marginTop: tokens.spacing[4],
+      flex: 1,
+      lineHeight: 18,
     },
   });
 }
