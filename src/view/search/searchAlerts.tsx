@@ -64,15 +64,38 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
       paddingTop={0}
       paddingBottom={0}
       header={
-        <TopAppBar
-          title="Meus alertas"
-          onBack={guardedBack}
-          contentMaxWidth={wide ? WIDE_CONTENT_MAX_WIDTH : undefined}
-        />
+        wide ? (
+          <View style={styles.wideHeader}>
+            <View style={styles.wideHeaderLeft}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Voltar"
+                onPress={guardedBack}
+                style={withPress(styles.wideBackButton)}
+              >
+                <AppIcon name="back" size={20} color={colors.m3.onSurface} />
+              </Pressable>
+              <View>
+                <Text accessibilityRole="header" style={styles.wideTitle}>
+                  Meus alertas
+                </Text>
+                <Text style={styles.wideSubtitle}>
+                  Avisamos você quando novos livros chegarem em Piripiri
+                </Text>
+              </View>
+            </View>
+          </View>
+        ) : (
+          <TopAppBar
+            title="Meus alertas"
+            onBack={guardedBack}
+            contentMaxWidth={undefined}
+          />
+        )
       }
     >
       {!userId ? (
-        <View style={styles.centered}>
+        <View style={[styles.centered, wide && styles.centeredWide]}>
           <IconBadge icon="bell" tone="action" size="large" />
           <Text accessibilityRole="header" style={styles.emptyTitle}>
             Entre para criar alertas
@@ -150,11 +173,11 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
               ]}
               {...standardVerticalScrollProps}
               ListEmptyComponent={
-                <View testID="search-alerts-empty-state" style={styles.emptyBox}>
+                <View testID="search-alerts-empty-state" style={[styles.emptyBox, wide && styles.emptyBoxWide]}>
                   <Text accessibilityRole="header" style={styles.emptyHeadline}>
                     Nenhum alerta criado
                   </Text>
-                  <Text style={styles.body}>
+                  <Text style={[styles.body, wide && { textAlign: "center" }]}>
                     Busque um título ou tema e ative um alerta para receber novidades.
                   </Text>
                   {/* `02.13`: a ação vem logo depois do texto, não presa ao rodapé (Spec 043, RN-11). */}
@@ -162,7 +185,7 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
                 </View>
               }
               renderItem={({ item }) => (
-                <View style={[styles.alertItem, wide && { flex: 1, maxWidth: "50%" }]}>
+                <View style={[styles.alertItem, wide && { flex: 1, minWidth: 0 }]}>
                   <Pressable
                     accessibilityRole="button"
                     accessibilityLabel={`Gerenciar alerta ${item.query}`}
@@ -205,6 +228,38 @@ function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
   page: { flex: 1, backgroundColor: colors.background, minHeight: 0 },
   flexOne: { flex: 1, minHeight: 0 },
+  wideHeader: {
+    width: "100%",
+    maxWidth: WIDE_CONTENT_MAX_WIDTH,
+    alignSelf: "center",
+    paddingHorizontal: WEB_GUTTER,
+    paddingTop: tokens.spacing[24],
+    paddingBottom: tokens.spacing[12],
+  },
+  wideHeaderLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: tokens.spacing[16],
+  },
+  wideBackButton: {
+    width: tokens.spacing[40],
+    height: tokens.spacing[40],
+    borderRadius: tokens.radius.full,
+    backgroundColor: colors.m3.surfaceContainerHigh,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: colors.m3.outlineVariant,
+  },
+  wideTitle: {
+    ...tokens.typography.brandLargeTitle,
+    color: colors.brandBrown,
+  },
+  wideSubtitle: {
+    ...tokens.typography.bodyMedium,
+    color: colors.m3.onSurfaceVariant,
+    marginTop: tokens.spacing[2],
+  },
   content: {
     flex: 1,
     minHeight: 0,
@@ -228,8 +283,17 @@ function createStyles(colors: ColorPalette) {
     padding: tokens.spacing[24],
     gap: tokens.spacing[12],
   },
+  centeredWide: {
+    backgroundColor: colors.m3.surfaceContainerLow,
+    borderRadius: tokens.radius.card,
+    borderWidth: 1,
+    borderColor: colors.m3.outlineVariant,
+    padding: tokens.spacing[40],
+    marginTop: tokens.spacing[40],
+  },
   heroHeader: {
     gap: tokens.spacing[4],
+    maxWidth: 640,
   },
   heroTitle: {
     ...tokens.typography.displayLarge,
@@ -237,11 +301,13 @@ function createStyles(colors: ColorPalette) {
   },
   formCard: {
     backgroundColor: colors.m3.surfaceContainerLow,
-    borderRadius: tokens.radius.medium,
+    borderRadius: tokens.radius.card,
     borderWidth: 1,
     borderColor: colors.m3.outlineVariant,
-    padding: tokens.spacing[16],
+    padding: tokens.spacing[20],
     gap: tokens.spacing[12],
+    maxWidth: 640,
+    width: "100%",
   },
   formTitle: {
     ...tokens.typography.titleMedium,
@@ -321,6 +387,18 @@ function createStyles(colors: ColorPalette) {
     paddingHorizontal: tokens.spacing[16],
     paddingVertical: tokens.spacing[8],
     gap: tokens.spacing[8],
+  },
+  emptyBoxWide: {
+    maxWidth: 640,
+    width: "100%",
+    alignSelf: "center",
+    backgroundColor: colors.m3.surfaceContainerLow,
+    borderRadius: tokens.radius.card,
+    borderWidth: 1,
+    borderColor: colors.m3.outlineVariant,
+    padding: tokens.spacing[32],
+    marginTop: tokens.spacing[16],
+    alignItems: "center",
   },
   alertItem: {
     gap: tokens.spacing[12],
