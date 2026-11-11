@@ -344,9 +344,9 @@ export default function Search({
       {/* 6. Resumo da faixa de resultados e ordenação (Figma `02.04`: "1 livro à venda · Literatura") */}
       {!state.loading && !state.error && state.books.length > 0 ? (
         <View style={styles.summaryRow}>
-          <View style={styles.summaryBadge}>
-            <Text numberOfLines={1} style={styles.summaryBadgeText}>{state.resultsSummary}</Text>
-          </View>
+          <Text numberOfLines={1} style={styles.summaryText}>
+            {state.resultsSummary}
+          </Text>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={`Ordenar por ${SORT_LABELS[state.sortBy]}`}
@@ -354,7 +354,7 @@ export default function Search({
             style={withPress(styles.sortButton)}
           >
             <Text style={styles.sortText}>{SORT_LABELS[state.sortBy]}</Text>
-            <AppIcon name="chevronDown" size={16} color={colors.m3.primary} />
+            <AppIcon name="chevronDown" size={14} color={colors.m3.onSurfaceVariant} />
           </Pressable>
         </View>
       ) : null}
@@ -733,34 +733,32 @@ function createStyles(colors: ColorPalette) {
       alignItems: "center",
       justifyContent: "space-between",
       gap: tokens.spacing[12],
-      marginVertical: tokens.spacing[4],
+      paddingVertical: tokens.spacing[6],
+      paddingHorizontal: tokens.spacing[4],
     },
-    summaryBadge: {
-      paddingHorizontal: tokens.spacing[10],
-      paddingVertical: 3,
-      borderRadius: tokens.radius.full,
-      backgroundColor: colors.nature.sprout,
-      alignSelf: "center",
-      maxWidth: "68%",
+    summaryText: {
+      flex: 1,
+      ...tokens.typography.bodyMedium,
+      color: colors.m3.onSurfaceVariant,
+      fontWeight: tokens.fontWeight.medium,
     },
-    summaryBadgeText: {
-      ...tokens.typography.labelSmall,
-      fontSize: 12,
-      fontWeight: tokens.fontWeight.bold,
-      color: colors.nature.foliageDeep,
-    },
-    summaryText: { flex: 1, ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
     sortButton: {
       flexDirection: "row",
       alignItems: "center",
-      justifyContent: "flex-end",
+      justifyContent: "center",
       gap: tokens.spacing[4],
-      height: tokens.spacing[40],
+      height: 32,
       paddingHorizontal: tokens.spacing[12],
       borderRadius: tokens.radius.full,
-      backgroundColor: colors.m3.surfaceContainerHigh,
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
     },
-    sortText: { ...tokens.typography.labelLarge, color: colors.m3.primary },
+    sortText: {
+      ...tokens.typography.labelMedium,
+      color: colors.m3.onSurface,
+      fontWeight: tokens.fontWeight.semiBold,
+    },
     body: { ...tokens.typography.bodyLarge, lineHeight: tokens.lineHeight[25], color: colors.secondaryText },
     empty: { alignItems: "center", paddingTop: tokens.spacing[32], gap: tokens.spacing[8] },
     emptyWide: { width: "100%", paddingVertical: tokens.spacing[48], paddingHorizontal: tokens.spacing[48], borderRadius: tokens.radius.xxl, backgroundColor: colors.m3.surfaceContainerLow, gap: tokens.spacing[16] },
