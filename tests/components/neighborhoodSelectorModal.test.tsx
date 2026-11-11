@@ -12,66 +12,67 @@ describe("NeighborhoodSelectorModal (Spec 067 / ADR 0050)", () => {
     const { queryByText } = await render(
       <NeighborhoodSelectorModal
         visible={false}
-        currentNeighborhood="Centro"
+        currentNeighborhood="all"
         onSelect={vi.fn()}
         onClose={vi.fn()}
       />,
     );
-    expect(queryByText("Escolha seu bairro")).toBeNull();
+    expect(queryByText("Locais em Piripiri")).toBeNull();
   });
 
-  it("renderiza os 17 bairros e a opção 'Todos os bairros' quando visível", async () => {
+  it("renderiza os pontos de encontro e a opção 'Todos os locais' quando visível", async () => {
     const { getByText, getByLabelText } = await render(
       <NeighborhoodSelectorModal
         visible={true}
-        currentNeighborhood="Centro"
+        currentNeighborhood="all"
         onSelect={vi.fn()}
         onClose={vi.fn()}
       />,
     );
 
-    expect(getByText("Escolha seu bairro")).toBeDefined();
-    expect(getByLabelText("Selecionar todos os bairros de Piripiri")).toBeDefined();
-    expect(getByLabelText("Selecionar bairro Centro")).toBeDefined();
-    expect(getByLabelText("Selecionar bairro Petecas")).toBeDefined();
-    expect(getByLabelText("Selecionar bairro Paciência")).toBeDefined();
+    expect(getByText("Locais em Piripiri")).toBeDefined();
+    expect(getByLabelText("Selecionar todos os locais de Piripiri")).toBeDefined();
+    expect(getByLabelText("Selecionar ponto de encontro Campus IFPI Piripiri")).toBeDefined();
+    expect(getByLabelText("Selecionar ponto de encontro Praça da Bandeira")).toBeDefined();
+    expect(getByLabelText("Selecionar ponto de encontro Museu de Piripiri")).toBeDefined();
+    expect(getByLabelText("Selecionar ponto de encontro Praça de Eventos")).toBeDefined();
   });
 
-  it("filtra a lista de bairros ao digitar no campo de busca", async () => {
+  it("filtra a lista de locais ao digitar no campo de busca", async () => {
     const { getByPlaceholderText, getByLabelText, queryByLabelText } = await render(
       <NeighborhoodSelectorModal
         visible={true}
-        currentNeighborhood="Centro"
+        currentNeighborhood="all"
         onSelect={vi.fn()}
         onClose={vi.fn()}
       />,
     );
 
-    const input = getByPlaceholderText("Buscar bairro em Piripiri...");
+    const input = getByPlaceholderText("Buscar ponto de encontro em Piripiri...");
     await React.act(async () => {
-      fireEvent.changeText(input, "pet");
+      fireEvent.changeText(input, "bandeira");
     });
 
-    expect(getByLabelText("Selecionar bairro Petecas")).toBeDefined();
-    expect(queryByLabelText("Selecionar bairro Centro")).toBeNull();
+    expect(getByLabelText("Selecionar ponto de encontro Praça da Bandeira")).toBeDefined();
+    expect(queryByLabelText("Selecionar ponto de encontro Campus IFPI Piripiri")).toBeNull();
   });
 
-  it("chama onSelect ao tocar em um bairro", async () => {
+  it("chama onSelect ao tocar em um ponto de encontro", async () => {
     const onSelect = vi.fn();
     const onClose = vi.fn();
     const { getByLabelText } = await render(
       <NeighborhoodSelectorModal
         visible={true}
-        currentNeighborhood="Centro"
+        currentNeighborhood="all"
         onSelect={onSelect}
         onClose={onClose}
       />,
     );
 
-    const petecasBtn = getByLabelText("Selecionar bairro Petecas");
-    fireEvent.press(petecasBtn);
+    const bandeiraBtn = getByLabelText("Selecionar ponto de encontro Praça da Bandeira");
+    fireEvent.press(bandeiraBtn);
 
-    expect(onSelect).toHaveBeenCalledWith("Petecas");
+    expect(onSelect).toHaveBeenCalledWith("Praça da Bandeira");
   });
 
   it("chama onClose ao tocar no botão fechar", async () => {
@@ -79,13 +80,13 @@ describe("NeighborhoodSelectorModal (Spec 067 / ADR 0050)", () => {
     const { getByLabelText } = await render(
       <NeighborhoodSelectorModal
         visible={true}
-        currentNeighborhood="Centro"
+        currentNeighborhood="all"
         onSelect={vi.fn()}
         onClose={onClose}
       />,
     );
 
-    const closeBtn = getByLabelText("Fechar seletor de bairros");
+    const closeBtn = getByLabelText("Fechar seletor de locais");
     fireEvent.press(closeBtn);
 
     expect(onClose).toHaveBeenCalled();

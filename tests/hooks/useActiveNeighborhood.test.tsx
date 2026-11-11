@@ -55,18 +55,18 @@ describe("testes de hook: useActiveNeighborhood (Spec 067 / ADR 0050)", () => {
   });
 
   it("carrega o bairro previamente salvo no AsyncStorage", async () => {
-    store.set(ACTIVE_NEIGHBORHOOD_STORAGE_KEY, "Petecas");
-    const hook = await renderActiveNeighborhoodHook("Centro");
-    expect(hook.current.activeNeighborhood).toBe("Petecas");
+    store.set(ACTIVE_NEIGHBORHOOD_STORAGE_KEY, "Praça da Bandeira");
+    const hook = await renderActiveNeighborhoodHook("all");
+    expect(hook.current.activeNeighborhood).toBe("Praça da Bandeira");
   });
 
   it("atualiza o bairro e persiste no AsyncStorage", async () => {
-    const hook = await renderActiveNeighborhoodHook("Centro");
+    const hook = await renderActiveNeighborhoodHook("all");
     await act(async () => {
-      await hook.current.selectNeighborhood("Paciência");
+      await hook.current.selectNeighborhood("Campus IFPI Piripiri");
     });
-    expect(hook.current.activeNeighborhood).toBe("Paciência");
-    expect(store.get(ACTIVE_NEIGHBORHOOD_STORAGE_KEY)).toBe("Paciência");
+    expect(hook.current.activeNeighborhood).toBe("Campus IFPI Piripiri");
+    expect(store.get(ACTIVE_NEIGHBORHOOD_STORAGE_KEY)).toBe("Campus IFPI Piripiri");
   });
 
   it("controla a abertura e fechamento do seletor", async () => {

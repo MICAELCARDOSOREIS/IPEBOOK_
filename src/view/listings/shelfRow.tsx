@@ -4,6 +4,7 @@ import type { Book } from "@/model/entities/book";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { formatPrice } from "@/view/formatPrice";
+import { formatBookLocation } from "@/model/entities/location";
 import { AppIcon } from "@/view/components/AppIcon";
 import { BookCover } from "@/view/components/BookCover";
 import { ModalityCoverArea } from "@/view/components/ModalityCoverArea";
@@ -71,7 +72,7 @@ export function ShelfRow({ book, summary, accessibilityLabel, onPress, onShareWh
         <View style={styles.cellNeighborhood}>
           <AppIcon name="place" size={14} color={colors.m3.onSurfaceVariant} />
           <Text style={styles.cellNeighborhoodText} numberOfLines={1}>
-            {book.neighborhood || "Piripiri"}
+            {formatBookLocation(book.neighborhood)}
           </Text>
         </View>
         <View style={styles.cellStatus}>
@@ -160,7 +161,7 @@ export function ShelfRow({ book, summary, accessibilityLabel, onPress, onShareWh
             <View style={styles.locationRow}>
               <AppIcon name="place" size={13} color={colors.nature.foliageDeep} />
               <Text style={styles.locationText} numberOfLines={1}>
-                {book.neighborhood || "Piripiri"}
+                {formatBookLocation(book.neighborhood)}
               </Text>
             </View>
             <View style={[styles.statusPill, { backgroundColor: statusTone.background }]}>

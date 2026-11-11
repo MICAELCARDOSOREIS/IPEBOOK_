@@ -6,6 +6,7 @@ import { BookCover } from "@/view/components/BookCover";
 import { IpeMark } from "@/view/components/IpeMark";
 import { withPress } from "@/view/pressFeedback";
 import { formatPrice } from "@/view/formatPrice";
+import { formatBookLocation } from "@/model/entities/location";
 import { standardHorizontalScrollProps } from "@/view/scrollProps";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
@@ -146,7 +147,7 @@ export function CatalogCarousel({
             <View style={styles.carouselCardLocationRow}>
               <AppIcon name="place" size={13} color={colors.nature.foliageDeep} />
               <Text numberOfLines={1} style={styles.carouselCardNeighborhood}>
-                {item.neighborhood || "Piripiri"}
+                {formatBookLocation(item.neighborhood)}
               </Text>
             </View>
             {item.status === "reserved" ? (

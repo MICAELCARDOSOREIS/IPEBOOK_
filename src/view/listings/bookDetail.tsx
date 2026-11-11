@@ -13,6 +13,7 @@ import {
 import { SHARE_BASE_URL } from "@/viewmodel/useShareListingViewModel";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { formatPrice } from "@/view/formatPrice";
+import { formatBookLocation } from "@/model/entities/location";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { captureRef } from "react-native-view-shot";
 import { Breadcrumb } from "@/view/components/Breadcrumb";
@@ -139,7 +140,7 @@ export default function BookDetail({
 
   const conditionLabel = book?.condition ? BOOK_CONDITION_LABELS[book.condition] : "Bom estado";
   const categoryLabel = book?.category || "Literatura";
-  const neighborhoodLabel = book?.neighborhood || "Centro";
+  const neighborhoodLabel = formatBookLocation(book?.neighborhood);
   const primaryActionLabel = book ? PRIMARY_ACTION_LABEL[book.modality] : "";
   const insets = useSafeAreaInsets();
   const wideWeb = useIsWideWeb();

@@ -227,29 +227,29 @@ describe("testes de componente com mock: Home (ISO/IEC 25010 - Usabilidade e Con
     expect(reloadMock).toHaveBeenCalledTimes(1);
   });
 
-  describe("seção hiperlocal por bairro ativo (Spec 068 / ADR 0051)", () => {
+  describe("seção hiperlocal por ponto de encontro / local ativo em Piripiri (Spec 068 / ADR 0051)", () => {
     const mixedBooks: HomeState["books"] = [
       {
         id: "1",
-        title: "Livro do Centro",
+        title: "Livro da Praça",
         author: "Autor A",
         ownerId: "u1",
         modality: "sale",
         status: "available",
-        neighborhood: "Centro",
+        neighborhood: "Praça da Bandeira",
       },
       {
         id: "2",
-        title: "Livro de Crioli",
+        title: "Livro do IFPI",
         author: "Autor B",
         ownerId: "u2",
         modality: "donation",
         status: "available",
-        neighborhood: "Crioli",
+        neighborhood: "Campus IFPI Piripiri",
       },
     ];
 
-    it("filtra os livros do bairro ativo e atualiza título do carrossel", async () => {
+    it("filtra os livros do ponto de encontro ativo e atualiza título do carrossel", async () => {
       mockedUseHomeViewModel.mockReturnValue([
         { books: mixedBooks, loading: false, error: null },
         { reload: vi.fn() },
@@ -258,19 +258,19 @@ describe("testes de componente com mock: Home (ISO/IEC 25010 - Usabilidade e Con
       let screen!: Awaited<ReturnType<typeof render>>;
       await act(async () => {
         screen = await render(
-          <Home currentNeighborhood="Crioli" onNavigateToSearch={onNavigateToSearch} />,
+          <Home currentNeighborhood="Campus IFPI Piripiri" onNavigateToSearch={onNavigateToSearch} />,
         );
       });
 
-      expect(screen.getByText("Perto de você no Crioli")).toBeDefined();
-      expect(screen.getAllByText("Livro de Crioli").length).toBeGreaterThanOrEqual(1);
-      expect(screen.queryByText("Livro do Centro")).toBeNull();
+      expect(screen.getByText("Em Campus IFPI Piripiri")).toBeDefined();
+      expect(screen.getAllByText("Livro do IFPI").length).toBeGreaterThanOrEqual(1);
+      expect(screen.queryByText("Livro da Praça")).toBeNull();
 
       fireEvent.press(screen.getByLabelText("Ver mais livros recém-adicionados"));
-      expect(onNavigateToSearch).toHaveBeenCalledWith({ neighborhood: "Crioli" });
+      expect(onNavigateToSearch).toHaveBeenCalledWith({ neighborhood: "Campus IFPI Piripiri" });
     });
 
-    it("exibe estado de ausência acolhedor quando não há livros no bairro selecionado", async () => {
+    it("exibe estado de ausência acolhedor quando não há livros no ponto de encontro selecionado", async () => {
       mockedUseHomeViewModel.mockReturnValue([
         { books: mixedBooks, loading: false, error: null },
         { reload: vi.fn() },
@@ -279,12 +279,12 @@ describe("testes de componente com mock: Home (ISO/IEC 25010 - Usabilidade e Con
       let screen!: Awaited<ReturnType<typeof render>>;
       await act(async () => {
         screen = await render(
-          <Home currentNeighborhood="Petecas" onNavigateToSearch={onNavigateToSearch} />,
+          <Home currentNeighborhood="Museu de Piripiri" onNavigateToSearch={onNavigateToSearch} />,
         );
       });
 
-      expect(screen.getByText("Perto de você no Petecas")).toBeDefined();
-      expect(screen.getByText("Ainda não há livros no Petecas.")).toBeDefined();
+      expect(screen.getByText("Em Museu de Piripiri")).toBeDefined();
+      expect(screen.getByText("Ainda não há livros no Museu de Piripiri.")).toBeDefined();
 
       const exploreAllBtn = screen.getByLabelText("Ver livros em toda Piripiri");
       expect(exploreAllBtn).toBeDefined();
@@ -292,18 +292,18 @@ describe("testes de componente com mock: Home (ISO/IEC 25010 - Usabilidade e Con
       expect(onNavigateToSearch).toHaveBeenCalledWith({ neighborhood: "all" });
     });
 
-    it("exibe o selo de bairro no card do livro quando definido (Spec 070 / ADR 0053)", async () => {
+    it("exibe o selo de local no card do livro quando definido (Spec 070 / ADR 0053)", async () => {
       mockedUseHomeViewModel.mockReturnValue([
         { books: mixedBooks, loading: false, error: null },
         { reload: vi.fn() },
       ]);
       let screen!: Awaited<ReturnType<typeof render>>;
       await act(async () => {
-        screen = await render(<Home currentNeighborhood="Crioli" />);
+        screen = await render(<Home currentNeighborhood="Campus IFPI Piripiri" />);
       });
 
-      expect(screen.getAllByText("Crioli").length).toBeGreaterThanOrEqual(2);
-      expect(screen.getByLabelText("Ver detalhe de Livro de Crioli, Autor B em Crioli")).toBeDefined();
+      expect(screen.getAllByText("Campus IFPI Piripiri").length).toBeGreaterThanOrEqual(2);
+      expect(screen.getByLabelText("Ver detalhe de Livro do IFPI, Autor B em Campus IFPI Piripiri")).toBeDefined();
     });
   });
 

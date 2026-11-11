@@ -16,7 +16,7 @@ export type ActiveNeighborhoodHookResult = {
  * Persiste a escolha em AsyncStorage sob a chave `@ipebook:active_neighborhood`.
  */
 export function useActiveNeighborhood(
-  defaultNeighborhood = "Centro",
+  defaultNeighborhood = "all",
 ): ActiveNeighborhoodHookResult {
   const [activeNeighborhood, setActiveNeighborhood] = useState(defaultNeighborhood);
   const [isSelectorOpen, setIsSelectorOpen] = useState(false);
@@ -27,7 +27,15 @@ export function useActiveNeighborhood(
       try {
         const stored = await AsyncStorage.getItem(ACTIVE_NEIGHBORHOOD_STORAGE_KEY);
         if (isMounted && stored && stored.trim()) {
-          setActiveNeighborhood(stored.trim());
+          const val = stored.trim();
+          // Se for bairro residencial legado antigo (ex.: Centro, Paciência), migra para all (Piripiri)
+          const isLegacyNeighborhood =
+            val === "Centro" ||
+            val === "Paciência" ||
+            val === "Crioli" ||
+            val === "Petecas" ||
+            val === "Prado";
+          setActiveNeighborhood(isLegacyNeighborhood ? "all" : val);
         }
       } catch {
         // Fallback para o valor inicial em caso de falha de leitura
