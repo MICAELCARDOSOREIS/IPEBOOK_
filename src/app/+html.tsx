@@ -3,8 +3,8 @@ import type { PropsWithChildren } from "react";
 import { tokens } from "@/view/tokens";
 
 /**
- * HTML raiz da Web (Spec 025 / Issue #121).
- * Define idioma pt-BR, Web App Manifest, cores temáticas e meta tags PWA para instalação no celular.
+ * HTML raiz da Web (Spec 025 / Spec 135 / Issue #121 / Issue #220).
+ * Define idioma pt-BR, Web App Manifest, cores temáticas, compatibilidade Apple HIG e meta tags PWA para instalação no celular.
  * Desde o Expo 58, os scripts e estilos do bundle chegam por `useServerDocumentContext`;
  * sem renderizar `headNodes` e `bodyNodes` a página exportada fica em branco.
  */
@@ -15,7 +15,8 @@ export default function Root({ children }: PropsWithChildren) {
       <head>
         <meta charSet="utf-8" />
         <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
-        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover" />
+        <meta name="format-detection" content="telephone=no" />
         <meta name="theme-color" content={tokens.colors.action} />
         <meta name="description" content="Marketplace comunitário de livros em Piripiri, PI (venda, troca e doação)" />
         <meta name="mobile-web-app-capable" content="yes" />
@@ -26,12 +27,22 @@ export default function Root({ children }: PropsWithChildren) {
         <link rel="icon" type="image/png" sizes="192x192" href="/icone-192.png" />
         <link rel="shortcut icon" href="/favicon.ico?v=2" />
         <link rel="apple-touch-icon" href="/icone-192.png" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/icone-192.png" />
+        <link rel="apple-touch-icon" sizes="192x192" href="/icone-192.png" />
+        <link rel="apple-touch-icon" sizes="512x512" href="/icone-512.png" />
         <ScrollViewStyleReset />
         {/* Barras de rolagem finas e discretas nos dois temas (a nativa do Chrome fica branca no escuro). */}
         <style
           dangerouslySetInnerHTML={{
             __html: [
-              `*{scrollbar-width:thin;scrollbar-color:rgba(128,128,128,.45) transparent}`,
+              `*{scrollbar-width:thin;scrollbar-color:rgba(128,128,128,.45) transparent;-webkit-tap-highlight-color:transparent}`,
+              `html,body{overscroll-behavior-y:none;-webkit-overflow-scrolling:touch}`,
+              `body{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}`,
+              // Apple HIG / Safari iOS: campos com fonte < 16px provocam zoom automático indesejado na tela.
+              `@supports (-webkit-touch-callout:none){input,select,textarea{font-size:16px!important}}`,
+              `@media screen and (max-width:768px){input,select,textarea{font-size:16px!important}}`,
+              // Safe area do Home Indicator no dock flutuante (ADR 0108 / Spec 135)
+              `[data-testid="navigation-bar-tablist"]{padding-bottom:max(12px,calc(8px + env(safe-area-inset-bottom,0px)))!important}`,
               // Foco de teclado visível nos dois temas: anel escuro com halo claro (WCAG 2.4.7).
               `:focus-visible{outline:${tokens.accessibility.focusWidth}px solid ${tokens.colors.actionDeep};outline-offset:2px;box-shadow:0 0 0 5px ${tokens.colors.m3.primaryContainer};border-radius:${tokens.radius.small}px}`,
               `[role="button"],[role="link"],[role="tab"],[role="radio"],[role="checkbox"],[role="switch"],[role="search"]{cursor:pointer}`,
