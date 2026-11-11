@@ -15,7 +15,7 @@ import { TextButton } from "@/view/components/TextButton";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { formatPrice } from "@/view/formatPrice";
 import { useTheme } from "@/view/theme/ThemeProvider";
-import { type ColorPalette, tokens } from "@/view/tokens";
+import { type ColorPalette, fontFamily, tokens } from "@/view/tokens";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { WEB_GUTTER } from "@/view/webLayout";
@@ -249,45 +249,30 @@ export default function ManageListing({
                   <Text style={styles.bookAuthor} numberOfLines={1}>
                     {book.author}
                   </Text>
+
                   <View style={styles.tagRow}>
                     <Tag variant={book.modality} />
                     {book.price !== undefined ? (
                       <Text style={styles.price}>{formatPrice(book.price)}</Text>
                     ) : null}
                   </View>
-                  {book.condition ? (
-                    <Text style={styles.bookMeta}>{BOOK_CONDITION_LABELS[book.condition]}</Text>
-                  ) : null}
-                  {location ? (
-                    <Text style={styles.bookMeta} numberOfLines={1}>
-                      {location}
-                    </Text>
-                  ) : null}
-                </View>
-              </View>
 
-              {/* Informações rápidas em pílulas */}
-              <View style={styles.statsRow}>
-                <View style={styles.statPill}>
-                  <AppIcon
-                    name={book.modality === "trade" ? "swap" : book.modality === "sale" ? "category" : "heart"}
-                    size={16}
-                    color={colors.action}
-                  />
-                  <Text style={styles.statPillText}>
-                    {book.modality === "trade"
-                      ? "Disponível para troca"
-                      : book.modality === "sale"
-                      ? "Disponível para compra"
-                      : "Disponível para doação"}
-                  </Text>
-                </View>
-                {book.neighborhood ? (
-                  <View style={styles.statPill}>
-                    <AppIcon name="place" size={16} color={colors.action} />
-                    <Text style={styles.statPillText}>{book.neighborhood}</Text>
+                  <View style={styles.metaRow}>
+                    {book.condition ? (
+                      <View style={styles.metaBadge}>
+                        <Text style={styles.bookMeta}>{BOOK_CONDITION_LABELS[book.condition]}</Text>
+                      </View>
+                    ) : null}
+                    {location ? (
+                      <View style={styles.metaBadge}>
+                        <AppIcon name="place" size={13} color={colors.secondaryText} />
+                        <Text style={styles.bookMeta} numberOfLines={1}>
+                          {location}
+                        </Text>
+                      </View>
+                    ) : null}
                   </View>
-                ) : null}
+                </View>
               </View>
             </View>
 
@@ -345,7 +330,7 @@ export default function ManageListing({
                   pressed && !reserved && styles.actionCardPressed,
                 ]}
               >
-                <View style={[styles.actionIconWrapper, { backgroundColor: colors.soft }]}>
+                <View style={[styles.actionIconWrapper, { backgroundColor: colors.m3.primaryContainer }]}>
                   <AppIcon name="edit" size={22} color={reserved ? colors.secondaryText : colors.action} />
                 </View>
                 <View style={styles.actionTexts}>
@@ -371,8 +356,8 @@ export default function ManageListing({
                     pressed && styles.actionCardPressed,
                   ]}
                 >
-                  <View style={[styles.actionIconWrapper, { backgroundColor: colors.soft }]}>
-                    <AppIcon name="visibility" size={22} color={colors.action} />
+                  <View style={[styles.actionIconWrapper, { backgroundColor: colors.m3.secondaryContainer }]}>
+                    <AppIcon name="visibility" size={22} color={colors.actionDeep} />
                   </View>
                   <View style={styles.actionTexts}>
                     <Text style={styles.actionTitle}>Ver como leitor</Text>
@@ -400,8 +385,8 @@ export default function ManageListing({
                   pressed && styles.actionCardPressed,
                 ]}
               >
-                <View style={[styles.actionIconWrapper, { backgroundColor: colors.nature.sprout }]}>
-                  <AppIcon name="whatsapp" size={22} color={colors.nature.foliage} />
+                <View style={[styles.actionIconWrapper, { backgroundColor: "#E8F5E9" }]}>
+                  <AppIcon name="whatsapp" size={22} color="#1B5E20" />
                 </View>
                 <View style={styles.actionTexts}>
                   <Text style={styles.actionTitle}>Divulgar no WhatsApp</Text>
@@ -421,8 +406,8 @@ export default function ManageListing({
                   pressed && styles.actionCardPressed,
                 ]}
               >
-                <View style={[styles.actionIconWrapper, { backgroundColor: colors.m3.surfaceContainerLow }]}>
-                  <AppIcon name="share" size={22} color={colors.action} />
+                <View style={[styles.actionIconWrapper, { backgroundColor: colors.ipe.container }]}>
+                  <AppIcon name="share" size={22} color={colors.ipe.onContainer} />
                 </View>
                 <View style={styles.actionTexts}>
                   <Text style={styles.actionTitle}>Compartilhar anúncio</Text>
@@ -462,7 +447,7 @@ export default function ManageListing({
                     {
                       backgroundColor: paused
                         ? colors.nature.sprout
-                        : colors.m3.surfaceContainerLow,
+                        : colors.m3.surfaceContainerHigh,
                     },
                   ]}
                 >
@@ -472,7 +457,7 @@ export default function ManageListing({
                     <AppIcon
                       name={paused ? "unarchive" : "archive"}
                       size={22}
-                      color={reserved ? colors.secondaryText : paused ? colors.nature.foliage : colors.action}
+                      color={reserved ? colors.secondaryText : paused ? colors.nature.foliage : colors.secondaryText}
                     />
                   )}
                 </View>
@@ -579,67 +564,67 @@ function createStyles(colors: ColorPalette) {
     columnHalf: { flex: 1 },
     bookCard: {
       backgroundColor: colors.surface,
-      borderRadius: tokens.radius.medium,
+      borderRadius: tokens.radius.card,
       borderWidth: 1,
       borderColor: colors.m3.outlineVariant,
       padding: tokens.spacing[16],
-      gap: tokens.spacing[12],
+      elevation: 1,
+      shadowColor: colors.m3.shadow,
+      shadowOpacity: 0.05,
+      shadowRadius: 4,
+      shadowOffset: { width: 0, height: 2 },
     },
     bookRow: {
       flexDirection: "row",
-      gap: tokens.spacing[12],
+      gap: tokens.spacing[14],
+      alignItems: "center",
     },
     bookTexts: { flex: 1, gap: tokens.spacing[4] },
-    tagRow: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[8] },
+    tagRow: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[8], marginTop: tokens.spacing[2] },
     bookTitle: {
       ...tokens.typography.titleMedium,
+      fontFamily: fontFamily.semiBold,
       color: colors.text,
-      fontWeight: tokens.fontWeight.bold,
     },
     bookAuthor: {
       ...tokens.typography.bodyMedium,
       color: colors.secondaryText,
     },
+    metaRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[6],
+      flexWrap: "wrap",
+      marginTop: tokens.spacing[4],
+    },
+    metaBadge: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[4],
+      backgroundColor: colors.m3.surfaceContainerLow,
+      paddingHorizontal: tokens.spacing[8],
+      paddingVertical: tokens.spacing[4],
+      borderRadius: tokens.radius.full,
+    },
     bookMeta: {
-      ...tokens.typography.bodyMedium,
+      ...tokens.typography.labelSmall,
       color: colors.secondaryText,
     },
     price: {
       ...tokens.typography.bodyMedium,
-      fontWeight: tokens.fontWeight.semiBold,
+      fontFamily: fontFamily.semiBold,
       color: colors.action,
-    },
-    statsRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[8],
-      paddingTop: tokens.spacing[10],
-      borderTopWidth: 1,
-      borderTopColor: colors.m3.outlineVariant,
-      flexWrap: "wrap",
-    },
-    statPill: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[6],
-      backgroundColor: colors.m3.surfaceContainerLow,
-      paddingHorizontal: tokens.spacing[10],
-      paddingVertical: tokens.spacing[6],
-      borderRadius: tokens.radius.full,
-    },
-    statPillText: {
-      ...tokens.typography.labelSmall,
-      color: colors.secondaryText,
     },
     statusBox: {
       backgroundColor: colors.m3.surfaceContainerLow,
-      borderRadius: tokens.radius.medium,
+      borderRadius: tokens.radius.card,
       padding: tokens.spacing[16],
       gap: tokens.spacing[8],
       borderWidth: 1,
       borderColor: colors.m3.outlineVariant,
     },
     statusBoxActive: {
+      backgroundColor: colors.nature.sprout,
       borderColor: colors.nature.foliage,
       borderLeftWidth: 4,
     },
@@ -670,7 +655,7 @@ function createStyles(colors: ColorPalette) {
     statusTitle: {
       ...tokens.typography.titleMedium,
       color: colors.text,
-      fontWeight: tokens.fontWeight.semiBold,
+      fontFamily: fontFamily.semiBold,
     },
     statusBadgeSubtitle: {
       ...tokens.typography.labelSmall,
@@ -685,12 +670,13 @@ function createStyles(colors: ColorPalette) {
       gap: tokens.spacing[8],
     },
     sectionHeaderTitle: {
-      ...tokens.typography.labelLarge,
+      ...tokens.typography.labelMedium,
       color: colors.secondaryText,
-      fontWeight: tokens.fontWeight.semiBold,
+      fontFamily: fontFamily.semiBold,
       textTransform: "uppercase",
-      letterSpacing: 0.5,
-      paddingHorizontal: tokens.spacing[2],
+      letterSpacing: 0.8,
+      paddingHorizontal: tokens.spacing[4],
+      marginTop: tokens.spacing[4],
       marginBottom: tokens.spacing[2],
     },
     actionCard: {
@@ -698,36 +684,40 @@ function createStyles(colors: ColorPalette) {
       alignItems: "center",
       gap: tokens.spacing[12],
       backgroundColor: colors.surface,
-      borderRadius: tokens.radius.cardSmall,
+      borderRadius: tokens.radius.card,
       borderWidth: 1,
       borderColor: colors.m3.outlineVariant,
       padding: tokens.spacing[14],
       minHeight: tokens.accessibility.touchTarget,
+      elevation: 1,
+      shadowColor: colors.m3.shadow,
+      shadowOpacity: 0.04,
+      shadowRadius: 3,
+      shadowOffset: { width: 0, height: 1 },
     },
     actionCardPressed: {
       backgroundColor: colors.m3.surfaceContainerLow,
-      transform: [{ scale: 0.99 }],
+      transform: [{ scale: 0.98 }],
     },
     actionCardDisabled: {
-      opacity: 0.5,
+      opacity: 0.45,
     },
     actionIconWrapper: {
-      width: 40,
-      height: 40,
-      borderRadius: tokens.radius.full,
+      width: 44,
+      height: 44,
+      borderRadius: tokens.radius.cardSmall,
       alignItems: "center",
       justifyContent: "center",
     },
     actionTexts: { flex: 1, gap: tokens.spacing[2] },
     actionTitle: {
       ...tokens.typography.bodyLarge,
-      fontWeight: tokens.fontWeight.semiBold,
+      fontFamily: fontFamily.semiBold,
       color: colors.text,
     },
     actionHint: {
-      ...tokens.typography.bodyMedium,
-      color: colors.secondaryText,
-      fontSize: 13,
+      ...tokens.typography.footnote,
+      color: colors.m3.onSurfaceVariant,
       lineHeight: 18,
     },
     textDisabled: {
