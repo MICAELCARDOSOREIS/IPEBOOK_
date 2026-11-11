@@ -26,7 +26,8 @@ import { PIRIPIRI_MEETING_POINTS } from "@/model/entities/meetingPoint";
 import { addMeetingToCalendar } from "@/view/calendarIntegration";
 import { NegotiationStatusCard } from "./NegotiationStatusCard";
 import { BuyerPendingProposalBanner, OwnerPendingProposalCard } from "./ChatProposalCards";
-import { tokens, type ColorPalette } from "@/view/tokens";
+import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
+import { formatPrice } from "@/view/formatPrice";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
@@ -274,15 +275,39 @@ export function Chat({
             {detail && !embedded ? (
               <View style={[styles.bookCard, isWebStandalone && styles.bookCardWide]}>
                 <View style={styles.bookRow}>
-                  <BookCover id={detail.book.id} title={detail.book.title} photoUrl={detail.book.photoUrl} variant="list" />
+                  <BookCover
+                    id={detail.book.id}
+                    title={detail.book.title}
+                    photoUrl={detail.book.photoUrl}
+                    variant="list"
+                    width={36}
+                  />
                   <View style={styles.bookText}>
-                    <Text style={styles.bookTitle} numberOfLines={2}>
+                    <Text style={styles.bookTitle} numberOfLines={1}>
                       {detail.book.title}
                     </Text>
-                    <Tag variant={detail.book.modality} />
+                    <View style={styles.bookMetaRow}>
+                      <Tag variant={detail.book.modality} />
+                      {detail.book.modality === "sale" && detail.book.price != null ? (
+                        <Text style={styles.bookPrice}>{formatPrice(detail.book.price)}</Text>
+                      ) : null}
+                    </View>
                   </View>
+                  {/* Se a negociação estiver aceita e ainda sem encontro marcado, exibe o botão direto na linha compacta */}
+                  {detail.request.status === "accepted" && !meetingState.meeting && !delivery.completed ? (
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel="Combinar encontro na negociação"
+                      onPress={() => (onScheduleMeeting ? guardedScheduleMeeting(requestId) : guardedOpenNegotiation(requestId))}
+                      style={withPress(styles.combine)}
+                    >
+                      <Text style={styles.combineText}>Combinar</Text>
+                    </Pressable>
+                  ) : null}
                 </View>
-                {detail.request.status === "accepted" ? (
+
+                {/* Exibe o status do encontro somente quando há encontro agendado/proposto ou entrega concluída */}
+                {detail.request.status === "accepted" && (meetingState.meeting || delivery.completed) ? (
                   <NegotiationStatusCard
                     embedded
                     combineAccessibilityLabel="Combinar encontro na negociação"
@@ -517,28 +542,62 @@ function createStyles(colors: ColorPalette) {
     },
     headerTitle: { flex: 1, ...tokens.typography.titleMedium, fontWeight: tokens.fontWeight.semiBold, color: colors.m3.onSurface },
     bookCard: {
-      gap: tokens.spacing[12],
+      gap: tokens.spacing[8],
       marginHorizontal: tokens.spacing[16],
-      marginTop: tokens.spacing[10],
-      marginBottom: tokens.spacing[8],
-      padding: tokens.spacing[12],
+      marginTop: tokens.spacing[6],
+      marginBottom: tokens.spacing[4],
+      paddingHorizontal: tokens.spacing[12],
+      paddingVertical: tokens.spacing[8],
       borderRadius: tokens.radius.card,
       backgroundColor: colors.surface,
       borderWidth: 1,
       borderColor: colors.m3.outlineVariant,
+      elevation: 1,
+      shadowColor: colors.m3.shadow,
+      shadowOpacity: 0.04,
+      shadowRadius: 3,
+      shadowOffset: { width: 0, height: 1 },
     },
-    bookRow: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[12] },
-    bookText: { flex: 1, gap: tokens.spacing[6], alignItems: "flex-start" },
-    bookTitle: { ...tokens.typography.bodyLarge, fontWeight: tokens.fontWeight.medium, color: colors.m3.onSurface },
+    bookRow: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[10] },
+    bookText: { flex: 1, minWidth: 0, gap: 2, alignItems: "flex-start" },
+    bookTitle: {
+      ...tokens.typography.labelLarge,
+      fontFamily: fontFamily.semiBold,
+      fontSize: 15,
+      lineHeight: 20,
+      color: colors.m3.onSurface,
+    },
+    bookAuthor: {
+      ...tokens.typography.footnote,
+      color: colors.m3.onSurfaceVariant,
+    },
+    bookMetaRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[6],
+      marginTop: 2,
+    },
+    bookPrice: {
+      ...tokens.typography.labelSmall,
+      fontFamily: fontFamily.semiBold,
+      color: colors.nature.foliageDeep,
+    },
     // "Combinar" como botão tonal (Spec 089): antes era só um texto verde, sem cara de botão.
     combine: {
-      minHeight: tokens.spacing[40],
+      minHeight: 34,
       justifyContent: "center",
-      paddingHorizontal: tokens.spacing[16],
+      alignItems: "center",
+      paddingHorizontal: tokens.spacing[14],
       borderRadius: tokens.radius.full,
-      backgroundColor: colors.m3.secondaryContainer,
+      backgroundColor: colors.nature.sprout,
+      borderWidth: 1,
+      borderColor: `${colors.nature.foliage}40`,
     },
-    combineText: { ...tokens.typography.labelMedium, fontWeight: tokens.fontWeight.semiBold, color: colors.m3.onSecondaryContainer },
+    combineText: {
+      ...tokens.typography.labelMedium,
+      fontWeight: tokens.fontWeight.semiBold,
+      color: colors.nature.foliageDeep,
+    },
     center: { flex: 1, alignItems: "center", justifyContent: "center" },
     // Espaço no fim para a última mensagem não colar no campo de digitar (Spec 089).
     list: { paddingHorizontal: tokens.spacing[16], paddingTop: tokens.spacing[8], paddingBottom: tokens.spacing[24] },
