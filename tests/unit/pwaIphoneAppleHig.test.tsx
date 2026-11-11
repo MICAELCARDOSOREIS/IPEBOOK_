@@ -147,11 +147,12 @@ describe("PWA iPhone & Safari Apple HIG (Spec 135 / ADR 0108 / Issue #220)", () 
     });
 
     it("canonicalizeHref lida com parâmetro dinâmico ausente ou nulo", () => {
+      // @ts-expect-error teste de parâmetro nulo
       expect(canonicalizeHref({ pathname: "/livro/[id]", params: { id: null } })).toBe("/livro/[id]");
     });
 
     it("canonicalizeHref filtra parâmetros vazios da query string", () => {
-      expect(canonicalizeHref({ pathname: "/busca", params: { q: "", cat: "geral" } })).toBe("/busca?cat=geral");
+      expect(canonicalizeHref({ pathname: "/busca" as never, params: { q: "", cat: "geral" } })).toBe("/busca?cat=geral");
     });
 
     it("replaceOnce bloqueia duplicata consecutiva", () => {
