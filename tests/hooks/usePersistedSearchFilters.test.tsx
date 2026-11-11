@@ -73,13 +73,13 @@ describe("testes de hook: usePersistedSearchFilters", () => {
   it("grava filtros e ordenação via persist()", async () => {
     const hook = await renderHook();
     await act(async () => {
-      hook.current.persist({ ...DEFAULT_SEARCH_FILTERS, modality: "sale" }, "title_asc");
+      hook.current.persist({ ...DEFAULT_SEARCH_FILTERS, modality: "sale" }, "title");
     });
     const saved = store.get(SEARCH_FILTERS_STORAGE_KEY);
     expect(saved).toBeDefined();
     const parsed = JSON.parse(saved as string);
     expect(parsed.filters.modality).toBe("sale");
-    expect(parsed.sortBy).toBe("title_asc");
+    expect(parsed.sortBy).toBe("title");
   });
 
   it("recupera-se graciosamente quando o conteúdo no storage for inválido", async () => {
