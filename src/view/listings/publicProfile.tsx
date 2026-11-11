@@ -10,7 +10,7 @@ import {
 } from "@/di/container";
 import { normalizeInstagramHandle } from "@/model/validators/instagramValidator";
 import { ProfileSafetySheet } from "@/view/listings/profileSafetySheet";
-import { tokens, type ColorPalette } from "@/view/tokens";
+import { tokens, type ColorPalette, fontFamily } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { Avatar } from "@/view/components/Avatar";
 import { Breadcrumb } from "@/view/components/Breadcrumb";
@@ -111,114 +111,143 @@ export function PublicProfile({ userId, onBack, onOpenChat, onReportListing, onR
                 style={styles.breadcrumb}
               />
             ) : null}
-            {/* 2. Identidade (Avatar 80px + Nome em Serifa + Subtítulo) */}
+            {/* 2. Identidade (Avatar 84px + Moldura Ipê + Nome em Serifa + Badges) */}
             <View style={styles.identitySection}>
-              <Avatar name={profile.name} photoUrl={profile.photoUrl} size={80} />
+              <View style={styles.avatarWrapper}>
+                <Avatar name={profile.name} photoUrl={profile.photoUrl} size={84} />
+              </View>
               <Text accessibilityRole="header" style={styles.name}>{profile.name}</Text>
               <Text style={styles.subtitle}>Conheça a pessoa antes de combinar.</Text>
-              {instagramHandle ? (
-                <Pressable
-                  accessibilityRole="link"
-                  accessibilityLabel={`Abrir Instagram @${instagramHandle}`}
-                  hitSlop={8}
-                  onPress={() => void Linking.openURL(`https://instagram.com/${instagramHandle}`).catch(() => {})}
-                  style={({ pressed }) => [styles.socialBadge, pressed && { opacity: 0.6 }]}
-                >
-                  <Text style={styles.socialHandle}>{`@${instagramHandle}`}</Text>
-                </Pressable>
-              ) : null}
+              <View style={styles.identityBadgesRow}>
+                <View style={styles.locationBadge}>
+                  <AppIcon name="place" size={13} color={colors.nature.foliage} />
+                  <Text style={styles.locationBadgeText}>Piripiri, PI</Text>
+                </View>
+                {instagramHandle ? (
+                  <Pressable
+                    accessibilityRole="link"
+                    accessibilityLabel={`Abrir Instagram @${instagramHandle}`}
+                    hitSlop={8}
+                    onPress={() => void Linking.openURL(`https://instagram.com/${instagramHandle}`).catch(() => {})}
+                    style={({ pressed }) => [styles.socialBadge, pressed && { opacity: 0.6 }]}
+                  >
+                    <Text style={styles.socialHandle}>{`@${instagramHandle}`}</Text>
+                  </Pressable>
+                ) : null}
+              </View>
             </View>
 
-            {/* 3. Cards Informativos Padronizados com Superfície M3 */}
+            {/* 3. Cards Informativos Padronizados com Superfície M3 e Identidade Ipê */}
             {/* Na web larga os três cartões ficam lado a lado, sem esticar pela largura toda. */}
             <View style={styles.statsRow}>
-            {/* Card 1: Avaliações */}
-            <View style={styles.infoCard}>
-              <View style={styles.cardLeadingBox}>
-                {profile.ratingCount > 0 ? (
-                  <View style={styles.ratingNumberRow}>
-                    <Text style={styles.statLargeValue}>
-                      {profile.averageRating?.toFixed(1)}
-                    </Text>
-                    <AppIcon name="star" size={12} color={colors.highlight} />
-                  </View>
-                ) : (
-                  <AppIcon name="star" size={24} color={colors.secondaryText} />
-                )}
+              {/* Card 1: Avaliações */}
+              <View style={styles.infoCard}>
+                <View style={[styles.cardLeadingBox, styles.cardLeadingBoxRating]}>
+                  {profile.ratingCount > 0 ? (
+                    <View style={styles.ratingNumberRow}>
+                      <Text style={[styles.statLargeValue, styles.statValueRating]}>
+                        {profile.averageRating?.toFixed(1)}
+                      </Text>
+                      <AppIcon name="star" size={12} color={colors.highlight} />
+                    </View>
+                  ) : (
+                    <AppIcon name="star" size={22} color={colors.ipe.bloomDeep} />
+                  )}
+                </View>
+                <View style={styles.cardHeaderTextCol}>
+                  <Text style={styles.cardTitle}>
+                    {profile.ratingCount > 0
+                      ? `Avaliação média (${profile.ratingCount} ${profile.ratingCount > 1 ? "avaliações" : "avaliação"})`
+                      : "Sem avaliações ainda"}
+                  </Text>
+                  <Text style={styles.cardSubtitle}>
+                    {profile.ratingCount > 0 ? "Avaliação da comunidade em Piripiri" : "Novo membro no IpêBook"}
+                  </Text>
+                </View>
               </View>
-              <View style={styles.cardHeaderTextCol}>
-                <Text style={styles.cardTitle}>
-                  {profile.ratingCount > 0
-                    ? `Avaliação média (${profile.ratingCount} ${profile.ratingCount > 1 ? "avaliações" : "avaliação"})`
-                    : "Sem avaliações ainda"}
-                </Text>
-                <Text style={styles.cardSubtitle}>
-                  {profile.ratingCount > 0 ? "Avaliação da comunidade em Piripiri" : "Novo membro no IpêBook"}
-                </Text>
+
+              {/* Card 2: Negociações Concluídas */}
+              <View style={styles.infoCard}>
+                <View style={[styles.cardLeadingBox, styles.cardLeadingBoxTrades]}>
+                  <Text style={[styles.statLargeValue, styles.statValueTrades]}>{profile.completedNegotiations}</Text>
+                </View>
+                <View style={styles.cardHeaderTextCol}>
+                  <Text style={styles.cardTitle}>
+                    {profile.completedNegotiations === 1 ? "Negociação concluída" : "Negociações concluídas"}
+                  </Text>
+                  <Text style={styles.cardSubtitle}>Livros trocados, vendidos ou doados com sucesso</Text>
+                </View>
+              </View>
+
+              {/* Card 3: Tempo de Comunidade */}
+              <View style={styles.infoCard}>
+                <View style={[styles.cardLeadingBox, styles.cardLeadingBoxCalendar]}>
+                  <AppIcon name="calendar" size={22} color={colors.book.leather} />
+                </View>
+                <View style={styles.cardHeaderTextCol}>
+                  <Text style={styles.cardTitle}>
+                    {`Na comunidade desde ${formatJoinedAt(profile.joinedAt)}`}
+                  </Text>
+                  <Text style={styles.cardSubtitle}>Piripiri, Piauí</Text>
+                </View>
               </View>
             </View>
 
-            {/* Card 2: Negociações Concluídas */}
-            <View style={styles.infoCard}>
-              <View style={styles.cardLeadingBox}>
-                <Text style={styles.statLargeValue}>{profile.completedNegotiations}</Text>
+            {/* Aviso acolhedor quando for o próprio perfil */}
+            {isOwnProfile ? (
+              <View style={styles.ownProfileNoticeCard}>
+                <View style={styles.ownProfileNoticeIcon}>
+                  <AppIcon name="info" size={18} color={colors.nature.foliage} />
+                </View>
+                <View style={styles.ownProfileNoticeText}>
+                  <Text style={styles.ownProfileNoticeTitle}>Seu perfil público</Text>
+                  <Text style={styles.ownProfileNoticeSubtitle}>
+                    É assim que outros leitores de Piripiri visualizam você na comunidade.
+                  </Text>
+                </View>
               </View>
-              <View style={styles.cardHeaderTextCol}>
-                <Text style={styles.cardTitle}>
-                  {profile.completedNegotiations === 1 ? "Negociação concluída" : "Negociações concluídas"}
-                </Text>
-                <Text style={styles.cardSubtitle}>Livros trocados, vendidos ou doados com sucesso</Text>
-              </View>
-            </View>
-
-            {/* Card 3: Tempo de Comunidade */}
-            <View style={styles.infoCard}>
-              <View style={styles.cardLeadingBox}>
-                <AppIcon name="calendar" size={24} color={colors.m3.primary} />
-              </View>
-              <View style={styles.cardHeaderTextCol}>
-                <Text style={styles.cardTitle}>
-                  {`Na comunidade desde ${formatJoinedAt(profile.joinedAt)}`}
-                </Text>
-                <Text style={styles.cardSubtitle}>Piripiri, Piauí</Text>
-              </View>
-            </View>
-            </View>
+            ) : null}
 
             {/* 4. Ações Principais com Hierarquia M3 e Contraste Acessível */}
             {!isOwnProfile ? (
-            <View style={styles.actionsSection}>
-              <FilledButton
-                label={chatButtonLabel}
-                accessibilityLabel={`Conversar com ${profile.name}`}
-                loading={chat.busy}
-                onPress={() => void chat.start()}
-              />
-              {chat.notice ? (
-                <Text accessibilityRole="alert" style={styles.cardSubtitle}>
-                  {chat.notice}
-                </Text>
-              ) : null}
+              <View style={styles.actionsSection}>
+                <FilledButton
+                  label={chatButtonLabel}
+                  accessibilityLabel={`Conversar com ${profile.name}`}
+                  loading={chat.busy}
+                  onPress={() => void chat.start()}
+                />
+                {chat.notice ? (
+                  <Text accessibilityRole="alert" style={styles.cardSubtitle}>
+                    {chat.notice}
+                  </Text>
+                ) : null}
 
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Denunciar ou bloquear"
-                onPress={() => setSafetyOpen(true)}
-                style={withPress(styles.safetyButton)}
-              >
-                <AppIcon name="flag" size={18} color={colors.error} />
-                <Text style={styles.safetyButtonText}>Denunciar ou bloquear</Text>
-              </Pressable>
-            </View>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Denunciar ou bloquear"
+                  onPress={() => setSafetyOpen(true)}
+                  style={withPress(styles.safetyButton)}
+                >
+                  <AppIcon name="flag" size={18} color={colors.error} />
+                  <Text style={styles.safetyButtonText}>Denunciar ou bloquear</Text>
+                </Pressable>
+              </View>
             ) : null}
+
             {wideWeb ? (
               <View style={styles.wideBelow}>
                 <View style={styles.wideBelowMain}>
                   <OwnerListings ownerId={userId} ownerName={profile.name} onOpenBook={guardedOpenBook} />
                 </View>
-                <UserRatingsPanel userId={userId} />
+                <UserRatingsPanel userId={userId} wideWeb={wideWeb} />
               </View>
-            ) : null}
+            ) : (
+              <View style={styles.mobileBelow}>
+                <OwnerListings ownerId={userId} ownerName={profile.name} onOpenBook={guardedOpenBook} />
+                <UserRatingsPanel userId={userId} wideWeb={wideWeb} />
+              </View>
+            )}
           </View>
         ) : null}
       </ScrollView>
@@ -255,7 +284,7 @@ export default PublicProfile;
 
 function createStyles(colors: ColorPalette, wideWeb: boolean) {
   return StyleSheet.create({
-    page: { flex: 1, backgroundColor: colors.background },
+    page: { flex: 1, minHeight: 0, backgroundColor: colors.background },
     scrollContent: {
       paddingHorizontal: wideWeb ? WEB_GUTTER : tokens.spacing[16],
       paddingTop: tokens.spacing[8],
@@ -297,55 +326,113 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
     },
     wideBelow: { flexDirection: "row", alignItems: "flex-start", gap: tokens.spacing[24] },
     wideBelowMain: { flex: 1 },
+    mobileBelow: {
+      gap: tokens.spacing[16],
+      marginTop: tokens.spacing[8],
+    },
     identitySection: {
       alignItems: "center",
-      gap: tokens.spacing[8],
-      paddingVertical: tokens.spacing[16],
+      gap: tokens.spacing[6],
+      paddingVertical: tokens.spacing[12],
+    },
+    avatarWrapper: {
+      padding: 3,
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.ipe.petalSoft,
+      borderWidth: 1.5,
+      borderColor: colors.ipe.bloom,
     },
     name: {
       ...tokens.typography.brandTitle,
       color: colors.text,
       textAlign: "center",
       paddingHorizontal: tokens.spacing[8],
+      fontSize: 26,
+      lineHeight: 32,
     },
     subtitle: {
       ...tokens.typography.bodyMedium,
       color: colors.secondaryText,
       textAlign: "center",
     },
+    identityBadgesRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[8],
+      marginTop: tokens.spacing[4],
+      flexWrap: "wrap",
+      justifyContent: "center",
+    },
+    locationBadge: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[4],
+      paddingHorizontal: tokens.spacing[10],
+      paddingVertical: tokens.spacing[4],
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.nature.sprout,
+      borderWidth: 1,
+      borderColor: `${colors.nature.foliage}30`,
+    },
+    locationBadgeText: {
+      ...tokens.typography.footnote,
+      fontFamily: fontFamily.medium,
+      color: colors.nature.foliageDeep,
+    },
     socialBadge: {
-      paddingHorizontal: tokens.spacing[12],
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[4],
+      paddingHorizontal: tokens.spacing[10],
       paddingVertical: tokens.spacing[4],
       borderRadius: tokens.radius.full,
       backgroundColor: colors.surface,
       borderWidth: 1,
       borderColor: colors.m3.outlineVariant,
-      marginTop: tokens.spacing[4],
     },
     socialHandle: {
       ...tokens.typography.footnote,
-      fontWeight: tokens.fontWeight.medium,
+      fontFamily: fontFamily.semiBold,
       color: colors.action,
     },
-    statsRow: wideWeb ? { flexDirection: "row", gap: tokens.spacing[16] } : { gap: tokens.spacing[12] },
+    statsRow: wideWeb ? { flexDirection: "row", gap: tokens.spacing[16] } : { gap: tokens.spacing[10] },
     infoCard: {
       flex: wideWeb ? 1 : undefined,
       backgroundColor: colors.surface,
       borderRadius: tokens.radius.card,
       borderWidth: 1,
       borderColor: colors.m3.outlineVariant,
-      padding: tokens.spacing[16],
+      padding: tokens.spacing[14],
       flexDirection: "row",
       alignItems: "center",
-      gap: tokens.spacing[16],
+      gap: tokens.spacing[14],
+      elevation: 1,
+      shadowColor: colors.m3.shadow,
+      shadowOpacity: 0.04,
+      shadowRadius: 3,
+      shadowOffset: { width: 0, height: 1 },
     },
     cardLeadingBox: {
-      width: tokens.spacing[48],
-      height: tokens.spacing[48],
-      borderRadius: tokens.radius.cardSmall,
-      backgroundColor: colors.m3.surfaceContainerHigh,
+      width: 48,
+      height: 48,
+      borderRadius: tokens.radius.medium,
       justifyContent: "center",
       alignItems: "center",
+    },
+    cardLeadingBoxRating: {
+      backgroundColor: colors.ipe.container,
+      borderWidth: 1,
+      borderColor: colors.ipe.bloom,
+    },
+    cardLeadingBoxTrades: {
+      backgroundColor: colors.nature.sprout,
+      borderWidth: 1,
+      borderColor: `${colors.nature.foliage}30`,
+    },
+    cardLeadingBoxCalendar: {
+      backgroundColor: colors.book.pageCard,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
     },
     ratingNumberRow: {
       flexDirection: "row",
@@ -353,23 +440,64 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
       gap: tokens.spacing[2],
     },
     statLargeValue: {
-      ...tokens.typography.titleBlock,
+      ...tokens.typography.titleLarge,
+      fontFamily: fontFamily.semiBold,
       fontWeight: tokens.fontWeight.bold,
       color: colors.text,
       textAlign: "center",
     },
+    statValueRating: {
+      color: colors.ipe.onContainer,
+    },
+    statValueTrades: {
+      color: colors.nature.foliageDeep,
+    },
     cardHeaderTextCol: {
       flex: 1,
-      gap: tokens.spacing[2],
+      gap: 2,
     },
     cardTitle: {
-      ...tokens.typography.subheadline,
-      fontWeight: tokens.fontWeight.semiBold,
+      ...tokens.typography.bodyLarge,
+      fontFamily: fontFamily.semiBold,
       color: colors.text,
     },
     cardSubtitle: {
       ...tokens.typography.footnote,
       color: colors.secondaryText,
+      lineHeight: 18,
+    },
+    ownProfileNoticeCard: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[10],
+      padding: tokens.spacing[12],
+      borderRadius: tokens.radius.card,
+      backgroundColor: colors.nature.sprout,
+      borderWidth: 1,
+      borderColor: `${colors.nature.foliage}30`,
+      marginTop: tokens.spacing[4],
+    },
+    ownProfileNoticeIcon: {
+      width: 32,
+      height: 32,
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.surface,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    ownProfileNoticeText: {
+      flex: 1,
+      gap: 2,
+    },
+    ownProfileNoticeTitle: {
+      ...tokens.typography.labelLarge,
+      fontFamily: fontFamily.semiBold,
+      color: colors.nature.foliageDeep,
+    },
+    ownProfileNoticeSubtitle: {
+      ...tokens.typography.footnote,
+      color: colors.nature.foliageDeep,
+      lineHeight: 16,
     },
     // Web larga: botões lado a lado com largura do conteúdo, centralizados.
     actionsSection: {

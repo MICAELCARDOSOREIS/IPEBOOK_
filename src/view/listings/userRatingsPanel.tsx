@@ -8,9 +8,9 @@ import { Avatar } from "@/view/components/Avatar";
 const COMMUNITY_MEMBER = "Pessoa da comunidade";
 
 /** Painel "Avaliações" do perfil público na web larga (Figma `03.04`). As avaliações são públicas (ADR 0038). */
-export function UserRatingsPanel({ userId }: { userId: string }) {
+export function UserRatingsPanel({ userId, wideWeb = false }: { userId: string; wideWeb?: boolean }) {
   const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = useMemo(() => createStyles(colors, wideWeb), [colors, wideWeb]);
   // O caso de uso lista as avaliações recebidas pelo id informado; aqui o id é o da pessoa do perfil.
   const [state] = makeReceivedRatingsViewModel(userId);
 
@@ -37,9 +37,25 @@ export function UserRatingsPanel({ userId }: { userId: string }) {
   );
 }
 
-function createStyles(colors: ColorPalette) {
+function createStyles(colors: ColorPalette, wideWeb: boolean) {
   return StyleSheet.create({
-    panel: { width: 320, maxWidth: "35%", flexShrink: 0, gap: tokens.spacing[12], padding: tokens.spacing[20], borderRadius: tokens.radius.large, backgroundColor: colors.m3.surfaceContainerLow },
+    panel: {
+      width: "100%",
+      maxWidth: wideWeb ? 320 : "100%",
+      flexShrink: 0,
+      gap: tokens.spacing[12],
+      padding: tokens.spacing[16],
+      borderRadius: tokens.radius.card,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+      elevation: 1,
+      shadowColor: colors.m3.shadow,
+      shadowOpacity: 0.04,
+      shadowRadius: 3,
+      shadowOffset: { width: 0, height: 1 },
+      marginTop: tokens.spacing[8],
+    },
     title: { ...tokens.typography.titleBar, color: colors.m3.onSurface },
     row: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[12] },
     rowText: { flex: 1, gap: tokens.spacing[2] },
