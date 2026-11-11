@@ -9,7 +9,8 @@ export type ConnectedNavigationBarProps = Omit<NavigationBarProps, "badges"> & {
 /** Barra de navegação com os selos (propostas esperando resposta em "Conversas", Spec 091). */
 export function ConnectedNavigationBar({ pathname, ...props }: ConnectedNavigationBarProps) {
   const [auth] = makeAuthViewModel();
-  const badges = makeNavigationBadgesViewModel(auth.user?.id ?? null, pathname);
+  // Mantém os selos atualizados via realtime sem disparar requisições de rede concorrentes a cada troca de aba
+  const badges = makeNavigationBadgesViewModel(auth.user?.id ?? null, auth.user?.id ?? "");
   if (auth.loading || !auth.user) return null;
   return <NavigationBar {...props} badges={badges} />;
 }
