@@ -10,6 +10,7 @@ import { IconBadge } from "@/view/components/IconBadge";
 import { AppIcon } from "@/view/components/AppIcon";
 import { ShelfRow } from "@/view/listings/shelfRow";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
+import { standardHorizontalScrollProps } from "@/view/scrollProps";
 
 const MODALITY_LABELS: Readonly<Record<BookModality, string>> = {
   sale: "Venda",
@@ -78,9 +79,8 @@ export function MyListingsListingsTab({
     <>
       <ScrollView
         horizontal
-        showsHorizontalScrollIndicator={false}
+        {...standardHorizontalScrollProps}
         contentContainerStyle={styles.filterRow}
-        keyboardShouldPersistTaps="handled"
       >
         {/* Mesmo Chip do resto do app (Home, Explorar, filtros): raio, check e cores iguais. */}
         {filterChips.map((chip) => (

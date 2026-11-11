@@ -495,6 +495,7 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
                     maxLength={MAX_SOCIAL_HANDLE_LENGTH}
                     editable={!saving}
                     returnKeyType="done"
+                    onSubmitEditing={() => void handleSave()}
                     error={fieldErrors.socialHandle}
                     helperText={fieldErrors.socialHandle ? undefined : "Opcional. Informe seu usuário, com ou sem @."}
                   />
@@ -523,8 +524,8 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
               </View>
             ) : null}
 
-            {/* Na web larga, a ação fica no fluxo do formulário; no celular, fica fixa no rodapé. */}
-            {wide ? (
+            {/* Na web larga ou no celular com teclado ativo, a ação fica no fluxo do formulário. */}
+            {wide || isKeyboardVisible ? (
               <View style={styles.actionContainer}>
                 <FilledButton
                   label="Salvar alterações"

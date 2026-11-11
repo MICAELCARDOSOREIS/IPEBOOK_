@@ -6,6 +6,13 @@ import Search from "@/view/search/search";
 
 vi.mock("@/viewmodel/useSearchViewModel", () => ({ useSearchViewModel: vi.fn() }));
 vi.mock("@/viewmodel/useNetworkStatus", () => ({ useNetworkStatus: vi.fn() }));
+vi.mock("@/viewmodel/usePersistedSearchFilters", () => ({
+  usePersistedSearchFilters: vi.fn(() => ({
+    persisted: null,
+    loaded: true,
+    persist: vi.fn(),
+  })),
+}));
 
 import {
   type SearchConditionFilter,

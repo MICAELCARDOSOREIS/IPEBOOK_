@@ -42,7 +42,7 @@ export function AboutSections({ onStart, onSignIn, onHelp, onTerms, betaInvite =
   return (
     <>
       <View style={styles.section}>
-        <Text accessibilityRole="header" style={styles.sectionTitle}>Como funciona</Text>
+        <Text accessibilityRole="header" aria-level={2} style={styles.sectionTitle}>Como funciona</Text>
         <View style={styles.steps}>
           {STEPS.map((step, index) => (
             <View key={step.title} style={styles.step}>
@@ -58,7 +58,7 @@ export function AboutSections({ onStart, onSignIn, onHelp, onTerms, betaInvite =
 
       <View style={styles.safety}>
         <View style={styles.safetyText}>
-          <Text accessibilityRole="header" style={styles.safetyTitle}>Feito para a comunidade de Piripiri.</Text>
+          <Text accessibilityRole="header" aria-level={2} style={styles.safetyTitle}>Feito para a comunidade de Piripiri.</Text>
           <Text style={styles.safetyLead}>
             Livros circulam melhor quando quem negocia se sente seguro. Por isso o app cuida do encontro, não só do anúncio.
           </Text>
@@ -74,7 +74,7 @@ export function AboutSections({ onStart, onSignIn, onHelp, onTerms, betaInvite =
       </View>
 
       <View style={styles.finalCta}>
-        <Text accessibilityRole="header" style={styles.finalTitle}>Pronto para dar nova vida a um livro?</Text>
+        <Text accessibilityRole="header" aria-level={2} style={styles.finalTitle}>Pronto para dar nova vida a um livro?</Text>
         <View style={styles.finalActions}>
           <Pressable accessibilityRole="button" accessibilityLabel={betaInvite ? "Quero testar o app" : "Criar conta grátis"} onPress={onStart} style={withPress(styles.cta)}>
             <Text style={styles.ctaText}>{betaInvite ? "Quero testar o app" : "Criar conta"}</Text>
