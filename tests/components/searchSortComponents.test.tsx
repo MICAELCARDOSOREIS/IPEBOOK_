@@ -25,8 +25,8 @@ describe("Componentes de Ordenação Avançada (Spec 121, ADR 0095)", () => {
     const radios = getAllByRole("radio");
     expect(radios.length).toBe(5);
 
-    // Toca em "Bairros de Piripiri"
-    fireEvent.press(getByText("Bairros de Piripiri"));
+    // Toca em "Locais em Piripiri"
+    fireEvent.press(getByText("Locais em Piripiri"));
     expect(onSelect).toHaveBeenCalledWith("neighborhood");
     expect(onClose).toHaveBeenCalled();
   });
@@ -52,7 +52,7 @@ describe("Componentes de Ordenação Avançada (Spec 121, ADR 0095)", () => {
     );
 
     expect(getByText("Ordenar por")).toBeTruthy();
-    expect(getByText("Bairros de Piripiri")).toBeTruthy();
+    expect(getByText("Locais em Piripiri")).toBeTruthy();
     expect(getByText("Menor preço")).toBeTruthy();
     expect(getByText("Maior preço")).toBeTruthy();
 
@@ -80,10 +80,10 @@ describe("Componentes de Ordenação Avançada (Spec 121, ADR 0095)", () => {
     );
 
     expect(getByText("Ordenar por")).toBeTruthy();
-    const bairroChip = getByText("Bairros de Piripiri");
-    expect(bairroChip).toBeTruthy();
+    const localChip = getByText("Locais em Piripiri");
+    expect(localChip).toBeTruthy();
 
-    fireEvent.press(bairroChip);
+    fireEvent.press(localChip);
     expect(onSortChange).toHaveBeenCalledWith("neighborhood");
   });
 });

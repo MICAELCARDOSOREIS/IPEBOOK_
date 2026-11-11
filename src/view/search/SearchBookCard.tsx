@@ -8,6 +8,7 @@ import { AppIcon } from "@/view/components/AppIcon";
 import { FavoriteButton } from "@/view/components/FavoriteButton";
 import { formatPrice } from "@/view/formatPrice";
 import { tokens, fontFamily, type ColorPalette } from "@/view/tokens";
+import { formatBookLocation } from "@/model/entities/location";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { webColumnWidth } from "@/view/webLayout";
 
@@ -82,7 +83,7 @@ export function SearchBookCard({
             <View style={styles.cardLocationBadge}>
               <AppIcon name="place" size={13} color={colors.nature.foliageDeep} />
               <Text numberOfLines={1} style={styles.cardLocationText}>
-                {item.neighborhood || "Piripiri"}
+                {formatBookLocation(item.neighborhood)}
               </Text>
             </View>
             <View style={[styles.cardStatusPill, { backgroundColor: statusTone.background }]}>

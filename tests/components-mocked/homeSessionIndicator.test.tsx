@@ -63,7 +63,7 @@ describe("indicador de sessão na Home (ISO/IEC 25010 - Usabilidade)", () => {
     }
     expect(screen.getByTestId("home-top-profile-button")).toBeDefined();
     expect(screen.queryByLabelText(/Abrir notificações/)).toBeNull();
-    expect(screen.getByLabelText("Selecionar bairro: Centro")).toBeDefined();
+    expect(screen.getByLabelText("Selecionar local em Piripiri: Piripiri")).toBeDefined();
   });
 
   it("não mostra botão Anunciar quando não há sessão autenticada", async () => {
