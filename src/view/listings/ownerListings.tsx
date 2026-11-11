@@ -1,24 +1,26 @@
 import { useMemo } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { makeHomeViewModel } from "@/di/container";
-import { tokens, type ColorPalette } from "@/view/tokens";
+import { tokens, fontFamily, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { formatPrice } from "@/view/formatPrice";
 import { BookCover } from "@/view/components/BookCover";
 import { ErrorState } from "@/view/components/ErrorState";
 import { Tag } from "@/view/components/Tag";
-
+import { AppIcon } from "@/view/components/AppIcon";
 import { withPress } from "@/view/pressFeedback";
+
 export type OwnerListingsProps = {
   ownerId: string;
   ownerName: string;
   onOpenBook?: (bookId: string) => void;
+  wideWeb?: boolean;
 };
 
-/** "Anúncios de <nome>" do perfil público na web larga (Figma `03.04`): grade com os livros da pessoa. */
-export function OwnerListings({ ownerId, ownerName, onOpenBook }: OwnerListingsProps) {
+/** "Anúncios de <nome>" do perfil público (Figma `03.04`): grade com os livros da pessoa. */
+export function OwnerListings({ ownerId, ownerName, onOpenBook, wideWeb = false }: OwnerListingsProps) {
   const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = useMemo(() => createStyles(colors, wideWeb), [colors, wideWeb]);
   const [state, actions] = makeHomeViewModel();
 
   if (state.loading) return null;
@@ -36,7 +38,10 @@ export function OwnerListings({ ownerId, ownerName, onOpenBook }: OwnerListingsP
 
   return (
     <View style={styles.section} testID="owner-listings">
-      <Text accessibilityRole="header" style={styles.title}>{`Anúncios de ${ownerName} (${books.length})`}</Text>
+      <View style={styles.headerRow}>
+        <AppIcon name="shelf" size={20} color={colors.nature.foliage} />
+        <Text accessibilityRole="header" style={styles.title}>{`Anúncios de ${ownerName} (${books.length})`}</Text>
+      </View>
       <View style={styles.grid}>
         {books.map((book) => (
           <Pressable
@@ -46,14 +51,18 @@ export function OwnerListings({ ownerId, ownerName, onOpenBook }: OwnerListingsP
             onPress={() => onOpenBook?.(book.id)}
             style={withPress(styles.card)}
           >
-            <BookCover id={book.id} title={book.title} author={book.author} photoUrl={book.photoUrl} variant="card" />
-            <Text style={styles.cardTitle} numberOfLines={1}>{book.title}</Text>
-            <Text style={styles.cardAuthor} numberOfLines={1}>{book.author}</Text>
-            <View style={styles.meta}>
-              <Text style={styles.price}>
-                {book.modality === "sale" && book.price ? formatPrice(book.price) : book.modality === "trade" ? "Para trocar" : "Gratuito"}
-              </Text>
-              <Tag variant={book.modality} />
+            <View style={styles.coverWrapper}>
+              <BookCover id={book.id} title={book.title} author={book.author} photoUrl={book.photoUrl} variant="card" />
+            </View>
+            <View style={styles.cardInfo}>
+              <Text style={styles.cardTitle} numberOfLines={2}>{book.title}</Text>
+              <Text style={styles.cardAuthor} numberOfLines={1}>{book.author}</Text>
+              <View style={styles.meta}>
+                <Text style={[styles.price, book.modality === "sale" && styles.priceSale]}>
+                  {book.modality === "sale" && book.price ? formatPrice(book.price) : book.modality === "trade" ? "Para trocar" : "Gratuito"}
+                </Text>
+                <Tag variant={book.modality} />
+              </View>
             </View>
           </Pressable>
         ))}
@@ -62,24 +71,88 @@ export function OwnerListings({ ownerId, ownerName, onOpenBook }: OwnerListingsP
   );
 }
 
-function createStyles(colors: ColorPalette) {
+function createStyles(colors: ColorPalette, wideWeb: boolean) {
   return StyleSheet.create({
-    section: { gap: tokens.spacing[16], marginTop: tokens.spacing[16] },
-    title: { ...tokens.typography.titleBar, color: colors.m3.onSurface },
-    grid: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[16] },
-    card: {
-      flexGrow: 1,
-      minWidth: 150,
-      maxWidth: 220,
-      gap: tokens.spacing[6],
-      padding: tokens.spacing[12],
-      borderRadius: tokens.radius.xl,
-      backgroundColor: colors.m3.surfaceContainerLowest,
+    section: { gap: tokens.spacing[12], marginTop: tokens.spacing[16] },
+    headerRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[8],
     },
-    cardTitle: { ...tokens.typography.titleMedium, color: colors.m3.onSurface },
-    cardAuthor: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
-    meta: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[8] },
-    price: { ...tokens.typography.labelLarge, color: colors.m3.onSurface },
+    title: {
+      ...tokens.typography.titleMedium,
+      color: colors.text,
+      fontFamily: fontFamily.semiBold,
+      fontWeight: tokens.fontWeight.semiBold,
+    },
+    grid: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: tokens.spacing[12],
+      justifyContent: wideWeb ? "flex-start" : "space-between",
+    },
+    card: {
+      width: wideWeb ? 180 : "48%",
+      maxWidth: wideWeb ? 220 : "48.5%",
+      flexGrow: 0,
+      flexShrink: 0,
+      gap: tokens.spacing[6],
+      padding: tokens.spacing[10],
+      borderRadius: tokens.radius.card,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+      elevation: 1,
+      shadowColor: colors.ipe.trunk,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.05,
+      shadowRadius: 4,
+    },
+    coverWrapper: {
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderRadius: tokens.radius.medium,
+      paddingVertical: tokens.spacing[8],
+      overflow: "hidden",
+    },
+    cardInfo: {
+      flex: 1,
+      justifyContent: "space-between",
+      gap: tokens.spacing[4],
+    },
+    cardTitle: {
+      fontSize: 14,
+      lineHeight: 18,
+      fontFamily: fontFamily.semiBold,
+      fontWeight: tokens.fontWeight.semiBold,
+      color: colors.text,
+      minHeight: 36,
+    },
+    cardAuthor: {
+      ...tokens.typography.labelSmall,
+      color: colors.secondaryText,
+      fontFamily: fontFamily.medium,
+    },
+    meta: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: tokens.spacing[4],
+      paddingTop: tokens.spacing[6],
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: colors.m3.outlineVariant,
+      marginTop: tokens.spacing[4],
+    },
+    price: {
+      ...tokens.typography.labelSmall,
+      color: colors.text,
+      fontWeight: tokens.fontWeight.bold,
+      fontVariant: ["tabular-nums"],
+    },
+    priceSale: {
+      color: colors.nature.foliageDeep,
+    },
   });
 }
 
