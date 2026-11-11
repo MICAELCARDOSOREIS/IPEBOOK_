@@ -159,29 +159,29 @@ export function ShelfRow({ book, summary, accessibilityLabel, onPress, onShareWh
               {book.neighborhood || "Piripiri"}
             </Text>
           </View>
-          <View style={styles.footerRight}>
-            <View style={[styles.statusPill, { backgroundColor: statusTone.background }]}>
-              <Text style={[styles.statusPillText, { color: statusTone.text }]}>
-                {statusTone.label}
-              </Text>
-            </View>
-            {book.status === "reserved" && onNavigateToNegotiation ? (
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={`Ver negociação de ${book.title}`}
-                hitSlop={8}
-                onPress={(e) => {
-                  e?.stopPropagation?.();
-                  onNavigateToNegotiation();
-                }}
-                style={withPress(styles.negotiationButton)}
-              >
-                <AppIcon name="chat" size={14} color={colors.m3.onPrimaryContainer} />
-                <Text style={styles.negotiationButtonText}>Ver negociação</Text>
-              </Pressable>
-            ) : null}
+          <View style={[styles.statusPill, { backgroundColor: statusTone.background }]}>
+            <Text style={[styles.statusPillText, { color: statusTone.text }]}>
+              {statusTone.label}
+            </Text>
           </View>
         </View>
+        {/* Ação da negociação em linha própria: mantém a situação sempre na mesma posição
+            (ao lado do bairro) em todos os cartões, sem depender de quebra do rodapé. */}
+        {book.status === "reserved" && onNavigateToNegotiation ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`Ver negociação de ${book.title}`}
+            hitSlop={8}
+            onPress={(e) => {
+              e?.stopPropagation?.();
+              onNavigateToNegotiation();
+            }}
+            style={withPress(styles.negotiationButton)}
+          >
+            <AppIcon name="chat" size={14} color={colors.m3.onPrimaryContainer} />
+            <Text style={styles.negotiationButtonText}>Ver negociação</Text>
+          </Pressable>
+        ) : null}
         <Text style={styles.srOnlySummary} numberOfLines={1}>
           {summary}
         </Text>
@@ -280,13 +280,6 @@ function createStyles(colors: ColorPalette) {
       borderTopWidth: StyleSheet.hairlineWidth,
       borderTopColor: colors.m3.outlineVariant,
     },
-    footerRight: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[6],
-      flexWrap: "wrap",
-      justifyContent: "flex-end",
-    },
     locationRow: {
       flexDirection: "row",
       alignItems: "center",
@@ -314,6 +307,7 @@ function createStyles(colors: ColorPalette) {
     },
     negotiationButton: {
       flexDirection: "row",
+      alignSelf: "flex-end",
       alignItems: "center",
       gap: tokens.spacing[4],
       paddingHorizontal: tokens.spacing[10],

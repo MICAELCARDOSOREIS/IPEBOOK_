@@ -385,6 +385,8 @@ O projeto Ipebook evoluiu significativamente durante a fase de validação com l
 
 | Categoria | Nome do Token | Valor Canônico | Onde Aplicar no Figma |
 | :--- | :--- | :--- | :--- |
+| **Tipografia (UI)** | `fontFamily.regular / medium / semiBold` | **`Plus Jakarta Sans`** (400, 500, 600) | Toda a interface: botões, inputs, parágrafos, chips, abas e modais (ADR 0107). |
+| **Tipografia (Brand)** | `fontFamily.brand` | **`Source Serif 4 Bold`** (700) | Logotipo, manchetes editoriais, títulos de destaque e seções da marca (ADR 0007). |
 | **Cor** | `colors.m3.outline` | `#7E776F` | Bordas de todos os botões outlined, chips não selecionados e caixas de seleção. |
 | **Cor** | `colors.ipe.bloomDeep` | `#8C5000` | Todas as estrelas preenchidas de avaliação e badges de alerta âmbar. |
 | **Cor** | `colors.m3.surfaceContainer` | `#F5EFE7` | Fundo de barras inferiores fixas de navegação e rodapés de ação. |
@@ -398,11 +400,13 @@ O projeto Ipebook evoluiu significativamente durante a fase de validação com l
 
 ## 4. Recomendações de Próximos Passos para o Design
 
-1. **Atualizar a Biblioteca de Componentes Base**:
+1. **Atualizar a Tipografia de Interface no Figma**:
+   - Atualizar os estilos de texto de interface (Body, Label, Title) para a família **Plus Jakarta Sans** nos pesos Regular (400), Medium (500) e SemiBold (600), mantendo a **Source Serif 4 Bold** nos títulos editoriais e na marca (conforme [ADR 0107](adr/0107-adocao-plus-jakarta-sans-na-interface.md)).
+2. **Atualizar a Biblioteca de Componentes Base**:
    - Ajustar as propriedades de raio dos modais para 28px.
    - Ajustar a cor de contorno dos componentes de Chip e Botão Outlined para `#7E776F`.
    - Garantir que ícones de ação rápida (fechar, voltar, deletar) possuam moldura transparente (*padding box*) de 48×48px.
-2. **Revisar o Hub do Perfil (`07.01`)**:
+3. **Revisar o Hub do Perfil (`07.01`)**:
    - Atualizar o layout para refletir o ADR 0060 (entrada única de Configurações em vez de 8 linhas desdobradas).
-3. **Incluir Telas de Estado Vazio**:
+4. **Incluir Telas de Estado Vazio**:
    - Criar variantes dos frames com os estados vazios ricos agora implementados (Favoritos vazios, Busca sem resultados, Estante sem livros).

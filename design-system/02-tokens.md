@@ -38,7 +38,8 @@ de uma cor-semente única (aqui, o verde ipê-do-cerrado).
 | `primary` | `#2b6334` | Ação principal, item ativo, links, progresso (7,2:1 sobre `surface`) | Herdado (papel `primary` do M3; valor é a cor-semente da marca) |
 | `on-primary` | `#ffffff` | Texto/ícone sobre `primary` (7,5:1) | Herdado |
 | `secondary-container` | `#dce9dc` | Tag Venda, chip selecionado, item ativo da navegação | Adaptado — M3 define o papel; o uso fixo "sempre Venda" é da marca |
-| `tertiary-container` | `#f8d88a` | Tag Troca | Adaptado — mesmo motivo |
+| `tertiary-container` | `#FDE68A` | Tag Troca e acentos solares de troca (Spec 116 / ADR 0104) | Adaptado — papel tonal ouro de ipê vivo |
+| `on-tertiary-container` | `#451A03` | Texto sobre `tertiary-container` (>8:1 WCAG AAA) | Adaptado |
 | `doacao-container` | `#f4ddd3` | Tag Doação | **Novo** — quarto papel de contêiner que o M3 não define |
 | `on-doacao-container` | `#6e3a28` | Texto sobre `doacao-container` (7:1) | Novo |
 | `error` | `#b3261e` | Erro de campo, botão Perigo (6,3:1 sobre `surface`) | Herdado |
@@ -50,18 +51,18 @@ de uma cor-semente única (aqui, o verde ipê-do-cerrado).
 | `outline` | `#7e776f` | Borda de campo e botão Contornado (4,2:1) | Herdado |
 | `focus-ring` | `#4e8a68` | Anel de foco (2 px de largura e 4 px de folga na API TypeScript) | Adaptado — cor própria da marca, não o azul padrão do M3 |
 | `brand-brown` | `#58331f` | Logotipo e títulos da marca (10,6:1) | Novo — papel de marca sem equivalente M3 |
-| `brand-amber` / `cover-sun` | `#f2bc45` / `#ddaf38` | Sol das capas ilustrativas; nunca texto | Novo |
+| `brand-amber` / `cover-sun` | `#F59E0B` / `#DDAF38` | Âmbar solar e sol das capas ilustrativas; nunca texto | Novo |
 | `book-page` | `#fcfaf5` | Papel pólen para leitura confortável sem ofuscamento | Novo — Metáfora do Livro |
 | `book-ink` | `#3c302a` | Tinta mineral/café com contraste AAA (>12:1) | Novo — Metáfora do Livro |
 | `nature-foliage` | `#2b6334` | Verde botânico da copa do ipê para botões principais | Novo — Metáfora Botânica |
 | `nature-foliage-deep` | `#1e4e27` | Verde folhagem profundo para área da capa de livros à Venda e foco | Novo — Metáfora Botânica |
 | `ipe-bloom` | `#F5B718` | Amarelo ouro canônico da florada do ipê para banner de doações, capa/tag de Doação e favoritos | Novo — Metáfora do Ipê |
-| `ipe-petal-soft` | `#fef6d8` | Chão de pétalas de ipê para fundos e acolhimento | Novo — Metáfora do Ipê |
+| `ipe-petal-soft` | `#FFFBEB` | Chão de pétalas de ipê frescas para fundos e acolhimento | Novo — Metáfora do Ipê |
 | `ipe-ribbon` | `#F5B718` | Fita marcadora de página de cetim do ipê | Novo — Metáfora do Livro & Ipê |
 
 ### Cores Canônicas por Modalidade na Vitrine e Filtros
 
-Para manter a fidelidade editorial desenhada para o IpêBook (Figma `02.01 · Início`, ADR 0104):
+Para manter a fidelidade editorial desenhada para a identidade do IpêBook (ADR 0104):
 - **Venda:** Verde Folhagem Profundo (`#1E4E27`, `tokens.colors.nature.foliageDeep`) na área superior da capa (`carouselCardCoverArea`), badge em pílula verde com texto branco (`#FFFFFF`) e ponto sólido verde no chip.
 - **Troca:** Marrom Tronco/Couro (`#58331F`, `tokens.colors.brandBrown`) na área superior da capa, badge em pílula marrom com texto branco (`#FFFFFF`) e ponto sólido marrom no chip.
 - **Doação:** Amarelo Ouro Solar (`#F5B718`, `tokens.colors.ipe.bloom`) na área superior da capa, badge em pílula amarela com texto marrom tronco profundo (`#451A03`, contraste AAA 8,3:1), ponto sólido amarelo no chip e fundo do banner comunitário *"Doações da semana"*.
@@ -158,18 +159,16 @@ conceitual do JSON. Novos componentes não devem repetir essa constante sem nece
 Os tokens semânticos de cor têm valores `light` e `dark` em `tokens.json` (por exemplo,
 `primary` claro `#2b6334` e escuro `#98d6a2`). A paleta escura é exposta por `darkColors` e
 selecionada pelo `ThemeProvider`, conforme a preferência resolvida pelo
-`useThemeViewModel`. A paleta noturna foi refinada para evitar ofuscamento e fadiga visual:
-- `badge.trade` adota fundo âmbar profundo (`#4A3508`) com texto dourado (`#FFDF99`, 8,5:1);
-- `badge.reserved` usa âmbar escuro (`#483200`) e texto `#FFE088` (8,9:1);
-- `badge.completed` usa verde floresta noturno (`#1B4D36`) e texto `#D0F5DC` (8,3:1);
-- `badge.sale` usa verde botânico escuro (`#1F5139`) e texto `#BBF0CE` (7,3:1);
+`useThemeViewModel`. A paleta noturna foi refinada para garantir conforto visual e contraste AAA:
+- As badges mantêm suas cores canônicas e vibrantes de domínio nos dois temas (ADR 0104), garantindo identificação imediata;
+- `badge.sale` usa verde botânico profundo (`#1E4E27`) com texto `#FFFFFF`;
+- `badge.trade` usa marrom tronco (`#58331F`) com texto `#FFFFFF`;
+- `badge.donation` e `badge.reserved` usam amarelo ouro solar (`#F5B718`) com texto marrom profundo (`#451A03`, 8,3:1);
 - `ipe.container` no escuro usa `#38290E` e texto `#FFE099` (10,5:1).
 Todas as combinações atingem ou superam WCAG AAA para texto e elementos de status.
 
 ## 5. Versão legível por máquina
 
-A versão machine-readable já existe: [`tokens.json`](tokens.json), no formato de tokens do
-artefato original do Figma (campos `name`/`value`/`usage` por token, não o formato W3C Design
-Tokens). [`src/view/tokens.ts`](../src/view/tokens.ts) é o módulo TypeScript mantido para
-consumo em código e deve permanecer sincronizado com os tokens que expõe (ver
-[ADR 0010](../docs/adr/0010-design-system-substitui-design-kit.md)).
+A versão machine-readable dos tokens reside em [`tokens.json`](tokens.json), mantida sincronizada
+com a implementação ativa de [`src/view/tokens.ts`](../src/view/tokens.ts) como fonte canônica de verdade
+(ver [ADR 0010](../docs/adr/0010-design-system-substitui-design-kit.md) e [ADR 0104](../docs/adr/0104-cores-canonicas-modalidades-e-vitrine-home.md)).
