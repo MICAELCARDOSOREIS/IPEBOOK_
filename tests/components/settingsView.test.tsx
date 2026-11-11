@@ -447,5 +447,76 @@ describe("Configurações — tela dedicada (Spec 073, ADR 0036)", () => {
     await expandSettingsSection(screen, "Notificações");
     expect(screen.getByText("Não foi possível salvar suas preferências de notificação.")).toBeDefined();
   });
+
+  it("navega pelos links de gestão da conta quando sessão ativa", async () => {
+    mockSession(true);
+    mockSettings();
+    const onNavigateToSecurity = vi.fn();
+    const onNavigateToNotifications = vi.fn();
+    const onNavigateToPrivacy = vi.fn();
+    const onNavigateToBlockedUsers = vi.fn();
+
+    const { screen } = await renderSettings({
+      onNavigateToSecurity,
+      onNavigateToNotifications,
+      onNavigateToPrivacy,
+      onNavigateToBlockedUsers,
+    });
+
+    await expandSettingsSection(screen, "Conta e dados");
+
+    await act(async () => { fireEvent.press(screen.getByLabelText("Segurança e verificação")); });
+    expect(onNavigateToSecurity).toHaveBeenCalledTimes(1);
+
+    await act(async () => { fireEvent.press(screen.getByLabelText("Central de notificações")); });
+    expect(onNavigateToNotifications).toHaveBeenCalledTimes(1);
+
+    await act(async () => { fireEvent.press(screen.getByLabelText("Privacidade e dados")); });
+    expect(onNavigateToPrivacy).toHaveBeenCalledTimes(1);
+
+    await act(async () => { fireEvent.press(screen.getByLabelText("Pessoas bloqueadas")); });
+    expect(onNavigateToBlockedUsers).toHaveBeenCalledTimes(1);
+  });
+
+  it("navega para ajuda e termos na seção Sobre o IpêBook", async () => {
+    mockSession(false);
+    mockSettings();
+    const onNavigateToHelp = vi.fn();
+    const onNavigateToTerms = vi.fn();
+
+    const { screen } = await renderSettings({
+      onNavigateToHelp,
+      onNavigateToTerms,
+    });
+
+    await expandSettingsSection(screen, "Sobre o IpêBook");
+
+    await act(async () => { fireEvent.press(screen.getByLabelText("Ajuda e suporte")); });
+    expect(onNavigateToHelp).toHaveBeenCalledTimes(1);
+
+    await act(async () => { fireEvent.press(screen.getByLabelText("Termos e privacidade")); });
+    expect(onNavigateToTerms).toHaveBeenCalledTimes(1);
+  });
+
+  it("exibe erros de limpeza de cache e histórico quando presentes no estado", async () => {
+    mockSession(false);
+    mockedUseSettingsViewModel.mockReturnValue([
+      {
+        clearingCache: false,
+        cacheCleared: false,
+        cacheError: "Erro ao limpar o catálogo offline",
+        clearingHistory: false,
+        historyCleared: false,
+        historyError: "Erro ao limpar o histórico de buscas",
+      },
+      { clearBooksCache: vi.fn(), clearSearchHistory: vi.fn() },
+    ]);
+
+    const { screen } = await renderSettings();
+    await expandSettingsSection(screen, "Armazenamento e histórico");
+
+    expect(screen.getByText("Erro ao limpar o catálogo offline")).toBeDefined();
+    expect(screen.getByText("Erro ao limpar o histórico de buscas")).toBeDefined();
+  });
 });
 
