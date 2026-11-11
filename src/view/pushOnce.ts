@@ -12,10 +12,10 @@ const DOUBLE_TAP_WINDOW_MS = process.env.NODE_ENV === "test" ? 1000 : 600;
 /**
  * Janela mínima global de transição entre quaisquer navegações para frente (push/replace),
  * evitando abrir telas diferentes em paralelo se a pessoa tocar com múltiplos dedos ao mesmo tempo.
- * Mantida em 200 ms no celular para transições ágeis e sem sensação de travamento entre abas.
+ * Mantida em 100 ms no celular para transições ágeis e sem sensação de travamento entre abas.
  * Em testes unitários mantém 0 para não interferir em asserções de rotas sequenciais distintas.
  */
-const GLOBAL_TRANSITION_WINDOW_MS = process.env.NODE_ENV === "test" ? 0 : 200;
+const GLOBAL_TRANSITION_WINDOW_MS = process.env.NODE_ENV === "test" ? 0 : 100;
 
 /**
  * Janela de bloqueio de duplo clique no botão voltar (evita fechar 2 ou 3 telas de uma vez).

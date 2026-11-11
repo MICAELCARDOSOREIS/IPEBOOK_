@@ -55,8 +55,16 @@ function ThemedStack() {
       screenOptions={{
         headerShown: false,
         contentStyle: { backgroundColor: colors.surface },
+        animation: Platform.OS === "android" ? "fade" : "default",
+        animationDuration: 150,
       }}
-    />
+    >
+      <Stack.Screen name="index" options={{ animation: "none" }} />
+      <Stack.Screen name="pesquisa" options={{ animation: "none" }} />
+      <Stack.Screen name="meus-anuncios" options={{ animation: "none" }} />
+      <Stack.Screen name="meus-pedidos" options={{ animation: "none" }} />
+      <Stack.Screen name="perfil" options={{ animation: "none" }} />
+    </Stack>
   );
 }
 
@@ -75,8 +83,8 @@ export default function RootLayout() {
   const wideWeb = useIsWideWeb();
   const navigateTo = (destination: NavigationDestination) => {
     const targetRoute = DESTINATION_ROUTES[destination];
-    // Previne navegação duplicada verificando se já estamos na rota
-    if (pathname !== targetRoute) pushOnce(targetRoute);
+    // Previne navegação duplicada e substitui a rota de topo sem empilhar histórico desnecessário entre abas
+    if (pathname !== targetRoute) replaceOnce(targetRoute);
   };
 
   // Trava o app em retrato em runtime (a app.json já trava em builds nativos; isto é a rede de

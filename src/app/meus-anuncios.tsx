@@ -12,7 +12,7 @@ export default function MeusAnunciosRoute() {
         onNavigateToHelp={() => pushOnce("/ajuda")}
         onNavigateToManageListing={(bookId) => pushOnce(`/gerenciar-anuncio/${bookId}` as never)}
         onNavigateToReceivedRequests={() => pushOnce("/pedidos-recebidos")}
-        onNavigateToNegotiationDetail={(requestId) => pushOnce(`/negociacao/${requestId}` as never)}
+        onNavigateToNegotiationDetail={(requestId) => pushOnce(`/conversa/${requestId}` as never)}
       />
     </RequireAuth>
   );
