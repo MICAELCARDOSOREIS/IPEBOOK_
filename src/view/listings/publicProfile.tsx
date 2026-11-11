@@ -1,6 +1,6 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import * as Linking from "expo-linking";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View, type ScrollViewInstance } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   makeAuthViewModel,
@@ -65,6 +65,13 @@ export function PublicProfile({ userId, onBack, onOpenChat, onReportListing, onR
   const [safety, safetyActions] = makeProfileSafetyViewModel(auth.user?.id ?? null, userId);
   const chat = makeChatWithUser(auth.user?.id ?? null, userId, (requestId) => guardedOpenChat(requestId));
   const profile = state.profile;
+  const scrollViewRef = useRef<ScrollViewInstance>(null);
+  const ratingsPosY = useRef<number>(0);
+  const scrollToRatings = useCallback(() => {
+    if (ratingsPosY.current > 0) {
+      scrollViewRef.current?.scrollTo({ y: Math.max(0, ratingsPosY.current - 24), animated: true });
+    }
+  }, []);
   // Só exibe o link quando o valor gravado respeita o padrão do Instagram (regra do domínio).
   const instagramHandle = normalizeInstagramHandle(profile?.socialHandle)?.slice(1) ?? null;
 
@@ -87,6 +94,7 @@ export function PublicProfile({ userId, onBack, onOpenChat, onReportListing, onR
       <TopAppBar contentMaxWidth={wideWeb ? WEB_MAX_WIDTH : undefined} title="Perfil" onBack={guardedBack} />
 
       <ScrollView
+        ref={scrollViewRef}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
         {...standardVerticalScrollProps}
       >
@@ -127,11 +135,13 @@ export function PublicProfile({ userId, onBack, onOpenChat, onReportListing, onR
                   <Pressable
                     accessibilityRole="link"
                     accessibilityLabel={`Abrir Instagram @${instagramHandle}`}
+                    accessibilityHint="Abre o Instagram desta pessoa no aplicativo ou navegador"
                     hitSlop={8}
                     onPress={() => void Linking.openURL(`https://instagram.com/${instagramHandle}`).catch(() => {})}
                     style={({ pressed }) => [styles.socialBadge, pressed && { opacity: 0.6 }]}
                   >
                     <Text style={styles.socialHandle}>{`@${instagramHandle}`}</Text>
+                    <AppIcon name="chevronRight" size={12} color={colors.nature.foliage} />
                   </Pressable>
                 ) : null}
               </View>
@@ -141,30 +151,43 @@ export function PublicProfile({ userId, onBack, onOpenChat, onReportListing, onR
             {/* Na web larga os três cartões ficam lado a lado, sem esticar pela largura toda. */}
             <View style={styles.statsRow}>
               {/* Card 1: Avaliações */}
-              <View style={styles.infoCard}>
-                <View style={[styles.cardLeadingBox, styles.cardLeadingBoxRating]}>
-                  {profile.ratingCount > 0 ? (
+              {profile.ratingCount > 0 ? (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`Avaliação média ${profile.averageRating?.toFixed(1)}. Ver avaliações da comunidade`}
+                  accessibilityHint="Rola a tela até as avaliações recebidas por esta pessoa"
+                  onPress={scrollToRatings}
+                  style={withPress(styles.infoCard)}
+                >
+                  <View style={[styles.cardLeadingBox, styles.cardLeadingBoxRating]}>
                     <View style={styles.ratingNumberRow}>
                       <Text style={[styles.statLargeValue, styles.statValueRating]}>
                         {profile.averageRating?.toFixed(1)}
                       </Text>
                       <AppIcon name="star" size={11} color={colors.highlight} />
                     </View>
-                  ) : (
+                  </View>
+                  <View style={styles.cardHeaderTextCol}>
+                    <Text style={styles.cardTitle}>
+                      {`Avaliação média (${profile.ratingCount} ${profile.ratingCount > 1 ? "avaliações" : "avaliação"})`}
+                    </Text>
+                    <Text style={styles.cardSubtitle}>
+                      Avaliação da comunidade em Piripiri
+                    </Text>
+                  </View>
+                  <AppIcon name="chevronDown" size={18} color={colors.secondaryText} />
+                </Pressable>
+              ) : (
+                <View style={styles.infoCard}>
+                  <View style={[styles.cardLeadingBox, styles.cardLeadingBoxRating]}>
                     <AppIcon name="star" size={22} color={colors.ipe.bloomDeep} />
-                  )}
+                  </View>
+                  <View style={styles.cardHeaderTextCol}>
+                    <Text style={styles.cardTitle}>Sem avaliações ainda</Text>
+                    <Text style={styles.cardSubtitle}>Novo membro no IpêBook</Text>
+                  </View>
                 </View>
-                <View style={styles.cardHeaderTextCol}>
-                  <Text style={styles.cardTitle}>
-                    {profile.ratingCount > 0
-                      ? `Avaliação média (${profile.ratingCount} ${profile.ratingCount > 1 ? "avaliações" : "avaliação"})`
-                      : "Sem avaliações ainda"}
-                  </Text>
-                  <Text style={styles.cardSubtitle}>
-                    {profile.ratingCount > 0 ? "Avaliação da comunidade em Piripiri" : "Novo membro no IpêBook"}
-                  </Text>
-                </View>
-              </View>
+              )}
 
               {/* Card 2: Negociações Concluídas */}
               <View style={styles.infoCard}>
@@ -240,12 +263,16 @@ export function PublicProfile({ userId, onBack, onOpenChat, onReportListing, onR
                 <View style={styles.wideBelowMain}>
                   <OwnerListings ownerId={userId} ownerName={profile.name} onOpenBook={guardedOpenBook} wideWeb={wideWeb} />
                 </View>
-                <UserRatingsPanel userId={userId} wideWeb={wideWeb} />
+                <View onLayout={(e) => { ratingsPosY.current = e.nativeEvent.layout.y; }}>
+                  <UserRatingsPanel userId={userId} wideWeb={wideWeb} />
+                </View>
               </View>
             ) : (
               <View style={styles.mobileBelow}>
                 <OwnerListings ownerId={userId} ownerName={profile.name} onOpenBook={guardedOpenBook} wideWeb={wideWeb} />
-                <UserRatingsPanel userId={userId} wideWeb={wideWeb} />
+                <View onLayout={(e) => { ratingsPosY.current = e.nativeEvent.layout.y; }}>
+                  <UserRatingsPanel userId={userId} wideWeb={wideWeb} />
+                </View>
               </View>
             )}
           </View>
