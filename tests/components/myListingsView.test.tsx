@@ -88,6 +88,61 @@ describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
     expect(screen.getByLabelText("0 para doar")).toBeDefined();
   });
 
+  it("apresenta o resumo por modalidade como informação, sem prometer ação de filtro", async () => {
+    const base = { author: "A", ownerId: "user-1", status: "available" as const };
+    mockViewModel({
+      books: [
+        { ...base, id: "s1", title: "V1", modality: "sale" },
+        { ...base, id: "d1", title: "D1", modality: "donation" },
+      ],
+    });
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<MyListings sessionUserId="user-1" />);
+    });
+
+    // Continua legível por leitores de tela...
+    expect(screen.getByLabelText("1 à venda")).toBeDefined();
+    // ...mas não se anuncia como botão acionável (o filtro real é a fileira de chips).
+    expect(screen.queryByRole("button", { name: "1 à venda" })).toBeNull();
+  });
+
+  it("mantém a situação no rodapé e abre a negociação pelo botão próprio do cartão reservado", async () => {
+    const reservado: Book = {
+      id: "b21",
+      title: "Iracema",
+      author: "José de Alencar",
+      modality: "sale",
+      price: 12,
+      ownerId: "user-1",
+      status: "reserved",
+    };
+    mockViewModel({ books: [reservado] });
+    mockReceived([
+      {
+        request: { id: "r21", listingId: "b21", requesterId: "u-bia", status: "accepted" },
+        listing: reservado,
+        requesterName: "Bia",
+      },
+    ]);
+    const onNavigateToNegotiationDetail = vi.fn();
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(
+        <MyListings sessionUserId="user-1" onNavigateToNegotiationDetail={onNavigateToNegotiationDetail} />,
+      );
+    });
+
+    expect(screen.getByText("Reservado")).toBeDefined();
+    expect(screen.getByText("Ver negociação")).toBeDefined();
+
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Ver negociação de Iracema"));
+    });
+    expect(onNavigateToNegotiationDetail).toHaveBeenCalledWith("r21");
+    mockReceived([]);
+  });
+
   it("mostra Precisa da sua atenção com Ver proposta para proposta pendente (Spec 075, CA4)", async () => {
     const book: Book = { id: "b20", title: "Vidas Secas", author: "G", modality: "trade", ownerId: "user-1", status: "available" };
     mockViewModel({ books: [book] });

@@ -142,10 +142,10 @@ export function MyListings({
   const wideWeb = useIsWideWeb();
   const insets = useSafeAreaInsets();
   const hasBooks = !state.loading && !state.error && state.books.length > 0;
-  // Posiciona o FAB logo acima da barra de navegação flutuante (88dp)
-  const navBarPaddingBottom = Math.max(tokens.spacing[20], insets.bottom + tokens.spacing[10]);
-  const navBarDockHeight = 88;
-  const fabBottom = navBarPaddingBottom + navBarDockHeight;
+  // Posiciona o FAB harmoniosamente logo acima da barra de navegação flutuante seguindo os tokens
+  const navBarPaddingBottom = insets.bottom > 0 ? insets.bottom + tokens.spacing[8] : tokens.spacing[12];
+  const navBarDockHeight = 62; // Altura real da cápsula da NavigationBar (dock M3 Expressive)
+  const fabBottom = navBarPaddingBottom + navBarDockHeight + tokens.spacing[12];
 
   return (
     <SafeAreaView edges={["top", "left", "right"]} style={styles.page}>
@@ -254,26 +254,23 @@ export function MyListings({
               </View>
             ) : null}
 
-            {/* Resumo por modalidade (cores canônicas da ADR 0104 / tokens.colors.badge) — toque filtra a lista */}
+            {/* Resumo por modalidade (cores canônicas da ADR 0104 / tokens.colors.badge) — somente leitura.
+                O filtro acionável é a fileira de chips de status logo abaixo; estes cartões não são botões. */}
             <View style={styles.statsRow}>
               {stats.map((stat) => (
-                <Pressable
+                <View
                   key={stat.key}
                   accessible
-                  accessibilityRole="button"
                   accessibilityLabel={`${stat.count} ${stat.label}`}
-                  accessibilityHint="Toque para ver os anúncios"
-                  onPress={() => setActiveTab("listings")}
-                  style={({ pressed }) => [
+                  style={[
                     styles.statCard,
                     wideWeb && styles.statCardWide,
                     { backgroundColor: colors.badge[stat.key].background },
-                    pressed && styles.statCardPressed,
                   ]}
                 >
                   <Text style={[styles.statCount, { color: colors.badge[stat.key].text }]}>{stat.count}</Text>
                   <Text style={[styles.statLabel, { color: colors.badge[stat.key].text }]}>{stat.label}</Text>
-                </Pressable>
+                </View>
               ))}
             </View>
 
@@ -715,10 +712,6 @@ function createStyles(colors: ColorPalette) {
       shadowOpacity: 0.08,
       shadowRadius: 3,
       shadowOffset: { width: 0, height: 1 },
-    },
-    statCardPressed: {
-      opacity: 0.88,
-      transform: [{ scale: 0.98 }],
     },
     statCount: { ...tokens.typography.brandTitle, fontSize: 22, lineHeight: 26 },
     statLabel: { ...tokens.typography.footnote, fontWeight: tokens.fontWeight.semiBold, opacity: 0.95 },
