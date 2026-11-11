@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import type { Book, BookModality, BookStatus } from "@/model/entities/book";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
@@ -10,6 +10,7 @@ import { IconBadge } from "@/view/components/IconBadge";
 import { AppIcon } from "@/view/components/AppIcon";
 import { ShelfRow } from "@/view/listings/shelfRow";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
+import { standardHorizontalScrollProps } from "@/view/scrollProps";
 
 const MODALITY_LABELS: Readonly<Record<BookModality, string>> = {
   sale: "Venda",
@@ -79,21 +80,42 @@ export function MyListingsListingsTab({
 
   return (
     <>
-      {/* Quebra em duas fileiras no mobile: os quatro status cabem na tela sem rolagem
-          horizontal, evitando que "Reservados" fique invisível em telas estreitas. */}
-      <View style={styles.filterRow}>
-        {/* Mesmo Chip do resto do app (Home, Explorar, filtros): raio, check e cores iguais. */}
-        {filterChips.map((chip) => (
-          <Chip
-            key={chip.key}
-            label={chip.label}
-            accessibilityLabel={chip.a11y}
-            tone={chip.tone}
-            selected={statusFilter === chip.key}
-            onPress={() => onStatusFilterChange(chip.key)}
-          />
-        ))}
-      </View>
+      {/* Fileira horizontal única de filtros no padrão da Home e do Explorar */}
+      {wideWeb ? (
+        <View style={styles.filterRowWide}>
+          {filterChips.map((chip) => (
+            <Chip
+              key={chip.key}
+              size="compact"
+              label={chip.label}
+              accessibilityLabel={chip.a11y}
+              tone={chip.tone}
+              selected={statusFilter === chip.key}
+              onPress={() => onStatusFilterChange(chip.key)}
+            />
+          ))}
+        </View>
+      ) : (
+        <ScrollView
+          horizontal
+          {...standardHorizontalScrollProps}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.filterScroll}
+          style={styles.filterScrollView}
+        >
+          {filterChips.map((chip) => (
+            <Chip
+              key={chip.key}
+              size="compact"
+              label={chip.label}
+              accessibilityLabel={chip.a11y}
+              tone={chip.tone}
+              selected={statusFilter === chip.key}
+              onPress={() => onStatusFilterChange(chip.key)}
+            />
+          ))}
+        </ScrollView>
+      )}
       {tabSelector}
       {filteredBooks.length === 0 ? (
         <View style={styles.empty}>
@@ -169,11 +191,22 @@ export function MyListingsListingsTab({
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
-    filterRow: {
+    filterRowWide: {
       flexDirection: "row",
-      flexWrap: "wrap",
+      alignItems: "center",
       gap: tokens.spacing[8],
-      paddingBottom: tokens.spacing[8],
+      paddingVertical: tokens.spacing[4],
+    },
+    filterScrollView: {
+      marginHorizontal: -tokens.spacing[16],
+      paddingVertical: tokens.spacing[4],
+    },
+    filterScroll: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[8],
+      paddingLeft: tokens.spacing[16],
+      paddingRight: tokens.spacing[28],
     },
     empty: { paddingTop: tokens.spacing[48], alignItems: "center", gap: tokens.spacing[12] },
     emptyTitle: {

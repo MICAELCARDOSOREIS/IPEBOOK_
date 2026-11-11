@@ -217,10 +217,16 @@ O projeto Ipebook evoluiu significativamente durante a fase de validação com l
 - **Como atualizar no Figma:** Atualizar o modal de exclusão para raio de 28px.
 
 #### 4.6. Rascunhos da Estante (`drafts.tsx` / `DraftsCard.tsx`)
-- **Frames no Figma:** `04.10 · Rascunhos`
+- **Frames no Figma:** `04.11 · Rascunhos`, `04.15 · Descartar rascunho?`, `04.16 · Rascunhos · vazio`
 - **O que mudou no código:** 
-  - Card dedicado na estante quando houver rascunhos em andamento, informando em qual etapa o usuário parou.
-- **Como atualizar no Figma:** Criar o card "Anúncios em andamento" na estante.
+  - Cards com raios concêntricos (16dp cartão / 12dp capa) e contorno suave Material 3.
+  - Barra de andamento visual segmentada em 3 etapas com pílulas arredondadas (`Livro`, `Fotos`, `Detalhes`) indicando o progresso alcançado.
+  - Preço formatado para livros de venda com badge próprio ao lado da tag de modalidade.
+  - Tratamento de erro de descarte com `InlineErrorCard` padronizado (ADR 0102).
+  - Estado vazio com tipografia de marca (`brandTitle`), círculo acolhedor e cartão educativo de dica.
+  - Aviso de privacidade e segurança no rodapé da lista reforçando o sigilo dos rascunhos até a publicação.
+  - Botão tonal de acesso rápido com contagem contextual de rascunhos no topo da Estante.
+- **Como atualizar no Figma:** Adicionar a barra segmentada de 3 etapas no card de rascunho do frame `04.11` e o cartão de dica de processo no frame `04.16`.
 
 ---
 
