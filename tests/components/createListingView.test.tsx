@@ -207,7 +207,7 @@ describe("etapa 2 do anúncio — Fotos (Figma 04.04)", () => {
 });
 
 describe("etapa 3 do anúncio — Detalhes (Figma 04.05)", () => {
-  it("oferece conservação, categoria, descrição com contador e bairro de Piripiri", async () => {
+  it("oferece conservação, categoria e descrição com contador", async () => {
     mockViewModel({ ...filledState, description: "Marcas leves" });
     const screen = await renderScreen();
     await goToStep(screen, 3);
@@ -221,9 +221,9 @@ describe("etapa 3 do anúncio — Detalhes (Figma 04.05)", () => {
     expect(screen.getByText("12/280")).toBeDefined();
     expect(screen.queryByText(/Restam/)).toBeNull();
     expect(screen.getByLabelText("Descrição").props.multiline).toBe(true);
-    // Figma `04.05` (nó `99:2259`): bairro como campo que abre o seletor, não 17 chips.
-    expect(screen.getByLabelText("Selecionar bairro para retirada em Piripiri")).toBeDefined();
-    expect(screen.getByText("Só o bairro aparece no anúncio.")).toBeDefined();
+    // Bairro para retirada removido conforme simplificação da etapa 3.
+    expect(screen.queryByLabelText("Selecionar bairro para retirada em Piripiri")).toBeNull();
+    expect(screen.queryByText("Só o bairro aparece no anúncio.")).toBeNull();
   });
 
   it("exibe banner de rascunho salvo e permite limpar rascunho (Issue #160)", async () => {
@@ -257,44 +257,17 @@ describe("etapa 3 do anúncio — Detalhes (Figma 04.05)", () => {
     expect(actions.setCondition).toHaveBeenCalledWith("marked");
   });
 
-  it("registra o bairro escolhido no seletor de bairros de Piripiri", async () => {
-    const actions = mockViewModel(filledState);
+  it("renderiza campos de conservação, categoria, box e descrição na etapa 3 sem campo de bairro", async () => {
+    mockViewModel(filledState);
     const screen = await renderScreen();
     await goToStep(screen, 3);
 
-    await act(async () => {
-      fireEvent.press(screen.getByLabelText("Selecionar bairro para retirada em Piripiri"));
-    });
-    expect(screen.getByText("Escolha seu bairro")).toBeDefined();
-
-    await act(async () => {
-      fireEvent.press(screen.getByLabelText("Selecionar bairro Paciência"));
-    });
-
-    expect(actions.setNeighborhood).toHaveBeenCalledWith("Paciência");
-    // O seletor fecha após a escolha; o campo passa a exibir o bairro escolhido no estado.
-    expect(screen.queryByText("Escolha seu bairro")).toBeNull();
-  });
-
-  it("permite limpar o bairro selecionado", async () => {
-    const actions = mockViewModel({ ...filledState, neighborhood: "Centro" });
-    const screen = await renderScreen();
-    await goToStep(screen, 3);
-
-    const field = screen.getByLabelText("Bairro para retirada: Centro. Alterar bairro");
-    // Regressão: na web, o botão de limpar dentro do campo gerava `<button>` aninhado.
-    const clear = screen.getByLabelText("Limpar bairro selecionado");
-    let ancestor = clear.parent;
-    while (ancestor) {
-      expect(ancestor).not.toBe(field);
-      ancestor = ancestor.parent;
-    }
-
-    await act(async () => {
-      fireEvent.press(clear);
-    });
-
-    expect(actions.setNeighborhood).toHaveBeenCalledWith("");
+    expect(screen.getByText("Conservação")).toBeDefined();
+    expect(screen.getByText("Categoria")).toBeDefined();
+    expect(screen.getByText("Box ou coleção de livros")).toBeDefined();
+    expect(screen.getByLabelText("Descrição")).toBeDefined();
+    expect(screen.queryByLabelText("Selecionar bairro para retirada em Piripiri")).toBeNull();
+    expect(screen.queryByText("Bairro para retirada")).toBeNull();
   });
 
   it("mantém as ações da etapa na barra fixa inferior", async () => {

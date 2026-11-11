@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useMemo, useRef, useState } from "react";
+import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import type { BookModality } from "@/model/entities/book";
 import type { IsbnFeedback } from "@/viewmodel/useCreateListingViewModel";
 import type { ListingBasicsErrors } from "@/viewmodel/listingBasicsValidation";
@@ -84,6 +84,8 @@ export type CreateListingStep1Props = {
   onSetPhotoUrl: (url: string) => void;
   fieldErrors?: ListingBasicsErrors;
   onGoToPhotos: () => void;
+  /** Disparado ao focar em um campo de texto, informando nome e coordenada Y absoluta no formulário */
+  onFocusField?: (fieldName: "title" | "author" | "price", yOffset: number) => void;
 };
 
 export function CreateListingStep1({
@@ -108,11 +110,19 @@ export function CreateListingStep1({
   onSetPhotoUrl,
   fieldErrors = {},
   onGoToPhotos,
+  onFocusField,
 }: CreateListingStep1Props) {
   const { colors } = useTheme();
   const wideWeb = useIsWideWeb();
   const [scannerVisible, setScannerVisible] = useState(false);
   const styles = useMemo(() => createStyles(colors), [colors]);
+
+  const authorInputRef = useRef<any>(null);
+  const priceInputRef = useRef<any>(null);
+  const containerY = useRef(0);
+  const titleY = useRef(0);
+  const authorY = useRef(72);
+  const priceY = useRef(144);
 
   return (
     <>
@@ -285,6 +295,110 @@ export function CreateListingStep1({
         )}
       </View>
 
+      <View
+        style={styles.fieldsContainer}
+        onLayout={(event) => {
+          containerY.current = event.nativeEvent.layout.y;
+        }}
+      >
+        <View
+          onLayout={(event) => {
+            titleY.current = event.nativeEvent.layout.y;
+          }}
+        >
+          <TextField
+            label="Título"
+            value={title}
+            onChangeText={onSetTitle}
+            editable={!loading}
+            placeholder="Ex: Dom Casmurro"
+            error={fieldErrors.title}
+            returnKeyType="next"
+            onSubmitEditing={() => authorInputRef.current?.focus()}
+            onFocus={() => onFocusField?.("title", containerY.current + titleY.current)}
+          />
+        </View>
+
+        {wideWeb && modality === "sale" ? (
+          <View style={styles.webFieldsRow}>
+            <View style={styles.webAuthorCol}>
+              <TextField
+                inputRef={authorInputRef}
+                label="Autor"
+                value={author}
+                onChangeText={onSetAuthor}
+                editable={!loading}
+                placeholder="Ex: Machado de Assis"
+                error={fieldErrors.author}
+                returnKeyType="next"
+                onSubmitEditing={() => priceInputRef.current?.focus()}
+                onFocus={() => onFocusField?.("author", containerY.current + authorY.current)}
+              />
+            </View>
+            <View style={styles.webPriceCol}>
+              <TextField
+                inputRef={priceInputRef}
+                label="Preço (R$)"
+                value={price}
+                onChangeText={onSetPrice}
+                editable={!loading}
+                keyboardType="decimal-pad"
+                placeholder="Ex: 25,00"
+                error={fieldErrors.price}
+                returnKeyType="done"
+                onFocus={() => onFocusField?.("price", containerY.current + priceY.current)}
+              />
+            </View>
+          </View>
+        ) : (
+          <>
+            <View
+              onLayout={(event) => {
+                authorY.current = event.nativeEvent.layout.y;
+              }}
+            >
+              <TextField
+                inputRef={authorInputRef}
+                label="Autor"
+                value={author}
+                onChangeText={onSetAuthor}
+                editable={!loading}
+                placeholder="Ex: Machado de Assis"
+                error={fieldErrors.author}
+                returnKeyType={modality === "sale" ? "next" : "done"}
+                onSubmitEditing={() => {
+                  if (modality === "sale") {
+                    priceInputRef.current?.focus();
+                  }
+                }}
+                onFocus={() => onFocusField?.("author", containerY.current + authorY.current)}
+              />
+            </View>
+
+            {modality === "sale" ? (
+              <View
+                onLayout={(event) => {
+                  priceY.current = event.nativeEvent.layout.y;
+                }}
+              >
+                <TextField
+                  inputRef={priceInputRef}
+                  label="Preço (R$)"
+                  value={price}
+                  onChangeText={onSetPrice}
+                  editable={!loading}
+                  keyboardType="decimal-pad"
+                  placeholder="Ex: 25,00"
+                  error={fieldErrors.price}
+                  returnKeyType="done"
+                  onFocus={() => onFocusField?.("price", containerY.current + priceY.current)}
+                />
+              </View>
+            ) : null}
+          </>
+        )}
+      </View>
+
       <View style={wideWeb ? styles.webPhotoCard : styles.photoCard}>
         <AddPhotoCard
           photoUrl={photoUrl}
@@ -299,66 +413,6 @@ export function CreateListingStep1({
               : "Foto leve, com boa luz. Você pode ajustar na próxima etapa."}
           </Text>
         </View>
-      </View>
-
-      <View style={styles.fieldsContainer}>
-        <TextField
-          label="Título"
-          value={title}
-          onChangeText={onSetTitle}
-          editable={!loading}
-          placeholder="Ex: Dom Casmurro"
-          error={fieldErrors.title}
-        />
-
-        {wideWeb && modality === "sale" ? (
-          <View style={styles.webFieldsRow}>
-            <View style={styles.webAuthorCol}>
-              <TextField
-                label="Autor"
-                value={author}
-                onChangeText={onSetAuthor}
-                editable={!loading}
-                placeholder="Ex: Machado de Assis"
-                error={fieldErrors.author}
-              />
-            </View>
-            <View style={styles.webPriceCol}>
-              <TextField
-                label="Preço (R$)"
-                value={price}
-                onChangeText={onSetPrice}
-                editable={!loading}
-                keyboardType="decimal-pad"
-                placeholder="Ex: 25,00"
-                error={fieldErrors.price}
-              />
-            </View>
-          </View>
-        ) : (
-          <>
-            <TextField
-              label="Autor"
-              value={author}
-              onChangeText={onSetAuthor}
-              editable={!loading}
-              placeholder="Ex: Machado de Assis"
-              error={fieldErrors.author}
-            />
-
-            {modality === "sale" ? (
-              <TextField
-                label="Preço (R$)"
-                value={price}
-                onChangeText={onSetPrice}
-                editable={!loading}
-                keyboardType="decimal-pad"
-                placeholder="Ex: 25,00"
-                error={fieldErrors.price}
-              />
-            ) : null}
-          </>
-        )}
       </View>
 
       <View style={styles.nextStepsNote}>

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import type { Book } from "@/model/entities/book";
 import { tokens, type ColorPalette } from "@/view/tokens";
@@ -104,22 +104,32 @@ export function Drafts({ sessionUserId, onBack, onResume, onNavigateToCreateList
             ) : null}
           </View>
         ) : (
-          <ScrollView
-            contentContainerStyle={[styles.scroll, wide && styles.scrollWide, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
+          <FlatList
+            data={state.drafts}
+            keyExtractor={(item) => item.id}
             {...standardVerticalScrollProps}
-          >
-            <Text style={[styles.summary, wide && styles.fullRow]}>
-              {state.drafts.length === 1 ? "1 anúncio em andamento" : `${state.drafts.length} anúncios em andamento`}
-            </Text>
-            {state.discardError ? (
-              <Text accessibilityRole="alert" style={[styles.cardError, wide && styles.fullRow]}>{state.discardError}</Text>
-            ) : null}
-            {state.drafts.map((book) => {
+            contentContainerStyle={[
+              styles.scroll,
+              wide && styles.scrollWide,
+              { paddingBottom: scrollBottomPadding.withoutBottomBar },
+            ]}
+            ListHeaderComponent={
+              <>
+                <Text style={[styles.summary, wide && styles.fullRow]}>
+                  {state.drafts.length === 1 ? "1 anúncio em andamento" : `${state.drafts.length} anúncios em andamento`}
+                </Text>
+                {state.discardError ? (
+                  <Text accessibilityRole="alert" style={[styles.cardError, wide && styles.fullRow]}>{state.discardError}</Text>
+                ) : null}
+              </>
+            }
+            ItemSeparatorComponent={() => <View style={{ height: tokens.spacing[12] }} />}
+            renderItem={({ item: book }) => {
               const step = Math.min(Math.max(book.draftStep ?? 1, 1), TOTAL_STEPS);
               const title = book.title?.trim() || "Sem título";
               const discarding = state.discardingId === book.id;
               return (
-                <View key={book.id} style={[styles.card, wide && columnWidth]}>
+                <View style={[styles.card, wide && columnWidth]}>
                   <Pressable
                     accessibilityRole="button"
                     accessibilityLabel={`Rascunho ${title}, ${stepLabel(book)}`}
@@ -158,8 +168,8 @@ export function Drafts({ sessionUserId, onBack, onResume, onNavigateToCreateList
                   </View>
                 </View>
               );
-            })}
-          </ScrollView>
+            }}
+          />
         )}
       </View>
 

@@ -232,6 +232,7 @@ export default function Search({
           horizontal
           {...standardHorizontalScrollProps}
           contentContainerStyle={styles.quickCategoriesScroll}
+          style={styles.quickCategoriesScrollView}
         >
           <Chip
             label="Todos"
@@ -274,7 +275,9 @@ export default function Search({
       {/* 6. Resumo da faixa de resultados e ordenação (Figma `02.04`: "1 livro à venda · Literatura") */}
       {!state.loading && !state.error && state.books.length > 0 ? (
         <View style={styles.summaryRow}>
-          <Text numberOfLines={2} style={styles.summaryText}>{state.resultsSummary}</Text>
+          <View style={styles.summaryBadge}>
+            <Text numberOfLines={1} style={styles.summaryBadgeText}>{state.resultsSummary}</Text>
+          </View>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={`Ordenar por ${SORT_LABELS[state.sortBy]}`}
@@ -608,10 +611,15 @@ function createStyles(colors: ColorPalette) {
       ...tokens.typography.bodyLarge,
       color: colors.m3.onSurfaceVariant,
     },
+    quickCategoriesScrollView: {
+      marginHorizontal: -tokens.spacing[16],
+    },
     quickCategoriesScroll: {
       flexDirection: "row",
       alignItems: "center",
       gap: tokens.spacing[8],
+      paddingLeft: tokens.spacing[16],
+      paddingRight: tokens.spacing[28],
       paddingVertical: tokens.spacing[2],
     },
     clearFiltersButton: {
@@ -641,6 +649,21 @@ function createStyles(colors: ColorPalette) {
       alignItems: "center",
       justifyContent: "space-between",
       gap: tokens.spacing[12],
+      marginVertical: tokens.spacing[4],
+    },
+    summaryBadge: {
+      paddingHorizontal: tokens.spacing[10],
+      paddingVertical: 3,
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.nature.sprout,
+      alignSelf: "center",
+      maxWidth: "68%",
+    },
+    summaryBadgeText: {
+      ...tokens.typography.labelSmall,
+      fontSize: 12,
+      fontWeight: tokens.fontWeight.bold,
+      color: colors.nature.foliageDeep,
     },
     summaryText: { flex: 1, ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
     sortButton: {

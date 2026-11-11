@@ -40,12 +40,28 @@ export class GoogleBooksBookMetadataService implements IBookMetadataService {
       const links = info.imageLinks ?? {};
       const coverUrl = largeGoogleCover(links.thumbnail ?? links.smallThumbnail);
 
+      const synopsis = typeof info.description === "string" && info.description.trim().length > 0 ? info.description.trim() : undefined;
+      const publisher = typeof info.publisher === "string" && info.publisher.trim().length > 0 ? info.publisher.trim() : undefined;
+      const pageCount = typeof info.pageCount === "number" && info.pageCount > 0 ? info.pageCount : undefined;
+      let publicationYear: number | undefined;
+      if (typeof info.publishedDate === "string") {
+        const match = info.publishedDate.match(/^(\d{4})/);
+        if (match) {
+          const parsed = Number.parseInt(match[1], 10);
+          if (parsed >= 1000 && parsed <= 2100) publicationYear = parsed;
+        }
+      }
+
       return {
         isbn: clean,
         title: String(info.title).trim(),
         author: author.trim(),
         coverUrl,
         ...(coverUrl ? { coverIsLarge: true } : {}),
+        ...(synopsis ? { synopsis } : {}),
+        ...(publisher ? { publisher } : {}),
+        ...(pageCount ? { pageCount } : {}),
+        ...(publicationYear ? { publicationYear } : {}),
       };
     } catch {
       return null;

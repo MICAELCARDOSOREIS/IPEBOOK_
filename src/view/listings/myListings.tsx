@@ -5,6 +5,7 @@ import { useIsWideWeb } from "@/view/useIsWideWeb";
 import type { BookModality } from "@/model/entities/book";
 import {
   makeAuthViewModel,
+  makeDraftsViewModel,
   makeMyListingsViewModel,
   makeNetworkStatus,
   makeReceivedRequestsViewModel,
@@ -25,10 +26,12 @@ import {
   MyListingsListingsTab,
 } from "@/view/listings/myListingsListingsTab";
 import { MyListingsProposalsTab } from "@/view/listings/myListingsProposalsTab";
+import { ShelfTabSheet } from "@/view/listings/ShelfTabSheet";
 import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 
+import { DraftsCard } from "@/view/listings/DraftsCard";
 import { withPress } from "@/view/pressFeedback";
 export { ShelfRow } from "@/view/listings/shelfRow";
 
@@ -66,9 +69,11 @@ export function MyListings({
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [state, actions] = makeMyListingsViewModel(sessionUserId);
   const [received] = makeReceivedRequestsViewModel(sessionUserId);
+  const [draftsState] = makeDraftsViewModel(sessionUserId);
   const [, shareActions] = makeShareListingViewModel();
   const { isOnline } = makeNetworkStatus();
   const [activeTab, setActiveTab] = useState<ShelfTab>("listings");
+  const [showTabSheet, setShowTabSheet] = useState(false);
   const [statusFilter, setStatusFilter] = useState<ListingsFilter>("all");
 
   const handleShareBook = (book: (typeof state.books)[number]) => {
@@ -127,13 +132,19 @@ export function MyListings({
     { key: "proposals", label: "Propostas", badge: proposals.length, tone: colors.badge.trade },
     { key: "concluded", label: "Concluídos", tone: colors.badge.completed },
   ];
+  const currentTabOption = tabs.find((t) => t.key === activeTab);
+  const currentTabLabel = currentTabOption
+    ? currentTabOption.badge
+      ? `${currentTabOption.label} (${currentTabOption.badge})`
+      : currentTabOption.label
+    : "Anúncios";
   const isIOS = Platform.OS === "ios";
   const wideWeb = useIsWideWeb();
   const insets = useSafeAreaInsets();
   const hasBooks = !state.loading && !state.error && state.books.length > 0;
-  // Posiciona o FAB com respiro harmônico de 16px acima do topo da barra de navegação flutuante (88dp)
-  const navBarPaddingBottom = Math.max(tokens.spacing[20], insets.bottom + tokens.spacing[10]);
-  const navBarDockHeight = 88;
+  // Posiciona o FAB com respiro harmônico de 16px acima do topo da barra de navegação flutuante (64dp)
+  const navBarPaddingBottom = insets.bottom > 0 ? insets.bottom + tokens.spacing[8] : tokens.spacing[12];
+  const navBarDockHeight = 64;
   const fabBottom = navBarPaddingBottom + navBarDockHeight + tokens.spacing[16];
 
   return (
@@ -158,7 +169,10 @@ export function MyListings({
           <Text style={styles.heroSubtitle}>Seus livros em Piripiri</Text>
         </View>
         <View style={styles.headerActions}>
-          {onNavigateToDrafts ? (
+          {/* Botão Rascunhos no header só aparece quando não há livros publicados (lista vazia).
+              Quando há livros, o card DraftsCard dentro da ScrollView assume esse papel,
+              pois o header some ao rolar e o card permanece visível. */}
+          {onNavigateToDrafts && !hasBooks ? (
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Ver rascunhos"
@@ -212,6 +226,11 @@ export function MyListings({
               },
             ]}
           >
+            {/* Card de rascunhos: destaque quando há rascunhos salvos (Spec 017) */}
+            {onNavigateToDrafts && hasBooks ? (
+              <DraftsCard onPress={guardedDrafts} />
+            ) : null}
+
             {/* Banner de incentivo à circulação na web larga (Figma 05.01) */}
             {wideWeb && onNavigateToCreateListing ? (
               <View style={styles.webExchangeBanner} testID="shelf-exchange-banner">
@@ -235,86 +254,56 @@ export function MyListings({
               </View>
             ) : null}
 
-            {/* Resumo por modalidade (cores canônicas da ADR 0104 / tokens.colors.badge) */}
+            {/* Resumo por modalidade (cores canônicas da ADR 0104 / tokens.colors.badge) — toque filtra a lista */}
             <View style={styles.statsRow}>
               {stats.map((stat) => (
-                <View
+                <Pressable
                   key={stat.key}
                   accessible
+                  accessibilityRole="button"
                   accessibilityLabel={`${stat.count} ${stat.label}`}
-                  style={[
+                  accessibilityHint="Toque para ver os anúncios"
+                  onPress={() => setActiveTab("listings")}
+                  style={({ pressed }) => [
                     styles.statCard,
                     wideWeb && styles.statCardWide,
                     { backgroundColor: colors.badge[stat.key].background },
+                    pressed && styles.statCardPressed,
                   ]}
                 >
                   <Text style={[styles.statCount, { color: colors.badge[stat.key].text }]}>{stat.count}</Text>
                   <Text style={[styles.statLabel, { color: colors.badge[stat.key].text }]}>{stat.label}</Text>
-                </View>
+                </Pressable>
               ))}
             </View>
 
-            {/* Abas: em estilo pílulas/chips em scroll horizontal consistente com o restante do app */}
-            <ScrollView
+            {/* Seletor de abas da estante (Anúncios, Propostas, Concluídos) no padrão do Explorar (Figma 02.04 / 05.01) */}
+            <View
               testID="my-listings-tablist"
-              accessibilityRole="tablist"
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.tabsScrollContent}
               style={[
+                styles.summaryRow,
+                wideWeb && styles.summaryRowWide,
                 isIOS ? styles.segmentTrackIOS : styles.segmentRowAndroid,
-                wideWeb && styles.segmentRowWide,
               ]}
-              keyboardShouldPersistTaps="handled"
             >
-              {tabs.map((tab) => {
-                const selected = activeTab === tab.key;
-                const a11yLabel = tab.badge ? `${tab.label}, ${tab.badge} em aberto` : tab.label;
-                return (
-                  <Pressable
-                    key={tab.key}
-                    accessibilityRole="tab"
-                    accessibilityLabel={a11yLabel}
-                    accessibilityState={{ selected }}
-                    onPress={() => setActiveTab(tab.key)}
-                    style={({ pressed }) => [
-                      styles.tabChip,
-                      selected
-                        ? [styles.tabChipSelected, { backgroundColor: tab.tone.background }]
-                        : styles.tabChipUnselected,
-                      pressed && styles.tabChipPressed,
-                    ]}
-                  >
-                    {selected ? (
-                      <AppIcon name="check" size={16} color={tab.tone.text} />
-                    ) : !tab.badge ? (
-                      <View
-                        style={[
-                          styles.tabChipDot,
-                          { backgroundColor: resolvedScheme === "dark" ? tab.tone.text : tab.tone.background },
-                        ]}
-                      />
-                    ) : null}
-                    <Text
-                      numberOfLines={1}
-                      style={[
-                        styles.tabChipText,
-                        selected
-                          ? [styles.tabChipTextSelected, { color: tab.tone.text }]
-                          : styles.tabChipTextUnselected,
-                      ]}
-                    >
-                      {tab.label}
-                    </Text>
-                    {tab.badge ? (
-                      <View style={styles.segmentBadge}>
-                        <Text style={styles.segmentBadgeText}>{tab.badge}</Text>
-                      </View>
-                    ) : null}
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
+              <Text style={styles.summaryText}>
+                {activeTab === "listings"
+                  ? `${activeBooks.length} ${activeBooks.length === 1 ? "anúncio na estante" : "anúncios na estante"}`
+                  : activeTab === "proposals"
+                  ? `${proposals.length} ${proposals.length === 1 ? "proposta em aberto" : "propostas em aberto"}`
+                  : "Livros concluídos e entregues"}
+              </Text>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`Exibir: ${currentTabLabel}`}
+                testID="my-listings-tab-selector"
+                onPress={() => setShowTabSheet(true)}
+                style={withPress(styles.sortButton)}
+              >
+                <Text style={styles.sortText}>{currentTabLabel}</Text>
+                <AppIcon name="chevronDown" size={16} color={colors.m3.primary} />
+              </Pressable>
+            </View>
 
             {activeTab === "listings" ? (
               <>
@@ -347,6 +336,11 @@ export function MyListings({
                   onStatusFilterChange={setStatusFilter}
                   onNavigateToManageListing={guardedManageListing}
                   onShareWhatsApp={handleShareBook}
+                  onNavigateToNegotiationForBook={(bookId) => {
+                    const item = proposals.find((p) => p.listing.id === bookId);
+                    if (item) guardedNegotiationDetail(item.request.id);
+                    else guardedManageListing(bookId);
+                  }}
                 />
               </>
             ) : activeTab === "proposals" ? (
@@ -438,6 +432,13 @@ export function MyListings({
           <AppIcon name="add" size={24} color={colors.m3.onPrimaryContainer} />
         </Pressable>
       ) : null}
+      <ShelfTabSheet
+        visible={showTabSheet}
+        selected={activeTab}
+        options={tabs.map((t) => ({ key: t.key, label: t.label, badge: t.badge }))}
+        onSelect={(tab) => setActiveTab(tab)}
+        onClose={() => setShowTabSheet(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -715,8 +716,41 @@ function createStyles(colors: ColorPalette) {
       shadowRadius: 3,
       shadowOffset: { width: 0, height: 1 },
     },
+    statCardPressed: {
+      opacity: 0.88,
+      transform: [{ scale: 0.98 }],
+    },
     statCount: { ...tokens.typography.brandTitle, fontSize: 22, lineHeight: 26 },
     statLabel: { ...tokens.typography.footnote, fontWeight: tokens.fontWeight.semiBold, opacity: 0.95 },
+    // Linha de resumo e seletor da estante (estilo 'Mais recentes' do Explorar, Figma 02.04 / 05.01)
+    summaryRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: tokens.spacing[12],
+      paddingVertical: tokens.spacing[4],
+    },
+    summaryRowWide: {
+      paddingVertical: tokens.spacing[8],
+    },
+    summaryText: {
+      flex: 1,
+      ...tokens.typography.bodyMedium,
+      color: colors.m3.onSurfaceVariant,
+    },
+    sortButton: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "flex-end",
+      gap: tokens.spacing[4],
+      minHeight: tokens.accessibility.touchTarget,
+      paddingLeft: tokens.spacing[8],
+    },
+    sortText: {
+      ...tokens.typography.labelLarge,
+      color: colors.m3.primary,
+      fontWeight: tokens.fontWeight.semiBold,
+    },
     // Abas em estilo pílulas/chips com rolagem horizontal (consistente com o resto do app)
     segmentRowAndroid: { flexDirection: "row" },
     tabsScrollContent: {

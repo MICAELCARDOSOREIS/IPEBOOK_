@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { makeAuthViewModel, makeReceivedRatingsViewModel } from "@/di/container";
 import { LoadingState } from "@/view/components/LoadingState";
@@ -42,51 +42,61 @@ export function ReceivedRatings({ sessionUserId, onBack }: ReceivedRatingsProps)
   return (
     <SafeAreaView style={styles.page}>
       <TopAppBar contentMaxWidth={wide ? WIDE_CONTENT_MAX_WIDTH : undefined} title="Avaliações recebidas" onBack={guardedBack} />
-      <ScrollView
-        contentContainerStyle={[styles.scroll, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
-        {...standardVerticalScrollProps}
-      >
+      {state.loading ? (
         <View style={[styles.content, wide && styles.contentWide]}>
-          {state.loading ? (
-            <LoadingState label="Carregando avaliações" />
-          ) : state.error ? (
-            <View style={styles.status}>
-              <Text accessibilityRole="alert" style={styles.errorText}>{state.error}</Text>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Tentar novamente"
-                onPress={() => void actions.reload()}
-                style={withPress(styles.retryButton)}
-              >
-                <Text style={styles.retryText}>Tentar novamente</Text>
-              </Pressable>
-            </View>
-          ) : state.ratings.length === 0 ? (
-            <View style={styles.status}>
-              <Text style={styles.emptyText}>Você ainda não recebeu avaliações.</Text>
-            </View>
-          ) : (
-            <View style={[styles.list, wide && styles.listWide]}>
-              {state.ratings.map((rating) => {
-                const { filled, empty } = starParts(rating.score);
-                return (
-                  <View key={rating.id} style={[styles.card, wide && styles.cardWide]}>
-                    <Text
-                      accessibilityLabel={`Nota ${rating.score} de 5`}
-                      style={styles.stars}
-                    >
-                      {filled}
-                      {empty ? <Text style={styles.starsEmpty}>{empty}</Text> : null}
-                    </Text>
-                    <Text style={styles.raterName}>{rating.raterName ?? "Pessoa da comunidade"}</Text>
-                    <Text style={styles.date}>{formatDate(rating.createdAt)}</Text>
-                  </View>
-                );
-              })}
-            </View>
-          )}
+          <LoadingState label="Carregando avaliações" />
         </View>
-      </ScrollView>
+      ) : state.error ? (
+        <View style={[styles.content, wide && styles.contentWide]}>
+          <View style={styles.status}>
+            <Text accessibilityRole="alert" style={styles.errorText}>{state.error}</Text>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Tentar novamente"
+              onPress={() => void actions.reload()}
+              style={withPress(styles.retryButton)}
+            >
+              <Text style={styles.retryText}>Tentar novamente</Text>
+            </Pressable>
+          </View>
+        </View>
+      ) : state.ratings.length === 0 ? (
+        <View style={[styles.content, wide && styles.contentWide]}>
+          <View style={styles.status}>
+            <Text style={styles.emptyText}>Você ainda não recebeu avaliações.</Text>
+          </View>
+        </View>
+      ) : (
+        <FlatList
+          data={state.ratings}
+          keyExtractor={(item) => item.id}
+          {...standardVerticalScrollProps}
+          contentContainerStyle={[
+            styles.scroll,
+            styles.content,
+            wide && styles.contentWide,
+            wide && styles.listWide,
+            { paddingBottom: scrollBottomPadding.withoutBottomBar },
+          ]}
+          ItemSeparatorComponent={() => <View style={{ height: tokens.spacing[12] }} />}
+          renderItem={({ item: rating }) => {
+            const { filled, empty } = starParts(rating.score);
+            return (
+              <View style={[styles.card, wide && styles.cardWide]}>
+                <Text
+                  accessibilityLabel={`Nota ${rating.score} de 5`}
+                  style={styles.stars}
+                >
+                  {filled}
+                  {empty ? <Text style={styles.starsEmpty}>{empty}</Text> : null}
+                </Text>
+                <Text style={styles.raterName}>{rating.raterName ?? "Pessoa da comunidade"}</Text>
+                <Text style={styles.date}>{formatDate(rating.createdAt)}</Text>
+              </View>
+            );
+          }}
+        />
+      )}
     </SafeAreaView>
   );
 }

@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
+import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { type ModerationDecision, type ModerationItem, REPORT_REASON_LABEL } from "@/model/entities/moderation";
 import { makeAuthViewModel, makeModerationViewModel } from "@/di/container";
@@ -60,97 +60,105 @@ export function Moderation({ sessionUserId, onBack, onOpenListing, onOpenProfile
   return (
     <SafeAreaView style={styles.page}>
       <TopAppBar title="Moderação" onBack={guardedBack} contentMaxWidth={wide ? WEB_MAX_WIDTH : undefined} />
-      <ScrollView
+      <FlatList
         {...standardVerticalScrollProps}
-        contentContainerStyle={[styles.scroll, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
+        data={state.error || (state.loading && state.items.length === 0) ? [] : state.items}
+        keyExtractor={(item) => `${item.kind}-${item.targetId}`}
+        contentContainerStyle={[
+          styles.content,
+          wide && styles.contentWide,
+          { paddingBottom: scrollBottomPadding.withoutBottomBar },
+        ]}
         keyboardShouldPersistTaps="handled"
         refreshControl={
           <RefreshControl refreshing={false} onRefresh={() => void actions.reload()} colors={[colors.action]} tintColor={colors.action} />
         }
-      >
-        <View style={[styles.content, wide && styles.contentWide]}>
-          <Text style={styles.intro}>
-            Denúncias abertas, das mais denunciadas para as menos. Anúncios com três denúncias ficam pausados até a sua decisão.
-          </Text>
-
-          {state.loading && state.items.length === 0 ? (
-            <LoadingState label="Carregando denúncias" />
-          ) : state.error ? (
-            <View style={styles.card}>
-              <InlineErrorCard message={state.error} />
-              <Pressable accessibilityRole="button" accessibilityLabel="Tentar de novo" onPress={() => void actions.reload()} style={withPress(styles.secondary)}>
-                <Text style={styles.secondaryText}>Tentar de novo</Text>
-              </Pressable>
-            </View>
-          ) : state.items.length === 0 ? (
+        ListHeaderComponent={
+          <View style={styles.headerSection}>
+            <Text style={styles.intro}>
+              Denúncias abertas, das mais denunciadas para as menos. Anúncios com três denúncias ficam pausados até a sua decisão.
+            </Text>
+            {state.loading && state.items.length === 0 ? (
+              <LoadingState label="Carregando denúncias" />
+            ) : state.error ? (
+              <View style={styles.card}>
+                <InlineErrorCard message={state.error} />
+                <Pressable accessibilityRole="button" accessibilityLabel="Tentar de novo" onPress={() => void actions.reload()} style={withPress(styles.secondary)}>
+                  <Text style={styles.secondaryText}>Tentar de novo</Text>
+                </Pressable>
+              </View>
+            ) : null}
+          </View>
+        }
+        ListEmptyComponent={
+          !state.loading && !state.error ? (
             <View style={styles.empty}>
               <AppIcon name="checkCircle" size={36} color={colors.action} />
               <Text accessibilityRole="header" style={styles.emptyTitle}>Nenhuma denúncia aberta</Text>
               <Text style={styles.muted}>A comunidade está em dia.</Text>
             </View>
-          ) : (
-            state.items.map((item) => {
-              const busy = state.decidingId === item.targetId;
-              const isListing = item.kind === "listing";
-              return (
-                <View key={`${item.kind}-${item.targetId}`} style={styles.card} testID={`moderation-${item.targetId}`}>
-                  <View style={styles.header}>
-                    <AppIcon name={isListing ? "shelf" : "person"} size={20} color={colors.secondaryText} />
-                    <Text style={styles.kind}>{isListing ? "Anúncio" : "Pessoa"}</Text>
-                    <Text style={styles.count}>
-                      {`${item.reportCount} ${item.reportCount === 1 ? "denúncia" : "denúncias"}`}
-                    </Text>
-                  </View>
+          ) : undefined
+        }
+        renderItem={({ item }) => {
+          const busy = state.decidingId === item.targetId;
+          const isListing = item.kind === "listing";
+          return (
+            <View style={styles.card} testID={`moderation-${item.targetId}`}>
+              <View style={styles.header}>
+                <AppIcon name={isListing ? "shelf" : "person"} size={20} color={colors.secondaryText} />
+                <Text style={styles.kind}>{isListing ? "Anúncio" : "Pessoa"}</Text>
+                <Text style={styles.count}>
+                  {`${item.reportCount} ${item.reportCount === 1 ? "denúncia" : "denúncias"}`}
+                </Text>
+              </View>
+              <Pressable
+                accessibilityRole="link"
+                accessibilityLabel={`Abrir ${item.label}`}
+                onPress={() => (isListing ? guardedOpenListing(item.targetId) : guardedOpenProfile(item.targetId))}
+              >
+                <Text style={styles.label} numberOfLines={2}>{item.label}</Text>
+              </Pressable>
+              <Text style={styles.muted}>
+                {item.reasons.map((reason) => REPORT_REASON_LABEL[reason] ?? reason).join(" · ")}
+              </Text>
+              {item.details.map((detail) => (
+                <Text key={detail} style={styles.detail}>{`“${detail}”`}</Text>
+              ))}
+              <View style={styles.actions}>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`Arquivar denúncias de ${item.label}`}
+                  disabled={busy}
+                  onPress={() => void actions.decide(item, "dismiss")}
+                  style={withPress(styles.secondary)}
+                >
+                  <Text style={styles.secondaryText}>Arquivar</Text>
+                </Pressable>
+                {isListing ? (
                   <Pressable
-                    accessibilityRole="link"
-                    accessibilityLabel={`Abrir ${item.label}`}
-                    onPress={() => (isListing ? guardedOpenListing(item.targetId) : guardedOpenProfile(item.targetId))}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Remover anúncio ${item.label}`}
+                    disabled={busy}
+                    onPress={() => setPending({ item, decision: "remove_listing" })}
+                    style={withPress(styles.secondary)}
                   >
-                    <Text style={styles.label} numberOfLines={2}>{item.label}</Text>
+                    <Text style={styles.dangerText}>Remover anúncio</Text>
                   </Pressable>
-                  <Text style={styles.muted}>
-                    {item.reasons.map((reason) => REPORT_REASON_LABEL[reason] ?? reason).join(" · ")}
-                  </Text>
-                  {item.details.map((detail) => (
-                    <Text key={detail} style={styles.detail}>{`“${detail}”`}</Text>
-                  ))}
-                  <View style={styles.actions}>
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel={`Arquivar denúncias de ${item.label}`}
-                      disabled={busy}
-                      onPress={() => void actions.decide(item, "dismiss")}
-                      style={withPress(styles.secondary)}
-                    >
-                      <Text style={styles.secondaryText}>Arquivar</Text>
-                    </Pressable>
-                    {isListing ? (
-                      <Pressable
-                        accessibilityRole="button"
-                        accessibilityLabel={`Remover anúncio ${item.label}`}
-                        disabled={busy}
-                        onPress={() => setPending({ item, decision: "remove_listing" })}
-                        style={withPress(styles.secondary)}
-                      >
-                        <Text style={styles.dangerText}>Remover anúncio</Text>
-                      </Pressable>
-                    ) : null}
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel={`Suspender conta ligada a ${item.label}`}
-                      disabled={busy}
-                      onPress={() => setPending({ item, decision: "suspend_user" })}
-                      style={withPress(styles.secondary)}
-                    >
-                      <Text style={styles.dangerText}>Suspender conta</Text>
-                    </Pressable>
-                  </View>
-                </View>
-              );
-            })
-          )}
-        </View>
-      </ScrollView>
+                ) : null}
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`Suspender conta ligada a ${item.label}`}
+                  disabled={busy}
+                  onPress={() => setPending({ item, decision: "suspend_user" })}
+                  style={withPress(styles.secondary)}
+                >
+                  <Text style={styles.dangerText}>Suspender conta</Text>
+                </Pressable>
+              </View>
+            </View>
+          );
+        }}
+      />
 
       <Dialog
         visible={pending !== null}
@@ -180,6 +188,7 @@ function createStyles(colors: ColorPalette) {
     scroll: { flexGrow: 1 },
     content: { width: "100%", padding: tokens.spacing[24], gap: tokens.spacing[16] },
     contentWide: { maxWidth: WEB_MAX_WIDTH, alignSelf: "center", paddingHorizontal: WEB_GUTTER },
+    headerSection: { gap: tokens.spacing[16], marginBottom: tokens.spacing[16] },
     intro: { ...tokens.typography.bodyMedium, color: colors.secondaryText },
     card: {
       backgroundColor: colors.surface,

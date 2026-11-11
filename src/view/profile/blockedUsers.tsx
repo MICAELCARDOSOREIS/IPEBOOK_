@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { makeAuthViewModel, makeBlockedUsersViewModel } from "@/di/container";
 import { Avatar } from "@/view/components/Avatar";
@@ -48,58 +48,77 @@ export function BlockedUsers({ onBack }: BlockedUsersProps) {
   return (
     <SafeAreaView style={styles.page}>
       <TopAppBar contentMaxWidth={wide ? WIDE_CONTENT_MAX_WIDTH : undefined} title="Pessoas bloqueadas" onBack={guardedBack} />
-      <ScrollView
-        contentContainerStyle={[styles.scroll, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
-        {...standardVerticalScrollProps}
-      >
+      {state.loading ? (
         <View style={[styles.content, wide && styles.contentWide]}>
           <Text style={styles.introText}>
             Pessoas bloqueadas não podem visualizar seus anúncios, enviar propostas de livros nem combinar encontros com você em Piripiri.
           </Text>
-
-          {state.loading ? (
-            <LoadingState label="Carregando pessoas bloqueadas" variant="conversations" />
-          ) : state.error ? (
-            <ErrorState message={state.error} onRetry={() => void actions.reload()} />
-          ) : state.blockedUsers.length === 0 ? (
-            <View style={styles.emptyContainer}>
-              <View style={styles.emptyIconCircle}>
-                <AppIcon name="lock" size={32} color={colors.secondaryText} />
-              </View>
-              <Text accessibilityRole="header" style={styles.emptyTitle}>
-                Nenhuma pessoa bloqueada
-              </Text>
-              <Text style={styles.emptySubtitle}>
-                Você não possui pessoas bloqueadas no momento.
-              </Text>
+          <LoadingState label="Carregando pessoas bloqueadas" variant="conversations" />
+        </View>
+      ) : state.error ? (
+        <View style={[styles.content, wide && styles.contentWide]}>
+          <Text style={styles.introText}>
+            Pessoas bloqueadas não podem visualizar seus anúncios, enviar propostas de livros nem combinar encontros com você em Piripiri.
+          </Text>
+          <ErrorState message={state.error} onRetry={() => void actions.reload()} />
+        </View>
+      ) : state.blockedUsers.length === 0 ? (
+        <View style={[styles.content, wide && styles.contentWide]}>
+          <Text style={styles.introText}>
+            Pessoas bloqueadas não podem visualizar seus anúncios, enviar propostas de livros nem combinar encontros com você em Piripiri.
+          </Text>
+          <View style={styles.emptyContainer}>
+            <View style={styles.emptyIconCircle}>
+              <AppIcon name="lock" size={32} color={colors.secondaryText} />
             </View>
-          ) : (
-            <View style={[styles.list, wide && styles.listWide]}>
-              {state.blockedUsers.map((item) => (
-                <View key={item.userId} style={[styles.card, wide && styles.cardWide]}>
-                  <View style={styles.userRow}>
-                    <Avatar name={item.name} photoUrl={item.photoUrl} size={40} />
-                    <View style={styles.userText}>
-                      <Text style={styles.userName}>{item.name}</Text>
-                      <Text style={styles.blockedDate}>Bloqueado na comunidade</Text>
-                    </View>
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel={`Desbloquear ${item.name}`}
-                      accessibilityState={{ disabled: state.unblockingId === item.userId }}
-                      disabled={state.unblockingId === item.userId}
-                      onPress={() => setTargetToUnblock(item)}
-                      style={withPress(styles.unblockButton)}
-                    >
-                      <Text style={styles.unblockButtonText}>Desbloquear</Text>
-                    </Pressable>
-                  </View>
+            <Text accessibilityRole="header" style={styles.emptyTitle}>
+              Nenhuma pessoa bloqueada
+            </Text>
+            <Text style={styles.emptySubtitle}>
+              Você não possui pessoas bloqueadas no momento.
+            </Text>
+          </View>
+        </View>
+      ) : (
+        <FlatList
+          data={state.blockedUsers}
+          keyExtractor={(item) => item.userId}
+          {...standardVerticalScrollProps}
+          contentContainerStyle={[
+            styles.content,
+            wide && styles.contentWide,
+            wide && styles.listWide,
+            { paddingBottom: scrollBottomPadding.withoutBottomBar },
+          ]}
+          ListHeaderComponent={
+            <Text style={styles.introText}>
+              Pessoas bloqueadas não podem visualizar seus anúncios, enviar propostas de livros nem combinar encontros com você em Piripiri.
+            </Text>
+          }
+          ItemSeparatorComponent={() => <View style={{ height: tokens.spacing[12] }} />}
+          renderItem={({ item }) => (
+            <View style={[styles.card, wide && styles.cardWide]}>
+              <View style={styles.userRow}>
+                <Avatar name={item.name} photoUrl={item.photoUrl} size={40} />
+                <View style={styles.userText}>
+                  <Text style={styles.userName}>{item.name}</Text>
+                  <Text style={styles.blockedDate}>Bloqueado na comunidade</Text>
                 </View>
-              ))}
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`Desbloquear ${item.name}`}
+                  accessibilityState={{ disabled: state.unblockingId === item.userId }}
+                  disabled={state.unblockingId === item.userId}
+                  onPress={() => setTargetToUnblock(item)}
+                  style={withPress(styles.unblockButton)}
+                >
+                  <Text style={styles.unblockButtonText}>Desbloquear</Text>
+                </Pressable>
+              </View>
             </View>
           )}
-        </View>
-      </ScrollView>
+        />
+      )}
 
       <Dialog
         visible={targetToUnblock !== null}

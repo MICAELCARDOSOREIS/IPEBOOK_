@@ -442,7 +442,7 @@ describe("Meu perfil — hub de navegação (Figma 07.01)", () => {
     expect(screen.getByText("troca")).toBeDefined();
   });
 
-  it("exibe a seção de Selos Comunitários de Piripiri com acessibilidade (Spec 122)", async () => {
+  it("prioriza a identidade e os menus sem redundância de selos no perfil principal", async () => {
     mockAuth({ id: "ana", email: "ana@exemplo.com" });
     mockProfile(fakeProfile);
     mockPreferences("Petecas");
@@ -452,10 +452,8 @@ describe("Meu perfil — hub de navegação (Figma 07.01)", () => {
       screen = await render(<ProfileHub {...baseProps()} />);
     });
 
-    expect(screen.getByText("Selos Comunitários de Piripiri")).toBeDefined();
-    expect(screen.getByText("Leitor de Piripiri")).toBeDefined();
-    expect(screen.getByText("Estante Ativa")).toBeDefined();
-    expect(screen.getByText("Ponto Seguro")).toBeDefined();
-    expect(screen.getByLabelText("Selo Leitor de Piripiri: Petecas")).toBeDefined();
+    expect(screen.queryByText("Selos Comunitários de Piripiri")).toBeNull();
+    expect(screen.getByText("Atividade")).toBeDefined();
+    expect(screen.getByText("Conta")).toBeDefined();
   });
 });

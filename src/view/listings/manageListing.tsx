@@ -1,25 +1,24 @@
 import { useMemo, useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
+import { makeManageListingViewModel, makeShareListingViewModel } from "@/di/container";
 import { BOOK_CONDITION_LABELS } from "@/model/entities/book";
-import { tokens, type ColorPalette } from "@/view/tokens";
-import { useTheme } from "@/view/theme/ThemeProvider";
-import { formatPrice } from "@/view/formatPrice";
 import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
-import { Breadcrumb } from "@/view/components/Breadcrumb";
 import { BookCover } from "@/view/components/BookCover";
+import { Breadcrumb } from "@/view/components/Breadcrumb";
 import { Dialog } from "@/view/components/Dialog";
 import { ErrorState } from "@/view/components/ErrorState";
 import { InlineErrorCard } from "@/view/components/InlineErrorCard";
 import { LoadingState } from "@/view/components/LoadingState";
+import { ScreenContainer } from "@/view/components/ScreenContainer";
 import { Tag } from "@/view/components/Tag";
 import { TextButton } from "@/view/components/TextButton";
-import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { TopAppBar } from "@/view/components/TopAppBar";
-import { makeManageListingViewModel, makeShareListingViewModel } from "@/di/container";
-import { WEB_GUTTER } from "@/view/webLayout";
+import { formatPrice } from "@/view/formatPrice";
+import { useTheme } from "@/view/theme/ThemeProvider";
+import { type ColorPalette, tokens } from "@/view/tokens";
 import { useGuardedPress } from "@/view/useGuardedPress";
-import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
+import { WEB_GUTTER } from "@/view/webLayout";
 
 export type ManageListingProps = {
   bookId: string;
@@ -93,26 +92,32 @@ export default function ManageListing({
 
   if (state.loading) {
     return (
-      <SafeAreaView style={styles.page}>
-        <TopAppBar contentMaxWidth={contentMaxWidth} title="Gerenciar anúncio" onBack={guardedBack} />
+      <ScreenContainer
+        maxWidth={contentMaxWidth}
+        header={<TopAppBar contentMaxWidth={contentMaxWidth} title="Gerenciar anúncio" onBack={guardedBack} />}
+        scroll={false}
+      >
         <View style={styles.loadingContainer}>
           <LoadingState label="Carregando anúncio" variant="manage" />
         </View>
-      </SafeAreaView>
+      </ScreenContainer>
     );
   }
 
   if (!state.book) {
     return (
-      <SafeAreaView style={styles.page}>
-        <TopAppBar contentMaxWidth={contentMaxWidth} title="Gerenciar anúncio" onBack={guardedBack} />
+      <ScreenContainer
+        maxWidth={contentMaxWidth}
+        header={<TopAppBar contentMaxWidth={contentMaxWidth} title="Gerenciar anúncio" onBack={guardedBack} />}
+        scroll={false}
+      >
         <View style={styles.loadingContainer}>
           <ErrorState
             message={state.error ?? "Não foi possível carregar o anúncio."}
             onRetry={() => void actions.load()}
           />
         </View>
-      </SafeAreaView>
+      </ScreenContainer>
     );
   }
 
@@ -121,12 +126,21 @@ export default function ManageListing({
   const reserved = book.status === "reserved" || book.status === "delivered";
   const location = [book.neighborhood, book.city, book.state].filter(Boolean).join(" · ");
 
-  const statusConfig: { title: string; hint: string; icon: AppIconName; tone: "active" | "paused" | "reserved" | "delivered" } = paused
+  const statusConfig: {
+    title: string;
+    hint: string;
+    icon: AppIconName;
+    tone: "active" | "paused" | "reserved" | "delivered";
+    iconColor: string;
+    badgeBg: string;
+  } = paused
     ? {
         title: "Anúncio pausado",
         hint: `${book.title} não aparece no catálogo enquanto estiver pausado.`,
         icon: "archive",
         tone: "paused",
+        iconColor: colors.secondaryText,
+        badgeBg: colors.m3.surfaceContainerLow,
       }
     : book.status === "delivered"
     ? {
@@ -134,6 +148,8 @@ export default function ManageListing({
         hint: `${book.title} foi entregue e saiu do catálogo. Ciclo concluído com sucesso!`,
         icon: "checkCircle",
         tone: "delivered",
+        iconColor: colors.nature.foliage,
+        badgeBg: colors.nature.sprout,
       }
     : reserved
     ? {
@@ -141,277 +157,366 @@ export default function ManageListing({
         hint: `${book.title} está reservado para uma negociação aceita.`,
         icon: "swap",
         tone: "reserved",
+        iconColor: colors.actionDeep,
+        badgeBg: colors.ipe.container,
       }
     : {
         title: "Anúncio ativo",
         hint: `${book.title} está disponível para leitores de Piripiri.`,
         icon: "checkCircle",
         tone: "active",
+        iconColor: colors.nature.foliage,
+        badgeBg: colors.nature.sprout,
       };
 
+  const bookSummaryA11y = `Resumo do anúncio: ${book.title}, de ${book.author}. Modalidade: ${
+    book.modality === "sale"
+      ? `Venda por ${formatPrice(book.price ?? 0)}`
+      : book.modality === "trade"
+      ? "Disponível para troca"
+      : "Disponível para doação"
+  }. Conservação: ${book.condition ? BOOK_CONDITION_LABELS[book.condition] : "não especificada"}.${
+    location ? ` Localização: ${location}.` : ""
+  }`;
+
   return (
-    <SafeAreaView style={styles.page}>
-      <TopAppBar contentMaxWidth={contentMaxWidth} title="Gerenciar anúncio" onBack={guardedBack} />
-      <ScrollView
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
-        {...standardVerticalScrollProps}
-      >
-        <View style={[styles.content, wide && styles.contentWide]}>
-          {wide ? (
-            <Breadcrumb
-              items={[
-                { label: "Estante", onPress: guardedBack, accessibilityLabel: "Voltar para Estante" },
-                { label: book.title, isCurrent: true },
-              ]}
-              style={styles.breadcrumb}
-            />
-          ) : null}
-          <Text accessibilityRole="header" style={styles.title}>Seu livro, suas escolhas.</Text>
+    <ScreenContainer
+      maxWidth={contentMaxWidth}
+      header={<TopAppBar contentMaxWidth={contentMaxWidth} title="Gerenciar anúncio" onBack={guardedBack} />}
+      contentStyle={styles.containerContent}
+    >
+      <View style={[styles.content, wide && styles.contentWide]}>
+        {wide ? (
+          <Breadcrumb
+            items={[
+              { label: "Estante", onPress: guardedBack, accessibilityLabel: "Voltar para Estante" },
+              { label: book.title, isCurrent: true },
+            ]}
+            style={styles.breadcrumb}
+          />
+        ) : null}
+
+        {/* Cabeçalho Ergonômico: compacto e escaneável */}
+        <View style={styles.headerBlock}>
+          <Text accessibilityRole="header" style={styles.title}>
+            Seu livro, suas escolhas.
+          </Text>
           <Text style={styles.subtitle}>Acompanhe e atualize esta publicação.</Text>
+        </View>
 
-          {shareState.linkCopied ? (
-            <View style={styles.toastBanner} accessibilityRole="alert">
-              <AppIcon name="checkCircle" size={18} color={colors.nature.foliage} />
-              <Text style={styles.toastBannerText}>Link do anúncio copiado para a área de transferência!</Text>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Fechar aviso"
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                onPress={shareActions.dismissLinkCopied}
-              >
-                <AppIcon name="close" size={16} color={colors.secondaryText} />
-              </Pressable>
-            </View>
-          ) : null}
+        {shareState.linkCopied ? (
+          <View
+            style={styles.toastBanner}
+            accessibilityRole="alert"
+            accessibilityLiveRegion="assertive"
+          >
+            <AppIcon name="checkCircle" size={20} color={colors.nature.foliage} />
+            <Text style={styles.toastBannerText}>Link do anúncio copiado para a área de transferência!</Text>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Fechar aviso"
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              onPress={shareActions.dismissLinkCopied}
+              style={styles.toastCloseButton}
+            >
+              <AppIcon name="close" size={18} color={colors.secondaryText} />
+            </Pressable>
+          </View>
+        ) : null}
 
-          <View style={[styles.columns, wide && styles.columnsWide]}>
-            {/* Coluna da Esquerda: Resumo do Livro e Status Atual */}
-            <View style={[styles.column, wide && styles.columnHalf]}>
-              <View style={styles.bookCard}>
-                <View style={styles.bookRow}>
-                  <BookCover
-                    id={book.id}
-                    title={book.title}
-                    photoUrl={book.photoUrl}
-                    variant="list"
-                    showRibbon={true}
-                  />
-                  <View style={styles.bookTexts}>
-                    <Text style={styles.bookTitle}>{book.title}</Text>
-                    <Text style={styles.bookAuthor}>{book.author}</Text>
-                    <View style={styles.tagRow}>
-                      <Tag variant={book.modality} />
-                      {book.price !== undefined ? (
-                        <Text style={styles.price}>{formatPrice(book.price)}</Text>
-                      ) : null}
-                    </View>
-                    {book.condition ? (
-                      <Text style={styles.bookMeta}>{BOOK_CONDITION_LABELS[book.condition]}</Text>
+        <View style={[styles.columns, wide && styles.columnsWide]}>
+          {/* Coluna da Esquerda: Resumo do Livro e Status Atual */}
+          <View style={[styles.column, wide && styles.columnHalf]}>
+            {/* Card com Resumo do Livro */}
+            <View
+              style={styles.bookCard}
+              accessible={true}
+              accessibilityRole="summary"
+              accessibilityLabel={bookSummaryA11y}
+            >
+              <View style={styles.bookRow}>
+                <BookCover
+                  id={book.id}
+                  title={book.title}
+                  photoUrl={book.photoUrl}
+                  variant="list"
+                  showRibbon={true}
+                />
+                <View style={styles.bookTexts}>
+                  <Text style={styles.bookTitle} numberOfLines={2}>
+                    {book.title}
+                  </Text>
+                  <Text style={styles.bookAuthor} numberOfLines={1}>
+                    {book.author}
+                  </Text>
+                  <View style={styles.tagRow}>
+                    <Tag variant={book.modality} />
+                    {book.price !== undefined ? (
+                      <Text style={styles.price}>{formatPrice(book.price)}</Text>
                     ) : null}
-                    {location ? <Text style={styles.bookMeta}>{location}</Text> : null}
                   </View>
-                </View>
-
-                {/* Métricas rápidas do livro */}
-                <View style={styles.statsRow}>
-                  <View style={styles.statPill}>
-                    <AppIcon
-                      name={book.modality === "trade" ? "swap" : book.modality === "sale" ? "category" : "heart"}
-                      size={16}
-                      color={colors.action}
-                    />
-                    <Text style={styles.statPillText}>
-                      {book.modality === "trade"
-                        ? "Disponível para troca"
-                        : book.modality === "sale"
-                        ? "Disponível para compra"
-                        : "Disponível para doação"}
+                  {book.condition ? (
+                    <Text style={styles.bookMeta}>{BOOK_CONDITION_LABELS[book.condition]}</Text>
+                  ) : null}
+                  {location ? (
+                    <Text style={styles.bookMeta} numberOfLines={1}>
+                      {location}
                     </Text>
-                  </View>
-                  {book.neighborhood ? (
-                    <View style={styles.statPill}>
-                      <AppIcon name="place" size={16} color={colors.action} />
-                      <Text style={styles.statPillText}>{book.neighborhood}</Text>
-                    </View>
                   ) : null}
                 </View>
               </View>
 
-              <View
-                style={[
-                  styles.statusBox,
-                  statusConfig.tone === "paused" && styles.statusBoxPaused,
-                  statusConfig.tone === "reserved" && styles.statusBoxReserved,
-                  statusConfig.tone === "active" && styles.statusBoxActive,
-                ]}
-              >
-                <View style={styles.statusHeader}>
+              {/* Informações rápidas em pílulas */}
+              <View style={styles.statsRow}>
+                <View style={styles.statPill}>
+                  <AppIcon
+                    name={book.modality === "trade" ? "swap" : book.modality === "sale" ? "category" : "heart"}
+                    size={16}
+                    color={colors.action}
+                  />
+                  <Text style={styles.statPillText}>
+                    {book.modality === "trade"
+                      ? "Disponível para troca"
+                      : book.modality === "sale"
+                      ? "Disponível para compra"
+                      : "Disponível para doação"}
+                  </Text>
+                </View>
+                {book.neighborhood ? (
+                  <View style={styles.statPill}>
+                    <AppIcon name="place" size={16} color={colors.action} />
+                    <Text style={styles.statPillText}>{book.neighborhood}</Text>
+                  </View>
+                ) : null}
+              </View>
+            </View>
+
+            {/* Caixa de Status do Anúncio */}
+            <View
+              accessible={true}
+              accessibilityRole="region"
+              accessibilityLiveRegion="polite"
+              accessibilityLabel={`Status do anúncio: ${statusConfig.title}. ${statusConfig.hint}`}
+              style={[
+                styles.statusBox,
+                statusConfig.tone === "paused" && styles.statusBoxPaused,
+                statusConfig.tone === "reserved" && styles.statusBoxReserved,
+                statusConfig.tone === "active" && styles.statusBoxActive,
+              ]}
+            >
+              <View style={styles.statusHeader}>
+                <View style={[styles.statusIconBadge, { backgroundColor: statusConfig.badgeBg }]}>
                   <AppIcon
                     name={statusConfig.icon}
                     size={20}
-                    color={
-                      statusConfig.tone === "active"
-                        ? colors.nature.foliage
-                        : statusConfig.tone === "reserved"
-                        ? colors.actionDeep
-                        : colors.secondaryText
-                    }
+                    color={statusConfig.iconColor}
                   />
-                  <Text style={styles.statusTitle}>{statusConfig.title}</Text>
                 </View>
-                <Text style={styles.statusHint}>{statusConfig.hint}</Text>
+                <View style={styles.statusTitleGroup}>
+                  <Text style={styles.statusTitle}>{statusConfig.title}</Text>
+                  <Text style={styles.statusBadgeSubtitle}>Situação no catálogo</Text>
+                </View>
               </View>
+              <Text style={styles.statusHint}>{statusConfig.hint}</Text>
+            </View>
+          </View>
+
+          {/* Coluna da Direita: Ações de Gerenciamento Agrupadas */}
+          <View style={[styles.column, wide && styles.columnHalf]}>
+            {state.error ? <InlineErrorCard message={state.error} /> : null}
+
+            {/* Grupo 1: Edição e Visualização */}
+            <View style={styles.actionGroup}>
+              <Text accessibilityRole="header" style={styles.sectionHeaderTitle}>
+                Edição e visualização
+              </Text>
+
+              {/* 1. Editar Anúncio */}
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Editar anúncio"
+                accessibilityHint="Abre o formulário para alterar fotos, preço, descrição e estado de conservação."
+                accessibilityState={{ disabled: reserved }}
+                disabled={reserved}
+                onPress={() => guardedEdit(book.id)}
+                style={({ pressed }) => [
+                  styles.actionCard,
+                  reserved && styles.actionCardDisabled,
+                  pressed && !reserved && styles.actionCardPressed,
+                ]}
+              >
+                <View style={[styles.actionIconWrapper, { backgroundColor: colors.soft }]}>
+                  <AppIcon name="edit" size={22} color={reserved ? colors.secondaryText : colors.action} />
+                </View>
+                <View style={styles.actionTexts}>
+                  <Text style={[styles.actionTitle, reserved && styles.textDisabled]}>Editar anúncio</Text>
+                  <Text style={styles.actionHint}>
+                    {reserved
+                      ? "Edição bloqueada durante negociação ativa."
+                      : "Atualize fotos, preço, descrição e estado de conservação."}
+                  </Text>
+                </View>
+                <AppIcon name="chevronRight" size={20} color={colors.secondaryText} />
+              </Pressable>
+
+              {/* 2. Ver Anúncio Como Leitor */}
+              {onViewPublicListing ? (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Ver anúncio como leitor"
+                  accessibilityHint="Abre a visualização do anúncio como os outros leitores o veem no catálogo."
+                  onPress={() => guardedViewPublic(book.id)}
+                  style={({ pressed }) => [
+                    styles.actionCard,
+                    pressed && styles.actionCardPressed,
+                  ]}
+                >
+                  <View style={[styles.actionIconWrapper, { backgroundColor: colors.soft }]}>
+                    <AppIcon name="visibility" size={22} color={colors.action} />
+                  </View>
+                  <View style={styles.actionTexts}>
+                    <Text style={styles.actionTitle}>Ver como leitor</Text>
+                    <Text style={styles.actionHint}>Visualize a página pública do livro no catálogo.</Text>
+                  </View>
+                  <AppIcon name="chevronRight" size={20} color={colors.secondaryText} />
+                </Pressable>
+              ) : null}
             </View>
 
-            {/* Coluna da Direita: Ações de Gerenciamento */}
-            <View style={[styles.column, wide && styles.columnHalf]}>
-              {state.error ? <InlineErrorCard message={state.error} /> : null}
+            {/* Grupo 2: Divulgação e Compartilhamento */}
+            <View style={styles.actionGroup}>
+              <Text accessibilityRole="header" style={styles.sectionHeaderTitle}>
+                Divulgar e compartilhar
+              </Text>
 
-              <View style={styles.actionsContainer}>
-                {/* 1. Editar Anúncio */}
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel="Editar anúncio"
-                  accessibilityState={{ disabled: reserved }}
-                  disabled={reserved}
-                  onPress={() => guardedEdit(book.id)}
-                  style={({ pressed }) => [
-                    styles.actionCard,
-                    reserved && styles.actionCardDisabled,
-                    pressed && !reserved && styles.actionCardPressed,
+              {/* 3. Divulgar no WhatsApp */}
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Divulgar no WhatsApp"
+                accessibilityHint="Abre o WhatsApp com mensagem formatada para enviar a grupos ou status de Piripiri."
+                onPress={() => void handleShareWhatsApp()}
+                style={({ pressed }) => [
+                  styles.actionCard,
+                  pressed && styles.actionCardPressed,
+                ]}
+              >
+                <View style={[styles.actionIconWrapper, { backgroundColor: colors.nature.sprout }]}>
+                  <AppIcon name="whatsapp" size={22} color={colors.nature.foliage} />
+                </View>
+                <View style={styles.actionTexts}>
+                  <Text style={styles.actionTitle}>Divulgar no WhatsApp</Text>
+                  <Text style={styles.actionHint}>Envie direto para status e grupos de Piripiri.</Text>
+                </View>
+                <AppIcon name="chevronRight" size={20} color={colors.secondaryText} />
+              </Pressable>
+
+              {/* 4. Compartilhar Anúncio */}
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Compartilhar anúncio"
+                accessibilityHint="Abre o menu para copiar link ou enviar anúncio por outros aplicativos."
+                onPress={() => void handleShare()}
+                style={({ pressed }) => [
+                  styles.actionCard,
+                  pressed && styles.actionCardPressed,
+                ]}
+              >
+                <View style={[styles.actionIconWrapper, { backgroundColor: colors.m3.surfaceContainerLow }]}>
+                  <AppIcon name="share" size={22} color={colors.action} />
+                </View>
+                <View style={styles.actionTexts}>
+                  <Text style={styles.actionTitle}>Compartilhar anúncio</Text>
+                  <Text style={styles.actionHint}>Copie o link ou envie por outros aplicativos.</Text>
+                </View>
+                <AppIcon name="chevronRight" size={20} color={colors.secondaryText} />
+              </Pressable>
+            </View>
+
+            {/* Grupo 3: Disponibilidade e Visibilidade */}
+            <View style={styles.actionGroup}>
+              <Text accessibilityRole="header" style={styles.sectionHeaderTitle}>
+                Disponibilidade no catálogo
+              </Text>
+
+              {/* 5. Pausar ou Retomar Publicação */}
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={paused ? "Retomar anúncio" : "Pausar anúncio"}
+                accessibilityHint={
+                  paused
+                    ? "Reativa este anúncio para voltar a ser encontrado pelos leitores."
+                    : "Oculta temporariamente este livro das buscas e do catálogo sem apagá-lo."
+                }
+                accessibilityState={{ disabled: state.busy || reserved }}
+                disabled={state.busy || reserved}
+                onPress={() => void actions.togglePause()}
+                style={({ pressed }) => [
+                  styles.actionCard,
+                  (state.busy || reserved) && styles.actionCardDisabled,
+                  pressed && !(state.busy || reserved) && styles.actionCardPressed,
+                ]}
+              >
+                <View
+                  style={[
+                    styles.actionIconWrapper,
+                    {
+                      backgroundColor: paused
+                        ? colors.nature.sprout
+                        : colors.m3.surfaceContainerLow,
+                    },
                   ]}
                 >
-                  <View style={styles.actionIconWrapper}>
-                    <AppIcon name="edit" size={22} color={reserved ? colors.secondaryText : colors.action} />
-                  </View>
-                  <View style={styles.actionTexts}>
-                    <Text style={[styles.actionTitle, reserved && styles.textDisabled]}>Editar anúncio</Text>
-                    <Text style={styles.actionHint}>
-                      {reserved
-                        ? "Edição bloqueada durante negociação ativa."
-                        : "Atualize fotos, preço, descrição e estado de conservação."}
-                    </Text>
-                  </View>
-                  <AppIcon name="chevronRight" size={20} color={colors.secondaryText} />
-                </Pressable>
+                  {state.busy ? (
+                    <ActivityIndicator size="small" color={colors.action} />
+                  ) : (
+                    <AppIcon
+                      name={paused ? "unarchive" : "archive"}
+                      size={22}
+                      color={reserved ? colors.secondaryText : paused ? colors.nature.foliage : colors.action}
+                    />
+                  )}
+                </View>
+                <View style={styles.actionTexts}>
+                  <Text style={[styles.actionTitle, (state.busy || reserved) && styles.textDisabled]}>
+                    {paused ? "Retomar anúncio" : "Pausar anúncio"}
+                  </Text>
+                  <Text style={styles.actionHint}>
+                    {paused
+                      ? "O livro volta a aparecer no catálogo e nas buscas."
+                      : "Oculta temporariamente do catálogo sem excluir o livro."}
+                  </Text>
+                </View>
+                <AppIcon name="chevronRight" size={20} color={colors.secondaryText} />
+              </Pressable>
+            </View>
 
-                {/* 2. Ver Anúncio Como Leitor */}
-                {onViewPublicListing ? (
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel="Ver anúncio como leitor"
-                    onPress={() => guardedViewPublic(book.id)}
-                    style={({ pressed }) => [
-                      styles.actionCard,
-                      pressed && styles.actionCardPressed,
-                    ]}
-                  >
-                    <View style={styles.actionIconWrapper}>
-                      <AppIcon name="visibility" size={22} color={colors.action} />
-                    </View>
-                    <View style={styles.actionTexts}>
-                      <Text style={styles.actionTitle}>Ver como leitor</Text>
-                      <Text style={styles.actionHint}>Visualize a página pública do livro no catálogo.</Text>
-                    </View>
-                    <AppIcon name="chevronRight" size={20} color={colors.secondaryText} />
-                  </Pressable>
-                ) : null}
-
-                {/* 3. Divulgar no WhatsApp */}
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel="Divulgar no WhatsApp"
-                  onPress={() => void handleShareWhatsApp()}
-                  style={({ pressed }) => [
-                    styles.actionCard,
-                    pressed && styles.actionCardPressed,
-                  ]}
-                >
-                  <View style={[styles.actionIconWrapper, { backgroundColor: colors.nature.sprout }]}>
-                    <AppIcon name="whatsapp" size={22} color={colors.nature.foliage} />
-                  </View>
-                  <View style={styles.actionTexts}>
-                    <Text style={styles.actionTitle}>Divulgar no WhatsApp</Text>
-                    <Text style={styles.actionHint}>Envie direto para status e grupos de Piripiri.</Text>
-                  </View>
-                  <AppIcon name="chevronRight" size={20} color={colors.secondaryText} />
-                </Pressable>
-
-                {/* 4. Compartilhar Anúncio */}
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel="Compartilhar anúncio"
-                  onPress={() => void handleShare()}
-                  style={({ pressed }) => [
-                    styles.actionCard,
-                    pressed && styles.actionCardPressed,
-                  ]}
-                >
-                  <View style={styles.actionIconWrapper}>
-                    <AppIcon name="share" size={22} color={colors.action} />
-                  </View>
-                  <View style={styles.actionTexts}>
-                    <Text style={styles.actionTitle}>Compartilhar anúncio</Text>
-                    <Text style={styles.actionHint}>Copie o link ou envie por outros aplicativos.</Text>
-                  </View>
-                  <AppIcon name="chevronRight" size={20} color={colors.secondaryText} />
-                </Pressable>
-
-                {/* 4. Pausar ou Retomar Publicação */}
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={paused ? "Retomar anúncio" : "Pausar anúncio"}
-                  accessibilityState={{ disabled: state.busy || reserved }}
-                  disabled={state.busy || reserved}
-                  onPress={() => void actions.togglePause()}
-                  style={({ pressed }) => [
-                    styles.actionCard,
-                    (state.busy || reserved) && styles.actionCardDisabled,
-                    pressed && !(state.busy || reserved) && styles.actionCardPressed,
-                  ]}
-                >
-                  <View style={styles.actionIconWrapper}>
-                    {state.busy ? (
-                      <ActivityIndicator size="small" color={colors.action} />
-                    ) : (
-                      <AppIcon
-                        name={paused ? "unarchive" : "archive"}
-                        size={22}
-                        color={reserved ? colors.secondaryText : colors.action}
-                      />
-                    )}
-                  </View>
-                  <View style={styles.actionTexts}>
-                    <Text style={[styles.actionTitle, (state.busy || reserved) && styles.textDisabled]}>
-                      {paused ? "Retomar anúncio" : "Pausar anúncio"}
-                    </Text>
-                    <Text style={styles.actionHint}>
-                      {paused
-                        ? "O livro volta a aparecer no catálogo e nas buscas."
-                        : "Oculta temporariamente do catálogo sem excluir o livro."}
-                    </Text>
-                  </View>
-                  <AppIcon name="chevronRight" size={20} color={colors.secondaryText} />
-                </Pressable>
+            {/* Grupo 4: Zona de Perigo / Exclusão Definitiva */}
+            <View style={styles.dangerZone}>
+              <View style={styles.dangerZoneHeader}>
+                <AppIcon name="delete" size={18} color={colors.error} />
+                <Text style={styles.dangerZoneTitle}>Zona de exclusão</Text>
               </View>
-
-              <View style={styles.deleteSection}>
+              <Text style={styles.dangerZoneDescription}>
+                Remover o livro cancela a publicação de forma definitiva e o retira da sua estante.
+              </Text>
+              <View style={styles.deleteButtonContainer}>
                 <TextButton
                   label="Excluir anúncio"
                   tone="danger"
+                  accessibilityLabel="Excluir anúncio"
                   disabled={state.busy || reserved}
                   onPress={() => setConfirmingRemoval(true)}
                 />
-                {reserved ? (
-                  <Text style={styles.deleteHint}>
-                    Conclua ou cancele a negociação em andamento para excluir este anúncio.
-                  </Text>
-                ) : null}
               </View>
+              {reserved ? (
+                <Text style={styles.deleteHint}>
+                  Conclua ou cancele a negociação em andamento para excluir este anúncio.
+                </Text>
+              ) : null}
             </View>
           </View>
         </View>
-      </ScrollView>
+      </View>
 
       <Dialog
         visible={confirmingRemoval}
@@ -424,35 +529,34 @@ export default function ManageListing({
         onConfirm={() => void handleRemove()}
         onCancel={() => setConfirmingRemoval(false)}
       />
-    </SafeAreaView>
+    </ScreenContainer>
   );
 }
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
-    page: { flex: 1, backgroundColor: colors.background },
-    loadingContainer: { flex: 1, padding: tokens.spacing[16] },
-    scrollContent: { padding: tokens.spacing[16], paddingBottom: tokens.spacing[48] },
+    loadingContainer: { flex: 1, padding: tokens.spacing[16], justifyContent: "center" },
+    containerContent: { paddingBottom: tokens.spacing[40] },
     content: { width: "100%", maxWidth: 560, alignSelf: "center", gap: tokens.spacing[16] },
     contentWide: { maxWidth: 1040, paddingHorizontal: WEB_GUTTER },
-    breadcrumb: { marginBottom: tokens.spacing[8] },
-    columns: { gap: tokens.spacing[16] },
-    columnsWide: { flexDirection: "row", alignItems: "flex-start", gap: tokens.spacing[24] },
-    column: { gap: tokens.spacing[16] },
-    columnHalf: { flex: 1 },
+    breadcrumb: { marginBottom: tokens.spacing[4] },
+    headerBlock: {
+      gap: tokens.spacing[4],
+      paddingVertical: tokens.spacing[4],
+    },
     title: {
-      ...tokens.typography.displayLarge,
+      ...tokens.typography.headlineMedium,
       color: colors.text,
     },
     subtitle: {
-      ...tokens.typography.bodyLarge,
+      ...tokens.typography.bodyMedium,
       color: colors.secondaryText,
     },
     toastBanner: {
       flexDirection: "row",
       alignItems: "center",
-      gap: tokens.spacing[8],
-      backgroundColor: colors.m3.surfaceContainerHigh,
+      gap: tokens.spacing[10],
+      backgroundColor: colors.nature.sprout,
       borderWidth: 1,
       borderColor: colors.nature.foliage,
       borderRadius: tokens.radius.cardSmall,
@@ -463,9 +567,19 @@ function createStyles(colors: ColorPalette) {
       color: colors.text,
       flex: 1,
     },
+    toastCloseButton: {
+      minWidth: 32,
+      minHeight: 32,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    columns: { gap: tokens.spacing[16] },
+    columnsWide: { flexDirection: "row", alignItems: "flex-start", gap: tokens.spacing[24] },
+    column: { gap: tokens.spacing[16] },
+    columnHalf: { flex: 1 },
     bookCard: {
       backgroundColor: colors.surface,
-      borderRadius: tokens.radius.large,
+      borderRadius: tokens.radius.medium,
       borderWidth: 1,
       borderColor: colors.m3.outlineVariant,
       padding: tokens.spacing[16],
@@ -499,7 +613,7 @@ function createStyles(colors: ColorPalette) {
       flexDirection: "row",
       alignItems: "center",
       gap: tokens.spacing[8],
-      paddingTop: tokens.spacing[8],
+      paddingTop: tokens.spacing[10],
       borderTopWidth: 1,
       borderTopColor: colors.m3.outlineVariant,
       flexWrap: "wrap",
@@ -507,10 +621,10 @@ function createStyles(colors: ColorPalette) {
     statPill: {
       flexDirection: "row",
       alignItems: "center",
-      gap: tokens.spacing[4],
+      gap: tokens.spacing[6],
       backgroundColor: colors.m3.surfaceContainerLow,
-      paddingHorizontal: tokens.spacing[8],
-      paddingVertical: tokens.spacing[4],
+      paddingHorizontal: tokens.spacing[10],
+      paddingVertical: tokens.spacing[6],
       borderRadius: tokens.radius.full,
     },
     statPillText: {
@@ -518,20 +632,18 @@ function createStyles(colors: ColorPalette) {
       color: colors.secondaryText,
     },
     statusBox: {
-      backgroundColor: colors.m3.surfaceContainerHigh,
+      backgroundColor: colors.m3.surfaceContainerLow,
       borderRadius: tokens.radius.medium,
       padding: tokens.spacing[16],
-      gap: tokens.spacing[6],
+      gap: tokens.spacing[8],
       borderWidth: 1,
       borderColor: colors.m3.outlineVariant,
     },
     statusBoxActive: {
-      backgroundColor: colors.m3.surfaceContainerHigh,
       borderColor: colors.nature.foliage,
       borderLeftWidth: 4,
     },
     statusBoxPaused: {
-      backgroundColor: colors.m3.surfaceContainerHigh,
       borderColor: colors.m3.outline,
       borderLeftWidth: 4,
     },
@@ -543,20 +655,43 @@ function createStyles(colors: ColorPalette) {
     statusHeader: {
       flexDirection: "row",
       alignItems: "center",
-      gap: tokens.spacing[8],
+      gap: tokens.spacing[10],
+    },
+    statusIconBadge: {
+      width: 36,
+      height: 36,
+      borderRadius: tokens.radius.full,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    statusTitleGroup: {
+      flex: 1,
     },
     statusTitle: {
       ...tokens.typography.titleMedium,
       color: colors.text,
       fontWeight: tokens.fontWeight.semiBold,
     },
+    statusBadgeSubtitle: {
+      ...tokens.typography.labelSmall,
+      color: colors.secondaryText,
+    },
     statusHint: {
       ...tokens.typography.bodyMedium,
       color: colors.secondaryText,
       lineHeight: 20,
     },
-    actionsContainer: {
+    actionGroup: {
       gap: tokens.spacing[8],
+    },
+    sectionHeaderTitle: {
+      ...tokens.typography.labelLarge,
+      color: colors.secondaryText,
+      fontWeight: tokens.fontWeight.semiBold,
+      textTransform: "uppercase",
+      letterSpacing: 0.5,
+      paddingHorizontal: tokens.spacing[2],
+      marginBottom: tokens.spacing[2],
     },
     actionCard: {
       flexDirection: "row",
@@ -580,7 +715,6 @@ function createStyles(colors: ColorPalette) {
       width: 40,
       height: 40,
       borderRadius: tokens.radius.full,
-      backgroundColor: colors.m3.surfaceContainerLow,
       alignItems: "center",
       justifyContent: "center",
     },
@@ -599,19 +733,38 @@ function createStyles(colors: ColorPalette) {
     textDisabled: {
       color: colors.secondaryText,
     },
-    deleteSection: {
+    dangerZone: {
       marginTop: tokens.spacing[8],
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderRadius: tokens.radius.medium,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+      padding: tokens.spacing[14],
+      gap: tokens.spacing[6],
+    },
+    dangerZoneHeader: {
+      flexDirection: "row",
       alignItems: "center",
+      gap: tokens.spacing[6],
+    },
+    dangerZoneTitle: {
+      ...tokens.typography.labelLarge,
+      color: colors.error,
+      fontWeight: tokens.fontWeight.semiBold,
+    },
+    dangerZoneDescription: {
+      ...tokens.typography.footnote,
+      color: colors.secondaryText,
+      lineHeight: 18,
+    },
+    deleteButtonContainer: {
+      alignItems: "flex-start",
+      paddingTop: tokens.spacing[4],
     },
     deleteHint: {
-      ...tokens.typography.bodyMedium,
+      ...tokens.typography.footnote,
       color: colors.secondaryText,
-      textAlign: "center",
       marginTop: tokens.spacing[4],
-    },
-    errorText: {
-      ...tokens.typography.bodyMedium,
-      color: colors.error,
     },
   });
 }

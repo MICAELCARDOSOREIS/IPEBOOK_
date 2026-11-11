@@ -74,6 +74,11 @@ conferir(
   "public/_headers não inclui https://brasilapi.com.br em connect-src; na web o ISBN perderia a sinopse e as edições nacionais.",
 );
 conferir(
+  "CSP libera a consulta de ISBN na Crossref (connect-src)",
+  /connect-src[^;]*https:\/\/api\.crossref\.org/.test(cabecalhos),
+  "public/_headers não inclui https://api.crossref.org em connect-src; na web o ISBN perderia a consulta acadêmica da Crossref.",
+);
+conferir(
   "Permissions-Policy libera a câmera do próprio site (leitor de ISBN)",
   /Permissions-Policy:[^\n]*camera=\(self\)/.test(cabecalhos),
   'public/_headers bloqueia a câmera (camera=()); o leitor de código de barras não funcionaria na web.',

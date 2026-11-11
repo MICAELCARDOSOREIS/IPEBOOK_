@@ -34,6 +34,10 @@ export function MyListingsProposalsTab({
   const styles = useMemo(() => createStyles(colors), [colors]);
   const wideWeb = useIsWideWeb();
 
+  const hasReserved = proposals.some(
+    (item) => item.request.status === "accepted" || item.listing.status === "reserved",
+  );
+
   return (
     <>
       {proposals.length === 0 ? (
@@ -41,18 +45,20 @@ export function MyListingsProposalsTab({
           Nenhuma proposta em aberto. Quando alguém se interessar por um livro seu, ela aparece aqui.
         </Text>
       ) : (
-        <View style={styles.listCard}>
-          <Text style={styles.listTitle}>
-            {`${proposals.length} ${proposals.length === 1 ? "proposta" : "propostas"}`}
-          </Text>
+        <View style={wideWeb ? styles.listCardWide : styles.listSectionMobile}>
           {wideWeb ? (
-            <View style={styles.tableHeader}>
-              <Text style={[styles.tableHeaderText, { flex: 3, minWidth: 220 }]}>Livro</Text>
-              <Text style={[styles.tableHeaderText, { flex: 1.5, minWidth: 120 }]}>Modalidade</Text>
-              <Text style={[styles.tableHeaderText, { flex: 1.5, minWidth: 120 }]}>Bairro</Text>
-              <Text style={[styles.tableHeaderText, { flex: 1.2, minWidth: 100 }]}>Situação</Text>
-              <Text style={[styles.tableHeaderText, { width: 110, textAlign: "right" }]}>Ação</Text>
-            </View>
+            <>
+              <Text style={styles.listTitle}>
+                {`${proposals.length} ${proposals.length === 1 ? "proposta" : "propostas"}`}
+              </Text>
+              <View style={styles.tableHeader}>
+                <Text style={[styles.tableHeaderText, { flex: 3, minWidth: 220 }]}>Livro</Text>
+                <Text style={[styles.tableHeaderText, { flex: 1.5, minWidth: 120 }]}>Modalidade</Text>
+                <Text style={[styles.tableHeaderText, { flex: 1.5, minWidth: 120 }]}>Bairro</Text>
+                <Text style={[styles.tableHeaderText, { flex: 1.2, minWidth: 100 }]}>Situação</Text>
+                <Text style={[styles.tableHeaderText, { width: 110, textAlign: "right" }]}>Ação</Text>
+              </View>
+            </>
           ) : null}
           {proposals.map((item) => (
             <ShelfRow
@@ -82,7 +88,9 @@ export function MyListingsProposalsTab({
       <View style={styles.infoCard}>
         <Text style={styles.infoCardTitle}>Tudo pela conversa</Text>
         <Text style={styles.orientationHint}>
-          Confira a proposta e combine os detalhes antes de reservar seu livro.
+          {hasReserved
+            ? "Livro reservado! Combine os detalhes e um ponto de encontro seguro em Piripiri para concluir a troca ou entrega."
+            : "Confira a proposta e combine os detalhes antes de reservar seu livro."}
         </Text>
       </View>
     </>
@@ -96,7 +104,10 @@ function createStyles(colors: ColorPalette) {
       color: colors.secondaryText,
       paddingVertical: tokens.spacing[16],
     },
-    listCard: {
+    listSectionMobile: {
+      gap: tokens.spacing[12],
+    },
+    listCardWide: {
       gap: tokens.spacing[4],
       paddingHorizontal: tokens.spacing[16],
       paddingTop: tokens.spacing[16],

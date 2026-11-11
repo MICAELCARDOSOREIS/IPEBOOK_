@@ -58,14 +58,10 @@ describe("Meu perfil na Web Larga (Spec 093, Spec 122 · Figma 07.01)", () => {
     // 1. Grid em duas colunas presente
     expect(screen.getByTestId("profile-wide-grid")).toBeDefined();
 
-    // 2. Coluna lateral com leitor e selos comunitários
+    // 2. Coluna lateral com leitor
     expect(screen.getByText("Ana Paula")).toBeDefined();
     expect(screen.getByText("@anapaula")).toBeDefined();
-    expect(screen.getByTestId("profile-badges-section")).toBeDefined();
-    expect(screen.getByText("Selos Comunitários de Piripiri")).toBeDefined();
-    expect(screen.getByText("Leitor de Piripiri")).toBeDefined();
-    expect(screen.getByText("Ponto Seguro")).toBeDefined();
-    expect(screen.getByText("Estante Ativa")).toBeDefined();
+    expect(screen.queryByTestId("profile-badges-section")).toBeNull();
 
     // 3. Coluna principal com Atividade e Conta
     expect(screen.getByText("Atividade")).toBeDefined();
