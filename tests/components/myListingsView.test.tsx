@@ -119,7 +119,7 @@ describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
     expect(screen.getByText("D1")).toBeDefined();
   });
 
-  it("mantém a situação no rodapé e abre a negociação pelo botão próprio do cartão reservado", async () => {
+  it("mantém a situação no rodapé e abre a negociação ao tocar no cartão reservado", async () => {
     const reservado: Book = {
       id: "b21",
       title: "Iracema",
@@ -146,7 +146,6 @@ describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
     });
 
     expect(screen.getByText("Reservado")).toBeDefined();
-    expect(screen.getByText("Ver negociação")).toBeDefined();
 
     await act(async () => {
       fireEvent.press(screen.getByLabelText("Ver negociação de Iracema"));
