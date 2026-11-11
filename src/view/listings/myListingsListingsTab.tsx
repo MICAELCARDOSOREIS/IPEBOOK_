@@ -206,7 +206,7 @@ function createStyles(colors: ColorPalette) {
       alignItems: "center",
       gap: tokens.spacing[8],
       paddingLeft: tokens.spacing[16],
-      paddingRight: tokens.spacing[28],
+      paddingRight: tokens.spacing[32],
     },
     empty: { paddingTop: tokens.spacing[48], alignItems: "center", gap: tokens.spacing[12] },
     emptyTitle: {
