@@ -38,7 +38,6 @@ import {
 import { HomeFloatingChatButton } from "@/view/home/HomeFloatingChatButton";
 import type { BookModality } from "@/model/entities/book";
 import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
-
 import { expressivePressedStyle, withPress } from "@/view/pressFeedback";
 
 export { carouselOffsetFor };
@@ -60,7 +59,6 @@ export type HomeProps = {
   /** Mudar este valor força o catálogo a recarregar (ex.: ao voltar de cadastrar um anúncio). */
   focusKey?: unknown;
 };
-
 export { resetAppLaunchCelebrationForTesting };
 
 function getBookRecency(book: Book): number {
@@ -90,7 +88,7 @@ export default function Home({
   onNavigateToSearch,
   focusKey,
 }: HomeProps = {}) {
-  const neighborhoodHook = useActiveNeighborhood("Centro");
+  const neighborhoodHook = useActiveNeighborhood("all");
   const effectiveNeighborhood = currentNeighborhood ?? neighborhoodHook.activeNeighborhood;
   const handleSelectNeighborhood = onSelectNeighborhood ?? neighborhoodHook.openSelector;
 
@@ -177,10 +175,12 @@ export default function Home({
   const isSpecificNeighborhood =
     Boolean(effectiveNeighborhood) &&
     effectiveNeighborhood !== "all" &&
-    effectiveNeighborhood !== "Todos os bairros (Piripiri)";
+    effectiveNeighborhood !== "Todos os bairros (Piripiri)" &&
+    effectiveNeighborhood !== "Piripiri (Todos os locais)" &&
+    effectiveNeighborhood !== "Piripiri (Todos)" &&
+    effectiveNeighborhood !== "Piripiri";
 
-  const isCustomNeighborhood =
-    isSpecificNeighborhood && effectiveNeighborhood !== "Centro";
+  const isCustomNeighborhood = isSpecificNeighborhood;
 
   const filteredBooks = useMemo(() => {
     if (selectedModality === "all") return state.books;
@@ -189,10 +189,12 @@ export default function Home({
 
   const neighborhoodBooks = useMemo(() => {
     if (!isSpecificNeighborhood) return filteredBooks;
-    if (effectiveNeighborhood === "Centro") {
-      return filteredBooks.filter((b) => !b.neighborhood || b.neighborhood === "Centro");
-    }
-    return filteredBooks.filter((b) => b.neighborhood === effectiveNeighborhood);
+    const lowerEffective = effectiveNeighborhood.toLowerCase();
+    return filteredBooks.filter((b) => {
+      if (!b.neighborhood) return false;
+      const lowerBook = b.neighborhood.toLowerCase();
+      return lowerBook.includes(lowerEffective) || lowerEffective.includes(lowerBook);
+    });
   }, [filteredBooks, isSpecificNeighborhood, effectiveNeighborhood]);
 
   const sortedNeighborhoodBooks = useMemo(() => {
@@ -221,11 +223,11 @@ export default function Home({
 
   const displayNeighborhood =
     !isSpecificNeighborhood
-      ? "Piripiri (Todos)"
+      ? "Piripiri"
       : effectiveNeighborhood;
 
   const carouselDisplayTitle = isCustomNeighborhood
-    ? `Perto de você no ${effectiveNeighborhood}`
+    ? `Em ${effectiveNeighborhood}`
     : "Perto de você";
 
   const listHeader = (
@@ -235,7 +237,7 @@ export default function Home({
         <View style={styles.topBar}>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={`Selecionar bairro: ${displayNeighborhood}`}
+            accessibilityLabel={`Selecionar local em Piripiri: ${displayNeighborhood}`}
             hitSlop={{ top: tokens.spacing[4], bottom: tokens.spacing[4] }}
             onPress={handleSelectNeighborhood}
             style={withPress(styles.neighborhoodPill)}
@@ -293,7 +295,7 @@ export default function Home({
               <View style={styles.heroLocationRowWide}>
                 <Pressable
                   accessibilityRole="button"
-                  accessibilityLabel={`Selecionar bairro: ${displayNeighborhood}`}
+                  accessibilityLabel={`Selecionar local em Piripiri: ${displayNeighborhood}`}
                   onPress={handleSelectNeighborhood}
                   style={withPress(styles.neighborhoodPill)}
                 >
@@ -412,7 +414,7 @@ export default function Home({
                   ]}
                 >
                   <View style={styles.heroHighlightIconBoxWide}>
-                    <AppIcon name="swap" size={18} color={colors.badge.trade.text} />
+                    <AppIcon name="swap" size={18} color={colors.badge.trade.background} />
                   </View>
                   <View style={styles.heroHighlightTextBoxWide}>
                     <Text numberOfLines={1} style={[styles.heroHighlightTitleWide, { color: colors.badge.trade.text }]}>
@@ -539,7 +541,7 @@ export default function Home({
           effectiveNeighborhood={effectiveNeighborhood}
           selectedModality={selectedModality}
           onExploreAllPiripiri={() => {
-            neighborhoodHook.selectNeighborhood("Todos os bairros (Piripiri)");
+            neighborhoodHook.selectNeighborhood("Piripiri (Todos os locais)");
             guardedNavigateToSearch(
               selectedModality === "all"
                 ? { neighborhood: "all" }

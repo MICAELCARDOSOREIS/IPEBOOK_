@@ -194,14 +194,14 @@ describe("BookDetail (spec 006, US6/T029)", () => {
   });
 
   it("lista conservação, categoria e retirada (Spec 074, CA5)", async () => {
-    setup(book({ condition: "good", category: "Romance", neighborhood: "Fonte dos Matos" }), user);
+    setup(book({ condition: "good", category: "Romance", neighborhood: "Campus IFPI Piripiri" }), user);
     const screen = await renderDetail();
     expect(screen.getByText("Conservação")).toBeDefined();
     expect(screen.getByText("Bom estado")).toBeDefined();
     expect(screen.getByText("Categoria")).toBeDefined();
     expect(screen.getByText("Romance")).toBeDefined();
     expect(screen.getByText("Retirada")).toBeDefined();
-    expect(screen.getByText("Fonte dos Matos")).toBeDefined();
+    expect(screen.getByText("Campus IFPI Piripiri")).toBeDefined();
   });
 
   it("mostra confirmação quando já solicitada e indica anúncio reservado", async () => {

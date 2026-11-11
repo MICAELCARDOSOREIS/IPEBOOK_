@@ -360,12 +360,12 @@ describe("Search (spec 006, US3/T019, Spec 028, Issue #93)", () => {
     expect(clearFilters).toHaveBeenCalledTimes(1);
   });
 
-  it("renderiza o selo de bairro no card do livro na busca quando definido (Spec 070 / ADR 0053)", async () => {
-    setup([book({ neighborhood: "Centro" })]);
+  it("renderiza o selo de local no card do livro na busca quando definido (Spec 070 / ADR 0053)", async () => {
+    setup([book({ neighborhood: "Praça da Bandeira" })]);
     const screen = await renderSearch();
 
-    expect(screen.getByText("Centro")).toBeDefined();
-    expect(screen.getByLabelText("Ver detalhe de Dom Casmurro, Machado de Assis em Centro")).toBeDefined();
+    expect(screen.getByText("Praça da Bandeira")).toBeDefined();
+    expect(screen.getByLabelText("Ver detalhe de Dom Casmurro, Machado de Assis em Praça da Bandeira")).toBeDefined();
   });
 
   it("aciona o atalho para a tela de favoritos ao tocar no botão da barra superior", async () => {

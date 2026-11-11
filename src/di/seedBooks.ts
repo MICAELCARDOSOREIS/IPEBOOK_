@@ -16,7 +16,7 @@ export const INITIAL_DEV_BOOKS: readonly Book[] = [
     condition: "good",
     city: "Piripiri",
     state: "PI",
-    neighborhood: "Centro",
+    neighborhood: "Praça da Bandeira",
     ownerId: "seed-user-1",
   },
   {
@@ -29,7 +29,7 @@ export const INITIAL_DEV_BOOKS: readonly Book[] = [
     condition: "good",
     city: "Piripiri",
     state: "PI",
-    neighborhood: "Centro",
+    neighborhood: "Campus IFPI Piripiri",
     ownerId: "seed-user-2",
   },
   {
@@ -42,7 +42,7 @@ export const INITIAL_DEV_BOOKS: readonly Book[] = [
     condition: "good",
     city: "Piripiri",
     state: "PI",
-    neighborhood: "Centro",
+    neighborhood: "Museu de Piripiri",
     ownerId: "seed-user-3",
   },
   {
@@ -56,7 +56,7 @@ export const INITIAL_DEV_BOOKS: readonly Book[] = [
     condition: "new",
     city: "Piripiri",
     state: "PI",
-    neighborhood: "Paciência",
+    neighborhood: "Praça de Eventos",
     ownerId: "seed-user-4",
   },
   {
@@ -69,7 +69,7 @@ export const INITIAL_DEV_BOOKS: readonly Book[] = [
     condition: "good",
     city: "Piripiri",
     state: "PI",
-    neighborhood: "Crioli",
+    neighborhood: "Praça da Bandeira",
     ownerId: "seed-user-5",
   },
   {
@@ -83,7 +83,7 @@ export const INITIAL_DEV_BOOKS: readonly Book[] = [
     condition: "good",
     city: "Piripiri",
     state: "PI",
-    neighborhood: "Petecas",
+    neighborhood: "Campus IFPI Piripiri",
     ownerId: "seed-user-6",
   },
   {
@@ -97,7 +97,7 @@ export const INITIAL_DEV_BOOKS: readonly Book[] = [
     condition: "good",
     city: "Piripiri",
     state: "PI",
-    neighborhood: "Centro",
+    neighborhood: "Piripiri",
     ownerId: "seed-user-7",
   },
   {
@@ -110,7 +110,7 @@ export const INITIAL_DEV_BOOKS: readonly Book[] = [
     condition: "good",
     city: "Piripiri",
     state: "PI",
-    neighborhood: "Centro",
+    neighborhood: "Piripiri",
     ownerId: "seed-user-8",
   },
 ];

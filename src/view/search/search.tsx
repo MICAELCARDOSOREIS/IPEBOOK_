@@ -32,8 +32,8 @@ import { usePersistedSearchFilters } from "@/viewmodel/usePersistedSearchFilters
 import { WEB_GUTTER, WEB_MAX_WIDTH, useWebGridColumns } from "@/view/webLayout";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { standardVerticalScrollProps, standardHorizontalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
-
 import { withPress } from "@/view/pressFeedback";
+
 export type SearchProps = {
   currentNeighborhood?: string;
   onSelectNeighborhood?: () => void;
@@ -46,7 +46,6 @@ export type SearchProps = {
 };
 
 const VALID_INITIAL_MODALITIES: readonly SearchModalityFilter[] = ["sale", "trade", "donation"];
-
 /** Converte o parâmetro de rota `modalidade` (string) no filtro válido, ou `undefined`. */
 export function parseInitialModality(value: string | string[] | undefined): SearchModalityFilter | undefined {
   const raw = Array.isArray(value) ? value[0] : value;
@@ -74,7 +73,6 @@ export default function Search({
         ? currentNeighborhood
         : neighborhoodHook.activeNeighborhood;
   const handleSelectNeighborhood = onSelectNeighborhood ?? neighborhoodHook.openSelector;
-
   const [auth] = makeAuthViewModel();
   const { colors, resolvedScheme } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -188,20 +186,27 @@ export default function Search({
     persist(state.filters, state.sortBy);
   }, [persistedLoaded, state.filters, state.sortBy, persist]);
 
-  const displayNeighborhood =
+  const isAll =
     !effectiveNeighborhood ||
     effectiveNeighborhood === "all" ||
-    effectiveNeighborhood === "Todos os bairros (Piripiri)"
-      ? "Piripiri (Todos)"
-      : effectiveNeighborhood;
+    effectiveNeighborhood === "Todos os bairros (Piripiri)" ||
+    effectiveNeighborhood === "Piripiri (Todos os locais)" ||
+    effectiveNeighborhood === "Piripiri (Todos)" ||
+    effectiveNeighborhood === "Piripiri";
 
-  const handleSelectNeighborhoodOption = (bairro: string) => {
-    setSelectedNeighborhoodOverride(bairro);
-    void neighborhoodHook.selectNeighborhood(bairro);
+  const displayNeighborhood = isAll ? "Piripiri" : effectiveNeighborhood;
+
+  const handleSelectNeighborhoodOption = (local: string) => {
+    setSelectedNeighborhoodOverride(local);
+    void neighborhoodHook.selectNeighborhood(local);
     if (typeof actions.setNeighborhood === "function") {
-      actions.setNeighborhood(
-        bairro === "Todos os bairros (Piripiri)" ? "all" : bairro,
-      );
+      const isSelectedAll =
+        local === "Todos os bairros (Piripiri)" ||
+        local === "Piripiri (Todos os locais)" ||
+        local === "Piripiri (Todos)" ||
+        local === "Piripiri" ||
+        local === "all";
+      actions.setNeighborhood(isSelectedAll ? "all" : local);
     }
   };
 
@@ -216,7 +221,7 @@ export default function Search({
       <View style={styles.topBar}>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={`Selecionar bairro: ${displayNeighborhood}`}
+          accessibilityLabel={`Selecionar local em Piripiri: ${displayNeighborhood}`}
           onPress={handleSelectNeighborhood}
           style={withPress(styles.neighborhoodPill)}
         >

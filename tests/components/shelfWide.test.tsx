@@ -109,7 +109,7 @@ describe("Estante na Web Larga (Spec 093 · Figma 05.01)", () => {
     // Cabeçalho da tabela web
     expect(screen.getByText("Livro")).toBeDefined();
     expect(screen.getByText("Modalidade")).toBeDefined();
-    expect(screen.getByText("Bairro")).toBeDefined();
+    expect(screen.getByText("Local")).toBeDefined();
     expect(screen.getByText("Situação")).toBeDefined();
     expect(screen.getByText("Ação")).toBeDefined();
 
@@ -117,7 +117,7 @@ describe("Estante na Web Larga (Spec 093 · Figma 05.01)", () => {
     expect(screen.getByText("Grande Sertão: Veredas")).toBeDefined();
     expect(screen.getByText("Guimarães Rosa")).toBeDefined();
     expect(screen.getByText("Box (2 vols)")).toBeDefined();
-    expect(screen.getByText("Centro")).toBeDefined();
+    expect(screen.getByText("Piripiri")).toBeDefined();
     expect(screen.getByText("R$ 45,00")).toBeDefined();
     expect(screen.getByText("Disponível")).toBeDefined();
 

@@ -143,7 +143,7 @@ export function MyListingsListingsTab({
               <View style={styles.tableHeader}>
                 <Text style={[styles.tableHeaderText, { flex: 3, minWidth: 220 }]}>Livro</Text>
                 <Text style={[styles.tableHeaderText, { flex: 1.5, minWidth: 120 }]}>Modalidade</Text>
-                <Text style={[styles.tableHeaderText, { flex: 1.5, minWidth: 120 }]}>Bairro</Text>
+                <Text style={[styles.tableHeaderText, { flex: 1.5, minWidth: 120 }]}>Local</Text>
                 <Text style={[styles.tableHeaderText, { flex: 1.2, minWidth: 100 }]}>Situação</Text>
                 <Text style={[styles.tableHeaderText, { width: 110, textAlign: "right" }]}>Ação</Text>
               </View>

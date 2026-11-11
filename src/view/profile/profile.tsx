@@ -15,7 +15,10 @@ import {
   makeUserPreferencesViewModel,
 } from "@/di/container";
 import type { ImageSource } from "@/model/services/iImagePickerService";
-import { PIRIPIRI_NEIGHBORHOODS } from "@/model/entities/location";
+import {
+  PIRIPIRI_MEETING_POINT_NAMES,
+  PIRIPIRI_NEIGHBORHOODS,
+} from "@/model/entities/location";
 import { normalizeInstagramHandle } from "@/model/validators/instagramValidator";
 import { sanitizeTextInput } from "@/model/validators/textSanitizer";
 import { tokens, type ColorPalette } from "@/view/tokens";
@@ -446,19 +449,19 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
                     </Pressable>
                   </View>
 
-                  {/* Atalhos de bairro */}
+                  {/* Atalhos de pontos de encontro */}
                   {showNeighborhoodPicks ? (
                     <View style={styles.neighborhoodChipsArea}>
                       <View style={styles.chipsHeader}>
                         <Text style={styles.sectionLabel}>Acesso rápido</Text>
                         <TextButton
                           label="Ocultar"
-                          accessibilityLabel="Ocultar opções rápidas de bairro"
+                          accessibilityLabel="Ocultar opções de locais de Piripiri"
                           onPress={() => setShowNeighborhoodPicks(false)}
                         />
                       </View>
                       <View style={styles.chipRow}>
-                        {PIRIPIRI_NEIGHBORHOODS.slice(0, NEIGHBORHOOD_QUICK_PICKS).map((item) => (
+                        {["Centro", ...PIRIPIRI_MEETING_POINT_NAMES].map((item) => (
                           <Chip
                             key={item}
                             size="compact"
@@ -471,7 +474,7 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
                         ))}
                       </View>
                       <Text style={styles.chipsHelper}>
-                        Escolha uma opção ou abra a lista completa no campo Bairro.
+                        Escolha um ponto de encontro preferido ou selecione na lista.
                       </Text>
                     </View>
                   ) : (

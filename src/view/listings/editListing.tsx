@@ -7,7 +7,11 @@ import {
   BOOK_CONDITION_LABELS,
   MAX_BOOK_DESCRIPTION_LENGTH,
 } from "@/model/entities/book";
-import { PIRIPIRI_NEIGHBORHOODS } from "@/model/entities/location";
+import {
+  PIRIPIRI_MEETING_POINT_NAMES,
+  PIRIPIRI_NEIGHBORHOODS,
+  DEFAULT_PIRIPIRI_LOCATION,
+} from "@/model/entities/location";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { categoryTone } from "@/view/categoryTone";
@@ -356,20 +360,28 @@ export default function EditListing({
           </View>
 
           <View style={styles.field}>
-            <Text style={styles.sectionLabel}>Local de retirada</Text>
+            <Text style={styles.sectionLabel}>Ponto de encontro / Retirada em Piripiri</Text>
             <View style={styles.modalityRow}>
-              {PIRIPIRI_NEIGHBORHOODS.map((neighborhood) => (
-                <Chip
-                  key={neighborhood}
-                  label={neighborhood}
-                  accessibilityLabel={`Bairro ${neighborhood}`}
-                  selected={state.neighborhood === neighborhood}
-                  onPress={() =>
-                    actions.setNeighborhood(state.neighborhood === neighborhood ? "" : neighborhood)
-                  }
-                  disabled={state.saving}
-                />
-              ))}
+              {["Piripiri (A combinar)", ...PIRIPIRI_MEETING_POINT_NAMES].map((locationName) => {
+                const isSelected =
+                  state.neighborhood === locationName ||
+                  (locationName === "Piripiri (A combinar)" &&
+                    (!state.neighborhood || state.neighborhood === "Piripiri" || state.neighborhood === "Centro"));
+                return (
+                  <Chip
+                    key={locationName}
+                    label={locationName}
+                    accessibilityLabel={`Ponto de encontro ${locationName}`}
+                    selected={isSelected}
+                    onPress={() =>
+                      actions.setNeighborhood(
+                        locationName === "Piripiri (A combinar)" ? DEFAULT_PIRIPIRI_LOCATION : locationName,
+                      )
+                    }
+                    disabled={state.saving}
+                  />
+                );
+              })}
             </View>
           </View>
 

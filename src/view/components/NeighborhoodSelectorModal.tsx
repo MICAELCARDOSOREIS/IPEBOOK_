@@ -10,7 +10,12 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { PIRIPIRI_NEIGHBORHOODS } from "@/model/entities/location";
+import {
+  ALL_PIRIPIRI_LOCATIONS_LABEL,
+  PIRIPIRI_MEETING_POINT_NAMES,
+  type PiripiriMeetingPointName,
+} from "@/model/entities/location";
+import { PIRIPIRI_MEETING_POINTS } from "@/model/entities/meetingPoint";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { AppIcon } from "@/view/components/AppIcon";
@@ -19,20 +24,57 @@ import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { standardVerticalScrollProps } from "@/view/scrollProps";
 
 import { withPress } from "@/view/pressFeedback";
+
+export type LocationItem = {
+  id: string;
+  name: string;
+  subtitle: string;
+  isAll?: boolean;
+};
+
 export type NeighborhoodSelectorModalProps = {
   visible: boolean;
   currentNeighborhood?: string;
   onSelect: (neighborhood: string) => void;
   onClose: () => void;
-  /** `false` em escolhas que exigem um bairro único (ex.: retirada do anúncio, `04.05`). */
+  /** `false` em escolhas que exigem um local específico (ex.: retirada do anúncio). */
   allowAllNeighborhoods?: boolean;
 };
 
-const ALL_NEIGHBORHOODS_LABEL = "Todos os bairros (Piripiri)";
+export const ALL_NEIGHBORHOODS_LABEL = ALL_PIRIPIRI_LOCATIONS_LABEL;
+
+const PIRIPIRI_LOCATIONS: readonly LocationItem[] = [
+  {
+    id: "all",
+    name: ALL_PIRIPIRI_LOCATIONS_LABEL,
+    subtitle: "Ver livros de toda a cidade de Piripiri",
+    isAll: true,
+  },
+  {
+    id: "ifpi",
+    name: "Campus IFPI Piripiri",
+    subtitle: "Recepção ou Biblioteca · Rodovia PI-112",
+  },
+  {
+    id: "bandeira",
+    name: "Praça da Bandeira",
+    subtitle: "Centro de Piripiri · Diariamente das 8h às 18h",
+  },
+  {
+    id: "museu",
+    name: "Museu de Piripiri",
+    subtitle: "Museu de Perypery · Rua Leônidas Melo, Centro",
+  },
+  {
+    id: "eventos",
+    name: "Praça de Eventos",
+    subtitle: "Centro de Piripiri · Espaço público seguro",
+  },
+];
 
 export function NeighborhoodSelectorModal({
   visible,
-  currentNeighborhood = "Centro",
+  currentNeighborhood = "all",
   onSelect,
   onClose,
   allowAllNeighborhoods = true,
@@ -43,14 +85,21 @@ export function NeighborhoodSelectorModal({
   const [filterText, setFilterText] = useState("");
   const wideWeb = useIsWideWeb();
 
+  const baseItems = useMemo(() => {
+    return allowAllNeighborhoods
+      ? PIRIPIRI_LOCATIONS
+      : PIRIPIRI_LOCATIONS.filter((item) => !item.isAll);
+  }, [allowAllNeighborhoods]);
+
   const filteredItems = useMemo(() => {
     const term = filterText.trim().toLowerCase();
-    const allList = allowAllNeighborhoods
-      ? [ALL_NEIGHBORHOODS_LABEL, ...PIRIPIRI_NEIGHBORHOODS]
-      : [...PIRIPIRI_NEIGHBORHOODS];
-    if (!term) return allList;
-    return allList.filter((name) => name.toLowerCase().includes(term));
-  }, [allowAllNeighborhoods, filterText]);
+    if (!term) return baseItems;
+    return baseItems.filter(
+      (item) =>
+        item.name.toLowerCase().includes(term) ||
+        item.subtitle.toLowerCase().includes(term),
+    );
+  }, [baseItems, filterText]);
 
   const closeRef = useRef<FocusableElement | null>(null);
   const searchInputRef = useRef<FocusableElement | null>(null);
@@ -64,7 +113,6 @@ export function NeighborhoodSelectorModal({
       accessibilityViewIsModal
       animationType="fade"
       transparent
-      // Tela cheia: o véu cobre também as barras do sistema (sem faixas claras em cima e embaixo).
       statusBarTranslucent
       navigationBarTranslucent
       visible={visible}
@@ -85,20 +133,21 @@ export function NeighborhoodSelectorModal({
               : { paddingBottom: Math.max(tokens.spacing[24], insets.bottom + tokens.spacing[12]) },
           ]}
         >
-          {/* Alça da folha (M3): indica que é uma folha inferior que se fecha. */}
+          {/* Alça da folha (M3) */}
           {wideWeb ? null : <View accessible={false} importantForAccessibility="no" style={styles.handle} />}
+
           {/* Cabeçalho */}
           <View style={styles.header}>
             <View style={styles.headerTitles}>
               <Text accessibilityRole="header" style={styles.title}>
-                Escolha seu bairro
+                Locais em Piripiri
               </Text>
-              <Text style={styles.subtitle}>Piripiri · Piauí</Text>
+              <Text style={styles.subtitle}>Pontos de encontro para entrega e retirada · PI</Text>
             </View>
             <Pressable
               ref={closeRef as never}
               accessibilityRole="button"
-              accessibilityLabel="Fechar seletor de bairros"
+              accessibilityLabel="Fechar seletor de locais"
               onPress={onClose}
               style={withPress(styles.closeButton)}
             >
@@ -106,15 +155,15 @@ export function NeighborhoodSelectorModal({
             </Pressable>
           </View>
 
-          {/* Campo de busca rápida de bairro */}
+          {/* Campo de busca rápida */}
           <View style={styles.searchBox}>
             <AppIcon name="search" size={20} color={colors.m3.onSurfaceVariant} />
             <TextInput
               ref={searchInputRef as never}
               style={styles.searchInput}
-              placeholder="Buscar bairro em Piripiri..."
+              placeholder="Buscar ponto de encontro em Piripiri..."
               placeholderTextColor={colors.m3.onSurfaceVariant}
-              accessibilityLabel="Buscar bairro em Piripiri"
+              accessibilityLabel="Buscar ponto de encontro em Piripiri"
               value={filterText}
               onChangeText={setFilterText}
               autoCapitalize="words"
@@ -125,7 +174,7 @@ export function NeighborhoodSelectorModal({
             {filterText.length > 0 ? (
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel="Limpar busca de bairro"
+                accessibilityLabel="Limpar busca de local"
                 onPress={() => setFilterText("")}
                 style={withPress(styles.clearSearchButton)}
               >
@@ -134,11 +183,11 @@ export function NeighborhoodSelectorModal({
             ) : null}
           </View>
 
-          {/* Lista de bairros */}
+          {/* Lista de locais e pontos de encontro */}
           <FlatList
             {...standardVerticalScrollProps}
             data={filteredItems}
-            keyExtractor={(item) => item}
+            keyExtractor={(item) => item.id}
             style={styles.list}
             contentContainerStyle={[
               styles.listContent,
@@ -147,34 +196,35 @@ export function NeighborhoodSelectorModal({
             ListEmptyComponent={
               <View style={styles.emptyContainer}>
                 <Text style={styles.emptyText}>
-                  Nenhum bairro encontrado para "{filterText}".
+                  Nenhum local encontrado para "{filterText}".
                 </Text>
                 <Pressable
                   accessibilityRole="button"
-                  accessibilityLabel="Limpar busca de bairro e mostrar todos"
+                  accessibilityLabel="Limpar busca e mostrar todos os locais"
                   onPress={() => setFilterText("")}
                   style={withPress(styles.emptyAction)}
                 >
-                  <Text style={styles.emptyActionText}>Ver todos os bairros</Text>
+                  <Text style={styles.emptyActionText}>Ver todos os locais</Text>
                 </Pressable>
               </View>
             }
             renderItem={({ item }) => {
-              const isAll = item === ALL_NEIGHBORHOODS_LABEL;
+              const currentNorm = (currentNeighborhood || "").toLowerCase();
+              const isAll = item.isAll;
               const isSelected =
-                (isAll && (currentNeighborhood === "all" || currentNeighborhood === ALL_NEIGHBORHOODS_LABEL)) ||
-                (!isAll && currentNeighborhood.toLowerCase() === item.toLowerCase());
+                (isAll && (currentNorm === "all" || currentNorm === "" || currentNorm.includes("todos") || currentNorm === "piripiri")) ||
+                (!isAll && (currentNorm === item.name.toLowerCase() || (item.name.toLowerCase().includes(currentNorm) && currentNorm.length > 3)));
 
               const label = isAll
-                ? "Selecionar todos os bairros de Piripiri"
-                : `Selecionar bairro ${item}`;
+                ? "Selecionar todos os locais de Piripiri"
+                : `Selecionar ponto de encontro ${item.name}`;
 
               return (
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel={label}
                   accessibilityState={{ selected: isSelected }}
-                  onPress={() => onSelect(item)}
+                  onPress={() => onSelect(item.name)}
                   style={({ pressed }) => [
                     styles.itemButton,
                     isSelected && styles.itemButtonSelected,
@@ -182,19 +232,37 @@ export function NeighborhoodSelectorModal({
                   ]}
                 >
                   <View style={styles.itemLeft}>
-                    <AppIcon
-                      name="place"
-                      size={20}
-                      color={isSelected ? colors.m3.primary : colors.m3.onSurfaceVariant}
-                    />
-                    <Text
+                    <View
                       style={[
-                        styles.itemText,
-                        isSelected && styles.itemTextSelected,
+                        styles.itemIconBox,
+                        isSelected && styles.itemIconBoxSelected,
                       ]}
                     >
-                      {item}
-                    </Text>
+                      <AppIcon
+                        name={isAll ? "place" : "place"}
+                        size={20}
+                        color={isSelected ? colors.m3.onPrimaryContainer : colors.m3.primary}
+                      />
+                    </View>
+                    <View style={styles.itemTextBox}>
+                      <Text
+                        style={[
+                          styles.itemText,
+                          isSelected && styles.itemTextSelected,
+                        ]}
+                      >
+                        {item.name}
+                      </Text>
+                      <Text
+                        numberOfLines={1}
+                        style={[
+                          styles.itemSubtext,
+                          isSelected && styles.itemSubtextSelected,
+                        ]}
+                      >
+                        {item.subtitle}
+                      </Text>
+                    </View>
                   </View>
                   {isSelected ? <AppIcon name="check" size={20} color={colors.m3.primary} /> : null}
                 </Pressable>
@@ -206,6 +274,8 @@ export function NeighborhoodSelectorModal({
     </Modal>
   );
 }
+
+export const LocationSelectorModal = NeighborhoodSelectorModal;
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
@@ -316,15 +386,39 @@ function createStyles(colors: ColorPalette) {
       flexDirection: "row",
       alignItems: "center",
       flex: 1,
+      gap: tokens.spacing[12],
+    },
+    itemIconBox: {
+      width: 36,
+      height: 36,
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.m3.surfaceContainerHigh,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    itemIconBoxSelected: {
+      backgroundColor: colors.m3.primaryContainer,
+    },
+    itemTextBox: {
+      flex: 1,
+      gap: tokens.spacing[2],
     },
     itemText: {
       ...tokens.typography.bodyLarge,
+      fontFamily: fontFamily.medium,
       color: colors.text,
-      marginLeft: tokens.spacing[12],
     },
     itemTextSelected: {
       fontFamily: fontFamily.semiBold,
       color: colors.m3.onSecondaryContainer,
+    },
+    itemSubtext: {
+      ...tokens.typography.footnote,
+      color: colors.m3.onSurfaceVariant,
+    },
+    itemSubtextSelected: {
+      color: colors.m3.onSecondaryContainer,
+      opacity: 0.85,
     },
     emptyContainer: {
       paddingVertical: tokens.spacing[24],

@@ -70,7 +70,7 @@ export const SORT_LABELS: Readonly<Record<SearchSortOption, string>> = {
   recent: "Mais recentes",
   price_asc: "Menor preço",
   price_desc: "Maior preço",
-  neighborhood: "Bairros de Piripiri",
+  neighborhood: "Locais em Piripiri",
   title: "A-Z",
 };
 
@@ -118,14 +118,20 @@ export function matchesCondition(book: Book, condition: SearchConditionFilter): 
 }
 
 function matchesNeighborhood(book: Book, neighborhood: string): boolean {
+  const norm = neighborhood.trim().toLowerCase();
   if (
-    neighborhood === "all" ||
-    neighborhood === "Todos os bairros" ||
-    neighborhood === "Todos os bairros (Piripiri)"
+    norm === "all" ||
+    norm === "todos os bairros" ||
+    norm === "todos os bairros (piripiri)" ||
+    norm === "piripiri (todos os locais)" ||
+    norm === "piripiri (todos)" ||
+    norm === "piripiri"
   ) {
     return true;
   }
-  return book.neighborhood?.trim().toLowerCase() === neighborhood.trim().toLowerCase();
+  const bookLoc = (book.neighborhood || "").trim().toLowerCase();
+  if (!bookLoc) return false;
+  return bookLoc === norm || bookLoc.includes(norm) || norm.includes(bookLoc);
 }
 
 /** Filtra o catálogo client-side (FR-005, Spec 028): termo, modalidade, categoria, preço e bairro. */
