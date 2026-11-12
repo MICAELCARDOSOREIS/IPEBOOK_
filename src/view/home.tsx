@@ -603,28 +603,13 @@ export default function Home({
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
-    wideHomeContent: {
-      width: "100%",
-    },
-    headerContainer: {
-      marginBottom: tokens.spacing[16],
-    },
-    headerContainerWide: {
-      marginBottom: tokens.spacing[24],
-      width: "100%",
-    },
+    wideHomeContent: { width: "100%", },
+    headerContainer: { marginBottom: tokens.spacing[16], },
+    headerContainerWide: { marginBottom: tokens.spacing[24], width: "100%", },
 
     // 1. Top bar
-    topBar: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-      gap: tokens.spacing[8],
-      marginBottom: tokens.spacing[12],
-    },
-    topBarWide: {
-      marginBottom: tokens.spacing[16],
-    },
+    topBar: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: tokens.spacing[8], marginBottom: tokens.spacing[12], },
+    topBarWide: { marginBottom: tokens.spacing[16], },
     neighborhoodPill: {
       flexShrink: 1,
       flexDirection: "row",
@@ -636,17 +621,8 @@ function createStyles(colors: ColorPalette) {
       height: tokens.spacing[40],
       borderRadius: tokens.radius.full,
     },
-    neighborhoodText: {
-      flexShrink: 1,
-      ...tokens.typography.labelLarge,
-      color: colors.m3.onSurface,
-    },
-    topRightActions: {
-      flexShrink: 0,
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[8],
-    },
+    neighborhoodText: { flexShrink: 1, ...tokens.typography.labelLarge, color: colors.m3.onSurface, },
+    topRightActions: { flexShrink: 0, flexDirection: "row", alignItems: "center", gap: tokens.spacing[8], },
     profileButton: {
       width: tokens.spacing[40],
       height: tokens.spacing[40],
@@ -656,33 +632,13 @@ function createStyles(colors: ColorPalette) {
       justifyContent: "center",
       overflow: "hidden",
     },
-    profileButtonPressed: {
-      transform: [{ scale: 0.94 }],
-      backgroundColor: colors.m3.surfaceContainerHighest,
-    },
-    profileAvatarImage: {
-      width: tokens.spacing[40],
-      height: tokens.spacing[40],
-      borderRadius: tokens.radius.full,
-    },
-    sessionPill: {
-      paddingHorizontal: tokens.spacing[12],
-      paddingVertical: tokens.spacing[6],
-      borderRadius: tokens.radius.full,
-      backgroundColor: colors.m3.surfaceContainerHigh,
-      minHeight: 36,
-      justifyContent: "center",
-    },
-    sessionPillText: {
-      ...tokens.typography.labelMedium,
-      fontWeight: tokens.fontWeight.semiBold,
-      color: colors.action,
-    },
+    profileButtonPressed: { transform: [{ scale: 0.94 }], backgroundColor: colors.m3.surfaceContainerHighest, },
+    profileAvatarImage: { width: tokens.spacing[40], height: tokens.spacing[40], borderRadius: tokens.radius.full, },
+    sessionPill: { paddingHorizontal: tokens.spacing[12], paddingVertical: tokens.spacing[6], borderRadius: tokens.radius.full, backgroundColor: colors.m3.surfaceContainerHigh, minHeight: 36, justifyContent: "center", },
+    sessionPillText: { ...tokens.typography.labelMedium, fontWeight: tokens.fontWeight.semiBold, color: colors.action, },
 
     // 2. Hero editorial
-    heroSection: {
-      marginBottom: tokens.spacing[12],
-    },
+    heroSection: { marginBottom: tokens.spacing[12], },
     heroSectionWide: {
       padding: tokens.spacing[20],
       marginBottom: tokens.spacing[16],
@@ -692,56 +648,16 @@ function createStyles(colors: ColorPalette) {
       borderColor: colors.m3.outlineVariant,
       width: "100%",
     },
-    heroTitle: {
-      ...tokens.typography.brandLargeTitle,
-      color: colors.brandBrown,
-    },
-    heroTitleWide: {
-      ...tokens.typography.brandDisplayMd,
-    },
-    heroSubtitle: {
-      ...tokens.typography.bodyLarge,
-      color: colors.m3.onSurfaceVariant,
-      marginTop: tokens.spacing[6],
-    },
-    heroSubtitleWide: {
-      ...tokens.typography.webLead,
-    },
-    heroRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-      gap: tokens.spacing[16],
-    },
-    heroRowWide: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-      gap: tokens.spacing[24],
-    },
-    heroLocationRowWide: {
-      flexDirection: "row",
-      alignItems: "center",
-      marginBottom: tokens.spacing[4],
-    },
-    heroTextContainer: {
-      flex: 1,
-    },
-    heroTextContainerWide: {
-      flex: 1.2,
-      minWidth: 320,
-      maxWidth: 640,
-      gap: tokens.spacing[8],
-      justifyContent: "center",
-    },
-    heroAsideWide: {
-      flex: 1,
-      maxWidth: 480,
-      minWidth: 320,
-      flexShrink: 0,
-      justifyContent: "center",
-      gap: tokens.spacing[10],
-    },
+    heroTitle: { ...tokens.typography.brandLargeTitle, color: colors.brandBrown, },
+    heroTitleWide: { ...tokens.typography.brandDisplayMd, },
+    heroSubtitle: { ...tokens.typography.bodyLarge, color: colors.m3.onSurfaceVariant, marginTop: tokens.spacing[6], },
+    heroSubtitleWide: { ...tokens.typography.webLead, },
+    heroRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: tokens.spacing[16], },
+    heroRowWide: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: tokens.spacing[24], },
+    heroLocationRowWide: { flexDirection: "row", alignItems: "center", marginBottom: tokens.spacing[4], },
+    heroTextContainer: { flex: 1, },
+    heroTextContainerWide: { flex: 1.2, minWidth: 320, maxWidth: 640, gap: tokens.spacing[8], justifyContent: "center", },
+    heroAsideWide: { flex: 1, maxWidth: 480, minWidth: 320, flexShrink: 0, justifyContent: "center", gap: tokens.spacing[10], },
     heroCelebrationCardWide: {
       backgroundColor: colors.ipe.petalSoft,
       borderRadius: tokens.radius.xl,
@@ -755,30 +671,11 @@ function createStyles(colors: ColorPalette) {
       shadowRadius: 8,
       elevation: 2,
     },
-    heroCelebrationRowWide: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[12],
-    },
-    heroCelebrationTextsWide: {
-      flex: 1,
-      gap: tokens.spacing[2],
-    },
-    heroCelebrationTitleWide: {
-      ...tokens.typography.titleMedium,
-      color: colors.brandBrown,
-      fontWeight: tokens.fontWeight.bold,
-    },
-    heroCelebrationBodyWide: {
-      ...tokens.typography.footnote,
-      color: colors.m3.onSurfaceVariant,
-      lineHeight: 18,
-    },
-    heroHighlightsRowWide: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[12],
-    },
+    heroCelebrationRowWide: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[12], },
+    heroCelebrationTextsWide: { flex: 1, gap: tokens.spacing[2], },
+    heroCelebrationTitleWide: { ...tokens.typography.titleMedium, color: colors.brandBrown, fontWeight: tokens.fontWeight.bold, },
+    heroCelebrationBodyWide: { ...tokens.typography.footnote, color: colors.m3.onSurfaceVariant, lineHeight: 18, },
+    heroHighlightsRowWide: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[12], },
     heroHighlightCardWide: {
       flex: 1,
       flexDirection: "row",
@@ -791,38 +688,12 @@ function createStyles(colors: ColorPalette) {
       borderWidth: 1,
       borderColor: colors.m3.outlineVariant,
     },
-    heroHighlightIconBoxWide: {
-      width: 32,
-      height: 32,
-      borderRadius: tokens.radius.full,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    heroHighlightTextBoxWide: {
-      flex: 1,
-      gap: tokens.spacing[2],
-    },
-    heroHighlightTitleWide: {
-      ...tokens.typography.labelLarge,
-      fontWeight: tokens.fontWeight.bold,
-      color: colors.text,
-    },
-    heroHighlightSubtitleWide: {
-      ...tokens.typography.captionSmall,
-      color: colors.secondaryText,
-    },
-    chipsContainerWide: {
-      flexDirection: "row",
-      alignItems: "center",
-      flexWrap: "wrap",
-      gap: tokens.spacing[8],
-      marginBottom: tokens.spacing[20],
-    },
-    heroMarkContainer: {
-      alignItems: "center",
-      justifyContent: "center",
-      padding: tokens.spacing[4],
-    },
+    heroHighlightIconBoxWide: { width: 32, height: 32, borderRadius: tokens.radius.full, alignItems: "center", justifyContent: "center", },
+    heroHighlightTextBoxWide: { flex: 1, gap: tokens.spacing[2], },
+    heroHighlightTitleWide: { ...tokens.typography.labelLarge, fontWeight: tokens.fontWeight.bold, color: colors.text, },
+    heroHighlightSubtitleWide: { ...tokens.typography.captionSmall, color: colors.secondaryText, },
+    chipsContainerWide: { flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: tokens.spacing[8], marginBottom: tokens.spacing[20], },
+    heroMarkContainer: { alignItems: "center", justifyContent: "center", padding: tokens.spacing[4], },
     heroMarkContainerWide: {
       alignItems: "center",
       justifyContent: "center",
@@ -842,11 +713,7 @@ function createStyles(colors: ColorPalette) {
       paddingVertical: tokens.spacing[4],
       borderRadius: tokens.radius.full,
     },
-    heroPetalsHintText: {
-      ...tokens.typography.labelSmall,
-      color: colors.ipe.bloomDeep,
-      fontWeight: tokens.fontWeight.semiBold,
-    },
+    heroPetalsHintText: { ...tokens.typography.labelSmall, color: colors.ipe.bloomDeep, fontWeight: tokens.fontWeight.semiBold, },
     statsBannerWide: {
       flexDirection: "row",
       flexWrap: "wrap",
@@ -862,41 +729,14 @@ function createStyles(colors: ColorPalette) {
       borderRadius: tokens.radius.card,
       alignSelf: "flex-start",
     },
-    statItemWide: {
-      alignItems: "flex-start",
-    },
-    statNumberWide: {
-      ...tokens.typography.brandTitle,
-      color: colors.m3.primary,
-    },
-    statLabelWide: {
-      ...tokens.typography.footnote,
-      color: colors.m3.onSurfaceVariant,
-      marginTop: tokens.spacing[4],
-    },
-    statDividerWide: {
-      width: 1,
-      height: 32,
-      backgroundColor: colors.m3.outlineVariant,
-    },
+    statItemWide: { alignItems: "flex-start", },
+    statNumberWide: { ...tokens.typography.brandTitle, color: colors.m3.primary, },
+    statLabelWide: { ...tokens.typography.footnote, color: colors.m3.onSurfaceVariant, marginTop: tokens.spacing[4], },
+    statDividerWide: { width: 1, height: 32, backgroundColor: colors.m3.outlineVariant, },
 
     // 3. Chips de Filtro
-    chipsContainer: {
-      flexDirection: "row",
-      flexWrap: "wrap",
-      gap: tokens.spacing[8],
-      marginBottom: tokens.spacing[20],
-    },
-    chipsScrollView: {
-      marginBottom: tokens.spacing[20],
-      marginHorizontal: -tokens.spacing[16],
-    },
-    chipsScroll: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[8],
-      paddingLeft: tokens.spacing[16],
-      paddingRight: tokens.spacing[28],
-    },
+    chipsContainer: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[8], marginBottom: tokens.spacing[20], },
+    chipsScrollView: { marginBottom: tokens.spacing[20], marginHorizontal: -tokens.spacing[16], },
+    chipsScroll: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[8], paddingLeft: tokens.spacing[16], paddingRight: tokens.spacing[28], },
   });
 }
