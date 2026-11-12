@@ -224,9 +224,9 @@ export function NegotiationStatusCard({
             accessibilityRole="button"
             accessibilityLabel={combineAccessibilityLabel ?? "Combinar encontro"}
             onPress={onCombineMeeting}
-            style={withPress(styles.actionButtonPrimary)}
+            style={withPress([styles.actionButtonPrimary, styles.actionButtonPrimaryFull])}
           >
-            <AppIcon name="place" size={16} color={colors.nature.onFoliage} />
+            <AppIcon name="place" size={18} color={colors.nature.onFoliage} />
             <Text style={styles.actionButtonPrimaryText}>{combineButtonLabel ?? "Combinar"}</Text>
           </Pressable>
         </View>
@@ -290,18 +290,18 @@ function createStyles(colors: ColorPalette) {
       flex: 1,
     },
     title: {
-      fontSize: tokens.fontSize[14],
-      fontWeight: "700",
+      ...tokens.typography.labelLarge,
+      fontFamily: fontFamily.semiBold,
       color: colors.m3.onSurface,
     },
     highlight: {
-      fontSize: tokens.fontSize[14],
-      fontWeight: "600",
+      ...tokens.typography.labelLarge,
+      fontFamily: fontFamily.semiBold,
       color: colors.action,
       marginTop: 2,
     },
     subtitle: {
-      fontSize: tokens.fontSize[12],
+      ...tokens.typography.footnote,
       color: colors.m3.onSurfaceVariant,
       marginTop: 2,
     },
@@ -309,40 +309,43 @@ function createStyles(colors: ColorPalette) {
       flexDirection: "row",
       flexWrap: "wrap",
       gap: tokens.spacing[8],
-      marginTop: tokens.spacing[4],
+      marginTop: tokens.spacing[6],
     },
     actionButtonPrimary: {
       flexDirection: "row",
-      gap: tokens.spacing[6],
+      gap: tokens.spacing[8],
       backgroundColor: colors.action,
-      paddingVertical: tokens.spacing[8],
+      paddingVertical: tokens.spacing[10],
       paddingHorizontal: tokens.spacing[16],
       borderRadius: tokens.radius.full,
       alignItems: "center",
       justifyContent: "center",
       minHeight: tokens.accessibility.touchTarget,
     },
+    actionButtonPrimaryFull: {
+      width: "100%",
+    },
     actionButtonPrimaryText: {
       color: colors.nature.onFoliage,
-      fontSize: tokens.fontSize[12],
-      fontWeight: "700",
+      ...tokens.typography.labelLarge,
+      fontFamily: fontFamily.semiBold,
     },
     actionButtonSecondary: {
       flexDirection: "row",
       alignItems: "center",
-      gap: tokens.spacing[4],
+      gap: tokens.spacing[6],
       backgroundColor: colors.surface,
       borderWidth: 1,
-      borderColor: colors.border,
-      paddingVertical: tokens.spacing[8],
-      paddingHorizontal: tokens.spacing[12],
+      borderColor: colors.m3.outlineVariant,
+      paddingVertical: tokens.spacing[10],
+      paddingHorizontal: tokens.spacing[14],
       borderRadius: tokens.radius.full,
       minHeight: tokens.accessibility.touchTarget,
     },
     actionButtonSecondaryText: {
       color: colors.m3.onSurface,
-      fontSize: tokens.fontSize[12],
-      fontWeight: "600",
+      ...tokens.typography.labelLarge,
+      fontFamily: fontFamily.medium,
     },
   });
 }

@@ -5,6 +5,7 @@ import { makeAuthViewModel, makeReceivedRatingsViewModel } from "@/di/container"
 import { LoadingState } from "@/view/components/LoadingState";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
+import { AppIcon } from "@/view/components/AppIcon";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
@@ -41,14 +42,37 @@ export function ReceivedRatings({ sessionUserId, onBack }: ReceivedRatingsProps)
 
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar contentMaxWidth={wide ? WIDE_CONTENT_MAX_WIDTH : undefined} title="Avaliações recebidas" onBack={guardedBack} />
+      {wide ? (
+        <View style={styles.wideHeader}>
+          <View style={styles.wideHeaderLeft}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Voltar"
+              onPress={guardedBack}
+              style={withPress(styles.wideBackButton)}
+            >
+              <AppIcon name="back" size={20} color={colors.m3.onSurface} />
+            </Pressable>
+            <View>
+              <Text accessibilityRole="header" style={styles.wideTitle}>
+                Avaliações recebidas
+              </Text>
+              <Text style={styles.wideSubtitle}>
+                Opiniões e notas deixadas pela comunidade de Piripiri
+              </Text>
+            </View>
+          </View>
+        </View>
+      ) : (
+        <TopAppBar contentMaxWidth={undefined} title="Avaliações recebidas" onBack={guardedBack} />
+      )}
       {state.loading ? (
         <View style={[styles.content, wide && styles.contentWide]}>
           <LoadingState label="Carregando avaliações" />
         </View>
       ) : state.error ? (
         <View style={[styles.content, wide && styles.contentWide]}>
-          <View style={styles.status}>
+          <View style={[styles.status, wide && styles.emptyWide]}>
             <Text accessibilityRole="alert" style={styles.errorText}>{state.error}</Text>
             <Pressable
               accessibilityRole="button"
@@ -62,23 +86,26 @@ export function ReceivedRatings({ sessionUserId, onBack }: ReceivedRatingsProps)
         </View>
       ) : state.ratings.length === 0 ? (
         <View style={[styles.content, wide && styles.contentWide]}>
-          <View style={styles.status}>
+          <View style={[styles.status, wide && styles.emptyWide]}>
             <Text style={styles.emptyText}>Você ainda não recebeu avaliações.</Text>
           </View>
         </View>
       ) : (
         <FlatList
+          key={wide ? "grid-ratings-2" : "list-ratings-1"}
+          numColumns={wide ? 2 : 1}
+          columnWrapperStyle={wide ? styles.gridRow : undefined}
           data={state.ratings}
           keyExtractor={(item) => item.id}
           {...standardVerticalScrollProps}
+          style={styles.flexOne}
           contentContainerStyle={[
             styles.scroll,
             styles.content,
             wide && styles.contentWide,
-            wide && styles.listWide,
             { paddingBottom: scrollBottomPadding.withoutBottomBar },
           ]}
-          ItemSeparatorComponent={() => <View style={{ height: tokens.spacing[12] }} />}
+          ItemSeparatorComponent={() => <View style={{ height: tokens.spacing[16] }} />}
           renderItem={({ item: rating }) => {
             const { filled, empty } = starParts(rating.score);
             return (
@@ -122,10 +149,55 @@ const WIDE_CONTENT_MAX_WIDTH = WEB_MAX_WIDTH;
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
-  page: { flex: 1, backgroundColor: colors.background },
+  page: { flex: 1, backgroundColor: colors.background, minHeight: 0 },
+  flexOne: { flex: 1, minHeight: 0 },
+  wideHeader: {
+    width: "100%",
+    maxWidth: WIDE_CONTENT_MAX_WIDTH,
+    alignSelf: "center",
+    paddingHorizontal: WEB_GUTTER,
+    paddingTop: tokens.spacing[24],
+    paddingBottom: tokens.spacing[12],
+  },
+  wideHeaderLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: tokens.spacing[16],
+  },
+  wideBackButton: {
+    width: tokens.spacing[40],
+    height: tokens.spacing[40],
+    borderRadius: tokens.radius.full,
+    backgroundColor: colors.m3.surfaceContainerHigh,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: colors.m3.outlineVariant,
+  },
+  wideTitle: {
+    ...tokens.typography.brandLargeTitle,
+    color: colors.brandBrown,
+  },
+  wideSubtitle: {
+    ...tokens.typography.bodyMedium,
+    color: colors.m3.onSurfaceVariant,
+    marginTop: tokens.spacing[2],
+  },
   scroll: { flexGrow: 1 },
   content: { width: "100%", padding: tokens.spacing[24] },
   status: { alignItems: "center", gap: tokens.spacing[16], paddingTop: tokens.spacing[48] },
+  emptyWide: {
+    backgroundColor: colors.m3.surfaceContainerLow,
+    borderRadius: tokens.radius.card,
+    borderWidth: 1,
+    borderColor: colors.m3.outlineVariant,
+    padding: tokens.spacing[40],
+    maxWidth: 640,
+    width: "100%",
+    alignSelf: "center",
+    marginTop: tokens.spacing[24],
+    paddingTop: tokens.spacing[40],
+  },
   errorText: { ...tokens.typography.bodyMedium, color: colors.error, textAlign: "center" },
   emptyText: { ...tokens.typography.bodyMedium, color: colors.secondaryText, textAlign: "center" },
   retryButton: {
@@ -141,8 +213,8 @@ function createStyles(colors: ColorPalette) {
   retryText: { ...tokens.typography.bodyMedium, color: colors.action, fontWeight: tokens.fontWeight.semiBold },
   list: { gap: tokens.spacing[12] },
   contentWide: { maxWidth: WIDE_CONTENT_MAX_WIDTH, alignSelf: "center", paddingHorizontal: WEB_GUTTER },
-  listWide: { flexDirection: "row", flexWrap: "wrap" },
-  cardWide: { flexBasis: "48%", flexGrow: 0 },
+  gridRow: { gap: tokens.spacing[16] },
+  cardWide: { flex: 1 },
   card: {
     backgroundColor: colors.surface,
     borderRadius: tokens.radius.medium,

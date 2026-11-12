@@ -12,6 +12,8 @@ export type FilledButtonProps = {
   disabled?: boolean;
   loadingLabel?: string;
   accessibilityLabel?: string;
+  backgroundColor?: string;
+  textColor?: string;
 };
 
 /** Botão preenchido do design system (botao.md): pílula com resposta M3 Expressive (mola e shape morphing). */
@@ -22,6 +24,8 @@ export function FilledButton({
   disabled = false,
   loadingLabel,
   accessibilityLabel,
+  backgroundColor,
+  textColor,
 }: FilledButtonProps) {
   const isDisabled = disabled || loading;
   const guardedPress = useGuardedPress(onPress);
@@ -40,14 +44,15 @@ export function FilledButton({
         onPressOut={onPressOut}
         style={[
           styles.button,
+          backgroundColor && !isDisabled ? { backgroundColor } : null,
           isPressed && !isDisabled && styles.pressedShape,
           isDisabled && styles.disabled,
         ]}
       >
         {loading ? (
-          <ActivityIndicator color={colors.surface} accessibilityLabel={loadingLabel ?? label} />
+          <ActivityIndicator color={textColor ?? colors.surface} accessibilityLabel={loadingLabel ?? label} />
         ) : (
-          <Text style={[styles.label, isDisabled && styles.labelDisabled]}>{label}</Text>
+          <Text style={[styles.label, textColor && !isDisabled ? { color: textColor } : null, isDisabled && styles.labelDisabled]}>{label}</Text>
         )}
       </Pressable>
     </Animated.View>

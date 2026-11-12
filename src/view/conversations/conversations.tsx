@@ -259,6 +259,7 @@ export function Conversations({
                 </View>
               ) : null}
               <FlatList
+                style={styles.flexOne}
                 {...standardVerticalScrollProps}
                 data={state.items}
                 keyExtractor={(item) => item.requestId}

@@ -129,33 +129,14 @@ describe("Profile (Spec 006 US4, Issue #55)", () => {
     expect(screen.getByText("Usuário não encontrado.")).toBeDefined();
   });
 
-  it("preenche o bairro e não exibe campo de telefone (Issue #141)", async () => {
+  it("não exibe campo de telefone nem de bairro no formulário de perfil", async () => {
     setup(
       { id: "ana", email: "ana@exemplo.com" },
       { preferences: { userId: "ana", phone: "86999998888", neighborhood: "Centro" } },
     );
     const screen = await renderProfile();
     expect(screen.queryByLabelText("Telefone/WhatsApp")).toBeNull();
-  });
-
-  it("salva o bairro selecionado sem exigir telefone (Issue #141)", async () => {
-    const { update, updatePreferences } = setup({ id: "ana", email: "ana@exemplo.com" });
-    const screen = await renderProfile();
-    await act(async () => {
-      fireEvent.press(screen.getByLabelText("Mostrar opções rápidas de bairro"));
-    });
-    await act(async () => {
-      fireEvent.press(screen.getByLabelText("Bairro Centro"));
-    });
-    await act(async () => { fireEvent.press(screen.getByText(/Salvar/)); });
-    expect(update).toHaveBeenCalledWith({ name: "Ana", photoUrl: undefined, socialHandle: undefined });
-    expect(updatePreferences).toHaveBeenCalledWith({ neighborhood: "Centro" });
-  });
-
-  it("mostra erro de domínio das preferências", async () => {
-    setup({ id: "ana", email: "ana@exemplo.com" }, { preferencesError: "Selecione um bairro válido de Piripiri." });
-    const screen = await renderProfile();
-    expect(screen.getByText("Selecione um bairro válido de Piripiri.")).toBeDefined();
+    expect(screen.queryByText("Selecionar bairro")).toBeNull();
   });
 
   it("valida em linha e bloqueia o salvamento quando o nome está vazio", async () => {
@@ -204,7 +185,7 @@ describe("Profile (Spec 006 US4, Issue #55)", () => {
     const screen = await renderProfile();
     expect(screen.queryByLabelText("Telefone/WhatsApp")).toBeNull();
     await act(async () => { fireEvent.press(screen.getByText(/Salvar/)); });
-    expect(updatePreferences).toHaveBeenCalledWith({ neighborhood: undefined });
+    expect(updatePreferences).not.toHaveBeenCalled();
   });
 
   it("limpa o erro em linha quando a pessoa corrige o campo", async () => {
@@ -238,30 +219,6 @@ describe("Profile (Spec 006 US4, Issue #55)", () => {
     expect(screen.getByText("Entre para editar seu perfil")).toBeDefined();
     expect(screen.getByText("Entrar ou criar conta")).toBeDefined();
     expect(onNavigateToSignIn).toHaveBeenCalledTimes(1);
-  });
-
-  it("não atribui bairro quando as preferências não trazem nenhum", async () => {
-    setup({ id: "ana", email: "ana@exemplo.com" });
-    const screen = await renderProfile();
-    expect(screen.getByText("Selecionar bairro")).toBeDefined();
-    expect(screen.queryByText("Bairro selecionado: Centro. Toque para alterar")).toBeNull();
-  });
-
-  it("rotula os atalhos como bairros de Piripiri, sem inventar frequência", async () => {
-    setup({ id: "ana", email: "ana@exemplo.com" });
-    const screen = await renderProfile();
-    await act(async () => {
-      fireEvent.press(screen.getByLabelText("Mostrar opções rápidas de bairro"));
-    });
-    expect(screen.getByText("Acesso rápido")).toBeDefined();
-    expect(screen.queryByText("Bairros populares")).toBeNull();
-  });
-
-  it("mantém os atalhos de bairro recolhidos por padrão", async () => {
-    setup({ id: "ana", email: "ana@exemplo.com" });
-    const screen = await renderProfile();
-    expect(screen.getByLabelText("Mostrar opções rápidas de bairro")).toBeDefined();
-    expect(screen.queryByText("Acesso rápido")).toBeNull();
   });
 
   it("volta direto quando não há edição em aberto", async () => {

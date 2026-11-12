@@ -47,8 +47,8 @@ export function ScheduleMeeting({ requestId, sessionUserId, onBack, onSent }: Sc
   const wideWeb = useIsWideWeb();
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  // Com token, o mapa é o fundo da tela e o formulário sobe num painel; sem token, o painel ocupa tudo.
-  const hasMap = Boolean(process.env.EXPO_PUBLIC_MAPBOX_TOKEN);
+  // Mapa desativado a pedido do usuário (fluxo direto com lista de pontos seguros).
+  const hasMap = false;
   const [stageHeight, setStageHeight] = useState(0);
   const [footerHeight, setFooterHeight] = useState(0);
   const [expanded, setExpanded] = useState(false);

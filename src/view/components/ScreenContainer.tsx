@@ -72,13 +72,14 @@ export function ScreenContainer({
       {scroll ? (
         <ScrollView
           {...standardVerticalScrollProps}
+          style={styles.scroll}
           contentContainerStyle={columnStyle}
           refreshControl={refreshControl}
         >
           {children}
         </ScrollView>
       ) : (
-        <View style={columnStyle}>{children}</View>
+        <View style={[styles.scroll, columnStyle]}>{children}</View>
       )}
       {overlay}
     </SafeAreaView>
@@ -87,11 +88,13 @@ export function ScreenContainer({
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
-    page: { flex: 1, backgroundColor: colors.surface, position: "relative" },
+    page: { flex: 1, backgroundColor: colors.surface, position: "relative", minHeight: 0 },
+    scroll: { flex: 1, width: "100%" },
     content: {
       flexGrow: 1,
       width: "100%",
       alignSelf: "center",
+      minHeight: 0,
     },
   });
 }

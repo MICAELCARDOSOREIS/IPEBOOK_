@@ -62,7 +62,6 @@ export const SORT_IDS: readonly SearchSortOption[] = [
   "recent",
   "price_asc",
   "price_desc",
-  "neighborhood",
   "title",
 ];
 
@@ -134,14 +133,43 @@ function matchesNeighborhood(book: Book, neighborhood: string): boolean {
   return bookLoc === norm || bookLoc.includes(norm) || norm.includes(bookLoc);
 }
 
+export function matchesCategory(bookCategory: string | undefined, filterCategory: string): boolean {
+  if (filterCategory === "all") return true;
+  if (!bookCategory) return false;
+  const b = bookCategory.trim().toLowerCase();
+  const f = filterCategory.trim().toLowerCase();
+  if (b === f) return true;
+
+  // Compatibilidade com as 6 macro-categorias canônicas (ADR 0109)
+  if (f === "didáticos & concursos") {
+    return b.includes("didático") || b.includes("concurso") || b.includes("enem") || b.includes("escolar");
+  }
+  if (f === "universitário & técnico") {
+    return b.includes("universitário") || b.includes("técnico") || b.includes("acadêmico") || b.includes("computação") || b.includes("exatas") || b.includes("ciência");
+  }
+  if (f === "literatura & romance") {
+    return b.includes("literatura") || b.includes("romance") || b.includes("ficção") || b.includes("poesia") || b.includes("conto");
+  }
+  if (f === "infantil & quadrinhos") {
+    return b.includes("infantil") || b.includes("infantojuvenil") || b.includes("quadrinho") || b.includes("mangá") || b.includes("gibi") || b.includes("hq");
+  }
+  if (f === "desenvolvimento & espiritualidade") {
+    return b.includes("desenvolvimento") || b.includes("autoajuda") || b.includes("espiritualidade") || b.includes("religi") || b.includes("teologia");
+  }
+  if (f === "outros") {
+    return b.includes("outro") || b.includes("biografia") || b.includes("história");
+  }
+
+  return false;
+}
+
 /** Filtra o catálogo client-side (FR-005, Spec 028): termo, modalidade, categoria, preço e bairro. */
 export function filterBooks(books: readonly Book[], query: SearchQuery): Book[] {
   const normalizedTerm = query.term.trim().toLowerCase();
-  const normalizedCategory = query.filters.category.trim().toLowerCase();
   return books.filter((book) => {
     if (normalizedTerm && !matchesTerm(book, normalizedTerm)) return false;
     if (query.filters.modality !== "all" && book.modality !== query.filters.modality) return false;
-    if (query.filters.category !== "all" && book.category?.trim().toLowerCase() !== normalizedCategory) return false;
+    if (!matchesCategory(book.category, query.filters.category)) return false;
     if (!matchesNeighborhood(book, query.neighborhood)) return false;
     if (!matchesPrice(book, query.filters.priceRange)) return false;
     if (query.filters.onlyBoxes && !book.isBox) return false;

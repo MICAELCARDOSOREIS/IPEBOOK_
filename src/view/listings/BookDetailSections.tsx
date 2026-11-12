@@ -96,13 +96,36 @@ export function HeroIconButton({
 }
 
 /** Linha da lista de detalhes (Figma `03.01`: ícone em selo, rótulo à esquerda, valor à direita). */
-export function DetailRow({ icon, label, value, last = false }: { icon: AppIconName; label: string; value: string; last?: boolean }) {
+export function DetailRow({
+  icon,
+  label,
+  value,
+  last = false,
+  containerColor,
+  iconColor,
+}: {
+  icon: AppIconName;
+  label: string;
+  value: string;
+  last?: boolean;
+  containerColor?: string;
+  iconColor?: string;
+}) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   return (
     <View style={[styles.detailRow, !last && styles.detailRowDivider]}>
-      <View style={styles.detailIcon}>
-        <AppIcon name={icon} size={18} color={colors.m3.onSecondaryContainer} />
+      <View
+        style={[
+          styles.detailIcon,
+          containerColor ? { backgroundColor: containerColor } : null,
+        ]}
+      >
+        <AppIcon
+          name={icon}
+          size={18}
+          color={iconColor ?? colors.m3.onSecondaryContainer}
+        />
       </View>
       <Text style={styles.detailLabel}>{label}</Text>
       <Text style={styles.detailValue} numberOfLines={1}>{value}</Text>
@@ -175,7 +198,7 @@ export function BookDetailHeroSection({
             icon={isFavorite ? "heartFill" : "heart"}
             label={isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
             disabled={favoriteLoading}
-            iconColor={isFavorite ? colors.ipe.bloomDeep : undefined}
+            iconColor={isFavorite ? colors.ipe.bloom : undefined}
             onPress={onToggleFavorite}
           />
         </View>
@@ -192,7 +215,7 @@ export function BookDetailHeroSection({
               publisher={book.publisher}
               pageCount={book.pageCount}
               photoUrl={book.photoUrl}
-              scale={wideWeb ? 1.6 : 1}
+              scale={wideWeb ? 1.35 : 1}
             />
           </View>
           {photos.length > 0 ? (
@@ -237,7 +260,13 @@ export function BookDetailHeroSection({
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
-    heroWide: { flex: 1.6, borderRadius: tokens.radius.xxl, paddingTop: tokens.spacing[16], minHeight: 520 },
+    heroWide: {
+      flex: 1.4,
+      borderRadius: tokens.radius.xxl,
+      paddingTop: tokens.spacing[16],
+      paddingBottom: tokens.spacing[20],
+      minHeight: 440,
+    },
     hero: {
       backgroundColor: colors.m3.surfaceContainerLow,
       borderBottomLeftRadius: tokens.radius.xxl,
@@ -306,7 +335,8 @@ function createStyles(colors: ColorPalette) {
       flexDirection: "row",
       alignItems: "center",
       gap: tokens.spacing[12],
-      minHeight: tokens.spacing[56],
+      minHeight: tokens.spacing[40],
+      paddingVertical: tokens.spacing[6],
     },
     detailRowDivider: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.m3.outlineVariant },
     detailIcon: {

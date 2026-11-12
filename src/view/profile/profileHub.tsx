@@ -381,7 +381,7 @@ export default function ProfileHub({
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
-    page: { flex: 1, backgroundColor: colors.background },
+    page: { flex: 1, minHeight: 0, backgroundColor: colors.background },
     scroll: { flexGrow: 1, paddingBottom: tokens.spacing[32] },
     // Web larga (Figma `07.01`): cartão e métricas em coluna lateral, "Atividade" e "Conta" lado a lado.
     contentWide: {
