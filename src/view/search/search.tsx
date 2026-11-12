@@ -507,9 +507,7 @@ export default function Search({
           <SortSheet
             visible={showSortSheet}
             selected={state.sortBy}
-            selectedModality={state.modality}
             onSelect={actions.setSortBy}
-            onSelectModality={actions.setModality}
             onClose={() => setShowSortSheet(false)}
           />
           <NeighborhoodSelectorModal
