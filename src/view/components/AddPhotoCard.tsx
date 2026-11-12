@@ -33,12 +33,24 @@ export function AddPhotoCard({
   if (photoUrl) {
     return (
       <View style={[styles.card, style]}>
-        <Image
-          source={{ uri: photoUrl }}
-          accessibilityLabel={`Pré-visualização da ${label.toLowerCase()}`}
-          style={styles.previewImage}
-          resizeMode="cover"
-        />
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Alterar ${label.toLowerCase()}`}
+          accessibilityHint="Toque para substituir esta foto"
+          onPress={onPress}
+          style={styles.previewPressable}
+        >
+          <Image
+            source={{ uri: photoUrl }}
+            accessibilityLabel={`Pré-visualização da ${label.toLowerCase()}`}
+            style={styles.previewImage}
+            resizeMode="cover"
+          />
+          <View style={styles.changeBadge}>
+            <AppIcon name="camera" color={colors.surface} size={14} />
+            <Text style={styles.changeBadgeText}>Alterar</Text>
+          </View>
+        </Pressable>
         {onRemovePhoto ? (
           <Pressable
             accessibilityRole="button"
@@ -102,6 +114,30 @@ function createStyles(colors: ColorPalette) {
     previewImage: {
       ...StyleSheet.absoluteFill,
       borderRadius: tokens.radius.large,
+    },
+    previewPressable: {
+      flex: 1,
+      width: "100%",
+      height: "100%",
+      position: "relative",
+    },
+    changeBadge: {
+      position: "absolute",
+      bottom: tokens.spacing[6],
+      left: tokens.spacing[6],
+      backgroundColor: "rgba(0, 0, 0, 0.65)",
+      borderRadius: tokens.radius.full,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[4],
+      paddingHorizontal: tokens.spacing[8],
+      paddingVertical: tokens.spacing[4],
+    },
+    changeBadgeText: {
+      ...tokens.typography.labelSmall,
+      color: colors.surface,
+      fontSize: 11,
+      fontWeight: tokens.fontWeight.medium,
     },
     removeButton: {
       position: "absolute",

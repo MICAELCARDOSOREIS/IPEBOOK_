@@ -1,5 +1,6 @@
 import { useMemo, useRef } from "react";
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { ImageSource } from "@/model/services/iImagePickerService";
 import { AppIcon } from "@/view/components/AppIcon";
 import { type FocusableElement, useModalFocusTrap } from "@/view/components/Dialog";
@@ -19,6 +20,7 @@ export type PhotoSourceSheetProps = {
 export function PhotoSourceSheet({ visible, title = "Adicionar foto", onChoose, onClose }: PhotoSourceSheetProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const insets = useSafeAreaInsets();
   const wideWeb = useIsWideWeb();
   const cameraRef = useRef<FocusableElement | null>(null);
   const libraryRef = useRef<FocusableElement | null>(null);
@@ -30,7 +32,7 @@ export function PhotoSourceSheet({ visible, title = "Adicionar foto", onChoose, 
     <Modal accessibilityViewIsModal visible={visible} transparent animationType="fade" statusBarTranslucent navigationBarTranslucent onRequestClose={onClose}>
       <View style={[styles.scrim, wideWeb && styles.scrimWide]}>
         <Pressable accessibilityRole="button" accessibilityLabel="Fechar ao tocar fora" onPress={onClose} style={StyleSheet.absoluteFill} />
-        <View style={[styles.sheet, wideWeb && styles.sheetWide]}>
+        <View style={[styles.sheet, wideWeb && styles.sheetWide, { paddingBottom: wideWeb ? tokens.spacing[24] : tokens.spacing[16] + insets.bottom }]}>
           {wideWeb ? null : <View accessible={false} importantForAccessibility="no" style={styles.handle} />}
           <Text accessibilityRole="header" style={styles.title}>{title}</Text>
           <Pressable
