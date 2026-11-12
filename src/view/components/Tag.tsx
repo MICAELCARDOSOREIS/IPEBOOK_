@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
+import { AppIcon } from "@/view/components/AppIcon";
 
 export type TagVariant =
   | "sale"
@@ -11,6 +12,7 @@ export type TagVariant =
   | "completed"
   | "paused"
   | "available"
+  | "box"
   | "venda"
   | "troca"
   | "doacao"
@@ -80,24 +82,29 @@ function createVariantConfig(
       defaultLabel: "Concluído",
     },
     paused: {
-      background: colors.disabledBackground,
-      text: colors.disabledText,
+      background: colors.badge.paused.background,
+      text: colors.badge.paused.text,
       defaultLabel: "Pausado",
     },
     pausado: {
-      background: colors.disabledBackground,
-      text: colors.disabledText,
+      background: colors.badge.paused.background,
+      text: colors.badge.paused.text,
       defaultLabel: "Pausado",
     },
     available: {
-      background: colors.soft,
-      text: colors.action,
+      background: colors.badge.available.background,
+      text: colors.badge.available.text,
       defaultLabel: "Disponível",
     },
     disponivel: {
-      background: colors.soft,
-      text: colors.action,
+      background: colors.badge.available.background,
+      text: colors.badge.available.text,
       defaultLabel: "Disponível",
+    },
+    box: {
+      background: colors.m3.secondaryContainer,
+      text: colors.m3.onSecondaryContainer,
+      defaultLabel: "Box",
     },
   };
 }
@@ -111,6 +118,7 @@ export function Tag({ variant, label, accessibilityLabel }: TagProps) {
   const variantConfig = useMemo(() => createVariantConfig(colors), [colors]);
   const config = variantConfig[variant] ?? variantConfig.sale;
   const displayText = label ?? config.defaultLabel;
+  const isTrade = variant === "trade" || variant === "troca";
 
   return (
     <View
@@ -118,6 +126,7 @@ export function Tag({ variant, label, accessibilityLabel }: TagProps) {
       accessibilityLabel={accessibilityLabel ?? displayText}
       style={[styles.container, { backgroundColor: config.background }]}
     >
+      {isTrade ? <AppIcon name="swap" size={11} color={config.text} /> : null}
       <Text style={[styles.text, { color: config.text }]}>{displayText}</Text>
     </View>
   );
@@ -126,12 +135,15 @@ export function Tag({ variant, label, accessibilityLabel }: TagProps) {
 const styles = StyleSheet.create({
   container: {
     alignSelf: "flex-start",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: tokens.spacing[4],
     paddingHorizontal: tokens.spacing[8],
-    paddingVertical: 2,
+    paddingVertical: tokens.spacing[2],
     borderRadius: tokens.radius.full,
   },
   text: {
-    fontSize: 11,
-    fontWeight: "bold",
+    ...tokens.typography.captionSmall,
+    fontWeight: tokens.fontWeight.bold,
   },
 });

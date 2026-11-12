@@ -1,16 +1,19 @@
-import { router } from "expo-router";
+import { pushOnce, replaceOnce } from "@/view/pushOnce";
+import { RequireAuth } from "@/view/components/RequireAuth";
 import MyListingsScreen from "@/view/listings/myListings";
 
 export default function MeusAnunciosRoute() {
   return (
-    <MyListingsScreen
-      onBack={() => router.back()}
-      onRequireSignIn={() => router.replace("/entrar")}
-      onNavigateToCreateListing={() => router.push("/anunciar")}
-      onNavigateToHelp={() => router.push("/ajuda")}
-      onNavigateToManageListing={(bookId) => router.push(`/gerenciar-anuncio/${bookId}` as never)}
-      onNavigateToReceivedRequests={() => router.push("/pedidos-recebidos")}
-      onNavigateToNegotiationDetail={(requestId) => router.push(`/negociacao/${requestId}` as never)}
-    />
+    <RequireAuth onRequireSignIn={() => replaceOnce("/entrar")}>
+      <MyListingsScreen
+        onRequireSignIn={() => replaceOnce("/entrar")}
+        onNavigateToCreateListing={() => pushOnce("/anunciar")}
+        onNavigateToDrafts={() => pushOnce("/rascunhos" as never)}
+        onNavigateToHelp={() => pushOnce("/ajuda")}
+        onNavigateToManageListing={(bookId) => pushOnce(`/gerenciar-anuncio/${bookId}` as never)}
+        onNavigateToReceivedRequests={() => pushOnce("/pedidos-recebidos")}
+        onNavigateToNegotiationDetail={(requestId) => pushOnce(`/conversa/${requestId}` as never)}
+      />
+    </RequireAuth>
   );
 }

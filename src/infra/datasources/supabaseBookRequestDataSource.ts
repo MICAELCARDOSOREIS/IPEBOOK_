@@ -1,5 +1,6 @@
 import type { IBookRequestDataSource } from "@/model/datasources/iBookRequestDataSource";
 import type { BookRequest, RequestStatus } from "@/model/entities/bookRequest";
+import { toDomainError } from "@/infra/supabaseErrors";
 import { DataSourceError } from "@/model/errors";
 import type { SupabaseAppClient } from "@/infra/supabaseClient";
 
@@ -8,6 +9,8 @@ type RequestRow = {
   listing_id: string;
   requester_id: string;
   status: RequestStatus;
+  initial_message?: string | null;
+  offered_book_id?: string | null;
 };
 
 function mapRequest(row: RequestRow): BookRequest {
@@ -16,10 +19,12 @@ function mapRequest(row: RequestRow): BookRequest {
     listingId: row.listing_id,
     requesterId: row.requester_id,
     status: row.status,
+    initialMessage: row.initial_message ?? undefined,
+    offeredBookId: row.offered_book_id ?? undefined,
   };
 }
 
-const columns = "id,listing_id,requester_id,status";
+const columns = "id,listing_id,requester_id,status,initial_message,offered_book_id";
 
 export class SupabaseBookRequestDataSource implements IBookRequestDataSource {
   constructor(private readonly client: SupabaseAppClient) {}
@@ -29,8 +34,10 @@ export class SupabaseBookRequestDataSource implements IBookRequestDataSource {
       listing_id: request.listingId,
       requester_id: request.requesterId,
       status: request.status,
+      initial_message: request.initialMessage ?? null,
+      offered_book_id: request.offeredBookId ?? null,
     }).select(columns).single();
-    if (error || !data) throw new DataSourceError("Não foi possível solicitar a negociação.");
+    if (error || !data) throw toDomainError(error, "Não foi possível solicitar a negociação.");
     return mapRequest(data as RequestRow);
   }
 

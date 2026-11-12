@@ -1,4 +1,5 @@
-import { router, useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
+import { backOnce, replaceOnce } from "@/view/pushOnce";
 import ScheduleMeetingScreen from "@/view/requests/scheduleMeeting";
 
 export default function CombinarEncontroRoute() {
@@ -6,9 +7,9 @@ export default function CombinarEncontroRoute() {
   return (
     <ScheduleMeetingScreen
       requestId={id ?? ""}
-      onBack={() => router.back()}
-      onRequireSignIn={() => router.replace("/entrar")}
-      onSent={() => router.back()}
+      onBack={() => backOnce()}
+      onRequireSignIn={() => replaceOnce("/entrar")}
+      onSent={() => backOnce()}
     />
   );
 }

@@ -7,7 +7,7 @@ import type { IShareUseCases } from "@/usecase/iShareUseCases";
 import { useInviteFriendsViewModel } from "@/viewmodel/useInviteFriendsViewModel";
 
 vi.mock("expo-linking", () => ({
-  createURL: vi.fn((path: string) => `https://ipebook.pages.dev${path}`),
+  createURL: vi.fn((path: string) => `https://ipebook.app${path}`),
   canOpenURL: vi.fn().mockResolvedValue(false),
   openURL: vi.fn().mockResolvedValue(undefined),
 }));
@@ -15,10 +15,10 @@ vi.mock("expo-linking", () => ({
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
 const mounted: ReactTestRenderer[] = [];
 
-async function renderHook(useCases: IShareUseCases, appUrl?: string) {
+async function renderHook(useCases: IShareUseCases, appUrl?: string, shareImageFile?: (uri: string) => Promise<boolean>) {
   let result!: ReturnType<typeof useInviteFriendsViewModel>;
   function HookProbe() {
-    result = useInviteFriendsViewModel(useCases, appUrl);
+    result = useInviteFriendsViewModel(useCases, appUrl, shareImageFile);
     return null;
   }
   await act(async () => {
@@ -42,10 +42,11 @@ afterEach(async () => {
 const fakeUseCases: IShareUseCases = {
   buildListingSharePath: () => "/livro/1",
   buildShareMessage: () => "mensagem",
+  buildWhatsAppShareMessage: () => "mensagem",
   buildWhatsAppShareUrl: (msg) => `whatsapp://send?text=${encodeURIComponent(msg)}`,
-  buildInviteMessage: (url = "https://ipebook.pages.dev") =>
+  buildInviteMessage: (url = "https://ipebook.app") =>
     `Venha para o IpêBook em Piripiri: ${url}`,
-  buildWhatsAppInviteUrl: (url = "https://ipebook.pages.dev") =>
+  buildWhatsAppInviteUrl: (url = "https://ipebook.app") =>
     `whatsapp://send?text=${encodeURIComponent(`Venha para o IpêBook em Piripiri: ${url}`)}`,
 };
 
@@ -54,6 +55,7 @@ describe("useInviteFriendsViewModel (Spec 057, Figma 08.02)", () => {
     const hook = await renderHook(fakeUseCases);
     expect(hook.current[0].sharing).toBe(false);
     expect(hook.current[0].linkCopied).toBe(false);
+    expect(hook.current[0].shared).toBe(false);
     expect(hook.current[0].error).toBeNull();
     expect(hook.current[0].inviteMessage).toContain("IpêBook");
   });
@@ -73,6 +75,8 @@ describe("useInviteFriendsViewModel (Spec 057, Figma 08.02)", () => {
       expect.stringContaining("whatsapp://send?text="),
     );
     expect(hook.current[0].sharing).toBe(false);
+    expect(hook.current[0].shared).toBe(true);
+    expect(hook.current[0].linkCopied).toBe(false);
     Platform.OS = originalOS;
   });
 
@@ -80,7 +84,7 @@ describe("useInviteFriendsViewModel (Spec 057, Figma 08.02)", () => {
     const originalOS = Platform.OS;
     Platform.OS = "android";
     vi.mocked(Linking.canOpenURL).mockResolvedValue(false);
-    const shareSpy = vi.spyOn(Share, "share").mockResolvedValue({ action: "sharedAction" });
+    const shareSpy = vi.spyOn(Share, "share").mockResolvedValue({ action: "sharedAction", activityType: undefined });
 
     const hook = await renderHook(fakeUseCases);
     await act(async () => {
@@ -90,13 +94,14 @@ describe("useInviteFriendsViewModel (Spec 057, Figma 08.02)", () => {
     expect(shareSpy).toHaveBeenCalledWith({
       message: expect.stringContaining("IpêBook em Piripiri"),
     });
+    expect(hook.current[0].shared).toBe(true);
     Platform.OS = originalOS;
   });
 
   it("compartilha via menu nativo em shareNative no mobile", async () => {
     const originalOS = Platform.OS;
     Platform.OS = "android";
-    const shareSpy = vi.spyOn(Share, "share").mockResolvedValue({ action: "sharedAction" });
+    const shareSpy = vi.spyOn(Share, "share").mockResolvedValue({ action: "sharedAction", activityType: undefined });
 
     const hook = await renderHook(fakeUseCases);
     await act(async () => {
@@ -106,6 +111,7 @@ describe("useInviteFriendsViewModel (Spec 057, Figma 08.02)", () => {
     expect(shareSpy).toHaveBeenCalledWith({
       message: expect.stringContaining("IpêBook em Piripiri"),
     });
+    expect(hook.current[0].shared).toBe(true);
     Platform.OS = originalOS;
   });
 
@@ -120,8 +126,9 @@ describe("useInviteFriendsViewModel (Spec 057, Figma 08.02)", () => {
       await hook.current[1].copyLink();
     });
 
-    expect(writeText).toHaveBeenCalledWith("https://ipebook.pages.dev");
+    expect(writeText).toHaveBeenCalledWith("https://ipebook.app");
     expect(hook.current[0].linkCopied).toBe(true);
+    expect(hook.current[0].shared).toBe(false);
 
     act(() => {
       hook.current[1].dismissLinkCopied();
@@ -129,4 +136,141 @@ describe("useInviteFriendsViewModel (Spec 057, Figma 08.02)", () => {
     expect(hook.current[0].linkCopied).toBe(false);
     Platform.OS = originalOS;
   });
+
+  it("cobre fluxos web de shareToWhatsApp e shareNative com e sem navigator.share", async () => {
+    const originalOS = Platform.OS;
+    Platform.OS = "web";
+    const navShare = vi.fn().mockResolvedValue(undefined);
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    vi.stubGlobal("navigator", { share: navShare, clipboard: { writeText } });
+
+    const hook = await renderHook(fakeUseCases);
+    await act(async () => {
+      await hook.current[1].shareToWhatsApp();
+    });
+    expect(navShare).toHaveBeenCalledTimes(1);
+    expect(hook.current[0].shared).toBe(true);
+    expect(hook.current[0].linkCopied).toBe(false);
+
+    await act(async () => {
+      await hook.current[1].shareNative();
+    });
+    expect(navShare).toHaveBeenCalledTimes(2);
+    expect(hook.current[0].shared).toBe(true);
+
+    act(() => {
+      hook.current[1].dismissShared();
+    });
+    expect(hook.current[0].shared).toBe(false);
+
+    // Sem navigator.share
+    vi.stubGlobal("navigator", { clipboard: { writeText } });
+    await act(async () => {
+      await hook.current[1].shareToWhatsApp();
+    });
+    expect(writeText).toHaveBeenCalled();
+    expect(hook.current[0].linkCopied).toBe(true);
+    expect(hook.current[0].shared).toBe(false);
+
+    await act(async () => {
+      await hook.current[1].shareNative();
+    });
+    expect(writeText).toHaveBeenCalled();
+    expect(hook.current[0].linkCopied).toBe(true);
+    Platform.OS = originalOS;
+  });
+
+  it("cobre fallback e erros em copyLink e shareNative no mobile", async () => {
+    const originalOS = Platform.OS;
+    Platform.OS = "android";
+    const shareSpy = vi.spyOn(Share, "share").mockResolvedValue({ action: "sharedAction", activityType: undefined });
+
+    const hook = await renderHook(fakeUseCases);
+    await act(async () => {
+      await hook.current[1].copyLink();
+    });
+    expect(shareSpy).toHaveBeenCalledWith({ message: "https://ipebook.app" });
+    expect(hook.current[0].shared).toBe(true);
+    expect(hook.current[0].linkCopied).toBe(false);
+
+    // Erros em shareNative e copyLink
+    shareSpy.mockRejectedValueOnce(new Error("Falha no share"));
+    await act(async () => {
+      await hook.current[1].shareNative();
+    });
+    expect(hook.current[0].error).toBe("Não foi possível compartilhar o convite. Tente novamente.");
+
+    shareSpy.mockRejectedValueOnce(new Error("Falha no copy"));
+    await act(async () => {
+      await hook.current[1].copyLink();
+    });
+    expect(hook.current[0].error).toBe("Não foi possível compartilhar o convite. Tente novamente.");
+
+    // Erro em shareToWhatsApp
+    vi.mocked(Linking.canOpenURL).mockRejectedValueOnce(new Error("Falha canOpen"));
+    await act(async () => {
+      await hook.current[1].shareToWhatsApp();
+    });
+    expect(hook.current[0].error).toBe("Não foi possível compartilhar o convite. Tente novamente.");
+    Platform.OS = originalOS;
+  });
 });
+
+describe("useInviteFriendsViewModel — imagem do convite (Spec 092)", () => {
+  it("captura a imagem e abre a folha de compartilhamento com o arquivo", async () => {
+    vi.spyOn(Platform, "OS", "get").mockReturnValue("android");
+    const shareFile = vi.fn().mockResolvedValue(true);
+    const share = vi.spyOn(Share, "share").mockResolvedValue({ action: "sharedAction", activityType: undefined });
+    const hook = await renderHook(fakeUseCases, undefined, shareFile);
+    const capture = vi.fn().mockResolvedValue("file:///tmp/convite.png");
+    await act(async () => { await hook.current[1].shareImage(capture); });
+    expect(capture).toHaveBeenCalledTimes(1);
+    expect(shareFile).toHaveBeenCalledWith("file:///tmp/convite.png", expect.stringContaining("IpêBook"), "Convidar amigos para o IpêBook");
+    expect(share).not.toHaveBeenCalled();
+    expect(hook.current[0].sharing).toBe(false);
+    expect(hook.current[0].shared).toBe(true);
+    expect(hook.current[0].error).toBeNull();
+  });
+
+  it("cai no texto com link quando o aparelho não compartilha arquivos", async () => {
+    vi.spyOn(Platform, "OS", "get").mockReturnValue("android");
+    const share = vi.spyOn(Share, "share").mockResolvedValue({ action: "sharedAction", activityType: undefined });
+    const hook = await renderHook(fakeUseCases, undefined, vi.fn().mockResolvedValue(false));
+    await act(async () => { await hook.current[1].shareImage(vi.fn().mockResolvedValue("file:///x.png")); });
+    expect(share).toHaveBeenCalledWith({ message: expect.stringContaining("IpêBook") });
+    expect(hook.current[0].shared).toBe(true);
+  });
+
+  it("na web copia o texto com o link, sem capturar", async () => {
+    vi.spyOn(Platform, "OS", "get").mockReturnValue("web");
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    vi.stubGlobal("navigator", { clipboard: { writeText } });
+    const capture = vi.fn();
+    const hook = await renderHook(fakeUseCases, undefined, vi.fn());
+    await act(async () => { await hook.current[1].shareImage(capture); });
+    expect(capture).not.toHaveBeenCalled();
+    expect(writeText).toHaveBeenCalledWith(expect.stringContaining("IpêBook"));
+    expect(hook.current[0].linkCopied).toBe(true);
+    expect(hook.current[0].shared).toBe(false);
+  });
+
+  it("mostra erro amigável quando a captura falha e ignora segundo toque em andamento", async () => {
+    vi.spyOn(Platform, "OS", "get").mockReturnValue("android");
+    const hook = await renderHook(fakeUseCases, undefined, vi.fn().mockResolvedValue(true));
+    await act(async () => { await hook.current[1].shareImage(vi.fn().mockRejectedValue(new Error("falhou"))); });
+    expect(hook.current[0].error).toBe("Não foi possível compartilhar o convite. Tente novamente.");
+
+    let release!: (uri: string) => void;
+    const slow = vi.fn().mockReturnValue(new Promise<string>((resolve) => { release = resolve; }));
+    const shareFile = vi.fn().mockResolvedValue(true);
+    const second = await renderHook(fakeUseCases, undefined, shareFile);
+    await act(async () => {
+      void second.current[1].shareImage(slow);
+      void second.current[1].shareImage(slow);
+    });
+    expect(slow).toHaveBeenCalledTimes(1);
+    await act(async () => { release("file:///a.png"); });
+    expect(shareFile).toHaveBeenCalledTimes(1);
+  });
+});
+

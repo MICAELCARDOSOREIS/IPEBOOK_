@@ -6,11 +6,10 @@ Data: 2026-10-13. Status: aceito.
 
 `docs/design-system.md` (linha 81) referenciava um "ADR 0019" para justificar o uso da fonte
 Source Serif 4 Bold na marca, mas esse arquivo nunca existiu neste repositório — só há ADRs
-0001 a 0006. A referência foi copiada do projeto irmão da equipe
-(`/home/usermicael/Projetos/IpeBook`), que tem seu próprio
-[ADR 0019](../../docs/adr/0019-serifa-da-marca-e-superficies-do-figma.md) — mas aquele ADR
-decide um escopo bem mais amplo (papéis de superfície do Figma, capa ilustrativa, navegação com
-5 destinos) que não se aplica a este projeto pequeno, ainda na fundação MVVM.
+0001 a 0006. A referência foi copiada do projeto irmão da equipe (fora deste repositório), que
+tem seu próprio ADR 0019 — mas aquele ADR decide um escopo bem mais amplo (papéis de superfície
+do Figma, capa ilustrativa, navegação com 5 destinos) que não se aplica a este projeto pequeno,
+ainda na fundação MVVM.
 
 ## Decisão
 

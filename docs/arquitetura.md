@@ -49,7 +49,7 @@ type Book = Readonly<{
   id: string;
   title: string;
   author: string;
-  status: "available" | "reserved";
+  status: "available" | "reserved" | "paused" | "draft" | "delivered";
   modality: "sale" | "trade" | "donation";
   price?: number; // obrigatório e > 0 só quando modality === "sale" (FR-005)
   ownerId: string;
@@ -64,11 +64,13 @@ createListing(input: CreateListingInput, sessionUserId: string | null): Promise<
 
 Este é um resumo dos contratos, não um arquivo TypeScript completo. O `id` é usado como chave da
 lista. Título, autor e a tag de modalidade (Venda/Troca/Doação) são exibidos na tela. `status`
-indica se o anúncio está `available` ou `reserved`; a transição para reservado é aplicada
+indica se o anúncio está `available`, `reserved`, `paused`, `draft` ou `delivered`; a transição para reservado é aplicada
 pelos casos de uso da negociação (`BookRequestUseCases.respondToRequest` com aceite). `createListing` exige
 `sessionUserId` não nulo (FR-006) e valida o payload com `bookValidator` antes de gravar; o
-anúncio criado é associado à conta autenticada via `ownerId`. Não há ISBN, arquivo digital ou
-localização no modelo atual.
+anúncio criado é associado à conta autenticada via `ownerId`. Não há arquivo digital (e-book) no
+modelo: a circulação é presencial em Piripiri, e a localização é dada por `city` e `neighborhood`.
+Os dados da edição (`synopsis`, `publisher`, `pageCount`, `publicationYear`) são preenchidos pela
+consulta ao ISBN (Spec 097), não digitados como ISBN próprio do anúncio.
 
 `readonly` protege usos no TypeScript, não congela objetos em tempo de execução. O datasource em memória copia os livros na entrada e na saída para que alterações externas não modifiquem sua lista interna; seus dados desaparecem ao encerrar a execução. A persistência real fica no `SupabaseBookDataSource`.
 

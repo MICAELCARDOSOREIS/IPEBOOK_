@@ -19,6 +19,8 @@ function requireSession(sessionUserId: string | null): string {
   return sessionUserId;
 }
 
+type Counterpart = { name: string | null; photoUrl: string | null };
+
 export class BookRequestUseCases implements IBookRequestUseCases {
   constructor(
     private readonly books: IBookDataSource,
@@ -26,7 +28,11 @@ export class BookRequestUseCases implements IBookRequestUseCases {
     private readonly profiles?: IProfileDataSource,
   ) {}
 
-  async requestNegotiation(listingId: string, sessionUserId: string | null): Promise<BookRequest> {
+  async requestNegotiation(
+    listingId: string,
+    sessionUserId: string | null,
+    options?: { initialMessage?: string; offeredBookId?: string },
+  ): Promise<BookRequest> {
     const userId = requireSession(sessionUserId);
     const listing = await this.books.findById(listingId);
     if (!listing) {
@@ -37,7 +43,7 @@ export class BookRequestUseCases implements IBookRequestUseCases {
       throw new ValidationError("Você não pode negociar o próprio anúncio.");
     }
     // FR-003
-    if (listing.status === "reserved") {
+    if (listing.status === "reserved" || listing.status === "delivered") {
       throw new ValidationError("Este anúncio não está mais disponível.");
     }
     // FR-002
@@ -45,21 +51,62 @@ export class BookRequestUseCases implements IBookRequestUseCases {
     if (existing.some((r) => r.requesterId === userId && r.status === "pending")) {
       throw new ValidationError("Você já tem um pedido pendente para este anúncio.");
     }
-    return this.requests.create({ listingId, requesterId: userId, status: "pending" });
+
+    let trimmedMessage: string | undefined;
+    if (options?.initialMessage !== undefined && options?.initialMessage !== null) {
+      const msg = options.initialMessage.trim();
+      if (msg.length > 500) {
+        throw new ValidationError("A mensagem inicial não pode ultrapassar 500 caracteres.");
+      }
+      if (msg.length > 0) {
+        trimmedMessage = msg;
+      }
+    }
+
+    let validOfferedBookId: string | undefined;
+    if (options?.offeredBookId) {
+      const offered = await this.books.findById(options.offeredBookId);
+      if (!offered) {
+        throw new ValidationError("Livro de troca não encontrado.");
+      }
+      if (offered.ownerId !== userId) {
+        throw new ValidationError("O livro oferecido para troca deve ser de sua propriedade.");
+      }
+      if (offered.status !== "available") {
+        throw new ValidationError("O livro oferecido para troca não está disponível.");
+      }
+      validOfferedBookId = offered.id;
+    }
+
+    return this.requests.create({
+      listingId,
+      requesterId: userId,
+      status: "pending",
+      initialMessage: trimmedMessage,
+      offeredBookId: validOfferedBookId,
+    });
   }
 
   async listReceivedRequests(sessionUserId: string | null): Promise<readonly RequestWithListing[]> {
     const userId = requireSession(sessionUserId);
     const myListings = await this.books.listByOwner(userId);
     const result: RequestWithListing[] = [];
-    const names = new Map<string, string | null>();
+    const people = new Map<string, Counterpart>();
     for (const listing of myListings) {
       const requests = await this.requests.listByListing(listing.id);
       for (const request of requests) {
-        if (!names.has(request.requesterId)) {
-          names.set(request.requesterId, await this.findCounterpartName(request.requesterId));
+        if (!people.has(request.requesterId)) {
+          people.set(request.requesterId, await this.findCounterpart(request.requesterId));
         }
-        result.push({ request, listing, requesterName: names.get(request.requesterId) ?? null });
+        const person = people.get(request.requesterId);
+        const offeredBook = request.offeredBookId ? await this.books.findById(request.offeredBookId) : null;
+        result.push({
+          request,
+          listing,
+          requesterName: person?.name ?? null,
+          requesterPhotoUrl: person?.photoUrl ?? null,
+          offeredBook,
+        });
       }
     }
     return result;
@@ -72,7 +119,8 @@ export class BookRequestUseCases implements IBookRequestUseCases {
     for (const request of requests) {
       const listing = await this.books.findById(request.listingId);
       if (listing) {
-        result.push({ request, listing });
+        const offeredBook = request.offeredBookId ? await this.books.findById(request.offeredBookId) : null;
+        result.push({ request, listing, offeredBook });
       }
     }
     return result;
@@ -117,6 +165,21 @@ export class BookRequestUseCases implements IBookRequestUseCases {
     return accepted;
   }
 
+  async cancelRequest(requestId: string, sessionUserId: string | null): Promise<BookRequest> {
+    const userId = requireSession(sessionUserId);
+    const request = await this.requests.findById(requestId);
+    if (!request) {
+      throw new ValidationError("Pedido não encontrado.");
+    }
+    if (request.requesterId !== userId) {
+      throw new AuthError("Somente quem fez o pedido pode cancelá-lo.");
+    }
+    if (request.status !== "pending") {
+      throw new ValidationError("Este pedido já foi respondido.");
+    }
+    return this.requests.respond(request.id, "cancelled");
+  }
+
   async getRequestDetail(
     requestId: string,
     sessionUserId: string | null,
@@ -141,28 +204,50 @@ export class BookRequestUseCases implements IBookRequestUseCases {
     const safeMeetingPoints: readonly MeetingPoint[] = PIRIPIRI_MEETING_POINTS;
 
     const counterpartId = isOwner ? request.requesterId : book.ownerId;
+    const offeredBook = request.offeredBookId ? await this.books.findById(request.offeredBookId) : null;
 
     return {
       request,
       book,
       isOwner,
       counterpartId,
-      counterpartName: await this.findCounterpartName(counterpartId),
+      ...(await this.findCounterpart(counterpartId).then((person) => ({
+        counterpartName: person.name,
+        counterpartPhotoUrl: person.photoUrl,
+      }))),
       safeMeetingPoints,
+      offeredBook,
     };
+  }
+
+  async getActiveRequest(listingId: string, sessionUserId: string | null): Promise<BookRequest | null> {
+    if (!sessionUserId) return null;
+    try {
+      const requests = await this.requests.listByListing(listingId);
+      const found = requests.find((r) => r.requesterId === sessionUserId && (r.status === "pending" || r.status === "accepted"));
+      if (found) return found;
+    } catch {
+      // continua para buscar pelos pedidos do solicitante
+    }
+    try {
+      const myRequests = await this.requests.listByRequester(sessionUserId);
+      return myRequests.find((r) => r.listingId === listingId && (r.status === "pending" || r.status === "accepted")) ?? null;
+    } catch {
+      return null;
+    }
   }
 
   /**
    * O encontro de `06.05` identifica a pessoa pelo nome. Uma falha ao ler o perfil não impede
-   * acompanhar a negociação: a tela recorre ao identificador.
+   * acompanhar a negociação: a tela recorre ao identificador. A foto vai junto para o avatar (Spec 084).
    */
-  private async findCounterpartName(counterpartId: string): Promise<string | null> {
-    if (!this.profiles) return null;
+  private async findCounterpart(counterpartId: string): Promise<Counterpart> {
+    if (!this.profiles) return { name: null, photoUrl: null };
     try {
       const profile = await this.profiles.findById(counterpartId);
-      return profile?.name ?? null;
+      return { name: profile?.name ?? null, photoUrl: profile?.photoUrl ?? null };
     } catch {
-      return null;
+      return { name: null, photoUrl: null };
     }
   }
 }

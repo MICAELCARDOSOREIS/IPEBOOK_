@@ -1,14 +1,17 @@
 import { useMemo, useState } from "react";
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { StyleSheet, Text, View } from "react-native";
+import { ScreenContainer } from "@/view/components/ScreenContainer";
 import { Dialog } from "@/view/components/Dialog";
+import { LoadingState } from "@/view/components/LoadingState";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { TextButton } from "@/view/components/TextButton";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { ALERT_MODALITY_SUMMARY, ALERT_CITY } from "@/view/search/alertLabels";
-import { useSearchAlertsViewModel } from "@/viewmodel/useSearchAlertsViewModel";
+import { makeSearchAlertsViewModel } from "@/di/container";
+import { useGuardedPress } from "@/view/useGuardedPress";
+import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 
 export type ManageAlertProps = {
   alertId: string;
@@ -27,7 +30,10 @@ export default function ManageAlert({
   onEditAlert,
   onAlertDeleted,
 }: ManageAlertProps) {
-  const [state, actions] = useSearchAlertsViewModel(userId);
+  const guardedBack = useGuardedPress(onBack);
+  const guardedEdit = useGuardedPress(onEditAlert);
+  const guardedAlertDeleted = useGuardedPress(onAlertDeleted);
+  const [state, actions] = makeSearchAlertsViewModel(userId);
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
@@ -35,102 +41,111 @@ export default function ManageAlert({
 
   if (state.loading) {
     return (
-      <SafeAreaView style={styles.page}>
-        <TopAppBar title="Gerenciar alerta" onBack={onBack} />
-        <View style={styles.status}>
-          <ActivityIndicator color={colors.action} accessibilityLabel="Carregando alerta" />
-        </View>
-      </SafeAreaView>
+      <ScreenContainer
+        maxWidth={560}
+        paddingHorizontal={tokens.spacing[24]}
+        paddingTop={tokens.spacing[24]}
+        header={<TopAppBar contentMaxWidth={560} title="Gerenciar alerta" onBack={guardedBack} />}
+        contentStyle={styles.content}
+      >
+        <LoadingState label="Carregando alerta" variant="form" />
+      </ScreenContainer>
     );
   }
 
   if (!alert) {
     return (
-      <SafeAreaView style={styles.page}>
-        <TopAppBar title="Gerenciar alerta" onBack={onBack} />
-        <View style={styles.content}>
-          <Text accessibilityRole="header" style={styles.headline}>
-            Alerta não encontrado
-          </Text>
-          <Text style={styles.body}>
-            Ele pode ter sido excluído. Volte para a lista e confira seus alertas.
-          </Text>
-          <OutlinedButton label="Voltar aos alertas" onPress={onBack} />
-        </View>
-      </SafeAreaView>
+      <ScreenContainer
+        maxWidth={560}
+        paddingHorizontal={tokens.spacing[24]}
+        paddingTop={tokens.spacing[24]}
+        header={<TopAppBar contentMaxWidth={560} title="Gerenciar alerta" onBack={guardedBack} />}
+        contentStyle={styles.content}
+      >
+        <Text accessibilityRole="header" style={styles.headline}>
+          Alerta não encontrado
+        </Text>
+        <Text style={styles.body}>
+          Ele pode ter sido excluído. Volte para a lista e confira seus alertas.
+        </Text>
+        <OutlinedButton label="Voltar aos alertas" onPress={guardedBack} />
+      </ScreenContainer>
     );
   }
 
   return (
-    <SafeAreaView style={styles.page}>
-      <TopAppBar title="Gerenciar alerta" onBack={onBack} />
-      <ScrollView contentContainerStyle={styles.scroll}>
-        <View style={styles.content}>
-          <Text accessibilityRole="header" style={styles.headline}>
-            {`${alert.query}, do seu jeito.`}
-          </Text>
-          <Text style={styles.body}>Acompanhe e ajuste o que você quer encontrar.</Text>
+    <ScreenContainer
+      maxWidth={560}
+      paddingHorizontal={tokens.spacing[24]}
+      paddingTop={tokens.spacing[24]}
+      paddingBottom={scrollBottomPadding.withoutBottomBar}
+      header={<TopAppBar contentMaxWidth={560} title="Gerenciar alerta" onBack={guardedBack} />}
+      contentStyle={styles.content}
+      overlay={
+        <Dialog
+          visible={confirmingDelete}
+          title="Excluir este alerta?"
+          message={`Você deixa de receber avisos sobre “${alert.query}”. Esta ação não pode ser desfeita.`}
+          confirmLabel="Confirmar exclusão"
+          cancelLabel="Cancelar"
+          destructive
+          onCancel={() => setConfirmingDelete(false)}
+          onConfirm={() => {
+            setConfirmingDelete(false);
+            void actions.remove(alert.id).then((removed) => {
+              if (removed) guardedAlertDeleted();
+            });
+          }}
+        />
+      }
+    >
+      <Text accessibilityRole="header" style={styles.headline}>
+        {`${alert.query}, do seu jeito.`}
+      </Text>
+      <Text style={styles.body}>Acompanhe e ajuste o que você quer encontrar.</Text>
 
-          <View style={alert.active ? styles.statusCard : styles.statusCardPaused}>
-            <Text style={styles.statusTitle}>
-              {alert.active ? "Alerta ativo" : "Alerta pausado"}
-            </Text>
-            <Text style={styles.body}>
-              {alert.active
-                ? "Você será avisado quando um livro combinar com esta busca."
-                : "Retome o alerta quando quiser voltar a receber novidades."}
-            </Text>
-          </View>
+      <View style={alert.active ? styles.statusCard : styles.statusCardPaused}>
+        <Text style={styles.statusTitle}>
+          {alert.active ? "Alerta ativo" : "Alerta pausado"}
+        </Text>
+        <Text style={styles.body}>
+          {alert.active
+            ? "Você será avisado quando um livro combinar com esta busca."
+            : "Retome o alerta quando quiser voltar a receber novidades."}
+        </Text>
+      </View>
 
-          <View style={styles.summary}>
-            <Text style={styles.summaryTitle}>{alert.query}</Text>
-            <Text style={styles.metaText}>
-              {`${ALERT_MODALITY_SUMMARY(alert.modalities)} · ${ALERT_CITY}`}
-            </Text>
-          </View>
+      <View style={styles.summary}>
+        <Text style={styles.summaryTitle}>{alert.query}</Text>
+        <Text style={styles.metaText}>
+          {`${ALERT_MODALITY_SUMMARY(alert.modalities)} · ${ALERT_CITY}`}
+        </Text>
+      </View>
 
-          {state.error ? (
-            <Text accessibilityRole="alert" style={styles.error}>
-              {state.error}
-            </Text>
-          ) : null}
+      {state.error ? (
+        <Text accessibilityRole="alert" style={styles.error}>
+          {state.error}
+        </Text>
+      ) : null}
 
-          <OutlinedButton
-            label="Editar alerta"
-            accessibilityLabel={`Editar alerta ${alert.query}`}
-            onPress={() => onEditAlert(alert.id)}
-          />
-          <OutlinedButton
-            label={alert.active ? "Pausar alerta" : "Retomar alerta"}
-            accessibilityLabel={
-              alert.active ? `Pausar alerta ${alert.query}` : `Retomar alerta ${alert.query}`
-            }
-            onPress={() => void actions.setActive(alert.id, !alert.active)}
-          />
-          <TextButton
-            label="Excluir alerta"
-            accessibilityLabel={`Excluir alerta ${alert.query}`}
-            onPress={() => setConfirmingDelete(true)}
-          />
-        </View>
-      </ScrollView>
-
-      <Dialog
-        visible={confirmingDelete}
-        title="Excluir este alerta?"
-        message={`Você deixa de receber avisos sobre “${alert.query}”. Esta ação não pode ser desfeita.`}
-        confirmLabel="Confirmar exclusão"
-        cancelLabel="Cancelar"
-        destructive
-        onCancel={() => setConfirmingDelete(false)}
-        onConfirm={() => {
-          setConfirmingDelete(false);
-          void actions.remove(alert.id).then((removed) => {
-            if (removed) onAlertDeleted();
-          });
-        }}
+      <OutlinedButton
+        label="Editar alerta"
+        accessibilityLabel={`Editar alerta ${alert.query}`}
+        onPress={() => guardedEdit(alert.id)}
       />
-    </SafeAreaView>
+      <OutlinedButton
+        label={alert.active ? "Pausar alerta" : "Retomar alerta"}
+        accessibilityLabel={
+          alert.active ? `Pausar alerta ${alert.query}` : `Retomar alerta ${alert.query}`
+        }
+        onPress={() => void actions.setActive(alert.id, !alert.active)}
+      />
+      <TextButton
+        label="Excluir alerta"
+        accessibilityLabel={`Excluir alerta ${alert.query}`}
+        onPress={() => setConfirmingDelete(true)}
+      />
+    </ScreenContainer>
   );
 }
 
@@ -148,9 +163,7 @@ function createStyles(colors: ColorPalette) {
     gap: tokens.spacing[16],
   },
   headline: {
-    fontSize: tokens.typography.displayLarge.fontSize,
-    lineHeight: tokens.typography.displayLarge.lineHeight,
-    fontFamily: tokens.typography.displayLarge.fontFamily,
+    ...tokens.typography.displayLarge,
     color: colors.text,
   },
   body: { ...tokens.typography.bodyMedium, color: colors.secondaryText },

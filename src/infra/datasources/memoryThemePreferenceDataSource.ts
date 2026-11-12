@@ -2,7 +2,7 @@ import type { IThemePreferenceDataSource } from "@/model/datasources/iThemePrefe
 import type { ThemePreference } from "@/model/entities/themePreference";
 
 export class MemoryThemePreferenceDataSource implements IThemePreferenceDataSource {
-  private preference: ThemePreference = "system";
+  private preference: ThemePreference = "light";
 
   async getPreference() {
     return this.preference;

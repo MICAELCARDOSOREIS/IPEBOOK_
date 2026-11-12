@@ -216,4 +216,35 @@ describe("useSearchAlertsViewModel", () => {
     });
     expect(generico.current[0].error).toBe("Não foi possível excluir o alerta.");
   });
+
+  it("update atualiza o alerta com sucesso e recarrega", async () => {
+    const updateAlert = vi.fn().mockResolvedValue(undefined);
+    const hook = await renderHook("bia", casosDeUso({ updateAlert }));
+
+    let ok = false;
+    await act(async () => {
+      ok = await hook.current[1].update("a1", "machado de assis", ["donation"]);
+    });
+
+    expect(ok).toBe(true);
+    expect(updateAlert).toHaveBeenCalledWith("bia", "a1", "machado de assis", ["donation"]);
+    expect(hook.current[0].message).toBe("Alerta atualizado.");
+  });
+
+  it("update trata erros de domínio e genéricos ao falhar", async () => {
+    const dominio = await renderHook("bia", casosDeUso({ updateAlert: falhaDominio("Consulta inválida") }));
+    let ok = true;
+    await act(async () => {
+      ok = await dominio.current[1].update("a1", "errado");
+    });
+    expect(ok).toBe(false);
+    expect(dominio.current[0].error).toBe("Consulta inválida");
+
+    const generico = await renderHook("bia", casosDeUso({ updateAlert: falhaGenerica }));
+    await act(async () => {
+      ok = await generico.current[1].update("a1", "errado");
+    });
+    expect(ok).toBe(false);
+    expect(generico.current[0].error).toBe("Não foi possível atualizar o alerta.");
+  });
 });

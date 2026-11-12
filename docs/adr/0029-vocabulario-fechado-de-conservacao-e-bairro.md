@@ -8,7 +8,7 @@ A etapa de detalhes do anúncio no Figma (`04.05 · Detalhes do livro`, nó `12:
 de conservação e a categoria como chips de escolha única, e o bairro como campo de retirada. O
 código não tinha conservação nem descrição, a categoria era texto livre de até 60 caracteres e o
 bairro também era texto livre: `PIRIPIRI_NEIGHBORHOODS` (os 17 bairros oficiais definidos pelo
-[ADR 0016](0016-beta-restrita-a-piripiri.md)) só era consultada por um teste de semente, nunca pela
+[ADR 0016](0016-restricao-beta-declaracao-piripiri.md)) só era consultada por um teste de semente, nunca pela
 tela. Na prática, dois anúncios do mesmo bairro podiam gravar "Centro", "centro" e "Centro, PI".
 
 A Spec 017 já havia registrado que as etapas 2 e 3 do Figma usavam campos que a entidade `Book` não

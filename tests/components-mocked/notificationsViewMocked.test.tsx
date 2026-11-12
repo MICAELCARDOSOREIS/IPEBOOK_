@@ -1,5 +1,5 @@
-import React from "react";
-import { act, render } from "@testing-library/react-native";
+
+import { act, fireEvent, render } from "@testing-library/react-native";
 import { describe, expect, it, vi } from "vitest";
 import type { NotificationsActions, NotificationsState } from "@/viewmodel/useNotificationsViewModel";
 import Notifications from "@/view/notifications/notifications";
@@ -18,14 +18,21 @@ function mock(state: Partial<NotificationsState>, actions: Partial<Notifications
     filteredNotifications: [],
     loading: false,
     error: null,
+    actionError: null,
     filter: "all",
     unreadCount: 0,
+    systemPermissionGranted: true,
     ...state,
   };
   const fullActions: NotificationsActions = {
     reload: vi.fn(),
+    refresh: vi.fn().mockResolvedValue(undefined),
     markAsRead: vi.fn(),
     markAllAsRead: vi.fn(),
+    deleteNotification: vi.fn(),
+    clearAll: vi.fn(),
+    clearRead: vi.fn(),
+    clearActionError: vi.fn(),
     setFilter: vi.fn(),
     ...actions,
   };
@@ -51,5 +58,66 @@ describe("Notifications com ViewModel mockado (Issue #76)", () => {
       screen = await render(<Notifications sessionUserId="u1" onBack={vi.fn()} />);
     });
     expect(screen.getByText("Você está sem conexão com a internet.")).toBeDefined();
+  });
+});
+
+describe("Notifications — puxar para atualizar e rótulos (Spec 091)", () => {
+  const item = { id: "n1", userId: "u", title: "Nova proposta", message: "Ana quer seu livro", type: "request_received", read: false, createdAt: new Date().toISOString() } as const;
+
+  it("recarrega sem esconder a lista ao puxar para atualizar", async () => {
+    const actions = mock({ notifications: [item], filteredNotifications: [item], unreadCount: 1 });
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<Notifications sessionUserId="u" />);
+    });
+    await act(async () => {
+      await screen.getByTestId("notifications-list").props.onRefresh();
+    });
+    expect(actions.refresh).toHaveBeenCalledTimes(1);
+  });
+
+  it("mantém a lista visível quando uma ação falha e só avisa pelo snackbar", async () => {
+    mock({
+      notifications: [item],
+      filteredNotifications: [item],
+      unreadCount: 1,
+      actionError: "Não foi possível excluir a notificação.",
+    });
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<Notifications sessionUserId="u" />);
+    });
+
+    expect(screen.getByText("Nova proposta")).toBeDefined();
+    expect(screen.getByText("Não foi possível excluir a notificação.")).toBeDefined();
+  });
+
+  it("oferece 'Marcar todas como lidas' e não repete a contagem de pendentes", async () => {
+    mock({ notifications: [item], filteredNotifications: [item], unreadCount: 1 });
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<Notifications sessionUserId="u" />);
+    });
+    expect(screen.getByLabelText("Marcar todas como lidas")).toBeDefined();
+    expect(screen.queryByText("1 alerta pendente de leitura")).toBeNull();
+  });
+});
+
+describe("Notifications — estado vazio leva ao catálogo", () => {
+  it("pressiona 'Explorar livros' e chama a ação da rota, não o retorno", async () => {
+    mock({});
+    const onBack = vi.fn();
+    const onExploreBooks = vi.fn();
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<Notifications sessionUserId="u" onBack={onBack} onExploreBooks={onExploreBooks} />);
+    });
+
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Explorar livros" }));
+    });
+
+    expect(onExploreBooks).toHaveBeenCalledTimes(1);
+    expect(onBack).not.toHaveBeenCalled();
   });
 });

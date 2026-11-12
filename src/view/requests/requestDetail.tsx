@@ -1,9 +1,14 @@
-import { useEffect, useMemo, useState } from "react";
-import * as Linking from "expo-linking";
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import type { Meeting } from "@/model/entities/meeting";
+import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
-import { useRequestDetailViewModel } from "@/viewmodel/useRequestDetailViewModel";
+import { LoadingState } from "@/view/components/LoadingState";
+import {
+  makeAuthViewModel,
+  makeDeliveryStatus,
+  makeNegotiationRatingViewModel,
+  makeRequestDetailViewModel,
+} from "@/di/container";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { formatPrice } from "@/view/formatPrice";
@@ -13,6 +18,19 @@ import { BookCover } from "@/view/components/BookCover";
 import { IconBadge } from "@/view/components/IconBadge";
 import { Tag } from "@/view/components/Tag";
 import { TopAppBar } from "@/view/components/TopAppBar";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
+import { Avatar } from "@/view/components/Avatar";
+import { AppIcon } from "@/view/components/AppIcon";
+import { NegotiationRatingModal } from "@/view/requests/NegotiationRatingModal";
+import { FilledButton } from "@/view/components/FilledButton";
+import { TextButton } from "@/view/components/TextButton";
+import { Dialog } from "@/view/components/Dialog";
+import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
+import { useGuardedPress } from "@/view/useGuardedPress";
+import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
+
+import { withPress } from "@/view/pressFeedback";
+const WIDE_CONTENT_MAX_WIDTH = WEB_MAX_WIDTH;
 
 export type RequestDetailProps = {
   requestId: string;
@@ -21,6 +39,10 @@ export type RequestDetailProps = {
   onNavigateToBookDetail?: (bookId: string) => void;
   /** Abre `06.04`/`06.13` para combinar ou reagendar (Spec 052). */
   onScheduleMeeting?: () => void;
+  /** Abre a conversa em tela cheia (`/conversa/[id]`, Spec 082). */
+  onOpenChat?: (requestId: string) => void;
+  /** Abre "Entrega do livro": o anunciante mostra o QR e o leitor o lê (Spec 095). */
+  onOpenDelivery?: () => void;
   focusKey?: number;
 };
 
@@ -34,43 +56,87 @@ export function RequestDetail({
   onBack,
   onNavigateToBookDetail,
   onScheduleMeeting,
+  onOpenChat,
+  onOpenDelivery,
   focusKey,
 }: RequestDetailProps) {
-  const [state, actions] = useRequestDetailViewModel(requestId, sessionUserId);
+  const [state, actions] = makeRequestDetailViewModel(requestId, sessionUserId);
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const detail = state.detail;
-  const [mapErrors, setMapErrors] = useState<Record<string, string>>({});
+  const [meeting, setMeeting] = useState<Meeting | null>(null);
+  const handleMeetingChange = useCallback((value: Meeting | null) => setMeeting(value), []);
+  const [refreshCount, setRefreshCount] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
 
-  async function handleOpenMap(point: { name: string; address: string }) {
-    setMapErrors((previous) => {
-      const { [point.name]: _removed, ...rest } = previous;
-      return rest;
-    });
-    const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(point.address)}`;
+  async function handleRefresh() {
+    setRefreshing(true);
+    setRefreshCount((count) => count + 1);
     try {
-      await Linking.openURL(url);
-    } catch {
-      setMapErrors((previous) => ({
-        ...previous,
-        [point.name]: `Não foi possível abrir o mapa para "${point.name}". Tente novamente.`,
-      }));
+      await actions.reload();
+    } finally {
+      setRefreshing(false);
     }
   }
 
+  const counterpartId = detail?.counterpartId ?? "";
+  const [ratingState, ratingActions] = makeNegotiationRatingViewModel(
+    requestId,
+    sessionUserId,
+    counterpartId,
+  );
+
+  const delivery = makeDeliveryStatus(requestId, sessionUserId, (focusKey ?? 0) + refreshCount);
+  const [ratingModalVisible, setRatingModalVisible] = useState(false);
+  const [cancellingRequest, setCancellingRequest] = useState(false);
+  const [confirmCancelOpen, setConfirmCancelOpen] = useState(false);
+  // Web larga: coluna mais larga; livro e encontro de um lado, entrega e pessoa do outro.
+  const wide = useIsWideWeb();
+  // Concluída pela entrega por QR (Spec 095); a avaliação sozinha vale para negociações anteriores.
+  const completed = Boolean(delivery.completed) || Boolean(ratingState.userRating);
+  const meetingConfirmed = meeting?.status === "confirmed";
+
+  const guardedBack = useGuardedPress(onBack);
+  const guardedNavigateToBookDetail = useGuardedPress((bookId: string) => onNavigateToBookDetail?.(bookId));
+  const guardedScheduleMeeting = useGuardedPress(onScheduleMeeting);
+  const guardedOpenChat = useGuardedPress((id: string) => onOpenChat?.(id));
+  const guardedOpenDelivery = useGuardedPress(onOpenDelivery);
+  const awaitingMyConfirmation =
+    meeting?.status === "proposed" && meeting.proposedBy !== sessionUserId;
+  // Pedido ainda sem resposta ou encerrado: não há encontro a combinar.
+  const requestStatus = detail?.request.status;
+  const awaitingAnswer = requestStatus === "pending";
+  const closed = requestStatus === "rejected" || requestStatus === "cancelled";
+  const progress = [
+    { label: awaitingAnswer ? "Aguardando resposta" : "Aceita", done: !awaitingAnswer },
+    { label: meetingConfirmed ? "Encontro combinado" : "Combinar encontro", done: meetingConfirmed || completed },
+    { label: "Concluída", done: completed },
+  ];
+  const currentStep = progress.findIndex((item) => !item.done);
+
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar title="Acompanhar encontro" onBack={() => onBack?.()} />
-      <ScrollView contentContainerStyle={styles.scroll}>
-        <View style={styles.content}>
-          {state.loading ? (
-            <View style={styles.status}>
-              <ActivityIndicator
-                color={colors.action}
-                accessibilityLabel="Carregando detalhes da negociação"
-              />
-              <Text style={styles.body}>Carregando detalhes…</Text>
-            </View>
+      <TopAppBar title="Acompanhar encontro" onBack={guardedBack} contentMaxWidth={wide ? WIDE_CONTENT_MAX_WIDTH : undefined} />
+      <ScrollView
+        testID="request-detail-scroll"
+        {...standardVerticalScrollProps}
+        contentContainerStyle={[styles.scroll, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => void handleRefresh()}
+            colors={[colors.action]}
+            tintColor={colors.action}
+          />
+        }
+      >
+        <View style={[styles.content, wide && styles.contentWide]}>
+          {state.loading && !detail ? (
+            <LoadingState
+              label="Carregando detalhes da negociação"
+              srText="Carregando detalhes…"
+              variant="detail"
+            />
           ) : state.error ? (
             <View style={styles.status}>
               <Text accessibilityRole="alert" style={styles.errorText}>
@@ -78,30 +144,80 @@ export function RequestDetail({
               </Text>
               <Pressable
                 accessibilityRole="button"
+                accessibilityLabel="Tentar novamente"
                 onPress={() => void actions.reload()}
-                style={styles.retryButton}
+                style={withPress(styles.retryButton)}
               >
                 <Text style={styles.retryText}>Tentar novamente</Text>
               </Pressable>
             </View>
           ) : detail ? (
             <View style={styles.container}>
-              <Text style={styles.heroHeadline}>Seu próximo capítulo está perto.</Text>
-              <View style={styles.successBanner}>
-                <IconBadge icon="check" tone="action" />
-                <View style={styles.bannerTextContainer}>
-                  <Text style={styles.successTitle}>Negociação aceita!</Text>
-                  <Text style={styles.successSubtitle}>
-                    O livro está reservado para esta negociação.
+              <Text style={styles.heroHeadline}>
+                {completed ? "Livro entregue. Boa leitura!" : "Seu próximo capítulo está perto."}
+              </Text>
+              {/* Aceita: a etapa "Aceita" já informa (Spec 083); o aviso fica só para a conclusão. */}
+              {completed ? (
+                <View style={styles.successBanner}>
+                  <IconBadge icon="check" tone="action" />
+                  <View style={styles.bannerTextContainer}>
+                    <Text style={styles.successTitle}>Negociação concluída</Text>
+                    <Text style={styles.successSubtitle}>
+                      {ratingState.userRating
+                        ? "Obrigado por avaliar. Isso ajuda a comunidade a confiar."
+                        : "As duas pessoas confirmaram a entrega. Avaliar ajuda a comunidade a confiar."}
+                    </Text>
+                  </View>
+                </View>
+              ) : null}
+
+              {/* Onde a negociação está: aceita → encontro combinado → concluída. */}
+              {closed ? null : (
+              <View
+                accessible
+                accessibilityRole="progressbar"
+                accessibilityLabel={`Andamento: ${progress.filter((item) => item.done).length} de ${progress.length} etapas. ${progress.find((item) => !item.done)?.label ?? "Tudo concluído"}`}
+                style={styles.progressRow}
+              >
+                {progress.map((item, index) => {
+                  const current = index === currentStep;
+                  return (
+                  <View
+                    key={item.label}
+                    accessibilityLabel={current ? `Etapa atual: ${item.label}` : undefined}
+                    style={styles.progressItem}
+                  >
+                    <View style={[styles.progressDot, item.done && styles.progressDotDone, current && styles.progressDotCurrent]}>
+                      {item.done ? (
+                        <AppIcon name="check" size={14} color={colors.surface} />
+                      ) : (
+                        <Text style={[styles.progressNumber, current && styles.progressNumberCurrent]}>{index + 1}</Text>
+                      )}
+                    </View>
+                    <Text style={[styles.progressLabel, item.done && styles.progressLabelDone, current && styles.progressLabelCurrent]}>
+                      {item.label}
+                    </Text>
+                  </View>
+                  );
+                })}
+              </View>
+              )}
+              {awaitingMyConfirmation && !completed ? (
+                <View accessibilityRole="alert" style={styles.yourTurn}>
+                  <AppIcon name="info" size={18} color={colors.actionDeep} />
+                  <Text style={styles.yourTurnText}>
+                    Sua vez: {detail.counterpartName ?? COMMUNITY_MEMBER} sugeriu um encontro. Confirme ou sugira outro horário.
                   </Text>
                 </View>
-              </View>
+              ) : null}
 
+              <View style={[styles.columns, wide && styles.columnsWide]}>
+              <View style={[styles.column, wide && styles.columnHalf]}>
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel={`Ver anúncio de ${detail.book.title}`}
-                onPress={() => onNavigateToBookDetail?.(detail.book.id)}
-                style={styles.bookCard}
+                onPress={() => guardedNavigateToBookDetail(detail.book.id)}
+                style={withPress(styles.bookCard)}
               >
                 <BookCover
                   id={detail.book.id}
@@ -111,7 +227,8 @@ export function RequestDetail({
                 />
                 <View style={styles.bookInfo}>
                   <Text style={styles.bookTitle}>{detail.book.title}</Text>
-                  <Text style={styles.bookAuthor}>{detail.book.author}</Text>
+                  {/* "Autor desconhecido" é o texto de preenchimento do cadastro; sem autor real, não ocupa linha. */}
+                  {detail.book.author !== "Autor desconhecido" ? <Text style={styles.bookAuthor}>{detail.book.author}</Text> : null}
                   <View style={styles.tagRow}>
                     <Tag variant={detail.book.modality} />
                     {detail.book.modality === "sale" && detail.book.price ? (
@@ -121,70 +238,224 @@ export function RequestDetail({
                 </View>
               </Pressable>
 
-              <View style={styles.card}>
-                <View style={styles.cardHeaderRow}>
-                  <IconBadge icon="person" tone="neutral" />
-                  <Text accessibilityRole="header" style={styles.sectionHeader}>
-                    Participantes
+              {awaitingAnswer || closed ? (
+                <View style={styles.card} testID="request-status-card">
+                  <View style={styles.cardHeaderRow}>
+                    <IconBadge icon="calendar" tone="neutral" />
+                    <Text accessibilityRole="header" style={styles.sectionHeader}>
+                      {awaitingAnswer ? "Aguardando resposta" : requestStatus === "rejected" ? "Pedido recusado" : "Pedido cancelado"}
+                    </Text>
+                  </View>
+                  <Text style={styles.bodyText}>
+                    {awaitingAnswer
+                      ? detail.isOwner
+                        ? "Aceite ou recuse este pedido em Pedidos recebidos. O encontro é combinado depois do aceite."
+                        : "Quem anunciou ainda não respondeu. O encontro é combinado depois do aceite."
+                      : "Esta negociação foi encerrada e não terá encontro."}
                   </Text>
                 </View>
-                <Text style={styles.bodyText}>
-                  {detail.isOwner ? "Pessoa interessada: " : "Pessoa que anunciou: "}
-                  <Text style={styles.highlightText}>
+              ) : (
+                <MeetingCard
+                  requestId={requestId}
+                  sessionUserId={sessionUserId}
+                  counterpartName={detail.counterpartName ?? COMMUNITY_MEMBER}
+                  focusKey={(focusKey ?? 0) + refreshCount}
+                  onScheduleMeeting={guardedScheduleMeeting}
+                  onMeetingChange={handleMeetingChange}
+                  concluded={Boolean(delivery.completed)}
+                />
+              )}
+              </View>
+              <View style={[styles.column, wide && styles.columnHalf]}>
+
+              {meetingConfirmed || delivery.completed ? (
+                <View style={styles.card} testID="delivery-card">
+                  <View style={styles.cardHeaderRow}>
+                    <IconBadge icon="check" tone={delivery.completed ? "action" : "neutral"} />
+                    <Text accessibilityRole="header" style={styles.sectionHeader}>
+                      {delivery.completed ? "Entrega concluída" : "Entrega do livro"}
+                    </Text>
+                  </View>
+                  {delivery.completed ? (
+                    ratingState.userRating ? (
+                      <Text style={styles.bodyText}>
+                        Você avaliou esta negociação com {ratingState.userRating.score} estrelas.
+                      </Text>
+                    ) : (
+                      <>
+                        <Text style={styles.bodyText}>As duas pessoas confirmaram a entrega. Conte como foi.</Text>
+                        <FilledButton label="Avaliar negociação" onPress={() => setRatingModalVisible(true)} />
+                      </>
+                    )
+                  ) : (
+                    <>
+                      <Text style={styles.bodyText}>
+                        {delivery.role === "giver"
+                          ? "No encontro, mostre o QR para quem recebe o livro. A leitura conclui a negociação."
+                          : "No encontro, leia o QR que a outra pessoa mostra para concluir a negociação."}
+                      </Text>
+                      <FilledButton
+                        label={delivery.role === "giver" ? "Mostrar QR da entrega" : "Ler QR da entrega"}
+                        disabled={delivery.loading || !delivery.role}
+                        onPress={guardedOpenDelivery}
+                      />
+                    </>
+                  )}
+                </View>
+              ) : null}
+
+              {/* Pessoa da negociação em uma linha (Spec 083), no lugar do cartão "Participantes" */}
+              <View style={styles.personRow}>
+                <Avatar
+                  name={detail.counterpartName ?? COMMUNITY_MEMBER}
+                  photoUrl={detail.counterpartPhotoUrl ?? undefined}
+                  size={44}
+                />
+                <View style={styles.personText}>
+                  <Text style={styles.personName} numberOfLines={2}>
                     {detail.counterpartName ?? COMMUNITY_MEMBER}
                   </Text>
-                </Text>
+                  <Text style={styles.personRole}>{detail.isOwner ? "Quer o livro" : "Anunciou o livro"}</Text>
+                </View>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`Conversar com ${detail.counterpartName ?? COMMUNITY_MEMBER}`}
+                  onPress={() => guardedOpenChat(requestId)}
+                  style={withPress(styles.chatButton)}
+                >
+                  <AppIcon name="chat" size={18} color={colors.m3.onSecondaryContainer} />
+                  <Text style={styles.chatButtonText}>Conversar</Text>
+                </Pressable>
               </View>
 
-              <MeetingCard
-                requestId={requestId}
-                sessionUserId={sessionUserId}
-                counterpartName={detail.counterpartName ?? COMMUNITY_MEMBER}
-                focusKey={focusKey}
-                onScheduleMeeting={onScheduleMeeting}
-              />
-
-              <View style={styles.card}>
-                <View style={styles.cardHeaderRow}>
-                  <IconBadge icon="place" tone="action" />
-                  <Text accessibilityRole="header" style={styles.sectionHeader}>
-                    Encontro seguro em Piripiri
-                  </Text>
-                </View>
-                <Text style={styles.bodyText}>
-                  Para a sua segurança, combinem a entrega sempre em locais públicos e movimentados:
-                </Text>
-                <View style={styles.pointList}>
-                  {detail.safeMeetingPoints.map((point) => (
-                    <View key={point.name} style={styles.pointCard}>
-                      <Text style={styles.pointName}>• {point.name}</Text>
-                      <Text style={styles.pointDetail}>{point.address}</Text>
-                      <Text style={styles.pointDetail}>{point.recommendedTime}</Text>
-                      <Pressable
-                        accessibilityRole="button"
-                        accessibilityLabel={`Como chegar à ${point.name}`}
-                        onPress={() => void handleOpenMap(point)}
-                        style={styles.directionsButton}
-                      >
-                        <Text style={styles.directionsText}>Como chegar</Text>
-                      </Pressable>
-                      {mapErrors[point.name] ? (
-                        <Text accessibilityRole="alert" style={styles.mapErrorText}>
-                          {mapErrors[point.name]}
-                        </Text>
-                      ) : null}
+              {/* Informações de apoio e próximos passos durante a espera de resposta */}
+              {awaitingAnswer ? (
+                <>
+                  <View style={styles.infoCard}>
+                    <View style={styles.cardHeaderRow}>
+                      <IconBadge icon="info" tone="neutral" />
+                      <Text accessibilityRole="header" style={styles.sectionHeader}>
+                        Como funciona o processo
+                      </Text>
                     </View>
-                  ))}
-                </View>
-                <Text style={styles.tipText}>
-                  Chegue alguns minutos antes, verifique a conservação do livro no momento da troca e
-                  prefira horários diurnos.
-                </Text>
+                    <View style={styles.stepsList}>
+                      <View style={styles.stepItem}>
+                        <View style={styles.stepBullet}>
+                          <Text style={styles.stepNumber}>1</Text>
+                        </View>
+                        <View style={styles.stepContent}>
+                          <Text style={styles.stepTitle}>Notificação enviada</Text>
+                          <Text style={styles.stepDesc}>
+                            Quem anunciou recebeu sua proposta e responderá em breve.
+                          </Text>
+                        </View>
+                      </View>
+                      <View style={styles.stepItem}>
+                        <View style={styles.stepBullet}>
+                          <Text style={styles.stepNumber}>2</Text>
+                        </View>
+                        <View style={styles.stepContent}>
+                          <Text style={styles.stepTitle}>Combinar encontro</Text>
+                          <Text style={styles.stepDesc}>
+                            Com a proposta aceita, vocês escolhem juntos um local e horário aqui no app.
+                          </Text>
+                        </View>
+                      </View>
+                      <View style={styles.stepItem}>
+                        <View style={styles.stepBullet}>
+                          <Text style={styles.stepNumber}>3</Text>
+                        </View>
+                        <View style={styles.stepContent}>
+                          <Text style={styles.stepTitle}>Entrega presencial e segura</Text>
+                          <Text style={styles.stepDesc}>
+                            No encontro público em Piripiri, a entrega é confirmada via leitura de QR Code.
+                          </Text>
+                        </View>
+                      </View>
+                    </View>
+                  </View>
+
+                  {detail.safeMeetingPoints && detail.safeMeetingPoints.length > 0 ? (
+                    <View style={styles.infoCard}>
+                      <View style={styles.cardHeaderRow}>
+                        <IconBadge icon="place" tone="neutral" />
+                        <Text accessibilityRole="header" style={styles.sectionHeader}>
+                          Locais sugeridos para entrega
+                        </Text>
+                      </View>
+                      <Text style={styles.bodyText}>
+                        Ao combinarem o encontro, recomendamos priorizar locais públicos e movimentados:
+                      </Text>
+                      <View style={styles.pointsList}>
+                        {detail.safeMeetingPoints.map((point) => (
+                          <View key={point.name} style={styles.pointRow}>
+                            <AppIcon name="place" size={16} color={colors.action} />
+                            <View style={styles.pointTextContainer}>
+                              <Text style={styles.pointName}>{point.name}</Text>
+                              <Text style={styles.pointAddress}>{point.address}</Text>
+                            </View>
+                          </View>
+                        ))}
+                      </View>
+                    </View>
+                  ) : null}
+
+                  {!detail.isOwner && actions.cancelRequest ? (
+                    <View style={styles.cancelRequestRow}>
+                      <TextButton
+                        label="Desistir deste pedido"
+                        tone="danger"
+                        accessibilityLabel="Desistir deste pedido"
+                        onPress={() => setConfirmCancelOpen(true)}
+                      />
+                    </View>
+                  ) : null}
+                </>
+              ) : null}
+              </View>
               </View>
             </View>
           ) : null}
         </View>
       </ScrollView>
+
+      <Dialog
+        visible={confirmCancelOpen}
+        title="Desistir do pedido?"
+        message="Se desistir agora, o pedido será cancelado e quem anunciou será informado."
+        confirmLabel="Sim, desistir"
+        cancelLabel="Voltar"
+        destructive
+        loading={cancellingRequest}
+        onConfirm={async () => {
+          if (!actions.cancelRequest) return;
+          setCancellingRequest(true);
+          try {
+            await actions.cancelRequest();
+            setConfirmCancelOpen(false);
+          } finally {
+            setCancellingRequest(false);
+          }
+        }}
+        onCancel={() => setConfirmCancelOpen(false)}
+      />
+
+      {detail ? (
+        <NegotiationRatingModal
+          visible={ratingModalVisible}
+          counterpartName={detail.counterpartName ?? COMMUNITY_MEMBER}
+          selectedScore={ratingState.selectedScore}
+          onSelectScore={ratingActions.setSelectedScore}
+          onSubmit={async () => ratingActions.submitRating()}
+          onClose={() => {
+            setRatingModalVisible(false);
+            ratingActions.resetFeedback();
+          }}
+          isSubmitting={ratingState.isSubmitting}
+          submitError={ratingState.submitError}
+          isSuccess={ratingState.isSuccess}
+        />
+      ) : null}
     </SafeAreaView>
   );
 }
@@ -195,6 +466,9 @@ export type RequestDetailScreenProps = {
   onRequireSignIn?: () => void;
   onNavigateToBookDetail?: (bookId: string) => void;
   onScheduleMeeting?: () => void;
+  onOpenChat?: (requestId: string) => void;
+  /** Abre "Entrega do livro": o anunciante mostra o QR e o leitor o lê (Spec 095). */
+  onOpenDelivery?: () => void;
   focusKey?: number;
 };
 
@@ -204,9 +478,11 @@ export default function RequestDetailScreen({
   onRequireSignIn,
   onNavigateToBookDetail,
   onScheduleMeeting,
+  onOpenChat,
+  onOpenDelivery,
   focusKey,
 }: RequestDetailScreenProps) {
-  const [authState] = useAuthViewModel();
+  const [authState] = makeAuthViewModel();
 
   useEffect(() => {
     if (!authState.loading && !authState.user) {
@@ -223,6 +499,8 @@ export default function RequestDetailScreen({
       onBack={onBack}
       onNavigateToBookDetail={onNavigateToBookDetail}
       onScheduleMeeting={onScheduleMeeting}
+      onOpenChat={onOpenChat}
+      onOpenDelivery={onOpenDelivery}
       focusKey={focusKey}
     />
   );
@@ -230,13 +508,39 @@ export default function RequestDetailScreen({
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
-  page: { flex: 1, backgroundColor: colors.background },
+    progressRow: { flexDirection: "row", justifyContent: "space-between", gap: tokens.spacing[8] },
+    progressItem: { flex: 1, alignItems: "center", gap: tokens.spacing[4] },
+    progressDot: {
+      width: 24,
+      height: 24,
+      borderRadius: tokens.radius.cardSmall,
+      alignItems: "center",
+      justifyContent: "center",
+      borderWidth: 1,
+      borderColor: colors.m3.outline,
+    },
+    progressDotDone: { backgroundColor: colors.action, borderColor: colors.action },
+    progressNumber: { ...tokens.typography.labelMedium, color: colors.m3.onSurfaceVariant },
+    progressLabel: { ...tokens.typography.labelMedium, color: colors.m3.onSurfaceVariant, textAlign: "center" },
+    progressLabelDone: { color: colors.text },
+    // Etapa em andamento (Spec 083): contorno e número verdes, rótulo em negrito.
+    progressDotCurrent: { borderColor: colors.action, borderWidth: 2 },
+    progressNumberCurrent: { color: colors.action, fontWeight: tokens.fontWeight.bold },
+    progressLabelCurrent: { color: colors.action, fontWeight: tokens.fontWeight.bold },
+    yourTurn: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[8],
+      padding: tokens.spacing[12],
+      borderRadius: tokens.radius.medium,
+      backgroundColor: colors.m3.surfaceContainerHigh,
+    },
+    yourTurnText: { flex: 1, ...tokens.typography.bodyMedium, color: colors.actionDeep },
+  page: { flex: 1, minHeight: 0, backgroundColor: colors.background },
   scroll: { flexGrow: 1, paddingBottom: tokens.spacing[48] },
   content: {
     flex: 1,
     width: "100%",
-    maxWidth: 720,
-    alignSelf: "center",
     padding: tokens.spacing[16],
   },
   status: {
@@ -269,13 +573,17 @@ function createStyles(colors: ColorPalette) {
   retryText: {
     ...tokens.typography.bodyMedium,
     color: colors.action,
-    fontWeight: "600",
+    fontWeight: tokens.fontWeight.semiBold,
   },
   container: { gap: tokens.spacing[16] },
+  contentWide: { maxWidth: WIDE_CONTENT_MAX_WIDTH, alignSelf: "center", paddingHorizontal: WEB_GUTTER },
+  columns: { gap: tokens.spacing[16] },
+  columnsWide: { flexDirection: "row", alignItems: "flex-start", gap: tokens.spacing[32] },
+  column: { gap: tokens.spacing[16] },
+  columnHalf: { flex: 1 },
+  // Manchete menor (Spec 083) para a ação do momento caber acima da dobra.
   heroHeadline: {
-    fontSize: tokens.typography.displayLarge.fontSize,
-    lineHeight: tokens.typography.displayLarge.lineHeight,
-    fontFamily: tokens.typography.displayLarge.fontFamily,
+    ...tokens.typography.brandTitle,
     color: colors.text,
   },
   successBanner: {
@@ -327,7 +635,7 @@ function createStyles(colors: ColorPalette) {
   },
   price: {
     ...tokens.typography.bodyMedium,
-    fontWeight: "600",
+    fontWeight: tokens.fontWeight.semiBold,
     color: colors.action,
   },
   card: {
@@ -354,49 +662,106 @@ function createStyles(colors: ColorPalette) {
     color: colors.text,
   },
   highlightText: {
-    fontWeight: "700",
+    fontWeight: tokens.fontWeight.bold,
     color: colors.action,
   },
-  pointList: { gap: tokens.spacing[12], paddingVertical: tokens.spacing[4] },
-  pointCard: {
-    gap: tokens.spacing[4],
-    paddingVertical: tokens.spacing[8],
-    borderTopWidth: 1,
-    borderTopColor: colors.m3.outlineVariant,
+  // Linha da pessoa (Spec 083): avatar, nome, papel e botão tonal "Conversar".
+  personRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: tokens.spacing[12],
+    padding: tokens.spacing[12],
+    borderRadius: tokens.radius.card,
+    backgroundColor: colors.m3.surfaceContainerLow,
+  },
+  personText: { flex: 1, gap: tokens.spacing[2] },
+  personName: { ...tokens.typography.bodyLarge, fontWeight: tokens.fontWeight.semiBold, color: colors.m3.onSurface },
+  personRole: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
+  chatButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: tokens.spacing[6],
+    minHeight: tokens.accessibility.touchTarget,
+    paddingHorizontal: tokens.spacing[16],
+    borderRadius: tokens.radius.full,
+    backgroundColor: colors.m3.secondaryContainer,
+  },
+  chatButtonText: {
+    ...tokens.typography.labelMedium,
+    fontWeight: tokens.fontWeight.semiBold,
+    color: colors.m3.onSecondaryContainer,
+  },
+  infoCard: {
+    backgroundColor: colors.surface,
+    padding: tokens.spacing[16],
+    borderRadius: tokens.radius.medium,
+    borderWidth: 1,
+    borderColor: colors.m3.outlineVariant,
+    gap: tokens.spacing[12],
+  },
+  stepsList: {
+    gap: tokens.spacing[12],
+    marginTop: tokens.spacing[4],
+  },
+  stepItem: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: tokens.spacing[12],
+  },
+  stepBullet: {
+    width: 24,
+    height: 24,
+    borderRadius: tokens.radius.full,
+    backgroundColor: colors.m3.surfaceContainerHigh,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 2,
+  },
+  stepNumber: {
+    ...tokens.typography.labelSmall,
+    fontWeight: tokens.fontWeight.bold,
+    color: colors.action,
+  },
+  stepContent: {
+    flex: 1,
+    gap: tokens.spacing[2],
+  },
+  stepTitle: {
+    ...tokens.typography.bodyMedium,
+    fontWeight: tokens.fontWeight.semiBold,
+    color: colors.text,
+  },
+  stepDesc: {
+    ...tokens.typography.footnote,
+    color: colors.secondaryText,
+    lineHeight: 18,
+  },
+  pointsList: {
+    gap: tokens.spacing[10],
+    marginTop: tokens.spacing[6],
+  },
+  pointRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: tokens.spacing[8],
+    paddingVertical: tokens.spacing[4],
+  },
+  pointTextContainer: {
+    flex: 1,
+    gap: tokens.spacing[2],
   },
   pointName: {
     ...tokens.typography.bodyMedium,
-    fontWeight: "600",
+    fontWeight: tokens.fontWeight.semiBold,
     color: colors.text,
   },
-  pointDetail: {
-    ...tokens.typography.bodyMedium,
+  pointAddress: {
+    ...tokens.typography.footnote,
     color: colors.secondaryText,
   },
-  directionsButton: {
-    alignSelf: "flex-start",
-    marginTop: tokens.spacing[4],
+  cancelRequestRow: {
+    alignItems: "center",
     paddingVertical: tokens.spacing[8],
-    paddingHorizontal: tokens.spacing[16],
-    borderRadius: tokens.radius.full,
-    backgroundColor: colors.action,
-    minHeight: tokens.accessibility.touchTarget,
-    justifyContent: "center",
-  },
-  directionsText: {
-    ...tokens.typography.labelMedium,
-    fontWeight: "700",
-    color: colors.surface,
-  },
-  mapErrorText: {
-    ...tokens.typography.labelMedium,
-    color: colors.error,
-  },
-  tipText: {
-    ...tokens.typography.labelMedium,
-    color: colors.secondaryText,
-    fontStyle: "italic",
-    marginTop: tokens.spacing[4],
   },
   });
 }

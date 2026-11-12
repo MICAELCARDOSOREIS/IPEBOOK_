@@ -3,6 +3,7 @@ import {
   formatBookDisplay,
   sanitizeBookInput,
   validateBookPayload,
+  validateDraftPayload,
 } from "@/model/validators/bookValidator";
 
 describe("validação unitária de livros (ISO/IEC 25010 - Adequação Funcional)", () => {
@@ -305,5 +306,122 @@ describe("Spec 030 — conservação e descrição", () => {
     expect(sanitized.condition).toBe("good");
     expect(sanitized.description).toBe("Marcas leves");
     expect(sanitizeBookInput({ ...base, description: "   " }).description).toBeUndefined();
+  });
+});
+
+describe("Spec 112 — suporte a box e coleções de livros", () => {
+  const base = {
+    id: "book-box-1",
+    title: "Trilogia O Senhor dos Anéis",
+    author: "J.R.R. Tolkien",
+    ownerId: "user-box",
+    modality: "sale" as const,
+    price: 150,
+  };
+
+  it("aprova anúncio marcado como box sem quantidade explícita de volumes", () => {
+    const result = validateBookPayload({
+      ...base,
+      isBox: true,
+    });
+    expect(result.isValid).toBe(true);
+    expect(result.errors).toHaveLength(0);
+  });
+
+  it("aprova anúncio marcado como box com quantidade válida de volumes nos limites", () => {
+    expect(validateBookPayload({ ...base, isBox: true, boxVolumesCount: 2 }).isValid).toBe(true);
+    expect(validateBookPayload({ ...base, isBox: true, boxVolumesCount: 3 }).isValid).toBe(true);
+    expect(validateBookPayload({ ...base, isBox: true, boxVolumesCount: 100 }).isValid).toBe(true);
+  });
+
+  it("rejeita quantidade de volumes quando anúncio não é box", () => {
+    const result = validateBookPayload({
+      ...base,
+      isBox: false,
+      boxVolumesCount: 3,
+    });
+    expect(result.isValid).toBe(false);
+    expect(result.errors).toContain(
+      "Quantidade de volumes só pode ser informada para boxes ou coleções.",
+    );
+  });
+
+  it("rejeita quantidade de volumes abaixo de 2 ou acima de 100", () => {
+    const abaixo = validateBookPayload({
+      ...base,
+      isBox: true,
+      boxVolumesCount: 1,
+    });
+    expect(abaixo.isValid).toBe(false);
+    expect(abaixo.errors).toContain(
+      "Quantidade de volumes deve ser um número inteiro entre 2 e 100.",
+    );
+
+    const acima = validateBookPayload({
+      ...base,
+      isBox: true,
+      boxVolumesCount: 101,
+    });
+    expect(acima.isValid).toBe(false);
+    expect(acima.errors).toContain(
+      "Quantidade de volumes deve ser um número inteiro entre 2 e 100.",
+    );
+  });
+
+  it("rejeita quantidade de volumes não inteira ou de tipo inválido", () => {
+    const fracionario = validateBookPayload({
+      ...base,
+      isBox: true,
+      boxVolumesCount: 3.5,
+    });
+    expect(fracionario.isValid).toBe(false);
+    expect(fracionario.errors).toContain(
+      "Quantidade de volumes deve ser um número inteiro entre 2 e 100.",
+    );
+
+    const texto = validateBookPayload({
+      ...base,
+      isBox: true,
+      boxVolumesCount: "tres" as unknown as number,
+    });
+    expect(texto.isValid).toBe(false);
+    expect(texto.errors).toContain(
+      "Quantidade de volumes deve ser um número inteiro entre 2 e 100.",
+    );
+  });
+
+  it("sanitiza campos de box corretamente", () => {
+    const sanitizado = sanitizeBookInput({
+      ...base,
+      isBox: true,
+      boxVolumesCount: 4,
+    });
+    expect(sanitizado.isBox).toBe(true);
+    expect(sanitizado.boxVolumesCount).toBe(4);
+
+    const invalido = sanitizeBookInput({
+      ...base,
+      isBox: false,
+      boxVolumesCount: 3.14,
+    });
+    expect(invalido.isBox).toBe(false);
+    expect(invalido.boxVolumesCount).toBeUndefined();
+  });
+
+  it("valida volumes em rascunhos com tolerância e regras de integridade (validateDraftPayload)", () => {
+    const draftBase = {
+      ownerId: "user-box",
+      modality: "trade",
+    };
+
+    expect(validateDraftPayload(draftBase).isValid).toBe(true);
+    expect(validateDraftPayload({ ...draftBase, boxVolumesCount: null }).isValid).toBe(true);
+    expect(validateDraftPayload({ ...draftBase, boxVolumesCount: 3 }).isValid).toBe(true);
+
+    const invalido = validateDraftPayload({ ...draftBase, boxVolumesCount: 1 });
+    expect(invalido.isValid).toBe(false);
+    expect(invalido.errors).toContain(
+      "Quantidade de volumes deve ser um número inteiro entre 2 e 100.",
+    );
   });
 });

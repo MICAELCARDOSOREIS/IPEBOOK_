@@ -1,29 +1,28 @@
 import { useFonts } from "expo-font";
 import {
-  Roboto_400Regular,
-  Roboto_500Medium,
-  Roboto_600SemiBold,
-} from "@expo-google-fonts/roboto";
+  PlusJakartaSans_400Regular,
+  PlusJakartaSans_500Medium,
+  PlusJakartaSans_600SemiBold,
+} from "@expo-google-fonts/plus-jakarta-sans";
 import { SourceSerif4_700Bold } from "@expo-google-fonts/source-serif-4";
 
 /**
- * Fontes decididas no ADR 0007 (serifa da marca) e no design-system: Source Serif 4 Bold para a
- * marca, Roboto para a interface. Roboto Flex (nome usado no design-system) só distribui o corte
- * estático Regular pelo Google Fonts/Expo; por isso o app usa Roboto (família próxima, com os
- * pesos 400/500/600 que a tipografia dos tokens exige) em vez de Roboto Flex.
+ * Fontes decididas no ADR 0007 (serifa da marca) e no ADR 0107 (Plus Jakarta Sans na interface):
+ * Source Serif 4 Bold para a marca e títulos literários; Plus Jakarta Sans para toda a interface,
+ * botões, formulários e textos corridos nos pesos 400/500/600.
  */
 export const fontFamily = {
   brand: "SourceSerif4_700Bold",
-  regular: "Roboto_400Regular",
-  medium: "Roboto_500Medium",
-  semiBold: "Roboto_600SemiBold",
+  regular: "PlusJakartaSans_400Regular",
+  medium: "PlusJakartaSans_500Medium",
+  semiBold: "PlusJakartaSans_600SemiBold",
 } as const;
 
 export function useIpebookFonts() {
   return useFonts({
     SourceSerif4_700Bold,
-    Roboto_400Regular,
-    Roboto_500Medium,
-    Roboto_600SemiBold,
+    PlusJakartaSans_400Regular,
+    PlusJakartaSans_500Medium,
+    PlusJakartaSans_600SemiBold,
   });
 }

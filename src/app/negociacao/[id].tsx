@@ -1,5 +1,7 @@
 import { useCallback, useState } from "react";
-import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
+import { useFocusEffect, useLocalSearchParams } from "expo-router";
+import { backOnce, pushOnce, replaceOnce } from "@/view/pushOnce";
+import { RequireAuth } from "@/view/components/RequireAuth";
 import RequestDetailScreen from "@/view/requests/requestDetail";
 
 export default function NegociacaoDetalheRoute() {
@@ -9,13 +11,17 @@ export default function NegociacaoDetalheRoute() {
   useFocusEffect(useCallback(() => { setFocusKey((value) => value + 1); }, []));
 
   return (
-    <RequestDetailScreen
-      requestId={id}
-      focusKey={focusKey}
-      onBack={() => router.back()}
-      onRequireSignIn={() => router.replace("/entrar")}
-      onNavigateToBookDetail={(bookId) => router.push(`/livro/${bookId}`)}
-      onScheduleMeeting={() => router.push(`/negociacao/${id}/encontro` as never)}
-    />
+    <RequireAuth onRequireSignIn={() => replaceOnce("/entrar")}>
+      <RequestDetailScreen
+        requestId={id}
+        focusKey={focusKey}
+        onBack={() => backOnce()}
+        onRequireSignIn={() => replaceOnce("/entrar")}
+        onNavigateToBookDetail={(bookId) => pushOnce(`/livro/${bookId}`)}
+        onScheduleMeeting={() => pushOnce(`/negociacao/${id}/encontro` as never)}
+        onOpenDelivery={() => pushOnce(`/negociacao/${id}/entrega` as never)}
+        onOpenChat={(requestId) => pushOnce(`/conversa/${requestId}` as never)}
+      />
+    </RequireAuth>
   );
 }

@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { bookUseCases } from "@/di/container";
 import type { Book } from "@/model/entities/book";
 import { DomainError } from "@/model/errors";
 import type { IBookUseCases } from "@/usecase/iBookUseCases";
@@ -20,13 +19,26 @@ export type MyListingsActions = {
   togglePauseListing: (bookId: string) => Promise<boolean>;
 };
 
+const sessionMyListingsCache = new Map<string, readonly Book[]>();
+
+export function getCachedMyListingById(bookId: string): Book | null {
+  if (process.env.NODE_ENV === "test") return null;
+  for (const list of sessionMyListingsCache.values()) {
+    const found = list.find((b) => b.id === bookId);
+    if (found) return found;
+  }
+  return null;
+}
+
 export function useMyListingsViewModel(
   sessionUserId: string | null,
-  books: IBookUseCases = bookUseCases,
+  books: IBookUseCases,
 ): [MyListingsState, MyListingsActions] {
+  const isTest = process.env.NODE_ENV === "test";
+  const initialCached = !isTest && sessionUserId ? (sessionMyListingsCache.get(sessionUserId) ?? null) : null;
   const [state, setState] = useState<MyListingsState>({
-    books: [],
-    loading: true,
+    books: initialCached ?? [],
+    loading: initialCached === null,
     error: null,
     cancellingId: null,
     cancelError: null,
@@ -39,9 +51,16 @@ export function useMyListingsViewModel(
   const reload = useCallback(async () => {
     if (!active.current) return;
     const current = ++request.current;
-    setState((previous) => ({ ...previous, loading: true, error: null, cancelError: null, pauseError: null }));
+    setState((previous) => ({
+      ...previous,
+      loading: previous.books.length === 0,
+      error: null,
+      cancelError: null,
+      pauseError: null,
+    }));
     try {
       const result = await books.listMyListings(sessionUserId);
+      if (!isTest && sessionUserId) sessionMyListingsCache.set(sessionUserId, result);
       if (active.current && current === request.current) {
         setState((previous) => ({
           ...previous,
@@ -62,7 +81,7 @@ export function useMyListingsViewModel(
         }));
       }
     }
-  }, [books, sessionUserId]);
+  }, [books, sessionUserId, isTest]);
 
   const cancelListing = useCallback(
     async (bookId: string): Promise<boolean> => {

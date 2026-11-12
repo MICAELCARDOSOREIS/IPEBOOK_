@@ -1,5 +1,4 @@
 import { useCallback, useState } from "react";
-import { logger as defaultLogger, rateLimiter as defaultRateLimiter, reportUseCases } from "@/di/container";
 import type { ReportReason } from "@/model/entities/report";
 import { DomainError } from "@/model/errors";
 import type { ILogger } from "@/model/services/iLogger";
@@ -33,9 +32,9 @@ const INITIAL_STATE: ReportListingState = {
 const GENERIC_ERROR = "Não foi possível enviar a denúncia. Tente novamente.";
 
 export function useReportListingViewModel(
-  useCases: IReportUseCases = reportUseCases,
-  rateLimiter: IRateLimiter = defaultRateLimiter,
-  logger: ILogger = defaultLogger,
+  useCases: IReportUseCases,
+  rateLimiter: IRateLimiter,
+  logger: ILogger,
 ): [ReportListingState, ReportListingActions] {
   const [state, setState] = useState<ReportListingState>(INITIAL_STATE);
 
@@ -69,7 +68,7 @@ export function useReportListingViewModel(
         return false;
       }
 
-      const guard = guardFormSubmit(rateLimiter, formKey("report:submit", listingId), 3);
+      const guard = guardFormSubmit(rateLimiter, formKey(`report:submit:${listingId}`, sessionUserId), 3);
       if (!guard.allowed) {
         logger.warn("Denúncia bloqueada pelo limite de tentativas do cliente");
         setState((prev) => ({ ...prev, loading: false, error: guard.message }));

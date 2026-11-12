@@ -6,14 +6,20 @@ import { FilledButton } from "@/view/components/FilledButton";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { TextField } from "@/view/components/TextField";
 import { TopAppBar } from "@/view/components/TopAppBar";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
-
+import { WEB_GUTTER, useWebColumns, webColumnWidth } from "@/view/webLayout";
+import { withPress } from "@/view/pressFeedback";
+import { useGuardedPress } from "@/view/useGuardedPress";
+import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 export type HelpAndFaqProps = {
   onBack: () => void;
   /** Abre as negociações em andamento, como o botão "Abrir conversas" do Figma `09.01`. */
   onOpenConversations?: () => void;
 };
+
+const WIDE_CONTENT_MAX_WIDTH = 1240;
 
 type CategoryFilter = "todos" | "seguranca" | "regras" | "suporte";
 
@@ -36,10 +42,16 @@ function normalizeSearchText(value: string): string {
  * Figma `09.01 · Ajuda` (`145:2702` / Web `370:17541`).
  */
 export default function HelpAndFaq({ onBack, onOpenConversations }: HelpAndFaqProps) {
+  const guardedBack = useGuardedPress(onBack);
+  const guardedOpenConversations = useGuardedPress(onOpenConversations);
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [filter, setFilter] = useState<CategoryFilter>("todos");
   const [searchQuery, setSearchQuery] = useState("");
+  // Web larga: coluna mais larga, com as respostas em duas colunas.
+  const wide = useIsWideWeb();
+  const columns = useWebColumns(2, 3);
+  const columnWidth = { width: webColumnWidth(columns) };
 
   const normalizedQuery = normalizeSearchText(searchQuery);
 
@@ -63,9 +75,12 @@ export default function HelpAndFaq({ onBack, onOpenConversations }: HelpAndFaqPr
 
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar title="Ajuda" onBack={onBack} />
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.content}>
+      <TopAppBar title="Ajuda" onBack={guardedBack} contentMaxWidth={wide ? WIDE_CONTENT_MAX_WIDTH : undefined} />
+      <ScrollView
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
+        {...standardVerticalScrollProps}
+      >
+        <View style={[styles.content, wide && styles.contentWide]}>
           <View style={styles.headerSection}>
             <Text style={styles.heroHeadline}>Vamos ajudar.</Text>
             <Text style={styles.heroSubtitle}>
@@ -88,8 +103,9 @@ export default function HelpAndFaq({ onBack, onOpenConversations }: HelpAndFaqPr
                   key={cat.key}
                   accessibilityRole="button"
                   accessibilityLabel={`Filtrar por ${cat.label}`}
+                  accessibilityState={{ selected: isSelected }}
                   onPress={() => setFilter(cat.key)}
-                  style={[styles.filterChip, isSelected && styles.filterChipSelected]}
+                  style={withPress([styles.filterChip, isSelected && styles.filterChipSelected])}
                 >
                   <Text style={[styles.filterText, isSelected && styles.filterTextSelected]}>
                     {cat.label}
@@ -99,9 +115,9 @@ export default function HelpAndFaq({ onBack, onOpenConversations }: HelpAndFaqPr
             })}
           </View>
 
-          <View style={styles.list}>
+          <View style={[styles.list, wide && styles.listWide]}>
             {filteredItems.length === 0 ? (
-              <View style={styles.emptyCard}>
+              <View style={[styles.emptyCard, wide && styles.fullRow]}>
                 <Text style={styles.question}>Nenhuma dúvida encontrada para sua busca.</Text>
                 <Text style={styles.answer}>
                   Tente buscar por outra palavra-chave ou limpe o filtro ativo.
@@ -115,12 +131,15 @@ export default function HelpAndFaq({ onBack, onOpenConversations }: HelpAndFaqPr
                 />
               </View>
             ) : (
-              filteredItems.map((item) => (
-                <View key={item.id} style={styles.faqCard}>
-                  <Text style={styles.question}>{item.question}</Text>
-                  <Text style={styles.answer}>{item.answer}</Text>
-                </View>
-              ))
+              filteredItems.map((item, index) => {
+                const isOddLast = wide && index === filteredItems.length - 1 && filteredItems.length % 2 === 1;
+                return (
+                  <View key={item.id} style={[styles.faqCard, wide && (isOddLast ? styles.fullRow : columnWidth)]}>
+                    <Text style={styles.question}>{item.question}</Text>
+                    <Text style={styles.answer}>{item.answer}</Text>
+                  </View>
+                );
+              })
             )}
           </View>
 
@@ -129,7 +148,7 @@ export default function HelpAndFaq({ onBack, onOpenConversations }: HelpAndFaqPr
               <OutlinedButton
                 label="Abrir conversas"
                 accessibilityLabel="Abrir conversas: suas negociações em andamento"
-                onPress={onOpenConversations}
+                onPress={guardedOpenConversations}
               />
             </View>
           ) : null}
@@ -149,8 +168,6 @@ function createStyles(colors: ColorPalette) {
   content: {
     flex: 1,
     width: "100%",
-    maxWidth: 720,
-    alignSelf: "center",
     padding: tokens.spacing[24],
     gap: tokens.spacing[16],
   },
@@ -158,9 +175,7 @@ function createStyles(colors: ColorPalette) {
     gap: tokens.spacing[8],
   },
   heroHeadline: {
-    fontSize: tokens.typography.displayLarge.fontSize,
-    lineHeight: tokens.typography.displayLarge.lineHeight,
-    fontFamily: tokens.typography.displayLarge.fontFamily,
+    ...tokens.typography.displayLarge,
     color: colors.text,
   },
   heroSubtitle: {
@@ -173,30 +188,35 @@ function createStyles(colors: ColorPalette) {
     gap: tokens.spacing[8],
   },
   filterChip: {
-    paddingHorizontal: tokens.spacing[12],
+    paddingHorizontal: tokens.spacing[16],
     paddingVertical: tokens.spacing[8],
-    borderRadius: tokens.radius.full,
+    borderRadius: tokens.shapeMorph.chipUnselected,
     borderWidth: 1,
     borderColor: colors.m3.outlineVariant,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.m3.surfaceContainerLowest,
     minHeight: tokens.accessibility.touchTarget,
     justifyContent: "center",
   },
   filterChipSelected: {
-    backgroundColor: colors.action,
-    borderColor: colors.action,
+    backgroundColor: colors.nature.foliage,
+    borderColor: colors.nature.foliage,
+    borderRadius: tokens.shapeMorph.chipSelected,
+    borderWidth: 0,
   },
   filterText: {
-    ...tokens.typography.labelMedium,
-    color: colors.text,
+    ...tokens.typography.labelLarge,
+    color: colors.m3.onSurfaceVariant,
   },
   filterTextSelected: {
-    color: colors.surface,
-    fontWeight: "600",
+    color: colors.nature.onFoliage,
+    fontWeight: tokens.fontWeight.semiBold,
   },
   list: {
     gap: tokens.spacing[12],
   },
+  contentWide: { maxWidth: WIDE_CONTENT_MAX_WIDTH, alignSelf: "center", paddingHorizontal: WEB_GUTTER },
+  listWide: { flexDirection: "row", flexWrap: "wrap", alignItems: "flex-start", columnGap: tokens.spacing[16], rowGap: tokens.spacing[16] },
+  fullRow: { width: "100%" },
   footerAction: {
     paddingTop: tokens.spacing[24],
   },

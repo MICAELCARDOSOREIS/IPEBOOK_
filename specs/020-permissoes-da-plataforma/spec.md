@@ -32,12 +32,21 @@ fotos`, `11.05 · Fotos não permitidas`.
 
 ## 3. Critérios de Aceite
 
-- [ ] O usuário escolhe o bairro de uma lista pré-definida de bairros de Piripiri, sem precisar
-  conceder permissão de localização pra isso.
-- [ ] Quando uma funcionalidade pede permissão de localização, notificações ou fotos, o app
-  mostra uma tela explicando o motivo antes do prompt nativo do sistema.
-- [ ] Se o usuário nega a permissão, o app mostra um estado claro do que ficou indisponível e
+- [x] O usuário escolhe o bairro de uma lista pré-definida de bairros de Piripiri, sem precisar
+  conceder permissão de localização pra isso. (`PIRIPIRI_NEIGHBORHOODS` em
+  `src/model/entities/location.ts`, seletor em `NeighborhoodSelectorModal` + `useActiveNeighborhood`.)
+- [x] Quando uma funcionalidade pede permissão de localização, notificações ou fotos, o app
+  mostra uma tela explicando o motivo antes do prompt nativo do sistema. Não há pedido de
+  localização no app (a escolha do bairro é manual); notificações e fotos passaram pelo
+  `PermissionPromptDialog` em 2026-11-05 — ver `validacao.md`.
+- [x] Se o usuário nega a permissão, o app mostra um estado claro do que ficou indisponível e
   como habilitar depois (ex. link pras configurações do sistema), sem travar o restante do app.
-- [ ] Negar permissão de fotos no fluxo de anunciar não impede publicar o anúncio — ele segue
-  com a capa ilustrativa (ver `design-system/04-componentes/capa-ilustrativa.md`).
-- [ ] Cobertura de testes acima de 80% e zero violações em `npm run check:architecture`.
+  (`status === "denied"` do `PermissionPromptDialog`, mais o alerta do seletor de fotos.)
+- [x] Negar permissão de fotos no fluxo de anunciar não impede publicar o anúncio — ele segue
+  com a capa ilustrativa (ver `design-system/04-componentes/capa-ilustrativa.md`). O botão
+  "Publicar sem foto" dispensa o acesso e `photoUrl` continua opcional na publicação. Conferido em
+  navegador real: publicado sem foto, com o seletor nativo nunca aberto por essa escolha (evidência
+  em `validacao.md`).
+- [x] Cobertura de testes acima de 80% e zero violações em `npm run check:architecture`.
+  Medido em 2026-11-05: 0 violações em 473 arquivos; cobertura global acima do mínimo de 80% das
+  quatro dimensões (números na Seção 1 de `docs/estado.md` após o `npm run validate`).

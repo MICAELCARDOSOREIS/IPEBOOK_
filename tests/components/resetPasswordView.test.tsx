@@ -14,6 +14,7 @@ describe("tela de nova senha", () => {
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => { screen = await render(<ResetPassword link="ipebook://redefinir-senha?code=abc" />); });
     await act(async () => { fireEvent.changeText(screen.getByLabelText("Nova senha"), "nova-senha"); });
+    await act(async () => { fireEvent.changeText(screen.getByLabelText("Confirmar senha"), "nova-senha"); });
     await act(async () => {
       fireEvent.press(screen.getByRole("button", { name: "Salvar nova senha" }));
     });
@@ -52,6 +53,21 @@ describe("tela de nova senha", () => {
       fireEvent.press(screen.getByRole("button", { name: "Salvar nova senha" }));
     });
     expect(screen.getByText("As senhas não coincidem.")).toBeDefined();
+    expect(submit).not.toHaveBeenCalled();
+  });
+
+  it("exige a confirmação da nova senha antes de enviar", async () => {
+    const submit = vi.fn().mockResolvedValue(undefined);
+    mocked.mockReturnValue([{ loading: false, error: null, success: false, linkExpired: false }, { submit }]);
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => { screen = await render(<ResetPassword link="ipebook://redefinir-senha" />); });
+    await act(async () => {
+      fireEvent.changeText(screen.getByLabelText("Nova senha"), "senha1234");
+    });
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Salvar nova senha" }));
+    });
+    expect(screen.getByText("Confirme a nova senha.")).toBeDefined();
     expect(submit).not.toHaveBeenCalled();
   });
 

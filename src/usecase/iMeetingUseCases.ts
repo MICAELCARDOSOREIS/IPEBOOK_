@@ -3,6 +3,10 @@ import type { Meeting, MeetingProposal } from "@/model/entities/meeting";
 export interface IMeetingUseCases {
   /** Último encontro do pedido aceito, inclusive cancelado; `null` sem convite (Spec 052, RN-01). */
   getMeeting(requestId: string, sessionUserId: string | null): Promise<Meeting | null>;
+  /** Histórico completo de encontros da negociação, ordenados dos mais recentes aos mais antigos (Spec 071). */
+  getMeetingHistory(requestId: string, sessionUserId: string | null): Promise<readonly Meeting[]>;
+  /** Todos os encontros do usuário em suas negociações em Piripiri (Spec 071). */
+  getUserMeetingHistory(sessionUserId: string | null): Promise<readonly Meeting[]>;
   /** Envia convite (`06.04`); recusado se já houver encontro ativo (RN-04). */
   propose(requestId: string, proposal: MeetingProposal, sessionUserId: string | null): Promise<Meeting>;
   /** Confirma o convite da outra pessoa (`06.05`, RN-05). */

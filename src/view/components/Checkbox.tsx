@@ -1,5 +1,5 @@
 import { useId, useMemo } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { AppIcon } from "@/view/components/AppIcon";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
@@ -42,7 +42,7 @@ export function Checkbox({
         aria-describedby={hasError ? errorId : undefined}
         disabled={disabled}
         onPress={() => onChange(!checked)}
-        style={styles.row}
+        style={({ pressed }) => [styles.row, pressed && !disabled && styles.rowPressed]}
       >
         <AppIcon
           name={checked ? "checkboxOn" : "checkboxOff"}
@@ -79,25 +79,24 @@ function createStyles(colors: ColorPalette) {
       alignItems: "center",
       gap: tokens.spacing[12],
       minHeight: tokens.accessibility.touchTarget,
+      ...(Platform.OS === "web" ? ({ cursor: "pointer", userSelect: "none" } as never) : {}),
     },
-    texts: { flex: 1, gap: 2 },
+    rowPressed: {
+      transform: [{ scale: 0.98 }],
+    },
+    texts: { flex: 1, gap: tokens.spacing[2] },
     label: {
+      ...tokens.typography.bodyLarge,
       color: colors.text,
-      fontSize: tokens.typography.bodyLarge.fontSize,
-      lineHeight: tokens.typography.bodyLarge.lineHeight,
-      fontFamily: tokens.typography.bodyLarge.fontFamily,
     },
     labelDisabled: { color: colors.disabledText },
     description: {
+      ...tokens.typography.bodyMedium,
       color: colors.secondaryText,
-      fontSize: tokens.typography.bodyMedium.fontSize,
-      lineHeight: tokens.typography.bodyMedium.lineHeight,
-      fontFamily: tokens.typography.bodyMedium.fontFamily,
     },
     error: {
+      ...tokens.typography.bodyMedium,
       color: colors.error,
-      fontSize: tokens.typography.bodyMedium.fontSize,
-      fontFamily: tokens.typography.bodyMedium.fontFamily,
     },
   });
 }

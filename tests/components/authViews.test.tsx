@@ -1,4 +1,4 @@
-import React from "react";
+
 import { act, fireEvent, render } from "@testing-library/react-native";
 import { describe, expect, it, vi } from "vitest";
 import type { AuthActions, AuthState } from "@/viewmodel/useAuthViewModel";
@@ -17,7 +17,8 @@ function mockAuth(state: AuthState, actions: Partial<AuthActions> = {}) {
   const fullActions: AuthActions = {
     signUp: vi.fn().mockResolvedValue(true),
     signIn: vi.fn().mockResolvedValue(true),
-    signOut: vi.fn().mockResolvedValue(undefined),
+    signInWithGoogle: vi.fn().mockResolvedValue(true),
+    signOut: vi.fn().mockResolvedValue(true),
     requestPasswordReset: vi.fn().mockResolvedValue("senha-temp"),
     ...actions,
   };
@@ -33,21 +34,51 @@ describe("tela de entrar (ISO/IEC 25010 - Usabilidade e Acessibilidade)", () => 
       screen = await render(<SignIn />);
     });
 
-    expect(screen.getByRole("header").props.children).toBe("Sua próxima leitura começa aqui.");
+    expect(screen.getByRole("header", { name: "Sua próxima leitura começa aqui." })).toBeDefined();
     expect(screen.getByText("Entre com o e-mail e a senha da sua conta.")).toBeDefined();
     expect(screen.getAllByText("Entrar").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByLabelText("E-mail")).toBeDefined();
     expect(screen.getByLabelText("Senha")).toBeDefined();
   });
 
-  it("exibe indicador de carregamento enquanto autentica", async () => {
+  it("não mostra o carregamento de envio durante a verificação inicial da sessão", async () => {
     mockAuth({ user: null, loading: true, error: null });
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
       screen = await render(<SignIn />);
     });
 
+    expect(screen.queryByLabelText("Entrando")).toBeNull();
+    expect(screen.getByRole("button", { name: "Entrar" })).toBeDefined();
+  });
+
+  it("exibe indicador de carregamento apenas enquanto autentica", async () => {
+    let resolveSignIn!: (value: boolean) => void;
+    const signIn = vi.fn().mockImplementation(
+      () => new Promise<boolean>((resolve) => { resolveSignIn = resolve; }),
+    );
+    mockAuth({ user: null, loading: false, error: null }, { signIn });
+
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<SignIn />);
+    });
+
+    await act(async () => {
+      fireEvent.changeText(screen.getByLabelText("E-mail"), "pessoa@exemplo.com");
+      fireEvent.changeText(screen.getByLabelText("Senha"), "12345678");
+    });
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Entrar" }));
+    });
+
     expect(screen.getByLabelText("Entrando")).toBeDefined();
+
+    await act(async () => {
+      resolveSignIn(false);
+    });
+
+    expect(screen.queryByLabelText("Entrando")).toBeNull();
   });
 
   it("exibe mensagem de erro de credenciais inválidas", async () => {
@@ -131,6 +162,22 @@ describe("tela de entrar (ISO/IEC 25010 - Usabilidade e Acessibilidade)", () => 
 
     expect(onNavigateToForgotPassword).toHaveBeenCalledTimes(1);
   });
+
+  it("aciona onBack ao tocar no botão voltar da barra superior", async () => {
+    mockAuth({ user: null, loading: false, error: null });
+    const onBack = vi.fn();
+
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<SignIn onBack={onBack} />);
+    });
+
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Voltar"));
+    });
+
+    expect(onBack).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe("tela de criar conta (ISO/IEC 25010 - Usabilidade e Acessibilidade)", () => {
@@ -141,14 +188,16 @@ describe("tela de criar conta (ISO/IEC 25010 - Usabilidade e Acessibilidade)", (
       screen = await render(<SignUp />);
     });
 
-    const headers = screen.getAllByRole("header").map((node) => node.props.children);
+    const headers = screen.getAllByRole("header").map((node) => node.props.accessibilityLabel ?? node.props.children);
     expect(headers).toContain("IpêBook");
-    expect(headers).toContain("Crie sua conta");
+    expect(headers.some((h) => typeof h === "string" && h.includes("Crie sua"))).toBe(true);
     expect(screen.getAllByText("Criar conta").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByLabelText("Nome completo")).toBeDefined();
     expect(screen.getByLabelText("E-mail")).toBeDefined();
     expect(screen.getByLabelText("Senha")).toBeDefined();
     expect(screen.getByRole("checkbox", { name: "Aceito os termos de uso" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Continuar com Google" })).toBeDefined();
+    expect(screen.getByText("ou crie com e-mail")).toBeDefined();
   });
 
   it("exibe mensagem de e-mail já cadastrado", async () => {
@@ -159,6 +208,24 @@ describe("tela de criar conta (ISO/IEC 25010 - Usabilidade e Acessibilidade)", (
     });
 
     expect(screen.getByText("Este e-mail já está em uso.")).toBeDefined();
+  });
+
+  it("chama signInWithGoogle e onAuthenticated ao tocar em Continuar com Google", async () => {
+    const signInWithGoogle = vi.fn().mockResolvedValue(true);
+    mockAuth({ user: null, loading: false, error: null }, { signInWithGoogle });
+    const onAuthenticated = vi.fn();
+
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<SignUp onAuthenticated={onAuthenticated} />);
+    });
+
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Continuar com Google" }));
+    });
+
+    expect(signInWithGoogle).toHaveBeenCalledTimes(1);
+    expect(onAuthenticated).toHaveBeenCalledTimes(1);
   });
 
   it("chama onAuthenticated após criar conta com sucesso", async () => {
@@ -199,6 +266,22 @@ describe("tela de criar conta (ISO/IEC 25010 - Usabilidade e Acessibilidade)", (
     });
 
     expect(onNavigateToSignIn).toHaveBeenCalledTimes(1);
+  });
+
+  it("aciona onBack ao tocar no botão voltar da barra superior", async () => {
+    mockAuth({ user: null, loading: false, error: null });
+    const onBack = vi.fn();
+
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<SignUp onBack={onBack} />);
+    });
+
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Voltar"));
+    });
+
+    expect(onBack).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -252,6 +335,23 @@ describe("tela de esqueceu a senha (ISO/IEC 25010 - Usabilidade e Acessibilidade
 
     expect(screen.getByRole("alert")).toBeDefined();
     expect(screen.getByText("Recuperação por e-mail indisponível no modo local.")).toBeDefined();
+  });
+
+  it("não solicita o link sem informar o e-mail", async () => {
+    const requestPasswordReset = vi.fn().mockResolvedValue(true);
+    mockAuth({ user: null, loading: false, error: null }, { requestPasswordReset });
+
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<ForgotPassword />);
+    });
+
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Enviar link" }));
+    });
+
+    expect(requestPasswordReset).not.toHaveBeenCalled();
+    expect(screen.getByText("Informe o e-mail da sua conta.")).toBeDefined();
   });
 
   it("aciona a navegação de volta ao login", async () => {

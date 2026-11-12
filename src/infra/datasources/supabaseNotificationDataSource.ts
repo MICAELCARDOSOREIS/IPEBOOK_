@@ -27,6 +27,8 @@ function mapNotification(row: NotificationRow): AppNotification {
   };
 }
 
+let channelSeq = 0;
+
 export class SupabaseNotificationDataSource implements INotificationDataSource {
   constructor(private readonly client: SupabaseAppClient) {}
 
@@ -63,6 +65,57 @@ export class SupabaseNotificationDataSource implements INotificationDataSource {
     if (error) {
       throw new DataSourceError("Não foi possível marcar as notificações como lidas.");
     }
+  }
+
+  async deleteNotification(notificationId: string): Promise<void> {
+    const { error } = await this.client
+      .from("v2_notifications")
+      .delete()
+      .eq("id", notificationId);
+
+    if (error) {
+      throw new DataSourceError("Não foi possível excluir a notificação.");
+    }
+  }
+
+  async clearAll(userId: string): Promise<void> {
+    const { error } = await this.client
+      .from("v2_notifications")
+      .delete()
+      .eq("user_id", userId);
+
+    if (error) {
+      throw new DataSourceError("Não foi possível limpar as notificações.");
+    }
+  }
+
+  async clearRead(userId: string): Promise<void> {
+    const { error } = await this.client
+      .from("v2_notifications")
+      .delete()
+      .eq("user_id", userId)
+      .eq("read", true);
+
+    if (error) {
+      throw new DataSourceError("Não foi possível limpar as notificações lidas.");
+    }
+  }
+
+  subscribeToChanges(userId: string, onChange: () => void): () => void {
+    const channel = this.client
+      // Nome único por assinatura: reusar o mesmo tópico depois de `subscribe()` lança erro do Realtime
+      // (Home, Conversas e a tela de notificações assinam ao mesmo tempo).
+      .channel(`notifications:${userId}:${++channelSeq}`)
+      .on(
+        "postgres_changes" as any,
+        { event: "*", schema: "public", table: "v2_notifications", filter: `user_id=eq.${userId}` },
+        () => onChange(),
+      )
+      .subscribe();
+
+    return () => {
+      this.client.removeChannel(channel);
+    };
   }
 
   async addNotification(notification: AppNotification): Promise<void> {

@@ -4,12 +4,17 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { REPORT_REASONS } from "@/model/entities/report";
 import { FilledButton } from "@/view/components/FilledButton";
 import { IconBadge } from "@/view/components/IconBadge";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { useFormErrorAnnouncer } from "@/view/useFormErrorAnnouncer";
-import { useReportListingViewModel } from "@/viewmodel/useReportListingViewModel";
+import { useGuardedPress } from "@/view/useGuardedPress";
+import { scrollBottomPadding, standardVerticalScrollProps } from "@/view/scrollProps";
+import { makeReportListingViewModel } from "@/di/container";
+import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
 
+import { withPress } from "@/view/pressFeedback";
 export type ReportListingProps = {
   listingId: string;
   listingTitle?: string;
@@ -29,19 +34,29 @@ export default function ReportListing({
   onBack,
   onNavigateToLogin,
 }: ReportListingProps) {
-  const [state, actions] = useReportListingViewModel();
+  const [state, actions] = makeReportListingViewModel();
   const { colors } = useTheme();
+  // Web larga: coluna mais larga, com o conteúdo dividido em duas colunas.
+  const wide = useIsWideWeb();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const errorRef = useFormErrorAnnouncer(state.error);
+
+  const guardedBack = useGuardedPress(onBack);
+  const guardedNavigateToLoginPress = useGuardedPress(onNavigateToLogin);
+  const guardedNavigateToLogin = onNavigateToLogin ? guardedNavigateToLoginPress : undefined;
 
   if (state.success) {
     return (
       <SafeAreaView style={styles.page}>
-        <TopAppBar title="Denunciar anúncio" onBack={onBack} />
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          <View style={styles.content}>
+        <TopAppBar title="Denunciar anúncio" onBack={guardedBack} contentMaxWidth={wide ? WEB_MAX_WIDTH : undefined} />
+        <ScrollView
+          {...standardVerticalScrollProps}
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={[styles.content, wide && styles.contentWide]}>
             <View style={styles.successCard}>
-              <IconBadge icon="check" tone="action" />
+              <IconBadge icon="check" tone="action" size="large" />
               <Text accessibilityRole="header" style={styles.successTitle}>
                 Denúncia enviada
               </Text>
@@ -50,7 +65,7 @@ export default function ReportListing({
                 A equipe vai analisar o relato em até 24 horas. Obrigado por ajudar a manter a comunidade IpêBook segura em Piripiri.
               </Text>
               <View style={styles.fullWidthButton}>
-                <FilledButton label="Voltar ao anúncio" onPress={onBack} />
+                <FilledButton label="Voltar ao anúncio" onPress={guardedBack} />
               </View>
             </View>
           </View>
@@ -62,20 +77,24 @@ export default function ReportListing({
   if (!sessionUserId) {
     return (
       <SafeAreaView style={styles.page}>
-        <TopAppBar title="Denunciar anúncio" onBack={onBack} />
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          <View style={styles.content}>
+        <TopAppBar title="Denunciar anúncio" onBack={guardedBack} contentMaxWidth={wide ? WEB_MAX_WIDTH : undefined} />
+        <ScrollView
+          {...standardVerticalScrollProps}
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={[styles.content, wide && styles.contentWide]}>
             <View style={styles.authNotice}>
-              <IconBadge icon="flag" tone="neutral" />
+              <IconBadge icon="flag" tone="neutral" size="large" />
               <Text accessibilityRole="header" style={styles.title}>
                 Identificação necessária
               </Text>
               <Text style={styles.bodyCenter}>
                 Para evitar abusos e manter o respeito na comunidade, apenas pessoas autenticadas podem denunciar anúncios.
               </Text>
-              {onNavigateToLogin ? (
+              {guardedNavigateToLogin ? (
                 <View style={styles.fullWidthButton}>
-                  <FilledButton label="Entrar na minha conta" onPress={onNavigateToLogin} />
+                  <FilledButton label="Entrar na minha conta" onPress={guardedNavigateToLogin} />
                 </View>
               ) : null}
             </View>
@@ -87,9 +106,13 @@ export default function ReportListing({
 
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar title="Denunciar anúncio" onBack={onBack} />
-      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
-        <View style={styles.content}>
+      <TopAppBar title="Denunciar anúncio" onBack={guardedBack} contentMaxWidth={wide ? WEB_MAX_WIDTH : undefined} />
+      <ScrollView
+        {...standardVerticalScrollProps}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={[styles.content, wide && styles.contentWide]}>
           {listingTitle ? (
             <Text style={styles.bookContext}>
               Denunciando: <Text style={styles.bookTitleBold}>{listingTitle}</Text>
@@ -103,6 +126,8 @@ export default function ReportListing({
             </Text>
           </View>
 
+          <View style={[styles.columns, wide && styles.columnsWide]}>
+          <View style={[styles.column, wide && styles.columnHalf]}>
           <View testID="report-reasons-radiogroup" accessibilityRole="radiogroup" style={styles.reasonList}>
             {REPORT_REASONS.map((option) => {
               const isSelected = state.reason === option.key;
@@ -114,7 +139,7 @@ export default function ReportListing({
                   accessibilityLabel={option.label}
                   accessibilityHint={option.description}
                   onPress={() => actions.setReason(option.key)}
-                  style={[styles.reasonOption, isSelected && styles.reasonOptionSelected]}
+                  style={withPress([styles.reasonOption, isSelected && styles.reasonOptionSelected])}
                 >
                   <View style={[styles.radioCircle, isSelected && styles.radioCircleSelected]}>
                     {isSelected ? <View style={styles.radioDot} /> : null}
@@ -123,12 +148,19 @@ export default function ReportListing({
                     <Text style={[styles.reasonLabel, isSelected && styles.reasonLabelSelected]}>
                       {option.label}
                     </Text>
+                    {option.description ? (
+                      <Text style={styles.reasonDescription}>
+                        {option.description}
+                      </Text>
+                    ) : null}
                   </View>
                 </Pressable>
               );
             })}
           </View>
 
+          </View>
+          <View style={[styles.column, wide && styles.columnHalf]}>
           <View style={styles.field}>
             <Text style={styles.inputLabel}>Detalhes (opcional)</Text>
             <TextInput
@@ -162,6 +194,8 @@ export default function ReportListing({
             loadingLabel="Enviando denúncia..."
             onPress={() => void actions.submit(listingId, sessionUserId)}
           />
+          </View>
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -170,7 +204,16 @@ export default function ReportListing({
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
-  page: { flex: 1, backgroundColor: colors.background },
+  page: { flex: 1, minHeight: 0, backgroundColor: colors.background },
+  contentWide: {
+    maxWidth: WEB_MAX_WIDTH,
+    alignSelf: "center",
+    paddingHorizontal: WEB_GUTTER,
+  },
+  columns: { gap: tokens.spacing[16] },
+  columnsWide: { flexDirection: "row", alignItems: "flex-start", gap: tokens.spacing[24] },
+  column: { gap: tokens.spacing[16] },
+  columnHalf: { flex: 1 },
   scrollContent: {
     flexGrow: 1,
     paddingBottom: tokens.spacing[48],
@@ -178,8 +221,6 @@ function createStyles(colors: ColorPalette) {
   content: {
     flex: 1,
     width: "100%",
-    maxWidth: 720,
-    alignSelf: "center",
     padding: tokens.spacing[24],
     gap: tokens.spacing[16],
   },
@@ -191,9 +232,7 @@ function createStyles(colors: ColorPalette) {
     gap: tokens.spacing[4],
   },
   heroHeadline: {
-    fontSize: tokens.typography.displayLarge.fontSize,
-    lineHeight: tokens.typography.displayLarge.lineHeight,
-    fontFamily: tokens.typography.displayLarge.fontFamily,
+    ...tokens.typography.displayLarge,
     color: colors.text,
   },
   successHeadline: {
@@ -203,7 +242,7 @@ function createStyles(colors: ColorPalette) {
     textAlign: "center",
   },
   bookTitleBold: {
-    fontWeight: "700",
+    fontWeight: tokens.fontWeight.bold,
     color: colors.text,
   },
   title: {
@@ -236,7 +275,7 @@ function createStyles(colors: ColorPalette) {
     borderColor: colors.border,
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 2,
+    marginTop: tokens.spacing[2],
   },
   radioCircleSelected: {
     borderColor: colors.action,
@@ -249,15 +288,20 @@ function createStyles(colors: ColorPalette) {
   },
   reasonTextContainer: {
     flex: 1,
-    gap: 2,
+    gap: tokens.spacing[2],
   },
   reasonLabel: {
     ...tokens.typography.bodyLarge,
-    fontWeight: "600",
+    fontWeight: tokens.fontWeight.semiBold,
     color: colors.text,
   },
   reasonLabelSelected: {
     color: colors.action,
+  },
+  reasonDescription: {
+    ...tokens.typography.footnote,
+    color: colors.secondaryText,
+    lineHeight: tokens.lineHeight[18],
   },
   field: {
     gap: tokens.spacing[6],

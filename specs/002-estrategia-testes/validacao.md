@@ -3,6 +3,10 @@
 Data: 2026-10-13. Branch: `develop`.
 Status: Implementado e validado localmente com 100% de sucesso.
 
+> **Atualização (2026-11-04):** a seção de testes E2E com Maestro registra uma evidência que não
+> existe mais. Os fluxos foram removidos e a validação em dispositivo passou a ser manual; os
+> números desta validação são históricos. Ver [`docs/qualidade.md`](../../docs/qualidade.md).
+
 ## Evidências Executáveis
 
 ### 1. `npm run validate` (Código de Saída: 0)

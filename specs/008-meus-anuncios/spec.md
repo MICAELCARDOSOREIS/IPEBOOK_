@@ -1,6 +1,6 @@
 # 008 — Gestão de Anúncios do Usuário (Meus Anúncios)
 
-Status: especificada. Data: 2026-10-15.
+Status: implementada e testada localmente. Data: 2026-11-04.
 
 ## Objetivo
 

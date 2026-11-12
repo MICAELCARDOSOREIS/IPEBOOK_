@@ -1,0 +1,45 @@
+{
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "vcs": {
+    "enabled": false
+  },
+  "files": {
+    "includes": [
+      "src/**",
+      "tests/**",
+      "functions/**",
+      "scripts/**",
+      "app.config.js",
+      "metro.config.js",
+      "vitest.config.mts"
+    ]
+  },
+  "formatter": {
+    "enabled": false
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "preset": "recommended",
+      "correctness": {
+        "noComponentHookFactories": "off",
+        "useExhaustiveDependencies": "warn"
+      },
+      "suspicious": {
+        "noArrayIndexKey": "warn",
+        "noControlCharactersInRegex": "warn",
+        "noThenProperty": "warn",
+        "useIterableCallbackReturn": "warn"
+      },
+      "security": {
+        "noDangerouslySetInnerHtml": "warn"
+      },
+      "a11y": {
+        "noSvgWithoutTitle": "warn"
+      }
+    }
+  },
+  "javascript": {
+    "globals": ["__DEV__"]
+  }
+}

@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { StyleSheet, Text, View } from "react-native";
-import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
+import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 
 export type LogotipoProps = {
@@ -18,8 +18,7 @@ export function Logotipo({ inverse = false, underline = false }: LogotipoProps) 
     <Text
       accessibilityRole="header"
       style={{
-        fontFamily: fontFamily.brand,
-        fontSize: 24,
+        ...tokens.typography.brandTitle,
         color: inverse ? colors.cover.text : colors.brandBrown,
       }}
     >

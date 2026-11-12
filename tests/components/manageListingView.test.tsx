@@ -1,15 +1,16 @@
-import React from "react";
 import { act, fireEvent, render } from "@testing-library/react-native";
+import type React from "react";
 import { describe, expect, it, vi } from "vitest";
 import type { Book } from "@/model/entities/book";
-import type { ManageListingActions, ManageListingState } from "@/viewmodel/useManageListingViewModel";
 import ManageListing from "@/view/listings/manageListing";
+import type { ManageListingActions, ManageListingState } from "@/viewmodel/useManageListingViewModel";
 
 vi.mock("@/viewmodel/useManageListingViewModel", () => ({
   useManageListingViewModel: vi.fn(),
 }));
 
 import { useManageListingViewModel } from "@/viewmodel/useManageListingViewModel";
+
 const mockedUseManageListingViewModel = vi.mocked(useManageListingViewModel);
 
 const book: Book = {
@@ -86,6 +87,10 @@ describe("tela de gerenciar anúncio (Figma 04.08)", () => {
     expect(screen.getByText("Negociação em andamento")).toBeDefined();
     expect(screen.getByLabelText("Editar anúncio").props.accessibilityState.disabled).toBe(true);
     expect(screen.getByLabelText("Pausar anúncio").props.accessibilityState.disabled).toBe(true);
+    expect(screen.getByRole("button", { name: "Excluir anúncio" }).props.accessibilityState.disabled).toBe(true);
+    expect(
+      screen.getByText("Conclua ou cancele a negociação em andamento para excluir este anúncio."),
+    ).toBeDefined();
   });
 
   it("aciona a edição do anúncio", async () => {
@@ -152,5 +157,80 @@ describe("tela de gerenciar anúncio (Figma 04.08)", () => {
     mockViewModel({ book: null, loading: false, error: "Você só pode gerenciar seus próprios anúncios." });
     const comErro = await renderScreen();
     expect(comErro.getByText("Você só pode gerenciar seus próprios anúncios.")).toBeDefined();
+  });
+
+  it("aciona a visualização pública do anúncio quando disponível", async () => {
+    mockViewModel({});
+    const onViewPublicListing = vi.fn();
+    const screen = await renderScreen({ onViewPublicListing });
+
+    const viewButton = screen.getByLabelText("Ver anúncio como leitor");
+    expect(viewButton).toBeDefined();
+
+    await act(async () => {
+      fireEvent.press(viewButton);
+    });
+
+    expect(onViewPublicListing).toHaveBeenCalledWith("b1");
+  });
+
+  it("permite compartilhar o anúncio", async () => {
+    mockViewModel({});
+    const screen = await renderScreen();
+
+    const shareButton = screen.getByLabelText("Compartilhar anúncio");
+    expect(shareButton).toBeDefined();
+
+    await act(async () => {
+      fireEvent.press(shareButton);
+    });
+  });
+
+  it("permite divulgar o anúncio no WhatsApp (Spec 118)", async () => {
+    mockViewModel({});
+    const screen = await renderScreen();
+
+    const whatsappButton = screen.getByLabelText("Divulgar no WhatsApp");
+    expect(whatsappButton).toBeDefined();
+
+    await act(async () => {
+      fireEvent.press(whatsappButton);
+    });
+  });
+
+  it("atende aos padrões de acessibilidade (IHC e a11y)", async () => {
+    mockViewModel({});
+    const screen = await renderScreen({ onViewPublicListing: vi.fn() });
+
+    // Seções organizadas com cabeçalhos acessíveis para navegação semântica
+    const headers = screen.getAllByRole("header").map((node) => node.props.children);
+    expect(headers).toContain("Edição e visualização");
+    expect(headers).toContain("Divulgar e compartilhar");
+    expect(headers).toContain("Disponibilidade no catálogo");
+
+    // Resumo acessível do livro para leitores de tela
+    const bookSummary = screen.getByLabelText(/Resumo do anúncio: O Pequeno Príncipe/);
+    expect(bookSummary).toBeDefined();
+
+    // Região de status ao vivo com accessibilityLiveRegion polite
+    const statusRegion = screen.getByLabelText(/Status do anúncio: Anúncio ativo/);
+    expect(statusRegion).toBeDefined();
+    expect(statusRegion.props.accessibilityLiveRegion).toBe("polite");
+
+    // Hints informativos nas ações para usuários com leitor de tela
+    const editBtn = screen.getByLabelText("Editar anúncio");
+    expect(editBtn.props.accessibilityHint).toContain("Abre o formulário");
+
+    const viewBtn = screen.getByLabelText("Ver anúncio como leitor");
+    expect(viewBtn.props.accessibilityHint).toContain("Abre a visualização");
+
+    const whatsappBtn = screen.getByLabelText("Divulgar no WhatsApp");
+    expect(whatsappBtn.props.accessibilityHint).toContain("Abre o WhatsApp");
+
+    const shareBtn = screen.getByLabelText("Compartilhar anúncio");
+    expect(shareBtn.props.accessibilityHint).toContain("Abre o menu para copiar link");
+
+    const pauseBtn = screen.getByLabelText("Pausar anúncio");
+    expect(pauseBtn.props.accessibilityHint).toContain("Oculta temporariamente");
   });
 });

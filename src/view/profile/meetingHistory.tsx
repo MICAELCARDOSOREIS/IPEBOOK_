@@ -1,0 +1,350 @@
+import { useMemo } from "react";
+import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { PIRIPIRI_MEETING_POINTS } from "@/model/entities/meetingPoint";
+import type { Meeting } from "@/model/entities/meeting";
+import { makeAuthViewModel, makeUserMeetingsViewModel } from "@/di/container";
+import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
+import { useTheme } from "@/view/theme/ThemeProvider";
+import { formatMeetingWhen } from "@/view/meetingFormat";
+import { AppIcon } from "@/view/components/AppIcon";
+import { ErrorState } from "@/view/components/ErrorState";
+import { LoadingState } from "@/view/components/LoadingState";
+import { TopAppBar } from "@/view/components/TopAppBar";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
+import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
+import { withPress } from "@/view/pressFeedback";
+import { useGuardedPress } from "@/view/useGuardedPress";
+import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
+export type MeetingHistoryProps = {
+  onBack?: () => void;
+  onNavigateToNegotiation?: (requestId: string) => void;
+};
+
+export default function MeetingHistory({ onBack, onNavigateToNegotiation }: MeetingHistoryProps) {
+  const guardedBack = useGuardedPress(onBack);
+  const guardedNegotiation = useGuardedPress(onNavigateToNegotiation);
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+  const [authState] = makeAuthViewModel();
+  // Web larga: coluna mais ampla e dois cartões por linha.
+  const wide = useIsWideWeb();
+  const userId = authState.user?.id ?? null;
+  const [state, actions] = makeUserMeetingsViewModel(userId);
+
+  function getStatusLabel(meeting: Meeting): { text: string; isPast: boolean } {
+    if (meeting.status === "cancelled") {
+      return { text: "Cancelado", isPast: true };
+    }
+    const isPast = new Date(meeting.scheduledAt).getTime() < Date.now();
+    if (meeting.status === "confirmed") {
+      return { text: isPast ? "Realizado" : "Confirmado", isPast };
+    }
+    return { text: isPast ? "Expirado" : "Aguardando confirmação", isPast };
+  }
+
+  return (
+    <SafeAreaView style={styles.page}>
+      {wide ? (
+        <View style={styles.wideHeader}>
+          <View style={styles.wideHeaderLeft}>
+            {onBack ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Voltar"
+                onPress={guardedBack}
+                style={withPress(styles.wideBackButton)}
+              >
+                <AppIcon name="back" size={20} color={colors.m3.onSurface} />
+              </Pressable>
+            ) : null}
+            <View>
+              <Text accessibilityRole="header" style={styles.wideTitle}>
+                Histórico de encontros
+              </Text>
+              <Text style={styles.wideSubtitle}>
+                Encontros nos 4 pontos seguros de Piripiri
+              </Text>
+            </View>
+          </View>
+        </View>
+      ) : (
+        <TopAppBar contentMaxWidth={undefined} title="Histórico de encontros" onBack={guardedBack} />
+      )}
+      {state.loading ? (
+        <View style={[styles.content, wide && styles.contentWide]}>
+          <LoadingState label="Carregando encontros…" />
+        </View>
+      ) : state.error ? (
+        <View style={[styles.content, wide && styles.contentWide]}>
+          <ErrorState message={state.error} onRetry={() => void actions.reload()} />
+        </View>
+      ) : state.meetings.length === 0 ? (
+        <View style={[styles.content, wide && styles.contentWide]}>
+          <View style={[styles.emptyContainer, wide && styles.emptyWide]}>
+            <AppIcon name="calendar" size={48} color={colors.m3.onSurfaceVariant} />
+            <Text style={styles.emptyTitle}>Nenhum encontro registrado</Text>
+            <Text style={styles.emptyText}>
+              Quando você aceitar ou propor trocas, os encontros nos 4 pontos seguros de Piripiri aparecerão aqui.
+            </Text>
+          </View>
+        </View>
+      ) : (
+        <FlatList
+          key={wide ? "grid-meetings-2" : "list-meetings-1"}
+          numColumns={wide ? 2 : 1}
+          columnWrapperStyle={wide ? styles.gridRow : undefined}
+          data={state.meetings}
+          keyExtractor={(item) => item.id}
+          {...standardVerticalScrollProps}
+          style={styles.flexOne}
+          contentContainerStyle={[
+            styles.content,
+            wide && styles.contentWide,
+            { paddingBottom: scrollBottomPadding.withoutBottomBar },
+          ]}
+          ListHeaderComponent={
+            <Text style={[styles.summaryText, wide && styles.fullRow]}>
+              {state.meetings.length} {state.meetings.length === 1 ? "encontro registrado" : "encontros registrados"} nos pontos públicos de Piripiri
+            </Text>
+          }
+          ItemSeparatorComponent={() => <View style={{ height: tokens.spacing[16] }} />}
+          renderItem={({ item: meeting }) => {
+            const point = PIRIPIRI_MEETING_POINTS.find((p) => p.name === meeting.pointName);
+            const statusInfo = getStatusLabel(meeting);
+            return (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`Encontro em ${meeting.pointName}, ${formatMeetingWhen(meeting.scheduledAt)}. Situação: ${statusInfo.text}`}
+                onPress={() => guardedNegotiation(meeting.requestId)}
+                style={withPress([styles.meetingCard, wide && styles.cardWide])}
+              >
+                <View style={styles.cardHeader}>
+                  <View style={styles.pointHeader}>
+                    <AppIcon name="place" size={20} color={colors.m3.primary} />
+                    <Text style={styles.pointTitle}>{meeting.pointName}</Text>
+                  </View>
+                  <View
+                    style={[
+                      styles.badge,
+                      meeting.status === "cancelled"
+                        ? styles.badgeCancelled
+                        : statusInfo.text === "Realizado"
+                          ? styles.badgeCompleted
+                          : styles.badgeActive,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.badgeText,
+                        meeting.status === "cancelled"
+                          ? styles.badgeTextCancelled
+                          : statusInfo.text === "Realizado"
+                            ? styles.badgeTextCompleted
+                            : styles.badgeTextActive,
+                      ]}
+                    >
+                      {statusInfo.text}
+                    </Text>
+                  </View>
+                </View>
+
+                {point ? <Text style={styles.pointAddress}>{point.address}</Text> : null}
+
+                <View style={styles.cardFooter}>
+                  <View style={styles.footerRow}>
+                    <AppIcon name="calendar" size={16} color={colors.m3.onSurfaceVariant} />
+                    <Text style={styles.footerText}>{formatMeetingWhen(meeting.scheduledAt)}</Text>
+                  </View>
+                  <View style={styles.detailLink}>
+                    <Text style={styles.detailLinkText}>Ver negociação</Text>
+                    <AppIcon name="chevronRight" size={16} color={colors.m3.primary} />
+                  </View>
+                </View>
+              </Pressable>
+            );
+          }}
+        />
+      )}
+    </SafeAreaView>
+  );
+}
+
+const WIDE_CONTENT_MAX_WIDTH = WEB_MAX_WIDTH;
+
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+    page: { flex: 1, backgroundColor: colors.background, minHeight: 0 },
+    flexOne: { flex: 1, minHeight: 0 },
+    wideHeader: {
+      width: "100%",
+      maxWidth: WIDE_CONTENT_MAX_WIDTH,
+      alignSelf: "center",
+      paddingHorizontal: WEB_GUTTER,
+      paddingTop: tokens.spacing[24],
+      paddingBottom: tokens.spacing[12],
+    },
+    wideHeaderLeft: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[16],
+    },
+    wideBackButton: {
+      width: tokens.spacing[40],
+      height: tokens.spacing[40],
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.m3.surfaceContainerHigh,
+      alignItems: "center",
+      justifyContent: "center",
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+    },
+    wideTitle: {
+      ...tokens.typography.brandLargeTitle,
+      color: colors.brandBrown,
+    },
+    wideSubtitle: {
+      ...tokens.typography.bodyMedium,
+      color: colors.m3.onSurfaceVariant,
+      marginTop: tokens.spacing[2],
+    },
+    content: {
+      width: "100%",
+      padding: tokens.spacing[16],
+      flexGrow: 1,
+    },
+    emptyContainer: {
+      alignItems: "center",
+      justifyContent: "center",
+      paddingVertical: tokens.spacing[48],
+      paddingHorizontal: tokens.spacing[24],
+      gap: tokens.spacing[12],
+    },
+    emptyWide: {
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderRadius: tokens.radius.card,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+      padding: tokens.spacing[40],
+      maxWidth: 640,
+      width: "100%",
+      alignSelf: "center",
+      marginTop: tokens.spacing[16],
+    },
+    emptyTitle: {
+      ...tokens.typography.titleMedium,
+      fontFamily: fontFamily.semiBold,
+      color: colors.text,
+      textAlign: "center",
+    },
+    emptyText: {
+      ...tokens.typography.bodyMedium,
+      fontFamily: fontFamily.regular,
+      color: colors.m3.onSurfaceVariant,
+      textAlign: "center",
+      maxWidth: 400,
+    },
+    list: {
+      gap: tokens.spacing[12],
+    },
+    contentWide: { maxWidth: WIDE_CONTENT_MAX_WIDTH, alignSelf: "center", paddingHorizontal: WEB_GUTTER },
+    gridRow: { gap: tokens.spacing[16] },
+    fullRow: { width: "100%" },
+    cardWide: { flex: 1 },
+    summaryText: {
+      ...tokens.typography.labelMedium,
+      fontFamily: fontFamily.medium,
+      color: colors.m3.onSurfaceVariant,
+      marginBottom: tokens.spacing[4],
+    },
+    meetingCard: {
+      backgroundColor: colors.surface,
+      borderRadius: tokens.radius.medium,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+      padding: tokens.spacing[16],
+      gap: tokens.spacing[8],
+    },
+    cardHeader: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "flex-start",
+      gap: tokens.spacing[8],
+    },
+    pointHeader: {
+      flex: 1,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[6],
+    },
+    pointTitle: {
+      flex: 1,
+      ...tokens.typography.subheadline,
+      fontFamily: fontFamily.semiBold,
+      fontWeight: tokens.fontWeight.semiBold,
+      color: colors.text,
+    },
+    pointAddress: {
+      ...tokens.typography.footnote,
+      color: colors.m3.onSurfaceVariant,
+      marginLeft: tokens.spacing[26],
+    },
+    cardFooter: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginTop: tokens.spacing[6],
+      paddingTop: tokens.spacing[8],
+      borderTopWidth: 1,
+      borderTopColor: colors.m3.outlineVariant,
+    },
+    footerRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[6],
+    },
+    footerText: {
+      ...tokens.typography.labelMedium,
+      fontFamily: fontFamily.medium,
+      color: colors.m3.onSurface,
+    },
+    detailLink: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[2],
+    },
+    detailLinkText: {
+      ...tokens.typography.labelMedium,
+      fontFamily: fontFamily.semiBold,
+      color: colors.m3.primary,
+    },
+    badge: {
+      paddingHorizontal: tokens.spacing[8],
+      paddingVertical: tokens.spacing[3],
+      borderRadius: tokens.radius.small,
+      overflow: "hidden",
+    },
+    badgeActive: {
+      backgroundColor: colors.m3.secondaryContainer,
+    },
+    badgeCompleted: {
+      backgroundColor: colors.m3.surfaceContainerHighest,
+    },
+    badgeCancelled: {
+      backgroundColor: colors.m3.surfaceContainerLow,
+    },
+    badgeText: {
+      ...tokens.typography.labelSmall,
+      fontFamily: fontFamily.medium,
+    },
+    badgeTextActive: {
+      color: colors.m3.onSecondaryContainer,
+    },
+    badgeTextCompleted: {
+      color: colors.m3.onSurfaceVariant,
+    },
+    badgeTextCancelled: {
+      color: colors.error,
+    },
+  });
+}

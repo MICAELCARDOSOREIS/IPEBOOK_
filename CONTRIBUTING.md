@@ -74,7 +74,7 @@ tipo(escopo opcional): descrição curta no imperativo
    - Para regras de negócio: criar testes em `tests/unit/`.
    - Para estado/ViewModel: criar testes em `tests/hooks/`.
    - Para UI/telas: criar testes em `tests/components/` ou `tests/components-mocked/`.
-   - Para fluxos completos: criar testes em `tests/integration/` ou `.maestro/`.
+   - Para fluxos completos: criar testes em `tests/integration/`.
 5. **Garantir validação local:**
    Antes de abrir commit ou Pull Request, execute:
    ```bash

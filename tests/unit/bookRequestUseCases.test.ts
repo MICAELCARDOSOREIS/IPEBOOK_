@@ -59,9 +59,24 @@ describe("negociação simples (spec 004)", () => {
       await expect(useCases.requestNegotiation("listing-1", "alice")).resolves.toMatchObject({ status: "pending" });
     });
 
+    it("bloqueia anúncio já entregue (Spec 095)", async () => {
+      await books.updateStatus("listing-1", "delivered");
+      await expect(useCases.requestNegotiation("listing-1", "alice")).rejects.toThrow(/não está mais disponível/);
+    });
+
     it("FR-003: bloqueia anúncio reservado", async () => {
       await books.updateStatus("listing-1", "reserved");
       await expect(useCases.requestNegotiation("listing-1", "alice")).rejects.toThrow(/não está mais disponível/);
+    });
+
+    it("getActiveRequest: localiza pedido pendente ou aceito do usuário para o anúncio", async () => {
+      expect(await useCases.getActiveRequest("listing-1", "alice")).toBeNull();
+      const created = await useCases.requestNegotiation("listing-1", "alice");
+      const active = await useCases.getActiveRequest("listing-1", "alice");
+      expect(active?.id).toBe(created.id);
+      expect(active?.status).toBe("pending");
+      expect(await useCases.getActiveRequest("listing-1", "bob")).toBeNull();
+      expect(await useCases.getActiveRequest("listing-1", null)).toBeNull();
     });
   });
 
@@ -86,6 +101,24 @@ describe("negociação simples (spec 004)", () => {
         ["alice", "Alice Souza"],
         ["bob", null],
       ]);
+    });
+
+    it("traz a foto de perfil de quem pediu e da outra pessoa no detalhe (Spec 084)", async () => {
+      const profiles = new MemoryProfileDataSource();
+      await profiles.ensure("alice", "Alice Souza");
+      await profiles.update("alice", { name: "Alice Souza", photoUrl: "https://cdn/alice.jpg" });
+      await profiles.ensure("owner", "Dono");
+      await profiles.update("owner", { name: "Dono", photoUrl: "https://cdn/dono.jpg" });
+      const withProfiles = new BookRequestUseCases(books, requests, profiles);
+      const req = await withProfiles.requestNegotiation("listing-1", "alice");
+
+      const received = await withProfiles.listReceivedRequests("owner");
+      expect(received[0].requesterPhotoUrl).toBe("https://cdn/alice.jpg");
+
+      const asOwner = await withProfiles.getRequestDetail(req.id, "owner");
+      expect(asOwner.counterpartPhotoUrl).toBe("https://cdn/alice.jpg");
+      const asRequester = await withProfiles.getRequestDetail(req.id, "alice");
+      expect(asRequester.counterpartPhotoUrl).toBe("https://cdn/dono.jpg");
     });
 
     it("lista enviados com status atual", async () => {
@@ -149,6 +182,101 @@ describe("negociação simples (spec 004)", () => {
     it("exige sessão e pedido existente", async () => {
       await expect(useCases.respondToRequest("x", "accept", null)).rejects.toBeInstanceOf(AuthError);
       await expect(useCases.respondToRequest("x", "accept", "owner")).rejects.toBeInstanceOf(ValidationError);
+    });
+  });
+
+  describe("cancelRequest (Spec 101)", () => {
+    it("quem pediu cancela o próprio pedido pendente e pode pedir de novo", async () => {
+      const req = await useCases.requestNegotiation("listing-1", "alice");
+      await expect(useCases.cancelRequest(req.id, "alice")).resolves.toMatchObject({ status: "cancelled" });
+      await expect(useCases.requestNegotiation("listing-1", "alice")).resolves.toMatchObject({ status: "pending" });
+    });
+
+    it("só quem pediu pode cancelar", async () => {
+      const req = await useCases.requestNegotiation("listing-1", "alice");
+      await expect(useCases.cancelRequest(req.id, "owner")).rejects.toBeInstanceOf(AuthError);
+      expect((await requests.findById(req.id))?.status).toBe("pending");
+    });
+
+    it("não cancela pedido já respondido", async () => {
+      const req = await useCases.requestNegotiation("listing-1", "alice");
+      await useCases.respondToRequest(req.id, "accept", "owner");
+      await expect(useCases.cancelRequest(req.id, "alice")).rejects.toThrow(/já foi respondido/);
+    });
+
+    it("exige sessão e pedido existente", async () => {
+      await expect(useCases.cancelRequest("x", null)).rejects.toBeInstanceOf(AuthError);
+      await expect(useCases.cancelRequest("x", "alice")).rejects.toBeInstanceOf(ValidationError);
+    });
+  });
+
+  describe("melhorias na proposta de negociação (Spec 113)", () => {
+    it("permite enviar mensagem inicial válida", async () => {
+      const created = await useCases.requestNegotiation("listing-1", "alice", {
+        initialMessage: "Olá! Gostaria muito de ler esse livro, estudo perto da Praça da Bandeira.",
+      });
+      expect(created.initialMessage).toBe(
+        "Olá! Gostaria muito de ler esse livro, estudo perto da Praça da Bandeira.",
+      );
+    });
+
+    it("rejeita mensagem inicial com mais de 500 caracteres", async () => {
+      const longMessage = "a".repeat(501);
+      await expect(
+        useCases.requestNegotiation("listing-1", "alice", { initialMessage: longMessage }),
+      ).rejects.toThrow(/não pode ultrapassar 500 caracteres/);
+    });
+
+    it("permite anexar livro de troca próprio e disponível", async () => {
+      const aliceBook = await books.create({
+        title: "Dom Casmurro",
+        author: "Machado de Assis",
+        ownerId: "alice",
+        modality: "trade",
+        status: "available",
+      });
+
+      const created = await useCases.requestNegotiation("listing-1", "alice", {
+        initialMessage: "Troco pelo meu Dom Casmurro!",
+        offeredBookId: aliceBook.id,
+      });
+
+      expect(created.offeredBookId).toBe(aliceBook.id);
+
+      const detail = await useCases.getRequestDetail(created.id, "alice");
+      expect(detail.offeredBook?.title).toBe("Dom Casmurro");
+
+      const received = await useCases.listReceivedRequests("owner");
+      expect(received[0].offeredBook?.id).toBe(aliceBook.id);
+
+      const sent = await useCases.listSentRequests("alice");
+      expect(sent[0].offeredBook?.id).toBe(aliceBook.id);
+    });
+
+    it("rejeita livro de troca inexistente", async () => {
+      await expect(
+        useCases.requestNegotiation("listing-1", "alice", { offeredBookId: "inexistente" }),
+      ).rejects.toThrow(/Livro de troca não encontrado/);
+    });
+
+    it("rejeita livro de troca que não pertence ao solicitante", async () => {
+      await expect(
+        useCases.requestNegotiation("listing-1", "alice", { offeredBookId: "listing-2" }),
+      ).rejects.toThrow(/deve ser de sua propriedade/);
+    });
+
+    it("rejeita livro de troca que não está disponível", async () => {
+      const unavailableBook = await books.create({
+        title: "Vidas Secas",
+        author: "Graciliano Ramos",
+        ownerId: "alice",
+        modality: "trade",
+        status: "reserved",
+      });
+
+      await expect(
+        useCases.requestNegotiation("listing-1", "alice", { offeredBookId: unavailableBook.id }),
+      ).rejects.toThrow(/não está disponível/);
     });
   });
 });

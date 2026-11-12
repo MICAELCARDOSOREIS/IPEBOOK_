@@ -19,8 +19,8 @@ export type MeetingProposal = Readonly<{
   scheduledAt: string;
 }>;
 
-/** Faixas de horário oferecidas como chips em `06.04` (RN-03). */
-export const MEETING_TIME_SLOTS: readonly number[] = [9, 10, 15, 17];
+/** Horários cheios oferecidos como chips em `06.04`, das 7h às 18h (RN-03). */
+export const MEETING_TIME_SLOTS: readonly number[] = [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18];
 
 /** O convite vale de amanhã até sete dias à frente (RN-03). */
 export const MEETING_MAX_DAYS_AHEAD = 7;

@@ -25,7 +25,7 @@ export function StepProgress({ currentStep, totalSteps, stepLabel }: StepProgres
         <Text style={styles.label}>{stepLabel}</Text>
       </View>
       {/* O ponto final é posicionado em relação à barra, não ao bloco com os rótulos (Spec 043, RN-06). */}
-      <View style={styles.trackArea} importantForAccessibility="no">
+      <View testID="step-progress-track-area" style={styles.trackArea} importantForAccessibility="no">
         <View style={styles.track}>
           <View testID="step-progress-fill" style={[styles.fill, { flex: progress }]} />
           <View style={{ flex: 1 - progress }} />
@@ -43,7 +43,8 @@ function createStyles(colors: ColorPalette) {
     trackArea: { marginTop: tokens.spacing[8] },
     track: {
       flexDirection: "row",
-      height: 4,
+      height: 8,
+      gap: tokens.spacing[4],
       borderRadius: tokens.radius.full,
       backgroundColor: colors.m3.secondaryContainer,
       overflow: "hidden",
@@ -56,8 +57,8 @@ function createStyles(colors: ColorPalette) {
       position: "absolute",
       right: 0,
       top: 0,
-      width: 4,
-      height: 4,
+      width: 8,
+      height: 8,
       borderRadius: tokens.radius.full,
       backgroundColor: colors.action,
     },

@@ -1,7 +1,6 @@
-import React from "react";
+
 import { act, fireEvent, render } from "@testing-library/react-native";
 import { describe, expect, it, vi } from "vitest";
-import type { AuthState } from "@/viewmodel/useAuthViewModel";
 import type { ReceivedRatingsState, ReceivedRatingsActions } from "@/viewmodel/useReceivedRatingsViewModel";
 import ReceivedRatingsScreen, { ReceivedRatings } from "@/view/profile/receivedRatings";
 

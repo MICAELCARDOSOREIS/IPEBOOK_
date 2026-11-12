@@ -1,14 +1,19 @@
 import { useEffect, useMemo, useRef } from "react";
-import { Animated, Image, StyleSheet, Text, View } from "react-native";
+import { Animated, Image, StyleSheet, View } from "react-native";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { useBookCoverImage } from "@/viewmodel/useBookCoverImage";
+import { IpeRibbon } from "@/view/components/IpeRibbon";
+import capaNoite from "@/view/assets/capas/capa-1.webp";
+import capaMontanhas from "@/view/assets/capas/capa-3.webp";
+import capaOndas from "@/view/assets/capas/capa-4.webp";
 
-export type BookCoverVariant = "list" | "card" | "carousel";
+export type BookCoverVariant = "list" | "card" | "carousel" | "detail";
 
 export type BookCoverProps = {
   id: string;
   title: string;
+  /** Aceito por compatibilidade: a capa ilustrativa é só arte, e o autor aparece ao lado dela. */
   author?: string;
   photoUrl?: string;
   variant?: BookCoverVariant;
@@ -16,29 +21,65 @@ export type BookCoverProps = {
   maxRetries?: number;
   initialBackoffMs?: number;
   testID?: string;
+  /** Largura em dp que substitui a da variante (o livro 3D ampliado na web larga). */
+  width?: number;
+  /** Desenha a lombada sobre a arte (capa plana). O livro 3D desliga: ele já tem a lombada de verdade. */
+  showSpine?: boolean;
+  /** Fita marcadora dourada do Ipê-Amarelo no topo da capa. */
+  showRibbon?: boolean;
 };
 
-const COVER_COLORS = [
-  tokens.colors.cover.blue,
-  tokens.colors.cover.brown,
-  tokens.colors.cover.green,
-  tokens.colors.cover.wine,
-  tokens.colors.cover.ochre,
-] as const;
-const ASPECT_RATIO = 120 / 170;
-const LIST_WIDTH = 44;
-const CARD_WIDTH = 96;
+/** A cor de cada arte, na mesma ordem de `COVER_ARTS`: noite marrom, montanhas verdes e ondas azul-marinho (definida em `tokens.colors.cover.artBackgrounds`). */
+const COVER_BACKGROUNDS = tokens.colors.cover.artBackgrounds;
+/** Proporção da capa no Figma (`02.01`, `02.02`): 55x88dp e 74x119dp, ambas em 5:8. */
+const ASPECT_RATIO = 5 / 8;
+/** Largura canônica de capa em listas no Figma (`05.01`, `02.06`, `04.08`: 55x88dp). */
+const LIST_WIDTH = 56;
+/** Capa dentro do card de carrossel da Home (`02.01`: 74x119dp). */
+const CARD_WIDTH = 74;
 /** Preenche a largura do card de carrossel da Home (`CAROUSEL_ITEM_WIDTH`). */
 const CAROUSEL_WIDTH = 152;
+/**
+ * Capa de destaque no detalhe do anúncio. O Figma (`03.01`) usa 97x155dp, mas na prática a capa
+ * ficava perdida na área de destaque; 136x218dp mantém a proporção 5:8 com título legível.
+ */
+const DETAIL_WIDTH = 136;
 
 const VARIANT_WIDTH: Record<BookCoverVariant, number> = {
   list: LIST_WIDTH,
   card: CARD_WIDTH,
   carousel: CAROUSEL_WIDTH,
+  detail: DETAIL_WIDTH,
 };
 
+const asSource = (art: number | string) => (typeof art === "string" ? { uri: art } : art);
+
+/** Três capas ilustrativas, recortadas dos cadernos artesanais do design: noite, montanhas e ondas. */
+const COVER_ARTS = [capaNoite, capaMontanhas, capaOndas] as const;
+const GOLD = tokens.colors.cover.gold;
+
+/** Hash FNV-1a: espalha ids parecidos (uuid) entre os desenhos. */
+/** Cor da capa ilustrativa deste livro; também serve de cor da lombada e da contracapa no livro 3D. */
+export function coverBackground(id: string): string {
+  return COVER_BACKGROUNDS[hashId(id) % COVER_ARTS.length];
+}
+
+/** Devolve a arte ilustrativa determinística e a cor de fundo correspondentes ao `id` do livro. */
+export function getIllustrativeCover(id: string): { source: { uri: string } | number; backgroundColor: string } {
+  const kind = hashId(id) % COVER_ARTS.length;
+  return {
+    source: asSource(COVER_ARTS[kind]),
+    backgroundColor: COVER_BACKGROUNDS[kind],
+  };
+}
+
 function hashId(id: string): number {
-  return [...id].reduce((sum, char) => sum + char.charCodeAt(0), 0);
+  let hash = 2166136261;
+  for (const char of id) {
+    hash ^= char.charCodeAt(0);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
 }
 
 /**
@@ -48,9 +89,11 @@ function hashId(id: string): number {
 export function BookCover({
   id,
   title,
-  author,
   photoUrl,
   variant = "list",
+  width: widthOverride,
+  showSpine = true,
+  showRibbon = false,
   timeoutMs,
   maxRetries,
   initialBackoffMs,
@@ -72,10 +115,10 @@ export function BookCover({
 
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const backgroundColor = COVER_COLORS[hashId(id) % COVER_COLORS.length];
-  const width = VARIANT_WIDTH[variant] ?? LIST_WIDTH;
+  const kind = hashId(id) % COVER_ARTS.length;
+  const backgroundColor = COVER_BACKGROUNDS[kind];
+  const width = widthOverride ?? VARIANT_WIDTH[variant] ?? LIST_WIDTH;
   const height = width / ASPECT_RATIO;
-  const showText = variant === "card";
 
   const pulseAnim = useRef(new Animated.Value(0.4)).current;
 
@@ -111,6 +154,7 @@ export function BookCover({
             resizeMode="cover"
             style={StyleSheet.absoluteFill}
           />
+          {showRibbon ? <IpeRibbon width={Math.max(8, width * 0.12)} height={Math.max(16, height * 0.18)} /> : null}
         </View>
       );
     }
@@ -146,18 +190,16 @@ export function BookCover({
       accessibilityLabel={`Capa ilustrativa de ${title}`}
       style={[styles.cover, { backgroundColor, width, height }]}
     >
-      {showText ? (
-        <View style={styles.textOverlay} accessible={false}>
-          <Text style={styles.title} numberOfLines={2}>
-            {title}
-          </Text>
-          {author ? (
-            <Text style={styles.author} numberOfLines={1}>
-              {author}
-            </Text>
-          ) : null}
+      <Image source={asSource(COVER_ARTS[kind])} resizeMode="cover" accessible={false} style={{ position: "absolute", left: 0, top: 0, width, height }} />
+      {showSpine ? (
+        // Lombada: faixa escura com filetes dourados, como na encadernação do caderno.
+        <View pointerEvents="none" accessible={false} style={[styles.spine, { width: Math.max(4, width * 0.06) }]}>
+          {[0.07, 0.11, 0.87, 0.91].map((at) => (
+            <View key={at} style={{ position: "absolute", left: 0, right: 0, top: height * at, height: 1, backgroundColor: GOLD }} />
+          ))}
         </View>
       ) : null}
+      {showRibbon ? <IpeRibbon width={Math.max(8, width * 0.12)} height={Math.max(16, height * 0.18)} /> : null}
     </View>
   );
 }
@@ -165,27 +207,26 @@ export function BookCover({
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     cover: {
-      borderRadius: tokens.radius.large,
+      // Figma `02.02`: capa com canto praticamente reto (raio ~2dp).
+      borderRadius: tokens.radius.extraSmall,
       justifyContent: "flex-end",
       overflow: "hidden",
     },
+    spine: {
+      position: "absolute",
+      left: 0,
+      top: 0,
+      bottom: 0,
+      backgroundColor: "rgba(0,0,0,0.22)",
+      borderRightWidth: 1,
+      borderRightColor: "rgba(245,239,232,0.28)",
+    },
     skeleton: {
       backgroundColor: colors.disabledBackground,
-      borderRadius: tokens.radius.large,
+      borderRadius: tokens.radius.extraSmall,
     },
     hiddenImage: {
       opacity: 0,
-    },
-    textOverlay: {
-      padding: tokens.spacing[8],
-    },
-    title: {
-      color: tokens.colors.cover.text,
-      ...tokens.typography.labelMedium,
-    },
-    author: {
-      color: tokens.colors.cover.text,
-      fontSize: 11,
     },
   });
 }

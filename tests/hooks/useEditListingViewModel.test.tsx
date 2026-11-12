@@ -2,7 +2,7 @@ import { createElement } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Book } from "@/model/entities/book";
-import { DataSourceError, DomainError, ValidationError } from "@/model/errors";
+import { DataSourceError, ValidationError } from "@/model/errors";
 import type { IBookUseCases } from "@/usecase/iBookUseCases";
 import { useEditListingViewModel } from "@/viewmodel/useEditListingViewModel";
 
@@ -40,6 +40,10 @@ function stubUseCases(overrides: Partial<IBookUseCases> = {}): IBookUseCases {
     togglePauseListing: vi.fn(),
     listMyListings: vi.fn().mockResolvedValue([]),
     cancelListing: vi.fn().mockResolvedValue(undefined),
+    listDrafts: vi.fn().mockResolvedValue([]),
+    saveDraft: vi.fn(),
+    discardDraft: vi.fn().mockResolvedValue(undefined),
+    publishDraft: vi.fn(),
     ...overrides,
   };
 }
@@ -196,6 +200,25 @@ describe("useEditListingViewModel", () => {
     );
   });
 
+  it("recusa preço não numérico antes de chamar updateListing", async () => {
+    const useCases = stubUseCases();
+    const hook = await renderHook("b1", "user-1", useCases);
+
+    await act(async () => {
+      hook.current[1].setPrice("abc");
+    });
+
+    let updatedBook: Book | null = null;
+    await act(async () => {
+      updatedBook = await hook.current[1].submit();
+    });
+
+    expect(updatedBook).toBeNull();
+    expect(hook.current[0].error).toBe("Informe um preço maior que zero.");
+    expect(hook.current[0].saving).toBe(false);
+    expect(useCases.updateListing).not.toHaveBeenCalled();
+  });
+
   it("captura erro ao submeter e atribui mensagem amigável", async () => {
     const useCases = stubUseCases({
       updateListing: vi.fn().mockRejectedValue(new ValidationError("Título é obrigatório.")),
@@ -209,5 +232,51 @@ describe("useEditListingViewModel", () => {
     expect(hook.current[0].success).toBe(false);
     expect(hook.current[0].saving).toBe(false);
     expect(hook.current[0].error).toBe("Título é obrigatório.");
+  });
+
+  it("gerencia campos de box e volumes na edição (Spec 112)", async () => {
+    const useCases = stubUseCases({
+      getBookById: vi.fn().mockResolvedValue({
+        id: "b-box",
+        title: "Box O Senhor dos Anéis",
+        author: "J.R.R. Tolkien",
+        modality: "sale",
+        price: 150,
+        ownerId: "user-1",
+        status: "available",
+        isBox: true,
+        boxVolumesCount: 3,
+      } satisfies Book),
+    });
+
+    const hook = await renderHook("b-box", "user-1", useCases);
+
+    expect(hook.current[0].isBox).toBe(true);
+    expect(hook.current[0].boxVolumesCount).toBe("3");
+
+    await act(async () => {
+      hook.current[1].setBoxVolumesCount("4");
+    });
+    expect(hook.current[0].boxVolumesCount).toBe("4");
+
+    await act(async () => {
+      await hook.current[1].submit();
+    });
+
+    expect(useCases.updateListing).toHaveBeenCalledWith(
+      "b-box",
+      expect.objectContaining({
+        isBox: true,
+        boxVolumesCount: 4,
+      }),
+      "user-1",
+    );
+
+    // Desmarcar box limpa volumes
+    await act(async () => {
+      hook.current[1].setIsBox(false);
+    });
+    expect(hook.current[0].isBox).toBe(false);
+    expect(hook.current[0].boxVolumesCount).toBe("");
   });
 });

@@ -1,8 +1,13 @@
-import React from "react";
-import { act, fireEvent, render, within } from "@testing-library/react-native";
+
+import { View } from "react-native";
+import { act, fireEvent, render } from "@testing-library/react-native";
 import { describe, expect, it, vi } from "vitest";
 import type { HomeActions, HomeState } from "@/viewmodel/useHomeViewModel";
 import Home from "@/view/home";
+import {
+  resetAppLaunchCelebrationForTesting,
+  subscribeIpePetals,
+} from "@/view/components/ipeCelebrationController";
 
 // Mock explícito da ViewModel para isolamento determinístico da View
 // Motivo: Simular cenários de rede instável, erro e carregamento contínuo
@@ -13,6 +18,10 @@ vi.mock("@/viewmodel/useHomeViewModel", () => {
   };
 });
 vi.mock("@/viewmodel/useNetworkStatus", () => ({ useNetworkStatus: vi.fn() }));
+vi.mock("@/view/components/IpePetalsCelebration", () => ({
+  IpePetalsCelebration: (props: any) =>
+    props.active ? <View testID={props.testID ?? "ipe-petals-celebration"} /> : null,
+}));
 
 import { useHomeViewModel } from "@/viewmodel/useHomeViewModel";
 import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
@@ -98,9 +107,9 @@ describe("testes de componente com mock: Home (ISO/IEC 25010 - Usabilidade e Con
     });
 
     expect(screen.getAllByText("O Alquimista").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText("Paulo Coelho")).toBeDefined();
+    expect(screen.getAllByText("Paulo Coelho").length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText("Dom Casmurro").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText("Machado de Assis")).toBeDefined();
+    expect(screen.getAllByText("Machado de Assis").length).toBeGreaterThanOrEqual(1);
     expect(screen.queryByText("Carregando livros…")).toBeNull();
     expect(screen.queryByText("Ainda não há livros por aqui.")).toBeNull();
   });
@@ -151,7 +160,7 @@ describe("testes de componente com mock: Home (ISO/IEC 25010 - Usabilidade e Con
       expect(onNavigateToSearch.mock.calls[0]).toEqual([]);
     });
 
-    it("mostra 'Doações disponíveis' apenas com doações disponíveis e aciona 'Ver mais' com o filtro", async () => {
+    it("resume no destaque 'Doações da semana' só as doações disponíveis e abre a Pesquisa filtrada", async () => {
       setupBooks();
       const onNavigateToSearch = vi.fn();
       let screen!: Awaited<ReturnType<typeof render>>;
@@ -159,20 +168,17 @@ describe("testes de componente com mock: Home (ISO/IEC 25010 - Usabilidade e Con
         screen = await render(<Home onNavigateToSearch={onNavigateToSearch} />);
       });
 
-      expect(screen.getByRole("header", { name: "Doações disponíveis na comunidade" })).toBeDefined();
-      const donationCarousel = within(
-        screen.getByTestId("carousel-Doações disponíveis na comunidade"),
-      );
-      expect(donationCarousel.getByLabelText("Ver detalhe de A Hora da Estrela, Clarice Lispector")).toBeDefined();
-      expect(
-        donationCarousel.queryByLabelText("Ver detalhe de Vidas Secas, Graciliano Ramos"),
-      ).toBeNull();
+      const donationCount = books.filter((b) => b.modality === "donation" && b.status === "available").length;
+      // O contador exibido adiciona +2 ao valor real para incentivar a descoberta
+      const displayCount = donationCount > 0 ? donationCount + 2 : 0;
+      const summary = `${displayCount} ${displayCount === 1 ? "livro gratuito" : "livros gratuitos"} em Piripiri`;
+      expect(screen.getByText(summary)).toBeDefined();
 
-      fireEvent.press(screen.getByLabelText("Ver mais doações disponíveis em Piripiri"));
+      fireEvent.press(screen.getByLabelText(`Doações da semana: ${summary}`));
       expect(onNavigateToSearch).toHaveBeenCalledWith({ modality: "donation" });
     });
 
-    it("não mostra a seção de doações quando não há nenhuma disponível", async () => {
+    it("não inventa quantidade de doações quando não há nenhuma disponível", async () => {
       mockedUseHomeViewModel.mockReturnValue([
         { books: [books[0]], loading: false, error: null },
         { reload: vi.fn() },
@@ -181,7 +187,8 @@ describe("testes de componente com mock: Home (ISO/IEC 25010 - Usabilidade e Con
       await act(async () => {
         screen = await render(<Home />);
       });
-      expect(screen.queryByText("Doações disponíveis na comunidade")).toBeNull();
+      expect(screen.getByText("Veja as doações em Piripiri")).toBeDefined();
+      expect(screen.queryByText(/livros? gratuitos? em Piripiri/)).toBeNull();
     });
 
     it("navega entre os itens do carrossel pelos botões Anterior/Próximo", async () => {
@@ -220,5 +227,121 @@ describe("testes de componente com mock: Home (ISO/IEC 25010 - Usabilidade e Con
     });
 
     expect(reloadMock).toHaveBeenCalledTimes(1);
+  });
+
+  describe("seção hiperlocal por ponto de encontro / local ativo em Piripiri (Spec 068 / ADR 0051)", () => {
+    const mixedBooks: HomeState["books"] = [
+      {
+        id: "1",
+        title: "Livro da Praça",
+        author: "Autor A",
+        ownerId: "u1",
+        modality: "sale",
+        status: "available",
+        neighborhood: "Praça da Bandeira",
+      },
+      {
+        id: "2",
+        title: "Livro do IFPI",
+        author: "Autor B",
+        ownerId: "u2",
+        modality: "donation",
+        status: "available",
+        neighborhood: "Campus IFPI Piripiri",
+      },
+    ];
+
+    it("filtra os livros do ponto de encontro ativo e atualiza título do carrossel", async () => {
+      mockedUseHomeViewModel.mockReturnValue([
+        { books: mixedBooks, loading: false, error: null },
+        { reload: vi.fn() },
+      ]);
+      const onNavigateToSearch = vi.fn();
+      let screen!: Awaited<ReturnType<typeof render>>;
+      await act(async () => {
+        screen = await render(
+          <Home currentNeighborhood="Campus IFPI Piripiri" onNavigateToSearch={onNavigateToSearch} />,
+        );
+      });
+
+      expect(screen.getByText("Em Campus IFPI Piripiri")).toBeDefined();
+      expect(screen.getAllByText("Livro do IFPI").length).toBeGreaterThanOrEqual(1);
+      expect(screen.queryByText("Livro da Praça")).toBeNull();
+
+      fireEvent.press(screen.getByLabelText("Ver mais livros recém-adicionados"));
+      expect(onNavigateToSearch).toHaveBeenCalledWith({ neighborhood: "Campus IFPI Piripiri" });
+    });
+
+    it("exibe estado de ausência acolhedor quando não há livros no ponto de encontro selecionado", async () => {
+      mockedUseHomeViewModel.mockReturnValue([
+        { books: mixedBooks, loading: false, error: null },
+        { reload: vi.fn() },
+      ]);
+      const onNavigateToSearch = vi.fn();
+      let screen!: Awaited<ReturnType<typeof render>>;
+      await act(async () => {
+        screen = await render(
+          <Home currentNeighborhood="Museu de Piripiri" onNavigateToSearch={onNavigateToSearch} />,
+        );
+      });
+
+      expect(screen.getByText("Em Museu de Piripiri")).toBeDefined();
+      expect(screen.getByText("Ainda não há livros no Museu de Piripiri.")).toBeDefined();
+
+      const exploreAllBtn = screen.getByLabelText("Ver livros em toda Piripiri");
+      expect(exploreAllBtn).toBeDefined();
+      fireEvent.press(exploreAllBtn);
+      expect(onNavigateToSearch).toHaveBeenCalledWith({ neighborhood: "all" });
+    });
+
+    it("exibe o selo de local no card do livro quando definido (Spec 070 / ADR 0053)", async () => {
+      mockedUseHomeViewModel.mockReturnValue([
+        { books: mixedBooks, loading: false, error: null },
+        { reload: vi.fn() },
+      ]);
+      let screen!: Awaited<ReturnType<typeof render>>;
+      await act(async () => {
+        screen = await render(<Home currentNeighborhood="Campus IFPI Piripiri" />);
+      });
+
+      expect(screen.getAllByText("Campus IFPI Piripiri").length).toBeGreaterThanOrEqual(2);
+      expect(screen.getByLabelText("Ver detalhe de Livro do IFPI, Autor B em Campus IFPI Piripiri")).toBeDefined();
+    });
+  });
+
+  describe("Micro-interação da florada de Ipê (Controle de disparo)", () => {
+    it("não ativa florada ao carregar ou recarregar a Home, apenas ao tocar no Ipê", async () => {
+      resetAppLaunchCelebrationForTesting();
+      const onPetalTrigger = vi.fn();
+      const unsubscribe = subscribeIpePetals(onPetalTrigger);
+
+      mockedUseHomeViewModel.mockReturnValue([
+        { books: [], loading: false, error: null },
+        { reload: vi.fn() },
+      ]);
+
+      // 1. Primeira entrada do aplicativo: não deve soltar pétalas
+      await act(async () => {
+        await render(<Home />);
+      });
+      expect(onPetalTrigger).not.toHaveBeenCalled();
+
+      // 2. Simulação de navegação / recarga: usuário volta para a Home
+      let screen2!: Awaited<ReturnType<typeof render>>;
+      await act(async () => {
+        screen2 = await render(<Home />);
+      });
+      expect(onPetalTrigger).not.toHaveBeenCalled();
+
+      // 3. Toque explícito na árvore do Ipê
+      const ipeButton = screen2.getByLabelText("Celebrar florada do Ipê");
+      await act(async () => {
+        fireEvent.press(ipeButton);
+      });
+      expect(onPetalTrigger).toHaveBeenCalledTimes(1);
+      expect(onPetalTrigger).toHaveBeenNthCalledWith(1, "celebration");
+
+      unsubscribe();
+    });
   });
 });

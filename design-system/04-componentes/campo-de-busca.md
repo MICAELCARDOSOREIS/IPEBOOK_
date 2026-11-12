@@ -26,9 +26,9 @@ Não há variantes — um único estilo de campo de busca em todo o app.
 
 | Estado | Aparência (tokens) | Comportamento | Acessibilidade |
 | --- | --- | --- | --- |
-| Vazio | Placeholder diz o que dá para buscar ("Busque por título ou autor") | Aguarda digitação | Rótulo acessível "Buscar livros" mesmo sem rótulo visível |
-| Com texto | Mostra botão Limpar | Filtra a lista ao digitar | Botão Limpar com rótulo "Limpar busca" |
-| Foco | Borda sutil ou elevação leve | Teclado aberto | Anunciado como campo de busca em edição |
+| Vazio | Placeholder diz o que dá para buscar ("Buscar título, autor ou categoria") | Aguarda digitação | Rótulo acessível "Buscar livros" mesmo sem rótulo visível |
+| Com texto | Mostra botão Limpar | Emite `onChangeText`; a tela ou ViewModel decide como filtrar | Botão Limpar com rótulo "Limpar busca" |
+| Foco | Mantém o mesmo container visual; o teclado é aberto pelo sistema | Teclado aberto | Rótulo "Buscar livros" e comportamento de campo editável |
 
 ## Acessibilidade
 
@@ -43,25 +43,11 @@ Não há variantes — um único estilo de campo de busca em todo o app.
 ## Código
 
 ```tsx
-import { Pressable, Text, TextInput, View } from "react-native";
-import { tokens } from "@/view/tokens";
+import { SearchField } from "@/view/components/SearchField";
 
-function CampoDeBusca({ valor, onChangeText }: { valor: string; onChangeText: (v: string) => void }) {
-  return (
-    <View style={{ flexDirection: "row", alignItems: "center", backgroundColor: tokens.colors.soft, borderRadius: tokens.radius.full, height: 56, paddingHorizontal: tokens.spacing[16] }}>
-      <TextInput
-        value={valor}
-        onChangeText={onChangeText}
-        placeholder="Busque por título ou autor"
-        accessibilityLabel="Buscar livros"
-        style={{ flex: 1, ...tokens.typography.bodyLarge }}
-      />
-      {valor.length > 0 ? (
-        <Pressable onPress={() => onChangeText("")} accessibilityLabel="Limpar busca" hitSlop={8}>
-          <Text>✕</Text>
-        </Pressable>
-      ) : null}
-    </View>
-  );
-}
+<SearchField
+  value={query}
+  onChangeText={setQuery}
+  onSubmitEditing={submitSearch}
+/>
 ```

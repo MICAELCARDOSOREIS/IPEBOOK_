@@ -11,6 +11,7 @@ import { MeetingUseCases } from "@/usecase/meetingUseCases";
 import type { IMeetingUseCases } from "@/usecase/iMeetingUseCases";
 import { useMeetingViewModel } from "@/viewmodel/useMeetingViewModel";
 import { useScheduleMeetingViewModel } from "@/viewmodel/useScheduleMeetingViewModel";
+import { useUserMeetingsViewModel } from "@/viewmodel/useUserMeetingsViewModel";
 
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
 const mounted: ReactTestRenderer[] = [];
@@ -67,7 +68,7 @@ describe("useScheduleMeetingViewModel (Spec 052, 06.04/06.13)", () => {
   it("oferece sete dias e as faixas de horário, e exige as três escolhas", async () => {
     const hook = await renderSchedule("dono");
     const [state, actions] = hook.current;
-    expect(state).toMatchObject({ mode: "propose", loading: false, pointName: null, timeSlots: [9, 10, 15, 17] });
+    expect(state).toMatchObject({ mode: "propose", loading: false, pointName: null, timeSlots: [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18] });
     expect(state.dayOptions).toHaveLength(7);
     await act(async () => { expect(await actions.submit()).toBe(false); });
     expect(hook.current[0].error).toMatch(/local, o dia e o horário/);
@@ -96,6 +97,31 @@ describe("useScheduleMeetingViewModel (Spec 052, 06.04/06.13)", () => {
     const meeting = await useCases.getMeeting("aceito", "dono");
     expect(meeting).toMatchObject({ status: "proposed", proposedBy: "leitora" });
     expect(new Date(meeting!.scheduledAt).getHours()).toBe(17);
+  });
+
+  it("restringe horários e invalida hora fora do expediente do Museu (Spec 114)", async () => {
+    const hook = await renderSchedule("dono");
+    // Sexta-feira: dia 2026-10-23 (índice 0)
+    await act(async () => {
+      hook.current[1].selectPoint("Museu de Piripiri");
+      hook.current[1].selectDay(0);
+    });
+    expect(hook.current[0].timeSlots).toEqual([8, 9, 10, 11, 12, 13, 14, 15, 16, 17]);
+    expect(hook.current[0].isPointOpenOnDay).toBe(true);
+
+    await act(async () => {
+      hook.current[1].selectHour(10);
+    });
+    expect(hook.current[0].hour).toBe(10);
+
+    // Mudar para Sábado: dia 2026-10-24 (índice 1)
+    await act(async () => {
+      hook.current[1].selectDay(1);
+    });
+    // O Museu fecha aos fins de semana, slots vazios e hora resetada para null
+    expect(hook.current[0].timeSlots).toHaveLength(0);
+    expect(hook.current[0].isPointOpenOnDay).toBe(false);
+    expect(hook.current[0].hour).toBeNull();
   });
 
   it("mostra o erro de domínio e o de carga", async () => {
@@ -136,5 +162,42 @@ describe("useMeetingViewModel (Spec 052, 06.05/06.11)", () => {
     const failing = { ...useCases, getMeeting: vi.fn().mockRejectedValue(new Error("rede")) } as unknown as IMeetingUseCases;
     const broken = await renderMeeting("dono", failing);
     expect(broken.current[0].error).toMatch(/Não foi possível carregar/);
+  });
+
+  it("carrega o histórico de encontros da negociação (Spec 071)", async () => {
+    await useCases.propose("aceito", { pointName: PRACA, scheduledAt: new Date(2026, 9, 23, 10).toISOString() }, "dono");
+    const hook = await renderMeeting("leitora");
+    expect(hook.current[0].history).toHaveLength(1);
+    expect(hook.current[0].history[0].pointName).toBe(PRACA);
+  });
+});
+
+async function renderUserMeetings(userId: string | null, cases: IMeetingUseCases = useCases) {
+  let result!: ReturnType<typeof useUserMeetingsViewModel>;
+  function Probe() {
+    result = useUserMeetingsViewModel(userId, cases);
+    return null;
+  }
+  await act(async () => {
+    mounted.push(create(createElement(Probe)));
+  });
+  return { get current() { return result; } };
+}
+
+describe("useUserMeetingsViewModel (Spec 071)", () => {
+  it("carrega a lista de encontros do usuário ou vazio se deslogado", async () => {
+    await useCases.propose("aceito", { pointName: PRACA, scheduledAt: new Date(2026, 9, 23, 10).toISOString() }, "dono");
+    const hook = await renderUserMeetings("leitora");
+    expect(hook.current[0].loading).toBe(false);
+    expect(hook.current[0].meetings).toHaveLength(1);
+
+    const anon = await renderUserMeetings(null);
+    expect(anon.current[0].meetings).toHaveLength(0);
+  });
+
+  it("trata erro ao carregar os encontros", async () => {
+    const failing = { ...useCases, getUserMeetingHistory: vi.fn().mockRejectedValue(new Error("rede")) } as unknown as IMeetingUseCases;
+    const hook = await renderUserMeetings("dono", failing);
+    expect(hook.current[0].error).toMatch(/Não foi possível carregar/);
   });
 });

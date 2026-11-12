@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useRef } from "react";
-import { ActivityIndicator, Modal, Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { AccessibilityInfo, ActivityIndicator, Animated, Modal, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 
+import { withPress } from "@/view/pressFeedback";
+import { useGuardedPress } from "@/view/useGuardedPress";
 export type FocusableElement = { focus: () => void };
 
 function focusSafely(element: FocusableElement | null | undefined): void {
@@ -31,24 +33,69 @@ export function resolveDialogTabWrap(
   return null;
 }
 
+/**
+ * Gestão de foco no Web para modais e folhas: move o foco para o primeiro elemento
+ * interativo ao abrir, cicla Tab/Shift+Tab dentro do modal, fecha com Escape e
+ * devolve o foco ao elemento gatilho ao fechar.
+ */
+export function useModalFocusTrap(
+  visible: boolean,
+  getFocusables: () => readonly (FocusableElement | null)[],
+  onClose: () => void,
+  disabled = false,
+): void {
+  const triggerRef = useRef<FocusableElement | null>(null);
+  const getFocusablesRef = useRef(getFocusables);
+  getFocusablesRef.current = getFocusables;
+  const isWeb = Platform.OS === "web" && typeof document !== "undefined";
+
+  useEffect(() => {
+    if (!isWeb) return;
+    if (visible) {
+      triggerRef.current = (document.activeElement as unknown as FocusableElement) ?? null;
+      const firstFocusable = disabled ? null : getFocusablesRef.current().find((el) => el != null) ?? null;
+      focusSafely(firstFocusable);
+    } else {
+      focusSafely(triggerRef.current);
+      triggerRef.current = null;
+    }
+  }, [visible, disabled, isWeb]);
+
+  useEffect(() => {
+    if (!isWeb || !visible) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onClose();
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const focusables = getFocusablesRef.current().filter(isFocusable);
+      const next = resolveDialogTabWrap(focusables, document.activeElement, event);
+      if (next) {
+        event.preventDefault();
+        focusSafely(next);
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown, true);
+    return () => {
+      if (typeof document !== "undefined") document.removeEventListener("keydown", handleKeyDown, true);
+    };
+  }, [visible, onClose, isWeb]);
+}
+
 export type DialogProps = {
   visible: boolean;
   title: string;
   message: string;
   confirmLabel: string;
   cancelLabel?: string;
+  showCancel?: boolean;
   destructive?: boolean;
   loading?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
 };
-
-/**
- * Token scrim de design-system/04-componentes/dialogo.md (#00000052).
- * Véu translúcido escuro que cobre o conteúdo atrás do diálogo — mesmo valor nos dois temas
- * (`design-system/tokens.json`: "scrim" varia pouco entre claro/escuro, dentro da tolerância).
- */
-const SCRIM_COLOR = "#00000052";
 
 /**
  * Diálogo do design system (design-system/04-componentes/dialogo.md).
@@ -60,6 +107,7 @@ export function Dialog({
   message,
   confirmLabel,
   cancelLabel = "Cancelar",
+  showCancel = true,
   destructive = false,
   loading = false,
   onConfirm,
@@ -67,105 +115,101 @@ export function Dialog({
 }: DialogProps) {
   const cancelRef = useRef<FocusableElement | null>(null);
   const confirmRef = useRef<FocusableElement | null>(null);
-  const triggerRef = useRef<FocusableElement | null>(null);
+  const cardScale = useRef(new Animated.Value(visible ? 1 : 0.92)).current;
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const guardedCancel = useGuardedPress(onCancel);
+  const guardedConfirm = useGuardedPress(onConfirm);
+
+  useEffect(() => {
+    if (!visible) {
+      cardScale.setValue(0.92);
+      return;
+    }
+    void Promise.resolve(AccessibilityInfo?.isReduceMotionEnabled?.())
+      .then((reduced) => {
+        if (reduced) {
+          cardScale.setValue(1);
+          return;
+        }
+        Animated.spring(cardScale, {
+          toValue: 1,
+          tension: tokens.spring.spatialSlow.tension,
+          friction: tokens.spring.spatialSlow.friction,
+          useNativeDriver: true,
+        }).start();
+      })
+      .catch(() => {
+        cardScale.setValue(1);
+      });
+  }, [visible, cardScale]);
 
   // Gestão de foco (Web): o diálogo prende o foco enquanto aberto e o devolve ao
   // gatilho ao fechar (design-system/06-acessibilidade.md e 04-componentes/dialogo.md).
   // Native (iOS/Android) já recebe isso do leitor de tela via accessibilityViewIsModal.
-  const isWeb = Platform.OS === "web" && typeof document !== "undefined";
-
-  useEffect(() => {
-    if (!isWeb) return;
-    if (visible) {
-      triggerRef.current = (document.activeElement as unknown as FocusableElement) ?? null;
-      const firstFocusable = loading ? null : cancelRef.current ?? confirmRef.current;
-      focusSafely(firstFocusable);
-    } else {
-      focusSafely(triggerRef.current);
-      triggerRef.current = null;
-    }
-  }, [visible, loading, isWeb]);
-
-  useEffect(() => {
-    if (!isWeb || !visible) return;
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        onCancel();
-        return;
-      }
-      if (event.key !== "Tab") return;
-      const focusables = [cancelRef.current, confirmRef.current].filter(isFocusable);
-      const next = resolveDialogTabWrap(focusables, document.activeElement, event);
-      if (next) {
-        event.preventDefault();
-        focusSafely(next);
-      }
-    };
-    document.addEventListener("keydown", handleKeyDown, true);
-    return () => {
-      if (typeof document !== "undefined") document.removeEventListener("keydown", handleKeyDown, true);
-    };
-  }, [visible, onCancel, isWeb]);
+  useModalFocusTrap(visible, () => [showCancel ? cancelRef.current : null, confirmRef.current], onCancel, loading);
 
   return (
     <Modal
+      statusBarTranslucent
+      navigationBarTranslucent
       visible={visible}
       transparent
       animationType="fade"
-      onRequestClose={onCancel}
+      onRequestClose={showCancel ? onCancel : undefined}
       accessibilityViewIsModal
       aria-modal
     >
       <View style={styles.scrim}>
-        <Pressable
-          accessibilityRole="none"
-          accessibilityLabel="Fechar diálogo"
-          style={StyleSheet.absoluteFill}
-          onPress={onCancel}
-        />
-        <View
+        {showCancel ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Fechar diálogo ao tocar fora"
+            style={StyleSheet.absoluteFill}
+            onPress={guardedCancel}
+          />
+        ) : null}
+        <Animated.View
           accessibilityRole="alert"
-          accessibilityLabel={title}
-          style={styles.card}
+          style={[styles.card, { transform: [{ scale: cardScale }] }]}
         >
-          <Text style={styles.title}>{title}</Text>
+          <Text accessibilityRole="header" style={styles.title}>{title}</Text>
           <Text style={styles.message}>{message}</Text>
           <View style={styles.actions}>
-            <Pressable
-              ref={cancelRef as never}
-              accessibilityRole="button"
-              accessibilityLabel={cancelLabel}
-              accessibilityState={{ disabled: loading }}
-              disabled={loading}
-              onPress={onCancel}
-              style={styles.cancelButton}
-            >
-              <Text style={styles.cancelText}>{cancelLabel}</Text>
-            </Pressable>
+            {showCancel ? (
+              <Pressable
+                ref={cancelRef as never}
+                accessibilityRole="button"
+                accessibilityLabel={cancelLabel}
+                accessibilityState={{ disabled: loading }}
+                disabled={loading}
+                onPress={guardedCancel}
+                style={withPress(styles.cancelButton)}
+              >
+                <Text style={styles.cancelText}>{cancelLabel}</Text>
+              </Pressable>
+            ) : null}
             <Pressable
               ref={confirmRef as never}
               accessibilityRole="button"
               accessibilityLabel={confirmLabel}
               accessibilityState={{ disabled: loading }}
               disabled={loading}
-              onPress={onConfirm}
-              style={[
+              onPress={guardedConfirm}
+              style={withPress([
                 styles.confirmButton,
                 destructive ? styles.confirmDestructive : styles.confirmDefault,
                 loading && styles.confirmDisabled,
-              ]}
+              ])}
             >
               {loading ? (
-                <ActivityIndicator color={colors.surface} />
+                <ActivityIndicator accessibilityLabel="Confirmando ação..." color={colors.surface} />
               ) : (
                 <Text style={styles.confirmText}>{confirmLabel}</Text>
               )}
             </Pressable>
           </View>
-        </View>
+        </Animated.View>
       </View>
     </Modal>
   );
@@ -175,7 +219,7 @@ function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     scrim: {
       flex: 1,
-      backgroundColor: SCRIM_COLOR,
+      backgroundColor: colors.m3.scrim,
       justifyContent: "center",
       alignItems: "center",
       padding: tokens.spacing[24],
@@ -184,11 +228,11 @@ function createStyles(colors: ColorPalette) {
       width: "100%",
       maxWidth: 420,
       backgroundColor: colors.surface,
-      borderRadius: tokens.radius.extraLarge,
+      borderRadius: tokens.radius.xxl,
       padding: tokens.spacing[24],
       gap: tokens.spacing[16],
       // Elevação M3 level 3 (design-system/04-componentes/dialogo.md)
-      shadowColor: "#000",
+      shadowColor: colors.m3.shadow,
       shadowOffset: { width: 0, height: 3 },
       shadowOpacity: 0.18,
       shadowRadius: 8,
@@ -220,7 +264,7 @@ function createStyles(colors: ColorPalette) {
     cancelText: {
       color: colors.action,
       ...tokens.typography.bodyMedium,
-      fontWeight: "600",
+      fontWeight: tokens.fontWeight.semiBold,
     },
     confirmButton: {
       minHeight: tokens.accessibility.touchTarget,
@@ -242,7 +286,7 @@ function createStyles(colors: ColorPalette) {
     confirmText: {
       color: colors.surface,
       ...tokens.typography.bodyMedium,
-      fontWeight: "600",
+      fontWeight: tokens.fontWeight.semiBold,
     },
   });
 }

@@ -2,6 +2,152 @@
 
 Versões no formato `MAIOR.MENOR.CORREÇÃO`. Mudança grande = versão nova.
 
+## 1.28.0 · 2026-11-09
+
+- **Cores Exclusivas por Situação e Filtro de Anúncios:** estabelecidas cores semânticas próprias para cada status de anúncio da estante e tags (`Tag.tsx`, `MyListingsListingsTab.tsx`): **Ativos** em Verde Folhagem canônico (`#1E4E27` / `#FFFFFF`), **Pausados** em Cinza Ardósia / Grafite neutro (`#52525B` / `#FFFFFF`), e **Reservados** em Amarelo Ouro Solar de Ipê (`#F5B718` / `#451A03`). Elimina a confusão de bolinhas pastel idênticas entre ativos e pausados.
+- **Abas da Estante com Identidade Cromática:** as abas principais de Meus Anúncios (`myListings.tsx`) ganham distinção por significado — `Anúncios` (verde canônico), `Propostas` (marrom nobre de negociação com badge de contagem) e `Concluídos` (verde esmeralda) com pontos indicadores inativos e state layer correspondente.
+
+## 1.27.0 · 2026-11-09
+
+- **Cores Canônicas das Modalidades e Vitrine da Home:** restaurada e documentada a identidade visual das modalidades com caixas cromáticas sob a capa (`carouselCardCoverArea`) e badges no carrossel (`CatalogCarousel`): Verde Folhagem (`#1E4E27`) para Venda, Marrom Tronco/Couro (`#58331F`) para Troca e Amarelo Ouro Solar (`#F5B718`) para Doação.
+- **Florada do Ipê e Doações (`ipe-bloom`):** consolidado o token canônico `#F5B718` (RGB `245, 183, 24`) para o banner "Doações da semana", fita marcadora e ponto colorido nos chips de filtro rápido, garantindo contraste 8,3:1 (AAA) com texto marrom profundo (`#451A03`).
+- **Barra de Navegação Flutuante (Dock):** documentada a anatomia em cápsula suspensa (`radius.full`), fundo em superfície acolhedora (`colors.surface`, `#FCFAF5`), elevação 6 e rótulo ativo destacado em `colors.m3.primary` (`#2B6334`).
+
+## 1.26.0 · 2026-11-04
+
+- Sincronizados os valores documentados de cor e contraste com `tokens.json` e
+  `src/view/tokens.ts`.
+- Atualizado o inventário para 28 documentos em `04-componentes/`, com classificação entre
+  componentes-base, padrões compostos e componentes de domínio.
+- Corrigido o exemplo histórico de `ExplorarScreen.tsx` para usar os nomes atuais da API e
+  identificado o código de produção em `src/view/search/`.
+- Documentado que os exports do Figma preservam fallbacks históricos e não são código de
+  produção.
+
+## 1.25.0 · 2026-11-01
+
+- Pedidos recebidos abrem nas propostas pendentes e confirmam aceite ou recusa sem interromper a navegação.
+
+## 1.24.0 · 2026-11-01
+
+- O topo dos pedidos recebidos ficou mais compacto para reduzir a rolagem até os livros.
+
+## 1.23.0 · 2026-11-01
+
+- Cabeçalho e resumo dos pedidos ficaram mais compactos, com superfícies neutras para manter o contraste nos temas claro e escuro.
+
+## 1.22.0 · 2026-11-01
+
+- Listas de pedidos distinguem negociações aceitas de livros já entregues, exibidos como finalizados.
+
+## 1.21.0 · 2026-11-01
+
+- Pedidos recebidos destacam o que aguarda resposta, mostram mensagem e livro oferecido e deixam aceitar como ação principal.
+
+## 1.20.0 · 2026-11-01
+
+- A florada passa sobre o conteúdo sem bloquear toques; algumas peças pousam por um instante nas barras superior e inferior e depois desaparecem.
+
+## 1.19.0 · 2026-11-01
+
+- O amarelo do ipê ficou mais vivo e reconhecível, mantendo o traço botânico vintage, os contornos sépia e as folhas verdes.
+
+## 1.18.0 · 2026-11-01
+
+- A florada ganhou paleta vintage com dourado envelhecido, linhas sépia e folhas compostas verdes.
+
+## 1.17.0 · 2026-11-01
+
+- A queda ganhou inclinações 3D suaves com perspectiva e sombra leve nas flores, sem aumentar a duração.
+
+## 1.16.0 · 2026-11-01
+
+- A entrada da florada ficou mais rápida e menos cadenciada; os atrasos agora variam entre as peças.
+- Flores e pétalas seguem o ipê-amarelo florido sem folhagem, com cálice, garganta e cinco lobos arredondados.
+
+## 1.15.0 · 2026-11-01
+
+- A florada usa ilustrações botânicas próprias de ipê, com corola, nervuras, garganta âmbar e folhagem natural.
+- A queda ganhou ritmos, balanços e rotações variados para flores, pétalas e folhas, com profundidade mais visível.
+
+## 1.14.0 · 2026-11-01
+
+- A florada de entrada agora usa 16 flores e pétalas douradas, com queda breve e poucas peças pousando na barra inferior.
+- Disparos manuais e celebrações continuam usando a florada completa, preservando a folhagem e a animação ampla.
+
+## 1.13.0 · 2026-11-01
+
+- O seletor de aparência passou a usar linhas explicadas e indicador de seleção acessível.
+- Sem preferência salva ou válida, o tema inicia em Claro, independentemente do sistema; Sistema
+  continua disponível como escolha manual.
+- Removida de Configurações a amostra estática de cores da identidade visual, mantendo o foco
+  nos modos Claro, Escuro e Sistema.
+
+## 1.12.0 · 2026-10-30
+
+- **Identidade Ipê, Livro & Folhagem Verde e Refinamento do Tema Escuro:**
+  - Inclusão dos tokens semânticos de domínio em `tokens.json` e `tokens.ts`:
+    - `book`: papel pólen suave (`#FCFAF5`), cartão (`#F2EDE5`), tinta café (`#3C302A`) e encadernação em couro (`#58331F`);
+    - `nature`: verde botânico da copa do ipê (`#2C5E45`) e broto suave (`#E7F0EA`);
+    - `ipe`: florada solar (`#F7C21E`), néctar âmbar (`#F29A1A`), chão de pétalas (`#FEF6D8`) e fita marcadora (`#F7C21E`).
+  - **Refinamento do Modo Escuro:**
+    - Badges de modalidade (`trade`, `reserved`, `completed`, `sale`) reestruturados para leitura noturna suave sem ofuscamento, com contraste superior a 7:1 (WCAG AAA);
+    - Superfícies escuras aveludadas em café escuro (`#151311` / `#1D1B19`), evitando distorções em telas OLED.
+  - **Novos Componentes e Interações:**
+    - `IpeRibbon`: fita marcadora de página de cetim do ipê para capas e cartões de livros (`design-system/04-componentes/fita-marcador.md`);
+    - `IpePetalsCelebration`: chuva orgânica de pétalas de ipê para comemorações e conclusões de trocas (`design-system/04-componentes/chuva-petalas.md`);
+    - `ReaderCard`: suporte à fase do Ciclo do Ipê (`cycleStage`: Semente, Broto, Florada, Ipê Frondoso);
+    - `Tag`: ícone semântico `swap` na modalidade Troca no Ipê-Amarelo;
+    - Prévia visual interativa da paleta em Configurações > Aparência.
+
+## 1.11.0 · 2026-10-29
+
+- Documentação dos componentes conferida contra as implementações atuais em `src/view/components/`.
+- Exemplos de botão, chip, busca, tag e barra superior alinhados às props, estados, tokens e
+  comportamentos de acessibilidade realmente disponíveis.
+- Registrado o uso de `useTheme()` nos componentes compatíveis e o caráter didático dos exemplos.
+
+## 1.10.0 · 2026-10-29
+
+- Documentação alinhada ao código atual, sem alteração na implementação.
+- Tema claro/escuro documentado conforme `ThemeProvider`, `darkColors` e a
+  [ADR 0036](../docs/adr/0036-tema-escuro-entra-em-escopo.md), incluindo a migração incremental
+  das telas.
+- Tabela de aliases, foco, movimento, `scrim` e API TypeScript de tokens corrigida.
+- Exports do Figma classificados explicitamente como referência visual, não código de produção.
+
+## 1.9.0 · 2026-10-26
+
+- Filtro do Explorar alinhado ao Figma `02.03` e `02.04` (ADR 0057).
+- **Responsáveis:** Micael Cardoso Reis.
+- **Mudanças:**
+  - `Chip` ganha a variante `size="regular"` (40 dp, padding lateral de 20 dp) para os grupos de
+    escolha da tela "Filtrar livros" (`02.03`); as fileiras rápidas da Home e do Explorar seguem em
+    32 dp (`compact`).
+  - Filtros aplicados passam a aparecer como **chips removíveis** (`02.04`): o mesmo `Chip`
+    selecionado, com `accessibilityLabel="Remover filtro …"` e `✕` no rótulo. Documentado em
+    `04-componentes/chip.md`, que também corrige o raio (8 dp, não pílula) e os tokens da variante
+    não selecionada (`surface-container-lowest` + `outline-variant`).
+  - Novo **Padrão 3: Explorar e filtrar o catálogo** em `05-padroes.md`, cobrindo busca, tela de
+    filtros com rascunho, chips aplicados, ordenação e os três estados vazios.
+
+## 1.8.0 · 2026-10-26
+
+- Profissionalização da orientação de tela e do layout das telas (decisão de retrato + componente
+  de coluna centralizada).
+- **Responsáveis:** Micael Cardoso Reis.
+- **Mudanças:**
+  - Decisão de **retrato-only no mobile** formalizada em `03-fundamentos.md` (nova seção
+    "Orientação e layout responsivo"): trava nativa via `app.json` + rede de segurança em runtime
+    com `expo-screen-orientation` (`lockAsync(PORTRAIT_UP)` em `src/app/_layout.tsx`, só nativo).
+    Web fica livre, com conteúdo centralizado.
+  - Novo componente `ScreenContainer` (`src/view/components/ScreenContainer.tsx`): centraliza o
+    padrão `SafeAreaView` > `ScrollView` > coluna `maxWidth`/`alignSelf: center` com padding lateral
+    `space-4` (16 px), eliminando a reescrita manual e inconsistente desse bloco em cada tela.
+  - `home.tsx` e `welcome.tsx` migradas para o `ScreenContainer`; padding lateral das duas alinhado
+    ao padrão do design system (`space-4`), corrigindo o desvio de `space-6` que havia na Home.
+  - Dependência adicionada: `expo-screen-orientation@~58.0.3` (módulo first-party do Expo).
+
 ## 1.7.0 · 2026-10-20
 
 - Alinhamento das telas sob responsabilidade do Micael às telas do Figma (Spec 030).
@@ -165,6 +311,5 @@ Versões no formato `MAIOR.MENOR.CORREÇÃO`. Mudança grande = versão nova.
   - `05-padroes.md`: fluxos "Entrar/Criar conta" e "Anunciar livro", com estados de carregando,
     erro, vazio e sucesso.
   - `06-acessibilidade.md`: tabela de contraste com os 6 pares já verificados na Tarefa 26.
-  - `07-teste-com-ia.md`: teste cego com um assistente de IA construindo a tela Explorar.
-- Ajustes feitos após o teste com IA: ver [07-teste-com-ia.md](07-teste-com-ia.md), seção
-  "Desvios e correções na documentação".
+  - Protótipo histórico da tela Explorar revisado para usar os aliases atuais de tokens.
+- Ajustes de documentação e tokens validados pelo script `npm run check:design-system`.

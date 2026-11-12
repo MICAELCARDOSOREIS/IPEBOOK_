@@ -1,12 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
-import { favoriteUseCases } from "@/di/container";
 import { DomainError } from "@/model/errors";
 import type { IFavoriteUseCases } from "@/usecase/iFavoriteUseCases";
 
 export type FavoriteButtonState = { selected: boolean; loading: boolean; error: string | null };
 export type FavoriteButtonActions = { toggle: () => Promise<void> };
 
-export function useFavoriteButtonViewModel(bookId: string, userId: string | null, useCases: IFavoriteUseCases = favoriteUseCases): [FavoriteButtonState, FavoriteButtonActions] {
+export function useFavoriteButtonViewModel(bookId: string, userId: string | null, useCases: IFavoriteUseCases): [FavoriteButtonState, FavoriteButtonActions] {
   const [state, setState] = useState<FavoriteButtonState>({ selected: false, loading: false, error: null });
   useEffect(() => {
     if (!userId) { setState({ selected: false, loading: false, error: null }); return; }

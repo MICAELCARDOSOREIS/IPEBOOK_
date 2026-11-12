@@ -173,7 +173,7 @@ https://github.com/architecture-decision-record/architecture-decision-record
 
 ## ipebook
 
-Plataforma comunitária de circulação e troca de livros em Piripiri, PI. React Native / Expo 57, TypeScript 6, Vitest e Supabase. Planejamento no Spec Kit (`specs/`), arquitetura em `docs/arquitetura.md` e decisões em `docs/adr/`.
+Plataforma comunitária de circulação e troca de livros em Piripiri, PI. React Native / Expo 58, TypeScript 6, Vitest e Supabase. Planejamento no Spec Kit (`specs/`), arquitetura em `docs/arquitetura.md` e decisões em `docs/adr/`.
 
 ## Policy
 
@@ -188,27 +188,30 @@ Plataforma comunitária de circulação e troca de livros em Piripiri, PI. React
 
 - Camadas MVVM: `src/model/` (entidades e contratos), `src/usecase/`, `src/viewmodel/`, `src/view/` e `src/infra/`.
 - Container de Injeção de Dependências: `src/di/container.ts`.
-- Rotas e telas (Expo Router): `app/` (23 rotas estáticas com suporte PWA).
+- Rotas e telas (Expo Router): `src/app/` (45 rotas estáticas com suporte PWA).
 - Banco de dados e políticas RLS: migrações em `supabase/migrations/` e catálogo semente em `scripts/popular-catalogo-piripiri.mjs`.
 - Rastreamento e continuidade: `docs/estado.md`, `docs/produto.md` e `docs/adr/README.md`.
 
 ## Running and verifying
 
-- Pipeline completo de validação local: `npm run validate` (inclui typecheck, linter arquitetural, testes SQL e cobertura com Vitest).
+- Pipeline completo de validação local: `npm run validate` (typecheck, lint, arquitetura, design system, numeração, config de build, testes SQL via PGlite, cobertura com Vitest e sincronia da documentação).
 - Verificação isolada de migrações e RLS via PGlite: `npm run test:sql`.
 - Verificação de fronteiras arquiteturais: `npm run check:architecture`.
-- Manter documentação rigorosamente sincronizada com o código: índice de ADRs, contagem de testes em `docs/estado.md` e tabelas em `docs/produto.md`.
+- APK de debug: `npm run apk:debug` (Gradle desacoplado do terminal/sessão; só arm64 por padrão, `APK_ABIS` para outras) e `npm run apk:debug:status`. Log em `android/build-logs/apk-debug.log`. Nunca rodar `./gradlew assembleDebug` preso à sessão.
+- App Bundle de produção local (assinado com a chave do EAS, para a Play Store, sem cota da nuvem): `npm run aab:local`, `npm run aab:local:status` e `npm run aab:local:log` (acompanha ao vivo); saída em `android/build-logs/`.
+- Manter documentação rigorosamente sincronizada com o código: índice de ADRs, contagem de testes em `docs/estado.md` e tabelas em `docs/produto.md`. As métricas atuais (testes, migrações, rotas, specs, ADRs) são conferidas por `npm run check:docs`; ao mudar um número, atualize o bloco "Conferência atual" e a Seção 1 — as entradas históricas da crônica preservam os números da sua data.
 
 ## Conventions that differ from defaults
 
-- Sanitização preventiva de textos de entrada (título, autor, descrição, denúncias) via `TextSanitizer`.
-- Validação estrita de upload de imagens por magic bytes reais (JPEG, PNG, WebP) até 5 MB via `ImageOptimizationService`.
+- Sanitização preventiva de textos de entrada (título, autor, descrição, denúncias, nome público do perfil) via `sanitizeTextInput` (`src/model/validators/textSanitizer.ts`).
+- Validação estrita de upload de imagens por magic bytes reais (JPEG, PNG, WebP) até 5 MB via `detectImageMimeType` (`src/model/validators/imageBytesValidator.ts`), usada por `listingPhotoUseCases` e `profilePhotoUseCases`. `src/infra/services/imageOptimizationService.ts` só é referenciado por testes.
 - Logs seguros com ofuscação de dados sensíveis (senhas, tokens, e-mails) via `SafeLogger`.
 - Conformidade LGPD ativa: exclusão definitiva com cascata via RPC segura e exportação estruturada de dados via `UserDataExportUseCases`.
 
 ## Known pitfalls
 
 - Em ambientes sandbox restritos, o Vitest pode acusar `EROFS` ao tentar criar `.vite-temp/` se `node_modules` estiver somente-leitura; executar fora do isolamento restrito quando necessário.
+- `npx expo install` usa o bun por padrão nesta máquina e deixa `node_modules` fora do `package-lock.json`; instalar com `npx expo install <pacote> --npm` (CI usa `npm ci`).
 - A branch `develop` é a base viva de integração: conferir histórico no Git antes de assumir status de branches remotas.
 
 <!-- /bmad:context -->

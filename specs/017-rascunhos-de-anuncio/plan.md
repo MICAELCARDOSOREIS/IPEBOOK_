@@ -30,3 +30,22 @@
 8. **Testes e Validação:**
    - Testes de usecase (salvar/retomar/descartar), viewmodel e view.
    - `npm run validate` e `npm run build:web`; registrar em `validacao.md` ao final.
+
+## Decisão T001 (2026-10-26)
+
+Optou-se por **estender `Book["status"]` com `"draft"`** em vez de criar entidade `DraftBook`, com
+persistência **no servidor** (fiel à spec) e **preservando o buffer local** de rascunho já existente.
+
+- O rascunho é um `Book` real com `status = "draft"` e coluna opcional `draft_step` (etapa em que a
+  pessoa parou), reaproveitando `MemoryBookDataSource`/`SupabaseBookDataSource` e `bookUseCases`.
+- Migração `202610260002_rascunhos_anuncio.sql`: adiciona `draft_step`, inclui `draft` no CHECK de
+  status, flexibiliza os CHECKs de título/autor e da regra preço/modalidade somente para rascunhos,
+  reforça a política SELECT (`status <> "draft" or owner_id = auth.uid()`) para não vazar rascunho
+  ao catálogo público, permite INSERT `available`/`draft` e cria política DELETE restrita ao dono do
+  próprio rascunho.
+- Camadas leem/ocultam rascunhos: `list()` exclui `draft`, `listMyListings` filtra `draft`, e
+  `listDrafts` retorna apenas os rascunhos do dono. Publicar transiciona `draft -> available`.
+- Alternativa rejeitada: entidade `DraftBook` própria exigiria novo datasource, caso DI e casos de
+  uso duplicando a forma do anúncio, sem ganho funcional para o beta.
+- Pendência de implantação: a migração ainda precisa ser aplicada ao Supabase remoto pelo
+  responsável antes de valer em produção.

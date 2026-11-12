@@ -10,14 +10,18 @@ jobs:
   validar:
     name: Validação e Testes
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout do código
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Configurar Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
 
       - name: Instalar dependências
@@ -26,14 +30,29 @@ jobs:
       - name: Verificar tipagem TypeScript
         run: npm run typecheck
 
+      - name: Verificar lint (Biome)
+        run: npm run lint
+
       - name: Verificar conformidade arquitetural (7 camadas MVVM)
         run: npm run check:architecture
+
+      - name: Verificar Design System (tokens, contraste e documentos de componentes)
+        run: npm run check:design-system
+
+      - name: Verificar numeração de specs e ADRs
+        run: npm run check:numbering
+
+      - name: Verificar configuração de build e publicação Web
+        run: npm run check:build-config
 
       - name: Executar testes de banco e migrações SQL (PGlite)
         run: npm run test:sql
 
       - name: Executar testes unitários e cobertura de código
         run: npm run test:coverage
+
+      - name: Verificar sincronia das métricas documentadas
+        run: npm run check:docs
 
       - name: Compilar pacote Web estático
         run: npm run build:web

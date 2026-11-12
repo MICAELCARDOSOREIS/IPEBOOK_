@@ -1,4 +1,4 @@
-import React from "react";
+
 import { act, fireEvent, render, waitFor } from "@testing-library/react-native";
 import { describe, expect, it, vi } from "vitest";
 import { searchAlertUseCases } from "@/di/container";

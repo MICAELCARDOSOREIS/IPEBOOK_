@@ -1,11 +1,16 @@
-import { useMemo } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { useMemo, useState } from "react";
+import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import type { ImageSource } from "@/model/services/iImagePickerService";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { AddPhotoCard } from "@/view/components/AddPhotoCard";
-import { FilledButton } from "@/view/components/FilledButton";
-import { OutlinedButton } from "@/view/components/OutlinedButton";
+import { PhotoSourceSheet } from "@/view/components/PhotoSourceSheet";
+import { PermissionPromptDialog } from "@/view/components/PermissionPromptDialog";
+import { TextButton } from "@/view/components/TextButton";
 import { TextField } from "@/view/components/TextField";
+import { AppIcon } from "@/view/components/AppIcon";
+import { InlineErrorCard } from "@/view/components/InlineErrorCard";
 
 export type CreateListingStep2Props = {
   photoUrl: string;
@@ -15,8 +20,10 @@ export type CreateListingStep2Props = {
   errorRef?: React.Ref<any>;
   onSetPhotoUrl: (url: string) => void;
   onRemovePhoto: (index: number) => void;
-  onContinue: () => void;
-  onBack: () => void;
+  /** Foto nova pela câmera ou galeria (Spec 092); `cover` é a capa, `extra` as demais. */
+  onChoosePhoto?: (slot: "cover" | "extra", source: ImageSource, slotIndex?: number) => void;
+  uploading?: boolean;
+  photoError?: string | null;
 };
 
 export function CreateListingStep2({
@@ -27,10 +34,19 @@ export function CreateListingStep2({
   errorRef,
   onSetPhotoUrl,
   onRemovePhoto,
-  onContinue,
-  onBack,
+  onChoosePhoto,
+  uploading = false,
+  photoError,
 }: CreateListingStep2Props) {
+  const [sheetSlot, setSheetSlot] = useState<{ slot: "cover" | "extra"; index?: number } | null>(null);
+  const [pendingPhoto, setPendingPhoto] = useState<{
+    slot: "cover" | "extra";
+    index?: number;
+    source: ImageSource;
+  } | null>(null);
+  const [showLinkField, setShowLinkField] = useState(false);
   const { colors } = useTheme();
+  const wideWeb = useIsWideWeb();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   return (
@@ -40,63 +56,99 @@ export function CreateListingStep2({
         Uma foto nítida ajuda a conhecer o estado do exemplar. Até 3 fotos.
       </Text>
 
-      {/* `04.04`: capa em destaque à esquerda, lombada e páginas empilhadas à direita. */}
-      <View style={styles.photoGrid}>
+      {/* `04.04`: capa em destaque à esquerda, lombada e verso empilhados à direita. */}
+      <View style={wideWeb ? styles.webPhotoGrid : styles.photoGrid}>
         <AddPhotoCard
           label="Foto da capa"
           photoUrl={photoUrl}
-          onPress={() => undefined}
+          onPress={() => setSheetSlot({ slot: "cover" })}
           onRemovePhoto={() => onSetPhotoUrl("")}
-          style={styles.coverSlot}
+          style={wideWeb ? styles.webCoverSlot : styles.coverSlot}
         />
-        <View style={styles.sideSlots}>
+        <View testID="step2-side-slots" style={wideWeb ? styles.webSideSlots : styles.sideSlots}>
           <AddPhotoCard
             label="Lombada"
             photoUrl={photos[0]}
-            onPress={() => undefined}
+            onPress={() => setSheetSlot({ slot: "extra", index: 0 })}
             onRemovePhoto={() => onRemovePhoto(0)}
-            style={styles.sideSlot}
+            style={wideWeb ? styles.webSideSlot : styles.sideSlot}
           />
           <AddPhotoCard
-            label="Páginas"
+            label="Verso"
             photoUrl={photos[1]}
-            onPress={() => undefined}
+            onPress={() => setSheetSlot({ slot: "extra", index: 1 })}
             onRemovePhoto={() => onRemovePhoto(1)}
-            style={styles.sideSlot}
+            style={wideWeb ? styles.webSideSlot : styles.sideSlot}
           />
         </View>
       </View>
 
-      <TextField
-        label="Endereço da foto da capa"
-        value={photoUrl}
-        onChangeText={onSetPhotoUrl}
-        editable={!loading}
-        placeholder="https://exemplo.com/capa.jpg"
-        autoCapitalize="none"
-        helperText="Capa ilustrativa: a foto real substitui esta prévia."
+      {uploading ? (
+        <View accessibilityLiveRegion="polite" style={styles.uploadingRow}>
+          <ActivityIndicator color={colors.action} accessibilityLabel="Enviando foto" />
+          <Text style={styles.tipText}>Enviando a foto…</Text>
+        </View>
+      ) : null}
+      {photoError ? (
+        <View style={styles.photoErrorBlock}>
+          <InlineErrorCard message={photoError} />
+          <Text style={styles.tipText}>
+            Dá para publicar sem foto: enquanto não houver imagem, usamos uma capa ilustrativa do livro.
+          </Text>
+        </View>
+      ) : null}
+
+      {showLinkField ? (
+        <TextField
+          label="Endereço da foto da capa"
+          value={photoUrl}
+          onChangeText={onSetPhotoUrl}
+          editable={!loading}
+          placeholder="https://exemplo.com/capa.jpg"
+          autoCapitalize="none"
+          helperText="Cole o link de uma imagem pública, se preferir."
+        />
+      ) : (
+        <TextButton label="Prefiro colar o link de uma imagem" onPress={() => setShowLinkField(true)} />
+      )}
+
+      <PhotoSourceSheet
+        visible={sheetSlot !== null}
+        title={sheetSlot?.slot === "cover" ? "Foto da capa" : "Mais uma foto"}
+        onChoose={(source) => {
+          const slot = sheetSlot;
+          setSheetSlot(null);
+          // O motivo do acesso à câmera/galeria vem antes do prompt nativo (Spec 020, CA2).
+          if (slot) setPendingPhoto({ ...slot, source });
+        }}
+        onClose={() => setSheetSlot(null)}
       />
 
-      <View style={styles.tipBox}>
-        <Text style={styles.tipTitle}>Dica de foto</Text>
+      <PermissionPromptDialog
+        permission="photos"
+        status={pendingPhoto ? "explain" : "idle"}
+        onAllow={() => {
+          const pending = pendingPhoto;
+          setPendingPhoto(null);
+          if (pending) onChoosePhoto?.(pending.slot, pending.source, pending.index);
+        }}
+        onLater={() => setPendingPhoto(null)}
+        onDismiss={() => setPendingPhoto(null)}
+      />
+
+      <View style={wideWeb ? styles.webTipBox : styles.tipBox}>
+        <View style={styles.tipHeaderRow}>
+          <AppIcon name="info" size={18} color={colors.action} />
+          <Text style={styles.tipTitle}>Dica de foto</Text>
+        </View>
         <Text style={styles.tipText}>
-          Luz natural, fundo liso e a capa inteira no quadro.
+          {wideWeb
+            ? "Fotografe em local com boa luz natural. Além da capa inteira, mostre a lombada e o verso (contracapa) para quem busca em Piripiri conferir a real conservação e ver o livro completo em 3D."
+            : "Luz natural, fundo liso e capa inteira no quadro. Fotos da lombada e do verso completam o livro em 3D e ajudam a conferir a conservação."}
         </Text>
       </View>
 
-      {error ? (
-        <Text
-          ref={errorRef}
-          accessibilityRole="alert"
-          accessibilityLiveRegion="assertive"
-          style={styles.errorText}
-        >
-          {error}
-        </Text>
-      ) : null}
-
-      <FilledButton label="Usar estas fotos" onPress={onContinue} />
-      <OutlinedButton label="Voltar à etapa anterior" onPress={onBack} />
+      {error ? <InlineErrorCard textRef={errorRef} message={error} /> : null}
     </>
   );
 }
@@ -104,43 +156,75 @@ export function CreateListingStep2({
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     photoGrid: { flexDirection: "row", gap: tokens.spacing[12] },
+    webPhotoGrid: {
+      flexDirection: "row",
+      gap: tokens.spacing[16],
+      width: "100%",
+    },
     coverSlot: { flex: 2, aspectRatio: undefined, minWidth: 0 },
+    webCoverSlot: {
+      flex: 1.4,
+      aspectRatio: undefined,
+      minWidth: 0,
+    },
     sideSlots: { flex: 1, gap: tokens.spacing[12] },
+    webSideSlots: {
+      flex: 1,
+      flexDirection: "row",
+      gap: tokens.spacing[12],
+    },
     sideSlot: { minWidth: 0 },
+    webSideSlot: {
+      flex: 1,
+      minWidth: 0,
+    },
     title: {
-      fontSize: tokens.typography.displayLarge.fontSize,
-      lineHeight: tokens.typography.displayLarge.lineHeight,
-      fontFamily: tokens.typography.displayLarge.fontFamily,
+      ...tokens.typography.brandHeadline,
       color: colors.text,
+      fontSize: 26,
+      lineHeight: 32,
     },
     subtitle: {
-      fontSize: tokens.typography.bodyLarge.fontSize,
-      lineHeight: tokens.typography.bodyLarge.lineHeight,
-      fontFamily: tokens.typography.bodyLarge.fontFamily,
+      ...tokens.typography.bodyMedium,
       color: colors.secondaryText,
+      lineHeight: 20,
+      marginTop: tokens.spacing[2],
     },
+    uploadingRow: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[12] },
     tipBox: {
       backgroundColor: colors.m3.surfaceContainerHigh,
       borderRadius: tokens.radius.medium,
       padding: tokens.spacing[16],
       gap: tokens.spacing[4],
     },
+    webTipBox: {
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+      borderRadius: tokens.radius.large,
+      padding: tokens.spacing[16],
+      gap: tokens.spacing[6],
+    },
+    tipHeaderRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[8],
+    },
     tipTitle: {
-      fontSize: tokens.typography.titleMedium.fontSize,
-      fontFamily: tokens.typography.titleMedium.fontFamily,
-      fontWeight: tokens.typography.titleMedium.fontWeight,
+      ...tokens.typography.titleMedium,
       color: colors.text,
     },
     tipText: {
-      fontSize: tokens.typography.bodyMedium.fontSize,
-      lineHeight: tokens.typography.bodyMedium.lineHeight,
-      fontFamily: tokens.typography.bodyMedium.fontFamily,
+      ...tokens.typography.bodyMedium,
       color: colors.secondaryText,
+      lineHeight: 20,
+    },
+    photoErrorBlock: {
+      gap: tokens.spacing[8],
     },
     errorText: {
+      ...tokens.typography.bodyMedium,
       color: colors.error,
-      fontSize: tokens.typography.bodyMedium.fontSize,
-      fontFamily: tokens.typography.bodyMedium.fontFamily,
     },
   });
 }

@@ -1,6 +1,6 @@
 # 007 — Contas persistentes e recuperação segura
 
-Status: em implementação. Data: 2026-10-15.
+Status: implementada e testada localmente. Data: 2026-11-04.
 
 ## Objetivo
 

@@ -13,5 +13,19 @@
 
 ## Acompanhamento (fora desta entrega)
 
-- [ ] Migrar os ~22 componentes restantes de `src/view/components/`.
-- [ ] Migrar as ~47 telas restantes de `src/view/*`.
+- [x] Migrar os componentes de `src/view/components/` (conferido em 2026-11-05): 41 dos 55
+      componentes leem `useTheme`. Os 14 restantes estão fora do tema por natureza — dez não
+      declaram cor alguma (`ConnectedNavigationBar`, `ConnectedWebHeader`, `RequireAuth`,
+      `PushRegistration`, `PwaRegister`, `Icon`, `FluentIcon`, `GoogleLogo`,
+      `IpeCelebrationOverlay` e `IpeMark`, este último um PNG decorativo) e quatro pintam o que
+      deve ser igual em qualquer tema: `Book3D`, `InviteCard` e `ListingShareCard` usam
+      `tokens.colors` do claro de propósito, como registra o comentário do `InviteCard`, e o
+      `QrCode` precisa de preto sobre branco para ser legível por leitor de código.
+- [x] Migrar as telas de `src/view/*` (conferido em 2026-11-05): 73 dos 86 arquivos de tela leem
+      `useTheme`; os 13 restantes são invólucros de composição que não pintam superfície — os dez
+      `*Screen.tsx`, os dois portões de rota (`welcomeRoute.tsx`, `initialRouteGate.tsx`) e o
+      navegador de fotos (`photoGallery.tsx`), escuro nos dois temas por ser um visualizador em
+      tela cheia. Das 15 linhas com cor hexadecimal dentro de `src/view/`, uma é comentário e as
+      outras 14 são `shadowColor: "#000000"` (2), o QR code (2), o fundo preto da câmera e do
+      navegador de fotos (2) e texto branco sobre essas superfícies escuras (8) — nenhuma é cor de
+      superfície do aplicativo.

@@ -1,8 +1,12 @@
 # Tokens
 
-Fonte canônica: [`tokens.json`](tokens.json) ([ADR 0010](../docs/adr/0010-design-system-substitui-design-kit.md)). Formato do
-nome: `categoria.papel.variação`. Em código, `src/view/tokens.ts` expõe esses mesmos valores
-(tema claro).
+Fonte canônica dos valores: [`tokens.json`](tokens.json) ([ADR 0010](../docs/adr/0010-design-system-substitui-design-kit.md)).
+Em código, [`src/view/tokens.ts`](../src/view/tokens.ts) é o espelho tipado que expõe a API consumida pelos componentes:
+`colors` (paleta clara), `darkColors` (paleta escura), `spacing`, `radius`, `typography`,
+`motion`, `elevation` e `accessibility`. Os nomes da API TypeScript não são uma cópia literal
+dos nomes M3 do JSON; a tabela de conversão abaixo é o contrato para implementação. Em caso de
+divergência, o valor do JSON canônico prevalece e o módulo TypeScript deve ser atualizado no
+mesmo trabalho.
 
 ## 1. Primitivos (o valor bruto)
 
@@ -27,14 +31,15 @@ de uma cor-semente única (aqui, o verde ipê-do-cerrado).
 
 ## 2. Semânticos (o significado)
 
-### Cor (tema claro — tema escuro adiado, ver [01-principios.md](01-principios.md) §5)
+### Cor (temas claro e escuro)
 
 | Token | Claro | Uso | Origem |
 | --- | --- | --- | --- |
-| `primary` | `#2c5e45` | Ação principal, item ativo, links, progresso (7,2:1 sobre `surface`) | Herdado (papel `primary` do M3; valor é a cor-semente da marca) |
+| `primary` | `#2b6334` | Ação principal, item ativo, links, progresso (7,2:1 sobre `surface`) | Herdado (papel `primary` do M3; valor é a cor-semente da marca) |
 | `on-primary` | `#ffffff` | Texto/ícone sobre `primary` (7,5:1) | Herdado |
-| `secondary-container` | `#dce8de` | Tag Venda, chip selecionado, item ativo da navegação | Adaptado — M3 define o papel; o uso fixo "sempre Venda" é da marca |
-| `tertiary-container` | `#f8d88a` | Tag Troca | Adaptado — mesmo motivo |
+| `secondary-container` | `#dce9dc` | Tag Venda, chip selecionado, item ativo da navegação | Adaptado — M3 define o papel; o uso fixo "sempre Venda" é da marca |
+| `tertiary-container` | `#FDE68A` | Tag Troca e acentos solares de troca (Spec 116 / ADR 0104) | Adaptado — papel tonal ouro de ipê vivo |
+| `on-tertiary-container` | `#451A03` | Texto sobre `tertiary-container` (>8:1 WCAG AAA) | Adaptado |
 | `doacao-container` | `#f4ddd3` | Tag Doação | **Novo** — quarto papel de contêiner que o M3 não define |
 | `on-doacao-container` | `#6e3a28` | Texto sobre `doacao-container` (7:1) | Novo |
 | `error` | `#b3261e` | Erro de campo, botão Perigo (6,3:1 sobre `surface`) | Herdado |
@@ -44,9 +49,23 @@ de uma cor-semente única (aqui, o verde ipê-do-cerrado).
 | `on-surface` | `#1d1b18` | Texto principal (16,5:1 sobre `surface`) | Herdado |
 | `on-surface-variant` | `#4d4740` | Texto de apoio, ícone inativo (8,8:1) | Herdado |
 | `outline` | `#7e776f` | Borda de campo e botão Contornado (4,2:1) | Herdado |
-| `focus-ring` | `#4e8a68` | Anel de foco, 3 px por fora (3,9:1 sobre `surface`) | Adaptado — cor própria da marca, não o azul padrão do M3 |
+| `focus-ring` | `#4e8a68` | Anel de foco (2 px de largura e 4 px de folga na API TypeScript) | Adaptado — cor própria da marca, não o azul padrão do M3 |
 | `brand-brown` | `#58331f` | Logotipo e títulos da marca (10,6:1) | Novo — papel de marca sem equivalente M3 |
-| `brand-amber` / `cover-sun` | `#f2bc45` / `#ddaf38` | Sol das capas ilustrativas; nunca texto | Novo |
+| `brand-amber` / `cover-sun` | `#F59E0B` / `#DDAF38` | Âmbar solar e sol das capas ilustrativas; nunca texto | Novo |
+| `book-page` | `#fcfaf5` | Papel pólen para leitura confortável sem ofuscamento | Novo — Metáfora do Livro |
+| `book-ink` | `#3c302a` | Tinta mineral/café com contraste AAA (>12:1) | Novo — Metáfora do Livro |
+| `nature-foliage` | `#2b6334` | Verde botânico da copa do ipê para botões principais | Novo — Metáfora Botânica |
+| `nature-foliage-deep` | `#1e4e27` | Verde folhagem profundo para área da capa de livros à Venda e foco | Novo — Metáfora Botânica |
+| `ipe-bloom` | `#F5B718` | Amarelo ouro canônico da florada do ipê para banner de doações, capa/tag de Doação e favoritos | Novo — Metáfora do Ipê |
+| `ipe-petal-soft` | `#FFFBEB` | Chão de pétalas de ipê frescas para fundos e acolhimento | Novo — Metáfora do Ipê |
+| `ipe-ribbon` | `#F5B718` | Fita marcadora de página de cetim do ipê | Novo — Metáfora do Livro & Ipê |
+
+### Cores Canônicas por Modalidade na Vitrine e Filtros
+
+Para manter a fidelidade editorial desenhada para a identidade do IpêBook (ADR 0104):
+- **Venda:** Verde Folhagem Profundo (`#1E4E27`, `tokens.colors.nature.foliageDeep`) na área superior da capa (`carouselCardCoverArea`), badge em pílula verde com texto branco (`#FFFFFF`) e ponto sólido verde no chip.
+- **Troca:** Marrom Tronco/Couro (`#58331F`, `tokens.colors.brandBrown`) na área superior da capa, badge em pílula marrom com texto branco (`#FFFFFF`) e ponto sólido marrom no chip.
+- **Doação:** Amarelo Ouro Solar (`#F5B718`, `tokens.colors.ipe.bloom`) na área superior da capa, badge em pílula amarela com texto marrom tronco profundo (`#451A03`, contraste AAA 8,3:1), ponto sólido amarelo no chip e fundo do banner comunitário *"Doações da semana"*.
 
 Lista completa (~50 tokens, claro e escuro) em
 [`tokens.json`](tokens.json), campo `color.tokens`.
@@ -56,7 +75,7 @@ Lista completa (~50 tokens, claro e escuro) em
 | Token | Família | Tamanho | Peso | Altura de linha | Uso | Origem |
 | --- | --- | --- | --- | --- | --- | --- |
 | `displayLarge` (brand-large-title) | Source Serif 4 | 32 px | 700 | 40 px | Título de tela raiz, logotipo | Novo — família extra sobre a escala M3 |
-| `brand-card-title` | Source Serif 4 | 19 px | 700 | 24 px | Título de livro em cartões/linhas de lista e título do estado vazio | Novo — não existe ainda em `src/view/tokens.ts`; ver nota abaixo |
+| `brand-card-title` | Source Serif 4 | 19 px | 700 | 24 px | Título de livro em cartões/linhas de lista e título do estado vazio | Novo — definido no JSON; a escala TypeScript atual usa `fontFamily.brand` com estilos existentes |
 | `m3-title-lg` | Roboto | 22 px | 400 | 28 px | Título da barra superior | Herdado |
 | `m3-body-lg` | Roboto | 16 px | 400 | 24 px | Texto de campo, busca, bolha de mensagem | Herdado |
 | `m3-body-md` | Roboto | 14 px | 400 | 20 px | Texto corrido, descrições | Herdado |
@@ -90,13 +109,15 @@ Escala completa (Android M3, iOS, Web, Documentação) em `tokens.json`, campo
 `tokens.json` usa nomes de papel M3 (`primary`, `on-surface-variant`...); o módulo
 TypeScript consumido pelo código usa uma API própria com um grupo `colors.m3` só para os papéis
 M3 ainda sem equivalente nas chaves antigas (ver [ADR 0010](../docs/adr/0010-design-system-substitui-design-kit.md)).
-Os exemplos de código em [04-componentes/](04-componentes/) usam a coluna "Em código" abaixo —
+Os exemplos de código em [04-componentes/](04-componentes/) são didáticos e podem usar
+`tokens.colors` para manter o exemplo curto. Em produção, componentes que participam do tema
+devem obter a paleta por `useTheme()`; a coluna "Em código" abaixo define os nomes disponíveis,
 **não** os nomes M3 da tabela de cor desta seção.
 
 | Papel M3 (`tokens.json`) | Em código (`tokens.colors`) |
 | --- | --- |
 | `primary` | `action` |
-| `on-primary` | branco literal (`#ffffff`) — ainda não tem token próprio |
+| `on-primary` | `colors.m3.onPrimary` |
 | `surface` | `surface` |
 | `on-surface` | `text` |
 | `on-surface-variant` | `secondaryText` |
@@ -106,14 +127,16 @@ Os exemplos de código em [04-componentes/](04-componentes/) usam a coluna "Em c
 | `tertiary-container` / `on-tertiary-container` | `badge.trade.background` / `badge.trade.text` |
 | `doacao-container` / `on-doacao-container` | `badge.donation.background` / `badge.donation.text` |
 | `error` | `error` |
-| `focus-ring` | não tem token em `tokens.ts` — usar o valor de `tokens.json` (`#4e8a68`) |
-| `scrim` | não tem token em `tokens.ts` — usar o valor de `tokens.json` (`#00000052` claro) |
+| `focus-ring` | `colors.m3.focusRing` |
+| `book-page` / `book-ink` | `colors.book.page` / `colors.book.ink` |
+| `nature-foliage` / `nature-sprout` | `colors.nature.foliage` / `colors.nature.sprout` |
+| `ipe-bloom` / `ipe-bloom-deep` / `ipe-ribbon` | `colors.ipe.bloom` / `colors.ipe.bloomDeep` / `colors.ipe.ribbon` |
+| `scrim` | não há chave própria em `tokens.ts`; o componente `Dialog` mantém uma constante local documentada |
 | papéis M3 sem chave antiga equivalente (`onSurface`, `surfaceContainer*`, `focusRing` etc.) | `colors.m3.*` |
 
-`on-primary`, `focus-ring` e `scrim` são uma lacuna real: ainda não têm token próprio em
-`src/view/tokens.ts`. Até alguém adicioná-los a `colors.m3`, qualquer código novo que precise
-desses papéis deve citar o valor de `tokens.json` num comentário, não escrever o hex
-sem explicação (ver exemplo em [04-componentes/dialogo.md](04-componentes/dialogo.md)).
+`on-primary` e `focus-ring` já têm token em `colors.m3`. `scrim` continua sem uma chave
+dedicada na API TypeScript; o `Dialog` usa uma constante local nomeada e vinculada ao token
+conceitual do JSON. Novos componentes não devem repetir essa constante sem necessidade.
 
 ## 3. Tokens de componente (onde é usado)
 
@@ -129,18 +152,23 @@ sem explicação (ver exemplo em [04-componentes/dialogo.md](04-componentes/dial
 | `tag.troca.bg` | `tertiary-container` | Adaptado |
 | `tag.doacao.bg` | `doacao-container` | Novo |
 | `navitem.active.bg` | `secondary-container` | Herdado |
+| `ribbon.ipe` | `colors.ipe.ribbon` | Novo |
 
 ## 4. Modo escuro
 
-Todos os tokens semânticos de cor já têm um valor `dark` equivalente em
-`tokens.json` (ex. `primary` claro `#2c5e45` → escuro `#9fd4b3`), mas **não entram em
-código nesta etapa** — decisão registrada em
-[ADR 0008](../docs/adr/0008-sem-dark-mode-android-md3-ios-liquid-glass.md). Quando o tema escuro
-entrar em escopo, só os tokens semânticos mudam de valor; nenhum componente muda de estrutura.
+Os tokens semânticos de cor têm valores `light` e `dark` em `tokens.json` (por exemplo,
+`primary` claro `#2b6334` e escuro `#98d6a2`). A paleta escura é exposta por `darkColors` e
+selecionada pelo `ThemeProvider`, conforme a preferência resolvida pelo
+`useThemeViewModel`. A paleta noturna foi refinada para garantir conforto visual e contraste AAA:
+- As badges mantêm suas cores canônicas e vibrantes de domínio nos dois temas (ADR 0104), garantindo identificação imediata;
+- `badge.sale` usa verde botânico profundo (`#1E4E27`) com texto `#FFFFFF`;
+- `badge.trade` usa marrom tronco (`#58331F`) com texto `#FFFFFF`;
+- `badge.donation` e `badge.reserved` usam amarelo ouro solar (`#F5B718`) com texto marrom profundo (`#451A03`, 8,3:1);
+- `ipe.container` no escuro usa `#38290E` e texto `#FFE099` (10,5:1).
+Todas as combinações atingem ou superam WCAG AAA para texto e elementos de status.
 
 ## 5. Versão legível por máquina
 
-A versão machine-readable já existe: [`tokens.json`](tokens.json), no
-formato de tokens do artifact original do Figma (campos `name`/`value`/`usage` por token, não o
-formato W3C Design Tokens). `src/view/tokens.ts` é o módulo TypeScript gerado a partir dele para
-consumo em código (ver [ADR 0010](../docs/adr/0010-design-system-substitui-design-kit.md)).
+A versão machine-readable dos tokens reside em [`tokens.json`](tokens.json), mantida sincronizada
+com a implementação ativa de [`src/view/tokens.ts`](../src/view/tokens.ts) como fonte canônica de verdade
+(ver [ADR 0010](../docs/adr/0010-design-system-substitui-design-kit.md) e [ADR 0104](../docs/adr/0104-cores-canonicas-modalidades-e-vitrine-home.md)).

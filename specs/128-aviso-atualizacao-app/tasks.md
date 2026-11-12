@@ -1,0 +1,8 @@
+# Tarefas — Spec 128 (Aviso de atualização do app na Play Store)
+
+- [x] **T001** Criar a migração `supabase/migrations/202611060001_politica_versao_app.sql` com a tabela `public.v2_app_version_policy`, constraints de formato semântico (`^\d+\.\d+\.\d+$`), RLS de leitura pública e bloqueio de escrita por clientes, semente `0.1.0` e verificações em `scripts/verificar-migracoes.mjs` e `scripts/verificar-migracoes-remotas.mjs`.
+- [x] **T002** Criar a entidade e funções puras `src/model/entities/appUpdate.ts` (`compareSemver`, `evaluateAppUpdateStatus`), contratos `IAppVersionPolicyDataSource`, `IAppUpdateDismissDataSource`, `IAppStoreLauncherService` e caso de uso `src/usecase/appUpdateUseCases.ts` com testes unitários em `tests/unit/appUpdateUseCases.test.ts`.
+- [x] **T003** Implementar os adaptadores de infraestrutura (`SupabaseAppVersionPolicyDataSource`, `MemoryAppVersionPolicyDataSource`, `AsyncStorageAppUpdateDismissDataSource`, `MemoryAppUpdateDismissDataSource`, `ExpoAppStoreLauncherService`, `MemoryAppStoreLauncherService`) e testes em `tests/unit/expoAppStoreLauncherService.test.ts` e `tests/unit/appUpdateDataSources.test.ts`.
+- [x] **T004** Implementar `src/viewmodel/useAppUpdateViewModel.ts`, compor `makeAppUpdateViewModel` em `src/di/container.ts` (respeitando ADR 0098) e testar em `tests/hooks/useAppUpdateViewModel.test.tsx`.
+- [x] **T005** Criar `src/view/components/AppUpdateGate.tsx`, integrar em `src/app/_layout.tsx` e testar em `tests/components/appUpdateGate.test.tsx` e `tests/components/appRoutes.test.tsx`.
+- [x] **T006** Executar `npm run validate` completo e sincronizar métricas em `docs/estado.md` e `README.md` (`npm run check:docs`).

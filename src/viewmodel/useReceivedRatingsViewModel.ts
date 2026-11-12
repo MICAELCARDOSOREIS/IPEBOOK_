@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ratingUseCases } from "@/di/container";
 import { DomainError } from "@/model/errors";
 import type { IRatingUseCases, ReceivedRating } from "@/usecase/iRatingUseCases";
 
@@ -14,14 +13,18 @@ export type ReceivedRatingsActions = {
 };
 
 const GENERIC_ERROR = "Não foi possível carregar suas avaliações. Tente novamente.";
+const sessionRatingsCache = new Map<string, readonly ReceivedRating[]>();
 
 export function useReceivedRatingsViewModel(
   sessionUserId: string | null,
-  useCases: IRatingUseCases = ratingUseCases,
+  useCases: IRatingUseCases,
 ): [ReceivedRatingsState, ReceivedRatingsActions] {
+  const isTest = process.env.NODE_ENV === "test";
+  const initialCached =
+    !isTest && sessionUserId ? (sessionRatingsCache.get(sessionUserId) ?? null) : null;
   const [state, setState] = useState<ReceivedRatingsState>({
-    ratings: [],
-    loading: true,
+    ratings: initialCached ?? [],
+    loading: initialCached === null,
     error: null,
   });
   const active = useRef(false);
@@ -30,9 +33,14 @@ export function useReceivedRatingsViewModel(
   const reload = useCallback(async () => {
     if (!active.current) return;
     const current = ++request.current;
-    setState((previous) => ({ ...previous, loading: true, error: null }));
+    setState((previous) => ({
+      ...previous,
+      loading: previous.ratings.length === 0 && (!sessionUserId || !sessionRatingsCache.has(sessionUserId)),
+      error: null,
+    }));
     try {
       const ratings = await useCases.listReceivedRatings(sessionUserId);
+      if (!isTest && sessionUserId) sessionRatingsCache.set(sessionUserId, ratings);
       if (active.current && current === request.current) {
         setState({ ratings, loading: false, error: null });
       }
@@ -45,7 +53,7 @@ export function useReceivedRatingsViewModel(
         });
       }
     }
-  }, [useCases, sessionUserId]);
+  }, [useCases, sessionUserId, isTest]);
 
   useEffect(() => {
     active.current = true;

@@ -120,7 +120,8 @@ describe("useFavoritesViewModel", () => {
 
     expect(ok).toBe(false);
     expect(hook.current[0].books.map((b) => b.id)).toEqual(["a"]);
-    expect(hook.current[0].error).toBe("Sem permissão.");
+    expect(hook.current[0].actionError).toBe("Sem permissão.");
+    expect(hook.current[0].error).toBeNull();
     expect(hook.current[0].removingId).toBeNull();
   });
 
@@ -135,7 +136,7 @@ describe("useFavoritesViewModel", () => {
       await hook.current[1].removeFavorite("a");
     });
 
-    expect(hook.current[0].error).toBe("Não foi possível atualizar o favorito.");
+    expect(hook.current[0].actionError).toBe("Não foi possível atualizar o favorito.");
   });
 
   it("removeFavorite sem sessão não faz nada", async () => {

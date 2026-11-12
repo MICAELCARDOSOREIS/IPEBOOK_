@@ -1,6 +1,11 @@
-import { router } from "expo-router";
+import { backOnce, replaceOnce } from "@/view/pushOnce";
+import { RequireAuth } from "@/view/components/RequireAuth";
 import { Security } from "@/view/profile/security";
 
 export default function SegurancaRoute() {
-  return <Security onBack={() => router.back()} />;
+  return (
+    <RequireAuth onRequireSignIn={() => replaceOnce("/entrar")}>
+      <Security onBack={() => backOnce()} />
+    </RequireAuth>
+  );
 }

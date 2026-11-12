@@ -23,7 +23,7 @@ afterEach(() => {
   }
 });
 
-async function renderPwaHook(options: UsePwaViewModelOptions = {}) {
+async function renderPwaHook(options: UsePwaViewModelOptions = { pwaService: createMockPwaService() }) {
   let hookResult!: ReturnType<typeof usePwaViewModel>;
   function Probe() {
     hookResult = usePwaViewModel(options);

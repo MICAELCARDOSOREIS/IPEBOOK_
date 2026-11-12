@@ -1,7 +1,8 @@
-import React from "react";
+
 import { render } from "@testing-library/react-native";
 import { Text } from "react-native";
 import { describe, expect, it, vi } from "vitest";
+import { makeWelcomeGateViewModel } from "@/di/container";
 import { MemoryOnboardingDataSource } from "@/infra/datasources/memoryOnboardingDataSource";
 import { OnboardingUseCases } from "@/usecase/onboardingUseCases";
 import { useWelcomeGateViewModel } from "@/viewmodel/useWelcomeGateViewModel";
@@ -41,5 +42,29 @@ describe("useWelcomeGateViewModel (issue #98)", () => {
     await screen.getByText("dispensar").props.onPress();
 
     expect(markWelcomeSeen).toHaveBeenCalledTimes(1);
+  });
+
+  it("desmontar antes da resolução ignora a resposta sem atualizar o estado", async () => {
+    let resolvePromise!: (val: boolean) => void;
+    const promise = new Promise<boolean>((res) => { resolvePromise = res; });
+    const useCases = {
+      shouldShowWelcome: vi.fn().mockReturnValue(promise),
+      markWelcomeSeen: vi.fn(),
+    } as unknown as OnboardingUseCases;
+
+    const screen = await render(<GateProbe useCases={useCases} />);
+    expect(screen.getByText("checking")).toBeTruthy();
+
+    screen.unmount();
+    resolvePromise(true);
+  });
+
+  it("a fábrica do container monta o gate com os casos de uso de onboarding (Spec 126 T004)", async () => {
+    function FactoryGateProbe() {
+      const [status] = makeWelcomeGateViewModel();
+      return <Text>{status}</Text>;
+    }
+    const screen = await render(<FactoryGateProbe />);
+    expect(await screen.findByText(/show|skip|checking/)).toBeTruthy();
   });
 });

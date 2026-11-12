@@ -1,18 +1,21 @@
-import { type Href, useRouter } from "expo-router";
+import type { Href } from "expo-router";
+import { backOnce, pushOnce, replaceOnce } from "@/view/pushOnce";
+import { RequireAuth } from "@/view/components/RequireAuth";
 import NotificationsScreen from "@/view/notifications/notificationsScreen";
 
 export default function NotificationsRoute() {
-  const router = useRouter();
-
   return (
-    <NotificationsScreen
-      onBack={() => router.back()}
-      onNavigateToLogin={() => router.push("/entrar")}
-      onNavigateToAction={(actionUrl) => {
-        if (actionUrl && actionUrl.startsWith("/")) {
-          router.push(actionUrl as Href);
-        }
-      }}
-    />
+    <RequireAuth onRequireSignIn={() => replaceOnce("/entrar")}>
+      <NotificationsScreen
+        onBack={() => backOnce()}
+        onNavigateToLogin={() => pushOnce("/entrar")}
+        onExploreBooks={() => pushOnce("/")}
+        onNavigateToAction={(actionUrl) => {
+          if (!actionUrl) return;
+          const destination = actionUrl.startsWith("/") ? actionUrl : `/${actionUrl}`;
+          pushOnce(destination as Href);
+        }}
+      />
+    </RequireAuth>
   );
 }

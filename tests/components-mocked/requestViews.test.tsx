@@ -1,4 +1,4 @@
-import React from "react";
+import type React from "react";
 import { act, fireEvent, render } from "@testing-library/react-native";
 import { describe, expect, it, vi } from "vitest";
 import type { Book } from "@/model/entities/book";
@@ -77,12 +77,15 @@ describe("tela de pedidos recebidos (ISO/IEC 25010 - Usabilidade)", () => {
   });
 
   it("aceita e recusa pedido pendente; não oferece ações para respondidos", async () => {
-    const actions = mockReceived({
-      items: [
-        { request: { id: "r1", listingId: "l1", requesterId: "alice", status: "pending" }, listing, requesterName: "Alice Souza" },
-        { request: { id: "r2", listingId: "l1", requesterId: "bob", status: "rejected" }, listing },
-      ],
-    });
+    const actions = mockReceived(
+      {
+        items: [
+          { request: { id: "r1", listingId: "l1", requesterId: "alice", status: "pending" }, listing, requesterName: "Alice Souza" },
+          { request: { id: "r2", listingId: "l1", requesterId: "bob", status: "rejected" }, listing },
+        ],
+      },
+      { accept: vi.fn().mockResolvedValue(true) },
+    );
     const screen = await renderEl(<ReceivedRequests sessionUserId="owner" />);
     // Spec 043 RN-02: nome público; sem perfil, nunca o identificador interno.
     expect(screen.getByText("Pessoa interessada: Alice Souza")).toBeDefined();
@@ -91,8 +94,11 @@ describe("tela de pedidos recebidos (ISO/IEC 25010 - Usabilidade)", () => {
     expect(screen.getByText("Recusado")).toBeDefined();
     expect(screen.getAllByText("Aceitar")).toHaveLength(1);
     await act(async () => { fireEvent.press(screen.getByText("Aceitar")); });
-    await act(async () => { fireEvent.press(screen.getByText("Recusar")); });
+    expect(actions.accept).not.toHaveBeenCalled();
+    expect(screen.getByText("Aceitar este pedido?")).toBeDefined();
+    await act(async () => { fireEvent.press(screen.getByText("Aceitar pedido")); });
     expect(actions.accept).toHaveBeenCalledWith("r1");
+    await act(async () => { fireEvent.press(screen.getByText("Recusar")); });
     expect(actions.reject).toHaveBeenCalledWith("r1");
   });
 

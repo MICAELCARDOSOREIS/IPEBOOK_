@@ -11,7 +11,6 @@ import { MemoryAuthDataSource } from "@/infra/datasources/memoryAuthDataSource";
 import { MemoryProfileDataSource } from "@/infra/datasources/memoryProfileDataSource";
 import { MemoryReportDataSource } from "@/infra/datasources/memoryReportDataSource";
 import { MemoryRatingDataSource } from "@/infra/datasources/memoryRatingDataSource";
-import type { Book } from "@/model/entities/book";
 
 describe("UserDataExportUseCases & DataSources (Portabilidade LGPD)", () => {
   it("rejeita exportação com identificador de usuário vazio ou inválido", async () => {

@@ -2,6 +2,10 @@
 
 Data: 2026-10-13. Status: aceito.
 
+> **Atualização (2026-11-04):** o item 5 (Maestro) foi superado. Os fluxos E2E em `.maestro/`
+> foram removidos e não são executados na CI; a validação em dispositivo passou a ser manual.
+> Os demais itens desta decisão continuam válidos. Ver [`docs/qualidade.md`](../../docs/qualidade.md).
+
 ## Contexto
 O projeto Ipebook exige uma estratégia abrangente e rigorosa de testes automatizados para atender aos requisitos de Engenharia de Software III (IFPI Piripiri) e aos princípios da constituição do projeto. As exigências incluem testes unitários, testes de componentes com React Native Testing Library (RNTL), componentes com mocks, testes de hooks com `renderHook`, cobertura mínima de 80%, testes de integração entre camadas, e pelo menos 3 fluxos E2E em dispositivo/emulador, fundamentando a qualidade na norma ISO/IEC 25010.
 

@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import { useMemo } from "react";
 import { StyleSheet, View } from "react-native";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
@@ -12,7 +12,7 @@ function createTones(colors: ColorPalette): Record<IconBadgeTone, { background: 
     trade: { background: colors.badge.trade.background, icon: colors.badge.trade.text },
     donation: { background: colors.badge.donation.background, icon: colors.badge.donation.text },
     error: { background: colors.errorContainer, icon: colors.error },
-    neutral: { background: colors.soft, icon: colors.secondaryText },
+    neutral: { background: colors.m3.surfaceContainer, icon: colors.secondaryText },
   };
 }
 

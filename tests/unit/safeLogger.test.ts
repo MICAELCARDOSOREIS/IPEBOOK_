@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { LogEntry } from "@/model/services/iLogger";
+import type { LogEntry } from "@/model/services/iLogger";
 import { SafeLogger, sanitizeContext } from "@/infra/services/safeLogger";
 
 describe("SafeLogger e sanitizeContext", () => {

@@ -1,4 +1,4 @@
-import React from "react";
+
 import { act, fireEvent, render } from "@testing-library/react-native";
 import { describe, expect, it } from "vitest";
 import { bookRequestUseCases, bookUseCases } from "@/di/container";
@@ -23,6 +23,9 @@ describe("SC-002: aceitar pedido recusa concorrentes e reserva o anúncio", () =
     expect(screen.getAllByText("Aceitar")).toHaveLength(2);
 
     await act(async () => { fireEvent.press(screen.getAllByText("Aceitar")[0]); });
+    expect(screen.getByText("Aceitar este pedido?")).toBeDefined();
+    await act(async () => { fireEvent.press(screen.getByText("Aceitar pedido")); });
+    await act(async () => { await Promise.resolve(); });
 
     expect(screen.queryByText("Aceitar")).toBeNull();
     expect(screen.getByText("Aceito")).toBeDefined();

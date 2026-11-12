@@ -1,22 +1,66 @@
-import { useMemo, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { useMemo, useRef, useState } from "react";
+import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import type { BookModality } from "@/model/entities/book";
 import type { IsbnFeedback } from "@/viewmodel/useCreateListingViewModel";
+import type { ListingBasicsErrors } from "@/viewmodel/listingBasicsValidation";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { AddPhotoCard } from "@/view/components/AddPhotoCard";
 import { Chip } from "@/view/components/Chip";
-import { FilledButton } from "@/view/components/FilledButton";
-import { OutlinedButton } from "@/view/components/OutlinedButton";
+import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
 import { IconBadge } from "@/view/components/IconBadge";
+import { InlineErrorCard } from "@/view/components/InlineErrorCard";
 import { TextField } from "@/view/components/TextField";
 import { BarcodeScannerModal } from "@/view/components/BarcodeScannerModal";
 
-const MODALITIES: { value: BookModality; label: string }[] = [
-  { value: "sale", label: "Venda" },
-  { value: "trade", label: "Troca" },
-  { value: "donation", label: "Doação" },
+import { withPress } from "@/view/pressFeedback";
+const MODALITIES: { value: BookModality; label: string; icon: AppIconName; desc: string }[] = [
+  { value: "sale", label: "Venda", icon: "category", desc: "Defina um preço justo em R$" },
+  { value: "trade", label: "Troca", icon: "swap", desc: "Troque por outros livros" },
+  { value: "donation", label: "Doação", icon: "heart", desc: "Compartilhe gratuitamente" },
 ];
+
+function getModalityTheme(modality: BookModality, colors: ColorPalette) {
+  switch (modality) {
+    case "sale":
+      return {
+        accent: colors.action,
+        bgSelected: colors.badge.sale.background,
+        textSelected: colors.badge.sale.text,
+        iconBgSelected: colors.soft,
+        iconBgUnselected: colors.soft,
+        iconColorSelected: colors.action,
+        iconColorUnselected: colors.action,
+        radioBorder: colors.action,
+        radioInner: colors.action,
+      };
+    case "trade":
+      return {
+        accent: colors.gold,
+        bgSelected: colors.badge.trade.background,
+        textSelected: colors.badge.trade.text,
+        iconBgSelected: colors.ipe.container,
+        iconBgUnselected: colors.ipe.container,
+        iconColorSelected: colors.gold,
+        iconColorUnselected: colors.gold,
+        radioBorder: colors.gold,
+        radioInner: colors.gold,
+      };
+    case "donation":
+      return {
+        accent: colors.badge.donation.text,
+        bgSelected: colors.badge.donation.background,
+        textSelected: colors.badge.donation.text,
+        iconBgSelected: colors.ipe.container,
+        iconBgUnselected: colors.ipe.container,
+        iconColorSelected: colors.badge.donation.text,
+        iconColorUnselected: colors.badge.donation.text,
+        radioBorder: colors.badge.donation.text,
+        radioInner: colors.badge.donation.text,
+      };
+  }
+}
 
 export type CreateListingStep1Props = {
   isbn?: string;
@@ -38,16 +82,18 @@ export type CreateListingStep1Props = {
   onSetAuthor: (author: string) => void;
   onSetPrice: (price: string) => void;
   onSetPhotoUrl: (url: string) => void;
+  fieldErrors?: ListingBasicsErrors;
   onGoToPhotos: () => void;
-  onContinue: () => void;
+  /** Disparado ao focar em um campo de texto, informando nome e coordenada Y absoluta no formulário */
+  onFocusField?: (fieldName: "title" | "author" | "price", yOffset: number) => void;
 };
 
 export function CreateListingStep1({
-  isbn,
+  isbn: _isbn,
   lookingUpIsbn,
   isbnFeedback,
-  onSetIsbn,
-  onLookupIsbn,
+  onSetIsbn: _onSetIsbn,
+  onLookupIsbn: _onLookupIsbn,
   onScanBarcode,
   modality,
   title,
@@ -62,51 +108,63 @@ export function CreateListingStep1({
   onSetAuthor,
   onSetPrice,
   onSetPhotoUrl,
+  fieldErrors = {},
   onGoToPhotos,
-  onContinue,
+  onFocusField,
 }: CreateListingStep1Props) {
   const { colors } = useTheme();
+  const wideWeb = useIsWideWeb();
   const [scannerVisible, setScannerVisible] = useState(false);
   const styles = useMemo(() => createStyles(colors), [colors]);
 
+  const authorInputRef = useRef<any>(null);
+  const priceInputRef = useRef<any>(null);
+  const containerY = useRef(0);
+  const titleY = useRef(0);
+  const authorY = useRef(72);
+  const priceY = useRef(144);
+
   return (
     <>
-      <View style={styles.isbnCard}>
-        <View style={styles.isbnHeader}>
-          <IconBadge icon="photo" tone="action" />
-          <View style={styles.isbnTexts}>
-            <Text style={styles.isbnTitle}>Ler ISBN com a câmera</Text>
-            <Text style={styles.hint}>Preenche título e autor automaticamente.</Text>
+      <View style={wideWeb ? styles.webIsbnCard : styles.isbnCard}>
+        {wideWeb ? (
+          <View style={styles.webIsbnHeader}>
+            <View style={styles.webIsbnTextsRow}>
+              <IconBadge icon="camera" tone="action" />
+              <View style={styles.isbnTexts}>
+                <Text style={styles.isbnTitle}>{lookingUpIsbn ? "Buscando o livro..." : "Escanear código de barras"}</Text>
+                <Text style={styles.hint}>Aponte o código de barras ou ISBN na câmera para autocompletar os dados.</Text>
+              </View>
+            </View>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Abrir leitor de código de barras pela câmera"
+              accessibilityState={{ disabled: Boolean(loading || lookingUpIsbn) }}
+              disabled={loading || lookingUpIsbn}
+              onPress={() => setScannerVisible(true)}
+              style={withPress(styles.webScanButton)}
+            >
+              <AppIcon name="camera" size={16} color={colors.action} />
+              <Text style={styles.webScanButtonText}>Usar câmera</Text>
+            </Pressable>
           </View>
-        </View>
-
-        <View style={styles.scanActionRow}>
-          <OutlinedButton
-            label="Escanear com a câmera"
+        ) : (
+          <Pressable
+            accessibilityRole="button"
             accessibilityLabel="Abrir leitor de código de barras pela câmera"
+            accessibilityState={{ disabled: Boolean(loading || lookingUpIsbn) }}
             disabled={loading || lookingUpIsbn}
             onPress={() => setScannerVisible(true)}
-          />
-        </View>
-
-        <View style={styles.isbnInputRow}>
-          <View style={styles.isbnFieldWrapper}>
-            <TextField
-              label="Código ISBN"
-              value={isbn ?? ""}
-              onChangeText={onSetIsbn ?? (() => {})}
-              placeholder="Ex: 9788535914849"
-              keyboardType="numeric"
-              editable={!loading && !lookingUpIsbn}
-            />
-          </View>
-          <FilledButton
-            label={lookingUpIsbn ? "Buscando..." : "Buscar"}
-            accessibilityLabel="Buscar dados do livro pelo ISBN"
-            loading={lookingUpIsbn}
-            onPress={() => onLookupIsbn?.()}
-          />
-        </View>
+            style={withPress(styles.isbnHeader)}
+          >
+            <IconBadge icon="camera" tone="action" />
+            <View style={styles.isbnTexts}>
+              <Text style={styles.isbnTitle}>{lookingUpIsbn ? "Buscando o livro..." : "Escanear código de barras"}</Text>
+              <Text style={styles.hint}>Título e autor entram sozinhos.</Text>
+            </View>
+            <AppIcon name="chevronRight" size={24} color={colors.m3.onSurfaceVariant} />
+          </Pressable>
+        )}
 
         <BarcodeScannerModal
           visible={scannerVisible}
@@ -144,75 +202,225 @@ export function CreateListingStep1({
           </View>
         ) : null}
       </View>
-      <Text style={styles.dividerText}>ou preencha manualmente</Text>
+
+      <View style={wideWeb ? styles.webDividerContainer : styles.dividerContainer}>
+        <View style={styles.dividerLine} />
+        <Text style={wideWeb ? styles.webDividerText : styles.dividerText}>ou preencha manualmente</Text>
+        <View style={styles.dividerLine} />
+      </View>
 
       <View style={styles.field}>
         <Text style={styles.sectionLabel}>Modalidade</Text>
-        <View style={styles.chipRow}>
-          {MODALITIES.map((item) => (
-            <Chip
-              key={item.value}
-              label={item.label}
-              accessibilityLabel={`Modalidade ${item.label}`}
-              selected={modality === item.value}
-              onPress={() => onSetModality(item.value)}
-              disabled={loading}
-            />
-          ))}
-        </View>
+        {wideWeb ? (
+          <View style={styles.webModalitiesGrid}>
+            {MODALITIES.map((item) => {
+              const isSelected = modality === item.value;
+              const theme = getModalityTheme(item.value, colors);
+              return (
+                <Pressable
+                  key={item.value}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Modalidade ${item.label}`}
+                  accessibilityState={{ selected: isSelected }}
+                  onPress={() => onSetModality(item.value)}
+                  disabled={loading}
+                  style={withPress([
+                    styles.webModalityCard,
+                    {
+                      borderColor: isSelected ? theme.accent : colors.m3.outlineVariant,
+                      backgroundColor: isSelected ? theme.bgSelected : colors.m3.surfaceContainerLow,
+                    },
+                  ])}
+                >
+                  <View style={styles.webModalityHeader}>
+                    <View
+                      style={[
+                        styles.webModalityIconBadge,
+                        {
+                          backgroundColor: isSelected ? theme.iconBgSelected : theme.iconBgUnselected,
+                        },
+                      ]}
+                    >
+                      <AppIcon
+                        name={item.icon}
+                        size={18}
+                        color={isSelected ? theme.iconColorSelected : theme.iconColorUnselected}
+                      />
+                    </View>
+                    <View
+                      style={[
+                        styles.webModalityRadio,
+                        { borderColor: isSelected ? theme.radioBorder : colors.m3.outlineVariant },
+                      ]}
+                    >
+                      {isSelected ? (
+                        <View style={[styles.webModalityRadioInner, { backgroundColor: theme.radioInner }]} />
+                      ) : null}
+                    </View>
+                  </View>
+                  <Text
+                    style={[
+                      styles.webModalityTitle,
+                      isSelected && { color: theme.textSelected, fontWeight: tokens.fontWeight.bold },
+                    ]}
+                  >
+                    {item.label}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.webModalityDesc,
+                      isSelected && { color: theme.textSelected, opacity: 0.85 },
+                    ]}
+                  >
+                    {item.desc}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        ) : (
+          <View style={styles.chipRow}>
+            {MODALITIES.map((item) => (
+              <Chip
+                key={item.value}
+                label={item.label}
+                accessibilityLabel={`Modalidade ${item.label}`}
+                tone={colors.badge[item.value]}
+                selected={modality === item.value}
+                onPress={() => onSetModality(item.value)}
+                disabled={loading}
+              />
+            ))}
+          </View>
+        )}
       </View>
 
-      <View style={styles.photoRow}>
-        <AddPhotoCard
-          photoUrl={photoUrl}
-          onPress={onGoToPhotos}
-          onRemovePhoto={() => onSetPhotoUrl("")}
-        />
-        <View style={styles.photoTexts}>
+      <View
+        style={styles.fieldsContainer}
+        onLayout={(event) => {
+          containerY.current = event.nativeEvent.layout.y;
+        }}
+      >
+        <View
+          onLayout={(event) => {
+            titleY.current = event.nativeEvent.layout.y;
+          }}
+        >
           <TextField
             label="Título"
             value={title}
             onChangeText={onSetTitle}
             editable={!loading}
             placeholder="Ex: Dom Casmurro"
+            error={fieldErrors.title}
+            returnKeyType="next"
+            onSubmitEditing={() => authorInputRef.current?.focus()}
+            onFocus={() => onFocusField?.("title", containerY.current + titleY.current)}
           />
-          <TextField
-            label="Autor"
-            value={author}
-            onChangeText={onSetAuthor}
-            editable={!loading}
-            placeholder="Ex: Machado de Assis"
-          />
+        </View>
+
+        {wideWeb && modality === "sale" ? (
+          <View style={styles.webFieldsRow}>
+            <View style={styles.webAuthorCol}>
+              <TextField
+                inputRef={authorInputRef}
+                label="Autor"
+                value={author}
+                onChangeText={onSetAuthor}
+                editable={!loading}
+                placeholder="Ex: Machado de Assis"
+                error={fieldErrors.author}
+                returnKeyType="next"
+                onSubmitEditing={() => priceInputRef.current?.focus()}
+                onFocus={() => onFocusField?.("author", containerY.current + authorY.current)}
+              />
+            </View>
+            <View style={styles.webPriceCol}>
+              <TextField
+                inputRef={priceInputRef}
+                label="Preço (R$)"
+                value={price}
+                onChangeText={onSetPrice}
+                editable={!loading}
+                keyboardType="decimal-pad"
+                placeholder="Ex: 25,00"
+                error={fieldErrors.price}
+                returnKeyType="done"
+                onFocus={() => onFocusField?.("price", containerY.current + priceY.current)}
+              />
+            </View>
+          </View>
+        ) : (
+          <>
+            <View
+              onLayout={(event) => {
+                authorY.current = event.nativeEvent.layout.y;
+              }}
+            >
+              <TextField
+                inputRef={authorInputRef}
+                label="Autor"
+                value={author}
+                onChangeText={onSetAuthor}
+                editable={!loading}
+                placeholder="Ex: Machado de Assis"
+                error={fieldErrors.author}
+                returnKeyType={modality === "sale" ? "next" : "done"}
+                onSubmitEditing={() => {
+                  if (modality === "sale") {
+                    priceInputRef.current?.focus();
+                  }
+                }}
+                onFocus={() => onFocusField?.("author", containerY.current + authorY.current)}
+              />
+            </View>
+
+            {modality === "sale" ? (
+              <View
+                onLayout={(event) => {
+                  priceY.current = event.nativeEvent.layout.y;
+                }}
+              >
+                <TextField
+                  inputRef={priceInputRef}
+                  label="Preço (R$)"
+                  value={price}
+                  onChangeText={onSetPrice}
+                  editable={!loading}
+                  keyboardType="decimal-pad"
+                  placeholder="Ex: 25,00"
+                  error={fieldErrors.price}
+                  returnKeyType="done"
+                  onFocus={() => onFocusField?.("price", containerY.current + priceY.current)}
+                />
+              </View>
+            ) : null}
+          </>
+        )}
+      </View>
+
+      <View style={wideWeb ? styles.webPhotoCard : styles.photoCard}>
+        <AddPhotoCard
+          photoUrl={photoUrl}
+          onPress={onGoToPhotos}
+          onRemovePhoto={() => onSetPhotoUrl("")}
+        />
+        <View style={styles.photoTexts}>
+          <Text style={styles.sectionLabel}>Foto de capa</Text>
+          <Text style={styles.hint}>
+            {wideWeb
+              ? "Foto nítida e bem iluminada do seu livro. Você poderá adicionar mais fotos na próxima etapa."
+              : "Foto leve, com boa luz. Você pode ajustar na próxima etapa."}
+          </Text>
         </View>
       </View>
 
-      {modality === "sale" ? (
-        <TextField
-          label="Preço (R$)"
-          value={price}
-          onChangeText={onSetPrice}
-          editable={!loading}
-          keyboardType="decimal-pad"
-          placeholder="Ex: 25,00"
-        />
-      ) : null}
+      <View style={styles.nextStepsNote}>
+        <AppIcon name="info" size={16} color={colors.secondaryText} />
+        <Text style={styles.hint}>Conservação e bairro vêm nas próximas etapas.</Text>
+      </View>
 
-      <Text style={styles.hint}>
-        Foto leve, com boa luz. Conservação e bairro vêm na próxima etapa.
-      </Text>
-
-      {error ? (
-        <Text
-          ref={errorRef}
-          accessibilityRole="alert"
-          accessibilityLiveRegion="assertive"
-          style={styles.errorText}
-        >
-          {error}
-        </Text>
-      ) : null}
-
-      <FilledButton label="Continuar" onPress={onContinue} />
+      {error ? <InlineErrorCard textRef={errorRef} message={error} /> : null}
     </>
   );
 }
@@ -221,9 +429,17 @@ function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     field: { gap: tokens.spacing[8] },
     isbnCard: {
-      gap: tokens.spacing[12],
+      gap: tokens.spacing[8],
       padding: tokens.spacing[12],
       borderRadius: tokens.radius.medium,
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+    },
+    webIsbnCard: {
+      gap: tokens.spacing[12],
+      padding: tokens.spacing[16],
+      borderRadius: tokens.radius.large,
       backgroundColor: colors.m3.surfaceContainerLow,
       borderWidth: 1,
       borderColor: colors.m3.outlineVariant,
@@ -232,6 +448,34 @@ function createStyles(colors: ColorPalette) {
       flexDirection: "row",
       alignItems: "center",
       gap: tokens.spacing[12],
+    },
+    webIsbnHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: tokens.spacing[16],
+    },
+    webIsbnTextsRow: {
+      flex: 1,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[12],
+    },
+    webScanButton: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[8],
+      paddingVertical: tokens.spacing[8],
+      paddingHorizontal: tokens.spacing[16],
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.m3.surfaceContainerLowest,
+      borderWidth: 1,
+      borderColor: colors.action,
+    },
+    webScanButtonText: {
+      ...tokens.typography.labelMedium,
+      color: colors.action,
+      fontWeight: tokens.fontWeight.semiBold,
     },
     isbnTexts: { flex: 1, gap: tokens.spacing[4] },
     isbnTitle: {
@@ -242,21 +486,13 @@ function createStyles(colors: ColorPalette) {
     scanActionRow: {
       width: "100%",
     },
-    isbnInputRow: {
-      flexDirection: "row",
-      gap: tokens.spacing[8],
-      alignItems: "flex-end",
-    },
-    isbnFieldWrapper: {
-      flex: 1,
-    },
     isbnFeedback: {
       padding: tokens.spacing[8],
       borderRadius: tokens.radius.medium,
       borderWidth: 1,
     },
     isbnFeedbackSuccess: {
-      backgroundColor: colors.soft,
+      backgroundColor: colors.m3.secondaryContainer,
       borderColor: colors.action,
     },
     isbnFeedbackInfo: {
@@ -272,7 +508,7 @@ function createStyles(colors: ColorPalette) {
     },
     isbnFeedbackTextSuccess: {
       color: colors.actionDeep,
-      fontWeight: "600",
+      fontWeight: tokens.fontWeight.semiBold,
     },
     isbnFeedbackTextInfo: {
       color: colors.secondaryText,
@@ -280,31 +516,152 @@ function createStyles(colors: ColorPalette) {
     isbnFeedbackTextError: {
       color: colors.error,
     },
+    dividerContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[12],
+      marginVertical: tokens.spacing[4],
+    },
+    dividerLine: {
+      flex: 1,
+      height: 1,
+      backgroundColor: colors.m3.outlineVariant,
+    },
     dividerText: {
       ...tokens.typography.labelMedium,
       color: colors.secondaryText,
       textAlign: "center",
     },
+    webDividerContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[16],
+      marginVertical: tokens.spacing[4],
+    },
+    webDividerLine: {
+      flex: 1,
+      height: 1,
+      backgroundColor: colors.m3.outlineVariant,
+    },
+    webDividerText: {
+      ...tokens.typography.labelMedium,
+      color: colors.secondaryText,
+    },
     chipRow: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[8] },
-    photoRow: { flexDirection: "row", gap: tokens.spacing[12], alignItems: "flex-start" },
-    photoTexts: { flex: 1, gap: tokens.spacing[12] },
+    webModalitiesGrid: {
+      flexDirection: "row",
+      gap: tokens.spacing[12],
+      width: "100%",
+    },
+    webModalityCard: {
+      flex: 1,
+      padding: tokens.spacing[16],
+      borderRadius: tokens.radius.large,
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderWidth: 1.5,
+      borderColor: colors.m3.outlineVariant,
+      gap: tokens.spacing[8],
+    },
+    webModalityCardSelected: {
+      borderColor: colors.action,
+      backgroundColor: colors.m3.secondaryContainer,
+    },
+    webModalityHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+    },
+    webModalityIconBadge: {
+      width: 32,
+      height: 32,
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.m3.surfaceContainerHigh,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    webModalityIconBadgeSelected: {
+      backgroundColor: colors.soft,
+    },
+    webModalityRadio: {
+      width: 18,
+      height: 18,
+      borderRadius: tokens.radius.full,
+      borderWidth: 2,
+      borderColor: colors.m3.outlineVariant,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    webModalityRadioSelected: {
+      borderColor: colors.action,
+    },
+    webModalityRadioInner: {
+      width: 10,
+      height: 10,
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.action,
+    },
+    webModalityTitle: {
+      ...tokens.typography.titleMedium,
+      fontWeight: tokens.fontWeight.semiBold,
+      color: colors.text,
+    },
+    webModalityTitleSelected: {
+      color: colors.actionDeep,
+    },
+    webModalityDesc: {
+      ...tokens.typography.footnote,
+      color: colors.secondaryText,
+      lineHeight: 16,
+    },
+    photoRow: { flexDirection: "row", gap: tokens.spacing[12], alignItems: "center" },
+    photoCard: {
+      flexDirection: "row",
+      gap: tokens.spacing[12],
+      alignItems: "center",
+      padding: tokens.spacing[12],
+      borderRadius: tokens.radius.medium,
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+    },
+    fieldsContainer: {
+      gap: tokens.spacing[16],
+    },
+    nextStepsNote: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[8],
+      paddingVertical: tokens.spacing[2],
+    },
+    webPhotoCard: {
+      flexDirection: "row",
+      gap: tokens.spacing[16],
+      alignItems: "center",
+      padding: tokens.spacing[14],
+      borderRadius: tokens.radius.large,
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+    },
+    photoTexts: { flex: 1, gap: tokens.spacing[4] },
+    webFieldsRow: {
+      flexDirection: "row",
+      gap: tokens.spacing[16],
+      alignItems: "flex-start",
+    },
+    webAuthorCol: { flex: 1.6 },
+    webPriceCol: { flex: 1 },
     sectionLabel: {
-      fontSize: tokens.typography.titleMedium.fontSize,
-      lineHeight: tokens.typography.titleMedium.lineHeight,
-      fontFamily: tokens.typography.titleMedium.fontFamily,
-      fontWeight: tokens.typography.titleMedium.fontWeight,
+      ...tokens.typography.titleMedium,
       color: colors.text,
     },
     hint: {
-      fontSize: tokens.typography.bodyMedium.fontSize,
-      lineHeight: tokens.typography.bodyMedium.lineHeight,
-      fontFamily: tokens.typography.bodyMedium.fontFamily,
+      ...tokens.typography.bodyMedium,
       color: colors.secondaryText,
     },
     errorText: {
+      ...tokens.typography.bodyMedium,
       color: colors.error,
-      fontSize: tokens.typography.bodyMedium.fontSize,
-      fontFamily: tokens.typography.bodyMedium.fontFamily,
     },
   });
 }

@@ -61,6 +61,6 @@ export const FAQ_ITEMS: readonly FaqItem[] = [
     category: "suporte",
     question: "Como falar com a equipe do IpêBook?",
     answer:
-      "Você pode entrar em contato conosco pelo e-mail contato@ipebook.com.br ou pessoalmente com a coordenação comunitária do projeto no IFPI Piripiri.",
+      "Você pode entrar em contato conosco pelo e-mail ipebook738@gmail.com ou pessoalmente com a coordenação comunitária do projeto no IFPI Piripiri.",
   },
 ];

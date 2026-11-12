@@ -14,7 +14,7 @@ O pipeline é acionado automaticamente em:
 - Todo `push` nas branches `main` e `develop`.
 - Todo `pull_request` apontando para `main` e `develop`.
 
-As etapas executadas no runner `ubuntu-latest` (Node.js 24) são:
+As etapas executadas no runner `ubuntu-latest` (Node.js 22) são:
 1. `npm ci` para instalação reprodutível baseada no `package-lock.json`.
 2. Verificação de tipos TypeScript (`npm run typecheck`).
 3. Verificação de barreiras arquiteturais entre camadas (`npm run check:architecture`).

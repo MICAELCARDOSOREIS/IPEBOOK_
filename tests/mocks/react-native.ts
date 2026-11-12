@@ -15,6 +15,8 @@ export const Pressable = React.forwardRef<any, any>((props, ref) =>
     "Pressable",
     {
       ...props,
+      // Como no React Native, estilo em função é resolvido com o estado atual (sem toque).
+      style: typeof props.style === "function" ? props.style({ pressed: false }) : props.style,
       accessible: props.accessible ?? true,
       ref,
       accessibilityRole: props.accessibilityRole ?? "button",
@@ -83,7 +85,7 @@ export const SectionList = React.forwardRef<any, any>((props: any, ref: any) => 
   }
   return React.createElement(
     View,
-    { ref },
+    { ref, testID: props.testID, onRefresh: props.onRefresh, refreshing: props.refreshing },
     sections.map((section: any, sectionIndex: number) =>
       React.createElement(
         React.Fragment,
@@ -115,6 +117,11 @@ export const Modal = React.forwardRef<any, any>((props, ref) => {
 });
 Modal.displayName = "Modal";
 
+export const KeyboardAvoidingView = React.forwardRef<any, any>((props, ref) =>
+  React.createElement("KeyboardAvoidingView", { ...props, ref }, props.children)
+);
+KeyboardAvoidingView.displayName = "KeyboardAvoidingView";
+
 export const StyleSheet = {
   create: <T extends Record<string, any>>(styles: T): T => styles,
   flatten: (style: any): any => {
@@ -140,8 +147,36 @@ export const StyleSheet = {
   },
 };
 
+/** Volte físico do Android: as telas registram um listener; aqui o evento nunca é disparado. */
+export const BackHandler = {
+  addEventListener: (_type: string, _handler: () => boolean) => ({ remove: () => {} }),
+};
+
+type KeyboardListener = (event: { endCoordinates?: { height: number; screenY: number } } | undefined) => void;
+const keyboardListeners = new Map<string, Set<KeyboardListener>>();
+
+/** Emula o teclado nativo: registra listeners e permite disparar eventos nos testes. */
+export const Keyboard = {
+  addListener: (type: string, handler: KeyboardListener) => {
+    const set = keyboardListeners.get(type) ?? new Set<KeyboardListener>();
+    set.add(handler);
+    keyboardListeners.set(type, set);
+    return { remove: () => set.delete(handler) };
+  },
+  dismiss: () => {},
+};
+
+/** Dispara um evento de teclado para os listeners registrados (uso exclusivo em testes). */
+export function __emitKeyboardEvent(type: string, height: number | undefined, screenY = 0) {
+  const event = height === undefined ? undefined : { endCoordinates: { height, screenY } };
+  for (const handler of keyboardListeners.get(type) ?? []) handler(event);
+}
+
+export const useWindowDimensions = () => ({ width: 360, height: 800, scale: 1, fontScale: 1 });
+
 export const AccessibilityInfo = {
   isScreenReaderEnabled: () => Promise.resolve(false),
+  isReduceMotionEnabled: () => Promise.resolve(false),
   addEventListener: () => ({ remove: () => {} }),
   announceForAccessibility: (_message: string) => {},
 };
@@ -150,6 +185,8 @@ export const Platform = {
   OS: "ios",
   select: (obj: any) => obj.ios ?? obj.default,
 };
+
+export const NativeModules: Record<string, any> = {};
 
 export let mockColorScheme: "light" | "dark" | null = "light";
 export const useColorScheme = () => mockColorScheme;
@@ -170,18 +207,37 @@ class MockAnimatedValue {
   setValue(v: number) {
     this.value = v;
   }
+  __getValue() {
+    return this.value;
+  }
   interpolate() {
     return this;
   }
+  addListener() {
+    return "mock-listener";
+  }
+  removeListener() {}
+  stopAnimation() {}
 }
 
 export const Animated = {
   Value: MockAnimatedValue,
-  timing: (_value: any, _config: any) => ({
+  // Em teste, o timing aplica o alvo de imediato: a animação é síncrona e previsível.
+  timing: (value: any, config: any) => ({
     start: (cb?: (result: { finished: boolean }) => void) => {
+      value?.setValue?.(config?.toValue ?? 0);
       if (cb) cb({ finished: true });
     },
     stop: () => {},
+    stopAnimation: () => {},
+  }),
+  spring: (value: any, config: any) => ({
+    start: (cb?: (result: { finished: boolean }) => void) => {
+      value?.setValue?.(config?.toValue ?? 0);
+      if (cb) cb({ finished: true });
+    },
+    stop: () => {},
+    stopAnimation: () => {},
   }),
   loop: (_anim: any) => ({
     start: (cb?: (result: { finished: boolean }) => void) => {
@@ -200,12 +256,31 @@ export const Animated = {
   ),
 };
 
+export const AppState = {
+  currentState: "active",
+  addEventListener: (_type: string, _listener: (status: string) => void) => ({ remove: () => {} }),
+};
+
+export const PanResponder = {
+  create: (_config: unknown) => ({ panHandlers: {} }),
+};
+
+export const Switch = React.forwardRef<any, any>((props, ref) =>
+  React.createElement("Switch", {
+    ...props,
+    ref,
+    accessibilityRole: props.accessibilityRole ?? "switch",
+  })
+);
+Switch.displayName = "Switch";
+
 export default {
   View,
   Text,
   Image,
   ScrollView,
   Modal,
+  KeyboardAvoidingView,
   Pressable,
   ActivityIndicator,
   TextInput,
@@ -213,8 +288,14 @@ export default {
   SectionList,
   StyleSheet,
   AccessibilityInfo,
+  BackHandler,
+  Keyboard,
   Platform,
+  NativeModules,
   Share,
   Animated,
+  PanResponder,
+  AppState,
+  Switch,
   useColorScheme,
 };

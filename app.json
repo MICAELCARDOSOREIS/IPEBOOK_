@@ -4,37 +4,112 @@
     "slug": "ipebook",
     "owner": "ipebook",
     "scheme": "ipebook",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "orientation": "portrait",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
+    "backgroundColor": "#FCFAF5",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "icon": "./assets/icon.png",
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#F6F1E8"
+      "backgroundColor": "#FCFAF5"
     },
     "android": {
+      "package": "com.ipebook.app",
+      "googleServicesFile": "./google-services.json",
+      "versionCode": 1,
       "adaptiveIcon": {
         "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundColor": "#F6F1E8",
+        "backgroundColor": "#FCEFCB",
         "monochromeImage": "./assets/android-icon-monochrome.png"
-      }
+      },
+      "softwareKeyboardLayoutMode": "resize",
+      "permissions": [
+        "android.permission.INTERNET",
+        "android.permission.CAMERA"
+      ]
+    },
+    "ios": {
+      "bundleIdentifier": "com.ipebook.app",
+      "supportsTablet": false
     },
     "web": {
       "bundler": "metro",
       "output": "static",
       "favicon": "./assets/favicon.png",
-      "themeColor": "#0D47A1",
-      "backgroundColor": "#F6F1E8",
+      "themeColor": "#2B6334",
+      "backgroundColor": "#FCFAF5",
       "description": "Marketplace comunitário de livros em Piripiri, PI (venda, troca e doação)"
     },
     "plugins": [
       "expo-router",
       "expo-status-bar",
-      "expo-font"
+      "expo-font",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "O IpêBook usa a câmera para ler o ISBN ao anunciar um livro e para tirar a foto do seu perfil.",
+          "recordAudioAndroid": false
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notificacao-icone.png",
+          "color": "#2B6334",
+          "defaultChannel": "updates"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "O IpêBook acessa suas fotos só quando você escolhe uma imagem para o seu perfil.",
+          "cameraPermission": "O IpêBook usa a câmera para ler o ISBN ao anunciar um livro e para tirar a foto do seu perfil.",
+          "microphonePermission": false
+        }
+      ],
+      "expo-web-browser",
+      [
+        "@sentry/react-native",
+        {
+          "organization": "usermicael",
+          "project": "ipebook",
+          "url": "https://sentry.io/"
+        }
+      ],
+      "@react-native-google-signin/google-signin",
+      [
+        "@sentry/react-native/expo",
+        {
+          "url": "https://sentry.io/",
+          "project": "ipebook",
+          "organization": "usermicael"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "asyncRoutes": {
+          "web": true
+        }
+      },
+      "eas": {
+        "projectId": "7593e188-168b-4282-87b9-74afae861981"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/7593e188-168b-4282-87b9-74afae861981",
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 0
     }
   }
 }

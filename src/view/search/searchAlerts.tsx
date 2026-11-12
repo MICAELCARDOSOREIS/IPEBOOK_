@@ -1,17 +1,24 @@
 import { useId, useMemo } from "react";
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { ScreenContainer } from "@/view/components/ScreenContainer";
 import { AppIcon } from "@/view/components/AppIcon";
+import { ErrorState } from "@/view/components/ErrorState";
 import { FilledButton } from "@/view/components/FilledButton";
 import { IconBadge } from "@/view/components/IconBadge";
+import { LoadingState } from "@/view/components/LoadingState";
+import { OfflineState } from "@/view/components/OfflineState";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { Tag } from "@/view/components/Tag";
 import { ALERT_CITY, ALERT_MODALITY_SUMMARY } from "@/view/search/alertLabels";
 import { TopAppBar } from "@/view/components/TopAppBar";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
-import { useSearchAlertsViewModel } from "@/viewmodel/useSearchAlertsViewModel";
-
+import { makeNetworkStatus, makeSearchAlertsViewModel } from "@/di/container";
+import { WEB_GUTTER, WEB_MAX_WIDTH, useWebColumns } from "@/view/webLayout";
+import { withPress } from "@/view/pressFeedback";
+import { useGuardedPress } from "@/view/useGuardedPress";
+import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 export type SearchAlertsProps = {
   userId: string | null;
   initialQuery?: string;
@@ -28,11 +35,21 @@ export type SearchAlertsProps = {
  * `02.09`–`02.13` (`254:4285`–`254:4728` / Web `370:15901`–`370:16061`).
  */
 export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogin, onSearchBooks, onManageAlert }: SearchAlertsProps) {
-  const [state, actions] = useSearchAlertsViewModel(userId, initialQuery);
+  const guardedBack = useGuardedPress(onBack);
+  const guardedLogin = useGuardedPress(onLogin);
+  const guardedSearchBooks = useGuardedPress(onSearchBooks);
+  const guardedManageAlert = useGuardedPress(onManageAlert);
+  const [state, actions] = makeSearchAlertsViewModel(userId, initialQuery);
+  const { isOnline } = makeNetworkStatus();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  // Web larga: coluna mais ampla e dois alertas por linha.
+  const wide = useIsWideWeb();
+  const listColumns = useWebColumns(2, 3);
   const errorId = useId();
-  const hasError = Boolean(state.error);
+  const loadError = state.loadError ?? null;
+  const formError = loadError ? null : state.error;
+  const hasError = Boolean(formError);
   /**
    * Sem alertas, `02.08` dispensa a manchete da lista cheia. O formulário permanece porque o alerta
    * também nasce aqui (Spec 016), além de `02.06`.
@@ -40,23 +57,58 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
   const showListChrome = state.loading || state.alerts.length > 0;
 
   return (
-    <SafeAreaView style={styles.page}>
-      <TopAppBar title="Meus alertas" onBack={onBack} />
+    <ScreenContainer
+      maxWidth={wide ? WIDE_CONTENT_MAX_WIDTH : 720}
+      scroll={false}
+      paddingHorizontal={0}
+      paddingTop={0}
+      paddingBottom={0}
+      header={
+        wide ? (
+          <View style={styles.wideHeader}>
+            <View style={styles.wideHeaderLeft}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Voltar"
+                onPress={guardedBack}
+                style={withPress(styles.wideBackButton)}
+              >
+                <AppIcon name="back" size={20} color={colors.m3.onSurface} />
+              </Pressable>
+              <View>
+                <Text accessibilityRole="header" style={styles.wideTitle}>
+                  Meus alertas
+                </Text>
+                <Text style={styles.wideSubtitle}>
+                  Avisamos você quando novos livros chegarem em Piripiri
+                </Text>
+              </View>
+            </View>
+          </View>
+        ) : (
+          <TopAppBar
+            title="Meus alertas"
+            onBack={guardedBack}
+            contentMaxWidth={undefined}
+          />
+        )
+      }
+    >
       {!userId ? (
-        <View style={styles.centered}>
-          <IconBadge icon="bell" tone="action" />
+        <View style={[styles.centered, wide && styles.centeredWide]}>
+          <IconBadge icon="bell" tone="action" size="large" />
           <Text accessibilityRole="header" style={styles.emptyTitle}>
             Entre para criar alertas
           </Text>
           <Text style={styles.bodyCenter}>
             Receba um aviso quando alguém anunciar o livro que você procura em Piripiri.
           </Text>
-          <Pressable accessibilityRole="button" onPress={onLogin} style={styles.loginButton}>
+          <Pressable accessibilityRole="button" accessibilityLabel="Entrar" onPress={guardedLogin} style={withPress(styles.loginButton)}>
             <Text style={styles.link}>Entrar</Text>
           </Pressable>
         </View>
       ) : (
-        <View style={styles.content}>
+        <View style={[styles.content, wide && styles.contentWide]}>
           {showListChrome ? (
             <View style={styles.heroHeader}>
               <Text style={styles.heroTitle}>O próximo livro pode chegar.</Text>
@@ -76,7 +128,7 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
               accessibilityLabel="Termo do alerta"
               value={state.query}
               onChangeText={actions.setQuery}
-              accessibilityHint={hasError ? state.error ?? undefined : undefined}
+              accessibilityHint={hasError ? formError ?? undefined : undefined}
               aria-describedby={hasError ? errorId : undefined}
               placeholder="Título ou autor"
               placeholderTextColor={colors.secondaryText}
@@ -85,7 +137,7 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
             />
             {hasError ? (
               <Text nativeID={errorId} accessibilityRole="alert" style={styles.error}>
-                {state.error}
+                {formError}
               </Text>
             ) : null}
             {state.message ? (
@@ -100,31 +152,45 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
           </View>
 
           {state.loading ? (
-            <ActivityIndicator color={colors.action} accessibilityLabel="Carregando alertas" />
+            <LoadingState label="Carregando alertas" />
+          ) : loadError ? (
+            isOnline ? (
+              <ErrorState message={loadError} onRetry={() => void actions.reload()} />
+            ) : (
+              <OfflineState onRetry={() => void actions.reload()} />
+            )
           ) : (
             <FlatList
+              key={wide ? `colunas-${listColumns}` : "uma-coluna"}
+              numColumns={wide ? listColumns : 1}
+              columnWrapperStyle={wide ? { gap: tokens.spacing[12] } : undefined}
+              style={styles.flexOne}
               data={state.alerts}
               keyExtractor={(item) => item.id}
-              contentContainerStyle={styles.listContent}
+              contentContainerStyle={[
+                styles.listContent,
+                { paddingBottom: scrollBottomPadding.withoutBottomBar },
+              ]}
+              {...standardVerticalScrollProps}
               ListEmptyComponent={
-                <View style={styles.emptyBox}>
+                <View testID="search-alerts-empty-state" style={[styles.emptyBox, wide && styles.emptyBoxWide]}>
                   <Text accessibilityRole="header" style={styles.emptyHeadline}>
                     Nenhum alerta criado
                   </Text>
-                  <Text style={styles.body}>
+                  <Text style={[styles.body, wide && { textAlign: "center" }]}>
                     Busque um título ou tema e ative um alerta para receber novidades.
                   </Text>
                   {/* `02.13`: a ação vem logo depois do texto, não presa ao rodapé (Spec 043, RN-11). */}
-                  {onSearchBooks ? <FilledButton label="Procurar um livro" onPress={onSearchBooks} /> : null}
+                  {onSearchBooks ? <FilledButton label="Procurar um livro" onPress={guardedSearchBooks} /> : null}
                 </View>
               }
               renderItem={({ item }) => (
-                <View style={styles.alertItem}>
+                <View style={[styles.alertItem, wide && { flex: 1, minWidth: 0 }]}>
                   <Pressable
                     accessibilityRole="button"
                     accessibilityLabel={`Gerenciar alerta ${item.query}`}
-                    onPress={() => onManageAlert?.(item.id)}
-                    style={styles.row}
+                    onPress={() => guardedManageAlert(item.id)}
+                    style={withPress(styles.row)}
                   >
                     <AppIcon name="bell" size={24} color={colors.text} />
                     <View style={styles.rowText}>
@@ -147,25 +213,65 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
           )}
           {onSearchBooks && showListChrome ? (
             <View style={styles.searchAction}>
-              <OutlinedButton label="Procurar outro livro" onPress={onSearchBooks} />
+              <OutlinedButton label="Procurar outro livro" onPress={guardedSearchBooks} />
             </View>
           ) : null}
         </View>
       )}
-    </SafeAreaView>
+    </ScreenContainer>
   );
 }
 
+const WIDE_CONTENT_MAX_WIDTH = WEB_MAX_WIDTH;
+
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
-  page: { flex: 1, backgroundColor: colors.background },
+  page: { flex: 1, backgroundColor: colors.background, minHeight: 0 },
+  flexOne: { flex: 1, minHeight: 0 },
+  wideHeader: {
+    width: "100%",
+    maxWidth: WIDE_CONTENT_MAX_WIDTH,
+    alignSelf: "center",
+    paddingHorizontal: WEB_GUTTER,
+    paddingTop: tokens.spacing[24],
+    paddingBottom: tokens.spacing[12],
+  },
+  wideHeaderLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: tokens.spacing[16],
+  },
+  wideBackButton: {
+    width: tokens.spacing[40],
+    height: tokens.spacing[40],
+    borderRadius: tokens.radius.full,
+    backgroundColor: colors.m3.surfaceContainerHigh,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: colors.m3.outlineVariant,
+  },
+  wideTitle: {
+    ...tokens.typography.brandLargeTitle,
+    color: colors.brandBrown,
+  },
+  wideSubtitle: {
+    ...tokens.typography.bodyMedium,
+    color: colors.m3.onSurfaceVariant,
+    marginTop: tokens.spacing[2],
+  },
   content: {
     flex: 1,
+    minHeight: 0,
     width: "100%",
-    maxWidth: 720,
-    alignSelf: "center",
     padding: tokens.spacing[24],
     gap: tokens.spacing[16],
+  },
+  contentWide: {
+    maxWidth: WEB_MAX_WIDTH,
+    alignSelf: "center",
+    paddingHorizontal: WEB_GUTTER,
+    minHeight: 0,
   },
   centered: {
     flex: 1,
@@ -177,22 +283,31 @@ function createStyles(colors: ColorPalette) {
     padding: tokens.spacing[24],
     gap: tokens.spacing[12],
   },
+  centeredWide: {
+    backgroundColor: colors.m3.surfaceContainerLow,
+    borderRadius: tokens.radius.card,
+    borderWidth: 1,
+    borderColor: colors.m3.outlineVariant,
+    padding: tokens.spacing[40],
+    marginTop: tokens.spacing[40],
+  },
   heroHeader: {
     gap: tokens.spacing[4],
+    maxWidth: 640,
   },
   heroTitle: {
-    fontSize: tokens.typography.displayLarge.fontSize,
-    lineHeight: tokens.typography.displayLarge.lineHeight,
-    fontFamily: tokens.typography.displayLarge.fontFamily,
+    ...tokens.typography.displayLarge,
     color: colors.text,
   },
   formCard: {
     backgroundColor: colors.m3.surfaceContainerLow,
-    borderRadius: tokens.radius.medium,
+    borderRadius: tokens.radius.card,
     borderWidth: 1,
     borderColor: colors.m3.outlineVariant,
-    padding: tokens.spacing[16],
+    padding: tokens.spacing[20],
     gap: tokens.spacing[12],
+    maxWidth: 640,
+    width: "100%",
   },
   formTitle: {
     ...tokens.typography.titleMedium,
@@ -235,7 +350,7 @@ function createStyles(colors: ColorPalette) {
   successMessage: {
     ...tokens.typography.bodyMedium,
     color: colors.success,
-    fontWeight: "600",
+    fontWeight: tokens.fontWeight.semiBold,
   },
   searchAction: {
     paddingHorizontal: tokens.spacing[16],
@@ -244,7 +359,7 @@ function createStyles(colors: ColorPalette) {
   link: {
     ...tokens.typography.bodyMedium,
     color: colors.action,
-    fontWeight: "600",
+    fontWeight: tokens.fontWeight.semiBold,
   },
   loginButton: {
     minHeight: tokens.accessibility.touchTarget,
@@ -273,6 +388,18 @@ function createStyles(colors: ColorPalette) {
     paddingVertical: tokens.spacing[8],
     gap: tokens.spacing[8],
   },
+  emptyBoxWide: {
+    maxWidth: 640,
+    width: "100%",
+    alignSelf: "center",
+    backgroundColor: colors.m3.surfaceContainerLow,
+    borderRadius: tokens.radius.card,
+    borderWidth: 1,
+    borderColor: colors.m3.outlineVariant,
+    padding: tokens.spacing[32],
+    marginTop: tokens.spacing[16],
+    alignItems: "center",
+  },
   alertItem: {
     gap: tokens.spacing[12],
   },
@@ -290,9 +417,7 @@ function createStyles(colors: ColorPalette) {
     gap: tokens.spacing[4],
   },
   activeAlertTitle: {
-    fontSize: tokens.typography.titleMedium.fontSize,
-    lineHeight: tokens.typography.titleMedium.lineHeight,
-    fontFamily: tokens.typography.titleMedium.fontFamily,
+    ...tokens.typography.titleMedium,
     color: colors.text,
   },
   rowText: {

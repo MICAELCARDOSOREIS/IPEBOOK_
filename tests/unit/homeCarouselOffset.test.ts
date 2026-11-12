@@ -7,7 +7,7 @@ import { carouselOffsetFor } from "@/view/home";
  * clique em densidade 3x). O passo correto é largura + margem.
  */
 describe("deslocamento do carrossel da Home", () => {
-  const ITEM_WIDTH = 152;
+  const ITEM_WIDTH = 168;
   const ITEM_GAP = 12;
   const STRIDE = ITEM_WIDTH + ITEM_GAP;
 

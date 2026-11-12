@@ -1,5 +1,6 @@
 import type { IBookDataSource, ListBooksOptions } from "@/model/datasources/iBookDataSource";
 import type { Book } from "@/model/entities/book";
+import { toDomainError } from "@/infra/supabaseErrors";
 import { DataSourceError } from "@/model/errors";
 import type { SupabaseAppClient } from "@/infra/supabaseClient";
 
@@ -17,12 +18,20 @@ type BookRow = {
   neighborhood?: string | null;
   condition?: Book["condition"] | null;
   description?: string | null;
+  synopsis?: string | null;
+  publisher?: string | null;
+  page_count?: number | null;
+  publication_year?: number | null;
   photo_url?: string | null;
   photos?: string[] | null;
+  draft_step?: number | null;
+  is_box?: boolean | null;
+  box_volumes_count?: number | null;
+  created_at?: string | null;
 };
 
-const BOOK_COLUMNS =
-  "id,title,author,category,owner_id,modality,price,status,city,state,neighborhood,condition,description,photo_url,photos";
+export const BOOK_COLUMNS =
+  "id,title,author,category,owner_id,modality,price,status,city,state,neighborhood,condition,description,synopsis,publisher,page_count,publication_year,photo_url,photos,draft_step,is_box,box_volumes_count,created_at";
 
 function mapBook(row: BookRow): Book {
   return {
@@ -39,8 +48,16 @@ function mapBook(row: BookRow): Book {
     ...(row.neighborhood ? { neighborhood: row.neighborhood } : {}),
     ...(row.condition ? { condition: row.condition } : {}),
     ...(row.description ? { description: row.description } : {}),
+    ...(row.synopsis ? { synopsis: row.synopsis } : {}),
+    ...(row.publisher ? { publisher: row.publisher } : {}),
+    ...(row.page_count ? { pageCount: Number(row.page_count) } : {}),
+    ...(row.publication_year ? { publicationYear: Number(row.publication_year) } : {}),
     ...(row.photo_url ? { photoUrl: row.photo_url } : {}),
     ...(row.photos && row.photos.length > 0 ? { photos: row.photos } : {}),
+    ...(row.draft_step === null || row.draft_step === undefined ? {} : { draftStep: Number(row.draft_step) }),
+    ...(row.is_box ? { isBox: true } : {}),
+    ...(row.box_volumes_count ? { boxVolumesCount: Number(row.box_volumes_count) } : {}),
+    ...(row.created_at ? { createdAt: row.created_at } : {}),
   };
 }
 
@@ -52,15 +69,35 @@ export class SupabaseBookDataSource implements IBookDataSource {
       .from("v2_books")
       .select(BOOK_COLUMNS)
       .neq("status", "paused")
-      .order("created_at", { ascending: false });
+      .neq("status", "draft")
+      // Entregue (Spec 095): a negociação foi concluída e o livro saiu de circulação.
+      .neq("status", "delivered");
+
+    if (
+      options?.neighborhood &&
+      options.neighborhood !== "all" &&
+      options.neighborhood !== "Todos os bairros (Piripiri)"
+    ) {
+      query = query.eq("neighborhood", options.neighborhood);
+    }
+
+    if (options?.modality) {
+      query = query.eq("modality", options.modality);
+    }
+
+    if (options?.onlyBoxes) {
+      query = query.eq("is_box", true);
+    }
+
+    let orderedQuery = query.order("created_at", { ascending: false });
 
     if (options?.limit !== undefined || options?.offset !== undefined) {
       const offset = Math.max(0, options?.offset ?? 0);
       const limit = Math.max(1, options?.limit ?? 20);
-      query = query.range(offset, offset + limit - 1);
+      orderedQuery = orderedQuery.range(offset, offset + limit - 1);
     }
 
-    const { data, error } = await query;
+    const { data, error } = await orderedQuery;
     if (error) throw new DataSourceError("Não foi possível carregar os livros.");
     return (data as BookRow[]).map(mapBook);
   }
@@ -79,10 +116,17 @@ export class SupabaseBookDataSource implements IBookDataSource {
       neighborhood: book.neighborhood ?? null,
       condition: book.condition ?? null,
       description: book.description ?? null,
+      synopsis: book.synopsis ?? null,
+      publisher: book.publisher ?? null,
+      page_count: book.pageCount ?? null,
+      publication_year: book.publicationYear ?? null,
       photo_url: book.photoUrl ?? null,
       photos: book.photos ? Array.from(book.photos) : [],
+      draft_step: book.draftStep ?? null,
+      is_box: Boolean(book.isBox),
+      box_volumes_count: book.boxVolumesCount ?? null,
     }).select(BOOK_COLUMNS).single();
-    if (error || !data) throw new DataSourceError("Não foi possível cadastrar o anúncio.");
+    if (error || !data) throw toDomainError(error, "Não foi possível cadastrar o anúncio.");
     return mapBook(data as BookRow);
   }
 
@@ -105,8 +149,20 @@ export class SupabaseBookDataSource implements IBookDataSource {
     if (partial.neighborhood !== undefined) patch.neighborhood = partial.neighborhood ?? null;
     if (partial.condition !== undefined) patch.condition = partial.condition ?? null;
     if (partial.description !== undefined) patch.description = partial.description ?? null;
+    if (partial.synopsis !== undefined) patch.synopsis = partial.synopsis ?? null;
+    if (partial.publisher !== undefined) patch.publisher = partial.publisher ?? null;
+    if (partial.pageCount !== undefined) patch.page_count = partial.pageCount ?? null;
+    if (partial.publicationYear !== undefined) patch.publication_year = partial.publicationYear ?? null;
     if (partial.photoUrl !== undefined) patch.photo_url = partial.photoUrl ?? null;
     if (partial.photos !== undefined) patch.photos = partial.photos ? Array.from(partial.photos) : [];
+    if (partial.draftStep !== undefined) patch.draft_step = partial.draftStep ?? null;
+    if (partial.isBox !== undefined) {
+      patch.is_box = Boolean(partial.isBox);
+      if (!partial.isBox) {
+        patch.box_volumes_count = null;
+      }
+    }
+    if (partial.boxVolumesCount !== undefined) patch.box_volumes_count = partial.boxVolumesCount ?? null;
 
     const { data, error } = await this.client
       .from("v2_books")
