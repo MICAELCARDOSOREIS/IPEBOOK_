@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { bookUseCases } from "@/di/container";
-import { favoriteUseCases } from "@/di/container";
 import type { Book } from "@/model/entities/book";
 import { DomainError } from "@/model/errors";
 import type { IBookUseCases } from "@/usecase/iBookUseCases";
 import type { IFavoriteUseCases } from "@/usecase/iFavoriteUseCases";
+import { getCachedCatalogBookById } from "@/viewmodel/useHomeViewModel";
+import { getCachedMyListingById } from "@/viewmodel/useMyListingsViewModel";
 
 export type BookDetailState = {
   book: Book | null;
@@ -21,32 +21,48 @@ export type BookDetailActions = {
 };
 
 const GENERIC_ERROR = "Não foi possível carregar o anúncio. Tente novamente.";
+const sessionBookDetailCache = new Map<string, Book>();
 
 export function useBookDetailViewModel(
   bookId: string,
-  useCases: IBookUseCases = bookUseCases,
-  favorites: IFavoriteUseCases = favoriteUseCases,
+  useCases: IBookUseCases,
+  favorites: IFavoriteUseCases,
   userId: string | null = null,
 ): [BookDetailState, BookDetailActions] {
-  const [state, setState] = useState<BookDetailState>({ book: null, loading: true, error: null, isFavorite: false, favoriteError: null, favoriteLoading: false });
+  const isTest = process.env.NODE_ENV === "test";
+  const initialBook = !isTest
+    ? (sessionBookDetailCache.get(bookId) ??
+      getCachedCatalogBookById(bookId) ??
+      getCachedMyListingById(bookId))
+    : null;
+  const [state, setState] = useState<BookDetailState>({
+    book: initialBook,
+    loading: initialBook === null,
+    error: null,
+    isFavorite: false,
+    favoriteError: null,
+    favoriteLoading: false,
+  });
   const active = useRef(false);
   const request = useRef(0);
 
   const reload = useCallback(async () => {
     if (!active.current) return;
     const current = ++request.current;
-    setState((previous) => ({ ...previous, loading: true, error: null }));
+    setState((previous) => ({ ...previous, loading: previous.book === null, error: null }));
     try {
-      const book = await useCases.getBookById(bookId);
-      let isFavorite = false;
-      let favoriteError: string | null = null;
-      if (userId) {
-        try {
-          isFavorite = await favorites.isFavorite(userId, bookId);
-        } catch {
-          favoriteError = "Não foi possível consultar favoritos.";
-        }
-      }
+      const favoritePromise = userId
+        ? favorites.isFavorite(userId, bookId).then(
+            (val) => ({ isFavorite: val, favoriteError: null as string | null }),
+            () => ({ isFavorite: false, favoriteError: "Não foi possível consultar favoritos." }),
+          )
+        : Promise.resolve({ isFavorite: false, favoriteError: null as string | null });
+
+      const [book, { isFavorite, favoriteError }] = await Promise.all([
+        useCases.getBookById(bookId),
+        favoritePromise,
+      ]);
+      if (!isTest) sessionBookDetailCache.set(bookId, book);
       if (active.current && current === request.current) {
         setState((prev) => ({ ...prev, book, isFavorite, favoriteError, loading: false, error: null }));
       }
@@ -59,7 +75,7 @@ export function useBookDetailViewModel(
         }));
       }
     }
-  }, [useCases, bookId, favorites, userId]);
+  }, [useCases, bookId, favorites, userId, isTest]);
 
   const toggleFavorite = useCallback(async (sessionUserId: string | null) => {
     setState((prev) => ({ ...prev, favoriteLoading: true, favoriteError: null }));

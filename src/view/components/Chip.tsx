@@ -1,7 +1,10 @@
 import { useMemo } from "react";
-import { Pressable, StyleSheet, Text } from "react-native";
+import { Animated, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
+import { contrastRatio } from "@/view/theme/contrastRatio";
+import { AppIcon } from "@/view/components/AppIcon";
+import { useExpressivePress } from "@/view/useExpressivePress";
 
 export type ChipProps = {
   label: string;
@@ -9,47 +12,95 @@ export type ChipProps = {
   onPress: () => void;
   disabled?: boolean;
   accessibilityLabel?: string;
+  /** `compact` (32 dp) nas fileiras da Home e do Explorar; `regular` (40 dp) nos grupos de escolha de tela cheia (`02.03`, `04.05`). */
+  size?: "compact" | "regular";
+  /** Cor própria da opção (ex.: modalidade): fundo e texto quando selecionada; um ponto da cor quando não. */
+  tone?: { background: string; text: string };
 };
 
-/** Chip de filtro do design system (chip.md): pílula de 32 px, check quando selecionado. */
-export function Chip({ label, selected, onPress, disabled = false, accessibilityLabel }: ChipProps) {
+/** Chip de filtro M3 Expressive (chip.md): alterna curvatura entre 8 dp (inativo) e 16 dp (selecionado/pressionado). */
+export function Chip({ label, selected, onPress, disabled = false, accessibilityLabel, size = "compact", tone }: ChipProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const { scale, isPressed, onPressIn, onPressOut } = useExpressivePress({ disabled, pressedScale: 0.96 });
+  const dotColor = useMemo(() => {
+    if (!tone) return undefined;
+    const surface = colors.m3.surfaceContainerLowest;
+    return contrastRatio(tone.background, surface) >= contrastRatio(tone.text, surface)
+      ? tone.background
+      : tone.text;
+  }, [tone, colors.m3.surfaceContainerLowest]);
 
   return (
-    <Pressable
-      accessibilityRole="checkbox"
-      accessibilityLabel={accessibilityLabel ?? label}
-      accessibilityState={{ checked: selected, disabled }}
-      disabled={disabled}
-      hitSlop={8}
-      onPress={onPress}
-      style={[
-        styles.chip,
-        selected ? styles.selected : styles.unselected,
-        disabled && styles.disabled,
-      ]}
-    >
-      <Text style={[styles.label, selected && styles.labelSelected, disabled && styles.labelDisabled]}>
-        {selected ? `✓ ${label}` : label}
-      </Text>
-    </Pressable>
+    <Animated.View style={[styles.container, { transform: [{ scale }] }]}>
+      <Pressable
+        accessibilityRole="checkbox"
+        accessibilityLabel={accessibilityLabel ?? label}
+        accessibilityState={{ checked: selected, disabled }}
+        disabled={disabled}
+        hitSlop={8}
+        onPress={onPress}
+        onPressIn={onPressIn}
+        onPressOut={onPressOut}
+        style={[
+          styles.chip,
+          size === "regular" ? styles.chipRegular : styles.chipCompact,
+          selected ? styles.selected : styles.unselected,
+          isPressed && !disabled ? styles.pressedShape : null,
+          selected && tone ? { backgroundColor: tone.background } : null,
+          tone || selected ? styles.withDot : null,
+          disabled && styles.disabled,
+        ]}
+      >
+        {selected ? <AppIcon name="check" size={18} color={tone?.text ?? colors.nature.onFoliage} /> : null}
+        {tone && !selected ? <View style={[styles.dot, { backgroundColor: dotColor, borderColor: dotColor }]} /> : null}
+        <Text
+          numberOfLines={1}
+          style={[
+            styles.label,
+            selected && styles.labelSelected,
+            selected && tone ? { color: tone.text } : null,
+            disabled && styles.labelDisabled,
+          ]}
+        >
+          {label}
+        </Text>
+      </Pressable>
+    </Animated.View>
   );
 }
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
-    chip: {
-      height: 32,
-      borderRadius: tokens.radius.full,
-      paddingHorizontal: tokens.spacing[12],
-      justifyContent: "center",
+    container: {
+      alignSelf: "flex-start",
     },
-    selected: { backgroundColor: colors.soft },
-    unselected: { borderWidth: 1, borderColor: colors.border },
-    disabled: { opacity: 0.38 },
-    label: { color: colors.secondaryText, ...tokens.typography.labelMedium },
-    labelSelected: { color: colors.action },
+    chip: {
+      borderRadius: tokens.shapeMorph.chipUnselected,
+      justifyContent: "center",
+      backgroundColor: colors.m3.surfaceContainerLowest,
+      ...(Platform.OS === "web" ? ({ cursor: "pointer", userSelect: "none" } as never) : {}),
+    },
+    // Figma `02.01`/`02.02`: 32 dp nas fileiras rápidas; `02.03`/`04.05`: 40 dp nos grupos de escolha.
+    chipCompact: { height: tokens.spacing[32], paddingHorizontal: tokens.spacing[16] },
+    chipRegular: { height: tokens.spacing[40], paddingHorizontal: tokens.spacing[20] },
+    selected: {
+      backgroundColor: colors.nature.foliage,
+      borderWidth: 0,
+      borderRadius: tokens.shapeMorph.chipSelected,
+    },
+    pressedShape: {
+      borderRadius: tokens.shapeMorph.chipSelected,
+    },
+    unselected: { borderWidth: 1, borderColor: colors.m3.outline },
+    withDot: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[8] },
+    dot: { width: 10, height: 10, borderRadius: tokens.radius.dot, borderWidth: 1 },
+    disabled: {
+      opacity: 0.38,
+      ...(Platform.OS === "web" ? ({ cursor: "not-allowed" } as never) : {}),
+    },
+    label: { color: colors.m3.onSurfaceVariant, ...tokens.typography.labelLarge },
+    labelSelected: { color: colors.nature.onFoliage, fontWeight: tokens.fontWeight.medium },
     labelDisabled: { color: colors.disabledText },
   });
 }

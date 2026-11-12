@@ -1,14 +1,13 @@
 import { useEffect, useState } from "react";
-import { pwaService as defaultPwaService } from "@/di/container";
 import type { IPwaService } from "@/model/services/iPwaService";
 
 export interface UsePwaViewModelOptions {
   autoRegister?: boolean;
-  pwaService?: IPwaService;
+  pwaService: IPwaService;
 }
 
-export function usePwaViewModel(options: UsePwaViewModelOptions = {}) {
-  const service = options.pwaService ?? defaultPwaService;
+export function usePwaViewModel(options: UsePwaViewModelOptions) {
+  const service = options.pwaService;
   const autoRegister = options.autoRegister ?? true;
 
   const [isSupported] = useState<boolean>(() => service.isSupported());

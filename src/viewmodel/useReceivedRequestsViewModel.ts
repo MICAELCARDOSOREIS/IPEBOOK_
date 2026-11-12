@@ -1,5 +1,4 @@
 import { useCallback, useState } from "react";
-import { bookRequestUseCases } from "@/di/container";
 import type { IBookRequestUseCases, RequestResponse } from "@/usecase/iBookRequestUseCases";
 import { messageOf, type RequestListState, useRequestList } from "@/viewmodel/useSentRequestsViewModel";
 
@@ -19,10 +18,14 @@ const RESPOND_ERROR = "Não foi possível responder ao pedido. Tente novamente."
 
 export function useReceivedRequestsViewModel(
   sessionUserId: string | null,
-  useCases: IBookRequestUseCases = bookRequestUseCases,
+  useCases: IBookRequestUseCases,
 ): [ReceivedRequestsState, ReceivedRequestsActions] {
   const load = useCallback(() => useCases.listReceivedRequests(sessionUserId), [useCases, sessionUserId]);
-  const [listState, reload, active] = useRequestList(load);
+  const [listState, reload, active] = useRequestList(
+    load,
+    undefined,
+    sessionUserId ? `received:${sessionUserId}` : undefined,
+  );
   const [respondingId, setRespondingId] = useState<string | null>(null);
   const [respondError, setRespondError] = useState<{ id: string; message: string } | null>(null);
 

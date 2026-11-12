@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { blockedUserUseCases } from "@/di/container";
 import type { BlockedUser } from "@/model/entities/blockedUser";
 import { DomainError } from "@/model/errors";
 import type { IBlockedUserUseCases } from "@/usecase/iBlockedUserUseCases";
@@ -22,7 +21,7 @@ const GENERIC_ERROR = "Não foi possível carregar as pessoas bloqueadas. Tente 
 
 export function useBlockedUsersViewModel(
   sessionUserId: string | null,
-  useCases: IBlockedUserUseCases = blockedUserUseCases,
+  useCases: IBlockedUserUseCases,
 ): [BlockedUsersState, BlockedUsersActions] {
   const [state, setState] = useState<BlockedUsersState>({
     blockedUsers: [],
@@ -79,7 +78,7 @@ export function useBlockedUsersViewModel(
   const unblockUser = useCallback(
     async (targetUserId: string): Promise<boolean> => {
       if (!sessionUserId) return false;
-      setState((prev) => ({ ...prev, unblockingId: targetUserId, error: null }));
+      setState((prev) => ({ ...prev, unblockingId: targetUserId, actionMessage: null }));
       try {
         await useCases.unblockUser(sessionUserId, targetUserId);
         if (active.current) {
@@ -93,8 +92,8 @@ export function useBlockedUsersViewModel(
         return true;
       } catch (err) {
         if (active.current) {
-          const error = err instanceof DomainError ? err.message : "Não foi possível desbloquear.";
-          setState((prev) => ({ ...prev, unblockingId: null, error }));
+          const message = err instanceof DomainError ? err.message : "Não foi possível desbloquear.";
+          setState((prev) => ({ ...prev, unblockingId: null, actionMessage: message }));
         }
         return false;
       }

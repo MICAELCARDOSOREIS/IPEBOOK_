@@ -1,8 +1,8 @@
-import React from "react";
+
 import { Platform } from "react-native";
 import { SymbolView } from "expo-symbols";
 import { MaterialIcons } from "@expo/vector-icons";
-import { tokens } from "@/view/tokens";
+import { useTheme } from "@/view/theme/ThemeProvider";
 import { FluentIcon, type FluentIconName } from "@/view/components/FluentIcon";
 
 /**
@@ -12,6 +12,8 @@ import { FluentIcon, type FluentIconName } from "@/view/components/FluentIcon";
  */
 const symbols = {
   home: { ios: "house", android: "home", web: "home" },
+  lightMode: { ios: "sun.max", android: "light_mode", web: "light_mode" },
+  darkMode: { ios: "moon", android: "dark_mode", web: "dark_mode" },
   search: { ios: "magnifyingglass", android: "search", web: "search" },
   close: { ios: "xmark", android: "close", web: "close" },
   logout: {
@@ -27,6 +29,7 @@ const symbols = {
   check: { ios: "checkmark", android: "check", web: "check" },
   chevronRight: { ios: "chevron.right", android: "chevron_right", web: "chevron_right" },
   chevronDown: { ios: "chevron.down", android: "expand_more", web: "expand_more" },
+  chevronUp: { ios: "chevron.up", android: "expand_less", web: "expand_less" },
   error: { ios: "exclamationmark.circle", android: "error", web: "error" },
   send: { ios: "paperplane", android: "send", web: "send" },
   chevronLeft: { ios: "chevron.left", android: "chevron_left", web: "chevron_left" },
@@ -66,10 +69,13 @@ const symbols = {
   mail: { ios: "envelope", android: "mail", web: "mail" },
   star: { ios: "star", android: "star", web: "star" },
   flag: { ios: "flag", android: "flag", web: "flag" },
+  block: { ios: "nosign", android: "block", web: "block" },
   share: { ios: "square.and.arrow.up", android: "share", web: "share" },
   conservation: { ios: "book.closed", android: "menu_book", web: "menu_book" },
+  whatsapp: { ios: "message.fill", android: "chat", web: "chat" },
   category: { ios: "tag", android: "sell", web: "sell" },
   more: { ios: "ellipsis", android: "more_horiz", web: "more_horiz" },
+  visibilityOff: { ios: "eye.slash", android: "visibility_off", web: "visibility_off" },
   eye: { ios: "eye", android: "visibility", web: "visibility" },
   wifiOff: { ios: "wifi.slash", android: "wifi_off", web: "wifi_off" },
 } as const;
@@ -84,6 +90,8 @@ const fluentCoverage: Partial<Record<AppIconName, FluentIconName>> = {
   home: "home",
   search: "search",
   person: "person",
+  swap: "swap",
+  bookmark: "bookmark",
 };
 
 export interface AppIconProps {
@@ -95,13 +103,17 @@ export interface AppIconProps {
 }
 
 /** Ícone decorativo: o rótulo acessível fica no controle que o contém. */
-export function AppIcon({ name, size = 24, color = tokens.colors.text, filled = false }: AppIconProps) {
+export function AppIcon({ name, size = 24, color, filled = false }: AppIconProps) {
+  const { colors } = useTheme();
+  const resolvedColor = color ?? colors.text;
+  const symbolEntry = symbols[name] ?? symbols.info;
+
   if (Platform.OS === "ios") {
     return (
       <SymbolView
-        name={symbols[name].ios}
+        name={symbolEntry.ios}
         size={size}
-        tintColor={color}
+        tintColor={resolvedColor}
         style={{ width: size, height: size }}
         accessible={false}
         importantForAccessibility="no-hide-descendants"
@@ -112,16 +124,16 @@ export function AppIcon({ name, size = 24, color = tokens.colors.text, filled = 
   if (Platform.OS === "web") {
     const fluentName = fluentCoverage[name];
     if (fluentName) {
-      return <FluentIcon name={fluentName} size={size} color={color} filled={filled} />;
+      return <FluentIcon name={fluentName} size={size} color={resolvedColor} filled={filled} />;
     }
     // Fallback: ícone ainda não migrado para o Fluent 2 (ADR 0014) — usa Material Symbols.
   }
 
   return (
     <MaterialIcons
-      name={symbols[name].android.replace(/_/g, "-") as never}
+      name={symbolEntry.android.replace(/_/g, "-") as never}
       size={size}
-      color={color}
+      color={resolvedColor}
       accessible={false}
       importantForAccessibility="no-hide-descendants"
     />

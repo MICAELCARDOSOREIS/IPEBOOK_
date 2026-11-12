@@ -1,5 +1,5 @@
 export type BookModality = "sale" | "trade" | "donation";
-export type BookStatus = "available" | "reserved" | "paused";
+export type BookStatus = "available" | "reserved" | "paused" | "draft" | "delivered";
 
 /** Estado de conservação do exemplar (Figma `04.05 · Detalhes do livro`). */
 export type BookCondition = "new" | "good" | "marked" | "worn";
@@ -16,6 +16,31 @@ export const BOOK_CONDITION_LABELS: Readonly<Record<BookCondition, string>> = {
 /** Limite da descrição, igual ao contador mostrado na etapa de detalhes do Figma. */
 export const MAX_BOOK_DESCRIPTION_LENGTH = 280;
 
+/**
+ * Categorias canônicas de livros para o catálogo, publicação e filtros do IpêBook (ADR 0109).
+ * Organizadas em 6 macro-áreas de alta circulação em Piripiri (ensino básico/concursos,
+ * ensino superior/técnico, literatura/romance, infantil/quadrinhos, desenvolvimento/espiritualidade e outros),
+ * evitando sobrecarga cognitiva e listas verticais extensas nos filtros.
+ */
+export const BOOK_CATEGORIES = [
+  "Didáticos & Concursos",
+  "Universitário & Técnico",
+  "Literatura & Romance",
+  "Infantil & Quadrinhos",
+  "Desenvolvimento & Espiritualidade",
+  "Outros",
+] as const;
+
+export type BookCategory = (typeof BOOK_CATEGORIES)[number];
+
+/** Limites dos dados da edição vindos do ISBN (Spec 097); a sinopse é do livro, não escrita pela pessoa. */
+export const MAX_BOOK_SYNOPSIS_LENGTH = 2000;
+export const MAX_BOOK_PUBLISHER_LENGTH = 120;
+
+/** Limites de volumes para anúncios de Box / Coleção (Spec 112 / ADR 0086). */
+export const MIN_BOX_VOLUMES = 2;
+export const MAX_BOX_VOLUMES = 100;
+
 export type Book = Readonly<{
   id: string;
   title: string;
@@ -27,9 +52,26 @@ export type Book = Readonly<{
   status: BookStatus;
   condition?: BookCondition;
   description?: string;
+  /** Sinopse e dados da edição, preenchidos pelo ISBN (Spec 097). */
+  synopsis?: string;
+  publisher?: string;
+  pageCount?: number;
+  publicationYear?: number;
   city?: string;
   state?: string;
   neighborhood?: string;
   photoUrl?: string;
   photos?: readonly string[];
+  /** Indica se o anúncio é referente a um Box ou Coleção de livros (Spec 112). */
+  isBox?: boolean;
+  /** Quantidade de volumes componentes do box (quando informada). */
+  boxVolumesCount?: number;
+  /**
+   * Etapa do assistente de publicação em que o rascunho foi salvo (1 Livro, 2 Fotos,
+   * 3 Detalhes). Presente apenas em anúncios com status `"draft"` (Spec 017), usada
+   * para retomar o fluxo exatamente de onde a pessoa parou.
+   */
+  draftStep?: number;
+  /** Data/hora ISO de criação do anúncio para ordenação por mais recentes na vitrine. */
+  createdAt?: string;
 }>;

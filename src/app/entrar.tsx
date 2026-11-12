@@ -1,4 +1,5 @@
 import { router, useLocalSearchParams } from "expo-router";
+import { backOnce, pushOnce, replaceOnce } from "@/view/pushOnce";
 import SignIn from "@/view/auth/signIn";
 
 export default function Entrar() {
@@ -6,13 +7,17 @@ export default function Entrar() {
   return (
     <SignIn
       onAuthenticated={() => {
-        if (retorno === "favoritos") router.replace("/favoritos");
-        else if (retorno === "alertas") router.replace({ pathname: "/alertas", params: { termo: termo ?? "" } });
-        else router.replace("/");
+        if (retorno === "favoritos") replaceOnce("/favoritos");
+        else if (retorno === "excluir-conta") replaceOnce("/excluir-conta");
+        else if (retorno === "alertas") replaceOnce({ pathname: "/alertas", params: { termo: termo ?? "" } });
+        else replaceOnce("/");
       }}
-      onNavigateToSignUp={() => router.push("/criar-conta")}
-      onNavigateToForgotPassword={() => router.push("/esqueci-senha")}
-      onBack={() => router.back()}
+      onNavigateToSignUp={() => pushOnce("/criar-conta")}
+      onNavigateToForgotPassword={() => pushOnce("/esqueci-senha")}
+      onBack={() => {
+        if (router.canGoBack()) backOnce();
+        else replaceOnce("/bem-vindo");
+      }}
     />
   );
 }

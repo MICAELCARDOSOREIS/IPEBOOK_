@@ -88,10 +88,24 @@ describe("perfil público do anunciante (spec 018)", () => {
       await expect(useCases.updateProfile("ana", { name: "a".repeat(61) })).rejects.toBeInstanceOf(ValidationError);
     });
 
-    it("rejeita link de foto que não é http(s)", async () => {
+    it("rejeita link de foto que não é https", async () => {
       await expect(
         useCases.updateProfile("ana", { name: "Ana", photoUrl: "ftp://exemplo.com/foto.png" }),
       ).rejects.toBeInstanceOf(ValidationError);
+      await expect(
+        useCases.updateProfile("ana", { name: "Ana", photoUrl: "http://exemplo.com/foto.png" }),
+      ).rejects.toBeInstanceOf(ValidationError);
+    });
+
+    it("remove tags e scripts do nome público antes de salvar", async () => {
+      const updated = await useCases.updateProfile("ana", {
+        name: "  <script>alert(1)</script>Ana   Silva<b>  </b> ",
+      });
+      expect(updated.name).toBe("Ana Silva");
+    });
+
+    it("rejeita nome que só contém tags", async () => {
+      await expect(useCases.updateProfile("ana", { name: "<b></b>" })).rejects.toBeInstanceOf(ValidationError);
     });
 
     it("atualiza nome, foto e rede social, e persiste em consultas seguintes", async () => {
@@ -114,6 +128,19 @@ describe("perfil público do anunciante (spec 018)", () => {
       const cleared = await useCases.updateProfile("ana", { name: "Ana", photoUrl: "", socialHandle: "" });
       expect(cleared.photoUrl).toBeUndefined();
       expect(cleared.socialHandle).toBeUndefined();
+    });
+
+    it("normaliza @perfil sem arroba ao salvar", async () => {
+      const updated = await useCases.updateProfile("ana", { name: "Ana", socialHandle: " anapaula " });
+      expect(updated.socialHandle).toBe("@anapaula");
+    });
+
+    it("rejeita rede social com link ou caracteres fora do padrão do Instagram", async () => {
+      // Regressão de segurança: o valor vira trecho de URL externa nas telas de perfil.
+      const invalidos = ["https://instagram.com/ana", "ana?u=evil.example", "ana/x", "ana;rm", "a".repeat(31), "ana$&"];
+      for (const socialHandle of invalidos) {
+        await expect(useCases.updateProfile("ana", { name: "Ana", socialHandle })).rejects.toBeInstanceOf(ValidationError);
+      }
     });
 
     it("cria o perfil antes de atualizar quando ainda não existe", async () => {

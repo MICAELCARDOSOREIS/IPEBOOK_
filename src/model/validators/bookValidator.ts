@@ -1,5 +1,10 @@
 import type { Book, BookCondition, BookModality } from "@/model/entities/book";
-import { BOOK_CONDITIONS, MAX_BOOK_DESCRIPTION_LENGTH } from "@/model/entities/book";
+import {
+  BOOK_CONDITIONS,
+  MAX_BOOK_DESCRIPTION_LENGTH,
+  MAX_BOX_VOLUMES,
+  MIN_BOX_VOLUMES,
+} from "@/model/entities/book";
 import { isValidBetaLocation } from "@/model/entities/location";
 
 export type BookValidationResult = Readonly<{
@@ -31,19 +36,27 @@ export function sanitizeBookInput(input: Partial<Book>): Partial<Book> {
     id: input.id?.trim(),
     title: input.title?.trim(),
     author: input.author?.trim(),
-    category: input.category?.trim(),
-    ownerId: input.ownerId?.trim(),
-    modality: input.modality,
-    price: input.price,
-    city: input.city?.trim(),
-    state: input.state?.trim(),
-    neighborhood: input.neighborhood?.trim(),
-    condition: input.condition,
-    description: input.description?.trim() || undefined,
-    photoUrl: input.photoUrl?.trim() || undefined,
-    photos: Array.isArray(input.photos)
-      ? input.photos.map((p) => (typeof p === "string" ? p.trim() : "")).filter(Boolean)
-      : undefined,
+    ...(input.category !== undefined ? { category: input.category?.trim() } : {}),
+    ...(input.ownerId !== undefined ? { ownerId: input.ownerId?.trim() } : {}),
+    ...(input.modality !== undefined ? { modality: input.modality } : {}),
+    ...(input.price !== undefined ? { price: input.price } : {}),
+    ...(input.city !== undefined ? { city: input.city?.trim() } : {}),
+    ...(input.state !== undefined ? { state: input.state?.trim() } : {}),
+    ...(input.neighborhood !== undefined ? { neighborhood: input.neighborhood?.trim() } : {}),
+    ...(input.condition !== undefined ? { condition: input.condition } : {}),
+    ...(input.description !== undefined ? { description: input.description?.trim() || undefined } : {}),
+    ...(input.photoUrl !== undefined ? { photoUrl: input.photoUrl?.trim() || undefined } : {}),
+    ...(input.photos !== undefined
+      ? {
+          photos: Array.isArray(input.photos)
+            ? input.photos.map((p) => (typeof p === "string" ? p.trim() : "")).filter(Boolean)
+            : undefined,
+        }
+      : {}),
+    ...(input.isBox !== undefined ? { isBox: input.isBox === true } : {}),
+    ...(typeof input.boxVolumesCount === "number" && Number.isInteger(input.boxVolumesCount)
+      ? { boxVolumesCount: input.boxVolumesCount }
+      : {}),
   };
 }
 
@@ -165,10 +178,93 @@ export function validateBookPayload(input: unknown): BookValidationResult {
     }
   }
 
+  if (raw.boxVolumesCount !== undefined && raw.boxVolumesCount !== null) {
+    if (raw.isBox !== true) {
+      errors.push("Quantidade de volumes só pode ser informada para boxes ou coleções.");
+    } else if (
+      typeof raw.boxVolumesCount !== "number" ||
+      !Number.isInteger(raw.boxVolumesCount) ||
+      raw.boxVolumesCount < MIN_BOX_VOLUMES ||
+      raw.boxVolumesCount > MAX_BOX_VOLUMES
+    ) {
+      errors.push(
+        `Quantidade de volumes deve ser um número inteiro entre ${MIN_BOX_VOLUMES} e ${MAX_BOX_VOLUMES}.`,
+      );
+    }
+  }
+
   return {
     isValid: errors.length === 0,
     errors,
   };
+}
+
+/**
+ * Validação tolerante de rascunho (Spec 017). Um rascunho é incompleto por natureza,
+ * então não exige título, autor nem preço. Ainda assim verifica os campos que, se
+ * presentes, precisam manter um formato válido — modalidade, conservação, categoria,
+ * descrição e URLs de foto — espelhando os CHECKs do banco que não são flexibilizados.
+ */
+export function validateDraftPayload(input: unknown): BookValidationResult {
+  const errors: string[] = [];
+
+  if (!input || typeof input !== "object") {
+    return { isValid: false, errors: ["Dados do rascunho inválidos ou não fornecidos."] };
+  }
+
+  const raw = input as Record<string, unknown>;
+
+  if (typeof raw.ownerId !== "string" || raw.ownerId.trim().length === 0) {
+    errors.push("Identificador do dono é obrigatório.");
+  }
+
+  if (!VALID_MODALITIES.includes(raw.modality as BookModality)) {
+    errors.push("Modalidade deve ser 'sale', 'trade' ou 'donation'.");
+  }
+
+  if (raw.condition !== undefined && raw.condition !== null &&
+    !BOOK_CONDITIONS.includes(raw.condition as BookCondition)) {
+    errors.push("Estado de conservação deve ser 'new', 'good', 'marked' ou 'worn'.");
+  }
+
+  if (raw.category !== undefined && raw.category !== null &&
+    (typeof raw.category !== "string" || raw.category.trim().length > 60)) {
+    errors.push("Categoria deve ter no máximo 60 caracteres.");
+  }
+
+  if (raw.description !== undefined && raw.description !== null &&
+    (typeof raw.description !== "string" || raw.description.trim().length > MAX_BOOK_DESCRIPTION_LENGTH)) {
+    errors.push(`Descrição deve conter no máximo ${MAX_BOOK_DESCRIPTION_LENGTH} caracteres.`);
+  }
+
+  if (raw.photoUrl !== undefined && raw.photoUrl !== null && raw.photoUrl !== "") {
+    if (typeof raw.photoUrl !== "string" || !isValidHttpUrl(raw.photoUrl)) {
+      errors.push("URL da foto de capa deve ser um endereço HTTP ou HTTPS válido.");
+    }
+  }
+
+  if (raw.photos !== undefined && raw.photos !== null) {
+    if (!Array.isArray(raw.photos) || raw.photos.length > MAX_PHOTOS) {
+      errors.push(`Galeria de fotos deve ser uma lista de no máximo ${MAX_PHOTOS} itens.`);
+    } else if (raw.photos.some((item) => typeof item !== "string" || !isValidHttpUrl(item))) {
+      errors.push("Cada foto da galeria deve ser um endereço HTTP ou HTTPS válido.");
+    }
+  }
+
+  if (raw.boxVolumesCount !== undefined && raw.boxVolumesCount !== null) {
+    if (
+      typeof raw.boxVolumesCount !== "number" ||
+      !Number.isInteger(raw.boxVolumesCount) ||
+      raw.boxVolumesCount < MIN_BOX_VOLUMES ||
+      raw.boxVolumesCount > MAX_BOX_VOLUMES
+    ) {
+      errors.push(
+        `Quantidade de volumes deve ser um número inteiro entre ${MIN_BOX_VOLUMES} e ${MAX_BOX_VOLUMES}.`,
+      );
+    }
+  }
+
+  return { isValid: errors.length === 0, errors };
 }
 
 export function formatBookDisplay(book: Pick<Book, "title" | "author">): string {

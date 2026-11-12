@@ -1,5 +1,6 @@
-import React from "react";
+
 import { act, fireEvent, render } from "@testing-library/react-native";
+import { StyleSheet } from "react-native";
 import { describe, expect, it, vi } from "vitest";
 import type { EditListingState, EditListingActions } from "@/viewmodel/useEditListingViewModel";
 import EditListing from "@/view/listings/editListing";
@@ -25,6 +26,8 @@ function mockViewModel(state: EditListingState, actions: Partial<EditListingActi
     setPhotoUrl: vi.fn(),
     addPhoto: vi.fn(),
     removePhoto: vi.fn(),
+    setIsBox: vi.fn(),
+    setBoxVolumesCount: vi.fn(),
     submit: vi.fn().mockResolvedValue(null),
     ...actions,
   };
@@ -56,6 +59,8 @@ const loadedState: EditListingState = {
   description: "Marcas leves",
   photoUrl: "",
   photos: [],
+  isBox: false,
+  boxVolumesCount: "",
   loading: false,
   saving: false,
   error: null,
@@ -111,7 +116,7 @@ describe("tela de edição de anúncio (ISO/IEC 25010 - Usabilidade e Acessibili
     expect(screen.getByDisplayValue("Marcas leves")).toBeDefined();
     expect(screen.getByLabelText("Categoria Romance").props.accessibilityState.checked).toBe(true);
     expect(screen.getByLabelText("Conservação Bom estado").props.accessibilityState.checked).toBe(true);
-    expect(screen.getByLabelText("Bairro Centro").props.accessibilityState.checked).toBe(true);
+    expect(screen.getByLabelText("Ponto de encontro Piripiri (A combinar)").props.accessibilityState.checked).toBe(true);
   });
 
   it("permite alterar modalidade e oculta preço quando não é venda", async () => {
@@ -172,7 +177,7 @@ describe("tela de edição de anúncio (ISO/IEC 25010 - Usabilidade e Acessibili
 });
 
 describe("Spec 030 — edição alinhada ao Figma 04.09", () => {
-  it("desmarca categoria, conservação e bairro ao tocar no chip já escolhido", async () => {
+  it("desmarca categoria, conservação e local ao tocar no chip já escolhido", async () => {
     const actions = mockViewModel(loadedState);
 
     let screen!: Awaited<ReturnType<typeof render>>;
@@ -183,15 +188,15 @@ describe("Spec 030 — edição alinhada ao Figma 04.09", () => {
     await act(async () => {
       fireEvent.press(screen.getByLabelText("Categoria Romance"));
       fireEvent.press(screen.getByLabelText("Conservação Bom estado"));
-      fireEvent.press(screen.getByLabelText("Bairro Centro"));
+      fireEvent.press(screen.getByLabelText("Ponto de encontro Piripiri (A combinar)"));
     });
 
     expect(actions.setCategory).toHaveBeenCalledWith("");
     expect(actions.setCondition).toHaveBeenCalledWith(null);
-    expect(actions.setNeighborhood).toHaveBeenCalledWith("");
+    expect(actions.setNeighborhood).toHaveBeenCalledWith("Piripiri");
   });
 
-  it("escolhe outra conservação e outro bairro", async () => {
+  it("escolhe outra conservação e outro ponto de encontro", async () => {
     const actions = mockViewModel(loadedState);
 
     let screen!: Awaited<ReturnType<typeof render>>;
@@ -201,13 +206,13 @@ describe("Spec 030 — edição alinhada ao Figma 04.09", () => {
 
     await act(async () => {
       fireEvent.press(screen.getByLabelText("Conservação Desgastado"));
-      fireEvent.press(screen.getByLabelText("Bairro Petecas"));
-      fireEvent.press(screen.getByLabelText("Categoria Infantil"));
+      fireEvent.press(screen.getByLabelText("Ponto de encontro Praça da Bandeira"));
+      fireEvent.press(screen.getByLabelText("Categoria Infantil & Quadrinhos"));
     });
 
     expect(actions.setCondition).toHaveBeenCalledWith("worn");
-    expect(actions.setNeighborhood).toHaveBeenCalledWith("Petecas");
-    expect(actions.setCategory).toHaveBeenCalledWith("Infantil");
+    expect(actions.setNeighborhood).toHaveBeenCalledWith("Praça da Bandeira");
+    expect(actions.setCategory).toHaveBeenCalledWith("Infantil & Quadrinhos");
   });
 
   it("mostra a mensagem de sucesso depois de salvar", async () => {
@@ -240,5 +245,17 @@ describe("Spec 030 — edição alinhada ao Figma 04.09", () => {
 
     expect(screen.getByText("Limite excedido em 2 caracteres")).toBeDefined();
     expect(screen.getByText("A descrição deve ter no máximo 280 caracteres.")).toBeDefined();
+  });
+
+  it("linha de categorias quebra os chips em telas estreitas (Spec 125 D3)", async () => {
+    mockViewModel(loadedState);
+
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<EditListing bookId="b1" sessionUserId="user-1" />);
+    });
+
+    const row = StyleSheet.flatten(screen.getByTestId("edit-listing-category-row").props.style);
+    expect(row.flexWrap).toBe("wrap");
   });
 });

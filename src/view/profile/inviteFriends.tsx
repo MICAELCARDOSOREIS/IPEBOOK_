@@ -1,14 +1,18 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { IconBadge } from "@/view/components/IconBadge";
 import { FilledButton } from "@/view/components/FilledButton";
-import { OutlinedButton } from "@/view/components/OutlinedButton";
-import { TextButton } from "@/view/components/TextButton";
-import { useInviteFriendsViewModel } from "@/viewmodel/useInviteFriendsViewModel";
+import { captureRef } from "react-native-view-shot";
+import { InviteCard } from "@/view/components/InviteCard";
+import { makeInviteFriendsViewModel } from "@/di/container";
+import { WEB_GUTTER } from "@/view/webLayout";
+import { useGuardedPress } from "@/view/useGuardedPress";
+import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 
 export type InviteFriendsProps = {
   onBack?: () => void;
@@ -18,15 +22,39 @@ export type InviteFriendsProps = {
  * Tela de convite de amigos e compartilhamento da comunidade (Figma `08.02 · Convidar amigos`).
  */
 export function InviteFriends({ onBack }: InviteFriendsProps) {
+  const guardedBack = useGuardedPress(onBack);
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const [state, actions] = useInviteFriendsViewModel();
+  const [state, actions] = makeInviteFriendsViewModel();
+
+  // Os avisos são de uma ação pontual: saem sozinhos para não ficarem presos na tela.
+  useEffect(() => {
+    if (!state.linkCopied) return;
+    const timer = setTimeout(actions.dismissLinkCopied, 4000);
+    return () => clearTimeout(timer);
+  }, [state.linkCopied, actions.dismissLinkCopied]);
+  useEffect(() => {
+    if (!state.shared) return;
+    const timer = setTimeout(actions.dismissShared, 4000);
+    return () => clearTimeout(timer);
+  }, [state.shared, actions.dismissShared]);
+  // Web larga: o cartão do convite de um lado, texto e ação do outro.
+  const wide = useIsWideWeb();
+  const cardRef = useRef<React.ComponentRef<typeof View>>(null);
+
+  // A imagem do convite é este cartão: captura em PNG e abre a folha de compartilhamento do sistema.
+  const captureInvite = () => captureRef(cardRef, { format: "png", quality: 1, result: "tmpfile" });
+
+  const contentMaxWidth = wide ? 960 : 560;
 
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar title="Convidar amigos" onBack={() => onBack?.()} />
-      <ScrollView contentContainerStyle={styles.scroll}>
-        <View style={styles.content}>
+      <TopAppBar contentMaxWidth={contentMaxWidth} title="Convidar amigos" onBack={guardedBack} />
+      <ScrollView
+        contentContainerStyle={[styles.scroll, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
+        {...standardVerticalScrollProps}
+      >
+        <View style={[styles.content, wide && styles.contentWide]}>
           <View style={styles.header}>
             <IconBadge icon="shelf" tone="action" size="large" />
             <Text accessibilityRole="header" style={styles.title}>
@@ -37,8 +65,13 @@ export function InviteFriends({ onBack }: InviteFriendsProps) {
             </Text>
           </View>
 
+          <View style={[styles.columns, wide && styles.columnsWide]}>
+          <View style={[styles.column, wide && styles.columnHalf, wide && styles.cardColumn]}>
+          <InviteCard ref={cardRef} url={state.inviteUrl} />
+          </View>
+          <View style={[styles.column, wide && styles.columnHalf]}>
           <View style={styles.previewCard}>
-            <Text style={styles.previewLabel}>Mensagem de convite</Text>
+            <Text style={styles.previewLabel}>Texto que vai junto com a imagem</Text>
             <Text style={styles.previewText}>{state.inviteMessage}</Text>
           </View>
 
@@ -52,6 +85,16 @@ export function InviteFriends({ onBack }: InviteFriendsProps) {
             </View>
           ) : null}
 
+          {state.shared ? (
+            <View
+              accessibilityRole="alert"
+              accessibilityLiveRegion="polite"
+              style={styles.feedbackBanner}
+            >
+              <Text style={styles.feedbackText}>Convite pronto. Escolha o app para enviar.</Text>
+            </View>
+          ) : null}
+
           {state.error ? (
             <View
               accessibilityRole="alert"
@@ -62,24 +105,16 @@ export function InviteFriends({ onBack }: InviteFriendsProps) {
             </View>
           ) : null}
 
+          {/* Um botão só: manda a imagem e o texto com o link juntos (Spec 092). */}
           <View style={styles.actions}>
             <FilledButton
-              label="Convidar pelo WhatsApp"
-              accessibilityLabel="Enviar convite pelo WhatsApp"
+              label="Compartilhar convite"
+              accessibilityLabel="Compartilhar o convite com imagem e texto"
               loading={state.sharing}
-              onPress={() => void actions.shareToWhatsApp()}
+              onPress={() => void actions.shareImage(captureInvite)}
             />
-            <OutlinedButton
-              label="Outras opções de envio"
-              accessibilityLabel="Mais opções de compartilhamento"
-              disabled={state.sharing}
-              onPress={() => void actions.shareNative()}
-            />
-            <TextButton
-              label={state.linkCopied ? "Link copiado!" : "Copiar link de convite"}
-              accessibilityLabel="Copiar link do aplicativo"
-              onPress={() => void actions.copyLink()}
-            />
+          </View>
+          </View>
           </View>
         </View>
       </ScrollView>
@@ -99,6 +134,12 @@ function createStyles(colors: ColorPalette) {
       alignSelf: "center",
       gap: tokens.spacing[24],
     },
+    contentWide: { maxWidth: 960, paddingHorizontal: WEB_GUTTER },
+    columns: { gap: tokens.spacing[24] },
+    columnsWide: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[48] },
+    column: { gap: tokens.spacing[24] },
+    columnHalf: { flex: 1 },
+    cardColumn: { alignItems: "center" },
     header: {
       alignItems: "center",
       gap: tokens.spacing[12],
@@ -114,7 +155,7 @@ function createStyles(colors: ColorPalette) {
       ...tokens.typography.bodyMedium,
       color: colors.secondaryText,
       textAlign: "center",
-      lineHeight: 22,
+      lineHeight: tokens.lineHeight[22],
     },
     previewCard: {
       padding: tokens.spacing[16],
@@ -127,17 +168,17 @@ function createStyles(colors: ColorPalette) {
     previewLabel: {
       ...tokens.typography.labelMedium,
       color: colors.actionDeep,
-      fontWeight: "600",
+      fontWeight: tokens.fontWeight.semiBold,
     },
     previewText: {
       ...tokens.typography.bodyMedium,
       color: colors.text,
-      lineHeight: 20,
+      lineHeight: tokens.lineHeight[20],
     },
     feedbackBanner: {
       padding: tokens.spacing[12],
       borderRadius: tokens.radius.medium,
-      backgroundColor: colors.soft,
+      backgroundColor: colors.m3.surfaceContainerHigh,
       borderWidth: 1,
       borderColor: colors.action,
       alignItems: "center",
@@ -145,7 +186,7 @@ function createStyles(colors: ColorPalette) {
     feedbackText: {
       ...tokens.typography.bodyMedium,
       color: colors.actionDeep,
-      fontWeight: "600",
+      fontWeight: tokens.fontWeight.semiBold,
     },
     errorBanner: {
       padding: tokens.spacing[12],

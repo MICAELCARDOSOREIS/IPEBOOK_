@@ -1,86 +1,335 @@
-import { useMemo } from "react";
-import { Image, ScrollView, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { useMemo, useState } from "react";
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { FilledButton } from "@/view/components/FilledButton";
 import { Logotipo } from "@/view/components/Logotipo";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
-import { TextButton } from "@/view/components/TextButton";
-import { accessibility, fontFamily, tokens, type ColorPalette } from "@/view/tokens";
+import { ScreenContainer } from "@/view/components/ScreenContainer";
+import { accessibility, colors as lightColors, fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
+import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
+import { AppIcon } from "@/view/components/AppIcon";
+import { AboutSections } from "@/view/onboarding/aboutSections";
+import { ThemeToggleButton } from "@/view/components/ThemeToggleButton";
+import { useGuardedPress } from "@/view/useGuardedPress";
+import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 import illustration from "./ilustracao-classicos.png";
 
+import { withPress } from "@/view/pressFeedback";
 export type WelcomeProps = {
   onStart: () => void;
   onSignIn: () => void;
-  onExplore: () => void;
+  /** Links do rodapé da página na web larga. */
+  onHelp?: () => void;
+  onTerms?: () => void;
+  /** Spec 108: no site, os botões chamam para o teste do app em vez de entrar ou criar conta. */
+  betaInvite?: boolean;
 };
 
 /**
  * Boas-vindas do primeiro acesso (Figma `01.01`, Android `324:38` / Web `146:457`).
- * Ver issue #98 e ADR 0022.
+ * Ver issue #98 e ADR 0022. O catálogo exige conta (Spec 092): sem sessão, a tela só
+ * oferece criar conta ou entrar — não há acesso de visitante.
  */
-export default function Welcome({ onStart, onSignIn, onExplore }: WelcomeProps) {
+const MODALITY_CONFIG = {
+  Venda: {
+    icon: "bookmark" as const,
+    description: "Defina o preço em reais e combine a entrega no seu bairro.",
+  },
+  Troca: {
+    icon: "swap" as const,
+    description: "Ofereça um livro da sua estante e combine a troca sem intermediários.",
+  },
+  Doação: {
+    icon: "heart" as const,
+    description: "Doe para quem vai ler. Sem cobrança pelo exemplar.",
+  },
+} as const;
+
+type ModalityKey = keyof typeof MODALITY_CONFIG;
+
+export default function Welcome({ onStart, onSignIn, onHelp, onTerms, betaInvite = false }: WelcomeProps) {
+  const guardedStart = useGuardedPress(onStart);
+  const guardedSignIn = useGuardedPress(onSignIn);
+  const guardedHelp = useGuardedPress(onHelp);
+  const guardedTerms = useGuardedPress(onTerms);
+  const [selectedModality, setSelectedModality] = useState<ModalityKey | null>(null);
+  const labels = betaInvite
+    ? { header: "Quero testar", start: "Quero testar o app", signIn: "Ver na Play Store" }
+    : { header: "Criar conta", start: "Começar agora", signIn: "Já tenho conta" };
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  return (
-    <SafeAreaView style={styles.page} edges={["top", "bottom"]}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.content}>
-          <View style={styles.header}>
-            <Logotipo />
-            <View style={styles.location} accessible accessibilityLabel="Beta exclusiva em Piripiri, PI">
-              <View style={styles.locationDot} />
-              <Text style={styles.locationText}>PIRIPIRI · PIAUÍ</Text>
-            </View>
-          </View>
+  const wideWeb = useIsWideWeb();
 
-          <Text accessibilityRole="header" style={styles.title}>Uma boa história</Text>
-          <View style={styles.highlight}>
-            <Text style={styles.title}>merece continuar.</Text>
-          </View>
-
-          <Image
-            source={illustration}
-            style={styles.illustration}
-            resizeMode="contain"
-            accessible={false}
-            importantForAccessibility="no"
-          />
-
-          <Text style={styles.subtitle}>Livros de quem mora perto de você.</Text>
-
-          <View style={styles.modalities} accessible accessibilityLabel="Modalidades: venda, troca e doação">
-            {["Venda", "Troca", "Doação"].map((label) => (
-              <Text key={label} style={styles.modality}>{label}</Text>
-            ))}
-          </View>
-
-          <View style={styles.actions}>
-            <FilledButton label="Começar" onPress={onStart} />
-            <OutlinedButton label="Já tenho conta" onPress={onSignIn} />
-            <TextButton label="Explorar livros sem entrar" onPress={onExplore} />
+  // Web larga (Figma `01.01` Web `146:457`): cabeçalho, chamada em duas colunas, três modalidades e rodapé.
+  // Cores canônicas vibrantes de modalidade fixadas com alto contraste (ADR 0104) nos dois modos de tema.
+  if (wideWeb) {
+    const cards = [
+      { label: "Venda", icon: MODALITY_CONFIG.Venda.icon, tone: lightColors.badge.sale.background, on: lightColors.badge.sale.text, text: MODALITY_CONFIG.Venda.description },
+      { label: "Troca", icon: MODALITY_CONFIG.Troca.icon, tone: lightColors.badge.trade.background, on: lightColors.badge.trade.text, text: MODALITY_CONFIG.Troca.description },
+      { label: "Doação", icon: MODALITY_CONFIG.Doação.icon, tone: lightColors.badge.donation.background, on: lightColors.badge.donation.text, text: MODALITY_CONFIG.Doação.description },
+    ] as const;
+    return (
+      <ScrollView
+        style={styles.wideRoot}
+        contentContainerStyle={[styles.wideContent, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
+        {...standardVerticalScrollProps}
+      >
+        <View style={styles.wideHeader}>
+          <Logotipo />
+          <View style={styles.wideHeaderActions}>
+            <ThemeToggleButton />
+            {betaInvite ? null : (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Entrar"
+                onPress={guardedSignIn}
+                style={withPress(styles.wideSignInButton)}
+              >
+                <Text style={styles.wideLink}>Entrar</Text>
+              </Pressable>
+            )}
+            <Pressable accessibilityRole="button" accessibilityLabel={labels.header} onPress={guardedStart} style={withPress(styles.wideCta)}>
+              <Text style={styles.wideCtaText}>{labels.header}</Text>
+            </Pressable>
           </View>
         </View>
+
+        <View style={styles.wideHero}>
+          <View style={styles.wideHeroText}>
+            <View style={styles.location} accessible accessibilityLabel="Beta exclusiva em Piripiri, PI">
+              <AppIcon name="place" size={14} color={colors.m3.onSurfaceVariant} />
+              <Text style={styles.locationText}>Piripiri · Piauí</Text>
+            </View>
+            <View>
+              <Text accessibilityRole="header" style={styles.wideTitle}>Uma boa história</Text>
+              <View style={styles.highlight}>
+                <Text style={[styles.wideTitle, styles.highlightText]}>merece continuar.</Text>
+              </View>
+            </View>
+            <Text style={styles.wideLead}>
+              Encontre, troque, venda ou doe livros com quem mora perto de você. Sem taxas e com encontro em local público.
+            </Text>
+            <View style={styles.wideActions}>
+              <Pressable accessibilityRole="button" accessibilityLabel={labels.start} onPress={guardedStart} style={withPress(styles.wideCta)}>
+                <Text style={styles.wideCtaText}>{labels.start}</Text>
+              </Pressable>
+              {betaInvite ? null : (
+                <Pressable accessibilityRole="button" accessibilityLabel={labels.signIn} onPress={guardedSignIn} style={withPress(styles.wideOutlined)}>
+                  <Text style={styles.wideOutlinedText}>{labels.signIn}</Text>
+                </Pressable>
+              )}
+            </View>
+          </View>
+          <View style={styles.widePanel}>
+            <Image source={illustration} style={styles.wideIllustration} resizeMode="contain" accessible={false} importantForAccessibility="no" />
+          </View>
+        </View>
+
+        <View style={styles.wideCards}>
+          {cards.map((card) => (
+            <View key={card.label} style={[styles.wideCard, { backgroundColor: card.tone }]}>
+              <AppIcon name={card.icon} size={24} color={card.on} />
+              <Text style={[styles.wideCardTitle, { color: card.on }]}>{card.label}</Text>
+              <Text style={[styles.wideCardText, { color: card.on }]}>{card.text}</Text>
+            </View>
+          ))}
+        </View>
+
+        <AboutSections onStart={guardedStart} onSignIn={guardedSignIn} onHelp={guardedHelp} onTerms={guardedTerms} betaInvite={betaInvite} />
       </ScrollView>
-    </SafeAreaView>
+    );
+  }
+
+  return (
+    <ScreenContainer
+      maxWidth={560}
+      paddingTop={tokens.spacing[24]}
+      paddingBottom={tokens.spacing[32]}
+      edges={["top", "bottom"]}
+      contentStyle={{ gap: tokens.spacing[16] }}
+    >
+      <View style={styles.header}>
+        <Logotipo />
+        <View style={styles.location} accessible accessibilityLabel="Beta exclusiva em Piripiri, PI">
+          <View style={styles.locationDot} />
+          <Text style={styles.locationText}>PIRIPIRI · PIAUÍ</Text>
+        </View>
+        {betaInvite ? <ThemeToggleButton /> : null}
+      </View>
+
+      <Text accessibilityRole="header" style={styles.title}>Uma boa história</Text>
+      <View style={styles.highlight}>
+        <Text style={[styles.title, styles.highlightText]}>merece continuar.</Text>
+      </View>
+
+      <Image
+        source={illustration}
+        style={styles.illustration}
+        resizeMode="contain"
+        accessible={false}
+        importantForAccessibility="no"
+      />
+
+      <Text style={styles.subtitle}>Livros de quem mora perto de você.</Text>
+
+      <View style={styles.modalities} accessible accessibilityLabel="Modalidades: venda, troca e doação">
+        {(
+          [
+            ["Venda", colors.badge.sale],
+            ["Troca", colors.badge.trade],
+            ["Doação", colors.badge.donation],
+          ] as const
+        ).map(([label, tone]) => {
+          const isSelected = selectedModality === label;
+          return (
+            <Pressable
+              key={label}
+              accessibilityRole="button"
+              accessibilityLabel={`${label}: toque para ver detalhes`}
+              accessibilityState={{ selected: isSelected }}
+              onPress={() => setSelectedModality((prev) => (prev === label ? null : label))}
+              style={withPress([
+                styles.modality,
+                {
+                  backgroundColor: isSelected ? tone.background : colors.m3.surfaceContainerLowest,
+                  borderColor: tone.background,
+                },
+              ])}
+            >
+              <View
+                style={[
+                  styles.modalityDot,
+                  { backgroundColor: isSelected ? tone.text : tone.background },
+                ]}
+              />
+              <Text
+                style={[
+                  styles.modalityText,
+                  { color: isSelected ? tone.text : colors.m3.onSurface },
+                ]}
+              >
+                {label}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+
+      {selectedModality ? (
+        <View
+          style={[
+            styles.modalityInfoCard,
+            {
+              backgroundColor:
+                selectedModality === "Venda"
+                  ? colors.badge.sale.background
+                  : selectedModality === "Troca"
+                    ? colors.badge.trade.background
+                    : colors.badge.donation.background,
+            },
+          ]}
+        >
+          <AppIcon
+            name={MODALITY_CONFIG[selectedModality].icon}
+            size={18}
+            color={
+              selectedModality === "Venda"
+                ? colors.badge.sale.text
+                : selectedModality === "Troca"
+                  ? colors.badge.trade.text
+                  : colors.badge.donation.text
+            }
+          />
+          <Text
+            style={[
+              styles.modalityInfoText,
+              {
+                color:
+                  selectedModality === "Venda"
+                    ? colors.badge.sale.text
+                    : selectedModality === "Troca"
+                      ? colors.badge.trade.text
+                      : colors.badge.donation.text,
+              },
+            ]}
+          >
+            {MODALITY_CONFIG[selectedModality].description}
+          </Text>
+        </View>
+      ) : null}
+
+      <View style={styles.trustBadge} accessible accessibilityLabel="Encontros em locais públicos de Piripiri sem taxas">
+        <AppIcon name="place" size={16} color={colors.action} />
+        <Text style={styles.trustBadgeText}>Encontros em locais públicos de Piripiri · Sem taxas</Text>
+      </View>
+
+      <View style={styles.actions}>
+        <FilledButton label={betaInvite ? labels.start : "Começar"} onPress={guardedStart} />
+        {betaInvite ? null : <OutlinedButton label={labels.signIn} onPress={guardedSignIn} />}
+      </View>
+
+      {onHelp || onTerms ? (
+        <View style={styles.footerLinks}>
+          {onHelp ? (
+            <Pressable
+              accessibilityRole="link"
+              accessibilityLabel="Como funciona o IpêBook"
+              onPress={guardedHelp}
+              style={withPress(styles.footerLink)}
+            >
+              <Text style={styles.footerLinkText}>Como funciona?</Text>
+            </Pressable>
+          ) : null}
+          {onHelp && onTerms ? <Text style={styles.footerLinkSeparator}>·</Text> : null}
+          {onTerms ? (
+            <Pressable
+              accessibilityRole="link"
+              accessibilityLabel="Termos de uso"
+              onPress={guardedTerms}
+              style={withPress(styles.footerLink)}
+            >
+              <Text style={styles.footerLinkText}>Termos de uso</Text>
+            </Pressable>
+          ) : null}
+        </View>
+      ) : null}
+    </ScreenContainer>
   );
 }
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
-  page: { flex: 1, backgroundColor: colors.surface },
-  scrollContent: {
-    flexGrow: 1,
-    paddingHorizontal: tokens.spacing[24],
-    paddingTop: tokens.spacing[24],
-    paddingBottom: tokens.spacing[32],
-  },
-  content: {
+  wideRoot: { flex: 1, backgroundColor: colors.background },
+  wideContent: {
     width: "100%",
-    maxWidth: 560,
+    maxWidth: WEB_MAX_WIDTH,
     alignSelf: "center",
-    gap: tokens.spacing[16],
+    paddingHorizontal: WEB_GUTTER,
+    paddingTop: tokens.spacing[16],
+    paddingBottom: tokens.spacing[32],
+    gap: tokens.spacing[64],
   },
+  wideHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", minHeight: 56, width: "100%" },
+  wideHeaderActions: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[16] },
+  wideSignInButton: { height: 48, paddingHorizontal: tokens.spacing[16], borderRadius: tokens.radius.full, alignItems: "center", justifyContent: "center" },
+  wideLink: { ...tokens.typography.labelLarge, color: colors.m3.primary },
+  wideCta: { height: 52, paddingHorizontal: tokens.spacing[32], borderRadius: tokens.radius.full, alignItems: "center", justifyContent: "center", backgroundColor: colors.m3.primary },
+  wideCtaText: { ...tokens.typography.labelLarge, color: colors.m3.onPrimary },
+  wideOutlined: { height: 52, paddingHorizontal: tokens.spacing[32], borderRadius: tokens.radius.full, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: colors.m3.outline },
+  wideOutlinedText: { ...tokens.typography.labelLarge, color: colors.m3.primary },
+  wideHero: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: tokens.spacing[64], width: "100%" },
+  wideHeroText: { flex: 1.2, gap: tokens.spacing[24], alignItems: "flex-start" },
+  wideTitle: { ...tokens.typography.brandHero, color: colors.m3.onSurface },
+  wideLead: { ...tokens.typography.webLead, color: colors.m3.onSurfaceVariant, maxWidth: 640 },
+  wideActions: { flexDirection: "row", gap: tokens.spacing[16] },
+  widePanel: { flex: 1, maxWidth: 640, height: 420, borderRadius: tokens.radius.xxl, alignItems: "center", justifyContent: "center", backgroundColor: colors.m3.primaryContainer },
+  wideIllustration: { width: "90%", height: "90%" },
+  wideCards: { flexDirection: "row", gap: tokens.spacing[24] },
+  wideCard: { flex: 1, gap: tokens.spacing[8], padding: tokens.spacing[24], borderRadius: tokens.radius.large },
+  wideCardTitle: { ...tokens.typography.titleBlock },
+  wideCardText: { ...tokens.typography.bodyLarge },
+  wideFooter: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -107,9 +356,7 @@ function createStyles(colors: ColorPalette) {
     color: colors.m3.onSurfaceVariant,
   },
   title: {
-    fontFamily: fontFamily.brand,
-    fontSize: tokens.typography.displayLarge.fontSize,
-    lineHeight: tokens.typography.displayLarge.lineHeight,
+    ...tokens.typography.displayLarge,
     color: colors.m3.onSurface,
   },
   highlight: {
@@ -118,6 +365,9 @@ function createStyles(colors: ColorPalette) {
     borderRadius: tokens.radius.small,
     paddingHorizontal: tokens.spacing[6],
   },
+  highlightText: {
+    color: colors.m3.onTertiaryContainer,
+  },
   illustration: { width: "100%", height: 300 },
   subtitle: {
     ...tokens.typography.bodyLarge,
@@ -125,15 +375,72 @@ function createStyles(colors: ColorPalette) {
   },
   modalities: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[8] },
   modality: {
-    ...tokens.typography.bodyMedium,
-    fontFamily: fontFamily.medium,
-    color: colors.m3.onSurfaceVariant,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: tokens.spacing[8],
     borderWidth: 1,
-    borderColor: colors.m3.outlineVariant,
-    borderRadius: tokens.radius.small,
+    borderRadius: tokens.radius.full,
     paddingHorizontal: tokens.spacing[16],
     paddingVertical: tokens.spacing[8],
   },
+  modalityDot: {
+    width: 8,
+    height: 8,
+    borderRadius: tokens.radius.full,
+  },
+  modalityText: {
+    ...tokens.typography.bodyMedium,
+    fontFamily: fontFamily.semiBold,
+  },
+  modalityInfoCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: tokens.spacing[12],
+    paddingHorizontal: tokens.spacing[16],
+    paddingVertical: tokens.spacing[12],
+    borderRadius: tokens.radius.medium,
+  },
+  modalityInfoText: {
+    ...tokens.typography.bodyMedium,
+    flex: 1,
+  },
+  trustBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: tokens.spacing[8],
+    paddingHorizontal: tokens.spacing[12],
+    paddingVertical: tokens.spacing[8],
+    borderRadius: tokens.radius.full,
+    backgroundColor: colors.m3.surfaceContainerLow,
+    borderWidth: 1,
+    borderColor: colors.ipe.container,
+    alignSelf: "flex-start",
+  },
+  trustBadgeText: {
+    ...tokens.typography.labelSmall,
+    color: colors.m3.onSurfaceVariant,
+  },
   actions: { gap: tokens.spacing[12], marginTop: tokens.spacing[16] },
+  footerLinks: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: tokens.spacing[12],
+    paddingTop: tokens.spacing[8],
+  },
+  footerLink: {
+    minHeight: accessibility.touchTarget,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: tokens.spacing[8],
+  },
+  footerLinkText: {
+    ...tokens.typography.labelMedium,
+    color: colors.m3.onSurfaceVariant,
+    textDecorationLine: "underline",
+  },
+  footerLinkSeparator: {
+    color: colors.m3.outlineVariant,
+  },
   });
 }

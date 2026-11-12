@@ -15,6 +15,8 @@ const Pressable = React.forwardRef((props, ref) =>
     "Pressable",
     {
       ...props,
+      // Como no React Native, estilo em função é resolvido com o estado atual (sem toque).
+      style: typeof props.style === "function" ? props.style({ pressed: false }) : props.style,
       accessible: props.accessible !== undefined ? props.accessible : true,
       accessibilityRole: props.accessibilityRole || "button",
       ref,
@@ -83,7 +85,7 @@ const SectionList = React.forwardRef((props, ref) => {
   }
   return React.createElement(
     View,
-    { ref },
+    { ref, testID: props.testID, onRefresh: props.onRefresh, refreshing: props.refreshing },
     sections.map((section, sectionIndex) =>
       React.createElement(
         React.Fragment,
@@ -115,6 +117,11 @@ const Modal = React.forwardRef((props, ref) => {
 });
 Modal.displayName = "Modal";
 
+const KeyboardAvoidingView = React.forwardRef((props, ref) =>
+  React.createElement("KeyboardAvoidingView", { ...props, ref }, props.children)
+);
+KeyboardAvoidingView.displayName = "KeyboardAvoidingView";
+
 const StyleSheet = {
   create: (styles) => styles,
   flatten: (style) => {
@@ -142,6 +149,7 @@ const StyleSheet = {
 
 const AccessibilityInfo = {
   isScreenReaderEnabled: () => Promise.resolve(false),
+  isReduceMotionEnabled: () => Promise.resolve(false),
   addEventListener: () => ({ remove: () => {} }),
   announceForAccessibility: () => {},
 };
@@ -150,6 +158,23 @@ const Platform = {
   OS: "ios",
   select: (obj) => obj.ios || obj.default,
 };
+
+/** Emula o teclado nativo: registra listeners e permite disparar eventos nos testes. */
+const keyboardListeners = new Map();
+const Keyboard = {
+  addListener: (type, handler) => {
+    const set = keyboardListeners.get(type) || new Set();
+    set.add(handler);
+    keyboardListeners.set(type, set);
+    return { remove: () => set.delete(handler) };
+  },
+  dismiss: () => {},
+};
+function __emitKeyboardEvent(type, height, screenY = 0) {
+  const event = height === undefined ? undefined : { endCoordinates: { height, screenY } };
+  for (const handler of keyboardListeners.get(type) || []) handler(event);
+}
+const useWindowDimensions = () => ({ width: 360, height: 800, scale: 1, fontScale: 1 });
 
 let mockColorScheme = "light";
 const useColorScheme = () => mockColorScheme;
@@ -164,18 +189,41 @@ class MockAnimatedValue {
   setValue(v) {
     this.value = v;
   }
+  __getValue() {
+    return this.value;
+  }
   interpolate() {
     return this;
   }
+  addListener() {
+    return "mock-listener";
+  }
+  removeListener() {}
+  stopAnimation() {}
 }
+
+const AppState = { currentState: "active", addEventListener: () => ({ remove: () => {} }) };
+
+const PanResponder = { create: () => ({ panHandlers: {} }) };
 
 const Animated = {
   Value: MockAnimatedValue,
-  timing: (_value, _config) => ({
+  // Em teste, o timing aplica o alvo de imediato: a animação é síncrona e previsível.
+  timing: (value, config) => ({
     start: (cb) => {
+      if (value && value.setValue) value.setValue(config && config.toValue != null ? config.toValue : 0);
       if (cb) cb({ finished: true });
     },
     stop: () => {},
+    stopAnimation: () => {},
+  }),
+  spring: (value, config) => ({
+    start: (cb) => {
+      if (value && value.setValue) value.setValue(config && config.toValue != null ? config.toValue : 0);
+      if (cb) cb({ finished: true });
+    },
+    stop: () => {},
+    stopAnimation: () => {},
   }),
   loop: (_anim) => ({
     start: (cb) => {
@@ -189,8 +237,17 @@ const Animated = {
     },
     stop: () => {},
   }),
+  delay: (_time) => ({
+    start: (cb) => {
+      if (cb) cb({ finished: true });
+    },
+    stop: () => {},
+  }),
   View: React.forwardRef((props, ref) =>
     React.createElement("View", { ...props, ref }, props.children)
+  ),
+  Text: React.forwardRef((props, ref) =>
+    React.createElement("Text", { ...props, ref }, props.children)
   ),
 };
 
@@ -200,6 +257,7 @@ module.exports = {
   Image,
   ScrollView,
   Modal,
+  KeyboardAvoidingView,
   Pressable,
   ActivityIndicator,
   TextInput,
@@ -208,7 +266,12 @@ module.exports = {
   StyleSheet,
   AccessibilityInfo,
   Platform,
+  Keyboard,
+  __emitKeyboardEvent,
+  useWindowDimensions,
   Animated,
+  PanResponder,
+  AppState,
   useColorScheme,
   __setMockColorScheme,
   default: {
@@ -217,6 +280,7 @@ module.exports = {
     Image,
     ScrollView,
     Modal,
+  KeyboardAvoidingView,
     Pressable,
     ActivityIndicator,
     TextInput,
@@ -226,5 +290,7 @@ module.exports = {
     AccessibilityInfo,
     Platform,
     Animated,
+    PanResponder,
+    AppState,
   },
 };

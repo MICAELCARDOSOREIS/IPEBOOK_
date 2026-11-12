@@ -1,0 +1,214 @@
+import { useMemo, useRef, useState } from "react";
+import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import type { Book } from "@/model/entities/book";
+import { AppIcon } from "@/view/components/AppIcon";
+import { Dialog, type FocusableElement, useModalFocusTrap } from "@/view/components/Dialog";
+import { useTheme } from "@/view/theme/ThemeProvider";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
+import { tokens, type ColorPalette } from "@/view/tokens";
+
+import { withPress } from "@/view/pressFeedback";
+export type ProfileSafetySheetProps = {
+  visible: boolean;
+  personName: string;
+  listings: readonly Book[] | null;
+  loadingListings: boolean;
+  blocking: boolean;
+  error: string | null;
+  onLoadListings: () => void;
+  onReportListing: (listingId: string) => void;
+  onReportUser: () => void;
+  onConfirmBlock: () => void;
+  onClose: () => void;
+};
+
+/**
+ * Folha "Denunciar ou bloquear" do perfil público (Spec 091): bloquear a pessoa (com confirmação) ou
+ * denunciar um dos anúncios dela, que é onde a denúncia existe no app.
+ */
+export function ProfileSafetySheet({
+  visible,
+  personName,
+  listings,
+  loadingListings,
+  blocking,
+  error,
+  onLoadListings,
+  onReportListing,
+  onReportUser,
+  onConfirmBlock,
+  onClose,
+}: ProfileSafetySheetProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+  const wideWeb = useIsWideWeb();
+  const [confirmingBlock, setConfirmingBlock] = useState(false);
+  const [choosingListing, setChoosingListing] = useState(false);
+  const reportUserRef = useRef<FocusableElement | null>(null);
+  const reportListingRef = useRef<FocusableElement | null>(null);
+  const blockRef = useRef<FocusableElement | null>(null);
+  const cancelRef = useRef<FocusableElement | null>(null);
+
+  const close = () => {
+    setChoosingListing(false);
+    setConfirmingBlock(false);
+    onClose();
+  };
+
+  useModalFocusTrap(
+    visible && !confirmingBlock,
+    () => [reportUserRef.current, reportListingRef.current, blockRef.current, cancelRef.current],
+    close,
+  );
+
+  const startReport = () => {
+    setChoosingListing(true);
+    if (listings === null) onLoadListings();
+  };
+
+  return (
+    <>
+      <Modal accessibilityViewIsModal={visible && !confirmingBlock} visible={visible} transparent animationType="fade" statusBarTranslucent navigationBarTranslucent onRequestClose={close}>
+        <View style={[styles.scrim, wideWeb && styles.scrimWide]}>
+          <Pressable accessibilityRole="button" accessibilityLabel="Fechar ao tocar fora" onPress={close} style={withPress(styles.backdrop)} />
+          <View style={[styles.sheet, wideWeb && styles.sheetWide]}>
+            {wideWeb ? null : <View accessible={false} importantForAccessibility="no" style={styles.handle} />}
+            <Text accessibilityRole="header" style={styles.title}>
+              {choosingListing ? "Qual anúncio denunciar?" : "Denunciar ou bloquear"}
+            </Text>
+
+            {choosingListing ? (
+              <ScrollView style={styles.list} keyboardShouldPersistTaps="handled">
+                {loadingListings ? (
+                  <ActivityIndicator color={colors.action} accessibilityLabel="Carregando anúncios" />
+                ) : listings && listings.length > 0 ? (
+                  listings.map((book) => (
+                    <Pressable
+                      key={book.id}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Denunciar o anúncio ${book.title}`}
+                      onPress={() => {
+                        close();
+                        onReportListing(book.id);
+                      }}
+                      style={withPress(styles.row)}
+                    >
+                      <AppIcon name="flag" size={20} color={colors.error} />
+                      <Text numberOfLines={2} style={styles.rowText}>{book.title}</Text>
+                    </Pressable>
+                  ))
+                ) : (
+                  <Text style={styles.hint}>
+                    {error ?? `${personName} não tem anúncios ativos para denunciar.`}
+                  </Text>
+                )}
+              </ScrollView>
+            ) : (
+              <>
+                <Pressable
+                  ref={reportUserRef as never}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Denunciar ${personName}`}
+                  onPress={() => {
+                    close();
+                    onReportUser();
+                  }}
+                  style={withPress(styles.row)}
+                >
+                  <AppIcon name="flag" size={20} color={colors.error} />
+                  <View style={styles.rowTexts}>
+                    <Text style={styles.rowText}>Denunciar {personName}</Text>
+                    <Text style={styles.hint}>Conduta abusiva, golpe ou perfil falso.</Text>
+                  </View>
+                </Pressable>
+                <Pressable ref={reportListingRef as never} accessibilityRole="button" accessibilityLabel={`Denunciar um anúncio de ${personName}`} onPress={startReport} style={withPress(styles.row)}>
+                  <AppIcon name="flag" size={20} color={colors.error} />
+                  <View style={styles.rowTexts}>
+                    <Text style={styles.rowText}>Denunciar um anúncio</Text>
+                    <Text style={styles.hint}>Avise a equipe sobre um livro desta pessoa.</Text>
+                  </View>
+                </Pressable>
+                <Pressable
+                  ref={blockRef as never}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Bloquear ${personName}`}
+                  onPress={() => setConfirmingBlock(true)}
+                  style={withPress(styles.row)}
+                >
+                  <AppIcon name="block" size={20} color={colors.error} />
+                  <View style={styles.rowTexts}>
+                    <Text style={styles.rowText}>Bloquear {personName}</Text>
+                    <Text style={styles.hint}>Vocês deixam de trocar mensagens. Dá para desbloquear depois.</Text>
+                  </View>
+                </Pressable>
+                {error ? (
+                  <Text accessibilityRole="alert" style={styles.errorText}>{error}</Text>
+                ) : null}
+              </>
+            )}
+
+            <Pressable ref={cancelRef as never} accessibilityRole="button" accessibilityLabel="Cancelar" onPress={close} style={withPress(styles.cancel)}>
+              <Text style={styles.cancelText}>Cancelar</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+
+      <Dialog
+        visible={visible && confirmingBlock}
+        title="Bloquear esta pessoa?"
+        message={`${personName} não poderá enviar mensagens a você. Você pode desbloquear em Perfil > Pessoas bloqueadas.`}
+        confirmLabel="Bloquear"
+        cancelLabel="Cancelar"
+        destructive
+        loading={blocking}
+        onConfirm={() => {
+          onConfirmBlock();
+          setConfirmingBlock(false);
+        }}
+        onCancel={() => setConfirmingBlock(false)}
+      />
+    </>
+  );
+}
+
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+    scrim: { flex: 1, backgroundColor: colors.m3.scrim, justifyContent: "flex-end" },
+    scrimWide: { justifyContent: "center", alignItems: "center", padding: tokens.spacing[24] },
+    backdrop: { ...StyleSheet.absoluteFill },
+    sheetWide: { width: "100%", maxWidth: 480, borderRadius: tokens.radius.xxl },
+    sheet: {
+      backgroundColor: colors.background,
+      borderTopLeftRadius: tokens.radius.xxl,
+      borderTopRightRadius: tokens.radius.xxl,
+      paddingHorizontal: tokens.spacing[24],
+      paddingBottom: tokens.spacing[24],
+      gap: tokens.spacing[8],
+    },
+    handle: {
+      alignSelf: "center",
+      width: 32,
+      height: 4,
+      borderRadius: tokens.radius.hairline,
+      marginTop: tokens.spacing[12],
+      backgroundColor: colors.m3.onSurfaceVariant,
+      opacity: 0.4,
+    },
+    title: { ...tokens.typography.titleMedium, color: colors.m3.onSurface, paddingVertical: tokens.spacing[8] },
+    list: { maxHeight: 320 },
+    row: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[16],
+      minHeight: 56,
+      paddingVertical: tokens.spacing[8],
+    },
+    rowTexts: { flex: 1, gap: tokens.spacing[2] },
+    rowText: { ...tokens.typography.bodyLarge, color: colors.m3.onSurface, flexShrink: 1 },
+    hint: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
+    errorText: { ...tokens.typography.bodyMedium, color: colors.error },
+    cancel: { minHeight: tokens.accessibility.touchTarget, alignItems: "center", justifyContent: "center" },
+    cancelText: { ...tokens.typography.labelLarge, color: colors.m3.primary },
+  });
+}

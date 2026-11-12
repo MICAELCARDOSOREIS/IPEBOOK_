@@ -1,5 +1,5 @@
 import { ValidationError } from "@/model/errors";
-import type { BookModality } from "@/model/entities/book";
+import { BOOK_CONDITION_LABELS, type BookModality } from "@/model/entities/book";
 import type { IShareUseCases, ShareableListing } from "@/usecase/iShareUseCases";
 
 const MODALITY_LABELS: Record<BookModality, string> = {
@@ -17,15 +17,76 @@ export class ShareUseCases implements IShareUseCases {
   buildShareMessage(listing: ShareableListing, url: string): string {
     const priceText =
       listing.modality === "sale" && listing.price ? ` por R$ ${listing.price.toFixed(2)}` : "";
-    return `"${listing.title}" de ${listing.author} — ${MODALITY_LABELS[listing.modality]}${priceText}.\nConfira no IpêBook: ${url}`;
+    const boxText = listing.isBox
+      ? ` (Box${listing.boxVolumesCount ? ` · ${listing.boxVolumesCount} volumes` : ""})`
+      : "";
+    const conditionLabel = listing.condition ? BOOK_CONDITION_LABELS[listing.condition] : null;
+    const hasNeighborhood =
+      listing.neighborhood &&
+      listing.neighborhood !== "Todos os bairros (Piripiri)" &&
+      listing.neighborhood !== "all";
+    const extras = [
+      listing.category,
+      conditionLabel,
+      hasNeighborhood ? `${listing.neighborhood}, Piripiri - PI` : null,
+    ].filter(Boolean);
+
+    const detailsLine = extras.length > 0 ? `\n${extras.join(" · ")}` : "";
+    return `"${listing.title}"${boxText} de ${listing.author} — ${MODALITY_LABELS[listing.modality]}${priceText}.${detailsLine}\nConfira no IpêBook: ${url}`;
   }
 
-  buildWhatsAppShareUrl(message: string): string {
-    return `whatsapp://send?text=${encodeURIComponent(message)}`;
+  buildWhatsAppShareMessage(listing: ShareableListing, url: string): string {
+    const boxText = listing.isBox
+      ? ` 📦 Box / Coleção${listing.boxVolumesCount ? ` (${listing.boxVolumesCount} volumes)` : ""}`
+      : "";
+
+    let modalityText = "";
+    if (listing.modality === "sale") {
+      const priceFormatted = listing.price ? `R$ ${listing.price.toFixed(2).replace(".", ",")}` : "";
+      modalityText = priceFormatted ? `💰 Venda: ${priceFormatted}` : "💰 Venda";
+    } else if (listing.modality === "trade") {
+      modalityText = "🔄 Disponível para troca";
+    } else {
+      modalityText = "🎁 Doação gratuita para quem vai ler";
+    }
+
+    const conditionLabel = listing.condition ? BOOK_CONDITION_LABELS[listing.condition] : null;
+    const detailsText = [listing.category, conditionLabel].filter(Boolean).join(" · ");
+
+    const hasNeighborhood =
+      listing.neighborhood &&
+      listing.neighborhood !== "Todos os bairros (Piripiri)" &&
+      listing.neighborhood !== "all";
+
+    const neighborhoodText = hasNeighborhood
+      ? `📍 Bairro ${listing.neighborhood}, Piripiri · PI`
+      : "📍 Piripiri · PI";
+
+    const lines = [
+      `📚 *${listing.title.trim()}*${boxText}`,
+      `✍️ Autor(a): ${listing.author.trim()}`,
+      `🌿 ${modalityText}`,
+      ...(detailsText ? [`📖 ${detailsText}`] : []),
+      neighborhoodText,
+      `🤝 Combine a retirada em um Ponto Seguro da cidade!`,
+      ``,
+      `👉 Veja fotos e combine a entrega no IpêBook:`,
+      url.trim(),
+    ];
+
+    return lines.join("\n");
   }
 
-  buildInviteMessage(url: string = "https://ipebook.pages.dev"): string {
-    const targetUrl = url.trim() || "https://ipebook.pages.dev";
+  buildWhatsAppShareUrl(message: string, isWeb: boolean = false): string {
+    const encoded = encodeURIComponent(message);
+    if (isWeb) {
+      return `https://api.whatsapp.com/send?text=${encoded}`;
+    }
+    return `whatsapp://send?text=${encoded}`;
+  }
+
+  buildInviteMessage(url: string = "https://ipebook.app"): string {
+    const targetUrl = url.trim() || "https://ipebook.app";
     return `Oi! Estou usando o IpêBook para trocar, vender e doar livros em Piripiri. Dá uma olhada e participa também da nossa comunidade de leitores:\n${targetUrl}`;
   }
 

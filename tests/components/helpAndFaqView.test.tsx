@@ -1,4 +1,4 @@
-import React from "react";
+
 import { act, fireEvent, render } from "@testing-library/react-native";
 import { describe, expect, it, vi } from "vitest";
 import HelpAndFaq from "@/view/help/helpAndFaq";
@@ -42,6 +42,12 @@ describe("tela de Central de Ajuda e FAQ (HelpAndFaq)", () => {
       fireEvent.press(suporteFilter);
     });
     expect(screen.getByText("Como falar com a equipe do IpêBook?")).toBeDefined();
+    expect(
+      screen.getByRole("button", { name: "Filtrar por Suporte e Contato" }).props.accessibilityState.selected,
+    ).toBe(true);
+    expect(
+      screen.getByRole("button", { name: "Filtrar por Todas" }).props.accessibilityState.selected,
+    ).toBe(false);
 
     const segurancaFilter = screen.getByRole("button", { name: "Filtrar por Segurança em Piripiri" });
     await act(async () => {

@@ -209,4 +209,41 @@ describe("testes de hook: useMyListingsViewModel (ISO/IEC 25010 - Confiabilidade
     expect(hook.current[0].pausingId).toBeNull();
     expect(hook.current[0].pauseError).toBe("Não é possível alterar status de anúncio reservado.");
   });
+
+  it("trata erros genéricos em listagem, cancelamento e pausa", async () => {
+    // Erro genérico na listagem
+    const hookErr = await renderHook("u1", {
+      listMyListings: async () => { throw new Error("500 Internal Error"); },
+    });
+    expect(hookErr.current[0].error).toBe("Não foi possível carregar seus anúncios. Tente novamente.");
+
+    // Erros genéricos em cancelListing e togglePauseListing
+    const book: Book = {
+      id: "1",
+      title: "Dom Casmurro",
+      author: "Machado",
+      ownerId: "u1",
+      modality: "trade",
+      status: "available",
+    };
+    const hookActions = await renderHook("u1", {
+      listMyListings: async () => [book],
+      cancelListing: vi.fn().mockRejectedValue(new Error("Falha de rede")),
+      togglePauseListing: vi.fn().mockRejectedValue(new Error("Falha de rede")),
+    } as unknown as IBookUseCases);
+
+    let cancelOk = true;
+    await act(async () => {
+      cancelOk = await hookActions.current[1].cancelListing("1");
+    });
+    expect(cancelOk).toBe(false);
+    expect(hookActions.current[0].cancelError).toBe("Não foi possível remover o anúncio. Tente novamente.");
+
+    let pauseOk = true;
+    await act(async () => {
+      pauseOk = await hookActions.current[1].togglePauseListing("1");
+    });
+    expect(pauseOk).toBe(false);
+    expect(hookActions.current[0].pauseError).toBe("Não foi possível alterar o status do anúncio. Tente novamente.");
+  });
 });

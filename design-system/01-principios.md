@@ -51,14 +51,15 @@ proposta"), nunca "OK" ou caixa-alta, sem emoji na interface.
   [02-tokens.md](02-tokens.md)).
 - **Evite:** Serifa em botão, campo de texto ou qualquer texto corrido.
 
-## Princípio 5: Nada de tema escuro ainda
+## Princípio 5: O tema acompanha a preferência da pessoa
 
-- **Origem:** Adaptado (omissão deliberada). M3 dá suporte nativo a tema escuro; o app guarda os
-  valores escuros em `tokens.json` mas não os implementa nesta etapa
-  ([ADR 0008](../docs/adr/0008-sem-dark-mode-android-md3-ios-liquid-glass.md)).
-- **O porquê:** Implementar dark mode agora dobraria o trabalho de cada tela nova sem benefício
-  claro para o MVP decidido.
-- **Na prática:** Todo componente usa só os valores de tema claro de
-  [`tokens.json`](tokens.json); nenhuma tela usa `useColorScheme` nem
-  lógica de tema.
-- **Evite:** Adicionar um toggle de tema ou ler a cor do sistema antes dessa decisão mudar.
+- **Origem:** Adaptado. A decisão original de adiar o tema escuro foi substituída pela
+  [ADR 0036](../docs/adr/0036-tema-escuro-entra-em-escopo.md), que prioriza acessibilidade e
+  preferência do sistema.
+- **O porquê:** Pessoas devem poder usar o app com o tema do sistema ou escolher claro/escuro
+  sem alterar a estrutura dos componentes.
+- **Na prática:** `ThemeProvider` resolve a preferência e fornece `colors` por `useTheme()`.
+  Componentes já migrados usam a paleta resolvida; telas ainda não migradas mantêm a paleta
+  clara por compatibilidade e devem ser migradas antes de receber novas variações visuais.
+- **Evite:** adicionar hexágonos literais, criar uma paleta paralela ou usar `useColorScheme`
+  diretamente em componentes; a resolução deve passar pelo ViewModel e pelo `ThemeProvider`.

@@ -1,37 +1,70 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { networkStatusDataSource as defaultNetworkStatusDataSource } from "@/di/container";
+import type { INetworkStatusDataSource } from "@/model/datasources/iNetworkStatusDataSource";
 import { AppIcon } from "@/view/components/AppIcon";
-import { tokens, type ColorPalette } from "@/view/tokens";
+import { withPress } from "@/view/pressFeedback";
 import { useTheme } from "@/view/theme/ThemeProvider";
+import { type ColorPalette, tokens } from "@/view/tokens";
+import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
 
 export type OfflineStateProps = {
   onRetry: () => void;
   message?: string;
   retryLabel?: string;
+  networkDataSource?: INetworkStatusDataSource;
+  testID?: string;
 };
 
 /**
- * Estado "sem conexão" do design system (design-system/04-componentes/estados-do-sistema.md).
- * Usado quando o app detecta perda de conectividade de rede. Apenas avisa — não opera offline
- * (sem cache local nem fila de ações pendentes) e nunca tenta de novo sozinho.
+ * Estado offline inteligente e acolhedor (Spec 131 / ADR 0102).
+ * Exibido em formato de cartão centralizado quando há perda de conectividade.
+ * Dispara automaticamente a recarga assim que o sinal de internet é restabelecido.
  */
 export function OfflineState({
   onRetry,
   message = "Você está sem conexão com a internet.",
   retryLabel = "Tentar novamente",
+  networkDataSource = defaultNetworkStatusDataSource,
+  testID = "offline-state-card",
 }: OfflineStateProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const { isOnline } = useNetworkStatus(networkDataSource);
+  const wasOffline = useRef(false);
+
+  // Auto-recuperação: se estava offline e voltou a ficar online, recarrega automaticamente
+  useEffect(() => {
+    if (!isOnline) {
+      wasOffline.current = true;
+    } else if (wasOffline.current) {
+      wasOffline.current = false;
+      onRetry();
+    }
+  }, [isOnline, onRetry]);
 
   return (
-    <View style={styles.container}>
-      <View style={styles.row}>
-        <AppIcon name="wifiOff" color={colors.secondaryText} />
-        <Text accessibilityRole="alert" style={styles.message}>{message}</Text>
+    <View testID={testID} style={styles.container}>
+      <View style={styles.card}>
+        <View style={styles.iconCircle}>
+          <AppIcon name="wifiOff" size={24} color={colors.secondaryText} />
+        </View>
+        <Text
+          accessibilityRole="alert"
+          accessibilityLiveRegion="polite"
+          style={styles.message}
+        >
+          {message}
+        </Text>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={retryLabel}
+          onPress={onRetry}
+          style={withPress(styles.retry)}
+        >
+          <Text style={styles.retryText}>{retryLabel}</Text>
+        </Pressable>
       </View>
-      <Pressable accessibilityRole="button" onPress={onRetry} style={styles.retry}>
-        <Text style={styles.retryText}>{retryLabel}</Text>
-      </Pressable>
     </View>
   );
 }
@@ -39,32 +72,50 @@ export function OfflineState({
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     container: {
-      gap: tokens.spacing[16],
-      alignItems: "flex-start",
+      width: "100%",
       paddingVertical: tokens.spacing[24],
-    },
-    row: {
-      flexDirection: "row",
+      paddingHorizontal: tokens.spacing[16],
       alignItems: "center",
-      gap: tokens.spacing[12],
+      justifyContent: "center",
+    },
+    card: {
+      width: "100%",
+      maxWidth: 480,
+      alignItems: "center",
+      gap: tokens.spacing[16],
+      padding: tokens.spacing[24],
+      backgroundColor: colors.book.pageCard,
+      borderRadius: tokens.radius.card,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+    },
+    iconCircle: {
+      width: 48,
+      height: 48,
+      borderRadius: 24,
+      backgroundColor: colors.m3.surfaceContainerHigh,
+      alignItems: "center",
+      justifyContent: "center",
     },
     message: {
-      flex: 1,
-      color: colors.secondaryText,
       ...tokens.typography.bodyMedium,
+      color: colors.text,
+      textAlign: "center",
+      lineHeight: 22,
     },
     retry: {
       minHeight: tokens.accessibility.touchTarget,
       justifyContent: "center",
-      paddingHorizontal: tokens.spacing[20],
-      borderRadius: tokens.radius.small,
-      borderWidth: 1,
-      borderColor: colors.border,
+      alignItems: "center",
+      paddingHorizontal: tokens.spacing[24],
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.action,
+      marginTop: tokens.spacing[4],
     },
     retryText: {
-      ...tokens.typography.bodyMedium,
-      color: colors.action,
-      fontWeight: "600",
+      ...tokens.typography.labelLarge,
+      color: colors.nature.onFoliage,
+      fontWeight: tokens.fontWeight.semiBold,
     },
   });
 }

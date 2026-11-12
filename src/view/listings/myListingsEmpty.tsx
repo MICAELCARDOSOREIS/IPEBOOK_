@@ -3,23 +3,31 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { FilledButton } from "@/view/components/FilledButton";
-import { IconBadge } from "@/view/components/IconBadge";
+import { AppIcon } from "@/view/components/AppIcon";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
+import { withPress } from "@/view/pressFeedback";
 
 export type MyListingsEmptyProps = {
   onNavigateToCreateListing?: () => void;
   onNavigateToHelp?: () => void;
 };
 
+/**
+ * Estado vazio da estante alinhado ao Figma `05.02 · Estante vazia` (`25:430`).
+ */
 export function MyListingsEmpty({
   onNavigateToCreateListing,
   onNavigateToHelp,
 }: MyListingsEmptyProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const wideWeb = useIsWideWeb();
 
   return (
-    <View style={styles.empty}>
-      <IconBadge icon="shelf" tone="neutral" size="large" />
+    <View style={[styles.empty, wideWeb && styles.emptyWide]}>
+      <View style={styles.emptyIconContainer}>
+        <AppIcon name="shelf" size={44} color={colors.m3.onSecondaryContainer} />
+      </View>
       <Text style={styles.emptyHeadline}>Sua estante começa com um livro</Text>
       <Text style={styles.emptyTitle}>
         Anuncie um livro para vender, trocar ou doar na sua região.
@@ -36,7 +44,7 @@ export function MyListingsEmpty({
           accessibilityRole="button"
           accessibilityLabel="Como funciona"
           onPress={onNavigateToHelp}
-          style={styles.howItWorksButton}
+          style={withPress(styles.howItWorksButton)}
         >
           <Text style={styles.howItWorksText}>Como funciona</Text>
         </Pressable>
@@ -47,29 +55,53 @@ export function MyListingsEmpty({
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
-    empty: { paddingTop: tokens.spacing[48], alignItems: "center", gap: tokens.spacing[12] },
+    empty: {
+      paddingTop: tokens.spacing[32],
+      alignItems: "center",
+      gap: tokens.spacing[12],
+      paddingHorizontal: tokens.spacing[16],
+    },
+    emptyWide: {
+      maxWidth: 520,
+      alignSelf: "center",
+      paddingVertical: tokens.spacing[40],
+      paddingHorizontal: tokens.spacing[32],
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderRadius: tokens.radius.xl,
+      marginTop: tokens.spacing[24],
+    },
+    emptyIconContainer: {
+      width: 96,
+      height: 96,
+      borderRadius: tokens.radius.circle96,
+      backgroundColor: colors.m3.secondaryContainer,
+      justifyContent: "center",
+      alignItems: "center",
+      marginBottom: tokens.spacing[8],
+    },
     emptyHeadline: {
-      ...tokens.typography.titleLarge,
-      fontFamily: tokens.typography.displayLarge.fontFamily,
+      ...tokens.typography.brandTitle,
       color: colors.text,
       textAlign: "center",
     },
     emptyTitle: {
-      ...tokens.typography.bodyMedium,
+      ...tokens.typography.bodyLarge,
       color: colors.secondaryText,
       textAlign: "center",
+      maxWidth: 320,
     },
     howItWorksButton: {
       minHeight: tokens.accessibility.touchTarget,
       justifyContent: "center",
       alignItems: "center",
       marginTop: tokens.spacing[8],
+      paddingHorizontal: tokens.spacing[16],
     },
     howItWorksText: {
-      ...tokens.typography.labelMedium,
+      ...tokens.typography.labelLarge,
       color: colors.action,
-      fontWeight: "600",
+      fontWeight: tokens.fontWeight.semiBold,
     },
-    emptyAction: { marginTop: tokens.spacing[16], width: "100%" },
+    emptyAction: { marginTop: tokens.spacing[16], width: "100%", maxWidth: 320 },
   });
 }

@@ -1,7 +1,9 @@
-import { useMemo } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, Text } from "react-native";
+import { useMemo, type ReactNode } from "react";
+import { ActivityIndicator, Animated, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
+import { useGuardedPress } from "@/view/useGuardedPress";
+import { useExpressivePress } from "@/view/useExpressivePress";
 
 export type OutlinedButtonProps = {
   label: string;
@@ -10,11 +12,13 @@ export type OutlinedButtonProps = {
   disabled?: boolean;
   loadingLabel?: string;
   accessibilityLabel?: string;
+  /** Ícone exibido à esquerda do rótulo (ex.: GoogleLogo). */
+  icon?: ReactNode;
 };
 
 /**
- * Botão contornado do design system (botao.md): ação alternativa à principal, como
- * "Voltar ao login" ou "Já tenho conta". Nunca concorre com o botão preenchido.
+ * Botão contornado do design system (botao.md): ação alternativa à principal, com resposta
+ * M3 Expressive (mola e shape morphing).
  */
 export function OutlinedButton({
   label,
@@ -23,46 +27,80 @@ export function OutlinedButton({
   disabled = false,
   loadingLabel,
   accessibilityLabel,
+  icon,
 }: OutlinedButtonProps) {
   const isDisabled = disabled || loading;
+  const guardedPress = useGuardedPress(onPress);
+  const { scale, isPressed, onPressIn, onPressOut } = useExpressivePress({ disabled: isDisabled });
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={accessibilityLabel ?? label}
-      accessibilityState={{ disabled: isDisabled }}
-      disabled={isDisabled}
-      onPress={onPress}
-      style={[styles.button, isDisabled && styles.disabled]}
-    >
-      {loading ? (
-        <ActivityIndicator color={colors.action} accessibilityLabel={loadingLabel ?? label} />
-      ) : (
-        <Text style={[styles.label, isDisabled && styles.labelDisabled]}>{label}</Text>
-      )}
-    </Pressable>
+    <Animated.View style={{ transform: [{ scale }] }}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={accessibilityLabel ?? label}
+        accessibilityState={loading ? { disabled: isDisabled, busy: true } : { disabled: isDisabled }}
+        disabled={isDisabled}
+        onPress={guardedPress}
+        onPressIn={onPressIn}
+        onPressOut={onPressOut}
+        style={[
+          styles.button,
+          Boolean(icon) && styles.buttonWithIcon,
+          isPressed && !isDisabled && styles.pressedShape,
+          isDisabled && styles.disabled,
+        ]}
+      >
+        {loading ? (
+          <ActivityIndicator color={colors.action} accessibilityLabel={loadingLabel ?? label} />
+        ) : (
+          <View style={styles.contentRow}>
+            {icon ? (
+              <View accessible={false} aria-hidden={true}>
+                {icon}
+              </View>
+            ) : null}
+            <Text style={[styles.label, isDisabled && styles.labelDisabled]}>{label}</Text>
+          </View>
+        )}
+      </Pressable>
+    </Animated.View>
   );
 }
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     button: {
-      minHeight: tokens.accessibility.touchTarget,
+      minHeight: 52,
       justifyContent: "center",
       alignItems: "center",
-      borderRadius: tokens.radius.full,
+      borderRadius: tokens.shapeMorph.buttonRest,
       borderWidth: 1,
       borderColor: colors.m3.outline,
       backgroundColor: "transparent",
       paddingHorizontal: tokens.spacing[24],
+      ...(Platform.OS === "web" ? ({ cursor: "pointer", userSelect: "none" } as never) : {}),
     },
-    disabled: { borderColor: colors.disabledBackground },
+    buttonWithIcon: {
+      paddingLeft: tokens.spacing[16],
+      paddingRight: tokens.spacing[24],
+    },
+    pressedShape: {
+      borderRadius: tokens.shapeMorph.buttonPressed,
+    },
+    contentRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: tokens.spacing[12],
+    },
+    disabled: {
+      borderColor: colors.disabledBackground,
+      ...(Platform.OS === "web" ? ({ cursor: "not-allowed" } as never) : {}),
+    },
     label: {
-      color: colors.action,
-      fontSize: tokens.typography.bodyLarge.fontSize,
-      fontFamily: tokens.typography.bodyLarge.fontFamily,
-      fontWeight: "600",
+      color: colors.m3.onSurface,
+      ...tokens.typography.labelLarge,
     },
     labelDisabled: { color: colors.disabledText },
   });

@@ -1,6 +1,6 @@
 # 009 — Detalhes da Negociação e Ponto de Encontro
 
-Status: especificada. Data: 2026-10-15.
+Status: implementada e testada localmente. Data: 2026-11-04.
 
 ## Objetivo
 

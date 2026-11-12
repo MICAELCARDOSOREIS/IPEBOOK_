@@ -1,4 +1,4 @@
-import React from "react";
+
 import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render } from "@testing-library/react-native";
 import { LoadingState } from "@/view/components/LoadingState";
@@ -12,10 +12,45 @@ describe("LoadingState (design-system/04-componentes/estados-do-sistema.md, Issu
     expect(getByText("Carregando…")).toBeDefined();
   });
 
-  it("aceita um rótulo customizado por tela", async () => {
-    const { getByLabelText, getByText } = await render(<LoadingState label="Carregando livros" />);
+  it("aceita um rótulo customizado por tela e renderiza variantes de esqueleto (Spec 132)", async () => {
+    const { getByLabelText, getByText, getByTestId } = await render(
+      <LoadingState label="Carregando livros" variant="catalog" />,
+    );
     expect(getByLabelText("Carregando livros")).toBeDefined();
     expect(getByText("Carregando livros…")).toBeDefined();
+    expect(getByTestId("skeleton-variant-catalog")).toBeDefined();
+
+    const profileSkeleton = await render(<LoadingState label="Carregando perfil" variant="profile" />);
+    expect(profileSkeleton.getByTestId("skeleton-variant-profile")).toBeDefined();
+
+    const publicProfileSkeleton = await render(
+      <LoadingState label="Carregando perfil" variant="publicProfile" />,
+    );
+    expect(publicProfileSkeleton.getByTestId("skeleton-variant-publicProfile")).toBeDefined();
+
+    const shelfSkeleton = await render(
+      <LoadingState label="Carregando seus anúncios" variant="shelf" />,
+    );
+    expect(shelfSkeleton.getByTestId("skeleton-variant-shelf")).toBeDefined();
+
+    const homeCarouselSkeleton = await render(
+      <LoadingState label="Carregando livros" variant="homeCarousel" />,
+    );
+    expect(homeCarouselSkeleton.getByTestId("skeleton-variant-homeCarousel")).toBeDefined();
+
+    const conversationsSkeleton = await render(
+      <LoadingState label="Carregando conversas" variant="conversations" />,
+    );
+    expect(conversationsSkeleton.getByTestId("skeleton-variant-conversations")).toBeDefined();
+
+    const detailSkeleton = await render(<LoadingState label="Carregando anúncio" variant="detail" />);
+    expect(detailSkeleton.getByTestId("skeleton-variant-detail")).toBeDefined();
+
+    const manageSkeleton = await render(<LoadingState label="Carregando anúncio" variant="manage" />);
+    expect(manageSkeleton.getByTestId("skeleton-variant-manage")).toBeDefined();
+
+    const formSkeleton = await render(<LoadingState label="Carregando alerta" variant="form" />);
+    expect(formSkeleton.getByTestId("skeleton-variant-form")).toBeDefined();
   });
 });
 

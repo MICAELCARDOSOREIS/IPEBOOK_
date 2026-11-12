@@ -52,4 +52,61 @@ describe("ShareUseCases (Spec 019)", () => {
       `whatsapp://send?text=${encodeURIComponent('"Dom Casmurro" de Machado de Assis')}`,
     );
   });
+
+  it("monta a URL do WhatsApp Web quando isWeb for verdadeiro (Spec 118)", () => {
+    const url = useCases.buildWhatsAppShareUrl("Oi Piripiri", true);
+    expect(url).toBe(`https://api.whatsapp.com/send?text=${encodeURIComponent("Oi Piripiri")}`);
+  });
+
+  it("monta mensagem rica para WhatsApp com negritos, emojis e Piripiri (Spec 118)", () => {
+    const message = useCases.buildWhatsAppShareMessage(
+      {
+        title: "O Povo Brasileiro",
+        author: "Darcy Ribeiro",
+        modality: "sale",
+        price: 35.5,
+        neighborhood: "Centro",
+      },
+      "https://ipebook.app/livro/b10",
+    );
+
+    expect(message).toContain("📚 *O Povo Brasileiro*");
+    expect(message).toContain("✍️ Autor(a): Darcy Ribeiro");
+    expect(message).toContain("💰 Venda: R$ 35,50");
+    expect(message).toContain("📍 Bairro Centro, Piripiri · PI");
+    expect(message).toContain("https://ipebook.app/livro/b10");
+  });
+
+  it("monta mensagem rica para WhatsApp para troca com box de livros (Spec 118)", () => {
+    const message = useCases.buildWhatsAppShareMessage(
+      {
+        title: "Harry Potter",
+        author: "J. K. Rowling",
+        modality: "trade",
+        isBox: true,
+        boxVolumesCount: 7,
+      },
+      "https://ipebook.app/livro/b11",
+    );
+
+    expect(message).toContain("📚 *Harry Potter* 📦 Box / Coleção (7 volumes)");
+    expect(message).toContain("🔄 Disponível para troca");
+    expect(message).toContain("📍 Piripiri · PI");
+  });
+
+  it("monta mensagem rica para WhatsApp para doação com categoria e conservação (Spec 118)", () => {
+    const message = useCases.buildWhatsAppShareMessage(
+      {
+        title: "Quarto de Despejo",
+        author: "Carolina Maria de Jesus",
+        modality: "donation",
+        category: "Literatura",
+        condition: "good",
+      },
+      "https://ipebook.app/livro/b12",
+    );
+
+    expect(message).toContain("🎁 Doação gratuita para quem vai ler");
+    expect(message).toContain("📖 Literatura · Bom estado");
+  });
 });

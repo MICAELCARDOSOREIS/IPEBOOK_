@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { bookUseCases } from "@/di/container";
 import type { Book, BookCondition, BookModality } from "@/model/entities/book";
 import { DomainError } from "@/model/errors";
 import type { IBookUseCases } from "@/usecase/iBookUseCases";
@@ -16,6 +15,8 @@ export type EditListingState = {
   description: string;
   photoUrl: string;
   photos: readonly string[];
+  isBox: boolean;
+  boxVolumesCount: string;
   loading: boolean;
   saving: boolean;
   error: string | null;
@@ -35,6 +36,8 @@ export type EditListingActions = {
   setPhotoUrl: (value: string) => void;
   addPhoto: (value: string) => void;
   removePhoto: (index: number) => void;
+  setIsBox: (value: boolean) => void;
+  setBoxVolumesCount: (value: string) => void;
   submit: () => Promise<Book | null>;
 };
 
@@ -50,6 +53,8 @@ const INITIAL_STATE: EditListingState = {
   description: "",
   photoUrl: "",
   photos: [],
+  isBox: false,
+  boxVolumesCount: "",
   loading: true,
   saving: false,
   error: null,
@@ -61,7 +66,7 @@ const GENERIC_ERROR = "Não foi possível atualizar o anúncio. Tente novamente.
 export function useEditListingViewModel(
   bookId: string,
   sessionUserId: string | null,
-  useCases: IBookUseCases = bookUseCases,
+  useCases: IBookUseCases,
 ): [EditListingState, EditListingActions] {
   const [state, setState] = useState<EditListingState>(INITIAL_STATE);
   const active = useRef(false);
@@ -99,6 +104,8 @@ export function useEditListingViewModel(
         description: book.description ?? "",
         photoUrl: book.photoUrl ?? "",
         photos: book.photos ?? [],
+        isBox: Boolean(book.isBox),
+        boxVolumesCount: book.boxVolumesCount ? String(book.boxVolumesCount) : "",
         loading: false,
         saving: false,
         error: null,
@@ -181,6 +188,25 @@ export function useEditListingViewModel(
     }));
   }, []);
 
+  const setIsBox = useCallback((value: boolean) => {
+    setState((prev) => ({
+      ...prev,
+      isBox: value,
+      boxVolumesCount: value ? prev.boxVolumesCount : "",
+      error: null,
+      success: false,
+    }));
+  }, []);
+
+  const setBoxVolumesCount = useCallback((value: string) => {
+    setState((prev) => ({
+      ...prev,
+      boxVolumesCount: value,
+      error: null,
+      success: false,
+    }));
+  }, []);
+
   const submit = useCallback(async (): Promise<Book | null> => {
     setState((prev) => ({ ...prev, saving: true, error: null, success: false }));
 
@@ -188,6 +214,29 @@ export function useEditListingViewModel(
       state.modality === "sale" && state.price.trim()
         ? Number(state.price.replace(",", "."))
         : undefined;
+
+    if (priceNum !== undefined && (!Number.isFinite(priceNum) || priceNum <= 0)) {
+      setState((prev) => ({
+        ...prev,
+        saving: false,
+        error: "Informe um preço maior que zero.",
+      }));
+      return null;
+    }
+
+    const volumesNum =
+      state.isBox && state.boxVolumesCount.trim()
+        ? Number(state.boxVolumesCount.trim())
+        : undefined;
+
+    if (volumesNum !== undefined && (!Number.isFinite(volumesNum) || volumesNum < 2)) {
+      setState((prev) => ({
+        ...prev,
+        saving: false,
+        error: "Informe uma quantidade de volumes entre 2 e 100.",
+      }));
+      return null;
+    }
 
     try {
       const updated = await useCases.updateListing(
@@ -203,6 +252,8 @@ export function useEditListingViewModel(
           description: state.description.trim() || undefined,
           photoUrl: state.photoUrl.trim() || undefined,
           photos: state.photos.length > 0 ? state.photos : undefined,
+          isBox: state.isBox,
+          boxVolumesCount: state.isBox ? volumesNum : undefined,
         },
         sessionUserId,
       );
@@ -235,6 +286,8 @@ export function useEditListingViewModel(
     state.description,
     state.photoUrl,
     state.photos,
+    state.isBox,
+    state.boxVolumesCount,
     useCases,
   ]);
 
@@ -261,6 +314,8 @@ export function useEditListingViewModel(
       setPhotoUrl,
       addPhoto,
       removePhoto,
+      setIsBox,
+      setBoxVolumesCount,
       submit,
     },
   ];

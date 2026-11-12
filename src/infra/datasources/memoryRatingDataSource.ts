@@ -25,4 +25,11 @@ export class MemoryRatingDataSource implements IRatingDataSource {
   async listByRater(userId: string): Promise<readonly Rating[]> {
     return this.ratings.filter((rating) => rating.raterId === userId).map((rating) => ({ ...rating }));
   }
+
+  async findByRequestAndRater(requestId: string, raterId: string): Promise<Rating | null> {
+    const found = this.ratings.find(
+      (rating) => rating.requestId === requestId && rating.raterId === raterId,
+    );
+    return found ? { ...found } : null;
+  }
 }

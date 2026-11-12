@@ -1,8 +1,13 @@
-import { useId, useMemo, useState } from "react";
-import type { KeyboardTypeOptions } from "react-native";
-import { StyleSheet, Text, TextInput, View } from "react-native";
+import { useId, useMemo, useState, type ComponentRef, type Ref } from "react";
+import type { KeyboardTypeOptions, ReturnKeyTypeOptions, TextInputProps } from "react-native";
+import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
+import { AppIcon } from "@/view/components/AppIcon";
+
+import { withPress } from "@/view/pressFeedback";
+
+export type TextInputInstance = ComponentRef<typeof TextInput>;
 
 export type TextFieldProps = {
   label: string;
@@ -20,9 +25,30 @@ export type TextFieldProps = {
   accessibilityLabel?: string;
   /** Campo de várias linhas, como a descrição de `04.05` (Spec 043, RN-08). */
   multiline?: boolean;
+  /** Fundo atrás do rótulo flutuante; precisa ser o mesmo do contêiner que hospeda o campo. */
+  labelBackgroundColor?: string;
+  /** Alinhamento do texto de suporte. `right` é o contador de `04.05` (`39/280` à direita). */
+  helperTextAlign?: "left" | "right";
+  /** Sugestão para gerenciadores de senha e preenchimento automático (e-mail, nome, senha atual ou nova). */
+  autoComplete?: TextInputProps["autoComplete"];
+  textContentType?: TextInputProps["textContentType"];
+  /** "next" nos campos intermediários e "done" no último: o teclado mostra a ação certa. */
+  returnKeyType?: ReturnKeyTypeOptions;
+  /** Toque na ação do teclado; no último campo costuma enviar o formulário. */
+  onSubmitEditing?: () => void;
+  /** Referência ao elemento TextInput para controle de foco programático (Spec 133 / Issue #217). */
+  inputRef?: Ref<TextInputInstance>;
+  /** Callback executada quando o campo ganha foco (útil para auto-scroll e IHC). */
+  onFocus?: () => void;
+  /** Callback executada quando o campo perde o foco. */
+  onBlur?: () => void;
 };
 
-/** Campo de texto do design system (campo-de-texto.md): rótulo sempre visível, estado de foco e erro. */
+/**
+ * Campo de texto do design system (campo-de-texto.md), Material 3 contornado como no Figma
+ * (`01.03`, `01.06`, `04.05`): contêiner de 56 dp com raio de 4 dp, rótulo flutuante sobre a
+ * borda quando há foco ou valor e rótulo dentro do campo quando está vazio.
+ */
 export function TextField({
   label,
   value,
@@ -38,47 +64,118 @@ export function TextField({
   maxLength,
   accessibilityLabel,
   multiline = false,
+  labelBackgroundColor,
+  helperTextAlign = "left",
+  autoComplete,
+  textContentType,
+  returnKeyType,
+  onSubmitEditing,
+  inputRef,
+  onFocus,
+  onBlur,
 }: TextFieldProps) {
   const [focused, setFocused] = useState(false);
+  // Campo de senha ganha o olho de mostrar/ocultar (some a dúvida de ter digitado errado no celular).
+  const [revealed, setRevealed] = useState(false);
   const hasError = Boolean(error);
   const errorId = useId();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const accentColor = hasError ? colors.error : focused ? colors.action : colors.secondaryText;
-  const borderColor = hasError ? colors.error : focused ? colors.action : colors.border;
+  const hasValue = value.length > 0;
+  const floating = focused || hasValue;
+  const accentColor = hasError ? colors.error : focused ? colors.action : colors.m3.onSurfaceVariant;
+  const borderColor = hasError ? colors.error : focused ? colors.action : colors.m3.outline;
 
   return (
     <View style={styles.field}>
-      <Text style={[styles.label, { color: accentColor }]}>{label}</Text>
-      <TextInput
-        accessibilityLabel={accessibilityLabel ?? label}
-        accessibilityHint={hasError ? error ?? undefined : undefined}
-        aria-describedby={hasError ? errorId : undefined}
-        value={value}
-        onChangeText={onChangeText}
-        secureTextEntry={secureTextEntry}
-        autoCapitalize={autoCapitalize}
-        keyboardType={keyboardType}
-        editable={editable}
-        placeholder={placeholder}
-        placeholderTextColor={placeholderTextColor ?? colors.secondaryText}
-        maxLength={maxLength}
-        multiline={multiline}
-        numberOfLines={multiline ? 4 : undefined}
-        textAlignVertical={multiline ? "top" : undefined}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
+      <View
         style={[
-          styles.input,
+          styles.container,
           { borderColor, borderWidth: focused || hasError ? 2 : 1 },
-          multiline && styles.multiline,
+          multiline && styles.containerMultiline,
           !editable && styles.disabled,
         ]}
-      />
+      >
+        <TextInput
+          ref={inputRef}
+          accessibilityLabel={accessibilityLabel ?? label}
+          accessibilityHint={hasError ? error ?? undefined : undefined}
+          accessibilityState={{ disabled: !editable }}
+          aria-invalid={hasError}
+          aria-describedby={hasError ? errorId : undefined}
+          value={value}
+          onChangeText={onChangeText}
+          secureTextEntry={secureTextEntry && !revealed}
+          autoComplete={autoComplete}
+          textContentType={textContentType}
+          returnKeyType={returnKeyType}
+          onSubmitEditing={onSubmitEditing}
+          autoCorrect={secureTextEntry ? false : undefined}
+          autoCapitalize={autoCapitalize}
+          keyboardType={keyboardType}
+          editable={editable}
+          placeholder={floating ? placeholder : undefined}
+          placeholderTextColor={placeholderTextColor ?? colors.m3.onSurfaceVariant}
+          maxLength={maxLength}
+          multiline={multiline}
+          numberOfLines={multiline ? 4 : undefined}
+          textAlignVertical={multiline ? "top" : "center"}
+          onFocus={() => {
+            setFocused(true);
+            onFocus?.();
+          }}
+          onBlur={() => {
+            setFocused(false);
+            onBlur?.();
+          }}
+          style={[styles.input, multiline && styles.inputMultiline, secureTextEntry && styles.inputWithToggle]}
+        />
+        {secureTextEntry ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={revealed ? "Ocultar senha" : "Mostrar senha"}
+            accessibilityState={{ expanded: revealed }}
+            hitSlop={8}
+            onPress={() => setRevealed((current) => !current)}
+            style={withPress(styles.toggle)}
+          >
+            <AppIcon name={revealed ? "visibilityOff" : "visibility"} size={22} color={colors.m3.onSurfaceVariant} />
+          </Pressable>
+        ) : null}
+        {floating ? (
+          <View
+            pointerEvents="none"
+            style={[styles.notch, { backgroundColor: labelBackgroundColor ?? colors.background }]}
+          >
+            <Text style={[styles.floatingLabel, { color: accentColor }]}>{label}</Text>
+          </View>
+        ) : (
+          <Text
+            pointerEvents="none"
+            style={[
+              styles.restingLabel,
+              multiline && styles.restingLabelMultiline,
+              { color: placeholderTextColor ?? colors.m3.onSurfaceVariant },
+            ]}
+          >
+            {label}
+          </Text>
+        )}
+      </View>
       {hasError ? (
-        <Text nativeID={errorId} accessibilityRole="alert" style={styles.errorText}>{error}</Text>
+        <Text
+          nativeID={errorId}
+          accessibilityRole="alert"
+          accessibilityLiveRegion="polite"
+          aria-live="polite"
+          style={[styles.errorText, helperTextAlign === "right" && styles.supportingRight]}
+        >
+          {error}
+        </Text>
       ) : helperText ? (
-        <Text style={styles.helperText}>{helperText}</Text>
+        <Text style={[styles.helperText, helperTextAlign === "right" && styles.supportingRight]}>
+          {helperText}
+        </Text>
       ) : null}
     </View>
   );
@@ -86,20 +183,64 @@ export function TextField({
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
-    field: { gap: tokens.spacing[6] },
-    label: { fontSize: tokens.typography.labelMedium.fontSize, fontWeight: tokens.typography.labelMedium.fontWeight },
-    input: {
-      minHeight: tokens.accessibility.touchTarget,
-      borderRadius: tokens.radius.small,
-      paddingHorizontal: tokens.spacing[12],
-      color: colors.text,
-      backgroundColor: colors.surface,
-      fontSize: tokens.typography.bodyLarge.fontSize,
+    field: { gap: tokens.spacing[4] },
+    container: {
+      minHeight: tokens.spacing[56],
+      justifyContent: "center",
+      borderRadius: tokens.radius.extraSmall,
+      backgroundColor: "transparent",
     },
-    multiline: { minHeight: tokens.spacing[64] + tokens.spacing[32], paddingVertical: tokens.spacing[12] },
+    containerMultiline: { minHeight: tokens.spacing[64] + tokens.spacing[32] },
+    input: {
+      minHeight: tokens.spacing[48],
+      paddingHorizontal: tokens.spacing[16],
+      paddingVertical: tokens.spacing[8],
+      color: colors.m3.onSurface,
+      ...tokens.typography.bodyLarge,
+    },
+    inputMultiline: {
+      minHeight: tokens.spacing[64] + tokens.spacing[24],
+      paddingTop: tokens.spacing[16],
+    },
+    inputWithToggle: { paddingRight: tokens.spacing[48] },
+    toggle: {
+      position: "absolute",
+      right: tokens.spacing[4],
+      top: 0,
+      bottom: 0,
+      width: tokens.spacing[48],
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    notch: {
+      position: "absolute",
+      top: -8,
+      left: tokens.spacing[8],
+      paddingHorizontal: tokens.spacing[4],
+      borderRadius: tokens.radius.extraSmall,
+    },
+    floatingLabel: { ...tokens.typography.labelMedium },
+    restingLabel: {
+      position: "absolute",
+      left: tokens.spacing[16],
+      right: tokens.spacing[16],
+      top: tokens.spacing[16],
+      ...tokens.typography.bodyLarge,
+    },
+    restingLabelMultiline: { top: tokens.spacing[16] },
     disabled: { opacity: 0.38 },
-    errorText: { color: colors.error, fontSize: tokens.typography.bodyMedium.fontSize },
-    helperText: { color: colors.secondaryText, fontSize: tokens.typography.labelMedium.fontSize },
+    errorText: {
+      color: colors.error,
+      paddingHorizontal: tokens.spacing[16],
+      ...tokens.typography.labelMedium,
+    },
+    helperText: {
+      color: colors.m3.onSurfaceVariant,
+      paddingHorizontal: tokens.spacing[16],
+      ...tokens.typography.labelMedium,
+    },
+    // Figma `04.05`: contador e texto de suporte alinhados à direita do campo.
+    supportingRight: { textAlign: "right" },
   });
 }
 

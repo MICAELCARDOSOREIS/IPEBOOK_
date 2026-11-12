@@ -1,5 +1,6 @@
-import React from "react";
+
 import { act, fireEvent, render } from "@testing-library/react-native";
+import { Platform, StyleSheet } from "react-native";
 import { describe, expect, it, vi } from "vitest";
 import type { Book } from "@/model/entities/book";
 import type { MyListingsState, MyListingsActions } from "@/viewmodel/useMyListingsViewModel";
@@ -58,14 +59,117 @@ function mockViewModel(
 }
 
 describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)", () => {
-  it("renderiza cabeçalho acessível com título Minha estante (Figma 05.01)", async () => {
+  it("renderiza cabeçalho Estante com subtítulo (Spec 075, CA1)", async () => {
     mockViewModel({ books: [], loading: false, error: null });
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
       screen = await render(<MyListings sessionUserId="user-1" />);
     });
 
-    expect(screen.getByRole("header").props.children).toBe("Minha estante");
+    expect(screen.getByRole("header").props.children).toBe("Estante");
+    expect(screen.getByText("Seus livros em Piripiri")).toBeDefined();
+  });
+
+  it("resume os anúncios por modalidade em três cartões (Spec 075, CA2)", async () => {
+    const base = { author: "A", ownerId: "user-1", status: "available" as const };
+    mockViewModel({
+      books: [
+        { ...base, id: "s1", title: "V1", modality: "sale" },
+        { ...base, id: "s2", title: "V2", modality: "sale" },
+        { ...base, id: "t1", title: "T1", modality: "trade" },
+      ],
+    });
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<MyListings sessionUserId="user-1" />);
+    });
+    expect(screen.getByLabelText("2 à venda")).toBeDefined();
+    expect(screen.getByLabelText("1 em troca")).toBeDefined();
+    expect(screen.getByLabelText("0 para doar")).toBeDefined();
+  });
+
+  it("permite filtrar por modalidade tocando nos cartões de resumo", async () => {
+    const base = { author: "A", ownerId: "user-1", status: "available" as const };
+    mockViewModel({
+      books: [
+        { ...base, id: "s1", title: "V1", modality: "sale" },
+        { ...base, id: "d1", title: "D1", modality: "donation" },
+      ],
+    });
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<MyListings sessionUserId="user-1" />);
+    });
+
+    const saleButton = screen.getByRole("button", { name: "1 à venda" });
+    expect(saleButton).toBeDefined();
+
+    // Ao tocar no cartão "1 à venda", filtra os livros para exibir apenas venda
+    await act(async () => {
+      fireEvent.press(saleButton);
+    });
+    expect(screen.getByText("V1")).toBeDefined();
+    expect(screen.queryByText("D1")).toBeNull();
+
+    // Ao tocar novamente, desmarca o filtro e volta a exibir ambos
+    await act(async () => {
+      fireEvent.press(saleButton);
+    });
+    expect(screen.getByText("V1")).toBeDefined();
+    expect(screen.getByText("D1")).toBeDefined();
+  });
+
+  it("mantém a situação no rodapé e abre a negociação ao tocar no cartão reservado", async () => {
+    const reservado: Book = {
+      id: "b21",
+      title: "Iracema",
+      author: "José de Alencar",
+      modality: "sale",
+      price: 12,
+      ownerId: "user-1",
+      status: "reserved",
+    };
+    mockViewModel({ books: [reservado] });
+    mockReceived([
+      {
+        request: { id: "r21", listingId: "b21", requesterId: "u-bia", status: "accepted" },
+        listing: reservado,
+        requesterName: "Bia",
+      },
+    ]);
+    const onNavigateToNegotiationDetail = vi.fn();
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(
+        <MyListings sessionUserId="user-1" onNavigateToNegotiationDetail={onNavigateToNegotiationDetail} />,
+      );
+    });
+
+    expect(screen.getByText("Reservado")).toBeDefined();
+
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Ver negociação de Iracema"));
+    });
+    expect(onNavigateToNegotiationDetail).toHaveBeenCalledWith("r21");
+    mockReceived([]);
+  });
+
+  it("mostra Precisa da sua atenção com Ver proposta para proposta pendente (Spec 075, CA4)", async () => {
+    const book: Book = { id: "b20", title: "Vidas Secas", author: "G", modality: "trade", ownerId: "user-1", status: "available" };
+    mockViewModel({ books: [book] });
+    mockReceived([
+      { request: { id: "r20", listingId: "b20", requesterId: "u-lu", status: "pending" }, listing: book, requesterName: "Lucas" },
+    ]);
+    const onNavigateToReceivedRequests = vi.fn();
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<MyListings sessionUserId="user-1" onNavigateToReceivedRequests={onNavigateToReceivedRequests} />);
+    });
+    expect(screen.getByText("Precisa da sua atenção")).toBeDefined();
+    expect(screen.getByText("Lucas quer trocar")).toBeDefined();
+    await act(async () => { fireEvent.press(screen.getByText("Ver proposta")); });
+    expect(onNavigateToReceivedRequests).toHaveBeenCalledTimes(1);
+    mockReceived([]);
   });
 
   it("não acrescenta manchete e mostra a dica depois da lista (Spec 039, Figma 05.01)", async () => {
@@ -107,6 +211,21 @@ describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
     const btn = screen.getByRole("button", { name: "Cadastrar anúncio" });
     fireEvent.press(btn);
     expect(onNavigateToCreateListing).toHaveBeenCalledTimes(1);
+  });
+
+  it("no celular o Anunciar livro é um único FAB do Material 3 no canto inferior, não um botão no cabeçalho", async () => {
+    const livro: Book = { id: "b13", title: "Iracema", author: "Alencar", modality: "trade", ownerId: "user-1", status: "available" };
+    mockViewModel({ books: [livro] });
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<MyListings sessionUserId="user-1" onNavigateToCreateListing={vi.fn()} />);
+    });
+    const fabs = screen.getAllByLabelText("Anunciar livro");
+    expect(fabs).toHaveLength(1);
+    const raw = fabs[0].props.style;
+    const resolved = typeof raw === "function" ? raw({ pressed: false }) : raw;
+    const style = Object.assign({}, ...[resolved].flat(Infinity).filter(Boolean));
+    expect(style).toMatchObject({ position: "absolute", width: 56, height: 56 });
   });
 
   it("lista cada anúncio como linha com resumo e seta para o gerenciamento (Spec 043, RN-04)", async () => {
@@ -235,15 +354,19 @@ describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
     });
 
     // Livro sem reserva com proposta pendente: antes a aba mostrava "Propostas (0)".
-    expect(screen.getByText("Propostas (2)")).toBeDefined();
     await act(async () => {
-      fireEvent.press(screen.getByText("Propostas (2)"));
+      fireEvent.press(screen.getByLabelText(/Exibir:/i));
+    });
+    expect(screen.getByLabelText("Propostas, 2 em aberto")).toBeDefined();
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Propostas, 2 em aberto"));
     });
 
     expect(screen.getByText("Ana Paula · proposta recebida · Troca")).toBeDefined();
     expect(screen.getByText("Pessoa da comunidade · negociação aceita · Troca")).toBeDefined();
     expect(screen.queryByText(/Caio/)).toBeNull();
-    expect(screen.queryByText("Todos (1)")).toBeNull();
+    // A barra de abas e filtros permanece acessível no topo para retorno em 1 toque
+    expect(screen.getByText("Todos (1)")).toBeDefined();
     expect(screen.getByText("Tudo pela conversa")).toBeDefined();
 
     const rows = screen.getAllByRole("button", { name: "Abrir proposta para Dom Casmurro" });
@@ -258,7 +381,7 @@ describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
     mockReceived([]);
   });
 
-  it("aba Propostas sem propostas mostra estado próprio", async () => {
+  it("aba Propostas sem propostas mostra estado próprio e volta para Anúncios (Spec 075, CA5)", async () => {
     mockViewModel({
       books: [{ id: "b1", title: "Livro", author: "A", modality: "sale", ownerId: "user-1", status: "available" }],
     });
@@ -267,9 +390,92 @@ describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
       screen = await render(<MyListings sessionUserId="user-1" />);
     });
     await act(async () => {
-      fireEvent.press(screen.getByText("Propostas (0)"));
+      fireEvent.press(screen.getByLabelText(/Exibir:/i));
     });
-    expect(screen.getByText(/Nenhuma proposta em aberto/)).toBeDefined();
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Propostas"));
+    });
+    expect(screen.getByText("Nenhuma proposta agora.")).toBeDefined();
+    await act(async () => { fireEvent.press(screen.getByText("Ver meus anúncios")); });
+    expect(screen.getByText("Livro")).toBeDefined();
+  });
+
+  it("não conta livros entregues no resumo por modalidade", async () => {
+    const base = { author: "A", ownerId: "user-1" };
+    mockViewModel({
+      books: [
+        { ...base, id: "s1", title: "V1", modality: "sale", status: "available" as const },
+        { ...base, id: "s2", title: "V2", modality: "sale", status: "delivered" as const },
+      ],
+    });
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<MyListings sessionUserId="user-1" />);
+    });
+    expect(screen.getByLabelText("1 à venda")).toBeDefined();
+  });
+
+  it("negociação aceita com o livro já entregue sai de Propostas e do selo e vai para Concluídos", async () => {
+    const entregue: Book = { id: "b20", title: "Vidas Secas", author: "Graciliano", modality: "donation", ownerId: "user-1", status: "delivered" };
+    const reservado: Book = { ...entregue, id: "b21", title: "Iracema", status: "reserved" };
+    mockViewModel({ books: [entregue, reservado] });
+    mockReceived([
+      { request: { id: "r20", listingId: "b20", requesterId: "u-ana", status: "accepted" }, listing: entregue, requesterName: "Ana" },
+      { request: { id: "r21", listingId: "b21", requesterId: "u-bia", status: "accepted" }, listing: reservado, requesterName: "Bia" },
+    ]);
+    const onNavigateToNegotiationDetail = vi.fn();
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<MyListings sessionUserId="user-1" onNavigateToNegotiationDetail={onNavigateToNegotiationDetail} />);
+    });
+
+    // Só a negociação ainda em andamento conta como proposta em aberto.
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText(/Exibir:/i));
+    });
+    expect(screen.getByLabelText("Propostas, 1 em aberto")).toBeDefined();
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Propostas, 1 em aberto"));
+    });
+    expect(screen.getByText("Bia · negociação aceita · Doação")).toBeDefined();
+    expect(screen.queryByText(/Ana/)).toBeNull();
+
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText(/Exibir:/i));
+    });
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Concluídos"));
+    });
+    expect(screen.getByText("Ana · Concluído · Doação")).toBeDefined();
+    // O livro aparece uma vez só (pela negociação), não repetido como "Entregue".
+    expect(screen.getAllByText("Vidas Secas")).toHaveLength(1);
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Ver histórico de Vidas Secas"));
+    });
+    expect(onNavigateToNegotiationDetail).toHaveBeenCalledWith("r20");
+    mockReceived([]);
+  });
+
+  it("leva o livro entregue de Anúncios para Concluídos", async () => {
+    const base = { author: "A", ownerId: "user-1", modality: "sale" as const };
+    mockViewModel({
+      books: [
+        { ...base, id: "a1", title: "Ativo", status: "available" as const },
+        { ...base, id: "e1", title: "Entregue", status: "delivered" as const },
+      ],
+    });
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<MyListings sessionUserId="user-1" />);
+    });
+    expect(screen.queryByText("Entregue")).toBeNull();
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText(/Exibir:/i));
+    });
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Concluídos"));
+    });
+    expect(screen.getByText("Entregue")).toBeDefined();
   });
 
   it("oferece o botão Anunciar livro quando já existe estante (Figma 05.01)", async () => {
@@ -346,5 +552,99 @@ describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
     });
     expect(screen.getByText("Dom Casmurro")).toBeDefined();
     expect(screen.getByText("O Quinze")).toBeDefined();
+  });
+
+  it("renderiza a aba Concluídos e exibe estado vazio ou livros finalizados (Spec 064, Figma 05.01)", async () => {
+    const book: Book = {
+      id: "b-conc",
+      title: "Vidas Secas",
+      author: "Graciliano Ramos",
+      modality: "trade",
+      ownerId: "user-1",
+      status: "available",
+    };
+    mockViewModel({ books: [book] });
+    mockReceived([
+      {
+        request: { id: "req-c1", listingId: "b-conc", requesterId: "u-lucas", status: "rejected" },
+        listing: book,
+        requesterName: "Lucas Mendes",
+      },
+    ]);
+
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<MyListings sessionUserId="user-1" />);
+    });
+
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText(/Exibir:/i));
+    });
+    expect(screen.getByLabelText("Concluídos")).toBeDefined();
+
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Concluídos"));
+    });
+
+    expect(screen.getByText("Vidas Secas")).toBeDefined();
+    expect(screen.getByText("Lucas Mendes · Concluído · Troca")).toBeDefined();
+  });
+
+  it("não exibe botão de voltar quando onBack não é fornecido (Spec 064)", async () => {
+    mockViewModel({ books: [] });
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<MyListings sessionUserId="user-1" />);
+    });
+
+    expect(screen.queryByLabelText("Voltar")).toBeNull();
+  });
+
+  it("exibe botão de voltar quando onBack é fornecido (Spec 064)", async () => {
+    mockViewModel({ books: [] });
+    const onBack = vi.fn();
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<MyListings sessionUserId="user-1" onBack={onBack} />);
+    });
+
+    const backBtn = screen.getByLabelText("Voltar");
+    expect(backBtn).toBeDefined();
+    fireEvent.press(backBtn);
+    expect(onBack).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    ["ios", 9],
+    ["android", undefined],
+  ] as const)("usa o seletor de abas da plataforma %s (Spec 075, CA6/CA7)", async (os, trackRadius) => {
+    const originalOS = Platform.OS;
+    Platform.OS = os;
+    mockViewModel({
+      books: [{ id: "b1", title: "Livro", author: "A", modality: "sale", ownerId: "user-1", status: "available" }],
+    });
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<MyListings sessionUserId="user-1" />);
+    });
+    const style = StyleSheet.flatten(screen.getByTestId("my-listings-tablist").props.style);
+    expect(style.borderRadius).toBe(trackRadius);
+    Platform.OS = originalOS;
+  });
+
+  it("exibe botão de 1 toque para compartilhamento no WhatsApp em cada card de livro (Spec 122)", async () => {
+    mockViewModel({
+      books: [
+        { id: "b-whats-1", title: "Dom Casmurro", author: "Machado de Assis", modality: "sale", price: 20, ownerId: "user-1", status: "available" },
+      ],
+    });
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<MyListings sessionUserId="user-1" />);
+    });
+
+    const shareBtn = screen.getByLabelText("Compartilhar Dom Casmurro no WhatsApp");
+    expect(shareBtn).toBeDefined();
+    fireEvent.press(shareBtn);
   });
 });

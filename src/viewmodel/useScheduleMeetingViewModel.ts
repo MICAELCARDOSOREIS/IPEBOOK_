@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  logger as defaultLogger,
-  meetingUseCases,
-  rateLimiter as defaultRateLimiter,
-} from "@/di/container";
-import { MEETING_TIME_SLOTS, type Meeting } from "@/model/entities/meeting";
+import type { Meeting } from "@/model/entities/meeting";
 import { DomainError } from "@/model/errors";
 import type { ILogger } from "@/model/services/iLogger";
 import type { IRateLimiter } from "@/model/services/iRateLimiter";
-import { meetingDayOptions, meetingScheduledAt } from "@/model/validators/meetingValidator";
+import {
+  isMeetingPointOpenOnDay,
+  meetingDayOptions,
+  meetingScheduledAt,
+  meetingTimeSlotsForPoint,
+} from "@/model/validators/meetingValidator";
 import type { IMeetingUseCases } from "@/usecase/iMeetingUseCases";
 import { formKey, guardFormSubmit } from "@/viewmodel/formRateLimit";
 
@@ -23,11 +23,13 @@ export type ScheduleMeetingState = {
   hour: number | null;
   dayOptions: readonly Date[];
   timeSlots: readonly number[];
+  isPointOpenOnDay: boolean;
   submitting: boolean;
   error: string | null;
 };
 
 export type ScheduleMeetingActions = {
+  reload: () => Promise<void>;
   selectPoint: (pointName: string) => void;
   selectDay: (index: number) => void;
   selectHour: (hour: number) => void;
@@ -48,10 +50,10 @@ function sameDay(a: Date, b: Date): boolean {
 export function useScheduleMeetingViewModel(
   requestId: string,
   sessionUserId: string | null,
-  useCases: IMeetingUseCases = meetingUseCases,
+  useCases: IMeetingUseCases,
   now: () => Date = systemNow,
-  rateLimiter: IRateLimiter = defaultRateLimiter,
-  logger: ILogger = defaultLogger,
+  rateLimiter: IRateLimiter,
+  logger: ILogger,
 ): [ScheduleMeetingState, ScheduleMeetingActions] {
   const dayOptions = useMemo(() => meetingDayOptions(now()), [now]);
   const [current, setCurrent] = useState<Meeting | null>(null);
@@ -66,41 +68,66 @@ export function useScheduleMeetingViewModel(
   });
   const active = useRef(false);
 
-  useEffect(() => {
-    active.current = true;
-    void (async () => {
-      try {
-        const meeting = await useCases.getMeeting(requestId, sessionUserId);
-        if (!active.current) return;
-        const ongoing = meeting && meeting.status !== "cancelled" ? meeting : null;
-        setCurrent(ongoing);
-        // Reagendar parte do encontro atual: local, dia (se ainda na janela) e horário.
-        const scheduled = ongoing ? new Date(ongoing.scheduledAt) : null;
-        const dayIndex = scheduled ? dayOptions.findIndex((day) => sameDay(day, scheduled)) : -1;
+  const reload = useCallback(async () => {
+    if (!active.current) return;
+    setState((previous) => ({ ...previous, loading: true, loadError: null }));
+    try {
+      const meeting = await useCases.getMeeting(requestId, sessionUserId);
+      if (!active.current) return;
+      const ongoing = meeting && meeting.status !== "cancelled" ? meeting : null;
+      setCurrent(ongoing);
+      // Reagendar parte do encontro atual: local, dia (se ainda na janela) e horário.
+      const scheduled = ongoing ? new Date(ongoing.scheduledAt) : null;
+      const dayIndex = scheduled ? dayOptions.findIndex((day) => sameDay(day, scheduled)) : -1;
+      const validSlots = meetingTimeSlotsForPoint(ongoing?.pointName ?? null, scheduled);
+      setState((previous) => ({
+        ...previous,
+        loading: false,
+        pointName: ongoing?.pointName ?? null,
+        dayIndex: dayIndex >= 0 ? dayIndex : null,
+        hour: scheduled && validSlots.includes(scheduled.getHours()) ? scheduled.getHours() : null,
+      }));
+    } catch (error) {
+      if (active.current) {
         setState((previous) => ({
           ...previous,
           loading: false,
-          pointName: ongoing?.pointName ?? null,
-          dayIndex: dayIndex >= 0 ? dayIndex : null,
-          hour: scheduled && MEETING_TIME_SLOTS.includes(scheduled.getHours()) ? scheduled.getHours() : null,
+          loadError: error instanceof DomainError ? error.message : LOAD_ERROR,
         }));
-      } catch (error) {
-        if (active.current) {
-          setState((previous) => ({
-            ...previous,
-            loading: false,
-            loadError: error instanceof DomainError ? error.message : LOAD_ERROR,
-          }));
-        }
       }
-    })();
+    }
+  }, [useCases, requestId, sessionUserId, dayOptions]);
+
+  useEffect(() => {
+    active.current = true;
+    void reload();
     return () => {
       active.current = false;
     };
-  }, [useCases, requestId, sessionUserId, dayOptions]);
+  }, [reload]);
 
-  const selectPoint = useCallback((pointName: string) => setState((p) => ({ ...p, pointName, error: null })), []);
-  const selectDay = useCallback((dayIndex: number) => setState((p) => ({ ...p, dayIndex, error: null })), []);
+  const selectPoint = useCallback(
+    (pointName: string) =>
+      setState((p) => {
+        const day = p.dayIndex !== null ? dayOptions[p.dayIndex] : null;
+        const allowed = meetingTimeSlotsForPoint(pointName, day);
+        const hourValid = p.hour !== null && allowed.includes(p.hour);
+        return { ...p, pointName, hour: hourValid ? p.hour : null, error: null };
+      }),
+    [dayOptions],
+  );
+
+  const selectDay = useCallback(
+    (dayIndex: number) =>
+      setState((p) => {
+        const day = dayOptions[dayIndex] ?? null;
+        const allowed = meetingTimeSlotsForPoint(p.pointName, day);
+        const hourValid = p.hour !== null && allowed.includes(p.hour);
+        return { ...p, dayIndex, hour: hourValid ? p.hour : null, error: null };
+      }),
+    [dayOptions],
+  );
+
   const selectHour = useCallback((hour: number) => setState((p) => ({ ...p, hour, error: null })), []);
 
   const submit = useCallback(async (): Promise<boolean> => {
@@ -137,8 +164,18 @@ export function useScheduleMeetingViewModel(
     }
   }, [state, rateLimiter, requestId, dayOptions, current, useCases, sessionUserId, logger]);
 
+  const currentDay = state.dayIndex !== null ? dayOptions[state.dayIndex] : null;
+  const timeSlots = useMemo(
+    () => meetingTimeSlotsForPoint(state.pointName, currentDay),
+    [state.pointName, currentDay],
+  );
+  const isPointOpenOnDay = useMemo(
+    () => isMeetingPointOpenOnDay(state.pointName, currentDay),
+    [state.pointName, currentDay],
+  );
+
   return [
-    { ...state, mode: current ? "reschedule" : "propose", dayOptions, timeSlots: MEETING_TIME_SLOTS },
-    { selectPoint, selectDay, selectHour, submit },
+    { ...state, mode: current ? "reschedule" : "propose", dayOptions, timeSlots, isPointOpenOnDay },
+    { reload, selectPoint, selectDay, selectHour, submit },
   ];
 }

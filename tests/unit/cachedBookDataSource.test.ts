@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import type { Book } from "@/model/entities/book";
 import type { IBookDataSource } from "@/model/datasources/iBookDataSource";
-import { CachedBookDataSource, IKeyValueStorage } from "@/infra/datasources/cachedBookDataSource";
+import { CachedBookDataSource, type IKeyValueStorage } from "@/infra/datasources/cachedBookDataSource";
 
 class MockStorage implements IKeyValueStorage {
   private data = new Map<string, string>();
@@ -65,7 +65,7 @@ describe("CachedBookDataSource (Resiliência e Offline-first)", () => {
 
     const savedInStorage = await storage.getItem("ipebook:cache:books:list");
     expect(savedInStorage).not.toBeNull();
-    const parsed = JSON.parse(savedInStorage!);
+    const parsed = JSON.parse(savedInStorage ?? "");
     expect(parsed.data).toEqual(sampleBooks);
   });
 
@@ -110,6 +110,27 @@ describe("CachedBookDataSource (Resiliência e Offline-first)", () => {
     const cachedDs = new CachedBookDataSource(primary, { storage });
 
     await expect(cachedDs.list()).rejects.toThrow("Supabase indisponível");
+  });
+
+  it("não usa cache expirado no fallback offline", async () => {
+    const primary: IBookDataSource = {
+      list: vi.fn().mockRejectedValue(new Error("Supabase indisponível")),
+      findById: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      updateStatus: vi.fn(),
+      delete: vi.fn(),
+      listByOwner: vi.fn(),
+    };
+    const storage = new MockStorage();
+    await storage.setItem(
+      "ipebook:cache:books:list",
+      JSON.stringify({ timestamp: Date.now() - 10_000, data: sampleBooks }),
+    );
+    const cachedDs = new CachedBookDataSource(primary, { storage, ttlMs: 1_000 });
+
+    await expect(cachedDs.list()).rejects.toThrow("Supabase indisponível");
+    expect(await storage.getItem("ipebook:cache:books:list")).toBeNull();
   });
 
   it("encontra livro por ID no cache se a rede falhar", async () => {
@@ -161,5 +182,65 @@ describe("CachedBookDataSource (Resiliência e Offline-first)", () => {
 
     // O cache deve ter sido invalidado
     expect(await storage.getItem("ipebook:cache:books:list")).toBeNull();
+  });
+
+  it("armazena e recupera os livros da estante do anunciante offline (Spec 130 / ADR 0101)", async () => {
+    const ownerBooks = [sampleBooks[0]];
+    const primary: IBookDataSource = {
+      list: vi.fn(),
+      findById: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      updateStatus: vi.fn(),
+      delete: vi.fn(),
+      listByOwner: vi
+        .fn()
+        .mockResolvedValueOnce(ownerBooks)
+        .mockRejectedValueOnce(new Error("Network failed")),
+    };
+
+    const storage = new MockStorage();
+    const cachedDs = new CachedBookDataSource(primary, { storage });
+
+    // 1ª chamada: online
+    const resultOnline = await cachedDs.listByOwner("user-1");
+    expect(resultOnline).toEqual(ownerBooks);
+    expect(primary.listByOwner).toHaveBeenCalledTimes(1);
+
+    const savedInStorage = await storage.getItem("ipebook:cache:books:owner:user-1");
+    expect(savedInStorage).not.toBeNull();
+
+    // 2ª chamada: offline
+    const resultOffline = await cachedDs.listByOwner("user-1");
+    expect(resultOffline).toEqual(ownerBooks);
+    expect(primary.listByOwner).toHaveBeenCalledTimes(2);
+  });
+
+  it("invalida o cache da estante do anunciante ao criar novo livro (Spec 130 / ADR 0101)", async () => {
+    const primary: IBookDataSource = {
+      list: vi.fn(),
+      findById: vi.fn(),
+      create: vi.fn().mockResolvedValue({ ...sampleBooks[0], id: "novo", ownerId: "user-1" }),
+      update: vi.fn(),
+      updateStatus: vi.fn(),
+      delete: vi.fn(),
+      listByOwner: vi.fn().mockResolvedValue([sampleBooks[0]]),
+    };
+
+    const storage = new MockStorage();
+    const cachedDs = new CachedBookDataSource(primary, { storage });
+
+    await cachedDs.listByOwner("user-1");
+    expect(await storage.getItem("ipebook:cache:books:owner:user-1")).not.toBeNull();
+
+    await cachedDs.create({
+      title: "Outro Livro",
+      author: "Outro Autor",
+      status: "available",
+      modality: "donation",
+      ownerId: "user-1",
+    });
+
+    expect(await storage.getItem("ipebook:cache:books:owner:user-1")).toBeNull();
   });
 });

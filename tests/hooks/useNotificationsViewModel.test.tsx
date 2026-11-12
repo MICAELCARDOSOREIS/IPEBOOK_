@@ -4,6 +4,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { AppNotification } from "@/model/entities/notification";
 import { DomainError } from "@/model/errors";
 import type { INotificationUseCases } from "@/usecase/iNotificationUseCases";
+import { MemoryPushNotificationService } from "@/infra/services/memoryPushNotificationService";
+import type { IPushNotificationService } from "@/model/services/iPushNotificationService";
 import { useNotificationsViewModel } from "@/viewmodel/useNotificationsViewModel";
 
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
@@ -35,14 +37,21 @@ function stubNotifications(overrides: Partial<INotificationUseCases> = {}): INot
     listNotifications: vi.fn().mockResolvedValue(mockNotifications),
     markAsRead: vi.fn().mockResolvedValue(undefined),
     markAllAsRead: vi.fn().mockResolvedValue(undefined),
+    deleteNotification: vi.fn().mockResolvedValue(undefined),
+    clearAll: vi.fn().mockResolvedValue(undefined),
+    clearRead: vi.fn().mockResolvedValue(undefined),
     ...overrides,
   };
 }
 
-async function renderHook(sessionUserId: string | null, useCases: INotificationUseCases) {
+async function renderHook(
+  sessionUserId: string | null,
+  useCases: INotificationUseCases,
+  push: IPushNotificationService = new MemoryPushNotificationService(),
+) {
   let result!: ReturnType<typeof useNotificationsViewModel>;
   function HookProbe() {
-    result = useNotificationsViewModel(sessionUserId, useCases);
+    result = useNotificationsViewModel(sessionUserId, useCases, push);
     return null;
   }
   await act(async () => {
@@ -86,6 +95,19 @@ describe("useNotificationsViewModel", () => {
     expect(state.unreadCount).toBe(1);
     expect(state.filter).toBe("all");
     expect(state.filteredNotifications).toHaveLength(2);
+  });
+
+  it("sincroniza o selo do app com as não lidas (Spec 099)", async () => {
+    const push = new MemoryPushNotificationService();
+    await renderHook("user-1", stubNotifications(), push);
+    expect(push.getBadgeCount()).toBe(1);
+  });
+
+  it("zera o selo quando a sessão sai (Spec 099)", async () => {
+    const push = new MemoryPushNotificationService();
+    await push.setBadgeCount(4);
+    await renderHook(null, stubNotifications(), push);
+    expect(push.getBadgeCount()).toBe(0);
   });
 
   it("filtra apenas não lidas quando filter é 'unread'", async () => {
@@ -142,6 +164,18 @@ describe("useNotificationsViewModel", () => {
     expect(state.error).toBe("Erro ao listar");
   });
 
+  it("captura erro genérico ao falhar no carregamento", async () => {
+    const useCases = stubNotifications({
+      listNotifications: vi.fn().mockRejectedValue(new Error("pane")),
+    });
+
+    const hook = await renderHook("user-1", useCases);
+    const [state] = hook.current;
+
+    expect(state.loading).toBe(false);
+    expect(state.error).toBe("Não foi possível carregar as notificações. Tente novamente.");
+  });
+
   it("captura erro genérico ao falhar em markAsRead", async () => {
     const useCases = stubNotifications({
       markAsRead: vi.fn().mockRejectedValue(new Error("Falha inesperada")),
@@ -153,7 +187,8 @@ describe("useNotificationsViewModel", () => {
     });
 
     const [state] = hook.current;
-    expect(state.error).toBe("Não foi possível marcar a notificação como lida.");
+    expect(state.actionError).toBe("Não foi possível marcar a notificação como lida.");
+    expect(state.error).toBeNull();
   });
 
   it("captura erro genérico ao falhar em markAllAsRead", async () => {
@@ -167,6 +202,133 @@ describe("useNotificationsViewModel", () => {
     });
 
     const [state] = hook.current;
-    expect(state.error).toBe("Não foi possível marcar todas as notificações como lidas.");
+    expect(state.actionError).toBe("Não foi possível marcar todas as notificações como lidas.");
+  });
+
+  it("mostra a mensagem do DomainError ao falhar em marcar como lida", async () => {
+    const useCases = stubNotifications({
+      markAsRead: vi.fn().mockRejectedValue(new DomainError("Sem permissão")),
+      markAllAsRead: vi.fn().mockRejectedValue(new DomainError("Sem permissão em lote")),
+    });
+
+    const hook = await renderHook("user-1", useCases);
+    await act(async () => {
+      await hook.current[1].markAsRead("n-1");
+    });
+    expect(hook.current[0].actionError).toBe("Sem permissão");
+
+    await act(async () => {
+      await hook.current[1].markAllAsRead();
+    });
+    expect(hook.current[0].actionError).toBe("Sem permissão em lote");
+  });
+
+  it("recarrega sozinha quando chega notificação em tempo real e cancela ao desmontar (Spec 086)", async () => {
+    let push: (() => void) | undefined;
+    const unsubscribe = vi.fn();
+    const listNotifications = vi
+      .fn()
+      .mockResolvedValueOnce([mockNotifications[1]])
+      .mockResolvedValueOnce(mockNotifications);
+    const subscribe = vi.fn((_userId: string, onChange: () => void) => {
+      push = onChange;
+      return unsubscribe;
+    });
+    const hook = await renderHook("user-1", stubNotifications({ listNotifications, subscribe }));
+    expect(subscribe).toHaveBeenCalledWith("user-1", expect.any(Function));
+    expect(hook.current[0].unreadCount).toBe(0);
+
+    await act(async () => {
+      push?.();
+    });
+    expect(hook.current[0].unreadCount).toBe(1);
+    expect(hook.current[0].loading).toBe(false);
+
+    await act(async () => {
+      mounted.pop()?.unmount();
+    });
+    expect(unsubscribe).toHaveBeenCalledTimes(1);
+  });
+
+  it("exclui notificação individualmente via deleteNotification", async () => {
+    const deleteNotification = vi.fn().mockResolvedValue(undefined);
+    const useCases = stubNotifications({ deleteNotification });
+
+    const hook = await renderHook("user-1", useCases);
+    expect(hook.current[0].notifications).toHaveLength(2);
+
+    await act(async () => {
+      await hook.current[1].deleteNotification("n-1");
+    });
+
+    expect(deleteNotification).toHaveBeenCalledWith("user-1", "n-1");
+    expect(hook.current[0].notifications).toHaveLength(1);
+    expect(hook.current[0].notifications[0].id).toBe("n-2");
+  });
+
+  it("limpa todas as notificações via clearAll", async () => {
+    const clearAll = vi.fn().mockResolvedValue(undefined);
+    const useCases = stubNotifications({ clearAll });
+
+    const hook = await renderHook("user-1", useCases);
+    expect(hook.current[0].notifications).toHaveLength(2);
+
+    await act(async () => {
+      await hook.current[1].clearAll();
+    });
+
+    expect(clearAll).toHaveBeenCalledWith("user-1");
+    expect(hook.current[0].notifications).toHaveLength(0);
+  });
+
+  it("limpa apenas notificações lidas via clearRead", async () => {
+    const clearRead = vi.fn().mockResolvedValue(undefined);
+    const useCases = stubNotifications({ clearRead });
+
+    const hook = await renderHook("user-1", useCases);
+    expect(hook.current[0].notifications).toHaveLength(2);
+
+    await act(async () => {
+      await hook.current[1].clearRead();
+    });
+
+    expect(clearRead).toHaveBeenCalledWith("user-1");
+    expect(hook.current[0].notifications).toHaveLength(1);
+    expect(hook.current[0].notifications[0].read).toBe(false);
+  });
+
+  it("mantém o cache de sessão sincronizado ao limpar tudo, evitando reaparecimento ao reabrir a tela", async () => {
+    const originalEnv = process.env.NODE_ENV;
+    try {
+      process.env.NODE_ENV = "development";
+      const listNotifications = vi.fn().mockResolvedValue(mockNotifications);
+      const clearAll = vi.fn().mockResolvedValue(undefined);
+      const useCases = stubNotifications({ listNotifications, clearAll });
+
+      // Primeira abertura: carrega notificações e popula cache
+      const hook1 = await renderHook("user-cache-test", useCases);
+      expect(hook1.current[0].notifications).toHaveLength(2);
+
+      // Usuário clica em limpar tudo
+      await act(async () => {
+        await hook1.current[1].clearAll();
+      });
+      expect(hook1.current[0].notifications).toHaveLength(0);
+
+      // Usuário sai da tela (desmonta)
+      const r1 = mounted.pop();
+      await act(async () => {
+        r1?.unmount();
+      });
+
+      // Usuário reabre a tela (monta novamente com o mesmo usuário)
+      listNotifications.mockResolvedValueOnce([]);
+      const hook2 = await renderHook("user-cache-test", useCases);
+
+      // Não pode ressurgir com notificações antigas via cache
+      expect(hook2.current[0].notifications).toHaveLength(0);
+    } finally {
+      process.env.NODE_ENV = originalEnv;
+    }
   });
 });

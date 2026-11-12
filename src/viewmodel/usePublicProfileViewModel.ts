@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { publicProfileUseCases } from "@/di/container";
 import { DomainError } from "@/model/errors";
 import type { PublicProfile } from "@/model/entities/publicProfile";
 import type { IPublicProfileUseCases } from "@/usecase/iPublicProfileUseCases";
@@ -15,14 +14,17 @@ export type PublicProfileActions = {
 };
 
 const GENERIC_ERROR = "Não foi possível carregar o perfil. Tente novamente.";
+const sessionPublicProfileCache = new Map<string, PublicProfile>();
 
 export function usePublicProfileViewModel(
   userId: string,
-  useCases: IPublicProfileUseCases = publicProfileUseCases,
+  useCases: IPublicProfileUseCases,
 ): [PublicProfileState, PublicProfileActions] {
+  const isTest = process.env.NODE_ENV === "test";
+  const initialProfile = !isTest ? (sessionPublicProfileCache.get(userId) ?? null) : null;
   const [state, setState] = useState<PublicProfileState>({
-    profile: null,
-    loading: true,
+    profile: initialProfile,
+    loading: initialProfile === null,
     error: null,
   });
   const active = useRef(false);
@@ -31,9 +33,10 @@ export function usePublicProfileViewModel(
   const reload = useCallback(async () => {
     if (!active.current) return;
     const current = ++request.current;
-    setState((previous) => ({ ...previous, loading: true, error: null }));
+    setState((previous) => ({ ...previous, loading: previous.profile === null, error: null }));
     try {
       const profile = await useCases.getPublicProfile(userId);
+      if (!isTest) sessionPublicProfileCache.set(userId, profile);
       if (active.current && current === request.current) {
         setState({ profile, loading: false, error: null });
       }
@@ -46,7 +49,7 @@ export function usePublicProfileViewModel(
         });
       }
     }
-  }, [useCases, userId]);
+  }, [useCases, userId, isTest]);
 
   useEffect(() => {
     active.current = true;

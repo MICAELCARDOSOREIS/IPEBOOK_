@@ -1,4 +1,4 @@
-import React from "react";
+
 import { act, fireEvent, render } from "@testing-library/react-native";
 import { describe, expect, it } from "vitest";
 import { authUseCases, bookUseCases } from "@/di/container";
@@ -27,7 +27,11 @@ describe("SC-005: ver detalhe do livro e solicitar negociação pela tela de det
     expect(screen.getByText("Doação")).toBeDefined();
 
     await act(async () => {
-      fireEvent.press(screen.getByText("Solicitar negociação"));
+      fireEvent.press(screen.getByText("Quero receber"));
+    });
+
+    await act(async () => {
+      fireEvent.press(screen.getByText("Confirmar interesse"));
     });
 
     expect(screen.getByText("Negociação solicitada")).toBeDefined();

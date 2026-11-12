@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { bookRequestUseCases } from "@/di/container";
 import { DomainError } from "@/model/errors";
 import type { IBookRequestUseCases, NegotiationDetail } from "@/usecase/iBookRequestUseCases";
 
@@ -11,6 +10,8 @@ export type RequestDetailState = {
 
 export type RequestDetailActions = {
   reload: () => Promise<void>;
+  respond?: (response: "accept" | "reject") => Promise<void>;
+  cancelRequest?: () => Promise<void>;
 };
 
 const GENERIC_ERROR = "Não foi possível carregar os detalhes da negociação. Tente novamente.";
@@ -18,7 +19,7 @@ const GENERIC_ERROR = "Não foi possível carregar os detalhes da negociação. 
 export function useRequestDetailViewModel(
   requestId: string,
   sessionUserId: string | null,
-  useCases: IBookRequestUseCases = bookRequestUseCases,
+  useCases: IBookRequestUseCases,
 ): [RequestDetailState, RequestDetailActions] {
   const [state, setState] = useState<RequestDetailState>({
     detail: null,
@@ -48,6 +49,21 @@ export function useRequestDetailViewModel(
     }
   }, [useCases, requestId, sessionUserId]);
 
+  const respond = useCallback(
+    async (response: "accept" | "reject") => {
+      if (!sessionUserId) return;
+      await useCases.respondToRequest(requestId, response, sessionUserId);
+      await reload();
+    },
+    [useCases, requestId, sessionUserId, reload],
+  );
+
+  const cancelRequest = useCallback(async () => {
+    if (!sessionUserId) return;
+    await useCases.cancelRequest(requestId, sessionUserId);
+    await reload();
+  }, [useCases, requestId, sessionUserId, reload]);
+
   useEffect(() => {
     active.current = true;
     void reload();
@@ -57,5 +73,5 @@ export function useRequestDetailViewModel(
     };
   }, [reload]);
 
-  return [state, { reload }];
+  return [state, { reload, respond, cancelRequest }];
 }

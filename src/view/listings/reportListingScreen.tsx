@@ -1,5 +1,4 @@
-import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
-import { useBookDetailViewModel } from "@/viewmodel/useBookDetailViewModel";
+import { makeAuthViewModel, makeBookDetailViewModel } from "@/di/container";
 import ReportListing from "@/view/listings/reportListing";
 
 export type ReportListingScreenProps = {
@@ -13,8 +12,8 @@ export default function ReportListingScreen({
   onBack,
   onNavigateToLogin,
 }: ReportListingScreenProps) {
-  const [authState] = useAuthViewModel();
-  const [bookState] = useBookDetailViewModel(listingId);
+  const [authState] = makeAuthViewModel();
+  const [bookState] = makeBookDetailViewModel(listingId);
 
   return (
     <ReportListing

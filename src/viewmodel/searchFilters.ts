@@ -1,0 +1,282 @@
+import type { Book, BookCondition, BookModality } from "@/model/entities/book";
+import { BOOK_CONDITION_LABELS } from "@/model/entities/book";
+
+export type SearchModalityFilter = BookModality | "all";
+export type SearchPriceRange = "all" | "free" | "under20" | "under50";
+export type SearchSortOption = "recent" | "price_asc" | "price_desc" | "neighborhood" | "title";
+/** Conservação do exemplar: "all" ou uma das condições do catálogo (Figma `02.03` e `34:229`). */
+export type SearchConditionFilter = "all" | BookCondition;
+
+/** Parâmetros que restringem o catálogo na Pesquisa (Figma `02.03 · Filtrar livros`). */
+export type SearchFilters = Readonly<{
+  modality: SearchModalityFilter;
+  category: string | "all";
+  condition: SearchConditionFilter;
+  priceRange: SearchPriceRange;
+  /** Restringe o catálogo a apenas boxes e coleções de livros (Spec 112). */
+  onlyBoxes?: boolean;
+}>;
+
+export type SearchFilterKey = "modality" | "category" | "condition" | "priceRange" | "onlyBoxes";
+
+/** Filtro já aplicado, exibido como chip removível no Figma `02.04 · Explorar com filtro`. */
+export type ActiveFilter = Readonly<{
+  key: SearchFilterKey;
+  label: string;
+}>;
+
+export type SearchQuery = Readonly<{
+  term: string;
+  filters: SearchFilters;
+  neighborhood: string | "all";
+}>;
+
+export const DEFAULT_SEARCH_FILTERS: SearchFilters = {
+  modality: "all",
+  category: "all",
+  condition: "all",
+  priceRange: "all",
+  onlyBoxes: false,
+};
+
+export const MODALITY_FILTER_LABELS: Readonly<Record<SearchModalityFilter, string>> = {
+  all: "Todas",
+  sale: "Venda",
+  trade: "Troca",
+  donation: "Doação",
+};
+
+export const PRICE_FILTER_LABELS: Readonly<Record<SearchPriceRange, string>> = {
+  all: "Todos os preços",
+  free: "Grátis",
+  under20: "Até R$ 20",
+  under50: "Até R$ 50",
+};
+
+export const CONDITION_FILTER_LABELS: Readonly<Record<SearchConditionFilter, string>> = {
+  all: "Todas as condições",
+  ...BOOK_CONDITION_LABELS,
+};
+
+export const SORT_IDS: readonly SearchSortOption[] = [
+  "recent",
+  "price_asc",
+  "price_desc",
+  "title",
+];
+
+export const SORT_LABELS: Readonly<Record<SearchSortOption, string>> = {
+  recent: "Mais recentes",
+  price_asc: "Menor preço",
+  price_desc: "Maior preço",
+  neighborhood: "Locais em Piripiri",
+  title: "A-Z",
+};
+
+/** Trecho do resumo do Figma `02.04`: "1 livro à venda · Literatura". */
+const MODALITY_SUMMARY: Readonly<Record<BookModality, string>> = {
+  sale: "à venda",
+  trade: "para troca",
+  donation: "para doação",
+};
+
+export function matchesTerm(book: Book, normalizedTerm: string): boolean {
+  return (
+    book.title.toLowerCase().includes(normalizedTerm) ||
+    book.author.toLowerCase().includes(normalizedTerm) ||
+    (book.category?.toLowerCase().includes(normalizedTerm) ?? false)
+  );
+}
+
+export function matchesPrice(book: Book, range: SearchPriceRange): boolean {
+  if (range === "all") return true;
+  if (range === "free") {
+    return book.modality === "donation" || (book.price !== undefined && book.price === 0);
+  }
+  const price = book.price ?? 0;
+  if (range === "under20") {
+    return price > 0 && price <= 20;
+  }
+  if (range === "under50") {
+    return price > 0 && price <= 50;
+  }
+  return true;
+}
+
+/**
+ * "Bom estado" aceita exemplares sem conservação informada (pois o detalhe do anúncio já
+ * apresenta esse caso como "Bom estado"). Condições específicas ("new", "marked", "worn")
+ * exigem que o exemplar tenha exatamente aquela condição informada.
+ */
+export function matchesCondition(book: Book, condition: SearchConditionFilter): boolean {
+  if (condition === "all") return true;
+  if (condition === "good") {
+    return book.condition === undefined || book.condition === "good";
+  }
+  return book.condition === condition;
+}
+
+function matchesNeighborhood(book: Book, neighborhood: string): boolean {
+  const norm = neighborhood.trim().toLowerCase();
+  if (
+    norm === "all" ||
+    norm === "todos os bairros" ||
+    norm === "todos os bairros (piripiri)" ||
+    norm === "piripiri (todos os locais)" ||
+    norm === "piripiri (todos)" ||
+    norm === "piripiri"
+  ) {
+    return true;
+  }
+  const bookLoc = (book.neighborhood || "").trim().toLowerCase();
+  if (!bookLoc) return false;
+  return bookLoc === norm || bookLoc.includes(norm) || norm.includes(bookLoc);
+}
+
+export function matchesCategory(bookCategory: string | undefined, filterCategory: string): boolean {
+  if (filterCategory === "all") return true;
+  if (!bookCategory) return false;
+  const b = bookCategory.trim().toLowerCase();
+  const f = filterCategory.trim().toLowerCase();
+  if (b === f) return true;
+
+  // Compatibilidade com as 6 macro-categorias canônicas (ADR 0109)
+  if (f === "didáticos & concursos") {
+    return b.includes("didático") || b.includes("concurso") || b.includes("enem") || b.includes("escolar");
+  }
+  if (f === "universitário & técnico") {
+    return b.includes("universitário") || b.includes("técnico") || b.includes("acadêmico") || b.includes("computação") || b.includes("exatas") || b.includes("ciência");
+  }
+  if (f === "literatura & romance") {
+    return b.includes("literatura") || b.includes("romance") || b.includes("ficção") || b.includes("poesia") || b.includes("conto");
+  }
+  if (f === "infantil & quadrinhos") {
+    return b.includes("infantil") || b.includes("infantojuvenil") || b.includes("quadrinho") || b.includes("mangá") || b.includes("gibi") || b.includes("hq");
+  }
+  if (f === "desenvolvimento & espiritualidade") {
+    return b.includes("desenvolvimento") || b.includes("autoajuda") || b.includes("espiritualidade") || b.includes("religi") || b.includes("teologia");
+  }
+  if (f === "outros") {
+    return b.includes("outro") || b.includes("biografia") || b.includes("história");
+  }
+
+  return false;
+}
+
+/** Filtra o catálogo client-side (FR-005, Spec 028): termo, modalidade, categoria, preço e bairro. */
+export function filterBooks(books: readonly Book[], query: SearchQuery): Book[] {
+  const normalizedTerm = query.term.trim().toLowerCase();
+  return books.filter((book) => {
+    if (normalizedTerm && !matchesTerm(book, normalizedTerm)) return false;
+    if (query.filters.modality !== "all" && book.modality !== query.filters.modality) return false;
+    if (!matchesCategory(book.category, query.filters.category)) return false;
+    if (!matchesNeighborhood(book, query.neighborhood)) return false;
+    if (!matchesPrice(book, query.filters.priceRange)) return false;
+    if (query.filters.onlyBoxes && !book.isBox) return false;
+    return matchesCondition(book, query.filters.condition);
+  });
+}
+
+/** Ordena sem mutar a lista recebida; `recent` preserva a ordem do datasource. */
+export function sortBooks(
+  books: readonly Book[],
+  sortBy: SearchSortOption,
+  preferredNeighborhood?: string | null,
+): Book[] {
+  if (sortBy === "title") {
+    return [...books].sort((a, b) => a.title.localeCompare(b.title, "pt-BR"));
+  }
+  if (sortBy === "price_asc") {
+    return [...books].sort((a, b) => (a.price ?? 0) - (b.price ?? 0));
+  }
+  if (sortBy === "price_desc") {
+    return [...books].sort((a, b) => (b.price ?? 0) - (a.price ?? 0));
+  }
+  if (sortBy === "neighborhood") {
+    const preferred = preferredNeighborhood?.trim().toLowerCase();
+    const hasPreferred =
+      Boolean(preferred) &&
+      preferred !== "all" &&
+      preferred !== "todos os bairros (piripiri)" &&
+      preferred !== "todos os bairros";
+
+    return [...books].sort((a, b) => {
+      const aBairro = a.neighborhood?.trim().toLowerCase();
+      const bBairro = b.neighborhood?.trim().toLowerCase();
+
+      // Se houver bairro preferido/ativo do leitor, exemplares desse bairro vêm primeiro
+      if (hasPreferred) {
+        const aMatches = aBairro === preferred;
+        const bMatches = bBairro === preferred;
+        if (aMatches && !bMatches) return -1;
+        if (!aMatches && bMatches) return 1;
+      }
+
+      // Entre outros bairros, agrupa por nome do bairro de Piripiri alfabeticamente
+      if (aBairro && bBairro) {
+        const cmp = aBairro.localeCompare(bBairro, "pt-BR");
+        if (cmp !== 0) return cmp;
+        return a.title.localeCompare(b.title, "pt-BR");
+      }
+      if (aBairro && !bBairro) return -1;
+      if (!aBairro && bBairro) return 1;
+
+      return a.title.localeCompare(b.title, "pt-BR");
+    });
+  }
+  return [...books];
+}
+
+export function countActiveFilters(filters: SearchFilters): number {
+  return activeFilters(filters).length;
+}
+
+/** Filtros aplicados (na ordem do Figma `02.04`), com o rótulo já pronto para o chip removível. */
+export function activeFilters(filters: SearchFilters): ActiveFilter[] {
+  const list: ActiveFilter[] = [];
+  if (filters.modality !== "all") {
+    list.push({ key: "modality", label: MODALITY_FILTER_LABELS[filters.modality] });
+  }
+  if (filters.category !== "all") {
+    list.push({ key: "category", label: filters.category });
+  }
+  if (filters.condition !== "all") {
+    list.push({ key: "condition", label: CONDITION_FILTER_LABELS[filters.condition] });
+  }
+  if (filters.priceRange !== "all") {
+    list.push({ key: "priceRange", label: PRICE_FILTER_LABELS[filters.priceRange] });
+  }
+  if (filters.onlyBoxes) {
+    list.push({ key: "onlyBoxes", label: "Boxes e coleções" });
+  }
+  return list;
+}
+
+/** Remove um filtro do chip correspondente, mantendo os demais. */
+export function removeFilter(filters: SearchFilters, key: SearchFilterKey): SearchFilters {
+  if (key === "modality") return { ...filters, modality: "all" };
+  if (key === "category") return { ...filters, category: "all" };
+  if (key === "condition") return { ...filters, condition: "all" };
+  if (key === "onlyBoxes") return { ...filters, onlyBoxes: false };
+  return { ...filters, priceRange: "all" };
+}
+
+/** Resumo da faixa de resultados do Figma `02.04`: "1 livro à venda · Literatura · Bom estado". */
+export function describeResults(count: number, filters: SearchFilters): string {
+  const countLabel = `${count} ${count === 1 ? "livro" : "livros"}`;
+  const head = filters.modality === "all" ? countLabel : `${countLabel} ${MODALITY_SUMMARY[filters.modality]}`;
+  const details: string[] = [];
+  if (filters.onlyBoxes) {
+    details.push("Boxes e coleções");
+  }
+  if (filters.category !== "all") {
+    details.push(filters.category);
+  }
+  if (filters.condition !== "all") {
+    details.push(CONDITION_FILTER_LABELS[filters.condition]);
+  }
+  if (filters.priceRange !== "all") {
+    details.push(PRICE_FILTER_LABELS[filters.priceRange]);
+  }
+  return details.length > 0 ? `${head} · ${details.join(" · ")}` : head;
+}

@@ -1,6 +1,10 @@
-# Ipebook
+# IpêBook 🌳📚
 
-Base independente em Expo, React Native e TypeScript, com arquitetura MVVM sofisticada em sete camadas e suíte completa de testes automatizados baseada na norma **ISO/IEC 25010**.
+Plataforma comunitária de troca, venda e doação de livros em **Piripiri, PI**, construída em Expo, React Native, TypeScript e Supabase, com arquitetura MVVM sofisticada em sete camadas e suíte de testes automatizados (**2.299 testes em 321 arquivos**) baseada na norma **ISO/IEC 25010**.
+
+* 🌐 **Site oficial:** [https://ipebook.app](https://ipebook.app)
+* 🤖 **Convite para o Beta Android (Play Store):** [https://ipebook.app/beta](https://ipebook.app/beta)
+* 📦 **Página na Google Play Store:** [com.ipebook.app](https://play.google.com/store/apps/details?id=com.ipebook.app&hl=pt-BR)
 
 Projeto avaliativo do curso de Tecnologia em Análise e Desenvolvimento de Sistemas do IFPI — Campus Piripiri, integrando três disciplinas:
 
@@ -39,22 +43,14 @@ npm run ios      # Dispositivo/Simulador iOS (macOS) — disponível, mas fora d
 
 ---
 
-## 🌐 Deploy Web
-
-Com as specs 003 (autenticação e cadastro de anúncio) e 004 (negociação) implementadas, o build
-web passou a ter valor real para publicar.
+## 🌐 Publicação Web e Android
 
 ```bash
-npm run build:web   # gera export estático em dist/ (expo export --platform web)
+npm run build:web   # exporta o site estático em dist/ e prepara fontes/rotas para o Cloudflare Pages
 ```
 
-O repositório está configurado para deploy estático na Vercel (ver [`vercel.json`](vercel.json)):
-`buildCommand` roda `npm run build:web` e `outputDirectory` aponta para `dist/`. Para publicar,
-conectar o repositório a um projeto Vercel (dashboard ou `vercel --prod`) — nenhuma variável de
-ambiente é necessária além das já presentes em `.env`/`app.json`.
-
-Build Android via EAS Build fica para quando houver necessidade de instalar em aparelho fora do
-ambiente de desenvolvimento.
+* **Web (Cloudflare Pages):** publicado em produção em **[https://ipebook.app](https://ipebook.app)** (`npx wrangler pages deploy dist --project-name ipebook --branch develop`).
+* **Android (Google Play Console):** geração local de AAB/APK (`npm run aab:local`, `npm run apk:debug`) e envio automatizado pela API do Google Play (`npm run play:submit`, documentado em [`docs/loja/publicacao-terminal.md`](docs/loja/publicacao-terminal.md)).
 
 ---
 
@@ -74,7 +70,10 @@ npm run test:coverage
 # Ou diretamente pelo parâmetro nativo:
 npm test -- --coverage
 
-# 3. Execução agregada de validação (Typescript estrito + Arquitetura + Cobertura)
+# 3. Análise estática com Biome (0 erros bloqueantes)
+npm run lint
+
+# 4. Execução agregada de validação (TypeScript estrito + Lint + Arquitetura + SQL + Cobertura)
 npm run validate
 ```
 
@@ -87,7 +86,6 @@ npm run validate
 | **Testes de Componentes** | `tests/components/` | Renderização semântica da View, cabeçalhos, rótulos de acessibilidade (`accessibilityRole`) e estado vazio. | RNTL (`homeView.test.tsx`) |
 | **Componentes com Mock** | `tests/components-mocked/` | Isolamento determinístico da View para forçar cenários extremos (falha de rede, carregamento, botão de retry). | RNTL com `vi.mock` (`homeViewMocked.test.tsx`) |
 | **Testes de Integração** | `tests/integration/` | Integração real entre múltiplas camadas: View + ViewModel + Casos de Uso + Repositório em memória sem mocks de negócio. | RNTL integrado (`homeIntegration.test.tsx`) |
-| **Testes End-to-End (E2E)** | `.maestro/` | 3 fluxos críticos reais executados em dispositivo ou emulador móvel. | Maestro (`01-catalogo-inicial.yaml`, `02-recuperacao-erro-retry.yaml`, `03-acessibilidade-e-elementos.yaml`) |
 
 ---
 
@@ -111,18 +109,19 @@ Conforme as diretrizes da disciplina, o projeto adotou três características es
 * **Por que é importante:** Garantir que pessoas usuárias de tecnologias assistivas (leitores de tela) possam navegar e operar o acervo de livros com clareza semântica.
 * **Funcionalidade / Tela:** Estrutura semântica e botões na tela Home ([`src/view/home.tsx`](src/view/home.tsx)).
 * **Como foi atendida:** Uso de propriedades semânticas nativas (`accessibilityRole="header"`, `accessibilityRole="alert"`, `accessibilityLabel="Carregando livros"` e `accessible={false}` em adereços visuais).
-* **Teste comprovatório:** [`tests/components/homeView.test.tsx`](tests/components/homeView.test.tsx) e fluxo E2E [`03-acessibilidade-e-elementos.yaml`](.maestro/03-acessibilidade-e-elementos.yaml).
+* **Teste comprovatório:** [`tests/components/homeView.test.tsx`](tests/components/homeView.test.tsx). Complemento por inspeção manual em dispositivo com leitor de tela.
 
 ---
 
-## 📱 Execução dos Testes E2E com Maestro
+## 📱 Validação manual em dispositivo
 
-Consulte as instruções detalhadas em [`.maestro/README.md`](.maestro/README.md).
+O projeto não mantém hoje uma suíte de testes End-to-End automatizada. Os fluxos que dependem de
+dispositivo (login com Google, câmera/QR em dois aparelhos, mapa, push e leitor de tela) são
+verificados manualmente antes de cada publicação, conforme o roteiro em
+[`docs/qualidade.md`](docs/qualidade.md). Os testes automatizados cobrem domínio, ViewModels,
+componentes e integração entre camadas.
 
-```bash
-# Executar suíte E2E completa no emulador:
-maestro test .maestro/
-```
+> **Limites do runtime de testes de componentes (Spec 126, CA7):** as suítes em `tests/components/` e `tests/components-mocked/` executam em Node sobre `tests/mocks/react-native.ts`. Esse ambiente preserva a árvore de elementos, propriedades de acessibilidade (`accessibilityRole`, `accessibilityLabel`, `accessibilityLiveRegion`), eventos e objetos `style` declarados, mas **não executa um motor de layout real** (Yoga/DOM): ele não valida largura calculada em pixels, colisão visual nem quebra efetiva de linha. Asserções de teste devem usar apenas contratos públicos (papel acessível, rótulo, `testID`, estilo declarado), sendo proibido o acoplamento estrutural via `.parent!` (vigiado por `npm run check:architecture`). A validação sensorial e de layout real permanece manual em aparelho ou navegador.
 
 ---
 
@@ -151,10 +150,32 @@ maestro test .maestro/
 * **Instituição:** Instituto Federal do Piauí — Campus Piripiri
 * **Disciplinas:** Engenharia de Software III, Programação para Dispositivos Móveis (PDM) e Interação Humano-Computador (IHC) (Prof. Jeferson Soares)
 * **Integrantes:**
-  1. **Micael Cardoso Reis** ([@Ghostyxseven](https://github.com/Ghostyxseven))
-  2. **Maria Clara Almeida Martins** ([@clarinhamartins](https://github.com/clarinhamartins))
-  3. **Antonio Carlos Gomes** ([@gomes738](https://github.com/gomes738))
-  4. **Eric Vinícius dos Santos Oliveira** ([@Eric2025gh](https://github.com/Eric2025gh))
+
+<table>
+  <tr>
+    <td align="center">
+      <a href="https://github.com/MICAELCARDOSOREIS"><img src="https://github.com/MICAELCARDOSOREIS.png?size=120" width="120" alt="Micael Cardoso Reis"/></a><br/>
+      <sub><b>Micael Cardoso Reis</b></sub><br/>
+      <a href="https://github.com/MICAELCARDOSOREIS">@MICAELCARDOSOREIS</a>
+    </td>
+    <td align="center">
+      <a href="https://github.com/clarinhamartins"><img src="https://github.com/clarinhamartins.png?size=120" width="120" alt="Maria Clara Almeida Martins"/></a><br/>
+      <sub><b>Maria Clara Almeida Martins</b></sub><br/>
+      <a href="https://github.com/clarinhamartins">@clarinhamartins</a>
+    </td>
+    <td align="center">
+      <a href="https://github.com/gomes738"><img src="https://github.com/gomes738.png?size=120" width="120" alt="Antonio Carlos Gomes"/></a><br/>
+      <sub><b>Antonio Carlos Gomes</b></sub><br/>
+      <a href="https://github.com/gomes738">@gomes738</a>
+    </td>
+    <td align="center">
+      <a href="https://github.com/Eric2025gh"><img src="https://github.com/Eric2025gh.png?size=120" width="120" alt="Eric Vinícius dos Santos Oliveira"/></a><br/>
+      <sub><b>Eric Vinícius dos Santos Oliveira</b></sub><br/>
+      <a href="https://github.com/Eric2025gh">@Eric2025gh</a>
+    </td>
+  </tr>
+</table>
+
 * Mais detalhes em [`docs/equipe.md`](docs/equipe.md).
 
 ---
@@ -162,4 +183,3 @@ maestro test .maestro/
 ## 🤝 Como Contribuir
 
 Consulte as diretrizes completas de colaboração, política de branches, fluxo de Git e convenção de commits em [**CONTRIBUTING.md**](CONTRIBUTING.md).
-

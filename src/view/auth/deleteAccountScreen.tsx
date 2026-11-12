@@ -1,10 +1,10 @@
-import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
+import { makeAuthViewModel } from "@/di/container";
 import DeleteAccount from "@/view/auth/deleteAccount";
 
 export type DeleteAccountScreenProps = {
   onBack: () => void;
   onAccountDeleted: () => void;
-  onNavigateToLogin: () => void;
+  onNavigateToLogin?: () => void;
   onEditProfile?: () => void;
 };
 
@@ -14,11 +14,12 @@ export default function DeleteAccountScreen({
   onNavigateToLogin,
   onEditProfile,
 }: DeleteAccountScreenProps) {
-  const [authState] = useAuthViewModel();
+  const [authState] = makeAuthViewModel();
 
   return (
     <DeleteAccount
       sessionUserId={authState.user?.id ?? null}
+      sessionLoading={authState.loading && !authState.user}
       onBack={onBack}
       onEditProfile={onEditProfile}
       onAccountDeleted={onAccountDeleted}

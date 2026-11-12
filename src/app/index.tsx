@@ -1,5 +1,8 @@
 import { useCallback, useState } from "react";
-import { router, useFocusEffect } from "expo-router";
+import { Platform } from "react-native";
+import { useFocusEffect } from "expo-router";
+import { pushOnce, replaceOnce } from "@/view/pushOnce";
+import { RequireAuth } from "@/view/components/RequireAuth";
 import Home from "@/view/home";
 
 export default function Index() {
@@ -10,27 +13,38 @@ export default function Index() {
     }, []),
   );
 
-  return (
+  const homeContent = (
     <Home
       focusKey={focusKey}
-      onNavigateToSignIn={() => router.push("/entrar")}
-      onNavigateToCreateListing={() => router.push("/anunciar")}
-      onNavigateToMyListings={() => router.push("/meus-anuncios")}
-      onNavigateToReceivedRequests={() => router.push("/pedidos-recebidos")}
-      onNavigateToSentRequests={() => router.push("/meus-pedidos")}
-      onNavigateToBookDetail={(bookId) => router.push(`/livro/${bookId}`)}
-      onNavigateToTerms={() => router.push("/termos")}
-      onNavigateToHelp={() => router.push("/ajuda")}
-      onNavigateToNotifications={() => router.push("/notificacoes")}
-      onNavigateToFavorites={() => router.push("/favoritos")}
-      onNavigateToAlerts={() => router.push("/alertas")}
-      onNavigateToSearch={(filter) =>
-        router.push(
-          filter?.modality
-            ? { pathname: "/pesquisa", params: { modalidade: filter.modality } }
+      onNavigateToSignIn={() => pushOnce("/entrar")}
+      onNavigateToBookDetail={(bookId) => pushOnce(`/livro/${bookId}`)}
+      onNavigateToNotifications={() => pushOnce("/notificacoes")}
+      onNavigateToConversations={() => pushOnce("/meus-pedidos")}
+      onNavigateToProfile={() => pushOnce("/perfil")}
+      onNavigateToHelp={() => pushOnce("/ajuda")}
+      onNavigateToTerms={() => pushOnce("/termos")}
+      onNavigateToSearch={(filter) => {
+        const params: Record<string, string> = {};
+        if (filter?.modality) params.modalidade = filter.modality;
+        if (filter?.neighborhood) params.bairro = filter.neighborhood;
+        pushOnce(
+          Object.keys(params).length > 0
+            ? { pathname: "/pesquisa", params }
             : "/pesquisa",
-        )
-      }
+        );
+      }}
     />
+  );
+
+  // Na Web, o catálogo comunitário é livre para qualquer visitante navegar sem exigir login prévio.
+  // No app móvel nativo, mantém o fluxo da Spec 092.
+  if (Platform.OS === "web") {
+    return homeContent;
+  }
+
+  return (
+    <RequireAuth onRequireSignIn={() => replaceOnce("/bem-vindo")}>
+      {homeContent}
+    </RequireAuth>
   );
 }

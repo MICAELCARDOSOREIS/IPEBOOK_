@@ -1,4 +1,4 @@
-import React from "react";
+import type React from "react";
 import { act, fireEvent, render } from "@testing-library/react-native";
 import { within } from "@testing-library/react-native";
 import { AccessibilityInfo } from "react-native";
@@ -29,7 +29,16 @@ function mockViewModel(state: CreateListingState, actions: Partial<CreateListing
     setDescription: vi.fn(),
     setPhotoUrl: vi.fn(),
     addPhoto: vi.fn(),
+    setPhotoAt: vi.fn(),
     removePhoto: vi.fn(),
+    setIsBox: vi.fn(),
+    setBoxVolumesCount: vi.fn(),
+    saveDraft: vi.fn().mockResolvedValue(undefined),
+    loadDraft: vi.fn().mockResolvedValue(false),
+    clearDraft: vi.fn().mockResolvedValue(undefined),
+    saveForLater: vi.fn().mockResolvedValue(true),
+    resumeDraft: vi.fn(),
+    loadServerDraft: vi.fn().mockResolvedValue(null),
     submit: vi.fn().mockResolvedValue(null),
     reset: vi.fn(),
     ...actions,
@@ -52,9 +61,21 @@ const defaultState: CreateListingState = {
   description: "",
   photoUrl: "",
   photos: [],
+  edition: {},
+  isBox: false,
+  boxVolumesCount: "",
+  draftId: null,
   loading: false,
   error: null,
   success: false,
+};
+
+/** Etapa 1 válida: o botão Continuar só avança com título, autor e preço da venda. */
+const filledState: CreateListingState = {
+  ...defaultState,
+  title: "Dom Casmurro",
+  author: "Machado de Assis",
+  price: "25,00",
 };
 
 async function renderScreen(props: Partial<React.ComponentProps<typeof CreateListing>> = {}) {
@@ -109,22 +130,17 @@ describe("etapa 1 do anúncio — Livro (Figma 04.01)", () => {
     expect(actions.submit).not.toHaveBeenCalled();
   });
 
-  it("permite digitar o código ISBN e acionar a busca automática (Spec 058)", async () => {
-    const actions = mockViewModel({
+  it("mostra o resultado da busca por ISBN sem campo de código nem botão Buscar (Spec 058, Spec 091)", async () => {
+    mockViewModel({
       ...defaultState,
       isbn: "9788535914849",
       isbnFeedback: { type: "success", message: 'Encontrado: "Dom Casmurro"!' },
     });
     const screen = await renderScreen();
 
-    expect(screen.getByLabelText("Código ISBN")).toBeDefined();
     expect(screen.getByText('Encontrado: "Dom Casmurro"!')).toBeDefined();
-
-    await act(async () => {
-      fireEvent.press(screen.getByLabelText("Buscar dados do livro pelo ISBN"));
-    });
-
-    expect(actions.lookupIsbn).toHaveBeenCalledTimes(1);
+    expect(screen.queryByLabelText("Código ISBN")).toBeNull();
+    expect(screen.queryByLabelText("Buscar dados do livro pelo ISBN")).toBeNull();
   });
 
   it("exibe botão para escanear código de barras com a câmera (Spec 059 / Figma 04.01)", async () => {
@@ -157,7 +173,7 @@ describe("etapa 1 do anúncio — Livro (Figma 04.01)", () => {
 
 describe("etapa 2 do anúncio — Fotos (Figma 04.04)", () => {
   it("mostra os três lugares de foto e a dica", async () => {
-    mockViewModel(defaultState);
+    mockViewModel(filledState);
     const screen = await renderScreen();
     await goToStep(screen, 2);
 
@@ -165,19 +181,20 @@ describe("etapa 2 do anúncio — Fotos (Figma 04.04)", () => {
     expect(screen.getByText("Etapa 2 de 3")).toBeDefined();
     expect(screen.getByLabelText("Adicionar foto da capa")).toBeDefined();
     expect(screen.getByLabelText("Adicionar lombada")).toBeDefined();
-    expect(screen.getByLabelText("Adicionar páginas")).toBeDefined();
-    // Spec 043 RN-07: capa em destaque (dois terços), lombada e páginas empilhadas ao lado.
+    expect(screen.getByLabelText("Adicionar verso")).toBeDefined();
+    // Spec 043 RN-07: capa em destaque (dois terços), lombada e verso empilhados ao lado.
     const flatten = (style: unknown): Record<string, unknown> =>
       Array.isArray(style) ? Object.assign({}, ...style.flat(Infinity).filter(Boolean)) : (style as Record<string, unknown>);
     expect(flatten(screen.getByLabelText("Adicionar foto da capa").props.style).flex).toBe(2);
-    const spine = screen.getByLabelText("Adicionar lombada");
-    expect(within(spine.parent!).getByLabelText("Adicionar páginas")).toBeDefined();
-    expect(within(spine.parent!).queryByLabelText("Adicionar foto da capa")).toBeNull();
+    const sideSlots = within(screen.getByTestId("step2-side-slots"));
+    expect(sideSlots.getByLabelText("Adicionar lombada")).toBeDefined();
+    expect(sideSlots.getByLabelText("Adicionar verso")).toBeDefined();
+    expect(sideSlots.queryByLabelText("Adicionar foto da capa")).toBeNull();
     expect(screen.getByText("Dica de foto")).toBeDefined();
   });
 
   it("volta para a etapa anterior", async () => {
-    mockViewModel(defaultState);
+    mockViewModel(filledState);
     const screen = await renderScreen();
     await goToStep(screen, 2);
 
@@ -190,21 +207,23 @@ describe("etapa 2 do anúncio — Fotos (Figma 04.04)", () => {
 });
 
 describe("etapa 3 do anúncio — Detalhes (Figma 04.05)", () => {
-  it("oferece conservação, categoria, descrição com contador e bairros de Piripiri", async () => {
-    mockViewModel({ ...defaultState, description: "Marcas leves" });
+  it("oferece conservação, categoria e descrição com contador", async () => {
+    mockViewModel({ ...filledState, description: "Marcas leves" });
     const screen = await renderScreen();
     await goToStep(screen, 3);
 
     expect(screen.getByText("Etapa 3 de 3")).toBeDefined();
     expect(screen.getByLabelText("Conservação Bom estado")).toBeDefined();
     expect(screen.getByLabelText("Conservação Desgastado")).toBeDefined();
-    expect(screen.getByLabelText("Categoria Literatura")).toBeDefined();
+    expect(screen.getByLabelText("Categoria Literatura & Romance")).toBeDefined();
     expect(screen.getByLabelText("Descrição")).toBeDefined();
     // Spec 043 RN-08: um único contador, sem o "Restam n caracteres" repetido.
     expect(screen.getByText("12/280")).toBeDefined();
     expect(screen.queryByText(/Restam/)).toBeNull();
     expect(screen.getByLabelText("Descrição").props.multiline).toBe(true);
-    expect(screen.getByLabelText("Bairro Centro")).toBeDefined();
+    // Bairro para retirada removido conforme simplificação da etapa 3.
+    expect(screen.queryByLabelText("Selecionar bairro para retirada em Piripiri")).toBeNull();
+    expect(screen.queryByText("Só o bairro aparece no anúncio.")).toBeNull();
   });
 
   it("exibe banner de rascunho salvo e permite limpar rascunho (Issue #160)", async () => {
@@ -219,7 +238,7 @@ describe("etapa 3 do anúncio — Detalhes (Figma 04.05)", () => {
   });
 
   it("exibe aviso quando a descrição ultrapassa 280 caracteres (Issue #160)", async () => {
-    mockViewModel({ ...defaultState, description: "a".repeat(285) });
+    mockViewModel({ ...filledState, description: "a".repeat(285) });
     const screen = await renderScreen();
     await goToStep(screen, 3);
 
@@ -227,7 +246,7 @@ describe("etapa 3 do anúncio — Detalhes (Figma 04.05)", () => {
   });
 
   it("registra a conservação escolhida", async () => {
-    const actions = mockViewModel(defaultState);
+    const actions = mockViewModel(filledState);
     const screen = await renderScreen();
     await goToStep(screen, 3);
 
@@ -238,20 +257,33 @@ describe("etapa 3 do anúncio — Detalhes (Figma 04.05)", () => {
     expect(actions.setCondition).toHaveBeenCalledWith("marked");
   });
 
-  it("registra o bairro escolhido a partir da lista oficial", async () => {
-    const actions = mockViewModel(defaultState);
+  it("renderiza campos de conservação, categoria, box e descrição na etapa 3 sem campo de bairro", async () => {
+    mockViewModel(filledState);
     const screen = await renderScreen();
     await goToStep(screen, 3);
 
-    await act(async () => {
-      fireEvent.press(screen.getByLabelText("Bairro Paciência"));
-    });
+    expect(screen.getByText("Conservação")).toBeDefined();
+    expect(screen.getByText("Categoria")).toBeDefined();
+    expect(screen.getByText("Box ou coleção de livros")).toBeDefined();
+    expect(screen.getByLabelText("Descrição")).toBeDefined();
+    expect(screen.queryByLabelText("Selecionar bairro para retirada em Piripiri")).toBeNull();
+    expect(screen.queryByText("Bairro para retirada")).toBeNull();
+  });
 
-    expect(actions.setNeighborhood).toHaveBeenCalledWith("Paciência");
+  it("mantém as ações da etapa na barra fixa inferior", async () => {
+    mockViewModel(filledState);
+    const screen = await renderScreen();
+    await goToStep(screen, 3);
+
+    const publish = screen.getByRole("button", { name: "Publicar anúncio" });
+    expect(publish).toBeDefined();
+    // "Voltar à etapa anterior" fica na mesma barra e a navegação do cabeçalho também recua.
+    expect(screen.getByRole("button", { name: "Voltar à etapa anterior" })).toBeDefined();
+    expect(screen.queryByRole("button", { name: "Continuar" })).toBeNull();
   });
 
   it("exibe indicador de carregamento enquanto publica", async () => {
-    mockViewModel({ ...defaultState, loading: true });
+    mockViewModel({ ...filledState, loading: true });
     const screen = await renderScreen();
     await goToStep(screen, 3);
 
@@ -259,7 +291,7 @@ describe("etapa 3 do anúncio — Detalhes (Figma 04.05)", () => {
   });
 
   it("exibe mensagem de erro quando a publicação falha", async () => {
-    mockViewModel({ ...defaultState, error: "Sessão obrigatória para cadastrar anúncio." });
+    mockViewModel({ ...filledState, error: "Sessão obrigatória para cadastrar anúncio." });
     const screen = await renderScreen();
     await goToStep(screen, 3);
 
@@ -268,7 +300,7 @@ describe("etapa 3 do anúncio — Detalhes (Figma 04.05)", () => {
 
   it("anuncia o erro para leitores de tela quando a publicação falha (Spec 042 / Issue #147)", async () => {
     const announceSpy = vi.spyOn(AccessibilityInfo, "announceForAccessibility");
-    mockViewModel({ ...defaultState, error: "Sessão obrigatória para cadastrar anúncio." });
+    mockViewModel({ ...filledState, error: "Sessão obrigatória para cadastrar anúncio." });
     const screen = await renderScreen();
     await goToStep(screen, 3);
 
@@ -285,7 +317,7 @@ describe("anúncio publicado (Figma 04.07)", () => {
     const onCreated = vi.fn();
     const onViewMyListings = vi.fn();
     const onGoHome = vi.fn();
-    const actions = mockViewModel(defaultState, {
+    const actions = mockViewModel(filledState, {
       submit: vi.fn().mockResolvedValue({
         id: "new-1",
         title: "Dom Casmurro",
@@ -325,7 +357,7 @@ describe("anúncio publicado (Figma 04.07)", () => {
   });
 
   it("não mostra a tela de sucesso quando a publicação falha", async () => {
-    mockViewModel(defaultState, { submit: vi.fn().mockResolvedValue(null) });
+    mockViewModel(filledState, { submit: vi.fn().mockResolvedValue(null) });
     const screen = await renderScreen();
     await goToStep(screen, 3);
 
@@ -334,5 +366,76 @@ describe("anúncio publicado (Figma 04.07)", () => {
     });
 
     expect(screen.queryByRole("header", { name: "Seu livro ganhou um novo começo." })).toBeNull();
+  });
+});
+
+describe("persistência e recuperação de rascunhos na UI (Spec 017 / Spec 072)", () => {
+  it("não avança e mostra o erro em cada campo quando a etapa 1 está incompleta", async () => {
+    const actions = mockViewModel({ ...defaultState, modality: "sale" });
+    const screen = await renderScreen();
+
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Continuar" }));
+    });
+
+    expect(screen.getByText("Etapa 1 de 3")).toBeDefined();
+    expect(screen.getByText("Informe o título do livro.")).toBeDefined();
+    expect(screen.getByText("Informe o autor do livro.")).toBeDefined();
+    expect(screen.getByText("Informe um preço maior que zero.")).toBeDefined();
+    expect(actions.saveDraft).not.toHaveBeenCalled();
+  });
+
+  it("não mostra erros de campo antes da primeira tentativa de avançar", async () => {
+    mockViewModel(defaultState);
+    const screen = await renderScreen();
+
+    expect(screen.queryByText("Informe o título do livro.")).toBeNull();
+  });
+
+  it("dispara actions.loadDraft na montagem se o formulário estiver limpo", async () => {
+    const actions = mockViewModel(defaultState);
+    await renderScreen();
+
+    expect(actions.loadDraft).toHaveBeenCalledTimes(1);
+  });
+
+  it("salva o rascunho ao avançar da etapa 1 para a etapa 2 via botão Continuar", async () => {
+    const actions = mockViewModel(filledState);
+    const screen = await renderScreen();
+
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Continuar" }));
+    });
+
+    expect(actions.saveDraft).toHaveBeenCalled();
+    expect(screen.getByText("Etapa 2 de 3")).toBeDefined();
+  });
+
+  it("salva o rascunho ao avançar da etapa 2 para a etapa 3 via botão Usar estas fotos", async () => {
+    const actions = mockViewModel(filledState);
+    const screen = await renderScreen();
+    await goToStep(screen, 2);
+
+    expect(actions.saveDraft).toHaveBeenCalled();
+
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Usar estas fotos" }));
+    });
+
+    expect(actions.saveDraft).toHaveBeenCalledTimes(2);
+    expect(screen.getByText("Etapa 3 de 3")).toBeDefined();
+  });
+
+  it("permite descartar o rascunho salvo limpando os dados e resetando para a etapa 1", async () => {
+    const actions = mockViewModel({ ...defaultState, title: "O Quinze", author: "Rachel de Queiroz" });
+    const screen = await renderScreen();
+
+    expect(screen.getByText("Rascunho salvo neste aparelho")).toBeDefined();
+
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Limpar rascunho" }));
+    });
+
+    expect(actions.reset).toHaveBeenCalledTimes(1);
   });
 });

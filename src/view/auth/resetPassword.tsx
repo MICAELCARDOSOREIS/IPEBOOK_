@@ -1,14 +1,18 @@
-import { useMemo, useState } from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { useMemo, useRef, useState } from "react";
+import { StyleSheet, Text, View } from "react-native";
+import { AuthShell } from "@/view/auth/AuthShell";
 import { FilledButton } from "@/view/components/FilledButton";
 import { IconBadge } from "@/view/components/IconBadge";
+import { InlineErrorCard } from "@/view/components/InlineErrorCard";
+import { ScreenContainer } from "@/view/components/ScreenContainer";
 import { TextButton } from "@/view/components/TextButton";
-import { TextField } from "@/view/components/TextField";
+import { TextField, type TextInputInstance } from "@/view/components/TextField";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
-import { useResetPasswordViewModel } from "@/viewmodel/useResetPasswordViewModel";
+import { makeResetPasswordViewModel } from "@/di/container";
+import { useGuardedPress } from "@/view/useGuardedPress";
+import { scrollBottomPadding } from "@/view/scrollProps";
 
 export type ResetPasswordProps = {
   link: string | null;
@@ -27,16 +31,32 @@ export default function ResetPassword({
   onNavigateToForgotPassword,
   onBack,
 }: ResetPasswordProps) {
-  const [state, actions] = useResetPasswordViewModel();
+  const guardedBack = useGuardedPress(onBack);
+  const guardedSignIn = useGuardedPress(onNavigateToSignIn);
+  const guardedForgotPassword = useGuardedPress(onNavigateToForgotPassword);
+  const [state, actions] = makeResetPasswordViewModel();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [validationError, setValidationError] = useState<string | null>(null);
+  const confirmPasswordInputRef = useRef<TextInputInstance>(null);
 
   const handleSubmit = async () => {
     setValidationError(null);
-    if (confirmPassword && password !== confirmPassword) {
+    if (!password) {
+      setValidationError("Informe a nova senha.");
+      return;
+    }
+    if (password.length < 8) {
+      setValidationError("A nova senha deve ter pelo menos 8 caracteres.");
+      return;
+    }
+    if (!confirmPassword) {
+      setValidationError("Confirme a nova senha.");
+      return;
+    }
+    if (password !== confirmPassword) {
       setValidationError("As senhas não coincidem.");
       return;
     }
@@ -46,175 +66,132 @@ export default function ResetPassword({
   const errorMessage = validationError ?? state.error;
 
   return (
-    <SafeAreaView style={styles.page}>
-      {onBack ? (
-        <TopAppBar
-          title={state.success ? "Senha atualizada" : state.linkExpired ? "Link expirado" : "Nova senha"}
-          onBack={onBack}
-        />
-      ) : null}
-      <ScrollView
-        contentContainerStyle={styles.centerContainer}
-        keyboardShouldPersistTaps="handled"
+    <AuthShell>
+      <ScreenContainer
+        maxWidth={560}
+        paddingTop={tokens.spacing[16]}
+        paddingBottom={scrollBottomPadding.withoutBottomBar}
+        header={
+          onBack ? (
+            <TopAppBar
+              contentMaxWidth={560}
+              title={state.success ? "Senha atualizada" : state.linkExpired ? "Link expirado" : "Nova senha"}
+              onBack={guardedBack}
+            />
+          ) : undefined
+        }
+        contentStyle={styles.content}
       >
-        <View style={styles.content}>
-          {state.linkExpired ? (
-            <>
-              <IconBadge icon="error" tone="error" />
-              <Text accessibilityRole="header" style={styles.title}>Link expirado.</Text>
-              <Text style={styles.subtitle}>
-                Esse link de recuperação não é mais válido. Solicite um novo link para continuar.
+        {state.linkExpired ? (
+          <>
+            <IconBadge icon="error" tone="error" size="large" />
+            <Text accessibilityRole="header" style={styles.title}>Link expirado.</Text>
+            <Text style={styles.subtitle}>
+              Esse link de recuperação não é mais válido. Solicite um novo link para continuar.
+            </Text>
+            <InlineErrorCard message="Link de recuperação inválido ou expirado." />
+            <FilledButton
+              label="Solicitar novo link"
+              onPress={guardedForgotPassword}
+            />
+          </>
+        ) : state.success ? (
+          <>
+            <IconBadge icon="check" tone="action" size="large" />
+            <Text accessibilityRole="header" style={styles.title}>
+              Tudo certo com seu acesso.
+            </Text>
+            <Text style={styles.subtitle}>
+              Sua nova senha foi salva. Entre novamente para continuar.
+            </Text>
+            <View style={styles.successBox}>
+              <Text accessibilityRole="alert" style={styles.message}>
+                Senha atualizada. Entre com a nova senha.
               </Text>
-              <View style={styles.errorBox}>
-                <Text accessibilityRole="alert" style={styles.errorMessage}>
-                  Link de recuperação inválido ou expirado.
-                </Text>
-              </View>
-              <FilledButton
-                label="Solicitar novo link"
-                onPress={() => onNavigateToForgotPassword?.()}
-              />
-            </>
-          ) : state.success ? (
-            <>
-              <IconBadge icon="check" tone="action" />
-              <Text accessibilityRole="header" style={styles.title}>
-                Tudo certo com seu acesso.
-              </Text>
-              <Text style={styles.subtitle}>
-                Sua nova senha foi salva. Entre novamente para continuar.
-              </Text>
-              <View style={styles.successBox}>
-                <Text accessibilityRole="alert" style={styles.message}>
-                  Senha atualizada. Entre com a nova senha.
-                </Text>
-              </View>
-              <FilledButton
-                label="Ir para o login"
-                onPress={() => onNavigateToSignIn?.()}
-              />
-            </>
-          ) : (
-            <>
-              <Text accessibilityRole="header" style={styles.title}>Um novo começo.</Text>
-              <Text style={styles.subtitle}>Escolha uma senha com pelo menos 8 caracteres.</Text>
-              <TextField
-                label="Nova senha"
-                value={password}
-                onChangeText={(text) => {
-                  setPassword(text);
-                  if (validationError) setValidationError(null);
-                }}
-                secureTextEntry
-                editable={!state.loading}
-                helperText="Use uma senha que você não usa em outro lugar."
-              />
+            </View>
+            <FilledButton
+              label="Ir para o login"
+              onPress={guardedSignIn}
+            />
+          </>
+        ) : (
+          <>
+            <Text accessibilityRole="header" style={styles.title}>Um novo começo.</Text>
+            <Text style={styles.subtitle}>Escolha uma senha com pelo menos 8 caracteres.</Text>
+            <TextField
+              label="Nova senha"
+              value={password}
+              onChangeText={(text) => {
+                setPassword(text);
+                if (validationError) setValidationError(null);
+              }}
+              secureTextEntry
+              autoComplete="new-password"
+              textContentType="newPassword"
+              returnKeyType="next"
+              onSubmitEditing={() => confirmPasswordInputRef.current?.focus?.()}
+              editable={!state.loading}
+              helperText="Use uma senha que você não usa em outro lugar."
+            />
 
-              <TextField
-                label="Confirmar senha"
-                value={confirmPassword}
-                onChangeText={(text) => {
-                  setConfirmPassword(text);
-                  if (validationError) setValidationError(null);
-                }}
-                secureTextEntry
-                editable={!state.loading}
-              />
+            <TextField
+              inputRef={confirmPasswordInputRef}
+              label="Confirmar senha"
+              value={confirmPassword}
+              onChangeText={(text) => {
+                setConfirmPassword(text);
+                if (validationError) setValidationError(null);
+              }}
+              secureTextEntry
+              autoComplete="new-password"
+              textContentType="newPassword"
+              returnKeyType="done"
+              onSubmitEditing={() => void handleSubmit()}
+              editable={!state.loading}
+            />
 
-              {errorMessage ? (
-                <Text accessibilityRole="alert" style={styles.error}>{errorMessage}</Text>
-              ) : null}
+            {errorMessage ? <InlineErrorCard message={errorMessage} /> : null}
 
-              <FilledButton
-                label="Salvar nova senha"
-                loading={state.loading}
-                loadingLabel="Salvando senha"
-                onPress={() => void handleSubmit()}
-              />
-            </>
-          )}
+            <FilledButton
+              label="Salvar nova senha"
+              loading={state.loading}
+              loadingLabel="Salvando senha"
+              onPress={() => void handleSubmit()}
+            />
 
-          <TextButton label="Voltar ao login" onPress={() => onNavigateToSignIn?.()} />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+            <TextButton label="Voltar ao login" disabled={state.loading} onPress={guardedSignIn} />
+          </>
+        )}
+      </ScreenContainer>
+    </AuthShell>
   );
 }
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
-  page: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  centerContainer: {
-    flexGrow: 1,
-    paddingHorizontal: tokens.spacing[24],
-    paddingTop: tokens.spacing[24],
-    paddingBottom: tokens.spacing[32],
-  },
-  content: {
-    width: "100%",
-    maxWidth: 560,
-    alignSelf: "center",
-    gap: tokens.spacing[16],
-  },
-  title: {
-    fontSize: tokens.typography.displayLarge.fontSize,
-    lineHeight: tokens.typography.displayLarge.lineHeight,
-    fontFamily: tokens.typography.displayLarge.fontFamily,
-    color: colors.action,
-  },
-  subtitle: {
-    fontSize: tokens.typography.bodyLarge.fontSize,
-    lineHeight: tokens.typography.bodyLarge.lineHeight,
-    fontFamily: tokens.typography.bodyLarge.fontFamily,
-    color: colors.secondaryText,
-    marginBottom: tokens.spacing[4],
-  },
-  successBox: {
-    borderWidth: 1,
-    borderColor: colors.success,
-    backgroundColor: colors.soft,
-    borderRadius: tokens.radius.medium,
-    padding: tokens.spacing[16],
-  },
-  message: {
-    color: colors.success,
-    fontSize: tokens.typography.bodyMedium.fontSize,
-    fontFamily: tokens.typography.bodyMedium.fontFamily,
-    lineHeight: 20,
-    fontWeight: "500",
-  },
-  error: {
-    color: colors.error,
-    fontSize: tokens.typography.bodyMedium.fontSize,
-    fontFamily: tokens.typography.bodyMedium.fontFamily,
-  },
-  errorBox: {
-    borderWidth: 1,
-    borderColor: colors.error,
-    backgroundColor: colors.errorContainer,
-    borderRadius: tokens.radius.medium,
-    padding: tokens.spacing[16],
-  },
-  errorMessage: {
-    color: colors.error,
-    fontSize: tokens.typography.bodyMedium.fontSize,
-    fontFamily: tokens.typography.bodyMedium.fontFamily,
-    lineHeight: 20,
-    fontWeight: "500",
-  },
-  linkButton: {
-    minHeight: tokens.accessibility.touchTarget,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  link: {
-    color: colors.action,
-    fontSize: tokens.typography.bodyMedium.fontSize,
-    fontFamily: tokens.typography.bodyMedium.fontFamily,
-    fontWeight: "600",
-  },
+    content: {
+      gap: tokens.spacing[16],
+    },
+    title: {
+      ...tokens.typography.displayLarge,
+      color: colors.action,
+    },
+    subtitle: {
+      ...tokens.typography.bodyLarge,
+      color: colors.secondaryText,
+      marginBottom: tokens.spacing[4],
+    },
+    successBox: {
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderRadius: tokens.radius.large,
+      padding: tokens.spacing[16],
+    },
+    message: {
+      ...tokens.typography.bodyMedium,
+      color: colors.success,
+      fontWeight: tokens.fontWeight.medium,
+    },
   });
 }

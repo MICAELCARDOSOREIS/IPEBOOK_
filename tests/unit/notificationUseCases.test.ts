@@ -85,4 +85,52 @@ describe("NotificationUseCases", () => {
       expect(ds.markAllAsRead).toHaveBeenCalledWith("user-1");
     });
   });
+
+  describe("deleteNotification", () => {
+    it("lança AuthError se o usuário não estiver autenticado", async () => {
+      const ds = createMockDataSource();
+      const useCases = new NotificationUseCases(ds);
+
+      await expect(useCases.deleteNotification(null, "notif-1")).rejects.toThrow(AuthError);
+    });
+
+    it("lança ValidationError se o identificador for vazio", async () => {
+      const ds = createMockDataSource();
+      const useCases = new NotificationUseCases(ds);
+
+      await expect(useCases.deleteNotification("user-1", "   ")).rejects.toThrow(ValidationError);
+    });
+
+    it("exclui a notificação com sucesso", async () => {
+      const deleteNotification = vi.fn(async () => {});
+      const ds = createMockDataSource({ deleteNotification });
+      const useCases = new NotificationUseCases(ds);
+
+      await useCases.deleteNotification("user-1", "notif-1");
+      expect(deleteNotification).toHaveBeenCalledWith("notif-1");
+    });
+  });
+
+  describe("clearAll e clearRead", () => {
+    it("lança AuthError ao tentar limpar sem usuário autenticado", async () => {
+      const ds = createMockDataSource();
+      const useCases = new NotificationUseCases(ds);
+
+      await expect(useCases.clearAll(null)).rejects.toThrow(AuthError);
+      await expect(useCases.clearRead(null)).rejects.toThrow(AuthError);
+    });
+
+    it("chama clearAll e clearRead no dataSource quando autenticado", async () => {
+      const clearAll = vi.fn(async () => {});
+      const clearRead = vi.fn(async () => {});
+      const ds = createMockDataSource({ clearAll, clearRead });
+      const useCases = new NotificationUseCases(ds);
+
+      await useCases.clearAll("user-1");
+      expect(clearAll).toHaveBeenCalledWith("user-1");
+
+      await useCases.clearRead("user-1");
+      expect(clearRead).toHaveBeenCalledWith("user-1");
+    });
+  });
 });

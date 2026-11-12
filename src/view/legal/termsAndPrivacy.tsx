@@ -1,10 +1,17 @@
 import { useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { PRIVACY_POLICY, TERMS_OF_USE } from "@/model/legalContent";
+import { LEGAL_LAST_UPDATED, PRIVACY_POLICY, TERMS_OF_USE } from "@/model/legalContent";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
+import { WEB_GUTTER, useWebColumns, webColumnWidth } from "@/view/webLayout";
+import { withPress } from "@/view/pressFeedback";
+import { useGuardedPress } from "@/view/useGuardedPress";
+import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
+
+const TERMS_WIDE_MAX_WIDTH = 1240;
 
 export type TermsAndPrivacyProps = {
   onBack?: () => void;
@@ -22,16 +29,25 @@ export default function TermsAndPrivacy({
   initialTab = "terms",
   onNavigateToDeleteAccount,
 }: TermsAndPrivacyProps = {}) {
+  const guardedBack = useGuardedPress(onBack);
+  const guardedDeleteAccount = useGuardedPress(onNavigateToDeleteAccount);
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [activeTab, setActiveTab] = useState<"terms" | "privacy">(initialTab);
+  // Web larga: coluna mais larga, com as cláusulas em duas colunas.
+  const wide = useIsWideWeb();
+  const columns = useWebColumns(2, 3);
+  const columnWidth = { width: webColumnWidth(columns) };
   const sections = activeTab === "terms" ? TERMS_OF_USE : PRIVACY_POLICY;
 
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar title="Termos e privacidade" onBack={() => onBack?.()} />
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.content}>
+      <TopAppBar title="Termos e privacidade" onBack={guardedBack} contentMaxWidth={wide ? TERMS_WIDE_MAX_WIDTH : undefined} />
+      <ScrollView
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
+        {...standardVerticalScrollProps}
+      >
+        <View style={[styles.content, wide && styles.contentWide]}>
           <View style={styles.heroHeader}>
             <Text style={styles.heroTitle}>Informação clara para você.</Text>
             <Text style={styles.heroSubtitle}>
@@ -41,9 +57,10 @@ export default function TermsAndPrivacy({
           <View testID="terms-privacy-tablist" accessibilityRole="tablist" style={styles.tabs}>
             <Pressable
               accessibilityRole="tab"
+              accessibilityLabel="Termos de Uso"
               accessibilityState={{ selected: activeTab === "terms" }}
               onPress={() => setActiveTab("terms")}
-              style={[styles.tab, activeTab === "terms" && styles.activeTab]}
+              style={withPress([styles.tab, activeTab === "terms" && styles.activeTab])}
             >
               <Text style={[styles.tabText, activeTab === "terms" && styles.activeTabText]}>
                 Termos de Uso
@@ -51,9 +68,10 @@ export default function TermsAndPrivacy({
             </Pressable>
             <Pressable
               accessibilityRole="tab"
+              accessibilityLabel="Privacidade (LGPD)"
               accessibilityState={{ selected: activeTab === "privacy" }}
               onPress={() => setActiveTab("privacy")}
-              style={[styles.tab, activeTab === "privacy" && styles.activeTab]}
+              style={withPress([styles.tab, activeTab === "privacy" && styles.activeTab])}
             >
               <Text style={[styles.tabText, activeTab === "privacy" && styles.activeTabText]}>
                 Privacidade (LGPD)
@@ -61,10 +79,10 @@ export default function TermsAndPrivacy({
             </Pressable>
           </View>
 
-          <View style={styles.cardList}>
-            <Text style={styles.updatedDate}>Última atualização: 15 de outubro de 2026</Text>
+          <View style={[styles.cardList, wide && styles.cardListWide]}>
+            <Text style={[styles.updatedDate, wide && styles.fullRow]}>{`Última atualização: ${LEGAL_LAST_UPDATED}`}</Text>
             {sections.map((section) => (
-              <View key={section.title} style={styles.sectionCard}>
+              <View key={section.title} style={[styles.sectionCard, wide && columnWidth]}>
                 <Text accessibilityRole="header" style={styles.sectionTitle}>
                   {section.title}
                 </Text>
@@ -76,7 +94,7 @@ export default function TermsAndPrivacy({
               </View>
             ))}
             {activeTab === "privacy" && onNavigateToDeleteAccount ? (
-              <View style={styles.sectionCard}>
+              <View style={[styles.sectionCard, wide && styles.fullRow]}>
                 <Text accessibilityRole="header" style={styles.sectionTitle}>
                   Portabilidade e Exclusão (LGPD — Art. 18)
                 </Text>
@@ -85,9 +103,9 @@ export default function TermsAndPrivacy({
                 </Text>
                 <Pressable
                   accessibilityRole="button"
-                  accessibilityLabel="Solicitar exclusão da minha conta e dados"
-                  onPress={onNavigateToDeleteAccount}
-                  style={styles.deleteAccountLink}
+                  accessibilityLabel="Abrir gerenciamento de exportação e exclusão dos meus dados"
+                  onPress={guardedDeleteAccount}
+                  style={withPress(styles.deleteAccountLink)}
                 >
                   <Text style={styles.deleteAccountText}>
                     Deseja exportar ou excluir sua conta? Gerenciar dados e exclusão definitiva (LGPD)
@@ -112,18 +130,17 @@ function createStyles(colors: ColorPalette) {
   content: {
     flex: 1,
     width: "100%",
-    maxWidth: 720,
-    alignSelf: "center",
     padding: tokens.spacing[16],
   },
+  contentWide: { maxWidth: TERMS_WIDE_MAX_WIDTH, alignSelf: "center", paddingHorizontal: WEB_GUTTER },
+  cardListWide: { flexDirection: "row", flexWrap: "wrap", alignItems: "flex-start", columnGap: tokens.spacing[16], rowGap: tokens.spacing[16] },
+  fullRow: { width: "100%" },
   heroHeader: {
     gap: tokens.spacing[4],
     marginBottom: tokens.spacing[16],
   },
   heroTitle: {
-    fontSize: tokens.typography.displayLarge.fontSize,
-    lineHeight: tokens.typography.displayLarge.lineHeight,
-    fontFamily: tokens.typography.displayLarge.fontFamily,
+    ...tokens.typography.displayLarge,
     color: colors.text,
   },
   heroSubtitle: {
@@ -154,7 +171,7 @@ function createStyles(colors: ColorPalette) {
   },
   activeTabText: {
     color: colors.action,
-    fontWeight: "600",
+    fontWeight: tokens.fontWeight.semiBold,
   },
   updatedDate: {
     ...tokens.typography.labelMedium,
@@ -192,7 +209,7 @@ function createStyles(colors: ColorPalette) {
     ...tokens.typography.labelMedium,
     color: colors.error,
     textDecorationLine: "underline",
-    fontWeight: "600",
+    fontWeight: tokens.fontWeight.semiBold,
   },
   });
 }

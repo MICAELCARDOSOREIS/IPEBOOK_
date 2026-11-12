@@ -1,4 +1,4 @@
-import React from "react";
+
 import { act, fireEvent, render } from "@testing-library/react-native";
 import { describe, expect, it, vi } from "vitest";
 import type { AuthState } from "@/viewmodel/useAuthViewModel";
@@ -32,6 +32,25 @@ describe("tela de Segurança e verificação (Figma 07.06)", () => {
     });
     expect(requestPasswordReset).toHaveBeenCalledWith("ana@exemplo.com");
     expect(screen.getByText("Link enviado. Confira sua caixa de entrada (e o spam).")).toBeDefined();
+  });
+
+  it("não envia o link quando não há sessão e oferece entrar na conta", async () => {
+    const { requestPasswordReset } = mockAuth(null);
+    const onNavigateToLogin = vi.fn();
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<Security onBack={() => {}} onNavigateToLogin={onNavigateToLogin} />);
+    });
+
+    expect(screen.getByText("Entre na sua conta para enviar o link de redefinição de senha.")).toBeDefined();
+    expect(screen.queryByText("Enviar link de redefinição")).toBeNull();
+
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Entrar na conta" }));
+    });
+
+    expect(onNavigateToLogin).toHaveBeenCalledTimes(1);
+    expect(requestPasswordReset).not.toHaveBeenCalled();
   });
 
   it("volta ao tocar no botão de voltar da barra superior", async () => {

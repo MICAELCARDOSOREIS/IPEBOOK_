@@ -12,8 +12,17 @@ export type CreateListingInput = Readonly<{
   neighborhood?: string;
   condition?: BookCondition;
   description?: string;
+  /** Sinopse e dados da edição, vindos do ISBN (Spec 097). */
+  synopsis?: string;
+  publisher?: string;
+  pageCount?: number;
+  publicationYear?: number;
   photoUrl?: string;
   photos?: readonly string[];
+  /** Indica se é um box/coleção de livros (Spec 112). */
+  isBox?: boolean;
+  /** Quantidade de volumes (de 2 a 100). */
+  boxVolumesCount?: number;
 }>;
 
 export type UpdateListingInput = Readonly<{
@@ -29,7 +38,18 @@ export type UpdateListingInput = Readonly<{
   description?: string;
   photoUrl?: string;
   photos?: readonly string[];
+  /** Indica se é um box/coleção de livros (Spec 112). */
+  isBox?: boolean;
+  /** Quantidade de volumes (de 2 a 100). */
+  boxVolumesCount?: number;
 }>;
+
+export type SaveDraftInput = CreateListingInput & {
+  /** Identificador do rascunho existente; ausente cria um novo (Spec 017). */
+  draftId?: string;
+  /** Etapa do assistente em que a pessoa salvou (1 Livro, 2 Fotos, 3 Detalhes). */
+  draftStep?: number;
+};
 
 export interface IBookUseCases {
   listBooks(options?: ListBooksOptions): Promise<readonly Book[]>;
@@ -39,4 +59,8 @@ export interface IBookUseCases {
   cancelListing(bookId: string, sessionUserId: string | null): Promise<void>;
   updateListing(bookId: string, input: UpdateListingInput, sessionUserId: string | null): Promise<Book>;
   togglePauseListing(bookId: string, sessionUserId: string | null): Promise<Book>;
+  listDrafts(sessionUserId: string | null): Promise<readonly Book[]>;
+  saveDraft(input: SaveDraftInput, sessionUserId: string | null): Promise<Book>;
+  discardDraft(bookId: string, sessionUserId: string | null): Promise<void>;
+  publishDraft(draftId: string, input: CreateListingInput, sessionUserId: string | null): Promise<Book>;
 }

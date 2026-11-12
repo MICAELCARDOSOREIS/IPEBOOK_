@@ -1,4 +1,4 @@
-import React from "react";
+
 import { afterEach, describe, expect, it } from "vitest";
 import { render } from "@testing-library/react-native";
 import { Platform, View } from "react-native";
@@ -15,7 +15,7 @@ describe("componentes de ícones (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
   });
 
   it("AppIcon: renderiza com cor e tamanho customizados", async () => {
-    const { toJSON } = await render(<AppIcon name="search" size={32} color="#2C5E45" />);
+    const { toJSON } = await render(<AppIcon name="search" size={32} color="#2B6334" />);
     const tree = toJSON();
     expect(tree).toBeDefined();
   });
@@ -89,8 +89,8 @@ describe("componentes de ícones (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
     });
   });
 
-  it("FluentIcon: renderiza os 3 ícones cobertos em regular e preenchido", async () => {
-    for (const name of ["home", "search", "person"] as const) {
+  it("FluentIcon: renderiza os ícones cobertos em regular e preenchido", async () => {
+    for (const name of ["home", "search", "person", "swap", "bookmark"] as const) {
       const { toJSON: toRegular } = await render(<FluentIcon name={name} />);
       const { toJSON: toFilled } = await render(<FluentIcon name={name} filled />);
       expect(toRegular()).toBeDefined();

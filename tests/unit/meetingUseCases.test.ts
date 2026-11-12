@@ -9,6 +9,7 @@ import { MeetingUseCases } from "@/usecase/meetingUseCases";
 const AGORA = new Date(2026, 9, 22, 14, 0, 0);
 const amanha10h = new Date(2026, 9, 23, 10).toISOString();
 const sabado15h = new Date(2026, 9, 24, 15).toISOString();
+const segunda15h = new Date(2026, 9, 26, 15).toISOString();
 const PRACA = "Praça da Bandeira (Centro)";
 const IFPI = "Campus IFPI Piripiri (Recepção ou Biblioteca)";
 
@@ -47,8 +48,8 @@ describe("combinar encontro (Spec 052)", () => {
   it("reagendar volta a aguardar a confirmação da outra pessoa (RN-06)", async () => {
     const convite = await useCases.propose("aceito", { pointName: PRACA, scheduledAt: amanha10h }, "dono");
     await useCases.confirm(convite.id, "leitora");
-    const novo = await useCases.reschedule(convite.id, { pointName: IFPI, scheduledAt: sabado15h }, "leitora");
-    expect(novo).toMatchObject({ status: "proposed", proposedBy: "leitora", pointName: IFPI, scheduledAt: sabado15h });
+    const novo = await useCases.reschedule(convite.id, { pointName: IFPI, scheduledAt: segunda15h }, "leitora");
+    expect(novo).toMatchObject({ status: "proposed", proposedBy: "leitora", pointName: IFPI, scheduledAt: segunda15h });
     expect((await notifications.listByUser("dono"))[0].title).toBe("Encontro reagendado");
     await expect(useCases.confirm(convite.id, "leitora")).rejects.toThrow(/não pode confirmá-lo/);
     await expect(useCases.confirm(convite.id, "dono")).resolves.toMatchObject({ status: "confirmed" });
@@ -56,13 +57,13 @@ describe("combinar encontro (Spec 052)", () => {
 
   it("cancelar libera um novo convite; um só encontro ativo por vez (RN-04, RN-07)", async () => {
     const convite = await useCases.propose("aceito", { pointName: PRACA, scheduledAt: amanha10h }, "dono");
-    await expect(useCases.propose("aceito", { pointName: IFPI, scheduledAt: sabado15h }, "leitora")).rejects.toThrow(/Já existe/);
+    await expect(useCases.propose("aceito", { pointName: IFPI, scheduledAt: segunda15h }, "leitora")).rejects.toThrow(/Já existe/);
     await useCases.cancel(convite.id, "leitora");
     expect((await notifications.listByUser("dono"))[0].title).toBe("Encontro cancelado");
     await expect(useCases.cancel(convite.id, "dono")).rejects.toThrow(/já foi cancelado/);
-    await expect(useCases.reschedule(convite.id, { pointName: IFPI, scheduledAt: sabado15h }, "dono")).rejects.toThrow(/cancelado/);
+    await expect(useCases.reschedule(convite.id, { pointName: IFPI, scheduledAt: segunda15h }, "dono")).rejects.toThrow(/cancelado/);
     await expect(useCases.confirm(convite.id, "dono")).rejects.toThrow(/aguardando/);
-    const outro = await useCases.propose("aceito", { pointName: IFPI, scheduledAt: sabado15h }, "leitora");
+    const outro = await useCases.propose("aceito", { pointName: IFPI, scheduledAt: segunda15h }, "leitora");
     expect((await useCases.getMeeting("aceito", "dono"))?.id).toBe(outro.id);
   });
 
@@ -80,6 +81,7 @@ describe("combinar encontro (Spec 052)", () => {
   it("recusa local e data inválidos antes de gravar (RN-02, RN-03)", async () => {
     await expect(useCases.propose("aceito", { pointName: "Minha casa", scheduledAt: amanha10h }, "dono")).rejects.toThrow(/pontos de encontro/);
     await expect(useCases.propose("aceito", { pointName: PRACA, scheduledAt: new Date(2026, 9, 21, 10).toISOString() }, "dono")).rejects.toThrow(/entre amanhã/);
+    await expect(useCases.propose("aceito", { pointName: IFPI, scheduledAt: sabado15h }, "dono")).rejects.toThrow(/apenas em dias úteis/);
     expect(await useCases.getMeeting("aceito", "dono")).toBeNull();
     const convite = await useCases.propose("aceito", { pointName: PRACA, scheduledAt: amanha10h }, "dono");
     await expect(useCases.reschedule(convite.id, { pointName: PRACA, scheduledAt: new Date(2026, 9, 23, 22).toISOString() }, "leitora")).rejects.toThrow(/horários/);
@@ -88,7 +90,26 @@ describe("combinar encontro (Spec 052)", () => {
   it("não sobrescreve mudança concorrente no datasource", async () => {
     const convite = await useCases.propose("aceito", { pointName: PRACA, scheduledAt: amanha10h }, "dono");
     await expect(meetings.update(convite.id, { status: "confirmed" }, "confirmed", "leitora")).rejects.toBeInstanceOf(DataSourceError);
-    await expect(meetings.create({ requestId: "aceito", pointName: IFPI, scheduledAt: sabado15h, proposedBy: "dono" })).rejects.toBeInstanceOf(DataSourceError);
+    await expect(meetings.create({ requestId: "aceito", pointName: IFPI, scheduledAt: segunda15h, proposedBy: "dono" })).rejects.toBeInstanceOf(DataSourceError);
     expect(await meetings.findById("nao-existe")).toBeNull();
+  });
+
+  it("recupera o histórico da negociação e os encontros do leitor em Piripiri (Spec 071)", async () => {
+    const primeiro = await useCases.propose("aceito", { pointName: PRACA, scheduledAt: amanha10h }, "dono");
+    await useCases.cancel(primeiro.id, "dono");
+    const segundo = await useCases.propose("aceito", { pointName: IFPI, scheduledAt: segunda15h }, "leitora");
+
+    const historicoNegociacao = await useCases.getMeetingHistory("aceito", "dono");
+    expect(historicoNegociacao).toHaveLength(2);
+    expect(historicoNegociacao[0].id).toBe(segundo.id);
+    expect(historicoNegociacao[1].id).toBe(primeiro.id);
+
+    const encontrosLeitora = await useCases.getUserMeetingHistory("leitora");
+    expect(encontrosLeitora).toHaveLength(2);
+
+    const encontrosDono = await useCases.getUserMeetingHistory("dono");
+    expect(encontrosDono).toHaveLength(2);
+
+    await expect(useCases.getUserMeetingHistory(null)).rejects.toBeInstanceOf(AuthError);
   });
 });

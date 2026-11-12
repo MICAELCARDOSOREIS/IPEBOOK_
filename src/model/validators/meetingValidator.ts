@@ -26,7 +26,43 @@ export function validateMeetingProposal(proposal: MeetingProposal, now: Date = n
   if (!MEETING_TIME_SLOTS.includes(scheduled.getHours()) || scheduled.getMinutes() !== 0) {
     return "Escolha um dos horários sugeridos.";
   }
+  if (isBusinessDaysOnlyPoint(proposal.pointName)) {
+    const dow = scheduled.getDay();
+    if (dow === 0 || dow === 6) {
+      return "Este local funciona apenas em dias úteis (segunda a sexta-feira).";
+    }
+    if (scheduled.getHours() < 8 || scheduled.getHours() > 17) {
+      return "Este local funciona das 8h às 17h.";
+    }
+  }
   return null;
+}
+
+/** Verifica se o ponto tem restrição de funcionamento apenas em dias úteis (IFPI e Museu). */
+export function isBusinessDaysOnlyPoint(pointName: string | null): boolean {
+  if (!pointName) return false;
+  return pointName.includes("IFPI") || pointName.includes("Museu");
+}
+
+/** Verifica se o local está aberto no dia informado. */
+export function isMeetingPointOpenOnDay(pointName: string | null, day: Date | null): boolean {
+  if (!pointName || !day) return true;
+  if (isBusinessDaysOnlyPoint(pointName)) {
+    const dow = day.getDay();
+    return dow >= 1 && dow <= 5;
+  }
+  return true;
+}
+
+/** Retorna os horários permitidos conforme o local e o dia. */
+export function meetingTimeSlotsForPoint(pointName: string | null, day: Date | null): readonly number[] {
+  if (pointName && isBusinessDaysOnlyPoint(pointName)) {
+    if (day && !isMeetingPointOpenOnDay(pointName, day)) {
+      return [];
+    }
+    return [8, 9, 10, 11, 12, 13, 14, 15, 16, 17];
+  }
+  return MEETING_TIME_SLOTS;
 }
 
 /** Próximos dias oferecidos como chips em `06.04`: de amanhã até `MEETING_MAX_DAYS_AHEAD`. */

@@ -2,8 +2,10 @@ import { createElement } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { DomainError } from "@/model/errors";
+import type { IFileDownloadService } from "@/model/services/iFileDownloadService";
 import type { IAuthUseCases } from "@/usecase/iAuthUseCases";
 import type { ISearchHistoryUseCases } from "@/usecase/iSearchHistoryUseCases";
+import type { IUserDataExportUseCases } from "@/usecase/iUserDataExportUseCases";
 import { useDeleteAccountViewModel } from "@/viewmodel/useDeleteAccountViewModel";
 
 function stubHistory(overrides: Partial<ISearchHistoryUseCases> = {}): ISearchHistoryUseCases {
@@ -31,10 +33,15 @@ function stubAuth(overrides: Partial<IAuthUseCases> = {}): IAuthUseCases {
   };
 }
 
-async function renderHook(auth: IAuthUseCases, history: ISearchHistoryUseCases = stubHistory()) {
+async function renderHook(
+  auth: IAuthUseCases,
+  history: ISearchHistoryUseCases = stubHistory(),
+  exportUseCases: IUserDataExportUseCases = { exportUserData: vi.fn() } as unknown as IUserDataExportUseCases,
+  download: IFileDownloadService = { downloadJson: vi.fn().mockResolvedValue(true) },
+) {
   let result!: ReturnType<typeof useDeleteAccountViewModel>;
   function HookProbe() {
-    result = useDeleteAccountViewModel(auth, history);
+    result = useDeleteAccountViewModel(auth, history, exportUseCases, download);
     return null;
   }
   await act(async () => {
@@ -196,5 +203,53 @@ describe("useDeleteAccountViewModel", () => {
 
     expect(ok).toBe(false);
     expect(hook.current[0].exportError).toBe("Você precisa estar conectado para baixar seus dados.");
+  });
+
+  it("trata erro genérico e DomainError no downloadUserData", async () => {
+    const mockExportFail = {
+      exportUserData: vi.fn().mockRejectedValue(new DomainError("Erro ao exportar dados")),
+    };
+    let result!: ReturnType<typeof useDeleteAccountViewModel>;
+    function Probe() {
+      result = useDeleteAccountViewModel(stubAuth(), stubHistory(), mockExportFail as any, { downloadJson: vi.fn() } as any);
+      return null;
+    }
+    await act(async () => {
+      mounted.push(create(createElement(Probe)));
+    });
+
+    let ok = true;
+    await act(async () => {
+      ok = await result[1].downloadUserData("user-1");
+    });
+
+    expect(ok).toBe(false);
+    expect(result[0].exportError).toBe("Erro ao exportar dados");
+  });
+
+  it("trata erro inesperado em deleteAccount e permite reset do estado", async () => {
+    const auth = stubAuth({
+      deleteAccount: vi.fn().mockRejectedValue(new Error("Erro de infraestrutura")),
+    });
+    const hook = await renderHook(auth);
+
+    await act(async () => {
+      hook.current[1].setConfirmed(true);
+    });
+
+    let ok = true;
+    await act(async () => {
+      ok = await hook.current[1].deleteAccount("user-1");
+    });
+
+    expect(ok).toBe(false);
+    expect(hook.current[0].error).toBe("Não foi possível excluir sua conta. Tente novamente.");
+
+    await act(async () => {
+      hook.current[1].reset();
+    });
+
+    expect(hook.current[0].confirmed).toBe(false);
+    expect(hook.current[0].error).toBeNull();
   });
 });

@@ -8,11 +8,13 @@ import {
   validateSignUpPayload,
 } from "@/model/validators/authValidator";
 import type { IAuthUseCases } from "@/usecase/iAuthUseCases";
+import type { ILocalCacheUseCases } from "@/usecase/iLocalCacheUseCases";
 
 export class AuthUseCases implements IAuthUseCases {
   constructor(
     private readonly dataSource: IAuthDataSource,
     private readonly profiles?: IProfileDataSource,
+    private readonly localCache?: ILocalCacheUseCases,
   ) {}
 
   async signUp(email: string, password: string, name: string): Promise<User> {
@@ -47,6 +49,28 @@ export class AuthUseCases implements IAuthUseCases {
     return this.dataSource.signIn(email.trim(), password);
   }
 
+  async signInWithGoogle(): Promise<User> {
+    if (!this.dataSource.signInWithGoogle) {
+      throw new AuthError("Login com Google indisponível.");
+    }
+    const user = await this.dataSource.signInWithGoogle();
+    if (user.id && user.id !== "pending") {
+      await this.ensurePublicProfile(user.id, user.name || "Leitor IpêBook");
+    }
+    return user;
+  }
+
+  async setSessionFromUrl(url: string): Promise<User> {
+    if (!this.dataSource.setSessionFromUrl) {
+      throw new AuthError("Processamento de retorno de autenticação indisponível.");
+    }
+    const user = await this.dataSource.setSessionFromUrl(url);
+    if (user.id && user.id !== "pending") {
+      await this.ensurePublicProfile(user.id, user.name || "Leitor IpêBook");
+    }
+    return user;
+  }
+
   signOut(): Promise<void> {
     return this.dataSource.signOut();
   }
@@ -66,9 +90,10 @@ export class AuthUseCases implements IAuthUseCases {
   }
 
   async deleteAccount(sessionUserId: string | null): Promise<void> {
-    if (!sessionUserId || !sessionUserId.trim()) {
+    if (!sessionUserId?.trim()) {
       throw new AuthError("Sessão obrigatória para excluir a conta.");
     }
     await this.dataSource.deleteAccount(sessionUserId.trim());
+    await this.localCache?.clearBooksCache();
   }
 }

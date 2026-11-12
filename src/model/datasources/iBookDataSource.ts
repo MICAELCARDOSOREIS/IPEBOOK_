@@ -3,6 +3,9 @@ import type { Book } from "@/model/entities/book";
 export type ListBooksOptions = {
   limit?: number;
   offset?: number;
+  neighborhood?: string;
+  modality?: Book["modality"];
+  onlyBoxes?: boolean;
 };
 
 export interface IBookDataSource {

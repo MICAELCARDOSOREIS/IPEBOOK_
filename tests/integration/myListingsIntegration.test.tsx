@@ -1,4 +1,4 @@
-import React from "react";
+
 import { act, render } from "@testing-library/react-native";
 import { describe, expect, it } from "vitest";
 import { MemoryAuthDataSource } from "@/infra/datasources/memoryAuthDataSource";
@@ -57,6 +57,6 @@ describe("Integração: Meus Anúncios (Spec 008)", () => {
     });
 
     // Como o container padrão em di usa a instância global, aqui garantimos que a View monta sem quebras
-    expect(screen.getByRole("header").props.children).toBe("Minha estante");
+    expect(screen.getByRole("header").props.children).toBe("Estante");
   });
 });

@@ -1,5 +1,6 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
+  AccessibilityInfo,
   ActivityIndicator,
   Modal,
   Pressable,
@@ -12,9 +13,11 @@ import { CameraView, useCameraPermissions, type BarcodeScanningResult } from "ex
 import { spacing, radius, typography, accessibility } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { AppIcon } from "@/view/components/AppIcon";
+import { type FocusableElement, useModalFocusTrap } from "@/view/components/Dialog";
 import { FilledButton } from "@/view/components/FilledButton";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
 
+import { withPress } from "@/view/pressFeedback";
 export type BarcodeScannerModalProps = {
   visible: boolean;
   onClose: () => void;
@@ -34,6 +37,9 @@ export function BarcodeScannerModal({
   const [permission, requestPermission] = useCameraPermissions();
   const [hasScanned, setHasScanned] = useState(false);
   const scanLockRef = useRef(false);
+  const closeRef = useRef<FocusableElement | null>(null);
+
+  useModalFocusTrap(visible, () => [closeRef.current], onClose);
 
   useEffect(() => {
     if (visible) {
@@ -50,6 +56,7 @@ export function BarcodeScannerModal({
     if (result.data) {
       scanLockRef.current = true;
       setHasScanned(true);
+      AccessibilityInfo.announceForAccessibility?.(`Código ${result.data} detectado com sucesso.`);
       onScan(result.data);
       onClose();
     }
@@ -59,21 +66,25 @@ export function BarcodeScannerModal({
 
   return (
     <Modal
+      statusBarTranslucent
+      navigationBarTranslucent
       visible={visible}
       animationType="slide"
+      accessibilityViewIsModal
       presentationStyle="fullScreen"
       onRequestClose={onClose}
     >
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
         {/* Barra Superior */}
         <View style={[styles.header, { borderBottomColor: colors.border }]}>
-          <Text style={[styles.headerTitle, { color: colors.text }]}>Escanear ISBN</Text>
+          <Text accessibilityRole="header" style={[styles.headerTitle, { color: colors.text }]}>Escanear ISBN</Text>
           <Pressable
+            ref={closeRef as never}
             accessibilityRole="button"
             accessibilityLabel="Fechar leitor de código de barras"
             onPress={onClose}
             hitSlop={12}
-            style={styles.closeButton}
+            style={withPress(styles.closeButton)}
           >
             <AppIcon name="close" size={24} color={colors.text} />
           </Pressable>
@@ -83,16 +94,16 @@ export function BarcodeScannerModal({
         {!permission ? (
           <View style={styles.centerContainer}>
             <ActivityIndicator size="large" color={colors.action} />
-            <Text style={[styles.statusText, { color: colors.secondaryText }]}>
+            <Text accessibilityRole="text" accessibilityLiveRegion="polite" style={[styles.statusText, { color: colors.secondaryText }]}>
               Iniciando câmera...
             </Text>
           </View>
         ) : !permission.granted ? (
           <View style={styles.permissionContainer}>
-            <View style={[styles.iconCircle, { backgroundColor: colors.soft }]}>
+            <View style={[styles.iconCircle, { backgroundColor: colors.m3.surfaceContainerHigh }]}>
               <AppIcon name="camera" size={40} color={colors.action} />
             </View>
-            <Text style={[styles.permissionTitle, { color: colors.text }]}>
+            <Text accessibilityRole="header" style={[styles.permissionTitle, { color: colors.text }]}>
               Permissão de Câmera Necessária
             </Text>
             <Text style={[styles.permissionMessage, { color: colors.secondaryText }]}>

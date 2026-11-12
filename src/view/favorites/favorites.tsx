@@ -1,23 +1,26 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { BOOK_CONDITION_LABELS } from "@/model/entities/book";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
+import { BOOK_CONDITION_LABELS, type BookModality } from "@/model/entities/book";
 import { AppIcon } from "@/view/components/AppIcon";
 import { BookCover } from "@/view/components/BookCover";
+import { ModalityCoverArea } from "@/view/components/ModalityCoverArea";
 import { ErrorState } from "@/view/components/ErrorState";
 import { FilledButton } from "@/view/components/FilledButton";
-import { IconBadge } from "@/view/components/IconBadge";
+import { IpeMark } from "@/view/components/IpeMark";
 import { LoadingState } from "@/view/components/LoadingState";
 import { OfflineState } from "@/view/components/OfflineState";
-import { Tag } from "@/view/components/Tag";
-import { TextButton } from "@/view/components/TextButton";
+import { Snackbar } from "@/view/components/Snackbar";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { formatPrice } from "@/view/formatPrice";
-import { useFavoritesViewModel } from "@/viewmodel/useFavoritesViewModel";
-import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
-import { useSearchAlertsViewModel } from "@/viewmodel/useSearchAlertsViewModel";
+import { makeFavoritesViewModel, makeNetworkStatus } from "@/di/container";
+import { WEB_GUTTER, WEB_MAX_WIDTH, useWebGridColumns, webColumnWidth } from "@/view/webLayout";
+import { withPress } from "@/view/pressFeedback";
+import { useGuardedPress } from "@/view/useGuardedPress";
+import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 
 export type FavoritesProps = {
   userId: string | null;
@@ -25,8 +28,14 @@ export type FavoritesProps = {
   onBack: () => void;
   onLogin: () => void;
   onBook: (id: string) => void;
-  onNavigateToAlerts?: () => void;
   onExploreBooks?: () => void;
+};
+
+/** Rótulo curto de modalidade na linha pequena do card (`02.06`). */
+const MODALITY_LABELS: Readonly<Record<BookModality, string>> = {
+  sale: "Venda",
+  trade: "Troca",
+  donation: "Doação",
 };
 
 /** Figma `02.06 · Favoritos` (nó `10:227`) e `02.14 · Favoritos · vazio` (nó `254:4129`). */
@@ -36,15 +45,16 @@ export default function Favorites({
   onBack,
   onLogin,
   onBook,
-  onNavigateToAlerts,
   onExploreBooks,
 }: FavoritesProps) {
-  const [state, actions] = useFavoritesViewModel(userId);
+  const guardedBack = useGuardedPress(onBack);
+  const guardedLogin = useGuardedPress(onLogin);
+  const guardedBook = useGuardedPress(onBook);
+  const guardedExploreBooks = useGuardedPress(onExploreBooks ?? onBack);
+  const [state, actions] = makeFavoritesViewModel(userId);
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  // A aba "Alertas" de `02.06` mostra a contagem ao lado do rótulo, como "Livros (n)".
-  const [alertsState] = useSearchAlertsViewModel(userId);
-  const { isOnline } = useNetworkStatus();
+  const { isOnline } = makeNetworkStatus();
   const firstFocus = useRef(true);
 
   useEffect(() => {
@@ -55,66 +65,142 @@ export default function Favorites({
     void actions.reload();
   }, [focusKey]);
 
+  const wideWeb = useIsWideWeb();
+  const gridColumns = useWebGridColumns();
+  const [statusFilter, setStatusFilter] = useState<"all" | "available" | "reserved">("all");
+  const visibleBooks = state.books.filter((book) =>
+    statusFilter === "all" ? true : statusFilter === "reserved" ? book.status === "reserved" : book.status !== "reserved",
+  );
+
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar title="Favoritos" onBack={onBack} />
+      {wideWeb ? null : <TopAppBar title="Favoritos" onBack={guardedBack} />}
 
-      {userId ? (
-        <View testID="favorites-tablist" accessibilityRole="tablist" style={styles.tabs}>
-          <Pressable
-            accessibilityRole="tab"
-            accessibilityState={{ selected: true }}
-            onPress={() => undefined}
-            style={[styles.tab, styles.tabActive]}
-          >
-            <Text style={[styles.tabLabel, styles.tabLabelActive]}>
-              {`Livros (${state.books.length})`}
-            </Text>
-          </Pressable>
-          <Pressable
-            accessibilityRole="tab"
-            accessibilityState={{ selected: false }}
-            onPress={() => onNavigateToAlerts?.()}
-            style={styles.tab}
-          >
-            <Text style={styles.tabLabel}>{`Alertas (${alertsState.alerts.length})`}</Text>
-          </Pressable>
+      {!wideWeb && userId && state.books.length > 0 ? (
+        <View style={styles.mobileChipsRow}>
+          {([["all", "Todos"], ["available", "Disponíveis"], ["reserved", "Reservados"]] as const).map(([value, label]) => {
+            const selected = statusFilter === value;
+            return (
+              <Pressable
+                key={value}
+                accessibilityRole="button"
+                accessibilityLabel={`Mostrar ${label.toLowerCase()}`}
+                accessibilityState={{ selected }}
+                onPress={() => setStatusFilter(value)}
+                style={withPress([styles.mobileChip, selected && styles.mobileChipSelected])}
+              >
+                {selected ? <AppIcon name="check" size={14} color={colors.nature.onFoliage} /> : null}
+                <Text style={[styles.mobileChipText, selected && { color: colors.nature.onFoliage, fontWeight: tokens.fontWeight.semiBold }]}>{label}</Text>
+              </Pressable>
+            );
+          })}
         </View>
       ) : null}
 
+      {wideWeb && userId ? (
+        <View style={styles.wideHeader}>
+          <View style={styles.wideHeaderLeft}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Voltar"
+              onPress={guardedBack}
+              style={withPress(styles.wideBackButton)}
+            >
+              <AppIcon name="back" size={20} color={colors.m3.onSurface} />
+            </Pressable>
+            <View>
+              <Text accessibilityRole="header" style={styles.wideTitle}>Favoritos</Text>
+              <Text style={styles.wideSubtitle}>
+                {state.books.length > 0
+                  ? `${state.books.length} ${state.books.length === 1 ? "livro salvo" : "livros salvos"} · avisamos se o preço ou a disponibilidade mudar.`
+                  : "Seus livros salvos aparecerão aqui."}
+              </Text>
+            </View>
+          </View>
+          {state.books.length > 0 ? (
+            <View style={styles.wideChips}>
+              {([["all", "Todos"], ["available", "Disponíveis"], ["reserved", "Reservados"]] as const).map(([value, label]) => {
+                const selected = statusFilter === value;
+                return (
+                  <Pressable
+                    key={value}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Mostrar ${label.toLowerCase()}`}
+                    accessibilityState={{ selected }}
+                    onPress={() => setStatusFilter(value)}
+                    style={withPress([styles.wideChip, selected && styles.wideChipSelected])}
+                  >
+                    {selected ? <AppIcon name="check" size={16} color={colors.nature.onFoliage} /> : null}
+                    <Text style={[styles.wideChipText, selected && { color: colors.nature.onFoliage, fontWeight: tokens.fontWeight.semiBold }]}>{label}</Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          ) : null}
+        </View>
+      ) : null}
+
+      {/* Lista de Favoritos */}
       {!userId ? (
-        <View style={styles.status}>
-          <IconBadge icon="heart" tone="action" />
+        <View style={[styles.status, wideWeb && styles.statusWide]}>
+          <View style={styles.emptyIpeContainer}>
+            <IpeMark size={72} />
+          </View>
           <Text accessibilityRole="header" style={styles.statusTitle}>
             Entre para ver seus favoritos
           </Text>
-          <Pressable accessibilityRole="button" onPress={onLogin}>
+          <Pressable accessibilityRole="button" accessibilityLabel="Entrar" onPress={guardedLogin}>
             <Text style={styles.link}>Entrar</Text>
           </Pressable>
         </View>
       ) : state.loading ? (
-        <LoadingState label="Carregando favoritos" />
+        <View style={styles.loadingContainer}>
+          <LoadingState label="Carregando favoritos" />
+        </View>
       ) : state.error ? (
-        isOnline ? (
-          <ErrorState message={state.error} onRetry={() => void actions.reload()} />
-        ) : (
-          <OfflineState onRetry={() => void actions.reload()} />
-        )
+        <View style={styles.loadingContainer}>
+          {isOnline ? (
+            <ErrorState message={state.error} onRetry={() => void actions.reload()} />
+          ) : (
+            <OfflineState onRetry={() => void actions.reload()} />
+          )}
+        </View>
       ) : (
         <FlatList
-          data={state.books}
+          style={styles.flexOne}
+          key={wideWeb ? `grade-${gridColumns}` : "lista"}
+          numColumns={wideWeb ? gridColumns : 1}
+          columnWrapperStyle={wideWeb ? styles.wideGridRow : undefined}
+          data={visibleBooks}
           keyExtractor={(book) => book.id}
-          contentContainerStyle={styles.list}
+          contentContainerStyle={[
+            wideWeb ? styles.wideList : styles.list,
+            { paddingBottom: scrollBottomPadding.withoutBottomBar },
+          ]}
+          {...standardVerticalScrollProps}
+          ListFooterComponent={
+            state.books.length > 0 ? (
+              <View style={[styles.privacyNote, wideWeb && styles.privacyNoteWide]}>
+                <AppIcon name="info" size={20} color={colors.m3.onSurfaceVariant} />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.privacyTitle}>Favoritos ficam só com você</Text>
+                  <Text style={styles.privacyBody}>Quem anunciou não vê quem salvou o livro.</Text>
+                </View>
+              </View>
+            ) : undefined
+          }
           ListEmptyComponent={
-            // `02.14`: título, apoio e ação alinhados à esquerda, sem ícone (Spec 043, RN-10).
-            <View style={styles.emptyBox}>
+            <View testID="favorites-empty-state" style={[styles.emptyBox, wideWeb && styles.emptyBoxWide]}>
+              <View style={styles.emptyIpeContainer}>
+                <IpeMark size={68} />
+              </View>
               <Text accessibilityRole="header" style={styles.emptyHeadline}>
                 Nenhum livro salvo
               </Text>
               <Text style={styles.emptyHint}>
-                Toque em Favoritar no anúncio para guardar os livros que você quer ler.
+                Toque no coração dos anúncios para guardar aqui os livros que você quer ler.
               </Text>
-              <FilledButton label="Explorar livros" onPress={onExploreBooks ?? onBack} />
+              <FilledButton label="Explorar livros" onPress={guardedExploreBooks} />
             </View>
           }
           renderItem={({ item }) => {
@@ -127,21 +213,26 @@ export default function Favorites({
               .join(" · ");
 
             return (
-              <View style={styles.row}>
+              <View style={[styles.row, wideWeb && styles.wideCard, wideWeb && { maxWidth: webColumnWidth(gridColumns) }]}>
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel={`Ver ${item.title}`}
-                  onPress={() => onBook(item.id)}
-                  style={styles.rowMain}
+                  onPress={() => guardedBook(item.id)}
+                  style={({ pressed }) => [
+                    styles.rowMain,
+                    wideWeb && styles.wideCardMain,
+                    pressed && styles.rowMainPressed,
+                  ]}
                 >
-                  <BookCover id={item.id} title={item.title} photoUrl={item.photoUrl} variant="list" />
+                  <ModalityCoverArea modality={item.modality}>
+                    <BookCover id={item.id} title={item.title} photoUrl={item.photoUrl} variant="list" />
+                  </ModalityCoverArea>
                   <View style={styles.rowTexts}>
-                    <View style={styles.rowHeader}>
-                      <Tag variant={item.modality} />
-                      {item.price !== undefined ? (
-                        <Text style={styles.price}>{formatPrice(item.price)}</Text>
-                      ) : null}
-                    </View>
+                    <Text style={styles.modalityLine}>
+                      {item.modality === "sale" && item.price !== undefined
+                        ? formatPrice(item.price)
+                        : MODALITY_LABELS[item.modality]}
+                    </Text>
                     <Text style={styles.bookTitle}>{item.title}</Text>
                     <Text style={styles.bookDetails}>{details}</Text>
                   </View>
@@ -152,128 +243,252 @@ export default function Favorites({
                   accessibilityState={{ disabled: state.removingId === item.id }}
                   disabled={state.removingId === item.id}
                   onPress={() => void actions.removeFavorite(item.id)}
-                  style={styles.favoriteButton}
+                  style={withPress(styles.favoriteButton)}
                 >
-                  <AppIcon name="heart" size={24} color={colors.action} />
+                  <AppIcon name="heartFill" size={24} color={colors.ipe.bloom} />
                 </Pressable>
               </View>
             );
           }}
         />
       )}
-
-      {userId && onNavigateToAlerts ? (
-        <TextButton label="Ver meus alertas de busca" onPress={() => onNavigateToAlerts()} />
-      ) : null}
+      <Snackbar
+        visible={state.actionError !== null}
+        message={state.actionError ?? ""}
+        onDismiss={actions.clearActionError}
+      />
     </SafeAreaView>
   );
 }
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
-  page: { flex: 1, backgroundColor: colors.background },
-  tabs: {
-    flexDirection: "row",
-    width: "100%",
-    maxWidth: 720,
-    alignSelf: "center",
-    gap: tokens.spacing[8],
-    paddingHorizontal: tokens.spacing[16],
-    borderBottomWidth: 1,
-    borderBottomColor: colors.m3.outlineVariant,
-  },
-  tab: {
-    minHeight: tokens.accessibility.touchTarget,
-    justifyContent: "center",
-    paddingHorizontal: tokens.spacing[16],
-    borderBottomWidth: 2,
-    borderBottomColor: "transparent",
-  },
-  tabActive: { borderBottomColor: colors.action },
-  tabLabel: {
-    fontSize: tokens.typography.bodyMedium.fontSize,
-    fontFamily: tokens.typography.bodyMedium.fontFamily,
-    color: colors.secondaryText,
-  },
-  tabLabelActive: { color: colors.action, fontWeight: "600" },
-  list: {
-    width: "100%",
-    maxWidth: 720,
-    alignSelf: "center",
-    padding: tokens.spacing[16],
-    gap: tokens.spacing[8],
-  },
-  status: {
-    width: "100%",
-    maxWidth: 720,
-    alignSelf: "center",
-    alignItems: "center",
-    gap: tokens.spacing[12],
-    padding: tokens.spacing[24],
-  },
-  emptyBox: { gap: tokens.spacing[12], paddingVertical: tokens.spacing[24] },
-  emptyHeadline: {
-    ...tokens.typography.titleLarge,
-    fontFamily: tokens.typography.displayLarge.fontFamily,
-    color: colors.text,
-  },
-  emptyHint: {
-    ...tokens.typography.bodyLarge,
-    color: colors.secondaryText,
-  },
-  statusTitle: {
-    fontSize: tokens.typography.titleMedium.fontSize,
-    lineHeight: tokens.typography.titleMedium.lineHeight,
-    fontFamily: tokens.typography.displayLarge.fontFamily,
-    fontWeight: tokens.typography.titleMedium.fontWeight,
-    color: colors.text,
-  },
-  link: {
-    color: colors.action,
-    fontFamily: tokens.typography.bodyMedium.fontFamily,
-    fontWeight: "600",
-    padding: tokens.spacing[12],
-  },
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderBottomWidth: 1,
-    borderBottomColor: colors.m3.outlineVariant,
-    paddingVertical: tokens.spacing[12],
-  },
-  rowMain: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: tokens.spacing[12],
-    minHeight: tokens.accessibility.touchTarget,
-  },
-  rowTexts: { flex: 1, gap: tokens.spacing[4] },
-  rowHeader: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[8] },
-  bookTitle: {
-    fontSize: tokens.typography.titleMedium.fontSize,
-    lineHeight: tokens.typography.titleMedium.lineHeight,
-    fontFamily: tokens.typography.titleMedium.fontFamily,
-    fontWeight: tokens.typography.titleMedium.fontWeight,
-    color: colors.text,
-  },
-  bookDetails: {
-    fontSize: tokens.typography.bodyMedium.fontSize,
-    lineHeight: tokens.typography.bodyMedium.lineHeight,
-    fontFamily: tokens.typography.bodyMedium.fontFamily,
-    color: colors.secondaryText,
-  },
-  price: {
-    fontSize: tokens.typography.bodyMedium.fontSize,
-    fontFamily: tokens.typography.bodyMedium.fontFamily,
-    fontWeight: "600",
-    color: colors.action,
-  },
-  favoriteButton: {
-    minWidth: tokens.accessibility.touchTarget,
-    minHeight: tokens.accessibility.touchTarget,
-    alignItems: "center",
-    justifyContent: "center",
-  },
+    page: { flex: 1, minHeight: 0, backgroundColor: colors.background },
+    flexOne: { flex: 1 },
+    loadingContainer: {
+      flex: 1,
+      paddingHorizontal: tokens.spacing[16],
+      paddingTop: tokens.spacing[8],
+    },
+    wideHeader: {
+      width: "100%",
+      maxWidth: WEB_MAX_WIDTH,
+      alignSelf: "center",
+      paddingHorizontal: WEB_GUTTER,
+      paddingTop: tokens.spacing[24],
+      gap: tokens.spacing[8],
+    },
+    wideHeaderLeft: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[16],
+    },
+    wideBackButton: {
+      width: tokens.spacing[40],
+      height: tokens.spacing[40],
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.m3.surfaceContainerHigh,
+      alignItems: "center",
+      justifyContent: "center",
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+    },
+    wideTitle: { ...tokens.typography.brandDisplayMd, color: colors.brandBrown },
+    wideSubtitle: { ...tokens.typography.bodyLarge, color: colors.m3.onSurfaceVariant },
+    wideChips: { flexDirection: "row", gap: tokens.spacing[8], paddingTop: tokens.spacing[16] },
+    wideChip: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[6],
+      height: tokens.spacing[32],
+      paddingHorizontal: tokens.spacing[16],
+      borderRadius: tokens.shapeMorph.chipUnselected,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+      backgroundColor: colors.m3.surfaceContainerLowest,
+    },
+    wideChipSelected: {
+      backgroundColor: colors.nature.foliage,
+      borderColor: colors.nature.foliage,
+      borderRadius: tokens.shapeMorph.chipSelected,
+      borderWidth: 0,
+      paddingLeft: tokens.spacing[8],
+    },
+    wideChipText: { ...tokens.typography.labelLarge, color: colors.m3.onSurfaceVariant },
+    mobileChipsRow: {
+      flexDirection: "row",
+      paddingHorizontal: tokens.spacing[16],
+      paddingVertical: tokens.spacing[8],
+      gap: tokens.spacing[8],
+    },
+    mobileChip: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[4],
+      paddingHorizontal: tokens.spacing[12],
+      paddingVertical: tokens.spacing[6],
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+    },
+    mobileChipSelected: {
+      backgroundColor: colors.nature.foliage,
+      borderColor: "transparent",
+    },
+    mobileChipText: {
+      ...tokens.typography.labelMedium,
+      color: colors.m3.onSurfaceVariant,
+      fontWeight: tokens.fontWeight.medium,
+    },
+    privacyNoteWide: {
+      maxWidth: WEB_MAX_WIDTH,
+      alignSelf: "center",
+      width: "100%",
+    },
+    wideList: {
+      width: "100%",
+      maxWidth: WEB_MAX_WIDTH,
+      alignSelf: "center",
+      paddingHorizontal: WEB_GUTTER,
+      paddingVertical: tokens.spacing[24],
+      gap: tokens.spacing[24],
+    },
+    wideGridRow: { gap: tokens.spacing[24] },
+    wideCard: {
+      flex: 1,
+      minWidth: 0,
+      flexDirection: "column",
+      alignItems: "stretch",
+      borderRadius: tokens.radius.xl,
+      backgroundColor: colors.m3.surfaceContainerLowest,
+      padding: tokens.spacing[12],
+    },
+    wideCardMain: { flexDirection: "column", alignItems: "stretch" },
+    privacyNote: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[16],
+      padding: tokens.spacing[16],
+      marginTop: tokens.spacing[8],
+      borderRadius: tokens.radius.medium,
+      backgroundColor: colors.m3.surfaceContainer,
+    },
+    privacyTitle: { ...tokens.typography.labelLarge, color: colors.m3.onSurface },
+    privacyBody: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
+    list: {
+      width: "100%",
+      padding: tokens.spacing[16],
+      gap: tokens.spacing[8],
+    },
+    status: {
+      width: "100%",
+      alignItems: "center",
+      gap: tokens.spacing[12],
+      padding: tokens.spacing[24],
+    },
+    statusWide: {
+      maxWidth: 640,
+      width: "100%",
+      alignSelf: "center",
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderRadius: tokens.radius.card,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+      padding: tokens.spacing[40],
+      marginTop: tokens.spacing[32],
+    },
+    emptyBox: {
+      gap: tokens.spacing[12],
+      paddingVertical: tokens.spacing[24],
+      alignItems: "center",
+    },
+    emptyBoxWide: {
+      maxWidth: 640,
+      width: "100%",
+      alignSelf: "center",
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderRadius: tokens.radius.card,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+      padding: tokens.spacing[40],
+      marginTop: tokens.spacing[24],
+      alignItems: "center",
+    },
+    emptyIpeContainer: {
+      width: 80,
+      height: 80,
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.ipe.container,
+      alignItems: "center",
+      justifyContent: "center",
+      marginBottom: tokens.spacing[6],
+      elevation: 2,
+      shadowColor: colors.m3.shadow,
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.12,
+      shadowRadius: 3,
+    },
+    emptyHeadline: {
+      ...tokens.typography.titleLarge,
+      fontFamily: tokens.typography.displayLarge.fontFamily,
+      color: colors.text,
+      textAlign: "center",
+    },
+    emptyHint: {
+      ...tokens.typography.bodyLarge,
+      color: colors.secondaryText,
+      textAlign: "center",
+      maxWidth: 420,
+    },
+    statusTitle: {
+      ...tokens.typography.titleMedium,
+      fontFamily: tokens.typography.displayLarge.fontFamily,
+      color: colors.text,
+    },
+    link: {
+      color: colors.action,
+      fontFamily: tokens.typography.bodyMedium.fontFamily,
+      fontWeight: tokens.fontWeight.semiBold,
+      padding: tokens.spacing[12],
+    },
+    row: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+      borderBottomWidth: 1,
+      borderBottomColor: colors.m3.outlineVariant,
+      paddingVertical: tokens.spacing[12],
+    },
+    rowMain: {
+      flex: 1,
+      flexDirection: "row",
+      alignItems: "flex-start",
+      gap: tokens.spacing[12],
+      minHeight: tokens.accessibility.touchTarget,
+    },
+    rowMainPressed: {
+      transform: [{ scale: 0.985 }],
+    },
+    rowTexts: { flex: 1, gap: tokens.spacing[4] },
+    modalityLine: {
+      ...tokens.typography.labelMedium,
+      color: colors.m3.onSurfaceVariant,
+    },
+    bookTitle: {
+      ...tokens.typography.brandCardTitle,
+      color: colors.m3.onSurface,
+    },
+    bookDetails: {
+      ...tokens.typography.bodyMedium,
+      color: colors.secondaryText,
+    },
+    favoriteButton: {
+      width: tokens.accessibility.touchTarget,
+      height: tokens.accessibility.touchTarget,
+      alignItems: "center",
+      justifyContent: "flex-start",
+      alignSelf: "flex-start",
+      paddingTop: tokens.spacing[2],
+    },
   });
 }

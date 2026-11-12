@@ -31,9 +31,8 @@ export function Manchete({ texto, realce, accessibilityLabel }: MancheteProps) {
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     linha: {
+      ...tokens.typography.displayLarge,
       fontFamily: fontFamily.brand,
-      fontSize: tokens.typography.displayLarge.fontSize,
-      lineHeight: tokens.typography.displayLarge.lineHeight,
       color: colors.m3.onSurface,
     },
     realce: {

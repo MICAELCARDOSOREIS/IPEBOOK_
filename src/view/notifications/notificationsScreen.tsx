@@ -1,18 +1,21 @@
-import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
+import { makeAuthViewModel } from "@/di/container";
 import Notifications from "@/view/notifications/notifications";
 
 export type NotificationsScreenProps = {
   onBack: () => void;
   onNavigateToLogin: () => void;
   onNavigateToAction: (actionUrl: string) => void;
+  /** Ação do estado vazio; sem ela o botão "Explorar livros" cairia no retorno. */
+  onExploreBooks: () => void;
 };
 
 export default function NotificationsScreen({
   onBack,
   onNavigateToLogin,
   onNavigateToAction,
+  onExploreBooks,
 }: NotificationsScreenProps) {
-  const [authState] = useAuthViewModel();
+  const [authState] = makeAuthViewModel();
 
   return (
     <Notifications
@@ -20,6 +23,7 @@ export default function NotificationsScreen({
       onBack={onBack}
       onNavigateToLogin={onNavigateToLogin}
       onNavigateToAction={onNavigateToAction}
+      onExploreBooks={onExploreBooks}
     />
   );
 }

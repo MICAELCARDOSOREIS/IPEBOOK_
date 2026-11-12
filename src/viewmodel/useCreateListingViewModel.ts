@@ -1,18 +1,36 @@
-import { useCallback, useState } from "react";
-import {
-  bookMetadataService as defaultMetadataService,
-  bookUseCases,
-  logger as defaultLogger,
-  rateLimiter as defaultRateLimiter,
-} from "@/di/container";
+import { useCallback, useRef, useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { Book, BookCondition, BookModality } from "@/model/entities/book";
 import { DomainError } from "@/model/errors";
 import { isValidIsbn, normalizeIsbn } from "@/model/isbn";
+import type { BookEdition } from "@/model/validators/bookEdition";
 import type { ILogger } from "@/model/services/iLogger";
 import type { IRateLimiter } from "@/model/services/iRateLimiter";
 import type { IBookMetadataService } from "@/model/services/iBookMetadataService";
-import type { IBookUseCases } from "@/usecase/iBookUseCases";
+import type { CreateListingInput, IBookUseCases } from "@/usecase/iBookUseCases";
 import { formKey, guardFormSubmit } from "@/viewmodel/formRateLimit";
+
+export const CREATE_LISTING_DRAFT_KEY = "ipebook.rascunho_anuncio";
+
+export type CreateListingDraft = {
+  isbn: string;
+  title: string;
+  author: string;
+  category: string;
+  modality: BookModality;
+  price: string;
+  neighborhood: string;
+  condition: BookCondition | null;
+  description: string;
+  photoUrl: string;
+  photos: readonly string[];
+  /** Sinopse e dados da edição vindos do ISBN (Spec 097). */
+  edition?: BookEdition;
+  /** Indica se o anúncio é referente a um Box ou Coleção (Spec 112). */
+  isBox?: boolean;
+  /** Quantidade de volumes informada no formulário (string para edição controlada). */
+  boxVolumesCount?: string;
+};
 
 export type IsbnFeedback = {
   type: "success" | "info" | "error";
@@ -33,6 +51,14 @@ export type CreateListingState = {
   description: string;
   photoUrl: string;
   photos: readonly string[];
+  /** Sinopse e dados da edição vindos do ISBN (Spec 097); vazio sem ISBN ou sem dados. */
+  edition: BookEdition;
+  /** Indica se o anúncio é um Box / Coleção de livros (Spec 112). */
+  isBox: boolean;
+  /** Quantidade de volumes (texto controlado no input). */
+  boxVolumesCount: string;
+  /** Identificador do rascunho no servidor quando a pessoa retomou um (Spec 017). */
+  draftId: string | null;
   loading: boolean;
   error: string | null;
   success: boolean;
@@ -53,7 +79,16 @@ export type CreateListingActions = {
   setDescription: (value: string) => void;
   setPhotoUrl: (value: string) => void;
   addPhoto: (value: string) => void;
+  setPhotoAt: (index: number, value: string) => void;
   removePhoto: (index: number) => void;
+  setIsBox: (value: boolean) => void;
+  setBoxVolumesCount: (value: string) => void;
+  saveDraft: () => Promise<void>;
+  loadDraft: () => Promise<boolean>;
+  clearDraft: () => Promise<void>;
+  saveForLater: (sessionUserId: string | null, step: number) => Promise<boolean>;
+  resumeDraft: (book: Book) => void;
+  loadServerDraft: (draftId: string) => Promise<number | null>;
   submit: (sessionUserId: string | null) => Promise<Book | null>;
   reset: () => void;
 };
@@ -72,6 +107,10 @@ const INITIAL_STATE: CreateListingState = {
   description: "",
   photoUrl: "",
   photos: [],
+  edition: {},
+  isBox: false,
+  boxVolumesCount: "",
+  draftId: null,
   loading: false,
   error: null,
   success: false,
@@ -80,12 +119,14 @@ const INITIAL_STATE: CreateListingState = {
 const GENERIC_ERROR = "Não foi possível cadastrar o anúncio. Tente novamente.";
 
 export function useCreateListingViewModel(
-  useCases: IBookUseCases = bookUseCases,
-  rateLimiter: IRateLimiter = defaultRateLimiter,
-  logger: ILogger = defaultLogger,
-  metadataService: IBookMetadataService = defaultMetadataService,
+  useCases: IBookUseCases,
+  rateLimiter: IRateLimiter,
+  logger: ILogger,
+  metadataService: IBookMetadataService,
 ): [CreateListingState, CreateListingActions] {
   const [state, setState] = useState<CreateListingState>(INITIAL_STATE);
+  const stateRef = useRef(state);
+  stateRef.current = state;
 
   const setIsbn = useCallback((value: string) => {
     setState((prev) => ({ ...prev, isbn: value, isbnFeedback: null }));
@@ -140,6 +181,12 @@ export function useCreateListingViewModel(
         title: meta.title,
         author: meta.author,
         photoUrl: meta.coverUrl && !prev.photoUrl ? meta.coverUrl : prev.photoUrl,
+        edition: {
+          ...(meta.synopsis ? { synopsis: meta.synopsis } : {}),
+          ...(meta.publisher ? { publisher: meta.publisher } : {}),
+          ...(meta.pageCount ? { pageCount: meta.pageCount } : {}),
+          ...(meta.publicationYear ? { publicationYear: meta.publicationYear } : {}),
+        },
         isbnFeedback: {
           type: "success",
           message: `Encontrado: "${meta.title}"!`,
@@ -215,6 +262,18 @@ export function useCreateListingViewModel(
     });
   }, []);
 
+  const setPhotoAt = useCallback((index: number, value: string) => {
+    setState((prev) => {
+      if (index < 0 || index >= prev.photos.length) return prev;
+      return {
+        ...prev,
+        photos: prev.photos.map((photo, i) => (i === index ? value : photo)),
+        error: null,
+        success: false,
+      };
+    });
+  }, []);
+
   const removePhoto = useCallback((index: number) => {
     setState((prev) => ({
       ...prev,
@@ -223,6 +282,190 @@ export function useCreateListingViewModel(
       success: false,
     }));
   }, []);
+
+  const setIsBox = useCallback((value: boolean) => {
+    setState((prev) => ({
+      ...prev,
+      isBox: value,
+      boxVolumesCount: value ? prev.boxVolumesCount : "",
+      error: null,
+      success: false,
+    }));
+  }, []);
+
+  const setBoxVolumesCount = useCallback((value: string) => {
+    setState((prev) => ({
+      ...prev,
+      boxVolumesCount: value,
+      error: null,
+      success: false,
+    }));
+  }, []);
+
+  const clearDraft = useCallback(async (): Promise<void> => {
+    try {
+      await AsyncStorage.removeItem(CREATE_LISTING_DRAFT_KEY);
+    } catch (err) {
+      logger.warn("Falha ao limpar rascunho do anúncio no AsyncStorage", { error: String(err) });
+    }
+  }, [logger]);
+
+  const saveDraft = useCallback(async (): Promise<void> => {
+    try {
+      const cur = stateRef.current;
+      const draft: CreateListingDraft = {
+        isbn: cur.isbn,
+        title: cur.title,
+        author: cur.author,
+        category: cur.category,
+        modality: cur.modality,
+        price: cur.price,
+        neighborhood: cur.neighborhood,
+        condition: cur.condition,
+        description: cur.description,
+        photoUrl: cur.photoUrl,
+        photos: cur.photos,
+        edition: cur.edition,
+        isBox: cur.isBox,
+        boxVolumesCount: cur.boxVolumesCount,
+      };
+      await AsyncStorage.setItem(CREATE_LISTING_DRAFT_KEY, JSON.stringify(draft));
+    } catch (err) {
+      logger.warn("Falha ao salvar rascunho do anúncio no AsyncStorage", { error: String(err) });
+    }
+  }, [logger]);
+
+  const loadDraft = useCallback(async (): Promise<boolean> => {
+    try {
+      const raw = await AsyncStorage.getItem(CREATE_LISTING_DRAFT_KEY);
+      if (!raw) {
+        return false;
+      }
+      const draft = JSON.parse(raw) as Partial<CreateListingDraft>;
+      if (!draft || typeof draft !== "object") {
+        return false;
+      }
+      setState((prev) => ({
+        ...prev,
+        isbn: typeof draft.isbn === "string" ? draft.isbn : prev.isbn,
+        title: typeof draft.title === "string" ? draft.title : prev.title,
+        author: typeof draft.author === "string" ? draft.author : prev.author,
+        category: typeof draft.category === "string" ? draft.category : prev.category,
+        modality:
+          draft.modality === "trade" || draft.modality === "donation" || draft.modality === "sale"
+            ? draft.modality
+            : prev.modality,
+        price: typeof draft.price === "string" ? draft.price : prev.price,
+        neighborhood: typeof draft.neighborhood === "string" ? draft.neighborhood : prev.neighborhood,
+        condition: draft.condition !== undefined ? draft.condition : prev.condition,
+        description: typeof draft.description === "string" ? draft.description : prev.description,
+        photoUrl: typeof draft.photoUrl === "string" ? draft.photoUrl : prev.photoUrl,
+        photos: Array.isArray(draft.photos) ? draft.photos : prev.photos,
+        edition: draft.edition && typeof draft.edition === "object" ? draft.edition : prev.edition,
+        isBox: typeof draft.isBox === "boolean" ? draft.isBox : prev.isBox,
+        boxVolumesCount:
+          typeof draft.boxVolumesCount === "string" ? draft.boxVolumesCount : prev.boxVolumesCount,
+      }));
+      return true;
+    } catch (err) {
+      logger.warn("Falha ao carregar rascunho do anúncio do AsyncStorage", { error: String(err) });
+      return false;
+    }
+  }, [logger]);
+
+  const buildInput = useCallback((): CreateListingInput => {
+    const cur = stateRef.current;
+    const priceNum = cur.modality === "sale" && cur.price.trim()
+      ? Number(cur.price.replace(",", "."))
+      : undefined;
+    const volumesNum =
+      cur.isBox && cur.boxVolumesCount.trim() ? Number(cur.boxVolumesCount.trim()) : undefined;
+    return {
+      title: cur.title,
+      author: cur.author,
+      ...(cur.category.trim() ? { category: cur.category.trim() } : {}),
+      modality: cur.modality,
+      price: priceNum,
+      city: "Piripiri",
+      state: "PI",
+      ...(cur.neighborhood.trim() ? { neighborhood: cur.neighborhood.trim() } : {}),
+      ...(cur.condition ? { condition: cur.condition } : {}),
+      ...(cur.description.trim() ? { description: cur.description.trim() } : {}),
+      ...cur.edition,
+      ...(cur.photoUrl.trim() ? { photoUrl: cur.photoUrl.trim() } : {}),
+      ...(cur.photos.length > 0 ? { photos: cur.photos } : {}),
+      ...(cur.isBox ? { isBox: true } : {}),
+      ...(cur.isBox && volumesNum ? { boxVolumesCount: volumesNum } : {}),
+    };
+  }, []);
+
+  const resumeDraft = useCallback((book: Book): void => {
+    setState((prev) => ({
+      ...prev,
+      draftId: book.id,
+      title: book.title ?? prev.title,
+      author: book.author ?? prev.author,
+      category: book.category ?? prev.category,
+      modality: book.modality ?? prev.modality,
+      price: book.price !== undefined ? String(book.price) : prev.price,
+      neighborhood: book.neighborhood ?? prev.neighborhood,
+      condition: book.condition ?? prev.condition,
+      description: book.description ?? prev.description,
+      photoUrl: book.photoUrl ?? prev.photoUrl,
+      photos: book.photos ?? prev.photos,
+      isBox: Boolean(book.isBox),
+      boxVolumesCount: book.boxVolumesCount ? String(book.boxVolumesCount) : "",
+      edition: {
+        ...(book.synopsis ? { synopsis: book.synopsis } : {}),
+        ...(book.publisher ? { publisher: book.publisher } : {}),
+        ...(book.pageCount ? { pageCount: book.pageCount } : {}),
+        ...(book.publicationYear ? { publicationYear: book.publicationYear } : {}),
+      },
+    }));
+  }, []);
+
+  const saveForLater = useCallback(
+    async (sessionUserId: string | null, step: number): Promise<boolean> => {
+      if (!sessionUserId) {
+        return false;
+      }
+      try {
+        const saved = await useCases.saveDraft(
+          { ...buildInput(), draftId: stateRef.current.draftId ?? undefined, draftStep: step },
+          sessionUserId,
+        );
+        setState((prev) => ({ ...prev, draftId: saved.id }));
+        return true;
+      } catch (error) {
+        setState((prev) => ({
+          ...prev,
+          error: error instanceof DomainError
+            ? error.message
+            : "Não foi possível salvar o rascunho. Tente novamente.",
+        }));
+        logger.error("Falha ao salvar rascunho do anúncio", error);
+        return false;
+      }
+    },
+    [buildInput, logger, useCases],
+  );
+
+  const loadServerDraft = useCallback(
+    async (draftId: string): Promise<number | null> => {
+      try {
+        const book = await useCases.getBookById(draftId);
+        if (book.status !== "draft") {
+          return null;
+        }
+        resumeDraft(book);
+        return book.draftStep ?? 1;
+      } catch (error) {
+        logger.error("Falha ao retomar rascunho do anúncio", error);
+        return null;
+      }
+    },
+    [logger, resumeDraft, useCases],
+  );
 
   const submit = useCallback(
     async (sessionUserId: string | null): Promise<Book | null> => {
@@ -234,28 +477,25 @@ export function useCreateListingViewModel(
       }
       setState((prev) => ({ ...prev, loading: true, error: null, success: false }));
 
-      const priceNum = state.modality === "sale" && state.price.trim()
-        ? Number(state.price.replace(",", "."))
-        : undefined;
-
+      const input = buildInput();
+      if (input.modality === "sale" && input.price !== undefined && (!Number.isFinite(input.price) || input.price <= 0)) {
+        setState((prev) => ({ ...prev, loading: false, error: "Informe um preço maior que zero." }));
+        return null;
+      }
+      if (input.boxVolumesCount !== undefined && (!Number.isFinite(input.boxVolumesCount) || input.boxVolumesCount < 2)) {
+        setState((prev) => ({
+          ...prev,
+          loading: false,
+          error: "Informe uma quantidade de volumes entre 2 e 100.",
+        }));
+        return null;
+      }
+      const draftId = stateRef.current.draftId;
       try {
-        const book = await useCases.createListing(
-          {
-            title: state.title,
-            author: state.author,
-            ...(state.category.trim() ? { category: state.category.trim() } : {}),
-            modality: state.modality,
-            price: priceNum,
-            city: "Piripiri",
-            state: "PI",
-            ...(state.neighborhood.trim() ? { neighborhood: state.neighborhood.trim() } : {}),
-            ...(state.condition ? { condition: state.condition } : {}),
-            ...(state.description.trim() ? { description: state.description.trim() } : {}),
-            ...(state.photoUrl.trim() ? { photoUrl: state.photoUrl.trim() } : {}),
-            ...(state.photos.length > 0 ? { photos: state.photos } : {}),
-          },
-          sessionUserId,
-        );
+        const book = draftId
+          ? await useCases.publishDraft(draftId, input, sessionUserId)
+          : await useCases.createListing(input, sessionUserId);
+        await clearDraft();
         setState({ ...INITIAL_STATE, success: true });
         return book;
       } catch (error) {
@@ -269,25 +509,18 @@ export function useCreateListingViewModel(
       }
     },
     [
-      state.title,
-      state.author,
-      state.category,
-      state.modality,
-      state.price,
-      state.neighborhood,
-      state.condition,
-      state.description,
-      state.photoUrl,
-      state.photos,
-      useCases,
-      rateLimiter,
+      buildInput,
+      clearDraft,
       logger,
+      rateLimiter,
+      useCases,
     ],
   );
 
   const reset = useCallback(() => {
+    void clearDraft();
     setState(INITIAL_STATE);
-  }, []);
+  }, [clearDraft]);
 
   return [
     state,
@@ -306,7 +539,16 @@ export function useCreateListingViewModel(
       setDescription,
       setPhotoUrl,
       addPhoto,
+      setPhotoAt,
       removePhoto,
+      setIsBox,
+      setBoxVolumesCount,
+      saveDraft,
+      loadDraft,
+      clearDraft,
+      saveForLater,
+      resumeDraft,
+      loadServerDraft,
       submit,
       reset,
     },

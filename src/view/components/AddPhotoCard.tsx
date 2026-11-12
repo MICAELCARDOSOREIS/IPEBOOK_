@@ -4,6 +4,7 @@ import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { AppIcon } from "@/view/components/AppIcon";
 
+import { withPress } from "@/view/pressFeedback";
 export type AddPhotoCardProps = {
   label?: string;
   onPress: () => void;
@@ -32,18 +33,31 @@ export function AddPhotoCard({
   if (photoUrl) {
     return (
       <View style={[styles.card, style]}>
-        <Image
-          source={{ uri: photoUrl }}
-          accessibilityLabel={`Pré-visualização da ${label.toLowerCase()}`}
-          style={styles.previewImage}
-          resizeMode="cover"
-        />
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Alterar ${label.toLowerCase()}`}
+          accessibilityHint="Toque para substituir esta foto"
+          onPress={onPress}
+          style={styles.previewPressable}
+        >
+          <Image
+            source={{ uri: photoUrl }}
+            accessibilityLabel={`Pré-visualização da ${label.toLowerCase()}`}
+            style={styles.previewImage}
+            resizeMode="cover"
+          />
+          <View style={styles.changeBadge}>
+            <AppIcon name="camera" color={colors.surface} size={14} />
+            <Text style={styles.changeBadgeText}>Alterar</Text>
+          </View>
+        </Pressable>
         {onRemovePhoto ? (
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={`Remover ${label.toLowerCase()}`}
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
             onPress={onRemovePhoto}
-            style={styles.removeButton}
+            style={withPress(styles.removeButton)}
           >
             <AppIcon name="close" color={colors.surface} size={16} />
           </Pressable>
@@ -57,9 +71,11 @@ export function AddPhotoCard({
       accessibilityRole="button"
       accessibilityLabel={`Adicionar ${label.toLowerCase()}`}
       onPress={onPress}
-      style={[styles.card, style]}
+      style={({ pressed }) => [styles.card, style, pressed && styles.cardPressed]}
     >
-      <AppIcon name="add" color={colors.action} size={28} />
+      <View style={styles.addIconCircle}>
+        <AppIcon name="add" color={colors.action} size={22} />
+      </View>
       <Text style={styles.label}>{label}</Text>
     </Pressable>
   );
@@ -72,30 +88,76 @@ function createStyles(colors: ColorPalette) {
       minWidth: tokens.accessibility.touchTarget * 2,
       alignItems: "center",
       justifyContent: "center",
-      gap: tokens.spacing[8],
-      borderRadius: tokens.radius.medium,
-      borderWidth: 1,
+      gap: tokens.spacing[6],
+      borderRadius: tokens.radius.large,
+      borderWidth: 1.5,
+      borderStyle: "dashed",
       borderColor: colors.m3.outlineVariant,
       backgroundColor: colors.surface,
       overflow: "hidden",
       position: "relative",
     },
-    previewImage: {
-      ...StyleSheet.absoluteFill,
+    cardPressed: {
+      borderRadius: tokens.shapeMorph.cardPressed,
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderColor: colors.action,
+      transform: [{ scale: 0.98 }],
     },
-    removeButton: {
-      position: "absolute",
-      top: tokens.spacing[4],
-      right: tokens.spacing[4],
-      backgroundColor: "rgba(0, 0, 0, 0.6)",
+    addIconCircle: {
+      width: 38,
+      height: 38,
       borderRadius: tokens.radius.full,
-      padding: tokens.spacing[4],
-      minWidth: 24,
-      minHeight: 24,
+      backgroundColor: colors.nature.sprout,
       alignItems: "center",
       justifyContent: "center",
     },
-    label: { color: colors.action, ...tokens.typography.bodyMedium, textAlign: "center" },
+    previewImage: {
+      ...StyleSheet.absoluteFill,
+      borderRadius: tokens.radius.large,
+    },
+    previewPressable: {
+      flex: 1,
+      width: "100%",
+      height: "100%",
+      position: "relative",
+    },
+    changeBadge: {
+      position: "absolute",
+      bottom: tokens.spacing[6],
+      left: tokens.spacing[6],
+      backgroundColor: "rgba(0, 0, 0, 0.65)",
+      borderRadius: tokens.radius.full,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[4],
+      paddingHorizontal: tokens.spacing[8],
+      paddingVertical: tokens.spacing[4],
+    },
+    changeBadgeText: {
+      ...tokens.typography.labelSmall,
+      color: colors.surface,
+      fontSize: 11,
+      fontWeight: tokens.fontWeight.medium,
+    },
+    removeButton: {
+      position: "absolute",
+      top: tokens.spacing[6],
+      right: tokens.spacing[6],
+      backgroundColor: "rgba(0, 0, 0, 0.65)",
+      borderRadius: tokens.radius.full,
+      width: 28,
+      height: 28,
+      alignItems: "center",
+      justifyContent: "center",
+      elevation: 2,
+    },
+    label: {
+      ...tokens.typography.labelMedium,
+      color: colors.action,
+      fontWeight: tokens.fontWeight.medium,
+      textAlign: "center",
+      paddingHorizontal: tokens.spacing[6],
+    },
   });
 }
 

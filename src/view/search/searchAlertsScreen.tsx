@@ -1,4 +1,4 @@
-import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
+import { makeAuthViewModel } from "@/di/container";
 import SearchAlerts from "@/view/search/searchAlerts";
 
 export type SearchAlertsScreenProps = {
@@ -9,6 +9,6 @@ export type SearchAlertsScreenProps = {
   onManageAlert?: (alertId: string) => void;
 };
 export default function SearchAlertsScreen(props: SearchAlertsScreenProps) {
-  const [auth] = useAuthViewModel();
+  const [auth] = makeAuthViewModel();
   return <SearchAlerts {...props} userId={auth.user?.id ?? null} />;
 }
