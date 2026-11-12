@@ -1,6 +1,6 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { tokens } from "@/view/tokens";
 
 // Mock do expo-router com vi.hoisted
@@ -27,8 +27,8 @@ vi.mock("expo-router/html", () => ({
   ScrollViewStyleReset: () => null,
 }));
 
-import { backOnce, canonicalizeHref, pushOnce, replaceOnce, _resetPushOnceState } from "@/view/pushOnce";
 import RootHtml from "@/app/+html";
+import { _resetPushOnceState, backOnce, canonicalizeHref, pushOnce, replaceOnce } from "@/view/pushOnce";
 
 describe("PWA iPhone & Safari Apple HIG (Spec 135 / ADR 0108 / Issue #220)", () => {
   beforeEach(() => {
@@ -142,13 +142,11 @@ describe("PWA iPhone & Safari Apple HIG (Spec 135 / ADR 0108 / Issue #220)", () 
     });
 
     it("canonicalizeHref lida com objeto sem pathname", () => {
-      // @ts-expect-error teste de fallback
-      expect(canonicalizeHref({})).toBe("/");
+      expect(canonicalizeHref({} as never)).toBe("/");
     });
 
     it("canonicalizeHref lida com parâmetro dinâmico ausente ou nulo", () => {
-      // @ts-expect-error teste de parâmetro nulo
-      expect(canonicalizeHref({ pathname: "/livro/[id]", params: { id: null } })).toBe("/livro/[id]");
+      expect(canonicalizeHref({ pathname: "/livro/[id]", params: { id: null } as never })).toBe("/livro/[id]");
     });
 
     it("canonicalizeHref filtra parâmetros vazios da query string", () => {
