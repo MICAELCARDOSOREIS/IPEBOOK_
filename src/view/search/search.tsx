@@ -324,33 +324,6 @@ export default function Search({
         })}
       </ScrollView>
 
-      {/* 5. Categorias do próprio catálogo em rolagem horizontal (Figma nó 183:3499) */}
-      {state.availableCategories.length > 0 ? (
-        <ScrollView
-          horizontal
-          {...standardHorizontalScrollProps}
-          contentContainerStyle={styles.quickCategoriesScroll}
-          style={styles.quickCategoriesScrollView}
-        >
-          <Chip
-            label="Todos"
-            accessibilityLabel="Filtrar por todas as categorias"
-            selected={state.category === "all"}
-            onPress={() => actions.setCategory("all")}
-          />
-          {state.availableCategories.map((category) => (
-            <Chip
-              key={category}
-              label={category}
-              accessibilityLabel={`Filtrar por categoria ${category}`}
-              tone={categoryTone(category, resolvedScheme)}
-              selected={state.category === category}
-              onPress={() => actions.setCategory(category)}
-            />
-          ))}
-        </ScrollView>
-      ) : null}
-
       {/* 5. Filtros aplicados como chips removíveis (Figma `02.04 · Explorar com filtro`) */}
       {visibleActiveFilters.length > 0 ? (
         <View style={styles.activeFiltersRow}>
@@ -732,17 +705,6 @@ function createStyles(colors: ColorPalette) {
       marginBottom: tokens.spacing[4],
     },
     quickModalitiesScroll: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[8],
-      paddingLeft: tokens.spacing[16],
-      paddingRight: tokens.spacing[28],
-      paddingVertical: tokens.spacing[2],
-    },
-    quickCategoriesScrollView: {
-      marginHorizontal: -tokens.spacing[16],
-    },
-    quickCategoriesScroll: {
       flexDirection: "row",
       alignItems: "center",
       gap: tokens.spacing[8],
