@@ -61,7 +61,9 @@ export function AddPhotoCard({
       onPress={onPress}
       style={({ pressed }) => [styles.card, style, pressed && styles.cardPressed]}
     >
-      <AppIcon name="add" color={colors.action} size={28} />
+      <View style={styles.addIconCircle}>
+        <AppIcon name="add" color={colors.action} size={22} />
+      </View>
       <Text style={styles.label}>{label}</Text>
     </Pressable>
   );
@@ -74,9 +76,10 @@ function createStyles(colors: ColorPalette) {
       minWidth: tokens.accessibility.touchTarget * 2,
       alignItems: "center",
       justifyContent: "center",
-      gap: tokens.spacing[8],
-      borderRadius: tokens.radius.medium,
-      borderWidth: 1,
+      gap: tokens.spacing[6],
+      borderRadius: tokens.radius.large,
+      borderWidth: 1.5,
+      borderStyle: "dashed",
       borderColor: colors.m3.outlineVariant,
       backgroundColor: colors.surface,
       overflow: "hidden",
@@ -85,24 +88,40 @@ function createStyles(colors: ColorPalette) {
     cardPressed: {
       borderRadius: tokens.shapeMorph.cardPressed,
       backgroundColor: colors.m3.surfaceContainerLow,
-      transform: [{ scale: 0.96 }],
+      borderColor: colors.action,
+      transform: [{ scale: 0.98 }],
     },
-    previewImage: {
-      ...StyleSheet.absoluteFill,
-    },
-    removeButton: {
-      position: "absolute",
-      top: tokens.spacing[4],
-      right: tokens.spacing[4],
-      backgroundColor: "rgba(0, 0, 0, 0.6)",
+    addIconCircle: {
+      width: 38,
+      height: 38,
       borderRadius: tokens.radius.full,
-      padding: tokens.spacing[4],
-      minWidth: 24,
-      minHeight: 24,
+      backgroundColor: colors.nature.sprout,
       alignItems: "center",
       justifyContent: "center",
     },
-    label: { color: colors.action, ...tokens.typography.bodyMedium, textAlign: "center" },
+    previewImage: {
+      ...StyleSheet.absoluteFill,
+      borderRadius: tokens.radius.large,
+    },
+    removeButton: {
+      position: "absolute",
+      top: tokens.spacing[6],
+      right: tokens.spacing[6],
+      backgroundColor: "rgba(0, 0, 0, 0.65)",
+      borderRadius: tokens.radius.full,
+      width: 28,
+      height: 28,
+      alignItems: "center",
+      justifyContent: "center",
+      elevation: 2,
+    },
+    label: {
+      ...tokens.typography.labelMedium,
+      color: colors.action,
+      fontWeight: tokens.fontWeight.medium,
+      textAlign: "center",
+      paddingHorizontal: tokens.spacing[6],
+    },
   });
 }
 

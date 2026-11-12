@@ -179,12 +179,16 @@ function createStyles(colors: ColorPalette) {
       minWidth: 0,
     },
     title: {
-      ...tokens.typography.displayLarge,
+      ...tokens.typography.brandHeadline,
       color: colors.text,
+      fontSize: 26,
+      lineHeight: 32,
     },
     subtitle: {
-      ...tokens.typography.bodyLarge,
+      ...tokens.typography.bodyMedium,
       color: colors.secondaryText,
+      lineHeight: 20,
+      marginTop: tokens.spacing[2],
     },
     uploadingRow: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[12] },
     tipBox: {
