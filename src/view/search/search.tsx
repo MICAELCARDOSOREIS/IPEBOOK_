@@ -91,9 +91,9 @@ export default function Search({
   const clearedSnapshotRef = useRef<{ term: string; filters: SearchFilters; sortBy: SearchSortOption; neighborhood: string | "all" } | null>(null);
   const { persisted, loaded: persistedLoaded, persist } = usePersistedSearchFilters();
   const insets = useSafeAreaInsets();
-  const navBarPaddingBottom = Math.max(tokens.spacing[20], insets.bottom + tokens.spacing[10]);
-  const navBarDockHeight = 88;
-  const floatingBottom = wideWeb ? tokens.spacing[32] : navBarPaddingBottom + navBarDockHeight + tokens.spacing[16];
+  const navBarPaddingBottom = insets.bottom > 0 ? insets.bottom + tokens.spacing[8] : tokens.spacing[12];
+  const navBarDockHeight = 62;
+  const floatingBottom = wideWeb ? tokens.spacing[32] : navBarPaddingBottom + navBarDockHeight + tokens.spacing[12];
 
   const guardedNavigateToBookDetail = useGuardedPress((bookId: string) => {
     void actions.registerSearch(state.term);
@@ -249,7 +249,7 @@ export default function Search({
               onPress={guardedNavigateToFavorites}
               style={withPress([styles.favoritesTopButton, wideWeb && styles.favoritesTopButtonWide])}
             >
-              <AppIcon name="heartFill" size={wideWeb ? 18 : 20} color={colors.ipe.bloomDeep} />
+              <AppIcon name="heartFill" size={wideWeb ? 18 : 20} color={colors.ipe.bloom} />
               {wideWeb ? <Text style={styles.favoritesButtonText}>Favoritos</Text> : null}
             </Pressable>
           ) : null}
@@ -295,7 +295,36 @@ export default function Search({
         onSubmitEditing={() => void actions.registerSearch(state.term)}
       />
 
-      {/* 4. Categorias do próprio catálogo em rolagem horizontal (Figma nó 183:3499) */}
+      {/* 4. Modalidades do catálogo em chips rápidos (Todas, Venda, Troca, Doação) */}
+      <ScrollView
+        horizontal
+        {...standardHorizontalScrollProps}
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.quickModalitiesScroll}
+        style={styles.quickModalitiesScrollView}
+      >
+        {(["all", "sale", "trade", "donation"] as const).map((mod) => {
+          const isSelected = state.modality === mod;
+          const label = mod === "all" ? "Todas" : mod === "sale" ? "Venda" : mod === "trade" ? "Troca" : "Doação";
+          const tone =
+            mod === "all"
+              ? { background: colors.nature.foliage, text: colors.nature.onFoliage }
+              : colors.badge[mod];
+          return (
+            <Chip
+              key={mod}
+              size="compact"
+              label={label}
+              accessibilityLabel={`Filtrar por ${label}`}
+              selected={isSelected}
+              tone={tone}
+              onPress={() => actions.setModality(mod)}
+            />
+          );
+        })}
+      </ScrollView>
+
+      {/* 5. Categorias do próprio catálogo em rolagem horizontal (Figma nó 183:3499) */}
       {state.availableCategories.length > 0 ? (
         <ScrollView
           horizontal
@@ -505,7 +534,9 @@ export default function Search({
           <SortSheet
             visible={showSortSheet}
             selected={state.sortBy}
+            selectedModality={state.modality}
             onSelect={actions.setSortBy}
+            onSelectModality={actions.setModality}
             onClose={() => setShowSortSheet(false)}
           />
           <NeighborhoodSelectorModal
@@ -694,6 +725,19 @@ function createStyles(colors: ColorPalette) {
     subtitle: {
       ...tokens.typography.bodyLarge,
       color: colors.m3.onSurfaceVariant,
+    },
+    quickModalitiesScrollView: {
+      flexGrow: 0,
+      marginHorizontal: -tokens.spacing[16],
+      marginBottom: tokens.spacing[4],
+    },
+    quickModalitiesScroll: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[8],
+      paddingLeft: tokens.spacing[16],
+      paddingRight: tokens.spacing[28],
+      paddingVertical: tokens.spacing[2],
     },
     quickCategoriesScrollView: {
       marginHorizontal: -tokens.spacing[16],
