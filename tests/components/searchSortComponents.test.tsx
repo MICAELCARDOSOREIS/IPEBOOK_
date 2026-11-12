@@ -7,34 +7,35 @@ import { WebFilterSidebar } from "@/view/search/WebFilterSidebar";
 import { DEFAULT_SEARCH_FILTERS, SORT_IDS, SORT_LABELS } from "@/viewmodel/searchFilters";
 
 describe("Componentes de Ordenação Avançada (Spec 121, ADR 0095)", () => {
-  it("SortSheet exibe as 5 opções de ordenação e aciona onSelect ao tocar", async () => {
+  it("SortSheet exibe as 4 opções de ordenação e aciona onSelect ao tocar", async () => {
     const onSelect = vi.fn();
     const onClose = vi.fn();
 
-    const { getByText, getAllByRole } = await render(
+    const { getByText, queryByText, getAllByRole } = await render(
       <ThemeProvider>
         <SortSheet visible selected="recent" onSelect={onSelect} onClose={onClose} />
       </ThemeProvider>,
     );
 
-    // Confere que todas as 5 opções estão presentes
+    // Confere que todas as 4 opções estão presentes e "Locais em Piripiri" foi removido
     for (const id of SORT_IDS) {
       expect(getByText(SORT_LABELS[id])).toBeTruthy();
     }
+    expect(queryByText("Locais em Piripiri")).toBeNull();
 
     const radios = getAllByRole("radio");
-    expect(radios.length).toBe(5);
+    expect(radios.length).toBe(4);
 
-    // Toca em "Locais em Piripiri"
-    fireEvent.press(getByText("Locais em Piripiri"));
-    expect(onSelect).toHaveBeenCalledWith("neighborhood");
+    // Toca em "Menor preço"
+    fireEvent.press(getByText("Menor preço"));
+    expect(onSelect).toHaveBeenCalledWith("price_asc");
     expect(onClose).toHaveBeenCalled();
   });
 
   it("FilterSheet exibe os chips de ordenação e permite alterar a opção selecionada", async () => {
     const onSortChange = vi.fn();
 
-    const { getByText } = await render(
+    const { getByText, queryByText } = await render(
       <ThemeProvider>
         <FilterSheet
           visible
@@ -52,7 +53,7 @@ describe("Componentes de Ordenação Avançada (Spec 121, ADR 0095)", () => {
     );
 
     expect(getByText("Ordenar por")).toBeTruthy();
-    expect(getByText("Locais em Piripiri")).toBeTruthy();
+    expect(queryByText("Locais em Piripiri")).toBeNull();
     expect(getByText("Menor preço")).toBeTruthy();
     expect(getByText("Maior preço")).toBeTruthy();
 
@@ -63,7 +64,7 @@ describe("Componentes de Ordenação Avançada (Spec 121, ADR 0095)", () => {
   it("WebFilterSidebar exibe seção 'Ordenar por' e dispara onSortChange", async () => {
     const onSortChange = vi.fn();
 
-    const { getByText } = await render(
+    const { getByText, queryByText } = await render(
       <ThemeProvider>
         <WebFilterSidebar
           filters={DEFAULT_SEARCH_FILTERS}
@@ -80,10 +81,11 @@ describe("Componentes de Ordenação Avançada (Spec 121, ADR 0095)", () => {
     );
 
     expect(getByText("Ordenar por")).toBeTruthy();
-    const localChip = getByText("Locais em Piripiri");
-    expect(localChip).toBeTruthy();
+    expect(queryByText("Locais em Piripiri")).toBeNull();
+    const azChip = getByText("A-Z");
+    expect(azChip).toBeTruthy();
 
-    fireEvent.press(localChip);
-    expect(onSortChange).toHaveBeenCalledWith("neighborhood");
+    fireEvent.press(azChip);
+    expect(onSortChange).toHaveBeenCalledWith("title");
   });
 });

@@ -8,7 +8,6 @@ import { AppIcon } from "@/view/components/AppIcon";
 const THEME_OPTIONS: { value: ThemePreference; label: string; description: string }[] = [
   { value: "system", label: "Sistema", description: "Acompanha a aparência do seu aparelho." },
   { value: "light", label: "Claro", description: "Usa fundos claros no aplicativo." },
-  { value: "dark", label: "Escuro", description: "Usa fundos escuros no aplicativo." },
 ];
 
 /** Seletor de aparência (Spec 054, ADR 0036): opções explicadas em linhas de seleção acessíveis. */

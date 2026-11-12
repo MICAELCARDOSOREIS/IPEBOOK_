@@ -11,6 +11,7 @@ export type RequestDetailState = {
 export type RequestDetailActions = {
   reload: () => Promise<void>;
   respond?: (response: "accept" | "reject") => Promise<void>;
+  cancelRequest?: () => Promise<void>;
 };
 
 const GENERIC_ERROR = "Não foi possível carregar os detalhes da negociação. Tente novamente.";
@@ -57,6 +58,12 @@ export function useRequestDetailViewModel(
     [useCases, requestId, sessionUserId, reload],
   );
 
+  const cancelRequest = useCallback(async () => {
+    if (!sessionUserId) return;
+    await useCases.cancelRequest(requestId, sessionUserId);
+    await reload();
+  }, [useCases, requestId, sessionUserId, reload]);
+
   useEffect(() => {
     active.current = true;
     void reload();
@@ -66,5 +73,5 @@ export function useRequestDetailViewModel(
     };
   }, [reload]);
 
-  return [state, { reload, respond }];
+  return [state, { reload, respond, cancelRequest }];
 }

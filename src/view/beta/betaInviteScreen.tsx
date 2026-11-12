@@ -237,30 +237,32 @@ export function BetaInviteScreen({
           <Text accessibilityRole="header" style={styles.helpGuideHeader}>
             Como liberar e baixar o IpêBook (passo a passo)
           </Text>
-          {helpSteps.map((step) => (
-            <View key={step.number} style={styles.helpStepCard}>
-              <View style={styles.helpStepHeader}>
-                <View style={styles.helpStepBadge}>
-                  <Text style={styles.helpStepBadgeText}>{step.number}</Text>
+          <View style={wide ? styles.helpStepsGrid : styles.helpStepsCol}>
+            {helpSteps.map((step) => (
+              <View key={step.number} style={[styles.helpStepCard, wide && styles.helpStepCardWide]}>
+                <View style={styles.helpStepHeader}>
+                  <View style={styles.helpStepBadge}>
+                    <Text style={styles.helpStepBadgeText}>{step.number}</Text>
+                  </View>
+                  <View style={styles.helpStepTextCol}>
+                    <Text style={styles.helpStepTitle}>{step.title}</Text>
+                    <Text style={styles.helpStepDesc}>{step.description}</Text>
+                  </View>
                 </View>
-                <View style={styles.helpStepTextCol}>
-                  <Text style={styles.helpStepTitle}>{step.title}</Text>
-                  <Text style={styles.helpStepDesc}>{step.description}</Text>
-                </View>
+                <Image
+                  source={step.image}
+                  style={styles.helpStepImage}
+                  resizeMode="contain"
+                  accessibilityLabel={`Imagem demonstrativa do passo ${step.number}: ${step.title}`}
+                />
+                {step.actionLabel && step.onAction ? (
+                  <View style={styles.helpStepAction}>
+                    <OutlinedButton label={step.actionLabel} onPress={step.onAction} />
+                  </View>
+                ) : null}
               </View>
-              <Image
-                source={step.image}
-                style={styles.helpStepImage}
-                resizeMode="contain"
-                accessibilityLabel={`Imagem demonstrativa do passo ${step.number}: ${step.title}`}
-              />
-              {step.actionLabel && step.onAction ? (
-                <View style={styles.helpStepAction}>
-                  <OutlinedButton label={step.actionLabel} onPress={step.onAction} />
-                </View>
-              ) : null}
-            </View>
-          ))}
+            ))}
+          </View>
         </View>
       ) : null}
     </View>
@@ -597,6 +599,8 @@ function createStyles(colors: ColorPalette) {
       ...tokens.typography.titleLarge,
       color: colors.m3.onSurface,
     },
+    helpStepsCol: { gap: tokens.spacing[20] },
+    helpStepsGrid: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[20] },
     helpStepCard: {
       gap: tokens.spacing[16],
       padding: tokens.spacing[20],
@@ -604,6 +608,11 @@ function createStyles(colors: ColorPalette) {
       backgroundColor: colors.m3.surfaceContainerHigh,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: colors.m3.outlineVariant,
+    },
+    helpStepCardWide: {
+      width: "48%",
+      minWidth: 320,
+      flexGrow: 1,
     },
     helpStepHeader: {
       flexDirection: "row",

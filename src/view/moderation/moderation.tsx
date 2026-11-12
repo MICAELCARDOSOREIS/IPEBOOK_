@@ -61,6 +61,10 @@ export function Moderation({ sessionUserId, onBack, onOpenListing, onOpenProfile
     <SafeAreaView style={styles.page}>
       <TopAppBar title="Moderação" onBack={guardedBack} contentMaxWidth={wide ? WEB_MAX_WIDTH : undefined} />
       <FlatList
+        key={wide ? "grid-mod-2" : "list-mod-1"}
+        numColumns={wide ? 2 : 1}
+        columnWrapperStyle={wide ? styles.gridRow : undefined}
+        style={styles.flexOne}
         {...standardVerticalScrollProps}
         data={state.error || (state.loading && state.items.length === 0) ? [] : state.items}
         keyExtractor={(item) => `${item.kind}-${item.targetId}`}
@@ -103,7 +107,7 @@ export function Moderation({ sessionUserId, onBack, onOpenListing, onOpenProfile
           const busy = state.decidingId === item.targetId;
           const isListing = item.kind === "listing";
           return (
-            <View style={styles.card} testID={`moderation-${item.targetId}`}>
+            <View style={[styles.card, wide && styles.cardWide]} testID={`moderation-${item.targetId}`}>
               <View style={styles.header}>
                 <AppIcon name={isListing ? "shelf" : "person"} size={20} color={colors.secondaryText} />
                 <Text style={styles.kind}>{isListing ? "Anúncio" : "Pessoa"}</Text>
@@ -184,10 +188,13 @@ export default function ModerationScreen(props: Omit<ModerationProps, "sessionUs
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
-    page: { flex: 1, backgroundColor: colors.background },
+    page: { flex: 1, backgroundColor: colors.background, minHeight: 0 },
+    flexOne: { flex: 1, minHeight: 0 },
     scroll: { flexGrow: 1 },
     content: { width: "100%", padding: tokens.spacing[24], gap: tokens.spacing[16] },
     contentWide: { maxWidth: WEB_MAX_WIDTH, alignSelf: "center", paddingHorizontal: WEB_GUTTER },
+    gridRow: { gap: tokens.spacing[16] },
+    cardWide: { flex: 1 },
     headerSection: { gap: tokens.spacing[16], marginBottom: tokens.spacing[16] },
     intro: { ...tokens.typography.bodyMedium, color: colors.secondaryText },
     card: {

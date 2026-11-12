@@ -57,7 +57,7 @@ export function FavoriteButton({ bookId, userId, onToggleSuccess }: FavoriteButt
           <AppIcon
             name={state.selected ? "heartFill" : "heart"}
             size={24}
-            color={state.selected ? colors.ipe.bloomDeep : colors.m3.primary}
+            color={state.selected ? colors.ipe.bloom : colors.m3.primary}
           />
         </Pressable>
       </Animated.View>

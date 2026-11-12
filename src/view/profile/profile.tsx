@@ -16,23 +16,17 @@ import {
   makeUserPreferencesViewModel,
 } from "@/di/container";
 import type { ImageSource } from "@/model/services/iImagePickerService";
-import {
-  PIRIPIRI_MEETING_POINT_NAMES,
-  PIRIPIRI_NEIGHBORHOODS,
-} from "@/model/entities/location";
 import { normalizeInstagramHandle } from "@/model/validators/instagramValidator";
 import { sanitizeTextInput } from "@/model/validators/textSanitizer";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { ReaderCard } from "@/view/components/ReaderCard";
 import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
-import { Chip } from "@/view/components/Chip";
 import { Dialog } from "@/view/components/Dialog";
 import { ErrorState } from "@/view/components/ErrorState";
 import { FilledButton } from "@/view/components/FilledButton";
 import { LoadingState } from "@/view/components/LoadingState";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
-import { NeighborhoodSelectorModal } from "@/view/components/NeighborhoodSelectorModal";
 import { ScreenContainer } from "@/view/components/ScreenContainer";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { useKeyboardVisible } from "@/view/useKeyboardVisible";
@@ -51,12 +45,6 @@ export type ProfileProps = {
 
 const MAX_NAME_LENGTH = 60;
 const MAX_SOCIAL_HANDLE_LENGTH = 60;
-
-/**
- * Atalhos exibidos abaixo do campo de bairro. São os seis primeiros da lista oficial,
- * não um ranking de frequência: a interface chama o grupo de "Acesso rápido".
- */
-const NEIGHBORHOOD_QUICK_PICKS = 6;
 
 type FieldErrors = Partial<Record<"name" | "photoUrl" | "socialHandle", string>>;
 
@@ -112,13 +100,8 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
   const [name, setName] = useState("");
   const [photoUrl, setPhotoUrl] = useState("");
   const [socialHandle, setSocialHandle] = useState("");
-  /** null = ainda não escolhido. A tela não atribui um bairro que a pessoa não selecionou. */
-  const [neighborhood, setNeighborhood] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
-  const [isNeighborhoodModalOpen, setIsNeighborhoodModalOpen] = useState(false);
-  /** Atalhos de bairro ficam recolhidos por padrão para manter o formulário limpo (Spec 017 polish). */
-  const [showNeighborhoodPicks, setShowNeighborhoodPicks] = useState(false);
   const [discardOpen, setDiscardOpen] = useState(false);
   /** true quando o toque em Salvar encontrou erros em linha (anuncia o resumo no TalkBack). */
   const [blockedSave, setBlockedSave] = useState(false);
@@ -143,28 +126,20 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
   }, [state.profile]);
 
   useEffect(() => {
-    if (!preferencesState.preferences) return;
-    setNeighborhood(preferencesState.preferences.neighborhood ?? null);
-  }, [preferencesState.preferences]);
-
-  useEffect(() => {
     if (!authState.loading && !userId) onNavigateToSignIn?.();
   }, [authState.loading, userId, onNavigateToSignIn]);
 
   /**
    * Valores carregados servem de linha de base: depois de salvar, os casos de uso devolvem
-   * perfil e preferências atualizados e `dirty` volta a ser falso sem código extra.
+   * perfil atualizado e `dirty` volta a ser falso sem código extra.
    */
   const dirty =
     name !== (state.profile?.name ?? "") ||
     photoUrl !== (state.profile?.photoUrl ?? "") ||
-    socialHandle !== (state.profile?.socialHandle ?? "") ||
-    neighborhood !== (preferencesState.preferences?.neighborhood ?? null);
+    socialHandle !== (state.profile?.socialHandle ?? "");
 
   const dirtyRef = useRef(dirty);
   dirtyRef.current = dirty;
-  const modalOpenRef = useRef(isNeighborhoodModalOpen);
-  modalOpenRef.current = isNeighborhoodModalOpen;
 
   /** Voltar com edição em aberto pergunta antes de descartar; sem edição, sai direto. */
   function requestBack() {
@@ -173,15 +148,10 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
   }
   const guardedBack = useGuardedPress(requestBack);
 
-  // Volte físico do Android: fecha o modal de bairros, pergunta antes de descartar e, com a
-  // tela limpa, deixa o sistema navegar (retorna false).
+  // Volte físico do Android: pergunta antes de descartar e, com a tela limpa, deixa o sistema navegar.
   useEffect(() => {
     if (Platform.OS === "web") return;
     const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
-      if (modalOpenRef.current) {
-        setIsNeighborhoodModalOpen(false);
-        return true;
-      }
       if (dirtyRef.current) {
         setDiscardOpen(true);
         return true;
@@ -232,17 +202,12 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
     setBlockedSave(false);
 
     const trimmedName = name.trim();
-    const [profileOk, preferencesOk] = await Promise.all([
-      actions.update({
-        name: trimmedName,
-        photoUrl: photoUrl.trim() || undefined,
-        socialHandle: normalizeInstagramHandle(socialHandle) ?? undefined,
-      }),
-      preferencesActions.update({
-        neighborhood: neighborhood ?? undefined,
-      }),
-    ]);
-    if (profileOk && preferencesOk) setSaved(true);
+    const profileOk = await actions.update({
+      name: trimmedName,
+      photoUrl: photoUrl.trim() || undefined,
+      socialHandle: normalizeInstagramHandle(socialHandle) ?? undefined,
+    });
+    if (profileOk) setSaved(true);
   }
 
   function handleRetryLoad() {
@@ -257,19 +222,10 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
       maxWidth={contentMaxWidth}
       paddingHorizontal={wide ? WEB_GUTTER : undefined}
       paddingTop={tokens.spacing[12]}
-      paddingBottom={!wide && state.profile ? tokens.spacing[80] + insets.bottom : tokens.spacing[32]}
+      paddingBottom={!wide && state.profile ? tokens.spacing[96] + insets.bottom : tokens.spacing[32]}
       header={<TopAppBar contentMaxWidth={contentMaxWidth} title="Editar perfil" onBack={guardedBack} />}
       overlay={
         <>
-          <NeighborhoodSelectorModal
-            visible={isNeighborhoodModalOpen}
-            currentNeighborhood={neighborhood ?? ""}
-            onSelect={(selected) => {
-              setNeighborhood(selected);
-              setIsNeighborhoodModalOpen(false);
-            }}
-            onClose={() => setIsNeighborhoodModalOpen(false)}
-          />
           <Dialog
             visible={discardOpen}
             title="Descartar alterações?"
@@ -341,7 +297,7 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
                       <ReaderCard
                         name={name.trim() || "Você"}
                         photoUrl={photoUrl.trim() || undefined}
-                        subtitle={neighborhood ? `${neighborhood}, Piripiri` : "Piripiri, PI"}
+                        subtitle={preferencesState.preferences?.neighborhood ? `${preferencesState.preferences.neighborhood}, Piripiri` : "Piripiri, PI"}
                       />
                     </View>
                   </View>
@@ -407,7 +363,7 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
                 <FormSection
                   icon="shelf"
                   title="Sobre você"
-                  caption="Nome, bairro e Instagram que aparecem no seu perfil público."
+                  caption="Nome e Instagram que aparecem no seu perfil público."
                 >
                   {/* Nome */}
                   <TextField
@@ -424,82 +380,6 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
                     helperText={fieldErrors.name ? undefined : `${name.trim().length}/${MAX_NAME_LENGTH}`}
                     helperTextAlign="right"
                   />
-
-                  {/* Bairro */}
-                  <View style={styles.fieldWrapper}>
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel={
-                        neighborhood
-                          ? `Bairro selecionado: ${neighborhood}. Toque para alterar`
-                          : "Nenhum bairro selecionado. Toque para escolher"
-                      }
-                      disabled={saving}
-                      onPress={() => setIsNeighborhoodModalOpen(true)}
-                      style={withPress(styles.selectorField)}
-                    >
-                      <View style={styles.selectorContainer}>
-                        <View style={styles.notch}>
-                          <Text style={styles.floatingLabel}>Bairro</Text>
-                        </View>
-                        <View style={styles.selectorContentRow}>
-                          <View style={styles.selectorIconWrap}>
-                            <AppIcon
-                              name="place"
-                              size={18}
-                              color={neighborhood ? colors.m3.primary : colors.m3.onSurfaceVariant}
-                            />
-                          </View>
-                          <Text style={neighborhood ? styles.fieldValue : styles.fieldPlaceholder}>
-                            {neighborhood ?? "Selecionar bairro"}
-                          </Text>
-                        </View>
-                        <AppIcon
-                          name="chevronDown"
-                          size={20}
-                          color={colors.m3.onSurfaceVariant}
-                        />
-                      </View>
-                    </Pressable>
-                  </View>
-
-                  {/* Atalhos de pontos de encontro */}
-                  {showNeighborhoodPicks ? (
-                    <View style={styles.neighborhoodChipsArea}>
-                      <View style={styles.chipsHeader}>
-                        <Text style={styles.sectionLabel}>Acesso rápido</Text>
-                        <TextButton
-                          label="Ocultar"
-                          accessibilityLabel="Ocultar opções de locais de Piripiri"
-                          onPress={() => setShowNeighborhoodPicks(false)}
-                        />
-                      </View>
-                      <View style={styles.chipRow}>
-                        {["Centro", ...PIRIPIRI_MEETING_POINT_NAMES].map((item) => (
-                          <Chip
-                            key={item}
-                            size="compact"
-                            label={item}
-                            accessibilityLabel={`Bairro ${item}`}
-                            selected={neighborhood === item}
-                            disabled={saving}
-                            onPress={() => setNeighborhood(item)}
-                          />
-                        ))}
-                      </View>
-                      <Text style={styles.chipsHelper}>
-                        Escolha um ponto de encontro preferido ou selecione na lista.
-                      </Text>
-                    </View>
-                  ) : (
-                    <View style={styles.quickPicksToggleRow}>
-                      <TextButton
-                        label="Opções rápidas de bairro"
-                        accessibilityLabel="Mostrar opções rápidas de bairro"
-                        onPress={() => setShowNeighborhoodPicks(true)}
-                      />
-                    </View>
-                  )}
 
                   {/* Instagram */}
                   <TextField
@@ -716,90 +596,6 @@ function createStyles(colors: ColorPalette, insets?: EdgeInsets) {
     previewLabel: { ...tokens.typography.labelMedium, color: colors.m3.onSurfaceVariant, fontWeight: tokens.fontWeight.semiBold },
     cardPreviewContainer: {
       width: "100%",
-    },
-    fieldWrapper: {
-      width: "100%",
-    },
-    selectorField: {
-      width: "100%",
-    },
-    selectorContainer: {
-      minHeight: tokens.spacing[56],
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-      borderRadius: tokens.radius.extraSmall,
-      borderWidth: 1,
-      borderColor: colors.m3.outline,
-      paddingHorizontal: tokens.spacing[16],
-      paddingVertical: tokens.spacing[8],
-      backgroundColor: "transparent",
-    },
-    selectorContentRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[12],
-      flex: 1,
-    },
-    selectorIconWrap: {
-      width: 28,
-      height: 28,
-      borderRadius: tokens.radius.full,
-      backgroundColor: colors.m3.surfaceContainerHighest,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    notch: {
-      position: "absolute",
-      top: -8,
-      left: tokens.spacing[8],
-      paddingHorizontal: tokens.spacing[4],
-      borderRadius: tokens.radius.extraSmall,
-      backgroundColor: colors.m3.surfaceContainerLow,
-    },
-    floatingLabel: {
-      ...tokens.typography.labelMedium,
-      color: colors.m3.onSurfaceVariant,
-    },
-    fieldValue: {
-      ...tokens.typography.bodyLarge,
-      color: colors.m3.onSurface,
-    },
-    fieldPlaceholder: {
-      ...tokens.typography.bodyLarge,
-      color: colors.m3.onSurfaceVariant,
-    },
-    quickPicksToggleRow: {
-      alignSelf: "flex-start",
-      marginTop: -tokens.spacing[4],
-    },
-    chipsHelper: {
-      ...tokens.typography.bodyMedium,
-      color: colors.m3.onSurfaceVariant,
-    },
-    neighborhoodChipsArea: {
-      marginTop: tokens.spacing[4],
-      gap: tokens.spacing[12],
-      padding: tokens.spacing[16],
-      borderRadius: tokens.radius.large,
-      backgroundColor: colors.m3.surfaceContainerHighest,
-      borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
-    },
-    chipsHeader: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-    },
-    sectionLabel: {
-      ...tokens.typography.labelMedium,
-      fontWeight: tokens.fontWeight.semiBold,
-      color: colors.m3.onSurfaceVariant,
-    },
-    chipRow: {
-      flexDirection: "row",
-      flexWrap: "wrap",
-      gap: tokens.spacing[8],
     },
     errorText: {
       ...tokens.typography.bodyMedium,

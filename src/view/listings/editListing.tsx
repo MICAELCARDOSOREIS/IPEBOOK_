@@ -3,6 +3,7 @@ import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import type { BookCondition, BookModality } from "@/model/entities/book";
 import {
+  BOOK_CATEGORIES,
   BOOK_CONDITIONS,
   BOOK_CONDITION_LABELS,
   MAX_BOOK_DESCRIPTION_LENGTH,
@@ -46,8 +47,8 @@ const MODALITIES: { value: BookModality; label: string }[] = [
   { value: "donation", label: "Doação" },
 ];
 
-/** Mesmas categorias oferecidas na publicação (Figma `04.05`). */
-const CATEGORIES = ["Literatura", "Infantil", "Didático", "Romance", "Outros"];
+/** Categorias canônicas oferecidas na publicação e edição (ADR 0109). */
+const CATEGORIES = BOOK_CATEGORIES;
 
 /** Figma `04.09 · Editar anúncio` (nó `19:242`). */
 export default function EditListing({
@@ -75,6 +76,13 @@ export default function EditListing({
   const priceY = useRef(460);
   const remainingDescriptionChars = MAX_BOOK_DESCRIPTION_LENGTH - state.description.length;
   const descriptionTooLong = remainingDescriptionChars < 0;
+
+  const displayedCategories = useMemo(() => {
+    if (state.category && !(CATEGORIES as readonly string[]).includes(state.category)) {
+      return [state.category, ...CATEGORIES];
+    }
+    return CATEGORIES;
+  }, [state.category]);
 
   const handleFocusField = (yOffset: number) => {
     if (wide) return;
@@ -227,7 +235,7 @@ export default function EditListing({
           <View style={styles.field}>
             <Text style={styles.sectionLabel}>Categoria</Text>
             <View style={styles.modalityRow} testID="edit-listing-category-row">
-              {CATEGORIES.map((category) => (
+              {displayedCategories.map((category) => (
                 <Chip
                   key={category}
                   label={category}
