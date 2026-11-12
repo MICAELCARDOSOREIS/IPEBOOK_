@@ -52,6 +52,27 @@ export function parseInitialModality(value: string | string[] | undefined): Sear
   return VALID_INITIAL_MODALITIES.find((modality) => modality === raw);
 }
 
+/** Preposição gramaticalmente correta em português para locais e bairros de Piripiri ("no" vs "na"). */
+export function getNeighborhoodPreposition(location: string): "na" | "no" {
+  const lower = location.trim().toLowerCase();
+  if (
+    lower.startsWith("praça") ||
+    lower.startsWith("floresta") ||
+    lower.startsWith("estação") ||
+    lower.startsWith("estacao") ||
+    lower.startsWith("caixa") ||
+    lower.startsWith("morada") ||
+    lower.startsWith("paciência") ||
+    lower.startsWith("paciencia") ||
+    lower.startsWith("vista") ||
+    lower.startsWith("fonte") ||
+    lower.startsWith("santa")
+  ) {
+    return "na";
+  }
+  return "no";
+}
+
 /** Busca e Exploração (Figma `02.02 · Explorar`, nó `10:2`). */
 export default function Search({
   currentNeighborhood,
@@ -111,7 +132,15 @@ export default function Search({
     actions.setOnlyBoxes(Boolean(snapshot.filters.onlyBoxes));
     actions.setPriceRange(snapshot.filters.priceRange);
     actions.setSortBy(snapshot.sortBy);
-    actions.setNeighborhood(snapshot.neighborhood);
+    if (snapshot.neighborhood && snapshot.neighborhood !== "all") {
+      setSelectedNeighborhoodOverride(snapshot.neighborhood);
+      void neighborhoodHook.selectNeighborhood(snapshot.neighborhood);
+      actions.setNeighborhood(snapshot.neighborhood);
+    } else {
+      setSelectedNeighborhoodOverride(null);
+      void neighborhoodHook.selectNeighborhood("all");
+      actions.setNeighborhood("all");
+    }
     clearedSnapshotRef.current = null;
     setSnackbarMessage(null);
     setSnackbarAction(null);
@@ -134,8 +163,10 @@ export default function Search({
       term: state.term,
       filters: state.filters,
       sortBy: state.sortBy,
-      neighborhood: state.neighborhood,
+      neighborhood: effectiveNeighborhood,
     };
+    setSelectedNeighborhoodOverride(null);
+    void neighborhoodHook.selectNeighborhood("all");
     actions.clearFilters();
     setSnackbarMessage("Busca reiniciada");
     setSnackbarAction({ label: "Desfazer", onPress: undoClear });
@@ -392,8 +423,10 @@ export default function Search({
     </View>
   );
 
-  const neighborhoodApplied = displayNeighborhood !== "Piripiri (Todos)";
+  const neighborhoodApplied = !isAll;
   const onlyNeighborhoodBlocks = neighborhoodApplied && state.matchesInOtherNeighborhoods > 0;
+  const hasOtherActiveFilters = Boolean(state.term.trim()) || state.activeFilters.length > 0;
+  const prep = getNeighborhoodPreposition(displayNeighborhood);
 
   const listEmpty = state.loading ? (
     <LoadingState label="Carregando livros" variant="catalog" />
@@ -411,7 +444,9 @@ export default function Search({
         </View>
       ) : null}
       <Text style={styles.emptyTitle}>
-        {onlyNeighborhoodBlocks ? `Nenhum livro no ${displayNeighborhood} com essa busca.` : "Nenhum livro encontrado."}
+        {onlyNeighborhoodBlocks
+          ? `Nenhum livro ${prep} ${displayNeighborhood} com essa busca.`
+          : "Nenhum livro encontrado."}
       </Text>
       <Text style={styles.body}>
         {onlyNeighborhoodBlocks
@@ -422,26 +457,30 @@ export default function Search({
             ? `Nenhum livro encontrado para "${state.term.trim()}". Tente outro título, autor ou categoria.`
             : "Ainda não há livros no catálogo."}
       </Text>
-      {onlyNeighborhoodBlocks ? (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Ver em toda Piripiri"
-          onPress={() => handleSelectNeighborhoodOption("Todos os bairros (Piripiri)")}
-          style={withPress(styles.emptyActionButton)}
-        >
-          <Text style={styles.emptyActionText}>Ver em toda Piripiri</Text>
-        </Pressable>
-      ) : null}
-      {state.hasActiveFilters ? (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Limpar filtros e buscar novamente"
-          onPress={handleClearFilters}
-          style={withPress(styles.emptyActionButton)}
-        >
-          <Text style={styles.emptyActionText}>Limpar filtros</Text>
-        </Pressable>
-      ) : null}
+      <View style={styles.emptyActions}>
+        {onlyNeighborhoodBlocks ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Ver em toda Piripiri"
+            onPress={() => handleSelectNeighborhoodOption("Todos os bairros (Piripiri)")}
+            style={withPress(styles.emptyPrimaryButton)}
+          >
+            <Text style={styles.emptyPrimaryButtonText}>Ver em toda Piripiri</Text>
+          </Pressable>
+        ) : null}
+        {(onlyNeighborhoodBlocks ? hasOtherActiveFilters : state.hasActiveFilters) ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Limpar filtros e buscar novamente"
+            onPress={handleClearFilters}
+            style={withPress(onlyNeighborhoodBlocks ? styles.emptySecondaryButton : styles.emptyPrimaryButton)}
+          >
+            <Text style={onlyNeighborhoodBlocks ? styles.emptySecondaryButtonText : styles.emptyPrimaryButtonText}>
+              Limpar filtros
+            </Text>
+          </Pressable>
+        ) : null}
+      </View>
     </View>
   );
 
@@ -763,8 +802,18 @@ function createStyles(colors: ColorPalette) {
       color: colors.m3.onSurface,
       fontWeight: tokens.fontWeight.semiBold,
     },
-    body: { ...tokens.typography.bodyLarge, lineHeight: tokens.lineHeight[25], color: colors.secondaryText },
-    empty: { alignItems: "center", paddingTop: tokens.spacing[32], gap: tokens.spacing[8] },
+    body: {
+      ...tokens.typography.bodyLarge,
+      lineHeight: tokens.lineHeight[25],
+      color: colors.secondaryText,
+      textAlign: "center",
+    },
+    empty: {
+      alignItems: "center",
+      paddingTop: tokens.spacing[32],
+      paddingHorizontal: tokens.spacing[24],
+      gap: tokens.spacing[12],
+    },
     emptyWide: { width: "100%", paddingVertical: tokens.spacing[48], paddingHorizontal: tokens.spacing[48], borderRadius: tokens.radius.xxl, backgroundColor: colors.m3.surfaceContainerLow, gap: tokens.spacing[16] },
     emptyIcon: { width: tokens.spacing[64], height: tokens.spacing[64], borderRadius: tokens.radius.circle64, alignItems: "center", justifyContent: "center", backgroundColor: colors.m3.secondaryContainer },
     alertCard: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[16], paddingHorizontal: tokens.spacing[24], paddingVertical: tokens.spacing[20], borderRadius: tokens.radius.large, backgroundColor: colors.m3.tertiaryContainer },
@@ -773,16 +822,59 @@ function createStyles(colors: ColorPalette) {
     alertCardBody: { ...tokens.typography.bodyLarge, color: colors.m3.onTertiaryContainer },
     alertCardButton: { height: 52, minWidth: 180, alignItems: "center", justifyContent: "center", borderRadius: tokens.radius.full, backgroundColor: colors.m3.primary },
     alertCardButtonText: { ...tokens.typography.labelLarge, color: colors.m3.onPrimary },
-    emptyTitle: { ...tokens.typography.brandCardTitle, color: colors.action },
-    emptyActionButton: {
+    emptyTitle: {
+      ...tokens.typography.brandCardTitle,
+      color: colors.action,
+      textAlign: "center",
+    },
+    emptyActions: {
+      flexDirection: "column",
+      alignItems: "center",
+      gap: tokens.spacing[12],
+      marginTop: tokens.spacing[8],
+    },
+    emptyPrimaryButton: {
+      minHeight: tokens.accessibility.touchTarget,
+      justifyContent: "center",
+      alignItems: "center",
+      backgroundColor: colors.m3.primary,
+      borderRadius: tokens.radius.full,
+      paddingHorizontal: tokens.spacing[24],
+      paddingVertical: tokens.spacing[12],
+    },
+    emptyPrimaryButtonText: {
+      ...tokens.typography.labelLarge,
+      color: colors.m3.onPrimary,
+      fontWeight: tokens.fontWeight.semiBold,
+    },
+    emptySecondaryButton: {
       minHeight: tokens.accessibility.touchTarget,
       justifyContent: "center",
       alignItems: "center",
       backgroundColor: colors.m3.surfaceContainerHigh,
-      borderRadius: tokens.radius.small,
-      paddingHorizontal: tokens.spacing[16],
+      borderRadius: tokens.radius.full,
+      paddingHorizontal: tokens.spacing[20],
+      paddingVertical: tokens.spacing[10],
     },
-    emptyActionText: { ...tokens.typography.subheadline, color: colors.action, fontWeight: tokens.fontWeight.semiBold },
+    emptySecondaryButtonText: {
+      ...tokens.typography.labelLarge,
+      color: colors.text,
+      fontWeight: tokens.fontWeight.medium,
+    },
+    emptyActionButton: {
+      minHeight: tokens.accessibility.touchTarget,
+      justifyContent: "center",
+      alignItems: "center",
+      backgroundColor: colors.m3.primary,
+      borderRadius: tokens.radius.full,
+      paddingHorizontal: tokens.spacing[24],
+      paddingVertical: tokens.spacing[12],
+    },
+    emptyActionText: {
+      ...tokens.typography.labelLarge,
+      color: colors.m3.onPrimary,
+      fontWeight: tokens.fontWeight.semiBold,
+    },
     alertLink: { color: colors.action, fontWeight: tokens.fontWeight.semiBold, padding: tokens.spacing[12] },
     historySection: { gap: tokens.spacing[8] },
     historyHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },

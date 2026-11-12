@@ -84,14 +84,40 @@ export function Drafts({ sessionUserId, onBack, onResume, onNavigateToCreateList
 
   return (
     <SafeAreaView edges={["top", "left", "right"]} style={styles.page}>
-      <TopAppBar contentMaxWidth={wide ? WIDE_CONTENT_MAX_WIDTH : 560} title="Rascunhos" onBack={guardedBack} />
+      {wide ? (
+        <View style={styles.wideHeader}>
+          <View style={styles.wideHeaderLeft}>
+            {onBack ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Voltar"
+                hitSlop={8}
+                onPress={guardedBack}
+                style={withPress(styles.wideBackButton)}
+              >
+                <AppIcon name="back" size={20} color={colors.m3.onSurface} />
+              </Pressable>
+            ) : null}
+            <View>
+              <Text accessibilityRole="header" style={styles.wideTitle}>
+                Rascunhos
+              </Text>
+              <Text style={styles.wideSubtitle}>
+                Seus anúncios de livros em andamento
+              </Text>
+            </View>
+          </View>
+        </View>
+      ) : (
+        <TopAppBar contentMaxWidth={560} title="Rascunhos" onBack={guardedBack} />
+      )}
       <View style={[styles.content, wide && styles.contentWide]}>
         {state.loading ? (
           <LoadingState label="Carregando seus rascunhos" />
         ) : state.error ? (
           <ErrorState message={state.error} onRetry={() => void actions.reload()} />
         ) : state.drafts.length === 0 ? (
-          <View style={styles.empty}>
+          <View style={[styles.empty, wide && styles.emptyWide]}>
             <View style={styles.emptyIcon}>
               <AppIcon name="document" size={36} color={colors.m3.onSecondaryContainer} />
             </View>
@@ -116,9 +142,13 @@ export function Drafts({ sessionUserId, onBack, onResume, onNavigateToCreateList
           </View>
         ) : (
           <FlatList
+            key={wide ? `grid-drafts-${columns}` : "list-drafts-1"}
+            numColumns={wide ? columns : 1}
+            columnWrapperStyle={wide ? styles.gridRow : undefined}
             data={state.drafts}
             keyExtractor={(item) => item.id}
             {...standardVerticalScrollProps}
+            style={styles.flexOne}
             contentContainerStyle={[
               styles.scroll,
               wide && styles.scrollWide,
@@ -159,7 +189,7 @@ export function Drafts({ sessionUserId, onBack, onResume, onNavigateToCreateList
               const hasPrice = book.modality === "sale" && book.price != null && book.price > 0;
 
               return (
-                <View style={[styles.card, wide && columnWidth]}>
+                <View style={[styles.card, wide && styles.cardWide]}>
                   {/* Linha superior: Tag da modalidade à esquerda e ação sutil de descartar à direita */}
                   <View style={styles.cardHeader}>
                     <View style={styles.metaRow}>
@@ -310,22 +340,52 @@ export default function DraftsScreen({
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
-    page: { flex: 1, backgroundColor: colors.background },
+    page: { flex: 1, backgroundColor: colors.background, minHeight: 0 },
+    flexOne: { flex: 1, minHeight: 0 },
+    wideHeader: {
+      width: "100%",
+      maxWidth: WIDE_CONTENT_MAX_WIDTH,
+      alignSelf: "center",
+      paddingHorizontal: WEB_GUTTER,
+      paddingTop: tokens.spacing[24],
+      paddingBottom: tokens.spacing[12],
+    },
+    wideHeaderLeft: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[16],
+    },
+    wideBackButton: {
+      width: tokens.spacing[40],
+      height: tokens.spacing[40],
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.m3.surfaceContainerHigh,
+      alignItems: "center",
+      justifyContent: "center",
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+    },
+    wideTitle: {
+      ...tokens.typography.brandLargeTitle,
+      color: colors.brandBrown,
+    },
+    wideSubtitle: {
+      ...tokens.typography.bodyMedium,
+      color: colors.m3.onSurfaceVariant,
+      marginTop: tokens.spacing[2],
+    },
     content: {
       flex: 1,
+      minHeight: 0,
       width: "100%",
       maxWidth: 560,
       alignSelf: "center",
       paddingHorizontal: tokens.spacing[16],
     },
     contentWide: { maxWidth: WIDE_CONTENT_MAX_WIDTH, paddingHorizontal: WEB_GUTTER },
-    scrollWide: {
-      flexDirection: "row",
-      flexWrap: "wrap",
-      alignItems: "flex-start",
-      columnGap: tokens.spacing[16],
-      rowGap: tokens.spacing[16],
-    },
+    scrollWide: {},
+    gridRow: { gap: tokens.spacing[16] },
+    cardWide: { flex: 1 },
     fullRow: { width: "100%" },
     scroll: { gap: tokens.spacing[12], paddingBottom: tokens.spacing[24] },
     headerSection: {
@@ -486,6 +546,17 @@ function createStyles(colors: ColorPalette) {
       alignItems: "center",
       gap: tokens.spacing[10],
       paddingHorizontal: tokens.spacing[16],
+    },
+    emptyWide: {
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderRadius: tokens.radius.card,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+      padding: tokens.spacing[40],
+      maxWidth: 640,
+      width: "100%",
+      alignSelf: "center",
+      marginTop: tokens.spacing[24],
     },
     emptyIcon: {
       width: 72,

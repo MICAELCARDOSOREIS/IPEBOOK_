@@ -44,7 +44,7 @@ export function AuthShell({ children }: { children: ReactNode }) {
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
-    row: { flex: 1, flexDirection: "row", backgroundColor: colors.background },
+    row: { flex: 1, minHeight: 0, flexDirection: "row", backgroundColor: colors.background },
     brandPanel: {
       width: 640,
       maxWidth: "45%",
@@ -70,7 +70,7 @@ function createStyles(colors: ColorPalette) {
       width: "100%",
       height: "100%",
     },
-    formPane: { flex: 1 },
+    formPane: { flex: 1, minHeight: 0 },
   });
 }
 

@@ -89,8 +89,8 @@ describe("componentes de ícones (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
     });
   });
 
-  it("FluentIcon: renderiza os 3 ícones cobertos em regular e preenchido", async () => {
-    for (const name of ["home", "search", "person"] as const) {
+  it("FluentIcon: renderiza os ícones cobertos em regular e preenchido", async () => {
+    for (const name of ["home", "search", "person", "swap", "bookmark"] as const) {
       const { toJSON: toRegular } = await render(<FluentIcon name={name} />);
       const { toJSON: toFilled } = await render(<FluentIcon name={name} filled />);
       expect(toRegular()).toBeDefined();

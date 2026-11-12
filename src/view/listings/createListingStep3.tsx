@@ -1,10 +1,12 @@
 import { useMemo, useRef } from "react";
 import { StyleSheet, Text, View } from "react-native";
-import type { BookCondition } from "@/model/entities/book";
 import {
+  BOOK_CATEGORIES,
   BOOK_CONDITIONS,
   BOOK_CONDITION_LABELS,
   MAX_BOOK_DESCRIPTION_LENGTH,
+  type BookCategory,
+  type BookCondition,
 } from "@/model/entities/book";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
@@ -15,8 +17,8 @@ import { Chip } from "@/view/components/Chip";
 import { InlineErrorCard } from "@/view/components/InlineErrorCard";
 import { TextField } from "@/view/components/TextField";
 
-/** Categorias sugeridas pela etapa de detalhes do Figma (`04.05`). */
-export const LISTING_CATEGORIES = ["Literatura", "Infantil", "Didático", "Romance", "Outros"];
+/** Categorias canônicas sugeridas para publicação (ADR 0109). */
+export const LISTING_CATEGORIES = BOOK_CATEGORIES;
 
 export type CreateListingStep3Props = {
   condition: BookCondition | null;
@@ -61,6 +63,12 @@ export function CreateListingStep3({
   const { colors, resolvedScheme } = useTheme();
   const wideWeb = useIsWideWeb();
   const styles = useMemo(() => createStyles(colors, wideWeb), [colors, wideWeb]);
+  const displayedCategories = useMemo(() => {
+    if (category && !(LISTING_CATEGORIES as readonly string[]).includes(category)) {
+      return [category, ...LISTING_CATEGORIES];
+    }
+    return LISTING_CATEGORIES;
+  }, [category]);
   const descY = useRef(0);
 
   const descriptionTooLong = description.length > MAX_BOOK_DESCRIPTION_LENGTH;
@@ -95,7 +103,7 @@ export function CreateListingStep3({
           <Text style={styles.sectionHint}>Gênero principal da obra</Text>
         </View>
         <View style={styles.chipRow}>
-          {LISTING_CATEGORIES.map((cat) => (
+          {displayedCategories.map((cat) => (
             <Chip
               key={cat}
               size="regular"

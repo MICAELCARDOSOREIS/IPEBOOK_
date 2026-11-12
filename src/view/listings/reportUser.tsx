@@ -161,7 +161,7 @@ export default function ReportUser({ userId, userName, onBack, onNavigateToLogin
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
-    page: { flex: 1, backgroundColor: colors.background },
+    page: { flex: 1, minHeight: 0, backgroundColor: colors.background },
     scroll: { padding: tokens.spacing[16] },
     content: { width: "100%", maxWidth: 560, alignSelf: "center", gap: tokens.spacing[16] },
     contentWide: { maxWidth: WEB_MAX_WIDTH, alignSelf: "center", paddingHorizontal: WEB_GUTTER },

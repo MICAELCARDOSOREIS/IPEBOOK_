@@ -94,22 +94,48 @@ export default function Notifications({
   if (!sessionUserId) {
     return (
       <SafeAreaView style={styles.page}>
-        <TopAppBar title="Notificações" onBack={guardedBack} />
-        <View style={styles.centered}>
-          <View style={styles.emptyIconCircle}>
-            <AppIcon name="bell" size={32} color={colors.action} />
+        {wide ? (
+          <View style={styles.wideHeader}>
+            <View style={styles.wideHeaderLeft}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Voltar"
+                hitSlop={8}
+                onPress={guardedBack}
+                style={withPress(styles.wideBackButton)}
+              >
+                <AppIcon name="back" size={20} color={colors.m3.onSurface} />
+              </Pressable>
+              <View>
+                <Text accessibilityRole="header" style={styles.wideTitle}>
+                  Notificações
+                </Text>
+                <Text style={styles.wideSubtitle}>
+                  Avisos de propostas, mensagens e atualizações em Piripiri
+                </Text>
+              </View>
+            </View>
           </View>
-          <Text accessibilityRole="header" style={styles.emptyTitle}>
-            Sessão necessária
-          </Text>
-          <Text style={[styles.emptyDescription, styles.textCentered]}>
-            Você precisa estar conectado à sua conta do IpêBook para acompanhar notificações e novidades de livros em Piripiri.
-          </Text>
-          <View style={styles.buttonWrapper}>
-            <FilledButton
-              label="Entrar na conta"
-              onPress={guardedLogin}
-            />
+        ) : (
+          <TopAppBar title="Notificações" onBack={guardedBack} />
+        )}
+        <View style={[styles.centered, wide && styles.centeredWide]}>
+          <View style={[styles.emptyCard, wide && styles.emptyCardWide]}>
+            <View style={styles.emptyIconCircle}>
+              <AppIcon name="bell" size={32} color={colors.action} />
+            </View>
+            <Text accessibilityRole="header" style={styles.emptyTitle}>
+              Sessão necessária
+            </Text>
+            <Text style={[styles.emptyDescription, styles.textCentered]}>
+              Você precisa estar conectado à sua conta do IpêBook para acompanhar notificações e novidades de livros em Piripiri.
+            </Text>
+            <View style={styles.buttonWrapper}>
+              <FilledButton
+                label="Entrar na conta"
+                onPress={guardedLogin}
+              />
+            </View>
           </View>
         </View>
       </SafeAreaView>
@@ -118,11 +144,34 @@ export default function Notifications({
 
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar
-        title="Notificações"
-        onBack={guardedBack}
-        contentMaxWidth={wide ? WIDE_CONTENT_MAX_WIDTH : undefined}
-      />
+      {wide ? (
+        <View style={styles.wideHeader}>
+          <View style={styles.wideHeaderLeft}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Voltar"
+              hitSlop={8}
+              onPress={guardedBack}
+              style={withPress(styles.wideBackButton)}
+            >
+              <AppIcon name="back" size={20} color={colors.m3.onSurface} />
+            </Pressable>
+            <View>
+              <Text accessibilityRole="header" style={styles.wideTitle}>
+                Notificações
+              </Text>
+              <Text style={styles.wideSubtitle}>
+                Avisos de propostas, mensagens e atualizações em Piripiri
+              </Text>
+            </View>
+          </View>
+        </View>
+      ) : (
+        <TopAppBar
+          title="Notificações"
+          onBack={guardedBack}
+        />
+      )}
       <View style={[styles.content, wide && styles.contentWide]}>
         {state.systemPermissionGranted === false && !prompt.granted ? (
           <View
@@ -252,37 +301,40 @@ export default function Notifications({
               <OfflineState onRetry={() => void actions.reload()} />
             )
           ) : state.filteredNotifications.length === 0 ? (
-            <View style={styles.emptyState}>
-              <View style={styles.emptyIconCircle}>
-                <AppIcon name="bell" size={36} color={colors.action} />
+            <View style={[styles.emptyState, wide && styles.emptyStateWide]}>
+              <View style={[styles.emptyCard, wide && styles.emptyCardWide]}>
+                <View style={styles.emptyIconCircle}>
+                  <AppIcon name="bell" size={36} color={colors.action} />
+                </View>
+                <Text accessibilityRole="header" style={styles.emptyHeadline}>
+                  {state.filter === "unread" ? "Nenhuma notificação não lida" : "Você está em dia"}
+                </Text>
+                <Text style={styles.emptyDescription}>
+                  {state.filter === "unread"
+                    ? "Você já visualizou todas as suas novidades recentes!"
+                    : "Suas mensagens, propostas e avisos de novos livros em Piripiri aparecerão aqui."}
+                </Text>
+                {state.filter === "unread" && state.notifications.length > 0 ? (
+                  <View style={styles.buttonWrapper}>
+                    <FilledButton
+                      label="Ver todas as notificações"
+                      onPress={() => actions.setFilter("all")}
+                    />
+                  </View>
+                ) : guardedExplore ? (
+                  <View style={styles.buttonWrapper}>
+                    <FilledButton
+                      label="Explorar livros"
+                      onPress={guardedExplore}
+                    />
+                  </View>
+                ) : null}
               </View>
-              <Text accessibilityRole="header" style={styles.emptyHeadline}>
-                {state.filter === "unread" ? "Nenhuma notificação não lida" : "Você está em dia"}
-              </Text>
-              <Text style={styles.emptyDescription}>
-                {state.filter === "unread"
-                  ? "Você já visualizou todas as suas novidades recentes!"
-                  : "Suas mensagens, propostas e avisos de novos livros em Piripiri aparecerão aqui."}
-              </Text>
-              {state.filter === "unread" && state.notifications.length > 0 ? (
-                <View style={styles.buttonWrapper}>
-                  <FilledButton
-                    label="Ver todas as notificações"
-                    onPress={() => actions.setFilter("all")}
-                  />
-                </View>
-              ) : guardedExplore ? (
-                <View style={styles.buttonWrapper}>
-                  <FilledButton
-                    label="Explorar livros"
-                    onPress={guardedExplore}
-                  />
-                </View>
-              ) : null}
             </View>
           ) : (
             <SectionList
               testID="notifications-list"
+              style={styles.flexOne}
               sections={groupNotificationsByPeriod(state.filteredNotifications).map((section) => ({
                 ...section,
                 data: [...section.data],
@@ -434,7 +486,7 @@ const WIDE_CONTENT_MAX_WIDTH = 1200;
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
-    page: { flex: 1, backgroundColor: colors.background },
+    page: { flex: 1, backgroundColor: colors.background, minHeight: 0 },
     sectionHeaderContainer: {
       flexDirection: "row",
       alignItems: "center",
@@ -456,6 +508,7 @@ function createStyles(colors: ColorPalette) {
     },
     content: {
       flex: 1,
+      minHeight: 0,
       width: "100%",
       paddingHorizontal: tokens.spacing[16],
       paddingTop: tokens.spacing[8],
@@ -497,6 +550,9 @@ function createStyles(colors: ColorPalette) {
     permissionBannerAction: { marginTop: tokens.spacing[10], maxWidth: 320 },
     flexOne: { flex: 1, minHeight: 0 },
     contentWide: {
+      flex: 1,
+      minHeight: 0,
+      width: "100%",
       maxWidth: WIDE_CONTENT_MAX_WIDTH,
       alignSelf: "center",
       paddingHorizontal: WEB_GUTTER,
@@ -593,6 +649,38 @@ function createStyles(colors: ColorPalette) {
       color: colors.error,
       fontWeight: tokens.fontWeight.medium,
     },
+    wideHeader: {
+      width: "100%",
+      maxWidth: WIDE_CONTENT_MAX_WIDTH,
+      alignSelf: "center",
+      paddingHorizontal: WEB_GUTTER,
+      paddingTop: tokens.spacing[24],
+      paddingBottom: tokens.spacing[12],
+    },
+    wideHeaderLeft: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[16],
+    },
+    wideBackButton: {
+      width: tokens.spacing[40],
+      height: tokens.spacing[40],
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.m3.surfaceContainerHigh,
+      alignItems: "center",
+      justifyContent: "center",
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+    },
+    wideTitle: {
+      ...tokens.typography.brandLargeTitle,
+      color: colors.brandBrown,
+    },
+    wideSubtitle: {
+      ...tokens.typography.bodyMedium,
+      color: colors.m3.onSurfaceVariant,
+      marginTop: tokens.spacing[2],
+    },
     centered: {
       flex: 1,
       width: "100%",
@@ -602,6 +690,9 @@ function createStyles(colors: ColorPalette) {
       alignItems: "center",
       paddingHorizontal: tokens.spacing[24],
       gap: tokens.spacing[12],
+    },
+    centeredWide: {
+      paddingVertical: tokens.spacing[40],
     },
     emptyState: {
       flex: 1,
@@ -613,6 +704,30 @@ function createStyles(colors: ColorPalette) {
       paddingHorizontal: tokens.spacing[24],
       paddingVertical: tokens.spacing[48],
       gap: tokens.spacing[12],
+    },
+    emptyStateWide: {
+      maxWidth: 680,
+      width: "100%",
+      alignSelf: "center",
+      paddingVertical: tokens.spacing[24],
+    },
+    emptyCard: {
+      width: "100%",
+      alignItems: "center",
+      gap: tokens.spacing[12],
+    },
+    emptyCardWide: {
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderRadius: tokens.radius.card,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+      paddingHorizontal: tokens.spacing[40],
+      paddingVertical: tokens.spacing[48],
+      elevation: 1,
+      shadowColor: colors.m3.shadow,
+      shadowOpacity: 0.1,
+      shadowRadius: 8,
+      shadowOffset: { width: 0, height: 2 },
     },
     emptyIconCircle: {
       width: 72,

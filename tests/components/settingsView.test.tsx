@@ -111,7 +111,7 @@ describe("Configurações — tela dedicada (Spec 073, ADR 0036)", () => {
     const headers = screen.getAllByRole("header");
     const titles = headers.map((h) => h.props.children);
     expect(titles).toContain("Configurações");
-    for (const label of ["Preferências", "Notificações", "Aparência", "Armazenamento e histórico", "Sobre o IpêBook"]) {
+    for (const label of ["Preferências", "Notificações", "Armazenamento e histórico", "Sobre o IpêBook"]) {
       expect(screen.getByLabelText(label).props.accessibilityState.expanded).toBe(false);
     }
 
@@ -126,76 +126,16 @@ describe("Configurações — tela dedicada (Spec 073, ADR 0036)", () => {
     expect(onBack).toHaveBeenCalledTimes(1);
   });
 
-  it("renderiza a seção 'Aparência' com as opções de tema em radiogroup acessível", async () => {
+  it("não mostra a seção de Aparência e opções de tema escuro", async () => {
     mockSession(true);
     mockSettings();
     const { screen } = await renderSettings();
 
-    // Cabeçalho e descrição da seção
     const headers = screen.getAllByRole("header");
     const titles = headers.map((h) => h.props.children);
-    expect(titles).toContain("Aparência");
-    expect(screen.queryByLabelText("Tema Sistema")).toBeNull();
-    await expandSettingsSection(screen, "Aparência");
-    expect(screen.getByText("A preferência escolhida é aplicada imediatamente.")).toBeDefined();
-
-    // Radiogroup acessível
-    const group = screen.getByTestId("theme-toggle-radiogroup");
-    expect(group).toBeDefined();
-    expect(group.props.accessibilityRole).toBe("radiogroup");
-
-    // Opções Sistema, Claro e Escuro com role radio
-    const sistemaOption = screen.getByLabelText("Tema Sistema");
-    const claroOption = screen.getByLabelText("Tema Claro");
-    const escuroOption = screen.getByLabelText("Tema Escuro");
-
-    expect(sistemaOption).toBeDefined();
-    expect(claroOption).toBeDefined();
-    expect(escuroOption).toBeDefined();
-
-    expect(sistemaOption.props.accessibilityRole).toBe("radio");
-    expect(claroOption.props.accessibilityRole).toBe("radio");
-    expect(escuroOption.props.accessibilityRole).toBe("radio");
-
-    // Claro selecionado por padrão no primeiro acesso.
-    expect(sistemaOption.props.accessibilityState.checked).toBe(false);
-    expect(claroOption.props.accessibilityState.checked).toBe(true);
-    expect(escuroOption.props.accessibilityState.checked).toBe(false);
-
-    await expandSettingsSection(screen, "Preferências");
-    expect(screen.getByLabelText("Preferências").props.accessibilityState.expanded).toBe(true);
-    expect(screen.getByLabelText("Aparência").props.accessibilityState.expanded).toBe(false);
-    expect(screen.queryByLabelText("Tema Sistema")).toBeNull();
-  });
-
-  it("alterna a opção de tema ao selecionar Claro ou Escuro", async () => {
-    mockSession(true);
-    mockSettings();
-    const { screen } = await renderSettings();
-    await expandSettingsSection(screen, "Aparência");
-
-    const escuroOption = screen.getByLabelText("Tema Escuro");
-    await act(async () => {
-      fireEvent.press(escuroOption);
-    });
-
-    expect(escuroOption.props.accessibilityState.checked).toBe(true);
-    expect(screen.getByLabelText("Tema Sistema").props.accessibilityState.checked).toBe(false);
-    expect(screen.getByLabelText("Tema Claro").props.accessibilityState.checked).toBe(false);
-  });
-
-  it("não mostra as cores da identidade visual como opções de aparência", async () => {
-    mockSession(true);
-    mockSettings();
-    const { screen } = await renderSettings();
-
-    await expandSettingsSection(screen, "Aparência");
-    expect(screen.queryByTestId("theme-palette-preview")).toBeNull();
-    expect(screen.queryByText("Cores da identidade visual")).toBeNull();
-    expect(screen.queryByText("Flor do Ipê")).toBeNull();
-    expect(screen.queryByText("Âmbar Néctar")).toBeNull();
-    expect(screen.queryByText("Papel de Livro")).toBeNull();
-    expect(screen.queryByText("Verde Folha")).toBeNull();
+    expect(titles).not.toContain("Aparência");
+    expect(screen.queryByLabelText("Aparência")).toBeNull();
+    expect(screen.queryByTestId("theme-toggle-radiogroup")).toBeNull();
   });
 
   it("explica e confirma a remoção da cópia do catálogo", async () => {

@@ -215,7 +215,7 @@ describe("etapa 3 do anúncio — Detalhes (Figma 04.05)", () => {
     expect(screen.getByText("Etapa 3 de 3")).toBeDefined();
     expect(screen.getByLabelText("Conservação Bom estado")).toBeDefined();
     expect(screen.getByLabelText("Conservação Desgastado")).toBeDefined();
-    expect(screen.getByLabelText("Categoria Literatura")).toBeDefined();
+    expect(screen.getByLabelText("Categoria Literatura & Romance")).toBeDefined();
     expect(screen.getByLabelText("Descrição")).toBeDefined();
     // Spec 043 RN-08: um único contador, sem o "Restam n caracteres" repetido.
     expect(screen.getByText("12/280")).toBeDefined();

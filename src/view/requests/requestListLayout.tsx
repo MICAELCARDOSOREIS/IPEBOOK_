@@ -105,7 +105,7 @@ export function RequestListLayout({
 
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar title={title} onBack={guardedBack} contentMaxWidth={wide ? WIDE_CONTENT_MAX_WIDTH : undefined} />
+      {wide ? null : <TopAppBar title={title} onBack={guardedBack} />}
       <View style={[styles.content, wide && styles.contentWide]}>
         {wide ? (
           <Breadcrumb
@@ -191,8 +191,9 @@ export function RequestListLayout({
         ) : (
           <FlatList
             {...standardVerticalScrollProps}
-              key={wide ? `colunas-${listColumns}` : "uma-coluna"}
-              numColumns={wide ? listColumns : 1}
+            style={styles.flexOne}
+            key={wide ? `colunas-${listColumns}` : "uma-coluna"}
+            numColumns={wide ? listColumns : 1}
               columnWrapperStyle={wide ? styles.columns : undefined}
               data={filteredItems}
               keyExtractor={(item) => item.request.id}
@@ -227,7 +228,7 @@ export function RequestListLayout({
                     </Pressable>
                   </View>
                 ) : (
-                  <View style={styles.emptyBox}>
+                  <View style={[styles.emptyBox, wide && styles.emptyBoxWide]}>
                     <IconBadge icon="swap" tone="neutral" size="large" />
                     <Text accessibilityRole="header" style={styles.emptyTitle}>
                       Nenhuma proposta ainda
@@ -435,7 +436,8 @@ export function createRequestStyles(colors: ColorPalette) {
 function createStyles(colors: ColorPalette) {
   const requestStyles = createRequestStyles(colors);
   return StyleSheet.create({
-  page: { flex: 1, backgroundColor: colors.background },
+  page: { flex: 1, backgroundColor: colors.background, minHeight: 0 },
+  flexOne: { flex: 1, minHeight: 0 },
   snackbarContainer: {
     position: "absolute",
     left: tokens.spacing[16],
@@ -446,6 +448,7 @@ function createStyles(colors: ColorPalette) {
   },
   content: {
     flex: 1,
+    minHeight: 0,
     width: "100%",
     padding: tokens.spacing[24],
     paddingTop: tokens.spacing[16],
@@ -454,6 +457,7 @@ function createStyles(colors: ColorPalette) {
     maxWidth: WIDE_CONTENT_MAX_WIDTH,
     alignSelf: "center",
     paddingHorizontal: WEB_GUTTER,
+    minHeight: 0,
   },
   columns: { gap: tokens.spacing[16] },
   itemWide: { flex: 1, padding: tokens.spacing[20] },
@@ -572,6 +576,22 @@ function createStyles(colors: ColorPalette) {
     alignItems: "center",
     padding: tokens.spacing[24],
     gap: tokens.spacing[12],
+  },
+  emptyBoxWide: {
+    backgroundColor: colors.m3.surfaceContainerLow,
+    borderRadius: tokens.radius.card,
+    borderWidth: 1,
+    borderColor: colors.m3.outlineVariant,
+    padding: tokens.spacing[40],
+    maxWidth: 640,
+    width: "100%",
+    alignSelf: "center",
+    marginTop: tokens.spacing[24],
+    elevation: 1,
+    shadowColor: colors.m3.shadow,
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
   },
   emptyTitle: {
     ...tokens.typography.titleMedium,

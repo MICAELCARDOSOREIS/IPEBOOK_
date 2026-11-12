@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { DEFAULT_SEARCH_FILTERS, type SearchFilters, type SearchSortOption } from "@/viewmodel/searchFilters";
+import { DEFAULT_SEARCH_FILTERS, SORT_IDS, type SearchFilters, type SearchSortOption } from "@/viewmodel/searchFilters";
 
 export const SEARCH_FILTERS_STORAGE_KEY = "@ipebook:search_filters";
 
@@ -33,9 +33,12 @@ export function usePersistedSearchFilters(): UsePersistedSearchFiltersResult {
         const stored = await AsyncStorage.getItem(SEARCH_FILTERS_STORAGE_KEY);
         if (isMounted && stored) {
           const parsed = JSON.parse(stored) as Partial<PersistedSearchFilters>;
+          const rawSort = parsed.sortBy;
+          const validSort =
+            rawSort && SORT_IDS.includes(rawSort) ? rawSort : "recent";
           setPersisted({
             filters: { ...DEFAULT_SEARCH_FILTERS, ...(parsed.filters ?? {}) },
-            sortBy: parsed.sortBy ?? "recent",
+            sortBy: validSort,
           });
         }
       } catch {

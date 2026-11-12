@@ -261,9 +261,6 @@ export function ScheduleMeetingWideLayout({
                   {hasMap ? (
                     <MeetingMap selectedName={pointName} compactPadding onSelect={onSelectFromMap} />
                   ) : (
-                    <StaticMeetingMap selectedName={pointName} compactPadding />
-                  )}
-                  {!hasMap && !process.env.EXPO_PUBLIC_MAPBOX_TOKEN ? (
                     <View style={styles.wideMapEmptyFallback}>
                       <AppIcon name="place" size={32} color={colors.m3.primary} />
                       <Text style={styles.wideMapEmptyFallbackTitle}>4 Pontos Seguros em Piripiri</Text>
@@ -271,7 +268,7 @@ export function ScheduleMeetingWideLayout({
                         Praça da Bandeira, Praça de Eventos, Museu de Perypery e Campus IFPI.
                       </Text>
                     </View>
-                  ) : null}
+                  )}
                 </View>
 
                 <View style={styles.wideMapCardFooter}>

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { Book } from "@/model/entities/book";
+import { BOOK_CATEGORIES, type Book } from "@/model/entities/book";
 import type { IBookUseCases } from "@/usecase/iBookUseCases";
 import type { ISearchHistoryUseCases } from "@/usecase/iSearchHistoryUseCases";
 import { useHomeViewModel } from "@/viewmodel/useHomeViewModel";
@@ -100,14 +100,8 @@ export function useSearchViewModel(
   useEffect(() => { void history.listTerms(userId).then(setTerms); }, [userId, history]);
 
   const availableCategories = useMemo(() => {
-    const set = new Set<string>();
-    for (const b of homeState.books) {
-      if (b.category?.trim()) {
-        set.add(b.category.trim());
-      }
-    }
-    return Array.from(set).sort((a, b) => a.localeCompare(b, "pt-BR"));
-  }, [homeState.books]);
+    return [...BOOK_CATEGORIES];
+  }, []);
 
   const filteredBooks = useMemo(
     () => sortBooks(filterBooks(homeState.books, { term, filters, neighborhood }), sortBy, neighborhood),

@@ -23,6 +23,8 @@ import { Avatar } from "@/view/components/Avatar";
 import { AppIcon } from "@/view/components/AppIcon";
 import { NegotiationRatingModal } from "@/view/requests/NegotiationRatingModal";
 import { FilledButton } from "@/view/components/FilledButton";
+import { TextButton } from "@/view/components/TextButton";
+import { Dialog } from "@/view/components/Dialog";
 import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
@@ -86,6 +88,8 @@ export function RequestDetail({
 
   const delivery = makeDeliveryStatus(requestId, sessionUserId, (focusKey ?? 0) + refreshCount);
   const [ratingModalVisible, setRatingModalVisible] = useState(false);
+  const [cancellingRequest, setCancellingRequest] = useState(false);
+  const [confirmCancelOpen, setConfirmCancelOpen] = useState(false);
   // Web larga: coluna mais larga; livro e encontro de um lado, entrega e pessoa do outro.
   const wide = useIsWideWeb();
   // Concluída pela entrega por QR (Spec 095); a avaliação sozinha vale para negociações anteriores.
@@ -323,12 +327,118 @@ export function RequestDetail({
                   <Text style={styles.chatButtonText}>Conversar</Text>
                 </Pressable>
               </View>
+
+              {/* Informações de apoio e próximos passos durante a espera de resposta */}
+              {awaitingAnswer ? (
+                <>
+                  <View style={styles.infoCard}>
+                    <View style={styles.cardHeaderRow}>
+                      <IconBadge icon="info" tone="neutral" />
+                      <Text accessibilityRole="header" style={styles.sectionHeader}>
+                        Como funciona o processo
+                      </Text>
+                    </View>
+                    <View style={styles.stepsList}>
+                      <View style={styles.stepItem}>
+                        <View style={styles.stepBullet}>
+                          <Text style={styles.stepNumber}>1</Text>
+                        </View>
+                        <View style={styles.stepContent}>
+                          <Text style={styles.stepTitle}>Notificação enviada</Text>
+                          <Text style={styles.stepDesc}>
+                            Quem anunciou recebeu sua proposta e responderá em breve.
+                          </Text>
+                        </View>
+                      </View>
+                      <View style={styles.stepItem}>
+                        <View style={styles.stepBullet}>
+                          <Text style={styles.stepNumber}>2</Text>
+                        </View>
+                        <View style={styles.stepContent}>
+                          <Text style={styles.stepTitle}>Combinar encontro</Text>
+                          <Text style={styles.stepDesc}>
+                            Com a proposta aceita, vocês escolhem juntos um local e horário aqui no app.
+                          </Text>
+                        </View>
+                      </View>
+                      <View style={styles.stepItem}>
+                        <View style={styles.stepBullet}>
+                          <Text style={styles.stepNumber}>3</Text>
+                        </View>
+                        <View style={styles.stepContent}>
+                          <Text style={styles.stepTitle}>Entrega presencial e segura</Text>
+                          <Text style={styles.stepDesc}>
+                            No encontro público em Piripiri, a entrega é confirmada via leitura de QR Code.
+                          </Text>
+                        </View>
+                      </View>
+                    </View>
+                  </View>
+
+                  {detail.safeMeetingPoints && detail.safeMeetingPoints.length > 0 ? (
+                    <View style={styles.infoCard}>
+                      <View style={styles.cardHeaderRow}>
+                        <IconBadge icon="place" tone="neutral" />
+                        <Text accessibilityRole="header" style={styles.sectionHeader}>
+                          Locais sugeridos para entrega
+                        </Text>
+                      </View>
+                      <Text style={styles.bodyText}>
+                        Ao combinarem o encontro, recomendamos priorizar locais públicos e movimentados:
+                      </Text>
+                      <View style={styles.pointsList}>
+                        {detail.safeMeetingPoints.map((point) => (
+                          <View key={point.name} style={styles.pointRow}>
+                            <AppIcon name="place" size={16} color={colors.action} />
+                            <View style={styles.pointTextContainer}>
+                              <Text style={styles.pointName}>{point.name}</Text>
+                              <Text style={styles.pointAddress}>{point.address}</Text>
+                            </View>
+                          </View>
+                        ))}
+                      </View>
+                    </View>
+                  ) : null}
+
+                  {!detail.isOwner && actions.cancelRequest ? (
+                    <View style={styles.cancelRequestRow}>
+                      <TextButton
+                        label="Desistir deste pedido"
+                        tone="danger"
+                        accessibilityLabel="Desistir deste pedido"
+                        onPress={() => setConfirmCancelOpen(true)}
+                      />
+                    </View>
+                  ) : null}
+                </>
+              ) : null}
               </View>
               </View>
             </View>
           ) : null}
         </View>
       </ScrollView>
+
+      <Dialog
+        visible={confirmCancelOpen}
+        title="Desistir do pedido?"
+        message="Se desistir agora, o pedido será cancelado e quem anunciou será informado."
+        confirmLabel="Sim, desistir"
+        cancelLabel="Voltar"
+        destructive
+        loading={cancellingRequest}
+        onConfirm={async () => {
+          if (!actions.cancelRequest) return;
+          setCancellingRequest(true);
+          try {
+            await actions.cancelRequest();
+            setConfirmCancelOpen(false);
+          } finally {
+            setCancellingRequest(false);
+          }
+        }}
+        onCancel={() => setConfirmCancelOpen(false)}
+      />
 
       {detail ? (
         <NegotiationRatingModal
@@ -426,7 +536,7 @@ function createStyles(colors: ColorPalette) {
       backgroundColor: colors.m3.surfaceContainerHigh,
     },
     yourTurnText: { flex: 1, ...tokens.typography.bodyMedium, color: colors.actionDeep },
-  page: { flex: 1, backgroundColor: colors.background },
+  page: { flex: 1, minHeight: 0, backgroundColor: colors.background },
   scroll: { flexGrow: 1, paddingBottom: tokens.spacing[48] },
   content: {
     flex: 1,
@@ -580,6 +690,78 @@ function createStyles(colors: ColorPalette) {
     ...tokens.typography.labelMedium,
     fontWeight: tokens.fontWeight.semiBold,
     color: colors.m3.onSecondaryContainer,
+  },
+  infoCard: {
+    backgroundColor: colors.surface,
+    padding: tokens.spacing[16],
+    borderRadius: tokens.radius.medium,
+    borderWidth: 1,
+    borderColor: colors.m3.outlineVariant,
+    gap: tokens.spacing[12],
+  },
+  stepsList: {
+    gap: tokens.spacing[12],
+    marginTop: tokens.spacing[4],
+  },
+  stepItem: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: tokens.spacing[12],
+  },
+  stepBullet: {
+    width: 24,
+    height: 24,
+    borderRadius: tokens.radius.full,
+    backgroundColor: colors.m3.surfaceContainerHigh,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 2,
+  },
+  stepNumber: {
+    ...tokens.typography.labelSmall,
+    fontWeight: tokens.fontWeight.bold,
+    color: colors.action,
+  },
+  stepContent: {
+    flex: 1,
+    gap: tokens.spacing[2],
+  },
+  stepTitle: {
+    ...tokens.typography.bodyMedium,
+    fontWeight: tokens.fontWeight.semiBold,
+    color: colors.text,
+  },
+  stepDesc: {
+    ...tokens.typography.footnote,
+    color: colors.secondaryText,
+    lineHeight: 18,
+  },
+  pointsList: {
+    gap: tokens.spacing[10],
+    marginTop: tokens.spacing[6],
+  },
+  pointRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: tokens.spacing[8],
+    paddingVertical: tokens.spacing[4],
+  },
+  pointTextContainer: {
+    flex: 1,
+    gap: tokens.spacing[2],
+  },
+  pointName: {
+    ...tokens.typography.bodyMedium,
+    fontWeight: tokens.fontWeight.semiBold,
+    color: colors.text,
+  },
+  pointAddress: {
+    ...tokens.typography.footnote,
+    color: colors.secondaryText,
+  },
+  cancelRequestRow: {
+    alignItems: "center",
+    paddingVertical: tokens.spacing[8],
   },
   });
 }

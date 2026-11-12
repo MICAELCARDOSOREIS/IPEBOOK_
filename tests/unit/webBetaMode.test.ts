@@ -20,4 +20,9 @@ describe("webBetaRedirect (Spec 108, site só com o convite do beta)", () => {
     expect(webBetaRedirect("/anunciar", false)).toBeNull();
     expect(webBetaRedirect("/entrar", false)).toBeNull();
   });
+
+  it("usa o valor padrão de enabled (WEB_BETA_ONLY)", () => {
+    expect(webBetaRedirect("/")).toBeNull();
+    expect(webBetaRedirect("/pesquisa")).toBeNull();
+  });
 });

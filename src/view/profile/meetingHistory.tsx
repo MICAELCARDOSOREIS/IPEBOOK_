@@ -45,7 +45,32 @@ export default function MeetingHistory({ onBack, onNavigateToNegotiation }: Meet
 
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar contentMaxWidth={wide ? WIDE_CONTENT_MAX_WIDTH : undefined} title="Histórico de encontros" onBack={guardedBack} />
+      {wide ? (
+        <View style={styles.wideHeader}>
+          <View style={styles.wideHeaderLeft}>
+            {onBack ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Voltar"
+                onPress={guardedBack}
+                style={withPress(styles.wideBackButton)}
+              >
+                <AppIcon name="back" size={20} color={colors.m3.onSurface} />
+              </Pressable>
+            ) : null}
+            <View>
+              <Text accessibilityRole="header" style={styles.wideTitle}>
+                Histórico de encontros
+              </Text>
+              <Text style={styles.wideSubtitle}>
+                Encontros nos 4 pontos seguros de Piripiri
+              </Text>
+            </View>
+          </View>
+        </View>
+      ) : (
+        <TopAppBar contentMaxWidth={undefined} title="Histórico de encontros" onBack={guardedBack} />
+      )}
       {state.loading ? (
         <View style={[styles.content, wide && styles.contentWide]}>
           <LoadingState label="Carregando encontros…" />
@@ -56,7 +81,7 @@ export default function MeetingHistory({ onBack, onNavigateToNegotiation }: Meet
         </View>
       ) : state.meetings.length === 0 ? (
         <View style={[styles.content, wide && styles.contentWide]}>
-          <View style={styles.emptyContainer}>
+          <View style={[styles.emptyContainer, wide && styles.emptyWide]}>
             <AppIcon name="calendar" size={48} color={colors.m3.onSurfaceVariant} />
             <Text style={styles.emptyTitle}>Nenhum encontro registrado</Text>
             <Text style={styles.emptyText}>
@@ -66,13 +91,16 @@ export default function MeetingHistory({ onBack, onNavigateToNegotiation }: Meet
         </View>
       ) : (
         <FlatList
+          key={wide ? "grid-meetings-2" : "list-meetings-1"}
+          numColumns={wide ? 2 : 1}
+          columnWrapperStyle={wide ? styles.gridRow : undefined}
           data={state.meetings}
           keyExtractor={(item) => item.id}
           {...standardVerticalScrollProps}
+          style={styles.flexOne}
           contentContainerStyle={[
             styles.content,
             wide && styles.contentWide,
-            wide && styles.listWide,
             { paddingBottom: scrollBottomPadding.withoutBottomBar },
           ]}
           ListHeaderComponent={
@@ -80,7 +108,7 @@ export default function MeetingHistory({ onBack, onNavigateToNegotiation }: Meet
               {state.meetings.length} {state.meetings.length === 1 ? "encontro registrado" : "encontros registrados"} nos pontos públicos de Piripiri
             </Text>
           }
-          ItemSeparatorComponent={() => <View style={{ height: tokens.spacing[12] }} />}
+          ItemSeparatorComponent={() => <View style={{ height: tokens.spacing[16] }} />}
           renderItem={({ item: meeting }) => {
             const point = PIRIPIRI_MEETING_POINTS.find((p) => p.name === meeting.pointName);
             const statusInfo = getStatusLabel(meeting);
@@ -146,7 +174,40 @@ const WIDE_CONTENT_MAX_WIDTH = WEB_MAX_WIDTH;
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
-    page: { flex: 1, backgroundColor: colors.background },
+    page: { flex: 1, backgroundColor: colors.background, minHeight: 0 },
+    flexOne: { flex: 1, minHeight: 0 },
+    wideHeader: {
+      width: "100%",
+      maxWidth: WIDE_CONTENT_MAX_WIDTH,
+      alignSelf: "center",
+      paddingHorizontal: WEB_GUTTER,
+      paddingTop: tokens.spacing[24],
+      paddingBottom: tokens.spacing[12],
+    },
+    wideHeaderLeft: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[16],
+    },
+    wideBackButton: {
+      width: tokens.spacing[40],
+      height: tokens.spacing[40],
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.m3.surfaceContainerHigh,
+      alignItems: "center",
+      justifyContent: "center",
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+    },
+    wideTitle: {
+      ...tokens.typography.brandLargeTitle,
+      color: colors.brandBrown,
+    },
+    wideSubtitle: {
+      ...tokens.typography.bodyMedium,
+      color: colors.m3.onSurfaceVariant,
+      marginTop: tokens.spacing[2],
+    },
     content: {
       width: "100%",
       padding: tokens.spacing[16],
@@ -158,6 +219,17 @@ function createStyles(colors: ColorPalette) {
       paddingVertical: tokens.spacing[48],
       paddingHorizontal: tokens.spacing[24],
       gap: tokens.spacing[12],
+    },
+    emptyWide: {
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderRadius: tokens.radius.card,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+      padding: tokens.spacing[40],
+      maxWidth: 640,
+      width: "100%",
+      alignSelf: "center",
+      marginTop: tokens.spacing[16],
     },
     emptyTitle: {
       ...tokens.typography.titleMedium,
@@ -176,9 +248,9 @@ function createStyles(colors: ColorPalette) {
       gap: tokens.spacing[12],
     },
     contentWide: { maxWidth: WIDE_CONTENT_MAX_WIDTH, alignSelf: "center", paddingHorizontal: WEB_GUTTER },
-    listWide: { flexDirection: "row", flexWrap: "wrap" },
+    gridRow: { gap: tokens.spacing[16] },
     fullRow: { width: "100%" },
-    cardWide: { flexBasis: "48%", flexGrow: 0 },
+    cardWide: { flex: 1 },
     summaryText: {
       ...tokens.typography.labelMedium,
       fontFamily: fontFamily.medium,

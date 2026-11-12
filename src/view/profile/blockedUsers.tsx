@@ -47,7 +47,30 @@ export function BlockedUsers({ onBack }: BlockedUsersProps) {
 
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar contentMaxWidth={wide ? WIDE_CONTENT_MAX_WIDTH : undefined} title="Pessoas bloqueadas" onBack={guardedBack} />
+      {wide ? (
+        <View style={styles.wideHeader}>
+          <View style={styles.wideHeaderLeft}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Voltar"
+              onPress={guardedBack}
+              style={withPress(styles.wideBackButton)}
+            >
+              <AppIcon name="back" size={20} color={colors.m3.onSurface} />
+            </Pressable>
+            <View>
+              <Text accessibilityRole="header" style={styles.wideTitle}>
+                Pessoas bloqueadas
+              </Text>
+              <Text style={styles.wideSubtitle}>
+                Gerencie os perfis que não podem interagir com você
+              </Text>
+            </View>
+          </View>
+        </View>
+      ) : (
+        <TopAppBar contentMaxWidth={undefined} title="Pessoas bloqueadas" onBack={guardedBack} />
+      )}
       {state.loading ? (
         <View style={[styles.content, wide && styles.contentWide]}>
           <Text style={styles.introText}>
@@ -64,10 +87,7 @@ export function BlockedUsers({ onBack }: BlockedUsersProps) {
         </View>
       ) : state.blockedUsers.length === 0 ? (
         <View style={[styles.content, wide && styles.contentWide]}>
-          <Text style={styles.introText}>
-            Pessoas bloqueadas não podem visualizar seus anúncios, enviar propostas de livros nem combinar encontros com você em Piripiri.
-          </Text>
-          <View style={styles.emptyContainer}>
+          <View style={[styles.emptyContainer, wide && styles.emptyWide]}>
             <View style={styles.emptyIconCircle}>
               <AppIcon name="lock" size={32} color={colors.secondaryText} />
             </View>
@@ -77,17 +97,23 @@ export function BlockedUsers({ onBack }: BlockedUsersProps) {
             <Text style={styles.emptySubtitle}>
               Você não possui pessoas bloqueadas no momento.
             </Text>
+            <Text style={styles.introTextCard}>
+              Pessoas bloqueadas não podem visualizar seus anúncios, enviar propostas de livros nem combinar encontros com você em Piripiri.
+            </Text>
           </View>
         </View>
       ) : (
         <FlatList
+          key={wide ? "grid-blocked-2" : "list-blocked-1"}
+          numColumns={wide ? 2 : 1}
+          columnWrapperStyle={wide ? styles.gridRow : undefined}
           data={state.blockedUsers}
           keyExtractor={(item) => item.userId}
           {...standardVerticalScrollProps}
+          style={styles.flexOne}
           contentContainerStyle={[
             styles.content,
             wide && styles.contentWide,
-            wide && styles.listWide,
             { paddingBottom: scrollBottomPadding.withoutBottomBar },
           ]}
           ListHeaderComponent={
@@ -95,7 +121,7 @@ export function BlockedUsers({ onBack }: BlockedUsersProps) {
               Pessoas bloqueadas não podem visualizar seus anúncios, enviar propostas de livros nem combinar encontros com você em Piripiri.
             </Text>
           }
-          ItemSeparatorComponent={() => <View style={{ height: tokens.spacing[12] }} />}
+          ItemSeparatorComponent={() => <View style={{ height: tokens.spacing[16] }} />}
           renderItem={({ item }) => (
             <View style={[styles.card, wide && styles.cardWide]}>
               <View style={styles.userRow}>
@@ -151,6 +177,43 @@ function createStyles(colors: ColorPalette) {
     page: {
       flex: 1,
       backgroundColor: colors.background,
+      minHeight: 0,
+    },
+    flexOne: {
+      flex: 1,
+      minHeight: 0,
+    },
+    wideHeader: {
+      width: "100%",
+      maxWidth: WIDE_CONTENT_MAX_WIDTH,
+      alignSelf: "center",
+      paddingHorizontal: WEB_GUTTER,
+      paddingTop: tokens.spacing[24],
+      paddingBottom: tokens.spacing[12],
+    },
+    wideHeaderLeft: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[16],
+    },
+    wideBackButton: {
+      width: tokens.spacing[40],
+      height: tokens.spacing[40],
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.m3.surfaceContainerHigh,
+      alignItems: "center",
+      justifyContent: "center",
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+    },
+    wideTitle: {
+      ...tokens.typography.brandLargeTitle,
+      color: colors.brandBrown,
+    },
+    wideSubtitle: {
+      ...tokens.typography.bodyMedium,
+      color: colors.m3.onSurfaceVariant,
+      marginTop: tokens.spacing[2],
     },
     scroll: {
       flexGrow: 1,
@@ -174,6 +237,24 @@ function createStyles(colors: ColorPalette) {
       alignItems: "center",
       justifyContent: "center",
       gap: tokens.spacing[8],
+    },
+    emptyWide: {
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderRadius: tokens.radius.card,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+      padding: tokens.spacing[40],
+      maxWidth: 640,
+      width: "100%",
+      alignSelf: "center",
+      marginTop: tokens.spacing[16],
+    },
+    introTextCard: {
+      ...tokens.typography.bodyMedium,
+      color: colors.secondaryText,
+      textAlign: "center",
+      maxWidth: 480,
+      marginTop: tokens.spacing[8],
     },
     emptyIconCircle: {
       width: 64,
@@ -201,8 +282,8 @@ function createStyles(colors: ColorPalette) {
       gap: tokens.spacing[12],
     },
     contentWide: { maxWidth: WIDE_CONTENT_MAX_WIDTH, alignSelf: "center", paddingHorizontal: WEB_GUTTER },
-    listWide: { flexDirection: "row", flexWrap: "wrap" },
-    cardWide: { flexBasis: "48%", flexGrow: 0 },
+    gridRow: { gap: tokens.spacing[16] },
+    cardWide: { flex: 1 },
     card: {
       backgroundColor: colors.surface,
       borderRadius: tokens.radius.medium,

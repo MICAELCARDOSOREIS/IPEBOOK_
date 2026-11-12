@@ -57,7 +57,7 @@ describe("CreateListingStep1 — avisos do ISBN e fotos da etapa 2", () => {
     expect(onSetPhotoUrl).toHaveBeenCalledWith("");
     await act(async () => { fireEvent.press(screen.getByLabelText("Remover lombada")); });
     expect(onRemovePhoto).toHaveBeenCalledWith(0);
-    await act(async () => { fireEvent.press(screen.getByLabelText("Remover páginas")); });
+    await act(async () => { fireEvent.press(screen.getByLabelText("Remover verso")); });
     expect(onRemovePhoto).toHaveBeenCalledWith(1);
   });
 });

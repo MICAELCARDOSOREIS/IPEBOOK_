@@ -90,6 +90,8 @@ const fluentCoverage: Partial<Record<AppIconName, FluentIconName>> = {
   home: "home",
   search: "search",
   person: "person",
+  swap: "swap",
+  bookmark: "bookmark",
 };
 
 export interface AppIconProps {

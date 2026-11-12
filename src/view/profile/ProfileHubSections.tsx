@@ -151,7 +151,7 @@ export function ProfileIdentityCard({
             pressed && styles.editProfileButtonPressed,
           ]}
         >
-          <AppIcon name="edit" size={18} color={colors.ipe.onContainer} />
+          <AppIcon name="edit" size={18} color={colors.m3.primary} />
           <Text style={styles.editProfileButtonText}>Editar perfil</Text>
         </Pressable>
 
@@ -412,23 +412,25 @@ function createStyles(colors: ColorPalette) {
       gap: tokens.spacing[8],
       flex: 1,
       minHeight: tokens.accessibility.touchTarget,
-      backgroundColor: colors.ipe.bloom,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
       borderRadius: tokens.radius.full,
       paddingHorizontal: tokens.spacing[16],
     },
     editProfileButtonPressed: {
       borderRadius: tokens.shapeMorph.buttonPressed,
-      backgroundColor: colors.ipe.bloomDeep,
+      backgroundColor: colors.m3.surfaceContainerHigh,
       transform: [{ scale: 0.98 }],
     },
     editProfileButtonDark: {
-      backgroundColor: colors.ipe.container,
+      backgroundColor: colors.m3.surfaceContainerLow,
       borderWidth: 1,
-      borderColor: colors.ipe.bloom,
+      borderColor: colors.m3.outlineVariant,
     },
     editProfileButtonText: {
       ...tokens.typography.labelLarge,
-      color: colors.ipe.onContainer,
+      color: colors.m3.primary,
       fontWeight: tokens.fontWeight.semiBold,
     },
     primaryActions: {

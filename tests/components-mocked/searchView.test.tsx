@@ -194,6 +194,21 @@ describe("Search (spec 006, US3/T019, Spec 028, Issue #93)", () => {
     expect(screen.getByText("Nenhum livro no Centro com essa busca.")).toBeDefined();
     expect(screen.getByText("Há 3 livros em outros bairros de Piripiri.")).toBeDefined();
     expect(screen.getByLabelText("Ver em toda Piripiri")).toBeDefined();
+    expect(screen.getByLabelText("Limpar filtros e buscar novamente")).toBeDefined();
+  });
+
+  it("não exibe 'Limpar filtros' duplicado quando apenas o local restringe a busca", async () => {
+    setup([], "", { matchesInOtherNeighborhoods: 5 });
+    const screen = await renderSearch({ currentNeighborhood: "Campus IFPI Piripiri" });
+    expect(screen.getByText("Nenhum livro no Campus IFPI Piripiri com essa busca.")).toBeDefined();
+    expect(screen.getByLabelText("Ver em toda Piripiri")).toBeDefined();
+    expect(screen.queryByLabelText("Limpar filtros e buscar novamente")).toBeNull();
+  });
+
+  it("usa a preposição correta 'na' para locais femininos como Praça da Bandeira", async () => {
+    setup([], "", { matchesInOtherNeighborhoods: 2 });
+    const screen = await renderSearch({ currentNeighborhood: "Praça da Bandeira" });
+    expect(screen.getByText("Nenhum livro na Praça da Bandeira com essa busca.")).toBeDefined();
   });
 
   it("não sugere outros bairros quando nenhum livro existe fora do bairro (Spec 091)", async () => {

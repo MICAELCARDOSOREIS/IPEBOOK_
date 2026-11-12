@@ -372,7 +372,7 @@ export default function DeliveryScreen({ requestId, onBack, onRequireSignIn }: D
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
-    page: { flex: 1, backgroundColor: colors.surface },
+    page: { flex: 1, minHeight: 0, backgroundColor: colors.surface },
     loadingContainer: {
       width: "100%",
       maxWidth: 560,

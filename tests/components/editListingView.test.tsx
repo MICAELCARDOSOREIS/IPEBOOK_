@@ -207,12 +207,12 @@ describe("Spec 030 — edição alinhada ao Figma 04.09", () => {
     await act(async () => {
       fireEvent.press(screen.getByLabelText("Conservação Desgastado"));
       fireEvent.press(screen.getByLabelText("Ponto de encontro Praça da Bandeira"));
-      fireEvent.press(screen.getByLabelText("Categoria Infantil"));
+      fireEvent.press(screen.getByLabelText("Categoria Infantil & Quadrinhos"));
     });
 
     expect(actions.setCondition).toHaveBeenCalledWith("worn");
     expect(actions.setNeighborhood).toHaveBeenCalledWith("Praça da Bandeira");
-    expect(actions.setCategory).toHaveBeenCalledWith("Infantil");
+    expect(actions.setCategory).toHaveBeenCalledWith("Infantil & Quadrinhos");
   });
 
   it("mostra a mensagem de sucesso depois de salvar", async () => {

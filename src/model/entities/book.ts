@@ -16,6 +16,23 @@ export const BOOK_CONDITION_LABELS: Readonly<Record<BookCondition, string>> = {
 /** Limite da descrição, igual ao contador mostrado na etapa de detalhes do Figma. */
 export const MAX_BOOK_DESCRIPTION_LENGTH = 280;
 
+/**
+ * Categorias canônicas de livros para o catálogo, publicação e filtros do IpêBook (ADR 0109).
+ * Organizadas em 6 macro-áreas de alta circulação em Piripiri (ensino básico/concursos,
+ * ensino superior/técnico, literatura/romance, infantil/quadrinhos, desenvolvimento/espiritualidade e outros),
+ * evitando sobrecarga cognitiva e listas verticais extensas nos filtros.
+ */
+export const BOOK_CATEGORIES = [
+  "Didáticos & Concursos",
+  "Universitário & Técnico",
+  "Literatura & Romance",
+  "Infantil & Quadrinhos",
+  "Desenvolvimento & Espiritualidade",
+  "Outros",
+] as const;
+
+export type BookCategory = (typeof BOOK_CATEGORIES)[number];
+
 /** Limites dos dados da edição vindos do ISBN (Spec 097); a sinopse é do livro, não escrita pela pessoa. */
 export const MAX_BOOK_SYNOPSIS_LENGTH = 2000;
 export const MAX_BOOK_PUBLISHER_LENGTH = 120;

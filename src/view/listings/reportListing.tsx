@@ -148,6 +148,11 @@ export default function ReportListing({
                     <Text style={[styles.reasonLabel, isSelected && styles.reasonLabelSelected]}>
                       {option.label}
                     </Text>
+                    {option.description ? (
+                      <Text style={styles.reasonDescription}>
+                        {option.description}
+                      </Text>
+                    ) : null}
                   </View>
                 </Pressable>
               );
@@ -199,7 +204,7 @@ export default function ReportListing({
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
-  page: { flex: 1, backgroundColor: colors.background },
+  page: { flex: 1, minHeight: 0, backgroundColor: colors.background },
   contentWide: {
     maxWidth: WEB_MAX_WIDTH,
     alignSelf: "center",
@@ -292,6 +297,11 @@ function createStyles(colors: ColorPalette) {
   },
   reasonLabelSelected: {
     color: colors.action,
+  },
+  reasonDescription: {
+    ...tokens.typography.footnote,
+    color: colors.secondaryText,
+    lineHeight: tokens.lineHeight[18],
   },
   field: {
     gap: tokens.spacing[6],

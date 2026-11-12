@@ -223,4 +223,21 @@ describe("Spec 110 — Ações Interativas de Reserva no Detalhe do Livro", () =
     });
     expect(onClose).toHaveBeenCalled();
   });
+
+  it("aplica as cores da modalidade de venda ao botão 'Reservado'", async () => {
+    const book = sampleBook({ ownerId: "owner-1", status: "reserved", modality: "sale" });
+    const user = { id: "third-party", email: "third@example.com" } as AuthState["user"];
+    setupDetail(book, user);
+
+    const screen = await renderComponent(
+      <BookDetail bookId="b1" onBack={vi.fn()} />,
+    );
+
+    const reservedButton = screen.getByLabelText("Livro reservado. Toque para saber mais e entrar na lista de espera");
+    expect(reservedButton).toBeDefined();
+    const reservedText = screen.getByText("Reservado");
+    expect(reservedText).toBeDefined();
+    const flattenedStyle = Object.assign({}, ...[].concat(reservedButton.props.style as any));
+    expect(flattenedStyle.backgroundColor).toBe("#EBF4EC");
+  });
 });

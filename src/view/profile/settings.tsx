@@ -7,7 +7,6 @@ import { supportMailtoUrl, SUPPORT_EMAIL } from "@/view/supportContact";
 import { INSTAGRAM_HANDLE, INSTAGRAM_URL } from "@/view/instagram";
 import { InstagramIcon } from "@/view/components/InstagramIcon";
 import { TopAppBar } from "@/view/components/TopAppBar";
-import { ThemePreferenceSelector } from "@/view/components/ThemePreferenceSelector";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
 import { Avatar } from "@/view/components/Avatar";
@@ -60,7 +59,7 @@ type LinkItem = {
   onPress?: () => void;
 };
 
-type SettingsSectionKey = "account" | "preferences" | "notifications" | "appearance" | "device" | "about";
+type SettingsSectionKey = "account" | "preferences" | "notifications" | "device" | "about";
 
 /**
  * Tela de configurações do aplicativo (Spec 073, ADR 0058 e ADR 0060).
@@ -240,7 +239,6 @@ export function Settings({
     ...(accountLinks.length > 0 ? [{ key: "account", label: "Conta e dados", icon: "person" as const }] : []),
     { key: "preferences", label: "Preferências", icon: "place" as const },
     ...(hasAccount ? [{ key: "notifications", label: "Notificações", icon: "bell" as const }] : []),
-    { key: "appearance", label: "Aparência", icon: "visibility" as const },
     { key: "device", label: "Armazenamento e histórico", icon: "document" as const },
     { key: "about", label: "Sobre o IpêBook", icon: "info" as const },
   ];
@@ -344,7 +342,30 @@ export function Settings({
 
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar title="Configurações" onBack={guardedBack} contentMaxWidth={wide ? WIDE_CONTENT_MAX_WIDTH : undefined} />
+      {wide ? (
+        <View style={styles.wideTopHeader}>
+          <View style={styles.wideTopHeaderLeft}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Voltar"
+              onPress={guardedBack}
+              style={withPress(styles.wideBackButton)}
+            >
+              <AppIcon name="back" size={20} color={colors.m3.onSurface} />
+            </Pressable>
+            <View>
+              <Text accessibilityRole="header" style={styles.wideTitle}>
+                Configurações
+              </Text>
+              <Text style={styles.wideSubtitle}>
+                Preferências de uso, notificações, privacidade e conta
+              </Text>
+            </View>
+          </View>
+        </View>
+      ) : (
+        <TopAppBar title="Configurações" onBack={guardedBack} contentMaxWidth={undefined} />
+      )}
       <ScrollView ref={scrollRef} {...standardVerticalScrollProps} contentContainerStyle={[styles.scroll, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}>
         <View style={[styles.content, wide && styles.contentWide]}>
           {wide ? (
@@ -454,19 +475,6 @@ export function Settings({
               ) : null}
             </View>
           ) : null}
-
-          {/* Aparência (Spec 073 FR-003, ADR 0036) */}
-          <View style={styles.sectionCard} onLayout={(event) => { sectionY.current.appearance = event.nativeEvent.layout.y; }}>
-            {renderSectionHeader("appearance", "Aparência", "Tema claro, escuro ou padrão do sistema", "visibility")}
-            {expandedSection === "appearance" ? (
-              <View style={styles.sectionBodyCard}>
-                <Text style={styles.sectionDescription}>
-                  A preferência escolhida é aplicada imediatamente.
-                </Text>
-                <ThemePreferenceSelector />
-              </View>
-            ) : null}
-          </View>
 
           {/* Armazenamento e histórico: cópia offline do catálogo e buscas recentes */}
           <View style={styles.sectionCard} onLayout={(event) => { sectionY.current.device = event.nativeEvent.layout.y; }}>
@@ -622,7 +630,39 @@ function getIconColor(icon: LinkItem["icon"], colors: ColorPalette) {
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
-    page: { flex: 1, backgroundColor: colors.background },
+    page: { flex: 1, minHeight: 0, backgroundColor: colors.background },
+    wideTopHeader: {
+      width: "100%",
+      maxWidth: WIDE_CONTENT_MAX_WIDTH,
+      alignSelf: "center",
+      paddingHorizontal: WEB_GUTTER,
+      paddingTop: tokens.spacing[24],
+      paddingBottom: tokens.spacing[12],
+    },
+    wideTopHeaderLeft: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[16],
+    },
+    wideBackButton: {
+      width: tokens.spacing[40],
+      height: tokens.spacing[40],
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.m3.surfaceContainerHigh,
+      alignItems: "center",
+      justifyContent: "center",
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+    },
+    wideTitle: {
+      ...tokens.typography.brandLargeTitle,
+      color: colors.brandBrown,
+    },
+    wideSubtitle: {
+      ...tokens.typography.bodyMedium,
+      color: colors.m3.onSurfaceVariant,
+      marginTop: tokens.spacing[2],
+    },
     accountCard: {
       flexDirection: "row",
       alignItems: "center",

@@ -35,11 +35,28 @@ import { useGuardedPress } from "@/view/useGuardedPress";
 import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 
 import { withPress } from "@/view/pressFeedback";
-function createModalityTag(colors: ColorPalette): Record<BookModality, { background: string; text: string; label: string }> {
+interface ModalityThemeColors {
+  background: string;
+  text: string;
+  label: string;
+  container: string;
+  onContainer: string;
+  border: string;
+}
+
+function createModalityTag(colors: ColorPalette): Record<BookModality, ModalityThemeColors> {
+  const brandBrown = colors.brandBrown ?? colors.badge?.trade?.background ?? "#58331F";
+  const natureFoliage = colors.nature?.foliage ?? "#2B6334";
+  const natureFoliageDeep = colors.nature?.foliageDeep ?? colors.badge?.sale?.background ?? "#1E4E27";
+  const natureSprout = colors.nature?.sprout ?? "#EBF4EC";
+  const ipeContainer = colors.ipe?.container ?? "#FEF3C7";
+  const ipeOnContainer = colors.ipe?.onContainer ?? "#451A03";
+  const ipeBloomDeep = colors.ipe?.bloomDeep ?? "#D97706";
+
   return {
-    sale: { background: colors.badge.sale.background, text: colors.badge.sale.text, label: "Venda" },
-    trade: { background: colors.badge.trade.background, text: colors.badge.trade.text, label: "Troca" },
-    donation: { background: colors.badge.donation.background, text: colors.badge.donation.text, label: "Doação" },
+    sale: { background: colors.badge?.sale?.background ?? "#1E4E27", text: colors.badge?.sale?.text ?? "#FFFFFF", label: "Venda", container: natureSprout, onContainer: natureFoliageDeep, border: natureFoliage },
+    trade: { background: colors.badge?.trade?.background ?? brandBrown, text: colors.badge?.trade?.text ?? "#FFFFFF", label: "Troca", container: "#F4EAE4", onContainer: brandBrown, border: brandBrown },
+    donation: { background: colors.badge?.donation?.background ?? "#F5B718", text: colors.badge?.donation?.text ?? "#451A03", label: "Doação", container: ipeContainer, onContainer: ipeOnContainer, border: ipeBloomDeep },
   };
 }
 
@@ -277,12 +294,22 @@ export default function BookDetail({
           style={withPress([
             styles.statusButton,
             book.status === "reserved" ? styles.statusButtonReserved : styles.statusButtonDelivered,
+            book.status === "reserved" && heroColors
+              ? {
+                  backgroundColor: heroColors.container,
+                  borderColor: heroColors.border,
+                  borderWidth: 1.5,
+                }
+              : null,
           ])}
         >
           <Text
             style={[
               styles.statusButtonText,
               book.status === "reserved" ? styles.statusTextReserved : styles.statusTextDelivered,
+              book.status === "reserved" && heroColors
+                ? { color: heroColors.onContainer }
+                : null,
             ]}
           >
             {book.status === "delivered" ? "Entregue" : "Reservado"}
@@ -293,6 +320,8 @@ export default function BookDetail({
           <FilledButton
             label={primaryActionLabel}
             onPress={guardedNavigateToSignIn}
+            backgroundColor={heroColors?.background}
+            textColor={heroColors?.text}
           />
         ) : null
       ) : book.ownerId !== sessionUserId ? (
@@ -304,12 +333,26 @@ export default function BookDetail({
             style={withPress([
               styles.statusButton,
               isAccepted ? styles.statusButtonAccepted : styles.statusButtonRequested,
+              isAccepted && heroColors
+                ? { backgroundColor: heroColors.background }
+                : heroColors
+                  ? {
+                      backgroundColor: heroColors.container,
+                      borderColor: heroColors.border,
+                      borderWidth: 1.5,
+                    }
+                  : null,
             ])}
           >
             <Text
               style={[
                 styles.statusButtonText,
                 isAccepted ? styles.statusTextAccepted : styles.statusTextRequested,
+                isAccepted && heroColors
+                  ? { color: heroColors.text }
+                  : heroColors
+                    ? { color: heroColors.onContainer }
+                    : null,
               ]}
             >
               {isAccepted ? "Combinar encontro" : "Negociação solicitada"}
@@ -321,12 +364,16 @@ export default function BookDetail({
             loading={negotiation.pendingListingId === book.id}
             loadingLabel="Solicitando negociação"
             onPress={handlePrimaryAction}
+            backgroundColor={heroColors?.background}
+            textColor={heroColors?.text}
           />
         )
       ) : isOwner && onNavigateToManageListing ? (
         <FilledButton
           label="Gerenciar anúncio"
           onPress={() => guardedNavigateToManageListing(book.id)}
+          backgroundColor={heroColors?.background}
+          textColor={heroColors?.text}
         />
       ) : null
     ) : null;
@@ -451,15 +498,17 @@ export default function BookDetail({
                   icon="conservation"
                   label="Formato"
                   value={book.boxVolumesCount ? `Box / Coleção (${book.boxVolumesCount} volumes)` : "Box / Coleção"}
+                  containerColor={heroColors?.container}
+                  iconColor={heroColors?.onContainer}
                 />
               ) : null}
-              <DetailRow icon="conservation" label="Conservação" value={conditionLabel} />
-              <DetailRow icon="category" label="Categoria" value={categoryLabel} />
+              <DetailRow icon="conservation" label="Conservação" value={conditionLabel} containerColor={heroColors?.container} iconColor={heroColors?.onContainer} />
+              <DetailRow icon="category" label="Categoria" value={categoryLabel} containerColor={heroColors?.container} iconColor={heroColors?.onContainer} />
               {/* Dados da edição, preenchidos pelo ISBN (Spec 097). */}
-              {book.publisher ? <DetailRow icon="info" label="Editora" value={book.publisher} /> : null}
-              {book.pageCount ? <DetailRow icon="conservation" label="Páginas" value={String(book.pageCount)} /> : null}
-              {book.publicationYear ? <DetailRow icon="info" label="Ano" value={String(book.publicationYear)} /> : null}
-              <DetailRow icon="place" label="Retirada" value={neighborhoodLabel} last />
+              {book.publisher ? <DetailRow icon="info" label="Editora" value={book.publisher} containerColor={heroColors?.container} iconColor={heroColors?.onContainer} /> : null}
+              {book.pageCount ? <DetailRow icon="conservation" label="Páginas" value={String(book.pageCount)} containerColor={heroColors?.container} iconColor={heroColors?.onContainer} /> : null}
+              {book.publicationYear ? <DetailRow icon="info" label="Ano" value={String(book.publicationYear)} containerColor={heroColors?.container} iconColor={heroColors?.onContainer} /> : null}
+              <DetailRow icon="place" label="Retirada" value={neighborhoodLabel} last containerColor={heroColors?.container} iconColor={heroColors?.onContainer} />
             </View>
 
             {book.description ? (
@@ -482,22 +531,26 @@ export default function BookDetail({
                 accessibilityRole="button"
                 accessibilityLabel={isAccepted ? "Pedido aceito! Toque para combinar o encontro" : "Negociação em andamento. Toque para ver detalhes"}
                 onPress={navigateToActiveNegotiation}
-                style={withPress(styles.activeNegotiationBanner)}
+                style={withPress([
+                  styles.activeNegotiationBanner,
+                  heroColors && {
+                    backgroundColor: heroColors.container,
+                    borderColor: heroColors.border,
+                  },
+                ])}
               >
-                <View style={styles.activeNegotiationIconBox}>
-                  <AppIcon name="chat" size={24} color={colors.nature.foliage} />
+                <View style={[styles.activeNegotiationIconBox, heroColors && { backgroundColor: heroColors.background }]}>
+                  <AppIcon name="chat" size={24} color={heroColors?.text ?? colors.nature.foliage} />
                 </View>
                 <View style={styles.activeNegotiationContent}>
-                  <Text style={styles.activeNegotiationTitle}>
+                  <Text style={[styles.activeNegotiationTitle, heroColors && { color: heroColors.onContainer }]}>
                     {isAccepted ? "Pedido aceito!" : "Você já solicitou este exemplar"}
                   </Text>
-                  <Text style={styles.activeNegotiationBody}>
-                    {isAccepted
-                      ? "Toque aqui para combinar o encontro em Piripiri."
-                      : "Toque aqui para ver a negociação e combinar os detalhes."}
+                  <Text style={[styles.activeNegotiationBody, heroColors && { color: heroColors.onContainer }]}>
+                    {isAccepted ? "Toque aqui para combinar o encontro em Piripiri." : "Toque aqui para ver a negociação e combinar os detalhes."}
                   </Text>
                 </View>
-                <AppIcon name="chevronRight" size={20} color={colors.m3.onSurfaceVariant} />
+                <AppIcon name="chevronRight" size={20} color={heroColors?.onContainer ?? colors.m3.onSurfaceVariant} />
               </Pressable>
             ) : null}
 
@@ -540,15 +593,25 @@ export default function BookDetail({
             ) : null}
 
             {onNavigateToReport && (!sessionUserId || book.ownerId !== sessionUserId) ? (
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Denunciar anúncio"
-                onPress={() => guardedNavigateToReport(book.id)}
-                style={withPress(styles.reportButton)}
-              >
-                <AppIcon name="flag" size={18} color={colors.m3.onSurfaceVariant} />
-                <Text style={styles.reportText}>Denunciar anúncio</Text>
-              </Pressable>
+              <View style={styles.reportSection}>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Denunciar anúncio"
+                  onPress={() => guardedNavigateToReport(book.id)}
+                  style={withPress(styles.reportCard)}
+                >
+                  <View style={styles.reportIconBox}>
+                    <AppIcon name="flag" size={18} color={colors.error} />
+                  </View>
+                  <View style={styles.reportContent}>
+                    <Text style={styles.reportTitle}>Denunciar anúncio</Text>
+                    <Text style={styles.reportSubtitle}>
+                      Conteúdo impróprio, dados falsos ou suspeita de golpe
+                    </Text>
+                  </View>
+                  <AppIcon name="chevronRight" size={20} color={colors.m3.onSurfaceVariant} />
+                </Pressable>
+              </View>
             ) : null}
           </View>
         ) : null}
@@ -652,20 +715,29 @@ function createStyles(colors: ColorPalette) {
       flexDirection: "row",
       flexWrap: "wrap",
       alignItems: "flex-start",
-      columnGap: tokens.spacing[48],
+      columnGap: tokens.spacing[40],
       rowGap: tokens.spacing[16],
       width: "100%",
       maxWidth: WEB_MAX_WIDTH,
       alignSelf: "center",
       paddingHorizontal: WEB_GUTTER,
-      paddingTop: tokens.spacing[32],
-      paddingBottom: tokens.spacing[48],
+      paddingTop: tokens.spacing[20],
+      paddingBottom: tokens.spacing[32],
     },
     safeMeetingCard: { flexDirection: "row", gap: tokens.spacing[12], padding: tokens.spacing[16], borderRadius: tokens.radius.medium, backgroundColor: colors.m3.surfaceContainer },
     safeMeetingText: { flex: 1, gap: tokens.spacing[2] },
     safeMeetingTitle: { ...tokens.typography.labelLarge, color: colors.m3.onSurface },
     safeMeetingBody: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
-    contentWide: { flex: 1, maxWidth: 440, padding: tokens.spacing[24], borderRadius: tokens.radius.xl, borderWidth: 1, borderColor: colors.m3.outlineVariant, backgroundColor: colors.m3.surfaceContainerLow },
+    contentWide: {
+      flex: 1,
+      maxWidth: 480,
+      padding: tokens.spacing[20],
+      gap: tokens.spacing[12],
+      borderRadius: tokens.radius.xl,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+      backgroundColor: colors.m3.surfaceContainerLow,
+    },
     bottomBarWide: { paddingHorizontal: 0, paddingVertical: 0 },
     status: {
       width: "100%",
@@ -713,6 +785,43 @@ function createStyles(colors: ColorPalette) {
     synopsisTitle: { ...tokens.typography.titleMedium, fontFamily: fontFamily.semiBold, color: colors.m3.onSurface },
     synopsisText: { ...tokens.typography.subheadline, lineHeight: tokens.lineHeight[23], color: colors.m3.onSurfaceVariant },
     descriptionText: { ...tokens.typography.bodyLarge, color: colors.m3.onSurface },
+    reportSection: {
+      paddingTop: tokens.spacing[8],
+      paddingBottom: tokens.spacing[16],
+    },
+    reportCard: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderRadius: tokens.radius.card,
+      paddingHorizontal: tokens.spacing[16],
+      paddingVertical: tokens.spacing[12],
+      gap: tokens.spacing[12],
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+      minHeight: 56,
+    },
+    reportIconBox: {
+      width: tokens.spacing[32],
+      height: tokens.spacing[32],
+      borderRadius: tokens.radius.cardSmall,
+      backgroundColor: colors.m3.errorContainerM3 ?? colors.errorContainer ?? "#F9DEDC",
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    reportContent: {
+      flex: 1,
+      gap: tokens.spacing[2],
+    },
+    reportTitle: {
+      ...tokens.typography.labelLarge,
+      fontFamily: fontFamily.semiBold,
+      color: colors.m3.onSurface,
+    },
+    reportSubtitle: {
+      ...tokens.typography.footnote,
+      color: colors.m3.onSurfaceVariant,
+    },
     reportButton: {
       minHeight: tokens.accessibility.touchTarget,
       flexDirection: "row",
