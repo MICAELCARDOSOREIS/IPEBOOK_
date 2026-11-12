@@ -56,7 +56,7 @@ export function CreateListingStep2({
         Uma foto nítida ajuda a conhecer o estado do exemplar. Até 3 fotos.
       </Text>
 
-      {/* `04.04`: capa em destaque à esquerda, lombada e páginas empilhadas à direita. */}
+      {/* `04.04`: capa em destaque à esquerda, lombada e verso empilhados à direita. */}
       <View style={wideWeb ? styles.webPhotoGrid : styles.photoGrid}>
         <AddPhotoCard
           label="Foto da capa"
@@ -74,7 +74,7 @@ export function CreateListingStep2({
             style={wideWeb ? styles.webSideSlot : styles.sideSlot}
           />
           <AddPhotoCard
-            label="Páginas"
+            label="Verso"
             photoUrl={photos[1]}
             onPress={() => setSheetSlot({ slot: "extra", index: 1 })}
             onRemovePhoto={() => onRemovePhoto(1)}
@@ -143,8 +143,8 @@ export function CreateListingStep2({
         </View>
         <Text style={styles.tipText}>
           {wideWeb
-            ? "Fotografe em local com boa luz natural. Além da capa inteira, mostre a lombada e o corte das páginas para quem busca em Piripiri conferir a real conservação do livro."
-            : "Luz natural, fundo liso e capa inteira no quadro. Fotos da lombada e do corte das páginas ajudam a conferir a conservação do exemplar."}
+            ? "Fotografe em local com boa luz natural. Além da capa inteira, mostre a lombada e o verso (contracapa) para quem busca em Piripiri conferir a real conservação e ver o livro completo em 3D."
+            : "Luz natural, fundo liso e capa inteira no quadro. Fotos da lombada e do verso completam o livro em 3D e ajudam a conferir a conservação."}
         </Text>
       </View>
 

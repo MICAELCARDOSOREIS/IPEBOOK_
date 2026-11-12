@@ -181,14 +181,14 @@ describe("etapa 2 do anúncio — Fotos (Figma 04.04)", () => {
     expect(screen.getByText("Etapa 2 de 3")).toBeDefined();
     expect(screen.getByLabelText("Adicionar foto da capa")).toBeDefined();
     expect(screen.getByLabelText("Adicionar lombada")).toBeDefined();
-    expect(screen.getByLabelText("Adicionar páginas")).toBeDefined();
-    // Spec 043 RN-07: capa em destaque (dois terços), lombada e páginas empilhadas ao lado.
+    expect(screen.getByLabelText("Adicionar verso")).toBeDefined();
+    // Spec 043 RN-07: capa em destaque (dois terços), lombada e verso empilhados ao lado.
     const flatten = (style: unknown): Record<string, unknown> =>
       Array.isArray(style) ? Object.assign({}, ...style.flat(Infinity).filter(Boolean)) : (style as Record<string, unknown>);
     expect(flatten(screen.getByLabelText("Adicionar foto da capa").props.style).flex).toBe(2);
     const sideSlots = within(screen.getByTestId("step2-side-slots"));
     expect(sideSlots.getByLabelText("Adicionar lombada")).toBeDefined();
-    expect(sideSlots.getByLabelText("Adicionar páginas")).toBeDefined();
+    expect(sideSlots.getByLabelText("Adicionar verso")).toBeDefined();
     expect(sideSlots.queryByLabelText("Adicionar foto da capa")).toBeNull();
     expect(screen.getByText("Dica de foto")).toBeDefined();
   });

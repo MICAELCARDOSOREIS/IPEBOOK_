@@ -288,7 +288,7 @@ export default function CreateListing({
                   </View>
                   <View style={styles.webStepTextCol}>
                     <Text style={[styles.webStepTitle, step === 2 && styles.webStepTitleActive]}>2. Fotos</Text>
-                    <Text style={styles.webStepSubtitle}>Capa e páginas</Text>
+                    <Text style={styles.webStepSubtitle}>Capa, lombada e verso</Text>
                   </View>
                 </View>
 
