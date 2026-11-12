@@ -81,7 +81,7 @@ describe("Seções extraídas das telas (Spec 126 — E2 / CA5)", () => {
     expect(onExploreAll).toHaveBeenCalledTimes(1);
 
     await act(async () => {
-      fireEvent.press(screen.getByLabelText("Selecionar outro bairro"));
+      fireEvent.press(screen.getByLabelText("Selecionar outro local"));
     });
     expect(onChangeNeighborhood).toHaveBeenCalledTimes(1);
 

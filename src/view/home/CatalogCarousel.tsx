@@ -102,6 +102,7 @@ export function CatalogCarousel({
               title={item.title}
               photoUrl={item.photoUrl}
               variant="card"
+              width={wide ? 96 : undefined}
               showRibbon={item.modality === "donation" || item.modality === "trade"}
             />
           </View>
@@ -263,10 +264,20 @@ export function CatalogCarousel({
         onPress={onViewMore}
         style={withPress(styles.viewMoreBottomButton)}
       >
-        <Text style={styles.viewMoreBottomText}>
-          {viewMoreButtonText === "Ver mais" ? "Ver mais no Explorar" : viewMoreButtonText}
-        </Text>
-        <AppIcon name="chevronRight" size={16} color={colors.nature.foliageDeep} />
+        <View style={styles.viewMoreBottomIconBox}>
+          <AppIcon name="search" size={22} color={colors.nature.foliageDeep} />
+        </View>
+        <View style={styles.viewMoreBottomTextBox}>
+          <Text style={styles.viewMoreBottomTitle}>
+            {viewMoreButtonText === "Ver mais" ? "Ver mais no Explorar" : viewMoreButtonText}
+          </Text>
+          <Text style={styles.viewMoreBottomSubtitle}>
+            Consulte todos os livros disponíveis em Piripiri
+          </Text>
+        </View>
+        <View style={styles.viewMoreBottomChevronBox}>
+          <AppIcon name="chevronRight" size={22} color={colors.nature.foliageDeep} />
+        </View>
       </Pressable>
     </View>
   );
@@ -380,7 +391,7 @@ export type HomeEmptyCatalogSectionProps = {
 };
 
 /**
- * Estado vazio da estante na Home (com ações para explorar toda Piripiri ou trocar de bairro).
+ * Estado vazio da estante na Home (com ações para explorar toda Piripiri ou trocar de local).
  */
 export function HomeEmptyCatalogSection({
   carouselDisplayTitle,
@@ -407,7 +418,7 @@ export function HomeEmptyCatalogSection({
 
   const bodyText =
     hasAnyBooks && isSpecificNeighborhood
-      ? "Seja a primeira pessoa a fazer a estante circular no seu bairro ou explore livros em toda Piripiri."
+      ? "Seja a primeira pessoa a fazer a estante circular neste local ou explore livros em toda Piripiri."
       : isFilteredByModalityOnly
         ? "Explore todas as modalidades disponíveis na estante comunitária."
         : "Quando houver livros disponíveis, eles aparecerão neste espaço.";
@@ -442,12 +453,12 @@ export function HomeEmptyCatalogSection({
             {showChangeNeighborhood ? (
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel="Selecionar outro bairro"
+                accessibilityLabel="Selecionar outro local"
                 onPress={onChangeNeighborhood}
                 style={withPress(styles.emptySecondaryButton)}
               >
                 <AppIcon name="place" size={16} color={colors.m3.onSurfaceVariant} />
-                <Text style={styles.emptySecondaryButtonText}>Trocar bairro</Text>
+                <Text style={styles.emptySecondaryButtonText}>Trocar local</Text>
               </Pressable>
             ) : null}
             {showResetModality ? (
@@ -470,6 +481,7 @@ export function HomeEmptyCatalogSection({
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     donationBanner: {
+      width: "100%",
       flexDirection: "row",
       alignItems: "center",
       paddingHorizontal: tokens.spacing[16],
@@ -785,39 +797,50 @@ function createStyles(colors: ColorPalette) {
     },
     booksGridCellWide: {
       flexGrow: 1,
-      flexBasis: 200,
-      minWidth: 180,
-      maxWidth: 300,
+      flexBasis: 240,
+      minWidth: 200,
+      maxWidth: 440,
       flexDirection: "column",
     },
     viewMoreBottomButton: {
+      width: "100%",
       flexDirection: "row",
       alignItems: "center",
-      justifyContent: "center",
-      gap: tokens.spacing[8],
+      minHeight: tokens.spacing[64],
+      paddingHorizontal: tokens.spacing[16],
+      paddingVertical: tokens.spacing[14],
+      gap: tokens.spacing[14],
+      marginTop: tokens.spacing[16],
+      marginBottom: tokens.spacing[12],
+      borderRadius: tokens.radius.xl,
       backgroundColor: colors.m3.surfaceContainerLowest,
       borderWidth: 1,
       borderColor: colors.m3.outlineVariant,
+      elevation: 2,
+      shadowColor: colors.ipe.trunk,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.08,
+      shadowRadius: 6,
+      ...(Platform.OS === "web" ? ({ cursor: "pointer", userSelect: "none" } as never) : {}),
+    },
+    viewMoreBottomIconBox: {
+      width: 44,
+      height: 44,
       borderRadius: tokens.radius.full,
-      paddingVertical: tokens.spacing[12],
-      paddingHorizontal: tokens.spacing[20],
-      marginTop: tokens.spacing[16],
+      backgroundColor: colors.nature.sprout,
+      alignItems: "center",
+      justifyContent: "center",
       elevation: 1,
       shadowColor: colors.ipe.trunk,
       shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.05,
-      shadowRadius: 4,
+      shadowOpacity: 0.08,
+      shadowRadius: 3,
     },
-    viewMoreBottomText: {
-      ...tokens.typography.labelLarge,
-      fontFamily: fontFamily.semiBold,
-      fontWeight: tokens.fontWeight.semiBold,
-      color: colors.nature.foliageDeep,
-    },
-    empty: {
-      gap: tokens.spacing[12],
-      marginBottom: tokens.spacing[24],
-    },
+    viewMoreBottomTextBox: { flex: 1, gap: tokens.spacing[2] },
+    viewMoreBottomTitle: { ...tokens.typography.brandCardTitle, fontSize: 16, lineHeight: 20, color: colors.m3.onSurface },
+    viewMoreBottomSubtitle: { ...tokens.typography.labelSmall, fontSize: 12.5, lineHeight: 16, color: colors.m3.onSurfaceVariant },
+    viewMoreBottomChevronBox: { width: 32, height: 32, borderRadius: tokens.radius.full, alignItems: "center", justifyContent: "center" },
+    empty: { gap: tokens.spacing[12], marginBottom: tokens.spacing[24] },
     emptyCard: {
       width: "100%",
       backgroundColor: colors.book.pageCard,
@@ -856,11 +879,7 @@ function createStyles(colors: ColorPalette) {
       borderRadius: tokens.radius.full,
       backgroundColor: colors.m3.primary,
     },
-    emptyPrimaryButtonText: {
-      ...tokens.typography.labelLarge,
-      color: colors.m3.onPrimary,
-      fontWeight: tokens.fontWeight.semiBold,
-    },
+    emptyPrimaryButtonText: { ...tokens.typography.labelLarge, color: colors.m3.onPrimary, fontWeight: tokens.fontWeight.semiBold },
     emptySecondaryButton: {
       flexDirection: "row",
       alignItems: "center",
@@ -873,24 +892,8 @@ function createStyles(colors: ColorPalette) {
       borderColor: colors.m3.outlineVariant,
       backgroundColor: colors.m3.surfaceContainerLowest,
     },
-    emptySecondaryButtonText: {
-      ...tokens.typography.labelLarge,
-      color: colors.m3.onSurfaceVariant,
-      fontWeight: tokens.fontWeight.medium,
-    },
-    emptyTitle: {
-      ...tokens.typography.titleMedium,
-      fontFamily: fontFamily.semiBold,
-      color: colors.m3.onSurface,
-      lineHeight: tokens.lineHeight[24],
-      textAlign: "center",
-    },
-    body: {
-      ...tokens.typography.bodyMedium,
-      color: colors.m3.onSurfaceVariant,
-      lineHeight: tokens.lineHeight[20],
-      textAlign: "center",
-      maxWidth: 440,
-    },
+    emptySecondaryButtonText: { ...tokens.typography.labelLarge, color: colors.m3.onSurfaceVariant, fontWeight: tokens.fontWeight.medium },
+    emptyTitle: { ...tokens.typography.titleMedium, fontFamily: fontFamily.semiBold, color: colors.m3.onSurface, lineHeight: tokens.lineHeight[24], textAlign: "center" },
+    body: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant, lineHeight: tokens.lineHeight[20], textAlign: "center", maxWidth: 440 },
   });
 }
