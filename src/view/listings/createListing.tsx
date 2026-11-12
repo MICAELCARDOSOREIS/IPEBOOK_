@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { BackHandler, Platform, ScrollView, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView, useSafeAreaInsets, type EdgeInsets } from "react-native-safe-area-context";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { makeCreateListingViewModel, makeListingPhotoViewModel } from "@/di/container";
 import type { Book } from "@/model/entities/book";
 import { BOOK_CONDITION_LABELS } from "@/model/entities/book";
@@ -68,9 +68,8 @@ export default function CreateListing({
   const [photoState, photoActions] = makeListingPhotoViewModel(sessionUserId);
   const { colors } = useTheme();
   const wideWeb = useIsWideWeb();
-  const insets = useSafeAreaInsets();
   const isKeyboardVisible = useKeyboardVisible();
-  const styles = useMemo(() => createStyles(colors, wideWeb, insets), [colors, wideWeb, insets]);
+  const styles = useMemo(() => createStyles(colors, wideWeb), [colors, wideWeb]);
   const [step, setStep] = useState(1);
   const [published, setPublished] = useState<Book | null>(null);
   // Erros da etapa 1 só aparecem depois da primeira tentativa de avançar.
@@ -331,7 +330,8 @@ export default function CreateListing({
                 <Text style={styles.draftBannerText}>Rascunho salvo neste aparelho</Text>
               </View>
               <TextButton
-                label="Limpar rascunho"
+                label="Limpar"
+                accessibilityLabel="Limpar rascunho"
                 onPress={() => {
                   actions.reset();
                   setBasicsTouched(false);
@@ -553,12 +553,12 @@ export default function CreateListing({
   );
 }
 
-function createStyles(colors: ColorPalette, wideWeb: boolean, insets?: EdgeInsets) {
+function createStyles(colors: ColorPalette, wideWeb: boolean) {
   return StyleSheet.create({
     page: { flex: 1, backgroundColor: colors.background },
     scrollContent: {
       padding: tokens.spacing[16],
-      paddingBottom: wideWeb ? 160 : 130 + (insets?.bottom ?? 0),
+      paddingBottom: wideWeb ? 160 : tokens.spacing[24],
     },
     wideLayout: {
       flexDirection: "row",
@@ -847,8 +847,9 @@ function createStyles(colors: ColorPalette, wideWeb: boolean, insets?: EdgeInset
       maxWidth: wideWeb ? 1040 : 560,
       alignSelf: "center",
       paddingHorizontal: tokens.spacing[16],
-      paddingTop: tokens.spacing[10],
-      paddingBottom: Math.max(insets?.bottom ?? 0, tokens.spacing[12]),
+      paddingTop: tokens.spacing[8],
+      // A SafeAreaView da barra já soma a margem inferior do sistema.
+      paddingBottom: tokens.spacing[4],
     },
     webActionRow: {
       flexDirection: "row",
