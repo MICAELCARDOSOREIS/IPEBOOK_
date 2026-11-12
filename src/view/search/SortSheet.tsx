@@ -3,11 +3,14 @@ import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { AppIcon } from "@/view/components/AppIcon";
+import { Chip } from "@/view/components/Chip";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import {
+  MODALITY_FILTER_LABELS,
   SORT_IDS,
   SORT_LABELS,
+  type SearchModalityFilter,
   type SearchSortOption,
 } from "@/viewmodel/searchFilters";
 
@@ -16,13 +19,22 @@ export type SortSheetProps = {
   selected: SearchSortOption;
   onSelect: (sortBy: SearchSortOption) => void;
   onClose: () => void;
+  selectedModality?: SearchModalityFilter;
+  onSelectModality?: (modality: SearchModalityFilter) => void;
 };
 
 /**
- * Folha de ordenação aberta pelo rótulo do resumo (Figma `02.04`: "Mais recentes"). A ordenação
- * fica fora dos filtros: mudar a ordem não restringe resultados nem aparece nos chips aplicados.
+ * Folha de ordenação e filtro rápido aberta pelo rótulo do resumo (Figma `02.04`).
+ * Permite filtrar diretamente por modalidade (Venda, Troca, Doação) e ordenar os resultados.
  */
-export function SortSheet({ visible, selected, onSelect, onClose }: SortSheetProps) {
+export function SortSheet({
+  visible,
+  selected,
+  onSelect,
+  onClose,
+  selectedModality,
+  onSelectModality,
+}: SortSheetProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const insets = useSafeAreaInsets();
@@ -40,9 +52,41 @@ export function SortSheet({ visible, selected, onSelect, onClose }: SortSheetPro
       aria-modal
     >
       <View style={[styles.scrim, wideWeb && styles.scrimWide]}>
-        <Pressable accessibilityRole="none" accessibilityLabel="Fechar ordenação" style={StyleSheet.absoluteFill} onPress={onClose} />
+        <Pressable accessibilityRole="none" accessibilityLabel="Fechar ordenação e filtros" style={StyleSheet.absoluteFill} onPress={onClose} />
         <View style={[styles.sheet, wideWeb && styles.sheetWide, { paddingBottom: wideWeb ? tokens.spacing[24] : tokens.spacing[16] + insets.bottom }]}>
           {wideWeb ? null : <View style={styles.handle} />}
+
+          {onSelectModality ? (
+            <View style={styles.sectionModality}>
+              <Text accessibilityRole="header" style={styles.sectionTitle}>Filtrar por modalidade</Text>
+              <View style={styles.modalityChipsRow}>
+                {(["all", "sale", "trade", "donation"] as const).map((mod) => {
+                  const isSelected = (selectedModality ?? "all") === mod;
+                  const label = mod === "all" ? "Todas" : MODALITY_FILTER_LABELS[mod];
+                  const tone =
+                    mod === "all"
+                      ? { background: colors.nature.foliage, text: colors.nature.onFoliage }
+                      : colors.badge[mod];
+                  return (
+                    <Chip
+                      key={mod}
+                      size="regular"
+                      label={label}
+                      accessibilityLabel={`Filtrar por ${label}`}
+                      selected={isSelected}
+                      tone={tone}
+                      onPress={() => {
+                        onSelectModality(mod);
+                        onClose();
+                      }}
+                    />
+                  );
+                })}
+              </View>
+              <View style={styles.divider} />
+            </View>
+          ) : null}
+
           <Text accessibilityRole="header" style={styles.title}>Ordenar por</Text>
           <View accessibilityRole="radiogroup" accessibilityLabel="Ordenar por">
             {SORT_IDS.map((option) => {
@@ -103,6 +147,29 @@ function createStyles(colors: ColorPalette) {
       height: 4,
       borderRadius: tokens.radius.full,
       backgroundColor: colors.m3.outlineVariant,
+      marginBottom: tokens.spacing[4],
+    },
+    sectionModality: {
+      gap: tokens.spacing[8],
+      marginBottom: tokens.spacing[4],
+    },
+    sectionTitle: {
+      ...tokens.typography.labelLarge,
+      color: colors.m3.onSurfaceVariant,
+      fontWeight: tokens.fontWeight.semiBold,
+      textTransform: "uppercase",
+      letterSpacing: 0.5,
+    },
+    modalityChipsRow: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: tokens.spacing[8],
+      paddingVertical: tokens.spacing[4],
+    },
+    divider: {
+      height: StyleSheet.hairlineWidth,
+      backgroundColor: colors.m3.outlineVariant,
+      marginVertical: tokens.spacing[4],
     },
     title: { ...tokens.typography.titleMedium, color: colors.m3.onSurface, marginBottom: tokens.spacing[4] },
     row: {
