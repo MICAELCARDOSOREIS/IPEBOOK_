@@ -33,7 +33,7 @@ describe("CreateListingStep2 — câmera e galeria (Spec 092)", () => {
   it("CA4: 'publicar sem foto' não pede acesso nenhum e não chama o seletor", async () => {
     const onChoosePhoto = vi.fn();
     const screen = await render(<CreateListingStep2 {...base} onChoosePhoto={onChoosePhoto} />);
-    await act(async () => { fireEvent.press(screen.getByLabelText("Adicionar páginas")); });
+    await act(async () => { fireEvent.press(screen.getByLabelText("Adicionar verso")); });
     await act(async () => { fireEvent.press(screen.getByLabelText("Tirar foto com a câmera")); });
     await act(async () => { fireEvent.press(screen.getByLabelText(PERMISSION_PROMPT_COPY.photos.later)); });
     expect(onChoosePhoto).not.toHaveBeenCalled();
