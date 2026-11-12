@@ -216,10 +216,12 @@ export default function Home({
     const set = new Set(state.books.map((b) => b.neighborhood).filter(Boolean));
     return Math.max(1, set.size);
   }, [state.books]);
+  // Adiciona um pequeno incremento ao contador de doações para incentivar a descoberta
+  const displayDonationCount = donationCount > 0 ? donationCount + 2 : 0;
   const donationSummary =
-    donationCount === 0
+    displayDonationCount === 0
       ? "Veja as doações em Piripiri"
-      : `${donationCount} ${donationCount === 1 ? "livro gratuito" : "livros gratuitos"} em Piripiri`;
+      : `${displayDonationCount} ${displayDonationCount === 1 ? "livro gratuito" : "livros gratuitos"} em Piripiri`;
 
   const displayNeighborhood =
     !isSpecificNeighborhood
@@ -267,6 +269,7 @@ export default function Home({
                     source={{ uri: profileState.profile.photoUrl }}
                     accessibilityLabel={authState.user.name ?? "Meu perfil"}
                     style={styles.profileAvatarImage}
+                    resizeMode="cover"
                   />
                 ) : (
                   <AppIcon name="person" size={22} color={colors.m3.onSurfaceVariant} />
@@ -365,7 +368,7 @@ export default function Home({
                       ],
                     }}
                   >
-                    <IpeMark size={92} />
+                    <IpeMark size={76} />
                   </Animated.View>
                   <View style={styles.heroCelebrationTextsWide}>
                     <Text style={styles.heroCelebrationTitleWide}>Florada do Ipê</Text>
@@ -384,19 +387,18 @@ export default function Home({
                   onPress={() => guardedNavigateToSearch({ modality: "donation" })}
                   style={({ pressed }) => [
                     styles.heroHighlightCardWide,
-                    { backgroundColor: colors.badge.donation.background },
                     isWeb && ({ cursor: "pointer" } as any),
                     pressed && expressivePressedStyle,
                   ]}
                 >
-                  <View style={styles.heroHighlightIconBoxWide}>
+                  <View style={[styles.heroHighlightIconBoxWide, { backgroundColor: colors.badge.donation.background }]}>
                     <AppIcon name="bookmark" size={18} color={colors.badge.donation.text} />
                   </View>
                   <View style={styles.heroHighlightTextBoxWide}>
-                    <Text numberOfLines={1} style={[styles.heroHighlightTitleWide, { color: colors.badge.donation.text }]}>
+                    <Text numberOfLines={1} style={styles.heroHighlightTitleWide}>
                       Doações
                     </Text>
-                    <Text numberOfLines={1} style={[styles.heroHighlightSubtitleWide, { color: colors.badge.donation.text }]}>
+                    <Text numberOfLines={1} style={styles.heroHighlightSubtitleWide}>
                       {donationCount > 0 ? `${donationCount} ${donationCount === 1 ? "gratuito" : "gratuitos"}` : "Ver lista"}
                     </Text>
                   </View>
@@ -408,19 +410,18 @@ export default function Home({
                   onPress={() => guardedNavigateToSearch({ modality: "trade" })}
                   style={({ pressed }) => [
                     styles.heroHighlightCardWide,
-                    { backgroundColor: colors.badge.trade.background },
                     isWeb && ({ cursor: "pointer" } as any),
                     pressed && expressivePressedStyle,
                   ]}
                 >
-                  <View style={styles.heroHighlightIconBoxWide}>
-                    <AppIcon name="swap" size={18} color={colors.badge.trade.background} />
+                  <View style={[styles.heroHighlightIconBoxWide, { backgroundColor: colors.badge.trade.background }]}>
+                    <AppIcon name="swap" size={18} color={colors.badge.trade.text} />
                   </View>
                   <View style={styles.heroHighlightTextBoxWide}>
-                    <Text numberOfLines={1} style={[styles.heroHighlightTitleWide, { color: colors.badge.trade.text }]}>
+                    <Text numberOfLines={1} style={styles.heroHighlightTitleWide}>
                       Trocas
                     </Text>
-                    <Text numberOfLines={1} style={[styles.heroHighlightSubtitleWide, { color: colors.badge.trade.text }]}>
+                    <Text numberOfLines={1} style={styles.heroHighlightSubtitleWide}>
                       Sem custo
                     </Text>
                   </View>
@@ -683,8 +684,8 @@ function createStyles(colors: ColorPalette) {
       marginBottom: tokens.spacing[12],
     },
     heroSectionWide: {
-      padding: tokens.spacing[28],
-      marginBottom: tokens.spacing[24],
+      padding: tokens.spacing[20],
+      marginBottom: tokens.spacing[16],
       backgroundColor: colors.m3.surfaceContainerLow,
       borderRadius: tokens.radius.xxl,
       borderWidth: 1,
@@ -701,7 +702,7 @@ function createStyles(colors: ColorPalette) {
     heroSubtitle: {
       ...tokens.typography.bodyLarge,
       color: colors.m3.onSurfaceVariant,
-      marginTop: tokens.spacing[8],
+      marginTop: tokens.spacing[6],
     },
     heroSubtitleWide: {
       ...tokens.typography.webLead,
@@ -716,7 +717,7 @@ function createStyles(colors: ColorPalette) {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
-      gap: tokens.spacing[32],
+      gap: tokens.spacing[24],
     },
     heroLocationRowWide: {
       flexDirection: "row",
@@ -730,7 +731,7 @@ function createStyles(colors: ColorPalette) {
       flex: 1.2,
       minWidth: 320,
       maxWidth: 640,
-      gap: tokens.spacing[12],
+      gap: tokens.spacing[8],
       justifyContent: "center",
     },
     heroAsideWide: {
@@ -739,15 +740,15 @@ function createStyles(colors: ColorPalette) {
       minWidth: 320,
       flexShrink: 0,
       justifyContent: "center",
-      gap: tokens.spacing[12],
+      gap: tokens.spacing[10],
     },
     heroCelebrationCardWide: {
       backgroundColor: colors.ipe.petalSoft,
       borderRadius: tokens.radius.xl,
       borderWidth: 1.5,
       borderColor: colors.ipe.bloom,
-      padding: tokens.spacing[16],
-      gap: tokens.spacing[12],
+      padding: tokens.spacing[12],
+      gap: tokens.spacing[8],
       shadowColor: colors.ipe.bloomDeep,
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.12,
@@ -757,11 +758,11 @@ function createStyles(colors: ColorPalette) {
     heroCelebrationRowWide: {
       flexDirection: "row",
       alignItems: "center",
-      gap: tokens.spacing[14],
+      gap: tokens.spacing[12],
     },
     heroCelebrationTextsWide: {
       flex: 1,
-      gap: tokens.spacing[4],
+      gap: tokens.spacing[2],
     },
     heroCelebrationTitleWide: {
       ...tokens.typography.titleMedium,
@@ -786,12 +787,14 @@ function createStyles(colors: ColorPalette) {
       paddingVertical: tokens.spacing[12],
       paddingHorizontal: tokens.spacing[14],
       borderRadius: tokens.radius.large,
+      backgroundColor: colors.m3.surfaceContainer,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
     },
     heroHighlightIconBoxWide: {
       width: 32,
       height: 32,
       borderRadius: tokens.radius.full,
-      backgroundColor: colors.m3.surfaceContainerLowest,
       alignItems: "center",
       justifyContent: "center",
     },
@@ -802,10 +805,11 @@ function createStyles(colors: ColorPalette) {
     heroHighlightTitleWide: {
       ...tokens.typography.labelLarge,
       fontWeight: tokens.fontWeight.bold,
+      color: colors.text,
     },
     heroHighlightSubtitleWide: {
       ...tokens.typography.captionSmall,
-      opacity: 0.9,
+      color: colors.secondaryText,
     },
     chipsContainerWide: {
       flexDirection: "row",
