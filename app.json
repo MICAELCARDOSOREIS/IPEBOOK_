@@ -72,7 +72,6 @@
         }
       ],
       "expo-web-browser",
-      "@rnmapbox/maps",
       [
         "@sentry/react-native",
         {
