@@ -639,20 +639,9 @@ function createStyles(colors: ColorPalette) {
     cardMetaRowWide: { flexWrap: "wrap", rowGap: tokens.spacing[4] },
     cardActionsWide: { position: "absolute", top: tokens.spacing[8], right: tokens.spacing[8], width: tokens.accessibility.touchTarget },
     cardWide: { alignItems: "stretch", paddingLeft: tokens.spacing[12], paddingRight: tokens.spacing[12], marginBottom: 0, flex: 1, flexDirection: "column", maxWidth: "25%", borderRadius: tokens.radius.xl, backgroundColor: colors.m3.surfaceContainerLowest },
-    content: {
-      flexGrow: 1,
-      width: "100%",
-      paddingHorizontal: tokens.spacing[16],
-      paddingTop: tokens.spacing[8],
-      paddingBottom: tokens.spacing[24],
-    },
+    content: { flexGrow: 1, width: "100%", paddingHorizontal: tokens.spacing[16], paddingTop: tokens.spacing[8], paddingBottom: tokens.spacing[24], },
     filters: { gap: tokens.spacing[16], marginBottom: tokens.spacing[16] },
-    topBar: {
-      flexDirection: "row",
-      justifyContent: "space-between",
-      alignItems: "center",
-      minHeight: tokens.spacing[40],
-    },
+    topBar: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", minHeight: tokens.spacing[40], },
     neighborhoodPill: {
       flexShrink: 1,
       flexDirection: "row",
@@ -664,46 +653,12 @@ function createStyles(colors: ColorPalette) {
       height: tokens.spacing[40],
       borderRadius: tokens.radius.full,
     },
-    neighborhoodText: {
-      flexShrink: 1,
-      ...tokens.typography.labelMedium,
-      color: colors.text,
-      fontWeight: tokens.fontWeight.medium,
-    },
-    topRightActions: {
-      flexShrink: 0,
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[8],
-    },
-    favoritesTopButton: {
-      width: tokens.spacing[40],
-      height: tokens.spacing[40],
-      borderRadius: tokens.radius.full,
-      backgroundColor: colors.m3.surfaceContainerHigh,
-      justifyContent: "center",
-      alignItems: "center",
-    },
-    favoritesTopButtonWide: {
-      width: "auto",
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[6],
-      paddingHorizontal: tokens.spacing[14],
-    },
-    favoritesButtonText: {
-      ...tokens.typography.labelMedium,
-      color: colors.text,
-      fontWeight: tokens.fontWeight.medium,
-    },
-    tuneButton: {
-      width: tokens.spacing[40],
-      height: tokens.spacing[40],
-      borderRadius: tokens.radius.full,
-      backgroundColor: colors.m3.surfaceContainerHigh,
-      justifyContent: "center",
-      alignItems: "center",
-    },
+    neighborhoodText: { flexShrink: 1, ...tokens.typography.labelMedium, color: colors.text, fontWeight: tokens.fontWeight.medium, },
+    topRightActions: { flexShrink: 0, flexDirection: "row", alignItems: "center", gap: tokens.spacing[8], },
+    favoritesTopButton: { width: tokens.spacing[40], height: tokens.spacing[40], borderRadius: tokens.radius.full, backgroundColor: colors.m3.surfaceContainerHigh, justifyContent: "center", alignItems: "center", },
+    favoritesTopButtonWide: { width: "auto", flexDirection: "row", alignItems: "center", gap: tokens.spacing[6], paddingHorizontal: tokens.spacing[14], },
+    favoritesButtonText: { ...tokens.typography.labelMedium, color: colors.text, fontWeight: tokens.fontWeight.medium, },
+    tuneButton: { width: tokens.spacing[40], height: tokens.spacing[40], borderRadius: tokens.radius.full, backgroundColor: colors.m3.surfaceContainerHigh, justifyContent: "center", alignItems: "center", },
     // Contador de filtros aplicados sobre o ícone de ajustes (chip de 18 dp do Material 3).
     tuneBadge: {
       position: "absolute",
@@ -717,48 +672,14 @@ function createStyles(colors: ColorPalette) {
       alignItems: "center",
       justifyContent: "center",
     },
-    tuneBadgeText: {
-      ...tokens.typography.captionSmall,
-      fontFamily: fontFamily.semiBold,
-      color: colors.m3.onPrimary,
-    },
-    heroSection: {
-      gap: tokens.spacing[6],
-      marginTop: tokens.spacing[4],
-      marginBottom: tokens.spacing[4],
-    },
-    heading: {
-      ...tokens.typography.brandLargeTitle,
-      color: colors.brandBrown,
-      letterSpacing: tokens.letterSpacing.brandTighter,
-    },
-    subtitle: {
-      ...tokens.typography.bodyLarge,
-      color: colors.m3.onSurfaceVariant,
-    },
-    quickModalitiesScrollView: {
-      flexGrow: 0,
-      marginHorizontal: -tokens.spacing[16],
-      marginBottom: tokens.spacing[4],
-    },
-    quickModalitiesScroll: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[8],
-      paddingLeft: tokens.spacing[16],
-      paddingRight: tokens.spacing[28],
-      paddingVertical: tokens.spacing[2],
-    },
-    clearFiltersButton: {
-      minHeight: tokens.accessibility.touchTarget,
-      justifyContent: "center",
-      paddingHorizontal: tokens.spacing[8],
-    },
-    clearFiltersText: {
-      ...tokens.typography.bodyMedium,
-      color: colors.action,
-      fontWeight: tokens.fontWeight.semiBold,
-    },
+    tuneBadgeText: { ...tokens.typography.captionSmall, fontFamily: fontFamily.semiBold, color: colors.m3.onPrimary, },
+    heroSection: { gap: tokens.spacing[6], marginTop: tokens.spacing[4], marginBottom: tokens.spacing[4], },
+    heading: { ...tokens.typography.brandLargeTitle, color: colors.brandBrown, letterSpacing: tokens.letterSpacing.brandTighter, },
+    subtitle: { ...tokens.typography.bodyLarge, color: colors.m3.onSurfaceVariant, },
+    quickModalitiesScrollView: { flexGrow: 0, marginHorizontal: -tokens.spacing[16], marginBottom: tokens.spacing[4], },
+    quickModalitiesScroll: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[8], paddingLeft: tokens.spacing[16], paddingRight: tokens.spacing[28], paddingVertical: tokens.spacing[2], },
+    clearFiltersButton: { minHeight: tokens.accessibility.touchTarget, justifyContent: "center", paddingHorizontal: tokens.spacing[8], },
+    clearFiltersText: { ...tokens.typography.bodyMedium, color: colors.action, fontWeight: tokens.fontWeight.semiBold, },
     // Chip removível de filtro aplicado (Figma `02.04`): verde `secondaryContainer` com ✕.
     activeFiltersRow: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[8] },
     activeFilterChip: {
@@ -771,20 +692,8 @@ function createStyles(colors: ColorPalette) {
       backgroundColor: colors.nature.foliage,
     },
     activeFilterText: { ...tokens.typography.labelLarge, color: colors.nature.onFoliage, fontWeight: tokens.fontWeight.semiBold },
-    summaryRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-      gap: tokens.spacing[12],
-      paddingVertical: tokens.spacing[6],
-      paddingHorizontal: tokens.spacing[4],
-    },
-    summaryText: {
-      flex: 1,
-      ...tokens.typography.bodyMedium,
-      color: colors.m3.onSurfaceVariant,
-      fontWeight: tokens.fontWeight.medium,
-    },
+    summaryRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: tokens.spacing[12], paddingVertical: tokens.spacing[6], paddingHorizontal: tokens.spacing[4], },
+    summaryText: { flex: 1, ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant, fontWeight: tokens.fontWeight.medium, },
     sortButton: {
       flexDirection: "row",
       alignItems: "center",
@@ -797,23 +706,9 @@ function createStyles(colors: ColorPalette) {
       borderWidth: 1,
       borderColor: colors.m3.outlineVariant,
     },
-    sortText: {
-      ...tokens.typography.labelMedium,
-      color: colors.m3.onSurface,
-      fontWeight: tokens.fontWeight.semiBold,
-    },
-    body: {
-      ...tokens.typography.bodyLarge,
-      lineHeight: tokens.lineHeight[25],
-      color: colors.secondaryText,
-      textAlign: "center",
-    },
-    empty: {
-      alignItems: "center",
-      paddingTop: tokens.spacing[32],
-      paddingHorizontal: tokens.spacing[24],
-      gap: tokens.spacing[12],
-    },
+    sortText: { ...tokens.typography.labelMedium, color: colors.m3.onSurface, fontWeight: tokens.fontWeight.semiBold, },
+    body: { ...tokens.typography.bodyLarge, lineHeight: tokens.lineHeight[25], color: colors.secondaryText, textAlign: "center", },
+    empty: { alignItems: "center", paddingTop: tokens.spacing[32], paddingHorizontal: tokens.spacing[24], gap: tokens.spacing[12], },
     emptyWide: { width: "100%", paddingVertical: tokens.spacing[48], paddingHorizontal: tokens.spacing[48], borderRadius: tokens.radius.xxl, backgroundColor: colors.m3.surfaceContainerLow, gap: tokens.spacing[16] },
     emptyIcon: { width: tokens.spacing[64], height: tokens.spacing[64], borderRadius: tokens.radius.circle64, alignItems: "center", justifyContent: "center", backgroundColor: colors.m3.secondaryContainer },
     alertCard: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[16], paddingHorizontal: tokens.spacing[24], paddingVertical: tokens.spacing[20], borderRadius: tokens.radius.large, backgroundColor: colors.m3.tertiaryContainer },
@@ -822,17 +717,8 @@ function createStyles(colors: ColorPalette) {
     alertCardBody: { ...tokens.typography.bodyLarge, color: colors.m3.onTertiaryContainer },
     alertCardButton: { height: 52, minWidth: 180, alignItems: "center", justifyContent: "center", borderRadius: tokens.radius.full, backgroundColor: colors.m3.primary },
     alertCardButtonText: { ...tokens.typography.labelLarge, color: colors.m3.onPrimary },
-    emptyTitle: {
-      ...tokens.typography.brandCardTitle,
-      color: colors.action,
-      textAlign: "center",
-    },
-    emptyActions: {
-      flexDirection: "column",
-      alignItems: "center",
-      gap: tokens.spacing[12],
-      marginTop: tokens.spacing[8],
-    },
+    emptyTitle: { ...tokens.typography.brandCardTitle, color: colors.action, textAlign: "center", },
+    emptyActions: { flexDirection: "column", alignItems: "center", gap: tokens.spacing[12], marginTop: tokens.spacing[8], },
     emptyPrimaryButton: {
       minHeight: tokens.accessibility.touchTarget,
       justifyContent: "center",
@@ -842,11 +728,7 @@ function createStyles(colors: ColorPalette) {
       paddingHorizontal: tokens.spacing[24],
       paddingVertical: tokens.spacing[12],
     },
-    emptyPrimaryButtonText: {
-      ...tokens.typography.labelLarge,
-      color: colors.m3.onPrimary,
-      fontWeight: tokens.fontWeight.semiBold,
-    },
+    emptyPrimaryButtonText: { ...tokens.typography.labelLarge, color: colors.m3.onPrimary, fontWeight: tokens.fontWeight.semiBold, },
     emptySecondaryButton: {
       minHeight: tokens.accessibility.touchTarget,
       justifyContent: "center",
@@ -856,11 +738,7 @@ function createStyles(colors: ColorPalette) {
       paddingHorizontal: tokens.spacing[20],
       paddingVertical: tokens.spacing[10],
     },
-    emptySecondaryButtonText: {
-      ...tokens.typography.labelLarge,
-      color: colors.text,
-      fontWeight: tokens.fontWeight.medium,
-    },
+    emptySecondaryButtonText: { ...tokens.typography.labelLarge, color: colors.text, fontWeight: tokens.fontWeight.medium, },
     emptyActionButton: {
       minHeight: tokens.accessibility.touchTarget,
       justifyContent: "center",
@@ -870,33 +748,17 @@ function createStyles(colors: ColorPalette) {
       paddingHorizontal: tokens.spacing[24],
       paddingVertical: tokens.spacing[12],
     },
-    emptyActionText: {
-      ...tokens.typography.labelLarge,
-      color: colors.m3.onPrimary,
-      fontWeight: tokens.fontWeight.semiBold,
-    },
+    emptyActionText: { ...tokens.typography.labelLarge, color: colors.m3.onPrimary, fontWeight: tokens.fontWeight.semiBold, },
     alertLink: { color: colors.action, fontWeight: tokens.fontWeight.semiBold, padding: tokens.spacing[12] },
     historySection: { gap: tokens.spacing[8] },
     historyHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
     historyTitle: { ...tokens.typography.labelMedium, fontWeight: tokens.fontWeight.semiBold, color: colors.secondaryText },
     historyChips: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[8] },
-    historyChip: {
-      minHeight: tokens.accessibility.touchTarget,
-      justifyContent: "center",
-      borderRadius: tokens.radius.full,
-      backgroundColor: colors.m3.surfaceContainerHigh,
-      paddingHorizontal: tokens.spacing[16],
-    },
+    historyChip: { minHeight: tokens.accessibility.touchTarget, justifyContent: "center", borderRadius: tokens.radius.full, backgroundColor: colors.m3.surfaceContainerHigh, paddingHorizontal: tokens.spacing[16], },
     historyChipText: { ...tokens.typography.bodyLarge, color: colors.text },
 
     categoryBadge: { ...tokens.typography.labelSmall, color: colors.secondaryText, fontStyle: "italic" },
-    snackbarContainer: {
-      position: "absolute",
-      left: tokens.spacing[16],
-      right: tokens.spacing[16],
-      bottom: tokens.spacing[16],
-      zIndex: 20,
-    },
+    snackbarContainer: { position: "absolute", left: tokens.spacing[16], right: tokens.spacing[16], bottom: tokens.spacing[16], zIndex: 20, },
   });
 }
 
@@ -912,14 +774,7 @@ function SearchScrollTopButton({
   const [isHovered, setIsHovered] = useState(false);
   const scaleAnim = useRef(new Animated.Value(0.7)).current;
 
-  useEffect(() => {
-    Animated.spring(scaleAnim, {
-      toValue: 1,
-      tension: tokens.spring.spatialStandard.tension,
-      friction: tokens.spring.spatialStandard.friction,
-      useNativeDriver: true,
-    }).start();
-  }, [scaleAnim]);
+  useEffect(() => { Animated.spring(scaleAnim, { toValue: 1, tension: tokens.spring.spatialStandard.tension, friction: tokens.spring.spatialStandard.friction, useNativeDriver: true, }).start(); }, [scaleAnim]);
 
   const isWeb = Platform.OS === "web";
   const webFabBg =
@@ -927,13 +782,7 @@ function SearchScrollTopButton({
 
   return (
     <Animated.View
-      style={{
-        position: "absolute",
-        right: tokens.spacing[16],
-        bottom,
-        zIndex: 90,
-        transform: [{ scale: scaleAnim }],
-      }}
+      style={{ position: "absolute", right: tokens.spacing[16], bottom, zIndex: 90, transform: [{ scale: scaleAnim }], }}
     >
       <Pressable
         accessibilityRole="button"
@@ -943,11 +792,7 @@ function SearchScrollTopButton({
         onPress={onPress}
         style={({ pressed }) => [
           stylesScrollTop.scrollTopFab,
-          {
-            backgroundColor: isWeb ? webFabBg : colors.nature.sprout,
-            borderColor: colors.m3.outlineVariant,
-            shadowColor: colors.m3.shadow,
-          },
+          { backgroundColor: isWeb ? webFabBg : colors.nature.sprout, borderColor: colors.m3.outlineVariant, shadowColor: colors.m3.shadow, },
           isHovered && stylesScrollTop.scrollTopFabHovered,
           pressed && stylesScrollTop.scrollTopFabPressed,
         ]}
@@ -971,22 +816,9 @@ const stylesScrollTop = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 8,
     ...(Platform.OS === "web"
-      ? ({
-          cursor: "pointer",
-          userSelect: "none",
-          backdropFilter: "blur(16px)",
-          WebkitBackdropFilter: "blur(16px)",
-        } as never)
+      ? ({ cursor: "pointer", userSelect: "none", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", } as never)
       : {}),
   },
-  scrollTopFabHovered: {
-    transform: [{ scale: 1.06 }],
-    elevation: 8,
-    shadowOpacity: 0.26,
-    shadowRadius: 12,
-  },
-  scrollTopFabPressed: {
-    transform: [{ scale: 0.94 }],
-    opacity: 0.9,
-  },
+  scrollTopFabHovered: { transform: [{ scale: 1.06 }], elevation: 8, shadowOpacity: 0.26, shadowRadius: 12, },
+  scrollTopFabPressed: { transform: [{ scale: 0.94 }], opacity: 0.9, },
 });
