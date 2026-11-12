@@ -8,6 +8,7 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
+import { useSafeAreaInsets, type EdgeInsets } from "react-native-safe-area-context";
 import {
   makeAuthViewModel,
   makeProfilePhotoViewModel,
@@ -99,10 +100,9 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
   const { colors } = useTheme();
   // Web larga: coluna mais larga, com cartão e foto de um lado e dados e contato do outro.
   const wide = useIsWideWeb();
+  const insets = useSafeAreaInsets();
   const isKeyboardVisible = useKeyboardVisible();
-  const { width: viewportWidth } = useWindowDimensions();
-  const stackPhotoActions = viewportWidth < 380;
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = useMemo(() => createStyles(colors, insets), [colors, insets]);
   const [authState] = makeAuthViewModel();
   const userId = authState.user?.id ?? null;
   const [photo, photoActions] = makeProfilePhotoViewModel(userId);
@@ -257,7 +257,7 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
       maxWidth={contentMaxWidth}
       paddingHorizontal={wide ? WEB_GUTTER : undefined}
       paddingTop={tokens.spacing[12]}
-      paddingBottom={!wide && state.profile ? tokens.spacing[96] : tokens.spacing[32]}
+      paddingBottom={!wide && state.profile ? tokens.spacing[80] + insets.bottom : tokens.spacing[32]}
       header={<TopAppBar contentMaxWidth={contentMaxWidth} title="Editar perfil" onBack={guardedBack} />}
       overlay={
         <>
@@ -348,25 +348,39 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
 
                   <View style={styles.photoActionsBlock}>
                     <Text style={styles.photoActionsLabel}>Foto de perfil</Text>
-                    <View style={[styles.photoActions, stackPhotoActions && styles.photoActionsStacked]}>
-                      <View style={styles.photoAction}>
-                        <OutlinedButton
-                          label="Escolher foto"
-                          accessibilityLabel="Escolher foto da galeria"
-                          icon={<AppIcon name="photo" size={18} color={colors.m3.primary} />}
-                          disabled={photo.uploading || saving}
-                          onPress={() => void pickPhoto("library")}
-                        />
-                      </View>
-                      <View style={styles.photoAction}>
-                        <OutlinedButton
-                          label="Tirar foto"
-                          accessibilityLabel="Tirar foto com a câmera"
-                          icon={<AppIcon name="camera" size={18} color={colors.m3.primary} />}
-                          disabled={photo.uploading || saving}
-                          onPress={() => void pickPhoto("camera")}
-                        />
-                      </View>
+                    <View style={styles.photoActions}>
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel="Escolher foto da galeria"
+                        disabled={photo.uploading || saving}
+                        onPress={() => void pickPhoto("library")}
+                        style={({ pressed }) => [
+                          styles.photoButton,
+                          pressed && styles.photoButtonPressed,
+                          (photo.uploading || saving) && styles.photoButtonDisabled,
+                        ]}
+                      >
+                        <AppIcon name="photo" size={18} color={colors.m3.primary} />
+                        <Text numberOfLines={1} style={styles.photoButtonText}>
+                          Escolher foto
+                        </Text>
+                      </Pressable>
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel="Tirar foto com a câmera"
+                        disabled={photo.uploading || saving}
+                        onPress={() => void pickPhoto("camera")}
+                        style={({ pressed }) => [
+                          styles.photoButton,
+                          pressed && styles.photoButtonPressed,
+                          (photo.uploading || saving) && styles.photoButtonDisabled,
+                        ]}
+                      >
+                        <AppIcon name="camera" size={18} color={colors.m3.primary} />
+                        <Text numberOfLines={1} style={styles.photoButtonText}>
+                          Tirar foto
+                        </Text>
+                      </Pressable>
                     </View>
                     {photo.uploading ? <LoadingState label="Enviando foto" /> : null}
                     {photo.error ? (
@@ -558,7 +572,8 @@ function FormSection({
   children: ReactNode;
 }) {
   const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const insets = useSafeAreaInsets();
+  const styles = useMemo(() => createStyles(colors, insets), [colors, insets]);
   return (
     <View style={styles.formSection}>
       <View style={styles.formSectionHeader}>
@@ -577,34 +592,63 @@ function FormSection({
   );
 }
 
-function createStyles(colors: ColorPalette) {
+function createStyles(colors: ColorPalette, insets?: EdgeInsets) {
   return StyleSheet.create({
     photoActionsBlock: {
       gap: tokens.spacing[8],
-      paddingTop: tokens.spacing[8],
+      paddingTop: tokens.spacing[4],
     },
     photoActionsLabel: {
       ...tokens.typography.labelMedium,
       color: colors.m3.onSurfaceVariant,
       fontWeight: tokens.fontWeight.semiBold,
     },
-    photoActions: { flexDirection: "row", gap: tokens.spacing[12] },
-    photoActionsStacked: { flexDirection: "column" },
-    photoAction: { flex: 1 },
+    photoActions: {
+      flexDirection: "row",
+      gap: tokens.spacing[10],
+      alignItems: "center",
+    },
+    photoButton: {
+      flex: 1,
+      minHeight: 46,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: tokens.spacing[8],
+      borderRadius: tokens.radius.full,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+      backgroundColor: colors.surface,
+      paddingHorizontal: tokens.spacing[12],
+    },
+    photoButtonPressed: {
+      backgroundColor: colors.m3.surfaceContainerHigh,
+      transform: [{ scale: 0.98 }],
+    },
+    photoButtonDisabled: {
+      opacity: 0.5,
+    },
+    photoButtonText: {
+      ...tokens.typography.labelMedium,
+      color: colors.m3.onSurface,
+      fontWeight: tokens.fontWeight.medium,
+    },
     removePhotoRow: {
       alignSelf: "flex-start",
-      paddingTop: tokens.spacing[4],
+      paddingTop: tokens.spacing[2],
     },
     formSection: {
-      gap: tokens.spacing[14],
+      gap: tokens.spacing[12],
       padding: tokens.spacing[16],
       borderRadius: tokens.radius.xl,
       backgroundColor: colors.m3.surfaceContainerLow,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+      elevation: 1,
       shadowColor: colors.m3.shadow,
       shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.18,
-      shadowRadius: 1.5,
-      elevation: 1,
+      shadowOpacity: 0.08,
+      shadowRadius: 2,
     },
     formSectionHeader: { flexDirection: "row", alignItems: "flex-start", gap: tokens.spacing[12] },
     formSectionIcon: {
@@ -623,11 +667,11 @@ function createStyles(colors: ColorPalette) {
     },
     formContainer: {
       width: "100%",
-      gap: tokens.spacing[20],
+      gap: tokens.spacing[16],
     },
     heroSection: {
-      paddingBottom: tokens.spacing[4],
-      gap: tokens.spacing[4],
+      paddingBottom: tokens.spacing[2],
+      gap: tokens.spacing[2],
     },
     columns: { gap: tokens.spacing[16] },
     columnsWide: { flexDirection: "row", alignItems: "flex-start", gap: tokens.spacing[24] },
@@ -636,15 +680,16 @@ function createStyles(colors: ColorPalette) {
     heroTitle: {
       ...tokens.typography.brandHeadline,
       color: colors.brandBrown,
-      // A serifada da marca tem sobrehang à esquerda; um leve respiro evita que a primeira
-      // letra encoste e seja recortada pela viewport do ScrollView.
       paddingLeft: tokens.spacing[4],
       paddingRight: tokens.spacing[8],
+      fontSize: 26,
+      lineHeight: 32,
     },
     heroSubtitle: {
-      ...tokens.typography.bodyLarge,
+      ...tokens.typography.bodyMedium,
       color: colors.m3.onSurfaceVariant,
-      marginTop: tokens.spacing[6],
+      marginTop: tokens.spacing[2],
+      paddingLeft: tokens.spacing[4],
     },
     avatarSection: {
       gap: tokens.spacing[8],
@@ -791,13 +836,19 @@ function createStyles(colors: ColorPalette) {
       borderTopWidth: 1,
       borderTopColor: colors.m3.outlineVariant,
       backgroundColor: colors.surface,
+      elevation: 4,
+      shadowColor: colors.m3.shadow,
+      shadowOffset: { width: 0, height: -2 },
+      shadowOpacity: 0.08,
+      shadowRadius: 4,
     },
     stickyActionContent: {
       width: "100%",
       maxWidth: 560,
       alignSelf: "center",
       paddingHorizontal: tokens.spacing[16],
-      paddingVertical: tokens.spacing[12],
+      paddingTop: tokens.spacing[10],
+      paddingBottom: Math.max(insets?.bottom ?? 0, tokens.spacing[12]),
     },
     guestCard: {
       gap: tokens.spacing[16],
