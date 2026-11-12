@@ -442,12 +442,13 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
     cardLeadingBox: {
       minWidth: 48,
       height: 48,
-      paddingHorizontal: tokens.spacing[8],
+      paddingHorizontal: tokens.spacing[6],
       borderRadius: tokens.radius.medium,
       justifyContent: "center",
       alignItems: "center",
     },
     cardLeadingBoxRating: {
+      minWidth: 54,
       backgroundColor: colors.ipe.container,
       borderWidth: 1,
       borderColor: colors.ipe.bloom,
