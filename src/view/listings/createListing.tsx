@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { BackHandler, Platform, ScrollView, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets, type EdgeInsets } from "react-native-safe-area-context";
 import { makeCreateListingViewModel, makeListingPhotoViewModel } from "@/di/container";
 import type { Book } from "@/model/entities/book";
 import { BOOK_CONDITION_LABELS } from "@/model/entities/book";
@@ -68,8 +68,9 @@ export default function CreateListing({
   const [photoState, photoActions] = makeListingPhotoViewModel(sessionUserId);
   const { colors } = useTheme();
   const wideWeb = useIsWideWeb();
+  const insets = useSafeAreaInsets();
   const isKeyboardVisible = useKeyboardVisible();
-  const styles = useMemo(() => createStyles(colors, wideWeb), [colors, wideWeb]);
+  const styles = useMemo(() => createStyles(colors, wideWeb, insets), [colors, wideWeb, insets]);
   const [step, setStep] = useState(1);
   const [published, setPublished] = useState<Book | null>(null);
   // Erros da etapa 1 só aparecem depois da primeira tentativa de avançar.
@@ -325,7 +326,10 @@ export default function CreateListing({
 
           {hasDraftContent ? (
             <View style={styles.draftBanner}>
-              <Text style={styles.draftBannerText}>Rascunho salvo neste aparelho</Text>
+              <View style={styles.draftBannerLeft}>
+                <AppIcon name="checkCircle" size={16} color={colors.nature.foliageDeep} />
+                <Text style={styles.draftBannerText}>Rascunho salvo neste aparelho</Text>
+              </View>
               <TextButton
                 label="Limpar rascunho"
                 onPress={() => {
@@ -549,12 +553,12 @@ export default function CreateListing({
   );
 }
 
-function createStyles(colors: ColorPalette, wideWeb: boolean) {
+function createStyles(colors: ColorPalette, wideWeb: boolean, insets?: EdgeInsets) {
   return StyleSheet.create({
     page: { flex: 1, backgroundColor: colors.background },
     scrollContent: {
       padding: tokens.spacing[16],
-      paddingBottom: wideWeb ? 160 : tokens.spacing[32],
+      paddingBottom: wideWeb ? 160 : 130 + (insets?.bottom ?? 0),
     },
     wideLayout: {
       flexDirection: "row",
@@ -843,8 +847,8 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
       maxWidth: wideWeb ? 1040 : 560,
       alignSelf: "center",
       paddingHorizontal: tokens.spacing[16],
-      paddingTop: tokens.spacing[8],
-      paddingBottom: tokens.spacing[8],
+      paddingTop: tokens.spacing[10],
+      paddingBottom: Math.max(insets?.bottom ?? 0, tokens.spacing[12]),
     },
     webActionRow: {
       flexDirection: "row",
@@ -883,16 +887,23 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
       alignItems: "center",
       justifyContent: "space-between",
       paddingHorizontal: tokens.spacing[12],
-      paddingVertical: tokens.spacing[6],
+      paddingVertical: tokens.spacing[4],
       borderRadius: tokens.radius.medium,
-      backgroundColor: colors.m3.surfaceContainerHigh,
+      backgroundColor: colors.nature.sprout,
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      borderColor: `${colors.nature.foliage}30`,
+      gap: tokens.spacing[8],
+    },
+    draftBannerLeft: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[6],
+      flex: 1,
     },
     draftBannerText: {
-      ...tokens.typography.labelMedium,
-      color: colors.actionDeep,
-      fontWeight: tokens.fontWeight.semiBold,
+      ...tokens.typography.labelSmall,
+      color: colors.nature.foliageDeep,
+      fontWeight: tokens.fontWeight.medium,
     },
   });
 }
