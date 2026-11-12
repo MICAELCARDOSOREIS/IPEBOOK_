@@ -384,7 +384,7 @@ export function formatarRelatorioTerminal(metricas) {
     `  ├──────────────┼────────┼────────────┼─────────────────────────────────┤`,
     `  │ Doação       │ ${String(modalidades.doacao.total).padStart(6)} │ ${String(`${modalidades.doacao.percentual.toFixed(1)}%`).padStart(10)} │ Gratuito (comunitário)          │`,
     `  │ Troca        │ ${String(modalidades.troca.total).padStart(6)} │ ${String(`${modalidades.troca.percentual.toFixed(1)}%`).padStart(10)} │ Troca por outro exemplar        │`,
-    `  │ Venda        │ ${String(modalidades.venda.total).padStart(6)} │ ${String(modalidades.venda.percentual.toFixed(1) + '%').padStart(10)} │ Méd: ${formatPreco(modalidades.venda.precoMedio)} (${formatPreco(modalidades.venda.precoMinimo)}–${formatPreco(modalidades.venda.precoMaximo)}) │`,
+    `  │ Venda        │ ${String(modalidades.venda.total).padStart(6)} │ ${String(`${modalidades.venda.percentual.toFixed(1)}%`).padStart(10)} │ Méd: ${formatPreco(modalidades.venda.precoMedio)} (${formatPreco(modalidades.venda.precoMinimo)}–${formatPreco(modalidades.venda.precoMaximo)}) │`,
     `  └──────────────┴────────┴────────────┴─────────────────────────────────┘`,
     divisoria,
     '  📌 STATUS DOS ANÚNCIOS',
@@ -402,7 +402,7 @@ export function formatarRelatorioTerminal(metricas) {
   for (const b of distribuicaoBairros) {
     const nomeBairro = b.bairro.padEnd(18).slice(0, 18);
     const tot = String(b.total).padStart(6);
-    const pct = String(b.percentual.toFixed(1) + '%').padStart(10);
+    const pct = String(`${b.percentual.toFixed(1)}%`).padStart(10);
     const dsp = String(b.disponiveis).padStart(5);
     const trc = String(b.troca).padStart(5);
     const doa = String(b.doacao).padStart(5);
@@ -701,11 +701,11 @@ Conformidade LGPD:
   });
 
   if (isJson) {
-    process.stdout.write(gerarRelatorioJson(metricas) + '\n');
+    process.stdout.write(`${gerarRelatorioJson(metricas)}\n`);
   } else if (isMarkdown) {
-    process.stdout.write(formatarRelatorioMarkdown(metricas) + '\n');
+    process.stdout.write(`${formatarRelatorioMarkdown(metricas)}\n`);
   } else {
-    process.stdout.write(formatarRelatorioTerminal(metricas) + '\n');
+    process.stdout.write(`${formatarRelatorioTerminal(metricas)}\n`);
   }
 
   return 0;

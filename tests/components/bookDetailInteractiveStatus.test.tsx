@@ -240,4 +240,43 @@ describe("Spec 110 — Ações Interativas de Reserva no Detalhe do Livro", () =
     const flattenedStyle = Object.assign({}, ...[].concat(reservedButton.props.style as any));
     expect(flattenedStyle.backgroundColor).toBe("#EBF4EC");
   });
+
+  it("aplica cores de modalidade para troca e doação e cobre botões de solicitação aceita", async () => {
+    // 1. Troca
+    const bookTrade = sampleBook({ ownerId: "owner-1", status: "reserved", modality: "trade" });
+    const user = { id: "user-2", email: "user2@example.com" } as AuthState["user"];
+    setupDetail(bookTrade, user);
+    let screen = await renderComponent(<BookDetail bookId="b1" onBack={vi.fn()} />);
+    let btn = screen.getByLabelText("Livro reservado. Toque para saber mais e entrar na lista de espera");
+    let style = Object.assign({}, ...[].concat(btn.props.style as any));
+    expect(style.backgroundColor).toBe("#F4EAE4");
+
+    // 2. Doação
+    const bookDonation = sampleBook({ ownerId: "owner-1", status: "reserved", modality: "donation" });
+    setupDetail(bookDonation, user);
+    screen = await renderComponent(<BookDetail bookId="b1" onBack={vi.fn()} />);
+    btn = screen.getByLabelText("Livro reservado. Toque para saber mais e entrar na lista de espera");
+    style = Object.assign({}, ...[].concat(btn.props.style as any));
+    expect(style.backgroundColor).toBe("#FEF3C7");
+
+    // 3. Negociação solicitada e aceita
+    const bookAccepted = sampleBook({ ownerId: "owner-1", status: "available", modality: "donation" });
+    setupDetail(bookAccepted, user, { requestedListingIds: ["b1"] });
+    vi.mocked(useRequestNegotiationViewModel).mockReturnValue([
+      { sentRequests: [{ id: "req-1", listingId: "b1", status: "accepted" }], requestedListingIds: ["b1"], activeRequestStatus: "accepted", activeRequestId: "req-1" } as any,
+      { checkActiveRequest: vi.fn() } as any,
+    ]);
+    screen = await renderComponent(<BookDetail bookId="b1" onBack={vi.fn()} onNavigateToMyRequests={vi.fn()} />);
+    const acceptedBtn = screen.getByText("Combinar encontro");
+    expect(acceptedBtn).toBeDefined();
+
+    // 4. Negociação solicitada pendente
+    vi.mocked(useRequestNegotiationViewModel).mockReturnValue([
+      { sentRequests: [{ id: "req-2", listingId: "b1", status: "pending" }], requestedListingIds: ["b1"], activeRequestStatus: "pending", activeRequestId: "req-2" } as any,
+      { checkActiveRequest: vi.fn() } as any,
+    ]);
+    screen = await renderComponent(<BookDetail bookId="b1" onBack={vi.fn()} onNavigateToMyRequests={vi.fn()} />);
+    const pendingBtn = screen.getByText("Negociação solicitada");
+    expect(pendingBtn).toBeDefined();
+  });
 });
