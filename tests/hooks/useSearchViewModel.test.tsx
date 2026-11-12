@@ -166,14 +166,15 @@ describe("testes de hook: useSearchViewModel (ISO/IEC 25010 - Adequação Funcio
 
   it("filtra livros por categoria específica e expõe availableCategories (Spec 028, Issue #93)", async () => {
     const list = [
-      { id: "1", title: "Dom Casmurro", author: "Machado", ownerId: "u1", modality: "donation" as const, status: "available" as const, category: "Literatura Brasileira" },
-      { id: "2", title: "Cálculo I", author: "Stewart", ownerId: "u2", modality: "sale" as const, status: "available" as const, category: "Didáticos", price: 50 },
+      { id: "1", title: "Dom Casmurro", author: "Machado", ownerId: "u1", modality: "donation" as const, status: "available" as const, category: "Literatura & Romance" },
+      { id: "2", title: "Cálculo I", author: "Stewart", ownerId: "u2", modality: "sale" as const, status: "available" as const, category: "Didáticos & Concursos", price: 50 },
     ];
     const hook = await renderHook({ listBooks: async () => list });
-    expect(hook.current[0].availableCategories).toEqual(["Didáticos", "Literatura Brasileira"]);
+    expect(hook.current[0].availableCategories).toContain("Didáticos & Concursos");
+    expect(hook.current[0].availableCategories).toContain("Literatura & Romance");
 
     await act(async () => {
-      hook.current[1].setCategory("Didáticos");
+      hook.current[1].setCategory("Didáticos & Concursos");
     });
     expect(hook.current[0].books).toEqual([list[1]]);
 

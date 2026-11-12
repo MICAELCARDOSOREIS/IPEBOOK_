@@ -697,4 +697,79 @@ describe("Cobertura direcionada de branches (Branches Coverage Booster)", () => 
       expect(share.buildWhatsAppInviteUrl("https://custom.app")).toContain("https%3A%2F%2Fcustom.app");
     });
   });
+
+  describe("Cobertura adicional de branches (searchFilters e MeetingMap)", () => {
+    it("cobre branches de formatação e filtros de busca", async () => {
+      const {
+        filterBooks,
+        sortBooks,
+        describeResults,
+        activeFilters,
+        removeFilter,
+        matchesPrice,
+        matchesCategory,
+        matchesCondition,
+      } = await import("@/viewmodel/searchFilters");
+
+      const books = [
+        { id: "1", title: "Livro 1", author: "A", ownerId: "u1", modality: "sale" as const, status: "available" as const, price: 10, neighborhood: "Centro", category: "Didáticos & Concursos", condition: "new" as const },
+        { id: "2", title: "Livro 2", author: "B", ownerId: "u2", modality: "trade" as const, status: "available" as const, price: 35, neighborhood: "Floresta", isBox: true, category: "Universitário & Técnico" },
+        { id: "3", title: "Livro 3", author: "C", ownerId: "u3", modality: "donation" as const, status: "available" as const, neighborhood: "Centro", category: "Outros" },
+      ];
+
+      // matchesPrice branches
+      expect(matchesPrice(books[0], "all")).toBe(true);
+      expect(matchesPrice(books[0], "under20")).toBe(true);
+      expect(matchesPrice(books[1], "under50")).toBe(true);
+      expect(matchesPrice(books[2], "free")).toBe(true);
+
+      // matchesCategory branches
+      expect(matchesCategory("livro de cálculo universitário", "Universitário & Técnico")).toBe(true);
+      expect(matchesCategory("romance ficção", "Literatura & Romance")).toBe(true);
+      expect(matchesCategory("quadrinho gibi mangá", "Infantil & Quadrinhos")).toBe(true);
+      expect(matchesCategory("autoajuda e espiritualidade", "Desenvolvimento & Espiritualidade")).toBe(true);
+      expect(matchesCategory("biografia história", "Outros")).toBe(true);
+      expect(matchesCategory(undefined, "Outros")).toBe(false);
+
+      // matchesCondition branches
+      expect(matchesCondition(books[0], "new")).toBe(true);
+      expect(matchesCondition(books[1], "good")).toBe(true);
+      expect(matchesCondition(books[0], "all")).toBe(true);
+
+      // filterBooks com filtros diversos
+      expect(filterBooks(books, { term: "Livro", filters: { modality: "sale", priceRange: "all", condition: "all", onlyBoxes: false, category: "all" }, neighborhood: "all" })).toHaveLength(1);
+      expect(filterBooks(books, { term: "", filters: { modality: "all", priceRange: "free", condition: "all", onlyBoxes: false, category: "all" }, neighborhood: "all" })).toHaveLength(1);
+      expect(filterBooks(books, { term: "", filters: { modality: "all", priceRange: "under20", condition: "all", onlyBoxes: false, category: "all" }, neighborhood: "all" })).toHaveLength(1);
+      expect(filterBooks(books, { term: "", filters: { modality: "all", priceRange: "all", condition: "all", onlyBoxes: true, category: "all" }, neighborhood: "all" })).toHaveLength(1);
+      expect(filterBooks(books, { term: "", filters: { modality: "all", priceRange: "all", condition: "all", onlyBoxes: false, category: "Didáticos & Concursos" }, neighborhood: "all" })).toHaveLength(1);
+
+      // sortBooks
+      expect(sortBooks(books, "price_asc", "all")[0].id).toBe("3");
+      expect(sortBooks(books, "price_desc", "all")[0].id).toBe("2");
+      expect(sortBooks(books, "title", "all")[0].id).toBe("1");
+      expect(sortBooks(books, "recent", "all")).toHaveLength(3);
+
+      // describeResults
+      expect(describeResults(0, { modality: "all", priceRange: "all", condition: "all", onlyBoxes: false, category: "all" })).toBe("0 livros");
+      expect(describeResults(1, { modality: "sale", priceRange: "all", condition: "all", onlyBoxes: false, category: "all" })).toContain("1 livro à venda");
+      expect(describeResults(2, { modality: "trade", priceRange: "all", condition: "all", onlyBoxes: false, category: "all" })).toContain("2 livros para troca");
+      expect(describeResults(3, { modality: "donation", priceRange: "all", condition: "all", onlyBoxes: false, category: "all" })).toContain("3 livros para doação");
+
+      // activeFilters & removeFilter
+      const filtrosCheios = {
+        modality: "sale" as const,
+        priceRange: "under20" as const,
+        condition: "good" as const,
+        onlyBoxes: true,
+        category: "Didáticos & Concursos",
+      };
+      const ativos = activeFilters(filtrosCheios);
+      expect(ativos.length).toBeGreaterThanOrEqual(4);
+      expect(removeFilter(filtrosCheios, "modality").modality).toBe("all");
+      expect(removeFilter(filtrosCheios, "priceRange").priceRange).toBe("all");
+      expect(removeFilter(filtrosCheios, "condition").condition).toBe("all");
+      expect(removeFilter(filtrosCheios, "onlyBoxes").onlyBoxes).toBe(false);
+      expect(removeFilter(filtrosCheios, "category").category).toBe("all");
+    });
+  });
 });

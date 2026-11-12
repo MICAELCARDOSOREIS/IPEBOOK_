@@ -324,5 +324,33 @@ describe("useAuthViewModel", () => {
       expect(hook.current[0].user).toBeNull();
       expect(hook.current[0].error).toBeNull();
     });
+
+    it("cobre branches de erro e cache com process.env.NODE_ENV não-test", async () => {
+      const origEnv = process.env.NODE_ENV;
+      try {
+        process.env.NODE_ENV = "production";
+        const auth = createMockAuth({
+          getSession: vi.fn().mockResolvedValue(mockUser),
+          signIn: vi.fn().mockRejectedValue(new Error("Erro genérico não-domínio")),
+          signUp: vi.fn().mockRejectedValue(new Error("Falha cadastro não-domínio")),
+        });
+        const hook = await renderHook(auth, undefined, dummyLogger);
+        expect(hook.current).toBeDefined();
+
+        await act(async () => {
+          const res = await hook.current[1].signIn("teste@email.com", "senha");
+          expect(res).toBe(false);
+        });
+        expect(hook.current[0].error).toBe("Não foi possível concluir. Tente novamente.");
+
+        await act(async () => {
+          const res = await hook.current[1].signUp("teste2@email.com", "senha", "Nome");
+          expect(res).toBe(false);
+        });
+        expect(hook.current[0].error).toBe("Não foi possível concluir. Tente novamente.");
+      } finally {
+        process.env.NODE_ENV = origEnv;
+      }
+    });
   });
 });
