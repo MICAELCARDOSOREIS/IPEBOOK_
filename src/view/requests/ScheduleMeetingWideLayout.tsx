@@ -8,8 +8,6 @@ import { TextButton } from "@/view/components/TextButton";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { formatMeetingDay, spokenMeetingDay } from "@/view/meetingFormat";
 import { withPress } from "@/view/pressFeedback";
-import { MeetingMap } from "@/view/requests/MeetingMap";
-import { StaticMeetingMap } from "@/view/requests/MeetingMapStatic";
 import { scrollBottomPadding, standardVerticalScrollProps } from "@/view/scrollProps";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
@@ -43,7 +41,6 @@ export function OptionChip({ label, accessibilityLabel, selected, onPress, compa
 
 export type ScheduleMeetingWideLayoutProps = {
   rescheduling: boolean;
-  hasMap: boolean;
   windowWidth: number;
   windowHeight: number;
   pointName: string | null;
@@ -60,7 +57,6 @@ export type ScheduleMeetingWideLayoutProps = {
   errorRef: React.RefObject<any>;
   onBack: () => void;
   onSelectPoint: (name: string) => void;
-  onSelectFromMap: (name: string) => void;
   onSelectDay: (index: number) => void;
   onSelectHour: (hour: number) => void;
   onSubmit: () => void;
@@ -71,7 +67,6 @@ export type ScheduleMeetingWideLayoutProps = {
  */
 export function ScheduleMeetingWideLayout({
   rescheduling,
-  hasMap,
   windowWidth,
   windowHeight,
   pointName,
@@ -88,7 +83,6 @@ export function ScheduleMeetingWideLayout({
   errorRef,
   onBack,
   onSelectPoint,
-  onSelectFromMap,
   onSelectDay,
   onSelectHour,
   onSubmit,
@@ -131,7 +125,7 @@ export function ScheduleMeetingWideLayout({
                 <View style={styles.whereHeader}>
                   <Text accessibilityRole="header" style={styles.sectionLabel}>Onde</Text>
                   <Text style={styles.whereHint}>
-                    {hasMap ? "Clique num pino do mapa ou escolha na lista." : "Escolha um ponto público e seguro em Piripiri."}
+                    Escolha um ponto público e seguro em Piripiri.
                   </Text>
                 </View>
 
@@ -258,17 +252,13 @@ export function ScheduleMeetingWideLayout({
                 </View>
 
                 <View style={[styles.wideMapViewport, { height: mapViewportHeight }]}>
-                  {hasMap ? (
-                    <MeetingMap selectedName={pointName} compactPadding onSelect={onSelectFromMap} />
-                  ) : (
-                    <View style={styles.wideMapEmptyFallback}>
-                      <AppIcon name="place" size={32} color={colors.m3.primary} />
-                      <Text style={styles.wideMapEmptyFallbackTitle}>4 Pontos Seguros em Piripiri</Text>
-                      <Text style={styles.wideMapEmptyFallbackText}>
-                        Praça da Bandeira, Praça de Eventos, Museu de Perypery e Campus IFPI.
-                      </Text>
-                    </View>
-                  )}
+                  <View style={styles.wideMapEmptyFallback}>
+                    <AppIcon name="place" size={32} color={colors.m3.primary} />
+                    <Text style={styles.wideMapEmptyFallbackTitle}>4 Pontos Seguros em Piripiri</Text>
+                    <Text style={styles.wideMapEmptyFallbackText}>
+                      Praça da Bandeira, Praça de Eventos, Museu de Perypery e Campus IFPI.
+                    </Text>
+                  </View>
                 </View>
 
                 <View style={styles.wideMapCardFooter}>
@@ -280,7 +270,7 @@ export function ScheduleMeetingWideLayout({
                     </View>
                     <View style={styles.wideMapFooterTextCol}>
                       <Text numberOfLines={1} style={styles.wideMapFooterTitle}>
-                        {selectedPoint ? selectedPoint.name : "Escolha o local na lista ao lado ou no mapa"}
+                        {selectedPoint ? selectedPoint.name : "Escolha o local na lista ao lado"}
                       </Text>
                       <Text numberOfLines={2} style={styles.wideMapFooterSubtitle}>
                         {selectedPoint

@@ -110,5 +110,6 @@
 - [0108 — Adequação do PWA no iPhone/Safari ao Apple HIG](0108-pwa-iphone-safari-apple-hig.md)
 - [0109 — Padronização e expansão das categorias de livros no IpêBook](0109-padronizacao-e-expansao-das-categorias-de-livros.md)
 - [0110 — Atalho do WhatsApp abre o aplicativo, sem a folha de compartilhamento do sistema](0110-atualizacao-do-atalho-whatsapp-sem-folha-do-sistema.md)
+- [0111 — Combinar encontro sem mapa: a lista de pontos substitui o Mapbox](0111-encontro-sem-mapa-mapbox.md)
 
 Preservar registros aceitos; mudanças relevantes geram novo ADR com vínculos de substituição.
