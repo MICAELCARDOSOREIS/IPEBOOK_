@@ -83,7 +83,7 @@ export function NavigationBar({ active, onNavigate, disabledDestinations = [], b
           toValue: targetX,
           tension: tokens.spring.spatialStandard.tension,
           friction: tokens.spring.spatialStandard.friction,
-          useNativeDriver: true,
+          useNativeDriver: Platform.OS !== "web",
         }).start();
       })
       .catch(() => {
@@ -237,7 +237,7 @@ function TabIconWithBounce({
             toValue: 1,
             tension: tokens.spring.spatialStandard.tension,
             friction: tokens.spring.spatialStandard.friction,
-            useNativeDriver: true,
+            useNativeDriver: Platform.OS !== "web",
           }).start();
         })
         .catch(() => {

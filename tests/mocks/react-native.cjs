@@ -175,6 +175,10 @@ function __emitKeyboardEvent(type, height, screenY = 0) {
   for (const handler of keyboardListeners.get(type) || []) handler(event);
 }
 const useWindowDimensions = () => ({ width: 360, height: 800, scale: 1, fontScale: 1 });
+const Dimensions = {
+  get: (_dimension) => ({ width: 360, height: 800, scale: 1, fontScale: 1 }),
+  addEventListener: (_type, _handler) => ({ remove: () => {} }),
+};
 
 let mockColorScheme = "light";
 const useColorScheme = () => mockColorScheme;
@@ -269,6 +273,7 @@ module.exports = {
   Keyboard,
   __emitKeyboardEvent,
   useWindowDimensions,
+  Dimensions,
   Animated,
   PanResponder,
   AppState,

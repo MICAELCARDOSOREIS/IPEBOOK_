@@ -83,7 +83,7 @@ export default function TermsAndPrivacy({
             <Text style={[styles.updatedDate, wide && styles.fullRow]}>{`Última atualização: ${LEGAL_LAST_UPDATED}`}</Text>
             {sections.map((section) => (
               <View key={section.title} style={[styles.sectionCard, wide && columnWidth]}>
-                <Text accessibilityRole="header" style={styles.sectionTitle}>
+                <Text accessibilityRole="header" aria-level={2} style={styles.sectionTitle}>
                   {section.title}
                 </Text>
                 {section.paragraphs.map((p, index) => (
@@ -95,7 +95,7 @@ export default function TermsAndPrivacy({
             ))}
             {activeTab === "privacy" && onNavigateToDeleteAccount ? (
               <View style={[styles.sectionCard, wide && styles.fullRow]}>
-                <Text accessibilityRole="header" style={styles.sectionTitle}>
+                <Text accessibilityRole="header" aria-level={2} style={styles.sectionTitle}>
                   Portabilidade e Exclusão (LGPD — Art. 18)
                 </Text>
                 <Text style={styles.paragraph}>

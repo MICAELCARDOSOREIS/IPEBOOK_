@@ -1,5 +1,5 @@
-import { useMemo } from "react";
-import { Pressable, StyleSheet, Text, useWindowDimensions, View } from "react-native";
+import { useMemo, useState } from "react";
+import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
@@ -7,6 +7,7 @@ import { AppIcon } from "@/view/components/AppIcon";
 import type { NavigationDestination } from "@/view/components/NavigationBar";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { withPress } from "@/view/pressFeedback";
+import { useHydratedWindowWidth } from "@/view/useIsWideWeb";
 export type WebHeaderProps = {
   active?: NavigationDestination;
   onNavigate: (destination: NavigationDestination) => void;
@@ -18,6 +19,8 @@ export type WebHeaderProps = {
   onOpenNotifications?: () => void;
   /** Notificações não lidas, mostradas como selo no sino. */
   notificationCount?: number;
+  /** Busca de verdade: recebe o termo digitado e abre a Pesquisa já filtrada por ele. */
+  onSearch?: (term: string) => void;
 };
 
 const LINKS: ReadonlyArray<{ key: NavigationDestination; label: string }> = [
@@ -35,36 +38,45 @@ export function WebHeader({
   badgeCount = 0,
   onOpenNotifications,
   notificationCount = 0,
+  onSearch,
 }: WebHeaderProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   // Alinha ao recuo lateral padronizado das telas na web larga (WEB_GUTTER = 64 px, como em Boas-vindas e Beta).
-  const { width } = useWindowDimensions();
+  const width = useHydratedWindowWidth();
   const sideInset = width >= 960 ? WEB_GUTTER : tokens.spacing[16];
   // Janelas médias (tablet, notebook pequeno): vãos menores para tudo caber sem cortar o avatar.
   const compact = width < 1280;
+  const [searchTerm, setSearchTerm] = useState("");
   const guardedNavigate = useGuardedPress(onNavigate);
+  const submitSearch = () => {
+    const term = searchTerm.trim();
+    if (onSearch && term) onSearch(term);
+    else guardedNavigate("search");
+  };
   const guardedAnnounce = useGuardedPress(onAnnounce);
   const guardedOpenNotifications = useGuardedPress(onOpenNotifications);
 
   return (
-    <View accessibilityRole="header" testID="web-header" style={[styles.bar, { paddingHorizontal: sideInset }, compact && styles.barCompact]}>
+    <View role="banner" testID="web-header" style={[styles.bar, { paddingHorizontal: sideInset }, compact && styles.barCompact]}>
       <View style={styles.inner}>
         <Pressable accessibilityRole="link" accessibilityLabel="IpêBook, ir para o início" onPress={() => guardedNavigate("home")} style={withPress(styles.brandLink)}>
           <Text style={styles.brand}>IpêBook</Text>
         </Pressable>
 
-        <Pressable
-          accessibilityRole="search"
-          accessibilityLabel="Buscar título, autor ou categoria"
-          onPress={() => guardedNavigate("search")}
-          style={withPress(styles.search)}
-        >
-          <View style={styles.searchLeftRow}>
-            <AppIcon name="search" size={20} color={colors.m3.onSurfaceVariant} />
-            <Text numberOfLines={1} style={styles.searchText}>Buscar título, autor ou categoria</Text>
-          </View>
-        </Pressable>
+        <View style={styles.search}>
+          <AppIcon name="search" size={20} color={colors.m3.onSurfaceVariant} />
+          <TextInput
+            value={searchTerm}
+            onChangeText={setSearchTerm}
+            onSubmitEditing={submitSearch}
+            placeholder="Buscar título, autor ou categoria"
+            placeholderTextColor={colors.m3.onSurfaceVariant}
+            accessibilityLabel="Buscar título, autor ou categoria"
+            returnKeyType="search"
+            style={styles.searchInput}
+          />
+        </View>
 
         <View style={styles.spacer} />
 
@@ -156,7 +168,6 @@ function createStyles(colors: ColorPalette) {
     search: {
       flexDirection: "row",
       alignItems: "center",
-      justifyContent: "space-between",
       gap: tokens.spacing[10],
       flexShrink: 1,
       minWidth: 200,
@@ -169,13 +180,16 @@ function createStyles(colors: ColorPalette) {
       borderWidth: 1,
       borderColor: colors.m3.outlineVariant,
     },
-    searchLeftRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[10],
+    searchInput: {
+      ...tokens.typography.bodyMedium,
       flex: 1,
-    },
-    searchText: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant, flexShrink: 1 },
+      minWidth: 0,
+      height: "100%",
+      color: colors.m3.onSurface,
+      // 16 px evita o zoom involuntário do Safari ao focar o campo (Spec 136).
+      fontSize: 16,
+      outlineStyle: "none",
+    } as object,
     spacer: { flex: 1 },
     barCompact: { gap: tokens.spacing[16] },
     countBadge: {

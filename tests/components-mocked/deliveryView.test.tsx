@@ -26,7 +26,11 @@ vi.mock("expo-camera", () => ({
 }));
 vi.mock("@/viewmodel/useDeliveryViewModel", () => ({ useDeliveryViewModel: vi.fn() }));
 vi.mock("@/viewmodel/useAuthViewModel", () => ({ useAuthViewModel: vi.fn() }));
-vi.mock("@/view/useIsWideWeb", () => ({ useIsWideWeb: vi.fn(() => false) }));
+const larguraWeb = vi.hoisted(() => ({ atual: 360 }));
+vi.mock("@/view/useIsWideWeb", () => ({
+  useIsWideWeb: vi.fn(() => false),
+  useHydratedWindowWidth: () => larguraWeb.atual,
+}));
 vi.mock("@/viewmodel/useRequestDetailViewModel", () => ({
   useRequestDetailViewModel: vi.fn(() => [
     {
@@ -242,6 +246,7 @@ describe("Melhorias na entrega do livro (Spec 115)", () => {
 
   it("renderiza layout em 2 colunas com dicas de entrega na web larga", async () => {
     vi.mocked(useIsWideWeb).mockReturnValue(true);
+    larguraWeb.atual = 1280;
     try {
       mockState({ role: "giver", code: { code: "K7M2QXWA", expiresAt: new Date(Date.now() + 10 * 60_000).toISOString() } });
       const screen = await open();
@@ -251,6 +256,7 @@ describe("Melhorias na entrega do livro (Spec 115)", () => {
       expect(screen.getByRole("header", { name: "Mostre este QR para quem recebe o livro" })).toBeDefined();
     } finally {
       vi.mocked(useIsWideWeb).mockReturnValue(false);
+      larguraWeb.atual = 360;
     }
   });
 });

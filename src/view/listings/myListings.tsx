@@ -153,7 +153,7 @@ export function MyListings({
   const hasBooks = !state.loading && !state.error && state.books.length > 0;
   // Posiciona o FAB harmoniosamente logo acima da barra de navegação flutuante seguindo os tokens
   const navBarPaddingBottom = insets.bottom > 0 ? insets.bottom + tokens.spacing[8] : tokens.spacing[12];
-  const navBarDockHeight = 62; // Altura real da cápsula da NavigationBar (dock M3 Expressive)
+  const navBarDockHeight = 80; // Altura real da cápsula da NavigationBar (dock M3 Expressive)
   const fabBottom = navBarPaddingBottom + navBarDockHeight + tokens.spacing[12];
 
   type ShelfFilterKey = "all" | "active" | "paused" | "reserved" | "proposals" | "concluded";
@@ -382,7 +382,7 @@ export function MyListings({
               })}
             </View>
 
-            {/* Fileira horizontal única de abas e status da estante */}
+            {/* No celular a fileira rola; na web larga cabe inteira e pode quebrar linha. */}
             {wideWeb ? (
               <View
                 testID="my-listings-tablist"

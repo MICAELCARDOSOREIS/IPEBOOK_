@@ -26,9 +26,9 @@ export function HomeFloatingChatButton({
   const [isHovered, setIsHovered] = useState(false);
 
   // Posiciona o botão flutuante com respiro harmônico de 12px acima do topo real da barra de navegação flutuante
-  // (dock de ~64dp com padding inferior de acordo com safe area)
+  // (dock de ~80dp com padding inferior de acordo com safe area)
   const navBarPaddingBottom = insets.bottom > 0 ? insets.bottom + tokens.spacing[8] : tokens.spacing[12];
-  const navBarDockHeight = 64;
+  const navBarDockHeight = 80;
   const bottom = navBarPaddingBottom + navBarDockHeight + tokens.spacing[12];
 
   return (

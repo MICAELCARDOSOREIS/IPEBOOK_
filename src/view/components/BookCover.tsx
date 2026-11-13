@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef } from "react";
-import { Animated, Image, StyleSheet, View } from "react-native";
+import { Animated, Image, Platform, StyleSheet, View } from "react-native";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { useBookCoverImage } from "@/viewmodel/useBookCoverImage";
@@ -129,12 +129,12 @@ export function BookCover({
         Animated.timing(pulseAnim, {
           toValue: 0.85,
           duration: 750,
-          useNativeDriver: true,
+          useNativeDriver: Platform.OS !== "web",
         }),
         Animated.timing(pulseAnim, {
           toValue: 0.4,
           duration: 750,
-          useNativeDriver: true,
+          useNativeDriver: Platform.OS !== "web",
         }),
       ])
     );

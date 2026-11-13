@@ -43,6 +43,8 @@ export type SearchProps = {
   initialModality?: SearchModalityFilter;
   /** Pré-aplica uma categoria ao abrir, vindo de atalhos e recomendações. */
   initialCategory?: string;
+  /** Pré-aplica o termo digitado no campo de busca do cabeçalho web. */
+  initialTerm?: string;
 };
 
 const VALID_INITIAL_MODALITIES: readonly SearchModalityFilter[] = ["sale", "trade", "donation"];
@@ -81,6 +83,7 @@ export default function Search({
   onNavigateToFavorites,
   initialModality,
   initialCategory,
+  initialTerm,
 }: SearchProps = {}) {
   const neighborhoodHook = useActiveNeighborhood("all");
   const [selectedNeighborhoodOverride, setSelectedNeighborhoodOverride] = useState<string | null>(null);
@@ -180,8 +183,12 @@ export default function Search({
     if (initialCategory && initialCategory !== "all") {
       actions.setCategory(initialCategory);
     }
+    if (initialTerm) {
+      actions.setTerm(initialTerm);
+      void actions.registerSearch(initialTerm);
+    }
     appliedInitialFilters.current = true;
-  }, [initialModality, initialCategory, actions]);
+  }, [initialModality, initialCategory, initialTerm, actions]);
 
   useEffect(() => {
     if (typeof actions.setNeighborhood === "function") {
@@ -326,8 +333,8 @@ export default function Search({
         onSubmitEditing={() => void actions.registerSearch(state.term)}
       />
 
-      {/* 4. Modalidades do catálogo em chips rápidos (Todas, Venda, Troca, Doação) */}
-      <ScrollView
+      {/* 4. Modalidades em chips rápidos. Na web larga o painel "Filtros" já tem o grupo Modalidade. */}
+      {wideWeb ? null : <ScrollView
         horizontal
         {...standardHorizontalScrollProps}
         showsHorizontalScrollIndicator={false}
@@ -353,7 +360,7 @@ export default function Search({
             />
           );
         })}
-      </ScrollView>
+      </ScrollView>}
 
       {/* 5. Filtros aplicados como chips removíveis (Figma `02.04 · Explorar com filtro`) */}
       {visibleActiveFilters.length > 0 ? (
@@ -774,7 +781,7 @@ function SearchScrollTopButton({
   const [isHovered, setIsHovered] = useState(false);
   const scaleAnim = useRef(new Animated.Value(0.7)).current;
 
-  useEffect(() => { Animated.spring(scaleAnim, { toValue: 1, tension: tokens.spring.spatialStandard.tension, friction: tokens.spring.spatialStandard.friction, useNativeDriver: true, }).start(); }, [scaleAnim]);
+  useEffect(() => { Animated.spring(scaleAnim, { toValue: 1, tension: tokens.spring.spatialStandard.tension, friction: tokens.spring.spatialStandard.friction, useNativeDriver: Platform.OS !== "web", }).start(); }, [scaleAnim]);
 
   const isWeb = Platform.OS === "web";
   const webFabBg =

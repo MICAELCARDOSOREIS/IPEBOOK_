@@ -137,6 +137,25 @@ import { MemoryInAppUpdateService } from "@/infra/services/memoryInAppUpdateServ
 import { AppUpdateUseCases } from "@/usecase/appUpdateUseCases";
 import { useAppUpdateViewModel } from "@/viewmodel/useAppUpdateViewModel";
 
+const usaBackendSupabase =
+  process.env.NODE_ENV !== "test" && process.env.EXPO_PUBLIC_BACKEND === "supabase";
+
+let supabaseAppClient: ReturnType<typeof createSupabaseAppClient> | null = null;
+
+/**
+ * Um único cliente para todo o app: duas instâncias do GoTrueClient dividindo a mesma chave de
+ * sessão geram aviso no navegador e podem disputar o refresh do token (Spec 136).
+ */
+function getSupabaseAppClient() {
+  if (!supabaseAppClient) {
+    supabaseAppClient = createSupabaseAppClient(
+      process.env.EXPO_PUBLIC_SUPABASE_URL ?? "",
+      process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? process.env.EXPO_PUBLIC_SUPABASE_KEY ?? "",
+    );
+  }
+  return supabaseAppClient;
+}
+
 function createDataSources(): {
   auth: IAuthDataSource;
   books: IBookDataSource;
@@ -161,13 +180,10 @@ function createDataSources(): {
   const searchHistory = process.env.NODE_ENV === "test"
     ? new MemorySearchHistoryDataSource()
     : new AsyncStorageSearchHistoryDataSource();
-  if (process.env.NODE_ENV !== "test" && process.env.EXPO_PUBLIC_BACKEND === "supabase") {
+  if (usaBackendSupabase) {
     const redirectUrl = process.env.EXPO_PUBLIC_AUTH_REDIRECT_URL;
     if (!redirectUrl) throw new DataSourceError("Configure o retorno da recuperação de senha.");
-    const client = createSupabaseAppClient(
-      process.env.EXPO_PUBLIC_SUPABASE_URL ?? "",
-      process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? process.env.EXPO_PUBLIC_SUPABASE_KEY ?? "",
-    );
+    const client = getSupabaseAppClient();
     return {
       auth: new SupabaseAuthDataSource(
         client,
@@ -234,13 +250,8 @@ const dataSources = createDataSources();
 const bookDataSource = dataSources.books;
 
 const appUpdatePolicyDataSource =
-  process.env.NODE_ENV !== "test" && process.env.EXPO_PUBLIC_BACKEND === "supabase"
-    ? new SupabaseAppVersionPolicyDataSource(
-        createSupabaseAppClient(
-          process.env.EXPO_PUBLIC_SUPABASE_URL ?? "",
-          process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? process.env.EXPO_PUBLIC_SUPABASE_KEY ?? "",
-        ),
-      )
+  usaBackendSupabase
+    ? new SupabaseAppVersionPolicyDataSource(getSupabaseAppClient())
     : new MemoryAppVersionPolicyDataSource();
 export const appUpdateUseCases = new AppUpdateUseCases(
   appUpdatePolicyDataSource,

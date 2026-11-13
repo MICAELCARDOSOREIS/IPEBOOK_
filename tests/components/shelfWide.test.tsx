@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { Book } from "@/model/entities/book";
 import type { MyListingsActions, MyListingsState } from "@/viewmodel/useMyListingsViewModel";
 
-vi.mock("@/view/useIsWideWeb", () => ({ useIsWideWeb: () => true, WIDE_WEB_MIN_WIDTH: 960 }));
+vi.mock("@/view/useIsWideWeb", () => ({ useIsWideWeb: () => true, useHydratedWindowWidth: () => 1280, WIDE_WEB_MIN_WIDTH: 960 }));
 vi.mock("@/viewmodel/useMyListingsViewModel", () => ({ useMyListingsViewModel: vi.fn() }));
 vi.mock("@/viewmodel/useAuthViewModel", () => ({
   useAuthViewModel: () => [{ user: { id: "u1" }, loading: false }, {}],

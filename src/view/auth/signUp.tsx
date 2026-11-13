@@ -88,7 +88,7 @@ export default function SignUp({
         maxWidth={560}
         paddingTop={tokens.spacing[16]}
         paddingBottom={scrollBottomPadding.withoutBottomBar}
-        header={onBack ? <TopAppBar contentMaxWidth={560} title="Criar conta" onBack={guardedBack} /> : undefined}
+        header={onBack ? <TopAppBar alignToWindow={false} contentMaxWidth={560} title="Criar conta" onBack={guardedBack} /> : undefined}
         contentStyle={[
           styles.content,
           wideWeb && { justifyContent: "center" },

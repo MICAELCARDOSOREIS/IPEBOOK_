@@ -7,6 +7,7 @@ import { ScreenContainer } from "@/view/components/ScreenContainer";
 import { withPress } from "@/view/pressFeedback";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { tokens, type ColorPalette } from "@/view/tokens";
+import { useHydrated } from "@/view/useHydrated";
 
 export type RequireAuthProps = {
   /** Chamada quando a pessoa não tem sessão ativa (ex.: replaceOnce("/entrar")). */
@@ -21,6 +22,7 @@ export type RequireAuthProps = {
  */
 export function RequireAuth({ onRequireSignIn, children }: RequireAuthProps) {
   const [authState, authActions] = makeAuthViewModel();
+  const hydrated = useHydrated();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
@@ -39,7 +41,7 @@ export function RequireAuth({ onRequireSignIn, children }: RequireAuthProps) {
   }, [authState.loading, authState.user, isOnline, onRequireSignIn]);
 
   // Se estiver sem conexão e sem usuário em cache, apresenta estado offline acolhedor
-  if (!isOnline && !authState.user && !authState.loading) {
+  if (hydrated && !isOnline && !authState.user && !authState.loading) {
     return (
       <ScreenContainer edges={["top", "bottom", "left", "right"]} maxWidth={480}>
         <View style={styles.centerContainer}>
@@ -63,8 +65,9 @@ export function RequireAuth({ onRequireSignIn, children }: RequireAuthProps) {
     );
   }
 
-  // Enquanto verifica a sessão: tela de abertura do Ipê acolhedora e elegante
-  if (authState.loading) {
+  // Enquanto verifica a sessão: tela de abertura do Ipê acolhedora e elegante.
+  // `!hydrated` mantém a primeira renderização do cliente igual ao HTML estático (Spec 136).
+  if (!hydrated || authState.loading) {
     return (
       <ScreenContainer edges={["top", "bottom", "left", "right"]} maxWidth={480}>
         <View style={styles.loadingContainer}>

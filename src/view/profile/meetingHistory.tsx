@@ -87,6 +87,11 @@ export default function MeetingHistory({ onBack, onNavigateToNegotiation }: Meet
             <Text style={styles.emptyText}>
               Quando você aceitar ou propor trocas, os encontros nos 4 pontos seguros de Piripiri aparecerão aqui.
             </Text>
+            {onBack ? (
+              <Pressable accessibilityRole="button" accessibilityLabel="Voltar ao perfil" onPress={guardedBack} style={withPress(styles.emptyAction)}>
+                <Text style={styles.emptyActionText}>Voltar ao perfil</Text>
+              </Pressable>
+            ) : null}
           </View>
         </View>
       ) : (
@@ -244,6 +249,14 @@ function createStyles(colors: ColorPalette) {
       textAlign: "center",
       maxWidth: 400,
     },
+    emptyAction: {
+      marginTop: tokens.spacing[8],
+      paddingVertical: tokens.spacing[8],
+      paddingHorizontal: tokens.spacing[24],
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.m3.primary,
+    },
+    emptyActionText: { ...tokens.typography.labelLarge, color: colors.m3.onPrimary },
     list: {
       gap: tokens.spacing[12],
     },

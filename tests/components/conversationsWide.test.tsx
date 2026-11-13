@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { Book } from "@/model/entities/book";
 import type { ConversationItem, ConversationsState } from "@/viewmodel/useConversationsViewModel";
 
-vi.mock("@/view/useIsWideWeb", () => ({ useIsWideWeb: () => true, WIDE_WEB_MIN_WIDTH: 960 }));
+vi.mock("@/view/useIsWideWeb", () => ({ useIsWideWeb: () => true, useHydratedWindowWidth: () => 1280, WIDE_WEB_MIN_WIDTH: 960 }));
 vi.mock("@/viewmodel/useConversationsViewModel", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/viewmodel/useConversationsViewModel")>()),
   useConversationsViewModel: vi.fn(),

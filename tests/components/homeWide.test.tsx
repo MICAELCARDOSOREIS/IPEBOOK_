@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { Book } from "@/model/entities/book";
 import type { HomeActions, HomeState } from "@/viewmodel/useHomeViewModel";
 
-vi.mock("@/view/useIsWideWeb", () => ({ useIsWideWeb: () => true, WIDE_WEB_MIN_WIDTH: 960 }));
+vi.mock("@/view/useIsWideWeb", () => ({ useIsWideWeb: () => true, useHydratedWindowWidth: () => 1280, WIDE_WEB_MIN_WIDTH: 960 }));
 vi.mock("@/viewmodel/useHomeViewModel", () => ({ useHomeViewModel: vi.fn() }));
 vi.mock("@/viewmodel/useAuthViewModel", () => ({
   useAuthViewModel: () => [{ user: null, loading: false }, { signIn: vi.fn(), signOut: vi.fn() }],

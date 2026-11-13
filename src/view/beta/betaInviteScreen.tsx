@@ -19,7 +19,7 @@ import { BETA_GROUP_URL, PLAY_STORE_URL, TESTING_OPT_IN_URL } from "@/view/playS
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { fontFamily, colors as lightColors, tokens, type ColorPalette } from "@/view/tokens";
 import { useGuardedPress } from "@/view/useGuardedPress";
-import { useIsWideWeb } from "@/view/useIsWideWeb";
+import { useHydratedWindowWidth, useIsWideWeb } from "@/view/useIsWideWeb";
 import { scrollBottomPadding, standardVerticalScrollProps } from "@/view/scrollProps";
 import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
 import { makeAuthViewModel, makeBetaSignupViewModel } from "@/di/container";
@@ -111,6 +111,8 @@ export function BetaInviteScreen({
   const { colors } = useTheme();
   const highlights = useMemo(() => getHighlights(), []);
   const wide = useIsWideWeb();
+  // O formulário pede 440 px e o vão entre as colunas é de 64 px; abaixo disso elas empilham.
+  const stackColumns = useHydratedWindowWidth() < 1100;
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
@@ -427,9 +429,9 @@ export function BetaInviteScreen({
         keyboardShouldPersistTaps="handled"
       >
         {wide ? (
-          <View style={styles.wideRow}>
+          <View style={[styles.wideRow, stackColumns && styles.wideRowStacked]}>
             <View style={styles.wideIntro}>{intro}</View>
-            <View style={styles.wideForm}>{formCard}</View>
+            <View style={[styles.wideForm, stackColumns && styles.wideFormStacked]}>{formCard}</View>
           </View>
         ) : (
           <View style={styles.narrow}>
@@ -508,8 +510,10 @@ function createStyles(colors: ColorPalette) {
       maxWidth: WEB_MAX_WIDTH,
       alignSelf: "center",
     },
+    wideRowStacked: { flexDirection: "column", gap: tokens.spacing[32] },
     wideIntro: { flex: 1.3, maxWidth: 920 },
     wideForm: { flex: 1, maxWidth: 560, minWidth: 440 },
+    wideFormStacked: { width: "100%", maxWidth: 560, minWidth: 0, alignSelf: "center" },
     intro: { gap: tokens.spacing[24] },
     pill: {
       flexDirection: "row",

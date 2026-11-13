@@ -26,6 +26,8 @@ const CHANNEL_PRESETS: Record<
 };
 
 function getNotificationsModule(): typeof NotificationsType | null {
+  // No navegador o módulo não registra canal, handler nem push e ainda avisa no console ao ser carregado.
+  if (Platform.OS === "web") return null;
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     return require("expo-notifications");

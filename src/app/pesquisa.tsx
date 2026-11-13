@@ -5,12 +5,13 @@ import { RequireAuth } from "@/view/components/RequireAuth";
 import Search, { parseInitialModality } from "@/view/search/search";
 
 export default function Pesquisa() {
-  const { modalidade, bairro, categoria } = useLocalSearchParams<{ modalidade?: string; bairro?: string; categoria?: string }>();
+  const { modalidade, bairro, categoria, q } = useLocalSearchParams<{ modalidade?: string; bairro?: string; categoria?: string; q?: string }>();
 
   const searchContent = (
     <Search
       initialModality={parseInitialModality(modalidade)}
       initialCategory={typeof categoria === "string" && categoria.trim() ? categoria.trim() : undefined}
+      initialTerm={typeof q === "string" && q.trim() ? q.trim() : undefined}
       currentNeighborhood={typeof bairro === "string" ? bairro : undefined}
       onNavigateToBookDetail={(bookId) => pushOnce(`/livro/${bookId}`)}
       onNavigateToFavorites={() => pushOnce("/favoritos")}

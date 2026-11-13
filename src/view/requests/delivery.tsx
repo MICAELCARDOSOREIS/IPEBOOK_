@@ -26,7 +26,7 @@ import { QrCode } from "@/view/components/QrCode";
 import { Tag } from "@/view/components/Tag";
 import { TextField } from "@/view/components/TextField";
 import { TopAppBar } from "@/view/components/TopAppBar";
-import { useIsWideWeb } from "@/view/useIsWideWeb";
+import { useHydratedWindowWidth, useIsWideWeb } from "@/view/useIsWideWeb";
 import { WEB_MAX_WIDTH } from "@/view/webLayout";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
@@ -146,6 +146,8 @@ export function Delivery({ requestId, sessionUserId, onBack }: DeliveryProps) {
   }, [state.completed, ratingState.userRating]);
 
   const wide = useIsWideWeb();
+  // As colunas pedem 360 e 440 px; abaixo disso elas empilham em vez de estourar a janela.
+  const stackColumns = useHydratedWindowWidth() < 1100;
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const secondsLeft = useSecondsLeft(state.code?.expiresAt ?? null);
@@ -310,12 +312,12 @@ export function Delivery({ requestId, sessionUserId, onBack }: DeliveryProps) {
         <ScrollView {...standardVerticalScrollProps} contentContainerStyle={[styles.scroll, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}>
           <View style={[styles.content, wide && styles.contentWide]}>
             {wide ? (
-              <View style={styles.wideGrid}>
-                <View style={styles.wideSideCol}>
+              <View style={[styles.wideGrid, stackColumns && styles.wideGridStacked]}>
+                <View style={[styles.wideSideCol, stackColumns && styles.wideColFull]}>
                   {bookSummary}
                   <DeliveryTipsCard colors={colors} />
                 </View>
-                <View style={styles.wideMainCol}>
+                <View style={[styles.wideMainCol, stackColumns && styles.wideColFull]}>
                   {renderActionCard()}
                   {scanError || state.error ? (
                     <Text accessibilityRole="alert" accessibilityLiveRegion="assertive" style={styles.error}>
@@ -389,6 +391,8 @@ function createStyles(colors: ColorPalette) {
       gap: tokens.spacing[24],
       width: "100%",
     },
+    wideGridStacked: { flexDirection: "column" },
+    wideColFull: { width: "100%", maxWidth: "100%", minWidth: 0 },
     wideSideCol: {
       flex: 1,
       minWidth: 360,
