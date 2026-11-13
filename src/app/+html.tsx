@@ -16,6 +16,10 @@ export default function Root({ children }: PropsWithChildren) {
         <meta charSet="utf-8" />
         <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover" />
+        {/* Título estático (Spec 025): crawlers que não executam JavaScript e o flash da aba antes
+            da hidratação precisam do <title> no HTML inicial; o título por rota é ajustado em
+            runtime via pageTitleFor/webMeta. */}
+        <title>IpêBook · Livros usados em Piripiri, PI</title>
         <meta name="format-detection" content="telephone=no" />
         <meta name="theme-color" content={tokens.colors.surface} />
         <meta name="description" content="Marketplace comunitário de livros em Piripiri, PI (venda, troca e doação)" />
