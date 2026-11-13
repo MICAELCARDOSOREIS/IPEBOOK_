@@ -106,6 +106,7 @@ export default function ForgotPassword({ onNavigateToSignIn, onBack }: ForgotPas
         header={
           onBack ? (
             <TopAppBar
+              alignToWindow={false}
               contentMaxWidth={560}
               title={requested ? "Confira seu e-mail" : "Recuperar acesso"}
               onBack={guardedBack}

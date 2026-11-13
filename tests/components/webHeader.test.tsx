@@ -1,5 +1,5 @@
 import type React from "react";
-import { act, cleanup, fireEvent, render } from "@testing-library/react-native";
+import { cleanup, fireEvent, render } from "@testing-library/react-native";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { WebHeader } from "@/view/components/WebHeader";
 import { ThemeProvider } from "@/view/theme/ThemeProvider";
@@ -9,11 +9,7 @@ afterEach(async () => {
 });
 
 async function wrap(node: React.ReactElement) {
-  let screen!: Awaited<ReturnType<typeof render>>;
-  await act(async () => {
-    screen = await render(<ThemeProvider>{node}</ThemeProvider>);
-  });
-  return screen;
+  return render(<ThemeProvider>{node}</ThemeProvider>);
 }
 
 describe("WebHeader (Figma 34:70)", () => {
@@ -27,12 +23,24 @@ describe("WebHeader (Figma 34:70)", () => {
     expect(screen.getByText("LA")).toBeDefined();
     expect(screen.getByLabelText("Conversas, 2 com proposta")).toBeDefined();
 
-    fireEvent.press(screen.getByLabelText("Anunciar um livro"));
+    await fireEvent.press(screen.getByLabelText("Anunciar um livro"));
     expect(onAnnounce).toHaveBeenCalledTimes(1);
 
-    fireEvent.press(screen.getByLabelText("Meu perfil"));
+    await fireEvent.press(screen.getByLabelText("Meu perfil"));
     expect(onNavigate).toHaveBeenCalledWith("profile");
-    fireEvent.press(screen.getByLabelText("Buscar título, autor ou categoria"));
+  });
+
+  it("busca pelo termo digitado e, vazio, apenas abre a Pesquisa", async () => {
+    const onNavigate = vi.fn();
+    const onSearch = vi.fn();
+    const screen = await wrap(<WebHeader onNavigate={onNavigate} onAnnounce={vi.fn()} onSearch={onSearch} />);
+
+    await fireEvent(screen.getByLabelText("Buscar título, autor ou categoria"), "submitEditing");
+    expect(onSearch).not.toHaveBeenCalled();
     expect(onNavigate).toHaveBeenCalledWith("search");
+
+    await fireEvent.changeText(screen.getByLabelText("Buscar título, autor ou categoria"), "  Dom Casmurro ");
+    await fireEvent(screen.getByLabelText("Buscar título, autor ou categoria"), "submitEditing");
+    expect(onSearch).toHaveBeenCalledWith("Dom Casmurro");
   });
 });

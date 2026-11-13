@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useIsWideWeb } from "@/view/useIsWideWeb";
+import { useHydratedWindowWidth, useIsWideWeb } from "@/view/useIsWideWeb";
 import {
   makeAuthViewModel,
   makeMyListingsViewModel,
@@ -78,6 +78,8 @@ export default function ProfileHub({
   const [signingOut, setSigningOut] = useState(false);
   const [signOutError, setSignOutError] = useState<string | null>(null);
   const wideWeb = useIsWideWeb();
+  // Abaixo disso as duas colunas (380 + 480 px) não cabem na área útil e a página rola na horizontal.
+  const stackColumns = useHydratedWindowWidth() < 1100;
 
   const guardedBack = useGuardedPress(onBack);
   const guardedNavigateToSignIn = useGuardedPress(onNavigateToSignIn);
@@ -147,7 +149,7 @@ export default function ProfileHub({
       icon: "shelf",
       iconColor: colors.text,
       label: "Minhas publicações",
-      description: `${activeBooks} ativas · ${reservedBooks} reservada${reservedBooks !== 1 ? "s" : ""}`,
+      description: `${activeBooks} ativa${activeBooks !== 1 ? "s" : ""} · ${reservedBooks} reservada${reservedBooks !== 1 ? "s" : ""}`,
       onPress: guardedNavigateToMyListings,
       showChevron: true,
     },
@@ -158,7 +160,7 @@ export default function ProfileHub({
       label: "Avaliações recebidas",
       description:
         profile.ratingCount > 0
-          ? `★ ${ratingText} em ${completedTrocas} trocas`
+          ? `★ ${ratingText} em ${completedTrocas} troca${completedTrocas !== 1 ? "s" : ""}`
           : "Veja o que a comunidade disse sobre você",
       onPress: guardedNavigateToRatings,
       showChevron: true,
@@ -287,8 +289,8 @@ export default function ProfileHub({
             <ErrorState message={state.error} onRetry={profileActions.reload} />
           ) : isSignedIn ? (
             wideWeb ? (
-              <View style={styles.wideGrid} testID="profile-wide-grid">
-                <View style={styles.wideSideCol}>
+              <View style={[styles.wideGrid, stackColumns && styles.wideGridStacked]} testID="profile-wide-grid">
+                <View style={[styles.wideSideCol, stackColumns && styles.wideColFull]}>
                   <ProfileIdentityCard
                     name={profile.name}
                     photoUrl={profile.photoUrl}
@@ -307,7 +309,7 @@ export default function ProfileHub({
                 </View>
 
                 {/* Coluna Principal da Web Larga: Atividade e Conta lado a lado */}
-                <View style={styles.wideMainCol}>
+                <View style={[styles.wideMainCol, stackColumns && styles.wideColFull]}>
                   <View style={styles.wideSectionsRow}>
                     <ProfileMenuSection title="Atividade" items={activityItems} wideWeb />
                     <ProfileMenuSection
@@ -398,6 +400,8 @@ function createStyles(colors: ColorPalette) {
       gap: tokens.spacing[32],
       width: "100%",
     },
+    wideGridStacked: { flexDirection: "column" },
+    wideColFull: { width: "100%", minWidth: 0 },
     wideSideCol: {
       width: 380,
       gap: tokens.spacing[20],

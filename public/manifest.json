@@ -24,7 +24,7 @@
   ],
   "start_url": "/",
   "background_color": "#FCFAF5",
-  "theme_color": "#2B6334",
+  "theme_color": "#FCFAF5",
   "display": "standalone",
   "scope": "/",
   "lang": "pt-BR"

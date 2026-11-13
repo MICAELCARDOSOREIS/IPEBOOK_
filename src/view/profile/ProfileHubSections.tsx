@@ -152,7 +152,7 @@ export function ProfileIdentityCard({
           ]}
         >
           <AppIcon name="edit" size={18} color={colors.m3.primary} />
-          <Text style={styles.editProfileButtonText}>Editar perfil</Text>
+          <Text numberOfLines={1} style={styles.editProfileButtonText}>Editar perfil</Text>
         </Pressable>
 
         {onCreateListing ? (
@@ -163,7 +163,7 @@ export function ProfileIdentityCard({
             style={({ pressed }) => [styles.publishButton, pressed && styles.publishButtonPressed]}
           >
             <AppIcon name="add" size={20} color={colors.m3.onPrimary} />
-            <Text style={styles.publishButtonText}>Publicar um livro</Text>
+            <Text numberOfLines={1} style={styles.publishButtonText}>Publicar um livro</Text>
           </Pressable>
         ) : null}
       </View>
@@ -409,14 +409,14 @@ function createStyles(colors: ColorPalette) {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
-      gap: tokens.spacing[8],
+      gap: tokens.spacing[6],
       flex: 1,
       minHeight: tokens.accessibility.touchTarget,
       backgroundColor: colors.surface,
       borderWidth: 1,
       borderColor: colors.m3.outlineVariant,
       borderRadius: tokens.radius.full,
-      paddingHorizontal: tokens.spacing[16],
+      paddingHorizontal: tokens.spacing[12],
     },
     editProfileButtonPressed: {
       borderRadius: tokens.shapeMorph.buttonPressed,
@@ -525,15 +525,15 @@ function createStyles(colors: ColorPalette) {
       color: colors.m3.onSurfaceVariant,
     },
     publishButton: {
-      flex: 1,
+      flex: 1.25,
       minHeight: 48,
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
-      gap: tokens.spacing[8],
+      gap: tokens.spacing[6],
       borderRadius: tokens.shapeMorph.buttonRest,
       backgroundColor: colors.m3.primary,
-      paddingHorizontal: tokens.spacing[20],
+      paddingHorizontal: tokens.spacing[12],
     },
     publishButtonPressed: {
       borderRadius: tokens.shapeMorph.buttonPressed,

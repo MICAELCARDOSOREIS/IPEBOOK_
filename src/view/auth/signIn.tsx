@@ -75,7 +75,7 @@ export default function SignIn({
         maxWidth={560}
         paddingTop={tokens.spacing[16]}
         paddingBottom={scrollBottomPadding.withoutBottomBar}
-        header={onBack ? <TopAppBar contentMaxWidth={560} title="Entrar com e-mail" onBack={guardedBack} /> : undefined}
+        header={onBack ? <TopAppBar alignToWindow={false} contentMaxWidth={560} title="Entrar com e-mail" onBack={guardedBack} /> : undefined}
         contentStyle={[
           styles.content,
           wideWeb && { justifyContent: "center" },

@@ -131,6 +131,7 @@ export default function RootLayout() {
                 active={activeDestination}
                 pathname={pathname}
                 onNavigate={navigateTo}
+                onSearch={(term) => pushOnce({ pathname: "/pesquisa", params: { q: term } })}
                 onAnnounce={() => pushOnce("/anunciar")}
                 onOpenNotifications={() => pushOnce("/notificacoes")}
               />

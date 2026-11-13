@@ -174,6 +174,11 @@ export function __emitKeyboardEvent(type: string, height: number | undefined, sc
 
 export const useWindowDimensions = () => ({ width: 360, height: 800, scale: 1, fontScale: 1 });
 
+export const Dimensions = {
+  get: (_dimension: "window" | "screen") => ({ width: 360, height: 800, scale: 1, fontScale: 1 }),
+  addEventListener: (_type: string, _handler: () => void) => ({ remove: () => {} }),
+};
+
 export const AccessibilityInfo = {
   isScreenReaderEnabled: () => Promise.resolve(false),
   isReduceMotionEnabled: () => Promise.resolve(false),
@@ -298,4 +303,5 @@ export default {
   AppState,
   Switch,
   useColorScheme,
+  Dimensions,
 };

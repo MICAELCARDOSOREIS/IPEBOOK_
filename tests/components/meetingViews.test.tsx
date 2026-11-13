@@ -12,7 +12,11 @@ vi.mock("expo-linking", () => ({ openURL: (...args: unknown[]) => openURL(...arg
 vi.mock("@/viewmodel/useMeetingViewModel", () => ({ useMeetingViewModel: vi.fn() }));
 vi.mock("@/viewmodel/useScheduleMeetingViewModel", () => ({ useScheduleMeetingViewModel: vi.fn() }));
 vi.mock("@/viewmodel/useAuthViewModel", () => ({ useAuthViewModel: vi.fn() }));
-vi.mock("@/view/useIsWideWeb", () => ({ useIsWideWeb: vi.fn(() => false) }));
+const larguraWeb = vi.hoisted(() => ({ atual: 360 }));
+vi.mock("@/view/useIsWideWeb", () => ({
+  useIsWideWeb: vi.fn(() => false),
+  useHydratedWindowWidth: () => larguraWeb.atual,
+}));
 
 import { useMeetingViewModel } from "@/viewmodel/useMeetingViewModel";
 import { useScheduleMeetingViewModel } from "@/viewmodel/useScheduleMeetingViewModel";
@@ -304,6 +308,7 @@ describe("combinar e reagendar encontro (Spec 052, 06.04/06.13)", () => {
 
   it("renderiza layout de duas colunas na web larga (Spec 114)", async () => {
     vi.mocked(useIsWideWeb).mockReturnValue(true);
+    larguraWeb.atual = 1280;
     try {
       mockSchedule({ pointName: "Praça da Bandeira (Centro)", dayIndex: 1, hour: 15 });
       let screen!: Awaited<ReturnType<typeof render>>;
@@ -314,6 +319,7 @@ describe("combinar e reagendar encontro (Spec 052, 06.04/06.13)", () => {
       expect(screen.getByRole("button", { name: "Enviar convite" })).toBeDefined();
     } finally {
       vi.mocked(useIsWideWeb).mockReturnValue(false);
+      larguraWeb.atual = 360;
     }
   });
 

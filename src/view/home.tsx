@@ -25,7 +25,7 @@ import {
   HomeShortcutsSection,
   carouselOffsetFor,
 } from "@/view/home/CatalogCarousel";
-import { useIsWideWeb } from "@/view/useIsWideWeb";
+import { useHydratedWindowWidth, useIsWideWeb } from "@/view/useIsWideWeb";
 import { ScreenContainer } from "@/view/components/ScreenContainer";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { standardHorizontalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
@@ -103,6 +103,8 @@ export default function Home({
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const wideWeb = useIsWideWeb();
+  // Os dois blocos do hero pedem 320 px cada; com o padding do cartão, só cabem lado a lado daqui para cima.
+  const stackHero = useHydratedWindowWidth() < 1100;
   const isWeb = Platform.OS === "web";
   const [selectedModality, setSelectedModality] = useState<BookModality | "all">("all");
   const [refreshing, setRefreshing] = useState(false);
@@ -292,8 +294,8 @@ export default function Home({
 
       {/* 2. Manchete Editorial com o Ipê de Piripiri (Figma 02.01 / Spec 078) */}
       <View style={[styles.heroSection, wideWeb && styles.heroSectionWide]}>
-        <View style={[styles.heroRow, wideWeb && styles.heroRowWide]}>
-          <View style={[styles.heroTextContainer, wideWeb && styles.heroTextContainerWide]}>
+        <View style={[styles.heroRow, wideWeb && styles.heroRowWide, wideWeb && stackHero && styles.heroRowStacked]}>
+          <View style={[styles.heroTextContainer, wideWeb && styles.heroTextContainerWide, wideWeb && stackHero && styles.heroColStacked]}>
             {wideWeb ? (
               <View style={styles.heroLocationRowWide}>
                 <Pressable
@@ -343,7 +345,7 @@ export default function Home({
           </View>
 
           {wideWeb ? (
-            <View style={styles.heroAsideWide}>
+            <View style={[styles.heroAsideWide, stackHero && styles.heroColStacked]}>
               {/* Cartão interativo da Florada do Ipê */}
               <Pressable
                 accessibilityRole="button"
@@ -654,10 +656,12 @@ function createStyles(colors: ColorPalette) {
     heroSubtitleWide: { ...tokens.typography.webLead, },
     heroRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: tokens.spacing[16], },
     heroRowWide: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: tokens.spacing[24], },
+    heroRowStacked: { flexDirection: "column", alignItems: "stretch" },
     heroLocationRowWide: { flexDirection: "row", alignItems: "center", marginBottom: tokens.spacing[4], },
     heroTextContainer: { flex: 1, },
     heroTextContainerWide: { flex: 1.2, minWidth: 320, maxWidth: 640, gap: tokens.spacing[8], justifyContent: "center", },
     heroAsideWide: { flex: 1, maxWidth: 480, minWidth: 320, flexShrink: 0, justifyContent: "center", gap: tokens.spacing[10], },
+    heroColStacked: { minWidth: 0, maxWidth: "100%", width: "100%" },
     heroCelebrationCardWide: {
       backgroundColor: colors.ipe.petalSoft,
       borderRadius: tokens.radius.xl,

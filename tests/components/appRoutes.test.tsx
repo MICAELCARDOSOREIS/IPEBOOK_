@@ -273,7 +273,7 @@ describe("Rotas em src/app/** — contratos de parâmetros, guards e navegação
   });
 
   it("Pesquisa (/pesquisa) converte modalidade/categoria/bairro e protege com RequireAuth", async () => {
-    mockParamsState.current = { modalidade: "doacao", categoria: " Romance ", bairro: "Paciência" };
+    mockParamsState.current = { modalidade: "doacao", categoria: " Romance ", bairro: "Paciência", q: " Dom Casmurro " };
     await renderRoute(<Pesquisa />);
     getStub("RequireAuthStub").onRequireSignIn();
     expect(mockReplaceOnce).toHaveBeenCalledWith("/entrar");
@@ -282,6 +282,7 @@ describe("Rotas em src/app/** — contratos de parâmetros, guards e navegação
     expect(search.initialModality).toBe("donation");
     expect(search.initialCategory).toBe("Romance");
     expect(search.currentNeighborhood).toBe("Paciência");
+    expect(search.initialTerm).toBe("Dom Casmurro");
     search.onNavigateToBookDetail("b-9");
     expect(mockPushOnce).toHaveBeenCalledWith("/livro/b-9");
     search.onNavigateToFavorites();

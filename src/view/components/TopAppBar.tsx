@@ -1,12 +1,12 @@
 import { useMemo } from "react";
-import { Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from "react-native";
+import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { topBarInset } from "@/view/topBarInset";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { AppIcon } from "@/view/components/AppIcon";
 import { useGuardedPress } from "@/view/useGuardedPress";
-import { useIsWideWeb } from "@/view/useIsWideWeb";
+import { useIsWideWeb, useHydratedWindowWidth } from "@/view/useIsWideWeb";
 
 export type TopAppBarProps = {
   title: string;
@@ -15,6 +15,11 @@ export type TopAppBarProps = {
   floating?: boolean;
   /** Largura da coluna de conteúdo da tela, para alinhar a barra a ela na web larga. */
   contentMaxWidth?: number;
+  /**
+   * `false` quando a barra vive dentro de um painel (formulário da web larga): o recuo lateral é
+   * medido a partir do painel, não da janela, para o título não sair da área visível.
+   */
+  alignToWindow?: boolean;
 };
 
 /**
@@ -23,15 +28,19 @@ export type TopAppBarProps = {
  * Na web larga vira uma trilha discreta ("← Voltar | Título") de 48 px, sem faixa própria, para não
  * competir com o cabeçalho do site nem com a manchete da tela.
  */
-export function TopAppBar({ title, onBack, floating = false, contentMaxWidth }: TopAppBarProps) {
+export function TopAppBar({ title, onBack, floating = false, contentMaxWidth, alignToWindow = true }: TopAppBarProps) {
   const guardedBack = useGuardedPress(onBack);
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const { width } = useWindowDimensions();
+  const width = useHydratedWindowWidth();
   const wide = useIsWideWeb() && !floating;
   // Web larga: a barra acompanha a coluna de conteúdo centralizada (não vale para a barra sobre o mapa).
-  const alignToContent = Platform.OS === "web" && !floating ? { paddingHorizontal: topBarInset(width, contentMaxWidth) } : null;
+  const alignToContent = Platform.OS === "web" && !floating
+    ? alignToWindow
+      ? { paddingHorizontal: topBarInset(width, contentMaxWidth) }
+      : styles.crumbBarInline
+    : null;
   if (wide) {
     return (
       <View style={[styles.crumbBar, alignToContent]}>
@@ -89,6 +98,7 @@ function createStyles(colors: ColorPalette) {
       gap: tokens.spacing[12],
       backgroundColor: colors.background,
     },
+    crumbBarInline: { paddingHorizontal: tokens.spacing[24] },
     crumbBack: {
       flexDirection: "row",
       alignItems: "center",

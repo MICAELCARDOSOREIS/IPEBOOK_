@@ -6,6 +6,7 @@ import { useScheduleMeetingViewModel, type ScheduleMeetingActions, type Schedule
 
 vi.mock("@/view/useIsWideWeb", () => ({
   useIsWideWeb: () => true,
+  useHydratedWindowWidth: () => 1280,
   WIDE_WEB_MIN_WIDTH: 960,
 }));
 

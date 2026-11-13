@@ -19,7 +19,7 @@ export function Manchete({ texto, realce, accessibilityLabel }: MancheteProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   return (
-    <View accessible accessibilityRole="header" accessibilityLabel={accessibilityLabel ?? `${texto} ${realce}`}>
+    <View accessible accessibilityRole="header" aria-level={2} accessibilityLabel={accessibilityLabel ?? `${texto} ${realce}`}>
       <Text style={styles.linha}>{texto}</Text>
       <View style={styles.realce}>
         <Text style={styles.linha}>{realce}</Text>

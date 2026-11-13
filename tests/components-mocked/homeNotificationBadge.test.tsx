@@ -10,7 +10,7 @@ vi.mock("@/viewmodel/useNotificationsViewModel", () => ({
   useNotificationsViewModel: vi.fn().mockReturnValue([{ unreadCount: 0 }, { refresh: vi.fn(), reload: vi.fn() }]),
 }));
 vi.mock("@/viewmodel/useProfileViewModel", () => ({ useProfileViewModel: vi.fn() }));
-vi.mock("@/view/useIsWideWeb", () => ({ useIsWideWeb: () => false }));
+vi.mock("@/view/useIsWideWeb", () => ({ useIsWideWeb: () => false, useHydratedWindowWidth: () => 360 }));
 
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useHomeViewModel } from "@/viewmodel/useHomeViewModel";

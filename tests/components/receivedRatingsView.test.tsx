@@ -31,13 +31,21 @@ describe("tela de Avaliações recebidas (Figma 07.03, ISO/IEC 25010 - Usabilida
     expect(screen.getByLabelText("Carregando avaliações")).toBeDefined();
   });
 
-  it("mostra estado vazio quando não há avaliações", async () => {
+  it("mostra estado vazio quando não há avaliações e permite voltar ao perfil", async () => {
     mockViewModel({ ratings: [], loading: false, error: null });
+    const onBack = vi.fn();
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
-      screen = await render(<ReceivedRatings sessionUserId="bia" onBack={() => {}} />);
+      screen = await render(<ReceivedRatings sessionUserId="bia" onBack={onBack} />);
     });
-    expect(screen.getByText("Você ainda não recebeu avaliações.")).toBeDefined();
+    expect(screen.getByText("Você ainda não recebeu avaliações")).toBeDefined();
+    expect(
+      screen.getByText(
+        "As avaliações aparecem aqui depois que uma venda, troca ou doação é concluída e a outra pessoa conta como foi.",
+      ),
+    ).toBeDefined();
+    await fireEvent.press(screen.getByLabelText("Voltar ao perfil"));
+    expect(onBack).toHaveBeenCalledTimes(1);
   });
 
   it("lista as avaliações com nota, nome e data", async () => {

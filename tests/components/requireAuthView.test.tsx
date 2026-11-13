@@ -85,7 +85,8 @@ describe("RequireAuth: catálogo só para pessoa conectada (Spec 092)", () => {
   });
 
   it("exibe estado offline amigável quando sem conexão e sem sessão", async () => {
-    vi.mocked(useNetworkStatus).mockReturnValueOnce({ isOnline: false });
+    // A hidratação faz o componente renderizar duas vezes; o estado offline precisa persistir entre elas.
+    vi.mocked(useNetworkStatus).mockReturnValue({ isOnline: false });
     mockAuth(null, false);
     const onRequireSignIn = vi.fn();
     const screen = await render(
@@ -98,6 +99,7 @@ describe("RequireAuth: catálogo só para pessoa conectada (Spec 092)", () => {
     expect(screen.getByText("Você está sem conexão com a internet.")).toBeDefined();
     expect(screen.getByText("Tentar novamente")).toBeDefined();
     expect(screen.getByText("Ir para o início")).toBeDefined();
+    vi.mocked(useNetworkStatus).mockReturnValue({ isOnline: true });
   });
 });
 

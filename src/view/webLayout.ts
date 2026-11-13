@@ -1,4 +1,4 @@
-import { useWindowDimensions } from "react-native";
+import { useHydratedWindowWidth } from "@/view/useIsWideWeb";
 
 /** Largura máxima do conteúdo na web larga: acompanha o cabeçalho do site e cresce com a janela. */
 export const WEB_MAX_WIDTH = 1760;
@@ -34,12 +34,12 @@ export function webGridColumns(windowWidth: number): number {
 
 /** Colunas atuais da grade de livros (ver `webGridColumns`). */
 export function useWebGridColumns(): number {
-  const { width } = useWindowDimensions();
+  const width = useHydratedWindowWidth();
   return webGridColumns(width);
 }
 
 /** Colunas atuais da grade (ver `webColumnCount`). */
 export function useWebColumns(base: number, max?: number): number {
-  const { width } = useWindowDimensions();
+  const width = useHydratedWindowWidth();
   return webColumnCount(width, base, max);
 }

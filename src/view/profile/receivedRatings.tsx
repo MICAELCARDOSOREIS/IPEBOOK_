@@ -87,7 +87,13 @@ export function ReceivedRatings({ sessionUserId, onBack }: ReceivedRatingsProps)
       ) : state.ratings.length === 0 ? (
         <View style={[styles.content, wide && styles.contentWide]}>
           <View style={[styles.status, wide && styles.emptyWide]}>
-            <Text style={styles.emptyText}>Você ainda não recebeu avaliações.</Text>
+            <Text accessibilityRole="header" style={styles.emptyTitle}>Você ainda não recebeu avaliações</Text>
+            <Text style={styles.emptyText}>
+              As avaliações aparecem aqui depois que uma venda, troca ou doação é concluída e a outra pessoa conta como foi.
+            </Text>
+            <Pressable accessibilityRole="button" accessibilityLabel="Voltar ao perfil" onPress={guardedBack} style={withPress(styles.retryButton)}>
+              <Text style={styles.retryText}>Voltar ao perfil</Text>
+            </Pressable>
           </View>
         </View>
       ) : (
@@ -199,7 +205,8 @@ function createStyles(colors: ColorPalette) {
     paddingTop: tokens.spacing[40],
   },
   errorText: { ...tokens.typography.bodyMedium, color: colors.error, textAlign: "center" },
-  emptyText: { ...tokens.typography.bodyMedium, color: colors.secondaryText, textAlign: "center" },
+  emptyTitle: { ...tokens.typography.titleMedium, color: colors.m3.onSurface, textAlign: "center" },
+  emptyText: { ...tokens.typography.bodyMedium, color: colors.secondaryText, textAlign: "center", maxWidth: 420 },
   retryButton: {
     paddingVertical: tokens.spacing[8],
     paddingHorizontal: tokens.spacing[24],

@@ -74,6 +74,7 @@ export default function ResetPassword({
         header={
           onBack ? (
             <TopAppBar
+              alignToWindow={false}
               contentMaxWidth={560}
               title={state.success ? "Senha atualizada" : state.linkExpired ? "Link expirado" : "Nova senha"}
               onBack={guardedBack}

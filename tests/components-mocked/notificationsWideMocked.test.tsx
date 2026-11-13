@@ -6,7 +6,7 @@ import Notifications from "@/view/notifications/notifications";
 
 vi.mock("@/viewmodel/useNotificationsViewModel", () => ({ useNotificationsViewModel: vi.fn() }));
 vi.mock("@/viewmodel/useNetworkStatus", () => ({ useNetworkStatus: () => ({ isOnline: true }) }));
-vi.mock("@/view/useIsWideWeb", () => ({ useIsWideWeb: () => true }));
+vi.mock("@/view/useIsWideWeb", () => ({ useIsWideWeb: () => true, useHydratedWindowWidth: () => 1280 }));
 
 import { useNotificationsViewModel } from "@/viewmodel/useNotificationsViewModel";
 

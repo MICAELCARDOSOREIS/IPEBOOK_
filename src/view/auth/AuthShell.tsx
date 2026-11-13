@@ -21,7 +21,7 @@ export function AuthShell({ children }: { children: ReactNode }) {
     <View testID="auth-shell" style={styles.row}>
       <View style={styles.brandPanel}>
         <Text style={styles.brand}>IpêBook</Text>
-        <Text accessibilityRole="header" style={styles.headline}>
+        <Text accessibilityRole="header" aria-level={2} style={styles.headline}>
           Histórias que seguem.
         </Text>
         <Text style={styles.lead}>

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef } from "react";
-import { AccessibilityInfo, Animated, Pressable, StyleSheet, Text } from "react-native";
+import { AccessibilityInfo, Animated, Platform, Pressable, StyleSheet, Text } from "react-native";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useGuardedPress } from "@/view/useGuardedPress";
@@ -46,7 +46,7 @@ export function Snackbar({
           toValue: 1,
           tension: tokens.spring.spatialStandard.tension,
           friction: tokens.spring.spatialStandard.friction,
-          useNativeDriver: true,
+          useNativeDriver: Platform.OS !== "web",
         }).start();
       })
       .catch(() => {

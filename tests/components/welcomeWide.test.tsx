@@ -4,7 +4,7 @@ import { StyleSheet } from "react-native";
 import { describe, expect, it, vi } from "vitest";
 import { colors } from "@/view/tokens";
 
-vi.mock("@/view/useIsWideWeb", () => ({ useIsWideWeb: () => true, WIDE_WEB_MIN_WIDTH: 960 }));
+vi.mock("@/view/useIsWideWeb", () => ({ useIsWideWeb: () => true, useHydratedWindowWidth: () => 1280, WIDE_WEB_MIN_WIDTH: 960 }));
 
 import Welcome from "@/view/onboarding/welcome";
 

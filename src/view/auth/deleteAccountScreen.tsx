@@ -1,5 +1,6 @@
 import { makeAuthViewModel } from "@/di/container";
 import DeleteAccount from "@/view/auth/deleteAccount";
+import { useHydrated } from "@/view/useHydrated";
 
 export type DeleteAccountScreenProps = {
   onBack: () => void;
@@ -15,11 +16,13 @@ export default function DeleteAccountScreen({
   onEditProfile,
 }: DeleteAccountScreenProps) {
   const [authState] = makeAuthViewModel();
+  const hydrated = useHydrated();
 
   return (
     <DeleteAccount
       sessionUserId={authState.user?.id ?? null}
-      sessionLoading={authState.loading && !authState.user}
+      // `!hydrated` mantém a primeira renderização do cliente igual ao HTML estático (Spec 136).
+      sessionLoading={!authState.user && (!hydrated || authState.loading)}
       onBack={onBack}
       onEditProfile={onEditProfile}
       onAccountDeleted={onAccountDeleted}

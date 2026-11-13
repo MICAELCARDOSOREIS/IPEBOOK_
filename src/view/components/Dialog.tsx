@@ -136,7 +136,7 @@ export function Dialog({
           toValue: 1,
           tension: tokens.spring.spatialSlow.tension,
           friction: tokens.spring.spatialSlow.friction,
-          useNativeDriver: true,
+          useNativeDriver: Platform.OS !== "web",
         }).start();
       })
       .catch(() => {
