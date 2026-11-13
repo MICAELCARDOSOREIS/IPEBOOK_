@@ -90,20 +90,34 @@ export function useInviteFriendsViewModel(
       if (Platform.OS === "web") {
         const webNavigator = navigator as WebNavigatorWithShare;
         if (typeof webNavigator.share === "function") {
-          await webNavigator.share({ text: message, url: appUrl });
-          if (active.current) setState((prev) => ({ ...prev, sharing: false, shared: true, error: null }));
-        } else {
-          await navigator.clipboard.writeText(message);
-          if (active.current) setState((prev) => ({ ...prev, sharing: false, linkCopied: true, error: null }));
+          try {
+            // O convite já termina com o link: repetir `url` duplicaria o endereço no destino.
+            await webNavigator.share({ text: message });
+            if (active.current) setState((prev) => ({ ...prev, sharing: false, shared: true, error: null }));
+            return;
+          } catch (shareError) {
+            const name = (shareError as { name?: string } | null)?.name;
+            // Fechar o menu do navegador não é falha; nada foi compartilhado nem copiado.
+            if (name === "AbortError") {
+              if (active.current) setState((prev) => ({ ...prev, sharing: false, error: null }));
+              return;
+            }
+            // Sem permissão (iframe, falta de gesto do usuário): recorre à área de transferência.
+            if (name !== "NotAllowedError") throw shareError;
+          }
         }
+        await navigator.clipboard.writeText(message);
+        if (active.current) setState((prev) => ({ ...prev, sharing: false, linkCopied: true, error: null }));
         return;
       }
 
       const whatsappUrl = useCases.buildWhatsAppInviteUrl(appUrl);
-      const canOpen = await Linking.canOpenURL(whatsappUrl);
-      if (canOpen) {
+      // `canOpenURL` responde "não" para o esquema do WhatsApp no Android 11+ (visibilidade de pacotes)
+      // e no iOS sem `LSApplicationQueriesSchemes`, mesmo com o app instalado. Abrir de fato — e cair
+      // no menu do sistema quando a abertura falha — é o teste confiável da presença do WhatsApp.
+      try {
         await Linking.openURL(whatsappUrl);
-      } else {
+      } catch {
         await Share.share({ message });
       }
       if (active.current) setState((prev) => ({ ...prev, sharing: false, shared: true, error: null }));
@@ -125,12 +139,22 @@ export function useInviteFriendsViewModel(
       if (Platform.OS === "web") {
         const webNavigator = navigator as WebNavigatorWithShare;
         if (typeof webNavigator.share === "function") {
-          await webNavigator.share({ text: message, url: appUrl });
-          if (active.current) setState((prev) => ({ ...prev, sharing: false, shared: true, error: null }));
-        } else {
-          await navigator.clipboard.writeText(message);
-          if (active.current) setState((prev) => ({ ...prev, sharing: false, linkCopied: true, error: null }));
+          try {
+            // O convite já termina com o link: repetir `url` duplicaria o endereço no destino.
+            await webNavigator.share({ text: message });
+            if (active.current) setState((prev) => ({ ...prev, sharing: false, shared: true, error: null }));
+            return;
+          } catch (shareError) {
+            const name = (shareError as { name?: string } | null)?.name;
+            if (name === "AbortError") {
+              if (active.current) setState((prev) => ({ ...prev, sharing: false, error: null }));
+              return;
+            }
+            if (name !== "NotAllowedError") throw shareError;
+          }
         }
+        await navigator.clipboard.writeText(message);
+        if (active.current) setState((prev) => ({ ...prev, sharing: false, linkCopied: true, error: null }));
         return;
       }
 
@@ -146,7 +170,7 @@ export function useInviteFriendsViewModel(
         }));
       }
     }
-  }, [appUrl, message]);
+  }, [message]);
 
   const copyLink = useCallback(async () => {
     try {

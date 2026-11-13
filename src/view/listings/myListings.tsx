@@ -18,6 +18,7 @@ import { ErrorState } from "@/view/components/ErrorState";
 import { FilledButton } from "@/view/components/FilledButton";
 import { LoadingState } from "@/view/components/LoadingState";
 import { OfflineState } from "@/view/components/OfflineState";
+import { Snackbar } from "@/view/components/Snackbar";
 import { ShelfRow } from "@/view/listings/shelfRow";
 import { MyListingsEmpty } from "@/view/listings/myListingsEmpty";
 import { COMMUNITY_MEMBER } from "@/view/requests/receivedRequests";
@@ -70,7 +71,7 @@ export function MyListings({
   const [state, actions] = makeMyListingsViewModel(sessionUserId);
   const [received] = makeReceivedRequestsViewModel(sessionUserId);
   const [draftsState] = makeDraftsViewModel(sessionUserId);
-  const [, shareActions] = makeShareListingViewModel();
+  const [share, shareActions] = makeShareListingViewModel();
   const { isOnline } = makeNetworkStatus();
   const [activeTab, setActiveTab] = useState<ShelfTab>("listings");
   const [statusFilter, setStatusFilter] = useState<ListingsFilter>("all");
@@ -90,6 +91,11 @@ export function MyListings({
       photoUrl: book.photoUrl,
     });
   };
+
+  // O compartilhamento é uma ação pontual: o aviso diz o que aconteceu e sai sozinho.
+  const shareFeedback =
+    share.error ?? (share.linkCopied ? "Link do anúncio copiado para a área de transferência!" : null);
+  const dismissShareFeedback = share.error ? shareActions.dismissError : shareActions.dismissLinkCopied;
 
   const guardedCreateListing = useGuardedPress(onNavigateToCreateListing);
   const guardedDrafts = useGuardedPress(onNavigateToDrafts);
@@ -553,6 +559,9 @@ export function MyListings({
         >
           <AppIcon name="add" size={24} color={colors.m3.onPrimaryContainer} />
         </Pressable>
+      ) : null}
+      {shareFeedback ? (
+        <Snackbar visible message={shareFeedback} onDismiss={dismissShareFeedback} />
       ) : null}
     </SafeAreaView>
   );

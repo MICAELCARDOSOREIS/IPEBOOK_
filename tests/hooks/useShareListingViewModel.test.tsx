@@ -8,7 +8,6 @@ import { useShareListingViewModel } from "@/viewmodel/useShareListingViewModel";
 
 vi.mock("expo-linking", () => ({
   createURL: vi.fn((path: string) => `ipebook://${path}`),
-  canOpenURL: vi.fn().mockResolvedValue(false),
   openURL: vi.fn().mockResolvedValue(undefined),
 }));
 
@@ -109,36 +108,43 @@ describe("testes de hook: useShareListingViewModel (Spec 019)", () => {
       await hook.current[1].share("");
     });
     expect(hook.current[0]).toEqual({ sharing: false, linkCopied: false, error: "Anúncio inválido." });
+
+    // A tela pode fechar o aviso; repetir sem erro não altera o estado.
+    act(() => {
+      hook.current[1].dismissError();
+    });
+    expect(hook.current[0].error).toBeNull();
+    act(() => {
+      hook.current[1].dismissError();
+    });
+    expect(hook.current[0]).toEqual({ sharing: false, linkCopied: false, error: null });
   });
 
   describe("shareToWhatsApp (Issue #145)", () => {
-    it("abre o WhatsApp quando o app está instalado", async () => {
+    it("abre o WhatsApp sem consultar canOpenURL (indisponível no Android 11+ e no iOS)", async () => {
       const originalOS = Platform.OS;
       Platform.OS = "android";
-      const canOpenURL = vi.fn().mockResolvedValue(true);
       const openURL = vi.fn().mockResolvedValue(undefined);
       const linking = await import("expo-linking");
-      vi.mocked(linking.canOpenURL).mockImplementation(canOpenURL);
       vi.mocked(linking.openURL).mockImplementation(openURL);
+      const shareSpy = vi.spyOn(Share, "share");
 
       const hook = await renderHook(fakeUseCases);
       await act(async () => {
         await hook.current[1].shareToWhatsApp("b1", fakeListing);
       });
 
-      expect(canOpenURL).toHaveBeenCalledWith(
-        expect.stringContaining("whatsapp://send?text="),
-      );
       expect(openURL).toHaveBeenCalledWith(expect.stringContaining("whatsapp://send?text="));
+      expect(shareSpy).not.toHaveBeenCalled();
       expect(hook.current[0]).toEqual({ sharing: false, linkCopied: false, error: null });
       Platform.OS = originalOS;
     });
 
-    it("recorre ao menu nativo quando o WhatsApp não está instalado", async () => {
+    it("recorre ao menu nativo quando o WhatsApp não abre", async () => {
       const originalOS = Platform.OS;
       Platform.OS = "android";
       const linking = await import("expo-linking");
-      vi.mocked(linking.canOpenURL).mockResolvedValue(false);
+      vi.mocked(linking.openURL).mockRejectedValueOnce(new Error("nenhum app abre whatsapp://"));
       const shareSpy = vi.spyOn(Share, "share").mockResolvedValue({ action: "sharedAction", activityType: undefined });
 
       const hook = await renderHook(fakeUseCases);
@@ -164,11 +170,10 @@ describe("testes de hook: useShareListingViewModel (Spec 019)", () => {
         await hook.current[1].shareToWhatsApp("b1", fakeListing);
       });
 
-      expect(webShare).toHaveBeenCalledWith({
-        text: expect.stringContaining("Dom Casmurro"),
-        url: "https://ipebook.app/livro/b1",
-      });
-      expect(hook.current[0]).toEqual({ sharing: false, linkCopied: true, error: null });
+      // A mensagem já termina com o link: repetir `url` duplicaria o endereço no destino.
+      expect(webShare).toHaveBeenCalledWith({ text: expect.stringContaining("Dom Casmurro") });
+      // A folha do sistema é o próprio retorno; nada foi copiado.
+      expect(hook.current[0]).toEqual({ sharing: false, linkCopied: false, error: null });
       Platform.OS = originalOS;
     });
 
@@ -220,23 +225,24 @@ describe("testes de hook: useShareListingViewModel (Spec 019)", () => {
       Platform.OS = originalOS;
     });
 
-    it("compartilha imagem com legenda no WhatsApp quando capture é fornecido (Spec 118)", async () => {
+    it("abre só o WhatsApp, sem a folha de imagem do botão de compartilhar (Spec 118, ADR 0110)", async () => {
       const originalOS = Platform.OS;
       Platform.OS = "android";
       const shareFile = vi.fn().mockResolvedValue(true);
-      const hook = await renderHook(fakeUseCases, shareFile);
-      const capture = vi.fn().mockResolvedValue("file:///tmp/card-whatsapp.png");
+      const shareSpy = vi.spyOn(Share, "share");
+      const linking = await import("expo-linking");
+      const openURL = vi.fn().mockResolvedValue(undefined);
+      vi.mocked(linking.openURL).mockImplementation(openURL);
 
+      const hook = await renderHook(fakeUseCases, shareFile);
       await act(async () => {
-        await hook.current[1].shareToWhatsApp("b1", fakeListing, capture);
+        await hook.current[1].shareToWhatsApp("b1", fakeListing);
       });
 
-      expect(capture).toHaveBeenCalled();
-      expect(shareFile).toHaveBeenCalledWith(
-        "file:///tmp/card-whatsapp.png",
-        expect.stringContaining("Dom Casmurro"),
-        "Compartilhar anúncio no WhatsApp",
-      );
+      expect(openURL).toHaveBeenCalledWith(expect.stringContaining("whatsapp://send?text="));
+      // Enviar a arte por ACTION_SEND abria a mesma folha do botão de compartilhar.
+      expect(shareFile).not.toHaveBeenCalled();
+      expect(shareSpy).not.toHaveBeenCalled();
       expect(hook.current[0]).toEqual({ sharing: false, linkCopied: false, error: null });
       Platform.OS = originalOS;
     });
@@ -346,11 +352,8 @@ describe("useShareListingViewModel — branches de share com anúncio (Spec 118)
       await hook.current[1].share("b1", fakeListing);
     });
 
-    expect(webShare).toHaveBeenCalledWith({
-      text: expect.stringContaining("Dom Casmurro"),
-      url: "https://ipebook.app/livro/b1",
-    });
-    expect(hook.current[0]).toEqual({ sharing: false, linkCopied: true, error: null });
+    expect(webShare).toHaveBeenCalledWith({ text: expect.stringContaining("Dom Casmurro") });
+    expect(hook.current[0]).toEqual({ sharing: false, linkCopied: false, error: null });
     Platform.OS = originalOS;
   });
 
@@ -450,24 +453,6 @@ describe("useShareListingViewModel — branches de share com anúncio (Spec 118)
     expect(shareSpy).toHaveBeenCalledWith({ message: expect.stringContaining("Dom Casmurro") });
     Platform.OS = originalOS;
   });
-
-  it("cai no WhatsApp por link quando a captura falha no celular", async () => {
-    const originalOS = Platform.OS;
-    Platform.OS = "android";
-    const linking = await import("expo-linking");
-    vi.mocked(linking.canOpenURL).mockResolvedValue(true);
-    const openURL = vi.fn().mockResolvedValue(undefined);
-    vi.mocked(linking.openURL).mockImplementation(openURL);
-    const hook = await renderHook(fakeUseCases, vi.fn().mockResolvedValue(true));
-
-    await act(async () => {
-      await hook.current[1].shareToWhatsApp("b1", fakeListing, vi.fn().mockRejectedValue(new Error("sem captura")));
-    });
-
-    expect(openURL).toHaveBeenCalledWith(expect.stringContaining("whatsapp://send?text="));
-    expect(hook.current[0].error).toBeNull();
-    Platform.OS = originalOS;
-  });
 });
 
 describe("useShareListingViewModel — fallback sem formatação de WhatsApp", () => {
@@ -494,7 +479,7 @@ describe("useShareListingViewModel — fallback sem formatação de WhatsApp", (
     const originalOS = Platform.OS;
     Platform.OS = "android";
     const linking = await import("expo-linking");
-    vi.mocked(linking.canOpenURL).mockResolvedValue(false);
+    vi.mocked(linking.openURL).mockRejectedValueOnce(new Error("sem WhatsApp"));
     const shareSpy = vi.spyOn(Share, "share").mockResolvedValue({ action: "sharedAction", activityType: undefined });
     const hook = await renderHook(semFormatacao);
 

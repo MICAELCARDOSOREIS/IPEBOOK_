@@ -15,9 +15,11 @@ export type ShareListingActions = {
   share: (bookId: string, listing?: ShareableListing, capture?: () => Promise<string>) => Promise<void>;
   /** Captura a imagem do anúncio (`capture` devolve o PNG) e abre a folha de compartilhamento (Spec 092). */
   shareImage: (bookId: string, listing: ShareableListing, capture: () => Promise<string>) => Promise<void>;
-  /** Compartilhamento dedicado ao WhatsApp (Spec 118 / Issue #145), com texto formatado, suporte a imagem e fallback. */
-  shareToWhatsApp: (bookId: string, listing: ShareableListing, capture?: () => Promise<string>) => Promise<void>;
+  /** Atalho do WhatsApp (Spec 118 / ADR 0110): abre o aplicativo com a mensagem formatada, sem a folha do sistema. */
+  shareToWhatsApp: (bookId: string, listing: ShareableListing) => Promise<void>;
   dismissLinkCopied: () => void;
+  /** Fecha o aviso de falha exibido na tela; a próxima tentativa também limpa o erro sozinha. */
+  dismissError: () => void;
 };
 
 const GENERIC_ERROR = "Não foi possível compartilhar o anúncio. Tente novamente.";
@@ -64,8 +66,10 @@ export function useShareListingViewModel(
           const webNavigator = navigator as WebNavigatorWithShare;
           if (listing && typeof webNavigator?.share === "function") {
             try {
-              await webNavigator.share({ text: message, url });
-              if (active.current) setState({ sharing: false, linkCopied: true, error: null });
+              // A mensagem já termina com o link: passar `url` também duplicaria o endereço no destino.
+              await webNavigator.share({ text: message });
+              // A folha do sistema é o próprio retorno; nada foi copiado para a área de transferência.
+              if (active.current) setState({ sharing: false, linkCopied: false, error: null });
               return;
             } catch (shareError) {
               const name = (shareError as { name?: string } | null)?.name;
@@ -108,7 +112,7 @@ export function useShareListingViewModel(
   );
 
   const shareToWhatsApp = useCallback(
-    async (bookId: string, listing: ShareableListing, capture?: () => Promise<string>) => {
+    async (bookId: string, listing: ShareableListing) => {
       setState((prev) => ({ ...prev, sharing: true, error: null }));
       try {
         const path = useCases.buildListingSharePath(bookId);
@@ -122,7 +126,7 @@ export function useShareListingViewModel(
           let shared = false;
           if (typeof webNavigator.share === "function") {
             try {
-              await webNavigator.share({ text: message, url });
+              await webNavigator.share({ text: message });
               shared = true;
             } catch (shareError) {
               const name = (shareError as { name?: string } | null)?.name;
@@ -153,29 +157,22 @@ export function useShareListingViewModel(
               await navigator.clipboard.writeText(message).catch(() => null);
             }
           }
-          if (active.current) setState({ sharing: false, linkCopied: true, error: null });
+          // Só houve cópia quando a folha do sistema não foi usada com sucesso.
+          if (active.current) setState({ sharing: false, linkCopied: !shared, error: null });
           return;
         }
 
-        // Mobile: se tiver captura de imagem, tenta compartilhar o arquivo com a legenda formatada
-        if (capture) {
-          try {
-            const imageUri = await capture();
-            const sharedWithFile = await shareImageFile(imageUri, message, "Compartilhar anúncio no WhatsApp");
-            if (sharedWithFile) {
-              if (active.current) setState({ sharing: false, linkCopied: false, error: null });
-              return;
-            }
-          } catch {
-            // Em caso de falha na captura da imagem, prossegue para o envio direto de texto via WhatsApp
-          }
-        }
-
+        // Mobile: abre o WhatsApp direto com a mensagem formatada. A arte do card continua no botão de
+        // compartilhamento geral: enviá-la por `ACTION_SEND` abria a mesma folha do sistema que ele, e o
+        // atalho do WhatsApp deixava de ser um atalho (ADR 0110). O link canônico já gera a prévia do
+        // anúncio no WhatsApp pelas tags Open Graph (Spec 119).
         const whatsappUrl = useCases.buildWhatsAppShareUrl(message, false);
-        const canOpenWhatsApp = await Linking.canOpenURL(whatsappUrl);
-        if (canOpenWhatsApp) {
+        // `canOpenURL` responde "não" para o esquema do WhatsApp no Android 11+ (visibilidade de pacotes)
+        // e no iOS sem `LSApplicationQueriesSchemes`, mesmo com o app instalado. Abrir de fato — e cair
+        // no menu do sistema só quando a abertura falha — é o teste confiável da presença do WhatsApp.
+        try {
           await Linking.openURL(whatsappUrl);
-        } else {
+        } catch {
           await Share.share({ message });
         }
         if (active.current) setState({ sharing: false, linkCopied: false, error: null });
@@ -189,7 +186,7 @@ export function useShareListingViewModel(
         }
       }
     },
-    [useCases, shareImageFile],
+    [useCases],
   );
 
   const shareImage = useCallback(
@@ -224,5 +221,9 @@ export function useShareListingViewModel(
     setState((prev) => ({ ...prev, linkCopied: false }));
   }, []);
 
-  return [state, { share, shareImage, shareToWhatsApp, dismissLinkCopied }];
+  const dismissError = useCallback(() => {
+    setState((prev) => (prev.error ? { ...prev, error: null } : prev));
+  }, []);
+
+  return [state, { share, shareImage, shareToWhatsApp, dismissLinkCopied, dismissError }];
 }

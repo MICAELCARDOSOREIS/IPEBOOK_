@@ -68,7 +68,7 @@ function setupDetail(
   ]);
   vi.mocked(useShareListingViewModel).mockReturnValue([
     { sharing: false, linkCopied: false, error: null },
-    { share: vi.fn(), shareImage: vi.fn(), shareToWhatsApp: vi.fn(), dismissLinkCopied: vi.fn() },
+    { share: vi.fn(), shareImage: vi.fn(), shareToWhatsApp: vi.fn(), dismissLinkCopied: vi.fn(), dismissError: vi.fn() },
   ]);
   vi.mocked(usePublicProfileViewModel).mockReturnValue([
     {

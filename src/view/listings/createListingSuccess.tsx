@@ -11,6 +11,7 @@ import { FilledButton } from "@/view/components/FilledButton";
 import { Tag } from "@/view/components/Tag";
 import { AppIcon } from "@/view/components/AppIcon";
 import { Snackbar } from "@/view/components/Snackbar";
+import { InlineErrorCard } from "@/view/components/InlineErrorCard";
 import { IpePetalsCelebration } from "@/view/components/IpePetalsCelebration";
 import { makeShareListingViewModel } from "@/di/container";
 import { useGuardedPress } from "@/view/useGuardedPress";
@@ -166,6 +167,7 @@ export function CreateListingSuccess({
 
           {/* Ações com hierarquia clara (Lei de Hick & Fitts) */}
           <View style={styles.actionsBlock}>
+            {shareState.error ? <InlineErrorCard message={shareState.error} /> : null}
             {/* WhatsApp Hero Button */}
             <Animated.View style={{ transform: [{ scale: whatsappScale }] }}>
               <Pressable

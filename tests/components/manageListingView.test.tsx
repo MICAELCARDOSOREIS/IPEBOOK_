@@ -1,9 +1,15 @@
 import { act, fireEvent, render } from "@testing-library/react-native";
 import type React from "react";
+import { Share } from "react-native";
 import { describe, expect, it, vi } from "vitest";
 import type { Book } from "@/model/entities/book";
 import ManageListing from "@/view/listings/manageListing";
 import type { ManageListingActions, ManageListingState } from "@/viewmodel/useManageListingViewModel";
+
+vi.mock("expo-linking", () => ({
+  createURL: vi.fn((path: string) => `https://ipebook.app${path}`),
+  openURL: vi.fn().mockResolvedValue(undefined),
+}));
 
 vi.mock("@/viewmodel/useManageListingViewModel", () => ({
   useManageListingViewModel: vi.fn(),
@@ -69,6 +75,21 @@ describe("tela de gerenciar anúncio (Figma 04.08)", () => {
     expect(screen.getByText("Anúncio ativo")).toBeDefined();
     expect(screen.getByLabelText("Editar anúncio")).toBeDefined();
     expect(screen.getByLabelText("Pausar anúncio")).toBeDefined();
+  });
+
+  it("mostra o erro quando o compartilhamento no WhatsApp falha (Spec 118)", async () => {
+    mockViewModel({});
+    const linking = await import("expo-linking");
+    vi.mocked(linking.openURL).mockRejectedValueOnce(new Error("sem WhatsApp"));
+    const shareSpy = vi.spyOn(Share, "share").mockRejectedValueOnce(new Error("folha indisponível"));
+    const screen = await renderScreen();
+
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Divulgar no WhatsApp"));
+    });
+
+    expect(screen.getByText("Não foi possível compartilhar o anúncio. Tente novamente.")).toBeDefined();
+    shareSpy.mockRestore();
   });
 
   it("mostra o estado pausado e a ação de retomar", async () => {
