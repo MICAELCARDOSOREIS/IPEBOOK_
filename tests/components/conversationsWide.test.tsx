@@ -154,4 +154,58 @@ describe("Conversas na Web Larga (Spec 093 · Figma 06.01 / 06.09)", () => {
       expect(screen.queryByRole("button", { name: "Combinar encontro" })).toBeNull();
     });
   });
+
+  it("exibe o esqueleto em três painéis mantendo o cabeçalho e o subtítulo durante o carregamento", async () => {
+    setup({ loading: true, items: [] });
+    const screen = await renderView();
+
+    expect(screen.getByRole("header").props.children).toBe("Conversas");
+    expect(
+      screen.getByText("Acompanhe propostas de troca, compra e doação direto com leitores de Piripiri."),
+    ).toBeDefined();
+    expect(screen.getByLabelText("Carregando conversas")).toBeDefined();
+  });
+
+  it("no painel lateral de compra exibe autor, preço e permite abrir o anúncio ou denunciar", async () => {
+    const saleItem: ConversationItem = {
+      requestId: "r-sale",
+      listing: {
+        id: "b-sale",
+        title: "Capitães da Areia",
+        author: "Jorge Amado",
+        ownerId: "owner1",
+        modality: "sale",
+        price: 35,
+        status: "available",
+      },
+      otherName: "Maria",
+      otherPhotoUrl: null,
+      preview: "Fechado!",
+      lastMessageAt: "2026-10-26T06:00:00",
+      kind: "accepted",
+    };
+
+    setup({ items: [saleItem] });
+    const onOpenListing = vi.fn();
+    const onReportListing = vi.fn();
+    const screen = await renderView({ onOpenListing, onReportListing });
+
+    await act(async () => {
+      fireEvent.press(screen.getByText("Maria"));
+    });
+
+    expect(screen.getByText("Sobre a compra")).toBeDefined();
+    expect(screen.getByText("Jorge Amado")).toBeDefined();
+    expect(screen.getByText("R$ 35,00")).toBeDefined();
+
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Ver anúncio de Capitães da Areia" }));
+    });
+    expect(onOpenListing).toHaveBeenCalledWith("b-sale");
+
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Denunciar anúncio" }));
+    });
+    expect(onReportListing).toHaveBeenCalledWith("b-sale");
+  });
 });

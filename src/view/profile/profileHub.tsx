@@ -250,6 +250,7 @@ export default function ProfileHub({
               Meu perfil
             </Text>
             <View style={styles.headerActions}>
+              {wideWeb ? null : (
               <Pressable
                 testID="profile-notifications-button"
                 accessibilityRole="button"
@@ -271,6 +272,7 @@ export default function ProfileHub({
                   </View>
                 ) : null}
               </Pressable>
+              )}
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel="Abrir configurações"
@@ -289,8 +291,8 @@ export default function ProfileHub({
             <ErrorState message={state.error} onRetry={profileActions.reload} />
           ) : isSignedIn ? (
             wideWeb ? (
-              <View style={[styles.wideGrid, stackColumns && styles.wideGridStacked]} testID="profile-wide-grid">
-                <View style={[styles.wideSideCol, stackColumns && styles.wideColFull]}>
+              <View style={[styles.widePage, stackColumns && styles.wideGridStacked]} testID="profile-wide-grid">
+                <View style={styles.wideIdentity}>
                   <ProfileIdentityCard
                     name={profile.name}
                     photoUrl={profile.photoUrl}
@@ -301,25 +303,20 @@ export default function ProfileHub({
                     ratingText={ratingText}
                     wideWeb
                     onEditProfile={guardedNavigateToEditProfile}
-                    onCreateListing={onNavigateToCreateListing ? guardedNavigateToCreateListing : undefined}
                     onMyListings={guardedNavigateToMyListings}
                     onMeetingHistory={guardedNavigateToMeetingHistory}
                     onRatings={guardedNavigateToRatings}
                   />
                 </View>
-
-                {/* Coluna Principal da Web Larga: Atividade e Conta lado a lado */}
-                <View style={[styles.wideMainCol, stackColumns && styles.wideColFull]}>
-                  <View style={styles.wideSectionsRow}>
-                    <ProfileMenuSection title="Atividade" items={activityItems} wideWeb />
-                    <ProfileMenuSection
-                      title="Conta"
-                      items={accountItems}
-                      wideWeb
-                      defaultIconColor={colors.m3.onSurfaceVariant}
-                      onSignOut={openSignOutDialog}
-                    />
-                  </View>
+                <View style={styles.wideSectionsRow}>
+                  <ProfileMenuSection title="Atividade" items={activityItems} wideWeb />
+                  <ProfileMenuSection
+                    title="Conta"
+                    items={accountItems}
+                    wideWeb
+                    defaultIconColor={colors.m3.onSurfaceVariant}
+                    onSignOut={openSignOutDialog}
+                  />
                 </View>
               </View>
             ) : (
@@ -394,23 +391,20 @@ function createStyles(colors: ColorPalette) {
       gap: tokens.spacing[24],
     },
     fullRow: { width: "100%" },
-    wideGrid: {
+    widePage: {
+      width: "100%",
       flexDirection: "row",
       alignItems: "flex-start",
-      gap: tokens.spacing[32],
-      width: "100%",
+      gap: tokens.spacing[24],
+    },
+    wideIdentity: {
+      width: 360,
+      flexShrink: 0,
     },
     wideGridStacked: { flexDirection: "column" },
-    wideColFull: { width: "100%", minWidth: 0 },
-    wideSideCol: {
-      width: 380,
-      gap: tokens.spacing[20],
-    },
-    wideMainCol: {
-      flex: 1,
-      minWidth: 480,
-    },
     wideSectionsRow: {
+      flex: 1,
+      minWidth: 0,
       flexDirection: "row",
       flexWrap: "wrap",
       gap: tokens.spacing[24],

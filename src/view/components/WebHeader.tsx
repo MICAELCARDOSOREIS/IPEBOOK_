@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { Pressable, StyleSheet, Text, TextInput, View, Image } from "react-native";
 import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
@@ -14,6 +14,8 @@ export type WebHeaderProps = {
   onAnnounce: () => void;
   /** Iniciais para o avatar; sem sessão o avatar leva ao perfil (que oferece entrar). */
   initials?: string;
+  /** Foto do perfil público; quando há, substitui as iniciais. */
+  photoUrl?: string;
   badgeCount?: number;
   /** Abre as notificações; sem ele o sino não aparece. */
   onOpenNotifications?: () => void;
@@ -35,6 +37,7 @@ export function WebHeader({
   onNavigate,
   onAnnounce,
   initials = "",
+  photoUrl,
   badgeCount = 0,
   onOpenNotifications,
   notificationCount = 0,
@@ -135,7 +138,13 @@ export function WebHeader({
         ) : null}
 
         <Pressable accessibilityRole="button" accessibilityLabel="Meu perfil" onPress={() => guardedNavigate("profile")} style={withPress(styles.avatar)}>
-          {initials ? <Text style={styles.avatarText}>{initials}</Text> : <AppIcon name="person" size={20} color={colors.brandBrown} />}
+          {photoUrl ? (
+            <Image source={{ uri: photoUrl }} accessibilityElementsHidden style={styles.avatarPhoto} />
+          ) : initials ? (
+            <Text style={styles.avatarText}>{initials}</Text>
+          ) : (
+            <AppIcon name="person" size={20} color={colors.brandBrown} />
+          )}
         </Pressable>
       </View>
     </View>
@@ -242,6 +251,7 @@ function createStyles(colors: ColorPalette) {
       borderColor: colors.ipe.bloom,
     },
     avatarText: { ...tokens.typography.labelLarge, color: colors.brandBrown, fontWeight: tokens.fontWeight.bold },
+    avatarPhoto: { width: 40, height: 40, borderRadius: tokens.radius.full },
   });
 }
 

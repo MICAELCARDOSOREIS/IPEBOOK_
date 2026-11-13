@@ -71,6 +71,16 @@ async function renderChat(props: Partial<Parameters<typeof Chat>[0]> = {}) {
 }
 
 describe("Chat em tela cheia (Spec 082)", () => {
+  it("tocar no cartão do livro abre o acompanhamento da negociação", async () => {
+    setup();
+    const onOpenNegotiation = vi.fn();
+    const screen = await renderChat({ onOpenNegotiation });
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Abrir negociação de Dom Casmurro" }));
+    });
+    expect(onOpenNegotiation).toHaveBeenCalledWith("r1");
+  });
+
   it("mostra a pessoa, o livro e Combinar abre a negociação (CA2)", async () => {
     setup();
     const onOpenNegotiation = vi.fn();
@@ -349,6 +359,35 @@ describe("Chat em tela cheia (Spec 082)", () => {
       const screen = await renderChat();
 
       expect(screen.getByText("850/1000")).toBeDefined();
+    });
+
+    it("embutido sem encontro marcado omite o cartão redundante de combinar encontro e exibe o canal", async () => {
+      mockMeetingState = { meeting: null, loading: false };
+      setup();
+      const screen = await renderChat({ embedded: true });
+
+      expect(screen.getByText("Bate-papo da negociação · Troca")).toBeDefined();
+      expect(screen.queryByText("Nenhum encontro marcado")).toBeNull();
+      expect(screen.queryByRole("button", { name: "Combinar encontro" })).toBeNull();
+    });
+
+    it("embutido exibe a faixa de encontro quando já existe encontro confirmado", async () => {
+      mockMeetingState = {
+        meeting: {
+          id: "m1",
+          requestId: "r1",
+          pointName: "Praça da Bandeira",
+          scheduledAt: "2026-11-05T14:00:00.000Z",
+          status: "confirmed",
+          suggestedBy: "ana",
+        },
+        loading: false,
+      };
+      setup();
+      const screen = await renderChat({ embedded: true });
+
+      expect(screen.getByText("Encontro confirmado")).toBeDefined();
+      mockMeetingState = { meeting: null, loading: false };
     });
   });
 });

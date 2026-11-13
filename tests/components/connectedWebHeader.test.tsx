@@ -9,6 +9,8 @@ const authState = {
 
 const refreshMock = vi.fn();
 
+const profileState = { profile: null as { photoUrl?: string } | null };
+
 vi.mock("@/di/container", () => ({
   makeAuthViewModel: () => [authState],
   makeNavigationBadgesViewModel: () => ({ conversations: 3, shelf: 0 }),
@@ -16,11 +18,12 @@ vi.mock("@/di/container", () => ({
     { unreadCount: 5 },
     { refresh: refreshMock },
   ],
+  makeProfileViewModel: () => [profileState, {}],
 }));
 
 vi.mock("@/view/components/WebHeader", () => ({
   WebHeader: (props: Record<string, unknown>) => {
-    return <div data-testid="web-header" data-initials={props.initials} data-badges={props.badgeCount} data-notifications={props.notificationCount} />;
+    return <div data-testid="web-header" data-initials={props.initials} data-photo={props.photoUrl ?? ""} data-badges={props.badgeCount} data-notifications={props.notificationCount} />;
   },
 }));
 
@@ -83,5 +86,17 @@ describe("ConnectedWebHeader (Spec 093 / Spec 135)", () => {
     );
     const json = tela.toJSON() as unknown as { props: Record<string, unknown> };
     expect(json.props["data-initials"]).toBe("");
+  });
+
+  it("mostra a foto do perfil público no avatar", async () => {
+    authState.loading = false;
+    authState.user = { id: "u-1", name: "Maria Clara" };
+    profileState.profile = { photoUrl: "https://exemplo.test/foto.jpg" };
+    const tela = await render(
+      <ConnectedWebHeader pathname="/" onNavigate={vi.fn()} onAnnounce={vi.fn()} onOpenNotifications={vi.fn()} />,
+    );
+    const json = tela.toJSON() as unknown as { props: Record<string, unknown> };
+    expect(json.props["data-photo"]).toBe("https://exemplo.test/foto.jpg");
+    profileState.profile = null;
   });
 });

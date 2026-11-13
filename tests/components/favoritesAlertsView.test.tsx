@@ -1,9 +1,12 @@
 
 import { act, fireEvent, render, within } from "@testing-library/react-native";
+import { StyleSheet } from "react-native";
 import { describe, expect, it, vi } from "vitest";
 import Favorites from "@/view/favorites/favorites";
 import SearchAlerts from "@/view/search/searchAlerts";
 import { FavoriteButton } from "@/view/components/FavoriteButton";
+import { contrastRatio } from "@/view/theme/contrastRatio";
+import { colors } from "@/view/tokens";
 import { bookUseCases, favoriteUseCases, searchAlertUseCases } from "@/di/container";
 
 describe("favoritos e alertas (spec 016)", () => {
@@ -164,6 +167,27 @@ describe("favoritos e alertas (spec 016)", () => {
     expect(listSpy).toHaveBeenCalledTimes(2);
     expect(screen.getByRole("header", { name: "Nenhum alerta criado" })).toBeDefined();
     listSpy.mockRestore();
+  });
+
+  it("SearchAlerts aplica contraste legível (onPrimaryContainer sobre primaryContainer) no card de alerta ativo", async () => {
+    const alert = await searchAlertUseCases.createAlert("usuario-contraste-alerta", "Capitães da Areia");
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<SearchAlerts userId="usuario-contraste-alerta" onBack={vi.fn()} onLogin={vi.fn()} />);
+    });
+
+    const activeCard = screen.getByTestId(`active-alert-card-${alert.id}`);
+    const cardStyle = StyleSheet.flatten(activeCard.props.style);
+    const titleStyle = StyleSheet.flatten(screen.getByText("Alerta ativo").props.style);
+    const bodyStyle = StyleSheet.flatten(
+      screen.getByText("Você recebe uma notificação quando um novo livro corresponde à busca por Capitães da Areia.").props.style,
+    );
+
+    expect(cardStyle.backgroundColor).toBe(colors.m3.primaryContainer);
+    expect(titleStyle.color).toBe(colors.m3.onPrimaryContainer);
+    expect(bodyStyle.color).toBe(colors.m3.onPrimaryContainer);
+    expect(contrastRatio(titleStyle.color as string, cardStyle.backgroundColor as string)).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(bodyStyle.color as string, cardStyle.backgroundColor as string)).toBeGreaterThanOrEqual(4.5);
   });
 
 });

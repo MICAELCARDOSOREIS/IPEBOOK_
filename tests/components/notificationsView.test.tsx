@@ -7,7 +7,7 @@ import NotificationsScreen from "@/view/notifications/notificationsScreen";
 describe("Notifications Component (Spec 015)", () => {
   beforeEach(async () => {
     const { notificationUseCases } = await import("@/di/container");
-    const ds = (notificationUseCases as any).dataSource;
+    const ds = (notificationUseCases as unknown as { dataSource?: { notifications?: unknown[] } }).dataSource;
     if (ds && Array.isArray(ds.notifications)) {
       ds.notifications.length = 0;
       ds.notifications.push(
@@ -168,7 +168,25 @@ describe("Notifications Component (Spec 015)", () => {
 
     expect(cabecalhos.length).toBeGreaterThan(0);
     // Spec 043 RN-12: cada item traz o horário curto ("· 10h", "· Seg" ou "· 10/10").
-    expect(screen.getAllByText(/ ·\s(\d{1,2}h|Dom|Seg|Ter|Qua|Qui|Sex|Sáb|\d{2}\/\d{2})$/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/(?:^| )·\s(\d{1,2}h|Dom|Seg|Ter|Qua|Qui|Sex|Sáb|\d{2}\/\d{2})$/).length).toBeGreaterThan(0);
+  });
+
+  it("permite marcar uma notificação individualmente como lida", async () => {
+    let screen!: Awaited<ReturnType<typeof render>>;
+
+    await act(async () => {
+      screen = await render(<Notifications sessionUserId="user-1" onBack={vi.fn()} />);
+    });
+
+    const markReadBtn = screen.getByTestId("mark-read-notif-notif-001");
+    expect(markReadBtn).toBeDefined();
+
+    await act(async () => {
+      fireEvent.press(markReadBtn);
+    });
+
+    expect(screen.queryByTestId("mark-read-notif-notif-001")).toBeNull();
+    expect(screen.getByText("Dica de Segurança em Piripiri")).toBeDefined();
   });
 
   it("exibe alerta quando as permissões de notificação estiverem desativadas (Spec 111)", async () => {

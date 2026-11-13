@@ -1,7 +1,6 @@
 import * as Linking from "expo-linking";
 import { useMemo } from "react";
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
-import ipeFrame from "@/view/assets/moldura-ipe-perfil.png";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
 import { Avatar } from "@/view/components/Avatar";
 import { useTheme } from "@/view/theme/ThemeProvider";
@@ -79,7 +78,7 @@ export function ProfileIdentityCard({
                 hitSlop={8}
                 onPress={onEditProfile}
               >
-                <Text style={styles.identityHandleAction}>Adicionar Instagram</Text>
+                <Text style={styles.identityHandleMuted}>Adicionar Instagram</Text>
               </Pressable>
             )}
             <View style={styles.locationRow}>
@@ -91,14 +90,7 @@ export function ProfileIdentityCard({
           </View>
         </View>
         <View style={styles.avatarFrame}>
-          <Avatar name={name} photoUrl={photoUrl ?? undefined} size={92} />
-          <Image
-            source={ipeFrame}
-            accessibilityElementsHidden
-            pointerEvents="none"
-            resizeMode="contain"
-            style={styles.avatarIpeFrame}
-          />
+          <Avatar name={name} photoUrl={photoUrl ?? undefined} size={104} />
         </View>
       </View>
 
@@ -155,7 +147,7 @@ export function ProfileIdentityCard({
           <Text numberOfLines={1} style={styles.editProfileButtonText}>Editar perfil</Text>
         </Pressable>
 
-        {onCreateListing ? (
+        {onCreateListing && !wideWeb ? (
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Publicar um livro"
@@ -351,7 +343,7 @@ function createStyles(colors: ColorPalette) {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
-      gap: tokens.spacing[12],
+      gap: tokens.spacing[16],
     },
     identityText: { flex: 1, minWidth: 0, gap: tokens.spacing[4] },
     identityMetaRow: {
@@ -364,8 +356,8 @@ function createStyles(colors: ColorPalette) {
     profileName: {
       color: colors.brandBrown,
       fontFamily: fontFamily.brand,
-      fontSize: 34,
-      lineHeight: 41,
+      fontSize: 28,
+      lineHeight: 34,
       fontWeight: tokens.fontWeight.bold,
     },
     identityHandle: {
@@ -379,6 +371,10 @@ function createStyles(colors: ColorPalette) {
       fontWeight: tokens.fontWeight.semiBold,
       color: colors.m3.primary,
     },
+    identityHandleMuted: {
+      ...tokens.typography.bodyMedium,
+      color: colors.m3.onSurfaceVariant,
+    },
     locationRow: {
       flexDirection: "row",
       alignItems: "center",
@@ -390,20 +386,15 @@ function createStyles(colors: ColorPalette) {
       color: colors.m3.onSurfaceVariant,
     },
     avatarFrame: {
-      width: 116,
-      height: 116,
-      position: "relative",
-      padding: tokens.spacing[3],
+      width: 112,
+      height: 112,
+      padding: tokens.spacing[2],
       borderRadius: tokens.radius.full,
+      borderWidth: 3,
+      borderColor: colors.ipe.bloom,
+      backgroundColor: colors.ipe.container,
       alignItems: "center",
       justifyContent: "center",
-    },
-    avatarIpeFrame: {
-      position: "absolute",
-      top: -10,
-      left: -10,
-      width: 136,
-      height: 136,
     },
     editProfileButton: {
       flexDirection: "row",

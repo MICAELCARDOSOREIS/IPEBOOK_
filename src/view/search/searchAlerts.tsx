@@ -200,9 +200,9 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
                     </View>
                   </Pressable>
                   {item.active ? (
-                    <View style={styles.activeAlertCard}>
+                    <View testID={`active-alert-card-${item.id}`} style={styles.activeAlertCard}>
                       <Text style={styles.activeAlertTitle}>Alerta ativo</Text>
-                      <Text style={styles.body}>
+                      <Text style={styles.activeAlertBody}>
                         {`Você recebe uma notificação quando um novo livro corresponde à busca por ${item.query}.`}
                       </Text>
                     </View>
@@ -411,14 +411,18 @@ function createStyles(colors: ColorPalette) {
     gap: tokens.spacing[12],
   },
   activeAlertCard: {
-    backgroundColor: colors.badge.sale.background,
+    backgroundColor: colors.m3.primaryContainer,
     borderRadius: tokens.radius.medium,
     padding: tokens.spacing[16],
     gap: tokens.spacing[4],
   },
   activeAlertTitle: {
     ...tokens.typography.titleMedium,
-    color: colors.text,
+    color: colors.m3.onPrimaryContainer,
+  },
+  activeAlertBody: {
+    ...tokens.typography.bodyMedium,
+    color: colors.m3.onPrimaryContainer,
   },
   rowText: {
     flex: 1,

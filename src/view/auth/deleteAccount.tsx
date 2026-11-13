@@ -244,6 +244,8 @@ export default function DeleteAccount({
             loading={state.loading}
             loadingLabel="Excluindo conta..."
             disabled={state.loading || state.exporting}
+            backgroundColor={colors.error}
+            textColor={colors.surface}
             onPress={() => void actions.deleteAccount(sessionUserId)}
           />
         </View>

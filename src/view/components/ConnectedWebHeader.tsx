@@ -1,8 +1,8 @@
 import { useEffect } from "react";
-import { makeAuthViewModel, makeNavigationBadgesViewModel, makeNotificationsViewModel } from "@/di/container";
+import { makeAuthViewModel, makeNavigationBadgesViewModel, makeNotificationsViewModel, makeProfileViewModel } from "@/di/container";
 import { WebHeader, type WebHeaderProps } from "@/view/components/WebHeader";
 
-export type ConnectedWebHeaderProps = Omit<WebHeaderProps, "initials" | "badgeCount" | "notificationCount"> & {
+export type ConnectedWebHeaderProps = Omit<WebHeaderProps, "initials" | "photoUrl" | "badgeCount" | "notificationCount"> & {
   /** Rota atual: ao mudar de tela os selos são recalculados. */
   pathname: string;
 };
@@ -18,6 +18,7 @@ function initialsOf(name?: string, email?: string): string {
 export function ConnectedWebHeader({ pathname, ...props }: ConnectedWebHeaderProps) {
   const [auth] = makeAuthViewModel();
   const userId = auth.user?.id ?? null;
+  const [profile] = makeProfileViewModel(userId);
   const badges = makeNavigationBadgesViewModel(userId, pathname);
   const [notifications, notificationsActions] = makeNotificationsViewModel(userId);
   // Ao mudar de tela o selo do sino é recalculado, como o das conversas.
@@ -32,6 +33,7 @@ export function ConnectedWebHeader({ pathname, ...props }: ConnectedWebHeaderPro
     <WebHeader
       {...props}
       initials={initialsOf(auth.user?.name, auth.user?.email)}
+      photoUrl={profile.profile?.photoUrl}
       badgeCount={badges.conversations}
       notificationCount={notifications.unreadCount}
     />
