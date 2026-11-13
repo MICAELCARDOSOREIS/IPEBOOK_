@@ -10,7 +10,6 @@ import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
 import { AppIcon } from "@/view/components/AppIcon";
 import { AboutSections } from "@/view/onboarding/aboutSections";
-import { ThemeToggleButton } from "@/view/components/ThemeToggleButton";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 import illustration from "./ilustracao-classicos.png";
@@ -78,7 +77,6 @@ export default function Welcome({ onStart, onSignIn, onHelp, onTerms, betaInvite
         <View style={styles.wideHeader}>
           <Logotipo />
           <View style={styles.wideHeaderActions}>
-            <ThemeToggleButton />
             {betaInvite ? null : (
               <Pressable
                 accessibilityRole="button"
@@ -155,7 +153,6 @@ export default function Welcome({ onStart, onSignIn, onHelp, onTerms, betaInvite
           <View style={styles.locationDot} />
           <Text style={styles.locationText}>PIRIPIRI · PIAUÍ</Text>
         </View>
-        {betaInvite ? <ThemeToggleButton /> : null}
       </View>
 
       <Text accessibilityRole="header" style={styles.title}>Uma boa história</Text>

@@ -72,7 +72,7 @@ describe("PWA iPhone & Safari Apple HIG (Spec 135 / ADR 0108 / Issue #220)", () 
 
     it("mantém as capacidades de PWA standalone no iOS", () => {
       expect(htmlSource).toContain('<meta name="apple-mobile-web-app-capable" content="yes" />');
-      expect(htmlSource).toContain('<meta name="apple-mobile-web-app-status-bar-style" content="default" />');
+      expect(htmlSource).toContain('<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />');
       expect(htmlSource).toContain('<meta name="apple-mobile-web-app-title" content="IpêBook" />');
     });
   });

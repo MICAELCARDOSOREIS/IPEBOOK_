@@ -17,11 +17,11 @@ export default function Root({ children }: PropsWithChildren) {
         <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover" />
         <meta name="format-detection" content="telephone=no" />
-        <meta name="theme-color" content={tokens.colors.action} />
+        <meta name="theme-color" content={tokens.colors.surface} />
         <meta name="description" content="Marketplace comunitário de livros em Piripiri, PI (venda, troca e doação)" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="IpêBook" />
         <link rel="manifest" href="/manifest.json" />
         <link rel="icon" type="image/png" sizes="192x192" href="/icone-192.png" />
@@ -36,7 +36,7 @@ export default function Root({ children }: PropsWithChildren) {
           dangerouslySetInnerHTML={{
             __html: [
               `*{scrollbar-width:thin;scrollbar-color:rgba(128,128,128,.45) transparent;-webkit-tap-highlight-color:transparent}`,
-              `html,body{overscroll-behavior-y:none;-webkit-overflow-scrolling:touch}`,
+              `html,body,#root{background-color:${tokens.colors.surface};overscroll-behavior-y:none;-webkit-overflow-scrolling:touch}`,
               `body{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}`,
               // Apple HIG / Safari iOS: campos com fonte < 16px provocam zoom automático indesejado na tela.
               `@supports (-webkit-touch-callout:none){input,select,textarea{font-size:16px!important}}`,
