@@ -41,9 +41,10 @@ Em outra máquina, substituir apenas o caminho pelo diretório do clone. `npm ci
 
 | Comando | Resultado |
 | --- | --- |
-| `npm start` | Inicia servidor de desenvolvimento Expo |
-| `npm run web` | Inicia o fluxo web do Expo |
+| `npm start` | Inicia servidor de desenvolvimento Expo (Android e web no mesmo processo), com 4 GB de heap para o Metro |
+| `npm run web` | Inicia o fluxo web do Expo no mesmo servidor e com o mesmo heap |
 | `npm run android` | Solicita abertura no ambiente Android disponível |
+| `npm run android:usb` | Abre o projeto no aparelho Android pelo cabo USB, com túnel `adb reverse` (não depende do Wi-Fi) |
 | `npm run ios` | Solicita abertura no simulador iOS disponível |
 | `npm run typecheck` | Verifica tipos sem emitir arquivos |
 | `npm run lint` | Analisa o código com o Biome e falha apenas em erros |
@@ -54,6 +55,8 @@ Em outra máquina, substituir apenas o caminho pelo diretório do clone. `npm ci
 | `npm test` | Executa a suíte uma vez |
 | `npm run validate` | Executa tipos, lint, arquitetura, design system, numeração, config de build, SQL, testes com cobertura e sincronia da documentação, interrompendo em falhas |
 | `npm run build:web` | Exporta arquivos estáticos para `dist/` |
+
+`npm start` e `npm run web` executam `scripts/servidor-dev.sh`, que inicia o Expo com `NODE_OPTIONS=--max-old-space-size=4096`. O Metro atende Android e web no mesmo processo Node: com a web aberta e o app conectado, o bundle web estático (com SSR) somado ao bundle Android passa do heap padrão do Node nesta máquina (~2,2 GB) e o processo aborta com `FATAL ERROR: Ineffective mark-compacts near heap limit Allocation failed - JavaScript heap out of memory`. Para usar outro valor, definir a variável no ambiente (`NODE_OPTIONS=--max-old-space-size=6144 npm start`). Flags do Expo vão depois de `--`: `npm start -- --clear` limpa o cache do Metro (sem o `--`, o npm consome a flag e ela não chega ao Expo).
 
 Para Android/iOS é necessário preparar o ambiente nativo e um cliente compatível com o SDK utilizado. O simulador iOS local depende de macOS. Nesta entrega não há validação em dispositivo ou emulador; executar o comando não garante que o ambiente nativo esteja preparado.
 
@@ -97,14 +100,16 @@ Python 3 é necessário somente para este servidor de conferência. Abrir `http:
 | Falha de instalação por DNS/rede | Verificar conectividade e acesso ao registro; não modificar versões ou apagar lockfile para esconder a falha |
 | Dependências incompatíveis com Expo | Conferir versões com `npx expo install --check`; revisar o lockfile antes de alterar dependências |
 | Porta ocupada | Encerrar somente o servidor próprio ou usar outra porta, como `npm run web -- --port 8090` |
+| Servidor morre com `JavaScript heap out of memory` | Usar `npm start`/`npm run web` (heap de 4 GB) e fechar outros consumidores de memória; se ainda faltar, `NODE_OPTIONS=--max-old-space-size=6144 npm start` |
 | Emulador não inicia | Preparar ambiente da plataforma; não interpretar build web como teste nativo |
+| App abre no dev launcher e não carrega (tela branca ou "Bundling" parado) | Conferir se o aparelho alcança o computador (`ping` do IP do host); VPN ligada no celular ou isolamento de clientes no roteador cortam a rede local. Usar `npm run android:usb` (túnel pelo cabo) ou desligar a VPN |
 | Push recusado por falta de `workflow` | A autenticação precisa autorizar alteração do arquivo de CI; seguir o fluxo de autenticação da ferramenta Git usada |
 
 Nenhum segredo deve aparecer em exemplos, capturas, logs compartilhados ou commits.
 
 ## APK de debug local
 
-`npm run apk:debug` inicia a compilação em segundo plano, desacoplada do terminal (sobrevive ao fechar o terminal ou a sessão de IA). `npm run apk:debug:status` mostra o andamento ou o caminho do APK (`android/app/build/outputs/apk/debug/app-debug.apk`); `bash scripts/gerar-apk-debug.sh esperar` acompanha até o fim. Requer a pasta `android/` (gere com `npx expo prebuild -p android --no-install` após adicionar módulos nativos). O APK de debug carrega o código do Metro (`npx expo start`).
+`npm run apk:debug` inicia a compilação em segundo plano, desacoplada do terminal (sobrevive ao fechar o terminal ou a sessão de IA). `npm run apk:debug:status` mostra o andamento ou o caminho do APK (`android/app/build/outputs/apk/debug/app-debug.apk`); `bash scripts/gerar-apk-debug.sh esperar` acompanha até o fim. Requer a pasta `android/` (gere com `npx expo prebuild -p android --no-install` após adicionar módulos nativos). O APK de debug carrega o código do Metro (`npm start`).
 
 ## APK de release local (produção autônoma)
 
