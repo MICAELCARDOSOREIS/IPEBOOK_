@@ -223,6 +223,9 @@ export default function ManageListing({
           </View>
         ) : null}
 
+        {/* Compartilhar também pode falhar (validação ou folha do sistema): o erro fica visível aqui. */}
+        {shareState.error ? <InlineErrorCard message={shareState.error} /> : null}
+
         <View style={[styles.columns, wide && styles.columnsWide]}>
           {/* Coluna da Esquerda: Resumo do Livro e Status Atual */}
           <View style={[styles.column, wide && styles.columnHalf]}>

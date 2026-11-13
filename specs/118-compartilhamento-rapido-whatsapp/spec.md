@@ -3,7 +3,7 @@
 **Status:** Concluída  
 **Data:** 3 de novembro de 2026  
 **Contexto:** UX / Viralidade / Comunidade de Piripiri / Mobile / Web  
-**ADR vinculada:** [0092](../../docs/adr/0092-compartilhamento-rapido-whatsapp.md)
+**ADR vinculada:** [0092](../../docs/adr/0092-compartilhamento-rapido-whatsapp.md) — roteamento mobile revisado pelo [0110](../../docs/adr/0110-atualizacao-do-atalho-whatsapp-sem-folha-do-sistema.md)
 
 ## 1. Problema e Motivação
 
@@ -24,8 +24,8 @@ As opções anteriores de compartilhamento sofriam de:
 
 2. **Roteamento Inteligente por Plataforma (`useShareListingViewModel`):**
    - No **Mobile (Android/iOS)**:
-     - Tenta abrir o esquema nativo `whatsapp://send?text=...`.
-     - Suporte ao compartilhamento da imagem do card do livro com legenda formatada via `shareImageFile`.
+     - Abre o esquema nativo `whatsapp://send?text=...` com a mensagem formatada, sem passar pela folha do sistema.
+     - A imagem do card do livro com legenda formatada continua no botão genérico de compartilhar (`shareImageFile`), que é o único caminho que abre o seletor de aplicativos (ADR 0110).
      - Fallback automático para `Share.share` caso o WhatsApp não esteja instalado.
    - Na **Web/Desktop**:
      - Abertura direta do WhatsApp Web (`https://api.whatsapp.com/send?text=...`) em nova janela/aba.

@@ -1,10 +1,15 @@
 
 import { act, fireEvent, render } from "@testing-library/react-native";
-import { Platform, StyleSheet } from "react-native";
+import { Platform, Share, StyleSheet } from "react-native";
 import { describe, expect, it, vi } from "vitest";
 import type { Book } from "@/model/entities/book";
 import type { MyListingsState, MyListingsActions } from "@/viewmodel/useMyListingsViewModel";
 import MyListingsScreen, { MyListings } from "@/view/listings/myListings";
+
+vi.mock("expo-linking", () => ({
+  createURL: vi.fn((path: string) => `https://ipebook.app${path}`),
+  openURL: vi.fn().mockResolvedValue(undefined),
+}));
 
 vi.mock("@/viewmodel/useMyListingsViewModel", () => ({
   useMyListingsViewModel: vi.fn(),
@@ -646,5 +651,28 @@ describe("tela de Meus Anúncios (ISO/IEC 25010 - Usabilidade e Acessibilidade)"
     const shareBtn = screen.getByLabelText("Compartilhar Dom Casmurro no WhatsApp");
     expect(shareBtn).toBeDefined();
     fireEvent.press(shareBtn);
+  });
+
+  it("mostra o erro do compartilhamento na estante em vez de falhar em silêncio (Spec 118)", async () => {
+    mockViewModel({
+      books: [
+        { id: "b-whats-2", title: "Memórias Póstumas", author: "Machado de Assis", modality: "trade", ownerId: "user-1", status: "available" },
+      ],
+    });
+    const linking = await import("expo-linking");
+    vi.mocked(linking.openURL).mockRejectedValueOnce(new Error("sem WhatsApp"));
+    const shareSpy = vi.spyOn(Share, "share").mockRejectedValueOnce(new Error("folha indisponível"));
+
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<MyListings sessionUserId="user-1" />);
+    });
+
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Compartilhar Memórias Póstumas no WhatsApp"));
+    });
+
+    expect(screen.getByText("Não foi possível compartilhar o anúncio. Tente novamente.")).toBeDefined();
+    shareSpy.mockRestore();
   });
 });

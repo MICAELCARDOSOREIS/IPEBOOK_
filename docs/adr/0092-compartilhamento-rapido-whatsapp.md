@@ -1,6 +1,6 @@
 # 0092. Compartilhamento Rápido no WhatsApp e Grupos de Piripiri
 
-* Status: Aceito
+* Status: Aceito (roteamento mobile do item 2 substituído pelo [0110](0110-atualizacao-do-atalho-whatsapp-sem-folha-do-sistema.md))
 * Data: 2026-11-03
 * Contexto: UX / Viralidade / Comunidade / Piripiri / Mobile / Web
 * Vinculado à especificação: [Spec 118](../../specs/118-compartilhamento-rapido-whatsapp/spec.md)

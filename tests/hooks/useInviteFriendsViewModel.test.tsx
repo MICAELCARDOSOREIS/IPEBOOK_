@@ -8,7 +8,6 @@ import { useInviteFriendsViewModel } from "@/viewmodel/useInviteFriendsViewModel
 
 vi.mock("expo-linking", () => ({
   createURL: vi.fn((path: string) => `https://ipebook.app${path}`),
-  canOpenURL: vi.fn().mockResolvedValue(false),
   openURL: vi.fn().mockResolvedValue(undefined),
 }));
 
@@ -63,8 +62,8 @@ describe("useInviteFriendsViewModel (Spec 057, Figma 08.02)", () => {
   it("abre o WhatsApp diretamente quando disponível no mobile", async () => {
     const originalOS = Platform.OS;
     Platform.OS = "android";
-    vi.mocked(Linking.canOpenURL).mockResolvedValue(true);
     const openUrlSpy = vi.mocked(Linking.openURL);
+    const shareSpy = vi.spyOn(Share, "share");
 
     const hook = await renderHook(fakeUseCases);
     await act(async () => {
@@ -74,16 +73,17 @@ describe("useInviteFriendsViewModel (Spec 057, Figma 08.02)", () => {
     expect(openUrlSpy).toHaveBeenCalledWith(
       expect.stringContaining("whatsapp://send?text="),
     );
+    expect(shareSpy).not.toHaveBeenCalled();
     expect(hook.current[0].sharing).toBe(false);
     expect(hook.current[0].shared).toBe(true);
     expect(hook.current[0].linkCopied).toBe(false);
     Platform.OS = originalOS;
   });
 
-  it("cai no fallback de Share nativo quando o WhatsApp não está instalado", async () => {
+  it("cai no fallback de Share nativo quando o WhatsApp não abre", async () => {
     const originalOS = Platform.OS;
     Platform.OS = "android";
-    vi.mocked(Linking.canOpenURL).mockResolvedValue(false);
+    vi.mocked(Linking.openURL).mockRejectedValueOnce(new Error("nenhum app abre whatsapp://"));
     const shareSpy = vi.spyOn(Share, "share").mockResolvedValue({ action: "sharedAction", activityType: undefined });
 
     const hook = await renderHook(fakeUseCases);
@@ -148,7 +148,7 @@ describe("useInviteFriendsViewModel (Spec 057, Figma 08.02)", () => {
     await act(async () => {
       await hook.current[1].shareToWhatsApp();
     });
-    expect(navShare).toHaveBeenCalledTimes(1);
+    expect(navShare).toHaveBeenCalledWith({ text: expect.stringContaining("IpêBook em Piripiri") });
     expect(hook.current[0].shared).toBe(true);
     expect(hook.current[0].linkCopied).toBe(false);
 
@@ -207,11 +207,43 @@ describe("useInviteFriendsViewModel (Spec 057, Figma 08.02)", () => {
     expect(hook.current[0].error).toBe("Não foi possível compartilhar o convite. Tente novamente.");
 
     // Erro em shareToWhatsApp
-    vi.mocked(Linking.canOpenURL).mockRejectedValueOnce(new Error("Falha canOpen"));
+    vi.mocked(Linking.openURL).mockRejectedValueOnce(new Error("sem WhatsApp"));
+    shareSpy.mockRejectedValueOnce(new Error("Falha no share"));
     await act(async () => {
       await hook.current[1].shareToWhatsApp();
     });
     expect(hook.current[0].error).toBe("Não foi possível compartilhar o convite. Tente novamente.");
+    Platform.OS = originalOS;
+  });
+
+  it("trata cancelamento e falta de permissão da Web Share API no convite", async () => {
+    const originalOS = Platform.OS;
+    Platform.OS = "web";
+    const abort = Object.assign(new Error("cancelado"), { name: "AbortError" });
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    vi.stubGlobal("navigator", { share: vi.fn().mockRejectedValue(abort), clipboard: { writeText } });
+
+    const hook = await renderHook(fakeUseCases);
+    await act(async () => {
+      await hook.current[1].shareToWhatsApp();
+    });
+
+    // Fechar o menu do navegador encerra sem erro e sem copiar nada.
+    expect(hook.current[0].error).toBeNull();
+    expect(hook.current[0].shared).toBe(false);
+    expect(hook.current[0].linkCopied).toBe(false);
+    expect(writeText).not.toHaveBeenCalled();
+
+    const denied = Object.assign(new Error("sem permissão"), { name: "NotAllowedError" });
+    vi.stubGlobal("navigator", { share: vi.fn().mockRejectedValue(denied), clipboard: { writeText } });
+    await act(async () => {
+      await hook.current[1].shareNative();
+    });
+
+    // Sem permissão, o convite vai para a área de transferência com aviso.
+    expect(writeText).toHaveBeenCalledWith(expect.stringContaining("IpêBook em Piripiri"));
+    expect(hook.current[0].linkCopied).toBe(true);
+    expect(hook.current[0].shared).toBe(false);
     Platform.OS = originalOS;
   });
 });

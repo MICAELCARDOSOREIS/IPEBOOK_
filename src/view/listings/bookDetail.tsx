@@ -277,8 +277,8 @@ export default function BookDetail({
 
   const handleShareToWhatsApp = useCallback(() => {
     if (!book || !shareableListing) return;
-    void shareActions.shareToWhatsApp(book.id, shareableListing, captureShareImage);
-  }, [book, shareableListing, shareActions, captureShareImage]);
+    void shareActions.shareToWhatsApp(book.id, shareableListing);
+  }, [book, shareableListing, shareActions]);
 
   const handleShareLink = useCallback(() => {
     void shareActions.share(book?.id ?? bookId, shareableListing, captureShareImage);

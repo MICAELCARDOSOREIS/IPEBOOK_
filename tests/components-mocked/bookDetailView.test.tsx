@@ -97,7 +97,7 @@ function setup(
   const shareImage = vi.fn().mockResolvedValue(undefined);
   vi.mocked(useShareListingViewModel).mockReturnValue([
     { ...emptyShare, ...options.share },
-    { share, shareImage, shareToWhatsApp, dismissLinkCopied: vi.fn() },
+    { share, shareImage, shareToWhatsApp, dismissLinkCopied: vi.fn(), dismissError: vi.fn() },
   ]);
   return { request, share, shareToWhatsApp, shareImage, reload };
 }
@@ -300,7 +300,7 @@ describe("BookDetail (spec 006, US6/T029)", () => {
     );
   });
 
-  it("compartilha no WhatsApp ao tocar no botão da barra superior com os dados e a captura do cartão (Spec 092, Spec 118)", async () => {
+  it("compartilha no WhatsApp ao tocar no botão da barra superior, sem a folha de imagem (Spec 118, ADR 0110)", async () => {
     const { shareToWhatsApp } = setup(
       book({ ownerId: "other", modality: "sale", price: 42, neighborhood: "Centro" }),
       null,
@@ -311,10 +311,7 @@ describe("BookDetail (spec 006, US6/T029)", () => {
     expect(shareToWhatsApp).toHaveBeenCalledWith(
       "b1",
       expect.objectContaining({ title: "Dom Casmurro", author: "Machado de Assis", modality: "sale", price: 42, neighborhood: "Centro" }),
-      expect.any(Function),
     );
-    const capture = vi.mocked(shareToWhatsApp).mock.calls[0][2] as () => Promise<string>;
-    await expect(capture()).resolves.toBe("file:///tmp/anuncio.png");
   });
 
   it("mostra confirmação de link copiado (Spec 019)", async () => {
