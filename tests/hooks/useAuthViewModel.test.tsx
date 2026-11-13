@@ -2,7 +2,7 @@ import { createElement } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { User } from "@/model/entities/user";
-import { DomainError } from "@/model/errors";
+import { AuthError, DomainError } from "@/model/errors";
 import type { ILogger } from "@/model/services/iLogger";
 import type { IRateLimiter } from "@/model/services/iRateLimiter";
 import type { IAuthUseCases } from "@/usecase/iAuthUseCases";
@@ -288,6 +288,41 @@ describe("useAuthViewModel", () => {
       });
       expect(ok).toBe(false);
       expect(hookSemCallback.current[0].error).toContain("indisponível");
+    });
+
+    it("ignora URL que não é retorno de autenticação sem registrar erro de aplicação", async () => {
+      const setSessionFromUrl = vi.fn().mockResolvedValue(mockUser);
+      const auth = createMockAuth({ setSessionFromUrl });
+      const logger: ILogger = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() };
+      const hook = await renderHook(auth, undefined, logger);
+      let ok: boolean = true;
+      await act(async () => {
+        // URL com que o servidor de desenvolvimento do Expo abre o app: não tem credenciais.
+        ok = (await hook.current[1].handleAuthCallback?.(
+          "exp+ipebook://?__expo_url=http%3A%2F%2F192.168.2.60%3A8081",
+        )) ?? true;
+      });
+      expect(ok).toBe(false);
+      expect(setSessionFromUrl).not.toHaveBeenCalled();
+      expect(hook.current[0].error).toContain("Abra o link recebido novamente");
+      expect(logger.warn).toHaveBeenCalled();
+      expect(logger.error).not.toHaveBeenCalled();
+    });
+
+    it("registra recusa do provedor como aviso, não como erro", async () => {
+      const auth = createMockAuth({
+        setSessionFromUrl: vi.fn().mockRejectedValue(new AuthError("O link de acesso expirou ou já foi usado.")),
+      });
+      const logger: ILogger = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() };
+      const hook = await renderHook(auth, undefined, logger);
+      let ok: boolean = true;
+      await act(async () => {
+        ok = (await hook.current[1].handleAuthCallback?.("ipebook://auth/callback#error=access_denied")) ?? true;
+      });
+      expect(ok).toBe(false);
+      expect(hook.current[0].error).toContain("expirou");
+      expect(logger.warn).toHaveBeenCalled();
+      expect(logger.error).not.toHaveBeenCalled();
     });
   });
 

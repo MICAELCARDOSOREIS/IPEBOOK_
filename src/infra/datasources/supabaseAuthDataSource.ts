@@ -312,6 +312,16 @@ export class SupabaseAuthDataSource implements IAuthDataSource {
       const accessToken = hash.get("access_token");
       const refreshToken = hash.get("refresh_token");
 
+      // O provedor também devolve a recusa sem credenciais (ex.: `#error=access_denied&error_code=otp_expired`).
+      const providerError = hash.get("error") ?? query.get("error") ?? hash.get("error_code") ?? query.get("error_code");
+      if (providerError) {
+        const expired = [hash, query].some((params) =>
+          `${params.get("error_code") ?? ""} ${params.get("error_description") ?? ""}`.toLowerCase().includes("expired"),
+        );
+        if (expired) throw new ExpiredLinkError("O link de acesso expirou ou já foi usado. Solicite um novo.");
+        throw new AuthError("Não foi possível concluir o login com o provedor. Tente novamente.");
+      }
+
       if (code) {
         const { data, error } = await this.client.auth.exchangeCodeForSession(code);
         if (error || !data.user?.email) throw new AuthError("Falha ao autenticar com o código recebido.");

@@ -91,13 +91,13 @@ acima.
 
 A verificação é realizada pelo `@vitest/coverage-v8`, exigindo o mínimo de 80% em todas as métricas.
 
-**Resultado aferido em 2026-11-06 pelo `npm run validate`:**
-- **Statements:** 91,68% (requisito: >= 80%)
-- **Branches:** 81,12% (requisito: >= 80%)
-- **Functions:** 88,88% (requisito: >= 80%)
-- **Lines:** 92,93% (requisito: >= 80%)
+**Resultado aferido em 2026-11-12 pelo `npm run validate`:**
+- **Statements:** 91,03% (requisito: >= 80%)
+- **Branches:** 80,24% (requisito: >= 80%)
+- **Functions:** 87,78% (requisito: >= 80%)
+- **Lines:** 92,44% (requisito: >= 80%)
 
-A suíte validada nessa execução continha 2.155 testes aprovados em 301 arquivos. Os números acima
+A suíte validada nessa execução continha 2.321 testes aprovados em 321 arquivos. Os números acima
 são a medição corrente; resultados anteriores podem ser encontrados nos registros históricos de
 `docs/estado.md` e não devem ser usados como retrato atual da cobertura.
 

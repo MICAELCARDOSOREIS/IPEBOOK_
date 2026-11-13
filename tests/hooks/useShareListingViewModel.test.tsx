@@ -334,3 +334,252 @@ describe("useShareListingViewModel — imagem do anúncio (Spec 092)", () => {
   });
 });
 
+describe("useShareListingViewModel — branches de share com anúncio (Spec 118)", () => {
+  it("usa a Web Share API ao compartilhar anúncio na web", async () => {
+    const originalOS = Platform.OS;
+    Platform.OS = "web";
+    const webShare = vi.fn().mockResolvedValue(undefined);
+    vi.stubGlobal("navigator", { share: webShare, clipboard: { writeText: vi.fn() } });
+
+    const hook = await renderHook(fakeUseCases);
+    await act(async () => {
+      await hook.current[1].share("b1", fakeListing);
+    });
+
+    expect(webShare).toHaveBeenCalledWith({
+      text: expect.stringContaining("Dom Casmurro"),
+      url: "https://ipebook.app/livro/b1",
+    });
+    expect(hook.current[0]).toEqual({ sharing: false, linkCopied: true, error: null });
+    Platform.OS = originalOS;
+  });
+
+  it("encerra sem erro quando a pessoa cancela a Web Share API", async () => {
+    const originalOS = Platform.OS;
+    Platform.OS = "web";
+    const cancel = Object.assign(new Error("cancelado"), { name: "AbortError" });
+    vi.stubGlobal("navigator", { share: vi.fn().mockRejectedValue(cancel) });
+
+    const hook = await renderHook(fakeUseCases);
+    await act(async () => {
+      await hook.current[1].share("b1", fakeListing);
+    });
+
+    expect(hook.current[0]).toEqual({ sharing: false, linkCopied: false, error: null });
+    Platform.OS = originalOS;
+  });
+
+  it("copia o texto quando a Web Share API é recusada por permissão", async () => {
+    const originalOS = Platform.OS;
+    Platform.OS = "web";
+    const denied = Object.assign(new Error("sem permissão"), { name: "NotAllowedError" });
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    vi.stubGlobal("navigator", { share: vi.fn().mockRejectedValue(denied), clipboard: { writeText } });
+
+    const hook = await renderHook(fakeUseCases);
+    await act(async () => {
+      await hook.current[1].share("b1", fakeListing);
+    });
+
+    expect(writeText).toHaveBeenCalledWith(expect.stringContaining("Dom Casmurro"));
+    expect(hook.current[0]).toEqual({ sharing: false, linkCopied: true, error: null });
+    Platform.OS = originalOS;
+  });
+
+  it("mostra erro genérico quando a Web Share API falha por outro motivo", async () => {
+    const originalOS = Platform.OS;
+    Platform.OS = "web";
+    vi.stubGlobal("navigator", { share: vi.fn().mockRejectedValue(new Error("falha inesperada")) });
+
+    const hook = await renderHook(fakeUseCases);
+    await act(async () => {
+      await hook.current[1].share("b1", fakeListing);
+    });
+
+    expect(hook.current[0].error).toBe("Não foi possível compartilhar o anúncio. Tente novamente.");
+    Platform.OS = originalOS;
+  });
+
+  it("compartilha a imagem capturada no Android", async () => {
+    const originalOS = Platform.OS;
+    Platform.OS = "android";
+    const shareFile = vi.fn().mockResolvedValue(true);
+    const shareSpy = vi.spyOn(Share, "share").mockResolvedValue({ action: "sharedAction", activityType: undefined });
+    const hook = await renderHook(fakeUseCases, shareFile);
+    const capture = vi.fn().mockResolvedValue("file:///tmp/anuncio.png");
+
+    await act(async () => {
+      await hook.current[1].share("b1", fakeListing, capture);
+    });
+
+    expect(shareFile).toHaveBeenCalledWith(
+      "file:///tmp/anuncio.png",
+      expect.stringContaining("Dom Casmurro"),
+      "Compartilhar anúncio",
+    );
+    expect(shareSpy).not.toHaveBeenCalled();
+    expect(hook.current[0]).toEqual({ sharing: false, linkCopied: false, error: null });
+    Platform.OS = originalOS;
+  });
+
+  it("cai no compartilhamento de texto quando a captura falha no Android", async () => {
+    const originalOS = Platform.OS;
+    Platform.OS = "android";
+    const shareSpy = vi.spyOn(Share, "share").mockResolvedValue({ action: "sharedAction", activityType: undefined });
+    const hook = await renderHook(fakeUseCases, vi.fn().mockResolvedValue(true));
+
+    await act(async () => {
+      await hook.current[1].share("b1", fakeListing, vi.fn().mockRejectedValue(new Error("captura falhou")));
+    });
+
+    expect(shareSpy).toHaveBeenCalledWith({ message: expect.stringContaining("Dom Casmurro") });
+    expect(hook.current[0].error).toBeNull();
+    Platform.OS = originalOS;
+  });
+
+  it("cai no compartilhamento de texto quando o arquivo não é compartilhado", async () => {
+    const originalOS = Platform.OS;
+    Platform.OS = "android";
+    const shareSpy = vi.spyOn(Share, "share").mockResolvedValue({ action: "sharedAction", activityType: undefined });
+    const hook = await renderHook(fakeUseCases, vi.fn().mockResolvedValue(false));
+
+    await act(async () => {
+      await hook.current[1].share("b1", fakeListing, vi.fn().mockResolvedValue("file:///tmp/anuncio.png"));
+    });
+
+    expect(shareSpy).toHaveBeenCalledWith({ message: expect.stringContaining("Dom Casmurro") });
+    Platform.OS = originalOS;
+  });
+
+  it("cai no WhatsApp por link quando a captura falha no celular", async () => {
+    const originalOS = Platform.OS;
+    Platform.OS = "android";
+    const linking = await import("expo-linking");
+    vi.mocked(linking.canOpenURL).mockResolvedValue(true);
+    const openURL = vi.fn().mockResolvedValue(undefined);
+    vi.mocked(linking.openURL).mockImplementation(openURL);
+    const hook = await renderHook(fakeUseCases, vi.fn().mockResolvedValue(true));
+
+    await act(async () => {
+      await hook.current[1].shareToWhatsApp("b1", fakeListing, vi.fn().mockRejectedValue(new Error("sem captura")));
+    });
+
+    expect(openURL).toHaveBeenCalledWith(expect.stringContaining("whatsapp://send?text="));
+    expect(hook.current[0].error).toBeNull();
+    Platform.OS = originalOS;
+  });
+});
+
+describe("useShareListingViewModel — fallback sem formatação de WhatsApp", () => {
+  const semFormatacao = {
+    ...fakeUseCases,
+    buildWhatsAppShareMessage: undefined,
+  } as unknown as IShareUseCases;
+
+  it("usa a mensagem genérica ao compartilhar anúncio", async () => {
+    const originalOS = Platform.OS;
+    Platform.OS = "android";
+    const shareSpy = vi.spyOn(Share, "share").mockResolvedValue({ action: "sharedAction", activityType: undefined });
+    const hook = await renderHook(semFormatacao);
+
+    await act(async () => {
+      await hook.current[1].share("b1", fakeListing);
+    });
+
+    expect(shareSpy).toHaveBeenCalledWith({ message: expect.stringContaining("Dom Casmurro") });
+    Platform.OS = originalOS;
+  });
+
+  it("usa a mensagem genérica ao compartilhar no WhatsApp", async () => {
+    const originalOS = Platform.OS;
+    Platform.OS = "android";
+    const linking = await import("expo-linking");
+    vi.mocked(linking.canOpenURL).mockResolvedValue(false);
+    const shareSpy = vi.spyOn(Share, "share").mockResolvedValue({ action: "sharedAction", activityType: undefined });
+    const hook = await renderHook(semFormatacao);
+
+    await act(async () => {
+      await hook.current[1].shareToWhatsApp("b1", fakeListing);
+    });
+
+    expect(shareSpy).toHaveBeenCalledWith({ message: expect.stringContaining("Dom Casmurro") });
+    Platform.OS = originalOS;
+  });
+
+  it("mostra erro genérico quando a Web Share API falha no WhatsApp", async () => {
+    const originalOS = Platform.OS;
+    Platform.OS = "web";
+    vi.stubGlobal("navigator", { share: vi.fn().mockRejectedValue(new Error("falha inesperada")) });
+
+    const hook = await renderHook(fakeUseCases);
+    await act(async () => {
+      await hook.current[1].shareToWhatsApp("b1", fakeListing);
+    });
+
+    expect(hook.current[0].error).toBe("Não foi possível compartilhar o anúncio. Tente novamente.");
+    Platform.OS = originalOS;
+  });
+});
+
+describe("useShareListingViewModel — abertura do WhatsApp na web", () => {
+  it("abre o WhatsApp em nova aba quando disponível", async () => {
+    const originalOS = Platform.OS;
+    Platform.OS = "web";
+    const open = vi.fn().mockReturnValue({});
+    vi.stubGlobal("navigator", {});
+    vi.stubGlobal("window", { open });
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    vi.stubGlobal("navigator", { clipboard: { writeText } });
+
+    const hook = await renderHook(fakeUseCases);
+    await act(async () => {
+      await hook.current[1].shareToWhatsApp("b1", fakeListing);
+    });
+
+    expect(open).toHaveBeenCalledWith(expect.stringContaining("whatsapp://send?text="), "_blank", "noopener,noreferrer");
+    expect(hook.current[0].linkCopied).toBe(true);
+    Platform.OS = originalOS;
+  });
+
+  it("usa Linking.openURL quando a janela não é aberta", async () => {
+    const originalOS = Platform.OS;
+    Platform.OS = "web";
+    const linking = await import("expo-linking");
+    const openURL = vi.fn().mockResolvedValue(undefined);
+    vi.mocked(linking.openURL).mockImplementation(openURL);
+    vi.stubGlobal("navigator", {});
+    vi.stubGlobal("window", { open: vi.fn().mockReturnValue(null) });
+
+    const hook = await renderHook(fakeUseCases);
+    await act(async () => {
+      await hook.current[1].shareToWhatsApp("b1", fakeListing);
+    });
+
+    expect(openURL).toHaveBeenCalledWith(expect.stringContaining("whatsapp://send?text="));
+    Platform.OS = originalOS;
+  });
+
+  it("segue para o WhatsApp quando window.open lança exceção", async () => {
+    const originalOS = Platform.OS;
+    Platform.OS = "web";
+    const linking = await import("expo-linking");
+    const openURL = vi.fn().mockResolvedValue(undefined);
+    vi.mocked(linking.openURL).mockImplementation(openURL);
+    vi.stubGlobal("navigator", {});
+    vi.stubGlobal("window", {
+      open: vi.fn(() => {
+        throw new Error("bloqueado");
+      }),
+    });
+
+    const hook = await renderHook(fakeUseCases);
+    await act(async () => {
+      await hook.current[1].shareToWhatsApp("b1", fakeListing);
+    });
+
+    expect(openURL).toHaveBeenCalled();
+    expect(hook.current[0].error).toBeNull();
+    Platform.OS = originalOS;
+  });
+});
+

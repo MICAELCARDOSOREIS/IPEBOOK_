@@ -2,7 +2,7 @@
 
 **Branch**: `feat/032-melhorias-telas-micael`
 **Data**: 2026-10-20
-**Status**: Em implementação
+**Status**: Concluída
 **Issues vinculadas**: #160, #161, #162, #163, #164, #165 (`pessoa:micael`)
 
 ## 1. Contexto e Objetivo

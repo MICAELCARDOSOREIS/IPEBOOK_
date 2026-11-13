@@ -1,4 +1,4 @@
-# Especificação 135 — [PWA/iOS] Adequar telas do PWA no iPhone/Safari ao Apple HIG sem alterar comportamento Android/Web
+# Especificação 136 — [PWA/iOS] Adequar telas do PWA no iPhone/Safari ao Apple HIG sem alterar comportamento Android/Web
 
 **Estado:** Especificada em 2026-11-11  
 **Responsável:** Maria Clara Almeida Martins (`pessoa:maria-clara`)  

@@ -15,12 +15,12 @@ export type AuthCallbackProps = {
 export default function AuthCallback({ url, onSuccess, onBackToSignIn }: AuthCallbackProps) {
   const [state, actions] = makeAuthViewModel();
   const { colors } = useTheme();
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [failed, setFailed] = useState(false);
 
   // Mantém as dependências mais recentes sem reexecutar o efeito: cada renderização recria
   // `actions` e `onSuccess`, e reprocessar a URL descartaria o resultado em andamento.
-  const latest = useRef({ actions, onSuccess, error: state.error });
-  latest.current = { actions, onSuccess, error: state.error };
+  const latest = useRef({ actions, onSuccess });
+  latest.current = { actions, onSuccess };
   const processedUrl = useRef<string | null>(null);
   const mounted = useRef(true);
 
@@ -34,6 +34,7 @@ export default function AuthCallback({ url, onSuccess, onBackToSignIn }: AuthCal
   useEffect(() => {
     if (!url || processedUrl.current === url) return;
     processedUrl.current = url;
+    setFailed(false);
 
     async function completeAuth(callbackUrl: string) {
       const handle = latest.current.actions.handleAuthCallback;
@@ -43,12 +44,16 @@ export default function AuthCallback({ url, onSuccess, onBackToSignIn }: AuthCal
       if (ok) {
         latest.current.onSuccess();
       } else {
-        setErrorMessage(latest.current.error ?? "Não foi possível concluir o login.");
+        setFailed(true);
       }
     }
 
     completeAuth(url);
   }, [url]);
+
+  // O ViewModel só publica o motivo depois de concluir a tentativa: ler o estado no instante da
+  // falha devolveria o valor anterior e esconderia a mensagem real.
+  const errorMessage = failed ? (state.error ?? "Não foi possível concluir o login.") : null;
 
   return (
     <ScreenContainer

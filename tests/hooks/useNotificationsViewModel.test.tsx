@@ -6,7 +6,7 @@ import { DomainError } from "@/model/errors";
 import type { INotificationUseCases } from "@/usecase/iNotificationUseCases";
 import { MemoryPushNotificationService } from "@/infra/services/memoryPushNotificationService";
 import type { IPushNotificationService } from "@/model/services/iPushNotificationService";
-import { useNotificationsViewModel } from "@/viewmodel/useNotificationsViewModel";
+import { clearSessionNotificationsCache, useNotificationsViewModel } from "@/viewmodel/useNotificationsViewModel";
 
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
 const mounted: ReactTestRenderer[] = [];
@@ -221,6 +221,47 @@ describe("useNotificationsViewModel", () => {
       await hook.current[1].markAllAsRead();
     });
     expect(hook.current[0].actionError).toBe("Sem permissão em lote");
+  });
+
+  it("mostra a mensagem do DomainError ao falhar em excluir, limpar tudo e limpar lidas", async () => {
+    const useCases = stubNotifications({
+      deleteNotification: vi.fn().mockRejectedValue(new DomainError("Falha ao excluir")),
+      clearAll: vi.fn().mockRejectedValue(new DomainError("Falha ao limpar tudo")),
+      clearRead: vi.fn().mockRejectedValue(new DomainError("Falha ao limpar lidas")),
+    });
+
+    const hook = await renderHook("user-1", useCases);
+
+    await act(async () => {
+      await hook.current[1].deleteNotification("n-1");
+    });
+    expect(hook.current[0].actionError).toBe("Falha ao excluir");
+
+    await act(async () => {
+      await hook.current[1].clearAll();
+    });
+    expect(hook.current[0].actionError).toBe("Falha ao limpar tudo");
+
+    await act(async () => {
+      await hook.current[1].clearRead();
+    });
+    expect(hook.current[0].actionError).toBe("Falha ao limpar lidas");
+  });
+
+  it("tolera falha ao consultar a permissão de notificações do aparelho", async () => {
+    const push = new MemoryPushNotificationService();
+    vi.spyOn(push, "getPermissions").mockRejectedValue(new Error("sem permissão"));
+
+    const hook = await renderHook("user-1", stubNotifications(), push);
+
+    expect(hook.current[0].systemPermissionGranted).toBeNull();
+  });
+
+  it("limpa o cache de sessão de um usuário ou de todos", () => {
+    expect(() => {
+      clearSessionNotificationsCache("user-1");
+      clearSessionNotificationsCache();
+    }).not.toThrow();
   });
 
   it("recarrega sozinha quando chega notificação em tempo real e cancela ao desmontar (Spec 086)", async () => {

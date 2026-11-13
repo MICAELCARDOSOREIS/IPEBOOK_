@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { User } from "@/model/entities/user";
-import { DomainError } from "@/model/errors";
+import { AuthError, DomainError } from "@/model/errors";
 import type { ILogger } from "@/model/services/iLogger";
 import type { IRateLimiter } from "@/model/services/iRateLimiter";
 import type { IAuthUseCases } from "@/usecase/iAuthUseCases";
@@ -25,6 +25,22 @@ export type AuthActions = {
 };
 
 const GENERIC_ERROR = "Não foi possível concluir. Tente novamente.";
+
+/**
+ * O retorno do provedor sempre traz credenciais (código PKCE ou tokens no fragmento) ou o erro do
+ * Supabase. A rota também abre com URLs alheias ao login — por exemplo, o endereço do servidor de
+ * desenvolvimento do Expo (`exp+ipebook://?__expo_url=...`) —, que não têm sessão a restaurar.
+ */
+function hasAuthReturnParams(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    const query = new URLSearchParams(parsed.search);
+    const hash = new URLSearchParams(parsed.hash.replace(/^#/, ""));
+    return ["code", "access_token", "error", "error_code"].some((key) => query.has(key) || hash.has(key));
+  } catch {
+    return false;
+  }
+}
 
 let sessionAuthCache: { resolved: boolean; user: User | null } = {
   resolved: false,
@@ -206,6 +222,18 @@ export function useAuthViewModel(
       if (!auth.setSessionFromUrl) {
         throw new DomainError("Processamento de retorno de autenticação indisponível.");
       }
+      if (!hasAuthReturnParams(url)) {
+        logger.warn("Retorno de autenticação sem credenciais ignorado");
+        if (active.current) {
+          setState((previous) => ({
+            ...previous,
+            loading: false,
+            error: "Não foi possível concluir o login. Abra o link recebido novamente.",
+            statusMessage: null,
+          }));
+        }
+        return false;
+      }
       const user = await auth.setSessionFromUrl(url);
       if (!isTest) sessionAuthCache = { resolved: true, user };
       if (active.current) {
@@ -221,7 +249,13 @@ export function useAuthViewModel(
           statusMessage: null,
         }));
       }
-      logger.error("Falha ao processar callback de autenticação", error);
+      // Link expirado, recusado pelo provedor ou falha de rede é resultado esperado deste fluxo,
+      // não defeito do app: fica como aviso para não virar alerta de erro.
+      if (error instanceof AuthError) {
+        logger.warn("Retorno de autenticação recusado");
+      } else {
+        logger.error("Falha ao processar callback de autenticação", error);
+      }
       return false;
     }
   }, [auth, logger, isTest]);
