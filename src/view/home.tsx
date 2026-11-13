@@ -218,12 +218,10 @@ export default function Home({
     const set = new Set(state.books.map((b) => b.neighborhood).filter(Boolean));
     return Math.max(1, set.size);
   }, [state.books]);
-  // Adiciona um pequeno incremento ao contador de doações para incentivar a descoberta
-  const displayDonationCount = donationCount > 0 ? donationCount + 2 : 0;
   const donationSummary =
-    displayDonationCount === 0
+    donationCount === 0
       ? "Veja as doações em Piripiri"
-      : `${displayDonationCount} ${displayDonationCount === 1 ? "livro gratuito" : "livros gratuitos"} em Piripiri`;
+      : `${donationCount} ${donationCount === 1 ? "livro gratuito" : "livros gratuitos"} em Piripiri`;
 
   const displayNeighborhood =
     !isSpecificNeighborhood

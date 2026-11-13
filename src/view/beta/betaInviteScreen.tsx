@@ -9,7 +9,6 @@ import { InlineErrorCard } from "@/view/components/InlineErrorCard";
 import { Logotipo } from "@/view/components/Logotipo";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { TextField } from "@/view/components/TextField";
-import { ThemeToggleButton } from "@/view/components/ThemeToggleButton";
 import illustration from "@/view/onboarding/ilustracao-classicos.png";
 import passo1Img from "@/view/beta/passo-1.png";
 import passo2Img from "@/view/beta/passo-2.png";
@@ -419,7 +418,6 @@ export function BetaInviteScreen({
               <AppIcon name="home" size={18} color={colors.m3.onSurfaceVariant} />
               <Text style={styles.homeLinkText}>Início</Text>
             </Pressable>
-            <ThemeToggleButton />
           </View>
         </View>
       </View>

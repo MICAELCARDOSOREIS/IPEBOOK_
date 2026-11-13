@@ -41,5 +41,17 @@
   },
   "javascript": {
     "globals": ["__DEV__"]
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["src/app/+html.tsx"],
+      "linter": {
+        "rules": {
+          "correctness": {
+            "noReactNativeRawText": "off"
+          }
+        }
+      }
+    }
+  ]
 }

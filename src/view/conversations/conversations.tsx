@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { FlatList, Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { FlatList, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import {
@@ -9,11 +9,13 @@ import {
   makeNetworkStatus,
 } from "@/di/container";
 import { Chat } from "@/view/conversations/chat";
+import { createConversationsStyles } from "@/view/conversations/conversationsStyles";
 import {
   formatConversationTime,
   type ConversationItem,
 } from "@/viewmodel/useConversationsViewModel";
-import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
+import { formatPrice } from "@/view/formatPrice";
+import { tokens } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { AppIcon } from "@/view/components/AppIcon";
 import { Avatar } from "@/view/components/Avatar";
@@ -24,11 +26,10 @@ import { BookCover } from "@/view/components/BookCover";
 import { Tag } from "@/view/components/Tag";
 import { LoadingState } from "@/view/components/LoadingState";
 import { OfflineState } from "@/view/components/OfflineState";
-import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
-
 import { withPress } from "@/view/pressFeedback";
+
 /** "Combinar encontro" do painel largo; some quando a entrega já foi concluída por QR (Spec 095). */
 function CombineAction({ requestId, sessionUserId, onOpen }: { requestId: string; sessionUserId: string; onOpen?: (requestId: string) => void }) {
   const delivery = makeDeliveryStatus(requestId, sessionUserId);
@@ -70,7 +71,7 @@ export function Conversations({
 }: ConversationsProps) {
   const { colors } = useTheme();
   const wideWeb = useIsWideWeb();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = useMemo(() => createConversationsStyles(colors), [colors]);
   const [state, actions] = makeConversationsViewModel(sessionUserId);
   const { isOnline } = makeNetworkStatus();
 
@@ -151,6 +152,70 @@ export function Conversations({
     guardedOpenListing(item.listing.id);
   };
 
+  const listFooter = (
+    <View style={wideWeb ? styles.wideListFooter : styles.footerContainer}>
+      {cancelFailed ? (
+        <Text accessibilityRole="alert" style={styles.footerError}>
+          Não foi possível cancelar o pedido. Tente novamente.
+        </Text>
+      ) : null}
+      {deleteFailed ? (
+        <Text accessibilityRole="alert" style={styles.footerError}>
+          Não foi possível apagar a conversa. Tente novamente.
+        </Text>
+      ) : null}
+      <View style={styles.footerCard}>
+        <View style={styles.footerIconBox}>
+          <AppIcon name="info" size={16} color={colors.m3.primary} />
+        </View>
+        <View style={styles.footerTextCol}>
+          <Text style={styles.footer}>Combine sempre pelo chat do IpêBook. Não compartilhe senhas ou códigos.</Text>
+          {wideWeb ? null : <Text style={styles.footerSub}>Para apagar uma conversa, mantenha o dedo sobre ela.</Text>}
+        </View>
+      </View>
+    </View>
+  );
+
+  const renderAboutBook = (item: ConversationItem) => {
+    const content = (
+      <View style={styles.aboutBook}>
+        <BookCover id={item.listing.id} title={item.listing.title} photoUrl={item.listing.photoUrl} variant="list" />
+        <View style={styles.aboutBookText}>
+          <Text style={styles.aboutBookTitle} numberOfLines={2}>{item.listing.title}</Text>
+          {item.listing.author ? (
+            <Text style={styles.aboutBookAuthor} numberOfLines={1}>{item.listing.author}</Text>
+          ) : null}
+          <View style={styles.aboutBookMeta}>
+            <Tag variant={item.listing.modality} />
+            {item.listing.modality === "sale" && item.listing.price != null ? (
+              <Text style={styles.aboutBookPrice}>{formatPrice(item.listing.price)}</Text>
+            ) : null}
+          </View>
+        </View>
+        {onOpenListing ? <AppIcon name="chevronRight" size={18} color={colors.m3.onSurfaceVariant} /> : null}
+      </View>
+    );
+
+    if (!onOpenListing) {
+      return <View style={styles.aboutBookCard}>{content}</View>;
+    }
+
+    return (
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`Ver anúncio de ${item.listing.title}`}
+        onPress={() => guardedOpenListing(item.listing.id)}
+        style={({ pressed, hovered }: { pressed: boolean; hovered?: boolean }) => [
+          styles.aboutBookCard,
+          hovered ? styles.aboutBookCardHovered : null,
+          pressed ? styles.rowPressed : null,
+        ]}
+      >
+        {content}
+      </Pressable>
+    );
+  };
+
   return (
     <SafeAreaView edges={["top", "left", "right"]} style={styles.page}>
       <View style={wideWeb ? styles.wideContainer : styles.flexOne}>
@@ -173,7 +238,7 @@ export function Conversations({
           >
             Conversas
           </Text>
-          {wideWeb && state.items.length === 0 ? (
+          {wideWeb ? (
             <Text style={styles.subtitleWide}>
               Acompanhe propostas de troca, compra e doação direto com leitores de Piripiri.
             </Text>
@@ -181,11 +246,55 @@ export function Conversations({
         </View>
 
         {state.loading && state.items.length === 0 ? (
-          <View style={wideWeb ? styles.wideLoading : styles.loadingContainer}>
-            <LoadingState label="Carregando conversas" variant="conversations" />
-          </View>
+          wideWeb ? (
+            <View style={styles.wideWorkspace}>
+              <View style={styles.wideListPane}>
+                <View style={styles.wideListHeader}>
+                  <View style={styles.skeletonLineSub} />
+                </View>
+                <View style={styles.wideLoadingListBody}>
+                  <LoadingState label="Carregando conversas" variant="conversations" />
+                </View>
+              </View>
+              <View style={styles.widePane} importantForAccessibility="no-hide-descendants">
+                <View style={styles.wideLoadingHeaderBar}>
+                  <View style={styles.skeletonAvatar40} />
+                  <View style={styles.rowText}>
+                    <View style={styles.skeletonLineTitle} />
+                    <View style={styles.skeletonLineSub} />
+                  </View>
+                </View>
+                <View style={styles.wideLoadingChatBody}>
+                  <View style={styles.skeletonBubbleOther} />
+                  <View style={styles.skeletonBubbleMine} />
+                  <View style={styles.skeletonBubbleOther} />
+                </View>
+                <View style={styles.wideLoadingComposerBar}>
+                  <View style={styles.skeletonInput} />
+                  <View style={styles.skeletonSendBtn} />
+                </View>
+              </View>
+              <View style={styles.aboutPane} importantForAccessibility="no-hide-descendants">
+                <View style={styles.skeletonLineTitle} />
+                <View style={styles.aboutBookCard}>
+                  <View style={styles.aboutBook}>
+                    <View style={styles.skeletonBookCover} />
+                    <View style={styles.aboutBookText}>
+                      <View style={styles.skeletonLineTitle} />
+                      <View style={styles.skeletonLineSub} />
+                    </View>
+                  </View>
+                </View>
+                <View style={styles.skeletonAboutButton} />
+              </View>
+            </View>
+          ) : (
+            <View style={styles.loadingContainer}>
+              <LoadingState label="Carregando conversas" variant="conversations" />
+            </View>
+          )
         ) : state.error ? (
-          <View style={wideWeb ? styles.wideLoading : styles.loadingContainer}>
+          <View style={wideWeb ? styles.emptyContainerWide : styles.loadingContainer}>
             {isOnline ? (
               <ErrorState message={state.error} onRetry={() => void actions.reload()} />
             ) : (
@@ -270,7 +379,7 @@ export function Conversations({
                       accessibilityRole="button"
                       accessibilityLabel={`Você tem ${pendingReceivedCount} ${pendingReceivedCount === 1 ? "nova proposta recebida" : "novas propostas recebidas"}. Toque para abrir pedidos recebidos.`}
                       onPress={guardedOpenReceivedRequests}
-                      style={withPress(styles.pendingBanner)}
+                      style={withPress([styles.pendingBanner, wideWeb && styles.pendingBannerWide])}
                     >
                       <View style={styles.pendingBannerIcon}>
                         <AppIcon name="swap" size={18} color={colors.nature.foliage} />
@@ -297,9 +406,10 @@ export function Conversations({
                         accessibilityHint={item.kind === "accepted" ? "Mantenha pressionado para apagar a conversa" : undefined}
                         onPress={() => open(item)}
                         onLongPress={item.kind === "accepted" ? () => setToDelete(item) : undefined}
-                        style={({ pressed }) => [
+                        style={({ pressed, hovered }: { pressed: boolean; hovered?: boolean }) => [
                           styles.row,
                           wideWeb && styles.rowWideItem,
+                          wideWeb && hovered && !isSelected ? styles.rowHovered : null,
                           pressed ? styles.rowPressed : null,
                           isSelected ? styles.rowSelected : null,
                           wideWeb && item.kind === "accepted" ? styles.rowWithDelete : null,
@@ -349,7 +459,7 @@ export function Conversations({
                           onPress={() => setToDelete(item)}
                           style={({ hovered }: { hovered?: boolean }) => [styles.deleteButton, hovered ? styles.deleteButtonHovered : null]}
                         >
-                          <AppIcon name="delete" size={20} color={colors.m3.onSurfaceVariant} />
+                          <AppIcon name="delete" size={18} color={colors.m3.onSurfaceVariant} />
                         </Pressable>
                       ) : null}
                       {item.kind === "pendingSent" ? (
@@ -369,30 +479,9 @@ export function Conversations({
                     </View>
                   );
                 }}
-                ListFooterComponent={
-                  <View style={styles.footerContainer}>
-                    {cancelFailed ? (
-                      <Text accessibilityRole="alert" style={styles.footerError}>
-                        Não foi possível cancelar o pedido. Tente novamente.
-                      </Text>
-                    ) : null}
-                    {deleteFailed ? (
-                      <Text accessibilityRole="alert" style={styles.footerError}>
-                        Não foi possível apagar a conversa. Tente novamente.
-                      </Text>
-                    ) : null}
-                    <View style={styles.footerCard}>
-                      <View style={styles.footerIconBox}>
-                        <AppIcon name="info" size={16} color={colors.m3.primary} />
-                      </View>
-                      <View style={styles.footerTextCol}>
-                        <Text style={styles.footer}>Combine sempre pelo chat do IpêBook. Não compartilhe senhas ou códigos.</Text>
-                        {wideWeb ? null : <Text style={styles.footerSub}>Para apagar uma conversa, mantenha o dedo sobre ela.</Text>}
-                      </View>
-                    </View>
-                  </View>
-                }
+                ListFooterComponent={wideWeb ? undefined : listFooter}
               />
+              {wideWeb ? listFooter : null}
             </View>
 
             {/* Painel Central: Chat da negociação selecionada ou placeholder */}
@@ -415,21 +504,32 @@ export function Conversations({
             {/* Painel Direito: Detalhes da negociação e encontro seguro */}
             {wideWeb && selectedItem ? (
               <View style={styles.aboutPane} testID="conversation-about">
-                <Text accessibilityRole="header" style={styles.aboutTitle}>{`Sobre ${selectedItem.listing.modality === "trade" ? "a troca" : selectedItem.listing.modality === "donation" ? "a doação" : "a compra"}`}</Text>
-                <View style={styles.aboutBook}>
-                  <BookCover id={selectedItem.listing.id} title={selectedItem.listing.title} photoUrl={selectedItem.listing.photoUrl} variant="list" />
-                  <View style={styles.aboutBookText}>
-                    <Text style={styles.aboutBookTitle} numberOfLines={2}>{selectedItem.listing.title}</Text>
-                    <Tag variant={selectedItem.listing.modality} />
-                  </View>
-                </View>
+                <Text accessibilityRole="header" style={styles.aboutTitle}>
+                  {`Sobre ${selectedItem.listing.modality === "trade" ? "a troca" : selectedItem.listing.modality === "donation" ? "a doação" : "a compra"}`}
+                </Text>
+                {renderAboutBook(selectedItem)}
                 <CombineAction requestId={selectedItem.requestId} sessionUserId={sessionUserId} onOpen={guardedOpenNegotiation} />
                 <View style={styles.aboutSafe}>
-                  <Text style={styles.aboutSafeTitle}>Encontro seguro</Text>
+                  <View style={styles.aboutSafeHeader}>
+                    <View style={styles.aboutSafeIcon}>
+                      <AppIcon name="place" size={14} color={colors.nature.foliageDeep} />
+                    </View>
+                    <Text style={styles.aboutSafeTitle}>Encontro seguro</Text>
+                  </View>
                   <Text style={styles.aboutSafeBody}>Locais públicos e horário de movimento em Piripiri.</Text>
                 </View>
                 {onReportListing ? (
-                  <Pressable accessibilityRole="button" accessibilityLabel="Denunciar anúncio" onPress={() => guardedReportListing(selectedItem.listing.id)}>
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel="Denunciar anúncio"
+                    onPress={() => guardedReportListing(selectedItem.listing.id)}
+                    style={({ pressed, hovered }: { pressed: boolean; hovered?: boolean }) => [
+                      styles.aboutReportButton,
+                      hovered ? styles.aboutReportButtonHovered : null,
+                      pressed ? styles.rowPressed : null,
+                    ]}
+                  >
+                    <AppIcon name="flag" size={16} color={colors.error} />
                     <Text style={styles.aboutReport}>Denunciar anúncio</Text>
                   </Pressable>
                 ) : null}
@@ -478,418 +578,4 @@ export default function ConversationsScreen({ onRequireSignIn, ...props }: Conve
 
   if (authState.loading || !authState.user) return null;
   return <Conversations sessionUserId={authState.user.id} {...props} />;
-}
-
-function createStyles(colors: ColorPalette) {
-  return StyleSheet.create({
-    page: { flex: 1, backgroundColor: colors.background },
-    flexOne: { flex: 1 },
-    loadingContainer: { flex: 1, paddingHorizontal: tokens.spacing[16], paddingTop: tokens.spacing[8] },
-    wideLoading: { width: "100%", maxWidth: 380, paddingTop: tokens.spacing[12] },
-    // Container web largo padronizado em WEB_MAX_WIDTH com margem lateral WEB_GUTTER (alinhado ao WebHeader).
-    wideContainer: {
-      flex: 1,
-      width: "100%",
-      maxWidth: WEB_MAX_WIDTH,
-      alignSelf: "center",
-      paddingHorizontal: WEB_GUTTER,
-      paddingTop: tokens.spacing[16],
-      paddingBottom: tokens.spacing[24],
-      // O painel ocupa a janela e cada coluna rola por conta própria, como nos mensageiros.
-      minHeight: 0,
-    },
-    mobileHeader: { paddingBottom: tokens.spacing[12] },
-    mobileHeaderWithBack: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[8],
-      paddingHorizontal: tokens.spacing[16],
-      paddingTop: tokens.spacing[12],
-      paddingBottom: tokens.spacing[12],
-    },
-    backButton: {
-      width: tokens.spacing[40],
-      height: tokens.spacing[40],
-      borderRadius: tokens.radius.full,
-      backgroundColor: colors.m3.surfaceContainerLow,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    wideHeader: {
-      marginBottom: tokens.spacing[16],
-      gap: tokens.spacing[6],
-    },
-    title: {
-      ...tokens.typography.brandLargeTitle,
-      color: colors.brandBrown,
-      paddingHorizontal: tokens.spacing[16],
-      paddingTop: tokens.spacing[16],
-      paddingBottom: tokens.spacing[8],
-    },
-    titleWithBack: {
-      flex: 1,
-      paddingHorizontal: 0,
-      paddingTop: 0,
-      paddingBottom: 0,
-    },
-    titleWide: {
-      paddingHorizontal: 0,
-      paddingTop: 0,
-      paddingBottom: 0,
-    },
-    subtitleWide: {
-      ...tokens.typography.bodyLarge,
-      color: colors.m3.onSurfaceVariant,
-    },
-    // Estado Vazio Web Largo
-    emptyContainerWide: {
-      width: "100%",
-      alignItems: "center",
-    },
-    emptyWide: {
-      width: "100%",
-      maxWidth: 620,
-      alignSelf: "center",
-      backgroundColor: colors.m3.surfaceContainerLow,
-      borderRadius: tokens.radius.extraLarge,
-      paddingVertical: tokens.spacing[40],
-      paddingHorizontal: tokens.spacing[48],
-      borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
-      marginTop: tokens.spacing[12],
-      gap: tokens.spacing[12],
-    },
-    emptyIconWide: {
-      width: 80,
-      height: 80,
-      borderRadius: tokens.radius.circle80,
-      marginBottom: tokens.spacing[4],
-    },
-    emptyTitleWide: {
-      ...tokens.typography.headlineMedium,
-      color: colors.m3.onSurface,
-    },
-    emptyBodyWide: {
-      ...tokens.typography.subheadline,
-      maxWidth: 440,
-      lineHeight: tokens.lineHeight[22],
-      color: colors.m3.onSurfaceVariant,
-    },
-    emptyActionWide: {
-      width: "100%",
-      maxWidth: 280,
-      alignSelf: "center",
-      marginTop: tokens.spacing[12],
-    },
-    featuresRowWide: {
-      flexDirection: "row",
-      gap: tokens.spacing[20],
-      marginTop: tokens.spacing[32],
-      width: "100%",
-      maxWidth: 1100,
-      justifyContent: "center",
-    },
-    featureCardWide: {
-      flex: 1,
-      backgroundColor: colors.surface,
-      borderRadius: tokens.radius.card,
-      padding: tokens.spacing[20],
-      borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
-      gap: tokens.spacing[6],
-    },
-    featureIconBoxWide: {
-      width: 44,
-      height: 44,
-      borderRadius: tokens.radius.cardSmall,
-      backgroundColor: colors.m3.primaryContainer,
-      alignItems: "center",
-      justifyContent: "center",
-      marginBottom: tokens.spacing[4],
-    },
-    featureTitleWide: {
-      ...tokens.typography.subheadline,
-      color: colors.m3.onSurface,
-      fontWeight: tokens.fontWeight.bold,
-    },
-    featureBodyWide: {
-      ...tokens.typography.footnote,
-      color: colors.m3.onSurfaceVariant,
-    },
-    // Espaço multi-painel para conversas ativas
-    wideWorkspace: {
-      flex: 1,
-      flexDirection: "row",
-      borderRadius: tokens.radius.xl,
-      borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
-      backgroundColor: colors.surface,
-      overflow: "hidden",
-      minHeight: 0,
-    },
-    wideListPane: {
-      width: 380,
-      minHeight: 0,
-      borderRightWidth: 1,
-      borderRightColor: colors.m3.outlineVariant,
-      backgroundColor: colors.m3.surfaceContainerLow,
-    },
-    wideListHeader: {
-      paddingHorizontal: tokens.spacing[16],
-      paddingVertical: tokens.spacing[12],
-      borderBottomWidth: 1,
-      borderBottomColor: colors.m3.outlineVariant,
-      backgroundColor: colors.m3.surfaceContainerLow,
-    },
-    wideListCount: {
-      ...tokens.typography.labelMedium,
-      color: colors.m3.onSurfaceVariant,
-      fontWeight: tokens.fontWeight.semiBold,
-    },
-    wideList: {
-      paddingBottom: tokens.spacing[24],
-    },
-    widePane: {
-      flex: 1,
-      minWidth: 0,
-      minHeight: 0,
-      backgroundColor: colors.background,
-    },
-    widePaneEmpty: {
-      alignItems: "center",
-      justifyContent: "center",
-      padding: tokens.spacing[32],
-      gap: tokens.spacing[12],
-    },
-    emptyCenterIconBox: {
-      width: 80,
-      height: 80,
-      borderRadius: tokens.radius.circle80,
-      backgroundColor: colors.m3.surfaceContainerHigh,
-      alignItems: "center",
-      justifyContent: "center",
-      marginBottom: tokens.spacing[8],
-    },
-    emptyCenterTitle: {
-      ...tokens.typography.brandCardTitle,
-      color: colors.m3.onSurface,
-    },
-    emptyCenterBody: {
-      ...tokens.typography.bodyMedium,
-      color: colors.m3.onSurfaceVariant,
-      textAlign: "center",
-      maxWidth: 320,
-    },
-    aboutPane: {
-      width: 320,
-      minHeight: 0,
-      gap: tokens.spacing[16],
-      padding: tokens.spacing[20],
-      borderLeftWidth: 1,
-      borderLeftColor: colors.m3.outlineVariant,
-      backgroundColor: colors.m3.surfaceContainerLow,
-    },
-    aboutTitle: { ...tokens.typography.titleMedium, color: colors.m3.onSurface },
-    aboutBook: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[12] },
-    aboutBookText: { flex: 1, gap: tokens.spacing[6], alignItems: "flex-start" },
-    aboutBookTitle: { ...tokens.typography.labelLarge, color: colors.m3.onSurface },
-    aboutSafe: { gap: tokens.spacing[2], padding: tokens.spacing[16], borderRadius: tokens.radius.medium, backgroundColor: colors.m3.surfaceContainer },
-    aboutSafeTitle: { ...tokens.typography.labelLarge, color: colors.m3.onSurface },
-    aboutSafeBody: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
-    aboutReport: { ...tokens.typography.labelLarge, color: colors.error },
-    list: { paddingBottom: tokens.spacing[32], paddingTop: tokens.spacing[8], width: "100%" },
-    row: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[14],
-      minHeight: 88,
-      paddingHorizontal: tokens.spacing[16],
-      paddingVertical: tokens.spacing[14],
-      ...(Platform.OS === "web" ? ({ cursor: "pointer", userSelect: "none" } as never) : {}),
-    },
-    rowWideItem: {
-      borderBottomWidth: 1,
-      borderBottomColor: colors.m3.outlineVariant,
-    },
-    rowPressed: {
-      backgroundColor: colors.m3.surfaceContainer,
-      borderRadius: tokens.shapeMorph.cardPressed,
-      transform: [{ scale: 0.99 }],
-    },
-    rowSelected: {
-      backgroundColor: colors.m3.secondaryContainer,
-      borderLeftWidth: 4,
-      borderLeftColor: colors.m3.primary,
-    },
-    rowText: { flex: 1, gap: tokens.spacing[4] },
-    rowHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: tokens.spacing[8] },
-    name: { flex: 1, ...tokens.typography.bodyLarge, fontWeight: tokens.fontWeight.semiBold, color: colors.m3.onSurface },
-    nameSelected: { fontWeight: tokens.fontWeight.bold, color: colors.m3.onSecondaryContainer },
-    pendingSentPill: {
-      paddingHorizontal: tokens.spacing[8],
-      paddingVertical: tokens.spacing[2],
-      borderRadius: tokens.radius.full,
-      backgroundColor: colors.m3.surfaceContainerHigh,
-    },
-    pendingSentPillText: {
-      ...tokens.typography.labelSmall,
-      color: colors.m3.onSurfaceVariant,
-      fontWeight: tokens.fontWeight.medium,
-    },
-    badge: {
-      alignSelf: "flex-start",
-      paddingHorizontal: tokens.spacing[8],
-      paddingVertical: tokens.spacing[2],
-      marginVertical: tokens.spacing[2],
-      borderRadius: tokens.radius.full,
-      backgroundColor: colors.m3.primary,
-    },
-    badgeText: { ...tokens.typography.labelSmall, fontWeight: tokens.fontWeight.bold, color: colors.m3.onPrimary },
-    time: { ...tokens.typography.labelSmall, color: colors.m3.onSurfaceVariant },
-    preview: { ...tokens.typography.bodyMedium, color: colors.m3.onSurface },
-    previewStatus: { color: colors.m3.onSurfaceVariant, fontStyle: "italic" },
-    aboutRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[8],
-      marginTop: tokens.spacing[4],
-    },
-    about: { ...tokens.typography.labelMedium, fontWeight: tokens.fontWeight.medium, color: colors.m3.primary, flex: 1 },
-    footerContainer: {
-      paddingHorizontal: tokens.spacing[16],
-      paddingTop: tokens.spacing[8],
-      gap: tokens.spacing[8],
-    },
-    footerCard: {
-      flexDirection: "row",
-      alignItems: "flex-start",
-      gap: tokens.spacing[10],
-      padding: tokens.spacing[12],
-      borderRadius: tokens.radius.card,
-      backgroundColor: colors.m3.surfaceContainerLow,
-      borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
-    },
-    footerIconBox: {
-      width: 28,
-      height: 28,
-      borderRadius: tokens.radius.full,
-      backgroundColor: colors.m3.secondaryContainer,
-      alignItems: "center",
-      justifyContent: "center",
-      marginTop: 1,
-    },
-    footerTextCol: { flex: 1, gap: tokens.spacing[4] },
-    footer: {
-      ...tokens.typography.labelMedium,
-      fontFamily: fontFamily.regular,
-      color: colors.m3.onSurface,
-    },
-    footerSub: {
-      ...tokens.typography.labelSmall,
-      fontFamily: fontFamily.regular,
-      color: colors.m3.onSurfaceVariant,
-    },
-    footerError: { ...tokens.typography.bodyMedium, color: colors.error },
-    empty: { alignItems: "center", gap: tokens.spacing[8], paddingTop: tokens.spacing[48], paddingHorizontal: tokens.spacing[24] },
-    emptyIcon: {
-      width: 72,
-      height: 72,
-      borderRadius: tokens.radius.circle72,
-      alignItems: "center",
-      justifyContent: "center",
-      backgroundColor: colors.m3.secondaryContainer,
-      marginBottom: tokens.spacing[8],
-    },
-    emptyTitle: {
-      ...tokens.typography.brandTitle,
-      color: colors.m3.onSurface,
-      textAlign: "center",
-    },
-    emptyBody: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant, textAlign: "center", maxWidth: 320 },
-    emptyAction: { alignSelf: "stretch", marginTop: tokens.spacing[16] },
-    deleteButton: {
-      width: tokens.spacing[40],
-      height: tokens.spacing[40],
-      borderRadius: tokens.radius.xl,
-      alignItems: "center",
-      justifyContent: "center",
-      position: "absolute",
-      right: tokens.spacing[12],
-      top: "50%",
-      marginTop: -tokens.spacing[20],
-      ...(Platform.OS === "web" ? ({ cursor: "pointer", userSelect: "none" } as never) : {}),
-    },
-    // A linha e o apagar são botões irmãos: o navegador não aceita botão dentro de botão.
-    rowWrap: { position: "relative" },
-    rowCardMobile: {
-      marginHorizontal: tokens.spacing[16],
-      marginBottom: tokens.spacing[12],
-      borderRadius: tokens.radius.card,
-      backgroundColor: colors.surface,
-      borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
-      overflow: "hidden",
-    },
-    cancelRequestBar: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-      paddingHorizontal: tokens.spacing[16],
-      paddingVertical: tokens.spacing[8],
-      backgroundColor: colors.m3.surfaceContainerLow,
-      borderTopWidth: 1,
-      borderTopColor: colors.m3.outlineVariant,
-      gap: tokens.spacing[8],
-    },
-    cancelRequestHint: {
-      ...tokens.typography.labelSmall,
-      color: colors.m3.onSurfaceVariant,
-      flex: 1,
-    },
-    cancelRequest: {
-      paddingHorizontal: tokens.spacing[12],
-      paddingVertical: tokens.spacing[6],
-      borderRadius: tokens.radius.full,
-      backgroundColor: colors.errorContainer,
-      minHeight: tokens.spacing[32],
-      justifyContent: "center",
-    },
-    cancelRequestText: { ...tokens.typography.labelMedium, fontWeight: tokens.fontWeight.semiBold, color: colors.error },
-    rowWithDelete: { paddingRight: tokens.spacing[56] },
-    deleteButtonHovered: { backgroundColor: colors.m3.surfaceContainerHigh },
-    pendingBanner: {
-      flexDirection: "row",
-      alignItems: "center",
-      backgroundColor: colors.nature.sprout,
-      borderRadius: tokens.radius.card,
-      padding: tokens.spacing[12],
-      marginHorizontal: tokens.spacing[16],
-      marginBottom: tokens.spacing[12],
-      borderWidth: 1,
-      borderColor: colors.nature.foliage,
-      gap: tokens.spacing[10],
-    },
-    pendingBannerIcon: {
-      width: 36,
-      height: 36,
-      borderRadius: tokens.radius.full,
-      backgroundColor: colors.nature.onFoliage,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    pendingBannerContent: {
-      flex: 1,
-      gap: 2,
-    },
-    pendingBannerTitle: {
-      ...tokens.typography.bodyLarge,
-      fontWeight: tokens.fontWeight.bold,
-      color: colors.nature.foliageDeep,
-    },
-    pendingBannerSubtitle: {
-      ...tokens.typography.labelSmall,
-      color: colors.nature.foliageDeep,
-    },
-  });
 }

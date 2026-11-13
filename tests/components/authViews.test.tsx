@@ -1,10 +1,12 @@
 
 import { act, fireEvent, render } from "@testing-library/react-native";
+import { StyleSheet } from "react-native";
 import { describe, expect, it, vi } from "vitest";
 import type { AuthActions, AuthState } from "@/viewmodel/useAuthViewModel";
 import ForgotPassword from "@/view/auth/forgotPassword";
 import SignIn from "@/view/auth/signIn";
 import SignUp from "@/view/auth/signUp";
+import { colors, fontFamily } from "@/view/tokens";
 
 vi.mock("@/viewmodel/useAuthViewModel", () => ({
   useAuthViewModel: vi.fn(),
@@ -34,7 +36,11 @@ describe("tela de entrar (ISO/IEC 25010 - Usabilidade e Acessibilidade)", () => 
       screen = await render(<SignIn />);
     });
 
-    expect(screen.getByRole("header", { name: "Sua próxima leitura começa aqui." })).toBeDefined();
+    const heading = screen.getByRole("header", { name: "Sua próxima leitura começa aqui." });
+    expect(heading).toBeDefined();
+    const headingStyle = StyleSheet.flatten(heading.props.style);
+    expect(headingStyle.fontFamily).toBe(fontFamily.brand);
+    expect(headingStyle.color).toBe(colors.m3.onSurface);
     expect(screen.getByText("Entre com o e-mail e a senha da sua conta.")).toBeDefined();
     expect(screen.getAllByText("Entrar").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByLabelText("E-mail")).toBeDefined();

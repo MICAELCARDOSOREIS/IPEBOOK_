@@ -11,7 +11,8 @@ os horários vêm no formato do sistema ("15:50"), não há separação por dia 
 ## Escopo
 
 1. **Rota `/conversa/[id]`** em tela cheia: barra superior com voltar e o nome da outra pessoa; cartão do livro
-   (capa, título, etiqueta da modalidade) com a ação **"Combinar"**, que abre a negociação (`/negociacao/[id]`).
+   (capa, título, etiqueta da modalidade) abre o acompanhamento (`/negociacao/[id]`). A ação **"Combinar"**
+   continua no cartão e abre a marcação do encontro quando a rota informa esse atalho.
 2. **Balões** do Figma: os meus à direita em `secondaryContainer`, os da outra pessoa à esquerda em
    `surfaceContainerHigh`, horário "8h40" no balão; **separadores de dia** ("Hoje", "Ontem", "sáb, 24 out").
 3. Lista **rola até a última mensagem** ao abrir e ao chegar mensagem nova.
@@ -27,7 +28,7 @@ os horários vêm no formato do sistema ("15:50"), não há separação por dia 
 | # | Critério | Verificação |
 |---|---|---|
 | CA1 | Horário "8h40" e separadores Hoje/Ontem/data corretos | teste unitário |
-| CA2 | Tela mostra nome, livro, modalidade e "Combinar" abre a negociação | teste de componente |
+| CA2 | Tela mostra nome, livro, modalidade; o cartão do livro e "Combinar" abrem a negociação | teste de componente |
 | CA3 | Balões meus/da outra pessoa e envio pelo botão | teste de componente |
 | CA4 | Sugestão preenche o campo na conversa vazia | teste de componente |
 | CA5 | Conversas aceitas e "Abrir conversa" levam a `/conversa/[id]` | teste de componente |

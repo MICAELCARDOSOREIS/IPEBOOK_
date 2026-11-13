@@ -104,11 +104,11 @@ export default function ManageAlert({
       </Text>
       <Text style={styles.body}>Acompanhe e ajuste o que você quer encontrar.</Text>
 
-      <View style={alert.active ? styles.statusCard : styles.statusCardPaused}>
-        <Text style={styles.statusTitle}>
+      <View testID="manage-alert-status-card" style={alert.active ? styles.statusCard : styles.statusCardPaused}>
+        <Text style={alert.active ? styles.statusTitle : styles.statusTitlePaused}>
           {alert.active ? "Alerta ativo" : "Alerta pausado"}
         </Text>
-        <Text style={styles.body}>
+        <Text style={alert.active ? styles.statusBody : styles.body}>
           {alert.active
             ? "Você será avisado quando um livro combinar com esta busca."
             : "Retome o alerta quando quiser voltar a receber novidades."}
@@ -168,7 +168,7 @@ function createStyles(colors: ColorPalette) {
   },
   body: { ...tokens.typography.bodyMedium, color: colors.secondaryText },
   statusCard: {
-    backgroundColor: colors.badge.sale.background,
+    backgroundColor: colors.m3.primaryContainer,
     borderRadius: tokens.radius.medium,
     padding: tokens.spacing[16],
     gap: tokens.spacing[4],
@@ -180,6 +180,14 @@ function createStyles(colors: ColorPalette) {
     gap: tokens.spacing[4],
   },
   statusTitle: {
+    ...tokens.typography.titleMedium,
+    color: colors.m3.onPrimaryContainer,
+  },
+  statusBody: {
+    ...tokens.typography.bodyMedium,
+    color: colors.m3.onPrimaryContainer,
+  },
+  statusTitlePaused: {
     ...tokens.typography.titleMedium,
     color: colors.text,
   },

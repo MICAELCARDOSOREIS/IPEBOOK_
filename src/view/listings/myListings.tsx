@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Platform, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { useIsWideWeb } from "@/view/useIsWideWeb";
-import type { BookModality } from "@/model/entities/book";
 import {
   makeAuthViewModel,
   makeDraftsViewModel,
@@ -11,29 +9,31 @@ import {
   makeReceivedRequestsViewModel,
   makeShareListingViewModel,
 } from "@/di/container";
-import { tokens, type ColorPalette } from "@/view/tokens";
-import { useTheme } from "@/view/theme/ThemeProvider";
+import type { BookModality } from "@/model/entities/book";
 import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
+import { Chip } from "@/view/components/Chip";
 import { ErrorState } from "@/view/components/ErrorState";
 import { FilledButton } from "@/view/components/FilledButton";
 import { LoadingState } from "@/view/components/LoadingState";
 import { OfflineState } from "@/view/components/OfflineState";
 import { Snackbar } from "@/view/components/Snackbar";
-import { ShelfRow } from "@/view/listings/shelfRow";
 import { MyListingsEmpty } from "@/view/listings/myListingsEmpty";
-import { COMMUNITY_MEMBER } from "@/view/requests/receivedRequests";
 import {
   type ListingsFilter,
   MyListingsListingsTab,
 } from "@/view/listings/myListingsListingsTab";
-import { Chip } from "@/view/components/Chip";
 import { MyListingsProposalsTab } from "@/view/listings/myListingsProposalsTab";
-import { ShelfEmptyState, MODALITY_LABEL, REQUEST_VERB, initials } from "@/view/listings/ShelfEmptyState";
-import { WEB_MAX_WIDTH, WEB_GUTTER } from "@/view/webLayout";
-import { useGuardedPress } from "@/view/useGuardedPress";
-import { standardVerticalScrollProps, standardHorizontalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
-
+import { initials, MODALITY_LABEL, REQUEST_VERB, ShelfEmptyState } from "@/view/listings/ShelfEmptyState";
+import { ShelfRow } from "@/view/listings/shelfRow";
+import { createMyListingsStyles } from "@/view/listings/myListingsStyles";
 import { withPress } from "@/view/pressFeedback";
+import { COMMUNITY_MEMBER } from "@/view/requests/receivedRequests";
+import { scrollBottomPadding, standardHorizontalScrollProps, standardVerticalScrollProps } from "@/view/scrollProps";
+import { useTheme } from "@/view/theme/ThemeProvider";
+import { tokens } from "@/view/tokens";
+import { useGuardedPress } from "@/view/useGuardedPress";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
+
 export { ShelfRow } from "@/view/listings/shelfRow";
 
 export type MyListingsProps = {
@@ -66,8 +66,8 @@ export function MyListings({
   onNavigateToReceivedRequests,
   onNavigateToNegotiationDetail,
 }: MyListingsProps) {
-  const { colors, resolvedScheme } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const { colors } = useTheme();
+  const styles = useMemo(() => createMyListingsStyles(colors), [colors]);
   const [state, actions] = makeMyListingsViewModel(sessionUserId);
   const [received] = makeReceivedRequestsViewModel(sessionUserId);
   const [draftsState] = makeDraftsViewModel(sessionUserId);
@@ -126,10 +126,10 @@ export function MyListings({
   const pendingProposals = proposals.filter((item) => item.request.status === "pending");
   const attention = pendingProposals[0];
   const countBy = (modality: BookModality) => activeBooks.filter((b) => b.modality === modality).length;
-  const stats: { key: BookModality; count: number; label: string }[] = [
-    { key: "sale", count: countBy("sale"), label: "à venda" },
-    { key: "trade", count: countBy("trade"), label: "em troca" },
-    { key: "donation", count: countBy("donation"), label: "para doar" },
+  const stats: { key: BookModality; count: number; label: string; icon: AppIconName }[] = [
+    { key: "sale", count: countBy("sale"), label: "à venda", icon: "category" },
+    { key: "trade", count: countBy("trade"), label: "em troca", icon: "swap" },
+    { key: "donation", count: countBy("donation"), label: "para doar", icon: "heart" },
   ];
   const tabs: {
     key: ShelfTab;
@@ -283,7 +283,7 @@ export function MyListings({
               onPress={guardedCreateListing}
               style={withPress(styles.announceButtonHeader)}
             >
-              <AppIcon name="add" size={18} color={colors.m3.onPrimary} />
+              <AppIcon name="add" size={18} color={colors.m3.onSecondaryContainer} />
               <Text style={styles.announceButtonHeaderText}>Anunciar livro</Text>
             </Pressable>
           ) : null}
@@ -317,34 +317,12 @@ export function MyListings({
               },
             ]}
           >
-            {/* Banner de incentivo à circulação na web larga (Figma 05.01) */}
-            {wideWeb && onNavigateToCreateListing ? (
-              <View style={styles.webExchangeBanner} testID="shelf-exchange-banner">
-                <View style={styles.webExchangeBannerIconBox}>
-                  <AppIcon name="swap" size={28} color={colors.m3.onTertiaryContainer} />
-                </View>
-                <View style={styles.webExchangeBannerTextBox}>
-                  <Text style={styles.webExchangeBannerTitle}>Quer fazer seus livros circularem?</Text>
-                  <Text style={styles.webExchangeBannerSubtitle}>
-                    Tem livros parados na estante? Anuncie para troca, venda acessível ou doação para leitores de Piripiri.
-                  </Text>
-                </View>
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel="Anunciar novo livro na estante"
-                  onPress={guardedCreateListing}
-                  style={withPress(styles.webExchangeBannerButton)}
-                >
-                  <Text style={styles.webExchangeBannerButtonText}>Anunciar livro</Text>
-                </Pressable>
-              </View>
-            ) : null}
-
             {/* Filtros interativos por modalidade (cores canônicas da ADR 0104 / tokens.colors.badge) */}
-            <View style={styles.statsRow}>
+            <View style={[styles.statsRow, wideWeb && styles.statsRowWide]}>
               {stats.map((stat) => {
                 const isSelected = modalityFilter === stat.key;
                 const isDimmed = modalityFilter !== "all" && !isSelected;
+                const badgeTone = colors.badge[stat.key];
                 return (
                   <Pressable
                     key={stat.key}
@@ -356,27 +334,65 @@ export function MyListings({
                       setModalityFilter((curr) => (curr === stat.key ? "all" : stat.key));
                     }}
                     style={({ pressed }) => [
-                      styles.statCard,
-                      wideWeb && styles.statCardWide,
-                      { backgroundColor: colors.badge[stat.key].background },
-                      isSelected && {
-                        borderWidth: 2,
-                        borderColor: colors.badge[stat.key].text,
-                        ...styles.statCardSelected,
-                      },
+                      wideWeb ? styles.statCardWide : styles.statCardMobile,
+                      !wideWeb && { backgroundColor: badgeTone.background },
+                      isSelected &&
+                        (wideWeb
+                          ? {
+                              borderWidth: 2,
+                              borderColor:
+                                badgeTone.background === "#F5B718"
+                                  ? colors.ipe.bloomDeep
+                                  : badgeTone.background,
+                              backgroundColor: colors.m3.surfaceContainerLow,
+                              ...styles.statCardSelected,
+                            }
+                          : {
+                              borderWidth: 2,
+                              borderColor: badgeTone.text,
+                              ...styles.statCardSelected,
+                            }),
                       isDimmed && styles.statCardDimmed,
                       pressed && styles.statCardPressed,
                     ]}
                   >
-                    <View style={styles.statContentRow}>
-                      <Text style={[styles.statCount, { color: colors.badge[stat.key].text }]}>{stat.count}</Text>
-                      {isSelected ? (
-                        <View style={[styles.statCheckBadge, { backgroundColor: colors.badge[stat.key].text }]}>
-                          <AppIcon name="check" size={12} color={colors.badge[stat.key].background} />
+                    {wideWeb ? (
+                      <>
+                        <View style={[styles.statIconBadge, { backgroundColor: badgeTone.background }]}>
+                          <AppIcon name={stat.icon} size={18} color={badgeTone.text} />
                         </View>
-                      ) : null}
-                    </View>
-                    <Text style={[styles.statLabel, { color: colors.badge[stat.key].text }]}>{stat.label}</Text>
+                        <View style={styles.statTextGroup}>
+                          <View style={styles.statContentRow}>
+                            <Text style={styles.statCount}>{stat.count}</Text>
+                            {isSelected ? (
+                              <View style={[styles.statCheckBadge, { backgroundColor: badgeTone.background }]}>
+                                <AppIcon name="check" size={12} color={badgeTone.text} />
+                              </View>
+                            ) : null}
+                          </View>
+                          <Text style={styles.statLabel}>{stat.label}</Text>
+                        </View>
+                      </>
+                    ) : (
+                      <>
+                        <View style={styles.statContentRow}>
+                          <Text style={[styles.statCountMobile, { color: badgeTone.text }]}>
+                            {stat.count}
+                          </Text>
+                          {isSelected ? (
+                            <View style={[styles.statCheckBadge, { backgroundColor: badgeTone.text }]}>
+                              <AppIcon name="check" size={12} color={badgeTone.background} />
+                            </View>
+                          ) : null}
+                        </View>
+                        <Text
+                          style={[styles.statLabelMobile, { color: badgeTone.text }]}
+                          numberOfLines={1}
+                        >
+                          {stat.label}
+                        </Text>
+                      </>
+                    )}
                   </Pressable>
                 );
               })}
@@ -495,14 +511,14 @@ export function MyListings({
               />
             ) : (
               <View style={styles.listCard}>
-                <Text style={styles.sectionTitle}>Concluídos</Text>
+                <Text style={[styles.sectionTitle, styles.concludedSectionTitle]}>Concluídos</Text>
                 {wideWeb ? (
                   <View style={styles.tableHeader}>
                     <Text style={[styles.tableHeaderText, { flex: 3, minWidth: 220 }]}>Livro</Text>
                     <Text style={[styles.tableHeaderText, { flex: 1.5, minWidth: 120 }]}>Modalidade</Text>
                     <Text style={[styles.tableHeaderText, { flex: 1.5, minWidth: 120 }]}>Histórico</Text>
                     <Text style={[styles.tableHeaderText, { flex: 1.2, minWidth: 100 }]}>Situação</Text>
-                    <Text style={[styles.tableHeaderText, { width: 110, textAlign: "right" }]}>Ação</Text>
+                    <Text style={[styles.tableHeaderText, { width: 148, textAlign: "right" }]}>Ação</Text>
                   </View>
                 ) : null}
                 {concludedProposals.map((item) => (
@@ -545,6 +561,30 @@ export function MyListings({
                 ))}
               </View>
             )}
+
+            {/* Banner convidativo à circulação posicionado após a tabela para manter os livros em primeiro plano */}
+            {wideWeb && onNavigateToCreateListing ? (
+              <View style={styles.webExchangeBanner} testID="shelf-exchange-banner">
+                <View style={styles.webExchangeBannerIconBox}>
+                  <AppIcon name="swap" size={24} color={colors.ipe.onContainer} />
+                </View>
+                <View style={styles.webExchangeBannerTextBox}>
+                  <Text style={styles.webExchangeBannerTitle}>Quer fazer seus livros circularem?</Text>
+                  <Text style={styles.webExchangeBannerSubtitle}>
+                    Tem livros parados na estante? Anuncie para troca, venda acessível ou doação para leitores de Piripiri.
+                  </Text>
+                </View>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Anunciar novo livro na estante"
+                  onPress={guardedCreateListing}
+                  style={withPress(styles.webExchangeBannerButton)}
+                >
+                  <AppIcon name="add" size={18} color={colors.m3.onPrimary} />
+                  <Text style={styles.webExchangeBannerButtonText}>Anunciar livro</Text>
+                </Pressable>
+              </View>
+            ) : null}
           </ScrollView>
         )}
       </View>
@@ -590,7 +630,7 @@ export default function MyListingsScreen({
   onNavigateToNegotiationDetail,
 }: MyListingsScreenProps = {}) {
   const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = useMemo(() => createMyListingsStyles(colors), [colors]);
   const wideWeb = useIsWideWeb();
   const [authState] = makeAuthViewModel();
 
@@ -632,227 +672,4 @@ export default function MyListingsScreen({
       onNavigateToNegotiationDetail={onNavigateToNegotiationDetail}
     />
   );
-}
-function createStyles(colors: ColorPalette) {
-  return StyleSheet.create({
-    page: { flex: 1, backgroundColor: colors.background },
-    header: {
-      flexDirection: "row",
-      alignItems: "center",
-      paddingHorizontal: tokens.spacing[16],
-      paddingTop: tokens.spacing[12],
-      paddingBottom: tokens.spacing[12],
-      gap: tokens.spacing[8],
-    },
-    iconButton: {
-      minHeight: tokens.accessibility.touchTarget,
-      minWidth: tokens.accessibility.touchTarget,
-      justifyContent: "center",
-      alignItems: "center",
-    },
-    headerText: { flex: 1 },
-    heroTitle: {
-      ...tokens.typography.brandLargeTitle,
-      color: colors.brandBrown,
-    },
-    heroSubtitle: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
-    fab: {
-      position: "absolute",
-      right: tokens.spacing[16],
-      width: tokens.spacing[56],
-      height: tokens.spacing[56],
-      borderRadius: tokens.radius.card,
-      alignItems: "center",
-      justifyContent: "center",
-      backgroundColor: colors.m3.primaryContainer,
-      elevation: 6,
-      shadowColor: colors.m3.shadow,
-      shadowOpacity: 0.25,
-      shadowRadius: 6,
-      shadowOffset: { width: 0, height: 3 },
-      zIndex: 90,
-    },
-    fabPressed: {
-      opacity: 0.92,
-      borderRadius: tokens.shapeMorph.cardPressed,
-      transform: [{ scale: 0.94 }],
-    },
-    segmentPressed: {
-      transform: [{ scale: 0.97 }],
-    },
-    // Botão tonal com ícone (M3): pílula compacta e elegante ao lado do título da Estante.
-    draftsLink: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[6],
-      paddingHorizontal: tokens.spacing[12],
-      paddingVertical: tokens.spacing[6],
-      minHeight: 36,
-      borderRadius: tokens.radius.full,
-      backgroundColor: colors.m3.secondaryContainer,
-      borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
-    },
-    draftsLinkPressed: { opacity: 0.85, transform: [{ scale: 0.96 }] },
-    draftsLinkText: {
-      ...tokens.typography.labelMedium,
-      color: colors.m3.onSecondaryContainer,
-      fontWeight: tokens.fontWeight.semiBold,
-    },
-    headerActions: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[12],
-      marginLeft: "auto",
-    },
-    announceButtonHeader: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[8],
-      height: tokens.accessibility.touchTarget,
-      paddingHorizontal: tokens.spacing[18],
-      borderRadius: tokens.radius.full,
-      backgroundColor: colors.m3.primary,
-      elevation: 2,
-      shadowColor: colors.m3.shadow,
-      shadowOpacity: 0.15,
-      shadowRadius: 4,
-      shadowOffset: { width: 0, height: 2 },
-    },
-    announceButtonHeaderText: {
-      ...tokens.typography.labelLarge,
-      fontWeight: tokens.fontWeight.semiBold,
-      color: colors.m3.onPrimary,
-    },
-    content: {
-      flex: 1,
-      width: "100%",
-      paddingHorizontal: tokens.spacing[16],
-    },
-    // Web larga (Figma `05.01`): coluna centralizada em WEB_MAX_WIDTH com respiro editorial.
-    headerWide: {
-      width: "100%",
-      maxWidth: WEB_MAX_WIDTH,
-      alignSelf: "center",
-      paddingHorizontal: WEB_GUTTER,
-      paddingTop: tokens.spacing[32],
-      paddingBottom: tokens.spacing[16],
-    },
-    contentWide: {
-      width: "100%",
-      maxWidth: WEB_MAX_WIDTH,
-      alignSelf: "center",
-      paddingHorizontal: WEB_GUTTER,
-    },
-    segmentRowWide: {
-      alignSelf: "flex-start",
-      minWidth: 380,
-      maxWidth: 520,
-      marginBottom: tokens.spacing[4],
-    },
-    tableHeader: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[16], paddingHorizontal: tokens.spacing[16], paddingVertical: tokens.spacing[12] },
-    tableHeaderText: { ...tokens.typography.labelLarge, color: colors.m3.onSurfaceVariant },
-    webExchangeBanner: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[16], backgroundColor: colors.m3.tertiaryContainer, borderRadius: tokens.radius.card, padding: tokens.spacing[20], marginBottom: tokens.spacing[8] },
-    webExchangeBannerIconBox: { width: tokens.spacing[48], height: tokens.spacing[48], borderRadius: tokens.radius.full, backgroundColor: colors.m3.surfaceContainerLowest, justifyContent: "center", alignItems: "center" },
-    webExchangeBannerTextBox: { flex: 1, gap: tokens.spacing[4] },
-    webExchangeBannerTitle: { ...tokens.typography.brandCardTitle, color: colors.m3.onTertiaryContainer },
-    webExchangeBannerSubtitle: { ...tokens.typography.bodyMedium, color: colors.m3.onTertiaryContainer },
-    webExchangeBannerButton: { minHeight: tokens.accessibility.touchTarget, paddingHorizontal: tokens.spacing[20], borderRadius: tokens.radius.full, backgroundColor: colors.m3.primary, justifyContent: "center", alignItems: "center" },
-    webExchangeBannerButtonText: { ...tokens.typography.labelLarge, color: colors.m3.onPrimary, fontWeight: tokens.fontWeight.semiBold },
-    scroll: { paddingBottom: tokens.spacing[96] + tokens.spacing[64], gap: tokens.spacing[16] },
-    statsRow: { flexDirection: "row", gap: tokens.spacing[8] },
-    statCardWide: { flex: 0, minWidth: 160, paddingHorizontal: tokens.spacing[16] },
-    statCard: {
-      flex: 1,
-      borderRadius: tokens.radius.card,
-      paddingHorizontal: tokens.spacing[14],
-      paddingVertical: tokens.spacing[12],
-      gap: tokens.spacing[2],
-      elevation: 1,
-      shadowColor: colors.m3.shadow,
-      shadowOpacity: 0.08,
-      shadowRadius: 3,
-      shadowOffset: { width: 0, height: 1 },
-    },
-    statCardSelected: { elevation: 3, shadowOpacity: 0.16, shadowRadius: 6, shadowOffset: { width: 0, height: 2 } },
-    statCardDimmed: { opacity: 0.45 },
-    statCardPressed: { opacity: 0.85, transform: [{ scale: 0.98 }] },
-    statContentRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-    statCheckBadge: { width: 18, height: 18, borderRadius: tokens.radius.full, alignItems: "center", justifyContent: "center" },
-    statCount: { ...tokens.typography.brandTitle, fontSize: 22, lineHeight: 26 },
-    statLabel: { ...tokens.typography.footnote, fontWeight: tokens.fontWeight.semiBold, opacity: 0.95 },
-    // Linha de resumo e seletor da estante (estilo 'Mais recentes' do Explorar, abaixo dos chips)
-    summaryRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-      gap: tokens.spacing[12],
-      paddingVertical: tokens.spacing[6],
-      marginTop: tokens.spacing[4],
-      marginBottom: tokens.spacing[4],
-    },
-    summaryRowWide: {
-      paddingVertical: tokens.spacing[8],
-    },
-    summaryText: {
-      flex: 1,
-      ...tokens.typography.bodyMedium,
-      color: colors.m3.onSurfaceVariant,
-    },
-    sortButton: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "flex-end",
-      gap: tokens.spacing[4],
-      minHeight: tokens.accessibility.touchTarget,
-      paddingLeft: tokens.spacing[8],
-    },
-    sortText: {
-      ...tokens.typography.labelLarge,
-      color: colors.m3.primary,
-      fontWeight: tokens.fontWeight.semiBold,
-    },
-    // Abas em estilo pílulas/chips com rolagem horizontal (consistente com o resto do app)
-    segmentRowAndroid: { flexDirection: "row", gap: tokens.spacing[8] },
-    filterRowWide: { flexDirection: "row", gap: tokens.spacing[8], flexWrap: "wrap" },
-    filterScroll: { gap: tokens.spacing[8], paddingVertical: tokens.spacing[4] },
-    filterScrollView: { marginHorizontal: -tokens.spacing[16], paddingHorizontal: tokens.spacing[16] },
-    hiddenAccessibilityTrigger: { position: "absolute", width: 1, height: 1, opacity: 0 },
-    // iPhone: controle segmentado do Figma (trilho cinza, segmento selecionado claro e elevado).
-    segmentTrackIOS: {
-      flexDirection: "row",
-      padding: tokens.spacing[2],
-      borderRadius: tokens.radius.segmentOuter,
-      backgroundColor: colors.m3.surfaceContainerHighest,
-    },
-    sectionTitle: { ...tokens.typography.titleMedium, color: colors.m3.onSurface },
-    attentionCard: {
-      gap: tokens.spacing[12],
-      padding: tokens.spacing[16],
-      borderRadius: tokens.radius.card,
-      backgroundColor: colors.m3.surfaceContainerLow,
-    },
-    attentionRow: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[12] },
-    attentionAvatar: {
-      width: tokens.spacing[40],
-      height: tokens.spacing[40],
-      borderRadius: tokens.radius.full,
-      alignItems: "center",
-      justifyContent: "center",
-      backgroundColor: colors.m3.secondaryContainer,
-    },
-    attentionAvatarText: { ...tokens.typography.labelMedium, fontWeight: tokens.fontWeight.semiBold, color: colors.m3.onSecondaryContainer },
-    attentionText: { flex: 1, gap: tokens.spacing[2] },
-    attentionTitle: { ...tokens.typography.bodyLarge, fontWeight: tokens.fontWeight.semiBold, color: colors.m3.onSurface },
-    attentionSubtitle: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
-    attentionActions: { alignSelf: "flex-end", minWidth: 160 },
-    listCard: {
-      gap: tokens.spacing[4],
-      paddingHorizontal: tokens.spacing[16],
-      paddingTop: tokens.spacing[16],
-      paddingBottom: tokens.spacing[4],
-      borderRadius: tokens.radius.card,
-      backgroundColor: colors.m3.surfaceContainerLow,
-    },
-  });
 }

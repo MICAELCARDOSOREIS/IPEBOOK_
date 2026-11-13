@@ -1,9 +1,10 @@
 
 import { act, fireEvent, render } from "@testing-library/react-native";
-import { AccessibilityInfo } from "react-native";
+import { AccessibilityInfo, StyleSheet } from "react-native";
 import { describe, expect, it, vi } from "vitest";
 import DeleteAccount from "@/view/auth/deleteAccount";
 import DeleteAccountScreen from "@/view/auth/deleteAccountScreen";
+import { colors } from "@/view/tokens";
 
 vi.mock("expo-file-system/legacy", () => ({
   documentDirectory: "file:///dados/",
@@ -178,6 +179,11 @@ describe("tela de exclusão de conta (DeleteAccount - LGPD)", () => {
     });
 
     const submitBtn = screen.getByRole("button", { name: "Confirmar e excluir minha conta" });
+    const submitBtnStyle = StyleSheet.flatten(submitBtn.props.style);
+    const submitTextStyle = StyleSheet.flatten(screen.getByText("Confirmar e excluir minha conta").props.style);
+    expect(submitBtnStyle.backgroundColor).toBe(colors.error);
+    expect(submitTextStyle.color).toBe(colors.surface);
+
     await act(async () => {
       fireEvent.press(submitBtn);
     });

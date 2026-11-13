@@ -64,5 +64,6 @@ describe("Home na Web Larga (Spec 093 · Figma 02.01)", () => {
     expect(screen.getByText("livros anunciados")).toBeDefined();
     expect(screen.getByText("bairros com leitores")).toBeDefined();
     expect(screen.getByText("doação disponível")).toBeDefined();
+    expect(screen.getByText("1 livro gratuito em Piripiri")).toBeDefined();
   });
 });

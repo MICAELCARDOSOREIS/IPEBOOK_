@@ -249,4 +249,17 @@ describe("Navegação para a Home a partir do Beta (Spec 108)", () => {
     });
     expect(screen.queryByText("Como liberar e baixar o IpêBook (passo a passo)")).toBeNull();
   });
+
+  it("não exibe alternância de tema escuro para manter consistência com o app", async () => {
+    const state = { loading: false, error: null, success: false };
+    const actions = { submit: vi.fn(), reset: vi.fn() };
+
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<BetaInviteScreen state={state} actions={actions} />);
+    });
+
+    expect(screen.queryByLabelText("Usar tema escuro")).toBeNull();
+    expect(screen.queryByLabelText("Usar tema claro")).toBeNull();
+  });
 });

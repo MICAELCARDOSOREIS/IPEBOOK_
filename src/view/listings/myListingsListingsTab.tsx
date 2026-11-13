@@ -1,16 +1,16 @@
 import { useMemo } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import type { Book, BookModality, BookStatus } from "@/model/entities/book";
-import { tokens, type ColorPalette } from "@/view/tokens";
-import { useTheme } from "@/view/theme/ThemeProvider";
-import { formatPrice } from "@/view/formatPrice";
+import { AppIcon } from "@/view/components/AppIcon";
 import { Chip } from "@/view/components/Chip";
 import { FilledButton } from "@/view/components/FilledButton";
 import { IconBadge } from "@/view/components/IconBadge";
-import { AppIcon } from "@/view/components/AppIcon";
+import { formatPrice } from "@/view/formatPrice";
 import { ShelfRow } from "@/view/listings/shelfRow";
-import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { standardHorizontalScrollProps } from "@/view/scrollProps";
+import { useTheme } from "@/view/theme/ThemeProvider";
+import { type ColorPalette, tokens } from "@/view/tokens";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
 
 const MODALITY_LABELS: Readonly<Record<BookModality, string>> = {
   sale: "Venda",
@@ -137,15 +137,17 @@ export function MyListingsListingsTab({
         <View style={wideWeb ? styles.listCardWide : styles.listSectionMobile}>
           {wideWeb ? (
             <>
-              <Text style={styles.listTitle}>
-                {`${filteredBooks.length} ${filteredBooks.length === 1 ? "anúncio" : "anúncios"}`}
-              </Text>
+              <View style={styles.listHeaderRow}>
+                <Text style={styles.listTitle}>
+                  {`${filteredBooks.length} ${filteredBooks.length === 1 ? "anúncio" : "anúncios"}`}
+                </Text>
+              </View>
               <View style={styles.tableHeader}>
                 <Text style={[styles.tableHeaderText, { flex: 3, minWidth: 220 }]}>Livro</Text>
                 <Text style={[styles.tableHeaderText, { flex: 1.5, minWidth: 120 }]}>Modalidade</Text>
                 <Text style={[styles.tableHeaderText, { flex: 1.5, minWidth: 120 }]}>Local</Text>
                 <Text style={[styles.tableHeaderText, { flex: 1.2, minWidth: 100 }]}>Situação</Text>
-                <Text style={[styles.tableHeaderText, { width: 110, textAlign: "right" }]}>Ação</Text>
+                <Text style={[styles.tableHeaderText, { width: 148, textAlign: "right" }]}>Ação</Text>
               </View>
             </>
           ) : null}
@@ -230,13 +232,38 @@ function createStyles(colors: ColorPalette) {
     listCardWide: {
       paddingHorizontal: tokens.spacing[16],
       paddingTop: tokens.spacing[16],
-      paddingBottom: tokens.spacing[4],
+      paddingBottom: tokens.spacing[8],
       borderRadius: tokens.radius.card,
-      backgroundColor: colors.m3.surfaceContainerLow,
+      backgroundColor: colors.m3.surfaceContainerLowest,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
     },
-    tableHeader: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[16], paddingHorizontal: tokens.spacing[16], paddingVertical: tokens.spacing[12] },
-    tableHeaderText: { ...tokens.typography.labelLarge, color: colors.m3.onSurfaceVariant },
-    listTitle: { ...tokens.typography.titleMedium, color: colors.m3.onSurface, paddingHorizontal: tokens.spacing[4] },
+    listHeaderRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingHorizontal: tokens.spacing[16],
+      paddingBottom: tokens.spacing[8],
+    },
+    tableHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[16],
+      paddingHorizontal: tokens.spacing[16],
+      paddingVertical: tokens.spacing[12],
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: colors.m3.outlineVariant,
+    },
+    tableHeaderText: {
+      ...tokens.typography.labelLarge,
+      fontWeight: tokens.fontWeight.semiBold,
+      color: colors.m3.onSurfaceVariant,
+    },
+    listTitle: {
+      ...tokens.typography.titleMedium,
+      fontVariant: ["tabular-nums"],
+      color: colors.m3.onSurface,
+    },
     orientationBox: {
       flexDirection: "row",
       alignItems: "center",

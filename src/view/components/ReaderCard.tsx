@@ -3,17 +3,14 @@ import { StyleSheet, Text, View } from "react-native";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { Avatar } from "@/view/components/Avatar";
-import { IpeMark } from "@/view/components/IpeMark";
 
 export type ReaderCardProps = {
   name: string;
   /** Linha de apoio: avaliação e bairro, por exemplo. */
   subtitle: string;
   photoUrl?: string;
-  /** Rótulo pequeno acima do nome; padrão "Cartão de leitor". */
+  /** Rótulo pequeno acima do nome; omitido, o cartão mostra só o nome. */
   eyebrow?: string;
-  /** Selo do ipê no canto quando há foto; o Meu perfil o esconde para dar espaço ao nome (Spec 081). */
-  showMark?: boolean;
   /** Conteúdo extra abaixo da linha de apoio, como o Instagram do Meu perfil (Spec 081). */
   footer?: ReactNode;
   /** Fase do Ciclo do Ipê (ex.: "Semente", "Broto", "Florada do Ipê", "Ipê Frondoso"). */
@@ -21,37 +18,36 @@ export type ReaderCardProps = {
 };
 
 /**
- * "Cartão de leitor" (Spec 078): capa de livro em âmbar de ipê, com lombada marrom à esquerda, avatar com
- * anel de flor, nome em serifa e o ipê da marca brotando no canto.
+ * Prévia de como a pessoa aparece na comunidade (Spec 078): foto com anel da florada, nome em serifa e a
+ * linha de apoio. O anel substitui a moldura ilustrada do ipê, que competia com a foto.
  */
 export function ReaderCard({
   name,
   subtitle,
   photoUrl,
-  eyebrow = "Cartão de leitor",
-  showMark = true,
+  eyebrow,
   footer,
   cycleStage,
 }: ReaderCardProps) {
-  const withMark = Boolean(photoUrl) && showMark;
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   return (
     <View accessible={!footer} accessibilityLabel={`Cartão de leitor de ${name}`} style={styles.card}>
-      <View style={styles.spine} />
       <View style={styles.avatarRing}>
-        <Avatar name={name} photoUrl={photoUrl} size={64} />
+        <Avatar name={name} photoUrl={photoUrl} size={72} />
       </View>
       <View style={styles.text}>
-        <View style={styles.eyebrowRow}>
-          <Text style={styles.eyebrow}>{eyebrow}</Text>
-          {cycleStage ? (
-            <View style={styles.cycleBadge}>
-              <Text style={styles.cycleBadgeText}>{cycleStage}</Text>
-            </View>
-          ) : null}
-        </View>
+        {eyebrow || cycleStage ? (
+          <View style={styles.eyebrowRow}>
+            {eyebrow ? <Text style={styles.eyebrow}>{eyebrow}</Text> : null}
+            {cycleStage ? (
+              <View style={styles.cycleBadge}>
+                <Text style={styles.cycleBadgeText}>{cycleStage}</Text>
+              </View>
+            ) : null}
+          </View>
+        ) : null}
         <Text style={styles.name} numberOfLines={2}>
           {name}
         </Text>
@@ -60,11 +56,6 @@ export function ReaderCard({
         </Text>
         {footer}
       </View>
-      {withMark ? (
-        <View style={styles.mark}>
-          <IpeMark size={52} testID="reader-card-ipe" />
-        </View>
-      ) : null}
     </View>
   );
 }
@@ -74,37 +65,23 @@ function createStyles(colors: ColorPalette) {
     card: {
       flexDirection: "row",
       alignItems: "center",
-      gap: tokens.spacing[12],
-      minHeight: 112,
-      paddingVertical: tokens.spacing[16],
-      paddingLeft: tokens.spacing[32],
-      paddingRight: tokens.spacing[12],
-      borderRadius: tokens.radius.medium,
-      overflow: "hidden",
-      backgroundColor: colors.ipe.petalSoft,
-    },
-    spine: {
-      position: "absolute",
-      left: 0,
-      top: 0,
-      bottom: 0,
-      width: 22,
-      alignItems: "center",
-      justifyContent: "center",
-      backgroundColor: colors.ipe.trunk,
-    },
-    mark: {
-      width: tokens.spacing[56],
-      flexShrink: 0,
-      alignItems: "center",
-      justifyContent: "center",
+      gap: tokens.spacing[16],
+      minHeight: 96,
+      paddingVertical: tokens.spacing[12],
+      paddingHorizontal: tokens.spacing[16],
+      borderRadius: tokens.radius.large,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.book.paperEdge,
     },
     avatarRing: {
-      padding: tokens.spacing[3],
+      padding: tokens.spacing[2],
       borderRadius: tokens.radius.full,
-      backgroundColor: colors.ipe.bloom,
+      borderWidth: 2,
+      borderColor: colors.ipe.bloom,
+      backgroundColor: colors.ipe.container,
     },
-    text: { flex: 1, minWidth: 0, gap: tokens.spacing[4] },
+    text: { flex: 1, minWidth: 0, gap: tokens.spacing[2] },
     eyebrowRow: {
       flexDirection: "row",
       flexWrap: "wrap",
@@ -127,17 +104,14 @@ function createStyles(colors: ColorPalette) {
     eyebrow: {
       ...tokens.typography.labelSmall,
       fontWeight: tokens.fontWeight.semiBold,
-      letterSpacing: tokens.letterSpacing.overline,
-      textTransform: "uppercase",
       color: colors.ipe.onContainer,
-      opacity: 0.75,
     },
     name: {
       ...tokens.typography.titleLarge,
       fontFamily: fontFamily.brand,
       fontWeight: tokens.fontWeight.bold,
-      color: colors.ipe.onContainer,
+      color: colors.brandBrown,
     },
-    subtitle: { ...tokens.typography.bodyMedium, color: colors.ipe.onContainer },
+    subtitle: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
   });
 }
