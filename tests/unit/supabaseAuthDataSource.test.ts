@@ -225,6 +225,22 @@ describe("SupabaseAuthDataSource (Issue #97)", () => {
       );
       await expect(ds.setSessionFromUrl(tokensNoHash)).resolves.toMatchObject({ id: "atacante" });
     });
+
+    it("traduz o link expirado devolvido pelo provedor em ExpiredLinkError", async () => {
+      const ds = new SupabaseAuthDataSource(fakeClient({}), "https://app/redefinir-senha");
+      await expect(
+        ds.setSessionFromUrl(
+          "ipebook://auth/callback#error=access_denied&error_code=otp_expired&error_description=Email+link+is+invalid+or+has+expired",
+        ),
+      ).rejects.toBeInstanceOf(ExpiredLinkError);
+    });
+
+    it("traduz a recusa do provedor sem expiração em falha de login", async () => {
+      const ds = new SupabaseAuthDataSource(fakeClient({}), "https://app/redefinir-senha");
+      await expect(ds.setSessionFromUrl("ipebook://auth/callback#error=access_denied")).rejects.toThrow(
+        "Não foi possível concluir o login com o provedor. Tente novamente.",
+      );
+    });
   });
 
   it("apaga as fotos da pessoa no storage antes de excluir a conta (LGPD)", async () => {

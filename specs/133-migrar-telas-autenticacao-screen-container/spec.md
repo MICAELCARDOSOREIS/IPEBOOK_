@@ -1,6 +1,6 @@
 # Especificação 133 — Migrar telas de autenticação para ScreenContainer e aprimorar foco e erros
 
-**Estado:** Especificada em 2026-11-10  
+**Estado:** Concluída em 2026-11-10 (validada localmente)  
 **ADR:** [0106](../../docs/adr/0106-migracao-telas-autenticacao-screen-container-e-ihc.md)  
 **Issue:** [#217](https://github.com/clarinhamartins/ipebook/issues/217)
 

@@ -96,4 +96,30 @@ describe("tela de callback de autenticação (AuthCallback)", () => {
     fireEvent.press(link);
     expect(onBackToSignIn).toHaveBeenCalled();
   });
+
+  it("mostra o motivo publicado pelo ViewModel depois de a tentativa falhar", async () => {
+    const handleAuthCallback = vi.fn().mockResolvedValue(false);
+    mockAuth({ user: null, loading: true, error: null }, { handleAuthCallback });
+    const onSuccess = vi.fn();
+    const url = "ipebook://auth/callback#error=access_denied";
+
+    let view!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      view = await render(<AuthCallback url={url} onSuccess={onSuccess} />);
+    });
+    expect(screen.getByText("Não foi possível concluir o login.")).toBeDefined();
+
+    // O ViewModel publica o motivo junto com o fim da tentativa; a tela acompanha o novo estado.
+    mockAuth(
+      { user: null, loading: false, error: "Não foi possível concluir o login com o provedor. Tente novamente." },
+      { handleAuthCallback },
+    );
+    await act(async () => {
+      await view.rerender(<AuthCallback url={url} onSuccess={onSuccess} />);
+    });
+    expect(
+      screen.getByText("Não foi possível concluir o login com o provedor. Tente novamente."),
+    ).toBeDefined();
+    expect(screen.queryByText("Não foi possível concluir o login.")).toBeNull();
+  });
 });
