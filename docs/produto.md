@@ -130,9 +130,8 @@ específico, basta atualizar esta tabela.
 
 ## Próximos passos e pendências
 
-Issues antigas citadas aqui (#93 filtros, #73 perfil público, #109 Cloudflare) já foram concluídas; ver `docs/estado.md`. As migrações de moderação e limites anti-abuso já estão aplicadas no Supabase remoto (43/43), e o projeto do Sentry já foi criado com DSN no `.env` e no EAS. Pendências atuais para o lançamento:
+Issues antigas citadas aqui (#93 filtros, #73 perfil público, #109 Cloudflare) já foram concluídas; ver `docs/estado.md`. As migrações de moderação e limites anti-abuso já estão aplicadas no Supabase remoto (43/43), e o projeto do Sentry já foi criado com DSN no `.env` e no EAS. O cadastro dos moderadores (Spec 102) foi feito em 2026-11-12 pelo SQL do Supabase, cobrindo os quatro integrantes de [docs/equipe.md](equipe.md); conferir o acesso de cada conta à tela de Moderação continua sendo validação no aparelho/navegador. Pendências atuais para o lançamento:
 
-- Cadastrar o primeiro moderador (Spec 102).
 - Beta na Play Store: seguir [docs/loja/beta-play-store.md](loja/beta-play-store.md).
 - Revisão jurídica dos termos e da política de privacidade e publicação em um link público.
 - Teste completo no aparelho com duas contas (pedido, chat, encontro, QR, avaliação, avisos e moderação).
