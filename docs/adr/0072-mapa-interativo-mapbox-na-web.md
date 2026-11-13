@@ -1,6 +1,6 @@
 # 0072 — Mapa interativo do Mapbox na web
 
-Data: 2026-10-28. Status: aceito. Substitui a parte da web do [ADR 0068](0068-mapa-estatico-mapbox-no-encontro.md) (o app nativo já seguia o [ADR 0069](0069-mapa-interativo-mapbox-no-app.md)). Especificação: [094](../../specs/094-mapa-combinar-encontro/spec.md).
+Data: 2026-10-28. Status: aceito; substituído pelo [ADR 0111](0111-encontro-sem-mapa-mapbox.md). Substitui a parte da web do [ADR 0068](0068-mapa-estatico-mapbox-no-encontro.md) (o app nativo já seguia o [ADR 0069](0069-mapa-interativo-mapbox-no-app.md)). Especificação: [094](../../specs/094-mapa-combinar-encontro/spec.md).
 
 ## Contexto
 A web mostrava só uma imagem estática do Mapbox: sem zoom, sem arraste e sem tocar no pino, enquanto o app tinha o mapa interativo. Pediu-se usar o mapa de verdade também na web.

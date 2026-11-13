@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Animated, PanResponder, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions, type ScrollViewInstance } from "react-native";
+import { useEffect, useMemo, useRef } from "react";
+import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions, type ScrollViewInstance } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { makeAuthViewModel, makeScheduleMeetingViewModel } from "@/di/container";
 import { PIRIPIRI_MEETING_POINTS } from "@/model/entities/meetingPoint";
@@ -13,18 +13,12 @@ import { FilledButton } from "@/view/components/FilledButton";
 import { LoadingState } from "@/view/components/LoadingState";
 import { TextButton } from "@/view/components/TextButton";
 import { TopAppBar } from "@/view/components/TopAppBar";
-import { MeetingMap } from "@/view/requests/MeetingMap";
 import { OptionChip, ScheduleMeetingWideLayout } from "@/view/requests/ScheduleMeetingWideLayout";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { standardVerticalScrollProps, standardHorizontalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 
 import { withPress } from "@/view/pressFeedback";
-/** Parte da altura que o painel do formulário cobre sobre o mapa. */
-const SHEET_FRACTION = 0.6;
-/** Altura do puxador e do trecho do painel que fica à vista quando ele está recolhido (título "Onde" e dica). */
-const HANDLE_ZONE = 36;
-const PEEK_CONTENT = 76;
 
 export type ScheduleMeetingProps = {
   requestId: string;
@@ -47,74 +41,13 @@ export function ScheduleMeeting({ requestId, sessionUserId, onBack, onSent }: Sc
   const wideWeb = useIsWideWeb();
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  // Mapa desativado a pedido do usuário (fluxo direto com lista de pontos seguros).
-  const hasMap = false;
-  const [stageHeight, setStageHeight] = useState(0);
-  const [footerHeight, setFooterHeight] = useState(0);
-  const [expanded, setExpanded] = useState(false);
-  const heightAnim = useRef(new Animated.Value(0)).current;
-  const heightValue = useRef(0);
-  const dragStart = useRef(0);
-  const placed = useRef(false);
-  // Painel de altura fixa; recolhido, deixa à vista só o puxador, o início da lista e o rodapé com a ação.
-  const expandedHeight = Math.round(stageHeight * SHEET_FRACTION);
-  const collapsedHeight = Math.min(expandedHeight, HANDLE_ZONE + PEEK_CONTENT + footerHeight);
-  const sheetHeight = expanded ? expandedHeight : collapsedHeight;
   const scrollRef = useRef<ScrollViewInstance>(null);
   const dayY = useRef(0);
 
+  // Escolhido o local, leva a lista ao "Dia" para o próximo passo não ficar escondido abaixo da dobra.
   useEffect(() => {
-    const id = heightAnim.addListener(({ value }) => { heightValue.current = value; });
-    return () => heightAnim.removeListener(id);
-  }, [heightAnim]);
-
-  // Começa recolhido, embaixo; depois anima entre os dois pontos de parada.
-  useEffect(() => {
-    if (stageHeight === 0 || footerHeight === 0) return;
-    const target = expanded ? expandedHeight : collapsedHeight;
-    if (!placed.current) {
-      placed.current = true;
-      heightAnim.setValue(target);
-      return;
-    }
-    Animated.spring(heightAnim, { toValue: target, useNativeDriver: false, bounciness: 4 }).start();
-  }, [expanded, expandedHeight, collapsedHeight, stageHeight, footerHeight, heightAnim]);
-
-  const panResponder = useMemo(
-    () =>
-      PanResponder.create({
-        onStartShouldSetPanResponder: () => true,
-        onPanResponderGrant: () => {
-          heightAnim.stopAnimation();
-          dragStart.current = heightValue.current;
-        },
-        onPanResponderMove: (_event, gesture) => {
-          heightAnim.setValue(Math.min(expandedHeight, Math.max(collapsedHeight, dragStart.current - gesture.dy)));
-        },
-        onPanResponderRelease: (_event, gesture) => {
-          if (Math.abs(gesture.dy) < 6) {
-            setExpanded((value) => !value);
-            return;
-          }
-          const end = dragStart.current - gesture.dy;
-          setExpanded(gesture.vy < -0.4 ? true : gesture.vy > 0.4 ? false : end > (expandedHeight + collapsedHeight) / 2);
-        },
-        onPanResponderTerminate: () => {
-          heightAnim.setValue(expanded ? expandedHeight : collapsedHeight);
-        },
-      }),
-    [collapsedHeight, expandedHeight, expanded, heightAnim],
-  );
-
-  // Escolhido o local (na lista ou no pino), leva o painel ao "Dia" para o próximo passo não ficar escondido abaixo da dobra.
-  useEffect(() => {
-    if (expanded && state.pointName && state.dayIndex === null) scrollRef.current?.scrollTo({ y: Math.max(0, dayY.current - 8), animated: true });
-  }, [expanded, state.pointName, state.dayIndex]);
-
-  const selectFromMap = (name: string) => {
-    actions.selectPoint(name);
-    setExpanded(true);
-  };
+    if (state.pointName && state.dayIndex === null) scrollRef.current?.scrollTo({ y: Math.max(0, dayY.current - 8), animated: true });
+  }, [state.pointName, state.dayIndex]);
 
   const selectedPoint = PIRIPIRI_MEETING_POINTS.find((item) => item.name === state.pointName) ?? null;
 
@@ -136,7 +69,6 @@ export function ScheduleMeeting({ requestId, sessionUserId, onBack, onSent }: Sc
     return (
       <ScheduleMeetingWideLayout
         rescheduling={rescheduling}
-        hasMap={hasMap}
         windowWidth={windowWidth}
         windowHeight={windowHeight}
         pointName={state.pointName}
@@ -153,7 +85,6 @@ export function ScheduleMeeting({ requestId, sessionUserId, onBack, onSent }: Sc
         errorRef={errorRef}
         onBack={guardedBack}
         onSelectPoint={(name) => actions.selectPoint(name)}
-        onSelectFromMap={selectFromMap}
         onSelectDay={(index) => actions.selectDay(index)}
         onSelectHour={(hour) => actions.selectHour(hour)}
         onSubmit={async () => {
@@ -165,12 +96,8 @@ export function ScheduleMeeting({ requestId, sessionUserId, onBack, onSent }: Sc
 
   return (
     <View style={styles.page}>
-      {/* Com mapa, ele ocupa a tela toda (inclusive atrás da barra e do painel). */}
-      {hasMap && !state.loading && !state.loadError ? (
-        <MeetingMap selectedName={state.pointName} coveredBottom={SHEET_FRACTION} sheetHeight={sheetHeight} onSelect={selectFromMap} />
-      ) : null}
-      <SafeAreaView style={styles.safe} pointerEvents="box-none" edges={hasMap ? ["bottom", "left", "right"] : undefined}>
-      <TopAppBar contentMaxWidth={560} floating={hasMap} title={rescheduling ? "Reagendar encontro" : "Combinar encontro"} onBack={guardedBack} />
+      <SafeAreaView style={styles.safe} pointerEvents="box-none">
+      <TopAppBar contentMaxWidth={560} title={rescheduling ? "Reagendar encontro" : "Combinar encontro"} onBack={guardedBack} />
       {state.loading ? (
         <View style={styles.loadingContainer}>
           <LoadingState label="Carregando o encontro" variant="detail" />
@@ -180,51 +107,10 @@ export function ScheduleMeeting({ requestId, sessionUserId, onBack, onSent }: Sc
           <ErrorState message={state.loadError} onRetry={() => void actions.reload()} />
         </View>
       ) : (
-        <View style={styles.stage} pointerEvents="box-none" onLayout={(event) => setStageHeight(Math.round(event.nativeEvent.layout.height))}>
-          <Animated.View
-            style={hasMap ? [styles.sheet, { height: heightAnim }] : styles.sheetFull}
-          >
-          {hasMap ? (
-            <View
-              {...panResponder.panHandlers}
-              accessible
-              accessibilityRole="button"
-              accessibilityLabel={expanded ? "Recolher a lista de locais" : "Expandir a lista de locais"}
-              accessibilityActions={[{ name: "activate" }]}
-              onAccessibilityAction={() => setExpanded((value) => !value)}
-              style={styles.handleZone}
-            >
-              <View style={styles.handle} />
-            </View>
-          ) : null}
-          {hasMap && !expanded ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Expandir a lista de locais"
-              onPress={() => setExpanded(true)}
-              style={withPress(styles.peek)}
-            >
-              {selectedPoint ? (
-                <>
-                  <View style={styles.peekBadge}>
-                    <Text style={styles.peekBadgeText}>{PIRIPIRI_MEETING_POINTS.indexOf(selectedPoint) + 1}</Text>
-                  </View>
-                  <View style={styles.peekText}>
-                    <Text numberOfLines={1} style={styles.peekTitle}>{selectedPoint.name}</Text>
-                    <Text numberOfLines={1} style={styles.peekHint}>Toque para escolher o dia e o horário</Text>
-                  </View>
-                </>
-              ) : (
-                <View style={styles.peekText}>
-                  <Text style={styles.sectionLabel}>Onde</Text>
-                  <Text numberOfLines={1} style={styles.peekHint}>Toque num pino ou arraste para ver os locais.</Text>
-                </View>
-              )}
-            </Pressable>
-          ) : null}
+        <View style={styles.stage} pointerEvents="box-none">
+          <View style={styles.sheetFull}>
           <ScrollView
             ref={scrollRef}
-            scrollEnabled={!hasMap || expanded}
             style={styles.sheetScroll}
             contentContainerStyle={[styles.scroll, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
             {...standardVerticalScrollProps}
@@ -239,9 +125,7 @@ export function ScheduleMeeting({ requestId, sessionUserId, onBack, onSent }: Sc
 
               <View style={styles.whereHeader}>
                 <Text accessibilityRole="header" style={styles.sectionLabel}>Onde</Text>
-                <Text style={styles.whereHint}>
-                  {hasMap ? "Toque num pino do mapa ou escolha na lista." : "Escolha um ponto público e seguro."}
-                </Text>
+                <Text style={styles.whereHint}>Escolha um ponto público e seguro.</Text>
               </View>
               <View accessibilityRole="radiogroup" accessibilityLabel="Local do encontro" style={styles.places}>
                 {PIRIPIRI_MEETING_POINTS.map((point, index) => {
@@ -327,7 +211,7 @@ export function ScheduleMeeting({ requestId, sessionUserId, onBack, onSent }: Sc
             </View>
           </ScrollView>
           {/* Ação principal fixa no rodapé, como em `06.04`. */}
-          <View style={styles.footer} onLayout={(event) => setFooterHeight(Math.round(event.nativeEvent.layout.height))}>
+          <View style={styles.footer}>
             <View style={styles.footerContent}>
               <View accessibilityLiveRegion="polite" style={styles.summary}>
                 <AppIcon name={summary.complete ? "check" : "info"} size={18} color={summary.complete ? colors.m3.primary : colors.m3.onSurfaceVariant} />
@@ -345,7 +229,7 @@ export function ScheduleMeeting({ requestId, sessionUserId, onBack, onSent }: Sc
               {rescheduling ? <TextButton label="Cancelar" onPress={guardedBack} /> : null}
             </View>
           </View>
-          </Animated.View>
+          </View>
         </View>
       )}
       </SafeAreaView>
@@ -384,52 +268,6 @@ function createStyles(colors: ColorPalette) {
       paddingTop: tokens.spacing[16],
     },
     stage: { flex: 1 },
-    sheet: {
-      position: "absolute",
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: colors.m3.surfaceContainerLow,
-      borderTopLeftRadius: tokens.radius.extraLarge,
-      borderTopRightRadius: tokens.radius.extraLarge,
-      overflow: "hidden",
-      elevation: 8,
-      shadowColor: colors.m3.shadow,
-      shadowOpacity: 0.25,
-      shadowRadius: 12,
-    },
-    peek: {
-      position: "absolute",
-      top: HANDLE_ZONE,
-      left: 0,
-      right: 0,
-      height: PEEK_CONTENT,
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[12],
-      paddingHorizontal: tokens.spacing[16],
-      backgroundColor: colors.m3.surfaceContainerLow,
-      zIndex: 1,
-    },
-    peekBadge: {
-      width: 40,
-      height: 40,
-      borderRadius: tokens.radius.medium,
-      backgroundColor: colors.m3.secondaryContainer,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    peekBadgeText: { ...tokens.typography.titleLarge, fontFamily: fontFamily.brand, color: colors.m3.onSecondaryContainer },
-    peekText: { flex: 1, gap: tokens.spacing[4] },
-    peekTitle: { ...tokens.typography.bodyLarge, fontFamily: fontFamily.semiBold, color: colors.m3.primary },
-    peekHint: { ...tokens.typography.bodyMedium, fontFamily: fontFamily.regular, color: colors.m3.onSurfaceVariant },
-    handleZone: { height: HANDLE_ZONE, justifyContent: "center", alignItems: "center" },
-    handle: {
-      width: 32,
-      height: 4,
-      borderRadius: tokens.radius.full,
-      backgroundColor: colors.m3.outlineVariant,
-    },
     summary: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[8] },
     summaryText: { flex: 1, ...tokens.typography.bodyMedium, fontFamily: fontFamily.regular, color: colors.m3.onSurfaceVariant },
     summaryTextDone: { fontFamily: fontFamily.semiBold, color: colors.m3.onSurface },

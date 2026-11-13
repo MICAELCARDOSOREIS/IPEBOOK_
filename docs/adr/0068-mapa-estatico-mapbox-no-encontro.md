@@ -1,6 +1,6 @@
 # 0068 — Mapa estático do Mapbox em "Combinar encontro"
 
-Data: 2026-10-27. Status: aceito; substituído parcialmente pelo [ADR 0069](0069-mapa-interativo-mapbox-no-app.md) no app nativo (a web mantém o mapa estático).
+Data: 2026-10-27. Status: aceito; substituído pelo [ADR 0111](0111-encontro-sem-mapa-mapbox.md) (o encontro voltou a ser escolhido pela lista, sem mapa). Antes, substituído parcialmente pelo [ADR 0069](0069-mapa-interativo-mapbox-no-app.md) no app nativo.
 
 ## Contexto
 A escolha do local do encontro era só uma lista de texto (Spec 094). Pediu-se o mapa do Mapbox. O app já roda em APK de desenvolvimento, Expo Go e web.

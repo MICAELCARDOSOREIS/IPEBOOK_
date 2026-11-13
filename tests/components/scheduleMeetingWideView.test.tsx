@@ -55,7 +55,7 @@ function mockSchedule(
 }
 
 describe("ScheduleMeeting em Desktop Largo (Web, useIsWideWeb)", () => {
-  it("renderiza layout em 2 colunas com lista de locais, grade de dias, horários e mapa/guia", async () => {
+  it("renderiza layout em 2 colunas com lista de locais, grade de dias, horários e guia de pontos", async () => {
     const actions = mockSchedule({
       pointName: "Praça da Bandeira (Centro)",
       dayIndex: 0,
@@ -74,9 +74,10 @@ describe("ScheduleMeeting em Desktop Largo (Web, useIsWideWeb)", () => {
     expect(screen.getByRole("header", { name: "Combinar encontro" })).toBeDefined();
     expect(screen.getByRole("header", { name: "Escolha onde e quando encontrar" })).toBeDefined();
 
-    // Coluna Direita: Mapa e Dicas
+    // Coluna Direita: Guia de pontos e Dicas
     expect(screen.getByText("Pontos de Encontro em Piripiri")).toBeDefined();
     expect(screen.getByText("4 locais públicos oficiais")).toBeDefined();
+    expect(screen.getByText("4 Pontos Seguros em Piripiri")).toBeDefined();
     expect(screen.getByText("Dicas de Segurança Comunitária")).toBeDefined();
 
     // Detalhe do ponto selecionado na coluna direita e no card da lista
@@ -178,7 +179,7 @@ describe("ScheduleMeeting em Desktop Largo (Web, useIsWideWeb)", () => {
       );
     });
 
-    expect(screen.getByText("Escolha o local na lista ao lado ou no mapa")).toBeDefined();
+    expect(screen.getByText("Escolha o local na lista ao lado")).toBeDefined();
     expect(screen.getByText(/Pontos monitorados e centrais em Piripiri/)).toBeDefined();
   });
 

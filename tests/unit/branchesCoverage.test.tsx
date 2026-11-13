@@ -698,7 +698,7 @@ describe("Cobertura direcionada de branches (Branches Coverage Booster)", () => 
     });
   });
 
-  describe("Cobertura adicional de branches (searchFilters e MeetingMap)", () => {
+  describe("Cobertura adicional de branches (searchFilters)", () => {
     it("cobre branches de formatação e filtros de busca", async () => {
       const {
         filterBooks,

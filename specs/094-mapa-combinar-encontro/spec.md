@@ -1,5 +1,7 @@
 # Spec 094 — Mapa do Mapbox em "Combinar encontro"
 
+**Status:** Revogada pelo [ADR 0111](../../docs/adr/0111-encontro-sem-mapa-mapbox.md) em 2026-11-13. O encontro voltou a ser escolhido pela lista dos quatro pontos, sem mapa e sem `mapbox-gl`. O texto abaixo registra o comportamento que vigorou até essa data.
+
 ## Objetivo
 Mostrar, na tela `06.04 · Combinar encontro` (e no reagendamento), um mapa com os quatro pontos públicos de Piripiri para a pessoa ver onde cada local fica antes de escolher.
 

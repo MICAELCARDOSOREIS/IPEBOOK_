@@ -226,7 +226,6 @@ describe("Seções extraídas das telas (Spec 126 — E2 / CA5)", () => {
           <OptionChip label="14h" accessibilityLabel="Horário 14h" selected onPress={() => onSelectHour(14)} compact />
           <ScheduleMeetingWideLayout
             rescheduling={false}
-            hasMap={false}
             windowWidth={1280}
             windowHeight={800}
             pointName={PIRIPIRI_MEETING_POINTS[0].name}
@@ -243,7 +242,6 @@ describe("Seções extraídas das telas (Spec 126 — E2 / CA5)", () => {
             errorRef={{ current: null }}
             onBack={vi.fn()}
             onSelectPoint={onSelectPoint}
-            onSelectFromMap={onSelectPoint}
             onSelectDay={onSelectDay}
             onSelectHour={onSelectHour}
             onSubmit={onSubmit}

@@ -56,11 +56,6 @@ for (const rota of rotasDinamicas()) {
   );
 }
 const cabecalhos = readFileSync(join(raiz, "public/_headers"), "utf-8");
-conferir(
-  "CSP libera imagens do Mapbox (mapa estático do encontro)",
-  /img-src[^;]*https:\/\/api\.mapbox\.com/.test(cabecalhos),
-  "public/_headers não inclui https://api.mapbox.com em img-src; o mapa do encontro seria bloqueado na web.",
-);
 for (const origem of ["covers.openlibrary.org", "*.archive.org", "books.google.com"]) {
   conferir(
     `CSP libera as capas de ${origem} (ISBN e galeria de fotos)`,
