@@ -29,18 +29,18 @@ A decisão está registrada no [ADR 0002](adr/0002-adotar-expo-mvvm.md). O nome 
 ```mermaid
 flowchart TD
     R["app/index.tsx"] --> V["view/home.tsx"]
-    V --> VM["useHomeViewModel"]
+    V --> DI["di/container.ts (makeHomeViewModel)"]
+    DI --> VM["useHomeViewModel"]
     VM --> UC["IBookUseCases / BookUseCases"]
     UC --> DS["IBookDataSource"]
     MEM["MemoryBookDataSource"] -. implementa .-> DS
-    DI["di/container.ts"] -. compõe .-> UC
+    DI -. compõe .-> UC
     DI -. instancia .-> MEM
-    VM -. valor padrão injetado .-> DI
 ```
 
 Ao montar a tela, o hook chama `listBooks()`. O caso de uso delega a `list()` do datasource recebido no construtor. O datasource padrão retorna uma lista vazia. Quando resolve, o hook entrega o estado à View. Esta mostra lista, ausência de dados, carregamento ou erro.
 
-O container exporta uma instância compartilhada de `IBookUseCases`. Nos testes, a ViewModel recebe uma implementação alternativa pelo argumento; não é necessário conectar banco nem rede. O backend (memória ou Supabase) é escolhido no container, conforme a nota no topo deste documento.
+Conforme a Spec 126 ([ADR 0098](adr/0098-estrategia-de-injecao-de-dependencia-nos-viewmodels.md)), todos os ViewModels de `src/viewmodel/` recebem suas dependências por parâmetro obrigatório (nenhum ViewModel importa `src/di/container.ts`). O container expõe fábricas `make*ViewModel` consumidas pelas Views. Nos testes de hooks, a ViewModel recebe uma implementação alternativa diretamente pelo argumento; não é necessário conectar banco nem rede. O backend (memória ou Supabase) é escolhido no container, conforme a nota no topo deste documento.
 
 ## Contratos e modelo atual
 

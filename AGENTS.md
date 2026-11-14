@@ -188,7 +188,7 @@ Plataforma comunitária de circulação e troca de livros em Piripiri, PI. React
 
 - Camadas MVVM: `src/model/` (entidades e contratos), `src/usecase/`, `src/viewmodel/`, `src/view/` e `src/infra/`.
 - Container de Injeção de Dependências: `src/di/container.ts`.
-- Rotas e telas (Expo Router): `src/app/` (45 rotas estáticas com suporte PWA).
+- Rotas e telas (Expo Router): `src/app/` (46 rotas estáticas com suporte PWA).
 - Banco de dados e políticas RLS: migrações em `supabase/migrations/` e catálogo semente em `scripts/popular-catalogo-piripiri.mjs`.
 - Rastreamento e continuidade: `docs/estado.md`, `docs/produto.md` e `docs/adr/README.md`.
 

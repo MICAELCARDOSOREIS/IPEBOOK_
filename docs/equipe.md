@@ -18,7 +18,7 @@ Este projeto integra as atividades avaliativas do curso de Tecnologia em Anális
 ## 👥 Integrantes da Equipe
 
 ### 1. Micael Cardoso Reis
-* **GitHub:** [@Ghostyxseven](https://github.com/Ghostyxseven)
+* **GitHub:** [@MICAELCARDOSOREIS](https://github.com/MICAELCARDOSOREIS) / [@Ghostyxseven](https://github.com/Ghostyxseven)
 * **E-mails no Git:** `cardosomicael245@gmail.com` / `104681133+Ghostyxseven@users.noreply.github.com`
 * **Principais Atribuições:** Arquitetura MVVM em 7 camadas, governança e pipeline de CI, Design System Material 3 Expressive, validações arquiteturais automatizadas e funcionalidades hiperlocais (bairros de Piripiri, QR Code e busca textual).
 
