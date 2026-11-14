@@ -1,5 +1,5 @@
-import React from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import React, { useState } from "react";
+import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import type { Book } from "@/model/entities/book";
 import { BookCover } from "@/view/components/BookCover";
 import { ModalityCoverArea } from "@/view/components/ModalityCoverArea";
@@ -31,6 +31,7 @@ export function SearchBookCard({
 }: SearchBookCardProps) {
   const { colors } = useTheme();
   const styles = React.useMemo(() => createCardStyles(colors), [colors]);
+  const [isHovered, setIsHovered] = useState(false);
 
   const priceOrCondition =
     item.price != null
@@ -47,11 +48,20 @@ export function SearchBookCard({
       : { background: colors.nature.sprout, text: colors.nature.foliageDeep, label: "Disponível" };
 
   return (
-    <View style={[styles.card, wideWeb && styles.cardWide, wideWeb && { maxWidth: webColumnWidth(gridColumns) }]}>
+    <View
+      style={[
+        styles.card,
+        wideWeb && styles.cardWide,
+        wideWeb && isHovered && styles.cardWideHovered,
+        wideWeb && { maxWidth: webColumnWidth(gridColumns) },
+      ]}
+    >
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`Ver detalhe de ${item.title}, ${item.author}${item.neighborhood ? ` em ${item.neighborhood}` : ""}`}
         onPress={onPress}
+        onHoverIn={() => setIsHovered(true)}
+        onHoverOut={() => setIsHovered(false)}
         style={({ pressed }) => [
           styles.cardMain,
           wideWeb && styles.cardMainWide,
@@ -59,25 +69,35 @@ export function SearchBookCard({
         ]}
       >
         <ModalityCoverArea modality={item.modality}>
-          <BookCover id={item.id} title={item.title} photoUrl={item.photoUrl} variant={wideWeb ? "card" : "list"} />
+          <View style={styles.coverShadowWrap}>
+            <BookCover
+              id={item.id}
+              title={item.title}
+              photoUrl={item.photoUrl}
+              variant={wideWeb ? "card" : "list"}
+              showRibbon={item.modality === "donation" || item.modality === "trade"}
+            />
+          </View>
         </ModalityCoverArea>
         <View style={[styles.cardInfo, wideWeb && styles.cardInfoWide]}>
-          <View style={[styles.cardMetaRow, wideWeb && styles.cardMetaRowWide]}>
-            <View style={styles.cardBadgesGroup}>
-              <Tag variant={item.modality} />
-              {item.isBox ? (
-                <Tag
-                  variant="box"
-                  label={item.boxVolumesCount ? `Box (${item.boxVolumesCount} vols)` : "Box"}
-                />
-              ) : null}
+          <View style={styles.cardTopGroup}>
+            <View style={[styles.cardMetaRow, wideWeb && styles.cardMetaRowWide]}>
+              <View style={styles.cardBadgesGroup}>
+                <Tag variant={item.modality} />
+                {item.isBox ? (
+                  <Tag
+                    variant="box"
+                    label={item.boxVolumesCount ? `Box (${item.boxVolumesCount} vols)` : "Box"}
+                  />
+                ) : null}
+              </View>
+              <Text numberOfLines={1} style={styles.priceText}>{priceOrCondition}</Text>
             </View>
-            <Text numberOfLines={1} style={styles.priceText}>{priceOrCondition}</Text>
-          </View>
-          <View style={styles.cardTitleBlock}>
-            <Text numberOfLines={2} style={styles.cardTitle}>{item.title}</Text>
-            <Text numberOfLines={1} style={styles.cardAuthor}>{item.author}</Text>
-            {item.category ? <Text numberOfLines={1} style={styles.categoryBadge}>{item.category}</Text> : null}
+            <View style={styles.cardTitleBlock}>
+              <Text numberOfLines={2} style={styles.cardTitle}>{item.title}</Text>
+              <Text numberOfLines={1} style={styles.cardAuthor}>{item.author}</Text>
+              {item.category ? <Text numberOfLines={1} style={styles.categoryBadge}>{item.category}</Text> : null}
+            </View>
           </View>
           <View style={styles.cardFooterRow}>
             <View style={styles.cardLocationBadge}>
@@ -98,6 +118,7 @@ export function SearchBookCard({
         <FavoriteButton
           bookId={item.id}
           userId={userId}
+          variant={wideWeb ? "overlay" : "default"}
           onToggleSuccess={onFavoriteToggle}
         />
         {!wideWeb ? (
@@ -145,6 +166,13 @@ function createCardStyles(colors: ColorPalette) {
       marginBottom: tokens.spacing[20],
       position: "relative",
       borderRadius: tokens.radius.xl,
+      ...(Platform.OS === "web" ? ({ transitionProperty: "transform, box-shadow, border-color", transitionDuration: "150ms" } as never) : {}),
+    },
+    cardWideHovered: {
+      borderColor: colors.m3.outline,
+      elevation: 4,
+      shadowOpacity: 0.14,
+      shadowRadius: 12,
     },
     cardMain: {
       flex: 1,
@@ -152,6 +180,7 @@ function createCardStyles(colors: ColorPalette) {
       flexDirection: "row",
       alignItems: "center",
       gap: tokens.spacing[12],
+      ...(Platform.OS === "web" ? ({ cursor: "pointer", userSelect: "none" } as never) : {}),
     },
     cardMainWide: {
       flexDirection: "column",
@@ -161,6 +190,14 @@ function createCardStyles(colors: ColorPalette) {
     cardMainPressed: {
       transform: [{ scale: 0.985 }],
     },
+    coverShadowWrap: {
+      borderRadius: tokens.radius.cardSmall,
+      elevation: 5,
+      shadowColor: colors.m3.shadow,
+      shadowOffset: { width: 0, height: 3 },
+      shadowOpacity: 0.24,
+      shadowRadius: 6,
+    },
     cardInfo: {
       flex: 1,
       minWidth: 0,
@@ -168,9 +205,12 @@ function createCardStyles(colors: ColorPalette) {
       justifyContent: "center",
     },
     cardInfoWide: {
-      justifyContent: "flex-start",
+      justifyContent: "space-between",
       paddingRight: 0,
-      gap: tokens.spacing[8],
+      gap: tokens.spacing[10],
+    },
+    cardTopGroup: {
+      gap: tokens.spacing[6],
     },
     cardTitleBlock: {
       gap: 2,
@@ -262,8 +302,8 @@ function createCardStyles(colors: ColorPalette) {
     },
     cardActionsWide: {
       position: "absolute",
-      top: tokens.spacing[14],
-      right: tokens.spacing[14],
+      top: tokens.spacing[12],
+      right: tokens.spacing[12],
       flexDirection: "row",
       width: "auto",
       height: "auto",

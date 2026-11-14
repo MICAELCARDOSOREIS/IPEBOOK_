@@ -27,7 +27,10 @@ function getModalityTheme(modality: BookModality, colors: ColorPalette) {
       return {
         accent: colors.action,
         bgSelected: colors.badge.sale.background,
+        bgUnselected: colors.nature.sprout,
+        borderUnselected: colors.action,
         textSelected: colors.badge.sale.text,
+        textUnselected: colors.actionDeep,
         iconBgSelected: colors.soft,
         iconBgUnselected: colors.soft,
         iconColorSelected: colors.action,
@@ -37,27 +40,33 @@ function getModalityTheme(modality: BookModality, colors: ColorPalette) {
       };
     case "trade":
       return {
-        accent: colors.gold,
+        accent: colors.brandBrown,
         bgSelected: colors.badge.trade.background,
+        bgUnselected: colors.book.paperEdge,
+        borderUnselected: colors.brandBrown,
         textSelected: colors.badge.trade.text,
+        textUnselected: colors.brandBrown,
         iconBgSelected: colors.ipe.container,
-        iconBgUnselected: colors.ipe.container,
-        iconColorSelected: colors.gold,
-        iconColorUnselected: colors.gold,
-        radioBorder: colors.gold,
-        radioInner: colors.gold,
+        iconBgUnselected: colors.book.page,
+        iconColorSelected: colors.brandBrown,
+        iconColorUnselected: colors.brandBrown,
+        radioBorder: colors.brandBrown,
+        radioInner: colors.brandBrown,
       };
     case "donation":
       return {
-        accent: colors.badge.donation.text,
+        accent: colors.ipe.bloomDeep,
         bgSelected: colors.badge.donation.background,
+        bgUnselected: colors.ipe.container,
+        borderUnselected: colors.ipe.bloom,
         textSelected: colors.badge.donation.text,
-        iconBgSelected: colors.ipe.container,
-        iconBgUnselected: colors.ipe.container,
+        textUnselected: colors.ipe.onContainer,
+        iconBgSelected: colors.ipe.petalSoft,
+        iconBgUnselected: colors.ipe.petalSoft,
         iconColorSelected: colors.badge.donation.text,
         iconColorUnselected: colors.badge.donation.text,
-        radioBorder: colors.badge.donation.text,
-        radioInner: colors.badge.donation.text,
+        radioBorder: colors.ipe.bloomDeep,
+        radioInner: colors.ipe.bloomDeep,
       };
   }
 }
@@ -227,8 +236,9 @@ export function CreateListingStep1({
                   style={withPress([
                     styles.webModalityCard,
                     {
-                      borderColor: isSelected ? theme.accent : colors.m3.outlineVariant,
-                      backgroundColor: isSelected ? theme.bgSelected : colors.m3.surfaceContainerLow,
+                      borderColor: isSelected ? theme.accent : theme.borderUnselected,
+                      borderWidth: isSelected ? 2 : 1.5,
+                      backgroundColor: isSelected ? theme.bgSelected : theme.bgUnselected,
                     },
                   ])}
                 >
@@ -261,7 +271,10 @@ export function CreateListingStep1({
                   <Text
                     style={[
                       styles.webModalityTitle,
-                      isSelected && { color: theme.textSelected, fontWeight: tokens.fontWeight.bold },
+                      {
+                        color: isSelected ? theme.textSelected : theme.textUnselected,
+                        fontWeight: isSelected ? tokens.fontWeight.bold : tokens.fontWeight.semiBold,
+                      },
                     ]}
                   >
                     {item.label}
@@ -269,7 +282,7 @@ export function CreateListingStep1({
                   <Text
                     style={[
                       styles.webModalityDesc,
-                      isSelected && { color: theme.textSelected, opacity: 0.85 },
+                      { color: isSelected ? theme.textSelected : theme.textUnselected, opacity: isSelected ? 0.85 : 1 },
                     ]}
                   >
                     {item.desc}

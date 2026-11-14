@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { AppIcon } from "@/view/components/AppIcon";
@@ -51,9 +51,25 @@ export function WebFilterSidebar({
 
   return (
     <View accessibilityLabel="Filtros" testID="web-filter-sidebar" style={styles.panel}>
-      {/* Rola por conta própria: em janelas baixas a coluna não cabe inteira ao lado dos resultados. */}
-      <ScrollView contentContainerStyle={styles.panelContent} keyboardShouldPersistTaps="handled">
-      <Text accessibilityRole="header" style={styles.title}>Filtros</Text>
+      {/* Rola por conta própria e fica visível ao rolar os resultados na web. */}
+      <ScrollView
+        style={styles.panelScroll}
+        contentContainerStyle={styles.panelContent}
+        keyboardShouldPersistTaps="handled"
+      >
+      <View style={styles.headerRow}>
+        <Text accessibilityRole="header" style={styles.title}>Filtros</Text>
+        {hasActiveFilters ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Limpar todos os filtros de busca"
+            onPress={onClear}
+            style={withPress(styles.clearButton)}
+          >
+            <Text style={styles.clear}>Limpar</Text>
+          </Pressable>
+        ) : null}
+      </View>
 
       <View style={styles.group}>
         <Text style={styles.groupLabel}>Modalidade</Text>
@@ -136,11 +152,6 @@ export function WebFilterSidebar({
         </View>
       ) : null}
 
-      {hasActiveFilters ? (
-        <Pressable accessibilityRole="button" accessibilityLabel="Limpar todos os filtros de busca" onPress={onClear}>
-          <Text style={styles.clear}>Limpar filtros</Text>
-        </Pressable>
-      ) : null}
       </ScrollView>
     </View>
   );
@@ -174,11 +185,27 @@ function createStyles(colors: ColorPalette) {
       borderRadius: tokens.radius.large,
       backgroundColor: colors.m3.surfaceContainerLow,
       alignSelf: "flex-start",
+      ...(Platform.OS === "web"
+        ? ({
+            position: "sticky",
+            top: tokens.spacing[24],
+            maxHeight: "calc(100vh - 112px)",
+          } as never)
+        : {}),
     },
-    panelContent: { gap: tokens.spacing[24], padding: tokens.spacing[24] },
+    panelScroll: {
+      ...(Platform.OS === "web" ? ({ overscrollBehavior: "contain" } as never) : {}),
+    },
+    panelContent: { gap: tokens.spacing[14], padding: tokens.spacing[20] },
+    headerRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: tokens.spacing[8],
+    },
     title: { ...tokens.typography.titleBlock, color: colors.m3.onSurface },
     group: { gap: tokens.spacing[4] },
-    groupLabel: { ...tokens.typography.labelLarge, color: colors.m3.onSurface, marginBottom: tokens.spacing[6] },
+    groupLabel: { ...tokens.typography.labelLarge, color: colors.m3.onSurface, marginBottom: tokens.spacing[4] },
     chips: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[8] },
     chip: {
       flexDirection: "row",
@@ -190,6 +217,7 @@ function createStyles(colors: ColorPalette) {
       borderWidth: 1,
       borderColor: colors.m3.outlineVariant,
       backgroundColor: colors.m3.surfaceContainerLowest,
+      ...(Platform.OS === "web" ? ({ cursor: "pointer", userSelect: "none" } as never) : {}),
     },
     chipSelected: {
       backgroundColor: colors.nature.foliage,
@@ -200,7 +228,13 @@ function createStyles(colors: ColorPalette) {
     },
     chipText: { ...tokens.typography.labelLarge, color: colors.m3.onSurfaceVariant },
     chipTextSelected: { color: colors.nature.onFoliage, fontWeight: tokens.fontWeight.semiBold },
-    checkRow: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[12], minHeight: 40 },
+    checkRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[12],
+      minHeight: 32,
+      ...(Platform.OS === "web" ? ({ cursor: "pointer", userSelect: "none" } as never) : {}),
+    },
     box: {
       width: 18,
       height: 18,
@@ -211,7 +245,14 @@ function createStyles(colors: ColorPalette) {
       justifyContent: "center",
     },
     boxChecked: { backgroundColor: colors.m3.primary, borderColor: colors.m3.primary },
-    checkLabel: { ...tokens.typography.bodyLarge, color: colors.m3.onSurface },
+    checkLabel: { ...tokens.typography.bodyLarge, color: colors.m3.onSurface, flexShrink: 1 },
+    clearButton: {
+      minHeight: 32,
+      justifyContent: "center",
+      paddingHorizontal: tokens.spacing[8],
+      borderRadius: tokens.radius.full,
+      ...(Platform.OS === "web" ? ({ cursor: "pointer", userSelect: "none" } as never) : {}),
+    },
     clear: { ...tokens.typography.labelLarge, color: colors.m3.primary },
   });
 }

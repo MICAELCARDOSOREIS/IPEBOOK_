@@ -82,14 +82,12 @@ export function createMyListingsStyles(colors: ColorPalette) {
       paddingHorizontal: tokens.spacing[16],
       paddingVertical: tokens.spacing[8],
       borderRadius: tokens.radius.full,
-      backgroundColor: colors.m3.secondaryContainer,
-      borderWidth: 1,
-      borderColor: colors.nature.foliage,
+      backgroundColor: colors.m3.primary,
     },
     announceButtonHeaderText: {
       ...tokens.typography.labelLarge,
       fontWeight: tokens.fontWeight.semiBold,
-      color: colors.m3.onSecondaryContainer,
+      color: colors.m3.onPrimary,
     },
     content: {
       flex: 1,
@@ -271,16 +269,16 @@ export function createMyListingsStyles(colors: ColorPalette) {
       color: colors.m3.primary,
       fontWeight: tokens.fontWeight.semiBold,
     },
-    // Abas em estilo pílulas/chips com rolagem horizontal (consistente com o resto do app)
-    segmentRowAndroid: { flexDirection: "row", gap: tokens.spacing[8] },
+    // Abas em pílulas que quebram linha (no celular, sem rolagem horizontal que corta o último chip).
+    segmentRowAndroid: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[8] },
     filterRowWide: { flexDirection: "row", gap: tokens.spacing[8], flexWrap: "wrap" },
-    filterScroll: { gap: tokens.spacing[8], paddingVertical: tokens.spacing[4] },
-    filterScrollView: { marginHorizontal: -tokens.spacing[16], paddingHorizontal: tokens.spacing[16] },
     hiddenAccessibilityTrigger: { position: "absolute", width: 1, height: 1, opacity: 0 },
     // iPhone: controle segmentado do Figma (trilho cinza, segmento selecionado claro e elevado).
     segmentTrackIOS: {
       flexDirection: "row",
+      flexWrap: "wrap",
       padding: tokens.spacing[2],
+      gap: tokens.spacing[8],
       borderRadius: tokens.radius.segmentOuter,
       backgroundColor: colors.m3.surfaceContainerHighest,
     },

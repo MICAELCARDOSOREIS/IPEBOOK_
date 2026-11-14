@@ -2,6 +2,7 @@ import React from "react";
 import renderer, { act } from "react-test-renderer";
 import { describe, expect, it, vi } from "vitest";
 import { SearchBookCard } from "@/view/search/SearchBookCard";
+import { FavoriteButton } from "@/view/components/FavoriteButton";
 import type { Book } from "@/model/entities/book";
 
 const sampleBook: Book = {
@@ -66,6 +67,8 @@ describe("SearchBookCard", () => {
     });
 
     expect(root!.root.findByProps({ accessibilityLabel: "Ver detalhe de Dom Casmurro, Machado de Assis" })).toBeTruthy();
+    const favoriteBtn = root!.root.findByType(FavoriteButton);
+    expect(favoriteBtn.props.variant).toBe("overlay");
   });
 });
 

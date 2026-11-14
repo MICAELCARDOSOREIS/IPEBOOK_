@@ -11,15 +11,19 @@ export type FavoriteButtonProps = {
   bookId: string;
   userId: string | null;
   onToggleSuccess?: (selected: boolean) => void;
+  /** Em `overlay`, exibe um fundo circular de alto contraste para sobrepor capas escuras. */
+  variant?: "default" | "overlay";
 };
-export function FavoriteButton({ bookId, userId, onToggleSuccess }: FavoriteButtonProps) {
+export function FavoriteButton({ bookId, userId, onToggleSuccess, variant = "default" }: FavoriteButtonProps) {
   const [state, actions] = makeFavoriteButtonViewModel(bookId, userId);
   const { colors } = useTheme();
   const [showToggleError, setShowToggleError] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   const { scale, isPressed, onPressIn, onPressOut } = useExpressivePress({
     disabled: state.loading,
     pressedScale: 0.88,
   });
+  const isOverlay = variant === "overlay";
 
   useEffect(() => {
     if (!showToggleError || !state.error) return;
@@ -44,21 +48,45 @@ export function FavoriteButton({ bookId, userId, onToggleSuccess }: FavoriteButt
           onPress={handleToggle}
           onPressIn={onPressIn}
           onPressOut={onPressOut}
+          onHoverIn={() => setIsHovered(true)}
+          onHoverOut={() => setIsHovered(false)}
           style={{
             width: tokens.accessibility.touchTarget,
             height: tokens.accessibility.touchTarget,
             borderRadius: isPressed ? tokens.shapeMorph.buttonPressed : tokens.shapeMorph.buttonRest,
-            backgroundColor: isPressed ? colors.m3.surfaceContainerHigh : "transparent",
+            backgroundColor: !isOverlay && isPressed ? colors.m3.surfaceContainerHigh : "transparent",
             alignItems: "center",
             justifyContent: "center",
             ...(Platform.OS === "web" ? ({ cursor: "pointer", userSelect: "none" } as never) : {}),
           }}
         >
-          <AppIcon
-            name={state.selected ? "heartFill" : "heart"}
-            size={24}
-            color={state.selected ? colors.ipe.bloom : colors.m3.primary}
-          />
+          <View
+            style={
+              isOverlay
+                ? {
+                    width: 36,
+                    height: 36,
+                    borderRadius: tokens.radius.full,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    backgroundColor: isPressed || isHovered ? colors.m3.surfaceContainerHigh : colors.m3.surfaceContainerLowest,
+                    borderWidth: 1,
+                    borderColor: colors.m3.outlineVariant,
+                    elevation: 2,
+                    shadowColor: colors.m3.shadow,
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.14,
+                    shadowRadius: 4,
+                  }
+                : undefined
+            }
+          >
+            <AppIcon
+              name={state.selected ? "heartFill" : "heart"}
+              size={isOverlay ? 20 : 24}
+              color={state.selected ? (isOverlay ? colors.ipe.bloomDeep : colors.ipe.bloom) : colors.m3.primary}
+            />
+          </View>
         </Pressable>
       </Animated.View>
       {showToggleError && state.error ? (

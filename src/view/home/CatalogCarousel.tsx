@@ -102,7 +102,7 @@ export function CatalogCarousel({
               title={item.title}
               photoUrl={item.photoUrl}
               variant="card"
-              width={wide ? 96 : undefined}
+              width={wide ? 112 : undefined}
               showRibbon={item.modality === "donation" || item.modality === "trade"}
             />
           </View>
@@ -204,26 +204,30 @@ export function CatalogCarousel({
             </View>
           ) : null}
         </View>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={`Item anterior de ${title}`}
-          accessibilityState={{ disabled: index <= 0 }}
-          disabled={index <= 0}
-          onPress={() => goTo(index - 1)}
-          style={withPress([styles.carouselNavButton, styles.carouselNavButtonLeft])}
-        >
-          <Text style={styles.carouselNavText}>‹</Text>
-        </Pressable>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={`Próximo item de ${title}`}
-          accessibilityState={{ disabled: index >= lastIndex }}
-          disabled={index >= lastIndex}
-          onPress={() => goTo(index + 1)}
-          style={withPress([styles.carouselNavButton, styles.carouselNavButtonRight])}
-        >
-          <Text style={styles.carouselNavText}>›</Text>
-        </Pressable>
+        {wideWeb ? null : (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`Item anterior de ${title}`}
+            accessibilityState={{ disabled: index <= 0 }}
+            disabled={index <= 0}
+            onPress={() => goTo(index - 1)}
+            style={withPress([styles.carouselNavButton, styles.carouselNavButtonLeft])}
+          >
+            <Text style={styles.carouselNavText}>‹</Text>
+          </Pressable>
+        )}
+        {wideWeb ? null : (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`Próximo item de ${title}`}
+            accessibilityState={{ disabled: index >= lastIndex }}
+            disabled={index >= lastIndex}
+            onPress={() => goTo(index + 1)}
+            style={withPress([styles.carouselNavButton, styles.carouselNavButtonRight])}
+          >
+            <Text style={styles.carouselNavText}>›</Text>
+          </Pressable>
+        )}
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={viewMoreLabel}
@@ -258,6 +262,7 @@ export function CatalogCarousel({
           })}
         </View>
       )}
+      {wideWeb ? null : (
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`Explorar catálogo completo de ${title}`}
@@ -279,6 +284,7 @@ export function CatalogCarousel({
           <AppIcon name="chevronRight" size={22} color={colors.nature.foliageDeep} />
         </View>
       </Pressable>
+      )}
     </View>
   );
 }
