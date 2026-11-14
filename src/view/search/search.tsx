@@ -11,19 +11,13 @@ import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { SortSheet } from "@/view/search/SortSheet";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
-import { categoryTone } from "@/view/categoryTone";
-import { formatPrice } from "@/view/formatPrice";
-import { BookCover } from "@/view/components/BookCover";
-import { ModalityCoverArea } from "@/view/components/ModalityCoverArea";
 import { ErrorState } from "@/view/components/ErrorState";
 import { SearchField } from "@/view/components/SearchField";
-import { FavoriteButton } from "@/view/components/FavoriteButton";
 import { Dialog } from "@/view/components/Dialog";
 import { Chip } from "@/view/components/Chip";
 import { LoadingState } from "@/view/components/LoadingState";
 import { OfflineState } from "@/view/components/OfflineState";
 import { SearchBookCard } from "@/view/search/SearchBookCard";
-import { Tag } from "@/view/components/Tag";
 import { AppIcon } from "@/view/components/AppIcon";
 import { Snackbar } from "@/view/components/Snackbar";
 import { NeighborhoodSelectorModal } from "@/view/components/NeighborhoodSelectorModal";
@@ -254,7 +248,7 @@ export default function Search({
 
   // Busca e filtros viajam no cabeçalho da própria lista para rolagem natural no mobile.
   const listHeader = (
-    <View style={styles.filters}>
+    <View style={[styles.filters, wideWeb && styles.filtersWide]}>
       {/* 1. Barra de Topo: Bairro (Pill) e Ações (Limpar filtros / Tune) (Figma nós 137:2457 e 137:2461) */}
       <View style={styles.topBar}>
         <Pressable
@@ -571,8 +565,6 @@ export default function Search({
           filters={state.filters}
           categories={state.availableCategories}
           hasActiveFilters={state.hasActiveFilters}
-          sortBy={state.sortBy}
-          onSortChange={actions.setSortBy}
           onModality={actions.setModality}
           onCondition={actions.setCondition}
           onCategory={actions.setCategory}
@@ -638,16 +630,11 @@ function createStyles(colors: ColorPalette) {
       paddingHorizontal: WEB_GUTTER,
       paddingTop: tokens.spacing[24],
     },
-    contentWide: { flexGrow: 1, paddingBottom: tokens.spacing[32], gap: tokens.spacing[24] },
-    gridRow: { gap: tokens.spacing[24] },
-    cardMainWide: { flexDirection: "column", alignItems: "stretch", gap: tokens.spacing[8] },
-    // Na grade, o texto começa logo abaixo da capa para os títulos ficarem alinhados entre colunas.
-    cardInfoWide: { justifyContent: "flex-start" },
-    cardMetaRowWide: { flexWrap: "wrap", rowGap: tokens.spacing[4] },
-    cardActionsWide: { position: "absolute", top: tokens.spacing[8], right: tokens.spacing[8], width: tokens.accessibility.touchTarget },
-    cardWide: { alignItems: "stretch", paddingLeft: tokens.spacing[12], paddingRight: tokens.spacing[12], marginBottom: 0, flex: 1, flexDirection: "column", maxWidth: "25%", borderRadius: tokens.radius.xl, backgroundColor: colors.m3.surfaceContainerLowest },
+    contentWide: { flexGrow: 1, paddingBottom: tokens.spacing[32], gap: tokens.spacing[20] },
+    gridRow: { gap: tokens.spacing[24], alignItems: "stretch" },
     content: { flexGrow: 1, width: "100%", paddingHorizontal: tokens.spacing[16], paddingTop: tokens.spacing[8], paddingBottom: tokens.spacing[24], },
     filters: { gap: tokens.spacing[16], marginBottom: tokens.spacing[16] },
+    filtersWide: { gap: tokens.spacing[12], marginBottom: tokens.spacing[8] },
     topBar: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", minHeight: tokens.spacing[40], },
     neighborhoodPill: {
       flexShrink: 1,
@@ -659,10 +646,19 @@ function createStyles(colors: ColorPalette) {
       paddingRight: tokens.spacing[8],
       height: tokens.spacing[40],
       borderRadius: tokens.radius.full,
+      ...(Platform.OS === "web" ? ({ cursor: "pointer", userSelect: "none" } as never) : {}),
     },
     neighborhoodText: { flexShrink: 1, ...tokens.typography.labelMedium, color: colors.text, fontWeight: tokens.fontWeight.medium, },
     topRightActions: { flexShrink: 0, flexDirection: "row", alignItems: "center", gap: tokens.spacing[8], },
-    favoritesTopButton: { width: tokens.spacing[40], height: tokens.spacing[40], borderRadius: tokens.radius.full, backgroundColor: colors.m3.surfaceContainerHigh, justifyContent: "center", alignItems: "center", },
+    favoritesTopButton: {
+      width: tokens.spacing[40],
+      height: tokens.spacing[40],
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.m3.surfaceContainerHigh,
+      justifyContent: "center",
+      alignItems: "center",
+      ...(Platform.OS === "web" ? ({ cursor: "pointer", userSelect: "none" } as never) : {}),
+    },
     favoritesTopButtonWide: { width: "auto", flexDirection: "row", alignItems: "center", gap: tokens.spacing[6], paddingHorizontal: tokens.spacing[14], },
     favoritesButtonText: { ...tokens.typography.labelMedium, color: colors.text, fontWeight: tokens.fontWeight.medium, },
     tuneButton: { width: tokens.spacing[40], height: tokens.spacing[40], borderRadius: tokens.radius.full, backgroundColor: colors.m3.surfaceContainerHigh, justifyContent: "center", alignItems: "center", },
@@ -685,7 +681,12 @@ function createStyles(colors: ColorPalette) {
     subtitle: { ...tokens.typography.bodyLarge, color: colors.m3.onSurfaceVariant, },
     quickModalitiesScrollView: { flexGrow: 0, marginHorizontal: -tokens.spacing[16], marginBottom: tokens.spacing[4], },
     quickModalitiesScroll: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[8], paddingLeft: tokens.spacing[16], paddingRight: tokens.spacing[28], paddingVertical: tokens.spacing[2], },
-    clearFiltersButton: { minHeight: tokens.accessibility.touchTarget, justifyContent: "center", paddingHorizontal: tokens.spacing[8], },
+    clearFiltersButton: {
+      minHeight: tokens.accessibility.touchTarget,
+      justifyContent: "center",
+      paddingHorizontal: tokens.spacing[8],
+      ...(Platform.OS === "web" ? ({ cursor: "pointer", userSelect: "none" } as never) : {}),
+    },
     clearFiltersText: { ...tokens.typography.bodyMedium, color: colors.action, fontWeight: tokens.fontWeight.semiBold, },
     // Chip removível de filtro aplicado (Figma `02.04`): verde `secondaryContainer` com ✕.
     activeFiltersRow: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[8] },
@@ -697,6 +698,7 @@ function createStyles(colors: ColorPalette) {
       paddingHorizontal: tokens.spacing[12],
       borderRadius: tokens.shapeMorph.chipSelected,
       backgroundColor: colors.nature.foliage,
+      ...(Platform.OS === "web" ? ({ cursor: "pointer", userSelect: "none" } as never) : {}),
     },
     activeFilterText: { ...tokens.typography.labelLarge, color: colors.nature.onFoliage, fontWeight: tokens.fontWeight.semiBold },
     summaryRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: tokens.spacing[12], paddingVertical: tokens.spacing[6], paddingHorizontal: tokens.spacing[4], },
@@ -712,6 +714,7 @@ function createStyles(colors: ColorPalette) {
       backgroundColor: colors.m3.surfaceContainerLow,
       borderWidth: 1,
       borderColor: colors.m3.outlineVariant,
+      ...(Platform.OS === "web" ? ({ cursor: "pointer", userSelect: "none" } as never) : {}),
     },
     sortText: { ...tokens.typography.labelMedium, color: colors.m3.onSurface, fontWeight: tokens.fontWeight.semiBold, },
     body: { ...tokens.typography.bodyLarge, lineHeight: tokens.lineHeight[25], color: colors.secondaryText, textAlign: "center", },
@@ -763,8 +766,6 @@ function createStyles(colors: ColorPalette) {
     historyChips: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[8] },
     historyChip: { minHeight: tokens.accessibility.touchTarget, justifyContent: "center", borderRadius: tokens.radius.full, backgroundColor: colors.m3.surfaceContainerHigh, paddingHorizontal: tokens.spacing[16], },
     historyChipText: { ...tokens.typography.bodyLarge, color: colors.text },
-
-    categoryBadge: { ...tokens.typography.labelSmall, color: colors.secondaryText, fontStyle: "italic" },
     snackbarContainer: { position: "absolute", left: tokens.spacing[16], right: tokens.spacing[16], bottom: tokens.spacing[16], zIndex: 20, },
   });
 }

@@ -67,19 +67,21 @@ export function WebHeader({
           <Text style={styles.brand}>IpêBook</Text>
         </Pressable>
 
-        <View style={styles.search}>
-          <AppIcon name="search" size={20} color={colors.m3.onSurfaceVariant} />
-          <TextInput
-            value={searchTerm}
-            onChangeText={setSearchTerm}
-            onSubmitEditing={submitSearch}
-            placeholder="Buscar título, autor ou categoria"
-            placeholderTextColor={colors.m3.onSurfaceVariant}
-            accessibilityLabel="Buscar título, autor ou categoria"
-            returnKeyType="search"
-            style={styles.searchInput}
-          />
-        </View>
+        {active !== "search" ? (
+          <View style={styles.search}>
+            <AppIcon name="search" size={20} color={colors.m3.onSurfaceVariant} />
+            <TextInput
+              value={searchTerm}
+              onChangeText={setSearchTerm}
+              onSubmitEditing={submitSearch}
+              placeholder="Buscar título, autor ou categoria"
+              placeholderTextColor={colors.m3.onSurfaceVariant}
+              accessibilityLabel="Buscar título, autor ou categoria"
+              returnKeyType="search"
+              style={styles.searchInput}
+            />
+          </View>
+        ) : null}
 
         <View style={styles.spacer} />
 

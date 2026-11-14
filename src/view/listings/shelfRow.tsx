@@ -108,6 +108,7 @@ export function ShelfRow({ book, summary, accessibilityLabel, onPress, onShareWh
               style={withPress(styles.whatsappButton)}
             >
               <AppIcon name="share" size={18} color={colors.nature.foliage} />
+              <Text style={styles.srOnlySummary}>Compartilhar</Text>
             </Pressable>
           ) : null}
         </View>
@@ -345,7 +346,7 @@ function createStyles(colors: ColorPalette) {
       paddingVertical: tokens.spacing[14],
     },
     cellBook: { flex: 3, minWidth: 220, flexDirection: "row", alignItems: "center", gap: tokens.spacing[16] },
-    cellModality: { flex: 1.5, minWidth: 120, alignItems: "flex-start", gap: tokens.spacing[4] },
+    cellModality: { flex: 1.5, minWidth: 120, flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: tokens.spacing[8] },
     cellPrice: {
       ...tokens.typography.labelMedium,
       fontWeight: tokens.fontWeight.semiBold,

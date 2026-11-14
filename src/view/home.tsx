@@ -344,7 +344,6 @@ export default function Home({
 
           {wideWeb ? (
             <View style={[styles.heroAsideWide, stackHero && styles.heroColStacked]}>
-              {/* Cartão interativo da Florada do Ipê */}
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel="Celebrar florada do Ipê"
@@ -368,7 +367,7 @@ export default function Home({
                       ],
                     }}
                   >
-                    <IpeMark size={76} />
+                    <IpeMark size={88} />
                   </Animated.View>
                   <View style={styles.heroCelebrationTextsWide}>
                     <Text style={styles.heroCelebrationTitleWide}>Florada do Ipê</Text>
@@ -378,55 +377,6 @@ export default function Home({
                   </View>
                 </View>
               </Pressable>
-
-              {/* Destaques Comunitários: Doações e Trocas */}
-              <View style={styles.heroHighlightsRowWide}>
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={`Doações da semana: ${donationSummary}`}
-                  onPress={() => guardedNavigateToSearch({ modality: "donation" })}
-                  style={({ pressed }) => [
-                    styles.heroHighlightCardWide,
-                    isWeb && ({ cursor: "pointer" } as any),
-                    pressed && expressivePressedStyle,
-                  ]}
-                >
-                  <View style={[styles.heroHighlightIconBoxWide, { backgroundColor: colors.badge.donation.background }]}>
-                    <AppIcon name="bookmark" size={18} color={colors.badge.donation.text} />
-                  </View>
-                  <View style={styles.heroHighlightTextBoxWide}>
-                    <Text numberOfLines={1} style={styles.heroHighlightTitleWide}>
-                      Doações
-                    </Text>
-                    <Text numberOfLines={1} style={styles.heroHighlightSubtitleWide}>
-                      {donationCount > 0 ? `${donationCount} ${donationCount === 1 ? "gratuito" : "gratuitos"}` : "Ver lista"}
-                    </Text>
-                  </View>
-                </Pressable>
-
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel="Trocar livros com leitores de Piripiri"
-                  onPress={() => guardedNavigateToSearch({ modality: "trade" })}
-                  style={({ pressed }) => [
-                    styles.heroHighlightCardWide,
-                    isWeb && ({ cursor: "pointer" } as any),
-                    pressed && expressivePressedStyle,
-                  ]}
-                >
-                  <View style={[styles.heroHighlightIconBoxWide, { backgroundColor: colors.badge.trade.background }]}>
-                    <AppIcon name="swap" size={18} color={colors.badge.trade.text} />
-                  </View>
-                  <View style={styles.heroHighlightTextBoxWide}>
-                    <Text numberOfLines={1} style={styles.heroHighlightTitleWide}>
-                      Trocas
-                    </Text>
-                    <Text numberOfLines={1} style={styles.heroHighlightSubtitleWide}>
-                      Sem custo
-                    </Text>
-                  </View>
-                </Pressable>
-              </View>
             </View>
           ) : (
             <Pressable
@@ -640,12 +590,8 @@ function createStyles(colors: ColorPalette) {
     // 2. Hero editorial
     heroSection: { marginBottom: tokens.spacing[12], },
     heroSectionWide: {
-      padding: tokens.spacing[20],
-      marginBottom: tokens.spacing[16],
-      backgroundColor: colors.m3.surfaceContainerLow,
-      borderRadius: tokens.radius.xxl,
-      borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      marginBottom: tokens.spacing[28],
+      paddingVertical: tokens.spacing[8],
       width: "100%",
     },
     heroTitle: { ...tokens.typography.brandLargeTitle, color: colors.brandBrown, },
@@ -653,47 +599,23 @@ function createStyles(colors: ColorPalette) {
     heroSubtitle: { ...tokens.typography.bodyLarge, color: colors.m3.onSurfaceVariant, marginTop: tokens.spacing[6], },
     heroSubtitleWide: { ...tokens.typography.webLead, },
     heroRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: tokens.spacing[16], },
-    heroRowWide: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: tokens.spacing[24], },
+    heroRowWide: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[32], },
     heroRowStacked: { flexDirection: "column", alignItems: "stretch" },
     heroLocationRowWide: { flexDirection: "row", alignItems: "center", marginBottom: tokens.spacing[4], },
     heroTextContainer: { flex: 1, },
-    heroTextContainerWide: { flex: 1.2, minWidth: 320, maxWidth: 640, gap: tokens.spacing[8], justifyContent: "center", },
-    heroAsideWide: { flex: 1, maxWidth: 480, minWidth: 320, flexShrink: 0, justifyContent: "center", gap: tokens.spacing[10], },
+    heroTextContainerWide: { flexGrow: 1, flexShrink: 1, minWidth: 280, maxWidth: 560, gap: tokens.spacing[8], justifyContent: "center", },
+    heroAsideWide: { width: 360, maxWidth: "38%", flexShrink: 0, justifyContent: "center" },
     heroColStacked: { minWidth: 0, maxWidth: "100%", width: "100%" },
     heroCelebrationCardWide: {
-      backgroundColor: colors.ipe.petalSoft,
+      backgroundColor: "#E6A817",
       borderRadius: tokens.radius.xl,
-      borderWidth: 1.5,
-      borderColor: colors.ipe.bloom,
-      padding: tokens.spacing[12],
-      gap: tokens.spacing[8],
-      shadowColor: colors.ipe.bloomDeep,
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.12,
-      shadowRadius: 8,
-      elevation: 2,
+      padding: tokens.spacing[16],
+      gap: tokens.spacing[10],
     },
     heroCelebrationRowWide: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[12], },
     heroCelebrationTextsWide: { flex: 1, gap: tokens.spacing[2], },
-    heroCelebrationTitleWide: { ...tokens.typography.titleMedium, color: colors.brandBrown, fontWeight: tokens.fontWeight.bold, },
-    heroCelebrationBodyWide: { ...tokens.typography.footnote, color: colors.m3.onSurfaceVariant, lineHeight: 18, },
-    heroHighlightsRowWide: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[12], },
-    heroHighlightCardWide: {
-      flex: 1,
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[10],
-      paddingVertical: tokens.spacing[12],
-      paddingHorizontal: tokens.spacing[14],
-      borderRadius: tokens.radius.large,
-      backgroundColor: colors.m3.surfaceContainer,
-      borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
-    },
-    heroHighlightIconBoxWide: { width: 32, height: 32, borderRadius: tokens.radius.full, alignItems: "center", justifyContent: "center", },
-    heroHighlightTextBoxWide: { flex: 1, gap: tokens.spacing[2], },
-    heroHighlightTitleWide: { ...tokens.typography.labelLarge, fontWeight: tokens.fontWeight.bold, color: colors.text, },
-    heroHighlightSubtitleWide: { ...tokens.typography.captionSmall, color: colors.secondaryText, },
+    heroCelebrationTitleWide: { ...tokens.typography.titleMedium, fontSize: 20, color: "#451A03", fontWeight: tokens.fontWeight.bold, },
+    heroCelebrationBodyWide: { ...tokens.typography.footnote, fontSize: 14, color: "#451A03", lineHeight: 20, },
     chipsContainerWide: { flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: tokens.spacing[8], marginBottom: tokens.spacing[20], },
     heroMarkContainer: { alignItems: "center", justifyContent: "center", padding: tokens.spacing[4], },
     heroMarkContainerWide: {
@@ -723,12 +645,7 @@ function createStyles(colors: ColorPalette) {
       columnGap: tokens.spacing[28],
       rowGap: tokens.spacing[12],
       marginTop: tokens.spacing[8],
-      paddingVertical: tokens.spacing[12],
-      paddingHorizontal: tokens.spacing[20],
-      backgroundColor: colors.m3.surfaceContainerLowest,
-      borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
-      borderRadius: tokens.radius.card,
+      paddingVertical: tokens.spacing[4],
       alignSelf: "flex-start",
     },
     statItemWide: { alignItems: "flex-start", },

@@ -28,7 +28,7 @@ import { ShelfRow } from "@/view/listings/shelfRow";
 import { createMyListingsStyles } from "@/view/listings/myListingsStyles";
 import { withPress } from "@/view/pressFeedback";
 import { COMMUNITY_MEMBER } from "@/view/requests/receivedRequests";
-import { scrollBottomPadding, standardHorizontalScrollProps, standardVerticalScrollProps } from "@/view/scrollProps";
+import { scrollBottomPadding, standardVerticalScrollProps } from "@/view/scrollProps";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { tokens } from "@/view/tokens";
 import { useGuardedPress } from "@/view/useGuardedPress";
@@ -222,7 +222,7 @@ export function MyListings({
     },
     {
       key: "concluded",
-      label: "Concluídos",
+      label: `Concluídos (${concludedProposals.length + deliveredBooks.length})`,
       a11y: "Concluídos",
       tone: colors.badge.completed,
       selected: activeTab === "concluded",
@@ -283,7 +283,7 @@ export function MyListings({
               onPress={guardedCreateListing}
               style={withPress(styles.announceButtonHeader)}
             >
-              <AppIcon name="add" size={18} color={colors.m3.onSecondaryContainer} />
+              <AppIcon name="add" size={18} color={colors.m3.onPrimary} />
               <Text style={styles.announceButtonHeaderText}>Anunciar livro</Text>
             </Pressable>
           ) : null}
@@ -398,46 +398,23 @@ export function MyListings({
               })}
             </View>
 
-            {/* No celular a fileira rola; na web larga cabe inteira e pode quebrar linha. */}
-            {wideWeb ? (
-              <View
-                testID="my-listings-tablist"
-                style={[styles.filterRowWide, isIOS ? styles.segmentTrackIOS : styles.segmentRowAndroid]}
-              >
-                {shelfChips.map((chip) => (
-                  <Chip
-                    key={chip.key}
-                    size="compact"
-                    label={chip.label}
-                    accessibilityLabel={chip.a11y}
-                    tone={chip.tone}
-                    selected={chip.selected}
-                    onPress={chip.onPress}
-                  />
-                ))}
-              </View>
-            ) : (
-              <ScrollView
-                testID="my-listings-tablist"
-                horizontal
-                {...standardHorizontalScrollProps}
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.filterScroll}
-                style={[styles.filterScrollView, isIOS ? styles.segmentTrackIOS : styles.segmentRowAndroid]}
-              >
-                {shelfChips.map((chip) => (
-                  <Chip
-                    key={chip.key}
-                    size="compact"
-                    label={chip.label}
-                    accessibilityLabel={chip.a11y}
-                    tone={chip.tone}
-                    selected={chip.selected}
-                    onPress={chip.onPress}
-                  />
-                ))}
-              </ScrollView>
-            )}
+            {/* No celular os chips quebram em linhas para caberem inteiros, sem corte nem rolagem. */}
+            <View
+              testID="my-listings-tablist"
+              style={[styles.filterRowWide, isIOS ? styles.segmentTrackIOS : styles.segmentRowAndroid]}
+            >
+              {shelfChips.map((chip) => (
+                <Chip
+                  key={chip.key}
+                  size="compact"
+                  label={chip.label}
+                  accessibilityLabel={chip.a11y}
+                  tone={chip.tone}
+                  selected={chip.selected}
+                  onPress={chip.onPress}
+                />
+              ))}
+            </View>
 
             {/* Gatilho de acessibilidade mantido para compatibilidade com rotinas de teste */}
             <Pressable

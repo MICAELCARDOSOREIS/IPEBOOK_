@@ -265,7 +265,7 @@ export default function CreateListing({
                     )}
                   </View>
                   <View style={styles.webStepTextCol}>
-                    <Text style={[styles.webStepTitle, step === 1 && styles.webStepTitleActive]}>1. Livro</Text>
+                    <Text style={[styles.webStepTitle, step === 1 && styles.webStepTitleActive]}>Livro</Text>
                     <Text style={styles.webStepSubtitle}>Título e modalidade</Text>
                   </View>
                 </View>
@@ -287,7 +287,7 @@ export default function CreateListing({
                     )}
                   </View>
                   <View style={styles.webStepTextCol}>
-                    <Text style={[styles.webStepTitle, step === 2 && styles.webStepTitleActive]}>2. Fotos</Text>
+                    <Text style={[styles.webStepTitle, step === 2 && styles.webStepTitleActive]}>Fotos</Text>
                     <Text style={styles.webStepSubtitle}>Capa, lombada e verso</Text>
                   </View>
                 </View>
@@ -305,13 +305,12 @@ export default function CreateListing({
                     <Text style={[styles.webStepBadgeText, step === 3 && styles.webStepBadgeTextActive]}>3</Text>
                   </View>
                   <View style={styles.webStepTextCol}>
-                    <Text style={[styles.webStepTitle, step === 3 && styles.webStepTitleActive]}>3. Detalhes</Text>
+                    <Text style={[styles.webStepTitle, step === 3 && styles.webStepTitleActive]}>Detalhes</Text>
                     <Text style={styles.webStepSubtitle}>Conservação e detalhes</Text>
                   </View>
                 </View>
               </View>
 
-              {/* Barra de progresso contínuo e acessibilidade para leitores e testes */}
               <View style={styles.webProgressTrackArea}>
                 <View style={styles.webProgressTrack}>
                   <View testID="step-progress-fill" style={[styles.webProgressFill, { width: `${(step / TOTAL_STEPS) * 100}%` }]} />
@@ -416,16 +415,28 @@ export default function CreateListing({
         {wideWeb ? (
           <View style={styles.previewCard}>
             <View style={styles.previewCardHeader}>
-              <View style={styles.previewLiveBadge}>
-                <View style={styles.previewLiveDot} />
-                <Text style={styles.previewLiveText}>PRÉVIA EM TEMPO REAL</Text>
-              </View>
-              <Text style={styles.previewHint}>Como os leitores em Piripiri verão seu anúncio</Text>
+              <Text style={styles.previewLiveText}>Prévia</Text>
+              <Text style={styles.previewHint}>
+                {state.title.trim()
+                  ? "Como os leitores em Piripiri verão seu anúncio"
+                  : "Preencha o título para ver o anúncio como os leitores verão"}
+              </Text>
             </View>
             <View style={styles.previewBook}>
-              <BookCover id="previa" title={state.title.trim() || "Título do livro"} author={state.author.trim() || undefined} photoUrl={state.photoUrl || undefined} variant="detail" />
-              <Text style={styles.previewTitle}>{state.title.trim() || "Título do livro"}</Text>
-              <Text style={styles.previewAuthor}>{state.author.trim() || "Autor"}</Text>
+              {state.photoUrl ? (
+                <BookCover id="previa" title={state.title.trim() || "Livro"} author={state.author.trim() || undefined} photoUrl={state.photoUrl} variant="detail" />
+              ) : (
+                <View style={styles.previewCoverEmpty}>
+                  <AppIcon name="shelf" size={28} color={colors.secondaryText} />
+                  <Text style={styles.previewCoverEmptyText}>A capa entra na próxima etapa</Text>
+                </View>
+              )}
+              <Text style={state.title.trim() ? styles.previewTitle : styles.previewPlaceholder}>
+                {state.title.trim() || "O título aparece aqui"}
+              </Text>
+              <Text style={state.author.trim() ? styles.previewAuthor : styles.previewPlaceholder}>
+                {state.author.trim() || "O autor aparece aqui"}
+              </Text>
               <View style={styles.previewLocationRow}>
                 <AppIcon name="place" size={14} color={colors.secondaryText} />
                 <Text style={styles.previewLocationText}>
@@ -435,7 +446,7 @@ export default function CreateListing({
               <View style={styles.previewMeta}>
                 <Text style={styles.previewPrice}>
                   {state.modality === "sale"
-                    ? (state.price.trim() ? `R$ ${state.price.trim()}` : "R$ —")
+                    ? (state.price.trim() ? `R$ ${state.price.trim()}` : "Preço a definir")
                     : state.modality === "trade"
                       ? "Para trocar"
                       : "Gratuito"}
@@ -465,7 +476,7 @@ export default function CreateListing({
                 <View style={styles.previewLockBadge}>
                   <AppIcon name="lock" size={12} color={colors.action} />
                 </View>
-                <Text style={styles.previewNoteTitle}>Privacidade e Segurança</Text>
+                <Text style={styles.previewNoteTitle}>Privacidade</Text>
               </View>
               <Text style={styles.previewNote}>
                 Privacidade garantida: Só o bairro aparece no anúncio. Seu endereço, nome completo e e-mail ficam protegidos.
@@ -634,20 +645,22 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
       elevation: 1,
     },
     previewCardHeader: { gap: tokens.spacing[6], },
-    previewLiveBadge: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: tokens.spacing[6],
-      backgroundColor: colors.soft,
-      paddingVertical: tokens.spacing[4],
-      paddingHorizontal: tokens.spacing[8],
-      borderRadius: tokens.radius.full,
-      alignSelf: "flex-start",
-    },
-    previewLiveDot: { width: 7, height: 7, borderRadius: tokens.radius.full, backgroundColor: colors.action, },
-    previewLiveText: { ...tokens.typography.labelSmall, color: colors.actionDeep, fontWeight: tokens.fontWeight.bold, fontSize: 10, letterSpacing: 0.8, },
+    previewLiveText: { ...tokens.typography.titleMedium, color: colors.text, fontWeight: tokens.fontWeight.bold, },
     previewHint: { ...tokens.typography.footnote, color: colors.secondaryText, },
     previewLabel: { ...tokens.typography.labelLarge, color: colors.m3.onSurfaceVariant },
+    previewCoverEmpty: {
+      height: 120,
+      borderRadius: tokens.radius.large,
+      borderWidth: 1,
+      borderStyle: "dashed",
+      borderColor: colors.m3.outline,
+      backgroundColor: colors.m3.surfaceContainerLow,
+      alignItems: "center",
+      justifyContent: "center",
+      gap: tokens.spacing[8],
+    },
+    previewCoverEmptyText: { ...tokens.typography.footnote, color: colors.secondaryText, textAlign: "center", },
+    previewPlaceholder: { ...tokens.typography.bodyMedium, color: colors.secondaryText, fontStyle: "italic", },
     previewBook: {
       gap: tokens.spacing[8],
       padding: tokens.spacing[16],
@@ -691,9 +704,8 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
       maxWidth: wideWeb ? 1040 : 560,
       alignSelf: "center",
       paddingHorizontal: tokens.spacing[16],
-      paddingTop: tokens.spacing[8],
-      // A SafeAreaView da barra já soma a margem inferior do sistema.
-      paddingBottom: tokens.spacing[4],
+      paddingTop: tokens.spacing[16],
+      paddingBottom: tokens.spacing[12],
     },
     webActionRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", width: "100%", },
     webSecondaryActions: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[8], },

@@ -22,6 +22,8 @@ describe("WebHeader (Figma 34:70)", () => {
 
     expect(screen.getByText("LA")).toBeDefined();
     expect(screen.getByLabelText("Conversas, 2 com proposta")).toBeDefined();
+    // Na tela de Pesquisa, evita duplicar o campo de busca já presente no corpo da página.
+    expect(screen.queryByLabelText("Buscar título, autor ou categoria")).toBeNull();
 
     await fireEvent.press(screen.getByLabelText("Anunciar um livro"));
     expect(onAnnounce).toHaveBeenCalledTimes(1);

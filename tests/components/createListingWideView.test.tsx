@@ -65,14 +65,16 @@ describe("CreateListing no Desktop Web (wideWeb = true)", () => {
       screen = await render(<CreateListing sessionUserId="user-1" />);
     });
 
-    expect(screen.getByText("1. Livro")).toBeDefined();
-    expect(screen.getByText("2. Fotos")).toBeDefined();
-    expect(screen.getByText("3. Detalhes")).toBeDefined();
+    expect(screen.getByText("Livro")).toBeDefined();
+    expect(screen.getByText("Fotos")).toBeDefined();
+    expect(screen.getByText("Detalhes")).toBeDefined();
     expect(screen.getByText("Etapa 1 de 3")).toBeDefined();
     expect(screen.getByLabelText("Modalidade Venda")).toBeDefined();
     expect(screen.getByLabelText("Modalidade Troca")).toBeDefined();
     expect(screen.getByLabelText("Modalidade Doação")).toBeDefined();
-    expect(screen.getByText("PRÉVIA EM TEMPO REAL")).toBeDefined();
+    expect(screen.getByText("Prévia")).toBeDefined();
+    expect(screen.getByText("O título aparece aqui")).toBeDefined();
+    expect(screen.queryByText("Título do livro")).toBeNull();
     expect(screen.getByText("Salvar para depois")).toBeDefined();
     expect(screen.getByRole("button", { name: "Continuar" })).toBeDefined();
 
