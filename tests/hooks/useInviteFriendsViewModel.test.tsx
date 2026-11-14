@@ -3,6 +3,7 @@ import { Platform, Share } from "react-native";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import * as Linking from "expo-linking";
+import { DomainError } from "@/model/errors";
 import type { IShareUseCases } from "@/usecase/iShareUseCases";
 import { useInviteFriendsViewModel } from "@/viewmodel/useInviteFriendsViewModel";
 
@@ -303,6 +304,96 @@ describe("useInviteFriendsViewModel — imagem do convite (Spec 092)", () => {
     expect(slow).toHaveBeenCalledTimes(1);
     await act(async () => { release("file:///a.png"); });
     expect(shareFile).toHaveBeenCalledTimes(1);
+  });
+
+  it("propaga DomainError nas ações de convite e permite limpar estado shared", async () => {
+    vi.spyOn(Platform, "OS", "get").mockReturnValue("android");
+    const hook = await renderHook(fakeUseCases, undefined, vi.fn().mockResolvedValue(true));
+
+    await act(async () => {
+      await hook.current[1].shareImage(vi.fn().mockRejectedValue(new DomainError("Erro de captura.")));
+    });
+    expect(hook.current[0].error).toBe("Erro de captura.");
+
+    vi.spyOn(Share, "share").mockRejectedValueOnce(new DomainError("Falha ao abrir folha."));
+    await act(async () => {
+      await hook.current[1].shareNative();
+    });
+    expect(hook.current[0].error).toBe("Falha ao abrir folha.");
+
+    vi.spyOn(Share, "share").mockRejectedValueOnce(new DomainError("Sem permissão para copiar."));
+    await act(async () => {
+      await hook.current[1].copyLink();
+    });
+    expect(hook.current[0].error).toBe("Sem permissão para copiar.");
+
+    vi.spyOn(Share, "share").mockResolvedValueOnce({ action: "sharedAction", activityType: undefined });
+    await act(async () => {
+      await hook.current[1].shareNative();
+    });
+    expect(hook.current[0].shared).toBe(true);
+
+    act(() => {
+      hook.current[1].dismissShared();
+    });
+    expect(hook.current[0].shared).toBe(false);
+  });
+
+  it("trata fallback NotAllowedError em shareToWhatsApp, AbortError em shareNative e erro inesperado na Web", async () => {
+    vi.spyOn(Platform, "OS", "get").mockReturnValue("web");
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    const denied = Object.assign(new Error("negado"), { name: "NotAllowedError" });
+    vi.stubGlobal("navigator", { share: vi.fn().mockRejectedValue(denied), clipboard: { writeText } });
+
+    const hook = await renderHook(fakeUseCases);
+    await act(async () => {
+      await hook.current[1].shareToWhatsApp();
+    });
+    expect(writeText).toHaveBeenCalledTimes(1);
+    expect(hook.current[0].linkCopied).toBe(true);
+
+    const abort = Object.assign(new Error("cancelado"), { name: "AbortError" });
+    vi.stubGlobal("navigator", { share: vi.fn().mockRejectedValue(abort), clipboard: { writeText } });
+    await act(async () => {
+      await hook.current[1].shareNative();
+    });
+    expect(hook.current[0].error).toBeNull();
+
+    vi.stubGlobal("navigator", { share: vi.fn().mockRejectedValue(new DomainError("Compartilhamento bloqueado.")), clipboard: { writeText } });
+    await act(async () => {
+      await hook.current[1].shareToWhatsApp();
+    });
+    expect(hook.current[0].error).toBe("Compartilhamento bloqueado.");
+
+    vi.stubGlobal("navigator", { share: vi.fn().mockRejectedValue(new Error("erro desconhecido")), clipboard: { writeText } });
+    await act(async () => {
+      await hook.current[1].shareNative();
+    });
+    expect(hook.current[0].error).toBe("Não foi possível compartilhar o convite. Tente novamente.");
+
+    vi.stubGlobal("navigator", { clipboard: { writeText: vi.fn().mockRejectedValue(new Error("clipboard indisponível")) } });
+    await act(async () => {
+      await hook.current[1].copyLink();
+    });
+    expect(hook.current[0].error).toBe("Não foi possível compartilhar o convite. Tente novamente.");
+  });
+
+  it("não atualiza estado após desmontar durante ação assíncrona", async () => {
+    vi.spyOn(Platform, "OS", "get").mockReturnValue("web");
+    let resolveCopy!: () => void;
+    vi.stubGlobal("navigator", {
+      clipboard: { writeText: vi.fn().mockReturnValue(new Promise<void>((r) => { resolveCopy = r; })) },
+    });
+    const hook = await renderHook(fakeUseCases);
+    const pending = hook.current[1].copyLink();
+    await act(async () => {
+      mounted.splice(0).forEach((tree) => tree.unmount());
+    });
+    await act(async () => {
+      resolveCopy();
+      await pending;
+    });
+    expect(hook.current[0].linkCopied).toBe(false);
   });
 });
 

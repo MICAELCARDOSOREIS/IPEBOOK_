@@ -128,6 +128,24 @@ describe("useRequestNegotiationViewModel (ISO/IEC 25010 - Adequação Funcional)
     let fallbackResult: unknown;
     await act(async () => { fallbackResult = await hook2.current[1].request("listing-1", "alice"); });
     expect(fallbackResult).toMatchObject({ listingId: "listing-1", requesterId: "alice", status: "pending" });
+
+    // Sem sessão em checkActiveRequest limpa o estado ativo
+    let cleared: unknown = "sentinel";
+    await act(async () => {
+      cleared = await hook2.current[1].checkActiveRequest("listing-1", null);
+    });
+    expect(cleared).toBeNull();
+    expect(hook2.current[0].activeRequestId).toBeNull();
+
+    // Erro não-Error com texto de pedido pendente e getActiveRequest retornando null
+    const stringReject = {
+      requestNegotiation: async () => { throw "pedido pendente"; },
+      getActiveRequest: async () => null,
+    } as unknown as IBookRequestUseCases;
+    const hook3 = await renderHook(() => useRequestNegotiationViewModel(stringReject));
+    let strRes: unknown;
+    await act(async () => { strRes = await hook3.current[1].request("listing-1", null); });
+    expect(strRes).toMatchObject({ listingId: "listing-1", requesterId: "", status: "pending" });
   });
 });
 

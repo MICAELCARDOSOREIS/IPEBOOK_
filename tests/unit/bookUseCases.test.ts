@@ -655,4 +655,80 @@ describe("suporte a box e coleções de livros (Spec 112)", () => {
     expect(draft.isBox).toBe(true);
     expect(draft.boxVolumesCount).toBe(5);
   });
+
+  it("valida identificadores ausentes e anúncios inexistentes em cancelListing, updateListing e togglePauseListing", async () => {
+    const useCases = new BookUseCases(new MemoryBookDataSource());
+    await expect(useCases.cancelListing("   ", "u1")).rejects.toThrow(ValidationError);
+    await expect(useCases.cancelListing("inexistente", "u1")).rejects.toThrow(DataSourceError);
+    await expect(useCases.updateListing("   ", { title: "Novo" }, "u1")).rejects.toThrow(ValidationError);
+    await expect(useCases.updateListing("inexistente", { title: "Novo" }, "u1")).rejects.toThrow(DataSourceError);
+    await expect(useCases.togglePauseListing("   ", "u1")).rejects.toThrow(ValidationError);
+    await expect(useCases.togglePauseListing("inexistente", "u1")).rejects.toThrow(DataSourceError);
+  });
+
+  it("atualiza campos opcionais em updateListing e publica rascunho completo com box", async () => {
+    const source = new MemoryBookDataSource();
+    const useCases = new BookUseCases(source);
+    const created = await useCases.createListing(
+      {
+        title: "Box Inicial",
+        author: "Autora",
+        modality: "sale",
+        price: 50,
+        category: "Ficção",
+        neighborhood: "Centro",
+        condition: "good",
+        description: "Descrição inicial",
+        photoUrl: "https://cdn.example.com/1.jpg",
+        photos: ["https://cdn.example.com/1.jpg"],
+        isBox: true,
+        boxVolumesCount: 3,
+      },
+      "u1",
+    );
+
+    const updated = await useCases.updateListing(
+      created.id,
+      {
+        category: "Romance",
+        city: "Piripiri",
+        state: "PI",
+        neighborhood: "Recreio",
+        condition: "new",
+        description: "Nova descrição",
+        photoUrl: "https://cdn.example.com/2.jpg",
+        photos: ["https://cdn.example.com/2.jpg"],
+        isBox: false,
+      },
+      "u1",
+    );
+    expect(updated.category).toBe("Romance");
+    expect(updated.neighborhood).toBe("Recreio");
+    expect(updated.isBox).toBe(false);
+    expect(updated.boxVolumesCount).toBeUndefined();
+
+    const draft = await useCases.saveDraft({ title: "Rascunho Box", author: "", modality: "trade" }, "u1");
+    const published = await useCases.publishDraft(
+      draft.id,
+      {
+        title: "Box Publicado",
+        author: "Autor Box",
+        modality: "trade",
+        category: "Ficção",
+        city: "Piripiri",
+        state: "PI",
+        neighborhood: "Centro",
+        condition: "good",
+        description: "Coleção completa",
+        photoUrl: "https://cdn.example.com/box.jpg",
+        photos: ["https://cdn.example.com/box.jpg"],
+        isBox: true,
+        boxVolumesCount: 4,
+      },
+      "u1",
+    );
+    expect(published.status).toBe("available");
+    expect(published.isBox).toBe(true);
+    expect(published.boxVolumesCount).toBe(4);
+  });
 });
