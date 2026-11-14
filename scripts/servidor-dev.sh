@@ -17,6 +17,25 @@ set -euo pipefail
 RAIZ="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$RAIZ"
 
-export NODE_OPTIONS="${NODE_OPTIONS:---max-old-space-size=4096}"
+node_opts="${NODE_OPTIONS:-}"
+if [[ "$node_opts" != *"--max-old-space-size"* ]]; then
+  node_opts="${node_opts:+$node_opts }--max-old-space-size=4096"
+fi
+if [[ "$node_opts" != *"metro-sem-vazamento-ssr.cjs"* ]]; then
+  node_opts="${node_opts:+$node_opts }--require=$RAIZ/scripts/metro-sem-vazamento-ssr.cjs"
+fi
+export NODE_OPTIONS="$node_opts"
+
+tem_max_workers=false
+for arg in "$@"; do
+  if [[ "$arg" == "--max-workers" || "$arg" == --max-workers=* ]]; then
+    tem_max_workers=true
+    break
+  fi
+done
+
+if [[ "$tem_max_workers" == false ]]; then
+  exec ./node_modules/.bin/expo start --max-workers "${EXPO_METRO_MAX_WORKERS:-4}" "$@"
+fi
 
 exec ./node_modules/.bin/expo start "$@"
