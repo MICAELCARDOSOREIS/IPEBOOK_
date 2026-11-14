@@ -3,7 +3,7 @@
 ## Backend Supabase (spec 007)
 
 O backend oficial é o Supabase, selecionado com `EXPO_PUBLIC_BACKEND=supabase` (padrão do
-[`.env.example`](../.env.example)). O projeto usa tabelas `v2_` para esta versão. As 41 migrações
+[`.env.example`](../.env.example)). O projeto usa tabelas `v2_` para esta versão. As 43 migrações
 locais de `supabase/migrations/` já estão aplicadas e verificadas no projeto remoto
 (`npm run health:supabase:remote`). Configurar no `.env` a URL do projeto, a chave **publicável** e
 `EXPO_PUBLIC_AUTH_REDIRECT_URL`; o endereço de retorno precisa estar na lista de URLs permitidas do
@@ -56,7 +56,7 @@ Em outra máquina, substituir apenas o caminho pelo diretório do clone. `npm ci
 | `npm run validate` | Executa tipos, lint, arquitetura, design system, numeração, config de build, SQL, testes com cobertura e sincronia da documentação, interrompendo em falhas |
 | `npm run build:web` | Exporta arquivos estáticos para `dist/` |
 
-`npm start` e `npm run web` executam `scripts/servidor-dev.sh`, que inicia o Expo com `NODE_OPTIONS=--max-old-space-size=4096`. O Metro atende Android e web no mesmo processo Node: com a web aberta e o app conectado, o bundle web estático (com SSR) somado ao bundle Android passa do heap padrão do Node nesta máquina (~2,2 GB) e o processo aborta com `FATAL ERROR: Ineffective mark-compacts near heap limit Allocation failed - JavaScript heap out of memory`. Para usar outro valor, definir a variável no ambiente (`NODE_OPTIONS=--max-old-space-size=6144 npm start`). Flags do Expo vão depois de `--`: `npm start -- --clear` limpa o cache do Metro (sem o `--`, o npm consome a flag e ela não chega ao Expo).
+`npm start` e `npm run web` executam `scripts/servidor-dev.sh`, que inicia o Expo com `NODE_OPTIONS=--max-old-space-size=4096`, `--max-workers 4` (`EXPO_METRO_MAX_WORKERS` permite ajustar) e [`scripts/metro-sem-vazamento-ssr.cjs`](../scripts/metro-sem-vazamento-ssr.cjs) para evitar o vazamento de `SourceMap` no SSR em Node 24 (`EXPO_SSR_SOURCEMAPS=1` reativa os mapas SSR para depuração pontual). O Metro atende Android e web no mesmo processo Node: com a web aberta e o app conectado, o bundle web estático (com SSR) somado ao bundle Android passa do heap padrão do Node nesta máquina (~2,2 GB) e o processo aborta com `FATAL ERROR: Ineffective mark-compacts near heap limit Allocation failed - JavaScript heap out of memory`. Para usar outro valor, definir a variável no ambiente (`NODE_OPTIONS=--max-old-space-size=6144 npm start`). Flags do Expo vão depois de `--`: `npm start -- --clear` limpa o cache do Metro (sem o `--`, o npm consome a flag e ela não chega ao Expo).
 
 Para Android/iOS é necessário preparar o ambiente nativo e um cliente compatível com o SDK utilizado. O simulador iOS local depende de macOS. Nesta entrega não há validação em dispositivo ou emulador; executar o comando não garante que o ambiente nativo esteja preparado.
 

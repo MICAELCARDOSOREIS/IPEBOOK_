@@ -41,11 +41,12 @@ justificativa.
 graph TD
     app --> view
     view --> viewmodel
+    view --> di
     view --> model
     viewmodel --> usecase
     viewmodel --> model
-    viewmodel --> di
     usecase --> model
+    di --> viewmodel
     di --> usecase
     di --> infra
     di --> model

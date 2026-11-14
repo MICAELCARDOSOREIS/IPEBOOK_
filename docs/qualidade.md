@@ -91,13 +91,13 @@ acima.
 
 A verificação é realizada pelo `@vitest/coverage-v8`, exigindo o mínimo de 80% em todas as métricas.
 
-**Resultado aferido em 2026-11-12 pelo `npm run validate`:**
-- **Statements:** 91,03% (requisito: >= 80%)
-- **Branches:** 80,24% (requisito: >= 80%)
-- **Functions:** 87,78% (requisito: >= 80%)
-- **Lines:** 92,44% (requisito: >= 80%)
+**Resultado aferido em 2026-11-14 pela suíte de validação e cobertura:**
+- **Statements:** 91,18% (requisito: >= 80%)
+- **Branches:** 80,65% (requisito: >= 80%)
+- **Functions:** 88,06% (requisito: >= 80%)
+- **Lines:** 92,58% (requisito: >= 80%)
 
-A suíte validada nessa execução continha 2.321 testes aprovados em 321 arquivos. Os números acima
+A suíte validada nessa execução continha 2.299 testes aprovados em 312 arquivos. Os números acima
 são a medição corrente; resultados anteriores podem ser encontrados nos registros históricos de
 `docs/estado.md` e não devem ser usados como retrato atual da cobertura.
 
@@ -116,7 +116,7 @@ no nível padrão de erro.
 
 A auditoria de dependências de produção (`npm audit --omit=dev`) aponta 13 vulnerabilidades
 (2 altas, 10 moderadas e 1 baixa), sem nenhuma crítica. As correções automáticas disponíveis
-exigiriam mudanças incompatíveis em módulos do Expo (`expo@51`), então não foram aplicadas. Foram
+exigiriam mudanças incompatíveis em módulos do Expo (`expo@58`), então não foram aplicadas. Foram
 aplicados apenas `overrides` pontuais e compatíveis em `package.json`:
 
 | Pacote | Versão forçada | Origem | Efeito |
