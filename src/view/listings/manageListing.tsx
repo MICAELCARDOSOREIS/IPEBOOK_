@@ -16,12 +16,14 @@ import { formatPrice } from "@/view/formatPrice";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { type ColorPalette, fontFamily, tokens } from "@/view/tokens";
 import { useGuardedPress } from "@/view/useGuardedPress";
+import { useOnRefocus } from "@/view/useRefocusKey";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { WEB_GUTTER } from "@/view/webLayout";
 
 export type ManageListingProps = {
   bookId: string;
   sessionUserId: string | null;
+  focusKey?: number;
   onEdit?: (bookId: string) => void;
   onViewPublicListing?: (bookId: string) => void;
   onRemoved?: () => void;
@@ -32,6 +34,7 @@ export type ManageListingProps = {
 export default function ManageListing({
   bookId,
   sessionUserId,
+  focusKey,
   onEdit,
   onViewPublicListing,
   onRemoved,
@@ -42,6 +45,9 @@ export default function ManageListing({
   const guardedViewPublic = useGuardedPress(onViewPublicListing);
   const guardedRemoved = useGuardedPress(onRemoved);
   const [state, actions] = makeManageListingViewModel(bookId, sessionUserId);
+  useOnRefocus(focusKey, () => {
+    void actions.load();
+  });
   const [shareState, shareActions] = makeShareListingViewModel();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);

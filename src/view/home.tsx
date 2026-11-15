@@ -35,7 +35,7 @@ import {
   resetAppLaunchCelebrationForTesting,
   triggerIpePetals,
 } from "@/view/components/ipeCelebrationController";
-import { HomeFloatingChatButton } from "@/view/home/HomeFloatingChatButton";
+import { HomeFloatingAddButton } from "@/view/home/HomeFloatingChatButton";
 import type { BookModality } from "@/model/entities/book";
 import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
 import { expressivePressedStyle, withPress } from "@/view/pressFeedback";
@@ -49,6 +49,7 @@ export type HomeProps = {
   onNavigateToBookDetail?: (bookId: string) => void;
   onNavigateToNotifications?: () => void;
   onNavigateToConversations?: () => void;
+  onNavigateToCreateListing?: () => void;
   onNavigateToProfile?: () => void;
   /** Contador manual de conversas/mensagens não lidas (útil para testes determinísticos). */
   conversationsBadgeCount?: number;
@@ -81,6 +82,7 @@ export default function Home({
   onNavigateToBookDetail,
   onNavigateToNotifications,
   onNavigateToConversations,
+  onNavigateToCreateListing,
   onNavigateToProfile,
   conversationsBadgeCount: explicitConversationsBadgeCount,
   onNavigateToTerms: _onNavigateToTerms,
@@ -128,6 +130,14 @@ export default function Home({
     }
   }, [onNavigateToConversations, authState.user, onNavigateToSignIn]);
   const guardedNavigateToConversations = useGuardedPress(handleConversationsPress);
+  const handleCreateListingPress = useCallback(() => {
+    if (onNavigateToCreateListing) {
+      onNavigateToCreateListing();
+    } else if (!authState.user && onNavigateToSignIn) {
+      onNavigateToSignIn();
+    }
+  }, [onNavigateToCreateListing, authState.user, onNavigateToSignIn]);
+  const guardedNavigateToCreateListing = useGuardedPress(handleCreateListingPress);
   const guardedNavigateToHelp = useGuardedPress(onNavigateToHelp);
   const guardedNavigateToSearch = useGuardedPress(onNavigateToSearch);
 
@@ -251,8 +261,33 @@ export default function Home({
 
           <View style={styles.topRightActions}>
             {authState.loading ? null : authState.user ? (
-              <Pressable
-                testID="home-top-profile-button"
+              <>
+                <Pressable
+                  testID="home-top-conversations-button"
+                  accessibilityRole="button"
+                  accessibilityLabel={
+                    conversationsBadgeCount > 0
+                      ? `Abrir conversas, ${conversationsBadgeCount} ${conversationsBadgeCount === 1 ? "nova" : "novas"}`
+                      : "Abrir conversas"
+                  }
+                  hitSlop={{ top: tokens.spacing[4], bottom: tokens.spacing[4], left: tokens.spacing[4], right: tokens.spacing[4] }}
+                  onPress={() => guardedNavigateToConversations()}
+                  style={({ pressed }) => [
+                    styles.topIconButton,
+                    pressed && styles.profileButtonPressed,
+                  ]}
+                >
+                  <AppIcon name="chat" size={20} color={colors.m3.onSurfaceVariant} />
+                  {conversationsBadgeCount > 0 ? (
+                    <View style={styles.topIconBadge} testID="home-top-conversations-badge">
+                      <Text style={styles.topIconBadgeText}>
+                        {conversationsBadgeCount > 9 ? "9+" : conversationsBadgeCount}
+                      </Text>
+                    </View>
+                  ) : null}
+                </Pressable>
+                <Pressable
+                  testID="home-top-profile-button"
                 accessibilityRole="button"
                 accessibilityLabel={
                   authState.user.name ? `Meu perfil, ${authState.user.name}` : "Meu perfil"
@@ -275,6 +310,7 @@ export default function Home({
                   <AppIcon name="person" size={22} color={colors.m3.onSurfaceVariant} />
                 )}
               </Pressable>
+              </>
             ) : (
               <Pressable
                 accessibilityRole="button"
@@ -537,11 +573,8 @@ export default function Home({
             onSelect={neighborhoodHook.selectNeighborhood}
             onClose={neighborhoodHook.closeSelector}
           />
-          {!wideWeb && (onNavigateToConversations || onNavigateToSignIn) ? (
-            <HomeFloatingChatButton
-              badgeCount={conversationsBadgeCount}
-              onPress={() => guardedNavigateToConversations()}
-            />
+          {!wideWeb && (onNavigateToCreateListing || onNavigateToSignIn) ? (
+            <HomeFloatingAddButton onPress={() => guardedNavigateToCreateListing()} />
           ) : null}
         </>
       }
@@ -573,6 +606,32 @@ function createStyles(colors: ColorPalette) {
     },
     neighborhoodText: { flexShrink: 1, ...tokens.typography.labelLarge, color: colors.m3.onSurface, },
     topRightActions: { flexShrink: 0, flexDirection: "row", alignItems: "center", gap: tokens.spacing[8], },
+    topIconButton: {
+      width: tokens.spacing[40],
+      height: tokens.spacing[40],
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.m3.surfaceContainerHigh,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    topIconBadge: {
+      position: "absolute",
+      top: -2,
+      right: -2,
+      minWidth: 18,
+      height: 18,
+      paddingHorizontal: 4,
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.action,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    topIconBadgeText: {
+      ...tokens.typography.labelSmall,
+      color: colors.m3.onPrimary,
+      fontSize: 10,
+      lineHeight: 12,
+    },
     profileButton: {
       width: tokens.spacing[40],
       height: tokens.spacing[40],

@@ -43,6 +43,14 @@ export type ConversationsDeps = {
 /** Maior que qualquer data ISO: ordena a proposta recebida pendente antes das conversas. */
 const TOP_SORT_KEY = "9999";
 const COMMUNITY_MEMBER = "Pessoa da comunidade";
+
+function formatMemberName(name: string | null | undefined): string {
+  const trimmed = name?.trim() ?? "";
+  if (!trimmed || /^Usuário #[0-9A-F]{4}$/i.test(trimmed)) {
+    return COMMUNITY_MEMBER;
+  }
+  return trimmed;
+}
 const LOAD_ERROR = "Não foi possível carregar suas conversas. Tente novamente.";
 const WEEKDAYS = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"];
 
@@ -87,7 +95,12 @@ async function buildItem(
   } else {
     other = { name: entry.requesterName ?? null, photoUrl: entry.requesterPhotoUrl ?? null };
   }
-  const base = { requestId: request.id, listing, otherName: other.name || COMMUNITY_MEMBER, otherPhotoUrl: other.photoUrl };
+  const base = {
+    requestId: request.id,
+    listing,
+    otherName: formatMemberName(other.name),
+    otherPhotoUrl: other.photoUrl,
+  };
 
   if (request.status === "pending") {
     return {

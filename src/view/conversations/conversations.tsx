@@ -19,6 +19,7 @@ import { tokens } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { AppIcon } from "@/view/components/AppIcon";
 import { Avatar } from "@/view/components/Avatar";
+import { Chip } from "@/view/components/Chip";
 import { Dialog } from "@/view/components/Dialog";
 import { ErrorState } from "@/view/components/ErrorState";
 import { FilledButton } from "@/view/components/FilledButton";
@@ -126,12 +127,23 @@ export function Conversations({
 
   // Web larga (Figma `06.01`): a conversa abre ao lado da lista, sem trocar de rota.
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [filter, setFilter] = useState<"active" | "completed">("active");
+
+  const activeItems = useMemo(
+    () => state.items.filter((item) => item.listing.status !== "delivered"),
+    [state.items],
+  );
+  const completedItems = useMemo(
+    () => state.items.filter((item) => item.listing.status === "delivered"),
+    [state.items],
+  );
+  const visibleItems = filter === "completed" ? completedItems : activeItems;
 
   const selectedItem = state.items.find((item) => item.requestId === selectedId) ?? null;
 
   const pendingReceivedCount = useMemo(
-    () => state.items.filter((item) => item.kind === "pendingReceived").length,
-    [state.items],
+    () => activeItems.filter((item) => item.kind === "pendingReceived").length,
+    [activeItems],
   );
 
   const open = (item: ConversationItem) => {
@@ -217,7 +229,7 @@ export function Conversations({
   };
 
   return (
-    <SafeAreaView edges={["top", "left", "right"]} style={styles.page}>
+    <SafeAreaView edges={["top", "bottom", "left", "right"]} style={styles.page}>
       <View style={wideWeb ? styles.wideContainer : styles.flexOne}>
         {/* Cabeçalho da tela (alinhado a 80px no desktop com o WebHeader) */}
         <View style={wideWeb ? styles.wideHeader : [styles.mobileHeader, Boolean(onBack) && styles.mobileHeaderWithBack]}>
@@ -363,18 +375,30 @@ export function Conversations({
               {wideWeb ? (
                 <View style={styles.wideListHeader}>
                   <Text style={styles.wideListCount}>
-                    {`${state.items.length} ${state.items.length === 1 ? "conversa" : "conversas"}`}
+                    {`${visibleItems.length} ${visibleItems.length === 1 ? "conversa" : "conversas"}`}
                   </Text>
                 </View>
               ) : null}
+              <View style={[styles.filterBar, wideWeb && styles.filterBarWide]}>
+                <Chip
+                  label={`Ativas (${activeItems.length})`}
+                  selected={filter === "active"}
+                  onPress={() => setFilter("active")}
+                />
+                <Chip
+                  label={`Concluídas (${completedItems.length})`}
+                  selected={filter === "completed"}
+                  onPress={() => setFilter("completed")}
+                />
+              </View>
               <FlatList
                 style={styles.flexOne}
                 {...standardVerticalScrollProps}
-                data={state.items}
+                data={visibleItems}
                 keyExtractor={(item) => item.requestId}
-                contentContainerStyle={wideWeb ? styles.wideList : [styles.list, { paddingBottom: scrollBottomPadding.withBottomBar }]}
+                contentContainerStyle={wideWeb ? styles.wideList : [styles.list, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
                 ListHeaderComponent={
-                  pendingReceivedCount > 0 && onOpenReceivedRequests ? (
+                  filter === "active" && pendingReceivedCount > 0 && onOpenReceivedRequests ? (
                     <Pressable
                       accessibilityRole="button"
                       accessibilityLabel={`Você tem ${pendingReceivedCount} ${pendingReceivedCount === 1 ? "nova proposta recebida" : "novas propostas recebidas"}. Toque para abrir pedidos recebidos.`}
@@ -396,10 +420,35 @@ export function Conversations({
                     </Pressable>
                   ) : undefined
                 }
+                ListEmptyComponent={
+                  <View style={styles.filteredEmpty}>
+                    <Text style={styles.filteredEmptyTitle}>
+                      {filter === "completed"
+                        ? "Nenhuma negociação concluída ainda"
+                        : "Nenhuma conversa ativa no momento"}
+                    </Text>
+                    <Text style={styles.filteredEmptyBody}>
+                      {filter === "completed"
+                        ? "Quando uma entrega for finalizada, a conversa aparecerá separada aqui."
+                        : "Suas negociações em andamento foram concluídas."}
+                    </Text>
+                    {filter === "active" && completedItems.length > 0 ? (
+                      <FilledButton label="Ver concluídas" onPress={() => setFilter("completed")} />
+                    ) : null}
+                  </View>
+                }
                 renderItem={({ item }) => {
                   const isSelected = wideWeb && item.requestId === selectedId;
+                  const isCompleted = item.listing.status === "delivered";
                   return (
-                    <View style={[styles.rowWrap, !wideWeb && styles.rowCardMobile]}>
+                    <View
+                      style={[
+                        styles.rowWrap,
+                        !wideWeb && styles.rowCardMobile,
+                        !wideWeb && !isCompleted && item.kind === "pendingReceived" && styles.rowCardPendingReceived,
+                        !wideWeb && !isCompleted && item.kind === "pendingSent" && styles.rowCardPendingSent,
+                      ]}
+                    >
                       <Pressable
                         accessibilityRole="button"
                         accessibilityLabel={`Conversa com ${item.otherName} sobre ${item.listing.title}. ${item.preview}`}
@@ -415,13 +464,26 @@ export function Conversations({
                           wideWeb && item.kind === "accepted" ? styles.rowWithDelete : null,
                         ]}
                       >
-                        <Avatar name={item.otherName} photoUrl={item.otherPhotoUrl ?? undefined} size={48} />
+                        <BookCover
+                          id={item.listing.id}
+                          title={item.listing.title}
+                          photoUrl={item.listing.photoUrl}
+                          variant="list"
+                        />
                         <View style={styles.rowText}>
                           <View style={styles.rowHeader}>
-                            <Text style={[styles.name, isSelected && styles.nameSelected]} numberOfLines={1}>
-                              {item.otherName}
+                            <Text style={[styles.about, isSelected && styles.nameSelected]} numberOfLines={1}>
+                              {item.listing.title}
                             </Text>
-                            {item.lastMessageAt ? (
+                            {isCompleted ? (
+                              <View style={styles.completedPill}>
+                                <Text style={styles.completedPillText}>Concluído</Text>
+                              </View>
+                            ) : item.kind === "pendingReceived" ? (
+                              <View style={styles.badge}>
+                                <Text style={styles.badgeText}>Nova proposta</Text>
+                              </View>
+                            ) : item.lastMessageAt ? (
                               <Text style={styles.time}>{formatConversationTime(item.lastMessageAt, now)}</Text>
                             ) : item.kind === "pendingSent" ? (
                               <View style={styles.pendingSentPill}>
@@ -429,27 +491,22 @@ export function Conversations({
                               </View>
                             ) : null}
                           </View>
-                          {item.kind === "pendingReceived" ? (
-                            <View style={styles.badge}>
-                              <Text style={styles.badgeText}>Nova proposta</Text>
+                          <View style={styles.aboutRow}>
+                            <View style={styles.rowAuthorGroup}>
+                              <Avatar name={item.otherName} photoUrl={item.otherPhotoUrl ?? undefined} size={20} />
+                              <Text style={[styles.name, isSelected && styles.nameSelected]} numberOfLines={1}>
+                                {item.otherName}
+                              </Text>
                             </View>
-                          ) : null}
+                            <Tag variant={item.listing.modality} />
+                          </View>
                           <Text
                             style={[styles.preview, item.kind !== "accepted" ? styles.previewStatus : null]}
                             numberOfLines={2}
                           >
                             {item.preview}
                           </Text>
-                          <View style={styles.aboutRow}>
-                            <Tag variant={item.listing.modality} />
-                            <Text style={styles.about} numberOfLines={1}>
-                              {`Sobre ${item.listing.title}`}
-                            </Text>
-                          </View>
                         </View>
-                        {!wideWeb ? (
-                          <AppIcon name="chevronRight" size={18} color={colors.m3.onSurfaceVariant} />
-                        ) : null}
                       </Pressable>
                       {/* Na web larga não há toque longo: o apagar fica visível na própria linha. */}
                       {wideWeb && item.kind === "accepted" ? (

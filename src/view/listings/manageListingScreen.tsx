@@ -4,6 +4,7 @@ import ManageListing from "@/view/listings/manageListing";
 
 export type ManageListingScreenProps = {
   bookId: string;
+  focusKey?: number;
   onEdit?: (bookId: string) => void;
   onViewPublicListing?: (bookId: string) => void;
   onRemoved?: () => void;
@@ -13,6 +14,7 @@ export type ManageListingScreenProps = {
 
 export default function ManageListingScreen({
   bookId,
+  focusKey,
   onEdit,
   onViewPublicListing,
   onRemoved,
@@ -33,6 +35,7 @@ export default function ManageListingScreen({
     <ManageListing
       bookId={bookId}
       sessionUserId={authState.user.id}
+      focusKey={focusKey}
       onEdit={onEdit}
       onViewPublicListing={onViewPublicListing}
       onRemoved={onRemoved}

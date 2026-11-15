@@ -16,6 +16,7 @@ import { useTheme } from "@/view/theme/ThemeProvider";
 import { AppIcon } from "@/view/components/AppIcon";
 import { Avatar } from "@/view/components/Avatar";
 import { BookCover } from "@/view/components/BookCover";
+import { Chip } from "@/view/components/Chip";
 import { ErrorState } from "@/view/components/ErrorState";
 import { FilledButton } from "@/view/components/FilledButton";
 import { formatPrice } from "@/view/formatPrice";
@@ -156,6 +157,7 @@ export function Delivery({ requestId, sessionUserId, onBack }: DeliveryProps) {
 
   const [permission, requestPermission] = useCameraPermissions();
   const [typed, setTyped] = useState("");
+  const [scanMode, setScanMode] = useState<"qr" | "code">("qr");
   const [scanError, setScanError] = useState<string | null>(null);
   const scanLock = useRef(false);
 
@@ -248,9 +250,29 @@ export function Delivery({ requestId, sessionUserId, onBack }: DeliveryProps) {
 
     return (
       <View style={styles.card}>
-        <Text accessibilityRole="header" style={styles.headline}>Confirme que recebeu o livro</Text>
-        <Text style={styles.body}>Aponte a câmera para o QR que a outra pessoa mostra ou digite o código.</Text>
+        <Text accessibilityRole="header" style={styles.headline}>Confirmar recebimento</Text>
+        <Text style={styles.bodyCompact}>
+          {Platform.OS !== "web"
+            ? "Escaneie o QR da outra pessoa ou digite o código."
+            : "Digite o código de 8 caracteres exibido no celular de quem entrega."}
+        </Text>
         {Platform.OS !== "web" ? (
+          <View style={styles.modeRow}>
+            <Chip
+              label="Ler QR"
+              accessibilityLabel="Ler QR Code com a câmera"
+              selected={scanMode === "qr"}
+              onPress={() => setScanMode("qr")}
+            />
+            <Chip
+              label="Digitar código"
+              accessibilityLabel="Digitar código manualmente"
+              selected={scanMode === "code"}
+              onPress={() => setScanMode("code")}
+            />
+          </View>
+        ) : null}
+        {Platform.OS !== "web" && scanMode === "qr" ? (
           permission?.granted ? (
             <View style={styles.camera}>
               <CameraView
@@ -259,39 +281,48 @@ export function Delivery({ requestId, sessionUserId, onBack }: DeliveryProps) {
                 barcodeScannerSettings={{ barcodeTypes: ["qr"] }}
                 onBarcodeScanned={handleScanned}
               />
+              <View pointerEvents="none" style={styles.cameraOverlay}>
+                <View style={styles.cameraReticle} />
+                <Text style={styles.cameraHint}>Centralize o QR Code aqui</Text>
+              </View>
             </View>
           ) : (
             <View style={styles.permission}>
-              <AppIcon name="camera" size={32} color={colors.m3.primary} />
-              <Text style={styles.body}>Permita a câmera para ler o QR ou digite o código abaixo.</Text>
+              <AppIcon name="camera" size={28} color={colors.m3.primary} />
+              <Text style={styles.bodyCompact}>Permita a câmera para ler o QR ou alterne para digitar o código.</Text>
               <OutlinedButton label="Permitir câmera" onPress={() => void requestPermission()} />
             </View>
           )
         ) : (
-          <View style={styles.webNoticeBlock}>
-            <AppIcon name="info" size={20} color={colors.m3.primary} />
-            <Text style={styles.webNoticeText}>
-              Na versão web, digite o código de 8 caracteres exibido no celular de quem entrega.
-            </Text>
-          </View>
+          <>
+            {Platform.OS === "web" ? (
+              <View style={styles.webNoticeBlock}>
+                <AppIcon name="info" size={20} color={colors.m3.primary} />
+                <Text style={styles.webNoticeText}>
+                  Na versão web, digite o código de 8 caracteres exibido no celular de quem entrega.
+                </Text>
+              </View>
+            ) : null}
+            <TextField
+              label="Código da entrega"
+              labelBackgroundColor={colors.m3.surfaceContainerLow}
+              value={typed}
+              onChangeText={(value) => setTyped(normalizeDeliveryCode(value).slice(0, 8))}
+              autoCapitalize="characters"
+              maxLength={8}
+              helperText="8 caracteres, como K7M2QXWA"
+              returnKeyType="done"
+              onSubmitEditing={() => void actions.confirm(typed)}
+            />
+            <FilledButton
+              label="Confirmar entrega"
+              loading={state.confirming}
+              loadingLabel="Confirmando"
+              disabled={typed.length !== 8}
+              onPress={() => void actions.confirm(typed)}
+            />
+          </>
         )}
-        <TextField
-          label="Código da entrega"
-          value={typed}
-          onChangeText={(value) => setTyped(normalizeDeliveryCode(value).slice(0, 8))}
-          autoCapitalize="characters"
-          maxLength={8}
-          helperText="8 caracteres, como K7M2QXWA"
-          returnKeyType="done"
-          onSubmitEditing={() => void actions.confirm(typed)}
-        />
-        <FilledButton
-          label="Confirmar entrega"
-          loading={state.confirming}
-          loadingLabel="Confirmando"
-          disabled={typed.length !== 8}
-          onPress={() => void actions.confirm(typed)}
-        />
       </View>
     );
   }
@@ -383,7 +414,15 @@ function createStyles(colors: ColorPalette) {
       paddingTop: tokens.spacing[16],
     },
     scroll: { paddingBottom: tokens.spacing[24] },
-    content: { width: "100%", maxWidth: 560, alignSelf: "center", padding: tokens.spacing[16], gap: tokens.spacing[16] },
+    content: {
+      width: "100%",
+      maxWidth: 560,
+      alignSelf: "center",
+      paddingHorizontal: tokens.spacing[16],
+      paddingTop: tokens.spacing[8],
+      paddingBottom: tokens.spacing[16],
+      gap: tokens.spacing[10],
+    },
     contentWide: { maxWidth: WEB_MAX_WIDTH, paddingHorizontal: tokens.spacing[24] },
     wideGrid: {
       flexDirection: "row",
@@ -405,19 +444,53 @@ function createStyles(colors: ColorPalette) {
       gap: tokens.spacing[16],
     },
     card: {
-      gap: tokens.spacing[16],
-      padding: tokens.spacing[16],
+      gap: tokens.spacing[10],
+      padding: tokens.spacing[14],
       borderRadius: tokens.radius.extraLarge,
       backgroundColor: colors.m3.surfaceContainerLow,
     },
     headline: { ...tokens.typography.titleLarge, fontFamily: fontFamily.brand, color: colors.m3.onSurface },
     body: { ...tokens.typography.bodyLarge, fontFamily: fontFamily.regular, color: colors.m3.onSurfaceVariant },
+    bodyCompact: { ...tokens.typography.bodyMedium, fontFamily: fontFamily.regular, color: colors.m3.onSurfaceVariant },
     qrBlock: { alignItems: "center", gap: tokens.spacing[12] },
     code: { ...tokens.typography.brandSection, letterSpacing: tokens.letterSpacing.code, color: colors.m3.onSurface },
     hint: { ...tokens.typography.bodyMedium, fontFamily: fontFamily.regular, color: colors.m3.onSurfaceVariant },
     expired: { color: colors.error, fontFamily: fontFamily.semiBold },
     expiringSoon: { color: colors.ipe.bloomDeep, fontFamily: fontFamily.semiBold },
-    camera: { height: 280, borderRadius: tokens.radius.large, overflow: "hidden", backgroundColor: "#000000" },
+    modeRow: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: tokens.spacing[8],
+    },
+    camera: { height: 220, borderRadius: tokens.radius.large, overflow: "hidden", backgroundColor: "#111411" },
+    cameraOverlay: {
+      position: "absolute",
+      top: 0,
+      right: 0,
+      bottom: 0,
+      left: 0,
+      alignItems: "center",
+      justifyContent: "center",
+      gap: tokens.spacing[8],
+      padding: tokens.spacing[12],
+    },
+    cameraReticle: {
+      width: 128,
+      height: 128,
+      borderRadius: tokens.radius.medium,
+      borderWidth: 2,
+      borderColor: "rgba(255, 255, 255, 0.72)",
+      backgroundColor: "transparent",
+    },
+    cameraHint: {
+      ...tokens.typography.labelMedium,
+      color: "#ffffff",
+      backgroundColor: "rgba(0, 0, 0, 0.55)",
+      paddingHorizontal: tokens.spacing[10],
+      paddingVertical: tokens.spacing[4],
+      borderRadius: tokens.radius.full,
+      overflow: "hidden",
+    },
     permission: {
       alignItems: "center",
       gap: tokens.spacing[12],

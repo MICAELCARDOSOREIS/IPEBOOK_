@@ -400,14 +400,44 @@ export function createConversationsStyles(colors: ColorPalette) {
       borderColor: colors.error,
     },
     aboutReport: { ...tokens.typography.labelLarge, fontFamily: fontFamily.medium, color: colors.error },
+    filterBar: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[8],
+      paddingHorizontal: tokens.spacing[16],
+      paddingBottom: tokens.spacing[8],
+    },
+    filterBarWide: {
+      paddingHorizontal: tokens.spacing[12],
+      paddingTop: tokens.spacing[8],
+      paddingBottom: tokens.spacing[4],
+    },
+    filteredEmpty: {
+      alignItems: "center",
+      justifyContent: "center",
+      paddingHorizontal: tokens.spacing[24],
+      paddingVertical: tokens.spacing[48],
+      gap: tokens.spacing[8],
+    },
+    filteredEmptyTitle: {
+      ...tokens.typography.titleMedium,
+      color: colors.m3.onSurface,
+      textAlign: "center",
+    },
+    filteredEmptyBody: {
+      ...tokens.typography.bodyMedium,
+      color: colors.m3.onSurfaceVariant,
+      textAlign: "center",
+      marginBottom: tokens.spacing[8],
+    },
     list: { paddingBottom: tokens.spacing[32], paddingTop: tokens.spacing[8], width: "100%" },
     row: {
       flexDirection: "row",
-      alignItems: "center",
+      alignItems: "flex-start",
       gap: tokens.spacing[12],
       minHeight: 84,
-      paddingHorizontal: tokens.spacing[16],
-      paddingVertical: tokens.spacing[12],
+      paddingHorizontal: tokens.spacing[14],
+      paddingVertical: tokens.spacing[14],
       ...(Platform.OS === "web" ? ({ cursor: "pointer", userSelect: "none" } as never) : {}),
     },
     rowWideItem: {
@@ -430,9 +460,10 @@ export function createConversationsStyles(colors: ColorPalette) {
       backgroundColor: colors.m3.secondaryContainer,
       borderColor: colors.nature.foliage,
     },
-    rowText: { flex: 1, minWidth: 0, gap: tokens.spacing[4] },
+    rowText: { flex: 1, minWidth: 0, gap: tokens.spacing[6] },
     rowHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: tokens.spacing[8] },
-    name: { flex: 1, ...tokens.typography.bodyLarge, fontWeight: tokens.fontWeight.semiBold, color: colors.m3.onSurface },
+    rowAuthorGroup: { flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", gap: tokens.spacing[6] },
+    name: { flex: 1, ...tokens.typography.labelLarge, fontWeight: tokens.fontWeight.medium, color: colors.m3.onSurfaceVariant },
     nameSelected: { fontWeight: tokens.fontWeight.bold, color: colors.m3.onSecondaryContainer },
     pendingSentPill: {
       paddingHorizontal: tokens.spacing[8],
@@ -445,11 +476,20 @@ export function createConversationsStyles(colors: ColorPalette) {
       color: colors.m3.onSurfaceVariant,
       fontWeight: tokens.fontWeight.medium,
     },
-    badge: {
-      alignSelf: "flex-start",
+    completedPill: {
       paddingHorizontal: tokens.spacing[8],
       paddingVertical: tokens.spacing[2],
-      marginVertical: tokens.spacing[2],
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.m3.secondaryContainer,
+    },
+    completedPillText: {
+      ...tokens.typography.labelSmall,
+      color: colors.m3.onSecondaryContainer,
+      fontWeight: tokens.fontWeight.medium,
+    },
+    badge: {
+      paddingHorizontal: tokens.spacing[8],
+      paddingVertical: tokens.spacing[2],
       borderRadius: tokens.radius.full,
       backgroundColor: colors.m3.primary,
     },
@@ -460,10 +500,10 @@ export function createConversationsStyles(colors: ColorPalette) {
     aboutRow: {
       flexDirection: "row",
       alignItems: "center",
+      justifyContent: "space-between",
       gap: tokens.spacing[8],
-      marginTop: tokens.spacing[2],
     },
-    about: { ...tokens.typography.labelMedium, fontWeight: tokens.fontWeight.medium, color: colors.m3.primary, flex: 1 },
+    about: { ...tokens.typography.bodyLarge, fontWeight: tokens.fontWeight.semiBold, color: colors.m3.onSurface, flex: 1 },
     footerContainer: {
       paddingHorizontal: tokens.spacing[16],
       paddingTop: tokens.spacing[8],
@@ -540,6 +580,13 @@ export function createConversationsStyles(colors: ColorPalette) {
       borderWidth: 1,
       borderColor: colors.m3.outlineVariant,
       overflow: "hidden",
+    },
+    rowCardPendingReceived: {
+      borderColor: colors.m3.primary,
+      backgroundColor: colors.m3.surfaceContainerLowest,
+    },
+    rowCardPendingSent: {
+      backgroundColor: colors.m3.surfaceContainerLow,
     },
     cancelRequestBar: {
       flexDirection: "row",

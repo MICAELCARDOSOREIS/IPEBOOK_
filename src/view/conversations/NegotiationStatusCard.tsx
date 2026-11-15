@@ -101,13 +101,14 @@ export function NegotiationStatusCard({
           </View>
         </View>
 
-        <View style={styles.actionsGrid}>
+        <View style={[styles.actionsGrid, embedded && styles.actionsGridCompact]}>
           {onOpenDelivery ? (
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Entrega do livro"
+              hitSlop={embedded ? 4 : undefined}
               onPress={onOpenDelivery}
-              style={withPress(styles.actionButtonPrimary)}
+              style={withPress([styles.actionButtonPrimary, embedded && styles.actionButtonCompact])}
             >
               <Text style={styles.actionButtonPrimaryText}>Entrega do livro</Text>
             </Pressable>
@@ -117,8 +118,9 @@ export function NegotiationStatusCard({
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Como chegar"
+              hitSlop={embedded ? 4 : undefined}
               onPress={onOpenDirections}
-              style={withPress(styles.actionButtonSecondary)}
+              style={withPress([styles.actionButtonSecondary, embedded && styles.actionButtonCompact])}
             >
               <AppIcon name="place" size={16} color={colors.m3.onSurface} />
               <Text style={styles.actionButtonSecondaryText}>Como chegar</Text>
@@ -129,11 +131,14 @@ export function NegotiationStatusCard({
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Adicionar à agenda"
+              hitSlop={embedded ? 4 : undefined}
               onPress={onAddToCalendar}
-              style={withPress(styles.actionButtonSecondary)}
+              style={withPress([styles.actionButtonSecondary, embedded && styles.actionButtonCompact])}
             >
               <AppIcon name="calendar" size={16} color={colors.m3.onSurface} />
-              <Text style={styles.actionButtonSecondaryText}>Adicionar à agenda</Text>
+              <Text style={styles.actionButtonSecondaryText}>
+                {embedded ? "Agenda" : "Adicionar à agenda"}
+              </Text>
             </Pressable>
           ) : null}
 
@@ -141,8 +146,9 @@ export function NegotiationStatusCard({
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Reagendar encontro"
+              hitSlop={embedded ? 4 : undefined}
               onPress={onRescheduleMeeting}
-              style={withPress(styles.actionButtonSecondary)}
+              style={withPress([styles.actionButtonSecondary, embedded && styles.actionButtonCompact])}
             >
               <AppIcon name="swap" size={16} color={colors.m3.onSurface} />
               <Text style={styles.actionButtonSecondaryText}>Reagendar</Text>
@@ -270,7 +276,8 @@ function createStyles(colors: ColorPalette) {
       borderRadius: 0,
       backgroundColor: "transparent",
       padding: 0,
-      paddingTop: tokens.spacing[12],
+      paddingTop: tokens.spacing[8],
+      gap: tokens.spacing[8],
       borderTopWidth: 1,
       borderTopColor: colors.m3.outlineVariant,
     },
@@ -310,6 +317,15 @@ function createStyles(colors: ColorPalette) {
       flexWrap: "wrap",
       gap: tokens.spacing[8],
       marginTop: tokens.spacing[6],
+    },
+    actionsGridCompact: {
+      gap: tokens.spacing[6],
+      marginTop: tokens.spacing[2],
+    },
+    actionButtonCompact: {
+      paddingVertical: tokens.spacing[6],
+      paddingHorizontal: tokens.spacing[12],
+      minHeight: 40,
     },
     actionButtonPrimary: {
       flexDirection: "row",

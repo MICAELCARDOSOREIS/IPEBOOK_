@@ -25,6 +25,7 @@ import { useActiveNeighborhood } from "@/viewmodel/useActiveNeighborhood";
 import { usePersistedSearchFilters } from "@/viewmodel/usePersistedSearchFilters";
 import { WEB_GUTTER, WEB_MAX_WIDTH, useWebGridColumns } from "@/view/webLayout";
 import { useGuardedPress } from "@/view/useGuardedPress";
+import { useOnRefocus } from "@/view/useRefocusKey";
 import { standardVerticalScrollProps, standardHorizontalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 import { withPress } from "@/view/pressFeedback";
 
@@ -39,6 +40,7 @@ export type SearchProps = {
   initialCategory?: string;
   /** Pré-aplica o termo digitado no campo de busca do cabeçalho web. */
   initialTerm?: string;
+  focusKey?: number;
 };
 
 const VALID_INITIAL_MODALITIES: readonly SearchModalityFilter[] = ["sale", "trade", "donation"];
@@ -78,6 +80,7 @@ export default function Search({
   initialModality,
   initialCategory,
   initialTerm,
+  focusKey,
 }: SearchProps = {}) {
   const neighborhoodHook = useActiveNeighborhood("all");
   const [selectedNeighborhoodOverride, setSelectedNeighborhoodOverride] = useState<string | null>(null);
@@ -95,6 +98,9 @@ export default function Search({
   const { colors, resolvedScheme } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [state, actions] = makeSearchViewModel(auth.user?.id ?? null);
+  useOnRefocus(focusKey, () => {
+    void actions.reload();
+  });
   const { isOnline } = makeNetworkStatus();
   const [confirmingClear, setConfirmingClear] = useState(false);
   const [showFilterSheet, setShowFilterSheet] = useState(false);

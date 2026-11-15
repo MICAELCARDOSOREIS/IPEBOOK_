@@ -38,6 +38,7 @@ import { LoadingState } from "@/view/components/LoadingState";
 import { Tag } from "@/view/components/Tag";
 import { Avatar } from "@/view/components/Avatar";
 import { useGuardedPress } from "@/view/useGuardedPress";
+import { useOnRefocus } from "@/view/useRefocusKey";
 import { standardVerticalScrollProps } from "@/view/scrollProps";
 import { withPress } from "@/view/pressFeedback";
 
@@ -51,6 +52,7 @@ const SUGGESTIONS = [
 export type ChatProps = {
   requestId: string;
   sessionUserId: string;
+  focusKey?: number;
   onBack?: () => void;
   /** "Combinar" marca o encontro; o cartão do livro abre o acompanhamento (`/negociacao/[id]`). */
   onOpenNegotiation?: (requestId: string) => void;
@@ -68,6 +70,7 @@ export type ChatProps = {
 export function Chat({
   requestId,
   sessionUserId,
+  focusKey,
   onBack,
   onOpenNegotiation,
   onOpenDelivery,
@@ -82,6 +85,12 @@ export function Chat({
   const [detailState, detailActions] = makeRequestDetailViewModel(requestId, sessionUserId);
   const [state, actions] = makeNegotiationChatViewModel(requestId, sessionUserId);
   const [meetingState, meetingActions] = makeMeetingViewModel(requestId, sessionUserId);
+
+  useOnRefocus(focusKey, () => {
+    void detailActions.reload();
+    void actions.reload();
+    void meetingActions.reload();
+  });
   const [respondingProposal, setRespondingProposal] = useState(false);
   const [proposalError, setProposalError] = useState<string | null>(null);
 

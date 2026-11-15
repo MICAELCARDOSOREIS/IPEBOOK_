@@ -178,7 +178,7 @@ export function MeetingCard({
       </View>
       <Text style={styles.body}>
         {confirmed
-          ? "Os dois confirmaram. Vocês recebem um aviso se algo mudar."
+          ? "Confirmado por ambos · aviso automático se algo mudar."
           : mine
             ? `${counterpartName} vai confirmar este horário ou sugerir outro. Você recebe um aviso quando responder.`
             : `${counterpartName} sugeriu este encontro. Confirme se esse horário funciona ou sugira outro.`}
@@ -186,7 +186,7 @@ export function MeetingCard({
 
       {/* Linhas de `06.05`: quando, onde e o que fazer. */}
       <View style={styles.detailRow}>
-        <AppIcon name="calendar" size={24} color={colors.m3.onSurface} />
+        <AppIcon name="calendar" size={22} color={colors.m3.onSurface} />
         <View style={styles.detailText}>
           <Text style={styles.detailTitle}>{formatMeetingWhen(meeting.scheduledAt)}</Text>
           <Text style={[styles.body, !countdown.past && styles.countdown]}>
@@ -195,17 +195,12 @@ export function MeetingCard({
         </View>
       </View>
       <View style={styles.detailRow}>
-        <AppIcon name="place" size={24} color={colors.m3.onSurface} />
+        <AppIcon name="place" size={22} color={colors.m3.onSurface} />
         <View style={styles.detailText}>
           <Text style={styles.detailTitle}>{meeting.pointName}</Text>
           {point ? <Text style={styles.body}>{point.address}</Text> : null}
         </View>
       </View>
-      <TextButton
-        label="Como chegar"
-        accessibilityLabel={`Como chegar a ${meeting.pointName}`}
-        onPress={() => void openDirections()}
-      />
       {mapError ? <Text accessibilityRole="alert" style={styles.error}>{mapError}</Text> : null}
 
       {actionError}
@@ -217,11 +212,22 @@ export function MeetingCard({
           onPress={() => void actions.confirm()}
         />
       ) : null}
-      <OutlinedButton
-        label={confirmed || mine ? "Reagendar" : "Sugerir outro horário"}
-        disabled={state.busy}
-        onPress={() => onScheduleMeeting?.()}
-      />
+      <View style={styles.actionsRow}>
+        <View style={styles.actionHalf}>
+          <OutlinedButton
+            label="Como chegar"
+            accessibilityLabel={`Como chegar a ${meeting.pointName}`}
+            onPress={() => void openDirections()}
+          />
+        </View>
+        <View style={styles.actionHalf}>
+          <OutlinedButton
+            label={confirmed || mine ? "Reagendar" : "Sugerir horário"}
+            disabled={state.busy}
+            onPress={() => onScheduleMeeting?.()}
+          />
+        </View>
+      </View>
       <TextButton label="Cancelar encontro" tone="danger" disabled={state.busy} onPress={() => setConfirmingCancel(true)} />
 
       {pastMeetings.length > 0 ? (
@@ -286,8 +292,10 @@ function createStyles(colors: ColorPalette) {
       fontFamily: fontFamily.regular,
       color: colors.m3.onSurfaceVariant,
     },
-    detailRow: { flexDirection: "row", alignItems: "flex-start", gap: tokens.spacing[16] },
-    detailText: { flex: 1, gap: tokens.spacing[4] },
+    detailRow: { flexDirection: "row", alignItems: "flex-start", gap: tokens.spacing[12] },
+    detailText: { flex: 1, gap: tokens.spacing[2] },
+    actionsRow: { flexDirection: "row", gap: tokens.spacing[8] },
+    actionHalf: { flex: 1 },
     countdown: { color: colors.action, fontFamily: fontFamily.medium },
     detailTitle: {
       ...tokens.typography.bodyLarge,

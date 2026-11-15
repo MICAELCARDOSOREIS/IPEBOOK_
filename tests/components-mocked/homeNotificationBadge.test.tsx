@@ -57,7 +57,7 @@ describe("Topo da Home — Botão de perfil e sem sino de notificações (Spec 0
     expect(onNavigateToProfile).toHaveBeenCalledTimes(1);
   });
 
-  it("renderiza o botão flutuante de mensagens quando logado e navega ao tocar", async () => {
+  it("renderiza o botão de conversas no topo quando logado e navega ao tocar", async () => {
     const onNavigateToConversations = vi.fn();
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
@@ -68,34 +68,46 @@ describe("Topo da Home — Botão de perfil e sem sino de notificações (Spec 0
         />,
       );
     });
-    const chatFab = screen.getByTestId("home-floating-chat-button");
-    expect(chatFab).toBeDefined();
+    const chatBtn = screen.getByTestId("home-top-conversations-button");
+    expect(chatBtn).toBeDefined();
     expect(screen.getByText("3")).toBeDefined();
-    fireEvent.press(chatFab);
+    fireEvent.press(chatBtn);
     expect(onNavigateToConversations).toHaveBeenCalledTimes(1);
   });
 
-  it("renderiza o botão flutuante de mensagens com badge singular (1) e limite (9+)", async () => {
+  it("renderiza o botão de conversas no topo com badge singular (1), limite (9+) e zerado", async () => {
     const fn = vi.fn();
     let screen1!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
       screen1 = await render(<Home onNavigateToConversations={fn} conversationsBadgeCount={1} />);
     });
-    expect(screen1.getByRole("button", { name: "Abrir mensagens flutuante, 1 nova" })).toBeDefined();
+    expect(screen1.getByRole("button", { name: "Abrir conversas, 1 nova" })).toBeDefined();
     expect(screen1.getByText("1")).toBeDefined();
 
     let screen10!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
       screen10 = await render(<Home onNavigateToConversations={fn} conversationsBadgeCount={12} />);
     });
-    expect(screen10.getByRole("button", { name: "Abrir mensagens flutuante, 12 novas" })).toBeDefined();
+    expect(screen10.getByRole("button", { name: "Abrir conversas, 12 novas" })).toBeDefined();
     expect(screen10.getByText("9+")).toBeDefined();
 
     let screen0!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
       screen0 = await render(<Home onNavigateToConversations={fn} conversationsBadgeCount={0} />);
     });
-    expect(screen0.getByRole("button", { name: "Abrir mensagens flutuante" })).toBeDefined();
-    expect(screen0.queryByTestId("home-floating-chat-badge")).toBeNull();
+    expect(screen0.getByRole("button", { name: "Abrir conversas" })).toBeDefined();
+    expect(screen0.queryByTestId("home-top-conversations-badge")).toBeNull();
+  });
+
+  it("renderiza o botão flutuante de anunciar livro na Home e navega ao tocar", async () => {
+    const onNavigateToCreateListing = vi.fn();
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<Home onNavigateToCreateListing={onNavigateToCreateListing} />);
+    });
+    const addFab = screen.getByTestId("home-floating-add-button");
+    expect(addFab).toBeDefined();
+    fireEvent.press(addFab);
+    expect(onNavigateToCreateListing).toHaveBeenCalledTimes(1);
   });
 });

@@ -147,11 +147,15 @@ export function TextField({
             pointerEvents="none"
             style={[styles.notch, { backgroundColor: labelBackgroundColor ?? colors.background }]}
           >
-            <Text style={[styles.floatingLabel, { color: accentColor }]}>{label}</Text>
+            <Text numberOfLines={1} ellipsizeMode="tail" style={[styles.floatingLabel, { color: accentColor }]}>
+              {label}
+            </Text>
           </View>
         ) : (
           <Text
             pointerEvents="none"
+            numberOfLines={1}
+            ellipsizeMode="tail"
             style={[
               styles.restingLabel,
               multiline && styles.restingLabelMultiline,

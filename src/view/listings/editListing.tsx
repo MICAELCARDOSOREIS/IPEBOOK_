@@ -279,7 +279,7 @@ export default function EditListing({
             {state.isBox ? (
               <View style={{ marginTop: tokens.spacing[8], paddingLeft: tokens.spacing[32] }}>
                 <TextField
-                  label="Quantidade de volumes (opcional)"
+                  label="Volumes (opcional)"
                   value={state.boxVolumesCount}
                   onChangeText={actions.setBoxVolumesCount}
                   editable={!state.saving}
@@ -370,11 +370,8 @@ export default function EditListing({
           <View style={styles.field}>
             <Text style={styles.sectionLabel}>Ponto de encontro / Retirada em Piripiri</Text>
             <View style={styles.modalityRow}>
-              {["Piripiri (A combinar)", ...PIRIPIRI_MEETING_POINT_NAMES].map((locationName) => {
-                const isSelected =
-                  state.neighborhood === locationName ||
-                  (locationName === "Piripiri (A combinar)" &&
-                    (!state.neighborhood || state.neighborhood === "Piripiri" || state.neighborhood === "Centro"));
+              {PIRIPIRI_MEETING_POINT_NAMES.map((locationName) => {
+                const isSelected = state.neighborhood === locationName;
                 return (
                   <Chip
                     key={locationName}
@@ -382,9 +379,7 @@ export default function EditListing({
                     accessibilityLabel={`Ponto de encontro ${locationName}`}
                     selected={isSelected}
                     onPress={() =>
-                      actions.setNeighborhood(
-                        locationName === "Piripiri (A combinar)" ? DEFAULT_PIRIPIRI_LOCATION : locationName,
-                      )
+                      actions.setNeighborhood(isSelected ? DEFAULT_PIRIPIRI_LOCATION : locationName)
                     }
                     disabled={state.saving}
                   />

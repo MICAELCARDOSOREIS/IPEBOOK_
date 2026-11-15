@@ -5,6 +5,44 @@ import { AppIcon } from "@/view/components/AppIcon";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 
+export type HomeFloatingAddButtonProps = {
+  onPress: () => void;
+};
+
+/**
+ * Botão Flutuante de Anunciar Livro (FAB Material 3 - Estilo Ipêbook)
+ * Renderizado no canto inferior direito da Home em telas móveis, acima do dock.
+ */
+export function HomeFloatingAddButton({ onPress }: HomeFloatingAddButtonProps) {
+  const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+  const [isHovered, setIsHovered] = useState(false);
+
+  const navBarPaddingBottom = insets.bottom > 0 ? insets.bottom + tokens.spacing[8] : tokens.spacing[12];
+  const navBarDockHeight = 80;
+  const bottom = navBarPaddingBottom + navBarDockHeight + tokens.spacing[12];
+
+  return (
+    <Pressable
+      testID="home-floating-add-button"
+      accessibilityRole="button"
+      accessibilityLabel="Anunciar livro"
+      onHoverIn={() => setIsHovered(true)}
+      onHoverOut={() => setIsHovered(false)}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.floatingChatButton,
+        { bottom },
+        isHovered && styles.floatingChatButtonHovered,
+        pressed && styles.floatingChatButtonPressed,
+      ]}
+    >
+      <AppIcon name="add" size={26} color={colors.nature.foliage} />
+    </Pressable>
+  );
+}
+
 export type HomeFloatingChatButtonProps = {
   badgeCount?: number;
   onPress: () => void;

@@ -143,7 +143,7 @@ export type BookDetailHeroSectionProps = {
   isFavorite: boolean;
   favoriteLoading: boolean;
   onBack: () => void;
-  onShareWhatsApp: () => void;
+  onShareWhatsApp?: () => void;
   onShareLink: () => void;
   onToggleFavorite: () => void;
   onOpenGallery: () => void;
@@ -162,7 +162,6 @@ export function BookDetailHeroSection({
   isFavorite,
   favoriteLoading,
   onBack,
-  onShareWhatsApp,
   onShareLink,
   onToggleFavorite,
   onOpenGallery,
@@ -181,13 +180,6 @@ export function BookDetailHeroSection({
       <View style={styles.heroBar}>
         {wideWeb ? <View /> : <HeroIconButton icon="back" label="Voltar" onPress={onBack} />}
         <View style={styles.heroBarTrailing}>
-          <HeroIconButton
-            icon="whatsapp"
-            label="Compartilhar anúncio no WhatsApp"
-            disabled={sharing}
-            iconColor={colors.nature.foliage}
-            onPress={onShareWhatsApp}
-          />
           <HeroIconButton
             icon="share"
             label="Compartilhar anúncio"

@@ -33,7 +33,7 @@ export function createChatStyles(colors: ColorPalette) {
         ? ({ cursor: "pointer", userSelect: "none" } as never)
         : {}),
     },
-    headerTitle: { flex: 1, ...tokens.typography.titleMedium, fontWeight: tokens.fontWeight.semiBold, color: colors.m3.onSurface },
+    headerTitle: { ...tokens.typography.titleMedium, fontWeight: tokens.fontWeight.semiBold, color: colors.m3.onSurface },
     bookCard: {
       gap: tokens.spacing[8],
       marginHorizontal: tokens.spacing[16],
@@ -269,6 +269,7 @@ export function createChatStyles(colors: ColorPalette) {
     headerInfo: {
       flex: 1,
       minWidth: 0,
+      justifyContent: "center",
       gap: 2,
     },
     headerTitleWide: {

@@ -2,14 +2,17 @@ import { Platform } from "react-native";
 import { useLocalSearchParams, type Href } from "expo-router";
 import { backOnce, pushOnce, replaceOnce } from "@/view/pushOnce";
 import { RequireAuth } from "@/view/components/RequireAuth";
+import { useRefocusKey } from "@/view/useRefocusKey";
 import BookDetail from "@/view/listings/bookDetail";
 
 export default function LivroDetalhe() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const focusKey = useRefocusKey();
 
   const detailContent = (
     <BookDetail
       bookId={id}
+      focusKey={focusKey}
       onBack={() => backOnce()}
       // Perfil público (somente leitura) de quem anuncia — Spec 018/Issue #73. Distinto da
       // futura rota de edição do próprio perfil (fluxo 07, issues #55/#56).

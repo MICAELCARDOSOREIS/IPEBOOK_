@@ -8,6 +8,7 @@ import {
   type BookCategory,
   type BookCondition,
 } from "@/model/entities/book";
+import { DEFAULT_PIRIPIRI_LOCATION, PIRIPIRI_MEETING_POINT_NAMES } from "@/model/entities/location";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
@@ -48,6 +49,7 @@ export function CreateListingStep3({
   condition,
   category,
   description,
+  neighborhood = "",
   isBox = false,
   boxVolumesCount = "",
   loading,
@@ -56,6 +58,7 @@ export function CreateListingStep3({
   onSetCondition,
   onSetCategory,
   onSetDescription,
+  onSetNeighborhood,
   onSetIsBox,
   onSetBoxVolumesCount,
   onFocusField,
@@ -130,7 +133,8 @@ export function CreateListingStep3({
         {isBox ? (
           <View style={styles.boxVolumesContainer}>
             <TextField
-              label="Quantidade de volumes (opcional)"
+              label="Volumes (opcional)"
+              labelBackgroundColor={colors.m3.surfaceContainerLow}
               value={boxVolumesCount}
               onChangeText={(text) => onSetBoxVolumesCount?.(text)}
               editable={!loading}
@@ -142,7 +146,33 @@ export function CreateListingStep3({
         ) : null}
       </View>
 
-      {/* 4. Descrição detalhada do anúncio */}
+      {/* 4. Local de retirada em Piripiri */}
+      <View style={styles.field}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionLabel}>Local de retirada</Text>
+          <Text style={styles.sectionHint}>Opcional · padrão Piripiri</Text>
+        </View>
+        <View style={styles.chipRow}>
+          {PIRIPIRI_MEETING_POINT_NAMES.map((locationName) => {
+            const isSelected = neighborhood === locationName;
+            return (
+              <Chip
+                key={locationName}
+                size="regular"
+                label={locationName}
+                accessibilityLabel={`Local de retirada ${locationName}`}
+                selected={isSelected}
+                onPress={() =>
+                  onSetNeighborhood?.(isSelected ? DEFAULT_PIRIPIRI_LOCATION : locationName)
+                }
+                disabled={loading}
+              />
+            );
+          })}
+        </View>
+      </View>
+
+      {/* 5. Descrição detalhada do anúncio */}
       <View
         style={styles.field}
         onLayout={(event) => {

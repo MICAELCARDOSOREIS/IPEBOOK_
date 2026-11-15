@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHydratedWindowWidth, useIsWideWeb } from "@/view/useIsWideWeb";
 import {
   makeAuthViewModel,
@@ -25,6 +25,7 @@ import { useTheme } from "@/view/theme/ThemeProvider";
 import { WEB_GUTTER } from "@/view/webLayout";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
+import { useOnRefocus } from "@/view/useRefocusKey";
 
 export type ProfileHubProps = {
   requireAuth?: boolean;
@@ -43,6 +44,7 @@ export type ProfileHubProps = {
   onSignedOut: () => void;
   /** Contador manual de notificações não lidas (útil para testes determinísticos). */
   unreadNotificationsCount?: number;
+  focusKey?: number;
 };
 
 /**
@@ -64,15 +66,22 @@ export default function ProfileHub({
   onNavigateToSettings,
   onSignedOut,
   unreadNotificationsCount: explicitUnreadCount,
+  focusKey,
 }: ProfileHubProps) {
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [authState, authActions] = makeAuthViewModel();
   const userId = authState.user?.id ?? null;
   const [state, profileActions] = makeProfileViewModel(userId);
-  const [notificationsState] = makeNotificationsViewModel(userId);
+  const [notificationsState, notificationsActions] = makeNotificationsViewModel(userId);
   const unreadNotificationsCount = explicitUnreadCount ?? notificationsState.unreadCount;
-  const [myListingsState] = makeMyListingsViewModel(userId);
+  const [myListingsState, myListingsActions] = makeMyListingsViewModel(userId);
+  useOnRefocus(focusKey, () => {
+    profileActions.reload();
+    void notificationsActions.refresh();
+    void myListingsActions.reload();
+  });
   const [preferencesState] = makeUserPreferencesViewModel(userId);
   const [confirmingSignOut, setConfirmingSignOut] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
@@ -228,7 +237,7 @@ export default function ProfileHub({
         {...standardVerticalScrollProps}
         contentContainerStyle={[
           styles.scroll,
-          { paddingBottom: wideWeb ? tokens.spacing[32] : 160 },
+          { paddingBottom: wideWeb ? tokens.spacing[32] : scrollBottomPadding.withoutBottomBar + insets.bottom },
         ]}
       >
         <View style={[styles.content, wideWeb && styles.contentWide]}>
