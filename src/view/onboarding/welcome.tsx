@@ -142,10 +142,10 @@ export default function Welcome({ onStart, onSignIn, onHelp, onTerms, betaInvite
   return (
     <ScreenContainer
       maxWidth={560}
-      paddingTop={tokens.spacing[24]}
-      paddingBottom={tokens.spacing[32]}
+      paddingTop={tokens.spacing[12]}
+      paddingBottom={tokens.spacing[24]}
       edges={["top", "bottom"]}
-      contentStyle={{ gap: tokens.spacing[16] }}
+      contentStyle={{ gap: tokens.spacing[12] }}
     >
       <View style={styles.header}>
         <Logotipo />
@@ -365,7 +365,7 @@ function createStyles(colors: ColorPalette) {
   highlightText: {
     color: colors.m3.onTertiaryContainer,
   },
-  illustration: { width: "100%", height: 300 },
+  illustration: { width: "100%", height: 220 },
   subtitle: {
     ...tokens.typography.bodyLarge,
     color: colors.m3.onSurfaceVariant,
@@ -417,7 +417,7 @@ function createStyles(colors: ColorPalette) {
     ...tokens.typography.labelSmall,
     color: colors.m3.onSurfaceVariant,
   },
-  actions: { gap: tokens.spacing[12], marginTop: tokens.spacing[16] },
+  actions: { gap: tokens.spacing[8], marginTop: tokens.spacing[8] },
   footerLinks: {
     flexDirection: "row",
     alignItems: "center",

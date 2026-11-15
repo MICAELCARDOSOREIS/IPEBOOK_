@@ -29,6 +29,7 @@ import { createMyListingsStyles } from "@/view/listings/myListingsStyles";
 import { withPress } from "@/view/pressFeedback";
 import { COMMUNITY_MEMBER } from "@/view/requests/receivedRequests";
 import { scrollBottomPadding, standardVerticalScrollProps } from "@/view/scrollProps";
+import { useOnRefocus } from "@/view/useRefocusKey";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { tokens } from "@/view/tokens";
 import { useGuardedPress } from "@/view/useGuardedPress";
@@ -48,6 +49,7 @@ export type MyListingsProps = {
   onNavigateToReceivedRequests?: () => void;
   /** Abre a negociação aceita (`06.05`). */
   onNavigateToNegotiationDetail?: (requestId: string) => void;
+  focusKey?: number;
 };
 
 type ShelfTab = "listings" | "proposals" | "concluded";
@@ -65,11 +67,16 @@ export function MyListings({
   onNavigateToHelp,
   onNavigateToReceivedRequests,
   onNavigateToNegotiationDetail,
+  focusKey,
 }: MyListingsProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createMyListingsStyles(colors), [colors]);
   const [state, actions] = makeMyListingsViewModel(sessionUserId);
-  const [received] = makeReceivedRequestsViewModel(sessionUserId);
+  const [received, receivedActions] = makeReceivedRequestsViewModel(sessionUserId);
+  useOnRefocus(focusKey, () => {
+    void actions.reload();
+    void receivedActions.reload();
+  });
   const [draftsState] = makeDraftsViewModel(sessionUserId);
   const [share, shareActions] = makeShareListingViewModel();
   const { isOnline } = makeNetworkStatus();
@@ -312,8 +319,8 @@ export function MyListings({
               {
                 paddingBottom:
                   hasBooks && onNavigateToCreateListing && !wideWeb
-                    ? scrollBottomPadding.withBottomBarAndFab
-                    : scrollBottomPadding.withBottomBar,
+                    ? scrollBottomPadding.withBottomBarAndFab + insets.bottom
+                    : scrollBottomPadding.withBottomBar + insets.bottom,
               },
             ]}
           >
@@ -585,6 +592,7 @@ export function MyListings({
 }
 
 export type MyListingsScreenProps = {
+  focusKey?: number;
   onBack?: () => void;
   onRequireSignIn?: () => void;
   onNavigateToCreateListing?: () => void;
@@ -597,6 +605,7 @@ export type MyListingsScreenProps = {
 };
 
 export default function MyListingsScreen({
+  focusKey,
   onBack,
   onRequireSignIn,
   onNavigateToCreateListing,
@@ -647,6 +656,7 @@ export default function MyListingsScreen({
       onNavigateToManageListing={onNavigateToManageListing}
       onNavigateToReceivedRequests={onNavigateToReceivedRequests}
       onNavigateToNegotiationDetail={onNavigateToNegotiationDetail}
+      focusKey={focusKey}
     />
   );
 }

@@ -113,6 +113,45 @@ export function RequestDetail({
     { label: "Concluída", done: completed },
   ];
   const currentStep = progress.findIndex((item) => !item.done);
+  const deliveryCard =
+    meetingConfirmed || delivery.completed ? (
+      <View
+        style={[styles.card, meetingConfirmed && !delivery.completed && styles.cardHighlighted]}
+        testID="delivery-card"
+      >
+        <View style={styles.cardHeaderRow}>
+          <IconBadge icon="check" tone={delivery.completed || meetingConfirmed ? "action" : "neutral"} />
+          <Text accessibilityRole="header" style={styles.sectionHeader}>
+            {delivery.completed ? "Entrega concluída" : "Entrega do livro"}
+          </Text>
+        </View>
+        {delivery.completed ? (
+          ratingState.userRating ? (
+            <Text style={styles.bodyText}>
+              Você avaliou esta negociação com {ratingState.userRating.score} estrelas.
+            </Text>
+          ) : (
+            <>
+              <Text style={styles.bodyText}>As duas pessoas confirmaram a entrega. Conte como foi.</Text>
+              <FilledButton label="Avaliar negociação" onPress={() => setRatingModalVisible(true)} />
+            </>
+          )
+        ) : (
+          <>
+            <Text style={styles.bodyText}>
+              {delivery.role === "giver"
+                ? "No encontro, mostre o QR para quem recebe o livro. A leitura conclui a negociação."
+                : "No encontro, leia o QR que a outra pessoa mostra para concluir a negociação."}
+            </Text>
+            <FilledButton
+              label={delivery.role === "giver" ? "Mostrar QR da entrega" : "Ler QR da entrega"}
+              disabled={delivery.loading || !delivery.role}
+              onPress={guardedOpenDelivery}
+            />
+          </>
+        )}
+      </View>
+    ) : null;
 
   return (
     <SafeAreaView style={styles.page}>
@@ -238,6 +277,9 @@ export function RequestDetail({
                 </View>
               </Pressable>
 
+              {/* No mobile, quando o encontro já está confirmado e falta a entrega, prioriza o card da etapa ativa */}
+              {!wide && meetingConfirmed && !delivery.completed ? deliveryCard : null}
+
               {awaitingAnswer || closed ? (
                 <View style={styles.card} testID="request-status-card">
                   <View style={styles.cardHeaderRow}>
@@ -268,41 +310,7 @@ export function RequestDetail({
               </View>
               <View style={[styles.column, wide && styles.columnHalf]}>
 
-              {meetingConfirmed || delivery.completed ? (
-                <View style={styles.card} testID="delivery-card">
-                  <View style={styles.cardHeaderRow}>
-                    <IconBadge icon="check" tone={delivery.completed ? "action" : "neutral"} />
-                    <Text accessibilityRole="header" style={styles.sectionHeader}>
-                      {delivery.completed ? "Entrega concluída" : "Entrega do livro"}
-                    </Text>
-                  </View>
-                  {delivery.completed ? (
-                    ratingState.userRating ? (
-                      <Text style={styles.bodyText}>
-                        Você avaliou esta negociação com {ratingState.userRating.score} estrelas.
-                      </Text>
-                    ) : (
-                      <>
-                        <Text style={styles.bodyText}>As duas pessoas confirmaram a entrega. Conte como foi.</Text>
-                        <FilledButton label="Avaliar negociação" onPress={() => setRatingModalVisible(true)} />
-                      </>
-                    )
-                  ) : (
-                    <>
-                      <Text style={styles.bodyText}>
-                        {delivery.role === "giver"
-                          ? "No encontro, mostre o QR para quem recebe o livro. A leitura conclui a negociação."
-                          : "No encontro, leia o QR que a outra pessoa mostra para concluir a negociação."}
-                      </Text>
-                      <FilledButton
-                        label={delivery.role === "giver" ? "Mostrar QR da entrega" : "Ler QR da entrega"}
-                        disabled={delivery.loading || !delivery.role}
-                        onPress={guardedOpenDelivery}
-                      />
-                    </>
-                  )}
-                </View>
-              ) : null}
+              {wide || delivery.completed ? deliveryCard : null}
 
               {/* Pessoa da negociação em uma linha (Spec 083), no lugar do cartão "Participantes" */}
               <View style={styles.personRow}>
@@ -589,7 +597,9 @@ function createStyles(colors: ColorPalette) {
   successBanner: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: colors.badge.sale.background,
+    backgroundColor: colors.m3.primaryContainer,
+    borderWidth: 1,
+    borderColor: `${colors.action}30`,
     padding: tokens.spacing[16],
     borderRadius: tokens.radius.medium,
     gap: tokens.spacing[12],
@@ -601,11 +611,11 @@ function createStyles(colors: ColorPalette) {
   successTitle: {
     ...tokens.typography.titleMedium,
     fontFamily: tokens.typography.displayLarge.fontFamily,
-    color: colors.action,
+    color: colors.m3.onPrimaryContainer,
   },
   successSubtitle: {
     ...tokens.typography.bodyMedium,
-    color: colors.text,
+    color: colors.m3.onPrimaryContainer,
   },
   bookCard: {
     flexDirection: "row",
@@ -645,6 +655,9 @@ function createStyles(colors: ColorPalette) {
     borderWidth: 1,
     borderColor: colors.m3.outlineVariant,
     gap: tokens.spacing[8],
+  },
+  cardHighlighted: {
+    borderColor: `${colors.action}50`,
   },
   cardHeaderRow: {
     flexDirection: "row",

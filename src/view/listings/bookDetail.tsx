@@ -33,6 +33,7 @@ import { BOOK_CONDITION_LABELS, type BookModality } from "@/model/entities/book"
 import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
+import { useOnRefocus } from "@/view/useRefocusKey";
 
 import { withPress } from "@/view/pressFeedback";
 interface ModalityThemeColors {
@@ -70,10 +71,12 @@ export type BookDetailProps = {
   onNavigateToMyRequests?: () => void;
   onNavigateToNegotiation?: (requestId: string) => void;
   onNavigateToCategorySearch?: (category: string) => void;
+  focusKey?: number;
 };
 
 export default function BookDetail({
   bookId,
+  focusKey,
   onBack,
   onNavigateToUserProfile,
   onNavigateToReport,
@@ -89,6 +92,9 @@ export default function BookDetail({
   const [authState] = makeAuthViewModel();
   const sessionUserId = authState.user?.id ?? null;
   const [state, actions] = makeBookDetailViewModel(bookId, sessionUserId);
+  useOnRefocus(focusKey, () => {
+    void actions.reload();
+  });
   const [negotiation, negotiationActions] = makeRequestNegotiationViewModel();
   const [share, shareActions] = makeShareListingViewModel();
   const book = state.book;
@@ -275,11 +281,6 @@ export default function BookDetail({
     [book],
   );
 
-  const handleShareToWhatsApp = useCallback(() => {
-    if (!book || !shareableListing) return;
-    void shareActions.shareToWhatsApp(book.id, shareableListing);
-  }, [book, shareableListing, shareActions]);
-
   const handleShareLink = useCallback(() => {
     void shareActions.share(book?.id ?? bookId, shareableListing, captureShareImage);
   }, [book?.id, bookId, shareableListing, shareActions, captureShareImage]);
@@ -426,7 +427,6 @@ export default function BookDetail({
           isFavorite={state.isFavorite}
           favoriteLoading={state.favoriteLoading}
           onBack={guardedBack}
-          onShareWhatsApp={handleShareToWhatsApp}
           onShareLink={handleShareLink}
           onToggleFavorite={() => void actions.toggleFavorite(sessionUserId)}
           onOpenGallery={() => setGalleryVisible(true)}

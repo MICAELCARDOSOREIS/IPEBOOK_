@@ -31,6 +31,9 @@ const ROOT_DESTINATIONS: Record<string, NavigationDestination> = {
   "/perfil": "profile",
 };
 
+/** Destinos que exibem o dock flutuante de 3 abas no mobile (ADR 0011). */
+const DOCK_DESTINATIONS = new Set<NavigationDestination>(["home", "search", "shelf"]);
+
 /** Telas de acesso e boas-vindas têm o próprio topo (painel da marca), sem o cabeçalho do app. */
 const AUTH_ROUTES = new Set(["/bem-vindo", "/sobre", "/entrar", "/criar-conta", "/esqueci-senha", "/redefinir-senha", "/auth/callback", "/beta"]);
 
@@ -137,7 +140,7 @@ export default function RootLayout() {
               />
             ) : null}
             <ThemedStack />
-            {activeDestination && !wideWeb && !WEB_BETA_ONLY ? (
+            {activeDestination && DOCK_DESTINATIONS.has(activeDestination) && !wideWeb && !WEB_BETA_ONLY ? (
               <ConnectedNavigationBar active={activeDestination} pathname={pathname} onNavigate={navigateTo} />
             ) : null}
           </KeyboardAwareRoot>

@@ -1,12 +1,15 @@
 import { router } from "expo-router";
 import { backOnce, pushOnce, replaceOnce } from "@/view/pushOnce";
 import { RequireAuth } from "@/view/components/RequireAuth";
+import { useRefocusKey } from "@/view/useRefocusKey";
 import ProfileHub from "@/view/profile/profileHub";
 
 export default function Perfil() {
+  const focusKey = useRefocusKey();
   return (
     <RequireAuth onRequireSignIn={() => replaceOnce("/entrar")}>
       <ProfileHub
+        focusKey={focusKey}
         onBack={() => {
           if (router.canGoBack()) backOnce();
           else replaceOnce("/");

@@ -86,7 +86,7 @@ export default function SignUp({
     <AuthShell>
       <ScreenContainer
         maxWidth={560}
-        paddingTop={tokens.spacing[16]}
+        paddingTop={tokens.spacing[8]}
         paddingBottom={scrollBottomPadding.withoutBottomBar}
         header={onBack ? <TopAppBar alignToWindow={false} contentMaxWidth={560} title="Criar conta" onBack={guardedBack} /> : undefined}
         contentStyle={[
@@ -225,7 +225,7 @@ export default function SignUp({
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     content: {
-      gap: tokens.spacing[12],
+      gap: tokens.spacing[8],
     },
     footerRow: {
       flexDirection: "row",
