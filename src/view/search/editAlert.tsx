@@ -14,6 +14,8 @@ import { useTheme } from "@/view/theme/ThemeProvider";
 import { ALERT_CITY, ALERT_MODALITY_LABELS } from "@/view/search/alertLabels";
 import { makeSearchAlertsViewModel } from "@/di/container";
 import { useGuardedPress } from "@/view/useGuardedPress";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
+import { WEB_MAX_WIDTH } from "@/view/webLayout";
 import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 
 export type EditAlertProps = {
@@ -30,6 +32,7 @@ export default function EditAlert({ alertId, userId, onBack, onSaved }: EditAler
   const guardedSaved = useGuardedPress(onSaved);
   const [state, actions] = makeSearchAlertsViewModel(userId);
   const { colors } = useTheme();
+  const wide = useIsWideWeb();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const alert = state.alerts.find((item) => item.id === alertId);
   const [term, setTerm] = useState("");
@@ -56,11 +59,11 @@ export default function EditAlert({ alertId, userId, onBack, onSaved }: EditAler
   if (state.loading) {
     return (
       <ScreenContainer
-        maxWidth={560}
+        maxWidth={wide ? WEB_MAX_WIDTH : 560}
         paddingHorizontal={tokens.spacing[24]}
         paddingTop={tokens.spacing[24]}
-        header={<TopAppBar contentMaxWidth={560} title="Editar alerta" onBack={guardedBack} />}
-        contentStyle={styles.content}
+        header={<TopAppBar contentMaxWidth={wide ? WEB_MAX_WIDTH : 560} title="Editar alerta" onBack={guardedBack} />}
+        contentStyle={[styles.content, wide && styles.contentWide]}
       >
         <LoadingState label="Carregando alerta" variant="form" />
       </ScreenContainer>
@@ -70,11 +73,11 @@ export default function EditAlert({ alertId, userId, onBack, onSaved }: EditAler
   if (!alert) {
     return (
       <ScreenContainer
-        maxWidth={560}
+        maxWidth={wide ? WEB_MAX_WIDTH : 560}
         paddingHorizontal={tokens.spacing[24]}
         paddingTop={tokens.spacing[24]}
-        header={<TopAppBar contentMaxWidth={560} title="Editar alerta" onBack={guardedBack} />}
-        contentStyle={styles.content}
+        header={<TopAppBar contentMaxWidth={wide ? WEB_MAX_WIDTH : 560} title="Editar alerta" onBack={guardedBack} />}
+        contentStyle={[styles.content, wide && styles.contentWide]}
       >
         <Text accessibilityRole="header" style={styles.headline}>
           Alerta não encontrado
@@ -86,12 +89,12 @@ export default function EditAlert({ alertId, userId, onBack, onSaved }: EditAler
 
   return (
     <ScreenContainer
-      maxWidth={560}
+      maxWidth={wide ? WEB_MAX_WIDTH : 560}
       paddingHorizontal={tokens.spacing[24]}
       paddingTop={tokens.spacing[24]}
       paddingBottom={scrollBottomPadding.withoutBottomBar}
-      header={<TopAppBar contentMaxWidth={560} title="Editar alerta" onBack={guardedBack} />}
-      contentStyle={styles.content}
+      header={<TopAppBar contentMaxWidth={wide ? WEB_MAX_WIDTH : 560} title="Editar alerta" onBack={guardedBack} />}
+      contentStyle={[styles.content, wide && styles.contentWide]}
     >
       <Text accessibilityRole="header" style={styles.headline}>
         Ajuste sua busca.
@@ -102,6 +105,7 @@ export default function EditAlert({ alertId, userId, onBack, onSaved }: EditAler
 
       <TextField
         label="O que você procura?"
+        labelBackgroundColor={wide ? colors.m3.surfaceContainerLow : undefined}
         value={term}
         onChangeText={setTerm}
         maxLength={100}
@@ -109,6 +113,7 @@ export default function EditAlert({ alertId, userId, onBack, onSaved }: EditAler
 
       <TextField
         label="Cidade"
+        labelBackgroundColor={wide ? colors.m3.surfaceContainerLow : undefined}
         value={ALERT_CITY}
         onChangeText={() => {}}
         editable={false}
@@ -171,6 +176,15 @@ function createStyles(colors: ColorPalette) {
     paddingHorizontal: tokens.spacing[24],
     paddingTop: tokens.spacing[24],
     gap: tokens.spacing[16],
+  },
+  contentWide: {
+    maxWidth: 680,
+    backgroundColor: colors.m3.surfaceContainerLow,
+    borderRadius: tokens.radius.xl,
+    borderWidth: 1,
+    borderColor: colors.book.paperEdge,
+    padding: tokens.spacing[28],
+    marginTop: tokens.spacing[16],
   },
   headline: {
     ...tokens.typography.displayLarge,

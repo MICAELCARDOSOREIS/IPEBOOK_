@@ -34,7 +34,7 @@ import { Snackbar } from "@/view/components/Snackbar";
 import { TextButton } from "@/view/components/TextButton";
 import { TextField } from "@/view/components/TextField";
 import { TopAppBar } from "@/view/components/TopAppBar";
-import { WEB_GUTTER } from "@/view/webLayout";
+import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
 import { withPress } from "@/view/pressFeedback";
 import { useGuardedPress } from "@/view/useGuardedPress";
 export type ProfileProps = {
@@ -88,6 +88,7 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
   const { colors } = useTheme();
   // Web larga: coluna mais larga, com cartão e foto de um lado e dados e contato do outro.
   const wide = useIsWideWeb();
+  const contentMaxWidth = wide ? WEB_MAX_WIDTH : 560;
   const insets = useSafeAreaInsets();
   const isKeyboardVisible = useKeyboardVisible();
   const styles = useMemo(() => createStyles(colors, insets), [colors, insets]);
@@ -163,7 +164,7 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
 
   if (authState.loading) {
     return (
-      <ScreenContainer maxWidth={560} paddingTop={tokens.spacing[12]}>
+      <ScreenContainer maxWidth={contentMaxWidth} paddingHorizontal={wide ? WEB_GUTTER : undefined} paddingTop={tokens.spacing[12]}>
         <LoadingState label="Carregando sessão" />
       </ScreenContainer>
     );
@@ -172,10 +173,11 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
   if (!userId) {
     return (
       <ScreenContainer
-        maxWidth={560}
+        maxWidth={contentMaxWidth}
+        paddingHorizontal={wide ? WEB_GUTTER : undefined}
         paddingTop={tokens.spacing[12]}
         paddingBottom={tokens.spacing[32]}
-        header={<TopAppBar contentMaxWidth={560} title="Editar perfil" onBack={guardedBack} />}
+        header={<TopAppBar contentMaxWidth={contentMaxWidth} title="Editar perfil" onBack={guardedBack} />}
       >
         <View style={styles.guestCard}>
           <Text style={styles.guestTitle}>Entre para editar seu perfil</Text>
@@ -214,8 +216,6 @@ export default function Profile({ onNavigateToSignIn, onBack }: ProfileProps) {
     actions.reload();
     preferencesActions.reload();
   }
-
-  const contentMaxWidth = wide ? 1040 : 560;
 
   return (
     <ScreenContainer

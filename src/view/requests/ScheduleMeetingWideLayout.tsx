@@ -11,6 +11,7 @@ import { withPress } from "@/view/pressFeedback";
 import { scrollBottomPadding, standardVerticalScrollProps } from "@/view/scrollProps";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
+import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
 
 export type OptionChipProps = {
   label: string;
@@ -96,7 +97,7 @@ export function ScheduleMeetingWideLayout({
     <View style={styles.page}>
       <SafeAreaView style={styles.safe}>
         <TopAppBar
-          contentMaxWidth={1180}
+          contentMaxWidth={WEB_MAX_WIDTH}
           title={rescheduling ? "Reagendar encontro" : "Combinar encontro"}
           onBack={onBack}
         />
@@ -377,12 +378,13 @@ function createStyles(colors: ColorPalette) {
       paddingBottom: tokens.spacing[48],
     },
     wideContainer: {
-      maxWidth: 1180,
+      maxWidth: WEB_MAX_WIDTH,
       width: "100%",
       alignSelf: "center",
       flexDirection: "row",
-      gap: tokens.spacing[24],
-      padding: tokens.spacing[24],
+      gap: tokens.spacing[32],
+      paddingHorizontal: WEB_GUTTER,
+      paddingVertical: tokens.spacing[24],
       alignItems: "flex-start",
     },
     wideContainerStacked: {
@@ -395,13 +397,12 @@ function createStyles(colors: ColorPalette) {
       minWidth: "100%",
     },
     wideFormCol: {
-      flex: 1,
+      flex: 1.1,
       minWidth: 320,
-      maxWidth: 560,
       backgroundColor: colors.m3.surfaceContainerLow,
       borderRadius: tokens.radius.large,
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      borderColor: colors.book.paperEdge,
       overflow: "hidden",
       shadowColor: colors.m3.shadow,
       shadowOpacity: 0.05,
@@ -414,7 +415,7 @@ function createStyles(colors: ColorPalette) {
     },
     wideFormFooter: {
       borderTopWidth: 1,
-      borderTopColor: colors.m3.outlineVariant,
+      borderTopColor: colors.book.paperEdge,
       backgroundColor: colors.m3.surfaceContainerLow,
       padding: tokens.spacing[16],
     },
@@ -441,7 +442,7 @@ function createStyles(colors: ColorPalette) {
       paddingHorizontal: tokens.spacing[14],
       borderRadius: tokens.radius.medium,
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      borderColor: colors.book.paperEdge,
       backgroundColor: colors.surface,
     },
     widePlaceCardSelected: {
@@ -532,7 +533,6 @@ function createStyles(colors: ColorPalette) {
     wideMapColumn: {
       flex: 1,
       minWidth: 320,
-      maxWidth: 580,
       gap: tokens.spacing[16],
     },
     wideMapSticky: {
@@ -543,7 +543,7 @@ function createStyles(colors: ColorPalette) {
     wideMapCard: {
       borderRadius: tokens.radius.large,
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      borderColor: colors.book.paperEdge,
       overflow: "hidden",
       backgroundColor: colors.m3.surfaceContainerHigh,
       shadowColor: colors.m3.shadow,
@@ -556,7 +556,7 @@ function createStyles(colors: ColorPalette) {
       paddingVertical: tokens.spacing[12],
       backgroundColor: colors.m3.surfaceContainerLow,
       borderBottomWidth: 1,
-      borderBottomColor: colors.m3.outlineVariant,
+      borderBottomColor: colors.book.paperEdge,
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",

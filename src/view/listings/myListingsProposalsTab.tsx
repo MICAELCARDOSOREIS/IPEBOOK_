@@ -52,11 +52,23 @@ export function MyListingsProposalsTab({
                 {`${proposals.length} ${proposals.length === 1 ? "proposta" : "propostas"}`}
               </Text>
               <View style={styles.tableHeader}>
-                <Text style={[styles.tableHeaderText, { flex: 3, minWidth: 220 }]}>Livro</Text>
-                <Text style={[styles.tableHeaderText, { flex: 1.5, minWidth: 120 }]}>Modalidade</Text>
-                <Text style={[styles.tableHeaderText, { flex: 1.5, minWidth: 120 }]}>Local</Text>
-                <Text style={[styles.tableHeaderText, { flex: 1.2, minWidth: 100 }]}>Situação</Text>
-                <Text style={[styles.tableHeaderText, { width: 148, textAlign: "right" }]}>Ação</Text>
+                <View style={styles.tableHeaderMain}>
+                  <View style={{ flex: 3, minWidth: 220 }}>
+                    <Text style={styles.tableHeaderText}>Livro</Text>
+                  </View>
+                  <View style={{ flex: 1.5, minWidth: 120 }}>
+                    <Text style={styles.tableHeaderText}>Modalidade</Text>
+                  </View>
+                  <View style={{ flex: 1.5, minWidth: 120 }}>
+                    <Text style={styles.tableHeaderText}>Local</Text>
+                  </View>
+                  <View style={{ flex: 1.2, minWidth: 100 }}>
+                    <Text style={styles.tableHeaderText}>Situação</Text>
+                  </View>
+                </View>
+                <View style={{ width: 148, alignItems: "flex-end" }}>
+                  <Text style={styles.tableHeaderText}>Ação</Text>
+                </View>
               </View>
             </>
           ) : null}
@@ -109,29 +121,38 @@ function createStyles(colors: ColorPalette) {
     },
     listCardWide: {
       gap: tokens.spacing[4],
-      paddingHorizontal: tokens.spacing[16],
       paddingTop: tokens.spacing[16],
       paddingBottom: tokens.spacing[8],
-      borderRadius: tokens.radius.card,
-      backgroundColor: colors.m3.surfaceContainerLowest,
+      borderRadius: tokens.radius.xl,
+      backgroundColor: colors.surface,
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      borderColor: colors.book.paperEdge,
+      overflow: "hidden",
     },
     listTitle: {
       ...tokens.typography.titleMedium,
       fontVariant: ["tabular-nums"],
       color: colors.m3.onSurface,
-      paddingHorizontal: tokens.spacing[16],
+      paddingHorizontal: tokens.spacing[24],
       paddingBottom: tokens.spacing[8],
     },
     tableHeader: {
       flexDirection: "row",
       alignItems: "center",
       gap: tokens.spacing[16],
-      paddingHorizontal: tokens.spacing[16],
+      paddingHorizontal: tokens.spacing[24],
       paddingVertical: tokens.spacing[12],
+      backgroundColor: colors.m3.surfaceContainerLow,
       borderTopWidth: StyleSheet.hairlineWidth,
-      borderTopColor: colors.m3.outlineVariant,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.book.paperEdge,
+    },
+    tableHeaderMain: {
+      flex: 1,
+      minWidth: 0,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[16],
     },
     tableHeaderText: {
       ...tokens.typography.labelLarge,

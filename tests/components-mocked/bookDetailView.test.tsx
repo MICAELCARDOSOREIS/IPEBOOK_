@@ -156,7 +156,6 @@ describe("BookDetail (spec 006, US6/T029)", () => {
     const screen = await renderDetail();
     expect(screen.queryByText("Propor troca")).toBeNull();
     expect(screen.getByLabelText("Compartilhar anúncio")).toBeDefined();
-    expect(screen.getByLabelText("Compartilhar anúncio no WhatsApp")).toBeDefined();
   });
 
   it("não oferece ação principal sem sessão (Spec 074, CA2)", async () => {
@@ -297,20 +296,6 @@ describe("BookDetail (spec 006, US6/T029)", () => {
       "b1",
       expect.objectContaining({ title: "Dom Casmurro", author: "Machado de Assis", modality: "trade" }),
       expect.any(Function),
-    );
-  });
-
-  it("compartilha no WhatsApp ao tocar no botão da barra superior, sem a folha de imagem (Spec 118, ADR 0110)", async () => {
-    const { shareToWhatsApp } = setup(
-      book({ ownerId: "other", modality: "sale", price: 42, neighborhood: "Centro" }),
-      null,
-    );
-    const screen = await renderDetail();
-    const whatsappButton = screen.getByLabelText("Compartilhar anúncio no WhatsApp");
-    await act(async () => { fireEvent.press(whatsappButton); });
-    expect(shareToWhatsApp).toHaveBeenCalledWith(
-      "b1",
-      expect.objectContaining({ title: "Dom Casmurro", author: "Machado de Assis", modality: "sale", price: 42, neighborhood: "Centro" }),
     );
   });
 

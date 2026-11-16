@@ -6,6 +6,7 @@ import type { Book } from "@/model/entities/book";
 import { BOOK_CONDITION_LABELS } from "@/model/entities/book";
 import { AppIcon } from "@/view/components/AppIcon";
 import { BookCover } from "@/view/components/BookCover";
+import { ModalityCoverArea } from "@/view/components/ModalityCoverArea";
 import { FilledButton } from "@/view/components/FilledButton";
 import { StepProgress } from "@/view/components/StepProgress";
 import { Tag } from "@/view/components/Tag";
@@ -22,6 +23,7 @@ import { useFormErrorAnnouncer } from "@/view/useFormErrorAnnouncer";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { useKeyboardVisible } from "@/view/useKeyboardVisible";
+import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
 import {
   type ListingBasicsErrors,
   validateListingBasics,
@@ -230,14 +232,14 @@ export default function CreateListing({
 
   return (
     <SafeAreaView edges={["top", "left", "right"]} style={styles.page}>
-      <TopAppBar contentMaxWidth={wideWeb ? 1040 : undefined} title={STEP_TITLES[step]} onBack={handleBack} />
+      <TopAppBar contentMaxWidth={wideWeb ? WEB_MAX_WIDTH : undefined} title={STEP_TITLES[step]} onBack={handleBack} />
       <ScrollView
         ref={scrollRef}
         contentContainerStyle={[
           styles.scrollContent,
           {
             paddingBottom: wideWeb
-              ? 160
+              ? 140
               : isKeyboardVisible
                 ? 320
                 : scrollBottomPadding.withoutBottomBar,
@@ -423,14 +425,38 @@ export default function CreateListing({
               </Text>
             </View>
             <View style={styles.previewBook}>
-              {state.photoUrl ? (
-                <BookCover id="previa" title={state.title.trim() || "Livro"} author={state.author.trim() || undefined} photoUrl={state.photoUrl} variant="detail" />
-              ) : (
-                <View style={styles.previewCoverEmpty}>
-                  <AppIcon name="shelf" size={28} color={colors.secondaryText} />
-                  <Text style={styles.previewCoverEmptyText}>A capa entra na próxima etapa</Text>
-                </View>
-              )}
+              <ModalityCoverArea modality={state.modality}>
+                <BookCover
+                  id="previa"
+                  title={state.title.trim() || "IpêBook"}
+                  author={state.author.trim() || undefined}
+                  photoUrl={state.photoUrl || undefined}
+                  variant="card"
+                  showRibbon={state.modality === "donation" || state.modality === "trade"}
+                />
+              </ModalityCoverArea>
+              {!state.photoUrl ? (
+                <Text style={styles.previewCoverEmptyText}>A capa entra na próxima etapa</Text>
+              ) : null}
+              <View style={styles.previewMeta}>
+                <Tag variant={state.modality} />
+                {state.isBox ? (
+                  <Tag
+                    variant="box"
+                    label={state.boxVolumesCount ? `Box (${state.boxVolumesCount} vols)` : "Box"}
+                  />
+                ) : null}
+                {state.category.trim() ? (
+                  <Tag variant="available" label={state.category.trim()} />
+                ) : null}
+                <Text style={styles.previewPrice}>
+                  {state.modality === "sale"
+                    ? (state.price.trim() ? `R$ ${state.price.trim()}` : "Preço a definir")
+                    : state.modality === "trade"
+                      ? "Para trocar"
+                      : "Gratuito"}
+                </Text>
+              </View>
               <Text style={state.title.trim() ? styles.previewTitle : styles.previewPlaceholder}>
                 {state.title.trim() || "O título aparece aqui"}
               </Text>
@@ -442,25 +468,6 @@ export default function CreateListing({
                 <Text style={styles.previewLocationText}>
                   {state.neighborhood.trim() ? `${state.neighborhood.trim()}, Piripiri` : "Piripiri (retirada local)"}
                 </Text>
-              </View>
-              <View style={styles.previewMeta}>
-                <Text style={styles.previewPrice}>
-                  {state.modality === "sale"
-                    ? (state.price.trim() ? `R$ ${state.price.trim()}` : "Preço a definir")
-                    : state.modality === "trade"
-                      ? "Para trocar"
-                      : "Gratuito"}
-                </Text>
-                <Tag variant={state.modality} />
-                {state.isBox ? (
-                  <Tag
-                    variant="box"
-                    label={state.boxVolumesCount ? `Box (${state.boxVolumesCount} vols)` : "Box"}
-                  />
-                ) : null}
-                {state.category.trim() ? (
-                  <Tag variant="available" label={state.category.trim()} />
-                ) : null}
               </View>
               {state.condition ? (
                 <View style={styles.previewConditionRow}>
@@ -567,24 +574,28 @@ export default function CreateListing({
 function createStyles(colors: ColorPalette, wideWeb: boolean) {
   return StyleSheet.create({
     page: { flex: 1, backgroundColor: colors.background },
-    scrollContent: { padding: tokens.spacing[16], paddingBottom: wideWeb ? 160 : tokens.spacing[24], },
+    scrollContent: {
+      padding: wideWeb ? 0 : tokens.spacing[16],
+      paddingBottom: wideWeb ? 140 : tokens.spacing[24],
+    },
     wideLayout: {
       flexDirection: "row",
       alignItems: "flex-start",
       justifyContent: "space-between",
-      gap: tokens.spacing[40],
+      gap: tokens.spacing[32],
       width: "100%",
-      maxWidth: 1040,
+      maxWidth: WEB_MAX_WIDTH,
+      paddingHorizontal: WEB_GUTTER,
       alignSelf: "center",
-      paddingTop: tokens.spacing[16],
+      paddingTop: tokens.spacing[8],
     },
     webStepperCard: {
       width: "100%",
       padding: tokens.spacing[16],
       borderRadius: tokens.radius.xl,
-      backgroundColor: colors.m3.surfaceContainerLowest,
+      backgroundColor: colors.m3.surfaceContainerLow,
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      borderColor: colors.book.paperEdge,
       gap: tokens.spacing[12],
       shadowColor: colors.m3.shadow,
       shadowOffset: { width: 0, height: 1 },
@@ -614,12 +625,12 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
     formCardMobile: { width: "100%", gap: tokens.spacing[16], },
     formCardWeb: {
       width: "100%",
-      backgroundColor: colors.m3.surfaceContainerLowest,
+      backgroundColor: colors.m3.surfaceContainerLow,
       borderRadius: tokens.radius.xl,
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
-      padding: tokens.spacing[24],
-      gap: tokens.spacing[18],
+      borderColor: colors.book.paperEdge,
+      padding: tokens.spacing[20],
+      gap: tokens.spacing[14],
       shadowColor: colors.m3.shadow,
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.04,
@@ -627,7 +638,7 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
       elevation: 1,
     },
     previewCard: {
-      width: 360,
+      width: 420,
       maxWidth: "38%",
       flexShrink: 0,
       gap: tokens.spacing[16],
@@ -635,7 +646,7 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
       borderRadius: tokens.radius.xl,
       backgroundColor: colors.m3.surfaceContainerLow,
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      borderColor: colors.book.paperEdge,
       position: wideWeb ? ("sticky" as "relative") : "relative",
       top: tokens.spacing[24],
       shadowColor: colors.m3.shadow,
@@ -665,9 +676,9 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
       gap: tokens.spacing[8],
       padding: tokens.spacing[16],
       borderRadius: tokens.radius.xl,
-      backgroundColor: colors.m3.surfaceContainerLowest,
+      backgroundColor: colors.surface,
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      borderColor: colors.book.paperEdge,
       shadowColor: colors.m3.shadow,
       shadowOffset: { width: 0, height: 1 },
       shadowOpacity: 0.04,
@@ -676,23 +687,38 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
     },
     previewTitle: { ...tokens.typography.titleMedium, fontFamily: tokens.typography.displayLarge.fontFamily, color: colors.m3.onSurface, },
     previewAuthor: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
-    previewLocationRow: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[4], },
+    previewLocationRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[4],
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: colors.book.paperEdge,
+      paddingTop: tokens.spacing[8],
+      marginTop: tokens.spacing[4],
+    },
     previewLocationText: { ...tokens.typography.footnote, color: colors.secondaryText, fontSize: 12, },
-    previewMeta: { flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: tokens.spacing[8], paddingTop: tokens.spacing[2], },
-    previewPrice: { ...tokens.typography.labelLarge, fontWeight: tokens.fontWeight.bold, color: colors.m3.onSurface, },
+    previewMeta: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: tokens.spacing[8], paddingTop: tokens.spacing[4], },
+    previewPrice: { ...tokens.typography.labelLarge, fontWeight: tokens.fontWeight.bold, color: colors.nature.foliageDeep, marginLeft: "auto", },
     previewConditionRow: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[4], },
     previewConditionText: { ...tokens.typography.footnote, color: colors.secondaryText, fontSize: 11, },
-    previewNoteBox: { backgroundColor: colors.m3.surfaceContainerLowest, borderWidth: 1, borderColor: colors.m3.outlineVariant, borderRadius: tokens.radius.medium, padding: tokens.spacing[12], gap: tokens.spacing[6], },
+    previewNoteBox: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.book.paperEdge, borderRadius: tokens.radius.medium, padding: tokens.spacing[12], gap: tokens.spacing[6], },
     previewNoteHeader: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[6], },
     previewLockBadge: { width: 20, height: 20, borderRadius: tokens.radius.full, backgroundColor: colors.soft, alignItems: "center", justifyContent: "center", },
     previewNoteTitle: { ...tokens.typography.labelSmall, color: colors.actionDeep, fontWeight: tokens.fontWeight.bold, fontSize: 11, },
     previewNote: { ...tokens.typography.footnote, color: colors.m3.onSurfaceVariant, lineHeight: 16, fontSize: 11, },
-    content: { width: wideWeb ? 640 : "100%", maxWidth: wideWeb ? 640 : 560, alignSelf: "center", gap: tokens.spacing[16], },
+    content: {
+      flex: wideWeb ? 1 : undefined,
+      minWidth: wideWeb ? 0 : undefined,
+      width: wideWeb ? undefined : "100%",
+      maxWidth: wideWeb ? undefined : 560,
+      alignSelf: wideWeb ? "stretch" : "center",
+      gap: tokens.spacing[16],
+    },
     actionBar: {
       width: "100%",
       backgroundColor: colors.surface,
       borderTopWidth: 1,
-      borderTopColor: colors.m3.outlineVariant,
+      borderTopColor: colors.book.paperEdge,
       shadowColor: "#000",
       shadowOffset: { width: 0, height: -2 },
       shadowOpacity: 0.04,
@@ -701,9 +727,9 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
     },
     actionBarInner: {
       width: "100%",
-      maxWidth: wideWeb ? 1040 : 560,
+      maxWidth: wideWeb ? WEB_MAX_WIDTH : 560,
       alignSelf: "center",
-      paddingHorizontal: tokens.spacing[16],
+      paddingHorizontal: wideWeb ? WEB_GUTTER : tokens.spacing[16],
       paddingTop: tokens.spacing[16],
       paddingBottom: tokens.spacing[12],
     },

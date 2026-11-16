@@ -26,13 +26,13 @@ import { TextButton } from "@/view/components/TextButton";
 import { TextField } from "@/view/components/TextField";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { useKeyboardVisible } from "@/view/useKeyboardVisible";
-import { WEB_GUTTER } from "@/view/webLayout";
+import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { makeEditListingViewModel } from "@/di/container";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 
-const EDIT_WIDE_MAX_WIDTH = 1080;
+const EDIT_WIDE_MAX_WIDTH = WEB_MAX_WIDTH;
 
 export type EditListingProps = {
   bookId: string;
@@ -448,7 +448,7 @@ function createStyles(colors: ColorPalette) {
   contentWide: { maxWidth: EDIT_WIDE_MAX_WIDTH, alignSelf: "center", paddingHorizontal: WEB_GUTTER },
   breadcrumb: { marginBottom: tokens.spacing[8] },
   columns: { gap: tokens.spacing[16] },
-  columnsWide: { flexDirection: "row", alignItems: "flex-start", gap: tokens.spacing[24] },
+  columnsWide: { flexDirection: "row", alignItems: "flex-start", gap: tokens.spacing[32] },
   column: { gap: tokens.spacing[16] },
   columnHalf: { flex: 1 },
   statusContainer: {

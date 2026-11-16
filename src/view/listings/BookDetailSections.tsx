@@ -174,78 +174,86 @@ export function BookDetailHeroSection({
       style={[
         styles.hero,
         wideWeb ? styles.heroWide : { paddingTop: topInset + tokens.spacing[8] },
-        heroBackgroundColor ? { backgroundColor: heroBackgroundColor } : null,
+        !wideWeb && heroBackgroundColor ? { backgroundColor: heroBackgroundColor } : null,
       ]}
     >
-      <View style={styles.heroBar}>
-        {wideWeb ? <View /> : <HeroIconButton icon="back" label="Voltar" onPress={onBack} />}
-        <View style={styles.heroBarTrailing}>
-          <HeroIconButton
-            icon="share"
-            label="Compartilhar anúncio"
-            disabled={sharing}
-            onPress={onShareLink}
-          />
-          <HeroIconButton
-            icon={isFavorite ? "heartFill" : "heart"}
-            label={isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
-            disabled={favoriteLoading}
-            iconColor={isFavorite ? colors.ipe.bloom : undefined}
-            onPress={onToggleFavorite}
-          />
-        </View>
-      </View>
-
-      {book ? (
-        <View style={[styles.coverArea, wideWeb && styles.coverAreaWide]}>
-          <View>
-            <Book3D
-              id={book.id}
-              title={book.title}
-              author={book.author}
-              description={book.synopsis ?? book.description}
-              publisher={book.publisher}
-              pageCount={book.pageCount}
-              photoUrl={book.photoUrl}
-              scale={wideWeb ? 1.35 : 1}
+      <View
+        style={[
+          styles.heroStage,
+          wideWeb && styles.heroStageWide,
+          wideWeb && heroBackgroundColor ? { backgroundColor: heroBackgroundColor } : null,
+        ]}
+      >
+        <View style={styles.heroBar}>
+          {wideWeb ? <View /> : <HeroIconButton icon="back" label="Voltar" onPress={onBack} />}
+          <View style={styles.heroBarTrailing}>
+            <HeroIconButton
+              icon="share"
+              label="Compartilhar anúncio"
+              disabled={sharing}
+              onPress={onShareLink}
+            />
+            <HeroIconButton
+              icon={isFavorite ? "heartFill" : "heart"}
+              label={isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+              disabled={favoriteLoading}
+              iconColor={isFavorite ? colors.ipe.bloom : undefined}
+              onPress={onToggleFavorite}
             />
           </View>
-          {photos.length > 0 ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Ver fotos do anúncio em tela cheia"
-              onPress={onOpenGallery}
-              hitSlop={8}
-              style={withPress(styles.photosButton)}
-            >
-              <AppIcon name="camera" size={16} color={colors.m3.primary} />
-              <Text style={styles.photosButtonText}>Ver fotos</Text>
-            </Pressable>
-          ) : null}
-          {photos.length > 1 && wideWeb ? (
-            <View style={styles.thumbRow} accessibilityLabel={`${photos.length} fotos`}>
-              {photos.map((url, idx) => (
-                <Pressable
-                  key={`${url}-${idx}`}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Ver foto ${idx + 1} em tela cheia`}
-                  onPress={onOpenGallery}
-                  style={withPress([styles.thumb, idx === 0 && styles.thumbActive])}
-                >
-                  <Image source={{ uri: url }} style={styles.thumbImage} resizeMode="cover" accessible={false} />
-                </Pressable>
-              ))}
-            </View>
-          ) : null}
-          {photos.length > 1 && !wideWeb ? (
-            <View style={styles.photoDots} accessibilityLabel={`${photos.length} fotos`}>
-              {photos.map((_, idx) => (
-                <View key={idx} style={[styles.dot, idx === 0 && styles.dotActive]} />
-              ))}
-            </View>
-          ) : null}
         </View>
-      ) : null}
+
+        {book ? (
+          <View style={[styles.coverArea, wideWeb && styles.coverAreaWide]}>
+            <View>
+              <Book3D
+                id={book.id}
+                title={book.title}
+                author={book.author}
+                description={book.synopsis ?? book.description}
+                publisher={book.publisher}
+                pageCount={book.pageCount}
+                photoUrl={book.photoUrl}
+                scale={wideWeb ? 1.35 : 1}
+              />
+            </View>
+            {photos.length > 0 ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Ver fotos do anúncio em tela cheia"
+                onPress={onOpenGallery}
+                hitSlop={8}
+                style={withPress(styles.photosButton)}
+              >
+                <AppIcon name="camera" size={16} color={colors.m3.primary} />
+                <Text style={styles.photosButtonText}>Ver fotos</Text>
+              </Pressable>
+            ) : null}
+            {photos.length > 1 && wideWeb ? (
+              <View style={styles.thumbRow} accessibilityLabel={`${photos.length} fotos`}>
+                {photos.map((url, idx) => (
+                  <Pressable
+                    key={`${url}-${idx}`}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Ver foto ${idx + 1} em tela cheia`}
+                    onPress={onOpenGallery}
+                    style={withPress([styles.thumb, idx === 0 && styles.thumbActive])}
+                  >
+                    <Image source={{ uri: url }} style={styles.thumbImage} resizeMode="cover" accessible={false} />
+                  </Pressable>
+                ))}
+              </View>
+            ) : null}
+            {photos.length > 1 && !wideWeb ? (
+              <View style={styles.photoDots} accessibilityLabel={`${photos.length} fotos`}>
+                {photos.map((_, idx) => (
+                  <View key={idx} style={[styles.dot, idx === 0 && styles.dotActive]} />
+                ))}
+              </View>
+            ) : null}
+          </View>
+        ) : null}
+      </View>
     </View>
   );
 }
@@ -253,11 +261,21 @@ export function BookDetailHeroSection({
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     heroWide: {
-      flex: 1.4,
+      flex: 1.15,
+      minWidth: 380,
       borderRadius: tokens.radius.xxl,
-      paddingTop: tokens.spacing[16],
-      paddingBottom: tokens.spacing[20],
-      minHeight: 440,
+      padding: tokens.spacing[20],
+      minHeight: 500,
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderWidth: 1,
+      borderColor: colors.book.paperEdge,
+    },
+    heroStage: { flex: 1 },
+    heroStageWide: {
+      flex: 1,
+      borderRadius: tokens.radius.xl,
+      padding: tokens.spacing[20],
+      justifyContent: "space-between",
     },
     hero: {
       backgroundColor: colors.m3.surfaceContainerLow,
@@ -327,10 +345,10 @@ function createStyles(colors: ColorPalette) {
       flexDirection: "row",
       alignItems: "center",
       gap: tokens.spacing[12],
-      minHeight: tokens.spacing[40],
-      paddingVertical: tokens.spacing[6],
+      minHeight: tokens.spacing[48],
+      paddingVertical: tokens.spacing[8],
     },
-    detailRowDivider: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.m3.outlineVariant },
+    detailRowDivider: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.book.paperEdge },
     detailIcon: {
       width: tokens.spacing[32],
       height: tokens.spacing[32],
@@ -345,9 +363,12 @@ function createStyles(colors: ColorPalette) {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
-      backgroundColor: colors.m3.surfaceContainerLow,
+      backgroundColor: colors.surface,
       borderRadius: tokens.radius.card,
+      borderWidth: 1,
+      borderColor: colors.book.paperEdge,
       paddingHorizontal: tokens.spacing[16],
+      paddingVertical: tokens.spacing[6],
       minHeight: tokens.spacing[64],
     },
     sellerInfo: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[12], flex: 1 },

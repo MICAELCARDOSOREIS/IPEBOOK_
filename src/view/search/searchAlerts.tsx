@@ -110,14 +110,14 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
       ) : (
         <View style={[styles.content, wide && styles.contentWide]}>
           {showListChrome ? (
-            <View style={styles.heroHeader}>
+            <View style={[styles.heroHeader, wide && styles.wideFullWidth]}>
               <Text style={styles.heroTitle}>O próximo livro pode chegar.</Text>
               <Text style={styles.body}>
                 Avisamos quando houver um anúncio que combine com sua busca.
               </Text>
             </View>
           ) : null}
-          <View style={styles.formCard}>
+          <View style={[styles.formCard, wide && styles.wideFullWidth]}>
             <Text style={styles.formTitle}>
               Avisaremos você
             </Text>
@@ -249,7 +249,7 @@ function createStyles(colors: ColorPalette) {
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
-    borderColor: colors.m3.outlineVariant,
+    borderColor: colors.book.paperEdge,
   },
   wideTitle: {
     ...tokens.typography.brandLargeTitle,
@@ -287,9 +287,12 @@ function createStyles(colors: ColorPalette) {
     backgroundColor: colors.m3.surfaceContainerLow,
     borderRadius: tokens.radius.card,
     borderWidth: 1,
-    borderColor: colors.m3.outlineVariant,
+    borderColor: colors.book.paperEdge,
     padding: tokens.spacing[40],
     marginTop: tokens.spacing[40],
+  },
+  wideFullWidth: {
+    maxWidth: "100%",
   },
   heroHeader: {
     gap: tokens.spacing[4],
@@ -303,7 +306,7 @@ function createStyles(colors: ColorPalette) {
     backgroundColor: colors.m3.surfaceContainerLow,
     borderRadius: tokens.radius.card,
     borderWidth: 1,
-    borderColor: colors.m3.outlineVariant,
+    borderColor: colors.book.paperEdge,
     padding: tokens.spacing[20],
     gap: tokens.spacing[12],
     maxWidth: 640,
@@ -395,12 +398,17 @@ function createStyles(colors: ColorPalette) {
     backgroundColor: colors.m3.surfaceContainerLow,
     borderRadius: tokens.radius.card,
     borderWidth: 1,
-    borderColor: colors.m3.outlineVariant,
+    borderColor: colors.book.paperEdge,
     padding: tokens.spacing[32],
     marginTop: tokens.spacing[16],
     alignItems: "center",
   },
   alertItem: {
+    backgroundColor: colors.m3.surfaceContainerLow,
+    borderRadius: tokens.radius.card,
+    borderWidth: 1,
+    borderColor: colors.book.paperEdge,
+    padding: tokens.spacing[16],
     gap: tokens.spacing[12],
   },
   row: {

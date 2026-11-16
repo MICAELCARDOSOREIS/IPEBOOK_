@@ -8,6 +8,8 @@ import { TopAppBar } from "@/view/components/TopAppBar";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { useGuardedPress } from "@/view/useGuardedPress";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
+import { WEB_MAX_WIDTH } from "@/view/webLayout";
 import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 
 export type SecurityProps = {
@@ -25,6 +27,7 @@ export function Security({ onBack, onNavigateToLogin }: SecurityProps) {
   const guardedLogin = useGuardedPress(onNavigateToLogin);
   const [authState, authActions] = makeAuthViewModel();
   const { colors } = useTheme();
+  const wide = useIsWideWeb();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [sent, setSent] = useState(false);
   const [sending, setSending] = useState(false);
@@ -46,7 +49,7 @@ export function Security({ onBack, onNavigateToLogin }: SecurityProps) {
 
   return (
     <SafeAreaView style={styles.page}>
-      <TopAppBar contentMaxWidth={720} title="Segurança e verificação" onBack={guardedBack} />
+      <TopAppBar contentMaxWidth={wide ? WEB_MAX_WIDTH : 720} title="Segurança e verificação" onBack={guardedBack} />
       <ScrollView
         contentContainerStyle={[styles.scroll, { paddingBottom: scrollBottomPadding.withoutBottomBar }]}
         {...standardVerticalScrollProps}
@@ -115,10 +118,10 @@ function createStyles(colors: ColorPalette) {
   },
   card: {
     backgroundColor: colors.surface,
-    borderRadius: tokens.radius.medium,
+    borderRadius: tokens.radius.card,
     borderWidth: 1,
-    borderColor: colors.m3.outlineVariant,
-    padding: tokens.spacing[16],
+    borderColor: colors.book.paperEdge,
+    padding: tokens.spacing[24],
     gap: tokens.spacing[12],
   },
   cardHeaderRow: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[12] },

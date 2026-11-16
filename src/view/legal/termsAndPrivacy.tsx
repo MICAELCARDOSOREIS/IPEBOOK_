@@ -1,17 +1,17 @@
 import { useMemo, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LEGAL_LAST_UPDATED, PRIVACY_POLICY, TERMS_OF_USE } from "@/model/legalContent";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
-import { WEB_GUTTER, useWebColumns, webColumnWidth } from "@/view/webLayout";
+import { WEB_GUTTER, WEB_MAX_WIDTH, useWebColumns, webColumnWidth } from "@/view/webLayout";
 import { withPress } from "@/view/pressFeedback";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 
-const TERMS_WIDE_MAX_WIDTH = 1240;
+const TERMS_WIDE_MAX_WIDTH = WEB_MAX_WIDTH;
 
 export type TermsAndPrivacyProps = {
   onBack?: () => void;
@@ -37,7 +37,10 @@ export default function TermsAndPrivacy({
   // Web larga: coluna mais larga, com as cláusulas em duas colunas.
   const wide = useIsWideWeb();
   const columns = useWebColumns(2, 3);
-  const columnWidth = { width: webColumnWidth(columns) };
+  const columnWidth =
+    Platform.OS === "web"
+      ? ({ width: `calc((100% - ${(columns - 1) * 16}px) / ${columns})` as unknown as `${number}%` })
+      : { width: webColumnWidth(columns) };
   const sections = activeTab === "terms" ? TERMS_OF_USE : PRIVACY_POLICY;
 
   return (
@@ -150,7 +153,7 @@ function createStyles(colors: ColorPalette) {
   tabs: {
     flexDirection: "row",
     borderBottomWidth: 1,
-    borderBottomColor: colors.m3.outlineVariant,
+    borderBottomColor: colors.book.paperEdge,
     marginBottom: tokens.spacing[16],
   },
   tab: {

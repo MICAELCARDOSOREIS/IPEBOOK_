@@ -6,6 +6,20 @@ vi.mock("expo-symbols", () => ({
   SymbolView: (props: any) => null,
 }));
 
+vi.mock("expo-router", () => ({
+  router: {
+    push: vi.fn(),
+    replace: vi.fn(),
+    back: vi.fn(),
+    canGoBack: () => false,
+  },
+  useFocusEffect: (cb: () => void | (() => void)) => {
+    void cb;
+  },
+  usePathname: () => "/",
+  useLocalSearchParams: () => ({}),
+}));
+
 const mockPath = fileURLToPath(new URL("./mocks/react-native.cjs", import.meta.url));
 
 // Redireciona qualquer require('react-native') feito pelo RNTL para o mock nativo

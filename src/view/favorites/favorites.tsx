@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { FlatList, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
-import { BOOK_CONDITION_LABELS, type BookModality } from "@/model/entities/book";
+import { BOOK_CONDITION_LABELS } from "@/model/entities/book";
 import { AppIcon } from "@/view/components/AppIcon";
 import { BookCover } from "@/view/components/BookCover";
 import { ModalityCoverArea } from "@/view/components/ModalityCoverArea";
+import { Tag } from "@/view/components/Tag";
 import { ErrorState } from "@/view/components/ErrorState";
 import { FilledButton } from "@/view/components/FilledButton";
 import { IpeMark } from "@/view/components/IpeMark";
@@ -29,13 +30,6 @@ export type FavoritesProps = {
   onLogin: () => void;
   onBook: (id: string) => void;
   onExploreBooks?: () => void;
-};
-
-/** Rótulo curto de modalidade na linha pequena do card (`02.06`). */
-const MODALITY_LABELS: Readonly<Record<BookModality, string>> = {
-  sale: "Venda",
-  trade: "Troca",
-  donation: "Doação",
 };
 
 /** Figma `02.06 · Favoritos` (nó `10:227`) e `02.14 · Favoritos · vazio` (nó `254:4129`). */
@@ -67,6 +61,10 @@ export default function Favorites({
 
   const wideWeb = useIsWideWeb();
   const gridColumns = useWebGridColumns();
+  const wideColumnMaxWidth =
+    Platform.OS === "web"
+      ? (`calc((100% - ${(gridColumns - 1) * 24}px) / ${gridColumns})` as unknown as `${number}%`)
+      : webColumnWidth(gridColumns);
   const [statusFilter, setStatusFilter] = useState<"all" | "available" | "reserved">("all");
   const visibleBooks = state.books.filter((book) =>
     statusFilter === "all" ? true : statusFilter === "reserved" ? book.status === "reserved" : book.status !== "reserved",
@@ -213,7 +211,7 @@ export default function Favorites({
               .join(" · ");
 
             return (
-              <View style={[styles.row, wideWeb && styles.wideCard, wideWeb && { maxWidth: webColumnWidth(gridColumns) }]}>
+              <View style={[styles.row, wideWeb && styles.wideCard, wideWeb && { maxWidth: wideColumnMaxWidth }]}>
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel={`Ver ${item.title}`}
@@ -225,14 +223,15 @@ export default function Favorites({
                   ]}
                 >
                   <ModalityCoverArea modality={item.modality}>
-                    <BookCover id={item.id} title={item.title} photoUrl={item.photoUrl} variant="list" />
+                    <BookCover id={item.id} title={item.title} photoUrl={item.photoUrl} variant={wideWeb ? "card" : "list"} />
                   </ModalityCoverArea>
                   <View style={styles.rowTexts}>
-                    <Text style={styles.modalityLine}>
-                      {item.modality === "sale" && item.price !== undefined
-                        ? formatPrice(item.price)
-                        : MODALITY_LABELS[item.modality]}
-                    </Text>
+                    <View style={styles.modalityRow}>
+                      <Tag variant={item.modality} />
+                      {item.modality === "sale" && item.price !== undefined ? (
+                        <Text style={styles.modalityLine}>{formatPrice(item.price)}</Text>
+                      ) : null}
+                    </View>
                     <Text style={styles.bookTitle}>{item.title}</Text>
                     <Text style={styles.bookDetails}>{details}</Text>
                   </View>
@@ -243,9 +242,9 @@ export default function Favorites({
                   accessibilityState={{ disabled: state.removingId === item.id }}
                   disabled={state.removingId === item.id}
                   onPress={() => void actions.removeFavorite(item.id)}
-                  style={withPress(styles.favoriteButton)}
+                  style={withPress([styles.favoriteButton, wideWeb && styles.favoriteButtonWide])}
                 >
-                  <AppIcon name="heartFill" size={24} color={colors.ipe.bloom} />
+                  <AppIcon name="heartFill" size={wideWeb ? 20 : 24} color={colors.ipe.bloom} />
                 </Pressable>
               </View>
             );
@@ -276,9 +275,16 @@ function createStyles(colors: ColorPalette) {
       alignSelf: "center",
       paddingHorizontal: WEB_GUTTER,
       paddingTop: tokens.spacing[24],
-      gap: tokens.spacing[8],
+      paddingBottom: tokens.spacing[8],
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      flexWrap: "wrap",
+      gap: tokens.spacing[16],
     },
     wideHeaderLeft: {
+      flex: 1,
+      minWidth: 260,
       flexDirection: "row",
       alignItems: "center",
       gap: tokens.spacing[16],
@@ -291,11 +297,11 @@ function createStyles(colors: ColorPalette) {
       alignItems: "center",
       justifyContent: "center",
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      borderColor: colors.book.paperEdge,
     },
     wideTitle: { ...tokens.typography.brandDisplayMd, color: colors.brandBrown },
     wideSubtitle: { ...tokens.typography.bodyLarge, color: colors.m3.onSurfaceVariant },
-    wideChips: { flexDirection: "row", gap: tokens.spacing[8], paddingTop: tokens.spacing[16] },
+    wideChips: { flexDirection: "row", gap: tokens.spacing[8] },
     wideChip: {
       flexDirection: "row",
       alignItems: "center",
@@ -304,7 +310,7 @@ function createStyles(colors: ColorPalette) {
       paddingHorizontal: tokens.spacing[16],
       borderRadius: tokens.shapeMorph.chipUnselected,
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      borderColor: colors.book.paperEdge,
       backgroundColor: colors.m3.surfaceContainerLowest,
     },
     wideChipSelected: {
@@ -358,13 +364,16 @@ function createStyles(colors: ColorPalette) {
     wideCard: {
       flex: 1,
       minWidth: 0,
+      position: "relative",
       flexDirection: "column",
       alignItems: "stretch",
       borderRadius: tokens.radius.xl,
       backgroundColor: colors.m3.surfaceContainerLowest,
+      borderWidth: 1,
+      borderColor: colors.book.paperEdge,
       padding: tokens.spacing[12],
     },
-    wideCardMain: { flexDirection: "column", alignItems: "stretch" },
+    wideCardMain: { flexDirection: "column", alignItems: "stretch", gap: tokens.spacing[10] },
     privacyNote: {
       flexDirection: "row",
       alignItems: "center",
@@ -394,7 +403,7 @@ function createStyles(colors: ColorPalette) {
       backgroundColor: colors.m3.surfaceContainerLow,
       borderRadius: tokens.radius.card,
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      borderColor: colors.book.paperEdge,
       padding: tokens.spacing[40],
       marginTop: tokens.spacing[32],
     },
@@ -410,7 +419,7 @@ function createStyles(colors: ColorPalette) {
       backgroundColor: colors.m3.surfaceContainerLow,
       borderRadius: tokens.radius.card,
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      borderColor: colors.book.paperEdge,
       padding: tokens.spacing[40],
       marginTop: tokens.spacing[24],
       alignItems: "center",
@@ -470,9 +479,17 @@ function createStyles(colors: ColorPalette) {
       transform: [{ scale: 0.985 }],
     },
     rowTexts: { flex: 1, gap: tokens.spacing[4] },
+    modalityRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      flexWrap: "wrap",
+      gap: tokens.spacing[6],
+    },
     modalityLine: {
-      ...tokens.typography.labelMedium,
-      color: colors.m3.onSurfaceVariant,
+      ...tokens.typography.labelLarge,
+      fontWeight: tokens.fontWeight.bold,
+      color: colors.nature.foliageDeep,
     },
     bookTitle: {
       ...tokens.typography.brandCardTitle,
@@ -489,6 +506,23 @@ function createStyles(colors: ColorPalette) {
       justifyContent: "flex-start",
       alignSelf: "flex-start",
       paddingTop: tokens.spacing[2],
+    },
+    favoriteButtonWide: {
+      position: "absolute",
+      top: tokens.spacing[18],
+      right: tokens.spacing[18],
+      width: 36,
+      height: 36,
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.m3.surfaceContainerLowest,
+      alignItems: "center",
+      justifyContent: "center",
+      paddingTop: 0,
+      elevation: 2,
+      shadowColor: colors.m3.shadow,
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.16,
+      shadowRadius: 4,
     },
   });
 }

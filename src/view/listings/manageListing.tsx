@@ -18,7 +18,7 @@ import { type ColorPalette, fontFamily, tokens } from "@/view/tokens";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { useOnRefocus } from "@/view/useRefocusKey";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
-import { WEB_GUTTER } from "@/view/webLayout";
+import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
 
 export type ManageListingProps = {
   bookId: string;
@@ -93,7 +93,7 @@ export default function ManageListing({
     });
   };
 
-  const contentMaxWidth = wide ? 1040 : 560;
+  const contentMaxWidth = wide ? WEB_MAX_WIDTH : 560;
 
   if (state.loading) {
     return (
@@ -557,7 +557,7 @@ function createStyles(colors: ColorPalette) {
     loadingContainer: { flex: 1, padding: tokens.spacing[16], justifyContent: "center" },
     containerContent: { paddingBottom: tokens.spacing[40] },
     content: { width: "100%", maxWidth: 560, alignSelf: "center", gap: tokens.spacing[16] },
-    contentWide: { maxWidth: 1040, paddingHorizontal: WEB_GUTTER },
+    contentWide: { maxWidth: WEB_MAX_WIDTH, paddingHorizontal: WEB_GUTTER },
     breadcrumb: { marginBottom: tokens.spacing[4] },
     headerBlock: {
       gap: tokens.spacing[4],
@@ -600,7 +600,7 @@ function createStyles(colors: ColorPalette) {
       backgroundColor: colors.surface,
       borderRadius: tokens.radius.card,
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      borderColor: colors.book.paperEdge,
       padding: tokens.spacing[16],
       elevation: 1,
       shadowColor: colors.m3.shadow,
@@ -655,7 +655,7 @@ function createStyles(colors: ColorPalette) {
       padding: tokens.spacing[16],
       gap: tokens.spacing[8],
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      borderColor: colors.book.paperEdge,
     },
     statusBoxActive: {
       backgroundColor: colors.nature.sprout,
@@ -720,7 +720,7 @@ function createStyles(colors: ColorPalette) {
       backgroundColor: colors.surface,
       borderRadius: tokens.radius.card,
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      borderColor: colors.book.paperEdge,
       padding: tokens.spacing[14],
       minHeight: tokens.accessibility.touchTarget,
       elevation: 1,
@@ -764,7 +764,7 @@ function createStyles(colors: ColorPalette) {
       backgroundColor: colors.surface,
       borderRadius: tokens.radius.card,
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      borderColor: colors.book.paperEdge,
       padding: tokens.spacing[14],
       minHeight: tokens.accessibility.touchTarget,
       elevation: 1,

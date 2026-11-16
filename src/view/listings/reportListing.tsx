@@ -211,7 +211,7 @@ function createStyles(colors: ColorPalette) {
     paddingHorizontal: WEB_GUTTER,
   },
   columns: { gap: tokens.spacing[16] },
-  columnsWide: { flexDirection: "row", alignItems: "flex-start", gap: tokens.spacing[24] },
+  columnsWide: { flexDirection: "row", alignItems: "flex-start", gap: tokens.spacing[32] },
   column: { gap: tokens.spacing[16] },
   columnHalf: { flex: 1 },
   scrollContent: {

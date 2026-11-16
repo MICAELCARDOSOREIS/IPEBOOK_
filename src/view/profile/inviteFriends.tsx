@@ -10,7 +10,7 @@ import { FilledButton } from "@/view/components/FilledButton";
 import { captureRef } from "react-native-view-shot";
 import { InviteCard } from "@/view/components/InviteCard";
 import { makeInviteFriendsViewModel } from "@/di/container";
-import { WEB_GUTTER } from "@/view/webLayout";
+import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 
@@ -45,7 +45,7 @@ export function InviteFriends({ onBack }: InviteFriendsProps) {
   // A imagem do convite é este cartão: captura em PNG e abre a folha de compartilhamento do sistema.
   const captureInvite = () => captureRef(cardRef, { format: "png", quality: 1, result: "tmpfile" });
 
-  const contentMaxWidth = wide ? 960 : 560;
+  const contentMaxWidth = wide ? WEB_MAX_WIDTH : 560;
 
   return (
     <SafeAreaView style={styles.page}>
@@ -134,7 +134,7 @@ function createStyles(colors: ColorPalette) {
       alignSelf: "center",
       gap: tokens.spacing[24],
     },
-    contentWide: { maxWidth: 960, paddingHorizontal: WEB_GUTTER },
+    contentWide: { maxWidth: WEB_MAX_WIDTH, paddingHorizontal: WEB_GUTTER },
     columns: { gap: tokens.spacing[24] },
     columnsWide: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[48] },
     column: { gap: tokens.spacing[24] },
@@ -162,7 +162,7 @@ function createStyles(colors: ColorPalette) {
       borderRadius: tokens.radius.medium,
       backgroundColor: colors.m3.surfaceContainerLow,
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      borderColor: colors.book.paperEdge,
       gap: tokens.spacing[8],
     },
     previewLabel: {

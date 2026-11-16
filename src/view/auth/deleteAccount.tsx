@@ -56,10 +56,10 @@ export default function DeleteAccount({
   if (state.success) {
     return (
       <ScreenContainer
-        maxWidth={560}
+        maxWidth={wide ? WEB_MAX_WIDTH : 560}
         paddingTop={tokens.spacing[16]}
         paddingBottom={scrollBottomPadding.withoutBottomBar}
-        header={<TopAppBar contentMaxWidth={560} title="Conta excluída" onBack={guardedBack} />}
+        header={<TopAppBar contentMaxWidth={wide ? WEB_MAX_WIDTH : 560} title="Conta excluída" onBack={guardedBack} />}
         contentStyle={styles.centerContainer}
       >
         <View style={styles.card}>
@@ -82,10 +82,10 @@ export default function DeleteAccount({
   if (!sessionUserId && sessionLoading) {
     return (
       <ScreenContainer
-        maxWidth={560}
+        maxWidth={wide ? WEB_MAX_WIDTH : 560}
         paddingTop={tokens.spacing[16]}
         paddingBottom={scrollBottomPadding.withoutBottomBar}
-        header={<TopAppBar contentMaxWidth={560} title="Privacidade e dados" onBack={guardedBack} />}
+        header={<TopAppBar contentMaxWidth={wide ? WEB_MAX_WIDTH : 560} title="Privacidade e dados" onBack={guardedBack} />}
         contentStyle={styles.centerContainer}
       >
         <View style={styles.card}>
@@ -104,10 +104,10 @@ export default function DeleteAccount({
   if (!sessionUserId) {
     return (
       <ScreenContainer
-        maxWidth={560}
+        maxWidth={wide ? WEB_MAX_WIDTH : 560}
         paddingTop={tokens.spacing[16]}
         paddingBottom={scrollBottomPadding.withoutBottomBar}
-        header={<TopAppBar contentMaxWidth={560} title="Privacidade e dados" onBack={guardedBack} />}
+        header={<TopAppBar contentMaxWidth={wide ? WEB_MAX_WIDTH : 560} title="Privacidade e dados" onBack={guardedBack} />}
         contentStyle={styles.centerContainer}
       >
         <View style={styles.card}>
@@ -274,7 +274,7 @@ function createStyles(colors: ColorPalette) {
       borderRadius: tokens.radius.medium,
       backgroundColor: colors.surface,
       borderWidth: 1,
-      borderColor: colors.border,
+      borderColor: colors.book.paperEdge,
     },
     navigationRowText: { flex: 1, gap: tokens.spacing[4] },
     navigationRowTitle: {
@@ -308,7 +308,7 @@ function createStyles(colors: ColorPalette) {
       backgroundColor: colors.m3.surfaceContainerLow,
       borderRadius: tokens.radius.medium,
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      borderColor: colors.book.paperEdge,
       gap: tokens.spacing[8],
     },
     privacyInfoTitle: {

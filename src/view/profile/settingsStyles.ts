@@ -1,9 +1,9 @@
 import { StyleSheet } from "react-native";
 import { type ColorPalette, tokens } from "@/view/tokens";
-import { WEB_GUTTER } from "@/view/webLayout";
+import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
 
-/** Container na web larga (1080 px) mantém a coluna de leitura (~600 px após sidebar de 300 px) sem vazio à direita. */
-export const SETTINGS_WIDE_CONTENT_MAX_WIDTH = 1080;
+/** Container na web larga alinhado ao WebHeader e ao Meu perfil. */
+export const SETTINGS_WIDE_CONTENT_MAX_WIDTH = WEB_MAX_WIDTH;
 
 export function createSettingsStyles(colors: ColorPalette) {
   return StyleSheet.create({
@@ -13,8 +13,8 @@ export function createSettingsStyles(colors: ColorPalette) {
       maxWidth: SETTINGS_WIDE_CONTENT_MAX_WIDTH,
       alignSelf: "center",
       paddingHorizontal: WEB_GUTTER,
-      paddingTop: tokens.spacing[24],
-      paddingBottom: tokens.spacing[12],
+      paddingTop: tokens.spacing[32],
+      paddingBottom: tokens.spacing[20],
     },
     wideTopHeaderLeft: {
       flexDirection: "row",
@@ -25,11 +25,11 @@ export function createSettingsStyles(colors: ColorPalette) {
       width: tokens.spacing[40],
       height: tokens.spacing[40],
       borderRadius: tokens.radius.full,
-      backgroundColor: colors.m3.surfaceContainerHigh,
+      backgroundColor: colors.m3.surfaceContainerLow,
       alignItems: "center",
       justifyContent: "center",
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      borderColor: colors.book.paperEdge,
     },
     wideTitle: {
       ...tokens.typography.brandLargeTitle,
@@ -44,18 +44,24 @@ export function createSettingsStyles(colors: ColorPalette) {
       flexDirection: "row",
       alignItems: "center",
       gap: tokens.spacing[16],
-      padding: tokens.spacing[16],
+      padding: tokens.spacing[20],
       borderRadius: tokens.radius.xl,
       backgroundColor: colors.m3.surfaceContainerLow,
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      borderColor: colors.book.paperEdge,
+      overflow: "hidden",
     },
     accountIdentity: {
       flex: 1,
+      width: "100%",
       minWidth: 0,
       flexDirection: "row",
       alignItems: "center",
       gap: tokens.spacing[12],
+    },
+    accountIdentityWide: {
+      flex: 0,
+      width: "100%",
     },
     accountInfo: { flex: 1, minWidth: 0, gap: tokens.spacing[2] },
     accountEyebrow: {
@@ -105,46 +111,60 @@ export function createSettingsStyles(colors: ColorPalette) {
       gap: tokens.spacing[12],
     },
     contentWide: {
+      width: "100%",
       maxWidth: SETTINGS_WIDE_CONTENT_MAX_WIDTH,
       alignSelf: "center",
       paddingHorizontal: WEB_GUTTER,
       flexDirection: "row",
       alignItems: "flex-start",
-      gap: tokens.spacing[48],
+      gap: tokens.spacing[32],
     },
     mainStacked: { gap: tokens.spacing[12] },
-    // Coluna de leitura: as listas de opções não passam de ~720 px (no container de 1080 px,
-    // a barra lateral de 300 px + vão já as deixam em ~600 px).
-    main: { flex: 1, minWidth: 0, maxWidth: 720, gap: tokens.spacing[16] },
+    main: { flex: 1, minWidth: 0, gap: tokens.spacing[16] },
     sidebar: {
-      width: 300,
+      width: 380,
+      flexShrink: 0,
       gap: tokens.spacing[16],
       // Fica visível enquanto a coluna principal rola (só existe na web).
       position: "sticky" as "relative",
       top: tokens.spacing[16],
     },
-    accountCardWide: { flexDirection: "column", alignItems: "flex-start", gap: tokens.spacing[12] },
-    // Na web larga o cartão é coluna: a pílula "Editar" fica ancorada à direita, sob o
-    // bloco de texto, para não sobrar canto vazio no cartão.
-    accountActionWide: { alignSelf: "flex-end" },
-    sideNav: { gap: tokens.spacing[2] },
+    accountCardWide: { flexDirection: "column", alignItems: "stretch", gap: tokens.spacing[14] },
+    accountActionWide: { alignSelf: "stretch", minHeight: 40, paddingVertical: tokens.spacing[8] },
+    sideNavCard: {
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderRadius: tokens.radius.xl,
+      borderWidth: 1,
+      borderColor: colors.book.paperEdge,
+      padding: tokens.spacing[12],
+      gap: tokens.spacing[4],
+    },
+    sideNav: { gap: tokens.spacing[4] },
     sideNavItem: {
       flexDirection: "row",
       alignItems: "center",
       gap: tokens.spacing[12],
       minHeight: tokens.accessibility.touchTarget,
-      paddingHorizontal: tokens.spacing[12],
-      borderRadius: tokens.radius.full,
+      paddingHorizontal: tokens.spacing[14],
+      borderRadius: tokens.radius.card,
     },
     sideNavItemActive: { backgroundColor: colors.m3.surfaceContainerHigh },
     sideNavLabel: { ...tokens.typography.labelLarge, color: colors.m3.onSurface },
-    sideSignOut: { alignItems: "flex-start", paddingHorizontal: tokens.spacing[4] },
+    sideNavLabelActive: { fontWeight: tokens.fontWeight.semiBold, color: colors.brandBrown },
+    sideSignOut: {
+      alignItems: "flex-start",
+      paddingHorizontal: tokens.spacing[6],
+      paddingTop: tokens.spacing[8],
+      marginTop: tokens.spacing[4],
+      borderTopWidth: 1,
+      borderTopColor: colors.book.paperEdge,
+    },
     sectionCard: {
       borderRadius: tokens.radius.xl,
       overflow: "hidden",
       backgroundColor: colors.m3.surfaceContainerLow,
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      borderColor: colors.book.paperEdge,
     },
     sectionHeaderRow: {
       flex: 1,
@@ -164,8 +184,8 @@ export function createSettingsStyles(colors: ColorPalette) {
       alignItems: "center",
       justifyContent: "space-between",
       gap: tokens.spacing[12],
-      paddingVertical: tokens.spacing[12],
-      paddingHorizontal: tokens.spacing[16],
+      paddingVertical: tokens.spacing[16],
+      paddingHorizontal: tokens.spacing[20],
     },
     disclosureHeaderExpanded: {
       backgroundColor: colors.m3.surfaceContainer,

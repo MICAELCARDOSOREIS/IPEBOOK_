@@ -134,7 +134,7 @@ export function CreateListingStep3({
           <View style={styles.boxVolumesContainer}>
             <TextField
               label="Volumes (opcional)"
-              labelBackgroundColor={colors.m3.surfaceContainerLow}
+              labelBackgroundColor={colors.surface}
               value={boxVolumesCount}
               onChangeText={(text) => onSetBoxVolumesCount?.(text)}
               editable={!loading}
@@ -181,6 +181,7 @@ export function CreateListingStep3({
       >
         <TextField
           label="Descrição"
+          labelBackgroundColor={wideWeb ? colors.m3.surfaceContainerLow : undefined}
           value={description}
           onChangeText={onSetDescription}
           editable={!loading}
@@ -233,9 +234,9 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
     boxCard: {
       padding: tokens.spacing[16],
       borderRadius: tokens.radius.medium,
-      backgroundColor: colors.m3.surfaceContainerLow,
+      backgroundColor: colors.surface,
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      borderColor: colors.book.paperEdge,
       gap: tokens.spacing[12],
     },
     boxVolumesContainer: {

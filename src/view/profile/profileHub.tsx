@@ -22,7 +22,7 @@ import {
 } from "@/view/profile/ProfileHubSections";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
-import { WEB_GUTTER } from "@/view/webLayout";
+import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 import { useOnRefocus } from "@/view/useRefocusKey";
@@ -255,9 +255,16 @@ export default function ProfileHub({
                 <AppIcon name="back" size={24} color={colors.m3.onSurface} />
               </Pressable>
             ) : null}
-            <Text accessibilityRole="header" style={styles.title}>
-              Meu perfil
-            </Text>
+            <View style={styles.headerTitleGroup}>
+              <Text accessibilityRole="header" style={[styles.title, wideWeb && styles.titleWide]}>
+                Meu perfil
+              </Text>
+              {wideWeb && isSignedIn ? (
+                <Text style={styles.subtitle}>
+                  Gerencie sua identidade, acompanhe suas trocas e ajuste sua conta em Piripiri.
+                </Text>
+              ) : null}
+            </View>
             <View style={styles.headerActions}>
               {wideWeb ? null : (
               <Pressable
@@ -287,7 +294,11 @@ export default function ProfileHub({
                 accessibilityLabel="Abrir configurações"
                 hitSlop={8}
                 onPress={guardedNavigateToSettings}
-                style={({ pressed }) => [styles.settingsButton, pressed && styles.settingsButtonPressed]}
+                style={({ pressed }) => [
+                  styles.settingsButton,
+                  wideWeb && styles.settingsButtonWide,
+                  pressed && styles.settingsButtonPressed,
+                ]}
               >
                 <AppIcon name="settings" size={24} color={colors.m3.onSurfaceVariant} />
               </Pressable>
@@ -301,7 +312,7 @@ export default function ProfileHub({
           ) : isSignedIn ? (
             wideWeb ? (
               <View style={[styles.widePage, stackColumns && styles.wideGridStacked]} testID="profile-wide-grid">
-                <View style={styles.wideIdentity}>
+                <View style={[styles.wideIdentity, stackColumns && styles.wideIdentityStacked]}>
                   <ProfileIdentityCard
                     name={profile.name}
                     photoUrl={profile.photoUrl}
@@ -393,7 +404,7 @@ function createStyles(colors: ColorPalette) {
     scroll: { flexGrow: 1, paddingBottom: tokens.spacing[32] },
     // Web larga (Figma `07.01`): cartão e métricas em coluna lateral, "Atividade" e "Conta" lado a lado.
     contentWide: {
-      maxWidth: 1240,
+      maxWidth: WEB_MAX_WIDTH,
       alignSelf: "center",
       paddingHorizontal: WEB_GUTTER,
       paddingTop: tokens.spacing[32],
@@ -403,12 +414,15 @@ function createStyles(colors: ColorPalette) {
     widePage: {
       width: "100%",
       flexDirection: "row",
-      alignItems: "flex-start",
+      alignItems: "stretch",
       gap: tokens.spacing[24],
     },
     wideIdentity: {
-      width: 360,
+      width: 390,
       flexShrink: 0,
+    },
+    wideIdentityStacked: {
+      width: "100%",
     },
     wideGridStacked: { flexDirection: "column" },
     wideSectionsRow: {
@@ -417,7 +431,7 @@ function createStyles(colors: ColorPalette) {
       flexDirection: "row",
       flexWrap: "wrap",
       gap: tokens.spacing[24],
-      alignItems: "flex-start",
+      alignItems: "stretch",
       width: "100%",
     },
     content: {
@@ -431,10 +445,21 @@ function createStyles(colors: ColorPalette) {
       alignItems: "center",
       gap: tokens.spacing[12],
     },
-    title: {
+    headerTitleGroup: {
       flex: 1,
+      minWidth: 0,
+      gap: tokens.spacing[4],
+    },
+    title: {
       ...tokens.typography.brandTitle,
       color: colors.brandBrown,
+    },
+    titleWide: {
+      ...tokens.typography.brandLargeTitle,
+    },
+    subtitle: {
+      ...tokens.typography.bodyMedium,
+      color: colors.m3.onSurfaceVariant,
     },
     headerActions: {
       flexDirection: "row",
@@ -465,6 +490,11 @@ function createStyles(colors: ColorPalette) {
       borderRadius: tokens.shapeMorph.buttonRest,
       alignItems: "center",
       justifyContent: "center",
+    },
+    settingsButtonWide: {
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderWidth: 1,
+      borderColor: colors.book.paperEdge,
     },
     settingsButtonPressed: {
       borderRadius: tokens.shapeMorph.buttonPressed,

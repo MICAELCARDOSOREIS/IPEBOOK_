@@ -1,6 +1,6 @@
-import { useMemo } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
-import type { Book } from "@/model/entities/book";
+import { useMemo, useState } from "react";
+import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { BOOK_CONDITION_LABELS, type Book } from "@/model/entities/book";
 import { formatBookLocation } from "@/model/entities/location";
 import { AppIcon } from "@/view/components/AppIcon";
 import { BookCover } from "@/view/components/BookCover";
@@ -27,6 +27,7 @@ export type ShelfRowProps = {
 export function ShelfRow({ book, summary, accessibilityLabel, onPress, onShareWhatsApp, onNavigateToNegotiation, wide }: ShelfRowProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const [isHovered, setIsHovered] = useState(false);
 
   if (wide) {
     const actionText = wide.actionLabel ?? "Editar";
@@ -39,13 +40,23 @@ export function ShelfRow({ book, summary, accessibilityLabel, onPress, onShareWh
     ]);
     const showOfferText =
       Boolean(wide.offer) && !redundantOffers.has(wide.offer.trim().toLowerCase());
+    const fallbackOfferText =
+      book.modality === "donation" ? "Gratuito" : book.modality === "trade" ? "Para troca" : "";
+    const metaDetails = [
+      book.category,
+      book.condition ? BOOK_CONDITION_LABELS[book.condition] : null,
+    ]
+      .filter(Boolean)
+      .join(" · ");
 
     return (
-      <View style={styles.tableRow}>
+      <View style={[styles.tableRow, isHovered && styles.tableRowHovered]}>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={accessibilityLabel}
           onPress={onPress}
+          onHoverIn={() => setIsHovered(true)}
+          onHoverOut={() => setIsHovered(false)}
           style={withPress(styles.tableMain)}
         >
           <View style={styles.cellBook}>
@@ -69,6 +80,11 @@ export function ShelfRow({ book, summary, accessibilityLabel, onPress, onShareWh
                   {book.author}
                 </Text>
               ) : null}
+              {metaDetails ? (
+                <Text style={styles.tableMeta} numberOfLines={1}>
+                  {metaDetails}
+                </Text>
+              ) : null}
             </View>
           </View>
           <View style={styles.cellModality}>
@@ -76,6 +92,10 @@ export function ShelfRow({ book, summary, accessibilityLabel, onPress, onShareWh
             {showOfferText ? (
               <Text style={styles.cellPrice} numberOfLines={1}>
                 {wide.offer}
+              </Text>
+            ) : fallbackOfferText ? (
+              <Text style={styles.cellOfferSubtle} numberOfLines={1}>
+                {fallbackOfferText}
               </Text>
             ) : null}
           </View>
@@ -90,15 +110,6 @@ export function ShelfRow({ book, summary, accessibilityLabel, onPress, onShareWh
           </View>
         </Pressable>
         <View style={styles.cellActionBox}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={`${actionText} ${book.title}`}
-            onPress={onPress}
-            style={withPress(styles.actionButton)}
-          >
-            <Text style={styles.cellAction}>{actionText}</Text>
-            <AppIcon name="chevronRight" size={16} color={colors.m3.onSecondaryContainer} />
-          </Pressable>
           {onShareWhatsApp && book.status === "available" ? (
             <Pressable
               accessibilityRole="button"
@@ -111,6 +122,15 @@ export function ShelfRow({ book, summary, accessibilityLabel, onPress, onShareWh
               <Text style={styles.srOnlySummary}>Compartilhar</Text>
             </Pressable>
           ) : null}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`${actionText} ${book.title}`}
+            onPress={onPress}
+            style={withPress(styles.actionButton)}
+          >
+            <Text style={styles.cellAction}>{actionText}</Text>
+            <AppIcon name="chevronRight" size={16} color={colors.m3.onSecondaryContainer} />
+          </Pressable>
         </View>
       </View>
     );
@@ -333,9 +353,12 @@ function createStyles(colors: ColorPalette) {
       flexDirection: "row",
       alignItems: "center",
       gap: tokens.spacing[16],
-      paddingHorizontal: tokens.spacing[16],
+      paddingHorizontal: tokens.spacing[24],
       borderTopWidth: StyleSheet.hairlineWidth,
-      borderTopColor: colors.m3.outlineVariant,
+      borderTopColor: colors.book.paperEdge,
+    },
+    tableRowHovered: {
+      backgroundColor: colors.m3.surfaceContainerLow,
     },
     tableMain: {
       flex: 1,
@@ -344,14 +367,19 @@ function createStyles(colors: ColorPalette) {
       alignItems: "center",
       gap: tokens.spacing[16],
       paddingVertical: tokens.spacing[14],
+      ...(Platform.OS === "web" ? ({ cursor: "pointer", userSelect: "none" } as never) : {}),
     },
     cellBook: { flex: 3, minWidth: 220, flexDirection: "row", alignItems: "center", gap: tokens.spacing[16] },
     cellModality: { flex: 1.5, minWidth: 120, flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: tokens.spacing[8] },
     cellPrice: {
-      ...tokens.typography.labelMedium,
-      fontWeight: tokens.fontWeight.semiBold,
+      ...tokens.typography.labelLarge,
+      fontWeight: tokens.fontWeight.bold,
       fontVariant: ["tabular-nums"],
-      color: colors.m3.onSurface,
+      color: colors.nature.foliageDeep,
+    },
+    cellOfferSubtle: {
+      ...tokens.typography.labelMedium,
+      color: colors.m3.onSurfaceVariant,
     },
     cellNeighborhood: { flex: 1.5, minWidth: 120, flexDirection: "row", alignItems: "center", gap: tokens.spacing[4] },
     cellNeighborhoodText: { ...tokens.typography.footnote, color: colors.m3.onSurfaceVariant },
@@ -383,14 +411,17 @@ function createStyles(colors: ColorPalette) {
       flexDirection: "row",
       alignItems: "center",
       gap: tokens.spacing[4],
-      paddingVertical: tokens.spacing[6],
-      paddingHorizontal: tokens.spacing[12],
+      height: 36,
+      paddingHorizontal: tokens.spacing[14],
       borderRadius: tokens.radius.full,
       backgroundColor: colors.m3.secondaryContainer,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
     },
     cellAction: { ...tokens.typography.labelMedium, fontWeight: tokens.fontWeight.semiBold, color: colors.m3.onSecondaryContainer },
     tableTitle: { ...tokens.typography.brandCardTitle, color: colors.m3.onSurface },
     tableAuthor: { ...tokens.typography.footnote, color: colors.m3.onSurfaceVariant },
+    tableMeta: { ...tokens.typography.captionSmall, color: colors.m3.onSurfaceVariant },
     rowSummary: {
       ...tokens.typography.bodyMedium,
       color: colors.m3.onSurfaceVariant,

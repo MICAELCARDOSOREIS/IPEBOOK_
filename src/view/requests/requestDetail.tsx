@@ -625,7 +625,7 @@ function createStyles(colors: ColorPalette) {
     padding: tokens.spacing[12],
     gap: tokens.spacing[12],
     borderWidth: 1,
-    borderColor: colors.m3.outlineVariant,
+    borderColor: colors.book.paperEdge,
   },
   bookInfo: { flex: 1, gap: tokens.spacing[4] },
   bookTitle: {

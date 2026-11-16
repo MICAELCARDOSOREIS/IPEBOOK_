@@ -28,7 +28,7 @@ import { Tag } from "@/view/components/Tag";
 import { TextField } from "@/view/components/TextField";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { useHydratedWindowWidth, useIsWideWeb } from "@/view/useIsWideWeb";
-import { WEB_MAX_WIDTH } from "@/view/webLayout";
+import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 
@@ -423,7 +423,7 @@ function createStyles(colors: ColorPalette) {
       paddingBottom: tokens.spacing[16],
       gap: tokens.spacing[10],
     },
-    contentWide: { maxWidth: WEB_MAX_WIDTH, paddingHorizontal: tokens.spacing[24] },
+    contentWide: { maxWidth: WEB_MAX_WIDTH, paddingHorizontal: WEB_GUTTER },
     wideGrid: {
       flexDirection: "row",
       alignItems: "flex-start",
@@ -435,7 +435,6 @@ function createStyles(colors: ColorPalette) {
     wideSideCol: {
       flex: 1,
       minWidth: 360,
-      maxWidth: 460,
       gap: tokens.spacing[16],
     },
     wideMainCol: {
@@ -448,6 +447,8 @@ function createStyles(colors: ColorPalette) {
       padding: tokens.spacing[14],
       borderRadius: tokens.radius.extraLarge,
       backgroundColor: colors.m3.surfaceContainerLow,
+      borderWidth: 1,
+      borderColor: colors.book.paperEdge,
     },
     headline: { ...tokens.typography.titleLarge, fontFamily: fontFamily.brand, color: colors.m3.onSurface },
     body: { ...tokens.typography.bodyLarge, fontFamily: fontFamily.regular, color: colors.m3.onSurfaceVariant },
