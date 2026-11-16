@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Pressable, StyleSheet, Text, TextInput, View, Image } from "react-native";
+import { Image, Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
@@ -61,8 +61,8 @@ export function WebHeader({
   const guardedOpenNotifications = useGuardedPress(onOpenNotifications);
 
   return (
-    <View role="banner" testID="web-header" style={[styles.bar, { paddingHorizontal: sideInset }, compact && styles.barCompact]}>
-      <View style={styles.inner}>
+    <View role="banner" testID="web-header" style={[styles.bar, { paddingHorizontal: sideInset }]}>
+      <View style={[styles.inner, compact && styles.innerCompact]}>
         <Pressable accessibilityRole="link" accessibilityLabel="IpêBook, ir para o início" onPress={() => guardedNavigate("home")} style={withPress(styles.brandLink)}>
           <Text style={styles.brand}>IpêBook</Text>
         </Pressable>
@@ -95,10 +95,9 @@ export function WebHeader({
                 accessibilityLabel={link.label}
                 accessibilityState={{ selected: isActive }}
                 onPress={() => guardedNavigate(link.key)}
-                style={withPress(styles.link)}
+                style={withPress([styles.link, isActive && styles.linkActive])}
               >
                 <Text style={[styles.linkText, isActive && styles.linkTextActive]}>{link.label}</Text>
-                {isActive ? <View style={styles.linkUnderline} /> : null}
               </Pressable>
             );
           })}
@@ -154,12 +153,14 @@ export function WebHeader({
 }
 
 function createStyles(colors: ColorPalette) {
+  const webPointer =
+    Platform.OS === "web" ? ({ cursor: "pointer", userSelect: "none" } as object) : {};
   return StyleSheet.create({
     bar: {
       height: 72,
       backgroundColor: colors.surface,
       borderBottomWidth: 1,
-      borderBottomColor: colors.m3.outlineVariant,
+      borderBottomColor: colors.book.paperEdge,
       justifyContent: "center",
       width: "100%",
     },
@@ -167,13 +168,17 @@ function createStyles(colors: ColorPalette) {
       flex: 1,
       flexDirection: "row",
       alignItems: "center",
-      gap: tokens.spacing[24],
+      gap: tokens.spacing[20],
       width: "100%",
       maxWidth: WEB_MAX_WIDTH,
       alignSelf: "center",
     },
+    innerCompact: {
+      gap: tokens.spacing[12],
+    },
     brandLink: {
       paddingVertical: tokens.spacing[4],
+      ...webPointer,
     },
     brand: { ...tokens.typography.brandTitle, letterSpacing: tokens.letterSpacing.brandTight, color: colors.brandBrown },
     search: {
@@ -181,15 +186,15 @@ function createStyles(colors: ColorPalette) {
       alignItems: "center",
       gap: tokens.spacing[10],
       flexShrink: 1,
-      minWidth: 200,
-      width: 460,
-      maxWidth: "35%",
+      minWidth: 220,
+      width: 520,
+      maxWidth: "38%",
       height: 44,
       paddingHorizontal: tokens.spacing[16],
       borderRadius: tokens.radius.full,
-      backgroundColor: colors.m3.surfaceContainerHigh,
+      backgroundColor: colors.m3.surfaceContainerLow,
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      borderColor: colors.book.paperEdge,
     },
     searchInput: {
       ...tokens.typography.bodyMedium,
@@ -202,7 +207,6 @@ function createStyles(colors: ColorPalette) {
       outlineStyle: "none",
     } as object,
     spacer: { flex: 1 },
-    barCompact: { gap: tokens.spacing[16] },
     countBadge: {
       position: "absolute",
       top: 4,
@@ -216,11 +220,20 @@ function createStyles(colors: ColorPalette) {
       justifyContent: "center",
     },
     countBadgeText: { ...tokens.typography.badgeMicro, color: colors.badge.completed.text },
-    links: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[28], height: "100%" },
-    link: { height: "100%", justifyContent: "center", position: "relative", paddingHorizontal: tokens.spacing[4] },
+    links: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[8] },
+    link: {
+      height: 40,
+      justifyContent: "center",
+      alignItems: "center",
+      paddingHorizontal: tokens.spacing[16],
+      borderRadius: tokens.radius.full,
+      ...webPointer,
+    },
+    linkActive: {
+      backgroundColor: colors.soft,
+    },
     linkText: { ...tokens.typography.labelLarge, color: colors.m3.onSurfaceVariant },
-    linkTextActive: { color: colors.m3.onSurface, fontWeight: tokens.fontWeight.bold },
-    linkUnderline: { position: "absolute", left: 0, right: 0, bottom: 0, height: 3, borderTopLeftRadius: 3, borderTopRightRadius: 3, backgroundColor: colors.m3.primary },
+    linkTextActive: { color: colors.actionDeep, fontWeight: tokens.fontWeight.bold },
     announce: {
       flexDirection: "row",
       alignItems: "center",
@@ -230,6 +243,7 @@ function createStyles(colors: ColorPalette) {
       paddingRight: tokens.spacing[18],
       borderRadius: tokens.radius.full,
       backgroundColor: colors.m3.primary,
+      ...webPointer,
     },
     announceText: { ...tokens.typography.labelLarge, color: colors.m3.onPrimary, fontWeight: tokens.fontWeight.semiBold },
     iconButton: {
@@ -237,9 +251,12 @@ function createStyles(colors: ColorPalette) {
       height: 40,
       borderRadius: tokens.radius.full,
       backgroundColor: colors.m3.surfaceContainerLow,
+      borderWidth: 1,
+      borderColor: colors.book.paperEdge,
       alignItems: "center",
       justifyContent: "center",
       position: "relative",
+      ...webPointer,
     },
     dot: { position: "absolute", top: 8, right: 8, width: 8, height: 8, borderRadius: tokens.radius.dot, backgroundColor: colors.error },
     avatar: {
@@ -251,6 +268,7 @@ function createStyles(colors: ColorPalette) {
       backgroundColor: colors.ipe.petalSoft,
       borderWidth: 1.5,
       borderColor: colors.ipe.bloom,
+      ...webPointer,
     },
     avatarText: { ...tokens.typography.labelLarge, color: colors.brandBrown, fontWeight: tokens.fontWeight.bold },
     avatarPhoto: { width: 40, height: 40, borderRadius: tokens.radius.full },
