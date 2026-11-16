@@ -16,6 +16,7 @@ import { IpePetalsCelebration } from "@/view/components/IpePetalsCelebration";
 import { makeShareListingViewModel } from "@/di/container";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { useExpressivePress } from "@/view/useExpressivePress";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 
 export type CreateListingSuccessProps = {
@@ -32,6 +33,7 @@ export function CreateListingSuccess({
   const guardedViewMyListings = useGuardedPress(onViewMyListings);
   const guardedGoHome = useGuardedPress(onGoHome);
   const { colors } = useTheme();
+  const wideWeb = useIsWideWeb();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [shareState, shareActions] = makeShareListingViewModel();
 
@@ -73,7 +75,7 @@ export function CreateListingSuccess({
         contentContainerStyle={styles.scrollContent}
         {...standardVerticalScrollProps}
       >
-        <View style={styles.content}>
+        <View style={[styles.content, wideWeb && styles.contentWide]}>
           <View style={styles.headerBlock}>
             <Manchete texto="Seu livro ganhou" realce="um novo começo." />
             <Text style={styles.subtitle}>
@@ -253,6 +255,14 @@ function createStyles(colors: ColorPalette) {
       alignSelf: "center",
       gap: tokens.spacing[16],
     },
+    contentWide: {
+      maxWidth: 680,
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderRadius: tokens.radius.xxl,
+      borderWidth: 1,
+      borderColor: colors.book.paperEdge,
+      padding: tokens.spacing[32],
+    },
     headerBlock: {
       gap: tokens.spacing[6],
       alignItems: "flex-start",
@@ -293,10 +303,10 @@ function createStyles(colors: ColorPalette) {
       gap: tokens.spacing[16],
       alignItems: "center",
       padding: tokens.spacing[14],
-      backgroundColor: colors.m3.surfaceContainerLow,
+      backgroundColor: colors.surface,
       borderRadius: tokens.radius.large,
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      borderColor: colors.book.paperEdge,
       shadowColor: "#000",
       shadowOffset: { width: 0, height: 1 },
       shadowOpacity: 0.05,

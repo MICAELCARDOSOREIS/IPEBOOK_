@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { FAQ_ITEMS } from "@/model/helpContent";
 import { FilledButton } from "@/view/components/FilledButton";
@@ -9,7 +9,7 @@ import { TopAppBar } from "@/view/components/TopAppBar";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
-import { WEB_GUTTER, useWebColumns, webColumnWidth } from "@/view/webLayout";
+import { WEB_GUTTER, WEB_MAX_WIDTH, useWebColumns, webColumnWidth } from "@/view/webLayout";
 import { withPress } from "@/view/pressFeedback";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
@@ -19,7 +19,7 @@ export type HelpAndFaqProps = {
   onOpenConversations?: () => void;
 };
 
-const WIDE_CONTENT_MAX_WIDTH = 1240;
+const WIDE_CONTENT_MAX_WIDTH = WEB_MAX_WIDTH;
 
 type CategoryFilter = "todos" | "seguranca" | "regras" | "suporte";
 
@@ -51,7 +51,10 @@ export default function HelpAndFaq({ onBack, onOpenConversations }: HelpAndFaqPr
   // Web larga: coluna mais larga, com as respostas em duas colunas.
   const wide = useIsWideWeb();
   const columns = useWebColumns(2, 3);
-  const columnWidth = { width: webColumnWidth(columns) };
+  const columnWidth =
+    Platform.OS === "web"
+      ? ({ width: `calc((100% - ${(columns - 1) * 16}px) / ${columns})` as unknown as `${number}%` })
+      : { width: webColumnWidth(columns) };
 
   const normalizedQuery = normalizeSearchText(searchQuery);
 
@@ -192,7 +195,7 @@ function createStyles(colors: ColorPalette) {
     paddingVertical: tokens.spacing[8],
     borderRadius: tokens.shapeMorph.chipUnselected,
     borderWidth: 1,
-    borderColor: colors.m3.outlineVariant,
+    borderColor: colors.book.paperEdge,
     backgroundColor: colors.m3.surfaceContainerLowest,
     minHeight: tokens.accessibility.touchTarget,
     justifyContent: "center",
@@ -225,7 +228,7 @@ function createStyles(colors: ColorPalette) {
     borderRadius: tokens.radius.medium,
     padding: tokens.spacing[20],
     borderWidth: 1,
-    borderColor: colors.m3.outlineVariant,
+    borderColor: colors.book.paperEdge,
     gap: tokens.spacing[12],
     alignItems: "center",
   },
@@ -234,7 +237,7 @@ function createStyles(colors: ColorPalette) {
     borderRadius: tokens.radius.medium,
     padding: tokens.spacing[16],
     borderWidth: 1,
-    borderColor: colors.m3.outlineVariant,
+    borderColor: colors.book.paperEdge,
     gap: tokens.spacing[8],
   },
   question: {

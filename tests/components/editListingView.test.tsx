@@ -116,7 +116,7 @@ describe("tela de edição de anúncio (ISO/IEC 25010 - Usabilidade e Acessibili
     expect(screen.getByDisplayValue("Marcas leves")).toBeDefined();
     expect(screen.getByLabelText("Categoria Romance").props.accessibilityState.checked).toBe(true);
     expect(screen.getByLabelText("Conservação Bom estado").props.accessibilityState.checked).toBe(true);
-    expect(screen.getByLabelText("Ponto de encontro Piripiri (A combinar)").props.accessibilityState.checked).toBe(true);
+    expect(screen.getByLabelText("Ponto de encontro Praça da Bandeira").props.accessibilityState.checked).toBe(false);
   });
 
   it("permite alterar modalidade e oculta preço quando não é venda", async () => {
@@ -178,7 +178,7 @@ describe("tela de edição de anúncio (ISO/IEC 25010 - Usabilidade e Acessibili
 
 describe("Spec 030 — edição alinhada ao Figma 04.09", () => {
   it("desmarca categoria, conservação e local ao tocar no chip já escolhido", async () => {
-    const actions = mockViewModel(loadedState);
+    const actions = mockViewModel({ ...loadedState, neighborhood: "Praça da Bandeira" });
 
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
@@ -188,7 +188,7 @@ describe("Spec 030 — edição alinhada ao Figma 04.09", () => {
     await act(async () => {
       fireEvent.press(screen.getByLabelText("Categoria Romance"));
       fireEvent.press(screen.getByLabelText("Conservação Bom estado"));
-      fireEvent.press(screen.getByLabelText("Ponto de encontro Piripiri (A combinar)"));
+      fireEvent.press(screen.getByLabelText("Ponto de encontro Praça da Bandeira"));
     });
 
     expect(actions.setCategory).toHaveBeenCalledWith("");

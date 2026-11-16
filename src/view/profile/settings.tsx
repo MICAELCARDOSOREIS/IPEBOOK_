@@ -307,7 +307,7 @@ export function Settings({
       onPress={guardedEditProfile}
       style={withPress([styles.accountCard, wide && styles.accountCardWide])}
     >
-      <View style={styles.accountIdentity}>
+      <View style={[styles.accountIdentity, wide && styles.accountIdentityWide]}>
         <Avatar
           name={profileState.profile?.name || accountEmail || "Você"}
           photoUrl={profileState.profile?.photoUrl ?? undefined}
@@ -361,25 +361,36 @@ export function Settings({
           {wide ? (
             <View style={styles.sidebar}>
               {accountCard}
-              <View accessibilityRole="menu" accessibilityLabel="Seções das configurações" style={styles.sideNav}>
-                {navItems.map((item) => (
-                  <Pressable
-                    key={item.key}
-                    accessibilityRole="link"
-                    accessibilityLabel={`Ir para ${item.label}`}
-                    onPress={() => scrollRef.current?.scrollTo({ y: mainY.current + (sectionY.current[item.key] ?? 0) - 16, animated: true })}
-                    style={({ hovered, pressed }: { hovered?: boolean; pressed: boolean }) => [styles.sideNavItem, (hovered || pressed) && styles.sideNavItemActive]}
-                  >
-                    <AppIcon name={item.icon} size={20} color={colors.m3.onSurfaceVariant} />
-                    <Text style={styles.sideNavLabel}>{item.label}</Text>
-                  </Pressable>
-                ))}
-              </View>
-              {hasAccount ? (
-                <View style={styles.sideSignOut}>
-                  <TextButton label="Sair da conta" tone="danger" onPress={() => { setSignOutError(null); setConfirmingSignOut(true); }} />
+              <View style={styles.sideNavCard}>
+                <View accessibilityRole="menu" accessibilityLabel="Seções das configurações" style={styles.sideNav}>
+                  {navItems.map((item) => {
+                    const isActive = expandedSection === item.key;
+                    return (
+                      <Pressable
+                        key={item.key}
+                        accessibilityRole="link"
+                        accessibilityLabel={`Ir para ${item.label}`}
+                        onPress={() => {
+                          setExpandedSection(item.key as SettingsSectionKey);
+                          scrollRef.current?.scrollTo({ y: mainY.current + (sectionY.current[item.key] ?? 0) - 16, animated: true });
+                        }}
+                        style={({ hovered, pressed }: { hovered?: boolean; pressed: boolean }) => [
+                          styles.sideNavItem,
+                          (isActive || hovered || pressed) && styles.sideNavItemActive,
+                        ]}
+                      >
+                        <AppIcon name={item.icon} size={20} color={isActive ? colors.brandBrown : colors.m3.onSurfaceVariant} />
+                        <Text style={[styles.sideNavLabel, isActive && styles.sideNavLabelActive]}>{item.label}</Text>
+                      </Pressable>
+                    );
+                  })}
                 </View>
-              ) : null}
+                {hasAccount ? (
+                  <View style={styles.sideSignOut}>
+                    <TextButton label="Sair da conta" tone="danger" onPress={() => { setSignOutError(null); setConfirmingSignOut(true); }} />
+                  </View>
+                ) : null}
+              </View>
             </View>
           ) : null}
           <View

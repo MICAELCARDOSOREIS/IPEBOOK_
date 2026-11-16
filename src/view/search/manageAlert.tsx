@@ -11,6 +11,8 @@ import { useTheme } from "@/view/theme/ThemeProvider";
 import { ALERT_MODALITY_SUMMARY, ALERT_CITY } from "@/view/search/alertLabels";
 import { makeSearchAlertsViewModel } from "@/di/container";
 import { useGuardedPress } from "@/view/useGuardedPress";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
+import { WEB_MAX_WIDTH } from "@/view/webLayout";
 import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 
 export type ManageAlertProps = {
@@ -35,6 +37,7 @@ export default function ManageAlert({
   const guardedAlertDeleted = useGuardedPress(onAlertDeleted);
   const [state, actions] = makeSearchAlertsViewModel(userId);
   const { colors } = useTheme();
+  const wide = useIsWideWeb();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const alert = state.alerts.find((item) => item.id === alertId);
@@ -42,11 +45,11 @@ export default function ManageAlert({
   if (state.loading) {
     return (
       <ScreenContainer
-        maxWidth={560}
+        maxWidth={wide ? WEB_MAX_WIDTH : 560}
         paddingHorizontal={tokens.spacing[24]}
         paddingTop={tokens.spacing[24]}
-        header={<TopAppBar contentMaxWidth={560} title="Gerenciar alerta" onBack={guardedBack} />}
-        contentStyle={styles.content}
+        header={<TopAppBar contentMaxWidth={wide ? WEB_MAX_WIDTH : 560} title="Gerenciar alerta" onBack={guardedBack} />}
+        contentStyle={[styles.content, wide && styles.contentWide]}
       >
         <LoadingState label="Carregando alerta" variant="form" />
       </ScreenContainer>
@@ -56,11 +59,11 @@ export default function ManageAlert({
   if (!alert) {
     return (
       <ScreenContainer
-        maxWidth={560}
+        maxWidth={wide ? WEB_MAX_WIDTH : 560}
         paddingHorizontal={tokens.spacing[24]}
         paddingTop={tokens.spacing[24]}
-        header={<TopAppBar contentMaxWidth={560} title="Gerenciar alerta" onBack={guardedBack} />}
-        contentStyle={styles.content}
+        header={<TopAppBar contentMaxWidth={wide ? WEB_MAX_WIDTH : 560} title="Gerenciar alerta" onBack={guardedBack} />}
+        contentStyle={[styles.content, wide && styles.contentWide]}
       >
         <Text accessibilityRole="header" style={styles.headline}>
           Alerta não encontrado
@@ -75,12 +78,12 @@ export default function ManageAlert({
 
   return (
     <ScreenContainer
-      maxWidth={560}
+      maxWidth={wide ? WEB_MAX_WIDTH : 560}
       paddingHorizontal={tokens.spacing[24]}
       paddingTop={tokens.spacing[24]}
       paddingBottom={scrollBottomPadding.withoutBottomBar}
-      header={<TopAppBar contentMaxWidth={560} title="Gerenciar alerta" onBack={guardedBack} />}
-      contentStyle={styles.content}
+      header={<TopAppBar contentMaxWidth={wide ? WEB_MAX_WIDTH : 560} title="Gerenciar alerta" onBack={guardedBack} />}
+      contentStyle={[styles.content, wide && styles.contentWide]}
       overlay={
         <Dialog
           visible={confirmingDelete}
@@ -161,6 +164,15 @@ function createStyles(colors: ColorPalette) {
     paddingHorizontal: tokens.spacing[24],
     paddingTop: tokens.spacing[24],
     gap: tokens.spacing[16],
+  },
+  contentWide: {
+    maxWidth: 680,
+    backgroundColor: colors.m3.surfaceContainerLow,
+    borderRadius: tokens.radius.xl,
+    borderWidth: 1,
+    borderColor: colors.book.paperEdge,
+    padding: tokens.spacing[28],
+    marginTop: tokens.spacing[16],
   },
   headline: {
     ...tokens.typography.displayLarge,

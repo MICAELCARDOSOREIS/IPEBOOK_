@@ -93,7 +93,7 @@ describe("cartão do encontro (Spec 052, 06.05/06.11/06.12)", () => {
     expect(screen.getByText("Praça da Bandeira, Centro, Piripiri, PI")).toBeDefined();
     await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Confirmar encontro" })); });
     expect(actions.confirm).toHaveBeenCalledOnce();
-    expect(screen.getByRole("button", { name: "Sugerir outro horário" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Sugerir horário" })).toBeDefined();
   });
 
   it("quem convidou aguarda e não vê confirmar (RN-05)", async () => {

@@ -116,6 +116,7 @@ describe("Entrega do livro (Spec 095, CA6/CA7)", () => {
   it("leitor: só habilita Confirmar com os 8 caracteres e confirma o código digitado", async () => {
     mockState({ role: "receiver" });
     const screen = await open();
+    await act(async () => { fireEvent.press(screen.getByLabelText("Digitar código manualmente")); });
     const field = screen.getByLabelText("Código da entrega");
     await act(async () => { fireEvent.changeText(field, "k7m2-qx"); });
     expect(screen.getByRole("button", { name: "Confirmar entrega" }).props.accessibilityState?.disabled).toBe(true);
@@ -153,6 +154,7 @@ describe("Entrega do livro (Spec 095, CA6/CA7)", () => {
   it("leitor: envia o código pelo teclado e mostra o carregando ao confirmar", async () => {
     mockState({ role: "receiver", confirming: true });
     const screen = await open();
+    await act(async () => { fireEvent.press(screen.getByLabelText("Digitar código manualmente")); });
     const field = screen.getByLabelText("Código da entrega");
     await act(async () => { fireEvent.changeText(field, "K7M2QXWA"); });
     await act(async () => { fireEvent(field, "submitEditing"); });
@@ -225,7 +227,7 @@ describe("rota da entrega: exige sessão", () => {
     vi.mocked(useDeliveryViewModel).mockReturnValue([{ ...base, role: "receiver" }, { generate: vi.fn(), confirm: vi.fn(), reload: vi.fn() }]);
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => { screen = await render(<DeliveryScreen requestId={REQUEST} />); });
-    expect(screen.getByRole("header", { name: "Confirme que recebeu o livro" })).toBeDefined();
+    expect(screen.getByRole("header", { name: "Confirmar recebimento" })).toBeDefined();
   });
 });
 

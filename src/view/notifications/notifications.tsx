@@ -488,12 +488,12 @@ export default function Notifications({
                         }
                       }}
                       style={withWebInteractive(
-                        styles.cardBody,
+                        [styles.cardBody, wide && styles.cardBodyWide],
                         styles.cardBodyHover,
                         colors.m3.focusRing,
                       )}
                     >
-                      <View style={styles.cardHeader}>
+                      <View style={[styles.cardHeader, wide && styles.cardHeaderWide]}>
                         <IconBadge icon={config.icon} tone={config.tone} />
                         <View style={styles.cardTitleContainer}>
                           <View style={styles.titleRow}>
@@ -512,29 +512,58 @@ export default function Notifications({
                                 <Text style={styles.novaBadgeText}>Nova</Text>
                               </View>
                             ) : null}
+                            {wide ? (
+                              <>
+                                <View style={styles.typeBadge}>
+                                  <Text style={styles.typeBadgeText}>{config.label}</Text>
+                                </View>
+                                {time ? <Text style={styles.timeText}>{` ·\u00A0${time}`}</Text> : null}
+                              </>
+                            ) : null}
                           </View>
-                          <View style={styles.metaRow}>
-                            <View style={styles.typeBadge}>
-                              <Text style={styles.typeBadgeText}>{config.label}</Text>
+                          {!wide ? (
+                            <View style={styles.metaRow}>
+                              <View style={styles.typeBadge}>
+                                <Text style={styles.typeBadgeText}>{config.label}</Text>
+                              </View>
+                              {time ? <Text style={styles.timeText}>{` ·\u00A0${time}`}</Text> : null}
                             </View>
-                            {time ? <Text style={styles.timeText}>{` ·\u00A0${time}`}</Text> : null}
-                          </View>
+                          ) : null}
+                          <Text style={styles.cardMessage}>{item.message}</Text>
+                          {!wide ? (
+                            <View style={[styles.cardFooter, !item.read && styles.cardFooterUnread]}>
+                              <Text style={[styles.actionHintText, !item.read && styles.actionHintTextUnread]}>
+                                {config.actionHint}
+                              </Text>
+                              <AppIcon
+                                name="chevronRight"
+                                size={14}
+                                color={item.read ? colors.action : colors.m3.onSecondaryContainer}
+                              />
+                            </View>
+                          ) : null}
                         </View>
                       </View>
 
-                      <Text style={styles.cardMessage}>{item.message}</Text>
-
                       {/* Rodapé do card: ação contextual rápida */}
-                      <View style={[styles.cardFooter, !item.read && styles.cardFooterUnread]}>
-                        <Text style={[styles.actionHintText, !item.read && styles.actionHintTextUnread]}>
-                          {config.actionHint}
-                        </Text>
-                        <AppIcon
-                          name="chevronRight"
-                          size={14}
-                          color={item.read ? colors.action : colors.m3.onSecondaryContainer}
-                        />
-                      </View>
+                      {wide ? (
+                        <View
+                          style={[
+                            styles.cardFooter,
+                            styles.cardFooterWide,
+                            !item.read && styles.cardFooterUnread,
+                          ]}
+                        >
+                          <Text style={[styles.actionHintText, !item.read && styles.actionHintTextUnread]}>
+                            {config.actionHint}
+                          </Text>
+                          <AppIcon
+                            name="chevronRight"
+                            size={14}
+                            color={item.read ? colors.action : colors.m3.onSecondaryContainer}
+                          />
+                        </View>
+                      ) : null}
                     </Pressable>
 
                     <View style={styles.cardActions}>

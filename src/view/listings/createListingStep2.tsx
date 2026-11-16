@@ -101,6 +101,7 @@ export function CreateListingStep2({
       {showLinkField ? (
         <TextField
           label="Endereço da foto da capa"
+          labelBackgroundColor={wideWeb ? colors.m3.surfaceContainerLow : undefined}
           value={photoUrl}
           onChangeText={onSetPhotoUrl}
           editable={!loading}
@@ -198,9 +199,9 @@ function createStyles(colors: ColorPalette) {
       gap: tokens.spacing[4],
     },
     webTipBox: {
-      backgroundColor: colors.m3.surfaceContainerLow,
+      backgroundColor: colors.surface,
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      borderColor: colors.book.paperEdge,
       borderRadius: tokens.radius.large,
       padding: tokens.spacing[16],
       gap: tokens.spacing[6],

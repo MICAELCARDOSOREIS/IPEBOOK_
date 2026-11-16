@@ -544,7 +544,15 @@ export function Conversations({
             {/* Painel Central: Chat da negociação selecionada ou placeholder */}
             {wideWeb && selectedId ? (
               <View style={styles.widePane} testID="conversation-pane">
-                <Chat embedded requestId={selectedId} sessionUserId={sessionUserId} onOpenNegotiation={guardedOpenNegotiation} />
+                <Chat
+                  embedded
+                  requestId={selectedId}
+                  sessionUserId={sessionUserId}
+                  initialCounterpartName={selectedItem?.otherName}
+                  initialCounterpartPhotoUrl={selectedItem?.otherPhotoUrl}
+                  initialModality={selectedItem?.listing.modality}
+                  onOpenNegotiation={guardedOpenNegotiation}
+                />
               </View>
             ) : wideWeb ? (
               <View style={[styles.widePane, styles.widePaneEmpty]}>
@@ -561,35 +569,39 @@ export function Conversations({
             {/* Painel Direito: Detalhes da negociação e encontro seguro */}
             {wideWeb && selectedItem ? (
               <View style={styles.aboutPane} testID="conversation-about">
-                <Text accessibilityRole="header" style={styles.aboutTitle}>
-                  {`Sobre ${selectedItem.listing.modality === "trade" ? "a troca" : selectedItem.listing.modality === "donation" ? "a doação" : "a compra"}`}
-                </Text>
-                {renderAboutBook(selectedItem)}
-                <CombineAction requestId={selectedItem.requestId} sessionUserId={sessionUserId} onOpen={guardedOpenNegotiation} />
-                <View style={styles.aboutSafe}>
-                  <View style={styles.aboutSafeHeader}>
-                    <View style={styles.aboutSafeIcon}>
-                      <AppIcon name="place" size={14} color={colors.nature.foliageDeep} />
-                    </View>
-                    <Text style={styles.aboutSafeTitle}>Encontro seguro</Text>
-                  </View>
-                  <Text style={styles.aboutSafeBody}>Locais públicos e horário de movimento em Piripiri.</Text>
+                <View style={styles.aboutHeader}>
+                  <Text accessibilityRole="header" style={styles.aboutTitle}>
+                    {`Sobre ${selectedItem.listing.modality === "trade" ? "a troca" : selectedItem.listing.modality === "donation" ? "a doação" : "a compra"}`}
+                  </Text>
                 </View>
-                {onReportListing ? (
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel="Denunciar anúncio"
-                    onPress={() => guardedReportListing(selectedItem.listing.id)}
-                    style={({ pressed, hovered }: { pressed: boolean; hovered?: boolean }) => [
-                      styles.aboutReportButton,
-                      hovered ? styles.aboutReportButtonHovered : null,
-                      pressed ? styles.rowPressed : null,
-                    ]}
-                  >
-                    <AppIcon name="flag" size={16} color={colors.error} />
-                    <Text style={styles.aboutReport}>Denunciar anúncio</Text>
-                  </Pressable>
-                ) : null}
+                <View style={styles.aboutBody}>
+                  {renderAboutBook(selectedItem)}
+                  <CombineAction requestId={selectedItem.requestId} sessionUserId={sessionUserId} onOpen={guardedOpenNegotiation} />
+                  <View style={styles.aboutSafe}>
+                    <View style={styles.aboutSafeHeader}>
+                      <View style={styles.aboutSafeIcon}>
+                        <AppIcon name="place" size={14} color={colors.nature.foliageDeep} />
+                      </View>
+                      <Text style={styles.aboutSafeTitle}>Encontro seguro</Text>
+                    </View>
+                    <Text style={styles.aboutSafeBody}>Locais públicos e horário de movimento em Piripiri.</Text>
+                  </View>
+                  {onReportListing ? (
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel="Denunciar anúncio"
+                      onPress={() => guardedReportListing(selectedItem.listing.id)}
+                      style={({ pressed, hovered }: { pressed: boolean; hovered?: boolean }) => [
+                        styles.aboutReportButton,
+                        hovered ? styles.aboutReportButtonHovered : null,
+                        pressed ? styles.rowPressed : null,
+                      ]}
+                    >
+                      <AppIcon name="flag" size={16} color={colors.error} />
+                      <Text style={styles.aboutReport}>Denunciar anúncio</Text>
+                    </Pressable>
+                  ) : null}
+                </View>
               </View>
             ) : null}
           </View>

@@ -47,13 +47,18 @@ export function SearchBookCard({
       ? { background: colors.badge.paused.background, text: colors.badge.paused.text, label: "Pausado" }
       : { background: colors.nature.sprout, text: colors.nature.foliageDeep, label: "Disponível" };
 
+  const wideColumnMaxWidth =
+    Platform.OS === "web"
+      ? (`calc((100% - ${(gridColumns - 1) * tokens.spacing[24]}px) / ${gridColumns})` as unknown as `${number}%`)
+      : webColumnWidth(gridColumns);
+
   return (
     <View
       style={[
         styles.card,
         wideWeb && styles.cardWide,
         wideWeb && isHovered && styles.cardWideHovered,
-        wideWeb && { maxWidth: webColumnWidth(gridColumns) },
+        wideWeb && { maxWidth: wideColumnMaxWidth },
       ]}
     >
       <Pressable
@@ -144,7 +149,7 @@ function createCardStyles(colors: ColorPalette) {
       backgroundColor: colors.m3.surfaceContainerLowest,
       borderRadius: tokens.radius.large,
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      borderColor: colors.book.paperEdge,
       paddingLeft: tokens.spacing[12],
       paddingRight: tokens.spacing[6],
       paddingVertical: tokens.spacing[12],
@@ -161,7 +166,8 @@ function createCardStyles(colors: ColorPalette) {
       minWidth: 0,
       flexDirection: "column",
       alignItems: "stretch",
-      padding: tokens.spacing[12],
+      backgroundColor: colors.surface,
+      padding: tokens.spacing[14],
       marginHorizontal: 0,
       marginBottom: tokens.spacing[20],
       position: "relative",
@@ -229,7 +235,8 @@ function createCardStyles(colors: ColorPalette) {
     },
     categoryBadge: {
       ...tokens.typography.captionSmall,
-      color: colors.m3.onSurfaceVariant,
+      color: colors.brandBrown,
+      fontWeight: tokens.fontWeight.medium,
       paddingTop: 2,
     },
     cardMetaRow: {
@@ -255,9 +262,9 @@ function createCardStyles(colors: ColorPalette) {
       justifyContent: "space-between",
       flexWrap: "nowrap",
       gap: tokens.spacing[6],
-      paddingTop: tokens.spacing[6],
+      paddingTop: tokens.spacing[8],
       borderTopWidth: StyleSheet.hairlineWidth,
-      borderTopColor: colors.m3.outlineVariant,
+      borderTopColor: colors.book.paperEdge,
     },
     cardLocationBadge: {
       flexDirection: "row",

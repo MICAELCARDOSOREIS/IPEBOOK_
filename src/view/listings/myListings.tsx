@@ -224,6 +224,7 @@ export function MyListings({
       tone: colors.badge.trade,
       selected: activeTab === "proposals",
       onPress: () => {
+        setModalityFilter("all");
         setActiveTab("proposals");
       },
     },
@@ -234,6 +235,7 @@ export function MyListings({
       tone: colors.badge.completed,
       selected: activeTab === "concluded",
       onPress: () => {
+        setModalityFilter("all");
         setActiveTab("concluded");
       },
     },
@@ -327,8 +329,8 @@ export function MyListings({
             {/* Filtros interativos por modalidade (cores canônicas da ADR 0104 / tokens.colors.badge) */}
             <View style={[styles.statsRow, wideWeb && styles.statsRowWide]}>
               {stats.map((stat) => {
-                const isSelected = modalityFilter === stat.key;
-                const isDimmed = modalityFilter !== "all" && !isSelected;
+                const isSelected = activeTab === "listings" && modalityFilter === stat.key;
+                const isDimmed = activeTab === "listings" && modalityFilter !== "all" && !isSelected;
                 const badgeTone = colors.badge[stat.key];
                 return (
                   <Pressable
@@ -351,7 +353,7 @@ export function MyListings({
                                 badgeTone.background === "#F5B718"
                                   ? colors.ipe.bloomDeep
                                   : badgeTone.background,
-                              backgroundColor: colors.m3.surfaceContainerLow,
+                              backgroundColor: colors.surface,
                               ...styles.statCardSelected,
                             }
                           : {
@@ -365,19 +367,38 @@ export function MyListings({
                   >
                     {wideWeb ? (
                       <>
-                        <View style={[styles.statIconBadge, { backgroundColor: badgeTone.background }]}>
-                          <AppIcon name={stat.icon} size={18} color={badgeTone.text} />
+                        <View
+                          style={[
+                            styles.statIconBadge,
+                            { backgroundColor: badgeTone.background },
+                          ]}
+                        >
+                          <AppIcon name={stat.icon} size={22} color={badgeTone.text} />
                         </View>
                         <View style={styles.statTextGroup}>
-                          <View style={styles.statContentRow}>
-                            <Text style={styles.statCount}>{stat.count}</Text>
-                            {isSelected ? (
-                              <View style={[styles.statCheckBadge, { backgroundColor: badgeTone.background }]}>
-                                <AppIcon name="check" size={12} color={badgeTone.text} />
-                              </View>
-                            ) : null}
-                          </View>
+                          <Text style={styles.statCount}>{stat.count}</Text>
                           <Text style={styles.statLabel}>{stat.label}</Text>
+                        </View>
+                        <View
+                          style={[
+                            styles.statFilterPillWide,
+                            {
+                              backgroundColor: isSelected ? badgeTone.background : colors.surface,
+                              borderColor: isSelected ? badgeTone.background : colors.book.paperEdge,
+                            },
+                          ]}
+                        >
+                          {isSelected ? (
+                            <AppIcon name="check" size={14} color={badgeTone.text} />
+                          ) : null}
+                          <Text
+                            style={[
+                              styles.statFilterPillTextWide,
+                              { color: isSelected ? badgeTone.text : colors.m3.onSurfaceVariant },
+                            ]}
+                          >
+                            {isSelected ? "Filtrado" : "Filtrar"}
+                          </Text>
                         </View>
                       </>
                     ) : (
@@ -498,11 +519,23 @@ export function MyListings({
                 <Text style={[styles.sectionTitle, styles.concludedSectionTitle]}>Concluídos</Text>
                 {wideWeb ? (
                   <View style={styles.tableHeader}>
-                    <Text style={[styles.tableHeaderText, { flex: 3, minWidth: 220 }]}>Livro</Text>
-                    <Text style={[styles.tableHeaderText, { flex: 1.5, minWidth: 120 }]}>Modalidade</Text>
-                    <Text style={[styles.tableHeaderText, { flex: 1.5, minWidth: 120 }]}>Histórico</Text>
-                    <Text style={[styles.tableHeaderText, { flex: 1.2, minWidth: 100 }]}>Situação</Text>
-                    <Text style={[styles.tableHeaderText, { width: 148, textAlign: "right" }]}>Ação</Text>
+                    <View style={styles.tableHeaderMain}>
+                      <View style={{ flex: 3, minWidth: 220 }}>
+                        <Text style={styles.tableHeaderText}>Livro</Text>
+                      </View>
+                      <View style={{ flex: 1.5, minWidth: 120 }}>
+                        <Text style={styles.tableHeaderText}>Modalidade</Text>
+                      </View>
+                      <View style={{ flex: 1.5, minWidth: 120 }}>
+                        <Text style={styles.tableHeaderText}>Histórico</Text>
+                      </View>
+                      <View style={{ flex: 1.2, minWidth: 100 }}>
+                        <Text style={styles.tableHeaderText}>Situação</Text>
+                      </View>
+                    </View>
+                    <View style={{ width: 148, alignItems: "flex-end" }}>
+                      <Text style={styles.tableHeaderText}>Ação</Text>
+                    </View>
                   </View>
                 ) : null}
                 {concludedProposals.map((item) => (

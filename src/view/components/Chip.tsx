@@ -82,7 +82,7 @@ function createStyles(colors: ColorPalette) {
       ...(Platform.OS === "web" ? ({ cursor: "pointer", userSelect: "none" } as never) : {}),
     },
     // Figma `02.01`/`02.02`: 32 dp nas fileiras rápidas; `02.03`/`04.05`: 40 dp nos grupos de escolha.
-    chipCompact: { height: tokens.spacing[32], paddingHorizontal: tokens.spacing[16] },
+    chipCompact: { height: tokens.spacing[32], paddingHorizontal: tokens.spacing[12] },
     chipRegular: { height: tokens.spacing[40], paddingHorizontal: tokens.spacing[20] },
     selected: {
       backgroundColor: colors.nature.foliage,
@@ -93,7 +93,7 @@ function createStyles(colors: ColorPalette) {
       borderRadius: tokens.shapeMorph.chipSelected,
     },
     unselected: { borderWidth: 1, borderColor: colors.m3.outline },
-    withDot: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[8] },
+    withDot: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[6] },
     dot: { width: 10, height: 10, borderRadius: tokens.radius.dot, borderWidth: 1 },
     disabled: {
       opacity: 0.38,

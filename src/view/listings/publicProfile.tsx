@@ -415,7 +415,7 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
       borderRadius: tokens.radius.full,
       backgroundColor: colors.surface,
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      borderColor: colors.book.paperEdge,
     },
     socialHandle: {
       ...tokens.typography.footnote,
@@ -428,7 +428,7 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
       backgroundColor: colors.surface,
       borderRadius: tokens.radius.card,
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      borderColor: colors.book.paperEdge,
       padding: tokens.spacing[14],
       flexDirection: "row",
       alignItems: "center",
@@ -461,7 +461,7 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
     cardLeadingBoxCalendar: {
       backgroundColor: colors.book.pageCard,
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      borderColor: colors.book.paperEdge,
     },
     ratingNumberRow: {
       flexDirection: "row",
@@ -546,7 +546,7 @@ function createStyles(colors: ColorPalette, wideWeb: boolean) {
       gap: tokens.spacing[8],
       borderRadius: tokens.radius.full,
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      borderColor: colors.book.paperEdge,
       backgroundColor: "transparent",
       paddingHorizontal: tokens.spacing[24],
     },

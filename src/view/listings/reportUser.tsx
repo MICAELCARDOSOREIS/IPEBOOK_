@@ -166,7 +166,7 @@ function createStyles(colors: ColorPalette) {
     content: { width: "100%", maxWidth: 560, alignSelf: "center", gap: tokens.spacing[16] },
     contentWide: { maxWidth: WEB_MAX_WIDTH, alignSelf: "center", paddingHorizontal: WEB_GUTTER },
     columns: { gap: tokens.spacing[16] },
-    columnsWide: { flexDirection: "row", alignItems: "flex-start", gap: tokens.spacing[24] },
+    columnsWide: { flexDirection: "row", alignItems: "flex-start", gap: tokens.spacing[32] },
     column: { gap: tokens.spacing[16] },
     columnHalf: { flex: 1 },
     centered: { flex: 1, alignItems: "center", justifyContent: "center", gap: tokens.spacing[12], padding: tokens.spacing[24] },

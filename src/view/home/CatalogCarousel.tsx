@@ -107,7 +107,7 @@ export function CatalogCarousel({
             />
           </View>
         </View>
-        <View style={styles.carouselCardMeta}>
+        <View style={[styles.carouselCardMeta, wide && styles.carouselCardMetaWide]}>
           <View style={styles.carouselCardTopGroup}>
             <View style={styles.carouselCardModalityRow}>
               <View style={styles.carouselCardPillsGroup}>
@@ -316,24 +316,28 @@ export function HomeShortcutsSection({
           accessibilityRole="button"
           accessibilityLabel={`Doações da semana: ${donationSummary}`}
           onPress={() => onNavigateToSearch({ modality: "donation" })}
-          style={withPress([styles.shortcut, { backgroundColor: colors.badge.donation.background }])}
+          style={withPress(styles.shortcut)}
         >
-          <AppIcon name="bookmark" size={24} color={colors.badge.donation.text} />
+          <View style={[styles.shortcutIconBadge, { backgroundColor: colors.badge.donation.background }]}>
+            <AppIcon name="bookmark" size={24} color={colors.badge.donation.text} />
+          </View>
           <View style={styles.shortcutText}>
-            <Text style={[styles.shortcutTitle, { color: colors.badge.donation.text }]}>Doações da semana</Text>
-            <Text style={[styles.shortcutBody, { color: colors.badge.donation.text }]}>{donationSummary}</Text>
+            <Text style={styles.shortcutTitle}>Doações da semana</Text>
+            <Text style={styles.shortcutBody}>{donationSummary}</Text>
           </View>
         </Pressable>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Troque o que já leu"
           onPress={() => onNavigateToSearch({ modality: "trade" })}
-          style={withPress([styles.shortcut, { backgroundColor: colors.badge.trade.background }])}
+          style={withPress(styles.shortcut)}
         >
-          <AppIcon name="swap" size={24} color={colors.badge.trade.text} />
+          <View style={[styles.shortcutIconBadge, { backgroundColor: colors.badge.trade.background }]}>
+            <AppIcon name="swap" size={24} color={colors.badge.trade.text} />
+          </View>
           <View style={styles.shortcutText}>
-            <Text style={[styles.shortcutTitle, { color: colors.badge.trade.text }]}>Troque o que já leu</Text>
-            <Text style={[styles.shortcutBody, { color: colors.badge.trade.text }]}>
+            <Text style={styles.shortcutTitle}>Troque o que já leu</Text>
+            <Text style={styles.shortcutBody}>
               Proponha uma troca direto pelo chat, sem intermediários.
             </Text>
           </View>
@@ -343,12 +347,14 @@ export function HomeShortcutsSection({
           accessibilityLabel="Encontro seguro: Locais públicos sugeridos e avaliação depois de cada troca"
           disabled={!onNavigateToHelp}
           onPress={() => onNavigateToHelp?.()}
-          style={withPress([styles.shortcut, { backgroundColor: colors.badge.sale.background }])}
+          style={withPress(styles.shortcut)}
         >
-          <AppIcon name="checkCircle" size={24} color={colors.badge.sale.text} />
+          <View style={[styles.shortcutIconBadge, { backgroundColor: colors.badge.sale.background }]}>
+            <AppIcon name="checkCircle" size={24} color={colors.badge.sale.text} />
+          </View>
           <View style={styles.shortcutText}>
-            <Text style={[styles.shortcutTitle, { color: colors.badge.sale.text }]}>Encontro seguro</Text>
-            <Text style={[styles.shortcutBody, { color: colors.badge.sale.text }]}>
+            <Text style={styles.shortcutTitle}>Encontro seguro</Text>
+            <Text style={styles.shortcutBody}>
               Locais públicos sugeridos e avaliação depois de cada troca.
             </Text>
           </View>
@@ -530,31 +536,69 @@ function createStyles(colors: ColorPalette) {
     donationBannerChevronBox: { width: tokens.spacing[28], height: tokens.spacing[28], borderRadius: tokens.radius.full, alignItems: "center", justifyContent: "center", },
     donationBannerChevronBoxHovered: { transform: [{ translateX: 2 }], },
     carouselSection: { marginBottom: tokens.spacing[24] },
-    carouselHeader: { position: "relative", flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: tokens.spacing[12], },
+    carouselHeader: { position: "relative", flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: tokens.spacing[16], },
     carouselTitleGroup: { flex: 1, flexDirection: "row", alignItems: "center", gap: tokens.spacing[8], marginRight: tokens.spacing[8], },
-    carouselTitle: { flexShrink: 1, ...tokens.typography.titleBar, color: colors.m3.onSurface, },
+    carouselTitle: { flexShrink: 1, ...tokens.typography.brandTitle, color: colors.brandBrown, },
     carouselBadge: {
       paddingHorizontal: tokens.spacing[8],
       paddingVertical: 2,
       borderRadius: tokens.radius.full,
       backgroundColor: colors.m3.surfaceContainerLow,
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      borderColor: colors.book.paperEdge,
       alignSelf: "center",
     },
     carouselBadgeText: { ...tokens.typography.labelSmall, fontSize: 12, fontWeight: tokens.fontWeight.medium, color: colors.m3.onSurfaceVariant, },
-    viewMoreButton: { flexShrink: 0, flexDirection: "row", alignItems: "center", gap: 2, minHeight: tokens.accessibility.touchTarget, justifyContent: "center", },
+    viewMoreButton: {
+      flexShrink: 0,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[4],
+      minHeight: 38,
+      paddingHorizontal: tokens.spacing[14],
+      paddingVertical: tokens.spacing[6],
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderWidth: 1,
+      borderColor: colors.book.paperEdge,
+      justifyContent: "center",
+    },
     viewMoreText: { ...tokens.typography.labelLarge, color: colors.m3.primary, },
     carouselRow: { position: "relative", marginHorizontal: -tokens.spacing[16], },
     shortcuts: { flexDirection: "row", gap: tokens.spacing[24] },
-    shortcut: { flex: 1, flexDirection: "row", gap: tokens.spacing[16], padding: tokens.spacing[24], borderRadius: tokens.radius.large },
+    shortcut: {
+      flex: 1,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[16],
+      padding: tokens.spacing[20],
+      borderRadius: tokens.radius.xl,
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderWidth: 1,
+      borderColor: colors.book.paperEdge,
+    },
+    shortcutIconBadge: {
+      width: 48,
+      height: 48,
+      borderRadius: tokens.radius.medium,
+      alignItems: "center",
+      justifyContent: "center",
+      flexShrink: 0,
+    },
     shortcutText: { flex: 1, gap: tokens.spacing[4] },
-    shortcutTitle: { ...tokens.typography.titleBlock },
-    shortcutBody: { ...tokens.typography.bodyMedium },
+    shortcutTitle: { ...tokens.typography.brandCardTitle, color: colors.brandBrown },
+    shortcutBody: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
     carouselGrid: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing[24], alignItems: "stretch", width: "100%" },
     carouselGridCell: { flexGrow: 1, flexBasis: 220, minWidth: 180, maxWidth: 320, flexDirection: "column" },
-    carouselCardCoverAreaWide: { paddingVertical: tokens.spacing[12] },
-    carouselCardWide: { flex: 1, width: "100%", borderRadius: tokens.radius.xl, backgroundColor: colors.m3.surfaceContainerLowest },
+    carouselCardCoverAreaWide: { paddingVertical: tokens.spacing[16], borderRadius: tokens.radius.card },
+    carouselCardWide: {
+      flex: 1,
+      width: "100%",
+      padding: tokens.spacing[14],
+      gap: tokens.spacing[12],
+      borderRadius: tokens.radius.xl,
+      backgroundColor: colors.surface,
+    },
     carouselList: { flexGrow: 0 },
     carouselListContent: { paddingHorizontal: tokens.spacing[16], gap: CAROUSEL_ITEM_GAP, alignItems: "stretch", },
     carouselNavButton: {
@@ -577,7 +621,7 @@ function createStyles(colors: ColorPalette) {
       borderRadius: tokens.radius.large,
       overflow: "hidden",
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      borderColor: colors.book.paperEdge,
       elevation: 2,
       shadowColor: colors.ipe.trunk,
       shadowOffset: { width: 0, height: 2 },
@@ -602,9 +646,14 @@ function createStyles(colors: ColorPalette) {
       paddingTop: tokens.spacing[12],
       paddingBottom: tokens.spacing[10],
       gap: tokens.spacing[8],
-      backgroundColor: colors.m3.surfaceContainerLowest,
+      backgroundColor: "transparent",
       borderBottomLeftRadius: tokens.radius.large,
       borderBottomRightRadius: tokens.radius.large,
+    },
+    carouselCardMetaWide: {
+      paddingHorizontal: tokens.spacing[2],
+      paddingTop: tokens.spacing[2],
+      paddingBottom: tokens.spacing[2],
     },
     carouselCardTopGroup: { gap: tokens.spacing[8], },
     carouselCardTitleBlock: { gap: 3, },
@@ -627,15 +676,15 @@ function createStyles(colors: ColorPalette) {
       marginTop: "auto",
       paddingTop: tokens.spacing[8],
       borderTopWidth: StyleSheet.hairlineWidth,
-      borderTopColor: colors.m3.outlineVariant,
+      borderTopColor: colors.book.paperEdge,
     },
     carouselCardLocationRow: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[4], flexShrink: 1, },
     carouselCardNeighborhood: { ...tokens.typography.labelSmall, fontSize: 12, lineHeight: 16, fontFamily: fontFamily.medium, color: colors.m3.onSurfaceVariant, flexShrink: 1, },
     booksGridContainer: { flexDirection: "column", gap: tokens.spacing[14], },
     booksGridRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "stretch", },
-    booksGridContainerWide: { flexDirection: "row", flexWrap: "wrap", alignItems: "stretch", gap: tokens.spacing[16], },
+    booksGridContainerWide: { flexDirection: "row", flexWrap: "wrap", alignItems: "stretch", gap: tokens.spacing[24], },
     booksGridCell: { width: "48.2%", flexDirection: "column", alignSelf: "stretch", },
-    booksGridCellWide: { flexGrow: 1, flexBasis: 240, minWidth: 200, maxWidth: 440, flexDirection: "column", },
+    booksGridCellWide: { flex: 1, flexBasis: 240, minWidth: 200, flexDirection: "column", },
     viewMoreBottomButton: {
       width: "100%",
       flexDirection: "row",

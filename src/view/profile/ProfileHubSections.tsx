@@ -184,7 +184,7 @@ export function ProfileCommunityBadges({
 
   return (
     <View style={[styles.badgesSection, wideWeb && styles.badgesSectionWide]} testID="profile-badges-section">
-      <View style={styles.sectionHeaderRow}>
+      <View style={styles.badgesHeaderRow}>
         <View style={styles.sectionBloom} />
         <Text accessibilityRole="header" style={styles.sectionHeader}>Selos Comunitários de Piripiri</Text>
       </View>
@@ -256,46 +256,48 @@ export function ProfileMenuSection({
 
   return (
     <View style={[styles.section, wideWeb && styles.sectionWide]}>
-      <View style={styles.sectionHeaderRow}>
-        <View style={styles.sectionBloom} />
-        <Text style={styles.sectionHeader}>{title}</Text>
-      </View>
-      <View style={styles.cardGroup}>
-        {items.map((item, index) => (
-          <View key={item.key}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={item.label}
-              accessibilityHint={item.description}
-              onPress={item.onPress}
-              style={({ pressed }) => [styles.menuRow, pressed && styles.menuRowPressed]}
-            >
-              <View style={styles.menuIconContainer}>
-                <AppIcon name={item.icon} size={20} color={item.iconColor ?? defaultIconColor ?? colors.m3.onSurface} />
-              </View>
-              <View style={styles.menuRowText}>
-                <Text style={styles.menuRowTitle}>{item.label}</Text>
-                {item.description ? (
-                  <Text style={styles.menuRowDescription}>{item.description}</Text>
-                ) : null}
-              </View>
-              {item.badgeCount && item.badgeCount > 0 ? (
-                <View style={styles.menuBadge}>
-                  <Text style={styles.menuBadgeText}>
-                    {item.badgeCount > 9 ? "9+" : item.badgeCount}
-                  </Text>
+      <View style={[styles.cardGroup, wideWeb && styles.cardGroupWide]}>
+        <View style={styles.sectionHeaderRow}>
+          <View style={styles.sectionBloom} />
+          <Text style={styles.sectionHeader}>{title}</Text>
+        </View>
+        <View style={styles.menuItemsList}>
+          {items.map((item, index) => (
+            <View key={item.key}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={item.label}
+                accessibilityHint={item.description}
+                onPress={item.onPress}
+                style={({ pressed }) => [styles.menuRow, pressed && styles.menuRowPressed]}
+              >
+                <View style={styles.menuIconContainer}>
+                  <AppIcon name={item.icon} size={20} color={item.iconColor ?? defaultIconColor ?? colors.m3.onSurface} />
                 </View>
-              ) : null}
-              {item.showChevron ? (
-                <AppIcon name="chevronRight" size={20} color={colors.m3.onSurfaceVariant} />
-              ) : null}
-            </Pressable>
-            {index < items.length - 1 ? <View style={styles.menuDivider} /> : null}
-          </View>
-        ))}
+                <View style={styles.menuRowText}>
+                  <Text style={styles.menuRowTitle}>{item.label}</Text>
+                  {item.description ? (
+                    <Text style={styles.menuRowDescription}>{item.description}</Text>
+                  ) : null}
+                </View>
+                {item.badgeCount && item.badgeCount > 0 ? (
+                  <View style={styles.menuBadge}>
+                    <Text style={styles.menuBadgeText}>
+                      {item.badgeCount > 9 ? "9+" : item.badgeCount}
+                    </Text>
+                  </View>
+                ) : null}
+                {item.showChevron ? (
+                  <AppIcon name="chevronRight" size={20} color={colors.m3.onSurfaceVariant} />
+                ) : null}
+              </Pressable>
+              {index < items.length - 1 ? <View style={styles.menuDivider} /> : null}
+            </View>
+          ))}
+        </View>
 
         {onSignOut ? (
-          <>
+          <View style={styles.signOutContainer}>
             <View style={styles.menuDivider} />
             <Pressable
               accessibilityRole="button"
@@ -310,7 +312,7 @@ export function ProfileMenuSection({
                 <Text style={[styles.menuRowTitle, styles.signOutText]}>Sair da conta</Text>
               </View>
             </Pressable>
-          </>
+          </View>
         ) : null}
       </View>
     </View>
@@ -323,21 +325,26 @@ function createStyles(colors: ColorPalette) {
       width: "100%",
       position: "relative",
       overflow: "hidden",
-      gap: tokens.spacing[8],
+      gap: tokens.spacing[16],
       borderRadius: tokens.radius.xl,
       backgroundColor: colors.m3.surfaceContainerLow,
       borderWidth: 1,
       borderColor: colors.book.paperEdge,
-      padding: tokens.spacing[16],
+      padding: tokens.spacing[20],
       shadowColor: colors.ipe.trunk,
       shadowOffset: { width: 0, height: 3 },
       shadowOpacity: 0.08,
       shadowRadius: 10,
       elevation: 2,
     },
-    heroBlockWide: { width: "100%" },
+    heroBlockWide: {
+      width: "100%",
+      flex: 1,
+      padding: tokens.spacing[24],
+      justifyContent: "space-between",
+    },
     badgesSectionWide: { width: "100%", marginTop: 0 },
-    sectionWide: { flex: 1, minWidth: 260 },
+    sectionWide: { flex: 1, minWidth: 300 },
     identityRow: {
       minHeight: 100,
       flexDirection: "row",
@@ -345,13 +352,11 @@ function createStyles(colors: ColorPalette) {
       justifyContent: "space-between",
       gap: tokens.spacing[16],
     },
-    identityText: { flex: 1, minWidth: 0, gap: tokens.spacing[4] },
+    identityText: { flex: 1, minWidth: 0, gap: tokens.spacing[6] },
     identityMetaRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      flexWrap: "wrap",
-      columnGap: tokens.spacing[12],
-      rowGap: tokens.spacing[4],
+      flexDirection: "column",
+      alignItems: "flex-start",
+      gap: tokens.spacing[6],
     },
     profileName: {
       color: colors.brandBrown,
@@ -373,13 +378,13 @@ function createStyles(colors: ColorPalette) {
     },
     identityHandleMuted: {
       ...tokens.typography.bodyMedium,
-      color: colors.m3.onSurfaceVariant,
+      color: colors.m3.primary,
+      fontWeight: tokens.fontWeight.medium,
     },
     locationRow: {
       flexDirection: "row",
       alignItems: "center",
       gap: tokens.spacing[4],
-      marginTop: tokens.spacing[2],
     },
     locationText: {
       ...tokens.typography.bodyMedium,
@@ -479,8 +484,12 @@ function createStyles(colors: ColorPalette) {
       flexDirection: "row",
       alignItems: "center",
       minHeight: 84,
-      marginTop: 0,
-      paddingVertical: tokens.spacing[4],
+      paddingVertical: tokens.spacing[12],
+      paddingHorizontal: tokens.spacing[8],
+      borderRadius: tokens.radius.card,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.book.paperEdge,
     },
     statBox: {
       flex: 1,
@@ -538,13 +547,23 @@ function createStyles(colors: ColorPalette) {
     section: {
       gap: tokens.spacing[4],
     },
-    sectionHeaderRow: {
+    badgesHeaderRow: {
       flexDirection: "row",
       alignItems: "center",
       gap: tokens.spacing[8],
       paddingHorizontal: tokens.spacing[4],
       marginTop: tokens.spacing[4],
       marginBottom: tokens.spacing[4],
+    },
+    sectionHeaderRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[8],
+      paddingHorizontal: tokens.spacing[20],
+      paddingTop: tokens.spacing[18],
+      paddingBottom: tokens.spacing[12],
+      borderBottomWidth: 1,
+      borderBottomColor: colors.book.paperEdge,
     },
     sectionBloom: {
       width: 4,
@@ -561,7 +580,7 @@ function createStyles(colors: ColorPalette) {
     },
     cardGroup: {
       backgroundColor: colors.m3.surfaceContainerLow,
-      borderRadius: tokens.radius.card,
+      borderRadius: tokens.radius.xl,
       borderWidth: 1,
       borderColor: colors.book.paperEdge,
       overflow: "hidden",
@@ -571,18 +590,27 @@ function createStyles(colors: ColorPalette) {
       shadowOpacity: 0.05,
       shadowRadius: 6,
     },
+    cardGroupWide: {
+      flex: 1,
+    },
+    menuItemsList: {
+      flexGrow: 0,
+    },
+    signOutContainer: {
+      marginTop: "auto",
+    },
     menuDivider: {
       height: 1,
       backgroundColor: colors.m3.outlineVariant,
       opacity: 0.35,
-      marginLeft: 72,
+      marginLeft: 76,
     },
     menuRow: {
       flexDirection: "row",
       alignItems: "center",
       gap: tokens.spacing[16],
-      paddingVertical: tokens.spacing[12],
-      paddingHorizontal: tokens.spacing[16],
+      paddingVertical: tokens.spacing[14],
+      paddingHorizontal: tokens.spacing[20],
       minHeight: tokens.accessibility.touchTarget,
     },
     menuRowPressed: {
