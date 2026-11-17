@@ -1,5 +1,4 @@
 
-import { describe, expect, it } from "vitest";
 import { render, within } from "@testing-library/react-native";
 import { StepProgress } from "@/view/components/StepProgress";
 

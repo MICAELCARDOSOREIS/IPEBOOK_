@@ -1,6 +1,5 @@
 
 import { render } from "@testing-library/react-native";
-import { describe, expect, it } from "vitest";
 import { Tag } from "@/view/components/Tag";
 
 describe("Tag (Design System - ISO/IEC 25010 Usabilidade e Acessibilidade)", () => {

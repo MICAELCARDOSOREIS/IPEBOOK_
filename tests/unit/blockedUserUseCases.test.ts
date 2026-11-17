@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import { BlockedUserUseCases } from "@/usecase/blockedUserUseCases";
 import { MemoryBlockedUserDataSource } from "@/infra/datasources/memoryBlockedUserDataSource";
 import { AuthError, ValidationError } from "@/model/errors";

@@ -1,23 +1,22 @@
 
 import { act, fireEvent, render } from "@testing-library/react-native";
 import { AccessibilityInfo, StyleSheet } from "react-native";
-import { describe, expect, it, vi } from "vitest";
 import DeleteAccount from "@/view/auth/deleteAccount";
 import DeleteAccountScreen from "@/view/auth/deleteAccountScreen";
 import { colors } from "@/view/tokens";
 
-vi.mock("expo-file-system/legacy", () => ({
+jest.mock("expo-file-system/legacy", () => ({
   documentDirectory: "file:///dados/",
-  writeAsStringAsync: vi.fn().mockResolvedValue(undefined),
+  writeAsStringAsync: jest.fn().mockResolvedValue(undefined),
 }));
-vi.mock("expo-sharing", () => ({
-  isAvailableAsync: vi.fn().mockResolvedValue(true),
-  shareAsync: vi.fn().mockResolvedValue(undefined),
+jest.mock("expo-sharing", () => ({
+  isAvailableAsync: jest.fn().mockResolvedValue(true),
+  shareAsync: jest.fn().mockResolvedValue(undefined),
 }));
 
 describe("tela de exclusão de conta (DeleteAccount - LGPD)", () => {
   it("exibe aviso de sessão necessária quando o usuário não estiver autenticado", async () => {
-    const onLogin = vi.fn();
+    const onLogin = jest.fn();
     let screen!: Awaited<ReturnType<typeof render>>;
 
     await act(async () => {
@@ -106,7 +105,7 @@ describe("tela de exclusão de conta (DeleteAccount - LGPD)", () => {
   });
 
   it("aciona callback onBack na barra superior", async () => {
-    const onBack = vi.fn();
+    const onBack = jest.fn();
     let screen!: Awaited<ReturnType<typeof render>>;
 
     await act(async () => {
@@ -143,7 +142,7 @@ describe("tela de exclusão de conta (DeleteAccount - LGPD)", () => {
   });
 
   it("oferece o atalho de editar informações do perfil (Figma 07.07, Spec 032)", async () => {
-    const onEditProfile = vi.fn();
+    const onEditProfile = jest.fn();
     let screen!: Awaited<ReturnType<typeof render>>;
 
     await act(async () => {
@@ -169,7 +168,7 @@ describe("tela de exclusão de conta (DeleteAccount - LGPD)", () => {
   });
 
   it("anuncia e foca o erro ao tentar excluir sem marcar a confirmação (Spec 042 / Issue #147)", async () => {
-    const announceSpy = vi.spyOn(AccessibilityInfo, "announceForAccessibility");
+    const announceSpy = jest.spyOn(AccessibilityInfo, "announceForAccessibility");
     let screen!: Awaited<ReturnType<typeof render>>;
 
     await act(async () => {

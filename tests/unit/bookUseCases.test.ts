@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import { MemoryBookDataSource } from "@/infra/datasources/memoryBookDataSource";
 import type { IBookDataSource } from "@/model/datasources/iBookDataSource";
 import { AuthError, DataSourceError, ValidationError } from "@/model/errors";

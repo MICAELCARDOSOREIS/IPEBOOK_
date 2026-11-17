@@ -1,14 +1,13 @@
 
 import { act, fireEvent, render } from "@testing-library/react-native";
 import { Share } from "react-native";
-import { describe, expect, it, vi } from "vitest";
 import type { Book } from "@/model/entities/book";
 import { CreateListingSuccess } from "@/view/listings/createListingSuccess";
 import { MyListingsEmpty } from "@/view/listings/myListingsEmpty";
 
-vi.mock("expo-linking", () => ({
-  createURL: vi.fn((path: string) => `https://ipebook.app${path}`),
-  openURL: vi.fn().mockResolvedValue(undefined),
+jest.mock("expo-linking", () => ({
+  createURL: jest.fn((path: string) => `https://ipebook.app${path}`),
+  openURL: jest.fn().mockResolvedValue(undefined),
 }));
 
 const book = (over: Partial<Book> = {}): Book => ({ id: "b", title: "Dom Casmurro", author: "Machado", ownerId: "u", modality: "sale", status: "available", ...over });
@@ -25,8 +24,8 @@ describe("ramos simples de telas de anúncio (Spec 092)", () => {
 
   it("mostra o erro quando o compartilhamento no WhatsApp falha logo após publicar (Spec 118)", async () => {
     const linking = await import("expo-linking");
-    vi.mocked(linking.openURL).mockRejectedValueOnce(new Error("sem WhatsApp"));
-    const shareSpy = vi.spyOn(Share, "share").mockRejectedValueOnce(new Error("folha indisponível"));
+    jest.mocked(linking.openURL).mockRejectedValueOnce(new Error("sem WhatsApp"));
+    const shareSpy = jest.spyOn(Share, "share").mockRejectedValueOnce(new Error("folha indisponível"));
     const screen = await render(<CreateListingSuccess published={book()} />);
 
     await act(async () => {

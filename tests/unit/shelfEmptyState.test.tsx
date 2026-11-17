@@ -1,4 +1,3 @@
-import { describe, expect, it, vi } from "vitest";
 import { render, fireEvent } from "@testing-library/react-native";
 import {
   ShelfEmptyState,
@@ -26,7 +25,7 @@ describe("ShelfEmptyState e auxiliares", () => {
   });
 
   it("renderiza título, corpo e aciona botão de ver anúncios", async () => {
-    const onShow = vi.fn();
+    const onShow = jest.fn();
     const { getByText } = await render(
       <ShelfEmptyState
         icon="shelf"

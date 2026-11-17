@@ -1,13 +1,12 @@
 
 import { act, fireEvent, render } from "@testing-library/react-native";
-import { describe, expect, it, vi } from "vitest";
 import * as Linking from "expo-linking";
 import { AboutSections } from "@/view/onboarding/aboutSections";
 
 describe("AboutSections — página que apresenta o app (Spec 092)", () => {
   it("explica como funciona, a segurança e leva a Criar conta e Entrar", async () => {
-    const onStart = vi.fn();
-    const onSignIn = vi.fn();
+    const onStart = jest.fn();
+    const onSignIn = jest.fn();
     const screen = await render(<AboutSections onStart={onStart} onSignIn={onSignIn} />);
     expect(screen.getByText("Como funciona")).toBeDefined();
     expect(screen.getByText("Anuncie ou procure")).toBeDefined();
@@ -26,9 +25,9 @@ describe("AboutSections — página que apresenta o app (Spec 092)", () => {
     expect(without.queryByLabelText("Ajuda e perguntas frequentes")).toBeNull();
     expect(without.queryByLabelText("Termos e privacidade")).toBeNull();
 
-    const onHelp = vi.fn();
-    const onTerms = vi.fn();
-    const open = vi.spyOn(Linking, "openURL").mockResolvedValue(true as never);
+    const onHelp = jest.fn();
+    const onTerms = jest.fn();
+    const open = jest.spyOn(Linking, "openURL").mockResolvedValue(true as never);
     const full = await render(<AboutSections onStart={() => {}} onSignIn={() => {}} onHelp={onHelp} onTerms={onTerms} />);
     await act(async () => { fireEvent.press(full.getByLabelText("Ajuda e perguntas frequentes")); });
     await act(async () => { fireEvent.press(full.getByLabelText("Termos e privacidade")); });

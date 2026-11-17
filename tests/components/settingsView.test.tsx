@@ -1,6 +1,5 @@
 import type React from "react";
 import { act, cleanup, fireEvent, render } from "@testing-library/react-native";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as Linking from "expo-linking";
 import { Settings } from "@/view/profile/settings";
 import { ThemeProvider } from "@/view/theme/ThemeProvider";
@@ -11,14 +10,14 @@ import {
   useNotificationPreferencesViewModel,
 } from "@/viewmodel/useNotificationPreferencesViewModel";
 
-vi.mock("@/viewmodel/useSettingsViewModel", () => ({ useSettingsViewModel: vi.fn() }));
-vi.mock("@/viewmodel/useAuthViewModel", () => ({ useAuthViewModel: vi.fn() }));
-vi.mock("@/viewmodel/usePublicProfileViewModel", () => ({
-  usePublicProfileViewModel: () => [{ profile: { userId: "ana", name: "Ana Paula", joinedAt: "2026-01-10T00:00:00.000Z" }, loading: false, error: null }, { reload: vi.fn() }],
+jest.mock("@/viewmodel/useSettingsViewModel", () => ({ useSettingsViewModel: jest.fn() }));
+jest.mock("@/viewmodel/useAuthViewModel", () => ({ useAuthViewModel: jest.fn() }));
+jest.mock("@/viewmodel/usePublicProfileViewModel", () => ({
+  usePublicProfileViewModel: () => [{ profile: { userId: "ana", name: "Ana Paula", joinedAt: "2026-01-10T00:00:00.000Z" }, loading: false, error: null }, { reload: jest.fn() }],
 }));
 // Preferências de notificação (Spec 099) vêm do container; na tela testamos só a apresentação.
-vi.mock("@/viewmodel/useNotificationPreferencesViewModel", () => ({
-  useNotificationPreferencesViewModel: vi.fn(),
+jest.mock("@/viewmodel/useNotificationPreferencesViewModel", () => ({
+  useNotificationPreferencesViewModel: jest.fn(),
   NOTIFICATION_PREFERENCE_CATEGORIES: {
     proposals: { label: "Propostas e mensagens", description: "Alguém tem interesse num livro seu ou responde a um pedido", types: ["request_received", "request_accepted"] },
     meetings: { label: "Lembretes de encontro", description: "Convites e avisos sobre a entrega combinada", types: ["meeting_update"] },
@@ -27,21 +26,21 @@ vi.mock("@/viewmodel/useNotificationPreferencesViewModel", () => ({
   },
 }));
 
-const mockedUseSettingsViewModel = vi.mocked(useSettingsViewModel);
-const mockedUseAuthViewModel = vi.mocked(useAuthViewModel);
-const mockedNotifPrefs = vi.mocked(useNotificationPreferencesViewModel);
+const mockedUseSettingsViewModel = jest.mocked(useSettingsViewModel);
+const mockedUseAuthViewModel = jest.mocked(useAuthViewModel);
+const mockedNotifPrefs = jest.mocked(useNotificationPreferencesViewModel);
 
-function mockSettings(clearBooksCache = vi.fn().mockResolvedValue(undefined)) {
+function mockSettings(clearBooksCache = jest.fn().mockResolvedValue(undefined)) {
   mockedUseSettingsViewModel.mockReturnValue([
     { clearingCache: false, cacheCleared: false, cacheError: null, clearingHistory: false, historyCleared: false, historyError: null },
-    { clearBooksCache, clearSearchHistory: vi.fn().mockResolvedValue(undefined) },
+    { clearBooksCache, clearSearchHistory: jest.fn().mockResolvedValue(undefined) },
   ]);
   return { clearBooksCache };
 }
 
 /** Selo padrão das preferências de notificação: tudo ligado, sem erro (Spec 099). */
 function mockNotifPrefs(overrides: Partial<ReturnType<typeof useNotificationPreferencesViewModel>[0]> = {}) {
-  const setEnabled = vi.fn().mockResolvedValue(undefined);
+  const setEnabled = jest.fn().mockResolvedValue(undefined);
   mockedNotifPrefs.mockReturnValue([
     {
       enabled: { proposals: true, meetings: true, searchAlerts: true, system: true },
@@ -55,7 +54,7 @@ function mockNotifPrefs(overrides: Partial<ReturnType<typeof useNotificationPref
 }
 
 /** Configurações mostra gestão de conta apenas com sessão (ADR 0060). */
-function mockSession(signedIn: boolean, signOut = vi.fn().mockResolvedValue(true)) {
+function mockSession(signedIn: boolean, signOut = jest.fn().mockResolvedValue(true)) {
   mockedUseAuthViewModel.mockReturnValue([
     {
       user: signedIn ? { id: "ana", email: "ana@exemplo.com" } : null,
@@ -63,10 +62,10 @@ function mockSession(signedIn: boolean, signOut = vi.fn().mockResolvedValue(true
       error: null,
     },
     {
-      signUp: vi.fn(),
-      signIn: vi.fn(),
+      signUp: jest.fn(),
+      signIn: jest.fn(),
       signOut,
-      requestPasswordReset: vi.fn(),
+      requestPasswordReset: jest.fn(),
     },
   ]);
   return { signOut };
@@ -75,7 +74,7 @@ function mockSession(signedIn: boolean, signOut = vi.fn().mockResolvedValue(true
 describe("Configurações — tela dedicada (Spec 073, ADR 0036)", () => {
   afterEach(() => {
     cleanup();
-    vi.clearAllMocks();
+    jest.clearAllMocks();
   });
 
   // Toda tela com sessão mostra as chaves de notificação; o valor padrão deixa tudo ligado.
@@ -84,7 +83,7 @@ describe("Configurações — tela dedicada (Spec 073, ADR 0036)", () => {
   });
 
   async function renderSettings(props: Partial<React.ComponentProps<typeof Settings>> = {}) {
-    const onBack = vi.fn();
+    const onBack = jest.fn();
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
       screen = await render(
@@ -178,7 +177,7 @@ describe("Configurações — tela dedicada (Spec 073, ADR 0036)", () => {
     mockSession(true);
     mockedUseSettingsViewModel.mockReturnValue([
       { clearingCache: false, cacheCleared: true, cacheError: null, clearingHistory: false, historyCleared: false, historyError: null },
-      { clearBooksCache: vi.fn(), clearSearchHistory: vi.fn() },
+      { clearBooksCache: jest.fn(), clearSearchHistory: jest.fn() },
     ]);
     const { screen } = await renderSettings();
 
@@ -197,7 +196,7 @@ describe("Configurações — tela dedicada (Spec 073, ADR 0036)", () => {
         historyCleared: false,
         historyError: null,
       },
-      { clearBooksCache: vi.fn(), clearSearchHistory: vi.fn() },
+      { clearBooksCache: jest.fn(), clearSearchHistory: jest.fn() },
     ]);
     const { screen } = await renderSettings();
 
@@ -209,7 +208,7 @@ describe("Configurações — tela dedicada (Spec 073, ADR 0036)", () => {
   it("mostra a versão do aplicativo e só exibe atalhos com navegação", async () => {
     mockSession(false);
     mockSettings();
-    const onNavigateToHelp = vi.fn();
+    const onNavigateToHelp = jest.fn();
     const { screen } = await renderSettings({ onNavigateToHelp });
 
     await expandSettingsSection(screen, "Sobre o IpêBook");
@@ -230,8 +229,8 @@ describe("Configurações — tela dedicada (Spec 073, ADR 0036)", () => {
   it("recebe Privacidade e dados e Pessoas bloqueadas quando há conta (ADR 0060)", async () => {
     mockSession(true);
     mockSettings();
-    const onNavigateToPrivacy = vi.fn();
-    const onNavigateToBlockedUsers = vi.fn();
+    const onNavigateToPrivacy = jest.fn();
+    const onNavigateToBlockedUsers = jest.fn();
     const { screen } = await renderSettings({ onNavigateToPrivacy, onNavigateToBlockedUsers });
 
     await expandSettingsSection(screen, "Conta e dados");
@@ -252,8 +251,8 @@ describe("Configurações — tela dedicada (Spec 073, ADR 0036)", () => {
   it("mostra o cartão da conta, o bairro padrão e sair da conta com confirmação (Spec 091)", async () => {
     mockSession(true);
     mockSettings();
-    const onNavigateToEditProfile = vi.fn();
-    const onSignedOut = vi.fn();
+    const onNavigateToEditProfile = jest.fn();
+    const onSignedOut = jest.fn();
     const { screen } = await renderSettings({ onNavigateToEditProfile, onSignedOut });
 
     expect(screen.getByText("Conta conectada")).toBeDefined();
@@ -274,9 +273,9 @@ describe("Configurações — tela dedicada (Spec 073, ADR 0036)", () => {
   });
 
   it("mantém o diálogo de saída aberto e avisa quando o logout falha", async () => {
-    mockSession(true, vi.fn().mockResolvedValue(false));
+    mockSession(true, jest.fn().mockResolvedValue(false));
     mockSettings();
-    const onSignedOut = vi.fn();
+    const onSignedOut = jest.fn();
     const { screen } = await renderSettings({ onSignedOut });
 
     await act(async () => { fireEvent.press(screen.getByText("Sair da conta")); });
@@ -301,10 +300,10 @@ describe("Configurações — tela dedicada (Spec 073, ADR 0036)", () => {
 
   it("pede confirmação antes de apagar o histórico de buscas (Spec 091)", async () => {
     mockSession(true);
-    const clearSearchHistory = vi.fn().mockResolvedValue(undefined);
+    const clearSearchHistory = jest.fn().mockResolvedValue(undefined);
     mockedUseSettingsViewModel.mockReturnValue([
       { clearingCache: false, cacheCleared: false, cacheError: null, clearingHistory: false, historyCleared: false, historyError: null },
-      { clearBooksCache: vi.fn(), clearSearchHistory },
+      { clearBooksCache: jest.fn(), clearSearchHistory },
     ]);
     const { screen } = await renderSettings();
     await expandSettingsSection(screen, "Armazenamento e histórico");
@@ -321,7 +320,7 @@ describe("Configurações — tela dedicada (Spec 073, ADR 0036)", () => {
   it("abre o e-mail do suporte com assunto e versão (Spec 091)", async () => {
     mockSession(false);
     mockSettings();
-    const open = vi.spyOn(Linking, "openURL").mockResolvedValue(true as never);
+    const open = jest.spyOn(Linking, "openURL").mockResolvedValue(true as never);
     const { screen } = await renderSettings();
     await expandSettingsSection(screen, "Sobre o IpêBook");
     expect(screen.getByText("ipebook738@gmail.com")).toBeDefined();
@@ -335,7 +334,7 @@ describe("Configurações — tela dedicada (Spec 073, ADR 0036)", () => {
   it("oferece 'Conhecer o IpêBook' que leva à página de apresentação (Spec 092)", async () => {
     mockSession(false);
     mockSettings();
-    const onNavigateToAbout = vi.fn();
+    const onNavigateToAbout = jest.fn();
     const { screen } = await renderSettings({ onNavigateToAbout });
     await expandSettingsSection(screen, "Sobre o IpêBook");
     await act(async () => { fireEvent.press(screen.getByLabelText("Conhecer o IpêBook")); });
@@ -345,7 +344,7 @@ describe("Configurações — tela dedicada (Spec 073, ADR 0036)", () => {
   it("oferece o Instagram do IpêBook com o ícone e abre o perfil (Spec 092)", async () => {
     mockSession(false);
     mockSettings();
-    const open = vi.spyOn(Linking, "openURL").mockResolvedValue(true as never);
+    const open = jest.spyOn(Linking, "openURL").mockResolvedValue(true as never);
     const { screen } = await renderSettings();
     await expandSettingsSection(screen, "Sobre o IpêBook");
     expect(screen.getByText("@ipebook")).toBeDefined();
@@ -391,10 +390,10 @@ describe("Configurações — tela dedicada (Spec 073, ADR 0036)", () => {
   it("navega pelos links de gestão da conta quando sessão ativa", async () => {
     mockSession(true);
     mockSettings();
-    const onNavigateToSecurity = vi.fn();
-    const onNavigateToNotifications = vi.fn();
-    const onNavigateToPrivacy = vi.fn();
-    const onNavigateToBlockedUsers = vi.fn();
+    const onNavigateToSecurity = jest.fn();
+    const onNavigateToNotifications = jest.fn();
+    const onNavigateToPrivacy = jest.fn();
+    const onNavigateToBlockedUsers = jest.fn();
 
     const { screen } = await renderSettings({
       onNavigateToSecurity,
@@ -421,8 +420,8 @@ describe("Configurações — tela dedicada (Spec 073, ADR 0036)", () => {
   it("navega para ajuda e termos na seção Sobre o IpêBook", async () => {
     mockSession(false);
     mockSettings();
-    const onNavigateToHelp = vi.fn();
-    const onNavigateToTerms = vi.fn();
+    const onNavigateToHelp = jest.fn();
+    const onNavigateToTerms = jest.fn();
 
     const { screen } = await renderSettings({
       onNavigateToHelp,
@@ -449,7 +448,7 @@ describe("Configurações — tela dedicada (Spec 073, ADR 0036)", () => {
         historyCleared: false,
         historyError: "Erro ao limpar o histórico de buscas",
       },
-      { clearBooksCache: vi.fn(), clearSearchHistory: vi.fn() },
+      { clearBooksCache: jest.fn(), clearSearchHistory: jest.fn() },
     ]);
 
     const { screen } = await renderSettings();

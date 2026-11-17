@@ -1,13 +1,13 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MemorySearchHistoryDataSource } from "@/infra/datasources/memorySearchHistoryDataSource";
 import { SearchHistoryUseCases } from "@/usecase/searchHistoryUseCases";
 
-const storage = new Map<string, string>();
-vi.mock("@react-native-async-storage/async-storage", () => ({
+const mockStorage = new Map<string, string>();
+jest.mock("@react-native-async-storage/async-storage", () => ({
+  __esModule: true,
   default: {
-    getItem: vi.fn(async (key: string) => storage.get(key) ?? null),
-    setItem: vi.fn(async (key: string, value: string) => { storage.set(key, value); }),
-    removeItem: vi.fn(async (key: string) => { storage.delete(key); }),
+    getItem: jest.fn(async (key: string) => mockStorage.get(key) ?? null),
+    setItem: jest.fn(async (key: string, value: string) => { mockStorage.set(key, value); }),
+    removeItem: jest.fn(async (key: string) => { mockStorage.delete(key); }),
   },
 }));
 
@@ -46,7 +46,7 @@ describe("caso de uso de histórico de buscas", () => {
 });
 
 describe("persistência em AsyncStorage do histórico de buscas", () => {
-  beforeEach(() => storage.clear());
+  beforeEach(() => mockStorage.clear());
 
   it("persiste, deduplica e limita por chave isolada de conta", async () => {
     const { AsyncStorageSearchHistoryDataSource } = await import("@/infra/datasources/asyncStorageSearchHistoryDataSource");
@@ -71,7 +71,7 @@ describe("persistência em AsyncStorage do histórico de buscas", () => {
 
   it("ignora conteúdo corrompido na chave de armazenamento", async () => {
     const { AsyncStorageSearchHistoryDataSource } = await import("@/infra/datasources/asyncStorageSearchHistoryDataSource");
-    storage.set("search-history:leitor", "{json invalido");
+    mockStorage.set("search-history:leitor", "{json invalido");
     const source = new AsyncStorageSearchHistoryDataSource();
     expect(await source.list("leitor")).toEqual([]);
   });

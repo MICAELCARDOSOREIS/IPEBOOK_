@@ -1,20 +1,19 @@
 
 import { act, cleanup, fireEvent, render, within } from "@testing-library/react-native";
-import { afterEach, describe, expect, it, vi } from "vitest";
 import { ScheduleMeeting } from "@/view/requests/scheduleMeeting";
 import { useScheduleMeetingViewModel, type ScheduleMeetingActions, type ScheduleMeetingState } from "@/viewmodel/useScheduleMeetingViewModel";
 
-vi.mock("@/view/useIsWideWeb", () => ({
+jest.mock("@/view/useIsWideWeb", () => ({
   useIsWideWeb: () => true,
   useHydratedWindowWidth: () => 1280,
   WIDE_WEB_MIN_WIDTH: 960,
 }));
 
-vi.mock("@/viewmodel/useScheduleMeetingViewModel");
+jest.mock("@/viewmodel/useScheduleMeetingViewModel");
 
 afterEach(async () => {
   await act(async () => cleanup());
-  vi.clearAllMocks();
+  jest.clearAllMocks();
 });
 
 const dias = [
@@ -25,16 +24,16 @@ const dias = [
 
 function mockSchedule(
   state: Partial<ScheduleMeetingState>,
-  submit = vi.fn().mockResolvedValue(true),
+  submit = jest.fn().mockResolvedValue(true),
 ) {
   const actions: ScheduleMeetingActions = {
-    reload: vi.fn(),
-    selectPoint: vi.fn(),
-    selectDay: vi.fn(),
-    selectHour: vi.fn(),
+    reload: jest.fn(),
+    selectPoint: jest.fn(),
+    selectDay: jest.fn(),
+    selectHour: jest.fn(),
     submit,
   };
-  vi.mocked(useScheduleMeetingViewModel).mockReturnValue([
+  jest.mocked(useScheduleMeetingViewModel).mockReturnValue([
     {
       mode: "propose",
       loading: false,
@@ -61,7 +60,7 @@ describe("ScheduleMeeting em Desktop Largo (Web, useIsWideWeb)", () => {
       dayIndex: 0,
       hour: 15,
     });
-    const onSent = vi.fn();
+    const onSent = jest.fn();
 
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
@@ -114,8 +113,8 @@ describe("ScheduleMeeting em Desktop Largo (Web, useIsWideWeb)", () => {
     await act(async () => {
       fireEvent.press(submitBtn);
     });
-    expect(actions.submit).toHaveBeenCalledOnce();
-    expect(onSent).toHaveBeenCalledOnce();
+    expect(actions.submit).toHaveBeenCalledTimes(1);
+    expect(onSent).toHaveBeenCalledTimes(1);
   });
 
   it("reagendamento no desktop: exibe manchete de reagendamento e botão de cancelar", async () => {
@@ -125,7 +124,7 @@ describe("ScheduleMeeting em Desktop Largo (Web, useIsWideWeb)", () => {
       dayIndex: 1,
       hour: 10,
     });
-    const onBack = vi.fn();
+    const onBack = jest.fn();
 
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
@@ -142,7 +141,7 @@ describe("ScheduleMeeting em Desktop Largo (Web, useIsWideWeb)", () => {
     await act(async () => {
       fireEvent.press(cancelBtn);
     });
-    expect(onBack).toHaveBeenCalledOnce();
+    expect(onBack).toHaveBeenCalledTimes(1);
   });
 
   it("exibe aviso específico quando o local fecha no dia escolhido (IFPI/Museu no fim de semana)", async () => {

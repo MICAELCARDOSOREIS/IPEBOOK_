@@ -1,6 +1,5 @@
 
 import { act, fireEvent, render } from "@testing-library/react-native";
-import { beforeEach, describe, expect, it, vi } from "vitest";
 import Notifications from "@/view/notifications/notifications";
 import NotificationsScreen from "@/view/notifications/notificationsScreen";
 
@@ -45,8 +44,8 @@ describe("Notifications Component (Spec 015)", () => {
     }
   });
   it("exibe aviso de sessão necessária quando o usuário não estiver autenticado", async () => {
-    const onLogin = vi.fn();
-    const onBack = vi.fn();
+    const onLogin = jest.fn();
+    const onBack = jest.fn();
     let screen!: Awaited<ReturnType<typeof render>>;
 
     await act(async () => {
@@ -76,8 +75,8 @@ describe("Notifications Component (Spec 015)", () => {
   });
 
   it("renderiza lista de notificações e abas de filtro para usuário autenticado", async () => {
-    const onBack = vi.fn();
-    const onAction = vi.fn();
+    const onBack = jest.fn();
+    const onAction = jest.fn();
     let screen!: Awaited<ReturnType<typeof render>>;
 
     await act(async () => {
@@ -157,7 +156,7 @@ describe("Notifications Component (Spec 015)", () => {
     let screen!: Awaited<ReturnType<typeof render>>;
 
     await act(async () => {
-      screen = await render(<Notifications sessionUserId="user-1" onBack={vi.fn()} />);
+      screen = await render(<Notifications sessionUserId="user-1" onBack={jest.fn()} />);
     });
 
     const periodos = ["Hoje", "Esta semana", "Antes"];
@@ -175,7 +174,7 @@ describe("Notifications Component (Spec 015)", () => {
     let screen!: Awaited<ReturnType<typeof render>>;
 
     await act(async () => {
-      screen = await render(<Notifications sessionUserId="user-1" onBack={vi.fn()} />);
+      screen = await render(<Notifications sessionUserId="user-1" onBack={jest.fn()} />);
     });
 
     const markReadBtn = screen.getByTestId("mark-read-notif-notif-001");
@@ -191,11 +190,11 @@ describe("Notifications Component (Spec 015)", () => {
 
   it("exibe alerta quando as permissões de notificação estiverem desativadas (Spec 111)", async () => {
     const { pushNotificationService } = await import("@/di/container");
-    vi.spyOn(pushNotificationService, "getPermissions").mockResolvedValueOnce(false);
+    jest.spyOn(pushNotificationService, "getPermissions").mockResolvedValueOnce(false);
     let screen!: Awaited<ReturnType<typeof render>>;
 
     await act(async () => {
-      screen = await render(<Notifications sessionUserId="user-1" onBack={vi.fn()} />);
+      screen = await render(<Notifications sessionUserId="user-1" onBack={jest.fn()} />);
     });
 
     expect(screen.getByRole("alert")).toBeDefined();
@@ -207,7 +206,7 @@ describe("Notifications Component (Spec 015)", () => {
     let screen!: Awaited<ReturnType<typeof render>>;
 
     await act(async () => {
-      screen = await render(<Notifications sessionUserId="user-1" onBack={vi.fn()} />);
+      screen = await render(<Notifications sessionUserId="user-1" onBack={jest.fn()} />);
     });
 
     const deleteBtn = screen.getByTestId("delete-notif-notif-001");
@@ -224,7 +223,7 @@ describe("Notifications Component (Spec 015)", () => {
     let screen!: Awaited<ReturnType<typeof render>>;
 
     await act(async () => {
-      screen = await render(<Notifications sessionUserId="user-1" onBack={vi.fn()} />);
+      screen = await render(<Notifications sessionUserId="user-1" onBack={jest.fn()} />);
     });
 
     // Limpar lidas

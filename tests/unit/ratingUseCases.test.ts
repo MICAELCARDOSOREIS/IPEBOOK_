@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import { RatingUseCases } from "@/usecase/ratingUseCases";
 import { MemoryRatingDataSource } from "@/infra/datasources/memoryRatingDataSource";
 import { MemoryProfileDataSource } from "@/infra/datasources/memoryProfileDataSource";

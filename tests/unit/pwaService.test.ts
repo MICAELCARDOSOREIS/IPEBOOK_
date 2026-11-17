@@ -1,26 +1,26 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Platform } from "react-native";
 import { PwaService } from "@/infra/services/pwaService";
 import type { ILogger } from "@/model/services/iLogger";
+import { stubGlobal, unstubAllGlobals } from "../helpers/stubGlobal";
 
 describe("PwaService (Spec 041, ADR 0035)", () => {
   const originalPlatform = Platform.OS;
 
   const mockLogger: ILogger = {
-    debug: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
+    debug: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
   };
 
   beforeEach(() => {
     Platform.OS = "web";
-    vi.clearAllMocks();
+    jest.clearAllMocks();
   });
 
   afterEach(() => {
     Platform.OS = originalPlatform;
-    vi.unstubAllGlobals();
+    unstubAllGlobals();
   });
 
   it("não reporta suporte quando a plataforma for nativa (Android ou iOS)", () => {
@@ -33,23 +33,23 @@ describe("PwaService (Spec 041, ADR 0035)", () => {
   });
 
   it("não reporta suporte se o navegador não disponibilizar serviceWorker", () => {
-    vi.stubGlobal("window", {
+    stubGlobal("window", {
       location: { protocol: "https:", hostname: "ipebook.org" },
     });
-    vi.stubGlobal("navigator", {});
+    stubGlobal("navigator", {});
 
     const service = new PwaService(mockLogger);
     expect(service.isSupported()).toBe(false);
   });
 
   it("não reporta suporte se o protocolo for inseguro (HTTP não-localhost)", () => {
-    vi.stubGlobal("window", {
+    stubGlobal("window", {
       location: { protocol: "http:", hostname: "meusite-inseguro.com" },
     });
-    vi.stubGlobal("navigator", {
+    stubGlobal("navigator", {
       serviceWorker: {
-        register: vi.fn(),
-        getRegistrations: vi.fn(),
+        register: jest.fn(),
+        getRegistrations: jest.fn(),
       },
     });
 
@@ -58,13 +58,13 @@ describe("PwaService (Spec 041, ADR 0035)", () => {
   });
 
   it("reporta suporte em contexto seguro HTTPS ou localhost", () => {
-    vi.stubGlobal("window", {
+    stubGlobal("window", {
       location: { protocol: "https:", hostname: "ipebook.pages.dev" },
     });
-    vi.stubGlobal("navigator", {
+    stubGlobal("navigator", {
       serviceWorker: {
-        register: vi.fn(),
-        getRegistrations: vi.fn(),
+        register: jest.fn(),
+        getRegistrations: jest.fn(),
       },
     });
 
@@ -72,13 +72,13 @@ describe("PwaService (Spec 041, ADR 0035)", () => {
     expect(service.isSupported()).toBe(true);
 
     // Também suporta localhost
-    vi.stubGlobal("window", {
+    stubGlobal("window", {
       location: { protocol: "http:", hostname: "localhost" },
     });
     expect(service.isSupported()).toBe(true);
 
     // Também suporta 127.0.0.1
-    vi.stubGlobal("window", {
+    stubGlobal("window", {
       location: { protocol: "http:", hostname: "127.0.0.1" },
     });
     expect(service.isSupported()).toBe(true);
@@ -93,14 +93,14 @@ describe("PwaService (Spec 041, ADR 0035)", () => {
   });
 
   it("registra o Service Worker com sucesso e loga informações", async () => {
-    const registerMock = vi.fn().mockResolvedValue({ scope: "https://ipebook.pages.dev/" });
-    vi.stubGlobal("window", {
+    const registerMock = jest.fn().mockResolvedValue({ scope: "https://ipebook.pages.dev/" });
+    stubGlobal("window", {
       location: { protocol: "https:", hostname: "ipebook.pages.dev" },
     });
-    vi.stubGlobal("navigator", {
+    stubGlobal("navigator", {
       serviceWorker: {
         register: registerMock,
-        getRegistrations: vi.fn(),
+        getRegistrations: jest.fn(),
       },
     });
 
@@ -121,14 +121,14 @@ describe("PwaService (Spec 041, ADR 0035)", () => {
   });
 
   it("trata erro de registro sem lançar exceção e loga aviso", async () => {
-    const registerMock = vi.fn().mockRejectedValue(new Error("Permissão negada"));
-    vi.stubGlobal("window", {
+    const registerMock = jest.fn().mockRejectedValue(new Error("Permissão negada"));
+    stubGlobal("window", {
       location: { protocol: "https:", hostname: "ipebook.pages.dev" },
     });
-    vi.stubGlobal("navigator", {
+    stubGlobal("navigator", {
       serviceWorker: {
         register: registerMock,
-        getRegistrations: vi.fn(),
+        getRegistrations: jest.fn(),
       },
     });
 
@@ -149,15 +149,15 @@ describe("PwaService (Spec 041, ADR 0035)", () => {
   });
 
   it("desregistra Service Workers ativos com sucesso", async () => {
-    const mockRegistration = { unregister: vi.fn().mockResolvedValue(true) };
-    const getRegistrationsMock = vi.fn().mockResolvedValue([mockRegistration]);
+    const mockRegistration = { unregister: jest.fn().mockResolvedValue(true) };
+    const getRegistrationsMock = jest.fn().mockResolvedValue([mockRegistration]);
 
-    vi.stubGlobal("window", {
+    stubGlobal("window", {
       location: { protocol: "https:", hostname: "ipebook.pages.dev" },
     });
-    vi.stubGlobal("navigator", {
+    stubGlobal("navigator", {
       serviceWorker: {
-        register: vi.fn().mockResolvedValue({ scope: "/" }),
+        register: jest.fn().mockResolvedValue({ scope: "/" }),
         getRegistrations: getRegistrationsMock,
       },
     });
@@ -172,14 +172,14 @@ describe("PwaService (Spec 041, ADR 0035)", () => {
   });
 
   it("captura exceção durante unregister e retorna false com aviso no logger", async () => {
-    const getRegistrationsMock = vi.fn().mockRejectedValue(new Error("Falha no navegador"));
+    const getRegistrationsMock = jest.fn().mockRejectedValue(new Error("Falha no navegador"));
 
-    vi.stubGlobal("window", {
+    stubGlobal("window", {
       location: { protocol: "https:", hostname: "ipebook.pages.dev" },
     });
-    vi.stubGlobal("navigator", {
+    stubGlobal("navigator", {
       serviceWorker: {
-        register: vi.fn(),
+        register: jest.fn(),
         getRegistrations: getRegistrationsMock,
       },
     });

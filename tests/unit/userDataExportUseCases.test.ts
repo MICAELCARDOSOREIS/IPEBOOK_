@@ -1,4 +1,3 @@
-import { describe, expect, it, vi } from "vitest";
 import { UserDataExportUseCases } from "@/usecase/userDataExportUseCases";
 import { MemoryUserDataExportDataSource } from "@/infra/datasources/memoryUserDataExportDataSource";
 import { SupabaseUserDataExportDataSource } from "@/infra/datasources/supabaseUserDataExportDataSource";
@@ -103,7 +102,7 @@ describe("UserDataExportUseCases & DataSources (Portabilidade LGPD)", () => {
     const source = new MemoryUserDataExportDataSource(undefined, undefined, undefined, undefined, {
       auth, profiles, notifications, reports, ratings,
     });
-    const history = { listTerms: vi.fn().mockResolvedValue(["Romance"]) } as any;
+    const history = { listTerms: jest.fn().mockResolvedValue(["Romance"]) } as any;
     const data = await new UserDataExportUseCases(source, history).exportUserData(user.id);
     expect(data.account).toMatchObject({ email: "leitor@example.com", name: "Leitora" });
     expect(data.profile).toMatchObject({ name: "Leitora" });
@@ -127,7 +126,7 @@ describe("UserDataExportUseCases & DataSources (Portabilidade LGPD)", () => {
       order: () => paged(items),
       range: (start: number, end: number) => Promise.resolve({ data: items.slice(start, end + 1), error: null }),
     });
-    const mockFrom = vi.fn().mockImplementation((table: string) => ({
+    const mockFrom = jest.fn().mockImplementation((table: string) => ({
       select: () => ({
         eq: () => table === "v2_profiles"
           ? { maybeSingle: () => Promise.resolve({ data: { id: "user-1", name: "Leitora", created_at: "2026-01-01" }, error: null }) }
@@ -138,7 +137,7 @@ describe("UserDataExportUseCases & DataSources (Portabilidade LGPD)", () => {
 
     const mockClient = {
       from: mockFrom,
-      auth: { getUser: vi.fn().mockResolvedValue({ data: { user: {
+      auth: { getUser: jest.fn().mockResolvedValue({ data: { user: {
         id: "user-1", email: "leitor@example.com", user_metadata: { full_name: "Leitora" },
       } }, error: null }) },
     } as any;
@@ -162,7 +161,7 @@ describe("UserDataExportUseCases & DataSources (Portabilidade LGPD)", () => {
 
   it("recusa exportação parcial quando uma consulta de dados falha", async () => {
     const client = {
-      auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: "user-1", email: "leitor@example.com" } }, error: null }) },
+      auth: { getUser: jest.fn().mockResolvedValue({ data: { user: { id: "user-1", email: "leitor@example.com" } }, error: null }) },
       from: (table: string) => ({ select: () => ({
         eq: () => table === "v2_profiles"
           ? { maybeSingle: () => Promise.resolve({ data: null, error: null }) }

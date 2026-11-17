@@ -1,4 +1,3 @@
-import { describe, expect, it, vi } from "vitest";
 import type { Book } from "@/model/entities/book";
 import type { IBookDataSource } from "@/model/datasources/iBookDataSource";
 import { CachedBookDataSource, type IKeyValueStorage } from "@/infra/datasources/cachedBookDataSource";
@@ -47,13 +46,13 @@ const sampleBooks: Book[] = [
 describe("CachedBookDataSource (Resiliência e Offline-first)", () => {
   it("retorna livros do primário e armazena cópia no storage", async () => {
     const primary: IBookDataSource = {
-      list: vi.fn().mockResolvedValue(sampleBooks),
-      findById: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
-      updateStatus: vi.fn(),
-      delete: vi.fn(),
-      listByOwner: vi.fn(),
+      list: jest.fn().mockResolvedValue(sampleBooks),
+      findById: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      updateStatus: jest.fn(),
+      delete: jest.fn(),
+      listByOwner: jest.fn(),
     };
 
     const storage = new MockStorage();
@@ -71,16 +70,16 @@ describe("CachedBookDataSource (Resiliência e Offline-first)", () => {
 
   it("utiliza fallback de cache local quando a chamada primária falha por erro de rede", async () => {
     const primary: IBookDataSource = {
-      list: vi
+      list: jest
         .fn()
         .mockResolvedValueOnce(sampleBooks) // 1ª chamada tem sucesso
         .mockRejectedValueOnce(new Error("Network request failed")), // 2ª chamada falha (offline)
-      findById: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
-      updateStatus: vi.fn(),
-      delete: vi.fn(),
-      listByOwner: vi.fn(),
+      findById: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      updateStatus: jest.fn(),
+      delete: jest.fn(),
+      listByOwner: jest.fn(),
     };
 
     const storage = new MockStorage();
@@ -97,13 +96,13 @@ describe("CachedBookDataSource (Resiliência e Offline-first)", () => {
 
   it("propaga erro caso o primário falhe e não haja nada em cache", async () => {
     const primary: IBookDataSource = {
-      list: vi.fn().mockRejectedValue(new Error("Supabase indisponível")),
-      findById: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
-      updateStatus: vi.fn(),
-      delete: vi.fn(),
-      listByOwner: vi.fn(),
+      list: jest.fn().mockRejectedValue(new Error("Supabase indisponível")),
+      findById: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      updateStatus: jest.fn(),
+      delete: jest.fn(),
+      listByOwner: jest.fn(),
     };
 
     const storage = new MockStorage();
@@ -114,13 +113,13 @@ describe("CachedBookDataSource (Resiliência e Offline-first)", () => {
 
   it("não usa cache expirado no fallback offline", async () => {
     const primary: IBookDataSource = {
-      list: vi.fn().mockRejectedValue(new Error("Supabase indisponível")),
-      findById: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
-      updateStatus: vi.fn(),
-      delete: vi.fn(),
-      listByOwner: vi.fn(),
+      list: jest.fn().mockRejectedValue(new Error("Supabase indisponível")),
+      findById: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      updateStatus: jest.fn(),
+      delete: jest.fn(),
+      listByOwner: jest.fn(),
     };
     const storage = new MockStorage();
     await storage.setItem(
@@ -135,13 +134,13 @@ describe("CachedBookDataSource (Resiliência e Offline-first)", () => {
 
   it("encontra livro por ID no cache se a rede falhar", async () => {
     const primary: IBookDataSource = {
-      list: vi.fn().mockResolvedValue(sampleBooks),
-      findById: vi.fn().mockRejectedValue(new Error("Network timeout")),
-      create: vi.fn(),
-      update: vi.fn(),
-      updateStatus: vi.fn(),
-      delete: vi.fn(),
-      listByOwner: vi.fn(),
+      list: jest.fn().mockResolvedValue(sampleBooks),
+      findById: jest.fn().mockRejectedValue(new Error("Network timeout")),
+      create: jest.fn(),
+      update: jest.fn(),
+      updateStatus: jest.fn(),
+      delete: jest.fn(),
+      listByOwner: jest.fn(),
     };
 
     const storage = new MockStorage();
@@ -157,13 +156,13 @@ describe("CachedBookDataSource (Resiliência e Offline-first)", () => {
 
   it("invalida cache ao criar, atualizar ou remover anúncios", async () => {
     const primary: IBookDataSource = {
-      list: vi.fn().mockResolvedValue(sampleBooks),
-      findById: vi.fn(),
-      create: vi.fn().mockResolvedValue({ ...sampleBooks[0], id: "novo" }),
-      update: vi.fn().mockResolvedValue(sampleBooks[0]),
-      updateStatus: vi.fn().mockResolvedValue(sampleBooks[0]),
-      delete: vi.fn().mockResolvedValue(undefined),
-      listByOwner: vi.fn(),
+      list: jest.fn().mockResolvedValue(sampleBooks),
+      findById: jest.fn(),
+      create: jest.fn().mockResolvedValue({ ...sampleBooks[0], id: "novo" }),
+      update: jest.fn().mockResolvedValue(sampleBooks[0]),
+      updateStatus: jest.fn().mockResolvedValue(sampleBooks[0]),
+      delete: jest.fn().mockResolvedValue(undefined),
+      listByOwner: jest.fn(),
     };
 
     const storage = new MockStorage();
@@ -187,13 +186,13 @@ describe("CachedBookDataSource (Resiliência e Offline-first)", () => {
   it("armazena e recupera os livros da estante do anunciante offline (Spec 130 / ADR 0101)", async () => {
     const ownerBooks = [sampleBooks[0]];
     const primary: IBookDataSource = {
-      list: vi.fn(),
-      findById: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
-      updateStatus: vi.fn(),
-      delete: vi.fn(),
-      listByOwner: vi
+      list: jest.fn(),
+      findById: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      updateStatus: jest.fn(),
+      delete: jest.fn(),
+      listByOwner: jest
         .fn()
         .mockResolvedValueOnce(ownerBooks)
         .mockRejectedValueOnce(new Error("Network failed")),
@@ -218,13 +217,13 @@ describe("CachedBookDataSource (Resiliência e Offline-first)", () => {
 
   it("invalida o cache da estante do anunciante ao criar novo livro (Spec 130 / ADR 0101)", async () => {
     const primary: IBookDataSource = {
-      list: vi.fn(),
-      findById: vi.fn(),
-      create: vi.fn().mockResolvedValue({ ...sampleBooks[0], id: "novo", ownerId: "user-1" }),
-      update: vi.fn(),
-      updateStatus: vi.fn(),
-      delete: vi.fn(),
-      listByOwner: vi.fn().mockResolvedValue([sampleBooks[0]]),
+      list: jest.fn(),
+      findById: jest.fn(),
+      create: jest.fn().mockResolvedValue({ ...sampleBooks[0], id: "novo", ownerId: "user-1" }),
+      update: jest.fn(),
+      updateStatus: jest.fn(),
+      delete: jest.fn(),
+      listByOwner: jest.fn().mockResolvedValue([sampleBooks[0]]),
     };
 
     const storage = new MockStorage();

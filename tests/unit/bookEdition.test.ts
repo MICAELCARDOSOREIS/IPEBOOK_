@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import { normalizeEdition, truncateAtWord } from "@/model/validators/bookEdition";
 
 describe("dados da edição vindos do ISBN (Spec 097)", () => {

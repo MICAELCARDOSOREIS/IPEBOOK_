@@ -1,32 +1,31 @@
 
 import { act, fireEvent, render } from "@testing-library/react-native";
-import { describe, expect, it, vi } from "vitest";
 import type { CreateListingState } from "@/viewmodel/useCreateListingViewModel";
 
-vi.mock("@/view/useIsWideWeb", () => ({ useIsWideWeb: () => true, useHydratedWindowWidth: () => 1280, WIDE_WEB_MIN_WIDTH: 960 }));
+jest.mock("@/view/useIsWideWeb", () => ({ useIsWideWeb: () => true, useHydratedWindowWidth: () => 1280, WIDE_WEB_MIN_WIDTH: 960 }));
 
 const mockActions = {
-  loadDraft: vi.fn(),
-  saveDraft: vi.fn(),
-  reset: vi.fn(),
-  setIsbn: vi.fn(),
-  lookupIsbn: vi.fn(),
-  handleBarcodeScanned: vi.fn(),
-  setModality: vi.fn(),
-  setTitle: vi.fn(),
-  setAuthor: vi.fn(),
-  setPrice: vi.fn(),
-  setPhotoUrl: vi.fn(),
-  addPhoto: vi.fn(),
-  removePhoto: vi.fn(),
-  setCondition: vi.fn(),
-  setCategory: vi.fn(),
-  setDescription: vi.fn(),
-  setNeighborhood: vi.fn(),
-  setIsBox: vi.fn(),
-  setBoxVolumesCount: vi.fn(),
-  submit: vi.fn(),
-  saveForLater: vi.fn(),
+  loadDraft: jest.fn(),
+  saveDraft: jest.fn(),
+  reset: jest.fn(),
+  setIsbn: jest.fn(),
+  lookupIsbn: jest.fn(),
+  handleBarcodeScanned: jest.fn(),
+  setModality: jest.fn(),
+  setTitle: jest.fn(),
+  setAuthor: jest.fn(),
+  setPrice: jest.fn(),
+  setPhotoUrl: jest.fn(),
+  addPhoto: jest.fn(),
+  removePhoto: jest.fn(),
+  setCondition: jest.fn(),
+  setCategory: jest.fn(),
+  setDescription: jest.fn(),
+  setNeighborhood: jest.fn(),
+  setIsBox: jest.fn(),
+  setBoxVolumesCount: jest.fn(),
+  submit: jest.fn(),
+  saveForLater: jest.fn(),
 };
 
 const defaultState: CreateListingState = {
@@ -52,7 +51,7 @@ const defaultState: CreateListingState = {
   success: false,
 };
 
-vi.mock("@/viewmodel/useCreateListingViewModel", () => ({
+jest.mock("@/viewmodel/useCreateListingViewModel", () => ({
   useCreateListingViewModel: () => [defaultState, mockActions],
 }));
 

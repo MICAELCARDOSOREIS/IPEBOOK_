@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import { bookDepthFromPages, faceContentOpacity, normalizeAngle, projectBookFaces, snapBookAngle } from "@/view/book3dGeometry";
 
 const W = 136;

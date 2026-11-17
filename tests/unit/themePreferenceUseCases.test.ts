@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import { MemoryThemePreferenceDataSource } from "@/infra/datasources/memoryThemePreferenceDataSource";
 import type { IThemePreferenceDataSource } from "@/model/datasources/iThemePreferenceDataSource";
 import { ThemePreferenceUseCases } from "@/usecase/themePreferenceUseCases";

@@ -1,6 +1,5 @@
 import { createElement } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
-import { afterEach, describe, expect, it, vi } from "vitest";
 import { useNegotiationChatViewModel } from "@/viewmodel/useNegotiationChatViewModel";
 import type { NegotiationMessage } from "@/model/entities/negotiationMessage";
 import { DataSourceError } from "@/model/errors";
@@ -163,14 +162,14 @@ describe("Hook useNegotiationChatViewModel (Spec 061 / ADR 0044)", () => {
 
   it("assina mensagens em tempo real e adiciona novas mensagens sem duplicações", async () => {
     let capturedCallback: ((msg: NegotiationMessage) => void) | null = null;
-    const unsubscribeMock = vi.fn();
+    const unsubscribeMock = jest.fn();
 
     const mockUseCases: MockUseCases = {
       getMessages: async () => sampleMessages,
       sendMessage: async () => {
         throw new Error("Não implementado");
       },
-      subscribeToMessages: vi.fn((requestId, onMessage) => {
+      subscribeToMessages: jest.fn((requestId, onMessage) => {
         expect(requestId).toBe("req-1");
         capturedCallback = onMessage;
         return unsubscribeMock;
@@ -207,13 +206,13 @@ describe("Hook useNegotiationChatViewModel (Spec 061 / ADR 0044)", () => {
   });
 
   it("executa cleanup ao desmontar o componente", async () => {
-    const unsubscribeMock = vi.fn();
+    const unsubscribeMock = jest.fn();
     const mockUseCases: MockUseCases = {
       getMessages: async () => [],
       sendMessage: async () => {
         throw new Error("Não implementado");
       },
-      subscribeToMessages: vi.fn(() => unsubscribeMock),
+      subscribeToMessages: jest.fn(() => unsubscribeMock),
     };
 
     await renderChatHook("req-1", "user-1", mockUseCases);

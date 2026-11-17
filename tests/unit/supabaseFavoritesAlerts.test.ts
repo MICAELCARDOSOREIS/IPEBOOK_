@@ -1,4 +1,3 @@
-import { describe, expect, it, vi } from "vitest";
 import { SupabaseFavoriteDataSource } from "@/infra/datasources/supabaseFavoriteDataSource";
 import { SupabaseSearchAlertDataSource } from "@/infra/datasources/supabaseSearchAlertDataSource";
 import type { SupabaseAppClient } from "@/infra/supabaseClient";
@@ -6,10 +5,10 @@ import type { SupabaseAppClient } from "@/infra/supabaseClient";
 function client(result: { data: unknown; error: unknown }) {
   const query: Record<string, unknown> = {};
   for (const name of ["select", "eq", "order", "insert", "delete", "update", "single"]) {
-    query[name] = vi.fn().mockReturnValue(query);
+    query[name] = jest.fn().mockReturnValue(query);
   }
   query.then = (resolve: (value: unknown) => void) => Promise.resolve(result).then(resolve);
-  return { value: { from: vi.fn().mockReturnValue(query) } as unknown as SupabaseAppClient, query };
+  return { value: { from: jest.fn().mockReturnValue(query) } as unknown as SupabaseAppClient, query };
 }
 
 const favorite = { id: "f1", user_id: "u1", book_id: "b1", created_at: "2026-10-15T00:00:00Z" };

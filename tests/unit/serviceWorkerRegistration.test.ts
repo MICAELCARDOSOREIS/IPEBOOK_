@@ -1,6 +1,5 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { describe, expect, it, vi } from "vitest";
 import {
   APP_SHELL_URLS,
   CATALOG_CACHE_NAME,
@@ -34,10 +33,10 @@ describe("Service Worker Registration e Simulação de Interceptação (Spec 041
   describe("Simulação de ciclo de vida do Service Worker", () => {
     it("evento install abre o cache estático e adiciona assets do App Shell", async () => {
       const mockCache = {
-        addAll: vi.fn().mockResolvedValue(undefined),
+        addAll: jest.fn().mockResolvedValue(undefined),
       };
       const mockCaches = {
-        open: vi.fn().mockResolvedValue(mockCache),
+        open: jest.fn().mockResolvedValue(mockCache),
       };
 
       // Simulação do comportamento de install
@@ -57,7 +56,7 @@ describe("Service Worker Registration e Simulação de Interceptação (Spec 041
         "cache-antigo-desconhecido",
       ];
       const activeCaches = [STATIC_CACHE_NAME, DYNAMIC_CACHE_NAME, CATALOG_CACHE_NAME];
-      const deleteMock = vi.fn().mockResolvedValue(true);
+      const deleteMock = jest.fn().mockResolvedValue(true);
 
       const toDelete = existingCaches.filter((c) => !activeCaches.includes(c));
       await Promise.all(toDelete.map((c) => deleteMock(c)));
@@ -82,7 +81,7 @@ describe("Service Worker Registration e Simulação de Interceptação (Spec 041
       });
 
       const mockCaches = {
-        match: vi.fn().mockImplementation((target: string | { url: string }) => {
+        match: jest.fn().mockImplementation((target: string | { url: string }) => {
           if (typeof target === "string" && target === "/index.html") {
             return Promise.resolve(mockAppShellResponse);
           }
@@ -106,7 +105,7 @@ describe("Service Worker Registration e Simulação de Interceptação (Spec 041
         mode: "navigate",
       };
       const mockCaches = {
-        match: vi.fn().mockResolvedValue(undefined),
+        match: jest.fn().mockResolvedValue(undefined),
       };
 
       const cached = await mockCaches.match(request as unknown as Request);
@@ -130,7 +129,7 @@ describe("Service Worker Registration e Simulação de Interceptação (Spec 041
       });
 
       const mockCaches = {
-        match: vi.fn().mockResolvedValue(mockSavedCatalog),
+        match: jest.fn().mockResolvedValue(mockSavedCatalog),
       };
 
       // Simulação de falha de rede seguida de hit de cache
@@ -149,7 +148,7 @@ describe("Service Worker Registration e Simulação de Interceptação (Spec 041
         url: "https://xiuuiggpccpgrwkzeloc.supabase.co/rest/v1/livros?select=*",
       };
       const mockCaches = {
-        match: vi.fn().mockResolvedValue(undefined),
+        match: jest.fn().mockResolvedValue(undefined),
       };
 
       const cached = await mockCaches.match(request as unknown as Request);

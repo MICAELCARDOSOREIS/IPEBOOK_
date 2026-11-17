@@ -1,21 +1,20 @@
 
 import { act, fireEvent, render } from "@testing-library/react-native";
-import { describe, expect, it, vi } from "vitest";
 import type { Book } from "@/model/entities/book";
 import type { ConversationItem, ConversationsState } from "@/viewmodel/useConversationsViewModel";
 
-vi.mock("@/view/useIsWideWeb", () => ({ useIsWideWeb: () => true, useHydratedWindowWidth: () => 1280, WIDE_WEB_MIN_WIDTH: 960 }));
-vi.mock("@/viewmodel/useConversationsViewModel", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/viewmodel/useConversationsViewModel")>()),
-  useConversationsViewModel: vi.fn(),
+jest.mock("@/view/useIsWideWeb", () => ({ useIsWideWeb: () => true, useHydratedWindowWidth: () => 1280, WIDE_WEB_MIN_WIDTH: 960 }));
+jest.mock("@/viewmodel/useConversationsViewModel", () => ({
+  ...jest.requireActual<typeof import("@/viewmodel/useConversationsViewModel")>("@/viewmodel/useConversationsViewModel"),
+  useConversationsViewModel: jest.fn(),
 }));
-vi.mock("@/viewmodel/useNetworkStatus", () => ({ useNetworkStatus: () => ({ isOnline: true }) }));
+jest.mock("@/viewmodel/useNetworkStatus", () => ({ useNetworkStatus: () => ({ isOnline: true }) }));
 // Entrega por QR (Spec 095): começa sem conclusão.
-let deliveryCompleted: Record<string, unknown> | null = null;
-vi.mock("@/viewmodel/useDeliveryViewModel", () => ({
-  useDeliveryStatus: () => ({ loading: false, role: "receiver", completed: deliveryCompleted }),
+let mockDeliveryCompleted: Record<string, unknown> | null = null;
+jest.mock("@/viewmodel/useDeliveryViewModel", () => ({
+  useDeliveryStatus: () => ({ loading: false, role: "receiver", completed: mockDeliveryCompleted }),
 }));
-vi.mock("@/view/conversations/chat", () => ({
+jest.mock("@/view/conversations/chat", () => ({
   Chat: () => <>{/* Chat mock */}</>,
 }));
 
@@ -32,9 +31,9 @@ const listing = (id: string, title: string): Book => ({
 });
 
 function setup(state: Partial<ConversationsState>) {
-  vi.mocked(useConversationsViewModel).mockReturnValue([
+  jest.mocked(useConversationsViewModel).mockReturnValue([
     { items: [], loading: false, error: null, ...state },
-    { reload: vi.fn(), deleteConversation: vi.fn().mockResolvedValue(true), cancelRequest: vi.fn().mockResolvedValue(true) },
+    { reload: jest.fn(), deleteConversation: jest.fn().mockResolvedValue(true), cancelRequest: jest.fn().mockResolvedValue(true) },
   ]);
 }
 
@@ -49,7 +48,7 @@ async function renderView(props: Partial<Parameters<typeof Conversations>[0]> = 
 describe("Conversas na Web Larga (Spec 093 · Figma 06.01 / 06.09)", () => {
   it("exibe cabeçalho editorial, card acolhedor e 3 cartões de destaque no estado vazio", async () => {
     setup({ items: [] });
-    const onExplore = vi.fn();
+    const onExplore = jest.fn();
     const screen = await renderView({ onExplore });
 
     // Cabeçalho editorial da tela
@@ -137,7 +136,7 @@ describe("Conversas na Web Larga (Spec 093 · Figma 06.01 / 06.09)", () => {
 
     it("oferece Combinar encontro e abre a negociação", async () => {
       setup({ items: [accepted] });
-      const onOpenNegotiation = vi.fn();
+      const onOpenNegotiation = jest.fn();
       const screen = await renderView({ onOpenNegotiation });
       await act(async () => { fireEvent.press(screen.getByText("Ana Paula")); });
       await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Combinar encontro" })); });
@@ -145,11 +144,11 @@ describe("Conversas na Web Larga (Spec 093 · Figma 06.01 / 06.09)", () => {
     });
 
     it("com a entrega concluída, não oferece mais Combinar encontro", async () => {
-      deliveryCompleted = { requestId: "r1", completedBy: "u", completedAt: "2026-10-29T10:00:00.000Z" };
+      mockDeliveryCompleted = { requestId: "r1", completedBy: "u", completedAt: "2026-10-29T10:00:00.000Z" };
       setup({ items: [accepted] });
       const screen = await renderView();
       await act(async () => { fireEvent.press(screen.getByText("Ana Paula")); });
-      deliveryCompleted = null;
+      mockDeliveryCompleted = null;
       expect(screen.getByTestId("conversation-about")).toBeDefined();
       expect(screen.queryByRole("button", { name: "Combinar encontro" })).toBeNull();
     });
@@ -186,8 +185,8 @@ describe("Conversas na Web Larga (Spec 093 · Figma 06.01 / 06.09)", () => {
     };
 
     setup({ items: [saleItem] });
-    const onOpenListing = vi.fn();
-    const onReportListing = vi.fn();
+    const onOpenListing = jest.fn();
+    const onReportListing = jest.fn();
     const screen = await renderView({ onOpenListing, onReportListing });
 
     await act(async () => {

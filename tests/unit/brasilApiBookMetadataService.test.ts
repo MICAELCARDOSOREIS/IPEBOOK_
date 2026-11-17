@@ -1,4 +1,3 @@
-import { describe, expect, it, vi } from "vitest";
 import { BrasilApiBookMetadataService } from "@/infra/services/brasilApiBookMetadataService";
 import { CompositeBookMetadataService } from "@/infra/services/compositeBookMetadataService";
 import type { BookMetadata } from "@/model/entities/bookMetadata";
@@ -7,12 +6,12 @@ import type { IBookMetadataService } from "@/model/services/iBookMetadataService
 const ISBN = "9788535914849";
 
 function respond(body: unknown, ok = true) {
-  return vi.fn().mockResolvedValue({ ok, json: async () => body });
+  return jest.fn().mockResolvedValue({ ok, json: async () => body });
 }
 
 describe("BrasilApiBookMetadataService (Spec 097, ADR 0073)", () => {
   it("rejeita ISBN inválido antes de fazer a chamada", async () => {
-    const fetchFn = vi.fn();
+    const fetchFn = jest.fn();
     expect(await new BrasilApiBookMetadataService(fetchFn as never).lookupByIsbn("abc")).toBeNull();
     expect(fetchFn).not.toHaveBeenCalled();
   });
@@ -53,7 +52,7 @@ describe("BrasilApiBookMetadataService (Spec 097, ADR 0073)", () => {
   it("sem título, com erro de rede ou de servidor, devolve null", async () => {
     expect(await new BrasilApiBookMetadataService(respond({ authors: ["A"] }) as never).lookupByIsbn(ISBN)).toBeNull();
     expect(await new BrasilApiBookMetadataService(respond({}, false) as never).lookupByIsbn(ISBN)).toBeNull();
-    expect(await new BrasilApiBookMetadataService(vi.fn().mockRejectedValue(new Error("rede")) as never).lookupByIsbn(ISBN)).toBeNull();
+    expect(await new BrasilApiBookMetadataService(jest.fn().mockRejectedValue(new Error("rede")) as never).lookupByIsbn(ISBN)).toBeNull();
   });
 });
 

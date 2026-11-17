@@ -1,18 +1,17 @@
 
 import { fireEvent, render } from "@testing-library/react-native";
-import { describe, expect, it, vi } from "vitest";
 import WelcomeRoute from "@/view/onboarding/welcomeRoute";
 
-vi.mock("@/viewmodel/useWelcomeGateViewModel", () => ({
-  useWelcomeGateViewModel: vi.fn(),
+jest.mock("@/viewmodel/useWelcomeGateViewModel", () => ({
+  useWelcomeGateViewModel: jest.fn(),
 }));
 
 import { useWelcomeGateViewModel } from "@/viewmodel/useWelcomeGateViewModel";
-const mockedGate = vi.mocked(useWelcomeGateViewModel);
+const mockedGate = jest.mocked(useWelcomeGateViewModel);
 
 async function renderRoute() {
-  const dismiss = vi.fn().mockResolvedValue(undefined);
-  const onFinish = vi.fn();
+  const dismiss = jest.fn().mockResolvedValue(undefined);
+  const onFinish = jest.fn();
   mockedGate.mockReturnValue(["skip", dismiss]);
   const screen = await render(<WelcomeRoute onFinish={onFinish} />);
   return { screen, dismiss, onFinish };

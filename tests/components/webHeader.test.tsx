@@ -1,6 +1,5 @@
 import type React from "react";
 import { cleanup, fireEvent, render } from "@testing-library/react-native";
-import { afterEach, describe, expect, it, vi } from "vitest";
 import { WebHeader } from "@/view/components/WebHeader";
 import { ThemeProvider } from "@/view/theme/ThemeProvider";
 
@@ -14,8 +13,8 @@ async function wrap(node: React.ReactElement) {
 
 describe("WebHeader (Figma 34:70)", () => {
   it("navega pelos atalhos, abre Anunciar e mostra iniciais e selo de propostas", async () => {
-    const onNavigate = vi.fn();
-    const onAnnounce = vi.fn();
+    const onNavigate = jest.fn();
+    const onAnnounce = jest.fn();
     const screen = await wrap(
       <WebHeader active="search" onNavigate={onNavigate} onAnnounce={onAnnounce} initials="LA" badgeCount={2} />,
     );
@@ -33,9 +32,9 @@ describe("WebHeader (Figma 34:70)", () => {
   });
 
   it("busca pelo termo digitado e, vazio, apenas abre a Pesquisa", async () => {
-    const onNavigate = vi.fn();
-    const onSearch = vi.fn();
-    const screen = await wrap(<WebHeader onNavigate={onNavigate} onAnnounce={vi.fn()} onSearch={onSearch} />);
+    const onNavigate = jest.fn();
+    const onSearch = jest.fn();
+    const screen = await wrap(<WebHeader onNavigate={onNavigate} onAnnounce={jest.fn()} onSearch={onSearch} />);
 
     await fireEvent(screen.getByLabelText("Buscar título, autor ou categoria"), "submitEditing");
     expect(onSearch).not.toHaveBeenCalled();

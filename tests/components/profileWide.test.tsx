@@ -1,14 +1,13 @@
 
 import { act, render } from "@testing-library/react-native";
-import { describe, expect, it, vi } from "vitest";
 import type { AuthState } from "@/viewmodel/useAuthViewModel";
 import type { ProfileState } from "@/viewmodel/useProfileViewModel";
 
-vi.mock("@/view/useIsWideWeb", () => ({ useIsWideWeb: () => true, useHydratedWindowWidth: () => 1280, WIDE_WEB_MIN_WIDTH: 960 }));
-vi.mock("@/viewmodel/useAuthViewModel", () => ({ useAuthViewModel: vi.fn() }));
-vi.mock("@/viewmodel/useProfileViewModel", () => ({ useProfileViewModel: vi.fn() }));
-vi.mock("@/viewmodel/useMyListingsViewModel", () => ({ useMyListingsViewModel: () => [{ books: [] }, {}] }));
-vi.mock("@/viewmodel/useUserPreferencesViewModel", () => ({
+jest.mock("@/view/useIsWideWeb", () => ({ useIsWideWeb: () => true, useHydratedWindowWidth: () => 1280, WIDE_WEB_MIN_WIDTH: 960 }));
+jest.mock("@/viewmodel/useAuthViewModel", () => ({ useAuthViewModel: jest.fn() }));
+jest.mock("@/viewmodel/useProfileViewModel", () => ({ useProfileViewModel: jest.fn() }));
+jest.mock("@/viewmodel/useMyListingsViewModel", () => ({ useMyListingsViewModel: () => [{ books: [] }, {}] }));
+jest.mock("@/viewmodel/useUserPreferencesViewModel", () => ({
   useUserPreferencesViewModel: () => [{ preferences: { userId: "ana", neighborhood: "Centro" }, loading: false }, {}],
 }));
 
@@ -16,8 +15,8 @@ import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useProfileViewModel } from "@/viewmodel/useProfileViewModel";
 import ProfileHub from "@/view/profile/profileHub";
 
-const mockedUseAuthViewModel = vi.mocked(useAuthViewModel);
-const mockedUseProfileViewModel = vi.mocked(useProfileViewModel);
+const mockedUseAuthViewModel = jest.mocked(useAuthViewModel);
+const mockedUseProfileViewModel = jest.mocked(useProfileViewModel);
 
 const fakeProfile: NonNullable<ProfileState["profile"]> = {
   userId: "ana",
@@ -34,23 +33,23 @@ describe("Meu perfil na Web Larga (Spec 093, Spec 122 · Figma 07.01)", () => {
   it("renderiza o grid de duas colunas com identidade e selos à esquerda, e seções Atividade e Conta lado a lado", async () => {
     mockedUseAuthViewModel.mockReturnValue([
       { user: { id: "ana", email: "ana@exemplo.com" } as AuthState["user"], loading: false, error: null },
-      { signUp: vi.fn(), signIn: vi.fn(), signOut: vi.fn(), requestPasswordReset: vi.fn() },
+      { signUp: jest.fn(), signIn: jest.fn(), signOut: jest.fn(), requestPasswordReset: jest.fn() },
     ]);
     mockedUseProfileViewModel.mockReturnValue([
       { profile: fakeProfile, loading: false, saving: false, error: null },
-      { update: vi.fn().mockResolvedValue(true), reload: vi.fn() },
+      { update: jest.fn().mockResolvedValue(true), reload: jest.fn() },
     ]);
 
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
       screen = await render(
         <ProfileHub
-          onNavigateToEditProfile={vi.fn()}
-          onNavigateToRatings={vi.fn()}
-          onNavigateToNotifications={vi.fn()}
-          onNavigateToSecurity={vi.fn()}
-          onSignedOut={vi.fn()}
-          onNavigateToCreateListing={vi.fn()}
+          onNavigateToEditProfile={jest.fn()}
+          onNavigateToRatings={jest.fn()}
+          onNavigateToNotifications={jest.fn()}
+          onNavigateToSecurity={jest.fn()}
+          onSignedOut={jest.fn()}
+          onNavigateToCreateListing={jest.fn()}
         />
       );
     });

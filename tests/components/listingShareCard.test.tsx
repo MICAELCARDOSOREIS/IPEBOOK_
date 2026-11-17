@@ -1,13 +1,12 @@
 
 import { act, fireEvent, render } from "@testing-library/react-native";
-import { describe, expect, it, vi } from "vitest";
 import { ListingShareCard } from "@/view/components/ListingShareCard";
 
 const book = { id: "b1", title: "Dom Casmurro", author: "Machado de Assis", modality: "sale" as const, price: 25, neighborhood: "Centro", photoUrl: "https://cdn/capa.jpg" };
 
 describe("ListingShareCard (Spec 092)", () => {
   it("mostra título, autor, preço, bairro e o endereço por escrito, e avisa quando a capa carrega", async () => {
-    const onCoverSettled = vi.fn();
+    const onCoverSettled = jest.fn();
     const screen = await render(<ListingShareCard book={book} url="https://ipebook.app/livro/b1" onCoverSettled={onCoverSettled} />);
     expect(screen.getByText("Dom Casmurro")).toBeDefined();
     expect(screen.getByText("Machado de Assis")).toBeDefined();
@@ -48,7 +47,7 @@ describe("ListingShareCard (Spec 092)", () => {
   });
 
   it("cai para a capa ilustrativa quando a foto do anúncio falha ao carregar", async () => {
-    const onCoverSettled = vi.fn();
+    const onCoverSettled = jest.fn();
     const screen = await render(
       <ListingShareCard book={book} url="https://ipebook.app/livro/b1" onCoverSettled={onCoverSettled} />,
     );

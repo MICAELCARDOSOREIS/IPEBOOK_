@@ -1,19 +1,20 @@
 import { createElement } from "react";
 import { Platform, Share } from "react-native";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
-import { afterEach, describe, expect, it, vi } from "vitest";
 import * as Linking from "expo-linking";
 import { DomainError } from "@/model/errors";
 import type { IShareUseCases } from "@/usecase/iShareUseCases";
 import { useInviteFriendsViewModel } from "@/viewmodel/useInviteFriendsViewModel";
+import { stubGlobal, unstubAllGlobals } from "../helpers/stubGlobal";
 
-vi.mock("expo-linking", () => ({
-  createURL: vi.fn((path: string) => `https://ipebook.app${path}`),
-  openURL: vi.fn().mockResolvedValue(undefined),
+jest.mock("expo-linking", () => ({
+  createURL: jest.fn((path: string) => `https://ipebook.app${path}`),
+  openURL: jest.fn().mockResolvedValue(undefined),
 }));
 
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
 const mounted: ReactTestRenderer[] = [];
+const originalPlatformOS = Platform.OS;
 
 async function renderHook(useCases: IShareUseCases, appUrl?: string, shareImageFile?: (uri: string) => Promise<boolean>) {
   let result!: ReturnType<typeof useInviteFriendsViewModel>;
@@ -35,8 +36,9 @@ afterEach(async () => {
   await act(async () => {
     mounted.splice(0).forEach((tree) => tree.unmount());
   });
-  vi.restoreAllMocks();
-  vi.unstubAllGlobals();
+  Platform.OS = originalPlatformOS;
+  jest.restoreAllMocks();
+  unstubAllGlobals();
 });
 
 const fakeUseCases: IShareUseCases = {
@@ -63,8 +65,8 @@ describe("useInviteFriendsViewModel (Spec 057, Figma 08.02)", () => {
   it("abre o WhatsApp diretamente quando disponível no mobile", async () => {
     const originalOS = Platform.OS;
     Platform.OS = "android";
-    const openUrlSpy = vi.mocked(Linking.openURL);
-    const shareSpy = vi.spyOn(Share, "share");
+    const openUrlSpy = jest.mocked(Linking.openURL);
+    const shareSpy = jest.spyOn(Share, "share");
 
     const hook = await renderHook(fakeUseCases);
     await act(async () => {
@@ -84,8 +86,8 @@ describe("useInviteFriendsViewModel (Spec 057, Figma 08.02)", () => {
   it("cai no fallback de Share nativo quando o WhatsApp não abre", async () => {
     const originalOS = Platform.OS;
     Platform.OS = "android";
-    vi.mocked(Linking.openURL).mockRejectedValueOnce(new Error("nenhum app abre whatsapp://"));
-    const shareSpy = vi.spyOn(Share, "share").mockResolvedValue({ action: "sharedAction", activityType: undefined });
+    jest.mocked(Linking.openURL).mockRejectedValueOnce(new Error("nenhum app abre whatsapp://"));
+    const shareSpy = jest.spyOn(Share, "share").mockResolvedValue({ action: "sharedAction", activityType: undefined });
 
     const hook = await renderHook(fakeUseCases);
     await act(async () => {
@@ -102,7 +104,7 @@ describe("useInviteFriendsViewModel (Spec 057, Figma 08.02)", () => {
   it("compartilha via menu nativo em shareNative no mobile", async () => {
     const originalOS = Platform.OS;
     Platform.OS = "android";
-    const shareSpy = vi.spyOn(Share, "share").mockResolvedValue({ action: "sharedAction", activityType: undefined });
+    const shareSpy = jest.spyOn(Share, "share").mockResolvedValue({ action: "sharedAction", activityType: undefined });
 
     const hook = await renderHook(fakeUseCases);
     await act(async () => {
@@ -119,8 +121,8 @@ describe("useInviteFriendsViewModel (Spec 057, Figma 08.02)", () => {
   it("copia link e sinaliza feedback na Web", async () => {
     const originalOS = Platform.OS;
     Platform.OS = "web";
-    const writeText = vi.fn().mockResolvedValue(undefined);
-    vi.stubGlobal("navigator", { clipboard: { writeText } });
+    const writeText = jest.fn().mockResolvedValue(undefined);
+    stubGlobal("navigator", { clipboard: { writeText } });
 
     const hook = await renderHook(fakeUseCases);
     await act(async () => {
@@ -141,9 +143,9 @@ describe("useInviteFriendsViewModel (Spec 057, Figma 08.02)", () => {
   it("cobre fluxos web de shareToWhatsApp e shareNative com e sem navigator.share", async () => {
     const originalOS = Platform.OS;
     Platform.OS = "web";
-    const navShare = vi.fn().mockResolvedValue(undefined);
-    const writeText = vi.fn().mockResolvedValue(undefined);
-    vi.stubGlobal("navigator", { share: navShare, clipboard: { writeText } });
+    const navShare = jest.fn().mockResolvedValue(undefined);
+    const writeText = jest.fn().mockResolvedValue(undefined);
+    stubGlobal("navigator", { share: navShare, clipboard: { writeText } });
 
     const hook = await renderHook(fakeUseCases);
     await act(async () => {
@@ -165,7 +167,7 @@ describe("useInviteFriendsViewModel (Spec 057, Figma 08.02)", () => {
     expect(hook.current[0].shared).toBe(false);
 
     // Sem navigator.share
-    vi.stubGlobal("navigator", { clipboard: { writeText } });
+    stubGlobal("navigator", { clipboard: { writeText } });
     await act(async () => {
       await hook.current[1].shareToWhatsApp();
     });
@@ -184,7 +186,7 @@ describe("useInviteFriendsViewModel (Spec 057, Figma 08.02)", () => {
   it("cobre fallback e erros em copyLink e shareNative no mobile", async () => {
     const originalOS = Platform.OS;
     Platform.OS = "android";
-    const shareSpy = vi.spyOn(Share, "share").mockResolvedValue({ action: "sharedAction", activityType: undefined });
+    const shareSpy = jest.spyOn(Share, "share").mockResolvedValue({ action: "sharedAction", activityType: undefined });
 
     const hook = await renderHook(fakeUseCases);
     await act(async () => {
@@ -208,7 +210,7 @@ describe("useInviteFriendsViewModel (Spec 057, Figma 08.02)", () => {
     expect(hook.current[0].error).toBe("Não foi possível compartilhar o convite. Tente novamente.");
 
     // Erro em shareToWhatsApp
-    vi.mocked(Linking.openURL).mockRejectedValueOnce(new Error("sem WhatsApp"));
+    jest.mocked(Linking.openURL).mockRejectedValueOnce(new Error("sem WhatsApp"));
     shareSpy.mockRejectedValueOnce(new Error("Falha no share"));
     await act(async () => {
       await hook.current[1].shareToWhatsApp();
@@ -221,8 +223,8 @@ describe("useInviteFriendsViewModel (Spec 057, Figma 08.02)", () => {
     const originalOS = Platform.OS;
     Platform.OS = "web";
     const abort = Object.assign(new Error("cancelado"), { name: "AbortError" });
-    const writeText = vi.fn().mockResolvedValue(undefined);
-    vi.stubGlobal("navigator", { share: vi.fn().mockRejectedValue(abort), clipboard: { writeText } });
+    const writeText = jest.fn().mockResolvedValue(undefined);
+    stubGlobal("navigator", { share: jest.fn().mockRejectedValue(abort), clipboard: { writeText } });
 
     const hook = await renderHook(fakeUseCases);
     await act(async () => {
@@ -236,7 +238,7 @@ describe("useInviteFriendsViewModel (Spec 057, Figma 08.02)", () => {
     expect(writeText).not.toHaveBeenCalled();
 
     const denied = Object.assign(new Error("sem permissão"), { name: "NotAllowedError" });
-    vi.stubGlobal("navigator", { share: vi.fn().mockRejectedValue(denied), clipboard: { writeText } });
+    stubGlobal("navigator", { share: jest.fn().mockRejectedValue(denied), clipboard: { writeText } });
     await act(async () => {
       await hook.current[1].shareNative();
     });
@@ -251,11 +253,11 @@ describe("useInviteFriendsViewModel (Spec 057, Figma 08.02)", () => {
 
 describe("useInviteFriendsViewModel — imagem do convite (Spec 092)", () => {
   it("captura a imagem e abre a folha de compartilhamento com o arquivo", async () => {
-    vi.spyOn(Platform, "OS", "get").mockReturnValue("android");
-    const shareFile = vi.fn().mockResolvedValue(true);
-    const share = vi.spyOn(Share, "share").mockResolvedValue({ action: "sharedAction", activityType: undefined });
+    Platform.OS = "android";
+    const shareFile = jest.fn().mockResolvedValue(true);
+    const share = jest.spyOn(Share, "share").mockResolvedValue({ action: "sharedAction", activityType: undefined });
     const hook = await renderHook(fakeUseCases, undefined, shareFile);
-    const capture = vi.fn().mockResolvedValue("file:///tmp/convite.png");
+    const capture = jest.fn().mockResolvedValue("file:///tmp/convite.png");
     await act(async () => { await hook.current[1].shareImage(capture); });
     expect(capture).toHaveBeenCalledTimes(1);
     expect(shareFile).toHaveBeenCalledWith("file:///tmp/convite.png", expect.stringContaining("IpêBook"), "Convidar amigos para o IpêBook");
@@ -266,20 +268,20 @@ describe("useInviteFriendsViewModel — imagem do convite (Spec 092)", () => {
   });
 
   it("cai no texto com link quando o aparelho não compartilha arquivos", async () => {
-    vi.spyOn(Platform, "OS", "get").mockReturnValue("android");
-    const share = vi.spyOn(Share, "share").mockResolvedValue({ action: "sharedAction", activityType: undefined });
-    const hook = await renderHook(fakeUseCases, undefined, vi.fn().mockResolvedValue(false));
-    await act(async () => { await hook.current[1].shareImage(vi.fn().mockResolvedValue("file:///x.png")); });
+    Platform.OS = "android";
+    const share = jest.spyOn(Share, "share").mockResolvedValue({ action: "sharedAction", activityType: undefined });
+    const hook = await renderHook(fakeUseCases, undefined, jest.fn().mockResolvedValue(false));
+    await act(async () => { await hook.current[1].shareImage(jest.fn().mockResolvedValue("file:///x.png")); });
     expect(share).toHaveBeenCalledWith({ message: expect.stringContaining("IpêBook") });
     expect(hook.current[0].shared).toBe(true);
   });
 
   it("na web copia o texto com o link, sem capturar", async () => {
-    vi.spyOn(Platform, "OS", "get").mockReturnValue("web");
-    const writeText = vi.fn().mockResolvedValue(undefined);
-    vi.stubGlobal("navigator", { clipboard: { writeText } });
-    const capture = vi.fn();
-    const hook = await renderHook(fakeUseCases, undefined, vi.fn());
+    Platform.OS = "web";
+    const writeText = jest.fn().mockResolvedValue(undefined);
+    stubGlobal("navigator", { clipboard: { writeText } });
+    const capture = jest.fn();
+    const hook = await renderHook(fakeUseCases, undefined, jest.fn());
     await act(async () => { await hook.current[1].shareImage(capture); });
     expect(capture).not.toHaveBeenCalled();
     expect(writeText).toHaveBeenCalledWith(expect.stringContaining("IpêBook"));
@@ -288,14 +290,14 @@ describe("useInviteFriendsViewModel — imagem do convite (Spec 092)", () => {
   });
 
   it("mostra erro amigável quando a captura falha e ignora segundo toque em andamento", async () => {
-    vi.spyOn(Platform, "OS", "get").mockReturnValue("android");
-    const hook = await renderHook(fakeUseCases, undefined, vi.fn().mockResolvedValue(true));
-    await act(async () => { await hook.current[1].shareImage(vi.fn().mockRejectedValue(new Error("falhou"))); });
+    Platform.OS = "android";
+    const hook = await renderHook(fakeUseCases, undefined, jest.fn().mockResolvedValue(true));
+    await act(async () => { await hook.current[1].shareImage(jest.fn().mockRejectedValue(new Error("falhou"))); });
     expect(hook.current[0].error).toBe("Não foi possível compartilhar o convite. Tente novamente.");
 
     let release!: (uri: string) => void;
-    const slow = vi.fn().mockReturnValue(new Promise<string>((resolve) => { release = resolve; }));
-    const shareFile = vi.fn().mockResolvedValue(true);
+    const slow = jest.fn().mockReturnValue(new Promise<string>((resolve) => { release = resolve; }));
+    const shareFile = jest.fn().mockResolvedValue(true);
     const second = await renderHook(fakeUseCases, undefined, shareFile);
     await act(async () => {
       void second.current[1].shareImage(slow);
@@ -307,27 +309,27 @@ describe("useInviteFriendsViewModel — imagem do convite (Spec 092)", () => {
   });
 
   it("propaga DomainError nas ações de convite e permite limpar estado shared", async () => {
-    vi.spyOn(Platform, "OS", "get").mockReturnValue("android");
-    const hook = await renderHook(fakeUseCases, undefined, vi.fn().mockResolvedValue(true));
+    Platform.OS = "android";
+    const hook = await renderHook(fakeUseCases, undefined, jest.fn().mockResolvedValue(true));
 
     await act(async () => {
-      await hook.current[1].shareImage(vi.fn().mockRejectedValue(new DomainError("Erro de captura.")));
+      await hook.current[1].shareImage(jest.fn().mockRejectedValue(new DomainError("Erro de captura.")));
     });
     expect(hook.current[0].error).toBe("Erro de captura.");
 
-    vi.spyOn(Share, "share").mockRejectedValueOnce(new DomainError("Falha ao abrir folha."));
+    jest.spyOn(Share, "share").mockRejectedValueOnce(new DomainError("Falha ao abrir folha."));
     await act(async () => {
       await hook.current[1].shareNative();
     });
     expect(hook.current[0].error).toBe("Falha ao abrir folha.");
 
-    vi.spyOn(Share, "share").mockRejectedValueOnce(new DomainError("Sem permissão para copiar."));
+    jest.spyOn(Share, "share").mockRejectedValueOnce(new DomainError("Sem permissão para copiar."));
     await act(async () => {
       await hook.current[1].copyLink();
     });
     expect(hook.current[0].error).toBe("Sem permissão para copiar.");
 
-    vi.spyOn(Share, "share").mockResolvedValueOnce({ action: "sharedAction", activityType: undefined });
+    jest.spyOn(Share, "share").mockResolvedValueOnce({ action: "sharedAction", activityType: undefined });
     await act(async () => {
       await hook.current[1].shareNative();
     });
@@ -340,10 +342,10 @@ describe("useInviteFriendsViewModel — imagem do convite (Spec 092)", () => {
   });
 
   it("trata fallback NotAllowedError em shareToWhatsApp, AbortError em shareNative e erro inesperado na Web", async () => {
-    vi.spyOn(Platform, "OS", "get").mockReturnValue("web");
-    const writeText = vi.fn().mockResolvedValue(undefined);
+    Platform.OS = "web";
+    const writeText = jest.fn().mockResolvedValue(undefined);
     const denied = Object.assign(new Error("negado"), { name: "NotAllowedError" });
-    vi.stubGlobal("navigator", { share: vi.fn().mockRejectedValue(denied), clipboard: { writeText } });
+    stubGlobal("navigator", { share: jest.fn().mockRejectedValue(denied), clipboard: { writeText } });
 
     const hook = await renderHook(fakeUseCases);
     await act(async () => {
@@ -353,25 +355,25 @@ describe("useInviteFriendsViewModel — imagem do convite (Spec 092)", () => {
     expect(hook.current[0].linkCopied).toBe(true);
 
     const abort = Object.assign(new Error("cancelado"), { name: "AbortError" });
-    vi.stubGlobal("navigator", { share: vi.fn().mockRejectedValue(abort), clipboard: { writeText } });
+    stubGlobal("navigator", { share: jest.fn().mockRejectedValue(abort), clipboard: { writeText } });
     await act(async () => {
       await hook.current[1].shareNative();
     });
     expect(hook.current[0].error).toBeNull();
 
-    vi.stubGlobal("navigator", { share: vi.fn().mockRejectedValue(new DomainError("Compartilhamento bloqueado.")), clipboard: { writeText } });
+    stubGlobal("navigator", { share: jest.fn().mockRejectedValue(new DomainError("Compartilhamento bloqueado.")), clipboard: { writeText } });
     await act(async () => {
       await hook.current[1].shareToWhatsApp();
     });
     expect(hook.current[0].error).toBe("Compartilhamento bloqueado.");
 
-    vi.stubGlobal("navigator", { share: vi.fn().mockRejectedValue(new Error("erro desconhecido")), clipboard: { writeText } });
+    stubGlobal("navigator", { share: jest.fn().mockRejectedValue(new Error("erro desconhecido")), clipboard: { writeText } });
     await act(async () => {
       await hook.current[1].shareNative();
     });
     expect(hook.current[0].error).toBe("Não foi possível compartilhar o convite. Tente novamente.");
 
-    vi.stubGlobal("navigator", { clipboard: { writeText: vi.fn().mockRejectedValue(new Error("clipboard indisponível")) } });
+    stubGlobal("navigator", { clipboard: { writeText: jest.fn().mockRejectedValue(new Error("clipboard indisponível")) } });
     await act(async () => {
       await hook.current[1].copyLink();
     });
@@ -379,10 +381,10 @@ describe("useInviteFriendsViewModel — imagem do convite (Spec 092)", () => {
   });
 
   it("não atualiza estado após desmontar durante ação assíncrona", async () => {
-    vi.spyOn(Platform, "OS", "get").mockReturnValue("web");
+    Platform.OS = "web";
     let resolveCopy!: () => void;
-    vi.stubGlobal("navigator", {
-      clipboard: { writeText: vi.fn().mockReturnValue(new Promise<void>((r) => { resolveCopy = r; })) },
+    stubGlobal("navigator", {
+      clipboard: { writeText: jest.fn().mockReturnValue(new Promise<void>((r) => { resolveCopy = r; })) },
     });
     const hook = await renderHook(fakeUseCases);
     const pending = hook.current[1].copyLink();

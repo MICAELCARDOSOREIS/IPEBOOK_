@@ -1,4 +1,3 @@
-import { describe, expect, it, vi } from "vitest";
 import { SupabaseBookRequestDataSource } from "@/infra/datasources/supabaseBookRequestDataSource";
 import { toDomainError } from "@/infra/supabaseErrors";
 import type { SupabaseAppClient } from "@/infra/supabaseClient";
@@ -33,9 +32,9 @@ describe("toDomainError (Spec 103)", () => {
   });
 
   it("o pedido mostra o limite para a pessoa", async () => {
-    const single = vi.fn().mockResolvedValue({ data: null, error: { code: "IBLIM", message: "Limite de 10 pedidos por dia atingido." } });
-    const chain = { insert: vi.fn(() => chain), select: vi.fn(() => chain), single };
-    const client = { from: vi.fn(() => chain) } as unknown as SupabaseAppClient;
+    const single = jest.fn().mockResolvedValue({ data: null, error: { code: "IBLIM", message: "Limite de 10 pedidos por dia atingido." } });
+    const chain: any = { insert: jest.fn(() => chain), select: jest.fn(() => chain), single };
+    const client = { from: jest.fn(() => chain) } as unknown as SupabaseAppClient;
     await expect(
       new SupabaseBookRequestDataSource(client).create({ listingId: "b1", requesterId: "ana", status: "pending" }),
     ).rejects.toThrow("Limite de 10 pedidos por dia atingido.");

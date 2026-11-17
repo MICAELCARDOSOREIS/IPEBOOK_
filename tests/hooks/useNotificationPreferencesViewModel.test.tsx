@@ -1,6 +1,5 @@
 import { createElement } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
-import { afterEach, describe, expect, it, vi } from "vitest";
 import type { UserPreferences } from "@/model/entities/userPreferences";
 import type { IUserPreferencesUseCases } from "@/usecase/iUserPreferencesUseCases";
 import { useNotificationPreferencesViewModel } from "@/viewmodel/useNotificationPreferencesViewModel";
@@ -37,8 +36,8 @@ afterEach(async () => {
 
 function stubPreferences(prefs: Partial<UserPreferences>): IUserPreferencesUseCases {
   return {
-    getPreferences: vi.fn().mockResolvedValue({ userId: "ana", ...prefs }),
-    updatePreferences: vi.fn().mockResolvedValue({ userId: "ana", ...prefs }),
+    getPreferences: jest.fn().mockResolvedValue({ userId: "ana", ...prefs }),
+    updatePreferences: jest.fn().mockResolvedValue({ userId: "ana", ...prefs }),
   };
 }
 
@@ -77,13 +76,13 @@ describe("useNotificationPreferencesViewModel (Spec 099)", () => {
     await act(async () => {
       await hook.current[1].setEnabled("system", true);
     });
-    const [, edits] = vi.mocked(useCases.updatePreferences).mock.calls[0];
+    const [, edits] = jest.mocked(useCases.updatePreferences).mock.calls[0];
     expect(new Set(edits.mutedTypes)).toEqual(new Set(["meeting_update"]));
   });
 
   it("mostra erro amigável quando salvar a preferência falha (Spec 099)", async () => {
     const useCases = stubPreferences({});
-    vi.mocked(useCases.updatePreferences).mockRejectedValueOnce(new Error("rede caiu"));
+    jest.mocked(useCases.updatePreferences).mockRejectedValueOnce(new Error("rede caiu"));
     const hook = await renderHook("ana", useCases);
     await act(async () => {
       await hook.current[1].setEnabled("meetings", false);

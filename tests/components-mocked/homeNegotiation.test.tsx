@@ -1,12 +1,11 @@
 import type React from "react";
 import { act, fireEvent, render } from "@testing-library/react-native";
-import { describe, expect, it, vi } from "vitest";
 import type { Book } from "@/model/entities/book";
 import type { AuthState } from "@/viewmodel/useAuthViewModel";
 import Home from "@/view/home";
 
-vi.mock("@/viewmodel/useHomeViewModel", () => ({ useHomeViewModel: vi.fn() }));
-vi.mock("@/viewmodel/useAuthViewModel", () => ({ useAuthViewModel: vi.fn() }));
+jest.mock("@/viewmodel/useHomeViewModel", () => ({ useHomeViewModel: jest.fn() }));
+jest.mock("@/viewmodel/useAuthViewModel", () => ({ useAuthViewModel: jest.fn() }));
 
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useHomeViewModel } from "@/viewmodel/useHomeViewModel";
@@ -22,10 +21,10 @@ const book = (over: Partial<Book>): Book => ({
 });
 
 function setup(books: Book[], user: AuthState["user"]) {
-  vi.mocked(useHomeViewModel).mockReturnValue([{ books, loading: false, error: null }, { reload: vi.fn() }]);
-  vi.mocked(useAuthViewModel).mockReturnValue([
+  jest.mocked(useHomeViewModel).mockReturnValue([{ books, loading: false, error: null }, { reload: jest.fn() }]);
+  jest.mocked(useAuthViewModel).mockReturnValue([
     { user, loading: false, error: null },
-    { signUp: vi.fn(), signIn: vi.fn(), signOut: vi.fn(), requestPasswordReset: vi.fn() },
+    { signUp: jest.fn(), signIn: jest.fn(), signOut: jest.fn(), requestPasswordReset: jest.fn() },
   ]);
 }
 
@@ -40,7 +39,7 @@ describe("navegação para o detalhe do livro a partir da Home (spec 006, US6/T0
 
   it("cada linha do catálogo navega para o detalhe do livro ao ser tocada", async () => {
     setup([book({ id: "a", title: "De outra" })], user);
-    const onNavigateToBookDetail = vi.fn();
+    const onNavigateToBookDetail = jest.fn();
     const screen = await renderHome({ onNavigateToBookDetail });
     await act(async () => {
       fireEvent.press(screen.getAllByLabelText("Ver detalhe de De outra, Autora")[0]);

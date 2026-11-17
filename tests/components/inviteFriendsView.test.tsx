@@ -1,16 +1,15 @@
 
 import { act, cleanup, fireEvent, render } from "@testing-library/react-native";
-import { afterEach, describe, expect, it, vi } from "vitest";
 import { InviteFriends } from "@/view/profile/inviteFriends";
 import type { InviteFriendsState, InviteFriendsActions } from "@/viewmodel/useInviteFriendsViewModel";
 
-vi.mock("@/viewmodel/useInviteFriendsViewModel", () => ({
-  useInviteFriendsViewModel: vi.fn(),
+jest.mock("@/viewmodel/useInviteFriendsViewModel", () => ({
+  useInviteFriendsViewModel: jest.fn(),
 }));
-vi.mock("react-native-view-shot", () => ({ captureRef: vi.fn().mockResolvedValue("file:///tmp/convite.png") }));
+jest.mock("react-native-view-shot", () => ({ captureRef: jest.fn().mockResolvedValue("file:///tmp/convite.png") }));
 
 import { useInviteFriendsViewModel } from "@/viewmodel/useInviteFriendsViewModel";
-const mockedUseInviteFriendsViewModel = vi.mocked(useInviteFriendsViewModel);
+const mockedUseInviteFriendsViewModel = jest.mocked(useInviteFriendsViewModel);
 
 function mockViewModel(
   state: Partial<InviteFriendsState> = {},
@@ -26,12 +25,12 @@ function mockViewModel(
     ...state,
   };
   const fullActions: InviteFriendsActions = {
-    shareImage: vi.fn().mockResolvedValue(undefined),
-    shareToWhatsApp: vi.fn().mockResolvedValue(undefined),
-    shareNative: vi.fn().mockResolvedValue(undefined),
-    copyLink: vi.fn().mockResolvedValue(undefined),
-    dismissLinkCopied: vi.fn(),
-    dismissShared: vi.fn(),
+    shareImage: jest.fn().mockResolvedValue(undefined),
+    shareToWhatsApp: jest.fn().mockResolvedValue(undefined),
+    shareNative: jest.fn().mockResolvedValue(undefined),
+    copyLink: jest.fn().mockResolvedValue(undefined),
+    dismissLinkCopied: jest.fn(),
+    dismissShared: jest.fn(),
     ...actions,
   };
   mockedUseInviteFriendsViewModel.mockReturnValue([fullState, fullActions]);
@@ -81,7 +80,7 @@ describe("InviteFriends — Convidar amigos (Figma 08.02, Spec 057)", () => {
 
   it("chama onBack ao acionar o botão de voltar", async () => {
     mockViewModel();
-    const onBack = vi.fn();
+    const onBack = jest.fn();
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
       screen = await render(<InviteFriends onBack={onBack} />);
@@ -108,7 +107,7 @@ describe("InviteFriends — Convidar amigos (Figma 08.02, Spec 057)", () => {
     expect(screen.queryByLabelText("Mais opções de compartilhamento")).toBeNull();
     expect(screen.queryByLabelText("Copiar link do aplicativo")).toBeNull();
     expect(screen.getByText("Texto que vai junto com a imagem")).toBeDefined();
-    const capture = vi.mocked(actions.shareImage).mock.calls[0][0];
+    const capture = jest.mocked(actions.shareImage).mock.calls[0][0];
     await expect(capture()).resolves.toBe("file:///tmp/convite.png");
   });
 });

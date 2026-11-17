@@ -1,4 +1,3 @@
-import { beforeEach, describe, expect, it } from "vitest";
 import { BookCoverCache, bookCoverCache } from "@/viewmodel/bookCoverCache";
 
 describe("BookCoverCache (Spec 040, ADR 0034)", () => {

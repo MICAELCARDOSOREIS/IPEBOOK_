@@ -1,15 +1,14 @@
-import { describe, expect, it, vi } from "vitest";
 import { SupabaseBetaTesterDataSource } from "@/infra/datasources/supabaseBetaTesterDataSource";
 import { DataSourceError } from "@/model/errors";
 import type { SupabaseAppClient } from "@/infra/supabaseClient";
 
-function clientWith(rpc: ReturnType<typeof vi.fn>): SupabaseAppClient {
+function clientWith(rpc: ReturnType<typeof jest.fn>): SupabaseAppClient {
   return { rpc } as unknown as SupabaseAppClient;
 }
 
 describe("SupabaseBetaTesterDataSource (Spec 108)", () => {
   it("registra a inscrição chamando a RPC com e-mail e nome", async () => {
-    const rpc = vi.fn().mockResolvedValue({ error: null });
+    const rpc = jest.fn().mockResolvedValue({ error: null });
     const dataSource = new SupabaseBetaTesterDataSource(clientWith(rpc));
 
     await dataSource.register({ email: "ana@exemplo.com", name: "Ana Paula" });
@@ -21,7 +20,7 @@ describe("SupabaseBetaTesterDataSource (Spec 108)", () => {
   });
 
   it("envia nome nulo quando a inscrição não informa o nome", async () => {
-    const rpc = vi.fn().mockResolvedValue({ error: null });
+    const rpc = jest.fn().mockResolvedValue({ error: null });
     const dataSource = new SupabaseBetaTesterDataSource(clientWith(rpc));
 
     await dataSource.register({ email: "beto@exemplo.com" });
@@ -33,7 +32,7 @@ describe("SupabaseBetaTesterDataSource (Spec 108)", () => {
   });
 
   it("traduz o erro do banco em DataSourceError", async () => {
-    const rpc = vi.fn().mockResolvedValue({ error: { message: "falhou", code: "P0001" } });
+    const rpc = jest.fn().mockResolvedValue({ error: { message: "falhou", code: "P0001" } });
     const dataSource = new SupabaseBetaTesterDataSource(clientWith(rpc));
 
     await expect(dataSource.register({ email: "ana@exemplo.com" })).rejects.toBeInstanceOf(

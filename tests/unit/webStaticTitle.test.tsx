@@ -1,9 +1,8 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { describe, expect, it, vi } from "vitest";
 
-// Mock do expo-router com vi.hoisted (mesma convenção de pwaIphoneAppleHig.test.tsx)
-vi.mock("expo-router/html", () => ({
+// Mock do expo-router/html no Jest (mesma convenção de pwaIphoneAppleHig.test.tsx)
+jest.mock("expo-router/html", () => ({
   useServerDocumentContext: () => ({
     htmlAttributes: {},
     bodyAttributes: {},

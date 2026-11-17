@@ -1,34 +1,33 @@
 
 import { act, fireEvent, render } from "@testing-library/react-native";
-import { describe, expect, it, vi } from "vitest";
 import type { AuthActions, AuthState } from "@/viewmodel/useAuthViewModel";
 import type { HomeActions, HomeState } from "@/viewmodel/useHomeViewModel";
 import Home from "@/view/home";
 
-vi.mock("@/viewmodel/useHomeViewModel", () => ({ useHomeViewModel: vi.fn() }));
-vi.mock("@/viewmodel/useAuthViewModel", () => ({ useAuthViewModel: vi.fn() }));
+jest.mock("@/viewmodel/useHomeViewModel", () => ({ useHomeViewModel: jest.fn() }));
+jest.mock("@/viewmodel/useAuthViewModel", () => ({ useAuthViewModel: jest.fn() }));
 
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useHomeViewModel } from "@/viewmodel/useHomeViewModel";
 
-const mockedUseHomeViewModel = vi.mocked(useHomeViewModel);
-const mockedUseAuthViewModel = vi.mocked(useAuthViewModel);
+const mockedUseHomeViewModel = jest.mocked(useHomeViewModel);
+const mockedUseAuthViewModel = jest.mocked(useAuthViewModel);
 
 const baseHomeState: HomeState = { books: [], loading: false, error: null };
-const baseHomeActions: HomeActions = { reload: vi.fn() };
+const baseHomeActions: HomeActions = { reload: jest.fn() };
 
 describe("indicador de sessão na Home (ISO/IEC 25010 - Usabilidade)", () => {
   it("mostra link de Entrar quando não há sessão autenticada", async () => {
     mockedUseHomeViewModel.mockReturnValue([baseHomeState, baseHomeActions]);
     const authState: AuthState = { user: null, loading: false, error: null };
     const authActions: AuthActions = {
-      signUp: vi.fn(),
-      signIn: vi.fn(),
-      signOut: vi.fn(),
-      requestPasswordReset: vi.fn(),
+      signUp: jest.fn(),
+      signIn: jest.fn(),
+      signOut: jest.fn(),
+      requestPasswordReset: jest.fn(),
     };
     mockedUseAuthViewModel.mockReturnValue([authState, authActions]);
-    const onNavigateToSignIn = vi.fn();
+    const onNavigateToSignIn = jest.fn();
 
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
@@ -49,7 +48,7 @@ describe("indicador de sessão na Home (ISO/IEC 25010 - Usabilidade)", () => {
       loading: false,
       error: null,
     };
-    const authActions: AuthActions = { signUp: vi.fn(), signIn: vi.fn(), signOut: vi.fn(), requestPasswordReset: vi.fn() };
+    const authActions: AuthActions = { signUp: jest.fn(), signIn: jest.fn(), signOut: jest.fn(), requestPasswordReset: jest.fn() };
     mockedUseAuthViewModel.mockReturnValue([authState, authActions]);
 
     let screen!: Awaited<ReturnType<typeof render>>;
@@ -70,7 +69,7 @@ describe("indicador de sessão na Home (ISO/IEC 25010 - Usabilidade)", () => {
     mockedUseHomeViewModel.mockReturnValue([baseHomeState, baseHomeActions]);
     mockedUseAuthViewModel.mockReturnValue([
       { user: null, loading: false, error: null },
-      { signUp: vi.fn(), signIn: vi.fn(), signOut: vi.fn(), requestPasswordReset: vi.fn() },
+      { signUp: jest.fn(), signIn: jest.fn(), signOut: jest.fn(), requestPasswordReset: jest.fn() },
     ]);
 
     let screen!: Awaited<ReturnType<typeof render>>;
@@ -85,7 +84,7 @@ describe("indicador de sessão na Home (ISO/IEC 25010 - Usabilidade)", () => {
     mockedUseHomeViewModel.mockReturnValue([baseHomeState, baseHomeActions]);
     mockedUseAuthViewModel.mockReturnValue([
       { user: null, loading: true, error: null },
-      { signUp: vi.fn(), signIn: vi.fn(), signOut: vi.fn(), requestPasswordReset: vi.fn() },
+      { signUp: jest.fn(), signIn: jest.fn(), signOut: jest.fn(), requestPasswordReset: jest.fn() },
     ]);
 
     let screen!: Awaited<ReturnType<typeof render>>;

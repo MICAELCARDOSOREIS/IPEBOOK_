@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import type { Book } from "@/model/entities/book";
 import {
   DEFAULT_SEARCH_FILTERS,

@@ -1,18 +1,17 @@
 import { act, fireEvent, render } from "@testing-library/react-native";
-import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { AuthActions, AuthState } from "@/viewmodel/useAuthViewModel";
 import type { ProfileActions, ProfileState } from "@/viewmodel/useProfileViewModel";
 import type { NotificationsActions, NotificationsState } from "@/viewmodel/useNotificationsViewModel";
 import ProfileHub from "@/view/profile/profileHub";
 
-vi.mock("@/viewmodel/useAuthViewModel", () => ({ useAuthViewModel: vi.fn() }));
-vi.mock("@/viewmodel/useProfileViewModel", () => ({ useProfileViewModel: vi.fn() }));
-vi.mock("@/viewmodel/useNotificationsViewModel", () => ({ useNotificationsViewModel: vi.fn() }));
-vi.mock("@/viewmodel/useMyListingsViewModel", () => ({
-  useMyListingsViewModel: vi.fn().mockReturnValue([{ books: [] }, { reload: vi.fn() }]),
+jest.mock("@/viewmodel/useAuthViewModel", () => ({ useAuthViewModel: jest.fn() }));
+jest.mock("@/viewmodel/useProfileViewModel", () => ({ useProfileViewModel: jest.fn() }));
+jest.mock("@/viewmodel/useNotificationsViewModel", () => ({ useNotificationsViewModel: jest.fn() }));
+jest.mock("@/viewmodel/useMyListingsViewModel", () => ({
+  useMyListingsViewModel: jest.fn().mockReturnValue([{ books: [] }, { reload: jest.fn() }]),
 }));
-vi.mock("@/viewmodel/useUserPreferencesViewModel", () => ({
-  useUserPreferencesViewModel: vi.fn().mockReturnValue([{ preferences: null }, {}]),
+jest.mock("@/viewmodel/useUserPreferencesViewModel", () => ({
+  useUserPreferencesViewModel: jest.fn().mockReturnValue([{ preferences: null }, {}]),
 }));
 
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
@@ -24,7 +23,7 @@ const authState: AuthState = {
   loading: false,
   error: null,
 };
-const authActions: AuthActions = { signUp: vi.fn(), signIn: vi.fn(), signOut: vi.fn(), requestPasswordReset: vi.fn() };
+const authActions: AuthActions = { signUp: jest.fn(), signIn: jest.fn(), signOut: jest.fn(), requestPasswordReset: jest.fn() };
 
 const profileState: ProfileState = {
   profile: {
@@ -40,29 +39,29 @@ const profileState: ProfileState = {
   saving: false,
   error: null,
 };
-const profileActions: ProfileActions = { reload: vi.fn(), update: vi.fn() };
+const profileActions: ProfileActions = { reload: jest.fn(), update: jest.fn() };
 
 describe("Notificações centralizadas no Perfil (Spec 078 / Melhoria UX)", () => {
   beforeEach(() => {
-    vi.mocked(useAuthViewModel).mockReturnValue([authState, authActions]);
-    vi.mocked(useProfileViewModel).mockReturnValue([profileState, profileActions]);
-    vi.mocked(useNotificationsViewModel).mockReturnValue([
+    jest.mocked(useAuthViewModel).mockReturnValue([authState, authActions]);
+    jest.mocked(useProfileViewModel).mockReturnValue([profileState, profileActions]);
+    jest.mocked(useNotificationsViewModel).mockReturnValue([
       { unreadCount: 3 } as NotificationsState,
-      { refresh: vi.fn(), reload: vi.fn() } as unknown as NotificationsActions,
+      { refresh: jest.fn(), reload: jest.fn() } as unknown as NotificationsActions,
     ]);
   });
 
   it("renderiza botão de notificações no topo do perfil com badge numérico e navega ao tocar", async () => {
-    const onNavigateToNotifications = vi.fn();
+    const onNavigateToNotifications = jest.fn();
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
       screen = await render(
         <ProfileHub
           onNavigateToNotifications={onNavigateToNotifications}
-          onNavigateToEditProfile={vi.fn()}
-          onNavigateToRatings={vi.fn()}
-          onNavigateToSecurity={vi.fn()}
-          onSignedOut={vi.fn()}
+          onNavigateToEditProfile={jest.fn()}
+          onNavigateToRatings={jest.fn()}
+          onNavigateToSecurity={jest.fn()}
+          onSignedOut={jest.fn()}
         />,
       );
     });
@@ -83,11 +82,11 @@ describe("Notificações centralizadas no Perfil (Spec 078 / Melhoria UX)", () =
       screen = await render(
         <ProfileHub
           unreadNotificationsCount={5}
-          onNavigateToNotifications={vi.fn()}
-          onNavigateToEditProfile={vi.fn()}
-          onNavigateToRatings={vi.fn()}
-          onNavigateToSecurity={vi.fn()}
-          onSignedOut={vi.fn()}
+          onNavigateToNotifications={jest.fn()}
+          onNavigateToEditProfile={jest.fn()}
+          onNavigateToRatings={jest.fn()}
+          onNavigateToSecurity={jest.fn()}
+          onSignedOut={jest.fn()}
         />,
       );
     });

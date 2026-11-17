@@ -1,6 +1,5 @@
 import { createElement } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
-import { afterEach, describe, expect, it, vi } from "vitest";
 import { ValidationError } from "@/model/errors";
 import type { IImagePickerService } from "@/model/services/iImagePickerService";
 import type { IListingPhotoUseCases } from "@/usecase/iListingPhotoUseCases";
@@ -26,9 +25,9 @@ const image = { bytes: new Uint8Array([1]), fileName: "a.jpg" };
 
 describe("useListingPhotoViewModel (Spec 092)", () => {
   it("escolhe com recorte de capa 5:8, envia e devolve a URL", async () => {
-    const pickImage = vi.fn().mockResolvedValue(image);
-    const upload = vi.fn().mockResolvedValue("https://cdn/u1/anuncio/a.jpg");
-    const hook = await renderHook({ pickSquareImage: vi.fn(), pickImage }, { uploadListingPhoto: upload });
+    const pickImage = jest.fn().mockResolvedValue(image);
+    const upload = jest.fn().mockResolvedValue("https://cdn/u1/anuncio/a.jpg");
+    const hook = await renderHook({ pickSquareImage: jest.fn(), pickImage }, { uploadListingPhoto: upload });
     let url: string | null = null;
     await act(async () => { url = await hook.current[1].choose("camera"); });
     expect(pickImage).toHaveBeenCalledWith("camera", [5, 8]);
@@ -38,8 +37,8 @@ describe("useListingPhotoViewModel (Spec 092)", () => {
   });
 
   it("cancelar não envia nem mostra erro", async () => {
-    const upload = vi.fn();
-    const hook = await renderHook({ pickSquareImage: vi.fn(), pickImage: vi.fn().mockResolvedValue(null) }, { uploadListingPhoto: upload });
+    const upload = jest.fn();
+    const hook = await renderHook({ pickSquareImage: jest.fn(), pickImage: jest.fn().mockResolvedValue(null) }, { uploadListingPhoto: upload });
     let url: string | null = "x";
     await act(async () => { url = await hook.current[1].choose("library"); });
     expect(url).toBeNull();
@@ -49,14 +48,14 @@ describe("useListingPhotoViewModel (Spec 092)", () => {
 
   it("mostra a mensagem de domínio ou uma genérica quando falha", async () => {
     const denied = await renderHook(
-      { pickSquareImage: vi.fn(), pickImage: vi.fn().mockRejectedValue(new ValidationError("Permita o acesso à câmera.")) },
-      { uploadListingPhoto: vi.fn() },
+      { pickSquareImage: jest.fn(), pickImage: jest.fn().mockRejectedValue(new ValidationError("Permita o acesso à câmera.")) },
+      { uploadListingPhoto: jest.fn() },
     );
     await act(async () => { await denied.current[1].choose("camera"); });
     expect(denied.current[0].error).toBe("Permita o acesso à câmera.");
     const network = await renderHook(
-      { pickSquareImage: vi.fn(), pickImage: vi.fn().mockResolvedValue(image) },
-      { uploadListingPhoto: vi.fn().mockRejectedValue(new Error("rede")) },
+      { pickSquareImage: jest.fn(), pickImage: jest.fn().mockResolvedValue(image) },
+      { uploadListingPhoto: jest.fn().mockRejectedValue(new Error("rede")) },
     );
     await act(async () => { await network.current[1].choose("library"); });
     expect(network.current[0].error).toBe("Não foi possível enviar a foto. Tente novamente.");
@@ -64,8 +63,8 @@ describe("useListingPhotoViewModel (Spec 092)", () => {
 
   it("ignora um segundo toque enquanto o seletor está aberto", async () => {
     let release!: (value: typeof image | null) => void;
-    const pickImage = vi.fn().mockReturnValue(new Promise((resolve) => { release = resolve; }));
-    const hook = await renderHook({ pickSquareImage: vi.fn(), pickImage }, { uploadListingPhoto: vi.fn() });
+    const pickImage = jest.fn().mockReturnValue(new Promise((resolve) => { release = resolve; }));
+    const hook = await renderHook({ pickSquareImage: jest.fn(), pickImage }, { uploadListingPhoto: jest.fn() });
     await act(async () => { void hook.current[1].choose("camera"); void hook.current[1].choose("camera"); });
     expect(pickImage).toHaveBeenCalledTimes(1);
     await act(async () => { release(null); });

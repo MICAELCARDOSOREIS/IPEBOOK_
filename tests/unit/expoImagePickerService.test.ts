@@ -1,33 +1,52 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const picker = vi.hoisted(() => ({
-  requestMediaLibraryPermissionsAsync: vi.fn(),
-  requestCameraPermissionsAsync: vi.fn(),
-  launchImageLibraryAsync: vi.fn(),
-  launchCameraAsync: vi.fn(),
+jest.mock("expo-image-picker", () => ({
+  __esModule: true,
+  requestMediaLibraryPermissionsAsync: jest.fn(),
+  requestCameraPermissionsAsync: jest.fn(),
+  launchImageLibraryAsync: jest.fn(),
+  launchCameraAsync: jest.fn(),
 }));
-const manipulator = vi.hoisted(() => {
-  const context = { resize: vi.fn(), renderAsync: vi.fn() };
-  return { context, manipulate: vi.fn(() => context) };
+jest.mock("expo-image-manipulator", () => {
+  const context = { resize: jest.fn(), renderAsync: jest.fn() };
+  return {
+    __esModule: true,
+    ImageManipulator: { manipulate: jest.fn(() => context) },
+    SaveFormat: { JPEG: "jpeg" },
+    __mockContext: context,
+  };
 });
-
-vi.mock("expo-image-picker", () => picker);
-vi.mock("expo-image-manipulator", () => ({
-  ImageManipulator: { manipulate: manipulator.manipulate },
-  SaveFormat: { JPEG: "jpeg" },
-}));
-vi.mock("react-native", () => ({ Platform: { OS: "web" } }));
+jest.mock("react-native", () => ({ __esModule: true, Platform: { OS: "web" } }));
 
 import { ExpoImagePickerService } from "@/infra/services/expoImagePickerService";
+import { stubGlobal, unstubAllGlobals } from "../helpers/stubGlobal";
 
-const saveAsync = vi.fn();
+const picker = jest.requireMock("expo-image-picker") as {
+  requestMediaLibraryPermissionsAsync: jest.Mock;
+  requestCameraPermissionsAsync: jest.Mock;
+  launchImageLibraryAsync: jest.Mock;
+  launchCameraAsync: jest.Mock;
+};
+const manipulatorModule = jest.requireMock("expo-image-manipulator") as {
+  ImageManipulator: { manipulate: jest.Mock };
+  __mockContext: { resize: jest.Mock; renderAsync: jest.Mock };
+};
+const manipulator = {
+  context: manipulatorModule.__mockContext,
+  manipulate: manipulatorModule.ImageManipulator.manipulate,
+};
+
+const saveAsync = jest.fn();
 
 beforeEach(() => {
-  vi.clearAllMocks();
+  jest.clearAllMocks();
   picker.requestMediaLibraryPermissionsAsync.mockResolvedValue({ granted: true });
   manipulator.context.renderAsync.mockResolvedValue({ saveAsync });
   saveAsync.mockResolvedValue({ uri: "file:///reduzida.jpg", width: 1080, height: 1080 });
-  vi.stubGlobal("fetch", vi.fn(async (uri: string) => ({ arrayBuffer: async () => new TextEncoder().encode(uri).buffer })));
+  stubGlobal("fetch", jest.fn(async (uri: string) => ({ arrayBuffer: async () => new TextEncoder().encode(uri).buffer })));
+});
+
+afterEach(() => {
+  unstubAllGlobals();
 });
 
 describe("ExpoImagePickerService (Spec 087)", () => {

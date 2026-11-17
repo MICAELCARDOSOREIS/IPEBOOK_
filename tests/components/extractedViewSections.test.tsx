@@ -1,6 +1,5 @@
 import React from "react";
 import { act, cleanup, fireEvent, render } from "@testing-library/react-native";
-import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Book } from "@/model/entities/book";
 import { PIRIPIRI_MEETING_POINTS } from "@/model/entities/meetingPoint";
 import { BuyerPendingProposalBanner, OwnerPendingProposalCard } from "@/view/conversations/ChatProposalCards";
@@ -26,11 +25,11 @@ const SAMPLE_BOOK: Book = {
 
 describe("Seções extraídas das telas (Spec 126 — E2 / CA5)", () => {
   it("renderiza CatalogCarousel, HomeShortcutsSection e HomeEmptyCatalogSection com contratos acessíveis", async () => {
-    const onNavigateToBookDetail = vi.fn();
-    const onViewMore = vi.fn();
-    const onNavigateToSearch = vi.fn();
-    const onExploreAll = vi.fn();
-    const onChangeNeighborhood = vi.fn();
+    const onNavigateToBookDetail = jest.fn();
+    const onViewMore = jest.fn();
+    const onNavigateToSearch = jest.fn();
+    const onExploreAll = jest.fn();
+    const onChangeNeighborhood = jest.fn();
 
     expect(carouselOffsetFor(2)).toBeGreaterThan(0);
 
@@ -85,7 +84,7 @@ describe("Seções extraídas das telas (Spec 126 — E2 / CA5)", () => {
     });
     expect(onChangeNeighborhood).toHaveBeenCalledTimes(1);
 
-    const onResetModality = vi.fn();
+    const onResetModality = jest.fn();
     await act(async () => {
       screen.rerender(
         <HomeEmptyCatalogSection
@@ -109,13 +108,13 @@ describe("Seções extraídas das telas (Spec 126 — E2 / CA5)", () => {
   });
 
   it("renderiza ProfileIdentityCard, ProfileCommunityBadges e ProfileMenuSection", async () => {
-    const onEditProfile = vi.fn();
-    const onCreateListing = vi.fn();
-    const onMyListings = vi.fn();
-    const onMeetingHistory = vi.fn();
-    const onRatings = vi.fn();
-    const onMenuAction = vi.fn();
-    const onSignOut = vi.fn();
+    const onEditProfile = jest.fn();
+    const onCreateListing = jest.fn();
+    const onMyListings = jest.fn();
+    const onMeetingHistory = jest.fn();
+    const onRatings = jest.fn();
+    const onMenuAction = jest.fn();
+    const onSignOut = jest.fn();
 
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
@@ -166,11 +165,11 @@ describe("Seções extraídas das telas (Spec 126 — E2 / CA5)", () => {
   });
 
   it("renderiza BookDetailHeroSection, HeroIconButton e DetailRow", async () => {
-    const onBack = vi.fn();
-    const onShareWhatsApp = vi.fn();
-    const onShareLink = vi.fn();
-    const onToggleFavorite = vi.fn();
-    const onOpenGallery = vi.fn();
+    const onBack = jest.fn();
+    const onShareWhatsApp = jest.fn();
+    const onShareLink = jest.fn();
+    const onToggleFavorite = jest.fn();
+    const onOpenGallery = jest.fn();
 
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
@@ -213,10 +212,10 @@ describe("Seções extraídas das telas (Spec 126 — E2 / CA5)", () => {
   });
 
   it("renderiza OptionChip e ScheduleMeetingWideLayout", async () => {
-    const onSelectPoint = vi.fn();
-    const onSelectDay = vi.fn();
-    const onSelectHour = vi.fn();
-    const onSubmit = vi.fn();
+    const onSelectPoint = jest.fn();
+    const onSelectDay = jest.fn();
+    const onSelectHour = jest.fn();
+    const onSubmit = jest.fn();
     const day = new Date("2026-05-06T12:00:00Z");
 
     let screen!: Awaited<ReturnType<typeof render>>;
@@ -240,7 +239,7 @@ describe("Seções extraídas das telas (Spec 126 — E2 / CA5)", () => {
             summary={{ complete: true, text: "Praça da Bandeira · Qua · 9h" }}
             scrollRef={{ current: null }}
             errorRef={{ current: null }}
-            onBack={vi.fn()}
+            onBack={jest.fn()}
             onSelectPoint={onSelectPoint}
             onSelectDay={onSelectDay}
             onSelectHour={onSelectHour}
@@ -262,8 +261,8 @@ describe("Seções extraídas das telas (Spec 126 — E2 / CA5)", () => {
   });
 
   it("renderiza OwnerPendingProposalCard e BuyerPendingProposalBanner", async () => {
-    const onAccept = vi.fn();
-    const onReject = vi.fn();
+    const onAccept = jest.fn();
+    const onReject = jest.fn();
 
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {

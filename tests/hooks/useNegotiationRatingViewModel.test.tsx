@@ -1,6 +1,5 @@
 import { createElement } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
-import { afterEach, describe, expect, it } from "vitest";
 import { useNegotiationRatingViewModel } from "@/viewmodel/useNegotiationRatingViewModel";
 import type { Rating } from "@/model/entities/rating";
 import { MemoryStoreReviewService } from "@/infra/services/memoryStoreReviewService";

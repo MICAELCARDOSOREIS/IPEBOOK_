@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import type { AppNotification } from "@/model/entities/notification";
 import { groupNotificationsByPeriod, notificationTimeLabel, periodOf } from "@/viewmodel/notificationGrouping";
 

@@ -1,6 +1,5 @@
 import React from "react";
 import renderer, { act } from "react-test-renderer";
-import { describe, expect, it, vi } from "vitest";
 import { SearchBookCard } from "@/view/search/SearchBookCard";
 import { FavoriteButton } from "@/view/components/FavoriteButton";
 import type { Book } from "@/model/entities/book";
@@ -22,8 +21,8 @@ const sampleBook: Book = {
 
 describe("SearchBookCard", () => {
   it("renderiza modalidade doacao com gratuito e status disponivel", () => {
-    const onPress = vi.fn();
-    const onFavoriteToggle = vi.fn();
+    const onPress = jest.fn();
+    const onFavoriteToggle = jest.fn();
     let root: renderer.ReactTestRenderer;
 
     act(() => {
@@ -60,8 +59,8 @@ describe("SearchBookCard", () => {
           wideWeb={true}
           gridColumns={3}
           userId={null}
-          onPress={vi.fn()}
-          onFavoriteToggle={vi.fn()}
+          onPress={jest.fn()}
+          onFavoriteToggle={jest.fn()}
         />,
       );
     });
@@ -73,8 +72,8 @@ describe("SearchBookCard", () => {
 });
 
   it("dispara onPress e onFavoriteToggle ao interagir", () => {
-    const onPress = vi.fn();
-    const onFavoriteToggle = vi.fn();
+    const onPress = jest.fn();
+    const onFavoriteToggle = jest.fn();
     let root: renderer.ReactTestRenderer;
 
     act(() => {

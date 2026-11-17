@@ -1,4 +1,3 @@
-import { describe, expect, it, vi } from "vitest";
 import { SupabaseDeliveryDataSource } from "@/infra/datasources/supabaseDeliveryDataSource";
 import type { SupabaseAppClient } from "@/infra/supabaseClient";
 import { DELIVERY_ATTEMPT_MESSAGES } from "@/model/entities/delivery";
@@ -8,12 +7,12 @@ type Result = { data: unknown; error: unknown };
 
 /** Cliente com a leitura de `v2_deliveries` e as duas funções RPC; cada um devolve o resultado combinado. */
 function fakeClient({ read, rpc }: { read?: Result; rpc?: Result }) {
-  const chain: Record<string, ReturnType<typeof vi.fn>> = {};
-  chain.select = vi.fn(() => chain);
-  chain.eq = vi.fn(() => chain);
-  chain.maybeSingle = vi.fn().mockResolvedValue(read ?? { data: null, error: null });
-  const rpcFn = vi.fn().mockResolvedValue(rpc ?? { data: null, error: null });
-  const client = { from: vi.fn(() => chain), rpc: rpcFn } as unknown as SupabaseAppClient;
+  const chain: Record<string, ReturnType<typeof jest.fn>> = {};
+  chain.select = jest.fn(() => chain);
+  chain.eq = jest.fn(() => chain);
+  chain.maybeSingle = jest.fn().mockResolvedValue(read ?? { data: null, error: null });
+  const rpcFn = jest.fn().mockResolvedValue(rpc ?? { data: null, error: null });
+  const client = { from: jest.fn(() => chain), rpc: rpcFn } as unknown as SupabaseAppClient;
   return { client, chain, rpc: rpcFn };
 }
 

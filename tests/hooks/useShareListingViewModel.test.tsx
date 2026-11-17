@@ -1,18 +1,19 @@
 import { createElement } from "react";
 import { Platform, Share } from "react-native";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
-import { afterEach, describe, expect, it, vi } from "vitest";
 import { ValidationError } from "@/model/errors";
 import type { IShareUseCases } from "@/usecase/iShareUseCases";
 import { useShareListingViewModel } from "@/viewmodel/useShareListingViewModel";
+import { stubGlobal, unstubAllGlobals } from "../helpers/stubGlobal";
 
-vi.mock("expo-linking", () => ({
-  createURL: vi.fn((path: string) => `ipebook://${path}`),
-  openURL: vi.fn().mockResolvedValue(undefined),
+jest.mock("expo-linking", () => ({
+  createURL: jest.fn((path: string) => `ipebook://${path}`),
+  openURL: jest.fn().mockResolvedValue(undefined),
 }));
 
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
 const mounted: ReactTestRenderer[] = [];
+const originalPlatformOS = Platform.OS;
 
 async function renderHook(useCases: IShareUseCases, shareImageFile?: (uri: string) => Promise<boolean>) {
   let result!: ReturnType<typeof useShareListingViewModel>;
@@ -34,8 +35,9 @@ afterEach(async () => {
   await act(async () => {
     mounted.splice(0).forEach((tree) => tree.unmount());
   });
-  vi.restoreAllMocks();
-  vi.unstubAllGlobals();
+  Platform.OS = originalPlatformOS;
+  jest.restoreAllMocks();
+  unstubAllGlobals();
 });
 
 const fakeUseCases: IShareUseCases = {
@@ -53,7 +55,7 @@ describe("testes de hook: useShareListingViewModel (Spec 019)", () => {
   it("compartilha via menu nativo no Android", async () => {
     const originalOS = Platform.OS;
     Platform.OS = "android";
-    const shareSpy = vi.spyOn(Share, "share").mockResolvedValue({ action: "sharedAction", activityType: undefined });
+    const shareSpy = jest.spyOn(Share, "share").mockResolvedValue({ action: "sharedAction", activityType: undefined });
     const hook = await renderHook(fakeUseCases);
     await act(async () => {
       await hook.current[1].share("b1");
@@ -66,8 +68,8 @@ describe("testes de hook: useShareListingViewModel (Spec 019)", () => {
   it("copia o link e sinaliza confirmação na Web", async () => {
     const originalOS = Platform.OS;
     Platform.OS = "web";
-    const writeText = vi.fn().mockResolvedValue(undefined);
-    vi.stubGlobal("navigator", { clipboard: { writeText } });
+    const writeText = jest.fn().mockResolvedValue(undefined);
+    stubGlobal("navigator", { clipboard: { writeText } });
     const hook = await renderHook(fakeUseCases);
     await act(async () => {
       await hook.current[1].share("b1");
@@ -80,7 +82,7 @@ describe("testes de hook: useShareListingViewModel (Spec 019)", () => {
   it("limpa a confirmação de link copiado", async () => {
     const originalOS = Platform.OS;
     Platform.OS = "web";
-    vi.stubGlobal("navigator", { clipboard: { writeText: vi.fn().mockResolvedValue(undefined) } });
+    stubGlobal("navigator", { clipboard: { writeText: jest.fn().mockResolvedValue(undefined) } });
     const hook = await renderHook(fakeUseCases);
     await act(async () => {
       await hook.current[1].share("b1");
@@ -124,10 +126,10 @@ describe("testes de hook: useShareListingViewModel (Spec 019)", () => {
     it("abre o WhatsApp sem consultar canOpenURL (indisponível no Android 11+ e no iOS)", async () => {
       const originalOS = Platform.OS;
       Platform.OS = "android";
-      const openURL = vi.fn().mockResolvedValue(undefined);
+      const openURL = jest.fn().mockResolvedValue(undefined);
       const linking = await import("expo-linking");
-      vi.mocked(linking.openURL).mockImplementation(openURL);
-      const shareSpy = vi.spyOn(Share, "share");
+      jest.mocked(linking.openURL).mockImplementation(openURL);
+      const shareSpy = jest.spyOn(Share, "share");
 
       const hook = await renderHook(fakeUseCases);
       await act(async () => {
@@ -144,8 +146,8 @@ describe("testes de hook: useShareListingViewModel (Spec 019)", () => {
       const originalOS = Platform.OS;
       Platform.OS = "android";
       const linking = await import("expo-linking");
-      vi.mocked(linking.openURL).mockRejectedValueOnce(new Error("nenhum app abre whatsapp://"));
-      const shareSpy = vi.spyOn(Share, "share").mockResolvedValue({ action: "sharedAction", activityType: undefined });
+      jest.mocked(linking.openURL).mockRejectedValueOnce(new Error("nenhum app abre whatsapp://"));
+      const shareSpy = jest.spyOn(Share, "share").mockResolvedValue({ action: "sharedAction", activityType: undefined });
 
       const hook = await renderHook(fakeUseCases);
       await act(async () => {
@@ -162,8 +164,8 @@ describe("testes de hook: useShareListingViewModel (Spec 019)", () => {
     it("usa a Web Share API quando disponível", async () => {
       const originalOS = Platform.OS;
       Platform.OS = "web";
-      const webShare = vi.fn().mockResolvedValue(undefined);
-      vi.stubGlobal("navigator", { share: webShare, clipboard: { writeText: vi.fn() } });
+      const webShare = jest.fn().mockResolvedValue(undefined);
+      stubGlobal("navigator", { share: webShare, clipboard: { writeText: jest.fn() } });
 
       const hook = await renderHook(fakeUseCases);
       await act(async () => {
@@ -181,7 +183,7 @@ describe("testes de hook: useShareListingViewModel (Spec 019)", () => {
       const originalOS = Platform.OS;
       Platform.OS = "web";
       const cancel = Object.assign(new Error("Share canceled"), { name: "AbortError" });
-      vi.stubGlobal("navigator", { share: vi.fn().mockRejectedValue(cancel), clipboard: { writeText: vi.fn() } });
+      stubGlobal("navigator", { share: jest.fn().mockRejectedValue(cancel), clipboard: { writeText: jest.fn() } });
 
       const hook = await renderHook(fakeUseCases);
       await act(async () => {
@@ -196,8 +198,8 @@ describe("testes de hook: useShareListingViewModel (Spec 019)", () => {
       const originalOS = Platform.OS;
       Platform.OS = "web";
       const denied = Object.assign(new Error("Permission denied"), { name: "NotAllowedError" });
-      const writeText = vi.fn().mockResolvedValue(undefined);
-      vi.stubGlobal("navigator", { share: vi.fn().mockRejectedValue(denied), clipboard: { writeText } });
+      const writeText = jest.fn().mockResolvedValue(undefined);
+      stubGlobal("navigator", { share: jest.fn().mockRejectedValue(denied), clipboard: { writeText } });
 
       const hook = await renderHook(fakeUseCases);
       await act(async () => {
@@ -212,8 +214,8 @@ describe("testes de hook: useShareListingViewModel (Spec 019)", () => {
     it("copia a mensagem quando a Web Share API não está disponível", async () => {
       const originalOS = Platform.OS;
       Platform.OS = "web";
-      const writeText = vi.fn().mockResolvedValue(undefined);
-      vi.stubGlobal("navigator", { clipboard: { writeText } });
+      const writeText = jest.fn().mockResolvedValue(undefined);
+      stubGlobal("navigator", { clipboard: { writeText } });
 
       const hook = await renderHook(fakeUseCases);
       await act(async () => {
@@ -228,11 +230,11 @@ describe("testes de hook: useShareListingViewModel (Spec 019)", () => {
     it("abre só o WhatsApp, sem a folha de imagem do botão de compartilhar (Spec 118, ADR 0110)", async () => {
       const originalOS = Platform.OS;
       Platform.OS = "android";
-      const shareFile = vi.fn().mockResolvedValue(true);
-      const shareSpy = vi.spyOn(Share, "share");
+      const shareFile = jest.fn().mockResolvedValue(true);
+      const shareSpy = jest.spyOn(Share, "share");
       const linking = await import("expo-linking");
-      const openURL = vi.fn().mockResolvedValue(undefined);
-      vi.mocked(linking.openURL).mockImplementation(openURL);
+      const openURL = jest.fn().mockResolvedValue(undefined);
+      jest.mocked(linking.openURL).mockImplementation(openURL);
 
       const hook = await renderHook(fakeUseCases, shareFile);
       await act(async () => {
@@ -253,10 +255,10 @@ describe("useShareListingViewModel — imagem do anúncio (Spec 092)", () => {
   it("captura a imagem e abre a folha de compartilhamento com o arquivo", async () => {
     const originalOS = Platform.OS;
     Platform.OS = "android";
-    const shareFile = vi.fn().mockResolvedValue(true);
-    const shareSpy = vi.spyOn(Share, "share").mockResolvedValue({ action: "sharedAction", activityType: undefined });
+    const shareFile = jest.fn().mockResolvedValue(true);
+    const shareSpy = jest.spyOn(Share, "share").mockResolvedValue({ action: "sharedAction", activityType: undefined });
     const hook = await renderHook(fakeUseCases, shareFile);
-    const capture = vi.fn().mockResolvedValue("file:///tmp/anuncio.png");
+    const capture = jest.fn().mockResolvedValue("file:///tmp/anuncio.png");
     await act(async () => { await hook.current[1].shareImage("b1", fakeListing, capture); });
     expect(shareFile).toHaveBeenCalledWith("file:///tmp/anuncio.png", "Dom Casmurro de Machado de Assis — https://ipebook.app/livro/b1", "Compartilhar anúncio");
     expect(shareSpy).not.toHaveBeenCalled();
@@ -267,9 +269,9 @@ describe("useShareListingViewModel — imagem do anúncio (Spec 092)", () => {
   it("cai no texto com link https quando o aparelho não compartilha arquivos", async () => {
     const originalOS = Platform.OS;
     Platform.OS = "android";
-    const shareSpy = vi.spyOn(Share, "share").mockResolvedValue({ action: "sharedAction", activityType: undefined });
-    const hook = await renderHook(fakeUseCases, vi.fn().mockResolvedValue(false));
-    await act(async () => { await hook.current[1].shareImage("b1", fakeListing, vi.fn().mockResolvedValue("file:///x.png")); });
+    const shareSpy = jest.spyOn(Share, "share").mockResolvedValue({ action: "sharedAction", activityType: undefined });
+    const hook = await renderHook(fakeUseCases, jest.fn().mockResolvedValue(false));
+    await act(async () => { await hook.current[1].shareImage("b1", fakeListing, jest.fn().mockResolvedValue("file:///x.png")); });
     expect(shareSpy).toHaveBeenCalledWith({ message: "Dom Casmurro de Machado de Assis — https://ipebook.app/livro/b1" });
     Platform.OS = originalOS;
   });
@@ -277,10 +279,10 @@ describe("useShareListingViewModel — imagem do anúncio (Spec 092)", () => {
   it("na web copia o texto com o link, sem capturar", async () => {
     const originalOS = Platform.OS;
     Platform.OS = "web";
-    const writeText = vi.fn().mockResolvedValue(undefined);
-    vi.stubGlobal("navigator", { clipboard: { writeText } });
-    const capture = vi.fn();
-    const hook = await renderHook(fakeUseCases, vi.fn());
+    const writeText = jest.fn().mockResolvedValue(undefined);
+    stubGlobal("navigator", { clipboard: { writeText } });
+    const capture = jest.fn();
+    const hook = await renderHook(fakeUseCases, jest.fn());
     await act(async () => { await hook.current[1].shareImage("b1", fakeListing, capture); });
     expect(capture).not.toHaveBeenCalled();
     expect(writeText).toHaveBeenCalledWith("Dom Casmurro de Machado de Assis — https://ipebook.app/livro/b1");
@@ -291,11 +293,11 @@ describe("useShareListingViewModel — imagem do anúncio (Spec 092)", () => {
   it("mostra erro amigável quando a captura falha ou o anúncio é inválido", async () => {
     const originalOS = Platform.OS;
     Platform.OS = "android";
-    const hook = await renderHook(fakeUseCases, vi.fn().mockResolvedValue(true));
-    await act(async () => { await hook.current[1].shareImage("b1", fakeListing, vi.fn().mockRejectedValue(new Error("x"))); });
+    const hook = await renderHook(fakeUseCases, jest.fn().mockResolvedValue(true));
+    await act(async () => { await hook.current[1].shareImage("b1", fakeListing, jest.fn().mockRejectedValue(new Error("x"))); });
     expect(hook.current[0].error).toBe("Não foi possível compartilhar o anúncio. Tente novamente.");
-    const invalid = await renderHook({ ...fakeUseCases, buildListingSharePath: () => { throw new ValidationError("Anúncio inválido."); } }, vi.fn());
-    await act(async () => { await invalid.current[1].shareImage("", fakeListing, vi.fn()); });
+    const invalid = await renderHook({ ...fakeUseCases, buildListingSharePath: () => { throw new ValidationError("Anúncio inválido."); } }, jest.fn());
+    await act(async () => { await invalid.current[1].shareImage("", fakeListing, jest.fn()); });
     expect(invalid.current[0].error).toBe("Anúncio inválido.");
     Platform.OS = originalOS;
   });
@@ -307,8 +309,8 @@ describe("useShareListingViewModel — imagem do anúncio (Spec 092)", () => {
     // AbortError
     const abortErr = new Error("Abort");
     abortErr.name = "AbortError";
-    const navAbort = vi.fn().mockRejectedValue(abortErr);
-    vi.stubGlobal("navigator", { share: navAbort });
+    const navAbort = jest.fn().mockRejectedValue(abortErr);
+    stubGlobal("navigator", { share: navAbort });
     const hook = await renderHook(fakeUseCases);
     await act(async () => {
       await hook.current[1].shareToWhatsApp("b1", fakeListing);
@@ -319,9 +321,9 @@ describe("useShareListingViewModel — imagem do anúncio (Spec 092)", () => {
     // NotAllowedError (recorre à área de transferência)
     const notAllowedErr = new Error("NotAllowed");
     notAllowedErr.name = "NotAllowedError";
-    const writeText = vi.fn().mockResolvedValue(undefined);
-    vi.stubGlobal("navigator", {
-      share: vi.fn().mockRejectedValue(notAllowedErr),
+    const writeText = jest.fn().mockResolvedValue(undefined);
+    stubGlobal("navigator", {
+      share: jest.fn().mockRejectedValue(notAllowedErr),
       clipboard: { writeText },
     });
     await act(async () => {
@@ -344,8 +346,8 @@ describe("useShareListingViewModel — branches de share com anúncio (Spec 118)
   it("usa a Web Share API ao compartilhar anúncio na web", async () => {
     const originalOS = Platform.OS;
     Platform.OS = "web";
-    const webShare = vi.fn().mockResolvedValue(undefined);
-    vi.stubGlobal("navigator", { share: webShare, clipboard: { writeText: vi.fn() } });
+    const webShare = jest.fn().mockResolvedValue(undefined);
+    stubGlobal("navigator", { share: webShare, clipboard: { writeText: jest.fn() } });
 
     const hook = await renderHook(fakeUseCases);
     await act(async () => {
@@ -361,7 +363,7 @@ describe("useShareListingViewModel — branches de share com anúncio (Spec 118)
     const originalOS = Platform.OS;
     Platform.OS = "web";
     const cancel = Object.assign(new Error("cancelado"), { name: "AbortError" });
-    vi.stubGlobal("navigator", { share: vi.fn().mockRejectedValue(cancel) });
+    stubGlobal("navigator", { share: jest.fn().mockRejectedValue(cancel) });
 
     const hook = await renderHook(fakeUseCases);
     await act(async () => {
@@ -376,8 +378,8 @@ describe("useShareListingViewModel — branches de share com anúncio (Spec 118)
     const originalOS = Platform.OS;
     Platform.OS = "web";
     const denied = Object.assign(new Error("sem permissão"), { name: "NotAllowedError" });
-    const writeText = vi.fn().mockResolvedValue(undefined);
-    vi.stubGlobal("navigator", { share: vi.fn().mockRejectedValue(denied), clipboard: { writeText } });
+    const writeText = jest.fn().mockResolvedValue(undefined);
+    stubGlobal("navigator", { share: jest.fn().mockRejectedValue(denied), clipboard: { writeText } });
 
     const hook = await renderHook(fakeUseCases);
     await act(async () => {
@@ -392,7 +394,7 @@ describe("useShareListingViewModel — branches de share com anúncio (Spec 118)
   it("mostra erro genérico quando a Web Share API falha por outro motivo", async () => {
     const originalOS = Platform.OS;
     Platform.OS = "web";
-    vi.stubGlobal("navigator", { share: vi.fn().mockRejectedValue(new Error("falha inesperada")) });
+    stubGlobal("navigator", { share: jest.fn().mockRejectedValue(new Error("falha inesperada")) });
 
     const hook = await renderHook(fakeUseCases);
     await act(async () => {
@@ -406,10 +408,10 @@ describe("useShareListingViewModel — branches de share com anúncio (Spec 118)
   it("compartilha a imagem capturada no Android", async () => {
     const originalOS = Platform.OS;
     Platform.OS = "android";
-    const shareFile = vi.fn().mockResolvedValue(true);
-    const shareSpy = vi.spyOn(Share, "share").mockResolvedValue({ action: "sharedAction", activityType: undefined });
+    const shareFile = jest.fn().mockResolvedValue(true);
+    const shareSpy = jest.spyOn(Share, "share").mockResolvedValue({ action: "sharedAction", activityType: undefined });
     const hook = await renderHook(fakeUseCases, shareFile);
-    const capture = vi.fn().mockResolvedValue("file:///tmp/anuncio.png");
+    const capture = jest.fn().mockResolvedValue("file:///tmp/anuncio.png");
 
     await act(async () => {
       await hook.current[1].share("b1", fakeListing, capture);
@@ -428,11 +430,11 @@ describe("useShareListingViewModel — branches de share com anúncio (Spec 118)
   it("cai no compartilhamento de texto quando a captura falha no Android", async () => {
     const originalOS = Platform.OS;
     Platform.OS = "android";
-    const shareSpy = vi.spyOn(Share, "share").mockResolvedValue({ action: "sharedAction", activityType: undefined });
-    const hook = await renderHook(fakeUseCases, vi.fn().mockResolvedValue(true));
+    const shareSpy = jest.spyOn(Share, "share").mockResolvedValue({ action: "sharedAction", activityType: undefined });
+    const hook = await renderHook(fakeUseCases, jest.fn().mockResolvedValue(true));
 
     await act(async () => {
-      await hook.current[1].share("b1", fakeListing, vi.fn().mockRejectedValue(new Error("captura falhou")));
+      await hook.current[1].share("b1", fakeListing, jest.fn().mockRejectedValue(new Error("captura falhou")));
     });
 
     expect(shareSpy).toHaveBeenCalledWith({ message: expect.stringContaining("Dom Casmurro") });
@@ -443,11 +445,11 @@ describe("useShareListingViewModel — branches de share com anúncio (Spec 118)
   it("cai no compartilhamento de texto quando o arquivo não é compartilhado", async () => {
     const originalOS = Platform.OS;
     Platform.OS = "android";
-    const shareSpy = vi.spyOn(Share, "share").mockResolvedValue({ action: "sharedAction", activityType: undefined });
-    const hook = await renderHook(fakeUseCases, vi.fn().mockResolvedValue(false));
+    const shareSpy = jest.spyOn(Share, "share").mockResolvedValue({ action: "sharedAction", activityType: undefined });
+    const hook = await renderHook(fakeUseCases, jest.fn().mockResolvedValue(false));
 
     await act(async () => {
-      await hook.current[1].share("b1", fakeListing, vi.fn().mockResolvedValue("file:///tmp/anuncio.png"));
+      await hook.current[1].share("b1", fakeListing, jest.fn().mockResolvedValue("file:///tmp/anuncio.png"));
     });
 
     expect(shareSpy).toHaveBeenCalledWith({ message: expect.stringContaining("Dom Casmurro") });
@@ -464,7 +466,7 @@ describe("useShareListingViewModel — fallback sem formatação de WhatsApp", (
   it("usa a mensagem genérica ao compartilhar anúncio", async () => {
     const originalOS = Platform.OS;
     Platform.OS = "android";
-    const shareSpy = vi.spyOn(Share, "share").mockResolvedValue({ action: "sharedAction", activityType: undefined });
+    const shareSpy = jest.spyOn(Share, "share").mockResolvedValue({ action: "sharedAction", activityType: undefined });
     const hook = await renderHook(semFormatacao);
 
     await act(async () => {
@@ -479,8 +481,8 @@ describe("useShareListingViewModel — fallback sem formatação de WhatsApp", (
     const originalOS = Platform.OS;
     Platform.OS = "android";
     const linking = await import("expo-linking");
-    vi.mocked(linking.openURL).mockRejectedValueOnce(new Error("sem WhatsApp"));
-    const shareSpy = vi.spyOn(Share, "share").mockResolvedValue({ action: "sharedAction", activityType: undefined });
+    jest.mocked(linking.openURL).mockRejectedValueOnce(new Error("sem WhatsApp"));
+    const shareSpy = jest.spyOn(Share, "share").mockResolvedValue({ action: "sharedAction", activityType: undefined });
     const hook = await renderHook(semFormatacao);
 
     await act(async () => {
@@ -494,7 +496,7 @@ describe("useShareListingViewModel — fallback sem formatação de WhatsApp", (
   it("mostra erro genérico quando a Web Share API falha no WhatsApp", async () => {
     const originalOS = Platform.OS;
     Platform.OS = "web";
-    vi.stubGlobal("navigator", { share: vi.fn().mockRejectedValue(new Error("falha inesperada")) });
+    stubGlobal("navigator", { share: jest.fn().mockRejectedValue(new Error("falha inesperada")) });
 
     const hook = await renderHook(fakeUseCases);
     await act(async () => {
@@ -510,11 +512,11 @@ describe("useShareListingViewModel — abertura do WhatsApp na web", () => {
   it("abre o WhatsApp em nova aba quando disponível", async () => {
     const originalOS = Platform.OS;
     Platform.OS = "web";
-    const open = vi.fn().mockReturnValue({});
-    vi.stubGlobal("navigator", {});
-    vi.stubGlobal("window", { open });
-    const writeText = vi.fn().mockResolvedValue(undefined);
-    vi.stubGlobal("navigator", { clipboard: { writeText } });
+    const open = jest.fn().mockReturnValue({});
+    stubGlobal("navigator", {});
+    stubGlobal("window", { open });
+    const writeText = jest.fn().mockResolvedValue(undefined);
+    stubGlobal("navigator", { clipboard: { writeText } });
 
     const hook = await renderHook(fakeUseCases);
     await act(async () => {
@@ -530,10 +532,10 @@ describe("useShareListingViewModel — abertura do WhatsApp na web", () => {
     const originalOS = Platform.OS;
     Platform.OS = "web";
     const linking = await import("expo-linking");
-    const openURL = vi.fn().mockResolvedValue(undefined);
-    vi.mocked(linking.openURL).mockImplementation(openURL);
-    vi.stubGlobal("navigator", {});
-    vi.stubGlobal("window", { open: vi.fn().mockReturnValue(null) });
+    const openURL = jest.fn().mockResolvedValue(undefined);
+    jest.mocked(linking.openURL).mockImplementation(openURL);
+    stubGlobal("navigator", {});
+    stubGlobal("window", { open: jest.fn().mockReturnValue(null) });
 
     const hook = await renderHook(fakeUseCases);
     await act(async () => {
@@ -548,11 +550,11 @@ describe("useShareListingViewModel — abertura do WhatsApp na web", () => {
     const originalOS = Platform.OS;
     Platform.OS = "web";
     const linking = await import("expo-linking");
-    const openURL = vi.fn().mockResolvedValue(undefined);
-    vi.mocked(linking.openURL).mockImplementation(openURL);
-    vi.stubGlobal("navigator", {});
-    vi.stubGlobal("window", {
-      open: vi.fn(() => {
+    const openURL = jest.fn().mockResolvedValue(undefined);
+    jest.mocked(linking.openURL).mockImplementation(openURL);
+    stubGlobal("navigator", {});
+    stubGlobal("window", {
+      open: jest.fn(() => {
         throw new Error("bloqueado");
       }),
     });

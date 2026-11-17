@@ -1,6 +1,5 @@
 import { createElement } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
-import { afterEach, describe, expect, it, vi } from "vitest";
 import type { User } from "@/model/entities/user";
 import { AuthError, DomainError } from "@/model/errors";
 import type { ILogger } from "@/model/services/iLogger";
@@ -15,13 +14,13 @@ afterEach(() => {
   act(() => {
     while (mounted.length) mounted.pop()?.unmount();
   });
-  vi.restoreAllMocks();
+  jest.restoreAllMocks();
 });
 
 const defaultLimiter: IRateLimiter = {
-  checkAndRecord: vi.fn().mockReturnValue({ allowed: true, remainingAttempts: 5, retryAfterMs: 0 }),
-  getTimeUntilResetMs: vi.fn().mockReturnValue(0),
-  reset: vi.fn(),
+  checkAndRecord: jest.fn().mockReturnValue({ allowed: true, remainingAttempts: 5, retryAfterMs: 0 }),
+  getTimeUntilResetMs: jest.fn().mockReturnValue(0),
+  reset: jest.fn(),
 };
 
 async function renderHook(
@@ -52,34 +51,34 @@ const mockUser: User = {
 
 function createMockAuth(overrides: Partial<IAuthUseCases> = {}): IAuthUseCases {
   return {
-    getSession: vi.fn().mockResolvedValue(null),
-    signIn: vi.fn().mockResolvedValue(mockUser),
-    signUp: vi.fn().mockResolvedValue(undefined),
-    signOut: vi.fn().mockResolvedValue(undefined),
-    requestPasswordReset: vi.fn().mockResolvedValue(undefined),
-    completePasswordReset: vi.fn().mockResolvedValue(undefined),
-    deleteAccount: vi.fn().mockResolvedValue(undefined),
-    signInWithGoogle: vi.fn().mockResolvedValue(mockUser),
-    setSessionFromUrl: vi.fn().mockResolvedValue(mockUser),
+    getSession: jest.fn().mockResolvedValue(null),
+    signIn: jest.fn().mockResolvedValue(mockUser),
+    signUp: jest.fn().mockResolvedValue(undefined),
+    signOut: jest.fn().mockResolvedValue(undefined),
+    requestPasswordReset: jest.fn().mockResolvedValue(undefined),
+    completePasswordReset: jest.fn().mockResolvedValue(undefined),
+    deleteAccount: jest.fn().mockResolvedValue(undefined),
+    signInWithGoogle: jest.fn().mockResolvedValue(mockUser),
+    setSessionFromUrl: jest.fn().mockResolvedValue(mockUser),
     ...overrides,
   };
 }
 
 const dummyLogger: ILogger = {
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-  debug: vi.fn(),
+  info: jest.fn(),
+  warn: jest.fn(),
+  error: jest.fn(),
+  debug: jest.fn(),
 };
 
 describe("useAuthViewModel", () => {
   it("carrega a sessão inicial ou define null quando falha", async () => {
-    const authSuccess = createMockAuth({ getSession: vi.fn().mockResolvedValue(mockUser) });
+    const authSuccess = createMockAuth({ getSession: jest.fn().mockResolvedValue(mockUser) });
     const hookSuccess = await renderHook(authSuccess);
     expect(hookSuccess.current[0].user).toEqual(mockUser);
     expect(hookSuccess.current[0].loading).toBe(false);
 
-    const authFail = createMockAuth({ getSession: vi.fn().mockRejectedValue(new Error("rede")) });
+    const authFail = createMockAuth({ getSession: jest.fn().mockRejectedValue(new Error("rede")) });
     const hookFail = await renderHook(authFail);
     expect(hookFail.current[0].user).toBeNull();
     expect(hookFail.current[0].loading).toBe(false);
@@ -88,8 +87,8 @@ describe("useAuthViewModel", () => {
   describe("signUp", () => {
     it("cria conta e define usuário autenticado", async () => {
       const auth = createMockAuth({
-        signUp: vi.fn().mockResolvedValue(undefined),
-        getSession: vi.fn().mockResolvedValueOnce(null).mockResolvedValueOnce(mockUser),
+        signUp: jest.fn().mockResolvedValue(undefined),
+        getSession: jest.fn().mockResolvedValueOnce(null).mockResolvedValueOnce(mockUser),
       });
       const hook = await renderHook(auth);
       let ok: boolean = false;
@@ -103,8 +102,8 @@ describe("useAuthViewModel", () => {
 
     it("informa confirmação de e-mail se sessão continuar vazia", async () => {
       const auth = createMockAuth({
-        signUp: vi.fn().mockResolvedValue(undefined),
-        getSession: vi.fn().mockResolvedValue(null),
+        signUp: jest.fn().mockResolvedValue(undefined),
+        getSession: jest.fn().mockResolvedValue(null),
       });
       const hook = await renderHook(auth);
       let ok: boolean = false;
@@ -118,9 +117,9 @@ describe("useAuthViewModel", () => {
     it("bloqueia quando rate limiter recusa", async () => {
       const auth = createMockAuth();
       const mockLimiter: IRateLimiter = {
-        checkAndRecord: vi.fn().mockReturnValue({ allowed: false, remainingAttempts: 0, retryAfterMs: 45000 }),
-        getTimeUntilResetMs: vi.fn().mockReturnValue(45000),
-        reset: vi.fn(),
+        checkAndRecord: jest.fn().mockReturnValue({ allowed: false, remainingAttempts: 0, retryAfterMs: 45000 }),
+        getTimeUntilResetMs: jest.fn().mockReturnValue(45000),
+        reset: jest.fn(),
       };
       const hook = await renderHook(auth, mockLimiter, dummyLogger);
       let ok: boolean = false;
@@ -133,7 +132,7 @@ describe("useAuthViewModel", () => {
 
     it("trata DomainError e erros genéricos", async () => {
       const auth = createMockAuth({
-        signUp: vi.fn().mockRejectedValue(new DomainError("E-mail já cadastrado.")),
+        signUp: jest.fn().mockRejectedValue(new DomainError("E-mail já cadastrado.")),
       });
       const hook = await renderHook(auth, undefined, dummyLogger);
       await act(async () => {
@@ -145,11 +144,11 @@ describe("useAuthViewModel", () => {
 
   describe("signIn e signOut", () => {
     it("autentica com sucesso e reseta tentativas", async () => {
-      const auth = createMockAuth({ signIn: vi.fn().mockResolvedValue(mockUser) });
+      const auth = createMockAuth({ signIn: jest.fn().mockResolvedValue(mockUser) });
       const mockLimiter: IRateLimiter = {
-        checkAndRecord: vi.fn().mockReturnValue({ allowed: true, remainingAttempts: 4, retryAfterMs: 0 }),
-        getTimeUntilResetMs: vi.fn().mockReturnValue(0),
-        reset: vi.fn(),
+        checkAndRecord: jest.fn().mockReturnValue({ allowed: true, remainingAttempts: 4, retryAfterMs: 0 }),
+        getTimeUntilResetMs: jest.fn().mockReturnValue(0),
+        reset: jest.fn(),
       };
       const hook = await renderHook(auth, mockLimiter, dummyLogger);
       let ok: boolean = false;
@@ -162,7 +161,7 @@ describe("useAuthViewModel", () => {
     });
 
     it("trata erro de senha incorreta", async () => {
-      const auth = createMockAuth({ signIn: vi.fn().mockRejectedValue(new DomainError("Senha incorreta.")) });
+      const auth = createMockAuth({ signIn: jest.fn().mockRejectedValue(new DomainError("Senha incorreta.")) });
       const hook = await renderHook(auth, undefined, dummyLogger);
       let ok: boolean = true;
       await act(async () => {
@@ -174,8 +173,8 @@ describe("useAuthViewModel", () => {
 
     it("efetua signOut com sucesso ou tolera falha", async () => {
       const auth = createMockAuth({
-        getSession: vi.fn().mockResolvedValue(mockUser),
-        signOut: vi.fn().mockResolvedValue(undefined),
+        getSession: jest.fn().mockResolvedValue(mockUser),
+        signOut: jest.fn().mockResolvedValue(undefined),
       });
       const hook = await renderHook(auth);
       expect(hook.current[0].user).toEqual(mockUser);
@@ -187,8 +186,8 @@ describe("useAuthViewModel", () => {
 
       // Com falha de signOut
       const authError = createMockAuth({
-        getSession: vi.fn().mockResolvedValue(mockUser),
-        signOut: vi.fn().mockRejectedValue(new Error("Falha")),
+        getSession: jest.fn().mockResolvedValue(mockUser),
+        signOut: jest.fn().mockRejectedValue(new Error("Falha")),
       });
       const hook2 = await renderHook(authError);
       await act(async () => {
@@ -202,7 +201,7 @@ describe("useAuthViewModel", () => {
 
   describe("requestPasswordReset", () => {
     it("recusa a recuperação sem e-mail sem chamar o caso de uso", async () => {
-      const requestPasswordReset = vi.fn().mockResolvedValue(undefined);
+      const requestPasswordReset = jest.fn().mockResolvedValue(undefined);
       const auth = createMockAuth({ requestPasswordReset });
       const hook = await renderHook(auth, undefined, dummyLogger);
 
@@ -226,7 +225,7 @@ describe("useAuthViewModel", () => {
       expect(ok).toBe(true);
 
       const authErr = createMockAuth({
-        requestPasswordReset: vi.fn().mockRejectedValue(new DomainError("Usuário não encontrado.")),
+        requestPasswordReset: jest.fn().mockRejectedValue(new DomainError("Usuário não encontrado.")),
       });
       const hookErr = await renderHook(authErr, undefined, dummyLogger);
       await act(async () => {
@@ -239,7 +238,7 @@ describe("useAuthViewModel", () => {
 
   describe("signInWithGoogle e handleAuthCallback", () => {
     it("autentica com Google, trata usuário cancelado ou ausência do método", async () => {
-      const auth = createMockAuth({ signInWithGoogle: vi.fn().mockResolvedValue(mockUser) });
+      const auth = createMockAuth({ signInWithGoogle: jest.fn().mockResolvedValue(mockUser) });
       const hook = await renderHook(auth, undefined, dummyLogger);
       let ok: boolean = false;
       await act(async () => {
@@ -249,7 +248,7 @@ describe("useAuthViewModel", () => {
 
       // Usuário cancelou
       const authCanceled = createMockAuth({
-        signInWithGoogle: vi.fn().mockRejectedValue(new DomainError("Login cancelado pelo usuário.")),
+        signInWithGoogle: jest.fn().mockRejectedValue(new DomainError("Login cancelado pelo usuário.")),
       });
       const hookCanceled = await renderHook(authCanceled, undefined, dummyLogger);
       await act(async () => {
@@ -270,7 +269,7 @@ describe("useAuthViewModel", () => {
     });
 
     it("processa retorno de autenticação handleAuthCallback", async () => {
-      const auth = createMockAuth({ setSessionFromUrl: vi.fn().mockResolvedValue(mockUser) });
+      const auth = createMockAuth({ setSessionFromUrl: jest.fn().mockResolvedValue(mockUser) });
       const hook = await renderHook(auth, undefined, dummyLogger);
       let ok: boolean = false;
       await act(async () => {
@@ -291,9 +290,9 @@ describe("useAuthViewModel", () => {
     });
 
     it("ignora URL que não é retorno de autenticação sem registrar erro de aplicação", async () => {
-      const setSessionFromUrl = vi.fn().mockResolvedValue(mockUser);
+      const setSessionFromUrl = jest.fn().mockResolvedValue(mockUser);
       const auth = createMockAuth({ setSessionFromUrl });
-      const logger: ILogger = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() };
+      const logger: ILogger = { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() };
       const hook = await renderHook(auth, undefined, logger);
       let ok: boolean = true;
       await act(async () => {
@@ -311,9 +310,9 @@ describe("useAuthViewModel", () => {
 
     it("registra recusa do provedor como aviso, não como erro", async () => {
       const auth = createMockAuth({
-        setSessionFromUrl: vi.fn().mockRejectedValue(new AuthError("O link de acesso expirou ou já foi usado.")),
+        setSessionFromUrl: jest.fn().mockRejectedValue(new AuthError("O link de acesso expirou ou já foi usado.")),
       });
-      const logger: ILogger = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() };
+      const logger: ILogger = { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() };
       const hook = await renderHook(auth, undefined, logger);
       let ok: boolean = true;
       await act(async () => {
@@ -332,7 +331,7 @@ describe("useAuthViewModel", () => {
       const hook = await renderHook(auth, undefined, dummyLogger);
       expect(hook.current[0].user).toBeNull();
 
-      vi.mocked(auth.getSession).mockResolvedValueOnce(mockUser);
+      jest.mocked(auth.getSession).mockResolvedValueOnce(mockUser);
       await act(async () => {
         await hook.current[1].refreshSession?.();
       });
@@ -341,7 +340,7 @@ describe("useAuthViewModel", () => {
     });
 
     it("não redesenha quando a sessão lida é a mesma conta", async () => {
-      const auth = createMockAuth({ getSession: vi.fn().mockResolvedValue(mockUser) });
+      const auth = createMockAuth({ getSession: jest.fn().mockResolvedValue(mockUser) });
       const hook = await renderHook(auth, undefined, dummyLogger);
       const estadoAntes = hook.current[0];
       await act(async () => {
@@ -351,7 +350,7 @@ describe("useAuthViewModel", () => {
     });
 
     it("mantém o estado quando a leitura da sessão falha", async () => {
-      const auth = createMockAuth({ getSession: vi.fn().mockRejectedValue(new Error("sem armazenamento")) });
+      const auth = createMockAuth({ getSession: jest.fn().mockRejectedValue(new Error("sem armazenamento")) });
       const hook = await renderHook(auth, undefined, dummyLogger);
       await act(async () => {
         await hook.current[1].refreshSession?.();
@@ -365,9 +364,9 @@ describe("useAuthViewModel", () => {
       try {
         process.env.NODE_ENV = "production";
         const auth = createMockAuth({
-          getSession: vi.fn().mockResolvedValue(mockUser),
-          signIn: vi.fn().mockRejectedValue(new Error("Erro genérico não-domínio")),
-          signUp: vi.fn().mockRejectedValue(new Error("Falha cadastro não-domínio")),
+          getSession: jest.fn().mockResolvedValue(mockUser),
+          signIn: jest.fn().mockRejectedValue(new Error("Erro genérico não-domínio")),
+          signUp: jest.fn().mockRejectedValue(new Error("Falha cadastro não-domínio")),
         });
         const hook = await renderHook(auth, undefined, dummyLogger);
         expect(hook.current).toBeDefined();

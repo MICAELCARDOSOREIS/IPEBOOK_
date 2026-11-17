@@ -1,4 +1,3 @@
-import { describe, expect, it, vi } from "vitest";
 import { MemoryBookDataSource } from "@/infra/datasources/memoryBookDataSource";
 import { AuthError, DataSourceError, ValidationError } from "@/model/errors";
 import { BookUseCases } from "@/usecase/bookUseCases";
@@ -166,7 +165,7 @@ describe("publishDraft (Spec 017)", () => {
 
   it("dispara alerta de correspondência ao publicar (matchNewBook)", async () => {
     const source = new MemoryBookDataSource();
-    const matchNewBook = vi.fn().mockResolvedValue(undefined);
+    const matchNewBook = jest.fn().mockResolvedValue(undefined);
     const useCases = new BookUseCases(source, { matchNewBook } as never);
     const draft = await useCases.saveDraft({ title: "", author: "", modality: "donation" }, "owner-1");
 

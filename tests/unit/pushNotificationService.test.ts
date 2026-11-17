@@ -1,5 +1,4 @@
 import { createRequire } from "node:module";
-import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Platform } from "react-native";
 import { MemoryPushNotificationService } from "@/infra/services/memoryPushNotificationService";
 import { ExpoPushNotificationService } from "@/infra/services/expoPushNotificationService";
@@ -155,7 +154,7 @@ describe("PushNotificationService (Spec 060 / ADR 0043)", () => {
     let service: ExpoPushNotificationService;
 
     beforeEach(() => {
-      vi.clearAllMocks();
+      jest.clearAllMocks();
       service = new ExpoPushNotificationService();
     });
 

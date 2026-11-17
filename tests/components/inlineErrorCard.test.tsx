@@ -1,5 +1,4 @@
 import { act, render } from "@testing-library/react-native";
-import { describe, expect, it } from "vitest";
 import { InlineErrorCard } from "@/view/components/InlineErrorCard";
 
 describe("InlineErrorCard (Spec 131 / ADR 0102)", () => {

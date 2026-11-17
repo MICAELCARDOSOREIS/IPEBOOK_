@@ -1,14 +1,14 @@
 import { createElement } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const store = new Map<string, string>();
+const mockStore = new Map<string, string>();
 
-vi.mock("@react-native-async-storage/async-storage", () => ({
+jest.mock("@react-native-async-storage/async-storage", () => ({
+  __esModule: true,
   default: {
-    getItem: vi.fn(async (key: string) => store.get(key) ?? null),
-    setItem: vi.fn(async (key: string, value: string) => {
-      store.set(key, value);
+    getItem: jest.fn(async (key: string) => mockStore.get(key) ?? null),
+    setItem: jest.fn(async (key: string, value: string) => {
+      mockStore.set(key, value);
     }),
   },
 }));
@@ -40,7 +40,7 @@ async function renderHook() {
 
 describe("testes de hook: usePersistedSearchFilters", () => {
   beforeEach(() => {
-    store.clear();
+    mockStore.clear();
   });
 
   afterEach(async () => {
@@ -56,7 +56,7 @@ describe("testes de hook: usePersistedSearchFilters", () => {
   });
 
   it("carrega filtros e ordenação persistidos anteriormente", async () => {
-    store.set(
+    mockStore.set(
       SEARCH_FILTERS_STORAGE_KEY,
       JSON.stringify({
         filters: { ...DEFAULT_SEARCH_FILTERS, modality: "trade", category: "Literatura" },
@@ -75,7 +75,7 @@ describe("testes de hook: usePersistedSearchFilters", () => {
     await act(async () => {
       hook.current.persist({ ...DEFAULT_SEARCH_FILTERS, modality: "sale" }, "title");
     });
-    const saved = store.get(SEARCH_FILTERS_STORAGE_KEY);
+    const saved = mockStore.get(SEARCH_FILTERS_STORAGE_KEY);
     expect(saved).toBeDefined();
     const parsed = JSON.parse(saved as string);
     expect(parsed.filters.modality).toBe("sale");
@@ -83,7 +83,7 @@ describe("testes de hook: usePersistedSearchFilters", () => {
   });
 
   it("recupera-se graciosamente quando o conteúdo no storage for inválido", async () => {
-    store.set(SEARCH_FILTERS_STORAGE_KEY, "invalido{json");
+    mockStore.set(SEARCH_FILTERS_STORAGE_KEY, "invalido{json");
     const hook = await renderHook();
     expect(hook.current.loaded).toBe(true);
     expect(hook.current.persisted).toBeNull();

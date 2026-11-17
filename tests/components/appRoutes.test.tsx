@@ -1,100 +1,88 @@
 import React from "react";
 import { render } from "@testing-library/react-native";
-import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const {
-  mockPushOnce,
-  mockReplaceOnce,
-  mockBackOnce,
-  mockCanGoBack,
-  mockParamsState,
-  mockPathnameState,
-  renderedProps,
-  createScreenStub,
-} = vi.hoisted(() => {
-  const propsMap: Record<string, Record<string, unknown>> = {};
-  return {
-    mockPushOnce: vi.fn(),
-    mockReplaceOnce: vi.fn(),
-    mockBackOnce: vi.fn(),
-    mockCanGoBack: vi.fn(() => true),
-    mockParamsState: { current: {} as Record<string, string | undefined> },
-    mockPathnameState: { current: "/" },
-    renderedProps: propsMap,
-    createScreenStub: (name: string) => {
-      const Stub = (props: Record<string, unknown>) => {
-        propsMap[name] = props;
-        return React.createElement(name, props, props.children as React.ReactNode);
-      };
-      return Stub;
-    },
+const mockPushOnce = jest.fn();
+const mockReplaceOnce = jest.fn();
+const mockBackOnce = jest.fn();
+const mockCanGoBack = jest.fn(() => true);
+const mockParamsState = { current: {} as Record<string, string | undefined> };
+const mockPathnameState = { current: "/" };
+const mockRenderedProps: Record<string, Record<string, unknown>> = {};
+
+function mockCreateScreenStub(name: string) {
+  const Stub = (props: Record<string, unknown>) => {
+    mockRenderedProps[name] = props;
+    const ReactRuntime = require("react") as typeof import("react");
+    return ReactRuntime.createElement(name, props, props.children as React.ReactNode);
   };
-});
+  return Stub;
+}
 
-vi.mock("expo-router", () => ({
+jest.mock("expo-router", () => ({
   router: {
-    push: vi.fn(),
-    replace: vi.fn(),
-    back: vi.fn(),
+    push: jest.fn(),
+    replace: jest.fn(),
+    back: jest.fn(),
     canGoBack: () => mockCanGoBack(),
   },
-  Stack: createScreenStub("StackStub"),
+  Stack: mockCreateScreenStub("StackStub"),
   usePathname: () => mockPathnameState.current,
   useLocalSearchParams: () => mockParamsState.current,
   useFocusEffect: (cb: () => void) => {
-    React.useEffect(() => {
+    const ReactRuntime = require("react") as typeof import("react");
+    ReactRuntime.useEffect(() => {
       cb();
     }, []);
   },
 }));
 
-vi.mock("expo-screen-orientation", () => ({
+jest.mock("expo-screen-orientation", () => ({
   OrientationLock: { PORTRAIT_UP: 1 },
-  lockAsync: vi.fn(() => Promise.resolve()),
+  lockAsync: jest.fn(() => Promise.resolve()),
 }));
 
-vi.mock("expo-status-bar", () => ({
-  StatusBar: createScreenStub("StatusBarStub"),
+jest.mock("expo-status-bar", () => ({
+  StatusBar: mockCreateScreenStub("StatusBarStub"),
 }));
 
-vi.mock("@/view/useIpebookFonts", () => ({
+jest.mock("@/view/useIpebookFonts", () => ({
   useIpebookFonts: () => [true],
 }));
 
-vi.mock("@/view/components/ConnectedNavigationBar", () => ({
-  ConnectedNavigationBar: createScreenStub("ConnectedNavigationBarStub"),
+jest.mock("@/view/components/ConnectedNavigationBar", () => ({
+  ConnectedNavigationBar: mockCreateScreenStub("ConnectedNavigationBarStub"),
 }));
 
-vi.mock("@/view/components/ConnectedWebHeader", () => ({
-  ConnectedWebHeader: createScreenStub("ConnectedWebHeaderStub"),
+jest.mock("@/view/components/ConnectedWebHeader", () => ({
+  ConnectedWebHeader: mockCreateScreenStub("ConnectedWebHeaderStub"),
 }));
 
-vi.mock("@/view/onboarding/initialRouteGate", () => ({
-  InitialRouteGate: createScreenStub("InitialRouteGateStub"),
+jest.mock("@/view/onboarding/initialRouteGate", () => ({
+  InitialRouteGate: mockCreateScreenStub("InitialRouteGateStub"),
 }));
 
-vi.mock("@/view/components/KeyboardAwareRoot", () => ({
-  KeyboardAwareRoot: createScreenStub("KeyboardAwareRootStub"),
+jest.mock("@/view/components/KeyboardAwareRoot", () => ({
+  KeyboardAwareRoot: mockCreateScreenStub("KeyboardAwareRootStub"),
 }));
 
-vi.mock("@/view/components/BrandSplashScreen", () => ({
-  BrandSplashScreen: createScreenStub("BrandSplashScreenStub"),
+jest.mock("@/view/components/BrandSplashScreen", () => ({
+  BrandSplashScreen: mockCreateScreenStub("BrandSplashScreenStub"),
 }));
 
-vi.mock("@/view/components/PushRegistration", () => ({
-  PushRegistration: createScreenStub("PushRegistrationStub"),
+jest.mock("@/view/components/PushRegistration", () => ({
+  PushRegistration: mockCreateScreenStub("PushRegistrationStub"),
 }));
 
-vi.mock("@/view/components/PwaRegister", () => ({
-  PwaRegister: createScreenStub("PwaRegisterStub"),
+jest.mock("@/view/components/PwaRegister", () => ({
+  PwaRegister: mockCreateScreenStub("PwaRegisterStub"),
 }));
 
-vi.mock("@/view/components/AppErrorFallback", () => ({
-  AppErrorFallback: createScreenStub("AppErrorFallbackStub"),
-  startErrorReporting: vi.fn(),
+jest.mock("@/view/components/AppErrorFallback", () => ({
+  AppErrorFallback: mockCreateScreenStub("AppErrorFallbackStub"),
+  startErrorReporting: jest.fn(),
 }));
 
-vi.mock("expo-router/html", () => ({
+jest.mock("expo-router/html", () => ({
   ScrollViewStyleReset: () => null,
   useServerDocumentContext: () => ({
     htmlAttributes: { "data-theme": "light" },
@@ -104,65 +92,66 @@ vi.mock("expo-router/html", () => ({
   }),
 }));
 
-vi.mock("expo-linking", () => ({
+jest.mock("expo-linking", () => ({
   useURL: () => "https://ipebook.app/auth/callback#access_token=abc",
 }));
 
-vi.mock("@/view/pushOnce", () => ({
+jest.mock("@/view/pushOnce", () => ({
   pushOnce: (...args: unknown[]) => mockPushOnce(...args),
   replaceOnce: (...args: unknown[]) => mockReplaceOnce(...args),
   backOnce: (...args: unknown[]) => mockBackOnce(...args),
 }));
 
-vi.mock("@/view/components/RequireAuth", () => ({
-  RequireAuth: createScreenStub("RequireAuthStub"),
+jest.mock("@/view/components/RequireAuth", () => ({
+  RequireAuth: mockCreateScreenStub("RequireAuthStub"),
 }));
 
-vi.mock("@/view/home", () => ({ default: createScreenStub("HomeStub") }));
-vi.mock("@/view/help/helpAndFaq", () => ({ default: createScreenStub("HelpAndFaqStub") }));
-vi.mock("@/view/search/searchAlertsScreen", () => ({ default: createScreenStub("SearchAlertsScreenStub") }));
-vi.mock("@/view/search/manageAlertScreen", () => ({ default: createScreenStub("ManageAlertScreenStub") }));
-vi.mock("@/view/search/editAlertScreen", () => ({ default: createScreenStub("EditAlertScreenStub") }));
-vi.mock("@/view/listings/createListingScreen", () => ({ default: createScreenStub("CreateListingScreenStub") }));
-vi.mock("@/view/auth/authCallback", () => ({ default: createScreenStub("AuthCallbackStub") }));
-vi.mock("@/view/onboarding/welcomeRoute", () => ({ default: createScreenStub("WelcomeRouteStub") }));
-vi.mock("@/view/beta/betaInviteScreen", () => ({ default: createScreenStub("BetaInviteRouteStub") }));
-vi.mock("@/view/conversations/chat", () => ({ default: createScreenStub("ChatScreenStub") }));
-vi.mock("@/view/auth/signUp", () => ({ default: createScreenStub("SignUpStub") }));
-vi.mock("@/view/listings/reportListingScreen", () => ({ default: createScreenStub("ReportListingScreenStub") }));
-vi.mock("@/view/listings/reportUser", () => ({ default: createScreenStub("ReportUserStub") }));
-vi.mock("@/view/listings/editListingScreen", () => ({ default: createScreenStub("EditListingScreenStub") }));
-vi.mock("@/view/auth/signIn", () => ({ default: createScreenStub("SignInStub") }));
-vi.mock("@/view/auth/forgotPassword", () => ({ default: createScreenStub("ForgotPasswordStub") }));
-vi.mock("@/view/auth/deleteAccountScreen", () => ({ default: createScreenStub("DeleteAccountScreenStub") }));
-vi.mock("@/view/favorites/favoritesScreen", () => ({ default: createScreenStub("FavoritesScreenStub") }));
-vi.mock("@/view/listings/manageListingScreen", () => ({ default: createScreenStub("ManageListingScreenStub") }));
-vi.mock("@/view/listings/bookDetail", () => ({ default: createScreenStub("BookDetailStub") }));
-vi.mock("@/view/listings/myListings", () => ({ default: createScreenStub("MyListingsScreenStub") }));
-vi.mock("@/view/conversations/conversations", () => ({ default: createScreenStub("ConversationsScreenStub") }));
-vi.mock("@/view/moderation/moderation", () => ({ default: createScreenStub("ModerationScreenStub") }));
-vi.mock("@/view/requests/requestDetail", () => ({ default: createScreenStub("RequestDetailScreenStub") }));
-vi.mock("@/view/requests/scheduleMeeting", () => ({ default: createScreenStub("ScheduleMeetingScreenStub") }));
-vi.mock("@/view/requests/delivery", () => ({ default: createScreenStub("DeliveryScreenStub") }));
-vi.mock("@/view/components/NotFound", () => ({ NotFound: createScreenStub("NotFoundStub") }));
-vi.mock("@/view/notifications/notificationsScreen", () => ({ default: createScreenStub("NotificationsScreenStub") }));
-vi.mock("@/view/requests/receivedRequests", () => ({ default: createScreenStub("ReceivedRequestsScreenStub") }));
-vi.mock("@/view/profile/profileHub", () => ({ default: createScreenStub("ProfileHubStub") }));
-vi.mock("@/view/listings/publicProfile", () => ({ PublicProfile: createScreenStub("PublicProfileStub") }));
-vi.mock("@/view/profile/receivedRatings", () => ({ default: createScreenStub("ReceivedRatingsScreenStub") }));
-vi.mock("@/view/profile/blockedUsers", () => ({ BlockedUsers: createScreenStub("BlockedUsersStub") }));
-vi.mock("@/view/profile/settings", () => ({ Settings: createScreenStub("SettingsStub") }));
-vi.mock("@/view/profile/inviteFriends", () => ({ InviteFriends: createScreenStub("InviteFriendsStub") }));
-vi.mock("@/view/profile/profile", () => ({ default: createScreenStub("ProfileStub") }));
-vi.mock("@/view/profile/meetingHistory", () => ({ default: createScreenStub("MeetingHistoryStub") }));
-vi.mock("@/view/profile/security", () => ({ Security: createScreenStub("SecurityStub") }));
-vi.mock("@/view/search/search", () => ({
-  default: createScreenStub("SearchStub"),
+jest.mock("@/view/home", () => ({ __esModule: true, default: mockCreateScreenStub("HomeStub") }));
+jest.mock("@/view/help/helpAndFaq", () => ({ __esModule: true, default: mockCreateScreenStub("HelpAndFaqStub") }));
+jest.mock("@/view/search/searchAlertsScreen", () => ({ __esModule: true, default: mockCreateScreenStub("SearchAlertsScreenStub") }));
+jest.mock("@/view/search/manageAlertScreen", () => ({ __esModule: true, default: mockCreateScreenStub("ManageAlertScreenStub") }));
+jest.mock("@/view/search/editAlertScreen", () => ({ __esModule: true, default: mockCreateScreenStub("EditAlertScreenStub") }));
+jest.mock("@/view/listings/createListingScreen", () => ({ __esModule: true, default: mockCreateScreenStub("CreateListingScreenStub") }));
+jest.mock("@/view/auth/authCallback", () => ({ __esModule: true, default: mockCreateScreenStub("AuthCallbackStub") }));
+jest.mock("@/view/onboarding/welcomeRoute", () => ({ __esModule: true, default: mockCreateScreenStub("WelcomeRouteStub") }));
+jest.mock("@/view/beta/betaInviteScreen", () => ({ __esModule: true, default: mockCreateScreenStub("BetaInviteRouteStub") }));
+jest.mock("@/view/conversations/chat", () => ({ __esModule: true, default: mockCreateScreenStub("ChatScreenStub") }));
+jest.mock("@/view/auth/signUp", () => ({ __esModule: true, default: mockCreateScreenStub("SignUpStub") }));
+jest.mock("@/view/listings/reportListingScreen", () => ({ __esModule: true, default: mockCreateScreenStub("ReportListingScreenStub") }));
+jest.mock("@/view/listings/reportUser", () => ({ __esModule: true, default: mockCreateScreenStub("ReportUserStub") }));
+jest.mock("@/view/listings/editListingScreen", () => ({ __esModule: true, default: mockCreateScreenStub("EditListingScreenStub") }));
+jest.mock("@/view/auth/signIn", () => ({ __esModule: true, default: mockCreateScreenStub("SignInStub") }));
+jest.mock("@/view/auth/forgotPassword", () => ({ __esModule: true, default: mockCreateScreenStub("ForgotPasswordStub") }));
+jest.mock("@/view/auth/deleteAccountScreen", () => ({ __esModule: true, default: mockCreateScreenStub("DeleteAccountScreenStub") }));
+jest.mock("@/view/favorites/favoritesScreen", () => ({ __esModule: true, default: mockCreateScreenStub("FavoritesScreenStub") }));
+jest.mock("@/view/listings/manageListingScreen", () => ({ __esModule: true, default: mockCreateScreenStub("ManageListingScreenStub") }));
+jest.mock("@/view/listings/bookDetail", () => ({ __esModule: true, default: mockCreateScreenStub("BookDetailStub") }));
+jest.mock("@/view/listings/myListings", () => ({ __esModule: true, default: mockCreateScreenStub("MyListingsScreenStub") }));
+jest.mock("@/view/conversations/conversations", () => ({ __esModule: true, default: mockCreateScreenStub("ConversationsScreenStub") }));
+jest.mock("@/view/moderation/moderation", () => ({ __esModule: true, default: mockCreateScreenStub("ModerationScreenStub") }));
+jest.mock("@/view/requests/requestDetail", () => ({ __esModule: true, default: mockCreateScreenStub("RequestDetailScreenStub") }));
+jest.mock("@/view/requests/scheduleMeeting", () => ({ __esModule: true, default: mockCreateScreenStub("ScheduleMeetingScreenStub") }));
+jest.mock("@/view/requests/delivery", () => ({ __esModule: true, default: mockCreateScreenStub("DeliveryScreenStub") }));
+jest.mock("@/view/components/NotFound", () => ({ NotFound: mockCreateScreenStub("NotFoundStub") }));
+jest.mock("@/view/notifications/notificationsScreen", () => ({ __esModule: true, default: mockCreateScreenStub("NotificationsScreenStub") }));
+jest.mock("@/view/requests/receivedRequests", () => ({ __esModule: true, default: mockCreateScreenStub("ReceivedRequestsScreenStub") }));
+jest.mock("@/view/profile/profileHub", () => ({ __esModule: true, default: mockCreateScreenStub("ProfileHubStub") }));
+jest.mock("@/view/listings/publicProfile", () => ({ PublicProfile: mockCreateScreenStub("PublicProfileStub") }));
+jest.mock("@/view/profile/receivedRatings", () => ({ __esModule: true, default: mockCreateScreenStub("ReceivedRatingsScreenStub") }));
+jest.mock("@/view/profile/blockedUsers", () => ({ BlockedUsers: mockCreateScreenStub("BlockedUsersStub") }));
+jest.mock("@/view/profile/settings", () => ({ Settings: mockCreateScreenStub("SettingsStub") }));
+jest.mock("@/view/profile/inviteFriends", () => ({ InviteFriends: mockCreateScreenStub("InviteFriendsStub") }));
+jest.mock("@/view/profile/profile", () => ({ __esModule: true, default: mockCreateScreenStub("ProfileStub") }));
+jest.mock("@/view/profile/meetingHistory", () => ({ __esModule: true, default: mockCreateScreenStub("MeetingHistoryStub") }));
+jest.mock("@/view/profile/security", () => ({ Security: mockCreateScreenStub("SecurityStub") }));
+jest.mock("@/view/search/search", () => ({
+  __esModule: true,
+  default: mockCreateScreenStub("SearchStub"),
   parseInitialModality: (m?: string) => (m === "doacao" ? "donation" : m === "troca" ? "trade" : m === "venda" ? "sale" : "all"),
 }));
-vi.mock("@/view/listings/drafts", () => ({ default: createScreenStub("DraftsScreenStub") }));
-vi.mock("@/view/auth/resetPassword", () => ({ default: createScreenStub("ResetPasswordStub") }));
-vi.mock("@/view/legal/termsAndPrivacy", () => ({ default: createScreenStub("TermsAndPrivacyStub") }));
+jest.mock("@/view/listings/drafts", () => ({ __esModule: true, default: mockCreateScreenStub("DraftsScreenStub") }));
+jest.mock("@/view/auth/resetPassword", () => ({ __esModule: true, default: mockCreateScreenStub("ResetPasswordStub") }));
+jest.mock("@/view/legal/termsAndPrivacy", () => ({ __esModule: true, default: mockCreateScreenStub("TermsAndPrivacyStub") }));
 
 import RootHtml from "@/app/+html";
 import NaoEncontrado from "@/app/+not-found";
@@ -214,7 +203,7 @@ import TermosRoute from "@/app/termos";
 type AnyRecord = Record<string, (...args: unknown[]) => unknown>;
 
 function getStub(name: string): AnyRecord & Record<string, unknown> {
-  const props = renderedProps[name];
+  const props = mockRenderedProps[name];
   if (!props) throw new Error(`Stub ${name} não foi renderizado.`);
   return props as AnyRecord & Record<string, unknown>;
 }
@@ -238,11 +227,11 @@ async function renderRoute(ui: React.ReactElement) {
 
 describe("Rotas em src/app/** — contratos de parâmetros, guards e navegação", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    jest.clearAllMocks();
     mockParamsState.current = {};
     mockCanGoBack.mockReturnValue(true);
-    for (const key of Object.keys(renderedProps)) {
-      delete renderedProps[key];
+    for (const key of Object.keys(mockRenderedProps)) {
+      delete mockRenderedProps[key];
     }
   });
 
@@ -607,7 +596,7 @@ describe("Rotas em src/app/** — contratos de parâmetros, guards e navegação
     navBar.onNavigate("search");
     expect(mockPushOnce).toHaveBeenCalledWith("/pesquisa");
 
-    const retryFn = vi.fn();
+    const retryFn = jest.fn();
     await renderRoute(<ErrorBoundary error={new Error("Falha")} retry={retryFn} />);
     expect(getStub("AppErrorFallbackStub").retry).toBe(retryFn);
   });

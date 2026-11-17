@@ -1,20 +1,23 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Platform } from "react-native";
 import { FileDownloadService } from "@/infra/services/fileDownloadService";
+import { stubGlobal, unstubAllGlobals } from "../helpers/stubGlobal";
 
-const native = vi.hoisted(() => ({
-  write: vi.fn(),
-  available: vi.fn(),
-  share: vi.fn(),
-}));
-vi.mock("expo-file-system/legacy", () => ({
+jest.mock("expo-file-system/legacy", () => ({
+  __esModule: true,
   documentDirectory: "file:///dados/",
-  writeAsStringAsync: native.write,
+  writeAsStringAsync: jest.fn(),
 }));
-vi.mock("expo-sharing", () => ({
-  isAvailableAsync: native.available,
-  shareAsync: native.share,
+jest.mock("expo-sharing", () => ({
+  __esModule: true,
+  isAvailableAsync: jest.fn(),
+  shareAsync: jest.fn(),
 }));
+
+const native = {
+  write: (jest.requireMock("expo-file-system/legacy") as { writeAsStringAsync: jest.Mock }).writeAsStringAsync,
+  available: (jest.requireMock("expo-sharing") as { isAvailableAsync: jest.Mock }).isAvailableAsync,
+  share: (jest.requireMock("expo-sharing") as { shareAsync: jest.Mock }).shareAsync,
+};
 
 describe("FileDownloadService (Spec 029 - LGPD Portabilidade)", () => {
   const originalPlatform = Platform.OS;
@@ -26,7 +29,7 @@ describe("FileDownloadService (Spec 029 - LGPD Portabilidade)", () => {
   });
   afterEach(() => {
     Platform.OS = originalPlatform;
-    vi.unstubAllGlobals();
+    unstubAllGlobals();
   });
 
   it("grava o JSON e abre o compartilhamento no aplicativo nativo", async () => {
@@ -52,13 +55,13 @@ describe("FileDownloadService (Spec 029 - LGPD Portabilidade)", () => {
 
   it("cria um download JSON no navegador", async () => {
     Platform.OS = "web";
-    const click = vi.fn();
+    const click = jest.fn();
     const anchor = { href: "", download: "", click };
-    const appendChild = vi.fn();
-    const removeChild = vi.fn();
-    const revokeObjectURL = vi.fn();
-    vi.stubGlobal("document", { createElement: () => anchor, body: { appendChild, removeChild } });
-    vi.stubGlobal("URL", { createObjectURL: () => "blob:ipebook", revokeObjectURL });
+    const appendChild = jest.fn();
+    const removeChild = jest.fn();
+    const revokeObjectURL = jest.fn();
+    stubGlobal("document", { createElement: () => anchor, body: { appendChild, removeChild } });
+    stubGlobal("URL", { createObjectURL: () => "blob:ipebook", revokeObjectURL });
     expect(await new FileDownloadService().downloadJson("dados.json", { titulo: "Livro" })).toBe(true);
     expect(anchor.download).toBe("dados.json");
     expect(click).toHaveBeenCalledTimes(1);

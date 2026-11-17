@@ -2,45 +2,44 @@ import type React from "react";
 import { act, fireEvent, render } from "@testing-library/react-native";
 import { within } from "@testing-library/react-native";
 import { AccessibilityInfo } from "react-native";
-import { describe, expect, it, vi } from "vitest";
 import type { CreateListingState, CreateListingActions } from "@/viewmodel/useCreateListingViewModel";
 import CreateListing from "@/view/listings/createListing";
 
-vi.mock("@/viewmodel/useCreateListingViewModel", () => ({
-  useCreateListingViewModel: vi.fn(),
+jest.mock("@/viewmodel/useCreateListingViewModel", () => ({
+  useCreateListingViewModel: jest.fn(),
 }));
 
 import { useCreateListingViewModel } from "@/viewmodel/useCreateListingViewModel";
-const mockedUseCreateListingViewModel = vi.mocked(useCreateListingViewModel);
+const mockedUseCreateListingViewModel = jest.mocked(useCreateListingViewModel);
 
 function mockViewModel(state: CreateListingState, actions: Partial<CreateListingActions> = {}) {
   const fullActions: CreateListingActions = {
-    setIsbn: vi.fn(),
-    lookupIsbn: vi.fn().mockResolvedValue(false),
-    handleBarcodeScanned: vi.fn().mockResolvedValue(false),
-    clearIsbnFeedback: vi.fn(),
-    setTitle: vi.fn(),
-    setAuthor: vi.fn(),
-    setCategory: vi.fn(),
-    setModality: vi.fn(),
-    setPrice: vi.fn(),
-    setNeighborhood: vi.fn(),
-    setCondition: vi.fn(),
-    setDescription: vi.fn(),
-    setPhotoUrl: vi.fn(),
-    addPhoto: vi.fn(),
-    setPhotoAt: vi.fn(),
-    removePhoto: vi.fn(),
-    setIsBox: vi.fn(),
-    setBoxVolumesCount: vi.fn(),
-    saveDraft: vi.fn().mockResolvedValue(undefined),
-    loadDraft: vi.fn().mockResolvedValue(false),
-    clearDraft: vi.fn().mockResolvedValue(undefined),
-    saveForLater: vi.fn().mockResolvedValue(true),
-    resumeDraft: vi.fn(),
-    loadServerDraft: vi.fn().mockResolvedValue(null),
-    submit: vi.fn().mockResolvedValue(null),
-    reset: vi.fn(),
+    setIsbn: jest.fn(),
+    lookupIsbn: jest.fn().mockResolvedValue(false),
+    handleBarcodeScanned: jest.fn().mockResolvedValue(false),
+    clearIsbnFeedback: jest.fn(),
+    setTitle: jest.fn(),
+    setAuthor: jest.fn(),
+    setCategory: jest.fn(),
+    setModality: jest.fn(),
+    setPrice: jest.fn(),
+    setNeighborhood: jest.fn(),
+    setCondition: jest.fn(),
+    setDescription: jest.fn(),
+    setPhotoUrl: jest.fn(),
+    addPhoto: jest.fn(),
+    setPhotoAt: jest.fn(),
+    removePhoto: jest.fn(),
+    setIsBox: jest.fn(),
+    setBoxVolumesCount: jest.fn(),
+    saveDraft: jest.fn().mockResolvedValue(undefined),
+    loadDraft: jest.fn().mockResolvedValue(false),
+    clearDraft: jest.fn().mockResolvedValue(undefined),
+    saveForLater: jest.fn().mockResolvedValue(true),
+    resumeDraft: jest.fn(),
+    loadServerDraft: jest.fn().mockResolvedValue(null),
+    submit: jest.fn().mockResolvedValue(null),
+    reset: jest.fn(),
     ...actions,
   };
   mockedUseCreateListingViewModel.mockReturnValue([state, fullActions]);
@@ -159,7 +158,7 @@ describe("etapa 1 do anúncio — Livro (Figma 04.01)", () => {
   });
 
   it("chama onCancel ao voltar da primeira etapa", async () => {
-    const onCancel = vi.fn();
+    const onCancel = jest.fn();
     mockViewModel(defaultState);
     const screen = await renderScreen({ onCancel });
 
@@ -299,7 +298,7 @@ describe("etapa 3 do anúncio — Detalhes (Figma 04.05)", () => {
   });
 
   it("anuncia o erro para leitores de tela quando a publicação falha (Spec 042 / Issue #147)", async () => {
-    const announceSpy = vi.spyOn(AccessibilityInfo, "announceForAccessibility");
+    const announceSpy = jest.spyOn(AccessibilityInfo, "announceForAccessibility");
     mockViewModel({ ...filledState, error: "Sessão obrigatória para cadastrar anúncio." });
     const screen = await renderScreen();
     await goToStep(screen, 3);
@@ -314,11 +313,11 @@ describe("etapa 3 do anúncio — Detalhes (Figma 04.05)", () => {
 
 describe("anúncio publicado (Figma 04.07)", () => {
   it("mostra o livro, os próximos passos e as ações de saída", async () => {
-    const onCreated = vi.fn();
-    const onViewMyListings = vi.fn();
-    const onGoHome = vi.fn();
+    const onCreated = jest.fn();
+    const onViewMyListings = jest.fn();
+    const onGoHome = jest.fn();
     const actions = mockViewModel(filledState, {
-      submit: vi.fn().mockResolvedValue({
+      submit: jest.fn().mockResolvedValue({
         id: "new-1",
         title: "Dom Casmurro",
         author: "Machado de Assis",
@@ -357,7 +356,7 @@ describe("anúncio publicado (Figma 04.07)", () => {
   });
 
   it("não mostra a tela de sucesso quando a publicação falha", async () => {
-    mockViewModel(filledState, { submit: vi.fn().mockResolvedValue(null) });
+    mockViewModel(filledState, { submit: jest.fn().mockResolvedValue(null) });
     const screen = await renderScreen();
     await goToStep(screen, 3);
 

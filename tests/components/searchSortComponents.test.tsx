@@ -1,4 +1,3 @@
-import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render } from "@testing-library/react-native";
 import { ThemeProvider } from "@/view/theme/ThemeProvider";
 import { SortSheet } from "@/view/search/SortSheet";
@@ -8,8 +7,8 @@ import { DEFAULT_SEARCH_FILTERS, SORT_IDS, SORT_LABELS } from "@/viewmodel/searc
 
 describe("Componentes de Ordenação Avançada (Spec 121, ADR 0095)", () => {
   it("SortSheet exibe as 4 opções de ordenação e aciona onSelect ao tocar", async () => {
-    const onSelect = vi.fn();
-    const onClose = vi.fn();
+    const onSelect = jest.fn();
+    const onClose = jest.fn();
 
     const { getByText, queryByText, getAllByRole } = await render(
       <ThemeProvider>
@@ -33,7 +32,7 @@ describe("Componentes de Ordenação Avançada (Spec 121, ADR 0095)", () => {
   });
 
   it("FilterSheet exibe os chips de ordenação e permite alterar a opção selecionada", async () => {
-    const onSortChange = vi.fn();
+    const onSortChange = jest.fn();
 
     const { getByText, queryByText } = await render(
       <ThemeProvider>
@@ -43,11 +42,11 @@ describe("Componentes de Ordenação Avançada (Spec 121, ADR 0095)", () => {
           sortBy="recent"
           availableCategories={["Ficção", "História"]}
           resultCount={10}
-          onChange={vi.fn()}
+          onChange={jest.fn()}
           onSortChange={onSortChange}
-          onApply={vi.fn()}
-          onReset={vi.fn()}
-          onClose={vi.fn()}
+          onApply={jest.fn()}
+          onReset={jest.fn()}
+          onClose={jest.fn()}
         />
       </ThemeProvider>,
     );
@@ -62,7 +61,7 @@ describe("Componentes de Ordenação Avançada (Spec 121, ADR 0095)", () => {
   });
 
   it("WebFilterSidebar exibe seção 'Ordenar por' e dispara onSortChange", async () => {
-    const onSortChange = vi.fn();
+    const onSortChange = jest.fn();
 
     const { getByText, queryByText } = await render(
       <ThemeProvider>
@@ -72,10 +71,10 @@ describe("Componentes de Ordenação Avançada (Spec 121, ADR 0095)", () => {
           hasActiveFilters={false}
           sortBy="recent"
           onSortChange={onSortChange}
-          onModality={vi.fn()}
-          onCondition={vi.fn()}
-          onCategory={vi.fn()}
-          onClear={vi.fn()}
+          onModality={jest.fn()}
+          onCondition={jest.fn()}
+          onCategory={jest.fn()}
+          onClear={jest.fn()}
         />
       </ThemeProvider>,
     );

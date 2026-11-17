@@ -1,4 +1,3 @@
-import { describe, expect, it, vi } from "vitest";
 import { SupabaseProfileDataSource } from "@/infra/datasources/supabaseProfileDataSource";
 import { DataSourceError } from "@/model/errors";
 import type { SupabaseAppClient } from "@/infra/supabaseClient";
@@ -6,7 +5,7 @@ import type { SupabaseAppClient } from "@/infra/supabaseClient";
 function fakeClient(...tableImpls: unknown[]): SupabaseAppClient {
   const queue = [...tableImpls];
   return {
-    from: vi.fn().mockImplementation(() => queue.shift()),
+    from: jest.fn().mockImplementation(() => queue.shift()),
   } as unknown as SupabaseAppClient;
 }
 
@@ -20,9 +19,9 @@ const row = {
 
 describe("SupabaseProfileDataSource (Spec 006 / Issue #55)", () => {
   it("findById retorna o perfil mapeado", async () => {
-    const maybeSingle = vi.fn().mockResolvedValue({ data: row, error: null });
-    const eq = vi.fn().mockReturnValue({ maybeSingle });
-    const select = vi.fn().mockReturnValue({ eq });
+    const maybeSingle = jest.fn().mockResolvedValue({ data: row, error: null });
+    const eq = jest.fn().mockReturnValue({ maybeSingle });
+    const select = jest.fn().mockReturnValue({ eq });
     const client = fakeClient({ select });
 
     const ds = new SupabaseProfileDataSource(client);
@@ -37,9 +36,9 @@ describe("SupabaseProfileDataSource (Spec 006 / Issue #55)", () => {
   });
 
   it("findById retorna null quando não encontrado", async () => {
-    const maybeSingle = vi.fn().mockResolvedValue({ data: null, error: null });
-    const eq = vi.fn().mockReturnValue({ maybeSingle });
-    const select = vi.fn().mockReturnValue({ eq });
+    const maybeSingle = jest.fn().mockResolvedValue({ data: null, error: null });
+    const eq = jest.fn().mockReturnValue({ maybeSingle });
+    const select = jest.fn().mockReturnValue({ eq });
     const client = fakeClient({ select });
 
     const ds = new SupabaseProfileDataSource(client);
@@ -47,9 +46,9 @@ describe("SupabaseProfileDataSource (Spec 006 / Issue #55)", () => {
   });
 
   it("findById lança DataSourceError em erro de banco", async () => {
-    const maybeSingle = vi.fn().mockResolvedValue({ data: null, error: { message: "falhou" } });
-    const eq = vi.fn().mockReturnValue({ maybeSingle });
-    const select = vi.fn().mockReturnValue({ eq });
+    const maybeSingle = jest.fn().mockResolvedValue({ data: null, error: { message: "falhou" } });
+    const eq = jest.fn().mockReturnValue({ maybeSingle });
+    const select = jest.fn().mockReturnValue({ eq });
     const client = fakeClient({ select });
 
     const ds = new SupabaseProfileDataSource(client);
@@ -57,9 +56,9 @@ describe("SupabaseProfileDataSource (Spec 006 / Issue #55)", () => {
   });
 
   it("ensure retorna o perfil existente sem criar de novo", async () => {
-    const maybeSingle = vi.fn().mockResolvedValue({ data: row, error: null });
-    const eq = vi.fn().mockReturnValue({ maybeSingle });
-    const select = vi.fn().mockReturnValue({ eq });
+    const maybeSingle = jest.fn().mockResolvedValue({ data: row, error: null });
+    const eq = jest.fn().mockReturnValue({ maybeSingle });
+    const select = jest.fn().mockReturnValue({ eq });
     const client = fakeClient({ select });
 
     const ds = new SupabaseProfileDataSource(client);
@@ -68,15 +67,15 @@ describe("SupabaseProfileDataSource (Spec 006 / Issue #55)", () => {
   });
 
   it("ensure cria o perfil quando ainda não existe", async () => {
-    const notFoundSingle = vi.fn().mockResolvedValue({ data: null, error: null });
-    const notFoundEq = vi.fn().mockReturnValue({ maybeSingle: notFoundSingle });
-    const selectNotFound = vi.fn().mockReturnValue({ eq: notFoundEq });
+    const notFoundSingle = jest.fn().mockResolvedValue({ data: null, error: null });
+    const notFoundEq = jest.fn().mockReturnValue({ maybeSingle: notFoundSingle });
+    const selectNotFound = jest.fn().mockReturnValue({ eq: notFoundEq });
 
-    const upsert = vi.fn().mockResolvedValue({ error: null });
+    const upsert = jest.fn().mockResolvedValue({ error: null });
 
-    const foundSingle = vi.fn().mockResolvedValue({ data: { ...row, name: "Usuária" }, error: null });
-    const foundEq = vi.fn().mockReturnValue({ maybeSingle: foundSingle });
-    const selectFound = vi.fn().mockReturnValue({ eq: foundEq });
+    const foundSingle = jest.fn().mockResolvedValue({ data: { ...row, name: "Usuária" }, error: null });
+    const foundEq = jest.fn().mockReturnValue({ maybeSingle: foundSingle });
+    const selectFound = jest.fn().mockReturnValue({ eq: foundEq });
 
     const client = fakeClient({ select: selectNotFound }, { upsert }, { select: selectFound });
 
@@ -90,10 +89,10 @@ describe("SupabaseProfileDataSource (Spec 006 / Issue #55)", () => {
   });
 
   it("ensure lança DataSourceError quando a criação falha", async () => {
-    const notFoundSingle = vi.fn().mockResolvedValue({ data: null, error: null });
-    const notFoundEq = vi.fn().mockReturnValue({ maybeSingle: notFoundSingle });
-    const selectNotFound = vi.fn().mockReturnValue({ eq: notFoundEq });
-    const upsert = vi.fn().mockResolvedValue({ error: { message: "falhou" } });
+    const notFoundSingle = jest.fn().mockResolvedValue({ data: null, error: null });
+    const notFoundEq = jest.fn().mockReturnValue({ maybeSingle: notFoundSingle });
+    const selectNotFound = jest.fn().mockReturnValue({ eq: notFoundEq });
+    const upsert = jest.fn().mockResolvedValue({ error: { message: "falhou" } });
     const client = fakeClient({ select: selectNotFound }, { upsert });
 
     const ds = new SupabaseProfileDataSource(client);
@@ -101,12 +100,12 @@ describe("SupabaseProfileDataSource (Spec 006 / Issue #55)", () => {
   });
 
   it("update salva e retorna o perfil atualizado", async () => {
-    const updateEq = vi.fn().mockResolvedValue({ error: null });
-    const update = vi.fn().mockReturnValue({ eq: updateEq });
+    const updateEq = jest.fn().mockResolvedValue({ error: null });
+    const update = jest.fn().mockReturnValue({ eq: updateEq });
 
-    const foundSingle = vi.fn().mockResolvedValue({ data: { ...row, name: "Ana Paula" }, error: null });
-    const foundEq = vi.fn().mockReturnValue({ maybeSingle: foundSingle });
-    const selectFound = vi.fn().mockReturnValue({ eq: foundEq });
+    const foundSingle = jest.fn().mockResolvedValue({ data: { ...row, name: "Ana Paula" }, error: null });
+    const foundEq = jest.fn().mockReturnValue({ maybeSingle: foundSingle });
+    const selectFound = jest.fn().mockReturnValue({ eq: foundEq });
 
     const client = fakeClient({ update }, { select: selectFound });
 
@@ -121,8 +120,8 @@ describe("SupabaseProfileDataSource (Spec 006 / Issue #55)", () => {
   });
 
   it("update lança DataSourceError quando o banco retorna erro", async () => {
-    const updateEq = vi.fn().mockResolvedValue({ error: { message: "falhou" } });
-    const update = vi.fn().mockReturnValue({ eq: updateEq });
+    const updateEq = jest.fn().mockResolvedValue({ error: { message: "falhou" } });
+    const update = jest.fn().mockReturnValue({ eq: updateEq });
     const client = fakeClient({ update });
 
     const ds = new SupabaseProfileDataSource(client);

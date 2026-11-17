@@ -1,6 +1,5 @@
 import { createElement } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
-import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ILocalCacheUseCases } from "@/usecase/iLocalCacheUseCases";
 import type { ISearchHistoryUseCases } from "@/usecase/iSearchHistoryUseCases";
 import { useSettingsViewModel } from "@/viewmodel/useSettingsViewModel";
@@ -11,9 +10,9 @@ const mounted: ReactTestRenderer[] = [];
 async function renderHook(
   useCases: ILocalCacheUseCases,
   history: ISearchHistoryUseCases = {
-    listTerms: vi.fn(),
-    registerSearch: vi.fn(),
-    clearHistory: vi.fn(),
+    listTerms: jest.fn(),
+    registerSearch: jest.fn(),
+    clearHistory: jest.fn(),
   } as unknown as ISearchHistoryUseCases,
 ) {
   let result!: ReturnType<typeof useSettingsViewModel>;
@@ -39,7 +38,7 @@ afterEach(async () => {
 
 describe("useSettingsViewModel — Configurações (Spec 073)", () => {
   it("começa ocioso e confirma a limpeza após o use case executar", async () => {
-    const clearBooksCache = vi.fn().mockResolvedValue(undefined);
+    const clearBooksCache = jest.fn().mockResolvedValue(undefined);
     const hook = await renderHook({ clearBooksCache });
 
     expect(hook.current[0].clearingCache).toBe(false);
@@ -57,7 +56,7 @@ describe("useSettingsViewModel — Configurações (Spec 073)", () => {
   });
 
   it("mostra erro amigável e mantém a tela utilizável quando a limpeza falha", async () => {
-    const clearBooksCache = vi.fn().mockRejectedValue(new Error("storage indisponível"));
+    const clearBooksCache = jest.fn().mockRejectedValue(new Error("storage indisponível"));
     const hook = await renderHook({ clearBooksCache });
 
     await act(async () => {
@@ -76,8 +75,8 @@ describe("useSettingsViewModel — histórico de buscas (Spec 091)", () => {
     let result!: ReturnType<typeof useSettingsViewModel>;
     function Probe() {
       result = useSettingsViewModel(
-        { clearBooksCache: vi.fn() },
-        { listTerms: vi.fn(), registerSearch: vi.fn(), clearHistory } as never,
+        { clearBooksCache: jest.fn() },
+        { listTerms: jest.fn(), registerSearch: jest.fn(), clearHistory } as never,
       );
       return null;
     }
@@ -86,7 +85,7 @@ describe("useSettingsViewModel — histórico de buscas (Spec 091)", () => {
   }
 
   it("apaga o histórico e confirma", async () => {
-    const clearHistory = vi.fn().mockResolvedValue(undefined);
+    const clearHistory = jest.fn().mockResolvedValue(undefined);
     const hook = await renderWithHistory(clearHistory);
     await act(async () => { await hook.current[1].clearSearchHistory("ana"); });
     expect(clearHistory).toHaveBeenCalledWith("ana");
@@ -95,7 +94,7 @@ describe("useSettingsViewModel — histórico de buscas (Spec 091)", () => {
   });
 
   it("mostra erro amigável quando apagar falha", async () => {
-    const hook = await renderWithHistory(vi.fn().mockRejectedValue(new Error("x")));
+    const hook = await renderWithHistory(jest.fn().mockRejectedValue(new Error("x")));
     await act(async () => { await hook.current[1].clearSearchHistory(null); });
     expect(hook.current[0].historyCleared).toBe(false);
     expect(hook.current[0].historyError).toBe("Não foi possível apagar o histórico de buscas. Tente novamente.");

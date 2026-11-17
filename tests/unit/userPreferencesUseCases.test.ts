@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import { MemoryUserPreferencesDataSource } from "@/infra/datasources/memoryUserPreferencesDataSource";
 import { ValidationError } from "@/model/errors";
 import { UserPreferencesUseCases } from "@/usecase/userPreferencesUseCases";

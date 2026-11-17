@@ -1,21 +1,20 @@
 
 import { render } from "@testing-library/react-native";
-import { describe, expect, it, vi } from "vitest";
 import type { ReceivedRatingsState } from "@/viewmodel/useReceivedRatingsViewModel";
 
-vi.mock("@/viewmodel/useReceivedRatingsViewModel", () => ({
-  useReceivedRatingsViewModel: vi.fn(),
+jest.mock("@/viewmodel/useReceivedRatingsViewModel", () => ({
+  useReceivedRatingsViewModel: jest.fn(),
 }));
 
 import { UserRatingsPanel } from "@/view/listings/userRatingsPanel";
 import { useReceivedRatingsViewModel } from "@/viewmodel/useReceivedRatingsViewModel";
 
-const mocked = vi.mocked(useReceivedRatingsViewModel);
+const mocked = jest.mocked(useReceivedRatingsViewModel);
 
 function mockState(state: Partial<ReceivedRatingsState>) {
   mocked.mockReturnValue([
     { ratings: [], loading: false, error: null, ...state },
-    { reload: vi.fn() },
+    { reload: jest.fn() },
   ]);
 }
 

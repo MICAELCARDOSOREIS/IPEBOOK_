@@ -1,5 +1,4 @@
 import { act, fireEvent, render } from "@testing-library/react-native";
-import { describe, expect, it, vi } from "vitest";
 import type { AuthActions, AuthState } from "@/viewmodel/useAuthViewModel";
 import SignIn from "@/view/auth/signIn";
 import SignUp from "@/view/auth/signUp";
@@ -8,19 +7,19 @@ import ForgotPassword from "@/view/auth/forgotPassword";
 import DeleteAccount from "@/view/auth/deleteAccount";
 import AuthCallback from "@/view/auth/authCallback";
 
-vi.mock("@/viewmodel/useAuthViewModel", () => ({
-  useAuthViewModel: vi.fn(),
+jest.mock("@/viewmodel/useAuthViewModel", () => ({
+  useAuthViewModel: jest.fn(),
 }));
 
-vi.mock("@/viewmodel/useResetPasswordViewModel", () => ({
-  useResetPasswordViewModel: vi.fn(() => [
+jest.mock("@/viewmodel/useResetPasswordViewModel", () => ({
+  useResetPasswordViewModel: jest.fn(() => [
     { loading: false, success: false, error: null, linkExpired: false },
-    { submit: vi.fn().mockResolvedValue(true) },
+    { submit: jest.fn().mockResolvedValue(true) },
   ]),
 }));
 
-vi.mock("@/viewmodel/useDeleteAccountViewModel", () => ({
-  useDeleteAccountViewModel: vi.fn(() => [
+jest.mock("@/viewmodel/useDeleteAccountViewModel", () => ({
+  useDeleteAccountViewModel: jest.fn(() => [
     {
       confirmed: false,
       loading: false,
@@ -32,24 +31,24 @@ vi.mock("@/viewmodel/useDeleteAccountViewModel", () => ({
       success: false,
     },
     {
-      setConfirmed: vi.fn(),
-      deleteAccount: vi.fn(),
-      downloadUserData: vi.fn(),
+      setConfirmed: jest.fn(),
+      deleteAccount: jest.fn(),
+      downloadUserData: jest.fn(),
     },
   ]),
 }));
 
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
-const mockedUseAuthViewModel = vi.mocked(useAuthViewModel);
+const mockedUseAuthViewModel = jest.mocked(useAuthViewModel);
 
 function mockAuth(state: AuthState, actions: Partial<AuthActions> = {}) {
   const fullActions: AuthActions = {
-    signUp: vi.fn().mockResolvedValue(true),
-    signIn: vi.fn().mockResolvedValue(true),
-    signInWithGoogle: vi.fn().mockResolvedValue(true),
-    signOut: vi.fn().mockResolvedValue(true),
-    requestPasswordReset: vi.fn().mockResolvedValue("senha-temp"),
-    handleAuthCallback: vi.fn().mockResolvedValue(true),
+    signUp: jest.fn().mockResolvedValue(true),
+    signIn: jest.fn().mockResolvedValue(true),
+    signInWithGoogle: jest.fn().mockResolvedValue(true),
+    signOut: jest.fn().mockResolvedValue(true),
+    requestPasswordReset: jest.fn().mockResolvedValue("senha-temp"),
+    handleAuthCallback: jest.fn().mockResolvedValue(true),
     ...actions,
   };
   mockedUseAuthViewModel.mockReturnValue([state, fullActions]);
@@ -148,7 +147,7 @@ describe("Spec 133 / Issue #217 — Migração para ScreenContainer e aprimorame
 
   it("AuthCallback adota InlineErrorCard quando ocorre falha", async () => {
     mockAuth({ user: null, loading: false, error: "Token inválido." }, {
-      handleAuthCallback: vi.fn().mockResolvedValue(false),
+      handleAuthCallback: jest.fn().mockResolvedValue(false),
     });
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {

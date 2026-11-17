@@ -1,6 +1,5 @@
 import { createElement } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
-import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Book } from "@/model/entities/book";
 import type { RequestWithListing } from "@/usecase/iBookRequestUseCases";
 import {
@@ -47,9 +46,9 @@ describe("findAcceptedRequestWith (Spec 091)", () => {
 
 describe("useChatWithUser (Spec 091)", () => {
   it("abre a conversa existente", async () => {
-    const onOpen = vi.fn();
+    const onOpen = jest.fn();
     const hook = await renderHook(
-      { listSentRequests: vi.fn().mockResolvedValue([entry("s1", "me", "ana", "accepted")]), listReceivedRequests: vi.fn().mockResolvedValue([]) },
+      { listSentRequests: jest.fn().mockResolvedValue([entry("s1", "me", "ana", "accepted")]), listReceivedRequests: jest.fn().mockResolvedValue([]) },
       onOpen,
     );
     await act(async () => { await hook.current.start(); });
@@ -58,19 +57,19 @@ describe("useChatWithUser (Spec 091)", () => {
   });
 
   it("explica como começar quando não há negociação aceita", async () => {
-    const onOpen = vi.fn();
-    const hook = await renderHook({ listSentRequests: vi.fn().mockResolvedValue([]), listReceivedRequests: vi.fn().mockResolvedValue([]) }, onOpen);
+    const onOpen = jest.fn();
+    const hook = await renderHook({ listSentRequests: jest.fn().mockResolvedValue([]), listReceivedRequests: jest.fn().mockResolvedValue([]) }, onOpen);
     await act(async () => { await hook.current.start(); });
     expect(onOpen).not.toHaveBeenCalled();
     expect(hook.current.notice).toBe(NO_CONVERSATION_MESSAGE);
   });
 
   it("ignora o segundo toque enquanto a busca está em andamento (abria a tela duas vezes)", async () => {
-    const onOpen = vi.fn();
+    const onOpen = jest.fn();
     let release!: (value: RequestWithListing[]) => void;
     const pending = new Promise<RequestWithListing[]>((resolve) => { release = resolve; });
-    const listSent = vi.fn().mockReturnValue(pending);
-    const hook = await renderHook({ listSentRequests: listSent, listReceivedRequests: vi.fn().mockResolvedValue([]) }, onOpen);
+    const listSent = jest.fn().mockReturnValue(pending);
+    const hook = await renderHook({ listSentRequests: listSent, listReceivedRequests: jest.fn().mockResolvedValue([]) }, onOpen);
     await act(async () => {
       void hook.current.start();
       void hook.current.start();
@@ -81,7 +80,7 @@ describe("useChatWithUser (Spec 091)", () => {
   });
 
   it("mostra erro quando a busca falha", async () => {
-    const hook = await renderHook({ listSentRequests: vi.fn().mockRejectedValue(new Error("rede")), listReceivedRequests: vi.fn().mockResolvedValue([]) }, vi.fn());
+    const hook = await renderHook({ listSentRequests: jest.fn().mockRejectedValue(new Error("rede")), listReceivedRequests: jest.fn().mockResolvedValue([]) }, jest.fn());
     await act(async () => { await hook.current.start(); });
     expect(hook.current.notice).toBe("Não foi possível abrir a conversa. Tente novamente.");
   });

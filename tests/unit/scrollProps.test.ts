@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import { standardVerticalScrollProps, standardHorizontalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 
 describe("scrollProps", () => {

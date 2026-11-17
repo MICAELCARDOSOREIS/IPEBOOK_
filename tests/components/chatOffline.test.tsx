@@ -1,19 +1,18 @@
 import { act, fireEvent, render } from "@testing-library/react-native";
-import { describe, expect, it, vi } from "vitest";
 import type { Book } from "@/model/entities/book";
 import { MemoryNetworkStatusDataSource } from "@/infra/datasources/memoryNetworkStatusDataSource";
 import { Chat } from "@/view/conversations/chat";
 
-vi.mock("@/viewmodel/useRequestDetailViewModel", () => ({ useRequestDetailViewModel: vi.fn() }));
-vi.mock("@/viewmodel/useNegotiationChatViewModel", () => ({ useNegotiationChatViewModel: vi.fn() }));
-vi.mock("@/viewmodel/useMeetingViewModel", () => ({
-  useMeetingViewModel: vi.fn(() => [{ meeting: null, loading: false }, { reload: vi.fn(), confirm: vi.fn() }]),
+jest.mock("@/viewmodel/useRequestDetailViewModel", () => ({ useRequestDetailViewModel: jest.fn() }));
+jest.mock("@/viewmodel/useNegotiationChatViewModel", () => ({ useNegotiationChatViewModel: jest.fn() }));
+jest.mock("@/viewmodel/useMeetingViewModel", () => ({
+  useMeetingViewModel: jest.fn(() => [{ meeting: null, loading: false }, { reload: jest.fn(), confirm: jest.fn() }]),
 }));
-vi.mock("@/viewmodel/useDeliveryViewModel", () => ({
+jest.mock("@/viewmodel/useDeliveryViewModel", () => ({
   useDeliveryStatus: () => ({ loading: false, role: "receiver", completed: null }),
 }));
-vi.mock("@/view/calendarIntegration", () => ({ addMeetingToCalendar: vi.fn() }));
-vi.mock("expo-linking", () => ({ openURL: vi.fn() }));
+jest.mock("@/view/calendarIntegration", () => ({ addMeetingToCalendar: jest.fn() }));
+jest.mock("expo-linking", () => ({ openURL: jest.fn() }));
 
 import { useRequestDetailViewModel } from "@/viewmodel/useRequestDetailViewModel";
 import { useNegotiationChatViewModel } from "@/viewmodel/useNegotiationChatViewModel";
@@ -29,8 +28,8 @@ const sampleBook: Book = {
 
 describe("Chat — Blindagem offline (Spec 130 / ADR 0101)", () => {
   it("desabilita botão de envio e avisa quando offline", async () => {
-    const detailActions = { reload: vi.fn(), respond: vi.fn() };
-    vi.mocked(useRequestDetailViewModel).mockReturnValue([
+    const detailActions = { reload: jest.fn(), respond: jest.fn() };
+    jest.mocked(useRequestDetailViewModel).mockReturnValue([
       {
         detail: {
           request: { id: "r1", listingId: "b1", requesterId: "me", status: "accepted" },
@@ -47,8 +46,8 @@ describe("Chat — Blindagem offline (Spec 130 / ADR 0101)", () => {
       detailActions,
     ]);
 
-    const chatActions = { setInputText: vi.fn(), sendMessage: vi.fn(), retryLastMessage: vi.fn(), reload: vi.fn() };
-    vi.mocked(useNegotiationChatViewModel).mockReturnValue([
+    const chatActions = { setInputText: jest.fn(), sendMessage: jest.fn(), retryLastMessage: jest.fn(), reload: jest.fn() };
+    jest.mocked(useNegotiationChatViewModel).mockReturnValue([
       { messages: [], inputText: "Olá, tudo bem?", isLoading: false, isSending: false, error: null, sendError: null },
       chatActions,
     ]);

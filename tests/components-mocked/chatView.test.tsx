@@ -1,29 +1,28 @@
 import { act, fireEvent, render } from "@testing-library/react-native";
 import * as Linking from "expo-linking";
-import { describe, expect, it, vi } from "vitest";
 import type { Book } from "@/model/entities/book";
 import type { NegotiationChatState } from "@/viewmodel/useNegotiationChatViewModel";
 import type { NegotiationDetail } from "@/usecase/iBookRequestUseCases";
 import { addMeetingToCalendar } from "@/view/calendarIntegration";
 import { Chat } from "@/view/conversations/chat";
 
-vi.mock("@/viewmodel/useRequestDetailViewModel", () => ({ useRequestDetailViewModel: vi.fn() }));
-vi.mock("@/viewmodel/useNegotiationChatViewModel", () => ({ useNegotiationChatViewModel: vi.fn() }));
-const mockMeetingActions = { reload: vi.fn(), confirm: vi.fn() };
+jest.mock("@/viewmodel/useRequestDetailViewModel", () => ({ useRequestDetailViewModel: jest.fn() }));
+jest.mock("@/viewmodel/useNegotiationChatViewModel", () => ({ useNegotiationChatViewModel: jest.fn() }));
+const mockMeetingActions = { reload: jest.fn(), confirm: jest.fn() };
 let mockMeetingState: { meeting: any; loading: boolean } = { meeting: null, loading: false };
-vi.mock("@/viewmodel/useMeetingViewModel", () => ({
-  useMeetingViewModel: vi.fn(() => [mockMeetingState, mockMeetingActions]),
+jest.mock("@/viewmodel/useMeetingViewModel", () => ({
+  useMeetingViewModel: jest.fn(() => [mockMeetingState, mockMeetingActions]),
 }));
-vi.mock("@/view/calendarIntegration", () => ({
-  addMeetingToCalendar: vi.fn().mockResolvedValue(true),
+jest.mock("@/view/calendarIntegration", () => ({
+  addMeetingToCalendar: jest.fn().mockResolvedValue(true),
 }));
-vi.mock("expo-linking", () => ({
-  openURL: vi.fn().mockResolvedValue(undefined),
+jest.mock("expo-linking", () => ({
+  openURL: jest.fn().mockResolvedValue(undefined),
 }));
 // Entrega por QR (Spec 095): começa sem conclusão.
-let deliveryCompleted: Record<string, unknown> | null = null;
-vi.mock("@/viewmodel/useDeliveryViewModel", () => ({
-  useDeliveryStatus: () => ({ loading: false, role: "receiver", completed: deliveryCompleted }),
+let mockDeliveryCompleted: Record<string, unknown> | null = null;
+jest.mock("@/viewmodel/useDeliveryViewModel", () => ({
+  useDeliveryStatus: () => ({ loading: false, role: "receiver", completed: mockDeliveryCompleted }),
 }));
 
 import { useRequestDetailViewModel } from "@/viewmodel/useRequestDetailViewModel";
@@ -36,8 +35,8 @@ function setup(
   detailOverride: Partial<NegotiationDetail> = {},
   detailActionsOverride: { reload?: any; respond?: any } = {},
 ) {
-  const detailActions = { reload: vi.fn(), respond: vi.fn().mockResolvedValue(true), ...detailActionsOverride };
-  vi.mocked(useRequestDetailViewModel).mockReturnValue([
+  const detailActions = { reload: jest.fn(), respond: jest.fn().mockResolvedValue(true), ...detailActionsOverride };
+  jest.mocked(useRequestDetailViewModel).mockReturnValue([
     {
       detail: {
         request: { id: "r1", listingId: "b1", requesterId: "me", status: "accepted" },
@@ -54,8 +53,8 @@ function setup(
     },
     detailActions,
   ]);
-  const actions = { setInputText: vi.fn(), sendMessage: vi.fn().mockResolvedValue(true), retryLastMessage: vi.fn(), reload: vi.fn() };
-  vi.mocked(useNegotiationChatViewModel).mockReturnValue([
+  const actions = { setInputText: jest.fn(), sendMessage: jest.fn().mockResolvedValue(true), retryLastMessage: jest.fn(), reload: jest.fn() };
+  jest.mocked(useNegotiationChatViewModel).mockReturnValue([
     { messages: [], inputText: "", isLoading: false, isSending: false, error: null, sendError: null, ...chat },
     actions,
   ]);
@@ -73,7 +72,7 @@ async function renderChat(props: Partial<Parameters<typeof Chat>[0]> = {}) {
 describe("Chat em tela cheia (Spec 082)", () => {
   it("tocar no cartão do livro abre o acompanhamento da negociação", async () => {
     setup();
-    const onOpenNegotiation = vi.fn();
+    const onOpenNegotiation = jest.fn();
     const screen = await renderChat({ onOpenNegotiation });
     await act(async () => {
       fireEvent.press(screen.getByRole("button", { name: "Abrir negociação de Dom Casmurro" }));
@@ -83,7 +82,7 @@ describe("Chat em tela cheia (Spec 082)", () => {
 
   it("mostra a pessoa, o livro e Combinar abre a negociação (CA2)", async () => {
     setup();
-    const onOpenNegotiation = vi.fn();
+    const onOpenNegotiation = jest.fn();
     const screen = await renderChat({ onOpenNegotiation });
     expect(screen.getByRole("header").props.children).toBe("Ana Paula");
     expect(screen.getByText("Dom Casmurro")).toBeDefined();
@@ -117,7 +116,7 @@ describe("Chat em tela cheia (Spec 082)", () => {
 
   it("mostra a foto da pessoa no cabeçalho e Voltar funciona (Spec 089)", async () => {
     setup();
-    const onBack = vi.fn();
+    const onBack = jest.fn();
     const screen = await renderChat({ onBack });
     expect(screen.getByLabelText("Ana Paula")).toBeDefined();
     await act(async () => { fireEvent.press(screen.getByLabelText("Voltar")); });
@@ -126,7 +125,7 @@ describe("Chat em tela cheia (Spec 082)", () => {
 
   it("Combinar é um botão com rótulo acessível (Spec 089)", async () => {
     setup();
-    const onOpenNegotiation = vi.fn();
+    const onOpenNegotiation = jest.fn();
     const screen = await renderChat({ onOpenNegotiation });
     await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Combinar encontro na negociação" })); });
     expect(onOpenNegotiation).toHaveBeenCalledWith("r1");
@@ -134,18 +133,18 @@ describe("Chat em tela cheia (Spec 082)", () => {
 
   it("depois da entrega concluída, o chat não oferece mais o Combinar (Spec 095)", async () => {
     setup();
-    deliveryCompleted = { requestId: "r1", completedBy: "me", completedAt: "2026-10-29T10:00:00.000Z" };
+    mockDeliveryCompleted = { requestId: "r1", completedBy: "me", completedAt: "2026-10-29T10:00:00.000Z" };
     const screen = await renderChat({});
-    deliveryCompleted = null;
+    mockDeliveryCompleted = null;
     expect(screen.getByText("Dom Casmurro")).toBeDefined();
     expect(screen.queryByLabelText("Combinar encontro na negociação")).toBeNull();
   });
 
   it("depois da entrega concluída, a conversa vira só consulta, sem campo de mensagem", async () => {
     setup();
-    deliveryCompleted = { requestId: "r1", completedBy: "me", completedAt: "2026-10-29T10:00:00.000Z" };
+    mockDeliveryCompleted = { requestId: "r1", completedBy: "me", completedAt: "2026-10-29T10:00:00.000Z" };
     const screen = await renderChat({});
-    deliveryCompleted = null;
+    mockDeliveryCompleted = null;
     expect(screen.getByText("Negociação concluída. A conversa ficou só para consulta.")).toBeDefined();
     expect(screen.queryByLabelText("Campo de mensagem")).toBeNull();
     expect(screen.queryByLabelText("Enviar mensagem")).toBeNull();
@@ -238,7 +237,7 @@ describe("Chat em tela cheia (Spec 082)", () => {
             status: "pending",
           },
         },
-        { respond: vi.fn().mockRejectedValue(new Error("Falha ao aceitar")) },
+        { respond: jest.fn().mockRejectedValue(new Error("Falha ao aceitar")) },
       );
       const screen = await renderChat();
       await act(async () => {
@@ -259,7 +258,7 @@ describe("Chat em tela cheia (Spec 082)", () => {
             status: "pending",
           },
         },
-        { respond: vi.fn().mockRejectedValue(new Error("Falha ao recusar")) },
+        { respond: jest.fn().mockRejectedValue(new Error("Falha ao recusar")) },
       );
       const screen = await renderChat();
       await act(async () => {
@@ -305,7 +304,7 @@ describe("Chat em tela cheia (Spec 082)", () => {
         },
         loading: false,
       };
-      deliveryCompleted = { requestId: "r1", completedBy: "me", completedAt: "2026-11-05T15:00:00.000Z" };
+      mockDeliveryCompleted = { requestId: "r1", completedBy: "me", completedAt: "2026-11-05T15:00:00.000Z" };
 
       setup({ messages: [] });
       const screen = await renderChat();
@@ -314,7 +313,7 @@ describe("Chat em tela cheia (Spec 082)", () => {
       expect(screen.getByText("Livro entregue presencialmente com sucesso!")).toBeDefined();
 
       mockMeetingState = { meeting: null, loading: false };
-      deliveryCompleted = null;
+      mockDeliveryCompleted = null;
     });
 
     it("permite abrir direções no mapa, adicionar à agenda e ir para entrega", async () => {
@@ -331,8 +330,8 @@ describe("Chat em tela cheia (Spec 082)", () => {
       };
 
       setup();
-      const onScheduleMeeting = vi.fn();
-      const onOpenDelivery = vi.fn();
+      const onScheduleMeeting = jest.fn();
+      const onOpenDelivery = jest.fn();
       const screen = await renderChat({ onScheduleMeeting, onOpenDelivery });
 
       await act(async () => {

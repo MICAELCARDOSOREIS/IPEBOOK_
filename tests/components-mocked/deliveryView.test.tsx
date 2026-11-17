@@ -1,38 +1,37 @@
 
 import { act, fireEvent, render } from "@testing-library/react-native";
-import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { DeliveryActions, DeliveryState } from "@/viewmodel/useDeliveryViewModel";
 import { buildDeliveryPayload } from "@/model/entities/delivery";
 import DeliveryScreen, { Delivery } from "@/view/requests/delivery";
 
 // A câmera guarda o leitor de QR para o teste simular uma leitura.
-const camera = vi.hoisted(() => ({
+const mockCamera = {
   onScan: undefined as undefined | ((result: { data: string }) => void),
   granted: true,
   askAgain: undefined as undefined | (() => void),
-}));
-vi.mock("expo-camera", () => ({
+};
+jest.mock("expo-camera", () => ({
   CameraView: (props: { onBarcodeScanned?: (result: { data: string }) => void }) => {
-    camera.onScan = props.onBarcodeScanned;
+    mockCamera.onScan = props.onBarcodeScanned;
     return null;
   },
   useCameraPermissions: () => [
-    { granted: camera.granted },
+    { granted: mockCamera.granted },
     () => {
-      camera.askAgain?.();
+      mockCamera.askAgain?.();
       return Promise.resolve({ granted: true });
     },
   ],
 }));
-vi.mock("@/viewmodel/useDeliveryViewModel", () => ({ useDeliveryViewModel: vi.fn() }));
-vi.mock("@/viewmodel/useAuthViewModel", () => ({ useAuthViewModel: vi.fn() }));
-const larguraWeb = vi.hoisted(() => ({ atual: 360 }));
-vi.mock("@/view/useIsWideWeb", () => ({
-  useIsWideWeb: vi.fn(() => false),
-  useHydratedWindowWidth: () => larguraWeb.atual,
+jest.mock("@/viewmodel/useDeliveryViewModel", () => ({ useDeliveryViewModel: jest.fn() }));
+jest.mock("@/viewmodel/useAuthViewModel", () => ({ useAuthViewModel: jest.fn() }));
+const mockLarguraWeb = { atual: 360 };
+jest.mock("@/view/useIsWideWeb", () => ({
+  useIsWideWeb: jest.fn(() => false),
+  useHydratedWindowWidth: () => mockLarguraWeb.atual,
 }));
-vi.mock("@/viewmodel/useRequestDetailViewModel", () => ({
-  useRequestDetailViewModel: vi.fn(() => [
+jest.mock("@/viewmodel/useRequestDetailViewModel", () => ({
+  useRequestDetailViewModel: jest.fn(() => [
     {
       detail: {
         book: {
@@ -52,7 +51,7 @@ vi.mock("@/viewmodel/useRequestDetailViewModel", () => ({
       loading: false,
       error: null,
     },
-    { reload: vi.fn() },
+    { reload: jest.fn() },
   ]),
 }));
 
@@ -74,21 +73,21 @@ const base: DeliveryState = {
 let actions: DeliveryActions;
 
 function mockState(overrides: Partial<DeliveryState>) {
-  vi.mocked(useDeliveryViewModel).mockReturnValue([{ ...base, ...overrides }, actions]);
+  jest.mocked(useDeliveryViewModel).mockReturnValue([{ ...base, ...overrides }, actions]);
 }
 
 async function open() {
   let screen!: Awaited<ReturnType<typeof render>>;
   await act(async () => {
-    screen = await render(<Delivery requestId={REQUEST} sessionUserId="u1" onBack={vi.fn()} />);
+    screen = await render(<Delivery requestId={REQUEST} sessionUserId="u1" onBack={jest.fn()} />);
   });
   return screen;
 }
 
 describe("Entrega do livro (Spec 095, CA6/CA7)", () => {
   beforeEach(() => {
-    camera.granted = true;
-    actions = { generate: vi.fn().mockResolvedValue(undefined), confirm: vi.fn().mockResolvedValue(true), reload: vi.fn() };
+    mockCamera.granted = true;
+    actions = { generate: jest.fn().mockResolvedValue(undefined), confirm: jest.fn().mockResolvedValue(true), reload: jest.fn() };
   });
 
   it("anunciante: mostra o QR, o código agrupado e permite gerar outro", async () => {
@@ -129,21 +128,21 @@ describe("Entrega do livro (Spec 095, CA6/CA7)", () => {
     mockState({ role: "receiver" });
     const screen = await open();
 
-    await act(async () => { camera.onScan?.({ data: buildDeliveryPayload("99999999-0181-4b91-8266-2bd2f363f5f5", "K7M2QXWA") }); });
+    await act(async () => { mockCamera.onScan?.({ data: buildDeliveryPayload("99999999-0181-4b91-8266-2bd2f363f5f5", "K7M2QXWA") }); });
     expect(screen.getByText("Este QR é de outra negociação.")).toBeDefined();
     expect(actions.confirm).not.toHaveBeenCalled();
 
-    await act(async () => { camera.onScan?.({ data: "https://exemplo.com" }); });
+    await act(async () => { mockCamera.onScan?.({ data: "https://exemplo.com" }); });
     expect(screen.getByText("Este QR não é de uma entrega do IpêBook.")).toBeDefined();
 
-    await act(async () => { camera.onScan?.({ data: buildDeliveryPayload(REQUEST, "K7M2QXWA") }); });
+    await act(async () => { mockCamera.onScan?.({ data: buildDeliveryPayload(REQUEST, "K7M2QXWA") }); });
     expect(actions.confirm).toHaveBeenCalledWith("K7M2QXWA");
   });
 
   it("leitor sem permissão da câmera: pede a permissão e segue pelo código digitado", async () => {
-    camera.granted = false;
-    const asked = vi.fn();
-    camera.askAgain = asked;
+    mockCamera.granted = false;
+    const asked = jest.fn();
+    mockCamera.askAgain = asked;
     mockState({ role: "receiver" });
     const screen = await open();
     expect(screen.queryByLabelText("Código da entrega")).toBeDefined();
@@ -191,24 +190,24 @@ describe("Entrega do livro (Spec 095, CA6/CA7)", () => {
   it("leitor: ignora novas leituras enquanto confirma", async () => {
     mockState({ role: "receiver", confirming: true });
     await open();
-    await act(async () => { camera.onScan?.({ data: buildDeliveryPayload(REQUEST, "K7M2QXWA") }); });
+    await act(async () => { mockCamera.onScan?.({ data: buildDeliveryPayload(REQUEST, "K7M2QXWA") }); });
     expect(actions.confirm).not.toHaveBeenCalled();
   });
 
   it("leitor: leitura sem texto é recusada como QR de outro tipo", async () => {
     mockState({ role: "receiver" });
     const screen = await open();
-    await act(async () => { camera.onScan?.({} as { data: string }); });
+    await act(async () => { mockCamera.onScan?.({} as { data: string }); });
     expect(screen.getByText("Este QR não é de uma entrega do IpêBook.")).toBeDefined();
   });
 });
 
 describe("rota da entrega: exige sessão", () => {
-  const authActions = { signUp: vi.fn(), signIn: vi.fn(), signOut: vi.fn(), requestPasswordReset: vi.fn() };
+  const authActions = { signUp: jest.fn(), signIn: jest.fn(), signOut: jest.fn(), requestPasswordReset: jest.fn() };
 
   it("sem sessão, pede o login e não desenha a tela", async () => {
-    vi.mocked(useAuthViewModel).mockReturnValue([{ user: null, loading: false, error: null }, authActions]);
-    const onRequireSignIn = vi.fn();
+    jest.mocked(useAuthViewModel).mockReturnValue([{ user: null, loading: false, error: null }, authActions]);
+    const onRequireSignIn = jest.fn();
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => { screen = await render(<DeliveryScreen requestId={REQUEST} onRequireSignIn={onRequireSignIn} />); });
     expect(onRequireSignIn).toHaveBeenCalledTimes(1);
@@ -216,15 +215,15 @@ describe("rota da entrega: exige sessão", () => {
   });
 
   it("enquanto confere a sessão, não faz nada", async () => {
-    vi.mocked(useAuthViewModel).mockReturnValue([{ user: null, loading: true, error: null }, authActions]);
-    const onRequireSignIn = vi.fn();
+    jest.mocked(useAuthViewModel).mockReturnValue([{ user: null, loading: true, error: null }, authActions]);
+    const onRequireSignIn = jest.fn();
     await act(async () => { await render(<DeliveryScreen requestId={REQUEST} onRequireSignIn={onRequireSignIn} />); });
     expect(onRequireSignIn).not.toHaveBeenCalled();
   });
 
   it("com sessão, mostra a entrega", async () => {
-    vi.mocked(useAuthViewModel).mockReturnValue([{ user: { id: "u1", name: "Ana", email: "a@b.c" } as never, loading: false, error: null }, authActions]);
-    vi.mocked(useDeliveryViewModel).mockReturnValue([{ ...base, role: "receiver" }, { generate: vi.fn(), confirm: vi.fn(), reload: vi.fn() }]);
+    jest.mocked(useAuthViewModel).mockReturnValue([{ user: { id: "u1", name: "Ana", email: "a@b.c" } as never, loading: false, error: null }, authActions]);
+    jest.mocked(useDeliveryViewModel).mockReturnValue([{ ...base, role: "receiver" }, { generate: jest.fn(), confirm: jest.fn(), reload: jest.fn() }]);
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => { screen = await render(<DeliveryScreen requestId={REQUEST} />); });
     expect(screen.getByRole("header", { name: "Confirmar recebimento" })).toBeDefined();
@@ -233,7 +232,7 @@ describe("rota da entrega: exige sessão", () => {
 
 describe("Melhorias na entrega do livro (Spec 115)", () => {
   beforeEach(() => {
-    actions = { generate: vi.fn().mockResolvedValue(undefined), confirm: vi.fn().mockResolvedValue(true), reload: vi.fn() };
+    actions = { generate: jest.fn().mockResolvedValue(undefined), confirm: jest.fn().mockResolvedValue(true), reload: jest.fn() };
   });
 
   it("exibe o resumo contextual do livro e da contraparte comunitária", async () => {
@@ -247,8 +246,8 @@ describe("Melhorias na entrega do livro (Spec 115)", () => {
   });
 
   it("renderiza layout em 2 colunas com dicas de entrega na web larga", async () => {
-    vi.mocked(useIsWideWeb).mockReturnValue(true);
-    larguraWeb.atual = 1280;
+    jest.mocked(useIsWideWeb).mockReturnValue(true);
+    mockLarguraWeb.atual = 1280;
     try {
       mockState({ role: "giver", code: { code: "K7M2QXWA", expiresAt: new Date(Date.now() + 10 * 60_000).toISOString() } });
       const screen = await open();
@@ -257,8 +256,8 @@ describe("Melhorias na entrega do livro (Spec 115)", () => {
       expect(screen.getByText(/Realizem a troca em um dos 4 pontos públicos e seguros de Piripiri/)).toBeDefined();
       expect(screen.getByRole("header", { name: "Mostre este QR para quem recebe o livro" })).toBeDefined();
     } finally {
-      vi.mocked(useIsWideWeb).mockReturnValue(false);
-      larguraWeb.atual = 360;
+      jest.mocked(useIsWideWeb).mockReturnValue(false);
+      mockLarguraWeb.atual = 360;
     }
   });
 });

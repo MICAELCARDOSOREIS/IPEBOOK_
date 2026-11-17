@@ -1,6 +1,5 @@
 import type React from "react";
 import { act, cleanup, fireEvent, render } from "@testing-library/react-native";
-import { afterEach, describe, expect, it, vi } from "vitest";
 import { WebFilterSidebar } from "@/view/search/WebFilterSidebar";
 import { ThemeProvider } from "@/view/theme/ThemeProvider";
 import { DEFAULT_SEARCH_FILTERS } from "@/viewmodel/searchFilters";
@@ -22,16 +21,16 @@ describe("WebFilterSidebar (Figma 34:229)", () => {
     filters: DEFAULT_SEARCH_FILTERS,
     categories: ["Literatura", "Infantil"],
     hasActiveFilters: false,
-    onModality: vi.fn(),
-    onCondition: vi.fn(),
-    onCategory: vi.fn(),
-    onClear: vi.fn(),
+    onModality: jest.fn(),
+    onCondition: jest.fn(),
+    onCategory: jest.fn(),
+    onClear: jest.fn(),
   };
 
   it("aplica filtros na hora, alterna de volta e só oferece limpar com filtro ativo", async () => {
-    const onModality = vi.fn();
-    const onCondition = vi.fn();
-    const onCategory = vi.fn();
+    const onModality = jest.fn();
+    const onCondition = jest.fn();
+    const onCategory = jest.fn();
     const screen = await wrap(
       <WebFilterSidebar
         {...base}
@@ -60,7 +59,7 @@ describe("WebFilterSidebar (Figma 34:229)", () => {
 
     // "Limpar filtros" só aparece com filtro ativo.
     expect(screen.queryByLabelText("Limpar todos os filtros de busca")).toBeNull();
-    const onClear = vi.fn();
+    const onClear = jest.fn();
     await act(async () => {
       screen.rerender(
         <ThemeProvider>

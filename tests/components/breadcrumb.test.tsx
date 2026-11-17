@@ -1,6 +1,5 @@
 
 import { act, cleanup, fireEvent, render } from "@testing-library/react-native";
-import { afterEach, describe, expect, it, vi } from "vitest";
 import { Breadcrumb } from "@/view/components/Breadcrumb";
 
 describe("Breadcrumb (Navegação Web e Desktop)", () => {
@@ -17,8 +16,8 @@ describe("Breadcrumb (Navegação Web e Desktop)", () => {
   });
 
   it("renderiza os itens, separadores e dispara ações", async () => {
-    const onHome = vi.fn();
-    const onCategory = vi.fn();
+    const onHome = jest.fn();
+    const onCategory = jest.fn();
 
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
@@ -54,7 +53,7 @@ describe("Breadcrumb (Navegação Web e Desktop)", () => {
       screen = await render(
         <Breadcrumb
           items={[
-            { label: "Explorar", onPress: vi.fn() },
+            { label: "Explorar", onPress: jest.fn() },
             { label: "Título do Livro" },
           ]}
         />

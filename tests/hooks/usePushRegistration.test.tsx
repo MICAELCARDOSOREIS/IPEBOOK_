@@ -1,6 +1,5 @@
 import { createElement } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
-import { afterEach, describe, expect, it, vi } from "vitest";
 import { MemoryPushNotificationService } from "@/infra/services/memoryPushNotificationService";
 import type { IUserPreferencesUseCases } from "@/usecase/iUserPreferencesUseCases";
 import { internalRouteOf, usePushRegistration } from "@/viewmodel/usePushRegistration";
@@ -12,9 +11,9 @@ afterEach(() => {
 
 function fakePreferences(current: { pushToken?: string | null } = {}) {
   return {
-    getPreferences: vi.fn().mockResolvedValue({ userId: "u1", ...current }),
-    updatePreferences: vi.fn().mockResolvedValue({ userId: "u1" }),
-  } as unknown as IUserPreferencesUseCases & { updatePreferences: ReturnType<typeof vi.fn>; getPreferences: ReturnType<typeof vi.fn> };
+    getPreferences: jest.fn().mockResolvedValue({ userId: "u1", ...current }),
+    updatePreferences: jest.fn().mockResolvedValue({ userId: "u1" }),
+  } as unknown as IUserPreferencesUseCases & { updatePreferences: jest.Mock; getPreferences: jest.Mock };
 }
 
 type ProbeProps = { id: string | null; ready: boolean };

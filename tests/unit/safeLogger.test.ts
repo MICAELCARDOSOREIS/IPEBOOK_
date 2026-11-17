@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import type { LogEntry } from "@/model/services/iLogger";
 import { SafeLogger, sanitizeContext } from "@/infra/services/safeLogger";
 

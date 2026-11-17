@@ -1,6 +1,5 @@
 import { createElement } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
-import { afterEach, describe, expect, it, vi } from "vitest";
 import { DomainError, ValidationError } from "@/model/errors";
 import type { IUserPreferencesUseCases } from "@/usecase/iUserPreferencesUseCases";
 import { useUserPreferencesViewModel } from "@/viewmodel/useUserPreferencesViewModel";
@@ -34,12 +33,12 @@ const preferences = { userId: "ana", phone: "86999998888", neighborhood: "Centro
 
 describe("testes de hook: useUserPreferencesViewModel (Spec 034 / Issue #141)", () => {
   it("não carrega nada sem sessão", async () => {
-    const hook = await renderHook(null, { getPreferences: vi.fn(), updatePreferences: vi.fn() });
+    const hook = await renderHook(null, { getPreferences: jest.fn(), updatePreferences: jest.fn() });
     expect(hook.current[0]).toEqual({ preferences: null, pushToken: null, loading: false, saving: false, error: null });
   });
 
   it("carrega as preferências da pessoa autenticada", async () => {
-    const hook = await renderHook("ana", { getPreferences: async () => preferences, updatePreferences: vi.fn() });
+    const hook = await renderHook("ana", { getPreferences: async () => preferences, updatePreferences: jest.fn() });
     expect(hook.current[0]).toEqual({ preferences, pushToken: null, loading: false, saving: false, error: null });
   });
 
@@ -48,7 +47,7 @@ describe("testes de hook: useUserPreferencesViewModel (Spec 034 / Issue #141)", 
       getPreferences: async () => {
         throw new ValidationError("Usuário não encontrado.");
       },
-      updatePreferences: vi.fn(),
+      updatePreferences: jest.fn(),
     });
     expect(hook.current[0]).toEqual({
       preferences: null,
@@ -61,7 +60,7 @@ describe("testes de hook: useUserPreferencesViewModel (Spec 034 / Issue #141)", 
 
   it("atualiza as preferências com sucesso", async () => {
     const updated = { ...preferences, phone: "86988887777" };
-    const updatePreferences = vi.fn().mockResolvedValue(updated);
+    const updatePreferences = jest.fn().mockResolvedValue(updated);
     const hook = await renderHook("ana", { getPreferences: async () => preferences, updatePreferences });
     let ok = false;
     await act(async () => {
@@ -103,8 +102,8 @@ describe("testes de hook: useUserPreferencesViewModel (Spec 034 / Issue #141)", 
   });
 
   it("reload sem sessão não recarrega nada", async () => {
-    const getPreferences = vi.fn();
-    const hook = await renderHook(null, { getPreferences, updatePreferences: vi.fn() });
+    const getPreferences = jest.fn();
+    const hook = await renderHook(null, { getPreferences, updatePreferences: jest.fn() });
     await act(async () => {
       hook.current[1].reload();
     });
@@ -112,11 +111,11 @@ describe("testes de hook: useUserPreferencesViewModel (Spec 034 / Issue #141)", 
   });
 
   it("reload propaga o DomainError quando a recarga falha", async () => {
-    const getPreferences = vi
+    const getPreferences = jest
       .fn()
       .mockRejectedValueOnce(new Error("boom"))
       .mockRejectedValueOnce(new DomainError("sem acesso"));
-    const hook = await renderHook("ana", { getPreferences, updatePreferences: vi.fn() });
+    const hook = await renderHook("ana", { getPreferences, updatePreferences: jest.fn() });
     await act(async () => {
       hook.current[1].reload();
     });
@@ -124,8 +123,8 @@ describe("testes de hook: useUserPreferencesViewModel (Spec 034 / Issue #141)", 
   });
 
   it("não atualiza sem sessão", async () => {
-    const updatePreferences = vi.fn();
-    const hook = await renderHook(null, { getPreferences: vi.fn(), updatePreferences });
+    const updatePreferences = jest.fn();
+    const hook = await renderHook(null, { getPreferences: jest.fn(), updatePreferences });
     let ok = true;
     await act(async () => {
       ok = await hook.current[1].update({ phone: "86988887777" });
@@ -136,12 +135,12 @@ describe("testes de hook: useUserPreferencesViewModel (Spec 034 / Issue #141)", 
 
   it("recarrega as preferências pelo reload após falha de carregamento", async () => {
     let attempts = 0;
-    const getPreferences = vi.fn(async () => {
+    const getPreferences = jest.fn(async () => {
       attempts += 1;
       if (attempts === 1) throw new Error("boom");
       return preferences;
     });
-    const hook = await renderHook("ana", { getPreferences, updatePreferences: vi.fn() });
+    const hook = await renderHook("ana", { getPreferences, updatePreferences: jest.fn() });
     expect(hook.current[0].error).toBe("Não foi possível carregar suas preferências. Tente novamente.");
     await act(async () => {
       hook.current[1].reload();
@@ -156,7 +155,7 @@ describe("testes de hook: useUserPreferencesViewModel (Spec 034 / Issue #141)", 
     };
     const hook = await renderHook("ana", {
       getPreferences: async () => preferencesWithToken,
-      updatePreferences: vi.fn(),
+      updatePreferences: jest.fn(),
     });
     expect(hook.current[0].pushToken).toBe("ExponentPushToken[sample-token-123]");
     expect(hook.current[0].preferences?.pushToken).toBe("ExponentPushToken[sample-token-123]");
@@ -167,7 +166,7 @@ describe("testes de hook: useUserPreferencesViewModel (Spec 034 / Issue #141)", 
       ...preferences,
       pushToken: "ExponentPushToken[sample-token-456]",
     };
-    const updatePreferences = vi.fn().mockResolvedValue(updated);
+    const updatePreferences = jest.fn().mockResolvedValue(updated);
     const hook = await renderHook("ana", {
       getPreferences: async () => preferences,
       updatePreferences,
@@ -190,7 +189,7 @@ describe("testes de hook: useUserPreferencesViewModel (Spec 034 / Issue #141)", 
       ...preferences,
       pushToken: null,
     };
-    const updatePreferences = vi.fn().mockResolvedValue(updated);
+    const updatePreferences = jest.fn().mockResolvedValue(updated);
     const hook = await renderHook("ana", {
       getPreferences: async () => ({ ...preferences, pushToken: "ExponentPushToken[antigo]" }),
       updatePreferences,
@@ -207,8 +206,8 @@ describe("testes de hook: useUserPreferencesViewModel (Spec 034 / Issue #141)", 
   });
 
   it("setPushToken retorna false quando não autenticado", async () => {
-    const updatePreferences = vi.fn();
-    const hook = await renderHook(null, { getPreferences: vi.fn(), updatePreferences });
+    const updatePreferences = jest.fn();
+    const hook = await renderHook(null, { getPreferences: jest.fn(), updatePreferences });
     let ok = true;
     await act(async () => {
       ok = await hook.current[1].setPushToken!("ExponentPushToken[xyz]");

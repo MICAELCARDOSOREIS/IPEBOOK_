@@ -1,4 +1,3 @@
-import { describe, expect, it, vi } from "vitest";
 import { OPEN_GRAPH_BOOK_COLUMNS, onRequest } from "../../functions/livro/[id]";
 import { BOOK_COLUMNS } from "@/infra/datasources/supabaseBookDataSource";
 
@@ -18,7 +17,7 @@ describe("Cloudflare Pages Function /livro/[id] (Spec 119)", () => {
 
     const originalHtml = `<!DOCTYPE html><html><head><title>IpêBook</title></head><body><div id="root"></div></body></html>`;
 
-    const fakeNext = vi.fn().mockResolvedValue(
+    const fakeNext = jest.fn().mockResolvedValue(
       new Response(originalHtml, {
         status: 200,
         headers: { "Content-Type": "text/html; charset=utf-8" },
@@ -27,7 +26,7 @@ describe("Cloudflare Pages Function /livro/[id] (Spec 119)", () => {
 
     // Mock global fetch para simular resposta do Supabase REST
     const originalFetch = globalThis.fetch;
-    const fetchMock = vi.fn().mockResolvedValue({
+    const fetchMock = jest.fn().mockResolvedValue({
       ok: true,
       json: async () => [mockBook],
     } as unknown as Response);
@@ -64,7 +63,7 @@ describe("Cloudflare Pages Function /livro/[id] (Spec 119)", () => {
 
   it("retorna o HTML original caso o livro não seja encontrado no Supabase", async () => {
     const originalHtml = `<!DOCTYPE html><html><head><title>IpêBook</title></head><body></body></html>`;
-    const fakeNext = vi.fn().mockResolvedValue(
+    const fakeNext = jest.fn().mockResolvedValue(
       new Response(originalHtml, {
         status: 200,
         headers: { "Content-Type": "text/html; charset=utf-8" },
@@ -72,7 +71,7 @@ describe("Cloudflare Pages Function /livro/[id] (Spec 119)", () => {
     );
 
     const originalFetch = globalThis.fetch;
-    globalThis.fetch = vi.fn().mockResolvedValue({
+    globalThis.fetch = jest.fn().mockResolvedValue({
       ok: true,
       json: async () => [],
     } as unknown as Response);

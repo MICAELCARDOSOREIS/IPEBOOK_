@@ -1,7 +1,6 @@
-import { describe, expect, it } from "vitest";
 import { render } from "@testing-library/react-native";
-import { Platform, StyleSheet, Text } from "react-native";
-import { __emitKeyboardEvent } from "../mocks/react-native";
+// @ts-expect-error Exportado pelo mock de react-native
+import { Platform, StyleSheet, Text, __emitKeyboardEvent } from "react-native";
 import { medirInsetoTeclado } from "@/view/useKeyboardInset";
 import { KeyboardAwareRoot } from "@/view/components/KeyboardAwareRoot";
 

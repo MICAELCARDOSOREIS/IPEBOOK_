@@ -1,5 +1,4 @@
 import { act, cleanup, fireEvent, render } from "@testing-library/react-native";
-import { afterEach, describe, expect, it, vi } from "vitest";
 import { SentRequests } from "@/view/requests/sentRequests";
 import { ReceivedRequests } from "@/view/requests/receivedRequests";
 
@@ -7,19 +6,19 @@ afterEach(() => {
   cleanup();
 });
 
-vi.mock("@/viewmodel/useSentRequestsViewModel", () => ({
-  useSentRequestsViewModel: vi.fn(),
+jest.mock("@/viewmodel/useSentRequestsViewModel", () => ({
+  useSentRequestsViewModel: jest.fn(),
 }));
 
-vi.mock("@/viewmodel/useReceivedRequestsViewModel", () => ({
-  useReceivedRequestsViewModel: vi.fn(),
+jest.mock("@/viewmodel/useReceivedRequestsViewModel", () => ({
+  useReceivedRequestsViewModel: jest.fn(),
 }));
 
 import { useSentRequestsViewModel } from "@/viewmodel/useSentRequestsViewModel";
 import { useReceivedRequestsViewModel } from "@/viewmodel/useReceivedRequestsViewModel";
 
-const mockedUseSent = vi.mocked(useSentRequestsViewModel);
-const mockedUseReceived = vi.mocked(useReceivedRequestsViewModel);
+const mockedUseSent = jest.mocked(useSentRequestsViewModel);
+const mockedUseReceived = jest.mocked(useReceivedRequestsViewModel);
 
 const mockSentItem = {
   request: {
@@ -81,7 +80,7 @@ describe("SentRequests e ReceivedRequests Views (ISO/IEC 25010 - Adequação Fun
     it("exibe mensagem vazia quando não há pedidos enviados", async () => {
       mockedUseSent.mockReturnValue([
         { items: [], loading: false, error: null },
-        { reload: vi.fn() },
+        { reload: jest.fn() },
       ]);
 
       let screen!: Awaited<ReturnType<typeof render>>;
@@ -95,9 +94,9 @@ describe("SentRequests e ReceivedRequests Views (ISO/IEC 25010 - Adequação Fun
     it("exibe botão de ver detalhes do encontro quando pedido foi aceito", async () => {
       mockedUseSent.mockReturnValue([
         { items: [mockSentItem], loading: false, error: null },
-        { reload: vi.fn() },
+        { reload: jest.fn() },
       ]);
-      const onNavigate = vi.fn();
+      const onNavigate = jest.fn();
 
       let screen!: Awaited<ReturnType<typeof render>>;
       await act(async () => {
@@ -113,7 +112,7 @@ describe("SentRequests e ReceivedRequests Views (ISO/IEC 25010 - Adequação Fun
     });
 
     it("permite tentar novamente em caso de erro", async () => {
-      const reload = vi.fn();
+      const reload = jest.fn();
       mockedUseSent.mockReturnValue([
         { items: [], loading: false, error: "Falha de rede ao carregar" },
         { reload },
@@ -135,7 +134,7 @@ describe("SentRequests e ReceivedRequests Views (ISO/IEC 25010 - Adequação Fun
     it("exibe mensagem vazia quando não há pedidos recebidos", async () => {
       mockedUseReceived.mockReturnValue([
         { items: [], loading: false, error: null, respondingId: null, respondError: null, respondErrorId: null },
-        { reload: vi.fn(), accept: vi.fn(), reject: vi.fn() },
+        { reload: jest.fn(), accept: jest.fn(), reject: jest.fn() },
       ]);
 
       let screen!: Awaited<ReturnType<typeof render>>;
@@ -147,11 +146,11 @@ describe("SentRequests e ReceivedRequests Views (ISO/IEC 25010 - Adequação Fun
     });
 
     it("exibe botões de Aceitar e Recusar para pedidos pendentes e dispara actions", async () => {
-      const accept = vi.fn().mockResolvedValue(true);
-      const reject = vi.fn();
+      const accept = jest.fn().mockResolvedValue(true);
+      const reject = jest.fn();
       mockedUseReceived.mockReturnValue([
         { items: [mockReceivedItemPending], loading: false, error: null, respondingId: null, respondError: null, respondErrorId: null },
-        { reload: vi.fn(), accept, reject },
+        { reload: jest.fn(), accept, reject },
       ]);
 
       const screen = await render(<ReceivedRequests sessionUserId="user-me" />);
@@ -182,10 +181,10 @@ describe("SentRequests e ReceivedRequests Views (ISO/IEC 25010 - Adequação Fun
     });
 
     it("mantém o diálogo de aceite aberto quando a resposta falha", async () => {
-      const accept = vi.fn().mockResolvedValue(false);
+      const accept = jest.fn().mockResolvedValue(false);
       mockedUseReceived.mockReturnValue([
         { items: [mockReceivedItemPending], loading: false, error: null, respondingId: null, respondError: null, respondErrorId: null },
-        { reload: vi.fn(), accept, reject: vi.fn() },
+        { reload: jest.fn(), accept, reject: jest.fn() },
       ]);
 
       const screen = await render(<ReceivedRequests sessionUserId="user-me" />);
@@ -201,7 +200,7 @@ describe("SentRequests e ReceivedRequests Views (ISO/IEC 25010 - Adequação Fun
     });
 
     it("exibe botão de ver detalhes do encontro para pedidos aceitos e alerta de erro de resposta", async () => {
-      const onNavigate = vi.fn();
+      const onNavigate = jest.fn();
       mockedUseReceived.mockReturnValue([
         {
           items: [mockReceivedItemAccepted],
@@ -211,7 +210,7 @@ describe("SentRequests e ReceivedRequests Views (ISO/IEC 25010 - Adequação Fun
           respondError: "Não foi possível aceitar a negociação.",
           respondErrorId: "req-3",
         },
-        { reload: vi.fn(), accept: vi.fn(), reject: vi.fn() },
+        { reload: jest.fn(), accept: jest.fn(), reject: jest.fn() },
       ]);
 
       const screen = await render(
@@ -239,7 +238,7 @@ describe("SentRequests e ReceivedRequests Views (ISO/IEC 25010 - Adequação Fun
           respondError: null,
           respondErrorId: null,
         },
-        { reload: vi.fn(), accept: vi.fn(), reject: vi.fn() },
+        { reload: jest.fn(), accept: jest.fn(), reject: jest.fn() },
       ]);
 
       const screen = await render(<ReceivedRequests sessionUserId="user-me" />);

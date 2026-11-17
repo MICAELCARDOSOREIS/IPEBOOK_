@@ -1,16 +1,15 @@
 import { act, fireEvent, render } from "@testing-library/react-native";
-import { describe, expect, it, vi } from "vitest";
 import type { ModerationItem } from "@/model/entities/moderation";
 import { Moderation } from "@/view/moderation/moderation";
 
-vi.mock("@/viewmodel/useModerationViewModel", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/viewmodel/useModerationViewModel")>()),
-  useModerationViewModel: vi.fn(),
+jest.mock("@/viewmodel/useModerationViewModel", () => ({
+  ...jest.requireActual<typeof import("@/viewmodel/useModerationViewModel")>("@/viewmodel/useModerationViewModel"),
+  useModerationViewModel: jest.fn(),
 }));
 
 import { type ModerationState, useModerationViewModel } from "@/viewmodel/useModerationViewModel";
 
-const decide = vi.fn().mockResolvedValue(true);
+const decide = jest.fn().mockResolvedValue(true);
 const listing: ModerationItem = {
   kind: "listing", targetId: "b1", label: "Dom Casmurro", ownerId: "ana",
   reasons: ["fraud_or_scam", "misleading_info"], details: ["Foto não é do livro"], reportCount: 3,
@@ -19,16 +18,16 @@ const listing: ModerationItem = {
 const person: ModerationItem = { ...listing, kind: "user", targetId: "ana", label: "Ana", reasons: ["fake_profile"], details: [], reportCount: 1 };
 
 function setup(state: Partial<ModerationState>) {
-  vi.mocked(useModerationViewModel).mockReturnValue([
+  jest.mocked(useModerationViewModel).mockReturnValue([
     { items: [], loading: false, error: null, decidingId: null, actionMessage: null, ...state },
-    { reload: vi.fn(), decide, clearActionMessage: vi.fn() },
+    { reload: jest.fn(), decide, clearActionMessage: jest.fn() },
   ]);
 }
 
 async function renderView() {
   let screen!: Awaited<ReturnType<typeof render>>;
   await act(async () => {
-    screen = await render(<Moderation sessionUserId="mod" onBack={vi.fn()} />);
+    screen = await render(<Moderation sessionUserId="mod" onBack={jest.fn()} />);
   });
   return screen;
 }
@@ -64,14 +63,14 @@ describe("Moderation (Spec 102)", () => {
   });
 
   it("suspende com confirmação, abre o alvo e mantém o diálogo se a decisão falhar", async () => {
-    const onOpenListing = vi.fn();
-    const onOpenProfile = vi.fn();
+    const onOpenListing = jest.fn();
+    const onOpenProfile = jest.fn();
     setup({ items: [listing, person], loading: true, decidingId: "zzz" });
     decide.mockClear();
     decide.mockResolvedValueOnce(false);
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
-      screen = await render(<Moderation sessionUserId="mod" onBack={vi.fn()} onOpenListing={onOpenListing} onOpenProfile={onOpenProfile} />);
+      screen = await render(<Moderation sessionUserId="mod" onBack={jest.fn()} onOpenListing={onOpenListing} onOpenProfile={onOpenProfile} />);
     });
     await act(async () => { fireEvent.press(screen.getByLabelText("Abrir Dom Casmurro")); });
     await act(async () => { fireEvent.press(screen.getByLabelText("Abrir Ana")); });
@@ -86,15 +85,15 @@ describe("Moderation (Spec 102)", () => {
   });
 
   it("carregando sem itens mostra o indicador; tentar de novo recarrega", async () => {
-    const reload = vi.fn();
-    vi.mocked(useModerationViewModel).mockReturnValue([
+    const reload = jest.fn();
+    jest.mocked(useModerationViewModel).mockReturnValue([
       { items: [], loading: true, error: null, decidingId: null, actionMessage: "Conta suspensa.", },
-      { reload, decide, clearActionMessage: vi.fn() },
+      { reload, decide, clearActionMessage: jest.fn() },
     ]);
     expect((await renderView()).getByLabelText("Carregando denúncias")).toBeDefined();
-    vi.mocked(useModerationViewModel).mockReturnValue([
+    jest.mocked(useModerationViewModel).mockReturnValue([
       { items: [], loading: false, error: "Falhou", decidingId: null, actionMessage: null },
-      { reload, decide, clearActionMessage: vi.fn() },
+      { reload, decide, clearActionMessage: jest.fn() },
     ]);
     const screen = await renderView();
     await act(async () => { fireEvent.press(screen.getByText("Tentar de novo")); });

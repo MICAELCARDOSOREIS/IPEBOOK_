@@ -1,6 +1,5 @@
 
 import { act, fireEvent, render } from "@testing-library/react-native";
-import { describe, expect, it, vi } from "vitest";
 import { TextField } from "@/view/components/TextField";
 
 
@@ -16,7 +15,7 @@ describe("TextField — senha e preenchimento automático (Spec 092)", () => {
   });
 
   it("campo comum não tem olho e repassa autoComplete e a ação do teclado", async () => {
-    const onSubmit = vi.fn();
+    const onSubmit = jest.fn();
     const screen = await render(
       <TextField label="E-mail" value="" onChangeText={() => {}} autoComplete="email" returnKeyType="done" onSubmitEditing={onSubmit} />,
     );

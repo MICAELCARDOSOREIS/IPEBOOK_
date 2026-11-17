@@ -1,4 +1,3 @@
-import { describe, expect, it, vi } from "vitest";
 import { ClientRateLimiter } from "@/infra/services/clientRateLimiter";
 
 describe("ClientRateLimiter", () => {
@@ -40,7 +39,7 @@ describe("ClientRateLimiter", () => {
   });
 
   it("libera novas tentativas após o término da janela deslizante", () => {
-    vi.useFakeTimers();
+    jest.useFakeTimers();
     try {
       const limiter = new ClientRateLimiter({ defaultMaxAttempts: 2, defaultWindowMs: 5000 });
 
@@ -49,12 +48,12 @@ describe("ClientRateLimiter", () => {
       expect(limiter.checkAndRecord("test-key").allowed).toBe(false);
 
       // Avança o tempo além da janela de 5000ms
-      vi.advanceTimersByTime(5100);
+      jest.advanceTimersByTime(5100);
 
       const afterWindow = limiter.checkAndRecord("test-key");
       expect(afterWindow.allowed).toBe(true);
     } finally {
-      vi.useRealTimers();
+      jest.useRealTimers();
     }
   });
 
@@ -70,16 +69,16 @@ describe("ClientRateLimiter", () => {
   });
 
   it("calcula corretamente o tempo restante até o reset", () => {
-    vi.useFakeTimers();
+    jest.useFakeTimers();
     try {
       const limiter = new ClientRateLimiter({ defaultMaxAttempts: 1, defaultWindowMs: 10_000 });
       limiter.checkAndRecord("calc-time");
 
-      vi.advanceTimersByTime(4000);
+      jest.advanceTimersByTime(4000);
       const remaining = limiter.getTimeUntilResetMs("calc-time");
       expect(remaining).toBeCloseTo(6000, -2);
     } finally {
-      vi.useRealTimers();
+      jest.useRealTimers();
     }
   });
 });

@@ -1,6 +1,5 @@
 import type React from "react";
 import { act, render } from "@testing-library/react-native";
-import { describe, expect, it, vi } from "vitest";
 import { Book3D } from "@/view/components/Book3D";
 
 const LABEL = "Capa de Capitães da Areia, em 3D. Use as ações para girar o livro.";
@@ -138,7 +137,7 @@ describe("Book3D: gesto de arrastar", () => {
       return { panHandlers: {} };
     };
     try {
-      const onPress = vi.fn();
+      const onPress = jest.fn();
       const screen = await open({ onPress });
       const gesture = created[created.length - 1];
       gesture.onPanResponderGrant();

@@ -1,5 +1,4 @@
 import { act, render } from "@testing-library/react-native";
-import { describe, expect, it } from "vitest";
 import { IpeMark } from "@/view/components/IpeMark";
 import { ReaderCard } from "@/view/components/ReaderCard";
 

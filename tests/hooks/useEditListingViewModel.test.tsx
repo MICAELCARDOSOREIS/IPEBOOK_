@@ -1,6 +1,5 @@
 import { createElement } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
-import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Book } from "@/model/entities/book";
 import { DataSourceError, ValidationError } from "@/model/errors";
 import type { IBookUseCases } from "@/usecase/iBookUseCases";
@@ -11,8 +10,8 @@ const mounted: ReactTestRenderer[] = [];
 
 function stubUseCases(overrides: Partial<IBookUseCases> = {}): IBookUseCases {
   return {
-    listBooks: vi.fn().mockResolvedValue([]),
-    getBookById: vi.fn().mockResolvedValue({
+    listBooks: jest.fn().mockResolvedValue([]),
+    getBookById: jest.fn().mockResolvedValue({
       id: "b1",
       title: "Livro Original",
       author: "Autor Original",
@@ -27,8 +26,8 @@ function stubUseCases(overrides: Partial<IBookUseCases> = {}): IBookUseCases {
       photoUrl: "https://example.com/capa.jpg",
       photos: ["https://example.com/foto1.jpg"],
     } satisfies Book),
-    createListing: vi.fn(),
-    updateListing: vi.fn().mockResolvedValue({
+    createListing: jest.fn(),
+    updateListing: jest.fn().mockResolvedValue({
       id: "b1",
       title: "Livro Atualizado",
       author: "Autor Atualizado",
@@ -37,13 +36,13 @@ function stubUseCases(overrides: Partial<IBookUseCases> = {}): IBookUseCases {
       ownerId: "user-1",
       status: "available",
     } satisfies Book),
-    togglePauseListing: vi.fn(),
-    listMyListings: vi.fn().mockResolvedValue([]),
-    cancelListing: vi.fn().mockResolvedValue(undefined),
-    listDrafts: vi.fn().mockResolvedValue([]),
-    saveDraft: vi.fn(),
-    discardDraft: vi.fn().mockResolvedValue(undefined),
-    publishDraft: vi.fn(),
+    togglePauseListing: jest.fn(),
+    listMyListings: jest.fn().mockResolvedValue([]),
+    cancelListing: jest.fn().mockResolvedValue(undefined),
+    listDrafts: jest.fn().mockResolvedValue([]),
+    saveDraft: jest.fn(),
+    discardDraft: jest.fn().mockResolvedValue(undefined),
+    publishDraft: jest.fn(),
     ...overrides,
   };
 }
@@ -105,7 +104,7 @@ describe("useEditListingViewModel", () => {
 
   it("emite erro se o anúncio estiver reservado", async () => {
     const useCases = stubUseCases({
-      getBookById: vi.fn().mockResolvedValue({
+      getBookById: jest.fn().mockResolvedValue({
         id: "b1",
         title: "Livro",
         author: "Autor",
@@ -124,7 +123,7 @@ describe("useEditListingViewModel", () => {
 
   it("emite erro se o anúncio não for encontrado", async () => {
     const useCases = stubUseCases({
-      getBookById: vi.fn().mockRejectedValue(new DataSourceError("Anúncio não encontrado.")),
+      getBookById: jest.fn().mockRejectedValue(new DataSourceError("Anúncio não encontrado.")),
     });
     const hook = await renderHook("b99", "user-1", useCases);
 
@@ -221,7 +220,7 @@ describe("useEditListingViewModel", () => {
 
   it("captura erro ao submeter e atribui mensagem amigável", async () => {
     const useCases = stubUseCases({
-      updateListing: vi.fn().mockRejectedValue(new ValidationError("Título é obrigatório.")),
+      updateListing: jest.fn().mockRejectedValue(new ValidationError("Título é obrigatório.")),
     });
     const hook = await renderHook("b1", "user-1", useCases);
 
@@ -236,7 +235,7 @@ describe("useEditListingViewModel", () => {
 
   it("gerencia campos de box e volumes na edição (Spec 112)", async () => {
     const useCases = stubUseCases({
-      getBookById: vi.fn().mockResolvedValue({
+      getBookById: jest.fn().mockResolvedValue({
         id: "b-box",
         title: "Box O Senhor dos Anéis",
         author: "J.R.R. Tolkien",

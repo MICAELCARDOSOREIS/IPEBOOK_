@@ -1,19 +1,18 @@
 
 import { act, fireEvent, render } from "@testing-library/react-native";
-import { describe, expect, it, vi } from "vitest";
 import type { AuthState } from "@/viewmodel/useAuthViewModel";
 import { Security } from "@/view/profile/security";
 
-vi.mock("@/viewmodel/useAuthViewModel", () => ({ useAuthViewModel: vi.fn() }));
+jest.mock("@/viewmodel/useAuthViewModel", () => ({ useAuthViewModel: jest.fn() }));
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 
-const mockedUseAuthViewModel = vi.mocked(useAuthViewModel);
+const mockedUseAuthViewModel = jest.mocked(useAuthViewModel);
 
 function mockAuth(user: AuthState["user"], options: { loading?: boolean; error?: string | null } = {}) {
-  const requestPasswordReset = vi.fn().mockResolvedValue(true);
+  const requestPasswordReset = jest.fn().mockResolvedValue(true);
   mockedUseAuthViewModel.mockReturnValue([
     { user, loading: options.loading ?? false, error: options.error ?? null },
-    { signUp: vi.fn(), signIn: vi.fn(), signOut: vi.fn(), requestPasswordReset },
+    { signUp: jest.fn(), signIn: jest.fn(), signOut: jest.fn(), requestPasswordReset },
   ]);
   return { requestPasswordReset };
 }
@@ -36,7 +35,7 @@ describe("tela de Segurança e verificação (Figma 07.06)", () => {
 
   it("não envia o link quando não há sessão e oferece entrar na conta", async () => {
     const { requestPasswordReset } = mockAuth(null);
-    const onNavigateToLogin = vi.fn();
+    const onNavigateToLogin = jest.fn();
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
       screen = await render(<Security onBack={() => {}} onNavigateToLogin={onNavigateToLogin} />);
@@ -55,7 +54,7 @@ describe("tela de Segurança e verificação (Figma 07.06)", () => {
 
   it("volta ao tocar no botão de voltar da barra superior", async () => {
     mockAuth({ id: "ana", email: "ana@exemplo.com" });
-    const onBack = vi.fn();
+    const onBack = jest.fn();
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
       screen = await render(<Security onBack={onBack} />);

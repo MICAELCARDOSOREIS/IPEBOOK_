@@ -1,6 +1,5 @@
 
 import { act, fireEvent, render } from "@testing-library/react-native";
-import { describe, expect, it, vi } from "vitest";
 import { Snackbar } from "@/view/components/Snackbar";
 
 describe("Snackbar (Design System - ISO/IEC 25010 Usabilidade e Acessibilidade)", () => {
@@ -20,7 +19,7 @@ describe("Snackbar (Design System - ISO/IEC 25010 Usabilidade e Acessibilidade)"
   });
 
   it("renderiza botão de ação e dispara onAction ao ser pressionado", async () => {
-    const onAction = vi.fn();
+    const onAction = jest.fn();
     const screen = await render(
       <Snackbar
         visible={true}
@@ -36,9 +35,9 @@ describe("Snackbar (Design System - ISO/IEC 25010 Usabilidade e Acessibilidade)"
   });
 
   it("chama onDismiss após a duração especificada", async () => {
-    vi.useFakeTimers();
+    jest.useFakeTimers();
     try {
-      const onDismiss = vi.fn();
+      const onDismiss = jest.fn();
       await render(
         <Snackbar
           visible={true}
@@ -51,12 +50,12 @@ describe("Snackbar (Design System - ISO/IEC 25010 Usabilidade e Acessibilidade)"
       expect(onDismiss).not.toHaveBeenCalled();
 
       await act(async () => {
-        vi.advanceTimersByTime(3000);
+        jest.advanceTimersByTime(3000);
       });
 
       expect(onDismiss).toHaveBeenCalledTimes(1);
     } finally {
-      vi.useRealTimers();
+      jest.useRealTimers();
     }
   });
 });

@@ -1,6 +1,5 @@
 import React from "react";
 import { AccessibilityInfo, Animated, StyleSheet } from "react-native";
-import { afterEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, renderHook } from "@testing-library/react-native";
 import { tokens } from "@/view/tokens";
 import { useExpressivePress } from "@/view/useExpressivePress";
@@ -12,7 +11,7 @@ import { TextButton } from "@/view/components/TextButton";
 describe("Material 3 Expressive — Tokens, Física de Mola e Shape Morphing (Spec 109, ADR 0084)", () => {
   afterEach(() => {
     cleanup();
-    vi.restoreAllMocks();
+    jest.restoreAllMocks();
   });
 
   it("expõe tokens de física de mola (spring) com tension e friction positivos", () => {
@@ -36,8 +35,8 @@ describe("Material 3 Expressive — Tokens, Física de Mola e Shape Morphing (Sp
   });
 
   it("useExpressivePress alterna isPressed e dispara Animated.spring quando reduzir movimento está desativado", async () => {
-    vi.spyOn(AccessibilityInfo, "isReduceMotionEnabled").mockResolvedValue(false);
-    const springSpy = vi.spyOn(Animated, "spring");
+    jest.spyOn(AccessibilityInfo, "isReduceMotionEnabled").mockResolvedValue(false);
+    const springSpy = jest.spyOn(Animated, "spring");
 
     const { result } = await renderHook(() => useExpressivePress({ pressedScale: 0.96 }));
     expect(result.current.isPressed).toBe(false);
@@ -76,15 +75,15 @@ describe("Material 3 Expressive — Tokens, Física de Mola e Shape Morphing (Sp
   });
 
   it("useExpressivePress respeita isReduceMotionEnabled aplicando setValue direto sem Animated.spring", async () => {
-    vi.spyOn(AccessibilityInfo, "isReduceMotionEnabled").mockResolvedValue(true);
-    const springSpy = vi.spyOn(Animated, "spring");
+    jest.spyOn(AccessibilityInfo, "isReduceMotionEnabled").mockResolvedValue(true);
+    const springSpy = jest.spyOn(Animated, "spring");
 
     const { result } = await renderHook(() => useExpressivePress({ pressedScale: 0.95 }));
     await act(async () => {
       await Promise.resolve();
     });
 
-    const setValueSpy = vi.spyOn(result.current.scale, "setValue");
+    const setValueSpy = jest.spyOn(result.current.scale, "setValue");
     await act(async () => {
       result.current.onPressIn();
     });

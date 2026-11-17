@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import type { IOnboardingDataSource } from "@/model/datasources/iOnboardingDataSource";
 import { MemoryOnboardingDataSource } from "@/infra/datasources/memoryOnboardingDataSource";
 import { OnboardingUseCases } from "@/usecase/onboardingUseCases";

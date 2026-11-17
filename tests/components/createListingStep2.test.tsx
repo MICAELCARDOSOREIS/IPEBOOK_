@@ -1,14 +1,13 @@
 
 import { act, fireEvent, render } from "@testing-library/react-native";
-import { describe, expect, it, vi } from "vitest";
 import { PERMISSION_PROMPT_COPY } from "@/view/components/PermissionPromptDialog";
 import { CreateListingStep2 } from "@/view/listings/createListingStep2";
 
-const base = { photoUrl: "", photos: [] as string[], loading: false, error: null, onSetPhotoUrl: vi.fn(), onRemovePhoto: vi.fn() };
+const base = { photoUrl: "", photos: [] as string[], loading: false, error: null, onSetPhotoUrl: jest.fn(), onRemovePhoto: jest.fn() };
 
 describe("CreateListingStep2 — câmera e galeria (Spec 092)", () => {
   it("escolher a galeria abre o motivo antes do prompt e a foto sai depois de permitir", async () => {
-    const onChoosePhoto = vi.fn();
+    const onChoosePhoto = jest.fn();
     const screen = await render(<CreateListingStep2 {...base} onChoosePhoto={onChoosePhoto} />);
     await act(async () => { fireEvent.press(screen.getByLabelText("Adicionar foto da capa")); });
     expect(screen.getByText("Tirar foto")).toBeDefined();
@@ -21,7 +20,7 @@ describe("CreateListingStep2 — câmera e galeria (Spec 092)", () => {
   });
 
   it("a câmera do slot extra também passa pelo motivo antes de abrir", async () => {
-    const onChoosePhoto = vi.fn();
+    const onChoosePhoto = jest.fn();
     const screen = await render(<CreateListingStep2 {...base} onChoosePhoto={onChoosePhoto} />);
     await act(async () => { fireEvent.press(screen.getByLabelText("Adicionar lombada")); });
     await act(async () => { fireEvent.press(screen.getByLabelText("Tirar foto com a câmera")); });
@@ -31,7 +30,7 @@ describe("CreateListingStep2 — câmera e galeria (Spec 092)", () => {
   });
 
   it("CA4: 'publicar sem foto' não pede acesso nenhum e não chama o seletor", async () => {
-    const onChoosePhoto = vi.fn();
+    const onChoosePhoto = jest.fn();
     const screen = await render(<CreateListingStep2 {...base} onChoosePhoto={onChoosePhoto} />);
     await act(async () => { fireEvent.press(screen.getByLabelText("Adicionar verso")); });
     await act(async () => { fireEvent.press(screen.getByLabelText("Tirar foto com a câmera")); });

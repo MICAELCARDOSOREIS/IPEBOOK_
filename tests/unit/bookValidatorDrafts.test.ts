@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import { validateDraftPayload } from "@/model/validators/bookValidator";
 
 // Spec 017 — validação tolerante de rascunho: incompleto por natureza, mas ainda
