@@ -1,0 +1,33 @@
+appId: com.ipebook.app
+name: Onboarding, permissão de avisos e catálogo inicial (Android)
+tags:
+  - android
+  - smoke
+---
+- launchApp:
+    clearState: true
+- assertVisible: "Uma boa história"
+- assertVisible: "Começar"
+- assertVisible: "Já tenho conta"
+- tapOn: "Já tenho conta"
+- assertVisible: "Sua próxima leitura"
+- assertVisible: "Continuar com Google"
+- runFlow:
+    when:
+      true: ${E2E_EMAIL != null && E2E_SENHA != null}
+    commands:
+      - tapOn:
+          id: "E-mail"
+          optional: true
+      - inputText: ${E2E_EMAIL}
+      - tapOn:
+          id: "Senha"
+          optional: true
+      - inputText: ${E2E_SENHA}
+      - tapOn: "Entrar"
+      - runFlow:
+          when:
+            visible: "Avisos no seu celular"
+          commands:
+            - tapOn: "Permitir avisos"
+      - assertVisible: "Perto de você"
