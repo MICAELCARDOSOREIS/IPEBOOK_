@@ -1,5 +1,5 @@
 #!/bin/sh
-# Bloqueio de commits diretos na main / master
+# Bloqueio de commits diretos na main / master e verificações rápidas locais antes do commit
 
 branch="$(git symbolic-ref --short -q HEAD)"
 
@@ -11,6 +11,33 @@ if [ "$branch" = "main" ] || [ "$branch" = "master" ]; then
   echo "   git checkout develop"
   echo ""
   exit 1
+fi
+
+if [ "${IPEBOOK_SKIP_HOOKS:-0}" = "1" ]; then
+  echo "⚠️  IPEBOOK_SKIP_HOOKS=1 ativo: pulando verificação rápida do pre-commit."
+  exit 0
+fi
+
+if ! command -v node >/dev/null 2>&1 || ! command -v npm >/dev/null 2>&1; then
+  echo "❌ ERRO: Node.js e npm são obrigatórios para validar o commit localmente."
+  exit 1
+fi
+
+if [ ! -f "scripts/rodar-ci-local.mjs" ]; then
+  exit 0
+fi
+
+echo ""
+echo "🔎 Executando verificações rápidas locais antes do commit (npm run ci:rapido)..."
+node scripts/rodar-ci-local.mjs --rapido </dev/null
+status=$?
+
+if [ "$status" -ne 0 ]; then
+  echo ""
+  echo "❌ Commit bloqueado: corrija as falhas acima antes de commitar."
+  echo "👉 Dica: rode 'npm run ci:rapido' no terminal para revalidar rapidamente."
+  echo ""
+  exit "$status"
 fi
 
 exit 0

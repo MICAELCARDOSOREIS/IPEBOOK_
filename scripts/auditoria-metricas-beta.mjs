@@ -714,11 +714,13 @@ Conformidade LGPD:
 const isDirectRun = process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1];
 
 if (isDirectRun) {
-  try {
-    const exitCode = await executarAuditoriaBeta(process.argv.slice(2));
-    process.exit(exitCode);
-  } catch (err) {
-    process.stderr.write(`❌ Erro na auditoria: ${err.message}\n`);
-    process.exit(1);
-  }
+  (async () => {
+    try {
+      const exitCode = await executarAuditoriaBeta(process.argv.slice(2));
+      process.exit(exitCode);
+    } catch (err) {
+      process.stderr.write(`❌ Erro na auditoria: ${err.message}\n`);
+      process.exit(1);
+    }
+  })();
 }
