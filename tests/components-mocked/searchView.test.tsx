@@ -1,7 +1,7 @@
 import type React from "react";
 import { act, fireEvent, render } from "@testing-library/react-native";
 import type { Book } from "@/model/entities/book";
-import Search from "@/view/search/search";
+import Search, { getNeighborhoodPreposition, parseInitialModality } from "@/view/search/search";
 
 jest.mock("@/viewmodel/useSearchViewModel", () => ({ useSearchViewModel: jest.fn() }));
 jest.mock("@/viewmodel/useNetworkStatus", () => ({ useNetworkStatus: jest.fn() }));
@@ -68,6 +68,7 @@ function setup(
   const applyDraftFilters = jest.fn();
   const resetFilters = jest.fn();
   const clearFilters = jest.fn();
+  const reload = jest.fn();
   const registerSearch = jest.fn();
   const clearHistory = jest.fn();
 
@@ -119,7 +120,7 @@ function setup(
       applyDraftFilters,
       resetFilters,
       clearFilters,
-      reload: jest.fn(),
+      reload,
       registerSearch,
       clearHistory,
     },
@@ -129,10 +130,12 @@ function setup(
     setModality,
     setCategory,
     setCondition,
+    setNeighborhood,
     setPriceRange,
     setSortBy,
     removeActiveFilter,
     openFilterDraft,
+    reload,
     updateDraftFilters,
     applyDraftFilters,
     resetFilters,
@@ -410,7 +413,60 @@ describe("Search (spec 006, US3/T019, Spec 028, Issue #93)", () => {
     expect(scrollTopBtn).toBeDefined();
 
     await act(async () => {
+      fireEvent(scrollTopBtn, "hoverIn");
+      fireEvent(scrollTopBtn, "hoverOut");
       fireEvent.press(scrollTopBtn);
     });
+  });
+
+  it("converte modalidade inicial e preposição de bairros e interage com chips, histórico, bairro e erro", async () => {
+    expect(parseInitialModality("sale")).toBe("sale");
+    expect(parseInitialModality(["trade"])).toBe("trade");
+    expect(parseInitialModality("invalida")).toBeUndefined();
+    expect(parseInitialModality(undefined)).toBeUndefined();
+    expect(getNeighborhoodPreposition("Praça da Bandeira")).toBe("na");
+    expect(getNeighborhoodPreposition("Centro")).toBe("no");
+
+    const { setModality, registerSearch, clearHistory, reload } = setup([], "", {
+      history: ["Iracema"],
+      error: "Falha ao carregar catálogo",
+    });
+    const screen = await renderSearch();
+
+    await act(async () => {
+      fireEvent(screen.getByLabelText("Buscar livros"), "submitEditing");
+    });
+    expect(registerSearch).toHaveBeenCalled();
+
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText(/Selecionar local em Piripiri/));
+    });
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Selecionar ponto de encontro Praça da Bandeira"));
+    });
+
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Filtrar por Venda"));
+    });
+    expect(setModality).toHaveBeenCalledWith("sale");
+
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Limpar histórico de buscas"));
+    });
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Cancelar" }));
+    });
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Limpar histórico de buscas"));
+    });
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Limpar histórico" }));
+    });
+    expect(clearHistory).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Tentar novamente"));
+    });
+    expect(reload).toHaveBeenCalled();
   });
 });

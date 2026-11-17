@@ -1,28 +1,32 @@
 import { act, fireEvent, render } from "@testing-library/react-native";
+import * as container from "@/di/container";
 import type { Book } from "@/model/entities/book";
 import type { ConversationItem, ConversationsState } from "@/viewmodel/useConversationsViewModel";
-import { Conversations } from "@/view/conversations/conversations";
+import ConversationsScreen, { Conversations } from "@/view/conversations/conversations";
 
 jest.mock("@/viewmodel/useConversationsViewModel", () => ({
   ...jest.requireActual<typeof import("@/viewmodel/useConversationsViewModel")>("@/viewmodel/useConversationsViewModel"),
   useConversationsViewModel: jest.fn(),
 }));
-jest.mock("@/viewmodel/useNetworkStatus", () => ({ useNetworkStatus: () => ({ isOnline: true }) }));
+jest.mock("@/viewmodel/useNetworkStatus", () => ({ useNetworkStatus: jest.fn(() => ({ isOnline: true })) }));
 
 import { useConversationsViewModel } from "@/viewmodel/useConversationsViewModel";
+import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
 
-const listing = (id: string, title: string): Book => ({
-  id, title, author: "A", ownerId: "x", modality: "trade", status: "available",
+const listing = (id: string, title: string, status: Book["status"] = "available"): Book => ({
+  id, title, author: "A", ownerId: "x", modality: "trade", status,
 });
 
 const deleteConversation = jest.fn().mockResolvedValue(true);
 const cancelRequest = jest.fn().mockResolvedValue(true);
 
 function setup(state: Partial<ConversationsState>) {
+  const reload = jest.fn().mockResolvedValue(undefined);
   jest.mocked(useConversationsViewModel).mockReturnValue([
     { items: [], loading: false, error: null, ...state },
-    { reload: jest.fn(), deleteConversation, cancelRequest },
+    { reload, deleteConversation, cancelRequest },
   ]);
+  return { reload };
 }
 
 async function renderView(props: Partial<Parameters<typeof Conversations>[0]> = {}) {
@@ -170,5 +174,98 @@ describe("Conversations (Spec 076)", () => {
     expect(backBtn).toBeDefined();
     await act(async () => { fireEvent.press(backBtn); });
     expect(onBack).toHaveBeenCalledTimes(1);
+  });
+
+  it("aciona reload ao tentar novamente no estado de erro online e offline", async () => {
+    const { reload } = setup({ error: "Falha ao carregar." });
+    const onlineScreen = await renderView();
+    await act(async () => { fireEvent.press(onlineScreen.getByLabelText("Tentar novamente")); });
+    expect(reload).toHaveBeenCalledTimes(1);
+
+    jest.mocked(useNetworkStatus).mockReturnValue({ isOnline: false });
+    try {
+      const offlineScreen = await renderView();
+      await act(async () => { fireEvent.press(offlineScreen.getByLabelText("Tentar novamente")); });
+      expect(reload).toHaveBeenCalledTimes(2);
+    } finally {
+      jest.mocked(useNetworkStatus).mockReturnValue({ isOnline: true });
+    }
+  });
+
+  it("alterna filtros Ativas/Concluídas e aciona Ver concluídas quando só há entregas finalizadas", async () => {
+    const completedOnly: ConversationItem[] = [
+      {
+        requestId: "r4",
+        listing: listing("b4", "Memórias Póstumas", "delivered"),
+        otherName: "Carlos",
+        otherPhotoUrl: null,
+        preview: "Entrega confirmada",
+        lastMessageAt: null,
+        kind: "accepted",
+      },
+    ];
+    setup({ items: completedOnly });
+    const screen = await renderView();
+
+    expect(screen.getByText("Nenhuma conversa ativa no momento")).toBeDefined();
+    await act(async () => { fireEvent.press(screen.getByText("Ver concluídas")); });
+    expect(screen.getByText("Carlos")).toBeDefined();
+
+    await act(async () => { fireEvent.press(screen.getByText("Ativas (0)")); });
+    expect(screen.getByText("Nenhuma conversa ativa no momento")).toBeDefined();
+
+    await act(async () => { fireEvent.press(screen.getByText("Concluídas (1)")); });
+    expect(screen.getByText("Carlos")).toBeDefined();
+  });
+
+  it("permite manter conversa ou pedido ao cancelar os diálogos de confirmação", async () => {
+    setup({ items });
+    deleteConversation.mockClear();
+    cancelRequest.mockClear();
+    const screen = await renderView();
+
+    await act(async () => { fireEvent(screen.getByText("Ana Paula"), "longPress"); });
+    expect(screen.getByText("Apagar conversa?")).toBeDefined();
+    await act(async () => { fireEvent.press(screen.getByText("Manter")); });
+    expect(screen.queryByText("Apagar conversa?")).toBeNull();
+    expect(deleteConversation).not.toHaveBeenCalled();
+
+    await act(async () => { fireEvent.press(screen.getByLabelText("Cancelar pedido de Iracema")); });
+    expect(screen.getByText("Cancelar pedido?")).toBeDefined();
+    await act(async () => { fireEvent.press(screen.getByText("Manter pedido")); });
+    expect(screen.queryByText("Cancelar pedido?")).toBeNull();
+    expect(cancelRequest).not.toHaveBeenCalled();
+  });
+
+  it("ConversationsScreen exige login quando não autenticado e renderiza quando há sessão", async () => {
+    setup({ items });
+    const onRequireSignIn = jest.fn();
+    const authActions = {
+      signUp: jest.fn(),
+      signIn: jest.fn(),
+      signOut: jest.fn(),
+      requestPasswordReset: jest.fn(),
+    };
+    const spy = jest.spyOn(container, "makeAuthViewModel");
+    try {
+      spy.mockReturnValue([{ user: null, loading: false, error: null }, authActions]);
+      let screen!: Awaited<ReturnType<typeof render>>;
+      await act(async () => {
+        screen = await render(<ConversationsScreen onRequireSignIn={onRequireSignIn} />);
+      });
+      expect(onRequireSignIn).toHaveBeenCalledTimes(1);
+      expect(screen.queryByText("Ana Paula")).toBeNull();
+
+      spy.mockReturnValue([
+        { user: { id: "me", email: "me@example.com", name: "Eu" }, loading: false, error: null },
+        authActions,
+      ]);
+      await act(async () => {
+        screen.rerender(<ConversationsScreen onRequireSignIn={onRequireSignIn} />);
+      });
+      expect(screen.getByText("Ana Paula")).toBeDefined();
+    } finally {
+      spy.mockRestore();
+    }
   });
 });

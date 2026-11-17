@@ -388,5 +388,85 @@ describe("Chat em tela cheia (Spec 082)", () => {
       expect(screen.getByText("Encontro confirmado")).toBeDefined();
       mockMeetingState = { meeting: null, loading: false };
     });
+
+    it("envia ao pressionar Enter no web, recarrega em erro e aciona ações do encontro no modo normal e embutido", async () => {
+      const { Platform } = require("react-native");
+      const originalOs = Platform.OS;
+      Platform.OS = "web";
+      try {
+        const { actions } = setup({ inputText: "Mensagem via Enter" });
+        const screen = await renderChat();
+        const input = screen.getByLabelText("Campo de mensagem");
+        await act(async () => {
+          fireEvent(input, "keyPress", {
+            nativeEvent: { key: "Enter", shiftKey: false },
+            preventDefault: jest.fn(),
+          });
+        });
+        expect(actions.sendMessage).toHaveBeenCalledTimes(1);
+      } finally {
+        Platform.OS = originalOs;
+      }
+
+      const { actions: errActions } = setup({ error: "Erro ao carregar mensagens" });
+      const errScreen = await renderChat();
+      await act(async () => {
+        fireEvent.press(errScreen.getByRole("button", { name: "Tentar novamente" }));
+      });
+      expect(errActions.reload).toHaveBeenCalled();
+
+      mockMeetingState = {
+        meeting: {
+          id: "m2",
+          requestId: "r1",
+          pointName: "Praça da Bandeira",
+          scheduledAt: "2026-11-05T14:00:00.000Z",
+          status: "proposed",
+          proposedBy: "ana",
+        },
+        loading: false,
+      };
+      setup();
+      const onScheduleMeeting = jest.fn();
+      const onOpenDelivery = jest.fn();
+      const proposedEmbedded = await renderChat({
+        embedded: true,
+        onScheduleMeeting,
+        onOpenDelivery,
+      });
+      await act(async () => {
+        fireEvent.press(proposedEmbedded.getByRole("button", { name: "Confirmar encontro" }));
+        fireEvent.press(proposedEmbedded.getByRole("button", { name: "Sugerir outro horário" }));
+      });
+      expect(mockMeetingActions.confirm).toHaveBeenCalled();
+      expect(onScheduleMeeting).toHaveBeenCalledWith("r1");
+
+      mockMeetingState = {
+        meeting: {
+          id: "m3",
+          requestId: "r1",
+          pointName: "Praça da Bandeira",
+          scheduledAt: "2026-11-05T14:00:00.000Z",
+          status: "confirmed",
+          proposedBy: "ana",
+        },
+        loading: false,
+      };
+      setup();
+      const confirmedEmbedded = await renderChat({
+        embedded: true,
+        onScheduleMeeting,
+        onOpenDelivery,
+      });
+      await act(async () => {
+        fireEvent.press(confirmedEmbedded.getByRole("button", { name: "Entrega do livro" }));
+        fireEvent.press(confirmedEmbedded.getByRole("button", { name: "Adicionar à agenda" }));
+        fireEvent.press(confirmedEmbedded.getByRole("button", { name: "Reagendar encontro" }));
+      });
+      expect(onOpenDelivery).toHaveBeenCalledWith("r1");
+      expect(addMeetingToCalendar).toHaveBeenCalled();
+
+      mockMeetingState = { meeting: null, loading: false };
+    });
   });
 });

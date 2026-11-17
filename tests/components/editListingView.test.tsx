@@ -257,4 +257,38 @@ describe("Spec 030 — edição alinhada ao Figma 04.09", () => {
     const row = StyleSheet.flatten(screen.getByTestId("edit-listing-category-row").props.style);
     expect(row.flexWrap).toBe("wrap");
   });
+
+  it("aciona foto, campos de foco/submit e troca de modalidade na edição", async () => {
+    const actions = mockViewModel({
+      ...loadedState,
+      photoUrl: "https://cdn.ipebook.app/antiga.jpg",
+    });
+
+    let screen!: Awaited<ReturnType<typeof render>>;
+    await act(async () => {
+      screen = await render(<EditListing bookId="b1" sessionUserId="user-1" onCancel={jest.fn()} />);
+    });
+
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Remover foto da capa" }));
+    });
+    expect(actions.setPhotoUrl).toHaveBeenCalledWith("");
+
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Alterar foto da capa" }));
+    });
+    expect(screen.getByLabelText("URL da foto da capa")).toBeDefined();
+
+    await act(async () => {
+      fireEvent(screen.getByLabelText("Título do livro"), "focus");
+      fireEvent(screen.getByLabelText("Título do livro"), "submitEditing");
+      fireEvent(screen.getByLabelText("Autor do livro"), "focus");
+      fireEvent(screen.getByLabelText("Autor do livro"), "submitEditing");
+      fireEvent(screen.getByLabelText("Descrição"), "focus");
+      fireEvent(screen.getByLabelText("Preço do livro"), "focus");
+      fireEvent.press(screen.getByLabelText("Modalidade Troca"));
+    });
+
+    expect(actions.setModality).toHaveBeenCalledWith("trade");
+  });
 });

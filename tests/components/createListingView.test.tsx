@@ -2,6 +2,8 @@ import type React from "react";
 import { act, fireEvent, render } from "@testing-library/react-native";
 import { within } from "@testing-library/react-native";
 import { AccessibilityInfo } from "react-native";
+import * as container from "@/di/container";
+import * as useIsWideWebModule from "@/view/useIsWideWeb";
 import type { CreateListingState, CreateListingActions } from "@/viewmodel/useCreateListingViewModel";
 import CreateListing from "@/view/listings/createListing";
 
@@ -436,5 +438,147 @@ describe("persistência e recuperação de rascunhos na UI (Spec 017 / Spec 072)
     });
 
     expect(actions.reset).toHaveBeenCalledTimes(1);
+  });
+
+  it("aciona foco, submitEditing, scanner ISBN e remoção de foto na etapa 1", async () => {
+    const actions = mockViewModel({
+      ...filledState,
+      photoUrl: "https://cdn.ipebook.app/capa.jpg",
+    });
+    const screen = await renderScreen();
+
+    const titleField = screen.getByLabelText("Título");
+    const authorField = screen.getByLabelText("Autor");
+    const priceField = screen.getByLabelText("Preço (R$)");
+
+    await act(async () => {
+      fireEvent(titleField, "focus");
+      fireEvent(titleField, "submitEditing");
+      fireEvent(authorField, "focus");
+      fireEvent(authorField, "submitEditing");
+      fireEvent(priceField, "focus");
+    });
+
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Abrir leitor de código de barras pela câmera" }));
+    });
+    expect(screen.getByRole("button", { name: "Fechar leitor de código de barras" })).toBeDefined();
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Fechar leitor de código de barras" }));
+    });
+
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Remover foto da capa" }));
+    });
+    expect(actions.setPhotoUrl).toHaveBeenCalledWith("");
+  });
+
+  it("abre etapa 2 pelo card de capa, escolhe foto por câmera/galeria e salva rascunho para depois", async () => {
+    const choose = jest
+      .fn()
+      .mockResolvedValueOnce("https://cdn.ipebook.app/capa-camera.jpg")
+      .mockResolvedValueOnce("https://cdn.ipebook.app/extra-galeria.jpg");
+    const photoSpy = jest
+      .spyOn(container, "makeListingPhotoViewModel")
+      .mockReturnValue([{ uploading: false, error: null }, { choose, clearError: jest.fn() }]);
+
+    try {
+      const actions = mockViewModel(filledState);
+      const screen = await renderScreen();
+
+      await act(async () => {
+        fireEvent.press(screen.getByLabelText("Adicionar foto da capa"));
+      });
+      expect(screen.getByText("Etapa 2 de 3")).toBeDefined();
+
+      await act(async () => {
+        fireEvent.press(screen.getByLabelText("Adicionar foto da capa"));
+      });
+      await act(async () => {
+        fireEvent.press(screen.getByLabelText("Tirar foto com a câmera"));
+      });
+      await act(async () => {
+        fireEvent.press(screen.getByRole("button", { name: "Permitir e escolher" }));
+      });
+      expect(choose).toHaveBeenCalledWith("camera");
+      expect(actions.setPhotoUrl).toHaveBeenCalledWith("https://cdn.ipebook.app/capa-camera.jpg");
+
+      await act(async () => {
+        fireEvent.press(screen.getByLabelText("Adicionar lombada"));
+      });
+      await act(async () => {
+        fireEvent.press(screen.getByLabelText("Escolher foto da galeria"));
+      });
+      await act(async () => {
+        fireEvent.press(screen.getByRole("button", { name: "Permitir e escolher" }));
+      });
+      expect(choose).toHaveBeenCalledWith("library");
+      expect(actions.addPhoto).toHaveBeenCalledWith("https://cdn.ipebook.app/extra-galeria.jpg");
+
+      await act(async () => {
+        fireEvent.press(screen.getByRole("button", { name: "Salvar rascunho para depois" }));
+      });
+      expect(actions.saveForLater).toHaveBeenCalledTimes(1);
+    } finally {
+      photoSpy.mockRestore();
+    }
+  });
+
+  it("aciona categoria, box/coleção, volumes, local de retirada e foco na descrição na etapa 3", async () => {
+    const actions = mockViewModel({
+      ...filledState,
+      category: "Literatura & Romance",
+      neighborhood: "Campus IFPI Piripiri",
+      isBox: true,
+      boxVolumesCount: "2",
+    });
+    const screen = await renderScreen();
+    await goToStep(screen, 3);
+
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Categoria Literatura & Romance"));
+      fireEvent.press(screen.getByLabelText("Categoria Didáticos & Concursos"));
+      fireEvent.press(screen.getByLabelText("Box ou coleção de livros"));
+      fireEvent.changeText(screen.getByLabelText("Volumes (opcional)"), "4");
+      fireEvent.press(screen.getByLabelText("Local de retirada Campus IFPI Piripiri"));
+      fireEvent.press(screen.getByLabelText("Local de retirada Praça da Bandeira"));
+      fireEvent(screen.getByLabelText("Descrição"), "focus");
+    });
+
+    expect(actions.setCategory).toHaveBeenCalledWith("");
+    expect(actions.setCategory).toHaveBeenCalledWith("Didáticos & Concursos");
+    expect(actions.setIsBox).toHaveBeenCalledWith(false);
+    expect(actions.setBoxVolumesCount).toHaveBeenCalledWith("4");
+    expect(actions.setNeighborhood).toHaveBeenCalledWith("Piripiri");
+    expect(actions.setNeighborhood).toHaveBeenCalledWith("Praça da Bandeira");
+  });
+
+  it("exibe ações de desktop na web larga e permite salvar para depois, voltar e publicar", async () => {
+    const wideSpy = jest.spyOn(useIsWideWebModule, "useIsWideWeb").mockReturnValue(true);
+    try {
+      const actions = mockViewModel(filledState);
+      const screen = await renderScreen();
+
+      await act(async () => {
+        fireEvent.press(screen.getByRole("button", { name: "Salvar para depois" }));
+      });
+      expect(actions.saveForLater).toHaveBeenCalledTimes(1);
+
+      await goToStep(screen, 3);
+      await act(async () => {
+        fireEvent.press(screen.getByRole("button", { name: "Voltar à etapa anterior" }));
+      });
+      expect(screen.getByText("Etapa 2 de 3")).toBeDefined();
+
+      await act(async () => {
+        fireEvent.press(screen.getByRole("button", { name: "Usar estas fotos" }));
+      });
+      await act(async () => {
+        fireEvent.press(screen.getByRole("button", { name: "Publicar anúncio" }));
+      });
+      expect(actions.submit).toHaveBeenCalledTimes(1);
+    } finally {
+      wideSpy.mockRestore();
+    }
   });
 });
