@@ -7,12 +7,12 @@
 
 ## 1. Resumo Executivo (3P)
 
-- **Progresso:** Versão `0.2.0` concluída e **publicada na Google Play Store** (`com.ipebook.app`), com validação ponta a ponta em aparelho real usando duas contas (pedido, chat em tempo real, agendamento de encontro, QR Code de entrega, avaliação, notificações push, moderação, login com Google, Sentry e `expo-updates`). Suíte migrada de Vitest para **Jest** com provedor de cobertura V8 ([ADR 0113](adr/0113-migracao-vitest-para-jest.md)) e reforçada com **suíte E2E Web automatizada via Chrome CDP** ([Spec 138](../specs/138-e2e-web-cdp/spec.md), [ADR 0112](adr/0112-e2e-web-cdp.md)) — somando **2.300 testes em 312 arquivos**, **7/7 cenários E2E Web verdes**, **46 arquivos de rota/layout** (`44` rotas navegáveis) e **43/43 migrações SQL** validadas — além de hooks Git locais (`ci:rapido` no `pre-commit` e `ci:local` espelhando o CI/CD no `pre-push`).
-- **Planos:** Integrar na branch `develop` os ajustes de Jest, E2E Web CDP e documentação sincronizada (`npm run validate`), atualizar a publicação Web/PWA em `https://ipebook.app` (Cloudflare Pages), executar o plano de **iOS Nativo (Apple HIG / Liquid Glass)** especificado na [Spec 137](../specs/137-ios-nativo-apple-hig/spec.md) e concluir os itens pós-lançamento do beta.
+- **Progresso:** Versão `0.2.0` concluída e **publicada na Google Play Store** (`com.ipebook.app`), com validação ponta a ponta em aparelho real usando duas contas (pedido, chat em tempo real, agendamento de encontro, QR Code de entrega, avaliação, notificações push, moderação, login com Google, Sentry e `expo-updates`). Suíte migrada de Vitest para **Jest** com provedor de cobertura V8 ([ADR 0113](adr/0113-migracao-vitest-para-jest.md)), reforçada com **suíte E2E Web automatizada via Chrome CDP** ([Spec 138](../specs/138-e2e-web-cdp/spec.md), [ADR 0112](adr/0112-e2e-web-cdp.md)), fluxos E2E nativos Android em **Maestro** (`.maestro/*.yaml`, sintaxe validada via `maestro check-syntax`) e elevação da cobertura de *functions* para **85,19%** — somando **2.317 testes em 313 arquivos**, **7/7 cenários E2E Web verdes**, **46 arquivos de rota/layout** (`44` rotas navegáveis) e **43/43 migrações SQL** validadas — além de hooks Git locais (`ci:rapido` no `pre-commit` e `ci:local` espelhando o CI/CD no `pre-push`).
+- **Planos:** Integrar na branch `develop` os ajustes de Jest, E2E Web CDP, fluxos `.maestro/`, cobertura ampliada e documentação sincronizada (`npm run validate`), atualizar a publicação Web/PWA em `https://ipebook.app` (Cloudflare Pages), executar `.maestro/` em aparelho/emulador Android conectado ao `adb`, executar o plano de **iOS Nativo (Apple HIG / Liquid Glass)** especificado na [Spec 137](../specs/137-ios-nativo-apple-hig/spec.md) e concluir os itens pós-lançamento do beta.
 - **Riscos e Atenção:**
   - A versão Web em produção (`https://ipebook.app`) ainda precisa ser republicada para refletir as correções recentes de PWA, SEO (`<title>` estático), remoção do Mapbox e layout desktop.
-  - A cobertura de *functions* está em **81,02%** (margem curta acima do piso de 80%), enquanto *branches* subiu para **85,54%** no provedor V8 do Jest.
-  - Termos de Uso e Política de Privacidade em link público ainda aguardam revisão jurídica, e ainda não há ferramenta de analytics de produto (ex.: PostHog) ativa em produção.
+  - A suíte E2E nativa Android (`.maestro/*.yaml`) está com a sintaxe validada via `maestro check-syntax`, mas a execução em runtime aguarda um aparelho físico USB ou sessão Waydroid conectada ao `adb` (nenhum dispositivo conectado no ambiente atual).
+  - Termos de Uso e Política de Privacidade em link público ainda aguardam revisão jurídica, ainda não há um segundo projeto Supabase em nuvem dedicado exclusivamente a testes/staging (E2E Web roda contra modo memória isolado e SQL valida localmente em PGlite), e não há ferramenta de analytics de produto (ex.: PostHog) ativa em produção.
 
 ---
 
@@ -83,9 +83,9 @@
 
 | Indicador | Valor Atual |
 | :--- | :--- |
-| **Testes automatizados** | **2.300 testes** em **312 arquivos** + **7/7 cenários E2E Web (CDP)** |
-| **Cobertura (Statements / Lines)** | **95%** / **95%** |
-| **Cobertura (Functions / Branches)** | **81,02%** / **85,54%** |
+| **Testes automatizados** | **2.317 testes** em **313 arquivos** + **7/7 cenários E2E Web (CDP)** + **4 fluxos Maestro Android** (`.maestro/`, sintaxe validada) |
+| **Cobertura (Statements / Lines)** | **95,26%** / **95,26%** |
+| **Cobertura (Functions / Branches)** | **85,19%** / **86,05%** |
 | **Saúde arquitetural** | **496 arquivos** sem violações de imports |
 | **Rotas estáticas** | **46 arquivos** em `src/app/` (`44` rotas navegáveis) |
 | **Documentação técnica** | **137 specs** e **113 ADRs** |

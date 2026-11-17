@@ -457,5 +457,33 @@ describe("Configurações — tela dedicada (Spec 073, ADR 0036)", () => {
     expect(screen.getByText("Erro ao limpar o catálogo offline")).toBeDefined();
     expect(screen.getByText("Erro ao limpar o histórico de buscas")).toBeDefined();
   });
+
+  it("permite cancelar saída da conta, voltar e selecionar bairro padrão", async () => {
+    mockSession(true);
+    mockSettings();
+    const onBack = jest.fn();
+    const { screen } = await renderSettings({ onBack });
+
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Voltar"));
+    });
+    expect(onBack).toHaveBeenCalledTimes(1);
+
+    await expandSettingsSection(screen, "Preferências");
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Bairro padrão"));
+    });
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Selecionar ponto de encontro Praça da Bandeira"));
+    });
+
+    await act(async () => {
+      fireEvent.press(screen.getByText("Sair da conta"));
+    });
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Ficar" }));
+    });
+    expect(screen.queryByText("Sair da conta?")).toBeNull();
+  });
 });
 

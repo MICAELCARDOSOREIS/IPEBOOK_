@@ -209,7 +209,7 @@ export default function EditListing({
               editable={!state.saving}
               placeholder="Ex: Dom Casmurro"
               returnKeyType="next"
-              onSubmitEditing={() => authorInputRef.current?.focus()}
+              onSubmitEditing={() => authorInputRef.current?.focus?.()}
               onFocus={() => handleFocusField(titleY.current)}
             />
           </View>
@@ -227,7 +227,7 @@ export default function EditListing({
               editable={!state.saving}
               placeholder="Ex: Machado de Assis"
               returnKeyType="next"
-              onSubmitEditing={() => descInputRef.current?.focus()}
+              onSubmitEditing={() => descInputRef.current?.focus?.()}
               onFocus={() => handleFocusField(authorY.current)}
             />
           </View>

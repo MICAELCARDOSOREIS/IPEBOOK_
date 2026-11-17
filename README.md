@@ -1,6 +1,6 @@
 # IpêBook 🌳📚
 
-Plataforma comunitária de troca, venda e doação de livros em **Piripiri, PI**, construída em Expo, React Native, TypeScript e Supabase, com arquitetura MVVM sofisticada em sete camadas e suíte de testes automatizados (**2.300 testes em 312 arquivos**) baseada na norma **ISO/IEC 25010**.
+Plataforma comunitária de troca, venda e doação de livros em **Piripiri, PI**, construída em Expo, React Native, TypeScript e Supabase, com arquitetura MVVM sofisticada em sete camadas e suíte de testes automatizados (**2.317 testes em 313 arquivos**) baseada na norma **ISO/IEC 25010**.
 
 * 🌐 **Site oficial:** [https://ipebook.app](https://ipebook.app)
 * 🤖 **Convite para o Beta Android (Play Store):** [https://ipebook.app/beta](https://ipebook.app/beta)
@@ -93,6 +93,7 @@ npm run test:e2e:build   # força nova exportação Web em dist-e2e/ antes de ro
 | **Componentes com Mock** | `tests/components-mocked/` | Isolamento determinístico da View para forçar cenários extremos (falha de rede, carregamento, botão de retry). | RNTL com `jest.mock` (`homeViewMocked.test.tsx`) |
 | **Testes de Integração** | `tests/integration/` | Integração real entre múltiplas camadas: View + ViewModel + Casos de Uso + Repositório em memória sem mocks de negócio. | RNTL integrado (`homeIntegration.test.tsx`) |
 | **Testes E2E Web (CDP)** | `tests/e2e/` | Fluxos completos em Chrome headless via CDP puro (boas-vindas, busca, cadastro, anúncio, favoritos e pedidos). | Node 24 + Chrome CDP (`run.mjs`, `cdp.mjs`) |
+| **Testes E2E Android (Maestro)** | `.maestro/` | Fluxos nativos de hardware/SO fora da Web (Google Sign-In nativo, câmera/ISBN/permissão de fotos e QR Code/push). | Maestro YAML (`maestro test .maestro` com `adb` conectado) |
 
 ---
 
@@ -122,7 +123,7 @@ Conforme as diretrizes da disciplina, o projeto adotou três características es
 
 ## 📱 Validação manual em dispositivo
 
-A versão Web conta com suíte E2E automatizada via Chrome CDP (`npm run test:e2e`, sem Playwright). Os fluxos nativos que dependem de aparelho físico (login com Google, câmera/QR em dois aparelhos, push e leitor de tela) são verificados manualmente antes de cada publicação, conforme o roteiro em
+A versão Web conta com suíte E2E automatizada via Chrome CDP (`npm run test:e2e`, sem Playwright). Os fluxos nativos que dependem de aparelho físico (login com Google, câmera/QR em dois aparelhos, push e leitor de tela) possuem fluxos declarativos em [`.maestro/`](.maestro/README.md) (sintaxe validada via `maestro check-syntax`; execução ao vivo depende de aparelho físico ou Waydroid conectado ao `adb`) e também são verificados manualmente antes de cada publicação, conforme o roteiro em
 [`docs/qualidade.md`](docs/qualidade.md). Os testes automatizados cobrem domínio, ViewModels,
 componentes e integração entre camadas.
 

@@ -78,9 +78,10 @@ function setup(
     { reload: jest.fn() },
   ]);
   const reload = jest.fn();
+  const toggleFavorite = jest.fn();
   jest.mocked(useBookDetailViewModel).mockReturnValue([
     { book, loading: options.loading ?? false, error: options.error ?? null, isFavorite: false, favoriteError: null, favoriteLoading: false },
-    { reload, toggleFavorite: jest.fn() },
+    { reload, toggleFavorite },
   ]);
   jest.mocked(useAuthViewModel).mockReturnValue([
     { user, loading: false, error: null },
@@ -98,7 +99,7 @@ function setup(
     { ...emptyShare, ...options.share },
     { share, shareImage, shareToWhatsApp, dismissLinkCopied: jest.fn(), dismissError: jest.fn() },
   ]);
-  return { request, share, shareToWhatsApp, shareImage, reload };
+  return { request, share, shareToWhatsApp, shareImage, reload, toggleFavorite };
 }
 
 async function renderDetail(props: Partial<React.ComponentProps<typeof BookDetail>> = {}) {
@@ -308,5 +309,71 @@ describe("BookDetail (spec 006, US6/T029)", () => {
     setup(book({}), user, { share: { error: "Não foi possível compartilhar o anúncio. Tente novamente." } });
     const screen = await renderDetail();
     expect(screen.getByText("Não foi possível compartilhar o anúncio. Tente novamente.")).toBeDefined();
+  });
+
+  it("aciona gerenciamento para dono, favoritos, galeria e folha de reservado", async () => {
+    const onNavigateToManageListing = jest.fn();
+    const { toggleFavorite } = setup(book({ ownerId: user.id, photoUrl: "https://cdn.ipebook.app/capa.jpg" }), user);
+    const ownerScreen = await renderDetail({ onNavigateToManageListing });
+
+    await act(async () => {
+      fireEvent.press(ownerScreen.getByRole("button", { name: "Gerenciar anúncio" }));
+    });
+    expect(onNavigateToManageListing).toHaveBeenCalledWith("b1");
+
+    await act(async () => {
+      fireEvent.press(ownerScreen.getByRole("button", { name: "Adicionar aos favoritos" }));
+    });
+    expect(toggleFavorite).toHaveBeenCalledWith(user.id);
+
+    await act(async () => {
+      fireEvent.press(ownerScreen.getByRole("button", { name: "Ver fotos do anúncio em tela cheia" }));
+    });
+    await act(async () => {
+      fireEvent.press(ownerScreen.getByRole("button", { name: "Fechar galeria de fotos" }));
+    });
+
+    const onNavigateToCategorySearch = jest.fn();
+    const onNavigateToUserProfile = jest.fn();
+    setup(book({ ownerId: "other", status: "reserved", category: "Ficção" }), user, { ownerName: "Carlos" });
+    const reservedScreen = await renderDetail({
+      onNavigateToCategorySearch,
+      onNavigateToUserProfile,
+    });
+
+    await act(async () => {
+      fireEvent.press(reservedScreen.getByText("Reservado"));
+    });
+    await act(async () => {
+      fireEvent.press(reservedScreen.getByLabelText("Buscar outros livros da categoria Ficção"));
+    });
+    expect(onNavigateToCategorySearch).toHaveBeenCalledWith("Ficção");
+
+    await act(async () => {
+      fireEvent.press(reservedScreen.getByText("Reservado"));
+    });
+    await act(async () => {
+      fireEvent.press(reservedScreen.getByLabelText("Ver perfil e outros anúncios de Carlos"));
+    });
+    expect(onNavigateToUserProfile).toHaveBeenCalledWith("other");
+
+    await act(async () => {
+      fireEvent.press(reservedScreen.getByText("Reservado"));
+    });
+    await act(async () => {
+      fireEvent.press(reservedScreen.getByLabelText("Fechar informações da reserva"));
+    });
+  });
+
+  it("abre e fecha a folha de proposta sem enviar", async () => {
+    setup(book({ ownerId: "other", status: "available" }), user);
+    const screen = await renderDetail();
+
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Propor troca" }));
+    });
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Cancelar" }));
+    });
   });
 });

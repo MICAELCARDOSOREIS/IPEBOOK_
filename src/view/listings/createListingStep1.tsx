@@ -309,7 +309,7 @@ export function CreateListingStep1({
                 placeholder="Ex: Dom Casmurro"
                 error={fieldErrors.title}
                 returnKeyType="next"
-                onSubmitEditing={() => authorInputRef.current?.focus()}
+                onSubmitEditing={() => authorInputRef.current?.focus?.()}
                 onFocus={() => onFocusField?.("title", containerY.current + titleY.current)}
               />
             </View>
@@ -326,7 +326,7 @@ export function CreateListingStep1({
                 returnKeyType={modality === "sale" ? "next" : "done"}
                 onSubmitEditing={() => {
                   if (modality === "sale") {
-                    priceInputRef.current?.focus();
+                    priceInputRef.current?.focus?.();
                   }
                 }}
                 onFocus={() => onFocusField?.("author", containerY.current + authorY.current)}
@@ -365,7 +365,7 @@ export function CreateListingStep1({
                 placeholder="Ex: Dom Casmurro"
                 error={fieldErrors.title}
                 returnKeyType="next"
-                onSubmitEditing={() => authorInputRef.current?.focus()}
+                onSubmitEditing={() => authorInputRef.current?.focus?.()}
                 onFocus={() => onFocusField?.("title", containerY.current + titleY.current)}
               />
             </View>
@@ -386,7 +386,7 @@ export function CreateListingStep1({
                 returnKeyType={modality === "sale" ? "next" : "done"}
                 onSubmitEditing={() => {
                   if (modality === "sale") {
-                    priceInputRef.current?.focus();
+                    priceInputRef.current?.focus?.();
                   }
                 }}
                 onFocus={() => onFocusField?.("author", containerY.current + authorY.current)}
