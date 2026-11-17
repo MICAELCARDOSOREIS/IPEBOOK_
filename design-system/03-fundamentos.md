@@ -20,8 +20,8 @@ Regras de uso dos tokens definidos em [02-tokens.md](02-tokens.md). Voz da marca
 ## Tipografia
 
 - Títulos de tela raiz, logotipo e título do livro usam a serifa da marca
-  (`fontFamily.brand` → Source Serif 4 Bold); todo o resto da interface usa a escala M3 em
-  Roboto. (Adaptado — ver [01-principios.md](01-principios.md) §4)
+  (`fontFamily.brand` → Source Serif 4 Bold); todo o resto da interface usa a escala tipográfica com
+  **Plus Jakarta Sans** (400, 500, 600 — [ADR 0107](../docs/adr/0107-adocao-plus-jakarta-sans-na-interface.md)). (Adaptado — ver [01-principios.md](01-principios.md) §4)
 - Rótulo de botão em `m3-label-lg`; texto de campo e mensagem em `m3-body-lg`; descrições em
   `m3-body-md`. (Herdado)
 - O texto respeita o tamanho de fonte escolhido no sistema Android, até 200%: nenhuma altura

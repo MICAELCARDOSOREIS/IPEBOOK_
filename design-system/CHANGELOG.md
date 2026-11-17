@@ -2,6 +2,13 @@
 
 Versões no formato `MAIOR.MENOR.CORREÇÃO`. Mudança grande = versão nova.
 
+## 1.29.0 · 2026-11-17
+
+- **Alinhamento geral da documentação com o código (`src/view/tokens.ts`, ADR 0107 e Specs 061–138)**:
+  - Substituídas referências antigas de tipografia `Roboto` por `Plus Jakarta Sans` (`design-system/README.md`, `01-principios.md`, `02-tokens.md`, `03-fundamentos.md` e `docs/design-system.md`).
+  - Atualizada a ficha `dialogo.md` para usar `tokens.colors.m3.scrim`, `tokens.radius.xxl` (28 dp) e `accessibilityViewIsModal`, corrigida a nota do `scrim` em `02-tokens.md` e sincronizados os hexadecimais de `fita-marcador.md` (`#F5B718` / `#D97706`), as 5 cores de `capa-ilustrativa.md` e todos os valores de `docs/design-system.md`.
+  - Removidos avisos obsoletos de "fora de escopo" nos componentes efetivamente entregues no código: `barra-de-navegacao.md` (3 destinos principais: Início, Explorar e Estante), `avatar.md` (`src/view/components/Avatar.tsx`), `estados-do-sistema.md` (`OfflineState` com recuperação automática + SWR), `bolha-de-mensagem.md` (`src/view/conversations/chat.tsx`), `interruptor.md` (`Switch` em `src/view/profile/settings.tsx`) e `fab.md` (FAB 56 × 56 dp em `src/view/listings/myListings.tsx`).
+
 ## 1.28.0 · 2026-11-09
 
 - **Cores Exclusivas por Situação e Filtro de Anúncios:** estabelecidas cores semânticas próprias para cada status de anúncio da estante e tags (`Tag.tsx`, `MyListingsListingsTab.tsx`): **Ativos** em Verde Folhagem canônico (`#1E4E27` / `#FFFFFF`), **Pausados** em Cinza Ardósia / Grafite neutro (`#52525B` / `#FFFFFF`), e **Reservados** em Amarelo Ouro Solar de Ipê (`#F5B718` / `#451A03`). Elimina a confusão de bolinhas pastel idênticas entre ativos e pausados.

@@ -76,11 +76,11 @@ Lista completa (~50 tokens, claro e escuro) em
 | --- | --- | --- | --- | --- | --- | --- |
 | `displayLarge` (brand-large-title) | Source Serif 4 | 32 px | 700 | 40 px | Título de tela raiz, logotipo | Novo — família extra sobre a escala M3 |
 | `brand-card-title` | Source Serif 4 | 19 px | 700 | 24 px | Título de livro em cartões/linhas de lista e título do estado vazio | Novo — definido no JSON; a escala TypeScript atual usa `fontFamily.brand` com estilos existentes |
-| `m3-title-lg` | Roboto | 22 px | 400 | 28 px | Título da barra superior | Herdado |
-| `m3-body-lg` | Roboto | 16 px | 400 | 24 px | Texto de campo, busca, bolha de mensagem | Herdado |
-| `m3-body-md` | Roboto | 14 px | 400 | 20 px | Texto corrido, descrições | Herdado |
-| `m3-label-lg` | Roboto (500) | 14 px | 500 | 20 px | Rótulo de botão, chip, aba | Herdado |
-| `m3-label-sm` | Roboto (500) | 11 px | 500 | 16 px | Rótulo da barra de navegação | Herdado |
+| `m3-title-lg` | Plus Jakarta Sans (M3: Roboto) | 22 px | 400 | 28 px | Título da barra superior | Adaptado ([ADR 0107](../docs/adr/0107-adocao-plus-jakarta-sans-na-interface.md)) |
+| `m3-body-lg` | Plus Jakarta Sans (M3: Roboto) | 16 px | 400 | 24 px | Texto de campo, busca, bolha de mensagem | Adaptado ([ADR 0107](../docs/adr/0107-adocao-plus-jakarta-sans-na-interface.md)) |
+| `m3-body-md` | Plus Jakarta Sans (M3: Roboto) | 14 px | 400 | 20 px | Texto corrido, descrições | Adaptado ([ADR 0107](../docs/adr/0107-adocao-plus-jakarta-sans-na-interface.md)) |
+| `m3-label-lg` | Plus Jakarta Sans (500) | 14 px | 500 | 20 px | Rótulo de botão, chip, aba | Adaptado ([ADR 0107](../docs/adr/0107-adocao-plus-jakarta-sans-na-interface.md)) |
+| `m3-label-sm` | Plus Jakarta Sans (500) | 11 px | 500 | 16 px | Rótulo da barra de navegação | Adaptado ([ADR 0107](../docs/adr/0107-adocao-plus-jakarta-sans-na-interface.md)) |
 
 Escala completa (Android M3, iOS, Web, Documentação) em `tokens.json`, campo
 `type.groups`.
@@ -131,12 +131,10 @@ devem obter a paleta por `useTheme()`; a coluna "Em código" abaixo define os no
 | `book-page` / `book-ink` | `colors.book.page` / `colors.book.ink` |
 | `nature-foliage` / `nature-sprout` | `colors.nature.foliage` / `colors.nature.sprout` |
 | `ipe-bloom` / `ipe-bloom-deep` / `ipe-ribbon` | `colors.ipe.bloom` / `colors.ipe.bloomDeep` / `colors.ipe.ribbon` |
-| `scrim` | não há chave própria em `tokens.ts`; o componente `Dialog` mantém uma constante local documentada |
+| `scrim` | `colors.m3.scrim` (`#00000052`) |
 | papéis M3 sem chave antiga equivalente (`onSurface`, `surfaceContainer*`, `focusRing` etc.) | `colors.m3.*` |
 
-`on-primary` e `focus-ring` já têm token em `colors.m3`. `scrim` continua sem uma chave
-dedicada na API TypeScript; o `Dialog` usa uma constante local nomeada e vinculada ao token
-conceitual do JSON. Novos componentes não devem repetir essa constante sem necessidade.
+`on-primary`, `focus-ring` e `scrim` já têm chave dedicada em `colors.m3` (`src/view/tokens.ts`). Novos componentes devem reutilizar esses tokens via `useTheme()` sem duplicar literais hexadecimais.
 
 ## 3. Tokens de componente (onde é usado)
 

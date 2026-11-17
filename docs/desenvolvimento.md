@@ -25,14 +25,14 @@ As migrações SQL oficiais residem em `supabase/migrations/` e são aplicadas c
 
 ## Ambiente
 
-O projeto usa npm e `package-lock.json`. A CI está configurada com Node.js 22. As versões do projeto estão em [package.json](../package.json); o lockfile registra as versões resolvidas. Não atualizar dependências como parte de uma simples instalação.
+O projeto usa npm e `package-lock.json`. A CI está configurada com **Node.js 24** (`.github/workflows/validacao.yml`). As versões do projeto estão em [package.json](../package.json); o lockfile registra as versões resolvidas. Não atualizar dependências como parte de uma simples instalação.
 
 ## Instalar e executar
 
 Dentro da pasta clonada, ou nesta instalação local:
 
 ```bash
-cd /home/usermicael/IPEBOOK_
+cd IPEBOOK_
 npm ci
 npm run web
 ```
@@ -45,20 +45,32 @@ Em outra máquina, substituir apenas o caminho pelo diretório do clone. `npm ci
 | `npm run web` | Inicia o fluxo web do Expo no mesmo servidor e com o mesmo heap |
 | `npm run android` | Solicita abertura no ambiente Android disponível |
 | `npm run android:usb` | Abre o projeto no aparelho Android pelo cabo USB, com túnel `adb reverse` (não depende do Wi-Fi) |
-| `npm run ios` | Solicita abertura no simulador iOS disponível |
-| `npm run typecheck` | Verifica tipos sem emitir arquivos |
+| `npm run ios` | Solicita abertura no simulador iOS disponível (macOS) |
+| `npm run typecheck` | Verifica tipos sem emitir arquivos (`tsc --noEmit`, incluindo `functions/`) |
 | `npm run lint` | Analisa o código com o Biome e falha apenas em erros |
 | `npm run lint:fix` | Aplica as correções seguras do Biome |
-| `npm run check:architecture` | Verifica imports entre camadas |
+| `npm run check:architecture` | Verifica imports entre camadas, teto de 900 linhas em `src/view/` e proibição de `.parent!` |
+| `npm run check:design-system` | Confere tokens canônicos, contrastes, 28 docs de componentes e `accessibilityViewIsModal` |
 | `npm run check:numbering` | Falha se duas specs ou dois ADRs usarem o mesmo número |
-| `npm run test:sql` | Executa migrações e cenários de RLS em PostgreSQL local via PGlite |
-| `npm test` | Executa a suíte uma vez |
-| `npm run validate` | Executa tipos, lint, arquitetura, design system, numeração, config de build, SQL, testes com cobertura e sincronia da documentação, interrompendo em falhas |
-| `npm run build:web` | Exporta arquivos estáticos para `dist/` |
+| `npm run check:build-config` | Valida `app.json`, `eas.json`, redirects/headers Web e assets nativos |
+| `npm run check:docs` | Confere sincronia das métricas atuais entre código, `docs/estado.md` e `README.md` |
+| `npm run test:sql` | Executa as 43 migrações e cenários de RLS em PostgreSQL local via PGlite |
+| `npm test` | Executa a suíte unitária/integração no Jest uma vez |
+| `npm run test:coverage` | Executa o Jest com cobertura V8 (limiar ≥ 80%) e gera `coverage/relatorio-testes.json` |
+| `npm run test:e2e` | Executa os cenários E2E Web em Chrome headless via CDP (`dist-e2e/`, sem Playwright) |
+| `npm run test:e2e:build` | Reexporta `dist-e2e/` em modo memória e executa a suíte E2E Web |
+| `npm run ci:rapido` | Executa as 6 checagens rápidas locais (usado automaticamente no `.githooks/pre-commit`) |
+| `npm run ci:local` | Espelha localmente todos os passos do `.github/workflows/validacao.yml` (usado no `.githooks/pre-push`) |
+| `npm run validate` | Executa tipos, lint, arquitetura, design system, numeração, config de build, SQL, cobertura e sincronia da documentação |
+| `npm run build:web` | Exporta arquivos estáticos para `dist/` e prepara assets e meta tags de fallback |
+| `npm run verify:release` | Verifica `.env.example`, tipos, arquitetura, SQL, testes e artefatos em `dist/` |
+| `npm run health:supabase` / `health:supabase:remote` | Diagnostica saúde do Supabase e reconciliação de migrações remotas |
+| `npm run db:seed` / `npm run stats:beta` | Gera catálogo semente de Piripiri (10 livros) / consulta métricas agregadas da beta |
+| `npm run aab:local` / `npm run play:submit` | Gera App Bundle assinado localmente e envia para a Google Play (`docs/loja/publicacao-terminal.md`) |
 
 `npm start` e `npm run web` executam `scripts/servidor-dev.sh`, que inicia o Expo com `NODE_OPTIONS=--max-old-space-size=4096`, `--max-workers 4` (`EXPO_METRO_MAX_WORKERS` permite ajustar) e [`scripts/metro-sem-vazamento-ssr.cjs`](../scripts/metro-sem-vazamento-ssr.cjs) para evitar o vazamento de `SourceMap` no SSR em Node 24 (`EXPO_SSR_SOURCEMAPS=1` reativa os mapas SSR para depuração pontual). O Metro atende Android e web no mesmo processo Node: com a web aberta e o app conectado, o bundle web estático (com SSR) somado ao bundle Android passa do heap padrão do Node nesta máquina (~2,2 GB) e o processo aborta com `FATAL ERROR: Ineffective mark-compacts near heap limit Allocation failed - JavaScript heap out of memory`. Para usar outro valor, definir a variável no ambiente (`NODE_OPTIONS=--max-old-space-size=6144 npm start`). Flags do Expo vão depois de `--`: `npm start -- --clear` limpa o cache do Metro (sem o `--`, o npm consome a flag e ela não chega ao Expo).
 
-Para Android/iOS é necessário preparar o ambiente nativo e um cliente compatível com o SDK utilizado. O simulador iOS local depende de macOS. Nesta entrega não há validação em dispositivo ou emulador; executar o comando não garante que o ambiente nativo esteja preparado.
+Para Android/iOS é necessário preparar o ambiente nativo e um cliente compatível com o SDK utilizado. O simulador iOS local depende de macOS. A versão Web é validada automaticamente via `npm run test:e2e` (Chrome CDP) e a versão Android `0.2.0` foi validada em aparelho físico real; o iOS Nativo depende de macOS e segue o planejamento da [Spec 137](../specs/137-ios-nativo-apple-hig/spec.md). Em máquinas com memória limitada ao rodar toda a suíte com cobertura, o [`jest.config.cjs`](../jest.config.cjs) limita `maxWorkers: 6` (podendo ser reduzido com `npm run test:coverage -- --maxWorkers=3`).
 
 ## Configuração e dados
 
@@ -79,7 +91,11 @@ python3 -m http.server 8089 --bind 127.0.0.1 --directory dist
 
 Python 3 é necessário somente para este servidor de conferência. Abrir `http://127.0.0.1:8089`. Servir arquivos localmente não publica o aplicativo. Os estados esperados estão no [guia de uso](uso.md).
 
-## Fluxo de contribuição
+## Fluxo de contribuição e hooks Git automáticos
+
+Os hooks versionados em `.githooks/` (ativados por `npm run setup:hooks` / `prepare` via `git config core.hooksPath .githooks`) impedem que código quebrado vá para o CI/CD do GitHub:
+- **`.githooks/pre-commit`:** bloqueia commits na `main`/`master` e roda `npm run ci:rapido` (tipos, lint, arquitetura, design system, numeração e config de build).
+- **`.githooks/pre-push`:** bloqueia push na `main`/`master` e roda `npm run ci:local` (bateria completa idêntica ao `.github/workflows/validacao.yml`, incluindo `test:sql`, `test:coverage`, `check:docs`, `build:web` em modo memória e `test:e2e:build`; aceita `IPEBOOK_JEST_WORKERS` para ajustar paralelismo e `IPEBOOK_SKIP_HOOKS=1` apenas em emergências explícitas).
 
 1. Conferir `git status --short --branch` e preservar alterações existentes.
 2. Usar `develop` como base; para trabalho isolado, criar branch com nome descritivo a partir dela.
@@ -114,3 +130,7 @@ Nenhum segredo deve aparecer em exemplos, capturas, logs compartilhados ou commi
 ## APK de release local (produção autônoma)
 
 `npm run apk:release` inicia a compilação do APK de release em segundo plano, desacoplada do terminal. Diferente do debug, este APK é 100% autônomo (não necessita do servidor Metro), executa com bytecode pré-compilado pelo motor Hermes, minificação R8/ProGuard e compressão de recursos. O arquivo final é gerado em `android/app/build/outputs/apk/release/app-release.apk`. Para acompanhar o andamento, use `npm run apk:release:status` ou `npm run apk:release:log`.
+
+## App Bundle de produção (AAB) e envio à Google Play
+
+`npm run aab:local` gera o App Bundle (`.aab`) assinado localmente com a chave do EAS em segundo plano (`npm run aab:local:status` e `npm run aab:local:log`; saída em `android/build-logs/`). Para enviar o `.aab` gerado diretamente pela API da Google Play sem abrir o Play Console, execute `npm run play:submit` após configurar a conta de serviço conforme [`docs/loja/publicacao-terminal.md`](loja/publicacao-terminal.md).

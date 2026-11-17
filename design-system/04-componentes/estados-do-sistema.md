@@ -24,24 +24,24 @@ Origem no sistema base: Material 3 (indicadores de progresso, banners de erro). 
 
 ## Anatomia
 
-- **LoadingState**: indicador de progresso centralizado + texto curto ("Carregando…").
-- **ErrorState** / **OfflineState**: ícone + mensagem (`accessibilityRole="alert"`) + botão de
-  ação explícito ("Tentar novamente"). Nunca há retry automático silencioso.
+- **LoadingState**: indicador de progresso centralizado ou esqueleto (`LoadingSkeletonVariants.tsx`, [ADR 0103](../../docs/adr/0103-esqueletos-de-carregamento-e-cache-instantaneo.md)) + texto curto ("Carregando…").
+- **ErrorState**: ícone + mensagem em cartão (`accessibilityRole="alert"`) + botão explícito ("Tentar novamente").
+- **OfflineState**: cartão centralizado com ícone `wifiOff`, mensagem acessível (`accessibilityRole="alert"`, `accessibilityLiveRegion="polite"`), botão explícito ("Tentar novamente") e **auto-recuperação** ao detectar o retorno da conexão ([ADR 0102](../../docs/adr/0102-design-de-erros-e-auto-recuperacao-offline.md)).
 
 ## Variantes
 
 | Variante | Uso | Diferença |
 | --- | --- | --- |
 | `ErrorState` | Erro genérico (servidor, validação) | Botão preenchido (ação primária) |
-| `OfflineState` | Sem conectividade de rede | Ícone de wifi cortado; botão contornado (ação secundária, já que a causa é externa ao app) |
+| `OfflineState` | Sem conectividade de rede | Ícone de wifi cortado; auto-recupera ao reconectar e mantém botão explícito de tentativa |
 
 ## Estados
 
 | Estado | Aparência (tokens) | Comportamento | Acessibilidade |
 | --- | --- | --- | --- |
-| Carregando | `ActivityIndicator` com `tokens.colors.action` | Bloqueia a lista até a resposta | `accessibilityLabel` descreve o que está carregando |
-| Sem conexão | Ícone `wifiOff` + `tokens.colors.secondaryText` | Oferece "Tentar novamente"; não opera offline (sem cache local, sem fila de ações) | Mensagem com `accessibilityRole="alert"` |
-| Erro | Ícone `error` + `tokens.colors.error` | Oferece "Tentar novamente"; a ação é sempre explícita, nunca retry automático em loop | Mensagem com `accessibilityRole="alert"` |
+| Carregando | `ActivityIndicator` com `tokens.colors.action` ou Skeletons | Exibe indicador ou cache instantâneo (SWR) durante a consulta | `accessibilityLabel` descreve o que está carregando |
+| Sem conexão | Ícone `wifiOff` + cartão centralizado | Dispara `onRetry` automaticamente quando `isOnline` volta a `true` e mantém botão manual | Mensagem com `accessibilityRole="alert"` e `accessibilityLiveRegion="polite"` |
+| Erro | Ícone `error` + `tokens.colors.error` | Oferece "Tentar novamente"; sem loop automático de retry | Mensagem com `accessibilityRole="alert"` e `accessibilityLiveRegion="polite"` |
 
 ## Detecção de conectividade
 

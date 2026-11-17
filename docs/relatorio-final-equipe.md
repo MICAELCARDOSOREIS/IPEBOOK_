@@ -5,7 +5,7 @@
 **Curso:** Tecnologia em Análise e Desenvolvimento de Sistemas (TADS)  
 **Disciplinas:** Engenharia de Software III / Programação para Dispositivos Móveis  
 **Responsável pela Consolidação:** Eric Vinícius dos Santos Oliveira  
-**Data:** Outubro de 2026  
+**Data:** Outubro de 2026 *(atualizado em novembro de 2026 com a consolidação da entrega beta `0.2.0`)*  
 
 ---
 
@@ -13,17 +13,17 @@
 
 O **Ipebook** nasceu com o propósito de suprir a carência de uma plataforma hiperlocal dedicada à circulação, doação, venda acessível e troca de livros físicos no município de Piripiri - PI. 
 
-Ao longo do semestre, o projeto evoluiu de uma ideia exploratória para uma plataforma robusta multiplataforma (Android e Web), alinhando padrões rigorosos de Engenharia de Software com as práticas recomendadas de Programação Móvel.
+Ao longo do semestre, o projeto evoluiu de uma ideia exploratória para uma plataforma robusta multiplataforma (Android publicado na Play Store e Web/PWA em [`https://ipebook.app`](https://ipebook.app)), alinhando padrões rigorosos de Engenharia de Software com as práticas recomendadas de Programação Móvel e IHC.
 
 ---
 
 ## 2. Consolidação das Entregas por Integrante
 
 ### 2.1 Micael Cardoso Reis
-- **Arquitetura e Governança:** Concepção da estrutura MVVM sofisticada em 7 camadas (`app`, `view`, `viewmodel`, `usecase`, `model`, `infra`, `di`), automação do validador de fronteiras arquiteturais (`check:architecture`).
-- **Core de UI e Design System:** Implementação dos tokens visuais, componentes fundamentais e migração integral para o Material 3 Expressive (ADR 0084).
-- **Testes e Infraestrutura:** Pipeline de Integração Contínua (CI) com GitHub Actions, cobertura de testes com Vitest acima de 80%, deploy contínuo na Vercel e Cloudflare Pages.
-- **Funcionalidades Críticas:** Mecanismo hiperlocal por bairros de Piripiri, sistema de busca textual com trigramas PostgreSQL (`pg_trgm`), histórico de encontros com mapa e confirmação por QR Code.
+- **Arquitetura e Governança:** Concepção da estrutura MVVM sofisticada em 7 camadas (`app`, `view`, `viewmodel`, `usecase`, `model`, `infra`, `di`), automação do validador de fronteiras arquiteturais (`check:architecture`) e injeção de dependência explícita em 100% dos ViewModels (Spec 126 / ADR 0098).
+- **Core de UI e Design System:** Implementação dos tokens visuais, componentes fundamentais, migração integral para o Material 3 Expressive (ADR 0084) e adoção tipográfica da Plus Jakarta Sans (ADR 0107).
+- **Testes e Infraestrutura:** Pipeline de Integração Contínua (CI) com GitHub Actions, migração da suíte automatizada para Jest com cobertura V8 acima de 80% (ADR 0113), suíte E2E Web via Chrome CDP (Spec 138 / ADR 0112), publicação Android `0.2.0` na Play Store e deploy Web no Cloudflare Pages.
+- **Funcionalidades Críticas:** Mecanismo hiperlocal por localidades/bairros de Piripiri, sistema de busca textual com trigramas PostgreSQL (`pg_trgm`), histórico de encontros em Pontos Seguros (ADR 0111) e confirmação por QR Code (ADR 0070).
 
 ### 2.2 Maria Clara Almeida Martins
 - **Identidade e Interação Humano-Computador (IHC):** Estruturação do Design System formal, contratos de tokens semânticos, paleta inspirada no Ipê e tipografia serifada da marca.
@@ -43,14 +43,14 @@ Ao longo do semestre, o projeto evoluiu de uma ideia exploratória para uma plat
 - **Segurança e Moderação:** Validação de regras de negócio, limites anti-abuso e painel de moderação para conformidade com termos da comunidade.
 
 ### 2.4 Eric Vinícius dos Santos Oliveira
-- **Definição de Produto e Plataformas:** Condução e formalização da decisão estratégica inicial de plataformas (Android e Web prioritárias, postergando iOS conforme ADR 0040 e Tarefa 4).
-- **Consolidação Técnica e Documental:** Elaboração deste relatório consolidado de entregas, compilação dos relatórios de conformidade e rastreabilidade para a banca avaliadora.
+- **Definição de Produto e Plataformas:** Condução e formalização da decisão estratégica inicial de plataformas (Android e Web prioritárias, evoluindo posteriormente para PWA Apple HIG na Spec 136 e planejamento de iOS Nativo na Spec 137).
+- **Consolidação Técnica e Documental:** Elaboração deste relatório consolidado de entregas, guia de sincronização do Figma (`docs/relatorio-alinhamento-figma-e-evolucao-ux.md`) e rastreabilidade para a banca avaliadora.
 
 ---
 
 ## 3. Arquitetura e Decisões Técnicas (ADRs)
 
-O projeto adotou o padrão de **Architecture Decision Records (ADRs)** desde a sua concepção, totalizando mais de 80 decisões registradas em `docs/adr/`. Destacam-se:
+O projeto adotou o padrão de **Architecture Decision Records (ADRs)** desde a sua concepção, totalizando **113 decisões** registradas em [`docs/adr/README.md`](adr/README.md). Destacam-se:
 
 | ADR | Decisão | Impacto |
 | --- | --- | --- |
@@ -61,6 +61,11 @@ O projeto adotou o padrão de **Architecture Decision Records (ADRs)** desde a s
 | **0050** | Seletor de Bairro Comunitário | Enfoque hiperlocal específico para a realidade de Piripiri |
 | **0070** | Conclusão de Troca via QR Code | Verificação presencial segura entre os moradores |
 | **0084** | Adoção do Material 3 Expressive | Modernização visual com suporte a temas, feedback tátil e ergonomia |
+| **0098** | Injeção de Dependência nos ViewModels | 100% dos ViewModels desacoplados do container (`make*ViewModel`) |
+| **0107** | Tipografia Plus Jakarta Sans | Harmonização tipográfica da interface com a serifa da marca (`Source Serif 4`) |
+| **0111** | Encontro sem Mapa (Pontos Seguros) | Escolha acessível entre os 4 pontos públicos sem dependência do Mapbox |
+| **0112** | E2E Web via Chrome CDP | Validação ponta a ponta na Web em navegador real sem Playwright |
+| **0113** | Migração de Vitest para Jest | Alinhamento ao executor padrão do ecossistema React Native/Expo |
 
 ---
 
@@ -68,13 +73,13 @@ O projeto adotou o padrão de **Architecture Decision Records (ADRs)** desde a s
 
 O projeto segue rigorosamente o modelo de qualidade da **ISO/IEC 25010**:
 
-- **Verificação Automatizada:** `npm run test` com Vitest, cobrindo testes unitários de entidades, casos de uso, viewmodels e componentes visuais com mocks isolados.
-- **Métricas Atingidas:**
-  - Statements: > 90%
-  - Branches: > 80% (conforme limiar de qualidade estabelecido)
-  - Functions: > 90%
-  - Lines: > 90%
-- **Verificação Estática e Linting:** Biome configurado para análise e formatação uniforme de código, além do validador customizado de camadas arquiteturais.
+- **Verificação Automatizada:** `npm test` e `npm run test:coverage` com **Jest** (`coverageProvider: "v8"`, ADR 0113), cobrindo **2.300 testes em 312 arquivos** (unitários, hooks, componentes com RNTL, mocks isolados e integração), além de **7/7 cenários E2E Web via Chrome CDP** (`npm run test:e2e:build`, ADR 0112), checagem SQL/RLS via PGlite (`npm run test:sql`) e simulação automática local do CI/CD antes do push (`npm run ci:local` via `.githooks/pre-push`).
+- **Métricas Atingidas (2026-11-17):**
+  - Statements: **95%** (limiar mínimo: 80%)
+  - Branches: **85,54%** (limiar mínimo: 80%)
+  - Functions: **81,02%** (limiar mínimo: 80%)
+  - Lines: **95%** (limiar mínimo: 80%)
+- **Verificação Estática e Linting:** Biome configurado para análise estática sem reformatar em massa, acompanhado de validadores automáticos de camadas MVVM (`check:architecture`), design system (`check:design-system`), numeração (`check:numbering`), configuração de build (`check:build-config`) e sincronia documental (`check:docs`).
 
 ---
 
@@ -82,8 +87,8 @@ O projeto segue rigorosamente o modelo de qualidade da **ISO/IEC 25010**:
 
 O Ipebook atinge com sucesso o marco de versão estável para o ciclo avaliativo, dispondo de:
 1. Catálogo comunitário com paginação e filtros hiperlocais;
-2. Autenticação e perfil de usuário completos;
-3. Fluxo de ponta a ponta de negociação e agendamento de encontros;
-4. Leitor de código de barras para ISBN integrado à câmera;
+2. Autenticação (e-mail/senha e Google nativo) e perfil de usuário completos;
+3. Fluxo de ponta a ponta de negociação, chat em tempo real, agendamento de encontro e conclusão por QR Code;
+4. Leitor de código de barras para ISBN integrado à câmera (Open Library, Google Books, BrasilAPI e Crossref);
 5. Suporte a anúncios individuais e box de livros;
-6. Aplicação Web responsiva publicada e pronta para testes.
+6. Aplicativo Android `0.2.0` publicado na Google Play Store e aplicação Web/PWA responsiva publicada em `https://ipebook.app`.

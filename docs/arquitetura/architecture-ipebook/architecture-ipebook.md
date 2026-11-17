@@ -15,6 +15,8 @@ companions: ['../../adr/README.md', '../../arquitetura.md']
 
 # Architecture Spine — IpêBook
 
+> **Contexto temporal (2026-10-17):** este documento consolida os 20 invariantes arquiteturais estabelecidos na fundação do projeto. Os princípios MVVM e portas/adaptadores (`AD-1` a `AD-20`) continuam vigentes e verificados por `npm run check:architecture`, enquanto itens da seção `Stack` e `Deferred` evoluíram em ADRs posteriores — destaque para Tema Escuro ([ADR 0036](../../adr/0036-tema-escuro-entra-em-escopo.md)), Chat em tempo real ([ADR 0044](../../adr/0044-chat-mensagens-negociacao.md)), Login Google ([ADR 0082](../../adr/0082-login-google-nativo.md)), Expo 58 / React Native 0.88 e migração para Jest ([ADR 0113](../../adr/0113-migracao-vitest-para-jest.md)).
+
 ## Design Paradigm
 
 MVVM em sete camadas, com portas e adaptadores no limite de dados: os contratos `I*DataSource`

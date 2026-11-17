@@ -7,7 +7,7 @@
 - **Contexto técnico:** Adequação de telas e ergonomia web no iPhone (Safari e modo PWA Standalone) em conformidade com o Apple Human Interface Guidelines (HIG) sem afetar Android e Web Desktop.
 - **Relacionado a:** ADR 0008 (Diretrizes Visuais por Plataforma), ADR 0020 (Publicação Web Cloudflare Pages), ADR 0035 (Service Worker e Cache Offline PWA), ADR 0106 (Padronização com ScreenContainer), ADR 0107 (Adoção da Plus Jakarta Sans na Interface).
 - **Issue:** #220
-- **Spec:** 135
+- **Spec:** [136](../../specs/136-pwa-iphone-apple-hig/spec.md)
 
 ---
 

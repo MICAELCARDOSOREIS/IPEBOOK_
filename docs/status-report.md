@@ -1,17 +1,17 @@
 # Status Report — Ipebook
 
-**Data:** 16 de novembro de 2026 | **Versão:** `0.2.0` | **Branch:** `develop`  
+**Data:** 17 de novembro de 2026 | **Versão:** `0.2.0` | **Branch:** `develop`  
 **Contexto:** Plataforma comunitária de circulação de livros em Piripiri, PI — IFPI Campus Piripiri (TADS, 2026)
 
 ---
 
 ## 1. Resumo Executivo (3P)
 
-- **Progresso:** Versão `0.2.0` concluída e **publicada na Google Play Store** (`com.ipebook.app`), com validação ponta a ponta em aparelho real usando duas contas (pedido, chat em tempo real, agendamento de encontro, QR Code de entrega, avaliação, notificações push, moderação, login com Google, Sentry e `expo-updates`). Base estabilizada com **2.300 testes**, **46 rotas** e **43/43 migrações SQL** aplicadas no Supabase.
-- **Planos:** Consolidar os ajustes finais da branch `develop` (`npm run validate`), atualizar a publicação Web/PWA em `https://ipebook.app` (Cloudflare Pages) e fechar os itens pós-lançamento do beta.
+- **Progresso:** Versão `0.2.0` concluída e **publicada na Google Play Store** (`com.ipebook.app`), com validação ponta a ponta em aparelho real usando duas contas (pedido, chat em tempo real, agendamento de encontro, QR Code de entrega, avaliação, notificações push, moderação, login com Google, Sentry e `expo-updates`). Suíte migrada de Vitest para **Jest** com provedor de cobertura V8 ([ADR 0113](adr/0113-migracao-vitest-para-jest.md)) e reforçada com **suíte E2E Web automatizada via Chrome CDP** ([Spec 138](../specs/138-e2e-web-cdp/spec.md), [ADR 0112](adr/0112-e2e-web-cdp.md)) — somando **2.300 testes em 312 arquivos**, **7/7 cenários E2E Web verdes**, **46 arquivos de rota/layout** (`44` rotas navegáveis) e **43/43 migrações SQL** validadas — além de hooks Git locais (`ci:rapido` no `pre-commit` e `ci:local` espelhando o CI/CD no `pre-push`).
+- **Planos:** Integrar na branch `develop` os ajustes de Jest, E2E Web CDP e documentação sincronizada (`npm run validate`), atualizar a publicação Web/PWA em `https://ipebook.app` (Cloudflare Pages), executar o plano de **iOS Nativo (Apple HIG / Liquid Glass)** especificado na [Spec 137](../specs/137-ios-nativo-apple-hig/spec.md) e concluir os itens pós-lançamento do beta.
 - **Riscos e Atenção:**
-  - A versão Web em produção (`https://ipebook.app`) ainda precisa ser republicada para refletir as correções recentes de PWA, SEO e layout desktop.
-  - A cobertura de *branches* está em **80,51%** (margem curta acima do piso de 80%).
+  - A versão Web em produção (`https://ipebook.app`) ainda precisa ser republicada para refletir as correções recentes de PWA, SEO (`<title>` estático), remoção do Mapbox e layout desktop.
+  - A cobertura de *functions* está em **81,02%** (margem curta acima do piso de 80%), enquanto *branches* subiu para **85,54%** no provedor V8 do Jest.
   - Termos de Uso e Política de Privacidade em link público ainda aguardam revisão jurídica, e ainda não há ferramenta de analytics de produto (ex.: PostHog) ativa em produção.
 
 ---
@@ -21,8 +21,8 @@
 | Plataforma / Canal | Situação Atual | Observação |
 | :--- | :--- | :--- |
 | **Android** (`com.ipebook.app`) | **Publicado na Play Store (`0.2.0`)** | Validado ponta a ponta em aparelho real |
-| **Web / PWA** (`https://ipebook.app`) | **No ar — republicação pendente** | Falta subir build com melhorias de PWA, SEO e 3 colunas desktop |
-| **iOS** | **Via PWA (Safari)** | Adequado ao Apple HIG; app nativo fora do escopo inicial |
+| **Web / PWA** (`https://ipebook.app`) | **No ar — republicação pendente** | Build local validado com 7/7 cenários E2E CDP; falta novo deploy no Cloudflare Pages |
+| **iOS** | **PWA (Safari) entregue · Nativo planejado** | PWA adequado ao Apple HIG (Spec 136); app nativo especificado na [Spec 137](../specs/137-ios-nativo-apple-hig/spec.md) |
 
 ---
 
@@ -34,15 +34,16 @@
 | **Out – Início Nov/2026** | Integração Supabase (Auth, Postgres/RLS, Realtime, Storage), negociação com QR Code, moderação, ISBN, busca/alertas e Design System Ipê (tema escuro e acessibilidade WCAG 2.1 AA). |
 | **12/11/2026** | Consolidação da versão `0.2.0` e publicação Web inicial em `https://ipebook.app`. |
 | **16/11/2026** | Publicação da build Android `0.2.0` na Google Play Store e validação ponta a ponta em aparelho real. |
+| **17/11/2026** | Suíte E2E Web via Chrome CDP (Spec 138 / ADR 0112), migração da suíte unitária/integração para Jest (ADR 0113) e especificação do iOS Nativo (Spec 137). |
 
 ---
 
-## 4. Principais Entregas do Ciclo (01/11 – 16/11/2026)
+## 4. Principais Entregas do Ciclo (01/11 – 17/11/2026)
 
 - **Lançamento Beta Android (`0.2.0`):** Geração da build de produção, envio à Play Store e validação completa dos fluxos principais em dispositivos reais.
-- **Experiência Web e PWA:** Adequação ao Apple HIG no iPhone/Safari, redesenho de Notificações e Conversas em 3 colunas no desktop, padronização de superfícies em telas largas, `<title>` estático para SEO e correção de vazamento de memória no SSR em desenvolvimento.
-- **Encontros e Compartilhamento:** Remoção definitiva do Mapbox mantendo a lista acessível dos 4 Pontos Seguros de Piripiri com rotas diretas, e abertura direta do WhatsApp ao compartilhar anúncios.
-- **Qualidade e Operação:** Padronização visual dos estados de erro, quitação de dívidas de arquitetura/injeção de dependências e cadastro dos moderadores no Supabase.
+- **Experiência Web, PWA e E2E CDP:** Adequação ao Apple HIG no iPhone/Safari (Spec 136), redesenho de Notificações e Conversas em 3 colunas no desktop, `<title>` estático para SEO, correção de vazamento de memória no SSR em desenvolvimento e suíte E2E Web automatizada com Chrome CDP (Spec 138).
+- **Migração para Jest e Qualidade Contínua:** Migração integral dos 312 arquivos de teste para Jest com `coverageProvider: "v8"` (ADR 0113), padronização visual dos estados de erro (Spec 131), quitação de dívidas de arquitetura/DI (Spec 126) e cadastro dos moderadores no Supabase.
+- **Encontros e Compartilhamento:** Remoção definitiva do Mapbox mantendo a lista acessível dos 4 Pontos Seguros de Piripiri (ADR 0111), e abertura direta do WhatsApp ao compartilhar anúncios (ADR 0110).
 
 ---
 
@@ -77,17 +78,17 @@
 
 ## 7. Arquitetura, Governança e Indicadores Técnicos
 
-- **Stack e Arquitetura:** React Native, Expo / Expo Router, TypeScript, Supabase, Vitest, PGlite e Biome, em arquitetura **MVVM** desacoplada por contratos e injeção de dependências.
-- **Portões de Qualidade (`npm run validate`):** Checagem automática de tipos, lint, grafo de imports, design system, numeração de specs/ADRs, configuração de build, migrações SQL em PGlite e cobertura de testes.
+- **Stack e Arquitetura:** React Native, Expo / Expo Router, TypeScript, Supabase, Jest, PGlite e Biome, em arquitetura **MVVM** desacoplada por contratos e injeção de dependências.
+- **Portões de Qualidade (`npm run validate` e `npm run test:e2e`):** Checagem automática de tipos, lint, grafo de imports, design system, numeração de specs/ADRs, configuração de build, migrações SQL em PGlite, cobertura V8 no Jest, sincronia da documentação e E2E Web via Chrome CDP.
 
 | Indicador | Valor Atual |
 | :--- | :--- |
-| **Testes automatizados** | **2.300 testes** em **312 arquivos** |
-| **Cobertura (Statements / Lines)** | **90,94%** / **92,31%** |
-| **Cobertura (Functions / Branches)** | **87,63%** / **80,51%** |
+| **Testes automatizados** | **2.300 testes** em **312 arquivos** + **7/7 cenários E2E Web (CDP)** |
+| **Cobertura (Statements / Lines)** | **95%** / **95%** |
+| **Cobertura (Functions / Branches)** | **81,02%** / **85,54%** |
 | **Saúde arquitetural** | **496 arquivos** sem violações de imports |
-| **Rotas estáticas** | **46 rotas** |
-| **Documentação técnica** | **135 specs** e **111 ADRs** |
+| **Rotas estáticas** | **46 arquivos** em `src/app/` (`44` rotas navegáveis) |
+| **Documentação técnica** | **137 specs** e **113 ADRs** |
 | **Migrações Supabase** | **43/43** aplicadas e validadas com PGlite |
 
 ---
@@ -105,6 +106,7 @@
 
 ## 9. Próximos Passos
 
-1. **Fechamento da branch `develop`:** Revisar alterações locais, executar `npm run validate` e registrar commit.
-2. **Atualização Web (`https://ipebook.app`):** Gerar build Web (`npm run build:web`) e publicar no Cloudflare Pages.
-3. **Governança e Pós-lançamento Beta:** Concluir revisão jurídica dos Termos de Uso e Política de Privacidade em link público; avaliar adoção de analytics de uso (PostHog) e ambiente Supabase dedicado para testes.
+1. **Fechamento da branch `develop`:** Revisar alterações locais (Jest, E2E Web CDP e documentação sincronizada), executar `npm run validate` e `npm run test:e2e` e registrar commit.
+2. **Atualização Web (`https://ipebook.app`):** Gerar build Web (`npm run build:web`) e republicar no Cloudflare Pages.
+3. **Evolução iOS Nativo (`Spec 137`):** Executar incrementalmente a adequação nativa de iPhone ao Apple HIG e Liquid Glass em feature branches derivadas de `develop`.
+4. **Governança e Pós-lançamento Beta:** Concluir revisão jurídica dos Termos de Uso e Política de Privacidade em link público; avaliar adoção de analytics de uso (PostHog) e ambiente Supabase dedicado para testes.

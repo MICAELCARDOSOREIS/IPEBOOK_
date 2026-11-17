@@ -17,8 +17,8 @@ Origem no sistema base: **Novo** — elemento inspirado nas encadernações clá
 
 ## Anatomia
 
-1. Fita vertical em ouro solar do Ipê (`colors.ipe.bloom`, `#F7C21E`)
-2. Borda inferior em corte de cetim com sombra sutil (`colors.ipe.bloomDeep`, `#F29A1A`)
+1. Fita vertical em ouro solar do Ipê (`colors.ipe.bloom`, `#F5B718`)
+2. Borda inferior em corte de cetim com sombra sutil (`colors.ipe.bloomDeep`, `#D97706`)
 3. Filete lateral interno simulando o brilho do tecido de cetim
 
 ## Acessibilidade

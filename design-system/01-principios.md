@@ -45,7 +45,7 @@ proposta"), nunca "OK" ou caixa-alta, sem emoji na interface.
   IpêBook reserva uma segunda família (Source Serif 4 Bold) só para pontos de marca.
 - **O porquê:** Usar a serifa só no logotipo, no título de tela raiz e no título do livro cria um
   momento de marca sem tornar a interface inteira "decorada" — texto corrido e botões continuam
-  na escala neutra do M3 (Roboto).
+  na escala de interface sem-serifa (**Plus Jakarta Sans**, [ADR 0107](../docs/adr/0107-adocao-plus-jakarta-sans-na-interface.md)).
 - **Na prática:** `fontFamily.brand` (`SourceSerif4_700Bold`) só em `displayLarge`/título de
   capa; todo o resto usa `fontFamily.regular/medium/semiBold` (ver
   [02-tokens.md](02-tokens.md)).

@@ -26,9 +26,7 @@ precisa parecer organizada mesmo assim.
 | Capa em lista (44 px) | BookRow, resultados de busca | só a arte, sem texto |
 | Capa em cartão (≥ 80 px) | Detalhe do anúncio, Estante | arte + título + autor |
 
-Cinco cores possíveis (`cover.blue`, `cover.brown`, `cover.green`; mais `cover-wine` e
-`cover-ochre` no kit completo) × quatro motivos — a combinação é escolhida a partir do id do
-anúncio, para a capa ser sempre a mesma entre telas e sessões.
+Cinco cores de capa definidas em `tokens.colors.cover` (`cover.blue`, `cover.brown`, `cover.green`, `cover.wine` e `cover.ochre`, além dos fundos geométricos `cover.artBackgrounds`) × motivos editoriais em [`src/view/components/BookCover.tsx`](../../src/view/components/BookCover.tsx) — a combinação determinística garante que cada livro mantenha a mesma capa entre telas e sessões.
 
 ## Estados
 
@@ -60,7 +58,13 @@ cartão que a envolve, não à capa).
 import { Text, View } from "react-native";
 import { tokens } from "@/view/tokens";
 
-const CORES_CAPA = [tokens.colors.cover.blue, tokens.colors.cover.brown, tokens.colors.cover.green] as const;
+const CORES_CAPA = [
+  tokens.colors.cover.blue,
+  tokens.colors.cover.brown,
+  tokens.colors.cover.green,
+  tokens.colors.cover.wine,
+  tokens.colors.cover.ochre,
+] as const;
 
 function BookCover({ idAnuncio, titulo }: { idAnuncio: string; titulo: string }) {
   const cor = CORES_CAPA[hashSimples(idAnuncio) % CORES_CAPA.length];
