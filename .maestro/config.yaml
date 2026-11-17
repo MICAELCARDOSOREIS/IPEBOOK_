@@ -1,0 +1,6 @@
+# Configuração global dos fluxos E2E nativos do IpêBook (Android)
+flows:
+  - "01-onboarding-e-catalogo.yaml"
+  - "02-login-google-e-sessao.yaml"
+  - "03-anunciar-isbn-camera.yaml"
+  - "04-entrega-qr-e-notificacoes.yaml"

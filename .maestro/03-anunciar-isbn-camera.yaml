@@ -1,0 +1,35 @@
+appId: com.ipebook.app
+name: Leitor ISBN pela câmera e permissão de fotos ao anunciar (Android)
+tags:
+  - android
+  - camera
+  - hardware-nativo
+---
+- launchApp
+# Pré-condição: sessão autenticada no app Android
+- tapOn: "Anunciar livro"
+- assertVisible: "Abrir leitor de código de barras pela câmera"
+- tapOn: "Abrir leitor de código de barras pela câmera"
+- runFlow:
+    when:
+      visible: "Permitir"
+    commands:
+      - tapOn: "Permitir"
+- waitForAnimationToEnd
+- back
+- tapOn: "Título"
+- inputText: "Livro Teste Maestro"
+- tapOn: "Autor"
+- inputText: "Autor Maestro"
+- tapOn: "Modalidade Doação"
+- tapOn: "Continuar"
+- assertVisible: "Mostre seu livro."
+- tapOn: "Foto da capa"
+- assertVisible: "Tirar foto"
+- tapOn: "Tirar foto"
+- runFlow:
+    when:
+      visible: "Fotos do seu livro"
+    commands:
+      - assertVisible: "Permitir e escolher"
+      - tapOn: "Publicar sem foto"

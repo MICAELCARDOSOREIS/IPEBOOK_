@@ -1,0 +1,30 @@
+appId: com.ipebook.app
+name: Leitor de QR Code na entrega e notificações push (Android)
+tags:
+  - android
+  - qr
+  - push
+  - hardware-nativo
+---
+- launchApp
+# Pré-condição: sessão autenticada com negociação de entrega confirmada
+- tapOn: "Conversas"
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "Entrega do livro"
+    commands:
+      - tapOn: "Entrega do livro"
+      - runFlow:
+          when:
+            visible: "Ler QR Code com a câmera"
+          commands:
+            - assertVisible: "Digitar código manualmente"
+            - tapOn: "Ler QR Code com a câmera"
+            - runFlow:
+                when:
+                  visible: "Permitir câmera"
+                commands:
+                  - tapOn: "Permitir câmera"
+            - tapOn: "Digitar código manualmente"
+            - assertVisible: "Código da entrega"
