@@ -1,21 +1,20 @@
 
 import { act, cleanup, fireEvent, render, within } from "@testing-library/react-native";
-import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Meeting } from "@/model/entities/meeting";
 import type { MeetingActions, MeetingState } from "@/viewmodel/useMeetingViewModel";
 import type { ScheduleMeetingActions, ScheduleMeetingState } from "@/viewmodel/useScheduleMeetingViewModel";
 import { MeetingCard } from "@/view/requests/meetingCard";
 import ScheduleMeetingScreen, { ScheduleMeeting } from "@/view/requests/scheduleMeeting";
 
-const openURL = vi.fn();
-vi.mock("expo-linking", () => ({ openURL: (...args: unknown[]) => openURL(...args) }));
-vi.mock("@/viewmodel/useMeetingViewModel", () => ({ useMeetingViewModel: vi.fn() }));
-vi.mock("@/viewmodel/useScheduleMeetingViewModel", () => ({ useScheduleMeetingViewModel: vi.fn() }));
-vi.mock("@/viewmodel/useAuthViewModel", () => ({ useAuthViewModel: vi.fn() }));
-const larguraWeb = vi.hoisted(() => ({ atual: 360 }));
-vi.mock("@/view/useIsWideWeb", () => ({
-  useIsWideWeb: vi.fn(() => false),
-  useHydratedWindowWidth: () => larguraWeb.atual,
+const mockOpenURL = jest.fn();
+jest.mock("expo-linking", () => ({ openURL: (...args: unknown[]) => mockOpenURL(...args) }));
+jest.mock("@/viewmodel/useMeetingViewModel", () => ({ useMeetingViewModel: jest.fn() }));
+jest.mock("@/viewmodel/useScheduleMeetingViewModel", () => ({ useScheduleMeetingViewModel: jest.fn() }));
+jest.mock("@/viewmodel/useAuthViewModel", () => ({ useAuthViewModel: jest.fn() }));
+const mockLarguraWeb = { atual: 360 };
+jest.mock("@/view/useIsWideWeb", () => ({
+  useIsWideWeb: jest.fn(() => false),
+  useHydratedWindowWidth: () => mockLarguraWeb.atual,
 }));
 
 import { useMeetingViewModel } from "@/viewmodel/useMeetingViewModel";
@@ -39,15 +38,15 @@ const baseMeeting: Meeting = {
 };
 
 function mockMeeting(state: Partial<MeetingState>, actions: Partial<MeetingActions> = {}) {
-  const full: MeetingActions = { reload: vi.fn(), confirm: vi.fn().mockResolvedValue(true), cancel: vi.fn().mockResolvedValue(true), ...actions };
-  vi.mocked(useMeetingViewModel).mockReturnValue([
+  const full: MeetingActions = { reload: jest.fn(), confirm: jest.fn().mockResolvedValue(true), cancel: jest.fn().mockResolvedValue(true), ...actions };
+  jest.mocked(useMeetingViewModel).mockReturnValue([
     { meeting: null, history: [], loading: false, error: null, busy: false, actionError: null, ...state },
     full,
   ]);
   return full;
 }
 
-async function renderCard(userId: string, onScheduleMeeting = vi.fn()) {
+async function renderCard(userId: string, onScheduleMeeting = jest.fn()) {
   let screen!: Awaited<ReturnType<typeof render>>;
   await act(async () => {
     screen = await render(
@@ -77,11 +76,11 @@ describe("cartão do encontro com a entrega concluída (Spec 095)", () => {
 describe("cartão do encontro (Spec 052, 06.05/06.11/06.12)", () => {
   it("sem convite, oferece Escolher local e horário", async () => {
     mockMeeting({ meeting: null });
-    const onSchedule = vi.fn();
+    const onSchedule = jest.fn();
     const screen = await renderCard("dono", onSchedule);
     expect(screen.getByRole("header", { name: "Combine o encontro" })).toBeDefined();
     await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Escolher local e horário" })); });
-    expect(onSchedule).toHaveBeenCalledOnce();
+    expect(onSchedule).toHaveBeenCalledTimes(1);
   });
 
   it("convite da outra pessoa: mostra quando e onde e permite confirmar", async () => {
@@ -92,7 +91,7 @@ describe("cartão do encontro (Spec 052, 06.05/06.11/06.12)", () => {
     expect(screen.getByText("Sáb, 24/10 · 15h")).toBeDefined();
     expect(screen.getByText("Praça da Bandeira, Centro, Piripiri, PI")).toBeDefined();
     await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Confirmar encontro" })); });
-    expect(actions.confirm).toHaveBeenCalledOnce();
+    expect(actions.confirm).toHaveBeenCalledTimes(1);
     expect(screen.getByRole("button", { name: "Sugerir horário" })).toBeDefined();
   });
 
@@ -107,11 +106,11 @@ describe("cartão do encontro (Spec 052, 06.05/06.11/06.12)", () => {
 
   it("encontro combinado: reagendar e cancelar só depois de confirmar no diálogo (06.11)", async () => {
     const actions = mockMeeting({ meeting: { ...baseMeeting, status: "confirmed" } });
-    const onSchedule = vi.fn();
+    const onSchedule = jest.fn();
     const screen = await renderCard("leitora", onSchedule);
     expect(screen.getByRole("header", { name: "Encontro combinado" })).toBeDefined();
     await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Reagendar" })); });
-    expect(onSchedule).toHaveBeenCalledOnce();
+    expect(onSchedule).toHaveBeenCalledTimes(1);
 
     await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Cancelar encontro" })); });
     expect(actions.cancel).not.toHaveBeenCalled();
@@ -123,13 +122,13 @@ describe("cartão do encontro (Spec 052, 06.05/06.11/06.12)", () => {
     await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Cancelar encontro" })); });
     // Com o diálogo aberto, só a ação dele fica acessível (o fundo é modal).
     await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Cancelar encontro" })); });
-    expect(actions.cancel).toHaveBeenCalledOnce();
+    expect(actions.cancel).toHaveBeenCalledTimes(1);
   });
 
   it("mantém o diálogo de cancelamento aberto quando a falha impede o cancelamento", async () => {
     mockMeeting(
       { meeting: { ...baseMeeting, status: "confirmed" }, actionError: "Não foi possível atualizar o encontro. Tente novamente." },
-      { cancel: vi.fn().mockResolvedValue(false) },
+      { cancel: jest.fn().mockResolvedValue(false) },
     );
     const screen = await renderCard("leitora");
 
@@ -178,17 +177,17 @@ describe("cartão do encontro (Spec 052, 06.05/06.11/06.12)", () => {
   });
 
   it("ponto fora da lista de Piripiri abre o mapa pelo nome do local", async () => {
-    openURL.mockReset().mockResolvedValue(undefined);
+    mockOpenURL.mockReset().mockResolvedValue(undefined);
     mockMeeting({ meeting: { ...baseMeeting, status: "confirmed", pointName: "Biblioteca do bairro" } });
     const screen = await renderCard("leitora");
     await act(async () => {
       fireEvent.press(screen.getByRole("button", { name: "Como chegar a Biblioteca do bairro" }));
     });
-    expect(openURL).toHaveBeenCalledWith(expect.stringContaining(encodeURIComponent("Biblioteca do bairro, Piripiri")));
+    expect(mockOpenURL).toHaveBeenCalledWith(expect.stringContaining(encodeURIComponent("Biblioteca do bairro, Piripiri")));
   });
 
   it("mostra quanto falta e abre o mapa do ponto escolhido (Spec 079)", async () => {
-    openURL.mockReset().mockResolvedValue(undefined);
+    mockOpenURL.mockReset().mockResolvedValue(undefined);
     const amanha = new Date();
     amanha.setDate(amanha.getDate() + 1);
     amanha.setHours(15, 0, 0, 0);
@@ -198,13 +197,13 @@ describe("cartão do encontro (Spec 052, 06.05/06.11/06.12)", () => {
     await act(async () => {
       fireEvent.press(screen.getByRole("button", { name: "Como chegar a Praça da Bandeira (Centro)" }));
     });
-    expect(openURL).toHaveBeenCalledWith(expect.stringContaining("google.com/maps"));
+    expect(mockOpenURL).toHaveBeenCalledWith(expect.stringContaining("google.com/maps"));
   });
 
   it("avisa quando o horário do encontro já passou e quando o mapa falha (Spec 079)", async () => {
-    openURL.mockReset().mockRejectedValue(new Error("sem app"));
+    mockOpenURL.mockReset().mockRejectedValue(new Error("sem app"));
     mockMeeting({ meeting: { ...baseMeeting, status: "confirmed", scheduledAt: "2020-01-01T15:00:00.000Z" } });
-    const onMeetingChange = vi.fn();
+    const onMeetingChange = jest.fn();
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
       screen = await render(
@@ -226,15 +225,15 @@ describe("cartão do encontro (Spec 052, 06.05/06.11/06.12)", () => {
     const screen = await renderCard("dono");
     expect(screen.getByRole("alert").props.children).toBe("Você não participa desta negociação.");
     await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Tentar novamente" })); });
-    expect(actions.reload).toHaveBeenCalledOnce();
+    expect(actions.reload).toHaveBeenCalledTimes(1);
   });
 });
 
 const dias = [new Date(2026, 9, 23), new Date(2026, 9, 24)];
 
-function mockSchedule(state: Partial<ScheduleMeetingState>, submit = vi.fn().mockResolvedValue(true)) {
-  const actions: ScheduleMeetingActions = { reload: vi.fn(), selectPoint: vi.fn(), selectDay: vi.fn(), selectHour: vi.fn(), submit };
-  vi.mocked(useScheduleMeetingViewModel).mockReturnValue([
+function mockSchedule(state: Partial<ScheduleMeetingState>, submit = jest.fn().mockResolvedValue(true)) {
+  const actions: ScheduleMeetingActions = { reload: jest.fn(), selectPoint: jest.fn(), selectDay: jest.fn(), selectHour: jest.fn(), submit };
+  jest.mocked(useScheduleMeetingViewModel).mockReturnValue([
     {
       mode: "propose", loading: false, loadError: null, pointName: null, dayIndex: null, hour: null,
       dayOptions: dias, timeSlots: [9, 10, 15, 17], isPointOpenOnDay: true, submitting: false, error: null, ...state,
@@ -247,7 +246,7 @@ function mockSchedule(state: Partial<ScheduleMeetingState>, submit = vi.fn().moc
 describe("combinar e reagendar encontro (Spec 052, 06.04/06.13)", () => {
   it("06.04: escolhas de opção única e Enviar convite", async () => {
     const actions = mockSchedule({ pointName: "Praça da Bandeira (Centro)", dayIndex: 1, hour: 15 });
-    const onSent = vi.fn();
+    const onSent = jest.fn();
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => { screen = await render(<ScheduleMeeting requestId="r1" sessionUserId="dono" onSent={onSent} />); });
 
@@ -266,14 +265,14 @@ describe("combinar e reagendar encontro (Spec 052, 06.04/06.13)", () => {
     expect(actions.selectHour).toHaveBeenCalledWith(9);
 
     await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Enviar convite" })); });
-    expect(actions.submit).toHaveBeenCalledOnce();
-    expect(onSent).toHaveBeenCalledOnce();
+    expect(actions.submit).toHaveBeenCalledTimes(1);
+    expect(onSent).toHaveBeenCalledTimes(1);
   });
 
   it("06.13: reagendar com manchete, Enviar nova sugestão e Cancelar", async () => {
-    mockSchedule({ mode: "reschedule", error: "Escolha um dos horários sugeridos." }, vi.fn().mockResolvedValue(false));
-    const onBack = vi.fn();
-    const onSent = vi.fn();
+    mockSchedule({ mode: "reschedule", error: "Escolha um dos horários sugeridos." }, jest.fn().mockResolvedValue(false));
+    const onBack = jest.fn();
+    const onSent = jest.fn();
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => { screen = await render(<ScheduleMeeting requestId="r1" sessionUserId="leitora" onBack={onBack} onSent={onSent} />); });
     expect(screen.getByRole("header", { name: "Reagendar encontro" })).toBeDefined();
@@ -282,7 +281,7 @@ describe("combinar e reagendar encontro (Spec 052, 06.04/06.13)", () => {
     await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Enviar nova sugestão" })); });
     expect(onSent).not.toHaveBeenCalled();
     await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Cancelar" })); });
-    expect(onBack).toHaveBeenCalledOnce();
+    expect(onBack).toHaveBeenCalledTimes(1);
   });
 
   it("carregando, erro de carga e exigência de sessão", async () => {
@@ -295,20 +294,20 @@ describe("combinar e reagendar encontro (Spec 052, 06.04/06.13)", () => {
     await act(async () => { screen = await render(<ScheduleMeeting requestId="r1" sessionUserId="intrusa" />); });
     expect(screen.getByText("Você não participa desta negociação.")).toBeDefined();
     await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Tentar novamente" })); });
-    expect(retryActions.reload).toHaveBeenCalledOnce();
+    expect(retryActions.reload).toHaveBeenCalledTimes(1);
 
-    vi.mocked(useAuthViewModel).mockReturnValue([
+    jest.mocked(useAuthViewModel).mockReturnValue([
       { user: null, loading: false, error: null },
-      { signIn: vi.fn(), signUp: vi.fn(), signOut: vi.fn(), requestPasswordReset: vi.fn() },
+      { signIn: jest.fn(), signUp: jest.fn(), signOut: jest.fn(), requestPasswordReset: jest.fn() },
     ] as never);
-    const onRequireSignIn = vi.fn();
+    const onRequireSignIn = jest.fn();
     await act(async () => { await render(<ScheduleMeetingScreen requestId="r1" onRequireSignIn={onRequireSignIn} />); });
-    expect(onRequireSignIn).toHaveBeenCalledOnce();
+    expect(onRequireSignIn).toHaveBeenCalledTimes(1);
   });
 
   it("renderiza layout de duas colunas na web larga (Spec 114)", async () => {
-    vi.mocked(useIsWideWeb).mockReturnValue(true);
-    larguraWeb.atual = 1280;
+    jest.mocked(useIsWideWeb).mockReturnValue(true);
+    mockLarguraWeb.atual = 1280;
     try {
       mockSchedule({ pointName: "Praça da Bandeira (Centro)", dayIndex: 1, hour: 15 });
       let screen!: Awaited<ReturnType<typeof render>>;
@@ -318,8 +317,8 @@ describe("combinar e reagendar encontro (Spec 052, 06.04/06.13)", () => {
       expect(screen.getByText(/Pontos de Encontro em Piripiri/i)).toBeDefined();
       expect(screen.getByRole("button", { name: "Enviar convite" })).toBeDefined();
     } finally {
-      vi.mocked(useIsWideWeb).mockReturnValue(false);
-      larguraWeb.atual = 360;
+      jest.mocked(useIsWideWeb).mockReturnValue(false);
+      mockLarguraWeb.atual = 360;
     }
   });
 

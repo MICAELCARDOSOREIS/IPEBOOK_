@@ -1,6 +1,5 @@
 import { createElement } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
-import { afterEach, describe, expect, it, vi } from "vitest";
 import type { INetworkStatusDataSource } from "@/model/datasources/iNetworkStatusDataSource";
 import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
 
@@ -9,8 +8,8 @@ const mounted: ReactTestRenderer[] = [];
 
 function stubNetworkStatus(overrides: Partial<INetworkStatusDataSource> = {}): INetworkStatusDataSource {
   return {
-    isOnline: vi.fn().mockResolvedValue(true),
-    subscribe: vi.fn().mockReturnValue(() => {}),
+    isOnline: jest.fn().mockResolvedValue(true),
+    subscribe: jest.fn().mockReturnValue(() => {}),
     ...overrides,
   };
 }
@@ -47,7 +46,7 @@ describe("useNetworkStatus (Spec 021, Issue #76)", () => {
   });
 
   it("reporta offline quando o datasource resolve isOnline como falso", async () => {
-    const dataSource = stubNetworkStatus({ isOnline: vi.fn().mockResolvedValue(false) });
+    const dataSource = stubNetworkStatus({ isOnline: jest.fn().mockResolvedValue(false) });
     const probe = await renderNetworkStatus(dataSource);
     expect(probe.current.isOnline).toBe(false);
   });
@@ -55,7 +54,7 @@ describe("useNetworkStatus (Spec 021, Issue #76)", () => {
   it("atualiza em tempo real quando o datasource notifica mudança via subscribe", async () => {
     let notify: ((online: boolean) => void) | undefined;
     const dataSource = stubNetworkStatus({
-      subscribe: vi.fn((onChange: (online: boolean) => void) => {
+      subscribe: jest.fn((onChange: (online: boolean) => void) => {
         notify = onChange;
         return () => {};
       }),
@@ -71,8 +70,8 @@ describe("useNetworkStatus (Spec 021, Issue #76)", () => {
   });
 
   it("cancela a inscrição ao desmontar", async () => {
-    const unsubscribe = vi.fn();
-    const dataSource = stubNetworkStatus({ subscribe: vi.fn().mockReturnValue(unsubscribe) });
+    const unsubscribe = jest.fn();
+    const dataSource = stubNetworkStatus({ subscribe: jest.fn().mockReturnValue(unsubscribe) });
     await renderNetworkStatus(dataSource);
     const renderer = mounted.pop();
     act(() => renderer?.unmount());
@@ -83,8 +82,8 @@ describe("useNetworkStatus (Spec 021, Issue #76)", () => {
     let resolveIsOnline!: (value: boolean) => void;
     let notifyAfterUnmount: ((online: boolean) => void) | undefined;
     const dataSource = stubNetworkStatus({
-      isOnline: vi.fn(() => new Promise<boolean>((resolve) => { resolveIsOnline = resolve; })),
-      subscribe: vi.fn((onChange: (online: boolean) => void) => {
+      isOnline: jest.fn(() => new Promise<boolean>((resolve) => { resolveIsOnline = resolve; })),
+      subscribe: jest.fn((onChange: (online: boolean) => void) => {
         notifyAfterUnmount = onChange;
         return () => {};
       }),

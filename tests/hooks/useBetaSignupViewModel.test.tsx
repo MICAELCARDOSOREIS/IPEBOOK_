@@ -1,6 +1,5 @@
 import { createElement } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
-import { afterEach, describe, expect, it, vi } from "vitest";
 import { DomainError } from "@/model/errors";
 import type { IBetaSignupUseCases } from "@/usecase/iBetaSignupUseCases";
 import { useBetaSignupViewModel } from "@/viewmodel/useBetaSignupViewModel";
@@ -33,7 +32,7 @@ async function probe(useCases: IBetaSignupUseCases) {
 describe("useBetaSignupViewModel (Spec 108)", () => {
   it("registra inscrição no beta com sucesso e reseta estado", async () => {
     const useCases: IBetaSignupUseCases = {
-      register: vi.fn().mockResolvedValue({ id: "beta-1", email: "testador@gmail.com", name: "Testador" }),
+      register: jest.fn().mockResolvedValue({ id: "beta-1", email: "testador@gmail.com", name: "Testador" }),
     };
     const hook = await probe(useCases);
     expect(hook.current[0]).toEqual({ loading: false, error: null, success: false });
@@ -52,7 +51,7 @@ describe("useBetaSignupViewModel (Spec 108)", () => {
 
   it("trata DomainError e erros inesperados", async () => {
     const useCasesDomain: IBetaSignupUseCases = {
-      register: vi.fn().mockRejectedValue(new DomainError("Inscrição já realizada com este e-mail.")),
+      register: jest.fn().mockRejectedValue(new DomainError("Inscrição já realizada com este e-mail.")),
     };
     const hookDomain = await probe(useCasesDomain);
     await act(async () => {
@@ -62,7 +61,7 @@ describe("useBetaSignupViewModel (Spec 108)", () => {
     expect(hookDomain.current[0].success).toBe(false);
 
     const useCasesGeneric: IBetaSignupUseCases = {
-      register: vi.fn().mockRejectedValue(new Error("Erro interno")),
+      register: jest.fn().mockRejectedValue(new Error("Erro interno")),
     };
     const hookGeneric = await probe(useCasesGeneric);
     await act(async () => {

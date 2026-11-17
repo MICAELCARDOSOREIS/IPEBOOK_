@@ -1,18 +1,17 @@
 import type React from "react";
 import { act, fireEvent, render } from "@testing-library/react-native";
-import { describe, expect, it, vi } from "vitest";
 import type { Book } from "@/model/entities/book";
 import type { AuthState } from "@/viewmodel/useAuthViewModel";
 import BookDetail from "@/view/listings/bookDetail";
 import { ReservedListingSheet } from "@/view/listings/ReservedListingSheet";
 import { Book3D } from "@/view/components/Book3D";
 
-vi.mock("@/viewmodel/useBookDetailViewModel", () => ({ useBookDetailViewModel: vi.fn() }));
-vi.mock("@/viewmodel/useAuthViewModel", () => ({ useAuthViewModel: vi.fn() }));
-vi.mock("@/viewmodel/useRequestNegotiationViewModel", () => ({ useRequestNegotiationViewModel: vi.fn() }));
-vi.mock("@/viewmodel/useShareListingViewModel", () => ({ useShareListingViewModel: vi.fn(), SHARE_BASE_URL: "https://ipebook.app" }));
-vi.mock("react-native-view-shot", () => ({ captureRef: vi.fn().mockResolvedValue("file:///tmp/anuncio.png") }));
-vi.mock("@/viewmodel/usePublicProfileViewModel", () => ({ usePublicProfileViewModel: vi.fn() }));
+jest.mock("@/viewmodel/useBookDetailViewModel", () => ({ useBookDetailViewModel: jest.fn() }));
+jest.mock("@/viewmodel/useAuthViewModel", () => ({ useAuthViewModel: jest.fn() }));
+jest.mock("@/viewmodel/useRequestNegotiationViewModel", () => ({ useRequestNegotiationViewModel: jest.fn() }));
+jest.mock("@/viewmodel/useShareListingViewModel", () => ({ useShareListingViewModel: jest.fn(), SHARE_BASE_URL: "https://ipebook.app" }));
+jest.mock("react-native-view-shot", () => ({ captureRef: jest.fn().mockResolvedValue("file:///tmp/anuncio.png") }));
+jest.mock("@/viewmodel/usePublicProfileViewModel", () => ({ usePublicProfileViewModel: jest.fn() }));
 
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useBookDetailViewModel } from "@/viewmodel/useBookDetailViewModel";
@@ -41,9 +40,9 @@ function setupDetail(
     toggleFavoriteMock?: () => Promise<void>;
   } = {},
 ) {
-  vi.mocked(useAuthViewModel).mockReturnValue([{ user, loading: false } as AuthState, { signOut: vi.fn() } as never]);
-  const toggleFavorite = options.toggleFavoriteMock ?? vi.fn().mockResolvedValue(undefined);
-  vi.mocked(useBookDetailViewModel).mockReturnValue([
+  jest.mocked(useAuthViewModel).mockReturnValue([{ user, loading: false } as AuthState, { signOut: jest.fn() } as never]);
+  const toggleFavorite = options.toggleFavoriteMock ?? jest.fn().mockResolvedValue(undefined);
+  jest.mocked(useBookDetailViewModel).mockReturnValue([
     {
       book,
       loading: false,
@@ -52,9 +51,9 @@ function setupDetail(
       favoriteError: null,
       favoriteLoading: false,
     },
-    { reload: vi.fn(), toggleFavorite },
+    { reload: jest.fn(), toggleFavorite },
   ]);
-  vi.mocked(useRequestNegotiationViewModel).mockReturnValue([
+  jest.mocked(useRequestNegotiationViewModel).mockReturnValue([
     {
       pendingListingId: null,
       requestedListingIds: options.requestedListingIds ?? [],
@@ -64,13 +63,13 @@ function setupDetail(
       activeRequestStatus: null,
       loadingActiveRequest: false,
     },
-    { request: vi.fn(), checkActiveRequest: vi.fn().mockResolvedValue(null) },
+    { request: jest.fn(), checkActiveRequest: jest.fn().mockResolvedValue(null) },
   ]);
-  vi.mocked(useShareListingViewModel).mockReturnValue([
+  jest.mocked(useShareListingViewModel).mockReturnValue([
     { sharing: false, linkCopied: false, error: null },
-    { share: vi.fn(), shareImage: vi.fn(), shareToWhatsApp: vi.fn(), dismissLinkCopied: vi.fn(), dismissError: vi.fn() },
+    { share: jest.fn(), shareImage: jest.fn(), shareToWhatsApp: jest.fn(), dismissLinkCopied: jest.fn(), dismissError: jest.fn() },
   ]);
-  vi.mocked(usePublicProfileViewModel).mockReturnValue([
+  jest.mocked(usePublicProfileViewModel).mockReturnValue([
     {
       profile: {
         userId: book.ownerId,
@@ -83,7 +82,7 @@ function setupDetail(
       loading: false,
       error: null,
     },
-    { reload: vi.fn() },
+    { reload: jest.fn() },
   ]);
 }
 
@@ -109,7 +108,7 @@ describe("Spec 110 — Ações Interativas de Reserva no Detalhe do Livro", () =
     setupDetail(book, user);
 
     const screen = await renderComponent(
-      <BookDetail bookId="b1" onBack={vi.fn()} />,
+      <BookDetail bookId="b1" onBack={jest.fn()} />,
     );
 
     // Encontra o botão de Reservado
@@ -131,11 +130,11 @@ describe("Spec 110 — Ações Interativas de Reserva no Detalhe do Livro", () =
     const user = { id: "me", email: "me@example.com" } as AuthState["user"];
     setupDetail(book, user);
 
-    const onNavigateToManageListing = vi.fn();
+    const onNavigateToManageListing = jest.fn();
     const screen = await renderComponent(
       <BookDetail
         bookId="b1"
-        onBack={vi.fn()}
+        onBack={jest.fn()}
         onNavigateToManageListing={onNavigateToManageListing}
       />,
     );
@@ -155,11 +154,11 @@ describe("Spec 110 — Ações Interativas de Reserva no Detalhe do Livro", () =
     const user = { id: "buyer", email: "buyer@example.com" } as AuthState["user"];
     setupDetail(book, user, { requestedListingIds: ["b1"] });
 
-    const onNavigateToMyRequests = vi.fn();
+    const onNavigateToMyRequests = jest.fn();
     const screen = await renderComponent(
       <BookDetail
         bookId="b1"
-        onBack={vi.fn()}
+        onBack={jest.fn()}
         onNavigateToMyRequests={onNavigateToMyRequests}
       />,
     );
@@ -175,10 +174,10 @@ describe("Spec 110 — Ações Interativas de Reserva no Detalhe do Livro", () =
   });
 
   it("folha ReservedListingSheet executa ações de favoritar, busca na categoria e perfil", async () => {
-    const onToggleFavorite = vi.fn();
-    const onSearchCategory = vi.fn();
-    const onViewOwnerProfile = vi.fn();
-    const onClose = vi.fn();
+    const onToggleFavorite = jest.fn();
+    const onSearchCategory = jest.fn();
+    const onViewOwnerProfile = jest.fn();
+    const onClose = jest.fn();
 
     const screen = await renderComponent(
       <ReservedListingSheet
@@ -230,7 +229,7 @@ describe("Spec 110 — Ações Interativas de Reserva no Detalhe do Livro", () =
     setupDetail(book, user);
 
     const screen = await renderComponent(
-      <BookDetail bookId="b1" onBack={vi.fn()} />,
+      <BookDetail bookId="b1" onBack={jest.fn()} />,
     );
 
     const reservedButton = screen.getByLabelText("Livro reservado. Toque para saber mais e entrar na lista de espera");
@@ -246,7 +245,7 @@ describe("Spec 110 — Ações Interativas de Reserva no Detalhe do Livro", () =
     const bookTrade = sampleBook({ ownerId: "owner-1", status: "reserved", modality: "trade" });
     const user = { id: "user-2", email: "user2@example.com" } as AuthState["user"];
     setupDetail(bookTrade, user);
-    let screen = await renderComponent(<BookDetail bookId="b1" onBack={vi.fn()} />);
+    let screen = await renderComponent(<BookDetail bookId="b1" onBack={jest.fn()} />);
     let btn = screen.getByLabelText("Livro reservado. Toque para saber mais e entrar na lista de espera");
     let style = Object.assign({}, ...[].concat(btn.props.style as any));
     expect(style.backgroundColor).toBe("#F4EAE4");
@@ -254,7 +253,7 @@ describe("Spec 110 — Ações Interativas de Reserva no Detalhe do Livro", () =
     // 2. Doação
     const bookDonation = sampleBook({ ownerId: "owner-1", status: "reserved", modality: "donation" });
     setupDetail(bookDonation, user);
-    screen = await renderComponent(<BookDetail bookId="b1" onBack={vi.fn()} />);
+    screen = await renderComponent(<BookDetail bookId="b1" onBack={jest.fn()} />);
     btn = screen.getByLabelText("Livro reservado. Toque para saber mais e entrar na lista de espera");
     style = Object.assign({}, ...[].concat(btn.props.style as any));
     expect(style.backgroundColor).toBe("#FEF3C7");
@@ -262,20 +261,20 @@ describe("Spec 110 — Ações Interativas de Reserva no Detalhe do Livro", () =
     // 3. Negociação solicitada e aceita
     const bookAccepted = sampleBook({ ownerId: "owner-1", status: "available", modality: "donation" });
     setupDetail(bookAccepted, user, { requestedListingIds: ["b1"] });
-    vi.mocked(useRequestNegotiationViewModel).mockReturnValue([
+    jest.mocked(useRequestNegotiationViewModel).mockReturnValue([
       { sentRequests: [{ id: "req-1", listingId: "b1", status: "accepted" }], requestedListingIds: ["b1"], activeRequestStatus: "accepted", activeRequestId: "req-1" } as any,
-      { checkActiveRequest: vi.fn() } as any,
+      { checkActiveRequest: jest.fn() } as any,
     ]);
-    screen = await renderComponent(<BookDetail bookId="b1" onBack={vi.fn()} onNavigateToMyRequests={vi.fn()} />);
+    screen = await renderComponent(<BookDetail bookId="b1" onBack={jest.fn()} onNavigateToMyRequests={jest.fn()} />);
     const acceptedBtn = screen.getByText("Combinar encontro");
     expect(acceptedBtn).toBeDefined();
 
     // 4. Negociação solicitada pendente
-    vi.mocked(useRequestNegotiationViewModel).mockReturnValue([
+    jest.mocked(useRequestNegotiationViewModel).mockReturnValue([
       { sentRequests: [{ id: "req-2", listingId: "b1", status: "pending" }], requestedListingIds: ["b1"], activeRequestStatus: "pending", activeRequestId: "req-2" } as any,
-      { checkActiveRequest: vi.fn() } as any,
+      { checkActiveRequest: jest.fn() } as any,
     ]);
-    screen = await renderComponent(<BookDetail bookId="b1" onBack={vi.fn()} onNavigateToMyRequests={vi.fn()} />);
+    screen = await renderComponent(<BookDetail bookId="b1" onBack={jest.fn()} onNavigateToMyRequests={jest.fn()} />);
     const pendingBtn = screen.getByText("Negociação solicitada");
     expect(pendingBtn).toBeDefined();
   });

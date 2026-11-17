@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import { MemoryBetaTesterDataSource } from "@/infra/datasources/memoryBetaTesterDataSource";
 import { ValidationError } from "@/model/errors";
 import { BetaSignupUseCases } from "@/usecase/betaSignupUseCases";

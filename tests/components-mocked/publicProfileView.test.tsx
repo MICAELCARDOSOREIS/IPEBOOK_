@@ -1,15 +1,14 @@
 import type React from "react";
 import { act, fireEvent, render } from "@testing-library/react-native";
-import { describe, expect, it, vi } from "vitest";
 import type { PublicProfile } from "@/model/entities/publicProfile";
 import { PublicProfile as PublicProfileView } from "@/view/listings/publicProfile";
 
-vi.mock("@/viewmodel/usePublicProfileViewModel", () => ({ usePublicProfileViewModel: vi.fn() }));
-vi.mock("@/viewmodel/useAuthViewModel", () => ({ useAuthViewModel: vi.fn() }));
-vi.mock("@/viewmodel/useProfileSafetyViewModel", () => ({ useProfileSafetyViewModel: vi.fn() }));
-vi.mock("@/viewmodel/useChatWithUser", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/viewmodel/useChatWithUser")>()),
-  useChatWithUser: vi.fn(),
+jest.mock("@/viewmodel/usePublicProfileViewModel", () => ({ usePublicProfileViewModel: jest.fn() }));
+jest.mock("@/viewmodel/useAuthViewModel", () => ({ useAuthViewModel: jest.fn() }));
+jest.mock("@/viewmodel/useProfileSafetyViewModel", () => ({ useProfileSafetyViewModel: jest.fn() }));
+jest.mock("@/viewmodel/useChatWithUser", () => ({
+  ...jest.requireActual<typeof import("@/viewmodel/useChatWithUser")>("@/viewmodel/useChatWithUser"),
+  useChatWithUser: jest.fn(),
 }));
 
 import * as Linking from "expo-linking";
@@ -28,26 +27,26 @@ const profile = (over: Partial<PublicProfile> = {}): PublicProfile => ({
   ...over,
 });
 
-const start = vi.fn().mockResolvedValue(undefined);
-const loadListings = vi.fn().mockResolvedValue(undefined);
-const block = vi.fn().mockResolvedValue(true);
+const start = jest.fn().mockResolvedValue(undefined);
+const loadListings = jest.fn().mockResolvedValue(undefined);
+const block = jest.fn().mockResolvedValue(true);
 const listingA = { id: "l1", title: "Dom Casmurro", author: "Machado", ownerId: "ana", modality: "trade", status: "available" } as const;
 
 function setup(
   profileValue: PublicProfile | null,
   options: { loading?: boolean; error?: string | null; viewerId?: string } = {},
 ) {
-  vi.mocked(useAuthViewModel).mockReturnValue([
+  jest.mocked(useAuthViewModel).mockReturnValue([
     { user: options.viewerId ? { id: options.viewerId, email: "x@exemplo.com" } : null, loading: false, error: null },
     {} as ReturnType<typeof useAuthViewModel>[1],
   ]);
-  const reload = vi.fn().mockResolvedValue(undefined);
-  vi.mocked(useChatWithUser).mockImplementation(() => ({ busy: false, notice: null, start }));
-  vi.mocked(useProfileSafetyViewModel).mockReturnValue([
+  const reload = jest.fn().mockResolvedValue(undefined);
+  jest.mocked(useChatWithUser).mockImplementation(() => ({ busy: false, notice: null, start }));
+  jest.mocked(useProfileSafetyViewModel).mockReturnValue([
     { listings: [listingA], loadingListings: false, blocking: false, blocked: false, error: null },
-    { loadListings, block, clearError: vi.fn() },
+    { loadListings, block, clearError: jest.fn() },
   ]);
-  vi.mocked(usePublicProfileViewModel).mockReturnValue([
+  jest.mocked(usePublicProfileViewModel).mockReturnValue([
     { profile: profileValue, loading: options.loading ?? false, error: options.error ?? null },
     { reload },
   ]);
@@ -129,7 +128,7 @@ describe("PublicProfile (spec 018 / issue #73)", () => {
   });
 
   it("abre o Instagram ao tocar no @ (sem @ duplicado na URL)", async () => {
-    const openURL = vi.spyOn(Linking, "openURL").mockResolvedValue(true);
+    const openURL = jest.spyOn(Linking, "openURL").mockResolvedValue(true);
     setup(profile({ socialHandle: "@anapaula" }));
     const screen = await renderView();
     fireEvent.press(screen.getByLabelText("Abrir Instagram @anapaula"));
@@ -158,7 +157,7 @@ describe("PublicProfile (spec 018 / issue #73)", () => {
 
   it("aciona onBack ao tocar no botão voltar da barra superior", async () => {
     setup(profile());
-    const onBack = vi.fn();
+    const onBack = jest.fn();
     const screen = await renderView({ onBack });
     fireEvent.press(screen.getByLabelText("Voltar"));
     expect(onBack).toHaveBeenCalledTimes(1);
@@ -174,7 +173,7 @@ describe("PublicProfile (spec 018 / issue #73)", () => {
 
   it("explica como começar quando ainda não há conversa (Spec 091)", async () => {
     setup(profile({ userId: "ana", name: "Ana Paula" }));
-    vi.mocked(useChatWithUser).mockImplementation(() => ({ busy: false, notice: "Ainda não há conversa com essa pessoa.", start }));
+    jest.mocked(useChatWithUser).mockImplementation(() => ({ busy: false, notice: "Ainda não há conversa com essa pessoa.", start }));
     const screen = await renderView();
     expect(screen.getByText("Ainda não há conversa com essa pessoa.")).toBeDefined();
   });
@@ -182,7 +181,7 @@ describe("PublicProfile (spec 018 / issue #73)", () => {
   it("abre a folha de segurança e bloqueia a pessoa depois de confirmar (Spec 091)", async () => {
     setup(profile({ userId: "ana", name: "Ana Paula" }), { viewerId: "me" });
     block.mockClear();
-    const onBack = vi.fn();
+    const onBack = jest.fn();
     const screen = await renderView({ onBack });
     await act(async () => { fireEvent.press(screen.getByLabelText("Denunciar ou bloquear")); });
     expect(screen.getByText("Denunciar um anúncio")).toBeDefined();
@@ -196,7 +195,7 @@ describe("PublicProfile (spec 018 / issue #73)", () => {
 
   it("leva à denúncia da pessoa (Spec 091)", async () => {
     setup(profile({ userId: "ana", name: "Ana Paula" }), { viewerId: "me" });
-    const onReportUser = vi.fn();
+    const onReportUser = jest.fn();
     const screen = await renderView({ onReportUser });
     await act(async () => { fireEvent.press(screen.getByLabelText("Denunciar ou bloquear")); });
     await act(async () => { fireEvent.press(screen.getByLabelText("Denunciar Ana Paula")); });
@@ -206,7 +205,7 @@ describe("PublicProfile (spec 018 / issue #73)", () => {
   it("leva à denúncia do anúncio escolhido (Spec 091)", async () => {
     setup(profile({ userId: "ana", name: "Ana Paula" }), { viewerId: "me" });
     loadListings.mockClear();
-    const onReportListing = vi.fn();
+    const onReportListing = jest.fn();
     const screen = await renderView({ onReportListing });
     await act(async () => { fireEvent.press(screen.getByLabelText("Denunciar ou bloquear")); });
     await act(async () => { fireEvent.press(screen.getByLabelText("Denunciar um anúncio de Ana Paula")); });

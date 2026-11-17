@@ -1,6 +1,5 @@
 import { createElement } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
-import { afterEach, describe, expect, it, vi } from "vitest";
 import { ALL_ALERT_MODALITIES, type SearchAlert } from "@/model/entities/searchAlert";
 import { DomainError } from "@/model/errors";
 import type { ISearchAlertUseCases } from "@/usecase/iSearchAlertUseCases";
@@ -61,7 +60,7 @@ const falhaGenerica = async () => {
 
 describe("useSearchAlertsViewModel", () => {
   it("sem sessão não lista alertas e não fica carregando", async () => {
-    const listAlerts = vi.fn(async () => [alerta]);
+    const listAlerts = jest.fn(async () => [alerta]);
     const hook = await renderHook(null, casosDeUso({ listAlerts }));
 
     expect(listAlerts).not.toHaveBeenCalled();
@@ -96,8 +95,8 @@ describe("useSearchAlertsViewModel", () => {
   });
 
   it("create envia o termo digitado, limpa o campo e recarrega", async () => {
-    const createAlert = vi.fn(async () => alerta);
-    const listAlerts = vi.fn(async () => [alerta]);
+    const createAlert = jest.fn(async () => alerta);
+    const listAlerts = jest.fn(async () => [alerta]);
     const hook = await renderHook("bia", casosDeUso({ createAlert, listAlerts }));
 
     await act(async () => {
@@ -132,7 +131,7 @@ describe("useSearchAlertsViewModel", () => {
   });
 
   it("update repassa termo e modalidades e confirma a mensagem", async () => {
-    const updateAlert = vi.fn(async () => undefined);
+    const updateAlert = jest.fn(async () => undefined);
     const hook = await renderHook("bia", casosDeUso({ updateAlert }));
 
     let ok = false;
@@ -162,8 +161,8 @@ describe("useSearchAlertsViewModel", () => {
   });
 
   it("setActive pausa o alerta e recarrega a lista", async () => {
-    const setActive = vi.fn(async () => undefined);
-    const listAlerts = vi.fn(async () => [alerta]);
+    const setActive = jest.fn(async () => undefined);
+    const listAlerts = jest.fn(async () => [alerta]);
     const hook = await renderHook("bia", casosDeUso({ setActive, listAlerts }));
 
     await act(async () => {
@@ -189,7 +188,7 @@ describe("useSearchAlertsViewModel", () => {
   });
 
   it("remove exclui o alerta e recarrega a lista", async () => {
-    const deleteAlert = vi.fn(async () => undefined);
+    const deleteAlert = jest.fn(async () => undefined);
     const hook = await renderHook("bia", casosDeUso({ deleteAlert }));
 
     let ok = false;
@@ -218,7 +217,7 @@ describe("useSearchAlertsViewModel", () => {
   });
 
   it("update atualiza o alerta com sucesso e recarrega", async () => {
-    const updateAlert = vi.fn().mockResolvedValue(undefined);
+    const updateAlert = jest.fn().mockResolvedValue(undefined);
     const hook = await renderHook("bia", casosDeUso({ updateAlert }));
 
     let ok = false;

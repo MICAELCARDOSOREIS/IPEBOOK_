@@ -11,7 +11,7 @@
       "scripts/**",
       "app.config.js",
       "metro.config.js",
-      "vitest.config.mts"
+      "jest.config.cjs"
     ]
   },
   "formatter": {

@@ -1,4 +1,3 @@
-import { beforeEach, describe, expect, it } from "vitest";
 import { MemoryBookDataSource } from "@/infra/datasources/memoryBookDataSource";
 import { MemoryBookRequestDataSource } from "@/infra/datasources/memoryBookRequestDataSource";
 import { MemoryProfileDataSource } from "@/infra/datasources/memoryProfileDataSource";

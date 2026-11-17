@@ -1,6 +1,5 @@
 import { createElement } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
-import { afterEach, describe, expect, it, vi } from "vitest";
 import { DomainError } from "@/model/errors";
 import type { IFavoriteUseCases } from "@/usecase/iFavoriteUseCases";
 import { useFavoriteButtonViewModel } from "@/viewmodel/useFavoriteButtonViewModel";
@@ -16,9 +15,9 @@ afterEach(async () => {
 
 function stubFavoriteUseCases(overrides: Partial<IFavoriteUseCases> = {}): IFavoriteUseCases {
   return {
-    isFavorite: vi.fn().mockResolvedValue(false),
-    toggleFavorite: vi.fn().mockResolvedValue(true),
-    listFavorites: vi.fn().mockResolvedValue([]),
+    isFavorite: jest.fn().mockResolvedValue(false),
+    toggleFavorite: jest.fn().mockResolvedValue(true),
+    listFavorites: jest.fn().mockResolvedValue([]),
     ...overrides,
   };
 }
@@ -52,7 +51,7 @@ describe("useFavoriteButtonViewModel", () => {
 
   it("carrega estado de favorito com sucesso quando userId presente", async () => {
     const useCases = stubFavoriteUseCases({
-      isFavorite: vi.fn().mockResolvedValue(true),
+      isFavorite: jest.fn().mockResolvedValue(true),
     });
     const hook = await renderHook("book-1", "user-1", useCases);
 
@@ -64,7 +63,7 @@ describe("useFavoriteButtonViewModel", () => {
 
   it("trata erro ao consultar favoritos", async () => {
     const useCases = stubFavoriteUseCases({
-      isFavorite: vi.fn().mockRejectedValue(new Error("Erro de conexão")),
+      isFavorite: jest.fn().mockRejectedValue(new Error("Erro de conexão")),
     });
     const hook = await renderHook("book-1", "user-1", useCases);
 
@@ -73,8 +72,8 @@ describe("useFavoriteButtonViewModel", () => {
 
   it("alterna favorito com sucesso via toggle", async () => {
     const useCases = stubFavoriteUseCases({
-      isFavorite: vi.fn().mockResolvedValue(false),
-      toggleFavorite: vi.fn().mockResolvedValue(true),
+      isFavorite: jest.fn().mockResolvedValue(false),
+      toggleFavorite: jest.fn().mockResolvedValue(true),
     });
     const hook = await renderHook("book-1", "user-1", useCases);
 
@@ -89,7 +88,7 @@ describe("useFavoriteButtonViewModel", () => {
 
   it("trata erro DomainError ao alternar favorito", async () => {
     const useCases = stubFavoriteUseCases({
-      toggleFavorite: vi.fn().mockRejectedValue(new DomainError("Ação não permitida")),
+      toggleFavorite: jest.fn().mockRejectedValue(new DomainError("Ação não permitida")),
     });
     const hook = await renderHook("book-1", "user-1", useCases);
 
@@ -102,7 +101,7 @@ describe("useFavoriteButtonViewModel", () => {
 
   it("trata erro inesperado genérico ao alternar favorito", async () => {
     const useCases = stubFavoriteUseCases({
-      toggleFavorite: vi.fn().mockRejectedValue(new Error("Falha 500")),
+      toggleFavorite: jest.fn().mockRejectedValue(new Error("Falha 500")),
     });
     const hook = await renderHook("book-1", "user-1", useCases);
 

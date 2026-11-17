@@ -1,12 +1,12 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const store = new Map<string, string>();
+const mockStore = new Map<string, string>();
 
-vi.mock("@react-native-async-storage/async-storage", () => ({
+jest.mock("@react-native-async-storage/async-storage", () => ({
+  __esModule: true,
   default: {
-    getItem: vi.fn(async (key: string) => store.get(key) ?? null),
-    setItem: vi.fn(async (key: string, value: string) => {
-      store.set(key, value);
+    getItem: jest.fn(async (key: string) => mockStore.get(key) ?? null),
+    setItem: jest.fn(async (key: string, value: string) => {
+      mockStore.set(key, value);
     }),
   },
 }));
@@ -18,7 +18,7 @@ import {
 
 describe("AsyncStorageThemePreferenceDataSource (Spec 054 / Issue #144)", () => {
   beforeEach(() => {
-    store.clear();
+    mockStore.clear();
   });
 
   it("retorna 'light' quando nada foi salvo ainda", async () => {
@@ -30,11 +30,11 @@ describe("AsyncStorageThemePreferenceDataSource (Spec 054 / Issue #144)", () => 
     const ds = new AsyncStorageThemePreferenceDataSource();
     await ds.setPreference("dark");
     expect(await ds.getPreference()).toBe("dark");
-    expect(store.get(THEME_PREFERENCE_KEY)).toBe("dark");
+    expect(mockStore.get(THEME_PREFERENCE_KEY)).toBe("dark");
   });
 
   it("retorna 'light' quando o valor salvo é inválido", async () => {
-    store.set(THEME_PREFERENCE_KEY, "neon");
+    mockStore.set(THEME_PREFERENCE_KEY, "neon");
     const ds = new AsyncStorageThemePreferenceDataSource();
     expect(await ds.getPreference()).toBe("light");
   });

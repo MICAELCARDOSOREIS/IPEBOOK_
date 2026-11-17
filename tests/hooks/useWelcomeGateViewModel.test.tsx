@@ -1,7 +1,6 @@
 
 import { render } from "@testing-library/react-native";
 import { Text } from "react-native";
-import { describe, expect, it, vi } from "vitest";
 import { makeWelcomeGateViewModel } from "@/di/container";
 import { MemoryOnboardingDataSource } from "@/infra/datasources/memoryOnboardingDataSource";
 import { OnboardingUseCases } from "@/usecase/onboardingUseCases";
@@ -34,8 +33,8 @@ describe("useWelcomeGateViewModel (issue #98)", () => {
   });
 
   it("dispensar grava a marca sem alterar o status já resolvido na sessão", async () => {
-    const markWelcomeSeen = vi.fn().mockResolvedValue(undefined);
-    const useCases = { shouldShowWelcome: vi.fn().mockResolvedValue(true), markWelcomeSeen } as unknown as OnboardingUseCases;
+    const markWelcomeSeen = jest.fn().mockResolvedValue(undefined);
+    const useCases = { shouldShowWelcome: jest.fn().mockResolvedValue(true), markWelcomeSeen } as unknown as OnboardingUseCases;
 
     const screen = await render(<GateProbe useCases={useCases} />);
     await screen.findByText("show");
@@ -48,8 +47,8 @@ describe("useWelcomeGateViewModel (issue #98)", () => {
     let resolvePromise!: (val: boolean) => void;
     const promise = new Promise<boolean>((res) => { resolvePromise = res; });
     const useCases = {
-      shouldShowWelcome: vi.fn().mockReturnValue(promise),
-      markWelcomeSeen: vi.fn(),
+      shouldShowWelcome: jest.fn().mockReturnValue(promise),
+      markWelcomeSeen: jest.fn(),
     } as unknown as OnboardingUseCases;
 
     const screen = await render(<GateProbe useCases={useCases} />);

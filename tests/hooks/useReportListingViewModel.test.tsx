@@ -1,6 +1,5 @@
 import { createElement } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
-import { afterEach, describe, expect, it, vi } from "vitest";
 import { DuplicateReportError, ValidationError } from "@/model/errors";
 import type { ILogger } from "@/model/services/iLogger";
 import type { IRateLimiter } from "@/model/services/iRateLimiter";
@@ -12,8 +11,8 @@ const mounted: ReactTestRenderer[] = [];
 
 function stubUseCases(overrides: Partial<IReportUseCases> = {}): IReportUseCases {
   return {
-    submitUserReport: vi.fn(),
-    submitReport: vi.fn(async (input, reporterId) => ({
+    submitUserReport: jest.fn(),
+    submitReport: jest.fn(async (input, reporterId) => ({
       id: "report-1",
       listingId: input.listingId,
       reporterId: reporterId!,
@@ -28,11 +27,11 @@ function stubUseCases(overrides: Partial<IReportUseCases> = {}): IReportUseCases
 async function renderHook(
   useCases: IReportUseCases,
   rateLimiter: IRateLimiter = {
-    checkAndRecord: vi.fn().mockReturnValue({ allowed: true, remainingAttempts: 3, retryAfterMs: 0 }),
-    getTimeUntilResetMs: vi.fn().mockReturnValue(0),
-    reset: vi.fn(),
+    checkAndRecord: jest.fn().mockReturnValue({ allowed: true, remainingAttempts: 3, retryAfterMs: 0 }),
+    getTimeUntilResetMs: jest.fn().mockReturnValue(0),
+    reset: jest.fn(),
   },
-  logger: ILogger = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() },
+  logger: ILogger = { debug: jest.fn(), info: jest.fn(), warn: jest.fn(), error: jest.fn() },
 ) {
   let result!: ReturnType<typeof useReportListingViewModel>;
   function HookProbe() {
@@ -145,7 +144,7 @@ describe("useReportListingViewModel", () => {
 
   it("trata erro de domínio lançado pelo use case", async () => {
     const useCases = stubUseCases({
-      submitReport: vi.fn(async () => {
+      submitReport: jest.fn(async () => {
         throw new ValidationError("Motivo inválido.");
       }),
     });
@@ -168,7 +167,7 @@ describe("useReportListingViewModel", () => {
 
   it("trata DuplicateReportError exibindo a mensagem amigável de duplicidade", async () => {
     const useCases = stubUseCases({
-      submitReport: vi.fn(async () => {
+      submitReport: jest.fn(async () => {
         throw new DuplicateReportError("Você já denunciou este anúncio.");
       }),
     });

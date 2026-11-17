@@ -1,4 +1,3 @@
-import { describe, expect, it, vi } from "vitest";
 import { MemoryBookMetadataService } from "@/infra/services/memoryBookMetadataService";
 import { OpenLibraryBookMetadataService } from "@/infra/services/openLibraryBookMetadataService";
 
@@ -31,7 +30,7 @@ describe("MemoryBookMetadataService (Spec 058)", () => {
 
 describe("OpenLibraryBookMetadataService (Spec 058)", () => {
   it("rejeita ISBN inválido antes de fazer fetch", async () => {
-    const fetchSpy = vi.fn();
+    const fetchSpy = jest.fn();
     const service = new OpenLibraryBookMetadataService(fetchSpy as any);
     const result = await service.lookupByIsbn("isbn-invalido");
     expect(result).toBeNull();
@@ -49,7 +48,7 @@ describe("OpenLibraryBookMetadataService (Spec 058)", () => {
         },
       }),
     };
-    const fetchSpy = vi.fn().mockResolvedValue(mockResponse);
+    const fetchSpy = jest.fn().mockResolvedValue(mockResponse);
     const service = new OpenLibraryBookMetadataService(fetchSpy as any);
 
     const result = await service.lookupByIsbn("978-85-359-1484-9");
@@ -62,7 +61,7 @@ describe("OpenLibraryBookMetadataService (Spec 058)", () => {
   });
 
   it("retorna null de forma resiliente em caso de falha de rede ou timeout", async () => {
-    const fetchSpy = vi.fn().mockRejectedValue(new Error("Network offline"));
+    const fetchSpy = jest.fn().mockRejectedValue(new Error("Network offline"));
     const service = new OpenLibraryBookMetadataService(fetchSpy as any);
 
     const result = await service.lookupByIsbn("978-85-359-1484-9");

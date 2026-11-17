@@ -1,4 +1,3 @@
-import { describe, it, expect } from 'vitest';
 import { LIVROS_SEMENTE_PIRIPIRI, gerarSqlSeed } from '../../scripts/popular-catalogo-piripiri.mjs';
 import { PIRIPIRI_NEIGHBORHOODS, DEFAULT_BETA_CITY, DEFAULT_BETA_STATE } from '@/model/entities/location';
 

@@ -1,6 +1,5 @@
 import { createElement } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
-import { afterEach, describe, expect, it, vi } from "vitest";
 import { DomainError } from "@/model/errors";
 import type { Book } from "@/model/entities/book";
 import type { IBookUseCases } from "@/usecase/iBookUseCases";
@@ -62,7 +61,7 @@ describe("testes de hook: useMyListingsViewModel (ISO/IEC 25010 - Confiabilidade
   });
 
   it("trata erro de domínio e permite recuperação via reload", async () => {
-    const listMyListings = vi
+    const listMyListings = jest
       .fn()
       .mockRejectedValueOnce(new DomainError("Falha temporária de rede."))
       .mockResolvedValueOnce([
@@ -101,7 +100,7 @@ describe("testes de hook: useMyListingsViewModel (ISO/IEC 25010 - Confiabilidade
   });
 
   it("remove livro com sucesso da lista via cancelListing", async () => {
-    const cancelListing = vi.fn().mockResolvedValue(undefined);
+    const cancelListing = jest.fn().mockResolvedValue(undefined);
     const hook = await renderHook("u1", {
       listMyListings: async () => [
         {
@@ -130,7 +129,7 @@ describe("testes de hook: useMyListingsViewModel (ISO/IEC 25010 - Confiabilidade
   });
 
   it("seta cancelError quando cancelListing falha com DomainError", async () => {
-    const cancelListing = vi.fn().mockRejectedValue(new DomainError("Não é possível remover."));
+    const cancelListing = jest.fn().mockRejectedValue(new DomainError("Não é possível remover."));
     const hook = await renderHook("u1", {
       listMyListings: async () => [
         {
@@ -165,7 +164,7 @@ describe("testes de hook: useMyListingsViewModel (ISO/IEC 25010 - Confiabilidade
       modality: "trade",
       status: "available",
     };
-    const togglePauseListing = vi.fn().mockResolvedValue({ ...book, status: "paused" });
+    const togglePauseListing = jest.fn().mockResolvedValue({ ...book, status: "paused" });
     const hook = await renderHook("u1", {
       listMyListings: async () => [book],
       togglePauseListing,
@@ -193,7 +192,7 @@ describe("testes de hook: useMyListingsViewModel (ISO/IEC 25010 - Confiabilidade
       modality: "trade",
       status: "reserved",
     };
-    const togglePauseListing = vi.fn().mockRejectedValue(new DomainError("Não é possível alterar status de anúncio reservado."));
+    const togglePauseListing = jest.fn().mockRejectedValue(new DomainError("Não é possível alterar status de anúncio reservado."));
     const hook = await renderHook("u1", {
       listMyListings: async () => [book],
       togglePauseListing,
@@ -228,8 +227,8 @@ describe("testes de hook: useMyListingsViewModel (ISO/IEC 25010 - Confiabilidade
     };
     const hookActions = await renderHook("u1", {
       listMyListings: async () => [book],
-      cancelListing: vi.fn().mockRejectedValue(new Error("Falha de rede")),
-      togglePauseListing: vi.fn().mockRejectedValue(new Error("Falha de rede")),
+      cancelListing: jest.fn().mockRejectedValue(new Error("Falha de rede")),
+      togglePauseListing: jest.fn().mockRejectedValue(new Error("Falha de rede")),
     } as unknown as IBookUseCases);
 
     let cancelOk = true;

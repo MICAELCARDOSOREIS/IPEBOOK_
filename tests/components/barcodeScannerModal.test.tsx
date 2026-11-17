@@ -1,25 +1,24 @@
-import React from "react";
 import { act, fireEvent, render } from "@testing-library/react-native";
-import { beforeEach, describe, expect, it, vi } from "vitest";
 import { BarcodeScannerModal } from "@/view/components/BarcodeScannerModal";
 
-const mockRequestPermission = vi.fn().mockResolvedValue({ granted: true, status: "granted" });
+const mockRequestPermission = jest.fn().mockResolvedValue({ granted: true, status: "granted" });
 let mockPermission: { granted: boolean; canAskAgain: boolean; status: string } | null = {
   granted: true,
   canAskAgain: true,
   status: "granted",
 };
 
-vi.mock("expo-camera", () => ({
+jest.mock("expo-camera", () => ({
   useCameraPermissions: () => [mockPermission, mockRequestPermission],
   CameraView: (props: any) => {
-    return React.createElement("CameraView", { testID: "mock-camera-view", ...props });
+    const ReactRuntime = require("react") as typeof import("react");
+    return ReactRuntime.createElement("CameraView", { testID: "mock-camera-view", ...props });
   },
 }));
 
 describe("BarcodeScannerModal (Spec 059 / ADR 0042)", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    jest.clearAllMocks();
     mockPermission = { granted: true, canAskAgain: true, status: "granted" };
   });
 
@@ -27,7 +26,7 @@ describe("BarcodeScannerModal (Spec 059 / ADR 0042)", () => {
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
       screen = await render(
-        <BarcodeScannerModal visible={false} onClose={vi.fn()} onScan={vi.fn()} />,
+        <BarcodeScannerModal visible={false} onClose={jest.fn()} onScan={jest.fn()} />,
       );
     });
     expect(screen.queryByText("Escanear ISBN")).toBeNull();
@@ -38,7 +37,7 @@ describe("BarcodeScannerModal (Spec 059 / ADR 0042)", () => {
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
       screen = await render(
-        <BarcodeScannerModal visible={true} onClose={vi.fn()} onScan={vi.fn()} />,
+        <BarcodeScannerModal visible={true} onClose={jest.fn()} onScan={jest.fn()} />,
       );
     });
     expect(screen.getByText("Iniciando câmera...")).toBeDefined();
@@ -49,7 +48,7 @@ describe("BarcodeScannerModal (Spec 059 / ADR 0042)", () => {
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
       screen = await render(
-        <BarcodeScannerModal visible={true} onClose={vi.fn()} onScan={vi.fn()} />,
+        <BarcodeScannerModal visible={true} onClose={jest.fn()} onScan={jest.fn()} />,
       );
     });
 
@@ -63,7 +62,7 @@ describe("BarcodeScannerModal (Spec 059 / ADR 0042)", () => {
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
       screen = await render(
-        <BarcodeScannerModal visible={true} onClose={vi.fn()} onScan={vi.fn()} />,
+        <BarcodeScannerModal visible={true} onClose={jest.fn()} onScan={jest.fn()} />,
       );
     });
 
@@ -75,11 +74,11 @@ describe("BarcodeScannerModal (Spec 059 / ADR 0042)", () => {
 
   it("chama onClose ao tocar em 'Digitar ISBN Manualmente' ou no botão fechar", async () => {
     mockPermission = { granted: false, canAskAgain: true, status: "denied" };
-    const onClose = vi.fn();
+    const onClose = jest.fn();
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
       screen = await render(
-        <BarcodeScannerModal visible={true} onClose={onClose} onScan={vi.fn()} />,
+        <BarcodeScannerModal visible={true} onClose={onClose} onScan={jest.fn()} />,
       );
     });
 
@@ -95,8 +94,8 @@ describe("BarcodeScannerModal (Spec 059 / ADR 0042)", () => {
   });
 
   it("renderiza a câmera e dispara onScan e onClose quando um código é detectado", async () => {
-    const onScan = vi.fn();
-    const onClose = vi.fn();
+    const onScan = jest.fn();
+    const onClose = jest.fn();
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
       screen = await render(

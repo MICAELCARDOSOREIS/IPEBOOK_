@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import { FAQ_ITEMS } from "@/model/helpContent";
 import { PIRIPIRI_MEETING_POINTS } from "@/model/entities/meetingPoint";
 

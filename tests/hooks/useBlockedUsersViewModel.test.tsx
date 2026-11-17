@@ -1,6 +1,5 @@
 import { createElement } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
-import { afterEach, describe, expect, it } from "vitest";
 import { useBlockedUsersViewModel } from "@/viewmodel/useBlockedUsersViewModel";
 import type { IBlockedUserUseCases } from "@/usecase/iBlockedUserUseCases";
 import type { BlockedUser } from "@/model/entities/blockedUser";

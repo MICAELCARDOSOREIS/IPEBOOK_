@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import { pageTitleFor } from "@/view/pageTitle";
 
 describe("pageTitleFor", () => {

@@ -1,4 +1,3 @@
-import { describe, expect, it, vi } from "vitest";
 import { ValidationError } from "@/model/errors";
 import { detectImageMimeType } from "@/model/validators/imageBytesValidator";
 import { ProfilePhotoUseCases } from "@/usecase/profilePhotoUseCases";
@@ -24,10 +23,10 @@ describe("detectImageMimeType (Spec 081, CA1)", () => {
 });
 
 describe("ProfilePhotoUseCases (Spec 081, CA2)", () => {
-  function storage(): IPhotoStorageDataSource & { uploadPhoto: ReturnType<typeof vi.fn> } {
+  function storage(): IPhotoStorageDataSource & { uploadPhoto: ReturnType<typeof jest.fn> } {
     return {
-      uploadPhoto: vi.fn(async () => "https://cdn.exemplo/book-photos/u1/perfil/foto.jpg"),
-      deletePhoto: vi.fn(async () => {}),
+      uploadPhoto: jest.fn(async () => "https://cdn.exemplo/book-photos/u1/perfil/foto.jpg"),
+      deletePhoto: jest.fn(async () => {}),
     };
   }
 

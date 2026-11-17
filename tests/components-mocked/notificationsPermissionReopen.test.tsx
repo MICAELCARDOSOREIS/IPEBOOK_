@@ -1,5 +1,4 @@
 import { act, fireEvent, render } from "@testing-library/react-native";
-import { beforeEach, describe, expect, it, vi } from "vitest";
 import { PERMISSION_PROMPT_COPY } from "@/view/components/PermissionPromptDialog";
 import Notifications from "@/view/notifications/notifications";
 import type {
@@ -11,9 +10,9 @@ import type {
   PermissionPromptState,
 } from "@/viewmodel/usePermissionPromptViewModel";
 
-vi.mock("@/viewmodel/useNotificationsViewModel", () => ({ useNotificationsViewModel: vi.fn() }));
-vi.mock("@/viewmodel/useNetworkStatus", () => ({ useNetworkStatus: vi.fn() }));
-vi.mock("@/viewmodel/usePermissionPromptViewModel", () => ({ usePermissionPromptViewModel: vi.fn() }));
+jest.mock("@/viewmodel/useNotificationsViewModel", () => ({ useNotificationsViewModel: jest.fn() }));
+jest.mock("@/viewmodel/useNetworkStatus", () => ({ useNetworkStatus: jest.fn() }));
+jest.mock("@/viewmodel/usePermissionPromptViewModel", () => ({ usePermissionPromptViewModel: jest.fn() }));
 
 import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
 import { useNotificationsViewModel } from "@/viewmodel/useNotificationsViewModel";
@@ -23,11 +22,11 @@ const prompt: PermissionPromptState & { actions: PermissionPromptActions } = {
   status: "idle",
   granted: false,
   actions: {
-    refresh: vi.fn(),
-    approve: vi.fn(),
-    decline: vi.fn(),
-    dismiss: vi.fn(),
-    reopen: vi.fn(),
+    refresh: jest.fn(),
+    approve: jest.fn(),
+    decline: jest.fn(),
+    dismiss: jest.fn(),
+    reopen: jest.fn(),
   },
 };
 
@@ -43,25 +42,25 @@ function tela(permissionNoAparelho: boolean | null) {
     systemPermissionGranted: permissionNoAparelho,
   };
   const actions: NotificationsActions = {
-    reload: vi.fn(),
-    refresh: vi.fn().mockResolvedValue(undefined),
-    markAsRead: vi.fn(),
-    markAllAsRead: vi.fn(),
-    deleteNotification: vi.fn(),
-    clearAll: vi.fn(),
-    clearRead: vi.fn(),
-    clearActionError: vi.fn(),
-    setFilter: vi.fn(),
+    reload: jest.fn(),
+    refresh: jest.fn().mockResolvedValue(undefined),
+    markAsRead: jest.fn(),
+    markAllAsRead: jest.fn(),
+    deleteNotification: jest.fn(),
+    clearAll: jest.fn(),
+    clearRead: jest.fn(),
+    clearActionError: jest.fn(),
+    setFilter: jest.fn(),
   };
-  vi.mocked(useNotificationsViewModel).mockReturnValue([state, actions]);
+  jest.mocked(useNotificationsViewModel).mockReturnValue([state, actions]);
 }
 
 beforeEach(() => {
-  vi.mocked(useNetworkStatus).mockReturnValue({ isOnline: true });
+  jest.mocked(useNetworkStatus).mockReturnValue({ isOnline: true });
   prompt.status = "idle";
   prompt.granted = false;
-  for (const fn of Object.values(prompt.actions)) (fn as ReturnType<typeof vi.fn>).mockReset();
-  vi.mocked(usePermissionPromptViewModel).mockReturnValue([
+  for (const fn of Object.values(prompt.actions)) (fn as ReturnType<typeof jest.fn>).mockReset();
+  jest.mocked(usePermissionPromptViewModel).mockReturnValue([
     { status: prompt.status, granted: prompt.granted },
     prompt.actions,
   ]);
@@ -72,7 +71,7 @@ describe("Central de notificações: reabrir o aviso de permissão (Spec 127)", 
     tela(false);
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
-      screen = await render(<Notifications sessionUserId="u1" onBack={vi.fn()} />);
+      screen = await render(<Notifications sessionUserId="u1" onBack={jest.fn()} />);
     });
     expect(screen.getByText("Notificações desativadas")).toBeDefined();
     expect(screen.getByLabelText("Pedir permissão de avisos novamente ao aparelho")).toBeDefined();
@@ -82,7 +81,7 @@ describe("Central de notificações: reabrir o aviso de permissão (Spec 127)", 
     tela(true);
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
-      screen = await render(<Notifications sessionUserId="u1" onBack={vi.fn()} />);
+      screen = await render(<Notifications sessionUserId="u1" onBack={jest.fn()} />);
     });
     expect(screen.queryByText("Notificações desativadas")).toBeNull();
     expect(prompt.actions.reopen).not.toHaveBeenCalled();
@@ -93,7 +92,7 @@ describe("Central de notificações: reabrir o aviso de permissão (Spec 127)", 
     tela(false);
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
-      screen = await render(<Notifications sessionUserId="u1" onBack={vi.fn()} />);
+      screen = await render(<Notifications sessionUserId="u1" onBack={jest.fn()} />);
     });
     expect(screen.queryByText(PERMISSION_PROMPT_COPY.notifications.title)).toBeNull();
 
@@ -104,12 +103,12 @@ describe("Central de notificações: reabrir o aviso de permissão (Spec 127)", 
 
     // O ViewModel passa a reportar a explicação aberta: a tela é a mesma do fluxo da Spec 020.
     prompt.status = "explain";
-    vi.mocked(usePermissionPromptViewModel).mockReturnValue([
+    jest.mocked(usePermissionPromptViewModel).mockReturnValue([
       { status: "explain", granted: false },
       prompt.actions,
     ]);
     await act(async () => {
-      screen.rerender(<Notifications sessionUserId="u1" onBack={vi.fn()} />);
+      screen.rerender(<Notifications sessionUserId="u1" onBack={jest.fn()} />);
     });
     expect(screen.getByText(PERMISSION_PROMPT_COPY.notifications.message)).toBeDefined();
     await act(async () => {
@@ -121,13 +120,13 @@ describe("Central de notificações: reabrir o aviso de permissão (Spec 127)", 
   it("some o controle quando o próprio aviso já registra a concessão, sem recarregar a tela", async () => {
     tela(false);
     prompt.granted = true;
-    vi.mocked(usePermissionPromptViewModel).mockReturnValue([
+    jest.mocked(usePermissionPromptViewModel).mockReturnValue([
       { status: "idle", granted: true },
       prompt.actions,
     ]);
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
-      screen = await render(<Notifications sessionUserId="u1" onBack={vi.fn()} />);
+      screen = await render(<Notifications sessionUserId="u1" onBack={jest.fn()} />);
     });
     expect(screen.queryByText("Notificações desativadas")).toBeNull();
   });

@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import { MemoryProfileDataSource } from "@/infra/datasources/memoryProfileDataSource";
 import { DataSourceError } from "@/model/errors";
 

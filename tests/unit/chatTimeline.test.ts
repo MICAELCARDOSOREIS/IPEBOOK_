@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import type { NegotiationMessage } from "@/model/entities/negotiationMessage";
 import {
   buildChatTimeline,

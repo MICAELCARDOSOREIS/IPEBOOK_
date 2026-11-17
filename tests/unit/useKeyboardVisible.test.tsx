@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import { render, act } from "@testing-library/react-native";
 // @ts-expect-error Exportado pelo mock de react-native
 import { Keyboard, Text, __emitKeyboardEvent } from "react-native";

@@ -1,6 +1,5 @@
 
 import { act, fireEvent, render } from "@testing-library/react-native";
-import { describe, expect, it, vi } from "vitest";
 import type { Book } from "@/model/entities/book";
 import { ProfileSafetySheet } from "@/view/listings/profileSafetySheet";
 
@@ -12,11 +11,11 @@ const base = {
   loadingListings: false,
   blocking: false,
   error: null as string | null,
-  onLoadListings: vi.fn(),
-  onReportListing: vi.fn(),
-  onReportUser: vi.fn(),
-  onConfirmBlock: vi.fn(),
-  onClose: vi.fn(),
+  onLoadListings: jest.fn(),
+  onReportListing: jest.fn(),
+  onReportUser: jest.fn(),
+  onConfirmBlock: jest.fn(),
+  onClose: jest.fn(),
 };
 
 async function open(props: Partial<typeof base> = {}) {

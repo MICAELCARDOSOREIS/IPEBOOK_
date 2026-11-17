@@ -1,5 +1,4 @@
 import { readFileSync } from "node:fs";
-import { describe, expect, it } from "vitest";
 import { PIRIPIRI_MEETING_POINTS } from "@/model/entities/meetingPoint";
 import { meetingNotice } from "@/model/entities/meetingNotice";
 

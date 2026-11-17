@@ -1,6 +1,5 @@
 
 import { act, render } from "@testing-library/react-native";
-import { describe, expect, it } from "vitest";
 import { MemoryBookDataSource } from "@/infra/datasources/memoryBookDataSource";
 import { MemoryBookRequestDataSource } from "@/infra/datasources/memoryBookRequestDataSource";
 import { BookRequestUseCases } from "@/usecase/bookRequestUseCases";

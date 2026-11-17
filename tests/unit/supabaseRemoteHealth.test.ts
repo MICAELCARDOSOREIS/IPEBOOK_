@@ -1,4 +1,3 @@
-import { describe, it, expect, vi } from 'vitest';
 import {
   mascararUrl,
   carregarConfiguracaoAmbiente,
@@ -50,7 +49,7 @@ describe('Diagnóstico de Saúde e Migrações do Supabase Remoto (Spec 049 / AD
 
   describe('verificarConectividade', () => {
     it('retorna ok: true quando o endpoint responde com status HTTP 200', async () => {
-      const mockFetch = vi.fn().mockResolvedValue({
+      const mockFetch = jest.fn().mockResolvedValue({
         ok: true,
         status: 200,
         statusText: 'OK',
@@ -73,7 +72,7 @@ describe('Diagnóstico de Saúde e Migrações do Supabase Remoto (Spec 049 / AD
     });
 
     it('retorna erro se o endpoint responder com código de erro HTTP (ex: 500)', async () => {
-      const mockFetch = vi.fn().mockResolvedValue({
+      const mockFetch = jest.fn().mockResolvedValue({
         ok: false,
         status: 500,
         statusText: 'Internal Server Error',
@@ -86,7 +85,7 @@ describe('Diagnóstico de Saúde e Migrações do Supabase Remoto (Spec 049 / AD
     });
 
     it('trata exceção de rede de forma graciosa sem lançar unhandled rejection', async () => {
-      const mockFetch = vi.fn().mockRejectedValue(new Error('Conexão recusada pelo host'));
+      const mockFetch = jest.fn().mockRejectedValue(new Error('Conexão recusada pelo host'));
 
       const resultado = await verificarConectividade('https://exemplo.supabase.co', 'chave-123', mockFetch);
       expect(resultado.ok).toBe(false);
@@ -96,7 +95,7 @@ describe('Diagnóstico de Saúde e Migrações do Supabase Remoto (Spec 049 / AD
 
   describe('verificarTabelasEColunas', () => {
     it('valida todas as tabelas e colunas quando PostgREST responde OK', async () => {
-      const mockFetch = vi.fn().mockResolvedValue({
+      const mockFetch = jest.fn().mockResolvedValue({
         ok: true,
         status: 200,
       });
@@ -113,7 +112,7 @@ describe('Diagnóstico de Saúde e Migrações do Supabase Remoto (Spec 049 / AD
     });
 
     it('detecta tabela ausente com status 404', async () => {
-      const mockFetch = vi.fn().mockImplementation((url: string) => {
+      const mockFetch = jest.fn().mockImplementation((url: string) => {
         if (url.includes('v2_user_preferences')) {
           return Promise.resolve({ ok: false, status: 404 });
         }
@@ -128,7 +127,7 @@ describe('Diagnóstico de Saúde e Migrações do Supabase Remoto (Spec 049 / AD
     });
 
     it('detecta colunas ausentes individuais quando PostgREST retorna 400', async () => {
-      const mockFetch = vi.fn().mockImplementation((url: string) => {
+      const mockFetch = jest.fn().mockImplementation((url: string) => {
         if (url.includes('v2_search_alerts')) {
           // Se consultar com todas as colunas juntas, falha (400)
           if (url.includes('modalities') && url.includes('query')) {
@@ -155,7 +154,7 @@ describe('Diagnóstico de Saúde e Migrações do Supabase Remoto (Spec 049 / AD
     it('trata 401 de tabela restrita por RLS como existente (sem falso positivo de coluna ausente)', async () => {
       // Regressão: v2_negotiation_messages tem revoke para anon (Spec 061); o PostgREST
       // responde 401 e o diagnóstico não pode concluir que a migração está pendente.
-      const mockFetch = vi.fn().mockImplementation((url: string) => {
+      const mockFetch = jest.fn().mockImplementation((url: string) => {
         if (url.includes('v2_negotiation_messages')) {
           return Promise.resolve({ ok: false, status: 401 });
         }
@@ -172,7 +171,7 @@ describe('Diagnóstico de Saúde e Migrações do Supabase Remoto (Spec 049 / AD
     });
 
     it('trata 401 em sonda de coluna individual como restrita, não como ausente', async () => {
-      const mockFetch = vi.fn().mockImplementation((url: string) => {
+      const mockFetch = jest.fn().mockImplementation((url: string) => {
         if (url.includes('v2_blocked_users')) {
           // Sonda combinada falha (400) e cada sonda por coluna recebe 401 de RLS
           if (url.includes('select=blocker_id%2Cblocked_id%2Ccreated_at')) {
@@ -195,7 +194,7 @@ describe('Diagnóstico de Saúde e Migrações do Supabase Remoto (Spec 049 / AD
 
   describe('verificarStorage', () => {
     it('identifica bucket público existente quando probe e listagem sucedem', async () => {
-      const mockFetch = vi.fn().mockImplementation((url: string) => {
+      const mockFetch = jest.fn().mockImplementation((url: string) => {
         if (url.includes('public/book-photos')) {
           return Promise.resolve({
             ok: false,
@@ -220,7 +219,7 @@ describe('Diagnóstico de Saúde e Migrações do Supabase Remoto (Spec 049 / AD
     });
 
     it('identifica falha quando o bucket não existe (NoSuchBucket)', async () => {
-      const mockFetch = vi.fn().mockImplementation(() => {
+      const mockFetch = jest.fn().mockImplementation(() => {
         return Promise.resolve({
           ok: false,
           status: 400,
@@ -234,7 +233,7 @@ describe('Diagnóstico de Saúde e Migrações do Supabase Remoto (Spec 049 / AD
     });
 
     it('trata exceção de rede no storage de forma resiliente', async () => {
-      const mockFetch = vi.fn().mockRejectedValue(new Error('Storage indisponível'));
+      const mockFetch = jest.fn().mockRejectedValue(new Error('Storage indisponível'));
 
       const resultado = await verificarStorage('https://exemplo.supabase.co', 'chave-123', mockFetch);
       expect(resultado.ok).toBe(false);
@@ -244,7 +243,7 @@ describe('Diagnóstico de Saúde e Migrações do Supabase Remoto (Spec 049 / AD
 
   describe('verificarFuncoesRpc', () => {
     it('detecta funções RPC existentes no schema cache', async () => {
-      const mockFetch = vi.fn().mockResolvedValue({
+      const mockFetch = jest.fn().mockResolvedValue({
         ok: false,
         status: 400,
         text: async () => JSON.stringify({ message: 'Não autorizado a excluir esta conta', code: 'P0001' }),
@@ -257,7 +256,7 @@ describe('Diagnóstico de Saúde e Migrações do Supabase Remoto (Spec 049 / AD
     });
 
     it('identifica RPC ausente com código PGRST202 do PostgREST', async () => {
-      const mockFetch = vi.fn().mockImplementation((url: string) => {
+      const mockFetch = jest.fn().mockImplementation((url: string) => {
         if (url.includes('accept_book_request')) {
           return Promise.resolve({
             ok: false,
@@ -364,7 +363,7 @@ describe('Diagnóstico de Saúde e Migrações do Supabase Remoto (Spec 049 / AD
 
   describe('executarDiagnosticoRemoto e formatadores', () => {
     it('executa diagnóstico completo e formata terminal e json com sucesso', async () => {
-      const mockFetch = vi.fn().mockImplementation((url: string) => {
+      const mockFetch = jest.fn().mockImplementation((url: string) => {
         if (url.includes('public/book-photos')) {
           return Promise.resolve({
             ok: false,
@@ -409,7 +408,7 @@ describe('Diagnóstico de Saúde e Migrações do Supabase Remoto (Spec 049 / AD
     });
 
     it('formata adequadamente falhas e pendências detectadas', async () => {
-      const mockFetch = vi.fn().mockImplementation((url: string) => {
+      const mockFetch = jest.fn().mockImplementation((url: string) => {
         if (url.includes('v2_user_preferences')) {
           return Promise.resolve({ ok: false, status: 404 });
         }

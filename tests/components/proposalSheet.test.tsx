@@ -1,6 +1,5 @@
 
 import { act, fireEvent, render } from "@testing-library/react-native";
-import { describe, expect, it, vi } from "vitest";
 import { ProposalSheet } from "@/view/listings/ProposalSheet";
 import { ThemeProvider } from "@/view/theme/ThemeProvider";
 import type { Book } from "@/model/entities/book";
@@ -50,9 +49,9 @@ describe("ProposalSheet (Spec 113)", () => {
         <ThemeProvider>
           <ProposalSheet
             visible={true}
-            onClose={vi.fn()}
+            onClose={jest.fn()}
             targetBook={targetSaleBook}
-            onSubmit={vi.fn()}
+            onSubmit={jest.fn()}
           />
         </ThemeProvider>,
       );
@@ -70,10 +69,10 @@ describe("ProposalSheet (Spec 113)", () => {
         <ThemeProvider>
           <ProposalSheet
             visible={true}
-            onClose={vi.fn()}
+            onClose={jest.fn()}
             targetBook={targetTradeBook}
             userBooks={userBooks}
-            onSubmit={vi.fn()}
+            onSubmit={jest.fn()}
           />
         </ThemeProvider>,
       );
@@ -92,10 +91,10 @@ describe("ProposalSheet (Spec 113)", () => {
         <ThemeProvider>
           <ProposalSheet
             visible={true}
-            onClose={vi.fn()}
+            onClose={jest.fn()}
             targetBook={targetTradeBook}
             loadingBooks={true}
-            onSubmit={vi.fn()}
+            onSubmit={jest.fn()}
           />
         </ThemeProvider>,
       );
@@ -111,10 +110,10 @@ describe("ProposalSheet (Spec 113)", () => {
         <ThemeProvider>
           <ProposalSheet
             visible={true}
-            onClose={vi.fn()}
+            onClose={jest.fn()}
             targetBook={targetTradeBook}
             userBooks={[]}
-            onSubmit={vi.fn()}
+            onSubmit={jest.fn()}
           />
         </ThemeProvider>,
       );
@@ -132,10 +131,10 @@ describe("ProposalSheet (Spec 113)", () => {
         <ThemeProvider>
           <ProposalSheet
             visible={true}
-            onClose={vi.fn()}
+            onClose={jest.fn()}
             targetBook={targetTradeBook}
             error="Erro ao processar a proposta."
-            onSubmit={vi.fn()}
+            onSubmit={jest.fn()}
           />
         </ThemeProvider>,
       );
@@ -145,14 +144,14 @@ describe("ProposalSheet (Spec 113)", () => {
   });
 
   it("permite selecionar e desmarcar livro de troca voltando para nenhum específico", async () => {
-    const onSubmit = vi.fn().mockResolvedValue(undefined);
+    const onSubmit = jest.fn().mockResolvedValue(undefined);
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
       screen = await render(
         <ThemeProvider>
           <ProposalSheet
             visible={true}
-            onClose={vi.fn()}
+            onClose={jest.fn()}
             targetBook={targetTradeBook}
             userBooks={userBooks}
             onSubmit={onSubmit}
@@ -184,14 +183,14 @@ describe("ProposalSheet (Spec 113)", () => {
   });
 
   it("envia mensagem e livro selecionado no onSubmit", async () => {
-    const onSubmit = vi.fn().mockResolvedValue(undefined);
+    const onSubmit = jest.fn().mockResolvedValue(undefined);
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
       screen = await render(
         <ThemeProvider>
           <ProposalSheet
             visible={true}
-            onClose={vi.fn()}
+            onClose={jest.fn()}
             targetBook={targetTradeBook}
             userBooks={userBooks}
             onSubmit={onSubmit}
@@ -226,7 +225,7 @@ describe("ProposalSheet (Spec 113)", () => {
   });
 
   it("aciona onClose ao clicar em Cancelar ou no botão fechar do topo", async () => {
-    const onClose = vi.fn();
+    const onClose = jest.fn();
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
       screen = await render(
@@ -235,7 +234,7 @@ describe("ProposalSheet (Spec 113)", () => {
             visible={true}
             onClose={onClose}
             targetBook={targetSaleBook}
-            onSubmit={vi.fn()}
+            onSubmit={jest.fn()}
           />
         </ThemeProvider>,
       );

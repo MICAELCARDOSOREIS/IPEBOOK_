@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import { MemoryReportDataSource } from "@/infra/datasources/memoryReportDataSource";
 import { AuthError, DuplicateReportError, ValidationError } from "@/model/errors";
 import { ReportUseCases } from "@/usecase/reportUseCases";

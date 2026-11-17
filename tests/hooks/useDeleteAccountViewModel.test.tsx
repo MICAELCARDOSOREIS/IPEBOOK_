@@ -1,6 +1,5 @@
 import { createElement } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
-import { afterEach, describe, expect, it, vi } from "vitest";
 import { DomainError } from "@/model/errors";
 import type { IFileDownloadService } from "@/model/services/iFileDownloadService";
 import type { IAuthUseCases } from "@/usecase/iAuthUseCases";
@@ -10,9 +9,9 @@ import { useDeleteAccountViewModel } from "@/viewmodel/useDeleteAccountViewModel
 
 function stubHistory(overrides: Partial<ISearchHistoryUseCases> = {}): ISearchHistoryUseCases {
   return {
-    listTerms: vi.fn().mockResolvedValue([]),
-    registerSearch: vi.fn().mockResolvedValue([]),
-    clearHistory: vi.fn().mockResolvedValue(undefined),
+    listTerms: jest.fn().mockResolvedValue([]),
+    registerSearch: jest.fn().mockResolvedValue([]),
+    clearHistory: jest.fn().mockResolvedValue(undefined),
     ...overrides,
   };
 }
@@ -22,13 +21,13 @@ const mounted: ReactTestRenderer[] = [];
 
 function stubAuth(overrides: Partial<IAuthUseCases> = {}): IAuthUseCases {
   return {
-    signUp: vi.fn(),
-    signIn: vi.fn(),
-    signOut: vi.fn(),
-    getSession: vi.fn().mockResolvedValue(null),
-    requestPasswordReset: vi.fn(),
-    completePasswordReset: vi.fn(),
-    deleteAccount: vi.fn().mockResolvedValue(undefined),
+    signUp: jest.fn(),
+    signIn: jest.fn(),
+    signOut: jest.fn(),
+    getSession: jest.fn().mockResolvedValue(null),
+    requestPasswordReset: jest.fn(),
+    completePasswordReset: jest.fn(),
+    deleteAccount: jest.fn().mockResolvedValue(undefined),
     ...overrides,
   };
 }
@@ -36,8 +35,8 @@ function stubAuth(overrides: Partial<IAuthUseCases> = {}): IAuthUseCases {
 async function renderHook(
   auth: IAuthUseCases,
   history: ISearchHistoryUseCases = stubHistory(),
-  exportUseCases: IUserDataExportUseCases = { exportUserData: vi.fn() } as unknown as IUserDataExportUseCases,
-  download: IFileDownloadService = { downloadJson: vi.fn().mockResolvedValue(true) },
+  exportUseCases: IUserDataExportUseCases = { exportUserData: jest.fn() } as unknown as IUserDataExportUseCases,
+  download: IFileDownloadService = { downloadJson: jest.fn().mockResolvedValue(true) },
 ) {
   let result!: ReturnType<typeof useDeleteAccountViewModel>;
   function HookProbe() {
@@ -142,7 +141,7 @@ describe("useDeleteAccountViewModel", () => {
 
   it("trata erro de domínio lançado pelo caso de uso", async () => {
     const auth = stubAuth({
-      deleteAccount: vi.fn().mockRejectedValue(new DomainError("Serviço indisponível.")),
+      deleteAccount: jest.fn().mockRejectedValue(new DomainError("Serviço indisponível.")),
     });
     const hook = await renderHook(auth);
 
@@ -163,13 +162,13 @@ describe("useDeleteAccountViewModel", () => {
   it("baixa dados do usuário com sucesso via downloadUserData (Spec 029 - LGPD)", async () => {
     const auth = stubAuth();
     const mockExport = {
-      exportUserData: vi.fn().mockResolvedValue({
+      exportUserData: jest.fn().mockResolvedValue({
         metadata: { schemaVersion: "1.0", exportedAt: "2026-10-20" },
         user: { id: "user-1", email: "teste@exemplo.com" },
       }),
     };
     const mockDownload = {
-      downloadJson: vi.fn().mockResolvedValue(true),
+      downloadJson: jest.fn().mockResolvedValue(true),
     };
 
     let result!: ReturnType<typeof useDeleteAccountViewModel>;
@@ -207,11 +206,11 @@ describe("useDeleteAccountViewModel", () => {
 
   it("trata erro genérico e DomainError no downloadUserData", async () => {
     const mockExportFail = {
-      exportUserData: vi.fn().mockRejectedValue(new DomainError("Erro ao exportar dados")),
+      exportUserData: jest.fn().mockRejectedValue(new DomainError("Erro ao exportar dados")),
     };
     let result!: ReturnType<typeof useDeleteAccountViewModel>;
     function Probe() {
-      result = useDeleteAccountViewModel(stubAuth(), stubHistory(), mockExportFail as any, { downloadJson: vi.fn() } as any);
+      result = useDeleteAccountViewModel(stubAuth(), stubHistory(), mockExportFail as any, { downloadJson: jest.fn() } as any);
       return null;
     }
     await act(async () => {
@@ -229,7 +228,7 @@ describe("useDeleteAccountViewModel", () => {
 
   it("trata erro inesperado em deleteAccount e permite reset do estado", async () => {
     const auth = stubAuth({
-      deleteAccount: vi.fn().mockRejectedValue(new Error("Erro de infraestrutura")),
+      deleteAccount: jest.fn().mockRejectedValue(new Error("Erro de infraestrutura")),
     });
     const hook = await renderHook(auth);
 

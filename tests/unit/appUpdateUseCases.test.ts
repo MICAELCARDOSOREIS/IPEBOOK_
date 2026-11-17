@@ -1,4 +1,3 @@
-import { describe, expect, it, vi } from "vitest";
 import {
   compareSemver,
   evaluateAppUpdateStatus,
@@ -17,14 +16,14 @@ const policy: AppVersionPolicy = {
 
 function createUseCases(dismissedVersion: string | null = null, inAppService?: MemoryInAppUpdateService) {
   let dismissed = dismissedVersion;
-  const policyDataSource = { getPolicy: vi.fn(async () => policy) };
+  const policyDataSource = { getPolicy: jest.fn(async () => policy) };
   const dismissDataSource = {
-    getDismissedVersion: vi.fn(async () => dismissed),
-    dismissVersion: vi.fn(async (version: string) => {
+    getDismissedVersion: jest.fn(async () => dismissed),
+    dismissVersion: jest.fn(async (version: string) => {
       dismissed = version;
     }),
   };
-  const storeLauncher = { openStore: vi.fn(async () => {}) };
+  const storeLauncher = { openStore: jest.fn(async () => {}) };
   return {
     useCases: new AppUpdateUseCases(
       policyDataSource,
@@ -98,7 +97,7 @@ describe("regras de atualização do app", () => {
     expect(result.policy?.latestVersion).toBe("0.3.0");
 
     // Ao chamar openStore, utiliza startUpdateFlow se disponível
-    const spy = vi.spyOn(inAppService, "startUpdateFlow");
+    const spy = jest.spyOn(inAppService, "startUpdateFlow");
     await ctx.useCases.openStore("https://play.google.com/store/apps/details?id=com.ipebook.app");
     expect(spy).toHaveBeenCalled();
     expect(ctx.storeLauncher.openStore).not.toHaveBeenCalled();

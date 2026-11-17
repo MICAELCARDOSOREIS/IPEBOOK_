@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import { MemoryNotificationDataSource } from "@/infra/datasources/memoryNotificationDataSource";
 import type { AppNotification } from "@/model/entities/notification";
 

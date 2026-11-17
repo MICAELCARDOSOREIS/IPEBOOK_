@@ -1,11 +1,10 @@
 
 import { act, fireEvent, render } from "@testing-library/react-native";
-import { describe, expect, it, vi } from "vitest";
 import Welcome from "@/view/onboarding/welcome";
 
 async function renderWelcome(props?: { onHelp?: () => void; onTerms?: () => void }) {
-  const onStart = vi.fn();
-  const onSignIn = vi.fn();
+  const onStart = jest.fn();
+  const onSignIn = jest.fn();
   const screen = await render(
     <Welcome onStart={onStart} onSignIn={onSignIn} onHelp={props?.onHelp} onTerms={props?.onTerms} />,
   );
@@ -46,8 +45,8 @@ describe("Boas-vindas do primeiro acesso (issue #98)", () => {
   });
 
   it("renderiza links institucionais de ajuda e termos quando fornecidos", async () => {
-    const onHelp = vi.fn();
-    const onTerms = vi.fn();
+    const onHelp = jest.fn();
+    const onTerms = jest.fn();
     const { screen } = await renderWelcome({ onHelp, onTerms });
 
     const helpLink = screen.getByRole("link", { name: "Como funciona o IpêBook" });

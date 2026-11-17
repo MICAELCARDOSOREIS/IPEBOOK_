@@ -1,14 +1,13 @@
 import { act, fireEvent, render } from "@testing-library/react-native";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Book } from "@/model/entities/book";
 import type { ConversationItem, ConversationsState } from "@/viewmodel/useConversationsViewModel";
 import { Conversations } from "@/view/conversations/conversations";
 
-vi.mock("@/viewmodel/useConversationsViewModel", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/viewmodel/useConversationsViewModel")>()),
-  useConversationsViewModel: vi.fn(),
+jest.mock("@/viewmodel/useConversationsViewModel", () => ({
+  ...jest.requireActual<typeof import("@/viewmodel/useConversationsViewModel")>("@/viewmodel/useConversationsViewModel"),
+  useConversationsViewModel: jest.fn(),
 }));
-vi.mock("@/viewmodel/useNetworkStatus", () => ({ useNetworkStatus: () => ({ isOnline: true }) }));
+jest.mock("@/viewmodel/useNetworkStatus", () => ({ useNetworkStatus: () => ({ isOnline: true }) }));
 
 import { useConversationsViewModel } from "@/viewmodel/useConversationsViewModel";
 
@@ -16,13 +15,13 @@ const listing = (id: string, title: string): Book => ({
   id, title, author: "A", ownerId: "x", modality: "trade", status: "available",
 });
 
-const deleteConversation = vi.fn().mockResolvedValue(true);
-const cancelRequest = vi.fn().mockResolvedValue(true);
+const deleteConversation = jest.fn().mockResolvedValue(true);
+const cancelRequest = jest.fn().mockResolvedValue(true);
 
 function setup(state: Partial<ConversationsState>) {
-  vi.mocked(useConversationsViewModel).mockReturnValue([
+  jest.mocked(useConversationsViewModel).mockReturnValue([
     { items: [], loading: false, error: null, ...state },
-    { reload: vi.fn(), deleteConversation, cancelRequest },
+    { reload: jest.fn(), deleteConversation, cancelRequest },
   ]);
 }
 
@@ -37,11 +36,13 @@ async function renderView(props: Partial<Parameters<typeof Conversations>[0]> = 
 describe("Conversations (Spec 076)", () => {
   // O horário é calculado na tela (Spec 089); fixa só o relógio para o resultado ser previsível.
   beforeEach(() => {
-    vi.useFakeTimers({ toFake: ["Date", "setInterval", "clearInterval"] });
-    vi.setSystemTime(new Date("2026-10-26T15:00:00"));
+    jest.useFakeTimers({
+      doNotFake: ["nextTick", "setImmediate", "clearImmediate", "setTimeout", "clearTimeout", "queueMicrotask", "performance", "hrtime"],
+    });
+    jest.setSystemTime(new Date("2026-10-26T15:00:00"));
   });
   afterEach(() => {
-    vi.useRealTimers();
+    jest.useRealTimers();
   });
 
   const items: ConversationItem[] = [
@@ -52,9 +53,9 @@ describe("Conversations (Spec 076)", () => {
 
   it("lista pessoa, prévia, horário e livro; aceita abre a conversa (Spec 076 CA4, Spec 082 CA5)", async () => {
     setup({ items });
-    const onOpenChat = vi.fn();
-    const onOpenReceivedRequests = vi.fn();
-    const onOpenListing = vi.fn();
+    const onOpenChat = jest.fn();
+    const onOpenReceivedRequests = jest.fn();
+    const onOpenListing = jest.fn();
     const screen = await renderView({ onOpenChat, onOpenReceivedRequests, onOpenListing });
 
     expect(screen.getByRole("header").props.children).toBe("Conversas");
@@ -75,8 +76,8 @@ describe("Conversations (Spec 076)", () => {
   });
 
   it("recarrega a lista quando a tela volta ao foco (regressão: selo Nova proposta ficava após aceitar)", async () => {
-    const reload = vi.fn().mockResolvedValue(undefined);
-    vi.mocked(useConversationsViewModel).mockReturnValue([
+    const reload = jest.fn().mockResolvedValue(undefined);
+    jest.mocked(useConversationsViewModel).mockReturnValue([
       { items, loading: false, error: null },
       { reload, deleteConversation, cancelRequest },
     ]);
@@ -91,7 +92,7 @@ describe("Conversations (Spec 076)", () => {
 
   it("mostra o estado vazio do 06.09 com Encontrar um livro (Spec 082)", async () => {
     setup({ items: [] });
-    const onExplore = vi.fn();
+    const onExplore = jest.fn();
     const screen = await renderView({ onExplore });
     expect(screen.getByText("Nenhuma conversa ainda")).toBeDefined();
     expect(screen.getByText("Encontre um livro e converse com a pessoa para combinar os detalhes.")).toBeDefined();
@@ -120,7 +121,7 @@ describe("Conversations (Spec 076)", () => {
     setup({ items });
     const screen = await renderView();
     expect(screen.getByText("9h")).toBeDefined();
-    await act(async () => { vi.setSystemTime(new Date("2026-10-26T16:10:00")); vi.advanceTimersByTime(60_000); });
+    await act(async () => { jest.setSystemTime(new Date("2026-10-26T16:10:00")); jest.advanceTimersByTime(60_000); });
     expect(screen.getByText("10h")).toBeDefined();
   });
 
@@ -163,7 +164,7 @@ describe("Conversations (Spec 076)", () => {
 
   it("renderiza botão Voltar no cabeçalho mobile quando onBack é informado", async () => {
     setup({ items });
-    const onBack = vi.fn();
+    const onBack = jest.fn();
     const screen = await renderView({ onBack });
     const backBtn = screen.getByLabelText("Voltar");
     expect(backBtn).toBeDefined();

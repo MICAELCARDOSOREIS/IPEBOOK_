@@ -1,6 +1,5 @@
 import { createElement } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
-import { afterEach, describe, expect, it } from "vitest";
 import { MemorySearchHistoryDataSource } from "@/infra/datasources/memorySearchHistoryDataSource";
 import type { IBookUseCases } from "@/usecase/iBookUseCases";
 import type { ISearchHistoryUseCases } from "@/usecase/iSearchHistoryUseCases";

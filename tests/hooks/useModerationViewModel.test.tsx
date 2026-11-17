@@ -1,6 +1,5 @@
 import { createElement } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
-import { afterEach, describe, expect, it } from "vitest";
 import { MemoryModerationDataSource } from "@/infra/datasources/memoryModerationDataSource";
 import type { ModerationItem } from "@/model/entities/moderation";
 import { ModerationUseCases } from "@/usecase/moderationUseCases";

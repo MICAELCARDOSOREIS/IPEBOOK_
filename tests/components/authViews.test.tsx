@@ -1,27 +1,26 @@
 
 import { act, fireEvent, render } from "@testing-library/react-native";
 import { StyleSheet } from "react-native";
-import { describe, expect, it, vi } from "vitest";
 import type { AuthActions, AuthState } from "@/viewmodel/useAuthViewModel";
 import ForgotPassword from "@/view/auth/forgotPassword";
 import SignIn from "@/view/auth/signIn";
 import SignUp from "@/view/auth/signUp";
 import { colors, fontFamily } from "@/view/tokens";
 
-vi.mock("@/viewmodel/useAuthViewModel", () => ({
-  useAuthViewModel: vi.fn(),
+jest.mock("@/viewmodel/useAuthViewModel", () => ({
+  useAuthViewModel: jest.fn(),
 }));
 
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
-const mockedUseAuthViewModel = vi.mocked(useAuthViewModel);
+const mockedUseAuthViewModel = jest.mocked(useAuthViewModel);
 
 function mockAuth(state: AuthState, actions: Partial<AuthActions> = {}) {
   const fullActions: AuthActions = {
-    signUp: vi.fn().mockResolvedValue(true),
-    signIn: vi.fn().mockResolvedValue(true),
-    signInWithGoogle: vi.fn().mockResolvedValue(true),
-    signOut: vi.fn().mockResolvedValue(true),
-    requestPasswordReset: vi.fn().mockResolvedValue("senha-temp"),
+    signUp: jest.fn().mockResolvedValue(true),
+    signIn: jest.fn().mockResolvedValue(true),
+    signInWithGoogle: jest.fn().mockResolvedValue(true),
+    signOut: jest.fn().mockResolvedValue(true),
+    requestPasswordReset: jest.fn().mockResolvedValue("senha-temp"),
     ...actions,
   };
   mockedUseAuthViewModel.mockReturnValue([state, fullActions]);
@@ -60,7 +59,7 @@ describe("tela de entrar (ISO/IEC 25010 - Usabilidade e Acessibilidade)", () => 
 
   it("exibe indicador de carregamento apenas enquanto autentica", async () => {
     let resolveSignIn!: (value: boolean) => void;
-    const signIn = vi.fn().mockImplementation(
+    const signIn = jest.fn().mockImplementation(
       () => new Promise<boolean>((resolve) => { resolveSignIn = resolve; }),
     );
     mockAuth({ user: null, loading: false, error: null }, { signIn });
@@ -99,9 +98,9 @@ describe("tela de entrar (ISO/IEC 25010 - Usabilidade e Acessibilidade)", () => 
   });
 
   it("chama onAuthenticated após login bem-sucedido", async () => {
-    const signIn = vi.fn().mockResolvedValue(true);
+    const signIn = jest.fn().mockResolvedValue(true);
     mockAuth({ user: null, loading: false, error: null }, { signIn });
-    const onAuthenticated = vi.fn();
+    const onAuthenticated = jest.fn();
 
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
@@ -121,9 +120,9 @@ describe("tela de entrar (ISO/IEC 25010 - Usabilidade e Acessibilidade)", () => 
   });
 
   it("não chama onAuthenticated quando o login falha", async () => {
-    const signIn = vi.fn().mockResolvedValue(false);
+    const signIn = jest.fn().mockResolvedValue(false);
     mockAuth({ user: null, loading: false, error: null }, { signIn });
-    const onAuthenticated = vi.fn();
+    const onAuthenticated = jest.fn();
 
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
@@ -139,7 +138,7 @@ describe("tela de entrar (ISO/IEC 25010 - Usabilidade e Acessibilidade)", () => 
 
   it("aciona a navegação para criar conta", async () => {
     mockAuth({ user: null, loading: false, error: null });
-    const onNavigateToSignUp = vi.fn();
+    const onNavigateToSignUp = jest.fn();
 
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
@@ -155,7 +154,7 @@ describe("tela de entrar (ISO/IEC 25010 - Usabilidade e Acessibilidade)", () => 
 
   it("aciona a navegação para esqueceu a senha", async () => {
     mockAuth({ user: null, loading: false, error: null });
-    const onNavigateToForgotPassword = vi.fn();
+    const onNavigateToForgotPassword = jest.fn();
 
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
@@ -171,7 +170,7 @@ describe("tela de entrar (ISO/IEC 25010 - Usabilidade e Acessibilidade)", () => 
 
   it("aciona onBack ao tocar no botão voltar da barra superior", async () => {
     mockAuth({ user: null, loading: false, error: null });
-    const onBack = vi.fn();
+    const onBack = jest.fn();
 
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
@@ -217,9 +216,9 @@ describe("tela de criar conta (ISO/IEC 25010 - Usabilidade e Acessibilidade)", (
   });
 
   it("chama signInWithGoogle e onAuthenticated ao tocar em Continuar com Google", async () => {
-    const signInWithGoogle = vi.fn().mockResolvedValue(true);
+    const signInWithGoogle = jest.fn().mockResolvedValue(true);
     mockAuth({ user: null, loading: false, error: null }, { signInWithGoogle });
-    const onAuthenticated = vi.fn();
+    const onAuthenticated = jest.fn();
 
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
@@ -235,9 +234,9 @@ describe("tela de criar conta (ISO/IEC 25010 - Usabilidade e Acessibilidade)", (
   });
 
   it("chama onAuthenticated após criar conta com sucesso", async () => {
-    const signUp = vi.fn().mockResolvedValue(true);
+    const signUp = jest.fn().mockResolvedValue(true);
     mockAuth({ user: null, loading: false, error: null }, { signUp });
-    const onAuthenticated = vi.fn();
+    const onAuthenticated = jest.fn();
 
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
@@ -260,7 +259,7 @@ describe("tela de criar conta (ISO/IEC 25010 - Usabilidade e Acessibilidade)", (
 
   it("aciona a navegação para entrar", async () => {
     mockAuth({ user: null, loading: false, error: null });
-    const onNavigateToSignIn = vi.fn();
+    const onNavigateToSignIn = jest.fn();
 
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
@@ -276,7 +275,7 @@ describe("tela de criar conta (ISO/IEC 25010 - Usabilidade e Acessibilidade)", (
 
   it("aciona onBack ao tocar no botão voltar da barra superior", async () => {
     mockAuth({ user: null, loading: false, error: null });
-    const onBack = vi.fn();
+    const onBack = jest.fn();
 
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
@@ -308,7 +307,7 @@ describe("tela de esqueceu a senha (ISO/IEC 25010 - Usabilidade e Acessibilidade
   });
 
   it("confirma a solicitação sem exibir senha", async () => {
-    const requestPasswordReset = vi.fn().mockResolvedValue(true);
+    const requestPasswordReset = jest.fn().mockResolvedValue(true);
     mockAuth({ user: null, loading: false, error: null }, { requestPasswordReset });
 
     let screen!: Awaited<ReturnType<typeof render>>;
@@ -331,7 +330,7 @@ describe("tela de esqueceu a senha (ISO/IEC 25010 - Usabilidade e Acessibilidade
   it("exibe erro quando o envio não está disponível", async () => {
     mockAuth(
       { user: null, loading: false, error: "Recuperação por e-mail indisponível no modo local." },
-      { requestPasswordReset: vi.fn().mockResolvedValue(false) },
+      { requestPasswordReset: jest.fn().mockResolvedValue(false) },
     );
 
     let screen!: Awaited<ReturnType<typeof render>>;
@@ -344,7 +343,7 @@ describe("tela de esqueceu a senha (ISO/IEC 25010 - Usabilidade e Acessibilidade
   });
 
   it("não solicita o link sem informar o e-mail", async () => {
-    const requestPasswordReset = vi.fn().mockResolvedValue(true);
+    const requestPasswordReset = jest.fn().mockResolvedValue(true);
     mockAuth({ user: null, loading: false, error: null }, { requestPasswordReset });
 
     let screen!: Awaited<ReturnType<typeof render>>;
@@ -362,7 +361,7 @@ describe("tela de esqueceu a senha (ISO/IEC 25010 - Usabilidade e Acessibilidade
 
   it("aciona a navegação de volta ao login", async () => {
     mockAuth({ user: null, loading: false, error: null });
-    const onNavigateToSignIn = vi.fn();
+    const onNavigateToSignIn = jest.fn();
 
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
@@ -378,9 +377,9 @@ describe("tela de esqueceu a senha (ISO/IEC 25010 - Usabilidade e Acessibilidade
 
   it("aciona a navegação de voltar quando onBack é fornecido em SignIn, SignUp e ForgotPassword", async () => {
     mockAuth({ user: null, loading: false, error: null });
-    const onBackSignIn = vi.fn();
-    const onBackSignUp = vi.fn();
-    const onBackForgot = vi.fn();
+    const onBackSignIn = jest.fn();
+    const onBackSignUp = jest.fn();
+    const onBackForgot = jest.fn();
 
     let screenSignIn!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
@@ -411,9 +410,9 @@ describe("tela de esqueceu a senha (ISO/IEC 25010 - Usabilidade e Acessibilidade
   });
 
   it("permite voltar ao login a partir do botão principal na tela de confirmação de e-mail (01.05)", async () => {
-    const requestPasswordReset = vi.fn().mockResolvedValue(true);
+    const requestPasswordReset = jest.fn().mockResolvedValue(true);
     mockAuth({ user: null, loading: false, error: null }, { requestPasswordReset });
-    const onNavigateToSignIn = vi.fn();
+    const onNavigateToSignIn = jest.fn();
 
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
@@ -437,7 +436,7 @@ describe("tela de esqueceu a senha (ISO/IEC 25010 - Usabilidade e Acessibilidade
 
 describe("Spec 030 — telas de acesso alinhadas ao Figma", () => {
   it("não cria conta sem o aceite explícito dos termos (01.03)", async () => {
-    const signUp = vi.fn().mockResolvedValue(true);
+    const signUp = jest.fn().mockResolvedValue(true);
     mockAuth({ user: null, loading: false, error: null }, { signUp });
 
     let screen!: Awaited<ReturnType<typeof render>>;
@@ -459,7 +458,7 @@ describe("Spec 030 — telas de acesso alinhadas ao Figma", () => {
   });
 
   it("limpa o erro dos termos quando a pessoa aceita (01.03)", async () => {
-    const signUp = vi.fn().mockResolvedValue(true);
+    const signUp = jest.fn().mockResolvedValue(true);
     mockAuth({ user: null, loading: false, error: null }, { signUp });
 
     let screen!: Awaited<ReturnType<typeof render>>;
@@ -480,7 +479,7 @@ describe("Spec 030 — telas de acesso alinhadas ao Figma", () => {
 
   it("abre os termos de uso a partir do cadastro (01.03)", async () => {
     mockAuth({ user: null, loading: false, error: null });
-    const onNavigateToTerms = vi.fn();
+    const onNavigateToTerms = jest.fn();
 
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
@@ -495,7 +494,7 @@ describe("Spec 030 — telas de acesso alinhadas ao Figma", () => {
   });
 
   it("mostra o endereço informado e o contador de reenvio (01.05)", async () => {
-    const requestPasswordReset = vi.fn().mockResolvedValue(true);
+    const requestPasswordReset = jest.fn().mockResolvedValue(true);
     mockAuth({ user: null, loading: false, error: null }, { requestPasswordReset });
 
     let screen!: Awaited<ReturnType<typeof render>>;
@@ -515,7 +514,7 @@ describe("Spec 030 — telas de acesso alinhadas ao Figma", () => {
   });
 
   it("volta ao formulário pela ação Corrigir e-mail (01.05)", async () => {
-    const requestPasswordReset = vi.fn().mockResolvedValue(true);
+    const requestPasswordReset = jest.fn().mockResolvedValue(true);
     mockAuth({ user: null, loading: false, error: null }, { requestPasswordReset });
 
     let screen!: Awaited<ReturnType<typeof render>>;
@@ -542,8 +541,8 @@ describe("Spec 030 — telas de acesso alinhadas ao Figma", () => {
 
 describe("Spec 030 — reenvio do link de recuperação (01.05)", () => {
   it("libera o reenvio quando o contador chega a zero", async () => {
-    vi.useFakeTimers();
-    const requestPasswordReset = vi.fn().mockResolvedValue(true);
+    jest.useFakeTimers();
+    const requestPasswordReset = jest.fn().mockResolvedValue(true);
     mockAuth({ user: null, loading: false, error: null }, { requestPasswordReset });
 
     let screen!: Awaited<ReturnType<typeof render>>;
@@ -561,7 +560,7 @@ describe("Spec 030 — reenvio do link de recuperação (01.05)", () => {
     expect(screen.getByText("Você pode reenviar o link em 0:45.")).toBeDefined();
 
     await act(async () => {
-      vi.advanceTimersByTime(45_000);
+      jest.advanceTimersByTime(45_000);
     });
 
     expect(screen.queryByText("Você pode reenviar o link em 0:45.")).toBeNull();
@@ -572,6 +571,6 @@ describe("Spec 030 — reenvio do link de recuperação (01.05)", () => {
 
     expect(requestPasswordReset).toHaveBeenCalledTimes(2);
     expect(screen.getByText("Você pode reenviar o link em 0:45.")).toBeDefined();
-    vi.useRealTimers();
+    jest.useRealTimers();
   });
 });

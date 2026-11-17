@@ -1,7 +1,6 @@
 import { createElement } from "react";
 import { Text } from "react-native";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
-import { afterEach, describe, expect, it, vi } from "vitest";
 import { NegotiationRatingModal } from "@/view/requests/NegotiationRatingModal";
 import { ThemeProvider } from "@/view/theme/ThemeProvider";
 
@@ -26,9 +25,9 @@ describe("NegotiationRatingModal (Spec 063 / ADR 0046)", () => {
             visible: false,
             counterpartName: "Ana Paula",
             selectedScore: 5,
-            onSelectScore: vi.fn(),
-            onSubmit: vi.fn(),
-            onClose: vi.fn(),
+            onSelectScore: jest.fn(),
+            onSubmit: jest.fn(),
+            onClose: jest.fn(),
             isSubmitting: false,
             submitError: null,
             isSuccess: false,
@@ -43,9 +42,9 @@ describe("NegotiationRatingModal (Spec 063 / ADR 0046)", () => {
 
   it("renderiza diálogo com 5 opções de estrelas e nome da contraparte", async () => {
     let tree!: ReactTestRenderer;
-    const onSelectScore = vi.fn();
-    const onSubmit = vi.fn().mockResolvedValue(true);
-    const onClose = vi.fn();
+    const onSelectScore = jest.fn();
+    const onSubmit = jest.fn().mockResolvedValue(true);
+    const onClose = jest.fn();
 
     await act(async () => {
       tree = create(
@@ -99,9 +98,9 @@ describe("NegotiationRatingModal (Spec 063 / ADR 0046)", () => {
             visible: true,
             counterpartName: "Carlos Silva",
             selectedScore: 5,
-            onSelectScore: vi.fn(),
-            onSubmit: vi.fn(),
-            onClose: vi.fn(),
+            onSelectScore: jest.fn(),
+            onSubmit: jest.fn(),
+            onClose: jest.fn(),
             isSubmitting: false,
             submitError: "Você já avaliou esta negociação.",
             isSuccess: false,
@@ -118,7 +117,7 @@ describe("NegotiationRatingModal (Spec 063 / ADR 0046)", () => {
 
   it("exibe tela de sucesso quando isSuccess for true", async () => {
     let tree!: ReactTestRenderer;
-    const onClose = vi.fn();
+    const onClose = jest.fn();
     await act(async () => {
       tree = create(
         createElement(
@@ -128,8 +127,8 @@ describe("NegotiationRatingModal (Spec 063 / ADR 0046)", () => {
             visible: true,
             counterpartName: "Carlos Silva",
             selectedScore: 5,
-            onSelectScore: vi.fn(),
-            onSubmit: vi.fn(),
+            onSelectScore: jest.fn(),
+            onSubmit: jest.fn(),
             onClose,
             isSubmitting: false,
             submitError: null,

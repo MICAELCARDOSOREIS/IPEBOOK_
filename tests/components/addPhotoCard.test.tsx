@@ -1,5 +1,4 @@
 
-import { describe, expect, it, vi } from "vitest";
 import { render, fireEvent } from "@testing-library/react-native";
 import { AddPhotoCard } from "@/view/components/AddPhotoCard";
 
@@ -19,14 +18,14 @@ describe("AddPhotoCard (design-system/04-componentes/cartao-de-adicionar-foto.md
   });
 
   it("chama onPress ao tocar", async () => {
-    const onPress = vi.fn();
+    const onPress = jest.fn();
     const { getByRole } = await render(<AddPhotoCard onPress={onPress} />);
     fireEvent.press(getByRole("button"));
     expect(onPress).toHaveBeenCalledTimes(1);
   });
 
   it("exibe pré-visualização quando photoUrl é informado e permite remoção", async () => {
-    const onRemove = vi.fn();
+    const onRemove = jest.fn();
     const { getByLabelText } = await render(
       <AddPhotoCard
         onPress={() => {}}

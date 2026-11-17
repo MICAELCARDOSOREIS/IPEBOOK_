@@ -1,6 +1,5 @@
 import { createElement } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
-import { afterEach, describe, expect, it, vi } from "vitest";
 import { DomainError } from "@/model/errors";
 import type { IBookRequestUseCases, NegotiationDetail } from "@/usecase/iBookRequestUseCases";
 import { useRequestDetailViewModel } from "@/viewmodel/useRequestDetailViewModel";
@@ -73,7 +72,7 @@ describe("testes de hook: useRequestDetailViewModel (ISO/IEC 25010 - Confiabilid
   });
 
   it("trata erro de domínio e permite recarregar", async () => {
-    const getRequestDetail = vi
+    const getRequestDetail = jest
       .fn()
       .mockRejectedValueOnce(new DomainError("Permissão negada."))
       .mockResolvedValueOnce(fakeDetail);

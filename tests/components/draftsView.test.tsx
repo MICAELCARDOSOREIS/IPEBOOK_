@@ -1,19 +1,18 @@
 
 import { act, fireEvent, render } from "@testing-library/react-native";
-import { describe, expect, it, vi } from "vitest";
 import type { Book } from "@/model/entities/book";
 import type { DraftsState, DraftsActions } from "@/viewmodel/useDraftsViewModel";
 import { Drafts } from "@/view/listings/drafts";
 import DraftsScreen from "@/view/listings/drafts";
 
-vi.mock("@/viewmodel/useDraftsViewModel", () => ({
-  useDraftsViewModel: vi.fn(),
+jest.mock("@/viewmodel/useDraftsViewModel", () => ({
+  useDraftsViewModel: jest.fn(),
 }));
-vi.mock("@/viewmodel/useAuthViewModel", () => ({ useAuthViewModel: vi.fn() }));
+jest.mock("@/viewmodel/useAuthViewModel", () => ({ useAuthViewModel: jest.fn() }));
 
 import { useDraftsViewModel } from "@/viewmodel/useDraftsViewModel";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
-const mockedUseDraftsViewModel = vi.mocked(useDraftsViewModel);
+const mockedUseDraftsViewModel = jest.mocked(useDraftsViewModel);
 
 function mockViewModel(state: Partial<DraftsState> = {}, actions: Partial<DraftsActions> = {}) {
   const fullState: DraftsState = {
@@ -25,8 +24,8 @@ function mockViewModel(state: Partial<DraftsState> = {}, actions: Partial<Drafts
     ...state,
   };
   const fullActions: DraftsActions = {
-    reload: vi.fn().mockResolvedValue(undefined),
-    discardDraft: vi.fn().mockResolvedValue(true),
+    reload: jest.fn().mockResolvedValue(undefined),
+    discardDraft: jest.fn().mockResolvedValue(true),
     ...actions,
   };
   mockedUseDraftsViewModel.mockReturnValue([fullState, fullActions]);
@@ -55,7 +54,7 @@ describe("tela de Rascunhos (Spec 017 — Figma 04.11 a 04.16)", () => {
   });
 
   it("mostra estado vazio com chamada para anunciar", async () => {
-    const onNavigateToCreateListing = vi.fn();
+    const onNavigateToCreateListing = jest.fn();
     mockViewModel({ drafts: [], loading: false });
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
@@ -93,7 +92,7 @@ describe("tela de Rascunhos (Spec 017 — Figma 04.11 a 04.16)", () => {
     mockViewModel({ drafts: [draft()], loading: false });
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
-      screen = await render(<Drafts sessionUserId="u1" onResume={vi.fn()} />);
+      screen = await render(<Drafts sessionUserId="u1" onResume={jest.fn()} />);
     });
     expect(screen.getByText("Dom Casmurro")).toBeTruthy();
     expect(screen.getByText("Parou nos detalhes")).toBeTruthy();
@@ -111,7 +110,7 @@ describe("tela de Rascunhos (Spec 017 — Figma 04.11 a 04.16)", () => {
   });
 
   it("retomar chama onResume com o id do rascunho", async () => {
-    const onResume = vi.fn();
+    const onResume = jest.fn();
     mockViewModel({ drafts: [draft({ id: "abc" })], loading: false });
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
@@ -190,7 +189,7 @@ describe("tela de Rascunhos (Spec 017 — Figma 04.11 a 04.16)", () => {
   });
 
   it("singular no resumo e toque no cartão retoma o rascunho (Spec 092)", async () => {
-    const onResume = vi.fn();
+    const onResume = jest.fn();
     mockViewModel({ drafts: [draft({ id: "z" })], loading: false });
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
@@ -203,12 +202,12 @@ describe("tela de Rascunhos (Spec 017 — Figma 04.11 a 04.16)", () => {
 });
 
 describe("contêiner de sessão da tela de Rascunhos (Spec 017)", () => {
-  const noopAuth = { signUp: vi.fn(), signIn: vi.fn(), signOut: vi.fn(), requestPasswordReset: vi.fn() };
+  const noopAuth = { signUp: jest.fn(), signIn: jest.fn(), signOut: jest.fn(), requestPasswordReset: jest.fn() };
 
   it("redireciona para entrar quando não há sessão", async () => {
-    vi.mocked(useAuthViewModel).mockReturnValue([{ user: null, loading: false, error: null }, noopAuth] as never);
+    jest.mocked(useAuthViewModel).mockReturnValue([{ user: null, loading: false, error: null }, noopAuth] as never);
     mockViewModel({ drafts: [], loading: false });
-    const onRequireSignIn = vi.fn();
+    const onRequireSignIn = jest.fn();
     await act(async () => {
       await render(<DraftsScreen onRequireSignIn={onRequireSignIn} />);
     });
@@ -216,9 +215,9 @@ describe("contêiner de sessão da tela de Rascunhos (Spec 017)", () => {
   });
 
   it("não renderiza nem redireciona enquanto a sessão carrega", async () => {
-    vi.mocked(useAuthViewModel).mockReturnValue([{ user: null, loading: true, error: null }, noopAuth] as never);
+    jest.mocked(useAuthViewModel).mockReturnValue([{ user: null, loading: true, error: null }, noopAuth] as never);
     mockViewModel({ drafts: [], loading: true });
-    const onRequireSignIn = vi.fn();
+    const onRequireSignIn = jest.fn();
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
       screen = await render(<DraftsScreen onRequireSignIn={onRequireSignIn} />);
@@ -228,14 +227,14 @@ describe("contêiner de sessão da tela de Rascunhos (Spec 017)", () => {
   });
 
   it("renderiza a lista de rascunhos quando autenticado", async () => {
-    vi.mocked(useAuthViewModel).mockReturnValue([
+    jest.mocked(useAuthViewModel).mockReturnValue([
       { user: { id: "u1", email: "p@e.com" }, loading: false, error: null },
       noopAuth,
     ] as never);
     mockViewModel({ drafts: [draft()], loading: false });
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
-      screen = await render(<DraftsScreen onBack={vi.fn()} onResume={vi.fn()} />);
+      screen = await render(<DraftsScreen onBack={jest.fn()} onResume={jest.fn()} />);
     });
     expect(screen.getByText("Dom Casmurro")).toBeTruthy();
   });

@@ -1,21 +1,20 @@
 import type React from "react";
 import { act, fireEvent, render } from "@testing-library/react-native";
-import { describe, expect, it, vi } from "vitest";
 import type { Book } from "@/model/entities/book";
 import type { ReceivedRequestsActions, ReceivedRequestsState } from "@/viewmodel/useReceivedRequestsViewModel";
 import type { RequestListState } from "@/viewmodel/useSentRequestsViewModel";
 import { ReceivedRequests } from "@/view/requests/receivedRequests";
 import { SentRequests } from "@/view/requests/sentRequests";
 
-vi.mock("@/viewmodel/useReceivedRequestsViewModel", () => ({ useReceivedRequestsViewModel: vi.fn() }));
-vi.mock("@/viewmodel/useSentRequestsViewModel", () => ({ useSentRequestsViewModel: vi.fn() }));
-vi.mock("@/viewmodel/useNetworkStatus", () => ({ useNetworkStatus: vi.fn() }));
+jest.mock("@/viewmodel/useReceivedRequestsViewModel", () => ({ useReceivedRequestsViewModel: jest.fn() }));
+jest.mock("@/viewmodel/useSentRequestsViewModel", () => ({ useSentRequestsViewModel: jest.fn() }));
+jest.mock("@/viewmodel/useNetworkStatus", () => ({ useNetworkStatus: jest.fn() }));
 
 import { useReceivedRequestsViewModel } from "@/viewmodel/useReceivedRequestsViewModel";
 import { useSentRequestsViewModel } from "@/viewmodel/useSentRequestsViewModel";
 import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
 
-vi.mocked(useNetworkStatus).mockReturnValue({ isOnline: true });
+jest.mocked(useNetworkStatus).mockReturnValue({ isOnline: true });
 
 const listing: Book = {
   id: "l1",
@@ -36,8 +35,8 @@ const base: ReceivedRequestsState = {
 };
 
 function mockReceived(state: Partial<ReceivedRequestsState>, actions: Partial<ReceivedRequestsActions> = {}) {
-  const full: ReceivedRequestsActions = { reload: vi.fn(), accept: vi.fn(), reject: vi.fn(), ...actions };
-  vi.mocked(useReceivedRequestsViewModel).mockReturnValue([{ ...base, ...state }, full]);
+  const full: ReceivedRequestsActions = { reload: jest.fn(), accept: jest.fn(), reject: jest.fn(), ...actions };
+  jest.mocked(useReceivedRequestsViewModel).mockReturnValue([{ ...base, ...state }, full]);
   return full;
 }
 
@@ -63,11 +62,11 @@ describe("tela de pedidos recebidos (ISO/IEC 25010 - Usabilidade)", () => {
   });
 
   it("mostra o estado de sem conexão em vez do erro genérico quando o dispositivo está offline (Issue #76)", async () => {
-    vi.mocked(useNetworkStatus).mockReturnValue({ isOnline: false });
+    jest.mocked(useNetworkStatus).mockReturnValue({ isOnline: false });
     mockReceived({ error: "Pedidos indisponíveis." });
     const screen = await renderEl(<ReceivedRequests sessionUserId="owner" />);
     expect(screen.getByText("Você está sem conexão com a internet.")).toBeDefined();
-    vi.mocked(useNetworkStatus).mockReturnValue({ isOnline: true });
+    jest.mocked(useNetworkStatus).mockReturnValue({ isOnline: true });
   });
 
   it("mostra estado vazio", async () => {
@@ -84,7 +83,7 @@ describe("tela de pedidos recebidos (ISO/IEC 25010 - Usabilidade)", () => {
           { request: { id: "r2", listingId: "l1", requesterId: "bob", status: "rejected" }, listing },
         ],
       },
-      { accept: vi.fn().mockResolvedValue(true) },
+      { accept: jest.fn().mockResolvedValue(true) },
     );
     const screen = await renderEl(<ReceivedRequests sessionUserId="owner" />);
     // Spec 043 RN-02: nome público; sem perfil, nunca o identificador interno.
@@ -120,8 +119,8 @@ describe("tela de meus pedidos (ISO/IEC 25010 - Usabilidade)", () => {
       loading: false,
       error: null,
     };
-    vi.mocked(useSentRequestsViewModel).mockReturnValue([state, { reload: vi.fn() }]);
-    const onBack = vi.fn();
+    jest.mocked(useSentRequestsViewModel).mockReturnValue([state, { reload: jest.fn() }]);
+    const onBack = jest.fn();
     const screen = await renderEl(<SentRequests sessionUserId="alice" onBack={onBack} />);
     expect(screen.getByText("Vidas Secas")).toBeDefined();
     expect(screen.getByText("Aceito")).toBeDefined();
@@ -129,7 +128,7 @@ describe("tela de meus pedidos (ISO/IEC 25010 - Usabilidade)", () => {
     await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Voltar" })); });
     expect(onBack).toHaveBeenCalledTimes(1);
 
-    vi.mocked(useSentRequestsViewModel).mockReturnValue([{ ...state, items: [] }, { reload: vi.fn() }]);
+    jest.mocked(useSentRequestsViewModel).mockReturnValue([{ ...state, items: [] }, { reload: jest.fn() }]);
     const empty = await renderEl(<SentRequests sessionUserId="alice" />);
     expect(empty.getByText("Você ainda não solicitou nenhuma negociação.")).toBeDefined();
   });

@@ -1,5 +1,4 @@
 
-import { afterEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render } from "@testing-library/react-native";
 import {
   PERMISSION_PROMPT_COPY,
@@ -28,8 +27,8 @@ describe("PermissionPromptDialog (Spec 020 T004)", () => {
   });
 
   it("CA2: explica o motivo das notificações e chama permitir ou adiar", async () => {
-    const onAllow = vi.fn();
-    const onLater = vi.fn();
+    const onAllow = jest.fn();
+    const onLater = jest.fn();
     const screen = await render(
       <PermissionPromptDialog
         permission="notifications"
@@ -51,8 +50,8 @@ describe("PermissionPromptDialog (Spec 020 T004)", () => {
   });
 
   it("CA3: na recusa diz o que fica indisponível, como habilitar depois e fecha com 'entendi'", async () => {
-    const onDismiss = vi.fn();
-    const onAllow = vi.fn();
+    const onDismiss = jest.fn();
+    const onAllow = jest.fn();
     const screen = await render(
       <PermissionPromptDialog
         permission="notifications"

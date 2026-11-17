@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import { contrastRatio } from "@/view/theme/contrastRatio";
 import { colors, darkColors } from "@/view/tokens";
 

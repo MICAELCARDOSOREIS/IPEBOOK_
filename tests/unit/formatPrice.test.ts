@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import { formatPrice } from "@/view/formatPrice";
 
 describe("formatPrice", () => {

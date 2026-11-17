@@ -1,34 +1,33 @@
 
 import { act, fireEvent, render } from "@testing-library/react-native";
 import { StyleSheet } from "react-native";
-import { describe, expect, it, vi } from "vitest";
 import type { EditListingState, EditListingActions } from "@/viewmodel/useEditListingViewModel";
 import EditListing from "@/view/listings/editListing";
 
-vi.mock("@/viewmodel/useEditListingViewModel", () => ({
-  useEditListingViewModel: vi.fn(),
+jest.mock("@/viewmodel/useEditListingViewModel", () => ({
+  useEditListingViewModel: jest.fn(),
 }));
 
 import { useEditListingViewModel } from "@/viewmodel/useEditListingViewModel";
-const mockedUseEditListingViewModel = vi.mocked(useEditListingViewModel);
+const mockedUseEditListingViewModel = jest.mocked(useEditListingViewModel);
 
 function mockViewModel(state: EditListingState, actions: Partial<EditListingActions> = {}) {
   const fullActions: EditListingActions = {
-    load: vi.fn().mockResolvedValue(undefined),
-    setTitle: vi.fn(),
-    setAuthor: vi.fn(),
-    setCategory: vi.fn(),
-    setModality: vi.fn(),
-    setPrice: vi.fn(),
-    setNeighborhood: vi.fn(),
-    setCondition: vi.fn(),
-    setDescription: vi.fn(),
-    setPhotoUrl: vi.fn(),
-    addPhoto: vi.fn(),
-    removePhoto: vi.fn(),
-    setIsBox: vi.fn(),
-    setBoxVolumesCount: vi.fn(),
-    submit: vi.fn().mockResolvedValue(null),
+    load: jest.fn().mockResolvedValue(undefined),
+    setTitle: jest.fn(),
+    setAuthor: jest.fn(),
+    setCategory: jest.fn(),
+    setModality: jest.fn(),
+    setPrice: jest.fn(),
+    setNeighborhood: jest.fn(),
+    setCondition: jest.fn(),
+    setDescription: jest.fn(),
+    setPhotoUrl: jest.fn(),
+    addPhoto: jest.fn(),
+    removePhoto: jest.fn(),
+    setIsBox: jest.fn(),
+    setBoxVolumesCount: jest.fn(),
+    submit: jest.fn().mockResolvedValue(null),
     ...actions,
   };
   mockedUseEditListingViewModel.mockReturnValue([state, fullActions]);
@@ -135,9 +134,9 @@ describe("tela de edição de anúncio (ISO/IEC 25010 - Usabilidade e Acessibili
   });
 
   it("submete alterações e chama onSaved ao obter sucesso", async () => {
-    const onSaved = vi.fn();
+    const onSaved = jest.fn();
     const actions = mockViewModel(loadedState, {
-      submit: vi.fn().mockResolvedValue(loadedState.book),
+      submit: jest.fn().mockResolvedValue(loadedState.book),
     });
 
     let screen!: Awaited<ReturnType<typeof render>>;
@@ -157,7 +156,7 @@ describe("tela de edição de anúncio (ISO/IEC 25010 - Usabilidade e Acessibili
   });
 
   it("chama onCancel ao clicar em Cancelar", async () => {
-    const onCancel = vi.fn();
+    const onCancel = jest.fn();
     mockViewModel(loadedState);
 
     let screen!: Awaited<ReturnType<typeof render>>;

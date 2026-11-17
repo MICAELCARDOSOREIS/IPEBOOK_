@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import {
   APP_SHELL_URLS,
   CATALOG_CACHE_NAME,

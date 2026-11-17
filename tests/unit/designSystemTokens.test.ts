@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import { colors, darkColors, tokens } from "@/view/tokens";
 
 describe("Contrato dos tokens do Design System", () => {

@@ -1,6 +1,5 @@
 import { createElement } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
-import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Book } from "@/model/entities/book";
 import { DomainError } from "@/model/errors";
 import type { IFavoriteUseCases } from "@/usecase/iFavoriteUseCases";
@@ -55,7 +54,7 @@ function casosDeUso(parcial: Partial<IFavoriteUseCases> = {}): IFavoriteUseCases
 
 describe("useFavoritesViewModel", () => {
   it("sem sessão não consulta favoritos e fica sem carregar", async () => {
-    const listFavorites = vi.fn(async () => [livro("a")]);
+    const listFavorites = jest.fn(async () => [livro("a")]);
     const hook = await montarLista(null, { listFavorites });
 
     expect(listFavorites).not.toHaveBeenCalled();
@@ -91,7 +90,7 @@ describe("useFavoritesViewModel", () => {
   });
 
   it("removeFavorite tira o livro da lista e devolve true", async () => {
-    const toggleFavorite = vi.fn(async () => false);
+    const toggleFavorite = jest.fn(async () => false);
     const hook = await montarLista("bia", { listFavorites: async () => [livro("a"), livro("b")], toggleFavorite });
 
     let ok = false;
@@ -140,7 +139,7 @@ describe("useFavoritesViewModel", () => {
   });
 
   it("removeFavorite sem sessão não faz nada", async () => {
-    const toggleFavorite = vi.fn(async () => true);
+    const toggleFavorite = jest.fn(async () => true);
     const hook = await montarLista(null, { toggleFavorite });
 
     let ok = true;
@@ -155,7 +154,7 @@ describe("useFavoritesViewModel", () => {
 
 describe("useFavoriteButtonViewModel", () => {
   it("sem sessão fica desmarcado e não consulta", async () => {
-    const isFavorite = vi.fn(async () => true);
+    const isFavorite = jest.fn(async () => true);
     const hook = await montarBotao(null, { isFavorite });
 
     expect(isFavorite).not.toHaveBeenCalled();

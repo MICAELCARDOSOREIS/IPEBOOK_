@@ -1,6 +1,5 @@
 import { createElement } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
-import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Book } from "@/model/entities/book";
 import { AuthError, DataSourceError } from "@/model/errors";
 import type { IBookUseCases } from "@/usecase/iBookUseCases";
@@ -20,17 +19,17 @@ const book: Book = {
 
 function stubUseCases(overrides: Partial<IBookUseCases> = {}): IBookUseCases {
   return {
-    listBooks: vi.fn().mockResolvedValue([]),
-    getBookById: vi.fn().mockResolvedValue(book),
-    createListing: vi.fn(),
-    updateListing: vi.fn(),
-    togglePauseListing: vi.fn().mockResolvedValue({ ...book, status: "paused" }),
-    listMyListings: vi.fn().mockResolvedValue([]),
-    cancelListing: vi.fn().mockResolvedValue(undefined),
-    listDrafts: vi.fn().mockResolvedValue([]),
-    saveDraft: vi.fn(),
-    discardDraft: vi.fn().mockResolvedValue(undefined),
-    publishDraft: vi.fn(),
+    listBooks: jest.fn().mockResolvedValue([]),
+    getBookById: jest.fn().mockResolvedValue(book),
+    createListing: jest.fn(),
+    updateListing: jest.fn(),
+    togglePauseListing: jest.fn().mockResolvedValue({ ...book, status: "paused" }),
+    listMyListings: jest.fn().mockResolvedValue([]),
+    cancelListing: jest.fn().mockResolvedValue(undefined),
+    listDrafts: jest.fn().mockResolvedValue([]),
+    saveDraft: jest.fn(),
+    discardDraft: jest.fn().mockResolvedValue(undefined),
+    publishDraft: jest.fn(),
     ...overrides,
   };
 }
@@ -82,7 +81,7 @@ describe("useManageListingViewModel", () => {
 
   it("informa erro de domínio ao carregar", async () => {
     const useCases = stubUseCases({
-      getBookById: vi.fn().mockRejectedValue(new DataSourceError("Anúncio não encontrado.")),
+      getBookById: jest.fn().mockRejectedValue(new DataSourceError("Anúncio não encontrado.")),
     });
     const hook = await renderHook("b1", "user-1", useCases);
 
@@ -99,7 +98,7 @@ describe("useManageListingViewModel", () => {
 
   it("usa mensagem genérica quando a carga falha por erro inesperado", async () => {
     const useCases = stubUseCases({
-      getBookById: vi.fn().mockRejectedValue(new Error("falha de rede")),
+      getBookById: jest.fn().mockRejectedValue(new Error("falha de rede")),
     });
     const hook = await renderHook("b1", "user-1", useCases);
 
@@ -133,7 +132,7 @@ describe("useManageListingViewModel", () => {
 
   it("mantém o anúncio e informa a falha quando a pausa é recusada", async () => {
     const useCases = stubUseCases({
-      togglePauseListing: vi.fn().mockRejectedValue(new AuthError("Sessão obrigatória para pausar ou retomar anúncio.")),
+      togglePauseListing: jest.fn().mockRejectedValue(new AuthError("Sessão obrigatória para pausar ou retomar anúncio.")),
     });
     const hook = await renderHook("b1", "user-1", useCases);
 
@@ -163,7 +162,7 @@ describe("useManageListingViewModel", () => {
 
   it("usa mensagem genérica quando a exclusão falha por erro inesperado", async () => {
     const useCases = stubUseCases({
-      cancelListing: vi.fn().mockRejectedValue(new Error("falha de rede")),
+      cancelListing: jest.fn().mockRejectedValue(new Error("falha de rede")),
     });
     const hook = await renderHook("b1", "user-1", useCases);
 
@@ -177,8 +176,8 @@ describe("useManageListingViewModel", () => {
 
   it("trata erro inesperado em togglePause e DomainError em remove", async () => {
     const useCases = stubUseCases({
-      togglePauseListing: vi.fn().mockRejectedValue(new Error("Erro 500")),
-      cancelListing: vi.fn().mockRejectedValue(new AuthError("Não autorizado a excluir este anúncio.")),
+      togglePauseListing: jest.fn().mockRejectedValue(new Error("Erro 500")),
+      cancelListing: jest.fn().mockRejectedValue(new AuthError("Não autorizado a excluir este anúncio.")),
     });
     const hook = await renderHook("b1", "user-1", useCases);
 

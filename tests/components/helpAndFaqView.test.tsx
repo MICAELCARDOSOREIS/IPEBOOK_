@@ -1,6 +1,5 @@
 
 import { act, fireEvent, render } from "@testing-library/react-native";
-import { describe, expect, it, vi } from "vitest";
 import HelpAndFaq from "@/view/help/helpAndFaq";
 
 describe("tela de Central de Ajuda e FAQ (HelpAndFaq)", () => {
@@ -69,7 +68,7 @@ describe("tela de Central de Ajuda e FAQ (HelpAndFaq)", () => {
   });
 
   it("aciona callback onBack na barra superior", async () => {
-    const onBack = vi.fn();
+    const onBack = jest.fn();
     let screen!: Awaited<ReturnType<typeof render>>;
 
     await act(async () => {
@@ -84,7 +83,7 @@ describe("tela de Central de Ajuda e FAQ (HelpAndFaq)", () => {
   });
 
   it("abre as conversas pelo botão de rodapé (Figma 09.01, Spec 032)", async () => {
-    const onOpenConversations = vi.fn();
+    const onOpenConversations = jest.fn();
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
       screen = await render(<HelpAndFaq onBack={() => {}} onOpenConversations={onOpenConversations} />);

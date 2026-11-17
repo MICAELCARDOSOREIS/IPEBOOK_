@@ -1,6 +1,5 @@
 import { act, fireEvent, render } from "@testing-library/react-native";
 import { StyleSheet } from "react-native";
-import { describe, expect, it, vi } from "vitest";
 import { MemoryBetaTesterDataSource } from "@/infra/datasources/memoryBetaTesterDataSource";
 import { BetaSignupUseCases } from "@/usecase/betaSignupUseCases";
 import { BetaInviteScreen } from "@/view/beta/betaInviteScreen";
@@ -14,7 +13,7 @@ function Harness({ dataSource, onOpenStore }: { dataSource: MemoryBetaTesterData
 
 async function renderScreen() {
   const dataSource = new MemoryBetaTesterDataSource();
-  const onOpenStore = vi.fn();
+  const onOpenStore = jest.fn();
   let screen!: Awaited<ReturnType<typeof render>>;
   await act(async () => {
     screen = await render(<Harness dataSource={dataSource} onOpenStore={onOpenStore} />);
@@ -52,9 +51,9 @@ describe("BetaInviteScreen (Spec 108)", () => {
 
 describe("Destaques da comunidade e ações de loja do beta (Spec 108)", () => {
   it("exibe os cartões de destaque na esquerda e permite abrir grupo e convite após inscrição", async () => {
-    const onOpenUrl = vi.fn();
+    const onOpenUrl = jest.fn();
     const state = { loading: false, error: null, success: true };
-    const actions = { submit: vi.fn(), reset: vi.fn() };
+    const actions = { submit: jest.fn(), reset: jest.fn() };
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
       screen = await render(
@@ -84,17 +83,17 @@ describe("Destaques da comunidade e ações de loja do beta (Spec 108)", () => {
 
 describe("Conexão com Google no convite do beta (Spec 108)", () => {
   it("oferece botão 'Continuar com Google' e chama signInWithGoogle", async () => {
-    const signInWithGoogle = vi.fn().mockResolvedValue(true);
+    const signInWithGoogle = jest.fn().mockResolvedValue(true);
     const authActions = {
-      signUp: vi.fn(),
-      signIn: vi.fn(),
+      signUp: jest.fn(),
+      signIn: jest.fn(),
       signInWithGoogle,
-      signOut: vi.fn(),
-      requestPasswordReset: vi.fn(),
+      signOut: jest.fn(),
+      requestPasswordReset: jest.fn(),
     };
     const authState = { user: null, loading: false, error: null };
     const state = { loading: false, error: null, success: false };
-    const actions = { submit: vi.fn(), reset: vi.fn() };
+    const actions = { submit: jest.fn(), reset: jest.fn() };
 
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
@@ -117,11 +116,11 @@ describe("Conexão com Google no convite do beta (Spec 108)", () => {
 
   it("quando autenticado com Google, registra o testador e mostra botão para a Play Store", async () => {
     const authActions = {
-      signUp: vi.fn(),
-      signIn: vi.fn(),
-      signInWithGoogle: vi.fn(),
-      signOut: vi.fn(),
-      requestPasswordReset: vi.fn(),
+      signUp: jest.fn(),
+      signIn: jest.fn(),
+      signInWithGoogle: jest.fn(),
+      signOut: jest.fn(),
+      requestPasswordReset: jest.fn(),
     };
     const authState = {
       user: { id: "u-1", email: "testador@gmail.com", name: "Micael Testador" },
@@ -129,8 +128,8 @@ describe("Conexão com Google no convite do beta (Spec 108)", () => {
       error: null,
     };
     const state = { loading: false, error: null, success: false };
-    const actions = { submit: vi.fn(), reset: vi.fn() };
-    const onOpenUrl = vi.fn();
+    const actions = { submit: jest.fn(), reset: jest.fn() };
+    const onOpenUrl = jest.fn();
 
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
@@ -160,13 +159,13 @@ describe("Conexão com Google no convite do beta (Spec 108)", () => {
   });
 
   it("permite sair da conta Google pelo botão de troca de conta", async () => {
-    const signOut = vi.fn().mockResolvedValue(undefined);
+    const signOut = jest.fn().mockResolvedValue(undefined);
     const authActions = {
-      signUp: vi.fn(),
-      signIn: vi.fn(),
-      signInWithGoogle: vi.fn(),
+      signUp: jest.fn(),
+      signIn: jest.fn(),
+      signInWithGoogle: jest.fn(),
       signOut,
-      requestPasswordReset: vi.fn(),
+      requestPasswordReset: jest.fn(),
     };
     const authState = {
       user: { id: "u-1", email: "testador@gmail.com", name: "Micael" },
@@ -174,7 +173,7 @@ describe("Conexão com Google no convite do beta (Spec 108)", () => {
       error: null,
     };
     const state = { loading: false, error: null, success: false };
-    const actions = { submit: vi.fn(), reset: vi.fn() };
+    const actions = { submit: jest.fn(), reset: jest.fn() };
 
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
@@ -197,9 +196,9 @@ describe("Conexão com Google no convite do beta (Spec 108)", () => {
 
 describe("Navegação para a Home a partir do Beta (Spec 108)", () => {
   it("chama onNavigateHome ao clicar no botão 'Início' ou no logotipo", async () => {
-    const onNavigateHome = vi.fn();
+    const onNavigateHome = jest.fn();
     const state = { loading: false, error: null, success: false };
-    const actions = { submit: vi.fn(), reset: vi.fn() };
+    const actions = { submit: jest.fn(), reset: jest.fn() };
 
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
@@ -225,7 +224,7 @@ describe("Navegação para a Home a partir do Beta (Spec 108)", () => {
 
   it("abre e fecha o guia visual passo a passo ao tocar no botão de ajuda", async () => {
     const state = { loading: false, error: null, success: false };
-    const actions = { submit: vi.fn(), reset: vi.fn() };
+    const actions = { submit: jest.fn(), reset: jest.fn() };
 
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
@@ -252,7 +251,7 @@ describe("Navegação para a Home a partir do Beta (Spec 108)", () => {
 
   it("não exibe alternância de tema escuro para manter consistência com o app", async () => {
     const state = { loading: false, error: null, success: false };
-    const actions = { submit: vi.fn(), reset: vi.fn() };
+    const actions = { submit: jest.fn(), reset: jest.fn() };
 
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {

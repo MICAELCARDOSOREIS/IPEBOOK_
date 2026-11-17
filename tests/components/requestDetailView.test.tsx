@@ -1,20 +1,19 @@
 
 import { act, fireEvent, render } from "@testing-library/react-native";
-import { describe, expect, it, vi } from "vitest";
 import type { NegotiationDetail } from "@/usecase/iBookRequestUseCases";
 import type { RequestDetailState, RequestDetailActions } from "@/viewmodel/useRequestDetailViewModel";
 import RequestDetailScreen, { RequestDetail } from "@/view/requests/requestDetail";
 
-vi.mock("@/viewmodel/useRequestDetailViewModel", () => ({
-  useRequestDetailViewModel: vi.fn(),
+jest.mock("@/viewmodel/useRequestDetailViewModel", () => ({
+  useRequestDetailViewModel: jest.fn(),
 }));
 
 // O cartão do encontro (Spec 052) tem testes próprios; aqui ele começa sem convite.
 let mockedMeeting: Record<string, unknown> | null = null;
-vi.mock("@/viewmodel/useMeetingViewModel", () => ({
+jest.mock("@/viewmodel/useMeetingViewModel", () => ({
   useMeetingViewModel: () => [
     { meeting: mockedMeeting, loading: false, error: null, busy: false, actionError: null },
-    { reload: vi.fn(), confirm: vi.fn(), cancel: vi.fn() },
+    { reload: jest.fn(), confirm: jest.fn(), cancel: jest.fn() },
   ],
 }));
 
@@ -24,23 +23,23 @@ let mockedDelivery: { loading: boolean; role: "giver" | "receiver" | null; compl
   role: null,
   completed: null,
 };
-vi.mock("@/viewmodel/useDeliveryViewModel", () => ({
+jest.mock("@/viewmodel/useDeliveryViewModel", () => ({
   useDeliveryStatus: () => mockedDelivery,
 }));
 
-vi.mock("@/viewmodel/useAuthViewModel", () => ({
-  useAuthViewModel: vi.fn(),
+jest.mock("@/viewmodel/useAuthViewModel", () => ({
+  useAuthViewModel: jest.fn(),
 }));
 
 import { useRequestDetailViewModel } from "@/viewmodel/useRequestDetailViewModel";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 
-const mockedUseRequestDetailViewModel = vi.mocked(useRequestDetailViewModel);
-const mockedUseAuthViewModel = vi.mocked(useAuthViewModel);
+const mockedUseRequestDetailViewModel = jest.mocked(useRequestDetailViewModel);
+const mockedUseAuthViewModel = jest.mocked(useAuthViewModel);
 
 function mockViewModel(state: RequestDetailState, actions: Partial<RequestDetailActions> = {}) {
   const fullActions: RequestDetailActions = {
-    reload: vi.fn().mockResolvedValue(undefined),
+    reload: jest.fn().mockResolvedValue(undefined),
     ...actions,
   };
   mockedUseRequestDetailViewModel.mockReturnValue([state, fullActions]);
@@ -97,7 +96,7 @@ describe("tela de Detalhes da Negociação (ISO/IEC 25010 - Usabilidade e Acessi
 
   it("linha da pessoa com papel e Conversar abre a conversa (Spec 082 CA5, Spec 083 CA3)", async () => {
     mockViewModel({ detail: fakeDetail, loading: false, error: null });
-    const onOpenChat = vi.fn();
+    const onOpenChat = jest.fn();
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
       screen = await render(<RequestDetail requestId="req-1" sessionUserId="vendedor-1" onOpenChat={onOpenChat} />);
@@ -154,7 +153,7 @@ describe("tela de Detalhes da Negociação (ISO/IEC 25010 - Usabilidade e Acessi
 
   it("renderiza cabeçalho e informações completas do acordo", async () => {
     mockViewModel({ detail: fakeDetail, loading: false, error: null });
-    const onNavigateToBookDetail = vi.fn();
+    const onNavigateToBookDetail = jest.fn();
 
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
@@ -234,7 +233,7 @@ describe("tela de Detalhes da Negociação (ISO/IEC 25010 - Usabilidade e Acessi
       scheduledAt: "2099-01-01T15:00:00.000Z", proposedBy: "comprador-1", status: "confirmed",
     };
 
-    async function open(onOpenDelivery = vi.fn()) {
+    async function open(onOpenDelivery = jest.fn()) {
       mockViewModel({ detail: fakeDetail, loading: false, error: null });
       let screen!: Awaited<ReturnType<typeof render>>;
       await act(async () => {
@@ -297,7 +296,7 @@ describe("tela de Detalhes da Negociação (ISO/IEC 25010 - Usabilidade e Acessi
   });
 
   it("puxar para atualizar recarrega sem esconder o conteúdo (Spec 080)", async () => {
-    const reload = vi.fn().mockResolvedValue(undefined);
+    const reload = jest.fn().mockResolvedValue(undefined);
     mockedUseRequestDetailViewModel.mockReturnValue([
       { detail: fakeDetail, loading: true, error: null },
       { reload },
@@ -344,9 +343,9 @@ describe("tela de Detalhes da Negociação (ISO/IEC 25010 - Usabilidade e Acessi
   it("redireciona para login se o usuário não tiver sessão", async () => {
     mockedUseAuthViewModel.mockReturnValue([
       { user: null, loading: false, error: null },
-      { signIn: vi.fn(), signUp: vi.fn(), signOut: vi.fn(), requestPasswordReset: vi.fn() },
+      { signIn: jest.fn(), signUp: jest.fn(), signOut: jest.fn(), requestPasswordReset: jest.fn() },
     ]);
-    const onRequireSignIn = vi.fn();
+    const onRequireSignIn = jest.fn();
 
     await act(async () => {
       await render(<RequestDetailScreen requestId="req-1" onRequireSignIn={onRequireSignIn} />);
@@ -358,7 +357,7 @@ describe("tela de Detalhes da Negociação (ISO/IEC 25010 - Usabilidade e Acessi
   it("a tela com sessão repassa a ação de abrir a entrega (regressão: o toque não fazia nada)", async () => {
     mockedUseAuthViewModel.mockReturnValue([
       { user: { id: "vendedor-1", name: "Ana", email: "a@b.c" } as never, loading: false, error: null },
-      { signIn: vi.fn(), signUp: vi.fn(), signOut: vi.fn(), requestPasswordReset: vi.fn() },
+      { signIn: jest.fn(), signUp: jest.fn(), signOut: jest.fn(), requestPasswordReset: jest.fn() },
     ]);
     mockedMeeting = {
       id: "m1", requestId: "req-1", pointName: "Praça da Bandeira (Centro)",
@@ -366,7 +365,7 @@ describe("tela de Detalhes da Negociação (ISO/IEC 25010 - Usabilidade e Acessi
     };
     mockedDelivery = { loading: false, role: "giver", completed: null };
     mockViewModel({ detail: fakeDetail, loading: false, error: null });
-    const onOpenDelivery = vi.fn();
+    const onOpenDelivery = jest.fn();
 
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {

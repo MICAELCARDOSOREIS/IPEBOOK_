@@ -1,6 +1,5 @@
 import { createElement } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
-import { afterEach, describe, expect, it, vi } from "vitest";
 import { ValidationError } from "@/model/errors";
 import type { IPublicProfileUseCases } from "@/usecase/iPublicProfileUseCases";
 import { useProfileViewModel } from "@/viewmodel/useProfileViewModel";
@@ -42,8 +41,8 @@ const profile = {
 describe("testes de hook: useProfileViewModel (Spec 006 / Issue #55)", () => {
   it("não carrega nada sem sessão", async () => {
     const hook = await renderHook(null, {
-      getPublicProfile: vi.fn(),
-      updateProfile: vi.fn(),
+      getPublicProfile: jest.fn(),
+      updateProfile: jest.fn(),
     });
     expect(hook.current[0]).toEqual({ profile: null, loading: false, saving: false, error: null });
   });
@@ -51,15 +50,15 @@ describe("testes de hook: useProfileViewModel (Spec 006 / Issue #55)", () => {
   it("carrega o perfil da pessoa autenticada", async () => {
     const hook = await renderHook("ana", {
       getPublicProfile: async () => profile,
-      updateProfile: vi.fn(),
+      updateProfile: jest.fn(),
     });
     expect(hook.current[0]).toEqual({ profile, loading: false, saving: false, error: null });
 
     // Reload com DomainError
-    const getProfileDomainErr = vi.fn(async () => {
+    const getProfileDomainErr = jest.fn(async () => {
       throw new ValidationError("Perfil suspenso.");
     });
-    const hookReloadErr = await renderHook("ana", { getPublicProfile: getProfileDomainErr, updateProfile: vi.fn() });
+    const hookReloadErr = await renderHook("ana", { getPublicProfile: getProfileDomainErr, updateProfile: jest.fn() });
     expect(hookReloadErr.current[0].error).toBe("Perfil suspenso.");
     await act(async () => {
       hookReloadErr.current[1].reload();
@@ -72,14 +71,14 @@ describe("testes de hook: useProfileViewModel (Spec 006 / Issue #55)", () => {
       getPublicProfile: async () => {
         throw new ValidationError("Usuário não encontrado.");
       },
-      updateProfile: vi.fn(),
+      updateProfile: jest.fn(),
     });
     expect(hook.current[0]).toEqual({ profile: null, loading: false, saving: false, error: "Usuário não encontrado." });
   });
 
   it("atualiza o perfil com sucesso", async () => {
     const updated = { ...profile, name: "Ana Paula" };
-    const updateProfile = vi.fn().mockResolvedValue(updated);
+    const updateProfile = jest.fn().mockResolvedValue(updated);
     const hook = await renderHook("ana", { getPublicProfile: async () => profile, updateProfile });
     let ok = false;
     await act(async () => {
@@ -119,8 +118,8 @@ describe("testes de hook: useProfileViewModel (Spec 006 / Issue #55)", () => {
   });
 
   it("não atualiza sem sessão", async () => {
-    const updateProfile = vi.fn();
-    const hook = await renderHook(null, { getPublicProfile: vi.fn(), updateProfile });
+    const updateProfile = jest.fn();
+    const hook = await renderHook(null, { getPublicProfile: jest.fn(), updateProfile });
     let ok = true;
     await act(async () => {
       ok = await hook.current[1].update({ name: "Ana" });
@@ -131,12 +130,12 @@ describe("testes de hook: useProfileViewModel (Spec 006 / Issue #55)", () => {
 
   it("recarrega o perfil pelo reload após falha de carregamento", async () => {
     let attempts = 0;
-    const getPublicProfile = vi.fn(async () => {
+    const getPublicProfile = jest.fn(async () => {
       attempts += 1;
       if (attempts === 1) throw new Error("boom");
       return profile;
     });
-    const hook = await renderHook("ana", { getPublicProfile, updateProfile: vi.fn() });
+    const hook = await renderHook("ana", { getPublicProfile, updateProfile: jest.fn() });
     expect(hook.current[0].error).toBe("Não foi possível carregar o perfil. Tente novamente.");
     await act(async () => {
       hook.current[1].reload();
@@ -144,10 +143,10 @@ describe("testes de hook: useProfileViewModel (Spec 006 / Issue #55)", () => {
     expect(hook.current[0]).toEqual({ profile, loading: false, saving: false, error: null });
 
     // Reload com DomainError
-    const getProfileDomainErr = vi.fn(async () => {
+    const getProfileDomainErr = jest.fn(async () => {
       throw new ValidationError("Perfil suspenso.");
     });
-    const hookReloadErr = await renderHook("ana", { getPublicProfile: getProfileDomainErr, updateProfile: vi.fn() });
+    const hookReloadErr = await renderHook("ana", { getPublicProfile: getProfileDomainErr, updateProfile: jest.fn() });
     expect(hookReloadErr.current[0].error).toBe("Perfil suspenso.");
     await act(async () => {
       hookReloadErr.current[1].reload();
@@ -156,8 +155,8 @@ describe("testes de hook: useProfileViewModel (Spec 006 / Issue #55)", () => {
   });
 
   it("não recarrega sem sessão", async () => {
-    const getPublicProfile = vi.fn();
-    const hook = await renderHook(null, { getPublicProfile, updateProfile: vi.fn() });
+    const getPublicProfile = jest.fn();
+    const hook = await renderHook(null, { getPublicProfile, updateProfile: jest.fn() });
     await act(async () => {
       hook.current[1].reload();
     });

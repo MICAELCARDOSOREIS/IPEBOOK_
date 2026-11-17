@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import { MemoryAuthDataSource } from "@/infra/datasources/memoryAuthDataSource";
 import { AuthUseCases } from "@/usecase/authUseCases";
 

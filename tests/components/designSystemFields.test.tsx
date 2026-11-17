@@ -1,5 +1,4 @@
 
-import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render } from "@testing-library/react-native";
 import { TextField } from "@/view/components/TextField";
 import { FilledButton } from "@/view/components/FilledButton";
@@ -52,7 +51,7 @@ describe("TextField (design-system/04-componentes/campo-de-texto.md)", () => {
   });
 
   it("chama onChangeText ao digitar", async () => {
-    const onChangeText = vi.fn();
+    const onChangeText = jest.fn();
     const { getByLabelText } = await render(
       <TextField label="Senha" value="" onChangeText={onChangeText} secureTextEntry />,
     );
@@ -63,7 +62,7 @@ describe("TextField (design-system/04-componentes/campo-de-texto.md)", () => {
 
 describe("FilledButton (design-system/04-componentes/botao.md)", () => {
   it("mostra o rótulo e aciona onPress", async () => {
-    const onPress = vi.fn();
+    const onPress = jest.fn();
     const { getByText } = await render(<FilledButton label="Entrar" onPress={onPress} />);
     fireEvent.press(getByText("Entrar"));
     expect(onPress).toHaveBeenCalledTimes(1);

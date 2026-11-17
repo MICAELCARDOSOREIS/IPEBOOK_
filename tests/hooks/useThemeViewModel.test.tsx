@@ -1,7 +1,7 @@
 import { createElement } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
-import { __setMockColorScheme } from "../mocks/react-native";
-import { afterEach, describe, expect, it, vi } from "vitest";
+// @ts-expect-error Exportado pelo mock de react-native
+import { __setMockColorScheme } from "react-native";
 import type { IThemePreferenceUseCases } from "@/usecase/iThemePreferenceUseCases";
 import { useThemeViewModel } from "@/viewmodel/useThemeViewModel";
 
@@ -34,8 +34,8 @@ afterEach(async () => {
 function fakeUseCases(preference: "system" | "light" | "dark" = "light"): IThemePreferenceUseCases {
   let stored = preference;
   return {
-    getPreference: vi.fn(async () => stored),
-    setPreference: vi.fn(async (next) => {
+    getPreference: jest.fn(async () => stored),
+    setPreference: jest.fn(async (next) => {
       stored = next;
     }),
   };

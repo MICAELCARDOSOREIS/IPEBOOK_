@@ -1,23 +1,22 @@
 import { act, fireEvent, render } from "@testing-library/react-native";
 import type React from "react";
 import { Share } from "react-native";
-import { describe, expect, it, vi } from "vitest";
 import type { Book } from "@/model/entities/book";
 import ManageListing from "@/view/listings/manageListing";
 import type { ManageListingActions, ManageListingState } from "@/viewmodel/useManageListingViewModel";
 
-vi.mock("expo-linking", () => ({
-  createURL: vi.fn((path: string) => `https://ipebook.app${path}`),
-  openURL: vi.fn().mockResolvedValue(undefined),
+jest.mock("expo-linking", () => ({
+  createURL: jest.fn((path: string) => `https://ipebook.app${path}`),
+  openURL: jest.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock("@/viewmodel/useManageListingViewModel", () => ({
-  useManageListingViewModel: vi.fn(),
+jest.mock("@/viewmodel/useManageListingViewModel", () => ({
+  useManageListingViewModel: jest.fn(),
 }));
 
 import { useManageListingViewModel } from "@/viewmodel/useManageListingViewModel";
 
-const mockedUseManageListingViewModel = vi.mocked(useManageListingViewModel);
+const mockedUseManageListingViewModel = jest.mocked(useManageListingViewModel);
 
 const book: Book = {
   id: "b1",
@@ -43,9 +42,9 @@ function mockViewModel(state: Partial<ManageListingState>, actions: Partial<Mana
     ...state,
   };
   const fullActions: ManageListingActions = {
-    load: vi.fn().mockResolvedValue(undefined),
-    togglePause: vi.fn().mockResolvedValue(true),
-    remove: vi.fn().mockResolvedValue(true),
+    load: jest.fn().mockResolvedValue(undefined),
+    togglePause: jest.fn().mockResolvedValue(true),
+    remove: jest.fn().mockResolvedValue(true),
     ...actions,
   };
   mockedUseManageListingViewModel.mockReturnValue([fullState, fullActions]);
@@ -80,8 +79,8 @@ describe("tela de gerenciar anúncio (Figma 04.08)", () => {
   it("mostra o erro quando o compartilhamento no WhatsApp falha (Spec 118)", async () => {
     mockViewModel({});
     const linking = await import("expo-linking");
-    vi.mocked(linking.openURL).mockRejectedValueOnce(new Error("sem WhatsApp"));
-    const shareSpy = vi.spyOn(Share, "share").mockRejectedValueOnce(new Error("folha indisponível"));
+    jest.mocked(linking.openURL).mockRejectedValueOnce(new Error("sem WhatsApp"));
+    const shareSpy = jest.spyOn(Share, "share").mockRejectedValueOnce(new Error("folha indisponível"));
     const screen = await renderScreen();
 
     await act(async () => {
@@ -116,7 +115,7 @@ describe("tela de gerenciar anúncio (Figma 04.08)", () => {
 
   it("aciona a edição do anúncio", async () => {
     mockViewModel({});
-    const onEdit = vi.fn();
+    const onEdit = jest.fn();
     const screen = await renderScreen({ onEdit });
 
     await act(async () => {
@@ -139,7 +138,7 @@ describe("tela de gerenciar anúncio (Figma 04.08)", () => {
 
   it("só exclui depois da confirmação no diálogo", async () => {
     const actions = mockViewModel({});
-    const onRemoved = vi.fn();
+    const onRemoved = jest.fn();
     const screen = await renderScreen({ onRemoved });
 
     await act(async () => {
@@ -182,7 +181,7 @@ describe("tela de gerenciar anúncio (Figma 04.08)", () => {
 
   it("aciona a visualização pública do anúncio quando disponível", async () => {
     mockViewModel({});
-    const onViewPublicListing = vi.fn();
+    const onViewPublicListing = jest.fn();
     const screen = await renderScreen({ onViewPublicListing });
 
     const viewButton = screen.getByLabelText("Ver anúncio como leitor");
@@ -221,7 +220,7 @@ describe("tela de gerenciar anúncio (Figma 04.08)", () => {
 
   it("atende aos padrões de acessibilidade (IHC e a11y)", async () => {
     mockViewModel({});
-    const screen = await renderScreen({ onViewPublicListing: vi.fn() });
+    const screen = await renderScreen({ onViewPublicListing: jest.fn() });
 
     // Seções organizadas com cabeçalhos acessíveis para navegação semântica
     const headers = screen.getAllByRole("header").map((node) => node.props.children);

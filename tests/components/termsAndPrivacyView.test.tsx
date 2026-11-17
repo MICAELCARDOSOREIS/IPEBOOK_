@@ -1,6 +1,5 @@
 
 import { act, fireEvent, render } from "@testing-library/react-native";
-import { describe, expect, it, vi } from "vitest";
 import TermsAndPrivacy from "@/view/legal/termsAndPrivacy";
 
 describe("tela de Termos e Privacidade (ISO/IEC 25010 - Usabilidade e Conformidade)", () => {
@@ -64,7 +63,7 @@ describe("tela de Termos e Privacidade (ISO/IEC 25010 - Usabilidade e Conformida
   });
 
   it("aciona callback onBack ao pressionar botão de retorno", async () => {
-    const onBack = vi.fn();
+    const onBack = jest.fn();
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
       screen = await render(<TermsAndPrivacy onBack={onBack} />);
@@ -76,7 +75,7 @@ describe("tela de Termos e Privacidade (ISO/IEC 25010 - Usabilidade e Conformida
   });
 
   it("aciona callback onNavigateToDeleteAccount na aba de privacidade", async () => {
-    const onDelete = vi.fn();
+    const onDelete = jest.fn();
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
       screen = await render(

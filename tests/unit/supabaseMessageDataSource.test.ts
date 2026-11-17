@@ -1,4 +1,3 @@
-import { describe, expect, it, vi } from "vitest";
 import { SupabaseMessageDataSource } from "@/infra/datasources/supabaseMessageDataSource";
 import type { SupabaseAppClient } from "@/infra/supabaseClient";
 import { DataSourceError } from "@/model/errors";
@@ -12,27 +11,27 @@ const sampleRow = {
 };
 
 function fakeClient(queryResult: { data: unknown; error: unknown } = { data: null, error: null }) {
-  const chain: Record<string, ReturnType<typeof vi.fn>> & { then?: any } = {};
+  const chain: Record<string, ReturnType<typeof jest.fn>> & { then?: any } = {};
   for (const method of ["select", "eq", "order", "insert", "upsert"]) {
-    chain[method] = vi.fn(() => chain);
+    chain[method] = jest.fn(() => chain);
   }
-  chain.single = vi.fn().mockResolvedValue(queryResult);
+  chain.single = jest.fn().mockResolvedValue(queryResult);
   chain.then = (onFulfilled: any, onRejected: any) =>
     Promise.resolve(queryResult).then(onFulfilled, onRejected);
 
   let capturedHandler: ((payload: any) => void) | null = null;
-  const mockChannel = {
-    on: vi.fn((_event: string, _filter: any, handler: (payload: any) => void) => {
+  const mockChannel: { on: jest.Mock; subscribe: jest.Mock } = {
+    on: jest.fn((_event: string, _filter: any, handler: (payload: any) => void) => {
       capturedHandler = handler;
       return mockChannel;
     }),
-    subscribe: vi.fn(() => mockChannel),
+    subscribe: jest.fn(() => mockChannel),
   };
 
   const client = {
-    from: vi.fn(() => chain),
-    channel: vi.fn(() => mockChannel),
-    removeChannel: vi.fn(),
+    from: jest.fn(() => chain),
+    channel: jest.fn(() => mockChannel),
+    removeChannel: jest.fn(),
   } as unknown as SupabaseAppClient;
 
   return {
@@ -108,7 +107,7 @@ describe("SupabaseMessageDataSource (Spec 061 / ADR 0044)", () => {
   it("assina mensagens em tempo real e repassa mensagens recebidas para o callback", () => {
     const { client, mockChannel, triggerPayload } = fakeClient();
     const ds = new SupabaseMessageDataSource(client);
-    const onMessage = vi.fn();
+    const onMessage = jest.fn();
 
     const unsubscribe = ds.subscribeToMessages("req-1", onMessage);
 
@@ -162,7 +161,7 @@ describe("SupabaseMessageDataSource (Spec 061 / ADR 0044)", () => {
   it("assina todas as mensagens em tempo real via subscribeToAllMessages", () => {
     const { client, mockChannel, triggerPayload } = fakeClient();
     const ds = new SupabaseMessageDataSource(client);
-    const onMessage = vi.fn();
+    const onMessage = jest.fn();
 
     const unsubscribe = ds.subscribeToAllMessages(onMessage);
     triggerPayload({});

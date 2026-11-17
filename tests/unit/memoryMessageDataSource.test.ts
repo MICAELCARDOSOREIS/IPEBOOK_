@@ -1,4 +1,3 @@
-import { describe, expect, it, vi } from "vitest";
 import { MemoryMessageDataSource } from "@/infra/datasources/memoryMessageDataSource";
 
 describe("MemoryMessageDataSource (Spec 061 / ADR 0044)", () => {
@@ -50,8 +49,8 @@ describe("MemoryMessageDataSource (Spec 061 / ADR 0044)", () => {
 
   it("notifica ouvintes inscritos ao enviar mensagem para o requestId correto", async () => {
     const ds = new MemoryMessageDataSource();
-    const listenerReq1 = vi.fn();
-    const listenerReq2 = vi.fn();
+    const listenerReq1 = jest.fn();
+    const listenerReq2 = jest.fn();
 
     const unsub1 = ds.subscribeToMessages("req-1", listenerReq1);
     ds.subscribeToMessages("req-2", listenerReq2);
@@ -79,7 +78,7 @@ describe("MemoryMessageDataSource (Spec 061 / ADR 0044)", () => {
 
   it("limpa mensagens e listeners ao chamar clear", async () => {
     const ds = new MemoryMessageDataSource();
-    const listener = vi.fn();
+    const listener = jest.fn();
     ds.subscribeToMessages("req-1", listener);
 
     await ds.sendMessage({

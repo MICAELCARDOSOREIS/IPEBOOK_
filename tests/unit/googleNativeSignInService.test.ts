@@ -1,4 +1,3 @@
-import { describe, expect, it, vi } from "vitest";
 import { SupabaseAuthDataSource } from "@/infra/datasources/supabaseAuthDataSource";
 import { GoogleNativeSignInService } from "@/infra/services/googleNativeSignInService";
 import type { SupabaseAppClient } from "@/infra/supabaseClient";
@@ -7,10 +6,10 @@ import type { INativeGoogleSignIn } from "@/model/services/iNativeGoogleSignIn";
 
 function api(signIn: () => Promise<unknown>) {
   return {
-    configure: vi.fn(),
-    hasPlayServices: vi.fn().mockResolvedValue(true),
-    signIn: vi.fn(signIn),
-    signOut: vi.fn().mockResolvedValue(null),
+    configure: jest.fn(),
+    hasPlayServices: jest.fn().mockResolvedValue(true),
+    signIn: jest.fn(signIn),
+    signOut: jest.fn().mockResolvedValue(null),
   };
 }
 
@@ -71,16 +70,16 @@ describe("GoogleNativeSignInService (Spec 106)", () => {
 });
 
 describe("SupabaseAuthDataSource com login Google nativo (Spec 106)", () => {
-  function native(token: string | null, available = true): INativeGoogleSignIn & { signOut: ReturnType<typeof vi.fn> } {
-    return { isAvailable: () => available, getIdToken: vi.fn().mockResolvedValue(token), signOut: vi.fn().mockResolvedValue(undefined) };
+  function native(token: string | null, available = true): INativeGoogleSignIn & { signOut: ReturnType<typeof jest.fn> } {
+    return { isAvailable: () => available, getIdToken: jest.fn().mockResolvedValue(token), signOut: jest.fn().mockResolvedValue(undefined) };
   }
 
   it("troca o idToken por sessão no Supabase, sem navegador", async () => {
-    const signInWithIdToken = vi.fn().mockResolvedValue({
+    const signInWithIdToken = jest.fn().mockResolvedValue({
       data: { user: { id: "u1", email: "ana@x.com", user_metadata: { full_name: "Ana Lima" } } },
       error: null,
     });
-    const signInWithOAuth = vi.fn();
+    const signInWithOAuth = jest.fn();
     const client = { auth: { signInWithIdToken, signInWithOAuth } } as unknown as SupabaseAppClient;
     const user = await new SupabaseAuthDataSource(client, "x", native("tok")).signInWithGoogle();
     expect(signInWithIdToken).toHaveBeenCalledWith({ provider: "google", token: "tok" });
@@ -89,14 +88,14 @@ describe("SupabaseAuthDataSource com login Google nativo (Spec 106)", () => {
   });
 
   it("cancelado ou recusado pelo Supabase vira erro de autenticação", async () => {
-    const recusa = { auth: { signInWithIdToken: vi.fn().mockResolvedValue({ data: { user: null }, error: { message: "bad" } }) } } as unknown as SupabaseAppClient;
+    const recusa = { auth: { signInWithIdToken: jest.fn().mockResolvedValue({ data: { user: null }, error: { message: "bad" } }) } } as unknown as SupabaseAppClient;
     await expect(new SupabaseAuthDataSource(recusa, "x", native(null)).signInWithGoogle()).rejects.toThrow("Login com Google cancelado.");
     await expect(new SupabaseAuthDataSource(recusa, "x", native("tok")).signInWithGoogle()).rejects.toBeInstanceOf(AuthError);
   });
 
   it("sem cliente configurado segue pelo navegador; sair também sai do Google", async () => {
-    const signInWithOAuth = vi.fn().mockResolvedValue({ data: { url: null }, error: { message: "x" } });
-    const signOut = vi.fn().mockResolvedValue({ error: null });
+    const signInWithOAuth = jest.fn().mockResolvedValue({ data: { url: null }, error: { message: "x" } });
+    const signOut = jest.fn().mockResolvedValue({ error: null });
     const google = native("tok", false);
     const source = new SupabaseAuthDataSource({ auth: { signInWithOAuth, signOut } } as unknown as SupabaseAppClient, "x", google);
     await expect(source.signInWithGoogle()).rejects.toBeInstanceOf(AuthError);
@@ -106,11 +105,11 @@ describe("SupabaseAuthDataSource com login Google nativo (Spec 106)", () => {
   });
 
   it("com Play Services indisponível faz fallback para o navegador em vez de falhar", async () => {
-    const signInWithOAuth = vi.fn().mockResolvedValue({ data: { url: null }, error: { message: "fallback" } });
+    const signInWithOAuth = jest.fn().mockResolvedValue({ data: { url: null }, error: { message: "fallback" } });
     const googleSemPlayServices = {
       isAvailable: () => true,
-      getIdToken: vi.fn().mockRejectedValue(new AuthError("Atualize o Google Play Services para entrar com Google.")),
-      signOut: vi.fn().mockResolvedValue(undefined),
+      getIdToken: jest.fn().mockRejectedValue(new AuthError("Atualize o Google Play Services para entrar com Google.")),
+      signOut: jest.fn().mockResolvedValue(undefined),
     };
     const source = new SupabaseAuthDataSource(
       { auth: { signInWithOAuth } } as unknown as SupabaseAppClient,

@@ -1,6 +1,5 @@
 import { createElement } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
-import { afterEach, describe, expect, it, vi } from "vitest";
 import { Platform } from "react-native";
 import type { AppVersionPolicy } from "@/model/entities/appUpdate";
 import type { AppUpdateUseCases } from "@/usecase/appUpdateUseCases";
@@ -13,7 +12,7 @@ afterEach(() => {
   act(() => {
     while (mounted.length) mounted.pop()?.unmount();
   });
-  vi.restoreAllMocks();
+  jest.restoreAllMocks();
 });
 
 const samplePolicy: AppVersionPolicy = {
@@ -26,10 +25,10 @@ const samplePolicy: AppVersionPolicy = {
 
 function createMockUseCases(overrides?: Partial<AppUpdateUseCases>): AppUpdateUseCases {
   return {
-    checkUpdate: vi.fn(async () => ({ status: "optional", policy: samplePolicy })),
-    dismiss: vi.fn(async () => {}),
-    openStore: vi.fn(async () => true),
-    evaluateStatus: vi.fn(),
+    checkUpdate: jest.fn(async () => ({ status: "optional", policy: samplePolicy })),
+    dismiss: jest.fn(async () => {}),
+    openStore: jest.fn(async () => true),
+    evaluateStatus: jest.fn(),
   } as unknown as AppUpdateUseCases;
 }
 
@@ -93,7 +92,7 @@ describe("useAppUpdateViewModel", () => {
     const originalOS = Platform.OS;
     Platform.OS = "android";
     const useCases = createMockUseCases();
-    (useCases.checkUpdate as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+    (useCases.checkUpdate as jest.Mock).mockResolvedValueOnce({
       status: "required",
       policy: samplePolicy,
     });
@@ -151,7 +150,7 @@ describe("useAppUpdateViewModel", () => {
     // Sem policy
     Platform.OS = "android";
     const noPolicyUseCases = createMockUseCases();
-    (noPolicyUseCases.checkUpdate as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+    (noPolicyUseCases.checkUpdate as jest.Mock).mockResolvedValueOnce({
       status: "up_to_date",
       policy: null,
     });

@@ -1,4 +1,3 @@
-import { describe, expect, it, vi } from "vitest";
 import { NativeModules, Platform } from "react-native";
 import { SupabaseAppVersionPolicyDataSource } from "@/infra/datasources/supabaseAppVersionPolicyDataSource";
 import { GooglePlayInAppUpdateService } from "@/infra/services/googlePlayInAppUpdateService";
@@ -26,14 +25,14 @@ describe("serviços de in-app updates", () => {
     const originalOS = Platform.OS;
     Platform.OS = "android";
     (NativeModules as Record<string, unknown>).IpebookPlayUpdate = {
-      checkStoreUpdate: vi.fn(async () => ({
+      checkStoreUpdate: jest.fn(async () => ({
         isUpdateAvailable: true,
         versionCode: 11,
         versionName: "0.1.0+11",
         installedVersionCode: 10,
         installedVersionName: "0.1.0",
       })),
-      startUpdateFlow: vi.fn(async () => true),
+      startUpdateFlow: jest.fn(async () => true),
     };
 
     try {
@@ -57,7 +56,7 @@ describe("serviços de in-app updates", () => {
     const originalOS = Platform.OS;
     Platform.OS = "android";
     (NativeModules as Record<string, unknown>).RNSentry = {
-      fetchNativeRelease: vi.fn(async () => ({
+      fetchNativeRelease: jest.fn(async () => ({
         id: "com.ipebook.app",
         version: "0.1.0",
         build: "10",
@@ -83,10 +82,10 @@ describe("serviços de in-app updates", () => {
     const originalOS = Platform.OS;
     Platform.OS = "android";
     (NativeModules as Record<string, unknown>).IpebookPlayUpdate = {
-      checkStoreUpdate: vi.fn(async () => {
+      checkStoreUpdate: jest.fn(async () => {
         throw new Error("Play Core indisponível");
       }),
-      startUpdateFlow: vi.fn(async () => {
+      startUpdateFlow: jest.fn(async () => {
         throw new Error("Falha ao abrir fluxo");
       }),
     };
@@ -109,7 +108,7 @@ describe("serviços de in-app updates", () => {
   });
 
   it("SupabaseAppVersionPolicyDataSource mapeia política remota incluindo versionCode opcional", async () => {
-    const maybeSingle = vi.fn(async () => ({
+    const maybeSingle = jest.fn(async () => ({
       data: {
         platform: "android",
         latest_version: "0.1.0",

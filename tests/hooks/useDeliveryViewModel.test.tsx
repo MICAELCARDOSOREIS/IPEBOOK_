@@ -1,6 +1,5 @@
 import { createElement } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
-import { afterEach, describe, expect, it, vi } from "vitest";
 import { ValidationError } from "@/model/errors";
 import type { Delivery } from "@/model/entities/delivery";
 import type { IDeliveryUseCases } from "@/usecase/iDeliveryUseCases";
@@ -51,10 +50,10 @@ const done: Delivery = { requestId: "r1", completedBy: "leitora", completedAt: "
 
 function fakeUseCases(overrides: Partial<IDeliveryUseCases> = {}): IDeliveryUseCases {
   return {
-    getDelivery: vi.fn().mockResolvedValue(null),
-    getRole: vi.fn().mockResolvedValue("giver"),
-    generateCode: vi.fn().mockResolvedValue({ code: "K7M2QXWA", expiresAt: "2026-10-29T10:15:00.000Z" }),
-    confirmDelivery: vi.fn().mockResolvedValue(done),
+    getDelivery: jest.fn().mockResolvedValue(null),
+    getRole: jest.fn().mockResolvedValue("giver"),
+    generateCode: jest.fn().mockResolvedValue({ code: "K7M2QXWA", expiresAt: "2026-10-29T10:15:00.000Z" }),
+    confirmDelivery: jest.fn().mockResolvedValue(done),
     ...overrides,
   };
 }
@@ -68,7 +67,7 @@ describe("useDeliveryViewModel (Spec 095, CA6/CA7)", () => {
   });
 
   it("anunciante: gerar de novo troca o código", async () => {
-    const generateCode = vi
+    const generateCode = jest
       .fn()
       .mockResolvedValueOnce({ code: "AAAAAAAA", expiresAt: "2026-10-29T10:15:00.000Z" })
       .mockResolvedValueOnce({ code: "BBBBBBBB", expiresAt: "2026-10-29T10:30:00.000Z" });
@@ -79,7 +78,7 @@ describe("useDeliveryViewModel (Spec 095, CA6/CA7)", () => {
   });
 
   it("leitor: não gera código e confirma com o código lido", async () => {
-    const useCases = fakeUseCases({ getRole: vi.fn().mockResolvedValue("receiver") });
+    const useCases = fakeUseCases({ getRole: jest.fn().mockResolvedValue("receiver") });
     const { result } = await renderHook(useCases, "leitora", 0);
     await waitFor(() => expect(result.current[0].role).toBe("receiver"));
     expect(useCases.generateCode).not.toHaveBeenCalled();
@@ -91,8 +90,8 @@ describe("useDeliveryViewModel (Spec 095, CA6/CA7)", () => {
   });
 
   it("leitor: mostra o motivo quando o código é recusado", async () => {
-    const confirmDelivery = vi.fn().mockRejectedValue(new ValidationError("Código incorreto."));
-    const useCases = fakeUseCases({ getRole: vi.fn().mockResolvedValue("receiver"), confirmDelivery });
+    const confirmDelivery = jest.fn().mockRejectedValue(new ValidationError("Código incorreto."));
+    const useCases = fakeUseCases({ getRole: jest.fn().mockResolvedValue("receiver"), confirmDelivery });
     const { result } = await renderHook(useCases, "leitora", 0);
     await waitFor(() => expect(result.current[0].role).toBe("receiver"));
     let ok = true;
@@ -102,49 +101,49 @@ describe("useDeliveryViewModel (Spec 095, CA6/CA7)", () => {
   });
 
   it("entrega já concluída: não gera código", async () => {
-    const useCases = fakeUseCases({ getDelivery: vi.fn().mockResolvedValue(done) });
+    const useCases = fakeUseCases({ getDelivery: jest.fn().mockResolvedValue(done) });
     const { result } = await renderHook(useCases, "dono", 0);
     await waitFor(() => expect(result.current[0].completed).toEqual(done));
     expect(useCases.generateCode).not.toHaveBeenCalled();
   });
 
   it("anunciante: percebe quando a outra pessoa conclui (consulta periódica)", async () => {
-    const getDelivery = vi.fn().mockResolvedValueOnce(null).mockResolvedValue(done);
+    const getDelivery = jest.fn().mockResolvedValueOnce(null).mockResolvedValue(done);
     const { result } = await renderHook(fakeUseCases({ getDelivery }), "dono", 20);
     await waitFor(() => expect(result.current[0].completed).toEqual(done));
   });
 
   it("erro ao carregar vira mensagem", async () => {
-    const getRole = vi.fn().mockRejectedValue(new ValidationError("Negociação não encontrada ou ainda não aceita."));
+    const getRole = jest.fn().mockRejectedValue(new ValidationError("Negociação não encontrada ou ainda não aceita."));
     const { result } = await renderHook(fakeUseCases({ getRole }), "dono", 0);
     await waitFor(() => expect(result.current[0].loadError).toBe("Negociação não encontrada ou ainda não aceita."));
   });
 
   it("falhas sem mensagem de domínio viram textos padrão", async () => {
-    const generateCode = vi.fn().mockRejectedValue(new Error("rede"));
+    const generateCode = jest.fn().mockRejectedValue(new Error("rede"));
     const { result } = await renderHook(fakeUseCases({ generateCode }), "dono", 0);
     await waitFor(() => expect(result.current[0].error).toBe("Não foi possível gerar o código."));
 
-    const getRole = vi.fn().mockRejectedValue(new Error("rede"));
+    const getRole = jest.fn().mockRejectedValue(new Error("rede"));
     const falhaDeCarga = await renderHook(fakeUseCases({ getRole }), "dono", 0);
     await waitFor(() => expect(falhaDeCarga.result.current[0].loadError).toBe("Não foi possível carregar a entrega. Tente novamente."));
 
-    const confirmDelivery = vi.fn().mockRejectedValue(new Error("rede"));
-    const leitor = await renderHook(fakeUseCases({ getRole: vi.fn().mockResolvedValue("receiver"), confirmDelivery }), "leitora", 0);
+    const confirmDelivery = jest.fn().mockRejectedValue(new Error("rede"));
+    const leitor = await renderHook(fakeUseCases({ getRole: jest.fn().mockResolvedValue("receiver"), confirmDelivery }), "leitora", 0);
     await waitFor(() => expect(leitor.result.current[0].role).toBe("receiver"));
     await act(async () => { await leitor.result.current[1].confirm("K7M2QXWA"); });
     expect(leitor.result.current[0].error).toBe("Não foi possível confirmar a entrega.");
   });
 
   it("a consulta periódica ignora falhas passageiras", async () => {
-    const getDelivery = vi.fn().mockResolvedValueOnce(null).mockRejectedValue(new Error("rede"));
+    const getDelivery = jest.fn().mockResolvedValueOnce(null).mockRejectedValue(new Error("rede"));
     const { result } = await renderHook(fakeUseCases({ getDelivery }), "dono", 15);
     await act(async () => { await new Promise((resolve) => setTimeout(resolve, 60)); });
     expect(result.current[0]).toMatchObject({ completed: null, code: { code: "K7M2QXWA" } });
   });
 
   it("recarregar busca tudo de novo", async () => {
-    const useCases = fakeUseCases({ getRole: vi.fn().mockResolvedValue("receiver") });
+    const useCases = fakeUseCases({ getRole: jest.fn().mockResolvedValue("receiver") });
     const { result } = await renderHook(useCases, "leitora", 0);
     await waitFor(() => expect(result.current[0].role).toBe("receiver"));
     await act(async () => { await result.current[1].reload(); });
@@ -166,14 +165,14 @@ describe("useDeliveryStatus (cartão da negociação)", () => {
   }
 
   it("informa o papel e se a entrega já foi concluída, sem gerar código", async () => {
-    const useCases = fakeUseCases({ getDelivery: vi.fn().mockResolvedValue(done) });
+    const useCases = fakeUseCases({ getDelivery: jest.fn().mockResolvedValue(done) });
     const result = await renderStatus(useCases);
     await waitFor(() => expect(result.current).toEqual({ loading: false, role: "giver", completed: done }));
     expect(useCases.generateCode).not.toHaveBeenCalled();
   });
 
   it("sem acesso à negociação, volta sem papel nem conclusão", async () => {
-    const useCases = fakeUseCases({ getRole: vi.fn().mockRejectedValue(new ValidationError("x")) });
+    const useCases = fakeUseCases({ getRole: jest.fn().mockRejectedValue(new ValidationError("x")) });
     const result = await renderStatus(useCases);
     await waitFor(() => expect(result.current).toEqual({ loading: false, role: null, completed: null }));
   });

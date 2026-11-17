@@ -1,20 +1,19 @@
 import type React from "react";
 import { act, fireEvent, render } from "@testing-library/react-native";
-import { describe, expect, it, vi } from "vitest";
 import type { Book } from "@/model/entities/book";
 import type { AuthState } from "@/viewmodel/useAuthViewModel";
 import type { RequestNegotiationState } from "@/viewmodel/useRequestNegotiationViewModel";
 import type { ShareListingState } from "@/viewmodel/useShareListingViewModel";
 import BookDetail from "@/view/listings/bookDetail";
 
-vi.mock("@/viewmodel/useBookDetailViewModel", () => ({ useBookDetailViewModel: vi.fn() }));
-vi.mock("@/viewmodel/useAuthViewModel", () => ({ useAuthViewModel: vi.fn() }));
-vi.mock("@/viewmodel/useRequestNegotiationViewModel", () => ({ useRequestNegotiationViewModel: vi.fn() }));
-vi.mock("@/viewmodel/useShareListingViewModel", () => ({ useShareListingViewModel: vi.fn(), SHARE_BASE_URL: "https://ipebook.app" }));
-vi.mock("react-native-view-shot", () => ({ captureRef: vi.fn().mockResolvedValue("file:///tmp/anuncio.png") }));
-vi.mock("@/viewmodel/usePublicProfileViewModel", () => ({ usePublicProfileViewModel: vi.fn() }));
-vi.mock("@/viewmodel/useMyListingsViewModel", () => ({
-  useMyListingsViewModel: vi.fn().mockReturnValue([{ books: [], loading: false, error: null }, { reload: vi.fn() }]),
+jest.mock("@/viewmodel/useBookDetailViewModel", () => ({ useBookDetailViewModel: jest.fn() }));
+jest.mock("@/viewmodel/useAuthViewModel", () => ({ useAuthViewModel: jest.fn() }));
+jest.mock("@/viewmodel/useRequestNegotiationViewModel", () => ({ useRequestNegotiationViewModel: jest.fn() }));
+jest.mock("@/viewmodel/useShareListingViewModel", () => ({ useShareListingViewModel: jest.fn(), SHARE_BASE_URL: "https://ipebook.app" }));
+jest.mock("react-native-view-shot", () => ({ captureRef: jest.fn().mockResolvedValue("file:///tmp/anuncio.png") }));
+jest.mock("@/viewmodel/usePublicProfileViewModel", () => ({ usePublicProfileViewModel: jest.fn() }));
+jest.mock("@/viewmodel/useMyListingsViewModel", () => ({
+  useMyListingsViewModel: jest.fn().mockReturnValue([{ books: [], loading: false, error: null }, { reload: jest.fn() }]),
 }));
 
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
@@ -61,7 +60,7 @@ function setup(
     ownerName?: string;
   } = {},
 ) {
-  vi.mocked(usePublicProfileViewModel).mockReturnValue([
+  jest.mocked(usePublicProfileViewModel).mockReturnValue([
     {
       profile: options.ownerName
         ? {
@@ -76,28 +75,28 @@ function setup(
       loading: false,
       error: null,
     },
-    { reload: vi.fn() },
+    { reload: jest.fn() },
   ]);
-  const reload = vi.fn();
-  vi.mocked(useBookDetailViewModel).mockReturnValue([
+  const reload = jest.fn();
+  jest.mocked(useBookDetailViewModel).mockReturnValue([
     { book, loading: options.loading ?? false, error: options.error ?? null, isFavorite: false, favoriteError: null, favoriteLoading: false },
-    { reload, toggleFavorite: vi.fn() },
+    { reload, toggleFavorite: jest.fn() },
   ]);
-  vi.mocked(useAuthViewModel).mockReturnValue([
+  jest.mocked(useAuthViewModel).mockReturnValue([
     { user, loading: false, error: null },
-    { signUp: vi.fn(), signIn: vi.fn(), signOut: vi.fn(), requestPasswordReset: vi.fn() },
+    { signUp: jest.fn(), signIn: jest.fn(), signOut: jest.fn(), requestPasswordReset: jest.fn() },
   ]);
-  const request = vi.fn().mockResolvedValue(true);
-  vi.mocked(useRequestNegotiationViewModel).mockReturnValue([
+  const request = jest.fn().mockResolvedValue(true);
+  jest.mocked(useRequestNegotiationViewModel).mockReturnValue([
     { ...emptyNegotiation, ...options.negotiation },
-    { request, checkActiveRequest: vi.fn().mockResolvedValue(null) },
+    { request, checkActiveRequest: jest.fn().mockResolvedValue(null) },
   ]);
-  const share = vi.fn().mockResolvedValue(undefined);
-  const shareToWhatsApp = vi.fn().mockResolvedValue(undefined);
-  const shareImage = vi.fn().mockResolvedValue(undefined);
-  vi.mocked(useShareListingViewModel).mockReturnValue([
+  const share = jest.fn().mockResolvedValue(undefined);
+  const shareToWhatsApp = jest.fn().mockResolvedValue(undefined);
+  const shareImage = jest.fn().mockResolvedValue(undefined);
+  jest.mocked(useShareListingViewModel).mockReturnValue([
     { ...emptyShare, ...options.share },
-    { share, shareImage, shareToWhatsApp, dismissLinkCopied: vi.fn(), dismissError: vi.fn() },
+    { share, shareImage, shareToWhatsApp, dismissLinkCopied: jest.fn(), dismissError: jest.fn() },
   ]);
   return { request, share, shareToWhatsApp, shareImage, reload };
 }
@@ -217,7 +216,7 @@ describe("BookDetail (spec 006, US6/T029)", () => {
 
   it("aciona onNavigateToUserProfile ao tocar no nome de quem anunciou (US5)", async () => {
     setup(book({ ownerId: "owner-xyz" }), user, { ownerName: "Joana Lima" });
-    const onNavigateToUserProfile = vi.fn();
+    const onNavigateToUserProfile = jest.fn();
     const screen = await renderDetail({ onNavigateToUserProfile });
     await act(async () => { fireEvent.press(screen.getByLabelText("Anunciado por Joana Lima")); });
     expect(onNavigateToUserProfile).toHaveBeenCalledWith("owner-xyz");
@@ -274,7 +273,7 @@ describe("BookDetail (spec 006, US6/T029)", () => {
 
   it("aciona onNavigateToReport ao tocar em denunciar anúncio", async () => {
     setup(book({ ownerId: "other" }), user);
-    const onNavigateToReport = vi.fn();
+    const onNavigateToReport = jest.fn();
     const screen = await renderDetail({ onNavigateToReport });
     await act(async () => { fireEvent.press(screen.getByLabelText("Denunciar anúncio")); });
     expect(onNavigateToReport).toHaveBeenCalledWith("b1");
@@ -282,7 +281,7 @@ describe("BookDetail (spec 006, US6/T029)", () => {
 
   it("aciona onBack ao tocar no botão voltar da barra superior (FR-011)", async () => {
     setup(book({}), user);
-    const onBack = vi.fn();
+    const onBack = jest.fn();
     const screen = await renderDetail({ onBack });
     fireEvent.press(screen.getByLabelText("Voltar"));
     expect(onBack).toHaveBeenCalledTimes(1);

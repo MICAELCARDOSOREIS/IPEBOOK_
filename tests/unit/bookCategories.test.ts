@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import { BOOK_CATEGORIES, type BookCategory } from "@/model/entities/book";
 import { LISTING_CATEGORIES } from "@/view/listings/createListingStep3";
 import { categoryTone } from "@/view/categoryTone";

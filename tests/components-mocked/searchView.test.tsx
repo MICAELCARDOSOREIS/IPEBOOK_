@@ -1,16 +1,15 @@
 import type React from "react";
 import { act, fireEvent, render } from "@testing-library/react-native";
-import { describe, expect, it, vi } from "vitest";
 import type { Book } from "@/model/entities/book";
 import Search from "@/view/search/search";
 
-vi.mock("@/viewmodel/useSearchViewModel", () => ({ useSearchViewModel: vi.fn() }));
-vi.mock("@/viewmodel/useNetworkStatus", () => ({ useNetworkStatus: vi.fn() }));
-vi.mock("@/viewmodel/usePersistedSearchFilters", () => ({
-  usePersistedSearchFilters: vi.fn(() => ({
+jest.mock("@/viewmodel/useSearchViewModel", () => ({ useSearchViewModel: jest.fn() }));
+jest.mock("@/viewmodel/useNetworkStatus", () => ({ useNetworkStatus: jest.fn() }));
+jest.mock("@/viewmodel/usePersistedSearchFilters", () => ({
+  usePersistedSearchFilters: jest.fn(() => ({
     persisted: null,
     loaded: true,
-    persist: vi.fn(),
+    persist: jest.fn(),
   })),
 }));
 
@@ -24,7 +23,7 @@ import {
 import { describeResults, activeFilters as deriveActiveFilters, type SearchFilters } from "@/viewmodel/searchFilters";
 import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
 
-vi.mocked(useNetworkStatus).mockReturnValue({ isOnline: true });
+jest.mocked(useNetworkStatus).mockReturnValue({ isOnline: true });
 
 const book = (over: Partial<Book>): Book => ({
   id: "b1",
@@ -56,21 +55,21 @@ function setup(
     matchesInOtherNeighborhoods?: number;
   } = {},
 ) {
-  const setTerm = vi.fn();
-  const setModality = vi.fn();
-  const setCategory = vi.fn();
-  const setCondition = vi.fn();
-  const setNeighborhood = vi.fn();
-  const setPriceRange = vi.fn();
-  const setSortBy = vi.fn();
-  const removeActiveFilter = vi.fn();
-  const openFilterDraft = vi.fn();
-  const updateDraftFilters = vi.fn();
-  const applyDraftFilters = vi.fn();
-  const resetFilters = vi.fn();
-  const clearFilters = vi.fn();
-  const registerSearch = vi.fn();
-  const clearHistory = vi.fn();
+  const setTerm = jest.fn();
+  const setModality = jest.fn();
+  const setCategory = jest.fn();
+  const setCondition = jest.fn();
+  const setNeighborhood = jest.fn();
+  const setPriceRange = jest.fn();
+  const setSortBy = jest.fn();
+  const removeActiveFilter = jest.fn();
+  const openFilterDraft = jest.fn();
+  const updateDraftFilters = jest.fn();
+  const applyDraftFilters = jest.fn();
+  const resetFilters = jest.fn();
+  const clearFilters = jest.fn();
+  const registerSearch = jest.fn();
+  const clearHistory = jest.fn();
 
   const filters: SearchFilters = {
     modality: options.modality ?? "all",
@@ -81,7 +80,7 @@ function setup(
   };
   const activeFilters = deriveActiveFilters(filters);
 
-  vi.mocked(useSearchViewModel).mockReturnValue([
+  jest.mocked(useSearchViewModel).mockReturnValue([
     {
       term,
       filters,
@@ -110,7 +109,7 @@ function setup(
       setModality,
       setCategory,
       setCondition,
-      setOnlyBoxes: vi.fn(),
+      setOnlyBoxes: jest.fn(),
       setNeighborhood,
       setPriceRange,
       setSortBy,
@@ -120,7 +119,7 @@ function setup(
       applyDraftFilters,
       resetFilters,
       clearFilters,
-      reload: vi.fn(),
+      reload: jest.fn(),
       registerSearch,
       clearHistory,
     },
@@ -225,7 +224,7 @@ describe("Search (spec 006, US3/T019, Spec 028, Issue #93)", () => {
 
   it("navega para o detalhe do livro ao tocar num resultado e registra a busca no histórico", async () => {
     const { registerSearch } = setup([book({ id: "x" })], "dom cas");
-    const onNavigateToBookDetail = vi.fn();
+    const onNavigateToBookDetail = jest.fn();
     const screen = await renderSearch({ onNavigateToBookDetail });
     await act(async () => {
       fireEvent.press(screen.getByLabelText("Ver detalhe de Dom Casmurro, Machado de Assis"));
@@ -241,11 +240,11 @@ describe("Search (spec 006, US3/T019, Spec 028, Issue #93)", () => {
   });
 
   it("mostra o estado de sem conexão em vez do erro genérico quando o dispositivo está offline (Issue #76)", async () => {
-    vi.mocked(useNetworkStatus).mockReturnValue({ isOnline: false });
+    jest.mocked(useNetworkStatus).mockReturnValue({ isOnline: false });
     setup([], "", { error: "Não foi possível carregar os livros." });
     const screen = await renderSearch();
     expect(screen.getByRole("alert").props.children).toBe("Você está sem conexão com a internet.");
-    vi.mocked(useNetworkStatus).mockReturnValue({ isOnline: true });
+    jest.mocked(useNetworkStatus).mockReturnValue({ isOnline: true });
   });
 
   it("mostra buscas recentes quando o campo está vazio e toque refaz a busca (issue #94)", async () => {
@@ -268,7 +267,7 @@ describe("Search (spec 006, US3/T019, Spec 028, Issue #93)", () => {
     await act(async () => { fireEvent.press(screen.getByLabelText("Limpar histórico de buscas")); });
     expect(screen.getByText("Limpar histórico de buscas?")).toBeDefined();
     await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Limpar histórico" })); });
-    expect(clearHistory).toHaveBeenCalledOnce();
+    expect(clearHistory).toHaveBeenCalledTimes(1);
   });
 
   it("abre 'Filtrar livros' com rascunho e só aplica ao tocar em Mostrar N livros (Figma 02.03)", async () => {
@@ -280,7 +279,7 @@ describe("Search (spec 006, US3/T019, Spec 028, Issue #93)", () => {
     const screen = await renderSearch();
 
     await act(async () => { fireEvent.press(screen.getByLabelText("Abrir filtros")); });
-    expect(openFilterDraft).toHaveBeenCalledOnce();
+    expect(openFilterDraft).toHaveBeenCalledTimes(1);
     expect(screen.getByText("Filtrar livros")).toBeDefined();
     expect(screen.getByText("Uma leitura do seu jeito.")).toBeDefined();
 
@@ -291,11 +290,11 @@ describe("Search (spec 006, US3/T019, Spec 028, Issue #93)", () => {
     expect(applyDraftFilters).not.toHaveBeenCalled();
 
     await act(async () => { fireEvent.press(screen.getByLabelText("Mostrar 1 livro")); });
-    expect(applyDraftFilters).toHaveBeenCalledOnce();
+    expect(applyDraftFilters).toHaveBeenCalledTimes(1);
 
     await act(async () => { fireEvent.press(screen.getByLabelText("Abrir filtros")); });
     await act(async () => { fireEvent.press(screen.getByLabelText("Limpar filtros")); });
-    expect(resetFilters).toHaveBeenCalledOnce();
+    expect(resetFilters).toHaveBeenCalledTimes(1);
   });
 
   it("filtra por categoria, modalidade, conservação, preço e ordenação na tela de filtros (Spec 028)", async () => {
@@ -385,7 +384,7 @@ describe("Search (spec 006, US3/T019, Spec 028, Issue #93)", () => {
 
   it("aciona o atalho para a tela de favoritos ao tocar no botão da barra superior", async () => {
     setup([book({})]);
-    const onNavigateToFavorites = vi.fn();
+    const onNavigateToFavorites = jest.fn();
     const screen = await renderSearch({ onNavigateToFavorites });
 
     const favButton = screen.getByLabelText("Ver meus livros favoritos");

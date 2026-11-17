@@ -1,5 +1,4 @@
 import { act, render } from "@testing-library/react-native";
-import { describe, expect, it } from "vitest";
 import { MemoryNetworkStatusDataSource } from "@/infra/datasources/memoryNetworkStatusDataSource";
 import { ConnectionStatusBanner } from "@/view/components/ConnectionStatusBanner";
 

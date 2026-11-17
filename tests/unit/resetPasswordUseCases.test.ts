@@ -1,4 +1,3 @@
-import { describe, expect, it, vi } from "vitest";
 import { MemoryAuthDataSource } from "@/infra/datasources/memoryAuthDataSource";
 import { AuthError, ValidationError } from "@/model/errors";
 import { AuthUseCases } from "@/usecase/authUseCases";
@@ -6,7 +5,7 @@ import { AuthUseCases } from "@/usecase/authUseCases";
 describe("recuperação de senha", () => {
   it("não aceita senha curta antes de chamar a infraestrutura", async () => {
     const dataSource = new MemoryAuthDataSource();
-    const completePasswordReset = vi.spyOn(dataSource, "completePasswordReset");
+    const completePasswordReset = jest.spyOn(dataSource, "completePasswordReset");
     const auth = new AuthUseCases(dataSource);
 
     await expect(auth.completePasswordReset("ipebook://redefinir-senha", "curta")).rejects.toThrow(ValidationError);

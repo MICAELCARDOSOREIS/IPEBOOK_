@@ -1,4 +1,3 @@
-import { describe, expect, it, vi } from "vitest";
 import { SupabaseAuthDataSource } from "@/infra/datasources/supabaseAuthDataSource";
 import { SupabaseBookDataSource } from "@/infra/datasources/supabaseBookDataSource";
 import { SupabaseBookRequestDataSource } from "@/infra/datasources/supabaseBookRequestDataSource";
@@ -12,11 +11,11 @@ function fakeClient(value: unknown): SupabaseAppClient {
 describe("datasources Supabase", () => {
   it("cria conta e lê sessão confirmada sem expor os dados internos do provedor", async () => {
     const auth = new SupabaseAuthDataSource(fakeClient({ auth: {
-      signUp: vi.fn().mockResolvedValue({
+      signUp: jest.fn().mockResolvedValue({
         data: { user: { id: "1", email: "pessoa@exemplo.com", user_metadata: { full_name: "Leitora Teste" } } },
         error: null,
       }),
-      getSession: vi.fn().mockResolvedValue({
+      getSession: jest.fn().mockResolvedValue({
         data: { session: { user: { id: "1", email: "pessoa@exemplo.com", user_metadata: { full_name: "Leitora Teste" } } } },
         error: null,
       }),
@@ -35,9 +34,9 @@ describe("datasources Supabase", () => {
 
   it("trata cadastro, sessão e saída com respostas de erro seguras", async () => {
     const auth = new SupabaseAuthDataSource(fakeClient({ auth: {
-      signUp: vi.fn().mockResolvedValue({ data: { user: null }, error: { message: "interno" } }),
-      getSession: vi.fn().mockResolvedValue({ data: { session: null }, error: { message: "interno" } }),
-      signOut: vi.fn().mockResolvedValue({ error: { message: "interno" } }),
+      signUp: jest.fn().mockResolvedValue({ data: { user: null }, error: { message: "interno" } }),
+      getSession: jest.fn().mockResolvedValue({ data: { session: null }, error: { message: "interno" } }),
+      signOut: jest.fn().mockResolvedValue({ error: { message: "interno" } }),
     } }), "ipebook://redefinir-senha");
     await expect(auth.signUp("pessoa@exemplo.com", "senha1234", "Leitora Teste")).rejects.toThrow("Não foi possível criar a conta.");
     await expect(auth.currentUser()).resolves.toBeNull();
@@ -46,9 +45,9 @@ describe("datasources Supabase", () => {
 
   it("entra, sai e reconhece sessão ausente", async () => {
     const auth = new SupabaseAuthDataSource(fakeClient({ auth: {
-      signInWithPassword: vi.fn().mockResolvedValue({ data: { user: { id: "1", email: "pessoa@exemplo.com" } }, error: null }),
-      getSession: vi.fn().mockResolvedValue({ data: { session: null }, error: null }),
-      signOut: vi.fn().mockResolvedValue({ error: null }),
+      signInWithPassword: jest.fn().mockResolvedValue({ data: { user: { id: "1", email: "pessoa@exemplo.com" } }, error: null }),
+      getSession: jest.fn().mockResolvedValue({ data: { session: null }, error: null }),
+      signOut: jest.fn().mockResolvedValue({ error: null }),
     } }), "ipebook://redefinir-senha");
     await expect(auth.signIn("pessoa@exemplo.com", "senha1234")).resolves.toEqual({ id: "1", email: "pessoa@exemplo.com" });
     await expect(auth.currentUser()).resolves.toBeNull();
@@ -56,7 +55,7 @@ describe("datasources Supabase", () => {
   });
 
   it("envia a recuperação por link sem retornar senha ou revelar a conta", async () => {
-    const resetPasswordForEmail = vi.fn().mockResolvedValue({ error: null });
+    const resetPasswordForEmail = jest.fn().mockResolvedValue({ error: null });
     const auth = new SupabaseAuthDataSource(
       fakeClient({ auth: { resetPasswordForEmail } }),
       "https://ipebook.exemplo/app/redefinir-senha",
@@ -70,7 +69,7 @@ describe("datasources Supabase", () => {
 
   it("não vaza detalhes do provedor em falha de autenticação", async () => {
     const auth = new SupabaseAuthDataSource(
-      fakeClient({ auth: { signInWithPassword: vi.fn().mockResolvedValue({ data: {}, error: new Error("detalhe interno") }) } }),
+      fakeClient({ auth: { signInWithPassword: jest.fn().mockResolvedValue({ data: {}, error: new Error("detalhe interno") }) } }),
       "ipebook://redefinir-senha",
     );
     await expect(auth.signIn("pessoa@exemplo.com", "senha1234")).rejects.toThrow(
@@ -79,9 +78,9 @@ describe("datasources Supabase", () => {
   });
 
   it("não atualiza a senha sem sessão de recuperação", async () => {
-    const updateUser = vi.fn();
+    const updateUser = jest.fn();
     const auth = new SupabaseAuthDataSource(fakeClient({ auth: {
-      getSession: vi.fn().mockResolvedValue({ data: { session: null }, error: null }),
+      getSession: jest.fn().mockResolvedValue({ data: { session: null }, error: null }),
       updateUser,
     } }), "ipebook://redefinir-senha");
     await expect(auth.completePasswordReset(null, "senha-nova")).rejects.toThrow(
@@ -91,12 +90,12 @@ describe("datasources Supabase", () => {
   });
 
   it("redefine senha com código válido e encerra a sessão", async () => {
-    const exchangeCodeForSession = vi.fn().mockResolvedValue({ error: null });
-    const updateUser = vi.fn().mockResolvedValue({ error: null });
-    const signOut = vi.fn().mockResolvedValue({ error: null });
+    const exchangeCodeForSession = jest.fn().mockResolvedValue({ error: null });
+    const updateUser = jest.fn().mockResolvedValue({ error: null });
+    const signOut = jest.fn().mockResolvedValue({ error: null });
     const auth = new SupabaseAuthDataSource(fakeClient({ auth: {
       exchangeCodeForSession, updateUser, signOut,
-      getSession: vi.fn().mockResolvedValue({ data: { session: { user: { id: "1" } } }, error: null }),
+      getSession: jest.fn().mockResolvedValue({ data: { session: { user: { id: "1" } } }, error: null }),
     } }), "https://ipebook.exemplo/app/redefinir-senha");
     await auth.completePasswordReset("https://ipebook.exemplo/app/redefinir-senha?code=abc", "nova-senha");
     expect(exchangeCodeForSession).toHaveBeenCalledWith("abc");
@@ -105,12 +104,12 @@ describe("datasources Supabase", () => {
   });
 
   it("redefine senha com tokens do link nativo", async () => {
-    const setSession = vi.fn().mockResolvedValue({ error: null });
+    const setSession = jest.fn().mockResolvedValue({ error: null });
     const auth = new SupabaseAuthDataSource(fakeClient({ auth: {
       setSession,
-      getSession: vi.fn().mockResolvedValue({ data: { session: { user: { id: "1" } } }, error: null }),
-      updateUser: vi.fn().mockResolvedValue({ error: null }),
-      signOut: vi.fn().mockResolvedValue({ error: null }),
+      getSession: jest.fn().mockResolvedValue({ data: { session: { user: { id: "1" } } }, error: null }),
+      updateUser: jest.fn().mockResolvedValue({ error: null }),
+      signOut: jest.fn().mockResolvedValue({ error: null }),
     } }), "ipebook://redefinir-senha");
     await auth.completePasswordReset("ipebook://redefinir-senha#access_token=abc&refresh_token=def", "nova-senha");
     expect(setSession).toHaveBeenCalledWith({ access_token: "abc", refresh_token: "def" });
@@ -118,26 +117,26 @@ describe("datasources Supabase", () => {
 
   it("rejeita link malformado, código vencido e atualização negada", async () => {
     const auth = new SupabaseAuthDataSource(fakeClient({ auth: {
-      exchangeCodeForSession: vi.fn().mockResolvedValue({ error: { message: "vencido" } }),
+      exchangeCodeForSession: jest.fn().mockResolvedValue({ error: { message: "vencido" } }),
     } }), "ipebook://redefinir-senha");
     await expect(auth.completePasswordReset("sem-url", "nova-senha")).rejects.toThrow("Link de recuperação inválido");
     await expect(auth.completePasswordReset("ipebook://redefinir-senha", "nova-senha")).rejects.toThrow("Link de recuperação inválido");
     await expect(auth.completePasswordReset("ipebook://redefinir-senha?code=vencido", "nova-senha")).rejects.toThrow("Link de recuperação inválido");
     const denied = new SupabaseAuthDataSource(fakeClient({ auth: {
-      exchangeCodeForSession: vi.fn().mockResolvedValue({ error: null }),
-      getSession: vi.fn().mockResolvedValue({ data: { session: {} }, error: null }),
-      updateUser: vi.fn().mockResolvedValue({ error: { message: "negado" } }),
+      exchangeCodeForSession: jest.fn().mockResolvedValue({ error: null }),
+      getSession: jest.fn().mockResolvedValue({ data: { session: {} }, error: null }),
+      updateUser: jest.fn().mockResolvedValue({ error: { message: "negado" } }),
     } }), "ipebook://redefinir-senha");
     await expect(denied.completePasswordReset("ipebook://redefinir-senha?code=abc", "nova-senha")).rejects.toThrow("Não foi possível atualizar a senha.");
   });
 
   it("restaura sessão a partir de deep link OAuth com access_token e refresh_token", async () => {
-    const setSession = vi.fn().mockResolvedValue({
+    const setSession = jest.fn().mockResolvedValue({
       data: { user: { id: "google-123", email: "leitor@gmail.com", user_metadata: { full_name: "Micael" } } },
       error: null,
     });
     const auth = new SupabaseAuthDataSource(fakeClient({
-      auth: { setSession, getSession: vi.fn().mockResolvedValue({ data: { session: null }, error: null }) },
+      auth: { setSession, getSession: jest.fn().mockResolvedValue({ data: { session: null }, error: null }) },
     }), "ipebook://redefinir-senha");
 
     const user = await auth.setSessionFromUrl("ipebook://auth/callback#access_token=jwt-token&refresh_token=ref-token");
@@ -154,7 +153,7 @@ describe("datasources Supabase", () => {
   });
 
   it("restaura sessão a partir de deep link OAuth com code de autenticação", async () => {
-    const exchangeCodeForSession = vi.fn().mockResolvedValue({
+    const exchangeCodeForSession = jest.fn().mockResolvedValue({
       data: { user: { id: "code-user", email: "code@gmail.com" } },
       error: null,
     });
@@ -176,26 +175,26 @@ describe("datasources Supabase", () => {
   });
 
   it("exclui conta chamando a RPC delete_user_account e finaliza sessão", async () => {
-    const rpc = vi.fn().mockResolvedValue({ data: null, error: null });
-    const signOut = vi.fn().mockResolvedValue({ error: null });
-    const list = vi.fn().mockResolvedValue({ data: [], error: null });
+    const rpc = jest.fn().mockResolvedValue({ data: null, error: null });
+    const signOut = jest.fn().mockResolvedValue({ error: null });
+    const list = jest.fn().mockResolvedValue({ data: [], error: null });
     const auth = new SupabaseAuthDataSource(
-      fakeClient({ rpc, auth: { signOut }, storage: { from: vi.fn(() => ({ list, remove: vi.fn() })) } }),
+      fakeClient({ rpc, auth: { signOut }, storage: { from: jest.fn(() => ({ list, remove: jest.fn() })) } }),
       "https://ipebook.exemplo/app/redefinir-senha",
     );
 
     await auth.deleteAccount("user-123");
 
     expect(rpc).toHaveBeenCalledWith("delete_user_account", { target_user_id: "user-123" });
-    expect(signOut).toHaveBeenCalledOnce();
+    expect(signOut).toHaveBeenCalledTimes(1);
   });
 
   it("lança AuthError ao falhar na RPC de exclusão de conta", async () => {
-    const rpc = vi.fn().mockResolvedValue({ data: null, error: { message: "negado" } });
-    const signOut = vi.fn().mockResolvedValue({ error: null });
-    const list = vi.fn().mockResolvedValue({ data: [], error: null });
+    const rpc = jest.fn().mockResolvedValue({ data: null, error: { message: "negado" } });
+    const signOut = jest.fn().mockResolvedValue({ error: null });
+    const list = jest.fn().mockResolvedValue({ data: [], error: null });
     const auth = new SupabaseAuthDataSource(
-      fakeClient({ rpc, auth: { signOut }, storage: { from: vi.fn(() => ({ list, remove: vi.fn() })) } }),
+      fakeClient({ rpc, auth: { signOut }, storage: { from: jest.fn(() => ({ list, remove: jest.fn() })) } }),
       "https://ipebook.exemplo/app/redefinir-senha",
     );
 
@@ -209,10 +208,10 @@ describe("datasources Supabase", () => {
       id: "livro-1", title: "Dom Casmurro", author: "Machado de Assis",
       owner_id: "dono-1", modality: "sale", price: 29.9, status: "available",
     };
-    const single = vi.fn().mockResolvedValue({ data: row, error: null });
-    const select = vi.fn().mockReturnValue({ single });
-    const insert = vi.fn().mockReturnValue({ select });
-    const from = vi.fn().mockReturnValue({ insert });
+    const single = jest.fn().mockResolvedValue({ data: row, error: null });
+    const select = jest.fn().mockReturnValue({ single });
+    const insert = jest.fn().mockReturnValue({ select });
+    const from = jest.fn().mockReturnValue({ insert });
     const books = new SupabaseBookDataSource(fakeClient({ from }));
 
     const created = await books.create({
@@ -233,11 +232,11 @@ describe("datasources Supabase", () => {
       owner_id: "dono-2", modality: "donation", price: null, status: "available",
       condition: "marked", description: "Marcas leves de uso", neighborhood: "Centro",
     };
-    const single = vi.fn().mockResolvedValue({ data: row, error: null });
-    const select = vi.fn().mockReturnValue({ single });
-    const insert = vi.fn().mockReturnValue({ select });
-    const update = vi.fn().mockReturnValue({ eq: vi.fn().mockReturnValue({ select }) });
-    const from = vi.fn().mockReturnValue({ insert, update });
+    const single = jest.fn().mockResolvedValue({ data: row, error: null });
+    const select = jest.fn().mockReturnValue({ single });
+    const insert = jest.fn().mockReturnValue({ select });
+    const update = jest.fn().mockReturnValue({ eq: jest.fn().mockReturnValue({ select }) });
+    const from = jest.fn().mockReturnValue({ insert, update });
     const books = new SupabaseBookDataSource(fakeClient({ from }));
 
     const created = await books.create({
@@ -259,11 +258,11 @@ describe("datasources Supabase", () => {
       id: "livro-9", title: "1984", author: "George Orwell", owner_id: "dono-9", modality: "donation", price: null,
       status: "available", synopsis: "Distopia.", publisher: "Companhia das Letras", page_count: 416, publication_year: 2009,
     };
-    const single = vi.fn().mockResolvedValue({ data: row, error: null });
-    const select = vi.fn().mockReturnValue({ single });
-    const insert = vi.fn().mockReturnValue({ select });
-    const update = vi.fn().mockReturnValue({ eq: vi.fn().mockReturnValue({ select }) });
-    const from = vi.fn().mockReturnValue({ insert, update });
+    const single = jest.fn().mockResolvedValue({ data: row, error: null });
+    const select = jest.fn().mockReturnValue({ single });
+    const insert = jest.fn().mockReturnValue({ select });
+    const update = jest.fn().mockReturnValue({ eq: jest.fn().mockReturnValue({ select }) });
+    const from = jest.fn().mockReturnValue({ insert, update });
     const books = new SupabaseBookDataSource(fakeClient({ from }));
 
     const created = await books.create({
@@ -285,9 +284,9 @@ describe("datasources Supabase", () => {
       owner_id: "dono-3", modality: "trade", price: null, status: "available",
       condition: null, description: null,
     };
-    const single = vi.fn().mockResolvedValue({ data: row, error: null });
-    const insert = vi.fn().mockReturnValue({ select: vi.fn().mockReturnValue({ single }) });
-    const from = vi.fn().mockReturnValue({ insert });
+    const single = jest.fn().mockResolvedValue({ data: row, error: null });
+    const insert = jest.fn().mockReturnValue({ select: jest.fn().mockReturnValue({ single }) });
+    const from = jest.fn().mockReturnValue({ insert });
     const books = new SupabaseBookDataSource(fakeClient({ from }));
 
     const created = await books.create({
@@ -307,11 +306,11 @@ describe("datasources Supabase", () => {
       owner_id: "dono-box", modality: "sale", price: 250, status: "available",
       is_box: true, box_volumes_count: 7,
     };
-    const single = vi.fn().mockResolvedValue({ data: row, error: null });
-    const select = vi.fn().mockReturnValue({ single });
-    const insert = vi.fn().mockReturnValue({ select });
-    const update = vi.fn().mockReturnValue({ eq: vi.fn().mockReturnValue({ select }) });
-    const from = vi.fn().mockReturnValue({ insert, update });
+    const single = jest.fn().mockResolvedValue({ data: row, error: null });
+    const select = jest.fn().mockReturnValue({ single });
+    const insert = jest.fn().mockReturnValue({ select });
+    const update = jest.fn().mockReturnValue({ eq: jest.fn().mockReturnValue({ select }) });
+    const from = jest.fn().mockReturnValue({ insert, update });
     const books = new SupabaseBookDataSource(fakeClient({ from }));
 
     const created = await books.create({
@@ -332,18 +331,18 @@ describe("datasources Supabase", () => {
 
   it("lista, consulta e atualiza livros com os dados remotos", async () => {
     const row = { id: "1", title: "Livro", author: "Autora", owner_id: "dono", modality: "donation", price: null, status: "available" };
-    const order = vi.fn().mockResolvedValue({ data: [row], error: null });
-    const maybeSingle = vi.fn().mockResolvedValue({ data: row, error: null });
-    const single = vi.fn().mockResolvedValue({ data: { ...row, status: "reserved" }, error: null });
+    const order = jest.fn().mockResolvedValue({ data: [row], error: null });
+    const maybeSingle = jest.fn().mockResolvedValue({ data: row, error: null });
+    const single = jest.fn().mockResolvedValue({ data: { ...row, status: "reserved" }, error: null });
     const listChain: Record<string, unknown> = { order };
-    listChain.neq = vi.fn(() => listChain);
-    const from = vi.fn().mockReturnValue({
-      select: vi.fn().mockReturnValue({
+    listChain.neq = jest.fn(() => listChain);
+    const from = jest.fn().mockReturnValue({
+      select: jest.fn().mockReturnValue({
         order,
         neq: listChain.neq,
-        eq: vi.fn().mockReturnValue({ maybeSingle, order }),
+        eq: jest.fn().mockReturnValue({ maybeSingle, order }),
       }),
-      update: vi.fn().mockReturnValue({ eq: vi.fn().mockReturnValue({ select: vi.fn().mockReturnValue({ single }) }) }),
+      update: jest.fn().mockReturnValue({ eq: jest.fn().mockReturnValue({ select: jest.fn().mockReturnValue({ single }) }) }),
     });
     const books = new SupabaseBookDataSource(fakeClient({ from }));
     await expect(books.list()).resolves.toEqual([{ id: "1", title: "Livro", author: "Autora", ownerId: "dono", modality: "donation", status: "available" }]);
@@ -355,12 +354,12 @@ describe("datasources Supabase", () => {
 
   it("aplica paginação com range quando limit e offset são fornecidos (Issue #117)", async () => {
     const row = { id: "p1", title: "Livro Paginado", author: "Autor", owner_id: "dono", modality: "donation", price: null, status: "available" };
-    const range = vi.fn().mockResolvedValue({ data: [row], error: null });
-    const order = vi.fn().mockReturnValue({ range });
+    const range = jest.fn().mockResolvedValue({ data: [row], error: null });
+    const order = jest.fn().mockReturnValue({ range });
     const listChain: Record<string, unknown> = { order };
-    listChain.neq = vi.fn(() => listChain);
-    const from = vi.fn().mockReturnValue({
-      select: vi.fn().mockReturnValue({
+    listChain.neq = jest.fn(() => listChain);
+    const from = jest.fn().mockReturnValue({
+      select: jest.fn().mockReturnValue({
         neq: listChain.neq,
       }),
     });
@@ -374,13 +373,13 @@ describe("datasources Supabase", () => {
 
   it("aplica filtro de bairro e modalidade na consulta remota (Spec 068 / ADR 0051)", async () => {
     const row = { id: "p2", title: "Livro no Centro", author: "Autor", owner_id: "dono", modality: "donation", price: null, status: "available", neighborhood: "Centro" };
-    const order = vi.fn().mockResolvedValue({ data: [row], error: null });
-    const eqModality = vi.fn().mockReturnValue({ order });
-    const eqNeighborhood = vi.fn().mockReturnValue({ eq: eqModality, order });
-    const neq = vi.fn();
+    const order = jest.fn().mockResolvedValue({ data: [row], error: null });
+    const eqModality = jest.fn().mockReturnValue({ order });
+    const eqNeighborhood = jest.fn().mockReturnValue({ eq: eqModality, order });
+    const neq = jest.fn();
     neq.mockReturnValue({ neq, eq: eqNeighborhood, order });
-    const from = vi.fn().mockReturnValue({
-      select: vi.fn().mockReturnValue({ neq }),
+    const from = jest.fn().mockReturnValue({
+      select: jest.fn().mockReturnValue({ neq }),
     });
     const books = new SupabaseBookDataSource(fakeClient({ from }));
     const result = await books.list({ neighborhood: "Centro", modality: "donation" });
@@ -392,15 +391,15 @@ describe("datasources Supabase", () => {
   });
 
   it("trata catálogo vazio, livro ausente e falhas do banco sem detalhes internos", async () => {
-    const emptyOrder = vi.fn().mockResolvedValue({ data: [], error: null });
-    const emptyNeq = vi.fn();
+    const emptyOrder = jest.fn().mockResolvedValue({ data: [], error: null });
+    const emptyNeq = jest.fn();
     emptyNeq.mockReturnValue({ order: emptyOrder, neq: emptyNeq });
-    const empty = new SupabaseBookDataSource(fakeClient({ from: vi.fn().mockReturnValue({
-      select: vi.fn().mockReturnValue({
+    const empty = new SupabaseBookDataSource(fakeClient({ from: jest.fn().mockReturnValue({
+      select: jest.fn().mockReturnValue({
         order: emptyOrder,
         neq: emptyNeq,
-        eq: vi.fn().mockReturnValue({
-          maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+        eq: jest.fn().mockReturnValue({
+          maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
           order: emptyOrder,
         }),
       }),
@@ -408,20 +407,20 @@ describe("datasources Supabase", () => {
     await expect(empty.list()).resolves.toEqual([]);
     await expect(empty.findById("ausente")).resolves.toBeNull();
 
-    const failedOrder = vi.fn().mockResolvedValue({ data: null, error: { message: "interno" } });
-    const failedNeq = vi.fn();
+    const failedOrder = jest.fn().mockResolvedValue({ data: null, error: { message: "interno" } });
+    const failedNeq = jest.fn();
     failedNeq.mockReturnValue({ order: failedOrder, neq: failedNeq });
-    const failed = new SupabaseBookDataSource(fakeClient({ from: vi.fn().mockReturnValue({
-      select: vi.fn().mockReturnValue({
+    const failed = new SupabaseBookDataSource(fakeClient({ from: jest.fn().mockReturnValue({
+      select: jest.fn().mockReturnValue({
         order: failedOrder,
         neq: failedNeq,
-        eq: vi.fn().mockReturnValue({
-          maybeSingle: vi.fn().mockResolvedValue({ data: null, error: { message: "interno" } }),
+        eq: jest.fn().mockReturnValue({
+          maybeSingle: jest.fn().mockResolvedValue({ data: null, error: { message: "interno" } }),
           order: failedOrder,
         }),
       }),
-      insert: vi.fn().mockReturnValue({ select: vi.fn().mockReturnValue({ single: vi.fn().mockResolvedValue({ data: null, error: { message: "interno" } }) }) }),
-      update: vi.fn().mockReturnValue({ eq: vi.fn().mockReturnValue({ select: vi.fn().mockReturnValue({ single: vi.fn().mockResolvedValue({ data: null, error: { message: "interno" } }) }) }) }),
+      insert: jest.fn().mockReturnValue({ select: jest.fn().mockReturnValue({ single: jest.fn().mockResolvedValue({ data: null, error: { message: "interno" } }) }) }),
+      update: jest.fn().mockReturnValue({ eq: jest.fn().mockReturnValue({ select: jest.fn().mockReturnValue({ single: jest.fn().mockResolvedValue({ data: null, error: { message: "interno" } }) }) }) }),
     }) }));
     await expect(failed.list()).rejects.toThrow("Não foi possível carregar os livros.");
     await expect(failed.findById("1")).rejects.toThrow("Não foi possível consultar o anúncio.");
@@ -431,20 +430,20 @@ describe("datasources Supabase", () => {
 
   it("cria, lista e responde pedidos persistidos", async () => {
     const row = { id: "pedido-1", listing_id: "livro-1", requester_id: "pessoa-1", status: "pending" };
-    const select = vi.fn().mockImplementation(() => ({
-      single: vi.fn().mockResolvedValue({ data: row, error: null }),
-      eq: vi.fn().mockImplementation(() => Object.assign(Promise.resolve({ data: [row], error: null }), {
-        maybeSingle: vi.fn().mockResolvedValue({ data: row, error: null }),
+    const select = jest.fn().mockImplementation(() => ({
+      single: jest.fn().mockResolvedValue({ data: row, error: null }),
+      eq: jest.fn().mockImplementation(() => Object.assign(Promise.resolve({ data: [row], error: null }), {
+        maybeSingle: jest.fn().mockResolvedValue({ data: row, error: null }),
       })),
     }));
-    const from = vi.fn().mockReturnValue({
-      insert: vi.fn().mockReturnValue({ select }),
+    const from = jest.fn().mockReturnValue({
+      insert: jest.fn().mockReturnValue({ select }),
       select,
-      update: vi.fn().mockReturnValue({ eq: vi.fn().mockReturnValue({ eq: vi.fn().mockReturnValue({
-        select: vi.fn().mockReturnValue({ single: vi.fn().mockResolvedValue({ data: { ...row, status: "accepted" }, error: null }) }),
+      update: jest.fn().mockReturnValue({ eq: jest.fn().mockReturnValue({ eq: jest.fn().mockReturnValue({
+        select: jest.fn().mockReturnValue({ single: jest.fn().mockResolvedValue({ data: { ...row, status: "accepted" }, error: null }) }),
       }) }) }),
     });
-    const rpc = vi.fn().mockResolvedValue({ data: { ...row, status: "accepted" }, error: null });
+    const rpc = jest.fn().mockResolvedValue({ data: { ...row, status: "accepted" }, error: null });
     const requests = new SupabaseBookRequestDataSource(fakeClient({ from, rpc }));
     await expect(requests.create({ listingId: "livro-1", requesterId: "pessoa-1", status: "pending" })).resolves.toMatchObject({ id: "pedido-1" });
     await expect(requests.findById("pedido-1")).resolves.toMatchObject({ id: "pedido-1" });
@@ -456,17 +455,17 @@ describe("datasources Supabase", () => {
   });
 
   it("não retorna pedido alheio quando a consulta é negada", async () => {
-    const maybeSingle = vi.fn().mockResolvedValue({ data: null, error: { message: "RLS denied" } });
-    const eq = vi.fn().mockReturnValue({ maybeSingle });
+    const maybeSingle = jest.fn().mockResolvedValue({ data: null, error: { message: "RLS denied" } });
+    const eq = jest.fn().mockReturnValue({ maybeSingle });
     const requests = new SupabaseBookRequestDataSource(fakeClient({
-      from: vi.fn().mockReturnValue({ select: vi.fn().mockReturnValue({ eq }) }),
+      from: jest.fn().mockReturnValue({ select: jest.fn().mockReturnValue({ eq }) }),
     }));
     await expect(requests.findById("pedido-1")).rejects.toThrow("Não foi possível consultar o pedido.");
   });
 
   it("aceita pedido pela RPC transacional e trata falha sem expor detalhes", async () => {
     const row = { id: "pedido-1", listing_id: "livro-1", requester_id: "pessoa-1", status: "accepted" };
-    const rpc = vi.fn().mockResolvedValueOnce({ data: row, error: null })
+    const rpc = jest.fn().mockResolvedValueOnce({ data: row, error: null })
       .mockResolvedValueOnce({ data: null, error: { message: "detalhe interno" } });
     const requests = new SupabaseBookRequestDataSource(fakeClient({ rpc }));
     await expect(requests.acceptAtomically("pedido-1")).resolves.toMatchObject({ status: "accepted" });
@@ -476,14 +475,14 @@ describe("datasources Supabase", () => {
 
   it("trata falhas de criação, listagem e resposta de pedidos sem vazar o banco", async () => {
     const error = { message: "detalhe interno" };
-    const select = vi.fn().mockReturnValue({
-      single: vi.fn().mockResolvedValue({ data: null, error }),
-      eq: vi.fn().mockResolvedValue({ data: null, error }),
+    const select = jest.fn().mockReturnValue({
+      single: jest.fn().mockResolvedValue({ data: null, error }),
+      eq: jest.fn().mockResolvedValue({ data: null, error }),
     });
-    const requests = new SupabaseBookRequestDataSource(fakeClient({ from: vi.fn().mockReturnValue({
-      insert: vi.fn().mockReturnValue({ select }),
+    const requests = new SupabaseBookRequestDataSource(fakeClient({ from: jest.fn().mockReturnValue({
+      insert: jest.fn().mockReturnValue({ select }),
       select,
-      update: vi.fn().mockReturnValue({ eq: vi.fn().mockReturnValue({ eq: vi.fn().mockReturnValue({ select }) }) }),
+      update: jest.fn().mockReturnValue({ eq: jest.fn().mockReturnValue({ eq: jest.fn().mockReturnValue({ select }) }) }),
     }) }));
     await expect(requests.create({ listingId: "livro", requesterId: "pessoa", status: "pending" })).rejects.toThrow("Não foi possível solicitar a negociação.");
     await expect(requests.listByListing("livro")).rejects.toThrow("Não foi possível carregar os pedidos.");
@@ -502,10 +501,10 @@ describe("datasources Supabase", () => {
       created_at: "2026-10-15T12:00:00Z",
       action_url: null,
     };
-    const order = vi.fn().mockResolvedValue({ data: [row], error: null });
-    const eqSelect = vi.fn().mockReturnValue({ order });
-    const select = vi.fn().mockReturnValue({ eq: eqSelect });
-    const from = vi.fn().mockReturnValue({ select });
+    const order = jest.fn().mockResolvedValue({ data: [row], error: null });
+    const eqSelect = jest.fn().mockReturnValue({ order });
+    const select = jest.fn().mockReturnValue({ eq: eqSelect });
+    const from = jest.fn().mockReturnValue({ select });
 
     const notifDs = new SupabaseNotificationDataSource(fakeClient({ from }));
     const list = await notifDs.listByUser("user-1");
@@ -524,21 +523,21 @@ describe("datasources Supabase", () => {
       created_at: "2026-10-15T12:00:00Z",
       action_url: "/negociacao/1",
     };
-    const order = vi.fn().mockResolvedValue({ data: [row], error: null });
-    const eqSelect = vi.fn().mockReturnValue({ order });
-    const select = vi.fn().mockReturnValue({ eq: eqSelect });
-    const eqUpdate = vi.fn().mockResolvedValue({ error: null });
-    const update = vi.fn().mockReturnValue({ eq: eqUpdate });
-    const eqDelete2 = vi.fn().mockResolvedValue({ error: null });
-    const eqDelete = vi.fn().mockImplementation(() => ({
+    const order = jest.fn().mockResolvedValue({ data: [row], error: null });
+    const eqSelect = jest.fn().mockReturnValue({ order });
+    const select = jest.fn().mockReturnValue({ eq: eqSelect });
+    const eqUpdate = jest.fn().mockResolvedValue({ error: null });
+    const update = jest.fn().mockReturnValue({ eq: eqUpdate });
+    const eqDelete2 = jest.fn().mockResolvedValue({ error: null });
+    const eqDelete = jest.fn().mockImplementation(() => ({
       ...Promise.resolve({ error: null }),
       then: (r: any) => Promise.resolve({ error: null }).then(r),
       eq: eqDelete2,
     }));
-    const del = vi.fn().mockReturnValue({ eq: eqDelete });
-    const insert = vi.fn().mockResolvedValue({ error: null });
+    const del = jest.fn().mockReturnValue({ eq: eqDelete });
+    const insert = jest.fn().mockResolvedValue({ error: null });
 
-    const from = vi.fn().mockImplementation((table: string) => {
+    const from = jest.fn().mockImplementation((table: string) => {
       expect(table).toBe("v2_notifications");
       return { select, update, insert, delete: del };
     });
@@ -570,21 +569,21 @@ describe("datasources Supabase", () => {
 
   it("trata erros nas operações de notificação do Supabase", async () => {
     const error = { message: "falha no banco" };
-    const order = vi.fn().mockResolvedValue({ data: null, error });
-    const eqSelect = vi.fn().mockReturnValue({ order });
-    const select = vi.fn().mockReturnValue({ eq: eqSelect });
-    const eqUpdate = vi.fn().mockResolvedValue({ error });
-    const update = vi.fn().mockReturnValue({ eq: eqUpdate });
-    const eqDelete2 = vi.fn().mockResolvedValue({ error });
-    const eqDelete = vi.fn().mockImplementation(() => ({
+    const order = jest.fn().mockResolvedValue({ data: null, error });
+    const eqSelect = jest.fn().mockReturnValue({ order });
+    const select = jest.fn().mockReturnValue({ eq: eqSelect });
+    const eqUpdate = jest.fn().mockResolvedValue({ error });
+    const update = jest.fn().mockReturnValue({ eq: eqUpdate });
+    const eqDelete2 = jest.fn().mockResolvedValue({ error });
+    const eqDelete = jest.fn().mockImplementation(() => ({
       ...Promise.resolve({ error }),
       then: (r: any) => Promise.resolve({ error }).then(r),
       eq: eqDelete2,
     }));
-    const del = vi.fn().mockReturnValue({ eq: eqDelete });
-    const insert = vi.fn().mockResolvedValue({ error });
+    const del = jest.fn().mockReturnValue({ eq: eqDelete });
+    const insert = jest.fn().mockResolvedValue({ error });
 
-    const from = vi.fn().mockReturnValue({ select, update, insert, delete: del });
+    const from = jest.fn().mockReturnValue({ select, update, insert, delete: del });
     const notifDs = new SupabaseNotificationDataSource(fakeClient({ from }));
 
     await expect(notifDs.listByUser("user-1")).rejects.toThrow("Não foi possível carregar as notificações.");

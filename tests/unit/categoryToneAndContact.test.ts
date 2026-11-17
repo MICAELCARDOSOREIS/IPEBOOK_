@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import { categoryTone } from "@/view/categoryTone";
 import { SUPPORT_EMAIL, supportMailtoUrl } from "@/view/supportContact";
 

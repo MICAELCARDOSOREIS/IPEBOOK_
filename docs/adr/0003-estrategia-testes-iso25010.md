@@ -4,6 +4,9 @@ Data: 2026-10-13. Status: aceito.
 
 > **Atualização (2026-11-04):** o item 5 (Maestro) foi superado. Os fluxos E2E em `.maestro/`
 > foram removidos e não são executados na CI; a validação em dispositivo passou a ser manual.
+>
+> **Atualização (2026-11-17):** o item 1 (Vitest) foi substituído pelo [ADR 0113](0113-migracao-vitest-para-jest.md),
+> que adota Jest com `coverageProvider: "v8"` mantendo os mesmos limiares de 80%.
 > Os demais itens desta decisão continuam válidos. Ver [`docs/qualidade.md`](../../docs/qualidade.md).
 
 ## Contexto

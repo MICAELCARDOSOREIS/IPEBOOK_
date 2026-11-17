@@ -1,4 +1,3 @@
-import { describe, expect, it, vi } from "vitest";
 import {
   BUCKET_NAME,
   MAX_PHOTO_SIZE_BYTES,
@@ -16,11 +15,11 @@ function fakeClient(storageImpl: unknown): SupabaseAppClient {
 
 describe("SupabasePhotoStorageDataSource (Spec 023 / Issue #116)", () => {
   it("faz upload de foto com sucesso e retorna a URL pública", async () => {
-    const upload = vi.fn().mockResolvedValue({ error: null });
-    const getPublicUrl = vi.fn().mockReturnValue({
+    const upload = jest.fn().mockResolvedValue({ error: null });
+    const getPublicUrl = jest.fn().mockReturnValue({
       data: { publicUrl: "https://exemplo.supabase.co/storage/v1/object/public/book-photos/user-1/foto.jpg" },
     });
-    const from = vi.fn().mockReturnValue({ upload, getPublicUrl });
+    const from = jest.fn().mockReturnValue({ upload, getPublicUrl });
     const client = fakeClient({ from });
 
     const ds = new SupabasePhotoStorageDataSource(client);
@@ -32,7 +31,7 @@ describe("SupabasePhotoStorageDataSource (Spec 023 / Issue #116)", () => {
     });
 
     expect(from).toHaveBeenCalledWith(BUCKET_NAME);
-    expect(upload).toHaveBeenCalledOnce();
+    expect(upload).toHaveBeenCalledTimes(1);
     expect(url).toBe("https://exemplo.supabase.co/storage/v1/object/public/book-photos/user-1/foto.jpg");
   });
 
@@ -74,8 +73,8 @@ describe("SupabasePhotoStorageDataSource (Spec 023 / Issue #116)", () => {
   });
 
   it("lança DataSourceError quando o Supabase Storage falha", async () => {
-    const upload = vi.fn().mockResolvedValue({ error: { message: "Storage error" } });
-    const from = vi.fn().mockReturnValue({ upload });
+    const upload = jest.fn().mockResolvedValue({ error: { message: "Storage error" } });
+    const from = jest.fn().mockReturnValue({ upload });
     const ds = new SupabasePhotoStorageDataSource(fakeClient({ from }));
 
     await expect(
@@ -89,8 +88,8 @@ describe("SupabasePhotoStorageDataSource (Spec 023 / Issue #116)", () => {
   });
 
   it("remove foto existente extraindo o caminho do bucket", async () => {
-    const remove = vi.fn().mockResolvedValue({ error: null });
-    const from = vi.fn().mockReturnValue({ remove });
+    const remove = jest.fn().mockResolvedValue({ error: null });
+    const from = jest.fn().mockReturnValue({ remove });
     const ds = new SupabasePhotoStorageDataSource(fakeClient({ from }));
 
     await ds.deletePhoto(

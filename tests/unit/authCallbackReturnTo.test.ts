@@ -1,9 +1,9 @@
-import { describe, expect, it, beforeEach, vi } from "vitest";
 import { consumeAuthReturnTo, setAuthReturnTo } from "@/view/auth/authReturnTo";
+import { stubGlobal, unstubAllGlobals } from "../helpers/stubGlobal";
 
 describe("authReturnTo (Spec 108: preservação da rota de retorno OAuth)", () => {
   beforeEach(() => {
-    vi.stubGlobal("window", {
+    stubGlobal("window", {
       sessionStorage: {
         _data: {} as Record<string, string>,
         getItem(key: string) {
@@ -17,6 +17,10 @@ describe("authReturnTo (Spec 108: preservação da rota de retorno OAuth)", () =
         },
       },
     });
+  });
+
+  afterEach(() => {
+    unstubAllGlobals();
   });
 
   it("salva e consome auth_return_to retornando para /beta", () => {

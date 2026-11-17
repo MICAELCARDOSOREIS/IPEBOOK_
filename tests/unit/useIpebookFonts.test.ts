@@ -1,8 +1,7 @@
-import { describe, expect, it, vi } from "vitest";
 
-vi.mock("expo-font", () => ({ useFonts: vi.fn((map: Record<string, unknown>) => [Object.keys(map).length > 0, null]) }));
-vi.mock("@expo-google-fonts/source-serif-4", () => ({ SourceSerif4_700Bold: "mock-source-serif-4-bold" }));
-vi.mock("@expo-google-fonts/plus-jakarta-sans", () => ({
+jest.mock("expo-font", () => ({ useFonts: jest.fn((map: Record<string, unknown>) => [Object.keys(map).length > 0, null]) }));
+jest.mock("@expo-google-fonts/source-serif-4", () => ({ SourceSerif4_700Bold: "mock-source-serif-4-bold" }));
+jest.mock("@expo-google-fonts/plus-jakarta-sans", () => ({
   PlusJakartaSans_400Regular: "mock-plus-jakarta-sans-regular",
   PlusJakartaSans_500Medium: "mock-plus-jakarta-sans-medium",
   PlusJakartaSans_600SemiBold: "mock-plus-jakarta-sans-semibold",

@@ -1,21 +1,20 @@
 
 import { act, render, waitFor } from "@testing-library/react-native";
-import { describe, expect, it, vi } from "vitest";
 import type { AuthActions, AuthState } from "@/viewmodel/useAuthViewModel";
 
-vi.mock("@/viewmodel/useAuthViewModel", () => ({ useAuthViewModel: vi.fn() }));
+jest.mock("@/viewmodel/useAuthViewModel", () => ({ useAuthViewModel: jest.fn() }));
 
 import { searchAlertUseCases } from "@/di/container";
 import EditAlertScreen from "@/view/search/editAlertScreen";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 
-const mockedUseAuthViewModel = vi.mocked(useAuthViewModel);
+const mockedUseAuthViewModel = jest.mocked(useAuthViewModel);
 
 const actions: AuthActions = {
-  signUp: vi.fn().mockResolvedValue(false),
-  signIn: vi.fn().mockResolvedValue(false),
-  signOut: vi.fn().mockResolvedValue(true),
-  requestPasswordReset: vi.fn().mockResolvedValue(false),
+  signUp: jest.fn().mockResolvedValue(false),
+  signIn: jest.fn().mockResolvedValue(false),
+  signOut: jest.fn().mockResolvedValue(true),
+  requestPasswordReset: jest.fn().mockResolvedValue(false),
 };
 
 function authState(user: AuthState["user"]): [AuthState, AuthActions] {
@@ -32,7 +31,7 @@ describe("EditAlertScreen", () => {
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
       screen = await render(
-        <EditAlertScreen alertId={alert.id} onBack={vi.fn()} onSaved={vi.fn()} />,
+        <EditAlertScreen alertId={alert.id} onBack={jest.fn()} onSaved={jest.fn()} />,
       );
     });
 
@@ -48,7 +47,7 @@ describe("EditAlertScreen", () => {
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
       screen = await render(
-        <EditAlertScreen alertId={alert.id} onBack={vi.fn()} onSaved={vi.fn()} />,
+        <EditAlertScreen alertId={alert.id} onBack={jest.fn()} onSaved={jest.fn()} />,
       );
     });
 

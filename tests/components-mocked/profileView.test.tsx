@@ -1,15 +1,14 @@
 import type React from "react";
 import { act, fireEvent, render } from "@testing-library/react-native";
-import { describe, expect, it, vi } from "vitest";
 import type { AuthState } from "@/viewmodel/useAuthViewModel";
 import type { ProfileState } from "@/viewmodel/useProfileViewModel";
 import type { UserPreferencesState } from "@/viewmodel/useUserPreferencesViewModel";
 import Profile from "@/view/profile/profile";
 
-vi.mock("@/viewmodel/useAuthViewModel", () => ({ useAuthViewModel: vi.fn() }));
-vi.mock("@/viewmodel/useProfileViewModel", () => ({ useProfileViewModel: vi.fn() }));
-vi.mock("@/viewmodel/useUserPreferencesViewModel", () => ({ useUserPreferencesViewModel: vi.fn() }));
-vi.mock("@/viewmodel/useProfilePhotoViewModel", () => ({ useProfilePhotoViewModel: vi.fn() }));
+jest.mock("@/viewmodel/useAuthViewModel", () => ({ useAuthViewModel: jest.fn() }));
+jest.mock("@/viewmodel/useProfileViewModel", () => ({ useProfileViewModel: jest.fn() }));
+jest.mock("@/viewmodel/useUserPreferencesViewModel", () => ({ useUserPreferencesViewModel: jest.fn() }));
+jest.mock("@/viewmodel/useProfilePhotoViewModel", () => ({ useProfilePhotoViewModel: jest.fn() }));
 
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
 import { useProfileViewModel } from "@/viewmodel/useProfileViewModel";
@@ -43,34 +42,34 @@ function setup(
     photoError?: string | null;
   } = {},
 ) {
-  const choose = vi.fn().mockResolvedValue(options.pickedPhotoUrl ?? null);
-  vi.mocked(useProfilePhotoViewModel).mockReturnValue([
+  const choose = jest.fn().mockResolvedValue(options.pickedPhotoUrl ?? null);
+  jest.mocked(useProfilePhotoViewModel).mockReturnValue([
     { uploading: false, error: options.photoError ?? null },
-    { choose, clearError: vi.fn() },
+    { choose, clearError: jest.fn() },
   ]);
-  vi.mocked(useAuthViewModel).mockReturnValue([
+  jest.mocked(useAuthViewModel).mockReturnValue([
     { user, loading: options.sessionLoading ?? false, error: null },
-    { signUp: vi.fn(), signIn: vi.fn(), signOut: vi.fn(), requestPasswordReset: vi.fn() },
+    { signUp: jest.fn(), signIn: jest.fn(), signOut: jest.fn(), requestPasswordReset: jest.fn() },
   ]);
-  const update = vi.fn().mockResolvedValue(true);
-  vi.mocked(useProfileViewModel).mockReturnValue([
+  const update = jest.fn().mockResolvedValue(true);
+  jest.mocked(useProfileViewModel).mockReturnValue([
     {
       profile: options.profile === undefined ? profile : options.profile,
       loading: options.loading ?? false,
       saving: options.saving ?? false,
       error: options.error ?? null,
     },
-    { update, reload: vi.fn() },
+    { update, reload: jest.fn() },
   ]);
-  const updatePreferences = vi.fn().mockResolvedValue(true);
-  vi.mocked(useUserPreferencesViewModel).mockReturnValue([
+  const updatePreferences = jest.fn().mockResolvedValue(true);
+  jest.mocked(useUserPreferencesViewModel).mockReturnValue([
     {
       preferences: options.preferences === undefined ? emptyPreferences : options.preferences,
       loading: false,
       saving: false,
       error: options.preferencesError ?? null,
     },
-    { update: updatePreferences, reload: vi.fn() },
+    { update: updatePreferences, reload: jest.fn() },
   ]);
   return { update, updatePreferences, choose };
 }
@@ -86,7 +85,7 @@ async function renderProfile(props: Partial<React.ComponentProps<typeof Profile>
 describe("Profile (Spec 006 US4, Issue #55)", () => {
   it("redireciona para o login quando não há sessão", async () => {
     setup(null);
-    const onNavigateToSignIn = vi.fn();
+    const onNavigateToSignIn = jest.fn();
     await renderProfile({ onNavigateToSignIn });
     expect(onNavigateToSignIn).toHaveBeenCalledTimes(1);
   });
@@ -213,7 +212,7 @@ describe("Profile (Spec 006 US4, Issue #55)", () => {
   });
 
   it("oferece um caminho claro para quem não tem conta, além de redirecionar", async () => {
-    const onNavigateToSignIn = vi.fn();
+    const onNavigateToSignIn = jest.fn();
     setup(null);
     const screen = await renderProfile({ onNavigateToSignIn });
     expect(screen.getByText("Entre para editar seu perfil")).toBeDefined();
@@ -223,7 +222,7 @@ describe("Profile (Spec 006 US4, Issue #55)", () => {
 
   it("volta direto quando não há edição em aberto", async () => {
     setup({ id: "ana", email: "ana@exemplo.com" });
-    const onBack = vi.fn();
+    const onBack = jest.fn();
     const screen = await renderProfile({ onBack });
     await act(async () => { fireEvent.press(screen.getByLabelText("Voltar")); });
     expect(onBack).toHaveBeenCalledTimes(1);
@@ -232,7 +231,7 @@ describe("Profile (Spec 006 US4, Issue #55)", () => {
 
   it("pergunta antes de descartar alterações não salvas", async () => {
     setup({ id: "ana", email: "ana@exemplo.com" });
-    const onBack = vi.fn();
+    const onBack = jest.fn();
     const screen = await renderProfile({ onBack });
     await act(async () => { fireEvent.changeText(screen.getByDisplayValue("Ana"), "Ana Lima"); });
     await act(async () => { fireEvent.press(screen.getByLabelText("Voltar")); });

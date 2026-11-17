@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import { ClientRateLimiter } from "@/infra/services/clientRateLimiter";
 import {
   DEFAULT_FORM_ATTEMPTS,

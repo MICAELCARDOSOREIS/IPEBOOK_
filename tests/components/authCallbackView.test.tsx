@@ -1,24 +1,23 @@
 
 import { act, fireEvent, render, screen } from "@testing-library/react-native";
-import { describe, expect, it, vi } from "vitest";
 import type { AuthActions, AuthState } from "@/viewmodel/useAuthViewModel";
 import AuthCallback from "@/view/auth/authCallback";
 
-vi.mock("@/viewmodel/useAuthViewModel", () => ({
-  useAuthViewModel: vi.fn(),
+jest.mock("@/viewmodel/useAuthViewModel", () => ({
+  useAuthViewModel: jest.fn(),
 }));
 
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
-const mockedUseAuthViewModel = vi.mocked(useAuthViewModel);
+const mockedUseAuthViewModel = jest.mocked(useAuthViewModel);
 
 function mockAuth(state: AuthState, actions: Partial<AuthActions> = {}) {
   const fullActions: AuthActions = {
-    signUp: vi.fn().mockResolvedValue(true),
-    signIn: vi.fn().mockResolvedValue(true),
-    signInWithGoogle: vi.fn().mockResolvedValue(true),
-    handleAuthCallback: vi.fn().mockResolvedValue(true),
-    signOut: vi.fn().mockResolvedValue(true),
-    requestPasswordReset: vi.fn().mockResolvedValue(true),
+    signUp: jest.fn().mockResolvedValue(true),
+    signIn: jest.fn().mockResolvedValue(true),
+    signInWithGoogle: jest.fn().mockResolvedValue(true),
+    handleAuthCallback: jest.fn().mockResolvedValue(true),
+    signOut: jest.fn().mockResolvedValue(true),
+    requestPasswordReset: jest.fn().mockResolvedValue(true),
     ...actions,
   };
   mockedUseAuthViewModel.mockReturnValue([state, fullActions]);
@@ -27,9 +26,9 @@ function mockAuth(state: AuthState, actions: Partial<AuthActions> = {}) {
 
 describe("tela de callback de autenticação (AuthCallback)", () => {
   it("chama handleAuthCallback e redireciona com sucesso", async () => {
-    const handleAuthCallback = vi.fn().mockResolvedValue(true);
+    const handleAuthCallback = jest.fn().mockResolvedValue(true);
     mockAuth({ user: null, loading: false, error: null }, { handleAuthCallback });
-    const onSuccess = vi.fn();
+    const onSuccess = jest.fn();
 
     await act(async () => {
       render(
@@ -48,13 +47,13 @@ describe("tela de callback de autenticação (AuthCallback)", () => {
 
   it("conclui o login uma única vez mesmo com novas renderizações durante o processamento", async () => {
     let resolveCallback: (ok: boolean) => void = () => {};
-    const handleAuthCallback = vi.fn(
+    const handleAuthCallback = jest.fn(
       () => new Promise<boolean>((resolve) => { resolveCallback = resolve; }),
     );
     mockAuth({ user: null, loading: true, error: null }, { handleAuthCallback });
     const url = "https://ipebook.app/auth/callback#access_token=token&refresh_token=refresh";
-    const firstOnSuccess = vi.fn();
-    const secondOnSuccess = vi.fn();
+    const firstOnSuccess = jest.fn();
+    const secondOnSuccess = jest.fn();
 
     let view!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
@@ -74,10 +73,10 @@ describe("tela de callback de autenticação (AuthCallback)", () => {
   });
 
   it("exibe mensagem de erro quando o callback falha", async () => {
-    const handleAuthCallback = vi.fn().mockResolvedValue(false);
+    const handleAuthCallback = jest.fn().mockResolvedValue(false);
     mockAuth({ user: null, loading: false, error: "Link inválido ou expirado." }, { handleAuthCallback });
-    const onSuccess = vi.fn();
-    const onBackToSignIn = vi.fn();
+    const onSuccess = jest.fn();
+    const onBackToSignIn = jest.fn();
 
     await act(async () => {
       render(
@@ -98,9 +97,9 @@ describe("tela de callback de autenticação (AuthCallback)", () => {
   });
 
   it("mostra o motivo publicado pelo ViewModel depois de a tentativa falhar", async () => {
-    const handleAuthCallback = vi.fn().mockResolvedValue(false);
+    const handleAuthCallback = jest.fn().mockResolvedValue(false);
     mockAuth({ user: null, loading: true, error: null }, { handleAuthCallback });
-    const onSuccess = vi.fn();
+    const onSuccess = jest.fn();
     const url = "ipebook://auth/callback#error=access_denied";
 
     let view!: Awaited<ReturnType<typeof render>>;

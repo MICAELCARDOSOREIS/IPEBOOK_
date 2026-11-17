@@ -1,6 +1,5 @@
 import { createElement } from "react";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
-import { afterEach, describe, expect, it, vi } from "vitest";
 import { DomainError } from "@/model/errors";
 import type { Book } from "@/model/entities/book";
 import type { IBookUseCases } from "@/usecase/iBookUseCases";
@@ -63,7 +62,7 @@ describe("testes de hook: useDraftsViewModel (Spec 017 — Confiabilidade)", () 
   });
 
   it("trata erro de domínio e permite recarregar", async () => {
-    const listDrafts = vi
+    const listDrafts = jest
       .fn()
       .mockRejectedValueOnce(new DomainError("Sem conexão."))
       .mockResolvedValueOnce([draft("d1", "Rascunho")]);
@@ -88,7 +87,7 @@ describe("testes de hook: useDraftsViewModel (Spec 017 — Confiabilidade)", () 
   });
 
   it("remove rascunho da lista ao descartar com sucesso", async () => {
-    const discardDraft = vi.fn().mockResolvedValue(undefined);
+    const discardDraft = jest.fn().mockResolvedValue(undefined);
     const hook = await renderHook("u1", {
       listDrafts: async () => [draft("d1", "Um"), draft("d2", "Dois")],
       discardDraft,
@@ -106,7 +105,7 @@ describe("testes de hook: useDraftsViewModel (Spec 017 — Confiabilidade)", () 
   });
 
   it("mantém a lista e expõe discardError quando o descarte falha", async () => {
-    const discardDraft = vi.fn().mockRejectedValue(new DomainError("Rascunho não encontrado."));
+    const discardDraft = jest.fn().mockRejectedValue(new DomainError("Rascunho não encontrado."));
     const hook = await renderHook("u1", {
       listDrafts: async () => [draft("d1", "Um")],
       discardDraft,
@@ -123,7 +122,7 @@ describe("testes de hook: useDraftsViewModel (Spec 017 — Confiabilidade)", () 
   });
 
   it("mascara erro inesperado ao descartar com mensagem segura", async () => {
-    const discardDraft = vi.fn().mockRejectedValue(new Error("falha crua do banco"));
+    const discardDraft = jest.fn().mockRejectedValue(new Error("falha crua do banco"));
     const hook = await renderHook("u1", {
       listDrafts: async () => [draft("d1", "Um")],
       discardDraft,
