@@ -35,7 +35,7 @@ const reais = {
   ADRs: readdirSync(join(raiz, "docs", "adr")).filter((n) => /^\d{4}-.+\.md$/.test(n)).length,
 };
 
-// O total de testes vem do relatório do Vitest, produzido pelo mesmo executador da suíte de cobertura.
+// O total de testes vem do relatório do Jest, produzido pelo mesmo executor da suíte de cobertura.
 // Sem relatório (clonagem recente, checagem isolada) o total não é conferido; os demais números são.
 const relatorioTestes = join(raiz, "coverage", "relatorio-testes.json");
 if (existsSync(relatorioTestes)) {

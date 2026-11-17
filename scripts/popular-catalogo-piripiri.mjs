@@ -176,12 +176,14 @@ import { fileURLToPath } from 'node:url';
 const isDirectRun = process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1];
 
 if (isDirectRun) {
-  const args = process.argv.slice(2);
-  if (args.includes('--sql')) {
-    process.stdout.write(gerarSqlSeed() + '\n');
-  } else {
-    await executarValidacaoLocal();
-    process.stdout.write('\nPara exportar o SQL bruto execute:\n  npm run db:seed -- --sql\n');
-  }
+  (async () => {
+    const args = process.argv.slice(2);
+    if (args.includes('--sql')) {
+      process.stdout.write(gerarSqlSeed() + '\n');
+    } else {
+      await executarValidacaoLocal();
+      process.stdout.write('\nPara exportar o SQL bruto execute:\n  npm run db:seed -- --sql\n');
+    }
+  })();
 }
 

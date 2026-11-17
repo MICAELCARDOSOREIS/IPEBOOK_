@@ -1006,10 +1006,11 @@ export function gerarRelatorioJson(resultado) {
 
 // Execução como script de linha de comando
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
-  const args = process.argv.slice(2);
+  (async () => {
+    const args = process.argv.slice(2);
 
-  if (args.includes('--help') || args.includes('-h')) {
-    process.stdout.write(`
+    if (args.includes('--help') || args.includes('-h')) {
+      process.stdout.write(`
 Uso: npm run health:supabase:remote [opções]
 
 Opções:
@@ -1017,27 +1018,28 @@ Opções:
   --allow-pending   Retorna código de saída 0 mesmo se houver migrações pendentes
   --help, -h        Exibe esta mensagem de ajuda
 \n`);
-    process.exit(0);
-  }
+      process.exit(0);
+    }
 
-  const emiteJson = args.includes('--json');
-  const allowPending = args.includes('--allow-pending');
+    const emiteJson = args.includes('--json');
+    const allowPending = args.includes('--allow-pending');
 
-  const resultado = await executarDiagnosticoRemoto();
+    const resultado = await executarDiagnosticoRemoto();
 
-  if (emiteJson) {
-    process.stdout.write(gerarRelatorioJson(resultado) + '\n');
-  } else {
-    process.stdout.write(formatarRelatorioTerminal(resultado) + '\n');
-  }
+    if (emiteJson) {
+      process.stdout.write(gerarRelatorioJson(resultado) + '\n');
+    } else {
+      process.stdout.write(formatarRelatorioTerminal(resultado) + '\n');
+    }
 
-  if (resultado.ok) {
-    process.exit(0);
-  }
+    if (resultado.ok) {
+      process.exit(0);
+    }
 
-  if (allowPending && resultado.conectividade?.ok) {
-    process.exit(0);
-  }
+    if (allowPending && resultado.conectividade?.ok) {
+      process.exit(0);
+    }
 
-  process.exit(1);
+    process.exit(1);
+  })();
 }
