@@ -1,5 +1,7 @@
 # Auditoria de Acessibilidade das Telas Existentes (Issue #96)
 
+> **Registro histórico (2026-10-19):** este relatório documenta a auditoria estática inicial das 20 rotas então existentes. Os achados 1, 2 e 3 foram resolvidos nas issues #104, #105 e #106, e posteriormente expandidos pela [Spec 125](../specs/125-linha-de-base-acessibilidade-e-estados/spec.md) ([ADR 0097](adr/0097-linha-de-base-acessibilidade-e-estados-das-telas.md)), pela auditoria de contraste nos temas claro e escuro (`tests/unit/themeContrast.test.ts`), pela suíte E2E Web via Chrome CDP (`npm run test:e2e`) e pela validação em dispositivo Android com TalkBack (2026-11-16).
+
 Data: 2026-10-19. Autora: Maria Clara. Branch desta auditoria: `feature/96-auditoria-acessibilidade`.
 
 ## Método e limitações deste ambiente

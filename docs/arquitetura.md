@@ -22,7 +22,7 @@ A decisão está registrada no [ADR 0002](adr/0002-adotar-expo-mvvm.md). O nome 
 | `infra` | Implementar contratos com tecnologia concreta | [memoryBookDataSource.ts](../src/infra/datasources/memoryBookDataSource.ts) | Definir fluxo de tela |
 | `di` | Construir e conectar implementações | [container.ts](../src/di/container.ts) | Concentrar regras de negócio |
 
-`app/_layout.tsx` configura o Stack; `app/index.tsx` reexporta a View. `model/services` define contratos de serviços transversais (`ILogger`, `IRateLimiter`, `IFileDownloadService`, `IPwaService`), implementados em `infra/services` (`SafeLogger`, `ClientRateLimiter`, download de arquivos, otimização de imagens e PWA).
+`app/_layout.tsx` configura o Stack e encapsula o `ThemeProvider`, `KeyboardAwareRoot`, `AppUpdateGate`, `PushRegistration` e `PwaRegister`; `app/index.tsx` liga a rota raiz às Views. `model/services` define contratos de serviços transversais (`ILogger`, `IRateLimiter`, `IFileDownloadService`, `IPwaService`, `IBookMetadataService`, `IPushNotificationService`, `IErrorReporter`, `IInAppUpdateService`, `IAppStoreLauncherService`, `IImagePickerService`, `IStoreReviewService`), implementados em `infra/services` (`SafeLogger`, `ClientRateLimiter`, `FileDownloadService`, `PwaService`, provedores de ISBN Open Library/Google Books/BrasilAPI/Crossref, `ExpoImagePickerService` com redução de imagem via `expo-image-manipulator`, `ExpoPushNotificationService`, `SentryErrorReporter`, `GooglePlayInAppUpdateService`, `ExpoStoreReviewService`, além dos equivalentes em memória para testes). `CachedBookDataSource` atua como decorator de cache offline em `AsyncStorage` sobre o catálogo.
 
 ## Fluxo da tela inicial
 
@@ -123,7 +123,7 @@ correção, `anunciar.tsx` passava `sessionUserId={null}` fixo e o cadastro falh
 
 ## Negociação simples (specs/004, trilha do Antonio)
 
-Contratos: `BookRequest` (`id`, `listingId`, `requesterId`, `status: "pending" | "accepted" | "rejected"`, `createdAt`) em [bookRequest.ts](../src/model/entities/bookRequest.ts); `IBookRequestDataSource` (`create`, `findById`, `listByListing`, `listByRequester`, `updateStatus`) em [iBookRequestDataSource.ts](../src/model/datasources/iBookRequestDataSource.ts); e `IBookRequestUseCases` em [iBookRequestUseCases.ts](../src/usecase/iBookRequestUseCases.ts) implementado por `BookRequestUseCases`.
+Contratos: `BookRequest` (`id`, `listingId`, `requesterId`, `status: "pending" | "accepted" | "rejected" | "cancelled"`, além de `initialMessage` e `offeredBookId` opcionais pela Spec 113) em [bookRequest.ts](../src/model/entities/bookRequest.ts); `IBookRequestDataSource` (`create`, `findById`, `listByListing`, `listByRequester`, `updateStatus`) em [iBookRequestDataSource.ts](../src/model/datasources/iBookRequestDataSource.ts); e `IBookRequestUseCases` em [iBookRequestUseCases.ts](../src/usecase/iBookRequestUseCases.ts) implementado por `BookRequestUseCases`.
 
 `BookRequestUseCases` implementa quatro operações principais:
 - `requestNegotiation(listingId, requesterId)`: valida regras de bloqueio (não negociar próprio anúncio FR-001, não duplicar pedido pendente FR-002, não solicitar anúncio reservado FR-003) e cria pedido pendente.

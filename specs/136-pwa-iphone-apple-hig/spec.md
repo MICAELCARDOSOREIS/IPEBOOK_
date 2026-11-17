@@ -47,7 +47,7 @@ Enquanto a versão Android segue estritamente o Material Design 3 e a versão We
 | CA2 | Regras CSS para prevenção de zoom (`font-size: 16px`), bloqueio de rubber-banding (`overscroll-behavior-y: none`) e remoção de tap highlight cinza estão presentes no HTML raiz da Web. | Teste unitário e verificação de `+html.tsx`. |
 | CA3 | A barra flutuante de navegação respeita a safe area do Home Indicator via `env(safe-area-inset-bottom)`. | Regra CSS presente em `+html.tsx` e padding calculado. |
 | CA4 | Tags `apple-touch-icon` estão configuradas com ícones de alta resolução e dimensões adequadas (180x180, 192x192, 512x512). | Inspeção de `+html.tsx` e existência dos assets. |
-| CA5 | `backOnce` previne bloqueio de usuário quando `router.canGoBack()` for falso, redirecionando para a rota de fallback. | Teste unitário em `tests/unit/pwaIphoneAppleHig.test.ts`. |
+| CA5 | `backOnce` previne bloqueio de usuário quando `router.canGoBack()` for falso, redirecionando para a rota de fallback. | Teste unitário em `tests/unit/pwaIphoneAppleHig.test.tsx`. |
 | CA6 | Alvos de toque nos componentes de topo e navegação mantêm conformidade com o piso mínimo de 44×44 pt do Apple HIG. | Teste unitário de acessibilidade interativa. |
 | CA7 | O comportamento e visual do Android (MD3) e Web Desktop permanecem 100% inalterados. | Testes existentes verdes sem regressões. |
 | CA8 | Suíte completa de validação passa com 100% de sucesso (`npm run typecheck`, `npm run check:architecture`, `npm run test`). | Comandos executados com código de saída 0. |

@@ -35,7 +35,7 @@ Em **Settings** > **Environment variables**, configure as seguintes chaves para 
 
 | Variável | Valor Recomendado / Descrição |
 |---|---|
-| `NODE_VERSION` | `20.18.0` (ou `>= 20.0.0`) |
+| `NODE_VERSION` | `24` (ou `>= 20.18.0`, alinhado ao Node 24 da CI) |
 | `EXPO_PUBLIC_BACKEND` | `supabase` |
 | `EXPO_PUBLIC_SUPABASE_URL` | `https://xiuuiggpccpgrwkzeloc.supabase.co` |
 | `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | *(Chave anônima pública `sbp_...` do projeto Supabase)* |
@@ -79,8 +79,8 @@ Após a conclusão da implantação pela Cloudflare:
 5. **Tratamento de 404:** Acessar `https://ipebook.app/rota-inexistente-12345` e conferir a apresentação da tela de recurso não encontrado (`+not-found.html`) com status 404.
 6. **Autenticação:** Testar login ou cadastro com credenciais válidas e verificar persistência de sessão e permissões RLS.
 7. **Rotas dinâmicas novas:** além de `/livro/<id>`, abrir direto `/conversa/<id>`, `/perfil/<id>` e `/denunciar-pessoa/<id>` (F5). Todas dependem de uma regra em `public/_redirects`; `npm run check:build-config` (também na CI) reprova a integração se alguma rota dinâmica de `src/app` ficar sem regra.
-8. **Câmera e APIs de livros:** conferir que o leitor de ISBN pede permissão de câmera (`Permissions-Policy: camera=(self)`) e que a busca por ISBN não é bloqueada pela CSP (`openlibrary.org`, `www.googleapis.com` e `covers.openlibrary.org` estão liberados em `public/_headers`).
-9. **Cabeçalhos HTTP:** Inspecionar resposta com `curl -I https://ipebook.app` e validar presença dos cabeçalhos `X-Content-Type-Options`, `X-Frame-Options` e `Content-Security-Policy`.
+8. **Câmera e APIs de livros:** conferir que o leitor de ISBN pede permissão de câmera (`Permissions-Policy: camera=(self)`) e que a busca por ISBN e capas externas não são bloqueadas pela CSP (`brasilapi.com.br`, `api.crossref.org`, `openlibrary.org`, `www.googleapis.com`, `covers.openlibrary.org`, `*.archive.org` e `books.google.com` estão liberados em `public/_headers`).
+9. **Cabeçalhos HTTP e Open Graph:** Inspecionar resposta com `curl -I https://ipebook.app` para validar `X-Content-Type-Options`, `X-Frame-Options` e `Content-Security-Policy`, e testar um crawler em `/livro/<id>` para validar os cards Open Graph gerados por `functions/livro/[id].ts`.
 
 ---
 

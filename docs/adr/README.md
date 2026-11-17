@@ -2,7 +2,7 @@
 
 - [0001 — Adotar ADRs](0001-adotar-adrs.md)
 - [0002 — Adotar Expo e MVVM sofisticado](0002-adotar-expo-mvvm.md)
-- [0003 — Estratégia de testes com RNTL, Vitest Coverage e Maestro sob a ISO/IEC 25010](0003-estrategia-testes-iso25010.md)
+- [0003 — Estratégia de testes com RNTL, Vitest Coverage e Maestro sob a ISO/IEC 25010](0003-estrategia-testes-iso25010.md) (decisão 1 substituída pelo 0113; item 5 superado)
 - [0004 — Design System, tokens contratuais e diretrizes de IHC](0004-design-system-e-tokens-ihc.md)
 - [0005 — Modalidade do produto: venda, troca e doação de livros físicos](0005-modalidade-venda-troca-doacao.md)
 - [0006 — Haverá conta: e-mail/senha e login com Google](0006-conta-com-email-e-google.md)
@@ -67,11 +67,11 @@
 - [0065 — Foto de perfil pela câmera ou galeria, guardada no bucket `book-photos`](0065-foto-de-perfil-por-camera-e-galeria.md)
 - [0066 — Aprimoramentos da Experiência Web Responsiva e Desktop Largo](0066-aprimoramentos-web-responsiva.md)
 - [0067 — Catálogo exige conta: fim da navegação de visitante](0067-catalogo-exige-conta.md)
-- [0068 — Mapa estático do Mapbox em "Combinar encontro"](0068-mapa-estatico-mapbox-no-encontro.md)
-- [0069 — Mapa interativo do Mapbox no app nativo](0069-mapa-interativo-mapbox-no-app.md)
+- [0068 — Mapa estático do Mapbox em "Combinar encontro"](0068-mapa-estatico-mapbox-no-encontro.md) (substituído pelo 0111)
+- [0069 — Mapa interativo do Mapbox no app nativo](0069-mapa-interativo-mapbox-no-app.md) (substituído pelo 0111)
 - [0070 — Concluir a negociação por QR code](0070-conclusao-por-qr-code.md)
 - [0071 — Push de avisos por Edge Function do Supabase](0071-push-de-avisos-por-edge-function.md)
-- [0072 — Mapa interativo do Mapbox na web](0072-mapa-interativo-mapbox-na-web.md)
+- [0072 — Mapa interativo do Mapbox na web](0072-mapa-interativo-mapbox-na-web.md) (substituído pelo 0111)
 - [0073 — BrasilAPI como terceira fonte de ISBN e dados da edição no anúncio](0073-brasilapi-como-fonte-de-isbn.md)
 - [0074 — Avisos de pedido recebido e aceito no servidor](0074-avisos-de-pedido-recebido-e-aceito.md)
 - [0075 — Preferências de aviso, canais de entrega e push profissional](0075-preferencias-e-canais-de-notificacao.md)
@@ -111,5 +111,7 @@
 - [0109 — Padronização e expansão das categorias de livros no IpêBook](0109-padronizacao-e-expansao-das-categorias-de-livros.md)
 - [0110 — Atalho do WhatsApp abre o aplicativo, sem a folha de compartilhamento do sistema](0110-atualizacao-do-atalho-whatsapp-sem-folha-do-sistema.md)
 - [0111 — Combinar encontro sem mapa: a lista de pontos substitui o Mapbox](0111-encontro-sem-mapa-mapbox.md)
+- [0112 — Testes E2E Web com Chrome CDP nativo (sem Playwright)](0112-e2e-web-cdp.md)
+- [0113 — Migração do motor de testes de Vitest para Jest](0113-migracao-vitest-para-jest.md)
 
 Preservar registros aceitos; mudanças relevantes geram novo ADR com vínculos de substituição.

@@ -42,11 +42,12 @@ Feito para a comunidade de Piripiri. Seus dados podem ser baixados ou excluídos
 - Exclusão de dados: **sim**, pelo app (Configurações > Privacidade e dados > Excluir conta) — informar também o link web da política.
 - Localização precisa (GPS): **não** coletada.
 
-## Recursos visuais a produzir
-- Ícone 512×512 (base em `assets/`), imagem de destaque 1024×500.
-- Pelo menos 4 capturas de tela do celular: Início, Detalhe do livro, Chat, Encontro combinado.
+## Recursos visuais produzidos (`docs/loja/imagens/`)
+- Ícone 512×512: [`imagens/icone-512.png`](imagens/icone-512.png) (base em `assets/`).
+- Imagem de destaque 1024×500: [`imagens/destaque-1024x500.png`](imagens/destaque-1024x500.png).
+- Capturas de tela: [`imagens/tela-inicio.png`](imagens/tela-inicio.png), [`imagens/captura-explorar.png`](imagens/captura-explorar.png), [`imagens/captura-detalhe-livro.png`](imagens/captura-detalhe-livro.png), [`imagens/captura-anunciar.png`](imagens/captura-anunciar.png), [`imagens/captura-encontro.png`](imagens/captura-encontro.png), [`imagens/tela-entrar.png`](imagens/tela-entrar.png) e [`imagens/tela-cadastro.png`](imagens/tela-cadastro.png).
 
-## Antes de enviar
-- Política de privacidade revisada e publicada em URL pública.
-- Build de produção com `EXPO_PUBLIC_SENTRY_DSN` configurado (se for usar o Sentry).
-- Teste interno (faixa "Teste interno" da Play Console) com pelo menos duas contas reais.
+## Checklist de envio e acompanhamento
+- Política de privacidade revisada juridicamente antes da promoção para produção aberta.
+- Build de produção com `EXPO_PUBLIC_SENTRY_DSN` configurado (para uso do Sentry).
+- Build Android `0.2.0` enviada à Play Store e validada em aparelho real com duas contas (2026-11-16).

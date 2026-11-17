@@ -55,15 +55,14 @@ import { Modal, Text, View } from "react-native";
 import { tokens } from "@/view/tokens";
 import { BotaoPreenchido } from "./botao";
 
-// Token `scrim` (claro) de design-system/tokens.json — a API TypeScript ainda não possui uma
-// chave dedicada para este papel. A constante nomeada mantém a origem explícita.
-const SCRIM_CLARO = "#00000052";
-
 function DialogoConfirmacao({ visivel, titulo, texto, onConfirmar, onCancelar }: { visivel: boolean; titulo: string; texto: string; onConfirmar: () => void; onCancelar: () => void }) {
   return (
     <Modal visible={visivel} transparent animationType="fade" onRequestClose={onCancelar}>
-      <View style={{ flex: 1, backgroundColor: SCRIM_CLARO, justifyContent: "center", padding: tokens.spacing[24] }}>
-        <View style={{ backgroundColor: tokens.colors.surface, borderRadius: tokens.radius.extraLarge, padding: tokens.spacing[24] }}>
+      <View
+        accessibilityViewIsModal
+        style={{ flex: 1, backgroundColor: tokens.colors.m3.scrim, justifyContent: "center", padding: tokens.spacing[24] }}
+      >
+        <View style={{ backgroundColor: tokens.colors.surface, borderRadius: tokens.radius.xxl, padding: tokens.spacing[24] }}>
           <Text style={tokens.typography.titleMedium}>{titulo}</Text>
           <Text style={tokens.typography.bodyMedium}>{texto}</Text>
           <BotaoPreenchido label="Excluir anúncio" onPress={onConfirmar} />

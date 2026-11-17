@@ -1,4 +1,4 @@
-# Tarefas — Spec 135: Adequar PWA no iPhone/Safari ao Apple HIG
+# Tarefas — Spec 136: Adequar PWA no iPhone/Safari ao Apple HIG
 
 - [x] **T001 — Registrar ADR 0108**
   - Criar `docs/adr/0108-pwa-iphone-safari-apple-hig.md` documentando o contexto, decisão e consequências da adequação do PWA ao Apple HIG.

@@ -9,16 +9,19 @@ Este documento detalha a estratégia de engenharia da qualidade do Ipebook, a su
 Executar na raiz do projeto:
 
 ```bash
-# Execução rápida de toda a suíte de testes
+# Execução rápida de toda a suíte de testes (Jest)
 npm test
 
-# Execução com relatório e conferência de cobertura de código (mínimo 80%)
+# Execução com relatório e conferência de cobertura de código (V8, mínimo 80%)
 npm run test:coverage
+
+# Suíte E2E Web em navegador real via Chrome CDP (sem Playwright)
+npm run test:e2e
 
 # Análise estática com Biome (0 erros; avisos não bloqueiam)
 npm run lint
 
-# Validação unificada obrigatória (TypeScript + Lint + Arquitetura + SQL + Cobertura)
+# Validação unificada obrigatória (TypeScript + Lint + Arquitetura + Design System + Numeração + Build Config + SQL + Cobertura + Docs)
 npm run validate
 
 # Verificação do build estático web
@@ -77,41 +80,38 @@ A suíte adota a pirâmide de testes para garantir velocidade, alta fidelidade e
 ### 3.5. Testes de Integração Real (`tests/integration/`)
 - **`homeIntegration.test.tsx` (2 testes):** Exercita o fluxo completo de ponta a ponta sem nenhum mock de regra de negócio, ligando `MemoryBookDataSource` -> `BookUseCases` -> `useHomeViewModel` -> Renderização nativa da View.
 
-### 3.6. Validação manual em dispositivo
+### 3.6. Testes E2E Web (CDP) e validação manual em dispositivo
 
-Não há suíte End-to-End automatizada no repositório. Os fluxos que exigem dispositivo real
-(login com Google, câmera e leitura de QR entre dois aparelhos, mapa, notificações push e leitor
-de tela) são conferidos manualmente antes de cada publicação. Essa verificação é complementar:
-não substitui os testes automatizados de domínio, ViewModel, componentes e integração descritos
-acima.
+A versão Web conta com suíte End-to-End automatizada em [`tests/e2e/run.mjs`](../tests/e2e/run.mjs) (`npm run test:e2e`, [Spec 138](../specs/138-e2e-web-cdp/spec.md), [ADR 0112](adr/0112-e2e-web-cdp.md)), executando **7 cenários** ponta a ponta no Google Chrome headless via Chrome DevTools Protocol (CDP) puro em Node.js 24, sem Playwright (todos os **7/7 aprovados** em `npm run test:e2e:build`).
+
+Os fluxos nativos que exigem aparelho físico (login Google nativo, câmera e leitura de QR Code entre dois aparelhos, notificações push e leitor de tela TalkBack/VoiceOver) são conferidos manualmente antes de cada publicação (não há suíte Maestro ativa no repositório). Essa verificação manual é complementar e não substitui os testes automatizados descritos acima.
 
 ---
 
 ## 4. Cobertura de Código
 
-A verificação é realizada pelo `@vitest/coverage-v8`, exigindo o mínimo de 80% em todas as métricas.
+A verificação é realizada pelo Jest com provedor V8 (`coverageProvider: "v8"` em [`jest.config.cjs`](../jest.config.cjs)), exigindo o mínimo de 80% em todas as métricas.
 
-**Resultado aferido em 2026-11-14 pela suíte de validação e cobertura:**
-- **Statements:** 91,18% (requisito: >= 80%)
-- **Branches:** 80,65% (requisito: >= 80%)
-- **Functions:** 88,06% (requisito: >= 80%)
-- **Lines:** 92,58% (requisito: >= 80%)
+**Resultado aferido em 2026-11-17 pela suíte de validação e cobertura (`npm run test:coverage`):**
+- **Statements:** 95% (requisito: >= 80%)
+- **Branches:** 85,54% (requisito: >= 80%)
+- **Functions:** 81,02% (requisito: >= 80%)
+- **Lines:** 95% (requisito: >= 80%)
 
-A suíte validada nessa execução continha 2.299 testes aprovados em 312 arquivos. Os números acima
+A suíte validada nessa execução continha 2.300 testes aprovados em 312 arquivos. Os números acima
 são a medição corrente; resultados anteriores podem ser encontrados nos registros históricos de
 `docs/estado.md` e não devem ser usados como retrato atual da cobertura.
 
-A cobertura de branches permanece com margem estreita sobre o mínimo de 80%. Elevá-la de forma
-segura exige cobrir ramificações de ViewModels grandes, e não apenas acrescentar testes de caminho
-felizes; por isso o limite não foi elevado artificialmente.
+A cobertura de *functions* (81,02%) permanece com margem mais próxima do mínimo de 80%. Elevá-la de forma
+segura exige cobrir ramos e callbacks menos acionados de ViewModels e componentes de UI, e não apenas
+acrescentar testes de caminho feliz; por isso o limite não foi elevado artificialmente.
 
 ### 4.1. Lint e dependências
 
 O `npm run lint` executa o Biome sobre `src/`, `tests/`, `functions/` e `scripts/`. A configuração
 em [`biome.json`](../biome.json) usa o preset recomendado, formatter desativado e rebaixa para aviso
 (ou desativa pontualmente) as regras cuja correção exigiria refatoração ampla fora do escopo. Na
-medição de 2026-11-04 o resultado foi de 0 erros e 334 avisos (eram 509 antes das correções automáticas
-da Spec 123); a CI executa a mesma verificação. A regra `useHookAtTopLevel` (Rules of Hooks) permanece
+medição de 2026-11-17 o resultado foi de 0 erros e 367 avisos em 856 arquivos verificados; a CI executa a mesma verificação. A regra `useHookAtTopLevel` (Rules of Hooks) permanece
 no nível padrão de erro.
 
 A auditoria de dependências de produção (`npm audit --omit=dev`) aponta 13 vulnerabilidades
@@ -136,16 +136,16 @@ versão compatível, sem forçar downgrade da stack.
 Este guia foi elaborado para apoiar a apresentação técnica perante os avaliadores:
 
 ### P1: "Por que escolheram a arquitetura MVVM com 7 camadas em vez de colocar tudo em componentes React?"
-> **Resposta:** *"O MVVM desacopla completamente a lógica de apresentação e de negócio da renderização visual. Ao dividir o sistema em Model (entidades puras e contratos), UseCases (regras de negócio), ViewModel (estado observável), View (componentes React Native) e Infra (fontes de dados), garantimos que o domínio possa ser testado de forma rápida e unitária em Node.js, sem necessidade de emulador ou ciclo de vida de UI. Além disso, a injeção de dependências permite trocar a fonte de dados (ex: de memória para SQLite ou API REST) sem alterar uma única linha da interface gráfica."*
+> **Resposta:** *"O MVVM desacopla completamente a lógica de apresentação e de negócio da renderização visual. Ao dividir o sistema em Model (entidades puras e contratos), UseCases (regras de negócio), ViewModel (estado observável), View (componentes React Native) e Infra (fontes de dados), garantimos que o domínio possa ser testado de forma rápida e unitária em Node.js, sem necessidade de emulador ou ciclo de vida de UI. Além disso, a injeção de dependências permite trocar a fonte de dados (ex: de memória nos testes para Supabase/PostgreSQL em produção) sem alterar uma única linha da interface gráfica."*
 
 ### P2: "Como vocês comprovaram a qualidade segundo a norma ISO/IEC 25010?"
 > **Resposta:** *"Mapeamos três características centrais da ISO/IEC 25010 diretamente para testes automatizados reproduzíveis:*
 > 1. *Adequação Funcional: garantida por testes unitários e de integração que validam regras de cadastro, limites de caracteres e consistência de dados;*
 > 2. *Confiabilidade: comprovada por testes de hooks que simulam falhas de rede, sanitizam mensagens para evitar vazamento de dados internos e protegem contra condições de corrida;*
-> 3. *Usabilidade: atestada por testes com React Native Testing Library que verificam acessibilidade para leitores de tela (papéis de header, alert e button), complementados por inspeção manual em dispositivo."*
+> 3. *Usabilidade: atestada por testes com React Native Testing Library que verificam acessibilidade para leitores de tela (papéis de header, alert e button), complementados por E2E Web via Chrome CDP e inspeção manual em dispositivo."*
 
-### P3: "Por que não há testes End-to-End automatizados?"
-> **Resposta:** *"O projeto já teve fluxos declarativos de E2E, mas eles foram removidos quando deixaram de ser executados na CI e passaram a divergir da interface. Em vez de manter uma suíte que não rodava, optamos por não alegar uma cobertura que não existe: os fluxos que dependem de dispositivo (login com Google, câmera e QR entre dois aparelhos, mapa, push e leitor de tela) são verificados manualmente antes de cada publicação. A automação cobre domínio, ViewModels, componentes e integração entre camadas, que é onde os defeitos de lógica aparecem com mais frequência."*
+### P3: "Como funciona a validação End-to-End (E2E) do aplicativo?"
+> **Resposta:** *"Na Web, mantemos uma suíte E2E automatizada e reproduzível (`npm run test:e2e`, Spec 138 / ADR 0112) executada em navegador Chromium real via Chrome DevTools Protocol (CDP) puro no Node 24, sem Playwright, cobrindo boas-vindas, busca pública, cadastro, anúncio em 3 etapas, favoritos e envio de pedido. Os fluxos nativos que dependem de aparelho físico Android (login Google nativo, câmera e QR Code entre dois aparelhos, notificações push e leitor de tela TalkBack) são verificados manualmente em dispositivo real antes de cada publicação (não mantemos fluxos Maestro desatualizados)."*
 
 ### P4: "Como garantiram que os testes não quebrem por acoplamento com detalhes de implementação?"
 > **Resposta:** *"Seguimos os princípios da Testing Library: testamos o que o usuário vê e como ele interage. Em vez de verificar estados internos ou instâncias de classes, consultamos a tela por `getByRole`, `getByText` e `getByLabelText`. Mocks foram utilizados de forma estrita e fundamentada apenas onde era necessário isolar cenários não-determinísticos (como simular queda instantânea de rede no teste de componente mockado)."*

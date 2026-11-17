@@ -20,7 +20,7 @@ Durante refinamentos de interface, as caixas cromáticas que delimitavam a área
    - Fixar o valor canônico `#F5B718` (RGB `245, 183, 24`) em `colors.ipe.bloom`, `tokens.json` e `badge.donation.background`.
    - O banner de "Doações da semana" adota fundo `#F5B718`, círculo branco com ícone de marcador e textos no marrom tronco profundo (`#451A03`), assegurando contraste de 8,3:1 e máxima legibilidade.
 
-3. **Pontos indicadores (`dot`) dos chips de filtro rápido ([`Chip.tsx`](../src/view/components/Chip.tsx)):**
+3. **Pontos indicadores (`dot`) dos chips de filtro rápido ([`Chip.tsx`](../../src/view/components/Chip.tsx)):**
    - Preenchimento sólido e circular nos chips inativos: Verde escuro (`#1E4E27`) para Venda, Marrom escuro (`#58331F`) para Troca e Amarelo ouro (`#F5B718`) para Doação.
    - O chip "Todos", quando selecionado, preserva o fundo verde menta suave (`secondaryContainer`, `#D2EBD4`) com check e texto em verde escuro.
 

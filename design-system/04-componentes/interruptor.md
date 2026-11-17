@@ -1,7 +1,7 @@
 # Interruptor (Switch)
 
-> [!WARNING]
-> **FORA DE ESCOPO NA BETA (Issue #55 e ADR 0019)**: Descartado para a versão beta. Preferências, filtros e confirmações utilizam `Chip`, botões explícitos ou diálogos diretos para garantir consistência e acessibilidade simplificada. Não implementar este componente.
+> [!NOTE]
+> **IMPLEMENTADO NA TELA DE CONFIGURAÇÕES (Spec 099 · ADR 0075)**: Inicialmente preterido no escopo reduzido da primeira etapa, o interruptor foi adotado via `Switch` nativo do React Native em [`src/view/profile/settings.tsx`](../../src/view/profile/settings.tsx) para preferências imediatas de canais e categorias de notificação, envolto em linha clicável (`toggleRow`) com `accessibilityRole="switch"` e cores M3 adaptativas do tema claro/escuro.
 
 Origem no sistema base: Material 3, Switch. Situação: **Herdado**.
 

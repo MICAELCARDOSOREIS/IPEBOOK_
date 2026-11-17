@@ -9,7 +9,7 @@ Seja bem-vindo(a) ao projeto **Ipebook**! Este documento orienta os integrantes 
 1. **Português Obrigatório:** Toda a documentação, mensagens de commit, nomes de cenários de teste, pull requests e discussões técnicas devem ser redigidos em língua portuguesa.
 2. **Qualidade Contínua:** Nenhuma alteração pode ser integrada se quebrar a tipagem estrita (`tsc --noEmit`), violar as regras de camadas da arquitetura MVVM (`scripts/verificar-arquitetura.mjs`) ou reduzir a cobertura de testes para menos de 80% (`npm run test:coverage`).
 3. **Spec Kit & ADRs:** Novas funcionalidades ou decisões arquiteturais devem ser precedidas de especificações (`specs/`) e registros de decisão arquitetural (`docs/adr/`).
-   **Numeração das specs:** antes de criar `specs/NNN-...`, liste `specs/` e use o próximo número livre (`ls specs | tail -3`) — nunca reutilize um número já existente, nem em branches paralelas; ao abrir o PR, confira se outra branch não tomou o mesmo número. O mesmo vale para ADRs. A CI roda `npm run check:numbering` e falha se houver colisão; rode-o de novo depois de atualizar a branch com o `develop`.
+   **Numeração das specs:** antes de criar `specs/NNN-...`, liste `specs/` e use o próximo número livre (`ls specs | tail -3`) — nunca reutilize um número já existente, nem em branches paralelas; ao abrir o PR, confira se outra branch não tomou o mesmo número. O mesmo vale para ADRs. A CI roda `npm run check:numbering`, `npm run check:design-system` e `npm run check:docs` e falha se houver colisão ou métrica desatualizada; rode-os de novo depois de atualizar a branch com o `develop`.
 4. **Documentação sempre atualizada:** quem muda o código atualiza a documentação no mesmo commit/PR — nunca depois, "quando der tempo". Ver a seção 6 abaixo para o que checar.
 
 ---
@@ -75,12 +75,14 @@ tipo(escopo opcional): descrição curta no imperativo
    - Para estado/ViewModel: criar testes em `tests/hooks/`.
    - Para UI/telas: criar testes em `tests/components/` ou `tests/components-mocked/`.
    - Para fluxos completos: criar testes em `tests/integration/`.
-5. **Garantir validação local:**
-   Antes de abrir commit ou Pull Request, execute:
+5. **Garantir validação local automática antes do GitHub CI/CD:**
+   O repositório já configura hooks locais em `.githooks/` (`npm run setup:hooks` / `npm prepare`):
+   - **No `git commit` (`pre-commit`):** executa `npm run ci:rapido` (`typecheck`, `lint`, `check:architecture`, `check:design-system`, `check:numbering` e `check:build-config`), além de bloquear commits diretos na `main`.
+   - **No `git push` (`pre-push`):** executa `npm run ci:local` com **todos os 11 passos do CI/CD do GitHub** (inclui `test:sql`, `test:coverage` no Jest com cobertura mínima de 80%, `check:docs`, `build:web` em modo memória e `test:e2e:build` via Chrome CDP), além de bloquear push direto na `main`.
+   Se preferir rodar manualmente antes do push, use:
    ```bash
-   npm run validate
+   npm run ci:local
    ```
-   O comando garante que o TypeScript, a arquitetura de 7 camadas e a cobertura mínima de 80% estão aprovados.
 6. **Submeter Pull Request:**
    Abra o PR apontando sempre para a branch `develop`, descrevendo:
    - O que foi implementado;
@@ -107,7 +109,7 @@ errado. Sempre que seu PR mudar código, dados ou estrutura, atualize na mesma e
 depois) o que for afetado:
 
 * **Criou, renomeou ou apagou um arquivo que a documentação cita** (teste, spec, componente,
-  fluxo do Maestro)? Corrija todo link/nome citado — faça uma busca (`grep -rn "nome-antigo"`)
+  fluxo E2E ou ADR)? Corrija todo link/nome citado — faça uma busca (`grep -rn "nome-antigo"`)
   antes de abrir o PR. Já encontramos documentação referenciando arquivos renomeados e até
   arquivos duplicados/órfãos que ninguém tinha apagado.
 * **Mudou contagem de testes, cobertura, ou estrutura de pastas?** Atualize `docs/estado.md` e,

@@ -16,10 +16,11 @@ Projeto avaliativo do curso de Tecnologia em Análise e Desenvolvimento de Siste
 
 ## 📄 Produto e documentação
 
-* Objetivo, público, modalidade e decisões de produto em [`docs/produto.md`](docs/produto.md).
-* Estado atual e próximos passos em [`docs/estado.md`](docs/estado.md).
+* Índice completo da documentação técnica e guias em [`docs/README.md`](docs/README.md).
+* Objetivo, público, modalidades e decisões de produto em [`docs/produto.md`](docs/produto.md).
+* Estado atual, métricas verificadas e histórico de entregas em [`docs/estado.md`](docs/estado.md) e no relatório executivo [`docs/status-report.md`](docs/status-report.md).
 * Design system (IHC): paleta, tipografia, espaçamento e acessibilidade em [`docs/design-system.md`](docs/design-system.md).
-* Sistema de design completo (tokens, componentes com anatomia/estados/acessibilidade/código, princípios e fluxos) em [`design-system/`](design-system/README.md).
+* Sistema de design completo (tokens, 28 componentes com anatomia/estados/acessibilidade/código, princípios e fluxos) em [`design-system/`](design-system/README.md).
 * Especificações de cada funcionalidade (Spec Kit), da estrutura MVVM (001) às entregas mais recentes, em [`specs/`](specs/). A situação de cada uma está em [`docs/estado.md`](docs/estado.md).
 
 ---
@@ -35,11 +36,12 @@ npm run web
 
 Para executar em dispositivo nativo:
 ```bash
-npm run android  # Dispositivo/Emulador Android
-npm run ios      # Dispositivo/Simulador iOS (macOS) — disponível, mas fora do escopo de validação
+npm run android      # Dispositivo/Emulador Android
+npm run android:usb  # Túnel USB via adb reverse (independe de Wi-Fi/VPN)
+npm run ios          # Dispositivo/Simulador iOS (macOS) — ver Spec 137
 ```
 
-> Plataformas suportadas na primeira entrega: **Android e Web** (decisão registrada em [`docs/produto.md`](docs/produto.md)). iOS fica fora do escopo por enquanto; o comando continua disponível para quem tiver ambiente macOS, mas não é alvo de validação desta entrega.
+> **Plataformas:** **Android** (`0.2.0` publicado na Play Store e validado em aparelho real) e **Web / PWA** (publicada em [`https://ipebook.app`](https://ipebook.app), incluindo adequação ao Apple HIG no Safari do iPhone via Spec 136 / ADR 0108). O aplicativo **iOS Nativo** (Liquid Glass / Apple HIG) está especificado para implementação na [Spec 137](specs/137-ios-nativo-apple-hig/spec.md).
 
 ---
 
@@ -75,17 +77,22 @@ npm run lint
 
 # 4. Execução agregada de validação (TypeScript estrito + Lint + Arquitetura + SQL + Cobertura)
 npm run validate
+
+# 5. Suíte E2E Web em navegador real via Chrome CDP (sem Playwright, backend em memória)
+npm run test:e2e
+npm run test:e2e:build   # força nova exportação Web em dist-e2e/ antes de rodar
 ```
 
 ### 📂 Organização das Suítes de Testes
 
 | Categoria | Localização | O que valida | Evidência / Ferramenta |
 | :--- | :--- | :--- | :--- |
-| **Testes Unitários** | `tests/unit/` | Funções puras, validações de payload de livro, limites de caracteres e regras dos casos de uso. | Vitest (`bookValidator.test.ts`, `bookUseCases.test.ts`) |
+| **Testes Unitários** | `tests/unit/` | Funções puras, validações de payload de livro, limites de caracteres e regras dos casos de uso. | Jest (`bookValidator.test.ts`, `bookUseCases.test.ts`) |
 | **Testes de Hooks** | `tests/hooks/` | Ciclo de vida do hook `useHomeViewModel`, estado inicial, recarregamento, concorrência e tratamento seguro de erros. | `renderHook` (`useHomeViewModel.test.tsx`) |
 | **Testes de Componentes** | `tests/components/` | Renderização semântica da View, cabeçalhos, rótulos de acessibilidade (`accessibilityRole`) e estado vazio. | RNTL (`homeView.test.tsx`) |
-| **Componentes com Mock** | `tests/components-mocked/` | Isolamento determinístico da View para forçar cenários extremos (falha de rede, carregamento, botão de retry). | RNTL com `vi.mock` (`homeViewMocked.test.tsx`) |
+| **Componentes com Mock** | `tests/components-mocked/` | Isolamento determinístico da View para forçar cenários extremos (falha de rede, carregamento, botão de retry). | RNTL com `jest.mock` (`homeViewMocked.test.tsx`) |
 | **Testes de Integração** | `tests/integration/` | Integração real entre múltiplas camadas: View + ViewModel + Casos de Uso + Repositório em memória sem mocks de negócio. | RNTL integrado (`homeIntegration.test.tsx`) |
+| **Testes E2E Web (CDP)** | `tests/e2e/` | Fluxos completos em Chrome headless via CDP puro (boas-vindas, busca, cadastro, anúncio, favoritos e pedidos). | Node 24 + Chrome CDP (`run.mjs`, `cdp.mjs`) |
 
 ---
 
@@ -115,9 +122,7 @@ Conforme as diretrizes da disciplina, o projeto adotou três características es
 
 ## 📱 Validação manual em dispositivo
 
-O projeto não mantém hoje uma suíte de testes End-to-End automatizada. Os fluxos que dependem de
-dispositivo (login com Google, câmera/QR em dois aparelhos, mapa, push e leitor de tela) são
-verificados manualmente antes de cada publicação, conforme o roteiro em
+A versão Web conta com suíte E2E automatizada via Chrome CDP (`npm run test:e2e`, sem Playwright). Os fluxos nativos que dependem de aparelho físico (login com Google, câmera/QR em dois aparelhos, push e leitor de tela) são verificados manualmente antes de cada publicação, conforme o roteiro em
 [`docs/qualidade.md`](docs/qualidade.md). Os testes automatizados cobrem domínio, ViewModels,
 componentes e integração entre camadas.
 

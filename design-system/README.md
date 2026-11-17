@@ -1,6 +1,6 @@
 # IpêBook Design System · Sistema de design do app IpêBook
 
-> Versão da documentação: 1.26.0 · Disciplinas: IHC e PDM
+> Versão da documentação: 1.29.0 · Disciplinas: IHC e PDM
 >
 > Fonte única do design do app. Conteúdo originalmente trazido do Figma do projeto para a pasta
 > histórica `design-kit/` e depois migrado integralmente para cá (ver
@@ -17,8 +17,7 @@ de design transmite confiança de vizinhança: sóbrio, direto, sem ruído visua
 ilustrativa quando não tem foto, para a estante parecer organizada mesmo sem fotos reais.
 
 - **App:** IpêBook
-- **Plataforma e stack:** Android e Web com Expo/React Native (React Native Web); iOS
-  planejado para quando voltar ao escopo (ver seção 3 e [ADR 0008](../docs/adr/0008-sem-dark-mode-android-md3-ios-liquid-glass.md))
+- **Plataforma e stack:** Android (Material 3) e Web (Expo/React Native Web, incluindo adequação ao Apple HIG no PWA iOS/Safari na [Spec 136](../specs/136-pwa-iphone-apple-hig/spec.md)); iOS Nativo em planejamento na [Spec 137](../specs/137-ios-nativo-apple-hig/spec.md) ([ADR 0008](../docs/adr/0008-sem-dark-mode-android-md3-ios-liquid-glass.md))
 - **Sistema base:** Material 3 (Google) — único, conforme exigido pela atividade
 
 ## 2. Por que este sistema base (as cinco forças)
@@ -109,10 +108,10 @@ Pelo menos três decisões Adaptadas ou Novas que expressam a identidade do app:
 2. **Papel de cor `doacao-container` — Novo.** M3 só define `primary`/`secondary`/`tertiary`
    (contêiner); o app precisa de uma quarta cor fixa e exclusiva para a modalidade Doação, que
    não concorre com `tertiary-container` (usado em Troca).
-3. **Serifa de marca (Source Serif 4 Bold) sobre a escala tipográfica M3 — Adaptado.** M3
+3. **Serifa de marca (Source Serif 4 Bold) sobre a escala de interface — Adaptado.** M3
    recomenda uma única família tipográfica; o app usa a serifa só no logotipo, nos títulos de
-   tela raiz e no título do livro, para diferenciar a voz da marca do texto de interface, mantendo
-   Roboto para o resto da escala M3.
+   tela raiz e no título do livro, para diferenciar a voz da marca do texto de interface, usando
+   **Plus Jakarta Sans** para a escala de interface ([ADR 0107](../docs/adr/0107-adocao-plus-jakarta-sans-na-interface.md)).
 4. **Tema claro e escuro — Adaptado.** Na ausência de preferência salva, o app inicia no tema
    Claro; a pessoa pode escolher manualmente Sistema, Claro ou Escuro, com a escolha persistida
    no dispositivo. A opção Sistema acompanha o tema do aparelho quando escolhida. A infraestrutura
