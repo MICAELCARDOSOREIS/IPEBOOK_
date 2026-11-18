@@ -182,6 +182,7 @@ export const Dimensions = {
 export const AccessibilityInfo = {
   isScreenReaderEnabled: () => Promise.resolve(false),
   isReduceMotionEnabled: () => Promise.resolve(false),
+  isReduceTransparencyEnabled: () => Promise.resolve(false),
   addEventListener: () => ({ remove: () => {} }),
   announceForAccessibility: (_message: string) => {},
 };
