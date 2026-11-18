@@ -22,6 +22,7 @@ import { WEB_GUTTER, WEB_MAX_WIDTH, useWebGridColumns, webColumnWidth } from "@/
 import { withPress } from "@/view/pressFeedback";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { standardVerticalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
+import { triggerHaptic } from "@/view/haptics";
 
 export type FavoritesProps = {
   userId: string | null;
@@ -84,7 +85,10 @@ export default function Favorites({
                 accessibilityRole="button"
                 accessibilityLabel={`Mostrar ${label.toLowerCase()}`}
                 accessibilityState={{ selected }}
-                onPress={() => setStatusFilter(value)}
+                onPress={() => {
+                  if (Platform.OS === "ios") triggerHaptic("selection");
+                  setStatusFilter(value);
+                }}
                 style={withPress([styles.mobileChip, selected && styles.mobileChipSelected])}
               >
                 {selected ? <AppIcon name="check" size={14} color={colors.nature.onFoliage} /> : null}
@@ -125,7 +129,10 @@ export default function Favorites({
                     accessibilityRole="button"
                     accessibilityLabel={`Mostrar ${label.toLowerCase()}`}
                     accessibilityState={{ selected }}
-                    onPress={() => setStatusFilter(value)}
+                    onPress={() => {
+                  if (Platform.OS === "ios") triggerHaptic("selection");
+                  setStatusFilter(value);
+                }}
                     style={withPress([styles.wideChip, selected && styles.wideChipSelected])}
                   >
                     {selected ? <AppIcon name="check" size={16} color={colors.nature.onFoliage} /> : null}
@@ -241,7 +248,10 @@ export default function Favorites({
                   accessibilityLabel={`Remover ${item.title} dos favoritos`}
                   accessibilityState={{ disabled: state.removingId === item.id }}
                   disabled={state.removingId === item.id}
-                  onPress={() => void actions.removeFavorite(item.id)}
+                  onPress={() => {
+                    if (Platform.OS === "ios") triggerHaptic("medium");
+                    void actions.removeFavorite(item.id);
+                  }}
                   style={withPress([styles.favoriteButton, wideWeb && styles.favoriteButtonWide])}
                 >
                   <AppIcon name="heartFill" size={wideWeb ? 20 : 24} color={colors.ipe.bloom} />

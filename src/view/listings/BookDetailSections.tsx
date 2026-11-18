@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { Image, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import type { Book } from "@/model/entities/book";
 import type { PublicProfile } from "@/model/entities/publicProfile";
 import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
@@ -8,6 +8,7 @@ import { Book3D } from "@/view/components/Book3D";
 import { withPress } from "@/view/pressFeedback";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
+import { triggerHaptic } from "@/view/haptics";
 
 /** Texto usado enquanto o perfil carrega ou quando ele não pôde ser lido. */
 const OWNER_FALLBACK_LABEL = "Anunciado por outro membro da comunidade";
@@ -84,7 +85,10 @@ export function HeroIconButton({
       accessibilityState={{ disabled }}
       disabled={disabled}
       hitSlop={4}
-      onPress={onPress}
+      onPress={() => {
+        if (Platform.OS === "ios") triggerHaptic("selection");
+        onPress();
+      }}
       style={({ pressed }) => [
         styles.heroIconButton,
         pressed && !disabled && styles.heroIconButtonPressed,

@@ -15,7 +15,8 @@
   - Adequar `bem-vindo.tsx`, `entrar.tsx`, `criar-conta.tsx`, `esqueci-senha.tsx`, `redefinir-senha.tsx`, `auth/callback.tsx` para iPhone nativo.
 
 - [ ] **T004 (Issue #4) — Adequar Fluxos 02 e 03: Descoberta, Detalhe do Livro e Perfil Público (22 telas Figma)**
-  - Adequar `index.tsx`, `pesquisa.tsx`, `favoritos.tsx`, `alertas.tsx`, `alertas/[id].tsx`, `alertas/[id]/editar.tsx`, `livro/[id].tsx` e `perfil/[userId].tsx`.
+  - Implementadas adequações de Apple HIG em Descoberta, Busca, Favoritos, Detalhe do Livro e Perfil Público (PR #240).
+  - *Pendências para conclusão formal:* adequação das rotas de gestão de alertas (`alertas/[id].tsx` e `alertas/[id]/editar.tsx`) e registro da validação conjunta em aparelho real / simulador iPhone com `@Eric2025gh`.
 
 - [ ] **T005 (Issue #5) — Adequar Fluxos 04 e 05: Publicação e Minha Estante (29 telas Figma)**
   - Adequar `anunciar.tsx`, `editar-anuncio/[id].tsx`, `gerenciar-anuncio/[id].tsx`, `rascunhos.tsx`, `meus-anuncios.tsx`, `meus-pedidos.tsx` e `pedidos-recebidos.tsx`.
