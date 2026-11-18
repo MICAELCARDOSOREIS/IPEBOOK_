@@ -361,7 +361,12 @@ export async function launchChromeCdp() {
   const xdgCache = join(userDataDir, "xdg-cache");
   mkdirSync(xdgConfig, { recursive: true });
   mkdirSync(xdgCache, { recursive: true });
-  const chromeBin = process.env.CHROME_BIN || "google-chrome";
+  const defaultChromeWin = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
+  const chromeBin =
+    process.env.CHROME_BIN ||
+    (process.platform === "win32" && existsSync(defaultChromeWin)
+      ? defaultChromeWin
+      : "google-chrome");
   const proc = spawn(
     chromeBin,
     [
