@@ -58,7 +58,7 @@ export function FilterSheet({
   onReset,
   onClose,
 }: FilterSheetProps) {
-  const { colors, resolvedScheme } = useTheme();
+  const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const wideWeb = useIsWideWeb();
   const { width } = useWindowDimensions();
@@ -129,7 +129,7 @@ export function FilterSheet({
                     size="compact"
                     label={category}
                     accessibilityLabel={`Filtrar por categoria ${category}`}
-                    tone={categoryTone(category, resolvedScheme)}
+                    tone={categoryTone(category)}
                     selected={draftFilters.category === category}
                     onPress={() => onChange({ category })}
                   />
