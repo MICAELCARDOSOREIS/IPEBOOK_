@@ -24,13 +24,13 @@ describe("AsyncStorageLocalCacheDataSource — limpeza do catálogo offline (Spe
 
   it("remove apenas a chave do catálogo guardado pelo CachedBookDataSource", async () => {
     mockStore.set(BOOKS_LIST_CACHE_KEY, JSON.stringify({ timestamp: 1, data: [] }));
-    mockStore.set("ipebook.preferenciaDeTema", "dark");
+    mockStore.set("ipebook.primeiroAcessoVisto", "true");
 
     const ds = new AsyncStorageLocalCacheDataSource();
     await ds.clearBooksCache();
 
     expect(mockStore.has(BOOKS_LIST_CACHE_KEY)).toBe(false);
-    expect(mockStore.get("ipebook.preferenciaDeTema")).toBe("dark");
+    expect(mockStore.get("ipebook.primeiroAcessoVisto")).toBe("true");
   });
 
   it("limpar sem nada guardado não falha", async () => {

@@ -3,14 +3,13 @@ import { SUPPORT_EMAIL, supportMailtoUrl } from "@/view/supportContact";
 
 describe("categoryTone (Spec 091)", () => {
   it("dá sempre a mesma cor à mesma categoria, sem diferenciar caixa ou espaços", () => {
-    expect(categoryTone(" Ficção ", "light")).toEqual(categoryTone("ficção", "light"));
+    expect(categoryTone(" Ficção ")).toEqual(categoryTone("ficção"));
   });
 
-  it("tem paleta própria no tema escuro", () => {
-    const light = categoryTone("Literatura Brasileira", "light");
-    const dark = categoryTone("Literatura Brasileira", "dark");
-    expect(dark).not.toEqual(light);
-    expect(dark.background).toMatch(/^#/);
+  it("retorna códigos hexadecimais válidos para fundo e texto", () => {
+    const tone = categoryTone("Literatura Brasileira");
+    expect(tone.background).toMatch(/^#/);
+    expect(tone.text).toMatch(/^#/);
   });
 });
 

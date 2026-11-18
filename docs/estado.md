@@ -601,3 +601,4 @@ No aplicativo implementado, **46 rotas estáticas** cobrem integralmente os 8 fl
 - `specs/136-pwa-iphone-apple-hig/`: Adequação das telas do PWA no iPhone/Safari ao Apple HIG sem alterar comportamento Android/Web (Issue #220, ADR 0108, Maria Clara).
 - `specs/137-ios-nativo-apple-hig/`: Planejamento e divisão em sub-issues da adequação nativa do iPhone (iOS) ao Apple HIG e Liquid Glass sem impactar Android/Web (Eric Vinícius).
 - `specs/138-e2e-web-cdp/`: Suíte automatizada de testes End-to-End (E2E) da versão Web via Chrome CDP nativo sem Playwright (ADR 0112).
+- `specs/139-remocao-tema-escuro/`: Remoção do suporte ao tema escuro e consolidação da operação exclusiva no tema claro editorial (ADR 0114, substituindo ADR 0036).

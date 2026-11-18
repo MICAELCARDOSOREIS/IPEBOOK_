@@ -305,7 +305,7 @@ export function HomeShortcutsSection({
   onNavigateToSearch,
   onNavigateToHelp,
 }: HomeShortcutsSectionProps) {
-  const { colors, resolvedScheme } = useTheme();
+  const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [isBannerHovered, setIsBannerHovered] = useState(false);
 
@@ -372,7 +372,6 @@ export function HomeShortcutsSection({
       onPress={() => onNavigateToSearch({ modality: "donation" })}
       style={({ pressed }) => [
         styles.donationBanner,
-        resolvedScheme === "dark" && styles.donationBannerDark,
         isBannerHovered && styles.donationBannerHovered,
         pressed && styles.donationBannerPressed,
       ]}
@@ -514,7 +513,6 @@ function createStyles(colors: ColorPalette) {
         ? ({ cursor: "pointer", userSelect: "none", } as never)
         : {}),
     },
-    donationBannerDark: { backgroundColor: colors.ipe.container, borderColor: colors.ipe.bloom, },
     donationBannerHovered: { transform: [{ scale: 1.01 }], elevation: 4, shadowOpacity: 0.18, shadowRadius: 12, },
     donationBannerPressed: { transform: [{ scale: 0.985 }], opacity: 0.92, },
     donationBannerIconBox: {

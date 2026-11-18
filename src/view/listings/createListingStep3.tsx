@@ -63,7 +63,7 @@ export function CreateListingStep3({
   onSetBoxVolumesCount,
   onFocusField,
 }: CreateListingStep3Props) {
-  const { colors, resolvedScheme } = useTheme();
+  const { colors } = useTheme();
   const wideWeb = useIsWideWeb();
   const styles = useMemo(() => createStyles(colors, wideWeb), [colors, wideWeb]);
   const displayedCategories = useMemo(() => {
@@ -112,7 +112,7 @@ export function CreateListingStep3({
               size="regular"
               label={cat}
               accessibilityLabel={`Categoria ${cat}`}
-              tone={categoryTone(cat, resolvedScheme)}
+              tone={categoryTone(cat)}
               selected={category === cat}
               onPress={() => onSetCategory(category === cat ? "" : cat)}
               disabled={loading}
