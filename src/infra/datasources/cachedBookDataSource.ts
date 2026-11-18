@@ -6,6 +6,7 @@ export interface IKeyValueStorage {
   getItem(key: string): Promise<string | null>;
   setItem(key: string, value: string): Promise<void>;
   removeItem(key: string): Promise<void>;
+  getAllKeys?(): Promise<readonly string[]>;
 }
 
 export interface CachedBookDataSourceOptions {
@@ -34,6 +35,7 @@ export class CachedBookDataSource implements IBookDataSource {
   private readonly prefix: string;
   private readonly listKey: string;
   private readonly ttlMs: number;
+  private readonly ownerCacheReady: Promise<void>;
 
   constructor(primary: IBookDataSource, options: CachedBookDataSourceOptions = {}) {
     this.primary = primary;
@@ -41,10 +43,21 @@ export class CachedBookDataSource implements IBookDataSource {
     this.prefix = options.cacheKeyPrefix ?? DEFAULT_PREFIX;
     this.listKey = `${this.prefix}:list`;
     this.ttlMs = options.ttlMs ?? DEFAULT_TTL_MS;
+    this.ownerCacheReady = this.removeLegacyOwnerCache();
   }
 
   private ownerListKey(ownerId: string): string {
-    return `${this.prefix}:owner:${ownerId}`;
+    return `${this.prefix}:owner-v2:${ownerId}`;
+  }
+
+  private async removeLegacyOwnerCache(): Promise<void> {
+    try {
+      const keys = await this.storage.getAllKeys?.() ?? [];
+      const legacyPrefix = `${this.prefix}:owner:`;
+      await Promise.all(keys.filter((key) => key.startsWith(legacyPrefix)).map((key) => this.storage.removeItem(key)));
+    } catch {
+      // O armazenamento pode estar indisponível durante a renderização web no servidor.
+    }
   }
 
   private async readCache<T>(key: string): Promise<T | null> {
@@ -141,10 +154,11 @@ export class CachedBookDataSource implements IBookDataSource {
   }
 
   async listByOwner(ownerId: string): Promise<readonly Book[]> {
+    await this.ownerCacheReady;
     const key = this.ownerListKey(ownerId);
     try {
       const fresh = await this.primary.listByOwner(ownerId);
-      await this.writeCache(key, fresh);
+      await this.writeCache(key, fresh.filter((book) => book.status !== "draft"));
       return fresh;
     } catch (networkError) {
       const cached = await this.readCache<Book[]>(key);

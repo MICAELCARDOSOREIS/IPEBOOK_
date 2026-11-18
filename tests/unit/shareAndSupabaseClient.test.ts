@@ -1,3 +1,4 @@
+import { createClient } from "@supabase/supabase-js";
 import { Platform, Share } from "react-native";
 import { defaultShareImageFile } from "@/viewmodel/shareImageFile";
 import { DataSourceError } from "@/model/errors";
@@ -98,9 +99,19 @@ describe("defaultShareImageFile e createSupabaseAppClient", () => {
     Platform.OS = "web";
     const webClient = createSupabaseAppClient("https://projeto.supabase.co", "sb_publishable_valida123");
     expect(webClient).toBeDefined();
+    expect(createClient).toHaveBeenLastCalledWith(
+      "https://projeto.supabase.co",
+      "sb_publishable_valida123",
+      { auth: expect.objectContaining({ flowType: "pkce", detectSessionInUrl: false }) },
+    );
 
     Platform.OS = "android";
     const nativeClient = createSupabaseAppClient("https://projeto.supabase.co", "sb_publishable_valida123");
     expect(nativeClient).toBeDefined();
+    expect(createClient).toHaveBeenLastCalledWith(
+      "https://projeto.supabase.co",
+      "sb_publishable_valida123",
+      { auth: expect.objectContaining({ flowType: "implicit" }) },
+    );
   });
 });

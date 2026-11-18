@@ -17,6 +17,7 @@ export function createSupabaseAppClient(url: string, publishableKey: string) {
       storage: Platform.OS === "web" ? undefined : AsyncStorage,
       autoRefreshToken: true,
       persistSession: true,
+      flowType: Platform.OS === "web" ? "pkce" : "implicit",
       detectSessionInUrl: false,
     },
   });

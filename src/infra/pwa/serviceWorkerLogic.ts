@@ -4,8 +4,8 @@
  */
 
 export const STATIC_CACHE_NAME = "ipebook-static-v1";
-export const DYNAMIC_CACHE_NAME = "ipebook-dynamic-v1";
-export const CATALOG_CACHE_NAME = "ipebook-catalog-v1";
+export const DYNAMIC_CACHE_NAME = "ipebook-dynamic-v2";
+export const CATALOG_CACHE_NAME = "ipebook-catalog-v2";
 
 export const APP_SHELL_URLS: readonly string[] = [
   "/",
@@ -45,8 +45,18 @@ export function isStaticAsset(url: URL): boolean {
 /**
  * Determina se a URL corresponde a uma consulta de catálogo de livros no backend Supabase.
  */
-export function isCatalogRequest(url: URL): boolean {
-  return url.pathname.includes("/rest/v1/livros");
+export function isCatalogRequest(url: URL, authorization?: string | null, apiKey?: string | null) {
+  return (
+    apiKey?.startsWith("sb_publishable_") === true &&
+    (!authorization || authorization === `Bearer ${apiKey}`) &&
+    url.protocol === "https:" &&
+    url.hostname.endsWith(".supabase.co") &&
+    url.pathname === "/rest/v1/v2_books" &&
+    url.searchParams.getAll("status").includes("neq.draft") &&
+    /^[a-z_,]+$/.test(url.searchParams.get("select") ?? "") &&
+    !url.searchParams.has("owner_id") &&
+    !url.searchParams.has("id")
+  );
 }
 
 /**
@@ -71,14 +81,17 @@ export function classifyRequest(request: {
   if (!parsedUrl.protocol.startsWith("http")) return "pass-through";
 
   // Rotas sensíveis de autenticação transitam diretamente pela rede sem cache
-  if (parsedUrl.pathname.includes("/auth/v1/")) return "pass-through";
+  if (
+    parsedUrl.pathname.includes("/auth/v1/") ||
+    /^\/(?:auth\/callback|redefinir-senha)(?:\.html|\/)?$/.test(parsedUrl.pathname)
+  ) return "pass-through";
 
   const acceptHeader = request.headers?.get("accept");
   if (isNavigationRequest(request.mode, acceptHeader)) {
     return "navigation";
   }
 
-  if (isCatalogRequest(parsedUrl)) {
+  if (isCatalogRequest(parsedUrl, request.headers?.get("authorization"), request.headers?.get("apikey"))) {
     return "catalog";
   }
 
@@ -161,7 +174,7 @@ export function createOfflineCatalogResponse(): Response {
     message: "Você está sem conexão com a internet e não há dados em cache para esta consulta de livros.",
   });
   return new Response(payload, {
-    status: 200,
+    status: 503,
     headers: {
       "Content-Type": "application/json; charset=utf-8",
       "X-Ipebook-Offline": "true",

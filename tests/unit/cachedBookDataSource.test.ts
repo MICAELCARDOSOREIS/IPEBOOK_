@@ -13,6 +13,10 @@ class MockStorage implements IKeyValueStorage {
     this.data.set(key, value);
   }
 
+  async getAllKeys(): Promise<string[]> {
+    return [...this.data.keys()];
+  }
+
   async removeItem(key: string): Promise<void> {
     this.data.delete(key);
   }
@@ -184,7 +188,8 @@ describe("CachedBookDataSource (Resiliência e Offline-first)", () => {
   });
 
   it("armazena e recupera os livros da estante do anunciante offline (Spec 130 / ADR 0101)", async () => {
-    const ownerBooks = [sampleBooks[0]];
+    const draft = { ...sampleBooks[0], id: "rascunho-privado", status: "draft" as const };
+    const ownerBooks = [sampleBooks[0], draft];
     const primary: IBookDataSource = {
       list: jest.fn(),
       findById: jest.fn(),
@@ -199,6 +204,8 @@ describe("CachedBookDataSource (Resiliência e Offline-first)", () => {
     };
 
     const storage = new MockStorage();
+    const legacyKey = "ipebook:cache:books:owner:outro-usuario";
+    await storage.setItem(legacyKey, JSON.stringify({ timestamp: Date.now(), data: [draft] }));
     const cachedDs = new CachedBookDataSource(primary, { storage });
 
     // 1ª chamada: online
@@ -206,12 +213,14 @@ describe("CachedBookDataSource (Resiliência e Offline-first)", () => {
     expect(resultOnline).toEqual(ownerBooks);
     expect(primary.listByOwner).toHaveBeenCalledTimes(1);
 
-    const savedInStorage = await storage.getItem("ipebook:cache:books:owner:user-1");
+    const savedInStorage = await storage.getItem("ipebook:cache:books:owner-v2:user-1");
     expect(savedInStorage).not.toBeNull();
+    expect(savedInStorage).not.toContain(draft.id);
+    expect(await storage.getItem(legacyKey)).toBeNull();
 
     // 2ª chamada: offline
     const resultOffline = await cachedDs.listByOwner("user-1");
-    expect(resultOffline).toEqual(ownerBooks);
+    expect(resultOffline).toEqual([sampleBooks[0]]);
     expect(primary.listByOwner).toHaveBeenCalledTimes(2);
   });
 
@@ -230,7 +239,7 @@ describe("CachedBookDataSource (Resiliência e Offline-first)", () => {
     const cachedDs = new CachedBookDataSource(primary, { storage });
 
     await cachedDs.listByOwner("user-1");
-    expect(await storage.getItem("ipebook:cache:books:owner:user-1")).not.toBeNull();
+    expect(await storage.getItem("ipebook:cache:books:owner-v2:user-1")).not.toBeNull();
 
     await cachedDs.create({
       title: "Outro Livro",
@@ -240,6 +249,6 @@ describe("CachedBookDataSource (Resiliência e Offline-first)", () => {
       ownerId: "user-1",
     });
 
-    expect(await storage.getItem("ipebook:cache:books:owner:user-1")).toBeNull();
+    expect(await storage.getItem("ipebook:cache:books:owner-v2:user-1")).toBeNull();
   });
 });

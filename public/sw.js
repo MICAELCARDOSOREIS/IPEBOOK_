@@ -4,8 +4,8 @@
  */
 
 const STATIC_CACHE_NAME = "ipebook-static-v1";
-const DYNAMIC_CACHE_NAME = "ipebook-dynamic-v1";
-const CATALOG_CACHE_NAME = "ipebook-catalog-v1";
+const DYNAMIC_CACHE_NAME = "ipebook-dynamic-v2";
+const CATALOG_CACHE_NAME = "ipebook-catalog-v2";
 
 const APP_SHELL_URLS = [
   "/",
@@ -121,7 +121,7 @@ function createOfflineCatalogResponse() {
     message: "Você está sem conexão com a internet e não há dados em cache para esta consulta de livros.",
   });
   return new Response(payload, {
-    status: 200,
+    status: 503,
     headers: {
       "Content-Type": "application/json; charset=utf-8",
       "X-Ipebook-Offline": "true",
@@ -135,6 +135,20 @@ function isStaticAsset(url) {
   if (pathname.startsWith("/assets/")) return true;
   if (url.hostname === "fonts.googleapis.com" || url.hostname === "fonts.gstatic.com") return true;
   return /\.(?:js|css|png|jpg|jpeg|gif|svg|ico|webp|woff|woff2|ttf|eot)$/i.test(pathname);
+}
+
+function isCatalogRequest(url, authorization, apiKey) {
+  return (
+    apiKey?.startsWith("sb_publishable_") === true &&
+    (!authorization || authorization === `Bearer ${apiKey}`) &&
+    url.protocol === "https:" &&
+    url.hostname.endsWith(".supabase.co") &&
+    url.pathname === "/rest/v1/v2_books" &&
+    url.searchParams.getAll("status").includes("neq.draft") &&
+    /^[a-z_,]+$/.test(url.searchParams.get("select") ?? "") &&
+    !url.searchParams.has("owner_id") &&
+    !url.searchParams.has("id")
+  );
 }
 
 // Interceptação de requisições
@@ -159,7 +173,10 @@ self.addEventListener("fetch", (event) => {
   }
 
   // Rotas de autenticação Supabase transitam sem cache para preservar segurança de credenciais
-  if (url.pathname.includes("/auth/v1/")) {
+  if (
+    url.pathname.includes("/auth/v1/") ||
+    /^\/(?:auth\/callback|redefinir-senha)(?:\.html|\/)?$/.test(url.pathname)
+  ) {
     return;
   }
 
@@ -189,22 +206,27 @@ self.addEventListener("fetch", (event) => {
   }
 
   // 2. Requisições ao Catálogo de Livros Supabase: Estratégia Network-First com fallback de cache
-  if (url.pathname.includes("/rest/v1/livros")) {
+  if (isCatalogRequest(url, request.headers.get("authorization"), request.headers.get("apikey"))) {
     event.respondWith(
       fetch(request)
-        .then((networkResponse) => {
-          if (networkResponse && networkResponse.status < 400) {
-            const clone = networkResponse.clone();
-            caches.open(CATALOG_CACHE_NAME).then((cache) => cache.put(request, clone));
+        .then(async (networkResponse) => {
+          if (networkResponse.status === 200) {
+            try {
+              const cache = await caches.open(CATALOG_CACHE_NAME);
+              await cache.put(request, networkResponse.clone());
+            } catch {
+              // A resposta da rede continua disponível se o cache estiver indisponível.
+            }
           }
           return networkResponse;
         })
         .catch(async () => {
-          const cachedResponse = await caches.match(request);
-          if (cachedResponse) {
-            return cachedResponse;
+          try {
+            const cache = await caches.open(CATALOG_CACHE_NAME);
+            return (await cache.match(request)) ?? createOfflineCatalogResponse();
+          } catch {
+            return createOfflineCatalogResponse();
           }
-          return createOfflineCatalogResponse();
         })
     );
     return;
