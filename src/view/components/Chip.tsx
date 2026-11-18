@@ -46,7 +46,9 @@ export function Chip({ label, selected, onPress, disabled = false, accessibility
           styles.chip,
           size === "regular" ? styles.chipRegular : styles.chipCompact,
           selected ? styles.selected : styles.unselected,
-          isPressed && !disabled ? styles.pressedShape : null,
+          Platform.OS === "ios" && styles.iosPill,
+          Platform.OS === "ios" && !selected && styles.iosUnselected,
+          isPressed && !disabled && Platform.OS !== "ios" ? styles.pressedShape : null,
           selected && tone ? { backgroundColor: tone.background } : null,
           tone || selected ? styles.withDot : null,
           disabled && styles.disabled,
@@ -84,6 +86,15 @@ function createStyles(colors: ColorPalette) {
     // Figma `02.01`/`02.02`: 32 dp nas fileiras rápidas; `02.03`/`04.05`: 40 dp nos grupos de escolha.
     chipCompact: { height: tokens.spacing[32], paddingHorizontal: tokens.spacing[12] },
     chipRegular: { height: tokens.spacing[40], paddingHorizontal: tokens.spacing[20] },
+    iosPill: {
+      minHeight: 44,
+      borderRadius: tokens.radius.full,
+      borderCurve: "continuous",
+    },
+    iosUnselected: {
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderColor: colors.m3.outlineVariant,
+    },
     selected: {
       backgroundColor: colors.nature.foliage,
       borderWidth: 0,

@@ -33,7 +33,7 @@ export function FilledButton({
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   return (
-    <Animated.View style={{ transform: [{ scale }] }}>
+    <Animated.View style={[{ transform: [{ scale }] }, Platform.OS === "ios" && !isDisabled && styles.iosShadow]}>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={accessibilityLabel ?? label}
@@ -44,8 +44,9 @@ export function FilledButton({
         onPressOut={onPressOut}
         style={[
           styles.button,
+          Platform.OS === "ios" && styles.iosButton,
           backgroundColor && !isDisabled ? { backgroundColor } : null,
-          isPressed && !isDisabled && styles.pressedShape,
+          isPressed && !isDisabled && Platform.OS !== "ios" && styles.pressedShape,
           isDisabled && styles.disabled,
         ]}
       >
@@ -70,6 +71,16 @@ function createStyles(colors: ColorPalette) {
       backgroundColor: colors.action,
       paddingHorizontal: tokens.spacing[24],
       ...(Platform.OS === "web" ? ({ cursor: "pointer", userSelect: "none" } as never) : {}),
+    },
+    iosButton: {
+      borderCurve: "continuous",
+      borderRadius: tokens.radius.full,
+    },
+    iosShadow: {
+      shadowColor: colors.m3.shadow,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.16,
+      shadowRadius: 12,
     },
     pressedShape: {
       borderRadius: tokens.shapeMorph.buttonPressed,

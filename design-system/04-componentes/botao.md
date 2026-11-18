@@ -100,3 +100,15 @@ function BotaoPreenchido({ label, onPress, disabled }: { label: string; onPress:
 Em uma tela com botão de voltar na [Barra superior](barra-superior.md), a ação contornada não pode
 se chamar só "Voltar": dois controles com o mesmo nome acessível confundem leitores de tela. Use um
 rótulo que diga para onde se volta, como "Voltar à etapa anterior" (ver `createListing.tsx`).
+
+
+## Adaptação para iPhone nativo (Spec 137)
+
+- `FilledButton` mantém o verde IpêBook e a altura de 52 pt; no iOS recebe cantos
+  contínuos e elevação suave sem transparência no texto principal.
+- `OutlinedButton` usa superfície Liquid Glass somente no **iOS**, com
+  `glass.fill` e `glass.stroke`, desfoque do `expo-blur` e rótulo legível.
+- A opção **Reduzir Transparência** substitui o vidro por
+  `surface-container-low` opaco. Estados de carregamento e desabilitado não
+  exibem desfoque.
+- Android (M3 Expressive) e Web mantêm seus estilos e comportamentos existentes.
