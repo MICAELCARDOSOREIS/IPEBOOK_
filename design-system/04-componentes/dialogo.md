@@ -27,6 +27,7 @@ Origem no sistema base: Material 3, Basic dialog. Situação: **Herdado**.
 | --- | --- | --- |
 | Padrão | Confirmação neutra | `surface-container-high`, botão Contornado/Texto |
 | Destrutivo | Ação irreversível | mesma estrutura + botão [Perigo](botao.md) na confirmação |
+| Folha Inferior (BottomSheet) | Seleção de opções, filtros ou ordenação | `surface-container-low` (M3) / `glass.fill` + `BlurView` (iOS), raio `radius.xxl` (28 dp), alça `dragHandle` |
 
 ## Estados
 

@@ -7,7 +7,7 @@
   - Atualizar escopo de iOS Nativo via ADR vinculado ao ADR 0008.
   - Configurar `ios` em `app.json` (`bundleIdentifier`, `infoPlist` em PT-BR, ícones, deep links) e validar `npm run check:build-config`.
 
-- [ ] **T002 (Issue #2) — Base Liquid Glass e componentes Apple HIG no Design System**
+- [x] **T002 (Issue #2) — Base Liquid Glass e componentes Apple HIG no Design System**
   - Implementar suporte isolado `Platform.OS === 'ios'` em `ScreenContainer`, `ConnectedNavigationBar`, `TopAppBar` e `BottomSheet`.
   - Adicionar suporte a Reduzir Transparência, alvos `≥ 44×44 pt` e feedback tátil (*Haptics*).
 
