@@ -114,7 +114,7 @@
 - [0112 — Testes E2E Web com Chrome CDP nativo (sem Playwright)](0112-e2e-web-cdp.md)
 - [0113 — Migração do motor de testes de Vitest para Jest](0113-migracao-vitest-para-jest.md)
 - [0114 — Remoção do tema escuro: operação exclusiva em tema claro editorial](0114-remocao-do-tema-escuro.md)
-- [0115 — Base Liquid Glass e componentes Apple HIG no iOS Nativo](0115-base-liquid-glass-apple-hig.md)
+- [0115 — Base Liquid Glass e Componentes Apple HIG no iOS Nativo](0115-base-liquid-glass-apple-hig.md)
 - [0116 — Padronização Apple HIG para Descoberta, Busca, Favoritos e Detalhes no iOS](0116-padronizacao-apple-hig-descoberta-busca-ios.md)
 
 Preservar registros aceitos; mudanças relevantes geram novo ADR com vínculos de substituição.
