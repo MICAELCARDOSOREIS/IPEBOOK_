@@ -42,9 +42,35 @@ tags:
 - tapOn: "Início"
 - assertVisible: "Encontre sua próxima história."
 - assertVisible: "Perto de você"
+- tapOn: "Selecionar local em Piripiri: .*"
+- assertVisible: "Piripiri (Todos os locais)"
+- back
 - tapOn: "Explorar"
 - assertVisible: "O que vamos ler hoje?"
+- tapOn: "Buscar livros"
+- inputText: "Dom"
+- hideKeyboard
+- runFlow:
+    when:
+      visible: "Limpar busca"
+    commands:
+      - tapOn: "Limpar busca"
+- tapOn: "Filtrar por Venda"
+- tapOn: "Filtrar por Troca"
 - tapOn: "Filtrar por Doação"
 - tapOn: "Filtrar por Todas"
+- tapOn: "Abrir filtros"
+- assertVisible: "Filtrar livros"
+- back
+- runFlow:
+    when:
+      visible: "Ordenar por .*"
+    commands:
+      - tapOn: "Ordenar por .*"
+      - assertVisible: "Ordenar por"
+      - back
+- tapOn: "Ver meus livros favoritos"
+- assertVisible: "Favoritos"
+- back
 - tapOn: "Início"
 - assertVisible: "Encontre sua próxima história."
