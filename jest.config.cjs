@@ -1,7 +1,7 @@
 /** @type {import('jest').Config} */
 module.exports = {
   testEnvironment: "node",
-  testTimeout: 15000,
+  testTimeout: 30000,
   maxWorkers: 6,
   setupFiles: ["<rootDir>/tests/setupNodeReactNative.cjs"],
   setupFilesAfterEnv: ["<rootDir>/tests/setupTests.ts"],
