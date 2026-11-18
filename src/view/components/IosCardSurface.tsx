@@ -54,7 +54,7 @@ export function IosCardSurface({
             testID="ios-card-blur"
             tint="light"
             intensity={24}
-            style={StyleSheet.absoluteFillObject}
+            style={StyleSheet.absoluteFill}
           />
         </View>
       ) : null}
@@ -103,7 +103,7 @@ function createStyles(colors: ColorPalette) {
       borderColor: colors.ipe.bloom,
     },
     blurClip: {
-      ...StyleSheet.absoluteFillObject,
+      ...StyleSheet.absoluteFill,
       overflow: "hidden",
       borderRadius: tokens.radius.xl,
     },
