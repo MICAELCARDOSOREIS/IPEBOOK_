@@ -92,7 +92,7 @@ export function Settings({
   const guardedNotifications = onNavigateToNotifications ? guardedNotificationsPress : undefined;
   const guardedSignedOutPress = useGuardedPress(onSignedOut);
   const guardedSignedOut = onSignedOut ? guardedSignedOutPress : undefined;
-  const { colors, resolvedScheme } = useTheme();
+  const { colors } = useTheme();
   // Web larga: barra lateral com a conta e o índice das seções, e as seções empilhadas ao lado.
   const wide = useIsWideWeb();
   const scrollRef = useRef<ScrollViewInstance>(null);
@@ -453,13 +453,11 @@ export function Settings({
                             accessibilityLabel={`${category.label}: ${notifPrefs.enabled[key] ? "ativada" : "desativada"}`}
                             trackColor={{
                               false: colors.m3.surfaceContainerHighest,
-                              true: resolvedScheme === "dark" ? colors.m3.primaryContainer : colors.action,
+                              true: colors.action,
                             }}
                             thumbColor={
                               notifPrefs.enabled[key]
-                                ? resolvedScheme === "dark"
-                                  ? colors.m3.primary
-                                  : colors.m3.onPrimary
+                                ? colors.m3.onPrimary
                                 : colors.m3.outline
                             }
                           />

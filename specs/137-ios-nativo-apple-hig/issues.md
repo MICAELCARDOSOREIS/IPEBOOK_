@@ -26,7 +26,7 @@ Este documento quebra o trabalho do iPhone nativo em **8 issues independentes e 
 
 ## Issue 2 — `[iOS Nativo · Design System] Base Liquid Glass e componentes Apple HIG (Safe Areas, Dock, TopAppBar, BottomSheet)`
 
-- **Status:** **Concluída** (Implementada por Maria Clara · `@clarinhamartins` · [ADR 0114](../../docs/adr/0114-base-liquid-glass-apple-hig.md))
+- **Status:** **Concluída** (Implementada por Maria Clara · `@clarinhamartins` · [ADR 0115](../../docs/adr/0115-base-liquid-glass-apple-hig.md))
 - **Responsável:** Maria Clara (`@clarinhamartins`) · **Apoio:** Eric Vinícius (`@Eric2025gh`) e Micael (`@MICAELCARDOSOREIS`)
 - **Labels:** `pessoa:maria-clara`, `ios`, `apple-hig`, `design-system`
 - **Branch:** `feature/ios-design-system-liquid-glass` (integrada em `develop`)
@@ -60,7 +60,7 @@ Este documento quebra o trabalho do iPhone nativo em **8 issues independentes e 
 
 ## Issue 4 — `[iOS Nativo · Fluxos 02 e 03] Adequar Descoberta, Busca, Favoritos, Alertas, Detalhe do Livro e Perfil Público (22 telas Figma)`
 
-- **Status:** **Em revisão (Parcial)** (Implementada por Maria Clara · `@clarinhamartins` · PR #240 · [ADR 0115](../../docs/adr/0115-padronizacao-apple-hig-descoberta-busca-ios.md); pendente validação em iPhone/simulador e rotas de alertas `alertas/[id]` e `alertas/[id]/editar` com `@Eric2025gh`)
+- **Status:** **Em revisão (Parcial)** (Implementada por Maria Clara · `@clarinhamartins` · PR #240 · [ADR 0116](../../docs/adr/0116-padronizacao-apple-hig-descoberta-busca-ios.md); pendente validação em iPhone/simulador e rotas de alertas `alertas/[id]` e `alertas/[id]/editar` com `@Eric2025gh`)
 - **Responsável:** Maria Clara (`@clarinhamartins`) · **Apoio:** Eric Vinícius (`@Eric2025gh`)
 - **Labels:** `pessoa:maria-clara`, `ios`, `apple-hig`, `discovery`
 - **Rotas:** `index.tsx`, `pesquisa.tsx`, `favoritos.tsx`, `alertas.tsx`, `alertas/[id].tsx`, `alertas/[id]/editar.tsx`, `livro/[id].tsx`, `perfil/[userId].tsx`

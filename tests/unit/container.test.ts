@@ -4,7 +4,6 @@ import {
   negotiationMessageUseCases,
   messageDataSource,
   onboardingUseCases,
-  themePreferenceUseCases,
   localCacheUseCases,
   networkStatusDataSource,
   searchAlertUseCases,
@@ -46,7 +45,6 @@ import {
 describe("Container DI (Injeção de Dependências)", () => {
   it("exporta todos os useCases e serviços essenciais instanciados para o ambiente", () => {
     expect(onboardingUseCases).toBeDefined();
-    expect(themePreferenceUseCases).toBeDefined();
     expect(localCacheUseCases).toBeDefined();
     expect(networkStatusDataSource).toBeDefined();
     expect(searchAlertUseCases).toBeDefined();

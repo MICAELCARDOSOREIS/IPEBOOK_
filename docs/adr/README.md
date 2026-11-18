@@ -7,7 +7,7 @@
 - [0005 — Modalidade do produto: venda, troca e doação de livros físicos](0005-modalidade-venda-troca-doacao.md)
 - [0006 — Haverá conta: e-mail/senha e login com Google](0006-conta-com-email-e-google.md)
 - [0007 — Serifa da marca: Source Serif 4 Bold](0007-serifa-da-marca.md)
-- [0008 — Sem dark mode nesta etapa; Android segue Material Design 3, iOS segue Liquid Glass](0008-sem-dark-mode-android-md3-ios-liquid-glass.md) (decisão 1 substituída pelo 0036)
+- [0008 — Sem dark mode nesta etapa; Android segue Material Design 3, iOS segue Liquid Glass](0008-sem-dark-mode-android-md3-ios-liquid-glass.md) (decisão 1 confirmada pelo 0114)
 - [0009 — design-kit/tokens.json como fonte única de tokens; carregamento de fonte no Expo](0009-design-kit-tokens-como-fonte-unica.md) (substituído pelo 0010)
 - [0010 — design-system/ substitui design-kit/ como fonte única de design](0010-design-system-substitui-design-kit.md)
 - [0011 — Barra de navegação com 3 destinos (Início, Pesquisa, Perfil)](0011-navegacao-tres-destinos.md)
@@ -35,7 +35,7 @@
 - [0033 — Verificação de saúde e migrações do Supabase remoto](0033-verificacao-saude-migracoes-remotas-supabase.md)
 - [0034 — Cache progressivo, resiliência de timeout e retry em capas de livros](0034-cache-progressivo-retry-capas-livros.md)
 - [0035 — Service Worker e cache offline de assets e catálogo no PWA](0035-service-worker-cache-offline-pwa.md)
-- [0036 — Tema escuro entra em escopo (substitui a decisão 1 da 0008)](0036-tema-escuro-entra-em-escopo.md)
+- [0036 — Tema escuro entra em escopo (substitui a decisão 1 da 0008)](0036-tema-escuro-entra-em-escopo.md) (substituído pelo 0114)
 - [0037 — Encontro como entidade própria da negociação](0037-encontro-como-entidade-propria.md) (criado como 0036 e renumerado por colisão com o ADR do tema escuro)
 - [0038 — Leitura pública anônima de perfis comunitários e avaliações](0038-leitura-anonima-perfis-publicos-e-avaliacoes.md)
 - [0039 — Bloqueio de usuários e moderação interpessoal](0039-bloqueio-de-usuarios-e-moderacao.md)
@@ -113,7 +113,8 @@
 - [0111 — Combinar encontro sem mapa: a lista de pontos substitui o Mapbox](0111-encontro-sem-mapa-mapbox.md)
 - [0112 — Testes E2E Web com Chrome CDP nativo (sem Playwright)](0112-e2e-web-cdp.md)
 - [0113 — Migração do motor de testes de Vitest para Jest](0113-migracao-vitest-para-jest.md)
-- [0114 — Base Liquid Glass e componentes Apple HIG no iOS Nativo](0114-base-liquid-glass-apple-hig.md)
-- [0115 — Padronização Apple HIG para Descoberta, Busca, Favoritos e Detalhes no iOS](0115-padronizacao-apple-hig-descoberta-busca-ios.md)
+- [0114 — Remoção do tema escuro: operação exclusiva em tema claro editorial](0114-remocao-do-tema-escuro.md)
+- [0115 — Base Liquid Glass e componentes Apple HIG no iOS Nativo](0115-base-liquid-glass-apple-hig.md)
+- [0116 — Padronização Apple HIG para Descoberta, Busca, Favoritos e Detalhes no iOS](0116-padronizacao-apple-hig-descoberta-busca-ios.md)
 
 Preservar registros aceitos; mudanças relevantes geram novo ADR com vínculos de substituição.

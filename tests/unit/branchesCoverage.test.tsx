@@ -32,7 +32,6 @@ import { useNavigationBadgesViewModel } from "@/viewmodel/useNavigationBadgesVie
 import { useNotificationPreferencesViewModel } from "@/viewmodel/useNotificationPreferencesViewModel";
 import { useInviteFriendsViewModel } from "@/viewmodel/useInviteFriendsViewModel";
 import { useDraftsViewModel } from "@/viewmodel/useDraftsViewModel";
-import { useThemeViewModel } from "@/viewmodel/useThemeViewModel";
 import { MemoryBlockedUserDataSource } from "@/infra/datasources/memoryBlockedUserDataSource";
 import { ShareUseCases } from "@/usecase/shareUseCases";
 import { DomainError, ValidationError } from "@/model/errors";
@@ -536,35 +535,6 @@ describe("Cobertura direcionada de branches (Branches Coverage Booster)", () => 
         await hookRes[1].reload();
       });
       expect(hookRes[0].error).toContain("Não foi possível carregar seus rascunhos");
-    });
-  });
-
-  describe("useThemeViewModel", () => {
-    it("carrega preferência salva e alterna tema", async () => {
-      const mockThemeUseCases = {
-        getPreference: jest.fn().mockResolvedValue("system"),
-        setPreference: jest.fn().mockResolvedValue(undefined),
-      };
-
-      let hookRes!: ReturnType<typeof useThemeViewModel>;
-      function Probe() {
-        hookRes = useThemeViewModel(mockThemeUseCases as never);
-        return null;
-      }
-
-      await React.act(async () => {
-        await render(<Probe />);
-      });
-
-      expect(hookRes[0].loading).toBe(false);
-      expect(hookRes[0].preference).toBe("system");
-
-      await React.act(async () => {
-        await hookRes[1].setPreference("dark");
-      });
-      expect(mockThemeUseCases.setPreference).toHaveBeenCalledWith("dark");
-      expect(hookRes[0].preference).toBe("dark");
-      expect(hookRes[0].resolvedScheme).toBe("dark");
     });
   });
 

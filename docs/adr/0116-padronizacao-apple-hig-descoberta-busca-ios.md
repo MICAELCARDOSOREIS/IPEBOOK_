@@ -1,10 +1,10 @@
-# 0115. Padronização Apple HIG para Descoberta, Busca, Favoritos e Detalhes no iOS
+# 0116. Padronização Apple HIG para Descoberta, Busca, Favoritos e Detalhes no iOS
 
 - **Status:** Aceito
 - **Data:** 2026-11-17
 - **Autora:** Maria Clara (`clarinhamartins`)
 - **Especificações vinculadas:** Spec 137 (Fase 2, Tarefa T004, Issue #229)
-- **Decisões relacionadas:** ADR 0008, ADR 0095, ADR 0108, ADR 0114
+- **Decisões relacionadas:** ADR 0008, ADR 0095, ADR 0108, ADR 0115
 
 ## Contexto
 

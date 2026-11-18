@@ -12,41 +12,64 @@ tags:
 - assertVisible: "O que vamos ler hoje?"
 - runFlow:
     when:
-      visible: "Ver detalhe de .*"
+      visible: "Ver detalhe de Assim Falou Zaratustra.*"
+    commands:
+      - tapOn: "Ver detalhe de Assim Falou Zaratustra.*"
+- runFlow:
+    when:
+      visible: "O que vamos ler hoje?"
     commands:
       - tapOn:
           text: "Ver detalhe de .*"
           index: 0
-      - scrollUntilVisible:
-          element: "Conservação"
-          direction: DOWN
-          timeout: 6000
-      - assertVisible: "Conservação"
-      - scrollUntilVisible:
-          element: "Anunciado por .*"
-          direction: DOWN
-          timeout: 6000
-      - runFlow:
-          when:
-            visible: "Anunciado por .*"
-          commands:
-            - tapOn: "Anunciado por .*"
-            - waitForAnimationToEnd
-            - back
-            - waitForAnimationToEnd
-      - runFlow:
-          when:
-            notVisible: "Denunciar anúncio"
-          commands:
-            - scroll
-      - runFlow:
-          when:
-            visible: "Denunciar anúncio"
-          commands:
-            - tapOn: "Denunciar anúncio"
-            - waitForAnimationToEnd
-            - back
+- scrollUntilVisible:
+    element: "Conservação"
+    direction: DOWN
+    speed: 55
+    visibilityPercentage: 50
+    timeout: 10000
+- assertVisible: "Conservação"
+- scrollUntilVisible:
+    element: "Anunciado por .*"
+    direction: DOWN
+    speed: 55
+    visibilityPercentage: 50
+    timeout: 10000
+- runFlow:
+    when:
+      visible: "Anunciado por .*"
+    commands:
+      - tapOn: "Anunciado por .*"
+      - waitForAnimationToEnd
       - back
+      - waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "Quero receber|Tenho interesse|Propor troca"
+      notVisible: "Denunciar anúncio"
+    commands:
+      - scrollUntilVisible:
+          element: "Denunciar anúncio"
+          direction: DOWN
+          speed: 55
+          visibilityPercentage: 50
+          timeout: 10000
+- runFlow:
+    when:
+      visible: "Denunciar anúncio"
+    commands:
+      - tapOn: "Denunciar anúncio"
+      - assertVisible: "O que aconteceu?"
+      - scrollUntilVisible:
+          element: "Enviar denúncia"
+          direction: DOWN
+          speed: 55
+          visibilityPercentage: 50
+          timeout: 8000
+      - assertVisible: "Enviar denúncia"
+      - back
+      - waitForAnimationToEnd
+- back
 # 2. Fluxo da Estante: Rascunhos, Propostas/Pedidos Recebidos, Filtros, Gerenciar e Editar Anúncio (sem salvar)
 - tapOn: "Estante"
 - assertVisible: "Estante"

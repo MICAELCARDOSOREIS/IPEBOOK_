@@ -6,7 +6,6 @@ export interface SanitizeOptions {
 const CONTROL_CHARS_REGEX = /[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g;
 const SCRIPT_STYLE_BLOCKS_REGEX = /<\s*(script|style)[^>]*>[\s\S]*?<\s*\/\s*\1\s*>/gi;
 const HTML_TAGS_REGEX = /<[^>]*>/g;
-const DANGEROUS_PATTERNS_REGEX = /<\s*script|javascript\s*:|<\s*iframe|on\w+\s*=/i;
 
 /**
  * Sanitiza campos de texto livre removendo tags HTML, scripts, caracteres de controle
@@ -51,12 +50,4 @@ export function sanitizeTextInput(input: string, options: SanitizeOptions = {}):
   }
 
   return clean;
-}
-
-/**
- * Verifica se uma string contém elementos de código malicioso ou tags de script.
- */
-export function containsDangerousHtml(input: string): boolean {
-  if (!input || typeof input !== "string") return false;
-  return DANGEROUS_PATTERNS_REGEX.test(input);
 }

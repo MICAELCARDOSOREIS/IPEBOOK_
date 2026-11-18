@@ -70,10 +70,8 @@ import type { ISearchAlertUseCases } from "@/usecase/iSearchAlertUseCases";
 import type { ISearchHistoryUseCases } from "@/usecase/iSearchHistoryUseCases";
 import { INITIAL_DEV_BOOKS } from "@/di/seedBooks";
 import { AsyncStorageOnboardingDataSource } from "@/infra/datasources/asyncStorageOnboardingDataSource";
-import { AsyncStorageThemePreferenceDataSource } from "@/infra/datasources/asyncStorageThemePreferenceDataSource";
 import { AsyncStorageLocalCacheDataSource } from "@/infra/datasources/asyncStorageLocalCacheDataSource";
 import { MemoryOnboardingDataSource } from "@/infra/datasources/memoryOnboardingDataSource";
-import { MemoryThemePreferenceDataSource } from "@/infra/datasources/memoryThemePreferenceDataSource";
 import { MemoryLocalCacheDataSource } from "@/infra/datasources/memoryLocalCacheDataSource";
 import { NetInfoNetworkStatusDataSource } from "@/infra/datasources/netInfoNetworkStatusDataSource";
 import { SupabasePhotoStorageDataSource } from "@/infra/datasources/supabasePhotoStorageDataSource";
@@ -99,7 +97,6 @@ import { FileDownloadService } from "@/infra/services/fileDownloadService";
 import type { IPwaService } from "@/model/services/iPwaService";
 import { PwaService } from "@/infra/services/pwaService";
 import type { IOnboardingUseCases } from "@/usecase/iOnboardingUseCases";
-import type { IThemePreferenceUseCases } from "@/usecase/iThemePreferenceUseCases";
 import type { IUserDataExportUseCases } from "@/usecase/iUserDataExportUseCases";
 import type { IUserPreferencesUseCases } from "@/usecase/iUserPreferencesUseCases";
 import { OnboardingUseCases } from "@/usecase/onboardingUseCases";
@@ -111,7 +108,6 @@ import { SupabaseBlockedUserDataSource } from "@/infra/datasources/supabaseBlock
 import type { IMessageDataSource } from "@/model/datasources/iMessageDataSource";
 import { MemoryMessageDataSource } from "@/infra/datasources/memoryMessageDataSource";
 import { SupabaseMessageDataSource } from "@/infra/datasources/supabaseMessageDataSource";
-import { ThemePreferenceUseCases } from "@/usecase/themePreferenceUseCases";
 import type { ILocalCacheUseCases } from "@/usecase/iLocalCacheUseCases";
 import { LocalCacheUseCases } from "@/usecase/localCacheUseCases";
 import { UserDataExportUseCases } from "@/usecase/userDataExportUseCases";
@@ -265,9 +261,6 @@ export const appUpdateUseCases = new AppUpdateUseCases(
 
 export const onboardingUseCases: IOnboardingUseCases = new OnboardingUseCases(
   process.env.NODE_ENV === "test" ? new MemoryOnboardingDataSource() : new AsyncStorageOnboardingDataSource(),
-);
-export const themePreferenceUseCases: IThemePreferenceUseCases = new ThemePreferenceUseCases(
-  process.env.NODE_ENV === "test" ? new MemoryThemePreferenceDataSource() : new AsyncStorageThemePreferenceDataSource(),
 );
 export const localCacheUseCases: ILocalCacheUseCases = new LocalCacheUseCases(
   process.env.NODE_ENV === "test" ? new MemoryLocalCacheDataSource() : new AsyncStorageLocalCacheDataSource(),
@@ -514,15 +507,12 @@ import { useReceivedRequestsViewModel } from "@/viewmodel/useReceivedRequestsVie
 import { useRequestDetailViewModel } from "@/viewmodel/useRequestDetailViewModel";
 import { useRequestNegotiationViewModel } from "@/viewmodel/useRequestNegotiationViewModel";
 import { useScheduleMeetingViewModel } from "@/viewmodel/useScheduleMeetingViewModel";
-import { useSentRequestsViewModel } from "@/viewmodel/useSentRequestsViewModel";
 import { useUserMeetingsViewModel } from "@/viewmodel/useUserMeetingsViewModel";
 
 /** Lote pedidos, encontro e entrega (T006). */
 export const makeRequestNegotiationViewModel = () => useRequestNegotiationViewModel(bookRequestUseCases);
 export const makeReceivedRequestsViewModel = (sessionUserId: string | null) =>
   useReceivedRequestsViewModel(sessionUserId, bookRequestUseCases);
-export const makeSentRequestsViewModel = (sessionUserId: string | null) =>
-  useSentRequestsViewModel(sessionUserId, bookRequestUseCases);
 export const makeRequestDetailViewModel = (requestId: string, sessionUserId: string | null) =>
   useRequestDetailViewModel(requestId, sessionUserId, bookRequestUseCases);
 export const makeMeetingViewModel = (requestId: string, sessionUserId: string | null) =>
@@ -630,7 +620,6 @@ import { useReportListingViewModel } from "@/viewmodel/useReportListingViewModel
 import { useReportUserViewModel } from "@/viewmodel/useReportUserViewModel";
 import { useResetPasswordViewModel } from "@/viewmodel/useResetPasswordViewModel";
 import { useSettingsViewModel } from "@/viewmodel/useSettingsViewModel";
-import { useThemeViewModel } from "@/viewmodel/useThemeViewModel";
 import { useUserPreferencesViewModel } from "@/viewmodel/useUserPreferencesViewModel";
 
 const defaultProfileSafetyDeps: ProfileSafetyDeps = {
@@ -667,6 +656,5 @@ export const makeReportUserViewModel = () => useReportUserViewModel(reportUseCas
 export const makeResetPasswordViewModel = () => useResetPasswordViewModel(authUseCases);
 export const makeSettingsViewModel = () =>
   useSettingsViewModel(localCacheUseCases, searchHistoryUseCases);
-export const makeThemeViewModel = () => useThemeViewModel(themePreferenceUseCases);
 export const makeUserPreferencesViewModel = (userId: string | null) =>
   useUserPreferencesViewModel(userId, userPreferencesUseCases);

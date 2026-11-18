@@ -2,7 +2,6 @@
 import { act, fireEvent, render } from "@testing-library/react-native";
 import { bookRequestUseCases, bookUseCases } from "@/di/container";
 import { ReceivedRequests } from "@/view/requests/receivedRequests";
-import { SentRequests } from "@/view/requests/sentRequests";
 
 /**
  * SC-001/SC-002 pela composição real (container → caso de uso → infra em memória) e pela
@@ -45,9 +44,5 @@ describe("SC-002: aceitar pedido recusa concorrentes e reserva o anúncio", () =
     await expect(bookRequestUseCases.requestNegotiation(listing.id, "carol-sc002")).rejects.toThrow(
       /não está mais disponível/,
     );
-
-    let sent!: Awaited<ReturnType<typeof render>>;
-    await act(async () => { sent = await render(<SentRequests sessionUserId="bob-sc002" />); });
-    expect(sent.getByText("Capitães da Areia")).toBeDefined();
   });
 });

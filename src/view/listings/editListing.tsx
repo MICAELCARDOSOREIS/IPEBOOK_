@@ -60,7 +60,7 @@ export default function EditListing({
   const guardedCancel = useGuardedPress(onCancel);
   const guardedSaved = useGuardedPress(onSaved);
   const [state, actions] = makeEditListingViewModel(bookId, sessionUserId);
-  const { colors, resolvedScheme } = useTheme();
+  const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [showPhotoInput, setShowPhotoInput] = useState(false);
   // Web larga: foto e identificação de um lado, descrição e venda do outro.
@@ -240,7 +240,7 @@ export default function EditListing({
                   key={category}
                   label={category}
                   accessibilityLabel={`Categoria ${category}`}
-                  tone={categoryTone(category, resolvedScheme)}
+                  tone={categoryTone(category)}
                   selected={state.category === category}
                   onPress={() => actions.setCategory(state.category === category ? "" : category)}
                   disabled={state.saving}

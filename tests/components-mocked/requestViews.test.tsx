@@ -2,16 +2,12 @@ import type React from "react";
 import { act, fireEvent, render } from "@testing-library/react-native";
 import type { Book } from "@/model/entities/book";
 import type { ReceivedRequestsActions, ReceivedRequestsState } from "@/viewmodel/useReceivedRequestsViewModel";
-import type { RequestListState } from "@/viewmodel/useSentRequestsViewModel";
 import { ReceivedRequests } from "@/view/requests/receivedRequests";
-import { SentRequests } from "@/view/requests/sentRequests";
 
 jest.mock("@/viewmodel/useReceivedRequestsViewModel", () => ({ useReceivedRequestsViewModel: jest.fn() }));
-jest.mock("@/viewmodel/useSentRequestsViewModel", () => ({ useSentRequestsViewModel: jest.fn() }));
 jest.mock("@/viewmodel/useNetworkStatus", () => ({ useNetworkStatus: jest.fn() }));
 
 import { useReceivedRequestsViewModel } from "@/viewmodel/useReceivedRequestsViewModel";
-import { useSentRequestsViewModel } from "@/viewmodel/useSentRequestsViewModel";
 import { useNetworkStatus } from "@/viewmodel/useNetworkStatus";
 
 jest.mocked(useNetworkStatus).mockReturnValue({ isOnline: true });
@@ -109,27 +105,5 @@ describe("tela de pedidos recebidos (ISO/IEC 25010 - Usabilidade)", () => {
     });
     const screen = await renderEl(<ReceivedRequests sessionUserId="owner" />);
     expect(screen.getByText("Este pedido já foi respondido.")).toBeDefined();
-  });
-});
-
-describe("tela de meus pedidos (ISO/IEC 25010 - Usabilidade)", () => {
-  it("mostra status de cada pedido enviado e o estado vazio", async () => {
-    const state: RequestListState = {
-      items: [{ request: { id: "r1", listingId: "l1", requesterId: "alice", status: "accepted" }, listing }],
-      loading: false,
-      error: null,
-    };
-    jest.mocked(useSentRequestsViewModel).mockReturnValue([state, { reload: jest.fn() }]);
-    const onBack = jest.fn();
-    const screen = await renderEl(<SentRequests sessionUserId="alice" onBack={onBack} />);
-    expect(screen.getByText("Vidas Secas")).toBeDefined();
-    expect(screen.getByText("Aceito")).toBeDefined();
-    expect(screen.queryByText("Aceitar")).toBeNull();
-    await act(async () => { fireEvent.press(screen.getByRole("button", { name: "Voltar" })); });
-    expect(onBack).toHaveBeenCalledTimes(1);
-
-    jest.mocked(useSentRequestsViewModel).mockReturnValue([{ ...state, items: [] }, { reload: jest.fn() }]);
-    const empty = await renderEl(<SentRequests sessionUserId="alice" />);
-    expect(empty.getByText("Você ainda não solicitou nenhuma negociação.")).toBeDefined();
   });
 });

@@ -1,4 +1,4 @@
-# ADR 0114 — Base Liquid Glass e Componentes Apple HIG no iOS Nativo
+# ADR 0115 — Base Liquid Glass e Componentes Apple HIG no iOS Nativo
 
 - **Status:** Aceito
 - **Data:** 17 de novembro de 2026
