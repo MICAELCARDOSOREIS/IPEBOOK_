@@ -5,22 +5,47 @@ tags:
   - camera
   - hardware-nativo
 ---
-- launchApp
+- launchApp:
+    stopApp: false
 # Pré-condição: sessão autenticada no app Android
-- tapOn: "Anunciar livro"
-- assertVisible: "Abrir leitor de código de barras pela câmera"
+- tapOn: "Início"
+- assertVisible:
+    id: "home-floating-add-button"
+- tapOn:
+    id: "home-floating-add-button"
+- assertVisible: "Anunciar livro"
 - tapOn: "Abrir leitor de código de barras pela câmera"
+- runFlow:
+    when:
+      visible: "Durante o uso do app"
+    commands:
+      - tapOn: "Durante o uso do app"
+- runFlow:
+    when:
+      visible: "Ao usar o app"
+    commands:
+      - tapOn: "Ao usar o app"
 - runFlow:
     when:
       visible: "Permitir"
     commands:
       - tapOn: "Permitir"
-- waitForAnimationToEnd
-- back
+- assertVisible: "Escanear ISBN"
+- tapOn: "Fechar leitor de código de barras"
+- tapOn:
+    text: "Título"
+    optional: true
+- runFlow:
+    when:
+      visible: "Limpar rascunho"
+    commands:
+      - tapOn: "Limpar rascunho"
 - tapOn: "Título"
 - inputText: "Livro Teste Maestro"
+- hideKeyboard
 - tapOn: "Autor"
 - inputText: "Autor Maestro"
+- hideKeyboard
 - tapOn: "Modalidade Doação"
 - tapOn: "Continuar"
 - assertVisible: "Mostre seu livro."
@@ -33,3 +58,12 @@ tags:
     commands:
       - assertVisible: "Permitir e escolher"
       - tapOn: "Publicar sem foto"
+- tapOn: "Voltar à etapa anterior"
+- runFlow:
+    when:
+      visible: "Limpar rascunho"
+    commands:
+      - tapOn: "Limpar rascunho"
+- back
+- assertVisible:
+    id: "home-floating-add-button"
