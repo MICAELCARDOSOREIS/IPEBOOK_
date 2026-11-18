@@ -1,9 +1,11 @@
+import { BlurView } from "expo-blur";
 import { useMemo, type ReactNode } from "react";
 import { ActivityIndicator, Animated, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { useExpressivePress } from "@/view/useExpressivePress";
+import { useReduceTransparency } from "@/view/useReduceTransparency";
 
 export type OutlinedButtonProps = {
   label: string;
@@ -34,8 +36,9 @@ export function OutlinedButton({
   const { scale, isPressed, onPressIn, onPressOut } = useExpressivePress({ disabled: isDisabled });
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const reduceTransparency = useReduceTransparency();
   return (
-    <Animated.View style={{ transform: [{ scale }] }}>
+    <Animated.View style={[{ transform: [{ scale }] }, Platform.OS === "ios" && !isDisabled && styles.iosShadow]}>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={accessibilityLabel ?? label}
@@ -46,11 +49,17 @@ export function OutlinedButton({
         onPressOut={onPressOut}
         style={[
           styles.button,
+          Platform.OS === "ios" && !isDisabled && (reduceTransparency ? styles.iosOpaque : styles.iosGlass),
           Boolean(icon) && styles.buttonWithIcon,
-          isPressed && !isDisabled && styles.pressedShape,
+          isPressed && !isDisabled && Platform.OS !== "ios" && styles.pressedShape,
           isDisabled && styles.disabled,
         ]}
       >
+        {Platform.OS === "ios" && !reduceTransparency && !isDisabled ? (
+          <View pointerEvents="none" style={styles.iosBlurClip}>
+            <BlurView testID="outlined-button-blur" intensity={24} tint="light" style={StyleSheet.absoluteFillObject} />
+          </View>
+        ) : null}
         {loading ? (
           <ActivityIndicator color={colors.action} accessibilityLabel={loadingLabel ?? label} />
         ) : (
@@ -80,6 +89,29 @@ function createStyles(colors: ColorPalette) {
       backgroundColor: "transparent",
       paddingHorizontal: tokens.spacing[24],
       ...(Platform.OS === "web" ? ({ cursor: "pointer", userSelect: "none" } as never) : {}),
+    },
+    iosGlass: {
+      borderRadius: tokens.radius.full,
+      borderCurve: "continuous",
+      backgroundColor: tokens.glass.fill,
+      borderColor: tokens.glass.stroke,
+    },
+    iosOpaque: {
+      borderRadius: tokens.radius.full,
+      borderCurve: "continuous",
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderColor: colors.m3.outlineVariant,
+    },
+    iosShadow: {
+      shadowColor: colors.m3.shadow,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.10,
+      shadowRadius: 12,
+    },
+    iosBlurClip: {
+      ...StyleSheet.absoluteFillObject,
+      overflow: "hidden",
+      borderRadius: tokens.radius.full,
     },
     buttonWithIcon: {
       paddingLeft: tokens.spacing[16],

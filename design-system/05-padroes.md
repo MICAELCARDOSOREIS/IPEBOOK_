@@ -85,3 +85,22 @@ Fluxos do app, derivados das histórias de usuário de
   termo e o bairro, reiniciar a busca apaga tudo.
 - **Evite:** filtrar a lista a cada toque dentro da tela de filtros (a lista pisca e pode esvaziar no meio
   da escolha), usar categorias fixas que não existem no catálogo e contar a ordenação como filtro ativo.
+
+
+## Padrão iOS: superfícies e controles no tema claro (Spec 137)
+
+Referência editável no [Figma do iPhone](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?node-id=31-2).
+
+| Elemento | Padrão iPhone | Implementação |
+| --- | --- | --- |
+| Card de livro/leitor | Superfície opaca, raio 20 pt, borda suave e sombra discreta | `IosCardSurface variant="paper"`; aplicado ao `ReaderCard` |
+| Card de estado | `neutral`, `success`, `info` ou `donation`, sem vidro sobre conteúdo extenso | `IosCardSurface` |
+| Controle secundário | Pílula Liquid Glass, com `BlurView` e fallback opaco | `OutlinedButton` |
+| Ação principal | Verde da marca, altura 52 pt, cantos contínuos e sombra suave | `FilledButton` |
+| Campo de formulário | Fundo sólido, raio 14 pt, foco e erro claramente identificados | `TextField` |
+| Chip de filtro | Pílula de no mínimo 44 pt, mantendo marcação acessível | `Chip` |
+
+Todos os ajustes são condicionados a `Platform.OS === "ios"`. O hook
+`useReduceTransparency` respeita a preferência de acessibilidade para
+superfícies translúcidas. O Android permanece em Material 3 Expressive e a Web
+conserva seus estilos; não foi introduzido tema escuro.
