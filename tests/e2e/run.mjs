@@ -24,7 +24,7 @@ function garantirBuildWebMemoria(forcarBuild) {
   const res = spawnSync(
     process.platform === "win32" ? "npx.cmd" : "npx",
     ["expo", "export", "--platform", "web", "--output-dir", "dist-e2e"],
-    { cwd: RAIZ, env, stdio: "inherit", shell: process.platform === "win32" },
+    { cwd: RAIZ, env, stdio: "inherit" },
   );
   if (res.status !== 0) {
     throw new Error(`Falha ao exportar build Web E2E (código ${res.status ?? "desconhecido"}).`);
@@ -361,8 +361,7 @@ const CENARIOS = [
       // 4) Conta B confirma encontro direto no chat embutido de Conversas
       await entrarPelaTelaEntrar(page, contaB);
       await page.clickBySelector('[aria-label^="Conversas"]');
-      await page.waitForText(tituloLivro);
-      await page.clickByText(tituloLivro);
+      await page.clickBySelector(`[aria-label*="sobre ${tituloLivro}"]`);
       await page.waitForText("Oi, combinamos a entrega hoje?");
       await page.waitForText("Confirmar encontro");
       await page.clickByText("Confirmar encontro", { exact: true });
@@ -390,8 +389,7 @@ const CENARIOS = [
       // 6) Conta B confirma entrega pelo código e envia avaliação 5 estrelas
       await entrarPelaTelaEntrar(page, contaB);
       await page.clickBySelector('[aria-label^="Conversas"]');
-      await page.waitForText(tituloLivro);
-      await page.clickByText(tituloLivro);
+      await page.clickBySelector(`[aria-label*="sobre ${tituloLivro}"]`);
       await page.waitForText("Entrega do livro");
       await page.clickByText("Entrega do livro", { exact: true });
       await page.waitForText("Ler QR da entrega");
