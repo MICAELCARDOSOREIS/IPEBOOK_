@@ -1,5 +1,5 @@
 import { contrastRatio } from "@/view/theme/contrastRatio";
-import { colors, darkColors } from "@/view/tokens";
+import { colors } from "@/view/tokens";
 
 describe("Spec 116 — Cores Vivas do Ipê e Harmonia de Contraste", () => {
   it("tokens de ipê amarelo possuem tons de florada solar viva (não cinzentos ou desbotados)", () => {
@@ -43,11 +43,5 @@ describe("Spec 116 — Cores Vivas do Ipê e Harmonia de Contraste", () => {
     expect(colors.m3.onDoacaoContainer.toLowerCase()).toBe("#6e3a28");
     expect(contrastRatio(colors.m3.onDoacaoContainer, colors.m3.doacaoContainer)).toBeGreaterThanOrEqual(4.5);
     expect(contrastRatio(colors.badge.donation.text, colors.badge.donation.background)).toBeGreaterThanOrEqual(4.5);
-  });
-
-  it("tema escuro mantém contraste elevado para as cores do ipê", () => {
-    expect(contrastRatio(darkColors.ipe.onContainer, darkColors.ipe.container)).toBeGreaterThanOrEqual(4.5);
-    expect(contrastRatio(darkColors.m3.onTertiaryContainer, darkColors.m3.tertiaryContainer)).toBeGreaterThanOrEqual(4.5);
-    expect(contrastRatio(darkColors.m3.onDoacaoContainer, darkColors.m3.doacaoContainer)).toBeGreaterThanOrEqual(4.5);
   });
 });

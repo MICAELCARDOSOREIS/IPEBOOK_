@@ -5,7 +5,6 @@ import ManageListingScreen from "@/view/listings/manageListingScreen";
 import SearchAlertsScreen from "@/view/search/searchAlertsScreen";
 import ReportListingScreen from "@/view/listings/reportListingScreen";
 import FavoritesScreen from "@/view/favorites/favoritesScreen";
-import SentRequestsScreen from "@/view/requests/sentRequests";
 import ReceivedRequestsScreen from "@/view/requests/receivedRequests";
 
 jest.mock("@/viewmodel/useAuthViewModel", () => ({
@@ -54,10 +53,6 @@ jest.mock("@/view/favorites/favorites", () => ({
     const { Text } = require("react-native");
     return <Text testID="favorites-view">Favorites: {String(userId)}</Text>;
   }),
-}));
-
-jest.mock("@/viewmodel/useSentRequestsViewModel", () => ({
-  useSentRequestsViewModel: jest.fn(() => [{ items: [], loading: false, error: null }, { reload: jest.fn() }]),
 }));
 
 jest.mock("@/viewmodel/useReceivedRequestsViewModel", () => ({
@@ -223,18 +218,7 @@ describe("Screen Wrappers e Gates de Sessão (ISO/IEC 25010 - Usabilidade e Segu
     });
   });
 
-  describe("SentRequestsScreen e ReceivedRequestsScreen", () => {
-    it("SentRequestsScreen redireciona se não houver usuário", async () => {
-      mockedUseAuth.mockReturnValue([{ user: null, loading: false, error: null }, {} as any]);
-      const onRequireSignIn = jest.fn();
-      let screen!: Awaited<ReturnType<typeof render>>;
-      await act(async () => {
-        screen = await render(<SentRequestsScreen onRequireSignIn={onRequireSignIn} />);
-      });
-      expect(onRequireSignIn).toHaveBeenCalledTimes(1);
-      expect(screen.toJSON()).toBeNull();
-    });
-
+  describe("ReceivedRequestsScreen", () => {
     it("ReceivedRequestsScreen redireciona se não houver usuário", async () => {
       mockedUseAuth.mockReturnValue([{ user: null, loading: false, error: null }, {} as any]);
       const onRequireSignIn = jest.fn();

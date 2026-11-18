@@ -1,6 +1,4 @@
 import {
-  formatBookDisplay,
-  sanitizeBookInput,
   validateBookPayload,
   validateDraftPayload,
 } from "@/model/validators/bookValidator";
@@ -223,46 +221,6 @@ describe("validação unitária de livros (ISO/IEC 25010 - Adequação Funcional
       expect(result.errors).toContain("O anúncio pode conter no máximo 5 fotos.");
     });
   });
-
-  describe("sanitizeBookInput", () => {
-    it("remove espaços em branco nas extremidades dos campos", () => {
-      const sanitized = sanitizeBookInput({
-        id: "  123  ",
-        title: "  O Guarani  ",
-        author: "  José de Alencar  ",
-      });
-
-      expect(sanitized).toEqual({
-        id: "123",
-        title: "O Guarani",
-        author: "José de Alencar",
-      });
-    });
-
-    it("preserva campos indefinidos sem quebrar", () => {
-      const sanitized = sanitizeBookInput({});
-      expect(sanitized).toEqual({
-        id: undefined,
-        title: undefined,
-        author: undefined,
-      });
-    });
-  });
-
-  describe("formatBookDisplay", () => {
-    it("formata título e autor no padrão visual estabelecido", () => {
-      const formatted = formatBookDisplay({
-        title: "Vidas Secas",
-        author: "Graciliano Ramos",
-      });
-      expect(formatted).toBe("Vidas Secas — Graciliano Ramos");
-    });
-
-    it("substitui valores ausentes por texto padrão seguro", () => {
-      expect(formatBookDisplay({ title: "", author: "" })).toBe("Sem título — Autor desconhecido");
-      expect(formatBookDisplay({ title: "   ", author: "   " })).toBe("Sem título — Autor desconhecido");
-    });
-  });
 });
 
 describe("Spec 030 — conservação e descrição", () => {
@@ -298,13 +256,6 @@ describe("Spec 030 — conservação e descrição", () => {
   it("aceita conservação e descrição ausentes ou nulas", () => {
     expect(validateBookPayload({ ...base, condition: null, description: null }).isValid).toBe(true);
     expect(validateBookPayload(base).isValid).toBe(true);
-  });
-
-  it("limpa espaços da descrição e preserva a conservação ao sanitizar", () => {
-    const sanitized = sanitizeBookInput({ ...base, condition: "good", description: "  Marcas leves  " });
-    expect(sanitized.condition).toBe("good");
-    expect(sanitized.description).toBe("Marcas leves");
-    expect(sanitizeBookInput({ ...base, description: "   " }).description).toBeUndefined();
   });
 });
 
@@ -387,24 +338,6 @@ describe("Spec 112 — suporte a box e coleções de livros", () => {
     expect(texto.errors).toContain(
       "Quantidade de volumes deve ser um número inteiro entre 2 e 100.",
     );
-  });
-
-  it("sanitiza campos de box corretamente", () => {
-    const sanitizado = sanitizeBookInput({
-      ...base,
-      isBox: true,
-      boxVolumesCount: 4,
-    });
-    expect(sanitizado.isBox).toBe(true);
-    expect(sanitizado.boxVolumesCount).toBe(4);
-
-    const invalido = sanitizeBookInput({
-      ...base,
-      isBox: false,
-      boxVolumesCount: 3.14,
-    });
-    expect(invalido.isBox).toBe(false);
-    expect(invalido.boxVolumesCount).toBeUndefined();
   });
 
   it("valida volumes em rascunhos com tolerância e regras de integridade (validateDraftPayload)", () => {

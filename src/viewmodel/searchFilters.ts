@@ -227,10 +227,6 @@ export function sortBooks(
   return [...books];
 }
 
-export function countActiveFilters(filters: SearchFilters): number {
-  return activeFilters(filters).length;
-}
-
 /** Filtros aplicados (na ordem do Figma `02.04`), com o rótulo já pronto para o chip removível. */
 export function activeFilters(filters: SearchFilters): ActiveFilter[] {
   const list: ActiveFilter[] = [];

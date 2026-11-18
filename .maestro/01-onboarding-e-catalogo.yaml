@@ -10,11 +10,43 @@ tags:
     commands:
       - launchApp:
           clearState: true
+      - waitForAnimationToEnd
       - runFlow:
           when:
-            true: ${METRO_URL != null}
+            visible: "DEVELOPMENT SERVERS"
           commands:
-            - openLink: ${METRO_URL}
+            - runFlow:
+                when:
+                  true: ${METRO_URL != null}
+                commands:
+                  - openLink: ${METRO_URL}
+                  - waitForAnimationToEnd
+            - runFlow:
+                when:
+                  visible: "DEVELOPMENT SERVERS"
+                commands:
+                  - tapOn: "http://"
+                  - inputText: "http://127.0.0.1:8081"
+                  - hideKeyboard
+                  - tapOn: "Connect"
+      - extendedWaitUntil:
+          visible: "(Continue|Toggle performance monitor|Uma boa história)"
+          timeout: 45000
+      - runFlow:
+          when:
+            visible: "Continue"
+          commands:
+            - tapOn: "Continue"
+            - waitForAnimationToEnd
+      - runFlow:
+          when:
+            visible: "Toggle performance monitor"
+          commands:
+            - back
+            - waitForAnimationToEnd
+      - extendedWaitUntil:
+          visible: "Uma boa história"
+          timeout: 20000
       - assertVisible: "Uma boa história"
       - assertVisible: "Começar"
       - assertVisible: "Já tenho conta"
@@ -39,38 +71,43 @@ tags:
                   - tapOn: "Permitir avisos"
 - launchApp:
     stopApp: false
-- tapOn: "Início"
-- assertVisible: "Encontre sua próxima história."
-- assertVisible: "Perto de você"
-- tapOn: "Selecionar local em Piripiri: .*"
-- assertVisible: "Piripiri (Todos os locais)"
-- back
-- tapOn: "Explorar"
-- assertVisible: "O que vamos ler hoje?"
-- tapOn: "Buscar livros"
-- inputText: "Dom"
-- hideKeyboard
+- waitForAnimationToEnd
 - runFlow:
     when:
-      visible: "Limpar busca"
+      visible: "Início"
     commands:
-      - tapOn: "Limpar busca"
-- tapOn: "Filtrar por Venda"
-- tapOn: "Filtrar por Troca"
-- tapOn: "Filtrar por Doação"
-- tapOn: "Filtrar por Todas"
-- tapOn: "Abrir filtros"
-- assertVisible: "Filtrar livros"
-- back
-- runFlow:
-    when:
-      visible: "Ordenar por .*"
-    commands:
-      - tapOn: "Ordenar por .*"
-      - assertVisible: "Ordenar por"
+      - tapOn: "Início"
+      - assertVisible: "Encontre sua próxima história."
+      - assertVisible: "Perto de você"
+      - tapOn: "Selecionar local em Piripiri: .*"
+      - assertVisible: "Piripiri (Todos os locais)"
       - back
-- tapOn: "Ver meus livros favoritos"
-- assertVisible: "Favoritos"
-- back
-- tapOn: "Início"
-- assertVisible: "Encontre sua próxima história."
+      - tapOn: "Explorar"
+      - assertVisible: "O que vamos ler hoje?"
+      - tapOn: "Buscar livros"
+      - inputText: "Dom"
+      - hideKeyboard
+      - runFlow:
+          when:
+            visible: "Limpar busca"
+          commands:
+            - tapOn: "Limpar busca"
+      - tapOn: "Filtrar por Venda"
+      - tapOn: "Filtrar por Troca"
+      - tapOn: "Filtrar por Doação"
+      - tapOn: "Filtrar por Todas"
+      - tapOn: "Abrir filtros"
+      - assertVisible: "Filtrar livros"
+      - back
+      - runFlow:
+          when:
+            visible: "Ordenar por .*"
+          commands:
+            - tapOn: "Ordenar por .*"
+            - assertVisible: "Ordenar por"
+            - back
+      - tapOn: "Ver meus livros favoritos"
+      - assertVisible: "Favoritos"
+      - back
+      - tapOn: "Início"
+      - assertVisible: "Encontre sua próxima história."

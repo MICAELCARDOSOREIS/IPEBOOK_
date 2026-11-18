@@ -1,42 +1,17 @@
 import { act, cleanup, fireEvent, render } from "@testing-library/react-native";
-import { SentRequests } from "@/view/requests/sentRequests";
 import { ReceivedRequests } from "@/view/requests/receivedRequests";
 
 afterEach(() => {
   cleanup();
 });
 
-jest.mock("@/viewmodel/useSentRequestsViewModel", () => ({
-  useSentRequestsViewModel: jest.fn(),
-}));
-
 jest.mock("@/viewmodel/useReceivedRequestsViewModel", () => ({
   useReceivedRequestsViewModel: jest.fn(),
 }));
 
-import { useSentRequestsViewModel } from "@/viewmodel/useSentRequestsViewModel";
 import { useReceivedRequestsViewModel } from "@/viewmodel/useReceivedRequestsViewModel";
 
-const mockedUseSent = jest.mocked(useSentRequestsViewModel);
 const mockedUseReceived = jest.mocked(useReceivedRequestsViewModel);
-
-const mockSentItem = {
-  request: {
-    id: "req-1",
-    listingId: "book-1",
-    requesterId: "user-buyer",
-    status: "accepted" as const,
-    createdAt: new Date().toISOString(),
-  },
-  listing: {
-    id: "book-1",
-    title: "O Alquimista",
-    author: "Paulo Coelho",
-    ownerId: "user-seller",
-    modality: "trade" as const,
-    status: "reserved" as const,
-  },
-};
 
 const mockReceivedItemPending = {
   request: {
@@ -75,61 +50,7 @@ const mockReceivedItemAccepted = {
   },
 };
 
-describe("SentRequests e ReceivedRequests Views (ISO/IEC 25010 - Adequação Funcional)", () => {
-  describe("SentRequests", () => {
-    it("exibe mensagem vazia quando não há pedidos enviados", async () => {
-      mockedUseSent.mockReturnValue([
-        { items: [], loading: false, error: null },
-        { reload: jest.fn() },
-      ]);
-
-      let screen!: Awaited<ReturnType<typeof render>>;
-      await act(async () => {
-        screen = await render(<SentRequests sessionUserId="user-buyer" />);
-      });
-
-      expect(screen.getByText("Você ainda não solicitou nenhuma negociação.")).toBeDefined();
-    });
-
-    it("exibe botão de ver detalhes do encontro quando pedido foi aceito", async () => {
-      mockedUseSent.mockReturnValue([
-        { items: [mockSentItem], loading: false, error: null },
-        { reload: jest.fn() },
-      ]);
-      const onNavigate = jest.fn();
-
-      let screen!: Awaited<ReturnType<typeof render>>;
-      await act(async () => {
-        screen = await render(
-          <SentRequests sessionUserId="user-buyer" onNavigateToNegotiationDetail={onNavigate} />,
-        );
-      });
-
-      expect(screen.getByText("O Alquimista")).toBeDefined();
-      const button = screen.getByText("Ver detalhes do encontro");
-      fireEvent.press(button);
-      expect(onNavigate).toHaveBeenCalledWith("req-1");
-    });
-
-    it("permite tentar novamente em caso de erro", async () => {
-      const reload = jest.fn();
-      mockedUseSent.mockReturnValue([
-        { items: [], loading: false, error: "Falha de rede ao carregar" },
-        { reload },
-      ]);
-
-      let screen!: Awaited<ReturnType<typeof render>>;
-      await act(async () => {
-        screen = await render(<SentRequests sessionUserId="user-buyer" />);
-      });
-
-      expect(screen.getByText("Falha de rede ao carregar")).toBeDefined();
-      const retryButton = screen.getByText("Tentar novamente");
-      fireEvent.press(retryButton);
-      expect(reload).toHaveBeenCalledTimes(1);
-    });
-  });
-
+describe("ReceivedRequests View (ISO/IEC 25010 - Adequação Funcional)", () => {
   describe("ReceivedRequests", () => {
     it("exibe mensagem vazia quando não há pedidos recebidos", async () => {
       mockedUseReceived.mockReturnValue([

@@ -1,6 +1,6 @@
 # 0036 — Tema escuro entra em escopo (substitui a decisão 1 da ADR 0008)
 
-Data: 2026-10-21. Status: aceito.
+Data: 2026-10-21. Status: substituído pelo [ADR 0114](0114-remocao-do-tema-escuro.md) (2026-11-18).
 
 ## Contexto
 

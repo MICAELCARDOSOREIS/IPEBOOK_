@@ -26,8 +26,8 @@ export function Snackbar({
   onDismiss,
   duration = 4000,
 }: SnackbarProps) {
-  const { colors, resolvedScheme } = useTheme();
-  const styles = useMemo(() => createStyles(colors, resolvedScheme), [colors, resolvedScheme]);
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const scale = useRef(new Animated.Value(0.95)).current;
   const guardedAction = useGuardedPress(onAction);
 
@@ -89,9 +89,9 @@ export function Snackbar({
   );
 }
 
-function createStyles(colors: ColorPalette, resolvedScheme: "light" | "dark") {
-  // M3 Snackbar: superfície inversa (escura no tema claro, clara no tema escuro) e rótulo de ação contrastante.
-  const actionColor = resolvedScheme === "dark" ? colors.m3.onPrimary : colors.m3.primaryContainer;
+function createStyles(colors: ColorPalette) {
+  // M3 Snackbar: superfície inversa e rótulo de ação contrastante.
+  const actionColor = colors.m3.primaryContainer;
   return StyleSheet.create({
     container: {
       flexDirection: "row",

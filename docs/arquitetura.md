@@ -134,10 +134,10 @@ Contratos: `BookRequest` (`id`, `listingId`, `requesterId`, `status: "pending" |
 ViewModels, Telas e Rotas:
 - `useRequestNegotiationViewModel`: gerencia o estado da ação de solicitar negociação na Home (`pendingListingId`, `requestedListingIds`, `errorListingId`).
 - `useReceivedRequestsViewModel`: gerencia a listagem e ações de responder (aceitar/recusar) aos pedidos recebidos.
-- `useSentRequestsViewModel`: gerencia a listagem e visualização do status dos pedidos enviados.
-- `src/view/requests/requestListLayout.tsx`: componente estrutural reaproveitável para listas de pedidos, com estados de carregamento, erro amigável e lista vazia.
-- `src/view/requests/receivedRequests.tsx` e `src/view/requests/sentRequests.tsx`: telas puras de pedidos recebidos e enviados, desacopladas do roteador por injeção de callbacks.
-- `src/app/pedidos-recebidos.tsx` e `src/app/meus-pedidos.tsx`: rotas finas do Expo Router que conectam a sessão do usuário às telas de pedidos.
+- `useConversationsViewModel`: consolida pedidos enviados/recebidos e mensagens das negociações ativas na aba de Conversas.
+- `src/view/requests/requestListLayout.tsx`: componente estrutural reaproveitável da lista de pedidos recebidos (`05.03`, `06.03`), com estados de carregamento, erro amigável e lista vazia.
+- `src/view/requests/receivedRequests.tsx` e `src/view/conversations/conversations.tsx`: telas puras de pedidos recebidos e conversas/pedidos enviados, desacopladas do roteador por injeção de callbacks.
+- `src/app/pedidos-recebidos.tsx`, `src/app/meus-pedidos.tsx` e `src/app/conversas.tsx`: rotas finas do Expo Router que conectam a sessão do usuário às telas de pedidos e conversas.
 
 ## Encontro da negociação (specs/052, trilha do Micael)
 

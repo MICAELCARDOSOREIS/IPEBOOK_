@@ -1,9 +1,9 @@
 import { contrastRatio } from "@/view/theme/contrastRatio";
-import { colors, darkColors } from "@/view/tokens";
+import { colors } from "@/view/tokens";
 
 const MIN_TEXT_CONTRAST = 4.5;
 
-describe("contraste de tema claro/escuro (Spec 054 / Issue #144, WCAG AA)", () => {
+describe("contraste do tema claro (WCAG AA)", () => {
   it.each([
     ["texto principal sobre fundo", colors.text, colors.background],
     ["texto secundário sobre fundo", colors.secondaryText, colors.background],
@@ -25,68 +25,25 @@ describe("contraste de tema claro/escuro (Spec 054 / Issue #144, WCAG AA)", () =
     expect(contrastRatio(foreground, background)).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
   });
 
-  it.each([
-    ["texto principal sobre fundo", darkColors.text, darkColors.background],
-    ["texto secundário sobre fundo", darkColors.secondaryText, darkColors.background],
-    ["texto principal sobre superfície", darkColors.text, darkColors.surface],
-    ["ação sobre superfície", darkColors.action, darkColors.surface],
-    ["erro sobre superfície", darkColors.error, darkColors.surface],
-    ["sucesso sobre superfície", darkColors.success, darkColors.surface],
-    ["on-primary sobre primary (M3)", darkColors.m3.onPrimary, darkColors.m3.primary],
-    ["on-primary-container sobre primary-container (M3)", darkColors.m3.onPrimaryContainer, darkColors.m3.primaryContainer],
-    ["on-surface sobre surface (M3)", darkColors.m3.onSurface, darkColors.m3.surfaceContainerLow],
-    ["texto principal sobre surface-container-high (M3)", darkColors.text, darkColors.m3.surfaceContainerHigh],
-    ["texto secundário sobre surface-container-high (M3)", darkColors.secondaryText, darkColors.m3.surfaceContainerHigh],
-    ["on-surface-variant sobre surface (M3)", darkColors.m3.onSurfaceVariant, darkColors.m3.surfaceContainerLow],
-    ["on-secondary-container sobre secondary-container (M3)", darkColors.m3.onSecondaryContainer, darkColors.m3.secondaryContainer],
-    ["on-tertiary-container sobre tertiary-container (M3)", darkColors.m3.onTertiaryContainer, darkColors.m3.tertiaryContainer],
-    ["on-doacao-container sobre doacao-container (M3)", darkColors.m3.onDoacaoContainer, darkColors.m3.doacaoContainer],
-    ["on-error-container sobre error-container (M3)", darkColors.m3.onErrorContainer, darkColors.m3.errorContainerM3],
-  ])("tema escuro: %s atinge 4.5:1", (_label, foreground, background) => {
-    expect(contrastRatio(foreground, background)).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
+  it("badges mantêm contraste mínimo no tema claro", () => {
+    for (const badge of Object.values(colors.badge)) {
+      expect(contrastRatio(badge.text, badge.background)).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
+    }
+    // Badge de contagem sobre cor de erro (NavigationBar, ProfileHub, ProfileMenuSection)
+    expect(contrastRatio(colors.surface, colors.error)).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
   });
 
-  it("badges mantêm contraste mínimo nos dois temas", () => {
-    for (const theme of [colors, darkColors]) {
-      for (const badge of Object.values(theme.badge)) {
-        expect(contrastRatio(badge.text, badge.background)).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
-      }
-      // Badge de contagem sobre cor de erro (NavigationBar, ProfileHub, ProfileMenuSection)
-      expect(contrastRatio(theme.surface, theme.error)).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
-    }
-    // No modo escuro, pontos/indicadores (dots) escolhem a cor de maior contraste (background ou text) sobre a superfície
-    for (const badge of Object.values(darkColors.badge)) {
-      const bestDotColor =
-        contrastRatio(badge.background, darkColors.m3.surfaceContainerLowest) >=
-        contrastRatio(badge.text, darkColors.m3.surfaceContainerLowest)
-          ? badge.background
-          : badge.text;
-      expect(contrastRatio(bestDotColor, darkColors.m3.surfaceContainerLowest)).toBeGreaterThanOrEqual(3.0);
+  it("tons de categoria mantêm contraste mínimo no tema claro", () => {
+    for (const tone of colors.categoryTones) {
+      expect(contrastRatio(tone.text, tone.background)).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
     }
   });
 
-  it("tons de categoria mantêm contraste mínimo nos dois temas", () => {
-    for (const theme of [colors, darkColors]) {
-      for (const tone of theme.categoryTones) {
-        expect(contrastRatio(tone.text, tone.background)).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
-      }
-    }
-  });
-
-  it("tokens de identidade (Livro, Ipê e Folhagem/Verde) mantêm contraste mínimo nos dois temas", () => {
-    // Modo claro
+  it("tokens de identidade (Livro, Ipê e Folhagem/Verde) mantêm contraste mínimo no tema claro", () => {
     expect(contrastRatio(colors.book.ink, colors.book.page)).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
     expect(contrastRatio(colors.book.inkSecondary, colors.book.page)).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
     expect(contrastRatio(colors.nature.foliage, colors.book.page)).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
     expect(contrastRatio(colors.nature.onFoliage, colors.nature.foliage)).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
     expect(contrastRatio(colors.ipe.onContainer, colors.ipe.container)).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
-
-    // Modo escuro
-    expect(contrastRatio(darkColors.book.ink, darkColors.book.page)).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
-    expect(contrastRatio(darkColors.book.inkSecondary, darkColors.book.page)).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
-    expect(contrastRatio(darkColors.nature.foliage, darkColors.book.page)).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
-    expect(contrastRatio(darkColors.nature.onFoliage, darkColors.nature.foliage)).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
-    expect(contrastRatio(darkColors.nature.onFoliage, darkColors.actionDeep)).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
-    expect(contrastRatio(darkColors.ipe.onContainer, darkColors.ipe.container)).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
   });
 });

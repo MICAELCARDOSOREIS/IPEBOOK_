@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { Platform, Pressable, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppIcon } from "@/view/components/AppIcon";
 import { tokens, type ColorPalette } from "@/view/tokens";
@@ -39,63 +39,6 @@ export function HomeFloatingAddButton({ onPress }: HomeFloatingAddButtonProps) {
       ]}
     >
       <AppIcon name="add" size={26} color={colors.nature.foliage} />
-    </Pressable>
-  );
-}
-
-export type HomeFloatingChatButtonProps = {
-  badgeCount?: number;
-  onPress: () => void;
-};
-
-/**
- * Botão Flutuante de Mensagens/Conversas (FAB Material 3 - Estilo Ipêbook)
- * Renderizado no canto inferior direito da Home em telas móveis, posicionado
- * com respiro harmônico acima da barra de navegação flutuante, com acabamento
- * translúcido em vidro, borda sutil e state layer de hover.
- */
-export function HomeFloatingChatButton({
-  badgeCount = 0,
-  onPress,
-}: HomeFloatingChatButtonProps) {
-  const { colors } = useTheme();
-  const insets = useSafeAreaInsets();
-  const styles = useMemo(() => createStyles(colors), [colors]);
-  const [isHovered, setIsHovered] = useState(false);
-
-  // Posiciona o botão flutuante com respiro harmônico de 12px acima do topo real da barra de navegação flutuante
-  // (dock de ~80dp com padding inferior de acordo com safe area)
-  const navBarPaddingBottom = insets.bottom > 0 ? insets.bottom + tokens.spacing[8] : tokens.spacing[12];
-  const navBarDockHeight = 80;
-  const bottom = navBarPaddingBottom + navBarDockHeight + tokens.spacing[12];
-
-  return (
-    <Pressable
-      testID="home-floating-chat-button"
-      accessibilityRole="button"
-      accessibilityLabel={
-        badgeCount > 0
-          ? `Abrir mensagens flutuante, ${badgeCount} ${badgeCount === 1 ? "nova" : "novas"}`
-          : "Abrir mensagens flutuante"
-      }
-      onHoverIn={() => setIsHovered(true)}
-      onHoverOut={() => setIsHovered(false)}
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.floatingChatButton,
-        { bottom },
-        isHovered && styles.floatingChatButtonHovered,
-        pressed && styles.floatingChatButtonPressed,
-      ]}
-    >
-      <AppIcon name="chat" size={26} color={colors.nature.foliage} />
-      {badgeCount > 0 ? (
-        <View style={styles.floatingChatBadge} testID="home-floating-chat-badge">
-          <Text style={styles.floatingChatBadgeText}>
-            {badgeCount > 9 ? "9+" : badgeCount}
-          </Text>
-        </View>
-      ) : null}
     </Pressable>
   );
 }
@@ -141,25 +84,6 @@ function createStyles(colors: ColorPalette) {
     floatingChatButtonPressed: {
       transform: [{ scale: 0.94 }],
       opacity: 0.9,
-    },
-    floatingChatBadge: {
-      position: "absolute",
-      top: -4,
-      right: -4,
-      minWidth: 20,
-      height: 20,
-      borderRadius: tokens.radius.full,
-      backgroundColor: colors.error,
-      alignItems: "center",
-      justifyContent: "center",
-      paddingHorizontal: tokens.spacing[4],
-      borderWidth: 2,
-      borderColor: colors.surface,
-    },
-    floatingChatBadgeText: {
-      ...tokens.typography.badgeMicro,
-      color: colors.badge.completed.text,
-      fontWeight: "700",
     },
   });
 }
