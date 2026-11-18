@@ -41,8 +41,6 @@ export type NeighborhoodSelectorModalProps = {
   allowAllNeighborhoods?: boolean;
 };
 
-export const ALL_NEIGHBORHOODS_LABEL = ALL_PIRIPIRI_LOCATIONS_LABEL;
-
 const PIRIPIRI_LOCATIONS: readonly LocationItem[] = [
   {
     id: "all",
@@ -274,8 +272,6 @@ export function NeighborhoodSelectorModal({
     </Modal>
   );
 }
-
-export const LocationSelectorModal = NeighborhoodSelectorModal;
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({

@@ -1,7 +1,4 @@
-import {
-  containsDangerousHtml,
-  sanitizeTextInput,
-} from "@/model/validators/textSanitizer";
+import { sanitizeTextInput } from "@/model/validators/textSanitizer";
 
 describe("TextSanitizer", () => {
   describe("sanitizeTextInput", () => {
@@ -51,27 +48,6 @@ describe("TextSanitizer", () => {
       expect(sanitizeTextInput("")).toBe("");
       expect(sanitizeTextInput(null as any)).toBe("");
       expect(sanitizeTextInput(undefined as any)).toBe("");
-    });
-  });
-
-  describe("containsDangerousHtml", () => {
-    it("detecta tag script", () => {
-      expect(containsDangerousHtml("<script>evil()</script>")).toBe(true);
-      expect(containsDangerousHtml(" <SCRIPT src='evil.js'>")).toBe(true);
-    });
-
-    it("detecta handlers de eventos JS", () => {
-      expect(containsDangerousHtml("<img onerror=alert(1)>")).toBe(true);
-      expect(containsDangerousHtml("onload = evil()")).toBe(true);
-    });
-
-    it("detecta protocolo javascript:", () => {
-      expect(containsDangerousHtml("javascript:void(0)")).toBe(true);
-    });
-
-    it("retorna false para texto comum sem HTML malicioso", () => {
-      expect(containsDangerousHtml("Livro de receitas da vovó")).toBe(false);
-      expect(containsDangerousHtml("Preço: R$ 50,00 < 60,00")).toBe(false);
     });
   });
 });

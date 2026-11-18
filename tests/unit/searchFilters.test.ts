@@ -2,7 +2,6 @@ import type { Book } from "@/model/entities/book";
 import {
   DEFAULT_SEARCH_FILTERS,
   activeFilters,
-  countActiveFilters,
   describeResults,
   filterBooks,
   matchesCondition,
@@ -100,8 +99,7 @@ describe("searchFilters (Spec 028 · Figma 02.03/02.04)", () => {
       { key: "condition", label: "Bom estado" },
       { key: "priceRange", label: "Até R$ 20" },
     ]);
-    expect(countActiveFilters(filters)).toBe(4);
-    expect(countActiveFilters(DEFAULT_SEARCH_FILTERS)).toBe(0);
+    expect(activeFilters(DEFAULT_SEARCH_FILTERS)).toEqual([]);
   });
 
   it("remove apenas o filtro escolhido", () => {
@@ -153,11 +151,10 @@ describe("searchFilters (Spec 028 · Figma 02.03/02.04)", () => {
       key: "onlyBoxes",
       label: "Boxes e coleções",
     });
-    expect(countActiveFilters(filters)).toBe(2);
 
     const semBox = removeFilter(filters, "onlyBoxes");
     expect(semBox.onlyBoxes).toBe(false);
-    expect(countActiveFilters(semBox)).toBe(1);
+    expect(activeFilters(semBox)).toHaveLength(1);
   });
 
   it("inclui 'Box/Coleção' na descrição resumida dos resultados (Spec 112)", () => {

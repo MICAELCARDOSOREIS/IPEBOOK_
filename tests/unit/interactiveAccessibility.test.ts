@@ -17,7 +17,6 @@ describe("Auditoria de acessibilidade (TalkBack / VoiceOver)", () => {
     { file: "listings/publicProfile.tsx", pattern: /accessibilityLabel="Tentar novamente"/ },
     { file: "notifications/notifications.tsx", pattern: /accessibilityLabel=\{`Todas \(\$\{state\.notifications\.length\}\)`\}/ },
     { file: "notifications/notifications.tsx", pattern: /accessibilityLabel=\{`Não lidas \(\$\{state\.unreadCount\}\)`\}/ },
-    { file: "requests/sentRequests.tsx", pattern: /accessibilityLabel="Ver detalhes do encontro"/ },
     { file: "requests/requestDetail.tsx", pattern: /accessibilityLabel="Tentar novamente"/ },
     { file: "search/searchAlerts.tsx", pattern: /accessibilityLabel="Entrar"/ },
     { file: "conversations/chat.tsx", pattern: /accessibilityLabel="Reenviar mensagem"/ },

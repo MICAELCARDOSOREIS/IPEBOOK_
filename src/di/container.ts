@@ -514,15 +514,12 @@ import { useReceivedRequestsViewModel } from "@/viewmodel/useReceivedRequestsVie
 import { useRequestDetailViewModel } from "@/viewmodel/useRequestDetailViewModel";
 import { useRequestNegotiationViewModel } from "@/viewmodel/useRequestNegotiationViewModel";
 import { useScheduleMeetingViewModel } from "@/viewmodel/useScheduleMeetingViewModel";
-import { useSentRequestsViewModel } from "@/viewmodel/useSentRequestsViewModel";
 import { useUserMeetingsViewModel } from "@/viewmodel/useUserMeetingsViewModel";
 
 /** Lote pedidos, encontro e entrega (T006). */
 export const makeRequestNegotiationViewModel = () => useRequestNegotiationViewModel(bookRequestUseCases);
 export const makeReceivedRequestsViewModel = (sessionUserId: string | null) =>
   useReceivedRequestsViewModel(sessionUserId, bookRequestUseCases);
-export const makeSentRequestsViewModel = (sessionUserId: string | null) =>
-  useSentRequestsViewModel(sessionUserId, bookRequestUseCases);
 export const makeRequestDetailViewModel = (requestId: string, sessionUserId: string | null) =>
   useRequestDetailViewModel(requestId, sessionUserId, bookRequestUseCases);
 export const makeMeetingViewModel = (requestId: string, sessionUserId: string | null) =>

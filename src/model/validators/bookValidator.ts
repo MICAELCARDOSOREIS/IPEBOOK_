@@ -31,35 +31,6 @@ function isValidHttpUrl(url: string): boolean {
   }
 }
 
-export function sanitizeBookInput(input: Partial<Book>): Partial<Book> {
-  return {
-    id: input.id?.trim(),
-    title: input.title?.trim(),
-    author: input.author?.trim(),
-    ...(input.category !== undefined ? { category: input.category?.trim() } : {}),
-    ...(input.ownerId !== undefined ? { ownerId: input.ownerId?.trim() } : {}),
-    ...(input.modality !== undefined ? { modality: input.modality } : {}),
-    ...(input.price !== undefined ? { price: input.price } : {}),
-    ...(input.city !== undefined ? { city: input.city?.trim() } : {}),
-    ...(input.state !== undefined ? { state: input.state?.trim() } : {}),
-    ...(input.neighborhood !== undefined ? { neighborhood: input.neighborhood?.trim() } : {}),
-    ...(input.condition !== undefined ? { condition: input.condition } : {}),
-    ...(input.description !== undefined ? { description: input.description?.trim() || undefined } : {}),
-    ...(input.photoUrl !== undefined ? { photoUrl: input.photoUrl?.trim() || undefined } : {}),
-    ...(input.photos !== undefined
-      ? {
-          photos: Array.isArray(input.photos)
-            ? input.photos.map((p) => (typeof p === "string" ? p.trim() : "")).filter(Boolean)
-            : undefined,
-        }
-      : {}),
-    ...(input.isBox !== undefined ? { isBox: input.isBox === true } : {}),
-    ...(typeof input.boxVolumesCount === "number" && Number.isInteger(input.boxVolumesCount)
-      ? { boxVolumesCount: input.boxVolumesCount }
-      : {}),
-  };
-}
-
 export function validateBookPayload(input: unknown): BookValidationResult {
   const errors: string[] = [];
 
@@ -265,10 +236,4 @@ export function validateDraftPayload(input: unknown): BookValidationResult {
   }
 
   return { isValid: errors.length === 0, errors };
-}
-
-export function formatBookDisplay(book: Pick<Book, "title" | "author">): string {
-  const title = book.title?.trim() || "Sem título";
-  const author = book.author?.trim() || "Autor desconhecido";
-  return `${title} — ${author}`;
 }

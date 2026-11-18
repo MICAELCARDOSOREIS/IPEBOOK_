@@ -28,6 +28,7 @@ const ROOT_DESTINATIONS: Record<string, NavigationDestination> = {
   "/pesquisa": "search",
   "/meus-anuncios": "shelf",
   "/meus-pedidos": "conversations",
+  "/conversas": "conversations",
   "/perfil": "profile",
 };
 
