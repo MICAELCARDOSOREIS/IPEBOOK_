@@ -16,11 +16,6 @@ export const PIRIPIRI_MEETING_POINT_NAMES = [
   "Praça de Eventos",
 ] as const;
 
-export const PIRIPIRI_LOCATION_OPTIONS = [
-  ALL_PIRIPIRI_LOCATIONS_LABEL,
-  ...PIRIPIRI_MEETING_POINT_NAMES,
-] as const;
-
 export type PiripiriMeetingPointName = (typeof PIRIPIRI_MEETING_POINT_NAMES)[number];
 
 export const PIRIPIRI_NEIGHBORHOODS = [
