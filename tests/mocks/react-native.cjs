@@ -150,6 +150,7 @@ const StyleSheet = {
 const AccessibilityInfo = {
   isScreenReaderEnabled: () => Promise.resolve(false),
   isReduceMotionEnabled: () => Promise.resolve(false),
+  isReduceTransparencyEnabled: () => Promise.resolve(false),
   addEventListener: () => ({ remove: () => {} }),
   announceForAccessibility: () => {},
 };

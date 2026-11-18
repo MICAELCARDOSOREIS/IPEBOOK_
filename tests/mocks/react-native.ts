@@ -106,9 +106,13 @@ export const Image = React.forwardRef<any, any>((props, ref) =>
 );
 Image.displayName = "Image";
 
-export const ScrollView = React.forwardRef<any, any>((props, ref) =>
-  React.createElement("ScrollView", { ...props, ref }, props.children)
-);
+export const ScrollView = React.forwardRef<any, any>((props, ref) => {
+  React.useImperativeHandle(ref, () => ({
+    scrollTo: () => {},
+    scrollToEnd: () => {},
+  }));
+  return React.createElement("ScrollView", { ...props, ref }, props.children);
+});
 ScrollView.displayName = "ScrollView";
 
 export const Modal = React.forwardRef<any, any>((props, ref) => {
@@ -182,6 +186,7 @@ export const Dimensions = {
 export const AccessibilityInfo = {
   isScreenReaderEnabled: () => Promise.resolve(false),
   isReduceMotionEnabled: () => Promise.resolve(false),
+  isReduceTransparencyEnabled: () => Promise.resolve(false),
   addEventListener: () => ({ remove: () => {} }),
   announceForAccessibility: (_message: string) => {},
 };

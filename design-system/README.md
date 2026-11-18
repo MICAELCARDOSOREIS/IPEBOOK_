@@ -1,6 +1,6 @@
 # IpêBook Design System · Sistema de design do app IpêBook
 
-> Versão da documentação: 1.29.0 · Disciplinas: IHC e PDM
+> Versão da documentação: 1.30.0 · Disciplinas: IHC e PDM
 >
 > Fonte única do design do app. Conteúdo originalmente trazido do Figma do projeto para a pasta
 > histórica `design-kit/` e depois migrado integralmente para cá (ver
@@ -44,7 +44,7 @@ ilustrativa quando não tem foto, para a estante parecer organizada mesmo sem fo
 | Configurações / Perfil | Item de lista, Interruptor, Avatar, Barra superior |
 | Propostas / Concluídos (spec 004) | Abas, Linha de livro, Badge |
 
-Lista completa dos 28 componentes documentados em [04-componentes/](04-componentes/). Alguns
+Lista completa dos 29 componentes documentados em [04-componentes/](04-componentes/). Alguns
 documentam padrões compostos ou decisões de composição que não correspondem a um arquivo
 genérico em `src/view/components/`; essa classificação está descrita na seção 4.1.
 
@@ -55,7 +55,7 @@ genérico em `src/view/components/`; essa classificação está descrita na seç
 | [01-principios.md](01-principios.md) | Valores que guiam as decisões |
 | [02-tokens.md](02-tokens.md) | Tokens primitivos, semânticos e de componente |
 | [03-fundamentos.md](03-fundamentos.md) | Regras de cor, tipografia, espaço, ícones, elevação e movimento |
-| [04-componentes/](04-componentes/) | Um arquivo por componente ou padrão — os 28 componentes documentados, cada um com anatomia, estados, acessibilidade e código React Native |
+| [04-componentes/](04-componentes/) | Um arquivo por componente ou padrão — os 29 componentes documentados, cada um com anatomia, estados, acessibilidade e código React Native |
 | [05-padroes.md](05-padroes.md) | Fluxos: entrar/cadastrar, anunciar livro e explorar/filtrar catálogo |
 | [06-acessibilidade.md](06-acessibilidade.md) | Contraste, alvos de toque, foco, leitor de tela |
 | [telas-android-figma.md](telas-android-figma.md) | Inventário das 137 telas Android do Figma (nome, node-id, link em modo Dev) — consulta offline, sem precisar abrir o Figma |
@@ -76,12 +76,12 @@ em [`src/view/components/`](../src/view/components/) e das regras MVVM do projet
 
 ### 4.1 Classificação dos componentes
 
-Os 28 arquivos de `04-componentes/` documentam componentes-base, padrões compostos e decisões
+Os 29 arquivos de `04-componentes/` documentam componentes-base, padrões compostos e decisões
 de composição. Nem todo documento precisa corresponder a um componente genérico:
 
 - **Componentes-base implementados:** `Button`, `TextField`, `SearchField`, `Chip`, `Tag`,
   `BookCover`, `Avatar`, `Checkbox`, `Dialog`, `Snackbar`, `StepProgress`, `TopAppBar`,
-  `NavigationBar`, `Logotipo`, `AddPhotoCard`, `IconBadge`, `IpeRibbon` e os estados do
+  `NavigationBar`, `BottomSheet`, `Logotipo`, `AddPhotoCard`, `IconBadge`, `IpeRibbon` e os estados do
   sistema. Suas implementações ficam em [`src/view/components/`](../src/view/components/).
 - **Padrões compostos implementados dentro das telas:** abas, bolhas de mensagem, estados
   vazios, opções de seleção e FAB. Eles permanecem inline quando a composição depende do
