@@ -1,6 +1,7 @@
 import { useId, useMemo } from "react";
-import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { FlatList, Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { ScreenContainer } from "@/view/components/ScreenContainer";
+import { triggerHaptic } from "@/view/haptics";
 import { AppIcon } from "@/view/components/AppIcon";
 import { ErrorState } from "@/view/components/ErrorState";
 import { FilledButton } from "@/view/components/FilledButton";
@@ -147,7 +148,10 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
             ) : null}
             <FilledButton
               label="Criar alerta"
-              onPress={() => void actions.create()}
+              onPress={() => {
+                if (Platform.OS === "ios") triggerHaptic("selection");
+                void actions.create();
+              }}
             />
           </View>
 
@@ -189,7 +193,10 @@ export default function SearchAlerts({ userId, initialQuery = "", onBack, onLogi
                   <Pressable
                     accessibilityRole="button"
                     accessibilityLabel={`Gerenciar alerta ${item.query}`}
-                    onPress={() => guardedManageAlert(item.id)}
+                    onPress={() => {
+                      if (Platform.OS === "ios") triggerHaptic("light");
+                      guardedManageAlert(item.id);
+                    }}
                     style={withPress(styles.row)}
                   >
                     <AppIcon name="bell" size={24} color={colors.text} />

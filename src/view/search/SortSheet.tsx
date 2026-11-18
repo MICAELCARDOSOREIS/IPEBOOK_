@@ -1,10 +1,12 @@
 import { useMemo } from "react";
-import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import { Modal, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { AppIcon } from "@/view/components/AppIcon";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
+import { triggerHaptic } from "@/view/haptics";
+import { useReduceTransparency } from "@/view/useReduceTransparency";
 import {
   SORT_IDS,
   SORT_LABELS,
@@ -30,6 +32,9 @@ export function SortSheet({ visible, selected, onSelect, onClose }: SortSheetPro
   const styles = useMemo(() => createStyles(colors), [colors]);
   const insets = useSafeAreaInsets();
   const wideWeb = useIsWideWeb();
+  const reduceTransparency = useReduceTransparency();
+  const isIos = Platform.OS === "ios";
+  const useGlass = isIos && !reduceTransparency && Boolean(colors.glass);
 
   return (
     <Modal
@@ -53,10 +58,16 @@ export function SortSheet({ visible, selected, onSelect, onClose }: SortSheetPro
           style={[
             styles.sheet,
             wideWeb && styles.sheetWide,
-            { paddingBottom: wideWeb ? tokens.spacing[24] : tokens.spacing[16] + insets.bottom },
+            isIos && styles.sheetIos,
+            useGlass && {
+              backgroundColor: colors.glass?.fill ?? colors.m3.surfaceContainer,
+              borderColor: colors.glass?.stroke ?? colors.m3.outlineVariant,
+              borderWidth: 1,
+            },
+            { paddingBottom: wideWeb ? tokens.spacing[24] : Math.max(tokens.spacing[16], insets.bottom + tokens.spacing[8]) },
           ]}
         >
-          {wideWeb ? null : <View style={styles.handle} />}
+          {wideWeb ? null : <View style={[styles.handle, isIos && styles.handleIos]} />}
           <Text accessibilityRole="header" style={styles.title}>
             Ordenar por
           </Text>
@@ -70,6 +81,9 @@ export function SortSheet({ visible, selected, onSelect, onClose }: SortSheetPro
                   accessibilityLabel={SORT_LABELS[option]}
                   accessibilityState={{ checked: isSelected }}
                   onPress={() => {
+                    if (isIos) {
+                      triggerHaptic("selection");
+                    }
                     onSelect(option);
                     onClose();
                   }}
@@ -118,6 +132,10 @@ function createStyles(colors: ColorPalette) {
       gap: tokens.spacing[8],
       elevation: 3,
     },
+    sheetIos: {
+      borderTopLeftRadius: tokens.radius.xxl,
+      borderTopRightRadius: tokens.radius.xxl,
+    },
     sheetWide: {
       width: "100%",
       maxWidth: 380,
@@ -130,6 +148,11 @@ function createStyles(colors: ColorPalette) {
       borderRadius: tokens.radius.full,
       backgroundColor: colors.m3.outlineVariant,
       marginBottom: tokens.spacing[4],
+    },
+    handleIos: {
+      width: 36,
+      height: 5,
+      backgroundColor: colors.m3.outline,
     },
     title: {
       ...tokens.typography.titleMedium,
