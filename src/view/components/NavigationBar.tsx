@@ -106,24 +106,25 @@ export function NavigationBar({ active, onNavigate, disabledDestinations = [], b
       pointerEvents="box-none"
       style={[styles.floatingWrapper, { paddingBottom }]}
     >
-      <View
-        testID="navigation-bar-dock"
-        style={styles.dock}
-        onLayout={(e) => {
-          const w = e.nativeEvent.layout.width;
-          if (w > 0 && Math.abs(w - dockWidth) > 1) {
-            setDockWidth(w);
-          }
-        }}
-      >
-        {Platform.OS === "ios" && !reduceTransparency ? (
-          <BlurView
-            pointerEvents="none"
-            tint={colors.surface === "#FCFAF5" ? "light" : "dark"}
-            intensity={60}
-            style={StyleSheet.absoluteFill}
-          />
-        ) : null}
+      <View style={styles.dockShadow}>
+        <View
+          testID="navigation-bar-dock"
+          style={styles.dock}
+          onLayout={(e) => {
+            const w = e.nativeEvent.layout.width;
+            if (w > 0 && Math.abs(w - dockWidth) > 1) {
+              setDockWidth(w);
+            }
+          }}
+        >
+          {Platform.OS === "ios" && !reduceTransparency ? (
+            <BlurView
+              pointerEvents="none"
+              tint={colors.surface === "#FCFAF5" ? "light" : "dark"}
+              intensity={60}
+              style={StyleSheet.absoluteFill}
+            />
+          ) : null}
 
         {/* Pílula Deslizante Contínua Material 3 Expressive */}
         {hasActiveItem ? (
@@ -217,6 +218,7 @@ export function NavigationBar({ active, onNavigate, disabledDestinations = [], b
             </Pressable>
           );
         })}
+        </View>
       </View>
     </View>
   );
@@ -278,7 +280,7 @@ function createStyles(colors: ColorPalette, reduceTransparency: boolean = false)
   const webDockBg =
     colors.surface === "#FCFAF5" ? "rgba(252, 250, 245, 0.92)" : "rgba(29, 27, 25, 0.90)";
 
-  // Liquid Glass no iOS (Spec 137 / ADR 0008, ADR 0114): vidro translúcido com fallback sólido ao reduzir transparência
+  // Liquid Glass no iOS (Spec 137 / ADR 0008, ADR 0115): vidro translúcido com fallback sólido ao reduzir transparência
   const dockBg = isIos
     ? (reduceTransparency ? colors.m3.surfaceContainer : tokens.glass.fill)
     : (isWeb ? webDockBg : colors.surface);
@@ -297,13 +299,23 @@ function createStyles(colors: ColorPalette, reduceTransparency: boolean = false)
       backgroundColor: "transparent",
       pointerEvents: "box-none",
     },
+    dockShadow: {
+      width: "100%",
+      maxWidth: INITIAL_DOCK_MAX_WIDTH,
+      borderRadius: tokens.radius.full,
+      backgroundColor: "transparent",
+      elevation: 4,
+      shadowColor: colors.m3.shadow,
+      shadowOffset: { width: 0, height: 3 },
+      shadowOpacity: 0.12,
+      shadowRadius: 12,
+    },
     dock: {
       position: "relative",
       flexDirection: "row",
       justifyContent: "space-around",
       alignItems: "center",
       width: "100%",
-      maxWidth: INITIAL_DOCK_MAX_WIDTH,
       backgroundColor: dockBg,
       borderRadius: tokens.radius.full,
       ...(isIos ? ({ borderCurve: "continuous" } as never) : {}),
@@ -312,11 +324,6 @@ function createStyles(colors: ColorPalette, reduceTransparency: boolean = false)
       borderWidth: 1,
       borderColor: dockBorderColor,
       overflow: "hidden",
-      elevation: 4,
-      shadowColor: colors.m3.shadow,
-      shadowOffset: { width: 0, height: 3 },
-      shadowOpacity: 0.12,
-      shadowRadius: 12,
       ...(isWeb
         ? ({
             backdropFilter: "blur(20px)",

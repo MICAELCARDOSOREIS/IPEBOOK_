@@ -26,7 +26,7 @@ Este documento quebra o trabalho do iPhone nativo em **8 issues independentes e 
 
 ## Issue 2 — `[iOS Nativo · Design System] Base Liquid Glass e componentes Apple HIG (Safe Areas, Dock, TopAppBar, BottomSheet)`
 
-- **Status:** **Em revisão** (Implementada por Maria Clara · `@clarinhamartins` · PR #239 · [ADR 0114](../../docs/adr/0114-base-liquid-glass-apple-hig.md))
+- **Status:** **Em revisão** (Implementada por Maria Clara · `@clarinhamartins` · PR #239 · [ADR 0115](../../docs/adr/0115-base-liquid-glass-apple-hig.md))
 - **Responsável:** Maria Clara (`@clarinhamartins`) · **Apoio:** Eric Vinícius (`@Eric2025gh`) e Micael (`@MICAELCARDOSOREIS`)
 - **Labels:** `pessoa:maria-clara`, `ios`, `apple-hig`, `design-system`
 - **Branch:** `feature/ios-design-system-liquid-glass` (base: `develop`)

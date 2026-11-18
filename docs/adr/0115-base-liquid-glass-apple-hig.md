@@ -1,11 +1,11 @@
-# ADR 0114 — Base Liquid Glass e Componentes Apple HIG no iOS Nativo
+# ADR 0115 — Base Liquid Glass e Componentes Apple HIG no iOS Nativo
 
 - **Status:** Aceito
 - **Data:** 17 de novembro de 2026
 - **Autores:** Maria Clara Almeida Martins (`pessoa:maria-clara`), Eric Vinícius dos Santos Oliveira (`pessoa:eric`), Micael Cardoso Reis (`pessoa:micael`)
 - **Decisores:** Time de Engenharia e Design IpêBook
 - **Contexto técnico:** Estabelecimento da infraestrutura do Design System para suporte a iOS Nativo no padrão Apple Human Interface Guidelines (HIG) e linguagem visual Liquid Glass (iOS 26), com preservação integral de Android (MD3) e Web.
-- **Relacionado a:** ADR 0008 (Diretrizes Visuais por Plataforma), ADR 0036 (Tema Escuro), ADR 0106 (Padronização com ScreenContainer), ADR 0108 (PWA no iPhone/Safari).
+- **Relacionado a:** ADR 0008 (Diretrizes Visuais por Plataforma), ADR 0106 (Padronização com ScreenContainer), ADR 0108 (PWA no iPhone/Safari).
 - **Issue:** #227 (parte da #225)
 - **Spec:** [137](../../specs/137-ios-nativo-apple-hig/spec.md)
 

@@ -1,7 +1,7 @@
 # Folha Inferior (Bottom Sheet)
 
 > [!NOTE]
-> **IMPLEMENTADO (Spec 137, ADR 0114 e ADR 0115)**: Implementado e ativo em `src/view/components/BottomSheet.tsx`, fornecendo superfície de folha modal acessível, adaptada ao Apple HIG com Liquid Glass no iOS e Material 3 no Android e Web.
+> **IMPLEMENTADO (Spec 137, ADR 0115)**: Implementado e ativo em `src/view/components/BottomSheet.tsx`, fornecendo superfície de folha modal acessível, adaptada ao Apple HIG com Liquid Glass no iOS e Material 3 no Android e Web.
 
 Origem no sistema base: Material 3 (Bottom Sheets) / Apple HIG (Sheets). Situação: **Adaptado**.
 
@@ -17,7 +17,7 @@ Origem no sistema base: Material 3 (Bottom Sheets) / Apple HIG (Sheets). Situaç
 
 ## Anatomia
 
-1. **Alça de arraste (*Drag handle*):** Pílula centralizada de 36 × 4 dp (`tokens.spacing[36]` × `tokens.spacing[4]`) com raio total, oculta em visualização desktop ampla (`wideWeb`).
+1. **Alça de arraste (*Drag handle*):** Pílula centralizada de 36 × 5 dp com raio total (`tokens.radius.full`), oculta em visualização desktop ampla (`wideWeb`).
 2. **Cabeçalho:** Título opcional em tipografia de subtítulo ou corpo em destaque, com botão fechar opcional.
 3. **Área de conteúdo:** Conteúdo contextual ou lista de opções rolável com altura máxima limitada a 90% da viewport.
 4. **Superfície:** Cantos superiores arredondados contínuos de 28 dp (`tokens.radius.xxl`, `borderCurve: "continuous"` no iOS) e acabamento translúcido no iOS ou tonal M3 no Android.
@@ -27,8 +27,8 @@ Origem no sistema base: Material 3 (Bottom Sheets) / Apple HIG (Sheets). Situaç
 
 | Plataforma | Superfície | Borda / Efeito | Comportamento de Teclado |
 | --- | --- | --- | --- |
-| **Android (M3)** | `colors.m3.surfaceContainerLow` | Sem borda, elevação tonal | Nativo |
-| **Web** | `colors.m3.surfaceContainerLow` | Centralizado em telas grandes com cantos totais | Tecla Esc fecha a folha |
+| **Android (M3)** | `colors.background` | Sem borda, elevação tonal | Nativo |
+| **Web** | `colors.background` | Centralizado em telas grandes com cantos totais | Tecla Esc fecha a folha |
 | **iOS (Apple HIG)** | `tokens.glass.fill` + `BlurView` nativo | `tokens.glass.stroke` (1 pt), `borderCurve: "continuous"` | `KeyboardAvoidingView` interno com `behavior="padding"` |
 
 ## Estados

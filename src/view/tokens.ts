@@ -394,7 +394,6 @@ export const shapeMorph = {
 
 export const tokens = {
   colors,
-  darkColors,
   glass,
   spacing,
   radius,
