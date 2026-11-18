@@ -4,6 +4,7 @@ import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { AppIcon } from "@/view/components/AppIcon";
 import { triggerHaptic } from "@/view/haptics";
+import { useGuardedPress } from "@/view/useGuardedPress";
 
 export type SearchFieldProps = {
   value: string;
@@ -20,21 +21,21 @@ export function SearchField({ value, onChangeText, placeholder = "Buscar título
   const [focused, setFocused] = useState(false);
   const isIos = Platform.OS === "ios";
 
-  const handleClear = () => {
+  const handleClear = useGuardedPress(() => {
     if (isIos) {
       triggerHaptic("light");
     }
     onChangeText("");
-  };
+  });
 
-  const handleCancel = () => {
+  const handleCancel = useGuardedPress(() => {
     if (isIos) {
       triggerHaptic("light");
     }
     onChangeText("");
     setFocused(false);
     onCancel?.();
-  };
+  });
 
   return (
     <View style={styles.wrapper}>
@@ -72,7 +73,6 @@ export function SearchField({ value, onChangeText, placeholder = "Buscar título
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Cancelar busca"
-          onPressIn={handleCancel}
           onPress={handleCancel}
           style={styles.cancelButton}
         >
