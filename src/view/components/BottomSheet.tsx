@@ -82,7 +82,7 @@ export function BottomSheet({
         if (typeof domNode?.querySelectorAll === "function") {
           const inner = Array.from(
             domNode.querySelectorAll<HTMLElement>(
-              'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+              'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
             ),
           );
           for (const el of inner) {
