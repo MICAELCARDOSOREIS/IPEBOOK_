@@ -130,6 +130,13 @@ export const colors = {
   },
 } as const;
 
+/** Vidro Liquid Glass no tema claro (iOS 26 / ADR 0008, ADR 0114, Spec 137, design-system/tokens.json).
+ * Exposto fora de ColorPalette por ter escopo restrito a superfícies claras do iOS. */
+export const glass = {
+  fill: "rgba(252, 250, 245, 0.58)",
+  stroke: "rgba(255, 255, 255, 0.75)",
+} as const;
+
 /** Mesma forma de `colors`, com folhas widened para `string` — permite que `colors` e `darkColors`
  * (valores hex diferentes) compartilhem um único tipo, consumido por `useTheme()`. */
 type WidenToString<T> = T extends string
@@ -512,6 +519,8 @@ export const shapeMorph = {
 
 export const tokens = {
   colors,
+  darkColors,
+  glass,
   spacing,
   radius,
   accessibility,

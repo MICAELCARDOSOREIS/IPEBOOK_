@@ -1,9 +1,16 @@
-import { useMemo, type ReactNode } from "react";
-import { ScrollView, StyleSheet, View, type RefreshControlProps, type StyleProp, type ViewStyle } from "react-native";
-import { SafeAreaView, type Edge } from "react-native-safe-area-context";
-import { tokens, type ColorPalette } from "@/view/tokens";
-import { useTheme } from "@/view/theme/ThemeProvider";
+import { type ReactNode, useMemo } from "react";
+import {
+  type RefreshControlProps,
+  ScrollView,
+  type StyleProp,
+  StyleSheet,
+  View,
+  type ViewStyle,
+} from "react-native";
+import { type Edge, SafeAreaView } from "react-native-safe-area-context";
 import { standardVerticalScrollProps } from "@/view/scrollProps";
+import { useTheme } from "@/view/theme/ThemeProvider";
+import { type ColorPalette, tokens } from "@/view/tokens";
 
 export type ScreenContainerProps = {
   children: ReactNode;
@@ -37,7 +44,7 @@ export type ScreenContainerProps = {
  * centralizada com `maxWidth` e padding padronizados. Centraliza o padrão repetido em todas as
  * telas (`SafeAreaView` > `ScrollView` > coluna `maxWidth`/`alignSelf: center`), garantindo
  * margens laterais consistentes (space-4) e leitura confortável em telas largas/Web.
- * Origem: Adaptado de Material 3 + 03-fundamentos.md (espaçamento e layout responsivo).
+ * O desvio de teclado no iOS e Android é gerenciado globalmente na raiz por `KeyboardAwareRoot` (Spec 088).
  */
 export function ScreenContainer({
   children,
@@ -66,21 +73,23 @@ export function ScreenContainer({
     contentStyle,
   ];
 
+  const body = scroll ? (
+    <ScrollView
+      {...standardVerticalScrollProps}
+      style={styles.scroll}
+      contentContainerStyle={columnStyle}
+      refreshControl={refreshControl}
+    >
+      {children}
+    </ScrollView>
+  ) : (
+    <View style={[styles.scroll, columnStyle]}>{children}</View>
+  );
+
   return (
     <SafeAreaView edges={edges} style={styles.page} testID={testID}>
       {header}
-      {scroll ? (
-        <ScrollView
-          {...standardVerticalScrollProps}
-          style={styles.scroll}
-          contentContainerStyle={columnStyle}
-          refreshControl={refreshControl}
-        >
-          {children}
-        </ScrollView>
-      ) : (
-        <View style={[styles.scroll, columnStyle]}>{children}</View>
-      )}
+      {body}
       {overlay}
     </SafeAreaView>
   );

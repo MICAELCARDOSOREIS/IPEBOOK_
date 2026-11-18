@@ -113,5 +113,6 @@
 - [0111 — Combinar encontro sem mapa: a lista de pontos substitui o Mapbox](0111-encontro-sem-mapa-mapbox.md)
 - [0112 — Testes E2E Web com Chrome CDP nativo (sem Playwright)](0112-e2e-web-cdp.md)
 - [0113 — Migração do motor de testes de Vitest para Jest](0113-migracao-vitest-para-jest.md)
+- [0114 — Base Liquid Glass e Componentes Apple HIG no iOS Nativo](0114-base-liquid-glass-apple-hig.md)
 
 Preservar registros aceitos; mudanças relevantes geram novo ADR com vínculos de substituição.

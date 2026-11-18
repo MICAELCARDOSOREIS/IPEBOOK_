@@ -2,6 +2,13 @@
 
 Versões no formato `MAIOR.MENOR.CORREÇÃO`. Mudança grande = versão nova.
 
+## 1.30.0 · 2026-11-18
+
+- **Base Liquid Glass, Apple HIG e BottomSheet no iOS Nativo (Spec 137, ADRs 0114 e 0115)**:
+  - Adicionados tokens de vidro translúcido (`glass-fill`, `glass-stroke`, `glass-fill-dark`) em `design-system/tokens.json` e espelho `src/view/tokens.ts`, integrados com `BlurView` nativo (`expo-blur`) no iOS e fallback opaco ao ativar acessibilidade de "Reduzir Transparência" (`useReduceTransparency`).
+  - Adicionado componente unificado `BottomSheet` (`src/view/components/BottomSheet.tsx`) com cantos contínuos de 28 dp (`tokens.radius.xxl`), alça de arraste com gesto *swipe-down* para fechar, modal com foco acessível e adoção direta na folha de ordenação (`SortSheet.tsx`).
+  - Padronização de feedback tátil via `expo-haptics` (`triggerHaptic`) nas ações de favoritar, remoção de favoritos, alternância de filtros e ordenação no iOS.
+
 ## 1.29.0 · 2026-11-17
 
 - **Alinhamento geral da documentação com o código (`src/view/tokens.ts`, ADR 0107 e Specs 061–138)**:
