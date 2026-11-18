@@ -1,7 +1,8 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import * as Linking from "expo-linking";
-import { Pressable, ScrollView, StyleSheet, Text, View, type ScrollViewInstance } from "react-native";
+import { Platform, Pressable, ScrollView, StyleSheet, Text, View, type ScrollViewInstance } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { triggerHaptic } from "@/view/haptics";
 import {
   makeAuthViewModel,
   makeChatWithUser,
@@ -238,7 +239,10 @@ export function PublicProfile({ userId, onBack, onOpenChat, onReportListing, onR
                   label={chatButtonLabel}
                   accessibilityLabel={`Conversar com ${profile.name}`}
                   loading={chat.busy}
-                  onPress={() => void chat.start()}
+                  onPress={() => {
+                    if (Platform.OS === "ios") triggerHaptic("light");
+                    void chat.start();
+                  }}
                 />
                 {chat.notice ? (
                   <Text accessibilityRole="alert" style={styles.cardSubtitle}>
@@ -249,7 +253,10 @@ export function PublicProfile({ userId, onBack, onOpenChat, onReportListing, onR
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel="Denunciar ou bloquear"
-                  onPress={() => setSafetyOpen(true)}
+                  onPress={() => {
+                    if (Platform.OS === "ios") triggerHaptic("light");
+                    setSafetyOpen(true);
+                  }}
                   style={withPress(styles.safetyButton)}
                 >
                   <AppIcon name="flag" size={18} color={colors.error} />

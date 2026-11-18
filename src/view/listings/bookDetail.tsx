@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
+import { triggerHaptic } from "@/view/haptics";
 import {
   makeAuthViewModel,
   makeBookDetailViewModel,
@@ -191,6 +192,9 @@ export default function BookDetail({
 
   const handlePrimaryAction = useCallback(() => {
     if (!book) return;
+    if (Platform.OS === "ios") {
+      triggerHaptic("selection");
+    }
     if (!sessionUserId) {
       guardedNavigateToSignIn();
       return;
@@ -636,7 +640,7 @@ export default function BookDetail({
 
       {/* 6. Barra fixa inferior: ação principal por modalidade */}
       {actionBar && !wideWeb ? (
-        <SafeAreaView edges={["bottom"]} style={styles.bottomBarContainer}>
+        <SafeAreaView edges={["bottom"]} style={[styles.bottomBarContainer, Platform.OS === "ios" && { paddingBottom: Math.max(tokens.spacing[8], insets.bottom) }]}>
           {actionBar}
         </SafeAreaView>
       ) : null}
