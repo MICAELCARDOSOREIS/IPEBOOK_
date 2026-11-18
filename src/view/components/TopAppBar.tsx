@@ -7,6 +7,7 @@ import { useTheme } from "@/view/theme/ThemeProvider";
 import { AppIcon } from "@/view/components/AppIcon";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { useIsWideWeb, useHydratedWindowWidth } from "@/view/useIsWideWeb";
+import { triggerHaptic } from "@/view/haptics";
 
 export type TopAppBarProps = {
   title: string;
@@ -29,7 +30,10 @@ export type TopAppBarProps = {
  * competir com o cabeçalho do site nem com a manchete da tela.
  */
 export function TopAppBar({ title, onBack, floating = false, contentMaxWidth, alignToWindow = true }: TopAppBarProps) {
-  const guardedBack = useGuardedPress(onBack);
+  const guardedBack = useGuardedPress(() => {
+    if (Platform.OS === "ios") triggerHaptic("light");
+    onBack();
+  });
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -121,8 +125,10 @@ function createStyles(colors: ColorPalette) {
       shadowOffset: { width: 0, height: 2 },
     },
     backButton: {
-      width: tokens.spacing[40],
-      height: tokens.spacing[40],
+      width: Platform.OS === "ios" ? 44 : tokens.spacing[40],
+      height: Platform.OS === "ios" ? 44 : tokens.spacing[40],
+      minWidth: Platform.OS === "ios" ? 44 : tokens.spacing[40],
+      minHeight: Platform.OS === "ios" ? 44 : tokens.spacing[40],
       borderRadius: tokens.shapeMorph.buttonRest,
       justifyContent: "center",
       alignItems: "center",
