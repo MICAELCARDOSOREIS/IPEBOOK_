@@ -2,6 +2,14 @@
 
 Versões no formato `MAIOR.MENOR.CORREÇÃO`. Mudança grande = versão nova.
 
+## 1.31.0 · 2026-11-18
+
+- **Acessibilidade Digital no iOS Apple HIG (Spec 137, Issue #233)**:
+  - Documentação formal das diretrizes de acessibilidade iOS em `design-system/06-acessibilidade.md` (Reduzir Transparência, Dynamic Type, VoiceOver e alvos de toque Apple HIG).
+  - Blindagem de layout para Dynamic Type com `maxFontSizeMultiplier` defensivo em `TopAppBar`, `NavigationBar` e `BottomSheet`.
+  - Reforço da semântica de leitor de tela (VoiceOver) com papéis (`tablist`, `tab`, `header`, `button`), estados e rótulos contextuais em português.
+  - Adição de 11 testes unitários dedicados em `tests/unit/iosAccessibilityHig.test.tsx` cobrindo fallbacks opacos, escalonamento tipográfico e alvos de toque mínimos de 44×44 pt.
+
 ## 1.30.0 · 2026-11-18
 
 - **Base Liquid Glass, Apple HIG e BottomSheet no iOS Nativo (Spec 137, ADRs 0115 e 0116)**:
