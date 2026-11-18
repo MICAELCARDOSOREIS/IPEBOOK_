@@ -1,18 +1,16 @@
-import { useMemo, type ReactNode } from "react";
+import { type ReactNode, useMemo } from "react";
 import {
-  KeyboardAvoidingView,
-  Platform,
+  type RefreshControlProps,
   ScrollView,
+  type StyleProp,
   StyleSheet,
   View,
-  type RefreshControlProps,
-  type StyleProp,
   type ViewStyle,
 } from "react-native";
-import { SafeAreaView, type Edge } from "react-native-safe-area-context";
-import { tokens, type ColorPalette } from "@/view/tokens";
-import { useTheme } from "@/view/theme/ThemeProvider";
+import { type Edge, SafeAreaView } from "react-native-safe-area-context";
 import { standardVerticalScrollProps } from "@/view/scrollProps";
+import { useTheme } from "@/view/theme/ThemeProvider";
+import { type ColorPalette, tokens } from "@/view/tokens";
 
 export type ScreenContainerProps = {
   children: ReactNode;
@@ -39,10 +37,6 @@ export type ScreenContainerProps = {
   /** Estilo extra aplicado à coluna de conteúdo (ex.: `flexGrow`, `gap`). */
   contentStyle?: StyleProp<ViewStyle>;
   testID?: string;
-  /** Se ativa KeyboardAvoidingView no iOS para proteger botões e campos de formulário (Apple HIG / Spec 137). */
-  keyboardAvoiding?: boolean;
-  /** Offset vertical extra para o KeyboardAvoidingView no iOS quando há header fixo. */
-  keyboardVerticalOffset?: number;
 };
 
 /**
@@ -50,7 +44,7 @@ export type ScreenContainerProps = {
  * centralizada com `maxWidth` e padding padronizados. Centraliza o padrão repetido em todas as
  * telas (`SafeAreaView` > `ScrollView` > coluna `maxWidth`/`alignSelf: center`), garantindo
  * margens laterais consistentes (space-4) e leitura confortável em telas largas/Web.
- * Origem: Adaptado de Material 3 + 03-fundamentos.md (espaçamento e layout responsivo).
+ * O desvio de teclado no iOS e Android é gerenciado globalmente na raiz por `KeyboardAwareRoot` (Spec 088).
  */
 export function ScreenContainer({
   children,
@@ -65,8 +59,6 @@ export function ScreenContainer({
   overlay,
   contentStyle,
   testID,
-  keyboardAvoiding = false,
-  keyboardVerticalOffset = 0,
 }: ScreenContainerProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -94,23 +86,10 @@ export function ScreenContainer({
     <View style={[styles.scroll, columnStyle]}>{children}</View>
   );
 
-  const mainContent =
-    Platform.OS === "ios" && keyboardAvoiding ? (
-      <KeyboardAvoidingView
-        behavior="padding"
-        keyboardVerticalOffset={keyboardVerticalOffset}
-        style={styles.keyboardView}
-      >
-        {body}
-      </KeyboardAvoidingView>
-    ) : (
-      body
-    );
-
   return (
     <SafeAreaView edges={edges} style={styles.page} testID={testID}>
       {header}
-      {mainContent}
+      {body}
       {overlay}
     </SafeAreaView>
   );
@@ -119,7 +98,6 @@ export function ScreenContainer({
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     page: { flex: 1, backgroundColor: colors.surface, position: "relative", minHeight: 0 },
-    keyboardView: { flex: 1, width: "100%" },
     scroll: { flex: 1, width: "100%" },
     content: {
       flexGrow: 1,

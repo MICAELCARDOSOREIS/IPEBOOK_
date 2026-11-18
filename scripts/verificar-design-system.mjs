@@ -87,8 +87,8 @@ for (const [texto, fundo, minimo] of pares) {
 }
 
 console.log("\x1b[36m▶ Inventário e exemplos\x1b[0m");
-conferir("Inventário declara 28 documentos", componentes.length === 28, `encontrados ${componentes.length}`);
-conferir("README declara 28 componentes", readme.includes("28 componentes"), "contagem desatualizada");
+conferir("Inventário declara 29 documentos", componentes.length === 29, `encontrados ${componentes.length}`);
+conferir("README declara 29 componentes", readme.includes("29 componentes"), "contagem desatualizada");
 const exemplo = ler("design-system/ExplorarScreen.tsx");
 conferir("Exemplo histórico usa aliases M3 válidos", exemplo.includes("tokens.colors.m3.surfaceContainerHigh") && exemplo.includes("tokens.colors.m3.surfaceContainerLow"), "alias inexistente usado no exemplo");
 conferir("Exports do Figma são classificados como históricos", ler("design-system/figma-exports/README.md").includes("fallbacks de tokens históricos"), "limitação não documentada");

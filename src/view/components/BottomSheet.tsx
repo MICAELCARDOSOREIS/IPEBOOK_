@@ -1,25 +1,27 @@
+import { BlurView } from "expo-blur";
 import type { ReactNode } from "react";
 import { useMemo, useRef } from "react";
 import {
+  KeyboardAvoidingView,
   Modal,
   PanResponder,
   Platform,
   Pressable,
+  type StyleProp,
   StyleSheet,
   Text,
   View,
-  type StyleProp,
   type ViewStyle,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { BlurView } from "expo-blur";
-import { useTheme } from "@/view/theme/ThemeProvider";
-import { tokens, type ColorPalette } from "@/view/tokens";
-import { useReduceTransparency } from "@/view/useReduceTransparency";
-import { useIsWideWeb } from "@/view/useIsWideWeb";
-import { type FocusableElement, useModalFocusTrap } from "@/view/components/Dialog";
 import { AppIcon } from "@/view/components/AppIcon";
+import { type FocusableElement, useModalFocusTrap } from "@/view/components/Dialog";
 import { triggerHaptic } from "@/view/haptics";
+import { useTheme } from "@/view/theme/ThemeProvider";
+import { type ColorPalette, tokens } from "@/view/tokens";
+import { useGuardedPress } from "@/view/useGuardedPress";
+import { useIsWideWeb } from "@/view/useIsWideWeb";
+import { useReduceTransparency } from "@/view/useReduceTransparency";
 
 export type BottomSheetProps = {
   visible: boolean;
@@ -37,11 +39,12 @@ export type BottomSheetProps = {
 
 /**
  * Componente BottomSheet unificado do design system (Apple HIG / Spec 137, Material 3):
- * - Cantos arredondados contínuos (tokens.radius.xxl = 28dp)
- * - Drag handle superior acessível com gesto de arraste (swipe-down) para fechar
- * - No iOS, acabamento Liquid Glass com BlurView nativo e fallback sólido quando Reduzir Transparência ativado
+ * - Cantos arredondados contínuos (tokens.radius.xxl = 28dp com borderCurve continuous no iOS)
+ * - Drag handle superior acessível com gesto de arraste (swipe-down) para fechar, oculto no desktop
+ * - No iOS, acabamento Liquid Glass com BlurView nativo e fallback sólido (surfaceContainer) quando Reduzir Transparência ativado
  * - Proteção de Safe Area (Home Indicator)
- * - Foco acessível com useModalFocusTrap e accessibilityViewIsModal
+ * - Foco acessível com useModalFocusTrap, aria-modal e accessibilityViewIsModal
+ * - Desvio de teclado interno com KeyboardAvoidingView próprio para superfícies modais
  */
 export function BottomSheet({
   visible,
@@ -53,6 +56,7 @@ export function BottomSheet({
   showCloseButton = false,
   initialFocusRef,
 }: BottomSheetProps) {
+  const guardedClose = useGuardedPress(onClose);
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const wideWeb = useIsWideWeb();
@@ -68,8 +72,32 @@ export function BottomSheet({
 
   useModalFocusTrap(
     visible,
-    () => [closeButtonRef.current, initialFocusRef?.current ?? null, sheetRef.current as unknown as FocusableElement],
-    onClose,
+    () => {
+      const elements: (FocusableElement | null)[] = [];
+      if (initialFocusRef?.current) {
+        elements.push(initialFocusRef.current);
+      }
+      if (Platform.OS === "web" && typeof document !== "undefined" && sheetRef.current) {
+        const domNode = sheetRef.current as unknown as HTMLElement;
+        if (typeof domNode?.querySelectorAll === "function") {
+          const inner = Array.from(
+            domNode.querySelectorAll<HTMLElement>(
+              'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+            ),
+          );
+          for (const el of inner) {
+            if (!elements.includes(el as unknown as FocusableElement)) {
+              elements.push(el as unknown as FocusableElement);
+            }
+          }
+        }
+      }
+      if (closeButtonRef.current && !elements.includes(closeButtonRef.current)) {
+        elements.push(closeButtonRef.current);
+      }
+      return elements;
+    },
+    guardedClose,
   );
 
   const panResponder = useMemo(
@@ -80,32 +108,38 @@ export function BottomSheet({
         onPanResponderRelease: (_evt, gestureState) => {
           if (gestureState.dy > 50 || gestureState.vy > 0.4) {
             triggerHaptic("selection");
-            onClose();
+            guardedClose();
           }
         },
       }),
-    [onClose],
+    [guardedClose],
   );
 
   return (
     <Modal
+      testID={testID}
       accessibilityViewIsModal
+      aria-modal
       visible={visible}
       transparent
       animationType="fade"
       statusBarTranslucent
       navigationBarTranslucent
-      onRequestClose={onClose}
+      onRequestClose={guardedClose}
     >
-      <View style={[styles.scrim, wideWeb && styles.scrimWide]} testID={testID}>
+      <KeyboardAvoidingView
+        behavior={isIos ? "padding" : undefined}
+        style={[styles.scrim, wideWeb && styles.scrimWide]}
+      >
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Fechar ao tocar fora"
-          onPress={onClose}
+          onPress={guardedClose}
           style={StyleSheet.absoluteFill}
         />
         <View
           ref={sheetRef as never}
+          testID={testID ? `${testID}-container` : "bottom-sheet-container"}
           {...(Platform.OS === "web" ? ({ tabIndex: -1 } as never) : {})}
           style={[
             styles.sheet,
@@ -123,19 +157,21 @@ export function BottomSheet({
             />
           ) : null}
 
-          {/* Drag handle superior estilo Apple HIG com gesto de arraste para fechar */}
-          <View
-            {...panResponder.panHandlers}
-            style={styles.handleContainer}
-            testID="bottom-sheet-drag-area"
-          >
+          {/* Drag handle superior estilo Apple HIG com gesto de arraste para fechar (oculto no desktop) */}
+          {wideWeb ? null : (
             <View
-              accessible={false}
-              importantForAccessibility="no"
-              style={styles.handle}
-              testID="bottom-sheet-handle"
-            />
-          </View>
+              {...panResponder.panHandlers}
+              style={styles.handleContainer}
+              testID="bottom-sheet-drag-area"
+            >
+              <View
+                accessible={false}
+                importantForAccessibility="no"
+                style={styles.handle}
+                testID="bottom-sheet-handle"
+              />
+            </View>
+          )}
 
           {title || showCloseButton ? (
             <View style={styles.header}>
@@ -151,7 +187,7 @@ export function BottomSheet({
                   ref={closeButtonRef as never}
                   accessibilityRole="button"
                   accessibilityLabel="Fechar"
-                  onPress={onClose}
+                  onPress={guardedClose}
                   hitSlop={8}
                   style={({ pressed }) => [styles.closeButton, pressed && styles.closeButtonPressed]}
                 >
@@ -163,7 +199,7 @@ export function BottomSheet({
 
           {children}
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
@@ -172,11 +208,12 @@ function createStyles(colors: ColorPalette, reduceTransparency: boolean = false)
   const isIos = Platform.OS === "ios";
   const isWeb = Platform.OS === "web";
 
+  // Liquid Glass no iOS com fallback para surfaceContainer sob Reduzir Transparência (tokens.json:526)
   const sheetBg = isIos
-    ? (reduceTransparency ? colors.surface : colors.glass.fill)
+    ? (reduceTransparency ? colors.m3.surfaceContainer : tokens.glass.fill)
     : colors.background;
 
-  const sheetBorderColor = isIos && !reduceTransparency ? colors.glass.stroke : "transparent";
+  const sheetBorderColor = isIos && !reduceTransparency ? tokens.glass.stroke : "transparent";
 
   return StyleSheet.create({
     scrim: {
@@ -191,6 +228,7 @@ function createStyles(colors: ColorPalette, reduceTransparency: boolean = false)
     },
     sheet: {
       backgroundColor: sheetBg,
+      maxHeight: "90%",
       borderTopLeftRadius: tokens.radius.xxl,
       borderTopRightRadius: tokens.radius.xxl,
       borderTopWidth: isIos && !reduceTransparency ? 1 : 0,
@@ -201,6 +239,7 @@ function createStyles(colors: ColorPalette, reduceTransparency: boolean = false)
       paddingTop: tokens.spacing[8],
       gap: tokens.spacing[12],
       overflow: "hidden",
+      ...(isIos ? ({ borderCurve: "continuous" } as const) : {}),
       ...(isWeb
         ? ({
             backdropFilter: "blur(24px)",
@@ -213,7 +252,12 @@ function createStyles(colors: ColorPalette, reduceTransparency: boolean = false)
       maxWidth: 480,
       borderRadius: tokens.radius.xxl,
       borderWidth: 1,
+      borderTopWidth: 1,
+      borderBottomWidth: 1,
+      borderLeftWidth: 1,
+      borderRightWidth: 1,
       borderColor: colors.m3.outlineVariant,
+      ...(isIos ? ({ borderCurve: "continuous" } as const) : {}),
     },
     handleContainer: {
       alignSelf: "stretch",
