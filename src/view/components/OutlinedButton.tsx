@@ -57,7 +57,7 @@ export function OutlinedButton({
       >
         {Platform.OS === "ios" && !reduceTransparency && !isDisabled ? (
           <View pointerEvents="none" style={styles.iosBlurClip}>
-            <BlurView testID="outlined-button-blur" intensity={24} tint="light" style={StyleSheet.absoluteFillObject} />
+            <BlurView testID="outlined-button-blur" intensity={24} tint="light" style={StyleSheet.absoluteFill} />
           </View>
         ) : null}
         {loading ? (
@@ -109,7 +109,7 @@ function createStyles(colors: ColorPalette) {
       shadowRadius: 12,
     },
     iosBlurClip: {
-      ...StyleSheet.absoluteFillObject,
+      ...StyleSheet.absoluteFill,
       overflow: "hidden",
       borderRadius: tokens.radius.full,
     },
