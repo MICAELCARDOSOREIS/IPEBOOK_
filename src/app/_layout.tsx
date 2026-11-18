@@ -46,10 +46,9 @@ const DESTINATION_ROUTES: Record<NavigationDestination, Href> = {
   profile: "/perfil" as Href,
 };
 
-/** Ícones da barra de status seguem o tema do app (preferência da pessoa), não só o do sistema. */
+/** Ícones da barra de status sempre escuros sobre a superfície clara editorial (ADR 0114). */
 function ThemedStatusBar() {
-  const { resolvedScheme } = useTheme();
-  return <StatusBar style={resolvedScheme === "dark" ? "light" : "dark"} />;
+  return <StatusBar style="dark" />;
 }
 
 function ThemedStack() {

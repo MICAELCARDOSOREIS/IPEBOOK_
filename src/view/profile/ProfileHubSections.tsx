@@ -51,7 +51,7 @@ export function ProfileIdentityCard({
   onMeetingHistory,
   onRatings,
 }: ProfileIdentityCardProps) {
-  const { colors, resolvedScheme } = useTheme();
+  const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   return (
@@ -139,7 +139,6 @@ export function ProfileIdentityCard({
           onPress={onEditProfile}
           style={({ pressed }) => [
             styles.editProfileButton,
-            resolvedScheme === "dark" && styles.editProfileButtonDark,
             pressed && styles.editProfileButtonPressed,
           ]}
         >
@@ -418,11 +417,6 @@ function createStyles(colors: ColorPalette) {
       borderRadius: tokens.shapeMorph.buttonPressed,
       backgroundColor: colors.m3.surfaceContainerHigh,
       transform: [{ scale: 0.98 }],
-    },
-    editProfileButtonDark: {
-      backgroundColor: colors.m3.surfaceContainerLow,
-      borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
     },
     editProfileButtonText: {
       ...tokens.typography.labelLarge,
