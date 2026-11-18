@@ -127,7 +127,7 @@ describe("iOS Nativo — Fluxos 02 e 03: Descoberta e Busca (Spec 137, Issue #22
       Platform.OS = "ios";
       const onApplyMock = jest.fn();
       const onResetMock = jest.fn();
-      const { getByRole } = await render(
+      const view1 = await render(
         <FilterSheet
           visible={true}
           draftFilters={defaultFilters}
@@ -142,15 +142,41 @@ describe("iOS Nativo — Fluxos 02 e 03: Descoberta e Busca (Spec 137, Issue #22
         />
       );
 
-      const applyBtn = getByRole("button", { name: "Mostrar 5 livros" });
-      fireEvent.press(applyBtn);
+      const applyBtn = view1.getByRole("button", { name: "Mostrar 5 livros" });
+      await act(async () => {
+        fireEvent.press(applyBtn);
+      });
       expect(triggerHapticSpy).toHaveBeenCalledWith("selection");
       expect(onApplyMock).toHaveBeenCalled();
 
-      const resetBtn = getByRole("button", { name: "Limpar filtros" });
-      fireEvent.press(resetBtn);
+      const resetBtn = view1.getByRole("button", { name: "Limpar filtros" });
+      await act(async () => {
+        fireEvent.press(resetBtn);
+      });
       expect(triggerHapticSpy).toHaveBeenCalledWith("light");
       expect(onResetMock).toHaveBeenCalled();
+    });
+
+    it("renderiza filtros em BottomSheet com drag handle no mobile/iOS", async () => {
+      Platform.OS = "ios";
+      const view = await render(
+        <FilterSheet
+          visible={true}
+          draftFilters={defaultFilters}
+          sortBy="recent"
+          availableCategories={["Literatura"]}
+          resultCount={3}
+          onChange={jest.fn()}
+          onSortChange={jest.fn()}
+          onApply={jest.fn()}
+          onReset={jest.fn()}
+          onClose={jest.fn()}
+        />
+      );
+
+      expect(view.getByTestId("filter-sheet")).toBeDefined();
+      expect(view.getByTestId("bottom-sheet-drag-area")).toBeDefined();
+      expect(view.getByTestId("bottom-sheet-handle")).toBeDefined();
     });
   });
 });
