@@ -7,7 +7,7 @@
 **Fonte Visual Oficial:** [Figma — IpêBook](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?t=xKQbpBwLpirB2jV2-0)  
 **Figma (modo Dev):** [Figma — IpêBook · Dev Mode](https://www.figma.com/design/cxEisNRzOQR6krv8Ow7HCa/Ip%C3%AABook?m=dev) — specs de cor, espaçamento e assets prontos para inspecionar, sem precisar converter manualmente. Telas individuais: [Android](../design-system/telas-android-figma.md) (137), [iPhone](../design-system/telas-iphone-figma.md) (144 — base do PWA Safari na Spec 136 e planejamento nativo na [Spec 137](../specs/137-ios-nativo-apple-hig/spec.md)), [Web](../design-system/telas-web-figma.md) (126).  
 **Contratos Técnicos:** [`design-system/tokens.json`](../design-system/tokens.json) e [`src/view/tokens.ts`](../src/view/tokens.ts)  
-**Decisão Arquitetural:** [ADR 0004 — Design System e Tokens de IHC](adr/0004-design-system-e-tokens-ihc.md), [ADR 0010 — design-system/ substitui design-kit/ como fonte única](adr/0010-design-system-substitui-design-kit.md), [ADR 0036 — Tema escuro](adr/0036-tema-escuro-entra-em-escopo.md), [ADR 0104 — Cores canônicas](adr/0104-cores-canonicas-modalidades-e-vitrine-home.md), [ADR 0107 — Plus Jakarta Sans](adr/0107-adocao-plus-jakarta-sans-na-interface.md)
+**Decisão Arquitetural:** [ADR 0004 — Design System e Tokens de IHC](adr/0004-design-system-e-tokens-ihc.md), [ADR 0010 — design-system/ substitui design-kit/ como fonte única](adr/0010-design-system-substitui-design-kit.md), [ADR 0104 — Cores canônicas](adr/0104-cores-canonicas-modalidades-e-vitrine-home.md), [ADR 0107 — Plus Jakarta Sans](adr/0107-adocao-plus-jakarta-sans-na-interface.md), [ADR 0114 — Operação exclusiva em tema claro editorial](adr/0114-remocao-do-tema-escuro.md)
 **Entrega completa (atividade IHC + PDM):** [`design-system/`](../design-system/)
 
 ---
@@ -73,13 +73,13 @@ Quando um usuário cadastra um anúncio sem enviar foto da câmera, o app (`Book
 
 ### 2.4 Estados de Sistema e Feedback
 
-- **Sucesso:** `#2B6334` no tema claro / `#98D6A2` no tema escuro (confirmação de operações concluídas)
-- **Erro:** `#B3261E` no tema claro / `#FFB4AB` no tema escuro (mensagens de alerta e validação de formulários)
-- **Container de Erro:** `#F9DEDC` no tema claro / `#8C1D18` no tema escuro (fundo suave para caixas de erro)
+- **Sucesso:** `#2B6334` (confirmação de operações concluídas)
+- **Erro:** `#B3261E` (mensagens de alerta e validação de formulários)
+- **Container de Erro:** `#F9DEDC` (fundo suave para caixas de erro)
 
-### 2.5 Tema Escuro (`darkColors` e `useTheme()`)
+### 2.5 Tema Claro Editorial Exclusivo (`useTheme()`)
 
-Desde o [ADR 0036](adr/0036-tema-escuro-entra-em-escopo.md), todas as telas consomem cores dinamicamente via `useTheme()` (`src/view/theme/ThemeProvider.tsx`), com alternância automática pelo sistema ou preferência manual do usuário (claro/escuro). No tema escuro, o papel noturno substitui o pergaminho claro: `background` `#151311`, `surface` `#1D1B19`, texto principal `#E8E2DB`, texto secundário `#CDC5BC`, cor primária M3 `#98D6A2` e `primaryContainer` `#184E21`.
+Conforme o [ADR 0114](adr/0114-remocao-do-tema-escuro.md) (que substitui o ADR 0036 e confirma a decisão 1 do [ADR 0008](adr/0008-sem-dark-mode-android-md3-ios-liquid-glass.md)), o aplicativo opera exclusivamente no tema claro editorial (`colors` em `src/view/tokens.ts`), distribuído para as telas via `useTheme()` (`src/view/theme/ThemeProvider.tsx`) e fixado na plataforma (`"userInterfaceStyle": "light"` em `app.json`).
 
 ---
 

@@ -6,7 +6,7 @@
     "scheme": "ipebook",
     "version": "0.2.0",
     "orientation": "portrait",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "light",
     "backgroundColor": "#FCFAF5",
     "assetBundlePatterns": [
       "**/*"

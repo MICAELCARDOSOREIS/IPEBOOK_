@@ -95,7 +95,7 @@ export default function Search({
         : neighborhoodHook.activeNeighborhood;
   const handleSelectNeighborhood = onSelectNeighborhood ?? neighborhoodHook.openSelector;
   const [auth] = makeAuthViewModel();
-  const { colors, resolvedScheme } = useTheme();
+  const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [state, actions] = makeSearchViewModel(auth.user?.id ?? null);
   useOnRefocus(focusKey, () => {

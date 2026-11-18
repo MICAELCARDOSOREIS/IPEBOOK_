@@ -1,21 +1,7 @@
 import { cleanup, render } from "@testing-library/react-native";
 import { StyleSheet, Text, View } from "react-native";
-import { colors, darkColors, type ColorPalette } from "@/view/tokens";
+import { colors } from "@/view/tokens";
 import { standardVerticalScrollProps } from "@/view/scrollProps";
-
-// Permite trocar o tema devolvido por useTheme em um caso específico (tema escuro).
-const mockTema = { cores: null as ColorPalette | null };
-jest.mock("@/view/theme/ThemeProvider", () => {
-  const original = jest.requireActual<typeof import("@/view/theme/ThemeProvider")>("@/view/theme/ThemeProvider");
-  return {
-    ...original,
-    useTheme: () => {
-      const padrao = original.useTheme();
-      return mockTema.cores ? { ...padrao, resolvedScheme: "dark", colors: mockTema.cores } : padrao;
-    },
-  };
-});
-
 import { ScreenContainer } from "@/view/components/ScreenContainer";
 
 type No = { type: string; props: Record<string, unknown>; children: (No | string)[] | null };
@@ -32,7 +18,6 @@ const estiloDaColuna = (coluna: No) =>
 
 describe("ScreenContainer (design-system/03-fundamentos.md, orientação e layout responsivo)", () => {
   afterEach(() => {
-    mockTema.cores = null;
     cleanup();
   });
 
@@ -158,16 +143,5 @@ describe("ScreenContainer (design-system/03-fundamentos.md, orientação e layou
       </ScreenContainer>,
     );
     expect(StyleSheet.flatten(raiz.props.style as never)).toMatchObject({ flex: 1, backgroundColor: colors.surface });
-  });
-
-  it("acompanha o tema escuro na cor de fundo", async () => {
-    mockTema.cores = darkColors;
-    const { raiz } = await montar(
-      <ScreenContainer>
-        <Text>Conteúdo</Text>
-      </ScreenContainer>,
-    );
-    expect(StyleSheet.flatten(raiz.props.style as never)).toMatchObject({ backgroundColor: darkColors.surface });
-    expect(darkColors.surface).not.toBe(colors.surface);
   });
 });
