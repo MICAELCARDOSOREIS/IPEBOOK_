@@ -40,11 +40,28 @@ tags:
 - assertVisible: "Conversas"
 - runFlow:
     when:
+      visible: "Concluídas.*"
+    commands:
+      - tapOn: "Concluídas.*"
+- runFlow:
+    when:
+      visible: "Ativas.*"
+    commands:
+      - tapOn: "Ativas.*"
+- runFlow:
+    when:
       visible: "Conversa com .*"
     commands:
       - tapOn:
           text: "Conversa com .*"
           index: 0
+      - runFlow:
+          when:
+            visible: "Combinar encontro"
+          commands:
+            - tapOn: "Combinar encontro"
+            - assertVisible: "Pontos"
+            - back
       - runFlow:
           when:
             visible: "Entrega do livro"
@@ -66,4 +83,69 @@ tags:
             - back
       - back
 - back
+- tapOn: "Estante"
+- assertVisible: "Estante"
+- runFlow:
+    when:
+      visible: "Filtrar por Reservados"
+    commands:
+      - tapOn: "Filtrar por Reservados"
+      - runFlow:
+          when:
+            visible: "Ver negociação de .*"
+          commands:
+            - tapOn:
+                text: "Ver negociação de .*"
+                index: 0
+            - runFlow:
+                when:
+                  visible: "Combinar encontro"
+                commands:
+                  - tapOn: "Combinar encontro"
+                  - assertVisible: "Combinar encontro"
+                  - back
+            - runFlow:
+                when:
+                  visible: "Alterar sugestão"
+                commands:
+                  - tapOn: "Alterar sugestão"
+                  - assertVisible: "Reagendar encontro"
+                  - back
+            - runFlow:
+                when:
+                  visible: "Entrega do livro"
+                commands:
+                  - tapOn: "Entrega do livro"
+                  - assertVisible: "Entrega do livro"
+                  - runFlow:
+                      when:
+                        visible: "Ler QR Code com a câmera"
+                      commands:
+                        - tapOn: "Digitar código manualmente"
+                        - assertVisible: "Código da entrega"
+                  - back
+            - runFlow:
+                when:
+                  visible: "Acompanhar negociação"
+                commands:
+                  - tapOn: "Acompanhar negociação"
+                  - assertVisible: "Acompanhar encontro"
+                  - runFlow:
+                      when:
+                        visible: "Mostrar QR da entrega"
+                      commands:
+                        - tapOn: "Mostrar QR da entrega"
+                        - assertVisible: "Entrega do livro"
+                        - back
+                  - runFlow:
+                      when:
+                        visible: "Ler QR da entrega"
+                      commands:
+                        - tapOn: "Ler QR da entrega"
+                        - assertVisible: "Entrega do livro"
+                        - back
+                  - back
+            - back
+      - tapOn: "Filtrar por Todos"
+- tapOn: "Início"
 - assertVisible: "Encontre sua próxima história."

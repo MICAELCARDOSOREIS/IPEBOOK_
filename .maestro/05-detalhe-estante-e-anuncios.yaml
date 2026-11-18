@@ -1,0 +1,103 @@
+appId: com.ipebook.app
+name: Detalhe do livro, perfil público, denúncia, Estante, rascunhos, gestão e edição de anúncio (Android)
+tags:
+  - android
+  - catalogo
+  - estante
+---
+- launchApp:
+    stopApp: false
+# 1. Fluxo do leitor: Explorar -> Detalhe do livro -> Perfil público -> Denúncia (sem enviar)
+- tapOn: "Explorar"
+- assertVisible: "O que vamos ler hoje?"
+- runFlow:
+    when:
+      visible: "Ver detalhe de .*"
+    commands:
+      - tapOn:
+          text: "Ver detalhe de .*"
+          index: 0
+      - scrollUntilVisible:
+          element: "Conservação"
+          direction: DOWN
+          timeout: 6000
+      - assertVisible: "Conservação"
+      - scrollUntilVisible:
+          element: "Anunciado por .*"
+          direction: DOWN
+          timeout: 6000
+      - runFlow:
+          when:
+            visible: "Anunciado por .*"
+          commands:
+            - tapOn: "Anunciado por .*"
+            - waitForAnimationToEnd
+            - back
+            - waitForAnimationToEnd
+      - runFlow:
+          when:
+            notVisible: "Denunciar anúncio"
+          commands:
+            - scroll
+      - runFlow:
+          when:
+            visible: "Denunciar anúncio"
+          commands:
+            - tapOn: "Denunciar anúncio"
+            - waitForAnimationToEnd
+            - back
+      - back
+# 2. Fluxo da Estante: Rascunhos, Propostas/Pedidos Recebidos, Filtros, Gerenciar e Editar Anúncio (sem salvar)
+- tapOn: "Estante"
+- assertVisible: "Estante"
+- runFlow:
+    when:
+      visible: "Ver .* rascunho.*"
+    commands:
+      - tapOn: "Ver .* rascunho.*"
+      - assertVisible: "Rascunhos"
+      - back
+- runFlow:
+    when:
+      visible: "Ver rascunhos"
+    commands:
+      - tapOn: "Ver rascunhos"
+      - assertVisible: "Rascunhos"
+      - back
+- runFlow:
+    when:
+      visible: "Propostas, .*"
+    commands:
+      - tapOn: "Propostas, .*"
+      - runFlow:
+          when:
+            visible: "Ver proposta"
+          commands:
+            - tapOn: "Ver proposta"
+            - assertVisible: "Pedidos recebidos"
+            - back
+- runFlow:
+    when:
+      visible: "Concluídos"
+    commands:
+      - tapOn: "Concluídos"
+- tapOn: "Filtrar por Ativos"
+- runFlow:
+    when:
+      visible: "Gerenciar anúncio de .*"
+    commands:
+      - tapOn:
+          text: "Gerenciar anúncio de .*"
+          index: 0
+      - assertVisible: "Gerenciar anúncio"
+      - runFlow:
+          when:
+            visible: "Editar anúncio"
+          commands:
+            - tapOn: "Editar anúncio"
+            - assertVisible: "Editar anúncio"
+            - back
+      - back
+- tapOn: "Filtrar por Todos"
+- tapOn: "Início"
+- assertVisible: "Encontre sua próxima história."

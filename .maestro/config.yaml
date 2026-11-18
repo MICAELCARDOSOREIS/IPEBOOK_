@@ -4,3 +4,5 @@ flows:
   - "02-login-google-e-sessao.yaml"
   - "03-anunciar-isbn-camera.yaml"
   - "04-entrega-qr-e-notificacoes.yaml"
+  - "05-detalhe-estante-e-anuncios.yaml"
+  - "06-perfil-configuracoes-e-institucionais.yaml"

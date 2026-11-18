@@ -93,7 +93,7 @@ npm run test:e2e:build   # força nova exportação Web em dist-e2e/ antes de ro
 | **Componentes com Mock** | `tests/components-mocked/` | Isolamento determinístico da View para forçar cenários extremos (falha de rede, carregamento, botão de retry). | RNTL com `jest.mock` (`homeViewMocked.test.tsx`) |
 | **Testes de Integração** | `tests/integration/` | Integração real entre múltiplas camadas: View + ViewModel + Casos de Uso + Repositório em memória sem mocks de negócio. | RNTL integrado (`homeIntegration.test.tsx`) |
 | **Testes E2E Web (CDP)** | `tests/e2e/` | Fluxos completos em Chrome headless via CDP puro (boas-vindas, busca, cadastro, anúncio, favoritos e pedidos). | Node 24 + Chrome CDP (`run.mjs`, `cdp.mjs`) |
-| **Testes E2E Android (Maestro)** | `.maestro/` | Fluxos nativos de hardware/SO fora da Web (Google Sign-In nativo, câmera/ISBN/permissão de fotos e QR Code/push). | Maestro YAML (`maestro test .maestro` com `adb` conectado) |
+| **Testes E2E Android (Maestro)** | `.maestro/` | Fluxos nativos cobrindo catálogo, perfil, câmera/ISBN, notificações, conversas, estante, gestão/edição, configurações, moderação, alertas, beta e 404. | Maestro YAML (`maestro test .maestro`, **6/6 aprovados no Waydroid**) |
 
 ---
 

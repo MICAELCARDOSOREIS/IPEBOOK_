@@ -33,5 +33,15 @@ tags:
           id: "home-top-profile-button"
       - assertVisible: "Meu perfil"
       - assertVisible: "Abrir configurações"
+      - tapOn: "Editar perfil"
+      - assertVisible: "Seu perfil, do seu jeito."
+      - back
+      - runFlow:
+          when:
+            visible: "Descartar alterações?"
+          commands:
+            - tapOn: "Descartar"
+      - assertVisible: "Meu perfil"
+      - waitForAnimationToEnd
       - back
       - assertVisible: "Encontre sua próxima história."
