@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { useMemo, useRef } from "react";
 import {
   Modal,
+  PanResponder,
   Platform,
   Pressable,
   StyleSheet,
@@ -11,12 +12,14 @@ import {
   type ViewStyle,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { BlurView } from "expo-blur";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useReduceTransparency } from "@/view/useReduceTransparency";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { type FocusableElement, useModalFocusTrap } from "@/view/components/Dialog";
 import { AppIcon } from "@/view/components/AppIcon";
+import { triggerHaptic } from "@/view/haptics";
 
 export type BottomSheetProps = {
   visible: boolean;
@@ -28,13 +31,15 @@ export type BottomSheetProps = {
   style?: StyleProp<ViewStyle>;
   /** Mostra botão 'Fechar' no topo */
   showCloseButton?: boolean;
+  /** Referência opcional para foco inicial na Web */
+  initialFocusRef?: React.RefObject<FocusableElement | null>;
 };
 
 /**
  * Componente BottomSheet unificado do design system (Apple HIG / Spec 137, Material 3):
  * - Cantos arredondados contínuos (tokens.radius.xxl = 28dp)
- * - Drag handle superior acessível
- * - No iOS, acabamento Liquid Glass com fallback sólido quando Reduzir Transparência ativado
+ * - Drag handle superior acessível com gesto de arraste (swipe-down) para fechar
+ * - No iOS, acabamento Liquid Glass com BlurView nativo e fallback sólido quando Reduzir Transparência ativado
  * - Proteção de Safe Area (Home Indicator)
  * - Foco acessível com useModalFocusTrap e accessibilityViewIsModal
  */
@@ -46,18 +51,41 @@ export function BottomSheet({
   testID,
   style,
   showCloseButton = false,
+  initialFocusRef,
 }: BottomSheetProps) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const wideWeb = useIsWideWeb();
   const reduceTransparency = useReduceTransparency();
+  const isIos = Platform.OS === "ios";
   const styles = useMemo(
     () => createStyles(colors, reduceTransparency),
     [colors, reduceTransparency],
   );
 
   const closeButtonRef = useRef<FocusableElement | null>(null);
-  useModalFocusTrap(visible, () => [closeButtonRef.current], onClose);
+  const sheetRef = useRef<View | null>(null);
+
+  useModalFocusTrap(
+    visible,
+    () => [closeButtonRef.current, initialFocusRef?.current ?? null, sheetRef.current as unknown as FocusableElement],
+    onClose,
+  );
+
+  const panResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => true,
+        onMoveShouldSetPanResponder: (_evt, gestureState) => gestureState.dy > 5,
+        onPanResponderRelease: (_evt, gestureState) => {
+          if (gestureState.dy > 50 || gestureState.vy > 0.4) {
+            triggerHaptic("selection");
+            onClose();
+          }
+        },
+      }),
+    [onClose],
+  );
 
   return (
     <Modal
@@ -77,6 +105,8 @@ export function BottomSheet({
           style={StyleSheet.absoluteFill}
         />
         <View
+          ref={sheetRef as never}
+          {...(Platform.OS === "web" ? ({ tabIndex: -1 } as never) : {})}
           style={[
             styles.sheet,
             wideWeb && styles.sheetWide,
@@ -84,8 +114,28 @@ export function BottomSheet({
             style,
           ]}
         >
-          {/* Drag handle superior estilo Apple HIG */}
-          <View accessible={false} importantForAccessibility="no" style={styles.handle} testID="bottom-sheet-handle" />
+          {isIos && !reduceTransparency ? (
+            <BlurView
+              pointerEvents="none"
+              tint={colors.surface === "#FCFAF5" ? "light" : "dark"}
+              intensity={60}
+              style={StyleSheet.absoluteFill}
+            />
+          ) : null}
+
+          {/* Drag handle superior estilo Apple HIG com gesto de arraste para fechar */}
+          <View
+            {...panResponder.panHandlers}
+            style={styles.handleContainer}
+            testID="bottom-sheet-drag-area"
+          >
+            <View
+              accessible={false}
+              importantForAccessibility="no"
+              style={styles.handle}
+              testID="bottom-sheet-handle"
+            />
+          </View>
 
           {title || showCloseButton ? (
             <View style={styles.header}>
@@ -165,13 +215,18 @@ function createStyles(colors: ColorPalette, reduceTransparency: boolean = false)
       borderWidth: 1,
       borderColor: colors.m3.outlineVariant,
     },
+    handleContainer: {
+      alignSelf: "stretch",
+      alignItems: "center",
+      justifyContent: "center",
+      paddingVertical: tokens.spacing[8],
+      cursor: isWeb ? "grab" : undefined,
+    } as ViewStyle,
     handle: {
       alignSelf: "center",
       width: 36,
       height: 5,
       borderRadius: tokens.radius.full,
-      marginTop: tokens.spacing[4],
-      marginBottom: tokens.spacing[4],
       backgroundColor: colors.m3.onSurfaceVariant,
       opacity: 0.35,
     },

@@ -272,8 +272,8 @@ export const darkColors: ColorPalette = {
   // Vidro Liquid Glass no tema escuro (iOS 26 / ADR 0008, Spec 137, design-system/tokens.json)
   glass: {
     fill: "rgba(40, 37, 34, 0.55)",
-    stroke: "rgba(255, 255, 255, 0.15)",
-    fillDark: "rgba(30, 30, 30, 0.50)",
+    stroke: "rgba(255, 255, 255, 0.18)",
+    fillDark: "rgba(30, 30, 30, 0.42)",
   },
 } as const;
 

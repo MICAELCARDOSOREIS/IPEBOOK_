@@ -1,4 +1,5 @@
 import { Platform } from "react-native";
+import * as Haptics from "expo-haptics";
 
 export type HapticFeedbackType =
   | "light"
@@ -16,29 +17,27 @@ export type HapticFeedbackType =
 export function triggerHaptic(type: HapticFeedbackType = "light"): void {
   if (Platform.OS !== "ios") return;
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const Haptics = require("expo-haptics");
     switch (type) {
       case "light":
-        Haptics.impactAsync?.(Haptics.ImpactFeedbackStyle?.Light ?? "light");
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         break;
       case "medium":
-        Haptics.impactAsync?.(Haptics.ImpactFeedbackStyle?.Medium ?? "medium");
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         break;
       case "heavy":
-        Haptics.impactAsync?.(Haptics.ImpactFeedbackStyle?.Heavy ?? "heavy");
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
         break;
       case "selection":
-        Haptics.selectionAsync?.();
+        Haptics.selectionAsync();
         break;
       case "success":
-        Haptics.notificationAsync?.(Haptics.NotificationFeedbackType?.Success ?? "success");
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         break;
       case "warning":
-        Haptics.notificationAsync?.(Haptics.NotificationFeedbackType?.Warning ?? "warning");
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
         break;
       case "error":
-        Haptics.notificationAsync?.(Haptics.NotificationFeedbackType?.Error ?? "error");
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         break;
     }
   } catch {

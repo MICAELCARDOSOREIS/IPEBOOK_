@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Animated, FlatList, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Animated, FlatList, Keyboard, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ScreenContainer } from "@/view/components/ScreenContainer";
 import { makeAuthViewModel, makeNetworkStatus, makeSearchViewModel } from "@/di/container";
@@ -331,6 +331,10 @@ export default function Search({
         value={state.term}
         onChangeText={actions.setTerm}
         onSubmitEditing={() => void actions.registerSearch(state.term)}
+        onCancel={() => {
+          actions.setTerm("");
+          Keyboard.dismiss();
+        }}
       />
 
       {/* 4. Modalidades em chips rápidos. Na web larga o painel "Filtros" já tem o grupo Modalidade. */}

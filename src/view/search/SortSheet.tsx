@@ -1,12 +1,10 @@
 import { useMemo } from "react";
-import { Modal, Platform, Pressable, StyleSheet, Text, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useIsWideWeb } from "@/view/useIsWideWeb";
+import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { AppIcon } from "@/view/components/AppIcon";
+import { BottomSheet } from "@/view/components/BottomSheet";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { triggerHaptic } from "@/view/haptics";
-import { useReduceTransparency } from "@/view/useReduceTransparency";
 import {
   SORT_IDS,
   SORT_LABELS,
@@ -26,139 +24,60 @@ export type SortSheetProps = {
 /**
  * Folha de ordenação aberta pelo rótulo do resumo (Figma `02.04`: "Mais recentes"). A ordenação
  * fica fora dos filtros: mudar a ordem não restringe resultados nem aparece nos chips aplicados.
+ * Utiliza o componente unificado `BottomSheet` com Liquid Glass no iOS e Material 3 no Android/Web.
  */
 export function SortSheet({ visible, selected, onSelect, onClose }: SortSheetProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const insets = useSafeAreaInsets();
-  const wideWeb = useIsWideWeb();
-  const reduceTransparency = useReduceTransparency();
   const isIos = Platform.OS === "ios";
-  const useGlass = isIos && !reduceTransparency && Boolean(colors.glass);
 
   return (
-    <Modal
+    <BottomSheet
       visible={visible}
-      animationType="fade"
-      transparent
-      statusBarTranslucent
-      navigationBarTranslucent
-      onRequestClose={onClose}
-      accessibilityViewIsModal
-      aria-modal
+      onClose={onClose}
+      title="Ordenar por"
+      testID="sort-sheet"
     >
-      <View style={[styles.scrim, wideWeb && styles.scrimWide]}>
-        <Pressable
-          accessibilityRole="none"
-          accessibilityLabel="Fechar ordenação"
-          style={StyleSheet.absoluteFill}
-          onPress={onClose}
-        />
-        <View
-          style={[
-            styles.sheet,
-            wideWeb && styles.sheetWide,
-            isIos && styles.sheetIos,
-            useGlass && {
-              backgroundColor: colors.glass?.fill ?? colors.m3.surfaceContainer,
-              borderColor: colors.glass?.stroke ?? colors.m3.outlineVariant,
-              borderWidth: 1,
-            },
-            { paddingBottom: wideWeb ? tokens.spacing[24] : Math.max(tokens.spacing[16], insets.bottom + tokens.spacing[8]) },
-          ]}
-        >
-          {wideWeb ? null : <View style={[styles.handle, isIos && styles.handleIos]} />}
-          <Text accessibilityRole="header" style={styles.title}>
-            Ordenar por
-          </Text>
-          <View accessibilityRole="radiogroup" accessibilityLabel="Ordenar por" style={styles.list}>
-            {SORT_IDS.map((option) => {
-              const isSelected = selected === option;
-              return (
-                <Pressable
-                  key={option}
-                  accessibilityRole="radio"
-                  accessibilityLabel={SORT_LABELS[option]}
-                  accessibilityState={{ checked: isSelected }}
-                  onPress={() => {
-                    if (isIos) {
-                      triggerHaptic("selection");
-                    }
-                    onSelect(option);
-                    onClose();
-                  }}
-                  style={({ pressed }) => [
-                    styles.row,
-                    isSelected && styles.rowSelected,
-                    pressed && styles.rowPressed,
-                  ]}
-                >
-                  <Text style={[styles.rowLabel, isSelected && styles.rowLabelSelected]}>
-                    {SORT_LABELS[option]}
-                  </Text>
-                  <AppIcon
-                    name={isSelected ? "radioOn" : "radioOff"}
-                    size={22}
-                    color={isSelected ? colors.m3.primary : colors.m3.outline}
-                  />
-                </Pressable>
-              );
-            })}
-          </View>
-        </View>
+      <View accessibilityRole="radiogroup" accessibilityLabel="Ordenar por" style={styles.list}>
+        {SORT_IDS.map((option) => {
+          const isSelected = selected === option;
+          return (
+            <Pressable
+              key={option}
+              accessibilityRole="radio"
+              accessibilityLabel={SORT_LABELS[option]}
+              accessibilityState={{ checked: isSelected }}
+              onPress={() => {
+                if (isIos) {
+                  triggerHaptic("selection");
+                }
+                onSelect(option);
+                onClose();
+              }}
+              style={({ pressed }) => [
+                styles.row,
+                isSelected && styles.rowSelected,
+                pressed && styles.rowPressed,
+              ]}
+            >
+              <Text style={[styles.rowLabel, isSelected && styles.rowLabelSelected]}>
+                {SORT_LABELS[option]}
+              </Text>
+              <AppIcon
+                name={isSelected ? "radioOn" : "radioOff"}
+                size={22}
+                color={isSelected ? colors.m3.primary : colors.m3.outline}
+              />
+            </Pressable>
+          );
+        })}
       </View>
-    </Modal>
+    </BottomSheet>
   );
 }
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
-    scrim: {
-      flex: 1,
-      backgroundColor: colors.m3.scrim,
-      justifyContent: "flex-end",
-    },
-    scrimWide: {
-      justifyContent: "center",
-      alignItems: "center",
-      padding: tokens.spacing[24],
-    },
-    sheet: {
-      backgroundColor: colors.m3.surfaceContainerLow,
-      borderTopLeftRadius: tokens.radius.extraLarge,
-      borderTopRightRadius: tokens.radius.extraLarge,
-      paddingHorizontal: tokens.spacing[24],
-      paddingTop: tokens.spacing[12],
-      gap: tokens.spacing[8],
-      elevation: 3,
-    },
-    sheetIos: {
-      borderTopLeftRadius: tokens.radius.xxl,
-      borderTopRightRadius: tokens.radius.xxl,
-    },
-    sheetWide: {
-      width: "100%",
-      maxWidth: 380,
-      borderRadius: tokens.radius.extraLarge,
-    },
-    handle: {
-      alignSelf: "center",
-      width: 32,
-      height: 4,
-      borderRadius: tokens.radius.full,
-      backgroundColor: colors.m3.outlineVariant,
-      marginBottom: tokens.spacing[4],
-    },
-    handleIos: {
-      width: 36,
-      height: 5,
-      backgroundColor: colors.m3.outline,
-    },
-    title: {
-      ...tokens.typography.titleMedium,
-      color: colors.m3.onSurface,
-      marginBottom: tokens.spacing[4],
-    },
     list: {
       gap: tokens.spacing[4],
     },

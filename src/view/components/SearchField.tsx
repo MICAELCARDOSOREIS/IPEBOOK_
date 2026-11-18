@@ -39,7 +39,7 @@ export function SearchField({ value, onChangeText, placeholder = "Buscar título
   return (
     <View style={styles.wrapper}>
       <View style={[styles.container, focused && styles.containerFocused, isIos && styles.containerIos]}>
-        <AppIcon name="search" size={20} color={focused ? colors.m3.primary : colors.secondaryText} />
+        <AppIcon name="search" size={isIos ? 20 : 24} color={focused ? colors.m3.primary : colors.secondaryText} />
         <TextInput
           value={value}
           onChangeText={onChangeText}
@@ -58,7 +58,11 @@ export function SearchField({ value, onChangeText, placeholder = "Buscar título
             accessibilityLabel="Limpar busca"
             hitSlop={8}
             onPress={handleClear}
-            style={({ pressed }) => [styles.clearButton, pressed && styles.clearButtonPressed]}
+            style={({ pressed }) => [
+              styles.clearButton,
+              isIos && styles.clearButtonIos,
+              pressed && styles.clearButtonPressed,
+            ]}
           >
             <Text style={styles.clearIcon}>✕</Text>
           </Pressable>
@@ -68,6 +72,7 @@ export function SearchField({ value, onChangeText, placeholder = "Buscar título
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Cancelar busca"
+          onPressIn={handleCancel}
           onPress={handleCancel}
           style={styles.cancelButton}
         >
@@ -116,6 +121,10 @@ function createStyles(colors: ColorPalette) {
       justifyContent: "center",
       alignItems: "center",
       ...(Platform.OS === "web" ? ({ cursor: "pointer", userSelect: "none" } as never) : {}),
+    },
+    clearButtonIos: {
+      minHeight: 36,
+      minWidth: 36,
     },
     clearButtonPressed: {
       borderRadius: tokens.shapeMorph.buttonPressed,
