@@ -223,7 +223,7 @@ export default function CreateListing({
     if (wideWeb) return;
     // No mobile, rola para posicionar o campo com 20dp de respiro na área visível
     setTimeout(() => {
-      scrollRef.current?.scrollTo?.({
+      scrollRef.current?.scrollTo({
         y: Math.max(0, yOffset - 20),
         animated: true,
       });

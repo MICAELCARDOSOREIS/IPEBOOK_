@@ -72,7 +72,31 @@ export function BottomSheet({
 
   useModalFocusTrap(
     visible,
-    () => [closeButtonRef.current, initialFocusRef?.current ?? null, sheetRef.current as unknown as FocusableElement],
+    () => {
+      const elements: (FocusableElement | null)[] = [];
+      if (initialFocusRef?.current) {
+        elements.push(initialFocusRef.current);
+      }
+      if (Platform.OS === "web" && typeof document !== "undefined" && sheetRef.current) {
+        const domNode = sheetRef.current as unknown as HTMLElement;
+        if (typeof domNode?.querySelectorAll === "function") {
+          const inner = Array.from(
+            domNode.querySelectorAll<HTMLElement>(
+              'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+            ),
+          );
+          for (const el of inner) {
+            if (!elements.includes(el as unknown as FocusableElement)) {
+              elements.push(el as unknown as FocusableElement);
+            }
+          }
+        }
+      }
+      if (closeButtonRef.current && !elements.includes(closeButtonRef.current)) {
+        elements.push(closeButtonRef.current);
+      }
+      return elements;
+    },
     guardedClose,
   );
 

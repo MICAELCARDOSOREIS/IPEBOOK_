@@ -1,8 +1,8 @@
 # Especificação 137 — [iOS Nativo] Adequar todas as telas do iPhone ao Apple HIG e Liquid Glass
 
-**Estado:** Em andamento (T002 e T004 entregues por Maria Clara em 2026-11-17)  
+**Estado:** Em andamento (T002 entregue por Maria Clara em 2026-11-17)  
 **Responsável Principal:** Eric Vinícius dos Santos Oliveira (`@Eric2025gh`, `pessoa:eric`)  
-**Apoio e Entregas da Equipe:** Maria Clara Almeida Martins (`@clarinhamartins` — T002 e T004: Liquid Glass no Design System, ADR 0114, e Telas de Descoberta/Busca, ADR 0115), Micael Cardoso Reis (`@MICAELCARDOSOREIS`), Antonio Carlos Gomes (`@gomes738`)  
+**Apoio e Entregas da Equipe:** Maria Clara Almeida Martins (`@clarinhamartins` — T002: Liquid Glass no Design System, ADR 0115), Micael Cardoso Reis (`@MICAELCARDOSOREIS`), Antonio Carlos Gomes (`@gomes738`)  
 **Referências Principais:**
 - [ADR 0008 — Diretrizes Visuais por Plataforma](../../docs/adr/0008-sem-dark-mode-android-md3-ios-liquid-glass.md)
 - [Inventário de Telas iPhone · iOS 26 (Figma)](../../design-system/telas-iphone-figma.md) (144 telas em 12 fluxos)
