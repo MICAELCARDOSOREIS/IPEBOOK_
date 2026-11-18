@@ -123,7 +123,7 @@ Conforme as diretrizes da disciplina, o projeto adotou três características es
 
 ## 📱 Validação manual em dispositivo
 
-A versão Web conta com suíte E2E automatizada via Chrome CDP (`npm run test:e2e`, sem Playwright). Os fluxos nativos que dependem de aparelho físico (login com Google, câmera/QR em dois aparelhos, push e leitor de tela) possuem fluxos declarativos em [`.maestro/`](.maestro/README.md) (sintaxe validada via `maestro check-syntax`; execução ao vivo depende de aparelho físico ou Waydroid conectado ao `adb`) e também são verificados manualmente antes de cada publicação, conforme o roteiro em
+A versão Web conta com suíte E2E automatizada via Chrome CDP (`npm run test:e2e`, sem Playwright). Os fluxos nativos que dependem de aparelho físico (login com Google, câmera/QR em dois aparelhos, push e leitor de tela) possuem suíte automatizada em [`.maestro/`](.maestro/README.md) (executada no Waydroid contra o development build conectado ao Metro; ramos condicionais como login Google em estado deslogado, reset completo de onboarding e encontro confirmado para entrega QR dependem das respectivas pré-condições no aparelho) e também são verificados manualmente antes de cada publicação, conforme o roteiro em
 [`docs/qualidade.md`](docs/qualidade.md). Os testes automatizados cobrem domínio, ViewModels,
 componentes e integração entre camadas.
 

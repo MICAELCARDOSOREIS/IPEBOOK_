@@ -6,25 +6,64 @@ tags:
   - push
   - hardware-nativo
 ---
-- launchApp
-# Pré-condição: sessão autenticada com negociação de entrega confirmada
-- tapOn: "Conversas"
-- waitForAnimationToEnd
+- launchApp:
+    stopApp: false
+# Pré-condição: sessão autenticada
+- tapOn: "Início"
+- assertVisible:
+    id: "home-top-profile-button"
+- tapOn:
+    id: "home-top-profile-button"
+- assertVisible: "Meu perfil"
+- assertVisible:
+    id: "profile-notifications-button"
+- tapOn:
+    id: "profile-notifications-button"
+- assertVisible: "Notificações"
 - runFlow:
     when:
-      visible: "Entrega do livro"
+      visible: "Pedir permissão de novo"
     commands:
-      - tapOn: "Entrega do livro"
+      - tapOn: "Pedir permissão de novo"
       - runFlow:
           when:
-            visible: "Ler QR Code com a câmera"
+            visible: "Avisos no seu celular"
           commands:
-            - assertVisible: "Digitar código manualmente"
-            - tapOn: "Ler QR Code com a câmera"
+            - assertVisible: "Permitir avisos"
+            - tapOn: "Agora não"
+- back
+- back
+- assertVisible:
+    id: "home-top-conversations-button"
+- tapOn:
+    id: "home-top-conversations-button"
+- assertVisible: "Conversas"
+- runFlow:
+    when:
+      visible: "Conversa com .*"
+    commands:
+      - tapOn:
+          text: "Conversa com .*"
+          index: 0
+      - runFlow:
+          when:
+            visible: "Entrega do livro"
+          commands:
+            - tapOn: "Entrega do livro"
             - runFlow:
                 when:
-                  visible: "Permitir câmera"
+                  visible: "Ler QR Code com a câmera"
                 commands:
-                  - tapOn: "Permitir câmera"
-            - tapOn: "Digitar código manualmente"
-            - assertVisible: "Código da entrega"
+                  - assertVisible: "Digitar código manualmente"
+                  - tapOn: "Ler QR Code com a câmera"
+                  - runFlow:
+                      when:
+                        visible: "Permitir câmera"
+                      commands:
+                        - tapOn: "Permitir câmera"
+                  - tapOn: "Digitar código manualmente"
+                  - assertVisible: "Código da entrega"
+            - back
+      - back
+- back
+- assertVisible: "Encontre sua próxima história."
