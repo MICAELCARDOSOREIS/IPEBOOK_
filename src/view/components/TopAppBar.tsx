@@ -1,13 +1,13 @@
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
-import { topBarInset } from "@/view/topBarInset";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { tokens, type ColorPalette } from "@/view/tokens";
-import { useTheme } from "@/view/theme/ThemeProvider";
 import { AppIcon } from "@/view/components/AppIcon";
-import { useGuardedPress } from "@/view/useGuardedPress";
-import { useIsWideWeb, useHydratedWindowWidth } from "@/view/useIsWideWeb";
 import { triggerHaptic } from "@/view/haptics";
+import { useTheme } from "@/view/theme/ThemeProvider";
+import { type ColorPalette, tokens } from "@/view/tokens";
+import { topBarInset } from "@/view/topBarInset";
+import { useGuardedPress } from "@/view/useGuardedPress";
+import { useHydratedWindowWidth, useIsWideWeb } from "@/view/useIsWideWeb";
 
 export type TopAppBarProps = {
   title: string;
@@ -30,10 +30,11 @@ export type TopAppBarProps = {
  * competir com o cabeçalho do site nem com a manchete da tela.
  */
 export function TopAppBar({ title, onBack, floating = false, contentMaxWidth, alignToWindow = true }: TopAppBarProps) {
-  const guardedBack = useGuardedPress(() => {
+  const handleBack = useCallback(() => {
     if (Platform.OS === "ios") triggerHaptic("light");
     onBack();
-  });
+  }, [onBack]);
+  const guardedBack = useGuardedPress(handleBack);
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const styles = useMemo(() => createStyles(colors), [colors]);

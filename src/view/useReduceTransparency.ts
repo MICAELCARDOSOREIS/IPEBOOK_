@@ -10,17 +10,24 @@ export function useReduceTransparency(): boolean {
 
   useEffect(() => {
     let mounted = true;
+    let eventReceived = false;
+
     if (Platform.OS === "ios" && typeof AccessibilityInfo?.isReduceTransparencyEnabled === "function") {
       AccessibilityInfo.isReduceTransparencyEnabled()
         .then((enabled) => {
-          if (mounted) setReduceTransparency(Boolean(enabled));
+          if (mounted && !eventReceived) {
+            setReduceTransparency(Boolean(enabled));
+          }
         })
         .catch(() => {});
 
       const sub = AccessibilityInfo.addEventListener?.(
         "reduceTransparencyChanged",
         (enabled: boolean) => {
-          if (mounted) setReduceTransparency(Boolean(enabled));
+          eventReceived = true;
+          if (mounted) {
+            setReduceTransparency(Boolean(enabled));
+          }
         },
       );
 
