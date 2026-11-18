@@ -1,11 +1,9 @@
 import { useMemo } from "react";
-import { Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
-import { useIsWideWeb } from "@/view/useIsWideWeb";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Platform, ScrollView, StyleSheet, Text, View } from "react-native";
+import { BottomSheet } from "@/view/components/BottomSheet";
 import { Chip } from "@/view/components/Chip";
 import { FilledButton } from "@/view/components/FilledButton";
 import { TextButton } from "@/view/components/TextButton";
-import { TopAppBar } from "@/view/components/TopAppBar";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { triggerHaptic } from "@/view/haptics";
@@ -43,9 +41,10 @@ export type FilterSheetProps = {
 };
 
 /**
- * "Filtrar livros" (Figma `02.03`): tela cheia com modalidade, categoria, conservação, preço e
- * ordenação. As escolhas ficam num rascunho (`draftFilters`) e só valem ao tocar em
- * "Mostrar N livros", o que permite desistir da edição voltando pela barra superior.
+ * "Filtrar livros" (Figma `02.03` / Apple HIG Spec 137, Issue #229):
+ * Folha inferior (BottomSheet) unificada com drag handle superior, gesto de arraste (swipe-down)
+ * para fechar, acabamento Liquid Glass no iOS e botões de ação ("Limpar" e "Aplicar")
+ * fixados no rodapé logo acima do Home Indicator.
  */
 export function FilterSheet({
   visible,
@@ -61,12 +60,9 @@ export function FilterSheet({
 }: FilterSheetProps) {
   const { colors, resolvedScheme } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const wideWeb = useIsWideWeb();
-  const { width } = useWindowDimensions();
   const isIos = Platform.OS === "ios";
   const categories = useMemo(() => {
     const list = [...availableCategories];
-    // Uma categoria aplicada pode ter saído do catálogo; mantê-la evita perder o filtro em edição.
     if (draftFilters.category !== "all" && !list.includes(draftFilters.category)) {
       list.unshift(draftFilters.category);
     }
@@ -74,23 +70,21 @@ export function FilterSheet({
   }, [availableCategories, draftFilters.category]);
 
   return (
-    <Modal
+    <BottomSheet
       visible={visible}
-      animationType={wideWeb ? "fade" : "slide"}
-      transparent={wideWeb}
-      // App em tela cheia: sem isto o Android pinta faixas cinza sob a barra de status e a de navegação.
-      statusBarTranslucent
-      navigationBarTranslucent
-      onRequestClose={onClose}
-      accessibilityViewIsModal
-      aria-modal
+      onClose={onClose}
+      title="Filtrar livros"
+      testID="filter-sheet"
+      showCloseButton
+      style={styles.sheet}
     >
-      {/* Web larga: diálogo centralizado sobre um véu, em vez de uma página esticada pela janela. */}
-      <View style={wideWeb ? styles.scrim : styles.page}>
-      {wideWeb ? <Pressable accessibilityLabel="Fechar filtros" onPress={onClose} style={StyleSheet.absoluteFill} /> : null}
-      <SafeAreaView style={[styles.page, wideWeb && styles.dialog]}>
-        <TopAppBar title="Filtrar livros" onBack={onClose} contentMaxWidth={wideWeb ? width : undefined} />
-        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <View style={styles.container}>
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
           <Text accessibilityRole="header" style={styles.heading}>
             Uma leitura do seu jeito.
           </Text>
@@ -104,7 +98,9 @@ export function FilterSheet({
                   size="regular"
                   label={MODALITY_FILTER_LABELS[modality]}
                   accessibilityLabel={
-                    modality === "all" ? "Filtrar por todas as modalidades" : `Filtrar por ${MODALITY_FILTER_LABELS[modality]}`
+                    modality === "all"
+                      ? "Filtrar por todas as modalidades"
+                      : `Filtrar por ${MODALITY_FILTER_LABELS[modality]}`
                   }
                   tone={modality === "all" ? undefined : colors.badge[modality]}
                   selected={draftFilters.modality === modality}
@@ -226,7 +222,11 @@ export function FilterSheet({
             />
             <View style={styles.footerPrimary}>
               <FilledButton
-                label={resultCount === 0 ? "Ver resultados" : `Mostrar ${resultCount} ${resultCount === 1 ? "livro" : "livros"}`}
+                label={
+                  resultCount === 0
+                    ? "Ver resultados"
+                    : `Mostrar ${resultCount} ${resultCount === 1 ? "livro" : "livros"}`
+                }
                 accessibilityLabel={`Mostrar ${resultCount} ${resultCount === 1 ? "livro" : "livros"}`}
                 onPress={() => {
                   if (isIos) triggerHaptic("selection");
@@ -236,24 +236,28 @@ export function FilterSheet({
             </View>
           </View>
         </View>
-      </SafeAreaView>
       </View>
-    </Modal>
+    </BottomSheet>
   );
 }
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
-    page: { flex: 1, backgroundColor: colors.background },
-    scrim: { flex: 1, alignItems: "center", justifyContent: "center", padding: tokens.spacing[24], backgroundColor: colors.m3.scrim },
-    dialog: { flex: 0, width: "100%", maxWidth: 640, height: "90%", maxHeight: 820, borderRadius: tokens.radius.xxl, overflow: "hidden" },
-    content: {
-      paddingHorizontal: tokens.spacing[24],
-      paddingTop: tokens.spacing[8],
-      paddingBottom: tokens.spacing[24],
-      gap: tokens.spacing[24],
+    sheet: {
+      height: "85%",
+      maxHeight: 760,
     },
-    // Figma `02.03`: manchete editorial em Source Serif, logo abaixo da barra superior.
+    container: {
+      flex: 1,
+      minHeight: 0,
+    },
+    scroll: {
+      flex: 1,
+    },
+    content: {
+      paddingBottom: tokens.spacing[16],
+      gap: tokens.spacing[20],
+    },
     heading: {
       ...tokens.typography.brandTitle,
       color: colors.text,
@@ -261,7 +265,7 @@ function createStyles(colors: ColorPalette) {
     },
     section: {
       gap: tokens.spacing[12],
-      paddingBottom: tokens.spacing[20],
+      paddingBottom: tokens.spacing[16],
       borderBottomWidth: StyleSheet.hairlineWidth,
       borderBottomColor: colors.m3.outlineVariant,
     },
@@ -269,25 +273,32 @@ function createStyles(colors: ColorPalette) {
       ...tokens.typography.titleMedium,
       color: colors.m3.onSurface,
     },
-    chipsRow: { flexDirection: "row", flexWrap: "wrap", columnGap: tokens.spacing[8], rowGap: tokens.spacing[8] },
-    radioGroup: { gap: tokens.spacing[4] },
-    radioRow: {
+    chipsRow: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      columnGap: tokens.spacing[8],
+      rowGap: tokens.spacing[8],
+    },
+    footer: {
+      paddingTop: tokens.spacing[12],
+      paddingBottom: tokens.spacing[4],
+      gap: tokens.spacing[8],
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: colors.m3.outlineVariant,
+    },
+    footerRow: {
       flexDirection: "row",
       alignItems: "center",
-      gap: tokens.spacing[16],
-      minHeight: tokens.accessibility.touchTarget,
-    },
-    radioLabel: { ...tokens.typography.bodyLarge, color: colors.m3.onSurface },
-    footer: {
-      paddingHorizontal: tokens.spacing[24],
-      paddingTop: tokens.spacing[12],
-      paddingBottom: tokens.spacing[8],
       gap: tokens.spacing[8],
-      backgroundColor: colors.m3.surfaceContainer,
     },
-    footerRow: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[8] },
-    footerPrimary: { flex: 1 },
-    emptyHint: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant, textAlign: "center" },
+    footerPrimary: {
+      flex: 1,
+    },
+    emptyHint: {
+      ...tokens.typography.bodyMedium,
+      color: colors.m3.onSurfaceVariant,
+      textAlign: "center",
+    },
   });
 }
 
