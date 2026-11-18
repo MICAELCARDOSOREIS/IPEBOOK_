@@ -3,42 +3,75 @@ import { Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-na
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { AppIcon } from "@/view/components/AppIcon";
+import { triggerHaptic } from "@/view/haptics";
 
 export type SearchFieldProps = {
   value: string;
   onChangeText: (value: string) => void;
   placeholder?: string;
   onSubmitEditing?: () => void;
+  onCancel?: () => void;
 };
 
 /** Campo de busca M3 Expressive (campo-de-busca.md): pílula com destaque de foco e botão Limpar elástico. */
-export function SearchField({ value, onChangeText, placeholder = "Buscar título, autor ou categoria", onSubmitEditing }: SearchFieldProps) {
+export function SearchField({ value, onChangeText, placeholder = "Buscar título, autor ou categoria", onSubmitEditing, onCancel }: SearchFieldProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [focused, setFocused] = useState(false);
+  const isIos = Platform.OS === "ios";
+
+  const handleClear = () => {
+    if (isIos) {
+      triggerHaptic("light");
+    }
+    onChangeText("");
+  };
+
+  const handleCancel = () => {
+    if (isIos) {
+      triggerHaptic("light");
+    }
+    onChangeText("");
+    setFocused(false);
+    onCancel?.();
+  };
+
   return (
-    <View style={[styles.container, focused && styles.containerFocused]}>
-      <AppIcon name="search" size={24} color={focused ? colors.m3.primary : colors.secondaryText} />
-      <TextInput
-        value={value}
-        onChangeText={onChangeText}
-        onSubmitEditing={onSubmitEditing}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
-        placeholder={placeholder}
-        placeholderTextColor={colors.secondaryText}
-        accessibilityLabel="Buscar livros"
-        style={styles.input}
-      />
-      {value.length > 0 ? (
+    <View style={styles.wrapper}>
+      <View style={[styles.container, focused && styles.containerFocused, isIos && styles.containerIos]}>
+        <AppIcon name="search" size={20} color={focused ? colors.m3.primary : colors.secondaryText} />
+        <TextInput
+          value={value}
+          onChangeText={onChangeText}
+          onSubmitEditing={onSubmitEditing}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          placeholder={placeholder}
+          placeholderTextColor={colors.secondaryText}
+          accessibilityLabel="Buscar livros"
+          style={styles.input}
+          clearButtonMode={isIos ? "never" : undefined}
+        />
+        {value.length > 0 ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Limpar busca"
+            hitSlop={8}
+            onPress={handleClear}
+            style={({ pressed }) => [styles.clearButton, pressed && styles.clearButtonPressed]}
+          >
+            <Text style={styles.clearIcon}>✕</Text>
+          </Pressable>
+        ) : null}
+      </View>
+      {isIos && (focused || value.length > 0) && onCancel ? (
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Limpar busca"
-          hitSlop={8}
-          onPress={() => onChangeText("")}
-          style={({ pressed }) => [styles.clearButton, pressed && styles.clearButtonPressed]}
+          accessibilityLabel="Cancelar busca"
+          onPress={handleCancel}
+          style={styles.cancelButton}
         >
-          <Text style={styles.clearIcon}>✕</Text>
+          <Text style={styles.cancelText}>Cancelar</Text>
         </Pressable>
       ) : null}
     </View>
@@ -47,7 +80,14 @@ export function SearchField({ value, onChangeText, placeholder = "Buscar título
 
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
+    wrapper: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[8],
+      width: "100%",
+    },
     container: {
+      flex: 1,
       flexDirection: "row",
       alignItems: "center",
       height: tokens.spacing[56],
@@ -57,6 +97,12 @@ function createStyles(colors: ColorPalette) {
       borderColor: colors.book.paperEdge,
       paddingHorizontal: tokens.spacing[20],
       gap: tokens.spacing[12],
+    },
+    containerIos: {
+      height: 44,
+      borderRadius: tokens.radius.cardSmall,
+      paddingHorizontal: tokens.spacing[12],
+      gap: tokens.spacing[8],
     },
     containerFocused: {
       backgroundColor: colors.m3.surfaceContainerHighest,
@@ -77,6 +123,17 @@ function createStyles(colors: ColorPalette) {
       transform: [{ scale: 0.9 }],
     },
     clearIcon: { color: colors.secondaryText, fontSize: tokens.fontSize[16] },
+    cancelButton: {
+      paddingHorizontal: tokens.spacing[8],
+      minHeight: 44,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    cancelText: {
+      ...tokens.typography.bodyLarge,
+      color: colors.m3.primary,
+      fontWeight: tokens.fontWeight.medium,
+    },
   });
 }
 

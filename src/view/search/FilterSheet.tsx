@@ -1,13 +1,14 @@
 import { useMemo } from "react";
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Chip } from "@/view/components/Chip";
 import { FilledButton } from "@/view/components/FilledButton";
 import { TextButton } from "@/view/components/TextButton";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
+import { triggerHaptic } from "@/view/haptics";
 import { categoryTone } from "@/view/categoryTone";
 import {
   CONDITION_FILTER_LABELS,
@@ -60,8 +61,10 @@ export function FilterSheet({
 }: FilterSheetProps) {
   const { colors, resolvedScheme } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const insets = useSafeAreaInsets();
   const wideWeb = useIsWideWeb();
   const { width } = useWindowDimensions();
+  const isIos = Platform.OS === "ios";
   const categories = useMemo(() => {
     const list = [...availableCategories];
     // Uma categoria aplicada pode ter saído do catálogo; mantê-la evita perder o filtro em edição.
@@ -207,19 +210,29 @@ export function FilterSheet({
           </View>
         </ScrollView>
 
-        <View style={styles.footer}>
+        <View style={[styles.footer, isIos && { paddingBottom: Math.max(tokens.spacing[12], insets.bottom + tokens.spacing[4]) }]}>
           {resultCount === 0 ? (
             <Text accessibilityRole="alert" style={styles.emptyHint}>
               Nenhum livro com essas escolhas. Tire algum filtro para ver mais.
             </Text>
           ) : null}
           <View style={styles.footerRow}>
-            <TextButton label="Limpar" accessibilityLabel="Limpar filtros" onPress={onReset} />
+            <TextButton
+              label="Limpar"
+              accessibilityLabel="Limpar filtros"
+              onPress={() => {
+                if (isIos) triggerHaptic("light");
+                onReset();
+              }}
+            />
             <View style={styles.footerPrimary}>
               <FilledButton
                 label={resultCount === 0 ? "Ver resultados" : `Mostrar ${resultCount} ${resultCount === 1 ? "livro" : "livros"}`}
                 accessibilityLabel={`Mostrar ${resultCount} ${resultCount === 1 ? "livro" : "livros"}`}
-                onPress={onApply}
+                onPress={() => {
+                  if (isIos) triggerHaptic("selection");
+                  onApply();
+                }}
               />
             </View>
           </View>

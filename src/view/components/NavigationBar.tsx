@@ -4,6 +4,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
+import { useReduceTransparency } from "@/view/useReduceTransparency";
+import { triggerHaptic } from "@/view/haptics";
 
 export type NavigationDestination = "home" | "search" | "shelf" | "conversations" | "profile";
 
@@ -45,7 +47,8 @@ function getPillTargetX(index: number, totalItems: number, containerWidth: numbe
 export function NavigationBar({ active, onNavigate, disabledDestinations = [], badges = {} }: NavigationBarProps) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const reduceTransparency = useReduceTransparency();
+  const styles = useMemo(() => createStyles(colors, reduceTransparency), [colors, reduceTransparency]);
   const [hoveredKey, setHoveredKey] = useState<NavigationDestination | null>(null);
   const [dockWidth, setDockWidth] = useState(INITIAL_DOCK_MAX_WIDTH);
   const [optimisticActive, setOptimisticActive] = useState<NavigationDestination>(active);
@@ -148,6 +151,7 @@ export function NavigationBar({ active, onNavigate, disabledDestinations = [], b
                 }
                 lastNavigateTime.current = now;
                 setOptimisticActive(item.key);
+                triggerHaptic("selection");
                 onNavigate(item.key);
               }}
               style={({ pressed }) => [
@@ -257,10 +261,17 @@ const stylesLocal = StyleSheet.create({
   iconLayer: { zIndex: 1 },
 });
 
-function createStyles(colors: ColorPalette) {
+function createStyles(colors: ColorPalette, reduceTransparency: boolean = false) {
   const isWeb = Platform.OS === "web";
+  const isIos = Platform.OS === "ios";
   const webDockBg =
     colors.surface === "#FCFAF5" ? "rgba(252, 250, 245, 0.92)" : "rgba(29, 27, 25, 0.90)";
+
+  // Liquid Glass no iOS (Spec 137 / ADR 0008, ADR 0114): vidro translúcido com fallback sólido ao reduzir transparência
+  const dockBg = isIos
+    ? (reduceTransparency ? colors.m3.surfaceContainer : colors.glass.fill)
+    : (isWeb ? webDockBg : colors.surface);
+  const dockBorderColor = isIos && !reduceTransparency ? colors.glass.stroke : colors.m3.outlineVariant;
 
   return StyleSheet.create({
     floatingWrapper: {
@@ -282,12 +293,12 @@ function createStyles(colors: ColorPalette) {
       alignItems: "center",
       width: "100%",
       maxWidth: INITIAL_DOCK_MAX_WIDTH,
-      backgroundColor: isWeb ? webDockBg : colors.surface,
+      backgroundColor: dockBg,
       borderRadius: tokens.radius.full,
       paddingVertical: DOCK_VERTICAL_PADDING,
       paddingHorizontal: DOCK_HORIZONTAL_PADDING,
       borderWidth: 1,
-      borderColor: colors.m3.outlineVariant,
+      borderColor: dockBorderColor,
       overflow: "hidden",
       elevation: 4,
       shadowColor: colors.m3.shadow,

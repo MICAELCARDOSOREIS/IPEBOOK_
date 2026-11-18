@@ -5,6 +5,7 @@ import { useTheme } from "@/view/theme/ThemeProvider";
 import { AppIcon } from "@/view/components/AppIcon";
 import { useExpressivePress } from "@/view/useExpressivePress";
 import { useGuardedPress } from "@/view/useGuardedPress";
+import { triggerHaptic } from "@/view/haptics";
 import { makeFavoriteButtonViewModel } from "@/di/container";
 
 export type FavoriteButtonProps = {
@@ -34,6 +35,9 @@ export function FavoriteButton({ bookId, userId, onToggleSuccess, variant = "def
   const handleToggle = useGuardedPress(async () => {
     setShowToggleError(true);
     const wasSelected = state.selected;
+    if (Platform.OS === "ios") {
+      triggerHaptic("selection");
+    }
     await actions.toggle();
     onToggleSuccess?.(!wasSelected);
   });

@@ -22,7 +22,7 @@
 | :--- | :--- | :--- |
 | **Android** (`com.ipebook.app`) | **Publicado na Play Store (`0.2.0`)** | Validado ponta a ponta em aparelho real |
 | **Web / PWA** (`https://ipebook.app`) | **No ar — republicação pendente** | Build local validado com 7/7 cenários E2E CDP; falta novo deploy no Cloudflare Pages |
-| **iOS** | **PWA (Safari) entregue · Nativo planejado** | PWA adequado ao Apple HIG (Spec 136); app nativo especificado na [Spec 137](../specs/137-ios-nativo-apple-hig/spec.md) |
+| **iOS** | **PWA entregue · Nativo em implementação** | PWA adequado ao Apple HIG (Spec 136); no app nativo ([Spec 137](../specs/137-ios-nativo-apple-hig/spec.md)), base Liquid Glass ([ADR 0114](adr/0114-base-liquid-glass-apple-hig.md), T002) e Descoberta/Busca ([ADR 0115](adr/0115-padronizacao-apple-hig-descoberta-busca-ios.md), T004) já entregues por Maria Clara |
 
 ---
 
@@ -88,7 +88,7 @@
 | **Cobertura (Functions / Branches)** | **85,19%** / **86,05%** |
 | **Saúde arquitetural** | **496 arquivos** sem violações de imports |
 | **Rotas estáticas** | **46 arquivos** em `src/app/` (`44` rotas navegáveis) |
-| **Documentação técnica** | **137 specs** e **113 ADRs** |
+| **Documentação técnica** | **137 specs** e **115 ADRs** |
 | **Migrações Supabase** | **43/43** aplicadas e validadas com PGlite |
 
 ---
@@ -98,7 +98,7 @@
 | Integrante | Frentes Principais |
 | :--- | :--- |
 | **Micael Cardoso Reis** | Arquitetura MVVM, governança/CI, Design System M3, validações automatizadas e recursos hiperlocais (bairros, QR Code, busca) |
-| **Maria Clara Almeida Martins** | Identidade Visual e IHC (Design System Ipê), tema escuro, acessibilidade (WCAG 2.1 AA / TalkBack), onboarding, catálogo, perfil e estados de UI |
+| **Maria Clara Almeida Martins** | Identidade Visual e IHC (Design System Ipê), tema escuro, acessibilidade (WCAG 2.1 AA / TalkBack), onboarding, catálogo, perfil, estados de UI e iOS Nativo Apple HIG / Liquid Glass (ADRs 0114 e 0115) |
 | **Antonio Carlos Gomes** | Ciclo de negociação, cadastro/gestão de anúncios, integração ISBN (BrasilAPI), boxes/coleções e moderação comunitária |
 | **Eric Vinícius dos Santos Oliveira** | Definição de escopo de produto e plataformas (Android/Web) e consolidação documental de conformidade e rastreabilidade |
 

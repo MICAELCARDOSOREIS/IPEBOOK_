@@ -133,6 +133,7 @@ function executar() {
     const res = spawnSync(NPM_BIN, etapa.args, {
       cwd: RAIZ,
       stdio: ["ignore", "inherit", "inherit"],
+      shell: process.platform === "win32",
       env: etapa.env ? { ...process.env, ...etapa.env } : process.env,
     });
 
