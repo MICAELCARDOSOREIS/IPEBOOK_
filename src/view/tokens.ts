@@ -128,6 +128,13 @@ export const colors = {
     scrim: "#00000052",
     shadow: "#000000",
   },
+
+  // Vidro Liquid Glass (iOS 26 / ADR 0008, Spec 137, design-system/tokens.json)
+  glass: {
+    fill: "rgba(252, 250, 245, 0.58)",
+    stroke: "rgba(255, 255, 255, 0.75)",
+    fillDark: "rgba(30, 30, 30, 0.42)",
+  },
 } as const;
 
 /** Mesma forma de `colors`, com folhas widened para `string` — permite que `colors` e `darkColors`
@@ -260,6 +267,13 @@ export const darkColors: ColorPalette = {
     focusRing: "#4e8a68",
     scrim: "#00000052",
     shadow: "#000000",
+  },
+
+  // Vidro Liquid Glass no tema escuro (iOS 26 / ADR 0008, Spec 137, design-system/tokens.json)
+  glass: {
+    fill: "rgba(40, 37, 34, 0.55)",
+    stroke: "rgba(255, 255, 255, 0.15)",
+    fillDark: "rgba(30, 30, 30, 0.50)",
   },
 } as const;
 

@@ -7,14 +7,14 @@
   - Atualizar escopo de iOS Nativo via ADR vinculado ao ADR 0008.
   - Configurar `ios` em `app.json` (`bundleIdentifier`, `infoPlist` em PT-BR, ícones, deep links) e validar `npm run check:build-config`.
 
-- [ ] **T002 (Issue #2) — Base Liquid Glass e componentes Apple HIG no Design System**
+- [x] **T002 (Issue #2) — Base Liquid Glass e componentes Apple HIG no Design System**
   - Implementar suporte isolado `Platform.OS === 'ios'` em `ScreenContainer`, `ConnectedNavigationBar`, `TopAppBar` e `BottomSheet`.
   - Adicionar suporte a Reduzir Transparência, alvos `≥ 44×44 pt` e feedback tátil (*Haptics*).
 
 - [ ] **T003 (Issue #3) — Adequar Fluxo 01: Acesso e Onboarding (17 telas Figma)**
   - Adequar `bem-vindo.tsx`, `entrar.tsx`, `criar-conta.tsx`, `esqueci-senha.tsx`, `redefinir-senha.tsx`, `auth/callback.tsx` para iPhone nativo.
 
-- [ ] **T004 (Issue #4) — Adequar Fluxos 02 e 03: Descoberta, Detalhe do Livro e Perfil Público (22 telas Figma)**
+- [x] **T004 (Issue #4) — Adequar Fluxos 02 e 03: Descoberta, Detalhe do Livro e Perfil Público (22 telas Figma)**
   - Adequar `index.tsx`, `pesquisa.tsx`, `favoritos.tsx`, `alertas.tsx`, `alertas/[id].tsx`, `alertas/[id]/editar.tsx`, `livro/[id].tsx` e `perfil/[userId].tsx`.
 
 - [ ] **T005 (Issue #5) — Adequar Fluxos 04 e 05: Publicação e Minha Estante (29 telas Figma)**

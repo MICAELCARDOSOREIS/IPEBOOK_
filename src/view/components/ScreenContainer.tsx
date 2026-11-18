@@ -1,5 +1,14 @@
 import { useMemo, type ReactNode } from "react";
-import { ScrollView, StyleSheet, View, type RefreshControlProps, type StyleProp, type ViewStyle } from "react-native";
+import {
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  View,
+  type RefreshControlProps,
+  type StyleProp,
+  type ViewStyle,
+} from "react-native";
 import { SafeAreaView, type Edge } from "react-native-safe-area-context";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
@@ -30,6 +39,10 @@ export type ScreenContainerProps = {
   /** Estilo extra aplicado à coluna de conteúdo (ex.: `flexGrow`, `gap`). */
   contentStyle?: StyleProp<ViewStyle>;
   testID?: string;
+  /** Se ativa KeyboardAvoidingView no iOS para proteger botões e campos de formulário (Apple HIG / Spec 137). */
+  keyboardAvoiding?: boolean;
+  /** Offset vertical extra para o KeyboardAvoidingView no iOS quando há header fixo. */
+  keyboardVerticalOffset?: number;
 };
 
 /**
@@ -52,6 +65,8 @@ export function ScreenContainer({
   overlay,
   contentStyle,
   testID,
+  keyboardAvoiding = false,
+  keyboardVerticalOffset = 0,
 }: ScreenContainerProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -66,21 +81,36 @@ export function ScreenContainer({
     contentStyle,
   ];
 
+  const body = scroll ? (
+    <ScrollView
+      {...standardVerticalScrollProps}
+      style={styles.scroll}
+      contentContainerStyle={columnStyle}
+      refreshControl={refreshControl}
+    >
+      {children}
+    </ScrollView>
+  ) : (
+    <View style={[styles.scroll, columnStyle]}>{children}</View>
+  );
+
+  const mainContent =
+    Platform.OS === "ios" && keyboardAvoiding ? (
+      <KeyboardAvoidingView
+        behavior="padding"
+        keyboardVerticalOffset={keyboardVerticalOffset}
+        style={styles.keyboardView}
+      >
+        {body}
+      </KeyboardAvoidingView>
+    ) : (
+      body
+    );
+
   return (
     <SafeAreaView edges={edges} style={styles.page} testID={testID}>
       {header}
-      {scroll ? (
-        <ScrollView
-          {...standardVerticalScrollProps}
-          style={styles.scroll}
-          contentContainerStyle={columnStyle}
-          refreshControl={refreshControl}
-        >
-          {children}
-        </ScrollView>
-      ) : (
-        <View style={[styles.scroll, columnStyle]}>{children}</View>
-      )}
+      {mainContent}
       {overlay}
     </SafeAreaView>
   );
@@ -89,6 +119,7 @@ export function ScreenContainer({
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     page: { flex: 1, backgroundColor: colors.surface, position: "relative", minHeight: 0 },
+    keyboardView: { flex: 1, width: "100%" },
     scroll: { flex: 1, width: "100%" },
     content: {
       flexGrow: 1,
