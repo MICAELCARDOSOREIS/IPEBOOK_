@@ -1,7 +1,7 @@
 /** @type {import('jest').Config} */
 module.exports = {
   testEnvironment: "node",
-  testTimeout: 30000,
+  testTimeout: 15000,
   maxWorkers: 6,
   setupFiles: ["<rootDir>/tests/setupNodeReactNative.cjs"],
   setupFilesAfterEnv: ["<rootDir>/tests/setupTests.ts"],
@@ -34,6 +34,8 @@ module.exports = {
     "^expo-notifications$": "<rootDir>/tests/mocks/expo-notifications.ts",
     "^react-native-view-shot$": "<rootDir>/tests/mocks/react-native-view-shot.ts",
     "^expo-store-review$": "<rootDir>/tests/mocks/expo-store-review.ts",
+    "^expo-haptics$": "<rootDir>/tests/mocks/expo-haptics.ts",
+    "^expo-blur$": "<rootDir>/tests/mocks/expo-blur.ts",
     "^@react-native-google-signin/google-signin$": "<rootDir>/tests/mocks/google-signin.ts",
     "^@sentry/react-native$": "<rootDir>/tests/mocks/sentry-react-native.ts",
   },

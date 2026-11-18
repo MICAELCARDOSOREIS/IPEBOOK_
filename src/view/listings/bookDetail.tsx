@@ -640,7 +640,7 @@ export default function BookDetail({
 
       {/* 6. Barra fixa inferior: ação principal por modalidade */}
       {actionBar && !wideWeb ? (
-        <SafeAreaView edges={["bottom"]} style={[styles.bottomBarContainer, Platform.OS === "ios" && { paddingBottom: Math.max(tokens.spacing[8], insets.bottom) }]}>
+        <SafeAreaView edges={["bottom"]} style={styles.bottomBarContainer}>
           {actionBar}
         </SafeAreaView>
       ) : null}

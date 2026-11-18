@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Chip } from "@/view/components/Chip";
 import { FilledButton } from "@/view/components/FilledButton";
 import { TextButton } from "@/view/components/TextButton";
@@ -61,7 +61,6 @@ export function FilterSheet({
 }: FilterSheetProps) {
   const { colors, resolvedScheme } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const insets = useSafeAreaInsets();
   const wideWeb = useIsWideWeb();
   const { width } = useWindowDimensions();
   const isIos = Platform.OS === "ios";
@@ -210,7 +209,7 @@ export function FilterSheet({
           </View>
         </ScrollView>
 
-        <View style={[styles.footer, isIos && { paddingBottom: Math.max(tokens.spacing[12], insets.bottom + tokens.spacing[4]) }]}>
+        <View style={styles.footer}>
           {resultCount === 0 ? (
             <Text accessibilityRole="alert" style={styles.emptyHint}>
               Nenhum livro com essas escolhas. Tire algum filtro para ver mais.

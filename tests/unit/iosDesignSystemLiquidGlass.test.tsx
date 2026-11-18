@@ -1,5 +1,6 @@
-import { act, fireEvent, render } from "@testing-library/react-native";
+import { fireEvent, render } from "@testing-library/react-native";
 import { AccessibilityInfo, Platform, Text, View } from "react-native";
+import * as Haptics from "expo-haptics";
 import { BottomSheet } from "@/view/components/BottomSheet";
 import { NavigationBar } from "@/view/components/NavigationBar";
 import { ScreenContainer } from "@/view/components/ScreenContainer";
@@ -17,7 +18,7 @@ describe("iOS Nativo · Design System Liquid Glass & Apple HIG (Spec 137, ADR 01
   });
 
   describe("Tokens Liquid Glass", () => {
-    it("declara tokens contratuais de vidro para tema claro e escuro", () => {
+    it("declara tokens contratuais de vidro para tema claro e escuro em conformidade com design-system/tokens.json", () => {
       expect(colors.glass).toBeDefined();
       expect(colors.glass.fill).toBe("rgba(252, 250, 245, 0.58)");
       expect(colors.glass.stroke).toBe("rgba(255, 255, 255, 0.75)");
@@ -47,25 +48,72 @@ describe("iOS Nativo · Design System Liquid Glass & Apple HIG (Spec 137, ADR 01
       const screen = await render(<TestComponent />);
       expect(screen.getByTestId("val").props.children).toBe("true");
     });
+
+    it("registra listener para o evento reduceTransparencyChanged no iOS", async () => {
+      Object.defineProperty(Platform, "OS", { value: "ios", configurable: true });
+      let listenerCallback: ((enabled: boolean) => void) | undefined;
+      jest.spyOn(AccessibilityInfo, "addEventListener").mockImplementation((event: string, cb: any) => {
+        if (event === "reduceTransparencyChanged") {
+          listenerCallback = cb;
+        }
+        return { remove: jest.fn() } as any;
+      });
+
+      function TestComponent() {
+        const reduced = useReduceTransparency();
+        return <Text testID="val">{String(reduced)}</Text>;
+      }
+      await render(<TestComponent />);
+      expect(AccessibilityInfo.addEventListener).toHaveBeenCalledWith("reduceTransparencyChanged", expect.any(Function));
+      expect(listenerCallback).toBeDefined();
+    });
   });
 
   describe("triggerHaptic", () => {
-    it("executa com segurança sem lançar exceções em todas as variações", () => {
-      Object.defineProperty(Platform, "OS", { value: "ios", configurable: true });
-      expect(() => {
-        triggerHaptic("light");
-        triggerHaptic("medium");
-        triggerHaptic("heavy");
-        triggerHaptic("selection");
-        triggerHaptic("success");
-        triggerHaptic("warning");
-        triggerHaptic("error");
-      }).not.toThrow();
+    let impactSpy: jest.SpyInstance;
+    let selectionSpy: jest.SpyInstance;
+    let notificationSpy: jest.SpyInstance;
+
+    beforeEach(() => {
+      impactSpy = jest.spyOn(Haptics, "impactAsync").mockResolvedValue();
+      selectionSpy = jest.spyOn(Haptics, "selectionAsync").mockResolvedValue();
+      notificationSpy = jest.spyOn(Haptics, "notificationAsync").mockResolvedValue();
     });
 
-    it("é no-op fora do iOS", () => {
+    it("dispara as APIs corretas do expo-haptics no iOS", () => {
+      Object.defineProperty(Platform, "OS", { value: "ios", configurable: true });
+
+      triggerHaptic("light");
+      expect(impactSpy).toHaveBeenCalledWith(Haptics.ImpactFeedbackStyle.Light);
+
+      triggerHaptic("medium");
+      expect(impactSpy).toHaveBeenCalledWith(Haptics.ImpactFeedbackStyle.Medium);
+
+      triggerHaptic("heavy");
+      expect(impactSpy).toHaveBeenCalledWith(Haptics.ImpactFeedbackStyle.Heavy);
+
+      triggerHaptic("selection");
+      expect(selectionSpy).toHaveBeenCalled();
+
+      triggerHaptic("success");
+      expect(notificationSpy).toHaveBeenCalledWith(Haptics.NotificationFeedbackType.Success);
+
+      triggerHaptic("warning");
+      expect(notificationSpy).toHaveBeenCalledWith(Haptics.NotificationFeedbackType.Warning);
+
+      triggerHaptic("error");
+      expect(notificationSpy).toHaveBeenCalledWith(Haptics.NotificationFeedbackType.Error);
+    });
+
+    it("é no-op fora do iOS sem acionar expo-haptics", () => {
+      impactSpy.mockClear();
+      selectionSpy.mockClear();
+      notificationSpy.mockClear();
       Object.defineProperty(Platform, "OS", { value: "android", configurable: true });
-      expect(() => triggerHaptic("selection")).not.toThrow();
+      triggerHaptic("selection");
+      triggerHaptic("light");
+      expect(impactSpy).not.toHaveBeenCalled();
+      expect(selectionSpy).not.toHaveBeenCalled();
     });
   });
 
@@ -73,11 +121,13 @@ describe("iOS Nativo · Design System Liquid Glass & Apple HIG (Spec 137, ADR 01
     it("envolve conteúdo com KeyboardAvoidingView no iOS quando keyboardAvoiding=true", async () => {
       Object.defineProperty(Platform, "OS", { value: "ios", configurable: true });
       const screen = await render(
-        <ScreenContainer keyboardAvoiding keyboardVerticalOffset={20}>
-          <Text>Conteúdo iOS</Text>
+        <ScreenContainer keyboardAvoiding keyboardVerticalOffset={24} testID="screen-container">
+          <Text>Conteúdo iOS com teclado</Text>
         </ScreenContainer>,
       );
-      expect(screen.getByText("Conteúdo iOS")).toBeDefined();
+      expect(screen.getByText("Conteúdo iOS com teclado")).toBeDefined();
+      const container = screen.getByTestId("screen-container");
+      expect(container).toBeDefined();
     });
 
     it("renderiza normalmente sem KeyboardAvoidingView no Android", async () => {
@@ -92,7 +142,7 @@ describe("iOS Nativo · Design System Liquid Glass & Apple HIG (Spec 137, ADR 01
   });
 
   describe("NavigationBar (Liquid Glass e Apple HIG)", () => {
-    it("renderiza dock flutuante com acabamento Liquid Glass no iOS", async () => {
+    it("renderiza dock flutuante com acabamento Liquid Glass e BlurView no iOS", async () => {
       Object.defineProperty(Platform, "OS", { value: "ios", configurable: true });
       jest.spyOn(AccessibilityInfo, "isReduceTransparencyEnabled").mockResolvedValue(false);
 
@@ -102,6 +152,9 @@ describe("iOS Nativo · Design System Liquid Glass & Apple HIG (Spec 137, ADR 01
       const tablist = screen.getByTestId("navigation-bar-tablist");
       expect(tablist).toBeDefined();
 
+      const blurView = screen.getByTestId("blur-view");
+      expect(blurView).toBeDefined();
+
       const tabs = screen.getAllByRole("tab");
       expect(tabs.length).toBe(3);
 
@@ -109,7 +162,7 @@ describe("iOS Nativo · Design System Liquid Glass & Apple HIG (Spec 137, ADR 01
       expect(onNavigate).toHaveBeenCalledWith("search");
     });
 
-    it("aplica fallback opaco quando Reduzir Transparência estiver ativo no iOS", async () => {
+    it("aplica fallback opaco sem BlurView quando Reduzir Transparência estiver ativo no iOS", async () => {
       Object.defineProperty(Platform, "OS", { value: "ios", configurable: true });
       jest.spyOn(AccessibilityInfo, "isReduceTransparencyEnabled").mockResolvedValue(true);
 
@@ -117,6 +170,7 @@ describe("iOS Nativo · Design System Liquid Glass & Apple HIG (Spec 137, ADR 01
       const screen = await render(<NavigationBar active="home" onNavigate={onNavigate} />);
 
       expect(screen.getByTestId("navigation-bar-tablist")).toBeDefined();
+      expect(screen.queryByTestId("blur-view")).toBeNull();
     });
   });
 
@@ -142,7 +196,10 @@ describe("iOS Nativo · Design System Liquid Glass & Apple HIG (Spec 137, ADR 01
   });
 
   describe("BottomSheet (Apple HIG & Acessibilidade)", () => {
-    it("renderiza com modal de acessibilidade, drag handle e cantos contínuos de 28 dp", async () => {
+    it("renderiza com modal de acessibilidade, drag handle, BlurView no iOS e cantos de 28 dp", async () => {
+      Object.defineProperty(Platform, "OS", { value: "ios", configurable: true });
+      jest.spyOn(AccessibilityInfo, "isReduceTransparencyEnabled").mockResolvedValue(false);
+
       const onClose = jest.fn();
       const screen = await render(
         <BottomSheet visible onClose={onClose} title="Opções do Livro" showCloseButton testID="modal-sheet">
@@ -152,8 +209,11 @@ describe("iOS Nativo · Design System Liquid Glass & Apple HIG (Spec 137, ADR 01
         </BottomSheet>,
       );
 
-      expect(screen.getByTestId("modal-sheet")).toBeDefined();
+      const sheetModal = screen.getByTestId("modal-sheet");
+      expect(sheetModal).toBeDefined();
+      expect(screen.getByTestId("bottom-sheet-drag-area")).toBeDefined();
       expect(screen.getByTestId("bottom-sheet-handle")).toBeDefined();
+      expect(screen.getByTestId("blur-view")).toBeDefined();
       expect(screen.getByText("Opções do Livro")).toBeDefined();
       expect(screen.getByText("Conteúdo da folha")).toBeDefined();
 

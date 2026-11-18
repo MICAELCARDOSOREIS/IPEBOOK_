@@ -1,4 +1,3 @@
-import React from "react";
 import { Platform } from "react-native";
 import { act, fireEvent, render } from "@testing-library/react-native";
 import { FavoriteButton } from "@/view/components/FavoriteButton";
@@ -6,7 +5,7 @@ import { SearchField } from "@/view/components/SearchField";
 import { SortSheet } from "@/view/search/SortSheet";
 import { FilterSheet } from "@/view/search/FilterSheet";
 import * as HapticsModule from "@/view/haptics";
-import type { SearchFilters, SearchSortOption } from "@/viewmodel/searchFilters";
+import type { SearchFilters } from "@/viewmodel/searchFilters";
 
 jest.mock("@/di/container", () => {
   const actual = jest.requireActual("@/di/container");
@@ -64,7 +63,7 @@ describe("iOS Nativo — Fluxos 02 e 03: Descoberta e Busca (Spec 137, Issue #22
       Platform.OS = "ios";
       const onCancelMock = jest.fn();
       const onChangeMock = jest.fn();
-      const { getByRole, getByLabelText } = await render(
+      const { getByRole } = await render(
         <SearchField
           value="Machado de Assis"
           onChangeText={onChangeMock}

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AccessibilityInfo, Animated, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { BlurView } from "expo-blur";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
@@ -114,6 +115,15 @@ export function NavigationBar({ active, onNavigate, disabledDestinations = [], b
           }
         }}
       >
+        {Platform.OS === "ios" && !reduceTransparency ? (
+          <BlurView
+            pointerEvents="none"
+            tint={colors.surface === "#FCFAF5" ? "light" : "dark"}
+            intensity={60}
+            style={StyleSheet.absoluteFill}
+          />
+        ) : null}
+
         {/* Pílula Deslizante Contínua Material 3 Expressive */}
         {hasActiveItem ? (
           <Animated.View
