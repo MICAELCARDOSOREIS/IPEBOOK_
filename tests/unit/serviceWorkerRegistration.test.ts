@@ -1,12 +1,13 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { runInNewContext } from "node:vm";
+import { BOOK_COLUMNS } from "@/infra/datasources/supabaseBookDataSource";
 import {
   APP_SHELL_URLS,
   CATALOG_CACHE_NAME,
   DYNAMIC_CACHE_NAME,
   STATIC_CACHE_NAME,
   classifyRequest,
-  createOfflineCatalogResponse,
   createOfflineHtmlResponse,
 } from "@/infra/pwa/serviceWorkerLogic";
 
@@ -50,9 +51,10 @@ describe("Service Worker Registration e Simulação de Interceptação (Spec 041
     it("evento activate purga caches legados mantendo apenas os ativos", async () => {
       const existingCaches = [
         "ipebook-static-v1",
-        "ipebook-catalog-v1",
-        "ipebook-dynamic-v1",
+        "ipebook-catalog-v2",
+        "ipebook-dynamic-v2",
         "ipebook-static-v0-legado",
+        "ipebook-dynamic-v1",
         "cache-antigo-desconhecido",
       ];
       const activeCaches = [STATIC_CACHE_NAME, DYNAMIC_CACHE_NAME, CATALOG_CACHE_NAME];
@@ -61,8 +63,9 @@ describe("Service Worker Registration e Simulação de Interceptação (Spec 041
       const toDelete = existingCaches.filter((c) => !activeCaches.includes(c));
       await Promise.all(toDelete.map((c) => deleteMock(c)));
 
-      expect(deleteMock).toHaveBeenCalledTimes(2);
+      expect(deleteMock).toHaveBeenCalledTimes(3);
       expect(deleteMock).toHaveBeenCalledWith("ipebook-static-v0-legado");
+      expect(deleteMock).toHaveBeenCalledWith("ipebook-dynamic-v1");
       expect(deleteMock).toHaveBeenCalledWith("cache-antigo-desconhecido");
     });
   });
@@ -117,48 +120,48 @@ describe("Service Worker Registration e Simulação de Interceptação (Spec 041
       expect(text).toContain("IpêBook Piripiri");
     });
 
-    it("catálogo de livros offline com cache hit retorna dados previamente armazenados", async () => {
-      const request = {
-        method: "GET",
-        url: "https://xiuuiggpccpgrwkzeloc.supabase.co/rest/v1/livros?select=*",
-      };
-      expect(classifyRequest(request)).toBe("catalog");
-
-      const mockSavedCatalog = new Response(JSON.stringify([{ id: "1", title: "Dom Casmurro" }]), {
-        headers: { "Content-Type": "application/json" },
+    it("o worker publicado só armazena o catálogo público e responde 503 sem cache", async () => {
+      const apiKey = "sb_publishable_teste";
+      const url = new URL("https://projeto.supabase.co/rest/v1/v2_books");
+      url.searchParams.set("select", BOOK_COLUMNS);
+      url.searchParams.append("status", "neq.paused");
+      url.searchParams.append("status", "neq.draft");
+      url.searchParams.append("status", "neq.delivered");
+      const online = new Response(JSON.stringify([{ id: "1", title: "Dom Casmurro" }]));
+      const cache = { put: jest.fn().mockResolvedValue(undefined), match: jest.fn() };
+      const open = jest.fn().mockResolvedValue(cache);
+      const fetch = jest.fn().mockResolvedValueOnce(online).mockRejectedValue(new Error("Offline"));
+      const handlers = new Map<string, (event: unknown) => void>();
+      runInNewContext(swContent, {
+        self: { addEventListener: (name: string, handler: (event: unknown) => void) => handlers.set(name, handler) },
+        URL,
+        Response,
+        fetch,
+        caches: { open },
       });
 
-      const mockCaches = {
-        match: jest.fn().mockResolvedValue(mockSavedCatalog),
+      const dispatch = (target: URL, token = apiKey) => {
+        const request = new Request(target, { headers: { apikey: apiKey, Authorization: `Bearer ${token}` } });
+        const respondWith = jest.fn();
+        handlers.get("fetch")?.({ request, respondWith });
+        return respondWith.mock.calls[0]?.[0] as Promise<Response> | undefined;
       };
 
-      // Simulação de falha de rede seguida de hit de cache
-      const cached = await mockCaches.match(request as unknown as Request);
-      const response = cached || createOfflineCatalogResponse();
-
-      expect(response).toBe(mockSavedCatalog);
-      const data = await response.json();
-      expect(data).toHaveLength(1);
-      expect(data[0].title).toBe("Dom Casmurro");
-    });
-
-    it("catálogo de livros offline sem cache salvo retorna resposta fallback amigável", async () => {
-      const request = {
-        method: "GET",
-        url: "https://xiuuiggpccpgrwkzeloc.supabase.co/rest/v1/livros?select=*",
-      };
-      const mockCaches = {
-        match: jest.fn().mockResolvedValue(undefined),
-      };
-
-      const cached = await mockCaches.match(request as unknown as Request);
-      const response = cached || createOfflineCatalogResponse();
-
-      expect(response.headers.get("X-Ipebook-Offline")).toBe("true");
-      const json = await response.json();
-      expect(json.offline).toBe(true);
-      expect(json.data).toEqual([]);
-      expect(json.message).toContain("sem conexão com a internet");
+      expect(dispatch(url, "sessao-autenticada")).toBeUndefined();
+      const estante = new URL(url);
+      estante.searchParams.set("owner_id", "eq.dono");
+      expect(dispatch(estante)).toBeUndefined();
+      expect(dispatch(new URL("https://ipebook.app/auth/callback?code=codigo"))).toBeUndefined();
+      expect(dispatch(new URL("https://ipebook.app/redefinir-senha?code=codigo"))).toBeUndefined();
+      expect(open).not.toHaveBeenCalled();
+      expect(await dispatch(url)).toBe(online);
+      expect(open).toHaveBeenCalledWith(CATALOG_CACHE_NAME);
+      expect(cache.put).toHaveBeenCalledTimes(1);
+      cache.match.mockResolvedValueOnce(online);
+      expect(await dispatch(url)).toBe(online);
+      const offline = await dispatch(url);
+      expect(offline?.status).toBe(503);
+      expect(offline?.headers.get("X-Ipebook-Offline")).toBe("true");
     });
 
     it("requisições sensíveis de autenticação transitam como pass-through", () => {

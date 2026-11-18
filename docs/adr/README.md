@@ -116,5 +116,6 @@
 - [0114 — Remoção do tema escuro: operação exclusiva em tema claro editorial](0114-remocao-do-tema-escuro.md)
 - [0115 — Base Liquid Glass e Componentes Apple HIG no iOS Nativo](0115-base-liquid-glass-apple-hig.md)
 - [0116 — Padronização Apple HIG para Descoberta, Busca, Favoritos e Detalhes no iOS](0116-padronizacao-apple-hig-descoberta-busca-ios.md)
+- [0117 — PKCE e privacidade do cache web](0117-pkce-e-privacidade-do-cache-web.md)
 
 Preservar registros aceitos; mudanças relevantes geram novo ADR com vínculos de substituição.
