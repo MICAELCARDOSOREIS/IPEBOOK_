@@ -63,3 +63,40 @@ com os valores documentados em `tokens.json`. Os demais tokens de cor não foram
   sistema, listas e cartões crescem em vez de cortar o texto.
 - Com "Remover animações" ativo no sistema, deslocamentos viram esmaecimento
   (`tokens.motion.duration.standard`), sem remover o feedback.
+
+## Acessibilidade no iOS (Apple HIG & Spec 137)
+
+As diretrizes do Apple Human Interface Guidelines (HIG) para acessibilidade no iPhone são atendidas
+de forma nativa e isolada (`Platform.OS === "ios"`), sem interferir nas regras de Material Design 3
+do Android ou Web:
+
+- **Alvos de toque Apple HIG:**
+  O HIG exige área interativa mínima de 44×44 pt. Os botões de navegação, fechar folha inferior e ações
+  rápidas no iOS adotam exatamente 44×44 pt (ex.: `TopAppBar.backButton`, `BottomSheet.closeButton`),
+  enquanto os botões primários e campos de texto mantêm 48 a 52 dp/pt, superando a exigência mínima.
+- **Reduzir Transparência (`UIAccessibilityIsReduceTransparencyEnabled`):**
+  Superfícies translúcidas Liquid Glass (`ScreenContainer`, `TopAppBar`, `NavigationBar`, `BottomSheet`)
+  utilizam o hook `useReduceTransparency`. Quando o usuário ativa a redução de transparência nos Ajustes
+  do iOS, o efeito de desfoque translúcido é automaticamente substituído por superfícies opacas sólidas
+  em `colors.m3.surfaceContainer` ou `colors.background`, eliminando interferência visual de fundos
+  e garantindo contraste estrito.
+- **Dynamic Type (Tipografia Adaptável):**
+  Para suportar os tamanhos ampliados de acessibilidade (Accessibility Sizes AX1–AX5) sem quebras críticas
+  de layout:
+  - Cabeçalhos fixos e barras superiores (`TopAppBar`, `BottomSheet`) aplicam `maxFontSizeMultiplier={1.3}`
+    com `numberOfLines={1}` e `accessibilityRole="header"`, permitindo que o VoiceOver leia o título
+    integralmente sem que o texto expulse os botões de ação ou sobreponha controles da tela.
+  - A barra inferior flutuante (`NavigationBar`) aplica `maxFontSizeMultiplier={1.2}` nos rótulos de abas
+    e badges para preservar a geometria da pílula deslizante e o toque ergonômico.
+  - Áreas de conteúdo, cards e formulários não fixam altura vertical (`minHeight` ou livre) e crescem
+    dinamicamente para acomodar o texto em tamanhos maiores.
+- **Leitor de Tela (VoiceOver):**
+  - Componentes com semântica de grupo declaram papéis formais (`accessibilityRole="tablist"` na barra
+    e `accessibilityRole="tab"` com `accessibilityState={{ selected }}` nos itens).
+  - Títulos de telas e seções declaram `accessibilityRole="header"`.
+  - Botões de fechar, voltar e limpar utilizam `accessibilityRole="button"` com rótulos descritivos
+    em português.
+- **Feedback Tátil Acessível (Haptics):**
+  Ações significativas (favoritar, aplicar filtros, tocar em botões principais e fechar folhas) disparam
+  micro-vibrações táteis (`triggerHaptic` com `selection`, `light` ou `success`) via `expo-haptics`,
+  oferecendo confirmação multissensorial independente da pista visual.
