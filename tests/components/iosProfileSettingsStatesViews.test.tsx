@@ -3,7 +3,10 @@ import * as Haptics from "expo-haptics";
 import { Platform, View } from "react-native";
 import { MemoryNetworkStatusDataSource } from "@/infra/datasources/memoryNetworkStatusDataSource";
 import { ErrorState } from "@/view/components/ErrorState";
+import { iosNeutralCardStyle } from "@/view/components/IosCardSurface";
 import { OfflineState } from "@/view/components/OfflineState";
+import { createNotificationsStyles } from "@/view/notifications/notificationsStyles";
+import { colors, tokens } from "@/view/tokens";
 import { ProfileIdentityCard, ProfileMenuSection } from "@/view/profile/ProfileHubSections";
 import { Settings } from "@/view/profile/settings";
 import { useAuthViewModel } from "@/viewmodel/useAuthViewModel";
@@ -105,5 +108,22 @@ describe("Perfil, Configurações e Estados iOS 26 (Spec 137 · #232)", () => {
     expect(onRetryError).toHaveBeenCalledTimes(1);
     expect(impactSpy).toHaveBeenCalledTimes(2);
     impactSpy.mockRestore();
+  });
+
+  it("aplica cartão elevado iOS 26 em notificações/perfil sem alterar Android", () => {
+    const iosCard = iosNeutralCardStyle(colors);
+    expect(iosCard?.borderRadius).toBe(tokens.radius.xl);
+    expect(iosCard?.backgroundColor).toBe(colors.m3.surfaceContainerLowest);
+
+    const iosNotifications = createNotificationsStyles(colors);
+    expect(iosNotifications.card.borderRadius).toBe(tokens.radius.xl);
+    expect(iosNotifications.permissionIconCircle.backgroundColor).toBe(colors.m3.primaryContainer);
+    expect(iosNotifications.emptyHeadline.fontSize).toBe(25);
+
+    Object.defineProperty(Platform, "OS", { value: "android", configurable: true });
+    expect(iosNeutralCardStyle(colors)).toBeNull();
+    const androidNotifications = createNotificationsStyles(colors);
+    expect(androidNotifications.card.borderRadius).toBe(tokens.radius.card);
+    expect(androidNotifications.permissionIconCircle.backgroundColor).toBe(colors.m3.secondaryContainer);
   });
 });

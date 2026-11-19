@@ -3,6 +3,7 @@ import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { makeAuthViewModel, makeReceivedRatingsViewModel } from "@/di/container";
 import { LoadingState } from "@/view/components/LoadingState";
+import { iosNeutralCardStyle } from "@/view/components/IosCardSurface";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 import { AppIcon } from "@/view/components/AppIcon";
@@ -229,6 +230,7 @@ function createStyles(colors: ColorPalette) {
     borderColor: colors.book.paperEdge,
     padding: tokens.spacing[16],
     gap: tokens.spacing[4],
+    ...iosNeutralCardStyle(colors),
   },
   stars: { ...tokens.typography.titleBlock, color: colors.highlight },
   starsEmpty: { color: colors.m3.outline },

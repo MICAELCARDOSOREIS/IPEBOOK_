@@ -6,6 +6,7 @@ import { makeAuthViewModel, makeModerationViewModel } from "@/di/container";
 import { AppIcon } from "@/view/components/AppIcon";
 import { Dialog } from "@/view/components/Dialog";
 import { InlineErrorCard } from "@/view/components/InlineErrorCard";
+import { iosNeutralCardStyle } from "@/view/components/IosCardSurface";
 import { LoadingState } from "@/view/components/LoadingState";
 import { Snackbar } from "@/view/components/Snackbar";
 import { TopAppBar } from "@/view/components/TopAppBar";
@@ -204,6 +205,7 @@ function createStyles(colors: ColorPalette) {
       borderWidth: 1,
       borderColor: colors.book.paperEdge,
       gap: tokens.spacing[8],
+      ...iosNeutralCardStyle(colors),
     },
     header: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[8] },
     kind: { ...tokens.typography.labelMedium, color: colors.secondaryText, flex: 1 },

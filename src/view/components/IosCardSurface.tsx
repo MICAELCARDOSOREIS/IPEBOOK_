@@ -111,3 +111,22 @@ function createStyles(colors: ColorPalette) {
 }
 
 export default IosCardSurface;
+
+/**
+ * Estilo de cartão neutro elevado do iOS 26 (Figma `iPhone · Superfície de card`)
+ * para uso em `StyleSheet.create`; retorna `null` no Android e na Web.
+ */
+export function iosNeutralCardStyle(colors: ColorPalette): ViewStyle | null {
+  if (Platform.OS !== "ios") return null;
+  return {
+    backgroundColor: colors.m3.surfaceContainerLowest,
+    borderColor: colors.m3.outlineVariant,
+    borderRadius: tokens.radius.xl,
+    borderCurve: "continuous",
+    borderWidth: 1,
+    shadowColor: colors.m3.shadow,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.09,
+    shadowRadius: 12,
+  };
+}
