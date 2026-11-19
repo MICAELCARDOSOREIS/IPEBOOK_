@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from "react-native";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { Avatar } from "@/view/components/Avatar";
+import { IosCardSurface } from "@/view/components/IosCardSurface";
 
 export type ReaderCardProps = {
   name: string;
@@ -33,7 +34,7 @@ export function ReaderCard({
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   return (
-    <View accessible={!footer} accessibilityLabel={`Cartão de leitor de ${name}`} style={styles.card}>
+    <IosCardSurface variant="paper" accessible={!footer} accessibilityLabel={`Cartão de leitor de ${name}`} style={styles.card}>
       <View style={styles.avatarRing}>
         <Avatar name={name} photoUrl={photoUrl} size={72} />
       </View>
@@ -56,7 +57,7 @@ export function ReaderCard({
         </Text>
         {footer}
       </View>
-    </View>
+    </IosCardSurface>
   );
 }
 

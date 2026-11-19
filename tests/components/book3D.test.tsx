@@ -146,6 +146,14 @@ describe("Book3D: gesto de arrastar", () => {
 
       await act(async () => {
         gesture.onPanResponderGrant();
+        gesture.onPanResponderMove({}, { dx: 18, dy: 56 });
+      });
+      expect(screen.queryByTestId("book3d-face-left")).toBeNull();
+      expect(gesture.onPanResponderTerminationRequest()).toBe(true);
+      gesture.onPanResponderTerminate();
+
+      await act(async () => {
+        gesture.onPanResponderGrant();
         gesture.onPanResponderMove({}, { dx: 80, dy: 0 });
       });
       expect(screen.getByTestId("book3d-face-left")).toBeDefined();
@@ -193,6 +201,9 @@ describe("Book3D: gesto de arrastar", () => {
       const screen = await open({ description: "Sinopse na contracapa." });
       const gesture = created[created.length - 1];
       await act(async () => {
+        gesture.onPanResponderGrant();
+        gesture.onPanResponderRelease({}, { dx: 0, dy: 0, vx: 0 });
+        await new Promise((resolve) => setTimeout(resolve, 100));
         gesture.onPanResponderGrant();
         gesture.onPanResponderRelease({}, { dx: 0, dy: 0, vx: 0 });
         await new Promise((resolve) => setTimeout(resolve, 650));

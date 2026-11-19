@@ -49,6 +49,14 @@ export function CreateListingStep2({
   const wideWeb = useIsWideWeb();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
+  const bookSide = sheetSlot?.slot === "cover" ? "cover"
+    : sheetSlot?.index === 0 ? "spine"
+    : sheetSlot?.index === 1 ? "back"
+    : undefined;
+  const photoTitle = bookSide === "spine" ? "Foto da lombada"
+    : bookSide === "back" ? "Foto do verso"
+    : "Foto da capa";
+
   return (
     <>
       <Text accessibilityRole="header" style={styles.title}>Mostre seu livro.</Text>
@@ -115,7 +123,8 @@ export function CreateListingStep2({
 
       <PhotoSourceSheet
         visible={sheetSlot !== null}
-        title={sheetSlot?.slot === "cover" ? "Foto da capa" : "Mais uma foto"}
+        title={photoTitle}
+        bookSide={bookSide}
         onChoose={(source) => {
           const slot = sheetSlot;
           setSheetSlot(null);
@@ -143,9 +152,7 @@ export function CreateListingStep2({
           <Text style={styles.tipTitle}>Dica de foto</Text>
         </View>
         <Text style={styles.tipText}>
-          {wideWeb
-            ? "Fotografe em local com boa luz natural. Além da capa inteira, mostre a lombada e o verso (contracapa) para quem busca em Piripiri conferir a real conservação e ver o livro completo em 3D."
-            : "Luz natural, fundo liso e capa inteira no quadro. Fotos da lombada e do verso completam o livro em 3D e ajudam a conferir a conservação."}
+          Use luz natural. Mostre a lombada e o verso para ajudar a identificar o estado do exemplar.
         </Text>
       </View>
 

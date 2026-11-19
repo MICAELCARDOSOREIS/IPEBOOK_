@@ -10,6 +10,7 @@ describe("CreateListingStep2 — câmera e galeria (Spec 092)", () => {
     const onChoosePhoto = jest.fn();
     const screen = await render(<CreateListingStep2 {...base} onChoosePhoto={onChoosePhoto} />);
     await act(async () => { fireEvent.press(screen.getByLabelText("Adicionar foto da capa")); });
+    expect(screen.getByText(/Alinhe a capa de frente/)).toBeDefined();
     expect(screen.getByText("Tirar foto")).toBeDefined();
     await act(async () => { fireEvent.press(screen.getByLabelText("Escolher foto da galeria")); });
     // CA2 da Spec 020: primeiro a explicação, só depois o acesso do aparelho.
@@ -23,6 +24,7 @@ describe("CreateListingStep2 — câmera e galeria (Spec 092)", () => {
     const onChoosePhoto = jest.fn();
     const screen = await render(<CreateListingStep2 {...base} onChoosePhoto={onChoosePhoto} />);
     await act(async () => { fireEvent.press(screen.getByLabelText("Adicionar lombada")); });
+    expect(screen.getByText(/Coloque a lombada na vertical/)).toBeDefined();
     await act(async () => { fireEvent.press(screen.getByLabelText("Tirar foto com a câmera")); });
     expect(onChoosePhoto).not.toHaveBeenCalled();
     await act(async () => { fireEvent.press(screen.getByLabelText(PERMISSION_PROMPT_COPY.photos.allow)); });
@@ -33,6 +35,7 @@ describe("CreateListingStep2 — câmera e galeria (Spec 092)", () => {
     const onChoosePhoto = jest.fn();
     const screen = await render(<CreateListingStep2 {...base} onChoosePhoto={onChoosePhoto} />);
     await act(async () => { fireEvent.press(screen.getByLabelText("Adicionar verso")); });
+    expect(screen.getByText(/Fotografe a contracapa de frente/)).toBeDefined();
     await act(async () => { fireEvent.press(screen.getByLabelText("Tirar foto com a câmera")); });
     await act(async () => { fireEvent.press(screen.getByLabelText(PERMISSION_PROMPT_COPY.photos.later)); });
     expect(onChoosePhoto).not.toHaveBeenCalled();

@@ -253,10 +253,10 @@ export class SupabaseAuthDataSource implements IAuthDataSource {
       const origin = typeof window !== "undefined" && window.location?.origin ? window.location.origin : "http://localhost:8081";
       const { data, error } = await authClient.signInWithOAuth({
         provider: "google",
-        options: { redirectTo: `${origin}/auth/callback` },
+        options: { redirectTo: `${origin}/auth/callback`, skipBrowserRedirect: true },
       });
-      if (error) throw new AuthError("Não foi possível autenticar com o Google. Tente novamente.");
-      if (data?.url && typeof window !== "undefined") window.location.href = data.url;
+      if (error || !data?.url) throw new AuthError("Não foi possível autenticar com o Google. Tente novamente.");
+      if (typeof window !== "undefined") window.location.href = data.url;
       const current = await this.currentUser();
       return current ?? { id: "pending", email: "", name: "Usuário Google" };
     }
@@ -328,7 +328,7 @@ export class SupabaseAuthDataSource implements IAuthDataSource {
         return { id: data.user.id, email: data.user.email, name: readFullName(data.user) };
       }
 
-      if (accessToken && refreshToken) {
+      if (Platform.OS !== "web" && accessToken && refreshToken) {
         // Um link montado por terceiros não pode trocar a conta de quem já está logado (login forçado).
         const { data: atual } = await this.client.auth.getSession();
         const usuarioAtual = atual.session?.user?.id;

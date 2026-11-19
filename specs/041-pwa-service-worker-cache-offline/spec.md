@@ -20,7 +20,7 @@ Antes desta especificação:
 - Implementar arquivo executável do Service Worker em `public/sw.js` para ser copiado estaticamente no build do Expo Web (`dist/sw.js`).
 - Configurar pré-cache estático do App Shell no evento `install` (`/`, `/index.html`, `/manifest.json`, favicons, ícones essenciais e páginas base).
 - Implementar estratégia Stale-While-Revalidate para assets estáticos (scripts, estilos, fontes e imagens locais em `_expo/static/` e assets).
-- Implementar estratégia Network-First com fallback para Cache e resposta amigável estruturada para requisições de catálogo do Supabase (`/rest/v1/livros*`).
+- Implementar estratégia Network-First com fallback para Cache e resposta estruturada HTTP 503 sem dados em cache para consultas anônimas do catálogo público do Supabase (`/rest/v1/v2_books`) que excluam rascunhos. As consultas autenticadas usam o cache local do aplicativo quando a rede falha. Conforme [ADR 0117](../../docs/adr/0117-pkce-e-privacidade-do-cache-web.md).
 - Gerenciar o ciclo de vida do Service Worker (`skipWaiting` na instalação, `clients.claim` na ativação e purga de caches legados no evento `activate`).
 - Criar abstrações na arquitetura MVVM (`IPwaService`, `PwaService`, `usePwaViewModel`, `PwaRegister`) para registro não intrusivo e testabilidade.
 - Integrar o registro no `src/app/+html.tsx` (para carregamento inicial estático) e em `src/app/_layout.tsx` (via componente `PwaRegister` em conformidade com as regras de camadas).
