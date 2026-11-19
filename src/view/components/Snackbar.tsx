@@ -1,8 +1,10 @@
+import { BlurView } from "expo-blur";
 import { useEffect, useMemo, useRef } from "react";
-import { AccessibilityInfo, Animated, Platform, Pressable, StyleSheet, Text } from "react-native";
+import { AccessibilityInfo, Animated, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useGuardedPress } from "@/view/useGuardedPress";
+import { useReduceTransparency } from "@/view/useReduceTransparency";
 
 export type SnackbarProps = {
   visible: boolean;
@@ -27,6 +29,9 @@ export function Snackbar({
   duration = 4000,
 }: SnackbarProps) {
   const { colors } = useTheme();
+  const isIos = Platform.OS === "ios";
+  const reduceTransparency = useReduceTransparency();
+  const iosGlass = isIos && !reduceTransparency;
   const styles = useMemo(() => createStyles(colors), [colors]);
   const scale = useRef(new Animated.Value(0.95)).current;
   const guardedAction = useGuardedPress(onAction);
@@ -67,11 +72,22 @@ export function Snackbar({
   if (!visible) return null;
 
   return (
-    <Animated.View style={[styles.container, { transform: [{ scale }] }]}>
+    <Animated.View
+      style={[
+        styles.container,
+        isIos && (iosGlass ? styles.iosGlassContainer : styles.iosOpaqueContainer),
+        { transform: [{ scale }] },
+      ]}
+    >
+      {iosGlass ? (
+        <View pointerEvents="none" style={styles.iosBlurClip}>
+          <BlurView intensity={28} tint="light" style={StyleSheet.absoluteFill} />
+        </View>
+      ) : null}
       <Text
         accessibilityRole="alert"
         accessibilityLiveRegion="polite"
-        style={styles.message}
+        style={[styles.message, isIos && styles.iosMessage]}
       >
         {message}
       </Text>
@@ -82,7 +98,7 @@ export function Snackbar({
           onPress={guardedAction}
           style={({ pressed }) => [styles.actionButton, pressed && styles.actionButtonPressed]}
         >
-          <Text style={styles.actionText}>{actionLabel}</Text>
+          <Text style={[styles.actionText, isIos && styles.iosActionText]}>{actionLabel}</Text>
         </Pressable>
       ) : null}
     </Animated.View>
@@ -129,6 +145,36 @@ function createStyles(colors: ColorPalette) {
       ...tokens.typography.labelMedium,
       color: actionColor,
       fontWeight: tokens.fontWeight.bold,
+    },
+    iosGlassContainer: {
+      backgroundColor: tokens.glass.fill,
+      borderRadius: tokens.radius.full,
+      borderCurve: "continuous",
+      borderWidth: 1,
+      borderColor: tokens.glass.stroke,
+      shadowColor: "#2e2b21",
+      shadowOpacity: 0.14,
+      shadowRadius: 12,
+      shadowOffset: { width: 0, height: 4 },
+      overflow: "hidden",
+    },
+    iosOpaqueContainer: {
+      backgroundColor: colors.m3.surfaceContainer,
+      borderRadius: tokens.radius.full,
+      borderCurve: "continuous",
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+    },
+    iosBlurClip: {
+      ...StyleSheet.absoluteFill,
+      borderRadius: tokens.radius.full,
+      overflow: "hidden",
+    },
+    iosMessage: {
+      color: colors.m3.onSurface,
+    },
+    iosActionText: {
+      color: colors.action,
     },
   });
 }
