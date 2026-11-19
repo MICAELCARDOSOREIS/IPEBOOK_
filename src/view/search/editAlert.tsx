@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Platform, StyleSheet, Text, View } from "react-native";
 import { ScreenContainer } from "@/view/components/ScreenContainer";
 import type { BookModality } from "@/model/entities/book";
 import { ALL_ALERT_MODALITIES } from "@/model/entities/searchAlert";
@@ -9,6 +9,7 @@ import { LoadingState } from "@/view/components/LoadingState";
 import { TextButton } from "@/view/components/TextButton";
 import { TextField } from "@/view/components/TextField";
 import { TopAppBar } from "@/view/components/TopAppBar";
+import { triggerHaptic } from "@/view/haptics";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { ALERT_CITY, ALERT_MODALITY_LABELS } from "@/view/search/alertLabels";
@@ -48,6 +49,7 @@ export default function EditAlert({ alertId, userId, onBack, onSaved }: EditAler
   }, [alert, loadedId]);
 
   const toggle = (modality: BookModality) => {
+    if (Platform.OS === "ios") triggerHaptic("selection");
     setModalityError(null);
     setModalities((previous) =>
       previous.includes(modality)
@@ -151,15 +153,26 @@ export default function EditAlert({ alertId, userId, onBack, onSaved }: EditAler
         label="Salvar alterações"
         onPress={() => {
           if (modalities.length === 0) {
+            if (Platform.OS === "ios") triggerHaptic("error");
             setModalityError("Selecione pelo menos um tipo.");
             return;
           }
+          if (Platform.OS === "ios") triggerHaptic("selection");
           void actions.update(alert.id, term, modalities).then((saved) => {
-            if (saved) guardedSaved();
+            if (saved) {
+              if (Platform.OS === "ios") triggerHaptic("success");
+              guardedSaved();
+            }
           });
         }}
       />
-      <TextButton label="Cancelar" onPress={guardedBack} />
+      <TextButton
+        label="Cancelar"
+        onPress={() => {
+          if (Platform.OS === "ios") triggerHaptic("light");
+          guardedBack();
+        }}
+      />
     </ScreenContainer>
   );
 }

@@ -22,7 +22,11 @@ Adotar melhorias específicas e isoladas para iOS (`Platform.OS === 'ios'`) nos 
    - Disparo de `triggerHaptic("selection")` ao alternar favoritos em `FavoriteButton`, selecionar critérios de ordenação em `SortSheet`, aplicar filtros em `FilterSheet` e acionar a ação principal de negociação em `BookDetail`.
    - Disparo de `triggerHaptic("light")` ao limpar ou cancelar busca em `SearchField`, limpar filtros em `FilterSheet` e acionar ações de denúncia em `PublicProfile`.
 
-2. **Barra de busca no padrão HIG (`SearchField`):**
+2. **Gestão e Edição de Alertas (`ManageAlert` e `EditAlert`):**
+   - Cantos contínuos refinados (`tokens.radius.lg`) nos cartões de status no iOS.
+   - Feedback tátil com `triggerHaptic("selection")` ao pausar/retomar alerta, abrir edição e alternar modalidades; `triggerHaptic("light")` ao cancelar ou abrir exclusão; `triggerHaptic("warning")` na confirmação de exclusão; e `triggerHaptic("success")`/`triggerHaptic("error")` na submissão de edições.
+
+3. **Barra de busca no padrão HIG (`SearchField`):**
    - Altura de 44 pt no iOS (`containerIos`), cantos arredondados contínuos de raio médio e botão lateral "Cancelar" acessível visível durante a interação.
 
 3. **Folhas inferiores e ordenação (`SortSheet` e `FilterSheet`):**

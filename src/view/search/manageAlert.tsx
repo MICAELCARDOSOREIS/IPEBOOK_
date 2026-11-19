@@ -1,11 +1,12 @@
 import { useMemo, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Platform, StyleSheet, Text, View } from "react-native";
 import { ScreenContainer } from "@/view/components/ScreenContainer";
 import { Dialog } from "@/view/components/Dialog";
 import { LoadingState } from "@/view/components/LoadingState";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { TextButton } from "@/view/components/TextButton";
 import { TopAppBar } from "@/view/components/TopAppBar";
+import { triggerHaptic } from "@/view/haptics";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { ALERT_MODALITY_SUMMARY, ALERT_CITY } from "@/view/search/alertLabels";
@@ -71,7 +72,13 @@ export default function ManageAlert({
         <Text style={styles.body}>
           Ele pode ter sido excluído. Volte para a lista e confira seus alertas.
         </Text>
-        <OutlinedButton label="Voltar aos alertas" onPress={guardedBack} />
+        <OutlinedButton
+          label="Voltar aos alertas"
+          onPress={() => {
+            if (Platform.OS === "ios") triggerHaptic("light");
+            guardedBack();
+          }}
+        />
       </ScreenContainer>
     );
   }
@@ -92,8 +99,12 @@ export default function ManageAlert({
           confirmLabel="Confirmar exclusão"
           cancelLabel="Cancelar"
           destructive
-          onCancel={() => setConfirmingDelete(false)}
+          onCancel={() => {
+            if (Platform.OS === "ios") triggerHaptic("light");
+            setConfirmingDelete(false);
+          }}
           onConfirm={() => {
+            if (Platform.OS === "ios") triggerHaptic("warning");
             setConfirmingDelete(false);
             void actions.remove(alert.id).then((removed) => {
               if (removed) guardedAlertDeleted();
@@ -134,19 +145,28 @@ export default function ManageAlert({
       <OutlinedButton
         label="Editar alerta"
         accessibilityLabel={`Editar alerta ${alert.query}`}
-        onPress={() => guardedEdit(alert.id)}
+        onPress={() => {
+          if (Platform.OS === "ios") triggerHaptic("selection");
+          guardedEdit(alert.id);
+        }}
       />
       <OutlinedButton
         label={alert.active ? "Pausar alerta" : "Retomar alerta"}
         accessibilityLabel={
           alert.active ? `Pausar alerta ${alert.query}` : `Retomar alerta ${alert.query}`
         }
-        onPress={() => void actions.setActive(alert.id, !alert.active)}
+        onPress={() => {
+          if (Platform.OS === "ios") triggerHaptic("selection");
+          void actions.setActive(alert.id, !alert.active);
+        }}
       />
       <TextButton
         label="Excluir alerta"
         accessibilityLabel={`Excluir alerta ${alert.query}`}
-        onPress={() => setConfirmingDelete(true)}
+        onPress={() => {
+          if (Platform.OS === "ios") triggerHaptic("light");
+          setConfirmingDelete(true);
+        }}
       />
     </ScreenContainer>
   );
@@ -181,13 +201,13 @@ function createStyles(colors: ColorPalette) {
   body: { ...tokens.typography.bodyMedium, color: colors.secondaryText },
   statusCard: {
     backgroundColor: colors.m3.primaryContainer,
-    borderRadius: tokens.radius.medium,
+    borderRadius: Platform.OS === "ios" ? tokens.radius.card : tokens.radius.medium,
     padding: tokens.spacing[16],
     gap: tokens.spacing[4],
   },
   statusCardPaused: {
     backgroundColor: colors.m3.surfaceContainerHigh,
-    borderRadius: tokens.radius.medium,
+    borderRadius: Platform.OS === "ios" ? tokens.radius.card : tokens.radius.medium,
     padding: tokens.spacing[16],
     gap: tokens.spacing[4],
   },
