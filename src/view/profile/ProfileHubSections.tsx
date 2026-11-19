@@ -1,3 +1,4 @@
+import { BlurView } from "expo-blur";
 import * as Linking from "expo-linking";
 import { useMemo } from "react";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
@@ -67,6 +68,11 @@ export function ProfileIdentityCard({
         wideWeb && styles.heroBlockWide,
       ]}
     >
+      {iosGlass ? (
+        <View pointerEvents="none" style={styles.iosBlurClip}>
+          <BlurView intensity={24} tint="light" style={StyleSheet.absoluteFill} />
+        </View>
+      ) : null}
       <View style={styles.identityRow}>
         <View style={styles.identityText}>
           <Text accessibilityRole="header" style={styles.profileName} numberOfLines={2}>
@@ -165,8 +171,15 @@ export function ProfileIdentityCard({
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Publicar um livro"
-            onPress={onCreateListing}
-            style={({ pressed }) => [styles.publishButton, pressed && styles.publishButtonPressed]}
+            onPress={() => {
+              if (isIos) triggerHaptic("light");
+              onCreateListing();
+            }}
+            style={({ pressed }) => [
+              styles.publishButton,
+              isIos && styles.iosPublishButton,
+              pressed && styles.publishButtonPressed,
+            ]}
           >
             <AppIcon name="add" size={20} color={colors.m3.onPrimary} />
             <Text numberOfLines={1} style={styles.publishButtonText}>Publicar um livro</Text>
@@ -280,6 +293,11 @@ export function ProfileMenuSection({
           wideWeb && styles.cardGroupWide,
         ]}
       >
+        {iosGlass ? (
+          <View pointerEvents="none" style={styles.iosBlurClip}>
+            <BlurView intensity={24} tint="light" style={StyleSheet.absoluteFill} />
+          </View>
+        ) : null}
         <View style={styles.sectionHeaderRow}>
           <View style={styles.sectionBloom} />
           <Text style={styles.sectionHeader}>{title}</Text>
@@ -350,6 +368,7 @@ export function ProfileMenuSection({
 }
 
 function createStyles(colors: ColorPalette) {
+  const isIos = Platform.OS === "ios";
   return StyleSheet.create({
     heroBlock: {
       width: "100%",
@@ -390,12 +409,30 @@ function createStyles(colors: ColorPalette) {
       borderColor: tokens.ios.separator,
     },
     iosGlassButton: {
+      minHeight: 49,
+      borderCurve: "continuous",
       backgroundColor: tokens.glass.fill,
       borderColor: tokens.glass.stroke,
       shadowColor: "#2e2b21",
       shadowOffset: { width: 0, height: 4 },
       shadowOpacity: 0.12,
       shadowRadius: 8,
+    },
+    iosPublishButton: {
+      minHeight: 49,
+      borderRadius: tokens.radius.full,
+      borderCurve: "continuous",
+      borderWidth: 1,
+      borderColor: tokens.glass.stroke,
+      shadowColor: "#2e2b21",
+      shadowOffset: { width: 0, height: 5 },
+      shadowOpacity: 0.17,
+      shadowRadius: 7,
+    },
+    iosBlurClip: {
+      ...StyleSheet.absoluteFill,
+      borderRadius: tokens.radius.xxl,
+      overflow: "hidden",
     },
     iosOpaqueButton: {
       backgroundColor: colors.m3.surfaceContainer,
@@ -570,7 +607,7 @@ function createStyles(colors: ColorPalette) {
       width: 1,
       height: tokens.spacing[32],
       backgroundColor: colors.ipe.bloom,
-      opacity: 0.65,
+      opacity: isIos ? 1 : 0.65,
     },
     statNumber: {
       fontFamily: fontFamily.brand,
@@ -664,8 +701,8 @@ function createStyles(colors: ColorPalette) {
     menuDivider: {
       height: 1,
       backgroundColor: colors.m3.outlineVariant,
-      opacity: 0.35,
-      marginLeft: 76,
+      opacity: isIos ? 0.7 : 0.35,
+      marginLeft: isIos ? 68 : 76,
     },
     menuRow: {
       flexDirection: "row",
