@@ -63,7 +63,7 @@ export function TopAppBar({ title, onBack, floating = false, contentMaxWidth, al
           <Text style={styles.crumbBackText}>Voltar</Text>
         </Pressable>
         <View accessible={false} aria-hidden={true} style={styles.crumbDivider} />
-        <Text accessibilityRole="header" accessibilityLabel={title} numberOfLines={1} style={styles.crumbTitle}>{title}</Text>
+        <Text accessibilityRole="header" accessibilityLabel={title} numberOfLines={1} maxFontSizeMultiplier={1.3} style={styles.crumbTitle}>{title}</Text>
       </View>
     );
   }
@@ -80,7 +80,7 @@ export function TopAppBar({ title, onBack, floating = false, contentMaxWidth, al
           <AppIcon name="back" size={24} color={colors.m3.onSurface} />
         </View>
       </Pressable>
-      <Text accessibilityRole="header" accessibilityLabel={title} numberOfLines={1} style={styles.title}>{title}</Text>
+      <Text accessibilityRole="header" accessibilityLabel={title} numberOfLines={1} maxFontSizeMultiplier={1.3} style={styles.title}>{title}</Text>
     </View>
   );
 }

@@ -176,7 +176,7 @@ export function BottomSheet({
           {title || showCloseButton ? (
             <View style={styles.header}>
               {title ? (
-                <Text accessibilityRole="header" style={styles.title}>
+                <Text accessibilityRole="header" maxFontSizeMultiplier={1.3} numberOfLines={1} style={styles.title}>
                   {title}
                 </Text>
               ) : (

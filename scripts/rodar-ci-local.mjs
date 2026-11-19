@@ -134,6 +134,7 @@ function executar() {
       cwd: RAIZ,
       stdio: ["ignore", "inherit", "inherit"],
       env: etapa.env ? { ...process.env, ...etapa.env } : process.env,
+      shell: process.platform === "win32",
     });
 
     const duracao = ((Date.now() - inicio) / 1000).toFixed(1);
