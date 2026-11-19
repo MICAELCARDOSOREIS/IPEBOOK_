@@ -5,7 +5,9 @@ import { Dialog } from "@/view/components/Dialog";
 import { FilledButton } from "@/view/components/FilledButton";
 import { IosCardSurface } from "@/view/components/IosCardSurface";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
+import { PhotoSourceSheet } from "@/view/components/PhotoSourceSheet";
 import { ReaderCard } from "@/view/components/ReaderCard";
+import { Snackbar } from "@/view/components/Snackbar";
 import { TextField } from "@/view/components/TextField";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { colors, tokens } from "@/view/tokens";
@@ -125,5 +127,22 @@ describe("Design System iPhone · botões, cards e formulários (Spec 137)", () 
     expect(screen.getByTestId("dialog-ios-blur")).toBeDefined();
     const confirmStyle = StyleSheet.flatten(screen.getByLabelText("Excluir").props.style);
     expect(confirmStyle.backgroundColor).toBe(tokens.ios.destructiveFill);
+  });
+
+  it("aplica Liquid Glass em Snackbar e PhotoSourceSheet no iOS e preserva Android", async () => {
+    Object.defineProperty(Platform, "OS", { value: "ios", configurable: true });
+    jest.spyOn(AccessibilityInfo, "isReduceTransparencyEnabled").mockResolvedValue(false);
+
+    const snackbar = await render(<Snackbar visible message="Link copiado" />);
+    expect(snackbar.getByTestId("blur-view")).toBeDefined();
+    expect(StyleSheet.flatten(snackbar.getByRole("alert").props.style).color).toBe(colors.m3.onSurface);
+
+    const sheet = await render(<PhotoSourceSheet visible onChoose={() => {}} onClose={() => {}} />);
+    expect(sheet.getByTestId("blur-view")).toBeDefined();
+
+    Object.defineProperty(Platform, "OS", { value: "android", configurable: true });
+    const androidSnackbar = await render(<Snackbar visible message="Link copiado" />);
+    expect(androidSnackbar.queryByTestId("blur-view")).toBeNull();
+    expect(StyleSheet.flatten(androidSnackbar.getByRole("alert").props.style).color).toBe(colors.m3.inverseOnSurface);
   });
 });

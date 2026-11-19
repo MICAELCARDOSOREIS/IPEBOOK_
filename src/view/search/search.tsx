@@ -1,3 +1,4 @@
+import { BlurView } from "expo-blur";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Animated, FlatList, Keyboard, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -28,6 +29,8 @@ import { useGuardedPress } from "@/view/useGuardedPress";
 import { useOnRefocus } from "@/view/useRefocusKey";
 import { standardVerticalScrollProps, standardHorizontalScrollProps, scrollBottomPadding } from "@/view/scrollProps";
 import { withPress } from "@/view/pressFeedback";
+import { triggerHaptic } from "@/view/haptics";
+import { useReduceTransparency } from "@/view/useReduceTransparency";
 
 export type SearchProps = {
   currentNeighborhood?: string;
@@ -804,6 +807,9 @@ function SearchScrollTopButton({
 }) {
   const [isHovered, setIsHovered] = useState(false);
   const scaleAnim = useRef(new Animated.Value(0.7)).current;
+  const isIos = Platform.OS === "ios";
+  const reduceTransparency = useReduceTransparency();
+  const iosGlass = isIos && !reduceTransparency;
 
   useEffect(() => { Animated.spring(scaleAnim, { toValue: 1, tension: tokens.spring.spatialStandard.tension, friction: tokens.spring.spatialStandard.friction, useNativeDriver: Platform.OS !== "web", }).start(); }, [scaleAnim]);
 
@@ -820,21 +826,46 @@ function SearchScrollTopButton({
         accessibilityLabel="Voltar ao topo da lista"
         onHoverIn={() => setIsHovered(true)}
         onHoverOut={() => setIsHovered(false)}
-        onPress={onPress}
+        onPress={() => {
+          if (isIos) triggerHaptic("light");
+          onPress();
+        }}
         style={({ pressed }) => [
           stylesScrollTop.scrollTopFab,
-          { backgroundColor: isWeb ? webFabBg : colors.nature.sprout, borderColor: colors.m3.outlineVariant, shadowColor: colors.m3.shadow, },
+          {
+            backgroundColor: isIos
+              ? iosGlass
+                ? tokens.glass.fill
+                : colors.m3.surfaceContainer
+              : isWeb
+                ? webFabBg
+                : colors.nature.sprout,
+            borderColor: iosGlass ? tokens.glass.stroke : colors.m3.outlineVariant,
+            shadowColor: isIos ? "#302e24" : colors.m3.shadow,
+            shadowOpacity: iosGlass ? 0.14 : 0.2,
+            overflow: "hidden",
+          },
           isHovered && stylesScrollTop.scrollTopFabHovered,
           pressed && stylesScrollTop.scrollTopFabPressed,
         ]}
       >
-        <AppIcon name="chevronUp" size={24} color={colors.nature.foliage} />
+        {iosGlass ? (
+          <View pointerEvents="none" style={stylesScrollTop.iosBlurClip}>
+            <BlurView intensity={24} tint="light" style={StyleSheet.absoluteFill} />
+          </View>
+        ) : null}
+        <AppIcon name="chevronUp" size={24} color={isIos ? colors.m3.onSurface : colors.nature.foliage} />
       </Pressable>
     </Animated.View>
   );
 }
 
 const stylesScrollTop = StyleSheet.create({
+  iosBlurClip: {
+    ...StyleSheet.absoluteFill,
+    borderRadius: tokens.radius.full,
+    overflow: "hidden",
+  },
   scrollTopFab: {
     width: tokens.spacing[48],
     height: tokens.spacing[48],
