@@ -1,5 +1,5 @@
 import React from "react";
-import { AccessibilityInfo, Animated, StyleSheet } from "react-native";
+import { AccessibilityInfo, Animated, Platform, StyleSheet } from "react-native";
 import { act, cleanup, fireEvent, render, renderHook } from "@testing-library/react-native";
 import { tokens } from "@/view/tokens";
 import { useExpressivePress } from "@/view/useExpressivePress";
@@ -9,8 +9,16 @@ import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { TextButton } from "@/view/components/TextButton";
 
 describe("Material 3 Expressive — Tokens, Física de Mola e Shape Morphing (Spec 109, ADR 0084)", () => {
+  const originalPlatform = Platform.OS;
+
+  beforeEach(() => {
+    // M3 Expressive é o contrato visual do Android; o mock global inicia em iOS.
+    Object.defineProperty(Platform, "OS", { value: "android", configurable: true });
+  });
+
   afterEach(() => {
     cleanup();
+    Object.defineProperty(Platform, "OS", { value: originalPlatform, configurable: true });
     jest.restoreAllMocks();
   });
 

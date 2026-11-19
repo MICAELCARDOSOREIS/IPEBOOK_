@@ -1,3 +1,4 @@
+import { Platform } from "react-native";
 import { SupabaseAuthDataSource } from "@/infra/datasources/supabaseAuthDataSource";
 import { AuthError, EmailAlreadyRegisteredError, ExpiredLinkError } from "@/model/errors";
 import { MIN_PASSWORD_LENGTH, validateNewPassword } from "@/model/validators/authValidator";
@@ -223,6 +224,26 @@ describe("SupabaseAuthDataSource (Issue #97)", () => {
         "https://app/redefinir-senha",
       );
       await expect(ds.setSessionFromUrl(tokensNoHash)).resolves.toMatchObject({ id: "atacante" });
+    });
+
+    it("na web recusa tokens no fragmento e usa a troca PKCE para o código", async () => {
+      const original = Platform.OS;
+      Platform.OS = "web";
+      try {
+        const setSession = jest.fn();
+        const exchangeCodeForSession = jest.fn().mockResolvedValue({ data: { user: atacante }, error: null });
+        const ds = new SupabaseAuthDataSource(
+          fakeClient({ setSession, exchangeCodeForSession }),
+          "https://app/redefinir-senha",
+        );
+        await expect(ds.setSessionFromUrl(tokensNoHash)).rejects.toBeInstanceOf(AuthError);
+        expect(setSession).not.toHaveBeenCalled();
+        const callback = "https://app/auth/callback?code=codigo";
+        await expect(ds.setSessionFromUrl(callback)).resolves.toMatchObject({ id: "atacante" });
+        expect(exchangeCodeForSession).toHaveBeenCalledWith("codigo");
+      } finally {
+        Platform.OS = original;
+      }
     });
 
     it("traduz o link expirado devolvido pelo provedor em ExpiredLinkError", async () => {

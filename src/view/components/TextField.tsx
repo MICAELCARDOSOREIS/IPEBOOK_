@@ -1,6 +1,6 @@
 import { useId, useMemo, useState, type ComponentRef, type Ref } from "react";
 import type { KeyboardTypeOptions, ReturnKeyTypeOptions, TextInputProps } from "react-native";
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { AppIcon } from "@/view/components/AppIcon";
@@ -91,6 +91,7 @@ export function TextField({
       <View
         style={[
           styles.container,
+          Platform.OS === "ios" && styles.iosContainer,
           { borderColor, borderWidth: focused || hasError ? 2 : 1 },
           multiline && styles.containerMultiline,
           !editable && styles.disabled,
@@ -145,7 +146,7 @@ export function TextField({
         {floating ? (
           <View
             pointerEvents="none"
-            style={[styles.notch, { backgroundColor: labelBackgroundColor ?? colors.background }]}
+            style={[styles.notch, { backgroundColor: labelBackgroundColor ?? (Platform.OS === "ios" ? colors.m3.surfaceContainerLow : colors.background) }]}
           >
             <Text numberOfLines={1} ellipsizeMode="tail" style={[styles.floatingLabel, { color: accentColor }]}>
               {label}
@@ -193,6 +194,11 @@ function createStyles(colors: ColorPalette) {
       justifyContent: "center",
       borderRadius: tokens.radius.extraSmall,
       backgroundColor: "transparent",
+    },
+    iosContainer: {
+      borderRadius: tokens.radius.medium,
+      borderCurve: "continuous",
+      backgroundColor: colors.m3.surfaceContainerLow,
     },
     containerMultiline: { minHeight: tokens.spacing[64] + tokens.spacing[32] },
     input: {
