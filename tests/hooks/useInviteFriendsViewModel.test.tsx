@@ -1,5 +1,5 @@
 import { createElement } from "react";
-import { Platform, Share } from "react-native";
+import { Clipboard, Platform, Share } from "react-native";
 import { act, create, type ReactTestRenderer } from "react-test-renderer";
 import * as Linking from "expo-linking";
 import { DomainError } from "@/model/errors";
@@ -53,6 +53,21 @@ const fakeUseCases: IShareUseCases = {
 };
 
 describe("useInviteFriendsViewModel (Spec 057, Figma 08.02)", () => {
+  it("copia o link no iOS e confirma a cópia sem abrir a folha nativa", async () => {
+    Platform.OS = "ios";
+    const copy = jest.spyOn(Clipboard, "setString");
+    const share = jest.spyOn(Share, "share");
+    const hook = await renderHook(fakeUseCases, "https://ipebook.app");
+
+    await act(async () => {
+      await hook.current[1].copyLink();
+    });
+
+    expect(copy).toHaveBeenCalledWith("https://ipebook.app");
+    expect(share).not.toHaveBeenCalled();
+    expect(hook.current[0].linkCopied).toBe(true);
+  });
+
   it("inicia com estado padrão e mensagem preenchida", async () => {
     const hook = await renderHook(fakeUseCases);
     expect(hook.current[0].sharing).toBe(false);

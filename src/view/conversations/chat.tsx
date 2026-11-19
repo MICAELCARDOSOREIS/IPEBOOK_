@@ -30,6 +30,7 @@ import { createChatStyles } from "./chatStyles";
 import { formatPrice } from "@/view/formatPrice";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
+import { useKeyboardVisible } from "@/view/useKeyboardVisible";
 import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
 import { BookCover } from "@/view/components/BookCover";
 import { Chip } from "@/view/components/Chip";
@@ -87,6 +88,7 @@ export function Chat({
   const { isOnline } = useNetworkStatus(networkStatusDataSource);
   const { colors } = useTheme();
   const wideWeb = useIsWideWeb();
+  const isKeyboardVisible = useKeyboardVisible();
   const styles = useMemo(() => createChatStyles(colors), [colors]);
   const [detailState, detailActions] = makeRequestDetailViewModel(requestId, sessionUserId);
   const [state, actions] = makeNegotiationChatViewModel(requestId, sessionUserId);
@@ -624,7 +626,10 @@ export function Chat({
   }
 
   return (
-    <SafeAreaView edges={["top", "left", "right", "bottom"]} style={[styles.page, isWebStandalone && styles.pageWeb]}>
+    <SafeAreaView
+      edges={Platform.OS === "ios" && isKeyboardVisible ? ["top", "left", "right"] : ["top", "left", "right", "bottom"]}
+      style={[styles.page, isWebStandalone && styles.pageWeb]}
+    >
       {chatBody}
     </SafeAreaView>
   );
