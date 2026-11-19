@@ -75,21 +75,22 @@ do Android ou Web:
   rápidas no iOS adotam exatamente 44×44 pt (ex.: `TopAppBar.backButton`, `BottomSheet.closeButton`),
   enquanto os botões primários e campos de texto mantêm 48 a 52 dp/pt, superando a exigência mínima.
 - **Reduzir Transparência (`UIAccessibilityIsReduceTransparencyEnabled`):**
-  Superfícies translúcidas Liquid Glass (`ScreenContainer`, `TopAppBar`, `NavigationBar`, `BottomSheet`)
+  Superfícies translúcidas Liquid Glass (`BottomSheet`, `NavigationBar`, `IosCardSurface` e `OutlinedButton`)
   utilizam o hook `useReduceTransparency`. Quando o usuário ativa a redução de transparência nos Ajustes
-  do iOS, o efeito de desfoque translúcido é automaticamente substituído por superfícies opacas sólidas
-  em `colors.m3.surfaceContainer` ou `colors.background`, eliminando interferência visual de fundos
-  e garantindo contraste estrito.
-- **Dynamic Type (Tipografia Adaptável):**
-  Para suportar os tamanhos ampliados de acessibilidade (Accessibility Sizes AX1–AX5) sem quebras críticas
-  de layout:
-  - Cabeçalhos fixos e barras superiores (`TopAppBar`, `BottomSheet`) aplicam `maxFontSizeMultiplier={1.3}`
-    com `numberOfLines={1}` e `accessibilityRole="header"`, permitindo que o VoiceOver leia o título
-    integralmente sem que o texto expulse os botões de ação ou sobreponha controles da tela.
-  - A barra inferior flutuante (`NavigationBar`) aplica `maxFontSizeMultiplier={1.2}` nos rótulos de abas
-    e badges para preservar a geometria da pílula deslizante e o toque ergonômico.
+  do iOS, o efeito de desfoque translúcido ou preenchimento semitransparente é automaticamente substituído
+  por superfícies opacas sólidas em `colors.m3.surfaceContainer` ou `colors.background`, eliminando
+  interferência visual de fundos e garantindo contraste estrito. Os componentes `ScreenContainer` e
+  `TopAppBar` operam diretamente com fundo sólido, sem necessidade de translucidez.
+- **Dynamic Type (Tipografia Adaptável) e Escala Multiplataforma:**
+  Para suportar os tamanhos ampliados de acessibilidade (Accessibility Sizes AX1–AX5 no iOS e configurações de fonte no Android/Web) sem quebras críticas de layout:
+  - O uso defensivo de `maxFontSizeMultiplier` e `numberOfLines={1}` é multiplataforma (protegendo a interface no iOS, Android e Web), sendo o teto restritivo de 1.2x–1.3x reservado exclusivamente para barras e cabeçalhos fixos de navegação:
+    - Cabeçalhos fixos e barras superiores (`TopAppBar`, `BottomSheet`) aplicam `maxFontSizeMultiplier={1.3}`
+      com `numberOfLines={1}` e `accessibilityRole="header"`, permitindo que o leitor de tela (VoiceOver/TalkBack)
+      leia o título integralmente sem que o texto expulse os botões de ação ou sobreponha controles da barra.
+    - A barra inferior flutuante (`NavigationBar`) aplica `maxFontSizeMultiplier={1.2}` nos rótulos de abas
+      e badges para preservar a geometria da cápsula deslizante e o toque ergonômico.
   - Áreas de conteúdo, cards e formulários não fixam altura vertical (`minHeight` ou livre) e crescem
-    dinamicamente para acomodar o texto em tamanhos maiores.
+    dinamicamente para acomodar o texto em tamanhos maiores sem limitação artificial de escala.
 - **Leitor de Tela (VoiceOver):**
   - Componentes com semântica de grupo declaram papéis formais (`accessibilityRole="tablist"` na barra
     e `accessibilityRole="tab"` com `accessibilityState={{ selected }}` nos itens).
