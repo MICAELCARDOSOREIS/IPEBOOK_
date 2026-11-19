@@ -6,10 +6,12 @@ import { ModalityCoverArea } from "@/view/components/ModalityCoverArea";
 import { Tag } from "@/view/components/Tag";
 import { AppIcon } from "@/view/components/AppIcon";
 import { FavoriteButton } from "@/view/components/FavoriteButton";
+import { triggerHaptic } from "@/view/haptics";
 import { formatPrice } from "@/view/formatPrice";
 import { tokens, fontFamily, type ColorPalette } from "@/view/tokens";
 import { formatBookLocation } from "@/model/entities/location";
 import { useTheme } from "@/view/theme/ThemeProvider";
+import { useReduceTransparency } from "@/view/useReduceTransparency";
 import { webColumnWidth } from "@/view/webLayout";
 
 export type SearchBookCardProps = {
@@ -30,6 +32,9 @@ export function SearchBookCard({
   onFavoriteToggle,
 }: SearchBookCardProps) {
   const { colors } = useTheme();
+  const isIos = Platform.OS === "ios";
+  const reduceTransparency = useReduceTransparency();
+  const iosGlass = isIos && !reduceTransparency;
   const styles = React.useMemo(() => createCardStyles(colors), [colors]);
   const [isHovered, setIsHovered] = useState(false);
 
@@ -56,6 +61,7 @@ export function SearchBookCard({
     <View
       style={[
         styles.card,
+        isIos && (iosGlass ? styles.iosGlassCard : styles.iosOpaqueCard),
         wideWeb && styles.cardWide,
         wideWeb && isHovered && styles.cardWideHovered,
         wideWeb && { maxWidth: wideColumnMaxWidth },
@@ -64,7 +70,10 @@ export function SearchBookCard({
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`Ver detalhe de ${item.title}, ${item.author}${item.neighborhood ? ` em ${item.neighborhood}` : ""}`}
-        onPress={onPress}
+        onPress={() => {
+          if (isIos) triggerHaptic("light");
+          onPress();
+        }}
         onHoverIn={() => setIsHovered(true)}
         onHoverOut={() => setIsHovered(false)}
         style={({ pressed }) => [
@@ -160,6 +169,22 @@ function createCardStyles(colors: ColorPalette) {
       shadowOpacity: 0.08,
       shadowRadius: 6,
       gap: tokens.spacing[8],
+    },
+    iosGlassCard: {
+      borderRadius: tokens.radius.xl,
+      borderCurve: "continuous",
+      backgroundColor: tokens.glass.fill,
+      borderColor: tokens.glass.stroke,
+      shadowColor: "#362b1f",
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.12,
+      shadowRadius: 14,
+    },
+    iosOpaqueCard: {
+      borderRadius: tokens.radius.xl,
+      borderCurve: "continuous",
+      backgroundColor: colors.m3.surfaceContainerLowest,
+      borderColor: tokens.ios.separator,
     },
     cardWide: {
       flex: 1,
