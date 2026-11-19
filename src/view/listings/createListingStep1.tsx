@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import type { BookModality } from "@/model/entities/book";
 import type { IsbnFeedback } from "@/viewmodel/useCreateListingViewModel";
 import type { ListingBasicsErrors } from "@/viewmodel/listingBasicsValidation";
@@ -12,6 +12,7 @@ import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
 import { IconBadge } from "@/view/components/IconBadge";
 import { InlineErrorCard } from "@/view/components/InlineErrorCard";
 import { TextField } from "@/view/components/TextField";
+import { TextButton } from "@/view/components/TextButton";
 import { BarcodeScannerModal } from "@/view/components/BarcodeScannerModal";
 
 import { withPress } from "@/view/pressFeedback";
@@ -71,11 +72,11 @@ export type CreateListingStep1Props = {
 };
 
 export function CreateListingStep1({
-  isbn: _isbn,
+  isbn,
   lookingUpIsbn,
   isbnFeedback,
-  onSetIsbn: _onSetIsbn,
-  onLookupIsbn: _onLookupIsbn,
+  onSetIsbn,
+  onLookupIsbn,
   onScanBarcode,
   modality,
   title,
@@ -155,6 +156,21 @@ export function CreateListingStep1({
             onScanBarcode?.(scannedCode);
           }}
         />
+        {Platform.OS === "ios" && onSetIsbn && onLookupIsbn ? (
+          <>
+            <TextField
+              label="ISBN (opcional)"
+              value={isbn ?? ""}
+              onChangeText={onSetIsbn}
+              editable={!loading && !lookingUpIsbn}
+              keyboardType="number-pad"
+              helperText="Digite o ISBN ou cole o código se ele terminar em X."
+              iosKeyboardDone
+              returnKeyType="done"
+            />
+            <TextButton label="Buscar pelo ISBN" disabled={!isbn?.trim() || loading || lookingUpIsbn} onPress={onLookupIsbn} />
+          </>
+        ) : null}
 
         {isbnFeedback ? (
           <View
@@ -342,6 +358,7 @@ export function CreateListingStep1({
                   onChangeText={onSetPrice}
                   editable={!loading}
                   keyboardType="decimal-pad"
+                  iosKeyboardDone
                   placeholder="Ex: 25,00"
                   error={fieldErrors.price}
                   returnKeyType="done"
@@ -406,6 +423,7 @@ export function CreateListingStep1({
                   onChangeText={onSetPrice}
                   editable={!loading}
                   keyboardType="decimal-pad"
+                  iosKeyboardDone
                   placeholder="Ex: 25,00"
                   error={fieldErrors.price}
                   returnKeyType="done"

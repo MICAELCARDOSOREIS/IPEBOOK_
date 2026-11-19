@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { DomainError } from "@/model/errors";
+import { DomainError, ImagePermissionDeniedError } from "@/model/errors";
 import type { IImagePickerService, ImageSource } from "@/model/services/iImagePickerService";
 import type { IListingPhotoUseCases } from "@/usecase/iListingPhotoUseCases";
 
-export type ListingPhotoState = { uploading: boolean; error: string | null };
+export type ListingPhotoState = { uploading: boolean; error: string | null; permissionDenied?: boolean };
 
 const UPLOAD_ERROR = "Não foi possível enviar a foto. Tente novamente.";
 /** Capa de livro: retrato 5:8, a mesma proporção da capa ilustrativa. */
@@ -42,7 +42,11 @@ export function useListingPhotoViewModel(
         return url;
       } catch (error) {
         if (active.current) {
-          setState({ uploading: false, error: error instanceof DomainError ? error.message : UPLOAD_ERROR });
+          setState({
+            uploading: false,
+            error: error instanceof DomainError ? error.message : UPLOAD_ERROR,
+            ...(error instanceof ImagePermissionDeniedError ? { permissionDenied: true } : {}),
+          });
         }
         return null;
       } finally {
@@ -52,6 +56,6 @@ export function useListingPhotoViewModel(
     [picker, useCases, sessionUserId],
   );
 
-  const clearError = useCallback(() => setState((prev) => ({ ...prev, error: null })), []);
+  const clearError = useCallback(() => setState((prev) => ({ uploading: prev.uploading, error: null })), []);
   return [state, { choose, clearError }];
 }

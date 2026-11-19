@@ -2,7 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import {
   AccessibilityInfo,
   ActivityIndicator,
+  AppState,
   Modal,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -16,6 +18,7 @@ import { AppIcon } from "@/view/components/AppIcon";
 import { type FocusableElement, useModalFocusTrap } from "@/view/components/Dialog";
 import { FilledButton } from "@/view/components/FilledButton";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
+import { OpenAppSettingsButton } from "@/view/components/OpenAppSettingsButton";
 
 import { withPress } from "@/view/pressFeedback";
 export type BarcodeScannerModalProps = {
@@ -34,7 +37,9 @@ export function BarcodeScannerModal({
   onScan,
 }: BarcodeScannerModalProps) {
   const { colors } = useTheme();
-  const [permission, requestPermission] = useCameraPermissions();
+  const [permission, requestPermission, getPermission] = useCameraPermissions();
+  const canAskAgain = permission?.canAskAgain;
+  const cameraGranted = permission?.granted;
   const [hasScanned, setHasScanned] = useState(false);
   const scanLockRef = useRef(false);
   const closeRef = useRef<FocusableElement | null>(null);
@@ -45,11 +50,19 @@ export function BarcodeScannerModal({
     if (visible) {
       setHasScanned(false);
       scanLockRef.current = false;
-      if (!permission?.granted) {
+      if (!cameraGranted && (Platform.OS !== "ios" || canAskAgain === true)) {
         requestPermission().catch(() => {});
       }
     }
-  }, [visible, permission?.granted, requestPermission]);
+  }, [visible, cameraGranted, canAskAgain, requestPermission]);
+
+  useEffect(() => {
+    if (!visible || Platform.OS !== "ios") return;
+    const subscription = AppState.addEventListener("change", (state) => {
+      if (state === "active") void getPermission().catch(() => {});
+    });
+    return () => subscription.remove();
+  }, [visible, getPermission]);
 
   const handleBarcodeScanned = (result: BarcodeScanningResult) => {
     if (scanLockRef.current || hasScanned) return;
@@ -110,11 +123,11 @@ export function BarcodeScannerModal({
               Para ler o código de barras no verso do livro e preencher os dados automaticamente, precisamos de acesso à câmera do seu dispositivo.
             </Text>
             <View style={styles.permissionActions}>
-              <FilledButton
+              {Platform.OS === "ios" && !permission.canAskAgain ? <OpenAppSettingsButton /> : <FilledButton
                 label="Permitir Câmera"
                 onPress={() => requestPermission()}
                 accessibilityLabel="Solicitar permissão de câmera"
-              />
+              />}
               <View style={styles.buttonSpacer} />
               <OutlinedButton
                 label="Digitar ISBN Manualmente"

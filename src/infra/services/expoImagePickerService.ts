@@ -1,7 +1,7 @@
 import { Platform } from "react-native";
 import { ImageManipulator, SaveFormat } from "expo-image-manipulator";
 import * as ImagePicker from "expo-image-picker";
-import { ValidationError } from "@/model/errors";
+import { ImagePermissionDeniedError } from "@/model/errors";
 import type { IImagePickerService, ImageSource, PickedImage } from "@/model/services/iImagePickerService";
 
 const PERMISSION_DENIED: Record<ImageSource, string> = {
@@ -23,7 +23,7 @@ export class ExpoImagePickerService implements IImagePickerService {
       source === "camera"
         ? await ImagePicker.requestCameraPermissionsAsync()
         : await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) throw new ValidationError(PERMISSION_DENIED[source]);
+    if (!permission.granted) throw new ImagePermissionDeniedError(PERMISSION_DENIED[source]);
 
     const options: ImagePicker.ImagePickerOptions = {
       mediaTypes: ["images"],

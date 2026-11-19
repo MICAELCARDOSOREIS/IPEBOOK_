@@ -1,9 +1,10 @@
 import { useId, useMemo, useState, type ComponentRef, type Ref } from "react";
 import type { KeyboardTypeOptions, ReturnKeyTypeOptions, TextInputProps } from "react-native";
-import { Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { InputAccessoryView, Keyboard, Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { AppIcon } from "@/view/components/AppIcon";
+import { TextButton } from "@/view/components/TextButton";
 
 import { withPress } from "@/view/pressFeedback";
 
@@ -36,6 +37,8 @@ export type TextFieldProps = {
   returnKeyType?: ReturnKeyTypeOptions;
   /** Toque na ação do teclado; no último campo costuma enviar o formulário. */
   onSubmitEditing?: () => void;
+  /** Ação para os teclados numéricos do iOS, que podem não ter tecla de retorno. */
+  iosKeyboardDone?: boolean;
   /** Referência ao elemento TextInput para controle de foco programático (Spec 133 / Issue #217). */
   inputRef?: Ref<TextInputInstance>;
   /** Callback executada quando o campo ganha foco (útil para auto-scroll e IHC). */
@@ -70,6 +73,7 @@ export function TextField({
   textContentType,
   returnKeyType,
   onSubmitEditing,
+  iosKeyboardDone,
   inputRef,
   onFocus,
   onBlur,
@@ -79,6 +83,7 @@ export function TextField({
   const [revealed, setRevealed] = useState(false);
   const hasError = Boolean(error);
   const errorId = useId();
+  const accessoryId = Platform.OS === "ios" && iosKeyboardDone ? `teclado-${errorId}` : undefined;
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const hasValue = value.length > 0;
@@ -110,6 +115,7 @@ export function TextField({
           autoComplete={autoComplete}
           textContentType={textContentType}
           returnKeyType={returnKeyType}
+          inputAccessoryViewID={accessoryId}
           onSubmitEditing={onSubmitEditing}
           autoCorrect={secureTextEntry ? false : undefined}
           autoCapitalize={autoCapitalize}
@@ -167,6 +173,16 @@ export function TextField({
           </Text>
         )}
       </View>
+      {accessoryId ? (
+        <InputAccessoryView nativeID={accessoryId} backgroundColor={colors.m3.surfaceContainerLow}>
+          <View style={styles.keyboardActions}>
+            <TextButton label="Concluir" onPress={() => {
+              Keyboard.dismiss();
+              onSubmitEditing?.();
+            }} />
+          </View>
+        </InputAccessoryView>
+      ) : null}
       {hasError ? (
         <Text
           nativeID={errorId}
@@ -189,6 +205,7 @@ export function TextField({
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     field: { gap: tokens.spacing[4] },
+    keyboardActions: { alignItems: "flex-end", paddingHorizontal: tokens.spacing[16] },
     container: {
       minHeight: tokens.spacing[56],
       justifyContent: "center",
