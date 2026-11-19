@@ -1,5 +1,6 @@
 
 import { act, cleanup, fireEvent, render } from "@testing-library/react-native";
+import { Platform } from "react-native";
 import { InviteFriends } from "@/view/profile/inviteFriends";
 import type { InviteFriendsState, InviteFriendsActions } from "@/viewmodel/useInviteFriendsViewModel";
 
@@ -38,8 +39,24 @@ function mockViewModel(
 }
 
 describe("InviteFriends — Convidar amigos (Figma 08.02, Spec 057)", () => {
+  const originalPlatform = Platform.OS;
+
   afterEach(() => {
     cleanup();
+    Platform.OS = originalPlatform;
+  });
+
+  it("abre o compartilhamento apenas do texto ao tocar na opção do iOS", async () => {
+    Platform.OS = "ios";
+    const actions = mockViewModel();
+    const screen = await render(<InviteFriends />);
+
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Compartilhar texto" }));
+    });
+
+    expect(actions.shareNative).toHaveBeenCalledTimes(1);
+    expect(actions.shareImage).not.toHaveBeenCalled();
   });
 
   it("renderiza cabeçalho, manchete e prévia da mensagem", async () => {
@@ -92,7 +109,8 @@ describe("InviteFriends — Convidar amigos (Figma 08.02, Spec 057)", () => {
     expect(onBack).toHaveBeenCalledTimes(1);
   });
 
-  it("um único botão Compartilhar convite envia imagem e texto, sem os outros botões (Spec 092)", async () => {
+  it("aciona o compartilhamento de imagem e texto no Android (Spec 092)", async () => {
+    Platform.OS = "android";
     const actions = mockViewModel();
     let screen!: Awaited<ReturnType<typeof render>>;
     await act(async () => {
@@ -106,6 +124,7 @@ describe("InviteFriends — Convidar amigos (Figma 08.02, Spec 057)", () => {
     expect(screen.queryByLabelText("Enviar convite pelo WhatsApp")).toBeNull();
     expect(screen.queryByLabelText("Mais opções de compartilhamento")).toBeNull();
     expect(screen.queryByLabelText("Copiar link do aplicativo")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Compartilhar texto" })).toBeNull();
     expect(screen.getByText("Texto que vai junto com a imagem")).toBeDefined();
     const capture = jest.mocked(actions.shareImage).mock.calls[0][0];
     await expect(capture()).resolves.toBe("file:///tmp/convite.png");
