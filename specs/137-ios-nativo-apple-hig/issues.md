@@ -119,8 +119,8 @@ Este documento quebra o trabalho do iPhone nativo em **8 issues independentes e 
 - **Labels:** `pessoa:eric`, `pessoa:maria-clara`, `ios`, `apple-hig`, `accessibility`
 - **Telas Figma:** `11.01` a `11.09` (Permissões e estados compactos/expandidos de Dynamic Island / Live Activity) e `12.01` a `12.10` (Reduzir Transparência e Texto Grande — Dark Mode revogado pela Spec 139 / ADR 0114)
 - **Melhorias Apple HIG entregues por Maria Clara (`@clarinhamartins`):**
-  - Validação e reforço de **Reduzir Transparência** (superfícies Liquid Glass passam a ter fundo sólido legível em `surfaceContainer` no `ScreenContainer`, `TopAppBar`, `NavigationBar` e `BottomSheet`).
-  - Suporte e blindagem de **Dynamic Type** (fontes ampliadas até 200% sem quebra de layout nem corte de botões, com `maxFontSizeMultiplier` defensivo e alvos mínimos de `44×44 pt`).
+  - Validação e reforço de **Reduzir Transparência** (superfícies translúcidas Liquid Glass passam a ter fundo sólido legível em `surfaceContainer` no `BottomSheet`, `NavigationBar`, `IosCardSurface` e `OutlinedButton`; `ScreenContainer` e `TopAppBar` já operam diretamente com fundo sólido).
+  - Suporte e blindagem de **Dynamic Type** e escala de texto multiplataforma (fontes ampliadas até 200% sem quebra de layout nem corte de botões, com teto defensivo de `maxFontSizeMultiplier` de 1.2x–1.3x restrito a barras e cabeçalhos fixos de navegação e alvos mínimos de `44×44 pt`).
   - Semântica e leitura completa com **VoiceOver** (`accessibilityRole="tablist"`, `"tab"`, `"header"`, `"button"`, estados e rótulos contextuais em português).
   - Documentação formal das diretrizes de acessibilidade iOS em `design-system/06-acessibilidade.md`.
 - **Pendências restantes (outros integrantes):**

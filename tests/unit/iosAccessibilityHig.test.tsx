@@ -1,5 +1,5 @@
 import { cleanup, render } from "@testing-library/react-native";
-import { AccessibilityInfo, Platform, StyleSheet, Text } from "react-native";
+import { Platform, StyleSheet, Text } from "react-native";
 import { BottomSheet } from "@/view/components/BottomSheet";
 import { NavigationBar } from "@/view/components/NavigationBar";
 import { TopAppBar } from "@/view/components/TopAppBar";
