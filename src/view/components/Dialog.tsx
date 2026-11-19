@@ -1,7 +1,9 @@
+import { BlurView } from "expo-blur";
 import { useEffect, useMemo, useRef } from "react";
 import { AccessibilityInfo, ActivityIndicator, Animated, Modal, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
+import { useReduceTransparency } from "@/view/useReduceTransparency";
 
 import { withPress } from "@/view/pressFeedback";
 import { useGuardedPress } from "@/view/useGuardedPress";
@@ -117,6 +119,9 @@ export function Dialog({
   const confirmRef = useRef<FocusableElement | null>(null);
   const cardScale = useRef(new Animated.Value(visible ? 1 : 0.92)).current;
   const { colors } = useTheme();
+  const isIos = Platform.OS === "ios";
+  const reduceTransparency = useReduceTransparency();
+  const iosGlass = isIos && !reduceTransparency;
   const styles = useMemo(() => createStyles(colors), [colors]);
   const guardedCancel = useGuardedPress(onCancel);
   const guardedConfirm = useGuardedPress(onConfirm);
@@ -171,8 +176,20 @@ export function Dialog({
         ) : null}
         <Animated.View
           accessibilityRole="alert"
-          style={[styles.card, { transform: [{ scale: cardScale }] }]}
+          style={[
+            styles.card,
+            isIos && (iosGlass ? styles.iosCardGlass : styles.iosCardOpaque),
+            { transform: [{ scale: cardScale }] },
+          ]}
         >
+          {iosGlass ? (
+            <BlurView
+              testID="dialog-ios-blur"
+              intensity={30}
+              tint="light"
+              style={[StyleSheet.absoluteFill, { borderRadius: tokens.radius.xxl }]}
+            />
+          ) : null}
           <Text accessibilityRole="header" style={styles.title}>{title}</Text>
           <Text style={styles.message}>{message}</Text>
           <View style={styles.actions}>
@@ -198,14 +215,21 @@ export function Dialog({
               onPress={guardedConfirm}
               style={withPress([
                 styles.confirmButton,
-                destructive ? styles.confirmDestructive : styles.confirmDefault,
+                destructive
+                  ? (isIos ? styles.iosConfirmDestructive : styles.confirmDestructive)
+                  : styles.confirmDefault,
                 loading && styles.confirmDisabled,
               ])}
             >
               {loading ? (
-                <ActivityIndicator accessibilityLabel="Confirmando ação..." color={colors.surface} />
+                <ActivityIndicator
+                  accessibilityLabel="Confirmando ação..."
+                  color={destructive && isIos ? colors.error : colors.surface}
+                />
               ) : (
-                <Text style={styles.confirmText}>{confirmLabel}</Text>
+                <Text style={[styles.confirmText, destructive && isIos && styles.iosConfirmDestructiveText]}>
+                  {confirmLabel}
+                </Text>
               )}
             </Pressable>
           </View>
@@ -237,6 +261,19 @@ function createStyles(colors: ColorPalette) {
       shadowOpacity: 0.18,
       shadowRadius: 8,
       elevation: 3,
+    },
+    iosCardGlass: {
+      overflow: "hidden",
+      borderCurve: "continuous",
+      backgroundColor: tokens.glass.fill,
+      borderWidth: 1,
+      borderColor: tokens.glass.stroke,
+    },
+    iosCardOpaque: {
+      borderCurve: "continuous",
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: tokens.ios.separator,
     },
     title: {
       color: colors.text,
@@ -279,6 +316,14 @@ function createStyles(colors: ColorPalette) {
     },
     confirmDestructive: {
       backgroundColor: colors.error,
+    },
+    iosConfirmDestructive: {
+      backgroundColor: tokens.ios.destructiveFill,
+      borderWidth: 1,
+      borderColor: tokens.ios.separator,
+    },
+    iosConfirmDestructiveText: {
+      color: colors.error,
     },
     confirmDisabled: {
       opacity: 0.6,
