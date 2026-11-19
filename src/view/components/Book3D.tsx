@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AccessibilityInfo, PanResponder, StyleSheet, Text, View } from "react-native";
+import { AccessibilityInfo, PanResponder, Platform, StyleSheet, Text, View, type ViewProps } from "react-native";
 import { BookCover, coverBackground } from "@/view/components/BookCover";
 import { bookDepthFromPages, faceContentOpacity, normalizeAngle, projectBookFaces, snapBookAngle, type BookFace } from "@/view/book3dGeometry";
 import { fontFamily, tokens } from "@/view/tokens";
@@ -15,7 +15,7 @@ export type Book3DProps = {
   /** Quantidade de páginas, usada para ajustar a espessura da lombada e do corte das folhas. */
   pageCount?: number;
   photoUrl?: string;
-  /** Toque sem arrastar (por exemplo, abrir as fotos); sem isso, o toque volta o livro para a capa. */
+  /** Toque sem arrastar (por exemplo, abrir as fotos); sem isso, o toque alterna entre capa e contracapa. */
   onPress?: () => void;
   /** Gira um pouco ao aparecer, para mostrar que é um livro. Desligado nos testes. */
   intro?: boolean;
@@ -23,8 +23,6 @@ export type Book3DProps = {
   scale?: number;
   /** Ângulo inicial em graus; 0 mostra a capa. */
   startAngle?: number;
-  /** Exibe uma badge discreta indicando que o modelo é 3D e responde ao toque/giro. */
-  show3dHint?: boolean;
   /** Rótulo de acessibilidade personalizado (ex.: para ver fotos em tela cheia). */
   accessibilityLabel?: string;
   /** Papel de acessibilidade personalizado. */
@@ -67,7 +65,6 @@ export function Book3D({
   intro = true,
   scale = 1,
   startAngle,
-  show3dHint,
   accessibilityLabel,
   accessibilityRole,
 }: Book3DProps) {
@@ -79,6 +76,7 @@ export function Book3D({
   const angleRef = useRef(normalizeAngle(defaultRestAngle));
   const reduceMotion = useRef(false);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const flipping = useRef(false);
   const press = useRef(onPress);
   press.current = onPress;
   const base = useMemo(() => coverBackground(id), [id]);
@@ -90,11 +88,13 @@ export function Book3D({
   const stop = () => {
     if (timer.current) clearInterval(timer.current);
     timer.current = null;
+    flipping.current = false;
   };
   /** Anima até `target` (ângulo equivalente mais próximo), com desaceleração. */
-  const animateTo = (target: number) => {
+  const animateTo = (target: number, flip = false) => {
     stop();
     if (reduceMotion.current) return apply(target);
+    flipping.current = flip;
     const delta = normalizeAngle(target - angleRef.current);
     const from = angleRef.current;
     const start = Date.now();
@@ -140,28 +140,45 @@ export function Book3D({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const dragFrom = useRef(0);
+  const activate = () => {
+    if (press.current) {
+      press.current();
+      return;
+    }
+    if (flipping.current) return;
+    const atFront = Math.abs(normalizeAngle(angleRef.current - defaultRestAngle)) < 5;
+    animateTo(atFront ? 180 : defaultRestAngle, true);
+  };
+  const activateRef = useRef(activate);
+  activateRef.current = activate;
+  const dragFrom = useRef<number | null>(null);
   const pan = useMemo(
     () =>
       PanResponder.create({
         onStartShouldSetPanResponder: () => true,
         onMoveShouldSetPanResponder: (_event, g) => Math.abs(g.dx) > Math.abs(g.dy) && Math.abs(g.dx) > 4,
-        onPanResponderTerminationRequest: (_event, g) => Math.abs(g.dy) > Math.abs(g.dx) && Math.abs(g.dy) > TAP_SLOP,
+        onPanResponderTerminationRequest: () => dragFrom.current === null,
         onPanResponderGrant: () => {
-          stop();
-          dragFrom.current = angleRef.current;
+          dragFrom.current = null;
         },
-        onPanResponderMove: (_event, g) => apply(dragFrom.current + g.dx * DRAG_GAIN),
-        onPanResponderRelease: (_event, g) => {
-          if (Math.abs(g.dx) < TAP_SLOP && Math.abs(g.dy) < TAP_SLOP) {
-            if (press.current) press.current();
-            else if (Math.abs(normalizeAngle(angleRef.current - defaultRestAngle)) < 5) animateTo(180);
-            else animateTo(defaultRestAngle);
-            return;
+        onPanResponderMove: (_event, g) => {
+          if (dragFrom.current === null) {
+            if (Math.abs(g.dx) < TAP_SLOP || Math.abs(g.dx) <= Math.abs(g.dy)) return;
+            stop();
+            dragFrom.current = angleRef.current;
           }
-          coast(g.vx);
+          apply(dragFrom.current + g.dx * DRAG_GAIN);
         },
-        onPanResponderTerminate: () => stop(),
+        onPanResponderRelease: (_event, g) => {
+          if (dragFrom.current !== null) {
+            coast(g.vx);
+          } else if (Math.abs(g.dx) < TAP_SLOP && Math.abs(g.dy) < TAP_SLOP) {
+            activateRef.current();
+          }
+        },
+        onPanResponderTerminate: () => {
+          if (dragFrom.current !== null) animateTo(snapBookAngle(angleRef.current, defaultRestAngle));
+        },
       }),
     // Os callbacks usam só refs.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -170,12 +187,22 @@ export function Book3D({
 
   const faces = projectBookFaces(angle, WIDTH, DEPTH);
   const total = WIDTH + DEPTH * 2;
+  const silhouetteWidth = faces.reduce((sum, face) => sum + face.width, 0);
 
   return (
     <View
       {...pan.panHandlers}
+      {...(Platform.OS === "web" ? {
+        tabIndex: 0 as const,
+        onKeyDown: ((event) => {
+          const { key, repeat } = event as typeof event & Pick<KeyboardEvent, "key" | "repeat">;
+          if (key !== "Enter" && key !== " ") return;
+          event.preventDefault();
+          if (!repeat) activate();
+        }) satisfies NonNullable<ViewProps["onKeyDown"]>,
+      } : {})}
       accessible
-      accessibilityRole={accessibilityRole ?? (onPress ? "button" : "image")}
+      accessibilityRole={accessibilityRole ?? (onPress || Platform.OS === "web" ? "button" : "image")}
       accessibilityLabel={
         accessibilityLabel ??
         (onPress
@@ -190,9 +217,7 @@ export function Book3D({
       onAccessibilityAction={(event) => {
         const action = event.nativeEvent.actionName;
         if (action === "activate") {
-          if (onPress) onPress();
-          else if (Math.abs(normalizeAngle(angleRef.current - defaultRestAngle)) < 5) animateTo(180);
-          else animateTo(defaultRestAngle);
+          activate();
         } else if (action === "increment") {
           animateTo(angleRef.current + STEP);
         } else if (action === "decrement") {
@@ -203,12 +228,13 @@ export function Book3D({
       }}
       style={[styles.stage, { width: total, height: HEIGHT }]}
     >
+      <View pointerEvents="none" style={[styles.groundShadow, { width: silhouetteWidth * 0.9, height: 12 * scale, bottom: -7 * scale }]} />
       {faces.map(({ face, center, width, shade }) => {
         const size = face === "front" || face === "back" ? WIDTH : DEPTH;
         const fade = faceContentOpacity(face, width / size);
         // No corte das páginas (face "right"), a altura é levemente menor que a capa dura (degrau de encadernação).
         const isPageBlock = face === "right";
-        const faceTop = isPageBlock ? Math.max(2, Math.round(3 * scale)) : 0;
+        const faceTop = isPageBlock ? Math.max(3, Math.round(5 * scale)) : 0;
         const faceHeight = isPageBlock ? HEIGHT - faceTop * 2 : HEIGHT;
         return (
           <View
@@ -228,15 +254,10 @@ export function Book3D({
             ]}
           >
             <FaceContent face={face} id={id} title={title} author={author} description={description} publisher={publisher} photoUrl={photoUrl} base={base} width={WIDTH} height={faceHeight} depth={DEPTH} fade={fade} />
-            <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: `rgba(0,0,0,${shade.toFixed(3)})` }]} />
+            <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: `rgba(0,0,0,${(isPageBlock ? shade * 0.35 : shade).toFixed(3)})` }]} />
           </View>
         );
       })}
-      {show3dHint ? (
-        <View pointerEvents="none" style={styles.hintBadge}>
-          <Text numberOfLines={1} style={styles.hintText}>3D · Toque para virar</Text>
-        </View>
-      ) : null}
     </View>
   );
 }
@@ -306,10 +327,10 @@ function FaceContent({ face, id, title, author, description, publisher, photoUrl
   // Corte das páginas: linhas finas paralelas à lombada + sombreamento interno junto às capas.
   return (
     <View style={[styles.fill, { backgroundColor: PAGE }]}>
-      <View pointerEvents="none" style={styles.pageInnerShadowLeft} />
       {Array.from({ length: Math.floor(depth / 2.2) }, (_, i) => (
         <View key={i} style={[styles.pageLine, { left: 2 + i * 2.2 }]} />
       ))}
+      <View pointerEvents="none" style={styles.pageInnerShadowLeft} />
       <View pointerEvents="none" style={styles.pageInnerShadowRight} />
     </View>
   );
@@ -317,6 +338,12 @@ function FaceContent({ face, id, title, author, description, publisher, photoUrl
 
 const styles = StyleSheet.create({
   stage: { alignItems: "center", justifyContent: "center" },
+  groundShadow: {
+    position: "absolute",
+    borderRadius: tokens.radius.full,
+    backgroundColor: "rgba(32, 22, 10, 0.12)",
+    boxShadow: "0px 2px 9px rgba(32, 22, 10, 0.2)",
+  },
   face: { position: "absolute", top: 0, overflow: "hidden", borderRadius: tokens.radius.micro },
   coverShadow: {
     elevation: 6,
@@ -328,8 +355,8 @@ const styles = StyleSheet.create({
   fill: { flex: 1 },
   hingeShadow: { position: "absolute", left: 4, top: 0, bottom: 0, width: 2, backgroundColor: "rgba(0,0,0,0.28)" },
   hingeHighlight: { position: "absolute", left: 6, top: 0, bottom: 0, width: 1, backgroundColor: "rgba(255,255,255,0.16)" },
-  pageInnerShadowLeft: { position: "absolute", left: 0, top: 0, bottom: 0, width: 3, backgroundColor: "rgba(0,0,0,0.12)" },
-  pageInnerShadowRight: { position: "absolute", right: 0, top: 0, bottom: 0, width: 2, backgroundColor: "rgba(0,0,0,0.08)" },
+  pageInnerShadowLeft: { position: "absolute", left: 0, top: 0, bottom: 0, width: 4, backgroundColor: "rgba(84, 59, 29, 0.18)" },
+  pageInnerShadowRight: { position: "absolute", right: 0, top: 0, bottom: 0, width: 2, backgroundColor: "rgba(84, 59, 29, 0.1)" },
   backFrame: { position: "absolute", left: 12, right: 12, top: 12, bottom: 12, borderWidth: 1, borderColor: GOLD },
   band: { position: "absolute", left: 0, right: 0, height: 1.5, backgroundColor: GOLD },
   backText: { position: "absolute", left: 0, right: 0, top: 0, bottom: 0, justifyContent: "center", alignItems: "center", gap: tokens.spacing[6] },
@@ -340,23 +367,7 @@ const styles = StyleSheet.create({
   backDescription: { color: COVER_TEXT, opacity: 0.85, fontFamily: fontFamily.regular, textAlign: "center" },
   spineAuthor: { color: COVER_TEXT, opacity: 0.8, fontFamily: fontFamily.regular, textAlign: "center" },
   spineText: { color: COVER_TEXT, ...tokens.typography.spineText, textAlign: "center" },
-  pageLine: { position: "absolute", top: 0, bottom: 0, width: 0.7, backgroundColor: "rgba(0,0,0,0.14)" },
-  hintBadge: {
-    position: "absolute",
-    bottom: 8,
-    alignSelf: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.65)",
-    paddingHorizontal: tokens.spacing[10],
-    paddingVertical: tokens.spacing[4],
-    borderRadius: tokens.radius.full,
-    zIndex: 20,
-  },
-  hintText: {
-    color: "#FFFFFF",
-    fontFamily: fontFamily.medium,
-    fontSize: tokens.fontSize[11] ?? 11,
-    letterSpacing: 0.3,
-  },
+  pageLine: { position: "absolute", top: 0, bottom: 0, width: 0.7, backgroundColor: "rgba(84, 59, 29, 0.16)" },
 });
 
 export default Book3D;
