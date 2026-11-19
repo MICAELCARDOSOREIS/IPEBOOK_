@@ -1,9 +1,12 @@
+import { BlurView } from "expo-blur";
 import { useMemo, useState } from "react";
-import { Platform, Pressable, StyleSheet } from "react-native";
+import { Platform, Pressable, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppIcon } from "@/view/components/AppIcon";
+import { triggerHaptic } from "@/view/haptics";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
+import { useReduceTransparency } from "@/view/useReduceTransparency";
 
 export type HomeFloatingAddButtonProps = {
   onPress: () => void;
@@ -16,6 +19,9 @@ export type HomeFloatingAddButtonProps = {
 export function HomeFloatingAddButton({ onPress }: HomeFloatingAddButtonProps) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
+  const isIos = Platform.OS === "ios";
+  const reduceTransparency = useReduceTransparency();
+  const iosGlass = isIos && !reduceTransparency;
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [isHovered, setIsHovered] = useState(false);
 
@@ -30,15 +36,24 @@ export function HomeFloatingAddButton({ onPress }: HomeFloatingAddButtonProps) {
       accessibilityLabel="Anunciar livro"
       onHoverIn={() => setIsHovered(true)}
       onHoverOut={() => setIsHovered(false)}
-      onPress={onPress}
+      onPress={() => {
+        if (isIos) triggerHaptic("light");
+        onPress();
+      }}
       style={({ pressed }) => [
         styles.floatingChatButton,
+        isIos && (iosGlass ? styles.iosGlassButton : styles.iosOpaqueButton),
         { bottom },
         isHovered && styles.floatingChatButtonHovered,
         pressed && styles.floatingChatButtonPressed,
       ]}
     >
-      <AppIcon name="add" size={26} color={colors.nature.foliage} />
+      {iosGlass ? (
+        <View pointerEvents="none" style={styles.iosBlurClip}>
+          <BlurView intensity={24} tint="light" style={StyleSheet.absoluteFill} />
+        </View>
+      ) : null}
+      <AppIcon name="add" size={26} color={isIos ? colors.m3.onSurface : colors.nature.foliage} />
     </Pressable>
   );
 }
@@ -84,6 +99,26 @@ function createStyles(colors: ColorPalette) {
     floatingChatButtonPressed: {
       transform: [{ scale: 0.94 }],
       opacity: 0.9,
+    },
+    iosGlassButton: {
+      borderRadius: tokens.radius.full,
+      backgroundColor: tokens.glass.fill,
+      borderColor: tokens.glass.stroke,
+      shadowColor: "#302e24",
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.14,
+      shadowRadius: 10,
+      overflow: "hidden",
+    },
+    iosOpaqueButton: {
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.m3.surfaceContainer,
+      borderColor: colors.m3.outlineVariant,
+    },
+    iosBlurClip: {
+      ...StyleSheet.absoluteFill,
+      borderRadius: tokens.radius.full,
+      overflow: "hidden",
     },
   });
 }

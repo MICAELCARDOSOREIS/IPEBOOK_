@@ -1,3 +1,4 @@
+import { BlurView } from "expo-blur";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Animated, AppState, Image, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import type { Book } from "@/model/entities/book";
@@ -39,6 +40,7 @@ import { HomeFloatingAddButton } from "@/view/home/HomeFloatingChatButton";
 import type { BookModality } from "@/model/entities/book";
 import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
 import { expressivePressedStyle, withPress } from "@/view/pressFeedback";
+import { useReduceTransparency } from "@/view/useReduceTransparency";
 
 export { carouselOffsetFor };
 
@@ -108,6 +110,9 @@ export default function Home({
   // Os dois blocos do hero pedem 320 px cada; com o padding do cartão, só cabem lado a lado daqui para cima.
   const stackHero = useHydratedWindowWidth() < 1100;
   const isWeb = Platform.OS === "web";
+  const isIos = Platform.OS === "ios";
+  const reduceTransparency = useReduceTransparency();
+  const iosGlass = isIos && !reduceTransparency;
   const [selectedModality, setSelectedModality] = useState<BookModality | "all">("all");
   const [refreshing, setRefreshing] = useState(false);
   const treeRotate = useRef(new Animated.Value(0)).current;
@@ -274,10 +279,16 @@ export default function Home({
                   onPress={() => guardedNavigateToConversations()}
                   style={({ pressed }) => [
                     styles.topIconButton,
+                    isIos && (iosGlass ? styles.iosTopIconGlass : styles.iosTopIconOpaque),
                     pressed && styles.profileButtonPressed,
                   ]}
                 >
-                  <AppIcon name="chat" size={20} color={colors.m3.onSurfaceVariant} />
+                  {iosGlass ? (
+                    <View pointerEvents="none" style={styles.iosTopBlurClip}>
+                      <BlurView intensity={22} tint="light" style={StyleSheet.absoluteFill} />
+                    </View>
+                  ) : null}
+                  <AppIcon name="chat" size={20} color={isIos ? colors.m3.primary : colors.m3.onSurfaceVariant} />
                   {conversationsBadgeCount > 0 ? (
                     <View style={styles.topIconBadge} testID="home-top-conversations-badge">
                       <Text style={styles.topIconBadgeText}>
@@ -296,9 +307,15 @@ export default function Home({
                 onPress={() => guardedNavigateToProfile()}
                 style={({ pressed }) => [
                   styles.profileButton,
+                  isIos && (iosGlass ? styles.iosTopIconGlass : styles.iosTopIconOpaque),
                   pressed && styles.profileButtonPressed,
                 ]}
               >
+                {iosGlass && !profileState.profile?.photoUrl ? (
+                  <View pointerEvents="none" style={styles.iosTopBlurClip}>
+                    <BlurView intensity={22} tint="light" style={StyleSheet.absoluteFill} />
+                  </View>
+                ) : null}
                 {profileState.profile?.photoUrl ? (
                   <Image
                     source={{ uri: profileState.profile.photoUrl }}
@@ -307,7 +324,7 @@ export default function Home({
                     resizeMode="cover"
                   />
                 ) : (
-                  <AppIcon name="person" size={22} color={colors.m3.onSurfaceVariant} />
+                  <AppIcon name="person" size={22} color={isIos ? colors.m3.primary : colors.m3.onSurfaceVariant} />
                 )}
               </Pressable>
               </>
@@ -450,7 +467,12 @@ export default function Home({
           {(["all", "sale", "trade", "donation"] as const).map((mod) => {
             const isSelected = selectedModality === mod;
             const label = mod === "all" ? "Todos" : mod === "sale" ? "Venda" : mod === "trade" ? "Troca" : "Doação";
-            const tone = mod === "all" ? { background: colors.nature.foliage, text: colors.nature.onFoliage } : colors.badge[mod];
+            const tone =
+              mod === "all"
+                ? isIos
+                  ? { background: colors.m3.primaryContainer, text: colors.m3.onSurface }
+                  : { background: colors.nature.foliage, text: colors.nature.onFoliage }
+                : colors.badge[mod];
             return (
               <Chip
                 key={mod}
@@ -475,7 +497,12 @@ export default function Home({
           {(["all", "sale", "trade", "donation"] as const).map((mod) => {
             const isSelected = selectedModality === mod;
             const label = mod === "all" ? "Todos" : mod === "sale" ? "Venda" : mod === "trade" ? "Troca" : "Doação";
-            const tone = mod === "all" ? { background: colors.nature.foliage, text: colors.nature.onFoliage } : colors.badge[mod];
+            const tone =
+              mod === "all"
+                ? isIos
+                  ? { background: colors.m3.primaryContainer, text: colors.m3.onSurface }
+                  : { background: colors.nature.foliage, text: colors.nature.onFoliage }
+                : colors.badge[mod];
             return (
               <Chip
                 key={mod}
@@ -643,6 +670,29 @@ function createStyles(colors: ColorPalette) {
       overflow: "hidden",
     },
     profileButtonPressed: { transform: [{ scale: 0.94 }], backgroundColor: colors.m3.surfaceContainerHighest, },
+    iosTopIconGlass: {
+      width: 42,
+      height: 42,
+      backgroundColor: tokens.glass.fill,
+      borderWidth: 1,
+      borderColor: tokens.glass.stroke,
+      shadowColor: colors.m3.shadow,
+      shadowOffset: { width: 0, height: 3 },
+      shadowOpacity: 0.12,
+      shadowRadius: 8,
+    },
+    iosTopIconOpaque: {
+      width: 42,
+      height: 42,
+      backgroundColor: colors.m3.surfaceContainer,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+    },
+    iosTopBlurClip: {
+      ...StyleSheet.absoluteFill,
+      borderRadius: tokens.radius.full,
+      overflow: "hidden",
+    },
     profileAvatarImage: { width: tokens.spacing[40], height: tokens.spacing[40], borderRadius: tokens.radius.full, },
     sessionPill: { paddingHorizontal: tokens.spacing[12], paddingVertical: tokens.spacing[6], borderRadius: tokens.radius.full, backgroundColor: colors.m3.surfaceContainerHigh, minHeight: 36, justifyContent: "center", },
     sessionPillText: { ...tokens.typography.labelMedium, fontWeight: tokens.fontWeight.semiBold, color: colors.action, },
