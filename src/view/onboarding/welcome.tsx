@@ -1,9 +1,10 @@
 import { useMemo, useState } from "react";
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Image, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { FilledButton } from "@/view/components/FilledButton";
 import { Logotipo } from "@/view/components/Logotipo";
 import { OutlinedButton } from "@/view/components/OutlinedButton";
 import { ScreenContainer } from "@/view/components/ScreenContainer";
+import { triggerHaptic } from "@/view/haptics";
 import { accessibility, colors as lightColors, fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
@@ -57,6 +58,7 @@ export default function Welcome({ onStart, onSignIn, onHelp, onTerms, betaInvite
     ? { header: "Quero testar", start: "Quero testar o app", signIn: "Ver na Play Store" }
     : { header: "Criar conta", start: "Começar agora", signIn: "Já tenho conta" };
   const { colors } = useTheme();
+  const isIos = Platform.OS === "ios";
   const styles = useMemo(() => createStyles(colors), [colors]);
   const wideWeb = useIsWideWeb();
 
@@ -149,7 +151,11 @@ export default function Welcome({ onStart, onSignIn, onHelp, onTerms, betaInvite
     >
       <View style={styles.header}>
         <Logotipo />
-        <View style={styles.location} accessible accessibilityLabel="Beta exclusiva em Piripiri, PI">
+        <View
+          style={[styles.location, isIos && styles.iosLocation]}
+          accessible
+          accessibilityLabel="Beta exclusiva em Piripiri, PI"
+        >
           <View style={styles.locationDot} />
           <Text style={styles.locationText}>PIRIPIRI · PIAUÍ</Text>
         </View>
@@ -185,9 +191,13 @@ export default function Welcome({ onStart, onSignIn, onHelp, onTerms, betaInvite
               accessibilityRole="button"
               accessibilityLabel={`${label}: toque para ver detalhes`}
               accessibilityState={{ selected: isSelected }}
-              onPress={() => setSelectedModality((prev) => (prev === label ? null : label))}
+              onPress={() => {
+                if (isIos) triggerHaptic("selection");
+                setSelectedModality((prev) => (prev === label ? null : label));
+              }}
               style={withPress([
                 styles.modality,
+                isIos && styles.iosModality,
                 {
                   backgroundColor: isSelected ? tone.background : colors.m3.surfaceContainerLowest,
                   borderColor: tone.background,
@@ -256,7 +266,11 @@ export default function Welcome({ onStart, onSignIn, onHelp, onTerms, betaInvite
         </View>
       ) : null}
 
-      <View style={styles.trustBadge} accessible accessibilityLabel="Encontros em locais públicos de Piripiri sem taxas">
+      <View
+        style={[styles.trustBadge, isIos && styles.iosTrustBadge]}
+        accessible
+        accessibilityLabel="Encontros em locais públicos de Piripiri sem taxas"
+      >
         <AppIcon name="place" size={16} color={colors.action} />
         <Text style={styles.trustBadgeText}>Encontros em locais públicos de Piripiri · Sem taxas</Text>
       </View>
@@ -342,6 +356,9 @@ function createStyles(colors: ColorPalette) {
     paddingHorizontal: tokens.spacing[12],
     paddingVertical: tokens.spacing[6],
   },
+  iosLocation: {
+    backgroundColor: colors.m3.surfaceContainer,
+  },
   locationDot: {
     width: tokens.spacing[6],
     height: tokens.spacing[6],
@@ -380,6 +397,10 @@ function createStyles(colors: ColorPalette) {
     paddingHorizontal: tokens.spacing[16],
     paddingVertical: tokens.spacing[8],
   },
+  iosModality: {
+    minHeight: 40,
+    borderRadius: 22,
+  },
   modalityDot: {
     width: 8,
     height: 8,
@@ -412,6 +433,9 @@ function createStyles(colors: ColorPalette) {
     borderWidth: 1,
     borderColor: colors.ipe.container,
     alignSelf: "flex-start",
+  },
+  iosTrustBadge: {
+    borderColor: colors.m3.tertiaryContainer,
   },
   trustBadgeText: {
     ...tokens.typography.labelSmall,
