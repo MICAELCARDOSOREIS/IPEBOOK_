@@ -36,18 +36,18 @@
   - *Nota de escopo:* Dark Mode foi removido pela Spec 139 / ADR 0114; a página Figma atual opera exclusivamente em tema claro e não possui telas de Dynamic Island / Live Activity.
   - *Pendências para fechamento:* fluxos de permissão nativas no iOS (`Notificações · permissões` `937:2386`, câmera/galeria) por `@Eric2025gh` e conferência final contra `937:3534` (texto maior) e `937:3645` (transparência reduzida).
 
-- [ ] **T009 (Issue #234) — Sign in with Apple (obrigatório na App Store)**
-  - Integrar login nativo com Apple (`expo-apple-authentication` + Supabase Auth) isolado para iOS nas telas `02 · Entrar` (`915:434`) e `03 · Criar conta` (`916:119`), garantindo conformidade com a regra da App Store quando há login com Google.
+- [ ] **T009 (Issue #234 — `@Eric2025gh`) — Sign in with Apple (obrigatório na App Store)**
+  - Integrar login nativo com Apple (`expo-apple-authentication` + Supabase Auth + Service ID / provedor Apple no Supabase) isolado para iOS nas telas `02 · Entrar` (`915:434`) e `03 · Criar conta` (`916:119`).
 
-- [ ] **T010 (Issue #235) — Notificações Push no iOS (`APNs`)**
+- [ ] **T010 (Issue #235 — `@Eric2025gh`) — Notificações Push no iOS (`APNs`)**
   - Implementação local entregue em `2a7a9d98` (atualização de selo/badge, abertura de conversa/negociação/central ao tocar e pedido de permissão).
-  - *Pendências para fechamento:* vincular credenciais APNs (`eas credentials -p ios`), implantar versão revisada de `enviar-push` no Supabase e homologar em iPhone assinado / TestFlight pelo Eric (`28 · Notificações` `916:2169` e `937:2386`).
+  - *Pendências para fechamento (`@Eric2025gh`):* vincular credenciais APNs (`eas credentials -p ios`), implantar versão revisada de `enviar-push` no Supabase e homologar em iPhone assinado / TestFlight (`28 · Notificações` `916:2169` e `937:2386`).
 
-- [ ] **T011 (Issue #236) — Build iOS, `PrivacyInfo.xcprivacy` e TestFlight**
+- [ ] **T011 (Issue #236 — `@Eric2025gh`) — Build iOS, `PrivacyInfo.xcprivacy` e TestFlight**
   - Configurar perfil iOS de build (`eas.json`), manifesto de privacidade da Apple e distribuição via TestFlight para testes da equipe em iPhone.
 
-- [ ] **T012 (Issue #237) — Auditoria Visual Final × Figma (`APP · 20 · iPhone · iOS 26`)**
-  - Conferir lado a lado tipografia, Liquid Glass, contrastes, listas agrupadas e estados vazios/carregamento/erro contra todos os quadros atualizados de [`design-system/telas-iphone-figma.md`](../../design-system/telas-iphone-figma.md).
+- [ ] **T012 (Issue #237 — `@Eric2025gh`) — Auditoria Visual Final × Figma (`APP · 20 · iPhone · iOS 26`)**
+  - Conferir lado a lado em iPhone tipografia, Liquid Glass, contrastes, listas agrupadas e estados vazios/carregamento/erro contra todos os quadros atualizados de [`design-system/telas-iphone-figma.md`](../../design-system/telas-iphone-figma.md).
 
-- [ ] **T013 (Issue #238) — Verificação final, QA iOS e regressão zero em Android e Web**
+- [ ] **T013 (Issue #238 — `@Eric2025gh`) — Verificação final, QA iOS e regressão zero em Android e Web**
   - Validar em simulador/iPhone real (Safe Areas, teclado, *swipe back*, VoiceOver, Dynamic Type e Reduzir Transparência) e executar `npm run validate`.
