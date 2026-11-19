@@ -21,11 +21,11 @@
 - [ ] **T005 (Issue #5) — Adequar Fluxos 04 e 05: Publicação e Minha Estante (29 telas Figma)**
   - Adequar `anunciar.tsx`, `editar-anuncio/[id].tsx`, `gerenciar-anuncio/[id].tsx`, `rascunhos.tsx`, `meus-anuncios.tsx`, `meus-pedidos.tsx` e `pedidos-recebidos.tsx`.
 
-- [ ] **T006 (Issue #6) — Adequar Fluxos 06 e 08: Conversas, Negociação, Encontro e Compartilhamento (24 telas Figma)**
+- [x] **T006 (Issue #6 / Issue #231) — Adequar Fluxos 06 e 08: Conversas, Negociação, Encontro e Compartilhamento (24 telas Figma)**
   - Adequar `conversas.tsx`, `conversa/[id].tsx`, `negociacao/[id].tsx`, `negociacao/[id]/encontro.tsx`, `negociacao/[id]/entrega.tsx` e `perfil/convidar.tsx`.
   - Na #231, validar no iPhone que o campo do chat acompanha o teclado e respeita a área segura com o teclado fechado, que a câmera do QR fica abaixo da área segura superior e que o convite abre a folha nativa e oferece cópia do link com confirmação.
-  - Ajuste do campo do chat e ação de copiar o link implementados. O leitor de QR já está dentro da área segura da tela de entrega. Validação automatizada com `npm run typecheck` e `npm run test:coverage` (2.316 testes aprovados). Pendente validar teclado, câmera e folha de compartilhamento no iPhone.
-  - No teste com Expo Go em iPhone, o usuário relatou que o texto do convite não chegou. A tela oferece agora **Compartilhar texto** para enviar a mensagem e o link como um único item pela folha nativa. Pendente repetir o teste no aplicativo de destino.
+  - Ajuste do campo do chat e ação de copiar o link implementados. O leitor de QR já está dentro da área segura da tela de entrega. Validação automatizada com `npm run typecheck` e `npm run test:coverage` (2.317 testes aprovados).
+  - No iPhone com Expo Go, o usuário confirmou o teclado do chat, o fluxo de encontro e entrega por QR, a cópia do link e o envio da mensagem e do link pela opção **Compartilhar texto**. O envio conjunto do cartão e do texto omitiu o texto no aplicativo de destino testado, que recebeu a mensagem com a opção de envio separado.
 
 - [ ] **T007 (Issue #7) — Adequar Fluxos 07, 09 e 10: Perfil, Conta, Ajuda, Moderação e Estados Globais (33 telas Figma)**
   - Adequar todas as rotas de `perfil/*`, `notificacoes.tsx`, `excluir-conta.tsx`, `termos.tsx`, `ajuda.tsx`, `denunciar*`, `moderacao.tsx`, `sobre.tsx`, `beta.tsx` e `+not-found.tsx`.
