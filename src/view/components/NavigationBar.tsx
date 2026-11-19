@@ -198,12 +198,13 @@ export function NavigationBar({ active, onNavigate, disabledDestinations = [], b
                     />
                     {badgeCount > 0 ? (
                       <View style={styles.badge}>
-                        <Text style={styles.badgeText}>{badgeCount > 9 ? "9+" : String(badgeCount)}</Text>
+                        <Text maxFontSizeMultiplier={1.2} style={styles.badgeText}>{badgeCount > 9 ? "9+" : String(badgeCount)}</Text>
                       </View>
                     ) : null}
                   </View>
                   <Text
                     numberOfLines={1}
+                    maxFontSizeMultiplier={1.2}
                     style={[
                       styles.label,
                       isActive && styles.labelActive,

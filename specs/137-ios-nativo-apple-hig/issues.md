@@ -112,15 +112,19 @@ Este documento quebra o trabalho do iPhone nativo em **8 issues independentes e 
 
 ---
 
-## Issue 8 — `[iOS Nativo · Fluxos 11 e 12] Permissões iOS, Dynamic Island/Live Activity, Dark Mode, Reduzir Transparência, Dynamic Type e VoiceOver (19 telas Figma)`
+## Issue 8 — `[iOS Nativo · Fluxos 11 e 12] Permissões iOS, Dynamic Island/Live Activity, Reduzir Transparência, Dynamic Type e VoiceOver (19 telas Figma)`
 
+- **Status:** **Em andamento (Entrega parcial de IHC/Acessibilidade por Maria Clara)**
 - **Responsável:** Eric Vinícius (`@Eric2025gh`) · **Apoio:** Micael (`@MICAELCARDOSOREIS`) e Maria Clara (`@clarinhamartins`)
-- **Labels:** `pessoa:eric`, `ios`, `apple-hig`, `accessibility`, `dark-mode`
-- **Telas Figma:** `11.01` a `11.09` (Permissões e estados compactos/expandidos de Dynamic Island / Live Activity) e `12.01` a `12.10` (Dark Mode, Reduzir Transparência e Texto Grande)
-- **Melhorias Apple HIG:**
-  - Auditar Dark Mode iOS nas telas principais (`Início`, `Detalhe`, `Conversa`, `Estante`, `Perfil`).
-  - Validar **Reduzir Transparência** (superfícies Liquid Glass passam a ter fundo sólido legível).
-  - Validar **Dynamic Type** (fontes ampliadas sem corte de texto ou sobreposição de botões).
-  - Validar leitura completa com **VoiceOver** e documentar contratos de preparo para **Live Activity / Dynamic Island** no acompanhamento de encontro.
+- **Labels:** `pessoa:eric`, `pessoa:maria-clara`, `ios`, `apple-hig`, `accessibility`
+- **Telas Figma:** `11.01` a `11.09` (Permissões e estados compactos/expandidos de Dynamic Island / Live Activity) e `12.01` a `12.10` (Reduzir Transparência e Texto Grande — Dark Mode revogado pela Spec 139 / ADR 0114)
+- **Melhorias Apple HIG entregues por Maria Clara (`@clarinhamartins`):**
+  - Validação e reforço de **Reduzir Transparência** (superfícies translúcidas Liquid Glass passam a ter fundo sólido legível em `surfaceContainer` no `BottomSheet`, `NavigationBar`, `IosCardSurface` e `OutlinedButton`; `ScreenContainer` e `TopAppBar` já operam diretamente com fundo sólido).
+  - Suporte e blindagem de **Dynamic Type** e escala de texto multiplataforma (fontes ampliadas até 200% sem quebra de layout nem corte de botões, com teto defensivo de `maxFontSizeMultiplier` de 1.2x–1.3x restrito a barras e cabeçalhos fixos de navegação e alvos mínimos de `44×44 pt`).
+  - Semântica e leitura completa com **VoiceOver** (`accessibilityRole="tablist"`, `"tab"`, `"header"`, `"button"`, estados e rótulos contextuais em português).
+  - Documentação formal das diretrizes de acessibilidade iOS em `design-system/06-acessibilidade.md`.
+- **Pendências restantes (outros integrantes):**
+  - Telas de permissão nativas do iOS (`11.01` a `11.04` por `@Eric2025gh`).
+  - Contratos de preparo para **Live Activity / Dynamic Island** no acompanhamento de encontro (`11.05` a `11.09` por `@MICAELCARDOSOREIS`).
 - **Critérios de aceite:**
-  - Suíte completa verde (`npm run typecheck`, `npm run lint`, `npm run check:architecture`, `npm run check:design-system`, `npm run test`).
+  - Suíte completa verde (`npm run typecheck`, `npm run lint`, `npm run check:architecture`, `npm run check:design-system`, `npm run test`, `npm run check:docs`).
