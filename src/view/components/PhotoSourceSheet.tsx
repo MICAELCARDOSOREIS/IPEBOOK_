@@ -1,10 +1,13 @@
+import { BlurView } from "expo-blur";
 import { useMemo, useRef } from "react";
-import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import { Modal, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { ImageSource } from "@/model/services/iImagePickerService";
 import { AppIcon } from "@/view/components/AppIcon";
 import { type FocusableElement, useModalFocusTrap } from "@/view/components/Dialog";
+import { triggerHaptic } from "@/view/haptics";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
+import { useReduceTransparency } from "@/view/useReduceTransparency";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { tokens, type ColorPalette } from "@/view/tokens";
 
@@ -26,6 +29,9 @@ const bookPhotoTips = {
 /** Folha inferior "Tirar foto" ou "Escolher da galeria", igual à escolha da foto de perfil. */
 export function PhotoSourceSheet({ visible, title = "Adicionar foto", bookSide, onChoose, onClose }: PhotoSourceSheetProps) {
   const { colors } = useTheme();
+  const isIos = Platform.OS === "ios";
+  const reduceTransparency = useReduceTransparency();
+  const iosGlass = isIos && !reduceTransparency;
   const styles = useMemo(() => createStyles(colors), [colors]);
   const insets = useSafeAreaInsets();
   const wideWeb = useIsWideWeb();
@@ -39,7 +45,19 @@ export function PhotoSourceSheet({ visible, title = "Adicionar foto", bookSide, 
     <Modal accessibilityViewIsModal visible={visible} transparent animationType="fade" statusBarTranslucent navigationBarTranslucent onRequestClose={onClose}>
       <View style={[styles.scrim, wideWeb && styles.scrimWide]}>
         <Pressable accessibilityRole="button" accessibilityLabel="Fechar ao tocar fora" onPress={onClose} style={StyleSheet.absoluteFill} />
-        <View style={[styles.sheet, wideWeb && styles.sheetWide, { paddingBottom: wideWeb ? tokens.spacing[24] : tokens.spacing[16] + insets.bottom }]}>
+        <View
+          style={[
+            styles.sheet,
+            isIos && (iosGlass ? styles.iosGlassSheet : styles.iosOpaqueSheet),
+            wideWeb && styles.sheetWide,
+            { paddingBottom: wideWeb ? tokens.spacing[24] : tokens.spacing[16] + insets.bottom },
+          ]}
+        >
+          {iosGlass && !wideWeb ? (
+            <View pointerEvents="none" style={styles.iosBlurClip}>
+              <BlurView intensity={30} tint="light" style={StyleSheet.absoluteFill} />
+            </View>
+          ) : null}
           {wideWeb ? null : <View accessible={false} importantForAccessibility="no" style={styles.handle} />}
           <Text accessibilityRole="header" style={styles.title}>{title}</Text>
           {bookSide ? (
@@ -57,7 +75,10 @@ export function PhotoSourceSheet({ visible, title = "Adicionar foto", bookSide, 
             ref={cameraRef as never}
             accessibilityRole="button"
             accessibilityLabel="Tirar foto com a câmera"
-            onPress={() => onChoose("camera")}
+            onPress={() => {
+              if (isIos) triggerHaptic("light");
+              onChoose("camera");
+            }}
             style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
           >
             <AppIcon name="camera" size={22} color={colors.m3.primary} />
@@ -67,7 +88,10 @@ export function PhotoSourceSheet({ visible, title = "Adicionar foto", bookSide, 
             ref={libraryRef as never}
             accessibilityRole="button"
             accessibilityLabel="Escolher foto da galeria"
-            onPress={() => onChoose("library")}
+            onPress={() => {
+              if (isIos) triggerHaptic("light");
+              onChoose("library");
+            }}
             style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
           >
             <AppIcon name="photo" size={22} color={colors.m3.primary} />
@@ -145,5 +169,24 @@ function createStyles(colors: ColorPalette) {
     rowText: { ...tokens.typography.bodyLarge, color: colors.m3.onSurface },
     cancel: { minHeight: tokens.accessibility.touchTarget, alignItems: "center", justifyContent: "center" },
     cancelText: { ...tokens.typography.labelLarge, color: colors.m3.primary },
+    iosGlassSheet: {
+      borderCurve: "continuous",
+      backgroundColor: tokens.glass.fill,
+      borderTopWidth: 1,
+      borderColor: tokens.glass.stroke,
+      overflow: "hidden",
+    },
+    iosOpaqueSheet: {
+      borderCurve: "continuous",
+      backgroundColor: colors.m3.surfaceContainerLow,
+      borderTopWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+    },
+    iosBlurClip: {
+      ...StyleSheet.absoluteFill,
+      borderTopLeftRadius: tokens.radius.xxl,
+      borderTopRightRadius: tokens.radius.xxl,
+      overflow: "hidden",
+    },
   });
 }

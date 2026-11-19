@@ -1,5 +1,6 @@
+import { BlurView } from "expo-blur";
 import { useEffect, useMemo, useState } from "react";
-import { Platform, Pressable, ScrollView, Text, View } from "react-native";
+import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   makeAuthViewModel,
@@ -32,7 +33,9 @@ import { scrollBottomPadding, standardVerticalScrollProps } from "@/view/scrollP
 import { useOnRefocus } from "@/view/useRefocusKey";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { tokens } from "@/view/tokens";
+import { triggerHaptic } from "@/view/haptics";
 import { useGuardedPress } from "@/view/useGuardedPress";
+import { useReduceTransparency } from "@/view/useReduceTransparency";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
 
 export { ShelfRow } from "@/view/listings/shelfRow";
@@ -70,6 +73,9 @@ export function MyListings({
   focusKey,
 }: MyListingsProps) {
   const { colors } = useTheme();
+  const isIos = Platform.OS === "ios";
+  const reduceTransparency = useReduceTransparency();
+  const iosGlass = isIos && !reduceTransparency;
   const styles = useMemo(() => createMyListingsStyles(colors), [colors]);
   const [state, actions] = makeMyListingsViewModel(sessionUserId);
   const [received, receivedActions] = makeReceivedRequestsViewModel(sessionUserId);
@@ -610,11 +616,24 @@ export function MyListings({
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Anunciar livro"
-          onPress={guardedCreateListing}
-          android_ripple={{ color: colors.m3.onPrimaryContainer, borderless: false }}
-          style={({ pressed }) => [styles.fab, { bottom: fabBottom }, pressed && styles.fabPressed]}
+          onPress={() => {
+            if (isIos) triggerHaptic("light");
+            guardedCreateListing();
+          }}
+          android_ripple={Platform.OS === "android" ? { color: colors.m3.onPrimaryContainer, borderless: false } : undefined}
+          style={({ pressed }) => [
+            styles.fab,
+            isIos && (iosGlass ? styles.iosFabGlass : styles.iosFabOpaque),
+            { bottom: fabBottom },
+            pressed && styles.fabPressed,
+          ]}
         >
-          <AppIcon name="add" size={24} color={colors.m3.onPrimaryContainer} />
+          {iosGlass ? (
+            <View pointerEvents="none" style={styles.iosBlurClip}>
+              <BlurView intensity={24} tint="light" style={StyleSheet.absoluteFill} />
+            </View>
+          ) : null}
+          <AppIcon name="add" size={24} color={isIos ? colors.m3.onSurface : colors.m3.onPrimaryContainer} />
         </Pressable>
       ) : null}
       {shareFeedback ? (
