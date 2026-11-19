@@ -4,21 +4,20 @@
 **Detalhamento completo das issues:** [`issues.md`](./issues.md)  
 **Inventário Figma atualizado (iOS 26 · Tema Claro):** [`design-system/telas-iphone-figma.md`](../../design-system/telas-iphone-figma.md)
 
-- [ ] **T001 (Issue #226) — ADR de escopo iOS Nativo e configuração `ios` em `app.json`**
-  - Atualizar escopo de iOS Nativo via ADR vinculado aos ADRs 0008 e 0114 (tema claro exclusivo).
-  - Configurar `ios` em `app.json` (`bundleIdentifier`, `infoPlist` em PT-BR, ícones, deep links) e validar `npm run check:build-config`.
+- [x] **T001 (Issue #226) — ADR de escopo iOS Nativo e configuração `ios` em `app.json`**
+  - Escopo de iOS Nativo em tema claro exclusivo consolidado pela Spec 139 / ADR 0114; seção `ios` em `app.json` configurada com `buildNumber: "1"`, `supportsTablet: false`, `bundleIdentifier` e `infoPlist` completo em PT-BR (`80bd12b` por `@Eric2025gh`).
+  - *Validação:* `npm run check:build-config` aprovado; conferência em hardware real pendente com `npx expo config --type public`.
 
 - [x] **T002 (Issue #227) — Base Liquid Glass e componentes Apple HIG no Design System**
-  - Entregue nos PRs `#239` (`@clarinhamartins`) e `#241` (`@MICAELCARDOSOREIS`): suporte isolado `Platform.OS === 'ios'` em `ScreenContainer`, `ConnectedNavigationBar`, `TopAppBar`, `BottomSheet`, botões, formulários e cards, com fallback para Reduzir Transparência, alvos `≥ 44×44 pt` e *Haptics*.
-  - *Conferência pós-redesign Figma:* comparar acabamento final com as pranchas `09` (`952:2303`) e `10` (`957:2903`) na auditoria #237.
+  - Entregue nos PRs `#239` (`@clarinhamartins`) e `#241` (`@MICAELCARDOSOREIS`) e refinada no alinhamento Figma iOS 26 (`585ed3c` por `@clarinhamartins`): tokens `ios` (`cell`, `separator`, `destructiveFill`), botão voltar Liquid Glass circular 44×44 e título centrado em `TopAppBar`, bordas/preenchimento `ios` em `TextField` e cartão Liquid Glass com ação destrutiva `#f9dedc` em `Dialog`.
 
 - [ ] **T003 (Issue #228) — Adequar Fluxo de Acesso e Onboarding**
-  - Adequar `bem-vindo.tsx`, `entrar.tsx`, `criar-conta.tsx`, `esqueci-senha.tsx`, `redefinir-senha.tsx`, `auth/callback.tsx` para iPhone nativo conforme quadros `01`–`04`, `09`, `51`–`52` e Prancha `09` (`952:2303`).
+  - Refinos iOS 26 aplicados em `welcome.tsx` (badge de localização, pílulas de modalidade contínuas e *Haptics*) e `authCallback.tsx` (`TextButton` ≥ 44 pt) em `15b87b8` (`@Eric2025gh`), somados ao suporte iOS em `OutlinedButton`, `FilledButton` e `TextField`.
+  - *Pendências para fechamento:* homologação em iPhone real (Safe Area, teclado sobre CTAs e VoiceOver) contra os quadros `01`–`04`, `09`, `51`–`52`.
 
 - [ ] **T004 (Issue #229) — Adequar Descoberta, Busca, Favoritos, Alertas, Detalhe do Livro e Perfil Público**
-  - Implementadas adequações de Apple HIG em Descoberta, Busca, Favoritos, Detalhe do Livro e Perfil Público (PR `#240` por `@clarinhamartins`).
-  - Rotas `alertas/[id].tsx` e `alertas/[id]/editar.tsx` submetidas no PR `#243` (aberto para revisão/merge).
-  - *Pendências para fechamento:* merge do PR `#243`, conferência visual contra os novos quadros da Seção `02` + `36`/`40` + `53` + protótipos `08`, e validação em aparelho real / simulador iPhone com `@Eric2025gh`.
+  - Entregues adequações Apple HIG (PR `#240` + PR `#243` para `alertas/[id]`) e refino Liquid Glass + háptica nos cards de `CatalogCarousel` e `SearchBookCard` (`324534d` por `@clarinhamartins`).
+  - *Pendências para fechamento:* validação final em aparelho real / simulador iPhone com `@Eric2025gh` na auditoria `#237`.
 
 - [ ] **T005 (Issue #230) — Adequar Publicação (ISBN, Câmera, Fotos, Rascunhos), Minha Estante e Pedidos**
   - Implementação local entregue em `dcef8369` (`anunciar.tsx`, `editar-anuncio/[id].tsx`, `gerenciar-anuncio/[id].tsx`, `rascunhos.tsx`, `meus-anuncios.tsx`, `meus-pedidos.tsx`, `pedidos-recebidos.tsx`) com acesso aos Ajustes do iPhone, entrada manual de ISBN, ação Concluir no teclado numérico, salvamento de rascunho e diálogos destrutivos.
@@ -29,8 +28,8 @@
   - *Conferência pós-redesign Figma:* checar alinhamento visual com Seção `04` (`18`, `43`–`46`, `50`), `27`, `54` e protótipos `08` (`937:2829`, `3131`–`3391`) durante a auditoria #237.
 
 - [ ] **T007 (Issue #232) — Adequar Perfil, Conta, Notificações, Ajuda, Moderação e Estados Globais**
-  - Adequar todas as rotas de `perfil/*`, `notificacoes.tsx`, `excluir-conta.tsx`, `termos.tsx`, `ajuda.tsx`, `denunciar*`, `moderacao.tsx`, `sobre.tsx`, `beta.tsx` e `+not-found.tsx`.
-  - Seguir os novos quadros do Figma: Seções `01` (`05`–`08`, `10`), `05` (`11`, `20`–`26`, `28`, `49`), `06` (`31`, `39`, `41`, `42`), `07` (`21B`, `24B`, `31B`), `08` (listas agrupadas e título compacto em Configurações), `10` (alertas/menus) e `11` (`56`, `57`, `59`).
+  - Alinhamentos visuais iOS 26 implementados (`e6170f1` e `1c1bf18` por `@Eric2025gh`): superfícies Liquid Glass e ícones verdes em `ProfileHubSections`, `OfflineState` e `ErrorState`, cards e controles em `settings`, cartões elevados `iosNeutralCardStyle` (`radius.xl`, borda `outlineVariant`, sombra quente) e títulos/ícones em `notificationsStyles`, `security`, `receivedRatings`, `blockedUsers`, `meetingHistory` e `moderation`.
+  - *Pendências para fechamento:* homologação visual em iPhone para listas agrupadas estáticas de Configurações (`937:3426`) e moderação/denúncias (`916:2342`–`2428`).
 
 - [ ] **T008 (Issue #233) — Permissões iOS, Reduzir Transparência, Dynamic Type e VoiceOver (Tema Claro)**
   - Entregue por Maria Clara (`@clarinhamartins`) no PR `#242`: Acessibilidade Digital Apple HIG no Design System (Reduzir Transparência com fallback opaco, Dynamic Type com `maxFontSizeMultiplier` e semântica completa para VoiceOver, com 11 testes unitários dedicados em `iosAccessibilityHig.test.tsx`).
