@@ -12,12 +12,19 @@ import { withPress } from "@/view/pressFeedback";
 export type PhotoSourceSheetProps = {
   visible: boolean;
   title?: string;
+  bookSide?: keyof typeof bookPhotoTips;
   onChoose: (source: ImageSource) => void;
   onClose: () => void;
 };
 
+const bookPhotoTips = {
+  cover: "Alinhe a capa de frente e deixe as quatro bordas visíveis. Use um fundo liso e evite reflexos sobre o título.",
+  spine: "Coloque a lombada na vertical e enquadre do topo à base. Deixe o título e as marcas de uso visíveis.",
+  back: "Fotografe a contracapa de frente, com todas as bordas no quadro. Evite reflexos sobre o texto.",
+};
+
 /** Folha inferior "Tirar foto" ou "Escolher da galeria", igual à escolha da foto de perfil. */
-export function PhotoSourceSheet({ visible, title = "Adicionar foto", onChoose, onClose }: PhotoSourceSheetProps) {
+export function PhotoSourceSheet({ visible, title = "Adicionar foto", bookSide, onChoose, onClose }: PhotoSourceSheetProps) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const insets = useSafeAreaInsets();
@@ -35,6 +42,17 @@ export function PhotoSourceSheet({ visible, title = "Adicionar foto", onChoose, 
         <View style={[styles.sheet, wideWeb && styles.sheetWide, { paddingBottom: wideWeb ? tokens.spacing[24] : tokens.spacing[16] + insets.bottom }]}>
           {wideWeb ? null : <View accessible={false} importantForAccessibility="no" style={styles.handle} />}
           <Text accessibilityRole="header" style={styles.title}>{title}</Text>
+          {bookSide ? (
+            <View style={styles.guide}>
+              <View accessible={false} aria-hidden style={styles.guideFrame}>
+                <View style={[styles.guideBook, bookSide === "spine" && styles.guideSpine]} />
+              </View>
+              <View style={styles.guideCopy}>
+                <Text style={styles.guideTitle}>Como enquadrar</Text>
+                <Text style={styles.guideText}>{bookPhotoTips[bookSide]}</Text>
+              </View>
+            </View>
+          ) : null}
           <Pressable
             ref={cameraRef as never}
             accessibilityRole="button"
@@ -83,6 +101,35 @@ function createStyles(colors: ColorPalette) {
     },
     handle: { alignSelf: "center", width: 32, height: 4, borderRadius: tokens.radius.hairline, marginTop: tokens.spacing[12], backgroundColor: colors.m3.onSurfaceVariant, opacity: 0.4 },
     title: { ...tokens.typography.titleMedium, color: colors.m3.onSurface, paddingVertical: tokens.spacing[8] },
+    guide: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: tokens.spacing[12],
+      padding: tokens.spacing[12],
+      backgroundColor: colors.m3.surfaceContainerHigh,
+      borderRadius: tokens.radius.medium,
+    },
+    guideFrame: {
+      width: 52,
+      height: 66,
+      alignItems: "center",
+      justifyContent: "center",
+      borderWidth: 1,
+      borderStyle: "dashed",
+      borderColor: colors.m3.onSurfaceVariant,
+      borderRadius: tokens.radius.small,
+    },
+    guideBook: {
+      width: 32,
+      height: 50,
+      borderRadius: tokens.radius.micro,
+      borderWidth: 2,
+      borderColor: colors.m3.primary,
+    },
+    guideSpine: { width: 12 },
+    guideCopy: { flex: 1, gap: tokens.spacing[4] },
+    guideTitle: { ...tokens.typography.labelLarge, color: colors.m3.onSurface },
+    guideText: { ...tokens.typography.bodyMedium, color: colors.m3.onSurfaceVariant },
     row: {
       flexDirection: "row",
       alignItems: "center",

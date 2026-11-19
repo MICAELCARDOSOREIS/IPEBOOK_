@@ -25,6 +25,7 @@ describe("ModalityCoverArea e PhotoSourceSheet", () => {
     const onChoose = jest.fn();
     const sheet = await render(<PhotoSourceSheet visible onChoose={onChoose} onClose={onClose} />);
     expect(sheet.getByText("Adicionar foto")).toBeDefined();
+    expect(sheet.queryByText("Como enquadrar")).toBeNull();
     await act(async () => { fireEvent.press(sheet.getByLabelText("Cancelar")); });
     expect(onClose).toHaveBeenCalledTimes(1);
     await act(async () => { fireEvent.press(sheet.getByLabelText("Tirar foto com a câmera")); });

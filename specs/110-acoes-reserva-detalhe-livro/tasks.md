@@ -9,3 +9,12 @@ Status: [x] Concluído | Branch: `develop`
 - [x] **T05**: Conectar os callbacks de navegação em `src/app/livro/[id].tsx`.
 - [x] **T06**: Criar testes automatizados para `ReservedListingSheet` e navegação de status em `tests/components/bookDetailInteractiveStatus.test.tsx`.
 - [x] **T07**: Validar testes (`npm test`), tipagem (`npm run typecheck`), conformidade arquitetural (`npm run check:architecture`) e numeração (`npm run check:numbering`).
+
+## Correção da interação do livro 3D
+
+- [x] Exibir a dica como botão no detalhe e permitir a virada por toque ou teclado. Manter a contracapa como prévia, com a sinopse integral na seção “Sinopse”.
+- [x] Ignorar toques repetidos durante a virada e iniciar a rotação por arraste somente após detectar deslocamento predominantemente horizontal.
+- [x] Confirmar as três regressões na versão anterior e executar as suítes `book3dGeometry`, `book3D` e `bookDetailInteractiveStatus` na versão corrigida. Passaram 36 testes.
+- [x] Conferir no Chrome via CDP, com o catálogo em memória e largura de 390 px, que o botão recebe foco, Enter mostra a contracapa e Espaço retorna à capa. O gesto vertical foi coberto no teste de componente. A validação em aparelho físico permanece pendente.
+
+A pedido do usuário, o botão visível foi removido. No Chrome via CDP, a dica deixou de aparecer e a capa recebeu foco e respondeu diretamente a Enter e Espaço.

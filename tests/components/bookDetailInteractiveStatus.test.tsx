@@ -4,7 +4,6 @@ import type { Book } from "@/model/entities/book";
 import type { AuthState } from "@/viewmodel/useAuthViewModel";
 import BookDetail from "@/view/listings/bookDetail";
 import { ReservedListingSheet } from "@/view/listings/ReservedListingSheet";
-import { Book3D } from "@/view/components/Book3D";
 
 jest.mock("@/viewmodel/useBookDetailViewModel", () => ({ useBookDetailViewModel: jest.fn() }));
 jest.mock("@/viewmodel/useAuthViewModel", () => ({ useAuthViewModel: jest.fn() }));
@@ -95,11 +94,21 @@ async function renderComponent(element: React.ReactElement) {
 }
 
 describe("Spec 110 — Ações Interativas de Reserva no Detalhe do Livro", () => {
-  it("renderiza Book3D com a dica '3D · Toque para virar' quando show3dHint está ativo", async () => {
-    const screen = await renderComponent(
-      <Book3D id="b1" title="1984" author="George Orwell" show3dHint />,
-    );
-    expect(screen.getByText("3D · Toque para virar")).toBeDefined();
+  it("permite virar o livro no detalhe e ler a sinopse integral", async () => {
+    const synopsis = "Uma sinopse longa para leitura integral. ".repeat(30).trim();
+    setupDetail(sampleBook({ synopsis }), null);
+    const screen = await renderComponent(<BookDetail bookId="b1" onBack={jest.fn()} />);
+
+    expect(screen.getByRole("header", { name: "Sinopse" })).toBeDefined();
+    expect(screen.getByText(synopsis).props.numberOfLines).toBeUndefined();
+    expect(screen.queryByText("3D · Toque para virar")).toBeNull();
+    const cover = screen.getByLabelText(/^Capa de 1984, em 3D/);
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 550));
+      await fireEvent(cover, "accessibilityAction", { nativeEvent: { actionName: "activate" } });
+      await new Promise((resolve) => setTimeout(resolve, 550));
+    });
+    expect(screen.getByTestId("book3d-face-back")).toBeDefined();
   });
 
   it("renderiza a pílula de 'Reservado' como botão acessível e abre a folha informativa para terceiros", async () => {
