@@ -297,14 +297,20 @@ export class CdpPage {
         if (!el) return null;
         el.scrollIntoView({ block: 'center' });
         el.focus();
-        el.select();
+        try {
+          el.setSelectionRange(el.value.length, el.value.length);
+        } catch {
+          try { el.select(); } catch {}
+        }
         return { len: (el.value || '').length };
       })()`,
       { timeoutMs, message: `campo ${sel}` },
     );
     if (hasExisting.len > 0) {
-      await this.send("Input.dispatchKeyEvent", { type: "keyDown", key: "Backspace", code: "Backspace", windowsVirtualKeyCode: 8 });
-      await this.send("Input.dispatchKeyEvent", { type: "keyUp", key: "Backspace", code: "Backspace", windowsVirtualKeyCode: 8 });
+      for (let i = 0; i < hasExisting.len + 3; i += 1) {
+        await this.send("Input.dispatchKeyEvent", { type: "keyDown", key: "Backspace", code: "Backspace", windowsVirtualKeyCode: 8 });
+        await this.send("Input.dispatchKeyEvent", { type: "keyUp", key: "Backspace", code: "Backspace", windowsVirtualKeyCode: 8 });
+      }
     }
     if (value.length > 0) {
       await this.send("Input.insertText", { text: value });
@@ -350,9 +356,30 @@ export class CdpPage {
       }
     }
     if (this.userDataDir && existsSync(this.userDataDir)) {
-      rmSync(this.userDataDir, { recursive: true, force: true });
+      try {
+        rmSync(this.userDataDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 150 });
+      } catch {
+        // ignora resíduo temporário bloqueado temporariamente no Windows
+      }
     }
   }
+}
+
+function findChromeBin() {
+  if (process.env.CHROME_BIN) return process.env.CHROME_BIN;
+  if (process.platform === "win32") {
+    const candidatos = [
+      "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+      "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
+      process.env.LOCALAPPDATA ? join(process.env.LOCALAPPDATA, "Google", "Chrome", "Application", "chrome.exe") : null,
+      "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
+      "C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe",
+    ].filter(Boolean);
+    for (const c of candidatos) {
+      if (existsSync(c)) return c;
+    }
+  }
+  return "google-chrome";
 }
 
 export async function launchChromeCdp() {
@@ -361,7 +388,7 @@ export async function launchChromeCdp() {
   const xdgCache = join(userDataDir, "xdg-cache");
   mkdirSync(xdgConfig, { recursive: true });
   mkdirSync(xdgCache, { recursive: true });
-  const chromeBin = process.env.CHROME_BIN || "google-chrome";
+  const chromeBin = findChromeBin();
   const proc = spawn(
     chromeBin,
     [

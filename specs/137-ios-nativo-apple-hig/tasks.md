@@ -27,8 +27,9 @@
 - [ ] **T007 (Issue #7) — Adequar Fluxos 07, 09 e 10: Perfil, Conta, Ajuda, Moderação e Estados Globais (33 telas Figma)**
   - Adequar todas as rotas de `perfil/*`, `notificacoes.tsx`, `excluir-conta.tsx`, `termos.tsx`, `ajuda.tsx`, `denunciar*`, `moderacao.tsx`, `sobre.tsx`, `beta.tsx` e `+not-found.tsx`.
 
-- [ ] **T008 (Issue #8) — Adequar Fluxos 11 e 12: Permissões iOS, Dynamic Island/Live Activity, Dark Mode, Reduzir Transparência e Dynamic Type / VoiceOver (19 telas Figma)**
-  - Garantir acessibilidade iOS completa, fallbacks de transparência e verificação final em simulador iPhone.
+- [ ] **T008 (Issue #8 / Issue #233) — Adequar Fluxos 11 e 12: Permissões iOS, Dynamic Island/Live Activity, Reduzir Transparência e Dynamic Type / VoiceOver (19 telas Figma)**
+  - Entregue por Maria Clara (`@clarinhamartins`): Acessibilidade Digital Apple HIG no Design System (Reduzir Transparência com fallback opaco, Dynamic Type com maxFontSizeMultiplier e semântica completa para VoiceOver, com 11 testes unitários dedicados em `iosAccessibilityHig.test.tsx`).
+  - *Pendências para conclusão integral da issue:* Telas de permissão nativas (`11.01` a `11.04` por `@Eric2025gh`) e contratos de Live Activity/Dynamic Island (`11.05` a `11.09` por `@MICAELCARDOSOREIS`).
 
 - [ ] **T009 — Sign in with Apple (obrigatório na App Store)**
   - Integrar login nativo com Apple (`expo-apple-authentication` + Supabase Auth) isolado para iOS, garantindo conformidade com a regra da App Store quando há login social (Google).

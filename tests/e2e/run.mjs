@@ -24,7 +24,7 @@ function garantirBuildWebMemoria(forcarBuild) {
   const res = spawnSync(
     process.platform === "win32" ? "npx.cmd" : "npx",
     ["expo", "export", "--platform", "web", "--output-dir", "dist-e2e"],
-    { cwd: RAIZ, env, stdio: "inherit" },
+    { cwd: RAIZ, env, stdio: "inherit", shell: process.platform === "win32" },
   );
   if (res.status !== 0) {
     throw new Error(`Falha ao exportar build Web E2E (código ${res.status ?? "desconhecido"}).`);
@@ -173,6 +173,10 @@ const CENARIOS = [
 
       await page.clickBySelector('[aria-label="Editar perfil"]');
       await page.waitForText("Nome público");
+      await page.waitFor(
+        'Boolean(document.querySelector(\'input[aria-label="Nome público"]\')?.value === "Leitor E2E")',
+        { message: "carregamento do nome atual no campo" },
+      );
       await page.fillInput('input[aria-label="Nome público"]', "Leitor Atualizado E2E");
       await page.clickByText("Salvar alterações", { exact: true });
       await page.waitForText("Leitor Atualizado E2E", { timeoutMs: 10000 });
