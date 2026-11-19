@@ -241,10 +241,10 @@ export function CatalogCarousel({
           accessibilityRole="button"
           accessibilityLabel={viewMoreLabel}
           onPress={onViewMore}
-          style={withPress(styles.viewMoreButton)}
+          style={withPress([styles.viewMoreButton, isIos && (iosGlass ? styles.iosViewMoreGlass : styles.iosViewMoreOpaque)])}
         >
-          <Text style={styles.viewMoreText}>{viewMoreButtonText}</Text>
-          <AppIcon name="chevronRight" size={16} color={colors.m3.primary} />
+          <Text style={[styles.viewMoreText, isIos && styles.iosViewMoreText]}>{viewMoreButtonText}</Text>
+          <AppIcon name="chevronRight" size={16} color={isIos ? colors.m3.onSurface : colors.m3.primary} />
         </Pressable>
       </View>
       {wideWeb ? (
@@ -580,6 +580,23 @@ function createStyles(colors: ColorPalette) {
       justifyContent: "center",
     },
     viewMoreText: { ...tokens.typography.labelLarge, color: colors.m3.primary, },
+    iosViewMoreGlass: {
+      minHeight: 40,
+      backgroundColor: tokens.glass.fill,
+      borderColor: tokens.glass.stroke,
+      shadowColor: "#302e24",
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.1,
+      shadowRadius: 10,
+    },
+    iosViewMoreOpaque: {
+      minHeight: 40,
+      backgroundColor: colors.m3.surfaceContainerLowest,
+      borderColor: colors.m3.outlineVariant,
+    },
+    iosViewMoreText: {
+      color: colors.m3.onSurface,
+    },
     carouselRow: { position: "relative", marginHorizontal: -tokens.spacing[16], },
     shortcuts: { flexDirection: "row", gap: tokens.spacing[24] },
     shortcut: {

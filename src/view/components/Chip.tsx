@@ -1,3 +1,4 @@
+import { BlurView } from "expo-blur";
 import { useMemo } from "react";
 import { Animated, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { tokens, type ColorPalette } from "@/view/tokens";
@@ -5,6 +6,7 @@ import { useTheme } from "@/view/theme/ThemeProvider";
 import { contrastRatio } from "@/view/theme/contrastRatio";
 import { AppIcon } from "@/view/components/AppIcon";
 import { useExpressivePress } from "@/view/useExpressivePress";
+import { useReduceTransparency } from "@/view/useReduceTransparency";
 
 export type ChipProps = {
   label: string;
@@ -21,6 +23,9 @@ export type ChipProps = {
 /** Chip de filtro M3 Expressive (chip.md): alterna curvatura entre 8 dp (inativo) e 16 dp (selecionado/pressionado). */
 export function Chip({ label, selected, onPress, disabled = false, accessibilityLabel, size = "compact", tone }: ChipProps) {
   const { colors } = useTheme();
+  const isIos = Platform.OS === "ios";
+  const reduceTransparency = useReduceTransparency();
+  const iosGlass = isIos && !reduceTransparency;
   const styles = useMemo(() => createStyles(colors), [colors]);
   const { scale, isPressed, onPressIn, onPressOut } = useExpressivePress({ disabled, pressedScale: 0.96 });
   const dotColor = useMemo(() => {
@@ -32,7 +37,7 @@ export function Chip({ label, selected, onPress, disabled = false, accessibility
   }, [tone, colors.m3.surfaceContainerLowest]);
 
   return (
-    <Animated.View style={[styles.container, { transform: [{ scale }] }]}>
+    <Animated.View style={[styles.container, isIos && !disabled && styles.iosShadow, { transform: [{ scale }] }]}>
       <Pressable
         accessibilityRole="checkbox"
         accessibilityLabel={accessibilityLabel ?? label}
@@ -46,14 +51,20 @@ export function Chip({ label, selected, onPress, disabled = false, accessibility
           styles.chip,
           size === "regular" ? styles.chipRegular : styles.chipCompact,
           selected ? styles.selected : styles.unselected,
-          Platform.OS === "ios" && styles.iosPill,
-          Platform.OS === "ios" && !selected && styles.iosUnselected,
-          isPressed && !disabled && Platform.OS !== "ios" ? styles.pressedShape : null,
+          isIos && styles.iosPill,
+          isIos && !selected && (iosGlass ? styles.iosUnselectedGlass : styles.iosUnselectedOpaque),
+          isIos && selected && styles.iosSelected,
+          isPressed && !disabled && !isIos ? styles.pressedShape : null,
           selected && tone ? { backgroundColor: tone.background } : null,
           tone || selected ? styles.withDot : null,
           disabled && styles.disabled,
         ]}
       >
+        {iosGlass && !selected && !disabled ? (
+          <View pointerEvents="none" style={styles.iosBlurClip}>
+            <BlurView intensity={20} tint="light" style={StyleSheet.absoluteFill} />
+          </View>
+        ) : null}
         {selected ? <AppIcon name="check" size={18} color={tone?.text ?? colors.nature.onFoliage} /> : null}
         {tone && !selected ? <View style={[styles.dot, { backgroundColor: dotColor, borderColor: dotColor }]} /> : null}
         <Text
@@ -90,10 +101,30 @@ function createStyles(colors: ColorPalette) {
       minHeight: 44,
       borderRadius: tokens.radius.full,
       borderCurve: "continuous",
+      overflow: "hidden",
     },
-    iosUnselected: {
+    iosShadow: {
+      shadowColor: "#2e2b21",
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.12,
+      shadowRadius: 8,
+    },
+    iosUnselectedGlass: {
+      backgroundColor: tokens.glass.fill,
+      borderColor: tokens.glass.stroke,
+    },
+    iosUnselectedOpaque: {
       backgroundColor: colors.m3.surfaceContainerLow,
       borderColor: colors.m3.outlineVariant,
+    },
+    iosSelected: {
+      borderWidth: 1,
+      borderColor: colors.m3.focusRing,
+    },
+    iosBlurClip: {
+      ...StyleSheet.absoluteFill,
+      borderRadius: tokens.radius.full,
+      overflow: "hidden",
     },
     selected: {
       backgroundColor: colors.nature.foliage,

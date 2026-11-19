@@ -198,6 +198,12 @@ describe("iOS Nativo · Design System Liquid Glass & Apple HIG (Spec 137, ADR 01
       const blurView = screen.getByTestId("blur-view");
       expect(blurView).toBeDefined();
 
+      const activePill = screen.getByTestId("navigation-bar-active-pill");
+      const pillStyle = StyleSheet.flatten(activePill.props.style);
+      expect(pillStyle.top).toBe(tokens.spacing[4]);
+      expect(pillStyle.bottom).toBe(tokens.spacing[4]);
+      expect(pillStyle.width).toBeGreaterThan(100);
+
       const tabs = screen.getAllByRole("tab");
       expect(tabs.length).toBe(3);
 

@@ -2,9 +2,11 @@ import { fireEvent, render } from "@testing-library/react-native";
 import * as Haptics from "expo-haptics";
 import { Platform, StyleSheet } from "react-native";
 import type { Book } from "@/model/entities/book";
+import { Chip } from "@/view/components/Chip";
 import { CatalogCarousel } from "@/view/home/CatalogCarousel";
+import { HomeFloatingAddButton } from "@/view/home/HomeFloatingChatButton";
 import { SearchBookCard } from "@/view/search/SearchBookCard";
-import { tokens } from "@/view/tokens";
+import { colors, tokens } from "@/view/tokens";
 
 const sampleBook: Book = {
   id: "livro-1",
@@ -85,6 +87,32 @@ describe("Cards de Catálogo e Busca iOS 26 (Spec 137 · #229)", () => {
     );
     await fireEvent.press(androidView.getByLabelText("Ver detalhe de O Pequeno Príncipe, Antoine de Saint-Exupéry em Centro"));
     expect(impactSpy).toHaveBeenCalledTimes(1);
+    impactSpy.mockRestore();
+  });
+
+  it("aplica Liquid Glass e haptic no botão flutuante e chips da Home no iOS", async () => {
+    Object.defineProperty(Platform, "OS", { value: "ios", configurable: true });
+    const impactSpy = jest.spyOn(Haptics, "impactAsync").mockResolvedValue();
+    const onAdd = jest.fn();
+
+    const addView = await render(<HomeFloatingAddButton onPress={onAdd} />);
+    const fab = addView.getByTestId("home-floating-add-button");
+    const fabStyle = StyleSheet.flatten(fab.props.style);
+    expect(fabStyle.borderRadius).toBe(tokens.radius.full);
+    expect(fabStyle.backgroundColor).toBe(tokens.glass.fill);
+    await fireEvent.press(fab);
+    expect(onAdd).toHaveBeenCalledTimes(1);
+    expect(impactSpy).toHaveBeenCalledTimes(1);
+
+    const chipView = await render(<Chip label="Venda" selected={false} onPress={jest.fn()} />);
+    const chipStyle = StyleSheet.flatten(chipView.getByRole("checkbox", { name: "Venda" }).props.style);
+    expect(chipStyle.backgroundColor).toBe(tokens.glass.fill);
+    expect(chipStyle.borderColor).toBe(tokens.glass.stroke);
+
+    Object.defineProperty(Platform, "OS", { value: "android", configurable: true });
+    const androidFab = await render(<HomeFloatingAddButton onPress={onAdd} />);
+    const androidFabStyle = StyleSheet.flatten(androidFab.getByTestId("home-floating-add-button").props.style);
+    expect(androidFabStyle.backgroundColor).toBe(colors.nature.sprout);
     impactSpy.mockRestore();
   });
 });

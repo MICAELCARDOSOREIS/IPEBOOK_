@@ -27,17 +27,24 @@ const ITEMS: ReadonlyArray<{ key: NavigationDestination; label: string; icon: Ap
 const INDICATOR_WIDTH = tokens.spacing[40] + tokens.spacing[24]; // 64 dp (proporção áurea do M3)
 const INDICATOR_HEIGHT = tokens.spacing[32]; // 32 dp (altura compacta e elegante)
 const DOCK_HORIZONTAL_PADDING = tokens.spacing[12]; // 12 dp
+const IOS_DOCK_HORIZONTAL_PADDING = tokens.spacing[6]; // 6 dp (cápsula iOS 26 envolve ícone + texto)
 const DOCK_VERTICAL_PADDING = tokens.spacing[6]; // 6 dp (respiro equilibrado)
 const INITIAL_DOCK_MAX_WIDTH = 340; // Largura balanceada para 3 abas sem distorção das bordas pílula
 
 /**
  * Calcula a posição horizontal X da pílula deslizante centralizada sobre o item `index`.
  */
-function getPillTargetX(index: number, totalItems: number, containerWidth: number): number {
+function getPillTargetX(
+  index: number,
+  totalItems: number,
+  containerWidth: number,
+  horizontalPadding: number,
+  pillWidth: number,
+): number {
   if (index < 0 || totalItems <= 0) return 0;
-  const availableWidth = Math.max(0, containerWidth - DOCK_HORIZONTAL_PADDING * 2);
+  const availableWidth = Math.max(0, containerWidth - horizontalPadding * 2);
   const itemWidth = availableWidth / totalItems;
-  return DOCK_HORIZONTAL_PADDING + index * itemWidth + (itemWidth - INDICATOR_WIDTH) / 2;
+  return horizontalPadding + index * itemWidth + (itemWidth - pillWidth) / 2;
 }
 
 /** Barra de navegação do design system (barra-de-navegacao.md), Material 3 Expressive como no Figma `02.01`:
@@ -61,13 +68,19 @@ export function NavigationBar({ active, onNavigate, disabledDestinations = [], b
     setOptimisticActive(active);
   }, [active]);
 
+  const isIos = Platform.OS === "ios";
+  const dockHorizontalPadding = isIos ? IOS_DOCK_HORIZONTAL_PADDING : DOCK_HORIZONTAL_PADDING;
+  const pillWidth = isIos
+    ? Math.max(INDICATOR_WIDTH, (dockWidth - dockHorizontalPadding * 2) / ITEMS.length)
+    : INDICATOR_WIDTH;
+
   const currentActive = optimisticActive ?? active;
   const activeIndex = ITEMS.findIndex((item) => item.key === currentActive);
   const hasActiveItem = activeIndex >= 0;
 
   // Posição inicial da pílula deslizante sem flash/salto no primeiro frame
   const initialX = useMemo(
-    () => getPillTargetX(Math.max(0, activeIndex), ITEMS.length, INITIAL_DOCK_MAX_WIDTH),
+    () => getPillTargetX(Math.max(0, activeIndex), ITEMS.length, INITIAL_DOCK_MAX_WIDTH, dockHorizontalPadding, pillWidth),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   );
@@ -76,7 +89,7 @@ export function NavigationBar({ active, onNavigate, disabledDestinations = [], b
   // Anima a pílula deslizante quando a aba ativa ou a largura do dock muda
   useEffect(() => {
     if (!hasActiveItem) return;
-    const targetX = getPillTargetX(activeIndex, ITEMS.length, dockWidth);
+    const targetX = getPillTargetX(activeIndex, ITEMS.length, dockWidth, dockHorizontalPadding, pillWidth);
     void Promise.resolve(AccessibilityInfo?.isReduceMotionEnabled?.())
       .then((reduced) => {
         if (reduced) {
@@ -93,7 +106,7 @@ export function NavigationBar({ active, onNavigate, disabledDestinations = [], b
       .catch(() => {
         slideAnim.setValue(targetX);
       });
-  }, [activeIndex, dockWidth, hasActiveItem, slideAnim]);
+  }, [activeIndex, dockHorizontalPadding, dockWidth, hasActiveItem, pillWidth, slideAnim]);
 
   // Em celulares com barra de 3 botões (Android) ou Home Indicator (iOS),
   // posiciona a cápsula com respiro sutil e ergonômico acima dos controles sem invadir a tela.
@@ -126,13 +139,14 @@ export function NavigationBar({ active, onNavigate, disabledDestinations = [], b
             />
           ) : null}
 
-        {/* Pílula Deslizante Contínua Material 3 Expressive */}
+        {/* Pílula Deslizante Contínua (iOS 26 envolve ícone + rótulo; Android/Web segue M3 Expressive) */}
         {hasActiveItem ? (
           <Animated.View
             pointerEvents="none"
             testID="navigation-bar-active-pill"
             style={[
               styles.slidingPill,
+              isIos && { width: pillWidth },
               {
                 transform: [{ translateX: slideAnim }],
               },
@@ -190,7 +204,9 @@ export function NavigationBar({ active, onNavigate, disabledDestinations = [], b
                         isDisabled
                           ? colors.secondaryText
                           : isActive
-                            ? colors.m3.onSecondaryContainer
+                            ? isIos
+                              ? colors.m3.onSurface
+                              : colors.m3.onSecondaryContainer
                             : isHovered
                               ? colors.m3.onSurface
                               : colors.m3.onSurfaceVariant
@@ -320,8 +336,8 @@ function createStyles(colors: ColorPalette, reduceTransparency: boolean = false)
       backgroundColor: dockBg,
       borderRadius: tokens.radius.full,
       ...(isIos ? ({ borderCurve: "continuous" } as never) : {}),
-      paddingVertical: DOCK_VERTICAL_PADDING,
-      paddingHorizontal: DOCK_HORIZONTAL_PADDING,
+      paddingVertical: isIos ? tokens.spacing[4] : DOCK_VERTICAL_PADDING,
+      paddingHorizontal: isIos ? IOS_DOCK_HORIZONTAL_PADDING : DOCK_HORIZONTAL_PADDING,
       borderWidth: 1,
       borderColor: dockBorderColor,
       overflow: "hidden",
@@ -332,16 +348,26 @@ function createStyles(colors: ColorPalette, reduceTransparency: boolean = false)
           } as never)
         : {}),
     },
-    slidingPill: {
-      position: "absolute",
-      top: DOCK_VERTICAL_PADDING + 2, // alinhado verticalmente com o centro do indicador de 32dp
-      left: 0,
-      width: INDICATOR_WIDTH,
-      height: INDICATOR_HEIGHT,
-      borderRadius: tokens.radius.full,
-      backgroundColor: colors.m3.secondaryContainer,
-      zIndex: 0,
-    },
+    slidingPill: isIos
+      ? {
+          position: "absolute",
+          top: tokens.spacing[4],
+          bottom: tokens.spacing[4],
+          left: 0,
+          borderRadius: tokens.radius.full,
+          backgroundColor: reduceTransparency ? colors.m3.primaryContainer : "rgba(210, 235, 212, 0.86)",
+          zIndex: 0,
+        }
+      : {
+          position: "absolute",
+          top: DOCK_VERTICAL_PADDING + 2, // alinhado verticalmente com o centro do indicador de 32dp
+          left: 0,
+          width: INDICATOR_WIDTH,
+          height: INDICATOR_HEIGHT,
+          borderRadius: tokens.radius.full,
+          backgroundColor: colors.m3.secondaryContainer,
+          zIndex: 0,
+        },
     item: {
       flex: 1,
       minWidth: 0,
@@ -401,7 +427,7 @@ function createStyles(colors: ColorPalette, reduceTransparency: boolean = false)
       fontWeight: tokens.fontWeight.semiBold,
     },
     labelActive: {
-      color: colors.m3.primary,
+      color: isIos ? colors.m3.onSurface : colors.m3.primary,
       fontFamily: tokens.fontFamily.semiBold,
       fontWeight: tokens.fontWeight.bold,
     },
