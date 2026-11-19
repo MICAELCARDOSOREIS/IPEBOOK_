@@ -3,6 +3,7 @@ import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { makeAuthViewModel } from "@/di/container";
 import { InlineErrorCard } from "@/view/components/InlineErrorCard";
 import { ScreenContainer } from "@/view/components/ScreenContainer";
+import { TextButton } from "@/view/components/TextButton";
 import { tokens } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
 
@@ -65,12 +66,7 @@ export default function AuthCallback({ url, onSuccess, onBackToSignIn }: AuthCal
         <View style={styles.content}>
           <InlineErrorCard message={errorMessage} style={styles.errorCard} />
           {onBackToSignIn ? (
-            <Text
-              style={[styles.link, { color: colors.action }]}
-              onPress={onBackToSignIn}
-            >
-              Voltar para o login
-            </Text>
+            <TextButton label="Voltar para o login" onPress={onBackToSignIn} />
           ) : null}
         </View>
       ) : (
@@ -105,9 +101,5 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: tokens.spacing[16],
     ...tokens.typography.bodyLarge,
-  },
-  link: {
-    ...tokens.typography.labelLarge,
-    fontWeight: tokens.fontWeight.bold,
   },
 });
