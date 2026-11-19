@@ -4,6 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { makeAuthViewModel } from "@/di/container";
 import { FilledButton } from "@/view/components/FilledButton";
 import { IconBadge } from "@/view/components/IconBadge";
+import { iosNeutralCardStyle } from "@/view/components/IosCardSurface";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { useTheme } from "@/view/theme/ThemeProvider";
@@ -123,6 +124,7 @@ function createStyles(colors: ColorPalette) {
     borderColor: colors.book.paperEdge,
     padding: tokens.spacing[24],
     gap: tokens.spacing[12],
+    ...iosNeutralCardStyle(colors),
   },
   cardHeaderRow: { flexDirection: "row", alignItems: "center", gap: tokens.spacing[12] },
   sectionHeader: {

@@ -9,6 +9,7 @@ import { useTheme } from "@/view/theme/ThemeProvider";
 import { formatMeetingWhen } from "@/view/meetingFormat";
 import { AppIcon } from "@/view/components/AppIcon";
 import { ErrorState } from "@/view/components/ErrorState";
+import { iosNeutralCardStyle } from "@/view/components/IosCardSurface";
 import { LoadingState } from "@/view/components/LoadingState";
 import { TopAppBar } from "@/view/components/TopAppBar";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
@@ -277,6 +278,7 @@ function createStyles(colors: ColorPalette) {
       borderColor: colors.book.paperEdge,
       padding: tokens.spacing[16],
       gap: tokens.spacing[8],
+      ...iosNeutralCardStyle(colors),
     },
     cardHeader: {
       flexDirection: "row",

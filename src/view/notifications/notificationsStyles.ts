@@ -5,6 +5,7 @@ import {
   StyleSheet,
   type ViewStyle,
 } from "react-native";
+import { iosNeutralCardStyle } from "@/view/components/IosCardSurface";
 import { expressivePressedStyle, webFocusRing } from "@/view/pressFeedback";
 import { tokens, type ColorPalette } from "@/view/tokens";
 import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
@@ -34,6 +35,8 @@ export function withWebInteractive(
 }
 
 export function createNotificationsStyles(colors: ColorPalette) {
+  const isIos = Platform.OS === "ios";
+  const iosCard = iosNeutralCardStyle(colors);
   return StyleSheet.create({
     page: { flex: 1, backgroundColor: colors.background, minHeight: 0 },
     sectionHeaderContainer: {
@@ -82,18 +85,19 @@ export function createNotificationsStyles(colors: ColorPalette) {
       backgroundColor: colors.m3.surfaceContainerLow,
       borderWidth: 1,
       borderColor: colors.m3.outlineVariant,
-      borderLeftWidth: 4,
-      borderLeftColor: colors.highlight,
       borderRadius: tokens.radius.cardSmall,
       padding: tokens.spacing[14],
       marginBottom: tokens.spacing[12],
       gap: tokens.spacing[10],
+      ...iosCard,
+      borderLeftWidth: 4,
+      borderLeftColor: colors.highlight,
     },
     permissionIconCircle: {
       width: 32,
       height: 32,
       borderRadius: tokens.radius.full,
-      backgroundColor: colors.m3.secondaryContainer,
+      backgroundColor: isIos ? colors.m3.primaryContainer : colors.m3.secondaryContainer,
       alignItems: "center",
       justifyContent: "center",
     },
@@ -444,8 +448,8 @@ export function createNotificationsStyles(colors: ColorPalette) {
       shadowOffset: { width: 0, height: 2 },
     },
     emptyIconCircle: {
-      width: 72,
-      height: 72,
+      width: isIos ? 73 : 72,
+      height: isIos ? 73 : 72,
       borderRadius: tokens.radius.full,
       backgroundColor: colors.ipe.container,
       alignItems: "center",
@@ -457,6 +461,7 @@ export function createNotificationsStyles(colors: ColorPalette) {
       fontFamily: tokens.typography.displayLarge.fontFamily,
       color: colors.text,
       textAlign: "center",
+      ...(isIos ? { fontSize: 25, lineHeight: 34 } : null),
     },
     emptyTitle: {
       ...tokens.typography.titleMedium,
@@ -495,6 +500,7 @@ export function createNotificationsStyles(colors: ColorPalette) {
       shadowOpacity: 0.04,
       shadowRadius: 4,
       elevation: 1,
+      ...iosCard,
     },
     unreadStripe: {
       width: 4,

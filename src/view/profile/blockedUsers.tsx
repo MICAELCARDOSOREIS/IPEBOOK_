@@ -5,6 +5,7 @@ import { makeAuthViewModel, makeBlockedUsersViewModel } from "@/di/container";
 import { Avatar } from "@/view/components/Avatar";
 import { Dialog } from "@/view/components/Dialog";
 import { ErrorState } from "@/view/components/ErrorState";
+import { iosNeutralCardStyle } from "@/view/components/IosCardSurface";
 import { LoadingState } from "@/view/components/LoadingState";
 import { Snackbar } from "@/view/components/Snackbar";
 import { TopAppBar } from "@/view/components/TopAppBar";
@@ -290,6 +291,7 @@ function createStyles(colors: ColorPalette) {
       padding: tokens.spacing[16],
       borderWidth: 1,
       borderColor: colors.book.paperEdge,
+      ...iosNeutralCardStyle(colors),
     },
     userRow: {
       flexDirection: "row",
