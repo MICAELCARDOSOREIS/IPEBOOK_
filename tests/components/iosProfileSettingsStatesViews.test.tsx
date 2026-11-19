@@ -52,6 +52,7 @@ describe("Perfil, Configurações e Estados iOS 26 (Spec 137 · #232)", () => {
   it("aplica feedback háptico em Meu perfil no iOS ao acionar Editar perfil e item de menu", async () => {
     const impactSpy = jest.spyOn(Haptics, "impactAsync").mockResolvedValue();
     const onEditProfile = jest.fn();
+    const onCreateListing = jest.fn();
     const onMenu = jest.fn();
 
     const view = await render(
@@ -63,6 +64,7 @@ describe("Perfil, Configurações e Estados iOS 26 (Spec 137 · #232)", () => {
           completedTrocas={1}
           ratingText="5.0"
           onEditProfile={onEditProfile}
+          onCreateListing={onCreateListing}
           onMyListings={jest.fn()}
           onMeetingHistory={jest.fn()}
           onRatings={jest.fn()}
@@ -74,11 +76,14 @@ describe("Perfil, Configurações e Estados iOS 26 (Spec 137 · #232)", () => {
       </View>,
     );
 
+    expect(view.getAllByTestId("blur-view").length).toBeGreaterThanOrEqual(2);
     await fireEvent.press(view.getByLabelText("Editar perfil"));
+    await fireEvent.press(view.getByLabelText("Publicar um livro"));
     await fireEvent.press(view.getByLabelText("Minhas publicações"));
     expect(onEditProfile).toHaveBeenCalledTimes(1);
+    expect(onCreateListing).toHaveBeenCalledTimes(1);
     expect(onMenu).toHaveBeenCalledTimes(1);
-    expect(impactSpy).toHaveBeenCalledTimes(2);
+    expect(impactSpy).toHaveBeenCalledTimes(3);
     impactSpy.mockRestore();
   });
 
