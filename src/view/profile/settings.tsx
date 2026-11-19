@@ -1,8 +1,9 @@
 import { useCallback, useMemo, useRef, useState } from "react";
-import { Pressable, ScrollView, Switch, Text, View, type ScrollViewInstance } from "react-native";
+import { Platform, Pressable, ScrollView, Switch, Text, View, type ScrollViewInstance } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Constants from "expo-constants";
 import * as Linking from "expo-linking";
+import { triggerHaptic } from "@/view/haptics";
 import { supportMailtoUrl, SUPPORT_EMAIL } from "@/view/supportContact";
 import { INSTAGRAM_HANDLE, INSTAGRAM_URL } from "@/view/instagram";
 import { InstagramIcon } from "@/view/components/InstagramIcon";
@@ -271,7 +272,10 @@ export function Settings({
         accessibilityRole="button"
         accessibilityLabel={label}
         accessibilityState={{ expanded }}
-        onPress={() => setExpandedSection((previous) => (previous === sectionKey ? null : sectionKey))}
+        onPress={() => {
+          if (Platform.OS === "ios") triggerHaptic("selection");
+          setExpandedSection((previous) => (previous === sectionKey ? null : sectionKey));
+        }}
         android_ripple={{ color: colors.m3.surfaceContainerHigh }}
         style={withPress([styles.disclosureHeader, expanded && styles.disclosureHeaderExpanded])}
       >
@@ -435,7 +439,10 @@ export function Settings({
                       return (
                         <Pressable
                           key={key}
-                          onPress={() => void notifActions.setEnabled(key, !notifPrefs.enabled[key])}
+                          onPress={() => {
+                            if (Platform.OS === "ios") triggerHaptic("selection");
+                            void notifActions.setEnabled(key, !notifPrefs.enabled[key]);
+                          }}
                           style={({ pressed }) => [
                             styles.toggleRow,
                             index > 0 && styles.linkDivider,
@@ -448,7 +455,10 @@ export function Settings({
                           </View>
                           <Switch
                             value={notifPrefs.enabled[key]}
-                            onValueChange={(value) => void notifActions.setEnabled(key, value)}
+                            onValueChange={(value) => {
+                              if (Platform.OS === "ios") triggerHaptic("selection");
+                              void notifActions.setEnabled(key, value);
+                            }}
                             accessibilityRole="switch"
                             accessibilityLabel={`${category.label}: ${notifPrefs.enabled[key] ? "ativada" : "desativada"}`}
                             trackColor={{

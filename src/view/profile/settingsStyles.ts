@@ -1,4 +1,4 @@
-import { StyleSheet } from "react-native";
+import { Platform, StyleSheet } from "react-native";
 import { type ColorPalette, tokens } from "@/view/tokens";
 import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
 
@@ -6,6 +6,7 @@ import { WEB_GUTTER, WEB_MAX_WIDTH } from "@/view/webLayout";
 export const SETTINGS_WIDE_CONTENT_MAX_WIDTH = WEB_MAX_WIDTH;
 
 export function createSettingsStyles(colors: ColorPalette) {
+  const isIos = Platform.OS === "ios";
   return StyleSheet.create({
     page: { flex: 1, minHeight: 0, backgroundColor: colors.background },
     wideTopHeader: {
@@ -46,10 +47,19 @@ export function createSettingsStyles(colors: ColorPalette) {
       gap: tokens.spacing[16],
       padding: tokens.spacing[20],
       borderRadius: tokens.radius.xl,
-      backgroundColor: colors.m3.surfaceContainerLow,
+      backgroundColor: isIos ? colors.m3.surfaceContainerLowest : colors.m3.surfaceContainerLow,
       borderWidth: 1,
-      borderColor: colors.book.paperEdge,
+      borderColor: isIos ? colors.m3.outlineVariant : colors.book.paperEdge,
       overflow: "hidden",
+      ...(isIos
+        ? {
+            borderCurve: "continuous" as const,
+            shadowColor: "#332b1f",
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.09,
+            shadowRadius: 12,
+          }
+        : {}),
     },
     accountIdentity: {
       flex: 1,
@@ -83,11 +93,11 @@ export function createSettingsStyles(colors: ColorPalette) {
       paddingHorizontal: tokens.spacing[12],
       paddingVertical: tokens.spacing[6],
       borderRadius: tokens.radius.full,
-      backgroundColor: colors.m3.secondaryContainer,
+      backgroundColor: isIos ? colors.m3.primaryContainer : colors.m3.secondaryContainer,
     },
     accountActionText: {
       ...tokens.typography.labelMedium,
-      color: colors.m3.onSecondaryContainer,
+      color: isIos ? colors.m3.onPrimaryContainer : colors.m3.onSecondaryContainer,
       fontWeight: tokens.fontWeight.semiBold,
     },
     signOutRow: { alignItems: "center", paddingTop: tokens.spacing[4] },
@@ -162,9 +172,18 @@ export function createSettingsStyles(colors: ColorPalette) {
     sectionCard: {
       borderRadius: tokens.radius.xl,
       overflow: "hidden",
-      backgroundColor: colors.m3.surfaceContainerLow,
+      backgroundColor: isIos ? colors.m3.surfaceContainerLowest : colors.m3.surfaceContainerLow,
       borderWidth: 1,
-      borderColor: colors.book.paperEdge,
+      borderColor: isIos ? colors.m3.outlineVariant : colors.book.paperEdge,
+      ...(isIos
+        ? {
+            borderCurve: "continuous" as const,
+            shadowColor: "#332b1f",
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.09,
+            shadowRadius: 12,
+          }
+        : {}),
     },
     sectionHeaderRow: {
       flex: 1,
@@ -195,8 +214,8 @@ export function createSettingsStyles(colors: ColorPalette) {
     sectionHeaderIcon: {
       width: tokens.spacing[40],
       height: tokens.spacing[40],
-      borderRadius: tokens.radius.medium,
-      backgroundColor: colors.m3.secondaryContainer,
+      borderRadius: isIos ? tokens.radius.full : tokens.radius.medium,
+      backgroundColor: isIos ? colors.m3.primaryContainer : colors.m3.secondaryContainer,
       alignItems: "center",
       justifyContent: "center",
     },
@@ -213,7 +232,7 @@ export function createSettingsStyles(colors: ColorPalette) {
       width: tokens.spacing[32],
       height: tokens.spacing[32],
       borderRadius: tokens.radius.full,
-      backgroundColor: colors.m3.surfaceContainerHigh,
+      backgroundColor: isIos ? colors.m3.surfaceContainer : colors.m3.surfaceContainerHigh,
       alignItems: "center",
       justifyContent: "center",
     },

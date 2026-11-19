@@ -1,10 +1,12 @@
 import * as Linking from "expo-linking";
 import { useMemo } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { AppIcon, type AppIconName } from "@/view/components/AppIcon";
 import { Avatar } from "@/view/components/Avatar";
+import { triggerHaptic } from "@/view/haptics";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
+import { useReduceTransparency } from "@/view/useReduceTransparency";
 
 export type ProfileMenuItem = {
   key: string;
@@ -52,10 +54,19 @@ export function ProfileIdentityCard({
   onRatings,
 }: ProfileIdentityCardProps) {
   const { colors } = useTheme();
+  const isIos = Platform.OS === "ios";
+  const reduceTransparency = useReduceTransparency();
+  const iosGlass = isIos && !reduceTransparency;
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   return (
-    <View style={[styles.heroBlock, wideWeb && styles.heroBlockWide]}>
+    <View
+      style={[
+        styles.heroBlock,
+        isIos && (iosGlass ? styles.iosGlassSurface : styles.iosOpaqueSurface),
+        wideWeb && styles.heroBlockWide,
+      ]}
+    >
       <View style={styles.identityRow}>
         <View style={styles.identityText}>
           <Text accessibilityRole="header" style={styles.profileName} numberOfLines={2}>
@@ -94,7 +105,7 @@ export function ProfileIdentityCard({
         </View>
       </View>
 
-      <View style={styles.statsContainer}>
+      <View style={[styles.statsContainer, isIos && (iosGlass ? styles.iosGlassSurface : styles.iosOpaqueSurface)]}>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={`Minhas publicações: ${totalPublications} ${totalPublications === 1 ? "publicação" : "publicações"}`}
@@ -136,9 +147,13 @@ export function ProfileIdentityCard({
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Editar perfil"
-          onPress={onEditProfile}
+          onPress={() => {
+            if (isIos) triggerHaptic("light");
+            onEditProfile();
+          }}
           style={({ pressed }) => [
             styles.editProfileButton,
+            isIos && (iosGlass ? styles.iosGlassButton : styles.iosOpaqueButton),
             pressed && styles.editProfileButtonPressed,
           ]}
         >
@@ -251,11 +266,20 @@ export function ProfileMenuSection({
   onSignOut,
 }: ProfileMenuSectionProps) {
   const { colors } = useTheme();
+  const isIos = Platform.OS === "ios";
+  const reduceTransparency = useReduceTransparency();
+  const iosGlass = isIos && !reduceTransparency;
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   return (
     <View style={[styles.section, wideWeb && styles.sectionWide]}>
-      <View style={[styles.cardGroup, wideWeb && styles.cardGroupWide]}>
+      <View
+        style={[
+          styles.cardGroup,
+          isIos && (iosGlass ? styles.iosGlassSurface : styles.iosOpaqueSurface),
+          wideWeb && styles.cardGroupWide,
+        ]}
+      >
         <View style={styles.sectionHeaderRow}>
           <View style={styles.sectionBloom} />
           <Text style={styles.sectionHeader}>{title}</Text>
@@ -267,10 +291,17 @@ export function ProfileMenuSection({
                 accessibilityRole="button"
                 accessibilityLabel={item.label}
                 accessibilityHint={item.description}
-                onPress={item.onPress}
-                style={({ pressed }) => [styles.menuRow, pressed && styles.menuRowPressed]}
+                onPress={() => {
+                  if (isIos) triggerHaptic("light");
+                  item.onPress();
+                }}
+                style={({ pressed }) => [
+                  styles.menuRow,
+                  isIos && styles.iosMenuRow,
+                  pressed && styles.menuRowPressed,
+                ]}
               >
-                <View style={styles.menuIconContainer}>
+                <View style={[styles.menuIconContainer, isIos && styles.iosMenuIconContainer]}>
                   <AppIcon name={item.icon} size={20} color={item.iconColor ?? defaultIconColor ?? colors.m3.onSurface} />
                 </View>
                 <View style={styles.menuRowText}>
@@ -341,6 +372,43 @@ function createStyles(colors: ColorPalette) {
       flex: 1,
       padding: tokens.spacing[24],
       justifyContent: "space-between",
+    },
+    iosGlassSurface: {
+      borderRadius: tokens.radius.xxl,
+      borderCurve: "continuous",
+      backgroundColor: tokens.glass.fill,
+      borderColor: tokens.glass.stroke,
+      shadowColor: "#362b1f",
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.12,
+      shadowRadius: 14,
+    },
+    iosOpaqueSurface: {
+      borderRadius: tokens.radius.xxl,
+      borderCurve: "continuous",
+      backgroundColor: colors.m3.surfaceContainer,
+      borderColor: tokens.ios.separator,
+    },
+    iosGlassButton: {
+      backgroundColor: tokens.glass.fill,
+      borderColor: tokens.glass.stroke,
+      shadowColor: "#2e2b21",
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.12,
+      shadowRadius: 8,
+    },
+    iosOpaqueButton: {
+      backgroundColor: colors.m3.surfaceContainer,
+      borderColor: tokens.ios.separator,
+    },
+    iosMenuRow: {
+      backgroundColor: colors.m3.surfaceContainerLowest,
+    },
+    iosMenuIconContainer: {
+      width: 36,
+      height: 36,
+      borderRadius: tokens.radius.medium,
+      backgroundColor: colors.m3.primaryContainer,
     },
     badgesSectionWide: { width: "100%", marginTop: 0 },
     sectionWide: { flex: 1, minWidth: 300 },

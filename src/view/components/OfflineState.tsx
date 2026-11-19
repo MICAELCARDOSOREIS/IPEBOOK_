@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useRef } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { networkStatusDataSource as defaultNetworkStatusDataSource } from "@/di/container";
 import type { INetworkStatusDataSource } from "@/model/datasources/iNetworkStatusDataSource";
 import { AppIcon } from "@/view/components/AppIcon";
+import { IosCardSurface } from "@/view/components/IosCardSurface";
+import { triggerHaptic } from "@/view/haptics";
 import { withPress } from "@/view/pressFeedback";
 import { useTheme } from "@/view/theme/ThemeProvider";
 import { type ColorPalette, tokens } from "@/view/tokens";
@@ -43,28 +45,43 @@ export function OfflineState({
     }
   }, [isOnline, onRetry]);
 
+  const isIos = Platform.OS === "ios";
+  const handleRetry = () => {
+    if (isIos) triggerHaptic("light");
+    onRetry();
+  };
+  const cardBody = (
+    <>
+      <View style={styles.iconCircle}>
+        <AppIcon name="wifiOff" size={24} color={colors.secondaryText} />
+      </View>
+      <Text
+        accessibilityRole="alert"
+        accessibilityLiveRegion="polite"
+        style={styles.message}
+      >
+        {message}
+      </Text>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={retryLabel}
+        onPress={handleRetry}
+        style={withPress(styles.retry)}
+      >
+        <Text style={styles.retryText}>{retryLabel}</Text>
+      </Pressable>
+    </>
+  );
+
   return (
     <View testID={testID} style={styles.container}>
-      <View style={styles.card}>
-        <View style={styles.iconCircle}>
-          <AppIcon name="wifiOff" size={24} color={colors.secondaryText} />
-        </View>
-        <Text
-          accessibilityRole="alert"
-          accessibilityLiveRegion="polite"
-          style={styles.message}
-        >
-          {message}
-        </Text>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={retryLabel}
-          onPress={onRetry}
-          style={withPress(styles.retry)}
-        >
-          <Text style={styles.retryText}>{retryLabel}</Text>
-        </Pressable>
-      </View>
+      {isIos ? (
+        <IosCardSurface variant="glass" style={styles.iosCard}>
+          {cardBody}
+        </IosCardSurface>
+      ) : (
+        <View style={styles.card}>{cardBody}</View>
+      )}
     </View>
   );
 }
@@ -88,6 +105,13 @@ function createStyles(colors: ColorPalette) {
       borderRadius: tokens.radius.card,
       borderWidth: 1,
       borderColor: colors.m3.outlineVariant,
+    },
+    iosCard: {
+      width: "100%",
+      maxWidth: 480,
+      alignItems: "center",
+      gap: tokens.spacing[16],
+      padding: tokens.spacing[24],
     },
     iconCircle: {
       width: 48,
