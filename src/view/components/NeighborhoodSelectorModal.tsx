@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from "react";
 import {
+  Animated,
   FlatList,
   Modal,
   Platform,
@@ -21,6 +22,7 @@ import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { AppIcon } from "@/view/components/AppIcon";
 import { type FocusableElement, useModalFocusTrap } from "@/view/components/Dialog";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
+import { useAnimatedKeyboardInset } from "@/view/useKeyboardInset";
 import { standardVerticalScrollProps } from "@/view/scrollProps";
 
 import { withPress } from "@/view/pressFeedback";
@@ -101,6 +103,7 @@ export function NeighborhoodSelectorModal({
 
   const closeRef = useRef<FocusableElement | null>(null);
   const searchInputRef = useRef<FocusableElement | null>(null);
+  const keyboardInset = useAnimatedKeyboardInset();
 
   useModalFocusTrap(visible, () => [searchInputRef.current, closeRef.current], onClose);
 
@@ -116,7 +119,14 @@ export function NeighborhoodSelectorModal({
       visible={visible}
       onRequestClose={onClose}
     >
-      <View style={[styles.scrim, wideWeb && styles.scrimWide]}>
+      <Animated.View
+        testID="neighborhood-selector-scrim"
+        style={[
+          styles.scrim,
+          wideWeb && styles.scrimWide,
+          !wideWeb && { paddingTop: insets.top + tokens.spacing[12], paddingBottom: keyboardInset },
+        ]}
+      >
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Fechar ao tocar fora"
@@ -268,7 +278,7 @@ export function NeighborhoodSelectorModal({
             }}
           />
         </View>
-      </View>
+      </Animated.View>
     </Modal>
   );
 }
@@ -299,7 +309,7 @@ function createStyles(colors: ColorPalette) {
       backgroundColor: colors.surface,
       borderTopLeftRadius: tokens.radius.extraLarge,
       borderTopRightRadius: tokens.radius.extraLarge,
-      maxHeight: "80%",
+      maxHeight: "90%",
       paddingTop: tokens.spacing[16],
       paddingBottom: tokens.spacing[24],
       paddingHorizontal: tokens.spacing[16],

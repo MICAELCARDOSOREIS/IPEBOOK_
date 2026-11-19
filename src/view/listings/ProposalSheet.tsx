@@ -1,6 +1,7 @@
-import { useMemo, useState } from "react";
+import { type ComponentRef, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Animated,
   Modal,
   Pressable,
   ScrollView,
@@ -11,6 +12,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
+import { useAnimatedKeyboardInset } from "@/view/useKeyboardInset";
 import type { Book } from "@/model/entities/book";
 import { AppIcon } from "@/view/components/AppIcon";
 import { BookCover } from "@/view/components/BookCover";
@@ -47,6 +49,8 @@ export function ProposalSheet({
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const wideWeb = useIsWideWeb();
+  const keyboardInset = useAnimatedKeyboardInset();
+  const scrollRef = useRef<ComponentRef<typeof ScrollView> | null>(null);
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   const [message, setMessage] = useState("");
@@ -78,7 +82,14 @@ export function ProposalSheet({
       accessibilityViewIsModal
       aria-modal
     >
-      <View style={[styles.scrim, wideWeb && styles.scrimWide]}>
+      <Animated.View
+        testID="proposal-sheet-scrim"
+        style={[
+          styles.scrim,
+          wideWeb && styles.scrimWide,
+          !wideWeb && { paddingTop: insets.top + tokens.spacing[12], paddingBottom: keyboardInset },
+        ]}
+      >
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Fechar formulário de proposta"
@@ -110,6 +121,7 @@ export function ProposalSheet({
           </View>
 
           <ScrollView
+            ref={scrollRef}
             {...standardVerticalScrollProps}
             style={styles.content}
             contentContainerStyle={styles.contentContainer}
@@ -144,6 +156,7 @@ export function ProposalSheet({
               <TextInput
                 value={message}
                 onChangeText={(text) => setMessage(text.slice(0, 500))}
+                onFocus={() => scrollRef.current?.scrollTo({ y: 96, animated: true })}
                 placeholder="Escreva uma mensagem para quem anunciou (opcional)"
                 placeholderTextColor={colors.m3.onSurfaceVariant}
                 multiline
@@ -248,7 +261,7 @@ export function ProposalSheet({
             />
           </View>
         </View>
-      </View>
+      </Animated.View>
     </Modal>
   );
 }
@@ -269,7 +282,7 @@ function createStyles(colors: ColorPalette) {
       backgroundColor: colors.surface,
       borderTopLeftRadius: tokens.radius.extraLarge,
       borderTopRightRadius: tokens.radius.extraLarge,
-      maxHeight: "90%",
+      maxHeight: "100%",
       shadowColor: "#000",
       shadowOffset: { width: 0, height: -2 },
       shadowOpacity: 0.15,

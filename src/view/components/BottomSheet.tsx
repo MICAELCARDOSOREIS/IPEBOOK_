@@ -2,7 +2,7 @@ import { BlurView } from "expo-blur";
 import type { ReactNode } from "react";
 import { useMemo, useRef } from "react";
 import {
-  KeyboardAvoidingView,
+  Animated,
   Modal,
   PanResponder,
   Platform,
@@ -21,6 +21,7 @@ import { useTheme } from "@/view/theme/ThemeProvider";
 import { type ColorPalette, tokens } from "@/view/tokens";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
+import { useAnimatedKeyboardInset } from "@/view/useKeyboardInset";
 import { useReduceTransparency } from "@/view/useReduceTransparency";
 
 export type BottomSheetProps = {
@@ -60,6 +61,7 @@ export function BottomSheet({
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const wideWeb = useIsWideWeb();
+  const keyboardInset = useAnimatedKeyboardInset();
   const reduceTransparency = useReduceTransparency();
   const isIos = Platform.OS === "ios";
   const styles = useMemo(
@@ -127,9 +129,13 @@ export function BottomSheet({
       navigationBarTranslucent
       onRequestClose={guardedClose}
     >
-      <KeyboardAvoidingView
-        behavior={isIos ? "padding" : undefined}
-        style={[styles.scrim, wideWeb && styles.scrimWide]}
+      <Animated.View
+        testID={testID ? `${testID}-scrim` : "bottom-sheet-scrim"}
+        style={[
+          styles.scrim,
+          wideWeb && styles.scrimWide,
+          !wideWeb && { paddingTop: insets.top + tokens.spacing[12], paddingBottom: keyboardInset },
+        ]}
       >
         <Pressable
           accessibilityRole="button"
@@ -199,7 +205,7 @@ export function BottomSheet({
 
           {children}
         </View>
-      </KeyboardAvoidingView>
+      </Animated.View>
     </Modal>
   );
 }

@@ -1,5 +1,7 @@
 
 import { act, fireEvent, render } from "@testing-library/react-native";
+// @ts-expect-error Exportado pelo mock de react-native
+import { Platform, StyleSheet, __emitKeyboardEvent } from "react-native";
 import { ProposalSheet } from "@/view/listings/ProposalSheet";
 import { ThemeProvider } from "@/view/theme/ThemeProvider";
 import type { Book } from "@/model/entities/book";
@@ -251,5 +253,38 @@ describe("ProposalSheet (Spec 113)", () => {
       fireEvent.press(closeBtn);
     });
     expect(onClose).toHaveBeenCalledTimes(2);
+  });
+
+  it("desvia a folha acima do teclado no Android quando keyboardDidShow dispara", async () => {
+    const originalPlatform = Platform.OS;
+    Platform.OS = "android";
+    try {
+      let screen!: Awaited<ReturnType<typeof render>>;
+      await act(async () => {
+        screen = await render(
+          <ThemeProvider>
+            <ProposalSheet
+              visible={true}
+              onClose={jest.fn()}
+              targetBook={targetSaleBook}
+              onSubmit={jest.fn()}
+            />
+          </ThemeProvider>,
+        );
+      });
+
+      const readPaddingBottom = () => {
+        const estilo = StyleSheet.flatten(screen.getByTestId("proposal-sheet-scrim").props.style);
+        return estilo.paddingBottom?.__getValue?.() ?? 0;
+      };
+
+      expect(readPaddingBottom()).toBe(0);
+      __emitKeyboardEvent("keyboardDidShow", 310);
+      expect(readPaddingBottom()).toBe(310);
+      __emitKeyboardEvent("keyboardDidHide", undefined);
+      expect(readPaddingBottom()).toBe(0);
+    } finally {
+      Platform.OS = originalPlatform;
+    }
   });
 });
