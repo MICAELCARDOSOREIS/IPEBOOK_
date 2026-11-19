@@ -72,7 +72,7 @@ export function InviteFriends({ onBack }: InviteFriendsProps) {
           </View>
           <View style={[styles.column, wide && styles.columnHalf]}>
           <View style={styles.previewCard}>
-            <Text style={styles.previewLabel}>Texto que vai junto com a imagem</Text>
+            <Text style={styles.previewLabel}>{Platform.OS === "ios" ? "Texto do convite" : "Texto que vai junto com a imagem"}</Text>
             <Text style={styles.previewText}>{state.inviteMessage}</Text>
           </View>
 
@@ -114,7 +114,10 @@ export function InviteFriends({ onBack }: InviteFriendsProps) {
               onPress={() => void actions.shareImage(captureInvite)}
             />
             {Platform.OS === "ios" ? (
-              <OutlinedButton label="Copiar link" disabled={state.sharing} onPress={() => void actions.copyLink()} />
+              <>
+                <OutlinedButton label="Compartilhar texto" disabled={state.sharing} onPress={() => void actions.shareNative()} />
+                <OutlinedButton label="Copiar link" disabled={state.sharing} onPress={() => void actions.copyLink()} />
+              </>
             ) : null}
           </View>
           </View>
