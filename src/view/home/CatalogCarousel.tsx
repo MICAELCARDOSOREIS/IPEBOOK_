@@ -4,6 +4,7 @@ import type { Book, BookModality } from "@/model/entities/book";
 import { AppIcon } from "@/view/components/AppIcon";
 import { BookCover } from "@/view/components/BookCover";
 import { IpeMark } from "@/view/components/IpeMark";
+import { triggerHaptic } from "@/view/haptics";
 import { withPress } from "@/view/pressFeedback";
 import { formatPrice } from "@/view/formatPrice";
 import { formatBookLocation } from "@/model/entities/location";
@@ -12,6 +13,7 @@ import { useTheme } from "@/view/theme/ThemeProvider";
 import { fontFamily, tokens, type ColorPalette } from "@/view/tokens";
 import { useGuardedPress } from "@/view/useGuardedPress";
 import { useIsWideWeb } from "@/view/useIsWideWeb";
+import { useReduceTransparency } from "@/view/useReduceTransparency";
 
 export const MODALITY_PLURAL = {
   sale: "livros à venda",
@@ -64,6 +66,9 @@ export function CatalogCarousel({
   const listRef = useRef<FlatList<Book> | null>(null);
   const lastIndex = Math.max(0, books.length - 1);
   const { colors } = useTheme();
+  const isIos = Platform.OS === "ios";
+  const reduceTransparency = useReduceTransparency();
+  const iosGlass = isIos && !reduceTransparency;
   const styles = useMemo(() => createStyles(colors), [colors]);
   const modalityTag = useMemo(() => createModalityTag(colors), [colors]);
   const wideWeb = useIsWideWeb();
@@ -82,9 +87,13 @@ export function CatalogCarousel({
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`Ver detalhe de ${item.title}, ${item.author}${item.neighborhood ? ` em ${item.neighborhood}` : ""}`}
-        onPress={() => guardedNavigateToBookDetail(item.id)}
+        onPress={() => {
+          if (isIos) triggerHaptic("light");
+          guardedNavigateToBookDetail(item.id);
+        }}
         style={({ pressed }) => [
           styles.carouselCard,
+          isIos && (iosGlass ? styles.iosGlassCard : styles.iosOpaqueCard),
           wide && styles.carouselCardWide,
           pressed && styles.carouselCardPressed,
         ]}
@@ -267,7 +276,10 @@ export function CatalogCarousel({
         accessibilityRole="button"
         accessibilityLabel={`Explorar catálogo completo de ${title}`}
         onPress={onViewMore}
-        style={withPress(styles.viewMoreBottomButton)}
+        style={withPress([
+          styles.viewMoreBottomButton,
+          isIos && (iosGlass ? styles.iosGlassCard : styles.iosOpaqueCard),
+        ])}
       >
         <View style={styles.viewMoreBottomIconBox}>
           <AppIcon name="search" size={22} color={colors.nature.foliageDeep} />
@@ -306,6 +318,9 @@ export function HomeShortcutsSection({
   onNavigateToHelp,
 }: HomeShortcutsSectionProps) {
   const { colors } = useTheme();
+  const isIos = Platform.OS === "ios";
+  const reduceTransparency = useReduceTransparency();
+  const iosGlass = isIos && !reduceTransparency;
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [isBannerHovered, setIsBannerHovered] = useState(false);
 
@@ -415,6 +430,9 @@ export function HomeEmptyCatalogSection({
   onResetModality,
 }: HomeEmptyCatalogSectionProps) {
   const { colors } = useTheme();
+  const isIos = Platform.OS === "ios";
+  const reduceTransparency = useReduceTransparency();
+  const iosGlass = isIos && !reduceTransparency;
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   const isFilteredByModalityOnly =
@@ -625,6 +643,22 @@ function createStyles(colors: ColorPalette) {
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.08,
       shadowRadius: 6,
+    },
+    iosGlassCard: {
+      borderRadius: tokens.radius.xl,
+      borderCurve: "continuous",
+      backgroundColor: tokens.glass.fill,
+      borderColor: tokens.glass.stroke,
+      shadowColor: "#362b1f",
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.12,
+      shadowRadius: 14,
+    },
+    iosOpaqueCard: {
+      borderRadius: tokens.radius.xl,
+      borderCurve: "continuous",
+      backgroundColor: colors.m3.surfaceContainerLowest,
+      borderColor: tokens.ios.separator,
     },
     carouselCardPressed: { borderRadius: tokens.shapeMorph.cardPressed, transform: [{ scale: 0.96 }], },
     carouselCardCoverArea: {
