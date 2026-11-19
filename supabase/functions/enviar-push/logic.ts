@@ -40,6 +40,8 @@ export type PushMessage = {
   tag?: string;
   /** iOS empilha na mesma conversa os avisos com o mesmo `threadId`. */
   threadId?: string;
+  /** Contagem exibida no ícone do app no iOS. Zero limpa o selo. */
+  badge?: number;
   data: { url: string | null; type: string; notificationId: string };
 };
 
@@ -75,7 +77,7 @@ export function isTypeMuted(type: string, mutedTypes: unknown): boolean {
  * negociação partilham `collapseId`/`tag`/`threadId` (a rota), então o novo substitui o anterior
  * em vez de empilhar uma notificação por mensagem, como fazem os apps profissionais.
  */
-export function buildPushMessage(notification: StoredNotification, token: string): PushMessage {
+export function buildPushMessage(notification: StoredNotification, token: string, unreadCount?: number): PushMessage {
   const channel = channelOf(notification.type);
   const group = notification.action_url ?? undefined;
   const message: PushMessage = {
@@ -87,6 +89,7 @@ export function buildPushMessage(notification: StoredNotification, token: string
     priority: priorityOf(notification.type),
     data: { url: notification.action_url, type: notification.type, notificationId: notification.id },
   };
+  if (unreadCount !== undefined) message.badge = unreadCount;
   if (group) {
     message.collapseId = group;
     message.tag = group;

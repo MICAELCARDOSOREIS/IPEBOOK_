@@ -39,6 +39,11 @@
 
 - [ ] **T010 — Notificações Push no iOS (`APNs`)**
   - Configurar APNs no Expo/Supabase, permissão nativa de notificações, badge no ícone e navegação por deep link ao tocar na notificação.
+  - Na #235, aproveitar o pedido de permissão após o login e o registro de token Expo já existentes. O envio deve incluir a contagem de avisos não lidos do destinatário para atualizar o selo mesmo com o app fechado. Se a contagem falhar, o aviso ainda deve sair.
+  - No iOS, o toque em mensagem abre a conversa; o de negociação mantém a rota do aviso, e um aviso remoto sem rota abre a central. Validar entrega única do toque em abertura a frio, cancelamento da escuta e limpeza do selo após ler todos.
+  - Conferir o direito `aps-environment` gerado pelo plugin no Expo. Com uma chave APNs vinculada no EAS e uma versão assinada instalada, validar permissão, token, recebimento, selo e toque em primeiro plano e com o app fechado. A versão local deve passar pelos testes do serviço, do registro e do payload.
+  - A introspecção local do Expo confirmou `aps-environment: development`. Para homologar, verificar a chave com `eas credentials -p ios`, instalar uma versão de desenvolvimento assinada ou TestFlight e disponibilizar a versão revisada de `enviar-push` no ambiente de teste. Gerar avisos com uma segunda conta, conferir a conversa, a negociação e a central ao tocar, e marcar todos como lidos para confirmar a limpeza do selo. O Expo Go pode executar a interface, mas a homologação de APNs depende da versão assinada do IpêBook.
+  - Implementação local aprovada em `npm run test:coverage` (2.319 testes), `npm run test:sql`, `npm run typecheck` e `deno check --cached-only supabase/functions/enviar-push/index.ts`. Credenciais APNs, implantação da função e recebimento no iPhone aguardam homologação.
 
 - [ ] **T011 — Build iOS, `PrivacyInfo.xcprivacy` e TestFlight**
   - Configurar perfil iOS de build (`eas.json`), manifesto de privacidade da Apple e distribuição via TestFlight para testes da equipe em iPhone.

@@ -61,10 +61,16 @@ Deno.serve(async (request) => {
     .is("pushed_at", null);
   if (!count) return reply(200, { enviado: false, motivo: "envio reivindicado por outra chamada" });
 
+  const { count: unreadCount, error: badgeError } = await admin
+    .from("v2_notifications")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", notification.user_id)
+    .eq("read", false);
+
   const response = await fetch(EXPO_PUSH_URL, {
     method: "POST",
     headers: { Accept: "application/json", "Content-Type": "application/json" },
-    body: JSON.stringify(buildPushMessage(notification, token)),
+    body: JSON.stringify(buildPushMessage(notification, token, badgeError ? undefined : unreadCount ?? undefined)),
   }).catch(() => null);
   if (!response?.ok) return reply(502, { enviado: false, motivo: "serviço de push indisponível" });
 
