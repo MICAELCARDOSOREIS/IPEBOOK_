@@ -241,7 +241,7 @@ export function Settings({
         accessibilityRole="button"
         accessibilityLabel={link.label}
         onPress={link.onPress}
-        android_ripple={{ color: colors.m3.surfaceContainerHigh }}
+        android_ripple={Platform.OS === "android" ? { color: colors.m3.surfaceContainerHigh } : undefined}
         style={({ pressed }) => [styles.linkRow, index > 0 && styles.linkDivider, pressed && styles.linkPressed]}
       >
         <View style={[styles.iconCircle, getIconToneStyle(link.icon, colors)]}>
@@ -276,7 +276,7 @@ export function Settings({
           if (Platform.OS === "ios") triggerHaptic("selection");
           setExpandedSection((previous) => (previous === sectionKey ? null : sectionKey));
         }}
-        android_ripple={{ color: colors.m3.surfaceContainerHigh }}
+        android_ripple={Platform.OS === "android" ? { color: colors.m3.surfaceContainerHigh } : undefined}
         style={withPress([styles.disclosureHeader, expanded && styles.disclosureHeaderExpanded])}
       >
         <View style={styles.sectionHeaderRow}>
@@ -465,10 +465,13 @@ export function Settings({
                               false: colors.m3.surfaceContainerHighest,
                               true: colors.action,
                             }}
+                            ios_backgroundColor={colors.m3.surfaceContainerHighest}
                             thumbColor={
-                              notifPrefs.enabled[key]
-                                ? colors.m3.onPrimary
-                                : colors.m3.outline
+                              Platform.OS === "ios"
+                                ? undefined
+                                : notifPrefs.enabled[key]
+                                  ? colors.m3.onPrimary
+                                  : colors.m3.outline
                             }
                           />
                         </Pressable>

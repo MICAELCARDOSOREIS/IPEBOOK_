@@ -41,6 +41,28 @@ export function createMyListingsStyles(colors: ColorPalette) {
       shadowOffset: { width: 0, height: 3 },
       zIndex: 90,
     },
+    iosFabGlass: {
+      borderRadius: tokens.radius.full,
+      backgroundColor: tokens.glass.fill,
+      borderWidth: 1,
+      borderColor: tokens.glass.stroke,
+      shadowColor: "#302e24",
+      shadowOpacity: 0.14,
+      shadowRadius: 10,
+      shadowOffset: { width: 0, height: 4 },
+      overflow: "hidden",
+    },
+    iosFabOpaque: {
+      borderRadius: tokens.radius.full,
+      backgroundColor: colors.m3.surfaceContainer,
+      borderWidth: 1,
+      borderColor: colors.m3.outlineVariant,
+    },
+    iosBlurClip: {
+      ...StyleSheet.absoluteFill,
+      borderRadius: tokens.radius.full,
+      overflow: "hidden",
+    },
     fabPressed: {
       opacity: 0.92,
       borderRadius: tokens.shapeMorph.cardPressed,
